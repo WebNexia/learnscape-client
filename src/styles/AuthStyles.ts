@@ -1,7 +1,7 @@
 export const formContainerStyles = () => ({
 	position: 'relative',
 	width: '50%',
-	height: '60vh',
+	height: '63vh',
 	padding: '6rem 3rem ',
 	border: '#01435A solid 0.1rem',
 	borderRadius: '0.2rem',
