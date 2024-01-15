@@ -1,9 +1,12 @@
-import { Box, Button } from '@mui/material';
+import { Box, Button, Typography } from '@mui/material';
 import * as styles from '../styles/AuthStyles';
 import { useState } from 'react';
 import { AuthUtils } from '../utils/AuthUtils';
+import { useNavigate } from 'react-router-dom';
 
 const Auth = () => {
+	const navigate = useNavigate();
+
 	const [isSignInActive, setSignInIsActive] = useState<boolean>(true);
 	const [isSignUpActive, setSignUpIsActive] = useState<boolean>(false);
 
@@ -36,6 +39,7 @@ const Auth = () => {
 						size='large'
 						sx={{
 							padding: '1rem 0',
+							color: '#4D7B8B',
 							backgroundColor: !isSignInActive ? 'lightgray' : null,
 							borderTop: isSignInActive ? 'solid 0.3rem #1EC28B' : 'solid 0.3rem lightgray',
 						}}>
@@ -50,6 +54,7 @@ const Auth = () => {
 						size='large'
 						sx={{
 							padding: '1rem 0',
+							color: '#4D7B8B',
 							backgroundColor: !isSignUpActive ? 'lightgray' : null,
 							borderTop: isSignUpActive ? 'solid 0.3rem #1EC28B' : 'solid 0.3rem lightgray',
 						}}>
@@ -98,6 +103,18 @@ const Auth = () => {
 						</Box>
 					) : null}
 				</Box>
+				<Typography
+					variant='body1'
+					sx={{
+						textAlign: 'center',
+						marginTop: '1.25rem',
+						color: '#01435A',
+						cursor: 'pointer',
+						':hover': { textDecoration: 'underline' },
+					}}
+					onClick={() => navigate('/')}>
+					Home Page
+				</Typography>
 			</Box>
 		</Box>
 	);
