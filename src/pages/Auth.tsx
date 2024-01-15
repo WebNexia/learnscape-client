@@ -1,14 +1,41 @@
 import { Box, Button, Typography } from '@mui/material';
 import * as styles from '../styles/AuthStyles';
-import { useState } from 'react';
+import { FormEvent, useState } from 'react';
 import { AuthUtils } from '../utils/AuthUtils';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const Auth = () => {
 	const navigate = useNavigate();
 
+	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
+
 	const [isSignInActive, setSignInIsActive] = useState<boolean>(true);
 	const [isSignUpActive, setSignUpIsActive] = useState<boolean>(false);
+
+	const [username, setUsername] = useState<string>('');
+	const [email, setEmail] = useState<string>('');
+	const [password, setPassword] = useState<string>('');
+
+	const signin = async (e: FormEvent) => {
+		e.preventDefault();
+		try {
+			const response = await axios.post(`${base_url}/users/signin`, { email, password });
+			console.log(response.data);
+		} catch (error) {
+			console.log(error);
+		}
+	};
+
+	const signup = async (e: FormEvent) => {
+		e.preventDefault();
+		try {
+			const response = await axios.post(`${base_url}/users/signup`, { username, email, password });
+			console.log(response);
+		} catch (error) {
+			console.log(error);
+		}
+	};
 
 	return (
 		<Box
@@ -35,6 +62,11 @@ const Auth = () => {
 						onClick={() => {
 							setSignInIsActive(true);
 							setSignUpIsActive(false);
+							if (!isSignInActive) {
+								setEmail('');
+								setUsername('');
+								setPassword('');
+							}
 						}}
 						size='large'
 						sx={{
@@ -50,6 +82,11 @@ const Auth = () => {
 						onClick={() => {
 							setSignInIsActive(false);
 							setSignUpIsActive(true);
+							if (!isSignUpActive) {
+								setEmail('');
+								setUsername('');
+								setPassword('');
+							}
 						}}
 						size='large'
 						sx={{
@@ -65,7 +102,7 @@ const Auth = () => {
 				<Box sx={{ display: 'flex', justifyContent: 'center' }}>
 					{isSignInActive ? (
 						<Box sx={{ marginTop: '2rem', width: '80%' }}>
-							<form>
+							<form onSubmit={signin}>
 								<Box
 									sx={{
 										display: 'flex',
@@ -73,10 +110,14 @@ const Auth = () => {
 										justifyContent: 'center',
 										alignItems: 'center',
 									}}>
-									{AuthUtils.textFieldGenerator('Email Address', 'email')}
-									{AuthUtils.textFieldGenerator('Password', 'password')}
+									{AuthUtils.textFieldGenerator('Email Address', 'email', email, (e) =>
+										setEmail(e.target.value)
+									)}
+									{AuthUtils.textFieldGenerator('Password', 'password', password, (e) =>
+										setPassword(e.target.value)
+									)}
 								</Box>
-								<Button variant='contained' fullWidth sx={styles.submitBtnStyles()}>
+								<Button variant='contained' fullWidth sx={styles.submitBtnStyles()} type='submit'>
 									Sign In
 								</Button>
 							</form>
@@ -84,7 +125,7 @@ const Auth = () => {
 					) : null}
 					{isSignUpActive ? (
 						<Box sx={{ marginTop: '2rem', width: '80%' }}>
-							<form>
+							<form onSubmit={signup}>
 								<Box
 									sx={{
 										display: 'flex',
@@ -92,11 +133,17 @@ const Auth = () => {
 										justifyContent: 'center',
 										alignItems: 'center',
 									}}>
-									{AuthUtils.textFieldGenerator('Email Address', 'email')}
-									{AuthUtils.textFieldGenerator('Username', 'text')}
-									{AuthUtils.textFieldGenerator('Password', 'password')}
+									{AuthUtils.textFieldGenerator('Email Address', 'email', email, (e) =>
+										setEmail(e.target.value)
+									)}
+									{AuthUtils.textFieldGenerator('Username', 'text', username, (e) =>
+										setUsername(e.target.value)
+									)}
+									{AuthUtils.textFieldGenerator('Password', 'password', password, (e) =>
+										setPassword(e.target.value)
+									)}
 								</Box>
-								<Button variant='contained' fullWidth sx={styles.submitBtnStyles()}>
+								<Button variant='contained' fullWidth sx={styles.submitBtnStyles()} type='submit'>
 									Sign Up
 								</Button>
 							</form>
