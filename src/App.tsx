@@ -1,10 +1,11 @@
 import './App.css';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import Auth from './pages/Auth';
 import HomePage from './pages/HomePage';
 import { ThemeProvider } from '@mui/material/styles';
 import theme from './themes';
 import Dashboard from './pages/Dashboard';
+import { Box } from '@mui/material';
 
 function App() {
 	return (
