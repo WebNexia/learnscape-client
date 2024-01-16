@@ -11,15 +11,3 @@ export const formContainerStyles = () => ({
 		boxShadow: '0.2rem 0.2rem 0.2rem 0.2rem rgba(0,0,0,0.5)',
 	},
 });
-
-export const submitBtnStyles = () => ({
-	backgroundColor: '#1EC28B',
-	marginTop: '1.25rem',
-	fontSize: '1.25rem',
-	fontWeight: 500,
-	':hover': {
-		backgroundColor: '#FDF7F0',
-		color: '#1EC28B',
-		border: 'solid #1EC28B',
-	},
-});

@@ -11,7 +11,7 @@ export const AuthUtils = {
 			onChange={onchange}
 			fullWidth
 			sx={{ marginBottom: '0.85rem' }}
-			size='medium'
+			size='small'
 		/>
 	),
 };

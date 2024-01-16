@@ -4,6 +4,7 @@ import { FormEvent, useState } from 'react';
 import { AuthUtils } from '../utils/AuthUtils';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import theme from '../themes';
 
 const Auth = () => {
 	const navigate = useNavigate();
@@ -22,6 +23,10 @@ const Auth = () => {
 		try {
 			const response = await axios.post(`${base_url}/users/signin`, { email, password });
 			console.log(response.data);
+			setEmail('');
+			setUsername('');
+			navigate(`/user/${response.data._id}`);
+			localStorage.setItem('user_token', response.data.token);
 		} catch (error) {
 			console.log(error);
 		}
@@ -31,11 +36,19 @@ const Auth = () => {
 		e.preventDefault();
 		try {
 			const response = await axios.post(`${base_url}/users/signup`, { username, email, password });
-			console.log(response);
+			console.log(response.data.data[0]._id);
+			setEmail('');
+			setPassword('');
+			setUsername('');
+			navigate(`/user/${response.data.data[0]._id}`);
+			localStorage.setItem('signedup', 'yes');
 		} catch (error) {
 			console.log(error);
 		}
 	};
+
+	const sharedBtnStyles = theme.tabBtnAuth || {};
+	const submitBtnStyles = theme.submitBtn || {};
 
 	return (
 		<Box
@@ -70,8 +83,8 @@ const Auth = () => {
 						}}
 						size='large'
 						sx={{
+							...sharedBtnStyles,
 							padding: '1rem 0',
-							color: '#4D7B8B',
 							backgroundColor: !isSignInActive ? 'lightgray' : null,
 							borderTop: isSignInActive ? 'solid 0.3rem #1EC28B' : 'solid 0.3rem lightgray',
 						}}>
@@ -90,8 +103,8 @@ const Auth = () => {
 						}}
 						size='large'
 						sx={{
+							...sharedBtnStyles,
 							padding: '1rem 0',
-							color: '#4D7B8B',
 							backgroundColor: !isSignUpActive ? 'lightgray' : null,
 							borderTop: isSignUpActive ? 'solid 0.3rem #1EC28B' : 'solid 0.3rem lightgray',
 						}}>
@@ -117,7 +130,7 @@ const Auth = () => {
 										setPassword(e.target.value)
 									)}
 								</Box>
-								<Button variant='contained' fullWidth sx={styles.submitBtnStyles()} type='submit'>
+								<Button variant='contained' fullWidth sx={submitBtnStyles} type='submit'>
 									Sign In
 								</Button>
 							</form>
@@ -143,25 +156,26 @@ const Auth = () => {
 										setPassword(e.target.value)
 									)}
 								</Box>
-								<Button variant='contained' fullWidth sx={styles.submitBtnStyles()} type='submit'>
+								<Button variant='contained' fullWidth sx={submitBtnStyles} type='submit'>
 									Sign Up
 								</Button>
 							</form>
 						</Box>
 					) : null}
 				</Box>
-				<Typography
-					variant='body1'
-					sx={{
-						textAlign: 'center',
-						marginTop: '1.25rem',
-						color: '#01435A',
-						cursor: 'pointer',
-						':hover': { textDecoration: 'underline' },
-					}}
-					onClick={() => navigate('/')}>
-					Home Page
-				</Typography>
+				<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+					<Typography
+						variant='body1'
+						sx={{
+							marginTop: '1.25rem',
+							color: '#01435A',
+							cursor: 'pointer',
+							':hover': { textDecoration: 'underline' },
+						}}
+						onClick={() => navigate('/')}>
+						Home Page
+					</Typography>
+				</Box>
 			</Box>
 		</Box>
 	);
