@@ -8,7 +8,14 @@ function App() {
 		<>
 			<Router>
 				<Routes>
-				    <Route path='/' element={<Box><Link to='/auth'>Signin</Link></Box>} />
+					<Route
+						path='/'
+						element={
+							<Box>
+								<Link to='/auth'>Signin</Link>
+							</Box>
+						}
+					/>
 					<Route path='/auth' element={<Auth />} />
 				</Routes>
 			</Router>
