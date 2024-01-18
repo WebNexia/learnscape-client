@@ -2,6 +2,7 @@ import './App.css';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import Auth from './pages/Auth';
 import { Box } from '@mui/material';
+import BubbleChartComponent from './BubbleChartComponent';
 
 function App() {
 	return (
@@ -12,7 +13,8 @@ function App() {
 						path='/'
 						element={
 							<Box>
-								<Link to='/auth'>Signin</Link>
+								{/* <Link to='/auth'>Signin</Link> */}
+								<BubbleChartComponent />
 							</Box>
 						}
 					/>
