@@ -22,7 +22,6 @@ const Auth = () => {
 		e.preventDefault();
 		try {
 			const response = await axios.post(`${base_url}/users/signin`, { email, password });
-			console.log(response.data);
 			setEmail('');
 			setUsername('');
 			navigate(`/user/${response.data._id}`);
@@ -36,7 +35,6 @@ const Auth = () => {
 		e.preventDefault();
 		try {
 			const response = await axios.post(`${base_url}/users/signup`, { username, email, password });
-			console.log(response.data.data[0]._id);
 			setEmail('');
 			setPassword('');
 			setUsername('');
