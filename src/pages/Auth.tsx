@@ -1,11 +1,11 @@
 import { Box, Button, Typography } from '@mui/material';
 import * as styles from '../styles/AuthStyles';
 import { FormEvent, useState } from 'react';
-import { AuthUtils } from '../utils/AuthUtils';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import theme from '../themes';
-import { AuthForms } from '../interfaces/enums';
+import { AuthForms, TextFieldTypes } from '../interfaces/enums';
+import TextFieldGenerator from '../components/TextFieldGenerator';
 
 const Auth = () => {
 	const navigate = useNavigate();
@@ -124,12 +124,24 @@ const Auth = () => {
 												justifyContent: 'center',
 												alignItems: 'center',
 											}}>
-											{AuthUtils.textFieldGenerator('Email Address', 'email', email, (e) =>
-												setEmail(e.target.value)
-											)}
-											{AuthUtils.textFieldGenerator('Password', 'password', password, (e) =>
-												setPassword(e.target.value)
-											)}
+											<TextFieldGenerator
+												variant='outlined'
+												label='Email Address'
+												type={TextFieldTypes.EMAIL}
+												onChange={(e) => setEmail(e.target.value)}
+												value={email}
+												size='small'
+												fullWidth={true}
+											/>
+											<TextFieldGenerator
+												variant='outlined'
+												label='Password'
+												type={TextFieldTypes.PASSWORD}
+												onChange={(e) => setPassword(e.target.value)}
+												value={password}
+												size='small'
+												fullWidth={true}
+											/>
 										</Box>
 										<Button variant='contained' fullWidth sx={submitBtnStyles} type='submit'>
 											Sign In
@@ -147,15 +159,34 @@ const Auth = () => {
 												justifyContent: 'center',
 												alignItems: 'center',
 											}}>
-											{AuthUtils.textFieldGenerator('Email Address', 'email', email, (e) =>
-												setEmail(e.target.value)
-											)}
-											{AuthUtils.textFieldGenerator('Username', 'text', username, (e) =>
-												setUsername(e.target.value)
-											)}
-											{AuthUtils.textFieldGenerator('Password', 'password', password, (e) =>
-												setPassword(e.target.value)
-											)}
+											<TextFieldGenerator
+												variant='outlined'
+												label='Email Address'
+												type={TextFieldTypes.EMAIL}
+												onChange={(e) => setEmail(e.target.value)}
+												value={email}
+												size='small'
+												fullWidth={true}
+											/>
+
+											<TextFieldGenerator
+												variant='outlined'
+												label='Username'
+												type={TextFieldTypes.TEXT}
+												onChange={(e) => setUsername(e.target.value)}
+												value={username}
+												size='small'
+												fullWidth={true}
+											/>
+											<TextFieldGenerator
+												variant='outlined'
+												label='Password'
+												type={TextFieldTypes.PASSWORD}
+												onChange={(e) => setPassword(e.target.value)}
+												value={password}
+												size='small'
+												fullWidth={true}
+											/>
 										</Box>
 										<Button variant='contained' fullWidth sx={submitBtnStyles} type='submit'>
 											Sign Up
