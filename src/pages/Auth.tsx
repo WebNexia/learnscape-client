@@ -5,14 +5,14 @@ import { AuthUtils } from '../utils/AuthUtils';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import theme from '../themes';
+import { AuthForms } from '../interfaces/enums';
 
 const Auth = () => {
 	const navigate = useNavigate();
 
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
-	const [isSignInActive, setSignInIsActive] = useState<boolean>(true);
-	const [isSignUpActive, setSignUpIsActive] = useState<boolean>(false);
+	const [activeForm, setActiveForm] = useState<AuthForms>(AuthForms.SIGN_IN);
 
 	const [username, setUsername] = useState<string>('');
 	const [email, setEmail] = useState<string>('');
@@ -73,9 +73,8 @@ const Auth = () => {
 					<Button
 						fullWidth
 						onClick={() => {
-							setSignInIsActive(true);
-							setSignUpIsActive(false);
-							if (!isSignInActive) {
+							setActiveForm(AuthForms.SIGN_IN);
+							if (activeForm !== AuthForms.SIGN_IN) {
 								setEmail('');
 								setUsername('');
 								setPassword('');
@@ -85,17 +84,17 @@ const Auth = () => {
 						sx={{
 							...sharedBtnStyles,
 							padding: '1rem 0',
-							backgroundColor: !isSignInActive ? 'lightgray' : null,
-							borderTop: isSignInActive ? 'solid 0.3rem #1EC28B' : 'solid 0.3rem lightgray',
+							backgroundColor: activeForm !== AuthForms.SIGN_IN ? 'lightgray' : null,
+							borderTop:
+								activeForm === AuthForms.SIGN_IN ? 'solid 0.3rem #1EC28B' : 'solid 0.3rem lightgray',
 						}}>
 						Sign In
 					</Button>
 					<Button
 						fullWidth
 						onClick={() => {
-							setSignInIsActive(false);
-							setSignUpIsActive(true);
-							if (!isSignUpActive) {
+							setActiveForm(AuthForms.SIGN_UP);
+							if (!AuthForms.SIGN_UP) {
 								setEmail('');
 								setUsername('');
 								setPassword('');
@@ -105,64 +104,69 @@ const Auth = () => {
 						sx={{
 							...sharedBtnStyles,
 							padding: '1rem 0',
-							backgroundColor: !isSignUpActive ? 'lightgray' : null,
-							borderTop: isSignUpActive ? 'solid 0.3rem #1EC28B' : 'solid 0.3rem lightgray',
+							backgroundColor: activeForm !== AuthForms.SIGN_UP ? 'lightgray' : null,
+							borderTop:
+								activeForm === AuthForms.SIGN_UP ? 'solid 0.3rem #1EC28B' : 'solid 0.3rem lightgray',
 						}}>
 						Sign Up
 					</Button>
 				</Box>
-
 				<Box sx={{ display: 'flex', justifyContent: 'center' }}>
-					{isSignInActive ? (
-						<Box sx={{ marginTop: '2rem', width: '80%' }}>
-							<form onSubmit={signin}>
-								<Box
-									sx={{
-										display: 'flex',
-										flexDirection: 'column',
-										justifyContent: 'center',
-										alignItems: 'center',
-									}}>
-									{AuthUtils.textFieldGenerator('Email Address', 'email', email, (e) =>
-										setEmail(e.target.value)
-									)}
-									{AuthUtils.textFieldGenerator('Password', 'password', password, (e) =>
-										setPassword(e.target.value)
-									)}
+					{
+						{
+							[AuthForms.SIGN_IN]: (
+								<Box sx={{ marginTop: '2rem', width: '80%' }}>
+									<form onSubmit={signin}>
+										<Box
+											sx={{
+												display: 'flex',
+												flexDirection: 'column',
+												justifyContent: 'center',
+												alignItems: 'center',
+											}}>
+											{AuthUtils.textFieldGenerator('Email Address', 'email', email, (e) =>
+												setEmail(e.target.value)
+											)}
+											{AuthUtils.textFieldGenerator('Password', 'password', password, (e) =>
+												setPassword(e.target.value)
+											)}
+										</Box>
+										<Button variant='contained' fullWidth sx={submitBtnStyles} type='submit'>
+											Sign In
+										</Button>
+									</form>
 								</Box>
-								<Button variant='contained' fullWidth sx={submitBtnStyles} type='submit'>
-									Sign In
-								</Button>
-							</form>
-						</Box>
-					) : null}
-					{isSignUpActive ? (
-						<Box sx={{ marginTop: '2rem', width: '80%' }}>
-							<form onSubmit={signup}>
-								<Box
-									sx={{
-										display: 'flex',
-										flexDirection: 'column',
-										justifyContent: 'center',
-										alignItems: 'center',
-									}}>
-									{AuthUtils.textFieldGenerator('Email Address', 'email', email, (e) =>
-										setEmail(e.target.value)
-									)}
-									{AuthUtils.textFieldGenerator('Username', 'text', username, (e) =>
-										setUsername(e.target.value)
-									)}
-									{AuthUtils.textFieldGenerator('Password', 'password', password, (e) =>
-										setPassword(e.target.value)
-									)}
+							),
+							[AuthForms.SIGN_UP]: (
+								<Box sx={{ marginTop: '2rem', width: '80%' }}>
+									<form onSubmit={signup}>
+										<Box
+											sx={{
+												display: 'flex',
+												flexDirection: 'column',
+												justifyContent: 'center',
+												alignItems: 'center',
+											}}>
+											{AuthUtils.textFieldGenerator('Email Address', 'email', email, (e) =>
+												setEmail(e.target.value)
+											)}
+											{AuthUtils.textFieldGenerator('Username', 'text', username, (e) =>
+												setUsername(e.target.value)
+											)}
+											{AuthUtils.textFieldGenerator('Password', 'password', password, (e) =>
+												setPassword(e.target.value)
+											)}
+										</Box>
+										<Button variant='contained' fullWidth sx={submitBtnStyles} type='submit'>
+											Sign Up
+										</Button>
+									</form>
 								</Box>
-								<Button variant='contained' fullWidth sx={submitBtnStyles} type='submit'>
-									Sign Up
-								</Button>
-							</form>
-						</Box>
-					) : null}
+							),
+						}[activeForm]
+					}
 				</Box>
+
 				<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
 					<Typography
 						variant='body1'
