@@ -16,6 +16,13 @@ const Dashboard = () => {
 		}
 	}, []);
 
+	useEffect(() => {
+		if (!localStorage.getItem('user_token')) {
+			navigate('/auth');
+			console.log('not logged in');
+		}
+	}, []);
+
 	return (
 		<Box
 			sx={{

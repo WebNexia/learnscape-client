@@ -34,11 +34,11 @@ const Auth = () => {
 	const signup = async (e: FormEvent) => {
 		e.preventDefault();
 		try {
-			const response = await axios.post(`${base_url}/users/signup`, { username, email, password });
+			await axios.post(`${base_url}/users/signup`, { username, email, password });
 			setEmail('');
 			setPassword('');
 			setUsername('');
-			navigate(`/user/${response.data.data[0]._id}`);
+			signin(e);
 			localStorage.setItem('signedup', 'yes');
 		} catch (error) {
 			console.log(error);
