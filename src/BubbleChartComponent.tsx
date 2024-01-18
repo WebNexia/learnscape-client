@@ -9,8 +9,18 @@ import {
   Title,
   Tooltip,
   Filler,
-  Legend
+  Legend,
+  ScriptableContext
 } from 'chart.js';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
+ChartJS.register(ChartDataLabels);
+interface CustomDataPoint {
+    x: number;
+    y: number;
+    r: number;
+    label: string;
+}
+
 
 // Register the components
 ChartJS.register(
@@ -33,10 +43,10 @@ const BubbleChartComponent: React.FC = () => {
             {
                 label: 'Dataset 1',
                 data: [
-                    { x: 20, y: 30, r: 25 },
+                    { x: 20, y: 30, r: 25,label: 'Label 1' },
     
                     // ... other data points
-                ],
+                ] as CustomDataPoint[],
                 backgroundColor: 'green',
                 // ... other dataset properties
             },
@@ -44,9 +54,9 @@ const BubbleChartComponent: React.FC = () => {
                 label: 'Dataset 2',
                 data: [
          
-                    { x: 40, y: 10, r: 15 },
+                    { x: 40, y: 10, r: 15,label: 'Label 2' },
                     // ... other data points
-                ],
+                ] as CustomDataPoint[],
                 backgroundColor: 'blue',
                 // ... other dataset properties
             },
@@ -54,9 +64,9 @@ const BubbleChartComponent: React.FC = () => {
                 label: 'Dataset 2',
                 data: [
          
-                    { x: 40, y: 50, r: 50 },
+                    { x: 40, y: 50, r: 50,label: 'Label 3' },
                     // ... other data points
-                ],
+                ] as CustomDataPoint[],
                 backgroundColor: 'pink',
                 // ... other dataset properties
             },
@@ -78,6 +88,17 @@ const BubbleChartComponent: React.FC = () => {
                 position: 'left' as const, // Explicitly setting as 'left'
                 beginAtZero: true, 
                 max: 100,
+            },
+        },
+        plugins: {
+            datalabels: {
+                color: '#000000',
+                align:"end"  as const, // Correctly using one of the specific string literals
+                anchor: "end"  as const,
+                formatter: (value: any, context: any) => {
+                    const dataPoint = context.chart.data.datasets[context.datasetIndex].data[context.dataIndex] as CustomDataPoint;
+                    return dataPoint ? dataPoint.label : '';
+                },
             },
         },
     };
