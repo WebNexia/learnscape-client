@@ -31,23 +31,34 @@ const BubbleChartComponent: React.FC = () => {
     const data = {
         datasets: [
             {
-                label: 'My First Dataset',
+                label: 'Dataset 1',
                 data: [
-                    { x: 20, y: 30, r: 50 },
-                    { x: 25, y: 10, r: 30 },
-                    // ... more data points
+                    { x: 20, y: 30, r: 25 },
+    
+                    // ... other data points
                 ],
-                backgroundColor: [
-                    'rgba(255, 99, 132)',
-                    'rgba(54, 162, 235)',
-                    // ... more colors for each data point
+                backgroundColor: 'green',
+                // ... other dataset properties
+            },
+            {
+                label: 'Dataset 2',
+                data: [
+         
+                    { x: 40, y: 10, r: 15 },
+                    // ... other data points
                 ],
-                borderColor: [
-                    'rgba(255, 99, 132)',
-                    'rgba(54, 162, 235)',
-                    // ... more border colors for each data point
+                backgroundColor: 'blue',
+                // ... other dataset properties
+            },
+            {
+                label: 'Dataset 2',
+                data: [
+         
+                    { x: 40, y: 50, r: 50 },
+                    // ... other data points
                 ],
-                borderWidth: 1,
+                backgroundColor: 'pink',
+                // ... other dataset properties
             },
             // ... more datasets if needed
         ],
