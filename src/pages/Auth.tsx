@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import theme from '../themes';
 import { AuthForms, TextFieldTypes } from '../interfaces/enums';
-import TextFieldGenerator from '../components/TextFieldGenerator';
+import CustomTextField from '../components/CustomTextField';
 
 const Auth = () => {
 	const navigate = useNavigate();
@@ -122,7 +122,7 @@ const Auth = () => {
 												justifyContent: 'center',
 												alignItems: 'center',
 											}}>
-											<TextFieldGenerator
+											<CustomTextField
 												variant='outlined'
 												label='Email Address'
 												type={TextFieldTypes.EMAIL}
@@ -131,7 +131,7 @@ const Auth = () => {
 												size='small'
 												fullWidth={true}
 											/>
-											<TextFieldGenerator
+											<CustomTextField
 												variant='outlined'
 												label='Password'
 												type={TextFieldTypes.PASSWORD}
@@ -157,7 +157,7 @@ const Auth = () => {
 												justifyContent: 'center',
 												alignItems: 'center',
 											}}>
-											<TextFieldGenerator
+											<CustomTextField
 												variant='outlined'
 												label='Email Address'
 												type={TextFieldTypes.EMAIL}
@@ -167,7 +167,7 @@ const Auth = () => {
 												fullWidth={true}
 											/>
 
-											<TextFieldGenerator
+											<CustomTextField
 												variant='outlined'
 												label='Username'
 												type={TextFieldTypes.TEXT}
@@ -176,7 +176,7 @@ const Auth = () => {
 												size='small'
 												fullWidth={true}
 											/>
-											<TextFieldGenerator
+											<CustomTextField
 												variant='outlined'
 												label='Password'
 												type={TextFieldTypes.PASSWORD}

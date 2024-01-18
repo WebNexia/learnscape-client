@@ -1,7 +1,7 @@
 import { TextField, TextFieldProps } from '@mui/material';
 import { ChangeEvent } from 'react';
 
-interface TextFieldGeneratorProps {
+interface CustomTextFieldProps {
 	label: string;
 	value: string;
 	type: string;
@@ -11,16 +11,7 @@ interface TextFieldGeneratorProps {
 	fullWidth: boolean;
 }
 
-const TextFieldGenerator = ({
-	variant,
-	label,
-	type,
-	value,
-	onChange,
-	fullWidth,
-	size,
-	...rest
-}: TextFieldGeneratorProps) => {
+const CustomTextField = ({ variant, label, type, value, onChange, fullWidth, size, ...rest }: CustomTextFieldProps) => {
 	return (
 		<TextField
 			variant={variant}
@@ -36,4 +27,4 @@ const TextFieldGenerator = ({
 	);
 };
 
-export default TextFieldGenerator;
+export default CustomTextField;
