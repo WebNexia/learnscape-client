@@ -8,3 +8,10 @@ export const enum TextFieldTypes {
 	PASSWORD = 'password',
 	TEXT = 'text',
 }
+
+export const enum AuthFormErrorMessages {
+	EMAIL_EXISTS = 'This email address is already in use!',
+	USERNAME_EXISTS = 'This username is already in use!',
+	EMAIL_NOT_EXIST = 'This email address is not registered!',
+	WRONG_PASSWORD = 'Enter the correct password!',
+}
