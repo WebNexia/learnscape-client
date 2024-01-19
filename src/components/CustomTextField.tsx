@@ -9,9 +9,20 @@ interface CustomTextFieldProps {
 	variant?: TextFieldProps['variant']; //there are defined variant values in mui
 	size?: TextFieldProps['size']; //there are defined size (small | medium) values in mui
 	fullWidth: boolean;
+	required?: boolean;
 }
 
-const CustomTextField = ({ variant, label, type, value, onChange, fullWidth, size, ...rest }: CustomTextFieldProps) => {
+const CustomTextField = ({
+	variant,
+	label,
+	type,
+	value,
+	onChange,
+	fullWidth,
+	size,
+	required,
+	...rest
+}: CustomTextFieldProps) => {
 	return (
 		<TextField
 			variant={variant}
@@ -22,6 +33,7 @@ const CustomTextField = ({ variant, label, type, value, onChange, fullWidth, siz
 			size={size}
 			sx={{ marginBottom: '0.85rem' }}
 			fullWidth={fullWidth}
+			required={required}
 			{...rest}
 		/>
 	);

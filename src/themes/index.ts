@@ -17,6 +17,14 @@ interface ExtendedThemeOptions extends ThemeOptions {
 			border?: string;
 		};
 	};
+	textColor?: {
+		primary: {
+			main: string;
+		};
+		secondary: {
+			main: string;
+		};
+	};
 }
 
 const theme = createTheme({
@@ -65,6 +73,14 @@ const theme = createTheme({
 			backgroundColor: '#FDF7F0',
 			color: '#1EC28B',
 			border: 'solid #1EC28B',
+		},
+	},
+	textColor: {
+		primary: {
+			main: '#01435A',
+		},
+		secondary: {
+			main: '#4D7B8B',
 		},
 	},
 } as ExtendedThemeOptions);
