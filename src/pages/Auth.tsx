@@ -42,8 +42,6 @@ const Auth = () => {
 			} else {
 				setErrorMsg(AuthFormErrorMessages.WRONG_PASSWORD);
 			}
-
-			console.log(response.data);
 		} catch (error) {
 			console.log(error);
 		}
@@ -62,8 +60,6 @@ const Auth = () => {
 			} else if (response.data.status === 409) {
 				setErrorMsg(AuthFormErrorMessages.EMAIL_EXISTS);
 			}
-
-			console.log(response.data);
 
 			localStorage.setItem('signedup', 'yes');
 		} catch (error) {
