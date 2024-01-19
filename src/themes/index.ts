@@ -20,6 +20,14 @@ interface ExtendedThemeOptions extends ThemeOptions {
 }
 
 const theme = createTheme({
+	palette: {
+		primary: {
+			main: '#01435A',
+		},
+		secondary: {
+			main: '#FDF7F0',
+		},
+	},
 	typography: {
 		h1: {
 			fontSize: '5rem',
