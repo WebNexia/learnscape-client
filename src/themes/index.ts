@@ -24,6 +24,12 @@ interface ExtendedThemeOptions extends ThemeOptions {
 		secondary: {
 			main: string;
 		};
+		common: {
+			main: string;
+		};
+	};
+	fontFamily?: {
+		main: string;
 	};
 }
 
@@ -90,6 +96,12 @@ const theme = createTheme({
 		secondary: {
 			main: '#4D7B8B',
 		},
+		common: {
+			main: '#FFFFFF', // White color
+		},
+	},
+	fontFamily: {
+		main: 'Poppins',
 	},
 } as ExtendedThemeOptions);
 

@@ -1,16 +1,22 @@
-import { Alert, Box, Button, Snackbar, Typography } from '@mui/material';
+import { Alert, Box, Snackbar } from '@mui/material';
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useTheme } from '@mui/material/styles';
+import { useNavigate, useParams } from 'react-router-dom';
+import theme from '../themes';
+import axios from 'axios';
+import { useQuery } from 'react-query';
+import Sidebar from '../components/Sidebar';
+import DashboardHeader from '../components/DashboardHeader';
 
 const Dashboard = () => {
 	const navigate = useNavigate();
 	const [signedUpMsg, setSignedUpMsg] = useState<boolean>(false);
 
+	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
+
 	const vertical = 'top';
 	const horizontal = 'center';
 
-	const theme = useTheme();
+	const { id } = useParams();
 
 	useEffect(() => {
 		if (localStorage.getItem('signedup')) {
@@ -22,9 +28,21 @@ const Dashboard = () => {
 	useEffect(() => {
 		if (!localStorage.getItem('user_token')) {
 			navigate('/auth');
-			console.log('not logged in');
 		}
 	}, []);
+
+	const { data, isLoading, isError } = useQuery('userData', async () => {
+		const response = await axios.get(`${base_url}/users/${id}`);
+		return response.data.data[0];
+	});
+
+	if (isLoading) {
+		return <Box>Loading...</Box>;
+	}
+
+	if (isError) {
+		return <Box>Error fetching data</Box>;
+	}
 
 	return (
 		<Box
@@ -32,7 +50,7 @@ const Dashboard = () => {
 				display: 'flex',
 				justifyContent: 'center',
 				alignItems: 'center',
-				backgroundColor: '#FDF7F0',
+				backgroundColor: theme.palette.secondary.main,
 				minHeight: '100vh',
 				position: 'relative',
 			}}>
@@ -45,29 +63,7 @@ const Dashboard = () => {
 					You successfully signed up!
 				</Alert>
 			</Snackbar>
-			<Box
-				sx={{
-					width: '10rem',
-					minHeight: '100vh',
-					backgroundColor: theme.palette.primary.main,
-					position: 'absolute',
-					left: 0,
-				}}>
-				<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '5rem' }}>
-					<Typography variant='h1' sx={{ color: 'white', fontSize: '2.25rem' }}>
-						KAIZEN
-					</Typography>
-				</Box>
-
-				{/* <Typography variant='h3'>Dashboard</Typography>
-				<Button
-					onClick={() => {
-						navigate('/');
-						localStorage.removeItem('user_token');
-					}}>
-					Logout
-				</Button> */}
-			</Box>
+			<Sidebar data={data} />
 			<Box
 				sx={{
 					display: 'flex',
@@ -77,19 +73,7 @@ const Dashboard = () => {
 					position: 'absolute',
 					right: 0,
 				}}>
-				<Box
-					sx={{
-						display: 'flex',
-						justifyContent: 'flex-start',
-						alignItems: 'center',
-						height: '3rem',
-						width: '100%',
-						backgroundColor: theme.typography.body1.color,
-					}}>
-					<Typography variant='h3' sx={{ color: 'white' }}>
-						Courses
-					</Typography>
-				</Box>
+				<DashboardHeader />
 				<Box></Box>
 			</Box>
 		</Box>
