@@ -6,6 +6,11 @@ import { ThemeProvider } from '@mui/material/styles';
 import theme from './themes';
 import Dashboard from './pages/Dashboard';
 import { QueryClient, QueryClientProvider } from 'react-query';
+import Courses from './pages/Courses';
+import Schedule from './pages/Schedule';
+import Messages from './pages/Messages';
+import Community from './pages/Community';
+import Settings from './pages/Settings';
 
 const queryClient = new QueryClient();
 
@@ -17,7 +22,12 @@ function App() {
 					<Routes>
 						<Route path='' element={<HomePage />} />
 						<Route path='/auth' element={<Auth />} />
-						<Route path='user/:id' element={<Dashboard />} />
+						<Route path='/dashboard/user/:id' element={<Dashboard />} />
+						<Route path='/courses/user/:id' element={<Courses />} />
+						<Route path='/schedule/user/:id' element={<Schedule />} />
+						<Route path='/messages/user/:id' element={<Messages />} />
+						<Route path='/community/user/:id' element={<Community />} />
+						<Route path='/settings/user/:id' element={<Settings />} />
 					</Routes>
 				</Router>
 			</ThemeProvider>

@@ -1,11 +1,9 @@
-import { Alert, Box, Snackbar } from '@mui/material';
+import { Alert, Box, Snackbar, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import theme from '../themes';
 import axios from 'axios';
 import { useQuery } from 'react-query';
-import Sidebar from '../components/Sidebar';
-import DashboardHeader from '../components/DashboardHeader';
+import DashboardPagesLayout from '../components/layouts/DashboardPagesLayout';
 
 const Dashboard = () => {
 	const navigate = useNavigate();
@@ -33,6 +31,7 @@ const Dashboard = () => {
 
 	const { data, isLoading, isError } = useQuery('userData', async () => {
 		const response = await axios.get(`${base_url}/users/${id}`);
+
 		return response.data.data[0];
 	});
 
@@ -44,16 +43,11 @@ const Dashboard = () => {
 		return <Box>Error fetching data</Box>;
 	}
 
+	localStorage.setItem('username', data.username);
+	localStorage.setItem('imageUrl', data.imageUrl);
+
 	return (
-		<Box
-			sx={{
-				display: 'flex',
-				justifyContent: 'center',
-				alignItems: 'center',
-				backgroundColor: theme.palette.secondary.main,
-				minHeight: '100vh',
-				position: 'relative',
-			}}>
+		<DashboardPagesLayout pageName='Dashboard'>
 			<Snackbar
 				open={signedUpMsg}
 				autoHideDuration={4000}
@@ -63,20 +57,8 @@ const Dashboard = () => {
 					You successfully signed up!
 				</Alert>
 			</Snackbar>
-			<Sidebar data={data} />
-			<Box
-				sx={{
-					display: 'flex',
-					flexDirection: 'column',
-					minHeight: '100vh',
-					width: 'calc(100vw - 10rem)',
-					position: 'absolute',
-					right: 0,
-				}}>
-				<DashboardHeader />
-				<Box></Box>
-			</Box>
-		</Box>
+			<Typography variant='h3'>Coming Soon...</Typography>
+		</DashboardPagesLayout>
 	);
 };
 
