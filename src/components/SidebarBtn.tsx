@@ -9,10 +9,6 @@ interface SidebarBtnProps {
 }
 
 const SidebarBtn = ({ btnText, onClick, IconName, selectedPage }: SidebarBtnProps) => {
-	const handleButtonClick = () => {
-		onClick(); // Invoke the provided onClick function to navigate
-	};
-
 	return (
 		<Button
 			variant='outlined'
@@ -37,7 +33,7 @@ const SidebarBtn = ({ btnText, onClick, IconName, selectedPage }: SidebarBtnProp
 					border: 'none',
 				},
 			}}
-			onClick={handleButtonClick}>
+			onClick={onClick}>
 			{btnText}
 		</Button>
 	);
