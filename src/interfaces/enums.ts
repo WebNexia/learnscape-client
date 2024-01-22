@@ -15,3 +15,17 @@ export const enum AuthFormErrorMessages {
 	EMAIL_NOT_EXIST = 'This email address is not registered!',
 	WRONG_PASSWORD = 'Enter the correct password!',
 }
+
+export const enum Mode {
+	DARK_MODE = 'dark',
+	LIGHT_MODE = 'light',
+}
+
+export const enum PageName {
+	DASHBOARD = 'Dashboard',
+	COURSES = 'Courses',
+	SCHEDULE = 'Schedule',
+	MESSAGES = 'Messages',
+	COMMUNITY = 'Community',
+	SETTINGS = 'Settings',
+}

@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import theme from '../themes';
 import { AuthFormErrorMessages, AuthForms, TextFieldTypes } from '../interfaces/enums';
-import CustomTextField from '../components/CustomTextField';
+import CustomTextField from '../components/forms/CustomFields/CustomTextField';
 
 const Auth = () => {
 	const navigate = useNavigate();
@@ -32,7 +32,7 @@ const Auth = () => {
 			const response = await axios.post(`${base_url}/users/signin`, { email, password });
 
 			if (response.data.status) {
-				navigate(`/user/${response.data._id}`);
+				navigate(`/dashboard/user/${response.data._id}`);
 				localStorage.setItem('user_token', response.data.token);
 				setEmail('');
 				setUsername('');

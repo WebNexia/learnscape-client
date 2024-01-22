@@ -1,13 +1,20 @@
-import { Alert, Box, Button, Snackbar, Typography } from '@mui/material';
+import { Alert, Box, Snackbar, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+import axios from 'axios';
+import { useQuery } from 'react-query';
+import DashboardPagesLayout from '../components/layouts/DashboardPagesLayout';
 
 const Dashboard = () => {
 	const navigate = useNavigate();
 	const [signedUpMsg, setSignedUpMsg] = useState<boolean>(false);
 
+	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
+
 	const vertical = 'top';
 	const horizontal = 'center';
+
+	const { id } = useParams();
 
 	useEffect(() => {
 		if (localStorage.getItem('signedup')) {
@@ -19,19 +26,28 @@ const Dashboard = () => {
 	useEffect(() => {
 		if (!localStorage.getItem('user_token')) {
 			navigate('/auth');
-			console.log('not logged in');
 		}
 	}, []);
 
+	const { data, isLoading, isError } = useQuery('userData', async () => {
+		const response = await axios.get(`${base_url}/users/${id}`);
+
+		return response.data.data[0];
+	});
+
+	if (isLoading) {
+		return <Box>Loading...</Box>;
+	}
+
+	if (isError) {
+		return <Box>Error fetching data</Box>;
+	}
+
+	localStorage.setItem('username', data.username);
+	localStorage.setItem('imageUrl', data.imageUrl);
+
 	return (
-		<Box
-			sx={{
-				display: 'flex',
-				justifyContent: 'center',
-				alignItems: 'center',
-				backgroundColor: '#FDF7F0',
-				minHeight: '100vh',
-			}}>
+		<DashboardPagesLayout pageName='Dashboard'>
 			<Snackbar
 				open={signedUpMsg}
 				autoHideDuration={4000}
@@ -41,17 +57,8 @@ const Dashboard = () => {
 					You successfully signed up!
 				</Alert>
 			</Snackbar>
-			<Box>
-				<Typography variant='h3'>Dashboard</Typography>
-				<Button
-					onClick={() => {
-						navigate('/');
-						localStorage.removeItem('user_token');
-					}}>
-					Logout
-				</Button>
-			</Box>
-		</Box>
+			<Typography variant='h3'>Coming Soon...</Typography>
+		</DashboardPagesLayout>
 	);
 };
 
