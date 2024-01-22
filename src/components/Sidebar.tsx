@@ -24,8 +24,6 @@ const Sidebar = () => {
 		navigate(path);
 	};
 
-	console.log();
-
 	return (
 		<Box
 			sx={{
@@ -36,7 +34,7 @@ const Sidebar = () => {
 				width: '10rem',
 				minHeight: '100vh',
 				backgroundColor: theme.palette.primary.main,
-				position: 'absolute',
+				position: 'fixed',
 				left: 0,
 			}}>
 			<Box sx={{ display: 'flex', alignItems: 'center', height: '3rem', marginBottom: '1rem' }}>

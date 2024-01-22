@@ -7,9 +7,13 @@ import { ReactNode } from 'react';
 interface DashboardPagesLayoutProps {
 	children: ReactNode;
 	pageName: string;
+	customSettings?: {
+		justifyContent?: string;
+		alignItems?: string;
+	};
 }
 
-const DashboardPagesLayout = ({ children, pageName }: DashboardPagesLayoutProps) => {
+const DashboardPagesLayout = ({ children, pageName, customSettings }: DashboardPagesLayoutProps) => {
 	return (
 		<div
 			style={{
@@ -26,7 +30,7 @@ const DashboardPagesLayout = ({ children, pageName }: DashboardPagesLayoutProps)
 					display: 'flex',
 					flexDirection: 'column',
 					minHeight: '100vh',
-					width: 'calc(100vw - 10rem)',
+					width: 'calc(100vw - 10.95rem)',
 					position: 'absolute',
 					right: 0,
 				}}>
@@ -34,9 +38,10 @@ const DashboardPagesLayout = ({ children, pageName }: DashboardPagesLayoutProps)
 				<Box
 					sx={{
 						display: 'flex',
-						justifyContent: 'center',
-						alignItems: 'center',
+						justifyContent: customSettings?.justifyContent || 'center',
+						alignItems: customSettings?.alignItems || 'center',
 						minHeight: 'calc(100vh - 3rem)',
+						overflowY: 'auto',
 					}}>
 					{children}
 				</Box>
