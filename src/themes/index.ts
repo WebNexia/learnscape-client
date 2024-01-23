@@ -8,7 +8,10 @@ interface ExtendedThemeOptions extends ThemeOptions {
 		color?: string;
 	};
 	submitBtn?: {
-		backgroundColor?: string;
+		backgroundColor?: {
+			primary: string;
+			secondary: string;
+		};
 		marginTop?: string;
 		fontWeight?: number;
 		':hover': {
@@ -31,6 +34,13 @@ interface ExtendedThemeOptions extends ThemeOptions {
 	fontFamily?: {
 		main: string;
 	};
+	bgColor?: {
+		primary: string;
+		secondary: string;
+		common: string;
+		greenPrimary: string;
+		greenSecondary: string;
+	};
 }
 
 const theme = createTheme({
@@ -41,7 +51,7 @@ const theme = createTheme({
 		secondary: {
 			main: '#FDF7F0',
 		},
-		common: {
+		light: {
 			main: '#FFFF',
 		},
 	},
@@ -83,7 +93,10 @@ const theme = createTheme({
 		color: '#01435A',
 	},
 	submitBtn: {
-		backgroundColor: '#1EC28B',
+		backgroundColor: {
+			primary: '#1EC28B',
+			secondary: '#00C6AD',
+		},
 		marginTop: '1.25rem',
 		fontWeight: 500,
 		':hover': {
@@ -105,6 +118,13 @@ const theme = createTheme({
 	},
 	fontFamily: {
 		main: 'Poppins',
+	},
+	bgColor: {
+		primary: '#01435A',
+		secondary: '#FDF7F0',
+		common: '#FFFF',
+		greenPrimary: '#1EC28B',
+		greenSecondary: '#00C6AD',
 	},
 } as ExtendedThemeOptions);
 

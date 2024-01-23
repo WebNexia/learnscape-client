@@ -25,7 +25,7 @@ const CoursePage = () => {
 
 	return (
 		<DashboardPagesLayout pageName='Courses' customSettings={{ alignItems: 'flex-start' }}>
-			<CoursePageBanner course={data} />
+			<CoursePageBanner course={data} userId={id} />
 		</DashboardPagesLayout>
 	);
 };

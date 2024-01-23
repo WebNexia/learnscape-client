@@ -32,6 +32,11 @@ const Dashboard = () => {
 	const { data, isLoading, isError } = useQuery('userData', async () => {
 		const response = await axios.get(`${base_url}/users/${id}`);
 
+		if (!localStorage.getItem('username') && !localStorage.getItem('imageUrl')) {
+			localStorage.setItem('username', response.data.data[0].username);
+			localStorage.setItem('imageUrl', response.data.data[0].imageUrl);
+		}
+
 		return response.data.data[0];
 	});
 
@@ -42,9 +47,6 @@ const Dashboard = () => {
 	if (isError) {
 		return <Box>Error fetching data</Box>;
 	}
-
-	localStorage.setItem('username', data.username);
-	localStorage.setItem('imageUrl', data.imageUrl);
 
 	return (
 		<DashboardPagesLayout pageName='Dashboard'>
