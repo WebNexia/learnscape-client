@@ -3,6 +3,7 @@ import theme from '../themes';
 import { Course } from '../interfaces/course';
 import { KeyboardBackspaceOutlined } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import CoursePageBannerDataCard from './CoursePageBannerDataCard';
 
 interface CoursePageBannerProps {
 	course: Course;
@@ -64,14 +65,14 @@ const CoursePageBanner = ({ course, userId }: CoursePageBannerProps) => {
 						<Button
 							variant='contained'
 							sx={{
-								backgroundColor: theme.submitBtn?.backgroundColor?.secondary,
+								backgroundColor: theme.bgColor?.greenSecondary,
 								width: '100%',
 								textTransform: 'capitalize',
 								position: 'absolute',
 								bottom: 5,
 								fontSize: '1rem',
 								':hover': {
-									color: theme.submitBtn?.backgroundColor?.secondary,
+									color: theme.textColor?.greenSecondary.main,
 									backgroundColor: theme.submitBtn?.[':hover'].backgroundColor,
 								},
 							}}>
@@ -81,92 +82,20 @@ const CoursePageBanner = ({ course, userId }: CoursePageBannerProps) => {
 				</Box>
 				<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1 }}>
 					<Box>
-						<Box
-							sx={{
-								width: '9rem',
-								height: '6rem',
-								backgroundColor: theme.bgColor?.common,
-								borderRadius: '0.4rem',
-								margin: '0 0.3rem 0.3rem 0',
-								padding: '0.5rem',
-								':hover': {
-									backgroundColor: theme.bgColor?.greenSecondary,
-								},
-							}}>
-							<Typography variant='body2' sx={{ fontSize: '0.85rem' }}>
-								Starting Date
-							</Typography>
-							<Typography
-								variant='body1'
-								sx={{ color: theme.textColor?.primary.main, fontSize: '1.15rem' }}>
-								January 1, 2024
-							</Typography>
-						</Box>
-						<Box
-							sx={{
-								width: '9rem',
-								height: '6rem',
-								backgroundColor: theme.bgColor?.common,
-								borderRadius: '0.4rem',
-								margin: '0 0.3rem 0.3rem 0',
-								padding: '0.5rem',
-								':hover': {
-									backgroundColor: theme.bgColor?.greenSecondary,
-								},
-							}}>
-							<Typography variant='body2' sx={{ fontSize: '0.85rem' }}>
-								Format
-							</Typography>
-							<Typography
-								variant='body1'
-								sx={{ color: theme.textColor?.primary.main, fontSize: '1.15rem' }}>
-								Online Course
-							</Typography>
-						</Box>
+						<CoursePageBannerDataCard title='Starting Date' content='January 1, 2024' />
+						<CoursePageBannerDataCard title='Duration' content='8 Weeks' />
 					</Box>
 					<Box>
-						<Box
-							sx={{
-								width: '9rem',
-								height: '6rem',
-								backgroundColor: theme.bgColor?.common,
-								borderRadius: '0.4rem',
-								margin: '0 0.3rem 0.3rem 0',
-								padding: '0.5rem',
-								':hover': {
-									backgroundColor: theme.bgColor?.greenSecondary,
-								},
-							}}>
-							<Typography variant='body2' sx={{ fontSize: '0.85rem' }}>
-								Duration
-							</Typography>
-							<Typography
-								variant='body1'
-								sx={{ color: theme.textColor?.primary.main, fontSize: '1.15rem' }}>
-								8 weeks
-							</Typography>
-						</Box>
-						<Box
-							sx={{
-								width: '9rem',
-								height: '6rem',
-								backgroundColor: theme.bgColor?.common,
-								borderRadius: '0.4rem',
-								margin: '0 0.3rem 0.3rem 0',
-								padding: '0.5rem',
-								':hover': {
-									backgroundColor: theme.bgColor?.greenSecondary,
-								},
-							}}>
-							<Typography variant='body2' sx={{ fontSize: '0.85rem' }}>
-								Price
-							</Typography>
-							<Typography
-								variant='body1'
-								sx={{ color: theme.textColor?.primary.main, fontSize: '1.15rem' }}>
-								{course.price}
-							</Typography>
-						</Box>
+						<CoursePageBannerDataCard title='Format' content='Online Course' />
+
+						<CoursePageBannerDataCard
+							title='Price'
+							content={course.price}
+							customSettings={{
+								color: theme.textColor?.common.main,
+								bgColor: theme.bgColor?.greenSecondary,
+							}}
+						/>
 					</Box>
 				</Box>
 			</Box>

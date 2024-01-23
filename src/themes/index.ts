@@ -8,10 +8,7 @@ interface ExtendedThemeOptions extends ThemeOptions {
 		color?: string;
 	};
 	submitBtn?: {
-		backgroundColor?: {
-			primary: string;
-			secondary: string;
-		};
+		backgroundColor?: string;
 		marginTop?: string;
 		fontWeight?: number;
 		':hover': {
@@ -28,6 +25,12 @@ interface ExtendedThemeOptions extends ThemeOptions {
 			main: string;
 		};
 		common: {
+			main: string;
+		};
+		greenPrimary: {
+			main: string;
+		};
+		greenSecondary: {
 			main: string;
 		};
 	};
@@ -93,10 +96,7 @@ const theme = createTheme({
 		color: '#01435A',
 	},
 	submitBtn: {
-		backgroundColor: {
-			primary: '#1EC28B',
-			secondary: '#00C6AD',
-		},
+		backgroundColor: '#1EC28B',
 		marginTop: '1.25rem',
 		fontWeight: 500,
 		':hover': {
@@ -114,6 +114,12 @@ const theme = createTheme({
 		},
 		common: {
 			main: '#FFFFFF', // White color
+		},
+		greenPrimary: {
+			main: '#1EC28B',
+		},
+		greenSecondary: {
+			main: '#00C6AD',
 		},
 	},
 	fontFamily: {

@@ -108,7 +108,7 @@ const Auth = () => {
 							backgroundColor: activeForm !== AuthForms.SIGN_IN ? 'lightgray' : null,
 							borderTop:
 								activeForm === AuthForms.SIGN_IN
-									? `solid 0.3rem ${theme.submitBtn?.backgroundColor}`
+									? `solid 0.3rem ${theme.bgColor?.greenPrimary}`
 									: 'solid 0.3rem lightgray',
 						}}>
 						Sign In
@@ -131,7 +131,7 @@ const Auth = () => {
 							backgroundColor: activeForm !== AuthForms.SIGN_UP ? 'lightgray' : null,
 							borderTop:
 								activeForm === AuthForms.SIGN_UP
-									? `solid 0.3rem ${theme.submitBtn?.backgroundColor}`
+									? `solid 0.3rem ${theme.bgColor?.greenPrimary}`
 									: 'solid 0.3rem lightgray',
 						}}>
 						Sign Up

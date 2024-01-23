@@ -1,5 +1,5 @@
 import { Button } from '@mui/material';
-import theme from '../themes';
+import theme from '../../../themes';
 
 interface SidebarBtnProps {
 	btnText: string;

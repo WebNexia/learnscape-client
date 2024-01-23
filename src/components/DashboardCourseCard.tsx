@@ -52,14 +52,14 @@ const DashboardCourseCard = ({ course }: DashboardCourseCardProps) => {
 				<Button
 					sx={{
 						fontFamily: theme.fontFamily?.main,
-						color: theme.submitBtn?.backgroundColor?.secondary,
+						color: theme.textColor?.greenSecondary.main,
 						textTransform: 'capitalize',
-						border: `${theme.submitBtn?.backgroundColor?.secondary} solid 0.1rem`,
+						border: `${theme.textColor?.greenSecondary.main} solid 0.1rem`,
 						borderRadius: '0.5rem',
 						px: '2rem',
 						':hover': {
 							color: theme.textColor?.common.main,
-							backgroundColor: theme.submitBtn?.backgroundColor?.secondary,
+							backgroundColor: theme.bgColor?.greenSecondary,
 						},
 					}}
 					onClick={() => navigate(`/course/${course._id}`)}>

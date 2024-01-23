@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { useQuery } from 'react-query';
-import DashboardPagesLayout from '../components/layouts/DashboardPagesLayout';
+import DashboardPagesLayout from '../components/layouts/DashboardLayout/DashboardPagesLayout';
 
 const Dashboard = () => {
 	const navigate = useNavigate();

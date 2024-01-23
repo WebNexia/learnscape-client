@@ -1,11 +1,11 @@
 import { Box, Typography } from '@mui/material';
-import theme from '../themes';
+import theme from '../../../themes';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import { CalendarMonth, Email, Groups, LibraryBooks, Settings } from '@mui/icons-material';
 import SidebarBtn from './SidebarBtn';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useState } from 'react';
-import { PageName } from '../interfaces/enums';
+import { PageName } from '../../../interfaces/enums';
 
 const Sidebar = () => {
 	const navigate = useNavigate();

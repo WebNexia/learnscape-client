@@ -1,5 +1,5 @@
 import { Box, Checkbox, FormControlLabel } from '@mui/material';
-import DashboardPagesLayout from '../components/layouts/DashboardPagesLayout';
+import DashboardPagesLayout from '../components/layouts/DashboardLayout/DashboardPagesLayout';
 import { useState } from 'react';
 import { useQuery } from 'react-query';
 import axios from 'axios';

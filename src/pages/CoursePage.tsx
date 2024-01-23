@@ -1,5 +1,5 @@
 import { Box } from '@mui/material';
-import DashboardPagesLayout from '../components/layouts/DashboardPagesLayout';
+import DashboardPagesLayout from '../components/layouts/DashboardLayout/DashboardPagesLayout';
 import { useParams } from 'react-router-dom';
 import { useQuery } from 'react-query';
 import axios from 'axios';

@@ -1,7 +1,7 @@
 import { Box } from '@mui/material';
-import DashboardHeader from '../DashboardHeader';
-import Sidebar from '../Sidebar';
-import theme from '../../themes';
+import DashboardHeader from './DashboardHeader';
+import Sidebar from './Sidebar';
+import theme from '../../../themes';
 import { ReactNode } from 'react';
 
 interface DashboardPagesLayoutProps {

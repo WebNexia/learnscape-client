@@ -1,6 +1,6 @@
 import { Typography } from '@mui/material';
 
-import DashboardPagesLayout from '../components/layouts/DashboardPagesLayout';
+import DashboardPagesLayout from '../components/layouts/DashboardLayout/DashboardPagesLayout';
 
 const Messages = () => {
 	return (

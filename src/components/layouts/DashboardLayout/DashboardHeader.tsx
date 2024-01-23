@@ -1,8 +1,8 @@
 import { AppBar, Box, Button, IconButton, Toolbar, Tooltip, Typography } from '@mui/material';
-import theme from '../themes';
+import theme from '../../../themes';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { Mode } from '../interfaces/enums';
+import { Mode } from '../../../interfaces/enums';
 import { DarkMode, LightMode } from '@mui/icons-material';
 
 interface DashboardHeaderProps {
