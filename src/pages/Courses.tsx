@@ -1,5 +1,4 @@
 import { Box, Checkbox, FormControlLabel } from '@mui/material';
-
 import DashboardPagesLayout from '../components/layouts/DashboardPagesLayout';
 import { useState } from 'react';
 import { useQuery } from 'react-query';

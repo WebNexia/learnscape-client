@@ -11,6 +11,7 @@ import Schedule from './pages/Schedule';
 import Messages from './pages/Messages';
 import Community from './pages/Community';
 import Settings from './pages/Settings';
+import CoursePage from './pages/CoursePage';
 
 const queryClient = new QueryClient();
 
@@ -28,6 +29,7 @@ function App() {
 						<Route path='/messages/user/:id' element={<Messages />} />
 						<Route path='/community/user/:id' element={<Community />} />
 						<Route path='/settings/user/:id' element={<Settings />} />
+						<Route path='/course/:id' element={<CoursePage />} />
 					</Routes>
 				</Router>
 			</ThemeProvider>

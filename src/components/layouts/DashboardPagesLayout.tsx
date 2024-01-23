@@ -20,7 +20,6 @@ const DashboardPagesLayout = ({ children, pageName, customSettings }: DashboardP
 				display: 'flex',
 				justifyContent: 'center',
 				alignItems: 'center',
-				backgroundColor: theme.palette.secondary.main,
 				minHeight: '100vh',
 				position: 'relative',
 			}}>
@@ -41,6 +40,7 @@ const DashboardPagesLayout = ({ children, pageName, customSettings }: DashboardP
 						justifyContent: customSettings?.justifyContent || 'center',
 						alignItems: customSettings?.alignItems || 'center',
 						minHeight: 'calc(100vh - 3rem)',
+						backgroundColor: theme.palette.secondary.main,
 						overflowY: 'auto',
 					}}>
 					{children}
