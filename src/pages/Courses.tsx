@@ -1,31 +1,20 @@
 import { Box, Checkbox, FormControlLabel } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/DashboardLayout/DashboardPagesLayout';
-import { useState } from 'react';
-import { useQuery } from 'react-query';
-import axios from 'axios';
+import { useContext, useState } from 'react';
 import DashboardCourseCard from '../components/DashboardCourseCard';
-import { Course } from '../interfaces/course';
+import { FilteredCourse } from '../interfaces/course';
+import { ActiveCoursesContext } from '../contexts/ActiveCoursesContextProvider';
+import { useParams } from 'react-router-dom';
 
 const Courses = () => {
-	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const [checked, setChecked] = useState<boolean>(false);
 
-	const { data, isLoading, isError } = useQuery('activeCourses', async () => {
-		const response = await axios.post(`${base_url}/courses/filter`, { query: { isActive: true } });
+	const { data } = useContext(ActiveCoursesContext);
 
-		return response.data;
-	});
-
-	if (isLoading) {
-		return <Box>Loading...</Box>;
-	}
-
-	if (isError) {
-		return <Box>Error fetching data</Box>;
-	}
+	const { id } = useParams();
 
 	return (
-		<DashboardPagesLayout pageName='Courses' customSettings={{ alignItems: 'flex-start' }}>
+		<DashboardPagesLayout pageName='Courses'>
 			<Box sx={{ width: '100%' }}>
 				<Box sx={{ margin: '2rem 0 2rem 3rem' }}>
 					<FormControlLabel
@@ -33,7 +22,6 @@ const Courses = () => {
 						label='Show only my courses'
 					/>
 				</Box>
-
 				<Box
 					sx={{
 						display: 'flex',
@@ -42,9 +30,19 @@ const Courses = () => {
 						alignItems: 'center',
 						margin: '0 3rem',
 					}}>
-					{data.response.map((course: Course) => (
-						<DashboardCourseCard key={course._id} course={course} />
-					))}
+					{data.map((course: FilteredCourse) => {
+						let userCoursesIds: string[] = [];
+
+						const storedUserCourseIds: string | null = localStorage.getItem('userCoursesIds');
+						if (storedUserCourseIds !== null) {
+							userCoursesIds = JSON.parse(storedUserCourseIds);
+						}
+						const isEnrolled: boolean = userCoursesIds?.includes(course._id);
+
+						return (
+							<DashboardCourseCard key={course._id} course={course} isEnrolled={isEnrolled} userId={id} />
+						);
+					})}
 				</Box>
 			</Box>
 		</DashboardPagesLayout>

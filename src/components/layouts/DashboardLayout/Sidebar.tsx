@@ -10,6 +10,7 @@ import { PageName } from '../../../interfaces/enums';
 const Sidebar = () => {
 	const navigate = useNavigate();
 	const { id } = useParams();
+	const { userId } = useParams();
 
 	const currentPage =
 		window.location.pathname.split('/')[1].charAt(0).toUpperCase() +
@@ -62,37 +63,37 @@ const Sidebar = () => {
 					<SidebarBtn
 						btnText='Dashboard'
 						IconName={DashboardIcon}
-						onClick={() => navigateWithPage(PageName.DASHBOARD, `/dashboard/user/${id}`)}
+						onClick={() => navigateWithPage(PageName.DASHBOARD, `/dashboard/user/${id || userId}`)}
 						selectedPage={selectedPage}
 					/>
 					<SidebarBtn
 						btnText='Courses'
 						IconName={LibraryBooks}
-						onClick={() => navigateWithPage(PageName.COURSES, `/courses/user/${id}`)}
+						onClick={() => navigateWithPage(PageName.COURSES, `/courses/user/${id || userId}`)}
 						selectedPage={selectedPage}
 					/>
 					<SidebarBtn
 						btnText='Schedule'
 						IconName={CalendarMonth}
-						onClick={() => navigateWithPage(PageName.SCHEDULE, `/schedule/user/${id}`)}
+						onClick={() => navigateWithPage(PageName.SCHEDULE, `/schedule/user/${id || userId}`)}
 						selectedPage={selectedPage}
 					/>
 					<SidebarBtn
 						btnText='Messages'
 						IconName={Email}
-						onClick={() => navigateWithPage(PageName.MESSAGES, `/messages/user/${id}`)}
+						onClick={() => navigateWithPage(PageName.MESSAGES, `/messages/user/${id || userId}`)}
 						selectedPage={selectedPage}
 					/>
 					<SidebarBtn
 						btnText='Community'
 						IconName={Groups}
-						onClick={() => navigateWithPage(PageName.COMMUNITY, `/community/user/${id}`)}
+						onClick={() => navigateWithPage(PageName.COMMUNITY, `/community/user/${id || userId}`)}
 						selectedPage={selectedPage}
 					/>
 					<SidebarBtn
 						btnText='Settings'
 						IconName={Settings}
-						onClick={() => navigateWithPage(PageName.SETTINGS, `/settings/user/${id}`)}
+						onClick={() => navigateWithPage(PageName.SETTINGS, `/settings/user/${id || userId}`)}
 						selectedPage={selectedPage}
 					/>
 				</Box>

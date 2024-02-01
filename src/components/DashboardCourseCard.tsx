@@ -1,25 +1,39 @@
-import { Button, Card, CardActions, CardContent, CardMedia, Typography } from '@mui/material';
-import { Course } from '../interfaces/course';
+import { Box, Button, Card, CardContent, CardMedia, LinearProgress, Typography } from '@mui/material';
+import { FilteredCourse } from '../interfaces/course';
 import { truncateText } from '../utils/TextUtils';
 import theme from '../themes';
 import { useNavigate } from 'react-router-dom';
 
 interface DashboardCourseCardProps {
-	course: Course;
+	course: FilteredCourse;
+	isEnrolled: boolean;
+	userId: string | undefined;
 }
 
-const DashboardCourseCard = ({ course }: DashboardCourseCardProps) => {
+const DashboardCourseCard = ({ course, isEnrolled, userId }: DashboardCourseCardProps) => {
 	const navigate = useNavigate();
+
+	const buttonStyles = {
+		fontFamily: theme.fontFamily?.main,
+		textTransform: 'capitalize',
+		border: `${theme.textColor?.greenSecondary.main} solid 0.1rem`,
+		borderRadius: '0.5rem',
+		px: '2rem',
+		':hover': {
+			color: isEnrolled ? theme.textColor?.greenSecondary.main : theme.textColor?.common.main,
+			backgroundColor: isEnrolled ? theme.bgColor?.common : theme.bgColor?.greenSecondary,
+		},
+	};
 	return (
 		<Card
 			sx={{
 				height: '30rem',
-				maxWidth: '25rem',
+				width: '22rem',
 				borderRadius: '0.65rem',
 				position: 'relative',
 				marginBottom: '3rem',
 			}}>
-			<CardMedia sx={{ height: '12rem', objectFit: 'contain' }} image={course.imageUrl} />
+			<CardMedia sx={{ height: '12rem', width: '22rem', objectFit: 'contain' }} image={course.imageUrl} />
 			<CardContent sx={{ padding: '1rem 1.5rem' }}>
 				<Typography variant='body1' sx={{ textAlign: 'center', color: theme.palette.primary.main }}>
 					{course.title}
@@ -36,36 +50,45 @@ const DashboardCourseCard = ({ course }: DashboardCourseCardProps) => {
 					{truncateText(course.description, 250)}
 				</Typography>
 			</CardContent>
-			<CardActions
+
+			<Box
 				sx={{
 					display: 'flex',
-					justifyContent: 'space-between',
-					alignItems: 'center',
+					flexDirection: 'column',
+					width: '100%',
 					position: 'absolute',
 					bottom: 0,
-					width: '100%',
-					padding: '1rem',
 				}}>
-				<Typography variant='body2' sx={{ color: theme.palette.primary.main }}>
-					{course.price}
-				</Typography>
-				<Button
+				<Box sx={{ visibility: isEnrolled ? 'visible' : 'hidden', width: '90%', alignSelf: 'center' }}>
+					<Typography variant='body2' sx={{ textAlign: 'center', marginBottom: '0.2rem' }}>
+						70% Completed
+					</Typography>
+					<LinearProgress variant='determinate' color='success' value={70} />
+				</Box>
+				<Box
 					sx={{
-						fontFamily: theme.fontFamily?.main,
-						color: theme.textColor?.greenSecondary.main,
-						textTransform: 'capitalize',
-						border: `${theme.textColor?.greenSecondary.main} solid 0.1rem`,
-						borderRadius: '0.5rem',
-						px: '2rem',
-						':hover': {
-							color: theme.textColor?.common.main,
-							backgroundColor: theme.bgColor?.greenSecondary,
-						},
-					}}
-					onClick={() => navigate(`/course/${course._id}`)}>
-					Explore
-				</Button>
-			</CardActions>
+						display: 'flex',
+						justifyContent: 'space-between',
+						alignItems: 'center',
+						padding: '1rem',
+					}}>
+					<Typography
+						variant='body2'
+						sx={{ visibility: isEnrolled ? 'hidden' : 'visible', color: theme.palette.primary.main }}>
+						{course.price}
+					</Typography>
+
+					<Button
+						sx={{
+							...buttonStyles,
+							backgroundColor: isEnrolled ? theme.bgColor?.greenSecondary : 'inherit',
+							color: isEnrolled ? theme.textColor?.common.main : theme.textColor?.greenSecondary.main,
+						}}
+						onClick={() => navigate(`/course/${course._id}/user/${userId}?isEnrolled=${isEnrolled}`)}>
+						{isEnrolled ? 'Continue' : 'Explore'}
+					</Button>
+				</Box>
+			</Box>
 		</Card>
 	);
 };

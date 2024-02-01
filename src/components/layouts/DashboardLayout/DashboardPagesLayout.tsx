@@ -10,16 +10,15 @@ interface DashboardPagesLayoutProps {
 	customSettings?: {
 		justifyContent?: string;
 		alignItems?: string;
+		flexDirection?: string;
 	};
 }
 
 const DashboardPagesLayout = ({ children, pageName, customSettings }: DashboardPagesLayoutProps) => {
 	return (
-		<div
-			style={{
+		<Box
+			sx={{
 				display: 'flex',
-				justifyContent: 'center',
-				alignItems: 'center',
 				minHeight: '100vh',
 				position: 'relative',
 			}}>
@@ -37,6 +36,7 @@ const DashboardPagesLayout = ({ children, pageName, customSettings }: DashboardP
 				<Box
 					sx={{
 						display: 'flex',
+						flexDirection: customSettings?.flexDirection || 'column',
 						justifyContent: customSettings?.justifyContent || 'center',
 						alignItems: customSettings?.alignItems || 'center',
 						minHeight: 'calc(100vh - 3rem)',
@@ -46,7 +46,7 @@ const DashboardPagesLayout = ({ children, pageName, customSettings }: DashboardP
 					{children}
 				</Box>
 			</Box>
-		</div>
+		</Box>
 	);
 };
 

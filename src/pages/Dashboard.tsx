@@ -1,13 +1,16 @@
 import { Alert, Box, Snackbar, Typography } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { useQuery } from 'react-query';
 import DashboardPagesLayout from '../components/layouts/DashboardLayout/DashboardPagesLayout';
+import { UserCoursesIdsContext } from '../contexts/UserCoursesIdsContextProvider';
 
 const Dashboard = () => {
 	const navigate = useNavigate();
 	const [signedUpMsg, setSignedUpMsg] = useState<boolean>(false);
+
+	const { fetchCourseIds } = useContext(UserCoursesIdsContext);
 
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
@@ -21,6 +24,8 @@ const Dashboard = () => {
 			localStorage.removeItem('signedup');
 			setSignedUpMsg(true);
 		}
+
+		if (id) fetchCourseIds(id);
 	}, []);
 
 	useEffect(() => {

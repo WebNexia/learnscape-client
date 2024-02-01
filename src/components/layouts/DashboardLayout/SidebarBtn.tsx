@@ -20,11 +20,11 @@ const SidebarBtn = ({ btnText, onClick, IconName, selectedPage }: SidebarBtnProp
 				marginBottom: '0.35rem',
 				fontFamily: theme.fontFamily?.main,
 				fontSize: '1rem',
-				lineHeight: '3',
+				lineHeight: '2.5',
 				width: '100%',
 				justifyContent: 'flex-start',
 				paddingRight: '1.5rem',
-				borderRadius: '1rem 0 0 1rem',
+				borderRadius: '1.5rem 0 0 1.5rem',
 				marginLeft: '1.85rem',
 				border: 'none',
 				':hover': {

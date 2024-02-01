@@ -44,6 +44,10 @@ interface ExtendedThemeOptions extends ThemeOptions {
 		greenPrimary: string;
 		greenSecondary: string;
 	};
+	border: {
+		main: string;
+		lightMain: string;
+	};
 }
 
 const theme = createTheme({
@@ -56,6 +60,9 @@ const theme = createTheme({
 		},
 		light: {
 			main: '#FFFF',
+		},
+		success: {
+			main: '#1EC28B',
 		},
 	},
 	typography: {
@@ -125,6 +132,12 @@ const theme = createTheme({
 	fontFamily: {
 		main: 'Poppins',
 	},
+
+	border: {
+		main: '#808080',
+		lightMain: '#d3d3d3',
+	},
+
 	bgColor: {
 		primary: '#01435A',
 		secondary: '#FDF7F0',

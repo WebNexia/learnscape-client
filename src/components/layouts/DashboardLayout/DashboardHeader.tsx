@@ -74,6 +74,7 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 							localStorage.removeItem('user_token');
 							localStorage.removeItem('username');
 							localStorage.removeItem('imageUrl');
+							localStorage.removeItem('userCoursesIds');
 						}}>
 						Log Out
 					</Button>

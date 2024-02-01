@@ -1,26 +1,102 @@
-import { Box, Button, Paper, Typography } from '@mui/material';
+import { Alert, Box, Button, Dialog, DialogActions, DialogTitle, Paper, Snackbar, Typography } from '@mui/material';
 import theme from '../themes';
-import { Course } from '../interfaces/course';
+import { SingleCourse } from '../interfaces/course';
 import { KeyboardBackspaceOutlined } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import CoursePageBannerDataCard from './CoursePageBannerDataCard';
+import axios from 'axios';
+import { useState } from 'react';
 
 interface CoursePageBannerProps {
-	course: Course;
-	userId?: string;
+	course: SingleCourse;
 }
 
-const CoursePageBanner = ({ course, userId }: CoursePageBannerProps) => {
+const CoursePageBanner = ({ course }: CoursePageBannerProps) => {
 	const navigate = useNavigate();
+
+	const [displayEnrollmentMsg, setDisplayEnrollmentMsg] = useState<boolean>(false);
+	const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
+
+	const { courseId, userId } = useParams();
+	const location = useLocation();
+	const searchParams = new URLSearchParams(location.search);
+	const isEnrolled = searchParams.get('isEnrolled');
+	const isEnrolledBoolean = !!(isEnrolled && isEnrolled.toLowerCase() === 'true');
+	const [isEnrolledStatus, setIsEnrolledStatus] = useState<boolean>(isEnrolledBoolean);
+
+	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
+
+	const vertical = 'top';
+	const horizontal = 'center';
+
+	const courseRegistration = async () => {
+		try {
+			const response = await axios.post(`${base_url}/userCourses/`, {
+				courseId,
+				userId,
+				isCompleted: false,
+				isInProgress: true,
+			});
+
+			console.log(response);
+
+			let updatedUserCoursesIds: string[] = [];
+			const storedUserCoursesIds = localStorage.getItem('userCoursesIds');
+			if (storedUserCoursesIds !== null && courseId) {
+				updatedUserCoursesIds = JSON.parse(storedUserCoursesIds);
+				updatedUserCoursesIds.push(courseId);
+				localStorage.setItem('userCoursesIds', JSON.stringify(updatedUserCoursesIds));
+			}
+
+			setDisplayEnrollmentMsg(true);
+			setIsEnrolledStatus(true);
+			navigate(`/course/${course._id}/user/${userId}?isEnrolled=true`);
+		} catch (error) {
+			console.log(error);
+		}
+	};
+
+	const handleEnrollment = async (): Promise<void> => {
+		if (course.price.toLowerCase() === 'free') {
+			await courseRegistration();
+			setIsEnrolledStatus(true);
+		} else {
+			setIsDialogOpen(true);
+		}
+	};
+
 	return (
 		<Paper
 			elevation={10}
 			sx={{
 				width: '85%',
 				height: '23rem',
-				marginTop: '3rem',
+				margin: '3rem 0 2rem 0',
 				backgroundColor: theme.palette.primary.main,
 			}}>
+			<Snackbar
+				open={displayEnrollmentMsg}
+				autoHideDuration={4000}
+				onClose={() => setDisplayEnrollmentMsg(false)}
+				anchorOrigin={{ vertical, horizontal }}>
+				<Alert onClose={() => setDisplayEnrollmentMsg(false)} severity='success' sx={{ width: '100%' }}>
+					You successfully enrolled the course!
+				</Alert>
+			</Snackbar>
+
+			<Dialog open={isDialogOpen} onClose={() => setIsDialogOpen(false)}>
+				<DialogTitle>Enroll</DialogTitle>
+				<DialogActions>
+					<Button
+						onClick={() => {
+							courseRegistration();
+							setIsDialogOpen(false);
+						}}>
+						Enroll
+					</Button>
+				</DialogActions>
+			</Dialog>
+
 			<Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
 				<Box
 					sx={{
@@ -44,7 +120,13 @@ const CoursePageBanner = ({ course, userId }: CoursePageBannerProps) => {
 									textDecoration: 'underline',
 								},
 							}}
-							onClick={() => navigate(`/courses/user/${userId}`)}>
+							onClick={() => {
+								if (userId !== undefined) {
+									navigate(`/courses/user/${userId}`);
+								} else {
+									console.log(userId);
+								}
+							}}>
 							Back to courses
 						</Button>
 						<Typography
@@ -65,6 +147,7 @@ const CoursePageBanner = ({ course, userId }: CoursePageBannerProps) => {
 						<Button
 							variant='contained'
 							sx={{
+								visibility: isEnrolledStatus ? 'hidden' : 'visible',
 								backgroundColor: theme.bgColor?.greenSecondary,
 								width: '100%',
 								textTransform: 'capitalize',
@@ -75,18 +158,19 @@ const CoursePageBanner = ({ course, userId }: CoursePageBannerProps) => {
 									color: theme.textColor?.greenSecondary.main,
 									backgroundColor: theme.submitBtn?.[':hover'].backgroundColor,
 								},
-							}}>
+							}}
+							onClick={handleEnrollment}>
 							Enroll
 						</Button>
 					</Box>
 				</Box>
 				<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1 }}>
 					<Box>
-						<CoursePageBannerDataCard title='Starting Date' content='January 1, 2024' />
-						<CoursePageBannerDataCard title='Duration' content='8 Weeks' />
+						<CoursePageBannerDataCard title='Starting Date' content={course.startingDate} />
+						<CoursePageBannerDataCard title='Duration' content={course.durationWeeks} />
 					</Box>
 					<Box>
-						<CoursePageBannerDataCard title='Format' content='Online Course' />
+						<CoursePageBannerDataCard title='Format' content={course.format} />
 
 						<CoursePageBannerDataCard
 							title='Price'
