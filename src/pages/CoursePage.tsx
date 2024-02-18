@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom';
 import { useQuery } from 'react-query';
 import axios from 'axios';
 import CoursePageBanner from '../components/CoursePageBanner';
-import Lessons from './Lessons';
+import Lessons from './Chapters';
 
 const CoursePage = () => {
 	const { courseId } = useParams();

@@ -40,7 +40,13 @@ const Courses = () => {
 						const isEnrolled: boolean = userCoursesIds?.includes(course._id);
 
 						return (
-							<DashboardCourseCard key={course._id} course={course} isEnrolled={isEnrolled} userId={id} />
+							<DashboardCourseCard
+								key={course._id}
+								course={course}
+								isEnrolled={isEnrolled}
+								userId={id}
+								displayMyCourses={checked}
+							/>
 						);
 					})}
 				</Box>

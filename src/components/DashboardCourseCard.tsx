@@ -8,9 +8,10 @@ interface DashboardCourseCardProps {
 	course: FilteredCourse;
 	isEnrolled: boolean;
 	userId: string | undefined;
+	displayMyCourses: boolean;
 }
 
-const DashboardCourseCard = ({ course, isEnrolled, userId }: DashboardCourseCardProps) => {
+const DashboardCourseCard = ({ course, isEnrolled, userId, displayMyCourses }: DashboardCourseCardProps) => {
 	const navigate = useNavigate();
 
 	const buttonStyles = {
@@ -27,6 +28,7 @@ const DashboardCourseCard = ({ course, isEnrolled, userId }: DashboardCourseCard
 	return (
 		<Card
 			sx={{
+				display: !isEnrolled && displayMyCourses ? 'none' : 'block',
 				height: '30rem',
 				width: '22rem',
 				borderRadius: '0.65rem',
