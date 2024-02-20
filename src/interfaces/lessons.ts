@@ -1,4 +1,4 @@
-import { Question } from './question';
+import { QuestionInterface } from './question';
 
 interface BaseLesson {
 	_id: string;
@@ -16,5 +16,5 @@ export interface Lesson extends BaseLesson {
 }
 
 export interface LessonById extends BaseLesson {
-	questions: Question[];
+	questions: QuestionInterface[];
 }

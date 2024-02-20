@@ -13,7 +13,12 @@ const Lesson = ({ lesson }: LessonProps) => {
 
 	return (
 		<Box
-			sx={{ display: 'flex', height: '4rem', borderBottom: `0.1rem solid ${theme.border.lightMain}` }}
+			sx={{
+				display: 'flex',
+				height: '4rem',
+				borderBottom: `0.1rem solid ${theme.border.lightMain}`,
+				cursor: 'pointer',
+			}}
 			onClick={() => {
 				navigate(`/user/${userId}/lesson/${lesson._id}`);
 			}}>
