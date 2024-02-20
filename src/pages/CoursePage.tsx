@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom';
 import { useQuery } from 'react-query';
 import axios from 'axios';
 import CoursePageBanner from '../components/CoursePageBanner';
-import Lessons from './Chapters';
+import Chapters from '../components/courses/Chapters';
 
 const CoursePage = () => {
 	const { courseId } = useParams();
@@ -28,7 +28,7 @@ const CoursePage = () => {
 	return (
 		<DashboardPagesLayout pageName='Courses'>
 			<CoursePageBanner course={data} />
-			<Lessons />
+			<Chapters course={data} />
 		</DashboardPagesLayout>
 	);
 };

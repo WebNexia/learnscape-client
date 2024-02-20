@@ -15,6 +15,7 @@ import CoursePage from './pages/CoursePage';
 import ActiveCoursesContextProvider from './contexts/ActiveCoursesContextProvider';
 import MediaQueryContextProvider from './contexts/MediaQueryContextProvider';
 import UserCoursesIdsContextProvider from './contexts/UserCoursesIdsContextProvider';
+import LessonPage from './pages/LessonPage';
 
 const queryClient = new QueryClient();
 
@@ -36,6 +37,7 @@ function App() {
 									<Route path='/community/user/:id' element={<Community />} />
 									<Route path='/settings/user/:id' element={<Settings />} />
 									<Route path='/course/:courseId/user/:userId' element={<CoursePage />} />
+									<Route path='user/:userId/lesson/:lessonId' element={<LessonPage />} />
 								</Routes>
 							</Router>
 						</ThemeProvider>

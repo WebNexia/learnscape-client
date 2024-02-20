@@ -29,6 +29,16 @@ const CoursePageBanner = ({ course }: CoursePageBannerProps) => {
 	const vertical = 'top';
 	const horizontal = 'center';
 
+	const date: Date = new Date(course.startingDate);
+
+	const options: Intl.DateTimeFormatOptions = {
+		year: 'numeric',
+		month: 'short',
+		day: 'numeric',
+	};
+
+	const startDate: string = date.toLocaleString('en-US', options);
+
 	const courseRegistration = async () => {
 		try {
 			const response = await axios.post(`${base_url}/userCourses/`, {
@@ -166,7 +176,7 @@ const CoursePageBanner = ({ course }: CoursePageBannerProps) => {
 				</Box>
 				<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1 }}>
 					<Box>
-						<CoursePageBannerDataCard title='Starting Date' content={course.startingDate} />
+						<CoursePageBannerDataCard title='Starting Date' content={startDate} />
 						<CoursePageBannerDataCard title='Duration' content={course.durationWeeks} />
 					</Box>
 					<Box>
@@ -174,7 +184,9 @@ const CoursePageBanner = ({ course }: CoursePageBannerProps) => {
 
 						<CoursePageBannerDataCard
 							title='Price'
-							content={course.price}
+							content={`${course.price.toLowerCase() === 'free' ? '' : course.priceCurrency}${
+								course.price
+							}`}
 							customSettings={{
 								color: theme.textColor?.common.main,
 								bgColor: theme.bgColor?.greenSecondary,
