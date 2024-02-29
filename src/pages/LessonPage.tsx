@@ -4,6 +4,8 @@ import { useParams } from 'react-router-dom';
 import { useQuery } from 'react-query';
 import axios from 'axios';
 import Questions from '../components/courses/Questions';
+import ReactPlayer from 'react-player';
+import DashboardHeader from '../components/layouts/DashboardLayout/DashboardHeader';
 
 const LessonPage = () => {
 	const { userId, lessonId } = useParams();
@@ -42,17 +44,22 @@ const LessonPage = () => {
 		<Box
 			sx={{
 				display: 'flex',
+				flexDirection: 'column',
 				justifyContent: 'center',
 				backgroundColor: theme.bgColor?.secondary,
 				minHeight: '100vh',
-				padding: '3rem',
+				padding: '0 0 3rem 0',
 			}}>
-			<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-				<Typography variant='h3'>{userData.username}</Typography>
-				<Typography variant='h5'>{lessonData.title}</Typography>
-				<img src={lessonData.imageUrl} alt='lesson_pic' height='250px' width='300px' />
+			<DashboardHeader pageName='Kaizen' />
+			<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '2rem 0 3rem 0' }}>
+				<Typography variant='h5' sx={{ marginBottom: '1.5rem' }}>
+					{lessonData.title}
+				</Typography>
+				<ReactPlayer url={'https://www.youtube.com/watch?v=g06q54-10f4'} />
 			</Box>
-			<Questions questions={lessonData.questions} />
+			<Box sx={{ padding: '3rem' }}>
+				<Questions questions={lessonData.questions} />
+			</Box>
 		</Box>
 	);
 };

@@ -21,6 +21,7 @@ const Lesson = ({ lesson }: LessonProps) => {
 			}}
 			onClick={() => {
 				navigate(`/user/${userId}/lesson/${lesson._id}`);
+				window.scrollTo({ top: 0, behavior: 'smooth' });
 			}}>
 			<Box sx={{ height: '4rem', width: '5rem' }}>
 				<img src={lesson.imageUrl} alt='lesson_pic' width='100%' height='100%' />
