@@ -27,9 +27,26 @@ interface ExtendedThemeOptions extends ThemeOptions {
 		common: {
 			main: string;
 		};
+		greenPrimary: {
+			main: string;
+		};
+		greenSecondary: {
+			main: string;
+		};
 	};
 	fontFamily?: {
 		main: string;
+	};
+	bgColor?: {
+		primary: string;
+		secondary: string;
+		common: string;
+		greenPrimary: string;
+		greenSecondary: string;
+	};
+	border: {
+		main: string;
+		lightMain: string;
 	};
 }
 
@@ -40,6 +57,12 @@ const theme = createTheme({
 		},
 		secondary: {
 			main: '#FDF7F0',
+		},
+		light: {
+			main: '#FFFF',
+		},
+		success: {
+			main: '#1EC28B',
 		},
 	},
 	typography: {
@@ -99,9 +122,28 @@ const theme = createTheme({
 		common: {
 			main: '#FFFFFF', // White color
 		},
+		greenPrimary: {
+			main: '#1EC28B',
+		},
+		greenSecondary: {
+			main: '#00C6AD',
+		},
 	},
 	fontFamily: {
 		main: 'Poppins',
+	},
+
+	border: {
+		main: '#808080',
+		lightMain: '#d3d3d3',
+	},
+
+	bgColor: {
+		primary: '#01435A',
+		secondary: '#FDF7F0',
+		common: '#FFFF',
+		greenPrimary: '#1EC28B',
+		greenSecondary: '#00C6AD',
 	},
 } as ExtendedThemeOptions);
 

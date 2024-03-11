@@ -11,26 +11,42 @@ import Schedule from './pages/Schedule';
 import Messages from './pages/Messages';
 import Community from './pages/Community';
 import Settings from './pages/Settings';
+import CoursePage from './pages/CoursePage';
+import ActiveCoursesContextProvider from './contexts/ActiveCoursesContextProvider';
+import MediaQueryContextProvider from './contexts/MediaQueryContextProvider';
+import UserCoursesIdsContextProvider from './contexts/UserCoursesIdsContextProvider';
+import LessonPage from './pages/LessonPage';
 
 const queryClient = new QueryClient();
 
 function App() {
 	return (
 		<QueryClientProvider client={queryClient}>
-			<ThemeProvider theme={theme}>
-				<Router>
-					<Routes>
-						<Route path='' element={<HomePage />} />
-						<Route path='/auth' element={<Auth />} />
-						<Route path='/dashboard/user/:id' element={<Dashboard />} />
-						<Route path='/courses/user/:id' element={<Courses />} />
-						<Route path='/schedule/user/:id' element={<Schedule />} />
-						<Route path='/messages/user/:id' element={<Messages />} />
-						<Route path='/community/user/:id' element={<Community />} />
-						<Route path='/settings/user/:id' element={<Settings />} />
-					</Routes>
-				</Router>
-			</ThemeProvider>
+			<MediaQueryContextProvider>
+				<UserCoursesIdsContextProvider>
+					<ActiveCoursesContextProvider>
+						<ThemeProvider theme={theme}>
+							<Router>
+								<Routes>
+									<Route path='' element={<HomePage />} />
+									<Route path='/auth' element={<Auth />} />
+									<Route path='/dashboard/user/:id' element={<Dashboard />} />
+									<Route path='/courses/user/:id' element={<Courses />} />
+									<Route path='/schedule/user/:id' element={<Schedule />} />
+									<Route path='/messages/user/:id' element={<Messages />} />
+									<Route path='/community/user/:id' element={<Community />} />
+									<Route path='/settings/user/:id' element={<Settings />} />
+									<Route
+										path='/course/:courseId/user/:userId/userCourseId/:userCourseId'
+										element={<CoursePage />}
+									/>
+									<Route path='user/:userId/lesson/:lessonId/' element={<LessonPage />} />
+								</Routes>
+							</Router>
+						</ThemeProvider>
+					</ActiveCoursesContextProvider>
+				</UserCoursesIdsContextProvider>
+			</MediaQueryContextProvider>
 		</QueryClientProvider>
 	);
 }

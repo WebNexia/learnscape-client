@@ -1,13 +1,16 @@
 import { Alert, Box, Snackbar, Typography } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { useQuery } from 'react-query';
-import DashboardPagesLayout from '../components/layouts/DashboardPagesLayout';
+import DashboardPagesLayout from '../components/layouts/DashboardLayout/DashboardPagesLayout';
+import { UserCoursesIdsContext } from '../contexts/UserCoursesIdsContextProvider';
 
 const Dashboard = () => {
 	const navigate = useNavigate();
 	const [signedUpMsg, setSignedUpMsg] = useState<boolean>(false);
+
+	const { fetchUserCourseIds } = useContext(UserCoursesIdsContext);
 
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
@@ -21,6 +24,10 @@ const Dashboard = () => {
 			localStorage.removeItem('signedup');
 			setSignedUpMsg(true);
 		}
+
+		if (id) {
+			fetchUserCourseIds(id);
+		}
 	}, []);
 
 	useEffect(() => {
@@ -32,6 +39,11 @@ const Dashboard = () => {
 	const { data, isLoading, isError } = useQuery('userData', async () => {
 		const response = await axios.get(`${base_url}/users/${id}`);
 
+		if (!localStorage.getItem('username') && !localStorage.getItem('imageUrl')) {
+			localStorage.setItem('username', response.data.data[0].username);
+			localStorage.setItem('imageUrl', response.data.data[0].imageUrl);
+		}
+
 		return response.data.data[0];
 	});
 
@@ -42,9 +54,6 @@ const Dashboard = () => {
 	if (isError) {
 		return <Box>Error fetching data</Box>;
 	}
-
-	localStorage.setItem('username', data.username);
-	localStorage.setItem('imageUrl', data.imageUrl);
 
 	return (
 		<DashboardPagesLayout pageName='Dashboard'>
