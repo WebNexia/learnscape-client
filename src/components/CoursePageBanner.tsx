@@ -2,27 +2,24 @@ import { Alert, Box, Button, Dialog, DialogActions, DialogTitle, Paper, Snackbar
 import theme from '../themes';
 import { SingleCourse } from '../interfaces/course';
 import { KeyboardBackspaceOutlined } from '@mui/icons-material';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import CoursePageBannerDataCard from './CoursePageBannerDataCard';
 import axios from 'axios';
 import { useState } from 'react';
+import { UserCoursesIdsWithCourseIds } from '../contexts/UserCoursesIdsContextProvider';
 
 interface CoursePageBannerProps {
 	course: SingleCourse;
+	isEnrolledStatus: boolean;
 }
 
-const CoursePageBanner = ({ course }: CoursePageBannerProps) => {
+const CoursePageBanner = ({ course, isEnrolledStatus }: CoursePageBannerProps) => {
 	const navigate = useNavigate();
 
 	const [displayEnrollmentMsg, setDisplayEnrollmentMsg] = useState<boolean>(false);
 	const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
 
 	const { courseId, userId } = useParams();
-	const location = useLocation();
-	const searchParams = new URLSearchParams(location.search);
-	const isEnrolled = searchParams.get('isEnrolled');
-	const isEnrolledBoolean = !!(isEnrolled && isEnrolled.toLowerCase() === 'true');
-	const [isEnrolledStatus, setIsEnrolledStatus] = useState<boolean>(isEnrolledBoolean);
 
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
@@ -48,19 +45,17 @@ const CoursePageBanner = ({ course }: CoursePageBannerProps) => {
 				isInProgress: true,
 			});
 
-			console.log(response);
-
-			let updatedUserCoursesIds: string[] = [];
+			let updatedUserCoursesIds: UserCoursesIdsWithCourseIds[] = [];
 			const storedUserCoursesIds = localStorage.getItem('userCoursesIds');
 			if (storedUserCoursesIds !== null && courseId) {
 				updatedUserCoursesIds = JSON.parse(storedUserCoursesIds);
-				updatedUserCoursesIds.push(courseId);
+				updatedUserCoursesIds.push({ courseId, userCourseId: response.data._id });
 				localStorage.setItem('userCoursesIds', JSON.stringify(updatedUserCoursesIds));
 			}
 
 			setDisplayEnrollmentMsg(true);
-			setIsEnrolledStatus(true);
-			navigate(`/course/${course._id}/user/${userId}?isEnrolled=true`);
+			isEnrolledStatus = true;
+			navigate(`/course/${course._id}/user/${userId}/userCourseId/${response.data._id}?isEnrolled=true`);
 		} catch (error) {
 			console.log(error);
 		}
@@ -69,7 +64,7 @@ const CoursePageBanner = ({ course }: CoursePageBannerProps) => {
 	const handleEnrollment = async (): Promise<void> => {
 		if (course.price.toLowerCase() === 'free') {
 			await courseRegistration();
-			setIsEnrolledStatus(true);
+			isEnrolledStatus = true;
 		} else {
 			setIsDialogOpen(true);
 		}
@@ -131,11 +126,8 @@ const CoursePageBanner = ({ course }: CoursePageBannerProps) => {
 								},
 							}}
 							onClick={() => {
-								if (userId !== undefined) {
-									navigate(`/courses/user/${userId}`);
-								} else {
-									console.log(userId);
-								}
+								navigate(-1);
+								// window.scrollTo({ top: 0, behavior: 'smooth' });
 							}}>
 							Back to courses
 						</Button>
@@ -184,9 +176,13 @@ const CoursePageBanner = ({ course }: CoursePageBannerProps) => {
 
 						<CoursePageBannerDataCard
 							title='Price'
-							content={`${course.price.toLowerCase() === 'free' ? '' : course.priceCurrency}${
-								course.price
-							}`}
+							content={`${
+								course.price.toLowerCase() === 'free'
+									? ''
+									: course.priceCurrency === null
+									? ''
+									: course.priceCurrency
+							}${course.price}`}
 							customSettings={{
 								color: theme.textColor?.common.main,
 								bgColor: theme.bgColor?.greenSecondary,

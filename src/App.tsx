@@ -36,8 +36,11 @@ function App() {
 									<Route path='/messages/user/:id' element={<Messages />} />
 									<Route path='/community/user/:id' element={<Community />} />
 									<Route path='/settings/user/:id' element={<Settings />} />
-									<Route path='/course/:courseId/user/:userId' element={<CoursePage />} />
-									<Route path='user/:userId/lesson/:lessonId' element={<LessonPage />} />
+									<Route
+										path='/course/:courseId/user/:userId/userCourseId/:userCourseId'
+										element={<CoursePage />}
+									/>
+									<Route path='user/:userId/lesson/:lessonId/' element={<LessonPage />} />
 								</Routes>
 							</Router>
 						</ThemeProvider>

@@ -28,6 +28,7 @@ const Question = ({
 }: QuestionsProps) => {
 	const [value, setValue] = useState<string>('');
 	const [error, setError] = useState<boolean>(false);
+	const [success, setSuccess] = useState<boolean>(false);
 	const [helperText, setHelperText] = useState<string>('Choose wisely');
 	const [isAnswerCorrect, setIsAnswerCorrect] = useState<boolean>(false);
 
@@ -44,6 +45,7 @@ const Question = ({
 			setHelperText('You got it!');
 			setError(false);
 			setIsAnswerCorrect(true);
+			setSuccess(true);
 		} else if (value !== question.correctAnswer && value !== '') {
 			setHelperText('Sorry, wrong answer!');
 			setError(true);
@@ -63,7 +65,7 @@ const Question = ({
 			}}>
 			<form onSubmit={handleSubmit}>
 				<FormControl sx={{ m: 3 }} error={error} variant='standard'>
-					<FormLabel>
+					<FormLabel sx={{ color: success ? 'green' : 'inherit' }}>
 						{questionNumber}. {question.question}
 					</FormLabel>
 					<RadioGroup name='question' value={value} onChange={handleRadioChange}>
@@ -76,7 +78,7 @@ const Question = ({
 						/>
 						<FormControlLabel value={question.optionFour} control={<Radio />} label={question.optionFour} />
 					</RadioGroup>
-					<FormHelperText>{helperText}</FormHelperText>
+					<FormHelperText sx={{ color: success ? 'green' : 'inherit' }}>{helperText}</FormHelperText>
 					<Button sx={{ mt: '2rem' }} type='submit' variant='outlined'>
 						Check Answer
 					</Button>
@@ -85,7 +87,6 @@ const Question = ({
 
 			<Box sx={{ display: 'flex', justifyContent: 'space-around', margin: '2rem', width: '50%' }}>
 				<Button
-					sx={{ display: displayedQuestionNumber - 1 === 0 ? 'none' : 'block' }}
 					variant='outlined'
 					onClick={() => {
 						if (!(displayedQuestionNumber - 1 === 0)) {
@@ -97,14 +98,13 @@ const Question = ({
 				</Button>
 
 				<Button
-					sx={{ display: displayedQuestionNumber + 1 > numberOfQuestions ? 'none' : 'block' }}
 					variant='outlined'
 					onClick={() => {
 						if (!(displayedQuestionNumber + 1 > numberOfQuestions)) {
 							setDisplayedQuestionNumber((prev) => prev + 1);
 						}
 					}}
-					disabled={!isAnswerCorrect}>
+					disabled={!isAnswerCorrect || displayedQuestionNumber + 1 > numberOfQuestions}>
 					Next
 				</Button>
 			</Box>

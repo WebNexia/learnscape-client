@@ -5,6 +5,7 @@ import DashboardCourseCard from '../components/DashboardCourseCard';
 import { FilteredCourse } from '../interfaces/course';
 import { ActiveCoursesContext } from '../contexts/ActiveCoursesContextProvider';
 import { useParams } from 'react-router-dom';
+import { UserCoursesIdsWithCourseIds } from '../contexts/UserCoursesIdsContextProvider';
 
 const Courses = () => {
 	const [checked, setChecked] = useState<boolean>(false);
@@ -31,13 +32,19 @@ const Courses = () => {
 						margin: '0 3rem',
 					}}>
 					{data.map((course: FilteredCourse) => {
-						let userCoursesIds: string[] = [];
+						let courseIdUserCourseIds: UserCoursesIdsWithCourseIds[] = [];
 
 						const storedUserCourseIds: string | null = localStorage.getItem('userCoursesIds');
 						if (storedUserCourseIds !== null) {
-							userCoursesIds = JSON.parse(storedUserCourseIds);
+							courseIdUserCourseIds = JSON.parse(storedUserCourseIds);
 						}
-						const isEnrolled: boolean = userCoursesIds?.includes(course._id);
+						const isEnrolled: boolean = courseIdUserCourseIds
+							?.map((courseIdUserCourseId) => courseIdUserCourseId.courseId)
+							.includes(course._id);
+
+						const userCourseId: string = courseIdUserCourseIds?.filter(
+							(courseIdUserCourseId) => courseIdUserCourseId?.courseId === course._id
+						)[0]?.userCourseId;
 
 						return (
 							<DashboardCourseCard
@@ -46,6 +53,7 @@ const Courses = () => {
 								isEnrolled={isEnrolled}
 								userId={id}
 								displayMyCourses={checked}
+								userCourseId={userCourseId}
 							/>
 						);
 					})}

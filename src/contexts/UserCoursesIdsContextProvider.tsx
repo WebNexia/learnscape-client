@@ -2,42 +2,48 @@ import axios from 'axios';
 import { ReactNode, createContext } from 'react';
 
 interface UserCoursesIdsContextTypes {
-	fetchCourseIds: (userId: string) => void;
+	fetchUserCourseIds: (userId: string) => void;
 }
 
 interface UserCoursesIdsContextProviderProps {
 	children: ReactNode;
 }
 
+export interface UserCoursesIdsWithCourseIds {
+	courseId: string;
+	userCourseId: string;
+}
+
 export const UserCoursesIdsContext = createContext<UserCoursesIdsContextTypes>({
-	fetchCourseIds: () => {},
+	fetchUserCourseIds: () => {},
 });
 
 const UserCoursesIdsContextProvider = (props: UserCoursesIdsContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
-	const fetchCourseIds = async (userId: string) => {
+	const fetchUserCourseIds = async (userId: string) => {
 		try {
 			const response = await axios.get(`${base_url}/usercourses/user/${userId}`);
 
-			console.log(response);
+			const userCourseIds: UserCoursesIdsWithCourseIds[] = response.data.response.reduce(
+				(acc: UserCoursesIdsWithCourseIds[], value: any) => {
+					if (value.courseId && value.courseId._id) {
+						acc.push({ courseId: value.courseId._id, userCourseId: value._id });
+					}
+					return acc;
+				},
+				[]
+			);
 
-			const courseIds: string[] = response.data.response.reduce((acc: string[], value: any) => {
-				if (value.courseId && value.courseId._id) {
-					acc.push(value.courseId._id);
-				}
-				return acc;
-			}, []);
-
-			console.log(courseIds);
-
-			localStorage.setItem('userCoursesIds', JSON.stringify(courseIds));
+			localStorage.setItem('userCoursesIds', JSON.stringify(userCourseIds));
 		} catch (error) {
 			console.log(error);
 		}
 	};
 
-	return <UserCoursesIdsContext.Provider value={{ fetchCourseIds }}>{props.children}</UserCoursesIdsContext.Provider>;
+	return (
+		<UserCoursesIdsContext.Provider value={{ fetchUserCourseIds }}>{props.children}</UserCoursesIdsContext.Provider>
+	);
 };
 
 export default UserCoursesIdsContextProvider;

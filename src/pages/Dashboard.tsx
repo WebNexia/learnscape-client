@@ -10,7 +10,7 @@ const Dashboard = () => {
 	const navigate = useNavigate();
 	const [signedUpMsg, setSignedUpMsg] = useState<boolean>(false);
 
-	const { fetchCourseIds } = useContext(UserCoursesIdsContext);
+	const { fetchUserCourseIds } = useContext(UserCoursesIdsContext);
 
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
@@ -25,7 +25,9 @@ const Dashboard = () => {
 			setSignedUpMsg(true);
 		}
 
-		if (id) fetchCourseIds(id);
+		if (id) {
+			fetchUserCourseIds(id);
+		}
 	}, []);
 
 	useEffect(() => {

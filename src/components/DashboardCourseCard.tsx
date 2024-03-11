@@ -9,9 +9,16 @@ interface DashboardCourseCardProps {
 	isEnrolled: boolean;
 	userId: string | undefined;
 	displayMyCourses: boolean;
+	userCourseId: string;
 }
 
-const DashboardCourseCard = ({ course, isEnrolled, userId, displayMyCourses }: DashboardCourseCardProps) => {
+const DashboardCourseCard = ({
+	course,
+	isEnrolled,
+	userId,
+	displayMyCourses,
+	userCourseId,
+}: DashboardCourseCardProps) => {
 	const navigate = useNavigate();
 
 	const buttonStyles = {
@@ -86,7 +93,14 @@ const DashboardCourseCard = ({ course, isEnrolled, userId, displayMyCourses }: D
 							backgroundColor: isEnrolled ? theme.bgColor?.greenSecondary : 'inherit',
 							color: isEnrolled ? theme.textColor?.common.main : theme.textColor?.greenSecondary.main,
 						}}
-						onClick={() => navigate(`/course/${course._id}/user/${userId}?isEnrolled=${isEnrolled}`)}>
+						onClick={() => {
+							navigate(
+								`/course/${course._id}/user/${userId}/userCourseId/${
+									userCourseId === undefined ? 'none' : userCourseId
+								}?isEnrolled=${isEnrolled}`
+							);
+							window.scrollTo({ top: 0, behavior: 'smooth' });
+						}}>
 						{isEnrolled ? 'Continue' : 'Explore'}
 					</Button>
 				</Box>
