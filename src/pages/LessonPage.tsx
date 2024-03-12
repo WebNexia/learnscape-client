@@ -31,6 +31,8 @@ const LessonPage = () => {
 	} = useQuery('userData', async () => {
 		const response = await axios.get(`${base_url}/users/${userId}`);
 
+		console.log(userData);
+
 		return response.data.data[0];
 	});
 

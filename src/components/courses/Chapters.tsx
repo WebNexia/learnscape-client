@@ -20,7 +20,6 @@ const Chapters = ({ course, isEnrolledStatus }: ChaptersProps) => {
 						chapter={chapter}
 						isEnrolledStatus={isEnrolledStatus}
 						firstChapterOrder={firstChapterOrder}
-						courseId={course._id}
 					/>
 				))}
 		</Box>

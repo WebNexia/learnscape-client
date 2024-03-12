@@ -18,8 +18,9 @@ const CoursePage = () => {
 	if (currentUserCourseIds !== null) {
 		courseIdUserCourseIds = JSON.parse(currentUserCourseIds);
 	}
-	let isEnrolledStatus: boolean =
-		courseIdUserCourseIds.filter((courseIdUserCourseId) => courseIdUserCourseId.courseId === courseId).length > 0;
+	let isEnrolledStatus = courseIdUserCourseIds.some(
+		(courseIdUserCourseId) => courseIdUserCourseId.courseId === courseId
+	);
 
 	const { data, isLoading, isError } = useQuery('singleCourseData', async () => {
 		const response = await axios.get(`${base_url}/courses/${courseId}`);

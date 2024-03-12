@@ -2,7 +2,7 @@ import { Box, Typography } from '@mui/material';
 import theme from '../../themes';
 import { Lock } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import axios from 'axios';
 
 interface LessonProps {
@@ -11,9 +11,17 @@ interface LessonProps {
 	lessonOrder: number;
 	firstLessonOrder: number;
 	isFirstChapter: boolean;
+	userLessonIdsList: string[];
 }
 
-const Lesson = ({ lesson, isEnrolledStatus, lessonOrder, isFirstChapter, firstLessonOrder }: LessonProps) => {
+const Lesson = ({
+	lesson,
+	isEnrolledStatus,
+	lessonOrder,
+	isFirstChapter,
+	firstLessonOrder,
+	userLessonIdsList,
+}: LessonProps) => {
 	const { userId, courseId, userCourseId } = useParams();
 	const navigate = useNavigate();
 
@@ -24,7 +32,7 @@ const Lesson = ({ lesson, isEnrolledStatus, lessonOrder, isFirstChapter, firstLe
 	useEffect(() => {
 		const createUserLesson = async () => {
 			try {
-				await axios.post(`${base_url}/userLessons`, {
+				const response = await axios.post(`${base_url}/userLessons`, {
 					lessonId: lesson._id,
 					userId,
 					courseId,
@@ -34,6 +42,13 @@ const Lesson = ({ lesson, isEnrolledStatus, lessonOrder, isFirstChapter, firstLe
 					isCompleted: false,
 					isInProgress: true,
 				});
+
+				const currentUserLessonIds = localStorage.getItem('userLessonIds');
+				let updatedUserLessonIds: string[] = [];
+
+				if (currentUserLessonIds !== null) {
+					updatedUserLessonIds = JSON.parse(currentUserLessonIds).push(response.data[0]?._id);
+				}
 			} catch (error) {
 				console.log(error);
 			}
@@ -53,7 +68,7 @@ const Lesson = ({ lesson, isEnrolledStatus, lessonOrder, isFirstChapter, firstLe
 				cursor: 'pointer',
 			}}
 			onClick={() => {
-				if (isEnrolledStatus) {
+				if (isEnrolledStatus && userLessonIdsList.includes(lesson._id)) {
 					navigate(`/user/${userId}/lesson/${lesson._id}`);
 					window.scrollTo({ top: 0, behavior: 'smooth' });
 				}
