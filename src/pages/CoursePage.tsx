@@ -6,20 +6,26 @@ import axios from 'axios';
 import CoursePageBanner from '../components/CoursePageBanner';
 import Chapters from '../components/courses/Chapters';
 import { UserCoursesIdsWithCourseIds } from '../contexts/UserCoursesIdsContextProvider';
+import { useEffect, useState } from 'react';
 
 const CoursePage = () => {
-	const { courseId } = useParams();
+	const { courseId, userCourseId } = useParams();
 
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
 	let courseIdUserCourseIds: UserCoursesIdsWithCourseIds[] = [];
 
-	const currentUserCourseIds: string | null = localStorage.getItem('userCoursesIds');
-	if (currentUserCourseIds !== null) {
-		courseIdUserCourseIds = JSON.parse(currentUserCourseIds);
-	}
-	let isEnrolledStatus: boolean =
-		courseIdUserCourseIds.filter((courseIdUserCourseId) => courseIdUserCourseId.courseId === courseId).length > 0;
+	const [isEnrolledStatus, setIsEnrolledStatus] = useState<boolean>(false);
+
+	useEffect(() => {
+		const currentUserCourseIds: string | null = localStorage.getItem('userCoursesIds');
+		if (currentUserCourseIds !== null) {
+			courseIdUserCourseIds = JSON.parse(currentUserCourseIds);
+			setIsEnrolledStatus(
+				courseIdUserCourseIds.some((courseIdUserCourseId) => courseIdUserCourseId.courseId === courseId)
+			);
+		}
+	}, [userCourseId]);
 
 	const { data, isLoading, isError } = useQuery('singleCourseData', async () => {
 		const response = await axios.get(`${base_url}/courses/${courseId}`);
@@ -37,7 +43,11 @@ const CoursePage = () => {
 
 	return (
 		<DashboardPagesLayout pageName='Courses'>
-			<CoursePageBanner course={data} isEnrolledStatus={isEnrolledStatus} />
+			<CoursePageBanner
+				course={data}
+				isEnrolledStatus={isEnrolledStatus}
+				setIsEnrolledStatus={setIsEnrolledStatus}
+			/>
 			<Chapters course={data} isEnrolledStatus={isEnrolledStatus} />
 		</DashboardPagesLayout>
 	);

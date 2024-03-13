@@ -7,13 +7,18 @@ import CoursePageBannerDataCard from './CoursePageBannerDataCard';
 import axios from 'axios';
 import { useState } from 'react';
 import { UserCoursesIdsWithCourseIds } from '../contexts/UserCoursesIdsContextProvider';
+import { BaseChapter } from '../interfaces/chapter';
 
 interface CoursePageBannerProps {
 	course: SingleCourse;
 	isEnrolledStatus: boolean;
+	setIsEnrolledStatus: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const CoursePageBanner = ({ course, isEnrolledStatus }: CoursePageBannerProps) => {
+const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus }: CoursePageBannerProps) => {
+	const firstChapter: BaseChapter = course.chapters.sort((a, b) => a.order - b.order)[0];
+	const firstLessonId: string = firstChapter.lessons.sort((a, b) => a.order - b.order)[0]._id;
+
 	const navigate = useNavigate();
 
 	const [displayEnrollmentMsg, setDisplayEnrollmentMsg] = useState<boolean>(false);
@@ -45,6 +50,27 @@ const CoursePageBanner = ({ course, isEnrolledStatus }: CoursePageBannerProps) =
 				isInProgress: true,
 			});
 
+			setIsEnrolledStatus(true);
+
+			await axios.post(`${base_url}/userLessons`, {
+				lessonId: firstLessonId,
+				userId,
+				courseId,
+				userCourseId: response.data._id,
+				currentQuestion: 1,
+				lessonOrder: firstChapter.lessons.sort((a, b) => a.order - b.order)[0].order,
+				isCompleted: false,
+				isInProgress: true,
+			});
+
+			const currentUserLessonIdsList: string | null = localStorage.getItem('userLessonIds');
+
+			if (currentUserLessonIdsList !== null) {
+				const updatedUserLessonIdsList: string[] = JSON.parse(currentUserLessonIdsList);
+				updatedUserLessonIdsList.push(firstLessonId);
+				localStorage.setItem('userLessonIds', JSON.stringify(updatedUserLessonIdsList));
+			}
+
 			let updatedUserCoursesIds: UserCoursesIdsWithCourseIds[] = [];
 			const storedUserCoursesIds = localStorage.getItem('userCoursesIds');
 			if (storedUserCoursesIds !== null && courseId) {
@@ -54,7 +80,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus }: CoursePageBannerProps) =
 			}
 
 			setDisplayEnrollmentMsg(true);
-			isEnrolledStatus = true;
+
 			navigate(`/course/${course._id}/user/${userId}/userCourseId/${response.data._id}?isEnrolled=true`);
 		} catch (error) {
 			console.log(error);
@@ -64,7 +90,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus }: CoursePageBannerProps) =
 	const handleEnrollment = async (): Promise<void> => {
 		if (course.price.toLowerCase() === 'free') {
 			await courseRegistration();
-			isEnrolledStatus = true;
+			setIsEnrolledStatus(true);
 		} else {
 			setIsDialogOpen(true);
 		}

@@ -2,47 +2,28 @@ import { Box, Typography } from '@mui/material';
 import theme from '../../themes';
 import { Lock } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useEffect, useState } from 'react';
-import axios from 'axios';
 
 interface LessonProps {
 	lesson: any;
 	isEnrolledStatus: boolean;
-	lessonOrder: number;
-	firstLessonOrder: number;
-	isFirstChapter: boolean;
 }
 
-const Lesson = ({ lesson, isEnrolledStatus, lessonOrder, isFirstChapter, firstLessonOrder }: LessonProps) => {
-	const { userId, courseId, userCourseId } = useParams();
+const Lesson = ({ lesson, isEnrolledStatus }: LessonProps) => {
+	const { userId } = useParams();
 	const navigate = useNavigate();
 
-	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
+	const handleLessonClick = () => {
+		const updatedUserLessonIds = localStorage.getItem('userLessonIds');
+		let updatedUserLessonIdsList: string[] = [];
 
-	const isFirstLesson: boolean = lessonOrder === firstLessonOrder;
-
-	useEffect(() => {
-		const createUserLesson = async () => {
-			try {
-				await axios.post(`${base_url}/userLessons`, {
-					lessonId: lesson._id,
-					userId,
-					courseId,
-					userCourseId,
-					currentQuestion: 1,
-					lessonOrder,
-					isCompleted: false,
-					isInProgress: true,
-				});
-			} catch (error) {
-				console.log(error);
-			}
-		};
-
-		if (isEnrolledStatus && isFirstLesson && isFirstChapter && userCourseId !== 'none') {
-			createUserLesson();
+		if (updatedUserLessonIds !== null) {
+			updatedUserLessonIdsList = JSON.parse(updatedUserLessonIds);
 		}
-	}, [userCourseId]);
+		if (isEnrolledStatus && updatedUserLessonIdsList.includes(lesson._id)) {
+			navigate(`/user/${userId}/lesson/${lesson._id}`);
+			window.scrollTo({ top: 0, behavior: 'smooth' });
+		}
+	};
 
 	return (
 		<Box
@@ -52,12 +33,7 @@ const Lesson = ({ lesson, isEnrolledStatus, lessonOrder, isFirstChapter, firstLe
 				borderBottom: `0.1rem solid ${theme.border.lightMain}`,
 				cursor: 'pointer',
 			}}
-			onClick={() => {
-				if (isEnrolledStatus) {
-					navigate(`/user/${userId}/lesson/${lesson._id}`);
-					window.scrollTo({ top: 0, behavior: 'smooth' });
-				}
-			}}>
+			onClick={handleLessonClick}>
 			<Box sx={{ height: '4rem', width: '5rem' }}>
 				<img src={lesson.imageUrl} alt='lesson_pic' width='100%' height='100%' />
 			</Box>

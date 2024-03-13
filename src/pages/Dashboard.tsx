@@ -44,6 +44,8 @@ const Dashboard = () => {
 			localStorage.setItem('imageUrl', response.data.data[0].imageUrl);
 		}
 
+		console.log(data);
+
 		return response.data.data[0];
 	});
 

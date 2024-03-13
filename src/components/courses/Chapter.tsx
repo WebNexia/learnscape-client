@@ -2,19 +2,14 @@ import { Box, Typography } from '@mui/material';
 import theme from '../../themes';
 import Lesson from './Lesson';
 import { BaseChapter } from '../../interfaces/chapter';
+import { LessonById } from '../../interfaces/lessons';
 
 interface ChapterProps {
 	chapter: BaseChapter;
 	isEnrolledStatus: boolean;
-	firstChapterOrder: number;
-	courseId: string;
 }
 
-const Chapter = ({ chapter, isEnrolledStatus, firstChapterOrder, courseId }: ChapterProps) => {
-	const isFirstChapter: boolean = chapter.order === firstChapterOrder;
-
-	const firstLessonOrder: number = chapter.lessons?.sort((a, b) => a.order - b.order)[0].order;
-
+const Chapter = ({ chapter, isEnrolledStatus }: ChapterProps) => {
 	return (
 		<Box
 			sx={{
@@ -26,16 +21,9 @@ const Chapter = ({ chapter, isEnrolledStatus, firstChapterOrder, courseId }: Cha
 			</Box>
 			{chapter.lessons
 				.sort((a, b) => a.order - b.order)
-				.map((lesson, index) => (
-					<Lesson
-						key={index}
-						lesson={lesson}
-						isEnrolledStatus={isEnrolledStatus}
-						lessonOrder={lesson.order}
-						isFirstChapter={isFirstChapter}
-						firstLessonOrder={firstLessonOrder}
-					/>
-				))}
+				.map((lesson: LessonById, index) => {
+					return <Lesson key={index} lesson={lesson} isEnrolledStatus={isEnrolledStatus} />;
+				})}
 		</Box>
 	);
 };
