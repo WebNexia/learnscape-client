@@ -8,19 +8,12 @@ interface ChaptersProps {
 }
 
 const Chapters = ({ course, isEnrolledStatus }: ChaptersProps) => {
-	const firstChapterOrder: number | undefined = course.chapters.sort((a, b) => a.order - b.order)[0]?.order;
-
 	return (
 		<Box sx={{ width: '85%' }}>
 			{course.chapters
 				.sort((a, b) => a.order - b.order)
 				.map((chapter) => (
-					<Chapter
-						key={chapter._id}
-						chapter={chapter}
-						isEnrolledStatus={isEnrolledStatus}
-						firstChapterOrder={firstChapterOrder}
-					/>
+					<Chapter key={chapter._id} chapter={chapter} isEnrolledStatus={isEnrolledStatus} />
 				))}
 		</Box>
 	);

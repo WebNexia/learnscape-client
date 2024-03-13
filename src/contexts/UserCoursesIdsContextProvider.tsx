@@ -35,6 +35,18 @@ const UserCoursesIdsContextProvider = (props: UserCoursesIdsContextProviderProps
 				[]
 			);
 
+			const responseUserLessonIdsData = await axios.get(`${base_url}/userlessons/user/${userId}`);
+
+			console.log(responseUserLessonIdsData.data.response.map((userLesson: any) => userLesson.lessonId._id));
+
+			const currentUserLessonIdsList = responseUserLessonIdsData.data.response.map(
+				(userLesson: any) => userLesson.lessonId._id
+			);
+
+			if (!localStorage.getItem('userCoursesIds')) {
+				localStorage.setItem('userLessonIds', JSON.stringify(currentUserLessonIdsList));
+			}
+
 			localStorage.setItem('userCoursesIds', JSON.stringify(userCourseIds));
 		} catch (error) {
 			console.log(error);

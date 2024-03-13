@@ -7,5 +7,6 @@ export interface BaseChapter {
 	isActive: boolean;
 	createdAt: string;
 	updatedAt: string;
+	lessonIds: string[];
 	lessons: Lesson[];
 }
