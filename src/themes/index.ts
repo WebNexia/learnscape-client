@@ -40,6 +40,7 @@ interface ExtendedThemeOptions extends ThemeOptions {
 	bgColor?: {
 		primary: string;
 		secondary: string;
+		lessonInProgress: string;
 		common: string;
 		greenPrimary: string;
 		greenSecondary: string;
@@ -141,6 +142,7 @@ const theme = createTheme({
 	bgColor: {
 		primary: '#01435A',
 		secondary: '#FDF7F0',
+		lessonInProgress: '#4D7B8B',
 		common: '#FFFF',
 		greenPrimary: '#1EC28B',
 		greenSecondary: '#00C6AD',

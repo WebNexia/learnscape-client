@@ -24,6 +24,7 @@ const LessonPage = () => {
 		return response.data.data[0];
 	});
 
+	console.log(lessonData);
 	const {
 		data: userData,
 		isLoading: isUserDataLoading,

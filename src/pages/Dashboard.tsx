@@ -4,13 +4,13 @@ import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { useQuery } from 'react-query';
 import DashboardPagesLayout from '../components/layouts/DashboardLayout/DashboardPagesLayout';
-import { UserCoursesIdsContext } from '../contexts/UserCoursesIdsContextProvider';
+import { UserCourseLessonDataContext } from '../contexts/UserCourseLessonDataContextProvider';
 
 const Dashboard = () => {
 	const navigate = useNavigate();
 	const [signedUpMsg, setSignedUpMsg] = useState<boolean>(false);
 
-	const { fetchUserCourseIds } = useContext(UserCoursesIdsContext);
+	const { fetchUserCourseData, fetchUserLessonData } = useContext(UserCourseLessonDataContext);
 
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
@@ -26,7 +26,8 @@ const Dashboard = () => {
 		}
 
 		if (id) {
-			fetchUserCourseIds(id);
+			fetchUserCourseData(id);
+			fetchUserLessonData(id);
 		}
 	}, []);
 

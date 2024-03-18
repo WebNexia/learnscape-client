@@ -21,7 +21,7 @@ export interface UserLessonList extends BaseUserLesson {
 
 export interface UserLessonsByUserId extends BaseUserLesson {
 	userId: string;
-	lessonId: Lesson[];
+	lessonId: Lesson;
 }
 
 export interface UserLessonsByLessonId extends BaseUserLesson {
