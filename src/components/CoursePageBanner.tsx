@@ -6,7 +6,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import CoursePageBannerDataCard from './CoursePageBannerDataCard';
 import axios from 'axios';
 import { useState } from 'react';
-import { UserCoursesIdsWithCourseIds } from '../contexts/UserCoursesIdsContextProvider';
+import { UserCoursesIdsWithCourseIds, UserLessonDataStorage } from '../contexts/UserCourseLessonDataContextProvider';
 import { BaseChapter } from '../interfaces/chapter';
 
 interface CoursePageBannerProps {
@@ -63,12 +63,22 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus }: Cou
 				isInProgress: true,
 			});
 
-			const currentUserLessonIdsList: string | null = localStorage.getItem('userLessonIds');
+			const currentUserLessonData: string | null = localStorage.getItem('userLessonData');
 
-			if (currentUserLessonIdsList !== null) {
-				const updatedUserLessonIdsList: string[] = JSON.parse(currentUserLessonIdsList);
-				updatedUserLessonIdsList.push(firstLessonId);
-				localStorage.setItem('userLessonIds', JSON.stringify(updatedUserLessonIdsList));
+			if (currentUserLessonData !== null) {
+				const updatedUserLessonData: UserLessonDataStorage[] = JSON.parse(currentUserLessonData);
+				if (
+					!updatedUserLessonData.map((data: UserLessonDataStorage) => data.lessonId).includes(firstLessonId)
+				) {
+					const newUserLessonData: UserLessonDataStorage = {
+						lessonId: firstLessonId,
+						isCompleted: false,
+						isInProgress: true,
+					};
+
+					updatedUserLessonData.push(newUserLessonData);
+					localStorage.setItem('userLessonData', JSON.stringify(updatedUserLessonData));
+				}
 			}
 
 			let updatedUserCoursesIds: UserCoursesIdsWithCourseIds[] = [];

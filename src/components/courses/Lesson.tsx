@@ -1,10 +1,14 @@
 import { Box, Typography } from '@mui/material';
 import theme from '../../themes';
-import { Lock } from '@mui/icons-material';
+import { CheckCircleOutlineRounded, Lock } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
+import { UserLessonDataStorage } from '../../contexts/UserCourseLessonDataContextProvider';
+import { LessonById } from '../../interfaces/lessons';
+import { useEffect, useState } from 'react';
+import ProgressIcon from '../../assets/ProgressIcon.png';
 
 interface LessonProps {
-	lesson: any;
+	lesson: LessonById;
 	isEnrolledStatus: boolean;
 }
 
@@ -12,14 +16,35 @@ const Lesson = ({ lesson, isEnrolledStatus }: LessonProps) => {
 	const { userId } = useParams();
 	const navigate = useNavigate();
 
-	const handleLessonClick = () => {
-		const updatedUserLessonIds = localStorage.getItem('userLessonIds');
-		let updatedUserLessonIdsList: string[] = [];
+	const currentUserLessonData: string | null = localStorage.getItem('userLessonData');
 
-		if (updatedUserLessonIds !== null) {
-			updatedUserLessonIdsList = JSON.parse(updatedUserLessonIds);
-		}
-		if (isEnrolledStatus && updatedUserLessonIdsList.includes(lesson._id)) {
+	let parsedUserLessonData: UserLessonDataStorage[] = [];
+	if (currentUserLessonData !== null) {
+		parsedUserLessonData = JSON.parse(currentUserLessonData);
+	}
+
+	const [userLessonData, setUserLessonData] = useState<UserLessonDataStorage[]>(parsedUserLessonData);
+	const [isLessonInProgress, setIsLessonInProgress] = useState<boolean>(false);
+	const [isLessonCompleted, setIsLessonCompleted] = useState<boolean>(false);
+
+	useEffect(() => {
+		const fetchUserLessonProgress = () => {
+			setUserLessonData(parsedUserLessonData);
+			userLessonData.map((data: UserLessonDataStorage) => {
+				if (data.lessonId === lesson._id) {
+					setIsLessonInProgress(data.isInProgress);
+					setIsLessonCompleted(data.isCompleted);
+				}
+			});
+		};
+		fetchUserLessonProgress();
+	}, [currentUserLessonData]);
+
+	const handleLessonClick = () => {
+		if (
+			isEnrolledStatus &&
+			userLessonData.map((data: UserLessonDataStorage) => data.lessonId).includes(lesson._id)
+		) {
 			navigate(`/user/${userId}/lesson/${lesson._id}`);
 			window.scrollTo({ top: 0, behavior: 'smooth' });
 		}
@@ -29,12 +54,17 @@ const Lesson = ({ lesson, isEnrolledStatus }: LessonProps) => {
 		<Box
 			sx={{
 				display: 'flex',
-				height: '4rem',
+				height: isEnrolledStatus && isLessonInProgress ? '8rem' : '4rem',
 				borderBottom: `0.1rem solid ${theme.border.lightMain}`,
+				backgroundColor: isEnrolledStatus && isLessonInProgress ? theme.bgColor?.lessonInProgress : 'white',
 				cursor: 'pointer',
 			}}
 			onClick={handleLessonClick}>
-			<Box sx={{ height: '4rem', width: '5rem' }}>
+			<Box
+				sx={{
+					height: isEnrolledStatus && isLessonInProgress ? '8rem' : '4rem',
+					width: isEnrolledStatus && isLessonInProgress ? '10rem' : '5rem',
+				}}>
 				<img src={lesson.imageUrl} alt='lesson_pic' width='100%' height='100%' />
 			</Box>
 			<Box
@@ -46,11 +76,21 @@ const Lesson = ({ lesson, isEnrolledStatus }: LessonProps) => {
 					px: '1rem',
 				}}>
 				<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-					<Typography variant='body2'>Lesson {lesson.order}</Typography>
-					<Typography variant='body1'>{lesson.title}</Typography>
+					<Typography variant='body2' sx={{ color: isEnrolledStatus && isLessonInProgress ? 'white' : null }}>
+						Lesson {lesson.order}
+					</Typography>
+					<Typography variant='body1' sx={{ color: isEnrolledStatus && isLessonInProgress ? 'white' : null }}>
+						{lesson.title}
+					</Typography>
 				</Box>
 				<Box>
-					<Lock sx={{ color: theme.border.lightMain }} />
+					{isEnrolledStatus && isLessonInProgress ? (
+						<img src={ProgressIcon} alt='' />
+					) : !isEnrolledStatus || (!isLessonInProgress && !isLessonCompleted) ? (
+						<Lock sx={{ color: theme.border.lightMain }} />
+					) : (
+						<CheckCircleOutlineRounded sx={{ color: theme.palette.primary.main }} />
+					)}
 				</Box>
 			</Box>
 		</Box>

@@ -1,12 +1,12 @@
 interface BaseCourse {
 	_id: string;
-	title?: string;
+	title: string;
 	description: string;
 	price: string;
-	imageUrl?: string;
-	isActive?: boolean;
-	createdAt?: string;
-	updatedAt?: string;
+	imageUrl: string;
+	isActive: boolean;
+	createdAt: string;
+	updatedAt: string;
 }
 
 export interface Course extends BaseCourse {
@@ -15,6 +15,10 @@ export interface Course extends BaseCourse {
 
 export interface FilteredCourse extends BaseCourse {
 	chapterIds: any;
+}
+
+export interface UserCourseByUserId extends BaseCourse {
+	chapterIds: string[];
 }
 
 export interface SingleCourse extends BaseCourse {

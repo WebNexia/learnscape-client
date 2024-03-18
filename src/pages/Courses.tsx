@@ -5,7 +5,7 @@ import DashboardCourseCard from '../components/DashboardCourseCard';
 import { FilteredCourse } from '../interfaces/course';
 import { ActiveCoursesContext } from '../contexts/ActiveCoursesContextProvider';
 import { useParams } from 'react-router-dom';
-import { UserCoursesIdsWithCourseIds } from '../contexts/UserCoursesIdsContextProvider';
+import { UserCoursesIdsWithCourseIds } from '../contexts/UserCourseLessonDataContextProvider';
 
 const Courses = () => {
 	const [checked, setChecked] = useState<boolean>(false);

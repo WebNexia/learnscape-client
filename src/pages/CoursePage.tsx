@@ -5,7 +5,7 @@ import { useQuery } from 'react-query';
 import axios from 'axios';
 import CoursePageBanner from '../components/CoursePageBanner';
 import Chapters from '../components/courses/Chapters';
-import { UserCoursesIdsWithCourseIds } from '../contexts/UserCoursesIdsContextProvider';
+import { UserCoursesIdsWithCourseIds } from '../contexts/UserCourseLessonDataContextProvider';
 import { useEffect, useState } from 'react';
 
 const CoursePage = () => {

@@ -14,8 +14,8 @@ import Settings from './pages/Settings';
 import CoursePage from './pages/CoursePage';
 import ActiveCoursesContextProvider from './contexts/ActiveCoursesContextProvider';
 import MediaQueryContextProvider from './contexts/MediaQueryContextProvider';
-import UserCoursesIdsContextProvider from './contexts/UserCoursesIdsContextProvider';
 import LessonPage from './pages/LessonPage';
+import UserCourseLessonDataContextProvider from './contexts/UserCourseLessonDataContextProvider';
 
 const queryClient = new QueryClient();
 
@@ -23,7 +23,7 @@ function App() {
 	return (
 		<QueryClientProvider client={queryClient}>
 			<MediaQueryContextProvider>
-				<UserCoursesIdsContextProvider>
+				<UserCourseLessonDataContextProvider>
 					<ActiveCoursesContextProvider>
 						<ThemeProvider theme={theme}>
 							<Router>
@@ -45,7 +45,7 @@ function App() {
 							</Router>
 						</ThemeProvider>
 					</ActiveCoursesContextProvider>
-				</UserCoursesIdsContextProvider>
+				</UserCourseLessonDataContextProvider>
 			</MediaQueryContextProvider>
 		</QueryClientProvider>
 	);
