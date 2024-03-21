@@ -34,8 +34,6 @@ const LessonPage = () => {
 		return response.data.data[0];
 	});
 
-	console.log(userData);
-
 	if (isUserDataLoading || isLessonDataLoading) {
 		return <Box>Loading...</Box>;
 	}
@@ -43,6 +41,7 @@ const LessonPage = () => {
 	if (userError || lessonError) {
 		return <Box>Error fetching data</Box>;
 	}
+	console.log(userData);
 
 	return (
 		<Box
