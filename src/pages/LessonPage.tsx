@@ -24,15 +24,12 @@ const LessonPage = () => {
 		return response.data.data[0];
 	});
 
-	console.log(lessonData);
 	const {
 		data: userData,
 		isLoading: isUserDataLoading,
 		isError: userError,
 	} = useQuery('userData', async () => {
 		const response = await axios.get(`${base_url}/users/${userId}`);
-
-		console.log(userData);
 
 		return response.data.data[0];
 	});
@@ -70,6 +67,7 @@ const LessonPage = () => {
 				}}
 				onClick={() => {
 					navigate(-1);
+					window.scrollTo({ top: 0, behavior: 'smooth' });
 				}}>
 				Back to Course Home Page
 			</Button>

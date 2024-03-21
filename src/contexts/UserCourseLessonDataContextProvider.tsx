@@ -1,11 +1,15 @@
 import axios from 'axios';
-import { ReactNode, createContext } from 'react';
+import { ReactNode, createContext, useState } from 'react';
 import { UserLessonsByUserId } from '../interfaces/userLesson';
 import { UserCoursesByUserId } from '../interfaces/userCourses';
+import { SingleCourse } from '../interfaces/course';
 
 interface UserCourseLessonDataContextTypes {
 	fetchUserCourseData: (userId: string) => void;
 	fetchUserLessonData: (userId: string) => void;
+	fetchSingleCourseData: (courseId: string) => void;
+	singleCourse: SingleCourse | null;
+	setSingleCourse: React.Dispatch<React.SetStateAction<SingleCourse | null>>;
 }
 
 interface UserCoursesIdsContextProviderProps {
@@ -19,6 +23,8 @@ export interface UserCoursesIdsWithCourseIds {
 
 export interface UserLessonDataStorage {
 	lessonId: string;
+	userLessonId: string;
+	courseId: string;
 	isCompleted: boolean;
 	isInProgress: boolean;
 }
@@ -26,10 +32,23 @@ export interface UserLessonDataStorage {
 export const UserCourseLessonDataContext = createContext<UserCourseLessonDataContextTypes>({
 	fetchUserCourseData: () => {},
 	fetchUserLessonData: () => {},
+	fetchSingleCourseData: () => {},
+	singleCourse: null,
+	setSingleCourse: () => {},
 });
 
 const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
+	const [singleCourse, setSingleCourse] = useState<SingleCourse | null>(null);
+
+	const fetchSingleCourseData = async (courseId: string): Promise<void> => {
+		try {
+			const response = await axios.get(`${base_url}/courses/${courseId}`);
+			setSingleCourse(response.data.data[0] || null);
+		} catch (error) {
+			console.log(error);
+		}
+	};
 
 	const fetchUserCourseData = async (userId: string): Promise<void> => {
 		try {
@@ -58,6 +77,8 @@ const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProvide
 			(userLesson: UserLessonsByUserId) => {
 				const userLessonData: UserLessonDataStorage = {
 					lessonId: userLesson.lessonId._id,
+					userLessonId: userLesson._id,
+					courseId: userLesson.courseId,
 					isCompleted: userLesson.isCompleted,
 					isInProgress: userLesson.isInProgress,
 				};
@@ -72,7 +93,14 @@ const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProvide
 	};
 
 	return (
-		<UserCourseLessonDataContext.Provider value={{ fetchUserCourseData, fetchUserLessonData }}>
+		<UserCourseLessonDataContext.Provider
+			value={{
+				fetchUserCourseData,
+				fetchUserLessonData,
+				fetchSingleCourseData,
+				singleCourse,
+				setSingleCourse,
+			}}>
 			{props.children}
 		</UserCourseLessonDataContext.Provider>
 	);

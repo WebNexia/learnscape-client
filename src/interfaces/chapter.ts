@@ -10,3 +10,8 @@ export interface BaseChapter {
 	lessonIds: string[];
 	lessons: Lesson[];
 }
+
+export interface ChapterProgress extends BaseChapter {
+	isChapterCompleted: boolean;
+	isChapterInProgress: boolean;
+}
