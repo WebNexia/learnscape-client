@@ -38,5 +38,12 @@ interface Chapter {
 	isActive: boolean;
 	createdAt: string;
 	updatedAt: string;
-	lessons: any;
+	lessons: Lesson[];
+}
+
+interface Lesson {
+	_id: string;
+	title: string;
+	imageUrl: string;
+	order: number;
 }

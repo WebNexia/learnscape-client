@@ -40,7 +40,10 @@ function App() {
 										path='/course/:courseId/user/:userId/userCourseId/:userCourseId'
 										element={<CoursePage />}
 									/>
-									<Route path='user/:userId/lesson/:lessonId/' element={<LessonPage />} />
+									<Route
+										path='user/:userId/course/:courseId/userCourseId/:userCourseId/lesson/:lessonId/'
+										element={<LessonPage />}
+									/>
 								</Routes>
 							</Router>
 						</ThemeProvider>

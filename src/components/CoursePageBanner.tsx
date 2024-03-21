@@ -1,4 +1,14 @@
-import { Alert, Box, Button, Dialog, DialogActions, DialogTitle, Paper, Snackbar, Typography } from '@mui/material';
+import {
+	Alert,
+	Box,
+	Button,
+	Dialog,
+	DialogActions,
+	DialogTitle,
+	Paper,
+	Snackbar,
+	Typography,
+} from '@mui/material';
 import theme from '../themes';
 import { SingleCourse } from '../interfaces/course';
 import { KeyboardBackspaceOutlined } from '@mui/icons-material';
@@ -6,7 +16,10 @@ import { useNavigate, useParams } from 'react-router-dom';
 import CoursePageBannerDataCard from './CoursePageBannerDataCard';
 import axios from 'axios';
 import { useState } from 'react';
-import { UserCoursesIdsWithCourseIds, UserLessonDataStorage } from '../contexts/UserCourseLessonDataContextProvider';
+import {
+	UserCoursesIdsWithCourseIds,
+	UserLessonDataStorage,
+} from '../contexts/UserCourseLessonDataContextProvider';
 import { BaseChapter } from '../interfaces/chapter';
 
 interface CoursePageBannerProps {
@@ -15,8 +28,13 @@ interface CoursePageBannerProps {
 	setIsEnrolledStatus: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus }: CoursePageBannerProps) => {
-	const firstChapter: BaseChapter = course.chapters.sort((a, b) => a.order - b.order)[0];
+const CoursePageBanner = ({
+	course,
+	isEnrolledStatus,
+	setIsEnrolledStatus,
+}: CoursePageBannerProps) => {
+	const firstChapter: BaseChapter =
+		course && course?.chapters.sort((a, b) => a.order - b.order)[0];
 	const firstLessonId: string = firstChapter.lessons.sort((a, b) => a.order - b.order)[0]._id;
 
 	const navigate = useNavigate();
@@ -41,7 +59,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus }: Cou
 
 	const startDate: string = date.toLocaleString('en-US', options);
 
-	const courseRegistration = async () => {
+	const courseRegistration = async (): Promise<void> => {
 		try {
 			const response = await axios.post(`${base_url}/userCourses/`, {
 				courseId,
@@ -52,7 +70,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus }: Cou
 
 			setIsEnrolledStatus(true);
 
-			await axios.post(`${base_url}/userLessons`, {
+			const responseUserLesson = await axios.post(`${base_url}/userLessons`, {
 				lessonId: firstLessonId,
 				userId,
 				courseId,
@@ -66,12 +84,19 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus }: Cou
 			const currentUserLessonData: string | null = localStorage.getItem('userLessonData');
 
 			if (currentUserLessonData !== null) {
-				const updatedUserLessonData: UserLessonDataStorage[] = JSON.parse(currentUserLessonData);
+				const updatedUserLessonData: UserLessonDataStorage[] =
+					JSON.parse(currentUserLessonData);
 				if (
-					!updatedUserLessonData.map((data: UserLessonDataStorage) => data.lessonId).includes(firstLessonId)
+					!updatedUserLessonData.some(
+						(data: UserLessonDataStorage) =>
+							data.lessonId === firstLessonId && data.courseId === courseId
+					) &&
+					courseId
 				) {
 					const newUserLessonData: UserLessonDataStorage = {
 						lessonId: firstLessonId,
+						userLessonId: responseUserLesson.data._id,
+						courseId,
 						isCompleted: false,
 						isInProgress: true,
 					};
@@ -91,7 +116,9 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus }: Cou
 
 			setDisplayEnrollmentMsg(true);
 
-			navigate(`/course/${course._id}/user/${userId}/userCourseId/${response.data._id}?isEnrolled=true`);
+			navigate(
+				`/course/${course._id}/user/${userId}/userCourseId/${response.data._id}?isEnrolled=true`
+			);
 		} catch (error) {
 			console.log(error);
 		}
@@ -120,7 +147,10 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus }: Cou
 				autoHideDuration={4000}
 				onClose={() => setDisplayEnrollmentMsg(false)}
 				anchorOrigin={{ vertical, horizontal }}>
-				<Alert onClose={() => setDisplayEnrollmentMsg(false)} severity='success' sx={{ width: '100%' }}>
+				<Alert
+					onClose={() => setDisplayEnrollmentMsg(false)}
+					severity='success'
+					sx={{ width: '100%' }}>
 					You successfully enrolled the course!
 				</Alert>
 			</Snackbar>
@@ -202,7 +232,13 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus }: Cou
 						</Button>
 					</Box>
 				</Box>
-				<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1 }}>
+				<Box
+					sx={{
+						display: 'flex',
+						justifyContent: 'center',
+						alignItems: 'center',
+						flex: 1,
+					}}>
 					<Box>
 						<CoursePageBannerDataCard title='Starting Date' content={startDate} />
 						<CoursePageBannerDataCard title='Duration' content={course.durationWeeks} />

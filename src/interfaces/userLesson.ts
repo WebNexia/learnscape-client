@@ -4,7 +4,6 @@ import { User } from './user';
 
 interface BaseUserLesson {
 	_id: string;
-	courseId: Course[];
 	userCourseId: string;
 	currentQuestion: number;
 	lessonOrder: number;
@@ -17,14 +16,17 @@ interface BaseUserLesson {
 export interface UserLessonList extends BaseUserLesson {
 	userId: string;
 	lessonId: Lesson[];
+	courseId: Course[];
 }
 
 export interface UserLessonsByUserId extends BaseUserLesson {
 	userId: string;
 	lessonId: Lesson;
+	courseId: string;
 }
 
 export interface UserLessonsByLessonId extends BaseUserLesson {
 	lessonId: string;
 	userId: User;
+	courseId: string;
 }
