@@ -41,6 +41,7 @@ const LessonPage = () => {
 	if (userError || lessonError) {
 		return <Box>Error fetching data</Box>;
 	}
+	console.log(userData);
 
 	return (
 		<Box
@@ -71,11 +72,21 @@ const LessonPage = () => {
 				}}>
 				Back to Course Home Page
 			</Button>
-			<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '2rem 0 3rem 0' }}>
+			<Box
+				sx={{
+					display: 'flex',
+					flexDirection: 'column',
+					alignItems: 'center',
+					margin: '2rem 0 3rem 0',
+				}}>
 				<Typography variant='h5' sx={{ marginBottom: '1.5rem' }}>
 					{lessonData.title}
 				</Typography>
-				<ReactPlayer url={'https://www.youtube.com/watch?v=g06q54-10f4'} width='70vw' height='50vh' />
+				<ReactPlayer
+					url={'https://www.youtube.com/watch?v=g06q54-10f4'}
+					width='70vw'
+					height='50vh'
+				/>
 			</Box>
 			<Box sx={{ padding: '3rem' }}>
 				<Questions questions={lessonData.questions} />
