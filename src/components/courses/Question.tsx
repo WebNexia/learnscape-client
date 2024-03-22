@@ -13,6 +13,7 @@ import { useState } from 'react';
 import axios from 'axios';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { UserLessonDataStorage } from '../../contexts/UserCourseLessonDataContextProvider';
+import theme from '../../themes';
 
 interface QuestionsProps {
 	question: QuestionInterface;
@@ -29,12 +30,6 @@ const Question = ({
 	displayedQuestionNumber,
 	setDisplayedQuestionNumber,
 }: QuestionsProps) => {
-	const [value, setValue] = useState<string>('');
-	const [error, setError] = useState<boolean>(false);
-	const [success, setSuccess] = useState<boolean>(false);
-	const [helperText, setHelperText] = useState<string>('Choose wisely');
-	const [isAnswerCorrect, setIsAnswerCorrect] = useState<boolean>(false);
-
 	const { userId, lessonId, courseId, userCourseId } = useParams();
 	const navigate = useNavigate();
 
@@ -43,6 +38,25 @@ const Question = ({
 	const nextLessonId = searchParams.get('next');
 	const nextLessonOrder = searchParams.get('nextLessonOrder');
 
+	const [isLessonCompleted, setIsLessonCompleted] = useState<boolean>(() => {
+		const isCompleted = searchParams.get('isCompleted');
+		if (isCompleted !== null) {
+			return JSON.parse(isCompleted);
+		}
+	});
+
+	const [value, setValue] = useState<string>(() => {
+		if (isLessonCompleted && question.correctAnswer) {
+			return question.correctAnswer;
+		} else {
+			return '';
+		}
+	});
+	const [error, setError] = useState<boolean>(false);
+	const [success, setSuccess] = useState<boolean>(false);
+	const [helperText, setHelperText] = useState<string>('Choose wisely');
+	const [isAnswerCorrect, setIsAnswerCorrect] = useState<boolean>(false);
+
 	const userLessonData = localStorage.getItem('userLessonData');
 	let parsedUserLessonData: UserLessonDataStorage[] = [];
 	if (userLessonData !== null) {
@@ -50,7 +64,7 @@ const Question = ({
 	}
 
 	const userLessonId = parsedUserLessonData.filter(
-		(data: UserLessonDataStorage) => data.lessonId === lessonId
+		(data: UserLessonDataStorage) => data.lessonId === lessonId && data.courseId === courseId
 	)[0]?.userLessonId;
 
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -62,6 +76,7 @@ const Question = ({
 				questionId: question._id,
 				userId,
 				lessonId,
+				courseId,
 				isCompleted: true,
 				isInProgress: false,
 			});
@@ -78,6 +93,7 @@ const Question = ({
 				navigate(
 					`/user/${userId}/course/${courseId}/userCourseId/${userCourseId}/lesson/${lessonId}?isCompleted=true&next=${nextLessonId}&nextLessonOrder=${nextLessonOrder}`
 				);
+				setIsLessonCompleted(true);
 
 				if (nextLessonId !== null) {
 					const responseUserLesson = await axios.post(`${base_url}/userLessons`, {
@@ -91,9 +107,10 @@ const Question = ({
 						isInProgress: true,
 					});
 					if (
-						!parsedUserLessonData
-							.map((data: UserLessonDataStorage) => data.lessonId)
-							.includes(nextLessonId) &&
+						!parsedUserLessonData.some(
+							(data: UserLessonDataStorage) =>
+								data.lessonId === nextLessonId && data.courseId === courseId
+						) &&
 						courseId
 					) {
 						const newUserLessonData: UserLessonDataStorage = {
@@ -114,8 +131,10 @@ const Question = ({
 				const indexToUpdate = parsedUserLessonData.findIndex(
 					(item) => item.userLessonId === userLessonId
 				);
+				console.log(indexToUpdate);
 				parsedUserLessonData[indexToUpdate].isCompleted = true;
 				parsedUserLessonData[indexToUpdate].isInProgress = false;
+				console.log(parsedUserLessonData);
 				localStorage.setItem('userLessonData', JSON.stringify(parsedUserLessonData));
 			}
 		} catch (error) {
@@ -142,10 +161,12 @@ const Question = ({
 			setHelperText('Sorry, wrong answer!');
 			setError(true);
 			setIsAnswerCorrect(false);
+			setIsLessonCompleted(false);
 		} else {
 			setHelperText('Please select an option.');
 			setError(true);
 			setIsAnswerCorrect(false);
+			setIsLessonCompleted(false);
 		}
 	};
 
@@ -158,10 +179,14 @@ const Question = ({
 			}}>
 			<form onSubmit={handleSubmit}>
 				<FormControl sx={{ m: 3 }} error={error} variant='standard'>
-					<FormLabel sx={{ color: success ? 'green' : 'inherit' }}>
+					<FormLabel
+						sx={{ color: success ? theme.textColor?.greenPrimary.main : 'inherit' }}>
 						{questionNumber}. {question.question}
 					</FormLabel>
-					<RadioGroup name='question' value={value} onChange={handleRadioChange}>
+					<RadioGroup
+						name='question'
+						value={isLessonCompleted ? question.correctAnswer : value}
+						onChange={handleRadioChange}>
 						<FormControlLabel
 							value={question.optionOne}
 							control={<Radio />}
@@ -186,7 +211,10 @@ const Question = ({
 					<FormHelperText sx={{ color: success ? 'green' : 'inherit' }}>
 						{helperText}
 					</FormHelperText>
-					<Button sx={{ mt: '2rem' }} type='submit' variant='outlined'>
+					<Button
+						sx={{ mt: '2rem', width: '13rem', alignSelf: 'center' }}
+						type='submit'
+						variant='outlined'>
 						Submit Answer
 					</Button>
 				</FormControl>
@@ -216,9 +244,26 @@ const Question = ({
 						if (!(displayedQuestionNumber + 1 > numberOfQuestions)) {
 							setDisplayedQuestionNumber((prev) => prev + 1);
 						}
+						if (isLessonCompleted && displayedQuestionNumber === numberOfQuestions) {
+							navigate(
+								`/course/${courseId}/user/${userId}/userCourseId/${userCourseId}?isEnrolled=true`
+							);
+							window.scrollTo({ top: 0, behavior: 'smooth' });
+						}
 					}}
-					disabled={!isAnswerCorrect || displayedQuestionNumber + 1 > numberOfQuestions}>
-					Next
+					sx={{
+						color: !isAnswerCorrect ? 'inherit' : theme.textColor?.common.main,
+						backgroundColor: !isAnswerCorrect ? 'inherit' : theme.bgColor?.greenPrimary,
+						':hover': {
+							color: theme.bgColor?.greenPrimary,
+							backgroundColor: theme.textColor?.common.main,
+						},
+					}}
+					disabled={
+						(!isAnswerCorrect || displayedQuestionNumber + 1 > numberOfQuestions) &&
+						!isLessonCompleted
+					}>
+					{displayedQuestionNumber === numberOfQuestions ? 'Complete Lesson' : 'Next'}
 				</Button>
 			</Box>
 		</Box>

@@ -1,8 +1,9 @@
-import { Box } from '@mui/material';
+import { Box, CircularProgress, Typography } from '@mui/material';
 import axios from 'axios';
 import { ReactNode, createContext } from 'react';
 import { useQuery } from 'react-query';
 import { FilteredCourse } from '../interfaces/course';
+import theme from '../themes';
 
 interface ActiveCoursesContextTypes {
 	data: FilteredCourse[];
@@ -18,18 +19,54 @@ const ActiveCoursesContextProvider = (props: ActiveCoursesContextProviderProps) 
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
 	const { data, isLoading, isError } = useQuery('activeCourses', async () => {
-		const response = await axios.post(`${base_url}/courses/filter`, { query: { isActive: true } });
+		const response = await axios.post(`${base_url}/courses/filter`, {
+			query: { isActive: true },
+		});
 		return response.data.response;
 	});
 
 	if (isLoading) {
-		return <Box>Loading...</Box>;
+		return (
+			<Box
+				sx={{
+					display: 'flex',
+					flexDirection: 'column',
+					justifyContent: 'center',
+					alignItems: 'center',
+					backgroundColor: theme.bgColor?.secondary,
+					height: '100vh',
+				}}>
+				<CircularProgress />
+				<Typography
+					sx={{
+						margin: '2rem',
+						fontSize: '2rem',
+						fontFamily: 'Poppins',
+						fontWeight: 500,
+						color: '#01435A',
+					}}>
+					Loading...
+				</Typography>
+				<Typography
+					sx={{
+						fontSize: '3rem',
+						fontFamily: 'Permanent Marker, cursive',
+						color: '#01435A',
+					}}>
+					KAIZEN
+				</Typography>
+			</Box>
+		);
 	}
 
 	if (isError) {
 		return <Box>Error fetching data</Box>;
 	}
-	return <ActiveCoursesContext.Provider value={{ data }}>{props.children}</ActiveCoursesContext.Provider>;
+	return (
+		<ActiveCoursesContext.Provider value={{ data }}>
+			{props.children}
+		</ActiveCoursesContext.Provider>
+	);
 };
 
 export default ActiveCoursesContextProvider;

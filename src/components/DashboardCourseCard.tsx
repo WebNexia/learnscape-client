@@ -1,4 +1,12 @@
-import { Box, Button, Card, CardContent, CardMedia, LinearProgress, Typography } from '@mui/material';
+import {
+	Box,
+	Button,
+	Card,
+	CardContent,
+	CardMedia,
+	LinearProgress,
+	Typography,
+} from '@mui/material';
 import { FilteredCourse } from '../interfaces/course';
 import { truncateText } from '../utils/TextUtils';
 import theme from '../themes';
@@ -42,9 +50,14 @@ const DashboardCourseCard = ({
 				position: 'relative',
 				marginBottom: '3rem',
 			}}>
-			<CardMedia sx={{ height: '12rem', width: '22rem', objectFit: 'contain' }} image={course.imageUrl} />
+			<CardMedia
+				sx={{ height: '12rem', width: '22rem', objectFit: 'contain' }}
+				image={course.imageUrl}
+			/>
 			<CardContent sx={{ padding: '1rem 1.5rem' }}>
-				<Typography variant='body1' sx={{ textAlign: 'center', color: theme.palette.primary.main }}>
+				<Typography
+					variant='body1'
+					sx={{ textAlign: 'center', color: theme.palette.primary.main }}>
 					{course.title}
 				</Typography>
 				<Typography
@@ -68,9 +81,16 @@ const DashboardCourseCard = ({
 					position: 'absolute',
 					bottom: 0,
 				}}>
-				<Box sx={{ visibility: isEnrolled ? 'visible' : 'hidden', width: '90%', alignSelf: 'center' }}>
-					<Typography variant='body2' sx={{ textAlign: 'center', marginBottom: '0.2rem' }}>
-						70% Completed
+				<Box
+					sx={{
+						visibility: isEnrolled ? 'visible' : 'hidden',
+						width: '90%',
+						alignSelf: 'center',
+					}}>
+					<Typography
+						variant='body2'
+						sx={{ textAlign: 'center', marginBottom: '0.2rem' }}>
+						In Progress
 					</Typography>
 					<LinearProgress variant='determinate' color='success' value={70} />
 				</Box>
@@ -83,7 +103,10 @@ const DashboardCourseCard = ({
 					}}>
 					<Typography
 						variant='body2'
-						sx={{ visibility: isEnrolled ? 'hidden' : 'visible', color: theme.palette.primary.main }}>
+						sx={{
+							visibility: isEnrolled ? 'hidden' : 'visible',
+							color: theme.palette.primary.main,
+						}}>
 						{course.price}
 					</Typography>
 
@@ -91,7 +114,9 @@ const DashboardCourseCard = ({
 						sx={{
 							...buttonStyles,
 							backgroundColor: isEnrolled ? theme.bgColor?.greenSecondary : 'inherit',
-							color: isEnrolled ? theme.textColor?.common.main : theme.textColor?.greenSecondary.main,
+							color: isEnrolled
+								? theme.textColor?.common.main
+								: theme.textColor?.greenSecondary.main,
 						}}
 						onClick={() => {
 							navigate(
