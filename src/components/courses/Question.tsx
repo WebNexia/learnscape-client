@@ -12,7 +12,10 @@ import { QuestionInterface } from '../../interfaces/question';
 import { useState } from 'react';
 import axios from 'axios';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { UserLessonDataStorage } from '../../contexts/UserCourseLessonDataContextProvider';
+import {
+	UserCoursesIdsWithCourseIds,
+	UserLessonDataStorage,
+} from '../../contexts/UserCourseLessonDataContextProvider';
 import theme from '../../themes';
 
 interface QuestionsProps {
@@ -30,9 +33,11 @@ const Question = ({
 	displayedQuestionNumber,
 	setDisplayedQuestionNumber,
 }: QuestionsProps) => {
-	const { userId, lessonId, courseId, userCourseId } = useParams();
+	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const navigate = useNavigate();
 
+	//storing parameters from the URL
+	const { userId, lessonId, courseId, userCourseId } = useParams();
 	const location = useLocation();
 	const searchParams = new URLSearchParams(location.search);
 	const nextLessonId = searchParams.get('next');
@@ -44,6 +49,7 @@ const Question = ({
 			return JSON.parse(isCompleted);
 		}
 	});
+	/////////////////////////////////////////////////////////////
 
 	const [value, setValue] = useState<string>(() => {
 		if (isLessonCompleted && question.correctAnswer) {
@@ -57,6 +63,29 @@ const Question = ({
 	const [helperText, setHelperText] = useState<string>('Choose wisely');
 	const [isAnswerCorrect, setIsAnswerCorrect] = useState<boolean>(false);
 
+	const userCourseData = localStorage.getItem('userCourseData');
+	let parsedUserCourseData: UserCoursesIdsWithCourseIds[] = [];
+	if (userCourseData !== null) {
+		parsedUserCourseData = JSON.parse(userCourseData);
+	}
+	const [isCourseCompleted, setIsCourseCompleted] = useState<boolean>(() => {
+		// Find the user course data that matches the userCourseId
+		const currentUserCourseData: UserCoursesIdsWithCourseIds | undefined =
+			parsedUserCourseData.find(
+				(data: UserCoursesIdsWithCourseIds) => data.userCourseId === userCourseId
+			);
+
+		// Check if currentUserCourseData exists
+		if (currentUserCourseData) {
+			// Return the isCourseCompleted value if currentUserCourseData exists
+			return currentUserCourseData.isCourseCompleted || false; // Return false if undefined
+		} else {
+			// Return a default value if currentUserCourseData is undefined
+			return false;
+		}
+	});
+
+	//parsing userLesson data and its id
 	const userLessonData = localStorage.getItem('userLessonData');
 	let parsedUserLessonData: UserLessonDataStorage[] = [];
 	if (userLessonData !== null) {
@@ -66,9 +95,9 @@ const Question = ({
 	const userLessonId = parsedUserLessonData.filter(
 		(data: UserLessonDataStorage) => data.lessonId === lessonId && data.courseId === courseId
 	)[0]?.userLessonId;
+	//////////////////////////////////////////////////////////////////
 
-	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
-
+	//creating userQuestion when the question is answered correctly and updating local storage and DB accordingly
 	const createUserQuestion = async () => {
 		try {
 			await axios.post(`${base_url}/userQuestions`, {
@@ -80,10 +109,16 @@ const Question = ({
 				isCompleted: true,
 				isInProgress: false,
 			});
-			await axios.patch(`${base_url}/userLessons/${userLessonId}`, {
-				currentQuestion: displayedQuestionNumber + 1,
-			});
 
+			//updating current lesson's current question number(next question's number) if not last question
+			if (displayedQuestionNumber + 1 <= numberOfQuestions) {
+				await axios.patch(`${base_url}/userLessons/${userLessonId}`, {
+					currentQuestion: displayedQuestionNumber + 1,
+				});
+			}
+			////////////////////////////////////////////////////////////////////////////
+
+			//completing lesson after answering last question correctly and navigating back to the course page
 			if (displayedQuestionNumber === numberOfQuestions) {
 				await axios.patch(`${base_url}/userLessons/${userLessonId}`, {
 					isCompleted: true,
@@ -95,6 +130,7 @@ const Question = ({
 				);
 				setIsLessonCompleted(true);
 
+				//creating new userLesson for next lesson if exists and updating local storage
 				if (nextLessonId !== null) {
 					const responseUserLesson = await axios.post(`${base_url}/userLessons`, {
 						lessonId: nextLessonId,
@@ -127,16 +163,33 @@ const Question = ({
 							JSON.stringify(parsedUserLessonData)
 						);
 					}
+				} else if (nextLessonId === null && nextLessonOrder === null) {
+					await axios.patch(`${base_url}/usercourses/${userCourseId}`, {
+						isCompleted: true,
+						isInProgress: false,
+					});
+
+					setIsCourseCompleted(true);
+
+					const userCourseIndexToUpdate = parsedUserCourseData.findIndex(
+						(item) => item.userCourseId === userCourseId
+					);
+					parsedUserCourseData[userCourseIndexToUpdate].isCourseCompleted = true;
+					parsedUserCourseData[userCourseIndexToUpdate].isCourseInProgress = false;
+					localStorage.setItem('userCourseData', JSON.stringify(parsedUserCourseData));
 				}
-				const indexToUpdate = parsedUserLessonData.findIndex(
+				//////////////////////////////////////////////////////////////
+
+				//updating userLesson progress
+				const userLessonIndexToUpdate = parsedUserLessonData.findIndex(
 					(item) => item.userLessonId === userLessonId
 				);
-				console.log(indexToUpdate);
-				parsedUserLessonData[indexToUpdate].isCompleted = true;
-				parsedUserLessonData[indexToUpdate].isInProgress = false;
-				console.log(parsedUserLessonData);
+				parsedUserLessonData[userLessonIndexToUpdate].isCompleted = true;
+				parsedUserLessonData[userLessonIndexToUpdate].isInProgress = false;
 				localStorage.setItem('userLessonData', JSON.stringify(parsedUserLessonData));
+				///////////////////////////////////////////////////////////////
 			}
+			///////////////////////////////////////////////////////////////
 		} catch (error) {
 			console.log(error);
 		}
@@ -263,7 +316,11 @@ const Question = ({
 						(!isAnswerCorrect || displayedQuestionNumber + 1 > numberOfQuestions) &&
 						!isLessonCompleted
 					}>
-					{displayedQuestionNumber === numberOfQuestions ? 'Complete Lesson' : 'Next'}
+					{displayedQuestionNumber === numberOfQuestions && isCourseCompleted
+						? 'Complete Course'
+						: displayedQuestionNumber === numberOfQuestions && !isCourseCompleted
+						? 'Complete Lesson'
+						: 'Next'}
 				</Button>
 			</Box>
 		</Box>

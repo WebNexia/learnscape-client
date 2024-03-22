@@ -12,17 +12,15 @@ const CoursePage = () => {
 	const { singleCourse, fetchSingleCourseData } = useContext(UserCourseLessonDataContext);
 	const { courseId, userCourseId } = useParams();
 
-	let courseIdUserCourseIds: UserCoursesIdsWithCourseIds[] = [];
+	let userCourseData: UserCoursesIdsWithCourseIds[] = [];
 
 	const [isEnrolledStatus, setIsEnrolledStatus] = useState<boolean>(false);
 
 	useEffect(() => {
-		const currentUserCourseIds: string | null = localStorage.getItem('userCoursesIds');
-		if (currentUserCourseIds !== null) {
-			courseIdUserCourseIds = JSON.parse(currentUserCourseIds);
-			setIsEnrolledStatus(
-				courseIdUserCourseIds.some((courseIdUserCourseId) => courseIdUserCourseId.courseId === courseId)
-			);
+		const currentUserCourseData: string | null = localStorage.getItem('userCourseData');
+		if (currentUserCourseData !== null) {
+			userCourseData = JSON.parse(currentUserCourseData);
+			setIsEnrolledStatus(userCourseData.some((data) => data.courseId === courseId));
 		}
 
 		if (courseId) {

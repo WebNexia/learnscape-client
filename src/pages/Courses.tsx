@@ -19,7 +19,12 @@ const Courses = () => {
 			<Box sx={{ width: '100%' }}>
 				<Box sx={{ margin: '2rem 0 2rem 3rem' }}>
 					<FormControlLabel
-						control={<Checkbox checked={checked} onChange={(e) => setChecked(e.target.checked)} />}
+						control={
+							<Checkbox
+								checked={checked}
+								onChange={(e) => setChecked(e.target.checked)}
+							/>
+						}
 						label='Show only my courses'
 					/>
 				</Box>
@@ -32,19 +37,28 @@ const Courses = () => {
 						margin: '0 3rem',
 					}}>
 					{data.map((course: FilteredCourse) => {
-						let courseIdUserCourseIds: UserCoursesIdsWithCourseIds[] = [];
+						let userCourseData: UserCoursesIdsWithCourseIds[] = [];
 
-						const storedUserCourseIds: string | null = localStorage.getItem('userCoursesIds');
-						if (storedUserCourseIds !== null) {
-							courseIdUserCourseIds = JSON.parse(storedUserCourseIds);
+						const storedUserCourseData: string | null =
+							localStorage.getItem('userCourseData');
+						if (storedUserCourseData !== null) {
+							userCourseData = JSON.parse(storedUserCourseData);
 						}
-						const isEnrolled: boolean = courseIdUserCourseIds
-							?.map((courseIdUserCourseId) => courseIdUserCourseId.courseId)
+						const isEnrolled: boolean = userCourseData
+							?.map((data) => data.courseId)
 							.includes(course._id);
 
-						const userCourseId: string = courseIdUserCourseIds?.filter(
-							(courseIdUserCourseId) => courseIdUserCourseId?.courseId === course._id
+						const userCourseId: string = userCourseData?.filter(
+							(data) => data?.courseId === course._id
 						)[0]?.userCourseId;
+
+						const singleUserCourseData: UserCoursesIdsWithCourseIds | undefined =
+							userCourseData.find(
+								(data: UserCoursesIdsWithCourseIds) =>
+									data.userCourseId === userCourseId
+							);
+						const isCourseCompleted: boolean =
+							singleUserCourseData?.isCourseCompleted || false;
 
 						return (
 							<DashboardCourseCard
@@ -54,6 +68,7 @@ const Courses = () => {
 								userId={id}
 								displayMyCourses={checked}
 								userCourseId={userCourseId}
+								isCourseCompleted={isCourseCompleted}
 							/>
 						);
 					})}

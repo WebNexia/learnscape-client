@@ -18,6 +18,7 @@ interface DashboardCourseCardProps {
 	userId: string | undefined;
 	displayMyCourses: boolean;
 	userCourseId: string;
+	isCourseCompleted: boolean;
 }
 
 const DashboardCourseCard = ({
@@ -26,6 +27,7 @@ const DashboardCourseCard = ({
 	userId,
 	displayMyCourses,
 	userCourseId,
+	isCourseCompleted,
 }: DashboardCourseCardProps) => {
 	const navigate = useNavigate();
 
@@ -90,9 +92,13 @@ const DashboardCourseCard = ({
 					<Typography
 						variant='body2'
 						sx={{ textAlign: 'center', marginBottom: '0.2rem' }}>
-						In Progress
+						{isCourseCompleted ? 'Completed' : 'In Progress'}
 					</Typography>
-					<LinearProgress variant='determinate' color='success' value={70} />
+					<LinearProgress
+						variant='determinate'
+						color='success'
+						value={isCourseCompleted ? 100 : 70}
+					/>
 				</Box>
 				<Box
 					sx={{
@@ -126,7 +132,11 @@ const DashboardCourseCard = ({
 							);
 							window.scrollTo({ top: 0, behavior: 'smooth' });
 						}}>
-						{isEnrolled ? 'Continue' : 'Explore'}
+						{isEnrolled && isCourseCompleted
+							? 'Review Course'
+							: isEnrolled && !isCourseCompleted
+							? 'Continue'
+							: 'Explore'}
 					</Button>
 				</Box>
 			</Box>

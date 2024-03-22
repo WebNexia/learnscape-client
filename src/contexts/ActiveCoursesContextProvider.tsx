@@ -4,6 +4,7 @@ import { ReactNode, createContext } from 'react';
 import { useQuery } from 'react-query';
 import { FilteredCourse } from '../interfaces/course';
 import theme from '../themes';
+import { SentimentVeryDissatisfied } from '@mui/icons-material';
 
 interface ActiveCoursesContextTypes {
 	data: FilteredCourse[];
@@ -60,7 +61,29 @@ const ActiveCoursesContextProvider = (props: ActiveCoursesContextProviderProps) 
 	}
 
 	if (isError) {
-		return <Box>Error fetching data</Box>;
+		return (
+			<Box
+				sx={{
+					display: 'flex',
+					flexDirection: 'column',
+					justifyContent: 'center',
+					alignItems: 'center',
+					backgroundColor: theme.bgColor?.secondary,
+					height: '100vh',
+				}}>
+				<Typography
+					sx={{
+						margin: '2rem',
+						fontSize: '2rem',
+						fontFamily: 'Poppins',
+						fontWeight: 500,
+						color: '#01435A',
+					}}>
+					Ooops, something went wrong!
+				</Typography>
+				<SentimentVeryDissatisfied fontSize='large' color='error' />
+			</Box>
+		);
 	}
 	return (
 		<ActiveCoursesContext.Provider value={{ data }}>

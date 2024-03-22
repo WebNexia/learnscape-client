@@ -6,7 +6,7 @@ import axios from 'axios';
 import Questions from '../components/courses/Questions';
 import ReactPlayer from 'react-player';
 import DashboardHeader from '../components/layouts/DashboardLayout/DashboardHeader';
-import { KeyboardBackspaceOutlined } from '@mui/icons-material';
+import { KeyboardBackspaceOutlined, SentimentVeryDissatisfied } from '@mui/icons-material';
 
 const LessonPage = () => {
 	const { userId, lessonId } = useParams();
@@ -69,7 +69,29 @@ const LessonPage = () => {
 	}
 
 	if (userError || lessonError) {
-		return <Box>Error fetching data</Box>;
+		return (
+			<Box
+				sx={{
+					display: 'flex',
+					flexDirection: 'column',
+					justifyContent: 'center',
+					alignItems: 'center',
+					backgroundColor: theme.bgColor?.secondary,
+					height: '100vh',
+				}}>
+				<Typography
+					sx={{
+						margin: '2rem',
+						fontSize: '2rem',
+						fontFamily: 'Poppins',
+						fontWeight: 500,
+						color: '#01435A',
+					}}>
+					Ooops, something went wrong!
+				</Typography>
+				<SentimentVeryDissatisfied fontSize='large' color='error' />
+			</Box>
+		);
 	}
 	console.log(userData);
 

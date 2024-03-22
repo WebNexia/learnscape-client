@@ -19,6 +19,8 @@ interface UserCoursesIdsContextProviderProps {
 export interface UserCoursesIdsWithCourseIds {
 	courseId: string;
 	userCourseId: string;
+	isCourseCompleted: boolean;
+	isCourseInProgress: boolean;
 }
 
 export interface UserLessonDataStorage {
@@ -54,17 +56,22 @@ const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProvide
 		try {
 			const response = await axios.get(`${base_url}/usercourses/user/${userId}`);
 
-			const userCourseIds: UserCoursesIdsWithCourseIds[] = response.data.response.reduce(
+			const userCourseData: UserCoursesIdsWithCourseIds[] = response.data.response.reduce(
 				(acc: UserCoursesIdsWithCourseIds[], value: UserCoursesByUserId) => {
 					if (value.courseId && value.courseId._id) {
-						acc.push({ courseId: value.courseId._id, userCourseId: value._id });
+						acc.push({
+							courseId: value.courseId._id,
+							userCourseId: value._id,
+							isCourseCompleted: value.isCompleted,
+							isCourseInProgress: value.isInProgress,
+						});
 					}
 					return acc;
 				},
 				[]
 			);
 
-			localStorage.setItem('userCoursesIds', JSON.stringify(userCourseIds));
+			localStorage.setItem('userCourseData', JSON.stringify(userCourseData));
 		} catch (error) {
 			console.log(error);
 		}
