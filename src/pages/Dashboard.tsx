@@ -6,6 +6,7 @@ import { useQuery } from 'react-query';
 import DashboardPagesLayout from '../components/layouts/DashboardLayout/DashboardPagesLayout';
 import { UserCourseLessonDataContext } from '../contexts/UserCourseLessonDataContextProvider';
 import theme from '../themes';
+import { SentimentVeryDissatisfied } from '@mui/icons-material';
 
 const Dashboard = () => {
 	const navigate = useNavigate();
@@ -86,7 +87,29 @@ const Dashboard = () => {
 	}
 
 	if (isError) {
-		return <Box>Error fetching data</Box>;
+		return (
+			<Box
+				sx={{
+					display: 'flex',
+					flexDirection: 'column',
+					justifyContent: 'center',
+					alignItems: 'center',
+					backgroundColor: theme.bgColor?.secondary,
+					height: '100vh',
+				}}>
+				<Typography
+					sx={{
+						margin: '2rem',
+						fontSize: '2rem',
+						fontFamily: 'Poppins',
+						fontWeight: 500,
+						color: '#01435A',
+					}}>
+					Ooops, something went wrong!
+				</Typography>
+				<SentimentVeryDissatisfied fontSize='large' color='error' />
+			</Box>
+		);
 	}
 
 	return (

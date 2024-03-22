@@ -107,11 +107,16 @@ const CoursePageBanner = ({
 			}
 
 			let updatedUserCoursesIds: UserCoursesIdsWithCourseIds[] = [];
-			const storedUserCoursesIds = localStorage.getItem('userCoursesIds');
+			const storedUserCoursesIds = localStorage.getItem('userCourseData');
 			if (storedUserCoursesIds !== null && courseId) {
 				updatedUserCoursesIds = JSON.parse(storedUserCoursesIds);
-				updatedUserCoursesIds.push({ courseId, userCourseId: response.data._id });
-				localStorage.setItem('userCoursesIds', JSON.stringify(updatedUserCoursesIds));
+				updatedUserCoursesIds.push({
+					courseId,
+					userCourseId: response.data._id,
+					isCourseCompleted: false,
+					isCourseInProgress: true,
+				});
+				localStorage.setItem('userCourseData', JSON.stringify(updatedUserCoursesIds));
 			}
 
 			setDisplayEnrollmentMsg(true);
