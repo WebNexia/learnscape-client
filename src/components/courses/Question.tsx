@@ -316,11 +316,14 @@ const Question = ({
 						(!isAnswerCorrect || displayedQuestionNumber + 1 > numberOfQuestions) &&
 						!isLessonCompleted
 					}>
-					{displayedQuestionNumber === numberOfQuestions && isCourseCompleted
+					{displayedQuestionNumber === numberOfQuestions &&
+					(nextLessonId === null || isCourseCompleted)
 						? 'Complete Course'
 						: displayedQuestionNumber === numberOfQuestions && !isCourseCompleted
 						? 'Complete Lesson'
-						: 'Next'}
+						: displayedQuestionNumber < numberOfQuestions
+						? 'Next'
+						: null}
 				</Button>
 			</Box>
 		</Box>
