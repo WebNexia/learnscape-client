@@ -74,7 +74,6 @@ const Lesson = ({
 
 			window.scrollTo({ top: 0, behavior: 'smooth' });
 		};
-		console.log(isLessonRegisteredInThisCourse);
 
 		if (isEnrolledStatus && isLessonRegisteredInThisCourse) {
 			if (

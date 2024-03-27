@@ -1,4 +1,4 @@
-interface BaseCourse {
+export interface BaseCourse {
 	_id: string;
 	title: string;
 	description: string;
@@ -10,7 +10,12 @@ interface BaseCourse {
 }
 
 export interface Course extends BaseCourse {
-	lessonCount?: number;
+	lessonCount: number;
+	startingDate: string;
+	format: string;
+	durationWeeks: string;
+	durationHours: string;
+	priceCurrency: string;
 }
 
 export interface FilteredCourse extends BaseCourse {
