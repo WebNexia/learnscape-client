@@ -14,7 +14,11 @@ interface DashboardPagesLayoutProps {
 	};
 }
 
-const DashboardPagesLayout = ({ children, pageName, customSettings }: DashboardPagesLayoutProps) => {
+const DashboardPagesLayout = ({
+	children,
+	pageName,
+	customSettings,
+}: DashboardPagesLayoutProps) => {
 	return (
 		<Box
 			sx={{

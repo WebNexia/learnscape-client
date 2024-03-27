@@ -12,10 +12,12 @@ import Messages from './pages/Messages';
 import Community from './pages/Community';
 import Settings from './pages/Settings';
 import CoursePage from './pages/CoursePage';
-import ActiveCoursesContextProvider from './contexts/ActiveCoursesContextProvider';
+import ActiveCoursesContextProvider from './contexts/CoursesContextProvider';
 import MediaQueryContextProvider from './contexts/MediaQueryContextProvider';
 import LessonPage from './pages/LessonPage';
 import UserCourseLessonDataContextProvider from './contexts/UserCourseLessonDataContextProvider';
+import AdminDashboard from './pages/AdminDashboard';
+import AdminCourseEditPage from './pages/AdminCourseEditPage';
 
 const queryClient = new QueryClient();
 
@@ -31,6 +33,15 @@ function App() {
 									<Route path='' element={<HomePage />} />
 									<Route path='/auth' element={<Auth />} />
 									<Route path='/dashboard/user/:id' element={<Dashboard />} />
+									<Route
+										path='/admin/dashboard/user/:userId'
+										element={<AdminDashboard />}
+									/>
+									<Route
+										path='admin/course-edit/user/:userId/course/:courseId'
+										element={<AdminCourseEditPage />}
+									/>
+
 									<Route path='/courses/user/:id' element={<Courses />} />
 									<Route path='/schedule/user/:id' element={<Schedule />} />
 									<Route path='/messages/user/:id' element={<Messages />} />
