@@ -50,7 +50,11 @@ const Auth = () => {
 	const signUp = async (e: FormEvent) => {
 		e.preventDefault();
 		try {
-			const response = await axios.post(`${base_url}/users/signup`, { username, email, password });
+			const response = await axios.post(`${base_url}/users/signup`, {
+				username,
+				email,
+				password,
+			});
 
 			if (response.data.status !== 409) {
 				signIn(e);
@@ -151,27 +155,19 @@ const Auth = () => {
 												alignItems: 'center',
 											}}>
 											<CustomTextField
-												variant='outlined'
 												label='Email Address'
 												type={TextFieldTypes.EMAIL}
 												onChange={(e) => setEmail(e.target.value)}
 												value={email}
-												size='small'
-												fullWidth={true}
-												required
 											/>
 											<CustomTextField
-												variant='outlined'
 												label='Password'
 												type={TextFieldTypes.PASSWORD}
 												onChange={(e) => setPassword(e.target.value)}
 												value={password}
-												size='small'
-												fullWidth={true}
-												required
 											/>
 										</Box>
-										<Button variant='contained' fullWidth sx={submitBtnStyles} type='submit'>
+										<Button fullWidth sx={submitBtnStyles} type='submit'>
 											Sign In
 										</Button>
 									</form>
@@ -188,38 +184,30 @@ const Auth = () => {
 												alignItems: 'center',
 											}}>
 											<CustomTextField
-												variant='outlined'
 												label='Email Address'
 												type={TextFieldTypes.EMAIL}
 												onChange={(e) => setEmail(e.target.value)}
 												value={email}
-												size='small'
-												fullWidth={true}
-												required
 											/>
 
 											<CustomTextField
-												variant='outlined'
 												label='Username'
 												type={TextFieldTypes.TEXT}
 												onChange={(e) => setUsername(e.target.value)}
 												value={username}
-												size='small'
-												fullWidth={true}
-												required
 											/>
 											<CustomTextField
-												variant='outlined'
 												label='Password'
 												type={TextFieldTypes.PASSWORD}
 												onChange={(e) => setPassword(e.target.value)}
 												value={password}
-												size='small'
-												fullWidth={true}
-												required
 											/>
 										</Box>
-										<Button variant='contained' fullWidth sx={submitBtnStyles} type='submit'>
+										<Button
+											variant='contained'
+											fullWidth
+											sx={submitBtnStyles}
+											type='submit'>
 											Sign Up
 										</Button>
 									</form>

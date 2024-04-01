@@ -11,10 +11,10 @@ export interface BaseCourse {
 
 export interface Course extends BaseCourse {
 	lessonCount: number;
-	startingDate: string;
+	startingDate: Date;
 	format: string;
-	durationWeeks: string;
-	durationHours: string;
+	durationWeeks: number;
+	durationHours: number;
 	priceCurrency: string;
 }
 
@@ -27,10 +27,10 @@ export interface UserCourseByUserId extends BaseCourse {
 }
 
 export interface SingleCourse extends BaseCourse {
-	startingDate: string;
+	startingDate: Date;
 	format: string;
-	durationWeeks: string;
-	durationHours: string;
+	durationWeeks: number;
+	durationHours: number;
 	priceCurrency: string;
 	chapters: Chapter[];
 }
