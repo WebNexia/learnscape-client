@@ -15,6 +15,11 @@ interface CustomTextFieldProps {
 	InputLabelProps?: Partial<InputLabelProps>;
 	maxRows?: number;
 	disabled?: boolean;
+	error?: boolean;
+	helperText?: string;
+	helperTextColor?: string; // Default value for helper text color
+	helperBackgroundColor?: string | undefined; // Default value for helper text background color
+	placeholder?: string;
 }
 
 const CustomTextField = ({
@@ -31,6 +36,12 @@ const CustomTextField = ({
 	InputLabelProps,
 	maxRows,
 	disabled,
+	error,
+	helperText,
+	helperTextColor,
+	helperBackgroundColor = 'transparent',
+	placeholder,
+
 	...rest
 }: CustomTextFieldProps) => {
 	return (
@@ -48,6 +59,10 @@ const CustomTextField = ({
 			InputLabelProps={InputLabelProps}
 			maxRows={maxRows}
 			disabled={disabled}
+			error={error}
+			helperText={helperText}
+			placeholder={placeholder}
+			InputProps={{ style: { backgroundColor: helperBackgroundColor } }}
 			{...rest}
 		/>
 	);

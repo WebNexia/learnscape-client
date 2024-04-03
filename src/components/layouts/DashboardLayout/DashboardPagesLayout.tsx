@@ -32,7 +32,8 @@ const DashboardPagesLayout = ({
 					display: 'flex',
 					flexDirection: 'column',
 					minHeight: '100vh',
-					width: 'calc(100vw - 10.95rem)',
+					width: 'calc(100% - 10rem)',
+					marginLeft: '10rem',
 					position: 'absolute',
 					right: 0,
 				}}>
