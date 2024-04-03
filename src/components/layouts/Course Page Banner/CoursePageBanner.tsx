@@ -9,8 +9,8 @@ import {
 	Snackbar,
 	Typography,
 } from '@mui/material';
-import theme from '../themes';
-import { SingleCourse } from '../interfaces/course';
+import theme from '../../../themes';
+import { SingleCourse } from '../../../interfaces/course';
 import { KeyboardBackspaceOutlined } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import CoursePageBannerDataCard from './CoursePageBannerDataCard';
@@ -19,8 +19,8 @@ import { useState } from 'react';
 import {
 	UserCoursesIdsWithCourseIds,
 	UserLessonDataStorage,
-} from '../contexts/UserCourseLessonDataContextProvider';
-import { BaseChapter } from '../interfaces/chapter';
+} from '../../../contexts/UserCourseLessonDataContextProvider';
+import { BaseChapter } from '../../../interfaces/chapter';
 
 interface CoursePageBannerProps {
 	course: SingleCourse;

@@ -80,13 +80,27 @@ const AdminCourseEditPage = () => {
 		e.preventDefault();
 		if (singleCourse !== undefined) {
 			try {
-				const response = await axios.patch(`${base_url}/courses/${courseId}`, singleCourse);
-				console.log(response.data);
+				await axios.patch(`${base_url}/courses/${courseId}`, singleCourse);
 				updateCourse(singleCourse);
 			} catch (error) {
 				console.log(error);
 			}
 		}
+	};
+
+	const formatDate = (date: Date) => {
+		if (!(date instanceof Date)) return ''; // Return empty string if date is not valid
+
+		const day = String(date.getDate()).padStart(2, '0');
+		const month = String(date.getMonth() + 1).padStart(2, '0');
+		const year = date.getFullYear();
+
+		return `${year}-${month}-${day}`;
+	};
+
+	const parseDate = (dateString: string) => {
+		const [year, month, day] = dateString.split('-');
+		return new Date(`${year}-${month}-${day}`);
 	};
 
 	return (
@@ -500,22 +514,23 @@ const AdminCourseEditPage = () => {
 							<CustomTextField
 								sx={{ marginTop: '0.5rem', backgroundColor: theme.bgColor?.common }}
 								value={
-									singleCourse?.startingDate instanceof Date
-										? singleCourse?.startingDate.toISOString().split('T')[0]
+									singleCourse && singleCourse.startingDate
+										? formatDate(new Date(singleCourse.startingDate)) // Format the starting date
 										: ''
 								}
 								onChange={(e) => {
-									const selectedDate = new Date(e.target.value);
-									if (singleCourse?.startingDate !== undefined) {
+									const selectedDate = parseDate(e.target.value); // Parse the input date
+									if (singleCourse && singleCourse.startingDate !== undefined) {
 										setSingleCourse({
 											...singleCourse,
-											startingDate: selectedDate,
+											startingDate: selectedDate, // Assign parsed date object here
 										});
 									}
 								}}
 								type='date'
 							/>
 						</Box>
+
 						<Box sx={{ mt: '2rem' }}>
 							<Typography variant='h3'>Duration in Weeks</Typography>
 							<CustomTextField

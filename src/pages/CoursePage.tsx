@@ -1,6 +1,6 @@
 import DashboardPagesLayout from '../components/layouts/DashboardLayout/DashboardPagesLayout';
 import { useParams } from 'react-router-dom';
-import CoursePageBanner from '../components/CoursePageBanner';
+import CoursePageBanner from '../components/layouts/Course Page Banner/CoursePageBanner';
 import Chapters from '../components/courses/Chapters';
 import {
 	UserCourseLessonDataContext,
