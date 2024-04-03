@@ -81,6 +81,17 @@ const Sidebar = () => {
 						marginTop: '2rem',
 					}}>
 					<SidebarBtn
+						btnText='Admin DB'
+						IconName={DashboardIcon}
+						onClick={() =>
+							navigateWithPage(
+								PageName.DASHBOARD,
+								`/admin/dashboard/user/${id || userId}`
+							)
+						}
+						selectedPage={selectedPage}
+					/>
+					<SidebarBtn
 						btnText='Dashboard'
 						IconName={DashboardIcon}
 						onClick={() =>

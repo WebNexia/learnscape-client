@@ -1,5 +1,5 @@
 import { Card, Typography } from '@mui/material';
-import theme from '../themes';
+import theme from '../../../themes';
 
 interface CoursePageBannerDataCardProps {
 	title: string;

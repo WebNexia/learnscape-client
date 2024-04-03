@@ -17,8 +17,6 @@ interface CustomTextFieldProps {
 	disabled?: boolean;
 	error?: boolean;
 	helperText?: string;
-	helperTextColor?: string; // Default value for helper text color
-	helperBackgroundColor?: string | undefined; // Default value for helper text background color
 	placeholder?: string;
 }
 
@@ -38,8 +36,6 @@ const CustomTextField = ({
 	disabled,
 	error,
 	helperText,
-	helperTextColor,
-	helperBackgroundColor = 'transparent',
 	placeholder,
 
 	...rest
@@ -62,7 +58,6 @@ const CustomTextField = ({
 			error={error}
 			helperText={helperText}
 			placeholder={placeholder}
-			InputProps={{ style: { backgroundColor: helperBackgroundColor } }}
 			{...rest}
 		/>
 	);
