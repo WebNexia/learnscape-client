@@ -35,7 +35,7 @@ const CoursePageBanner = ({
 }: CoursePageBannerProps) => {
 	const firstChapter: BaseChapter =
 		course && course?.chapters.sort((a, b) => a.order - b.order)[0];
-	const firstLessonId: string = firstChapter.lessons.sort((a, b) => a.order - b.order)[0]._id;
+	const firstLessonId: string = firstChapter?.lessons.sort((a, b) => a.order - b.order)[0]?._id;
 
 	const navigate = useNavigate();
 

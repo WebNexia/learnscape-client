@@ -3,14 +3,18 @@ import theme from '../themes';
 
 interface CoursePageBannerDataCardProps {
 	title: string;
-	content: string;
+	content: string | number;
 	customSettings?: {
 		bgColor?: string;
 		color?: string;
 	};
 }
 
-const CoursePageBannerDataCard = ({ title, content, customSettings }: CoursePageBannerDataCardProps) => {
+const CoursePageBannerDataCard = ({
+	title,
+	content,
+	customSettings,
+}: CoursePageBannerDataCardProps) => {
 	return (
 		<Card
 			sx={{
@@ -24,12 +28,17 @@ const CoursePageBannerDataCard = ({ title, content, customSettings }: CoursePage
 				margin: '0 0.3rem 0.3rem 0',
 				padding: '0.5rem 0.5rem 1rem 0.5rem',
 			}}>
-			<Typography variant='body2' sx={{ fontSize: '0.85rem', color: customSettings?.color || 'inherit' }}>
+			<Typography
+				variant='body2'
+				sx={{ fontSize: '0.85rem', color: customSettings?.color || 'inherit' }}>
 				{title}
 			</Typography>
 			<Typography
 				variant='body1'
-				sx={{ color: customSettings?.color || theme.textColor?.primary.main, fontSize: '1rem' }}>
+				sx={{
+					color: customSettings?.color || theme.textColor?.primary.main,
+					fontSize: '1rem',
+				}}>
 				{content}
 			</Typography>
 		</Card>

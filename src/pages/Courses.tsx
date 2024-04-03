@@ -2,7 +2,7 @@ import { Box, Checkbox, FormControlLabel } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/DashboardLayout/DashboardPagesLayout';
 import { useContext, useState } from 'react';
 import DashboardCourseCard from '../components/DashboardCourseCard';
-import { Course } from '../interfaces/course';
+import { SingleCourse } from '../interfaces/course';
 import { CoursesContext } from '../contexts/CoursesContextProvider';
 import { useParams } from 'react-router-dom';
 import { UserCoursesIdsWithCourseIds } from '../contexts/UserCourseLessonDataContextProvider';
@@ -39,8 +39,8 @@ const Courses = () => {
 						margin: '0 3rem',
 					}}>
 					{sortedData
-						.filter((course: Course) => course.isActive === true)
-						.map((course: Course) => {
+						.filter((course: SingleCourse) => course.isActive === true)
+						.map((course: SingleCourse) => {
 							let userCourseData: UserCoursesIdsWithCourseIds[] = [];
 
 							const storedUserCourseData: string | null =

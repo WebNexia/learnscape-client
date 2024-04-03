@@ -5,16 +5,17 @@ import { useQuery } from 'react-query';
 
 import { SentimentVeryDissatisfied } from '@mui/icons-material';
 import theme from '../themes';
-import { Course } from '../interfaces/course';
+import { Course, SingleCourse } from '../interfaces/course';
 
 interface CoursesContextTypes {
-	data: Course[];
-	sortedData: Course[];
-	sortData: (property: keyof Course, order: 'asc' | 'desc') => void;
-	setSortedData: React.Dispatch<React.SetStateAction<Course[]>>;
+	data: SingleCourse[];
+	sortedData: SingleCourse[];
+	sortData: (property: keyof SingleCourse, order: 'asc' | 'desc') => void;
+	setSortedData: React.Dispatch<React.SetStateAction<SingleCourse[]>>;
 	addNewCourse: (newCourse: any) => void;
 	updateCoursePublishing: (id: string) => void;
 	removeCourse: (id: string) => void;
+	updateCourse: (singleCourse: SingleCourse) => void;
 }
 
 interface CoursesContextProviderProps {
@@ -29,12 +30,13 @@ export const CoursesContext = createContext<CoursesContextTypes>({
 	addNewCourse: () => {},
 	updateCoursePublishing: () => {},
 	removeCourse: () => {},
+	updateCourse: () => {},
 });
 
 const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
-	const [sortedData, setSortedData] = useState<Course[]>([]);
+	const [sortedData, setSortedData] = useState<SingleCourse[]>([]);
 
 	const { data, isLoading, isError } = useQuery('allCourses', async () => {
 		const response = await axios.get(`${base_url}/courses`);
@@ -49,8 +51,8 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 	});
 
 	// Function to handle sorting
-	const sortData = (property: keyof Course, order: 'asc' | 'desc') => {
-		const sortedDataCopy = [...sortedData].sort((a: Course, b: Course) => {
+	const sortData = (property: keyof SingleCourse, order: 'asc' | 'desc') => {
+		const sortedDataCopy = [...sortedData].sort((a: SingleCourse, b: SingleCourse) => {
 			if (order === 'asc') {
 				return a[property] > b[property] ? 1 : -1;
 			} else {
@@ -68,6 +70,16 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 		const updatedCourseList = sortedData.map((course) => {
 			if (course._id === id) {
 				return { ...course, isActive: !course.isActive };
+			}
+			return course;
+		});
+		setSortedData(updatedCourseList);
+	};
+
+	const updateCourse = (singleCourse: SingleCourse) => {
+		const updatedCourseList = sortedData.map((course) => {
+			if (singleCourse._id === course._id) {
+				return singleCourse;
 			}
 			return course;
 		});
@@ -150,6 +162,7 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 				addNewCourse,
 				removeCourse,
 				updateCoursePublishing,
+				updateCourse,
 			}}>
 			{props.children}
 		</CoursesContext.Provider>

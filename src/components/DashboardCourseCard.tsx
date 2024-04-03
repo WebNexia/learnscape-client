@@ -7,13 +7,13 @@ import {
 	LinearProgress,
 	Typography,
 } from '@mui/material';
-import { Course } from '../interfaces/course';
+import { SingleCourse } from '../interfaces/course';
 import { truncateText } from '../utils/TextUtils';
 import theme from '../themes';
 import { useNavigate } from 'react-router-dom';
 
 interface DashboardCourseCardProps {
-	course: Course;
+	course: SingleCourse;
 	isEnrolled: boolean;
 	userId: string | undefined;
 	displayMyCourses: boolean;
