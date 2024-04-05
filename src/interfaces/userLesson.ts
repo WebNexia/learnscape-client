@@ -6,7 +6,6 @@ interface BaseUserLesson {
 	_id: string;
 	userCourseId: string;
 	currentQuestion: number;
-	lessonOrder: number;
 	isCompleted: boolean;
 	isInProgress: boolean;
 	createdAt: string;

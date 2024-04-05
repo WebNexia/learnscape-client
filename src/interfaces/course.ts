@@ -1,3 +1,5 @@
+import { BaseChapter } from './chapter';
+
 export interface BaseCourse {
 	_id: string;
 	title: string;
@@ -32,23 +34,5 @@ export interface SingleCourse extends BaseCourse {
 	durationWeeks: number;
 	durationHours: number;
 	priceCurrency: string;
-	chapters: Chapter[];
-}
-
-interface Chapter {
-	_id: string;
-	title: string;
-	lessonIds: string[];
-	order: number;
-	isActive: boolean;
-	createdAt: string;
-	updatedAt: string;
-	lessons: Lesson[];
-}
-
-interface Lesson {
-	_id: string;
-	title: string;
-	imageUrl: string;
-	order: number;
+	chapters: BaseChapter[];
 }

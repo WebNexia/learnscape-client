@@ -5,7 +5,6 @@ interface BaseLesson {
 	title?: string;
 	type?: string;
 	imageUrl?: string;
-	order: number;
 	isActive?: boolean;
 	createdAt?: string;
 	updatedAt?: string;

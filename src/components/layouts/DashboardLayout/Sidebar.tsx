@@ -85,7 +85,7 @@ const Sidebar = () => {
 						IconName={DashboardIcon}
 						onClick={() =>
 							navigateWithPage(
-								PageName.DASHBOARD,
+								PageName.ADMIN_DASHBOARD,
 								`/admin/dashboard/user/${id || userId}`
 							)
 						}
