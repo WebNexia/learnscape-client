@@ -22,6 +22,11 @@ import CustomErrorMessage from '../components/forms/CustomFields/CustomErrorMess
 import AdminCourseEditChapter from '../components/AdminCourseEditChapter';
 import { BaseChapter } from '../interfaces/chapter';
 
+export interface ChapterUpdateTrack {
+	chapterId: string;
+	isUpdated: boolean;
+}
+
 const AdminCourseEditPage = () => {
 	const { userId, courseId } = useParams();
 	const navigate = useNavigate();
@@ -34,6 +39,7 @@ const AdminCourseEditPage = () => {
 	const [isActive, setIsActive] = useState<boolean>();
 	const [isFree, setIsFree] = useState<boolean>(false);
 	const [isMissingField, setIsMissingField] = useState<boolean>(false);
+	const [isChapterUpdated, setIsChapterUpdated] = useState<ChapterUpdateTrack[]>([]);
 
 	useEffect(() => {
 		if (courseId) {
@@ -46,6 +52,15 @@ const AdminCourseEditPage = () => {
 					}
 					setIsActive(response.data.data[0].isActive);
 					setChapters(response.data.data[0].chapters);
+					const chapterUpdateData: ChapterUpdateTrack[] =
+						response.data.data[0].chapters.reduce(
+							(acc: ChapterUpdateTrack[], value: BaseChapter) => {
+								acc.push({ chapterId: value._id, isUpdated: false });
+								return acc;
+							},
+							[]
+						);
+					setIsChapterUpdated(chapterUpdateData);
 				} catch (error) {
 					console.log(error);
 				}
@@ -89,14 +104,23 @@ const AdminCourseEditPage = () => {
 				updateCourse(singleCourse);
 
 				await Promise.all(
-					chapters.map(async (chapter) => {
-						await axios.patch(`${base_url}/chapters/${chapter._id}`, chapter);
+					chapters.map(async (chapter, index) => {
+						if (isChapterUpdated[index].isUpdated) {
+							await axios.patch(`${base_url}/chapters/${chapter._id}`, chapter);
+						}
 					})
 				);
 			} catch (error) {
 				console.log(error);
 			}
 		}
+
+		setIsChapterUpdated((prevData) => {
+			prevData = prevData.map((data) => {
+				return { ...data, isUpdated: false };
+			});
+			return prevData;
+		});
 	};
 
 	const formatDate = (date: Date) => {
@@ -113,8 +137,6 @@ const AdminCourseEditPage = () => {
 		const [year, month, day] = dateString.split('-');
 		return new Date(`${year}-${month}-${day}`);
 	};
-
-	console.log(singleCourse?.chapters);
 
 	return (
 		<DashboardPagesLayout
@@ -233,7 +255,15 @@ const AdminCourseEditPage = () => {
 									color: theme.textColor?.greenPrimary.main,
 								},
 							}}
-							onClick={() => setIsEditMode(false)}>
+							onClick={() => {
+								setIsEditMode(false);
+								setIsChapterUpdated((prevData) => {
+									prevData = prevData.map((data) => {
+										return { ...data, isUpdated: false };
+									});
+									return prevData;
+								});
+							}}>
 							Cancel
 						</Button>
 					</Box>
@@ -585,6 +615,7 @@ const AdminCourseEditPage = () => {
 						</Box>
 						<Box sx={{ mt: '3rem' }}>
 							<Typography variant='h3'>Chapters</Typography>
+
 							{singleCourse &&
 								singleCourse.chapters.map((chapter) => {
 									return (
@@ -593,6 +624,7 @@ const AdminCourseEditPage = () => {
 											chapter={chapter}
 											setSingleCourse={setSingleCourse}
 											setChapters={setChapters}
+											setIsChapterUpdated={setIsChapterUpdated}
 										/>
 									);
 								})}

@@ -7,17 +7,20 @@ import { useState } from 'react';
 import { Lesson } from '../interfaces/lessons';
 import { useRaisedShadow } from '../hooks/use-raised-shadow';
 import { SingleCourse } from '../interfaces/course';
+import { ChapterUpdateTrack } from '../pages/AdminCourseEditPage';
 
 interface AdminCourseEditChapterProps {
 	chapter: BaseChapter;
 	setSingleCourse: React.Dispatch<React.SetStateAction<SingleCourse | undefined>>;
 	setChapters: React.Dispatch<React.SetStateAction<BaseChapter[]>>;
+	setIsChapterUpdated: React.Dispatch<React.SetStateAction<ChapterUpdateTrack[]>>;
 }
 
 const AdminCourseEditChapter = ({
 	chapter,
 	setSingleCourse,
 	setChapters,
+	setIsChapterUpdated,
 }: AdminCourseEditChapterProps) => {
 	const [lessons, setLessons] = useState<Lesson[]>(chapter.lessons);
 
@@ -25,7 +28,7 @@ const AdminCourseEditChapter = ({
 	const boxShadow = useRaisedShadow(y);
 
 	return (
-		<Box key={chapter._id} sx={{ margin: '1.5rem 0 3rem 0', width: '90%' }}>
+		<Box sx={{ margin: '1.5rem 0 3rem 0', width: '90%' }}>
 			<Box
 				sx={{
 					display: 'flex',
@@ -78,6 +81,17 @@ const AdminCourseEditChapter = ({
 						}
 						return prevCourse; // Return unchanged if prevCourse is undefined
 					});
+					setIsChapterUpdated((prevData: ChapterUpdateTrack[]) => {
+						if (prevData) {
+							prevData = prevData.map((data) => {
+								if (data.chapterId === chapter._id) {
+									return { ...data, isUpdated: true };
+								}
+								return data;
+							})!;
+						}
+						return prevData;
+					});
 				}}>
 				{lessons.map((lesson) => {
 					return (
@@ -129,7 +143,7 @@ const AdminCourseEditChapter = ({
 										<Typography variant='body1'>{lesson.title}</Typography>
 									</Box>
 									<Box>
-										<IconButton>
+										<IconButton onClick={() => {}}>
 											<Delete />
 										</IconButton>
 									</Box>
