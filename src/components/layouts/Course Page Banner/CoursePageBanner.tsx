@@ -33,9 +33,8 @@ const CoursePageBanner = ({
 	isEnrolledStatus,
 	setIsEnrolledStatus,
 }: CoursePageBannerProps) => {
-	const firstChapter: BaseChapter =
-		course && course?.chapters.sort((a, b) => a.order - b.order)[0];
-	const firstLessonId: string = firstChapter?.lessons.sort((a, b) => a.order - b.order)[0]?._id;
+	const firstChapter: BaseChapter = course && course?.chapters[0];
+	const firstLessonId: string = firstChapter?.lessons[0]._id;
 
 	const navigate = useNavigate();
 
@@ -76,7 +75,6 @@ const CoursePageBanner = ({
 				courseId,
 				userCourseId: response.data._id,
 				currentQuestion: 1,
-				lessonOrder: firstChapter.lessons.sort((a, b) => a.order - b.order)[0].order,
 				isCompleted: false,
 				isInProgress: true,
 			});

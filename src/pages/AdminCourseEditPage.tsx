@@ -13,12 +13,21 @@ import { FormEvent, useContext, useEffect, useState } from 'react';
 
 import { useNavigate, useParams } from 'react-router-dom';
 import theme from '../themes';
-import { Delete, Edit, KeyboardBackspaceOutlined } from '@mui/icons-material';
+import { Edit, KeyboardBackspaceOutlined } from '@mui/icons-material';
 import axios from 'axios';
 import { CoursesContext } from '../contexts/CoursesContextProvider';
 import { SingleCourse } from '../interfaces/course';
 import CustomTextField from '../components/forms/CustomFields/CustomTextField';
 import CustomErrorMessage from '../components/forms/CustomFields/CustomErrorMessage';
+import AdminCourseEditChapter from '../components/AdminCourseEditChapter';
+import { BaseChapter } from '../interfaces/chapter';
+import { Reorder, useMotionValue } from 'framer-motion';
+import { useRaisedShadow } from '../hooks/use-raised-shadow';
+
+export interface ChapterUpdateTrack {
+	chapterId: string;
+	isUpdated: boolean;
+}
 
 const AdminCourseEditPage = () => {
 	const { userId, courseId } = useParams();
@@ -28,9 +37,11 @@ const AdminCourseEditPage = () => {
 	const { updateCoursePublishing, updateCourse } = useContext(CoursesContext);
 	const [isEditMode, setIsEditMode] = useState<boolean>(false);
 	const [singleCourse, setSingleCourse] = useState<SingleCourse>();
+	const [chapters, setChapters] = useState<BaseChapter[]>([]);
 	const [isActive, setIsActive] = useState<boolean>();
 	const [isFree, setIsFree] = useState<boolean>(false);
 	const [isMissingField, setIsMissingField] = useState<boolean>(false);
+	const [isChapterUpdated, setIsChapterUpdated] = useState<ChapterUpdateTrack[]>([]);
 
 	useEffect(() => {
 		if (courseId) {
@@ -42,6 +53,16 @@ const AdminCourseEditPage = () => {
 						setIsFree(true);
 					}
 					setIsActive(response.data.data[0].isActive);
+					setChapters(response.data.data[0].chapters);
+					const chapterUpdateData: ChapterUpdateTrack[] =
+						response.data.data[0].chapters.reduce(
+							(acc: ChapterUpdateTrack[], value: BaseChapter) => {
+								acc.push({ chapterId: value._id, isUpdated: false });
+								return acc;
+							},
+							[]
+						);
+					setIsChapterUpdated(chapterUpdateData);
 				} catch (error) {
 					console.log(error);
 				}
@@ -78,14 +99,30 @@ const AdminCourseEditPage = () => {
 
 	const handleCourseUpdate = async (e: FormEvent): Promise<void> => {
 		e.preventDefault();
+
 		if (singleCourse !== undefined) {
 			try {
 				await axios.patch(`${base_url}/courses/${courseId}`, singleCourse);
 				updateCourse(singleCourse);
+
+				await Promise.all(
+					chapters.map(async (chapter, index) => {
+						if (isChapterUpdated[index].isUpdated) {
+							await axios.patch(`${base_url}/chapters/${chapter._id}`, chapter);
+						}
+					})
+				);
 			} catch (error) {
 				console.log(error);
 			}
 		}
+
+		setIsChapterUpdated((prevData) => {
+			prevData = prevData.map((data) => {
+				return { ...data, isUpdated: false };
+			});
+			return prevData;
+		});
 	};
 
 	const formatDate = (date: Date) => {
@@ -102,6 +139,9 @@ const AdminCourseEditPage = () => {
 		const [year, month, day] = dateString.split('-');
 		return new Date(`${year}-${month}-${day}`);
 	};
+
+	const y = useMotionValue(0);
+	const boxShadow = useRaisedShadow(y);
 
 	return (
 		<DashboardPagesLayout
@@ -200,7 +240,8 @@ const AdminCourseEditPage = () => {
 									singleCourse?.description.trim() !== '' &&
 									(isFree ||
 										(singleCourse?.priceCurrency !== '' &&
-											singleCourse?.price !== ''))
+											singleCourse?.price !== '')) &&
+									!chapters.some((chapter) => chapter.title === '')
 								) {
 									setIsEditMode(false);
 									handleCourseUpdate(e);
@@ -209,6 +250,27 @@ const AdminCourseEditPage = () => {
 								}
 							}}>
 							Save
+						</Button>
+						<Button
+							variant='contained'
+							sx={{
+								backgroundColor: theme.bgColor?.greenPrimary,
+								ml: '0.5rem',
+								':hover': {
+									backgroundColor: theme.bgColor?.common,
+									color: theme.textColor?.greenPrimary.main,
+								},
+							}}
+							onClick={() => {
+								setIsEditMode(false);
+								setIsChapterUpdated((prevData) => {
+									prevData = prevData.map((data) => {
+										return { ...data, isUpdated: false };
+									});
+									return prevData;
+								});
+							}}>
+							Cancel
 						</Button>
 					</Box>
 				) : (
@@ -284,64 +346,58 @@ const AdminCourseEditPage = () => {
 					<Box sx={{ mt: '2rem' }}>
 						<Typography variant='h3'>Chapters</Typography>
 						{singleCourse &&
-							singleCourse.chapters
-								.sort((a, b) => a.order - b.order)
-								.map((chapter) => {
-									return (
-										<Box key={chapter._id} sx={{ margin: '1rem 0 3rem 0' }}>
-											<Box display='flex'>
-												<Typography variant='h6' sx={{ mb: '1rem' }}>
-													{chapter.title}
-												</Typography>
-											</Box>
-											{chapter.lessons
-												.sort((a, b) => a.order - b.order)
-												.map((lesson) => {
-													return (
-														<Box
-															key={lesson._id}
-															sx={{
-																display: 'flex',
-																alignItems: 'center',
-																height: '5rem',
-																width: '90%',
-																backgroundColor:
-																	theme.bgColor?.common,
-																margin: '1.25rem 0',
-																borderRadius: '0.25rem',
-																boxShadow:
-																	'0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
-															}}>
-															<Box
-																sx={{
-																	height: '5rem',
-																	width: '6rem',
-																}}>
-																<img
-																	src={lesson.imageUrl}
-																	alt='lesson_img'
-																	height='100%'
-																	width='100%'
-																	style={{
-																		borderRadius:
-																			'0.25rem 0 0 0.25rem',
-																	}}
-																/>
-															</Box>
-															<Box
-																sx={{
-																	ml: '1rem',
-																}}>
-																<Typography variant='body1'>
-																	{lesson.title}
-																</Typography>
-															</Box>
-														</Box>
-													);
-												})}
+							singleCourse.chapters.map((chapter) => {
+								return (
+									<Box key={chapter._id} sx={{ margin: '1rem 0 4rem 0' }}>
+										<Box display='flex'>
+											<Typography variant='h6' sx={{ mb: '1rem' }}>
+												{chapter.title}
+											</Typography>
 										</Box>
-									);
-								})}
+										{chapter.lessons.map((lesson) => {
+											return (
+												<Box
+													key={lesson._id}
+													sx={{
+														display: 'flex',
+														alignItems: 'center',
+														height: '5rem',
+														width: '90%',
+														backgroundColor: theme.bgColor?.common,
+														margin: '1.25rem 0',
+														borderRadius: '0.25rem',
+														boxShadow:
+															'0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
+													}}>
+													<Box
+														sx={{
+															height: '5rem',
+															width: '6rem',
+														}}>
+														<img
+															src={lesson.imageUrl}
+															alt='lesson_img'
+															height='100%'
+															width='100%'
+															style={{
+																borderRadius: '0.25rem 0 0 0.25rem',
+															}}
+														/>
+													</Box>
+													<Box
+														sx={{
+															ml: '1rem',
+														}}>
+														<Typography variant='body1'>
+															{lesson.title}
+														</Typography>
+													</Box>
+												</Box>
+											);
+										})}
+									</Box>
+								);
+							})}
 					</Box>
 				</Box>
 			)}
@@ -564,110 +620,67 @@ const AdminCourseEditPage = () => {
 							/>
 						</Box>
 						<Box sx={{ mt: '3rem' }}>
-							<Typography variant='h3'>Chapters</Typography>
-							{singleCourse &&
-								singleCourse.chapters
-									.sort((a, b) => a.order - b.order)
-									.map((chapter) => {
+							<Box
+								sx={{
+									display: 'flex',
+									justifyContent: 'space-between',
+									alignItems: 'center',
+									width: '90%',
+								}}>
+								<Typography variant='h3' sx={{ mb: '2rem' }}>
+									Chapters
+								</Typography>
+								<Button
+									variant='contained'
+									sx={{
+										backgroundColor: theme.bgColor?.greenPrimary,
+										':hover': {
+											backgroundColor: theme.bgColor?.common,
+											color: theme.textColor?.greenPrimary.main,
+										},
+									}}>
+									Add Chapter
+								</Button>
+							</Box>
+
+							<Reorder.Group
+								axis='y'
+								values={chapters}
+								onReorder={(newChapters): void => {
+									setChapters(newChapters);
+									setSingleCourse((prevCourse) => {
+										if (prevCourse) {
+											return {
+												...prevCourse,
+												chapters: newChapters,
+												chapterIds: newChapters.map(
+													(newChapter) => newChapter._id
+												),
+											};
+										}
+										return prevCourse; // Return unchanged if prevCourse is undefined
+									});
+								}}>
+								{singleCourse &&
+									chapters.map((chapter) => {
 										return (
-											<Box
+											<Reorder.Item
 												key={chapter._id}
-												sx={{ margin: '1.5rem 0 3rem 0', width: '90%' }}>
-												<Box
-													sx={{
-														display: 'flex',
-														justifyContent: 'space-between',
-														alignItems: 'center',
-														mb: '1rem',
-													}}>
-													<Box>
-														<Typography variant='h6'>
-															{chapter.title}
-														</Typography>
-													</Box>
-													<Box>
-														<Button
-															variant='contained'
-															sx={{
-																backgroundColor:
-																	theme.bgColor?.greenPrimary,
-																':hover': {
-																	backgroundColor:
-																		theme.bgColor?.common,
-																	color: theme.textColor
-																		?.greenPrimary.main,
-																},
-															}}>
-															Add Lesson
-														</Button>
-													</Box>
-												</Box>
-												{chapter.lessons
-													.sort((a, b) => a.order - b.order)
-													.map((lesson) => {
-														return (
-															<Box
-																key={lesson._id}
-																sx={{
-																	display: 'flex',
-																	alignItems: 'center',
-																	height: '5rem',
-																	width: '100%',
-																	backgroundColor:
-																		theme.bgColor?.common,
-																	margin: '1.25rem 0',
-																	borderRadius: '0.25rem',
-																	boxShadow:
-																		'0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
-																	transition: '0.4s',
-																	':hover': {
-																		boxShadow:
-																			'0.1rem 0 0.5rem 0.3rem rgba(0, 0, 0, 0.3)',
-																		cursor: 'pointer',
-																	},
-																}}>
-																<Box
-																	sx={{
-																		height: '5rem',
-																		width: '6rem',
-																	}}>
-																	<img
-																		src={lesson.imageUrl}
-																		alt='lesson_img'
-																		height='100%'
-																		width='100%'
-																		style={{
-																			borderRadius:
-																				'0.25rem 0 0 0.25rem',
-																		}}
-																	/>
-																</Box>
-																<Box
-																	sx={{
-																		display: 'flex',
-																		justifyContent:
-																			'space-between',
-																		alignItems: 'center',
-																		margin: '0 1rem',
-																		width: '100%',
-																	}}>
-																	<Box>
-																		<Typography variant='body1'>
-																			{lesson.title}
-																		</Typography>
-																	</Box>
-																	<Box>
-																		<IconButton>
-																			<Delete />
-																		</IconButton>
-																	</Box>
-																</Box>
-															</Box>
-														);
-													})}
-											</Box>
+												value={chapter}
+												style={{ listStyle: 'none', boxShadow }}>
+												<AdminCourseEditChapter
+													key={chapter._id}
+													chapter={chapter}
+													setSingleCourse={setSingleCourse}
+													setChapters={setChapters}
+													setIsChapterUpdated={setIsChapterUpdated}
+													setIsMissingField={setIsMissingField}
+													isMissingField={isMissingField}
+												/>
+											</Reorder.Item>
 										);
 									})}
+							</Reorder.Group>
 						</Box>
 					</form>
 				</Box>

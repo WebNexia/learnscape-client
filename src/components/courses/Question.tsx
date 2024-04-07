@@ -41,7 +41,6 @@ const Question = ({
 	const location = useLocation();
 	const searchParams = new URLSearchParams(location.search);
 	const nextLessonId = searchParams.get('next');
-	const nextLessonOrder = searchParams.get('nextLessonOrder');
 
 	const [isLessonCompleted, setIsLessonCompleted] = useState<boolean>(() => {
 		const isCompleted = searchParams.get('isCompleted');
@@ -126,7 +125,7 @@ const Question = ({
 				});
 
 				navigate(
-					`/user/${userId}/course/${courseId}/userCourseId/${userCourseId}/lesson/${lessonId}?isCompleted=true&next=${nextLessonId}&nextLessonOrder=${nextLessonOrder}`
+					`/user/${userId}/course/${courseId}/userCourseId/${userCourseId}/lesson/${lessonId}?isCompleted=true&next=${nextLessonId}`
 				);
 				setIsLessonCompleted(true);
 
@@ -138,7 +137,6 @@ const Question = ({
 						courseId,
 						userCourseId,
 						currentQuestion: 1,
-						lessonOrder: nextLessonOrder,
 						isCompleted: false,
 						isInProgress: true,
 					});
@@ -163,7 +161,7 @@ const Question = ({
 							JSON.stringify(parsedUserLessonData)
 						);
 					}
-				} else if (nextLessonId === null && nextLessonOrder === null) {
+				} else if (nextLessonId === null) {
 					await axios.patch(`${base_url}/usercourses/${userCourseId}`, {
 						isCompleted: true,
 						isInProgress: false,

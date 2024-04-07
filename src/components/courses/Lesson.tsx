@@ -11,18 +11,16 @@ interface LessonProps {
 	lesson: LessonById;
 	isEnrolledStatus: boolean;
 	nextLessonId: string;
-	nextLessonOrder: number;
 	nextChapterFirstLessonId: string;
-	nextChapterFirstLessonOrder: number;
+	lessonOrder: number;
 }
 
 const Lesson = ({
 	lesson,
 	isEnrolledStatus,
 	nextLessonId,
-	nextLessonOrder,
 	nextChapterFirstLessonId,
-	nextChapterFirstLessonOrder,
+	lessonOrder,
 }: LessonProps) => {
 	const { userId, courseId, userCourseId } = useParams();
 	const navigate = useNavigate();
@@ -61,12 +59,12 @@ const Lesson = ({
 	}, [currentUserLessonData]);
 
 	const handleLessonClick = () => {
-		const navigateToLesson = (lessonId: string, nextId?: string, nextOrder?: number) => {
+		const navigateToLesson = (lessonId: string, nextId?: string) => {
 			const url = `/user/${userId}/course/${courseId}/userCourseId/${userCourseId}/lesson/${lessonId}`;
 			const queryParams = `?isCompleted=${isLessonCompleted}`;
 
-			if (nextId && nextOrder) {
-				const nextQuery = `&next=${nextId}&nextLessonOrder=${nextOrder}`;
+			if (nextId) {
+				const nextQuery = `&next=${nextId}`;
 				navigate(`${url}${queryParams}${nextQuery}`);
 			} else {
 				navigate(`${url}${queryParams}`);
@@ -83,9 +81,9 @@ const Lesson = ({
 				) &&
 				nextLessonId
 			) {
-				navigateToLesson(lesson._id, nextLessonId, nextLessonOrder);
+				navigateToLesson(lesson._id, nextLessonId);
 			} else if (!nextLessonId && nextChapterFirstLessonId) {
-				navigateToLesson(lesson._id, nextChapterFirstLessonId, nextChapterFirstLessonOrder);
+				navigateToLesson(lesson._id, nextChapterFirstLessonId);
 			} else if (!nextChapterFirstLessonId) {
 				navigateToLesson(lesson._id);
 			}
@@ -124,7 +122,7 @@ const Lesson = ({
 					<Typography
 						variant='body2'
 						sx={{ color: isEnrolledStatus && isLessonInProgress ? 'white' : null }}>
-						Lesson {lesson.order}
+						Lesson {lessonOrder}
 					</Typography>
 					<Typography
 						variant='body1'

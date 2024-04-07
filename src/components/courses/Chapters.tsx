@@ -11,29 +11,22 @@ const Chapters = ({ course, isEnrolledStatus }: ChaptersProps) => {
 	return (
 		<Box sx={{ width: '85%' }}>
 			{course &&
-				course.chapters
-					.sort((a, b) => a.order - b.order)
-					.map((chapter, index) => {
-						let nextChapterFirstLessonId: string = '';
-						let nextChapterFirstLessonOrder: number = 1;
-						if (index + 1 < course.chapters.length) {
-							const nextChapterFirstLesson = course.chapters[index + 1].lessons.sort(
-								(a, b) => a.order - b.order
-							)[0];
-
-							nextChapterFirstLessonId = nextChapterFirstLesson._id;
-							nextChapterFirstLessonOrder = nextChapterFirstLesson.order;
-						}
-						return (
-							<Chapter
-								key={chapter._id}
-								chapter={chapter}
-								isEnrolledStatus={isEnrolledStatus}
-								nextChapterFirstLessonId={nextChapterFirstLessonId}
-								nextChapterFirstLessonOrder={nextChapterFirstLessonOrder}
-							/>
-						);
-					})}
+				course.chapters.map((chapter, index) => {
+					console.log(chapter._id);
+					let nextChapterFirstLessonId: string = '';
+					if (index + 1 < course.chapters.length) {
+						const nextChapterFirstLesson = course.chapters[index + 1].lessons[0];
+						nextChapterFirstLessonId = nextChapterFirstLesson._id;
+					}
+					return (
+						<Chapter
+							key={chapter._id}
+							chapter={chapter}
+							isEnrolledStatus={isEnrolledStatus}
+							nextChapterFirstLessonId={nextChapterFirstLessonId}
+						/>
+					);
+				})}
 		</Box>
 	);
 };
