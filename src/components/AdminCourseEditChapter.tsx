@@ -8,12 +8,16 @@ import { Lesson } from '../interfaces/lessons';
 import { useRaisedShadow } from '../hooks/use-raised-shadow';
 import { SingleCourse } from '../interfaces/course';
 import { ChapterUpdateTrack } from '../pages/AdminCourseEditPage';
+import CustomTextField from './forms/CustomFields/CustomTextField';
+import CustomErrorMessage from './forms/CustomFields/CustomErrorMessage';
 
 interface AdminCourseEditChapterProps {
 	chapter: BaseChapter;
 	setSingleCourse: React.Dispatch<React.SetStateAction<SingleCourse | undefined>>;
 	setChapters: React.Dispatch<React.SetStateAction<BaseChapter[]>>;
 	setIsChapterUpdated: React.Dispatch<React.SetStateAction<ChapterUpdateTrack[]>>;
+	setIsMissingField: React.Dispatch<React.SetStateAction<boolean>>;
+	isMissingField: boolean;
 }
 
 const AdminCourseEditChapter = ({
@@ -21,6 +25,8 @@ const AdminCourseEditChapter = ({
 	setSingleCourse,
 	setChapters,
 	setIsChapterUpdated,
+	setIsMissingField,
+	isMissingField,
 }: AdminCourseEditChapterProps) => {
 	const [lessons, setLessons] = useState<Lesson[]>(chapter.lessons);
 
@@ -28,7 +34,18 @@ const AdminCourseEditChapter = ({
 	const boxShadow = useRaisedShadow(y);
 
 	return (
-		<Box sx={{ margin: '1.5rem 0 3rem 0', width: '90%' }}>
+		<Box
+			sx={{
+				margin: '1.5rem 0 4rem 0',
+				width: '90%',
+				padding: '1rem',
+				boxShadow: '0 0.3rem 1rem 0 rgba(0,0,0,0.25)',
+				transition: '0.3s',
+				borderRadius: '0.3rem',
+				':hover': {
+					boxShadow: '0 0.3rem 1rem 0.3rem rgba(0,0,0,0.5)',
+				},
+			}}>
 			<Box
 				sx={{
 					display: 'flex',
@@ -37,12 +54,61 @@ const AdminCourseEditChapter = ({
 					mb: '1rem',
 				}}>
 				<Box>
-					<Typography variant='h6'>{chapter.title}</Typography>
+					<CustomTextField
+						sx={{ backgroundColor: theme.bgColor?.common }}
+						value={chapter.title}
+						onChange={(e) => {
+							setIsChapterUpdated((prevData: ChapterUpdateTrack[]) => {
+								if (prevData) {
+									prevData = prevData.map((data) => {
+										if (data.chapterId === chapter._id) {
+											return {
+												...data,
+												isUpdated: true,
+											};
+										}
+										return data;
+									})!;
+								}
+								return prevData;
+							});
+							setSingleCourse((prevCourse) => {
+								if (prevCourse) {
+									const updatedChapters = prevCourse.chapters.map(
+										(currentChapter) => {
+											if (chapter._id === currentChapter._id) {
+												// Return a new chapter object with updated lessons
+												return {
+													...currentChapter,
+													title: e.target.value,
+												};
+											}
+											return currentChapter;
+										}
+									);
+
+									// Return a new course object with updated chapters
+									setChapters(updatedChapters);
+									return {
+										...prevCourse,
+										chapters: updatedChapters,
+									};
+								}
+								return prevCourse; // Return unchanged if prevCourse is undefined
+							});
+							setIsMissingField(false);
+						}}
+						error={isMissingField && chapter?.title === ''}
+					/>
+					{isMissingField && chapter?.title === '' && (
+						<CustomErrorMessage>Please enter chapter name</CustomErrorMessage>
+					)}
 				</Box>
 				<Box>
 					<Button
 						variant='contained'
 						sx={{
+							textTransform: 'capitalize',
 							backgroundColor: theme.bgColor?.greenPrimary,
 							':hover': {
 								backgroundColor: theme.bgColor?.common,
@@ -50,6 +116,19 @@ const AdminCourseEditChapter = ({
 							},
 						}}>
 						Add Lesson
+					</Button>
+					<Button
+						variant='contained'
+						sx={{
+							textTransform: 'capitalize',
+							backgroundColor: theme.bgColor?.greenPrimary,
+							ml: '0.75rem',
+							':hover': {
+								backgroundColor: theme.bgColor?.delete,
+								color: theme.textColor?.common.main,
+							},
+						}}>
+						Delete Chapter
 					</Button>
 				</Box>
 			</Box>
@@ -143,7 +222,77 @@ const AdminCourseEditChapter = ({
 										<Typography variant='body1'>{lesson.title}</Typography>
 									</Box>
 									<Box>
-										<IconButton onClick={() => {}}>
+										<IconButton
+											onClick={() => {
+												setLessons(
+													lessons.filter(
+														(currentLesson) =>
+															currentLesson._id !== lesson._id
+													)
+												);
+												const updatedLessonIds: string[] = lessons.reduce(
+													(acc: string[], currentLesson: Lesson) => {
+														if (currentLesson._id !== lesson._id) {
+															acc.push(currentLesson._id);
+														}
+														return acc;
+													},
+													[]
+												);
+
+												setSingleCourse((prevCourse) => {
+													if (prevCourse) {
+														const updatedChapters =
+															prevCourse.chapters.map(
+																(currentChapter) => {
+																	if (
+																		chapter._id ===
+																		currentChapter._id
+																	) {
+																		// Return a new chapter object with updated lessons
+																		return {
+																			...currentChapter,
+																			lessons: lessons.filter(
+																				(currentLesson) =>
+																					currentLesson._id !==
+																					lesson._id
+																			),
+																			lessonIds:
+																				updatedLessonIds,
+																		};
+																	}
+																	return currentChapter;
+																}
+															);
+
+														// Return a new course object with updated chapters
+														setChapters(updatedChapters);
+														return {
+															...prevCourse,
+															chapters: updatedChapters,
+														};
+													}
+													return prevCourse; // Return unchanged if prevCourse is undefined
+												});
+												setIsChapterUpdated(
+													(prevData: ChapterUpdateTrack[]) => {
+														if (prevData) {
+															prevData = prevData.map((data) => {
+																if (
+																	data.chapterId === chapter._id
+																) {
+																	return {
+																		...data,
+																		isUpdated: true,
+																	};
+																}
+																return data;
+															})!;
+														}
+														return prevData;
+													}
+												);
+											}}>
 											<Delete />
 										</IconButton>
 									</Box>

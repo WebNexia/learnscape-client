@@ -44,6 +44,7 @@ interface ExtendedThemeOptions extends ThemeOptions {
 		common: string;
 		greenPrimary: string;
 		greenSecondary: string;
+		delete: string;
 	};
 	border: {
 		main: string;
@@ -164,6 +165,7 @@ const theme = createTheme({
 		common: '#FFFF',
 		greenPrimary: '#1EC28B',
 		greenSecondary: '#00C6AD',
+		delete: '#FF0000',
 	},
 } as ExtendedThemeOptions);
 

@@ -21,6 +21,8 @@ import CustomTextField from '../components/forms/CustomFields/CustomTextField';
 import CustomErrorMessage from '../components/forms/CustomFields/CustomErrorMessage';
 import AdminCourseEditChapter from '../components/AdminCourseEditChapter';
 import { BaseChapter } from '../interfaces/chapter';
+import { Reorder, useMotionValue } from 'framer-motion';
+import { useRaisedShadow } from '../hooks/use-raised-shadow';
 
 export interface ChapterUpdateTrack {
 	chapterId: string;
@@ -138,6 +140,9 @@ const AdminCourseEditPage = () => {
 		return new Date(`${year}-${month}-${day}`);
 	};
 
+	const y = useMotionValue(0);
+	const boxShadow = useRaisedShadow(y);
+
 	return (
 		<DashboardPagesLayout
 			pageName='Course Edit'
@@ -235,7 +240,8 @@ const AdminCourseEditPage = () => {
 									singleCourse?.description.trim() !== '' &&
 									(isFree ||
 										(singleCourse?.priceCurrency !== '' &&
-											singleCourse?.price !== ''))
+											singleCourse?.price !== '')) &&
+									!chapters.some((chapter) => chapter.title === '')
 								) {
 									setIsEditMode(false);
 									handleCourseUpdate(e);
@@ -342,7 +348,7 @@ const AdminCourseEditPage = () => {
 						{singleCourse &&
 							singleCourse.chapters.map((chapter) => {
 								return (
-									<Box key={chapter._id} sx={{ margin: '1rem 0 3rem 0' }}>
+									<Box key={chapter._id} sx={{ margin: '1rem 0 4rem 0' }}>
 										<Box display='flex'>
 											<Typography variant='h6' sx={{ mb: '1rem' }}>
 												{chapter.title}
@@ -614,20 +620,67 @@ const AdminCourseEditPage = () => {
 							/>
 						</Box>
 						<Box sx={{ mt: '3rem' }}>
-							<Typography variant='h3'>Chapters</Typography>
+							<Box
+								sx={{
+									display: 'flex',
+									justifyContent: 'space-between',
+									alignItems: 'center',
+									width: '90%',
+								}}>
+								<Typography variant='h3' sx={{ mb: '2rem' }}>
+									Chapters
+								</Typography>
+								<Button
+									variant='contained'
+									sx={{
+										backgroundColor: theme.bgColor?.greenPrimary,
+										':hover': {
+											backgroundColor: theme.bgColor?.common,
+											color: theme.textColor?.greenPrimary.main,
+										},
+									}}>
+									Add Chapter
+								</Button>
+							</Box>
 
-							{singleCourse &&
-								singleCourse.chapters.map((chapter) => {
-									return (
-										<AdminCourseEditChapter
-											key={chapter._id}
-											chapter={chapter}
-											setSingleCourse={setSingleCourse}
-											setChapters={setChapters}
-											setIsChapterUpdated={setIsChapterUpdated}
-										/>
-									);
-								})}
+							<Reorder.Group
+								axis='y'
+								values={chapters}
+								onReorder={(newChapters): void => {
+									setChapters(newChapters);
+									setSingleCourse((prevCourse) => {
+										if (prevCourse) {
+											return {
+												...prevCourse,
+												chapters: newChapters,
+												chapterIds: newChapters.map(
+													(newChapter) => newChapter._id
+												),
+											};
+										}
+										return prevCourse; // Return unchanged if prevCourse is undefined
+									});
+								}}>
+								{singleCourse &&
+									chapters.map((chapter) => {
+										return (
+											<Reorder.Item
+												key={chapter._id}
+												value={chapter}
+												style={{ listStyle: 'none', boxShadow }}>
+												<AdminCourseEditChapter
+													key={chapter._id}
+													chapter={chapter}
+													setSingleCourse={setSingleCourse}
+													setChapters={setChapters}
+													setIsChapterUpdated={setIsChapterUpdated}
+													setIsMissingField={setIsMissingField}
+													isMissingField={isMissingField}
+												/>
+											</Reorder.Item>
+										);
+									})}
+							</Reorder.Group>
 						</Box>
 					</form>
 				</Box>
