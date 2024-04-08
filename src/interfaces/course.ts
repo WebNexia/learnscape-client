@@ -34,5 +34,6 @@ export interface SingleCourse extends BaseCourse {
 	durationWeeks: number;
 	durationHours: number;
 	priceCurrency: string;
+	chapterIds: string[];
 	chapters: BaseChapter[];
 }

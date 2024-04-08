@@ -1,6 +1,5 @@
 import {
 	Box,
-	Button,
 	Table,
 	TableHead,
 	TableBody,
@@ -24,7 +23,10 @@ import { SingleCourse } from '../interfaces/course';
 import { Delete, Edit, FileCopy } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
-import CustomTextField from '../components/forms/CustomFields/CustomTextField';
+import CustomTextField from '../components/forms/Custom Fields/CustomTextField';
+import CustomSubmitButton from '../components/forms/Custom Buttons/CustomSubmitButton';
+import CustomCancelButton from '../components/forms/Custom Buttons/CustomCancelButton';
+import CustomDeleteButton from '../components/forms/Custom Buttons/CustomDeleteButton';
 
 const AdminDashboard = () => {
 	const { userId } = useParams();
@@ -183,33 +185,19 @@ const AdminDashboard = () => {
 						/>
 					</Box>
 					<DialogActions>
-						<Button
+						<CustomCancelButton
 							onClick={closeNewCourseModal}
-							variant='contained'
 							sx={{
-								backgroundColor: theme.bgColor?.greenPrimary,
 								margin: '0 0.5rem 1rem 0',
-								':hover': {
-									backgroundColor: theme.bgColor?.common,
-									color: theme.textColor?.greenPrimary.main,
-								},
-							}}
-							type='reset'>
+							}}>
 							Cancel
-						</Button>
-						<Button
-							type='submit'
-							variant='contained'
+						</CustomCancelButton>
+						<CustomSubmitButton
 							sx={{
-								backgroundColor: theme.bgColor?.greenPrimary,
 								margin: '0 0.5rem 1rem 0',
-								':hover': {
-									backgroundColor: theme.bgColor?.common,
-									color: theme.textColor?.greenPrimary.main,
-								},
 							}}>
 							Create
-						</Button>
+						</CustomSubmitButton>
 					</DialogActions>
 				</form>
 			</Dialog>
@@ -221,18 +209,7 @@ const AdminDashboard = () => {
 					padding: '2rem',
 					width: '100%',
 				}}>
-				<Button
-					variant='contained'
-					sx={{
-						backgroundColor: theme.bgColor?.greenPrimary,
-						':hover': {
-							backgroundColor: theme.bgColor?.common,
-							color: theme.textColor?.greenPrimary.main,
-						},
-					}}
-					onClick={openNewCourseModal}>
-					New Course
-				</Button>
+				<CustomSubmitButton onClick={openNewCourseModal}>New Course</CustomSubmitButton>
 			</Box>
 			<Box sx={{ padding: '2rem', mt: '1rem', width: '100%' }}>
 				<Table>
@@ -355,44 +332,25 @@ const AdminDashboard = () => {
 												</DialogContent>
 
 												<DialogActions>
-													<Button
+													<CustomCancelButton
 														onClick={() =>
 															closeDeleteCourseModal(index)
 														}
-														variant='contained'
 														sx={{
-															backgroundColor:
-																theme.bgColor?.greenPrimary,
 															margin: '0 0.5rem 1rem 0',
-															':hover': {
-																backgroundColor:
-																	theme.bgColor?.common,
-																color: theme.textColor?.greenPrimary
-																	.main,
-															},
 														}}>
 														Cancel
-													</Button>
-													<Button
-														type='submit'
-														variant='contained'
+													</CustomCancelButton>
+													<CustomDeleteButton
 														sx={{
-															backgroundColor:
-																theme.bgColor?.greenPrimary,
 															margin: '0 0.5rem 1rem 0',
-															':hover': {
-																backgroundColor:
-																	theme.bgColor?.common,
-																color: theme.textColor?.greenPrimary
-																	.main,
-															},
 														}}
 														onClick={() => {
 															deleteCourse(course._id);
 															closeDeleteCourseModal(index);
 														}}>
 														Delete
-													</Button>
+													</CustomDeleteButton>
 												</DialogActions>
 											</Dialog>
 										)}

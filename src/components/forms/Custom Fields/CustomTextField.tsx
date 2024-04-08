@@ -5,7 +5,7 @@ interface CustomTextFieldProps {
 	label?: string;
 	value?: string | number;
 	type?: string;
-	onChange: (e: ChangeEvent<HTMLInputElement>) => void;
+	onChange?: (e: ChangeEvent<HTMLInputElement>) => void;
 	variant?: TextFieldProps['variant']; //there are defined variant values in mui
 	size?: TextFieldProps['size']; //there are defined size (small | medium) values in mui
 	fullWidth?: boolean;

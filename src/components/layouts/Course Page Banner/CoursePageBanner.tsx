@@ -21,6 +21,7 @@ import {
 	UserLessonDataStorage,
 } from '../../../contexts/UserCourseLessonDataContextProvider';
 import { BaseChapter } from '../../../interfaces/chapter';
+import CustomSubmitButton from '../../forms/Custom Buttons/CustomSubmitButton';
 
 interface CoursePageBannerProps {
 	course: SingleCourse;
@@ -34,7 +35,7 @@ const CoursePageBanner = ({
 	setIsEnrolledStatus,
 }: CoursePageBannerProps) => {
 	const firstChapter: BaseChapter = course && course?.chapters[0];
-	const firstLessonId: string = firstChapter?.lessons[0]._id;
+	const firstLessonId: string = firstChapter?.lessons[0]?._id;
 
 	const navigate = useNavigate();
 
@@ -215,24 +216,18 @@ const CoursePageBanner = ({
 							}}>
 							{course.description}
 						</Typography>
-						<Button
+						<CustomSubmitButton
 							variant='contained'
 							sx={{
 								visibility: isEnrolledStatus ? 'hidden' : 'visible',
-								backgroundColor: theme.bgColor?.greenSecondary,
 								width: '100%',
-								textTransform: 'capitalize',
 								position: 'absolute',
 								bottom: 5,
 								fontSize: '1rem',
-								':hover': {
-									color: theme.textColor?.greenSecondary.main,
-									backgroundColor: theme.submitBtn?.[':hover'].backgroundColor,
-								},
 							}}
 							onClick={handleEnrollment}>
 							Enroll
-						</Button>
+						</CustomSubmitButton>
 					</Box>
 				</Box>
 				<Box

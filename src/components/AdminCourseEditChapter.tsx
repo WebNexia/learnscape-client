@@ -1,4 +1,4 @@
-import { Box, Button, IconButton, Typography } from '@mui/material';
+import { Box, IconButton, Tooltip, Typography } from '@mui/material';
 import { useMotionValue, Reorder } from 'framer-motion';
 import theme from '../themes';
 import { Delete } from '@mui/icons-material';
@@ -8,8 +8,10 @@ import { Lesson } from '../interfaces/lessons';
 import { useRaisedShadow } from '../hooks/use-raised-shadow';
 import { SingleCourse } from '../interfaces/course';
 import { ChapterUpdateTrack } from '../pages/AdminCourseEditPage';
-import CustomTextField from './forms/CustomFields/CustomTextField';
-import CustomErrorMessage from './forms/CustomFields/CustomErrorMessage';
+import CustomTextField from './forms/Custom Fields/CustomTextField';
+import CustomErrorMessage from './forms/Custom Fields/CustomErrorMessage';
+import CustomSubmitButton from './forms/Custom Buttons/CustomSubmitButton';
+import CustomDeleteButton from './forms/Custom Buttons/CustomDeleteButton';
 
 interface AdminCourseEditChapterProps {
 	chapter: BaseChapter;
@@ -18,6 +20,7 @@ interface AdminCourseEditChapterProps {
 	setIsChapterUpdated: React.Dispatch<React.SetStateAction<ChapterUpdateTrack[]>>;
 	setIsMissingField: React.Dispatch<React.SetStateAction<boolean>>;
 	isMissingField: boolean;
+	setDeletedChapterIds: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
 const AdminCourseEditChapter = ({
@@ -27,6 +30,7 @@ const AdminCourseEditChapter = ({
 	setIsChapterUpdated,
 	setIsMissingField,
 	isMissingField,
+	setDeletedChapterIds,
 }: AdminCourseEditChapterProps) => {
 	const [lessons, setLessons] = useState<Lesson[]>(chapter.lessons);
 
@@ -105,31 +109,33 @@ const AdminCourseEditChapter = ({
 					)}
 				</Box>
 				<Box>
-					<Button
-						variant='contained'
-						sx={{
-							textTransform: 'capitalize',
-							backgroundColor: theme.bgColor?.greenPrimary,
-							':hover': {
-								backgroundColor: theme.bgColor?.common,
-								color: theme.textColor?.greenPrimary.main,
-							},
-						}}>
-						Add Lesson
-					</Button>
-					<Button
-						variant='contained'
-						sx={{
-							textTransform: 'capitalize',
-							backgroundColor: theme.bgColor?.greenPrimary,
-							ml: '0.75rem',
-							':hover': {
-								backgroundColor: theme.bgColor?.delete,
-								color: theme.textColor?.common.main,
-							},
+					<CustomSubmitButton>Add Lesson</CustomSubmitButton>
+					<CustomDeleteButton
+						onClick={() => {
+							setSingleCourse((prevCourse) => {
+								if (prevCourse) {
+									const updatedChapters = prevCourse.chapters.filter(
+										(currentChapter) => chapter._id !== currentChapter._id
+									);
+
+									// Return a new course object with updated chapters
+									setChapters(updatedChapters);
+									return {
+										...prevCourse,
+										chapters: updatedChapters,
+										chapterIds: updatedChapters.map(
+											(updatedChapter) => updatedChapter._id
+										),
+									};
+								}
+								return prevCourse; // Return unchanged if prevCourse is undefined
+							});
+							setDeletedChapterIds((prevIds) => {
+								return [...prevIds, chapter._id];
+							});
 						}}>
 						Delete Chapter
-					</Button>
+					</CustomDeleteButton>
 				</Box>
 			</Box>
 			<Reorder.Group
@@ -222,79 +228,91 @@ const AdminCourseEditChapter = ({
 										<Typography variant='body1'>{lesson.title}</Typography>
 									</Box>
 									<Box>
-										<IconButton
-											onClick={() => {
-												setLessons(
-													lessons.filter(
-														(currentLesson) =>
-															currentLesson._id !== lesson._id
-													)
-												);
-												const updatedLessonIds: string[] = lessons.reduce(
-													(acc: string[], currentLesson: Lesson) => {
-														if (currentLesson._id !== lesson._id) {
-															acc.push(currentLesson._id);
-														}
-														return acc;
-													},
-													[]
-												);
+										<Tooltip title='Remove Lesson' placement='left'>
+											<IconButton
+												onClick={() => {
+													setLessons(
+														lessons.filter(
+															(currentLesson) =>
+																currentLesson._id !== lesson._id
+														)
+													);
+													const updatedLessonIds: string[] =
+														lessons.reduce(
+															(
+																acc: string[],
+																currentLesson: Lesson
+															) => {
+																if (
+																	currentLesson._id !== lesson._id
+																) {
+																	acc.push(currentLesson._id);
+																}
+																return acc;
+															},
+															[]
+														);
 
-												setSingleCourse((prevCourse) => {
-													if (prevCourse) {
-														const updatedChapters =
-															prevCourse.chapters.map(
-																(currentChapter) => {
+													setSingleCourse((prevCourse) => {
+														if (prevCourse) {
+															const updatedChapters =
+																prevCourse.chapters.map(
+																	(currentChapter) => {
+																		if (
+																			chapter._id ===
+																			currentChapter._id
+																		) {
+																			// Return a new chapter object with updated lessons
+																			return {
+																				...currentChapter,
+																				lessons:
+																					lessons.filter(
+																						(
+																							currentLesson
+																						) =>
+																							currentLesson._id !==
+																							lesson._id
+																					),
+																				lessonIds:
+																					updatedLessonIds,
+																			};
+																		}
+																		return currentChapter;
+																	}
+																);
+
+															// Return a new course object with updated chapters
+															setChapters(updatedChapters);
+															return {
+																...prevCourse,
+																chapters: updatedChapters,
+															};
+														}
+														return prevCourse; // Return unchanged if prevCourse is undefined
+													});
+													setIsChapterUpdated(
+														(prevData: ChapterUpdateTrack[]) => {
+															if (prevData) {
+																prevData = prevData.map((data) => {
 																	if (
-																		chapter._id ===
-																		currentChapter._id
+																		data.chapterId ===
+																		chapter._id
 																	) {
-																		// Return a new chapter object with updated lessons
 																		return {
-																			...currentChapter,
-																			lessons: lessons.filter(
-																				(currentLesson) =>
-																					currentLesson._id !==
-																					lesson._id
-																			),
-																			lessonIds:
-																				updatedLessonIds,
+																			...data,
+																			isUpdated: true,
 																		};
 																	}
-																	return currentChapter;
-																}
-															);
-
-														// Return a new course object with updated chapters
-														setChapters(updatedChapters);
-														return {
-															...prevCourse,
-															chapters: updatedChapters,
-														};
-													}
-													return prevCourse; // Return unchanged if prevCourse is undefined
-												});
-												setIsChapterUpdated(
-													(prevData: ChapterUpdateTrack[]) => {
-														if (prevData) {
-															prevData = prevData.map((data) => {
-																if (
-																	data.chapterId === chapter._id
-																) {
-																	return {
-																		...data,
-																		isUpdated: true,
-																	};
-																}
-																return data;
-															})!;
+																	return data;
+																})!;
+															}
+															return prevData;
 														}
-														return prevData;
-													}
-												);
-											}}>
-											<Delete />
-										</IconButton>
+													);
+												}}>
+												<Delete />
+											</IconButton>
+										</Tooltip>
 									</Box>
 								</Box>
 							</Box>

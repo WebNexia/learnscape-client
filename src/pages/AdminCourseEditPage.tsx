@@ -17,12 +17,14 @@ import { Edit, KeyboardBackspaceOutlined } from '@mui/icons-material';
 import axios from 'axios';
 import { CoursesContext } from '../contexts/CoursesContextProvider';
 import { SingleCourse } from '../interfaces/course';
-import CustomTextField from '../components/forms/CustomFields/CustomTextField';
-import CustomErrorMessage from '../components/forms/CustomFields/CustomErrorMessage';
+import CustomTextField from '../components/forms/Custom Fields/CustomTextField';
+import CustomErrorMessage from '../components/forms/Custom Fields/CustomErrorMessage';
 import AdminCourseEditChapter from '../components/AdminCourseEditChapter';
 import { BaseChapter } from '../interfaces/chapter';
 import { Reorder, useMotionValue } from 'framer-motion';
 import { useRaisedShadow } from '../hooks/use-raised-shadow';
+import CustomSubmitButton from '../components/forms/Custom Buttons/CustomSubmitButton';
+import CustomCancelButton from '../components/forms/Custom Buttons/CustomCancelButton';
 
 export interface ChapterUpdateTrack {
 	chapterId: string;
@@ -42,6 +44,8 @@ const AdminCourseEditPage = () => {
 	const [isFree, setIsFree] = useState<boolean>(false);
 	const [isMissingField, setIsMissingField] = useState<boolean>(false);
 	const [isChapterUpdated, setIsChapterUpdated] = useState<ChapterUpdateTrack[]>([]);
+	const [resetChanges, setResetChanges] = useState<boolean>(false);
+	const [deletedChapterIds, setDeletedChapterIds] = useState<string[]>([]);
 
 	useEffect(() => {
 		if (courseId) {
@@ -69,7 +73,7 @@ const AdminCourseEditPage = () => {
 			};
 			fetchSingleCourseData(courseId);
 		}
-	}, [courseId, isActive]);
+	}, [courseId, isActive, resetChanges]);
 
 	const handlePublishing = async (): Promise<void> => {
 		if (courseId !== undefined) {
@@ -117,6 +121,14 @@ const AdminCourseEditPage = () => {
 			}
 		}
 
+		if (deletedChapterIds.length !== 0) {
+			await Promise.all(
+				deletedChapterIds.map(async (chapterId) => {
+					await axios.delete(`${base_url}/chapters/${chapterId}`);
+				})
+			);
+		}
+
 		setIsChapterUpdated((prevData) => {
 			prevData = prevData.map((data) => {
 				return { ...data, isUpdated: false };
@@ -147,144 +159,120 @@ const AdminCourseEditPage = () => {
 		<DashboardPagesLayout
 			pageName='Course Edit'
 			customSettings={{ justifyContent: 'flex-start' }}>
-			<Paper
-				elevation={10}
-				sx={{
-					width: '90%',
-					height: '7rem',
-					margin: '2.25rem 0',
-					backgroundColor: theme.palette.primary.main,
-					position: 'sticky',
-					top: 0,
-					zIndex: 1000,
-				}}>
-				<Box
+			<Box sx={{ width: '90%', position: 'sticky', zIndex: 500, top: 0 }}>
+				<Paper
+					elevation={10}
 					sx={{
-						display: 'flex',
-						justifyContent: 'space-between',
-						height: '100%',
 						width: '100%',
+						height: '7rem',
+						m: '2.25rem 0',
+						backgroundColor: theme.palette.primary.main,
 					}}>
-					<Box sx={{ flex: 2, padding: '0.5rem' }}>
-						<Button
-							variant='text'
-							startIcon={<KeyboardBackspaceOutlined />}
-							sx={{
-								color: theme.textColor?.common.main,
-								textTransform: 'inherit',
-								fontFamily: theme.fontFamily?.main,
-								':hover': {
-									backgroundColor: 'transparent',
-									textDecoration: 'underline',
-								},
-							}}
-							onClick={() => {
-								navigate(`/admin/dashboard/user/${userId}`);
-								window.scrollTo({ top: 0, behavior: 'smooth' });
-							}}>
-							Back to courses
-						</Button>
-					</Box>
 					<Box
 						sx={{
 							display: 'flex',
-							justifyContent: 'flex-end',
-							alignItems: 'center',
-							flex: 1,
-							mr: '3rem',
+							justifyContent: 'space-between',
+							height: '100%',
+							width: '100%',
 						}}>
-						<Typography variant='h3' sx={{ color: theme.textColor?.common.main }}>
-							{singleCourse?.title}
-						</Typography>
-					</Box>
-				</Box>
-			</Paper>
-			<Box
-				sx={{
-					display: 'flex',
-					justifyContent: 'flex-end',
-					width: '90%',
-					position: 'sticky',
-					top: '7rem',
-					zIndex: 1000,
-				}}>
-				<Box>
-					<Button
-						variant='contained'
-						sx={{
-							visibility: isEditMode ? 'hidden' : 'visible',
-							backgroundColor: theme.bgColor?.greenPrimary,
-							':hover': {
-								backgroundColor: theme.bgColor?.common,
-								color: theme.textColor?.greenPrimary.main,
-							},
-						}}
-						onClick={() => handlePublishing()}>
-						{isActive ? 'Unpublish' : 'Publish'}
-					</Button>
-				</Box>
-				{isEditMode ? (
-					<Box>
-						<Button
-							variant='contained'
-							sx={{
-								backgroundColor: theme.bgColor?.greenPrimary,
-								':hover': {
-									backgroundColor: theme.bgColor?.common,
-									color: theme.textColor?.greenPrimary.main,
-								},
-							}}
-							onClick={(e) => {
-								if (
-									singleCourse?.title.trim() !== '' &&
-									singleCourse?.description.trim() !== '' &&
-									(isFree ||
-										(singleCourse?.priceCurrency !== '' &&
-											singleCourse?.price !== '')) &&
-									!chapters.some((chapter) => chapter.title === '')
-								) {
-									setIsEditMode(false);
-									handleCourseUpdate(e);
-								} else {
-									setIsMissingField(true);
-								}
-							}}>
-							Save
-						</Button>
-						<Button
-							variant='contained'
-							sx={{
-								backgroundColor: theme.bgColor?.greenPrimary,
-								ml: '0.5rem',
-								':hover': {
-									backgroundColor: theme.bgColor?.common,
-									color: theme.textColor?.greenPrimary.main,
-								},
-							}}
-							onClick={() => {
-								setIsEditMode(false);
-								setIsChapterUpdated((prevData) => {
-									prevData = prevData.map((data) => {
-										return { ...data, isUpdated: false };
-									});
-									return prevData;
-								});
-							}}>
-							Cancel
-						</Button>
-					</Box>
-				) : (
-					<Box sx={{ ml: '1rem' }}>
-						<Tooltip title='Edit Course' placement='top'>
-							<IconButton
+						<Box sx={{ flex: 2, padding: '0.5rem' }}>
+							<Button
+								variant='text'
+								startIcon={<KeyboardBackspaceOutlined />}
+								sx={{
+									color: theme.textColor?.common.main,
+									textTransform: 'inherit',
+									fontFamily: theme.fontFamily?.main,
+									':hover': {
+										backgroundColor: 'transparent',
+										textDecoration: 'underline',
+									},
+								}}
 								onClick={() => {
-									setIsEditMode(true);
+									navigate(`/admin/dashboard/user/${userId}`);
+									window.scrollTo({ top: 0, behavior: 'smooth' });
 								}}>
-								<Edit />
-							</IconButton>
-						</Tooltip>
+								Back to courses
+							</Button>
+						</Box>
+						<Box
+							sx={{
+								display: 'flex',
+								justifyContent: 'flex-end',
+								alignItems: 'center',
+								flex: 1,
+								mr: '3rem',
+							}}>
+							<Typography variant='h3' sx={{ color: theme.textColor?.common.main }}>
+								{singleCourse?.title}
+							</Typography>
+						</Box>
 					</Box>
-				)}
+				</Paper>
+				<Box
+					sx={{
+						display: 'flex',
+						justifyContent: 'flex-end',
+						width: '100%',
+						top: '7rem',
+						zIndex: 1000,
+					}}>
+					<Box>
+						<CustomSubmitButton
+							sx={{
+								visibility: isEditMode ? 'hidden' : 'visible',
+							}}
+							onClick={handlePublishing}>
+							{isActive ? 'Unpublish' : 'Publish'}
+						</CustomSubmitButton>
+					</Box>
+					{isEditMode ? (
+						<Box>
+							<CustomSubmitButton
+								onClick={(e) => {
+									if (
+										singleCourse?.title.trim() !== '' &&
+										singleCourse?.description.trim() !== '' &&
+										(isFree ||
+											(singleCourse?.priceCurrency !== '' &&
+												singleCourse?.price !== '')) &&
+										!chapters.some((chapter) => chapter.title === '')
+									) {
+										setIsEditMode(false);
+										handleCourseUpdate(e as FormEvent<Element>);
+									} else {
+										setIsMissingField(true);
+									}
+								}}>
+								Save
+							</CustomSubmitButton>
+							<CustomCancelButton
+								onClick={() => {
+									setIsEditMode(false);
+									setIsChapterUpdated((prevData) => {
+										prevData = prevData.map((data) => {
+											return { ...data, isUpdated: false };
+										});
+										return prevData;
+									});
+									setResetChanges(!resetChanges);
+								}}>
+								Cancel
+							</CustomCancelButton>
+						</Box>
+					) : (
+						<Box sx={{ ml: '1rem' }}>
+							<Tooltip title='Edit Course' placement='top'>
+								<IconButton
+									onClick={() => {
+										setIsEditMode(true);
+									}}>
+									<Edit />
+								</IconButton>
+							</Tooltip>
+						</Box>
+					)}
+				</Box>
 			</Box>
 			{!isEditMode && (
 				<Box
@@ -295,56 +283,56 @@ const AdminCourseEditPage = () => {
 						width: '90%',
 					}}>
 					<Box sx={{ mt: '2rem' }}>
-						<Typography variant='h3'>Title</Typography>
-						<Typography variant='body2' sx={{ margin: '0.5rem 0 0 0.5rem' }}>
+						<Typography variant='h4'>Title</Typography>
+						<Typography variant='body2' sx={{ mt: '0.5rem' }}>
 							{singleCourse?.title}
 						</Typography>
 					</Box>
 					<Box sx={{ mt: '2rem' }}>
-						<Typography variant='h3'>Description</Typography>
-						<Typography variant='body2' sx={{ margin: '0.5rem 0 0 0.5rem' }}>
+						<Typography variant='h4'>Description</Typography>
+						<Typography variant='body2' sx={{ mt: '0.5rem' }}>
 							{singleCourse?.description}
 						</Typography>
 					</Box>
 					<Box sx={{ mt: '2rem' }}>
-						<Typography variant='h3'>Price</Typography>
-						<Typography variant='body2' sx={{ margin: '0.5rem 0 0 0.5rem' }}>
+						<Typography variant='h4'>Price</Typography>
+						<Typography variant='body2' sx={{ mt: '0.5rem' }}>
 							{singleCourse?.priceCurrency}
 							{singleCourse?.price}
 						</Typography>
 					</Box>
 					<Box sx={{ mt: '2rem' }}>
-						<Typography variant='h3'>Image URL</Typography>
-						<Typography variant='body2' sx={{ margin: '0.5rem 0 0 0.5rem' }}>
+						<Typography variant='h4'>Image URL</Typography>
+						<Typography variant='body2' sx={{ mt: '0.5rem' }}>
 							{singleCourse?.imageUrl}
 						</Typography>
 					</Box>
 					<Box sx={{ mt: '2rem' }}>
-						<Typography variant='h3'>Status</Typography>
-						<Typography variant='body2' sx={{ margin: '0.5rem 0 0 0.5rem' }}>
+						<Typography variant='h4'>Status</Typography>
+						<Typography variant='body2' sx={{ mt: '0.5rem' }}>
 							{isActive ? 'Published' : 'Unpublished'}
 						</Typography>
 					</Box>
 					<Box sx={{ mt: '2rem' }}>
-						<Typography variant='h3'>Starting Date</Typography>
-						<Typography variant='body2' sx={{ margin: '0.5rem 0 0 0.5rem' }}>
+						<Typography variant='h4'>Starting Date</Typography>
+						<Typography variant='body2' sx={{ mt: '0.5rem' }}>
 							{startDate}
 						</Typography>
 					</Box>
 					<Box sx={{ mt: '2rem' }}>
-						<Typography variant='h3'>Duration in Weeks</Typography>
-						<Typography variant='body2' sx={{ margin: '0.5rem 0 0 0.5rem' }}>
+						<Typography variant='h4'>Duration in Weeks</Typography>
+						<Typography variant='body2' sx={{ mt: '0.5rem' }}>
 							{singleCourse?.durationWeeks}
 						</Typography>
 					</Box>
 					<Box sx={{ mt: '2rem' }}>
-						<Typography variant='h3'>Duration in Hours</Typography>
-						<Typography variant='body2' sx={{ margin: '0.5rem 0 0 0.5rem' }}>
+						<Typography variant='h4'>Duration in Hours</Typography>
+						<Typography variant='body2' sx={{ mt: '0.5rem' }}>
 							{singleCourse?.durationHours}
 						</Typography>
 					</Box>
 					<Box sx={{ mt: '2rem' }}>
-						<Typography variant='h3'>Chapters</Typography>
+						<Typography variant='h4'>Chapters</Typography>
 						{singleCourse &&
 							singleCourse.chapters.map((chapter) => {
 								return (
@@ -630,17 +618,7 @@ const AdminCourseEditPage = () => {
 								<Typography variant='h3' sx={{ mb: '2rem' }}>
 									Chapters
 								</Typography>
-								<Button
-									variant='contained'
-									sx={{
-										backgroundColor: theme.bgColor?.greenPrimary,
-										':hover': {
-											backgroundColor: theme.bgColor?.common,
-											color: theme.textColor?.greenPrimary.main,
-										},
-									}}>
-									Add Chapter
-								</Button>
+								<CustomSubmitButton>Add Chapter</CustomSubmitButton>
 							</Box>
 
 							<Reorder.Group
@@ -662,6 +640,7 @@ const AdminCourseEditPage = () => {
 									});
 								}}>
 								{singleCourse &&
+									singleCourse.chapterIds?.length > 0 &&
 									chapters.map((chapter) => {
 										return (
 											<Reorder.Item
@@ -676,6 +655,7 @@ const AdminCourseEditPage = () => {
 													setIsChapterUpdated={setIsChapterUpdated}
 													setIsMissingField={setIsMissingField}
 													isMissingField={isMissingField}
+													setDeletedChapterIds={setDeletedChapterIds}
 												/>
 											</Reorder.Item>
 										);
