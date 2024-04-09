@@ -34,8 +34,7 @@ const CoursePageBanner = ({
 	isEnrolledStatus,
 	setIsEnrolledStatus,
 }: CoursePageBannerProps) => {
-	const firstChapter: BaseChapter = course && course?.chapters[0];
-	const firstLessonId: string = firstChapter?.lessons[0]?._id;
+	const firstLessonId: string = course && course?.chapters[0]?.lessonIds[0];
 
 	const navigate = useNavigate();
 

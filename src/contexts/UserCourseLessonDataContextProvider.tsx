@@ -3,6 +3,7 @@ import { ReactNode, createContext, useState } from 'react';
 import { UserLessonsByUserId } from '../interfaces/userLesson';
 import { UserCoursesByUserId } from '../interfaces/userCourses';
 import { SingleCourse } from '../interfaces/course';
+import { BaseChapter } from '../interfaces/chapter';
 
 interface UserCourseLessonDataContextTypes {
 	fetchUserCourseData: (userId: string) => void;
@@ -10,6 +11,8 @@ interface UserCourseLessonDataContextTypes {
 	fetchSingleCourseData: (courseId: string) => void;
 	singleCourse: SingleCourse | null;
 	setSingleCourse: React.Dispatch<React.SetStateAction<SingleCourse | null>>;
+	singleCourseUser: SingleCourse | null;
+	setSingleCourseUser: React.Dispatch<React.SetStateAction<SingleCourse | null>>;
 }
 
 interface UserCoursesIdsContextProviderProps {
@@ -37,16 +40,40 @@ export const UserCourseLessonDataContext = createContext<UserCourseLessonDataCon
 	fetchSingleCourseData: () => {},
 	singleCourse: null,
 	setSingleCourse: () => {},
+	singleCourseUser: null,
+	setSingleCourseUser: () => {},
 });
 
 const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const [singleCourse, setSingleCourse] = useState<SingleCourse | null>(null);
 
+	const [singleCourseUser, setSingleCourseUser] = useState<SingleCourse | null>(null);
+
 	const fetchSingleCourseData = async (courseId: string): Promise<void> => {
 		try {
 			const response = await axios.get(`${base_url}/courses/${courseId}`);
 			setSingleCourse(response.data.data[0] || null);
+
+			console.log(response.data.data[0]);
+
+			setSingleCourseUser(() => {
+				const filteredChapters: BaseChapter[] | undefined =
+					response.data.data[0]?.chapters.filter(
+						(chapter: BaseChapter) => chapter.lessonIds.length !== 0
+					);
+
+				const filteredChapterIds: string[] | undefined = filteredChapters?.map(
+					(chapter) => chapter._id
+				);
+
+				console.log(filteredChapters);
+				return {
+					...response.data.data[0],
+					chapters: filteredChapters,
+					chapterIds: filteredChapterIds,
+				};
+			});
 		} catch (error) {
 			console.log(error);
 		}
@@ -107,6 +134,8 @@ const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProvide
 				fetchSingleCourseData,
 				singleCourse,
 				setSingleCourse,
+				singleCourseUser,
+				setSingleCourseUser,
 			}}>
 			{props.children}
 		</UserCourseLessonDataContext.Provider>

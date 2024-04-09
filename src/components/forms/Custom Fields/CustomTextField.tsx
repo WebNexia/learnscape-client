@@ -1,5 +1,6 @@
 import { InputLabelProps, TextField, TextFieldProps } from '@mui/material';
 import React, { ChangeEvent } from 'react';
+import theme from '../../../themes';
 
 interface CustomTextFieldProps {
 	label?: string;
@@ -14,6 +15,7 @@ interface CustomTextFieldProps {
 	sx?: React.CSSProperties;
 	InputLabelProps?: Partial<InputLabelProps>;
 	maxRows?: number;
+	rows?: number;
 	disabled?: boolean;
 	error?: boolean;
 	helperText?: string;
@@ -33,6 +35,7 @@ const CustomTextField = ({
 	sx,
 	InputLabelProps,
 	maxRows,
+	rows = 4,
 	disabled,
 	error,
 	helperText,
@@ -48,12 +51,13 @@ const CustomTextField = ({
 			value={value}
 			onChange={onChange}
 			size={size}
-			sx={{ ...sx, marginBottom: '0.85rem' }}
+			sx={{ ...sx, marginBottom: '0.85rem', backgroundColor: theme.bgColor?.common }}
 			fullWidth={fullWidth}
 			required={required}
 			multiline={multiline}
 			InputLabelProps={InputLabelProps}
 			maxRows={maxRows}
+			rows={rows}
 			disabled={disabled}
 			error={error}
 			helperText={helperText}

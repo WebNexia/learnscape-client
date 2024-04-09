@@ -9,7 +9,7 @@ import {
 import { useContext, useEffect, useState } from 'react';
 
 const CoursePage = () => {
-	const { singleCourse, fetchSingleCourseData } = useContext(UserCourseLessonDataContext);
+	const { singleCourseUser, fetchSingleCourseData } = useContext(UserCourseLessonDataContext);
 	const { courseId, userCourseId } = useParams();
 
 	let userCourseData: UserCoursesIdsWithCourseIds[] = [];
@@ -30,14 +30,14 @@ const CoursePage = () => {
 
 	return (
 		<DashboardPagesLayout pageName='Courses' customSettings={{ justifyContent: 'flex-start' }}>
-			{singleCourse && (
+			{singleCourseUser && (
 				<>
 					<CoursePageBanner
-						course={singleCourse}
+						course={singleCourseUser}
 						isEnrolledStatus={isEnrolledStatus}
 						setIsEnrolledStatus={setIsEnrolledStatus}
 					/>
-					<Chapters course={singleCourse} isEnrolledStatus={isEnrolledStatus} />
+					<Chapters course={singleCourseUser} isEnrolledStatus={isEnrolledStatus} />
 				</>
 			)}
 		</DashboardPagesLayout>
