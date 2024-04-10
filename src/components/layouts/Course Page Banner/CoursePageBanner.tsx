@@ -20,7 +20,6 @@ import {
 	UserCoursesIdsWithCourseIds,
 	UserLessonDataStorage,
 } from '../../../contexts/UserCourseLessonDataContextProvider';
-import { BaseChapter } from '../../../interfaces/chapter';
 import CustomSubmitButton from '../../forms/Custom Buttons/CustomSubmitButton';
 
 interface CoursePageBannerProps {
