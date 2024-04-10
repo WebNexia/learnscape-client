@@ -666,6 +666,7 @@ const AdminCourseEditPage = () => {
 							<Box sx={{ margin: '2rem 0 0 6rem', flex: 10 }}>
 								<Typography variant='h4'>Image URL</Typography>
 								<CustomTextField
+									required={false}
 									sx={{ marginTop: '0.5rem' }}
 									value={singleCourse?.imageUrl}
 									onChange={(e) => {
@@ -690,6 +691,7 @@ const AdminCourseEditPage = () => {
 								<Box sx={{ flex: 2 }}>
 									<Typography variant='h4'>Weeks</Typography>
 									<CustomTextField
+										required={false}
 										sx={{ marginTop: '0.5rem' }}
 										value={singleCourse?.durationWeeks}
 										onChange={(e) => {
@@ -707,6 +709,7 @@ const AdminCourseEditPage = () => {
 								<Box sx={{ ml: '0.5rem', flex: 3 }}>
 									<Typography variant='h4'>Hours</Typography>
 									<CustomTextField
+										required={false}
 										sx={{ marginTop: '0.5rem' }}
 										value={singleCourse?.durationHours}
 										onChange={(e) => {
@@ -725,6 +728,7 @@ const AdminCourseEditPage = () => {
 							<Box sx={{ margin: '2rem 0 0 6rem', flex: 10 }}>
 								<Typography variant='h4'>Starting Date</Typography>
 								<CustomTextField
+									required={false}
 									sx={{ marginTop: '0.5rem' }}
 									value={
 										singleCourse && singleCourse.startingDate
@@ -764,7 +768,7 @@ const AdminCourseEditPage = () => {
 										setIsChapterCreateModalOpen(true);
 										setNewChapterTitle('');
 									}}>
-									Add Chapter
+									New Chapter
 								</CustomSubmitButton>
 							</Box>
 
