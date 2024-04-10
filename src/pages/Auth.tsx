@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import theme from '../themes';
 import { AuthFormErrorMessages, AuthForms, TextFieldTypes } from '../interfaces/enums';
-import CustomTextField from '../components/forms/CustomFields/CustomTextField';
+import CustomTextField from '../components/forms/Custom Fields/CustomTextField';
 
 const Auth = () => {
 	const navigate = useNavigate();
