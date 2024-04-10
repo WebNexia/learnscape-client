@@ -107,6 +107,7 @@ const AdminCourseEditPage = () => {
 					const response = await axios.get(`${base_url}/courses/${courseId}`);
 
 					const courseResponse = response?.data?.data[0];
+
 					setSingleCourse(courseResponse);
 					if (courseResponse?.price?.toLowerCase() === 'free') {
 						setIsFree(true);
@@ -476,7 +477,7 @@ const AdminCourseEditPage = () => {
 																		width: '6rem',
 																	}}>
 																	<img
-																		src={lesson.imageUrl}
+																		src={lesson?.imageUrl}
 																		alt='lesson_img'
 																		height='100%'
 																		width='100%'
