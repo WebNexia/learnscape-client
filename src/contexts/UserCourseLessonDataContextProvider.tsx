@@ -59,8 +59,8 @@ const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProvide
 
 			setSingleCourseUser(() => {
 				const filteredChapters: BaseChapter[] | undefined =
-					response.data.data[0]?.chapters.filter(
-						(chapter: BaseChapter) => chapter.lessonIds.length !== 0
+					response?.data?.data[0]?.chapters?.filter(
+						(chapter: BaseChapter) => chapter?.lessonIds?.length !== 0
 					);
 
 				const filteredChapterIds: string[] | undefined = filteredChapters?.map(
