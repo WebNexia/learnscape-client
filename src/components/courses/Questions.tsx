@@ -12,16 +12,17 @@ const Questions = ({ questions }: QuestionsProps) => {
 	const numberOfQuestions = questions.length;
 	return (
 		<Box>
-			{questions.map((question, index) => (
-				<Question
-					key={question._id}
-					question={question}
-					questionNumber={index + 1}
-					numberOfQuestions={numberOfQuestions}
-					displayedQuestionNumber={displayedQuestionNumber}
-					setDisplayedQuestionNumber={setDisplayedQuestionNumber}
-				/>
-			))}
+			{questions &&
+				questions.map((question, index) => (
+					<Question
+						key={question._id}
+						question={question}
+						questionNumber={index + 1}
+						numberOfQuestions={numberOfQuestions}
+						displayedQuestionNumber={displayedQuestionNumber}
+						setDisplayedQuestionNumber={setDisplayedQuestionNumber}
+					/>
+				))}
 		</Box>
 	);
 };

@@ -304,6 +304,8 @@ const AdminLessons = () => {
 				</Table>
 				<Stack spacing={3}>
 					<Pagination
+						showFirstButton
+						showLastButton
 						count={numberOfPages}
 						page={pageNumber}
 						onChange={(event: React.ChangeEvent<unknown>, value: number) => {

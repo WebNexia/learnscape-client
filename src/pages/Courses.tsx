@@ -38,44 +38,46 @@ const Courses = () => {
 						alignItems: 'center',
 						margin: '0 3rem',
 					}}>
-					{sortedData
-						.filter((course: SingleCourse) => course.isActive === true)
-						.map((course: SingleCourse) => {
-							let userCourseData: UserCoursesIdsWithCourseIds[] = [];
+					{sortedData &&
+						sortedData
+							.filter((course: SingleCourse) => course.isActive === true)
+							.map((course: SingleCourse) => {
+								let userCourseData: UserCoursesIdsWithCourseIds[] = [];
 
-							const storedUserCourseData: string | null =
-								localStorage.getItem('userCourseData');
-							if (storedUserCourseData !== null) {
-								userCourseData = JSON.parse(storedUserCourseData);
-							}
-							const isEnrolled: boolean = userCourseData
-								?.map((data) => data.courseId)
-								.includes(course._id);
+								const storedUserCourseData: string | null =
+									localStorage.getItem('userCourseData');
+								if (storedUserCourseData !== null) {
+									userCourseData = JSON.parse(storedUserCourseData);
+								}
+								const isEnrolled: boolean = userCourseData
+									?.map((data) => data.courseId)
+									.includes(course._id);
 
-							const userCourseId: string = userCourseData?.filter(
-								(data) => data?.courseId === course._id
-							)[0]?.userCourseId;
+								const userCourseId: string = userCourseData?.filter(
+									(data) => data?.courseId === course._id
+								)[0]?.userCourseId;
 
-							const singleUserCourseData: UserCoursesIdsWithCourseIds | undefined =
-								userCourseData.find(
+								const singleUserCourseData:
+									| UserCoursesIdsWithCourseIds
+									| undefined = userCourseData.find(
 									(data: UserCoursesIdsWithCourseIds) =>
 										data.userCourseId === userCourseId
 								);
-							const isCourseCompleted: boolean =
-								singleUserCourseData?.isCourseCompleted || false;
+								const isCourseCompleted: boolean =
+									singleUserCourseData?.isCourseCompleted || false;
 
-							return (
-								<DashboardCourseCard
-									key={course._id}
-									course={course}
-									isEnrolled={isEnrolled}
-									userId={id}
-									displayMyCourses={checked}
-									userCourseId={userCourseId}
-									isCourseCompleted={isCourseCompleted}
-								/>
-							);
-						})}
+								return (
+									<DashboardCourseCard
+										key={course._id}
+										course={course}
+										isEnrolled={isEnrolled}
+										userId={id}
+										displayMyCourses={checked}
+										userCourseId={userCourseId}
+										isCourseCompleted={isCourseCompleted}
+									/>
+								);
+							})}
 				</Box>
 			</Box>
 		</DashboardPagesLayout>

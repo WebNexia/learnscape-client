@@ -79,7 +79,7 @@ const LessonsContextProvider = (props: LessonsContextProviderProps) => {
 	};
 
 	const updateLessonPublishing = (id: string) => {
-		const updatedLessonList = sortedData.map((lesson) => {
+		const updatedLessonList = sortedData?.map((lesson) => {
 			if (lesson._id === id) {
 				return { ...lesson, isActive: !lesson.isActive };
 			}
@@ -89,7 +89,7 @@ const LessonsContextProvider = (props: LessonsContextProviderProps) => {
 	};
 
 	const updateLesson = (singleLesson: Lesson) => {
-		const updatedLessonList = sortedData.map((lesson) => {
+		const updatedLessonList = sortedData?.map((lesson) => {
 			if (singleLesson._id === lesson._id) {
 				return singleLesson;
 			}
@@ -99,7 +99,7 @@ const LessonsContextProvider = (props: LessonsContextProviderProps) => {
 	};
 
 	const removeLesson = (id: string) => {
-		setSortedData((prevSortedData) => prevSortedData.filter((data) => data._id !== id));
+		setSortedData((prevSortedData) => prevSortedData?.filter((data) => data._id !== id));
 	};
 
 	useEffect(() => {}, [sortedData]);

@@ -81,7 +81,7 @@ const AdminCourseEditChapter = ({
 							});
 							setSingleCourse((prevCourse) => {
 								if (prevCourse) {
-									const updatedChapters = prevCourse.chapters.map(
+									const updatedChapters = prevCourse.chapters?.map(
 										(currentChapter) => {
 											if (chapter._id === currentChapter._id) {
 												// Return a new chapter object with updated lessons
@@ -117,7 +117,7 @@ const AdminCourseEditChapter = ({
 						onClick={() => {
 							setSingleCourse((prevCourse) => {
 								if (prevCourse) {
-									const updatedChapters = prevCourse.chapters.filter(
+									const updatedChapters = prevCourse.chapters?.filter(
 										(currentChapter) => chapter._id !== currentChapter._id
 									);
 
@@ -145,11 +145,11 @@ const AdminCourseEditChapter = ({
 				<Reorder.Group
 					axis='y'
 					values={lessons || []}
-					onReorder={(newLessons): void => {
+					onReorder={(newLessons: Lesson[]): void => {
 						setLessons(newLessons);
 						setSingleCourse((prevCourse) => {
 							if (prevCourse) {
-								const updatedChapters = prevCourse.chapters.map(
+								const updatedChapters = prevCourse.chapters?.map(
 									(currentChapter) => {
 										if (chapter._id === currentChapter._id) {
 											// Return a new chapter object with updated lessons
@@ -244,7 +244,7 @@ const AdminCourseEditChapter = ({
 													<IconButton
 														onClick={() => {
 															setLessons(
-																lessons.filter(
+																lessons?.filter(
 																	(currentLesson) =>
 																		currentLesson._id !==
 																		lesson._id
@@ -272,7 +272,7 @@ const AdminCourseEditChapter = ({
 															setSingleCourse((prevCourse) => {
 																if (prevCourse) {
 																	const updatedChapters =
-																		prevCourse.chapters.map(
+																		prevCourse.chapters?.map(
 																			(currentChapter) => {
 																				if (
 																					chapter._id ===
@@ -282,7 +282,7 @@ const AdminCourseEditChapter = ({
 																					return {
 																						...currentChapter,
 																						lessons:
-																							lessons.filter(
+																							lessons?.filter(
 																								(
 																									currentLesson
 																								) =>

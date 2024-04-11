@@ -11,6 +11,7 @@ const Chapters = ({ course, isEnrolledStatus }: ChaptersProps) => {
 	return (
 		<Box sx={{ width: '85%' }}>
 			{course &&
+				course.chapters &&
 				course.chapters.map((chapter, index) => {
 					let nextChapterFirstLessonId: string = '';
 					if (index + 1 < course.chapters.length) {

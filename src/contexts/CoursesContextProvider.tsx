@@ -79,7 +79,7 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 	};
 
 	const updateCoursePublishing = (id: string) => {
-		const updatedCourseList = sortedData.map((course) => {
+		const updatedCourseList = sortedData?.map((course) => {
 			if (course._id === id) {
 				return { ...course, isActive: !course.isActive };
 			}
@@ -89,7 +89,7 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 	};
 
 	const updateCourse = (singleCourse: SingleCourse) => {
-		const updatedCourseList = sortedData.map((course) => {
+		const updatedCourseList = sortedData?.map((course) => {
 			if (singleCourse._id === course._id) {
 				return singleCourse;
 			}
@@ -99,7 +99,7 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 	};
 
 	const removeCourse = (id: string) => {
-		setSortedData((prevSortedData) => prevSortedData.filter((data) => data._id !== id));
+		setSortedData((prevSortedData) => prevSortedData?.filter((data) => data._id !== id));
 	};
 
 	useEffect(() => {}, [sortedData]);

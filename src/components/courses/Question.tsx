@@ -91,7 +91,7 @@ const Question = ({
 		parsedUserLessonData = JSON.parse(userLessonData);
 	}
 
-	const userLessonId = parsedUserLessonData.filter(
+	const userLessonId = parsedUserLessonData?.filter(
 		(data: UserLessonDataStorage) => data.lessonId === lessonId && data.courseId === courseId
 	)[0]?.userLessonId;
 	//////////////////////////////////////////////////////////////////

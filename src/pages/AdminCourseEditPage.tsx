@@ -166,7 +166,7 @@ const AdminCourseEditPage = () => {
 				updateCourse(singleCourse);
 
 				await Promise.all(
-					chapters.map(async (chapter, index) => {
+					chapters?.map(async (chapter, index) => {
 						if (isChapterUpdated[index]?.isUpdated) {
 							await axios.patch(`${base_url}/chapters/${chapter._id}`, chapter);
 						}
@@ -179,7 +179,7 @@ const AdminCourseEditPage = () => {
 
 		if (deletedChapterIds.length !== 0) {
 			await Promise.all(
-				deletedChapterIds.map(async (chapterId) => {
+				deletedChapterIds?.map(async (chapterId) => {
 					await axios.delete(`${base_url}/chapters/${chapterId}`);
 				})
 			);
@@ -445,6 +445,7 @@ const AdminCourseEditPage = () => {
 						) : (
 							<>
 								{singleCourse &&
+									singleCourse.chapters &&
 									singleCourse.chapters.map((chapter) => {
 										return (
 											<Box key={chapter._id} sx={{ margin: '1rem 0 4rem 0' }}>
@@ -453,7 +454,8 @@ const AdminCourseEditPage = () => {
 														{chapter.title}
 													</Typography>
 												</Box>
-												{chapter.lessons &&
+												{chapter &&
+													chapter.lessons &&
 													chapter.lessons.length !== 0 &&
 													chapter.lessons.map((lesson) => {
 														return (
@@ -703,7 +705,7 @@ const AdminCourseEditPage = () => {
 											}
 										}}
 										type='number'
-										placeholder='Number of weeks'
+										placeholder='# of weeks'
 									/>
 								</Box>
 								<Box sx={{ ml: '0.5rem', flex: 3 }}>
@@ -721,7 +723,7 @@ const AdminCourseEditPage = () => {
 											}
 										}}
 										type='number'
-										placeholder='Number of hours'
+										placeholder='# of hours'
 									/>
 								</Box>
 							</Box>

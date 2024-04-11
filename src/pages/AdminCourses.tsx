@@ -282,104 +282,109 @@ const AdminCourses = () => {
 						</TableRow>
 					</TableHead>
 					<TableBody>
-						{sortedData.map((course: SingleCourse, index) => {
-							let startDate: string = '';
-							const options: Intl.DateTimeFormatOptions = {
-								year: 'numeric',
-								month: 'short',
-								day: 'numeric',
-							};
+						{sortedData &&
+							sortedData.map((course: SingleCourse, index) => {
+								let startDate: string = '';
+								const options: Intl.DateTimeFormatOptions = {
+									year: 'numeric',
+									month: 'short',
+									day: 'numeric',
+								};
 
-							if (course.startingDate !== undefined) {
-								const date: Date = new Date(course.startingDate);
-								startDate = date.toLocaleString('en-US', options);
-							}
+								if (course.startingDate !== undefined) {
+									const date: Date = new Date(course.startingDate);
+									startDate = date.toLocaleString('en-US', options);
+								}
 
-							return (
-								<TableRow key={course._id}>
-									<TableCell>
-										<Typography variant='body2'>{course.title}</Typography>
-									</TableCell>
-									<TableCell>
-										<Typography variant='body2'>
-											{course.isActive ? 'Published' : 'Unpublished'}
-										</Typography>
-									</TableCell>
-									<TableCell>
-										<Typography variant='body2'>{startDate}</Typography>
-									</TableCell>
-									<TableCell>
-										<Typography variant='body2'>
-											{course.priceCurrency}
-											{course.price}
-										</Typography>
-									</TableCell>
-									<TableCell
-										sx={{
-											textAlign: 'center',
-										}}>
-										<IconButton sx={{ color: theme.textColor?.secondary.main }}>
-											<FileCopy />
-										</IconButton>
-										<IconButton
-											sx={{ color: theme.textColor?.secondary.main }}
-											onClick={() => {
-												navigate(
-													`/admin/course-edit/user/${userId}/course/${course._id}`
-												);
+								return (
+									<TableRow key={course._id}>
+										<TableCell>
+											<Typography variant='body2'>{course.title}</Typography>
+										</TableCell>
+										<TableCell>
+											<Typography variant='body2'>
+												{course.isActive ? 'Published' : 'Unpublished'}
+											</Typography>
+										</TableCell>
+										<TableCell>
+											<Typography variant='body2'>{startDate}</Typography>
+										</TableCell>
+										<TableCell>
+											<Typography variant='body2'>
+												{course.priceCurrency}
+												{course.price}
+											</Typography>
+										</TableCell>
+										<TableCell
+											sx={{
+												textAlign: 'center',
 											}}>
-											<Edit />
-										</IconButton>
-										<IconButton
-											sx={{ color: theme.textColor?.secondary.main }}
-											onClick={() => {
-												openDeleteCourseModal(index);
-											}}>
-											<Delete />
-										</IconButton>
-										{isCourseDeleteModalOpen[index] !== undefined && (
-											<Dialog
-												open={isCourseDeleteModalOpen[index]}
-												onClose={() => closeDeleteCourseModal(index)}
-												fullWidth
-												maxWidth='md'>
-												<DialogContent>
-													<Typography>
-														Are you sure you want to delete this course?
-													</Typography>
-												</DialogContent>
+											<IconButton
+												sx={{ color: theme.textColor?.secondary.main }}>
+												<FileCopy />
+											</IconButton>
+											<IconButton
+												sx={{ color: theme.textColor?.secondary.main }}
+												onClick={() => {
+													navigate(
+														`/admin/course-edit/user/${userId}/course/${course._id}`
+													);
+												}}>
+												<Edit />
+											</IconButton>
+											<IconButton
+												sx={{ color: theme.textColor?.secondary.main }}
+												onClick={() => {
+													openDeleteCourseModal(index);
+												}}>
+												<Delete />
+											</IconButton>
+											{isCourseDeleteModalOpen[index] !== undefined && (
+												<Dialog
+													open={isCourseDeleteModalOpen[index]}
+													onClose={() => closeDeleteCourseModal(index)}
+													fullWidth
+													maxWidth='md'>
+													<DialogContent>
+														<Typography>
+															Are you sure you want to delete this
+															course?
+														</Typography>
+													</DialogContent>
 
-												<DialogActions>
-													<CustomCancelButton
-														onClick={() =>
-															closeDeleteCourseModal(index)
-														}
-														sx={{
-															margin: '0 0.5rem 1rem 0',
-														}}>
-														Cancel
-													</CustomCancelButton>
-													<CustomDeleteButton
-														sx={{
-															margin: '0 0.5rem 1rem 0',
-														}}
-														onClick={() => {
-															deleteCourse(course._id);
-															closeDeleteCourseModal(index);
-														}}>
-														Delete
-													</CustomDeleteButton>
-												</DialogActions>
-											</Dialog>
-										)}
-									</TableCell>
-								</TableRow>
-							);
-						})}
+													<DialogActions>
+														<CustomCancelButton
+															onClick={() =>
+																closeDeleteCourseModal(index)
+															}
+															sx={{
+																margin: '0 0.5rem 1rem 0',
+															}}>
+															Cancel
+														</CustomCancelButton>
+														<CustomDeleteButton
+															sx={{
+																margin: '0 0.5rem 1rem 0',
+															}}
+															onClick={() => {
+																deleteCourse(course._id);
+																closeDeleteCourseModal(index);
+															}}>
+															Delete
+														</CustomDeleteButton>
+													</DialogActions>
+												</Dialog>
+											)}
+										</TableCell>
+									</TableRow>
+								);
+							})}
 					</TableBody>
 				</Table>
 				<Stack spacing={3}>
 					<Pagination
+						showFirstButton
+						showLastButton
 						count={numberOfPages}
 						page={pageNumber}
 						onChange={(event: React.ChangeEvent<unknown>, value: number) => {
