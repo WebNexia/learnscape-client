@@ -14,6 +14,8 @@ import {
 	FormControlLabel,
 	Checkbox,
 	DialogContent,
+	Stack,
+	Pagination,
 } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/DashboardLayout/DashboardPagesLayout';
 import theme from '../themes';
@@ -28,10 +30,18 @@ import CustomSubmitButton from '../components/forms/Custom Buttons/CustomSubmitB
 import CustomCancelButton from '../components/forms/Custom Buttons/CustomCancelButton';
 import CustomDeleteButton from '../components/forms/Custom Buttons/CustomDeleteButton';
 
-const AdminDashboard = () => {
+const AdminCourses = () => {
 	const { userId } = useParams();
 	const navigate = useNavigate();
-	const { sortedData, sortData, addNewCourse, removeCourse } = useContext(CoursesContext);
+	const {
+		sortedData,
+		sortData,
+		addNewCourse,
+		removeCourse,
+		numberOfPages,
+		pageNumber,
+		setPageNumber,
+	} = useContext(CoursesContext);
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
 	const [isCourseCreateModalOpen, setIsCourseCreateModalOpen] = useState<boolean>(false);
@@ -113,7 +123,7 @@ const AdminDashboard = () => {
 
 	return (
 		<DashboardPagesLayout
-			pageName='Admin Dashboard'
+			pageName='Admin Courses'
 			customSettings={{ justifyContent: 'flex-start' }}>
 			<Dialog
 				open={isCourseCreateModalOpen}
@@ -211,8 +221,16 @@ const AdminDashboard = () => {
 				}}>
 				<CustomSubmitButton onClick={openNewCourseModal}>New Course</CustomSubmitButton>
 			</Box>
-			<Box sx={{ padding: '2rem', mt: '1rem', width: '100%' }}>
-				<Table>
+			<Box
+				sx={{
+					display: 'flex',
+					flexDirection: 'column',
+					alignItems: 'center',
+					padding: '2rem',
+					mt: '1rem',
+					width: '100%',
+				}}>
+				<Table sx={{ mb: '2rem' }}>
 					<TableHead>
 						<TableRow>
 							<TableCell>
@@ -360,9 +378,18 @@ const AdminDashboard = () => {
 						})}
 					</TableBody>
 				</Table>
+				<Stack spacing={3}>
+					<Pagination
+						count={numberOfPages}
+						page={pageNumber}
+						onChange={(event: React.ChangeEvent<unknown>, value: number) => {
+							setPageNumber(value);
+						}}
+					/>
+				</Stack>
 			</Box>
 		</DashboardPagesLayout>
 	);
 };
 
-export default AdminDashboard;
+export default AdminCourses;

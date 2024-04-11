@@ -81,12 +81,23 @@ const Sidebar = () => {
 						marginTop: '2rem',
 					}}>
 					<SidebarBtn
-						btnText='Admin DB'
+						btnText='Admin Crs'
 						IconName={DashboardIcon}
 						onClick={() =>
 							navigateWithPage(
-								PageName.ADMIN_DASHBOARD,
-								`/admin/dashboard/user/${id || userId}`
+								PageName.ADMIN_COURSES,
+								`/admin/courses/user/${id || userId}`
+							)
+						}
+						selectedPage={selectedPage}
+					/>
+					<SidebarBtn
+						btnText='Admin Lssns'
+						IconName={DashboardIcon}
+						onClick={() =>
+							navigateWithPage(
+								PageName.ADMIN_LESSONS,
+								`/admin/lessons/user/${id || userId}`
 							)
 						}
 						selectedPage={selectedPage}
