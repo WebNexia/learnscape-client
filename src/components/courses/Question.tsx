@@ -238,26 +238,17 @@ const Question = ({
 						name='question'
 						value={isLessonCompleted ? question.correctAnswer : value}
 						onChange={handleRadioChange}>
-						<FormControlLabel
-							value={question.optionOne}
-							control={<Radio />}
-							label={question.optionOne}
-						/>
-						<FormControlLabel
-							value={question.optionTwo}
-							control={<Radio />}
-							label={question.optionTwo}
-						/>
-						<FormControlLabel
-							value={question.optionThree}
-							control={<Radio />}
-							label={question.optionThree}
-						/>
-						<FormControlLabel
-							value={question.optionFour}
-							control={<Radio />}
-							label={question.optionFour}
-						/>
+						{question &&
+							question.options &&
+							question.options.map((option) => {
+								return (
+									<FormControlLabel
+										value={option}
+										control={<Radio />}
+										label={option}
+									/>
+								);
+							})}
 					</RadioGroup>
 					<FormHelperText sx={{ color: success ? 'green' : 'inherit' }}>
 						{helperText}

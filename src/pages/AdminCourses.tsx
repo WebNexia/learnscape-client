@@ -153,7 +153,6 @@ const AdminCourses = () => {
 						label='Description'
 						value={description}
 						onChange={(e) => setDescription(e.target.value)}
-						maxRows={4}
 						sx={{ margin: '1rem 2rem' }}
 						InputLabelProps={{
 							sx: { fontSize: '0.8rem' },
@@ -387,7 +386,7 @@ const AdminCourses = () => {
 						showLastButton
 						count={numberOfPages}
 						page={pageNumber}
-						onChange={(event: React.ChangeEvent<unknown>, value: number) => {
+						onChange={(_: React.ChangeEvent<unknown>, value: number) => {
 							setPageNumber(value);
 						}}
 					/>

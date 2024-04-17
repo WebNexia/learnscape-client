@@ -61,7 +61,6 @@ const AdminCourseEditPage = () => {
 			const createChapterResponse = await axios.post(`${base_url}/chapters`, {
 				title: newChapterTitle,
 			});
-			console.log(createChapterResponse.data._id);
 
 			setChapters((prevData) => {
 				return [createChapterResponse.data, ...prevData];
@@ -213,9 +212,9 @@ const AdminCourseEditPage = () => {
 
 	return (
 		<DashboardPagesLayout
-			pageName='Course Edit'
+			pageName='Edit Course'
 			customSettings={{ justifyContent: 'flex-start' }}>
-			<Box sx={{ width: '90%', position: 'sticky', zIndex: 500, top: 0 }}>
+			<Box sx={{ width: '90%' }}>
 				<Paper
 					elevation={10}
 					sx={{
@@ -245,7 +244,7 @@ const AdminCourseEditPage = () => {
 									},
 								}}
 								onClick={() => {
-									navigate(`/admin/dashboard/user/${userId}`);
+									navigate(`/admin/courses/user/${userId}`);
 									window.scrollTo({ top: 0, behavior: 'smooth' });
 								}}>
 								Back to courses
@@ -277,8 +276,6 @@ const AdminCourseEditPage = () => {
 						justifyContent: 'space-between',
 						alignItems: 'center',
 						width: '100%',
-						top: '7rem',
-						zIndex: 1000,
 					}}>
 					<Box sx={{ textAlign: 'center' }}>
 						<img
@@ -375,17 +372,6 @@ const AdminCourseEditPage = () => {
 					<Box
 						sx={{
 							mt: '3rem',
-							padding: '2rem',
-							boxShadow: '0 0 0.3rem 0 rgba(0,0,0,0.2)',
-						}}>
-						<Typography variant='h4'>Title</Typography>
-						<Typography variant='body2' sx={{ mt: '0.5rem' }}>
-							{singleCourse?.title}
-						</Typography>
-					</Box>
-					<Box
-						sx={{
-							mt: '2rem',
 							padding: '2rem',
 							boxShadow: '0 0 0.3rem 0 rgba(0,0,0,0.2)',
 						}}>
@@ -853,8 +839,8 @@ const AdminCourseEditPage = () => {
 										});
 									}}>
 									{singleCourse &&
-										singleCourse.chapterIds.length !== 0 &&
-										chapters.map((chapter) => {
+										singleCourse.chapterIds?.length !== 0 &&
+										chapters?.map((chapter) => {
 											return (
 												<Reorder.Item
 													key={chapter._id}

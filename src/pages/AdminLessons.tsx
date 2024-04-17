@@ -4,8 +4,13 @@ import {
 	DialogActions,
 	DialogContent,
 	DialogTitle,
+	FormControl,
 	IconButton,
+	InputLabel,
+	MenuItem,
 	Pagination,
+	Select,
+	SelectChangeEvent,
 	Stack,
 	Table,
 	TableBody,
@@ -35,6 +40,8 @@ const AdminLessons = () => {
 	const [isNewLessonModalOpen, setIsNewLessonModalOpen] = useState<boolean>(false);
 	const [title, setTitle] = useState<string>('');
 	const [type, setType] = useState<string>('');
+
+	const lessonTypes: string[] = ['Quiz', 'Instructional Lesson'];
 
 	const {
 		sortData,
@@ -121,17 +128,28 @@ const AdminLessons = () => {
 							sx: { fontSize: '0.8rem' },
 						}}
 					/>
-					<CustomTextField
-						fullWidth={false}
-						label='Type'
-						value={type}
-						onChange={(e) => setType(e.target.value)}
-						maxRows={4}
-						sx={{ margin: '1rem 2rem' }}
-						InputLabelProps={{
-							sx: { fontSize: '0.8rem' },
-						}}
-					/>
+					<FormControl sx={{ margin: '1rem 2rem' }}>
+						<InputLabel id='type' sx={{ fontSize: '0.8rem' }}>
+							Type
+						</InputLabel>
+						<Select
+							labelId='type'
+							id='lesson_type'
+							value={type}
+							onChange={(event: SelectChangeEvent) => {
+								setType(event.target.value);
+							}}
+							size='medium'
+							label='Type'
+							required>
+							{lessonTypes &&
+								lessonTypes.map((type) => (
+									<MenuItem value={type} key={type}>
+										{type}
+									</MenuItem>
+								))}
+						</Select>
+					</FormControl>
 
 					<DialogActions>
 						<CustomCancelButton
@@ -228,7 +246,10 @@ const AdminLessons = () => {
 											<Typography variant='body2'>{lesson.title}</Typography>
 										</TableCell>
 										<TableCell>
-											<Typography variant='body2'>{lesson.type}</Typography>
+											<Typography variant='body2'>
+												{lesson.type.charAt(0).toUpperCase() +
+													lesson.type.slice(1)}
+											</Typography>
 										</TableCell>
 										<TableCell>
 											<Typography variant='body2'>
@@ -308,7 +329,7 @@ const AdminLessons = () => {
 						showLastButton
 						count={numberOfPages}
 						page={pageNumber}
-						onChange={(event: React.ChangeEvent<unknown>, value: number) => {
+						onChange={(_: React.ChangeEvent<unknown>, value: number) => {
 							setPageNumber(value);
 						}}
 					/>

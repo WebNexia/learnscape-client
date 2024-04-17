@@ -5,6 +5,7 @@ interface BaseLesson {
 	title: string;
 	type: string;
 	imageUrl: string;
+	videoUrl: string;
 	isActive: boolean;
 	createdAt: string;
 	updatedAt: string;
@@ -12,6 +13,7 @@ interface BaseLesson {
 
 export interface Lesson extends BaseLesson {
 	questionIds: string[];
+	questions: QuestionInterface[];
 }
 
 export interface LessonById extends BaseLesson {

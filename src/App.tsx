@@ -20,6 +20,7 @@ import AdminCourses from './pages/AdminCourses';
 import AdminLessons from './pages/AdminLessons';
 import CoursesContextProvider from './contexts/CoursesContextProvider';
 import LessonsContextProvider from './contexts/LessonsContextProvider';
+import AdminLessonEditPage from './pages/AdminLessonEditPage';
 
 const queryClient = new QueryClient();
 
@@ -41,12 +42,16 @@ function App() {
 											element={<AdminCourses />}
 										/>
 										<Route
+											path='admin/course-edit/user/:userId/course/:courseId'
+											element={<AdminCourseEditPage />}
+										/>
+										<Route
 											path='/admin/lessons/user/:userId'
 											element={<AdminLessons />}
 										/>
 										<Route
-											path='admin/course-edit/user/:userId/course/:courseId'
-											element={<AdminCourseEditPage />}
+											path='admin/lesson-edit/user/:userId/lesson/:lessonId'
+											element={<AdminLessonEditPage />}
 										/>
 
 										<Route path='/courses/user/:id' element={<Courses />} />

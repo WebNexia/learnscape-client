@@ -17,6 +17,11 @@ const CustomSubmitButton = ({
 	sx,
 	onClick,
 }: CustomSubmitButtonProps) => {
+	const handleClick = (event: MouseEvent<HTMLButtonElement> | FormEvent<Element>) => {
+		if (onClick) {
+			onClick(event);
+		}
+	};
 	return (
 		<Button
 			type={type}
@@ -30,7 +35,7 @@ const CustomSubmitButton = ({
 					color: theme.textColor?.greenPrimary.main,
 				},
 			}}
-			onClick={onClick}>
+			onClick={handleClick}>
 			{children}
 		</Button>
 	);
