@@ -20,7 +20,7 @@ import {
 	TableSortLabel,
 	Typography,
 } from '@mui/material';
-import DashboardPagesLayout from '../components/layouts/DashboardLayout/DashboardPagesLayout';
+import DashboardPagesLayout from '../components/layouts/Dashboard Layout/DashboardPagesLayout';
 import CustomTextField from '../components/forms/Custom Fields/CustomTextField';
 import CustomSubmitButton from '../components/forms/Custom Buttons/CustomSubmitButton';
 import CustomCancelButton from '../components/forms/Custom Buttons/CustomCancelButton';
@@ -43,15 +43,7 @@ const AdminLessons = () => {
 
 	const lessonTypes: string[] = ['Quiz', 'Instructional Lesson'];
 
-	const {
-		sortData,
-		sortedData,
-		addNewLesson,
-		removeLesson,
-		numberOfPages,
-		pageNumber,
-		setPageNumber,
-	} = useContext(LessonsContext);
+	const { sortData, sortedData, addNewLesson, removeLesson, numberOfPages, pageNumber, setPageNumber } = useContext(LessonsContext);
 
 	const createLesson = async () => {
 		try {
@@ -102,14 +94,8 @@ const AdminLessons = () => {
 		}
 	};
 	return (
-		<DashboardPagesLayout
-			pageName='Admin Lessons'
-			customSettings={{ justifyContent: 'flex-start' }}>
-			<Dialog
-				open={isNewLessonModalOpen}
-				onClose={() => setIsNewLessonModalOpen(false)}
-				fullWidth
-				maxWidth='md'>
+		<DashboardPagesLayout pageName='Admin Lessons' customSettings={{ justifyContent: 'flex-start' }}>
+			<Dialog open={isNewLessonModalOpen} onClose={() => setIsNewLessonModalOpen(false)} fullWidth maxWidth='md'>
 				<DialogTitle variant='h3'>Create New Lesson</DialogTitle>
 				<form
 					onSubmit={(e: React.FormEvent<HTMLFormElement>) => {
@@ -198,18 +184,12 @@ const AdminLessons = () => {
 					<TableHead>
 						<TableRow>
 							<TableCell>
-								<TableSortLabel
-									active={orderBy === 'title'}
-									direction={orderBy === 'title' ? order : 'asc'}
-									onClick={() => handleSort('title')}>
+								<TableSortLabel active={orderBy === 'title'} direction={orderBy === 'title' ? order : 'asc'} onClick={() => handleSort('title')}>
 									<Typography variant='h5'>Title</Typography>
 								</TableSortLabel>
 							</TableCell>
 							<TableCell>
-								<TableSortLabel
-									active={orderBy === 'type'}
-									direction={orderBy === 'type' ? order : 'asc'}
-									onClick={() => handleSort('type')}>
+								<TableSortLabel active={orderBy === 'type'} direction={orderBy === 'type' ? order : 'asc'} onClick={() => handleSort('type')}>
 									<Typography variant='h5'>Type</Typography>
 								</TableSortLabel>
 							</TableCell>
@@ -246,31 +226,23 @@ const AdminLessons = () => {
 											<Typography variant='body2'>{lesson.title}</Typography>
 										</TableCell>
 										<TableCell>
-											<Typography variant='body2'>
-												{lesson.type.charAt(0).toUpperCase() +
-													lesson.type.slice(1)}
-											</Typography>
+											<Typography variant='body2'>{lesson.type.charAt(0).toUpperCase() + lesson.type.slice(1)}</Typography>
 										</TableCell>
 										<TableCell>
-											<Typography variant='body2'>
-												{lesson.isActive ? 'Published' : 'Unpublished'}
-											</Typography>
+											<Typography variant='body2'>{lesson.isActive ? 'Published' : 'Unpublished'}</Typography>
 										</TableCell>
 
 										<TableCell
 											sx={{
 												textAlign: 'center',
 											}}>
-											<IconButton
-												sx={{ color: theme.textColor?.secondary.main }}>
+											<IconButton sx={{ color: theme.textColor?.secondary.main }}>
 												<FileCopy />
 											</IconButton>
 											<IconButton
 												sx={{ color: theme.textColor?.secondary.main }}
 												onClick={() => {
-													navigate(
-														`/admin/lesson-edit/user/${userId}/lesson/${lesson._id}`
-													);
+													navigate(`/admin/lesson-edit/user/${userId}/lesson/${lesson._id}`);
 												}}>
 												<Edit />
 											</IconButton>
@@ -282,23 +254,14 @@ const AdminLessons = () => {
 												<Delete />
 											</IconButton>
 											{isLessonDeleteModalOpen[index] !== undefined && (
-												<Dialog
-													open={isLessonDeleteModalOpen[index]}
-													onClose={() => closeDeleteLessonModal(index)}
-													fullWidth
-													maxWidth='md'>
+												<Dialog open={isLessonDeleteModalOpen[index]} onClose={() => closeDeleteLessonModal(index)} fullWidth maxWidth='md'>
 													<DialogContent>
-														<Typography>
-															Are you sure you want to delete this
-															lesson?
-														</Typography>
+														<Typography>Are you sure you want to delete this lesson?</Typography>
 													</DialogContent>
 
 													<DialogActions>
 														<CustomCancelButton
-															onClick={() =>
-																closeDeleteLessonModal(index)
-															}
+															onClick={() => closeDeleteLessonModal(index)}
 															sx={{
 																margin: '0 0.5rem 1rem 0',
 															}}>

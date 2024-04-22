@@ -1,6 +1,6 @@
 import { Typography } from '@mui/material';
 
-import DashboardPagesLayout from '../components/layouts/DashboardLayout/DashboardPagesLayout';
+import DashboardPagesLayout from '../components/layouts/Dashboard Layout/DashboardPagesLayout';
 
 const Schedule = () => {
 	return (

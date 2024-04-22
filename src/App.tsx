@@ -37,36 +37,18 @@ function App() {
 										<Route path='' element={<HomePage />} />
 										<Route path='/auth' element={<Auth />} />
 										<Route path='/dashboard/user/:id' element={<Dashboard />} />
-										<Route
-											path='/admin/courses/user/:userId'
-											element={<AdminCourses />}
-										/>
-										<Route
-											path='admin/course-edit/user/:userId/course/:courseId'
-											element={<AdminCourseEditPage />}
-										/>
-										<Route
-											path='/admin/lessons/user/:userId'
-											element={<AdminLessons />}
-										/>
-										<Route
-											path='admin/lesson-edit/user/:userId/lesson/:lessonId'
-											element={<AdminLessonEditPage />}
-										/>
+										<Route path='/admin/courses/user/:userId' element={<AdminCourses />} />
+										<Route path='admin/course-edit/user/:userId/course/:courseId' element={<AdminCourseEditPage />} />
+										<Route path='/admin/lessons/user/:userId' element={<AdminLessons />} />
+										<Route path='admin/lesson-edit/user/:userId/lesson/:lessonId' element={<AdminLessonEditPage />} />
 
 										<Route path='/courses/user/:id' element={<Courses />} />
 										<Route path='/schedule/user/:id' element={<Schedule />} />
 										<Route path='/messages/user/:id' element={<Messages />} />
 										<Route path='/community/user/:id' element={<Community />} />
 										<Route path='/settings/user/:id' element={<Settings />} />
-										<Route
-											path='/course/:courseId/user/:userId/userCourseId/:userCourseId'
-											element={<CoursePage />}
-										/>
-										<Route
-											path='user/:userId/course/:courseId/userCourseId/:userCourseId/lesson/:lessonId/'
-											element={<LessonPage />}
-										/>
+										<Route path='/course/:courseId/user/:userId/userCourseId/:userCourseId' element={<CoursePage />} />
+										<Route path='user/:userId/course/:courseId/userCourseId/:userCourseId/lesson/:lessonId/' element={<LessonPage />} />
 									</Routes>
 								</Router>
 							</ThemeProvider>

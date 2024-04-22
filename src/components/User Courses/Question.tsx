@@ -1,21 +1,9 @@
-import {
-	Box,
-	Button,
-	FormControl,
-	FormControlLabel,
-	FormHelperText,
-	FormLabel,
-	Radio,
-	RadioGroup,
-} from '@mui/material';
+import { Box, Button, FormControl, FormControlLabel, FormHelperText, FormLabel, Radio, RadioGroup } from '@mui/material';
 import { QuestionInterface } from '../../interfaces/question';
 import { useState } from 'react';
 import axios from 'axios';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import {
-	UserCoursesIdsWithCourseIds,
-	UserLessonDataStorage,
-} from '../../contexts/UserCourseLessonDataContextProvider';
+import { UserCoursesIdsWithCourseIds, UserLessonDataStorage } from '../../contexts/UserCourseLessonDataContextProvider';
 import theme from '../../themes';
 
 interface QuestionsProps {
@@ -26,13 +14,7 @@ interface QuestionsProps {
 	setDisplayedQuestionNumber: React.Dispatch<React.SetStateAction<number>>;
 }
 
-const Question = ({
-	question,
-	questionNumber,
-	numberOfQuestions,
-	displayedQuestionNumber,
-	setDisplayedQuestionNumber,
-}: QuestionsProps) => {
+const Question = ({ question, questionNumber, numberOfQuestions, displayedQuestionNumber, setDisplayedQuestionNumber }: QuestionsProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const navigate = useNavigate();
 
@@ -69,10 +51,9 @@ const Question = ({
 	}
 	const [isCourseCompleted, setIsCourseCompleted] = useState<boolean>(() => {
 		// Find the user course data that matches the userCourseId
-		const currentUserCourseData: UserCoursesIdsWithCourseIds | undefined =
-			parsedUserCourseData.find(
-				(data: UserCoursesIdsWithCourseIds) => data.userCourseId === userCourseId
-			);
+		const currentUserCourseData: UserCoursesIdsWithCourseIds | undefined = parsedUserCourseData.find(
+			(data: UserCoursesIdsWithCourseIds) => data.userCourseId === userCourseId
+		);
 
 		// Check if currentUserCourseData exists
 		if (currentUserCourseData) {
@@ -91,9 +72,8 @@ const Question = ({
 		parsedUserLessonData = JSON.parse(userLessonData);
 	}
 
-	const userLessonId = parsedUserLessonData?.filter(
-		(data: UserLessonDataStorage) => data.lessonId === lessonId && data.courseId === courseId
-	)[0]?.userLessonId;
+	const userLessonId = parsedUserLessonData?.filter((data: UserLessonDataStorage) => data.lessonId === lessonId && data.courseId === courseId)[0]
+		?.userLessonId;
 	//////////////////////////////////////////////////////////////////
 
 	//creating userQuestion when the question is answered correctly and updating local storage and DB accordingly
@@ -124,9 +104,7 @@ const Question = ({
 					isInProgress: false,
 				});
 
-				navigate(
-					`/user/${userId}/course/${courseId}/userCourseId/${userCourseId}/lesson/${lessonId}?isCompleted=true&next=${nextLessonId}`
-				);
+				navigate(`/user/${userId}/course/${courseId}/userCourseId/${userCourseId}/lesson/${lessonId}?isCompleted=true&next=${nextLessonId}`);
 				setIsLessonCompleted(true);
 
 				//creating new userLesson for next lesson if exists and updating local storage
@@ -140,13 +118,7 @@ const Question = ({
 						isCompleted: false,
 						isInProgress: true,
 					});
-					if (
-						!parsedUserLessonData.some(
-							(data: UserLessonDataStorage) =>
-								data.lessonId === nextLessonId && data.courseId === courseId
-						) &&
-						courseId
-					) {
+					if (!parsedUserLessonData.some((data: UserLessonDataStorage) => data.lessonId === nextLessonId && data.courseId === courseId) && courseId) {
 						const newUserLessonData: UserLessonDataStorage = {
 							lessonId: nextLessonId,
 							userLessonId: responseUserLesson.data._id,
@@ -156,10 +128,7 @@ const Question = ({
 						};
 
 						parsedUserLessonData.push(newUserLessonData);
-						localStorage.setItem(
-							'userLessonData',
-							JSON.stringify(parsedUserLessonData)
-						);
+						localStorage.setItem('userLessonData', JSON.stringify(parsedUserLessonData));
 					}
 				} else if (nextLessonId === null) {
 					await axios.patch(`${base_url}/usercourses/${userCourseId}`, {
@@ -169,9 +138,7 @@ const Question = ({
 
 					setIsCourseCompleted(true);
 
-					const userCourseIndexToUpdate = parsedUserCourseData.findIndex(
-						(item) => item.userCourseId === userCourseId
-					);
+					const userCourseIndexToUpdate = parsedUserCourseData.findIndex((item) => item.userCourseId === userCourseId);
 					parsedUserCourseData[userCourseIndexToUpdate].isCourseCompleted = true;
 					parsedUserCourseData[userCourseIndexToUpdate].isCourseInProgress = false;
 					localStorage.setItem('userCourseData', JSON.stringify(parsedUserCourseData));
@@ -179,9 +146,7 @@ const Question = ({
 				//////////////////////////////////////////////////////////////
 
 				//updating userLesson progress
-				const userLessonIndexToUpdate = parsedUserLessonData.findIndex(
-					(item) => item.userLessonId === userLessonId
-				);
+				const userLessonIndexToUpdate = parsedUserLessonData.findIndex((item) => item.userLessonId === userLessonId);
 				parsedUserLessonData[userLessonIndexToUpdate].isCompleted = true;
 				parsedUserLessonData[userLessonIndexToUpdate].isInProgress = false;
 				localStorage.setItem('userLessonData', JSON.stringify(parsedUserLessonData));
@@ -230,33 +195,18 @@ const Question = ({
 			}}>
 			<form onSubmit={handleSubmit}>
 				<FormControl sx={{ m: 3 }} error={error} variant='standard'>
-					<FormLabel
-						sx={{ color: success ? theme.textColor?.greenPrimary.main : 'inherit' }}>
+					<FormLabel sx={{ color: success ? theme.textColor?.greenPrimary.main : 'inherit' }}>
 						{questionNumber}. {question.question}
 					</FormLabel>
-					<RadioGroup
-						name='question'
-						value={isLessonCompleted ? question.correctAnswer : value}
-						onChange={handleRadioChange}>
+					<RadioGroup name='question' value={isLessonCompleted ? question.correctAnswer : value} onChange={handleRadioChange}>
 						{question &&
 							question.options &&
 							question.options.map((option) => {
-								return (
-									<FormControlLabel
-										value={option}
-										control={<Radio />}
-										label={option}
-									/>
-								);
+								return <FormControlLabel value={option} control={<Radio />} label={option} />;
 							})}
 					</RadioGroup>
-					<FormHelperText sx={{ color: success ? 'green' : 'inherit' }}>
-						{helperText}
-					</FormHelperText>
-					<Button
-						sx={{ mt: '2rem', width: '13rem', alignSelf: 'center' }}
-						type='submit'
-						variant='outlined'>
+					<FormHelperText sx={{ color: success ? 'green' : 'inherit' }}>{helperText}</FormHelperText>
+					<Button sx={{ mt: '2rem', width: '13rem', alignSelf: 'center' }} type='submit' variant='outlined'>
 						Submit Answer
 					</Button>
 				</FormControl>
@@ -287,9 +237,7 @@ const Question = ({
 							setDisplayedQuestionNumber((prev) => prev + 1);
 						}
 						if (isLessonCompleted && displayedQuestionNumber === numberOfQuestions) {
-							navigate(
-								`/course/${courseId}/user/${userId}/userCourseId/${userCourseId}?isEnrolled=true`
-							);
+							navigate(`/course/${courseId}/user/${userId}/userCourseId/${userCourseId}?isEnrolled=true`);
 							window.scrollTo({ top: 0, behavior: 'smooth' });
 						}
 					}}
@@ -301,12 +249,8 @@ const Question = ({
 							backgroundColor: theme.textColor?.common.main,
 						},
 					}}
-					disabled={
-						(!isAnswerCorrect || displayedQuestionNumber + 1 > numberOfQuestions) &&
-						!isLessonCompleted
-					}>
-					{displayedQuestionNumber === numberOfQuestions &&
-					(nextLessonId === null || isCourseCompleted)
+					disabled={(!isAnswerCorrect || displayedQuestionNumber + 1 > numberOfQuestions) && !isLessonCompleted}>
+					{displayedQuestionNumber === numberOfQuestions && (nextLessonId === null || isCourseCompleted)
 						? 'Complete Course'
 						: displayedQuestionNumber === numberOfQuestions && !isCourseCompleted
 						? 'Complete Lesson'

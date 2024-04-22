@@ -1,15 +1,7 @@
-import {
-	Box,
-	Button,
-	Card,
-	CardContent,
-	CardMedia,
-	LinearProgress,
-	Typography,
-} from '@mui/material';
-import { SingleCourse } from '../interfaces/course';
-import { truncateText } from '../utils/TextUtils';
-import theme from '../themes';
+import { Box, Button, Card, CardContent, CardMedia, LinearProgress, Typography } from '@mui/material';
+import { SingleCourse } from '../../interfaces/course';
+import { truncateText } from '../../utils/TextUtils';
+import theme from '../../themes';
 import { useNavigate } from 'react-router-dom';
 
 interface DashboardCourseCardProps {
@@ -21,14 +13,7 @@ interface DashboardCourseCardProps {
 	isCourseCompleted: boolean;
 }
 
-const DashboardCourseCard = ({
-	course,
-	isEnrolled,
-	userId,
-	displayMyCourses,
-	userCourseId,
-	isCourseCompleted,
-}: DashboardCourseCardProps) => {
+const DashboardCourseCard = ({ course, isEnrolled, userId, displayMyCourses, userCourseId, isCourseCompleted }: DashboardCourseCardProps) => {
 	const navigate = useNavigate();
 
 	const buttonStyles = {
@@ -52,14 +37,9 @@ const DashboardCourseCard = ({
 				position: 'relative',
 				marginBottom: '3rem',
 			}}>
-			<CardMedia
-				sx={{ height: '12rem', width: '22rem', objectFit: 'contain' }}
-				image={course.imageUrl}
-			/>
+			<CardMedia sx={{ height: '12rem', width: '22rem', objectFit: 'contain' }} image={course.imageUrl} />
 			<CardContent sx={{ padding: '1rem 1.5rem' }}>
-				<Typography
-					variant='body1'
-					sx={{ textAlign: 'center', color: theme.palette.primary.main }}>
+				<Typography variant='body1' sx={{ textAlign: 'center', color: theme.palette.primary.main }}>
 					{course.title}
 				</Typography>
 				<Typography
@@ -71,7 +51,7 @@ const DashboardCourseCard = ({
 						marginTop: '0.75rem',
 						width: '100%',
 					}}>
-					{truncateText(course.description, 250)}
+					{truncateText(course.description, 175)}
 				</Typography>
 			</CardContent>
 
@@ -89,16 +69,10 @@ const DashboardCourseCard = ({
 						width: '90%',
 						alignSelf: 'center',
 					}}>
-					<Typography
-						variant='body2'
-						sx={{ textAlign: 'center', marginBottom: '0.2rem' }}>
+					<Typography variant='body2' sx={{ textAlign: 'center', marginBottom: '0.2rem' }}>
 						{isCourseCompleted ? 'Completed' : 'In Progress'}
 					</Typography>
-					<LinearProgress
-						variant='determinate'
-						color='success'
-						value={isCourseCompleted ? 100 : 70}
-					/>
+					<LinearProgress variant='determinate' color='success' value={isCourseCompleted ? 100 : 70} />
 				</Box>
 				<Box
 					sx={{
@@ -120,23 +94,15 @@ const DashboardCourseCard = ({
 						sx={{
 							...buttonStyles,
 							backgroundColor: isEnrolled ? theme.bgColor?.greenSecondary : 'inherit',
-							color: isEnrolled
-								? theme.textColor?.common.main
-								: theme.textColor?.greenSecondary.main,
+							color: isEnrolled ? theme.textColor?.common.main : theme.textColor?.greenSecondary.main,
 						}}
 						onClick={() => {
 							navigate(
-								`/course/${course._id}/user/${userId}/userCourseId/${
-									userCourseId === undefined ? 'none' : userCourseId
-								}?isEnrolled=${isEnrolled}`
+								`/course/${course._id}/user/${userId}/userCourseId/${userCourseId === undefined ? 'none' : userCourseId}?isEnrolled=${isEnrolled}`
 							);
 							window.scrollTo({ top: 0, behavior: 'smooth' });
 						}}>
-						{isEnrolled && isCourseCompleted
-							? 'Review Course'
-							: isEnrolled && !isCourseCompleted
-							? 'Continue'
-							: 'Explore'}
+						{isEnrolled && isCourseCompleted ? 'Review Course' : isEnrolled && !isCourseCompleted ? 'Continue' : 'Explore'}
 					</Button>
 				</Box>
 			</Box>

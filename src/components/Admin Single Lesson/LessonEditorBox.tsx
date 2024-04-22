@@ -1,0 +1,213 @@
+import { Alert, Box, Dialog, IconButton, Snackbar, Tooltip, Typography } from '@mui/material';
+import ReactPlayer from 'react-player';
+import CustomSubmitButton from '../forms/Custom Buttons/CustomSubmitButton';
+import CustomCancelButton from '../forms/Custom Buttons/CustomCancelButton';
+import { Edit } from '@mui/icons-material';
+import { Lesson } from '../../interfaces/lessons';
+import { FormEvent, useState } from 'react';
+import { QuestionUpdateTrack } from '../../pages/AdminLessonEditPage';
+
+interface LessonEditorBoxProps {
+	singleLesson?: Lesson;
+	isEditMode: boolean;
+	isActive: boolean;
+	isMissingFieldMsgOpen: boolean;
+	resetChanges: boolean;
+	setIsEditMode: React.Dispatch<React.SetStateAction<boolean>>;
+	setIsMissingFieldMsgOpen: React.Dispatch<React.SetStateAction<boolean>>;
+	setIsMissingField: React.Dispatch<React.SetStateAction<boolean>>;
+	handlePublishing: () => void;
+	setResetChanges: React.Dispatch<React.SetStateAction<boolean>>;
+	handleLessonUpdate: (event: React.FormEvent<Element>) => void;
+	setIsLessonUpdated: React.Dispatch<React.SetStateAction<boolean>>;
+	setIsQuestionUpdated: React.Dispatch<React.SetStateAction<QuestionUpdateTrack[]>>;
+}
+
+const LessonEditorBox = ({
+	singleLesson,
+	isEditMode,
+	isActive,
+	isMissingFieldMsgOpen,
+	resetChanges,
+	setIsEditMode,
+	setIsMissingFieldMsgOpen,
+	setIsMissingField,
+	handlePublishing,
+	setResetChanges,
+	handleLessonUpdate,
+	setIsLessonUpdated,
+	setIsQuestionUpdated,
+}: LessonEditorBoxProps) => {
+	const [isVideoPlayerOpen, setIsVideoPlayerOpen] = useState<boolean>(false);
+	const vertical = 'top';
+	const horizontal = 'center';
+	return (
+		<Box
+			sx={{
+				display: 'flex',
+				justifyContent: 'space-between',
+				alignItems: 'center',
+				width: '100%',
+			}}>
+			<Box sx={{ display: 'flex', alignItems: 'center', textAlign: 'center' }}>
+				<Box sx={{ height: '8rem', width: '12rem', mr: '2rem' }}>
+					{singleLesson?.imageUrl && (
+						<img
+							src={singleLesson.imageUrl}
+							alt='course_img'
+							height='100%'
+							style={{
+								borderRadius: '0.2rem',
+								boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
+							}}
+						/>
+					)}
+					<Typography variant='body2' sx={{ mt: '0.35rem' }}>
+						Lesson Image
+					</Typography>
+				</Box>
+				<Box
+					sx={{ height: '8rem', width: '12rem', cursor: 'pointer' }}
+					onClick={() => {
+						if (singleLesson?.videoUrl) {
+							setIsVideoPlayerOpen(true);
+						}
+					}}>
+					{singleLesson?.videoUrl ? (
+						<Box
+							sx={{
+								height: '100%',
+								width: '100%',
+								position: 'relative',
+							}}>
+							<ReactPlayer
+								url={singleLesson?.videoUrl}
+								height='100%'
+								width='100%'
+								style={{
+									borderRadius: '0.2rem',
+									boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
+								}}
+								light={true}
+								controls={false}
+							/>
+							<Box
+								sx={{
+									position: 'absolute',
+									top: 0,
+									left: 0,
+									height: '100%',
+									width: '100%',
+									zIndex: 1000,
+									backgroundColor: 'transparent',
+									cursor: 'pointer',
+								}}
+								onClick={() => {
+									if (singleLesson?.videoUrl) {
+										setIsVideoPlayerOpen(true);
+									}
+								}}></Box>
+						</Box>
+					) : (
+						<Box
+							sx={{
+								display: 'flex',
+								justifyContent: 'center',
+								alignItems: 'center',
+								height: '100%',
+							}}>
+							<img
+								src={'https://www.47pitches.com/contents/images/no-video.jpg'}
+								alt='video_thumbnail'
+								height='100%'
+								width='100%'
+								style={{
+									borderRadius: '0.2rem',
+									boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
+								}}
+							/>
+						</Box>
+					)}
+					<Typography variant='body2' sx={{ mt: '0.35rem' }}>
+						Video Thumbnail
+					</Typography>
+				</Box>
+				<Dialog
+					open={isVideoPlayerOpen}
+					onClose={() => {
+						setIsVideoPlayerOpen(false);
+					}}
+					fullWidth
+					maxWidth='md'
+					sx={{ display: 'flex', justifyContent: 'center', padding: '3rem' }}>
+					<ReactPlayer url={singleLesson?.videoUrl} height='30rem' width='55rem' style={{ margin: '0.5rem' }} controls={true} />
+				</Dialog>
+			</Box>
+			<Box sx={{ display: 'flex' }}>
+				<Box>
+					<CustomSubmitButton
+						sx={{
+							visibility: isEditMode ? 'hidden' : 'visible',
+						}}
+						onClick={handlePublishing}>
+						{isActive ? 'Unpublish' : 'Publish'}
+					</CustomSubmitButton>
+				</Box>
+				<Snackbar
+					open={isMissingFieldMsgOpen}
+					autoHideDuration={3000}
+					anchorOrigin={{ vertical, horizontal }}
+					sx={{ mt: '14rem' }}
+					onClose={() => setIsMissingFieldMsgOpen(false)}>
+					<Alert severity='error' variant='filled' sx={{ width: '100%' }}>
+						Fill the required field(s)
+					</Alert>
+				</Snackbar>
+				{isEditMode ? (
+					<Box>
+						<CustomSubmitButton
+							onClick={(e) => {
+								if (singleLesson?.title.trim() !== '' && singleLesson?.title !== '') {
+									setIsEditMode(false);
+									handleLessonUpdate(e as FormEvent<Element>);
+								} else {
+									setIsMissingField(true);
+									setIsMissingFieldMsgOpen(true);
+								}
+							}}>
+							Save
+						</CustomSubmitButton>
+						<CustomCancelButton
+							onClick={() => {
+								setIsEditMode(false);
+								setIsLessonUpdated(false);
+								setResetChanges(!resetChanges);
+
+								setIsQuestionUpdated((prevData: QuestionUpdateTrack[]) => {
+									prevData = prevData.map((data) => {
+										return { ...data, isUpdated: false };
+									});
+									return prevData;
+								});
+							}}>
+							Cancel
+						</CustomCancelButton>
+					</Box>
+				) : (
+					<Box sx={{ ml: '1rem' }}>
+						<Tooltip title='Edit Lesson' placement='top'>
+							<IconButton
+								onClick={() => {
+									setIsEditMode(true);
+								}}>
+								<Edit />
+							</IconButton>
+						</Tooltip>
+					</Box>
+				)}
+			</Box>
+		</Box>
+	);
+};
+
+export default LessonEditorBox;

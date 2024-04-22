@@ -17,7 +17,7 @@ import {
 	Stack,
 	Pagination,
 } from '@mui/material';
-import DashboardPagesLayout from '../components/layouts/DashboardLayout/DashboardPagesLayout';
+import DashboardPagesLayout from '../components/layouts/Dashboard Layout/DashboardPagesLayout';
 import theme from '../themes';
 import React, { useContext, useEffect, useState } from 'react';
 import { CoursesContext } from '../contexts/CoursesContextProvider';
@@ -33,15 +33,7 @@ import CustomDeleteButton from '../components/forms/Custom Buttons/CustomDeleteB
 const AdminCourses = () => {
 	const { userId } = useParams();
 	const navigate = useNavigate();
-	const {
-		sortedData,
-		sortData,
-		addNewCourse,
-		removeCourse,
-		numberOfPages,
-		pageNumber,
-		setPageNumber,
-	} = useContext(CoursesContext);
+	const { sortedData, sortData, addNewCourse, removeCourse, numberOfPages, pageNumber, setPageNumber } = useContext(CoursesContext);
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
 	const [isCourseCreateModalOpen, setIsCourseCreateModalOpen] = useState<boolean>(false);
@@ -122,14 +114,8 @@ const AdminCourses = () => {
 	};
 
 	return (
-		<DashboardPagesLayout
-			pageName='Admin Courses'
-			customSettings={{ justifyContent: 'flex-start' }}>
-			<Dialog
-				open={isCourseCreateModalOpen}
-				onClose={closeNewCourseModal}
-				fullWidth
-				maxWidth='md'>
+		<DashboardPagesLayout pageName='Admin Courses' customSettings={{ justifyContent: 'flex-start' }}>
+			<Dialog open={isCourseCreateModalOpen} onClose={closeNewCourseModal} fullWidth maxWidth='md'>
 				<DialogTitle variant='h3'>Create New Course</DialogTitle>
 				<form
 					onSubmit={(e: React.FormEvent<HTMLFormElement>) => {
@@ -183,15 +169,7 @@ const AdminCourses = () => {
 						/>
 					</Box>
 					<Box sx={{ margin: '2rem' }}>
-						<FormControlLabel
-							control={
-								<Checkbox
-									checked={checked}
-									onChange={(e) => setChecked(e.target.checked)}
-								/>
-							}
-							label='Free Course'
-						/>
+						<FormControlLabel control={<Checkbox checked={checked} onChange={(e) => setChecked(e.target.checked)} />} label='Free Course' />
 					</Box>
 					<DialogActions>
 						<CustomCancelButton
@@ -233,10 +211,7 @@ const AdminCourses = () => {
 					<TableHead>
 						<TableRow>
 							<TableCell>
-								<TableSortLabel
-									active={orderBy === 'title'}
-									direction={orderBy === 'title' ? order : 'asc'}
-									onClick={() => handleSort('title')}>
+								<TableSortLabel active={orderBy === 'title'} direction={orderBy === 'title' ? order : 'asc'} onClick={() => handleSort('title')}>
 									<Typography variant='h5'>Title</Typography>
 								</TableSortLabel>
 							</TableCell>
@@ -257,10 +232,7 @@ const AdminCourses = () => {
 								</TableSortLabel>
 							</TableCell>
 							<TableCell>
-								<TableSortLabel
-									active={orderBy === 'price'}
-									direction={orderBy === 'price' ? order : 'asc'}
-									onClick={() => handleSort('price')}>
+								<TableSortLabel active={orderBy === 'price'} direction={orderBy === 'price' ? order : 'asc'} onClick={() => handleSort('price')}>
 									<Typography variant='h5'>Price</Typography>
 								</TableSortLabel>
 							</TableCell>
@@ -301,9 +273,7 @@ const AdminCourses = () => {
 											<Typography variant='body2'>{course.title}</Typography>
 										</TableCell>
 										<TableCell>
-											<Typography variant='body2'>
-												{course.isActive ? 'Published' : 'Unpublished'}
-											</Typography>
+											<Typography variant='body2'>{course.isActive ? 'Published' : 'Unpublished'}</Typography>
 										</TableCell>
 										<TableCell>
 											<Typography variant='body2'>{startDate}</Typography>
@@ -318,16 +288,13 @@ const AdminCourses = () => {
 											sx={{
 												textAlign: 'center',
 											}}>
-											<IconButton
-												sx={{ color: theme.textColor?.secondary.main }}>
+											<IconButton sx={{ color: theme.textColor?.secondary.main }}>
 												<FileCopy />
 											</IconButton>
 											<IconButton
 												sx={{ color: theme.textColor?.secondary.main }}
 												onClick={() => {
-													navigate(
-														`/admin/course-edit/user/${userId}/course/${course._id}`
-													);
+													navigate(`/admin/course-edit/user/${userId}/course/${course._id}`);
 												}}>
 												<Edit />
 											</IconButton>
@@ -339,23 +306,14 @@ const AdminCourses = () => {
 												<Delete />
 											</IconButton>
 											{isCourseDeleteModalOpen[index] !== undefined && (
-												<Dialog
-													open={isCourseDeleteModalOpen[index]}
-													onClose={() => closeDeleteCourseModal(index)}
-													fullWidth
-													maxWidth='md'>
+												<Dialog open={isCourseDeleteModalOpen[index]} onClose={() => closeDeleteCourseModal(index)} fullWidth maxWidth='md'>
 													<DialogContent>
-														<Typography>
-															Are you sure you want to delete this
-															course?
-														</Typography>
+														<Typography>Are you sure you want to delete this course?</Typography>
 													</DialogContent>
 
 													<DialogActions>
 														<CustomCancelButton
-															onClick={() =>
-																closeDeleteCourseModal(index)
-															}
+															onClick={() => closeDeleteCourseModal(index)}
 															sx={{
 																margin: '0 0.5rem 1rem 0',
 															}}>

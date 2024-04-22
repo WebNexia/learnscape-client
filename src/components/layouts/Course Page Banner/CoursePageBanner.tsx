@@ -1,14 +1,4 @@
-import {
-	Alert,
-	Box,
-	Button,
-	Dialog,
-	DialogActions,
-	DialogTitle,
-	Paper,
-	Snackbar,
-	Typography,
-} from '@mui/material';
+import { Alert, Box, Button, Dialog, DialogActions, DialogTitle, Paper, Snackbar, Typography } from '@mui/material';
 import theme from '../../../themes';
 import { SingleCourse } from '../../../interfaces/course';
 import { KeyboardBackspaceOutlined } from '@mui/icons-material';
@@ -16,11 +6,9 @@ import { useNavigate, useParams } from 'react-router-dom';
 import CoursePageBannerDataCard from './CoursePageBannerDataCard';
 import axios from 'axios';
 import { useState } from 'react';
-import {
-	UserCoursesIdsWithCourseIds,
-	UserLessonDataStorage,
-} from '../../../contexts/UserCourseLessonDataContextProvider';
+import { UserCoursesIdsWithCourseIds, UserLessonDataStorage } from '../../../contexts/UserCourseLessonDataContextProvider';
 import CustomSubmitButton from '../../forms/Custom Buttons/CustomSubmitButton';
+import CustomCancelButton from '../../forms/Custom Buttons/CustomCancelButton';
 
 interface CoursePageBannerProps {
 	course: SingleCourse;
@@ -28,13 +16,8 @@ interface CoursePageBannerProps {
 	setIsEnrolledStatus: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const CoursePageBanner = ({
-	course,
-	isEnrolledStatus,
-	setIsEnrolledStatus,
-}: CoursePageBannerProps) => {
-	const firstLessonId: string =
-		course && course?.chapters[0]?.lessonIds && course?.chapters[0]?.lessonIds[0];
+const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus }: CoursePageBannerProps) => {
+	const firstLessonId: string = course && course?.chapters[0]?.lessonIds && course?.chapters[0]?.lessonIds[0];
 
 	const navigate = useNavigate();
 
@@ -82,15 +65,8 @@ const CoursePageBanner = ({
 			const currentUserLessonData: string | null = localStorage.getItem('userLessonData');
 
 			if (currentUserLessonData !== null) {
-				const updatedUserLessonData: UserLessonDataStorage[] =
-					JSON.parse(currentUserLessonData);
-				if (
-					!updatedUserLessonData.some(
-						(data: UserLessonDataStorage) =>
-							data.lessonId === firstLessonId && data.courseId === courseId
-					) &&
-					courseId
-				) {
+				const updatedUserLessonData: UserLessonDataStorage[] = JSON.parse(currentUserLessonData);
+				if (!updatedUserLessonData.some((data: UserLessonDataStorage) => data.lessonId === firstLessonId && data.courseId === courseId) && courseId) {
 					const newUserLessonData: UserLessonDataStorage = {
 						lessonId: firstLessonId,
 						userLessonId: responseUserLesson.data._id,
@@ -119,9 +95,7 @@ const CoursePageBanner = ({
 
 			setDisplayEnrollmentMsg(true);
 
-			navigate(
-				`/course/${course._id}/user/${userId}/userCourseId/${response.data._id}?isEnrolled=true`
-			);
+			navigate(`/course/${course._id}/user/${userId}/userCourseId/${response.data._id}?isEnrolled=true`);
 		} catch (error) {
 			console.log(error);
 		}
@@ -150,24 +124,33 @@ const CoursePageBanner = ({
 				autoHideDuration={4000}
 				onClose={() => setDisplayEnrollmentMsg(false)}
 				anchorOrigin={{ vertical, horizontal }}>
-				<Alert
-					onClose={() => setDisplayEnrollmentMsg(false)}
-					severity='success'
-					sx={{ width: '100%' }}>
+				<Alert onClose={() => setDisplayEnrollmentMsg(false)} severity='success' sx={{ width: '100%' }}>
 					You successfully enrolled the course!
 				</Alert>
 			</Snackbar>
 
-			<Dialog open={isDialogOpen} onClose={() => setIsDialogOpen(false)}>
-				<DialogTitle>Enroll</DialogTitle>
+			<Dialog open={isDialogOpen} onClose={() => setIsDialogOpen(false)} fullWidth maxWidth='sm'>
+				<DialogTitle variant='h3'>Make Payment</DialogTitle>
 				<DialogActions>
-					<Button
+					<CustomCancelButton
+						onClick={() => {
+							setIsDialogOpen(false);
+						}}
+						sx={{
+							margin: '0 0.5rem 1rem 0',
+						}}>
+						Cancel
+					</CustomCancelButton>
+					<CustomSubmitButton
 						onClick={() => {
 							courseRegistration();
 							setIsDialogOpen(false);
+						}}
+						sx={{
+							margin: '0 0.5rem 1rem 0',
 						}}>
 						Enroll
-					</Button>
+					</CustomSubmitButton>
 				</DialogActions>
 			</Dialog>
 
@@ -195,14 +178,12 @@ const CoursePageBanner = ({
 								},
 							}}
 							onClick={() => {
-								navigate(-1);
-								// window.scrollTo({ top: 0, behavior: 'smooth' });
+								navigate(`/courses/user/${userId}`);
+								window.scrollTo({ top: 0, behavior: 'smooth' });
 							}}>
 							Back to courses
 						</Button>
-						<Typography
-							variant='h3'
-							sx={{ color: theme.textColor?.common.main, margin: '0.5rem 0 1rem 0' }}>
+						<Typography variant='h3' sx={{ color: theme.textColor?.common.main, margin: '0.5rem 0 1rem 0' }}>
 							{course.title}
 						</Typography>
 						<Typography
@@ -238,20 +219,14 @@ const CoursePageBanner = ({
 					}}>
 					<Box>
 						<CoursePageBannerDataCard title='Starting Date' content={startDate} />
-						<CoursePageBannerDataCard title='Duration' content={course.durationWeeks} />
+						<CoursePageBannerDataCard title='Weeks(#)' content={course.durationWeeks} />
 					</Box>
 					<Box>
 						<CoursePageBannerDataCard title='Format' content={course.format} />
 
 						<CoursePageBannerDataCard
 							title='Price'
-							content={`${
-								course.price.toLowerCase() === 'free'
-									? ''
-									: course.priceCurrency === null
-									? ''
-									: course.priceCurrency
-							}${course.price}`}
+							content={`${course.price.toLowerCase() === 'free' ? '' : course.priceCurrency === null ? '' : course.priceCurrency}${course.price}`}
 							customSettings={{
 								color: theme.textColor?.common.main,
 								bgColor: theme.bgColor?.greenSecondary,

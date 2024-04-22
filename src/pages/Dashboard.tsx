@@ -3,7 +3,7 @@ import { useContext, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { useQuery } from 'react-query';
-import DashboardPagesLayout from '../components/layouts/DashboardLayout/DashboardPagesLayout';
+import DashboardPagesLayout from '../components/layouts/Dashboard Layout/DashboardPagesLayout';
 import { UserCourseLessonDataContext } from '../contexts/UserCourseLessonDataContextProvider';
 import theme from '../themes';
 import { SentimentVeryDissatisfied } from '@mui/icons-material';
@@ -114,15 +114,8 @@ const Dashboard = () => {
 
 	return (
 		<DashboardPagesLayout pageName='Dashboard'>
-			<Snackbar
-				open={signedUpMsg}
-				autoHideDuration={4000}
-				onClose={() => setSignedUpMsg(false)}
-				anchorOrigin={{ vertical, horizontal }}>
-				<Alert
-					onClose={() => setSignedUpMsg(false)}
-					severity='success'
-					sx={{ width: '100%' }}>
+			<Snackbar open={signedUpMsg} autoHideDuration={4000} onClose={() => setSignedUpMsg(false)} anchorOrigin={{ vertical, horizontal }}>
+				<Alert onClose={() => setSignedUpMsg(false)} severity='success' sx={{ width: '100%' }}>
 					You successfully signed up!
 				</Alert>
 			</Snackbar>
