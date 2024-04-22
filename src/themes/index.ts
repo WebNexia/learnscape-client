@@ -33,6 +33,9 @@ interface ExtendedThemeOptions extends ThemeOptions {
 		greenSecondary: {
 			main: string;
 		};
+		error: {
+			main: string;
+		};
 	};
 	fontFamily?: {
 		main: string;
@@ -147,6 +150,9 @@ const theme = createTheme({
 		},
 		greenSecondary: {
 			main: '#00C6AD',
+		},
+		error: {
+			main: '#ff3333',
 		},
 	},
 	fontFamily: {

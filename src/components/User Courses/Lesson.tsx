@@ -15,13 +15,7 @@ interface LessonProps {
 	lessonOrder: number;
 }
 
-const Lesson = ({
-	lesson,
-	isEnrolledStatus,
-	nextLessonId,
-	nextChapterFirstLessonId,
-	lessonOrder,
-}: LessonProps) => {
+const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLessonId, lessonOrder }: LessonProps) => {
 	const { userId, courseId, userCourseId } = useParams();
 	const navigate = useNavigate();
 
@@ -32,12 +26,10 @@ const Lesson = ({
 		parsedUserLessonData = JSON.parse(currentUserLessonData);
 	}
 
-	const [userLessonData, setUserLessonData] =
-		useState<UserLessonDataStorage[]>(parsedUserLessonData);
+	const [userLessonData, setUserLessonData] = useState<UserLessonDataStorage[]>(parsedUserLessonData);
 	const [isLessonInProgress, setIsLessonInProgress] = useState<boolean>(false);
 	const [isLessonCompleted, setIsLessonCompleted] = useState<boolean>(false);
-	const [isLessonRegisteredInThisCourse, setIsLessonRegisteredInThisCourse] =
-		useState<boolean>(false);
+	const [isLessonRegisteredInThisCourse, setIsLessonRegisteredInThisCourse] = useState<boolean>(false);
 
 	useEffect(() => {
 		const fetchUserLessonProgress = () => {
@@ -74,13 +66,7 @@ const Lesson = ({
 		};
 
 		if (isEnrolledStatus && isLessonRegisteredInThisCourse) {
-			if (
-				userLessonData.some(
-					(data: UserLessonDataStorage) =>
-						data.lessonId === lesson._id && data.courseId === courseId
-				) &&
-				nextLessonId
-			) {
+			if (userLessonData.some((data: UserLessonDataStorage) => data.lessonId === lesson._id && data.courseId === courseId) && nextLessonId) {
 				navigateToLesson(lesson._id, nextLessonId);
 			} else if (!nextLessonId && nextChapterFirstLessonId) {
 				navigateToLesson(lesson._id, nextChapterFirstLessonId);
@@ -96,10 +82,7 @@ const Lesson = ({
 				display: 'flex',
 				height: isEnrolledStatus && isLessonInProgress ? '8rem' : '4rem',
 				borderBottom: `0.1rem solid ${theme.border.lightMain}`,
-				backgroundColor:
-					isEnrolledStatus && isLessonInProgress
-						? theme.bgColor?.lessonInProgress
-						: 'white',
+				backgroundColor: isEnrolledStatus && isLessonInProgress ? theme.bgColor?.lessonInProgress : 'white',
 				cursor: 'pointer',
 			}}
 			onClick={handleLessonClick}>
@@ -119,23 +102,17 @@ const Lesson = ({
 					px: '1rem',
 				}}>
 				<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-					<Typography
-						variant='body2'
-						sx={{ color: isEnrolledStatus && isLessonInProgress ? 'white' : null }}>
+					<Typography variant='body2' sx={{ color: isEnrolledStatus && isLessonInProgress ? 'white' : null }}>
 						Lesson {lessonOrder}
 					</Typography>
-					<Typography
-						variant='body1'
-						sx={{ color: isEnrolledStatus && isLessonInProgress ? 'white' : null }}>
+					<Typography variant='body1' sx={{ color: isEnrolledStatus && isLessonInProgress ? 'white' : null }}>
 						{lesson.title}
 					</Typography>
 				</Box>
 				<Box>
 					{isEnrolledStatus && isLessonInProgress && isLessonRegisteredInThisCourse ? (
 						<img src={ProgressIcon} alt='' />
-					) : !isEnrolledStatus ||
-					  (!isLessonInProgress && !isLessonCompleted) ||
-					  !isLessonRegisteredInThisCourse ? (
+					) : !isEnrolledStatus || (!isLessonInProgress && !isLessonCompleted) || !isLessonRegisteredInThisCourse ? (
 						<Lock sx={{ color: theme.border.lightMain }} />
 					) : (
 						<CheckCircleOutlineRounded sx={{ color: theme.palette.success.main }} />

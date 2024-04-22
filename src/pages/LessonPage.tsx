@@ -3,9 +3,9 @@ import theme from '../themes';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from 'react-query';
 import axios from 'axios';
-import Questions from '../components/courses/Questions';
+import Questions from '../components/User Courses/Questions';
 import ReactPlayer from 'react-player';
-import DashboardHeader from '../components/layouts/DashboardLayout/DashboardHeader';
+import DashboardHeader from '../components/layouts/Dashboard Layout/DashboardHeader';
 import { KeyboardBackspaceOutlined, SentimentVeryDissatisfied } from '@mui/icons-material';
 
 const LessonPage = () => {
@@ -134,11 +134,7 @@ const LessonPage = () => {
 				<Typography variant='h5' sx={{ marginBottom: '1.5rem' }}>
 					{lessonData.title}
 				</Typography>
-				<ReactPlayer
-					url={'https://www.youtube.com/watch?v=g06q54-10f4'}
-					width='70vw'
-					height='50vh'
-				/>
+				<ReactPlayer url={'https://www.youtube.com/watch?v=g06q54-10f4'} width='70vw' height='50vh' />
 			</Box>
 			<Box sx={{ padding: '3rem' }}>
 				<Questions questions={lessonData.questions} />

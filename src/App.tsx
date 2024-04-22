@@ -12,12 +12,15 @@ import Messages from './pages/Messages';
 import Community from './pages/Community';
 import Settings from './pages/Settings';
 import CoursePage from './pages/CoursePage';
-import ActiveCoursesContextProvider from './contexts/CoursesContextProvider';
 import MediaQueryContextProvider from './contexts/MediaQueryContextProvider';
 import LessonPage from './pages/LessonPage';
 import UserCourseLessonDataContextProvider from './contexts/UserCourseLessonDataContextProvider';
-import AdminDashboard from './pages/AdminDashboard';
 import AdminCourseEditPage from './pages/AdminCourseEditPage';
+import AdminCourses from './pages/AdminCourses';
+import AdminLessons from './pages/AdminLessons';
+import CoursesContextProvider from './contexts/CoursesContextProvider';
+import LessonsContextProvider from './contexts/LessonsContextProvider';
+import AdminLessonEditPage from './pages/AdminLessonEditPage';
 
 const queryClient = new QueryClient();
 
@@ -26,39 +29,31 @@ function App() {
 		<QueryClientProvider client={queryClient}>
 			<MediaQueryContextProvider>
 				<UserCourseLessonDataContextProvider>
-					<ActiveCoursesContextProvider>
-						<ThemeProvider theme={theme}>
-							<Router>
-								<Routes>
-									<Route path='' element={<HomePage />} />
-									<Route path='/auth' element={<Auth />} />
-									<Route path='/dashboard/user/:id' element={<Dashboard />} />
-									<Route
-										path='/admin/dashboard/user/:userId'
-										element={<AdminDashboard />}
-									/>
-									<Route
-										path='admin/course-edit/user/:userId/course/:courseId'
-										element={<AdminCourseEditPage />}
-									/>
+					<CoursesContextProvider>
+						<LessonsContextProvider>
+							<ThemeProvider theme={theme}>
+								<Router>
+									<Routes>
+										<Route path='' element={<HomePage />} />
+										<Route path='/auth' element={<Auth />} />
+										<Route path='/dashboard/user/:id' element={<Dashboard />} />
+										<Route path='/admin/courses/user/:userId' element={<AdminCourses />} />
+										<Route path='admin/course-edit/user/:userId/course/:courseId' element={<AdminCourseEditPage />} />
+										<Route path='/admin/lessons/user/:userId' element={<AdminLessons />} />
+										<Route path='admin/lesson-edit/user/:userId/lesson/:lessonId' element={<AdminLessonEditPage />} />
 
-									<Route path='/courses/user/:id' element={<Courses />} />
-									<Route path='/schedule/user/:id' element={<Schedule />} />
-									<Route path='/messages/user/:id' element={<Messages />} />
-									<Route path='/community/user/:id' element={<Community />} />
-									<Route path='/settings/user/:id' element={<Settings />} />
-									<Route
-										path='/course/:courseId/user/:userId/userCourseId/:userCourseId'
-										element={<CoursePage />}
-									/>
-									<Route
-										path='user/:userId/course/:courseId/userCourseId/:userCourseId/lesson/:lessonId/'
-										element={<LessonPage />}
-									/>
-								</Routes>
-							</Router>
-						</ThemeProvider>
-					</ActiveCoursesContextProvider>
+										<Route path='/courses/user/:id' element={<Courses />} />
+										<Route path='/schedule/user/:id' element={<Schedule />} />
+										<Route path='/messages/user/:id' element={<Messages />} />
+										<Route path='/community/user/:id' element={<Community />} />
+										<Route path='/settings/user/:id' element={<Settings />} />
+										<Route path='/course/:courseId/user/:userId/userCourseId/:userCourseId' element={<CoursePage />} />
+										<Route path='user/:userId/course/:courseId/userCourseId/:userCourseId/lesson/:lessonId/' element={<LessonPage />} />
+									</Routes>
+								</Router>
+							</ThemeProvider>
+						</LessonsContextProvider>
+					</CoursesContextProvider>
 				</UserCourseLessonDataContextProvider>
 			</MediaQueryContextProvider>
 		</QueryClientProvider>

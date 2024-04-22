@@ -1,11 +1,8 @@
-import DashboardPagesLayout from '../components/layouts/DashboardLayout/DashboardPagesLayout';
+import DashboardPagesLayout from '../components/layouts/Dashboard Layout/DashboardPagesLayout';
 import { useParams } from 'react-router-dom';
 import CoursePageBanner from '../components/layouts/Course Page Banner/CoursePageBanner';
-import Chapters from '../components/courses/Chapters';
-import {
-	UserCourseLessonDataContext,
-	UserCoursesIdsWithCourseIds,
-} from '../contexts/UserCourseLessonDataContextProvider';
+import Chapters from '../components/User Courses/Chapters';
+import { UserCourseLessonDataContext, UserCoursesIdsWithCourseIds } from '../contexts/UserCourseLessonDataContextProvider';
 import { useContext, useEffect, useState } from 'react';
 
 const CoursePage = () => {
@@ -32,11 +29,7 @@ const CoursePage = () => {
 		<DashboardPagesLayout pageName='Courses' customSettings={{ justifyContent: 'flex-start' }}>
 			{singleCourseUser && (
 				<>
-					<CoursePageBanner
-						course={singleCourseUser}
-						isEnrolledStatus={isEnrolledStatus}
-						setIsEnrolledStatus={setIsEnrolledStatus}
-					/>
+					<CoursePageBanner course={singleCourseUser} isEnrolledStatus={isEnrolledStatus} setIsEnrolledStatus={setIsEnrolledStatus} />
 					<Chapters course={singleCourseUser} isEnrolledStatus={isEnrolledStatus} />
 				</>
 			)}

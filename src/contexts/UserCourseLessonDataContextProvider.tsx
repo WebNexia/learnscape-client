@@ -55,8 +55,6 @@ const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProvide
 			const response = await axios.get(`${base_url}/courses/${courseId}`);
 			setSingleCourse(response.data.data[0] || null);
 
-			console.log(response.data.data[0]);
-
 			setSingleCourseUser(() => {
 				const filteredChapters: BaseChapter[] | undefined =
 					response?.data?.data[0]?.chapters?.filter(
@@ -67,7 +65,6 @@ const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProvide
 					(chapter) => chapter._id
 				);
 
-				console.log(filteredChapters);
 				return {
 					...response.data.data[0],
 					chapters: filteredChapters,
@@ -107,7 +104,7 @@ const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProvide
 	const fetchUserLessonData = async (userId: string): Promise<void> => {
 		const responseUserLessonIdsData = await axios.get(`${base_url}/userlessons/user/${userId}`);
 
-		const currentUserLessonIdsList = responseUserLessonIdsData.data.response.map(
+		const currentUserLessonIdsList = responseUserLessonIdsData.data?.response?.map(
 			(userLesson: UserLessonsByUserId) => {
 				const userLessonData: UserLessonDataStorage = {
 					lessonId: userLesson.lessonId._id,

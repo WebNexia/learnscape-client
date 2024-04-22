@@ -14,8 +14,10 @@ import {
 	FormControlLabel,
 	Checkbox,
 	DialogContent,
+	Stack,
+	Pagination,
 } from '@mui/material';
-import DashboardPagesLayout from '../components/layouts/DashboardLayout/DashboardPagesLayout';
+import DashboardPagesLayout from '../components/layouts/Dashboard Layout/DashboardPagesLayout';
 import theme from '../themes';
 import React, { useContext, useEffect, useState } from 'react';
 import { CoursesContext } from '../contexts/CoursesContextProvider';
@@ -28,10 +30,10 @@ import CustomSubmitButton from '../components/forms/Custom Buttons/CustomSubmitB
 import CustomCancelButton from '../components/forms/Custom Buttons/CustomCancelButton';
 import CustomDeleteButton from '../components/forms/Custom Buttons/CustomDeleteButton';
 
-const AdminDashboard = () => {
+const AdminCourses = () => {
 	const { userId } = useParams();
 	const navigate = useNavigate();
-	const { sortedData, sortData, addNewCourse, removeCourse } = useContext(CoursesContext);
+	const { sortedData, sortData, addNewCourse, removeCourse, numberOfPages, pageNumber, setPageNumber } = useContext(CoursesContext);
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
 	const [isCourseCreateModalOpen, setIsCourseCreateModalOpen] = useState<boolean>(false);
@@ -112,14 +114,8 @@ const AdminDashboard = () => {
 	};
 
 	return (
-		<DashboardPagesLayout
-			pageName='Admin Dashboard'
-			customSettings={{ justifyContent: 'flex-start' }}>
-			<Dialog
-				open={isCourseCreateModalOpen}
-				onClose={closeNewCourseModal}
-				fullWidth
-				maxWidth='md'>
+		<DashboardPagesLayout pageName='Admin Courses' customSettings={{ justifyContent: 'flex-start' }}>
+			<Dialog open={isCourseCreateModalOpen} onClose={closeNewCourseModal} fullWidth maxWidth='md'>
 				<DialogTitle variant='h3'>Create New Course</DialogTitle>
 				<form
 					onSubmit={(e: React.FormEvent<HTMLFormElement>) => {
@@ -143,7 +139,6 @@ const AdminDashboard = () => {
 						label='Description'
 						value={description}
 						onChange={(e) => setDescription(e.target.value)}
-						maxRows={4}
 						sx={{ margin: '1rem 2rem' }}
 						InputLabelProps={{
 							sx: { fontSize: '0.8rem' },
@@ -174,15 +169,7 @@ const AdminDashboard = () => {
 						/>
 					</Box>
 					<Box sx={{ margin: '2rem' }}>
-						<FormControlLabel
-							control={
-								<Checkbox
-									checked={checked}
-									onChange={(e) => setChecked(e.target.checked)}
-								/>
-							}
-							label='Free Course'
-						/>
+						<FormControlLabel control={<Checkbox checked={checked} onChange={(e) => setChecked(e.target.checked)} />} label='Free Course' />
 					</Box>
 					<DialogActions>
 						<CustomCancelButton
@@ -211,15 +198,20 @@ const AdminDashboard = () => {
 				}}>
 				<CustomSubmitButton onClick={openNewCourseModal}>New Course</CustomSubmitButton>
 			</Box>
-			<Box sx={{ padding: '2rem', mt: '1rem', width: '100%' }}>
-				<Table>
+			<Box
+				sx={{
+					display: 'flex',
+					flexDirection: 'column',
+					alignItems: 'center',
+					padding: '2rem',
+					mt: '1rem',
+					width: '100%',
+				}}>
+				<Table sx={{ mb: '2rem' }}>
 					<TableHead>
 						<TableRow>
 							<TableCell>
-								<TableSortLabel
-									active={orderBy === 'title'}
-									direction={orderBy === 'title' ? order : 'asc'}
-									onClick={() => handleSort('title')}>
+								<TableSortLabel active={orderBy === 'title'} direction={orderBy === 'title' ? order : 'asc'} onClick={() => handleSort('title')}>
 									<Typography variant='h5'>Title</Typography>
 								</TableSortLabel>
 							</TableCell>
@@ -240,10 +232,7 @@ const AdminDashboard = () => {
 								</TableSortLabel>
 							</TableCell>
 							<TableCell>
-								<TableSortLabel
-									active={orderBy === 'price'}
-									direction={orderBy === 'price' ? order : 'asc'}
-									onClick={() => handleSort('price')}>
+								<TableSortLabel active={orderBy === 'price'} direction={orderBy === 'price' ? order : 'asc'} onClick={() => handleSort('price')}>
 									<Typography variant='h5'>Price</Typography>
 								</TableSortLabel>
 							</TableCell>
@@ -264,105 +253,105 @@ const AdminDashboard = () => {
 						</TableRow>
 					</TableHead>
 					<TableBody>
-						{sortedData.map((course: SingleCourse, index) => {
-							let startDate: string = '';
-							const options: Intl.DateTimeFormatOptions = {
-								year: 'numeric',
-								month: 'short',
-								day: 'numeric',
-							};
+						{sortedData &&
+							sortedData.map((course: SingleCourse, index) => {
+								let startDate: string = '';
+								const options: Intl.DateTimeFormatOptions = {
+									year: 'numeric',
+									month: 'short',
+									day: 'numeric',
+								};
 
-							if (course.startingDate !== undefined) {
-								const date: Date = new Date(course.startingDate);
-								startDate = date.toLocaleString('en-US', options);
-							}
+								if (course.startingDate !== undefined) {
+									const date: Date = new Date(course.startingDate);
+									startDate = date.toLocaleString('en-US', options);
+								}
 
-							return (
-								<TableRow key={course._id}>
-									<TableCell>
-										<Typography variant='body2'>{course.title}</Typography>
-									</TableCell>
-									<TableCell>
-										<Typography variant='body2'>
-											{course.isActive ? 'Published' : 'Unpublished'}
-										</Typography>
-									</TableCell>
-									<TableCell>
-										<Typography variant='body2'>{startDate}</Typography>
-									</TableCell>
-									<TableCell>
-										<Typography variant='body2'>
-											{course.priceCurrency}
-											{course.price}
-										</Typography>
-									</TableCell>
-									<TableCell
-										sx={{
-											textAlign: 'center',
-										}}>
-										<IconButton sx={{ color: theme.textColor?.secondary.main }}>
-											<FileCopy />
-										</IconButton>
-										<IconButton
-											sx={{ color: theme.textColor?.secondary.main }}
-											onClick={() => {
-												navigate(
-													`/admin/course-edit/user/${userId}/course/${course._id}`
-												);
+								return (
+									<TableRow key={course._id}>
+										<TableCell>
+											<Typography variant='body2'>{course.title}</Typography>
+										</TableCell>
+										<TableCell>
+											<Typography variant='body2'>{course.isActive ? 'Published' : 'Unpublished'}</Typography>
+										</TableCell>
+										<TableCell>
+											<Typography variant='body2'>{startDate}</Typography>
+										</TableCell>
+										<TableCell>
+											<Typography variant='body2'>
+												{course.priceCurrency}
+												{course.price}
+											</Typography>
+										</TableCell>
+										<TableCell
+											sx={{
+												textAlign: 'center',
 											}}>
-											<Edit />
-										</IconButton>
-										<IconButton
-											sx={{ color: theme.textColor?.secondary.main }}
-											onClick={() => {
-												openDeleteCourseModal(index);
-											}}>
-											<Delete />
-										</IconButton>
-										{isCourseDeleteModalOpen[index] !== undefined && (
-											<Dialog
-												open={isCourseDeleteModalOpen[index]}
-												onClose={() => closeDeleteCourseModal(index)}
-												fullWidth
-												maxWidth='md'>
-												<DialogContent>
-													<Typography>
-														Are you sure you want to delete this course?
-													</Typography>
-												</DialogContent>
+											<IconButton sx={{ color: theme.textColor?.secondary.main }}>
+												<FileCopy />
+											</IconButton>
+											<IconButton
+												sx={{ color: theme.textColor?.secondary.main }}
+												onClick={() => {
+													navigate(`/admin/course-edit/user/${userId}/course/${course._id}`);
+												}}>
+												<Edit />
+											</IconButton>
+											<IconButton
+												sx={{ color: theme.textColor?.secondary.main }}
+												onClick={() => {
+													openDeleteCourseModal(index);
+												}}>
+												<Delete />
+											</IconButton>
+											{isCourseDeleteModalOpen[index] !== undefined && (
+												<Dialog open={isCourseDeleteModalOpen[index]} onClose={() => closeDeleteCourseModal(index)} fullWidth maxWidth='md'>
+													<DialogContent>
+														<Typography>Are you sure you want to delete this course?</Typography>
+													</DialogContent>
 
-												<DialogActions>
-													<CustomCancelButton
-														onClick={() =>
-															closeDeleteCourseModal(index)
-														}
-														sx={{
-															margin: '0 0.5rem 1rem 0',
-														}}>
-														Cancel
-													</CustomCancelButton>
-													<CustomDeleteButton
-														sx={{
-															margin: '0 0.5rem 1rem 0',
-														}}
-														onClick={() => {
-															deleteCourse(course._id);
-															closeDeleteCourseModal(index);
-														}}>
-														Delete
-													</CustomDeleteButton>
-												</DialogActions>
-											</Dialog>
-										)}
-									</TableCell>
-								</TableRow>
-							);
-						})}
+													<DialogActions>
+														<CustomCancelButton
+															onClick={() => closeDeleteCourseModal(index)}
+															sx={{
+																margin: '0 0.5rem 1rem 0',
+															}}>
+															Cancel
+														</CustomCancelButton>
+														<CustomDeleteButton
+															sx={{
+																margin: '0 0.5rem 1rem 0',
+															}}
+															onClick={() => {
+																deleteCourse(course._id);
+																closeDeleteCourseModal(index);
+															}}>
+															Delete
+														</CustomDeleteButton>
+													</DialogActions>
+												</Dialog>
+											)}
+										</TableCell>
+									</TableRow>
+								);
+							})}
 					</TableBody>
 				</Table>
+				<Stack spacing={3}>
+					<Pagination
+						showFirstButton
+						showLastButton
+						count={numberOfPages}
+						page={pageNumber}
+						onChange={(_: React.ChangeEvent<unknown>, value: number) => {
+							setPageNumber(value);
+						}}
+					/>
+				</Stack>
 			</Box>
 		</DashboardPagesLayout>
 	);
 };
 
-export default AdminDashboard;
+export default AdminCourses;

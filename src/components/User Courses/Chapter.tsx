@@ -20,24 +20,26 @@ const Chapter = ({ chapter, isEnrolledStatus, nextChapterFirstLessonId }: Chapte
 			<Box sx={{ backgroundColor: theme.palette.secondary.main, padding: '1rem 0' }}>
 				<Typography variant='h3'>{chapter.title}</Typography>
 			</Box>
-			{chapter.lessons.map((lesson: LessonById, index) => {
-				let nextLessonId: string = '';
+			{chapter &&
+				chapter.lessons &&
+				chapter.lessons.map((lesson: LessonById, index) => {
+					let nextLessonId: string = '';
 
-				if (index !== chapter.lessons.length - 1) {
-					nextLessonId = chapter.lessons[index + 1]._id;
-				}
-				let lessonOrder: number = index + 1;
-				return (
-					<Lesson
-						key={lesson._id}
-						lesson={lesson}
-						isEnrolledStatus={isEnrolledStatus}
-						nextLessonId={nextLessonId}
-						nextChapterFirstLessonId={nextChapterFirstLessonId}
-						lessonOrder={lessonOrder}
-					/>
-				);
-			})}
+					if (index !== chapter.lessons.length - 1) {
+						nextLessonId = chapter.lessons[index + 1]._id;
+					}
+					let lessonOrder: number = index + 1;
+					return (
+						<Lesson
+							key={lesson._id}
+							lesson={lesson}
+							isEnrolledStatus={isEnrolledStatus}
+							nextLessonId={nextLessonId}
+							nextChapterFirstLessonId={nextChapterFirstLessonId}
+							lessonOrder={lessonOrder}
+						/>
+					);
+				})}
 		</Box>
 	);
 };
