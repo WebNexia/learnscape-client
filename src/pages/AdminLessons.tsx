@@ -94,7 +94,7 @@ const AdminLessons = () => {
 		}
 	};
 	return (
-		<DashboardPagesLayout pageName='Admin Lessons' customSettings={{ justifyContent: 'flex-start' }}>
+		<DashboardPagesLayout pageName='Lessons' customSettings={{ justifyContent: 'flex-start' }}>
 			<Dialog open={isNewLessonModalOpen} onClose={() => setIsNewLessonModalOpen(false)} fullWidth maxWidth='md'>
 				<DialogTitle variant='h3'>Create New Lesson</DialogTitle>
 				<form

@@ -1,7 +1,7 @@
 import { Box, Typography } from '@mui/material';
 import theme from '../../../themes';
 import DashboardIcon from '@mui/icons-material/Dashboard';
-import { AssignmentIndRounded, CalendarMonth, Email, Groups, LibraryBooks, Settings } from '@mui/icons-material';
+import { AssignmentIndRounded, CalendarMonth, Email, Groups, LibraryBooks, PeopleAltOutlined, QuizOutlined, Settings } from '@mui/icons-material';
 import SidebarBtn from './SidebarBtn';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useContext, useState } from 'react';
@@ -80,6 +80,18 @@ const Sidebar = () => {
 					{user?.role === Roles.ADMIN && (
 						<>
 							<SidebarBtn
+								btnText='Dashboard'
+								IconName={DashboardIcon}
+								onClick={() => navigateWithPage(PageName.ADMIN_COURSES, `/admin/dashboard/user/${id || userId}`)}
+								selectedPage={selectedPage}
+							/>
+							<SidebarBtn
+								btnText='Users'
+								IconName={PeopleAltOutlined}
+								onClick={() => navigateWithPage(PageName.ADMIN_COURSES, `/admin/users/user/${id || userId}`)}
+								selectedPage={selectedPage}
+							/>
+							<SidebarBtn
 								btnText='Courses'
 								IconName={LibraryBooks}
 								onClick={() => navigateWithPage(PageName.ADMIN_COURSES, `/admin/courses/user/${id || userId}`)}
@@ -89,6 +101,36 @@ const Sidebar = () => {
 								btnText='Lessons'
 								IconName={AssignmentIndRounded}
 								onClick={() => navigateWithPage(PageName.ADMIN_LESSONS, `/admin/lessons/user/${id || userId}`)}
+								selectedPage={selectedPage}
+							/>
+							<SidebarBtn
+								btnText='Questions'
+								IconName={QuizOutlined}
+								onClick={() => navigateWithPage(PageName.ADMIN_QUESTIONS, `/admin/questions/user/${id || userId}`)}
+								selectedPage={selectedPage}
+							/>
+							<SidebarBtn
+								btnText='Schedule'
+								IconName={CalendarMonth}
+								onClick={() => navigateWithPage(PageName.SCHEDULE, `/admin/schedule/user/${id || userId}`)}
+								selectedPage={selectedPage}
+							/>
+							<SidebarBtn
+								btnText='Messages'
+								IconName={Email}
+								onClick={() => navigateWithPage(PageName.ADMIN_MESSAGES, `/admin/messages/user/${id || userId}`)}
+								selectedPage={selectedPage}
+							/>
+							<SidebarBtn
+								btnText='Community'
+								IconName={Groups}
+								onClick={() => navigateWithPage(PageName.ADMIN_COMMUNITY, `/admin/community/user/${id || userId}`)}
+								selectedPage={selectedPage}
+							/>
+							<SidebarBtn
+								btnText='Settings'
+								IconName={Settings}
+								onClick={() => navigateWithPage(PageName.ADMIN_SETTINGS, `/admin/settings/user/${id || userId}`)}
 								selectedPage={selectedPage}
 							/>
 						</>
