@@ -1,16 +1,19 @@
 import { Box, Button, Typography } from '@mui/material';
 import * as styles from '../styles/AuthStyles';
-import { FormEvent, useState } from 'react';
+import { FormEvent, useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import theme from '../themes';
-import { AuthFormErrorMessages, AuthForms, TextFieldTypes } from '../interfaces/enums';
+import { AuthFormErrorMessages, AuthForms, Roles, TextFieldTypes } from '../interfaces/enums';
 import CustomTextField from '../components/forms/Custom Fields/CustomTextField';
+import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 
 const Auth = () => {
 	const navigate = useNavigate();
 
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
+
+	const { setUserId } = useContext(UserAuthContext);
 
 	const [activeForm, setActiveForm] = useState<AuthForms>(AuthForms.SIGN_IN);
 
@@ -32,11 +35,17 @@ const Auth = () => {
 			const response = await axios.post(`${base_url}/users/signin`, { email, password });
 
 			if (response.data.status) {
-				navigate(`/dashboard/user/${response.data._id}`);
+				if (response.data.role === Roles.USER) {
+					navigate(`/dashboard/user/${response.data._id}`);
+				} else if (response.data.role === Roles.ADMIN) {
+					navigate(`/admin/courses/user/${response.data._id}`);
+				}
+
 				localStorage.setItem('user_token', response.data.token);
 				setEmail('');
 				setUsername('');
 				setPassword('');
+				setUserId(response.data._id);
 			} else if (response.data.message === 'Email does not exist') {
 				setErrorMsg(AuthFormErrorMessages.EMAIL_NOT_EXIST);
 			} else {
@@ -110,10 +119,7 @@ const Auth = () => {
 							...sharedBtnStyles,
 							padding: '1rem 0',
 							backgroundColor: activeForm !== AuthForms.SIGN_IN ? 'lightgray' : null,
-							borderTop:
-								activeForm === AuthForms.SIGN_IN
-									? `solid 0.3rem ${theme.bgColor?.greenPrimary}`
-									: 'solid 0.3rem lightgray',
+							borderTop: activeForm === AuthForms.SIGN_IN ? `solid 0.3rem ${theme.bgColor?.greenPrimary}` : 'solid 0.3rem lightgray',
 						}}>
 						Sign In
 					</Button>
@@ -133,10 +139,7 @@ const Auth = () => {
 							...sharedBtnStyles,
 							padding: '1rem 0',
 							backgroundColor: activeForm !== AuthForms.SIGN_UP ? 'lightgray' : null,
-							borderTop:
-								activeForm === AuthForms.SIGN_UP
-									? `solid 0.3rem ${theme.bgColor?.greenPrimary}`
-									: 'solid 0.3rem lightgray',
+							borderTop: activeForm === AuthForms.SIGN_UP ? `solid 0.3rem ${theme.bgColor?.greenPrimary}` : 'solid 0.3rem lightgray',
 						}}>
 						Sign Up
 					</Button>
@@ -154,12 +157,7 @@ const Auth = () => {
 												justifyContent: 'center',
 												alignItems: 'center',
 											}}>
-											<CustomTextField
-												label='Email Address'
-												type={TextFieldTypes.EMAIL}
-												onChange={(e) => setEmail(e.target.value)}
-												value={email}
-											/>
+											<CustomTextField label='Email Address' type={TextFieldTypes.EMAIL} onChange={(e) => setEmail(e.target.value)} value={email} />
 											<CustomTextField
 												label='Password'
 												type={TextFieldTypes.PASSWORD}
@@ -183,19 +181,9 @@ const Auth = () => {
 												justifyContent: 'center',
 												alignItems: 'center',
 											}}>
-											<CustomTextField
-												label='Email Address'
-												type={TextFieldTypes.EMAIL}
-												onChange={(e) => setEmail(e.target.value)}
-												value={email}
-											/>
+											<CustomTextField label='Email Address' type={TextFieldTypes.EMAIL} onChange={(e) => setEmail(e.target.value)} value={email} />
 
-											<CustomTextField
-												label='Username'
-												type={TextFieldTypes.TEXT}
-												onChange={(e) => setUsername(e.target.value)}
-												value={username}
-											/>
+											<CustomTextField label='Username' type={TextFieldTypes.TEXT} onChange={(e) => setUsername(e.target.value)} value={username} />
 											<CustomTextField
 												label='Password'
 												type={TextFieldTypes.PASSWORD}
@@ -203,11 +191,7 @@ const Auth = () => {
 												value={password}
 											/>
 										</Box>
-										<Button
-											variant='contained'
-											fullWidth
-											sx={submitBtnStyles}
-											type='submit'>
+										<Button variant='contained' fullWidth sx={submitBtnStyles} type='submit'>
 											Sign Up
 										</Button>
 									</form>

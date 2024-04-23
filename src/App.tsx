@@ -21,41 +21,56 @@ import AdminLessons from './pages/AdminLessons';
 import CoursesContextProvider from './contexts/CoursesContextProvider';
 import LessonsContextProvider from './contexts/LessonsContextProvider';
 import AdminLessonEditPage from './pages/AdminLessonEditPage';
+import UserAuthContextProvider from './contexts/UserAuthContextProvider';
+import { useState } from 'react';
+import { Roles } from './interfaces/enums';
 
 const queryClient = new QueryClient();
 
 function App() {
+	const [userRole, setUserRole] = useState<string>('');
+
+	const hasRole = (role: string) => {
+		return userRole && userRole === role;
+	};
+
+	const renderRoute = (path: string, element: JSX.Element, requiredRole: string) => {
+		return hasRole(requiredRole) ? <Route path={path} element={element} /> : <Route path='/' element={<HomePage />} />;
+	};
+
 	return (
 		<QueryClientProvider client={queryClient}>
-			<MediaQueryContextProvider>
-				<UserCourseLessonDataContextProvider>
-					<CoursesContextProvider>
-						<LessonsContextProvider>
-							<ThemeProvider theme={theme}>
-								<Router>
-									<Routes>
-										<Route path='' element={<HomePage />} />
-										<Route path='/auth' element={<Auth />} />
-										<Route path='/dashboard/user/:id' element={<Dashboard />} />
-										<Route path='/admin/courses/user/:userId' element={<AdminCourses />} />
-										<Route path='admin/course-edit/user/:userId/course/:courseId' element={<AdminCourseEditPage />} />
-										<Route path='/admin/lessons/user/:userId' element={<AdminLessons />} />
-										<Route path='admin/lesson-edit/user/:userId/lesson/:lessonId' element={<AdminLessonEditPage />} />
+			<UserAuthContextProvider setUserRole={setUserRole}>
+				<MediaQueryContextProvider>
+					<UserCourseLessonDataContextProvider>
+						<CoursesContextProvider>
+							<LessonsContextProvider>
+								<ThemeProvider theme={theme}>
+									<Router>
+										<Routes>
+											<Route path='' element={<HomePage />} />
+											<Route path='/auth' element={<Auth />} />
 
-										<Route path='/courses/user/:id' element={<Courses />} />
-										<Route path='/schedule/user/:id' element={<Schedule />} />
-										<Route path='/messages/user/:id' element={<Messages />} />
-										<Route path='/community/user/:id' element={<Community />} />
-										<Route path='/settings/user/:id' element={<Settings />} />
-										<Route path='/course/:courseId/user/:userId/userCourseId/:userCourseId' element={<CoursePage />} />
-										<Route path='user/:userId/course/:courseId/userCourseId/:userCourseId/lesson/:lessonId/' element={<LessonPage />} />
-									</Routes>
-								</Router>
-							</ThemeProvider>
-						</LessonsContextProvider>
-					</CoursesContextProvider>
-				</UserCourseLessonDataContextProvider>
-			</MediaQueryContextProvider>
+											{renderRoute('/admin/courses/user/:userId', <AdminCourses />, Roles.ADMIN)}
+											{renderRoute('/admin/course-edit/user/:userId/course/:courseId', <AdminCourseEditPage />, Roles.ADMIN)}
+											{renderRoute('/admin/lessons/user/:userId', <AdminLessons />, Roles.ADMIN)}
+											{renderRoute('admin/lesson-edit/user/:userId/lesson/:lessonId', <AdminLessonEditPage />, Roles.ADMIN)}
+											{renderRoute('/dashboard/user/:id', <Dashboard />, Roles.USER)}
+											{renderRoute('/courses/user/:id', <Courses />, Roles.USER)}
+											{renderRoute('/schedule/user/:id', <Schedule />, Roles.USER)}
+											{renderRoute('/messages/user/:id', <Messages />, Roles.USER)}
+											{renderRoute('/community/user/:id', <Community />, Roles.USER)}
+											{renderRoute('/settings/user/:id', <Settings />, Roles.USER)}
+											{renderRoute('/course/:courseId/user/:userId/userCourseId/:userCourseId', <CoursePage />, Roles.USER)}
+											{renderRoute('/user/:userId/course/:courseId/userCourseId/:userCourseId/lesson/:lessonId/', <LessonPage />, Roles.USER)}
+										</Routes>
+									</Router>
+								</ThemeProvider>
+							</LessonsContextProvider>
+						</CoursesContextProvider>
+					</UserCourseLessonDataContextProvider>
+				</MediaQueryContextProvider>
+			</UserAuthContextProvider>
 		</QueryClientProvider>
 	);
 }

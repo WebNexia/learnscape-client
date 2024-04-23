@@ -1,12 +1,14 @@
 import { Box, Typography } from '@mui/material';
 import theme from '../../themes';
 import { SingleCourse } from '../../interfaces/course';
+import { BaseChapter } from '../../interfaces/chapter';
 
 interface CourseDetailsNonEditBoxProps {
 	singleCourse?: SingleCourse;
+	chapters: BaseChapter[];
 }
 
-const CourseDetailsNonEditBox = ({ singleCourse }: CourseDetailsNonEditBoxProps) => {
+const CourseDetailsNonEditBox = ({ singleCourse, chapters }: CourseDetailsNonEditBoxProps) => {
 	let startDate: string = '';
 	const options: Intl.DateTimeFormatOptions = {
 		year: 'numeric',
@@ -89,7 +91,7 @@ const CourseDetailsNonEditBox = ({ singleCourse }: CourseDetailsNonEditBoxProps)
 					<>
 						{singleCourse &&
 							singleCourse.chapters &&
-							singleCourse.chapters.map((chapter) => {
+							chapters.map((chapter) => {
 								return (
 									<Box key={chapter._id} sx={{ margin: '1rem 0 4rem 0' }}>
 										<Box display='flex'>

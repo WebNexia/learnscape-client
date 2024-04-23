@@ -1,11 +1,9 @@
-import { Box, CircularProgress, Typography } from '@mui/material';
 import axios from 'axios';
 import { ReactNode, createContext, useEffect, useState } from 'react';
 import { useQuery } from 'react-query';
-
-import { SentimentVeryDissatisfied } from '@mui/icons-material';
-import theme from '../themes';
 import { Course, SingleCourse } from '../interfaces/course';
+import Loading from '../components/layouts/Loading/Loading';
+import LoadingError from '../components/layouts/Loading/LoadingError';
 
 interface CoursesContextTypes {
 	data: SingleCourse[];
@@ -46,21 +44,16 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 	const [numberOfPages, setNumberOfPages] = useState<number>(1);
 	const [pageNumber, setPageNumber] = useState<number>(1);
 
-	const { data, isLoading, isError } = useQuery(
-		['allCourses', { page: pageNumber }],
-		async () => {
-			const response = await axios.get(`${base_url}/courses?page=${pageNumber}`);
+	const { data, isLoading, isError } = useQuery(['allCourses', { page: pageNumber }], async () => {
+		const response = await axios.get(`${base_url}/courses?page=${pageNumber}`);
 
-			// Initial sorting when fetching data
-			const sortedDataCopy = [...response.data.data].sort((a: Course, b: Course) =>
-				b.updatedAt.localeCompare(a.updatedAt)
-			);
-			setSortedData(sortedDataCopy);
-			setNumberOfPages(response.data.pages);
+		// Initial sorting when fetching data
+		const sortedDataCopy = [...response.data.data].sort((a: Course, b: Course) => b.updatedAt.localeCompare(a.updatedAt));
+		setSortedData(sortedDataCopy);
+		setNumberOfPages(response.data.pages);
 
-			return response.data.data;
-		}
-	);
+		return response.data.data;
+	});
 
 	// Function to handle sorting
 	const sortData = (property: keyof SingleCourse, order: 'asc' | 'desc') => {
@@ -105,63 +98,11 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 	useEffect(() => {}, [sortedData]);
 
 	if (isLoading) {
-		return (
-			<Box
-				sx={{
-					display: 'flex',
-					flexDirection: 'column',
-					justifyContent: 'center',
-					alignItems: 'center',
-					backgroundColor: theme.bgColor?.secondary,
-					height: '100vh',
-				}}>
-				<CircularProgress />
-				<Typography
-					sx={{
-						margin: '2rem',
-						fontSize: '2rem',
-						fontFamily: 'Poppins',
-						fontWeight: 500,
-						color: '#01435A',
-					}}>
-					Loading...
-				</Typography>
-				<Typography
-					sx={{
-						fontSize: '3rem',
-						fontFamily: 'Permanent Marker, cursive',
-						color: '#01435A',
-					}}>
-					KAIZEN
-				</Typography>
-			</Box>
-		);
+		return <Loading />;
 	}
 
 	if (isError) {
-		return (
-			<Box
-				sx={{
-					display: 'flex',
-					flexDirection: 'column',
-					justifyContent: 'center',
-					alignItems: 'center',
-					backgroundColor: theme.bgColor?.secondary,
-					height: '100vh',
-				}}>
-				<Typography
-					sx={{
-						margin: '2rem',
-						fontSize: '2rem',
-						fontFamily: 'Poppins',
-						fontWeight: 500,
-						color: '#01435A',
-					}}>
-					Ooops, something went wrong!
-				</Typography>
-				<SentimentVeryDissatisfied fontSize='large' color='error' />
-			</Box>
-		);
+		return <LoadingError />;
 	}
 
 	return (

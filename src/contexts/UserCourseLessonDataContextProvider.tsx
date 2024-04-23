@@ -56,14 +56,11 @@ const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProvide
 			setSingleCourse(response.data.data[0] || null);
 
 			setSingleCourseUser(() => {
-				const filteredChapters: BaseChapter[] | undefined =
-					response?.data?.data[0]?.chapters?.filter(
-						(chapter: BaseChapter) => chapter?.lessonIds?.length !== 0
-					);
-
-				const filteredChapterIds: string[] | undefined = filteredChapters?.map(
-					(chapter) => chapter._id
+				const filteredChapters: BaseChapter[] | undefined = response?.data?.data[0]?.chapters?.filter(
+					(chapter: BaseChapter) => chapter?.lessonIds?.length !== 0
 				);
+
+				const filteredChapterIds: string[] | undefined = filteredChapters?.map((chapter) => chapter._id);
 
 				return {
 					...response.data.data[0],
@@ -104,19 +101,17 @@ const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProvide
 	const fetchUserLessonData = async (userId: string): Promise<void> => {
 		const responseUserLessonIdsData = await axios.get(`${base_url}/userlessons/user/${userId}`);
 
-		const currentUserLessonIdsList = responseUserLessonIdsData.data?.response?.map(
-			(userLesson: UserLessonsByUserId) => {
-				const userLessonData: UserLessonDataStorage = {
-					lessonId: userLesson.lessonId._id,
-					userLessonId: userLesson._id,
-					courseId: userLesson.courseId,
-					isCompleted: userLesson.isCompleted,
-					isInProgress: userLesson.isInProgress,
-				};
+		const currentUserLessonIdsList = responseUserLessonIdsData.data?.response?.map((userLesson: UserLessonsByUserId) => {
+			const userLessonData: UserLessonDataStorage = {
+				lessonId: userLesson.lessonId._id,
+				userLessonId: userLesson._id,
+				courseId: userLesson.courseId,
+				isCompleted: userLesson.isCompleted,
+				isInProgress: userLesson.isInProgress,
+			};
 
-				return userLessonData;
-			}
-		);
+			return userLessonData;
+		});
 
 		if (!localStorage.getItem('userLessonData')) {
 			localStorage.setItem('userLessonData', JSON.stringify(currentUserLessonIdsList));

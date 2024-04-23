@@ -1,11 +1,9 @@
-import { Box, CircularProgress, Typography } from '@mui/material';
 import axios from 'axios';
 import { ReactNode, createContext, useEffect, useState } from 'react';
 import { useQuery } from 'react-query';
-
-import { SentimentVeryDissatisfied } from '@mui/icons-material';
-import theme from '../themes';
 import { Lesson } from '../interfaces/lessons';
+import Loading from '../components/layouts/Loading/Loading';
+import LoadingError from '../components/layouts/Loading/LoadingError';
 
 interface LessonsContextTypes {
 	data: Lesson[];
@@ -52,9 +50,7 @@ const LessonsContextProvider = (props: LessonsContextProviderProps) => {
 			const response = await axios.get(`${base_url}/lessons?page=${pageNumber}`);
 
 			// Initial sorting when fetching data
-			const sortedDataCopy = [...response.data.data].sort((a: Lesson, b: Lesson) =>
-				b.updatedAt.localeCompare(a.updatedAt)
-			);
+			const sortedDataCopy = [...response.data.data].sort((a: Lesson, b: Lesson) => b.updatedAt.localeCompare(a.updatedAt));
 			setSortedData(sortedDataCopy);
 			setNumberOfPages(response.data.pages);
 
@@ -105,63 +101,11 @@ const LessonsContextProvider = (props: LessonsContextProviderProps) => {
 	useEffect(() => {}, [sortedData]);
 
 	if (isLoading) {
-		return (
-			<Box
-				sx={{
-					display: 'flex',
-					flexDirection: 'column',
-					justifyContent: 'center',
-					alignItems: 'center',
-					backgroundColor: theme.bgColor?.secondary,
-					height: '100vh',
-				}}>
-				<CircularProgress />
-				<Typography
-					sx={{
-						margin: '2rem',
-						fontSize: '2rem',
-						fontFamily: 'Poppins',
-						fontWeight: 500,
-						color: '#01435A',
-					}}>
-					Loading...
-				</Typography>
-				<Typography
-					sx={{
-						fontSize: '3rem',
-						fontFamily: 'Permanent Marker, cursive',
-						color: '#01435A',
-					}}>
-					KAIZEN
-				</Typography>
-			</Box>
-		);
+		return <Loading />;
 	}
 
 	if (isError) {
-		return (
-			<Box
-				sx={{
-					display: 'flex',
-					flexDirection: 'column',
-					justifyContent: 'center',
-					alignItems: 'center',
-					backgroundColor: theme.bgColor?.secondary,
-					height: '100vh',
-				}}>
-				<Typography
-					sx={{
-						margin: '2rem',
-						fontSize: '2rem',
-						fontFamily: 'Poppins',
-						fontWeight: 500,
-						color: '#01435A',
-					}}>
-					Ooops, something went wrong!
-				</Typography>
-				<SentimentVeryDissatisfied fontSize='large' color='error' />
-			</Box>
-		);
+		return <LoadingError />;
 	}
 
 	return (
