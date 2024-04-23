@@ -172,8 +172,6 @@ const AdminCourseEditPage = () => {
 	const y = useMotionValue(0);
 	const boxShadow = useRaisedShadow(y);
 
-	console.log(notSavedChapterIds);
-	console.log(chapters);
 	return (
 		<DashboardPagesLayout pageName='Edit Course' customSettings={{ justifyContent: 'flex-start' }}>
 			<Box sx={{ width: '90%' }}>

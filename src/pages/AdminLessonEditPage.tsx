@@ -179,23 +179,17 @@ const AdminLessonEditPage = () => {
 
 	const handleLessonUpdate = async (e: FormEvent): Promise<void> => {
 		e.preventDefault();
-		console.log(isQuestionUpdated);
-		console.log(isQuestionUpdated.some((data) => data.isUpdated === true));
 
 		if (singleLesson !== undefined && isLessonUpdated && isQuestionUpdated.some((data) => data.isUpdated === true)) {
 			try {
-				const response = await axios.patch(`${base_url}/lessons/${lessonId}`, singleLesson);
+				await axios.patch(`${base_url}/lessons/${lessonId}`, singleLesson);
 				setIsLessonUpdated(false);
 				updateLesson(singleLesson);
-
-				console.log(response.data);
 
 				await Promise.all(
 					questions?.map(async (question, index) => {
 						if (isQuestionUpdated[index]?.isUpdated) {
-							const response = await axios.patch(`${base_url}/questions/${question._id}`, question);
-							console.log(question);
-							console.log(response.data);
+							await axios.patch(`${base_url}/questions/${question._id}`, question);
 						}
 					})
 				);
@@ -917,7 +911,6 @@ const AdminLessonEditPage = () => {
 																									}
 																									return data;
 																								})!;
-																								console.log(prevData);
 																							}
 																							return prevData;
 																						});
