@@ -38,7 +38,7 @@ const Auth = () => {
 				if (response.data.role === Roles.USER) {
 					navigate(`/dashboard/user/${response.data._id}`);
 				} else if (response.data.role === Roles.ADMIN) {
-					navigate(`/admin/courses/user/${response.data._id}`);
+					navigate(`/admin/dashboard/user/${response.data._id}`);
 				}
 
 				localStorage.setItem('user_token', response.data.token);
