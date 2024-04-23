@@ -22,8 +22,15 @@ export const enum Mode {
 }
 
 export const enum PageName {
+	ADMIN_DASHBOARD = 'Dashboard',
+	ADMIN_USERS = 'Users',
 	ADMIN_COURSES = 'Courses',
 	ADMIN_LESSONS = 'Lessons',
+	ADMIN_QUESTIONS = 'Questions',
+	ADMIN_SCHEDULE = 'Schedule',
+	ADMIN_MESSAGES = 'Messages',
+	ADMIN_COMMUNITY = 'Community',
+	ADMIN_SETTINGS = 'Settings',
 	DASHBOARD = 'Dashboard',
 	COURSES = 'Courses',
 	SCHEDULE = 'Schedule',

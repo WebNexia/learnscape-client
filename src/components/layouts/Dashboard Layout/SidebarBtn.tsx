@@ -25,7 +25,7 @@ const SidebarBtn = ({ btnText, onClick, IconName, selectedPage }: SidebarBtnProp
 				justifyContent: 'flex-start',
 				paddingRight: '1.5rem',
 				borderRadius: '1.5rem 0 0 1.5rem',
-				marginLeft: '1.75rem',
+				marginLeft: '1.85rem',
 				border: 'none',
 				':hover': {
 					color: selectedPage !== btnText ? theme.submitBtn?.backgroundColor : theme.textColor?.primary.main,
