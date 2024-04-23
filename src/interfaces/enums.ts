@@ -22,12 +22,17 @@ export const enum Mode {
 }
 
 export const enum PageName {
-	ADMIN_COURSES = 'Admin Crs',
-	ADMIN_LESSONS = 'Admin Lessons',
+	ADMIN_COURSES = 'Courses',
+	ADMIN_LESSONS = 'Lessons',
 	DASHBOARD = 'Dashboard',
 	COURSES = 'Courses',
 	SCHEDULE = 'Schedule',
 	MESSAGES = 'Messages',
 	COMMUNITY = 'Community',
 	SETTINGS = 'Settings',
+}
+
+export const enum Roles {
+	ADMIN = 'admin',
+	USER = 'learner',
 }

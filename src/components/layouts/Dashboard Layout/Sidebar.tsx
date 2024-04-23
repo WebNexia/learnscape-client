@@ -1,24 +1,23 @@
 import { Box, Typography } from '@mui/material';
 import theme from '../../../themes';
 import DashboardIcon from '@mui/icons-material/Dashboard';
-import { CalendarMonth, Email, Groups, LibraryBooks, Settings } from '@mui/icons-material';
+import { AssignmentIndRounded, CalendarMonth, Email, Groups, LibraryBooks, Settings } from '@mui/icons-material';
 import SidebarBtn from './SidebarBtn';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useState } from 'react';
-import { PageName } from '../../../interfaces/enums';
+import { useContext, useState } from 'react';
+import { PageName, Roles } from '../../../interfaces/enums';
+import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 
 const Sidebar = () => {
 	const navigate = useNavigate();
-	const { id } = useParams();
-	const { userId } = useParams();
+	const { id, userId } = useParams();
+	const { user } = useContext(UserAuthContext);
 
-	const currentPage =
-		window.location.pathname.split('/')[1].charAt(0).toUpperCase() +
-		window.location.pathname.split('/')[1].slice(1);
+	const currentPage = window.location.pathname.includes('admin')
+		? window.location.pathname.split('/')[2].charAt(0).toUpperCase() + window.location.pathname.split('/')[2].slice(1)
+		: window.location.pathname.split('/')[1].charAt(0).toUpperCase() + window.location.pathname.split('/')[1].slice(1);
 
 	const [selectedPage, setSelectedPage] = useState<string>(currentPage);
-
-	const username: string | null = localStorage.getItem('username');
 
 	const navigateWithPage = (pageName: string, path: string) => {
 		setSelectedPage(pageName);
@@ -46,9 +45,7 @@ const Sidebar = () => {
 					height: '3rem',
 					marginBottom: '1rem',
 				}}>
-				<Typography
-					variant='h1'
-					sx={{ color: theme.textColor?.common.main, fontSize: '1.75rem' }}>
+				<Typography variant='h1' sx={{ color: theme.textColor?.common.main, fontSize: '1.75rem' }}>
 					KAIZEN
 				</Typography>
 			</Box>
@@ -60,7 +57,7 @@ const Sidebar = () => {
 					marginBottom: '1rem',
 				}}>
 				<img
-					src={localStorage.getItem('imageUrl') || undefined}
+					src={user?.imageUrl}
 					alt='user_profile_pic'
 					style={{
 						height: '6rem',
@@ -70,7 +67,7 @@ const Sidebar = () => {
 					}}
 				/>
 				<Typography variant='body1' sx={{ color: theme.textColor?.common.main }}>
-					{username}
+					{user?.username}
 				</Typography>
 				<Box
 					sx={{
@@ -80,76 +77,62 @@ const Sidebar = () => {
 						alignItems: 'flex-start',
 						marginTop: '2rem',
 					}}>
-					<SidebarBtn
-						btnText='Admin Crs'
-						IconName={DashboardIcon}
-						onClick={() =>
-							navigateWithPage(
-								PageName.ADMIN_COURSES,
-								`/admin/courses/user/${id || userId}`
-							)
-						}
-						selectedPage={selectedPage}
-					/>
-					<SidebarBtn
-						btnText='Admin Lssns'
-						IconName={DashboardIcon}
-						onClick={() =>
-							navigateWithPage(
-								PageName.ADMIN_LESSONS,
-								`/admin/lessons/user/${id || userId}`
-							)
-						}
-						selectedPage={selectedPage}
-					/>
-					<SidebarBtn
-						btnText='Dashboard'
-						IconName={DashboardIcon}
-						onClick={() =>
-							navigateWithPage(PageName.DASHBOARD, `/dashboard/user/${id || userId}`)
-						}
-						selectedPage={selectedPage}
-					/>
-					<SidebarBtn
-						btnText='Courses'
-						IconName={LibraryBooks}
-						onClick={() =>
-							navigateWithPage(PageName.COURSES, `/courses/user/${id || userId}`)
-						}
-						selectedPage={selectedPage}
-					/>
-					<SidebarBtn
-						btnText='Schedule'
-						IconName={CalendarMonth}
-						onClick={() =>
-							navigateWithPage(PageName.SCHEDULE, `/schedule/user/${id || userId}`)
-						}
-						selectedPage={selectedPage}
-					/>
-					<SidebarBtn
-						btnText='Messages'
-						IconName={Email}
-						onClick={() =>
-							navigateWithPage(PageName.MESSAGES, `/messages/user/${id || userId}`)
-						}
-						selectedPage={selectedPage}
-					/>
-					<SidebarBtn
-						btnText='Community'
-						IconName={Groups}
-						onClick={() =>
-							navigateWithPage(PageName.COMMUNITY, `/community/user/${id || userId}`)
-						}
-						selectedPage={selectedPage}
-					/>
-					<SidebarBtn
-						btnText='Settings'
-						IconName={Settings}
-						onClick={() =>
-							navigateWithPage(PageName.SETTINGS, `/settings/user/${id || userId}`)
-						}
-						selectedPage={selectedPage}
-					/>
+					{user?.role === Roles.ADMIN && (
+						<>
+							<SidebarBtn
+								btnText='Courses'
+								IconName={LibraryBooks}
+								onClick={() => navigateWithPage(PageName.ADMIN_COURSES, `/admin/courses/user/${id || userId}`)}
+								selectedPage={selectedPage}
+							/>
+							<SidebarBtn
+								btnText='Lessons'
+								IconName={AssignmentIndRounded}
+								onClick={() => navigateWithPage(PageName.ADMIN_LESSONS, `/admin/lessons/user/${id || userId}`)}
+								selectedPage={selectedPage}
+							/>
+						</>
+					)}
+					{user?.role === Roles.USER && (
+						<>
+							<SidebarBtn
+								btnText='Dashboard'
+								IconName={DashboardIcon}
+								onClick={() => navigateWithPage(PageName.DASHBOARD, `/dashboard/user/${id || userId}`)}
+								selectedPage={selectedPage}
+							/>
+							<SidebarBtn
+								btnText='Courses'
+								IconName={LibraryBooks}
+								onClick={() => navigateWithPage(PageName.COURSES, `/courses/user/${id || userId}`)}
+								selectedPage={selectedPage}
+							/>
+							<SidebarBtn
+								btnText='Schedule'
+								IconName={CalendarMonth}
+								onClick={() => navigateWithPage(PageName.SCHEDULE, `/schedule/user/${id || userId}`)}
+								selectedPage={selectedPage}
+							/>
+							<SidebarBtn
+								btnText='Messages'
+								IconName={Email}
+								onClick={() => navigateWithPage(PageName.MESSAGES, `/messages/user/${id || userId}`)}
+								selectedPage={selectedPage}
+							/>
+							<SidebarBtn
+								btnText='Community'
+								IconName={Groups}
+								onClick={() => navigateWithPage(PageName.COMMUNITY, `/community/user/${id || userId}`)}
+								selectedPage={selectedPage}
+							/>
+							<SidebarBtn
+								btnText='Settings'
+								IconName={Settings}
+								onClick={() => navigateWithPage(PageName.SETTINGS, `/settings/user/${id || userId}`)}
+								selectedPage={selectedPage}
+							/>
+						</>
+					)}
 				</Box>
 			</Box>
 		</Box>

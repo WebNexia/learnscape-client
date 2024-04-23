@@ -1,11 +1,14 @@
 import { Alert, Box, IconButton, Snackbar, Tooltip, Typography } from '@mui/material';
 import CustomSubmitButton from '../forms/Custom Buttons/CustomSubmitButton';
-import { FormEvent } from 'react';
+import { FormEvent, useContext } from 'react';
 import CustomCancelButton from '../forms/Custom Buttons/CustomCancelButton';
 import { Edit } from '@mui/icons-material';
 import { SingleCourse } from '../../interfaces/course';
 import { ChapterUpdateTrack } from '../../pages/AdminCourseEditPage';
 import { BaseChapter } from '../../interfaces/chapter';
+import axios from 'axios';
+import { useParams } from 'react-router-dom';
+import { CoursesContext } from '../../contexts/CoursesContextProvider';
 
 interface CourseEditorBoxProps {
 	singleCourse?: SingleCourse;
@@ -16,6 +19,9 @@ interface CourseEditorBoxProps {
 	isNoChapterMsgOpen: boolean;
 	resetChanges: boolean;
 	isFree: boolean;
+	notSavedChapterIds: string[];
+	setChapters: React.Dispatch<React.SetStateAction<BaseChapter[]>>;
+	setNotSavedChapterIds: React.Dispatch<React.SetStateAction<string[]>>;
 	setIsEditMode: React.Dispatch<React.SetStateAction<boolean>>;
 	setIsMissingFieldMsgOpen: React.Dispatch<React.SetStateAction<boolean>>;
 	setIsMissingField: React.Dispatch<React.SetStateAction<boolean>>;
@@ -35,6 +41,9 @@ const CourseEditorBox = ({
 	isNoChapterMsgOpen,
 	resetChanges,
 	isFree,
+	notSavedChapterIds,
+	setChapters,
+	setNotSavedChapterIds,
 	setIsEditMode,
 	setIsMissingFieldMsgOpen,
 	setIsMissingField,
@@ -44,8 +53,59 @@ const CourseEditorBox = ({
 	handleCourseUpdate,
 	setIsNoChapterMsgOpen,
 }: CourseEditorBoxProps) => {
+	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const vertical = 'top';
 	const horizontal = 'center';
+
+	const { courseId } = useParams();
+	const { updateCourse } = useContext(CoursesContext);
+
+	const handleCancel = async (): Promise<void> => {
+		setIsEditMode(false);
+
+		setIsChapterUpdated((prevData) => {
+			return prevData.map((data) => ({ ...data, isUpdated: false }));
+		});
+
+		try {
+			if (notSavedChapterIds.length !== 0) {
+				await Promise.all(
+					notSavedChapterIds?.map(async (id) => {
+						await axios.delete(`${base_url}/chapters/${id}`);
+					})
+				);
+			}
+
+			if (singleCourse) {
+				const updatedChapterIds = singleCourse.chapterIds.filter((chapterId) => !notSavedChapterIds.includes(chapterId));
+				const updatedChapters = singleCourse.chapters.filter((chapter) => {
+					if (!notSavedChapterIds.includes(chapter._id)) {
+						return chapter;
+					}
+				});
+
+				await axios.patch(`${base_url}/courses/${courseId}`, {
+					...singleCourse,
+					chapterIds: updatedChapterIds,
+					chapters: updatedChapters,
+				});
+
+				updateCourse({
+					...singleCourse,
+					chapterIds: updatedChapterIds,
+					chapters: updatedChapters,
+				});
+
+				setChapters(updatedChapters);
+			}
+
+			setNotSavedChapterIds([]);
+			setResetChanges(!resetChanges);
+		} catch (error) {
+			console.log(error);
+		}
+	};
+
 	return (
 		<Box
 			sx={{
@@ -114,22 +174,11 @@ const CourseEditorBox = ({
 									setIsMissingField(true);
 									setIsMissingFieldMsgOpen(true);
 								}
+								setNotSavedChapterIds([]);
 							}}>
 							Save
 						</CustomSubmitButton>
-						<CustomCancelButton
-							onClick={() => {
-								setIsEditMode(false);
-								setIsChapterUpdated((prevData) => {
-									prevData = prevData.map((data) => {
-										return { ...data, isUpdated: false };
-									});
-									return prevData;
-								});
-								setResetChanges(!resetChanges);
-							}}>
-							Cancel
-						</CustomCancelButton>
+						<CustomCancelButton onClick={handleCancel}>Cancel</CustomCancelButton>
 					</Box>
 				) : (
 					<Box sx={{ ml: '1rem' }}>

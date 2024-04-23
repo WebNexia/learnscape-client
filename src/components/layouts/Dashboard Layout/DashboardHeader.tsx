@@ -10,9 +10,7 @@ interface DashboardHeaderProps {
 }
 
 const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
-	const [mode, setMode] = useState<Mode>(
-		(localStorage.getItem('mode') as Mode) || Mode.LIGHT_MODE
-	);
+	const [mode, setMode] = useState<Mode>((localStorage.getItem('mode') as Mode) || Mode.LIGHT_MODE);
 	const navigate = useNavigate();
 
 	useEffect(() => {
@@ -72,12 +70,10 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 							fontFamily: theme.fontFamily?.main,
 						}}
 						onClick={() => {
-							navigate('/');
 							localStorage.removeItem('user_token');
-							localStorage.removeItem('username');
-							localStorage.removeItem('imageUrl');
 							localStorage.removeItem('userCourseData');
 							localStorage.removeItem('userLessonData');
+							navigate('/');
 						}}>
 						Log Out
 					</Button>

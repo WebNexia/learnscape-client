@@ -14,12 +14,8 @@ const SidebarBtn = ({ btnText, onClick, IconName, selectedPage }: SidebarBtnProp
 			variant='outlined'
 			startIcon={<IconName />}
 			sx={{
-				color:
-					selectedPage === btnText
-						? theme.textColor?.primary.main
-						: theme.textColor?.common.main,
-				backgroundColor:
-					selectedPage === btnText ? theme.palette.secondary.main : 'transparent',
+				color: selectedPage === btnText ? theme.textColor?.primary.main : theme.textColor?.common.main,
+				backgroundColor: selectedPage === btnText ? theme.palette.secondary.main : 'transparent',
 				textTransform: 'capitalize',
 				marginBottom: '0.35rem',
 				fontFamily: theme.fontFamily?.main,
@@ -29,15 +25,11 @@ const SidebarBtn = ({ btnText, onClick, IconName, selectedPage }: SidebarBtnProp
 				justifyContent: 'flex-start',
 				paddingRight: '1.5rem',
 				borderRadius: '1.5rem 0 0 1.5rem',
-				marginLeft: '1.85rem',
+				marginLeft: '1.75rem',
 				border: 'none',
 				':hover': {
-					color:
-						selectedPage !== btnText
-							? theme.submitBtn?.backgroundColor
-							: theme.textColor?.primary.main,
-					backgroundColor:
-						selectedPage === btnText ? theme.palette.secondary.main : 'transparent',
+					color: selectedPage !== btnText ? theme.submitBtn?.backgroundColor : theme.textColor?.primary.main,
+					backgroundColor: selectedPage === btnText ? theme.palette.secondary.main : 'transparent',
 					border: 'none',
 				},
 			}}

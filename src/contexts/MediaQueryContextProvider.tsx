@@ -22,11 +22,7 @@ const MediaQueryContextProvider = (props: MediaQueryContextProviderProps) => {
 	const isSmallScreen = useMediaQuery('(max-width: 700px)');
 	const isMediumScreen = useMediaQuery('(max-width:960px)');
 
-	return (
-		<MediaQueryContext.Provider value={{ isVerySmallScreen, isSmallScreen, isMediumScreen }}>
-			{props.children}
-		</MediaQueryContext.Provider>
-	);
+	return <MediaQueryContext.Provider value={{ isVerySmallScreen, isSmallScreen, isMediumScreen }}>{props.children}</MediaQueryContext.Provider>;
 };
 
 export default MediaQueryContextProvider;

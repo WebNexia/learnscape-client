@@ -38,6 +38,7 @@ const AdminCourseEditPage = () => {
 	const [isChapterUpdated, setIsChapterUpdated] = useState<ChapterUpdateTrack[]>([]);
 	const [resetChanges, setResetChanges] = useState<boolean>(false);
 	const [deletedChapterIds, setDeletedChapterIds] = useState<string[]>([]);
+	const [notSavedChapterIds, setNotSavedChapterIds] = useState<string[]>([]);
 	const [newChapterTitle, setNewChapterTitle] = useState<string>('');
 	const [isChapterCreateModalOpen, setIsChapterCreateModalOpen] = useState<boolean>(false);
 
@@ -49,6 +50,10 @@ const AdminCourseEditPage = () => {
 
 			setChapters((prevData) => {
 				return [createChapterResponse.data, ...prevData];
+			});
+
+			setNotSavedChapterIds((prevData) => {
+				return [createChapterResponse.data._id, ...prevData];
 			});
 
 			setSingleCourse((prevCourse) => {
@@ -64,16 +69,19 @@ const AdminCourseEditPage = () => {
 			});
 
 			if (singleCourse) {
+				const updatedChapterIds = [createChapterResponse.data._id, ...singleCourse.chapterIds];
+				const updatedChapters = [createChapterResponse.data, ...singleCourse.chapters];
+
 				await axios.patch(`${base_url}/courses/${courseId}`, {
 					...singleCourse,
-					chapterIds: [createChapterResponse.data._id, ...singleCourse.chapterIds],
-					chapters: [createChapterResponse.data, ...singleCourse.chapters],
+					chapterIds: updatedChapterIds,
+					chapters: updatedChapters,
 				});
 
 				updateCourse({
 					...singleCourse,
-					chapterIds: [createChapterResponse.data._id, ...singleCourse.chapterIds],
-					chapters: [createChapterResponse.data, ...singleCourse.chapters],
+					chapterIds: updatedChapterIds,
+					chapters: updatedChapters,
 				});
 			}
 		} catch (error) {
@@ -94,7 +102,11 @@ const AdminCourseEditPage = () => {
 						setIsFree(true);
 					}
 					setIsActive(courseResponse.isActive);
-					setChapters(courseResponse.chapters);
+
+					if (courseResponse.chapters[0].title) {
+						setChapters(courseResponse.chapters);
+					}
+
 					const chapterUpdateData: ChapterUpdateTrack[] = courseResponse?.chapters?.reduce((acc: ChapterUpdateTrack[], value: BaseChapter) => {
 						acc.push({ chapterId: value._id, isUpdated: false });
 						return acc;
@@ -109,7 +121,7 @@ const AdminCourseEditPage = () => {
 	}, [courseId, isActive, resetChanges]);
 
 	const handlePublishing = async (): Promise<void> => {
-		if (singleCourse?.chapterIds.length === 0) {
+		if (singleCourse?.chapterIds.length === 0 && !singleCourse?.isActive) {
 			setIsNoChapterMsgOpen(true);
 		} else if (courseId !== undefined) {
 			try {
@@ -153,16 +165,15 @@ const AdminCourseEditPage = () => {
 		}
 
 		setIsChapterUpdated((prevData) => {
-			prevData = prevData.map((data) => {
-				return { ...data, isUpdated: false };
-			});
-			return prevData;
+			return prevData.map((data) => ({ ...data, isUpdated: false }));
 		});
 	};
 
 	const y = useMotionValue(0);
 	const boxShadow = useRaisedShadow(y);
 
+	console.log(notSavedChapterIds);
+	console.log(chapters);
 	return (
 		<DashboardPagesLayout pageName='Edit Course' customSettings={{ justifyContent: 'flex-start' }}>
 			<Box sx={{ width: '90%' }}>
@@ -176,6 +187,8 @@ const AdminCourseEditPage = () => {
 					isNoChapterMsgOpen={isNoChapterMsgOpen}
 					resetChanges={resetChanges}
 					isFree={isFree}
+					notSavedChapterIds={notSavedChapterIds}
+					setNotSavedChapterIds={setNotSavedChapterIds}
 					setIsEditMode={setIsEditMode}
 					setIsMissingFieldMsgOpen={setIsMissingFieldMsgOpen}
 					setIsNoChapterMsgOpen={setIsNoChapterMsgOpen}
@@ -184,9 +197,10 @@ const AdminCourseEditPage = () => {
 					setResetChanges={setResetChanges}
 					setIsChapterUpdated={setIsChapterUpdated}
 					handleCourseUpdate={handleCourseUpdate}
+					setChapters={setChapters}
 				/>
 			</Box>
-			{!isEditMode && <CourseDetailsNonEditBox singleCourse={singleCourse} />}
+			{!isEditMode && <CourseDetailsNonEditBox singleCourse={singleCourse} chapters={chapters} />}
 
 			{isEditMode && (
 				<Box
@@ -299,20 +313,22 @@ const AdminCourseEditPage = () => {
 									{singleCourse &&
 										singleCourse.chapterIds?.length !== 0 &&
 										chapters?.map((chapter) => {
-											return (
-												<Reorder.Item key={chapter._id} value={chapter} style={{ listStyle: 'none', boxShadow }}>
-													<AdminCourseEditChapter
-														key={chapter._id}
-														chapter={chapter}
-														setSingleCourse={setSingleCourse}
-														setChapters={setChapters}
-														setIsChapterUpdated={setIsChapterUpdated}
-														setIsMissingField={setIsMissingField}
-														isMissingField={isMissingField}
-														setDeletedChapterIds={setDeletedChapterIds}
-													/>
-												</Reorder.Item>
-											);
+											if (chapter.title) {
+												return (
+													<Reorder.Item key={chapter._id} value={chapter} style={{ listStyle: 'none', boxShadow }}>
+														<AdminCourseEditChapter
+															key={chapter._id}
+															chapter={chapter}
+															setSingleCourse={setSingleCourse}
+															setChapters={setChapters}
+															setIsChapterUpdated={setIsChapterUpdated}
+															setIsMissingField={setIsMissingField}
+															isMissingField={isMissingField}
+															setDeletedChapterIds={setDeletedChapterIds}
+														/>
+													</Reorder.Item>
+												);
+											}
 										})}
 								</Reorder.Group>
 							)}
