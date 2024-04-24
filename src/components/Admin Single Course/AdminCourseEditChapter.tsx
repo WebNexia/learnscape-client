@@ -15,22 +15,26 @@ import CustomDeleteButton from '../forms/Custom Buttons/CustomDeleteButton';
 
 interface AdminCourseEditChapterProps {
 	chapter: BaseChapter;
+	newChaptersToCreate: BaseChapter[];
 	setSingleCourse: React.Dispatch<React.SetStateAction<SingleCourse | undefined>>;
 	setChapters: React.Dispatch<React.SetStateAction<BaseChapter[]>>;
 	setIsChapterUpdated: React.Dispatch<React.SetStateAction<ChapterUpdateTrack[]>>;
 	setIsMissingField: React.Dispatch<React.SetStateAction<boolean>>;
 	isMissingField: boolean;
 	setDeletedChapterIds: React.Dispatch<React.SetStateAction<string[]>>;
+	setNewChaptersToCreate: React.Dispatch<React.SetStateAction<BaseChapter[]>>;
 }
 
 const AdminCourseEditChapter = ({
 	chapter,
+	newChaptersToCreate,
 	setSingleCourse,
 	setChapters,
 	setIsChapterUpdated,
 	setIsMissingField,
 	isMissingField,
 	setDeletedChapterIds,
+	setNewChaptersToCreate,
 }: AdminCourseEditChapterProps) => {
 	const [lessons, setLessons] = useState<Lesson[]>(chapter?.lessons);
 
@@ -79,28 +83,20 @@ const AdminCourseEditChapter = ({
 								}
 								return prevData;
 							});
-							setSingleCourse((prevCourse) => {
-								if (prevCourse) {
-									const updatedChapters = prevCourse.chapters?.map((currentChapter) => {
-										if (chapter._id === currentChapter._id) {
-											// Return a new chapter object with updated lessons
-											return {
-												...currentChapter,
-												title: e.target.value,
-											};
-										}
-										return currentChapter;
-									});
 
-									// Return a new course object with updated chapters
-									setChapters(updatedChapters);
-									return {
-										...prevCourse,
-										chapters: updatedChapters,
-									};
-								}
-								return prevCourse; // Return unchanged if prevCourse is undefined
+							setChapters((prevData) => {
+								const updatedChapters = prevData?.map((currentChapter) => {
+									if (chapter._id === currentChapter._id) {
+										return {
+											...currentChapter,
+											title: e.target.value,
+										};
+									}
+									return currentChapter;
+								});
+								return updatedChapters;
 							});
+
 							setIsMissingField(false);
 						}}
 						error={isMissingField && chapter?.title === ''}
@@ -111,23 +107,22 @@ const AdminCourseEditChapter = ({
 					<CustomSubmitButton>Add Lesson</CustomSubmitButton>
 					<CustomDeleteButton
 						onClick={() => {
-							setSingleCourse((prevCourse) => {
-								if (prevCourse) {
-									const updatedChapters = prevCourse.chapters?.filter((currentChapter) => chapter._id !== currentChapter._id);
-
-									// Return a new course object with updated chapters
-									setChapters(updatedChapters);
-									return {
-										...prevCourse,
-										chapters: updatedChapters,
-										chapterIds: updatedChapters.map((updatedChapter) => updatedChapter._id),
-									};
+							setChapters((prevData) => {
+								if (prevData !== undefined) {
+									return prevData.filter((currentChapter) => chapter._id !== currentChapter._id);
 								}
-								return prevCourse; // Return unchanged if prevCourse is undefined
+								return prevData;
 							});
-							setDeletedChapterIds((prevIds) => {
-								return [...prevIds, chapter._id];
-							});
+
+							//checks if deleted chapter is newly created or an existing one
+							if (!newChaptersToCreate.some((chap) => chap._id === chapter._id)) {
+								setDeletedChapterIds((prevIds) => {
+									return [...prevIds, chapter._id];
+								});
+							} else {
+								const filteredNewlyCreatedChapters = newChaptersToCreate.filter((chap) => chap._id !== chapter._id);
+								setNewChaptersToCreate(filteredNewlyCreatedChapters);
+							}
 						}}>
 						Delete Chapter
 					</CustomDeleteButton>
