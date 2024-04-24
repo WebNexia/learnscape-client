@@ -1,14 +1,11 @@
 import { Alert, Box, IconButton, Snackbar, Tooltip, Typography } from '@mui/material';
 import CustomSubmitButton from '../forms/Custom Buttons/CustomSubmitButton';
-import { FormEvent, useContext } from 'react';
+import { FormEvent } from 'react';
 import CustomCancelButton from '../forms/Custom Buttons/CustomCancelButton';
 import { Edit } from '@mui/icons-material';
 import { SingleCourse } from '../../interfaces/course';
 import { ChapterUpdateTrack } from '../../pages/AdminCourseEditPage';
 import { BaseChapter } from '../../interfaces/chapter';
-import axios from 'axios';
-import { useParams } from 'react-router-dom';
-import { CoursesContext } from '../../contexts/CoursesContextProvider';
 
 interface CourseEditorBoxProps {
 	singleCourse?: SingleCourse;
@@ -30,6 +27,9 @@ interface CourseEditorBoxProps {
 	setIsChapterUpdated: React.Dispatch<React.SetStateAction<ChapterUpdateTrack[]>>;
 	handleCourseUpdate: (event: React.FormEvent<Element>) => void;
 	setIsNoChapterMsgOpen: React.Dispatch<React.SetStateAction<boolean>>;
+	setAllChaptersBeforeSave: React.Dispatch<React.SetStateAction<BaseChapter[]>>;
+	setNewChaptersToCreate: React.Dispatch<React.SetStateAction<BaseChapter[]>>;
+	setDeletedChapterIds: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
 const CourseEditorBox = ({
@@ -41,69 +41,27 @@ const CourseEditorBox = ({
 	isNoChapterMsgOpen,
 	resetChanges,
 	isFree,
-	notSavedChapterIds,
-	setChapters,
+	setAllChaptersBeforeSave,
 	setNotSavedChapterIds,
 	setIsEditMode,
 	setIsMissingFieldMsgOpen,
 	setIsMissingField,
 	handlePublishing,
 	setResetChanges,
-	setIsChapterUpdated,
 	handleCourseUpdate,
 	setIsNoChapterMsgOpen,
+	setNewChaptersToCreate,
+	setDeletedChapterIds,
 }: CourseEditorBoxProps) => {
-	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const vertical = 'top';
 	const horizontal = 'center';
 
-	const { courseId } = useParams();
-	const { updateCourse } = useContext(CoursesContext);
-
 	const handleCancel = async (): Promise<void> => {
 		setIsEditMode(false);
-
-		setIsChapterUpdated((prevData) => {
-			return prevData.map((data) => ({ ...data, isUpdated: false }));
-		});
-
-		try {
-			if (notSavedChapterIds.length !== 0) {
-				await Promise.all(
-					notSavedChapterIds?.map(async (id) => {
-						await axios.delete(`${base_url}/chapters/${id}`);
-					})
-				);
-			}
-
-			if (singleCourse) {
-				const updatedChapterIds = singleCourse.chapterIds.filter((chapterId) => !notSavedChapterIds.includes(chapterId));
-				const updatedChapters = singleCourse.chapters.filter((chapter) => {
-					if (!notSavedChapterIds.includes(chapter._id)) {
-						return chapter;
-					}
-				});
-
-				await axios.patch(`${base_url}/courses/${courseId}`, {
-					...singleCourse,
-					chapterIds: updatedChapterIds,
-					chapters: updatedChapters,
-				});
-
-				updateCourse({
-					...singleCourse,
-					chapterIds: updatedChapterIds,
-					chapters: updatedChapters,
-				});
-
-				setChapters(updatedChapters);
-			}
-
-			setNotSavedChapterIds([]);
-			setResetChanges(!resetChanges);
-		} catch (error) {
-			console.log(error);
-		}
+		setAllChaptersBeforeSave(chapters);
+		setResetChanges(!resetChanges);
+		setNewChaptersToCreate([]);
+		setDeletedChapterIds([]);
 	};
 
 	return (
