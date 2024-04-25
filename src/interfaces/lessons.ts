@@ -9,6 +9,7 @@ interface BaseLesson {
 	isActive: boolean;
 	createdAt: string;
 	updatedAt: string;
+	text: string;
 }
 
 export interface Lesson extends BaseLesson {

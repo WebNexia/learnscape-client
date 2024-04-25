@@ -3,14 +3,8 @@ import {
 	Dialog,
 	DialogActions,
 	DialogContent,
-	DialogTitle,
-	FormControl,
 	IconButton,
-	InputLabel,
-	MenuItem,
 	Pagination,
-	Select,
-	SelectChangeEvent,
 	Stack,
 	Table,
 	TableBody,
@@ -18,11 +12,10 @@ import {
 	TableHead,
 	TableRow,
 	TableSortLabel,
+	Tooltip,
 	Typography,
 } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/Dashboard Layout/DashboardPagesLayout';
-import CustomTextField from '../components/forms/Custom Fields/CustomTextField';
-import CustomSubmitButton from '../components/forms/Custom Buttons/CustomSubmitButton';
 import CustomCancelButton from '../components/forms/Custom Buttons/CustomCancelButton';
 import { useContext, useEffect, useState } from 'react';
 import axios from 'axios';
@@ -32,31 +25,17 @@ import theme from '../themes';
 import { Delete, Edit, FileCopy } from '@mui/icons-material';
 import CustomDeleteButton from '../components/forms/Custom Buttons/CustomDeleteButton';
 import { useNavigate, useParams } from 'react-router-dom';
+import CreateLessonDialog from '../components/layouts/New Lesson/CreateLessonDialog';
+import CustomSubmitButton from '../components/forms/Custom Buttons/CustomSubmitButton';
 
 const AdminLessons = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { userId } = useParams();
 	const navigate = useNavigate();
+
+	const { sortData, sortedData, removeLesson, numberOfPages, pageNumber, setPageNumber } = useContext(LessonsContext);
+
 	const [isNewLessonModalOpen, setIsNewLessonModalOpen] = useState<boolean>(false);
-	const [title, setTitle] = useState<string>('');
-	const [type, setType] = useState<string>('');
-
-	const lessonTypes: string[] = ['Quiz', 'Instructional Lesson'];
-
-	const { sortData, sortedData, addNewLesson, removeLesson, numberOfPages, pageNumber, setPageNumber } = useContext(LessonsContext);
-
-	const createLesson = async () => {
-		try {
-			const response = await axios.post(`${base_url}/lessons`, {
-				title,
-				type,
-			});
-
-			addNewLesson({ _id: response.data._id, title, type });
-		} catch (error) {
-			console.log(error);
-		}
-	};
 
 	const [orderBy, setOrderBy] = useState<keyof Lesson>('title');
 	const [order, setOrder] = useState<'asc' | 'desc'>('asc');
@@ -95,82 +74,26 @@ const AdminLessons = () => {
 	};
 	return (
 		<DashboardPagesLayout pageName='Lessons' customSettings={{ justifyContent: 'flex-start' }}>
-			<Dialog open={isNewLessonModalOpen} onClose={() => setIsNewLessonModalOpen(false)} fullWidth maxWidth='md'>
-				<DialogTitle variant='h3'>Create New Lesson</DialogTitle>
-				<form
-					onSubmit={(e: React.FormEvent<HTMLFormElement>) => {
-						e.preventDefault();
-						createLesson();
-						setIsNewLessonModalOpen(false);
-					}}
-					style={{ display: 'flex', flexDirection: 'column' }}>
-					<CustomTextField
-						fullWidth={false}
-						label='Title'
-						value={title}
-						onChange={(e) => setTitle(e.target.value)}
-						sx={{ margin: '1rem 2rem' }}
-						InputLabelProps={{
-							sx: { fontSize: '0.8rem' },
-						}}
-					/>
-					<FormControl sx={{ margin: '1rem 2rem' }}>
-						<InputLabel id='type' sx={{ fontSize: '0.8rem' }}>
-							Type
-						</InputLabel>
-						<Select
-							labelId='type'
-							id='lesson_type'
-							value={type}
-							onChange={(event: SelectChangeEvent) => {
-								setType(event.target.value);
-							}}
-							size='medium'
-							label='Type'
-							required>
-							{lessonTypes &&
-								lessonTypes.map((type) => (
-									<MenuItem value={type} key={type}>
-										{type}
-									</MenuItem>
-								))}
-						</Select>
-					</FormControl>
-
-					<DialogActions>
-						<CustomCancelButton
-							onClick={() => setIsNewLessonModalOpen(false)}
-							sx={{
-								margin: '0 0.5rem 1rem 0',
-							}}>
-							Cancel
-						</CustomCancelButton>
-						<CustomSubmitButton
-							sx={{
-								margin: '0 0.5rem 1rem 0',
-							}}>
-							Create
-						</CustomSubmitButton>
-					</DialogActions>
-				</form>
-			</Dialog>
-			<Box
-				sx={{
+			<CreateLessonDialog
+				isNewLessonModalOpen={isNewLessonModalOpen}
+				createNewLesson={true}
+				setIsNewLessonModalOpen={setIsNewLessonModalOpen}
+				containerStyle={{
 					display: 'flex',
 					flexDirection: 'row',
 					justifyContent: 'flex-end',
 					padding: '2rem',
 					width: '100%',
-				}}>
-				<CustomSubmitButton
-					onClick={() => {
-						setIsNewLessonModalOpen(true);
-						setTitle('');
-						setType('');
-					}}>
-					New Lesson
-				</CustomSubmitButton>
-			</Box>
+				}}
+				triggerButton={
+					<CustomSubmitButton
+						onClick={() => {
+							setIsNewLessonModalOpen(true);
+						}}>
+						New Lesson
+					</CustomSubmitButton>
+				}
+			/>
 			<Box
 				sx={{
 					display: 'flex',
@@ -236,23 +159,29 @@ const AdminLessons = () => {
 											sx={{
 												textAlign: 'center',
 											}}>
-											<IconButton sx={{ color: theme.textColor?.secondary.main }}>
-												<FileCopy />
-											</IconButton>
-											<IconButton
-												sx={{ color: theme.textColor?.secondary.main }}
-												onClick={() => {
-													navigate(`/admin/lesson-edit/user/${userId}/lesson/${lesson._id}`);
-												}}>
-												<Edit />
-											</IconButton>
-											<IconButton
-												sx={{ color: theme.textColor?.secondary.main }}
-												onClick={() => {
-													openDeleteLessonModal(index);
-												}}>
-												<Delete />
-											</IconButton>
+											<Tooltip title='Clone' placement='top'>
+												<IconButton sx={{ color: theme.textColor?.secondary.main }}>
+													<FileCopy />
+												</IconButton>
+											</Tooltip>
+											<Tooltip title='Edit' placement='top'>
+												<IconButton
+													sx={{ color: theme.textColor?.secondary.main }}
+													onClick={() => {
+														navigate(`/admin/lesson-edit/user/${userId}/lesson/${lesson._id}`);
+													}}>
+													<Edit />
+												</IconButton>
+											</Tooltip>
+											<Tooltip title='Delete' placement='top'>
+												<IconButton
+													sx={{ color: theme.textColor?.secondary.main }}
+													onClick={() => {
+														openDeleteLessonModal(index);
+													}}>
+													<Delete />
+												</IconButton>
+											</Tooltip>
 											{isLessonDeleteModalOpen[index] !== undefined && (
 												<Dialog open={isLessonDeleteModalOpen[index]} onClose={() => closeDeleteLessonModal(index)} fullWidth maxWidth='md'>
 													<DialogContent>

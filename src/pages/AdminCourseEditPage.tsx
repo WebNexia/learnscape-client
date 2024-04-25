@@ -16,10 +16,34 @@ import CoursePaper from '../components/Admin Single Course/Paper';
 import CourseEditorBox from '../components/Admin Single Course/CourseEditorBox';
 import CourseDetailsNonEditBox from '../components/Admin Single Course/CourseDetailsNonEditBox';
 import CourseDetailsEditBox from '../components/Admin Single Course/CourseDetailsEditBox';
+import { Lesson } from '../interfaces/lessons';
 
 export interface ChapterUpdateTrack {
 	chapterId: string;
 	isUpdated: boolean;
+}
+
+export interface ChapterLessonData {
+	chapterId: string;
+	lessons: Lesson[];
+
+	// Getter to generate lessonIds based on lessons array
+	readonly lessonIds: string[];
+}
+
+export class ChapterLessonDataImpl implements ChapterLessonData {
+	chapterId: string;
+	lessons: Lesson[];
+
+	constructor(chapterId: string, lessons: Lesson[]) {
+		this.chapterId = chapterId;
+		this.lessons = lessons;
+	}
+
+	// Implement the getter for lessonIds
+	get lessonIds(): string[] {
+		return this.lessons.map((lesson) => lesson._id);
+	}
 }
 
 const AdminCourseEditPage = () => {
@@ -40,13 +64,13 @@ const AdminCourseEditPage = () => {
 	const [isChapterUpdated, setIsChapterUpdated] = useState<ChapterUpdateTrack[]>([]);
 	const [resetChanges, setResetChanges] = useState<boolean>(false);
 	const [deletedChapterIds, setDeletedChapterIds] = useState<string[]>([]);
-	const [notSavedChapterIds, setNotSavedChapterIds] = useState<string[]>([]);
 	const [newChapterTitle, setNewChapterTitle] = useState<string>('');
 	const [isChapterCreateModalOpen, setIsChapterCreateModalOpen] = useState<boolean>(false);
+	const [chapterLessonData, setChapterLessonData] = useState<{ [chapterId: string]: ChapterLessonData }>({});
 
 	const generateUniqueId = (): string => {
 		// Generate a random string of characters
-		const randomString = Math.random().toString(36).substr(2, 9);
+		const randomString = Math.random().toString(36).substring(2, 9);
 
 		// Generate a timestamp to ensure uniqueness
 		const timestamp = Date.now().toString(36);
@@ -71,10 +95,6 @@ const AdminCourseEditPage = () => {
 
 			setAllChaptersBeforeSave((prevData) => {
 				return [newChapterBeforeSave, ...prevData];
-			});
-
-			setNotSavedChapterIds((prevData) => {
-				return [newChapterBeforeSave._id, ...prevData];
 			});
 
 			setNewChaptersToCreate((prevData) => {
@@ -102,6 +122,17 @@ const AdminCourseEditPage = () => {
 					if (courseResponse.chapters[0].title) {
 						setChapters(courseResponse.chapters);
 						setAllChaptersBeforeSave(courseResponse.chapters);
+
+						// Initialize chapter lesson data
+						const initialChapterLessonData: { [chapterId: string]: ChapterLessonData } = {};
+						courseResponse.chapters.forEach((chapter: BaseChapter) => {
+							initialChapterLessonData[chapter._id] = {
+								chapterId: chapter._id,
+								lessons: chapter.lessons,
+								lessonIds: chapter.lessons.map((lesson: Lesson) => lesson._id),
+							};
+						});
+						setChapterLessonData(initialChapterLessonData);
 					}
 
 					const chapterUpdateData: ChapterUpdateTrack[] = courseResponse?.chapters?.reduce((acc: ChapterUpdateTrack[], value: BaseChapter) => {
@@ -222,14 +253,13 @@ const AdminCourseEditPage = () => {
 				<CourseEditorBox
 					singleCourse={singleCourse}
 					chapters={chapters}
+					allChaptersBeforeSave={allChaptersBeforeSave}
 					isEditMode={isEditMode}
 					isActive={isActive}
 					isMissingFieldMsgOpen={isMissingFieldMsgOpen}
 					isNoChapterMsgOpen={isNoChapterMsgOpen}
 					resetChanges={resetChanges}
 					isFree={isFree}
-					notSavedChapterIds={notSavedChapterIds}
-					setNotSavedChapterIds={setNotSavedChapterIds}
 					setIsEditMode={setIsEditMode}
 					setIsMissingFieldMsgOpen={setIsMissingFieldMsgOpen}
 					setIsNoChapterMsgOpen={setIsNoChapterMsgOpen}
@@ -360,24 +390,22 @@ const AdminCourseEditPage = () => {
 									{allChaptersBeforeSave &&
 										allChaptersBeforeSave.length !== 0 &&
 										allChaptersBeforeSave?.map((chapter) => {
-											if (chapter.title) {
-												return (
-													<Reorder.Item key={chapter._id} value={chapter} style={{ listStyle: 'none', boxShadow }}>
-														<AdminCourseEditChapter
-															key={chapter._id}
-															chapter={chapter}
-															newChaptersToCreate={newChaptersToCreate}
-															setSingleCourse={setSingleCourse}
-															setChapters={setAllChaptersBeforeSave}
-															setIsChapterUpdated={setIsChapterUpdated}
-															setIsMissingField={setIsMissingField}
-															isMissingField={isMissingField}
-															setDeletedChapterIds={setDeletedChapterIds}
-															setNewChaptersToCreate={setNewChaptersToCreate}
-														/>
-													</Reorder.Item>
-												);
-											}
+											return (
+												<Reorder.Item key={chapter._id} value={chapter} style={{ listStyle: 'none', boxShadow }}>
+													<AdminCourseEditChapter
+														key={chapter._id}
+														chapter={chapter}
+														newChaptersToCreate={newChaptersToCreate}
+														setSingleCourse={setSingleCourse}
+														setChapters={setAllChaptersBeforeSave}
+														setIsChapterUpdated={setIsChapterUpdated}
+														setIsMissingField={setIsMissingField}
+														isMissingField={isMissingField}
+														setDeletedChapterIds={setDeletedChapterIds}
+														setNewChaptersToCreate={setNewChaptersToCreate}
+													/>
+												</Reorder.Item>
+											);
 										})}
 								</Reorder.Group>
 							)}

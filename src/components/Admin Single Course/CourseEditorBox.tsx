@@ -10,15 +10,14 @@ import { BaseChapter } from '../../interfaces/chapter';
 interface CourseEditorBoxProps {
 	singleCourse?: SingleCourse;
 	chapters: BaseChapter[];
+	allChaptersBeforeSave: BaseChapter[];
 	isEditMode: boolean;
 	isActive?: boolean;
 	isMissingFieldMsgOpen: boolean;
 	isNoChapterMsgOpen: boolean;
 	resetChanges: boolean;
 	isFree: boolean;
-	notSavedChapterIds: string[];
 	setChapters: React.Dispatch<React.SetStateAction<BaseChapter[]>>;
-	setNotSavedChapterIds: React.Dispatch<React.SetStateAction<string[]>>;
 	setIsEditMode: React.Dispatch<React.SetStateAction<boolean>>;
 	setIsMissingFieldMsgOpen: React.Dispatch<React.SetStateAction<boolean>>;
 	setIsMissingField: React.Dispatch<React.SetStateAction<boolean>>;
@@ -35,6 +34,7 @@ interface CourseEditorBoxProps {
 const CourseEditorBox = ({
 	singleCourse,
 	chapters,
+	allChaptersBeforeSave,
 	isEditMode,
 	isActive,
 	isMissingFieldMsgOpen,
@@ -42,7 +42,6 @@ const CourseEditorBox = ({
 	resetChanges,
 	isFree,
 	setAllChaptersBeforeSave,
-	setNotSavedChapterIds,
 	setIsEditMode,
 	setIsMissingFieldMsgOpen,
 	setIsMissingField,
@@ -124,7 +123,7 @@ const CourseEditorBox = ({
 									singleCourse?.title.trim() !== '' &&
 									singleCourse?.description.trim() !== '' &&
 									(isFree || (singleCourse?.priceCurrency !== '' && singleCourse?.price !== '')) &&
-									!chapters.some((chapter) => chapter.title === '')
+									!allChaptersBeforeSave.some((chapter) => chapter.title === '')
 								) {
 									setIsEditMode(false);
 									handleCourseUpdate(e as FormEvent<Element>);
@@ -132,7 +131,6 @@ const CourseEditorBox = ({
 									setIsMissingField(true);
 									setIsMissingFieldMsgOpen(true);
 								}
-								setNotSavedChapterIds([]);
 							}}>
 							Save
 						</CustomSubmitButton>
