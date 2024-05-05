@@ -1,11 +1,14 @@
-import { Box, Typography } from '@mui/material';
+import { Box, IconButton, Tooltip, Typography } from '@mui/material';
 import theme from '../../themes';
 import { SingleCourse } from '../../interfaces/course';
-import { BaseChapter } from '../../interfaces/chapter';
+
+import { ChapterLessonData } from '../../pages/AdminCourseEditPage';
+import { EditTwoTone } from '@mui/icons-material';
+import { useNavigate, useParams } from 'react-router-dom';
 
 interface CourseDetailsNonEditBoxProps {
 	singleCourse?: SingleCourse;
-	chapters: BaseChapter[];
+	chapters: ChapterLessonData[];
 }
 
 const CourseDetailsNonEditBox = ({ singleCourse, chapters }: CourseDetailsNonEditBoxProps) => {
@@ -20,6 +23,9 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters }: CourseDetailsNonEdi
 		const date: Date = new Date(singleCourse?.startingDate);
 		startDate = date.toLocaleString('en-US', options);
 	}
+
+	const navigate = useNavigate();
+	const { userId } = useParams();
 	return (
 		<Box
 			sx={{
@@ -76,7 +82,7 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters }: CourseDetailsNonEdi
 				</Box>
 			</Box>
 			<Box sx={{ mt: '6rem', minHeight: '40vh' }}>
-				<Typography variant='h4'>Chapters</Typography>
+				<Typography variant='h4'>CHAPTERS</Typography>
 				{singleCourse?.chapterIds?.length === 0 ? (
 					<Box
 						sx={{
@@ -93,9 +99,9 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters }: CourseDetailsNonEdi
 							singleCourse.chapters &&
 							chapters.map((chapter) => {
 								return (
-									<Box key={chapter._id} sx={{ margin: '1rem 0 4rem 0' }}>
+									<Box key={chapter.chapterId} sx={{ margin: '1rem 0 4rem 0' }}>
 										<Box display='flex'>
-											<Typography variant='h6' sx={{ mb: '1rem' }}>
+											<Typography variant='h6' sx={{ mb: '0rem' }}>
 												{chapter.title}
 											</Typography>
 										</Box>
@@ -109,8 +115,8 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters }: CourseDetailsNonEdi
 														sx={{
 															display: 'flex',
 															alignItems: 'center',
-															height: '5rem',
-															width: '60%',
+															height: '4rem',
+															width: '80%',
 															backgroundColor: theme.bgColor?.common,
 															margin: '1.25rem 0',
 															borderRadius: '0.25rem',
@@ -118,7 +124,7 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters }: CourseDetailsNonEdi
 														}}>
 														<Box
 															sx={{
-																height: '5rem',
+																height: '4rem',
 																width: '6rem',
 															}}>
 															<img
@@ -131,11 +137,25 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters }: CourseDetailsNonEdi
 																}}
 															/>
 														</Box>
-														<Box
-															sx={{
-																ml: '1rem',
-															}}>
-															<Typography variant='body1'>{lesson.title}</Typography>
+														<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', margin: '0 1rem' }}>
+															<Box>
+																<Typography variant='body1'>{lesson.title}</Typography>
+															</Box>
+															<Box sx={{ display: 'flex', alignItems: 'center' }}>
+																<Box sx={{ mr: '1rem' }}>
+																	<Typography variant='body1'>{lesson.type}</Typography>
+																</Box>
+																<Box>
+																	<Tooltip title='Edit Lesson' placement='top'>
+																		<IconButton
+																			onClick={() => {
+																				navigate(`/admin/lesson-edit/user/${userId}/lesson/${lesson._id}`);
+																			}}>
+																			<EditTwoTone />
+																		</IconButton>
+																	</Tooltip>
+																</Box>
+															</Box>
 														</Box>
 													</Box>
 												);

@@ -1,4 +1,4 @@
-import { Alert, Box, Button, Dialog, DialogActions, DialogTitle, Paper, Snackbar, Typography } from '@mui/material';
+import { Alert, Box, Button, Paper, Snackbar, Typography } from '@mui/material';
 import theme from '../../../themes';
 import { SingleCourse } from '../../../interfaces/course';
 import { KeyboardBackspaceOutlined } from '@mui/icons-material';
@@ -8,7 +8,8 @@ import axios from 'axios';
 import { useState } from 'react';
 import { UserCoursesIdsWithCourseIds, UserLessonDataStorage } from '../../../contexts/UserCourseLessonDataContextProvider';
 import CustomSubmitButton from '../../forms/Custom Buttons/CustomSubmitButton';
-import CustomCancelButton from '../../forms/Custom Buttons/CustomCancelButton';
+import CustomDialog from '../Dialog/CustomDialog';
+import CustomDialogActions from '../Dialog/CustomDialogActions';
 
 interface CoursePageBannerProps {
 	course: SingleCourse;
@@ -129,30 +130,18 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus }: Cou
 				</Alert>
 			</Snackbar>
 
-			<Dialog open={isDialogOpen} onClose={() => setIsDialogOpen(false)} fullWidth maxWidth='sm'>
-				<DialogTitle variant='h3'>Make Payment</DialogTitle>
-				<DialogActions>
-					<CustomCancelButton
-						onClick={() => {
-							setIsDialogOpen(false);
-						}}
-						sx={{
-							margin: '0 0.5rem 1rem 0',
-						}}>
-						Cancel
-					</CustomCancelButton>
-					<CustomSubmitButton
-						onClick={() => {
-							courseRegistration();
-							setIsDialogOpen(false);
-						}}
-						sx={{
-							margin: '0 0.5rem 1rem 0',
-						}}>
-						Enroll
-					</CustomSubmitButton>
-				</DialogActions>
-			</Dialog>
+			<CustomDialog openModal={isDialogOpen} closeModal={() => setIsDialogOpen(false)} title='Make Payment'>
+				<CustomDialogActions
+					onCancel={() => {
+						setIsDialogOpen(false);
+					}}
+					onSubmit={() => {
+						courseRegistration();
+						setIsDialogOpen(false);
+					}}
+					submitBtnText='Enroll'
+				/>
+			</CustomDialog>
 
 			<Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
 				<Box

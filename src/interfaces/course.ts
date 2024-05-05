@@ -1,4 +1,4 @@
-import { BaseChapter } from './chapter';
+import { ChapterLessonData } from '../pages/AdminCourseEditPage';
 
 export interface BaseCourse {
 	_id: string;
@@ -35,5 +35,5 @@ export interface SingleCourse extends BaseCourse {
 	durationHours: number;
 	priceCurrency: string;
 	chapterIds: string[];
-	chapters: BaseChapter[];
+	chapters: ChapterLessonData[];
 }
