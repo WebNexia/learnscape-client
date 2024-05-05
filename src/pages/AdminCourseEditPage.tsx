@@ -177,7 +177,6 @@ const AdminCourseEditPage = () => {
 					chapter.lessons = await Promise.all(
 						chapter.lessons.map(async (lesson: Lesson) => {
 							if (lesson._id.includes('temp_lesson_id')) {
-								console.log('deneme lesson');
 								const lessonResponse = await axios.post(`${base_url}/lessons`, {
 									title: lesson.title,
 									type: lesson.type,
@@ -190,7 +189,6 @@ const AdminCourseEditPage = () => {
 							return lesson;
 						})
 					);
-					console.log(chapter.lessons);
 					chapter.lessonIds = chapter.lessons.map((lesson) => lesson._id);
 
 					if (chapter.chapterId.includes('temp_chapter_id')) {
@@ -205,7 +203,6 @@ const AdminCourseEditPage = () => {
 			);
 
 			setChapterLessonData(updatedChapters);
-			console.log(updatedChapters);
 
 			setSingleCourse((prevCourse) => {
 				if (prevCourse) {
@@ -220,12 +217,11 @@ const AdminCourseEditPage = () => {
 			});
 
 			if (singleCourse !== undefined) {
-				const response = await axios.patch(`${base_url}/courses/${courseId}`, {
+				await axios.patch(`${base_url}/courses/${courseId}`, {
 					...singleCourse,
 					chapterIds: updatedChapters.map((chapter) => chapter.chapterId),
 				});
 
-				console.log(response.data);
 				updateCourse({
 					...singleCourse,
 					chapters: updatedChapters,

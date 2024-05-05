@@ -199,7 +199,6 @@ const AdminLessonEditPage = () => {
 			prevData = prevData.map((data) => {
 				return { ...data, isUpdated: false };
 			});
-			console.log(prevData);
 			return prevData;
 		});
 	};
