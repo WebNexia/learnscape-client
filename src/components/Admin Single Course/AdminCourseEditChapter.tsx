@@ -1,46 +1,35 @@
 import { Box, IconButton, Tooltip, Typography } from '@mui/material';
 import { useMotionValue, Reorder } from 'framer-motion';
 import theme from '../../themes';
-import { Delete } from '@mui/icons-material';
-import { BaseChapter } from '../../interfaces/chapter';
-import { useEffect, useState } from 'react';
+import { CreateTwoTone, Delete, FileCopy, NoteAdd } from '@mui/icons-material';
+import { useState } from 'react';
 import { Lesson } from '../../interfaces/lessons';
 import { useRaisedShadow } from '../../hooks/use-raised-shadow';
-import { SingleCourse } from '../../interfaces/course';
-import { ChapterUpdateTrack } from '../../pages/AdminCourseEditPage';
+import { ChapterLessonData, ChapterUpdateTrack } from '../../pages/AdminCourseEditPage';
 import CustomTextField from '../forms/Custom Fields/CustomTextField';
 import CustomErrorMessage from '../forms/Custom Fields/CustomErrorMessage';
-import CustomSubmitButton from '../forms/Custom Buttons/CustomSubmitButton';
-import CustomDeleteButton from '../forms/Custom Buttons/CustomDeleteButton';
+import CreateLessonDialog from '../layouts/New Lesson/CreateLessonDialog';
+import AddNewLessonDialog from './AddNewLessonDialog';
 
 interface AdminCourseEditChapterProps {
-	chapter: BaseChapter;
-	newChaptersToCreate: BaseChapter[];
-	setSingleCourse: React.Dispatch<React.SetStateAction<SingleCourse | undefined>>;
-	setChapters: React.Dispatch<React.SetStateAction<BaseChapter[]>>;
+	chapter: ChapterLessonData;
+	setChapterLessonDataBeforeSave: React.Dispatch<React.SetStateAction<ChapterLessonData[]>>;
 	setIsChapterUpdated: React.Dispatch<React.SetStateAction<ChapterUpdateTrack[]>>;
 	setIsMissingField: React.Dispatch<React.SetStateAction<boolean>>;
 	isMissingField: boolean;
 	setDeletedChapterIds: React.Dispatch<React.SetStateAction<string[]>>;
-	setNewChaptersToCreate: React.Dispatch<React.SetStateAction<BaseChapter[]>>;
 }
 
 const AdminCourseEditChapter = ({
 	chapter,
-	newChaptersToCreate,
-	setSingleCourse,
-	setChapters,
+	setChapterLessonDataBeforeSave,
 	setIsChapterUpdated,
 	setIsMissingField,
 	isMissingField,
 	setDeletedChapterIds,
-	setNewChaptersToCreate,
 }: AdminCourseEditChapterProps) => {
-	const [lessons, setLessons] = useState<Lesson[]>(chapter?.lessons);
-
-	useEffect(() => {
-		setLessons(chapter.lessons);
-	}, [chapter]);
+	const [isNewLessonModalOpen, setIsNewLessonModalOpen] = useState<boolean>(false);
+	const [addNewLessonModalOpen, setAddNewLessonModalOpen] = useState<boolean>(false);
 
 	const y = useMotionValue(0);
 	const boxShadow = useRaisedShadow(y);
@@ -72,7 +61,7 @@ const AdminCourseEditChapter = ({
 							setIsChapterUpdated((prevData: ChapterUpdateTrack[]) => {
 								if (prevData) {
 									prevData = prevData.map((data) => {
-										if (data.chapterId === chapter._id) {
+										if (data.chapterId === chapter.chapterId) {
 											return {
 												...data,
 												isUpdated: true,
@@ -84,9 +73,9 @@ const AdminCourseEditChapter = ({
 								return prevData;
 							});
 
-							setChapters((prevData) => {
+							setChapterLessonDataBeforeSave((prevData) => {
 								const updatedChapters = prevData?.map((currentChapter) => {
-									if (chapter._id === currentChapter._id) {
+									if (chapter.chapterId === currentChapter.chapterId) {
 										return {
 											...currentChapter,
 											title: e.target.value,
@@ -101,66 +90,99 @@ const AdminCourseEditChapter = ({
 						}}
 						error={isMissingField && chapter?.title === ''}
 					/>
-					{isMissingField && chapter?.title === '' && <CustomErrorMessage>Please enter chapter name</CustomErrorMessage>}
+					{isMissingField && chapter?.title === '' && <CustomErrorMessage>Please enter chapter title</CustomErrorMessage>}
 				</Box>
-				<Box>
-					<CustomSubmitButton>Add Lesson</CustomSubmitButton>
-					<CustomDeleteButton
-						onClick={() => {
-							setChapters((prevData) => {
-								if (prevData !== undefined) {
-									return prevData.filter((currentChapter) => chapter._id !== currentChapter._id);
-								}
-								return prevData;
-							});
+				<Box sx={{ display: 'flex' }}>
+					<Box sx={{ marginRight: '1rem' }}>
+						<Tooltip title='Add Lesson' placement='top'>
+							<IconButton
+								onClick={() => {
+									setAddNewLessonModalOpen(true);
+								}}>
+								<NoteAdd />
+							</IconButton>
+						</Tooltip>
 
-							//checks if deleted chapter is newly created or an existing one
-							if (!newChaptersToCreate.some((chap) => chap._id === chapter._id)) {
-								setDeletedChapterIds((prevIds) => {
-									return [...prevIds, chapter._id];
-								});
-							} else {
-								const filteredNewlyCreatedChapters = newChaptersToCreate.filter((chap) => chap._id !== chapter._id);
-								setNewChaptersToCreate(filteredNewlyCreatedChapters);
-							}
-						}}>
-						Delete Chapter
-					</CustomDeleteButton>
+						<AddNewLessonDialog
+							setAddNewLessonModalOpen={setAddNewLessonModalOpen}
+							addNewLessonModalOpen={addNewLessonModalOpen}
+							chapter={chapter}
+							setChapterLessonDataBeforeSave={setChapterLessonDataBeforeSave}
+							setIsChapterUpdated={setIsChapterUpdated}
+						/>
+
+						<Tooltip title='Create Lesson' placement='top'>
+							<IconButton
+								onClick={() => {
+									setIsNewLessonModalOpen(true);
+								}}>
+								<CreateTwoTone />
+							</IconButton>
+						</Tooltip>
+
+						<CreateLessonDialog
+							chapter={chapter}
+							isNewLessonModalOpen={isNewLessonModalOpen}
+							setIsNewLessonModalOpen={setIsNewLessonModalOpen}
+							createNewLesson={false}
+							setChapterLessonDataBeforeSave={setChapterLessonDataBeforeSave}
+							setIsChapterUpdated={setIsChapterUpdated}
+						/>
+					</Box>
+					<Box>
+						<Tooltip title='Clone Chapter' placement='top'>
+							<IconButton>
+								<FileCopy />
+							</IconButton>
+						</Tooltip>
+						<Tooltip title='Delete Chapter' placement='top'>
+							<IconButton
+								onClick={() => {
+									setChapterLessonDataBeforeSave((prevData) => {
+										if (prevData !== undefined) {
+											return prevData.filter((currentChapter) => chapter.chapterId !== currentChapter.chapterId);
+										}
+										return prevData;
+									});
+
+									setDeletedChapterIds((prevIds) => {
+										if (!chapter.chapterId.includes('temp_chapter_id')) {
+											return [...prevIds, chapter.chapterId];
+										}
+										return prevIds;
+									});
+								}}>
+								<Delete />
+							</IconButton>
+						</Tooltip>
+					</Box>
 				</Box>
 			</Box>
 			{chapter?.lessonIds?.length !== 0 && (
 				<Reorder.Group
 					axis='y'
-					values={lessons || []}
+					values={chapter?.lessons}
 					onReorder={(newLessons: Lesson[]): void => {
-						setLessons(newLessons);
-						setSingleCourse((prevCourse) => {
-							if (prevCourse) {
-								const updatedChapters = prevCourse.chapters?.map((currentChapter) => {
-									if (chapter._id === currentChapter._id) {
-										// Return a new chapter object with updated lessons
+						setChapterLessonDataBeforeSave((prevData) => {
+							if (prevData) {
+								return prevData.map((currentChapter) => {
+									if (currentChapter.chapterId === chapter?.chapterId) {
 										return {
 											...currentChapter,
 											lessons: newLessons,
-											lessonIds: newLessons.map((newLesson) => newLesson._id),
+											lessonIds: newLessons.map((lesson: Lesson) => lesson._id),
 										};
 									}
-									return currentChapter;
+									return currentChapter; // Return unchanged chapter if not the one being updated
 								});
-
-								// Return a new course object with updated chapters
-								setChapters(updatedChapters);
-								return {
-									...prevCourse,
-									chapters: updatedChapters,
-								};
 							}
-							return prevCourse; // Return unchanged if prevCourse is undefined
+							return prevData;
 						});
+
 						setIsChapterUpdated((prevData: ChapterUpdateTrack[]) => {
 							if (prevData) {
 								prevData = prevData.map((data) => {
-									if (data.chapterId === chapter._id) {
+									if (data.chapterId === chapter.chapterId) {
 										return { ...data, isUpdated: true };
 									}
 									return data;
@@ -169,8 +191,8 @@ const AdminCourseEditChapter = ({
 							return prevData;
 						});
 					}}>
-					{lessons &&
-						lessons?.map((lesson) => {
+					{chapter?.lessons &&
+						chapter.lessons?.map((lesson) => {
 							return (
 								<Reorder.Item key={lesson._id} value={lesson} style={{ boxShadow, listStyle: 'none' }}>
 									<Box
@@ -178,7 +200,7 @@ const AdminCourseEditChapter = ({
 										sx={{
 											display: 'flex',
 											alignItems: 'center',
-											height: '5rem',
+											height: '3.5rem',
 											width: '100%',
 											backgroundColor: theme.bgColor?.common,
 											margin: '1.25rem 0',
@@ -192,8 +214,8 @@ const AdminCourseEditChapter = ({
 										}}>
 										<Box
 											sx={{
-												height: '5rem',
-												width: '6rem',
+												height: '3.5rem',
+												width: '5rem',
 											}}>
 											<img
 												src={lesson.imageUrl}
@@ -216,45 +238,35 @@ const AdminCourseEditChapter = ({
 											<Box>
 												<Typography variant='body1'>{lesson.title}</Typography>
 											</Box>
-											<Box>
+											<Box sx={{ display: 'flex', alignItems: 'center' }}>
+												<Box sx={{ mr: '1rem' }}>
+													<Typography variant='body1'>({lesson.type})</Typography>
+												</Box>
 												<Tooltip title='Remove Lesson' placement='left'>
 													<IconButton
 														onClick={() => {
-															setLessons(lessons?.filter((currentLesson) => currentLesson._id !== lesson._id));
-															const updatedLessonIds: string[] = lessons.reduce((acc: string[], currentLesson: Lesson) => {
-																if (currentLesson._id !== lesson._id) {
-																	acc.push(currentLesson._id);
-																}
-																return acc;
-															}, []);
-
-															setSingleCourse((prevCourse) => {
-																if (prevCourse) {
-																	const updatedChapters = prevCourse.chapters?.map((currentChapter) => {
-																		if (chapter._id === currentChapter._id) {
-																			// Return a new chapter object with updated lessons
+															setChapterLessonDataBeforeSave((prevData) => {
+																if (prevData) {
+																	return prevData.map((currentChapter) => {
+																		if (currentChapter.chapterId === chapter?.chapterId) {
+																			const updatedLessons = currentChapter.lessons.filter((currentLesson) => currentLesson._id !== lesson._id);
+																			const updatedLessonIds = updatedLessons.map((lesson) => lesson._id);
 																			return {
 																				...currentChapter,
-																				lessons: lessons?.filter((currentLesson) => currentLesson._id !== lesson._id),
+																				lessons: updatedLessons,
 																				lessonIds: updatedLessonIds,
 																			};
 																		}
-																		return currentChapter;
+																		return currentChapter; // Return unchanged chapter if not the one being updated
 																	});
-
-																	// Return a new course object with updated chapters
-																	setChapters(updatedChapters);
-																	return {
-																		...prevCourse,
-																		chapters: updatedChapters,
-																	};
 																}
-																return prevCourse; // Return unchanged if prevCourse is undefined
+																return prevData;
 															});
+
 															setIsChapterUpdated((prevData: ChapterUpdateTrack[]) => {
 																if (prevData) {
 																	prevData = prevData.map((data) => {
-																		if (data.chapterId === chapter._id) {
+																		if (data.chapterId === chapter.chapterId) {
 																			return {
 																				...data,
 																				isUpdated: true,

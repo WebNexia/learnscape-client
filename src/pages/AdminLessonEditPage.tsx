@@ -1,9 +1,6 @@
 import {
 	Box,
-	Dialog,
-	DialogActions,
 	DialogContent,
-	DialogTitle,
 	FormControl,
 	FormControlLabel,
 	IconButton,
@@ -20,7 +17,6 @@ import theme from '../themes';
 import { AddCircle, Delete, Edit, FileCopy, RemoveCircle } from '@mui/icons-material';
 import { useParams } from 'react-router-dom';
 import CustomSubmitButton from '../components/forms/Custom Buttons/CustomSubmitButton';
-import CustomCancelButton from '../components/forms/Custom Buttons/CustomCancelButton';
 import { FormEvent, useContext, useEffect, useState } from 'react';
 import { Lesson } from '../interfaces/lessons';
 import axios from 'axios';
@@ -35,6 +31,8 @@ import LessonPaper from '../components/Admin Single Lesson/Paper';
 import QuestionDialogContentNonEdit from '../components/Admin Single Lesson/QuestionDialogContentNonEdit';
 import LessonEditorBox from '../components/Admin Single Lesson/LessonEditorBox';
 import QuestionsBoxNonEdit from '../components/Admin Single Lesson/QuestionsBoxNonEdit';
+import CustomDialog from '../components/layouts/Dialog/CustomDialog';
+import CustomDialogActions from '../components/layouts/Dialog/CustomDialogActions';
 
 export interface QuestionUpdateTrack {
 	questionId: string;
@@ -201,7 +199,6 @@ const AdminLessonEditPage = () => {
 			prevData = prevData.map((data) => {
 				return { ...data, isUpdated: false };
 			});
-			console.log(prevData);
 			return prevData;
 		});
 	};
@@ -350,16 +347,16 @@ const AdminLessonEditPage = () => {
 					setDisplayedQuestionNonEdit={setDisplayedQuestionNonEdit}
 				/>
 			)}
-			<Dialog
-				open={isDisplayNonEditQuestion}
-				onClose={() => {
+
+			<CustomDialog
+				openModal={isDisplayNonEditQuestion}
+				closeModal={() => {
 					setIsDisplayNonEditQuestion(false);
 					setDisplayedQuestionNonEdit(null);
-				}}
-				fullWidth
-				maxWidth='md'>
+				}}>
 				<QuestionDialogContentNonEdit question={displayedQuestionNonEdit} />
-			</Dialog>
+			</CustomDialog>
+
 			{isEditMode && (
 				<Box
 					sx={{
@@ -408,6 +405,7 @@ const AdminLessonEditPage = () => {
 									Add Question
 								</CustomSubmitButton>
 								<CustomSubmitButton
+									type='button'
 									sx={{ marginBottom: '1rem' }}
 									onClick={() => {
 										setIsQuestionCreateModalOpen(true);
@@ -419,10 +417,7 @@ const AdminLessonEditPage = () => {
 							</Box>
 						</Box>
 
-						<Dialog open={isQuestionCreateModalOpen} onClose={() => setIsQuestionCreateModalOpen(false)} fullWidth maxWidth='md'>
-							<DialogTitle variant='h3' sx={{ paddingTop: '2rem' }}>
-								Create New Question
-							</DialogTitle>
+						<CustomDialog openModal={isQuestionCreateModalOpen} closeModal={() => setIsQuestionCreateModalOpen(false)} title='Create Question'>
 							<form
 								onSubmit={(e: React.FormEvent<HTMLFormElement>) => {
 									e.preventDefault();
@@ -431,8 +426,8 @@ const AdminLessonEditPage = () => {
 								}}
 								style={{ display: 'flex', flexDirection: 'column' }}>
 								<DialogContent>
-									<FormControl sx={{ mb: '1rem', width: '15rem' }}>
-										<InputLabel id='type' sx={{ fontSize: '0.9rem' }}>
+									<FormControl sx={{ mb: '1rem', width: '15rem', backgroundColor: theme.bgColor?.common }}>
+										<InputLabel id='type' sx={{ fontSize: '0.9rem' }} required>
 											Type
 										</InputLabel>
 										<Select
@@ -577,26 +572,13 @@ const AdminLessonEditPage = () => {
 										)}
 									</Box>
 								</DialogContent>
-								<DialogActions
-									sx={{
-										marginBottom: '2rem',
-									}}>
-									<CustomCancelButton
-										onClick={() => setIsQuestionCreateModalOpen(false)}
-										sx={{
-											margin: '0 0.5rem 1rem 0',
-										}}>
-										Cancel
-									</CustomCancelButton>
-									<CustomSubmitButton
-										sx={{
-											margin: '0 0.5rem 1rem 0',
-										}}>
-										Create
-									</CustomSubmitButton>
-								</DialogActions>
+								<CustomDialogActions
+									onCancel={() => setIsQuestionCreateModalOpen(false)}
+									cancelBtnSx={{ margin: '0 0.5rem 1rem 0' }}
+									submitBtnSx={{ margin: '0 1rem 1rem 0' }}
+								/>
 							</form>
-						</Dialog>
+						</CustomDialog>
 
 						{singleLesson?.questionIds.length === 0 || questions.length === 0 ? (
 							<Box
@@ -705,15 +687,14 @@ const AdminLessonEditPage = () => {
 																			<Edit />
 																		</IconButton>
 																	</Tooltip>
-																	<Dialog
-																		open={editQuestionModalOpen[index]}
-																		onClose={() => {
+
+																	<CustomDialog
+																		openModal={editQuestionModalOpen[index]}
+																		closeModal={() => {
 																			closeQuestionEditModal(index);
 																			// setCorrectAnswerIndex(-1);
 																		}}
-																		fullWidth
-																		maxWidth='md'>
-																		<DialogTitle variant='h3'>Edit Question</DialogTitle>
+																		title='Edit Question'>
 																		<form
 																			onSubmit={(e: React.FormEvent<HTMLFormElement>) => {
 																				e.preventDefault();
@@ -862,64 +843,52 @@ const AdminLessonEditPage = () => {
 																						))}
 																				</Box>
 																			</DialogContent>
-																			<DialogActions
-																				sx={{
-																					marginBottom: '2rem',
-																				}}>
-																				<CustomCancelButton
-																					onClick={() => {
-																						closeQuestionEditModal(index);
-																						setCorrectAnswerIndex(-1);
-																					}}
-																					sx={{
-																						margin: '0 0.5rem 1rem 0',
-																					}}>
-																					Reset
-																				</CustomCancelButton>
-																				<CustomSubmitButton
-																					type='button'
-																					sx={{
-																						margin: '0 0.5rem 1rem 0',
-																					}}
-																					onClick={() => {
-																						closeQuestionEditModal(index);
-																						setQuestions((prevQuestions) => {
-																							if (!prevQuestions) return prevQuestions;
 
-																							return prevQuestions.map((prevQuestion) => {
-																								if (prevQuestion._id === question._id) {
-																									return {
-																										...prevQuestion,
-																										options: options.filter((option) => option !== ''),
-																										correctAnswer,
-																									};
-																								} else {
-																									return prevQuestion;
-																								}
-																							});
-																						});
+																			<CustomDialogActions
+																				onCancel={() => {
+																					closeQuestionEditModal(index);
+																					setCorrectAnswerIndex(-1);
+																				}}
+																				cancelBtnText='Reset'
+																				onSubmit={() => {
+																					closeQuestionEditModal(index);
+																					setQuestions((prevQuestions) => {
+																						if (!prevQuestions) return prevQuestions;
 
-																						setIsQuestionUpdated((prevData: QuestionUpdateTrack[]) => {
-																							setIsLessonUpdated(true);
-																							if (prevData) {
-																								prevData = prevData.map((data) => {
-																									if (data.questionId === question._id) {
-																										return {
-																											...data,
-																											isUpdated: true,
-																										};
-																									}
-																									return data;
-																								})!;
+																						return prevQuestions.map((prevQuestion) => {
+																							if (prevQuestion._id === question._id) {
+																								return {
+																									...prevQuestion,
+																									options: options.filter((option) => option !== ''),
+																									correctAnswer,
+																								};
+																							} else {
+																								return prevQuestion;
 																							}
-																							return prevData;
 																						});
-																					}}>
-																					Save
-																				</CustomSubmitButton>
-																			</DialogActions>
+																					});
+
+																					setIsQuestionUpdated((prevData: QuestionUpdateTrack[]) => {
+																						setIsLessonUpdated(true);
+																						if (prevData) {
+																							prevData = prevData.map((data) => {
+																								if (data.questionId === question._id) {
+																									return {
+																										...data,
+																										isUpdated: true,
+																									};
+																								}
+																								return data;
+																							})!;
+																						}
+																						return prevData;
+																					});
+																				}}
+																				submitBtnText='Save'
+																				submitBtnType='button'
+																			/>
 																		</form>
-																	</Dialog>
+																	</CustomDialog>
 																</Box>
 																<Tooltip title='Remove' placement='top'>
 																	<IconButton onClick={() => removeQuestion(question)}>

@@ -1,11 +1,11 @@
 import { Box, Typography } from '@mui/material';
 import theme from '../../themes';
 import Lesson from './Lesson';
-import { BaseChapter } from '../../interfaces/chapter';
 import { LessonById } from '../../interfaces/lessons';
+import { ChapterLessonData } from '../../pages/AdminCourseEditPage';
 
 interface ChapterProps {
-	chapter: BaseChapter;
+	chapter: ChapterLessonData;
 	isEnrolledStatus: boolean;
 	nextChapterFirstLessonId: string;
 }

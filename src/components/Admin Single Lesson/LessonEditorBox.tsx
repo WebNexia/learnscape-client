@@ -1,4 +1,4 @@
-import { Alert, Box, Dialog, IconButton, Snackbar, Tooltip, Typography } from '@mui/material';
+import { Alert, Box, IconButton, Snackbar, Tooltip, Typography } from '@mui/material';
 import ReactPlayer from 'react-player';
 import CustomSubmitButton from '../forms/Custom Buttons/CustomSubmitButton';
 import CustomCancelButton from '../forms/Custom Buttons/CustomCancelButton';
@@ -6,6 +6,7 @@ import { Edit } from '@mui/icons-material';
 import { Lesson } from '../../interfaces/lessons';
 import { FormEvent, useState } from 'react';
 import { QuestionUpdateTrack } from '../../pages/AdminLessonEditPage';
+import CustomDialog from '../layouts/Dialog/CustomDialog';
 
 interface LessonEditorBoxProps {
 	singleLesson?: Lesson;
@@ -132,16 +133,14 @@ const LessonEditorBox = ({
 						Video Thumbnail
 					</Typography>
 				</Box>
-				<Dialog
-					open={isVideoPlayerOpen}
-					onClose={() => {
+				<CustomDialog
+					openModal={isVideoPlayerOpen}
+					closeModal={() => {
 						setIsVideoPlayerOpen(false);
 					}}
-					fullWidth
-					maxWidth='md'
-					sx={{ display: 'flex', justifyContent: 'center', padding: '3rem' }}>
+					dialogPaperSx={{ display: 'flex', justifyContent: 'center', padding: '3rem' }}>
 					<ReactPlayer url={singleLesson?.videoUrl} height='30rem' width='55rem' style={{ margin: '0.5rem' }} controls={true} />
-				</Dialog>
+				</CustomDialog>
 			</Box>
 			<Box sx={{ display: 'flex' }}>
 				<Box>

@@ -35,6 +35,7 @@ const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree,
 				<CustomTextField
 					sx={{
 						marginTop: '0.5rem',
+						backgroundColor: theme.bgColor?.common,
 					}}
 					value={singleCourse?.title}
 					onChange={(e) => {
@@ -184,7 +185,7 @@ const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree,
 						<CustomTextField
 							required={false}
 							sx={{ marginTop: '0.5rem' }}
-							value={singleCourse?.durationWeeks}
+							value={singleCourse?.durationWeeks || ''}
 							onChange={(e) => {
 								if (singleCourse?.durationWeeks !== undefined) {
 									setSingleCourse({
@@ -202,7 +203,7 @@ const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree,
 						<CustomTextField
 							required={false}
 							sx={{ marginTop: '0.5rem' }}
-							value={singleCourse?.durationHours}
+							value={singleCourse?.durationHours || ''}
 							onChange={(e) => {
 								if (singleCourse?.durationHours !== undefined) {
 									setSingleCourse({

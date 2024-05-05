@@ -4,45 +4,40 @@ import { FormEvent } from 'react';
 import CustomCancelButton from '../forms/Custom Buttons/CustomCancelButton';
 import { Edit } from '@mui/icons-material';
 import { SingleCourse } from '../../interfaces/course';
-import { ChapterUpdateTrack } from '../../pages/AdminCourseEditPage';
-import { BaseChapter } from '../../interfaces/chapter';
+import { ChapterLessonData } from '../../pages/AdminCourseEditPage';
 
 interface CourseEditorBoxProps {
 	singleCourse?: SingleCourse;
-	chapters: BaseChapter[];
+	chapterLessonData: ChapterLessonData[];
+	chapterLessonDataBeforeSave: ChapterLessonData[];
 	isEditMode: boolean;
 	isActive?: boolean;
 	isMissingFieldMsgOpen: boolean;
 	isNoChapterMsgOpen: boolean;
 	resetChanges: boolean;
 	isFree: boolean;
-	notSavedChapterIds: string[];
-	setChapters: React.Dispatch<React.SetStateAction<BaseChapter[]>>;
-	setNotSavedChapterIds: React.Dispatch<React.SetStateAction<string[]>>;
 	setIsEditMode: React.Dispatch<React.SetStateAction<boolean>>;
 	setIsMissingFieldMsgOpen: React.Dispatch<React.SetStateAction<boolean>>;
 	setIsMissingField: React.Dispatch<React.SetStateAction<boolean>>;
 	handlePublishing: () => void;
 	setResetChanges: React.Dispatch<React.SetStateAction<boolean>>;
-	setIsChapterUpdated: React.Dispatch<React.SetStateAction<ChapterUpdateTrack[]>>;
 	handleCourseUpdate: (event: React.FormEvent<Element>) => void;
 	setIsNoChapterMsgOpen: React.Dispatch<React.SetStateAction<boolean>>;
-	setAllChaptersBeforeSave: React.Dispatch<React.SetStateAction<BaseChapter[]>>;
-	setNewChaptersToCreate: React.Dispatch<React.SetStateAction<BaseChapter[]>>;
+	setChapterLessonDataBeforeSave: React.Dispatch<React.SetStateAction<ChapterLessonData[]>>;
 	setDeletedChapterIds: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
 const CourseEditorBox = ({
 	singleCourse,
-	chapters,
+	chapterLessonData,
+	chapterLessonDataBeforeSave,
 	isEditMode,
 	isActive,
 	isMissingFieldMsgOpen,
 	isNoChapterMsgOpen,
 	resetChanges,
 	isFree,
-	setAllChaptersBeforeSave,
-	setNotSavedChapterIds,
+	setChapterLessonDataBeforeSave,
 	setIsEditMode,
 	setIsMissingFieldMsgOpen,
 	setIsMissingField,
@@ -50,7 +45,6 @@ const CourseEditorBox = ({
 	setResetChanges,
 	handleCourseUpdate,
 	setIsNoChapterMsgOpen,
-	setNewChaptersToCreate,
 	setDeletedChapterIds,
 }: CourseEditorBoxProps) => {
 	const vertical = 'top';
@@ -58,9 +52,8 @@ const CourseEditorBox = ({
 
 	const handleCancel = async (): Promise<void> => {
 		setIsEditMode(false);
-		setAllChaptersBeforeSave(chapters);
+		setChapterLessonDataBeforeSave(chapterLessonData);
 		setResetChanges(!resetChanges);
-		setNewChaptersToCreate([]);
 		setDeletedChapterIds([]);
 	};
 
@@ -124,7 +117,7 @@ const CourseEditorBox = ({
 									singleCourse?.title.trim() !== '' &&
 									singleCourse?.description.trim() !== '' &&
 									(isFree || (singleCourse?.priceCurrency !== '' && singleCourse?.price !== '')) &&
-									!chapters.some((chapter) => chapter.title === '')
+									!chapterLessonDataBeforeSave.some((chapter) => chapter.title === '')
 								) {
 									setIsEditMode(false);
 									handleCourseUpdate(e as FormEvent<Element>);
@@ -132,7 +125,6 @@ const CourseEditorBox = ({
 									setIsMissingField(true);
 									setIsMissingFieldMsgOpen(true);
 								}
-								setNotSavedChapterIds([]);
 							}}>
 							Save
 						</CustomSubmitButton>
