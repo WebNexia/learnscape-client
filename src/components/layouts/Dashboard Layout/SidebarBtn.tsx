@@ -21,7 +21,7 @@ const SidebarBtn = ({ btnText, onClick, IconName, selectedPage }: SidebarBtnProp
 				fontFamily: theme.fontFamily?.main,
 				fontSize: '1rem',
 				lineHeight: '2.5',
-				width: '100%',
+				width: '77%',
 				justifyContent: 'flex-start',
 				paddingRight: '1.5rem',
 				borderRadius: '1.5rem 0 0 1.5rem',
