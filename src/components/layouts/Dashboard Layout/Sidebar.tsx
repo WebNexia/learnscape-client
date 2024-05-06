@@ -82,13 +82,13 @@ const Sidebar = () => {
 							<SidebarBtn
 								btnText='Dashboard'
 								IconName={DashboardIcon}
-								onClick={() => navigateWithPage(PageName.ADMIN_COURSES, `/admin/dashboard/user/${id || userId}`)}
+								onClick={() => navigateWithPage(PageName.ADMIN_DASHBOARD, `/admin/dashboard/user/${id || userId}`)}
 								selectedPage={selectedPage}
 							/>
 							<SidebarBtn
 								btnText='Users'
 								IconName={PeopleAltOutlined}
-								onClick={() => navigateWithPage(PageName.ADMIN_COURSES, `/admin/users/user/${id || userId}`)}
+								onClick={() => navigateWithPage(PageName.ADMIN_USERS, `/admin/users/user/${id || userId}`)}
 								selectedPage={selectedPage}
 							/>
 							<SidebarBtn
