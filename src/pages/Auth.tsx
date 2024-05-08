@@ -19,7 +19,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
 	const { setUserId, fetchUserData } = useContext(UserAuthContext);
-	const { fetchOrganisationData, organisation } = useContext(OrganisationContext);
+	const { fetchOrganisationData, setOrgId } = useContext(OrganisationContext);
 
 	const [activeForm, setActiveForm] = useState<AuthForms>(AuthForms.SIGN_UP);
 
@@ -42,29 +42,28 @@ const Auth = ({ setUserRole }: AuthProps) => {
 			const response = await axios.post(`${base_url}/users/signin`, { email, password });
 
 			if (response.data.status) {
+				localStorage.setItem('user_token', response.data.token);
+				localStorage.setItem('role', response.data.role);
+
+				setUserId(response.data._id);
+				setOrgId(response.data.orgId);
+
+				await Promise.all([fetchUserData(response.data._id), fetchOrganisationData(response.data.orgId)]);
+
+				if (response.data.role) {
+					setUserRole(response.data.role);
+				}
+
 				if (response.data.role === Roles.USER) {
 					navigate(`/dashboard/user/${response.data._id}`);
 				} else if (response.data.role === Roles.ADMIN) {
 					navigate(`/admin/dashboard/user/${response.data._id}`);
 				}
 
-				localStorage.setItem('user_token', response.data.token);
-				localStorage.setItem('role', response.data.role);
 				setEmail('');
 				setUsername('');
 				setPassword('');
 				setErrorMsg(undefined);
-				setUserId(response.data._id);
-
-				if (response.data.role) {
-					setUserRole(response.data.role);
-				}
-
-				await fetchUserData(response.data._id);
-
-				if (!organisation || organisation._id !== response.data.orgId) {
-					await fetchOrganisationData(response.data.orgId);
-				}
 			} else if (response.data.message === 'Email does not exist') {
 				setErrorMsg(AuthFormErrorMessages.EMAIL_NOT_EXIST);
 			} else {

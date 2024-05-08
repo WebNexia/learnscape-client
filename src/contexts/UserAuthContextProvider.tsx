@@ -18,9 +18,9 @@ export interface UserAuthContextProviderProps {
 }
 
 export const UserAuthContext = createContext<UserAuthContextTypes>({
+	user: undefined,
 	userId: '',
 	setUserId: () => {},
-	user: undefined,
 	fetchUserData: async () => {},
 });
 
@@ -44,35 +44,16 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 		try {
 			const responseUserData = await axios.get(`${base_url}/users/${userId}`);
 			setUser(responseUserData.data.data[0]);
+			// Store data in React Query cache
+			queryClient.setQueryData('userData', responseUserData.data.data[0]);
 		} catch (error) {
 			throw new Error('Failed to fetch user data');
 		}
 	};
 
 	const userQuery = useQuery('userData', () => fetchUserData(userId), {
-		enabled: !!userId, // Only enable the query if userId is available
-		initialData: () => {
-			// Check if data is already available in the cache
-			const cachedData = queryClient.getQueryData<User | undefined>('userData');
-			if (cachedData) {
-				setUser(cachedData);
-			} else {
-				// If data is not available in the cache, fetch it
-				if (user) {
-					fetchUserData(user._id);
-				}
-			}
-		},
-		onSuccess: (data) => {
-			// Store data in React Query cache
-			queryClient.setQueryData('userData', data);
-		},
+		enabled: !!userId,
 	});
-
-	// const { data, isLoading, isError } = useQuery(['userData', { userId }], async () => {
-	// 	const response = await axios.get(`${base_url}/users/${userId}`);
-	// 	return response.data.data[0];
-	// });
 
 	if (userQuery.isLoading) {
 		return <Loading />;
@@ -82,7 +63,7 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 		return <LoadingError />;
 	}
 
-	return <UserAuthContext.Provider value={{ userId, setUserId, user, fetchUserData }}>{props.children}</UserAuthContext.Provider>;
+	return <UserAuthContext.Provider value={{ setUserId, user, fetchUserData, userId }}>{props.children}</UserAuthContext.Provider>;
 };
 
 export default UserAuthContextProvider;
