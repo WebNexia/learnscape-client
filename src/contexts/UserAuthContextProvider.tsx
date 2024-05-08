@@ -32,11 +32,16 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 	});
 
 	const { data, isLoading, isError } = useQuery(['userData', { userId }], async () => {
+		if (!userId) {
+			console.log('not signed in');
+			return null; // Return null if userId is not available
+		}
+
 		const response = await axios.get(`${base_url}/users/${userId}`);
 		return response.data.data[0];
 	});
 
-	if (isLoading) {
+	if (!userId || isLoading) {
 		return <Loading />;
 	}
 
