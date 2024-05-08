@@ -96,7 +96,6 @@ const Auth = ({ setUserRole }: AuthProps) => {
 
 			localStorage.setItem('signedup', 'yes');
 		} catch (error: any) {
-			console.log(error.response.status);
 			if (error.response.status === 409) {
 				setErrorMsg(AuthFormErrorMessages.EMAIL_EXISTS);
 			} else if (error.response.status === 404) {
@@ -190,7 +189,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 												value={password}
 											/>
 										</Box>
-										<Button fullWidth sx={submitBtnStyles} type='submit'>
+										<Button variant='contained' fullWidth sx={submitBtnStyles} type='submit'>
 											Sign In
 										</Button>
 									</form>
