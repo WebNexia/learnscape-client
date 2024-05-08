@@ -27,7 +27,8 @@ const SidebarBtn = ({ btnText, onClick, IconName, selectedPage }: SidebarBtnProp
 				borderRadius: '1.5rem 0 0 1.5rem',
 				marginLeft: '1.85rem',
 				border: 'none',
-				':hover': {
+				cursor: 'pointer',
+				'&:hover': {
 					color: selectedPage !== btnText ? theme.submitBtn?.backgroundColor : theme.textColor?.primary.main,
 					backgroundColor: selectedPage === btnText ? theme.palette.secondary.main : 'transparent',
 					border: 'none',
