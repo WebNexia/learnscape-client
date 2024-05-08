@@ -22,7 +22,6 @@ import CoursesContextProvider from './contexts/CoursesContextProvider';
 import LessonsContextProvider from './contexts/LessonsContextProvider';
 import AdminLessonEditPage from './pages/AdminLessonEditPage';
 import UserAuthContextProvider from './contexts/UserAuthContextProvider';
-import { useState } from 'react';
 import { Roles } from './interfaces/enums';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminQuestions from './pages/AdminQuestions';
@@ -33,11 +32,15 @@ import AdminSchedule from './pages/AdminSchedule';
 import AdminCommunity from './pages/AdminCommunity';
 import UsersContextProvider from './contexts/UsersContextProvider';
 import QuestionsContextProvider from './contexts/QuestionsContextProvider';
+import { useState } from 'react';
+import OrganisationContextProvider from './contexts/OrganisationContextProvider';
 
 const queryClient = new QueryClient();
 
 function App() {
-	const [userRole, setUserRole] = useState<string>('');
+	const [userRole, setUserRole] = useState<string | null>(
+		localStorage.getItem('role') // Retrieve user role from localStorage
+	);
 
 	const hasRole = (role: string) => {
 		return userRole && userRole === role;
@@ -49,50 +52,52 @@ function App() {
 
 	return (
 		<QueryClientProvider client={queryClient}>
-			<UserAuthContextProvider setUserRole={setUserRole}>
+			<UserAuthContextProvider>
 				<UsersContextProvider>
-					<QuestionsContextProvider>
-						<MediaQueryContextProvider>
-							<UserCourseLessonDataContextProvider>
-								<CoursesContextProvider>
-									<LessonsContextProvider>
-										<ThemeProvider theme={theme}>
-											<Router>
-												<Routes>
-													<Route path='' element={<HomePage />} />
-													<Route path='/auth' element={<Auth />} />
+					<OrganisationContextProvider>
+						<QuestionsContextProvider>
+							<MediaQueryContextProvider>
+								<UserCourseLessonDataContextProvider>
+									<CoursesContextProvider>
+										<LessonsContextProvider>
+											<ThemeProvider theme={theme}>
+												<Router>
+													<Routes>
+														<Route path='' element={<HomePage />} />
+														<Route path='/auth' element={<Auth setUserRole={setUserRole} />} />
 
-													<>
-														{renderRoute('/admin/dashboard/user/:userId', <AdminDashboard />, Roles.ADMIN)}
-														{renderRoute('/admin/users/user/:userId', <AdminUsers />, Roles.ADMIN)}
-														{renderRoute('/admin/courses/user/:userId', <AdminCourses />, Roles.ADMIN)}
-														{renderRoute('/admin/course-edit/user/:userId/course/:courseId', <AdminCourseEditPage />, Roles.ADMIN)}
-														{renderRoute('/admin/lessons/user/:userId', <AdminLessons />, Roles.ADMIN)}
-														{renderRoute('admin/lesson-edit/user/:userId/lesson/:lessonId', <AdminLessonEditPage />, Roles.ADMIN)}
-														{renderRoute('/admin/questions/user/:userId', <AdminQuestions />, Roles.ADMIN)}
-														{renderRoute('/admin/schedule/user/:userId', <AdminSchedule />, Roles.ADMIN)}
-														{renderRoute('/admin/messages/user/:userId', <AdminMessages />, Roles.ADMIN)}
-														{renderRoute('/admin/community/user/:userId', <AdminCommunity />, Roles.ADMIN)}
-														{renderRoute('/admin/settings/user/:userId', <AdminSettings />, Roles.ADMIN)}
-													</>
-													<>
-														{renderRoute('/dashboard/user/:id', <Dashboard />, Roles.USER)}
-														{renderRoute('/courses/user/:id', <Courses />, Roles.USER)}
-														{renderRoute('/course/:courseId/user/:userId/userCourseId/:userCourseId', <CoursePage />, Roles.USER)}
-														{renderRoute('/user/:userId/course/:courseId/userCourseId/:userCourseId/lesson/:lessonId/', <LessonPage />, Roles.USER)}
-														{renderRoute('/schedule/user/:id', <Schedule />, Roles.USER)}
-														{renderRoute('/messages/user/:id', <Messages />, Roles.USER)}
-														{renderRoute('/community/user/:id', <Community />, Roles.USER)}
-														{renderRoute('/settings/user/:id', <Settings />, Roles.USER)}
-													</>
-												</Routes>
-											</Router>
-										</ThemeProvider>
-									</LessonsContextProvider>
-								</CoursesContextProvider>
-							</UserCourseLessonDataContextProvider>
-						</MediaQueryContextProvider>
-					</QuestionsContextProvider>
+														<>
+															{renderRoute('/admin/dashboard/user/:userId', <AdminDashboard />, Roles.ADMIN)}
+															{renderRoute('/admin/users/user/:userId', <AdminUsers />, Roles.ADMIN)}
+															{renderRoute('/admin/courses/user/:userId', <AdminCourses />, Roles.ADMIN)}
+															{renderRoute('/admin/course-edit/user/:userId/course/:courseId', <AdminCourseEditPage />, Roles.ADMIN)}
+															{renderRoute('/admin/lessons/user/:userId', <AdminLessons />, Roles.ADMIN)}
+															{renderRoute('admin/lesson-edit/user/:userId/lesson/:lessonId', <AdminLessonEditPage />, Roles.ADMIN)}
+															{renderRoute('/admin/questions/user/:userId', <AdminQuestions />, Roles.ADMIN)}
+															{renderRoute('/admin/schedule/user/:userId', <AdminSchedule />, Roles.ADMIN)}
+															{renderRoute('/admin/messages/user/:userId', <AdminMessages />, Roles.ADMIN)}
+															{renderRoute('/admin/community/user/:userId', <AdminCommunity />, Roles.ADMIN)}
+															{renderRoute('/admin/settings/user/:userId', <AdminSettings />, Roles.ADMIN)}
+														</>
+														<>
+															{renderRoute('/dashboard/user/:id', <Dashboard />, Roles.USER)}
+															{renderRoute('/courses/user/:id', <Courses />, Roles.USER)}
+															{renderRoute('/course/:courseId/user/:userId/userCourseId/:userCourseId', <CoursePage />, Roles.USER)}
+															{renderRoute('/user/:userId/course/:courseId/userCourseId/:userCourseId/lesson/:lessonId/', <LessonPage />, Roles.USER)}
+															{renderRoute('/schedule/user/:id', <Schedule />, Roles.USER)}
+															{renderRoute('/messages/user/:id', <Messages />, Roles.USER)}
+															{renderRoute('/community/user/:id', <Community />, Roles.USER)}
+															{renderRoute('/settings/user/:id', <Settings />, Roles.USER)}
+														</>
+													</Routes>
+												</Router>
+											</ThemeProvider>
+										</LessonsContextProvider>
+									</CoursesContextProvider>
+								</UserCourseLessonDataContextProvider>
+							</MediaQueryContextProvider>
+						</QuestionsContextProvider>
+					</OrganisationContextProvider>
 				</UsersContextProvider>
 			</UserAuthContextProvider>
 		</QueryClientProvider>

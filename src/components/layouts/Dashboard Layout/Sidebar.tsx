@@ -7,11 +7,13 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useContext, useState } from 'react';
 import { PageName, Roles } from '../../../interfaces/enums';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
+import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
 
 const Sidebar = () => {
 	const navigate = useNavigate();
 	const { id, userId } = useParams();
 	const { user } = useContext(UserAuthContext);
+	const { organisation } = useContext(OrganisationContext);
 
 	const currentPage = window.location.pathname.includes('admin')
 		? window.location.pathname.split('/')[2].charAt(0).toUpperCase() + window.location.pathname.split('/')[2].slice(1)
@@ -46,7 +48,7 @@ const Sidebar = () => {
 					marginBottom: '1rem',
 				}}>
 				<Typography variant='h1' sx={{ color: theme.textColor?.common.main, fontSize: '1.75rem' }}>
-					KAIZEN
+					{organisation?.orgName}
 				</Typography>
 			</Box>
 			<Box

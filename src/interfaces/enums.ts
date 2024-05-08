@@ -11,9 +11,9 @@ export const enum TextFieldTypes {
 
 export const enum AuthFormErrorMessages {
 	EMAIL_EXISTS = 'This email address is already in use!',
-	USERNAME_EXISTS = 'This username is already in use!',
 	EMAIL_NOT_EXIST = 'This email address is not registered!',
 	WRONG_PASSWORD = 'Enter the correct password!',
+	ORG_CODE_NOT_EXIST = 'This organisation code does not exist',
 }
 
 export const enum Mode {

@@ -73,6 +73,7 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 							localStorage.removeItem('user_token');
 							localStorage.removeItem('userCourseData');
 							localStorage.removeItem('userLessonData');
+							localStorage.removeItem('role');
 							navigate('/');
 						}}>
 						Log Out
