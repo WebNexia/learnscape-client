@@ -7,21 +7,28 @@ import theme from '../themes';
 import { AuthFormErrorMessages, AuthForms, Roles, TextFieldTypes } from '../interfaces/enums';
 import CustomTextField from '../components/forms/Custom Fields/CustomTextField';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
+import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 
-const Auth = () => {
+interface AuthProps {
+	setUserRole: React.Dispatch<React.SetStateAction<string | null>>;
+}
+
+const Auth = ({ setUserRole }: AuthProps) => {
 	const navigate = useNavigate();
 
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
 	const { setUserId } = useContext(UserAuthContext);
+	const { fetchOrganisationData, organisation } = useContext(OrganisationContext);
 
-	const [activeForm, setActiveForm] = useState<AuthForms>(AuthForms.SIGN_IN);
+	const [activeForm, setActiveForm] = useState<AuthForms>(AuthForms.SIGN_UP);
 
 	const [errorMsg, setErrorMsg] = useState<AuthFormErrorMessages>();
 
 	const [username, setUsername] = useState<string>('');
 	const [email, setEmail] = useState<string>('');
 	const [password, setPassword] = useState<string>('');
+	const [orgCode, setOrgCode] = useState<string>('');
 
 	const errorMessageTypography = (
 		<Typography variant='body2' sx={{ textAlign: 'center', color: 'red', marginTop: '1rem' }}>
@@ -42,10 +49,20 @@ const Auth = () => {
 				}
 
 				localStorage.setItem('user_token', response.data.token);
+				localStorage.setItem('role', response.data.role);
 				setEmail('');
 				setUsername('');
 				setPassword('');
+				setErrorMsg(undefined);
 				setUserId(response.data._id);
+
+				if (response.data.role) {
+					setUserRole(response.data.role);
+				}
+
+				if (!organisation || organisation._id !== response.data.orgId) {
+					await fetchOrganisationData(response.data.orgId);
+				}
 			} else if (response.data.message === 'Email does not exist') {
 				setErrorMsg(AuthFormErrorMessages.EMAIL_NOT_EXIST);
 			} else {
@@ -63,20 +80,26 @@ const Auth = () => {
 				username,
 				email,
 				password,
+				orgCode,
 			});
 
-			if (response.data.status !== 409) {
-				signIn(e);
+			if (response.data.status === 201) {
+				await signIn(e);
 				setEmail('');
 				setPassword('');
 				setUsername('');
-			} else if (response.data.status === 409) {
-				setErrorMsg(AuthFormErrorMessages.EMAIL_EXISTS);
+				setOrgCode('');
+				setErrorMsg(undefined);
 			}
 
 			localStorage.setItem('signedup', 'yes');
-		} catch (error) {
-			console.log(error);
+		} catch (error: any) {
+			console.log(error.response.status);
+			if (error.response.status === 409) {
+				setErrorMsg(AuthFormErrorMessages.EMAIL_EXISTS);
+			} else if (error.response.status === 404) {
+				setErrorMsg(AuthFormErrorMessages.ORG_CODE_NOT_EXIST);
+			}
 		}
 	};
 
@@ -190,6 +213,12 @@ const Auth = () => {
 												onChange={(e) => setPassword(e.target.value)}
 												value={password}
 											/>
+											<CustomTextField
+												label='Organization Code'
+												type={TextFieldTypes.TEXT}
+												onChange={(e) => setOrgCode(e.target.value)}
+												value={orgCode}
+											/>
 										</Box>
 										<Button variant='contained' fullWidth sx={submitBtnStyles} type='submit'>
 											Sign Up
@@ -220,8 +249,8 @@ const Auth = () => {
 							{
 								[AuthFormErrorMessages.EMAIL_EXISTS]: errorMessageTypography,
 								[AuthFormErrorMessages.EMAIL_NOT_EXIST]: errorMessageTypography,
-								[AuthFormErrorMessages.USERNAME_EXISTS]: errorMessageTypography,
 								[AuthFormErrorMessages.WRONG_PASSWORD]: errorMessageTypography,
+								[AuthFormErrorMessages.ORG_CODE_NOT_EXIST]: errorMessageTypography,
 							}[errorMsg]}
 					</Box>
 				</Box>
