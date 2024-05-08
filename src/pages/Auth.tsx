@@ -189,7 +189,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 												value={password}
 											/>
 										</Box>
-										<Button fullWidth sx={submitBtnStyles} type='submit'>
+										<Button variant='contained' fullWidth sx={submitBtnStyles} type='submit'>
 											Sign In
 										</Button>
 									</form>
