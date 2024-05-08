@@ -18,7 +18,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
-	const { setUserId } = useContext(UserAuthContext);
+	const { setUserId, fetchUserData } = useContext(UserAuthContext);
 	const { fetchOrganisationData, organisation } = useContext(OrganisationContext);
 
 	const [activeForm, setActiveForm] = useState<AuthForms>(AuthForms.SIGN_UP);
@@ -59,6 +59,8 @@ const Auth = ({ setUserRole }: AuthProps) => {
 				if (response.data.role) {
 					setUserRole(response.data.role);
 				}
+
+				await fetchUserData(response.data._id);
 
 				if (!organisation || organisation._id !== response.data.orgId) {
 					await fetchOrganisationData(response.data.orgId);
