@@ -7,10 +7,8 @@ import LoadingError from '../components/layouts/Loading/LoadingError';
 import { OrganisationContext } from './OrganisationContextProvider';
 
 interface CoursesContextTypes {
-	data: SingleCourse[];
 	sortedCoursesData: SingleCourse[];
 	sortCoursesData: (property: keyof SingleCourse, order: 'asc' | 'desc') => void;
-	setSortedCoursesData: React.Dispatch<React.SetStateAction<SingleCourse[]>>;
 	addNewCourse: (newCourse: any) => void;
 	updateCoursePublishing: (id: string) => void;
 	removeCourse: (id: string) => void;
@@ -25,10 +23,8 @@ interface CoursesContextProviderProps {
 }
 
 export const CoursesContext = createContext<CoursesContextTypes>({
-	data: [],
 	sortedCoursesData: [],
 	sortCoursesData: () => {},
-	setSortedCoursesData: () => {},
 	addNewCourse: () => {},
 	updateCoursePublishing: () => {},
 	removeCourse: () => {},
@@ -50,11 +46,9 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 	const { data, isLoading, isError } = useQuery(
 		['allCourses', { page: pageNumber }],
 		async () => {
-			console.log('course context');
 			if (!orgId) return;
 
 			const response = await axios.get(`${base_url}/courses/organisation/${orgId}?page=${pageNumber}`);
-			console.log(response);
 
 			// Initial sorting when fetching data
 			const sortedDataCopy = [...response.data.data].sort((a: Course, b: Course) => b.updatedAt.localeCompare(a.updatedAt));
@@ -64,9 +58,14 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 			return response.data.data;
 		},
 		{
-			enabled: !!orgId, // Enable the query only when orgId is available
-			// keepPreviousData: true, // Keep previous data while fetching new data
+			enabled: !!orgId,
+			// refetchOnMount: false,
+			// refetchOnWindowFocus: false,
 		}
+		// {
+		// 	enabled: !!orgId, // Enable the query only when orgId is available
+		// keepPreviousData: true, // Keep previous data while fetching new data
+		// }
 	);
 
 	// Function to handle sorting
@@ -122,10 +121,8 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 	return (
 		<CoursesContext.Provider
 			value={{
-				data,
 				sortedCoursesData,
 				sortCoursesData,
-				setSortedCoursesData,
 				addNewCourse,
 				removeCourse,
 				updateCoursePublishing,

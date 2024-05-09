@@ -7,10 +7,8 @@ import { User } from '../interfaces/user';
 import { OrganisationContext } from './OrganisationContextProvider';
 
 interface UserContextTypes {
-	data: User[];
-	sortedUserData: User[];
-	sortUserData: (property: keyof User, order: 'asc' | 'desc') => void;
-	setSortedUserData: React.Dispatch<React.SetStateAction<User[]>>;
+	sortedUsersData: User[];
+	sortUsersData: (property: keyof User, order: 'asc' | 'desc') => void;
 	addNewUser: (newCourse: any) => void;
 	activateUser: (id: string) => void;
 	removeUser: (id: string) => void;
@@ -25,10 +23,8 @@ interface UserContextProviderProps {
 }
 
 export const UsersContext = createContext<UserContextTypes>({
-	data: [],
-	sortedUserData: [],
-	sortUserData: () => {},
-	setSortedUserData: () => {},
+	sortedUsersData: [],
+	sortUsersData: () => {},
 	addNewUser: () => {},
 	activateUser: () => {},
 	removeUser: () => {},
@@ -42,7 +38,7 @@ const UsersContextProvider = (props: UserContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
 
-	const [sortedUserData, setSortedUserData] = useState<User[]>([]);
+	const [sortedUsersData, setSortedUsersData] = useState<User[]>([]);
 	const [numberOfPages, setNumberOfPages] = useState<number>(1);
 	const [pageNumber, setPageNumber] = useState<number>(1);
 
@@ -55,55 +51,56 @@ const UsersContextProvider = (props: UserContextProviderProps) => {
 
 			// Initial sorting when fetching data
 			const sortedDataCopy = [...response.data.data].sort((a: User, b: User) => b.updatedAt.localeCompare(a.updatedAt));
-			setSortedUserData(sortedDataCopy);
+			setSortedUsersData(sortedDataCopy);
 			setNumberOfPages(response.data.pages);
 
 			return response.data.data;
 		},
-		{
-			enabled: !!orgId, // Enable the query only when orgId is available
-			// keepPreviousData: true, // Keep previous data while fetching new data
-		}
+		{ enabled: !!orgId }
+		// {
+		// 	enabled: !!orgId, // Enable the query only when orgId is available
+		// keepPreviousData: true, // Keep previous data while fetching new data
+		// }
 	);
 
 	// Function to handle sorting
-	const sortUserData = (property: keyof User, order: 'asc' | 'desc') => {
-		const sortedDataCopy = [...sortedUserData].sort((a: User, b: User) => {
+	const sortUsersData = (property: keyof User, order: 'asc' | 'desc') => {
+		const sortedDataCopy = [...sortedUsersData].sort((a: User, b: User) => {
 			if (order === 'asc') {
 				return a[property] > b[property] ? 1 : -1;
 			} else {
 				return a[property] < b[property] ? 1 : -1;
 			}
 		});
-		setSortedUserData(sortedDataCopy);
+		setSortedUsersData(sortedDataCopy);
 	};
 	// Function to update sortedUserData with new user data
 	const addNewUser = (newUser: any) => {
-		setSortedUserData((prevSortedData) => [newUser, ...prevSortedData]);
+		setSortedUsersData((prevSortedData) => [newUser, ...prevSortedData]);
 	};
 
 	const activateUser = (id: string) => {
-		const updatedCourseList = sortedUserData?.map((user) => {
+		const updatedCourseList = sortedUsersData?.map((user) => {
 			if (user._id === id) {
 				return { ...user, isActive: !user.isActive };
 			}
 			return user;
 		});
-		setSortedUserData(updatedCourseList);
+		setSortedUsersData(updatedCourseList);
 	};
 
 	const updateUser = (updatedUser: User) => {
-		const updatedUserList = sortedUserData?.map((user) => {
+		const updatedUserList = sortedUsersData?.map((user) => {
 			if (updatedUser._id === user._id) {
 				return updatedUser;
 			}
 			return user;
 		});
-		setSortedUserData(updatedUserList);
+		setSortedUsersData(updatedUserList);
 	};
 
 	const removeUser = (id: string) => {
-		setSortedUserData((prevSortedData) => prevSortedData?.filter((data) => data._id !== id));
+		setSortedUsersData((prevSortedData) => prevSortedData?.filter((data) => data._id !== id));
 	};
 
 	// useEffect(() => {}, [sortedUserData]);
@@ -119,10 +116,8 @@ const UsersContextProvider = (props: UserContextProviderProps) => {
 	return (
 		<UsersContext.Provider
 			value={{
-				data,
-				sortedUserData,
-				sortUserData,
-				setSortedUserData,
+				sortedUsersData,
+				sortUsersData,
 				addNewUser,
 				removeUser,
 				activateUser,
