@@ -10,7 +10,7 @@ import { UserCoursesIdsWithCourseIds } from '../contexts/UserCourseLessonDataCon
 const Courses = () => {
 	const [checked, setChecked] = useState<boolean>(false);
 
-	const { sortedData } = useContext(CoursesContext);
+	const { sortedCoursesData } = useContext(CoursesContext);
 
 	const { id } = useParams();
 
@@ -28,8 +28,8 @@ const Courses = () => {
 						alignItems: 'center',
 						margin: '0 3rem',
 					}}>
-					{sortedData &&
-						sortedData
+					{sortedCoursesData &&
+						sortedCoursesData
 							.filter((course: SingleCourse) => course.isActive === true)
 							.map((course: SingleCourse) => {
 								let userCourseData: UserCoursesIdsWithCourseIds[] = [];

@@ -1,9 +1,10 @@
 import axios from 'axios';
-import { ReactNode, createContext, useEffect, useState } from 'react';
+import { ReactNode, createContext, useContext, useState } from 'react';
 import { useQuery } from 'react-query';
 import { Lesson } from '../interfaces/lessons';
 import Loading from '../components/layouts/Loading/Loading';
 import LoadingError from '../components/layouts/Loading/LoadingError';
+import { OrganisationContext } from './OrganisationContextProvider';
 
 interface LessonsContextTypes {
 	data: Lesson[];
@@ -39,15 +40,18 @@ export const LessonsContext = createContext<LessonsContextTypes>({
 
 const LessonsContextProvider = (props: LessonsContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
+	const { orgId } = useContext(OrganisationContext);
 
 	const [sortedData, setSortedData] = useState<Lesson[]>([]);
 	const [numberOfPages, setNumberOfPages] = useState<number>(1);
 	const [pageNumber, setPageNumber] = useState<number>(1);
 
 	const { data, isLoading, isError } = useQuery(
-		['allLessons', { page: pageNumber }], //include query parameter in this format
+		['allLessons', { page: pageNumber }],
 		async () => {
-			const response = await axios.get(`${base_url}/lessons?page=${pageNumber}`);
+			if (!orgId) return;
+
+			const response = await axios.get(`${base_url}/lessons/organisation/${orgId}?page=${pageNumber}`);
 
 			// Initial sorting when fetching data
 			const sortedDataCopy = [...response.data.data].sort((a: Lesson, b: Lesson) => b.updatedAt.localeCompare(a.updatedAt));
@@ -55,6 +59,10 @@ const LessonsContextProvider = (props: LessonsContextProviderProps) => {
 			setNumberOfPages(response.data.pages);
 
 			return response.data.data;
+		},
+		{
+			enabled: !!orgId, // Enable the query only when orgId is available
+			// keepPreviousData: true, // Keep previous data while fetching new data
 		}
 	);
 
@@ -98,7 +106,7 @@ const LessonsContextProvider = (props: LessonsContextProviderProps) => {
 		setSortedData((prevSortedData) => prevSortedData?.filter((data) => data._id !== id));
 	};
 
-	useEffect(() => {}, [sortedData]);
+	// useEffect(() => {}, [sortedData]);
 
 	if (isLoading) {
 		return <Loading />;

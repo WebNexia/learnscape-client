@@ -18,7 +18,7 @@ import CustomActionBtn from '../components/layouts/Table/CustomActionBtn';
 const AdminCourses = () => {
 	const { userId } = useParams();
 	const navigate = useNavigate();
-	const { sortedData, sortData, addNewCourse, removeCourse, numberOfPages, pageNumber, setPageNumber } = useContext(CoursesContext);
+	const { sortedCoursesData, sortCoursesData, addNewCourse, removeCourse, numberOfPages, pageNumber, setPageNumber } = useContext(CoursesContext);
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
 	const [isCourseCreateModalOpen, setIsCourseCreateModalOpen] = useState<boolean>(false);
@@ -36,8 +36,8 @@ const AdminCourses = () => {
 	const [isCourseDeleteModalOpen, setIsCourseDeleteModalOpen] = useState<boolean[]>([]);
 
 	useEffect(() => {
-		setIsCourseDeleteModalOpen(Array(sortedData.length).fill(false));
-	}, [sortedData]);
+		setIsCourseDeleteModalOpen(Array(sortedCoursesData.length).fill(false));
+	}, [sortedCoursesData]);
 
 	const openDeleteCourseModal = (index: number) => {
 		const updatedState = [...isCourseDeleteModalOpen];
@@ -66,7 +66,7 @@ const AdminCourses = () => {
 				startingDate: '',
 			});
 
-			// Notify context provider to update sortedData with the new course
+			// Notify context provider to update sortedCoursesData with the new course
 			addNewCourse({
 				_id: response.data._id,
 				title,
@@ -95,7 +95,7 @@ const AdminCourses = () => {
 		const isAsc = orderBy === property && order === 'asc';
 		setOrder(isAsc ? 'desc' : 'asc');
 		setOrderBy(property);
-		sortData(property, isAsc ? 'desc' : 'asc');
+		sortCoursesData(property, isAsc ? 'desc' : 'asc');
 	};
 
 	return (
@@ -191,8 +191,8 @@ const AdminCourses = () => {
 						]}
 					/>
 					<TableBody>
-						{sortedData &&
-							sortedData.map((course: SingleCourse, index) => {
+						{sortedCoursesData &&
+							sortedCoursesData.map((course: SingleCourse, index) => {
 								let startDate: string = '';
 								const options: Intl.DateTimeFormatOptions = {
 									year: 'numeric',

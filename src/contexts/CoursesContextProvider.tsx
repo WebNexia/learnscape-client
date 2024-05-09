@@ -1,15 +1,16 @@
 import axios from 'axios';
-import { ReactNode, createContext, useEffect, useState } from 'react';
+import { ReactNode, createContext, useContext, useState } from 'react';
 import { useQuery } from 'react-query';
 import { Course, SingleCourse } from '../interfaces/course';
 import Loading from '../components/layouts/Loading/Loading';
 import LoadingError from '../components/layouts/Loading/LoadingError';
+import { OrganisationContext } from './OrganisationContextProvider';
 
 interface CoursesContextTypes {
 	data: SingleCourse[];
-	sortedData: SingleCourse[];
-	sortData: (property: keyof SingleCourse, order: 'asc' | 'desc') => void;
-	setSortedData: React.Dispatch<React.SetStateAction<SingleCourse[]>>;
+	sortedCoursesData: SingleCourse[];
+	sortCoursesData: (property: keyof SingleCourse, order: 'asc' | 'desc') => void;
+	setSortedCoursesData: React.Dispatch<React.SetStateAction<SingleCourse[]>>;
 	addNewCourse: (newCourse: any) => void;
 	updateCoursePublishing: (id: string) => void;
 	removeCourse: (id: string) => void;
@@ -25,9 +26,9 @@ interface CoursesContextProviderProps {
 
 export const CoursesContext = createContext<CoursesContextTypes>({
 	data: [],
-	sortedData: [],
-	sortData: () => {},
-	setSortedData: () => {},
+	sortedCoursesData: [],
+	sortCoursesData: () => {},
+	setSortedCoursesData: () => {},
 	addNewCourse: () => {},
 	updateCoursePublishing: () => {},
 	removeCourse: () => {},
@@ -40,62 +41,75 @@ export const CoursesContext = createContext<CoursesContextTypes>({
 const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
-	const [sortedData, setSortedData] = useState<SingleCourse[]>([]);
+	const { orgId } = useContext(OrganisationContext);
+
+	const [sortedCoursesData, setSortedCoursesData] = useState<SingleCourse[]>([]);
 	const [numberOfPages, setNumberOfPages] = useState<number>(1);
 	const [pageNumber, setPageNumber] = useState<number>(1);
 
-	const { data, isLoading, isError } = useQuery(['allCourses', { page: pageNumber }], async () => {
-		const response = await axios.get(`${base_url}/courses?page=${pageNumber}`);
+	const { data, isLoading, isError } = useQuery(
+		['allCourses', { page: pageNumber }],
+		async () => {
+			console.log('course context');
+			if (!orgId) return;
 
-		// Initial sorting when fetching data
-		const sortedDataCopy = [...response.data.data].sort((a: Course, b: Course) => b.updatedAt.localeCompare(a.updatedAt));
-		setSortedData(sortedDataCopy);
-		setNumberOfPages(response.data.pages);
+			const response = await axios.get(`${base_url}/courses/organisation/${orgId}?page=${pageNumber}`);
+			console.log(response);
 
-		return response.data.data;
-	});
+			// Initial sorting when fetching data
+			const sortedDataCopy = [...response.data.data].sort((a: Course, b: Course) => b.updatedAt.localeCompare(a.updatedAt));
+			setSortedCoursesData(sortedDataCopy);
+			setNumberOfPages(response.data.pages);
+
+			return response.data.data;
+		},
+		{
+			enabled: !!orgId, // Enable the query only when orgId is available
+			// keepPreviousData: true, // Keep previous data while fetching new data
+		}
+	);
 
 	// Function to handle sorting
-	const sortData = (property: keyof SingleCourse, order: 'asc' | 'desc') => {
-		const sortedDataCopy = [...sortedData].sort((a: SingleCourse, b: SingleCourse) => {
+	const sortCoursesData = (property: keyof SingleCourse, order: 'asc' | 'desc') => {
+		const sortedDataCopy = [...sortedCoursesData].sort((a: SingleCourse, b: SingleCourse) => {
 			if (order === 'asc') {
 				return a[property] > b[property] ? 1 : -1;
 			} else {
 				return a[property] < b[property] ? 1 : -1;
 			}
 		});
-		setSortedData(sortedDataCopy);
+		setSortedCoursesData(sortedDataCopy);
 	};
-	// Function to update sortedData with new course data
+	// Function to update sortedCoursesData with new course data
 	const addNewCourse = (newCourse: any) => {
-		setSortedData((prevSortedData) => [newCourse, ...prevSortedData]);
+		setSortedCoursesData((prevSortedData) => [newCourse, ...prevSortedData]);
 	};
 
 	const updateCoursePublishing = (id: string) => {
-		const updatedCourseList = sortedData?.map((course) => {
+		const updatedCourseList = sortedCoursesData?.map((course) => {
 			if (course._id === id) {
 				return { ...course, isActive: !course.isActive };
 			}
 			return course;
 		});
-		setSortedData(updatedCourseList);
+		setSortedCoursesData(updatedCourseList);
 	};
 
 	const updateCourse = (singleCourse: SingleCourse) => {
-		const updatedCourseList = sortedData?.map((course) => {
+		const updatedCourseList = sortedCoursesData?.map((course) => {
 			if (singleCourse._id === course._id) {
 				return singleCourse;
 			}
 			return course;
 		});
-		setSortedData(updatedCourseList);
+		setSortedCoursesData(updatedCourseList);
 	};
 
 	const removeCourse = (id: string) => {
-		setSortedData((prevSortedData) => prevSortedData?.filter((data) => data._id !== id));
+		setSortedCoursesData((prevSortedData) => prevSortedData?.filter((data) => data._id !== id));
 	};
 
-	useEffect(() => {}, [sortedData]);
+	// useEffect(() => {}, [sortedCoursesData]);
 
 	if (isLoading) {
 		return <Loading />;
@@ -109,9 +123,9 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 		<CoursesContext.Provider
 			value={{
 				data,
-				sortedData,
-				sortData,
-				setSortedData,
+				sortedCoursesData,
+				sortCoursesData,
+				setSortedCoursesData,
 				addNewCourse,
 				removeCourse,
 				updateCoursePublishing,

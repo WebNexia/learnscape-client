@@ -1,9 +1,10 @@
 import axios from 'axios';
-import { ReactNode, createContext, useEffect, useState } from 'react';
+import { ReactNode, createContext, useContext, useState } from 'react';
 import { useQuery } from 'react-query';
 import Loading from '../components/layouts/Loading/Loading';
 import LoadingError from '../components/layouts/Loading/LoadingError';
 import { QuestionInterface } from '../interfaces/question';
+import { OrganisationContext } from './OrganisationContextProvider';
 
 interface QuestionsContextTypes {
 	data: QuestionInterface[];
@@ -37,21 +38,31 @@ export const QuestionsContext = createContext<QuestionsContextTypes>({
 
 const QuestionsContextProvider = (props: QuestionContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
+	const { orgId } = useContext(OrganisationContext);
 
 	const [sortedQuestionData, setSortedQuestionData] = useState<QuestionInterface[]>([]);
 	const [numberOfPages, setNumberOfPages] = useState<number>(1);
 	const [pageNumber, setPageNumber] = useState<number>(1);
 
-	const { data, isLoading, isError } = useQuery(['allQuestions', { page: pageNumber }], async () => {
-		const response = await axios.get(`${base_url}/questions?page=${pageNumber}`);
+	const { data, isLoading, isError } = useQuery(
+		['allQuestions', { page: pageNumber }],
+		async () => {
+			if (!orgId) return;
 
-		// Initial sorting when fetching data
-		const sortedDataCopy = [...response.data.data].sort((a: QuestionInterface, b: QuestionInterface) => b.updatedAt.localeCompare(a.updatedAt));
-		setSortedQuestionData(sortedDataCopy);
-		setNumberOfPages(response.data.pages);
+			const response = await axios.get(`${base_url}/questions/organisation/${orgId}?page=${pageNumber}`);
 
-		return response.data.data;
-	});
+			// Initial sorting when fetching data
+			const sortedDataCopy = [...response.data.data].sort((a: QuestionInterface, b: QuestionInterface) => b.updatedAt.localeCompare(a.updatedAt));
+			setSortedQuestionData(sortedDataCopy);
+			setNumberOfPages(response.data.pages);
+
+			return response.data.data;
+		},
+		{
+			enabled: !!orgId, // Enable the query only when orgId is available
+			// keepPreviousData: true, // Keep previous data while fetching new data
+		}
+	);
 
 	// Function to handle sorting
 	const sortQuestionData = (property: keyof QuestionInterface, order: 'asc' | 'desc') => {
@@ -82,8 +93,6 @@ const QuestionsContextProvider = (props: QuestionContextProviderProps) => {
 	const removeQuestion = (id: string) => {
 		setSortedQuestionData((prevSortedData) => prevSortedData?.filter((data) => data._id !== id));
 	};
-
-	useEffect(() => {}, [sortedQuestionData]);
 
 	if (isLoading) {
 		return <Loading />;

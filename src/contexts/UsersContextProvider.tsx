@@ -1,9 +1,10 @@
 import axios from 'axios';
-import { ReactNode, createContext, useEffect, useState } from 'react';
+import { ReactNode, createContext, useContext, useState } from 'react';
 import { useQuery } from 'react-query';
 import Loading from '../components/layouts/Loading/Loading';
 import LoadingError from '../components/layouts/Loading/LoadingError';
 import { User } from '../interfaces/user';
+import { OrganisationContext } from './OrganisationContextProvider';
 
 interface UserContextTypes {
 	data: User[];
@@ -39,21 +40,31 @@ export const UsersContext = createContext<UserContextTypes>({
 
 const UsersContextProvider = (props: UserContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
+	const { orgId } = useContext(OrganisationContext);
 
 	const [sortedUserData, setSortedUserData] = useState<User[]>([]);
 	const [numberOfPages, setNumberOfPages] = useState<number>(1);
 	const [pageNumber, setPageNumber] = useState<number>(1);
 
-	const { data, isLoading, isError } = useQuery(['allUsers', { page: pageNumber }], async () => {
-		const response = await axios.get(`${base_url}/users?page=${pageNumber}`);
+	const { data, isLoading, isError } = useQuery(
+		['allUsers', { page: pageNumber }],
+		async () => {
+			if (!orgId) return;
 
-		// Initial sorting when fetching data
-		const sortedDataCopy = [...response.data.data].sort((a: User, b: User) => b.updatedAt.localeCompare(a.updatedAt));
-		setSortedUserData(sortedDataCopy);
-		setNumberOfPages(response.data.pages);
+			const response = await axios.get(`${base_url}/users/organisation/${orgId}?page=${pageNumber}`);
 
-		return response.data.data;
-	});
+			// Initial sorting when fetching data
+			const sortedDataCopy = [...response.data.data].sort((a: User, b: User) => b.updatedAt.localeCompare(a.updatedAt));
+			setSortedUserData(sortedDataCopy);
+			setNumberOfPages(response.data.pages);
+
+			return response.data.data;
+		},
+		{
+			enabled: !!orgId, // Enable the query only when orgId is available
+			// keepPreviousData: true, // Keep previous data while fetching new data
+		}
+	);
 
 	// Function to handle sorting
 	const sortUserData = (property: keyof User, order: 'asc' | 'desc') => {
@@ -95,7 +106,7 @@ const UsersContextProvider = (props: UserContextProviderProps) => {
 		setSortedUserData((prevSortedData) => prevSortedData?.filter((data) => data._id !== id));
 	};
 
-	useEffect(() => {}, [sortedUserData]);
+	// useEffect(() => {}, [sortedUserData]);
 
 	if (isLoading) {
 		return <Loading />;
