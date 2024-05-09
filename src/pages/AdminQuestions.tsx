@@ -19,7 +19,7 @@ const AdminLessons = () => {
 	const { userId } = useParams();
 	const navigate = useNavigate();
 
-	const { sortQuestionData, sortedQuestionData, removeQuestion, numberOfPages, pageNumber, setPageNumber } = useContext(QuestionsContext);
+	const { sortQuestionsData, sortedQuestionsData, removeQuestion, numberOfPages, pageNumber, setPageNumber } = useContext(QuestionsContext);
 
 	// const [isNewQuestionModalOpen, setIsNewQuestionModalOpen] = useState<boolean>(false);
 
@@ -30,14 +30,14 @@ const AdminLessons = () => {
 		const isAsc = orderBy === property && order === 'asc';
 		setOrder(isAsc ? 'desc' : 'asc');
 		setOrderBy(property);
-		sortQuestionData(property, isAsc ? 'desc' : 'asc');
+		sortQuestionsData(property, isAsc ? 'desc' : 'asc');
 	};
 
 	const [isQuestionDeleteModalOpen, setIsQuestionDeleteModalOpen] = useState<boolean[]>([]);
 
 	useEffect(() => {
-		setIsQuestionDeleteModalOpen(Array(sortedQuestionData.length).fill(false));
-	}, [sortedQuestionData, pageNumber]);
+		setIsQuestionDeleteModalOpen(Array(sortedQuestionsData.length).fill(false));
+	}, [sortedQuestionsData, pageNumber]);
 
 	const openQuestionLessonModal = (index: number) => {
 		const updatedState = [...isQuestionDeleteModalOpen];
@@ -84,8 +84,8 @@ const AdminLessons = () => {
 						]}
 					/>
 					<TableBody>
-						{sortedQuestionData &&
-							sortedQuestionData.map((question: QuestionInterface, index) => {
+						{sortedQuestionsData &&
+							sortedQuestionsData.map((question: QuestionInterface, index) => {
 								return (
 									<TableRow key={question._id}>
 										<CustomTableCell value={question.questionType} />

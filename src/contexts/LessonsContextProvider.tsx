@@ -7,10 +7,8 @@ import LoadingError from '../components/layouts/Loading/LoadingError';
 import { OrganisationContext } from './OrganisationContextProvider';
 
 interface LessonsContextTypes {
-	data: Lesson[];
-	sortedData: Lesson[];
-	sortData: (property: keyof Lesson, order: 'asc' | 'desc') => void;
-	setSortedData: React.Dispatch<React.SetStateAction<Lesson[]>>;
+	sortedLessonsData: Lesson[];
+	sortLessonsData: (property: keyof Lesson, order: 'asc' | 'desc') => void;
 	addNewLesson: (newLesson: any) => void;
 	updateLessonPublishing: (id: string) => void;
 	removeLesson: (id: string) => void;
@@ -25,10 +23,8 @@ interface LessonsContextProviderProps {
 }
 
 export const LessonsContext = createContext<LessonsContextTypes>({
-	data: [],
-	sortedData: [],
-	sortData: () => {},
-	setSortedData: () => {},
+	sortedLessonsData: [],
+	sortLessonsData: () => {},
 	addNewLesson: () => {},
 	updateLessonPublishing: () => {},
 	removeLesson: () => {},
@@ -42,7 +38,7 @@ const LessonsContextProvider = (props: LessonsContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
 
-	const [sortedData, setSortedData] = useState<Lesson[]>([]);
+	const [sortedLessonsData, setSortedLessonsData] = useState<Lesson[]>([]);
 	const [numberOfPages, setNumberOfPages] = useState<number>(1);
 	const [pageNumber, setPageNumber] = useState<number>(1);
 
@@ -54,59 +50,60 @@ const LessonsContextProvider = (props: LessonsContextProviderProps) => {
 			const response = await axios.get(`${base_url}/lessons/organisation/${orgId}?page=${pageNumber}`);
 
 			// Initial sorting when fetching data
-			const sortedDataCopy = [...response.data.data].sort((a: Lesson, b: Lesson) => b.updatedAt.localeCompare(a.updatedAt));
-			setSortedData(sortedDataCopy);
+			const sortedLessonsDataCopy = [...response.data.data].sort((a: Lesson, b: Lesson) => b.updatedAt.localeCompare(a.updatedAt));
+			setSortedLessonsData(sortedLessonsDataCopy);
 			setNumberOfPages(response.data.pages);
 
 			return response.data.data;
 		},
 		{
-			enabled: !!orgId, // Enable the query only when orgId is available
-			// keepPreviousData: true, // Keep previous data while fetching new data
+			enabled: !!orgId,
 		}
+		// {
+		// 	enabled: !!orgId, // Enable the query only when orgId is available
+		// keepPreviousData: true, // Keep previous data while fetching new data
+		// }
 	);
 
 	// Function to handle sorting
-	const sortData = (property: keyof Lesson, order: 'asc' | 'desc') => {
-		const sortedDataCopy = [...sortedData].sort((a: Lesson, b: Lesson) => {
+	const sortLessonsData = (property: keyof Lesson, order: 'asc' | 'desc') => {
+		const sortedLessonsDataCopy = [...sortedLessonsData].sort((a: Lesson, b: Lesson) => {
 			if (order === 'asc') {
 				return a[property] > b[property] ? 1 : -1;
 			} else {
 				return a[property] < b[property] ? 1 : -1;
 			}
 		});
-		setSortedData(sortedDataCopy);
+		setSortedLessonsData(sortedLessonsDataCopy);
 	};
-	// Function to update sortedData with new lesson data
+	// Function to update sortedLessonsData with new lesson data
 	const addNewLesson = (newLesson: any) => {
-		setSortedData((prevSortedData) => [newLesson, ...prevSortedData]);
+		setSortedLessonsData((prevSortedData) => [newLesson, ...prevSortedData]);
 	};
 
 	const updateLessonPublishing = (id: string) => {
-		const updatedLessonList = sortedData?.map((lesson) => {
+		const updatedLessonList = sortedLessonsData?.map((lesson) => {
 			if (lesson._id === id) {
 				return { ...lesson, isActive: !lesson.isActive };
 			}
 			return lesson;
 		});
-		setSortedData(updatedLessonList);
+		setSortedLessonsData(updatedLessonList);
 	};
 
 	const updateLesson = (singleLesson: Lesson) => {
-		const updatedLessonList = sortedData?.map((lesson) => {
+		const updatedLessonList = sortedLessonsData?.map((lesson) => {
 			if (singleLesson._id === lesson._id) {
 				return singleLesson;
 			}
 			return lesson;
 		});
-		setSortedData(updatedLessonList);
+		setSortedLessonsData(updatedLessonList);
 	};
 
 	const removeLesson = (id: string) => {
-		setSortedData((prevSortedData) => prevSortedData?.filter((data) => data._id !== id));
+		setSortedLessonsData((prevSortedData) => prevSortedData?.filter((data) => data._id !== id));
 	};
-
-	// useEffect(() => {}, [sortedData]);
 
 	if (isLoading) {
 		return <Loading />;
@@ -119,10 +116,8 @@ const LessonsContextProvider = (props: LessonsContextProviderProps) => {
 	return (
 		<LessonsContext.Provider
 			value={{
-				data,
-				sortedData,
-				sortData,
-				setSortedData,
+				sortedLessonsData,
+				sortLessonsData,
 				addNewLesson,
 				removeLesson,
 				updateLessonPublishing,

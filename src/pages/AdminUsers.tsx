@@ -18,7 +18,7 @@ const AdminUsers = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	// const { userId } = useParams();
 
-	const { sortUserData, sortedUserData, removeUser, numberOfPages, pageNumber, setPageNumber } = useContext(UsersContext);
+	const { sortUsersData, sortedUsersData, removeUser, numberOfPages, pageNumber, setPageNumber } = useContext(UsersContext);
 
 	// const [isNewUserModalOpen, setIsNewUserModalOpen] = useState<boolean>(false);
 
@@ -29,14 +29,14 @@ const AdminUsers = () => {
 		const isAsc = orderBy === property && order === 'asc';
 		setOrder(isAsc ? 'desc' : 'asc');
 		setOrderBy(property);
-		sortUserData(property, isAsc ? 'desc' : 'asc');
+		sortUsersData(property, isAsc ? 'desc' : 'asc');
 	};
 
 	const [isUserDeleteModalOpen, setIsUserDeleteModalOpen] = useState<boolean[]>([]);
 
 	useEffect(() => {
-		setIsUserDeleteModalOpen(Array(sortedUserData.length).fill(false));
-	}, [sortedUserData, pageNumber]);
+		setIsUserDeleteModalOpen(Array(sortedUsersData.length).fill(false));
+	}, [sortedUsersData, pageNumber]);
 
 	const openDeleteUserModal = (index: number) => {
 		const updatedState = [...isUserDeleteModalOpen];
@@ -85,8 +85,8 @@ const AdminUsers = () => {
 						]}
 					/>
 					<TableBody>
-						{sortedUserData &&
-							sortedUserData.map((user: User, index) => {
+						{sortedUsersData &&
+							sortedUsersData.map((user: User, index) => {
 								return (
 									<TableRow key={user._id}>
 										<CustomTableCell value={user.username} />

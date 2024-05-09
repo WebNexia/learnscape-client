@@ -25,7 +25,7 @@ const AddNewLessonDialog = ({
 	setIsChapterUpdated,
 	setChapterLessonDataBeforeSave,
 }: AddNewLessonDialogProps) => {
-	const { sortData, sortedData, numberOfPages, pageNumber, setPageNumber } = useContext(LessonsContext);
+	const { sortLessonsData, sortedLessonsData, numberOfPages, pageNumber, setPageNumber } = useContext(LessonsContext);
 	const [selectedLessons, setSelectedLessons] = useState<Lesson[]>([]);
 	const [selectedLessonIds, setSelectedLessonIds] = useState<string[]>([]);
 	const [orderBy, setOrderBy] = useState<keyof Lesson>('title');
@@ -41,7 +41,7 @@ const AddNewLessonDialog = ({
 		const isAsc = orderBy === property && order === 'asc';
 		setOrder(isAsc ? 'desc' : 'asc');
 		setOrderBy(property);
-		sortData(property, isAsc ? 'desc' : 'asc');
+		sortLessonsData(property, isAsc ? 'desc' : 'asc');
 	};
 
 	const handleCheckboxChange = (lesson: Lesson) => {
@@ -137,8 +137,8 @@ const AddNewLessonDialog = ({
 							]}
 						/>
 						<TableBody>
-							{sortedData &&
-								sortedData
+							{sortedLessonsData &&
+								sortedLessonsData
 									.filter((lesson) => !chapter.lessonIds.includes(lesson._id))
 									.map((lesson: Lesson) => {
 										const isSelected = selectedLessonIds.indexOf(lesson._id) !== -1;

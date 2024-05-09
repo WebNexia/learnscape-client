@@ -52,6 +52,8 @@ const OrganisationContextProvider = (props: UserAuthContextProviderProps) => {
 
 	const organisationQuery = useQuery('organisation', () => fetchOrganisationData(orgId), {
 		enabled: !!orgId,
+		refetchOnMount: false,
+		refetchOnWindowFocus: false,
 	});
 
 	if (organisationQuery.isLoading) {

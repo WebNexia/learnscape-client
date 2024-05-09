@@ -20,7 +20,7 @@ const AdminLessons = () => {
 	const { userId } = useParams();
 	const navigate = useNavigate();
 
-	const { sortData, sortedData, removeLesson, numberOfPages, pageNumber, setPageNumber } = useContext(LessonsContext);
+	const { sortLessonsData, sortedLessonsData, removeLesson, numberOfPages, pageNumber, setPageNumber } = useContext(LessonsContext);
 
 	const [isNewLessonModalOpen, setIsNewLessonModalOpen] = useState<boolean>(false);
 
@@ -31,14 +31,14 @@ const AdminLessons = () => {
 		const isAsc = orderBy === property && order === 'asc';
 		setOrder(isAsc ? 'desc' : 'asc');
 		setOrderBy(property);
-		sortData(property, isAsc ? 'desc' : 'asc');
+		sortLessonsData(property, isAsc ? 'desc' : 'asc');
 	};
 
 	const [isLessonDeleteModalOpen, setIsLessonDeleteModalOpen] = useState<boolean[]>([]);
 
 	useEffect(() => {
-		setIsLessonDeleteModalOpen(Array(sortedData.length).fill(false));
-	}, [sortedData, pageNumber]);
+		setIsLessonDeleteModalOpen(Array(sortedLessonsData.length).fill(false));
+	}, [sortedLessonsData, pageNumber]);
 
 	const openDeleteLessonModal = (index: number) => {
 		const updatedState = [...isLessonDeleteModalOpen];
@@ -87,8 +87,8 @@ const AdminLessons = () => {
 						]}
 					/>
 					<TableBody>
-						{sortedData &&
-							sortedData.map((lesson: Lesson, index) => {
+						{sortedLessonsData &&
+							sortedLessonsData.map((lesson: Lesson, index) => {
 								return (
 									<TableRow key={lesson._id}>
 										<CustomTableCell value={lesson.title} />
