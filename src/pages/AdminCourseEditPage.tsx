@@ -18,6 +18,7 @@ import CourseDetailsEditBox from '../components/Admin Single Course/CourseDetail
 import { Lesson } from '../interfaces/lessons';
 import CustomDialog from '../components/layouts/Dialog/CustomDialog';
 import CustomDialogActions from '../components/layouts/Dialog/CustomDialogActions';
+import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 
 export interface ChapterUpdateTrack {
 	chapterId: string;
@@ -57,6 +58,7 @@ export class ChapterLessonDataImpl implements ChapterLessonData {
 const AdminCourseEditPage = () => {
 	const { userId, courseId } = useParams();
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
+	const { orgId } = useContext(OrganisationContext);
 
 	const { updateCoursePublishing, updateCourse } = useContext(CoursesContext);
 	const [isEditMode, setIsEditMode] = useState<boolean>(false);
@@ -180,6 +182,7 @@ const AdminCourseEditPage = () => {
 								const lessonResponse = await axios.post(`${base_url}/lessons`, {
 									title: lesson.title,
 									type: lesson.type,
+									orgId,
 								});
 								return {
 									...lesson,

@@ -6,7 +6,7 @@ import { LessonsContext } from '../contexts/LessonsContextProvider';
 import { Lesson } from '../interfaces/lessons';
 import { Delete, Edit, FileCopy } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
-import CreateLessonDialog from '../components/layouts/New Lesson/CreateLessonDialog';
+import CreateLessonDialog from '../components/Admin Single Lesson/New Lesson/CreateLessonDialog';
 import CustomSubmitButton from '../components/forms/Custom Buttons/CustomSubmitButton';
 import CustomDialog from '../components/layouts/Dialog/CustomDialog';
 import CustomDialogActions from '../components/layouts/Dialog/CustomDialogActions';

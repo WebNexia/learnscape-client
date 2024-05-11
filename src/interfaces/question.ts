@@ -6,6 +6,7 @@ export interface QuestionInterface {
 	correctAnswer: string;
 	videoUrl: string;
 	imageUrl: string;
+	orgId: string;
 	isActive: boolean;
 	createdAt: string;
 	updatedAt: string;

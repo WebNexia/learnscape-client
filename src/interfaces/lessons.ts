@@ -10,6 +10,7 @@ interface BaseLesson {
 	createdAt: string;
 	updatedAt: string;
 	text: string;
+	orgId: string;
 }
 
 export interface Lesson extends BaseLesson {

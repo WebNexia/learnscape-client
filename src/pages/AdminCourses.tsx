@@ -14,12 +14,14 @@ import CustomTableHead from '../components/layouts/Table/CustomTableHead';
 import CustomTableCell from '../components/layouts/Table/CustomTableCell';
 import CustomTablePagination from '../components/layouts/Table/CustomTablePagination';
 import CustomActionBtn from '../components/layouts/Table/CustomActionBtn';
+import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 
 const AdminCourses = () => {
+	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { userId } = useParams();
 	const navigate = useNavigate();
 	const { sortedCoursesData, sortCoursesData, addNewCourse, removeCourse, numberOfPages, pageNumber, setPageNumber } = useContext(CoursesContext);
-	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
+	const { orgId } = useContext(OrganisationContext);
 
 	const [isCourseCreateModalOpen, setIsCourseCreateModalOpen] = useState<boolean>(false);
 
@@ -64,6 +66,7 @@ const AdminCourses = () => {
 				price: checked ? 'Free' : price,
 				priceCurrency: checked ? '' : priceCurrency,
 				startingDate: '',
+				orgId,
 			});
 
 			// Notify context provider to update sortedCoursesData with the new course
@@ -73,6 +76,7 @@ const AdminCourses = () => {
 				description,
 				price: checked ? 'Free' : price,
 				priceCurrency: checked ? '' : priceCurrency,
+				orgId,
 			});
 		} catch (error) {
 			console.log(error);

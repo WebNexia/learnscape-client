@@ -8,7 +8,7 @@ import { useRaisedShadow } from '../../hooks/use-raised-shadow';
 import { ChapterLessonData, ChapterUpdateTrack } from '../../pages/AdminCourseEditPage';
 import CustomTextField from '../forms/Custom Fields/CustomTextField';
 import CustomErrorMessage from '../forms/Custom Fields/CustomErrorMessage';
-import CreateLessonDialog from '../layouts/New Lesson/CreateLessonDialog';
+import CreateLessonDialog from '../Admin Single Lesson/New Lesson/CreateLessonDialog';
 import AddNewLessonDialog from './AddNewLessonDialog';
 
 interface AdminCourseEditChapterProps {

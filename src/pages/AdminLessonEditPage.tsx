@@ -33,6 +33,7 @@ import LessonEditorBox from '../components/Admin Single Lesson/LessonEditorBox';
 import QuestionsBoxNonEdit from '../components/Admin Single Lesson/QuestionsBoxNonEdit';
 import CustomDialog from '../components/layouts/Dialog/CustomDialog';
 import CustomDialogActions from '../components/layouts/Dialog/CustomDialogActions';
+import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 
 export interface QuestionUpdateTrack {
 	questionId: string;
@@ -41,6 +42,7 @@ export interface QuestionUpdateTrack {
 
 const AdminLessonEditPage = () => {
 	const { userId, lessonId } = useParams();
+	const { orgId } = useContext(OrganisationContext);
 	const { updateLessonPublishing, updateLesson } = useContext(LessonsContext);
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
@@ -65,7 +67,8 @@ const AdminLessonEditPage = () => {
 		correctAnswer: '',
 		videoUrl: '',
 		imageUrl: '',
-		isActive: false,
+		orgId,
+		isActive: true,
 		createdAt: '',
 		updatedAt: '',
 	});
@@ -148,7 +151,7 @@ const AdminLessonEditPage = () => {
 		}
 		const fetchQuestionTypes = async (): Promise<void> => {
 			try {
-				const response = await axios.get(`${base_url}/questiontypes`);
+				const response = await axios.get(`${base_url}/questiontypes/organisation/${orgId}`);
 				setQuestionTypes(response.data.data);
 			} catch (error) {
 				console.log(error);
@@ -212,6 +215,8 @@ const AdminLessonEditPage = () => {
 				videoUrl: newQuestion?.videoUrl,
 				options,
 				correctAnswer,
+				isActive: true,
+				orgId,
 			});
 			setIsLessonUpdated(true);
 
@@ -240,13 +245,14 @@ const AdminLessonEditPage = () => {
 
 	const cloneQuestion = async (question: QuestionInterface) => {
 		try {
-			const response = await axios.post(`${base_url}/questions`, {
+			const response = await axios.post(`${base_url}/questions/organisation/${orgId}`, {
 				questionType: question.questionType,
 				question: question.question,
 				imageUrl: question.imageUrl,
 				videoUrl: question.videoUrl,
 				options: question.options,
 				correctAnswer: question.correctAnswer,
+				orgId,
 			});
 
 			setIsLessonUpdated(true);
@@ -513,7 +519,7 @@ const AdminLessonEditPage = () => {
 												}}
 											/>
 										</Box>
-										{questionType === 'Multi Choice' && (
+										{questionType === 'Multiple Choice' && (
 											<Box
 												sx={{
 													display: 'flex',
