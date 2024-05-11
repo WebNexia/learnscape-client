@@ -1,7 +1,7 @@
 import { Alert, Snackbar, Typography } from '@mui/material';
 import { useContext, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import DashboardPagesLayout from '../components/layouts/Dashboard_Layout/DashboardPagesLayout';
+import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { UserCourseLessonDataContext } from '../contexts/UserCourseLessonDataContextProvider';
 
 const Dashboard = () => {

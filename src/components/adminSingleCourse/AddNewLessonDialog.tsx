@@ -1,14 +1,14 @@
 import { Box, Checkbox, DialogContent, FormControlLabel, Table, TableBody, TableCell, TableRow } from '@mui/material';
-import CustomCancelButton from '../forms/Custom_Buttons/CustomCancelButton';
+import CustomCancelButton from '../forms/customButtons/CustomCancelButton';
 import { Lesson } from '../../interfaces/lessons';
 import { useContext, useEffect, useState } from 'react';
 import { LessonsContext } from '../../contexts/LessonsContextProvider';
 import { ChapterLessonData, ChapterUpdateTrack } from '../../pages/AdminCourseEditPage';
-import CustomDialogActions from '../layouts/Dialog/CustomDialogActions';
-import CustomDialog from '../layouts/Dialog/CustomDialog';
-import CustomTableHead from '../layouts/Table/CustomTableHead';
-import CustomTableCell from '../layouts/Table/CustomTableCell';
-import CustomTablePagination from '../layouts/Table/CustomTablePagination';
+import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
+import CustomDialog from '../layouts/dialog/CustomDialog';
+import CustomTableHead from '../layouts/table/CustomTableHead';
+import CustomTableCell from '../layouts/table/CustomTableCell';
+import CustomTablePagination from '../layouts/table/CustomTablePagination';
 
 interface AddNewLessonDialogProps {
 	addNewLessonModalOpen: boolean;

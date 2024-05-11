@@ -1,13 +1,13 @@
 import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from '@mui/material';
-import CustomTextField from '../../forms/Custom_Fields/CustomTextField';
+import CustomTextField from '../../forms/customFields/CustomTextField';
 import { useContext, useState } from 'react';
 import { LessonsContext } from '../../../contexts/LessonsContextProvider';
 import axios from 'axios';
 import { Lesson } from '../../../interfaces/lessons';
 import { ChapterLessonData, ChapterUpdateTrack } from '../../../pages/AdminCourseEditPage';
 import theme from '../../../themes';
-import CustomDialog from '../../layouts/Dialog/CustomDialog';
-import CustomDialogActions from '../../layouts/Dialog/CustomDialogActions';
+import CustomDialog from '../../layouts/dialog/CustomDialog';
+import CustomDialogActions from '../../layouts/dialog/CustomDialogActions';
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
 
 interface CreateLessonDialogProps {

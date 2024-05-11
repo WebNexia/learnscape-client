@@ -1,16 +1,16 @@
 import { Box, Table, TableBody, TableCell, TableRow } from '@mui/material';
-import DashboardPagesLayout from '../components/layouts/Dashboard_Layout/DashboardPagesLayout';
+import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { useContext, useEffect, useState } from 'react';
 import axios from 'axios';
 import { Delete, Edit, FileCopy } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
-import CustomSubmitButton from '../components/forms/Custom_Buttons/CustomSubmitButton';
-import CustomDialog from '../components/layouts/Dialog/CustomDialog';
-import CustomDialogActions from '../components/layouts/Dialog/CustomDialogActions';
-import CustomTableHead from '../components/layouts/Table/CustomTableHead';
-import CustomTableCell from '../components/layouts/Table/CustomTableCell';
-import CustomTablePagination from '../components/layouts/Table/CustomTablePagination';
-import CustomActionBtn from '../components/layouts/Table/CustomActionBtn';
+import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
+import CustomDialog from '../components/layouts/dialog/CustomDialog';
+import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
+import CustomTableHead from '../components/layouts/table/CustomTableHead';
+import CustomTableCell from '../components/layouts/table/CustomTableCell';
+import CustomTablePagination from '../components/layouts/table/CustomTablePagination';
+import CustomActionBtn from '../components/layouts/table/CustomActionBtn';
 import { QuestionsContext } from '../contexts/QuestionsContextProvider';
 import { QuestionInterface } from '../interfaces/question';
 

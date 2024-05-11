@@ -1,6 +1,6 @@
 import { Box, Checkbox, FormControlLabel, Typography } from '@mui/material';
-import CustomTextField from '../forms/Custom_Fields/CustomTextField';
-import CustomErrorMessage from '../forms/Custom_Fields/CustomErrorMessage';
+import CustomTextField from '../forms/customFields/CustomTextField';
+import CustomErrorMessage from '../forms/customFields/CustomErrorMessage';
 import { SingleCourse } from '../../interfaces/course';
 import theme from '../../themes';
 

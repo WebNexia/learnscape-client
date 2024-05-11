@@ -7,9 +7,9 @@ import CoursePageBannerDataCard from './CoursePageBannerDataCard';
 import axios from 'axios';
 import { useState } from 'react';
 import { UserCoursesIdsWithCourseIds, UserLessonDataStorage } from '../../../contexts/UserCourseLessonDataContextProvider';
-import CustomSubmitButton from '../../forms/Custom_Buttons/CustomSubmitButton';
-import CustomDialog from '../Dialog/CustomDialog';
-import CustomDialogActions from '../Dialog/CustomDialogActions';
+import CustomSubmitButton from '../../forms/customButtons/CustomSubmitButton';
+import CustomDialog from '../dialog/CustomDialog';
+import CustomDialogActions from '../dialog/CustomDialogActions';
 
 interface CoursePageBannerProps {
 	course: SingleCourse;

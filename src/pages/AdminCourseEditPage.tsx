@@ -1,23 +1,23 @@
 import { Box, Typography } from '@mui/material';
-import DashboardPagesLayout from '../components/layouts/Dashboard_Layout/DashboardPagesLayout';
+import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { FormEvent, useContext, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import { CoursesContext } from '../contexts/CoursesContextProvider';
 import { SingleCourse } from '../interfaces/course';
-import CustomTextField from '../components/forms/Custom_Fields/CustomTextField';
-import AdminCourseEditChapter from '../components/Admin_Single_Course/AdminCourseEditChapter';
+import CustomTextField from '../components/forms/customFields/CustomTextField';
+import AdminCourseEditChapter from '../components/adminSingleCourse/AdminCourseEditChapter';
 import { BaseChapter } from '../interfaces/chapter';
 import { Reorder, useMotionValue } from 'framer-motion';
-import { useRaisedShadow } from '../hooks/use-raised-shadow';
-import CustomSubmitButton from '../components/forms/Custom_Buttons/CustomSubmitButton';
-import CoursePaper from '../components/Admin_Single_Course/Paper';
-import CourseEditorBox from '../components/Admin_Single_Course/CourseEditorBox';
-import CourseDetailsNonEditBox from '../components/Admin_Single_Course/CourseDetailsNonEditBox';
-import CourseDetailsEditBox from '../components/Admin_Single_Course/CourseDetailsEditBox';
+import { useRaisedShadow } from '../hooks/useRaisedShadow';
+import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
+import CoursePaper from '../components/adminSingleCourse/Paper';
+import CourseEditorBox from '../components/adminSingleCourse/CourseEditorBox';
+import CourseDetailsNonEditBox from '../components/adminSingleCourse/CourseDetailsNonEditBox';
+import CourseDetailsEditBox from '../components/adminSingleCourse/CourseDetailsEditBox';
 import { Lesson } from '../interfaces/lessons';
-import CustomDialog from '../components/layouts/Dialog/CustomDialog';
-import CustomDialogActions from '../components/layouts/Dialog/CustomDialogActions';
+import CustomDialog from '../components/layouts/dialog/CustomDialog';
+import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 
 export interface ChapterUpdateTrack {

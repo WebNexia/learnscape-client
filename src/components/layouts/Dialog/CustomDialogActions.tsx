@@ -1,7 +1,7 @@
 import { DialogActions } from '@mui/material';
-import CustomCancelButton from '../../forms/Custom_Buttons/CustomCancelButton';
-import CustomSubmitButton from '../../forms/Custom_Buttons/CustomSubmitButton';
-import CustomDeleteButton from '../../forms/Custom_Buttons/CustomDeleteButton';
+import CustomCancelButton from '../../forms/customButtons/CustomCancelButton';
+import CustomSubmitButton from '../../forms/customButtons/CustomSubmitButton';
+import CustomDeleteButton from '../../forms/customButtons/CustomDeleteButton';
 import { ReactNode } from 'react';
 
 interface CustomDialogActionsProps {

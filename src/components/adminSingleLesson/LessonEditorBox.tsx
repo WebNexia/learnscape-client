@@ -1,12 +1,12 @@
 import { Alert, Box, IconButton, Snackbar, Tooltip, Typography } from '@mui/material';
 import ReactPlayer from 'react-player';
-import CustomSubmitButton from '../forms/Custom_Buttons/CustomSubmitButton';
-import CustomCancelButton from '../forms/Custom_Buttons/CustomCancelButton';
+import CustomSubmitButton from '../forms/customButtons/CustomSubmitButton';
+import CustomCancelButton from '../forms/customButtons/CustomCancelButton';
 import { Edit } from '@mui/icons-material';
 import { Lesson } from '../../interfaces/lessons';
 import { FormEvent, useState } from 'react';
 import { QuestionUpdateTrack } from '../../pages/AdminLessonEditPage';
-import CustomDialog from '../layouts/Dialog/CustomDialog';
+import CustomDialog from '../layouts/dialog/CustomDialog';
 
 interface LessonEditorBoxProps {
 	singleLesson?: Lesson;
