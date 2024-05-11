@@ -1,13 +1,13 @@
 import { Box, Table, TableBody, TableCell, TableRow } from '@mui/material';
-import DashboardPagesLayout from '../components/layouts/Dashboard Layout/DashboardPagesLayout';
+import DashboardPagesLayout from '../components/layouts/Dashboard_Layout/DashboardPagesLayout';
 import { useContext, useEffect, useState } from 'react';
 import axios from 'axios';
 import { LessonsContext } from '../contexts/LessonsContextProvider';
 import { Lesson } from '../interfaces/lessons';
 import { Delete, Edit, FileCopy } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
-import CreateLessonDialog from '../components/Admin Single Lesson/New Lesson/CreateLessonDialog';
-import CustomSubmitButton from '../components/forms/Custom Buttons/CustomSubmitButton';
+import CreateLessonDialog from '../components/Admin_Single_Lesson/New_Lesson/CreateLessonDialog';
+import CustomSubmitButton from '../components/forms/Custom_Buttons/CustomSubmitButton';
 import CustomDialog from '../components/layouts/Dialog/CustomDialog';
 import CustomDialogActions from '../components/layouts/Dialog/CustomDialogActions';
 import CustomTableHead from '../components/layouts/Table/CustomTableHead';

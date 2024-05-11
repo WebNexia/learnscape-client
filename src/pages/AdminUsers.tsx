@@ -1,10 +1,10 @@
 import { Box, Table, TableBody, TableCell, TableRow } from '@mui/material';
-import DashboardPagesLayout from '../components/layouts/Dashboard Layout/DashboardPagesLayout';
+import DashboardPagesLayout from '../components/layouts/Dashboard_Layout/DashboardPagesLayout';
 import { useContext, useEffect, useState } from 'react';
 import axios from 'axios';
 import { Delete, Edit, FileCopy } from '@mui/icons-material';
 
-import CustomSubmitButton from '../components/forms/Custom Buttons/CustomSubmitButton';
+import CustomSubmitButton from '../components/forms/Custom_Buttons/CustomSubmitButton';
 import CustomDialog from '../components/layouts/Dialog/CustomDialog';
 import CustomDialogActions from '../components/layouts/Dialog/CustomDialogActions';
 import CustomTableHead from '../components/layouts/Table/CustomTableHead';

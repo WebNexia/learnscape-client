@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import theme from '../themes';
 import { AuthFormErrorMessages, AuthForms, Roles, TextFieldTypes } from '../interfaces/enums';
-import CustomTextField from '../components/forms/Custom Fields/CustomTextField';
+import CustomTextField from '../components/forms/Custom_Fields/CustomTextField';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 

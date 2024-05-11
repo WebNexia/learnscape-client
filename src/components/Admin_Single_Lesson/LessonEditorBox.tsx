@@ -1,7 +1,7 @@
 import { Alert, Box, IconButton, Snackbar, Tooltip, Typography } from '@mui/material';
 import ReactPlayer from 'react-player';
-import CustomSubmitButton from '../forms/Custom Buttons/CustomSubmitButton';
-import CustomCancelButton from '../forms/Custom Buttons/CustomCancelButton';
+import CustomSubmitButton from '../forms/Custom_Buttons/CustomSubmitButton';
+import CustomCancelButton from '../forms/Custom_Buttons/CustomCancelButton';
 import { Edit } from '@mui/icons-material';
 import { Lesson } from '../../interfaces/lessons';
 import { FormEvent, useState } from 'react';

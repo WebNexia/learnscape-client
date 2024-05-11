@@ -1,4 +1,4 @@
-import DashboardPagesLayout from '../components/layouts/Dashboard Layout/DashboardPagesLayout';
+import DashboardPagesLayout from '../components/layouts/Dashboard_Layout/DashboardPagesLayout';
 import { Typography } from '@mui/material';
 
 const AdminCommunity = () => {

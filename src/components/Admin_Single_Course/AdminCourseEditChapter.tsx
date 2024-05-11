@@ -6,9 +6,9 @@ import { useState } from 'react';
 import { Lesson } from '../../interfaces/lessons';
 import { useRaisedShadow } from '../../hooks/use-raised-shadow';
 import { ChapterLessonData, ChapterUpdateTrack } from '../../pages/AdminCourseEditPage';
-import CustomTextField from '../forms/Custom Fields/CustomTextField';
-import CustomErrorMessage from '../forms/Custom Fields/CustomErrorMessage';
-import CreateLessonDialog from '../Admin Single Lesson/New Lesson/CreateLessonDialog';
+import CustomTextField from '../forms/Custom_Fields/CustomTextField';
+import CustomErrorMessage from '../forms/Custom_Fields/CustomErrorMessage';
+import CreateLessonDialog from '../Admin_Single_Lesson/New_Lesson/CreateLessonDialog';
 import AddNewLessonDialog from './AddNewLessonDialog';
 
 interface AdminCourseEditChapterProps {

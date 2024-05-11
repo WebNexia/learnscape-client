@@ -1,13 +1,13 @@
 import { Box, Table, TableBody, TableRow, TableCell, FormControlLabel, Checkbox } from '@mui/material';
-import DashboardPagesLayout from '../components/layouts/Dashboard Layout/DashboardPagesLayout';
+import DashboardPagesLayout from '../components/layouts/Dashboard_Layout/DashboardPagesLayout';
 import React, { useContext, useEffect, useState } from 'react';
 import { CoursesContext } from '../contexts/CoursesContextProvider';
 import { SingleCourse } from '../interfaces/course';
 import { Delete, Edit, FileCopy } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
-import CustomTextField from '../components/forms/Custom Fields/CustomTextField';
-import CustomSubmitButton from '../components/forms/Custom Buttons/CustomSubmitButton';
+import CustomTextField from '../components/forms/Custom_Fields/CustomTextField';
+import CustomSubmitButton from '../components/forms/Custom_Buttons/CustomSubmitButton';
 import CustomDialog from '../components/layouts/Dialog/CustomDialog';
 import CustomDialogActions from '../components/layouts/Dialog/CustomDialogActions';
 import CustomTableHead from '../components/layouts/Table/CustomTableHead';

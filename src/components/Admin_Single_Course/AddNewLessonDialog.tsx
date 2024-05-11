@@ -1,5 +1,5 @@
 import { Box, Checkbox, DialogContent, FormControlLabel, Table, TableBody, TableCell, TableRow } from '@mui/material';
-import CustomCancelButton from '../forms/Custom Buttons/CustomCancelButton';
+import CustomCancelButton from '../forms/Custom_Buttons/CustomCancelButton';
 import { Lesson } from '../../interfaces/lessons';
 import { useContext, useEffect, useState } from 'react';
 import { LessonsContext } from '../../contexts/LessonsContextProvider';

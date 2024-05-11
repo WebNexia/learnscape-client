@@ -1,5 +1,5 @@
 import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from '@mui/material';
-import CustomTextField from '../../forms/Custom Fields/CustomTextField';
+import CustomTextField from '../../forms/Custom_Fields/CustomTextField';
 import { useContext, useState } from 'react';
 import { LessonsContext } from '../../../contexts/LessonsContextProvider';
 import axios from 'axios';

@@ -12,25 +12,25 @@ import {
 	Tooltip,
 	Typography,
 } from '@mui/material';
-import DashboardPagesLayout from '../components/layouts/Dashboard Layout/DashboardPagesLayout';
+import DashboardPagesLayout from '../components/layouts/Dashboard_Layout/DashboardPagesLayout';
 import theme from '../themes';
 import { AddCircle, Delete, Edit, FileCopy, RemoveCircle } from '@mui/icons-material';
 import { useParams } from 'react-router-dom';
-import CustomSubmitButton from '../components/forms/Custom Buttons/CustomSubmitButton';
+import CustomSubmitButton from '../components/forms/Custom_Buttons/CustomSubmitButton';
 import { FormEvent, useContext, useEffect, useState } from 'react';
 import { Lesson } from '../interfaces/lessons';
 import axios from 'axios';
 import { QuestionInterface } from '../interfaces/question';
 import { LessonsContext } from '../contexts/LessonsContextProvider';
-import CustomTextField from '../components/forms/Custom Fields/CustomTextField';
-import CustomErrorMessage from '../components/forms/Custom Fields/CustomErrorMessage';
+import CustomTextField from '../components/forms/Custom_Fields/CustomTextField';
+import CustomErrorMessage from '../components/forms/Custom_Fields/CustomErrorMessage';
 import { Reorder, useMotionValue } from 'framer-motion';
 import { useRaisedShadow } from '../hooks/use-raised-shadow';
 import { QuestionType } from '../interfaces/questionTypes';
-import LessonPaper from '../components/Admin Single Lesson/Paper';
-import QuestionDialogContentNonEdit from '../components/Admin Single Lesson/QuestionDialogContentNonEdit';
-import LessonEditorBox from '../components/Admin Single Lesson/LessonEditorBox';
-import QuestionsBoxNonEdit from '../components/Admin Single Lesson/QuestionsBoxNonEdit';
+import LessonPaper from '../components/Admin_Single_Lesson/Paper';
+import QuestionDialogContentNonEdit from '../components/Admin_Single_Lesson/QuestionDialogContentNonEdit';
+import LessonEditorBox from '../components/Admin_Single_Lesson/LessonEditorBox';
+import QuestionsBoxNonEdit from '../components/Admin_Single_Lesson/QuestionsBoxNonEdit';
 import CustomDialog from '../components/layouts/Dialog/CustomDialog';
 import CustomDialogActions from '../components/layouts/Dialog/CustomDialogActions';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
