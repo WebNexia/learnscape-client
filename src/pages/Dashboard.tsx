@@ -37,7 +37,7 @@ const Dashboard = () => {
 		<DashboardPagesLayout pageName='Dashboard'>
 			<Snackbar open={signedUpMsg} autoHideDuration={4000} onClose={() => setSignedUpMsg(false)} anchorOrigin={{ vertical, horizontal }}>
 				<Alert onClose={() => setSignedUpMsg(false)} severity='success' sx={{ width: '100%' }}>
-					You successfully signed up!
+					You successfully signed up! 
 				</Alert>
 			</Snackbar>
 			<Typography variant='h3'>Coming Soon...</Typography>
