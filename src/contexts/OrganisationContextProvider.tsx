@@ -2,8 +2,8 @@ import { createContext, ReactNode, useState } from 'react';
 import { Organisation } from '../interfaces/organisation';
 import axios from 'axios';
 import { useQuery, useQueryClient } from 'react-query';
-import Loading from '../components/layouts/loading2/Loading';
-import LoadingError from '../components/layouts/loading2/LoadingError';
+import Loading from '../components/layouts/loading/Loading';
+import LoadingError from '../components/layouts/loading/LoadingError';
 import { jwtDecode } from 'jwt-decode';
 
 interface OrganisationContextTypes {

@@ -1,8 +1,8 @@
 import axios from 'axios';
 import { ReactNode, createContext, useContext, useState } from 'react';
 import { useQuery } from 'react-query';
-import Loading from '../components/layouts/loading2/Loading';
-import LoadingError from '../components/layouts/loading2/LoadingError';
+import Loading from '../components/layouts/loading/Loading';
+import LoadingError from '../components/layouts/loading/LoadingError';
 import { QuestionInterface } from '../interfaces/question';
 import { OrganisationContext } from './OrganisationContextProvider';
 

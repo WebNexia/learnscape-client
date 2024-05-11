@@ -6,7 +6,7 @@ import { Edit } from '@mui/icons-material';
 import { Lesson } from '../../interfaces/lessons';
 import { FormEvent, useState } from 'react';
 import { QuestionUpdateTrack } from '../../pages/AdminLessonEditPage';
-import CustomDialog from '../layouts/dialog2/CustomDialog';
+import CustomDialog from '../layouts/dialog/CustomDialog';
 
 interface LessonEditorBoxProps {
 	singleLesson?: Lesson;

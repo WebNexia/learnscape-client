@@ -2,8 +2,8 @@ import axios from 'axios';
 import { ReactNode, createContext, useContext, useState } from 'react';
 import { useQuery } from 'react-query';
 import { Lesson } from '../interfaces/lessons';
-import Loading from '../components/layouts/loading2/Loading';
-import LoadingError from '../components/layouts/loading2/LoadingError';
+import Loading from '../components/layouts/loading/Loading';
+import LoadingError from '../components/layouts/loading/LoadingError';
 import { OrganisationContext } from './OrganisationContextProvider';
 
 interface LessonsContextTypes {

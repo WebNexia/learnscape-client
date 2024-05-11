@@ -8,8 +8,8 @@ import axios from 'axios';
 import { useState } from 'react';
 import { UserCoursesIdsWithCourseIds, UserLessonDataStorage } from '../../../contexts/UserCourseLessonDataContextProvider';
 import CustomSubmitButton from '../../forms/customButtons/CustomSubmitButton';
-import CustomDialog from '../dialog2/CustomDialog';
-import CustomDialogActions from '../dialog2/CustomDialogActions';
+import CustomDialog from '../dialog/CustomDialog';
+import CustomDialogActions from '../dialog/CustomDialogActions';
 
 interface CoursePageBannerProps {
 	course: SingleCourse;

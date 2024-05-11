@@ -16,8 +16,8 @@ import CourseEditorBox from '../components/adminSingleCourse/CourseEditorBox';
 import CourseDetailsNonEditBox from '../components/adminSingleCourse/CourseDetailsNonEditBox';
 import CourseDetailsEditBox from '../components/adminSingleCourse/CourseDetailsEditBox';
 import { Lesson } from '../interfaces/lessons';
-import CustomDialog from '../components/layouts/dialog2/CustomDialog';
-import CustomDialogActions from '../components/layouts/dialog2/CustomDialogActions';
+import CustomDialog from '../components/layouts/dialog/CustomDialog';
+import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 
 export interface ChapterUpdateTrack {

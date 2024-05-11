@@ -6,8 +6,8 @@ import axios from 'axios';
 import { Lesson } from '../../../interfaces/lessons';
 import { ChapterLessonData, ChapterUpdateTrack } from '../../../pages/AdminCourseEditPage';
 import theme from '../../../themes';
-import CustomDialog from '../../layouts/dialog2/CustomDialog';
-import CustomDialogActions from '../../layouts/dialog2/CustomDialogActions';
+import CustomDialog from '../../layouts/dialog/CustomDialog';
+import CustomDialogActions from '../../layouts/dialog/CustomDialogActions';
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
 
 interface CreateLessonDialogProps {
