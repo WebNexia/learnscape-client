@@ -5,12 +5,12 @@ import axios from 'axios';
 import { Delete, Edit, FileCopy } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
-import CustomDialog from '../components/layouts/dialog/CustomDialog';
-import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
-import CustomTableHead from '../components/layouts/table/CustomTableHead';
-import CustomTableCell from '../components/layouts/table/CustomTableCell';
-import CustomTablePagination from '../components/layouts/table/CustomTablePagination';
-import CustomActionBtn from '../components/layouts/table/CustomActionBtn';
+import CustomDialog from '../components/layouts/dialog2/CustomDialog';
+import CustomDialogActions from '../components/layouts/dialog2/CustomDialogActions';
+import CustomTableHead from '../components/layouts/table2/CustomTableHead';
+import CustomTableCell from '../components/layouts/table2/CustomTableCell';
+import CustomTablePagination from '../components/layouts/table2/CustomTablePagination';
+import CustomActionBtn from '../components/layouts/table2/CustomActionBtn';
 import { QuestionsContext } from '../contexts/QuestionsContextProvider';
 import { QuestionInterface } from '../interfaces/question';
 

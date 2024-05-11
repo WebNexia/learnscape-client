@@ -4,11 +4,11 @@ import { Lesson } from '../../interfaces/lessons';
 import { useContext, useEffect, useState } from 'react';
 import { LessonsContext } from '../../contexts/LessonsContextProvider';
 import { ChapterLessonData, ChapterUpdateTrack } from '../../pages/AdminCourseEditPage';
-import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
-import CustomDialog from '../layouts/dialog/CustomDialog';
-import CustomTableHead from '../layouts/table/CustomTableHead';
-import CustomTableCell from '../layouts/table/CustomTableCell';
-import CustomTablePagination from '../layouts/table/CustomTablePagination';
+import CustomDialogActions from '../layouts/dialog2/CustomDialogActions';
+import CustomDialog from '../layouts/dialog2/CustomDialog';
+import CustomTableHead from '../layouts/table2/CustomTableHead';
+import CustomTableCell from '../layouts/table2/CustomTableCell';
+import CustomTablePagination from '../layouts/table2/CustomTablePagination';
 
 interface AddNewLessonDialogProps {
 	addNewLessonModalOpen: boolean;

@@ -7,8 +7,8 @@ import Questions from '../components/userCourses/Questions';
 import ReactPlayer from 'react-player';
 import DashboardHeader from '../components/layouts/dashboardLayout/DashboardHeader';
 import { KeyboardBackspaceOutlined } from '@mui/icons-material';
-import Loading from '../components/layouts/loading/Loading';
-import LoadingError from '../components/layouts/loading/LoadingError';
+import Loading from '../components/layouts/loading2/Loading';
+import LoadingError from '../components/layouts/loading2/LoadingError';
 
 const LessonPage = () => {
 	const { lessonId } = useParams();

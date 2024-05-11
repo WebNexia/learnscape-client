@@ -31,8 +31,8 @@ import LessonPaper from '../components/adminSingleLesson/Paper';
 import QuestionDialogContentNonEdit from '../components/adminSingleLesson/QuestionDialogContentNonEdit';
 import LessonEditorBox from '../components/adminSingleLesson/LessonEditorBox';
 import QuestionsBoxNonEdit from '../components/adminSingleLesson/QuestionsBoxNonEdit';
-import CustomDialog from '../components/layouts/dialog/CustomDialog';
-import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
+import CustomDialog from '../components/layouts/dialog2/CustomDialog';
+import CustomDialogActions from '../components/layouts/dialog2/CustomDialogActions';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 
 export interface QuestionUpdateTrack {
