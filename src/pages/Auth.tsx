@@ -1,5 +1,5 @@
 import { Box, Button, Typography } from '@mui/material';
-import * as styles from '../styles/authStyles';
+import * as styles from '../styles/styleAuth';
 import { FormEvent, useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';

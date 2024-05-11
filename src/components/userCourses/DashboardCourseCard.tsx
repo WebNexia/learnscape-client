@@ -2,7 +2,7 @@ import { Box, Button, Card, CardContent, CardMedia, LinearProgress, Typography }
 import { SingleCourse } from '../../interfaces/course';
 import theme from '../../themes';
 import { useNavigate } from 'react-router-dom';
-import { truncateText } from '../../utils/textUtils';
+import { truncateText } from '../../utils/utilText';
 
 interface DashboardCourseCardProps {
 	course: SingleCourse;
