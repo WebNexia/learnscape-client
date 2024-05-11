@@ -1,13 +1,14 @@
 import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from '@mui/material';
-import CustomTextField from '../../forms/Custom Fields/CustomTextField';
+import CustomTextField from '../../forms/customFields/CustomTextField';
 import { useContext, useState } from 'react';
 import { LessonsContext } from '../../../contexts/LessonsContextProvider';
 import axios from 'axios';
 import { Lesson } from '../../../interfaces/lessons';
 import { ChapterLessonData, ChapterUpdateTrack } from '../../../pages/AdminCourseEditPage';
 import theme from '../../../themes';
-import CustomDialog from '../Dialog/CustomDialog';
-import CustomDialogActions from '../Dialog/CustomDialogActions';
+import CustomDialog from '../../layouts/dialog/CustomDialog';
+import CustomDialogActions from '../../layouts/dialog/CustomDialogActions';
+import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
 
 interface CreateLessonDialogProps {
 	chapter?: ChapterLessonData;
@@ -30,6 +31,7 @@ const CreateLessonDialog = ({
 	setIsChapterUpdated,
 }: CreateLessonDialogProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
+	const { orgId } = useContext(OrganisationContext);
 	const { addNewLesson } = useContext(LessonsContext);
 
 	const [title, setTitle] = useState<string>('');
@@ -55,6 +57,7 @@ const CreateLessonDialog = ({
 			const response = await axios.post(`${base_url}/lessons`, {
 				title,
 				type,
+				orgId,
 			});
 
 			addNewLesson({ _id: response.data._id, title, type });
@@ -77,6 +80,7 @@ const CreateLessonDialog = ({
 			questions: [],
 			createdAt: '',
 			updatedAt: '',
+			orgId,
 		};
 		if (setLessons) {
 			setLessons((prevData) => {

@@ -3,12 +3,12 @@ import theme from '../themes';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from 'react-query';
 import axios from 'axios';
-import Questions from '../components/User Courses/Questions';
+import Questions from '../components/userCourses/Questions';
 import ReactPlayer from 'react-player';
-import DashboardHeader from '../components/layouts/Dashboard Layout/DashboardHeader';
+import DashboardHeader from '../components/layouts/dashboardLayout/DashboardHeader';
 import { KeyboardBackspaceOutlined } from '@mui/icons-material';
-import Loading from '../components/layouts/Loading/Loading';
-import LoadingError from '../components/layouts/Loading/LoadingError';
+import Loading from '../components/layouts/loading/Loading';
+import LoadingError from '../components/layouts/loading/LoadingError';
 
 const LessonPage = () => {
 	const { lessonId } = useParams();

@@ -1,7 +1,7 @@
 import { Box, Checkbox, FormControlLabel } from '@mui/material';
-import DashboardPagesLayout from '../components/layouts/Dashboard Layout/DashboardPagesLayout';
+import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { useContext, useState } from 'react';
-import DashboardCourseCard from '../components/User Courses/DashboardCourseCard';
+import DashboardCourseCard from '../components/userCourses/DashboardCourseCard';
 import { SingleCourse } from '../interfaces/course';
 import { CoursesContext } from '../contexts/CoursesContextProvider';
 import { useParams } from 'react-router-dom';

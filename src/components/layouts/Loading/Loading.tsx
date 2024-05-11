@@ -1,7 +1,10 @@
 import { Box, CircularProgress, Typography } from '@mui/material';
 import theme from '../../../themes';
+import { useContext } from 'react';
+import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
 
 const Loading = () => {
+	const { organisation } = useContext(OrganisationContext);
 	return (
 		<Box
 			sx={{
@@ -29,7 +32,7 @@ const Loading = () => {
 					fontFamily: 'Permanent Marker, cursive',
 					color: '#01435A',
 				}}>
-				KAIZEN
+				{organisation?.orgName}
 			</Typography>
 		</Box>
 	);

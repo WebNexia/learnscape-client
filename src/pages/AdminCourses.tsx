@@ -1,25 +1,27 @@
 import { Box, Table, TableBody, TableRow, TableCell, FormControlLabel, Checkbox } from '@mui/material';
-import DashboardPagesLayout from '../components/layouts/Dashboard Layout/DashboardPagesLayout';
+import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import React, { useContext, useEffect, useState } from 'react';
 import { CoursesContext } from '../contexts/CoursesContextProvider';
 import { SingleCourse } from '../interfaces/course';
 import { Delete, Edit, FileCopy } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
-import CustomTextField from '../components/forms/Custom Fields/CustomTextField';
-import CustomSubmitButton from '../components/forms/Custom Buttons/CustomSubmitButton';
-import CustomDialog from '../components/layouts/Dialog/CustomDialog';
-import CustomDialogActions from '../components/layouts/Dialog/CustomDialogActions';
-import CustomTableHead from '../components/layouts/Table/CustomTableHead';
-import CustomTableCell from '../components/layouts/Table/CustomTableCell';
-import CustomTablePagination from '../components/layouts/Table/CustomTablePagination';
-import CustomActionBtn from '../components/layouts/Table/CustomActionBtn';
+import CustomTextField from '../components/forms/customFields/CustomTextField';
+import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
+import CustomDialog from '../components/layouts/dialog/CustomDialog';
+import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
+import CustomTableHead from '../components/layouts/table/CustomTableHead';
+import CustomTableCell from '../components/layouts/table/CustomTableCell';
+import CustomTablePagination from '../components/layouts/table/CustomTablePagination';
+import CustomActionBtn from '../components/layouts/table/CustomActionBtn';
+import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 
 const AdminCourses = () => {
+	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { userId } = useParams();
 	const navigate = useNavigate();
 	const { sortedCoursesData, sortCoursesData, addNewCourse, removeCourse, numberOfPages, pageNumber, setPageNumber } = useContext(CoursesContext);
-	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
+	const { orgId } = useContext(OrganisationContext);
 
 	const [isCourseCreateModalOpen, setIsCourseCreateModalOpen] = useState<boolean>(false);
 
@@ -64,6 +66,7 @@ const AdminCourses = () => {
 				price: checked ? 'Free' : price,
 				priceCurrency: checked ? '' : priceCurrency,
 				startingDate: '',
+				orgId,
 			});
 
 			// Notify context provider to update sortedCoursesData with the new course
@@ -73,6 +76,7 @@ const AdminCourses = () => {
 				description,
 				price: checked ? 'Free' : price,
 				priceCurrency: checked ? '' : priceCurrency,
+				orgId,
 			});
 		} catch (error) {
 			console.log(error);

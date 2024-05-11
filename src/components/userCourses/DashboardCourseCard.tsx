@@ -1,8 +1,8 @@
 import { Box, Button, Card, CardContent, CardMedia, LinearProgress, Typography } from '@mui/material';
 import { SingleCourse } from '../../interfaces/course';
-import { truncateText } from '../../utils/TextUtils';
 import theme from '../../themes';
 import { useNavigate } from 'react-router-dom';
+import { truncateText } from '../../utils/utilText';
 
 interface DashboardCourseCardProps {
 	course: SingleCourse;

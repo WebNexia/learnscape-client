@@ -1,6 +1,6 @@
 import { createContext, ReactNode, useState } from 'react';
-import Loading from '../components/layouts/Loading/Loading';
-import LoadingError from '../components/layouts/Loading/LoadingError';
+import Loading from '../components/layouts/loading/Loading';
+import LoadingError from '../components/layouts/loading/LoadingError';
 import { useQuery, useQueryClient } from 'react-query';
 import axios from 'axios';
 import { User } from '../interfaces/user';

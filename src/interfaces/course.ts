@@ -36,4 +36,5 @@ export interface SingleCourse extends BaseCourse {
 	priceCurrency: string;
 	chapterIds: string[];
 	chapters: ChapterLessonData[];
+	orgId: string;
 }

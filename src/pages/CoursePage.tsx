@@ -1,7 +1,7 @@
-import DashboardPagesLayout from '../components/layouts/Dashboard Layout/DashboardPagesLayout';
+import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { useParams } from 'react-router-dom';
-import CoursePageBanner from '../components/layouts/Course Page Banner/CoursePageBanner';
-import Chapters from '../components/User Courses/Chapters';
+import CoursePageBanner from '../components/layouts/coursePageBanner/CoursePageBanner';
+import Chapters from '../components/userCourses/Chapters';
 import { UserCourseLessonDataContext, UserCoursesIdsWithCourseIds } from '../contexts/UserCourseLessonDataContextProvider';
 import { useContext, useEffect, useState } from 'react';
 

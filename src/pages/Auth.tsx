@@ -1,11 +1,11 @@
 import { Box, Button, Typography } from '@mui/material';
-import * as styles from '../styles/AuthStyles';
+import * as styles from '../styles/styleAuth';
 import { FormEvent, useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import theme from '../themes';
 import { AuthFormErrorMessages, AuthForms, Roles, TextFieldTypes } from '../interfaces/enums';
-import CustomTextField from '../components/forms/Custom Fields/CustomTextField';
+import CustomTextField from '../components/forms/customFields/CustomTextField';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 

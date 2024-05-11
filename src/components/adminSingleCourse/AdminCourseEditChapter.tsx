@@ -4,11 +4,11 @@ import theme from '../../themes';
 import { CreateTwoTone, Delete, FileCopy, NoteAdd } from '@mui/icons-material';
 import { useState } from 'react';
 import { Lesson } from '../../interfaces/lessons';
-import { useRaisedShadow } from '../../hooks/use-raised-shadow';
+import { useRaisedShadow } from '../../hooks/useRaisedShadow';
 import { ChapterLessonData, ChapterUpdateTrack } from '../../pages/AdminCourseEditPage';
-import CustomTextField from '../forms/Custom Fields/CustomTextField';
-import CustomErrorMessage from '../forms/Custom Fields/CustomErrorMessage';
-import CreateLessonDialog from '../layouts/New Lesson/CreateLessonDialog';
+import CustomTextField from '../forms/customFields/CustomTextField';
+import CustomErrorMessage from '../forms/customFields/CustomErrorMessage';
+import CreateLessonDialog from '../adminSingleLesson/newLesson/CreateLessonDialog';
 import AddNewLessonDialog from './AddNewLessonDialog';
 
 interface AdminCourseEditChapterProps {

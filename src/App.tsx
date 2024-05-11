@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 import { ThemeProvider } from '@mui/material/styles';
 import theme from './themes';
 import { Roles } from './interfaces/enums';
-import Loading from './components/layouts/Loading/Loading';
+import Loading from './components/layouts/loading/Loading';
 
 const Auth = React.lazy(() => import('./pages/Auth'));
 const HomePage = React.lazy(() => import('./pages/HomePage'));

@@ -1,7 +1,7 @@
 import { Alert, Box, IconButton, Snackbar, Tooltip, Typography } from '@mui/material';
-import CustomSubmitButton from '../forms/Custom Buttons/CustomSubmitButton';
+import CustomSubmitButton from '../forms/customButtons/CustomSubmitButton';
 import { FormEvent } from 'react';
-import CustomCancelButton from '../forms/Custom Buttons/CustomCancelButton';
+import CustomCancelButton from '../forms/customButtons/CustomCancelButton';
 import { Edit } from '@mui/icons-material';
 import { SingleCourse } from '../../interfaces/course';
 import { ChapterLessonData } from '../../pages/AdminCourseEditPage';
