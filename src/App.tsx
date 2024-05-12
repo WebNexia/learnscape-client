@@ -55,7 +55,7 @@ function App() {
 
 	return (
 		<QueryClientProvider client={queryClient}>
-			<Suspense fallback={<Loading />}>
+			<ThemeProvider theme={theme}>
 				<MediaQueryContextProvider>
 					<UserAuthContextProvider>
 						<OrganisationContextProvider>
@@ -64,7 +64,7 @@ function App() {
 									<UserCourseLessonDataContextProvider>
 										<LessonsContextProvider>
 											<QuestionsContextProvider>
-												<ThemeProvider theme={theme}>
+												<Suspense fallback={<Loading />}>
 													<Router>
 														<Routes>
 															<Route path='' element={<HomePage />} />
@@ -99,7 +99,7 @@ function App() {
 															</>
 														</Routes>
 													</Router>
-												</ThemeProvider>
+												</Suspense>
 											</QuestionsContextProvider>
 										</LessonsContextProvider>
 									</UserCourseLessonDataContextProvider>
@@ -108,7 +108,8 @@ function App() {
 						</OrganisationContextProvider>
 					</UserAuthContextProvider>
 				</MediaQueryContextProvider>
-			</Suspense>
+			</ThemeProvider>
+
 			<ReactQueryDevtools initialIsOpen={true} />
 		</QueryClientProvider>
 	);

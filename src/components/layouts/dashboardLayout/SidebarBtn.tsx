@@ -2,10 +2,10 @@ import { Button } from '@mui/material';
 import theme from '../../../themes';
 
 interface SidebarBtnProps {
-	btnText: string;
-	onClick: () => void;
+	btnText?: string;
+	onClick?: () => void;
 	IconName: React.ElementType;
-	selectedPage: string;
+	selectedPage?: string;
 }
 
 const SidebarBtn = ({ btnText, onClick, IconName, selectedPage }: SidebarBtnProps) => {
