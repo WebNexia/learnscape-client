@@ -1,8 +1,13 @@
-import { Box, Checkbox, FormControlLabel, Typography } from '@mui/material';
+import { Box, Button, Checkbox, FormControl, FormControlLabel, Input, Typography } from '@mui/material';
 import CustomTextField from '../forms/customFields/CustomTextField';
 import CustomErrorMessage from '../forms/customFields/CustomErrorMessage';
 import { SingleCourse } from '../../interfaces/course';
 import theme from '../../themes';
+import { useContext, useState } from 'react';
+import { storage } from '../../firebase';
+import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
+import { v4 } from 'uuid';
+import { OrganisationContext } from '../../contexts/OrganisationContextProvider';
 
 interface CourseDetailsEditBoxProps {
 	singleCourse?: SingleCourse;
@@ -14,6 +19,48 @@ interface CourseDetailsEditBoxProps {
 }
 
 const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree, setIsMissingField, setSingleCourse }: CourseDetailsEditBoxProps) => {
+	const { organisation } = useContext(OrganisationContext);
+	const [imageUpload, setImageUpload] = useState<File | null>(null);
+	const [isImgSizeLarge, setIsImageSizeLarge] = useState<boolean>(false);
+
+	const handleImageUpload = () => {
+		if (imageUpload === null) {
+			setIsImageSizeLarge(false);
+			return;
+		}
+		const imageRef = ref(storage, `CourseImages/${`${organisation?.orgName}-` + `${imageUpload.name}-` + v4()}`);
+		if (!isImgSizeLarge) {
+			uploadBytes(imageRef, imageUpload)
+				.then(() => {
+					return getDownloadURL(imageRef);
+				})
+				.then((url) => {
+					if (singleCourse?.imageUrl !== undefined) {
+						setSingleCourse({
+							...singleCourse,
+							imageUrl: url,
+						});
+					}
+				})
+				.catch((error) => {
+					console.log(error);
+				});
+		}
+	};
+
+	const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		if (e.target.files && e.target.files.length > 0) {
+			if (e.target.files[0].size > 1024 * 1024) {
+				setIsImageSizeLarge(true);
+			} else {
+				setImageUpload(e.target.files[0]);
+				setIsImageSizeLarge(false);
+			}
+		} else {
+			setImageUpload(null);
+		}
+	};
+
 	const formatDate = (date: Date) => {
 		if (!(date instanceof Date)) return ''; // Return empty string if date is not valid
 
@@ -155,21 +202,24 @@ const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree,
 						/>
 					</Box>
 				</Box>
+
 				<Box sx={{ margin: '2rem 0 0 6rem', flex: 10 }}>
-					<Typography variant='h4'>Image URL</Typography>
-					<CustomTextField
-						required={false}
-						sx={{ marginTop: '0.5rem' }}
-						value={singleCourse?.imageUrl}
-						onChange={(e) => {
-							if (singleCourse?.imageUrl !== undefined) {
-								setSingleCourse({
-									...singleCourse,
-									imageUrl: e.target.value,
-								});
-							}
-						}}
-					/>
+					<FormControl sx={{ display: 'flex' }}>
+						<Typography variant='h4'>Image URL</Typography>
+						<Box sx={{ display: 'flex', width: '100%', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+							<Input
+								type='file'
+								onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleImageChange(e)}
+								inputProps={{ accept: '.jpg, .jpeg, .png' }} // Specify accepted file types
+								sx={{ width: '75%', backgroundColor: theme.bgColor?.common, marginTop: '0.5rem', padding: '0.35rem' }}
+								required
+							/>
+							<Button onClick={handleImageUpload} variant='outlined' sx={{ textTransform: 'capitalize' }}>
+								Upload Image
+							</Button>
+						</Box>
+						{isImgSizeLarge && <CustomErrorMessage>File size exceeds the limit of 1 MB </CustomErrorMessage>}
+					</FormControl>
 				</Box>
 			</Box>
 
