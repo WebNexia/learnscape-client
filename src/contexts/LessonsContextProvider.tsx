@@ -12,7 +12,7 @@ interface LessonsContextTypes {
 	addNewLesson: (newLesson: any) => void;
 	updateLessonPublishing: (id: string) => void;
 	removeLesson: (id: string) => void;
-	updateLesson: (singleLesson: Lesson) => void;
+	updateLessons: (singleLesson: Lesson) => void;
 	numberOfPages: number;
 	pageNumber: number;
 	setPageNumber: React.Dispatch<React.SetStateAction<number>>;
@@ -28,7 +28,7 @@ export const LessonsContext = createContext<LessonsContextTypes>({
 	addNewLesson: () => {},
 	updateLessonPublishing: () => {},
 	removeLesson: () => {},
-	updateLesson: () => {},
+	updateLessons: () => {},
 	numberOfPages: 1,
 	pageNumber: 1,
 	setPageNumber: () => {},
@@ -91,7 +91,7 @@ const LessonsContextProvider = (props: LessonsContextProviderProps) => {
 		setSortedLessonsData(updatedLessonList);
 	};
 
-	const updateLesson = (singleLesson: Lesson) => {
+	const updateLessons = (singleLesson: Lesson) => {
 		const updatedLessonList = sortedLessonsData?.map((lesson) => {
 			if (singleLesson._id === lesson._id) {
 				return singleLesson;
@@ -121,7 +121,7 @@ const LessonsContextProvider = (props: LessonsContextProviderProps) => {
 				addNewLesson,
 				removeLesson,
 				updateLessonPublishing,
-				updateLesson,
+				updateLessons,
 				numberOfPages,
 				pageNumber,
 				setPageNumber,

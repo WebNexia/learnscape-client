@@ -77,7 +77,7 @@ const AdminCourseEditPage = () => {
 	const [chapterLessonData, setChapterLessonData] = useState<ChapterLessonData[]>([]);
 	const [chapterLessonDataBeforeSave, setChapterLessonDataBeforeSave] = useState<ChapterLessonData[]>([]);
 
-	const createChapterTemplate = async (): Promise<void> => {
+	const createChapterTemplate = () => {
 		try {
 			const newChapterBeforeSave: ChapterLessonData = {
 				chapterId: generateUniqueId('temp_chapter_id_'),
@@ -97,6 +97,7 @@ const AdminCourseEditPage = () => {
 	const closeCreateChapterModal = () => setIsChapterCreateModalOpen(false);
 
 	useEffect(() => {
+		console.log('admin course edit page');
 		if (courseId) {
 			const fetchSingleCourseData = async (courseId: string): Promise<void> => {
 				try {

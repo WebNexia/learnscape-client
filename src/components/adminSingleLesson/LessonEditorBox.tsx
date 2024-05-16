@@ -9,11 +9,13 @@ import { QuestionUpdateTrack } from '../../pages/AdminLessonEditPage';
 import CustomDialog from '../layouts/dialog/CustomDialog';
 
 interface LessonEditorBoxProps {
-	singleLesson?: Lesson;
+	singleLesson: Lesson;
+	singleLessonBeforeSave: Lesson;
 	isEditMode: boolean;
 	isActive: boolean;
 	isMissingFieldMsgOpen: boolean;
 	resetChanges: boolean;
+	setSingleLessonBeforeSave: React.Dispatch<React.SetStateAction<Lesson>>;
 	setIsEditMode: React.Dispatch<React.SetStateAction<boolean>>;
 	setIsMissingFieldMsgOpen: React.Dispatch<React.SetStateAction<boolean>>;
 	setIsMissingField: React.Dispatch<React.SetStateAction<boolean>>;
@@ -26,10 +28,12 @@ interface LessonEditorBoxProps {
 
 const LessonEditorBox = ({
 	singleLesson,
+	singleLessonBeforeSave,
 	isEditMode,
 	isActive,
 	isMissingFieldMsgOpen,
 	resetChanges,
+	setSingleLessonBeforeSave,
 	setIsEditMode,
 	setIsMissingFieldMsgOpen,
 	setIsMissingField,
@@ -52,9 +56,9 @@ const LessonEditorBox = ({
 			}}>
 			<Box sx={{ display: 'flex', alignItems: 'center', textAlign: 'center' }}>
 				<Box sx={{ height: '8rem', width: '12rem', mr: '2rem' }}>
-					{singleLesson?.imageUrl && (
+					{singleLessonBeforeSave?.imageUrl && (
 						<img
-							src={singleLesson.imageUrl}
+							src={singleLessonBeforeSave.imageUrl}
 							alt='course_img'
 							height='100%'
 							style={{
@@ -70,11 +74,11 @@ const LessonEditorBox = ({
 				<Box
 					sx={{ height: '8rem', width: '12rem', cursor: 'pointer' }}
 					onClick={() => {
-						if (singleLesson?.videoUrl) {
+						if (singleLessonBeforeSave?.videoUrl) {
 							setIsVideoPlayerOpen(true);
 						}
 					}}>
-					{singleLesson?.videoUrl ? (
+					{singleLessonBeforeSave?.videoUrl ? (
 						<Box
 							sx={{
 								height: '100%',
@@ -82,7 +86,7 @@ const LessonEditorBox = ({
 								position: 'relative',
 							}}>
 							<ReactPlayer
-								url={singleLesson?.videoUrl}
+								url={singleLessonBeforeSave?.videoUrl}
 								height='100%'
 								width='100%'
 								style={{
@@ -104,7 +108,7 @@ const LessonEditorBox = ({
 									cursor: 'pointer',
 								}}
 								onClick={() => {
-									if (singleLesson?.videoUrl) {
+									if (singleLessonBeforeSave?.videoUrl) {
 										setIsVideoPlayerOpen(true);
 									}
 								}}></Box>
@@ -139,7 +143,7 @@ const LessonEditorBox = ({
 						setIsVideoPlayerOpen(false);
 					}}
 					dialogPaperSx={{ display: 'flex', justifyContent: 'center', padding: '3rem' }}>
-					<ReactPlayer url={singleLesson?.videoUrl} height='30rem' width='55rem' style={{ margin: '0.5rem' }} controls={true} />
+					<ReactPlayer url={singleLessonBeforeSave?.videoUrl} height='30rem' width='55rem' style={{ margin: '0.5rem' }} controls={true} />
 				</CustomDialog>
 			</Box>
 			<Box sx={{ display: 'flex' }}>
@@ -166,7 +170,7 @@ const LessonEditorBox = ({
 					<Box>
 						<CustomSubmitButton
 							onClick={(e) => {
-								if (singleLesson?.title.trim() !== '' && singleLesson?.title !== '') {
+								if (singleLessonBeforeSave?.title.trim() !== '' && singleLessonBeforeSave?.title !== '') {
 									setIsEditMode(false);
 									handleLessonUpdate(e as FormEvent<Element>);
 								} else {
@@ -181,7 +185,7 @@ const LessonEditorBox = ({
 								setIsEditMode(false);
 								setIsLessonUpdated(false);
 								setResetChanges(!resetChanges);
-
+								setSingleLessonBeforeSave(singleLesson);
 								setIsQuestionUpdated((prevData: QuestionUpdateTrack[]) => {
 									prevData = prevData.map((data) => {
 										return { ...data, isUpdated: false };

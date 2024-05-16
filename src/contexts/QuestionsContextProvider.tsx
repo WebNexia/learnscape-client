@@ -5,6 +5,7 @@ import Loading from '../components/layouts/loading/Loading';
 import LoadingError from '../components/layouts/loading/LoadingError';
 import { QuestionInterface } from '../interfaces/question';
 import { OrganisationContext } from './OrganisationContextProvider';
+import { QuestionType } from '../interfaces/questionTypes';
 
 interface QuestionsContextTypes {
 	sortedQuestionsData: QuestionInterface[];
@@ -15,9 +16,11 @@ interface QuestionsContextTypes {
 	numberOfPages: number;
 	pageNumber: number;
 	setPageNumber: React.Dispatch<React.SetStateAction<number>>;
+	fetchQuestionTypes: () => void;
+	questionTypes: QuestionType[];
 }
 
-interface QuestionContextProviderProps {
+interface QuestionsContextProviderProps {
 	children: ReactNode;
 }
 
@@ -30,15 +33,18 @@ export const QuestionsContext = createContext<QuestionsContextTypes>({
 	numberOfPages: 1,
 	pageNumber: 1,
 	setPageNumber: () => {},
+	fetchQuestionTypes: () => {},
+	questionTypes: [],
 });
 
-const QuestionsContextProvider = (props: QuestionContextProviderProps) => {
+const QuestionsContextProvider = (props: QuestionsContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
 
 	const [sortedQuestionsData, setSortedQuestionsData] = useState<QuestionInterface[]>([]);
 	const [numberOfPages, setNumberOfPages] = useState<number>(1);
 	const [pageNumber, setPageNumber] = useState<number>(1);
+	const [questionTypes, setQuestionTypes] = useState<QuestionType[]>([]);
 
 	const { data, isLoading, isError } = useQuery(
 		['allQuestions', { page: pageNumber }],
@@ -77,8 +83,8 @@ const QuestionsContextProvider = (props: QuestionContextProviderProps) => {
 		setSortedQuestionsData(sortedDataCopy);
 	};
 	// Function to update sortedQuestionsData with new course data
-	const addNewQuestion = (newUser: any) => {
-		setSortedQuestionsData((prevSortedData) => [newUser, ...prevSortedData]);
+	const addNewQuestion = (newQuestion: any) => {
+		setSortedQuestionsData((prevSortedData) => [newQuestion, ...prevSortedData]);
 	};
 
 	const updateQuestion = (updatedQuestion: QuestionInterface) => {
@@ -93,6 +99,15 @@ const QuestionsContextProvider = (props: QuestionContextProviderProps) => {
 
 	const removeQuestion = (id: string) => {
 		setSortedQuestionsData((prevSortedData) => prevSortedData?.filter((data) => data._id !== id));
+	};
+
+	const fetchQuestionTypes = async (): Promise<void> => {
+		try {
+			const response = await axios.get(`${base_url}/questiontypes/organisation/${orgId}`);
+			setQuestionTypes(response.data.data);
+		} catch (error) {
+			console.log(error);
+		}
 	};
 
 	if (isLoading) {
@@ -114,6 +129,8 @@ const QuestionsContextProvider = (props: QuestionContextProviderProps) => {
 				numberOfPages,
 				pageNumber,
 				setPageNumber,
+				fetchQuestionTypes,
+				questionTypes,
 			}}>
 			{props.children}
 		</QuestionsContext.Provider>

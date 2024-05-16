@@ -1,5 +1,5 @@
 import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from '@mui/material';
-import CustomTextField from '../../forms/customFields/CustomTextField';
+import CustomTextField from '../customFields/CustomTextField';
 import { useContext, useState } from 'react';
 import { LessonsContext } from '../../../contexts/LessonsContextProvider';
 import axios from 'axios';
@@ -17,7 +17,6 @@ interface CreateLessonDialogProps {
 	createNewLesson: boolean;
 	setIsNewLessonModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
 	setLessons?: React.Dispatch<React.SetStateAction<Lesson[]>>;
-	setNewLessonsToCreate?: React.Dispatch<React.SetStateAction<Lesson[]>>;
 	setChapterLessonDataBeforeSave?: React.Dispatch<React.SetStateAction<ChapterLessonData[]>>;
 	setIsChapterUpdated?: React.Dispatch<React.SetStateAction<ChapterUpdateTrack[]>>;
 }

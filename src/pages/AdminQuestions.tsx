@@ -13,15 +13,15 @@ import CustomTablePagination from '../components/layouts/table/CustomTablePagina
 import CustomActionBtn from '../components/layouts/table/CustomActionBtn';
 import { QuestionsContext } from '../contexts/QuestionsContextProvider';
 import { QuestionInterface } from '../interfaces/question';
+import CreateQuestionDialog from '../components/forms/newQuestion/createQuestionDialog';
+import useNewQuestion from '../hooks/useNewQuestion';
 
-const AdminLessons = () => {
+const AdminQuestions = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { userId } = useParams();
 	const navigate = useNavigate();
 
 	const { sortQuestionsData, sortedQuestionsData, removeQuestion, numberOfPages, pageNumber, setPageNumber } = useContext(QuestionsContext);
-
-	// const [isNewQuestionModalOpen, setIsNewQuestionModalOpen] = useState<boolean>(false);
 
 	const [orderBy, setOrderBy] = useState<keyof QuestionInterface>('questionType');
 	const [order, setOrder] = useState<'asc' | 'desc'>('asc');
@@ -35,11 +35,14 @@ const AdminLessons = () => {
 
 	const [isQuestionDeleteModalOpen, setIsQuestionDeleteModalOpen] = useState<boolean[]>([]);
 
+	const [questionType, setQuestionType] = useState<string>('');
+	const [isQuestionCreateModalOpen, setIsQuestionCreateModalOpen] = useState<boolean>(false);
+
 	useEffect(() => {
 		setIsQuestionDeleteModalOpen(Array(sortedQuestionsData.length).fill(false));
 	}, [sortedQuestionsData, pageNumber]);
 
-	const openQuestionLessonModal = (index: number) => {
+	const openDeleteQuestionModal = (index: number) => {
 		const updatedState = [...isQuestionDeleteModalOpen];
 		updatedState[index] = true;
 		setIsQuestionDeleteModalOpen(updatedState);
@@ -58,11 +61,60 @@ const AdminLessons = () => {
 			console.log(error);
 		}
 	};
+
+	const {
+		options,
+		setOptions,
+		correctAnswerIndex,
+		setCorrectAnswerIndex,
+		correctAnswer,
+		setCorrectAnswer,
+		isDuplicateOption,
+		setIsDuplicateOption,
+		setIsMinimumOptions,
+		isMinimumOptions,
+		addOption,
+		removeOption,
+		handleCorrectAnswerChange,
+		handleOptionChange,
+	} = useNewQuestion();
+
 	return (
 		<DashboardPagesLayout pageName='Lessons' customSettings={{ justifyContent: 'flex-start' }}>
 			<Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'flex-end', padding: '2rem', width: '100%' }}>
-				<CustomSubmitButton>New Question</CustomSubmitButton>
+				<CustomSubmitButton
+					onClick={() => {
+						setIsQuestionCreateModalOpen(true);
+						setQuestionType('');
+						setOptions(['']);
+						setCorrectAnswer('');
+						setIsDuplicateOption(false);
+						setIsMinimumOptions(true);
+					}}
+					type='button'>
+					New Question
+				</CustomSubmitButton>
 			</Box>
+
+			<CreateQuestionDialog
+				createNewQuestion={true}
+				questionType={questionType}
+				options={options}
+				correctAnswer={correctAnswer}
+				correctAnswerIndex={correctAnswerIndex}
+				isQuestionCreateModalOpen={isQuestionCreateModalOpen}
+				setQuestionType={setQuestionType}
+				setOptions={setOptions}
+				setCorrectAnswer={setCorrectAnswer}
+				setCorrectAnswerIndex={setCorrectAnswerIndex}
+				setIsQuestionCreateModalOpen={setIsQuestionCreateModalOpen}
+				addOption={addOption}
+				removeOption={removeOption}
+				handleCorrectAnswerChange={handleCorrectAnswerChange}
+				handleOptionChange={handleOptionChange}
+				isMinimumOptions={isMinimumOptions}
+				isDuplicateOption={isDuplicateOption}
+			/>
 
 			<Box
 				sx={{
@@ -106,7 +158,7 @@ const AdminLessons = () => {
 											<CustomActionBtn
 												title='Delete'
 												onClick={() => {
-													openQuestionLessonModal(index);
+													openDeleteQuestionModal(index);
 												}}
 												icon={<Delete />}
 											/>
@@ -138,4 +190,4 @@ const AdminLessons = () => {
 	);
 };
 
-export default AdminLessons;
+export default AdminQuestions;
