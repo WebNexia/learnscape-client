@@ -21,7 +21,7 @@ const QuestionsBoxNonEdit = ({ singleLesson, setIsDisplayNonEditQuestion, setDis
 			}}>
 			<Box sx={{ mt: '3rem', minHeight: '40vh' }}>
 				<Typography variant='h4'>Questions</Typography>
-				{singleLesson?.questionIds?.length === 0 ? (
+				{singleLesson?.questionIds?.length === 0 || singleLesson?.questions.filter((question) => question !== null).length === 0 ? (
 					<Box
 						sx={{
 							display: 'flex',

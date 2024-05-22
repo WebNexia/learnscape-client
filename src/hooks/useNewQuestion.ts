@@ -11,27 +11,6 @@ const useNewQuestion = (initialOptions: string[] = ['']) => {
 		setOptions((prevOptions) => [...prevOptions, '']);
 	}, []);
 
-	const removeOption = useCallback(
-		(indexToRemove: number) => {
-			setOptions((prevOptions) => {
-				const newOptions = [...prevOptions];
-				newOptions.splice(indexToRemove, 1);
-
-				if (indexToRemove === correctAnswerIndex) {
-					setCorrectAnswerIndex(-1);
-					setCorrectAnswer('');
-				} else if (indexToRemove < correctAnswerIndex) {
-					setCorrectAnswerIndex(correctAnswerIndex - 1);
-					setCorrectAnswer(newOptions[correctAnswerIndex - 1] || '');
-				}
-
-				setIsMinimumOptions(newOptions.filter((option) => option.trim() !== '').length >= 2);
-				return newOptions;
-			});
-		},
-		[correctAnswerIndex]
-	);
-
 	const handleCorrectAnswerChange = useCallback(
 		(index: number) => {
 			setCorrectAnswerIndex(index);
@@ -41,7 +20,7 @@ const useNewQuestion = (initialOptions: string[] = ['']) => {
 	);
 
 	const checkForDuplicateOptions = useCallback((options: string[]) => {
-		const filteredOptions = options.filter((option) => option.trim() !== '');
+		const filteredOptions = options.map((option) => option.trim()).filter((option) => option.trim() !== '');
 		const uniqueOptions = new Set(filteredOptions);
 		return uniqueOptions.size !== filteredOptions.length;
 	}, []);
@@ -53,10 +32,33 @@ const useNewQuestion = (initialOptions: string[] = ['']) => {
 				newOptions[index] = value;
 				setIsDuplicateOption(checkForDuplicateOptions(newOptions));
 				setIsMinimumOptions(newOptions.filter((option) => option.trim() !== '').length >= 2);
+
 				return newOptions;
 			});
 		},
 		[checkForDuplicateOptions]
+	);
+	const removeOption = useCallback(
+		(indexToRemove: number) => {
+			setOptions((prevOptions) => {
+				const newOptions = [...prevOptions];
+				newOptions.splice(indexToRemove, 1)[0];
+
+				if (indexToRemove === correctAnswerIndex) {
+					setCorrectAnswerIndex(-1);
+					setCorrectAnswer('');
+				} else if (indexToRemove < correctAnswerIndex) {
+					setCorrectAnswerIndex(correctAnswerIndex - 1);
+					setCorrectAnswer(newOptions[correctAnswerIndex - 1] || '');
+				}
+
+				const hasDuplicate = checkForDuplicateOptions(newOptions);
+				setIsDuplicateOption(hasDuplicate);
+				setIsMinimumOptions(newOptions.filter((option) => option.trim() !== '').length >= 2);
+				return newOptions;
+			});
+		},
+		[correctAnswerIndex, checkForDuplicateOptions]
 	);
 
 	return {

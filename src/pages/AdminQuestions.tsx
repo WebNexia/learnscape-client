@@ -3,7 +3,6 @@ import DashboardPagesLayout from '../components/layouts/dashboardLayout/Dashboar
 import { useContext, useEffect, useState } from 'react';
 import axios from 'axios';
 import { Delete, Edit, FileCopy } from '@mui/icons-material';
-import { useNavigate, useParams } from 'react-router-dom';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
@@ -13,13 +12,13 @@ import CustomTablePagination from '../components/layouts/table/CustomTablePagina
 import CustomActionBtn from '../components/layouts/table/CustomActionBtn';
 import { QuestionsContext } from '../contexts/QuestionsContextProvider';
 import { QuestionInterface } from '../interfaces/question';
-import CreateQuestionDialog from '../components/forms/newQuestion/createQuestionDialog';
+
 import useNewQuestion from '../hooks/useNewQuestion';
+import CreateQuestionDialog from '../components/forms/newQuestion/CreateQuestionDialog';
+import EditQuestionDialog from '../components/forms/editQuestion/EditQuestionDialog';
 
 const AdminQuestions = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
-	const { userId } = useParams();
-	const navigate = useNavigate();
 
 	const { sortQuestionsData, sortedQuestionsData, removeQuestion, numberOfPages, pageNumber, setPageNumber } = useContext(QuestionsContext);
 
@@ -33,34 +32,11 @@ const AdminQuestions = () => {
 		sortQuestionsData(property, isAsc ? 'desc' : 'asc');
 	};
 
-	const [isQuestionDeleteModalOpen, setIsQuestionDeleteModalOpen] = useState<boolean[]>([]);
-
 	const [questionType, setQuestionType] = useState<string>('');
+
+	const [isQuestionDeleteModalOpen, setIsQuestionDeleteModalOpen] = useState<boolean[]>([]);
+	const [editQuestionModalOpen, setEditQuestionModalOpen] = useState<boolean[]>([]);
 	const [isQuestionCreateModalOpen, setIsQuestionCreateModalOpen] = useState<boolean>(false);
-
-	useEffect(() => {
-		setIsQuestionDeleteModalOpen(Array(sortedQuestionsData.length).fill(false));
-	}, [sortedQuestionsData, pageNumber]);
-
-	const openDeleteQuestionModal = (index: number) => {
-		const updatedState = [...isQuestionDeleteModalOpen];
-		updatedState[index] = true;
-		setIsQuestionDeleteModalOpen(updatedState);
-	};
-	const closeDeleteQuestionModal = (index: number) => {
-		const updatedState = [...isQuestionDeleteModalOpen];
-		updatedState[index] = false;
-		setIsQuestionDeleteModalOpen(updatedState);
-	};
-
-	const deleteLesson = async (lessonId: string): Promise<void> => {
-		try {
-			removeQuestion(lessonId);
-			await axios.delete(`${base_url}/lessons/${lessonId}`);
-		} catch (error) {
-			console.log(error);
-		}
-	};
 
 	const {
 		options,
@@ -79,6 +55,43 @@ const AdminQuestions = () => {
 		handleOptionChange,
 	} = useNewQuestion();
 
+	useEffect(() => {
+		setIsQuestionDeleteModalOpen(Array(sortedQuestionsData.length).fill(false));
+		setEditQuestionModalOpen(Array(sortedQuestionsData.length).fill(false));
+	}, [sortedQuestionsData, pageNumber]);
+
+	const openDeleteQuestionModal = (index: number) => {
+		const updatedState = [...isQuestionDeleteModalOpen];
+		updatedState[index] = true;
+		setIsQuestionDeleteModalOpen(updatedState);
+	};
+	const closeDeleteQuestionModal = (index: number) => {
+		const updatedState = [...isQuestionDeleteModalOpen];
+		updatedState[index] = false;
+		setIsQuestionDeleteModalOpen(updatedState);
+	};
+
+	const deleteQuestion = async (questionId: string): Promise<void> => {
+		try {
+			removeQuestion(questionId);
+			await axios.delete(`${base_url}/questions/${questionId}`);
+		} catch (error) {
+			console.log(error);
+		}
+	};
+
+	// Function to toggle edit modal for a specific question
+	const toggleQuestionEditModal = (index: number) => {
+		const newEditModalOpen = [...editQuestionModalOpen];
+		newEditModalOpen[index] = !newEditModalOpen[index];
+		setEditQuestionModalOpen(newEditModalOpen);
+	};
+	const closeQuestionEditModal = (index: number) => {
+		const newEditModalOpen = [...editQuestionModalOpen];
+		newEditModalOpen[index] = false;
+		setEditQuestionModalOpen(newEditModalOpen);
+	};
+
 	return (
 		<DashboardPagesLayout pageName='Lessons' customSettings={{ justifyContent: 'flex-start' }}>
 			<Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'flex-end', padding: '2rem', width: '100%' }}>
@@ -90,6 +103,7 @@ const AdminQuestions = () => {
 						setCorrectAnswer('');
 						setIsDuplicateOption(false);
 						setIsMinimumOptions(true);
+						setCorrectAnswerIndex(-1);
 					}}
 					type='button'>
 					New Question
@@ -151,9 +165,37 @@ const AdminQuestions = () => {
 											<CustomActionBtn
 												title='Edit'
 												onClick={() => {
-													navigate(`/admin/question-edit/user/${userId}/question/${question._id}`);
+													setOptions(question.options);
+													setCorrectAnswer(question.correctAnswer);
+													const correctAnswerIndex = question.options.indexOf(question.correctAnswer);
+													setCorrectAnswerIndex(correctAnswerIndex);
+													toggleQuestionEditModal(index);
+													setIsDuplicateOption(false);
+													setIsMinimumOptions(true);
 												}}
 												icon={<Edit />}
+											/>
+
+											<EditQuestionDialog
+												fromLessonEditPage={false}
+												question={question}
+												correctAnswerIndex={correctAnswerIndex}
+												index={index}
+												options={options}
+												correctAnswer={question.correctAnswer}
+												questionType={question.questionType}
+												isMinimumOptions={isMinimumOptions}
+												isDuplicateOption={isDuplicateOption}
+												handleCorrectAnswerChange={handleCorrectAnswerChange}
+												setCorrectAnswerIndex={setCorrectAnswerIndex}
+												handleOptionChange={handleOptionChange}
+												closeQuestionEditModal={closeQuestionEditModal}
+												editQuestionModalOpen={editQuestionModalOpen}
+												addOption={addOption}
+												removeOption={removeOption}
+												setCorrectAnswer={setCorrectAnswer}
+												setIsDuplicateOption={setIsDuplicateOption}
+												setIsMinimumOptions={setIsMinimumOptions}
 											/>
 											<CustomActionBtn
 												title='Delete'
@@ -172,7 +214,7 @@ const AdminQuestions = () => {
 														onCancel={() => closeDeleteQuestionModal(index)}
 														deleteBtn={true}
 														onDelete={() => {
-															deleteLesson(question._id);
+															deleteQuestion(question._id);
 															closeDeleteQuestionModal(index);
 														}}
 													/>

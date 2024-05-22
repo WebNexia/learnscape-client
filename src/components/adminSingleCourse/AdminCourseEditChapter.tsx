@@ -10,6 +10,7 @@ import CustomTextField from '../forms/customFields/CustomTextField';
 import CustomErrorMessage from '../forms/customFields/CustomErrorMessage';
 import CreateLessonDialog from '../forms/newLesson/CreateLessonDialog';
 import AddNewLessonDialog from './AddNewLessonDialog';
+import { chapterUpdateTrack } from '../../utils/chapterUpdateTrack';
 
 interface AdminCourseEditChapterProps {
 	chapter: ChapterLessonData;
@@ -58,20 +59,7 @@ const AdminCourseEditChapter = ({
 					<CustomTextField
 						value={chapter.title}
 						onChange={(e) => {
-							setIsChapterUpdated((prevData: ChapterUpdateTrack[]) => {
-								if (prevData) {
-									prevData = prevData.map((data) => {
-										if (data.chapterId === chapter.chapterId) {
-											return {
-												...data,
-												isUpdated: true,
-											};
-										}
-										return data;
-									})!;
-								}
-								return prevData;
-							});
+							chapterUpdateTrack(chapter.chapterId, setIsChapterUpdated);
 
 							setChapterLessonDataBeforeSave((prevData) => {
 								const updatedChapters = prevData?.map((currentChapter) => {
@@ -178,18 +166,7 @@ const AdminCourseEditChapter = ({
 							}
 							return prevData;
 						});
-
-						setIsChapterUpdated((prevData: ChapterUpdateTrack[]) => {
-							if (prevData) {
-								prevData = prevData.map((data) => {
-									if (data.chapterId === chapter.chapterId) {
-										return { ...data, isUpdated: true };
-									}
-									return data;
-								})!;
-							}
-							return prevData;
-						});
+						chapterUpdateTrack(chapter.chapterId, setIsChapterUpdated);
 					}}>
 					{chapter?.lessons &&
 						chapter.lessons?.map((lesson) => {
@@ -263,20 +240,7 @@ const AdminCourseEditChapter = ({
 																return prevData;
 															});
 
-															setIsChapterUpdated((prevData: ChapterUpdateTrack[]) => {
-																if (prevData) {
-																	prevData = prevData.map((data) => {
-																		if (data.chapterId === chapter.chapterId) {
-																			return {
-																				...data,
-																				isUpdated: true,
-																			};
-																		}
-																		return data;
-																	})!;
-																}
-																return prevData;
-															});
+															chapterUpdateTrack(chapter.chapterId, setIsChapterUpdated);
 														}}>
 														<Delete />
 													</IconButton>

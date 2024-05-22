@@ -9,6 +9,7 @@ import CustomDialog from '../layouts/dialog/CustomDialog';
 import CustomTableHead from '../layouts/table/CustomTableHead';
 import CustomTableCell from '../layouts/table/CustomTableCell';
 import CustomTablePagination from '../layouts/table/CustomTablePagination';
+import { chapterUpdateTrack } from '../../utils/chapterUpdateTrack';
 
 interface AddNewLessonDialogProps {
 	addNewLessonModalOpen: boolean;
@@ -60,20 +61,7 @@ const AddNewLessonDialog = ({
 		setSelectedLessonIds(newSelectedLessonIds);
 		setSelectedLessons(newSelectedLessons);
 
-		setIsChapterUpdated((prevData: ChapterUpdateTrack[]) => {
-			if (prevData) {
-				prevData = prevData.map((data) => {
-					if (data.chapterId === chapter.chapterId) {
-						return {
-							...data,
-							isUpdated: true,
-						};
-					}
-					return data;
-				})!;
-			}
-			return prevData;
-		});
+		chapterUpdateTrack(chapter.chapterId, setIsChapterUpdated);
 	};
 	const handleAddLessons = () => {
 		setChapterLessonDataBeforeSave((prevData) => {

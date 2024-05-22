@@ -97,7 +97,6 @@ const AdminCourseEditPage = () => {
 	const closeCreateChapterModal = () => setIsChapterCreateModalOpen(false);
 
 	useEffect(() => {
-		console.log('admin course edit page');
 		if (courseId) {
 			const fetchSingleCourseData = async (courseId: string): Promise<void> => {
 				try {
@@ -157,92 +156,111 @@ const AdminCourseEditPage = () => {
 	const handleCourseUpdate = async (e: FormEvent): Promise<void> => {
 		e.preventDefault();
 
-		let updatedChapters: ChapterLessonData[] = [];
 		try {
-			if (chapterLessonDataBeforeSave) {
-				updatedChapters = [...chapterLessonDataBeforeSave];
+			if (!chapterLessonDataBeforeSave) {
+				console.error('No chapter lesson data to save.');
+				return;
 			}
 
+			let updatedChapters: ChapterLessonData[] = [...chapterLessonDataBeforeSave];
+
 			updatedChapters = await Promise.all(
-				chapterLessonDataBeforeSave?.map(async (chapter) => {
+				updatedChapters.map(async (chapter) => {
 					chapter.lessons = await Promise.all(
 						chapter.lessons.map(async (lesson: Lesson) => {
 							if (lesson._id.includes('temp_lesson_id')) {
-								const lessonResponse = await axios.post(`${base_url}/lessons`, {
-									title: lesson.title,
-									type: lesson.type,
-									orgId,
-								});
-								return {
-									...lesson,
-									_id: lessonResponse.data._id,
-								};
+								try {
+									const lessonResponse = await axios.post(`${base_url}/lessons`, {
+										title: lesson.title,
+										type: lesson.type,
+										orgId,
+									});
+									return {
+										...lesson,
+										_id: lessonResponse.data._id,
+									};
+								} catch (error) {
+									console.error('Error creating lesson:', error);
+									return lesson;
+								}
 							}
 							return lesson;
 						})
 					);
+
 					chapter.lessonIds = chapter.lessons.map((lesson) => lesson._id);
 
 					if (chapter.chapterId.includes('temp_chapter_id')) {
-						const response = await axios.post(`${base_url}/chapters`, {
-							title: chapter.title,
-							lessonIds: chapter.lessonIds,
-						});
-						chapter.chapterId = response.data._id;
+						try {
+							const response = await axios.post(`${base_url}/chapters`, {
+								title: chapter.title,
+								lessonIds: chapter.lessonIds,
+							});
+							chapter.chapterId = response.data._id;
+						} catch (error) {
+							console.error('Error creating chapter:', error);
+						}
 					}
+
 					return chapter;
 				})
 			);
 
 			setChapterLessonData(updatedChapters);
 
-			setSingleCourse((prevCourse) => {
-				if (prevCourse) {
-					// Combine existing chapters with newly created chapters
-					return {
-						...prevCourse,
-						chapters: updatedChapters,
-						chapterIds: updatedChapters.map((chapter) => chapter.chapterId),
-					};
-				}
-				return prevCourse; // Return unchanged if prevCourse is undefined
-			});
-
-			if (singleCourse !== undefined) {
-				await axios.patch(`${base_url}/courses/${courseId}`, {
-					...singleCourse,
-					chapterIds: updatedChapters.map((chapter) => chapter.chapterId),
-				});
-
-				updateCourse({
+			if (singleCourse) {
+				const updatedCourse = {
 					...singleCourse,
 					chapters: updatedChapters,
 					chapterIds: updatedChapters.map((chapter) => chapter.chapterId),
-				});
+				};
 
-				await Promise.all(
-					updatedChapters?.map(async (chapter, index) => {
-						if (isChapterUpdated[index]?.isUpdated) {
-							await axios.patch(`${base_url}/chapters/${chapter.chapterId}`, chapter);
-						}
-					})
-				);
+				try {
+					await axios.patch(`${base_url}/courses/${courseId}`, {
+						...updatedCourse,
+						chapterIds: updatedChapters.map((chapter) => chapter.chapterId),
+					});
+
+					updateCourse(updatedCourse);
+					setSingleCourse(updatedCourse);
+
+					await Promise.all(
+						updatedChapters.map(async (chapter) => {
+							const trackData = isChapterUpdated.find((data) => data.chapterId === chapter.chapterId);
+							if (trackData?.isUpdated) {
+								try {
+									await axios.patch(`${base_url}/chapters/${chapter.chapterId}`, chapter);
+								} catch (error) {
+									console.error('Error updating chapter:', error);
+								}
+							}
+						})
+					);
+				} catch (error) {
+					console.error('Error updating course:', error);
+				}
 			}
 
-			if (deletedChapterIds.length !== 0) {
-				await Promise.all(
-					deletedChapterIds?.map(async (chapterId) => {
-						await axios.delete(`${base_url}/chapters/${chapterId}`);
-					})
-				);
+			if (deletedChapterIds.length > 0) {
+				try {
+					await Promise.all(
+						deletedChapterIds.map(async (chapterId) => {
+							try {
+								await axios.delete(`${base_url}/chapters/${chapterId}`);
+							} catch (error) {
+								console.error('Error deleting chapter:', error);
+							}
+						})
+					);
+				} catch (error) {
+					console.error('Error deleting chapters:', error);
+				}
 			}
 
-			setIsChapterUpdated((prevData) => {
-				return prevData.map((data) => ({ ...data, isUpdated: false }));
-			});
+			setIsChapterUpdated((prevData) => prevData.map((data) => ({ ...data, isUpdated: false })));
 			setDeletedChapterIds([]);
 		} catch (error) {
-			console.log(error);
+			console.error('Error updating course:', error);
 		}
 	};
 

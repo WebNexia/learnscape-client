@@ -12,7 +12,7 @@ interface CustomDialogProps {
 	content?: string;
 }
 
-const CustomDialog = ({ children, openModal, closeModal, title, titleSx, content, dialogPaperSx }: CustomDialogProps) => {
+const CustomDialog = ({ children, openModal = false, closeModal, title, titleSx, content, dialogPaperSx }: CustomDialogProps) => {
 	return (
 		<Dialog
 			open={openModal}

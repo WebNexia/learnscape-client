@@ -45,6 +45,7 @@ interface CreateQuestionDialogProps {
 	removeOption: (indexToRemove: number) => void;
 	addOption: () => void;
 	handleOptionChange?: (index: number, value: string) => void;
+	setQuestionsUpdated?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const CreateQuestionDialog = ({
@@ -71,6 +72,7 @@ const CreateQuestionDialog = ({
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
 	const { addNewQuestion, fetchQuestionTypes, questionTypes } = useContext(QuestionsContext);
+
 	const [newQuestion, setNewQuestion] = useState<QuestionInterface>({
 		_id: '',
 		questionType: '',
@@ -88,7 +90,7 @@ const CreateQuestionDialog = ({
 	const [isCorrectAnswerMissing, setIsCorrectAnswerMissing] = useState<boolean>(false);
 
 	useEffect(() => {
-		fetchQuestionTypes();
+		fetchQuestionTypes(orgId);
 	}, []);
 
 	const resetValues = () => {
@@ -107,12 +109,15 @@ const CreateQuestionDialog = ({
 		});
 
 		setCorrectAnswer('');
-		setCorrectAnswerIndex(-1);
 		setOptions(['']);
 	};
 
 	const createQuestion = async () => {
-		const questionTypeId = questionTypes?.filter((type) => (type.name = questionType))[0]._id;
+		let questionTypeId: string = '';
+
+		if (questionTypes) {
+			questionTypeId = questionTypes?.filter((type) => type.name === questionType)[0]._id;
+		}
 		try {
 			const response = await axios.post(`${base_url}/questions`, {
 				questionType: questionTypeId,
@@ -127,7 +132,7 @@ const CreateQuestionDialog = ({
 
 			addNewQuestion({
 				_id: response.data._id,
-				questionType,
+				questionType: questionTypes?.filter((type) => type.name === questionType)[0].name,
 				question: newQuestion?.question,
 				options,
 				correctAnswer,
@@ -160,7 +165,6 @@ const CreateQuestionDialog = ({
 			};
 
 			setIsLessonUpdated(true);
-			setCorrectAnswerIndex(-1);
 
 			setSingleLessonBeforeSave((prevLesson) => {
 				return {
@@ -223,8 +227,8 @@ const CreateQuestionDialog = ({
 			<form
 				style={{ display: 'flex', flexDirection: 'column' }}
 				onSubmit={(e) => {
-					handleSubmit();
 					e.preventDefault();
+					handleSubmit();
 				}}>
 				<DialogContent>
 					<FormControl sx={{ mb: '1rem', width: '15rem', backgroundColor: theme.bgColor?.common }}>
@@ -339,8 +343,8 @@ const CreateQuestionDialog = ({
 														<Radio
 															checked={index === correctAnswerIndex}
 															onChange={() => {
-																handleCorrectAnswerChange(index);
 																setIsCorrectAnswerMissing(false);
+																handleCorrectAnswerChange(index);
 															}}
 															color='primary'
 														/>

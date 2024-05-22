@@ -16,7 +16,7 @@ interface QuestionsContextTypes {
 	numberOfPages: number;
 	pageNumber: number;
 	setPageNumber: React.Dispatch<React.SetStateAction<number>>;
-	fetchQuestionTypes: () => void;
+	fetchQuestionTypes: (orgId: string) => void;
 	questionTypes: QuestionType[];
 }
 
@@ -85,6 +85,7 @@ const QuestionsContextProvider = (props: QuestionsContextProviderProps) => {
 	// Function to update sortedQuestionsData with new course data
 	const addNewQuestion = (newQuestion: any) => {
 		setSortedQuestionsData((prevSortedData) => [newQuestion, ...prevSortedData]);
+		// queryClient.invalidateQueries(['allQuestions', { page: pageNumber }]);
 	};
 
 	const updateQuestion = (updatedQuestion: QuestionInterface) => {
@@ -99,11 +100,13 @@ const QuestionsContextProvider = (props: QuestionsContextProviderProps) => {
 
 	const removeQuestion = (id: string) => {
 		setSortedQuestionsData((prevSortedData) => prevSortedData?.filter((data) => data._id !== id));
+		// queryClient.invalidateQueries(['allQuestions', { page: pageNumber }]);
 	};
 
-	const fetchQuestionTypes = async (): Promise<void> => {
+	const fetchQuestionTypes = async (orgId: string) => {
 		try {
 			const response = await axios.get(`${base_url}/questiontypes/organisation/${orgId}`);
+
 			setQuestionTypes(response.data.data);
 		} catch (error) {
 			console.log(error);

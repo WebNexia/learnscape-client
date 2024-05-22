@@ -10,6 +10,7 @@ import CustomDialog from '../../layouts/dialog/CustomDialog';
 import CustomDialogActions from '../../layouts/dialog/CustomDialogActions';
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
 import { generateUniqueId } from '../../../utils/uniqueIdGenerator';
+import { chapterUpdateTrack } from '../../../utils/chapterUpdateTrack';
 
 interface CreateLessonDialogProps {
 	chapter?: ChapterLessonData;
@@ -84,17 +85,7 @@ const CreateLessonDialog = ({
 						if (currentChapter.chapterId === chapter?.chapterId) {
 							const updatedLessons = [newLessonBeforeSave, ...currentChapter.lessons];
 							if (setIsChapterUpdated) {
-								setIsChapterUpdated((prevData: ChapterUpdateTrack[]) => {
-									if (prevData) {
-										prevData = prevData.map((data) => {
-											if (data.chapterId === chapter.chapterId) {
-												return { ...data, isUpdated: true };
-											}
-											return data;
-										})!;
-									}
-									return prevData;
-								});
+								chapterUpdateTrack(chapter.chapterId, setIsChapterUpdated);
 							}
 							return {
 								...currentChapter,

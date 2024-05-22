@@ -1,7 +1,7 @@
-import { Box, DialogContent, FormControlLabel, IconButton, Radio, Tooltip, Typography } from '@mui/material';
+import { Box, IconButton, Tooltip, Typography } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import theme from '../themes';
-import { AddCircle, Delete, Edit, FileCopy, RemoveCircle } from '@mui/icons-material';
+import { Delete, Edit, FileCopy } from '@mui/icons-material';
 import { useParams } from 'react-router-dom';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import { FormEvent, useContext, useEffect, useState } from 'react';
@@ -18,11 +18,11 @@ import QuestionDialogContentNonEdit from '../components/adminSingleLesson/Questi
 import LessonEditorBox from '../components/adminSingleLesson/LessonEditorBox';
 import QuestionsBoxNonEdit from '../components/adminSingleLesson/QuestionsBoxNonEdit';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
-import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
-import CreateQuestionDialog from '../components/forms/newQuestion/createQuestionDialog';
-import { QuestionsContext } from '../contexts/QuestionsContextProvider';
 import useNewQuestion from '../hooks/useNewQuestion';
+import CreateQuestionDialog from '../components/forms/newQuestion/CreateQuestionDialog';
+import EditQuestionDialog from '../components/forms/editQuestion/EditQuestionDialog';
+import { QuestionsContext } from '../contexts/QuestionsContextProvider';
 
 export interface QuestionUpdateTrack {
 	questionId: string;
@@ -33,8 +33,8 @@ const AdminLessonEditPage = () => {
 	const { userId, lessonId } = useParams();
 	const { orgId } = useContext(OrganisationContext);
 	const { updateLessonPublishing, updateLessons } = useContext(LessonsContext);
-	const { questionTypes, fetchQuestionTypes } = useContext(QuestionsContext);
 
+	const { fetchQuestionTypes, questionTypes } = useContext(QuestionsContext);
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
 	const defaultLesson: Lesson = {
@@ -66,9 +66,27 @@ const AdminLessonEditPage = () => {
 	const [isQuestionUpdated, setIsQuestionUpdated] = useState<QuestionUpdateTrack[]>([]);
 
 	const [questionType, setQuestionType] = useState<string>('');
+
 	const [isQuestionCreateModalOpen, setIsQuestionCreateModalOpen] = useState<boolean>(false);
+	const {
+		options,
+		setOptions,
+		correctAnswerIndex,
+		setCorrectAnswerIndex,
+		correctAnswer,
+		setCorrectAnswer,
+		isDuplicateOption,
+		setIsDuplicateOption,
+		setIsMinimumOptions,
+		isMinimumOptions,
+		addOption,
+		removeOption,
+		handleCorrectAnswerChange,
+		handleOptionChange,
+	} = useNewQuestion();
 
 	useEffect(() => {
+		fetchQuestionTypes(orgId);
 		if (lessonId) {
 			const fetchSingleLessonData = async (lessonId: string): Promise<void> => {
 				try {
@@ -95,7 +113,6 @@ const AdminLessonEditPage = () => {
 			};
 			fetchSingleLessonData(lessonId);
 		}
-		fetchQuestionTypes();
 	}, [lessonId, isActive, resetChanges]);
 
 	// Define state for tracking edit modal visibility for each question
@@ -129,64 +146,77 @@ const AdminLessonEditPage = () => {
 
 	const y = useMotionValue(0);
 	const boxShadow = useRaisedShadow(y);
-
 	const handleLessonUpdate = async (e: FormEvent): Promise<void> => {
 		e.preventDefault();
 
 		let updatedQuestions: QuestionInterface[] = [];
-		if (singleLessonBeforeSave?.questions) {
-			updatedQuestions = await Promise.all(
-				singleLessonBeforeSave.questions
-					.filter((question) => question !== null || question !== undefined)
-					.map(async (question) => {
-						if (question !== null) {
-							const questionTypeId = questionTypes.filter((type) => (type.name = question.questionType))[0]._id;
-							question.questionType = questionTypeId;
 
+		if (singleLessonBeforeSave?.questions) {
+			const questionsWithPossibleNulls = await Promise.all(
+				singleLessonBeforeSave.questions
+					?.filter((question) => question !== null && question !== undefined)
+					?.map(async (question) => {
+						if (question !== null) {
 							if (question._id.includes('temp_question_id')) {
-								const questionResponse = await axios.post(`${base_url}/questions`, {
-									orgId,
-									question: question.question,
-									options: question.options,
-									correctAnswer: question.correctAnswer,
-									videoUrl: question.videoUrl,
-									imageUrl: question.imageUrl,
-									questionType: questionTypeId,
-									isActive: true,
-								});
-								return {
-									...question,
-									_id: questionResponse.data._id,
-									createdAt: questionResponse.data.createdAt,
-									updatedAt: questionResponse.data.updatedAt,
-								};
+								const questionTypeId = questionTypes.find((type) => type.name === question.questionType)?._id;
+								if (questionTypeId) {
+									question.questionType = questionTypeId;
+
+									if (question.correctAnswer !== '') {
+										try {
+											const questionResponse = await axios.post(`${base_url}/questions`, {
+												orgId,
+												question: question.question,
+												options: question.options,
+												correctAnswer: question.correctAnswer,
+												videoUrl: question.videoUrl,
+												imageUrl: question.imageUrl,
+												questionType: questionTypeId,
+												isActive: true,
+											});
+											return {
+												...question,
+												_id: questionResponse.data._id,
+												createdAt: questionResponse.data.createdAt,
+												updatedAt: questionResponse.data.updatedAt,
+											};
+										} catch (error) {
+											console.error('Error creating question:', error);
+											return null;
+										}
+									}
+								}
 							}
 						}
 						return question;
 					})
 			);
 
+			updatedQuestions = questionsWithPossibleNulls?.filter((question): question is QuestionInterface => question !== null);
+
 			await Promise.all(
-				updatedQuestions?.map(async (question, index) => {
-					if (isQuestionUpdated[index]?.isUpdated) {
-						await axios.patch(`${base_url}/questions/${question._id}`, question);
+				updatedQuestions?.map(async (question) => {
+					const trackData = isQuestionUpdated.find((data) => data.questionId === question._id);
+					if (question.correctAnswer !== '' && trackData?.isUpdated) {
+						try {
+							await axios.patch(`${base_url}/questions/${question._id}`, question);
+						} catch (error) {
+							console.error('Error updating question:', error);
+						}
 					}
 				})
 			);
+			const updatedQuestionIds = updatedQuestions?.filter((question) => question !== null).map((question) => question._id);
 
-			const updatedQuestionIds = updatedQuestions.filter((question) => question !== null).map((question) => question._id);
-
-			setSingleLessonBeforeSave((prevData) => {
-				return {
-					...prevData,
-					questions: updatedQuestions.filter((question) => question !== null),
-					questionIds: updatedQuestionIds,
-				};
-			});
+			setSingleLessonBeforeSave((prevData) => ({
+				...prevData,
+				questions: updatedQuestions,
+				questionIds: updatedQuestionIds,
+			}));
 		}
 
 		if (isLessonUpdated || isQuestionUpdated.some((data) => data.isUpdated === true)) {
-			const updatedQuestionIds = updatedQuestions.filter((question) => question !== null).map((question) => question._id);
+			const updatedQuestionIds = updatedQuestions.map((question) => question._id);
 			try {
 				await axios.patch(`${base_url}/lessons/${lessonId}`, {
 					...singleLessonBeforeSave,
@@ -194,93 +224,33 @@ const AdminLessonEditPage = () => {
 				});
 
 				setIsLessonUpdated(false);
+
 				updateLessons(singleLessonBeforeSave);
 				setSingleLesson({
 					...singleLessonBeforeSave,
 					questionIds: updatedQuestionIds,
 				});
 			} catch (error) {
-				console.log(error);
+				console.error('Error updating lesson:', error);
 			}
 		}
 
-		const questionUpdateData: QuestionUpdateTrack[] = updatedQuestions?.reduce((acc: QuestionUpdateTrack[], value: QuestionInterface) => {
-			acc.push({ questionId: value?._id, isUpdated: false });
-			return acc;
-		}, []);
+		const questionUpdateData: QuestionUpdateTrack[] = updatedQuestions.map((question) => ({
+			questionId: question._id,
+			isUpdated: false,
+		}));
 		setIsQuestionUpdated(questionUpdateData);
 	};
 
-	//questions created before save
-
-	// const cloneQuestion = async (question: QuestionInterface) => {
-	// 	try {
-	// 		const response = await axios.post(`${base_url}/questions/organisation/${orgId}`, {
-	// 			questionType: question.questionType,
-	// 			question: question.question,
-	// 			imageUrl: question.imageUrl,
-	// 			videoUrl: question.videoUrl,
-	// 			options: question.options,
-	// 			correctAnswer: question.correctAnswer,
-	// 			orgId,
-	// 		});
-
-	// 		setIsLessonUpdated(true);
-
-	// 		setQuestions((prevQuestions) => {
-	// 			const cloneIndex = prevQuestions.findIndex((q) => {
-	// 				if (q !== null) {
-	// 					return q._id === question._id;
-	// 				}
-	// 			});
-
-	// 			// Insert the cloned question right after it in the questions array
-	// 			const updatedQuestions = [...prevQuestions];
-	// 			updatedQuestions.splice(cloneIndex + 1, 0, response.data);
-
-	// 			// Insert the _id of the cloned question in the questionIds array
-	// 			const updatedIds = [...questionIds];
-	// 			updatedIds.splice(cloneIndex + 1, 0, response.data._id);
-
-	// 			// Update both questions and questionIds arrays
-	// 			setQuestionIds(updatedIds);
-
-	// 			setSingleLesson((prevLesson) => {
-	// 				if (prevLesson !== undefined) {
-	// 					// Find the index of the cloned question
-	// 					const cloneIndex = prevLesson.questions.findIndex((q) => {
-	// 						if (q !== null) {
-	// 							return q._id === question._id;
-	// 						}
-	// 					});
-	// 					// Insert the cloned question right after it
-	// 					const updatedQuestions = [...prevLesson.questions];
-	// 					updatedQuestions.splice(cloneIndex + 1, 0, response.data);
-
-	// 					return {
-	// 						...prevLesson,
-	// 						questions: updatedQuestions,
-	// 						questionIds: updatedIds,
-	// 					};
-	// 				}
-	// 				return prevLesson;
-	// 			});
-
-	// 			return updatedQuestions;
-	// 		});
-	// 	} catch (error) {
-	// 		console.log(error);
-	// 	}
-	// };
-
 	const removeQuestion = (question: QuestionInterface) => {
 		const updatedQuestions = singleLessonBeforeSave.questions.filter((thisQuestion) => {
-			if (thisQuestion !== null) {
-				return thisQuestion._id !== question._id;
-			}
+			return thisQuestion?._id !== question._id;
 		});
+
 		const updatedQuestionIds = updatedQuestions.map((question) => question._id!);
 		setIsLessonUpdated(true);
+
+		setIsQuestionUpdated((prevData: QuestionUpdateTrack[]) => prevData.filter((data) => data.questionId !== question._id));
 
 		setSingleLessonBeforeSave((prevLesson) => {
 			return {
@@ -290,23 +260,6 @@ const AdminLessonEditPage = () => {
 			};
 		});
 	};
-
-	const {
-		options,
-		setOptions,
-		correctAnswerIndex,
-		setCorrectAnswerIndex,
-		correctAnswer,
-		setCorrectAnswer,
-		isDuplicateOption,
-		setIsDuplicateOption,
-		setIsMinimumOptions,
-		isMinimumOptions,
-		addOption,
-		removeOption,
-		handleCorrectAnswerChange,
-		handleOptionChange,
-	} = useNewQuestion();
 
 	return (
 		<DashboardPagesLayout pageName='Edit Lesson' customSettings={{ justifyContent: 'flex-start' }}>
@@ -426,13 +379,15 @@ const AdminLessonEditPage = () => {
 										setCorrectAnswer('');
 										setIsDuplicateOption(false);
 										setIsMinimumOptions(true);
+										setCorrectAnswerIndex(-1);
 									}}>
 									Create Question
 								</CustomSubmitButton>
 							</Box>
 						</Box>
 
-						{singleLessonBeforeSave?.questionIds.length === 0 || singleLessonBeforeSave?.questions.length === 0 ? (
+						{singleLessonBeforeSave?.questionIds.length === 0 ||
+						singleLessonBeforeSave?.questions.filter((question) => question !== null).length === 0 ? (
 							<Box
 								sx={{
 									display: 'flex',
@@ -455,6 +410,15 @@ const AdminLessonEditPage = () => {
 								{singleLessonBeforeSave.questions &&
 									singleLessonBeforeSave.questions.length !== 0 &&
 									singleLessonBeforeSave.questions.map((question, index) => {
+										const filteredQuestionType = questionTypes.filter((type) => {
+											if (question !== null) {
+												return type._id === question.questionType || type.name === question.questionType;
+											}
+										});
+										let questionTypeName: string = '';
+										if (filteredQuestionType.length !== 0) {
+											questionTypeName = filteredQuestionType[0].name;
+										}
 										if (question !== null) {
 											return (
 												<Reorder.Item
@@ -519,241 +483,39 @@ const AdminLessonEditPage = () => {
 																	<Tooltip title='Edit' placement='top'>
 																		<IconButton
 																			onClick={() => {
+																				setOptions(question.options);
+																				setCorrectAnswer(question.correctAnswer);
+																				const correctAnswerIndex = question.options.indexOf(question.correctAnswer);
+																				setCorrectAnswerIndex(correctAnswerIndex);
 																				toggleQuestionEditModal(index);
-																				if (question.options && question.correctAnswer) {
-																					setOptions(question.options);
-																					setCorrectAnswer(question.correctAnswer);
-																				}
 																			}}>
 																			<Edit />
 																		</IconButton>
 																	</Tooltip>
-
-																	<CustomDialog
-																		openModal={editQuestionModalOpen[index]}
-																		closeModal={() => {
-																			closeQuestionEditModal(index);
-																			setCorrectAnswerIndex(-1);
-																		}}
-																		title='Edit Question'>
-																		<form
-																			onSubmit={(e: React.FormEvent<HTMLFormElement>) => {
-																				e.preventDefault();
-																			}}>
-																			<DialogContent
-																				sx={{
-																					display: 'flex',
-																					flexDirection: 'column',
-																					justifyContent: 'center',
-																					alignItems: 'center',
-
-																					margin: '0.5rem 0.5rem 2rem 0.5rem',
-																				}}>
-																				<Box sx={{ display: 'flex', justifyContent: 'flex-start', mb: '2rem', width: '100%' }}>
-																					<Typography>
-																						{question !== null &&
-																							questionTypes
-																								.filter((type) => type._id === question.questionType)
-																								.map((filteredType) => filteredType.name)[0]}
-																					</Typography>
-																				</Box>
-																				<Box
-																					sx={{
-																						display: 'flex',
-																						width: '100%',
-																					}}>
-																					<CustomTextField
-																						label='Video Url'
-																						required={false}
-																						value={question.videoUrl}
-																						onChange={(e) => {
-																							setSingleLessonBeforeSave((prevData) => {
-																								if (!prevData.questions) return prevData; // Return prevData if questions array is not defined
-
-																								const updatedQuestions = prevData.questions.map((prevQuestion) => {
-																									if (prevQuestion._id === question._id) {
-																										return {
-																											...prevQuestion,
-																											videoUrl: e.target.value,
-																										};
-																									} else {
-																										return prevQuestion;
-																									}
-																								});
-
-																								return {
-																									...prevData,
-																									questions: updatedQuestions, // Update the questions array with the modified question
-																								};
-																							});
-																						}}
-																					/>
-																					<CustomTextField
-																						label='Image Url'
-																						required={false}
-																						value={question.imageUrl}
-																						sx={{ marginLeft: '1rem' }}
-																						onChange={(e) => {
-																							setSingleLessonBeforeSave((prevData) => {
-																								if (!prevData.questions) return prevData; // Return prevData if questions array is not defined
-
-																								const updatedQuestions = prevData.questions.map((prevQuestion) => {
-																									if (prevQuestion._id === question._id) {
-																										return {
-																											...prevQuestion,
-																											imageUrl: e.target.value,
-																										};
-																									} else {
-																										return prevQuestion;
-																									}
-																								});
-
-																								return {
-																									...prevData,
-																									questions: updatedQuestions, // Update the questions array with the modified question
-																								};
-																							});
-																						}}
-																					/>
-																				</Box>
-																				<Box sx={{ width: '100%' }}>
-																					<CustomTextField
-																						label='Question'
-																						value={question.question}
-																						multiline={true}
-																						rows={1}
-																						onChange={(e) => {
-																							setSingleLessonBeforeSave((prevData) => {
-																								if (!prevData.questions) return prevData; // Return prevData if questions array is not defined
-
-																								const updatedQuestions = prevData.questions.map((prevQuestion) => {
-																									if (prevQuestion._id === question._id) {
-																										return {
-																											...prevQuestion,
-																											question: e.target.value,
-																										};
-																									} else {
-																										return prevQuestion;
-																									}
-																								});
-
-																								return {
-																									...prevData,
-																									questions: updatedQuestions, // Update the questions array with the modified question
-																								};
-																							});
-																						}}
-																					/>
-																				</Box>
-																				<Box
-																					sx={{
-																						width: '90%',
-																					}}>
-																					{question.options &&
-																						options.map((option, index) => (
-																							<Box
-																								key={index}
-																								sx={{
-																									display: 'flex',
-																									justifyContent: 'flex-end',
-																									alignItems: 'center',
-																									width: '100%',
-																									marginLeft: '3rem',
-																								}}>
-																								<Tooltip title='Correct Answer' placement='left'>
-																									<FormControlLabel
-																										control={
-																											<Radio
-																												checked={index === correctAnswerIndex}
-																												onChange={() => handleCorrectAnswerChange(index)}
-																												color='primary'
-																											/>
-																										}
-																										label=''
-																									/>
-																								</Tooltip>
-																								{index === options.length - 1 && (
-																									<Tooltip title='Add Option' placement='top'>
-																										<IconButton onClick={addOption}>
-																											<AddCircle />
-																										</IconButton>
-																									</Tooltip>
-																								)}
-																								<CustomTextField
-																									label={`Option ${index + 1}`}
-																									value={option}
-																									onChange={(e) => handleOptionChange(index, e.target.value)}
-																									sx={{
-																										marginTop: '0.75rem',
-																										marginRight: index === 0 ? '2.5rem' : 0,
-																										borderBottom: option === question.correctAnswer ? 'solid 0.2rem green' : 'inherit',
-																									}}
-																								/>
-																								{index > 0 && (
-																									<Tooltip title='Remove Option' placement='top'>
-																										<IconButton onClick={() => removeOption(index)}>
-																											<RemoveCircle />
-																										</IconButton>
-																									</Tooltip>
-																								)}
-																							</Box>
-																						))}
-																				</Box>
-																			</DialogContent>
-
-																			<CustomDialogActions
-																				onCancel={() => {
-																					closeQuestionEditModal(index);
-																					setCorrectAnswerIndex(-1);
-																				}}
-																				cancelBtnText='Cancel'
-																				onSubmit={() => {
-																					closeQuestionEditModal(index);
-
-																					setSingleLessonBeforeSave((prevData) => {
-																						if (!prevData.questions) return prevData; // Return prevData if questions array is not defined
-
-																						const updatedQuestions = prevData.questions
-																							.filter((question) => question !== null)
-																							.map((prevQuestion) => {
-																								if (prevQuestion._id === question._id) {
-																									return {
-																										...prevQuestion,
-																										options: options.filter((option) => option !== ''),
-																										correctAnswer,
-																									};
-																								} else {
-																									return prevQuestion;
-																								}
-																							});
-
-																						return {
-																							...prevData,
-																							questions: updatedQuestions, // Update the questions array with the modified question
-																						};
-																					});
-
-																					setIsQuestionUpdated((prevData: QuestionUpdateTrack[]) => {
-																						setIsLessonUpdated(true);
-																						if (prevData) {
-																							prevData = prevData.map((data) => {
-																								if (data.questionId === question._id) {
-																									return {
-																										...data,
-																										isUpdated: true,
-																									};
-																								}
-																								return data;
-																							})!;
-																						}
-																						return prevData;
-																					});
-																				}}
-																				submitBtnText='Save'
-																				submitBtnType='button'
-																			/>
-																		</form>
-																	</CustomDialog>
+																	<EditQuestionDialog
+																		fromLessonEditPage={true}
+																		question={question}
+																		correctAnswerIndex={correctAnswerIndex}
+																		index={index}
+																		options={options}
+																		correctAnswer={correctAnswer}
+																		questionType={questionTypeName}
+																		isMinimumOptions={isMinimumOptions}
+																		isDuplicateOption={isDuplicateOption}
+																		setSingleLessonBeforeSave={setSingleLessonBeforeSave}
+																		setIsLessonUpdated={setIsLessonUpdated}
+																		handleCorrectAnswerChange={handleCorrectAnswerChange}
+																		setCorrectAnswerIndex={setCorrectAnswerIndex}
+																		handleOptionChange={handleOptionChange}
+																		closeQuestionEditModal={closeQuestionEditModal}
+																		setIsQuestionUpdated={setIsQuestionUpdated}
+																		editQuestionModalOpen={editQuestionModalOpen}
+																		addOption={addOption}
+																		removeOption={removeOption}
+																		setCorrectAnswer={setCorrectAnswer}
+																		setIsDuplicateOption={setIsDuplicateOption}
+																		setIsMinimumOptions={setIsMinimumOptions}
+																	/>
 																</Box>
 																<Tooltip title='Remove' placement='top'>
 																	<IconButton onClick={() => removeQuestion(question)}>
