@@ -387,7 +387,7 @@ const AdminLessonEditPage = () => {
 						</Box>
 
 						{singleLessonBeforeSave?.questionIds.length === 0 ||
-						singleLessonBeforeSave?.questions.filter((question) => question !== null).length === 0 ? (
+						singleLessonBeforeSave?.questions?.filter((question) => question !== null).length === 0 ? (
 							<Box
 								sx={{
 									display: 'flex',
@@ -398,138 +398,140 @@ const AdminLessonEditPage = () => {
 								<Typography variant='body1'>No question for this lesson</Typography>
 							</Box>
 						) : (
-							<Reorder.Group
-								axis='y'
-								values={singleLessonBeforeSave.questions}
-								onReorder={(newQuestions): void => {
-									setIsLessonUpdated(true);
-									setSingleLessonBeforeSave((prevData) => {
-										return { ...prevData, questions: newQuestions, questionIds: newQuestions.map((question) => question._id) };
-									});
-								}}>
-								{singleLessonBeforeSave.questions &&
-									singleLessonBeforeSave.questions.length !== 0 &&
-									singleLessonBeforeSave.questions.map((question, index) => {
-										const filteredQuestionType = questionTypes.filter((type) => {
-											if (question !== null) {
-												return type._id === question.questionType || type.name === question.questionType;
-											}
+							<Box sx={{ mb: '5rem' }}>
+								<Reorder.Group
+									axis='y'
+									values={singleLessonBeforeSave.questions}
+									onReorder={(newQuestions): void => {
+										setIsLessonUpdated(true);
+										setSingleLessonBeforeSave((prevData) => {
+											return { ...prevData, questions: newQuestions, questionIds: newQuestions.map((question) => question._id) };
 										});
-										let questionTypeName: string = '';
-										if (filteredQuestionType.length !== 0) {
-											questionTypeName = filteredQuestionType[0].name;
-										}
-										if (question !== null) {
-											return (
-												<Reorder.Item
-													key={question._id}
-													value={question}
-													style={{
-														listStyle: 'none',
-														boxShadow,
-													}}>
-													<Box
+									}}>
+									{singleLessonBeforeSave.questions &&
+										singleLessonBeforeSave.questions.length !== 0 &&
+										singleLessonBeforeSave.questions.map((question, index) => {
+											const filteredQuestionType = questionTypes.filter((type) => {
+												if (question !== null) {
+													return type._id === question.questionType || type.name === question.questionType;
+												}
+											});
+											let questionTypeName: string = '';
+											if (filteredQuestionType.length !== 0) {
+												questionTypeName = filteredQuestionType[0].name;
+											}
+											if (question !== null) {
+												return (
+													<Reorder.Item
 														key={question._id}
-														sx={{
-															display: 'flex',
-															alignItems: 'center',
-															height: '5rem',
-															width: '100%',
-															backgroundColor: theme.bgColor?.common,
-															margin: '1.25rem 0',
-															borderRadius: '0.25rem',
-															boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
-															cursor: 'pointer',
+														value={question}
+														style={{
+															listStyle: 'none',
+															boxShadow,
 														}}>
 														<Box
-															sx={{
-																height: '5rem',
-																width: '4rem',
-															}}>
-															<img
-																src='https://images.unsplash.com/photo-1601027847350-0285867c31f7?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8N3x8cXVlc3Rpb24lMjBtYXJrfGVufDB8fDB8fHww'
-																alt='question_img'
-																height='100%'
-																width='100%'
-																style={{
-																	borderRadius: '0.25rem 0 0 0.25rem',
-																}}
-															/>
-														</Box>
-														<Box
+															key={question._id}
 															sx={{
 																display: 'flex',
-																justifyContent: 'space-between',
 																alignItems: 'center',
+																height: '5rem',
 																width: '100%',
-																mr: '1rem',
+																backgroundColor: theme.bgColor?.common,
+																margin: '1.25rem 0',
+																borderRadius: '0.25rem',
+																boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
+																cursor: 'pointer',
 															}}>
-															<Box sx={{ ml: '1rem' }}>
-																<Typography variant='h6'>{question.question}</Typography>
+															<Box
+																sx={{
+																	height: '5rem',
+																	width: '4rem',
+																}}>
+																<img
+																	src='https://images.unsplash.com/photo-1601027847350-0285867c31f7?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8N3x8cXVlc3Rpb24lMjBtYXJrfGVufDB8fDB8fHww'
+																	alt='question_img'
+																	height='100%'
+																	width='100%'
+																	style={{
+																		borderRadius: '0.25rem 0 0 0.25rem',
+																	}}
+																/>
 															</Box>
+															<Box
+																sx={{
+																	display: 'flex',
+																	justifyContent: 'space-between',
+																	alignItems: 'center',
+																	width: '100%',
+																	mr: '1rem',
+																}}>
+																<Box sx={{ ml: '1rem' }}>
+																	<Typography variant='h6'>{question.question}</Typography>
+																</Box>
 
-															<Box sx={{ display: 'flex' }}>
-																<Box>
-																	<Tooltip title='Clone' placement='top'>
-																		<IconButton
-																			onClick={() => {
-																				// cloneQuestion(question);
-																			}}>
-																			<FileCopy />
+																<Box sx={{ display: 'flex' }}>
+																	<Box>
+																		<Tooltip title='Clone' placement='top'>
+																			<IconButton
+																				onClick={() => {
+																					// cloneQuestion(question);
+																				}}>
+																				<FileCopy />
+																			</IconButton>
+																		</Tooltip>
+																	</Box>
+																	<Box>
+																		<Tooltip title='Edit' placement='top'>
+																			<IconButton
+																				onClick={() => {
+																					setOptions(question.options);
+																					setCorrectAnswer(question.correctAnswer);
+																					const correctAnswerIndex = question.options.indexOf(question.correctAnswer);
+																					setCorrectAnswerIndex(correctAnswerIndex);
+																					toggleQuestionEditModal(index);
+																				}}>
+																				<Edit />
+																			</IconButton>
+																		</Tooltip>
+																		<EditQuestionDialog
+																			fromLessonEditPage={true}
+																			question={question}
+																			correctAnswerIndex={correctAnswerIndex}
+																			index={index}
+																			options={options}
+																			correctAnswer={correctAnswer}
+																			questionType={questionTypeName}
+																			isMinimumOptions={isMinimumOptions}
+																			isDuplicateOption={isDuplicateOption}
+																			setSingleLessonBeforeSave={setSingleLessonBeforeSave}
+																			setIsLessonUpdated={setIsLessonUpdated}
+																			handleCorrectAnswerChange={handleCorrectAnswerChange}
+																			setCorrectAnswerIndex={setCorrectAnswerIndex}
+																			handleOptionChange={handleOptionChange}
+																			closeQuestionEditModal={closeQuestionEditModal}
+																			setIsQuestionUpdated={setIsQuestionUpdated}
+																			editQuestionModalOpen={editQuestionModalOpen}
+																			addOption={addOption}
+																			removeOption={removeOption}
+																			setCorrectAnswer={setCorrectAnswer}
+																			setIsDuplicateOption={setIsDuplicateOption}
+																			setIsMinimumOptions={setIsMinimumOptions}
+																		/>
+																	</Box>
+																	<Tooltip title='Remove' placement='top'>
+																		<IconButton onClick={() => removeQuestion(question)}>
+																			<Delete />
 																		</IconButton>
 																	</Tooltip>
 																</Box>
-																<Box>
-																	<Tooltip title='Edit' placement='top'>
-																		<IconButton
-																			onClick={() => {
-																				setOptions(question.options);
-																				setCorrectAnswer(question.correctAnswer);
-																				const correctAnswerIndex = question.options.indexOf(question.correctAnswer);
-																				setCorrectAnswerIndex(correctAnswerIndex);
-																				toggleQuestionEditModal(index);
-																			}}>
-																			<Edit />
-																		</IconButton>
-																	</Tooltip>
-																	<EditQuestionDialog
-																		fromLessonEditPage={true}
-																		question={question}
-																		correctAnswerIndex={correctAnswerIndex}
-																		index={index}
-																		options={options}
-																		correctAnswer={correctAnswer}
-																		questionType={questionTypeName}
-																		isMinimumOptions={isMinimumOptions}
-																		isDuplicateOption={isDuplicateOption}
-																		setSingleLessonBeforeSave={setSingleLessonBeforeSave}
-																		setIsLessonUpdated={setIsLessonUpdated}
-																		handleCorrectAnswerChange={handleCorrectAnswerChange}
-																		setCorrectAnswerIndex={setCorrectAnswerIndex}
-																		handleOptionChange={handleOptionChange}
-																		closeQuestionEditModal={closeQuestionEditModal}
-																		setIsQuestionUpdated={setIsQuestionUpdated}
-																		editQuestionModalOpen={editQuestionModalOpen}
-																		addOption={addOption}
-																		removeOption={removeOption}
-																		setCorrectAnswer={setCorrectAnswer}
-																		setIsDuplicateOption={setIsDuplicateOption}
-																		setIsMinimumOptions={setIsMinimumOptions}
-																	/>
-																</Box>
-																<Tooltip title='Remove' placement='top'>
-																	<IconButton onClick={() => removeQuestion(question)}>
-																		<Delete />
-																	</IconButton>
-																</Tooltip>
 															</Box>
 														</Box>
-													</Box>
-												</Reorder.Item>
-											);
-										}
-									})}
-							</Reorder.Group>
+													</Reorder.Item>
+												);
+											}
+										})}
+								</Reorder.Group>
+							</Box>
 						)}
 					</form>
 				</Box>
