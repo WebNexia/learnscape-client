@@ -24,6 +24,9 @@ interface LessonEditorBoxProps {
 	handleLessonUpdate: (event: React.FormEvent<Element>) => void;
 	setIsLessonUpdated: React.Dispatch<React.SetStateAction<boolean>>;
 	setIsQuestionUpdated: React.Dispatch<React.SetStateAction<QuestionUpdateTrack[]>>;
+	resetImageUpload: () => void;
+	resetVideoUpload: () => void;
+	resetEnterImageVideoUrl: () => void;
 }
 
 const LessonEditorBox = ({
@@ -42,10 +45,14 @@ const LessonEditorBox = ({
 	handleLessonUpdate,
 	setIsLessonUpdated,
 	setIsQuestionUpdated,
+	resetImageUpload,
+	resetVideoUpload,
+	resetEnterImageVideoUrl,
 }: LessonEditorBoxProps) => {
 	const [isVideoPlayerOpen, setIsVideoPlayerOpen] = useState<boolean>(false);
 	const vertical = 'top';
 	const horizontal = 'center';
+
 	return (
 		<Box
 			sx={{
@@ -56,34 +63,52 @@ const LessonEditorBox = ({
 			}}>
 			<Box sx={{ display: 'flex', alignItems: 'center', textAlign: 'center' }}>
 				<Box sx={{ height: '8rem', width: '12rem', mr: '2rem' }}>
-					{singleLessonBeforeSave?.imageUrl && (
-						<img
-							src={singleLessonBeforeSave.imageUrl}
-							alt='course_img'
-							height='100%'
-							style={{
-								borderRadius: '0.2rem',
-								boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
-							}}
-						/>
-					)}
+					<img
+						src={
+							singleLessonBeforeSave.imageUrl === '' ? 'https://directmobilityonline.co.uk/assets/img/noimage.png' : singleLessonBeforeSave.imageUrl
+						}
+						alt='lesson_img'
+						height='100%'
+						width='100%'
+						style={{
+							borderRadius: '0.2rem',
+							boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
+						}}
+					/>
+
 					<Typography variant='body2' sx={{ mt: '0.35rem' }}>
 						Lesson Image
 					</Typography>
+					{isEditMode && singleLessonBeforeSave.imageUrl !== '' && (
+						<Typography
+							variant='body2'
+							sx={{ fontSize: '0.75rem', textDecoration: 'underline', cursor: 'pointer' }}
+							onClick={() => {
+								setSingleLessonBeforeSave((prevData) => {
+									return {
+										...prevData,
+										imageUrl: '',
+									};
+								});
+
+								resetImageUpload();
+							}}>
+							Remove
+						</Typography>
+					)}
 				</Box>
-				<Box
-					sx={{ height: '8rem', width: '12rem', cursor: 'pointer' }}
-					onClick={() => {
-						if (singleLessonBeforeSave?.videoUrl) {
-							setIsVideoPlayerOpen(true);
-						}
-					}}>
+				<Box sx={{ height: '8rem', width: '12rem', cursor: 'pointer' }}>
 					{singleLessonBeforeSave?.videoUrl ? (
 						<Box
 							sx={{
 								height: '100%',
 								width: '100%',
 								position: 'relative',
+							}}
+							onClick={() => {
+								if (singleLessonBeforeSave?.videoUrl) {
+									setIsVideoPlayerOpen(true);
+								}
 							}}>
 							<ReactPlayer
 								url={singleLessonBeforeSave?.videoUrl}
@@ -136,6 +161,21 @@ const LessonEditorBox = ({
 					<Typography variant='body2' sx={{ mt: '0.35rem' }}>
 						Video Thumbnail
 					</Typography>
+					{isEditMode && singleLessonBeforeSave?.videoUrl !== '' && (
+						<Typography
+							variant='body2'
+							sx={{ fontSize: '0.75rem', textDecoration: 'underline', cursor: 'pointer' }}
+							onClick={() => {
+								setSingleLessonBeforeSave((prevData) => {
+									return {
+										...prevData,
+										videoUrl: '',
+									};
+								});
+							}}>
+							Remove
+						</Typography>
+					)}
 				</Box>
 				<CustomDialog
 					openModal={isVideoPlayerOpen}
@@ -173,6 +213,9 @@ const LessonEditorBox = ({
 								if (singleLessonBeforeSave?.title.trim() !== '' && singleLessonBeforeSave?.title !== '') {
 									setIsEditMode(false);
 									handleLessonUpdate(e as FormEvent<Element>);
+									resetImageUpload();
+									resetVideoUpload();
+									resetEnterImageVideoUrl();
 								} else {
 									setIsMissingField(true);
 									setIsMissingFieldMsgOpen(true);
@@ -192,6 +235,9 @@ const LessonEditorBox = ({
 									});
 									return prevData;
 								});
+								resetImageUpload();
+								resetVideoUpload();
+								resetEnterImageVideoUrl();
 							}}>
 							Cancel
 						</CustomCancelButton>
@@ -202,6 +248,9 @@ const LessonEditorBox = ({
 							<IconButton
 								onClick={() => {
 									setIsEditMode(true);
+									resetImageUpload();
+									resetVideoUpload();
+									resetEnterImageVideoUrl();
 								}}>
 								<Edit />
 							</IconButton>

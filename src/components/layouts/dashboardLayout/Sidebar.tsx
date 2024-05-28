@@ -114,7 +114,7 @@ const Sidebar = () => {
 							<SidebarBtn
 								btnText='Schedule'
 								IconName={CalendarMonth}
-								onClick={() => navigateWithPage(PageName.SCHEDULE, `/admin/schedule/user/${id || userId}`)}
+								onClick={() => navigateWithPage(PageName.ADMIN_SCHEDULE, `/admin/schedule/user/${id || userId}`)}
 								selectedPage={selectedPage}
 							/>
 							<SidebarBtn

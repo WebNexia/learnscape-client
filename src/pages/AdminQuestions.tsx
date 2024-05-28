@@ -93,7 +93,7 @@ const AdminQuestions = () => {
 	};
 
 	return (
-		<DashboardPagesLayout pageName='Lessons' customSettings={{ justifyContent: 'flex-start' }}>
+		<DashboardPagesLayout pageName='Questions' customSettings={{ justifyContent: 'flex-start' }}>
 			<Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'flex-end', padding: '2rem', width: '100%' }}>
 				<CustomSubmitButton
 					onClick={() => {

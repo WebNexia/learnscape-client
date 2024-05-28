@@ -28,6 +28,8 @@ const OrganisationContextProvider = (props: UserAuthContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const token = localStorage.getItem('user_token');
 
+	const [isLoaded, setIsLoaded] = useState<boolean>(false);
+
 	const [organisation, setOrganisation] = useState<Organisation>();
 	const [orgId, setOrgId] = useState<string>(() => {
 		if (token) {
@@ -43,6 +45,8 @@ const OrganisationContextProvider = (props: UserAuthContextProviderProps) => {
 		try {
 			const responseOrgData = await axios.get(`${base_url}/organisations/${orgId}`);
 			setOrganisation(responseOrgData.data.data[0]);
+
+			setIsLoaded(true);
 			// Store data in React Query cache
 			queryClient.setQueryData('organisation', responseOrgData.data.data[0]);
 		} catch (error) {
@@ -51,9 +55,7 @@ const OrganisationContextProvider = (props: UserAuthContextProviderProps) => {
 	};
 
 	const organisationQuery = useQuery('organisation', () => fetchOrganisationData(orgId), {
-		enabled: !!orgId,
-		refetchOnMount: false,
-		refetchOnWindowFocus: false,
+		enabled: !!orgId && !isLoaded,
 	});
 
 	if (organisationQuery.isLoading) {

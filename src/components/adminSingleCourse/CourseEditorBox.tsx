@@ -5,6 +5,7 @@ import CustomCancelButton from '../forms/customButtons/CustomCancelButton';
 import { Edit } from '@mui/icons-material';
 import { SingleCourse } from '../../interfaces/course';
 import { ChapterLessonData } from '../../pages/AdminCourseEditPage';
+import useImageUpload from '../../hooks/useImageUpload';
 
 interface CourseEditorBoxProps {
 	singleCourse?: SingleCourse;
@@ -16,6 +17,7 @@ interface CourseEditorBoxProps {
 	isNoChapterMsgOpen: boolean;
 	resetChanges: boolean;
 	isFree: boolean;
+	setSingleCourse: React.Dispatch<React.SetStateAction<SingleCourse | undefined>>;
 	setIsEditMode: React.Dispatch<React.SetStateAction<boolean>>;
 	setIsMissingFieldMsgOpen: React.Dispatch<React.SetStateAction<boolean>>;
 	setIsMissingField: React.Dispatch<React.SetStateAction<boolean>>;
@@ -37,6 +39,7 @@ const CourseEditorBox = ({
 	isNoChapterMsgOpen,
 	resetChanges,
 	isFree,
+	setSingleCourse,
 	setChapterLessonDataBeforeSave,
 	setIsEditMode,
 	setIsMissingFieldMsgOpen,
@@ -50,11 +53,14 @@ const CourseEditorBox = ({
 	const vertical = 'top';
 	const horizontal = 'center';
 
+	const { resetImageUpload } = useImageUpload();
+
 	const handleCancel = async (): Promise<void> => {
 		setIsEditMode(false);
 		setChapterLessonDataBeforeSave(chapterLessonData);
 		setResetChanges(!resetChanges);
 		setDeletedChapterIds([]);
+		resetImageUpload();
 	};
 
 	return (
@@ -67,10 +73,7 @@ const CourseEditorBox = ({
 			}}>
 			<Box sx={{ textAlign: 'center' }}>
 				<img
-					src={
-						singleCourse?.imageUrl ||
-						'https://images.unsplash.com/photo-1499750310107-5fef28a66643?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
-					}
+					src={singleCourse?.imageUrl || 'https://directmobilityonline.co.uk/assets/img/noimage.png'}
 					alt='course_img'
 					height='125rem'
 					style={{
@@ -81,6 +84,25 @@ const CourseEditorBox = ({
 				<Typography variant='body2' sx={{ mt: '0.25rem' }}>
 					Course Image
 				</Typography>
+				{isEditMode && singleCourse?.imageUrl !== '' && (
+					<Typography
+						variant='body2'
+						sx={{ fontSize: '0.75rem', textDecoration: 'underline', cursor: 'pointer' }}
+						onClick={() => {
+							setSingleCourse((prevData) => {
+								if (prevData !== undefined) {
+									return {
+										...prevData,
+										imageUrl: '',
+									};
+								}
+							});
+
+							resetImageUpload();
+						}}>
+						Remove
+					</Typography>
+				)}
 			</Box>
 			<Box sx={{ display: 'flex' }}>
 				<Box>

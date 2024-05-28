@@ -281,6 +281,7 @@ const AdminCourseEditPage = () => {
 					isNoChapterMsgOpen={isNoChapterMsgOpen}
 					resetChanges={resetChanges}
 					isFree={isFree}
+					setSingleCourse={setSingleCourse}
 					setIsEditMode={setIsEditMode}
 					setIsMissingFieldMsgOpen={setIsMissingFieldMsgOpen}
 					setIsNoChapterMsgOpen={setIsNoChapterMsgOpen}

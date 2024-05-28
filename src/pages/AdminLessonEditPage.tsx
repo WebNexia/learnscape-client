@@ -1,4 +1,4 @@
-import { Box, IconButton, Tooltip, Typography } from '@mui/material';
+import { Box, Button, FormControl, IconButton, Input, Tooltip, Typography } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import theme from '../themes';
 import { Delete, Edit, FileCopy } from '@mui/icons-material';
@@ -23,6 +23,8 @@ import useNewQuestion from '../hooks/useNewQuestion';
 import CreateQuestionDialog from '../components/forms/newQuestion/CreateQuestionDialog';
 import EditQuestionDialog from '../components/forms/editQuestion/EditQuestionDialog';
 import { QuestionsContext } from '../contexts/QuestionsContextProvider';
+import useImageUpload from '../hooks/useImageUpload';
+import useVideoUpload from '../hooks/useVideoUplaod';
 
 export interface QuestionUpdateTrack {
 	questionId: string;
@@ -34,8 +36,31 @@ const AdminLessonEditPage = () => {
 	const { orgId } = useContext(OrganisationContext);
 	const { updateLessonPublishing, updateLessons } = useContext(LessonsContext);
 
-	const { fetchQuestionTypes, questionTypes } = useContext(QuestionsContext);
+	const { questionTypes } = useContext(QuestionsContext);
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
+
+	const { imageUpload, isImgSizeLarge, handleImageChange, handleImageUpload, resetImageUpload } = useImageUpload();
+
+	const handleLessonImageUpload = () => {
+		handleImageUpload('LessonImages', (url) => {
+			setIsLessonUpdated(true);
+
+			setSingleLessonBeforeSave(() => {
+				return { ...singleLessonBeforeSave, imageUrl: url };
+			});
+		});
+	};
+
+	const { videoUpload, isVideoSizeLarge, handleVideoChange, handleVideoUpload, resetVideoUpload } = useVideoUpload();
+
+	const handleLessonVideoUpload = () => {
+		handleVideoUpload('LessonVideos', (url) => {
+			setSingleLessonBeforeSave((prevCourse) => ({
+				...prevCourse,
+				videoUrl: url,
+			}));
+		});
+	};
 
 	const defaultLesson: Lesson = {
 		_id: '',
@@ -65,6 +90,14 @@ const AdminLessonEditPage = () => {
 	const [isLessonUpdated, setIsLessonUpdated] = useState<boolean>(false);
 	const [isQuestionUpdated, setIsQuestionUpdated] = useState<QuestionUpdateTrack[]>([]);
 
+	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(true);
+	const [enterVideoUrl, setEnterVideoUrl] = useState<boolean>(true);
+
+	const resetEnterImageVideoUrl = () => {
+		setEnterVideoUrl(true);
+		setEnterImageUrl(true);
+	};
+
 	const [questionType, setQuestionType] = useState<string>('');
 
 	const [isQuestionCreateModalOpen, setIsQuestionCreateModalOpen] = useState<boolean>(false);
@@ -86,7 +119,6 @@ const AdminLessonEditPage = () => {
 	} = useNewQuestion();
 
 	useEffect(() => {
-		fetchQuestionTypes(orgId);
 		if (lessonId) {
 			const fetchSingleLessonData = async (lessonId: string): Promise<void> => {
 				try {
@@ -113,6 +145,9 @@ const AdminLessonEditPage = () => {
 			};
 			fetchSingleLessonData(lessonId);
 		}
+		resetVideoUpload();
+		resetImageUpload();
+		resetEnterImageVideoUrl();
 	}, [lessonId, isActive, resetChanges]);
 
 	// Define state for tracking edit modal visibility for each question
@@ -281,6 +316,9 @@ const AdminLessonEditPage = () => {
 					handleLessonUpdate={handleLessonUpdate}
 					setIsLessonUpdated={setIsLessonUpdated}
 					setIsQuestionUpdated={setIsQuestionUpdated}
+					resetImageUpload={resetImageUpload}
+					resetVideoUpload={resetVideoUpload}
+					resetEnterImageVideoUrl={resetEnterImageVideoUrl}
 				/>
 			</Box>
 
@@ -340,6 +378,7 @@ const AdminLessonEditPage = () => {
 									marginTop: '0.5rem',
 								}}
 								value={singleLessonBeforeSave?.title}
+								placeholder='Enter title'
 								onChange={(e) => {
 									setIsLessonUpdated(true);
 
@@ -352,6 +391,148 @@ const AdminLessonEditPage = () => {
 								error={isMissingField && singleLessonBeforeSave?.title === ''}
 							/>
 							{isMissingField && singleLessonBeforeSave?.title === '' && <CustomErrorMessage>Please enter a title</CustomErrorMessage>}
+						</Box>
+						<Box sx={{ display: 'flex', justifyContent: 'space-between', mt: '2rem', alignItems: 'flex-start' }}>
+							<Box sx={{ flex: 1, mr: '3rem' }}>
+								<FormControl sx={{ display: 'flex' }}>
+									<Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+										<Typography variant='h4'>Image</Typography>
+										<Box sx={{ display: 'flex' }}>
+											<Box>
+												<Typography
+													variant='body2'
+													sx={{ textDecoration: !enterImageUrl ? 'underline' : 'none', cursor: 'pointer' }}
+													onClick={() => setEnterImageUrl(false)}>
+													Upload
+												</Typography>
+											</Box>
+											<Typography sx={{ margin: '0 0.5rem' }}> | </Typography>
+											<Box>
+												<Typography
+													variant='body2'
+													sx={{ textDecoration: enterImageUrl ? 'underline' : 'none', cursor: 'pointer' }}
+													onClick={() => {
+														setEnterImageUrl(true);
+														resetImageUpload();
+													}}>
+													Enter URL
+												</Typography>
+											</Box>
+										</Box>
+									</Box>
+									{!enterImageUrl && (
+										<Box sx={{ display: 'flex', width: '100%', justifyContent: 'flex-start', alignItems: 'center', marginBottom: '0.25rem' }}>
+											<Input
+												type='file'
+												onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+													handleImageChange(e);
+													setIsLessonUpdated(true);
+												}}
+												inputProps={{ accept: '.jpg, .jpeg, .png' }} // Specify accepted file types
+												sx={{ width: '85%', backgroundColor: theme.bgColor?.common, marginTop: '0.5rem', padding: '0.35rem', mr: '0.75rem' }}
+											/>
+											<Button
+												onClick={handleLessonImageUpload}
+												variant='outlined'
+												sx={{ textTransform: 'capitalize', height: '2rem' }}
+												disabled={!imageUpload || isImgSizeLarge}>
+												Upload
+											</Button>
+										</Box>
+									)}
+									{isImgSizeLarge && <CustomErrorMessage>File size exceeds the limit of 1 MB </CustomErrorMessage>}
+									{enterImageUrl && (
+										<CustomTextField
+											value={singleLessonBeforeSave?.imageUrl}
+											placeholder='Image URL'
+											required={false}
+											sx={{ marginTop: '0.5rem' }}
+											onChange={(e) => {
+												setSingleLessonBeforeSave((prevCourse) => ({
+													...prevCourse,
+													imageUrl: e.target.value,
+												}));
+												setIsLessonUpdated(true);
+											}}
+										/>
+									)}
+								</FormControl>
+							</Box>
+							<Box sx={{ flex: 1 }}>
+								<FormControl sx={{ display: 'flex' }}>
+									<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+										<Box>
+											<Typography variant='h4'>Video</Typography>
+										</Box>
+										<Box sx={{ display: 'flex' }}>
+											<Box>
+												<Typography
+													variant='body2'
+													sx={{ textDecoration: !enterVideoUrl ? 'underline' : 'none', cursor: 'pointer' }}
+													onClick={() => setEnterVideoUrl(false)}>
+													Upload
+												</Typography>
+											</Box>
+											<Typography sx={{ margin: '0 0.5rem' }}> | </Typography>
+											<Box>
+												<Typography
+													variant='body2'
+													sx={{ textDecoration: enterVideoUrl ? 'underline' : 'none', cursor: 'pointer' }}
+													onClick={() => {
+														setEnterVideoUrl(true);
+														resetVideoUpload();
+													}}>
+													Enter URL
+												</Typography>
+											</Box>
+										</Box>
+									</Box>
+									{!enterVideoUrl && (
+										<>
+											<Box sx={{ display: 'flex', width: '100%', justifyContent: 'flex-start', alignItems: 'center', marginBottom: '0.85rem' }}>
+												<Input
+													type='file'
+													onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+														handleVideoChange(e);
+														setIsLessonUpdated(true);
+													}}
+													inputProps={{ accept: 'video/*' }} // Specify accepted file types
+													sx={{
+														width: '85%',
+														backgroundColor: theme.bgColor?.common,
+														marginTop: '0.5rem',
+														padding: '0.35rem',
+														mr: '0.75rem',
+													}}
+												/>
+												<Button
+													variant='outlined'
+													sx={{ textTransform: 'capitalize', height: '2rem' }}
+													onClick={handleLessonVideoUpload}
+													disabled={!videoUpload || isVideoSizeLarge}>
+													Upload
+												</Button>
+											</Box>
+											{isVideoSizeLarge && <CustomErrorMessage> Please upload a video smaller than 30MB.</CustomErrorMessage>}
+										</>
+									)}
+									{enterVideoUrl && (
+										<CustomTextField
+											value={singleLessonBeforeSave?.videoUrl}
+											placeholder='Video URL'
+											required={false}
+											sx={{ marginTop: '0.5rem' }}
+											onChange={(e) => {
+												setSingleLessonBeforeSave((prevCourse) => ({
+													...prevCourse,
+													videoUrl: e.target.value,
+												}));
+												setIsLessonUpdated(true);
+											}}
+										/>
+									)}
+								</FormControl>
+							</Box>
 						</Box>
 
 						<Box

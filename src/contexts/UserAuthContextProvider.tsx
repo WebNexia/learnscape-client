@@ -27,6 +27,7 @@ export const UserAuthContext = createContext<UserAuthContextTypes>({
 const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const token = localStorage.getItem('user_token');
+	const [isLoaded, setIsLoaded] = useState<boolean>(false);
 
 	const [user, setUser] = useState<User>();
 	const queryClient = useQueryClient();
@@ -44,6 +45,7 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 		try {
 			const responseUserData = await axios.get(`${base_url}/users/${userId}`);
 			setUser(responseUserData.data.data[0]);
+			setIsLoaded(true);
 			// Store data in React Query cache
 			queryClient.setQueryData('userData', responseUserData.data.data[0]);
 		} catch (error) {
@@ -52,7 +54,7 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 	};
 
 	const userQuery = useQuery('userData', () => fetchUserData(userId), {
-		enabled: !!userId,
+		enabled: !!userId && !isLoaded,
 	});
 
 	if (userQuery.isLoading) {
