@@ -1,4 +1,5 @@
-import { Box, Button, FormControl, IconButton, Input, Tooltip, Typography } from '@mui/material';
+import { Box, IconButton, Tooltip, Typography } from '@mui/material';
+
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import theme from '../themes';
 import { Delete, Edit, FileCopy } from '@mui/icons-material';
@@ -24,7 +25,9 @@ import CreateQuestionDialog from '../components/forms/newQuestion/CreateQuestion
 import EditQuestionDialog from '../components/forms/editQuestion/EditQuestionDialog';
 import { QuestionsContext } from '../contexts/QuestionsContextProvider';
 import useImageUpload from '../hooks/useImageUpload';
-import useVideoUpload from '../hooks/useVideoUplaod';
+import useVideoUpload from '../hooks/useVideoUpload';
+import HandleImageUploadURL from '../components/forms/uploadImageVideo/HandleImageUploadURL';
+import HandleVideoUploadURL from '../components/forms/uploadImageVideo/HandleVideoUploadURL';
 
 export interface QuestionUpdateTrack {
 	questionId: string;
@@ -39,28 +42,29 @@ const AdminLessonEditPage = () => {
 	const { questionTypes } = useContext(QuestionsContext);
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
-	const { imageUpload, isImgSizeLarge, handleImageChange, handleImageUpload, resetImageUpload } = useImageUpload();
+	const {
+		options,
+		setOptions,
+		correctAnswerIndex,
+		setCorrectAnswerIndex,
+		correctAnswer,
+		setCorrectAnswer,
+		isDuplicateOption,
+		setIsDuplicateOption,
+		setIsMinimumOptions,
+		isMinimumOptions,
+		addOption,
+		removeOption,
+		handleCorrectAnswerChange,
+		handleOptionChange,
+	} = useNewQuestion();
 
-	const handleLessonImageUpload = () => {
-		handleImageUpload('LessonImages', (url) => {
-			setIsLessonUpdated(true);
+	const { resetImageUpload } = useImageUpload();
 
-			setSingleLessonBeforeSave(() => {
-				return { ...singleLessonBeforeSave, imageUrl: url };
-			});
-		});
-	};
+	const y = useMotionValue(0);
+	const boxShadow = useRaisedShadow(y);
 
-	const { videoUpload, isVideoSizeLarge, handleVideoChange, handleVideoUpload, resetVideoUpload } = useVideoUpload();
-
-	const handleLessonVideoUpload = () => {
-		handleVideoUpload('LessonVideos', (url) => {
-			setSingleLessonBeforeSave((prevCourse) => ({
-				...prevCourse,
-				videoUrl: url,
-			}));
-		});
-	};
+	const { resetVideoUpload } = useVideoUpload();
 
 	const defaultLesson: Lesson = {
 		_id: '',
@@ -101,22 +105,6 @@ const AdminLessonEditPage = () => {
 	const [questionType, setQuestionType] = useState<string>('');
 
 	const [isQuestionCreateModalOpen, setIsQuestionCreateModalOpen] = useState<boolean>(false);
-	const {
-		options,
-		setOptions,
-		correctAnswerIndex,
-		setCorrectAnswerIndex,
-		correctAnswer,
-		setCorrectAnswer,
-		isDuplicateOption,
-		setIsDuplicateOption,
-		setIsMinimumOptions,
-		isMinimumOptions,
-		addOption,
-		removeOption,
-		handleCorrectAnswerChange,
-		handleOptionChange,
-	} = useNewQuestion();
 
 	useEffect(() => {
 		if (lessonId) {
@@ -179,8 +167,6 @@ const AdminLessonEditPage = () => {
 		}
 	};
 
-	const y = useMotionValue(0);
-	const boxShadow = useRaisedShadow(y);
 	const handleLessonUpdate = async (e: FormEvent): Promise<void> => {
 		e.preventDefault();
 
@@ -392,146 +378,51 @@ const AdminLessonEditPage = () => {
 							/>
 							{isMissingField && singleLessonBeforeSave?.title === '' && <CustomErrorMessage>Please enter a title</CustomErrorMessage>}
 						</Box>
-						<Box sx={{ display: 'flex', justifyContent: 'space-between', mt: '2rem', alignItems: 'flex-start' }}>
-							<Box sx={{ flex: 1, mr: '3rem' }}>
-								<FormControl sx={{ display: 'flex' }}>
-									<Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-										<Typography variant='h4'>Image</Typography>
-										<Box sx={{ display: 'flex' }}>
-											<Box>
-												<Typography
-													variant='body2'
-													sx={{ textDecoration: !enterImageUrl ? 'underline' : 'none', cursor: 'pointer' }}
-													onClick={() => setEnterImageUrl(false)}>
-													Upload
-												</Typography>
-											</Box>
-											<Typography sx={{ margin: '0 0.5rem' }}> | </Typography>
-											<Box>
-												<Typography
-													variant='body2'
-													sx={{ textDecoration: enterImageUrl ? 'underline' : 'none', cursor: 'pointer' }}
-													onClick={() => {
-														setEnterImageUrl(true);
-														resetImageUpload();
-													}}>
-													Enter URL
-												</Typography>
-											</Box>
-										</Box>
-									</Box>
-									{!enterImageUrl && (
-										<Box sx={{ display: 'flex', width: '100%', justifyContent: 'flex-start', alignItems: 'center', marginBottom: '0.25rem' }}>
-											<Input
-												type='file'
-												onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-													handleImageChange(e);
-													setIsLessonUpdated(true);
-												}}
-												inputProps={{ accept: '.jpg, .jpeg, .png' }} // Specify accepted file types
-												sx={{ width: '85%', backgroundColor: theme.bgColor?.common, marginTop: '0.5rem', padding: '0.35rem', mr: '0.75rem' }}
-											/>
-											<Button
-												onClick={handleLessonImageUpload}
-												variant='outlined'
-												sx={{ textTransform: 'capitalize', height: '2rem' }}
-												disabled={!imageUpload || isImgSizeLarge}>
-												Upload
-											</Button>
-										</Box>
-									)}
-									{isImgSizeLarge && <CustomErrorMessage>File size exceeds the limit of 1 MB </CustomErrorMessage>}
-									{enterImageUrl && (
-										<CustomTextField
-											value={singleLessonBeforeSave?.imageUrl}
-											placeholder='Image URL'
-											required={false}
-											sx={{ marginTop: '0.5rem' }}
-											onChange={(e) => {
-												setSingleLessonBeforeSave((prevCourse) => ({
-													...prevCourse,
-													imageUrl: e.target.value,
-												}));
-												setIsLessonUpdated(true);
-											}}
-										/>
-									)}
-								</FormControl>
+
+						<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mt: '2rem', width: '100%' }}>
+							<Box sx={{ flex: 1, mr: '2rem' }}>
+								<HandleImageUploadURL
+									onImageUploadLogic={(url) => {
+										setIsLessonUpdated(true);
+
+										setSingleLessonBeforeSave(() => {
+											return { ...singleLessonBeforeSave, imageUrl: url };
+										});
+									}}
+									onChangeImgUrl={(e) => {
+										setSingleLessonBeforeSave((prevCourse) => ({
+											...prevCourse,
+											imageUrl: e.target.value,
+										}));
+										setIsLessonUpdated(true);
+									}}
+									imageUrlValue={singleLessonBeforeSave?.imageUrl}
+									imageFolderName='LessonImages'
+									enterImageUrl={enterImageUrl}
+									setEnterImageUrl={setEnterImageUrl}
+								/>
 							</Box>
 							<Box sx={{ flex: 1 }}>
-								<FormControl sx={{ display: 'flex' }}>
-									<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-										<Box>
-											<Typography variant='h4'>Video</Typography>
-										</Box>
-										<Box sx={{ display: 'flex' }}>
-											<Box>
-												<Typography
-													variant='body2'
-													sx={{ textDecoration: !enterVideoUrl ? 'underline' : 'none', cursor: 'pointer' }}
-													onClick={() => setEnterVideoUrl(false)}>
-													Upload
-												</Typography>
-											</Box>
-											<Typography sx={{ margin: '0 0.5rem' }}> | </Typography>
-											<Box>
-												<Typography
-													variant='body2'
-													sx={{ textDecoration: enterVideoUrl ? 'underline' : 'none', cursor: 'pointer' }}
-													onClick={() => {
-														setEnterVideoUrl(true);
-														resetVideoUpload();
-													}}>
-													Enter URL
-												</Typography>
-											</Box>
-										</Box>
-									</Box>
-									{!enterVideoUrl && (
-										<>
-											<Box sx={{ display: 'flex', width: '100%', justifyContent: 'flex-start', alignItems: 'center', marginBottom: '0.85rem' }}>
-												<Input
-													type='file'
-													onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-														handleVideoChange(e);
-														setIsLessonUpdated(true);
-													}}
-													inputProps={{ accept: 'video/*' }} // Specify accepted file types
-													sx={{
-														width: '85%',
-														backgroundColor: theme.bgColor?.common,
-														marginTop: '0.5rem',
-														padding: '0.35rem',
-														mr: '0.75rem',
-													}}
-												/>
-												<Button
-													variant='outlined'
-													sx={{ textTransform: 'capitalize', height: '2rem' }}
-													onClick={handleLessonVideoUpload}
-													disabled={!videoUpload || isVideoSizeLarge}>
-													Upload
-												</Button>
-											</Box>
-											{isVideoSizeLarge && <CustomErrorMessage> Please upload a video smaller than 30MB.</CustomErrorMessage>}
-										</>
-									)}
-									{enterVideoUrl && (
-										<CustomTextField
-											value={singleLessonBeforeSave?.videoUrl}
-											placeholder='Video URL'
-											required={false}
-											sx={{ marginTop: '0.5rem' }}
-											onChange={(e) => {
-												setSingleLessonBeforeSave((prevCourse) => ({
-													...prevCourse,
-													videoUrl: e.target.value,
-												}));
-												setIsLessonUpdated(true);
-											}}
-										/>
-									)}
-								</FormControl>
+								<HandleVideoUploadURL
+									onVideoUploadLogic={(url) => {
+										setIsLessonUpdated(true);
+
+										setSingleLessonBeforeSave(() => {
+											return { ...singleLessonBeforeSave, videoUrl: url };
+										});
+									}}
+									onChangeVideoUrl={(e) => {
+										setSingleLessonBeforeSave((prevCourse) => ({
+											...prevCourse,
+											videoUrl: e.target.value,
+										}));
+										setIsLessonUpdated(true);
+									}}
+									videoUrlValue={singleLessonBeforeSave?.videoUrl}
+									videoFolderName='LessonVideos'
+									enterVideoUrl={enterVideoUrl}
+									setEnterVideoUrl={setEnterVideoUrl}
+								/>
 							</Box>
 						</Box>
 

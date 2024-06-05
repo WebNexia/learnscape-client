@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from 'react';
-import { Box, Button, DialogContent, FormControl, FormControlLabel, IconButton, Input, Radio, Tooltip, Typography } from '@mui/material';
+import { Box, DialogContent, FormControlLabel, IconButton, Radio, Tooltip, Typography } from '@mui/material';
 import CustomDialog from '../../layouts/dialog/CustomDialog';
 import CustomTextField from '../customFields/CustomTextField';
 import { AddCircle, RemoveCircle } from '@mui/icons-material';
@@ -13,8 +13,11 @@ import axios from 'axios';
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
 import { questionLessonUpdateTrack } from '../../../utils/questionLessonUpdateTrack';
 import useImageUpload from '../../../hooks/useImageUpload';
-import theme from '../../../themes';
-import useVideoUpload from '../../../hooks/useVideoUplaod';
+import useVideoUpload from '../../../hooks/useVideoUpload';
+import HandleImageUploadURL from '../uploadImageVideo/HandleImageUploadURL';
+import HandleVideoUploadURL from '../uploadImageVideo/HandleVideoUploadURL';
+import ImageThumbnail from '../uploadImageVideo/ImageThumbnail';
+import VideoThumbnail from '../uploadImageVideo/VideoThumbnail';
 
 interface EditQuestionDialogProps {
 	fromLessonEditPage: boolean;
@@ -75,63 +78,19 @@ const EditQuestionDialog = ({
 	const { updateQuestion } = useContext(QuestionsContext);
 	const [isCorrectAnswerMissing, setIsCorrectAnswerMissing] = useState<boolean>(correctAnswerIndex < 0);
 
-	const { imageUpload, isImgSizeLarge, handleImageChange, handleImageUpload, resetImageUpload } = useImageUpload();
-
-	const handleCourseImageUpload = () => {
-		handleImageUpload('QuestionImages', (url) => {
-			if (fromLessonEditPage && setSingleLessonBeforeSave) {
-				setSingleLessonBeforeSave((prevData) => {
-					if (!prevData.questions) return prevData;
-
-					const updatedQuestions = prevData.questions.map((prevQuestion) => {
-						if (prevQuestion._id === question._id) {
-							return { ...prevQuestion, imageUrl: url };
-						} else {
-							return prevQuestion;
-						}
-					});
-
-					return { ...prevData, questions: updatedQuestions };
-				});
-				questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
-			} else {
-				setImageUrlAdminQuestions(url);
-			}
-		});
-	};
+	const { resetImageUpload } = useImageUpload();
 
 	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(true);
 	const [enterVideoUrl, setEnterVideoUrl] = useState<boolean>(true);
+
+	const [questionBeforeSave, setQuestionBeforeSave] = useState<QuestionInterface>(question);
 
 	const resetEnterImageVideoUrl = () => {
 		setEnterVideoUrl(true);
 		setEnterImageUrl(true);
 	};
 
-	const { videoUpload, isVideoSizeLarge, handleVideoChange, handleVideoUpload, resetVideoUpload } = useVideoUpload();
-
-	const handleLessonVideoUpload = () => {
-		handleVideoUpload('QuestionVideos', (url) => {
-			if (fromLessonEditPage && setSingleLessonBeforeSave) {
-				setSingleLessonBeforeSave((prevData) => {
-					if (!prevData.questions) return prevData;
-
-					const updatedQuestions = prevData.questions.map((prevQuestion) => {
-						if (prevQuestion._id === question._id) {
-							return { ...prevQuestion, videoUrl: url };
-						} else {
-							return prevQuestion;
-						}
-					});
-
-					return { ...prevData, questions: updatedQuestions };
-				});
-				questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
-			} else {
-				setVideoUrlAdminQuestions(url);
-			}
-		});
-	};
+	const { resetVideoUpload } = useVideoUpload();
 
 	useEffect(() => {
 		setIsCorrectAnswerMissing(correctAnswerIndex < 0);
@@ -224,21 +183,45 @@ const EditQuestionDialog = ({
 		}
 	};
 
+	const imagePlaceHolderUrl = 'https://directmobilityonline.co.uk/assets/img/noimage.png';
+
+	const handleResetQuestion = () => {
+		if (fromLessonEditPage && setSingleLessonBeforeSave) {
+			setSingleLessonBeforeSave((prevData) => {
+				if (!prevData.questions) return prevData;
+
+				const updatedQuestions = prevData.questions.map((prevQuestion) => {
+					if (prevQuestion._id === question._id) {
+						return questionBeforeSave;
+					} else {
+						return prevQuestion;
+					}
+				});
+
+				return { ...prevData, questions: updatedQuestions };
+			});
+		} else {
+			setQuestionAdminQuestions(questionBeforeSave.question);
+			setImageUrlAdminQuestions(questionBeforeSave.imageUrl);
+			setVideoUrlAdminQuestions(questionBeforeSave.videoUrl);
+		}
+	};
+
 	return (
 		<CustomDialog
 			openModal={editQuestionModalOpen[index]}
 			closeModal={() => {
 				closeQuestionEditModal(index);
-				setCorrectAnswerIndex(-1);
 				setIsDuplicateOption(false);
 				setIsMinimumOptions(true);
 				resetImageUpload();
 				resetVideoUpload();
 				resetEnterImageVideoUrl();
-				setImageUrlAdminQuestions('');
-				setVideoUrlAdminQuestions('');
+				setCorrectAnswerIndex(-1);
+				handleResetQuestion();
 			}}
-			title='Edit Question'>
+			title='Edit Question'
+			maxWidth='lg'>
 			<form onSubmit={(e) => e.preventDefault()}>
 				<DialogContent
 					sx={{
@@ -254,132 +237,112 @@ const EditQuestionDialog = ({
 
 					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: '2rem', width: '100%' }}>
 						<Box sx={{ flex: 1, mr: '2rem' }}>
-							<FormControl sx={{ display: 'flex' }}>
-								<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-									<Typography variant='h6'>Image</Typography>
-									<Box sx={{ display: 'flex', alignItems: 'center' }}>
-										<Box>
-											<Typography
-												variant='body2'
-												sx={{ textDecoration: !enterImageUrl ? 'underline' : 'none', cursor: 'pointer' }}
-												onClick={() => setEnterImageUrl(false)}>
-												Upload
-											</Typography>
-										</Box>
-										<Typography sx={{ margin: '0 0.5rem' }}> | </Typography>
-										<Box>
-											<Typography
-												variant='body2'
-												sx={{ textDecoration: enterImageUrl ? 'underline' : 'none', cursor: 'pointer' }}
-												onClick={() => {
-													setEnterImageUrl(true);
-													resetImageUpload();
-												}}>
-												Enter URL
-											</Typography>
-										</Box>
-									</Box>
-								</Box>
-								{!enterImageUrl && (
-									<Box sx={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center' }}>
-										<Input
-											type='file'
-											onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-												handleImageChange(e);
-												console.log('Image Change');
-											}}
-											inputProps={{ accept: '.jpg, .jpeg, .png' }} // Specify accepted file types
-											sx={{ width: '80%', backgroundColor: theme.bgColor?.common, marginTop: '0.5rem', padding: '0.25rem' }}
-										/>
-										<Button
-											onClick={handleCourseImageUpload}
-											variant='outlined'
-											sx={{ textTransform: 'capitalize', height: '2rem', marginTop: '0.5rem', width: '10%' }}
-											disabled={!imageUpload || isImgSizeLarge}
-											size='small'>
-											Upload
-										</Button>
-									</Box>
-								)}
-								{isImgSizeLarge && <CustomErrorMessage>File size exceeds the limit of 1 MB </CustomErrorMessage>}
+							<HandleImageUploadURL
+								onImageUploadLogic={(url) => {
+									if (fromLessonEditPage && setSingleLessonBeforeSave) {
+										setSingleLessonBeforeSave((prevData) => {
+											if (!prevData.questions) return prevData;
 
-								{enterImageUrl && (
-									<CustomTextField
-										placeholder='Image URL'
-										required={false}
-										sx={{ marginTop: '0.5rem' }}
-										value={fromLessonEditPage ? question.imageUrl : imageUrlAdminQuestions}
-										onChange={(e) => handleInputChange('imageUrl', e.target.value)}
-									/>
-								)}
-							</FormControl>
+											const updatedQuestions = prevData.questions.map((prevQuestion) => {
+												if (prevQuestion._id === question._id) {
+													return { ...prevQuestion, imageUrl: url };
+												} else {
+													return prevQuestion;
+												}
+											});
+
+											return { ...prevData, questions: updatedQuestions };
+										});
+										questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
+									} else {
+										setImageUrlAdminQuestions(url);
+									}
+								}}
+								onChangeImgUrl={(e) => handleInputChange('imageUrl', e.target.value)}
+								imageUrlValue={fromLessonEditPage ? question.imageUrl : imageUrlAdminQuestions}
+								imageFolderName='QuestionImages'
+								enterImageUrl={enterImageUrl}
+								setEnterImageUrl={setEnterImageUrl}
+							/>
+
+							<ImageThumbnail
+								imgSource={fromLessonEditPage ? question?.imageUrl || imagePlaceHolderUrl : imageUrlAdminQuestions || imagePlaceHolderUrl}
+								removeImage={() => {
+									if (fromLessonEditPage && setSingleLessonBeforeSave) {
+										setSingleLessonBeforeSave((prevData) => {
+											if (!prevData.questions) return prevData;
+
+											const updatedQuestions = prevData.questions.map((prevQuestion) => {
+												if (prevQuestion._id === question._id) {
+													return { ...prevQuestion, imageUrl: '' };
+												} else {
+													return prevQuestion;
+												}
+											});
+
+											return { ...prevData, questions: updatedQuestions };
+										});
+										questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
+									} else {
+										setImageUrlAdminQuestions('');
+									}
+								}}
+							/>
 						</Box>
 						<Box sx={{ flex: 1 }}>
-							<FormControl sx={{ display: 'flex' }}>
-								<Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-									<Typography variant='h6'>Video</Typography>
-									<Box sx={{ display: 'flex', alignItems: 'center' }}>
-										<Box>
-											<Typography
-												variant='body2'
-												sx={{ textDecoration: !enterVideoUrl ? 'underline' : 'none', cursor: 'pointer' }}
-												onClick={() => setEnterVideoUrl(false)}>
-												Upload
-											</Typography>
-										</Box>
-										<Typography sx={{ margin: '0 0.5rem' }}> | </Typography>
-										<Box>
-											<Typography
-												variant='body2'
-												sx={{ textDecoration: enterVideoUrl ? 'underline' : 'none', cursor: 'pointer' }}
-												onClick={() => {
-													setEnterVideoUrl(true);
-													resetVideoUpload();
-												}}>
-												Enter URL
-											</Typography>
-										</Box>
-									</Box>
-								</Box>
+							<HandleVideoUploadURL
+								onVideoUploadLogic={(url) => {
+									if (fromLessonEditPage && setSingleLessonBeforeSave) {
+										setSingleLessonBeforeSave((prevData) => {
+											if (!prevData.questions) return prevData;
 
-								{!enterVideoUrl && (
-									<>
-										<Box sx={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center' }}>
-											<Input
-												type='file'
-												onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-													handleVideoChange(e);
-												}}
-												inputProps={{ accept: 'video/*' }} // Specify accepted file types
-												sx={{
-													width: '80%',
-													backgroundColor: theme.bgColor?.common,
-													marginTop: '0.5rem',
-													padding: '0.25rem',
-												}}
-											/>
-											<Button
-												variant='outlined'
-												sx={{ textTransform: 'capitalize', height: '2rem', marginTop: '0.5rem', width: '10%' }}
-												onClick={handleLessonVideoUpload}
-												disabled={!videoUpload || isVideoSizeLarge}>
-												Upload
-											</Button>
-										</Box>
-										{isVideoSizeLarge && <CustomErrorMessage> Please upload a video smaller than 30MB.</CustomErrorMessage>}
-									</>
-								)}
+											const updatedQuestions = prevData.questions.map((prevQuestion) => {
+												if (prevQuestion._id === question._id) {
+													return { ...prevQuestion, videoUrl: url };
+												} else {
+													return prevQuestion;
+												}
+											});
 
-								{enterVideoUrl && (
-									<CustomTextField
-										placeholder='Video URL'
-										required={false}
-										sx={{ marginTop: '0.5rem' }}
-										value={fromLessonEditPage ? question.videoUrl : videoUrlAdminQuestions}
-										onChange={(e) => handleInputChange('videoUrl', e.target.value)}
-									/>
-								)}
-							</FormControl>
+											return { ...prevData, questions: updatedQuestions };
+										});
+										questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
+									} else {
+										setVideoUrlAdminQuestions(url);
+									}
+								}}
+								onChangeVideoUrl={(e) => handleInputChange('videoUrl', e.target.value)}
+								videoUrlValue={fromLessonEditPage ? question.videoUrl : videoUrlAdminQuestions}
+								videoFolderName='QuestionVideos'
+								enterVideoUrl={enterVideoUrl}
+								setEnterVideoUrl={setEnterVideoUrl}
+							/>
+
+							<VideoThumbnail
+								videoPlayCondition={question?.videoUrl !== '' && videoUrlAdminQuestions !== ''}
+								videoUrl={fromLessonEditPage ? question?.videoUrl : videoUrlAdminQuestions}
+								videoPlaceholderUrl='https://www.47pitches.com/contents/images/no-video.jpg'
+								removeVideo={() => {
+									if (fromLessonEditPage && setSingleLessonBeforeSave) {
+										setSingleLessonBeforeSave((prevData) => {
+											if (!prevData.questions) return prevData;
+
+											const updatedQuestions = prevData.questions.map((prevQuestion) => {
+												if (prevQuestion._id === question._id) {
+													return { ...prevQuestion, videoUrl: '' };
+												} else {
+													return prevQuestion;
+												}
+											});
+
+											return { ...prevData, questions: updatedQuestions };
+										});
+										questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
+									} else {
+										setVideoUrlAdminQuestions('');
+									}
+								}}
+							/>
 						</Box>
 					</Box>
 
@@ -466,6 +429,7 @@ const EditQuestionDialog = ({
 						resetImageUpload();
 						resetVideoUpload();
 						resetEnterImageVideoUrl();
+						handleResetQuestion();
 					}}
 					cancelBtnText='Cancel'
 					onSubmit={handleSubmit}

@@ -79,7 +79,7 @@ const LessonEditorBox = ({
 					<Typography variant='body2' sx={{ mt: '0.35rem' }}>
 						Lesson Image
 					</Typography>
-					{isEditMode && singleLessonBeforeSave.imageUrl !== '' && (
+					{isEditMode && singleLessonBeforeSave.imageUrl && (
 						<Typography
 							variant='body2'
 							sx={{ fontSize: '0.75rem', textDecoration: 'underline', cursor: 'pointer' }}
@@ -161,7 +161,7 @@ const LessonEditorBox = ({
 					<Typography variant='body2' sx={{ mt: '0.35rem' }}>
 						Video Thumbnail
 					</Typography>
-					{isEditMode && singleLessonBeforeSave?.videoUrl !== '' && (
+					{isEditMode && singleLessonBeforeSave?.videoUrl && (
 						<Typography
 							variant='body2'
 							sx={{ fontSize: '0.75rem', textDecoration: 'underline', cursor: 'pointer' }}

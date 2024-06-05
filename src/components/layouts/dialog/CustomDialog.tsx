@@ -10,15 +10,16 @@ interface CustomDialogProps {
 	titleSx?: object;
 	dialogPaperSx?: object;
 	content?: string;
+	maxWidth?: 'md' | 'sm' | 'lg';
 }
 
-const CustomDialog = ({ children, openModal = false, closeModal, title, titleSx, content, dialogPaperSx }: CustomDialogProps) => {
+const CustomDialog = ({ children, openModal = false, closeModal, title, titleSx, content, dialogPaperSx, maxWidth = 'md' }: CustomDialogProps) => {
 	return (
 		<Dialog
 			open={openModal}
 			onClose={closeModal}
 			fullWidth
-			maxWidth='md'
+			maxWidth={maxWidth}
 			PaperProps={{
 				style: {
 					backgroundColor: theme.palette.secondary.main,

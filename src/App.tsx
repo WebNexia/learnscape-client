@@ -1,7 +1,6 @@
 import './App.css';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import React, { Suspense, useState } from 'react';
-import { ReactQueryDevtools } from 'react-query/devtools';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { ThemeProvider } from '@mui/material/styles';
 import theme from './themes';
@@ -109,8 +108,6 @@ function App() {
 					</UserAuthContextProvider>
 				</MediaQueryContextProvider>
 			</ThemeProvider>
-
-			<ReactQueryDevtools initialIsOpen={true} />
 		</QueryClientProvider>
 	);
 }

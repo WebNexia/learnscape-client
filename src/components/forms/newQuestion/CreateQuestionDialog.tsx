@@ -25,10 +25,11 @@ import axios from 'axios';
 import { QuestionsContext } from '../../../contexts/QuestionsContextProvider';
 import CustomErrorMessage from '../customFields/CustomErrorMessage';
 import useImageUpload from '../../../hooks/useImageUpload';
-import { Typography } from '@mui/material';
-import { Button } from '@mui/material';
-import { Input } from '@mui/material';
-import useVideoUpload from '../../../hooks/useVideoUplaod';
+import useVideoUpload from '../../../hooks/useVideoUpload';
+import HandleImageUploadURL from '../uploadImageVideo/HandleImageUploadURL';
+import HandleVideoUploadURL from '../uploadImageVideo/HandleVideoUploadURL';
+import ImageThumbnail from '../uploadImageVideo/ImageThumbnail';
+import VideoThumbnail from '../uploadImageVideo/VideoThumbnail';
 
 interface CreateQuestionDialogProps {
 	isQuestionCreateModalOpen: boolean;
@@ -78,21 +79,7 @@ const CreateQuestionDialog = ({
 	const { orgId } = useContext(OrganisationContext);
 	const { addNewQuestion, questionTypes } = useContext(QuestionsContext);
 
-	const { imageUpload, isImgSizeLarge, handleImageChange, handleImageUpload, resetImageUpload } = useImageUpload();
-
-	const handleCourseImageUpload = () => {
-		handleImageUpload('CourseImages', (url) => {
-			setNewQuestion((prevQuestion) => {
-				if (prevQuestion?.imageUrl !== undefined) {
-					return {
-						...prevQuestion,
-						imageUrl: url,
-					};
-				}
-				return prevQuestion;
-			});
-		});
-	};
+	const { resetImageUpload } = useImageUpload();
 
 	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(true);
 	const [enterVideoUrl, setEnterVideoUrl] = useState<boolean>(true);
@@ -102,16 +89,7 @@ const CreateQuestionDialog = ({
 		setEnterImageUrl(true);
 	};
 
-	const { videoUpload, isVideoSizeLarge, handleVideoChange, handleVideoUpload, resetVideoUpload } = useVideoUpload();
-
-	const handleLessonVideoUpload = () => {
-		handleVideoUpload('QuestionVideos', (url) => {
-			setSingleLessonBeforeSave((prevCourse) => ({
-				...prevCourse,
-				videoUrl: url,
-			}));
-		});
-	};
+	const { resetVideoUpload } = useVideoUpload();
 
 	const [newQuestion, setNewQuestion] = useState<QuestionInterface>({
 		_id: '',
@@ -271,7 +249,8 @@ const CreateQuestionDialog = ({
 				resetVideoUpload();
 				resetEnterImageVideoUrl();
 			}}
-			title='Create Question'>
+			title='Create Question'
+			maxWidth='lg'>
 			<form
 				style={{ display: 'flex', flexDirection: 'column' }}
 				onSubmit={(e) => {
@@ -306,170 +285,107 @@ const CreateQuestionDialog = ({
 							display: 'flex',
 							flexDirection: 'column',
 						}}>
-						<Box
-							sx={{
-								display: 'flex',
-								justifyContent: 'space-between',
-								alignItems: 'flex-start',
-								width: '100%',
-								mt: '1rem',
-							}}>
-							<Box sx={{ flex: 1, margin: '0 2rem 2rem 0' }}>
-								<FormControl sx={{ display: 'flex' }}>
-									<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-										<Typography variant='h6'>Image</Typography>
-										<Box sx={{ display: 'flex', alignItems: 'center' }}>
-											<Box>
-												<Typography
-													variant='body2'
-													sx={{ textDecoration: !enterImageUrl ? 'underline' : 'none', cursor: 'pointer' }}
-													onClick={() => setEnterImageUrl(false)}>
-													Upload
-												</Typography>
-											</Box>
-											<Typography sx={{ margin: '0 0.5rem' }}> | </Typography>
-											<Box>
-												<Typography
-													variant='body2'
-													sx={{ textDecoration: enterImageUrl ? 'underline' : 'none', cursor: 'pointer' }}
-													onClick={() => {
-														setEnterImageUrl(true);
-														resetImageUpload();
-													}}>
-													Enter URL
-												</Typography>
-											</Box>
-										</Box>
-									</Box>
-									{!enterImageUrl && (
-										<>
-											<Box
-												sx={{
-													display: 'flex',
-													width: '100%',
-													justifyContent: 'space-between',
-													marginBottom: '0.25rem',
-													alignItems: 'center',
-												}}>
-												<Input
-													type='file'
-													onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleImageChange(e)}
-													inputProps={{ accept: '.jpg, .jpeg, .png' }} // Specify accepted file types
-													sx={{ width: '80%', backgroundColor: theme.bgColor?.common, marginTop: '0.5rem', padding: '0.25rem' }}
-												/>
-												<Button
-													onClick={handleCourseImageUpload}
-													variant='outlined'
-													sx={{ textTransform: 'capitalize', height: '2rem', marginTop: '0.5rem' }}
-													disabled={!imageUpload || isImgSizeLarge}>
-													Upload
-												</Button>
-											</Box>
-											{isImgSizeLarge && <CustomErrorMessage>File size exceeds the limit of 1 MB </CustomErrorMessage>}
-										</>
-									)}
+						<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: '2rem', width: '100%' }}>
+							<Box sx={{ flex: 1, mr: '2rem' }}>
+								<HandleImageUploadURL
+									onImageUploadLogic={(url) => {
+										setNewQuestion((prevQuestion) => {
+											if (prevQuestion?.imageUrl !== undefined) {
+												return {
+													...prevQuestion,
+													imageUrl: url,
+												};
+											}
+											return prevQuestion;
+										});
+									}}
+									onChangeImgUrl={(e) => {
+										setNewQuestion((prevQuestion) => {
+											if (prevQuestion?.imageUrl !== undefined) {
+												return {
+													...prevQuestion,
+													imageUrl: e.target.value,
+												};
+											}
+											return prevQuestion;
+										});
+										setIsLessonUpdated(true);
+									}}
+									imageUrlValue={newQuestion?.imageUrl}
+									enterImageUrl={enterImageUrl}
+									setEnterImageUrl={setEnterImageUrl}
+									imageFolderName='QuestionImages'
+								/>
 
-									{enterImageUrl && (
-										<CustomTextField
-											value={newQuestion?.imageUrl}
-											placeholder='Image URL'
-											required={false}
-											sx={{ marginTop: '0.5rem' }}
-											onChange={(e) => {
-												setNewQuestion((prevQuestion) => {
-													if (prevQuestion?.imageUrl !== undefined) {
-														return {
-															...prevQuestion,
-															imageUrl: e.target.value,
-														};
-													}
-													return prevQuestion;
-												});
-												setIsLessonUpdated(true);
-											}}
-										/>
-									)}
-								</FormControl>
+								<ImageThumbnail
+									imgSource={newQuestion?.imageUrl || 'https://savethefrogs.com/wp-content/uploads/placeholder-wire-image-white.jpg'}
+									removeImage={() => {
+										setNewQuestion((prevQuestion) => {
+											if (prevQuestion?.imageUrl !== undefined) {
+												return {
+													...prevQuestion,
+													imageUrl: '',
+												};
+											}
+											return prevQuestion;
+										});
+										setIsLessonUpdated(true);
+										resetImageUpload();
+									}}
+								/>
 							</Box>
-							<Box sx={{ flex: 1, mb: '2rem' }}>
-								<FormControl sx={{ display: 'flex' }}>
-									<Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-										<Typography variant='h6'>Video</Typography>
-										<Box sx={{ display: 'flex', alignItems: 'center' }}>
-											<Box>
-												<Typography
-													variant='body2'
-													sx={{ textDecoration: !enterVideoUrl ? 'underline' : 'none', cursor: 'pointer' }}
-													onClick={() => setEnterVideoUrl(false)}>
-													Upload
-												</Typography>
-											</Box>
-											<Typography sx={{ margin: '0 0.5rem' }}> | </Typography>
-											<Box>
-												<Typography
-													variant='body2'
-													sx={{ textDecoration: enterVideoUrl ? 'underline' : 'none', cursor: 'pointer' }}
-													onClick={() => {
-														setEnterVideoUrl(true);
-														resetVideoUpload();
-													}}>
-													Enter URL
-												</Typography>
-											</Box>
-										</Box>
-									</Box>
+							<Box sx={{ flex: 1 }}>
+								<HandleVideoUploadURL
+									onVideoUploadLogic={(url) => {
+										setNewQuestion((prevQuestion) => {
+											if (prevQuestion?.videoUrl !== undefined) {
+												return {
+													...prevQuestion,
+													videoUrl: url,
+												};
+											}
+											return prevQuestion;
+										});
+									}}
+									onChangeVideoUrl={(e) => {
+										setNewQuestion((prevQuestion) => {
+											if (prevQuestion?.videoUrl !== undefined) {
+												return {
+													...prevQuestion,
+													videoUrl: e.target.value,
+												};
+											}
+											return prevQuestion;
+										});
+										setIsLessonUpdated(true);
+									}}
+									videoUrlValue={newQuestion?.videoUrl}
+									enterVideoUrl={enterVideoUrl}
+									setEnterVideoUrl={setEnterVideoUrl}
+									videoFolderName='QuestionVideos'
+								/>
 
-									{!enterVideoUrl && (
-										<>
-											<Box sx={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-												<Input
-													type='file'
-													onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-														handleVideoChange(e);
-														setIsLessonUpdated(true);
-													}}
-													inputProps={{ accept: 'video/*' }} // Specify accepted file types
-													sx={{
-														width: '80%',
-														backgroundColor: theme.bgColor?.common,
-														marginTop: '0.5rem',
-														padding: '0.25rem',
-													}}
-												/>
-												<Button
-													variant='outlined'
-													sx={{ textTransform: 'capitalize', height: '2rem', marginTop: '0.5rem' }}
-													onClick={handleLessonVideoUpload}
-													disabled={!videoUpload || isVideoSizeLarge}>
-													Upload
-												</Button>
-											</Box>
-											{isVideoSizeLarge && <CustomErrorMessage> Please upload a video smaller than 30MB.</CustomErrorMessage>}
-										</>
-									)}
-
-									{enterVideoUrl && (
-										<CustomTextField
-											value={newQuestion?.videoUrl}
-											required={false}
-											placeholder='Video URL'
-											sx={{ marginTop: '0.5rem' }}
-											onChange={(e) => {
-												setNewQuestion((prevQuestion) => {
-													if (prevQuestion?.videoUrl !== undefined) {
-														return {
-															...prevQuestion,
-															videoUrl: e.target.value,
-														};
-													}
-													return prevQuestion;
-												});
-											}}
-										/>
-									)}
-								</FormControl>
+								<VideoThumbnail
+									videoPlayCondition={newQuestion?.videoUrl}
+									videoUrl={newQuestion?.videoUrl}
+									videoPlaceholderUrl='https://riggswealth.com/wp-content/uploads/2016/06/Riggs-Video-Placeholder.jpg'
+									removeVideo={() => {
+										setNewQuestion((prevQuestion) => {
+											if (prevQuestion?.imageUrl !== undefined) {
+												return {
+													...prevQuestion,
+													videoUrl: '',
+												};
+											}
+											return prevQuestion;
+										});
+										setIsLessonUpdated(true);
+										resetImageUpload();
+									}}
+								/>
 							</Box>
 						</Box>
+
 						<Box>
 							<CustomTextField
 								value={newQuestion?.question}

@@ -1,10 +1,10 @@
-import { Box, Button, Checkbox, FormControl, FormControlLabel, Input, Typography } from '@mui/material';
+import { Box, Checkbox, FormControlLabel, Typography } from '@mui/material';
 import CustomTextField from '../forms/customFields/CustomTextField';
 import CustomErrorMessage from '../forms/customFields/CustomErrorMessage';
 import { SingleCourse } from '../../interfaces/course';
 import theme from '../../themes';
-import useImageUpload from '../../hooks/useImageUpload';
 import { useState } from 'react';
+import HandleImageUploadURL from '../forms/uploadImageVideo/HandleImageUploadURL';
 
 interface CourseDetailsEditBoxProps {
 	singleCourse?: SingleCourse;
@@ -16,20 +16,7 @@ interface CourseDetailsEditBoxProps {
 }
 
 const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree, setIsMissingField, setSingleCourse }: CourseDetailsEditBoxProps) => {
-	const { imageUpload, isImgSizeLarge, handleImageChange, handleImageUpload, resetImageUpload } = useImageUpload();
-
 	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(true);
-
-	const handleCourseImageUpload = () => {
-		handleImageUpload('CourseImages', (url) => {
-			if (singleCourse?.imageUrl !== undefined) {
-				setSingleCourse({
-					...singleCourse,
-					imageUrl: url,
-				});
-			}
-		});
-	};
 
 	const formatDate = (date: Date) => {
 		if (!(date instanceof Date)) return ''; // Return empty string if date is not valid
@@ -174,68 +161,27 @@ const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree,
 				</Box>
 
 				<Box sx={{ margin: '2rem 0 0 6rem', flex: 10 }}>
-					<FormControl sx={{ display: 'flex' }}>
-						<Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-							<Typography variant='h4'>Image</Typography>
-							<Box sx={{ display: 'flex' }}>
-								<Box>
-									<Typography
-										variant='body2'
-										sx={{ textDecoration: !enterImageUrl ? 'underline' : 'none', cursor: 'pointer' }}
-										onClick={() => setEnterImageUrl(false)}>
-										Upload
-									</Typography>
-								</Box>
-								<Typography sx={{ margin: '0 0.5rem' }}> | </Typography>
-								<Box>
-									<Typography
-										variant='body2'
-										sx={{ textDecoration: enterImageUrl ? 'underline' : 'none', cursor: 'pointer' }}
-										onClick={() => {
-											setEnterImageUrl(true);
-											resetImageUpload();
-										}}>
-										Enter URL
-									</Typography>
-								</Box>
-							</Box>
-						</Box>
-						{!enterImageUrl && (
-							<>
-								<Box sx={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-									<Input
-										type='file'
-										onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleImageChange(e)}
-										inputProps={{ accept: '.jpg, .jpeg, .png' }} // Specify accepted file types
-										sx={{ width: '85%', backgroundColor: theme.bgColor?.common, marginTop: '0.5rem', padding: '0.35rem' }}
-									/>
-									<Button
-										onClick={handleCourseImageUpload}
-										variant='outlined'
-										sx={{ textTransform: 'capitalize', height: '2rem', marginTop: '0.5rem' }}
-										disabled={!imageUpload || isImgSizeLarge}>
-										Upload
-									</Button>
-								</Box>
-								{isImgSizeLarge && <CustomErrorMessage>File size exceeds the limit of 1 MB </CustomErrorMessage>}
-							</>
-						)}
-						{enterImageUrl && (
-							<CustomTextField
-								value={singleCourse?.imageUrl}
-								placeholder='Image URL'
-								required={false}
-								sx={{ marginTop: '0.5rem' }}
-								onChange={(e) => {
-									setSingleCourse(() => {
-										if (singleCourse?.imageUrl !== undefined) {
-											return { ...singleCourse, imageUrl: e.target.value };
-										}
-									});
-								}}
-							/>
-						)}
-					</FormControl>
+					<HandleImageUploadURL
+						onImageUploadLogic={(url) => {
+							if (singleCourse?.imageUrl !== undefined) {
+								setSingleCourse({
+									...singleCourse,
+									imageUrl: url,
+								});
+							}
+						}}
+						onChangeImgUrl={(e) => {
+							setSingleCourse(() => {
+								if (singleCourse?.imageUrl !== undefined) {
+									return { ...singleCourse, imageUrl: e.target.value };
+								}
+							});
+						}}
+						imageUrlValue={singleCourse?.imageUrl}
+						imageFolderName='CourseImages'
+						enterImageUrl={enterImageUrl}
+						setEnterImageUrl={setEnterImageUrl}
+					/>
 				</Box>
 			</Box>
 

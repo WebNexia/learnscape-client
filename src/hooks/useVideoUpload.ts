@@ -6,6 +6,7 @@ const useVideoUpload = () => {
 	const { organisation } = useContext(OrganisationContext);
 	const [videoUpload, setVideoUpload] = useState<File | null>(null);
 	const [isVideoSizeLarge, setIsVideoSizeLarge] = useState<boolean>(false);
+	const [isVideoLoading, setIsVideoLoading] = useState<boolean>(false);
 
 	const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		if (e.target.files && e.target.files.length > 0) {
@@ -26,11 +27,14 @@ const useVideoUpload = () => {
 			setIsVideoSizeLarge(false);
 			return;
 		}
+		setIsVideoLoading(true);
 		try {
-			const url = await uploadVideo(videoUpload, folderName, organisation?.orgName || 'defaultOrg');
+			const url = await uploadVideo(videoUpload, folderName, organisation?.orgName || 'Org');
 			handleUrlCallback(url);
 		} catch (error) {
 			console.error('Error uploading video:', error);
+		} finally {
+			setIsVideoLoading(false);
 		}
 	};
 
@@ -47,6 +51,7 @@ const useVideoUpload = () => {
 		resetVideoUpload,
 		setIsVideoSizeLarge,
 		setVideoUpload,
+		isVideoLoading,
 	};
 };
 
