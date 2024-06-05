@@ -9,11 +9,13 @@ import { QuestionUpdateTrack } from '../../pages/AdminLessonEditPage';
 import CustomDialog from '../layouts/dialog/CustomDialog';
 
 interface LessonEditorBoxProps {
-	singleLesson?: Lesson;
+	singleLesson: Lesson;
+	singleLessonBeforeSave: Lesson;
 	isEditMode: boolean;
 	isActive: boolean;
 	isMissingFieldMsgOpen: boolean;
 	resetChanges: boolean;
+	setSingleLessonBeforeSave: React.Dispatch<React.SetStateAction<Lesson>>;
 	setIsEditMode: React.Dispatch<React.SetStateAction<boolean>>;
 	setIsMissingFieldMsgOpen: React.Dispatch<React.SetStateAction<boolean>>;
 	setIsMissingField: React.Dispatch<React.SetStateAction<boolean>>;
@@ -22,14 +24,19 @@ interface LessonEditorBoxProps {
 	handleLessonUpdate: (event: React.FormEvent<Element>) => void;
 	setIsLessonUpdated: React.Dispatch<React.SetStateAction<boolean>>;
 	setIsQuestionUpdated: React.Dispatch<React.SetStateAction<QuestionUpdateTrack[]>>;
+	resetImageUpload: () => void;
+	resetVideoUpload: () => void;
+	resetEnterImageVideoUrl: () => void;
 }
 
 const LessonEditorBox = ({
 	singleLesson,
+	singleLessonBeforeSave,
 	isEditMode,
 	isActive,
 	isMissingFieldMsgOpen,
 	resetChanges,
+	setSingleLessonBeforeSave,
 	setIsEditMode,
 	setIsMissingFieldMsgOpen,
 	setIsMissingField,
@@ -38,10 +45,14 @@ const LessonEditorBox = ({
 	handleLessonUpdate,
 	setIsLessonUpdated,
 	setIsQuestionUpdated,
+	resetImageUpload,
+	resetVideoUpload,
+	resetEnterImageVideoUrl,
 }: LessonEditorBoxProps) => {
 	const [isVideoPlayerOpen, setIsVideoPlayerOpen] = useState<boolean>(false);
 	const vertical = 'top';
 	const horizontal = 'center';
+
 	return (
 		<Box
 			sx={{
@@ -52,37 +63,55 @@ const LessonEditorBox = ({
 			}}>
 			<Box sx={{ display: 'flex', alignItems: 'center', textAlign: 'center' }}>
 				<Box sx={{ height: '8rem', width: '12rem', mr: '2rem' }}>
-					{singleLesson?.imageUrl && (
-						<img
-							src={singleLesson.imageUrl}
-							alt='course_img'
-							height='100%'
-							style={{
-								borderRadius: '0.2rem',
-								boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
-							}}
-						/>
-					)}
+					<img
+						src={
+							singleLessonBeforeSave.imageUrl === '' ? 'https://directmobilityonline.co.uk/assets/img/noimage.png' : singleLessonBeforeSave.imageUrl
+						}
+						alt='lesson_img'
+						height='100%'
+						width='100%'
+						style={{
+							borderRadius: '0.2rem',
+							boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
+						}}
+					/>
+
 					<Typography variant='body2' sx={{ mt: '0.35rem' }}>
 						Lesson Image
 					</Typography>
+					{isEditMode && singleLessonBeforeSave.imageUrl && (
+						<Typography
+							variant='body2'
+							sx={{ fontSize: '0.75rem', textDecoration: 'underline', cursor: 'pointer' }}
+							onClick={() => {
+								setSingleLessonBeforeSave((prevData) => {
+									return {
+										...prevData,
+										imageUrl: '',
+									};
+								});
+
+								resetImageUpload();
+							}}>
+							Remove
+						</Typography>
+					)}
 				</Box>
-				<Box
-					sx={{ height: '8rem', width: '12rem', cursor: 'pointer' }}
-					onClick={() => {
-						if (singleLesson?.videoUrl) {
-							setIsVideoPlayerOpen(true);
-						}
-					}}>
-					{singleLesson?.videoUrl ? (
+				<Box sx={{ height: '8rem', width: '12rem', cursor: 'pointer' }}>
+					{singleLessonBeforeSave?.videoUrl ? (
 						<Box
 							sx={{
 								height: '100%',
 								width: '100%',
 								position: 'relative',
+							}}
+							onClick={() => {
+								if (singleLessonBeforeSave?.videoUrl) {
+									setIsVideoPlayerOpen(true);
+								}
 							}}>
 							<ReactPlayer
-								url={singleLesson?.videoUrl}
+								url={singleLessonBeforeSave?.videoUrl}
 								height='100%'
 								width='100%'
 								style={{
@@ -104,7 +133,7 @@ const LessonEditorBox = ({
 									cursor: 'pointer',
 								}}
 								onClick={() => {
-									if (singleLesson?.videoUrl) {
+									if (singleLessonBeforeSave?.videoUrl) {
 										setIsVideoPlayerOpen(true);
 									}
 								}}></Box>
@@ -132,6 +161,21 @@ const LessonEditorBox = ({
 					<Typography variant='body2' sx={{ mt: '0.35rem' }}>
 						Video Thumbnail
 					</Typography>
+					{isEditMode && singleLessonBeforeSave?.videoUrl && (
+						<Typography
+							variant='body2'
+							sx={{ fontSize: '0.75rem', textDecoration: 'underline', cursor: 'pointer' }}
+							onClick={() => {
+								setSingleLessonBeforeSave((prevData) => {
+									return {
+										...prevData,
+										videoUrl: '',
+									};
+								});
+							}}>
+							Remove
+						</Typography>
+					)}
 				</Box>
 				<CustomDialog
 					openModal={isVideoPlayerOpen}
@@ -139,7 +183,7 @@ const LessonEditorBox = ({
 						setIsVideoPlayerOpen(false);
 					}}
 					dialogPaperSx={{ display: 'flex', justifyContent: 'center', padding: '3rem' }}>
-					<ReactPlayer url={singleLesson?.videoUrl} height='30rem' width='55rem' style={{ margin: '0.5rem' }} controls={true} />
+					<ReactPlayer url={singleLessonBeforeSave?.videoUrl} height='30rem' width='55rem' style={{ margin: '0.5rem' }} controls={true} />
 				</CustomDialog>
 			</Box>
 			<Box sx={{ display: 'flex' }}>
@@ -166,9 +210,12 @@ const LessonEditorBox = ({
 					<Box>
 						<CustomSubmitButton
 							onClick={(e) => {
-								if (singleLesson?.title.trim() !== '' && singleLesson?.title !== '') {
+								if (singleLessonBeforeSave?.title.trim() !== '' && singleLessonBeforeSave?.title !== '') {
 									setIsEditMode(false);
 									handleLessonUpdate(e as FormEvent<Element>);
+									resetImageUpload();
+									resetVideoUpload();
+									resetEnterImageVideoUrl();
 								} else {
 									setIsMissingField(true);
 									setIsMissingFieldMsgOpen(true);
@@ -181,13 +228,16 @@ const LessonEditorBox = ({
 								setIsEditMode(false);
 								setIsLessonUpdated(false);
 								setResetChanges(!resetChanges);
-
+								setSingleLessonBeforeSave(singleLesson);
 								setIsQuestionUpdated((prevData: QuestionUpdateTrack[]) => {
 									prevData = prevData.map((data) => {
 										return { ...data, isUpdated: false };
 									});
 									return prevData;
 								});
+								resetImageUpload();
+								resetVideoUpload();
+								resetEnterImageVideoUrl();
 							}}>
 							Cancel
 						</CustomCancelButton>
@@ -198,6 +248,9 @@ const LessonEditorBox = ({
 							<IconButton
 								onClick={() => {
 									setIsEditMode(true);
+									resetImageUpload();
+									resetVideoUpload();
+									resetEnterImageVideoUrl();
 								}}>
 								<Edit />
 							</IconButton>

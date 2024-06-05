@@ -40,7 +40,6 @@ const CustomTextField = ({
 	error,
 	helperText,
 	placeholder,
-
 	...rest
 }: CustomTextFieldProps) => {
 	return (

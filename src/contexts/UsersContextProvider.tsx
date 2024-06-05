@@ -42,25 +42,30 @@ const UsersContextProvider = (props: UserContextProviderProps) => {
 	const [numberOfPages, setNumberOfPages] = useState<number>(1);
 	const [pageNumber, setPageNumber] = useState<number>(1);
 
+	const [isLoaded, setIsLoaded] = useState<boolean>(false);
+
 	const { data, isLoading, isError } = useQuery(
 		['allUsers', { page: pageNumber }],
 		async () => {
 			if (!orgId) return;
 
-			const response = await axios.get(`${base_url}/users/organisation/${orgId}?page=${pageNumber}`);
+			try {
+				const response = await axios.get(`${base_url}/users/organisation/${orgId}?page=${pageNumber}`);
 
-			// Initial sorting when fetching data
-			const sortedDataCopy = [...response.data.data].sort((a: User, b: User) => b.updatedAt.localeCompare(a.updatedAt));
-			setSortedUsersData(sortedDataCopy);
-			setNumberOfPages(response.data.pages);
-
-			return response.data.data;
+				// Initial sorting when fetching data
+				const sortedDataCopy = [...response.data.data].sort((a: User, b: User) => b.updatedAt.localeCompare(a.updatedAt));
+				setSortedUsersData(sortedDataCopy);
+				setNumberOfPages(response.data.pages);
+				setIsLoaded(true);
+				return response.data.data;
+			} catch (error) {
+				setIsLoaded(true); // Set isLoading to false in case of an error
+				throw error; // Rethrow the error to be handled by React Query
+			}
 		},
-		{ enabled: !!orgId }
-		// {
-		// 	enabled: !!orgId, // Enable the query only when orgId is available
-		// keepPreviousData: true, // Keep previous data while fetching new data
-		// }
+		{
+			enabled: !!orgId && !isLoaded,
+		}
 	);
 
 	// Function to handle sorting

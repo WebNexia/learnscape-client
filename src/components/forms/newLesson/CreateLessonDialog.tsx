@@ -1,5 +1,5 @@
 import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from '@mui/material';
-import CustomTextField from '../../forms/customFields/CustomTextField';
+import CustomTextField from '../customFields/CustomTextField';
 import { useContext, useState } from 'react';
 import { LessonsContext } from '../../../contexts/LessonsContextProvider';
 import axios from 'axios';
@@ -10,6 +10,7 @@ import CustomDialog from '../../layouts/dialog/CustomDialog';
 import CustomDialogActions from '../../layouts/dialog/CustomDialogActions';
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
 import { generateUniqueId } from '../../../utils/uniqueIdGenerator';
+import { chapterUpdateTrack } from '../../../utils/chapterUpdateTrack';
 
 interface CreateLessonDialogProps {
 	chapter?: ChapterLessonData;
@@ -17,7 +18,6 @@ interface CreateLessonDialogProps {
 	createNewLesson: boolean;
 	setIsNewLessonModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
 	setLessons?: React.Dispatch<React.SetStateAction<Lesson[]>>;
-	setNewLessonsToCreate?: React.Dispatch<React.SetStateAction<Lesson[]>>;
 	setChapterLessonDataBeforeSave?: React.Dispatch<React.SetStateAction<ChapterLessonData[]>>;
 	setIsChapterUpdated?: React.Dispatch<React.SetStateAction<ChapterUpdateTrack[]>>;
 }
@@ -85,17 +85,7 @@ const CreateLessonDialog = ({
 						if (currentChapter.chapterId === chapter?.chapterId) {
 							const updatedLessons = [newLessonBeforeSave, ...currentChapter.lessons];
 							if (setIsChapterUpdated) {
-								setIsChapterUpdated((prevData: ChapterUpdateTrack[]) => {
-									if (prevData) {
-										prevData = prevData.map((data) => {
-											if (data.chapterId === chapter.chapterId) {
-												return { ...data, isUpdated: true };
-											}
-											return data;
-										})!;
-									}
-									return prevData;
-								});
+								chapterUpdateTrack(chapter.chapterId, setIsChapterUpdated);
 							}
 							return {
 								...currentChapter,
