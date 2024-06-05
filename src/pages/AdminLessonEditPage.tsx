@@ -28,6 +28,7 @@ import useImageUpload from '../hooks/useImageUpload';
 import useVideoUpload from '../hooks/useVideoUpload';
 import HandleImageUploadURL from '../components/forms/uploadImageVideo/HandleImageUploadURL';
 import HandleVideoUploadURL from '../components/forms/uploadImageVideo/HandleVideoUploadURL';
+import AddNewQuestionDialog from '../components/adminSingleLesson/AddNewQuestionDialog';
 
 export interface QuestionUpdateTrack {
 	questionId: string;
@@ -93,6 +94,8 @@ const AdminLessonEditPage = () => {
 	const [isDisplayNonEditQuestion, setIsDisplayNonEditQuestion] = useState<boolean>(false);
 	const [isLessonUpdated, setIsLessonUpdated] = useState<boolean>(false);
 	const [isQuestionUpdated, setIsQuestionUpdated] = useState<QuestionUpdateTrack[]>([]);
+
+	const [addNewQuestionModalOpen, setAddNewQuestionModalOpen] = useState<boolean>(false);
 
 	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(true);
 	const [enterVideoUrl, setEnterVideoUrl] = useState<boolean>(true);
@@ -438,9 +441,22 @@ const AdminLessonEditPage = () => {
 								Questions
 							</Typography>
 							<Box>
-								<CustomSubmitButton sx={{ margin: '0 0.5rem 1rem 0' }} onClick={() => {}}>
+								<CustomSubmitButton
+									sx={{ margin: '0 0.5rem 1rem 0' }}
+									onClick={() => {
+										setAddNewQuestionModalOpen(true);
+									}}>
 									Add Question
 								</CustomSubmitButton>
+
+								<AddNewQuestionDialog
+									addNewQuestionModalOpen={addNewQuestionModalOpen}
+									singleLessonBeforeSave={singleLessonBeforeSave}
+									setAddNewQuestionModalOpen={setAddNewQuestionModalOpen}
+									setIsLessonUpdated={setIsLessonUpdated}
+									setSingleLessonBeforeSave={setSingleLessonBeforeSave}
+								/>
+
 								<CustomSubmitButton
 									type='button'
 									sx={{ marginBottom: '1rem' }}
