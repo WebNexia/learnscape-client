@@ -1,4 +1,4 @@
-import { InputLabelProps, TextField, TextFieldProps } from '@mui/material';
+import { InputLabelProps, InputProps, TextField, TextFieldProps } from '@mui/material';
 import React, { ChangeEvent } from 'react';
 import theme from '../../../themes';
 
@@ -14,6 +14,7 @@ interface CustomTextFieldProps {
 	multiline?: boolean;
 	sx?: React.CSSProperties;
 	InputLabelProps?: Partial<InputLabelProps>;
+	InputProps?: InputProps;
 	maxRows?: number;
 	rows?: number;
 	disabled?: boolean;
@@ -34,6 +35,7 @@ const CustomTextField = ({
 	multiline,
 	sx,
 	InputLabelProps,
+	InputProps,
 	maxRows,
 	rows = 4,
 	disabled,
@@ -55,6 +57,7 @@ const CustomTextField = ({
 			required={required}
 			multiline={multiline}
 			InputLabelProps={InputLabelProps}
+			InputProps={InputProps}
 			maxRows={maxRows}
 			rows={rows}
 			disabled={disabled}
