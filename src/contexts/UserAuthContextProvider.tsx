@@ -1,16 +1,20 @@
-import { createContext, ReactNode, useState } from 'react';
+import { createContext, ReactNode, useEffect, useState } from 'react';
 import Loading from '../components/layouts/loading/Loading';
 import LoadingError from '../components/layouts/loading/LoadingError';
 import { useQuery, useQueryClient } from 'react-query';
 import axios from 'axios';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { auth } from '../firebase';
 import { User } from '../interfaces/user';
-import { jwtDecode } from 'jwt-decode';
 
 interface UserAuthContextTypes {
-	user?: User;
+	user?: User | undefined;
 	userId: string;
+	firebaseUserId: string;
+	setUser: React.Dispatch<React.SetStateAction<User | undefined>>;
 	setUserId: React.Dispatch<React.SetStateAction<string>>;
 	fetchUserData: (userId: string) => Promise<void>;
+	signOut: () => Promise<void>;
 }
 
 export interface UserAuthContextProviderProps {
@@ -20,40 +24,65 @@ export interface UserAuthContextProviderProps {
 export const UserAuthContext = createContext<UserAuthContextTypes>({
 	user: undefined,
 	userId: '',
+	firebaseUserId: '',
+	setUser: () => {},
 	setUserId: () => {},
 	fetchUserData: async () => {},
+	signOut: async () => {},
 });
 
 const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
-	const token = localStorage.getItem('user_token');
 	const [isLoaded, setIsLoaded] = useState<boolean>(false);
 
 	const [user, setUser] = useState<User>();
+	const [userId, setUserId] = useState<string>('');
+	const [firebaseUserId, setFirebaseUserId] = useState<string>('');
 	const queryClient = useQueryClient();
 
-	const [userId, setUserId] = useState<string>(() => {
-		if (token) {
-			const decodedToken = jwtDecode<any>(token);
-			return decodedToken.userId;
-		} else {
-			return '';
-		}
-	});
-
-	const fetchUserData = async (userId: string) => {
-		try {
-			const responseUserData = await axios.get(`${base_url}/users/${userId}`);
-			setUser(responseUserData.data.data[0]);
+	useEffect(() => {
+		const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+			if (currentUser) {
+				console.log(currentUser.uid);
+				setFirebaseUserId(currentUser.uid);
+			} else {
+				setUser(() => undefined);
+				setUserId('');
+			}
 			setIsLoaded(true);
-			// Store data in React Query cache
+		});
+
+		return () => {
+			unsubscribe();
+		};
+	}, []);
+
+	useEffect(() => {
+		if (firebaseUserId) {
+			fetchUserData(firebaseUserId);
+		}
+	}, [firebaseUserId]);
+
+	const fetchUserData = async (firebaseUserId: string) => {
+		try {
+			const responseUserData = await axios.get(`${base_url}/users/${firebaseUserId}`);
+			localStorage.setItem('role', responseUserData.data.data[0].role);
+			setUser(responseUserData.data.data[0]);
+			setUserId(responseUserData.data.data[0]._id);
 			queryClient.setQueryData('userData', responseUserData.data.data[0]);
 		} catch (error) {
 			throw new Error('Failed to fetch user data');
 		}
 	};
 
-	const userQuery = useQuery('userData', () => fetchUserData(userId), {
+	const signOutUser = async () => {
+		await signOut(auth);
+		setUser(() => undefined);
+		setUserId('');
+		queryClient.clear();
+	};
+
+	const userQuery = useQuery('userData', () => fetchUserData(firebaseUserId), {
 		enabled: !!userId && !isLoaded,
 	});
 
@@ -65,7 +94,11 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 		return <LoadingError />;
 	}
 
-	return <UserAuthContext.Provider value={{ setUserId, user, fetchUserData, userId }}>{props.children}</UserAuthContext.Provider>;
+	return (
+		<UserAuthContext.Provider value={{ user, userId, firebaseUserId, setUser, setUserId, fetchUserData, signOut: signOutUser }}>
+			{props.children}
+		</UserAuthContext.Provider>
+	);
 };
 
 export default UserAuthContextProvider;

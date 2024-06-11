@@ -12,9 +12,12 @@ import CustomTablePagination from '../components/layouts/table/CustomTablePagina
 import CustomActionBtn from '../components/layouts/table/CustomActionBtn';
 import { UsersContext } from '../contexts/UsersContextProvider';
 import { User } from '../interfaces/user';
+import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 
 const AdminUsers = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
+
+	const { userId } = useContext(UserAuthContext);
 
 	const { sortUsersData, sortedUsersData, removeUser, numberOfPages, pageNumber, setPageNumber } = useContext(UsersContext);
 
@@ -79,44 +82,46 @@ const AdminUsers = () => {
 					<TableBody>
 						{sortedUsersData &&
 							sortedUsersData.map((user: User, index) => {
-								return (
-									<TableRow key={user._id}>
-										<CustomTableCell value={user.username} />
-										<CustomTableCell value={user.email} />
-										<CustomTableCell value={user.isActive ? 'Active' : 'Inactive'} />
-										<CustomTableCell value={user.role.charAt(0).toUpperCase() + user.role.slice(1)} />
+								if (user._id !== userId) {
+									return (
+										<TableRow key={user._id}>
+											<CustomTableCell value={user.username} />
+											<CustomTableCell value={user.email} />
+											<CustomTableCell value={user.isActive ? 'Active' : 'Inactive'} />
+											<CustomTableCell value={user.role.charAt(0).toUpperCase() + user.role.slice(1)} />
 
-										<TableCell
-											sx={{
-												textAlign: 'center',
-											}}>
-											<CustomActionBtn title='Edit' onClick={() => {}} icon={<Edit />} />
-											<CustomActionBtn
-												title='Delete'
-												onClick={() => {
-													openDeleteUserModal(index);
-												}}
-												icon={<Delete />}
-											/>
-											{isUserDeleteModalOpen[index] !== undefined && (
-												<CustomDialog
-													openModal={isUserDeleteModalOpen[index]}
-													closeModal={() => closeDeleteUserModal(index)}
-													title='Delete User'
-													content='Are you sure you want to delete this user?'>
-													<CustomDialogActions
-														onCancel={() => closeDeleteUserModal(index)}
-														deleteBtn={true}
-														onDelete={() => {
-															deleteUser(user._id);
-															closeDeleteUserModal(index);
-														}}
-													/>
-												</CustomDialog>
-											)}
-										</TableCell>
-									</TableRow>
-								);
+											<TableCell
+												sx={{
+													textAlign: 'center',
+												}}>
+												<CustomActionBtn title='Edit' onClick={() => {}} icon={<Edit />} />
+												<CustomActionBtn
+													title='Delete'
+													onClick={() => {
+														openDeleteUserModal(index);
+													}}
+													icon={<Delete />}
+												/>
+												{isUserDeleteModalOpen[index] !== undefined && (
+													<CustomDialog
+														openModal={isUserDeleteModalOpen[index]}
+														closeModal={() => closeDeleteUserModal(index)}
+														title='Delete User'
+														content='Are you sure you want to delete this user?'>
+														<CustomDialogActions
+															onCancel={() => closeDeleteUserModal(index)}
+															deleteBtn={true}
+															onDelete={() => {
+																deleteUser(user._id);
+																closeDeleteUserModal(index);
+															}}
+														/>
+													</CustomDialog>
+												)}
+											</TableCell>
+										</TableRow>
+									);
+								}
 							})}
 					</TableBody>
 				</Table>

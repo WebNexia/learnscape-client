@@ -4,7 +4,6 @@ import axios from 'axios';
 import { useQuery, useQueryClient } from 'react-query';
 import Loading from '../components/layouts/loading/Loading';
 import LoadingError from '../components/layouts/loading/LoadingError';
-import { jwtDecode } from 'jwt-decode';
 
 interface OrganisationContextTypes {
 	organisation?: Organisation;
@@ -26,18 +25,16 @@ export const OrganisationContext = createContext<OrganisationContextTypes>({
 
 const OrganisationContextProvider = (props: UserAuthContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
-	const token = localStorage.getItem('user_token');
+	const token = localStorage.getItem('orgId')?.slice(5, -5);
 
 	const [isLoaded, setIsLoaded] = useState<boolean>(false);
 
 	const [organisation, setOrganisation] = useState<Organisation>();
 	const [orgId, setOrgId] = useState<string>(() => {
 		if (token) {
-			const decodedToken = jwtDecode<any>(token);
-			return decodedToken.orgId;
-		} else {
-			return '';
+			return token;
 		}
+		return '';
 	});
 	const queryClient = useQueryClient();
 

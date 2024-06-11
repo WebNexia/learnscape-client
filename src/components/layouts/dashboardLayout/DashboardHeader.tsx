@@ -1,15 +1,17 @@
 import { AppBar, Box, Button, IconButton, Toolbar, Tooltip, Typography } from '@mui/material';
 import theme from '../../../themes';
 import { useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { Mode } from '../../../interfaces/enums';
 import { DarkMode, LightMode } from '@mui/icons-material';
+import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 
 interface DashboardHeaderProps {
 	pageName: string;
 }
 
 const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
+	const { signOut } = useContext(UserAuthContext);
 	const [mode, setMode] = useState<Mode>((localStorage.getItem('mode') as Mode) || Mode.LIGHT_MODE);
 	const navigate = useNavigate();
 
@@ -69,8 +71,9 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 							color: theme.textColor?.common.main,
 							fontFamily: theme.fontFamily?.main,
 						}}
-						onClick={() => {
-							localStorage.removeItem('user_token');
+						onClick={async () => {
+							await signOut();
+							localStorage.removeItem('orgId');
 							localStorage.removeItem('userCourseData');
 							localStorage.removeItem('userLessonData');
 							localStorage.removeItem('role');

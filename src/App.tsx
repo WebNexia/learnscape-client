@@ -66,7 +66,7 @@ function App() {
 												<Suspense fallback={<Loading />}>
 													<Router>
 														<Routes>
-															<Route path='' element={<HomePage />} />
+															<Route path='/' element={<HomePage />} />
 															<Route path='/auth' element={<Auth setUserRole={setUserRole} />} />
 
 															<>

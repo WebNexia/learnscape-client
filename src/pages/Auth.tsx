@@ -1,4 +1,4 @@
-import { Box, Button, Typography } from '@mui/material';
+import { Alert, Box, Button, IconButton, InputAdornment, Snackbar, Typography } from '@mui/material';
 import * as styles from '../styles/styleAuth';
 import { FormEvent, useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -8,6 +8,12 @@ import { AuthFormErrorMessages, AuthForms, Roles, TextFieldTypes } from '../inte
 import CustomTextField from '../components/forms/customFields/CustomTextField';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
+import { AuthError, createUserWithEmailAndPassword, sendEmailVerification, signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../firebase';
+import { useQueryClient } from 'react-query';
+import { User } from '../interfaces/user';
+import { FirebaseError } from 'firebase/app';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
 
 interface AuthProps {
 	setUserRole: React.Dispatch<React.SetStateAction<string | null>>;
@@ -15,8 +21,12 @@ interface AuthProps {
 
 const Auth = ({ setUserRole }: AuthProps) => {
 	const navigate = useNavigate();
+	const queryClient = useQueryClient();
 
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
+
+	const vertical = 'top';
+	const horizontal = 'center';
 
 	const { setUserId, fetchUserData } = useContext(UserAuthContext);
 	const { fetchOrganisationData, setOrgId } = useContext(OrganisationContext);
@@ -24,11 +34,18 @@ const Auth = ({ setUserRole }: AuthProps) => {
 	const [activeForm, setActiveForm] = useState<AuthForms>(AuthForms.SIGN_UP);
 
 	const [errorMsg, setErrorMsg] = useState<AuthFormErrorMessages>();
+	const [signUpMessage, setSignUpMessage] = useState<boolean>(false);
 
 	const [username, setUsername] = useState<string>('');
 	const [email, setEmail] = useState<string>('');
 	const [password, setPassword] = useState<string>('');
 	const [orgCode, setOrgCode] = useState<string>('');
+
+	const [showPassword, setShowPassword] = useState(false);
+
+	const togglePasswordVisibility = () => {
+		setShowPassword((prevShowPassword) => !prevShowPassword);
+	};
 
 	const errorMessageTypography = (
 		<Typography variant='body2' sx={{ textAlign: 'center', color: 'red', marginTop: '1rem' }}>
@@ -39,67 +56,128 @@ const Auth = ({ setUserRole }: AuthProps) => {
 	const signIn = async (e: FormEvent) => {
 		e.preventDefault();
 		try {
-			const response = await axios.post(`${base_url}/users/signin`, { email, password });
+			const userCredential = await signInWithEmailAndPassword(auth, email, password);
+			const firebaseUser = userCredential.user;
 
-			if (response.data.status) {
-				localStorage.setItem('user_token', response.data.token);
-				localStorage.setItem('role', response.data.role);
+			if (!firebaseUser.emailVerified) {
+				setErrorMsg(AuthFormErrorMessages.EMAIL_NOT_VERIFIED);
+				return;
+			}
 
-				setUserId(response.data._id);
-				setOrgId(response.data.orgId);
+			await fetchUserData(firebaseUser.uid);
 
-				await Promise.all([fetchUserData(response.data._id), fetchOrganisationData(response.data.orgId)]);
+			const updatedUser = queryClient.getQueryData<User>('userData');
 
-				if (response.data.role) {
-					setUserRole(response.data.role);
-				}
+			if (updatedUser) {
+				await fetchOrganisationData(updatedUser?.orgId);
 
-				if (response.data.role === Roles.USER) {
-					navigate(`/dashboard/user/${response.data._id}`);
-				} else if (response.data.role === Roles.ADMIN) {
-					navigate(`/admin/dashboard/user/${response.data._id}`);
+				localStorage.setItem('role', updatedUser.role);
+				localStorage.setItem('orgId', '61b23' + updatedUser.orgId + '078a9');
+
+				setUserId(updatedUser._id);
+				setOrgId(updatedUser.orgId);
+				setUserRole(updatedUser.role);
+
+				if (updatedUser.role === Roles.USER) {
+					navigate(`/dashboard/user/${updatedUser._id}`);
+				} else if (updatedUser.role === Roles.ADMIN) {
+					navigate(`/admin/dashboard/user/${updatedUser._id}`);
 				}
 
 				setEmail('');
 				setUsername('');
 				setPassword('');
 				setErrorMsg(undefined);
-			} else if (response.data.message === 'Email does not exist') {
-				setErrorMsg(AuthFormErrorMessages.EMAIL_NOT_EXIST);
-			} else {
-				setErrorMsg(AuthFormErrorMessages.WRONG_PASSWORD);
 			}
 		} catch (error) {
-			console.log(error);
+			const firebaseError = error as AuthError;
+			if (firebaseError.code === 'auth/invalid-credential') {
+				setErrorMsg(AuthFormErrorMessages.INVALID_CREDENTIALS);
+			}
+			console.log(firebaseError, 'Failed to sign in');
 		}
 	};
 
+	const validatePassword = (password: string): AuthFormErrorMessages | null => {
+		const minLength = 6;
+		// const hasUppercase = /[A-Z]/.test(password);
+		// const hasLowercase = /[a-z]/.test(password);
+		const hasNumber = /\d/.test(password);
+		// const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+		const hasLetter = /[a-zA-Z]/.test(password);
+
+		if (password.length < minLength) {
+			return AuthFormErrorMessages.PASSWORD_TOO_SHORT;
+		}
+		if (!hasLetter) {
+			return AuthFormErrorMessages.PASSWORD_NO_LETTER;
+		}
+		// if (!hasUppercase) {
+		// 	return AuthFormErrorMessages.PASSWORD_NO_UPPERCASE;
+		// }
+		// if (!hasLowercase) {
+		// 	return AuthFormErrorMessages.PASSWORD_NO_LOWERCASE;
+		// }
+		if (!hasNumber) {
+			return AuthFormErrorMessages.PASSWORD_NO_NUMBER;
+		}
+		// if (!hasSpecialChar) {
+		// 	return AuthFormErrorMessages.PASSWORD_NO_SPECIAL_CHAR;
+		// }
+		return null;
+	};
 	const signUp = async (e: FormEvent) => {
 		e.preventDefault();
+
+		const passwordValidationError = validatePassword(password);
+		if (passwordValidationError) {
+			setErrorMsg(passwordValidationError);
+			return;
+		}
+
 		try {
-			const response = await axios.post(`${base_url}/users/signup`, {
-				username,
-				email,
-				password,
-				orgCode,
-			});
+			const response = await axios.get(`${base_url}/organisations/code/${orgCode}`);
 
-			if (response.data.status === 201) {
-				await signIn(e);
-				setEmail('');
-				setPassword('');
-				setUsername('');
-				setOrgCode('');
-				setErrorMsg(undefined);
+			if (response.data) {
+				const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+				const user = userCredential.user;
+
+				await sendEmailVerification(user);
+
+				await axios.post(`${base_url}/users/signup`, {
+					username,
+					orgCode,
+					firebaseUserId: user.uid,
+					email,
+				});
+
+				if (user) {
+					setActiveForm(AuthForms.SIGN_IN);
+					setEmail('');
+					setPassword('');
+					setUsername('');
+					setOrgCode('');
+					setErrorMsg(undefined);
+					setSignUpMessage(true);
+					setShowPassword(false);
+				}
 			}
-
-			localStorage.setItem('signedup', 'yes');
-		} catch (error: any) {
-			if (error.response.status === 409) {
-				setErrorMsg(AuthFormErrorMessages.EMAIL_EXISTS);
-			} else if (error.response.status === 404) {
+		} catch (error) {
+			if (error instanceof FirebaseError) {
+				handleFirebaseError(error);
+			} else {
 				setErrorMsg(AuthFormErrorMessages.ORG_CODE_NOT_EXIST);
 			}
+		}
+	};
+
+	const handleFirebaseError = (error: FirebaseError) => {
+		switch (error.code) {
+			case 'auth/email-already-in-use':
+				setErrorMsg(AuthFormErrorMessages.EMAIL_EXISTS);
+				break;
+			default:
+				setErrorMsg(AuthFormErrorMessages.UNKNOWN_ERROR_OCCURED);
 		}
 	};
 
@@ -130,6 +208,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 						fullWidth
 						onClick={() => {
 							setActiveForm(AuthForms.SIGN_IN);
+							setShowPassword(false);
 							if (activeForm !== AuthForms.SIGN_IN) {
 								setErrorMsg(undefined);
 								setEmail('');
@@ -150,6 +229,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 						fullWidth
 						onClick={() => {
 							setActiveForm(AuthForms.SIGN_UP);
+							setShowPassword(false);
 							if (activeForm !== AuthForms.SIGN_UP) {
 								setEmail('');
 								setUsername('');
@@ -167,6 +247,13 @@ const Auth = ({ setUserRole }: AuthProps) => {
 						Sign Up
 					</Button>
 				</Box>
+
+				<Snackbar open={signUpMessage} autoHideDuration={15000} onClose={() => setSignUpMessage(false)} anchorOrigin={{ vertical, horizontal }}>
+					<Alert onClose={() => setSignUpMessage(false)} severity='success' sx={{ width: '100%' }}>
+						You successfully signed up! Please verify your email address.
+					</Alert>
+				</Snackbar>
+
 				<Box sx={{ display: 'flex', justifyContent: 'center' }}>
 					{
 						{
@@ -180,12 +267,26 @@ const Auth = ({ setUserRole }: AuthProps) => {
 												justifyContent: 'center',
 												alignItems: 'center',
 											}}>
-											<CustomTextField label='Email Address' type={TextFieldTypes.EMAIL} onChange={(e) => setEmail(e.target.value)} value={email} />
+											<CustomTextField
+												label='Email Address'
+												type={TextFieldTypes.EMAIL}
+												onChange={(e) => setEmail(e.target.value.trim())}
+												value={email}
+											/>
 											<CustomTextField
 												label='Password'
-												type={TextFieldTypes.PASSWORD}
-												onChange={(e) => setPassword(e.target.value)}
+												type={showPassword ? TextFieldTypes.TEXT : TextFieldTypes.PASSWORD}
+												onChange={(e) => setPassword(e.target.value.trim())}
 												value={password}
+												InputProps={{
+													endAdornment: (
+														<InputAdornment position='end'>
+															<IconButton onClick={togglePasswordVisibility} edge='end'>
+																{!showPassword ? <Visibility /> : <VisibilityOff />}
+															</IconButton>
+														</InputAdornment>
+													),
+												}}
 											/>
 										</Box>
 										<Button variant='contained' fullWidth sx={submitBtnStyles} type='submit'>
@@ -204,19 +305,38 @@ const Auth = ({ setUserRole }: AuthProps) => {
 												justifyContent: 'center',
 												alignItems: 'center',
 											}}>
-											<CustomTextField label='Email Address' type={TextFieldTypes.EMAIL} onChange={(e) => setEmail(e.target.value)} value={email} />
+											<CustomTextField
+												label='Email Address'
+												type={TextFieldTypes.EMAIL}
+												onChange={(e) => setEmail(e.target.value.trim())}
+												value={email}
+											/>
 
-											<CustomTextField label='Username' type={TextFieldTypes.TEXT} onChange={(e) => setUsername(e.target.value)} value={username} />
+											<CustomTextField
+												label='Username'
+												type={TextFieldTypes.TEXT}
+												onChange={(e) => setUsername(e.target.value.trim())}
+												value={username}
+											/>
 											<CustomTextField
 												label='Password'
-												type={TextFieldTypes.PASSWORD}
-												onChange={(e) => setPassword(e.target.value)}
+												type={showPassword ? TextFieldTypes.TEXT : TextFieldTypes.PASSWORD}
+												onChange={(e) => setPassword(e.target.value.trim())}
 												value={password}
+												InputProps={{
+													endAdornment: (
+														<InputAdornment position='end'>
+															<IconButton onClick={togglePasswordVisibility} edge='end'>
+																{!showPassword ? <Visibility /> : <VisibilityOff />}
+															</IconButton>
+														</InputAdornment>
+													),
+												}}
 											/>
 											<CustomTextField
 												label='Organization Code'
 												type={TextFieldTypes.TEXT}
-												onChange={(e) => setOrgCode(e.target.value)}
+												onChange={(e) => setOrgCode(e.target.value.trim())}
 												value={orgCode}
 											/>
 										</Box>
@@ -248,9 +368,13 @@ const Auth = ({ setUserRole }: AuthProps) => {
 						{errorMsg &&
 							{
 								[AuthFormErrorMessages.EMAIL_EXISTS]: errorMessageTypography,
-								[AuthFormErrorMessages.EMAIL_NOT_EXIST]: errorMessageTypography,
-								[AuthFormErrorMessages.WRONG_PASSWORD]: errorMessageTypography,
+								[AuthFormErrorMessages.INVALID_CREDENTIALS]: errorMessageTypography,
 								[AuthFormErrorMessages.ORG_CODE_NOT_EXIST]: errorMessageTypography,
+								[AuthFormErrorMessages.EMAIL_NOT_VERIFIED]: errorMessageTypography,
+								[AuthFormErrorMessages.UNKNOWN_ERROR_OCCURED]: errorMessageTypography,
+								[AuthFormErrorMessages.PASSWORD_TOO_SHORT]: errorMessageTypography,
+								[AuthFormErrorMessages.PASSWORD_NO_NUMBER]: errorMessageTypography,
+								[AuthFormErrorMessages.PASSWORD_NO_LETTER]: errorMessageTypography,
 							}[errorMsg]}
 					</Box>
 				</Box>
