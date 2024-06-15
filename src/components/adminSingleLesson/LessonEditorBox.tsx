@@ -64,9 +64,7 @@ const LessonEditorBox = ({
 			<Box sx={{ display: 'flex', alignItems: 'center', textAlign: 'center' }}>
 				<Box sx={{ height: '8rem', width: '12rem', mr: '2rem' }}>
 					<img
-						src={
-							singleLessonBeforeSave.imageUrl === '' ? 'https://directmobilityonline.co.uk/assets/img/noimage.png' : singleLessonBeforeSave.imageUrl
-						}
+						src={singleLessonBeforeSave.imageUrl ? singleLessonBeforeSave.imageUrl : 'https://directmobilityonline.co.uk/assets/img/noimage.png'}
 						alt='lesson_img'
 						height='100%'
 						width='100%'

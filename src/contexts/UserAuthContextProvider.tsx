@@ -43,7 +43,6 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 	useEffect(() => {
 		const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
 			if (currentUser) {
-				console.log(currentUser.uid);
 				setFirebaseUserId(currentUser.uid);
 			} else {
 				setUser(() => undefined);

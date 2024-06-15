@@ -61,12 +61,14 @@ const VideoThumbnail = ({
 				/>
 			)}
 			<Box>
-				<Typography
-					variant='body2'
-					sx={{ fontSize: '0.75rem', textDecoration: 'underline', cursor: 'pointer', marginTop: '0.5rem' }}
-					onClick={removeVideo}>
-					Remove
-				</Typography>
+				{videoPlayCondition && (
+					<Typography
+						variant='body2'
+						sx={{ fontSize: '0.75rem', textDecoration: 'underline', cursor: 'pointer', marginTop: '0.5rem' }}
+						onClick={removeVideo}>
+						Remove
+					</Typography>
+				)}
 			</Box>
 		</Box>
 	);

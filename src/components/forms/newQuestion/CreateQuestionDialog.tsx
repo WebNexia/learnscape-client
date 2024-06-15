@@ -11,6 +11,7 @@ import {
 	Select,
 	SelectChangeEvent,
 	Tooltip,
+	Typography,
 } from '@mui/material';
 import CustomTextField from '../customFields/CustomTextField';
 import { AddCircle, RemoveCircle } from '@mui/icons-material';
@@ -30,6 +31,7 @@ import HandleImageUploadURL from '../uploadImageVideo/HandleImageUploadURL';
 import HandleVideoUploadURL from '../uploadImageVideo/HandleVideoUploadURL';
 import ImageThumbnail from '../uploadImageVideo/ImageThumbnail';
 import VideoThumbnail from '../uploadImageVideo/VideoThumbnail';
+import TinyMceEditor from '../../richTextEditor/TinyMceEditor';
 
 interface CreateQuestionDialogProps {
 	isQuestionCreateModalOpen: boolean;
@@ -106,6 +108,7 @@ const CreateQuestionDialog = ({
 	});
 
 	const [isCorrectAnswerMissing, setIsCorrectAnswerMissing] = useState<boolean>(false);
+	const [editorContent, setEditorContent] = useState<string>('');
 
 	useEffect(() => {
 		resetVideoUpload();
@@ -141,7 +144,7 @@ const CreateQuestionDialog = ({
 		try {
 			const response = await axios.post(`${base_url}/questions`, {
 				questionType: questionTypeId,
-				question: newQuestion?.question,
+				question: editorContent,
 				options,
 				correctAnswer,
 				imageUrl: newQuestion?.imageUrl,
@@ -153,7 +156,7 @@ const CreateQuestionDialog = ({
 			addNewQuestion({
 				_id: response.data._id,
 				questionType: questionTypes?.filter((type) => type.name === questionType)[0].name,
-				question: newQuestion?.question,
+				question: editorContent,
 				options,
 				correctAnswer,
 				imageUrl: newQuestion?.imageUrl,
@@ -173,7 +176,7 @@ const CreateQuestionDialog = ({
 			const newQuestionBeforeSave: QuestionInterface = {
 				_id: generateUniqueId('temp_question_id_'),
 				questionType,
-				question: newQuestion?.question,
+				question: editorContent,
 				options,
 				correctAnswer,
 				imageUrl: newQuestion?.imageUrl,
@@ -386,21 +389,15 @@ const CreateQuestionDialog = ({
 							</Box>
 						</Box>
 
-						<Box>
-							<CustomTextField
-								value={newQuestion?.question}
-								label='Question'
-								onChange={(e) => {
-									setNewQuestion((prevQuestion) => {
-										if (prevQuestion?.question !== undefined) {
-											return {
-												...prevQuestion,
-												question: e.target.value,
-											};
-										}
-										return prevQuestion;
-									});
+						<Box sx={{ width: '100%', margin: '1rem 0' }}>
+							<Typography variant='h6' sx={{ mb: '0.5rem' }}>
+								Question
+							</Typography>
+							<TinyMceEditor
+								handleEditorChange={(content) => {
+									setEditorContent(content);
 								}}
+								initialValue=''
 							/>
 						</Box>
 						{questionType === 'Multiple Choice' && (

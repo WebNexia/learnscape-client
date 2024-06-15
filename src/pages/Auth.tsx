@@ -177,7 +177,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 				setErrorMsg(AuthFormErrorMessages.EMAIL_EXISTS);
 				break;
 			default:
-				setErrorMsg(AuthFormErrorMessages.UNKNOWN_ERROR_OCCURED);
+				setErrorMsg(AuthFormErrorMessages.UNKNOWN_ERROR_OCCURRED);
 		}
 	};
 
@@ -234,6 +234,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 								setEmail('');
 								setUsername('');
 								setPassword('');
+								setOrgCode('');
 								setErrorMsg(undefined);
 							}
 						}}
@@ -270,13 +271,19 @@ const Auth = ({ setUserRole }: AuthProps) => {
 											<CustomTextField
 												label='Email Address'
 												type={TextFieldTypes.EMAIL}
-												onChange={(e) => setEmail(e.target.value.trim())}
+												onChange={(e) => {
+													setEmail(e.target.value.trim());
+													setErrorMsg(undefined);
+												}}
 												value={email}
 											/>
 											<CustomTextField
 												label='Password'
 												type={showPassword ? TextFieldTypes.TEXT : TextFieldTypes.PASSWORD}
-												onChange={(e) => setPassword(e.target.value.trim())}
+												onChange={(e) => {
+													setPassword(e.target.value.trim());
+													setErrorMsg(undefined);
+												}}
 												value={password}
 												InputProps={{
 													endAdornment: (
@@ -308,7 +315,10 @@ const Auth = ({ setUserRole }: AuthProps) => {
 											<CustomTextField
 												label='Email Address'
 												type={TextFieldTypes.EMAIL}
-												onChange={(e) => setEmail(e.target.value.trim())}
+												onChange={(e) => {
+													setEmail(e.target.value.trim());
+													setErrorMsg(undefined);
+												}}
 												value={email}
 											/>
 
@@ -321,7 +331,10 @@ const Auth = ({ setUserRole }: AuthProps) => {
 											<CustomTextField
 												label='Password'
 												type={showPassword ? TextFieldTypes.TEXT : TextFieldTypes.PASSWORD}
-												onChange={(e) => setPassword(e.target.value.trim())}
+												onChange={(e) => {
+													setPassword(e.target.value.trim());
+													setErrorMsg(undefined);
+												}}
 												value={password}
 												InputProps={{
 													endAdornment: (
@@ -336,7 +349,10 @@ const Auth = ({ setUserRole }: AuthProps) => {
 											<CustomTextField
 												label='Organization Code'
 												type={TextFieldTypes.TEXT}
-												onChange={(e) => setOrgCode(e.target.value.trim())}
+												onChange={(e) => {
+													setOrgCode(e.target.value.trim());
+													setErrorMsg(undefined);
+												}}
 												value={orgCode}
 											/>
 										</Box>
@@ -371,7 +387,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 								[AuthFormErrorMessages.INVALID_CREDENTIALS]: errorMessageTypography,
 								[AuthFormErrorMessages.ORG_CODE_NOT_EXIST]: errorMessageTypography,
 								[AuthFormErrorMessages.EMAIL_NOT_VERIFIED]: errorMessageTypography,
-								[AuthFormErrorMessages.UNKNOWN_ERROR_OCCURED]: errorMessageTypography,
+								[AuthFormErrorMessages.UNKNOWN_ERROR_OCCURRED]: errorMessageTypography,
 								[AuthFormErrorMessages.PASSWORD_TOO_SHORT]: errorMessageTypography,
 								[AuthFormErrorMessages.PASSWORD_NO_NUMBER]: errorMessageTypography,
 								[AuthFormErrorMessages.PASSWORD_NO_LETTER]: errorMessageTypography,

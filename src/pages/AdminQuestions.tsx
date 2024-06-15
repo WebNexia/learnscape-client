@@ -16,6 +16,8 @@ import { QuestionInterface } from '../interfaces/question';
 import useNewQuestion from '../hooks/useNewQuestion';
 import CreateQuestionDialog from '../components/forms/newQuestion/CreateQuestionDialog';
 import EditQuestionDialog from '../components/forms/editQuestion/EditQuestionDialog';
+import { stripHtml } from '../utils/stripHtml';
+import { truncateText } from '../utils/utilText';
 
 const AdminQuestions = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -155,7 +157,7 @@ const AdminQuestions = () => {
 								return (
 									<TableRow key={question._id}>
 										<CustomTableCell value={question.questionType} />
-										<CustomTableCell value={question.question} />
+										<CustomTableCell value={truncateText(stripHtml(question.question), 30)} />
 
 										<TableCell
 											sx={{

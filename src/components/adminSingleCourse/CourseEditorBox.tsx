@@ -84,7 +84,7 @@ const CourseEditorBox = ({
 				<Typography variant='body2' sx={{ mt: '0.25rem' }}>
 					Course Image
 				</Typography>
-				{isEditMode && singleCourse?.imageUrl !== '' && (
+				{isEditMode && singleCourse?.imageUrl && (
 					<Typography
 						variant='body2'
 						sx={{ fontSize: '0.75rem', textDecoration: 'underline', cursor: 'pointer' }}

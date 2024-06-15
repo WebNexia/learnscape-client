@@ -2,6 +2,8 @@ import { Box, DialogContent, Typography } from '@mui/material';
 import ReactPlayer from 'react-player';
 import { QuestionInterface } from '../../interfaces/question';
 import theme from '../../themes';
+import { stripHtml } from '../../utils/stripHtml';
+import { sanitizeHtml } from '../../utils/sanitizeHtml';
 
 interface QuestionDialogContentNonEditProps {
 	question: QuestionInterface | null;
@@ -51,9 +53,11 @@ const QuestionDialogContentNonEdit = ({ question }: QuestionDialogContentNonEdit
 				)}
 			</Box>
 			<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-				<Box>
-					<Typography variant='body1'>{question?.question}</Typography>
-				</Box>
+				{question && (
+					<Box>
+						<Typography dangerouslySetInnerHTML={{ __html: sanitizeHtml(question.question) }} />
+					</Box>
+				)}
 				<Box sx={{ alignSelf: 'start' }}>
 					{question &&
 						question.options &&

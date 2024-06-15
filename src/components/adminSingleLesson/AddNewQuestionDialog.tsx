@@ -9,6 +9,8 @@ import CustomTablePagination from '../layouts/table/CustomTablePagination';
 import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
 import CustomCancelButton from '../forms/customButtons/CustomCancelButton';
 import CustomTableCell from '../layouts/table/CustomTableCell';
+import { stripHtml } from '../../utils/stripHtml';
+import { truncateText } from '../../utils/utilText';
 
 interface AddNewQuestionDialogProps {
 	addNewQuestionModalOpen: boolean;
@@ -115,7 +117,7 @@ const AddNewQuestionDialog = ({
 										return (
 											<TableRow key={question._id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
 												<CustomTableCell value={question.questionType} />
-												<CustomTableCell value={question.question} />
+												<CustomTableCell value={truncateText(stripHtml(question.question), 15)} />
 
 												<TableCell
 													sx={{

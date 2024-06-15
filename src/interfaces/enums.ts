@@ -14,14 +14,13 @@ export const enum AuthFormErrorMessages {
 	INVALID_CREDENTIALS = 'Invalid email address or password.',
 	ORG_CODE_NOT_EXIST = 'This organisation code does not exist',
 	EMAIL_NOT_VERIFIED = 'Email is not verified',
-	UNKNOWN_ERROR_OCCURED = 'An unknown error occurred.',
+	UNKNOWN_ERROR_OCCURRED = 'An unknown error occurred.',
 	PASSWORD_TOO_SHORT = 'Password must be at least 6 characters long.',
 	PASSWORD_NO_LETTER = 'Password must contain at least one letter.',
 	// PASSWORD_NO_UPPERCASE = 'Password must contain at least one uppercase letter.',
 	// PASSWORD_NO_LOWERCASE = 'Password must contain at least one lowercase letter.',
 	PASSWORD_NO_NUMBER = 'Password must contain at least one number.',
 	// PASSWORD_NO_SPECIAL_CHAR = 'Password must contain at least one special character.',
-	UNKNOWN_ERROR_OCCURRED = 'An unknown error occurred.',
 }
 
 export const enum Mode {
