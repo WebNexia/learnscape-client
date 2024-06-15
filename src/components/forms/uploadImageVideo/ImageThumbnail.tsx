@@ -8,7 +8,6 @@ interface ImageThumbnailProps {
 }
 
 const ImageThumbnail = ({ imgSource, boxStyle, imgStyle, removeImage }: ImageThumbnailProps) => {
-	console.log(imgSource);
 	return (
 		<Box
 			sx={{

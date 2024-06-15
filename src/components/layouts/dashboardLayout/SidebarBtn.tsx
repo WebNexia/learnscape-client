@@ -19,9 +19,6 @@ const SidebarBtn = ({ btnText, onClick, IconName, selectedPage }: SidebarBtnProp
 
 	const isEditPage: boolean = selectedPage === `${subPageText}-edit`;
 
-	console.log(isEditPage, selectedPage);
-	console.log(selectedPage === btnText || isEditPage);
-
 	return (
 		<Button
 			variant='outlined'
