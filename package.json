@@ -28,10 +28,11 @@
 		"react-query": "^3.39.3",
 		"react-router-dom": "^6.21.2",
 		"styled-components": "^6.1.8",
-		"uuid": "^9.0.1",
-		"@tinymce/tinymce": "^5.0.0"
+		"tinymce": "^7.1.2",
+		"uuid": "^9.0.1"
 	},
 	"devDependencies": {
+		"@types/dompurify": "^3.0.5",
 		"@types/react": "^18.2.43",
 		"@types/react-dom": "^18.2.17",
 		"@types/uuid": "^9.0.8",
