@@ -29,6 +29,8 @@ import useVideoUpload from '../hooks/useVideoUpload';
 import HandleImageUploadURL from '../components/forms/uploadImageVideo/HandleImageUploadURL';
 import HandleVideoUploadURL from '../components/forms/uploadImageVideo/HandleVideoUploadURL';
 import AddNewQuestionDialog from '../components/adminSingleLesson/AddNewQuestionDialog';
+import { stripHtml } from '../utils/stripHtml';
+import { truncateText } from '../utils/utilText';
 
 export interface QuestionUpdateTrack {
 	questionId: string;
@@ -554,7 +556,7 @@ const AdminLessonEditPage = () => {
 																	mr: '1rem',
 																}}>
 																<Box sx={{ ml: '1rem' }}>
-																	<Typography variant='h6'>{question.question}</Typography>
+																	<Typography variant='h6'>{truncateText(stripHtml(question.question), 50)}</Typography>
 																</Box>
 
 																<Box sx={{ display: 'flex' }}>

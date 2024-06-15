@@ -166,6 +166,7 @@ const Loading = () => {
 					alignItems: 'center',
 					backgroundColor: theme.bgColor?.secondary,
 					height: '110vh',
+					marginLeft: '10rem',
 				}}>
 				<CircularProgress />
 				<Typography

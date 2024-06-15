@@ -18,6 +18,7 @@ import HandleImageUploadURL from '../uploadImageVideo/HandleImageUploadURL';
 import HandleVideoUploadURL from '../uploadImageVideo/HandleVideoUploadURL';
 import ImageThumbnail from '../uploadImageVideo/ImageThumbnail';
 import VideoThumbnail from '../uploadImageVideo/VideoThumbnail';
+import TinyMceEditor from '../../richTextEditor/TinyMceEditor';
 
 interface EditQuestionDialogProps {
 	fromLessonEditPage: boolean;
@@ -83,6 +84,8 @@ const EditQuestionDialog = ({
 	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(true);
 	const [enterVideoUrl, setEnterVideoUrl] = useState<boolean>(true);
 
+	const [editorContent, setEditorContent] = useState<string>(question.question);
+
 	const [questionBeforeSave, setQuestionBeforeSave] = useState<QuestionInterface>(question);
 
 	const resetEnterImageVideoUrl = () => {
@@ -100,6 +103,7 @@ const EditQuestionDialog = ({
 	}, [correctAnswerIndex]);
 
 	const handleSubmit = async () => {
+		await handleInputChange('question', editorContent);
 		if (correctAnswerIndex === -1 || correctAnswer === '' || isDuplicateOption || !isMinimumOptions) {
 			setIsCorrectAnswerMissing(correctAnswerIndex === -1 || correctAnswer === '');
 			return;
@@ -129,7 +133,7 @@ const EditQuestionDialog = ({
 
 				const response = await axios.patch(`${base_url}/questions/${question._id}`, {
 					orgId,
-					question: questionAdminQuestions,
+					question: editorContent,
 					options,
 					correctAnswer: updatedCorrectAnswer,
 					videoUrl: videoUrlAdminQuestions,
@@ -139,7 +143,7 @@ const EditQuestionDialog = ({
 				updateQuestion({
 					_id: question._id,
 					orgId,
-					question: questionAdminQuestions,
+					question: editorContent,
 					options,
 					correctAnswer: updatedCorrectAnswer,
 					videoUrl: videoUrlAdminQuestions,
@@ -160,7 +164,7 @@ const EditQuestionDialog = ({
 		closeQuestionEditModal(index);
 	};
 
-	const handleInputChange = (field: 'question' | 'videoUrl' | 'imageUrl', value: string) => {
+	const handleInputChange = async (field: 'question' | 'videoUrl' | 'imageUrl', value: string) => {
 		if (fromLessonEditPage && setSingleLessonBeforeSave) {
 			setSingleLessonBeforeSave((prevData) => {
 				if (!prevData.questions) return prevData;
@@ -346,15 +350,18 @@ const EditQuestionDialog = ({
 						</Box>
 					</Box>
 
-					<Box sx={{ width: '100%' }}>
-						<CustomTextField
-							label='Question'
-							value={fromLessonEditPage ? question.question : questionAdminQuestions}
-							multiline={true}
-							rows={1}
-							onChange={(e) => handleInputChange('question', e.target.value)}
+					<Box sx={{ width: '100%', margin: '1rem 0' }}>
+						<Typography variant='h6' sx={{ mb: '0.5rem' }}>
+							Question
+						</Typography>
+						<TinyMceEditor
+							handleEditorChange={(content) => {
+								setEditorContent(content);
+							}}
+							initialValue={fromLessonEditPage ? question.question : questionAdminQuestions}
 						/>
 					</Box>
+
 					<Box sx={{ width: '90%' }}>
 						{options.map((option, i) => (
 							<Box

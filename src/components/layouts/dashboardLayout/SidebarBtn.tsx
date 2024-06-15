@@ -9,13 +9,26 @@ interface SidebarBtnProps {
 }
 
 const SidebarBtn = ({ btnText, onClick, IconName, selectedPage }: SidebarBtnProps) => {
+	const btnTextChars: string[] | undefined = btnText?.split('');
+	let subPageText = '';
+
+	if (btnTextChars && btnTextChars[btnTextChars.length - 1] === 's') {
+		btnTextChars.pop();
+		subPageText = btnTextChars.join('');
+	}
+
+	const isEditPage: boolean = selectedPage === `${subPageText}-edit`;
+
+	console.log(isEditPage, selectedPage);
+	console.log(selectedPage === btnText || isEditPage);
+
 	return (
 		<Button
 			variant='outlined'
 			startIcon={<IconName />}
 			sx={{
-				color: selectedPage === btnText ? theme.textColor?.primary.main : theme.textColor?.common.main,
-				backgroundColor: selectedPage === btnText ? theme.palette.secondary.main : 'transparent',
+				color: selectedPage === btnText || isEditPage ? theme.textColor?.primary.main : theme.textColor?.common.main,
+				backgroundColor: selectedPage === btnText || isEditPage ? theme.palette.secondary.main : 'transparent',
 				textTransform: 'capitalize',
 				marginBottom: '0.35rem',
 				fontFamily: theme.fontFamily?.main,
@@ -29,8 +42,8 @@ const SidebarBtn = ({ btnText, onClick, IconName, selectedPage }: SidebarBtnProp
 				border: 'none',
 				cursor: 'pointer',
 				'&:hover': {
-					color: selectedPage !== btnText ? theme.submitBtn?.backgroundColor : theme.textColor?.primary.main,
-					backgroundColor: selectedPage === btnText ? theme.palette.secondary.main : 'transparent',
+					color: selectedPage !== btnText && !isEditPage ? theme.submitBtn?.backgroundColor : theme.textColor?.primary.main,
+					backgroundColor: selectedPage === btnText || isEditPage ? theme.palette.secondary.main : 'transparent',
 					border: 'none',
 				},
 			}}

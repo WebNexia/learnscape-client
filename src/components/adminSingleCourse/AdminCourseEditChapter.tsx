@@ -195,7 +195,7 @@ const AdminCourseEditChapter = ({
 												width: '5rem',
 											}}>
 											<img
-												src={lesson.imageUrl}
+												src={lesson.imageUrl || 'https://directmobilityonline.co.uk/assets/img/noimage.png'}
 												alt='lesson_img'
 												height='100%'
 												width='100%'

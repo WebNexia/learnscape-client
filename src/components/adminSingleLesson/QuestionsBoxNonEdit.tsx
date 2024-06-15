@@ -2,6 +2,8 @@ import { Box, Typography } from '@mui/material';
 import theme from '../../themes';
 import { Lesson } from '../../interfaces/lessons';
 import { QuestionInterface } from '../../interfaces/question';
+import { stripHtml } from '../../utils/stripHtml';
+import { truncateText } from '../../utils/utilText';
 
 interface QuestionsBoxNonEditProps {
 	singleLesson?: Lesson;
@@ -71,7 +73,7 @@ const QuestionsBoxNonEdit = ({ singleLesson, setIsDisplayNonEditQuestion, setDis
 												/>
 											</Box>
 											<Box sx={{ ml: '1rem' }}>
-												<Typography variant='h6'>{question.question}</Typography>
+												<Typography variant='h6'>{truncateText(stripHtml(question.question), 50)}</Typography>
 											</Box>
 										</Box>
 									);
