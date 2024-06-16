@@ -34,16 +34,45 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters }: CourseDetailsNonEdi
 				justifyContent: 'flex-start',
 				width: '90%',
 			}}>
-			<Box
-				sx={{
-					mt: '3rem',
-					padding: '2rem',
-					boxShadow: '0 0 0.3rem 0 rgba(0,0,0,0.2)',
-				}}>
-				<Typography variant='h4'>Description</Typography>
-				<Typography variant='body2' sx={{ mt: '0.5rem' }}>
-					{singleCourse?.description}
-				</Typography>
+			<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
+				<Box
+					sx={{
+						mt: '3rem',
+						padding: '2rem',
+						boxShadow: '0 0 0.3rem 0 rgba(0,0,0,0.2)',
+						flex: 3,
+					}}>
+					<Typography variant='h4'>Description</Typography>
+					<Typography variant='body2' sx={{ mt: '0.5rem' }}>
+						{singleCourse?.description}
+					</Typography>
+				</Box>
+				<Box
+					sx={{
+						display: 'flex',
+						flexDirection: 'column',
+						alignItems: 'flex-end',
+						mt: '3rem',
+						padding: '0 0 2rem 2rem',
+						flex: 1,
+					}}>
+					<Box sx={{ textAlign: 'center' }}>
+						<img
+							src={singleCourse?.imageUrl || 'https://directmobilityonline.co.uk/assets/img/noimage.png'}
+							alt='course_img'
+							height='115rem'
+							style={{
+								borderRadius: '0.2rem',
+								boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
+							}}
+						/>
+						<Box>
+							<Typography variant='body2' sx={{ mt: '0.25rem' }}>
+								Course Image
+							</Typography>
+						</Box>
+					</Box>
+				</Box>
 			</Box>
 
 			<Box
@@ -116,7 +145,7 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters }: CourseDetailsNonEdi
 															display: 'flex',
 															alignItems: 'center',
 															height: '4rem',
-															width: '80%',
+															width: '100%',
 															backgroundColor: theme.bgColor?.common,
 															margin: '1.25rem 0',
 															borderRadius: '0.25rem',

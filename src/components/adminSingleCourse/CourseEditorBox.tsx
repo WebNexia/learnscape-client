@@ -17,7 +17,6 @@ interface CourseEditorBoxProps {
 	isNoChapterMsgOpen: boolean;
 	resetChanges: boolean;
 	isFree: boolean;
-	setSingleCourse: React.Dispatch<React.SetStateAction<SingleCourse | undefined>>;
 	setIsEditMode: React.Dispatch<React.SetStateAction<boolean>>;
 	setIsMissingFieldMsgOpen: React.Dispatch<React.SetStateAction<boolean>>;
 	setIsMissingField: React.Dispatch<React.SetStateAction<boolean>>;
@@ -39,7 +38,6 @@ const CourseEditorBox = ({
 	isNoChapterMsgOpen,
 	resetChanges,
 	isFree,
-	setSingleCourse,
 	setChapterLessonDataBeforeSave,
 	setIsEditMode,
 	setIsMissingFieldMsgOpen,
@@ -67,43 +65,10 @@ const CourseEditorBox = ({
 		<Box
 			sx={{
 				display: 'flex',
-				justifyContent: 'space-between',
+				justifyContent: 'flex-end',
 				alignItems: 'center',
 				width: '100%',
 			}}>
-			<Box sx={{ textAlign: 'center' }}>
-				<img
-					src={singleCourse?.imageUrl || 'https://directmobilityonline.co.uk/assets/img/noimage.png'}
-					alt='course_img'
-					height='125rem'
-					style={{
-						borderRadius: '0.2rem',
-						boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
-					}}
-				/>
-				<Typography variant='body2' sx={{ mt: '0.25rem' }}>
-					Course Image
-				</Typography>
-				{isEditMode && singleCourse?.imageUrl && (
-					<Typography
-						variant='body2'
-						sx={{ fontSize: '0.75rem', textDecoration: 'underline', cursor: 'pointer' }}
-						onClick={() => {
-							setSingleCourse((prevData) => {
-								if (prevData !== undefined) {
-									return {
-										...prevData,
-										imageUrl: '',
-									};
-								}
-							});
-
-							resetImageUpload();
-						}}>
-						Remove
-					</Typography>
-				)}
-			</Box>
 			<Box sx={{ display: 'flex' }}>
 				<Box>
 					<CustomSubmitButton

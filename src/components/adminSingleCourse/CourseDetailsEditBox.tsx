@@ -3,8 +3,9 @@ import CustomTextField from '../forms/customFields/CustomTextField';
 import CustomErrorMessage from '../forms/customFields/CustomErrorMessage';
 import { SingleCourse } from '../../interfaces/course';
 import theme from '../../themes';
-import { useState } from 'react';
+import { useContext, useState } from 'react';
 import HandleImageUploadURL from '../forms/uploadImageVideo/HandleImageUploadURL';
+import useImageUpload from '../../hooks/useImageUpload';
 
 interface CourseDetailsEditBoxProps {
 	singleCourse?: SingleCourse;
@@ -17,6 +18,8 @@ interface CourseDetailsEditBoxProps {
 
 const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree, setIsMissingField, setSingleCourse }: CourseDetailsEditBoxProps) => {
 	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(true);
+
+	const { resetImageUpload } = useImageUpload();
 
 	const formatDate = (date: Date) => {
 		if (!(date instanceof Date)) return ''; // Return empty string if date is not valid
@@ -54,24 +57,70 @@ const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree,
 				/>
 				{isMissingField && singleCourse?.title === '' && <CustomErrorMessage>Please enter a title</CustomErrorMessage>}
 			</Box>
-			<Box sx={{ mt: '2rem' }}>
-				<Typography variant='h4'>Description*</Typography>
+			<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mt: '2rem', width: '100%' }}>
+				<Box sx={{ flex: 3 }}>
+					<Typography variant='h4'>Description*</Typography>
+					<CustomTextField
+						sx={{ marginTop: '0.5rem' }}
+						value={singleCourse?.description}
+						onChange={(e) => {
+							setSingleCourse(() => {
+								if (singleCourse?.description !== undefined) {
+									return { ...singleCourse, description: e.target.value };
+								}
+							});
+							setIsMissingField(false);
+						}}
+						multiline
+						error={isMissingField && singleCourse?.description === ''}
+					/>
+					{isMissingField && singleCourse?.description === '' && <CustomErrorMessage>Please enter a description</CustomErrorMessage>}
+				</Box>
+				<Box
+					sx={{
+						display: 'flex',
+						flexDirection: 'column',
+						alignItems: 'flex-end',
+						mt: '1.5rem',
+						padding: '0 0 2rem 2rem',
+						flex: 1,
+					}}>
+					<Box sx={{ textAlign: 'center' }}>
+						<img
+							src={singleCourse?.imageUrl || 'https://directmobilityonline.co.uk/assets/img/noimage.png'}
+							alt='course_img'
+							height='115rem'
+							style={{
+								borderRadius: '0.2rem',
+								boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
+							}}
+						/>
+						<Box>
+							<Typography variant='body2' sx={{ mt: '0.25rem' }}>
+								Course Image
+							</Typography>
+							{singleCourse?.imageUrl && (
+								<Typography
+									variant='body2'
+									sx={{ fontSize: '0.75rem', textDecoration: 'underline', cursor: 'pointer' }}
+									onClick={() => {
+										setSingleCourse((prevData) => {
+											if (prevData !== undefined) {
+												return {
+													...prevData,
+													imageUrl: '',
+												};
+											}
+										});
 
-				<CustomTextField
-					sx={{ marginTop: '0.5rem' }}
-					value={singleCourse?.description}
-					onChange={(e) => {
-						setSingleCourse(() => {
-							if (singleCourse?.description !== undefined) {
-								return { ...singleCourse, description: e.target.value };
-							}
-						});
-						setIsMissingField(false);
-					}}
-					multiline
-					error={isMissingField && singleCourse?.description === ''}
-				/>
-				{isMissingField && singleCourse?.description === '' && <CustomErrorMessage>Please enter a description</CustomErrorMessage>}
+										resetImageUpload();
+									}}>
+									Remove
+								</Typography>
+							)}
+						</Box>
+					</Box>
+				</Box>
 			</Box>
 
 			<Box

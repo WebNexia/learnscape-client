@@ -60,8 +60,7 @@ const CreateLessonDialog = ({
 			title,
 			type,
 			isActive: true,
-			imageUrl:
-				'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8bGVzc29ufGVufDB8fDB8fHww',
+			imageUrl: 'https://directmobilityonline.co.uk/assets/img/noimage.png',
 			videoUrl: '',
 			text: '',
 			questionIds: [],
@@ -163,7 +162,8 @@ const CreateLessonDialog = ({
 						setTitle('');
 					}}
 					cancelBtnSx={{ margin: '0.5rem 0.5rem 0.5rem 0' }}
-					submitBtnSx={{ margin: '0.5rem 1.5rem 0.5rem 0' }}></CustomDialogActions>
+					submitBtnSx={{ margin: '0.5rem 1.5rem 0.5rem 0' }}
+				/>
 			</form>
 		</CustomDialog>
 	);
