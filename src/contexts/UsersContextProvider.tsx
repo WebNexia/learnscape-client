@@ -108,8 +108,6 @@ const UsersContextProvider = (props: UserContextProviderProps) => {
 		setSortedUsersData((prevSortedData) => prevSortedData?.filter((data) => data._id !== id));
 	};
 
-	// useEffect(() => {}, [sortedUserData]);
-
 	if (isLoading) {
 		return <Loading />;
 	}

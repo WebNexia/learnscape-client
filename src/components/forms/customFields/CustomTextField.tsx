@@ -37,7 +37,7 @@ const CustomTextField = ({
 	InputLabelProps,
 	InputProps,
 	maxRows,
-	rows = 4,
+	rows = 3,
 	disabled,
 	error,
 	helperText,

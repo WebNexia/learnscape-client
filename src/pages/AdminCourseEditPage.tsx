@@ -12,7 +12,6 @@ import { Reorder, useMotionValue } from 'framer-motion';
 import { useRaisedShadow } from '../hooks/useRaisedShadow';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import CoursePaper from '../components/adminSingleCourse/Paper';
-import CourseEditorBox from '../components/adminSingleCourse/CourseEditorBox';
 import CourseDetailsNonEditBox from '../components/adminSingleCourse/CourseDetailsNonEditBox';
 import CourseDetailsEditBox from '../components/adminSingleCourse/CourseDetailsEditBox';
 import { Lesson } from '../interfaces/lessons';
@@ -271,13 +270,13 @@ const AdminCourseEditPage = () => {
 	return (
 		<DashboardPagesLayout pageName='Edit Course' customSettings={{ justifyContent: 'flex-start' }}>
 			<Box sx={{ width: '80%', position: 'fixed', top: '4rem', zIndex: 1, backgroundColor: theme.bgColor?.secondary }}>
-				<CoursePaper userId={userId} singleCourse={singleCourse} isActive={isActive} />
-				<CourseEditorBox
+				<CoursePaper
+					userId={userId}
 					singleCourse={singleCourse}
+					isActive={isActive}
 					chapterLessonData={chapterLessonData}
 					chapterLessonDataBeforeSave={chapterLessonDataBeforeSave}
 					isEditMode={isEditMode}
-					isActive={isActive}
 					isMissingFieldMsgOpen={isMissingFieldMsgOpen}
 					isNoChapterMsgOpen={isNoChapterMsgOpen}
 					resetChanges={resetChanges}
@@ -294,9 +293,8 @@ const AdminCourseEditPage = () => {
 				/>
 			</Box>
 
-			<Box sx={{ display: 'flex', width: '95%', justifyContent: 'center', marginTop: '13rem' }}>
+			<Box sx={{ display: 'flex', width: '95%', justifyContent: 'center', marginTop: '9rem' }}>
 				{!isEditMode && <CourseDetailsNonEditBox singleCourse={singleCourse} chapters={chapterLessonData} />}
-
 				{isEditMode && (
 					<Box
 						sx={{
@@ -314,7 +312,7 @@ const AdminCourseEditPage = () => {
 								setIsMissingField={setIsMissingField}
 								setSingleCourse={setSingleCourse}
 							/>
-							<Box sx={{ mt: '4rem', minHeight: '40vh' }}>
+							<Box sx={{ mt: '3rem', minHeight: '40vh' }}>
 								<Box
 									sx={{
 										display: 'flex',

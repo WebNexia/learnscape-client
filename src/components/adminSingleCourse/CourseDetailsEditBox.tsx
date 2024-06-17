@@ -37,29 +37,30 @@ const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree,
 	};
 	return (
 		<>
-			<Box sx={{ mt: '2rem' }}>
-				<Typography variant='h4'>Title*</Typography>
-				<CustomTextField
-					sx={{
-						marginTop: '0.5rem',
-						backgroundColor: theme.bgColor?.common,
-					}}
-					value={singleCourse?.title}
-					onChange={(e) => {
-						setSingleCourse(() => {
-							if (singleCourse?.title !== undefined) {
-								return { ...singleCourse, title: e.target.value };
-							}
-						});
-						setIsMissingField(false);
-					}}
-					error={isMissingField && singleCourse?.title === ''}
-				/>
-				{isMissingField && singleCourse?.title === '' && <CustomErrorMessage>Please enter a title</CustomErrorMessage>}
-			</Box>
-			<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mt: '2rem', width: '100%' }}>
-				<Box sx={{ flex: 3 }}>
-					<Typography variant='h4'>Description*</Typography>
+			<Box sx={{ display: 'flex', mt: '1.5rem' }}>
+				<Box sx={{ flex: 1 }}>
+					<Typography variant='h6'>Title*</Typography>
+					<CustomTextField
+						sx={{
+							marginTop: '0.5rem',
+							backgroundColor: theme.bgColor?.common,
+						}}
+						multiline
+						value={singleCourse?.title}
+						onChange={(e) => {
+							setSingleCourse(() => {
+								if (singleCourse?.title !== undefined) {
+									return { ...singleCourse, title: e.target.value };
+								}
+							});
+							setIsMissingField(false);
+						}}
+						error={isMissingField && singleCourse?.title === ''}
+					/>
+					{isMissingField && singleCourse?.title === '' && <CustomErrorMessage>Please enter a title</CustomErrorMessage>}
+				</Box>
+				<Box sx={{ flex: 1.5, marginLeft: '2rem' }}>
+					<Typography variant='h6'>Description*</Typography>
 					<CustomTextField
 						sx={{ marginTop: '0.5rem' }}
 						value={singleCourse?.description}
@@ -76,51 +77,6 @@ const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree,
 					/>
 					{isMissingField && singleCourse?.description === '' && <CustomErrorMessage>Please enter a description</CustomErrorMessage>}
 				</Box>
-				<Box
-					sx={{
-						display: 'flex',
-						flexDirection: 'column',
-						alignItems: 'flex-end',
-						mt: '1.5rem',
-						padding: '0 0 2rem 2rem',
-						flex: 1,
-					}}>
-					<Box sx={{ textAlign: 'center' }}>
-						<img
-							src={singleCourse?.imageUrl || 'https://directmobilityonline.co.uk/assets/img/noimage.png'}
-							alt='course_img'
-							height='115rem'
-							style={{
-								borderRadius: '0.2rem',
-								boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
-							}}
-						/>
-						<Box>
-							<Typography variant='body2' sx={{ mt: '0.25rem' }}>
-								Course Image
-							</Typography>
-							{singleCourse?.imageUrl && (
-								<Typography
-									variant='body2'
-									sx={{ fontSize: '0.75rem', textDecoration: 'underline', cursor: 'pointer' }}
-									onClick={() => {
-										setSingleCourse((prevData) => {
-											if (prevData !== undefined) {
-												return {
-													...prevData,
-													imageUrl: '',
-												};
-											}
-										});
-
-										resetImageUpload();
-									}}>
-									Remove
-								</Typography>
-							)}
-						</Box>
-					</Box>
-				</Box>
 			</Box>
 
 			<Box
@@ -128,9 +84,10 @@ const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree,
 					display: 'flex',
 					justifyContent: 'space-between',
 					alignItems: 'flex-start',
+					mt: '1.5rem',
 				}}>
-				<Box sx={{ mt: '2rem', flex: 6 }}>
-					<Typography variant='h4'>Price*</Typography>
+				<Box sx={{ flex: 1 }}>
+					<Typography variant='h6'>Price*</Typography>
 					<Box sx={{ display: 'flex' }}>
 						<Box sx={{ flex: 2 }}>
 							<CustomTextField
@@ -184,7 +141,7 @@ const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree,
 							{isMissingField && singleCourse?.price === '' && <CustomErrorMessage>Please enter a price value</CustomErrorMessage>}
 						</Box>
 					</Box>
-					<Box sx={{ margin: '1rem' }}>
+					<Box sx={{ margin: '0 0 1rem 0.5rem' }}>
 						<FormControlLabel
 							control={
 								<Checkbox
@@ -208,9 +165,71 @@ const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree,
 						/>
 					</Box>
 				</Box>
-
-				<Box sx={{ margin: '2rem 0 0 6rem', flex: 10 }}>
+				<Box sx={{ display: 'flex', marginLeft: '4rem', flex: 1 }}>
+					<Box sx={{ flex: 2 }}>
+						<Typography variant='h6'>Weeks</Typography>
+						<CustomTextField
+							required={false}
+							sx={{ marginTop: '0.5rem' }}
+							value={singleCourse?.durationWeeks || ''}
+							onChange={(e) => {
+								if (singleCourse?.durationWeeks !== undefined) {
+									setSingleCourse({
+										...singleCourse,
+										durationWeeks: +e.target.value,
+									});
+								}
+							}}
+							type='number'
+							placeholder='# of weeks'
+						/>
+					</Box>
+					<Box sx={{ ml: '0.5rem', flex: 3 }}>
+						<Typography variant='h6'>Hours</Typography>
+						<CustomTextField
+							required={false}
+							sx={{ marginTop: '0.5rem' }}
+							value={singleCourse?.durationHours || ''}
+							onChange={(e) => {
+								if (singleCourse?.durationHours !== undefined) {
+									setSingleCourse({
+										...singleCourse,
+										durationHours: +e.target.value,
+									});
+								}
+							}}
+							type='number'
+							placeholder='# of hours'
+						/>
+					</Box>
+				</Box>
+				<Box sx={{ marginLeft: '4rem', flex: 1 }}>
+					<Typography variant='h6'>Starting Date</Typography>
+					<CustomTextField
+						required={false}
+						sx={{ marginTop: '0.5rem' }}
+						value={
+							singleCourse && singleCourse.startingDate
+								? formatDate(new Date(singleCourse.startingDate)) // Format the starting date
+								: ''
+						}
+						onChange={(e) => {
+							const selectedDate = parseDate(e.target.value); // Parse the input date
+							if (singleCourse && singleCourse.startingDate !== undefined) {
+								setSingleCourse({
+									...singleCourse,
+									startingDate: selectedDate, // Assign parsed date object here
+								});
+							}
+						}}
+						type='date'
+					/>
+				</Box>
+			</Box>
+			<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mt: '1.5rem', width: '100%' }}>
+				<Box sx={{ flex: 3 }}>
 					<HandleImageUploadURL
+						label='Course Image'
 						onImageUploadLogic={(url) => {
 							if (singleCourse?.imageUrl !== undefined) {
 								setSingleCourse({
@@ -232,73 +251,50 @@ const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree,
 						setEnterImageUrl={setEnterImageUrl}
 					/>
 				</Box>
-			</Box>
+				<Box
+					sx={{
+						display: 'flex',
+						flexDirection: 'column',
+						alignItems: 'flex-end',
+						mt: '1.5rem',
+						padding: '0 0 2rem 2rem',
+						flex: 1,
+					}}>
+					<Box sx={{ textAlign: 'center' }}>
+						<img
+							src={singleCourse?.imageUrl || 'https://directmobilityonline.co.uk/assets/img/noimage.png'}
+							alt='course_img'
+							height='115rem'
+							style={{
+								borderRadius: '0.2rem',
+								boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
+							}}
+						/>
+						<Box>
+							<Typography variant='body2' sx={{ mt: '0.25rem' }}>
+								Course Image
+							</Typography>
+							{singleCourse?.imageUrl && (
+								<Typography
+									variant='body2'
+									sx={{ fontSize: '0.75rem', textDecoration: 'underline', cursor: 'pointer' }}
+									onClick={() => {
+										setSingleCourse((prevData) => {
+											if (prevData !== undefined) {
+												return {
+													...prevData,
+													imageUrl: '',
+												};
+											}
+										});
 
-			<Box
-				sx={{
-					display: 'flex',
-					justifyContent: 'space-between',
-					alignItems: 'flex-start',
-				}}>
-				<Box sx={{ display: 'flex', mt: '2rem', flex: 6 }}>
-					<Box sx={{ flex: 2 }}>
-						<Typography variant='h4'>Weeks</Typography>
-						<CustomTextField
-							required={false}
-							sx={{ marginTop: '0.5rem' }}
-							value={singleCourse?.durationWeeks || ''}
-							onChange={(e) => {
-								if (singleCourse?.durationWeeks !== undefined) {
-									setSingleCourse({
-										...singleCourse,
-										durationWeeks: +e.target.value,
-									});
-								}
-							}}
-							type='number'
-							placeholder='# of weeks'
-						/>
+										resetImageUpload();
+									}}>
+									Remove
+								</Typography>
+							)}
+						</Box>
 					</Box>
-					<Box sx={{ ml: '0.5rem', flex: 3 }}>
-						<Typography variant='h4'>Hours</Typography>
-						<CustomTextField
-							required={false}
-							sx={{ marginTop: '0.5rem' }}
-							value={singleCourse?.durationHours || ''}
-							onChange={(e) => {
-								if (singleCourse?.durationHours !== undefined) {
-									setSingleCourse({
-										...singleCourse,
-										durationHours: +e.target.value,
-									});
-								}
-							}}
-							type='number'
-							placeholder='# of hours'
-						/>
-					</Box>
-				</Box>
-				<Box sx={{ margin: '2rem 0 0 6rem', flex: 10 }}>
-					<Typography variant='h4'>Starting Date</Typography>
-					<CustomTextField
-						required={false}
-						sx={{ marginTop: '0.5rem' }}
-						value={
-							singleCourse && singleCourse.startingDate
-								? formatDate(new Date(singleCourse.startingDate)) // Format the starting date
-								: ''
-						}
-						onChange={(e) => {
-							const selectedDate = parseDate(e.target.value); // Parse the input date
-							if (singleCourse && singleCourse.startingDate !== undefined) {
-								setSingleCourse({
-									...singleCourse,
-									startingDate: selectedDate, // Assign parsed date object here
-								});
-							}
-						}}
-						type='date'
-					/>
 				</Box>
 			</Box>
 		</>
