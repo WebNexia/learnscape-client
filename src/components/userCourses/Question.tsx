@@ -1,10 +1,11 @@
 import { Box, Button, FormControl, FormControlLabel, FormHelperText, FormLabel, Radio, RadioGroup } from '@mui/material';
 import { QuestionInterface } from '../../interfaces/question';
-import { useState } from 'react';
+import { useContext, useState } from 'react';
 import axios from 'axios';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { UserCoursesIdsWithCourseIds, UserLessonDataStorage } from '../../contexts/UserCourseLessonDataContextProvider';
 import theme from '../../themes';
+import { OrganisationContext } from '../../contexts/OrganisationContextProvider';
 
 interface QuestionsProps {
 	question: QuestionInterface;
@@ -20,6 +21,7 @@ const Question = ({ question, questionNumber, numberOfQuestions, displayedQuesti
 
 	//storing parameters from the URL
 	const { userId, lessonId, courseId, userCourseId } = useParams();
+	const { orgId } = useContext(OrganisationContext);
 	const location = useLocation();
 	const searchParams = new URLSearchParams(location.search);
 	const nextLessonId = searchParams.get('next');
@@ -87,6 +89,7 @@ const Question = ({ question, questionNumber, numberOfQuestions, displayedQuesti
 				courseId,
 				isCompleted: true,
 				isInProgress: false,
+				orgId,
 			});
 
 			//updating current lesson's current question number(next question's number) if not last question
@@ -117,6 +120,7 @@ const Question = ({ question, questionNumber, numberOfQuestions, displayedQuesti
 						currentQuestion: 1,
 						isCompleted: false,
 						isInProgress: true,
+						orgId,
 					});
 					if (!parsedUserLessonData.some((data: UserLessonDataStorage) => data.lessonId === nextLessonId && data.courseId === courseId) && courseId) {
 						const newUserLessonData: UserLessonDataStorage = {

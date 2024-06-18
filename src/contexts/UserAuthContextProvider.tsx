@@ -44,6 +44,7 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 		const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
 			if (currentUser) {
 				setFirebaseUserId(currentUser.uid);
+				await fetchUserData(currentUser.uid);
 			} else {
 				setUser(() => undefined);
 				setUserId('');
@@ -55,12 +56,6 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 			unsubscribe();
 		};
 	}, []);
-
-	useEffect(() => {
-		if (firebaseUserId) {
-			fetchUserData(firebaseUserId);
-		}
-	}, [firebaseUserId]);
 
 	const fetchUserData = async (firebaseUserId: string) => {
 		try {

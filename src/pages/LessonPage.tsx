@@ -9,9 +9,12 @@ import DashboardHeader from '../components/layouts/dashboardLayout/DashboardHead
 import { KeyboardBackspaceOutlined } from '@mui/icons-material';
 import Loading from '../components/layouts/loading/Loading';
 import LoadingError from '../components/layouts/loading/LoadingError';
+import { OrganisationContext } from '../contexts/OrganisationContextProvider';
+import { useContext } from 'react';
 
 const LessonPage = () => {
 	const { lessonId } = useParams();
+	const { organisation } = useContext(OrganisationContext);
 	const navigate = useNavigate();
 
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -40,7 +43,7 @@ const LessonPage = () => {
 				minHeight: '100vh',
 				padding: '0 0 3rem 0',
 			}}>
-			<DashboardHeader pageName='Kaizen' />
+			<DashboardHeader pageName={organisation?.orgName || ''} />
 			<Button
 				variant='text'
 				startIcon={<KeyboardBackspaceOutlined />}
