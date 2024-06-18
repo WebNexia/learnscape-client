@@ -33,7 +33,6 @@ export const UserAuthContext = createContext<UserAuthContextTypes>({
 
 const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
-	const [isLoaded, setIsLoaded] = useState<boolean>(false);
 
 	const [user, setUser] = useState<User>();
 	const [userId, setUserId] = useState<string>('');
@@ -44,12 +43,15 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 		const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
 			if (currentUser) {
 				setFirebaseUserId(currentUser.uid);
-				await fetchUserData(currentUser.uid);
+				try {
+					await fetchUserData(currentUser.uid); // Fetch user data immediately upon authentication
+				} catch (error) {
+					console.error('Failed to fetch user data:', error);
+				}
 			} else {
 				setUser(() => undefined);
 				setUserId('');
 			}
-			setIsLoaded(true);
 		});
 
 		return () => {
@@ -75,18 +77,6 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 		setUserId('');
 		queryClient.clear();
 	};
-
-	const userQuery = useQuery('userData', () => fetchUserData(firebaseUserId), {
-		enabled: !!userId && !isLoaded,
-	});
-
-	if (userQuery.isLoading) {
-		return <Loading />;
-	}
-
-	if (userQuery.isError) {
-		return <LoadingError />;
-	}
 
 	return (
 		<UserAuthContext.Provider value={{ user, userId, firebaseUserId, setUser, setUserId, fetchUserData, signOut: signOutUser }}>
