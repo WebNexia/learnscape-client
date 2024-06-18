@@ -64,7 +64,7 @@ const AdminCourseEditPage = () => {
 	const { updateCoursePublishing, updateCourse } = useContext(CoursesContext);
 	const [isEditMode, setIsEditMode] = useState<boolean>(false);
 	const [singleCourse, setSingleCourse] = useState<SingleCourse>();
-	const [isActive, setIsActive] = useState<boolean>();
+	const [isActive, setIsActive] = useState<boolean>(false);
 	const [isFree, setIsFree] = useState<boolean>(false);
 	const [isMissingField, setIsMissingField] = useState<boolean>(false);
 	const [isMissingFieldMsgOpen, setIsMissingFieldMsgOpen] = useState<boolean>(false);
@@ -135,7 +135,7 @@ const AdminCourseEditPage = () => {
 			};
 			fetchSingleCourseData(courseId);
 		}
-	}, [courseId, isActive, resetChanges]);
+	}, [courseId, resetChanges]);
 
 	const handlePublishing = async (): Promise<void> => {
 		if (singleCourse?.chapterIds.length === 0 && !singleCourse?.isActive) {

@@ -5,17 +5,6 @@ import DashboardPagesLayout from '../components/layouts/dashboardLayout/Dashboar
 import { UserCourseLessonDataContext } from '../contexts/UserCourseLessonDataContextProvider';
 
 const Dashboard = () => {
-	const { fetchUserCourseData, fetchUserLessonData } = useContext(UserCourseLessonDataContext);
-
-	const { id } = useParams();
-
-	useEffect(() => {
-		if (id) {
-			fetchUserCourseData(id);
-			fetchUserLessonData(id);
-		}
-	}, []);
-
 	return (
 		<DashboardPagesLayout pageName='Dashboard'>
 			<Typography variant='h3'>Coming Soon...</Typography>

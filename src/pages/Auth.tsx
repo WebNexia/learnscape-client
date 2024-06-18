@@ -14,6 +14,9 @@ import { useQueryClient } from 'react-query';
 import { User } from '../interfaces/user';
 import { FirebaseError } from 'firebase/app';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
+import { UserCoursesIdsWithCourseIds, UserLessonDataStorage } from '../contexts/UserCourseLessonDataContextProvider';
+import { UserCoursesByUserId } from '../interfaces/userCourses';
+import { UserLessonsByUserId } from '../interfaces/userLesson';
 
 interface AuthProps {
 	setUserRole: React.Dispatch<React.SetStateAction<string | null>>;
@@ -88,6 +91,35 @@ const Auth = ({ setUserRole }: AuthProps) => {
 				setUsername('');
 				setPassword('');
 				setErrorMsg(undefined);
+
+				if (updatedUser.role !== Roles.ADMIN) {
+					const userCourseResponse = await axios.get(`${base_url}/usercourses/user/${updatedUser._id}`);
+					const userCourseData: UserCoursesIdsWithCourseIds[] = userCourseResponse.data.response.reduce(
+						(acc: UserCoursesIdsWithCourseIds[], value: UserCoursesByUserId) => {
+							if (value.courseId && value.courseId._id) {
+								acc.push({
+									courseId: value.courseId._id,
+									userCourseId: value._id,
+									isCourseCompleted: value.isCompleted,
+									isCourseInProgress: value.isInProgress,
+								});
+							}
+							return acc;
+						},
+						[]
+					);
+					localStorage.setItem('userCourseData', JSON.stringify(userCourseData));
+
+					const userLessonResponse = await axios.get(`${base_url}/userlessons/user/${updatedUser._id}`);
+					const userLessonData: UserLessonDataStorage[] = userLessonResponse.data.response.map((userLesson: UserLessonsByUserId) => ({
+						lessonId: userLesson.lessonId._id,
+						userLessonId: userLesson._id,
+						courseId: userLesson.courseId,
+						isCompleted: userLesson.isCompleted,
+						isInProgress: userLesson.isInProgress,
+					}));
+					localStorage.setItem('userLessonData', JSON.stringify(userLessonData));
+				}
 			}
 		} catch (error) {
 			const firebaseError = error as AuthError;

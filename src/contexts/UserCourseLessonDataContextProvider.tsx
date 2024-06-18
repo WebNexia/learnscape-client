@@ -1,13 +1,14 @@
 import axios from 'axios';
-import { ReactNode, createContext, useState } from 'react';
-import { UserLessonsByUserId } from '../interfaces/userLesson';
-import { UserCoursesByUserId } from '../interfaces/userCourses';
+import { ReactNode, createContext, useContext, useState, useEffect } from 'react';
 import { SingleCourse } from '../interfaces/course';
 import { BaseChapter } from '../interfaces/chapter';
+import { UserAuthContext } from './UserAuthContextProvider';
+import { OrganisationContext } from './OrganisationContextProvider';
+import { useQuery } from 'react-query';
+import Loading from '../components/layouts/loading/Loading';
+import LoadingError from '../components/layouts/loading/LoadingError';
 
 interface UserCourseLessonDataContextTypes {
-	fetchUserCourseData: (userId: string) => void;
-	fetchUserLessonData: (userId: string) => void;
 	fetchSingleCourseData: (courseId: string) => void;
 	singleCourse: SingleCourse | null;
 	setSingleCourse: React.Dispatch<React.SetStateAction<SingleCourse | null>>;
@@ -35,8 +36,6 @@ export interface UserLessonDataStorage {
 }
 
 export const UserCourseLessonDataContext = createContext<UserCourseLessonDataContextTypes>({
-	fetchUserCourseData: () => {},
-	fetchUserLessonData: () => {},
 	fetchSingleCourseData: () => {},
 	singleCourse: null,
 	setSingleCourse: () => {},
@@ -46,6 +45,13 @@ export const UserCourseLessonDataContext = createContext<UserCourseLessonDataCon
 
 const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
+	const { userId } = useContext(UserAuthContext);
+	const { orgId } = useContext(OrganisationContext);
+
+	const role = localStorage.getItem('role');
+
+	const [isLoaded, setIsLoaded] = useState<boolean>(false);
+
 	const [singleCourse, setSingleCourse] = useState<SingleCourse | null>(null);
 
 	const [singleCourseUser, setSingleCourseUser] = useState<SingleCourse | null>(null);
@@ -60,12 +66,9 @@ const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProvide
 					(chapter: BaseChapter) => chapter?.lessonIds?.length !== 0
 				);
 
-				const filteredChapterIds: string[] | undefined = filteredChapters?.map((chapter) => chapter._id);
-
 				return {
 					...response.data.data[0],
 					chapters: filteredChapters,
-					chapterIds: filteredChapterIds,
 				};
 			});
 		} catch (error) {
@@ -73,56 +76,53 @@ const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProvide
 		}
 	};
 
-	const fetchUserCourseData = async (userId: string): Promise<void> => {
-		try {
-			const response = await axios.get(`${base_url}/usercourses/user/${userId}`);
-
-			const userCourseData: UserCoursesIdsWithCourseIds[] = response.data.response.reduce(
-				(acc: UserCoursesIdsWithCourseIds[], value: UserCoursesByUserId) => {
-					if (value.courseId && value.courseId._id) {
-						acc.push({
-							courseId: value.courseId._id,
-							userCourseId: value._id,
-							isCourseCompleted: value.isCompleted,
-							isCourseInProgress: value.isInProgress,
-						});
-					}
-					return acc;
-				},
-				[]
-			);
-
-			localStorage.setItem('userCourseData', JSON.stringify(userCourseData));
-		} catch (error) {
-			console.log(error);
+	const {
+		isLoading,
+		error,
+		data: userCoursesData,
+	} = useQuery<UserCoursesIdsWithCourseIds[]>(
+		['userCoursesData', userId, orgId, role],
+		async () => {
+			const userCourseData: UserCoursesIdsWithCourseIds[] = JSON.parse(localStorage.getItem('userCourseData') || '[]');
+			return userCourseData;
+		},
+		{
+			enabled: !!userId && !!orgId,
 		}
-	};
+	);
 
-	const fetchUserLessonData = async (userId: string): Promise<void> => {
-		const responseUserLessonIdsData = await axios.get(`${base_url}/userlessons/user/${userId}`);
-
-		const currentUserLessonIdsList = responseUserLessonIdsData.data?.response?.map((userLesson: UserLessonsByUserId) => {
-			const userLessonData: UserLessonDataStorage = {
-				lessonId: userLesson.lessonId._id,
-				userLessonId: userLesson._id,
-				courseId: userLesson.courseId,
-				isCompleted: userLesson.isCompleted,
-				isInProgress: userLesson.isInProgress,
-			};
-
+	const {
+		isLoading: userLessonsLoading,
+		error: userLessonsError,
+		data: userLessonData,
+	} = useQuery<UserLessonDataStorage[]>(
+		['userLessonData', userId, orgId, role],
+		async () => {
+			const userLessonData: UserLessonDataStorage[] = JSON.parse(localStorage.getItem('userLessonData') || '[]');
 			return userLessonData;
-		});
-
-		if (!localStorage.getItem('userLessonData')) {
-			localStorage.setItem('userLessonData', JSON.stringify(currentUserLessonIdsList));
+		},
+		{
+			enabled: !!userId && !!orgId,
 		}
-	};
+	);
+
+	useEffect(() => {
+		if (userCoursesData && userLessonData) {
+			setIsLoaded(true);
+		}
+	}, [userCoursesData, userLessonData]);
+
+	if (isLoading || userLessonsLoading) {
+		return <Loading />;
+	}
+
+	if (error || userLessonsError) {
+		return <LoadingError />;
+	}
 
 	return (
 		<UserCourseLessonDataContext.Provider
 			value={{
-				fetchUserCourseData,
-				fetchUserLessonData,
 				fetchSingleCourseData,
 				singleCourse,
 				setSingleCourse,
