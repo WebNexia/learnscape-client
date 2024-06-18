@@ -39,7 +39,7 @@ const AdminCourseEditChapter = ({
 		<Box
 			sx={{
 				margin: '1.5rem 0 4rem 0',
-				width: '90%',
+				width: '100%',
 				padding: '1rem',
 				boxShadow: '0 0.3rem 1rem 0 rgba(0,0,0,0.25)',
 				transition: '0.3s',

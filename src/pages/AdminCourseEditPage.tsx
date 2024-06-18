@@ -12,7 +12,6 @@ import { Reorder, useMotionValue } from 'framer-motion';
 import { useRaisedShadow } from '../hooks/useRaisedShadow';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import CoursePaper from '../components/adminSingleCourse/Paper';
-import CourseEditorBox from '../components/adminSingleCourse/CourseEditorBox';
 import CourseDetailsNonEditBox from '../components/adminSingleCourse/CourseDetailsNonEditBox';
 import CourseDetailsEditBox from '../components/adminSingleCourse/CourseDetailsEditBox';
 import { Lesson } from '../interfaces/lessons';
@@ -20,6 +19,7 @@ import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import { generateUniqueId } from '../utils/uniqueIdGenerator';
+import theme from '../themes';
 
 export interface ChapterUpdateTrack {
 	chapterId: string;
@@ -269,19 +269,18 @@ const AdminCourseEditPage = () => {
 
 	return (
 		<DashboardPagesLayout pageName='Edit Course' customSettings={{ justifyContent: 'flex-start' }}>
-			<Box sx={{ width: '90%' }}>
-				<CoursePaper userId={userId} singleCourse={singleCourse} isActive={isActive} />
-				<CourseEditorBox
+			<Box sx={{ width: '80%', position: 'fixed', top: '4rem', zIndex: 1, backgroundColor: theme.bgColor?.secondary }}>
+				<CoursePaper
+					userId={userId}
 					singleCourse={singleCourse}
+					isActive={isActive}
 					chapterLessonData={chapterLessonData}
 					chapterLessonDataBeforeSave={chapterLessonDataBeforeSave}
 					isEditMode={isEditMode}
-					isActive={isActive}
 					isMissingFieldMsgOpen={isMissingFieldMsgOpen}
 					isNoChapterMsgOpen={isNoChapterMsgOpen}
 					resetChanges={resetChanges}
 					isFree={isFree}
-					setSingleCourse={setSingleCourse}
 					setIsEditMode={setIsEditMode}
 					setIsMissingFieldMsgOpen={setIsMissingFieldMsgOpen}
 					setIsNoChapterMsgOpen={setIsNoChapterMsgOpen}
@@ -294,110 +293,111 @@ const AdminCourseEditPage = () => {
 				/>
 			</Box>
 
-			{!isEditMode && <CourseDetailsNonEditBox singleCourse={singleCourse} chapters={chapterLessonData} />}
-
-			{isEditMode && (
-				<Box
-					sx={{
-						display: 'flex',
-						flexDirection: 'column',
-						justifyContent: 'flex-start',
-						width: '90%',
-					}}>
-					<form>
-						<CourseDetailsEditBox
-							singleCourse={singleCourse}
-							isFree={isFree}
-							isMissingField={isMissingField}
-							setIsFree={setIsFree}
-							setIsMissingField={setIsMissingField}
-							setSingleCourse={setSingleCourse}
-						/>
-						<Box sx={{ mt: '4rem', minHeight: '40vh' }}>
-							<Box
-								sx={{
-									display: 'flex',
-									justifyContent: 'space-between',
-									alignItems: 'center',
-									width: '90%',
-								}}>
-								<Typography variant='h4' sx={{ mb: '1rem' }}>
-									CHAPTERS
-								</Typography>
-								<CustomSubmitButton
-									type='button'
-									sx={{ marginBottom: '1rem' }}
-									onClick={() => {
-										setIsChapterCreateModalOpen(true);
-										setNewChapterTitle('');
-									}}>
-									New Chapter
-								</CustomSubmitButton>
-							</Box>
-
-							<CustomDialog openModal={isChapterCreateModalOpen} closeModal={closeCreateChapterModal} title='Create New Chapter'>
-								<form
-									onSubmit={(e: React.FormEvent<HTMLFormElement>) => {
-										e.preventDefault();
-										createChapterTemplate();
-										closeCreateChapterModal();
-									}}
-									style={{ display: 'flex', flexDirection: 'column' }}>
-									<CustomTextField
-										fullWidth={false}
-										label='Chapter Title'
-										value={newChapterTitle}
-										onChange={(e) => setNewChapterTitle(e.target.value)}
-										sx={{ margin: '2rem 1rem' }}
-										InputLabelProps={{
-											sx: { fontSize: '0.8rem' },
-										}}
-									/>
-
-									<CustomDialogActions onCancel={closeCreateChapterModal} />
-								</form>
-							</CustomDialog>
-
-							{chapterLessonDataBeforeSave.length === 0 ? (
+			<Box sx={{ display: 'flex', width: '95%', justifyContent: 'center', marginTop: '9rem' }}>
+				{!isEditMode && <CourseDetailsNonEditBox singleCourse={singleCourse} chapters={chapterLessonData} />}
+				{isEditMode && (
+					<Box
+						sx={{
+							display: 'flex',
+							flexDirection: 'column',
+							justifyContent: 'flex-start',
+							width: '90%',
+						}}>
+						<form>
+							<CourseDetailsEditBox
+								singleCourse={singleCourse}
+								isFree={isFree}
+								isMissingField={isMissingField}
+								setIsFree={setIsFree}
+								setIsMissingField={setIsMissingField}
+								setSingleCourse={setSingleCourse}
+							/>
+							<Box sx={{ mt: '3rem', minHeight: '40vh' }}>
 								<Box
 									sx={{
 										display: 'flex',
-										justifyContent: 'center',
+										justifyContent: 'space-between',
 										alignItems: 'center',
-										height: '30vh',
+										width: '100%',
 									}}>
-									<Typography variant='body1'>No chapters for this course</Typography>
+									<Typography variant='h4' sx={{ mb: '1rem' }}>
+										CHAPTERS
+									</Typography>
+									<CustomSubmitButton
+										type='button'
+										sx={{ marginBottom: '1rem' }}
+										onClick={() => {
+											setIsChapterCreateModalOpen(true);
+											setNewChapterTitle('');
+										}}>
+										New Chapter
+									</CustomSubmitButton>
 								</Box>
-							) : (
-								<Reorder.Group
-									axis='y'
-									values={chapterLessonDataBeforeSave}
-									onReorder={(newChapters): void => {
-										setChapterLessonDataBeforeSave(newChapters);
-									}}>
-									{chapterLessonDataBeforeSave &&
-										chapterLessonDataBeforeSave.length !== 0 &&
-										chapterLessonDataBeforeSave?.map((chapter) => {
-											return (
-												<Reorder.Item key={chapter.chapterId} value={chapter} style={{ listStyle: 'none', boxShadow }}>
-													<AdminCourseEditChapter
-														key={chapter.chapterId}
-														chapter={chapter}
-														setChapterLessonDataBeforeSave={setChapterLessonDataBeforeSave}
-														setIsChapterUpdated={setIsChapterUpdated}
-														setIsMissingField={setIsMissingField}
-														isMissingField={isMissingField}
-														setDeletedChapterIds={setDeletedChapterIds}
-													/>
-												</Reorder.Item>
-											);
-										})}
-								</Reorder.Group>
-							)}
-						</Box>
-					</form>
-				</Box>
-			)}
+
+								<CustomDialog openModal={isChapterCreateModalOpen} closeModal={closeCreateChapterModal} title='Create New Chapter'>
+									<form
+										onSubmit={(e: React.FormEvent<HTMLFormElement>) => {
+											e.preventDefault();
+											createChapterTemplate();
+											closeCreateChapterModal();
+										}}
+										style={{ display: 'flex', flexDirection: 'column' }}>
+										<CustomTextField
+											fullWidth={false}
+											label='Chapter Title'
+											value={newChapterTitle}
+											onChange={(e) => setNewChapterTitle(e.target.value)}
+											sx={{ margin: '2rem 1rem' }}
+											InputLabelProps={{
+												sx: { fontSize: '0.8rem' },
+											}}
+										/>
+
+										<CustomDialogActions onCancel={closeCreateChapterModal} />
+									</form>
+								</CustomDialog>
+
+								{chapterLessonDataBeforeSave.length === 0 ? (
+									<Box
+										sx={{
+											display: 'flex',
+											justifyContent: 'center',
+											alignItems: 'center',
+											height: '30vh',
+										}}>
+										<Typography variant='body1'>No chapters for this course</Typography>
+									</Box>
+								) : (
+									<Reorder.Group
+										axis='y'
+										values={chapterLessonDataBeforeSave}
+										onReorder={(newChapters): void => {
+											setChapterLessonDataBeforeSave(newChapters);
+										}}>
+										{chapterLessonDataBeforeSave &&
+											chapterLessonDataBeforeSave.length !== 0 &&
+											chapterLessonDataBeforeSave?.map((chapter) => {
+												return (
+													<Reorder.Item key={chapter.chapterId} value={chapter} style={{ listStyle: 'none', boxShadow }}>
+														<AdminCourseEditChapter
+															key={chapter.chapterId}
+															chapter={chapter}
+															setChapterLessonDataBeforeSave={setChapterLessonDataBeforeSave}
+															setIsChapterUpdated={setIsChapterUpdated}
+															setIsMissingField={setIsMissingField}
+															isMissingField={isMissingField}
+															setDeletedChapterIds={setDeletedChapterIds}
+														/>
+													</Reorder.Item>
+												);
+											})}
+									</Reorder.Group>
+								)}
+							</Box>
+						</form>
+					</Box>
+				)}
+			</Box>
 		</DashboardPagesLayout>
 	);
 };

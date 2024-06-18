@@ -109,8 +109,6 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 		setSortedCoursesData((prevSortedData) => prevSortedData?.filter((data) => data._id !== id));
 	};
 
-	// useEffect(() => {}, [sortedCoursesData]);
-
 	if (isLoading) {
 		return <Loading />;
 	}

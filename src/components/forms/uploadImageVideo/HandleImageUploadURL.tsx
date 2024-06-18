@@ -13,6 +13,7 @@ interface HandleImageUploadURLProps {
 	imageUrlValue?: string;
 	imageFolderName: string;
 	enterImageUrl: boolean;
+	label?: string;
 }
 
 const HandleImageUploadURL = ({
@@ -22,6 +23,7 @@ const HandleImageUploadURL = ({
 	imageUrlValue,
 	imageFolderName,
 	enterImageUrl,
+	label = 'Image',
 }: HandleImageUploadURLProps) => {
 	const { imageUpload, isImgSizeLarge, handleImageChange, resetImageUpload, handleImageUpload } = useImageUpload();
 
@@ -33,7 +35,7 @@ const HandleImageUploadURL = ({
 	return (
 		<FormControl sx={{ display: 'flex' }}>
 			<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-				<Typography variant='h6'>Image</Typography>
+				<Typography variant='h6'>{label}</Typography>
 				<Box sx={{ display: 'flex', alignItems: 'center' }}>
 					<Box>
 						<Typography

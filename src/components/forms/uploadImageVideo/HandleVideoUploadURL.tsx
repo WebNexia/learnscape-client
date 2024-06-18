@@ -14,6 +14,7 @@ interface HandleVideoUploadURLProps {
 	videoUrlValue?: string;
 	videoFolderName: string;
 	enterVideoUrl: boolean;
+	label?: string;
 }
 
 const HandleVideoUploadURL = ({
@@ -23,6 +24,7 @@ const HandleVideoUploadURL = ({
 	videoUrlValue,
 	videoFolderName,
 	enterVideoUrl,
+	label = 'Video',
 }: HandleVideoUploadURLProps) => {
 	const { videoUpload, isVideoSizeLarge, handleVideoChange, resetVideoUpload, handleVideoUpload, isVideoLoading } = useVideoUpload();
 
@@ -34,7 +36,7 @@ const HandleVideoUploadURL = ({
 	return (
 		<FormControl sx={{ display: 'flex' }}>
 			<Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-				<Typography variant='h6'>Video</Typography>
+				<Typography variant='h6'>{label}</Typography>
 				<Box sx={{ display: 'flex', alignItems: 'center' }}>
 					<Box>
 						<Typography

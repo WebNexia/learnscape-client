@@ -66,10 +66,6 @@ const LessonsContextProvider = (props: LessonsContextProviderProps) => {
 		{
 			enabled: !!orgId && !isLoaded,
 		}
-		// {
-		// 	enabled: !!orgId, // Enable the query only when orgId is available
-		// keepPreviousData: true, // Keep previous data while fetching new data
-		// }
 	);
 
 	// Function to handle sorting
