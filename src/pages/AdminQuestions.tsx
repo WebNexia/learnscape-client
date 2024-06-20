@@ -1,6 +1,6 @@
 import { Box, Table, TableBody, TableCell, TableRow } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import { Delete, Edit, FileCopy } from '@mui/icons-material';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
@@ -22,7 +22,8 @@ import { truncateText } from '../utils/utilText';
 const AdminQuestions = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
-	const { sortQuestionsData, sortedQuestionsData, removeQuestion, numberOfPages, pageNumber, setPageNumber } = useContext(QuestionsContext);
+	const { sortQuestionsData, sortedQuestionsData, removeQuestion, numberOfPages, questionsPageNumber, setQuestionsPageNumber, fetchQuestions } =
+		useContext(QuestionsContext);
 
 	const [orderBy, setOrderBy] = useState<keyof QuestionInterface>('questionType');
 	const [order, setOrder] = useState<'asc' | 'desc'>('asc');
@@ -57,10 +58,24 @@ const AdminQuestions = () => {
 		handleOptionChange,
 	} = useNewQuestion();
 
+	const isInitialMount = useRef(true);
+
+	useEffect(() => {
+		if (isInitialMount.current) {
+			isInitialMount.current = false;
+		} else {
+			fetchQuestions(questionsPageNumber);
+		}
+	}, [questionsPageNumber]);
+
+	useEffect(() => {
+		setQuestionsPageNumber(1);
+	}, []);
+
 	useEffect(() => {
 		setIsQuestionDeleteModalOpen(Array(sortedQuestionsData.length).fill(false));
 		setEditQuestionModalOpen(Array(sortedQuestionsData.length).fill(false));
-	}, [sortedQuestionsData, pageNumber]);
+	}, [sortedQuestionsData, questionsPageNumber]);
 
 	const openDeleteQuestionModal = (index: number) => {
 		const updatedState = [...isQuestionDeleteModalOpen];
@@ -77,6 +92,7 @@ const AdminQuestions = () => {
 		try {
 			removeQuestion(questionId);
 			await axios.delete(`${base_url}/questions/${questionId}`);
+			fetchQuestions(questionsPageNumber);
 		} catch (error) {
 			console.log(error);
 		}
@@ -228,7 +244,7 @@ const AdminQuestions = () => {
 							})}
 					</TableBody>
 				</Table>
-				<CustomTablePagination count={numberOfPages} page={pageNumber} onChange={setPageNumber} />
+				<CustomTablePagination count={numberOfPages} page={questionsPageNumber} onChange={setQuestionsPageNumber} />
 			</Box>
 		</DashboardPagesLayout>
 	);

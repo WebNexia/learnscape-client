@@ -50,7 +50,7 @@ const UsersContextProvider = (props: UserContextProviderProps) => {
 			if (!orgId) return;
 
 			try {
-				const response = await axios.get(`${base_url}/users/organisation/${orgId}?page=${pageNumber}`);
+				const response = await axios.get(`${base_url}/users/organisation/${orgId}?page=${pageNumber}&limit=50`);
 
 				// Initial sorting when fetching data
 				const sortedDataCopy = [...response.data.data].sort((a: User, b: User) => b.updatedAt.localeCompare(a.updatedAt));

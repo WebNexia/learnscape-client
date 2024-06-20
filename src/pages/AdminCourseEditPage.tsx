@@ -20,6 +20,7 @@ import CustomDialogActions from '../components/layouts/dialog/CustomDialogAction
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import { generateUniqueId } from '../utils/uniqueIdGenerator';
 import theme from '../themes';
+import { LessonsContext } from '../contexts/LessonsContextProvider';
 
 export interface ChapterUpdateTrack {
 	chapterId: string;
@@ -60,6 +61,7 @@ const AdminCourseEditPage = () => {
 	const { userId, courseId } = useParams();
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
+	const { fetchLessons, lessonsPageNumber } = useContext(LessonsContext);
 
 	const { updateCoursePublishing, updateCourse } = useContext(CoursesContext);
 	const [isEditMode, setIsEditMode] = useState<boolean>(false);
@@ -175,6 +177,7 @@ const AdminCourseEditPage = () => {
 										type: lesson.type,
 										orgId,
 									});
+									fetchLessons(lessonsPageNumber);
 									return {
 										...lesson,
 										_id: lessonResponse.data._id,

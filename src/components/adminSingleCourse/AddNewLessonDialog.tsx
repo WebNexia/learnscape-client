@@ -26,7 +26,7 @@ const AddNewLessonDialog = ({
 	setIsChapterUpdated,
 	setChapterLessonDataBeforeSave,
 }: AddNewLessonDialogProps) => {
-	const { sortLessonsData, sortedLessonsData, numberOfPages, pageNumber, setPageNumber } = useContext(LessonsContext);
+	const { sortLessonsData, sortedLessonsData, numberOfPages, lessonsPageNumber, setLessonsPageNumber } = useContext(LessonsContext);
 	const [selectedLessons, setSelectedLessons] = useState<Lesson[]>([]);
 	const [selectedLessonIds, setSelectedLessonIds] = useState<string[]>([]);
 	const [orderBy, setOrderBy] = useState<keyof Lesson>('title');
@@ -34,9 +34,9 @@ const AddNewLessonDialog = ({
 
 	useEffect(() => {
 		if (addNewLessonModalOpen) {
-			setPageNumber(1);
+			setLessonsPageNumber(1);
 		}
-	}, [addNewLessonModalOpen, setPageNumber]);
+	}, [addNewLessonModalOpen, setLessonsPageNumber]);
 
 	const handleSort = (property: keyof Lesson) => {
 		const isAsc = orderBy === property && order === 'asc';
@@ -147,7 +147,7 @@ const AddNewLessonDialog = ({
 									})}
 						</TableBody>
 					</Table>
-					<CustomTablePagination count={numberOfPages} page={pageNumber} onChange={setPageNumber} />
+					<CustomTablePagination count={numberOfPages} page={lessonsPageNumber} onChange={setLessonsPageNumber} />
 				</Box>
 			</DialogContent>
 			<CustomDialogActions

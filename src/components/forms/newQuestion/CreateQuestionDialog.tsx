@@ -32,6 +32,7 @@ import HandleVideoUploadURL from '../uploadImageVideo/HandleVideoUploadURL';
 import ImageThumbnail from '../uploadImageVideo/ImageThumbnail';
 import VideoThumbnail from '../uploadImageVideo/VideoThumbnail';
 import TinyMceEditor from '../../richTextEditor/TinyMceEditor';
+import TrueFalseOptions from '../../layouts/questionTypes/TrueFalseOptions';
 
 interface CreateQuestionDialogProps {
 	isQuestionCreateModalOpen: boolean;
@@ -108,6 +109,7 @@ const CreateQuestionDialog = ({
 	});
 
 	const [isCorrectAnswerMissing, setIsCorrectAnswerMissing] = useState<boolean>(false);
+	const [isQuestionMissing, setIsQuestionMissing] = useState<boolean>(false);
 	const [editorContent, setEditorContent] = useState<string>('');
 
 	useEffect(() => {
@@ -133,6 +135,12 @@ const CreateQuestionDialog = ({
 
 		setCorrectAnswer('');
 		setOptions(['']);
+		setEditorContent('');
+		setCorrectAnswerIndex(-1);
+		resetImageUpload();
+		resetVideoUpload();
+		resetEnterImageVideoUrl();
+		setIsQuestionMissing(false);
 	};
 
 	const createQuestion = async () => {
@@ -204,16 +212,18 @@ const CreateQuestionDialog = ({
 	};
 
 	const handleSubmit = () => {
-		if (correctAnswerIndex === -1) {
+		if (!editorContent) {
+			setIsQuestionMissing(true);
+			return;
+		}
+
+		if (correctAnswerIndex === -1 && !correctAnswer) {
 			setIsCorrectAnswerMissing(true);
 			return;
 		}
-		if (isDuplicateOption) {
-			return;
-		}
-		if (!isMinimumOptions) {
-			return;
-		}
+
+		if (isDuplicateOption) return;
+		if (!isMinimumOptions) return;
 
 		setIsCorrectAnswerMissing(false);
 
@@ -232,25 +242,7 @@ const CreateQuestionDialog = ({
 			openModal={isQuestionCreateModalOpen}
 			closeModal={() => {
 				setIsQuestionCreateModalOpen(false);
-				setNewQuestion({
-					_id: '',
-					questionType: '',
-					question: '',
-					options: [],
-					correctAnswer: '',
-					videoUrl: '',
-					imageUrl: '',
-					orgId,
-					isActive: true,
-					createdAt: '',
-					updatedAt: '',
-				});
-				setCorrectAnswer('');
-				setOptions(['']);
-				setCorrectAnswerIndex(-1);
-				resetImageUpload();
-				resetVideoUpload();
-				resetEnterImageVideoUrl();
+				resetValues();
 			}}
 			title='Create Question'
 			maxWidth='lg'>
@@ -271,6 +263,8 @@ const CreateQuestionDialog = ({
 							value={questionType}
 							onChange={(event: SelectChangeEvent) => {
 								setQuestionType(event.target.value);
+								setCorrectAnswer('');
+								setOptions(['']);
 							}}
 							size='medium'
 							label='Type'
@@ -291,6 +285,7 @@ const CreateQuestionDialog = ({
 						<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: '2rem', width: '100%' }}>
 							<Box sx={{ flex: 1, mr: '2rem' }}>
 								<HandleImageUploadURL
+									label='Question Image'
 									onImageUploadLogic={(url) => {
 										setNewQuestion((prevQuestion) => {
 											if (prevQuestion?.imageUrl !== undefined) {
@@ -339,6 +334,7 @@ const CreateQuestionDialog = ({
 							</Box>
 							<Box sx={{ flex: 1 }}>
 								<HandleVideoUploadURL
+									label='Question Video'
 									onVideoUploadLogic={(url) => {
 										setNewQuestion((prevQuestion) => {
 											if (prevQuestion?.videoUrl !== undefined) {
@@ -396,6 +392,7 @@ const CreateQuestionDialog = ({
 							<TinyMceEditor
 								handleEditorChange={(content) => {
 									setEditorContent(content);
+									setIsQuestionMissing(false);
 								}}
 								initialValue=''
 							/>
@@ -463,14 +460,28 @@ const CreateQuestionDialog = ({
 									))}
 							</Box>
 						)}
+						{questionType === 'True-False' && (
+							<Box>
+								<TrueFalseOptions
+									correctAnswer={correctAnswer}
+									setCorrectAnswer={setCorrectAnswer}
+									setIsCorrectAnswerMissing={setIsCorrectAnswerMissing}
+								/>
+								<Box sx={{ mt: '2rem' }}>
+									{isCorrectAnswerMissing && <CustomErrorMessage>- Select correct answer</CustomErrorMessage>}
+									{isQuestionMissing && <CustomErrorMessage>- Enter question</CustomErrorMessage>}
+								</Box>
+							</Box>
+						)}
 					</Box>
 
 					{questionType === 'Multiple Choice' && (
-						<>
-							{isCorrectAnswerMissing && <CustomErrorMessage>Select correct answer</CustomErrorMessage>}
-							{isDuplicateOption && <CustomErrorMessage>Options should be unique</CustomErrorMessage>}
-							{!isMinimumOptions && <CustomErrorMessage>At least two options are required</CustomErrorMessage>}
-						</>
+						<Box sx={{ mt: '2rem' }}>
+							{isQuestionMissing && <CustomErrorMessage>- Enter question</CustomErrorMessage>}
+							{isCorrectAnswerMissing && <CustomErrorMessage>- Select correct answer</CustomErrorMessage>}
+							{isDuplicateOption && <CustomErrorMessage>- Options should be unique</CustomErrorMessage>}
+							{!isMinimumOptions && <CustomErrorMessage>- At least two options are required</CustomErrorMessage>}
+						</Box>
 					)}
 				</DialogContent>
 				<CustomDialogActions

@@ -27,7 +27,7 @@ const AddNewQuestionDialog = ({
 	setIsLessonUpdated,
 	setSingleLessonBeforeSave,
 }: AddNewQuestionDialogProps) => {
-	const { sortQuestionsData, sortedQuestionsData, numberOfPages, pageNumber, setPageNumber } = useContext(QuestionsContext);
+	const { sortQuestionsData, sortedQuestionsData, numberOfPages, questionsPageNumber, setQuestionsPageNumber } = useContext(QuestionsContext);
 	const closeAddNewQuestionModal = () => setAddNewQuestionModalOpen(false);
 
 	const [selectedQuestions, setSelectedQuestions] = useState<QuestionInterface[]>([]);
@@ -37,9 +37,9 @@ const AddNewQuestionDialog = ({
 
 	useEffect(() => {
 		if (addNewQuestionModalOpen) {
-			setPageNumber(1);
+			setQuestionsPageNumber(1);
 		}
-	}, [addNewQuestionModalOpen, setPageNumber]);
+	}, [addNewQuestionModalOpen, setQuestionsPageNumber]);
 
 	const handleSort = (property: keyof QuestionInterface) => {
 		const isAsc = orderBy === property && order === 'asc';
@@ -130,7 +130,7 @@ const AddNewQuestionDialog = ({
 									})}
 						</TableBody>
 					</Table>
-					<CustomTablePagination count={numberOfPages} page={pageNumber} onChange={setPageNumber} />
+					<CustomTablePagination count={numberOfPages} page={questionsPageNumber} onChange={setQuestionsPageNumber} />
 				</Box>
 			</DialogContent>
 			<CustomDialogActions
