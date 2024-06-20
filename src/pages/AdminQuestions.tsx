@@ -12,7 +12,6 @@ import CustomTablePagination from '../components/layouts/table/CustomTablePagina
 import CustomActionBtn from '../components/layouts/table/CustomActionBtn';
 import { QuestionsContext } from '../contexts/QuestionsContextProvider';
 import { QuestionInterface } from '../interfaces/question';
-
 import useNewQuestion from '../hooks/useNewQuestion';
 import CreateQuestionDialog from '../components/forms/newQuestion/CreateQuestionDialog';
 import EditQuestionDialog from '../components/forms/editQuestion/EditQuestionDialog';
@@ -58,6 +57,15 @@ const AdminQuestions = () => {
 		handleOptionChange,
 	} = useNewQuestion();
 
+	useEffect(() => {
+		setQuestionsPageNumber(1);
+	}, []);
+
+	useEffect(() => {
+		setIsQuestionDeleteModalOpen(Array(sortedQuestionsData.length).fill(false));
+		setEditQuestionModalOpen(Array(sortedQuestionsData.length).fill(false));
+	}, [sortedQuestionsData, questionsPageNumber]);
+
 	const isInitialMount = useRef(true);
 
 	useEffect(() => {
@@ -67,15 +75,6 @@ const AdminQuestions = () => {
 			fetchQuestions(questionsPageNumber);
 		}
 	}, [questionsPageNumber]);
-
-	useEffect(() => {
-		setQuestionsPageNumber(1);
-	}, []);
-
-	useEffect(() => {
-		setIsQuestionDeleteModalOpen(Array(sortedQuestionsData.length).fill(false));
-		setEditQuestionModalOpen(Array(sortedQuestionsData.length).fill(false));
-	}, [sortedQuestionsData, questionsPageNumber]);
 
 	const openDeleteQuestionModal = (index: number) => {
 		const updatedState = [...isQuestionDeleteModalOpen];

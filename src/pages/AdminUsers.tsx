@@ -1,6 +1,6 @@
 import { Box, Table, TableBody, TableCell, TableRow } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import { Delete, Edit } from '@mui/icons-material';
 
@@ -19,7 +19,8 @@ const AdminUsers = () => {
 
 	const { userId } = useContext(UserAuthContext);
 
-	const { sortUsersData, sortedUsersData, removeUser, numberOfPages, pageNumber, setPageNumber } = useContext(UsersContext);
+	const { sortUsersData, sortedUsersData, removeUser, usersNumberOfPages, usersPageNumber, setUsersPageNumber, fetchUsers } =
+		useContext(UsersContext);
 
 	const [orderBy, setOrderBy] = useState<keyof User>('username');
 	const [order, setOrder] = useState<'asc' | 'desc'>('asc');
@@ -35,7 +36,17 @@ const AdminUsers = () => {
 
 	useEffect(() => {
 		setIsUserDeleteModalOpen(Array(sortedUsersData.length).fill(false));
-	}, [sortedUsersData, pageNumber]);
+	}, [sortedUsersData, usersPageNumber]);
+
+	const isInitialMount = useRef(true);
+
+	useEffect(() => {
+		if (isInitialMount.current) {
+			isInitialMount.current = false;
+		} else {
+			fetchUsers(usersPageNumber);
+		}
+	}, [usersPageNumber]);
 
 	const openDeleteUserModal = (index: number) => {
 		const updatedState = [...isUserDeleteModalOpen];
@@ -125,7 +136,7 @@ const AdminUsers = () => {
 							})}
 					</TableBody>
 				</Table>
-				<CustomTablePagination count={numberOfPages} page={pageNumber} onChange={setPageNumber} />
+				<CustomTablePagination count={usersNumberOfPages} page={usersPageNumber} onChange={setUsersPageNumber} />
 			</Box>
 		</DashboardPagesLayout>
 	);
