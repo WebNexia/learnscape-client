@@ -7,6 +7,17 @@ import theme from './themes';
 import { Roles } from './interfaces/enums';
 import Loading from './components/layouts/loading/Loading';
 
+// Import context providers directly
+import MediaQueryContextProvider from './contexts/MediaQueryContextProvider';
+import UserCourseLessonDataContextProvider from './contexts/UserCourseLessonDataContextProvider';
+import CoursesContextProvider from './contexts/CoursesContextProvider';
+import LessonsContextProvider from './contexts/LessonsContextProvider';
+import QuestionsContextProvider from './contexts/QuestionsContextProvider';
+import UserAuthContextProvider from './contexts/UserAuthContextProvider';
+import OrganisationContextProvider from './contexts/OrganisationContextProvider';
+import UsersContextProvider from './contexts/UsersContextProvider';
+
+// Lazy load pages
 const Auth = React.lazy(() => import('./pages/Auth'));
 const HomePage = React.lazy(() => import('./pages/HomePage'));
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
@@ -28,14 +39,6 @@ const AdminMessages = React.lazy(() => import('./pages/AdminMessages'));
 const AdminUsers = React.lazy(() => import('./pages/AdminUsers'));
 const AdminSchedule = React.lazy(() => import('./pages/AdminSchedule'));
 const AdminCommunity = React.lazy(() => import('./pages/AdminCommunity'));
-const MediaQueryContextProvider = React.lazy(() => import('./contexts/MediaQueryContextProvider'));
-const UserCourseLessonDataContextProvider = React.lazy(() => import('./contexts/UserCourseLessonDataContextProvider'));
-const CoursesContextProvider = React.lazy(() => import('./contexts/CoursesContextProvider'));
-const LessonsContextProvider = React.lazy(() => import('./contexts/LessonsContextProvider'));
-const QuestionsContextProvider = React.lazy(() => import('./contexts/QuestionsContextProvider'));
-const UserAuthContextProvider = React.lazy(() => import('./contexts/UserAuthContextProvider'));
-const OrganisationContextProvider = React.lazy(() => import('./contexts/OrganisationContextProvider'));
-const UsersContextProvider = React.lazy(() => import('./contexts/UsersContextProvider'));
 
 const queryClient = new QueryClient();
 
