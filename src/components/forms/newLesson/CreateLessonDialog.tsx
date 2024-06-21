@@ -38,7 +38,7 @@ const CreateLessonDialog = ({
 	const [title, setTitle] = useState<string>('');
 	const [type, setType] = useState<string>('');
 
-	const lessonTypes: string[] = ['Quiz', 'Instructional Lesson'];
+	const lessonTypes: string[] = ['Instructional Lesson', 'Quiz'];
 
 	const createLesson = async () => {
 		try {

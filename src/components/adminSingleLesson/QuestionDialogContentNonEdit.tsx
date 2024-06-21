@@ -104,7 +104,7 @@ const QuestionDialogContentNonEdit = ({ question }: QuestionDialogContentNonEdit
 									textAlign: 'center',
 									color: theme.textColor?.common.main,
 									boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
-									padding: '1rem',
+									padding: '0.5rem 1rem',
 									borderRadius: '0.35rem',
 									backgroundColor: question.correctAnswer === 'true' ? theme.bgColor?.greenPrimary : 'error.main',
 								}}>

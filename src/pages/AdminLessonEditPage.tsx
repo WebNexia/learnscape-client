@@ -34,6 +34,8 @@ import ImageThumbnail from '../components/forms/uploadImageVideo/ImageThumbnail'
 import VideoThumbnail from '../components/forms/uploadImageVideo/VideoThumbnail';
 import LessonImageCourseDisplay from '../components/adminSingleLesson/LessonImageCourseDisplay';
 import { questionTypeNameFinder } from '../utils/questionTypeNameFinder';
+import { sanitizeHtml } from '../utils/sanitizeHtml';
+import TinyMceEditor from '../components/richTextEditor/TinyMceEditor';
 
 export interface QuestionUpdateTrack {
 	questionId: string;
@@ -104,6 +106,8 @@ const AdminLessonEditPage = () => {
 	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(true);
 	const [enterVideoUrl, setEnterVideoUrl] = useState<boolean>(true);
 
+	const [editorContent, setEditorContent] = useState<string>(defaultLesson.text);
+
 	const resetEnterImageVideoUrl = () => {
 		setEnterVideoUrl(true);
 		setEnterImageUrl(true);
@@ -123,6 +127,8 @@ const AdminLessonEditPage = () => {
 
 					setSingleLesson(lessonsResponse);
 					setSingleLessonBeforeSave(lessonsResponse);
+
+					setEditorContent(lessonsResponse.text);
 
 					setIsActive(lessonsResponse.isActive);
 
@@ -240,6 +246,7 @@ const AdminLessonEditPage = () => {
 				...prevData,
 				questions: updatedQuestions,
 				questionIds: updatedQuestionIds,
+				text: editorContent,
 			}));
 		}
 
@@ -249,6 +256,7 @@ const AdminLessonEditPage = () => {
 				await axios.patch(`${base_url}/lessons/${lessonId}`, {
 					...singleLessonBeforeSave,
 					questionIds: updatedQuestionIds,
+					text: editorContent,
 				});
 
 				setIsLessonUpdated(false);
@@ -257,6 +265,7 @@ const AdminLessonEditPage = () => {
 				setSingleLesson({
 					...singleLessonBeforeSave,
 					questionIds: updatedQuestionIds,
+					text: editorContent,
 				});
 			} catch (error) {
 				console.error('Error updating lesson:', error);
@@ -292,7 +301,7 @@ const AdminLessonEditPage = () => {
 
 	return (
 		<DashboardPagesLayout pageName='Edit Lesson' customSettings={{ justifyContent: 'flex-start' }}>
-			<Box sx={{ width: '80%', position: 'fixed', top: '4rem', zIndex: 1, backgroundColor: theme.bgColor?.secondary }}>
+			<Box sx={{ width: '80%', position: 'fixed', top: '4rem', zIndex: 1000, backgroundColor: theme.bgColor?.secondary }}>
 				<LessonPaper
 					userId={userId}
 					singleLesson={singleLesson}
@@ -314,7 +323,6 @@ const AdminLessonEditPage = () => {
 					resetVideoUpload={resetVideoUpload}
 					resetEnterImageVideoUrl={resetEnterImageVideoUrl}
 				/>
-				{!isEditMode && <LessonImageCourseDisplay singleLesson={singleLesson} />}
 			</Box>
 
 			<CreateQuestionDialog
@@ -339,13 +347,32 @@ const AdminLessonEditPage = () => {
 				isDuplicateOption={isDuplicateOption}
 			/>
 
-			<Box sx={{ display: 'flex', width: '95%', justifyContent: 'center', marginTop: isEditMode ? '6rem' : '18rem' }}>
+			<Box sx={{ display: 'flex', width: '95%', justifyContent: 'center', marginTop: isEditMode ? '5rem' : '11rem' }}>
 				{!isEditMode && (
-					<QuestionsBoxNonEdit
-						singleLesson={singleLesson}
-						setIsDisplayNonEditQuestion={setIsDisplayNonEditQuestion}
-						setDisplayedQuestionNonEdit={setDisplayedQuestionNonEdit}
-					/>
+					<Box
+						sx={{
+							display: 'flex',
+							flexDirection: 'column',
+							justifyContent: 'center',
+							alignItems: 'center',
+							width: '100%',
+						}}>
+						<LessonImageCourseDisplay singleLesson={singleLesson} />
+						{singleLesson.type === 'Instructional Lesson' && (
+							<Box className='rich-text-content' component='div' sx={{ textAlign: 'justify', width: '90%', mt: '6rem' }}>
+								<Typography variant='h4' sx={{ mb: '1.25rem' }}>
+									Lesson Instructions
+								</Typography>
+								<Typography variant='body1' component='html' dangerouslySetInnerHTML={{ __html: sanitizeHtml(singleLesson.text) }} />
+							</Box>
+						)}
+
+						<QuestionsBoxNonEdit
+							singleLesson={singleLesson}
+							setIsDisplayNonEditQuestion={setIsDisplayNonEditQuestion}
+							setDisplayedQuestionNonEdit={setDisplayedQuestionNonEdit}
+						/>
+					</Box>
 				)}
 
 				<CustomDialog
@@ -468,6 +495,22 @@ const AdminLessonEditPage = () => {
 									/>
 								</Box>
 							</Box>
+
+							{singleLessonBeforeSave.type === 'Instructional Lesson' && (
+								<Box sx={{ mt: '5rem' }}>
+									<Typography variant='h6' sx={{ mb: '1rem' }}>
+										Lesson Instructions
+									</Typography>
+									<TinyMceEditor
+										height={400}
+										handleEditorChange={(content) => {
+											setEditorContent(content);
+											setIsLessonUpdated(true);
+										}}
+										initialValue={singleLessonBeforeSave.text}
+									/>
+								</Box>
+							)}
 
 							<Box
 								sx={{

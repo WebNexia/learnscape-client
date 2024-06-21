@@ -3,9 +3,10 @@ import { Editor } from '@tinymce/tinymce-react';
 interface TinyMceEditorProps {
 	handleEditorChange: (content: string) => void;
 	initialValue: string;
+	height?: string | number | undefined;
 }
 
-const TinyMceEditor = ({ handleEditorChange, initialValue }: TinyMceEditorProps) => {
+const TinyMceEditor = ({ handleEditorChange, initialValue, height = 300 }: TinyMceEditorProps) => {
 	const apiKey = import.meta.env.VITE_TINY_MCE_API_KEY;
 
 	return (
@@ -13,7 +14,7 @@ const TinyMceEditor = ({ handleEditorChange, initialValue }: TinyMceEditorProps)
 			apiKey={apiKey}
 			initialValue={initialValue}
 			init={{
-				height: 300,
+				height: height,
 				width: '100%',
 				icons: 'thin',
 				menubar: 'edit view insert format tools table',
