@@ -14,8 +14,9 @@ interface LessonsContextTypes {
 	removeLesson: (id: string) => void;
 	updateLessons: (singleLesson: Lesson) => void;
 	numberOfPages: number;
-	pageNumber: number;
-	setPageNumber: React.Dispatch<React.SetStateAction<number>>;
+	lessonsPageNumber: number;
+	setLessonsPageNumber: React.Dispatch<React.SetStateAction<number>>;
+	fetchLessons: (page: number) => void;
 }
 
 interface LessonsContextProviderProps {
@@ -30,8 +31,9 @@ export const LessonsContext = createContext<LessonsContextTypes>({
 	removeLesson: () => {},
 	updateLessons: () => {},
 	numberOfPages: 1,
-	pageNumber: 1,
-	setPageNumber: () => {},
+	lessonsPageNumber: 1,
+	setLessonsPageNumber: () => {},
+	fetchLessons: () => {},
 });
 
 const LessonsContextProvider = (props: LessonsContextProviderProps) => {
@@ -40,33 +42,31 @@ const LessonsContextProvider = (props: LessonsContextProviderProps) => {
 
 	const [sortedLessonsData, setSortedLessonsData] = useState<Lesson[]>([]);
 	const [numberOfPages, setNumberOfPages] = useState<number>(1);
-	const [pageNumber, setPageNumber] = useState<number>(1);
+	const [lessonsPageNumber, setLessonsPageNumber] = useState<number>(1);
 
 	const [isLoaded, setIsLoaded] = useState<boolean>(false);
 
-	const { data, isLoading, isError } = useQuery(
-		['allLessons', { page: pageNumber }],
-		async () => {
-			if (!orgId) return;
+	const fetchLessons = async (page: number) => {
+		if (!orgId) return;
 
-			try {
-				const response = await axios.get(`${base_url}/lessons/organisation/${orgId}?page=${pageNumber}`);
+		try {
+			const response = await axios.get(`${base_url}/lessons/organisation/${orgId}?page=${page}&limit=20`);
 
-				// Initial sorting when fetching data
-				const sortedLessonsDataCopy = [...response.data.data].sort((a: Lesson, b: Lesson) => b.updatedAt.localeCompare(a.updatedAt));
-				setSortedLessonsData(sortedLessonsDataCopy);
-				setNumberOfPages(response.data.pages);
-				setIsLoaded(true);
-				return response.data.data;
-			} catch (error) {
-				setIsLoaded(true); // Set isLoading to false in case of an error
-				throw error; // Rethrow the error to be handled by React Query
-			}
-		},
-		{
-			enabled: !!orgId && !isLoaded,
+			// Initial sorting when fetching data
+			const sortedLessonsDataCopy = [...response.data.data].sort((a: Lesson, b: Lesson) => b.updatedAt.localeCompare(a.updatedAt));
+			setSortedLessonsData(sortedLessonsDataCopy);
+			setNumberOfPages(response.data.pages);
+			setIsLoaded(true);
+			return response.data.data;
+		} catch (error) {
+			setIsLoaded(true); // Set isLoading to false in case of an error
+			throw error; // Rethrow the error to be handled by React Query
 		}
-	);
+	};
+
+	const { data, isLoading, isError } = useQuery(['allLessons', orgId, lessonsPageNumber], () => fetchLessons(lessonsPageNumber), {
+		enabled: !!orgId && !isLoaded,
+	});
 
 	// Function to handle sorting
 	const sortLessonsData = (property: keyof Lesson, order: 'asc' | 'desc') => {
@@ -126,8 +126,9 @@ const LessonsContextProvider = (props: LessonsContextProviderProps) => {
 				updateLessonPublishing,
 				updateLessons,
 				numberOfPages,
-				pageNumber,
-				setPageNumber,
+				lessonsPageNumber,
+				setLessonsPageNumber,
+				fetchLessons,
 			}}>
 			{props.children}
 		</LessonsContext.Provider>

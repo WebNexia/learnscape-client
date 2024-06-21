@@ -177,7 +177,7 @@ const AdminCourseEditChapter = ({
 										sx={{
 											display: 'flex',
 											alignItems: 'center',
-											height: '3.5rem',
+											height: '2.25rem',
 											width: '100%',
 											backgroundColor: theme.bgColor?.common,
 											margin: '1.25rem 0',
@@ -191,8 +191,8 @@ const AdminCourseEditChapter = ({
 										}}>
 										<Box
 											sx={{
-												height: '3.5rem',
-												width: '5rem',
+												height: '2.25rem',
+												width: '3rem',
 											}}>
 											<img
 												src={lesson.imageUrl || 'https://directmobilityonline.co.uk/assets/img/noimage.png'}
@@ -213,13 +213,13 @@ const AdminCourseEditChapter = ({
 												width: '100%',
 											}}>
 											<Box>
-												<Typography variant='body1'>{lesson.title}</Typography>
+												<Typography variant='body2'>{lesson.title}</Typography>
 											</Box>
 											<Box sx={{ display: 'flex', alignItems: 'center' }}>
 												<Box sx={{ mr: '1rem' }}>
-													<Typography variant='body1'>({lesson.type})</Typography>
+													<Typography variant='body2'>({lesson.type})</Typography>
 												</Box>
-												<Tooltip title='Remove Lesson' placement='left'>
+												<Tooltip title='Remove Lesson' placement='right'>
 													<IconButton
 														onClick={() => {
 															setChapterLessonDataBeforeSave((prevData) => {

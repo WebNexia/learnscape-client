@@ -45,8 +45,8 @@ const QuestionsBoxNonEdit = ({ singleLesson, setIsDisplayNonEditQuestion, setDis
 											sx={{
 												display: 'flex',
 												alignItems: 'center',
-												height: '5rem',
-												width: '80%',
+												height: '3rem',
+												width: '100%',
 												backgroundColor: theme.bgColor?.common,
 												margin: '1.25rem 0',
 												borderRadius: '0.25rem',
@@ -59,8 +59,8 @@ const QuestionsBoxNonEdit = ({ singleLesson, setIsDisplayNonEditQuestion, setDis
 											}}>
 											<Box
 												sx={{
-													height: '5rem',
-													width: '4rem',
+													height: '3rem',
+													width: '2rem',
 												}}>
 												<img
 													src='https://images.unsplash.com/photo-1601027847350-0285867c31f7?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8N3x8cXVlc3Rpb24lMjBtYXJrfGVufDB8fDB8fHww'
@@ -73,7 +73,7 @@ const QuestionsBoxNonEdit = ({ singleLesson, setIsDisplayNonEditQuestion, setDis
 												/>
 											</Box>
 											<Box sx={{ ml: '1rem' }}>
-												<Typography variant='h6'>{truncateText(stripHtml(question.question), 50)}</Typography>
+												<Typography variant='body2'>{truncateText(stripHtml(question.question), 60)}</Typography>
 											</Box>
 										</Box>
 									);

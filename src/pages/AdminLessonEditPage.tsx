@@ -44,7 +44,7 @@ const AdminLessonEditPage = () => {
 	const { orgId } = useContext(OrganisationContext);
 	const { updateLessonPublishing, updateLessons } = useContext(LessonsContext);
 
-	const { questionTypes } = useContext(QuestionsContext);
+	const { questionTypes, fetchQuestions, questionsPageNumber } = useContext(QuestionsContext);
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
 	const {
@@ -189,28 +189,26 @@ const AdminLessonEditPage = () => {
 								if (questionTypeId) {
 									question.questionType = questionTypeId;
 
-									if (question.correctAnswer !== '') {
-										try {
-											const questionResponse = await axios.post(`${base_url}/questions`, {
-												orgId,
-												question: question.question,
-												options: question.options,
-												correctAnswer: question.correctAnswer,
-												videoUrl: question.videoUrl,
-												imageUrl: question.imageUrl,
-												questionType: questionTypeId,
-												isActive: true,
-											});
-											return {
-												...question,
-												_id: questionResponse.data._id,
-												createdAt: questionResponse.data.createdAt,
-												updatedAt: questionResponse.data.updatedAt,
-											};
-										} catch (error) {
-											console.error('Error creating question:', error);
-											return null;
-										}
+									try {
+										const questionResponse = await axios.post(`${base_url}/questions`, {
+											orgId,
+											question: question.question,
+											options: question.options,
+											correctAnswer: question.correctAnswer,
+											videoUrl: question.videoUrl,
+											imageUrl: question.imageUrl,
+											questionType: questionTypeId,
+											isActive: true,
+										});
+										return {
+											...question,
+											_id: questionResponse.data._id,
+											createdAt: questionResponse.data.createdAt,
+											updatedAt: questionResponse.data.updatedAt,
+										};
+									} catch (error) {
+										console.error('Error creating question:', error);
+										return null;
 									}
 								}
 							}
@@ -224,9 +222,11 @@ const AdminLessonEditPage = () => {
 			await Promise.all(
 				updatedQuestions?.map(async (question) => {
 					const trackData = isQuestionUpdated.find((data) => data.questionId === question._id);
-					if (question.correctAnswer !== '' && trackData?.isUpdated) {
+					if (trackData?.isUpdated) {
 						try {
-							await axios.patch(`${base_url}/questions/${question._id}`, question);
+							const { questionType, ...questionWithoutType } = question;
+
+							await axios.patch(`${base_url}/questions/${question._id}`, questionWithoutType);
 						} catch (error) {
 							console.error('Error updating question:', error);
 						}
@@ -267,6 +267,7 @@ const AdminLessonEditPage = () => {
 			isUpdated: false,
 		}));
 		setIsQuestionUpdated(questionUpdateData);
+		fetchQuestions(questionsPageNumber);
 	};
 
 	const removeQuestion = (question: QuestionInterface) => {
@@ -492,6 +493,7 @@ const AdminLessonEditPage = () => {
 										setAddNewQuestionModalOpen={setAddNewQuestionModalOpen}
 										setIsLessonUpdated={setIsLessonUpdated}
 										setSingleLessonBeforeSave={setSingleLessonBeforeSave}
+										setIsQuestionUpdated={setIsQuestionUpdated}
 									/>
 
 									<CustomSubmitButton
@@ -559,7 +561,7 @@ const AdminLessonEditPage = () => {
 																sx={{
 																	display: 'flex',
 																	alignItems: 'center',
-																	height: '5rem',
+																	height: '3rem',
 																	width: '100%',
 																	backgroundColor: theme.bgColor?.common,
 																	margin: '1.25rem 0',
@@ -569,8 +571,8 @@ const AdminLessonEditPage = () => {
 																}}>
 																<Box
 																	sx={{
-																		height: '5rem',
-																		width: '4rem',
+																		height: '3rem',
+																		width: '2rem',
 																	}}>
 																	<img
 																		src='https://images.unsplash.com/photo-1601027847350-0285867c31f7?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8N3x8cXVlc3Rpb24lMjBtYXJrfGVufDB8fDB8fHww'
@@ -591,7 +593,7 @@ const AdminLessonEditPage = () => {
 																		mr: '1rem',
 																	}}>
 																	<Box sx={{ ml: '1rem' }}>
-																		<Typography variant='h6'>{truncateText(stripHtml(question.question), 50)}</Typography>
+																		<Typography variant='body2'>{truncateText(stripHtml(question.question), 60)}</Typography>
 																	</Box>
 
 																	<Box sx={{ display: 'flex' }}>

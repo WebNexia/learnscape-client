@@ -26,7 +26,7 @@ const CustomTableHead = <T,>({ orderBy, order, handleSort, columns }: CustomTabl
 									handleSort(column.key as keyof T);
 								}
 							}}>
-							<Typography variant='h5'>{column.label}</Typography>
+							<Typography variant='h6'>{column.label}</Typography>
 						</TableSortLabel>
 					</TableCell>
 				))}

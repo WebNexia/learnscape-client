@@ -14,9 +14,10 @@ interface QuestionsContextTypes {
 	removeQuestion: (id: string) => void;
 	updateQuestion: (question: QuestionInterface) => void;
 	numberOfPages: number;
-	pageNumber: number;
-	setPageNumber: React.Dispatch<React.SetStateAction<number>>;
+	questionsPageNumber: number;
+	setQuestionsPageNumber: React.Dispatch<React.SetStateAction<number>>;
 	questionTypes: QuestionType[];
+	fetchQuestions: (page: number) => void;
 }
 
 interface QuestionsContextProviderProps {
@@ -30,9 +31,10 @@ export const QuestionsContext = createContext<QuestionsContextTypes>({
 	removeQuestion: () => {},
 	updateQuestion: () => {},
 	numberOfPages: 1,
-	pageNumber: 1,
-	setPageNumber: () => {},
+	questionsPageNumber: 1,
+	setQuestionsPageNumber: () => {},
 	questionTypes: [],
+	fetchQuestions: () => {},
 });
 
 const QuestionsContextProvider = (props: QuestionsContextProviderProps) => {
@@ -41,38 +43,53 @@ const QuestionsContextProvider = (props: QuestionsContextProviderProps) => {
 
 	const [sortedQuestionsData, setSortedQuestionsData] = useState<QuestionInterface[]>([]);
 	const [numberOfPages, setNumberOfPages] = useState<number>(1);
-	const [pageNumber, setPageNumber] = useState<number>(1);
+	const [questionsPageNumber, setQuestionsPageNumber] = useState<number>(1);
 	const [questionTypes, setQuestionTypes] = useState<QuestionType[]>([]);
 
 	const [isLoaded, setIsLoaded] = useState<boolean>(false);
 
-	const { data, isLoading, isError } = useQuery(
-		['allQuestions', { page: pageNumber }],
-		async () => {
-			if (!orgId) return;
+	const fetchQuestions = async (page: number) => {
+		if (!orgId) return;
 
-			try {
-				const response = await axios.get(`${base_url}/questions/organisation/${orgId}?page=${pageNumber}`);
+		try {
+			const response = await axios.get(`${base_url}/questions/organisation/${orgId}?page=${page}&limit=50`);
 
-				const questionTypeResponse = await axios.get(`${base_url}/questiontypes/organisation/${orgId}`);
-
-				setQuestionTypes(questionTypeResponse.data.data);
-
-				// Initial sorting when fetching data
-				const sortedDataCopy = [...response.data.data].sort((a: QuestionInterface, b: QuestionInterface) => b.updatedAt.localeCompare(a.updatedAt));
-				setSortedQuestionsData(sortedDataCopy);
-				setNumberOfPages(response.data.pages);
-				setIsLoaded(true);
-				return response.data.data;
-			} catch (error) {
-				setIsLoaded(true); // Set isLoading to false in case of an error
-				throw error; // Rethrow the error to be handled by React Query
-			}
-		},
-		{
-			enabled: !!orgId && !isLoaded,
+			// Initial sorting when fetching data
+			const sortedDataCopy = [...response.data.data].sort((a: QuestionInterface, b: QuestionInterface) => b.updatedAt.localeCompare(a.updatedAt));
+			setSortedQuestionsData(sortedDataCopy);
+			setNumberOfPages(response.data.pages);
+			setIsLoaded(true);
+			return response.data.data;
+		} catch (error) {
+			throw error; // Rethrow the error to be handled by React Query
 		}
-	);
+	};
+
+	const {
+		data: allQuestionsData,
+		isLoading: allQuestionsLoading,
+		isError: allQuestionsError,
+	} = useQuery(['allQuestions', orgId, questionsPageNumber], () => fetchQuestions(questionsPageNumber), {
+		enabled: !!orgId && !isLoaded,
+	});
+
+	const fetchQuestionTypes = async () => {
+		if (!orgId) return;
+		try {
+			const questionTypeResponse = await axios.get(`${base_url}/questiontypes/organisation/${orgId}`);
+
+			setQuestionTypes(questionTypeResponse.data.data);
+		} catch (error) {
+			throw error;
+		}
+	};
+	const {
+		data: allQuestionTypesData,
+		isLoading: allQuestionTypesLoading,
+		isError: allQuestionTypesError,
+	} = useQuery('allQuestionTypes', () => fetchQuestionTypes(), {
+		enabled: !!orgId && !isLoaded,
+	});
 
 	// Function to handle sorting
 	const sortQuestionsData = (property: keyof QuestionInterface, order: 'asc' | 'desc') => {
@@ -85,6 +102,7 @@ const QuestionsContextProvider = (props: QuestionsContextProviderProps) => {
 		});
 		setSortedQuestionsData(sortedDataCopy);
 	};
+
 	// Function to update sortedQuestionsData with new course data
 	const addNewQuestion = (newQuestion: any) => {
 		setSortedQuestionsData((prevSortedData) => [newQuestion, ...prevSortedData]);
@@ -104,11 +122,11 @@ const QuestionsContextProvider = (props: QuestionsContextProviderProps) => {
 		setSortedQuestionsData((prevSortedData) => prevSortedData?.filter((data) => data._id !== id));
 	};
 
-	if (isLoading) {
+	if (allQuestionsLoading || allQuestionTypesLoading) {
 		return <Loading />;
 	}
 
-	if (isError) {
+	if (allQuestionsError || allQuestionTypesError) {
 		return <LoadingError />;
 	}
 
@@ -121,9 +139,10 @@ const QuestionsContextProvider = (props: QuestionsContextProviderProps) => {
 				removeQuestion,
 				updateQuestion,
 				numberOfPages,
-				pageNumber,
-				setPageNumber,
+				questionsPageNumber,
+				setQuestionsPageNumber,
 				questionTypes,
+				fetchQuestions,
 			}}>
 			{props.children}
 		</QuestionsContext.Provider>

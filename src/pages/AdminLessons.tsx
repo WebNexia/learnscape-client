@@ -1,6 +1,6 @@
 import { Box, Table, TableBody, TableCell, TableRow } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import { LessonsContext } from '../contexts/LessonsContextProvider';
 import { Lesson } from '../interfaces/lessons';
@@ -20,7 +20,8 @@ const AdminLessons = () => {
 	const { userId } = useParams();
 	const navigate = useNavigate();
 
-	const { sortLessonsData, sortedLessonsData, removeLesson, numberOfPages, pageNumber, setPageNumber } = useContext(LessonsContext);
+	const { sortLessonsData, sortedLessonsData, removeLesson, numberOfPages, lessonsPageNumber, setLessonsPageNumber, fetchLessons } =
+		useContext(LessonsContext);
 
 	const [isNewLessonModalOpen, setIsNewLessonModalOpen] = useState<boolean>(false);
 
@@ -38,7 +39,21 @@ const AdminLessons = () => {
 
 	useEffect(() => {
 		setIsLessonDeleteModalOpen(Array(sortedLessonsData.length).fill(false));
-	}, [sortedLessonsData, pageNumber]);
+	}, [sortedLessonsData, lessonsPageNumber]);
+
+	const isInitialMount = useRef(true);
+
+	useEffect(() => {
+		if (isInitialMount.current) {
+			isInitialMount.current = false;
+		} else {
+			fetchLessons(lessonsPageNumber);
+		}
+	}, [lessonsPageNumber]);
+
+	useEffect(() => {
+		setLessonsPageNumber(1);
+	}, []);
 
 	const openDeleteLessonModal = (index: number) => {
 		const updatedState = [...isLessonDeleteModalOpen];
@@ -55,6 +70,7 @@ const AdminLessons = () => {
 		try {
 			removeLesson(lessonId);
 			await axios.delete(`${base_url}/lessons/${lessonId}`);
+			fetchLessons(lessonsPageNumber);
 		} catch (error) {
 			console.log(error);
 		}
@@ -136,7 +152,7 @@ const AdminLessons = () => {
 							})}
 					</TableBody>
 				</Table>
-				<CustomTablePagination count={numberOfPages} page={pageNumber} onChange={setPageNumber} />
+				<CustomTablePagination count={numberOfPages} page={lessonsPageNumber} onChange={setLessonsPageNumber} />
 			</Box>
 		</DashboardPagesLayout>
 	);

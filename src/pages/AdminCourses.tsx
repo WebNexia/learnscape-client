@@ -1,6 +1,6 @@
 import { Box, Table, TableBody, TableRow, TableCell, FormControlLabel, Checkbox } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import { CoursesContext } from '../contexts/CoursesContextProvider';
 import { SingleCourse } from '../interfaces/course';
 import { Delete, Edit, FileCopy } from '@mui/icons-material';
@@ -20,7 +20,16 @@ const AdminCourses = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { userId } = useParams();
 	const navigate = useNavigate();
-	const { sortedCoursesData, sortCoursesData, addNewCourse, removeCourse, numberOfPages, pageNumber, setPageNumber } = useContext(CoursesContext);
+	const {
+		sortedCoursesData,
+		sortCoursesData,
+		addNewCourse,
+		removeCourse,
+		coursesNumberOfPages,
+		coursesPageNumber,
+		setCoursesPageNumber,
+		fetchCourses,
+	} = useContext(CoursesContext);
 	const { orgId } = useContext(OrganisationContext);
 
 	const [isCourseCreateModalOpen, setIsCourseCreateModalOpen] = useState<boolean>(false);
@@ -40,6 +49,16 @@ const AdminCourses = () => {
 	useEffect(() => {
 		setIsCourseDeleteModalOpen(Array(sortedCoursesData.length).fill(false));
 	}, [sortedCoursesData]);
+
+	const isInitialMount = useRef(true);
+
+	useEffect(() => {
+		if (isInitialMount.current) {
+			isInitialMount.current = false;
+		} else {
+			fetchCourses(coursesPageNumber);
+		}
+	}, [coursesPageNumber]);
 
 	const openDeleteCourseModal = (index: number) => {
 		const updatedState = [...isCourseDeleteModalOpen];
@@ -257,7 +276,7 @@ const AdminCourses = () => {
 							})}
 					</TableBody>
 				</Table>
-				<CustomTablePagination count={numberOfPages} page={pageNumber} onChange={setPageNumber} />
+				<CustomTablePagination count={coursesNumberOfPages} page={coursesPageNumber} onChange={setCoursesPageNumber} />
 			</Box>
 		</DashboardPagesLayout>
 	);

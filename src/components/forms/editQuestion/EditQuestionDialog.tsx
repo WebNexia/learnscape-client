@@ -19,6 +19,8 @@ import HandleVideoUploadURL from '../uploadImageVideo/HandleVideoUploadURL';
 import ImageThumbnail from '../uploadImageVideo/ImageThumbnail';
 import VideoThumbnail from '../uploadImageVideo/VideoThumbnail';
 import TinyMceEditor from '../../richTextEditor/TinyMceEditor';
+import TrueFalseOptions from '../../layouts/questionTypes/TrueFalseOptions';
+import { LessonsContext } from '../../../contexts/LessonsContextProvider';
 
 interface EditQuestionDialogProps {
 	fromLessonEditPage: boolean;
@@ -72,12 +74,18 @@ const EditQuestionDialog = ({
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
 
+	const { fetchLessons, lessonsPageNumber } = useContext(LessonsContext);
+
 	const [questionAdminQuestions, setQuestionAdminQuestions] = useState<string>(question.question);
 	const [imageUrlAdminQuestions, setImageUrlAdminQuestions] = useState<string>(question.imageUrl);
 	const [videoUrlAdminQuestions, setVideoUrlAdminQuestions] = useState<string>(question.videoUrl);
+	const [correctAnswerAdminQuestions, setCorrectAnswerAdminQuestions] = useState<string>(question.correctAnswer);
 
-	const { updateQuestion } = useContext(QuestionsContext);
-	const [isCorrectAnswerMissing, setIsCorrectAnswerMissing] = useState<boolean>(correctAnswerIndex < 0);
+	const { updateQuestion, fetchQuestions, questionsPageNumber } = useContext(QuestionsContext);
+	const [isCorrectAnswerMissing, setIsCorrectAnswerMissing] = useState<boolean>(
+		correctAnswerIndex < 0 && question.correctAnswer === '' && questionType !== 'Open-ended'
+	);
+	const [isQuestionMissing, setIsQuestionMissing] = useState<boolean>(false);
 
 	const { resetImageUpload } = useImageUpload();
 
@@ -96,7 +104,7 @@ const EditQuestionDialog = ({
 	const { resetVideoUpload } = useVideoUpload();
 
 	useEffect(() => {
-		setIsCorrectAnswerMissing(correctAnswerIndex < 0);
+		setIsCorrectAnswerMissing(correctAnswerIndex < 0 && question.correctAnswer === '' && questionType !== 'Open-ended');
 		resetVideoUpload();
 		resetImageUpload();
 		resetEnterImageVideoUrl();
@@ -104,10 +112,32 @@ const EditQuestionDialog = ({
 
 	const handleSubmit = async () => {
 		await handleInputChange('question', editorContent);
-		if (correctAnswerIndex === -1 || correctAnswer === '' || isDuplicateOption || !isMinimumOptions) {
-			setIsCorrectAnswerMissing(correctAnswerIndex === -1 || correctAnswer === '');
+
+		if (!editorContent) {
+			setIsQuestionMissing(true);
 			return;
 		}
+
+		if (questionType === 'Multiple Choice') {
+			if (correctAnswerIndex === -1 || !correctAnswer) {
+				setIsCorrectAnswerMissing(true);
+				return;
+			}
+		}
+
+		if (questionType === 'True-False') {
+			if (!correctAnswer) {
+				setIsCorrectAnswerMissing(true);
+				return;
+			}
+		}
+
+		if (questionType !== 'Open-ended') {
+			setIsCorrectAnswerMissing(false);
+		}
+
+		if (isDuplicateOption) return;
+		if (!isMinimumOptions) return;
 
 		if (fromLessonEditPage && setSingleLessonBeforeSave) {
 			setSingleLessonBeforeSave((prevData) => {
@@ -129,7 +159,7 @@ const EditQuestionDialog = ({
 			resetEnterImageVideoUrl();
 		} else {
 			try {
-				const updatedCorrectAnswer = options[correctAnswerIndex];
+				const updatedCorrectAnswer = questionType === 'Multiple Choice' ? options[correctAnswerIndex] : correctAnswerAdminQuestions;
 
 				const response = await axios.patch(`${base_url}/questions/${question._id}`, {
 					orgId,
@@ -156,6 +186,9 @@ const EditQuestionDialog = ({
 
 				resetImageUpload();
 				resetVideoUpload();
+				resetEnterImageVideoUrl();
+				fetchLessons(lessonsPageNumber);
+				fetchQuestions(questionsPageNumber);
 			} catch (error) {
 				console.error('Failed to update the question:', error);
 			}
@@ -323,7 +356,7 @@ const EditQuestionDialog = ({
 							/>
 
 							<VideoThumbnail
-								videoPlayCondition={question?.videoUrl !== '' && videoUrlAdminQuestions !== ''}
+								videoPlayCondition={!(question?.videoUrl === '' && videoUrlAdminQuestions === '')}
 								videoUrl={fromLessonEditPage ? question?.videoUrl : videoUrlAdminQuestions}
 								videoPlaceholderUrl='https://www.47pitches.com/contents/images/no-video.jpg'
 								removeVideo={() => {
@@ -357,74 +390,97 @@ const EditQuestionDialog = ({
 						<TinyMceEditor
 							handleEditorChange={(content) => {
 								setEditorContent(content);
+								setIsQuestionMissing(false);
+								if (fromLessonEditPage) {
+									questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
+								}
 							}}
 							initialValue={fromLessonEditPage ? question.question : questionAdminQuestions}
 						/>
 					</Box>
 
 					<Box sx={{ width: '90%' }}>
-						{options.map((option, i) => (
-							<Box
-								key={i}
-								sx={{
-									display: 'flex',
-									justifyContent: 'flex-end',
-									alignItems: 'center',
-									width: '100%',
-									marginLeft: '3rem',
-								}}>
-								<Tooltip title='Correct Answer' placement='left'>
-									<FormControlLabel
-										control={
-											<Radio
-												checked={i === correctAnswerIndex}
-												onChange={() => {
-													handleCorrectAnswerChange(i);
-													setIsCorrectAnswerMissing(false);
-													questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
-												}}
-												color='primary'
-											/>
-										}
-										label=''
-									/>
-								</Tooltip>
-								{i === options.length - 1 && (
-									<Tooltip title='Add Option' placement='top'>
-										<IconButton onClick={addOption}>
-											<AddCircle />
-										</IconButton>
-									</Tooltip>
-								)}
-								<CustomTextField
-									label={`Option ${i + 1}`}
-									value={option}
-									onChange={(e) => {
-										handleOptionChange(i, e.target.value);
-										if (i === correctAnswerIndex) setCorrectAnswer(e.target.value);
-										questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
-									}}
+						{questionType === 'Multiple Choice' &&
+							options.map((option, i) => (
+								<Box
+									key={i}
 									sx={{
-										marginTop: '0.75rem',
-										marginRight: i === 0 ? '2.5rem' : 0,
-										borderBottom: option === question.correctAnswer ? 'solid 0.2rem green' : 'inherit',
-									}}
-								/>
-								{i > 0 && (
-									<Tooltip title='Remove Option' placement='top'>
-										<IconButton onClick={() => removeOption(i)}>
-											<RemoveCircle />
-										</IconButton>
+										display: 'flex',
+										justifyContent: 'flex-end',
+										alignItems: 'center',
+										width: '100%',
+										marginLeft: '3rem',
+									}}>
+									<Tooltip title='Correct Answer' placement='left'>
+										<FormControlLabel
+											control={
+												<Radio
+													checked={i === correctAnswerIndex}
+													onChange={() => {
+														handleCorrectAnswerChange(i);
+														setIsCorrectAnswerMissing(false);
+														questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
+													}}
+													color='primary'
+												/>
+											}
+											label=''
+										/>
 									</Tooltip>
-								)}
-							</Box>
-						))}
+									{i === options.length - 1 && (
+										<Tooltip title='Add Option' placement='top'>
+											<IconButton onClick={addOption}>
+												<AddCircle />
+											</IconButton>
+										</Tooltip>
+									)}
+									<CustomTextField
+										label={`Option ${i + 1}`}
+										value={option}
+										onChange={(e) => {
+											handleOptionChange(i, e.target.value);
+											if (i === correctAnswerIndex) setCorrectAnswer(e.target.value);
+											questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
+										}}
+										sx={{
+											marginTop: '0.75rem',
+											marginRight: i === 0 ? '2.5rem' : 0,
+											borderBottom: option === question.correctAnswer ? 'solid 0.2rem green' : 'inherit',
+										}}
+									/>
+									{i > 0 && (
+										<Tooltip title='Remove Option' placement='top'>
+											<IconButton
+												onClick={() => {
+													removeOption(i);
+												}}>
+												<RemoveCircle />
+											</IconButton>
+										</Tooltip>
+									)}
+								</Box>
+							))}
+
+						{questionType === 'True-False' && (
+							<TrueFalseOptions
+								fromLessonEditPage={fromLessonEditPage}
+								correctAnswer={correctAnswer}
+								correctAnswerAdminQuestions={correctAnswerAdminQuestions}
+								setCorrectAnswer={setCorrectAnswer}
+								setIsCorrectAnswerMissing={setIsCorrectAnswerMissing}
+								setCorrectAnswerAdminQuestions={setCorrectAnswerAdminQuestions}
+							/>
+						)}
 					</Box>
+					<Box sx={{ alignSelf: 'flex-start', marginTop: '1.5rem' }}>
+						{isQuestionMissing && <CustomErrorMessage>- Enter question</CustomErrorMessage>}
+						{isCorrectAnswerMissing && <CustomErrorMessage>- Select correct answer</CustomErrorMessage>}
+					</Box>
+
 					{questionType === 'Multiple Choice' && (
 						<Box sx={{ alignSelf: 'flex-start', marginTop: '1.5rem' }}>
-							{isCorrectAnswerMissing && <CustomErrorMessage>Select correct answer</CustomErrorMessage>}
-							{isDuplicateOption && <CustomErrorMessage>Options should be unique</CustomErrorMessage>}
-							{!isMinimumOptions && <CustomErrorMessage>At least two options are required</CustomErrorMessage>}
+							{isDuplicateOption && <CustomErrorMessage>- Options should be unique</CustomErrorMessage>}
+							{!isMinimumOptions && <CustomErrorMessage>- At least two options are required</CustomErrorMessage>}
 						</Box>
 					)}
 				</DialogContent>

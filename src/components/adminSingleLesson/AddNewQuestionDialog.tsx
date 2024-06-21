@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import CustomDialog from '../layouts/dialog/CustomDialog';
 import { QuestionsContext } from '../../contexts/QuestionsContextProvider';
 import { QuestionInterface } from '../../interfaces/question';
@@ -11,6 +11,7 @@ import CustomCancelButton from '../forms/customButtons/CustomCancelButton';
 import CustomTableCell from '../layouts/table/CustomTableCell';
 import { stripHtml } from '../../utils/stripHtml';
 import { truncateText } from '../../utils/utilText';
+import { QuestionUpdateTrack } from '../../pages/AdminLessonEditPage';
 
 interface AddNewQuestionDialogProps {
 	addNewQuestionModalOpen: boolean;
@@ -18,6 +19,7 @@ interface AddNewQuestionDialogProps {
 	setAddNewQuestionModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
 	setIsLessonUpdated: React.Dispatch<React.SetStateAction<boolean>>;
 	setSingleLessonBeforeSave: React.Dispatch<React.SetStateAction<Lesson>>;
+	setIsQuestionUpdated: React.Dispatch<React.SetStateAction<QuestionUpdateTrack[]>>;
 }
 
 const AddNewQuestionDialog = ({
@@ -26,8 +28,10 @@ const AddNewQuestionDialog = ({
 	setAddNewQuestionModalOpen,
 	setIsLessonUpdated,
 	setSingleLessonBeforeSave,
+	setIsQuestionUpdated,
 }: AddNewQuestionDialogProps) => {
-	const { sortQuestionsData, sortedQuestionsData, numberOfPages, pageNumber, setPageNumber } = useContext(QuestionsContext);
+	const { sortQuestionsData, sortedQuestionsData, numberOfPages, questionsPageNumber, setQuestionsPageNumber, fetchQuestions } =
+		useContext(QuestionsContext);
 	const closeAddNewQuestionModal = () => setAddNewQuestionModalOpen(false);
 
 	const [selectedQuestions, setSelectedQuestions] = useState<QuestionInterface[]>([]);
@@ -37,9 +41,19 @@ const AddNewQuestionDialog = ({
 
 	useEffect(() => {
 		if (addNewQuestionModalOpen) {
-			setPageNumber(1);
+			setQuestionsPageNumber(1);
 		}
-	}, [addNewQuestionModalOpen, setPageNumber]);
+	}, [addNewQuestionModalOpen, setQuestionsPageNumber]);
+
+	const isInitialMount = useRef(true);
+
+	useEffect(() => {
+		if (isInitialMount.current) {
+			isInitialMount.current = false;
+		} else {
+			fetchQuestions(questionsPageNumber);
+		}
+	}, [questionsPageNumber]);
 
 	const handleSort = (property: keyof QuestionInterface) => {
 		const isAsc = orderBy === property && order === 'asc';
@@ -75,6 +89,18 @@ const AddNewQuestionDialog = ({
 				questionIds: prevData.questionIds.concat(selectedQuestionIds),
 			};
 		});
+
+		const addedQuestionsUpdateData: QuestionUpdateTrack[] = selectedQuestions?.reduce((acc: QuestionUpdateTrack[], value: QuestionInterface) => {
+			acc.push({ questionId: value?._id, isUpdated: false });
+			return acc;
+		}, []);
+
+		setIsQuestionUpdated((prevData) => {
+			return [...prevData, ...addedQuestionsUpdateData];
+		});
+
+		setIsLessonUpdated(true);
+
 		setSelectedQuestions([]);
 		setSelectedQuestionIds([]);
 		closeAddNewQuestionModal();
@@ -130,7 +156,7 @@ const AddNewQuestionDialog = ({
 									})}
 						</TableBody>
 					</Table>
-					<CustomTablePagination count={numberOfPages} page={pageNumber} onChange={setPageNumber} />
+					<CustomTablePagination count={numberOfPages} page={questionsPageNumber} onChange={setQuestionsPageNumber} />
 				</Box>
 			</DialogContent>
 			<CustomDialogActions
