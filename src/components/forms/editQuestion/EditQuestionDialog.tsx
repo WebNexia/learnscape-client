@@ -132,7 +132,7 @@ const EditQuestionDialog = ({
 			}
 		}
 
-		if (questionType !== 'Open-ended') {
+		if (questionType === 'Open-ended') {
 			setIsCorrectAnswerMissing(false);
 		}
 
