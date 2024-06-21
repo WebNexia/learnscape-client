@@ -141,6 +141,7 @@ const CreateQuestionDialog = ({
 		resetVideoUpload();
 		resetEnterImageVideoUrl();
 		setIsQuestionMissing(false);
+		setIsCorrectAnswerMissing(false);
 	};
 
 	const createQuestion = async () => {
@@ -217,7 +218,7 @@ const CreateQuestionDialog = ({
 			return;
 		}
 
-		if (correctAnswerIndex === -1 && !correctAnswer) {
+		if (correctAnswerIndex === -1 && !correctAnswer && questionType !== 'Open-ended') {
 			setIsCorrectAnswerMissing(true);
 			return;
 		}
@@ -467,18 +468,16 @@ const CreateQuestionDialog = ({
 									setCorrectAnswer={setCorrectAnswer}
 									setIsCorrectAnswerMissing={setIsCorrectAnswerMissing}
 								/>
-								<Box sx={{ mt: '2rem' }}>
-									{isCorrectAnswerMissing && <CustomErrorMessage>- Select correct answer</CustomErrorMessage>}
-									{isQuestionMissing && <CustomErrorMessage>- Enter question</CustomErrorMessage>}
-								</Box>
 							</Box>
 						)}
+					</Box>
+					<Box sx={{ mt: '2rem' }}>
+						{isQuestionMissing && <CustomErrorMessage>- Enter question</CustomErrorMessage>}
+						{isCorrectAnswerMissing && <CustomErrorMessage>- Select correct answer</CustomErrorMessage>}
 					</Box>
 
 					{questionType === 'Multiple Choice' && (
 						<Box sx={{ mt: '2rem' }}>
-							{isQuestionMissing && <CustomErrorMessage>- Enter question</CustomErrorMessage>}
-							{isCorrectAnswerMissing && <CustomErrorMessage>- Select correct answer</CustomErrorMessage>}
 							{isDuplicateOption && <CustomErrorMessage>- Options should be unique</CustomErrorMessage>}
 							{!isMinimumOptions && <CustomErrorMessage>- At least two options are required</CustomErrorMessage>}
 						</Box>

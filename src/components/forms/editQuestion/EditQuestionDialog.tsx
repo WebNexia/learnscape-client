@@ -82,7 +82,9 @@ const EditQuestionDialog = ({
 	const [correctAnswerAdminQuestions, setCorrectAnswerAdminQuestions] = useState<string>(question.correctAnswer);
 
 	const { updateQuestion, fetchQuestions, questionsPageNumber } = useContext(QuestionsContext);
-	const [isCorrectAnswerMissing, setIsCorrectAnswerMissing] = useState<boolean>(correctAnswerIndex < 0 && question.correctAnswer === '');
+	const [isCorrectAnswerMissing, setIsCorrectAnswerMissing] = useState<boolean>(
+		correctAnswerIndex < 0 && question.correctAnswer === '' && questionType !== 'Open-ended'
+	);
 	const [isQuestionMissing, setIsQuestionMissing] = useState<boolean>(false);
 
 	const { resetImageUpload } = useImageUpload();
@@ -102,7 +104,7 @@ const EditQuestionDialog = ({
 	const { resetVideoUpload } = useVideoUpload();
 
 	useEffect(() => {
-		setIsCorrectAnswerMissing(correctAnswerIndex < 0 && question.correctAnswer === '');
+		setIsCorrectAnswerMissing(correctAnswerIndex < 0 && question.correctAnswer === '' && questionType !== 'Open-ended');
 		resetVideoUpload();
 		resetImageUpload();
 		resetEnterImageVideoUrl();
@@ -115,12 +117,27 @@ const EditQuestionDialog = ({
 			setIsQuestionMissing(true);
 			return;
 		}
+
 		if (questionType === 'Multiple Choice') {
-			if (correctAnswerIndex === -1 || correctAnswer === '' || isDuplicateOption || !isMinimumOptions) {
-				setIsCorrectAnswerMissing(correctAnswerIndex === -1 || correctAnswer === '');
+			if (correctAnswerIndex === -1 || !correctAnswer) {
+				setIsCorrectAnswerMissing(true);
 				return;
 			}
 		}
+
+		if (questionType === 'True-False') {
+			if (!correctAnswer) {
+				setIsCorrectAnswerMissing(true);
+				return;
+			}
+		}
+
+		if (questionType !== 'Open-ended') {
+			setIsCorrectAnswerMissing(false);
+		}
+
+		if (isDuplicateOption) return;
+		if (!isMinimumOptions) return;
 
 		if (fromLessonEditPage && setSingleLessonBeforeSave) {
 			setSingleLessonBeforeSave((prevData) => {
@@ -339,7 +356,7 @@ const EditQuestionDialog = ({
 							/>
 
 							<VideoThumbnail
-								videoPlayCondition={question?.videoUrl !== '' && videoUrlAdminQuestions !== ''}
+								videoPlayCondition={!(question?.videoUrl === '' && videoUrlAdminQuestions === '')}
 								videoUrl={fromLessonEditPage ? question?.videoUrl : videoUrlAdminQuestions}
 								videoPlaceholderUrl='https://www.47pitches.com/contents/images/no-video.jpg'
 								removeVideo={() => {
@@ -433,7 +450,10 @@ const EditQuestionDialog = ({
 									/>
 									{i > 0 && (
 										<Tooltip title='Remove Option' placement='top'>
-											<IconButton onClick={() => removeOption(i)}>
+											<IconButton
+												onClick={() => {
+													removeOption(i);
+												}}>
 												<RemoveCircle />
 											</IconButton>
 										</Tooltip>
@@ -452,18 +472,15 @@ const EditQuestionDialog = ({
 							/>
 						)}
 					</Box>
+					<Box sx={{ alignSelf: 'flex-start', marginTop: '1.5rem' }}>
+						{isQuestionMissing && <CustomErrorMessage>- Enter question</CustomErrorMessage>}
+						{isCorrectAnswerMissing && <CustomErrorMessage>- Select correct answer</CustomErrorMessage>}
+					</Box>
+
 					{questionType === 'Multiple Choice' && (
 						<Box sx={{ alignSelf: 'flex-start', marginTop: '1.5rem' }}>
-							{isQuestionMissing && <CustomErrorMessage>- Enter question</CustomErrorMessage>}
-							{isCorrectAnswerMissing && <CustomErrorMessage>- Select correct answer</CustomErrorMessage>}
 							{isDuplicateOption && <CustomErrorMessage>- Options should be unique</CustomErrorMessage>}
 							{!isMinimumOptions && <CustomErrorMessage>- At least two options are required</CustomErrorMessage>}
-						</Box>
-					)}
-					{questionType === 'True-False' && (
-						<Box sx={{ alignSelf: 'flex-start', marginTop: '1.5rem' }}>
-							{isQuestionMissing && <CustomErrorMessage>- Enter question</CustomErrorMessage>}
-							{isCorrectAnswerMissing && <CustomErrorMessage>- Select correct answer</CustomErrorMessage>}
 						</Box>
 					)}
 				</DialogContent>

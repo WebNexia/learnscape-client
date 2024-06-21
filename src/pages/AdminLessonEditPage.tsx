@@ -189,28 +189,26 @@ const AdminLessonEditPage = () => {
 								if (questionTypeId) {
 									question.questionType = questionTypeId;
 
-									if (question.correctAnswer !== '') {
-										try {
-											const questionResponse = await axios.post(`${base_url}/questions`, {
-												orgId,
-												question: question.question,
-												options: question.options,
-												correctAnswer: question.correctAnswer,
-												videoUrl: question.videoUrl,
-												imageUrl: question.imageUrl,
-												questionType: questionTypeId,
-												isActive: true,
-											});
-											return {
-												...question,
-												_id: questionResponse.data._id,
-												createdAt: questionResponse.data.createdAt,
-												updatedAt: questionResponse.data.updatedAt,
-											};
-										} catch (error) {
-											console.error('Error creating question:', error);
-											return null;
-										}
+									try {
+										const questionResponse = await axios.post(`${base_url}/questions`, {
+											orgId,
+											question: question.question,
+											options: question.options,
+											correctAnswer: question.correctAnswer,
+											videoUrl: question.videoUrl,
+											imageUrl: question.imageUrl,
+											questionType: questionTypeId,
+											isActive: true,
+										});
+										return {
+											...question,
+											_id: questionResponse.data._id,
+											createdAt: questionResponse.data.createdAt,
+											updatedAt: questionResponse.data.updatedAt,
+										};
+									} catch (error) {
+										console.error('Error creating question:', error);
+										return null;
 									}
 								}
 							}
@@ -224,9 +222,11 @@ const AdminLessonEditPage = () => {
 			await Promise.all(
 				updatedQuestions?.map(async (question) => {
 					const trackData = isQuestionUpdated.find((data) => data.questionId === question._id);
-					if (question.correctAnswer !== '' && trackData?.isUpdated) {
+					if (trackData?.isUpdated) {
 						try {
-							await axios.patch(`${base_url}/questions/${question._id}`, question);
+							const { questionType, ...questionWithoutType } = question;
+
+							await axios.patch(`${base_url}/questions/${question._id}`, questionWithoutType);
 						} catch (error) {
 							console.error('Error updating question:', error);
 						}
@@ -493,6 +493,7 @@ const AdminLessonEditPage = () => {
 										setAddNewQuestionModalOpen={setAddNewQuestionModalOpen}
 										setIsLessonUpdated={setIsLessonUpdated}
 										setSingleLessonBeforeSave={setSingleLessonBeforeSave}
+										setIsQuestionUpdated={setIsQuestionUpdated}
 									/>
 
 									<CustomSubmitButton
