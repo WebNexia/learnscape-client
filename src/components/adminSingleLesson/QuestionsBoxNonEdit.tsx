@@ -4,6 +4,9 @@ import { Lesson } from '../../interfaces/lessons';
 import { QuestionInterface } from '../../interfaces/question';
 import { stripHtml } from '../../utils/stripHtml';
 import { truncateText } from '../../utils/utilText';
+import { questionTypeNameFinder } from '../../utils/questionTypeNameFinder';
+import { useContext } from 'react';
+import { QuestionsContext } from '../../contexts/QuestionsContextProvider';
 
 interface QuestionsBoxNonEditProps {
 	singleLesson?: Lesson;
@@ -12,6 +15,7 @@ interface QuestionsBoxNonEditProps {
 }
 
 const QuestionsBoxNonEdit = ({ singleLesson, setIsDisplayNonEditQuestion, setDisplayedQuestionNonEdit }: QuestionsBoxNonEditProps) => {
+	const { questionTypes } = useContext(QuestionsContext);
 	return (
 		<Box
 			sx={{
@@ -72,8 +76,13 @@ const QuestionsBoxNonEdit = ({ singleLesson, setIsDisplayNonEditQuestion, setDis
 													}}
 												/>
 											</Box>
-											<Box sx={{ ml: '1rem' }}>
-												<Typography variant='body2'>{truncateText(stripHtml(question.question), 60)}</Typography>
+											<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', margin: '0 1rem' }}>
+												<Box>
+													<Typography variant='body2'>{truncateText(stripHtml(question.question), 60)}</Typography>
+												</Box>
+												<Box>
+													<Typography variant='body2'>{questionTypeNameFinder(question.questionType, questionTypes)}</Typography>
+												</Box>
 											</Box>
 										</Box>
 									);

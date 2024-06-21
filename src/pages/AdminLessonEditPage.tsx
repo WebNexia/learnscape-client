@@ -33,6 +33,7 @@ import { truncateText } from '../utils/utilText';
 import ImageThumbnail from '../components/forms/uploadImageVideo/ImageThumbnail';
 import VideoThumbnail from '../components/forms/uploadImageVideo/VideoThumbnail';
 import LessonImageCourseDisplay from '../components/adminSingleLesson/LessonImageCourseDisplay';
+import { questionTypeNameFinder } from '../utils/questionTypeNameFinder';
 
 export interface QuestionUpdateTrack {
 	questionId: string;
@@ -352,7 +353,8 @@ const AdminLessonEditPage = () => {
 					closeModal={() => {
 						setIsDisplayNonEditQuestion(false);
 						setDisplayedQuestionNonEdit(null);
-					}}>
+					}}
+					titleSx={{ paddingTop: '0.5rem' }}>
 					<QuestionDialogContentNonEdit question={displayedQuestionNonEdit} />
 				</CustomDialog>
 
@@ -564,7 +566,7 @@ const AdminLessonEditPage = () => {
 																	height: '3rem',
 																	width: '100%',
 																	backgroundColor: theme.bgColor?.common,
-																	margin: '1.25rem 0',
+																	margin: '1rem 0',
 																	borderRadius: '0.25rem',
 																	boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
 																	cursor: 'pointer',
@@ -590,10 +592,14 @@ const AdminLessonEditPage = () => {
 																		justifyContent: 'space-between',
 																		alignItems: 'center',
 																		width: '100%',
-																		mr: '1rem',
+																		margin: '0 1rem',
 																	}}>
-																	<Box sx={{ ml: '1rem' }}>
-																		<Typography variant='body2'>{truncateText(stripHtml(question.question), 60)}</Typography>
+																	<Box sx={{ width: '35%' }}>
+																		<Typography variant='body2'>{truncateText(stripHtml(question.question), 45)}</Typography>
+																	</Box>
+
+																	<Box>
+																		<Typography variant='body2'>{questionTypeNameFinder(question.questionType, questionTypes)}</Typography>
 																	</Box>
 
 																	<Box sx={{ display: 'flex' }}>

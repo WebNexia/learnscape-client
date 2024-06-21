@@ -27,7 +27,7 @@ const TrueFalseOptions = ({
 	};
 
 	return (
-		<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', mt: '1.5rem' }}>
+		<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', mt: '2rem' }}>
 			<RadioGroup row value={fromLessonEditPage ? correctAnswer : correctAnswerAdminQuestions} onChange={handleChange}>
 				<Box sx={{ display: 'flex', alignItems: 'center' }}>
 					<Box

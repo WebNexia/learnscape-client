@@ -9,3 +9,20 @@
 a {
 	text-decoration: none;
 }
+
+.rich-text-content ul,
+.rich-text-content ol {
+	padding-left: 1.25rem; /* Adjust indentation for lists */
+}
+
+.rich-text-content li {
+	margin-bottom: 0.25rem; /* Adjust spacing between list items */
+}
+
+.rich-text-content p {
+	margin: 0 0 0.75rem; /* Adjust spacing between paragraphs */
+}
+
+.rich-text-content div {
+	margin-bottom: 0.75rem; /* Adjust spacing for div elements */
+}
