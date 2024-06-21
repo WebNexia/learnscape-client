@@ -46,7 +46,7 @@ const TrueFalseOptions = ({
 						}}>
 						<FormControlLabel
 							value='true'
-							control={<Radio color='secondary' />}
+							control={<Radio sx={{ color: theme.textColor?.common.main }} color='secondary' />}
 							label={
 								<Typography variant='body1' sx={{ color: theme.textColor?.common.main }}>
 									True
@@ -77,7 +77,7 @@ const TrueFalseOptions = ({
 						}}>
 						<FormControlLabel
 							value='false'
-							control={<Radio color='secondary' />}
+							control={<Radio sx={{ color: theme.textColor?.common.main }} color='secondary' />}
 							label={
 								<Typography variant='body1' sx={{ color: theme.textColor?.common.main }}>
 									False
