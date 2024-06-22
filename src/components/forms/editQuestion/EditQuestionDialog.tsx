@@ -374,6 +374,7 @@ const EditQuestionDialog = ({
 
 											return { ...prevData, questions: updatedQuestions };
 										});
+										setVideoUrlAdminQuestions('');
 										questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
 									} else {
 										setVideoUrlAdminQuestions('');
