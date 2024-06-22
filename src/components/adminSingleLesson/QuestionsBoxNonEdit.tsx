@@ -23,7 +23,7 @@ const QuestionsBoxNonEdit = ({ singleLesson, setIsDisplayNonEditQuestion, setDis
 				flexDirection: 'column',
 				justifyContent: 'flex-start',
 				width: '90%',
-				mt: '3rem',
+				mt: singleLesson?.type === 'Instructional Lesson' ? '1rem' : '3rem',
 			}}>
 			<Box sx={{ mt: '3rem', minHeight: '40vh' }}>
 				<Typography variant='h4'>Questions</Typography>
@@ -52,7 +52,7 @@ const QuestionsBoxNonEdit = ({ singleLesson, setIsDisplayNonEditQuestion, setDis
 												height: '3rem',
 												width: '100%',
 												backgroundColor: theme.bgColor?.common,
-												margin: '1.25rem 0',
+												margin: '1rem 0',
 												borderRadius: '0.25rem',
 												boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
 												cursor: 'pointer',

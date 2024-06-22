@@ -260,7 +260,7 @@ const CreateQuestionDialog = ({
 						</InputLabel>
 						<Select
 							labelId='type'
-							id='lesson_type'
+							id='question_type'
 							value={questionType}
 							onChange={(event: SelectChangeEvent) => {
 								setQuestionType(event.target.value);

@@ -144,17 +144,17 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters }: CourseDetailsNonEdi
 														sx={{
 															display: 'flex',
 															alignItems: 'center',
-															height: '4rem',
+															height: '3rem',
 															width: '100%',
 															backgroundColor: theme.bgColor?.common,
-															margin: '1.25rem 0',
+															margin: '1rem 0',
 															borderRadius: '0.25rem',
 															boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
 														}}>
 														<Box
 															sx={{
-																height: '4rem',
-																width: '6rem',
+																height: '3rem',
+																width: '4rem',
 															}}>
 															<img
 																src={lesson?.imageUrl || 'https://directmobilityonline.co.uk/assets/img/noimage.png'}
@@ -168,11 +168,11 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters }: CourseDetailsNonEdi
 														</Box>
 														<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', margin: '0 1rem' }}>
 															<Box>
-																<Typography variant='body1'>{lesson.title}</Typography>
+																<Typography variant='body2'>{lesson.title}</Typography>
 															</Box>
 															<Box sx={{ display: 'flex', alignItems: 'center' }}>
 																<Box sx={{ mr: '1rem' }}>
-																	<Typography variant='body1'>{lesson.type}</Typography>
+																	<Typography variant='body2'>{lesson.type}</Typography>
 																</Box>
 																<Box>
 																	<Tooltip title='Edit Lesson' placement='top'>

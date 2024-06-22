@@ -17,7 +17,7 @@ const LessonImageCourseDisplay = ({ singleLesson }: LessonImageCourseDisplayProp
 				display: 'flex',
 				justifyContent: 'space-between',
 				alignItems: 'center',
-				width: '100%',
+				width: '90%',
 			}}>
 			<Box sx={{ display: 'flex', alignItems: 'center', textAlign: 'center' }}>
 				<Box sx={{ height: '8rem', width: '12rem', mr: '2rem' }}>
