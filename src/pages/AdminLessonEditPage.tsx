@@ -1,4 +1,4 @@
-import { Box, IconButton, Tooltip, Typography } from '@mui/material';
+import { Box, FormControl, IconButton, InputLabel, MenuItem, Select, SelectChangeEvent, Tooltip, Typography } from '@mui/material';
 
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import theme from '../themes';
@@ -45,7 +45,7 @@ export interface QuestionUpdateTrack {
 const AdminLessonEditPage = () => {
 	const { userId, lessonId } = useParams();
 	const { orgId } = useContext(OrganisationContext);
-	const { updateLessonPublishing, updateLessons } = useContext(LessonsContext);
+	const { updateLessonPublishing, updateLessons, lessonTypes } = useContext(LessonsContext);
 
 	const { questionTypes, fetchQuestions, questionsPageNumber } = useContext(QuestionsContext);
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -106,7 +106,8 @@ const AdminLessonEditPage = () => {
 	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(true);
 	const [enterVideoUrl, setEnterVideoUrl] = useState<boolean>(true);
 
-	const [editorContent, setEditorContent] = useState<string>(defaultLesson.text);
+	const [editorContent, setEditorContent] = useState<string>('');
+	const [prevEditorContent, setPrevEditorContent] = useState<string>('');
 
 	const resetEnterImageVideoUrl = () => {
 		setEnterVideoUrl(true);
@@ -129,8 +130,11 @@ const AdminLessonEditPage = () => {
 					setSingleLessonBeforeSave(lessonsResponse);
 
 					setEditorContent(lessonsResponse.text);
+					setPrevEditorContent(lessonsResponse.text);
 
 					setIsActive(lessonsResponse.isActive);
+
+					setEditQuestionModalOpen(new Array(lessonsResponse?.questions?.length || 0).fill(false));
 
 					const questionUpdateData: QuestionUpdateTrack[] = lessonsResponse?.questions?.reduce(
 						(acc: QuestionUpdateTrack[], value: QuestionInterface) => {
@@ -151,8 +155,15 @@ const AdminLessonEditPage = () => {
 		resetEnterImageVideoUrl();
 	}, [lessonId, isActive, resetChanges]);
 
+	useEffect(() => {
+		setEditorContent(prevEditorContent);
+		setSingleLessonBeforeSave(() => {
+			return { ...singleLessonBeforeSave, text: prevEditorContent };
+		});
+	}, [singleLessonBeforeSave.type]);
+
 	// Define state for tracking edit modal visibility for each question
-	const [editQuestionModalOpen, setEditQuestionModalOpen] = useState<Array<boolean>>(new Array(singleLessonBeforeSave?.questions.length).fill(false));
+	const [editQuestionModalOpen, setEditQuestionModalOpen] = useState<Array<boolean>>([]);
 
 	// Function to toggle edit modal for a specific question
 	const toggleQuestionEditModal = (index: number) => {
@@ -246,7 +257,7 @@ const AdminLessonEditPage = () => {
 				...prevData,
 				questions: updatedQuestions,
 				questionIds: updatedQuestionIds,
-				text: editorContent,
+				text: singleLessonBeforeSave.type === 'Quiz' ? '' : editorContent,
 			}));
 		}
 
@@ -256,7 +267,7 @@ const AdminLessonEditPage = () => {
 				await axios.patch(`${base_url}/lessons/${lessonId}`, {
 					...singleLessonBeforeSave,
 					questionIds: updatedQuestionIds,
-					text: editorContent,
+					text: singleLessonBeforeSave.type === 'Quiz' ? '' : editorContent,
 				});
 
 				setIsLessonUpdated(false);
@@ -265,7 +276,7 @@ const AdminLessonEditPage = () => {
 				setSingleLesson({
 					...singleLessonBeforeSave,
 					questionIds: updatedQuestionIds,
-					text: editorContent,
+					text: singleLessonBeforeSave.type === 'Quiz' ? '' : editorContent,
 				});
 			} catch (error) {
 				console.error('Error updating lesson:', error);
@@ -278,6 +289,8 @@ const AdminLessonEditPage = () => {
 		}));
 		setIsQuestionUpdated(questionUpdateData);
 		fetchQuestions(questionsPageNumber);
+		setEditorContent('');
+		setPrevEditorContent('');
 	};
 
 	const removeQuestion = (question: QuestionInterface) => {
@@ -298,6 +311,8 @@ const AdminLessonEditPage = () => {
 			};
 		});
 	};
+
+	console.log(editorContent);
 
 	return (
 		<DashboardPagesLayout pageName='Edit Lesson' customSettings={{ justifyContent: 'flex-start' }}>
@@ -363,7 +378,11 @@ const AdminLessonEditPage = () => {
 								<Typography variant='h4' sx={{ mb: '1.25rem' }}>
 									Lesson Instructions
 								</Typography>
-								<Typography variant='body1' component='html' dangerouslySetInnerHTML={{ __html: sanitizeHtml(singleLesson.text) }} />
+								<Typography
+									variant='body1'
+									dangerouslySetInnerHTML={{ __html: sanitizeHtml(singleLesson.text) }}
+									sx={{ boxShadow: singleLesson.text ? '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)' : 'none', padding: '1rem' }}
+								/>
 							</Box>
 						)}
 
@@ -395,26 +414,56 @@ const AdminLessonEditPage = () => {
 							mt: '3rem',
 						}}>
 						<form onSubmit={(e) => handleLessonUpdate(e)}>
-							<Box sx={{ mt: '3rem' }}>
-								<Typography variant='h6'>Title*</Typography>
-								<CustomTextField
-									sx={{
-										marginTop: '0.5rem',
-									}}
-									value={singleLessonBeforeSave?.title}
-									placeholder='Enter title'
-									onChange={(e) => {
-										setIsLessonUpdated(true);
+							<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '3rem' }}>
+								<Box sx={{ flex: 1, mr: '2rem' }}>
+									<Typography variant='h6'>Title*</Typography>
+									<CustomTextField
+										sx={{
+											marginTop: '0.5rem',
+										}}
+										value={singleLessonBeforeSave?.title}
+										placeholder='Enter title'
+										onChange={(e) => {
+											setIsLessonUpdated(true);
 
-										setSingleLessonBeforeSave(() => {
-											setIsMissingField(false);
+											setSingleLessonBeforeSave(() => {
+												setIsMissingField(false);
 
-											return { ...singleLessonBeforeSave, title: e.target.value };
-										});
-									}}
-									error={isMissingField && singleLessonBeforeSave?.title === ''}
-								/>
-								{isMissingField && singleLessonBeforeSave?.title === '' && <CustomErrorMessage>Please enter a title</CustomErrorMessage>}
+												return { ...singleLessonBeforeSave, title: e.target.value };
+											});
+										}}
+										error={isMissingField && singleLessonBeforeSave?.title === ''}
+									/>
+									{isMissingField && singleLessonBeforeSave?.title === '' && <CustomErrorMessage>Please enter a title</CustomErrorMessage>}
+								</Box>
+								<Box sx={{ flex: 1, textAlign: 'right', mt: '1rem' }}>
+									<FormControl>
+										<InputLabel id='type' sx={{ fontSize: '0.8rem' }} required>
+											Type
+										</InputLabel>
+										<Select
+											labelId='type'
+											id='lesson_type'
+											value={singleLessonBeforeSave.type}
+											onChange={(e: SelectChangeEvent) => {
+												setSingleLessonBeforeSave(() => {
+													return { ...singleLessonBeforeSave, type: e.target.value };
+												});
+												setIsLessonUpdated(true);
+											}}
+											size='small'
+											label='Type'
+											required
+											sx={{ backgroundColor: theme.bgColor?.common }}>
+											{lessonTypes &&
+												lessonTypes.map((type) => (
+													<MenuItem value={type} key={type}>
+														{type}
+													</MenuItem>
+												))}
+										</Select>
+									</FormControl>
+								</Box>
 							</Box>
 
 							<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mt: '2rem', width: '100%' }}>
@@ -505,6 +554,7 @@ const AdminLessonEditPage = () => {
 										height={400}
 										handleEditorChange={(content) => {
 											setEditorContent(content);
+											setPrevEditorContent(content);
 											setIsLessonUpdated(true);
 										}}
 										initialValue={singleLessonBeforeSave.text}

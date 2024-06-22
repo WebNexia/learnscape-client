@@ -60,7 +60,7 @@ const LessonPaper = ({
 			sx={{
 				width: '100%',
 				height: '6rem',
-				m: '2.25rem 0',
+				mt: '2.25rem',
 				backgroundColor: theme.palette.primary.main,
 			}}>
 			<Box
@@ -107,7 +107,7 @@ const LessonPaper = ({
 								color: theme.textColor?.common.main,
 								padding: '0.5rem',
 							}}>
-							{singleLesson?.type}
+							{singleLessonBeforeSave?.type}
 						</Typography>
 					</Box>
 				</Box>
@@ -123,7 +123,7 @@ const LessonPaper = ({
 						<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
 							<Box>
 								<Typography variant='h4' sx={{ color: theme.textColor?.common.main }}>
-									{singleLesson?.title}
+									{singleLessonBeforeSave?.title}
 								</Typography>
 							</Box>
 							<Box>

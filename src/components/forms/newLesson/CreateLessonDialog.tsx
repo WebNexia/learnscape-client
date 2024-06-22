@@ -33,12 +33,10 @@ const CreateLessonDialog = ({
 }: CreateLessonDialogProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
-	const { addNewLesson } = useContext(LessonsContext);
+	const { addNewLesson, lessonTypes } = useContext(LessonsContext);
 
 	const [title, setTitle] = useState<string>('');
 	const [type, setType] = useState<string>('');
-
-	const lessonTypes: string[] = ['Instructional Lesson', 'Quiz'];
 
 	const createLesson = async () => {
 		try {

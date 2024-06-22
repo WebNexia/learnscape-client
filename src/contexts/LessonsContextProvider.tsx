@@ -17,6 +17,7 @@ interface LessonsContextTypes {
 	lessonsPageNumber: number;
 	setLessonsPageNumber: React.Dispatch<React.SetStateAction<number>>;
 	fetchLessons: (page: number) => void;
+	lessonTypes: string[];
 }
 
 interface LessonsContextProviderProps {
@@ -34,6 +35,7 @@ export const LessonsContext = createContext<LessonsContextTypes>({
 	lessonsPageNumber: 1,
 	setLessonsPageNumber: () => {},
 	fetchLessons: () => {},
+	lessonTypes: [],
 });
 
 const LessonsContextProvider = (props: LessonsContextProviderProps) => {
@@ -45,6 +47,8 @@ const LessonsContextProvider = (props: LessonsContextProviderProps) => {
 	const [lessonsPageNumber, setLessonsPageNumber] = useState<number>(1);
 
 	const [isLoaded, setIsLoaded] = useState<boolean>(false);
+
+	const lessonTypes: string[] = ['Instructional Lesson', 'Quiz'];
 
 	const fetchLessons = async (page: number) => {
 		if (!orgId) return;
@@ -129,6 +133,7 @@ const LessonsContextProvider = (props: LessonsContextProviderProps) => {
 				lessonsPageNumber,
 				setLessonsPageNumber,
 				fetchLessons,
+				lessonTypes,
 			}}>
 			{props.children}
 		</LessonsContext.Provider>

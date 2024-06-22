@@ -74,7 +74,7 @@ const QuestionDialogContentNonEdit = ({ question }: QuestionDialogContentNonEdit
 			{question && (
 				<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', paddingBottom: '0.5rem' }}>
 					<Box className='rich-text-content' component='div' sx={{ padding: '0.5rem 1rem', textAlign: 'justify' }}>
-						<Typography variant='body1' component='html' dangerouslySetInnerHTML={{ __html: sanitizeHtml(question.question) }} />
+						<Typography variant='body1' component='div' dangerouslySetInnerHTML={{ __html: sanitizeHtml(question.question) }} />
 					</Box>
 
 					<Box sx={{ alignSelf: 'center', width: '80%' }}>
