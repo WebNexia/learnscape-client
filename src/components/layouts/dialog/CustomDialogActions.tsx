@@ -16,6 +16,7 @@ interface CustomDialogActionsProps {
 	submitBtnText?: string;
 	deleteBtn?: boolean;
 	submitBtnType?: 'submit' | 'button' | 'reset' | undefined;
+	disableBtn?: boolean;
 }
 
 const CustomDialogActions = ({
@@ -30,6 +31,7 @@ const CustomDialogActions = ({
 	submitBtnSx,
 	deleteBtn = false,
 	submitBtnType,
+	disableBtn = false,
 }: CustomDialogActionsProps) => {
 	return (
 		<DialogActions
@@ -49,6 +51,7 @@ const CustomDialogActions = ({
 			{!deleteBtn ? (
 				<CustomSubmitButton
 					type={submitBtnType}
+					disabled={disableBtn}
 					sx={{
 						margin: '0 0.5rem 0.5rem 0',
 						...submitBtnSx,

@@ -39,6 +39,7 @@ import { Document } from '../interfaces/document';
 import { generateUniqueId } from '../utils/uniqueIdGenerator';
 import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
 import HandleDocUploadURL from '../components/forms/uploadImageVideoDocument/HandleDocUploadURL';
+import { DocumentsContext } from '../contexts/DocumentsContextProvider';
 
 export interface QuestionUpdateTrack {
 	questionId: string;
@@ -56,6 +57,7 @@ const AdminLessonEditPage = () => {
 	const { updateLessonPublishing, updateLessons, lessonTypes } = useContext(LessonsContext);
 
 	const { questionTypes, fetchQuestions, questionsPageNumber } = useContext(QuestionsContext);
+	const { fetchDocuments, documentsPageNumber } = useContext(DocumentsContext);
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
 	const {
@@ -277,8 +279,7 @@ const AdminLessonEditPage = () => {
 								userId,
 								documentUrl: document.documentUrl,
 							});
-
-							console.log(response);
+							fetchDocuments(documentsPageNumber);
 							return { ...document, _id: response.data._id, createdAt: response.data.createdAt, updatedAt: response.data.updatedAt };
 						} catch (error) {
 							console.error('Error creating document:', error);
@@ -293,14 +294,13 @@ const AdminLessonEditPage = () => {
 
 			await Promise.all(
 				updatedDocuments.map(async (doc) => {
-					console.log(isDocumentUpdated);
 					const trackData = isDocumentUpdated.find((data) => data.documentId === doc._id);
 					if (trackData?.isUpdated) {
 						try {
-							const res = await axios.patch(`${base_url}/documents/${doc._id}`, {
+							await axios.patch(`${base_url}/documents/${doc._id}`, {
 								name: doc.name,
 							});
-							console.log(res);
+							fetchDocuments(documentsPageNumber);
 						} catch (error) {
 							console.error('Error updating question:', error);
 						}
@@ -501,13 +501,15 @@ const AdminLessonEditPage = () => {
 									Lesson Materials
 								</Typography>
 							</Box>
-							{singleLesson.documents?.map((doc) => (
-								<Box sx={{ mb: '0.5rem' }} key={doc._id}>
-									<Link href={doc?.documentUrl} target='_blank' rel='noopener noreferrer' variant='body2'>
-										{doc?.name}
-									</Link>
-								</Box>
-							))}
+							{singleLesson.documents
+								?.filter((doc) => doc !== null)
+								.map((doc) => (
+									<Box sx={{ mb: '0.5rem' }} key={doc._id}>
+										<Link href={doc?.documentUrl} target='_blank' rel='noopener noreferrer' variant='body2'>
+											{doc?.name}
+										</Link>
+									</Box>
+								))}
 						</Box>
 					</Box>
 				)}
@@ -885,11 +887,13 @@ const AdminLessonEditPage = () => {
 
 										setSingleLessonBeforeSave((prevData) => {
 											if (prevData && userId) {
-												const maxNumber = prevData.documents.reduce((max, doc) => {
-													const match = doc.name.match(/Untitled Document (\d+)/);
-													const num = match ? parseInt(match[1], 10) : 0;
-													return num > max ? num : max;
-												}, 0);
+												const maxNumber = prevData.documents
+													.filter((doc) => doc !== null)
+													.reduce((max, doc) => {
+														const match = doc.name.match(/Untitled Document (\d+)/);
+														const num = match ? parseInt(match[1], 10) : 0;
+														return num > max ? num : max;
+													}, 0);
 
 												const newName = docName || `Untitled Document ${maxNumber + 1}`;
 												return {
