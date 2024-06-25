@@ -4,7 +4,7 @@ import CustomErrorMessage from '../forms/customFields/CustomErrorMessage';
 import { SingleCourse } from '../../interfaces/course';
 import theme from '../../themes';
 import { useContext, useState } from 'react';
-import HandleImageUploadURL from '../forms/uploadImageVideo/HandleImageUploadURL';
+import HandleImageUploadURL from '../forms/uploadImageVideoDocument/HandleImageUploadURL';
 import useImageUpload from '../../hooks/useImageUpload';
 
 interface CourseDetailsEditBoxProps {

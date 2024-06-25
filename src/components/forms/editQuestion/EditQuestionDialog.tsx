@@ -14,10 +14,10 @@ import { OrganisationContext } from '../../../contexts/OrganisationContextProvid
 import { questionLessonUpdateTrack } from '../../../utils/questionLessonUpdateTrack';
 import useImageUpload from '../../../hooks/useImageUpload';
 import useVideoUpload from '../../../hooks/useVideoUpload';
-import HandleImageUploadURL from '../uploadImageVideo/HandleImageUploadURL';
-import HandleVideoUploadURL from '../uploadImageVideo/HandleVideoUploadURL';
-import ImageThumbnail from '../uploadImageVideo/ImageThumbnail';
-import VideoThumbnail from '../uploadImageVideo/VideoThumbnail';
+import HandleImageUploadURL from '../uploadImageVideoDocument/HandleImageUploadURL';
+import HandleVideoUploadURL from '../uploadImageVideoDocument/HandleVideoUploadURL';
+import ImageThumbnail from '../uploadImageVideoDocument/ImageThumbnail';
+import VideoThumbnail from '../uploadImageVideoDocument/VideoThumbnail';
 import TinyMceEditor from '../../richTextEditor/TinyMceEditor';
 import TrueFalseOptions from '../../layouts/questionTypes/TrueFalseOptions';
 import { LessonsContext } from '../../../contexts/LessonsContextProvider';
@@ -143,7 +143,7 @@ const EditQuestionDialog = ({
 			setSingleLessonBeforeSave((prevData) => {
 				if (!prevData.questions) return prevData;
 
-				const updatedQuestions = prevData.questions.map((prevQuestion) => {
+				const updatedQuestions = prevData?.questions?.map((prevQuestion) => {
 					if (prevQuestion._id === question._id) {
 						return { ...prevQuestion, options: options.filter((option) => option !== ''), correctAnswer };
 					} else {
@@ -202,7 +202,7 @@ const EditQuestionDialog = ({
 			setSingleLessonBeforeSave((prevData) => {
 				if (!prevData.questions) return prevData;
 
-				const updatedQuestions = prevData.questions.map((prevQuestion) => {
+				const updatedQuestions = prevData?.questions?.map((prevQuestion) => {
 					if (prevQuestion._id === question._id) {
 						return { ...prevQuestion, [field]: value };
 					} else {
@@ -227,7 +227,7 @@ const EditQuestionDialog = ({
 			setSingleLessonBeforeSave((prevData) => {
 				if (!prevData.questions) return prevData;
 
-				const updatedQuestions = prevData.questions.map((prevQuestion) => {
+				const updatedQuestions = prevData?.questions?.map((prevQuestion) => {
 					if (prevQuestion._id === question._id) {
 						return questionBeforeSave;
 					} else {
@@ -280,7 +280,7 @@ const EditQuestionDialog = ({
 										setSingleLessonBeforeSave((prevData) => {
 											if (!prevData.questions) return prevData;
 
-											const updatedQuestions = prevData.questions.map((prevQuestion) => {
+											const updatedQuestions = prevData?.questions?.map((prevQuestion) => {
 												if (prevQuestion._id === question._id) {
 													return { ...prevQuestion, imageUrl: url };
 												} else {
@@ -333,7 +333,7 @@ const EditQuestionDialog = ({
 										setSingleLessonBeforeSave((prevData) => {
 											if (!prevData.questions) return prevData;
 
-											const updatedQuestions = prevData.questions.map((prevQuestion) => {
+											const updatedQuestions = prevData?.questions?.map((prevQuestion) => {
 												if (prevQuestion._id === question._id) {
 													return { ...prevQuestion, videoUrl: url };
 												} else {
@@ -364,7 +364,7 @@ const EditQuestionDialog = ({
 										setSingleLessonBeforeSave((prevData) => {
 											if (!prevData.questions) return prevData;
 
-											const updatedQuestions = prevData.questions.map((prevQuestion) => {
+											const updatedQuestions = prevData?.questions?.map((prevQuestion) => {
 												if (prevQuestion._id === question._id) {
 													return { ...prevQuestion, videoUrl: '' };
 												} else {
@@ -402,7 +402,7 @@ const EditQuestionDialog = ({
 
 					<Box sx={{ width: '90%' }}>
 						{questionType === 'Multiple Choice' &&
-							options.map((option, i) => (
+							options?.map((option, i) => (
 								<Box
 									key={i}
 									sx={{

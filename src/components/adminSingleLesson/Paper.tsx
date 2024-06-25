@@ -176,7 +176,7 @@ const LessonPaper = ({
 												setResetChanges(!resetChanges);
 												setSingleLessonBeforeSave(singleLesson);
 												setIsQuestionUpdated((prevData: QuestionUpdateTrack[]) => {
-													prevData = prevData.map((data) => {
+													prevData = prevData?.map((data) => {
 														return { ...data, isUpdated: false };
 													});
 													return prevData;

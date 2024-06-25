@@ -111,7 +111,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 					localStorage.setItem('userCourseData', JSON.stringify(userCourseData));
 
 					const userLessonResponse = await axios.get(`${base_url}/userlessons/user/${updatedUser._id}`);
-					const userLessonData: UserLessonDataStorage[] = userLessonResponse.data.response.map((userLesson: UserLessonsByUserId) => ({
+					const userLessonData: UserLessonDataStorage[] = userLessonResponse?.data.response?.map((userLesson: UserLessonsByUserId) => ({
 						lessonId: userLesson.lessonId._id,
 						userLessonId: userLesson._id,
 						courseId: userLesson.courseId,
