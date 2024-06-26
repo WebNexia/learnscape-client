@@ -270,30 +270,30 @@ const AdminLessonEditPage = () => {
 
 		try {
 			if (singleLessonBeforeSave?.documents) {
-			}
-			const updatedDocumentsPromises = singleLessonBeforeSave.documents
-				?.filter((doc) => doc !== null && doc !== undefined)
-				.map(async (document) => {
-					if (document._id.includes('temp_doc_id')) {
-						try {
-							const response = await axios.post(`${base_url}/documents`, {
-								name: document.name,
-								orgId,
-								userId,
-								documentUrl: document.documentUrl,
-							});
-							fetchDocuments(documentsPageNumber);
-							return { ...document, _id: response.data._id, createdAt: response.data.createdAt, updatedAt: response.data.updatedAt };
-						} catch (error) {
-							console.error('Error creating document:', error);
-							return null;
+				const updatedDocumentsPromises = (singleLessonBeforeSave.documents as (Document | null)[]) // Assert as array of Document or null
+					.filter((doc): doc is Document => doc !== null) // Type guard to filter out nulls
+					.map(async (document) => {
+						if (document._id.includes('temp_doc_id')) {
+							try {
+								const response = await axios.post(`${base_url}/documents`, {
+									name: document.name,
+									orgId,
+									userId,
+									documentUrl: document.documentUrl,
+								});
+								fetchDocuments(documentsPageNumber);
+								return { ...document, _id: response.data._id, createdAt: response.data.createdAt, updatedAt: response.data.updatedAt } as Document; // Assert as Document
+							} catch (error) {
+								console.error('Error creating document:', error);
+								return null;
+							}
 						}
-					}
-					return document;
-				});
+						return document;
+					});
 
-			const updatedQuestionsWithNulls = await Promise.all(updatedDocumentsPromises);
-			updatedDocuments = updatedQuestionsWithNulls.filter((doc) => doc !== null);
+				const updatedQuestionsWithNulls = await Promise.all(updatedDocumentsPromises);
+				updatedDocuments = updatedQuestionsWithNulls.filter((doc): doc is Document => doc !== null); // Type guard to filter out remaining nulls
+			}
 
 			await Promise.all(
 				updatedDocuments.map(async (doc) => {
@@ -336,7 +336,7 @@ const AdminLessonEditPage = () => {
 										_id: response.data._id,
 										createdAt: response.data.createdAt,
 										updatedAt: response.data.updatedAt,
-									};
+									} as QuestionInterface; // Assert as QuestionInterface
 								} catch (error) {
 									console.error('Error creating question:', error);
 									return null;
@@ -347,7 +347,7 @@ const AdminLessonEditPage = () => {
 					});
 
 				const updatedQuestionsWithNulls = await Promise.all(updatedQuestionsPromises);
-				updatedQuestions = updatedQuestionsWithNulls.filter((question) => question !== null);
+				updatedQuestions = updatedQuestionsWithNulls.filter((question): question is QuestionInterface => question !== null);
 
 				await Promise.all(
 					updatedQuestions.map(async (question) => {
