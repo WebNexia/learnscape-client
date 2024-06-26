@@ -5,6 +5,7 @@ import { storage } from '../firebase';
 const useDocUpload = () => {
 	const [docUpload, setDocUpload] = useState<File | null>(null);
 	const [isDocSizeLarge, setIsDocSizeLarge] = useState<boolean>(false);
+	const [isDocLoading, setIsDocLoading] = useState<boolean>(false);
 
 	const handleDocChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		if (e.target.files && e.target.files.length > 0) {
@@ -24,6 +25,8 @@ const useDocUpload = () => {
 			setIsDocSizeLarge(false);
 			return;
 		}
+
+		setIsDocLoading(true);
 		try {
 			const storageRef = ref(storage, `${folderName}/${docUpload.name}`);
 			const uploadTask = uploadBytesResumable(storageRef, docUpload);
@@ -36,15 +39,18 @@ const useDocUpload = () => {
 				},
 				(error) => {
 					console.error('Error uploading PDF:', error);
+					setIsDocLoading(false);
 				},
 				() => {
 					getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
 						handleUrlCallback(downloadURL);
+						setIsDocLoading(false);
 					});
 				}
 			);
 		} catch (error) {
 			console.error('Error uploading PDF:', error);
+			setIsDocLoading(false);
 		}
 	};
 
@@ -59,6 +65,7 @@ const useDocUpload = () => {
 		handleDocChange,
 		resetDocUpload,
 		handleDocUpload,
+		isDocLoading,
 	};
 };
 

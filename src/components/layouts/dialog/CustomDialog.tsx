@@ -4,7 +4,7 @@ import { ReactNode } from 'react';
 
 interface CustomDialogProps {
 	children?: ReactNode;
-	openModal: boolean;
+	openModal?: boolean;
 	closeModal?: () => void;
 	title?: string;
 	titleSx?: object;

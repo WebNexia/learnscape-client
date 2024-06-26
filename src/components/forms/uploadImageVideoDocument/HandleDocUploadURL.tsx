@@ -1,10 +1,13 @@
 import { useState } from 'react';
-import { Box, Button, FormControl, Input, Typography } from '@mui/material';
-import { Article, CloudUpload } from '@mui/icons-material';
+import { Box, Button, FormControl, IconButton, Input, Tooltip, Typography } from '@mui/material';
+import { Article, CloudUpload, PostAddOutlined } from '@mui/icons-material';
 import theme from '../../../themes';
 import CustomErrorMessage from '../customFields/CustomErrorMessage';
 import CustomTextField from '../customFields/CustomTextField';
 import useDocUpload from '../../../hooks/useDocUpload';
+import AddNewDocumentDialog from '../../adminSingleLesson/AddNewDocumentDialog';
+import { Lesson } from '../../../interfaces/lessons';
+import LoadingButton from '@mui/lab/LoadingButton';
 
 interface HandleDocUploadURLProps {
 	onDocUploadLogic?: (url: string, docName: string) => void;
@@ -16,6 +19,11 @@ interface HandleDocUploadURLProps {
 	setDocumentUrl?: React.Dispatch<React.SetStateAction<string>>;
 	setDocumentName?: React.Dispatch<React.SetStateAction<string>>;
 	setFileUploaded?: React.Dispatch<React.SetStateAction<boolean>>;
+	addNewDocumentModalOpen?: boolean;
+	setAddNewDocumentModalOpen?: React.Dispatch<React.SetStateAction<boolean>>;
+	setSingleLessonBeforeSave?: React.Dispatch<React.SetStateAction<Lesson>>;
+	singleLessonBeforeSave?: Lesson;
+	setIsLessonUpdated?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const HandleDocUploadURL = ({
@@ -28,8 +36,13 @@ const HandleDocUploadURL = ({
 	setDocumentUrl,
 	setDocumentName,
 	setFileUploaded,
+	addNewDocumentModalOpen,
+	setAddNewDocumentModalOpen,
+	setSingleLessonBeforeSave,
+	singleLessonBeforeSave,
+	setIsLessonUpdated,
 }: HandleDocUploadURLProps) => {
-	const { docUpload, isDocSizeLarge, handleDocChange, resetDocUpload, handleDocUpload } = useDocUpload();
+	const { docUpload, isDocSizeLarge, handleDocChange, resetDocUpload, handleDocUpload, isDocLoading } = useDocUpload();
 	const [manualDocUrl, setManualDocUrl] = useState<string>('');
 	const [docName, setDocName] = useState<string>('');
 
@@ -53,8 +66,6 @@ const HandleDocUploadURL = ({
 			if (onDocUploadLogic) {
 				onDocUploadLogic(manualDocUrl, docName);
 			}
-			console.log(manualDocUrl);
-			console.log(docName);
 
 			if (setDocumentName) setDocumentName(docName);
 			if (setFileUploaded) setFileUploaded(true);
@@ -91,6 +102,29 @@ const HandleDocUploadURL = ({
 							Enter URL
 						</Typography>
 					</Box>
+					{!fromAdminDocs && (
+						<>
+							<Typography sx={{ margin: '0 0.5rem' }}> | </Typography>
+							<Box>
+								<Tooltip title='Add from List' placement='top'>
+									<IconButton
+										onClick={() => {
+											if (setAddNewDocumentModalOpen) setAddNewDocumentModalOpen(true);
+										}}
+										size='small'>
+										<PostAddOutlined />
+									</IconButton>
+								</Tooltip>
+							</Box>
+						</>
+					)}
+					<AddNewDocumentDialog
+						addNewDocumentModalOpen={addNewDocumentModalOpen}
+						setAddNewDocumentModalOpen={setAddNewDocumentModalOpen}
+						setSingleLessonBeforeSave={setSingleLessonBeforeSave}
+						singleLessonBeforeSave={singleLessonBeforeSave}
+						setIsLessonUpdated={setIsLessonUpdated}
+					/>
 				</Box>
 			</Box>
 
@@ -120,15 +154,21 @@ const HandleDocUploadURL = ({
 								inputProps={{ accept: '.pdf' }}
 								sx={{ width: '82.5%', backgroundColor: theme.bgColor?.common, margin: '0.5rem 0 0.85rem 0', padding: '0.25rem' }}
 							/>
-							<Button
-								onClick={handleDocUploadReusable}
-								variant='outlined'
-								sx={{ textTransform: 'capitalize', height: '2rem', width: '15%' }}
-								disabled={!docUpload || isDocSizeLarge}
-								size='small'
-								startIcon={<CloudUpload />}>
-								Upload
-							</Button>
+							{!isDocLoading ? (
+								<Button
+									onClick={handleDocUploadReusable}
+									variant='outlined'
+									sx={{ textTransform: 'capitalize', height: '2rem', width: '15%' }}
+									disabled={!docUpload || isDocSizeLarge}
+									size='small'
+									startIcon={<CloudUpload />}>
+									Upload
+								</Button>
+							) : (
+								<LoadingButton loading variant='outlined' sx={{ textTransform: 'capitalize', height: '2rem' }}>
+									Upload
+								</LoadingButton>
+							)}
 						</Box>
 						{isDocSizeLarge && <CustomErrorMessage>Document size exceeds the limit of 1 MB </CustomErrorMessage>}
 					</Box>

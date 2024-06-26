@@ -89,7 +89,7 @@ const AdminDocuments = () => {
 	const createDocument = async (): Promise<void> => {
 		try {
 			const documentResponse = await axios.post(`${base_url}/documents`, {
-				name: documentName,
+				name: documentName.trim(),
 				documentUrl,
 				userId,
 				orgId,
@@ -97,7 +97,7 @@ const AdminDocuments = () => {
 
 			addNewDocument({
 				_id: documentResponse.data._id,
-				name: documentName,
+				name: documentName.trim(),
 				documentUrl,
 				userId,
 				orgId,
@@ -111,7 +111,7 @@ const AdminDocuments = () => {
 		if (singleDocument) {
 			try {
 				axios.patch(`${base_url}/documents/${singleDocument._id}`, {
-					name: singleDocument.name,
+					name: singleDocument.name.trim(),
 				});
 
 				fetchDocuments(documentsPageNumber);
@@ -190,16 +190,23 @@ const AdminDocuments = () => {
 						setIsDocumentCreateModalOpen(false);
 					}}
 					style={{ display: 'flex', flexDirection: 'column', padding: '0 1rem' }}>
-					<HandleDocUploadURL
-						enterDocUrl={enterDocUrl}
-						setEnterDocUrl={setEnterDocUrl}
-						docFolderName='Materials'
-						fromAdminDocs={true}
-						setDocumentUrl={setDocumentUrl}
-						setDocumentName={setDocumentName}
-						setFileUploaded={setFileUploaded}
+					<Box sx={{ margin: '0 1rem' }}>
+						<HandleDocUploadURL
+							enterDocUrl={enterDocUrl}
+							setEnterDocUrl={setEnterDocUrl}
+							docFolderName='Materials'
+							fromAdminDocs={true}
+							setDocumentUrl={setDocumentUrl}
+							setDocumentName={setDocumentName}
+							setFileUploaded={setFileUploaded}
+						/>
+					</Box>
+					<CustomDialogActions
+						onCancel={() => setIsDocumentCreateModalOpen(false)}
+						submitBtnType='submit'
+						disableBtn={!fileUploaded}
+						actionSx={{ mt: '1rem' }}
 					/>
-					<CustomDialogActions onCancel={() => setIsDocumentCreateModalOpen(false)} submitBtnType='submit' disableBtn={!fileUploaded} />
 				</form>
 			</CustomDialog>
 
@@ -229,7 +236,7 @@ const AdminDocuments = () => {
 									<TableRow key={document._id}>
 										<CustomTableCell value={document.name} />
 										<CustomTableCell>
-											<Link href={document.documentUrl} target='_blank'>
+											<Link href={document.documentUrl} target='_blank' rel='noopener noreferrer'>
 												{truncateText(document.documentUrl, 40)}
 											</Link>
 										</CustomTableCell>
@@ -249,13 +256,19 @@ const AdminDocuments = () => {
 
 											<CustomDialog openModal={editDocumentModalOpen[index]} closeModal={() => closeDocumentEditModal(index)}>
 												<form
+													style={{ display: 'flex', flexDirection: 'column' }}
 													onSubmit={async (e: React.FormEvent<HTMLFormElement>) => {
 														e.preventDefault();
-														await handleDocUpdate();
-														closeDocumentEditModal(index);
+														if (singleDocument?.name && singleDocument.name.trim()) {
+															handleDocUpdate();
+															closeDocumentEditModal(index);
+														}
 													}}>
 													<CustomTextField
+														label='Rename Document'
+														fullWidth={false}
 														required={true}
+														sx={{ margin: '2rem 1rem' }}
 														value={singleDocument?.name}
 														onChange={(e) => {
 															if (singleDocument) {
@@ -265,8 +278,9 @@ const AdminDocuments = () => {
 													/>
 													<CustomDialogActions
 														onCancel={() => closeDocumentEditModal(index)}
-														onSubmit={() => handleDocUpdate()}
-														submitBtnText='Save'
+														submitBtnText='Rename'
+														actionSx={{ mt: '1rem' }}
+														submitBtnType='submit'
 													/>
 												</form>
 											</CustomDialog>

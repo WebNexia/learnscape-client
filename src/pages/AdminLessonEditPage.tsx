@@ -115,6 +115,7 @@ const AdminLessonEditPage = () => {
 	const [isDocumentUpdated, setIsDocumentUpdated] = useState<DocumentUpdateTrack[]>([]);
 
 	const [addNewQuestionModalOpen, setAddNewQuestionModalOpen] = useState<boolean>(false);
+	const [addNewDocumentModalOpen, setAddNewDocumentModalOpen] = useState<boolean>(false);
 
 	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(true);
 	const [enterVideoUrl, setEnterVideoUrl] = useState<boolean>(true);
@@ -154,13 +155,15 @@ const AdminLessonEditPage = () => {
 
 		setSingleLessonBeforeSave((prevData) => {
 			if (prevData) {
-				const updatedDocuments = prevData.documents?.map((thisDoc) => {
-					if (thisDoc._id === document._id) {
-						return { ...thisDoc, name: originalDocumentNames[document._id] || thisDoc.name }; // Revert to original name
-					} else {
-						return thisDoc;
-					}
-				});
+				const updatedDocuments = prevData.documents
+					?.filter((document) => document !== null)
+					.map((thisDoc) => {
+						if (thisDoc._id === document._id) {
+							return { ...thisDoc, name: originalDocumentNames[document._id] || thisDoc.name }; // Revert to original name
+						} else {
+							return thisDoc;
+						}
+					});
 				return { ...prevData, documents: updatedDocuments };
 			}
 			return prevData;
@@ -910,6 +913,11 @@ const AdminLessonEditPage = () => {
 									enterDocUrl={enterDocUrl}
 									setEnterDocUrl={setEnterDocUrl}
 									docFolderName='Lesson Materials'
+									addNewDocumentModalOpen={addNewDocumentModalOpen}
+									setAddNewDocumentModalOpen={setAddNewDocumentModalOpen}
+									setSingleLessonBeforeSave={setSingleLessonBeforeSave}
+									singleLessonBeforeSave={singleLessonBeforeSave}
+									setIsLessonUpdated={setIsLessonUpdated}
 								/>
 							</Box>
 							<Box sx={{ marginBottom: '5rem' }}>
@@ -979,19 +987,22 @@ const AdminLessonEditPage = () => {
 															}}>
 															<CustomTextField
 																fullWidth={false}
-																label='Rename File'
+																required={true}
+																label='Rename Document'
 																value={document.name}
 																sx={{ margin: '2rem 1rem 3rem 1rem' }}
 																onChange={(e) => {
 																	setSingleLessonBeforeSave((prevData) => {
 																		if (prevData) {
-																			const updatedDocuments = prevData.documents?.map((thisDoc) => {
-																				if (thisDoc._id === document._id) {
-																					return { ...thisDoc, name: e.target.value };
-																				} else {
-																					return thisDoc;
-																				}
-																			});
+																			const updatedDocuments = prevData.documents
+																				?.filter((document) => document !== null)
+																				.map((thisDoc) => {
+																					if (thisDoc._id === document._id) {
+																						return { ...thisDoc, name: e.target.value };
+																					} else {
+																						return thisDoc;
+																					}
+																				});
 																			return { ...prevData, documents: updatedDocuments };
 																		}
 																		return prevData;
@@ -1002,6 +1013,7 @@ const AdminLessonEditPage = () => {
 																onCancel={() => closeDocRenameModal(index, document)}
 																submitBtnText='Save'
 																submitBtnType='button'
+																actionSx={{ mt: '1rem' }}
 																onSubmit={() => {
 																	saveDocRename(index);
 																	setIsDocumentUpdated((prevData) => {
@@ -1010,12 +1022,13 @@ const AdminLessonEditPage = () => {
 																				if (data.documentId === document._id) {
 																					return { ...data, isUpdated: true };
 																				}
-																				return data; // Don't forget to return the data if it's not updated
+																				return data;
 																			});
 																		}
 																		return prevData;
 																	});
 																}}
+																disableBtn={document.name.trim() === ''}
 															/>
 														</form>
 													</CustomDialog>

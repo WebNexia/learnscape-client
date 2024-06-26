@@ -88,10 +88,10 @@ const AddNewLessonDialog = ({
 			];
 		});
 
-		setSelectedLessons([]);
-		setSelectedLessonIds([]);
 		// Close the dialog
 		setAddNewLessonModalOpen(false);
+		setSelectedLessons([]);
+		setSelectedLessonIds([]);
 	};
 
 	const handleResetCheckboxes = () => {
