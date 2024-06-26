@@ -49,16 +49,6 @@ const AdminDocuments = () => {
 	const [editDocumentModalOpen, setEditDocumentModalOpen] = useState<boolean[]>([]);
 	const [isDocumentCreateModalOpen, setIsDocumentCreateModalOpen] = useState<boolean>(false);
 
-	// const defaultDoc: Document = {
-	// 	_id: '',
-	// 	name: '',
-	// 	documentUrl: '',
-	// 	orgId: '',
-	// 	userId: '',
-	// 	createdAt: '',
-	// 	updatedAt: '',
-	// };
-
 	const [singleDocument, setSingleDocument] = useState<Document | null>(null);
 
 	const [enterDocUrl, setEnterDocUrl] = useState<boolean>(true);
@@ -181,8 +171,7 @@ const AdminDocuments = () => {
 				closeModal={() => {
 					setIsDocumentCreateModalOpen(false);
 					setEnterDocUrl(true);
-				}}
-				maxWidth='lg'>
+				}}>
 				<form
 					onSubmit={async (e: React.FormEvent<HTMLFormElement>) => {
 						e.preventDefault();

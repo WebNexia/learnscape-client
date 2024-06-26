@@ -960,7 +960,7 @@ const AdminLessonEditPage = () => {
 																	return {
 																		...prevData,
 																		documents: filteredDocuments,
-																		documentsIds: filteredDocumentsIds,
+																		documentIds: filteredDocumentsIds,
 																	};
 																}
 																return prevData;

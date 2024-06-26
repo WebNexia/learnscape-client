@@ -10,6 +10,7 @@ import { DocumentsContext } from '../../contexts/DocumentsContextProvider';
 import { Document } from '../../interfaces/document';
 import { truncateText } from '../../utils/utilText';
 import { Lesson } from '../../interfaces/lessons';
+import { SingleCourse } from '../../interfaces/course';
 
 interface AddNewDocumentDialogProps {
 	addNewDocumentModalOpen?: boolean;
@@ -17,6 +18,9 @@ interface AddNewDocumentDialogProps {
 	setSingleLessonBeforeSave: React.Dispatch<React.SetStateAction<Lesson>> | undefined;
 	singleLessonBeforeSave: Lesson | undefined;
 	setIsLessonUpdated: React.Dispatch<React.SetStateAction<boolean>> | undefined;
+	fromAdminCourses?: boolean;
+	singleCourse: SingleCourse | undefined;
+	setSingleCourse: React.Dispatch<React.SetStateAction<SingleCourse | undefined>> | undefined;
 }
 
 const AddNewDocumentDialog = ({
@@ -25,6 +29,9 @@ const AddNewDocumentDialog = ({
 	setSingleLessonBeforeSave,
 	singleLessonBeforeSave,
 	setIsLessonUpdated,
+	fromAdminCourses,
+	singleCourse,
+	setSingleCourse,
 }: AddNewDocumentDialogProps) => {
 	const { sortDocumentsData, sortedDocumentsData, numberOfPages, documentsPageNumber, setDocumentsPageNumber } = useContext(DocumentsContext);
 	const [selectedDocuments, setSelectedDocuments] = useState<Document[]>([]);
@@ -62,23 +69,39 @@ const AddNewDocumentDialog = ({
 		setSelectedDocuments(newSelectedDocuments);
 	};
 	const handleAddDocuments = () => {
-		if (setSingleLessonBeforeSave) {
-			setSingleLessonBeforeSave((prevData) => {
-				if (prevData) {
-					return {
-						...prevData,
-						documents: [...selectedDocuments, ...prevData.documents],
-						documentIds: [...selectedDocumentIds, ...prevData.documentIds],
-					};
-				}
-				return prevData;
-			});
+		if (!fromAdminCourses) {
+			if (setSingleLessonBeforeSave) {
+				setSingleLessonBeforeSave((prevData) => {
+					if (prevData) {
+						return {
+							...prevData,
+							documents: [...selectedDocuments, ...prevData.documents],
+							documentIds: [...selectedDocumentIds, ...prevData.documentIds],
+						};
+					}
+					return prevData;
+				});
+			}
+			if (setIsLessonUpdated) setIsLessonUpdated(true);
+		} else {
+			if (setSingleCourse) {
+				setSingleCourse((prevData) => {
+					if (prevData) {
+						return {
+							...prevData,
+							documents: [...selectedDocuments, ...prevData.documents],
+							documentIds: [...selectedDocumentIds, ...prevData.documentIds],
+						};
+					}
+					return prevData;
+				});
+			}
 		}
+
 		// Close the dialog
 		if (setAddNewDocumentModalOpen) setAddNewDocumentModalOpen(false);
 		setSelectedDocuments([]);
 		setSelectedDocumentIds([]);
-		if (setIsLessonUpdated) setIsLessonUpdated(true);
 	};
 
 	const handleResetCheckboxes = () => {
@@ -117,7 +140,11 @@ const AddNewDocumentDialog = ({
 						<TableBody>
 							{sortedDocumentsData &&
 								sortedDocumentsData
-									.filter((document) => !singleLessonBeforeSave?.documentIds.includes(document._id))
+									.filter((document) =>
+										!fromAdminCourses
+											? !singleLessonBeforeSave?.documentIds.includes(document._id)
+											: !singleCourse?.documentIds.includes(document._id)
+									)
 									.map((document: Document) => {
 										const isSelected = selectedDocumentIds.indexOf(document._id) !== -1;
 										return (

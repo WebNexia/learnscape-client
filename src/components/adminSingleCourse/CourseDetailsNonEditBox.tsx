@@ -1,4 +1,4 @@
-import { Box, IconButton, Tooltip, Typography } from '@mui/material';
+import { Box, IconButton, Link, Tooltip, Typography } from '@mui/material';
 import theme from '../../themes';
 import { SingleCourse } from '../../interfaces/course';
 
@@ -194,6 +194,22 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters }: CourseDetailsNonEdi
 							})}
 					</>
 				)}
+			</Box>
+			<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', width: '90%', margin: '2rem 0 4rem 0' }}>
+				<Box>
+					<Typography variant='h4' sx={{ mb: '1.25rem' }}>
+						Course Materials
+					</Typography>
+				</Box>
+				{singleCourse?.documents
+					?.filter((doc) => doc !== null)
+					.map((doc) => (
+						<Box sx={{ mb: '0.5rem' }} key={doc._id}>
+							<Link href={doc?.documentUrl} target='_blank' rel='noopener noreferrer' variant='body2'>
+								{doc?.name}
+							</Link>
+						</Box>
+					))}
 			</Box>
 		</Box>
 	);

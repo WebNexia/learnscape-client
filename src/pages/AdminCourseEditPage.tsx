@@ -1,4 +1,4 @@
-import { Box, Typography } from '@mui/material';
+import { Box, Link, Typography } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { FormEvent, useContext, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
@@ -21,6 +21,10 @@ import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import { generateUniqueId } from '../utils/uniqueIdGenerator';
 import theme from '../themes';
 import { LessonsContext } from '../contexts/LessonsContextProvider';
+import HandleDocUploadURL from '../components/forms/uploadImageVideoDocument/HandleDocUploadURL';
+import { Document } from '../interfaces/document';
+import { DocumentUpdateTrack } from './AdminLessonEditPage';
+import { DocumentsContext } from '../contexts/DocumentsContextProvider';
 
 export interface ChapterUpdateTrack {
 	chapterId: string;
@@ -62,6 +66,7 @@ const AdminCourseEditPage = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
 	const { fetchLessons, lessonsPageNumber } = useContext(LessonsContext);
+	const { fetchDocuments, documentsPageNumber } = useContext(DocumentsContext);
 
 	const { updateCoursePublishing, updateCourse } = useContext(CoursesContext);
 	const [isEditMode, setIsEditMode] = useState<boolean>(false);
@@ -78,6 +83,54 @@ const AdminCourseEditPage = () => {
 	const [isChapterCreateModalOpen, setIsChapterCreateModalOpen] = useState<boolean>(false);
 	const [chapterLessonData, setChapterLessonData] = useState<ChapterLessonData[]>([]);
 	const [chapterLessonDataBeforeSave, setChapterLessonDataBeforeSave] = useState<ChapterLessonData[]>([]);
+
+	const [enterDocUrl, setEnterDocUrl] = useState<boolean>(true);
+	const [isDocRenameModalOpen, setIsDocRenameModalOpen] = useState<Array<boolean>>([]);
+	const [originalDocumentNames, setOriginalDocumentNames] = useState<Record<string, string>>({});
+	const [addNewDocumentModalOpen, setAddNewDocumentModalOpen] = useState<boolean>(false);
+	const [isDocumentUpdated, setIsDocumentUpdated] = useState<DocumentUpdateTrack[]>([]);
+
+	const toggleDocRenameModal = (index: number, document: Document) => {
+		const newRenameModalOpen = [...isDocRenameModalOpen];
+		if (!newRenameModalOpen[index]) {
+			setOriginalDocumentNames((prevNames) => ({
+				...prevNames,
+				[document._id]: document.name,
+			})); // Set the original document name
+		}
+		newRenameModalOpen[index] = !newRenameModalOpen[index];
+		setIsDocRenameModalOpen(newRenameModalOpen);
+	};
+
+	const closeDocRenameModal = (index: number, document: Document) => {
+		const newRenameModalOpen = [...isDocRenameModalOpen];
+		newRenameModalOpen[index] = false;
+
+		setSingleCourse((prevData) => {
+			if (prevData) {
+				const updatedDocuments = prevData.documents
+					?.filter((document) => document !== null)
+					.map((thisDoc) => {
+						if (thisDoc._id === document._id) {
+							return { ...thisDoc, name: originalDocumentNames[document._id] || thisDoc.name }; // Revert to original name
+						} else {
+							return thisDoc;
+						}
+					});
+				return { ...prevData, documents: updatedDocuments };
+			}
+			return prevData;
+		});
+
+		setIsDocRenameModalOpen(newRenameModalOpen);
+	};
+
+	const saveDocRename = (index: number) => {
+		const newRenameModalOpen = [...isDocRenameModalOpen];
+		newRenameModalOpen[index] = false;
+
+		setIsDocRenameModalOpen(newRenameModalOpen);
+	};
 
 	const createChapterTemplate = () => {
 		try {
@@ -131,6 +184,13 @@ const AdminCourseEditPage = () => {
 						return acc;
 					}, []);
 					setIsChapterUpdated(chapterUpdateData);
+
+					const documentUpdateData: DocumentUpdateTrack[] = courseResponse?.documents?.reduce((acc: DocumentUpdateTrack[], value: Document) => {
+						acc.push({ documentId: value?._id, isUpdated: false });
+						return acc;
+					}, []);
+
+					setIsDocumentUpdated(documentUpdateData);
 				} catch (error) {
 					console.log(error);
 				}
@@ -165,6 +225,7 @@ const AdminCourseEditPage = () => {
 			}
 
 			let updatedChapters: ChapterLessonData[] = [...chapterLessonDataBeforeSave];
+			let updatedDocuments: Document[] = [];
 
 			updatedChapters = await Promise.all(
 				updatedChapters.map(async (chapter) => {
@@ -211,11 +272,58 @@ const AdminCourseEditPage = () => {
 
 			setChapterLessonData(updatedChapters);
 
+			if (singleCourse?.documents) {
+				const updatedDocumentsPromises = (singleCourse?.documents as (Document | null)[]) // Assert as array of Document or null
+					.filter((doc): doc is Document => doc !== null) // Type guard to filter out nulls
+					.map(async (document) => {
+						if (document._id.includes('temp_doc_id')) {
+							try {
+								const response = await axios.post(`${base_url}/documents`, {
+									name: document.name,
+									orgId,
+									userId,
+									documentUrl: document.documentUrl,
+								});
+								fetchDocuments(documentsPageNumber);
+								return { ...document, _id: response.data._id, createdAt: response.data.createdAt, updatedAt: response.data.updatedAt } as Document; // Assert as Document
+							} catch (error) {
+								console.error('Error creating document:', error);
+								return null;
+							}
+						}
+						return document;
+					});
+
+				const updatedQuestionsWithNulls = await Promise.all(updatedDocumentsPromises);
+				updatedDocuments = updatedQuestionsWithNulls.filter((doc): doc is Document => doc !== null); // Type guard to filter out remaining nulls
+			}
+
+			await Promise.all(
+				updatedDocuments.map(async (doc) => {
+					console.log(isDocumentUpdated);
+					const trackData = isDocumentUpdated.find((data) => data.documentId === doc._id);
+					if (trackData?.isUpdated) {
+						try {
+							await axios.patch(`${base_url}/documents/${doc._id}`, {
+								name: doc.name,
+							});
+							fetchDocuments(documentsPageNumber);
+						} catch (error) {
+							console.error('Error updating question:', error);
+						}
+					}
+				})
+			);
+
+			const updatedDocumentIds = updatedDocuments.map((doc) => doc._id);
+
 			if (singleCourse) {
 				const updatedCourse = {
 					...singleCourse,
 					chapters: updatedChapters,
 					chapterIds: updatedChapters?.map((chapter) => chapter.chapterId),
+					documentIds: updatedDocumentIds,
+					documents: updatedDocuments,
 				};
 
 				try {
@@ -298,6 +406,7 @@ const AdminCourseEditPage = () => {
 
 			<Box sx={{ display: 'flex', width: '95%', justifyContent: 'center', marginTop: '9rem' }}>
 				{!isEditMode && <CourseDetailsNonEditBox singleCourse={singleCourse} chapters={chapterLessonData} />}
+
 				{isEditMode && (
 					<Box
 						sx={{
@@ -396,6 +505,155 @@ const AdminCourseEditPage = () => {
 											})}
 									</Reorder.Group>
 								)}
+							</Box>
+							<Box sx={{ margin: '2rem 0 1rem 0' }}>
+								<HandleDocUploadURL
+									label='Course Materials'
+									onDocUploadLogic={(url, docName) => {
+										setSingleCourse((prevData) => {
+											if (prevData && userId) {
+												const maxNumber = prevData.documents
+													.filter((doc) => doc !== null)
+													.reduce((max, doc) => {
+														const match = doc.name.match(/Untitled Document (\d+)/);
+														const num = match ? parseInt(match[1], 10) : 0;
+														return num > max ? num : max;
+													}, 0);
+												const newName = docName || `Untitled Document ${maxNumber + 1}`;
+												return {
+													...prevData,
+													documents: [
+														{ _id: generateUniqueId('temp_doc_id_'), name: newName, documentUrl: url, orgId, userId, createdAt: '', updatedAt: '' },
+														...prevData.documents,
+													],
+												};
+											}
+											return prevData;
+										});
+									}}
+									enterDocUrl={enterDocUrl}
+									setEnterDocUrl={setEnterDocUrl}
+									docFolderName='Course Materials'
+									addNewDocumentModalOpen={addNewDocumentModalOpen}
+									setAddNewDocumentModalOpen={setAddNewDocumentModalOpen}
+									singleCourse={singleCourse}
+									setSingleCourse={setSingleCourse}
+									fromAdminCourses={true}
+								/>
+							</Box>
+							<Box sx={{ marginBottom: '5rem' }}>
+								{singleCourse?.documents &&
+									singleCourse?.documents
+										?.filter((document) => document !== null)
+										.map((document, index) => (
+											<Box
+												key={index}
+												sx={{
+													display: 'flex',
+													flexDirection: 'column',
+													justifyContent: 'space-between',
+													alignItems: 'flex-start',
+													mb: '1rem',
+													width: '30%',
+												}}>
+												<Box sx={{ mb: '0.25rem' }}>
+													<Link href={document?.documentUrl} target='_blank' rel='noopener noreferrer' variant='body2'>
+														{document?.name}
+													</Link>
+												</Box>
+												<Box sx={{ display: 'flex', alignItems: 'center' }}>
+													<Typography
+														variant='body2'
+														sx={{
+															mr: '0.5rem',
+															':hover': {
+																textDecoration: 'underline',
+																cursor: 'pointer',
+															},
+														}}
+														onClick={() => {
+															setSingleCourse((prevData) => {
+																if (prevData) {
+																	const filteredDocuments = prevData.documents?.filter((thisDoc) => thisDoc._id !== document._id);
+																	const filteredDocumentIds = filteredDocuments?.map((doc) => doc._id);
+																	return {
+																		...prevData,
+																		documents: filteredDocuments,
+																		documentIds: filteredDocumentIds,
+																	};
+																}
+																return prevData;
+															});
+														}}>
+														Remove
+													</Typography>
+													<Typography
+														variant='body2'
+														onClick={() => toggleDocRenameModal(index, document)}
+														sx={{
+															':hover': {
+																textDecoration: 'underline',
+																cursor: 'pointer',
+															},
+														}}>
+														Rename
+													</Typography>
+													<CustomDialog openModal={isDocRenameModalOpen[index]} closeModal={() => closeDocRenameModal(index, document)}>
+														<form
+															style={{ display: 'flex', flexDirection: 'column' }}
+															onSubmit={(e: React.FormEvent<HTMLFormElement>) => {
+																e.preventDefault();
+															}}>
+															<CustomTextField
+																fullWidth={false}
+																required={true}
+																label='Rename Document'
+																value={document.name}
+																sx={{ margin: '2rem 1rem 3rem 1rem' }}
+																onChange={(e) => {
+																	setSingleCourse((prevData) => {
+																		if (prevData) {
+																			const updatedDocuments = prevData.documents
+																				?.filter((document) => document !== null)
+																				.map((thisDoc) => {
+																					if (thisDoc._id === document._id) {
+																						return { ...thisDoc, name: e.target.value };
+																					} else {
+																						return thisDoc;
+																					}
+																				});
+																			return { ...prevData, documents: updatedDocuments };
+																		}
+																		return prevData;
+																	});
+																}}
+															/>
+															<CustomDialogActions
+																onCancel={() => closeDocRenameModal(index, document)}
+																submitBtnText='Save'
+																submitBtnType='button'
+																actionSx={{ mt: '1rem' }}
+																onSubmit={() => {
+																	saveDocRename(index);
+																	setIsDocumentUpdated((prevData) => {
+																		if (prevData) {
+																			return prevData.map((data) => {
+																				if (data.documentId === document._id) {
+																					return { ...data, isUpdated: true };
+																				}
+																				return data;
+																			});
+																		}
+																		return prevData;
+																	});
+																}}
+																disableBtn={document.name.trim() === ''}
+															/>
+														</form>
+													</CustomDialog>
+												</Box>
+											</Box>
+										))}
 							</Box>
 						</form>
 					</Box>
