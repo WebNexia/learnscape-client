@@ -1,4 +1,5 @@
 import { ChapterLessonData } from '../pages/AdminCourseEditPage';
+import { Document } from './document';
 
 export interface BaseCourse {
 	_id: string;
@@ -37,4 +38,6 @@ export interface SingleCourse extends BaseCourse {
 	chapterIds: string[];
 	chapters: ChapterLessonData[];
 	orgId: string;
+	documentIds: string[];
+	documents: Document[];
 }

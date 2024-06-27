@@ -5,9 +5,10 @@ import theme from '../../../themes';
 import CustomErrorMessage from '../customFields/CustomErrorMessage';
 import CustomTextField from '../customFields/CustomTextField';
 import useDocUpload from '../../../hooks/useDocUpload';
-import AddNewDocumentDialog from '../../adminSingleLesson/AddNewDocumentDialog';
+import AddNewDocumentDialog from '../../adminDocuments/AddNewDocumentDialog';
 import { Lesson } from '../../../interfaces/lessons';
 import LoadingButton from '@mui/lab/LoadingButton';
+import { SingleCourse } from '../../../interfaces/course';
 
 interface HandleDocUploadURLProps {
 	onDocUploadLogic?: (url: string, docName: string) => void;
@@ -24,6 +25,9 @@ interface HandleDocUploadURLProps {
 	setSingleLessonBeforeSave?: React.Dispatch<React.SetStateAction<Lesson>>;
 	singleLessonBeforeSave?: Lesson;
 	setIsLessonUpdated?: React.Dispatch<React.SetStateAction<boolean>>;
+	singleCourse?: SingleCourse | undefined;
+	setSingleCourse?: React.Dispatch<React.SetStateAction<SingleCourse | undefined>>;
+	fromAdminCourses?: boolean | undefined;
 }
 
 const HandleDocUploadURL = ({
@@ -41,6 +45,9 @@ const HandleDocUploadURL = ({
 	setSingleLessonBeforeSave,
 	singleLessonBeforeSave,
 	setIsLessonUpdated,
+	singleCourse,
+	setSingleCourse,
+	fromAdminCourses,
 }: HandleDocUploadURLProps) => {
 	const { docUpload, isDocSizeLarge, handleDocChange, resetDocUpload, handleDocUpload, isDocLoading } = useDocUpload();
 	const [manualDocUrl, setManualDocUrl] = useState<string>('');
@@ -56,8 +63,7 @@ const HandleDocUploadURL = ({
 			if (setDocumentUrl) setDocumentUrl(url);
 
 			if (setFileUploaded) setFileUploaded(true);
-
-			setDocName('');
+			if (!fromAdminDocs) setDocName('');
 		});
 	};
 
@@ -124,6 +130,9 @@ const HandleDocUploadURL = ({
 						setSingleLessonBeforeSave={setSingleLessonBeforeSave}
 						singleLessonBeforeSave={singleLessonBeforeSave}
 						setIsLessonUpdated={setIsLessonUpdated}
+						singleCourse={singleCourse}
+						setSingleCourse={setSingleCourse}
+						fromAdminCourses={fromAdminCourses}
 					/>
 				</Box>
 			</Box>
@@ -132,7 +141,7 @@ const HandleDocUploadURL = ({
 				<CustomTextField
 					placeholder='Doc Name'
 					required={true}
-					sx={{ width: '42.5%', marginTop: '0.5rem' }}
+					sx={{ width: fromAdminDocs ? '37.5%' : '42.5%', marginTop: '0.5rem' }}
 					value={docName}
 					onChange={(e) => {
 						setDocName(e.target.value);
@@ -143,7 +152,7 @@ const HandleDocUploadURL = ({
 				/>
 
 				{!enterDocUrl && (
-					<Box sx={{ display: 'flex', flexDirection: 'column', width: '55%', alignItems: 'flex-start' }}>
+					<Box sx={{ display: 'flex', flexDirection: 'column', width: fromAdminDocs ? '60%' : '55%', alignItems: 'flex-start' }}>
 						<Box sx={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center' }}>
 							<Input
 								type='file'
@@ -152,13 +161,18 @@ const HandleDocUploadURL = ({
 									handleDocChange(e);
 								}}
 								inputProps={{ accept: '.pdf' }}
-								sx={{ width: '82.5%', backgroundColor: theme.bgColor?.common, margin: '0.5rem 0 0.85rem 0', padding: '0.25rem' }}
+								sx={{
+									width: fromAdminDocs ? '80%' : '82.5%',
+									backgroundColor: theme.bgColor?.common,
+									margin: '0.5rem 0 0.85rem 0',
+									padding: '0.25rem',
+								}}
 							/>
 							{!isDocLoading ? (
 								<Button
 									onClick={handleDocUploadReusable}
 									variant='outlined'
-									sx={{ textTransform: 'capitalize', height: '2rem', width: '15%' }}
+									sx={{ textTransform: 'capitalize', height: '2rem', width: fromAdminDocs ? '17.5%' : '15%' }}
 									disabled={!docUpload || isDocSizeLarge}
 									size='small'
 									startIcon={<CloudUpload />}>
@@ -175,11 +189,11 @@ const HandleDocUploadURL = ({
 				)}
 
 				{enterDocUrl && (
-					<Box sx={{ display: 'flex', width: '55%', justifyContent: 'space-between', alignItems: 'center' }}>
+					<Box sx={{ display: 'flex', width: fromAdminDocs ? '60%' : '55%', justifyContent: 'space-between', alignItems: 'center' }}>
 						<CustomTextField
 							placeholder='Doc URL'
 							required={enterDocUrl ? true : false}
-							sx={{ width: '82.5%', marginTop: '0.5rem' }}
+							sx={{ width: fromAdminDocs ? '80%' : '82.5%', marginTop: '0.5rem' }}
 							value={manualDocUrl}
 							onChange={(e) => setManualDocUrl(e.target.value)}
 						/>
@@ -187,7 +201,7 @@ const HandleDocUploadURL = ({
 						<Button
 							onClick={handleManualUrlAddition}
 							variant='outlined'
-							sx={{ textTransform: 'capitalize', height: '2rem', width: '15%' }}
+							sx={{ textTransform: 'capitalize', height: '2rem', width: fromAdminDocs ? '17.5%' : '15%' }}
 							disabled={!manualDocUrl}
 							size='small'
 							startIcon={<Article />}>

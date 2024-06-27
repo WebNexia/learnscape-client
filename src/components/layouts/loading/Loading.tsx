@@ -99,9 +99,9 @@ const Loading = () => {
 						display: 'flex',
 						alignItems: 'center',
 						height: '3rem',
-						marginBottom: '1rem',
+						marginBottom: '0.5rem',
 					}}>
-					<Typography variant='h1' sx={{ color: theme.textColor?.common.main, fontSize: '1.75rem' }}>
+					<Typography variant='h1' sx={{ color: theme.textColor?.common.main, fontSize: '1.5rem' }}>
 						{organisation?.orgName}
 					</Typography>
 				</Box>
@@ -110,7 +110,7 @@ const Loading = () => {
 						display: 'flex',
 						flexDirection: 'column',
 						alignItems: 'center',
-						marginBottom: '1rem',
+						marginBottom: '0.5rem',
 					}}>
 					<img
 						src={user?.imageUrl}
