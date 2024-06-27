@@ -37,9 +37,9 @@ import { sanitizeHtml } from '../utils/sanitizeHtml';
 import TinyMceEditor from '../components/richTextEditor/TinyMceEditor';
 import { Document } from '../interfaces/document';
 import { generateUniqueId } from '../utils/uniqueIdGenerator';
-import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
 import HandleDocUploadURL from '../components/forms/uploadImageVideoDocument/HandleDocUploadURL';
 import { DocumentsContext } from '../contexts/DocumentsContextProvider';
+import DocumentsListEditBox from '../components/adminDocuments/DocumentsListEditBox';
 
 export interface QuestionUpdateTrack {
 	questionId: string;
@@ -920,122 +920,48 @@ const AdminLessonEditPage = () => {
 									setIsLessonUpdated={setIsLessonUpdated}
 								/>
 							</Box>
-							<Box sx={{ marginBottom: '5rem' }}>
-								{singleLessonBeforeSave.documents &&
-									singleLessonBeforeSave.documents
-										?.filter((document) => document !== null)
-										.map((document, index) => (
-											<Box
-												key={index}
-												sx={{
-													display: 'flex',
-													flexDirection: 'column',
-													justifyContent: 'space-between',
-													alignItems: 'flex-start',
-													mb: '1rem',
-													width: '30%',
-												}}>
-												<Box sx={{ mb: '0.25rem' }}>
-													<Link href={document?.documentUrl} target='_blank' rel='noopener noreferrer' variant='body2'>
-														{document?.name}
-													</Link>
-												</Box>
-												<Box sx={{ display: 'flex', alignItems: 'center' }}>
-													<Typography
-														variant='body2'
-														sx={{
-															mr: '0.5rem',
-															':hover': {
-																textDecoration: 'underline',
-																cursor: 'pointer',
-															},
-														}}
-														onClick={() => {
-															setIsLessonUpdated(true);
-															setSingleLessonBeforeSave((prevData) => {
-																if (prevData) {
-																	const filteredDocuments = prevData.documents?.filter((thisDoc) => thisDoc._id !== document._id);
-																	const filteredDocumentsIds = filteredDocuments?.map((doc) => doc._id);
 
-																	return {
-																		...prevData,
-																		documents: filteredDocuments,
-																		documentIds: filteredDocumentsIds,
-																	};
-																}
-																return prevData;
-															});
-														}}>
-														Remove
-													</Typography>
-													<Typography
-														variant='body2'
-														onClick={() => toggleDocRenameModal(index, document)}
-														sx={{
-															':hover': {
-																textDecoration: 'underline',
-																cursor: 'pointer',
-															},
-														}}>
-														Rename
-													</Typography>
-													<CustomDialog openModal={isDocRenameModalOpen[index]} closeModal={() => closeDocRenameModal(index, document)}>
-														<form
-															style={{ display: 'flex', flexDirection: 'column' }}
-															onSubmit={(e: React.FormEvent<HTMLFormElement>) => {
-																e.preventDefault();
-															}}>
-															<CustomTextField
-																fullWidth={false}
-																required={true}
-																label='Rename Document'
-																value={document.name}
-																sx={{ margin: '2rem 1rem 3rem 1rem' }}
-																onChange={(e) => {
-																	setSingleLessonBeforeSave((prevData) => {
-																		if (prevData) {
-																			const updatedDocuments = prevData.documents
-																				?.filter((document) => document !== null)
-																				.map((thisDoc) => {
-																					if (thisDoc._id === document._id) {
-																						return { ...thisDoc, name: e.target.value };
-																					} else {
-																						return thisDoc;
-																					}
-																				});
-																			return { ...prevData, documents: updatedDocuments };
-																		}
-																		return prevData;
-																	});
-																}}
-															/>
-															<CustomDialogActions
-																onCancel={() => closeDocRenameModal(index, document)}
-																submitBtnText='Save'
-																submitBtnType='button'
-																actionSx={{ mt: '1rem' }}
-																onSubmit={() => {
-																	saveDocRename(index);
-																	setIsDocumentUpdated((prevData) => {
-																		if (prevData) {
-																			return prevData.map((data) => {
-																				if (data.documentId === document._id) {
-																					return { ...data, isUpdated: true };
-																				}
-																				return data;
-																			});
-																		}
-																		return prevData;
-																	});
-																}}
-																disableBtn={document.name.trim() === ''}
-															/>
-														</form>
-													</CustomDialog>
-												</Box>
-											</Box>
-										))}
-							</Box>
+							<DocumentsListEditBox
+								documentsSource={singleLessonBeforeSave}
+								toggleDocRenameModal={toggleDocRenameModal}
+								closeDocRenameModal={closeDocRenameModal}
+								isDocRenameModalOpen={isDocRenameModalOpen}
+								saveDocRename={saveDocRename}
+								setIsDocumentUpdated={setIsDocumentUpdated}
+								removeDocOnClick={(document: Document) => {
+									setIsLessonUpdated(true);
+									setSingleLessonBeforeSave((prevData) => {
+										if (prevData) {
+											const filteredDocuments = prevData.documents?.filter((thisDoc) => thisDoc._id !== document._id);
+											const filteredDocumentsIds = filteredDocuments?.map((doc) => doc._id);
+
+											return {
+												...prevData,
+												documents: filteredDocuments,
+												documentIds: filteredDocumentsIds,
+											};
+										}
+										return prevData;
+									});
+								}}
+								renameDocOnChange={(e: React.ChangeEvent<HTMLInputElement>, document: Document) => {
+									setSingleLessonBeforeSave((prevData) => {
+										if (prevData) {
+											const updatedDocuments = prevData.documents
+												?.filter((doc) => doc !== null)
+												.map((thisDoc) => {
+													if (thisDoc._id === document._id) {
+														return { ...thisDoc, name: e.target.value };
+													} else {
+														return thisDoc;
+													}
+												});
+											return { ...prevData, documents: updatedDocuments };
+										}
+										return prevData;
+									});
+								}}
+							/>
 						</form>
 					</Box>
 				)}

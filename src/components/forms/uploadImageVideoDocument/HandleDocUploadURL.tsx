@@ -5,7 +5,7 @@ import theme from '../../../themes';
 import CustomErrorMessage from '../customFields/CustomErrorMessage';
 import CustomTextField from '../customFields/CustomTextField';
 import useDocUpload from '../../../hooks/useDocUpload';
-import AddNewDocumentDialog from '../../adminSingleLesson/AddNewDocumentDialog';
+import AddNewDocumentDialog from '../../adminDocuments/AddNewDocumentDialog';
 import { Lesson } from '../../../interfaces/lessons';
 import LoadingButton from '@mui/lab/LoadingButton';
 import { SingleCourse } from '../../../interfaces/course';
