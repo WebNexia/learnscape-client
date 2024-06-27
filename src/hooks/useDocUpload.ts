@@ -1,15 +1,19 @@
-import { useState } from 'react';
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { storage } from '../firebase';
+// hooks/useDocUpload.js
+
+import { useContext, useState } from 'react';
+import documentUpload from '../utils/documentUpload';
+import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 
 const useDocUpload = () => {
+	const { organisation } = useContext(OrganisationContext);
 	const [docUpload, setDocUpload] = useState<File | null>(null);
-	const [isDocSizeLarge, setIsDocSizeLarge] = useState<boolean>(false);
-	const [isDocLoading, setIsDocLoading] = useState<boolean>(false);
+	const [isDocSizeLarge, setIsDocSizeLarge] = useState(false);
+	const [isDocLoading, setIsDocLoading] = useState(false);
 
 	const handleDocChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		if (e.target.files && e.target.files.length > 0) {
-			if (e.target.files[0].size > 1024 * 1024) {
+			const file = e.target.files[0];
+			if (file.size > 1024 * 1024) {
 				setIsDocSizeLarge(true);
 			} else {
 				setDocUpload(e.target.files[0]);
@@ -28,28 +32,11 @@ const useDocUpload = () => {
 
 		setIsDocLoading(true);
 		try {
-			const storageRef = ref(storage, `${folderName}/${docUpload.name}`);
-			const uploadTask = uploadBytesResumable(storageRef, docUpload);
-
-			uploadTask.on(
-				'state_changed',
-				(snapshot) => {
-					const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-					console.log(`Upload is ${progress}% done`);
-				},
-				(error) => {
-					console.error('Error uploading PDF:', error);
-					setIsDocLoading(false);
-				},
-				() => {
-					getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-						handleUrlCallback(downloadURL);
-						setIsDocLoading(false);
-					});
-				}
-			);
+			const url = await documentUpload(docUpload, folderName, organisation?.orgName || 'defaultOrg');
+			handleUrlCallback(url);
 		} catch (error) {
-			console.error('Error uploading PDF:', error);
+			console.error('Error uploading document:', error);
+		} finally {
 			setIsDocLoading(false);
 		}
 	};
@@ -63,8 +50,8 @@ const useDocUpload = () => {
 		docUpload,
 		isDocSizeLarge,
 		handleDocChange,
-		resetDocUpload,
 		handleDocUpload,
+		resetDocUpload,
 		isDocLoading,
 	};
 };

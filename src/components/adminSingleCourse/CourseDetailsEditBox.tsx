@@ -1,4 +1,4 @@
-import { Box, Checkbox, FormControlLabel, Typography } from '@mui/material';
+import { Box, Checkbox, FormControlLabel, Tooltip, Typography } from '@mui/material';
 import CustomTextField from '../forms/customFields/CustomTextField';
 import CustomErrorMessage from '../forms/customFields/CustomErrorMessage';
 import { SingleCourse } from '../../interfaces/course';
@@ -40,41 +40,49 @@ const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree,
 			<Box sx={{ display: 'flex', mt: '1.5rem' }}>
 				<Box sx={{ flex: 1 }}>
 					<Typography variant='h6'>Title*</Typography>
-					<CustomTextField
-						sx={{
-							marginTop: '0.5rem',
-							backgroundColor: theme.bgColor?.common,
-						}}
-						multiline
-						value={singleCourse?.title}
-						onChange={(e) => {
-							setSingleCourse(() => {
-								if (singleCourse?.title !== undefined) {
-									return { ...singleCourse, title: e.target.value };
-								}
-							});
-							setIsMissingField(false);
-						}}
-						error={isMissingField && singleCourse?.title === ''}
-					/>
+					<Tooltip title='Max 50 Characters' placement='top'>
+						<CustomTextField
+							sx={{
+								marginTop: '0.5rem',
+								backgroundColor: theme.bgColor?.common,
+							}}
+							multiline
+							value={singleCourse?.title}
+							onChange={(e) => {
+								setSingleCourse(() => {
+									if (singleCourse?.title !== undefined) {
+										return { ...singleCourse, title: e.target.value };
+									}
+								});
+								setIsMissingField(false);
+							}}
+							InputProps={{ inputProps: { maxLength: 50 } }}
+							error={isMissingField && singleCourse?.title === ''}
+						/>
+					</Tooltip>
 					{isMissingField && singleCourse?.title === '' && <CustomErrorMessage>Please enter a title</CustomErrorMessage>}
 				</Box>
 				<Box sx={{ flex: 1.5, marginLeft: '2rem' }}>
 					<Typography variant='h6'>Description*</Typography>
-					<CustomTextField
-						sx={{ marginTop: '0.5rem' }}
-						value={singleCourse?.description}
-						onChange={(e) => {
-							setSingleCourse(() => {
-								if (singleCourse?.description !== undefined) {
-									return { ...singleCourse, description: e.target.value };
-								}
-							});
-							setIsMissingField(false);
-						}}
-						multiline
-						error={isMissingField && singleCourse?.description === ''}
-					/>
+					<Tooltip title='Max 500 characters' placement='top'>
+						<CustomTextField
+							sx={{ marginTop: '0.5rem' }}
+							value={singleCourse?.description}
+							onChange={(e) => {
+								setSingleCourse(() => {
+									if (singleCourse?.description !== undefined) {
+										return { ...singleCourse, description: e.target.value };
+									}
+								});
+								setIsMissingField(false);
+							}}
+							multiline
+							resizable
+							InputProps={{ inputProps: { maxLength: 500 } }}
+							error={isMissingField && singleCourse?.description === ''}
+						/>
+					</Tooltip>
+
 					{isMissingField && singleCourse?.description === '' && <CustomErrorMessage>Please enter a description</CustomErrorMessage>}
 				</Box>
 			</Box>

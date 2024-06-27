@@ -10,6 +10,7 @@ import { UserCoursesIdsWithCourseIds, UserLessonDataStorage } from '../../../con
 import CustomSubmitButton from '../../forms/customButtons/CustomSubmitButton';
 import CustomDialog from '../dialog/CustomDialog';
 import CustomDialogActions from '../dialog/CustomDialogActions';
+import { dateFormatter } from '../../../utils/dateFormatter';
 
 interface CoursePageBannerProps {
 	course: SingleCourse;
@@ -31,16 +32,6 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus }: Cou
 
 	const vertical = 'top';
 	const horizontal = 'center';
-
-	const date: Date = new Date(course.startingDate);
-
-	const options: Intl.DateTimeFormatOptions = {
-		year: 'numeric',
-		month: 'short',
-		day: 'numeric',
-	};
-
-	const startDate: string = date.toLocaleString('en-US', options);
 
 	const courseRegistration = async (): Promise<void> => {
 		try {
@@ -207,7 +198,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus }: Cou
 						flex: 1,
 					}}>
 					<Box>
-						<CoursePageBannerDataCard title='Starting Date' content={startDate} />
+						<CoursePageBannerDataCard title='Starting Date' content={dateFormatter(course.startingDate)} />
 						<CoursePageBannerDataCard title='Weeks(#)' content={course.durationWeeks} />
 					</Box>
 					<Box>

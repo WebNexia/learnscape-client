@@ -14,13 +14,14 @@ interface CustomTextFieldProps {
 	multiline?: boolean;
 	sx?: React.CSSProperties;
 	InputLabelProps?: Partial<InputLabelProps>;
-	InputProps?: InputProps;
+	InputProps?: InputProps & { inputProps?: { maxLength?: number } };
 	maxRows?: number;
 	rows?: number;
 	disabled?: boolean;
 	error?: boolean;
 	helperText?: string;
 	placeholder?: string;
+	resizable?: boolean;
 }
 
 const CustomTextField = ({
@@ -42,6 +43,7 @@ const CustomTextField = ({
 	error,
 	helperText,
 	placeholder,
+	resizable = false,
 	...rest
 }: CustomTextFieldProps) => {
 	return (
@@ -52,12 +54,29 @@ const CustomTextField = ({
 			value={value}
 			onChange={onChange}
 			size={size}
-			sx={{ ...sx, marginBottom: '0.85rem', backgroundColor: theme.bgColor?.common }}
+			sx={{
+				...sx,
+				marginBottom: '0.85rem',
+				backgroundColor: theme.bgColor?.common,
+				'& .MuiInputBase-root': {
+					resize: resizable ? 'both' : 'none', // Allow resizing of the container
+				},
+				'& .MuiInputBase-inputMultiline': {
+					resize: resizable ? 'both' : 'none', // Allow resizing of the textarea
+					overflow: 'auto', // Ensure overflow is handled
+				},
+			}}
 			fullWidth={fullWidth}
 			required={required}
 			multiline={multiline}
 			InputLabelProps={InputLabelProps}
-			InputProps={InputProps}
+			InputProps={{
+				...InputProps,
+				inputProps: {
+					...InputProps?.inputProps,
+					maxLength: InputProps?.inputProps?.maxLength,
+				},
+			}}
 			maxRows={maxRows}
 			rows={rows}
 			disabled={disabled}

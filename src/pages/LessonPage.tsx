@@ -1,6 +1,6 @@
 import { Box, Button, Typography } from '@mui/material';
 import theme from '../themes';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useQuery } from 'react-query';
 import axios from 'axios';
 import Questions from '../components/userCourses/Questions';
@@ -15,7 +15,6 @@ import { useContext } from 'react';
 const LessonPage = () => {
 	const { lessonId } = useParams();
 	const { organisation } = useContext(OrganisationContext);
-	const navigate = useNavigate();
 
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
@@ -57,7 +56,6 @@ const LessonPage = () => {
 					},
 				}}
 				onClick={() => {
-					navigate(-1);
 					window.scrollTo({ top: 0, behavior: 'smooth' });
 				}}>
 				Back to Course Home Page

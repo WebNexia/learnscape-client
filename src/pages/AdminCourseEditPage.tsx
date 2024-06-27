@@ -301,7 +301,6 @@ const AdminCourseEditPage = () => {
 
 			await Promise.all(
 				updatedDocuments.map(async (doc) => {
-					console.log(isDocumentUpdated);
 					const trackData = isDocumentUpdated.find((data) => data.documentId === doc._id);
 					if (trackData?.isUpdated) {
 						try {
