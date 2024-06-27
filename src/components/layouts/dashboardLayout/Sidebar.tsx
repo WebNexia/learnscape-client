@@ -1,7 +1,17 @@
 import { Box, Typography } from '@mui/material';
 import theme from '../../../themes';
 import DashboardIcon from '@mui/icons-material/Dashboard';
-import { AssignmentIndRounded, CalendarMonth, Email, Groups, LibraryBooks, PeopleAltOutlined, QuizOutlined, Settings } from '@mui/icons-material';
+import {
+	AssignmentIndRounded,
+	CalendarMonth,
+	Email,
+	FilePresent,
+	Groups,
+	LibraryBooks,
+	PeopleAltOutlined,
+	QuizOutlined,
+	Settings,
+} from '@mui/icons-material';
 import SidebarBtn from './SidebarBtn';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useContext, useState } from 'react';
@@ -62,8 +72,8 @@ const Sidebar = () => {
 					src={user?.imageUrl}
 					alt='user_profile_pic'
 					style={{
-						height: '6rem',
-						width: '6rem',
+						height: '3rem',
+						width: '3rem',
 						borderRadius: '50%',
 						marginBottom: '0.5rem',
 					}}
@@ -77,7 +87,7 @@ const Sidebar = () => {
 						flexDirection: 'column',
 						justifyContent: 'flex-start',
 						alignItems: 'flex-start',
-						marginTop: '2rem',
+						marginTop: '1.5rem',
 					}}>
 					{user?.role === Roles.ADMIN && (
 						<>
@@ -109,6 +119,12 @@ const Sidebar = () => {
 								btnText='Questions'
 								IconName={QuizOutlined}
 								onClick={() => navigateWithPage(PageName.ADMIN_QUESTIONS, `/admin/questions/user/${id || userId}`)}
+								selectedPage={selectedPage}
+							/>
+							<SidebarBtn
+								btnText='Documents'
+								IconName={FilePresent}
+								onClick={() => navigateWithPage(PageName.ADMIN_DOCUMENTS, `/admin/documents/user/${id || userId}`)}
 								selectedPage={selectedPage}
 							/>
 							<SidebarBtn

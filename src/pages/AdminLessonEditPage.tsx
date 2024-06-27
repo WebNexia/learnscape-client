@@ -1,5 +1,4 @@
-import { Box, FormControl, IconButton, InputLabel, MenuItem, Select, SelectChangeEvent, Tooltip, Typography } from '@mui/material';
-
+import { Box, FormControl, IconButton, InputLabel, Link, MenuItem, Select, SelectChangeEvent, Tooltip, Typography } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import theme from '../themes';
 import { Delete, Edit, FileCopy } from '@mui/icons-material';
@@ -25,20 +24,30 @@ import EditQuestionDialog from '../components/forms/editQuestion/EditQuestionDia
 import { QuestionsContext } from '../contexts/QuestionsContextProvider';
 import useImageUpload from '../hooks/useImageUpload';
 import useVideoUpload from '../hooks/useVideoUpload';
-import HandleImageUploadURL from '../components/forms/uploadImageVideo/HandleImageUploadURL';
-import HandleVideoUploadURL from '../components/forms/uploadImageVideo/HandleVideoUploadURL';
+import HandleImageUploadURL from '../components/forms/uploadImageVideoDocument/HandleImageUploadURL';
+import HandleVideoUploadURL from '../components/forms/uploadImageVideoDocument/HandleVideoUploadURL';
 import AddNewQuestionDialog from '../components/adminSingleLesson/AddNewQuestionDialog';
 import { stripHtml } from '../utils/stripHtml';
 import { truncateText } from '../utils/utilText';
-import ImageThumbnail from '../components/forms/uploadImageVideo/ImageThumbnail';
-import VideoThumbnail from '../components/forms/uploadImageVideo/VideoThumbnail';
+import ImageThumbnail from '../components/forms/uploadImageVideoDocument/ImageThumbnail';
+import VideoThumbnail from '../components/forms/uploadImageVideoDocument/VideoThumbnail';
 import LessonImageCourseDisplay from '../components/adminSingleLesson/LessonImageCourseDisplay';
 import { questionTypeNameFinder } from '../utils/questionTypeNameFinder';
 import { sanitizeHtml } from '../utils/sanitizeHtml';
 import TinyMceEditor from '../components/richTextEditor/TinyMceEditor';
+import { Document } from '../interfaces/document';
+import { generateUniqueId } from '../utils/uniqueIdGenerator';
+import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
+import HandleDocUploadURL from '../components/forms/uploadImageVideoDocument/HandleDocUploadURL';
+import { DocumentsContext } from '../contexts/DocumentsContextProvider';
 
 export interface QuestionUpdateTrack {
 	questionId: string;
+	isUpdated: boolean;
+}
+
+export interface DocumentUpdateTrack {
+	documentId: string;
 	isUpdated: boolean;
 }
 
@@ -48,6 +57,7 @@ const AdminLessonEditPage = () => {
 	const { updateLessonPublishing, updateLessons, lessonTypes } = useContext(LessonsContext);
 
 	const { questionTypes, fetchQuestions, questionsPageNumber } = useContext(QuestionsContext);
+	const { fetchDocuments, documentsPageNumber } = useContext(DocumentsContext);
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
 	const {
@@ -86,6 +96,8 @@ const AdminLessonEditPage = () => {
 		orgId: '',
 		questionIds: [],
 		questions: [],
+		documentIds: [],
+		documents: [],
 	};
 
 	const [isEditMode, setIsEditMode] = useState<boolean>(false);
@@ -100,11 +112,14 @@ const AdminLessonEditPage = () => {
 	const [isDisplayNonEditQuestion, setIsDisplayNonEditQuestion] = useState<boolean>(false);
 	const [isLessonUpdated, setIsLessonUpdated] = useState<boolean>(false);
 	const [isQuestionUpdated, setIsQuestionUpdated] = useState<QuestionUpdateTrack[]>([]);
+	const [isDocumentUpdated, setIsDocumentUpdated] = useState<DocumentUpdateTrack[]>([]);
 
 	const [addNewQuestionModalOpen, setAddNewQuestionModalOpen] = useState<boolean>(false);
+	const [addNewDocumentModalOpen, setAddNewDocumentModalOpen] = useState<boolean>(false);
 
 	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(true);
 	const [enterVideoUrl, setEnterVideoUrl] = useState<boolean>(true);
+	const [enterDocUrl, setEnterDocUrl] = useState<boolean>(true);
 
 	const [editorContent, setEditorContent] = useState<string>('');
 	const [prevEditorContent, setPrevEditorContent] = useState<string>('');
@@ -112,11 +127,73 @@ const AdminLessonEditPage = () => {
 	const resetEnterImageVideoUrl = () => {
 		setEnterVideoUrl(true);
 		setEnterImageUrl(true);
+		setEnterDocUrl(true);
 	};
 
 	const [questionType, setQuestionType] = useState<string>('');
 
 	const [isQuestionCreateModalOpen, setIsQuestionCreateModalOpen] = useState<boolean>(false);
+	const [isDocRenameModalOpen, setIsDocRenameModalOpen] = useState<Array<boolean>>([]);
+	const [originalDocumentNames, setOriginalDocumentNames] = useState<Record<string, string>>({});
+
+	const toggleDocRenameModal = (index: number, document: Document) => {
+		const newRenameModalOpen = [...isDocRenameModalOpen];
+		if (!newRenameModalOpen[index]) {
+			setOriginalDocumentNames((prevNames) => ({
+				...prevNames,
+				[document._id]: document.name,
+			})); // Set the original document name
+		}
+		newRenameModalOpen[index] = !newRenameModalOpen[index];
+		setIsDocRenameModalOpen(newRenameModalOpen);
+		setIsLessonUpdated(true);
+	};
+
+	const closeDocRenameModal = (index: number, document: Document) => {
+		const newRenameModalOpen = [...isDocRenameModalOpen];
+		newRenameModalOpen[index] = false;
+
+		setSingleLessonBeforeSave((prevData) => {
+			if (prevData) {
+				const updatedDocuments = prevData.documents
+					?.filter((document) => document !== null)
+					.map((thisDoc) => {
+						if (thisDoc._id === document._id) {
+							return { ...thisDoc, name: originalDocumentNames[document._id] || thisDoc.name }; // Revert to original name
+						} else {
+							return thisDoc;
+						}
+					});
+				return { ...prevData, documents: updatedDocuments };
+			}
+			return prevData;
+		});
+
+		setIsDocRenameModalOpen(newRenameModalOpen);
+	};
+
+	const saveDocRename = (index: number) => {
+		const newRenameModalOpen = [...isDocRenameModalOpen];
+		newRenameModalOpen[index] = false;
+
+		setIsDocRenameModalOpen(newRenameModalOpen);
+		setIsLessonUpdated(true);
+	};
+
+	// Define state for tracking edit modal visibility for each question
+	const [editQuestionModalOpen, setEditQuestionModalOpen] = useState<Array<boolean>>([]);
+
+	// Function to toggle edit modal for a specific question
+	const toggleQuestionEditModal = (index: number) => {
+		const newEditModalOpen = [...editQuestionModalOpen];
+		newEditModalOpen[index] = !newEditModalOpen[index];
+		setEditQuestionModalOpen(newEditModalOpen);
+	};
+	const closeQuestionEditModal = (index: number) => {
+		const newEditModalOpen = [...editQuestionModalOpen];
+		newEditModalOpen[index] = false;
+		setEditQuestionModalOpen(newEditModalOpen);
+	};
 
 	useEffect(() => {
 		if (lessonId) {
@@ -124,7 +201,7 @@ const AdminLessonEditPage = () => {
 				try {
 					const response = await axios.get(`${base_url}/lessons/${lessonId}`);
 
-					const lessonsResponse = response?.data?.data[0];
+					const lessonsResponse = response?.data;
 
 					setSingleLesson(lessonsResponse);
 					setSingleLessonBeforeSave(lessonsResponse);
@@ -136,6 +213,8 @@ const AdminLessonEditPage = () => {
 
 					setEditQuestionModalOpen(new Array(lessonsResponse?.questions?.length || 0).fill(false));
 
+					setIsDocRenameModalOpen(new Array(lessonsResponse?.documents?.length || 0).fill(false));
+
 					const questionUpdateData: QuestionUpdateTrack[] = lessonsResponse?.questions?.reduce(
 						(acc: QuestionUpdateTrack[], value: QuestionInterface) => {
 							acc.push({ questionId: value?._id, isUpdated: false });
@@ -144,6 +223,13 @@ const AdminLessonEditPage = () => {
 						[]
 					);
 					setIsQuestionUpdated(questionUpdateData);
+
+					const documentUpdateData: DocumentUpdateTrack[] = lessonsResponse?.documents?.reduce((acc: DocumentUpdateTrack[], value: Document) => {
+						acc.push({ documentId: value?._id, isUpdated: false });
+						return acc;
+					}, []);
+
+					setIsDocumentUpdated(documentUpdateData);
 				} catch (error) {
 					console.log(error);
 				}
@@ -161,21 +247,6 @@ const AdminLessonEditPage = () => {
 			return { ...singleLessonBeforeSave, text: prevEditorContent };
 		});
 	}, [singleLessonBeforeSave.type]);
-
-	// Define state for tracking edit modal visibility for each question
-	const [editQuestionModalOpen, setEditQuestionModalOpen] = useState<Array<boolean>>([]);
-
-	// Function to toggle edit modal for a specific question
-	const toggleQuestionEditModal = (index: number) => {
-		const newEditModalOpen = [...editQuestionModalOpen];
-		newEditModalOpen[index] = !newEditModalOpen[index];
-		setEditQuestionModalOpen(newEditModalOpen);
-	};
-	const closeQuestionEditModal = (index: number) => {
-		const newEditModalOpen = [...editQuestionModalOpen];
-		newEditModalOpen[index] = false;
-		setEditQuestionModalOpen(newEditModalOpen);
-	};
 
 	const handlePublishing = async (): Promise<void> => {
 		if (lessonId !== undefined) {
@@ -195,102 +266,139 @@ const AdminLessonEditPage = () => {
 		e.preventDefault();
 
 		let updatedQuestions: QuestionInterface[] = [];
+		let updatedDocuments: Document[] = [];
 
-		if (singleLessonBeforeSave?.questions) {
-			const questionsWithPossibleNulls = await Promise.all(
-				singleLessonBeforeSave.questions
-					?.filter((question) => question !== null && question !== undefined)
-					?.map(async (question) => {
-						if (question !== null) {
-							if (question._id.includes('temp_question_id')) {
-								const questionTypeId = questionTypes.find((type) => type.name === question.questionType)?._id;
-								if (questionTypeId) {
-									question.questionType = questionTypeId;
-
-									try {
-										const questionResponse = await axios.post(`${base_url}/questions`, {
-											orgId,
-											question: question.question,
-											options: question.options,
-											correctAnswer: question.correctAnswer,
-											videoUrl: question.videoUrl,
-											imageUrl: question.imageUrl,
-											questionType: questionTypeId,
-											isActive: true,
-										});
-										return {
-											...question,
-											_id: questionResponse.data._id,
-											createdAt: questionResponse.data.createdAt,
-											updatedAt: questionResponse.data.updatedAt,
-										};
-									} catch (error) {
-										console.error('Error creating question:', error);
-										return null;
-									}
-								}
+		try {
+			if (singleLessonBeforeSave?.documents) {
+				const updatedDocumentsPromises = (singleLessonBeforeSave.documents as (Document | null)[]) // Assert as array of Document or null
+					.filter((doc): doc is Document => doc !== null) // Type guard to filter out nulls
+					.map(async (document) => {
+						if (document._id.includes('temp_doc_id')) {
+							try {
+								const response = await axios.post(`${base_url}/documents`, {
+									name: document.name,
+									orgId,
+									userId,
+									documentUrl: document.documentUrl,
+								});
+								fetchDocuments(documentsPageNumber);
+								return { ...document, _id: response.data._id, createdAt: response.data.createdAt, updatedAt: response.data.updatedAt } as Document; // Assert as Document
+							} catch (error) {
+								console.error('Error creating document:', error);
+								return null;
 							}
 						}
-						return question;
-					})
-			);
+						return document;
+					});
 
-			updatedQuestions = questionsWithPossibleNulls?.filter((question): question is QuestionInterface => question !== null);
+				const updatedQuestionsWithNulls = await Promise.all(updatedDocumentsPromises);
+				updatedDocuments = updatedQuestionsWithNulls.filter((doc): doc is Document => doc !== null); // Type guard to filter out remaining nulls
+			}
 
 			await Promise.all(
-				updatedQuestions?.map(async (question) => {
-					const trackData = isQuestionUpdated.find((data) => data.questionId === question._id);
+				updatedDocuments.map(async (doc) => {
+					const trackData = isDocumentUpdated.find((data) => data.documentId === doc._id);
 					if (trackData?.isUpdated) {
 						try {
-							const { questionType, ...questionWithoutType } = question;
-
-							await axios.patch(`${base_url}/questions/${question._id}`, questionWithoutType);
+							await axios.patch(`${base_url}/documents/${doc._id}`, {
+								name: doc.name,
+							});
+							fetchDocuments(documentsPageNumber);
 						} catch (error) {
 							console.error('Error updating question:', error);
 						}
 					}
 				})
 			);
-			const updatedQuestionIds = updatedQuestions?.filter((question) => question !== null).map((question) => question._id);
 
-			setSingleLessonBeforeSave((prevData) => ({
-				...prevData,
-				questions: updatedQuestions,
-				questionIds: updatedQuestionIds,
-				text: singleLessonBeforeSave.type === 'Quiz' ? '' : editorContent,
-			}));
-		}
+			const updatedDocumentIds = updatedDocuments.map((doc) => doc._id);
 
-		if (isLessonUpdated || isQuestionUpdated.some((data) => data.isUpdated === true)) {
-			const updatedQuestionIds = updatedQuestions.map((question) => question._id);
-			try {
-				await axios.patch(`${base_url}/lessons/${lessonId}`, {
-					...singleLessonBeforeSave,
-					questionIds: updatedQuestionIds,
-					text: singleLessonBeforeSave.type === 'Quiz' ? '' : editorContent,
-				});
+			if (singleLessonBeforeSave?.questions) {
+				const updatedQuestionsPromises = singleLessonBeforeSave.questions
+					.filter((question) => question !== null && question !== undefined)
+					.map(async (question) => {
+						if (question._id.includes('temp_question_id')) {
+							const questionTypeId = questionTypes.find((type) => type.name === question.questionType)?._id;
+							if (questionTypeId) {
+								try {
+									const response = await axios.post(`${base_url}/questions`, {
+										orgId,
+										question: question.question,
+										options: question.options,
+										correctAnswer: question.correctAnswer,
+										videoUrl: question.videoUrl,
+										imageUrl: question.imageUrl,
+										questionType: questionTypeId,
+										isActive: true,
+									});
+									return {
+										...question,
+										_id: response.data._id,
+										createdAt: response.data.createdAt,
+										updatedAt: response.data.updatedAt,
+									} as QuestionInterface; // Assert as QuestionInterface
+								} catch (error) {
+									console.error('Error creating question:', error);
+									return null;
+								}
+							}
+						}
+						return question;
+					});
 
-				setIsLessonUpdated(false);
+				const updatedQuestionsWithNulls = await Promise.all(updatedQuestionsPromises);
+				updatedQuestions = updatedQuestionsWithNulls.filter((question): question is QuestionInterface => question !== null);
 
-				updateLessons(singleLessonBeforeSave);
-				setSingleLesson({
-					...singleLessonBeforeSave,
-					questionIds: updatedQuestionIds,
-					text: singleLessonBeforeSave.type === 'Quiz' ? '' : editorContent,
-				});
-			} catch (error) {
-				console.error('Error updating lesson:', error);
+				await Promise.all(
+					updatedQuestions.map(async (question) => {
+						const trackData = isQuestionUpdated.find((data) => data.questionId === question._id);
+						if (trackData?.isUpdated) {
+							try {
+								const { questionType, ...questionWithoutType } = question;
+								await axios.patch(`${base_url}/questions/${question._id}`, questionWithoutType);
+							} catch (error) {
+								console.error('Error updating question:', error);
+							}
+						}
+					})
+				);
 			}
-		}
 
-		const questionUpdateData: QuestionUpdateTrack[] = updatedQuestions.map((question) => ({
-			questionId: question._id,
-			isUpdated: false,
-		}));
-		setIsQuestionUpdated(questionUpdateData);
-		fetchQuestions(questionsPageNumber);
-		setEditorContent('');
-		setPrevEditorContent('');
+			const updatedQuestionIds = updatedQuestions.map((question) => question._id);
+
+			if (isLessonUpdated || isQuestionUpdated.some((data) => data.isUpdated === true)) {
+				try {
+					await axios.patch(`${base_url}/lessons/${lessonId}`, {
+						...singleLessonBeforeSave,
+						questionIds: updatedQuestionIds,
+						text: singleLessonBeforeSave.type === 'Quiz' ? '' : editorContent,
+						documentIds: updatedDocumentIds,
+					});
+
+					updateLessons(singleLessonBeforeSave);
+					setSingleLesson({
+						...singleLessonBeforeSave,
+						questionIds: updatedQuestionIds,
+						text: singleLessonBeforeSave.type === 'Quiz' ? '' : editorContent,
+						documentIds: updatedDocumentIds,
+					});
+				} catch (error) {
+					console.error('Error updating lesson:', error);
+				}
+			}
+
+			const questionUpdateData: QuestionUpdateTrack[] = updatedQuestions.map((question) => ({
+				questionId: question._id,
+				isUpdated: false,
+			}));
+			setIsQuestionUpdated(questionUpdateData);
+			fetchQuestions(questionsPageNumber);
+			setEditorContent('');
+			setPrevEditorContent('');
+			setIsLessonUpdated(false);
+		} catch (error) {
+			console.error('Error during lesson update process:', error);
+		}
 	};
 
 	const removeQuestion = (question: QuestionInterface) => {
@@ -311,8 +419,6 @@ const AdminLessonEditPage = () => {
 			};
 		});
 	};
-
-	console.log(editorContent);
 
 	return (
 		<DashboardPagesLayout pageName='Edit Lesson' customSettings={{ justifyContent: 'flex-start' }}>
@@ -391,6 +497,23 @@ const AdminLessonEditPage = () => {
 							setIsDisplayNonEditQuestion={setIsDisplayNonEditQuestion}
 							setDisplayedQuestionNonEdit={setDisplayedQuestionNonEdit}
 						/>
+
+						<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', width: '90%', margin: '2rem 0 4rem 0' }}>
+							<Box>
+								<Typography variant='h4' sx={{ mb: '1.25rem' }}>
+									Lesson Materials
+								</Typography>
+							</Box>
+							{singleLesson.documents
+								?.filter((doc) => doc !== null)
+								.map((doc) => (
+									<Box sx={{ mb: '0.5rem' }} key={doc._id}>
+										<Link href={doc?.documentUrl} target='_blank' rel='noopener noreferrer' variant='body2'>
+											{doc?.name}
+										</Link>
+									</Box>
+								))}
+						</Box>
 					</Box>
 				)}
 
@@ -627,12 +750,12 @@ const AdminLessonEditPage = () => {
 										onReorder={(newQuestions): void => {
 											setIsLessonUpdated(true);
 											setSingleLessonBeforeSave((prevData) => {
-												return { ...prevData, questions: newQuestions, questionIds: newQuestions.map((question) => question._id) };
+												return { ...prevData, questions: newQuestions, questionIds: newQuestions?.map((question) => question._id) };
 											});
 										}}>
 										{singleLessonBeforeSave.questions &&
 											singleLessonBeforeSave.questions.length !== 0 &&
-											singleLessonBeforeSave.questions.map((question, index) => {
+											singleLessonBeforeSave.questions?.map((question, index) => {
 												const filteredQuestionType = questionTypes.filter((type) => {
 													if (question !== null) {
 														return type._id === question.questionType || type.name === question.questionType;
@@ -759,6 +882,160 @@ const AdminLessonEditPage = () => {
 									</Reorder.Group>
 								</Box>
 							)}
+							<Box sx={{ margin: '2rem 0 1rem 0' }}>
+								<HandleDocUploadURL
+									label='Lesson Materials'
+									onDocUploadLogic={(url, docName) => {
+										setIsLessonUpdated(true);
+
+										setSingleLessonBeforeSave((prevData) => {
+											if (prevData && userId) {
+												const maxNumber = prevData.documents
+													.filter((doc) => doc !== null)
+													.reduce((max, doc) => {
+														const match = doc.name.match(/Untitled Document (\d+)/);
+														const num = match ? parseInt(match[1], 10) : 0;
+														return num > max ? num : max;
+													}, 0);
+
+												const newName = docName || `Untitled Document ${maxNumber + 1}`;
+												return {
+													...prevData,
+													documents: [
+														{ _id: generateUniqueId('temp_doc_id_'), name: newName, documentUrl: url, orgId, userId, createdAt: '', updatedAt: '' },
+														...prevData.documents,
+													],
+												};
+											}
+											return prevData;
+										});
+									}}
+									enterDocUrl={enterDocUrl}
+									setEnterDocUrl={setEnterDocUrl}
+									docFolderName='Lesson Materials'
+									addNewDocumentModalOpen={addNewDocumentModalOpen}
+									setAddNewDocumentModalOpen={setAddNewDocumentModalOpen}
+									setSingleLessonBeforeSave={setSingleLessonBeforeSave}
+									singleLessonBeforeSave={singleLessonBeforeSave}
+									setIsLessonUpdated={setIsLessonUpdated}
+								/>
+							</Box>
+							<Box sx={{ marginBottom: '5rem' }}>
+								{singleLessonBeforeSave.documents &&
+									singleLessonBeforeSave.documents
+										?.filter((document) => document !== null)
+										.map((document, index) => (
+											<Box
+												key={index}
+												sx={{
+													display: 'flex',
+													flexDirection: 'column',
+													justifyContent: 'space-between',
+													alignItems: 'flex-start',
+													mb: '1rem',
+													width: '30%',
+												}}>
+												<Box sx={{ mb: '0.25rem' }}>
+													<Link href={document?.documentUrl} target='_blank' rel='noopener noreferrer' variant='body2'>
+														{document?.name}
+													</Link>
+												</Box>
+												<Box sx={{ display: 'flex', alignItems: 'center' }}>
+													<Typography
+														variant='body2'
+														sx={{
+															mr: '0.5rem',
+															':hover': {
+																textDecoration: 'underline',
+																cursor: 'pointer',
+															},
+														}}
+														onClick={() => {
+															setIsLessonUpdated(true);
+															setSingleLessonBeforeSave((prevData) => {
+																if (prevData) {
+																	const filteredDocuments = prevData.documents?.filter((thisDoc) => thisDoc._id !== document._id);
+																	const filteredDocumentsIds = filteredDocuments?.map((doc) => doc._id);
+
+																	return {
+																		...prevData,
+																		documents: filteredDocuments,
+																		documentsIds: filteredDocumentsIds,
+																	};
+																}
+																return prevData;
+															});
+														}}>
+														Remove
+													</Typography>
+													<Typography
+														variant='body2'
+														onClick={() => toggleDocRenameModal(index, document)}
+														sx={{
+															':hover': {
+																textDecoration: 'underline',
+																cursor: 'pointer',
+															},
+														}}>
+														Rename
+													</Typography>
+													<CustomDialog openModal={isDocRenameModalOpen[index]} closeModal={() => closeDocRenameModal(index, document)}>
+														<form
+															style={{ display: 'flex', flexDirection: 'column' }}
+															onSubmit={(e: React.FormEvent<HTMLFormElement>) => {
+																e.preventDefault();
+															}}>
+															<CustomTextField
+																fullWidth={false}
+																required={true}
+																label='Rename Document'
+																value={document.name}
+																sx={{ margin: '2rem 1rem 3rem 1rem' }}
+																onChange={(e) => {
+																	setSingleLessonBeforeSave((prevData) => {
+																		if (prevData) {
+																			const updatedDocuments = prevData.documents
+																				?.filter((document) => document !== null)
+																				.map((thisDoc) => {
+																					if (thisDoc._id === document._id) {
+																						return { ...thisDoc, name: e.target.value };
+																					} else {
+																						return thisDoc;
+																					}
+																				});
+																			return { ...prevData, documents: updatedDocuments };
+																		}
+																		return prevData;
+																	});
+																}}
+															/>
+															<CustomDialogActions
+																onCancel={() => closeDocRenameModal(index, document)}
+																submitBtnText='Save'
+																submitBtnType='button'
+																actionSx={{ mt: '1rem' }}
+																onSubmit={() => {
+																	saveDocRename(index);
+																	setIsDocumentUpdated((prevData) => {
+																		if (prevData) {
+																			return prevData.map((data) => {
+																				if (data.documentId === document._id) {
+																					return { ...data, isUpdated: true };
+																				}
+																				return data;
+																			});
+																		}
+																		return prevData;
+																	});
+																}}
+																disableBtn={document.name.trim() === ''}
+															/>
+														</form>
+													</CustomDialog>
+												</Box>
+											</Box>
+										))}
+							</Box>
 						</form>
 					</Box>
 				)}

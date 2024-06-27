@@ -44,7 +44,7 @@ export class ChapterLessonDataImpl implements ChapterLessonData {
 		this.chapterId = chapterId;
 		this.title = title;
 		this.lessons = lessons;
-		this._lessonIds = lessons.map((lesson) => lesson._id);
+		this._lessonIds = lessons?.map((lesson) => lesson._id);
 	}
 
 	// Implement the getter and setter for lessonIds
@@ -215,20 +215,20 @@ const AdminCourseEditPage = () => {
 				const updatedCourse = {
 					...singleCourse,
 					chapters: updatedChapters,
-					chapterIds: updatedChapters.map((chapter) => chapter.chapterId),
+					chapterIds: updatedChapters?.map((chapter) => chapter.chapterId),
 				};
 
 				try {
 					await axios.patch(`${base_url}/courses/${courseId}`, {
 						...updatedCourse,
-						chapterIds: updatedChapters.map((chapter) => chapter.chapterId),
+						chapterIds: updatedChapters?.map((chapter) => chapter.chapterId),
 					});
 
 					updateCourse(updatedCourse);
 					setSingleCourse(updatedCourse);
 
 					await Promise.all(
-						updatedChapters.map(async (chapter) => {
+						updatedChapters?.map(async (chapter) => {
 							const trackData = isChapterUpdated.find((data) => data.chapterId === chapter.chapterId);
 							if (trackData?.isUpdated) {
 								try {
@@ -247,7 +247,7 @@ const AdminCourseEditPage = () => {
 			if (deletedChapterIds.length > 0) {
 				try {
 					await Promise.all(
-						deletedChapterIds.map(async (chapterId) => {
+						deletedChapterIds?.map(async (chapterId) => {
 							try {
 								await axios.delete(`${base_url}/chapters/${chapterId}`);
 							} catch (error) {
@@ -260,7 +260,7 @@ const AdminCourseEditPage = () => {
 				}
 			}
 
-			setIsChapterUpdated((prevData) => prevData.map((data) => ({ ...data, isUpdated: false })));
+			setIsChapterUpdated((prevData) => prevData?.map((data) => ({ ...data, isUpdated: false })));
 			setDeletedChapterIds([]);
 		} catch (error) {
 			console.error('Error updating course:', error);

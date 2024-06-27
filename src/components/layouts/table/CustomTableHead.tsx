@@ -16,7 +16,7 @@ const CustomTableHead = <T,>({ orderBy, order, handleSort, columns }: CustomTabl
 	return (
 		<TableHead>
 			<TableRow>
-				{columns.map((column, index) => (
+				{columns?.map((column, index) => (
 					<TableCell key={index} sx={{ textAlign: 'center' }}>
 						<TableSortLabel
 							active={orderBy === column.key}

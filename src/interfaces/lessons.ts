@@ -1,3 +1,4 @@
+import { Document } from './document';
 import { QuestionInterface } from './question';
 
 interface BaseLesson {
@@ -16,6 +17,8 @@ interface BaseLesson {
 export interface Lesson extends BaseLesson {
 	questionIds: string[];
 	questions: QuestionInterface[];
+	documentIds: string[];
+	documents: Document[];
 }
 
 export interface LessonById extends BaseLesson {

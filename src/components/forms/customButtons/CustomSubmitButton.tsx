@@ -8,15 +8,10 @@ interface CustomSubmitButtonProps {
 	variant?: ButtonOwnProps['variant'];
 	sx?: React.CSSProperties;
 	onClick?: (event?: MouseEvent<HTMLButtonElement> | FormEvent<Element>) => void;
+	disabled?: boolean;
 }
 
-const CustomSubmitButton = ({
-	children,
-	type = 'submit',
-	variant = 'contained',
-	sx,
-	onClick,
-}: CustomSubmitButtonProps) => {
+const CustomSubmitButton = ({ children, type = 'submit', variant = 'contained', sx, onClick, disabled }: CustomSubmitButtonProps) => {
 	const handleClick = (event: MouseEvent<HTMLButtonElement> | FormEvent<Element>) => {
 		if (onClick) {
 			onClick(event);
@@ -26,6 +21,7 @@ const CustomSubmitButton = ({
 		<Button
 			type={type}
 			variant={variant}
+			disabled={disabled}
 			sx={{
 				...sx,
 				textTransform: 'capitalize',

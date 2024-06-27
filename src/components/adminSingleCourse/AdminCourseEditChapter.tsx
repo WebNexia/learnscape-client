@@ -227,7 +227,7 @@ const AdminCourseEditChapter = ({
 																	return prevData.map((currentChapter) => {
 																		if (currentChapter.chapterId === chapter?.chapterId) {
 																			const updatedLessons = currentChapter.lessons.filter((currentLesson) => currentLesson._id !== lesson._id);
-																			const updatedLessonIds = updatedLessons.map((lesson) => lesson._id);
+																			const updatedLessonIds = updatedLessons?.map((lesson) => lesson._id);
 																			return {
 																				...currentChapter,
 																				lessons: updatedLessons,

@@ -11,6 +11,7 @@ import {
 	CalendarMonth,
 	DarkMode,
 	Email,
+	FilePresent,
 	Groups,
 	LibraryBooks,
 	LightMode,
@@ -115,8 +116,8 @@ const Loading = () => {
 						src={user?.imageUrl}
 						alt='user_profile_pic'
 						style={{
-							height: '6rem',
-							width: '6rem',
+							height: '3rem',
+							width: '3rem',
 							borderRadius: '50%',
 							marginBottom: '0.5rem',
 						}}
@@ -130,7 +131,7 @@ const Loading = () => {
 							flexDirection: 'column',
 							justifyContent: 'flex-start',
 							alignItems: 'flex-start',
-							marginTop: '2rem',
+							marginTop: '1.5rem',
 						}}>
 						{user?.role === Roles.ADMIN && (
 							<>
@@ -139,6 +140,7 @@ const Loading = () => {
 								<SidebarBtn btnText='Courses' IconName={LibraryBooks} selectedPage={selectedPage} />
 								<SidebarBtn btnText='Lessons' IconName={AssignmentIndRounded} selectedPage={selectedPage} />
 								<SidebarBtn btnText='Questions' IconName={QuizOutlined} selectedPage={selectedPage} />
+								<SidebarBtn btnText='Documents' IconName={FilePresent} selectedPage={selectedPage} />
 								<SidebarBtn btnText='Schedule' IconName={CalendarMonth} selectedPage={selectedPage} />
 								<SidebarBtn btnText='Messages' IconName={Email} selectedPage={selectedPage} />
 								<SidebarBtn btnText='Community' IconName={Groups} selectedPage={selectedPage} />

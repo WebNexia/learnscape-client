@@ -1,13 +1,16 @@
 import { TableCell, Typography } from '@mui/material';
+import { ReactNode } from 'react';
 
 interface CustomTableCellProps {
-	value: string | boolean | number; // Adjust the type as needed
+	children?: ReactNode;
+	value?: string | boolean | number;
 }
 
-const CustomTableCell = ({ value }: CustomTableCellProps) => {
+const CustomTableCell = ({ children, value }: CustomTableCellProps) => {
 	return (
 		<TableCell sx={{ textAlign: 'center' }}>
 			<Typography variant='body2'>{value}</Typography>
+			{children}
 		</TableCell>
 	);
 };

@@ -12,7 +12,7 @@ export const questionLessonUpdateTrack = (
 
 	if (setIsQuestionUpdated) {
 		setIsQuestionUpdated((prevData: QuestionUpdateTrack[]) => {
-			return prevData.map((data) => {
+			return prevData?.map((data) => {
 				if (data.questionId === questionId) {
 					return {
 						...data,

@@ -66,6 +66,8 @@ const CreateLessonDialog = ({
 			createdAt: '',
 			updatedAt: '',
 			orgId,
+			documentIds: [],
+			documents: [],
 		};
 		if (setLessons) {
 			setLessons((prevData) => {
@@ -87,7 +89,7 @@ const CreateLessonDialog = ({
 							return {
 								...currentChapter,
 								lessons: updatedLessons,
-								lessonIds: updatedLessons.map((lesson: Lesson) => lesson._id),
+								lessonIds: updatedLessons?.map((lesson: Lesson) => lesson._id),
 							};
 						}
 						return currentChapter; // Return unchanged chapter if not the one being updated

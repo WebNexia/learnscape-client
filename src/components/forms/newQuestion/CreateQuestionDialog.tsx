@@ -27,10 +27,10 @@ import { QuestionsContext } from '../../../contexts/QuestionsContextProvider';
 import CustomErrorMessage from '../customFields/CustomErrorMessage';
 import useImageUpload from '../../../hooks/useImageUpload';
 import useVideoUpload from '../../../hooks/useVideoUpload';
-import HandleImageUploadURL from '../uploadImageVideo/HandleImageUploadURL';
-import HandleVideoUploadURL from '../uploadImageVideo/HandleVideoUploadURL';
-import ImageThumbnail from '../uploadImageVideo/ImageThumbnail';
-import VideoThumbnail from '../uploadImageVideo/VideoThumbnail';
+import HandleImageUploadURL from '../uploadImageVideoDocument/HandleImageUploadURL';
+import HandleVideoUploadURL from '../uploadImageVideoDocument/HandleVideoUploadURL';
+import ImageThumbnail from '../uploadImageVideoDocument/ImageThumbnail';
+import VideoThumbnail from '../uploadImageVideoDocument/VideoThumbnail';
 import TinyMceEditor from '../../richTextEditor/TinyMceEditor';
 import TrueFalseOptions from '../../layouts/questionTypes/TrueFalseOptions';
 
