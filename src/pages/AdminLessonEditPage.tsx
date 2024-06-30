@@ -296,9 +296,7 @@ const AdminLessonEditPage = () => {
 					});
 
 				const updatedDocumentsWithNulls = await Promise.all(updatedDocumentsPromises);
-				console.log('updatedDocumentsWithNulls Lesson: ' + updatedDocumentsWithNulls);
 				updatedDocuments = updatedDocumentsWithNulls.filter((doc): doc is Document => doc !== null);
-				console.log('updatedDocuments Lesson' + updatedDocuments);
 			}
 
 			await Promise.all(
@@ -629,7 +627,7 @@ const AdminLessonEditPage = () => {
 							<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mt: '2rem', width: '100%' }}>
 								<Box sx={{ flex: 1, mr: '2rem' }}>
 									<HandleImageUploadURL
-										label='Lesson Image'
+										label='Cover Image'
 										onImageUploadLogic={(url) => {
 											setIsLessonUpdated(true);
 
@@ -705,211 +703,213 @@ const AdminLessonEditPage = () => {
 								</Box>
 							</Box>
 
-							{singleLessonBeforeSave.type === 'Instructional Lesson' && (
-								<Box sx={{ mt: '5rem' }}>
-									<Typography variant='h6' sx={{ mb: '1rem' }}>
-										Lesson Instructions
-									</Typography>
-									<TinyMceEditor
-										height={400}
-										handleEditorChange={(content) => {
-											setEditorContent(content);
-											setPrevEditorContent(content);
-											setIsLessonUpdated(true);
-										}}
-										initialValue={singleLesson.text}
-									/>
-								</Box>
-							)}
-
-							<Box
-								sx={{
-									display: 'flex',
-									justifyContent: 'space-between',
-									alignItems: 'center',
-									width: '100%',
-									mt: '5rem',
-								}}>
-								<Typography variant='h4' sx={{ mb: '1rem' }}>
-									Questions
+							<Box sx={{ mt: '5rem' }}>
+								<Typography variant='h6' sx={{ mb: '1rem' }}>
+									{singleLessonBeforeSave.type === 'Instructional Lesson' ? 'Lesson Instructions' : 'Instructions'}
 								</Typography>
-								<Box>
-									<CustomSubmitButton
-										type='button'
-										sx={{ margin: '0 0.5rem 1rem 0' }}
-										onClick={() => {
-											setAddNewQuestionModalOpen(true);
-										}}>
-										Add Question
-									</CustomSubmitButton>
-
-									<AddNewQuestionDialog
-										addNewQuestionModalOpen={addNewQuestionModalOpen}
-										singleLessonBeforeSave={singleLessonBeforeSave}
-										setAddNewQuestionModalOpen={setAddNewQuestionModalOpen}
-										setIsLessonUpdated={setIsLessonUpdated}
-										setSingleLessonBeforeSave={setSingleLessonBeforeSave}
-										setIsQuestionUpdated={setIsQuestionUpdated}
-									/>
-
-									<CustomSubmitButton
-										type='button'
-										sx={{ marginBottom: '1rem' }}
-										onClick={() => {
-											setIsQuestionCreateModalOpen(true);
-											setQuestionType('');
-											setOptions(['']);
-											setCorrectAnswer('');
-											setIsDuplicateOption(false);
-											setIsMinimumOptions(true);
-											setCorrectAnswerIndex(-1);
-										}}>
-										Create Question
-									</CustomSubmitButton>
-								</Box>
+								<TinyMceEditor
+									height={400}
+									handleEditorChange={(content) => {
+										setEditorContent(content);
+										setPrevEditorContent(content);
+										setIsLessonUpdated(true);
+									}}
+									initialValue={singleLesson.text}
+								/>
 							</Box>
 
-							{singleLessonBeforeSave?.questionIds.length === 0 ||
-							singleLessonBeforeSave?.questions?.filter((question) => question !== null).length === 0 ? (
-								<Box
-									sx={{
-										display: 'flex',
-										justifyContent: 'center',
-										alignItems: 'center',
-										height: '30vh',
-									}}>
-									<Typography variant='body1'>No question for this lesson</Typography>
-								</Box>
-							) : (
-								<Box sx={{ mb: '5rem' }}>
-									<Reorder.Group
-										axis='y'
-										values={singleLessonBeforeSave.questions}
-										onReorder={(newQuestions): void => {
-											setIsLessonUpdated(true);
-											setSingleLessonBeforeSave((prevData) => {
-												return { ...prevData, questions: newQuestions, questionIds: newQuestions?.map((question) => question._id) };
-											});
+							{singleLessonBeforeSave.type !== 'Instructional Lesson' && (
+								<>
+									<Box
+										sx={{
+											display: 'flex',
+											justifyContent: 'space-between',
+											alignItems: 'center',
+											width: '100%',
+											mt: '5rem',
 										}}>
-										{singleLessonBeforeSave.questions &&
-											singleLessonBeforeSave.questions.length !== 0 &&
-											singleLessonBeforeSave.questions?.map((question, index) => {
-												if (question !== null) {
-													return (
-														<Reorder.Item
-															key={question._id}
-															value={question}
-															style={{
-																listStyle: 'none',
-																boxShadow,
-															}}>
-															<Box
-																key={question._id}
-																sx={{
-																	display: 'flex',
-																	alignItems: 'center',
-																	height: '3rem',
-																	width: '100%',
-																	backgroundColor: theme.bgColor?.common,
-																	margin: '1rem 0',
-																	borderRadius: '0.25rem',
-																	boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
-																	cursor: 'pointer',
-																}}>
-																<Box
-																	sx={{
-																		height: '3rem',
-																		width: '2rem',
-																	}}>
-																	<img
-																		src='https://images.unsplash.com/photo-1601027847350-0285867c31f7?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8N3x8cXVlc3Rpb24lMjBtYXJrfGVufDB8fDB8fHww'
-																		alt='question_img'
-																		height='100%'
-																		width='100%'
-																		style={{
-																			borderRadius: '0.25rem 0 0 0.25rem',
-																		}}
-																	/>
-																</Box>
-																<Box
-																	sx={{
-																		display: 'flex',
-																		justifyContent: 'space-between',
-																		alignItems: 'center',
-																		width: '100%',
-																		margin: '0 1rem',
-																	}}>
-																	<Box sx={{ width: '35%' }}>
-																		<Typography variant='body2'>{truncateText(stripHtml(question.question), 45)}</Typography>
-																	</Box>
+										<Typography variant='h4' sx={{ mb: '1rem' }}>
+											Questions
+										</Typography>
+										<Box>
+											<CustomSubmitButton
+												type='button'
+												sx={{ margin: '0 0.5rem 1rem 0' }}
+												onClick={() => {
+													setAddNewQuestionModalOpen(true);
+												}}>
+												Add Question
+											</CustomSubmitButton>
 
-																	<Box>
-																		<Typography variant='body2'>{fetchQuestionTypeName(question)}</Typography>
-																	</Box>
+											<AddNewQuestionDialog
+												addNewQuestionModalOpen={addNewQuestionModalOpen}
+												singleLessonBeforeSave={singleLessonBeforeSave}
+												setAddNewQuestionModalOpen={setAddNewQuestionModalOpen}
+												setIsLessonUpdated={setIsLessonUpdated}
+												setSingleLessonBeforeSave={setSingleLessonBeforeSave}
+												setIsQuestionUpdated={setIsQuestionUpdated}
+											/>
 
-																	<Box sx={{ display: 'flex' }}>
-																		<Box>
-																			<Tooltip title='Clone' placement='top'>
-																				<IconButton
-																					onClick={() => {
-																						// cloneQuestion(question);
-																					}}>
-																					<FileCopy />
-																				</IconButton>
-																			</Tooltip>
-																		</Box>
-																		<Box>
-																			<Tooltip title='Edit' placement='top'>
-																				<IconButton
-																					onClick={() => {
-																						setOptions(question.options);
-																						setCorrectAnswer(question.correctAnswer);
-																						const correctAnswerIndex = question.options.indexOf(question.correctAnswer);
-																						setCorrectAnswerIndex(correctAnswerIndex);
-																						toggleQuestionEditModal(index);
-																					}}>
-																					<Edit />
-																				</IconButton>
-																			</Tooltip>
-																			<EditQuestionDialog
-																				fromLessonEditPage={true}
-																				question={question}
-																				correctAnswerIndex={correctAnswerIndex}
-																				index={index}
-																				options={options}
-																				correctAnswer={correctAnswer}
-																				questionType={fetchQuestionTypeName(question)}
-																				isMinimumOptions={isMinimumOptions}
-																				isDuplicateOption={isDuplicateOption}
-																				setSingleLessonBeforeSave={setSingleLessonBeforeSave}
-																				setIsLessonUpdated={setIsLessonUpdated}
-																				handleCorrectAnswerChange={handleCorrectAnswerChange}
-																				setCorrectAnswerIndex={setCorrectAnswerIndex}
-																				handleOptionChange={handleOptionChange}
-																				closeQuestionEditModal={closeQuestionEditModal}
-																				setIsQuestionUpdated={setIsQuestionUpdated}
-																				editQuestionModalOpen={editQuestionModalOpen}
-																				addOption={addOption}
-																				removeOption={removeOption}
-																				setCorrectAnswer={setCorrectAnswer}
-																				setIsDuplicateOption={setIsDuplicateOption}
-																				setIsMinimumOptions={setIsMinimumOptions}
+											<CustomSubmitButton
+												type='button'
+												sx={{ marginBottom: '1rem' }}
+												onClick={() => {
+													setIsQuestionCreateModalOpen(true);
+													setQuestionType('');
+													setOptions(['']);
+													setCorrectAnswer('');
+													setIsDuplicateOption(false);
+													setIsMinimumOptions(true);
+													setCorrectAnswerIndex(-1);
+												}}>
+												Create Question
+											</CustomSubmitButton>
+										</Box>
+									</Box>
+
+									{singleLessonBeforeSave?.questionIds.length === 0 ||
+									singleLessonBeforeSave?.questions?.filter((question) => question !== null).length === 0 ? (
+										<Box
+											sx={{
+												display: 'flex',
+												justifyContent: 'center',
+												alignItems: 'center',
+												height: '30vh',
+											}}>
+											<Typography variant='body1'>No question for this lesson</Typography>
+										</Box>
+									) : (
+										<Box sx={{ mb: '5rem' }}>
+											<Reorder.Group
+												axis='y'
+												values={singleLessonBeforeSave.questions}
+												onReorder={(newQuestions): void => {
+													setIsLessonUpdated(true);
+													setSingleLessonBeforeSave((prevData) => {
+														return { ...prevData, questions: newQuestions, questionIds: newQuestions?.map((question) => question._id) };
+													});
+												}}>
+												{singleLessonBeforeSave.questions &&
+													singleLessonBeforeSave.questions.length !== 0 &&
+													singleLessonBeforeSave.questions?.map((question, index) => {
+														if (question !== null) {
+															return (
+																<Reorder.Item
+																	key={question._id}
+																	value={question}
+																	style={{
+																		listStyle: 'none',
+																		boxShadow,
+																	}}>
+																	<Box
+																		key={question._id}
+																		sx={{
+																			display: 'flex',
+																			alignItems: 'center',
+																			height: '3rem',
+																			width: '100%',
+																			backgroundColor: theme.bgColor?.common,
+																			margin: '1rem 0',
+																			borderRadius: '0.25rem',
+																			boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
+																			cursor: 'pointer',
+																		}}>
+																		<Box
+																			sx={{
+																				height: '3rem',
+																				width: '2rem',
+																			}}>
+																			<img
+																				src='https://images.unsplash.com/photo-1601027847350-0285867c31f7?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8N3x8cXVlc3Rpb24lMjBtYXJrfGVufDB8fDB8fHww'
+																				alt='question_img'
+																				height='100%'
+																				width='100%'
+																				style={{
+																					borderRadius: '0.25rem 0 0 0.25rem',
+																				}}
 																			/>
 																		</Box>
-																		<Tooltip title='Remove' placement='top'>
-																			<IconButton onClick={() => removeQuestion(question)}>
-																				<Delete />
-																			</IconButton>
-																		</Tooltip>
+																		<Box
+																			sx={{
+																				display: 'flex',
+																				justifyContent: 'space-between',
+																				alignItems: 'center',
+																				width: '100%',
+																				margin: '0 1rem',
+																			}}>
+																			<Box sx={{ width: '35%' }}>
+																				<Typography variant='body2'>{truncateText(stripHtml(question.question), 45)}</Typography>
+																			</Box>
+
+																			<Box>
+																				<Typography variant='body2'>{fetchQuestionTypeName(question)}</Typography>
+																			</Box>
+
+																			<Box sx={{ display: 'flex' }}>
+																				<Box>
+																					<Tooltip title='Clone' placement='top'>
+																						<IconButton
+																							onClick={() => {
+																								// cloneQuestion(question);
+																							}}>
+																							<FileCopy />
+																						</IconButton>
+																					</Tooltip>
+																				</Box>
+																				<Box>
+																					<Tooltip title='Edit' placement='top'>
+																						<IconButton
+																							onClick={() => {
+																								setOptions(question.options);
+																								setCorrectAnswer(question.correctAnswer);
+																								const correctAnswerIndex = question.options.indexOf(question.correctAnswer);
+																								setCorrectAnswerIndex(correctAnswerIndex);
+																								toggleQuestionEditModal(index);
+																							}}>
+																							<Edit />
+																						</IconButton>
+																					</Tooltip>
+																					<EditQuestionDialog
+																						fromLessonEditPage={true}
+																						question={question}
+																						correctAnswerIndex={correctAnswerIndex}
+																						index={index}
+																						options={options}
+																						correctAnswer={correctAnswer}
+																						questionType={fetchQuestionTypeName(question)}
+																						isMinimumOptions={isMinimumOptions}
+																						isDuplicateOption={isDuplicateOption}
+																						setSingleLessonBeforeSave={setSingleLessonBeforeSave}
+																						setIsLessonUpdated={setIsLessonUpdated}
+																						handleCorrectAnswerChange={handleCorrectAnswerChange}
+																						setCorrectAnswerIndex={setCorrectAnswerIndex}
+																						handleOptionChange={handleOptionChange}
+																						closeQuestionEditModal={closeQuestionEditModal}
+																						setIsQuestionUpdated={setIsQuestionUpdated}
+																						editQuestionModalOpen={editQuestionModalOpen}
+																						addOption={addOption}
+																						removeOption={removeOption}
+																						setCorrectAnswer={setCorrectAnswer}
+																						setIsDuplicateOption={setIsDuplicateOption}
+																						setIsMinimumOptions={setIsMinimumOptions}
+																					/>
+																				</Box>
+																				<Tooltip title='Remove' placement='top'>
+																					<IconButton onClick={() => removeQuestion(question)}>
+																						<Delete />
+																					</IconButton>
+																				</Tooltip>
+																			</Box>
+																		</Box>
 																	</Box>
-																</Box>
-															</Box>
-														</Reorder.Item>
-													);
-												}
-											})}
-									</Reorder.Group>
-								</Box>
+																</Reorder.Item>
+															);
+														}
+													})}
+											</Reorder.Group>
+										</Box>
+									)}
+								</>
 							)}
 							<Box sx={{ margin: '2rem 0 1rem 0' }}>
 								<HandleDocUploadURL

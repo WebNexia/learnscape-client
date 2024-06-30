@@ -48,7 +48,7 @@ const LessonsContextProvider = (props: LessonsContextProviderProps) => {
 
 	const [isLoaded, setIsLoaded] = useState<boolean>(false);
 
-	const lessonTypes: string[] = ['Instructional Lesson', 'Quiz'];
+	const lessonTypes: string[] = ['Instructional Lesson', 'Practice Lesson', 'Quiz'];
 
 	const fetchLessons = async (page: number) => {
 		if (!orgId) return;
