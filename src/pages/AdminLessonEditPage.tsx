@@ -32,7 +32,6 @@ import { truncateText } from '../utils/utilText';
 import ImageThumbnail from '../components/forms/uploadImageVideoDocument/ImageThumbnail';
 import VideoThumbnail from '../components/forms/uploadImageVideoDocument/VideoThumbnail';
 import LessonImageCourseDisplay from '../components/adminSingleLesson/LessonImageCourseDisplay';
-import { questionTypeNameFinder } from '../utils/questionTypeNameFinder';
 import { sanitizeHtml } from '../utils/sanitizeHtml';
 import TinyMceEditor from '../components/richTextEditor/TinyMceEditor';
 import { Document } from '../interfaces/document';
@@ -54,9 +53,9 @@ export interface DocumentUpdateTrack {
 const AdminLessonEditPage = () => {
 	const { userId, lessonId } = useParams();
 	const { orgId } = useContext(OrganisationContext);
-	const { updateLessonPublishing, updateLessons, lessonTypes } = useContext(LessonsContext);
+	const { updateLessonPublishing, updateLessons, lessonTypes, fetchLessons, lessonsPageNumber } = useContext(LessonsContext);
 
-	const { questionTypes, fetchQuestions, questionsPageNumber } = useContext(QuestionsContext);
+	const { questionTypes, fetchQuestions, questionsPageNumber, fetchQuestionTypeName } = useContext(QuestionsContext);
 	const { fetchDocuments, documentsPageNumber } = useContext(DocumentsContext);
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
@@ -270,8 +269,8 @@ const AdminLessonEditPage = () => {
 
 		try {
 			if (singleLessonBeforeSave?.documents) {
-				const updatedDocumentsPromises = (singleLessonBeforeSave.documents as (Document | null)[]) // Assert as array of Document or null
-					.filter((doc): doc is Document => doc !== null) // Type guard to filter out nulls
+				const updatedDocumentsPromises = (singleLessonBeforeSave.documents as (Document | null)[])
+					.filter((doc): doc is Document => doc !== null)
 					.map(async (document) => {
 						if (document._id.includes('temp_doc_id')) {
 							try {
@@ -282,7 +281,12 @@ const AdminLessonEditPage = () => {
 									documentUrl: document.documentUrl,
 								});
 								fetchDocuments(documentsPageNumber);
-								return { ...document, _id: response.data._id, createdAt: response.data.createdAt, updatedAt: response.data.updatedAt } as Document; // Assert as Document
+								return {
+									...document,
+									_id: response.data._id,
+									createdAt: response.data.createdAt,
+									updatedAt: response.data.updatedAt,
+								} as Document;
 							} catch (error) {
 								console.error('Error creating document:', error);
 								return null;
@@ -291,8 +295,10 @@ const AdminLessonEditPage = () => {
 						return document;
 					});
 
-				const updatedQuestionsWithNulls = await Promise.all(updatedDocumentsPromises);
-				updatedDocuments = updatedQuestionsWithNulls.filter((doc): doc is Document => doc !== null); // Type guard to filter out remaining nulls
+				const updatedDocumentsWithNulls = await Promise.all(updatedDocumentsPromises);
+				console.log('updatedDocumentsWithNulls Lesson: ' + updatedDocumentsWithNulls);
+				updatedDocuments = updatedDocumentsWithNulls.filter((doc): doc is Document => doc !== null);
+				console.log('updatedDocuments Lesson' + updatedDocuments);
 			}
 
 			await Promise.all(
@@ -305,7 +311,7 @@ const AdminLessonEditPage = () => {
 							});
 							fetchDocuments(documentsPageNumber);
 						} catch (error) {
-							console.error('Error updating question:', error);
+							console.error('Error updating document:', error);
 						}
 					}
 				})
@@ -331,12 +337,13 @@ const AdminLessonEditPage = () => {
 										questionType: questionTypeId,
 										isActive: true,
 									});
+									fetchQuestions(questionsPageNumber);
 									return {
 										...question,
 										_id: response.data._id,
 										createdAt: response.data.createdAt,
 										updatedAt: response.data.updatedAt,
-									} as QuestionInterface; // Assert as QuestionInterface
+									} as QuestionInterface;
 								} catch (error) {
 									console.error('Error creating question:', error);
 									return null;
@@ -356,6 +363,7 @@ const AdminLessonEditPage = () => {
 							try {
 								const { questionType, ...questionWithoutType } = question;
 								await axios.patch(`${base_url}/questions/${question._id}`, questionWithoutType);
+								fetchQuestions(questionsPageNumber);
 							} catch (error) {
 								console.error('Error updating question:', error);
 							}
@@ -368,19 +376,43 @@ const AdminLessonEditPage = () => {
 
 			if (isLessonUpdated || isQuestionUpdated.some((data) => data.isUpdated === true)) {
 				try {
-					await axios.patch(`${base_url}/lessons/${lessonId}`, {
+					const updatedLesson = {
 						...singleLessonBeforeSave,
 						questionIds: updatedQuestionIds,
 						text: singleLessonBeforeSave.type === 'Quiz' ? '' : editorContent,
 						documentIds: updatedDocumentIds,
+					};
+
+					await axios.patch(`${base_url}/lessons/${lessonId}`, updatedLesson);
+
+					fetchLessons(lessonsPageNumber);
+					updateLessons({
+						...singleLessonBeforeSave,
+						questions: updatedQuestions,
+						questionIds: updatedQuestionIds,
+						text: singleLessonBeforeSave.type === 'Quiz' ? '' : editorContent,
+						documentIds: updatedDocumentIds,
+						documents: updatedDocuments,
 					});
 
-					updateLessons(singleLessonBeforeSave);
 					setSingleLesson({
 						...singleLessonBeforeSave,
+						questions: updatedQuestions,
 						questionIds: updatedQuestionIds,
 						text: singleLessonBeforeSave.type === 'Quiz' ? '' : editorContent,
 						documentIds: updatedDocumentIds,
+						documents: updatedDocuments,
+					});
+
+					setSingleLessonBeforeSave((prevData) => {
+						return {
+							...prevData,
+							questions: updatedQuestions,
+							questionIds: updatedQuestionIds,
+							text: singleLessonBeforeSave.type === 'Quiz' ? '' : editorContent,
+							documentIds: updatedDocumentIds,
+							documents: updatedDocuments,
+						};
 					});
 				} catch (error) {
 					console.error('Error updating lesson:', error);
@@ -391,10 +423,15 @@ const AdminLessonEditPage = () => {
 				questionId: question._id,
 				isUpdated: false,
 			}));
+
 			setIsQuestionUpdated(questionUpdateData);
-			fetchQuestions(questionsPageNumber);
-			setEditorContent('');
-			setPrevEditorContent('');
+
+			const documentUpdateData: DocumentUpdateTrack[] = updatedDocuments.map((document) => ({
+				documentId: document._id,
+				isUpdated: false,
+			}));
+
+			setIsDocumentUpdated(documentUpdateData);
 			setIsLessonUpdated(false);
 		} catch (error) {
 			console.error('Error during lesson update process:', error);
@@ -498,7 +535,7 @@ const AdminLessonEditPage = () => {
 							setDisplayedQuestionNonEdit={setDisplayedQuestionNonEdit}
 						/>
 
-						<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', width: '90%', margin: '2rem 0 4rem 0' }}>
+						<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', width: '90%', margin: '3rem 0 4rem 0' }}>
 							<Box>
 								<Typography variant='h4' sx={{ mb: '1.25rem' }}>
 									Lesson Materials
@@ -680,7 +717,7 @@ const AdminLessonEditPage = () => {
 											setPrevEditorContent(content);
 											setIsLessonUpdated(true);
 										}}
-										initialValue={singleLessonBeforeSave.text}
+										initialValue={singleLesson.text}
 									/>
 								</Box>
 							)}
@@ -698,6 +735,7 @@ const AdminLessonEditPage = () => {
 								</Typography>
 								<Box>
 									<CustomSubmitButton
+										type='button'
 										sx={{ margin: '0 0.5rem 1rem 0' }}
 										onClick={() => {
 											setAddNewQuestionModalOpen(true);
@@ -756,15 +794,6 @@ const AdminLessonEditPage = () => {
 										{singleLessonBeforeSave.questions &&
 											singleLessonBeforeSave.questions.length !== 0 &&
 											singleLessonBeforeSave.questions?.map((question, index) => {
-												const filteredQuestionType = questionTypes.filter((type) => {
-													if (question !== null) {
-														return type._id === question.questionType || type.name === question.questionType;
-													}
-												});
-												let questionTypeName: string = '';
-												if (filteredQuestionType.length !== 0) {
-													questionTypeName = filteredQuestionType[0].name;
-												}
 												if (question !== null) {
 													return (
 														<Reorder.Item
@@ -815,7 +844,7 @@ const AdminLessonEditPage = () => {
 																	</Box>
 
 																	<Box>
-																		<Typography variant='body2'>{questionTypeNameFinder(question.questionType, questionTypes)}</Typography>
+																		<Typography variant='body2'>{fetchQuestionTypeName(question)}</Typography>
 																	</Box>
 
 																	<Box sx={{ display: 'flex' }}>
@@ -849,7 +878,7 @@ const AdminLessonEditPage = () => {
 																				index={index}
 																				options={options}
 																				correctAnswer={correctAnswer}
-																				questionType={questionTypeName}
+																				questionType={fetchQuestionTypeName(question)}
 																				isMinimumOptions={isMinimumOptions}
 																				isDuplicateOption={isDuplicateOption}
 																				setSingleLessonBeforeSave={setSingleLessonBeforeSave}
@@ -922,7 +951,7 @@ const AdminLessonEditPage = () => {
 							</Box>
 
 							<DocumentsListEditBox
-								documentsSource={singleLessonBeforeSave}
+								documentsSource={singleLessonBeforeSave.documents}
 								toggleDocRenameModal={toggleDocRenameModal}
 								closeDocRenameModal={closeDocRenameModal}
 								isDocRenameModalOpen={isDocRenameModalOpen}

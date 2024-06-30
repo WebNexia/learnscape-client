@@ -251,7 +251,6 @@ const CreateQuestionDialog = ({
 				style={{ display: 'flex', flexDirection: 'column' }}
 				onSubmit={(e) => {
 					e.preventDefault();
-					handleSubmit();
 				}}>
 				<DialogContent>
 					<FormControl sx={{ mb: '1rem', width: '15rem', backgroundColor: theme.bgColor?.common }}>
@@ -492,9 +491,10 @@ const CreateQuestionDialog = ({
 						resetEnterImageVideoUrl();
 						resetValues();
 					}}
+					onSubmit={handleSubmit}
 					cancelBtnSx={{ margin: '0 0.5rem 1rem 0' }}
 					submitBtnSx={{ margin: '0 1rem 1rem 0' }}
-					submitBtnType='submit'
+					submitBtnType='button'
 				/>
 			</form>
 		</CustomDialog>

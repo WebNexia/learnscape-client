@@ -180,7 +180,7 @@ const AdminCourseEditChapter = ({
 											height: '2.25rem',
 											width: '100%',
 											backgroundColor: theme.bgColor?.common,
-											margin: '1.25rem 0',
+											margin: '1rem 0',
 											borderRadius: '0.25rem',
 											boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
 											transition: '0.4s',

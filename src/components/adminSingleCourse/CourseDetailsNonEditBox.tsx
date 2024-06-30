@@ -4,7 +4,7 @@ import { SingleCourse } from '../../interfaces/course';
 
 import { ChapterLessonData } from '../../pages/AdminCourseEditPage';
 import { EditTwoTone } from '@mui/icons-material';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { dateFormatter } from '../../utils/dateFormatter';
 
 interface CourseDetailsNonEditBoxProps {
@@ -13,7 +13,6 @@ interface CourseDetailsNonEditBoxProps {
 }
 
 const CourseDetailsNonEditBox = ({ singleCourse, chapters }: CourseDetailsNonEditBoxProps) => {
-	const navigate = useNavigate();
 	const { userId } = useParams();
 	return (
 		<Box
@@ -167,7 +166,7 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters }: CourseDetailsNonEdi
 																	<Tooltip title='Edit Lesson' placement='top'>
 																		<IconButton
 																			onClick={() => {
-																				navigate(`/admin/lesson-edit/user/${userId}/lesson/${lesson._id}`);
+																				window.open(`/admin/lesson-edit/user/${userId}/lesson/${lesson._id}`, '_blank');
 																				window.scrollTo({ top: 0, behavior: 'smooth' });
 																			}}>
 																			<EditTwoTone />
@@ -191,7 +190,7 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters }: CourseDetailsNonEdi
 						Course Materials
 					</Typography>
 				</Box>
-				{singleCourse?.documents
+				{singleCourse?.documents[0]
 					?.filter((doc) => doc !== null)
 					.map((doc) => (
 						<Box sx={{ mb: '0.5rem' }} key={doc._id}>

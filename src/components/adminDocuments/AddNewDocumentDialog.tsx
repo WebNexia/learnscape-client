@@ -89,7 +89,7 @@ const AddNewDocumentDialog = ({
 					if (prevData) {
 						return {
 							...prevData,
-							documents: [...selectedDocuments, ...prevData.documents],
+							documents: [[...selectedDocuments, ...prevData.documents[0]]],
 							documentIds: [...selectedDocumentIds, ...prevData.documentIds],
 						};
 					}

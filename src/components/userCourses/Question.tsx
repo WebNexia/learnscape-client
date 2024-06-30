@@ -206,7 +206,7 @@ const Question = ({ question, questionNumber, numberOfQuestions, displayedQuesti
 						{question &&
 							question.options &&
 							question.options.map((option) => {
-								return <FormControlLabel value={option} control={<Radio />} label={option} />;
+								return <FormControlLabel value={option} control={<Radio />} label={option} key={question._id} />;
 							})}
 					</RadioGroup>
 					<FormHelperText sx={{ color: success ? 'green' : 'inherit' }}>{helperText}</FormHelperText>

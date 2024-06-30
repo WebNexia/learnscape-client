@@ -87,6 +87,7 @@ const DashboardCourseCard = ({ course, isEnrolled, userId, displayMyCourses, use
 							visibility: isEnrolled ? 'hidden' : 'visible',
 							color: theme.palette.primary.main,
 						}}>
+						{course.priceCurrency}
 						{course.price}
 					</Typography>
 

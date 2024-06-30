@@ -106,7 +106,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus }: Cou
 		<Paper
 			elevation={10}
 			sx={{
-				width: '85%',
+				width: '90%',
 				height: '23rem',
 				margin: '3rem 0 2rem 0',
 				backgroundColor: theme.palette.primary.main,
@@ -140,7 +140,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus }: Cou
 						display: 'flex',
 						flexDirection: 'column',
 						margin: '1rem 3rem 1rem 2rem',
-						flex: 1,
+						flex: 3,
 						position: 'relative',
 						height: '20rem',
 					}}>
@@ -180,7 +180,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus }: Cou
 							variant='contained'
 							sx={{
 								visibility: isEnrolledStatus ? 'hidden' : 'visible',
-								width: '100%',
+								width: '8rem',
 								position: 'absolute',
 								bottom: 5,
 								fontSize: '1rem',
@@ -195,15 +195,9 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus }: Cou
 						display: 'flex',
 						justifyContent: 'center',
 						alignItems: 'center',
-						flex: 1,
+						flex: 2,
 					}}>
 					<Box>
-						<CoursePageBannerDataCard title='Starting Date' content={dateFormatter(course.startingDate)} />
-						<CoursePageBannerDataCard title='Weeks(#)' content={course.durationWeeks} />
-					</Box>
-					<Box>
-						<CoursePageBannerDataCard title='Format' content={course.format} />
-
 						<CoursePageBannerDataCard
 							title='Price'
 							content={`${course.price.toLowerCase() === 'free' ? '' : course.priceCurrency === null ? '' : course.priceCurrency}${course.price}`}
@@ -212,6 +206,12 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus }: Cou
 								bgColor: theme.bgColor?.greenSecondary,
 							}}
 						/>
+						<CoursePageBannerDataCard title='Weeks(#)' content={course.durationWeeks} />
+					</Box>
+					<Box>
+						<CoursePageBannerDataCard title='Starting Date' content={dateFormatter(course.startingDate)} />
+
+						<CoursePageBannerDataCard title='Hours(#)' content={course.durationHours} />
 					</Box>
 				</Box>
 			</Box>

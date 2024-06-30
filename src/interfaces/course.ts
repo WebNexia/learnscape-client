@@ -39,5 +39,5 @@ export interface SingleCourse extends BaseCourse {
 	chapters: ChapterLessonData[];
 	orgId: string;
 	documentIds: string[];
-	documents: Document[];
+	documents: Document[][];
 }

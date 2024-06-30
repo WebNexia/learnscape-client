@@ -83,7 +83,8 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 				height: isEnrolledStatus && isLessonInProgress ? '8rem' : '4rem',
 				borderBottom: `0.1rem solid ${theme.border.lightMain}`,
 				backgroundColor: isEnrolledStatus && isLessonInProgress ? theme.bgColor?.lessonInProgress : 'white',
-				cursor: 'pointer',
+				cursor: isEnrolledStatus ? 'pointer' : 'none',
+				borderRadius: '0.3rem 0.3rem 0 0 ',
 			}}
 			onClick={handleLessonClick}>
 			<Box
@@ -91,7 +92,13 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 					height: isEnrolledStatus && isLessonInProgress ? '8rem' : '4rem',
 					width: isEnrolledStatus && isLessonInProgress ? '10rem' : '5rem',
 				}}>
-				<img src={lesson.imageUrl} alt='lesson_pic' width='100%' height='100%' />
+				<img
+					src={lesson.imageUrl || 'https://directmobilityonline.co.uk/assets/img/noimage.png'}
+					alt='lesson_pic'
+					width='100%'
+					height='100%'
+					style={{ borderBottom: `0.1rem solid ${theme.border.lightMain}`, borderTopLeftRadius: lessonOrder === 1 ? '0.3rem' : 0 }}
+				/>
 			</Box>
 			<Box
 				sx={{
@@ -109,14 +116,26 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 						{lesson.title}
 					</Typography>
 				</Box>
-				<Box>
-					{isEnrolledStatus && isLessonInProgress && isLessonRegisteredInThisCourse ? (
-						<img src={ProgressIcon} alt='' />
-					) : !isEnrolledStatus || (!isLessonInProgress && !isLessonCompleted) || !isLessonRegisteredInThisCourse ? (
-						<Lock sx={{ color: theme.border.lightMain }} />
-					) : (
-						<CheckCircleOutlineRounded sx={{ color: theme.palette.success.main }} />
-					)}
+				<Box sx={{ display: 'flex', alignItems: 'center' }}>
+					<Box>
+						<Typography
+							variant='body2'
+							sx={{
+								marginRight: '1rem',
+								color: isEnrolledStatus && isLessonInProgress && isLessonRegisteredInThisCourse ? theme.textColor?.common.main : 'inherit',
+							}}>
+							{lesson.type}
+						</Typography>
+					</Box>
+					<Box>
+						{isEnrolledStatus && isLessonInProgress && isLessonRegisteredInThisCourse ? (
+							<img src={ProgressIcon} alt='' />
+						) : !isEnrolledStatus || (!isLessonInProgress && !isLessonCompleted) || !isLessonRegisteredInThisCourse ? (
+							<Lock sx={{ color: theme.border.lightMain }} />
+						) : (
+							<CheckCircleOutlineRounded sx={{ color: theme.palette.success.main }} />
+						)}
+					</Box>
 				</Box>
 			</Box>
 		</Box>

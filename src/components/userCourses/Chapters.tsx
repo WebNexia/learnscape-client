@@ -1,6 +1,7 @@
 import { Box } from '@mui/material';
 import { SingleCourse } from '../../interfaces/course';
 import Chapter from './Chapter';
+import { generateUniqueId } from '../../utils/uniqueIdGenerator';
 
 interface ChaptersProps {
 	course: SingleCourse;
@@ -20,7 +21,7 @@ const Chapters = ({ course, isEnrolledStatus }: ChaptersProps) => {
 					}
 					return (
 						<Chapter
-							key={chapter.chapterId}
+							key={chapter.chapterId + generateUniqueId(chapter.chapterId)}
 							chapter={chapter}
 							isEnrolledStatus={isEnrolledStatus}
 							nextChapterFirstLessonId={nextChapterFirstLessonId}
