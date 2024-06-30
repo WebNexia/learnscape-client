@@ -56,7 +56,7 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters }: CourseDetailsNonEdi
 						/>
 						<Box>
 							<Typography variant='body2' sx={{ mt: '0.25rem' }}>
-								Course Image
+								Cover Image
 							</Typography>
 						</Box>
 					</Box>

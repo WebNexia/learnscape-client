@@ -9,9 +9,20 @@ interface CustomSubmitButtonProps {
 	sx?: React.CSSProperties;
 	onClick?: (event?: MouseEvent<HTMLButtonElement> | FormEvent<Element>) => void;
 	disabled?: boolean;
+	startIcon?: ReactNode;
+	endIcon?: ReactNode;
 }
 
-const CustomSubmitButton = ({ children, type = 'submit', variant = 'contained', sx, onClick, disabled }: CustomSubmitButtonProps) => {
+const CustomSubmitButton = ({
+	children,
+	type = 'submit',
+	variant = 'contained',
+	sx,
+	onClick,
+	disabled,
+	startIcon,
+	endIcon,
+}: CustomSubmitButtonProps) => {
 	const handleClick = (event: MouseEvent<HTMLButtonElement> | FormEvent<Element>) => {
 		if (onClick) {
 			onClick(event);
@@ -31,7 +42,9 @@ const CustomSubmitButton = ({ children, type = 'submit', variant = 'contained', 
 					color: theme.textColor?.greenPrimary.main,
 				},
 			}}
-			onClick={handleClick}>
+			onClick={handleClick}
+			startIcon={startIcon}
+			endIcon={endIcon}>
 			{children}
 		</Button>
 	);

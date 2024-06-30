@@ -5,13 +5,15 @@ import { useQuery } from 'react-query';
 import axios from 'axios';
 import ReactPlayer from 'react-player';
 import DashboardHeader from '../components/layouts/dashboardLayout/DashboardHeader';
-import { KeyboardBackspaceOutlined } from '@mui/icons-material';
+import { KeyboardBackspaceOutlined, KeyboardDoubleArrowRight } from '@mui/icons-material';
 import Loading from '../components/layouts/loading/Loading';
 import LoadingError from '../components/layouts/loading/LoadingError';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import { useContext } from 'react';
 import { sanitizeHtml } from '../utils/sanitizeHtml';
 import { Document } from '../interfaces/document';
+import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
+import { LessonsContext } from '../contexts/LessonsContextProvider';
 
 const LessonPage = () => {
 	const { lessonId, userId, courseId, userCourseId } = useParams();
@@ -48,7 +50,9 @@ const LessonPage = () => {
 				minHeight: '100vh',
 				padding: '0 0 3rem 0',
 			}}>
-			<DashboardHeader pageName={organisation?.orgName || ''} />
+			<Box sx={{ width: '100vw', position: 'fixed', top: 0 }}>
+				<DashboardHeader pageName={organisation?.orgName || ''} />
+			</Box>
 			<Box
 				sx={{
 					display: 'flex',
@@ -128,7 +132,7 @@ const LessonPage = () => {
 			</Box>
 
 			{lesson.text && (
-				<Box sx={{ display: 'flex', justifyContent: 'center', margin: '3rem 2rem 2rem 2rem', width: '85%' }}>
+				<Box sx={{ display: 'flex', justifyContent: 'center', margin: '2rem', width: '85%' }}>
 					<Box>
 						<Typography
 							variant='h6'
@@ -155,6 +159,16 @@ const LessonPage = () => {
 									</Link>
 								</Box>
 							))}
+					</Box>
+				</Box>
+			)}
+
+			{lesson.type === 'Instructional Lesson' && (
+				<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '85%' }}>
+					<Box sx={{ alignSelf: 'flex-end' }}>
+						<CustomSubmitButton endIcon={<KeyboardDoubleArrowRight />} onClick={() => {}}>
+							Next Lesson
+						</CustomSubmitButton>
 					</Box>
 				</Box>
 			)}

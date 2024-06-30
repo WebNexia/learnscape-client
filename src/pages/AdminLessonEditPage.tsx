@@ -387,7 +387,7 @@ const AdminLessonEditPage = () => {
 					const updatedLesson = {
 						...singleLessonBeforeSave,
 						questionIds: updatedQuestionIds,
-						text: singleLessonBeforeSave.type === 'Quiz' ? '' : editorContent,
+						text: editorContent,
 						documentIds: updatedDocumentIds,
 					};
 
@@ -398,7 +398,7 @@ const AdminLessonEditPage = () => {
 						...singleLessonBeforeSave,
 						questions: updatedQuestions,
 						questionIds: updatedQuestionIds,
-						text: singleLessonBeforeSave.type === 'Quiz' ? '' : editorContent,
+						text: editorContent,
 						documentIds: updatedDocumentIds,
 						documents: updatedDocuments,
 					});
@@ -407,7 +407,7 @@ const AdminLessonEditPage = () => {
 						...singleLessonBeforeSave,
 						questions: updatedQuestions,
 						questionIds: updatedQuestionIds,
-						text: singleLessonBeforeSave.type === 'Quiz' ? '' : editorContent,
+						text: editorContent,
 						documentIds: updatedDocumentIds,
 						documents: updatedDocuments,
 					});
@@ -524,24 +524,25 @@ const AdminLessonEditPage = () => {
 							width: '100%',
 						}}>
 						<LessonImageCourseDisplay singleLesson={singleLesson} />
-						{singleLesson.type === 'Instructional Lesson' && (
-							<Box className='rich-text-content' component='div' sx={{ textAlign: 'justify', width: '90%', mt: '6rem' }}>
-								<Typography variant='h4' sx={{ mb: '1.25rem' }}>
-									Lesson Instructions
-								</Typography>
-								<Typography
-									variant='body1'
-									dangerouslySetInnerHTML={{ __html: sanitizeHtml(singleLesson.text) }}
-									sx={{ boxShadow: singleLesson.text ? '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)' : 'none', padding: '1rem' }}
-								/>
-							</Box>
-						)}
 
-						<QuestionsBoxNonEdit
-							singleLesson={singleLesson}
-							setIsDisplayNonEditQuestion={setIsDisplayNonEditQuestion}
-							setDisplayedQuestionNonEdit={setDisplayedQuestionNonEdit}
-						/>
+						<Box className='rich-text-content' component='div' sx={{ textAlign: 'justify', width: '90%', mt: '6rem' }}>
+							<Typography variant='h4' sx={{ mb: '1.25rem' }}>
+								{singleLesson.type === 'Instructional Lesson' ? 'Lesson Instructions' : 'Instructions'}
+							</Typography>
+							<Typography
+								variant='body1'
+								dangerouslySetInnerHTML={{ __html: sanitizeHtml(singleLesson.text) }}
+								sx={{ boxShadow: singleLesson.text ? '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)' : 'none', padding: '1rem' }}
+							/>
+						</Box>
+
+						{singleLessonBeforeSave.type !== 'Instructional Lesson' && (
+							<QuestionsBoxNonEdit
+								singleLesson={singleLesson}
+								setIsDisplayNonEditQuestion={setIsDisplayNonEditQuestion}
+								setDisplayedQuestionNonEdit={setDisplayedQuestionNonEdit}
+							/>
+						)}
 
 						<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', width: '90%', margin: '3rem 0 4rem 0' }}>
 							<Box>
@@ -661,6 +662,7 @@ const AdminLessonEditPage = () => {
 										imgSource={singleLessonBeforeSave?.imageUrl || 'https://directmobilityonline.co.uk/assets/img/noimage.png'}
 										removeImage={() => {
 											{
+												setIsLessonUpdated(true);
 												setSingleLessonBeforeSave((prevData) => {
 													return {
 														...prevData,
@@ -684,8 +686,8 @@ const AdminLessonEditPage = () => {
 											});
 										}}
 										onChangeVideoUrl={(e) => {
-											setSingleLessonBeforeSave((prevCourse) => ({
-												...prevCourse,
+											setSingleLessonBeforeSave((prevData) => ({
+												...prevData,
 												videoUrl: e.target.value,
 											}));
 											setIsLessonUpdated(true);
@@ -700,6 +702,7 @@ const AdminLessonEditPage = () => {
 										videoUrl={singleLessonBeforeSave?.videoUrl}
 										videoPlaceholderUrl='https://riggswealth.com/wp-content/uploads/2016/06/Riggs-Video-Placeholder.jpg'
 										removeVideo={() => {
+											setIsLessonUpdated(true);
 											setSingleLessonBeforeSave((prevData) => {
 												return {
 													...prevData,
@@ -923,7 +926,7 @@ const AdminLessonEditPage = () => {
 							)}
 							<Box sx={{ margin: '2rem 0 1rem 0' }}>
 								<HandleDocUploadURL
-									label='Lesson Materials'
+									label={singleLessonBeforeSave.type === 'Quiz' ? 'Quiz Materials' : 'Lesson Materials'}
 									onDocUploadLogic={(url, docName) => {
 										setIsLessonUpdated(true);
 

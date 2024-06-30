@@ -237,7 +237,7 @@ const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree,
 			<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mt: '1.5rem', width: '100%' }}>
 				<Box sx={{ flex: 3 }}>
 					<HandleImageUploadURL
-						label='Course Image'
+						label='Cover Image'
 						onImageUploadLogic={(url) => {
 							if (singleCourse?.imageUrl !== undefined) {
 								setSingleCourse({
@@ -280,7 +280,7 @@ const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree,
 						/>
 						<Box>
 							<Typography variant='body2' sx={{ mt: '0.25rem' }}>
-								Course Image
+								Cover Image
 							</Typography>
 							{singleCourse?.imageUrl && (
 								<Typography
