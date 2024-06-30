@@ -3,7 +3,6 @@ import theme from '../themes';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from 'react-query';
 import axios from 'axios';
-import Questions from '../components/userCourses/Questions';
 import ReactPlayer from 'react-player';
 import DashboardHeader from '../components/layouts/dashboardLayout/DashboardHeader';
 import { KeyboardBackspaceOutlined } from '@mui/icons-material';
@@ -141,14 +140,10 @@ const LessonPage = () => {
 				</Box>
 			)}
 
-			{/* <Box sx={{ padding: '3rem' }}>
-				<Questions questions={lesson.questions} />
-			</Box> */}
-
 			{lesson.documents && (
 				<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '2rem', width: '85%' }}>
 					<Box sx={{ display: 'flex', alignSelf: 'flex-start' }}>
-						<Typography variant='h5'>Lesson Documents</Typography>
+						<Typography variant='h5'>Lesson Materials</Typography>
 					</Box>
 					<Box sx={{ display: 'flex', alignSelf: 'flex-start' }}>
 						{lesson.documents

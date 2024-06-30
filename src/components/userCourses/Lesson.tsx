@@ -80,7 +80,7 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 		<Box
 			sx={{
 				display: 'flex',
-				height: isEnrolledStatus && isLessonInProgress ? '8rem' : '4rem',
+				height: isEnrolledStatus && isLessonInProgress ? '6rem' : '4rem',
 				borderBottom: `0.1rem solid ${theme.border.lightMain}`,
 				backgroundColor: isEnrolledStatus && isLessonInProgress ? theme.bgColor?.lessonInProgress : 'white',
 				cursor: isEnrolledStatus ? 'pointer' : 'none',
@@ -89,7 +89,7 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 			onClick={handleLessonClick}>
 			<Box
 				sx={{
-					height: isEnrolledStatus && isLessonInProgress ? '8rem' : '4rem',
+					height: isEnrolledStatus && isLessonInProgress ? '6rem' : '4rem',
 					width: isEnrolledStatus && isLessonInProgress ? '10rem' : '5rem',
 				}}>
 				<img

@@ -16,9 +16,10 @@ interface CoursePageBannerProps {
 	course: SingleCourse;
 	isEnrolledStatus: boolean;
 	setIsEnrolledStatus: React.Dispatch<React.SetStateAction<boolean>>;
+	documentsRef: React.RefObject<HTMLDivElement>;
 }
 
-const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus }: CoursePageBannerProps) => {
+const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, documentsRef }: CoursePageBannerProps) => {
 	const firstLessonId: string = course && course?.chapters[0]?.lessonIds && course?.chapters[0]?.lessonIds[0];
 
 	const navigate = useNavigate();
@@ -176,18 +177,37 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus }: Cou
 							}}>
 							{course.description}
 						</Typography>
-						<CustomSubmitButton
-							variant='contained'
-							sx={{
-								visibility: isEnrolledStatus ? 'hidden' : 'visible',
-								width: '8rem',
-								position: 'absolute',
-								bottom: 5,
-								fontSize: '1rem',
-							}}
-							onClick={handleEnrollment}>
-							Enroll
-						</CustomSubmitButton>
+						{!isEnrolledStatus ? (
+							<CustomSubmitButton
+								variant='contained'
+								sx={{
+									width: '8rem',
+									position: 'absolute',
+									bottom: 5,
+									fontSize: '1rem',
+								}}
+								onClick={handleEnrollment}>
+								Enroll
+							</CustomSubmitButton>
+						) : (
+							<Typography
+								variant='body1'
+								onClick={() => {
+									documentsRef.current?.scrollIntoView({ behavior: 'smooth' });
+								}}
+								sx={{
+									width: 'fit-content',
+									position: 'absolute',
+									bottom: 5,
+									fontSize: '0.85rem',
+									textTransform: 'capitalize',
+									color: theme.textColor?.common.main,
+									cursor: 'pointer',
+									textDecoration: 'underline',
+								}}>
+								See Course Materials
+							</Typography>
+						)}
 					</Box>
 				</Box>
 				<Box
