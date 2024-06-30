@@ -317,7 +317,17 @@ const AdminLessonEditPage = () => {
 
 			const updatedDocumentIds = updatedDocuments.map((doc) => doc._id);
 
-			if (singleLessonBeforeSave?.questions) {
+			if (singleLessonBeforeSave.type === 'Instructional Lesson') {
+				setSingleLessonBeforeSave((prevData) => {
+					return {
+						...prevData,
+						questions: [],
+						questionIds: [],
+					};
+				});
+
+				updatedQuestions = [];
+			} else if (singleLessonBeforeSave?.questions) {
 				const updatedQuestionsPromises = singleLessonBeforeSave.questions
 					.filter((question) => question !== null && question !== undefined)
 					.map(async (question) => {
@@ -370,7 +380,7 @@ const AdminLessonEditPage = () => {
 				);
 			}
 
-			const updatedQuestionIds = updatedQuestions.map((question) => question._id);
+			const updatedQuestionIds = updatedQuestions?.map((question) => question._id);
 
 			if (isLessonUpdated || isQuestionUpdated.some((data) => data.isUpdated === true)) {
 				try {

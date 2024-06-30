@@ -112,7 +112,7 @@ const AdminCourseEditPage = () => {
 
 		setSingleCourse((prevData) => {
 			if (prevData) {
-				const updatedDocuments = prevData.documents[0]
+				const updatedDocuments = prevData.documents
 					?.filter((document) => document !== null)
 					.map((thisDoc) => {
 						if (thisDoc._id === document._id) {
@@ -121,7 +121,7 @@ const AdminCourseEditPage = () => {
 							return thisDoc;
 						}
 					});
-				return { ...prevData, documents: [updatedDocuments] };
+				return { ...prevData, documents: updatedDocuments };
 			}
 			return prevData;
 		});
@@ -161,7 +161,7 @@ const AdminCourseEditPage = () => {
 				try {
 					const response = await axios.get(`${base_url}/courses/${courseId}`);
 
-					const courseResponse = response?.data?.data[0];
+					const courseResponse = response?.data?.data;
 
 					setSingleCourse(courseResponse);
 					if (courseResponse?.price?.toLowerCase() === 'free') {
@@ -277,7 +277,7 @@ const AdminCourseEditPage = () => {
 			setChapterLessonData(updatedChapters);
 
 			if (singleCourse?.documents) {
-				const updatedDocumentsPromises = (singleCourse?.documents[0] as (Document | null)[]) // Assert as array of Document or null
+				const updatedDocumentsPromises = (singleCourse?.documents as (Document | null)[]) // Assert as array of Document or null
 					.filter((doc): doc is Document => doc !== null) // Type guard to filter out nulls
 					.map(async (document) => {
 						if (document._id.includes('temp_doc_id')) {
@@ -327,7 +327,7 @@ const AdminCourseEditPage = () => {
 					chapters: updatedChapters,
 					chapterIds: updatedChapters?.map((chapter) => chapter.chapterId),
 					documentIds: updatedDocumentIds,
-					documents: [updatedDocuments],
+					documents: updatedDocuments,
 				};
 
 				try {
@@ -521,7 +521,7 @@ const AdminCourseEditPage = () => {
 									onDocUploadLogic={(url, docName) => {
 										setSingleCourse((prevData) => {
 											if (prevData && userId) {
-												const maxNumber = prevData.documents[0]
+												const maxNumber = prevData.documents
 													.filter((doc) => doc !== null)
 													.reduce((max, doc) => {
 														const match = doc.name.match(/Untitled Document (\d+)/);
@@ -532,10 +532,8 @@ const AdminCourseEditPage = () => {
 												return {
 													...prevData,
 													documents: [
-														[
-															{ _id: generateUniqueId('temp_doc_id_'), name: newName, documentUrl: url, orgId, userId, createdAt: '', updatedAt: '' },
-															...prevData.documents.flat(),
-														],
+														{ _id: generateUniqueId('temp_doc_id_'), name: newName, documentUrl: url, orgId, userId, createdAt: '', updatedAt: '' },
+														...prevData.documents,
 													],
 												};
 											}
@@ -554,7 +552,7 @@ const AdminCourseEditPage = () => {
 							</Box>
 
 							<DocumentsListEditBox
-								documentsSource={singleCourse?.documents[0]}
+								documentsSource={singleCourse?.documents}
 								toggleDocRenameModal={toggleDocRenameModal}
 								closeDocRenameModal={closeDocRenameModal}
 								isDocRenameModalOpen={isDocRenameModalOpen}
@@ -563,12 +561,12 @@ const AdminCourseEditPage = () => {
 								removeDocOnClick={(document: Document) => {
 									setSingleCourse((prevData) => {
 										if (prevData) {
-											const filteredDocuments = prevData.documents[0]?.filter((thisDoc) => thisDoc._id !== document._id);
+											const filteredDocuments = prevData.documents?.filter((thisDoc) => thisDoc._id !== document._id);
 											const filteredDocumentIds = filteredDocuments?.map((doc) => doc._id);
 
 											return {
 												...prevData,
-												documents: [filteredDocuments],
+												documents: filteredDocuments,
 												documentIds: filteredDocumentIds,
 											};
 										}
@@ -578,7 +576,7 @@ const AdminCourseEditPage = () => {
 								renameDocOnChange={(e: React.ChangeEvent<HTMLInputElement>, document: Document) => {
 									setSingleCourse((prevData) => {
 										if (prevData) {
-											const updatedDocuments = prevData.documents[0]
+											const updatedDocuments = prevData.documents
 												?.filter((document) => document !== null)
 												.map((thisDoc) => {
 													if (thisDoc._id === document._id) {
@@ -587,7 +585,7 @@ const AdminCourseEditPage = () => {
 														return thisDoc;
 													}
 												});
-											return { ...prevData, documents: [updatedDocuments] };
+											return { ...prevData, documents: updatedDocuments };
 										}
 										return prevData;
 									});

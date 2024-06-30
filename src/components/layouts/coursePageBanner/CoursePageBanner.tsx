@@ -20,6 +20,7 @@ interface CoursePageBannerProps {
 }
 
 const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, documentsRef }: CoursePageBannerProps) => {
+	console.log(course);
 	const firstLessonId: string = course && course?.chapters[0]?.lessonIds && course?.chapters[0]?.lessonIds[0];
 
 	const navigate = useNavigate();

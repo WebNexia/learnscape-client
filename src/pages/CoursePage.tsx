@@ -41,7 +41,7 @@ const CoursePage = () => {
 					<Chapters course={singleCourseUser} isEnrolledStatus={isEnrolledStatus} />
 				</>
 			)}
-			{singleCourse?.documents[0] && (
+			{singleCourse?.documents && (
 				<Box ref={documentsRef} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '2rem', width: '85%' }}>
 					<Box sx={{ display: 'flex', alignSelf: 'flex-start' }}>
 						<Typography variant='h4' sx={{ mb: '1.25rem' }}>
@@ -49,7 +49,7 @@ const CoursePage = () => {
 						</Typography>
 					</Box>
 					<Box sx={{ display: 'flex', alignSelf: 'flex-start', flexDirection: 'column' }}>
-						{singleCourse.documents[0]
+						{singleCourse.documents
 							?.filter((doc: Document) => doc !== null)
 							.map((doc: Document) => (
 								<Box sx={{ marginBottom: '0.5rem' }} key={doc._id}>

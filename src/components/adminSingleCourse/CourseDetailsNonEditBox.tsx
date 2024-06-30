@@ -190,7 +190,7 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters }: CourseDetailsNonEdi
 						Course Materials
 					</Typography>
 				</Box>
-				{singleCourse?.documents[0]
+				{singleCourse?.documents
 					?.filter((doc) => doc !== null)
 					.map((doc) => (
 						<Box sx={{ mb: '0.5rem' }} key={doc._id}>
