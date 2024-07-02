@@ -9,18 +9,23 @@ import { KeyboardBackspaceOutlined, KeyboardDoubleArrowRight } from '@mui/icons-
 import Loading from '../components/layouts/loading/Loading';
 import LoadingError from '../components/layouts/loading/LoadingError';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 import { sanitizeHtml } from '../utils/sanitizeHtml';
 import { Document } from '../interfaces/document';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
-import { LessonsContext } from '../contexts/LessonsContextProvider';
+import Questions from '../components/userCourses/Questions';
+import { useUserCourseLessonData } from '../hooks/useUserCourseLessonData';
 
 const LessonPage = () => {
 	const { lessonId, userId, courseId, userCourseId } = useParams();
 	const { organisation } = useContext(OrganisationContext);
 	const navigate = useNavigate();
 
+	const [isQuestionsVisible, setIsQuestionsVisible] = useState<boolean>(false);
+
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
+
+	const { handleNextLesson } = useUserCourseLessonData();
 
 	const {
 		data: lesson,
@@ -44,13 +49,13 @@ const LessonPage = () => {
 			sx={{
 				display: 'flex',
 				flexDirection: 'column',
-				justifyContent: 'center',
+				justifyContent: 'flex-start',
 				alignItems: 'center',
 				backgroundColor: theme.bgColor?.secondary,
 				minHeight: '100vh',
 				padding: '0 0 3rem 0',
 			}}>
-			<Box sx={{ width: '100vw', position: 'fixed', top: 0 }}>
+			<Box sx={{ width: '100vw', position: 'fixed', top: 0, zIndex: 1111 }}>
 				<DashboardHeader pageName={organisation?.orgName || ''} />
 			</Box>
 			<Box
@@ -99,15 +104,15 @@ const LessonPage = () => {
 					margin: '0.5rem 0 0 0',
 					width: '100%',
 				}}>
-				{lesson.videoUrl && (
+				{lesson.videoUrl && !isQuestionsVisible && (
 					<Box
 						sx={{
 							display: 'flex',
 							justifyContent: 'center',
 							alignItems: 'center',
-							margin: lesson.videoUrl ? '7rem 0 2rem 0' : 'none',
+							margin: '11rem 0 2rem 0',
 							width: '100%',
-							height: lesson.videoUrl ? '22rem' : 'none',
+							height: '22rem',
 						}}>
 						<Box
 							sx={{
@@ -131,11 +136,26 @@ const LessonPage = () => {
 				)}
 			</Box>
 
-			{lesson.text && (
-				<Box sx={{ display: 'flex', justifyContent: 'center', margin: '2rem', width: '85%' }}>
+			{lesson.type !== 'Instructional Lesson' && !isQuestionsVisible && (
+				<Box sx={{ display: 'flex', justifyContent: 'flex-start', width: '85%', margin: lesson.videoUrl ? '3rem 0 1rem 0' : '12rem 0 1rem 0' }}>
+					<Typography variant='h5'>Instructions</Typography>
+				</Box>
+			)}
+
+			{lesson.text && !isQuestionsVisible && (
+				<Box
+					sx={{
+						display: 'flex',
+						justifyContent: 'flex-start',
+						alignItems: 'flex-start',
+						margin: '1rem 0 3rem 0',
+						width: '85%',
+						boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
+						padding: '2rem',
+					}}>
 					<Box>
 						<Typography
-							variant='h6'
+							variant='body1'
 							component='div'
 							dangerouslySetInnerHTML={{ __html: sanitizeHtml(lesson.text) }}
 							sx={{ lineHeight: 1.9, textAlign: 'justify' }}
@@ -144,7 +164,24 @@ const LessonPage = () => {
 				</Box>
 			)}
 
-			{lesson.documents && (
+			{lesson.type !== 'Instructional Lesson' && !isQuestionsVisible && (
+				<Box>
+					<CustomSubmitButton
+						onClick={() => {
+							setIsQuestionsVisible(true);
+						}}>
+						Go to Questions
+					</CustomSubmitButton>
+				</Box>
+			)}
+
+			{isQuestionsVisible && (
+				<Box sx={{ width: '85%' }}>
+					<Questions questions={lesson.questions} />
+				</Box>
+			)}
+
+			{lesson.documents.length !== 0 && (
 				<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '2rem', width: '85%' }}>
 					<Box sx={{ display: 'flex', alignSelf: 'flex-start' }}>
 						<Typography variant='h5'>Lesson Materials</Typography>
@@ -166,7 +203,13 @@ const LessonPage = () => {
 			{lesson.type === 'Instructional Lesson' && (
 				<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '85%' }}>
 					<Box sx={{ alignSelf: 'flex-end' }}>
-						<CustomSubmitButton endIcon={<KeyboardDoubleArrowRight />} onClick={() => {}}>
+						<CustomSubmitButton
+							endIcon={<KeyboardDoubleArrowRight />}
+							onClick={() => {
+								handleNextLesson();
+								window.scrollTo({ top: 0, behavior: 'smooth' });
+							}}
+							type='button'>
 							Next Lesson
 						</CustomSubmitButton>
 					</Box>

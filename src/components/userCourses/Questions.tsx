@@ -2,7 +2,6 @@ import { Box } from '@mui/material';
 import { QuestionInterface } from '../../interfaces/question';
 import Question from './Question';
 import { useState } from 'react';
-import { generateUniqueId } from '../../utils/uniqueIdGenerator';
 
 interface QuestionsProps {
 	questions: QuestionInterface[];
@@ -16,7 +15,7 @@ const Questions = ({ questions }: QuestionsProps) => {
 			{questions &&
 				questions.map((question, index) => (
 					<Question
-						key={generateUniqueId(question._id)}
+						key={question._id}
 						question={question}
 						questionNumber={index + 1}
 						numberOfQuestions={numberOfQuestions}

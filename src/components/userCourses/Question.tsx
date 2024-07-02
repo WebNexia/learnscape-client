@@ -1,4 +1,4 @@
-import { Box, Button, FormControl, FormControlLabel, FormHelperText, FormLabel, Radio, RadioGroup } from '@mui/material';
+import { Box, Button, FormControl, FormControlLabel, FormHelperText, FormLabel, Radio, RadioGroup, Typography } from '@mui/material';
 import { QuestionInterface } from '../../interfaces/question';
 import { useContext, useState } from 'react';
 import axios from 'axios';
@@ -6,6 +6,11 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { UserCoursesIdsWithCourseIds, UserLessonDataStorage } from '../../contexts/UserCourseLessonDataContextProvider';
 import theme from '../../themes';
 import { OrganisationContext } from '../../contexts/OrganisationContextProvider';
+import { sanitizeHtml } from '../../utils/sanitizeHtml';
+import ReactPlayer from 'react-player';
+import TrueFalseOptions from '../layouts/questionTypes/TrueFalseOptions';
+import { QuestionsContext } from '../../contexts/QuestionsContextProvider';
+import CustomTextField from '../forms/customFields/CustomTextField';
 
 interface QuestionsProps {
 	question: QuestionInterface;
@@ -22,6 +27,7 @@ const Question = ({ question, questionNumber, numberOfQuestions, displayedQuesti
 	//storing parameters from the URL
 	const { userId, lessonId, courseId, userCourseId } = useParams();
 	const { orgId } = useContext(OrganisationContext);
+	const { fetchQuestionTypeName } = useContext(QuestionsContext);
 	const location = useLocation();
 	const searchParams = new URLSearchParams(location.search);
 	const nextLessonId = searchParams.get('next');
@@ -163,6 +169,7 @@ const Question = ({ question, questionNumber, numberOfQuestions, displayedQuesti
 	};
 
 	const handleRadioChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+		setIsLessonCompleted(false);
 		setValue((event.target as HTMLInputElement).value);
 		setHelperText(' ');
 		setError(false);
@@ -197,19 +204,103 @@ const Question = ({ question, questionNumber, numberOfQuestions, displayedQuesti
 				flexDirection: 'column',
 				alignItems: 'center',
 			}}>
-			<form onSubmit={handleSubmit}>
-				<FormControl sx={{ m: 3 }} error={error} variant='standard'>
-					<FormLabel sx={{ color: success ? theme.textColor?.greenPrimary.main : 'inherit' }}>
-						{questionNumber}. {question.question}
+			<form onSubmit={handleSubmit} style={{ width: '100%' }}>
+				<FormControl sx={{ margin: '1rem', width: '100%' }} error={error} variant='standard'>
+					<Box
+						sx={{
+							display: 'flex',
+							justifyContent: 'center',
+							alignItems: 'center',
+							width: '100%',
+							height: question?.imageUrl || question?.videoUrl ? '18rem' : '0',
+							margin: question?.imageUrl || question?.videoUrl ? '9rem 0 2rem 0' : 'none',
+						}}>
+						{question?.imageUrl && (
+							<Box
+								sx={{
+									height: '100%',
+									flex: 1,
+									display: 'flex',
+									justifyContent: 'center',
+									alignItems: 'center',
+								}}>
+								<img
+									src={question?.imageUrl}
+									alt='question_img'
+									style={{
+										height: '100%',
+										width: question?.videoUrl ? '90%' : '50%',
+										borderRadius: '0.2rem',
+										boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
+									}}
+								/>
+							</Box>
+						)}
+
+						{question?.videoUrl && (
+							<Box
+								sx={{
+									height: '100%',
+									flex: 1,
+									display: 'flex',
+									justifyContent: 'center',
+									alignItems: 'center',
+								}}>
+								<ReactPlayer
+									url={question.videoUrl}
+									width={question?.imageUrl ? '90%' : '50%'}
+									height='100%'
+									style={{
+										boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
+									}}
+									controls
+								/>
+							</Box>
+						)}
+					</Box>
+					<FormLabel
+						sx={{
+							color: success ? theme.textColor?.greenPrimary.main : 'inherit',
+							margin: question.videoUrl || question.imageUrl ? '3rem 0 1rem 0' : '12rem 0 1rem 0',
+						}}>
+						<Box sx={{ display: 'flex', justifyContent: 'center' }}>
+							<Typography variant='h6' sx={{ mr: '0.5rem' }}>
+								{questionNumber}.{' '}
+							</Typography>
+							<Typography variant='h6' component='div' dangerouslySetInnerHTML={{ __html: sanitizeHtml(question.question) }} />
+						</Box>
 					</FormLabel>
-					<RadioGroup name='question' value={isLessonCompleted ? question.correctAnswer : value} onChange={handleRadioChange}>
-						{question &&
-							question.options &&
-							question.options.map((option) => {
-								return <FormControlLabel value={option} control={<Radio />} label={option} key={question._id} />;
-							})}
-					</RadioGroup>
-					<FormHelperText sx={{ color: success ? 'green' : 'inherit' }}>{helperText}</FormHelperText>
+
+					{fetchQuestionTypeName(question) === 'Open-ended' && <CustomTextField />}
+
+					{fetchQuestionTypeName(question) === 'True-False' && (
+						<Box>
+							<TrueFalseOptions
+								correctAnswer={value}
+								setCorrectAnswer={setValue}
+								fromLearner={true}
+								question={question}
+								isLessonCompleted={isLessonCompleted}
+								setIsLessonCompleted={setIsLessonCompleted}
+							/>
+						</Box>
+					)}
+					{fetchQuestionTypeName(question) === 'Multiple Choice' && (
+						<RadioGroup
+							name='question'
+							value={isLessonCompleted ? question.correctAnswer : value}
+							onChange={handleRadioChange}
+							sx={{ alignSelf: 'center' }}>
+							{question &&
+								question.options &&
+								question.options.map((option, index) => {
+									return <FormControlLabel value={option} control={<Radio />} label={option} key={index} />;
+								})}
+						</RadioGroup>
+					)}
+					{fetchQuestionTypeName(question) !== 'Open-ended' && !isLessonCompleted && (
+						<FormHelperText sx={{ color: success ? 'green' : 'inherit', alignSelf: 'center', mt: '2rem' }}>{helperText}</FormHelperText>
+					)}
 					<Button sx={{ mt: '2rem', width: '13rem', alignSelf: 'center' }} type='submit' variant='outlined'>
 						Submit Answer
 					</Button>
@@ -229,6 +320,7 @@ const Question = ({ question, questionNumber, numberOfQuestions, displayedQuesti
 						if (!(displayedQuestionNumber - 1 === 0)) {
 							setDisplayedQuestionNumber((prev) => prev - 1);
 						}
+						window.scrollTo({ top: 0, behavior: 'smooth' });
 					}}
 					disabled={displayedQuestionNumber - 1 === 0}>
 					Previous
@@ -242,8 +334,8 @@ const Question = ({ question, questionNumber, numberOfQuestions, displayedQuesti
 						}
 						if (isLessonCompleted && displayedQuestionNumber === numberOfQuestions) {
 							navigate(`/course/${courseId}/user/${userId}/userCourseId/${userCourseId}?isEnrolled=true`);
-							window.scrollTo({ top: 0, behavior: 'smooth' });
 						}
+						window.scrollTo({ top: 0, behavior: 'smooth' });
 					}}
 					sx={{
 						color: !isAnswerCorrect ? 'inherit' : theme.textColor?.common.main,

@@ -60,7 +60,6 @@ const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProvide
 		try {
 			const response = await axios.get(`${base_url}/courses/${courseId}`);
 			setSingleCourse(response.data.data || null);
-			console.log(response.data.data);
 
 			setSingleCourseUser(() => {
 				const filteredChapters: BaseChapter[] | undefined = response?.data?.data?.chapters?.filter(

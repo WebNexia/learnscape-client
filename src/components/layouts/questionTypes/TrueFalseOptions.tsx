@@ -1,34 +1,47 @@
 import { Box, Typography, Radio, RadioGroup, FormControlLabel } from '@mui/material';
 import theme from '../../../themes';
+import { QuestionInterface } from '../../../interfaces/question';
 
 interface TrueFalseOptionsProps {
+	question: QuestionInterface;
 	correctAnswer: string;
 	fromLessonEditPage?: boolean;
 	correctAnswerAdminQuestions?: string;
+	fromLearner?: boolean;
+	isLessonCompleted?: boolean;
+	setIsLessonCompleted?: React.Dispatch<React.SetStateAction<boolean>>;
 	setCorrectAnswer: React.Dispatch<React.SetStateAction<string>>;
-	setIsCorrectAnswerMissing: React.Dispatch<React.SetStateAction<boolean>>;
+	setIsCorrectAnswerMissing?: React.Dispatch<React.SetStateAction<boolean>>;
 	setCorrectAnswerAdminQuestions?: React.Dispatch<React.SetStateAction<string>>;
 }
 
 const TrueFalseOptions = ({
+	question,
 	correctAnswer,
 	fromLessonEditPage,
 	correctAnswerAdminQuestions,
+	fromLearner,
+	isLessonCompleted,
+	setIsLessonCompleted,
 	setCorrectAnswer,
 	setIsCorrectAnswerMissing,
 	setCorrectAnswerAdminQuestions,
 }: TrueFalseOptionsProps) => {
 	const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+		if (setIsLessonCompleted) setIsLessonCompleted(false);
 		setCorrectAnswer((event.target as HTMLInputElement).value);
-		setIsCorrectAnswerMissing(false);
+		if (setIsCorrectAnswerMissing) setIsCorrectAnswerMissing(false);
 		if (!fromLessonEditPage && setCorrectAnswerAdminQuestions) {
 			setCorrectAnswerAdminQuestions((event.target as HTMLInputElement).value);
 		}
 	};
 
+	const adminSetting = fromLessonEditPage ? correctAnswer : correctAnswerAdminQuestions;
+
+	const learnerSetting = isLessonCompleted ? question.correctAnswer : correctAnswer;
 	return (
 		<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', mt: '2rem' }}>
-			<RadioGroup row value={fromLessonEditPage ? correctAnswer : correctAnswerAdminQuestions} onChange={handleChange}>
+			<RadioGroup row value={fromLearner ? learnerSetting : adminSetting} onChange={handleChange}>
 				<Box sx={{ display: 'flex', alignItems: 'center' }}>
 					<Box
 						sx={{
