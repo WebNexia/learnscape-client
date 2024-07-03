@@ -120,5 +120,6 @@ export const useUserCourseLessonData = () => {
 		setIsCourseCompleted,
 		userLessonId,
 		handleNextLesson,
+		nextLessonId,
 	};
 };

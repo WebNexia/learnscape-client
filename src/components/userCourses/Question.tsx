@@ -2,8 +2,7 @@ import { Box, Button, FormControl, FormControlLabel, FormHelperText, FormLabel, 
 import { QuestionInterface } from '../../interfaces/question';
 import { useContext, useState } from 'react';
 import axios from 'axios';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { UserCoursesIdsWithCourseIds, UserLessonDataStorage } from '../../contexts/UserCourseLessonDataContextProvider';
+import { useNavigate, useParams } from 'react-router-dom';
 import theme from '../../themes';
 import { OrganisationContext } from '../../contexts/OrganisationContextProvider';
 import { sanitizeHtml } from '../../utils/sanitizeHtml';
@@ -11,34 +10,34 @@ import ReactPlayer from 'react-player';
 import TrueFalseOptions from '../layouts/questionTypes/TrueFalseOptions';
 import { QuestionsContext } from '../../contexts/QuestionsContextProvider';
 import CustomTextField from '../forms/customFields/CustomTextField';
+import { useUserCourseLessonData } from '../../hooks/useUserCourseLessonData';
 
 interface QuestionsProps {
 	question: QuestionInterface;
 	questionNumber: number;
 	numberOfQuestions: number;
 	displayedQuestionNumber: number;
+	lessonType?: string;
 	setDisplayedQuestionNumber: React.Dispatch<React.SetStateAction<number>>;
 }
 
-const Question = ({ question, questionNumber, numberOfQuestions, displayedQuestionNumber, setDisplayedQuestionNumber }: QuestionsProps) => {
+const Question = ({
+	question,
+	questionNumber,
+	numberOfQuestions,
+	displayedQuestionNumber,
+	setDisplayedQuestionNumber,
+	lessonType,
+}: QuestionsProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const navigate = useNavigate();
+	const { isLessonCompleted, setIsLessonCompleted, userLessonId, handleNextLesson, nextLessonId } = useUserCourseLessonData();
 
-	//storing parameters from the URL
 	const { userId, lessonId, courseId, userCourseId } = useParams();
 	const { orgId } = useContext(OrganisationContext);
 	const { fetchQuestionTypeName } = useContext(QuestionsContext);
-	const location = useLocation();
-	const searchParams = new URLSearchParams(location.search);
-	const nextLessonId = searchParams.get('next');
 
-	const [isLessonCompleted, setIsLessonCompleted] = useState<boolean>(() => {
-		const isCompleted = searchParams.get('isCompleted');
-		if (isCompleted !== null) {
-			return JSON.parse(isCompleted);
-		}
-	});
-	/////////////////////////////////////////////////////////////
+	const [userAnswer, setUserAnswer] = useState<string>('');
 
 	const [value, setValue] = useState<string>(() => {
 		if (isLessonCompleted && question.correctAnswer) {
@@ -52,37 +51,7 @@ const Question = ({ question, questionNumber, numberOfQuestions, displayedQuesti
 	const [helperText, setHelperText] = useState<string>('Choose wisely');
 	const [isAnswerCorrect, setIsAnswerCorrect] = useState<boolean>(false);
 
-	const userCourseData = localStorage.getItem('userCourseData');
-	let parsedUserCourseData: UserCoursesIdsWithCourseIds[] = [];
-	if (userCourseData !== null) {
-		parsedUserCourseData = JSON.parse(userCourseData);
-	}
-	const [isCourseCompleted, setIsCourseCompleted] = useState<boolean>(() => {
-		// Find the user course data that matches the userCourseId
-		const currentUserCourseData: UserCoursesIdsWithCourseIds | undefined = parsedUserCourseData.find(
-			(data: UserCoursesIdsWithCourseIds) => data.userCourseId === userCourseId
-		);
-
-		// Check if currentUserCourseData exists
-		if (currentUserCourseData) {
-			// Return the isCourseCompleted value if currentUserCourseData exists
-			return currentUserCourseData.isCourseCompleted || false; // Return false if undefined
-		} else {
-			// Return a default value if currentUserCourseData is undefined
-			return false;
-		}
-	});
-
-	//parsing userLesson data and its id
-	const userLessonData = localStorage.getItem('userLessonData');
-	let parsedUserLessonData: UserLessonDataStorage[] = [];
-	if (userLessonData !== null) {
-		parsedUserLessonData = JSON.parse(userLessonData);
-	}
-
-	const userLessonId = parsedUserLessonData?.filter((data: UserLessonDataStorage) => data.lessonId === lessonId && data.courseId === courseId)[0]
-		?.userLessonId;
-	//////////////////////////////////////////////////////////////////
+	console.log(userAnswer);
 
 	//creating userQuestion when the question is answered correctly and updating local storage and DB accordingly
 	const createUserQuestion = async () => {
@@ -96,6 +65,7 @@ const Question = ({ question, questionNumber, numberOfQuestions, displayedQuesti
 				isCompleted: true,
 				isInProgress: false,
 				orgId,
+				userAnswer,
 			});
 
 			//updating current lesson's current question number(next question's number) if not last question
@@ -104,7 +74,6 @@ const Question = ({ question, questionNumber, numberOfQuestions, displayedQuesti
 					currentQuestion: displayedQuestionNumber + 1,
 				});
 			}
-			////////////////////////////////////////////////////////////////////////////
 
 			//completing lesson after answering last question correctly and navigating back to the course page
 			if (displayedQuestionNumber === numberOfQuestions) {
@@ -115,60 +84,15 @@ const Question = ({ question, questionNumber, numberOfQuestions, displayedQuesti
 
 				navigate(`/user/${userId}/course/${courseId}/userCourseId/${userCourseId}/lesson/${lessonId}?isCompleted=true&next=${nextLessonId}`);
 				setIsLessonCompleted(true);
-
-				//creating new userLesson for next lesson if exists and updating local storage
-				if (nextLessonId !== null) {
-					const responseUserLesson = await axios.post(`${base_url}/userLessons`, {
-						lessonId: nextLessonId,
-						userId,
-						courseId,
-						userCourseId,
-						currentQuestion: 1,
-						isCompleted: false,
-						isInProgress: true,
-						orgId,
-					});
-					if (!parsedUserLessonData.some((data: UserLessonDataStorage) => data.lessonId === nextLessonId && data.courseId === courseId) && courseId) {
-						const newUserLessonData: UserLessonDataStorage = {
-							lessonId: nextLessonId,
-							userLessonId: responseUserLesson.data._id,
-							courseId,
-							isCompleted: false,
-							isInProgress: true,
-						};
-
-						parsedUserLessonData.push(newUserLessonData);
-						localStorage.setItem('userLessonData', JSON.stringify(parsedUserLessonData));
-					}
-				} else if (nextLessonId === null) {
-					await axios.patch(`${base_url}/usercourses/${userCourseId}`, {
-						isCompleted: true,
-						isInProgress: false,
-					});
-
-					setIsCourseCompleted(true);
-
-					const userCourseIndexToUpdate = parsedUserCourseData.findIndex((item) => item.userCourseId === userCourseId);
-					parsedUserCourseData[userCourseIndexToUpdate].isCourseCompleted = true;
-					parsedUserCourseData[userCourseIndexToUpdate].isCourseInProgress = false;
-					localStorage.setItem('userCourseData', JSON.stringify(parsedUserCourseData));
-				}
-				//////////////////////////////////////////////////////////////
-
-				//updating userLesson progress
-				const userLessonIndexToUpdate = parsedUserLessonData.findIndex((item) => item.userLessonId === userLessonId);
-				parsedUserLessonData[userLessonIndexToUpdate].isCompleted = true;
-				parsedUserLessonData[userLessonIndexToUpdate].isInProgress = false;
-				localStorage.setItem('userLessonData', JSON.stringify(parsedUserLessonData));
-				///////////////////////////////////////////////////////////////
+				handleNextLesson();
 			}
-			///////////////////////////////////////////////////////////////
 		} catch (error) {
 			console.log(error);
 		}
 	};
 
 	const handleRadioChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+		console.log('deneme');
 		setIsLessonCompleted(false);
 		setValue((event.target as HTMLInputElement).value);
 		setHelperText(' ');
@@ -178,22 +102,26 @@ const Question = ({ question, questionNumber, numberOfQuestions, displayedQuesti
 	const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
 
-		if (value === question.correctAnswer?.toString()) {
-			setHelperText('You got it!');
-			setError(false);
-			setIsAnswerCorrect(true);
-			setSuccess(true);
-			createUserQuestion();
-		} else if (value !== question.correctAnswer && value !== '') {
-			setHelperText('Sorry, wrong answer!');
-			setError(true);
-			setIsAnswerCorrect(false);
-			setIsLessonCompleted(false);
-		} else {
-			setHelperText('Please select an option.');
-			setError(true);
-			setIsAnswerCorrect(false);
-			setIsLessonCompleted(false);
+		if (lessonType === 'Practice Lesson') {
+			if (value === question.correctAnswer?.toString()) {
+				setHelperText('You got it!');
+				setError(false);
+				setIsAnswerCorrect(true);
+				setSuccess(true);
+				createUserQuestion();
+				setUserAnswer(value);
+			} else if (value !== question.correctAnswer && value !== '') {
+				setHelperText('Sorry, wrong answer!');
+				setError(true);
+				setIsAnswerCorrect(false);
+				setIsLessonCompleted(false);
+				setUserAnswer(value);
+			} else {
+				setHelperText('Please select an option.');
+				setError(true);
+				setIsAnswerCorrect(false);
+				setIsLessonCompleted(false);
+			}
 		}
 	};
 
@@ -213,7 +141,7 @@ const Question = ({ question, questionNumber, numberOfQuestions, displayedQuesti
 							alignItems: 'center',
 							width: '100%',
 							height: question?.imageUrl || question?.videoUrl ? '18rem' : '0',
-							margin: question?.imageUrl || question?.videoUrl ? '9rem 0 2rem 0' : 'none',
+							margin: question?.imageUrl || question?.videoUrl ? '10rem 0 2rem 0' : 'none',
 						}}>
 						{question?.imageUrl && (
 							<Box
@@ -261,7 +189,7 @@ const Question = ({ question, questionNumber, numberOfQuestions, displayedQuesti
 					<FormLabel
 						sx={{
 							color: success ? theme.textColor?.greenPrimary.main : 'inherit',
-							margin: question.videoUrl || question.imageUrl ? '3rem 0 1rem 0' : '12rem 0 1rem 0',
+							margin: question.videoUrl || question.imageUrl ? '3rem 0 1rem 0' : '11rem 0 1rem 0',
 						}}>
 						<Box sx={{ display: 'flex', justifyContent: 'center' }}>
 							<Typography variant='h6' sx={{ mr: '0.5rem' }}>
@@ -271,7 +199,11 @@ const Question = ({ question, questionNumber, numberOfQuestions, displayedQuesti
 						</Box>
 					</FormLabel>
 
-					{fetchQuestionTypeName(question) === 'Open-ended' && <CustomTextField />}
+					{fetchQuestionTypeName(question) === 'Open-ended' && (
+						<Box sx={{ width: '90%', margin: '1rem auto' }}>
+							<CustomTextField required={false} multiline rows={4} resizable />
+						</Box>
+					)}
 
 					{fetchQuestionTypeName(question) === 'True-False' && (
 						<Box>
@@ -301,7 +233,7 @@ const Question = ({ question, questionNumber, numberOfQuestions, displayedQuesti
 					{fetchQuestionTypeName(question) !== 'Open-ended' && !isLessonCompleted && (
 						<FormHelperText sx={{ color: success ? 'green' : 'inherit', alignSelf: 'center', mt: '2rem' }}>{helperText}</FormHelperText>
 					)}
-					<Button sx={{ mt: '2rem', width: '13rem', alignSelf: 'center' }} type='submit' variant='outlined'>
+					<Button sx={{ mt: '3rem', width: '13rem', alignSelf: 'center' }} type='submit' variant='outlined'>
 						Submit Answer
 					</Button>
 				</FormControl>
@@ -310,12 +242,13 @@ const Question = ({ question, questionNumber, numberOfQuestions, displayedQuesti
 			<Box
 				sx={{
 					display: 'flex',
-					justifyContent: 'space-around',
-					margin: '2rem',
-					width: '50%',
+					justifyContent: 'space-between',
+					mt: '2rem',
+					width: '40%',
 				}}>
 				<Button
 					variant='outlined'
+					sx={{ mr: '4rem' }}
 					onClick={() => {
 						if (!(displayedQuestionNumber - 1 === 0)) {
 							setDisplayedQuestionNumber((prev) => prev - 1);
@@ -346,9 +279,9 @@ const Question = ({ question, questionNumber, numberOfQuestions, displayedQuesti
 						},
 					}}
 					disabled={(!isAnswerCorrect || displayedQuestionNumber + 1 > numberOfQuestions) && !isLessonCompleted}>
-					{displayedQuestionNumber === numberOfQuestions && (nextLessonId === null || isCourseCompleted)
+					{displayedQuestionNumber === numberOfQuestions && nextLessonId === null
 						? 'Complete Course'
-						: displayedQuestionNumber === numberOfQuestions && !isCourseCompleted
+						: displayedQuestionNumber === numberOfQuestions && nextLessonId !== null
 						? 'Complete Lesson'
 						: displayedQuestionNumber < numberOfQuestions
 						? 'Next'

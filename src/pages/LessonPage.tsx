@@ -5,7 +5,7 @@ import { useQuery } from 'react-query';
 import axios from 'axios';
 import ReactPlayer from 'react-player';
 import DashboardHeader from '../components/layouts/dashboardLayout/DashboardHeader';
-import { KeyboardBackspaceOutlined, KeyboardDoubleArrowRight } from '@mui/icons-material';
+import { DoneAll, KeyboardBackspaceOutlined, KeyboardDoubleArrowRight } from '@mui/icons-material';
 import Loading from '../components/layouts/loading/Loading';
 import LoadingError from '../components/layouts/loading/LoadingError';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
@@ -25,7 +25,7 @@ const LessonPage = () => {
 
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
-	const { handleNextLesson } = useUserCourseLessonData();
+	const { handleNextLesson, nextLessonId } = useUserCourseLessonData();
 
 	const {
 		data: lesson,
@@ -148,7 +148,7 @@ const LessonPage = () => {
 						display: 'flex',
 						justifyContent: 'flex-start',
 						alignItems: 'flex-start',
-						margin: '1rem 0 3rem 0',
+						margin: lesson.videoUrl ? '1rem 0 3rem 0' : '12rem 0 3rem 0',
 						width: '85%',
 						boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
 						padding: '2rem',
@@ -177,7 +177,7 @@ const LessonPage = () => {
 
 			{isQuestionsVisible && (
 				<Box sx={{ width: '85%' }}>
-					<Questions questions={lesson.questions} />
+					<Questions questions={lesson.questions} lessonType={lesson.type} />
 				</Box>
 			)}
 
@@ -201,16 +201,16 @@ const LessonPage = () => {
 			)}
 
 			{lesson.type === 'Instructional Lesson' && (
-				<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '85%' }}>
+				<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '85%', marginTop: 'auto' }}>
 					<Box sx={{ alignSelf: 'flex-end' }}>
 						<CustomSubmitButton
-							endIcon={<KeyboardDoubleArrowRight />}
+							endIcon={!nextLessonId ? <DoneAll /> : <KeyboardDoubleArrowRight />}
 							onClick={() => {
 								handleNextLesson();
 								window.scrollTo({ top: 0, behavior: 'smooth' });
 							}}
 							type='button'>
-							Next Lesson
+							{nextLessonId ? 'Next Lesson' : 'Complete Course'}
 						</CustomSubmitButton>
 					</Box>
 				</Box>

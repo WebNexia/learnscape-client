@@ -5,9 +5,10 @@ import { useState } from 'react';
 
 interface QuestionsProps {
 	questions: QuestionInterface[];
+	lessonType?: string;
 }
 
-const Questions = ({ questions }: QuestionsProps) => {
+const Questions = ({ questions, lessonType }: QuestionsProps) => {
 	const [displayedQuestionNumber, setDisplayedQuestionNumber] = useState<number>(1);
 	const numberOfQuestions = questions.length;
 	return (
@@ -21,6 +22,7 @@ const Questions = ({ questions }: QuestionsProps) => {
 						numberOfQuestions={numberOfQuestions}
 						displayedQuestionNumber={displayedQuestionNumber}
 						setDisplayedQuestionNumber={setDisplayedQuestionNumber}
+						lessonType={lessonType}
 					/>
 				))}
 		</Box>
