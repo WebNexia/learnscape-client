@@ -22,7 +22,6 @@ const CoursePage = () => {
 			userCourseData = JSON.parse(currentUserCourseData);
 			setIsEnrolledStatus(userCourseData.some((data) => data.courseId === courseId));
 		}
-
 		if (courseId) {
 			fetchSingleCourseData(courseId);
 		}

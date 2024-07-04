@@ -31,7 +31,8 @@ const Question = ({
 }: QuestionsProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const navigate = useNavigate();
-	const { isLessonCompleted, setIsLessonCompleted, userLessonId, handleNextLesson, nextLessonId } = useUserCourseLessonData();
+	const { isLessonCompleted, setIsLessonCompleted, userLessonId, handleNextLesson, nextLessonId, updateLastQuestion, getLastQuestion } =
+		useUserCourseLessonData();
 
 	const { userId, lessonId, courseId, userCourseId } = useParams();
 	const { orgId } = useContext(OrganisationContext);
@@ -46,12 +47,11 @@ const Question = ({
 			return '';
 		}
 	});
+
 	const [error, setError] = useState<boolean>(false);
 	const [success, setSuccess] = useState<boolean>(false);
 	const [helperText, setHelperText] = useState<string>('Choose wisely');
 	const [isAnswerCorrect, setIsAnswerCorrect] = useState<boolean>(false);
-
-	console.log(userAnswer);
 
 	//creating userQuestion when the question is answered correctly and updating local storage and DB accordingly
 	const createUserQuestion = async () => {
@@ -69,20 +69,13 @@ const Question = ({
 			});
 
 			//updating current lesson's current question number(next question's number) if not last question
-			if (displayedQuestionNumber + 1 <= numberOfQuestions) {
-				await axios.patch(`${base_url}/userLessons/${userLessonId}`, {
-					currentQuestion: displayedQuestionNumber + 1,
-				});
+			if (displayedQuestionNumber + 1 <= numberOfQuestions && getLastQuestion() <= displayedQuestionNumber) {
+				updateLastQuestion(displayedQuestionNumber + 1);
 			}
 
 			//completing lesson after answering last question correctly and navigating back to the course page
 			if (displayedQuestionNumber === numberOfQuestions) {
-				await axios.patch(`${base_url}/userLessons/${userLessonId}`, {
-					isCompleted: true,
-					isInProgress: false,
-				});
-
-				navigate(`/user/${userId}/course/${courseId}/userCourseId/${userCourseId}/lesson/${lessonId}?isCompleted=true&next=${nextLessonId}`);
+				// navigate(`/user/${userId}/course/${courseId}/userCourseId/${userCourseId}/lesson/${lessonId}?isCompleted=true&next=${nextLessonId}`);
 				setIsLessonCompleted(true);
 				handleNextLesson();
 			}
@@ -92,7 +85,6 @@ const Question = ({
 	};
 
 	const handleRadioChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-		console.log('deneme');
 		setIsLessonCompleted(false);
 		setValue((event.target as HTMLInputElement).value);
 		setHelperText(' ');
@@ -101,7 +93,6 @@ const Question = ({
 
 	const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
-
 		if (lessonType === 'Practice Lesson') {
 			if (value === question.correctAnswer?.toString()) {
 				setHelperText('You got it!');

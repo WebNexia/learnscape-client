@@ -1,11 +1,11 @@
-import { useState, useContext } from 'react';
+import { useState, useContext, useCallback, useMemo } from 'react';
 import axios from 'axios';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import { UserCoursesIdsWithCourseIds, UserLessonDataStorage } from '../contexts/UserCourseLessonDataContextProvider';
 
 export const useUserCourseLessonData = () => {
-	const { userId, lessonId, courseId, userCourseId } = useParams();
+	const { userId, lessonId, courseId, userCourseId } = useParams<{ userId: string; lessonId: string; courseId: string; userCourseId: string }>();
 	const { orgId } = useContext(OrganisationContext);
 	const navigate = useNavigate();
 	const location = useLocation();
@@ -13,59 +13,83 @@ export const useUserCourseLessonData = () => {
 	const nextLessonId = searchParams.get('next');
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
+	// Function to get data from localStorage
+	const getLocalStorageData = (key: string): any[] => {
+		const data = localStorage.getItem(key);
+		return data ? JSON.parse(data) : [];
+	};
+
 	const [isLessonCompleted, setIsLessonCompleted] = useState<boolean>(() => {
 		const isCompleted = searchParams.get('isCompleted');
-		return isCompleted !== null ? JSON.parse(isCompleted) : false;
+		return isCompleted ? JSON.parse(isCompleted) : false;
 	});
 
-	const [isCourseCompleted, setIsCourseCompleted] = useState<boolean>(() => {
-		const userCourseData = localStorage.getItem('userCourseData');
-		if (userCourseData !== null) {
-			const parsedUserCourseData: UserCoursesIdsWithCourseIds[] = JSON.parse(userCourseData);
-			const currentUserCourseData = parsedUserCourseData.find((data) => data.userCourseId === userCourseId);
-			return currentUserCourseData ? currentUserCourseData.isCourseCompleted || false : false;
-		}
-		return false;
+	// State to manage localStorage data
+	const [localStorageData, setLocalStorageData] = useState<{
+		userCourseData: UserCoursesIdsWithCourseIds[];
+		userLessonData: UserLessonDataStorage[];
+	}>({
+		userCourseData: getLocalStorageData('userCourseData'),
+		userLessonData: getLocalStorageData('userLessonData'),
 	});
 
+	// Memoized values for parsed data
+	const parsedUserCourseData = useMemo(() => localStorageData.userCourseData, [localStorageData.userCourseData]);
+	const parsedUserLessonData = useMemo(() => localStorageData.userLessonData, [localStorageData.userLessonData]);
+
+	// State for current userLessonId
 	const [userLessonId, setUserLessonId] = useState<string | undefined>(() => {
-		const userLessonData = localStorage.getItem('userLessonData');
-		if (userLessonData !== null) {
-			const parsedUserLessonData: UserLessonDataStorage[] = JSON.parse(userLessonData);
-			const currentUserLessonData = parsedUserLessonData.find((data) => data.lessonId === lessonId && data.courseId === courseId);
-			return currentUserLessonData?.userLessonId;
-		}
-		return undefined;
+		const currentUserLessonData = parsedUserLessonData.find((data) => data.lessonId === lessonId && data.courseId === courseId);
+		return currentUserLessonData?.userLessonId;
 	});
 
-	const handleNextLesson = async () => {
-		try {
-			const userLessonData = localStorage.getItem('userLessonData');
-			let parsedUserLessonData: UserLessonDataStorage[] = [];
-			if (userLessonData !== null) {
-				parsedUserLessonData = JSON.parse(userLessonData);
-			}
+	// State for course completion status
+	const [isCourseCompleted, setIsCourseCompleted] = useState<boolean>(() => {
+		const currentUserCourseData = parsedUserCourseData.find((data) => data.userCourseId === userCourseId);
+		return currentUserCourseData ? currentUserCourseData.isCourseCompleted || false : false;
+	});
 
-			const userCourseData = localStorage.getItem('userCourseData');
-			let parsedUserCourseData: UserCoursesIdsWithCourseIds[] = [];
-			if (userCourseData !== null) {
-				parsedUserCourseData = JSON.parse(userCourseData);
-			}
-
-			// Mark the current lesson as completed
+	// Function to update last question index
+	const updateLastQuestion = useCallback(
+		(questionIndex: number) => {
 			const currentUserLessonIndex = parsedUserLessonData.findIndex((data) => data.userLessonId === userLessonId);
-			if (currentUserLessonIndex !== -1 && parsedUserLessonData[currentUserLessonIndex].isCompleted !== true) {
-				parsedUserLessonData[currentUserLessonIndex].isCompleted = true;
-				parsedUserLessonData[currentUserLessonIndex].isInProgress = false;
-				localStorage.setItem('userLessonData', JSON.stringify(parsedUserLessonData));
+
+			if (currentUserLessonIndex !== -1 && !parsedUserLessonData[currentUserLessonIndex].isCompleted) {
+				const updatedUserLessonData = [...parsedUserLessonData];
+				updatedUserLessonData[currentUserLessonIndex].currentQuestion = questionIndex;
+				localStorage.setItem('userLessonData', JSON.stringify(updatedUserLessonData));
+				setLocalStorageData((prev) => ({ ...prev, userLessonData: updatedUserLessonData }));
+			}
+		},
+		[userLessonId, parsedUserLessonData]
+	);
+
+	// Function to get last question index
+	const getLastQuestion = useCallback((): number => {
+		const currentUserLessonData = parsedUserLessonData.find((data) => data.userLessonId === userLessonId);
+		return currentUserLessonData ? currentUserLessonData.currentQuestion : 1;
+	}, [userLessonId, parsedUserLessonData]);
+
+	// Function to handle moving to the next lesson
+	const handleNextLesson = useCallback(async () => {
+		try {
+			const currentUserLessonIndex = parsedUserLessonData.findIndex((data) => data.userLessonId === userLessonId);
+
+			if (currentUserLessonIndex !== -1 && !parsedUserLessonData[currentUserLessonIndex].isCompleted) {
+				const updatedUserLessonData = [...parsedUserLessonData];
+				updatedUserLessonData[currentUserLessonIndex].isCompleted = true;
+				updatedUserLessonData[currentUserLessonIndex].isInProgress = false;
+				localStorage.setItem('userLessonData', JSON.stringify(updatedUserLessonData));
+				setLocalStorageData((prev) => ({ ...prev, userLessonData: updatedUserLessonData }));
 
 				await axios.patch(`${base_url}/userLessons/${userLessonId}`, {
 					isCompleted: true,
 					isInProgress: false,
+					currentQuestion: 1,
 				});
 			}
 
-			if (nextLessonId !== null) {
+			if (nextLessonId) {
 				const existingNextLesson = parsedUserLessonData.find((data) => data.lessonId === nextLessonId && data.courseId === courseId);
 
 				if (!existingNextLesson) {
@@ -84,15 +108,16 @@ export const useUserCourseLessonData = () => {
 						lessonId: nextLessonId,
 						userLessonId: responseUserLesson.data._id,
 						courseId: courseId || '',
+						currentQuestion: 1,
 						isCompleted: false,
 						isInProgress: true,
 					};
-					parsedUserLessonData.push(newUserLessonData);
-					localStorage.setItem('userLessonData', JSON.stringify(parsedUserLessonData));
-				}
 
-				navigate(`/course/${courseId}/user/${userId}/userCourseId/${userCourseId}?isEnrolled=true`);
-			} else if (nextLessonId === null) {
+					const updatedUserLessonData = [...parsedUserLessonData, newUserLessonData];
+					localStorage.setItem('userLessonData', JSON.stringify(updatedUserLessonData));
+					setLocalStorageData((prev) => ({ ...prev, userLessonData: updatedUserLessonData }));
+				}
+			} else {
 				await axios.patch(`${base_url}/usercourses/${userCourseId}`, {
 					isCompleted: true,
 					isInProgress: false,
@@ -101,9 +126,11 @@ export const useUserCourseLessonData = () => {
 				setIsCourseCompleted(true);
 
 				const userCourseIndexToUpdate = parsedUserCourseData.findIndex((item) => item.userCourseId === userCourseId);
-				parsedUserCourseData[userCourseIndexToUpdate].isCourseCompleted = true;
-				parsedUserCourseData[userCourseIndexToUpdate].isCourseInProgress = false;
-				localStorage.setItem('userCourseData', JSON.stringify(parsedUserCourseData));
+				const updatedUserCourseData = [...parsedUserCourseData];
+				updatedUserCourseData[userCourseIndexToUpdate].isCourseCompleted = true;
+				updatedUserCourseData[userCourseIndexToUpdate].isCourseInProgress = false;
+				localStorage.setItem('userCourseData', JSON.stringify(updatedUserCourseData));
+				setLocalStorageData((prev) => ({ ...prev, userCourseData: updatedUserCourseData }));
 
 				navigate(`/course/${courseId}/user/${userId}/userCourseId/${userCourseId}?isEnrolled=true`);
 				window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -111,8 +138,21 @@ export const useUserCourseLessonData = () => {
 		} catch (error) {
 			console.error(error);
 		}
-	};
+	}, [
+		userLessonId,
+		nextLessonId,
+		userId,
+		courseId,
+		userCourseId,
+		orgId,
+		navigate,
+		parsedUserLessonData,
+		parsedUserCourseData,
+		base_url,
+		setIsLessonCompleted,
+	]);
 
+	// Return the necessary data and functions from the hook
 	return {
 		isLessonCompleted,
 		setIsLessonCompleted,
@@ -121,5 +161,8 @@ export const useUserCourseLessonData = () => {
 		userLessonId,
 		handleNextLesson,
 		nextLessonId,
+		updateLastQuestion,
+		getLastQuestion,
+		parsedUserLessonData,
 	};
 };

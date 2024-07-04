@@ -64,6 +64,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 						lessonId: firstLessonId,
 						userLessonId: responseUserLesson.data._id,
 						courseId,
+						currentQuestion: 1,
 						isCompleted: false,
 						isInProgress: true,
 					};

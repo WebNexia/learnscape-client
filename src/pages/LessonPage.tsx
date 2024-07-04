@@ -31,7 +31,7 @@ const LessonPage = () => {
 		data: lesson,
 		isLoading,
 		isError,
-	} = useQuery('singleLessonData', async () => {
+	} = useQuery(['singleLessonData', lessonId], async () => {
 		const response = await axios.get(`${base_url}/lessons/${lessonId}`);
 		return response.data;
 	});
@@ -205,9 +205,10 @@ const LessonPage = () => {
 					<Box sx={{ alignSelf: 'flex-end' }}>
 						<CustomSubmitButton
 							endIcon={!nextLessonId ? <DoneAll /> : <KeyboardDoubleArrowRight />}
-							onClick={() => {
-								handleNextLesson();
+							onClick={async () => {
+								await handleNextLesson();
 								window.scrollTo({ top: 0, behavior: 'smooth' });
+								navigate(`/course/${courseId}/user/${userId}/userCourseId/${userCourseId}?isEnrolled=true`);
 							}}
 							type='button'>
 							{nextLessonId ? 'Next Lesson' : 'Complete Course'}
