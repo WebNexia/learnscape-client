@@ -5,6 +5,7 @@ import { useContext, useEffect, useState } from 'react';
 import { Mode } from '../../../interfaces/enums';
 import { DarkMode, LightMode } from '@mui/icons-material';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
+import { useUserCourseLessonData } from '../../../hooks/useUserCourseLessonData';
 
 interface DashboardHeaderProps {
 	pageName: string;
@@ -14,6 +15,7 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 	const { signOut } = useContext(UserAuthContext);
 	const [mode, setMode] = useState<Mode>((localStorage.getItem('mode') as Mode) || Mode.LIGHT_MODE);
 	const navigate = useNavigate();
+	const { updateInProgressLessons } = useUserCourseLessonData();
 
 	useEffect(() => {
 		if (!localStorage.getItem('mode')) {
@@ -73,10 +75,12 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 						}}
 						onClick={async () => {
 							await signOut();
+							await updateInProgressLessons();
 							localStorage.removeItem('orgId');
 							localStorage.removeItem('userCourseData');
 							localStorage.removeItem('userLessonData');
 							localStorage.removeItem('role');
+
 							navigate('/');
 						}}>
 						Log Out

@@ -54,7 +54,6 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 		const navigateToLesson = (lessonId: string, nextId?: string) => {
 			const url = `/user/${userId}/course/${courseId}/userCourseId/${userCourseId}/lesson/${lessonId}`;
 			const queryParams = `?isCompleted=${isLessonCompleted}`;
-
 			if (nextId) {
 				const nextQuery = `&next=${nextId}`;
 				navigate(`${url}${queryParams}${nextQuery}`);

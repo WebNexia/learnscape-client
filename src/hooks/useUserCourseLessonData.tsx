@@ -1,8 +1,9 @@
-import { useState, useContext, useCallback, useMemo } from 'react';
-import axios from 'axios';
-import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { useCallback, useContext, useState } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
-import { UserCoursesIdsWithCourseIds, UserLessonDataStorage } from '../contexts/UserCourseLessonDataContextProvider';
+import { useLocalStorageData } from './useLocalStorageData';
+import axios from 'axios';
+import { UserLessonDataStorage } from '../contexts/UserCourseLessonDataContextProvider';
 
 export const useUserCourseLessonData = () => {
 	const { userId, lessonId, courseId, userCourseId } = useParams<{ userId: string; lessonId: string; courseId: string; userCourseId: string }>();
@@ -13,29 +14,12 @@ export const useUserCourseLessonData = () => {
 	const nextLessonId = searchParams.get('next');
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
-	// Function to get data from localStorage
-	const getLocalStorageData = (key: string): any[] => {
-		const data = localStorage.getItem(key);
-		return data ? JSON.parse(data) : [];
-	};
+	const { setLocalStorageData, parsedUserCourseData, parsedUserLessonData } = useLocalStorageData();
 
 	const [isLessonCompleted, setIsLessonCompleted] = useState<boolean>(() => {
 		const isCompleted = searchParams.get('isCompleted');
 		return isCompleted ? JSON.parse(isCompleted) : false;
 	});
-
-	// State to manage localStorage data
-	const [localStorageData, setLocalStorageData] = useState<{
-		userCourseData: UserCoursesIdsWithCourseIds[];
-		userLessonData: UserLessonDataStorage[];
-	}>({
-		userCourseData: getLocalStorageData('userCourseData'),
-		userLessonData: getLocalStorageData('userLessonData'),
-	});
-
-	// Memoized values for parsed data
-	const parsedUserCourseData = useMemo(() => localStorageData.userCourseData, [localStorageData.userCourseData]);
-	const parsedUserLessonData = useMemo(() => localStorageData.userLessonData, [localStorageData.userLessonData]);
 
 	// State for current userLessonId
 	const [userLessonId, setUserLessonId] = useState<string | undefined>(() => {
@@ -79,6 +63,7 @@ export const useUserCourseLessonData = () => {
 				const updatedUserLessonData = [...parsedUserLessonData];
 				updatedUserLessonData[currentUserLessonIndex].isCompleted = true;
 				updatedUserLessonData[currentUserLessonIndex].isInProgress = false;
+				updatedUserLessonData[currentUserLessonIndex].currentQuestion = 1;
 				localStorage.setItem('userLessonData', JSON.stringify(updatedUserLessonData));
 				setLocalStorageData((prev) => ({ ...prev, userLessonData: updatedUserLessonData }));
 
@@ -152,6 +137,25 @@ export const useUserCourseLessonData = () => {
 		setIsLessonCompleted,
 	]);
 
+	// Function to update in-progress lessons
+	const updateInProgressLessons = useCallback(async () => {
+		const updatedParsedUserLessonData = JSON.parse(localStorage.getItem('userLessonData') || '[]');
+		const inProgressLessons = updatedParsedUserLessonData.filter((lesson: UserLessonDataStorage) => lesson.isInProgress);
+		try {
+			for (const lesson of inProgressLessons) {
+				const localStorageLesson = updatedParsedUserLessonData.find((data: UserLessonDataStorage) => data.userLessonId === lesson.userLessonId);
+				if (localStorageLesson) {
+					const currentQuestion = localStorageLesson.currentQuestion;
+					await axios.patch(`${base_url}/userLessons/${lesson.userLessonId}`, {
+						currentQuestion,
+					});
+				}
+			}
+		} catch (error) {
+			console.error('Failed to update in-progress lessons', error);
+		}
+	}, [base_url]);
+
 	// Return the necessary data and functions from the hook
 	return {
 		isLessonCompleted,
@@ -164,5 +168,6 @@ export const useUserCourseLessonData = () => {
 		updateLastQuestion,
 		getLastQuestion,
 		parsedUserLessonData,
+		updateInProgressLessons,
 	};
 };

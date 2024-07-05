@@ -170,7 +170,7 @@ const LessonPage = () => {
 						onClick={() => {
 							setIsQuestionsVisible(true);
 						}}>
-						Go to Questions
+						{lesson.type === 'Practice Lesson' ? 'Go to Questions' : 'Start Quiz'}
 					</CustomSubmitButton>
 				</Box>
 			)}

@@ -25,7 +25,6 @@ const Chapter = ({ chapter, isEnrolledStatus, nextChapterFirstLessonId }: Chapte
 					chapter.lessons &&
 					chapter.lessons.map((lesson: LessonById, index) => {
 						let nextLessonId: string = '';
-
 						if (index !== chapter.lessons.length - 1) {
 							nextLessonId = chapter.lessons[index + 1]._id;
 						}

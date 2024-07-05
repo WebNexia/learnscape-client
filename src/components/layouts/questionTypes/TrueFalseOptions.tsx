@@ -1,6 +1,7 @@
 import { Box, Typography, Radio, RadioGroup, FormControlLabel } from '@mui/material';
 import theme from '../../../themes';
 import { QuestionInterface } from '../../../interfaces/question';
+import { useUserCourseLessonData } from '../../../hooks/useUserCourseLessonData';
 
 interface TrueFalseOptionsProps {
 	question: QuestionInterface;
@@ -9,6 +10,7 @@ interface TrueFalseOptionsProps {
 	correctAnswerAdminQuestions?: string;
 	fromLearner?: boolean;
 	isLessonCompleted?: boolean;
+	displayedQuestionNumber?: number;
 	setIsLessonCompleted?: React.Dispatch<React.SetStateAction<boolean>>;
 	setCorrectAnswer: React.Dispatch<React.SetStateAction<string>>;
 	setIsCorrectAnswerMissing?: React.Dispatch<React.SetStateAction<boolean>>;
@@ -22,6 +24,7 @@ const TrueFalseOptions = ({
 	correctAnswerAdminQuestions,
 	fromLearner,
 	isLessonCompleted,
+	displayedQuestionNumber = 1,
 	setIsLessonCompleted,
 	setCorrectAnswer,
 	setIsCorrectAnswerMissing,
@@ -36,9 +39,11 @@ const TrueFalseOptions = ({
 		}
 	};
 
+	const { getLastQuestion } = useUserCourseLessonData();
+
 	const adminSetting = fromLessonEditPage ? correctAnswer : correctAnswerAdminQuestions;
 
-	const learnerSetting = isLessonCompleted ? question.correctAnswer : correctAnswer;
+	const learnerSetting = isLessonCompleted || displayedQuestionNumber < getLastQuestion() ? question.correctAnswer : correctAnswer;
 	return (
 		<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', mt: '2rem' }}>
 			<RadioGroup row value={fromLearner ? learnerSetting : adminSetting} onChange={handleChange}>

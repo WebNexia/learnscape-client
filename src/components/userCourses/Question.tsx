@@ -75,7 +75,6 @@ const Question = ({
 
 			//completing lesson after answering last question correctly and navigating back to the course page
 			if (displayedQuestionNumber === numberOfQuestions) {
-				// navigate(`/user/${userId}/course/${courseId}/userCourseId/${userCourseId}/lesson/${lessonId}?isCompleted=true&next=${nextLessonId}`);
 				setIsLessonCompleted(true);
 				handleNextLesson();
 			}
@@ -113,6 +112,7 @@ const Question = ({
 				setIsAnswerCorrect(false);
 				setIsLessonCompleted(false);
 			}
+		} else if (lessonType === 'Quiz') {
 		}
 	};
 
@@ -205,13 +205,14 @@ const Question = ({
 								question={question}
 								isLessonCompleted={isLessonCompleted}
 								setIsLessonCompleted={setIsLessonCompleted}
+								displayedQuestionNumber={displayedQuestionNumber}
 							/>
 						</Box>
 					)}
 					{fetchQuestionTypeName(question) === 'Multiple Choice' && (
 						<RadioGroup
 							name='question'
-							value={isLessonCompleted ? question.correctAnswer : value}
+							value={isLessonCompleted || displayedQuestionNumber < getLastQuestion() ? question.correctAnswer : value}
 							onChange={handleRadioChange}
 							sx={{ alignSelf: 'center' }}>
 							{question &&
@@ -269,7 +270,10 @@ const Question = ({
 							backgroundColor: theme.textColor?.common.main,
 						},
 					}}
-					disabled={(!isAnswerCorrect || displayedQuestionNumber + 1 > numberOfQuestions) && !isLessonCompleted}>
+					disabled={
+						(!isAnswerCorrect || displayedQuestionNumber + 1 > numberOfQuestions) &&
+						!(isLessonCompleted || displayedQuestionNumber < getLastQuestion())
+					}>
 					{displayedQuestionNumber === numberOfQuestions && nextLessonId === null
 						? 'Complete Course'
 						: displayedQuestionNumber === numberOfQuestions && nextLessonId !== null

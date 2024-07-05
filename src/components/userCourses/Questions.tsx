@@ -2,6 +2,7 @@ import { Box } from '@mui/material';
 import { QuestionInterface } from '../../interfaces/question';
 import Question from './Question';
 import { useState } from 'react';
+import { useUserCourseLessonData } from '../../hooks/useUserCourseLessonData';
 
 interface QuestionsProps {
 	questions: QuestionInterface[];
@@ -9,7 +10,8 @@ interface QuestionsProps {
 }
 
 const Questions = ({ questions, lessonType }: QuestionsProps) => {
-	const [displayedQuestionNumber, setDisplayedQuestionNumber] = useState<number>(1);
+	const { getLastQuestion } = useUserCourseLessonData();
+	const [displayedQuestionNumber, setDisplayedQuestionNumber] = useState<number>(getLastQuestion);
 	const numberOfQuestions = questions.length;
 	return (
 		<Box>
