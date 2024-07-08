@@ -9,12 +9,13 @@ import { DoneAll, KeyboardBackspaceOutlined, KeyboardDoubleArrowRight } from '@m
 import Loading from '../components/layouts/loading/Loading';
 import LoadingError from '../components/layouts/loading/LoadingError';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
-import { useContext, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { sanitizeHtml } from '../utils/sanitizeHtml';
 import { Document } from '../interfaces/document';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import Questions from '../components/userCourses/Questions';
 import { useUserCourseLessonData } from '../hooks/useUserCourseLessonData';
+import { useFetchUserQuestion } from '../hooks/useFetchUserQuestion';
 
 const LessonPage = () => {
 	const { lessonId, userId, courseId, userCourseId } = useParams();
@@ -26,14 +27,25 @@ const LessonPage = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
 	const { handleNextLesson, nextLessonId } = useUserCourseLessonData();
+	const { fetchUserAnswersByLesson, userAnswers } = useFetchUserQuestion();
+
+	const fetchLesson = async (lessonId: string) => {
+		const response = await axios.get(`${base_url}/lessons/${lessonId}`);
+		return response.data;
+	};
+
+	useEffect(() => {
+		if (lessonId) {
+			fetchUserAnswersByLesson(lessonId);
+		}
+	}, []);
 
 	const {
 		data: lesson,
 		isLoading,
 		isError,
-	} = useQuery(['singleLessonData', lessonId], async () => {
-		const response = await axios.get(`${base_url}/lessons/${lessonId}`);
-		return response.data;
+	} = useQuery(['singleLessonData', lessonId], () => fetchLesson(lessonId || ''), {
+		enabled: !!lessonId, // This line ensures the query only runs when lessonId is truthy
 	});
 
 	if (isLoading) {
@@ -137,7 +149,13 @@ const LessonPage = () => {
 			</Box>
 
 			{lesson.type !== 'Instructional Lesson' && !isQuestionsVisible && (
-				<Box sx={{ display: 'flex', justifyContent: 'flex-start', width: '85%', margin: lesson.videoUrl ? '3rem 0 1rem 0' : '12rem 0 1rem 0' }}>
+				<Box
+					sx={{
+						display: 'flex',
+						justifyContent: 'flex-start',
+						width: '85%',
+						margin: lesson.videoUrl ? '3rem 0 1rem 0' : '12rem 0 1rem 0',
+					}}>
 					<Typography variant='h5'>Instructions</Typography>
 				</Box>
 			)}
@@ -152,6 +170,7 @@ const LessonPage = () => {
 						width: '85%',
 						boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
 						padding: '2rem',
+						backgroundColor: theme.bgColor?.common,
 					}}>
 					<Box>
 						<Typography
@@ -177,7 +196,7 @@ const LessonPage = () => {
 
 			{isQuestionsVisible && (
 				<Box sx={{ width: '85%' }}>
-					<Questions questions={lesson.questions} lessonType={lesson.type} />
+					<Questions questions={lesson.questions} lessonType={lesson.type} userAnswers={userAnswers} />
 				</Box>
 			)}
 

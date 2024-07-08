@@ -15,6 +15,7 @@ interface TrueFalseOptionsProps {
 	setCorrectAnswer: React.Dispatch<React.SetStateAction<string>>;
 	setIsCorrectAnswerMissing?: React.Dispatch<React.SetStateAction<boolean>>;
 	setCorrectAnswerAdminQuestions?: React.Dispatch<React.SetStateAction<string>>;
+	setHelperText?: React.Dispatch<React.SetStateAction<string>>;
 }
 
 const TrueFalseOptions = ({
@@ -29,6 +30,7 @@ const TrueFalseOptions = ({
 	setCorrectAnswer,
 	setIsCorrectAnswerMissing,
 	setCorrectAnswerAdminQuestions,
+	setHelperText,
 }: TrueFalseOptionsProps) => {
 	const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
 		if (setIsLessonCompleted) setIsLessonCompleted(false);
@@ -37,6 +39,7 @@ const TrueFalseOptions = ({
 		if (!fromLessonEditPage && setCorrectAnswerAdminQuestions) {
 			setCorrectAnswerAdminQuestions((event.target as HTMLInputElement).value);
 		}
+		if (setHelperText) setHelperText(' ');
 	};
 
 	const { getLastQuestion } = useUserCourseLessonData();
