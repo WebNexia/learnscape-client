@@ -4,7 +4,7 @@ import { QuestionInterface } from '../../../interfaces/question';
 import { useUserCourseLessonData } from '../../../hooks/useUserCourseLessonData';
 
 interface TrueFalseOptionsProps {
-	question: QuestionInterface;
+	question?: QuestionInterface;
 	correctAnswer: string;
 	fromLessonEditPage?: boolean;
 	correctAnswerAdminQuestions?: string;
@@ -16,6 +16,8 @@ interface TrueFalseOptionsProps {
 	setIsCorrectAnswerMissing?: React.Dispatch<React.SetStateAction<boolean>>;
 	setCorrectAnswerAdminQuestions?: React.Dispatch<React.SetStateAction<string>>;
 	setHelperText?: React.Dispatch<React.SetStateAction<string>>;
+	setIsLessonUpdating?: React.Dispatch<React.SetStateAction<boolean>>;
+	isLessonUpdating?: boolean;
 }
 
 const TrueFalseOptions = ({
@@ -26,15 +28,16 @@ const TrueFalseOptions = ({
 	fromLearner,
 	isLessonCompleted,
 	displayedQuestionNumber = 1,
-	setIsLessonCompleted,
 	setCorrectAnswer,
 	setIsCorrectAnswerMissing,
 	setCorrectAnswerAdminQuestions,
 	setHelperText,
+	setIsLessonUpdating,
+	isLessonUpdating,
 }: TrueFalseOptionsProps) => {
 	const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-		if (setIsLessonCompleted) setIsLessonCompleted(false);
 		setCorrectAnswer((event.target as HTMLInputElement).value);
+		if (isLessonCompleted && setIsLessonUpdating) setIsLessonUpdating(true);
 		if (setIsCorrectAnswerMissing) setIsCorrectAnswerMissing(false);
 		if (!fromLessonEditPage && setCorrectAnswerAdminQuestions) {
 			setCorrectAnswerAdminQuestions((event.target as HTMLInputElement).value);
@@ -46,7 +49,8 @@ const TrueFalseOptions = ({
 
 	const adminSetting = fromLessonEditPage ? correctAnswer : correctAnswerAdminQuestions;
 
-	const learnerSetting = isLessonCompleted || displayedQuestionNumber < getLastQuestion() ? question.correctAnswer : correctAnswer;
+	const learnerSetting =
+		isLessonCompleted && displayedQuestionNumber < getLastQuestion() && isLessonUpdating ? question?.correctAnswer : correctAnswer;
 	return (
 		<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', mt: '2rem' }}>
 			<RadioGroup row value={fromLearner ? learnerSetting : adminSetting} onChange={handleChange}>

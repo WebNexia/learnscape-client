@@ -11,6 +11,7 @@ interface CustomSubmitButtonProps {
 	disabled?: boolean;
 	startIcon?: ReactNode;
 	endIcon?: ReactNode;
+	capitalize?: boolean;
 }
 
 const CustomSubmitButton = ({
@@ -22,6 +23,7 @@ const CustomSubmitButton = ({
 	disabled,
 	startIcon,
 	endIcon,
+	capitalize = true,
 }: CustomSubmitButtonProps) => {
 	const handleClick = (event: MouseEvent<HTMLButtonElement> | FormEvent<Element>) => {
 		if (onClick) {
@@ -35,7 +37,7 @@ const CustomSubmitButton = ({
 			disabled={disabled}
 			sx={{
 				...sx,
-				textTransform: 'capitalize',
+				textTransform: capitalize ? 'capitalize' : 'none',
 				backgroundColor: theme.bgColor?.greenPrimary,
 				':hover': {
 					backgroundColor: theme.bgColor?.common,

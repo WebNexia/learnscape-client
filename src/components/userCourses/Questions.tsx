@@ -9,18 +9,19 @@ interface QuestionsProps {
 	questions: QuestionInterface[];
 	lessonType?: string;
 	userAnswers: UserQuestionData[];
+	setUserAnswers: React.Dispatch<React.SetStateAction<UserQuestionData[]>>;
 }
 
-const Questions = ({ questions, lessonType, userAnswers }: QuestionsProps) => {
-	const { getLastQuestion } = useUserCourseLessonData();
+const Questions = ({ questions, lessonType, userAnswers, setUserAnswers }: QuestionsProps) => {
+	const { getLastQuestion, isLessonCompleted, setIsLessonCompleted } = useUserCourseLessonData();
 	const [displayedQuestionNumber, setDisplayedQuestionNumber] = useState<number>(getLastQuestion);
+	const [showQuestionSelector, setShowQuestionSelector] = useState<boolean>(false);
 	const numberOfQuestions = questions.length;
+
 	return (
 		<Box>
 			{questions &&
 				questions.map((question, index) => {
-					const userAnswerCurrentQuestionOpenEnded: string = userAnswers?.find((data) => data.questionId == question._id)?.userAnswer || '';
-
 					return (
 						<Question
 							key={question._id}
@@ -30,8 +31,12 @@ const Questions = ({ questions, lessonType, userAnswers }: QuestionsProps) => {
 							displayedQuestionNumber={displayedQuestionNumber}
 							setDisplayedQuestionNumber={setDisplayedQuestionNumber}
 							lessonType={lessonType}
-							userAnswerCurrentQuestionOpenEnded={userAnswerCurrentQuestionOpenEnded}
+							isLessonCompleted={isLessonCompleted}
+							setIsLessonCompleted={setIsLessonCompleted}
+							showQuestionSelector={showQuestionSelector}
+							setShowQuestionSelector={setShowQuestionSelector}
 							userAnswers={userAnswers}
+							setUserAnswers={setUserAnswers}
 						/>
 					);
 				})}

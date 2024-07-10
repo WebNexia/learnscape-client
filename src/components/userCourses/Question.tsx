@@ -6,8 +6,11 @@ import {
 	FormHelperText,
 	FormLabel,
 	IconButton,
+	MenuItem,
 	Radio,
 	RadioGroup,
+	Select,
+	SelectChangeEvent,
 	Tooltip,
 	Typography,
 } from '@mui/material';
@@ -23,8 +26,8 @@ import TrueFalseOptions from '../layouts/questionTypes/TrueFalseOptions';
 import { QuestionsContext } from '../../contexts/QuestionsContextProvider';
 import CustomTextField from '../forms/customFields/CustomTextField';
 import { useUserCourseLessonData } from '../../hooks/useUserCourseLessonData';
+import { Done, KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons-material';
 import { UserQuestionData } from '../../hooks/useFetchUserQuestion';
-import { Done, KeyboardDoubleArrowLeft, KeyboardDoubleArrowRight } from '@mui/icons-material';
 
 interface QuestionsProps {
 	question: QuestionInterface;
@@ -32,9 +35,13 @@ interface QuestionsProps {
 	numberOfQuestions: number;
 	displayedQuestionNumber: number;
 	lessonType?: string;
-	userAnswerCurrentQuestionOpenEnded: string;
+	isLessonCompleted: boolean;
+	showQuestionSelector: boolean;
 	userAnswers: UserQuestionData[];
+	setUserAnswers: React.Dispatch<React.SetStateAction<UserQuestionData[]>>;
 	setDisplayedQuestionNumber: React.Dispatch<React.SetStateAction<number>>;
+	setIsLessonCompleted: React.Dispatch<React.SetStateAction<boolean>>;
+	setShowQuestionSelector: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const Question = ({
@@ -42,15 +49,18 @@ const Question = ({
 	questionNumber,
 	numberOfQuestions,
 	displayedQuestionNumber,
-	setDisplayedQuestionNumber,
-	userAnswerCurrentQuestionOpenEnded,
+	isLessonCompleted,
+	showQuestionSelector,
 	userAnswers,
+	setUserAnswers,
+	setDisplayedQuestionNumber,
+	setIsLessonCompleted,
+	setShowQuestionSelector,
 	lessonType,
 }: QuestionsProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const navigate = useNavigate();
-	const { isLessonCompleted, setIsLessonCompleted, userLessonId, handleNextLesson, nextLessonId, updateLastQuestion, getLastQuestion } =
-		useUserCourseLessonData();
+	const { userLessonId, handleNextLesson, nextLessonId, updateLastQuestion, getLastQuestion } = useUserCourseLessonData();
 
 	const { userId, lessonId, courseId, userCourseId } = useParams();
 	const { orgId } = useContext(OrganisationContext);
@@ -58,13 +68,26 @@ const Question = ({
 
 	const [userAnswer, setUserAnswer] = useState<string>('');
 
-	const [value, setValue] = useState<string>('');
+	const [value, setValue] = useState<string>(() => {
+		if (isLessonCompleted && question.correctAnswer) {
+			return question.correctAnswer;
+		} else if (fetchQuestionTypeName(question) === 'Open-ended') {
+			const answer: string = userAnswers?.find((data) => data.questionId == question._id)?.userAnswer || '';
+			return answer;
+		} else if (!isLessonCompleted && displayedQuestionNumber < getLastQuestion()) {
+			return question.correctAnswer;
+		} else {
+			return userAnswer;
+		}
+	});
 
 	const [error, setError] = useState<boolean>(false);
 	const [success, setSuccess] = useState<boolean>(false);
 	const [helperText, setHelperText] = useState<string>('Choose wisely');
 	const [isAnswerCorrect, setIsAnswerCorrect] = useState<boolean>(false);
 	const [isOpenEndedAnswerSubmitted, setIsOpenEndedAnswerSubmitted] = useState<boolean>(false);
+	const [selectedQuestion, setSelectedQuestion] = useState<number>(displayedQuestionNumber);
+	const [isLessonUpdating, setIsLessonUpdating] = useState<boolean>(false);
 
 	const isCompletingCourse: boolean = displayedQuestionNumber === numberOfQuestions && nextLessonId === null;
 	const isCompletingLesson: boolean = displayedQuestionNumber === numberOfQuestions && nextLessonId !== null;
@@ -74,12 +97,24 @@ const Question = ({
 		if (isLessonCompleted && question.correctAnswer) {
 			setValue(question.correctAnswer);
 		} else if (fetchQuestionTypeName(question) === 'Open-ended') {
-			setValue(userAnswerCurrentQuestionOpenEnded);
+			setValue(() => {
+				const answer: string = userAnswers?.find((data) => data.questionId == question._id)?.userAnswer || '';
+				return answer;
+			});
 		} else if (!isLessonCompleted && displayedQuestionNumber < getLastQuestion()) {
 			setValue(question.correctAnswer);
 		} else {
 			setValue(userAnswer);
 		}
+		setSelectedQuestion(displayedQuestionNumber);
+		if (isLessonCompleted) {
+			setShowQuestionSelector(true);
+		}
+		if (isLessonCompleted || isAnswerCorrect || displayedQuestionNumber < getLastQuestion()) {
+			setHelperText(' ');
+		}
+		setIsOpenEndedAnswerSubmitted(false);
+		setIsAnswerCorrect(false);
 	}, [displayedQuestionNumber]);
 
 	//creating userQuestion when the question is answered correctly and updating local storage and DB accordingly
@@ -100,11 +135,27 @@ const Question = ({
 						orgId,
 						userAnswer,
 					});
+
 					const userQuestionId = res.data._id;
 					if (res.status === 200) {
 						await axios.patch(`${base_url}/userQuestions/${userQuestionId}`, { userAnswer });
+						setUserAnswers((prevData) => {
+							if (!prevData) return [];
+							return prevData.map((data) => (data.questionId === question._id ? { ...data, userAnswer } : data));
+						});
+					} else {
+						setUserAnswers((prevData) => {
+							const newUserAnswer = {
+								userQuestionId: res.data._id,
+								questionId: question._id,
+								userAnswer,
+							};
+							return [...prevData, newUserAnswer];
+						});
 					}
+
 					setIsOpenEndedAnswerSubmitted(true);
+					setValue(userAnswer);
 				}
 
 				// Updating current lesson's current question number (next question's number) if not the last question
@@ -114,17 +165,26 @@ const Question = ({
 
 				// Completing lesson after answering last question correctly and navigating back to the course page
 				if (displayedQuestionNumber === numberOfQuestions) {
+					await handleNextLesson();
 					setIsLessonCompleted(true);
-					handleNextLesson();
+					setShowQuestionSelector(true);
 				}
 			} catch (error) {
 				console.log(error);
 			}
+		} else {
+			setIsOpenEndedAnswerSubmitted(true);
 		}
 	};
 
 	const handleRadioChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-		setIsLessonCompleted(false);
+		if (isLessonCompleted) {
+			setShowQuestionSelector(true);
+			// setIsLessonCompleted(false);
+			setIsLessonUpdating(true);
+			setIsOpenEndedAnswerSubmitted(false);
+		}
+
 		setValue((event.target as HTMLInputElement).value);
 		setHelperText(' ');
 		setError(false);
@@ -138,27 +198,35 @@ const Question = ({
 				await createUserQuestion();
 				setUserAnswer(value);
 				setIsOpenEndedAnswerSubmitted(true);
+				setIsAnswerCorrect(true);
 			} else if (value === question.correctAnswer?.toString()) {
 				setHelperText('You got it!');
 				setError(false);
 				setIsAnswerCorrect(true);
 				setSuccess(true);
-				createUserQuestion();
+				await createUserQuestion();
 				setUserAnswer(value);
+				setIsOpenEndedAnswerSubmitted(true);
 			} else if (value !== question.correctAnswer && value !== '') {
 				setHelperText('Sorry, wrong answer!');
 				setError(true);
 				setIsAnswerCorrect(false);
-				setIsLessonCompleted(false);
 				setUserAnswer(value);
 			} else {
 				setHelperText('Please select an option.');
 				setError(true);
 				setIsAnswerCorrect(false);
-				setIsLessonCompleted(false);
 			}
 		} else if (lessonType === 'Quiz') {
 		}
+	};
+
+	const handleQuestionChange = (event: SelectChangeEvent<number>) => {
+		const selectedValue = Number(event.target.value);
+		setSelectedQuestion(selectedValue);
+		setDisplayedQuestionNumber(selectedValue);
+		setIsOpenEndedAnswerSubmitted(false);
+		window.scrollTo({ top: 0, behavior: 'smooth' });
 	};
 
 	return (
@@ -228,7 +296,9 @@ const Question = ({
 							margin: question.videoUrl || question.imageUrl ? '3rem 0 1rem 0' : '11rem 0 1rem 0',
 						}}>
 						<Box sx={{ display: 'flex', justifyContent: 'center' }}>
-							<Typography variant='h6' sx={{ mr: '0.5rem' }}></Typography>
+							<Typography variant='h6' sx={{ mr: '0.5rem' }}>
+								{questionNumber})
+							</Typography>
 							<Typography variant='h6' component='div' dangerouslySetInnerHTML={{ __html: sanitizeHtml(question.question) }} />
 						</Box>
 					</FormLabel>
@@ -257,16 +327,17 @@ const Question = ({
 								fromLearner={true}
 								question={question}
 								isLessonCompleted={isLessonCompleted}
-								setIsLessonCompleted={setIsLessonCompleted}
 								displayedQuestionNumber={displayedQuestionNumber}
 								setHelperText={setHelperText}
+								setIsLessonUpdating={setIsLessonUpdating}
+								isLessonUpdating={isLessonUpdating}
 							/>
 						</Box>
 					)}
 					{fetchQuestionTypeName(question) === 'Multiple Choice' && (
 						<RadioGroup
 							name='question'
-							value={isLessonCompleted && displayedQuestionNumber < getLastQuestion() ? question.correctAnswer : value}
+							value={isLessonCompleted && displayedQuestionNumber < getLastQuestion() && !isLessonUpdating ? question.correctAnswer : value}
 							onChange={handleRadioChange}
 							sx={{ alignSelf: 'center' }}>
 							{question &&
@@ -276,7 +347,7 @@ const Question = ({
 								})}
 						</RadioGroup>
 					)}
-					{fetchQuestionTypeName(question) !== 'Open-ended' && !isLessonCompleted && helperText !== ' ' && (
+					{fetchQuestionTypeName(question) !== 'Open-ended' && (!isLessonCompleted || isLessonUpdating) && helperText !== ' ' && (
 						<FormHelperText sx={{ color: success ? 'green' : 'inherit', alignSelf: 'center', mt: '2rem' }}>{helperText}</FormHelperText>
 					)}
 					<Button sx={{ mt: '3rem', width: '13rem', alignSelf: 'center' }} type='submit' variant='outlined'>
@@ -295,65 +366,109 @@ const Question = ({
 					width: '40%',
 				}}>
 				<Tooltip title='Previous' placement='left'>
-					<IconButton
-						sx={{
-							flexShrink: 0,
-							':hover': {
-								color: theme.bgColor?.greenPrimary,
-								backgroundColor: 'transparent',
-							},
-						}}
-						onClick={() => {
-							if (!(displayedQuestionNumber - 1 === 0)) {
-								setDisplayedQuestionNumber((prev) => prev - 1);
-							}
-							window.scrollTo({ top: 0, behavior: 'smooth' });
-							setIsOpenEndedAnswerSubmitted(false);
-						}}
-						disabled={displayedQuestionNumber - 1 === 0}>
-						<KeyboardDoubleArrowLeft />
-					</IconButton>
+					<span>
+						<IconButton
+							sx={{
+								flexShrink: 0,
+								':hover': {
+									color: theme.bgColor?.greenPrimary,
+									backgroundColor: 'transparent',
+								},
+							}}
+							onClick={() => {
+								if (!(displayedQuestionNumber - 1 === 0)) {
+									setDisplayedQuestionNumber((prev) => prev - 1);
+									setSelectedQuestion(displayedQuestionNumber - 1);
+								}
+								window.scrollTo({ top: 0, behavior: 'smooth' });
+								setIsOpenEndedAnswerSubmitted(false);
+							}}
+							disabled={displayedQuestionNumber - 1 === 0}>
+							<KeyboardArrowLeft fontSize='large' />
+						</IconButton>
+					</span>
 				</Tooltip>
 
-				<Typography
-					variant='body1'
-					sx={{
-						position: 'absolute',
-						left: '50%',
-						transform: 'translateX(-50%)',
-					}}>
-					{displayedQuestionNumber} / {numberOfQuestions}
-				</Typography>
+				{!showQuestionSelector && (
+					<Typography
+						variant='body1'
+						sx={{
+							position: 'absolute',
+							left: '50%',
+							transform: 'translateX(-50%)',
+						}}>
+						{displayedQuestionNumber} / {numberOfQuestions}
+					</Typography>
+				)}
+
+				{showQuestionSelector && (
+					<Box
+						sx={{
+							display: 'flex',
+							alignItems: 'center',
+							position: 'absolute',
+							left: '50%',
+							transform: 'translateX(-50%)',
+						}}>
+						<Select
+							labelId='question_number'
+							id='question_number'
+							sx={{ mr: '0.5rem' }}
+							value={selectedQuestion}
+							onChange={handleQuestionChange}
+							size='small'
+							label='#'
+							required>
+							{Array.from({ length: numberOfQuestions }, (_, i) => (
+								<MenuItem key={i + 1} value={i + 1}>
+									{i + 1}
+								</MenuItem>
+							))}
+						</Select>
+						<Typography> / {numberOfQuestions}</Typography>
+					</Box>
+				)}
 
 				<Tooltip
-					title={isCompletingCourse ? 'Complete Course' : isCompletingLesson ? 'Complete Lesson' : isNextQuestion ? 'Next' : null}
+					title={
+						displayedQuestionNumber === numberOfQuestions && nextLessonId === null
+							? 'Complete Course'
+							: displayedQuestionNumber === numberOfQuestions && nextLessonId !== null
+							? 'Complete Lesson'
+							: displayedQuestionNumber < numberOfQuestions
+							? 'Next'
+							: 'Complete'
+					}
 					placement='right'>
-					<IconButton
-						onClick={() => {
-							if (!(displayedQuestionNumber + 1 > numberOfQuestions)) {
-								setDisplayedQuestionNumber((prev) => prev + 1);
-							}
-							if (isLessonCompleted && displayedQuestionNumber === numberOfQuestions) {
-								navigate(`/course/${courseId}/user/${userId}/userCourseId/${userCourseId}?isEnrolled=true`);
-							}
-							window.scrollTo({ top: 0, behavior: 'smooth' });
-							setIsOpenEndedAnswerSubmitted(false);
-						}}
-						sx={{
-							flexShrink: 0,
-							color: !isAnswerCorrect && !isOpenEndedAnswerSubmitted ? 'gray' : theme.textColor?.common.main,
-							backgroundColor: !isAnswerCorrect && !isOpenEndedAnswerSubmitted ? 'inherit' : theme.bgColor?.greenPrimary,
-							':hover': {
-								color: theme.bgColor?.greenPrimary,
-								backgroundColor: 'transparent',
-							},
-						}}
-						disabled={
-							(!isAnswerCorrect || displayedQuestionNumber + 1 > numberOfQuestions) &&
-							!(isLessonCompleted || displayedQuestionNumber < getLastQuestion())
-						}>
-						{isCompletingCourse ? 'Complete Course' : isCompletingLesson ? <Done /> : isNextQuestion ? <KeyboardDoubleArrowRight /> : null}
-					</IconButton>
+					<span>
+						<IconButton
+							onClick={() => {
+								if (!(displayedQuestionNumber + 1 > numberOfQuestions)) {
+									setDisplayedQuestionNumber((prev) => prev + 1);
+									setSelectedQuestion(displayedQuestionNumber + 1);
+								}
+								if (isLessonCompleted && displayedQuestionNumber === numberOfQuestions) {
+									navigate(`/course/${courseId}/user/${userId}/userCourseId/${userCourseId}?isEnrolled=true`);
+								}
+								window.scrollTo({ top: 0, behavior: 'smooth' });
+								setIsOpenEndedAnswerSubmitted(false);
+							}}
+							sx={{
+								flexShrink: 0,
+								color: !isAnswerCorrect && !isOpenEndedAnswerSubmitted ? 'gray' : theme.textColor?.common.main,
+								backgroundColor: !isAnswerCorrect && !isOpenEndedAnswerSubmitted ? 'inherit' : theme.bgColor?.greenPrimary,
+								':hover': {
+									color: theme.bgColor?.greenPrimary,
+									backgroundColor: 'transparent',
+								},
+							}}
+							disabled={
+								(!isAnswerCorrect || displayedQuestionNumber + 1 > numberOfQuestions || !isOpenEndedAnswerSubmitted) &&
+								!(isLessonCompleted || displayedQuestionNumber < getLastQuestion())
+							}>
+							{isCompletingCourse ? 'Complete Course' : isCompletingLesson ? <Done /> : isNextQuestion ? <KeyboardArrowRight fontSize='large' /> : ''}
+						</IconButton>
+					</span>
 				</Tooltip>
 			</Box>
 		</Box>
