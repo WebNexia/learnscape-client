@@ -45,6 +45,7 @@ interface ExtendedThemeOptions extends ThemeOptions {
 		secondary: string;
 		lessonInProgress: string;
 		common: string;
+		commonTwo: string;
 		greenPrimary: string;
 		greenSecondary: string;
 		delete: string;
@@ -169,6 +170,7 @@ const theme = createTheme({
 		secondary: '#FDF7F0',
 		lessonInProgress: '#4D7B8B',
 		common: '#FFFF',
+		commonTwo: '#F0F2F5',
 		greenPrimary: '#1EC28B',
 		greenSecondary: '#00C6AD',
 		delete: '#FF0000',

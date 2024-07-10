@@ -6,6 +6,7 @@ import { stripHtml } from '../../utils/stripHtml';
 import { truncateText } from '../../utils/utilText';
 import { useContext } from 'react';
 import { QuestionsContext } from '../../contexts/QuestionsContextProvider';
+import { LessonType } from '../../interfaces/enums';
 
 interface QuestionsBoxNonEditProps {
 	singleLesson?: Lesson;
@@ -22,7 +23,7 @@ const QuestionsBoxNonEdit = ({ singleLesson, setIsDisplayNonEditQuestion, setDis
 				flexDirection: 'column',
 				justifyContent: 'flex-start',
 				width: '90%',
-				mt: singleLesson?.type === 'Instructional Lesson' ? '1rem' : '3rem',
+				mt: singleLesson?.type === LessonType.INSTRUCTIONAL_LESSON ? '1rem' : '3rem',
 			}}>
 			<Box sx={{ mt: '3rem', minHeight: '40vh' }}>
 				<Typography variant='h4'>Questions</Typography>

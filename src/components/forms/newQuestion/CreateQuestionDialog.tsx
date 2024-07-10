@@ -33,6 +33,7 @@ import ImageThumbnail from '../uploadImageVideoDocument/ImageThumbnail';
 import VideoThumbnail from '../uploadImageVideoDocument/VideoThumbnail';
 import TinyMceEditor from '../../richTextEditor/TinyMceEditor';
 import TrueFalseOptions from '../../layouts/questionTypes/TrueFalseOptions';
+import { QuestionType } from '../../../interfaces/enums';
 
 interface CreateQuestionDialogProps {
 	isQuestionCreateModalOpen: boolean;
@@ -218,7 +219,7 @@ const CreateQuestionDialog = ({
 			return;
 		}
 
-		if (correctAnswerIndex === -1 && !correctAnswer && questionType !== 'Open-ended') {
+		if (correctAnswerIndex === -1 && !correctAnswer && questionType !== QuestionType.OPEN_ENDED) {
 			setIsCorrectAnswerMissing(true);
 			return;
 		}
@@ -397,7 +398,7 @@ const CreateQuestionDialog = ({
 								initialValue=''
 							/>
 						</Box>
-						{questionType === 'Multiple Choice' && (
+						{questionType === QuestionType.MULTIPLE_CHOICE && (
 							<Box
 								sx={{
 									display: 'flex',
@@ -460,7 +461,7 @@ const CreateQuestionDialog = ({
 									))}
 							</Box>
 						)}
-						{questionType === 'True-False' && (
+						{questionType === QuestionType.TRUE_FALSE && (
 							<Box>
 								<TrueFalseOptions
 									correctAnswer={correctAnswer}
@@ -475,7 +476,7 @@ const CreateQuestionDialog = ({
 						{isCorrectAnswerMissing && <CustomErrorMessage>- Select correct answer</CustomErrorMessage>}
 					</Box>
 
-					{questionType === 'Multiple Choice' && (
+					{questionType === QuestionType.MULTIPLE_CHOICE && (
 						<Box sx={{ mt: '2rem' }}>
 							{isDuplicateOption && <CustomErrorMessage>- Options should be unique</CustomErrorMessage>}
 							{!isMinimumOptions && <CustomErrorMessage>- At least two options are required</CustomErrorMessage>}

@@ -16,6 +16,7 @@ import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitBu
 import Questions from '../components/userCourses/Questions';
 import { useUserCourseLessonData } from '../hooks/useUserCourseLessonData';
 import { useFetchUserQuestion, UserQuestionData } from '../hooks/useFetchUserQuestion';
+import { LessonType } from '../interfaces/enums';
 
 const LessonPage = () => {
 	const { lessonId, userId, courseId, userCourseId } = useParams();
@@ -88,8 +89,12 @@ const LessonPage = () => {
 					backgroundColor: theme.bgColor?.secondary,
 					zIndex: 1111,
 				}}>
-				<Box sx={{ display: 'flex', justifyContent: lesson.type !== 'Instructional Lesson' && isQuestionsVisible ? 'space-between' : 'flex-end' }}>
-					{lesson.type !== 'Instructional Lesson' && isQuestionsVisible && (
+				<Box
+					sx={{
+						display: 'flex',
+						justifyContent: lesson.type !== LessonType.INSTRUCTIONAL_LESSON && isQuestionsVisible ? 'space-between' : 'flex-end',
+					}}>
+					{lesson.type !== LessonType.INSTRUCTIONAL_LESSON && isQuestionsVisible && (
 						<Box sx={{ alignSelf: 'flex-end' }}>
 							<Button
 								variant='text'
@@ -182,7 +187,7 @@ const LessonPage = () => {
 				)}
 			</Box>
 
-			{lesson.type !== 'Instructional Lesson' && !isQuestionsVisible && (
+			{lesson.type !== LessonType.INSTRUCTIONAL_LESSON && !isQuestionsVisible && (
 				<Box
 					sx={{
 						display: 'flex',
@@ -205,6 +210,7 @@ const LessonPage = () => {
 						boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
 						padding: '2rem',
 						backgroundColor: theme.bgColor?.common,
+						borderRadius: '0.35rem',
 					}}>
 					<Box>
 						<Typography
@@ -217,14 +223,14 @@ const LessonPage = () => {
 				</Box>
 			)}
 
-			{lesson.type !== 'Instructional Lesson' && !isQuestionsVisible && (
+			{lesson.type !== LessonType.INSTRUCTIONAL_LESSON && !isQuestionsVisible && (
 				<Box>
 					<CustomSubmitButton
 						onClick={() => {
 							setIsQuestionsVisible(true);
 						}}
 						capitalize={false}>
-						{lesson.type === 'Practice Lesson' ? 'Go to Questions' : 'Start Quiz'}
+						{lesson.type === LessonType.PRACTICE_LESSON ? 'Go to Questions' : 'Start Quiz'}
 					</CustomSubmitButton>
 				</Box>
 			)}
@@ -254,7 +260,7 @@ const LessonPage = () => {
 				</Box>
 			)}
 
-			{lesson.type === 'Instructional Lesson' && (
+			{lesson.type === LessonType.INSTRUCTIONAL_LESSON && (
 				<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '85%', marginTop: 'auto' }}>
 					<Box sx={{ alignSelf: 'flex-end' }}>
 						<CustomSubmitButton

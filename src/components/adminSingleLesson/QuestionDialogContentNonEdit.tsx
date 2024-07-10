@@ -5,6 +5,7 @@ import theme from '../../themes';
 import { sanitizeHtml } from '../../utils/sanitizeHtml';
 import { useContext } from 'react';
 import { QuestionsContext } from '../../contexts/QuestionsContextProvider';
+import { QuestionType } from '../../interfaces/enums';
 
 interface QuestionDialogContentNonEditProps {
 	question: QuestionInterface | null;
@@ -76,7 +77,7 @@ const QuestionDialogContentNonEdit = ({ question }: QuestionDialogContentNonEdit
 					</Box>
 
 					<Box sx={{ alignSelf: 'center', width: '80%' }}>
-						{fetchQuestionTypeName(question) === 'Multiple Choice' &&
+						{fetchQuestionTypeName(question) === QuestionType.MULTIPLE_CHOICE &&
 							question.options &&
 							question.options.map((option, index) => {
 								const choiceLabel = String.fromCharCode(97 + index) + ')';
@@ -94,7 +95,7 @@ const QuestionDialogContentNonEdit = ({ question }: QuestionDialogContentNonEdit
 								);
 							})}
 					</Box>
-					{fetchQuestionTypeName(question) === 'True-False' && (
+					{fetchQuestionTypeName(question) === QuestionType.TRUE_FALSE && (
 						<Box sx={{ width: '6rem' }}>
 							<Typography
 								variant='h6'

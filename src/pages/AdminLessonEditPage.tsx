@@ -39,6 +39,7 @@ import { generateUniqueId } from '../utils/uniqueIdGenerator';
 import HandleDocUploadURL from '../components/forms/uploadImageVideoDocument/HandleDocUploadURL';
 import { DocumentsContext } from '../contexts/DocumentsContextProvider';
 import DocumentsListEditBox from '../components/adminDocuments/DocumentsListEditBox';
+import { LessonType } from '../interfaces/enums';
 
 export interface QuestionUpdateTrack {
 	questionId: string;
@@ -317,7 +318,7 @@ const AdminLessonEditPage = () => {
 
 			const updatedDocumentIds = updatedDocuments.map((doc) => doc._id);
 
-			if (singleLessonBeforeSave.type === 'Instructional Lesson') {
+			if (singleLessonBeforeSave.type === LessonType.INSTRUCTIONAL_LESSON) {
 				setSingleLessonBeforeSave((prevData) => {
 					return {
 						...prevData,
@@ -527,7 +528,7 @@ const AdminLessonEditPage = () => {
 
 						<Box className='rich-text-content' component='div' sx={{ textAlign: 'justify', width: '90%', mt: '6rem' }}>
 							<Typography variant='h4' sx={{ mb: '1.25rem' }}>
-								{singleLesson.type === 'Instructional Lesson' ? 'Lesson Instructions' : 'Instructions'}
+								{singleLesson.type === LessonType.INSTRUCTIONAL_LESSON ? 'Lesson Instructions' : 'Instructions'}
 							</Typography>
 							<Typography
 								variant='body1'
@@ -536,7 +537,7 @@ const AdminLessonEditPage = () => {
 							/>
 						</Box>
 
-						{singleLessonBeforeSave.type !== 'Instructional Lesson' && (
+						{singleLessonBeforeSave.type !== LessonType.INSTRUCTIONAL_LESSON && (
 							<QuestionsBoxNonEdit
 								singleLesson={singleLesson}
 								setIsDisplayNonEditQuestion={setIsDisplayNonEditQuestion}
@@ -718,7 +719,7 @@ const AdminLessonEditPage = () => {
 
 							<Box sx={{ mt: '5rem' }}>
 								<Typography variant='h6' sx={{ mb: '1rem' }}>
-									{singleLessonBeforeSave.type === 'Instructional Lesson' ? 'Lesson Instructions' : 'Instructions'}
+									{singleLessonBeforeSave.type === LessonType.INSTRUCTIONAL_LESSON ? 'Lesson Instructions' : 'Instructions'}
 								</Typography>
 								<TinyMceEditor
 									height={400}
@@ -731,7 +732,7 @@ const AdminLessonEditPage = () => {
 								/>
 							</Box>
 
-							{singleLessonBeforeSave.type !== 'Instructional Lesson' && (
+							{singleLessonBeforeSave.type !== LessonType.INSTRUCTIONAL_LESSON && (
 								<>
 									<Box
 										sx={{

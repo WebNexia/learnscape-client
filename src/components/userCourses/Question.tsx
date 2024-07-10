@@ -28,6 +28,7 @@ import CustomTextField from '../forms/customFields/CustomTextField';
 import { useUserCourseLessonData } from '../../hooks/useUserCourseLessonData';
 import { Done, KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons-material';
 import { UserQuestionData } from '../../hooks/useFetchUserQuestion';
+import { LessonType, QuestionType } from '../../interfaces/enums';
 
 interface QuestionsProps {
 	question: QuestionInterface;
@@ -71,7 +72,7 @@ const Question = ({
 	const [value, setValue] = useState<string>(() => {
 		if (isLessonCompleted && question.correctAnswer) {
 			return question.correctAnswer;
-		} else if (fetchQuestionTypeName(question) === 'Open-ended') {
+		} else if (fetchQuestionTypeName(question) === QuestionType.OPEN_ENDED) {
 			const answer: string = userAnswers?.find((data) => data.questionId == question._id)?.userAnswer || '';
 			return answer;
 		} else if (!isLessonCompleted && displayedQuestionNumber < getLastQuestion()) {
@@ -96,7 +97,7 @@ const Question = ({
 	useEffect(() => {
 		if (isLessonCompleted && question.correctAnswer) {
 			setValue(question.correctAnswer);
-		} else if (fetchQuestionTypeName(question) === 'Open-ended') {
+		} else if (fetchQuestionTypeName(question) === QuestionType.OPEN_ENDED) {
 			setValue(() => {
 				const answer: string = userAnswers?.find((data) => data.questionId == question._id)?.userAnswer || '';
 				return answer;
@@ -123,7 +124,7 @@ const Question = ({
 
 		if (!existingUserAnswer || existingUserAnswer.userAnswer !== userAnswer) {
 			try {
-				if ((lessonType === 'Practice Lesson' && fetchQuestionTypeName(question) === 'Open-ended') || lessonType === 'Quiz') {
+				if ((lessonType === LessonType.PRACTICE_LESSON && fetchQuestionTypeName(question) === QuestionType.OPEN_ENDED) || lessonType === 'Quiz') {
 					const res = await axios.post(`${base_url}/userQuestions`, {
 						userLessonId,
 						questionId: question._id,
@@ -193,8 +194,8 @@ const Question = ({
 
 	const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
-		if (lessonType === 'Practice Lesson') {
-			if (fetchQuestionTypeName(question) === 'Open-ended') {
+		if (lessonType === LessonType.PRACTICE_LESSON) {
+			if (fetchQuestionTypeName(question) === QuestionType.OPEN_ENDED) {
 				await createUserQuestion();
 				setUserAnswer(value);
 				setIsOpenEndedAnswerSubmitted(true);
@@ -217,7 +218,7 @@ const Question = ({
 				setError(true);
 				setIsAnswerCorrect(false);
 			}
-		} else if (lessonType === 'Quiz') {
+		} else if (lessonType === LessonType.QUIZ) {
 		}
 	};
 
@@ -303,7 +304,7 @@ const Question = ({
 						</Box>
 					</FormLabel>
 
-					{fetchQuestionTypeName(question) === 'Open-ended' && (
+					{fetchQuestionTypeName(question) === QuestionType.OPEN_ENDED && (
 						<Box sx={{ width: '90%', margin: '1rem auto' }}>
 							<CustomTextField
 								required={false}
@@ -319,7 +320,7 @@ const Question = ({
 						</Box>
 					)}
 
-					{fetchQuestionTypeName(question) === 'True-False' && (
+					{fetchQuestionTypeName(question) === QuestionType.TRUE_FALSE && (
 						<Box>
 							<TrueFalseOptions
 								correctAnswer={value}
@@ -334,7 +335,7 @@ const Question = ({
 							/>
 						</Box>
 					)}
-					{fetchQuestionTypeName(question) === 'Multiple Choice' && (
+					{fetchQuestionTypeName(question) === QuestionType.MULTIPLE_CHOICE && (
 						<RadioGroup
 							name='question'
 							value={isLessonCompleted && displayedQuestionNumber < getLastQuestion() && !isLessonUpdating ? question.correctAnswer : value}
@@ -347,7 +348,7 @@ const Question = ({
 								})}
 						</RadioGroup>
 					)}
-					{fetchQuestionTypeName(question) !== 'Open-ended' && (!isLessonCompleted || isLessonUpdating) && helperText !== ' ' && (
+					{fetchQuestionTypeName(question) !== QuestionType.OPEN_ENDED && (!isLessonCompleted || isLessonUpdating) && helperText !== ' ' && (
 						<FormHelperText sx={{ color: success ? 'green' : 'inherit', alignSelf: 'center', mt: '2rem' }}>{helperText}</FormHelperText>
 					)}
 					<Button sx={{ mt: '3rem', width: '13rem', alignSelf: 'center' }} type='submit' variant='outlined'>

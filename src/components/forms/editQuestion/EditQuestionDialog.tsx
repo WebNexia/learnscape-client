@@ -21,6 +21,7 @@ import VideoThumbnail from '../uploadImageVideoDocument/VideoThumbnail';
 import TinyMceEditor from '../../richTextEditor/TinyMceEditor';
 import TrueFalseOptions from '../../layouts/questionTypes/TrueFalseOptions';
 import { LessonsContext } from '../../../contexts/LessonsContextProvider';
+import { QuestionType } from '../../../interfaces/enums';
 
 interface EditQuestionDialogProps {
 	fromLessonEditPage: boolean;
@@ -83,7 +84,7 @@ const EditQuestionDialog = ({
 
 	const { updateQuestion, fetchQuestions, questionsPageNumber } = useContext(QuestionsContext);
 	const [isCorrectAnswerMissing, setIsCorrectAnswerMissing] = useState<boolean>(
-		correctAnswerIndex < 0 && question.correctAnswer === '' && questionType !== 'Open-ended'
+		correctAnswerIndex < 0 && question.correctAnswer === '' && questionType !== QuestionType.OPEN_ENDED
 	);
 	const [isQuestionMissing, setIsQuestionMissing] = useState<boolean>(false);
 
@@ -104,7 +105,7 @@ const EditQuestionDialog = ({
 	const { resetVideoUpload } = useVideoUpload();
 
 	useEffect(() => {
-		setIsCorrectAnswerMissing(correctAnswerIndex < 0 && question.correctAnswer === '' && questionType !== 'Open-ended');
+		setIsCorrectAnswerMissing(correctAnswerIndex < 0 && question.correctAnswer === '' && questionType !== QuestionType.OPEN_ENDED);
 		resetVideoUpload();
 		resetImageUpload();
 		resetEnterImageVideoUrl();
@@ -118,21 +119,21 @@ const EditQuestionDialog = ({
 			return;
 		}
 
-		if (questionType === 'Multiple Choice') {
+		if (questionType === QuestionType.MULTIPLE_CHOICE) {
 			if (correctAnswerIndex === -1 || !correctAnswer) {
 				setIsCorrectAnswerMissing(true);
 				return;
 			}
 		}
 
-		if (questionType === 'True-False') {
+		if (questionType === QuestionType.TRUE_FALSE) {
 			if (!correctAnswer) {
 				setIsCorrectAnswerMissing(true);
 				return;
 			}
 		}
 
-		if (questionType === 'Open-ended') {
+		if (questionType === QuestionType.OPEN_ENDED) {
 			setIsCorrectAnswerMissing(false);
 		}
 
@@ -159,7 +160,7 @@ const EditQuestionDialog = ({
 			resetEnterImageVideoUrl();
 		} else {
 			try {
-				const updatedCorrectAnswer = questionType === 'Multiple Choice' ? options[correctAnswerIndex] : correctAnswerAdminQuestions;
+				const updatedCorrectAnswer = questionType === QuestionType.MULTIPLE_CHOICE ? options[correctAnswerIndex] : correctAnswerAdminQuestions;
 
 				const response = await axios.patch(`${base_url}/questions/${question._id}`, {
 					orgId,
@@ -401,7 +402,7 @@ const EditQuestionDialog = ({
 					</Box>
 
 					<Box sx={{ width: '90%' }}>
-						{questionType === 'Multiple Choice' &&
+						{questionType === QuestionType.MULTIPLE_CHOICE &&
 							options?.map((option, i) => (
 								<Box
 									key={i}
@@ -462,7 +463,7 @@ const EditQuestionDialog = ({
 								</Box>
 							))}
 
-						{questionType === 'True-False' && (
+						{questionType === QuestionType.TRUE_FALSE && (
 							<TrueFalseOptions
 								fromLessonEditPage={fromLessonEditPage}
 								correctAnswer={correctAnswer}
@@ -478,7 +479,7 @@ const EditQuestionDialog = ({
 						{isCorrectAnswerMissing && <CustomErrorMessage>- Select correct answer</CustomErrorMessage>}
 					</Box>
 
-					{questionType === 'Multiple Choice' && (
+					{questionType === QuestionType.MULTIPLE_CHOICE && (
 						<Box sx={{ alignSelf: 'flex-start', marginTop: '1.5rem' }}>
 							{isDuplicateOption && <CustomErrorMessage>- Options should be unique</CustomErrorMessage>}
 							{!isMinimumOptions && <CustomErrorMessage>- At least two options are required</CustomErrorMessage>}
