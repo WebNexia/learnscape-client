@@ -2,6 +2,8 @@ import { Box, Typography, Radio, RadioGroup, FormControlLabel } from '@mui/mater
 import theme from '../../../themes';
 import { QuestionInterface } from '../../../interfaces/question';
 import { useUserCourseLessonData } from '../../../hooks/useUserCourseLessonData';
+import { LessonType } from '../../../interfaces/enums';
+import { QuizQuestionAnswer } from '../../../pages/LessonPage';
 
 interface TrueFalseOptionsProps {
 	question?: QuestionInterface;
@@ -18,6 +20,10 @@ interface TrueFalseOptionsProps {
 	setHelperText?: React.Dispatch<React.SetStateAction<string>>;
 	setIsLessonUpdating?: React.Dispatch<React.SetStateAction<boolean>>;
 	isLessonUpdating?: boolean;
+	setUserAnswer?: React.Dispatch<React.SetStateAction<string>>;
+	setUserQuizAnswers?: React.Dispatch<React.SetStateAction<QuizQuestionAnswer[]>>;
+	lessonType?: string | undefined;
+	userQuizAnswer?: string;
 }
 
 const TrueFalseOptions = ({
@@ -34,6 +40,10 @@ const TrueFalseOptions = ({
 	setHelperText,
 	setIsLessonUpdating,
 	isLessonUpdating,
+	setUserAnswer,
+	setUserQuizAnswers,
+	lessonType,
+	userQuizAnswer,
 }: TrueFalseOptionsProps) => {
 	const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
 		setCorrectAnswer((event.target as HTMLInputElement).value);
@@ -43,14 +53,32 @@ const TrueFalseOptions = ({
 			setCorrectAnswerAdminQuestions((event.target as HTMLInputElement).value);
 		}
 		if (setHelperText) setHelperText(' ');
+		if (setUserAnswer) setUserAnswer((event.target as HTMLInputElement).value);
+		if (setUserQuizAnswers && lessonType === LessonType.QUIZ) {
+			setUserQuizAnswers((prevData) => {
+				if (prevData) {
+					const updatedAnswers = prevData.map((answer) => {
+						if (answer.questionId === question?._id) {
+							return { ...answer, userAnswer: (event.target as HTMLInputElement).value };
+						}
+						return answer;
+					});
+					return updatedAnswers;
+				}
+				return prevData;
+			});
+		}
 	};
 
 	const { getLastQuestion } = useUserCourseLessonData();
 
 	const adminSetting = fromLessonEditPage ? correctAnswer : correctAnswerAdminQuestions;
-
 	const learnerSetting =
-		isLessonCompleted && displayedQuestionNumber < getLastQuestion() && isLessonUpdating ? question?.correctAnswer : correctAnswer;
+		isLessonCompleted && displayedQuestionNumber < getLastQuestion() && isLessonUpdating
+			? question?.correctAnswer
+			: isLessonCompleted && lessonType === LessonType.QUIZ
+			? userQuizAnswer
+			: correctAnswer;
 	return (
 		<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', mt: '2rem' }}>
 			<RadioGroup row value={fromLearner ? learnerSetting : adminSetting} onChange={handleChange}>

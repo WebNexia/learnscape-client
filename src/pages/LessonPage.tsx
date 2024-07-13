@@ -17,6 +17,13 @@ import Questions from '../components/userCourses/Questions';
 import { useUserCourseLessonData } from '../hooks/useUserCourseLessonData';
 import { useFetchUserQuestion, UserQuestionData } from '../hooks/useFetchUserQuestion';
 import { LessonType } from '../interfaces/enums';
+import CustomDialog from '../components/layouts/dialog/CustomDialog';
+import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
+
+export interface QuizQuestionAnswer {
+	questionId: string;
+	userAnswer: string;
+}
 
 const LessonPage = () => {
 	const { lessonId, userId, courseId, userCourseId } = useParams();
@@ -28,27 +35,21 @@ const LessonPage = () => {
 
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
-	const { handleNextLesson, nextLessonId } = useUserCourseLessonData();
+	const { handleNextLesson, nextLessonId, isLessonCompleted } = useUserCourseLessonData();
 
 	const [userAnswers, setUserAnswers] = useState<UserQuestionData[]>([]);
+	const [isLessonCourseCompletedModalOpen, setIsLessonCourseCompletedModalOpen] = useState<boolean>(false);
+	const [isQuizInProgress, setIsQuizInProgress] = useState<boolean>(false);
+	const [userQuizAnswers, setUserQuizAnswers] = useState<QuizQuestionAnswer[]>(() => {
+		const savedAnswers = localStorage.getItem(`UserQuizAnswers-${lessonId}`);
+		return savedAnswers ? JSON.parse(savedAnswers) : [];
+	});
 
-	useEffect(() => {
-		const fetchData = async () => {
-			if (lessonId) {
-				try {
-					const answers = await fetchUserAnswersByLesson(lessonId);
-					setUserAnswers(answers);
-				} catch (error) {
-					console.log('Error fetching user answers:', error);
-				}
-			}
-		};
-		fetchData();
-	}, [lessonId, fetchUserAnswersByLesson]);
 	const fetchLesson = async (lessonId: string) => {
 		const response = await axios.get(`${base_url}/lessons/${lessonId}`);
 		return response.data;
 	};
+
 	const {
 		data: lesson,
 		isLoading,
@@ -56,6 +57,48 @@ const LessonPage = () => {
 	} = useQuery(['singleLessonData', lessonId], () => fetchLesson(lessonId || ''), {
 		enabled: !!lessonId, // This line ensures the query only runs when lessonId is truthy
 	});
+
+	useEffect(() => {
+		const fetchData = async () => {
+			if (lessonId) {
+				try {
+					const answers = await fetchUserAnswersByLesson(lessonId);
+					if (lesson?.type === LessonType.QUIZ) {
+						setUserQuizAnswers(() => {
+							return answers.map((answer) => {
+								return { questionId: answer.questionId, userAnswer: answer.userAnswer };
+							});
+						});
+					} else {
+						setUserAnswers(answers);
+					}
+				} catch (error) {
+					console.log('Error fetching user answers:', error);
+				}
+			}
+		};
+
+		fetchData();
+
+		if (lesson?.type === LessonType.QUIZ && !isLessonCompleted) {
+			const savedQuizAnswers = localStorage.getItem(`UserQuizAnswers-${lessonId}`);
+			if (savedQuizAnswers) {
+				setUserQuizAnswers(JSON.parse(savedQuizAnswers));
+				setIsQuizInProgress(true);
+			}
+		}
+
+		if (lesson?.type === LessonType.QUIZ && !isLessonCompleted && userQuizAnswers.length !== 0) {
+			setIsQuizInProgress(true);
+		}
+	}, [lessonId, fetchUserAnswersByLesson]);
+
+	useEffect(() => {
+		if (lesson?.type === LessonType.QUIZ && !isLessonCompleted) {
+			localStorage.setItem(`UserQuizAnswers-${lessonId}`, JSON.stringify(userQuizAnswers));
+		}
+		console.log(userQuizAnswers);
+	}, [userQuizAnswers]);
 
 	if (isLoading) {
 		return <Loading />;
@@ -136,7 +179,8 @@ const LessonPage = () => {
 							onClick={() => {
 								navigate(`/course/${courseId}/user/${userId}/userCourseId/${userCourseId === undefined ? 'none' : userCourseId}?isEnrolled=true`);
 								window.scrollTo({ top: 0, behavior: 'smooth' });
-							}}>
+							}}
+							disabled={isQuizInProgress}>
 							Course Home Page
 						</Button>
 					</Box>
@@ -228,16 +272,33 @@ const LessonPage = () => {
 					<CustomSubmitButton
 						onClick={() => {
 							setIsQuestionsVisible(true);
+							if (lesson.type === LessonType.QUIZ && !isLessonCompleted) {
+								setIsQuizInProgress(true);
+							}
 						}}
 						capitalize={false}>
-						{lesson.type === LessonType.PRACTICE_LESSON ? 'Go to Questions' : 'Start Quiz'}
+						{lesson.type === LessonType.PRACTICE_LESSON
+							? 'Go to Questions'
+							: lesson.type === LessonType.QUIZ && !isLessonCompleted && isQuizInProgress
+							? 'Resume'
+							: lesson.type === LessonType.QUIZ && !isLessonCompleted
+							? 'Start Quiz'
+							: 'Review Quiz'}
 					</CustomSubmitButton>
 				</Box>
 			)}
 
 			{isQuestionsVisible && (
 				<Box sx={{ width: '85%' }}>
-					<Questions questions={lesson.questions} lessonType={lesson.type} userAnswers={userAnswers} setUserAnswers={setUserAnswers} />
+					<Questions
+						questions={lesson.questions}
+						lessonType={lesson.type}
+						userAnswers={userAnswers}
+						setUserAnswers={setUserAnswers}
+						setIsQuizInProgress={setIsQuizInProgress}
+						userQuizAnswers={userQuizAnswers}
+						setUserQuizAnswers={setUserQuizAnswers}
+					/>
 				</Box>
 			)}
 
@@ -265,15 +326,27 @@ const LessonPage = () => {
 					<Box sx={{ alignSelf: 'flex-end' }}>
 						<CustomSubmitButton
 							endIcon={!nextLessonId ? <DoneAll /> : <KeyboardDoubleArrowRight />}
-							onClick={async () => {
-								await handleNextLesson();
-								window.scrollTo({ top: 0, behavior: 'smooth' });
-								navigate(`/course/${courseId}/user/${userId}/userCourseId/${userCourseId}?isEnrolled=true`);
+							onClick={() => {
+								setIsLessonCourseCompletedModalOpen(true);
 							}}
 							type='button'>
 							{nextLessonId ? 'Next Lesson' : 'Complete Course'}
 						</CustomSubmitButton>
 					</Box>
+					<CustomDialog
+						openModal={isLessonCourseCompletedModalOpen}
+						closeModal={() => setIsLessonCourseCompletedModalOpen(false)}
+						content={`You have completed this ${nextLessonId ? 'lesson' : 'course'}. Proceed to the next ${nextLessonId ? 'lesson' : 'course'}.`}>
+						<CustomDialogActions
+							onCancel={() => setIsLessonCourseCompletedModalOpen(false)}
+							onSubmit={async () => {
+								await handleNextLesson();
+								navigate(`/course/${courseId}/user/${userId}/userCourseId/${userCourseId}?isEnrolled=true`);
+								window.scrollTo({ top: 0, behavior: 'smooth' });
+							}}
+							submitBtnText='OK'
+						/>
+					</CustomDialog>
 				</Box>
 			)}
 		</Box>

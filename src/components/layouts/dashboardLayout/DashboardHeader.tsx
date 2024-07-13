@@ -17,6 +17,14 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 	const navigate = useNavigate();
 	const { updateInProgressLessons } = useUserCourseLessonData();
 
+	const clearAllQuizData = () => {
+		Object.keys(localStorage).forEach((key) => {
+			if (key.startsWith('UserQuizAnswers-')) {
+				localStorage.removeItem(key);
+			}
+		});
+	};
+
 	useEffect(() => {
 		if (!localStorage.getItem('mode')) {
 			localStorage.setItem('mode', Mode.LIGHT_MODE);
@@ -80,6 +88,7 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 							localStorage.removeItem('userCourseData');
 							localStorage.removeItem('userLessonData');
 							localStorage.removeItem('role');
+							clearAllQuizData();
 
 							navigate('/');
 						}}>
