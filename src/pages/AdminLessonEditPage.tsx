@@ -32,7 +32,6 @@ import { truncateText } from '../utils/utilText';
 import ImageThumbnail from '../components/forms/uploadImageVideoDocument/ImageThumbnail';
 import VideoThumbnail from '../components/forms/uploadImageVideoDocument/VideoThumbnail';
 import LessonImageCourseDisplay from '../components/adminSingleLesson/LessonImageCourseDisplay';
-import { questionTypeNameFinder } from '../utils/questionTypeNameFinder';
 import { sanitizeHtml } from '../utils/sanitizeHtml';
 import TinyMceEditor from '../components/richTextEditor/TinyMceEditor';
 import { Document } from '../interfaces/document';
@@ -40,6 +39,7 @@ import { generateUniqueId } from '../utils/uniqueIdGenerator';
 import HandleDocUploadURL from '../components/forms/uploadImageVideoDocument/HandleDocUploadURL';
 import { DocumentsContext } from '../contexts/DocumentsContextProvider';
 import DocumentsListEditBox from '../components/adminDocuments/DocumentsListEditBox';
+import { LessonType } from '../interfaces/enums';
 
 export interface QuestionUpdateTrack {
 	questionId: string;
@@ -54,9 +54,9 @@ export interface DocumentUpdateTrack {
 const AdminLessonEditPage = () => {
 	const { userId, lessonId } = useParams();
 	const { orgId } = useContext(OrganisationContext);
-	const { updateLessonPublishing, updateLessons, lessonTypes } = useContext(LessonsContext);
+	const { updateLessonPublishing, updateLessons, lessonTypes, fetchLessons, lessonsPageNumber } = useContext(LessonsContext);
 
-	const { questionTypes, fetchQuestions, questionsPageNumber } = useContext(QuestionsContext);
+	const { questionTypes, fetchQuestions, questionsPageNumber, fetchQuestionTypeName } = useContext(QuestionsContext);
 	const { fetchDocuments, documentsPageNumber } = useContext(DocumentsContext);
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
@@ -270,8 +270,8 @@ const AdminLessonEditPage = () => {
 
 		try {
 			if (singleLessonBeforeSave?.documents) {
-				const updatedDocumentsPromises = (singleLessonBeforeSave.documents as (Document | null)[]) // Assert as array of Document or null
-					.filter((doc): doc is Document => doc !== null) // Type guard to filter out nulls
+				const updatedDocumentsPromises = (singleLessonBeforeSave.documents as (Document | null)[])
+					.filter((doc): doc is Document => doc !== null)
 					.map(async (document) => {
 						if (document._id.includes('temp_doc_id')) {
 							try {
@@ -282,7 +282,12 @@ const AdminLessonEditPage = () => {
 									documentUrl: document.documentUrl,
 								});
 								fetchDocuments(documentsPageNumber);
-								return { ...document, _id: response.data._id, createdAt: response.data.createdAt, updatedAt: response.data.updatedAt } as Document; // Assert as Document
+								return {
+									...document,
+									_id: response.data._id,
+									createdAt: response.data.createdAt,
+									updatedAt: response.data.updatedAt,
+								} as Document;
 							} catch (error) {
 								console.error('Error creating document:', error);
 								return null;
@@ -291,8 +296,8 @@ const AdminLessonEditPage = () => {
 						return document;
 					});
 
-				const updatedQuestionsWithNulls = await Promise.all(updatedDocumentsPromises);
-				updatedDocuments = updatedQuestionsWithNulls.filter((doc): doc is Document => doc !== null); // Type guard to filter out remaining nulls
+				const updatedDocumentsWithNulls = await Promise.all(updatedDocumentsPromises);
+				updatedDocuments = updatedDocumentsWithNulls.filter((doc): doc is Document => doc !== null);
 			}
 
 			await Promise.all(
@@ -305,7 +310,7 @@ const AdminLessonEditPage = () => {
 							});
 							fetchDocuments(documentsPageNumber);
 						} catch (error) {
-							console.error('Error updating question:', error);
+							console.error('Error updating document:', error);
 						}
 					}
 				})
@@ -313,7 +318,17 @@ const AdminLessonEditPage = () => {
 
 			const updatedDocumentIds = updatedDocuments.map((doc) => doc._id);
 
-			if (singleLessonBeforeSave?.questions) {
+			if (singleLessonBeforeSave.type === LessonType.INSTRUCTIONAL_LESSON) {
+				setSingleLessonBeforeSave((prevData) => {
+					return {
+						...prevData,
+						questions: [],
+						questionIds: [],
+					};
+				});
+
+				updatedQuestions = [];
+			} else if (singleLessonBeforeSave?.questions) {
 				const updatedQuestionsPromises = singleLessonBeforeSave.questions
 					.filter((question) => question !== null && question !== undefined)
 					.map(async (question) => {
@@ -331,12 +346,13 @@ const AdminLessonEditPage = () => {
 										questionType: questionTypeId,
 										isActive: true,
 									});
+									fetchQuestions(questionsPageNumber);
 									return {
 										...question,
 										_id: response.data._id,
 										createdAt: response.data.createdAt,
 										updatedAt: response.data.updatedAt,
-									} as QuestionInterface; // Assert as QuestionInterface
+									} as QuestionInterface;
 								} catch (error) {
 									console.error('Error creating question:', error);
 									return null;
@@ -356,6 +372,7 @@ const AdminLessonEditPage = () => {
 							try {
 								const { questionType, ...questionWithoutType } = question;
 								await axios.patch(`${base_url}/questions/${question._id}`, questionWithoutType);
+								fetchQuestions(questionsPageNumber);
 							} catch (error) {
 								console.error('Error updating question:', error);
 							}
@@ -364,23 +381,47 @@ const AdminLessonEditPage = () => {
 				);
 			}
 
-			const updatedQuestionIds = updatedQuestions.map((question) => question._id);
+			const updatedQuestionIds = updatedQuestions?.map((question) => question._id);
 
 			if (isLessonUpdated || isQuestionUpdated.some((data) => data.isUpdated === true)) {
 				try {
-					await axios.patch(`${base_url}/lessons/${lessonId}`, {
+					const updatedLesson = {
 						...singleLessonBeforeSave,
 						questionIds: updatedQuestionIds,
-						text: singleLessonBeforeSave.type === 'Quiz' ? '' : editorContent,
+						text: editorContent,
 						documentIds: updatedDocumentIds,
+					};
+
+					await axios.patch(`${base_url}/lessons/${lessonId}`, updatedLesson);
+
+					fetchLessons(lessonsPageNumber);
+					updateLessons({
+						...singleLessonBeforeSave,
+						questions: updatedQuestions,
+						questionIds: updatedQuestionIds,
+						text: editorContent,
+						documentIds: updatedDocumentIds,
+						documents: updatedDocuments,
 					});
 
-					updateLessons(singleLessonBeforeSave);
 					setSingleLesson({
 						...singleLessonBeforeSave,
+						questions: updatedQuestions,
 						questionIds: updatedQuestionIds,
-						text: singleLessonBeforeSave.type === 'Quiz' ? '' : editorContent,
+						text: editorContent,
 						documentIds: updatedDocumentIds,
+						documents: updatedDocuments,
+					});
+
+					setSingleLessonBeforeSave((prevData) => {
+						return {
+							...prevData,
+							questions: updatedQuestions,
+							questionIds: updatedQuestionIds,
+							text: singleLessonBeforeSave.type === 'Quiz' ? '' : editorContent,
+							documentIds: updatedDocumentIds,
+							documents: updatedDocuments,
+						};
 					});
 				} catch (error) {
 					console.error('Error updating lesson:', error);
@@ -391,10 +432,15 @@ const AdminLessonEditPage = () => {
 				questionId: question._id,
 				isUpdated: false,
 			}));
+
 			setIsQuestionUpdated(questionUpdateData);
-			fetchQuestions(questionsPageNumber);
-			setEditorContent('');
-			setPrevEditorContent('');
+
+			const documentUpdateData: DocumentUpdateTrack[] = updatedDocuments.map((document) => ({
+				documentId: document._id,
+				isUpdated: false,
+			}));
+
+			setIsDocumentUpdated(documentUpdateData);
 			setIsLessonUpdated(false);
 		} catch (error) {
 			console.error('Error during lesson update process:', error);
@@ -479,29 +525,30 @@ const AdminLessonEditPage = () => {
 							width: '100%',
 						}}>
 						<LessonImageCourseDisplay singleLesson={singleLesson} />
-						{singleLesson.type === 'Instructional Lesson' && (
-							<Box className='rich-text-content' component='div' sx={{ textAlign: 'justify', width: '90%', mt: '6rem' }}>
-								<Typography variant='h4' sx={{ mb: '1.25rem' }}>
-									Lesson Instructions
-								</Typography>
-								<Typography
-									variant='body1'
-									dangerouslySetInnerHTML={{ __html: sanitizeHtml(singleLesson.text) }}
-									sx={{ boxShadow: singleLesson.text ? '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)' : 'none', padding: '1rem' }}
-								/>
-							</Box>
+
+						<Box className='rich-text-content' component='div' sx={{ textAlign: 'justify', width: '90%', mt: '6rem' }}>
+							<Typography variant='h4' sx={{ mb: '1.25rem' }}>
+								{singleLesson.type === LessonType.INSTRUCTIONAL_LESSON ? 'Lesson Instructions' : 'Instructions'}
+							</Typography>
+							<Typography
+								variant='body1'
+								dangerouslySetInnerHTML={{ __html: sanitizeHtml(singleLesson.text) }}
+								sx={{ boxShadow: singleLesson.text ? '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)' : 'none', padding: '1rem' }}
+							/>
+						</Box>
+
+						{singleLessonBeforeSave.type !== LessonType.INSTRUCTIONAL_LESSON && (
+							<QuestionsBoxNonEdit
+								singleLesson={singleLesson}
+								setIsDisplayNonEditQuestion={setIsDisplayNonEditQuestion}
+								setDisplayedQuestionNonEdit={setDisplayedQuestionNonEdit}
+							/>
 						)}
 
-						<QuestionsBoxNonEdit
-							singleLesson={singleLesson}
-							setIsDisplayNonEditQuestion={setIsDisplayNonEditQuestion}
-							setDisplayedQuestionNonEdit={setDisplayedQuestionNonEdit}
-						/>
-
-						<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', width: '90%', margin: '2rem 0 4rem 0' }}>
+						<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', width: '90%', margin: '3rem 0 4rem 0' }}>
 							<Box>
 								<Typography variant='h4' sx={{ mb: '1.25rem' }}>
-									Lesson Materials
+									{singleLesson.type} Materials
 								</Typography>
 							</Box>
 							{singleLesson.documents
@@ -592,7 +639,7 @@ const AdminLessonEditPage = () => {
 							<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mt: '2rem', width: '100%' }}>
 								<Box sx={{ flex: 1, mr: '2rem' }}>
 									<HandleImageUploadURL
-										label='Lesson Image'
+										label='Cover Image'
 										onImageUploadLogic={(url) => {
 											setIsLessonUpdated(true);
 
@@ -616,6 +663,7 @@ const AdminLessonEditPage = () => {
 										imgSource={singleLessonBeforeSave?.imageUrl || 'https://directmobilityonline.co.uk/assets/img/noimage.png'}
 										removeImage={() => {
 											{
+												setIsLessonUpdated(true);
 												setSingleLessonBeforeSave((prevData) => {
 													return {
 														...prevData,
@@ -639,8 +687,8 @@ const AdminLessonEditPage = () => {
 											});
 										}}
 										onChangeVideoUrl={(e) => {
-											setSingleLessonBeforeSave((prevCourse) => ({
-												...prevCourse,
+											setSingleLessonBeforeSave((prevData) => ({
+												...prevData,
 												videoUrl: e.target.value,
 											}));
 											setIsLessonUpdated(true);
@@ -655,6 +703,7 @@ const AdminLessonEditPage = () => {
 										videoUrl={singleLessonBeforeSave?.videoUrl}
 										videoPlaceholderUrl='https://riggswealth.com/wp-content/uploads/2016/06/Riggs-Video-Placeholder.jpg'
 										removeVideo={() => {
+											setIsLessonUpdated(true);
 											setSingleLessonBeforeSave((prevData) => {
 												return {
 													...prevData,
@@ -668,223 +717,217 @@ const AdminLessonEditPage = () => {
 								</Box>
 							</Box>
 
-							{singleLessonBeforeSave.type === 'Instructional Lesson' && (
-								<Box sx={{ mt: '5rem' }}>
-									<Typography variant='h6' sx={{ mb: '1rem' }}>
-										Lesson Instructions
-									</Typography>
-									<TinyMceEditor
-										height={400}
-										handleEditorChange={(content) => {
-											setEditorContent(content);
-											setPrevEditorContent(content);
-											setIsLessonUpdated(true);
-										}}
-										initialValue={singleLessonBeforeSave.text}
-									/>
-								</Box>
-							)}
-
-							<Box
-								sx={{
-									display: 'flex',
-									justifyContent: 'space-between',
-									alignItems: 'center',
-									width: '100%',
-									mt: '5rem',
-								}}>
-								<Typography variant='h4' sx={{ mb: '1rem' }}>
-									Questions
+							<Box sx={{ mt: '5rem' }}>
+								<Typography variant='h6' sx={{ mb: '1rem' }}>
+									{singleLessonBeforeSave.type === LessonType.INSTRUCTIONAL_LESSON ? 'Lesson Instructions' : 'Instructions'}
 								</Typography>
-								<Box>
-									<CustomSubmitButton
-										sx={{ margin: '0 0.5rem 1rem 0' }}
-										onClick={() => {
-											setAddNewQuestionModalOpen(true);
-										}}>
-										Add Question
-									</CustomSubmitButton>
-
-									<AddNewQuestionDialog
-										addNewQuestionModalOpen={addNewQuestionModalOpen}
-										singleLessonBeforeSave={singleLessonBeforeSave}
-										setAddNewQuestionModalOpen={setAddNewQuestionModalOpen}
-										setIsLessonUpdated={setIsLessonUpdated}
-										setSingleLessonBeforeSave={setSingleLessonBeforeSave}
-										setIsQuestionUpdated={setIsQuestionUpdated}
-									/>
-
-									<CustomSubmitButton
-										type='button'
-										sx={{ marginBottom: '1rem' }}
-										onClick={() => {
-											setIsQuestionCreateModalOpen(true);
-											setQuestionType('');
-											setOptions(['']);
-											setCorrectAnswer('');
-											setIsDuplicateOption(false);
-											setIsMinimumOptions(true);
-											setCorrectAnswerIndex(-1);
-										}}>
-										Create Question
-									</CustomSubmitButton>
-								</Box>
+								<TinyMceEditor
+									height={400}
+									handleEditorChange={(content) => {
+										setEditorContent(content);
+										setPrevEditorContent(content);
+										setIsLessonUpdated(true);
+									}}
+									initialValue={singleLesson.text}
+								/>
 							</Box>
 
-							{singleLessonBeforeSave?.questionIds.length === 0 ||
-							singleLessonBeforeSave?.questions?.filter((question) => question !== null).length === 0 ? (
-								<Box
-									sx={{
-										display: 'flex',
-										justifyContent: 'center',
-										alignItems: 'center',
-										height: '30vh',
-									}}>
-									<Typography variant='body1'>No question for this lesson</Typography>
-								</Box>
-							) : (
-								<Box sx={{ mb: '5rem' }}>
-									<Reorder.Group
-										axis='y'
-										values={singleLessonBeforeSave.questions}
-										onReorder={(newQuestions): void => {
-											setIsLessonUpdated(true);
-											setSingleLessonBeforeSave((prevData) => {
-												return { ...prevData, questions: newQuestions, questionIds: newQuestions?.map((question) => question._id) };
-											});
+							{singleLessonBeforeSave.type !== LessonType.INSTRUCTIONAL_LESSON && (
+								<>
+									<Box
+										sx={{
+											display: 'flex',
+											justifyContent: 'space-between',
+											alignItems: 'center',
+											width: '100%',
+											mt: '5rem',
 										}}>
-										{singleLessonBeforeSave.questions &&
-											singleLessonBeforeSave.questions.length !== 0 &&
-											singleLessonBeforeSave.questions?.map((question, index) => {
-												const filteredQuestionType = questionTypes.filter((type) => {
-													if (question !== null) {
-														return type._id === question.questionType || type.name === question.questionType;
-													}
-												});
-												let questionTypeName: string = '';
-												if (filteredQuestionType.length !== 0) {
-													questionTypeName = filteredQuestionType[0].name;
-												}
-												if (question !== null) {
-													return (
-														<Reorder.Item
-															key={question._id}
-															value={question}
-															style={{
-																listStyle: 'none',
-																boxShadow,
-															}}>
-															<Box
-																key={question._id}
-																sx={{
-																	display: 'flex',
-																	alignItems: 'center',
-																	height: '3rem',
-																	width: '100%',
-																	backgroundColor: theme.bgColor?.common,
-																	margin: '1rem 0',
-																	borderRadius: '0.25rem',
-																	boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
-																	cursor: 'pointer',
-																}}>
-																<Box
-																	sx={{
-																		height: '3rem',
-																		width: '2rem',
-																	}}>
-																	<img
-																		src='https://images.unsplash.com/photo-1601027847350-0285867c31f7?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8N3x8cXVlc3Rpb24lMjBtYXJrfGVufDB8fDB8fHww'
-																		alt='question_img'
-																		height='100%'
-																		width='100%'
-																		style={{
-																			borderRadius: '0.25rem 0 0 0.25rem',
-																		}}
-																	/>
-																</Box>
-																<Box
-																	sx={{
-																		display: 'flex',
-																		justifyContent: 'space-between',
-																		alignItems: 'center',
-																		width: '100%',
-																		margin: '0 1rem',
-																	}}>
-																	<Box sx={{ width: '35%' }}>
-																		<Typography variant='body2'>{truncateText(stripHtml(question.question), 45)}</Typography>
-																	</Box>
+										<Typography variant='h4' sx={{ mb: '1rem' }}>
+											Questions
+										</Typography>
+										<Box>
+											<CustomSubmitButton
+												type='button'
+												sx={{ margin: '0 0.5rem 1rem 0' }}
+												onClick={() => {
+													setAddNewQuestionModalOpen(true);
+												}}>
+												Add Question
+											</CustomSubmitButton>
 
-																	<Box>
-																		<Typography variant='body2'>{questionTypeNameFinder(question.questionType, questionTypes)}</Typography>
-																	</Box>
+											<AddNewQuestionDialog
+												addNewQuestionModalOpen={addNewQuestionModalOpen}
+												singleLessonBeforeSave={singleLessonBeforeSave}
+												setAddNewQuestionModalOpen={setAddNewQuestionModalOpen}
+												setIsLessonUpdated={setIsLessonUpdated}
+												setSingleLessonBeforeSave={setSingleLessonBeforeSave}
+												setIsQuestionUpdated={setIsQuestionUpdated}
+											/>
 
-																	<Box sx={{ display: 'flex' }}>
-																		<Box>
-																			<Tooltip title='Clone' placement='top'>
-																				<IconButton
-																					onClick={() => {
-																						// cloneQuestion(question);
-																					}}>
-																					<FileCopy />
-																				</IconButton>
-																			</Tooltip>
-																		</Box>
-																		<Box>
-																			<Tooltip title='Edit' placement='top'>
-																				<IconButton
-																					onClick={() => {
-																						setOptions(question.options);
-																						setCorrectAnswer(question.correctAnswer);
-																						const correctAnswerIndex = question.options.indexOf(question.correctAnswer);
-																						setCorrectAnswerIndex(correctAnswerIndex);
-																						toggleQuestionEditModal(index);
-																					}}>
-																					<Edit />
-																				</IconButton>
-																			</Tooltip>
-																			<EditQuestionDialog
-																				fromLessonEditPage={true}
-																				question={question}
-																				correctAnswerIndex={correctAnswerIndex}
-																				index={index}
-																				options={options}
-																				correctAnswer={correctAnswer}
-																				questionType={questionTypeName}
-																				isMinimumOptions={isMinimumOptions}
-																				isDuplicateOption={isDuplicateOption}
-																				setSingleLessonBeforeSave={setSingleLessonBeforeSave}
-																				setIsLessonUpdated={setIsLessonUpdated}
-																				handleCorrectAnswerChange={handleCorrectAnswerChange}
-																				setCorrectAnswerIndex={setCorrectAnswerIndex}
-																				handleOptionChange={handleOptionChange}
-																				closeQuestionEditModal={closeQuestionEditModal}
-																				setIsQuestionUpdated={setIsQuestionUpdated}
-																				editQuestionModalOpen={editQuestionModalOpen}
-																				addOption={addOption}
-																				removeOption={removeOption}
-																				setCorrectAnswer={setCorrectAnswer}
-																				setIsDuplicateOption={setIsDuplicateOption}
-																				setIsMinimumOptions={setIsMinimumOptions}
+											<CustomSubmitButton
+												type='button'
+												sx={{ marginBottom: '1rem' }}
+												onClick={() => {
+													setIsQuestionCreateModalOpen(true);
+													setQuestionType('');
+													setOptions(['']);
+													setCorrectAnswer('');
+													setIsDuplicateOption(false);
+													setIsMinimumOptions(true);
+													setCorrectAnswerIndex(-1);
+												}}>
+												Create Question
+											</CustomSubmitButton>
+										</Box>
+									</Box>
+
+									{singleLessonBeforeSave?.questionIds.length === 0 ||
+									singleLessonBeforeSave?.questions?.filter((question) => question !== null).length === 0 ? (
+										<Box
+											sx={{
+												display: 'flex',
+												justifyContent: 'center',
+												alignItems: 'center',
+												height: '30vh',
+											}}>
+											<Typography variant='body1'>No question for this lesson</Typography>
+										</Box>
+									) : (
+										<Box sx={{ mb: '5rem' }}>
+											<Reorder.Group
+												axis='y'
+												values={singleLessonBeforeSave.questions}
+												onReorder={(newQuestions): void => {
+													setIsLessonUpdated(true);
+													setSingleLessonBeforeSave((prevData) => {
+														return { ...prevData, questions: newQuestions, questionIds: newQuestions?.map((question) => question._id) };
+													});
+												}}>
+												{singleLessonBeforeSave.questions &&
+													singleLessonBeforeSave.questions.length !== 0 &&
+													singleLessonBeforeSave.questions?.map((question, index) => {
+														if (question !== null) {
+															return (
+																<Reorder.Item
+																	key={question._id}
+																	value={question}
+																	style={{
+																		listStyle: 'none',
+																		boxShadow,
+																	}}>
+																	<Box
+																		key={question._id}
+																		sx={{
+																			display: 'flex',
+																			alignItems: 'center',
+																			height: '3rem',
+																			width: '100%',
+																			backgroundColor: theme.bgColor?.common,
+																			margin: '1rem 0',
+																			borderRadius: '0.25rem',
+																			boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
+																			cursor: 'pointer',
+																		}}>
+																		<Box
+																			sx={{
+																				height: '3rem',
+																				width: '2rem',
+																			}}>
+																			<img
+																				src='https://images.unsplash.com/photo-1601027847350-0285867c31f7?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8N3x8cXVlc3Rpb24lMjBtYXJrfGVufDB8fDB8fHww'
+																				alt='question_img'
+																				height='100%'
+																				width='100%'
+																				style={{
+																					borderRadius: '0.25rem 0 0 0.25rem',
+																				}}
 																			/>
 																		</Box>
-																		<Tooltip title='Remove' placement='top'>
-																			<IconButton onClick={() => removeQuestion(question)}>
-																				<Delete />
-																			</IconButton>
-																		</Tooltip>
+																		<Box
+																			sx={{
+																				display: 'flex',
+																				justifyContent: 'space-between',
+																				alignItems: 'center',
+																				width: '100%',
+																				margin: '0 1rem',
+																			}}>
+																			<Box sx={{ width: '35%' }}>
+																				<Typography variant='body2'>{truncateText(stripHtml(question.question), 45)}</Typography>
+																			</Box>
+
+																			<Box>
+																				<Typography variant='body2'>{fetchQuestionTypeName(question)}</Typography>
+																			</Box>
+
+																			<Box sx={{ display: 'flex' }}>
+																				<Box>
+																					<Tooltip title='Clone' placement='top'>
+																						<IconButton
+																							onClick={() => {
+																								// cloneQuestion(question);
+																							}}>
+																							<FileCopy />
+																						</IconButton>
+																					</Tooltip>
+																				</Box>
+																				<Box>
+																					<Tooltip title='Edit' placement='top'>
+																						<IconButton
+																							onClick={() => {
+																								setOptions(question.options);
+																								setCorrectAnswer(question.correctAnswer);
+																								const correctAnswerIndex = question.options.indexOf(question.correctAnswer);
+																								setCorrectAnswerIndex(correctAnswerIndex);
+																								toggleQuestionEditModal(index);
+																							}}>
+																							<Edit />
+																						</IconButton>
+																					</Tooltip>
+																					<EditQuestionDialog
+																						fromLessonEditPage={true}
+																						question={question}
+																						correctAnswerIndex={correctAnswerIndex}
+																						index={index}
+																						options={options}
+																						correctAnswer={correctAnswer}
+																						questionType={fetchQuestionTypeName(question)}
+																						isMinimumOptions={isMinimumOptions}
+																						isDuplicateOption={isDuplicateOption}
+																						setSingleLessonBeforeSave={setSingleLessonBeforeSave}
+																						setIsLessonUpdated={setIsLessonUpdated}
+																						handleCorrectAnswerChange={handleCorrectAnswerChange}
+																						setCorrectAnswerIndex={setCorrectAnswerIndex}
+																						handleOptionChange={handleOptionChange}
+																						closeQuestionEditModal={closeQuestionEditModal}
+																						setIsQuestionUpdated={setIsQuestionUpdated}
+																						editQuestionModalOpen={editQuestionModalOpen}
+																						addOption={addOption}
+																						removeOption={removeOption}
+																						setCorrectAnswer={setCorrectAnswer}
+																						setIsDuplicateOption={setIsDuplicateOption}
+																						setIsMinimumOptions={setIsMinimumOptions}
+																					/>
+																				</Box>
+																				<Tooltip title='Remove' placement='top'>
+																					<IconButton onClick={() => removeQuestion(question)}>
+																						<Delete />
+																					</IconButton>
+																				</Tooltip>
+																			</Box>
+																		</Box>
 																	</Box>
-																</Box>
-															</Box>
-														</Reorder.Item>
-													);
-												}
-											})}
-									</Reorder.Group>
-								</Box>
+																</Reorder.Item>
+															);
+														}
+													})}
+											</Reorder.Group>
+										</Box>
+									)}
+								</>
 							)}
 							<Box sx={{ margin: '2rem 0 1rem 0' }}>
 								<HandleDocUploadURL
-									label='Lesson Materials'
+									label={singleLessonBeforeSave.type === 'Quiz' ? 'Quiz Materials' : 'Lesson Materials'}
 									onDocUploadLogic={(url, docName) => {
 										setIsLessonUpdated(true);
 
@@ -922,7 +965,7 @@ const AdminLessonEditPage = () => {
 							</Box>
 
 							<DocumentsListEditBox
-								documentsSource={singleLessonBeforeSave}
+								documentsSource={singleLessonBeforeSave.documents}
 								toggleDocRenameModal={toggleDocRenameModal}
 								closeDocRenameModal={closeDocRenameModal}
 								isDocRenameModalOpen={isDocRenameModalOpen}

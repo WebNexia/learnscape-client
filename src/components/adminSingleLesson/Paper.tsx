@@ -166,6 +166,7 @@ const LessonPaper = ({
 													setIsMissingField(true);
 													setIsMissingFieldMsgOpen(true);
 												}
+												window.scrollTo({ top: 0, behavior: 'smooth' });
 											}}>
 											Save
 										</CustomSubmitButton>

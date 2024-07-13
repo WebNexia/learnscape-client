@@ -18,14 +18,7 @@ const Chapters = ({ course, isEnrolledStatus }: ChaptersProps) => {
 					if (index + 1 < course.chapters.length) {
 						nextChapterFirstLessonId = course.chapters[index + 1].lessonIds[0];
 					}
-					return (
-						<Chapter
-							key={chapter.chapterId}
-							chapter={chapter}
-							isEnrolledStatus={isEnrolledStatus}
-							nextChapterFirstLessonId={nextChapterFirstLessonId}
-						/>
-					);
+					return <Chapter key={index} chapter={chapter} isEnrolledStatus={isEnrolledStatus} nextChapterFirstLessonId={nextChapterFirstLessonId} />;
 				})}
 		</Box>
 	);

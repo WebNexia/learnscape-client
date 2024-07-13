@@ -3,13 +3,11 @@ import React from 'react';
 import CustomDialog from '../layouts/dialog/CustomDialog';
 import CustomTextField from '../forms/customFields/CustomTextField';
 import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
-import { Lesson } from '../../interfaces/lessons';
-import { SingleCourse } from '../../interfaces/course';
 import { Document } from '../../interfaces/document';
 import { DocumentUpdateTrack } from '../../pages/AdminLessonEditPage';
 
 interface DocumentsListEditBoxProps {
-	documentsSource: Lesson | (SingleCourse | undefined);
+	documentsSource: Document[] | undefined;
 	toggleDocRenameModal: (index: number, document: Document) => void;
 	closeDocRenameModal: (index: number, document: Document) => void;
 	isDocRenameModalOpen: boolean[];
@@ -31,8 +29,8 @@ const DocumentsListEditBox = ({
 }: DocumentsListEditBoxProps) => {
 	return (
 		<Box sx={{ marginBottom: '5rem' }}>
-			{documentsSource?.documents &&
-				documentsSource.documents
+			{documentsSource &&
+				documentsSource
 					.filter((document) => document !== null)
 					.map((document, index) => (
 						<Box

@@ -4,9 +4,9 @@ import { Lesson } from '../../interfaces/lessons';
 import { QuestionInterface } from '../../interfaces/question';
 import { stripHtml } from '../../utils/stripHtml';
 import { truncateText } from '../../utils/utilText';
-import { questionTypeNameFinder } from '../../utils/questionTypeNameFinder';
 import { useContext } from 'react';
 import { QuestionsContext } from '../../contexts/QuestionsContextProvider';
+import { LessonType } from '../../interfaces/enums';
 
 interface QuestionsBoxNonEditProps {
 	singleLesson?: Lesson;
@@ -15,7 +15,7 @@ interface QuestionsBoxNonEditProps {
 }
 
 const QuestionsBoxNonEdit = ({ singleLesson, setIsDisplayNonEditQuestion, setDisplayedQuestionNonEdit }: QuestionsBoxNonEditProps) => {
-	const { questionTypes } = useContext(QuestionsContext);
+	const { fetchQuestionTypeName } = useContext(QuestionsContext);
 	return (
 		<Box
 			sx={{
@@ -23,11 +23,11 @@ const QuestionsBoxNonEdit = ({ singleLesson, setIsDisplayNonEditQuestion, setDis
 				flexDirection: 'column',
 				justifyContent: 'flex-start',
 				width: '90%',
-				mt: singleLesson?.type === 'Instructional Lesson' ? '1rem' : '3rem',
+				mt: singleLesson?.type === LessonType.INSTRUCTIONAL_LESSON ? '1rem' : '3rem',
 			}}>
 			<Box sx={{ mt: '3rem', minHeight: '40vh' }}>
 				<Typography variant='h4'>Questions</Typography>
-				{singleLesson?.questionIds?.length === 0 || singleLesson?.questions.filter((question) => question !== null).length === 0 ? (
+				{singleLesson?.questionIds?.length === 0 || singleLesson?.questions?.filter((question) => question !== null).length === 0 ? (
 					<Box
 						sx={{
 							display: 'flex',
@@ -81,7 +81,7 @@ const QuestionsBoxNonEdit = ({ singleLesson, setIsDisplayNonEditQuestion, setDis
 													<Typography variant='body2'>{truncateText(stripHtml(question.question), 60)}</Typography>
 												</Box>
 												<Box>
-													<Typography variant='body2'>{questionTypeNameFinder(question.questionType, questionTypes)}</Typography>
+													<Typography variant='body2'>{fetchQuestionTypeName(question)}</Typography>
 												</Box>
 											</Box>
 										</Box>

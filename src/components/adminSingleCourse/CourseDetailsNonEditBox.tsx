@@ -4,7 +4,8 @@ import { SingleCourse } from '../../interfaces/course';
 
 import { ChapterLessonData } from '../../pages/AdminCourseEditPage';
 import { EditTwoTone } from '@mui/icons-material';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
+import { dateFormatter } from '../../utils/dateFormatter';
 
 interface CourseDetailsNonEditBoxProps {
 	singleCourse?: SingleCourse;
@@ -12,19 +13,6 @@ interface CourseDetailsNonEditBoxProps {
 }
 
 const CourseDetailsNonEditBox = ({ singleCourse, chapters }: CourseDetailsNonEditBoxProps) => {
-	let startDate: string = '';
-	const options: Intl.DateTimeFormatOptions = {
-		year: 'numeric',
-		month: 'long',
-		day: 'numeric',
-	};
-
-	if (singleCourse?.startingDate !== undefined) {
-		const date: Date = new Date(singleCourse?.startingDate);
-		startDate = date.toLocaleString('en-US', options);
-	}
-
-	const navigate = useNavigate();
 	const { userId } = useParams();
 	return (
 		<Box
@@ -68,7 +56,7 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters }: CourseDetailsNonEdi
 						/>
 						<Box>
 							<Typography variant='body2' sx={{ mt: '0.25rem' }}>
-								Course Image
+								Cover Image
 							</Typography>
 						</Box>
 					</Box>
@@ -94,7 +82,7 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters }: CourseDetailsNonEdi
 				<Box sx={{ textAlign: 'center' }}>
 					<Typography variant='h4'>Starting Date</Typography>
 					<Typography variant='body2' sx={{ mt: '0.5rem' }}>
-						{startDate}
+						{dateFormatter(singleCourse?.startingDate)}
 					</Typography>
 				</Box>
 				<Box sx={{ textAlign: 'center' }}>
@@ -178,7 +166,8 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters }: CourseDetailsNonEdi
 																	<Tooltip title='Edit Lesson' placement='top'>
 																		<IconButton
 																			onClick={() => {
-																				navigate(`/admin/lesson-edit/user/${userId}/lesson/${lesson._id}`);
+																				window.open(`/admin/lesson-edit/user/${userId}/lesson/${lesson._id}`, '_blank');
+																				window.scrollTo({ top: 0, behavior: 'smooth' });
 																			}}>
 																			<EditTwoTone />
 																		</IconButton>

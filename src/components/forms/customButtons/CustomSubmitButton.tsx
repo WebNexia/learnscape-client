@@ -9,9 +9,22 @@ interface CustomSubmitButtonProps {
 	sx?: React.CSSProperties;
 	onClick?: (event?: MouseEvent<HTMLButtonElement> | FormEvent<Element>) => void;
 	disabled?: boolean;
+	startIcon?: ReactNode;
+	endIcon?: ReactNode;
+	capitalize?: boolean;
 }
 
-const CustomSubmitButton = ({ children, type = 'submit', variant = 'contained', sx, onClick, disabled }: CustomSubmitButtonProps) => {
+const CustomSubmitButton = ({
+	children,
+	type = 'submit',
+	variant = 'contained',
+	sx,
+	onClick,
+	disabled,
+	startIcon,
+	endIcon,
+	capitalize = true,
+}: CustomSubmitButtonProps) => {
 	const handleClick = (event: MouseEvent<HTMLButtonElement> | FormEvent<Element>) => {
 		if (onClick) {
 			onClick(event);
@@ -24,14 +37,16 @@ const CustomSubmitButton = ({ children, type = 'submit', variant = 'contained', 
 			disabled={disabled}
 			sx={{
 				...sx,
-				textTransform: 'capitalize',
+				textTransform: capitalize ? 'capitalize' : 'none',
 				backgroundColor: theme.bgColor?.greenPrimary,
 				':hover': {
 					backgroundColor: theme.bgColor?.common,
 					color: theme.textColor?.greenPrimary.main,
 				},
 			}}
-			onClick={handleClick}>
+			onClick={handleClick}
+			startIcon={startIcon}
+			endIcon={endIcon}>
 			{children}
 		</Button>
 	);

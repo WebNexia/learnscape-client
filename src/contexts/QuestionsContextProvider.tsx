@@ -18,6 +18,7 @@ interface QuestionsContextTypes {
 	setQuestionsPageNumber: React.Dispatch<React.SetStateAction<number>>;
 	questionTypes: QuestionType[];
 	fetchQuestions: (page: number) => void;
+	fetchQuestionTypeName: (question: QuestionInterface) => string;
 }
 
 interface QuestionsContextProviderProps {
@@ -35,6 +36,7 @@ export const QuestionsContext = createContext<QuestionsContextTypes>({
 	setQuestionsPageNumber: () => {},
 	questionTypes: [],
 	fetchQuestions: () => {},
+	fetchQuestionTypeName: () => '',
 });
 
 const QuestionsContextProvider = (props: QuestionsContextProviderProps) => {
@@ -83,6 +85,20 @@ const QuestionsContextProvider = (props: QuestionsContextProviderProps) => {
 			throw error;
 		}
 	};
+
+	const fetchQuestionTypeName = (question: QuestionInterface): string => {
+		const filteredQuestionType = questionTypes.filter((type) => {
+			if (question !== null) {
+				return type._id === question.questionType || type.name === question.questionType;
+			}
+		});
+		let questionTypeName: string = '';
+		if (filteredQuestionType.length !== 0) {
+			questionTypeName = filteredQuestionType[0].name;
+		}
+		return questionTypeName;
+	};
+
 	const {
 		data: allQuestionTypesData,
 		isLoading: allQuestionTypesLoading,
@@ -143,6 +159,7 @@ const QuestionsContextProvider = (props: QuestionsContextProviderProps) => {
 				setQuestionsPageNumber,
 				questionTypes,
 				fetchQuestions,
+				fetchQuestionTypeName,
 			}}>
 			{props.children}
 		</QuestionsContext.Provider>

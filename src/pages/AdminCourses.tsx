@@ -1,4 +1,4 @@
-import { Box, Table, TableBody, TableRow, TableCell, FormControlLabel, Checkbox } from '@mui/material';
+import { Box, Table, TableBody, TableRow, TableCell, FormControlLabel, Checkbox, Tooltip } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { CoursesContext } from '../contexts/CoursesContextProvider';
@@ -15,6 +15,7 @@ import CustomTableCell from '../components/layouts/table/CustomTableCell';
 import CustomTablePagination from '../components/layouts/table/CustomTablePagination';
 import CustomActionBtn from '../components/layouts/table/CustomActionBtn';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
+import { dateFormatter } from '../utils/dateFormatter';
 
 const AdminCourses = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -131,27 +132,37 @@ const AdminCourses = () => {
 						closeNewCourseModal();
 					}}
 					style={{ display: 'flex', flexDirection: 'column' }}>
-					<CustomTextField
-						fullWidth={false}
-						label='Title'
-						value={title}
-						onChange={(e) => setTitle(e.target.value)}
-						sx={{ margin: '1rem 2rem' }}
-						InputLabelProps={{
-							sx: { fontSize: '0.8rem' },
-						}}
-					/>
-					<CustomTextField
-						fullWidth={false}
-						label='Description'
-						value={description}
-						onChange={(e) => setDescription(e.target.value)}
-						sx={{ margin: '1rem 2rem' }}
-						InputLabelProps={{
-							sx: { fontSize: '0.8rem' },
-						}}
-						multiline
-					/>
+					<Tooltip title='Max 50 Characters' placement='top'>
+						<CustomTextField
+							fullWidth={false}
+							label='Title'
+							value={title}
+							onChange={(e) => setTitle(e.target.value)}
+							sx={{ margin: '1rem 2rem' }}
+							InputLabelProps={{
+								sx: { fontSize: '0.8rem' },
+							}}
+							InputProps={{ inputProps: { maxLength: 50 } }}
+						/>
+					</Tooltip>
+
+					<Tooltip title='Max 500 characters' placement='top'>
+						<CustomTextField
+							fullWidth={false}
+							label='Description'
+							value={description}
+							onChange={(e) => setDescription(e.target.value)}
+							sx={{ margin: '1rem 2rem' }}
+							InputLabelProps={{
+								sx: { fontSize: '0.8rem' },
+							}}
+							InputProps={{ inputProps: { maxLength: 500 } }}
+							multiline
+							rows={5}
+							resizable
+						/>
+					</Tooltip>
+
 					<Box sx={{ display: 'flex' }}>
 						<CustomTextField
 							label='Price Currency'
@@ -216,23 +227,11 @@ const AdminCourses = () => {
 					<TableBody>
 						{sortedCoursesData &&
 							sortedCoursesData.map((course: SingleCourse, index) => {
-								let startDate: string = '';
-								const options: Intl.DateTimeFormatOptions = {
-									year: 'numeric',
-									month: 'short',
-									day: 'numeric',
-								};
-
-								if (course.startingDate !== undefined) {
-									const date: Date = new Date(course.startingDate);
-									startDate = date.toLocaleString('en-US', options);
-								}
-
 								return (
 									<TableRow key={course._id}>
 										<CustomTableCell value={course.title} />
 										<CustomTableCell value={course.isActive ? 'Published' : 'Unpublished'} />
-										<CustomTableCell value={startDate} />
+										<CustomTableCell value={dateFormatter(course.startingDate)} />
 										<CustomTableCell value={`${course.priceCurrency}${course.price}`} />
 
 										<TableCell

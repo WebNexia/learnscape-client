@@ -9,19 +9,9 @@ interface CustomCancelButtonProps {
 	onClick?: (event?: MouseEvent<HTMLButtonElement> | FormEvent<Element>) => void;
 }
 
-const CustomCancelButton = ({
-	children = 'Cancel',
-	type = 'reset',
-	variant = 'outlined',
-	sx,
-	onClick,
-}: CustomCancelButtonProps) => {
+const CustomCancelButton = ({ children = 'Cancel', type = 'reset', variant = 'outlined', sx, onClick }: CustomCancelButtonProps) => {
 	return (
-		<Button
-			type={type}
-			variant={variant}
-			sx={{ ...sx, textTransform: 'capitalize', ml: '0.5rem' }}
-			onClick={onClick}>
+		<Button type={type} variant={variant} sx={{ ...sx, textTransform: 'capitalize', ml: '0.5rem' }} onClick={onClick}>
 			{children}
 		</Button>
 	);

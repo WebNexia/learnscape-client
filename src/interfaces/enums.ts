@@ -51,3 +51,15 @@ export const enum Roles {
 	ADMIN = 'admin',
 	USER = 'learner',
 }
+
+export const enum QuestionType {
+	MULTIPLE_CHOICE = 'Multiple Choice',
+	OPEN_ENDED = 'Open-ended',
+	TRUE_FALSE = 'True-False',
+}
+
+export const enum LessonType {
+	INSTRUCTIONAL_LESSON = 'Instructional Lesson',
+	PRACTICE_LESSON = 'Practice Lesson',
+	QUIZ = 'Quiz',
+}

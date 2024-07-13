@@ -1,5 +1,4 @@
 import { useState } from 'react';
-
 import { useContext } from 'react';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import uploadImage from '../utils/imageUpload';

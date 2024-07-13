@@ -8,6 +8,7 @@ export interface BaseChapter {
 	updatedAt: string;
 	lessonIds: string[];
 	lessons: Lesson[];
+	orgId: string;
 }
 
 export interface ChapterProgress extends BaseChapter {

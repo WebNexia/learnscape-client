@@ -10,14 +10,16 @@ import { UserCoursesIdsWithCourseIds, UserLessonDataStorage } from '../../../con
 import CustomSubmitButton from '../../forms/customButtons/CustomSubmitButton';
 import CustomDialog from '../dialog/CustomDialog';
 import CustomDialogActions from '../dialog/CustomDialogActions';
+import { dateFormatter } from '../../../utils/dateFormatter';
 
 interface CoursePageBannerProps {
 	course: SingleCourse;
 	isEnrolledStatus: boolean;
 	setIsEnrolledStatus: React.Dispatch<React.SetStateAction<boolean>>;
+	documentsRef: React.RefObject<HTMLDivElement>;
 }
 
-const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus }: CoursePageBannerProps) => {
+const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, documentsRef }: CoursePageBannerProps) => {
 	const firstLessonId: string = course && course?.chapters[0]?.lessonIds && course?.chapters[0]?.lessonIds[0];
 
 	const navigate = useNavigate();
@@ -31,16 +33,6 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus }: Cou
 
 	const vertical = 'top';
 	const horizontal = 'center';
-
-	const date: Date = new Date(course.startingDate);
-
-	const options: Intl.DateTimeFormatOptions = {
-		year: 'numeric',
-		month: 'short',
-		day: 'numeric',
-	};
-
-	const startDate: string = date.toLocaleString('en-US', options);
 
 	const courseRegistration = async (): Promise<void> => {
 		try {
@@ -72,6 +64,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus }: Cou
 						lessonId: firstLessonId,
 						userLessonId: responseUserLesson.data._id,
 						courseId,
+						currentQuestion: 1,
 						isCompleted: false,
 						isInProgress: true,
 					};
@@ -115,7 +108,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus }: Cou
 		<Paper
 			elevation={10}
 			sx={{
-				width: '85%',
+				width: '90%',
 				height: '23rem',
 				margin: '3rem 0 2rem 0',
 				backgroundColor: theme.palette.primary.main,
@@ -149,7 +142,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus }: Cou
 						display: 'flex',
 						flexDirection: 'column',
 						margin: '1rem 3rem 1rem 2rem',
-						flex: 1,
+						flex: 3,
 						position: 'relative',
 						height: '20rem',
 					}}>
@@ -185,18 +178,37 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus }: Cou
 							}}>
 							{course.description}
 						</Typography>
-						<CustomSubmitButton
-							variant='contained'
-							sx={{
-								visibility: isEnrolledStatus ? 'hidden' : 'visible',
-								width: '100%',
-								position: 'absolute',
-								bottom: 5,
-								fontSize: '1rem',
-							}}
-							onClick={handleEnrollment}>
-							Enroll
-						</CustomSubmitButton>
+						{!isEnrolledStatus ? (
+							<CustomSubmitButton
+								variant='contained'
+								sx={{
+									width: '8rem',
+									position: 'absolute',
+									bottom: 5,
+									fontSize: '1rem',
+								}}
+								onClick={handleEnrollment}>
+								Enroll
+							</CustomSubmitButton>
+						) : (
+							<Typography
+								variant='body1'
+								onClick={() => {
+									documentsRef.current?.scrollIntoView({ behavior: 'smooth' });
+								}}
+								sx={{
+									width: 'fit-content',
+									position: 'absolute',
+									bottom: 5,
+									fontSize: '0.85rem',
+									textTransform: 'capitalize',
+									color: theme.textColor?.common.main,
+									cursor: 'pointer',
+									textDecoration: 'underline',
+								}}>
+								See Course Materials
+							</Typography>
+						)}
 					</Box>
 				</Box>
 				<Box
@@ -204,15 +216,9 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus }: Cou
 						display: 'flex',
 						justifyContent: 'center',
 						alignItems: 'center',
-						flex: 1,
+						flex: 2,
 					}}>
 					<Box>
-						<CoursePageBannerDataCard title='Starting Date' content={startDate} />
-						<CoursePageBannerDataCard title='Weeks(#)' content={course.durationWeeks} />
-					</Box>
-					<Box>
-						<CoursePageBannerDataCard title='Format' content={course.format} />
-
 						<CoursePageBannerDataCard
 							title='Price'
 							content={`${course.price.toLowerCase() === 'free' ? '' : course.priceCurrency === null ? '' : course.priceCurrency}${course.price}`}
@@ -221,6 +227,12 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus }: Cou
 								bgColor: theme.bgColor?.greenSecondary,
 							}}
 						/>
+						<CoursePageBannerDataCard title='Weeks(#)' content={course.durationWeeks} />
+					</Box>
+					<Box>
+						<CoursePageBannerDataCard title='Starting Date' content={dateFormatter(course.startingDate)} />
+
+						<CoursePageBannerDataCard title='Hours(#)' content={course.durationHours} />
 					</Box>
 				</Box>
 			</Box>

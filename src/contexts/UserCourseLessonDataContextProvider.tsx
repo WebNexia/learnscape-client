@@ -7,6 +7,7 @@ import { OrganisationContext } from './OrganisationContextProvider';
 import { useQuery } from 'react-query';
 import Loading from '../components/layouts/loading/Loading';
 import LoadingError from '../components/layouts/loading/LoadingError';
+import { useParams } from 'react-router-dom';
 
 interface UserCourseLessonDataContextTypes {
 	fetchSingleCourseData: (courseId: string) => void;
@@ -31,6 +32,7 @@ export interface UserLessonDataStorage {
 	lessonId: string;
 	userLessonId: string;
 	courseId: string;
+	currentQuestion: number;
 	isCompleted: boolean;
 	isInProgress: boolean;
 }
@@ -48,6 +50,8 @@ const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProvide
 	const { userId } = useContext(UserAuthContext);
 	const { orgId } = useContext(OrganisationContext);
 
+	const { courseId } = useParams();
+
 	const role = localStorage.getItem('role');
 
 	const [isLoaded, setIsLoaded] = useState<boolean>(false);
@@ -56,25 +60,35 @@ const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProvide
 
 	const [singleCourseUser, setSingleCourseUser] = useState<SingleCourse | null>(null);
 
-	const fetchSingleCourseData = async (courseId: string): Promise<void> => {
+	const fetchSingleCourseData = async (courseId: string | undefined): Promise<void> => {
 		try {
-			const response = await axios.get(`${base_url}/courses/${courseId}`);
-			setSingleCourse(response.data.data[0] || null);
+			if (courseId) {
+				const response = await axios.get(`${base_url}/courses/${courseId}`);
+				setSingleCourse(response.data.data || null);
 
-			setSingleCourseUser(() => {
-				const filteredChapters: BaseChapter[] | undefined = response?.data?.data[0]?.chapters?.filter(
-					(chapter: BaseChapter) => chapter?.lessonIds?.length !== 0
-				);
+				setSingleCourseUser(() => {
+					const filteredChapters: BaseChapter[] | undefined = response?.data?.data?.chapters?.filter(
+						(chapter: BaseChapter) => chapter?.lessonIds?.length !== 0
+					);
 
-				return {
-					...response.data.data[0],
-					chapters: filteredChapters,
-				};
-			});
+					return {
+						...response.data.data,
+						chapters: filteredChapters,
+					};
+				});
+			}
 		} catch (error) {
 			console.log(error);
 		}
 	};
+
+	const {
+		data: singleCourseData,
+		isLoading: singleCourseDataLoading,
+		error: singleCourseDataError,
+	} = useQuery(['singleCourseData', orgId], () => fetchSingleCourseData(courseId), {
+		enabled: !!userId && !!orgId,
+	});
 
 	const {
 		isLoading,
@@ -112,11 +126,11 @@ const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProvide
 		}
 	}, [userCoursesData, userLessonData]);
 
-	if (isLoading || userLessonsLoading) {
+	if (isLoading || userLessonsLoading || singleCourseDataLoading) {
 		return <Loading />;
 	}
 
-	if (error || userLessonsError) {
+	if (error || userLessonsError || singleCourseDataError) {
 		return <LoadingError />;
 	}
 

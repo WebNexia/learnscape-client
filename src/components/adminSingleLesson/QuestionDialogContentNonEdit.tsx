@@ -3,9 +3,9 @@ import ReactPlayer from 'react-player';
 import { QuestionInterface } from '../../interfaces/question';
 import theme from '../../themes';
 import { sanitizeHtml } from '../../utils/sanitizeHtml';
-import { questionTypeNameFinder } from '../../utils/questionTypeNameFinder';
 import { useContext } from 'react';
 import { QuestionsContext } from '../../contexts/QuestionsContextProvider';
+import { QuestionType } from '../../interfaces/enums';
 
 interface QuestionDialogContentNonEditProps {
 	question: QuestionInterface | null;
@@ -14,7 +14,7 @@ interface QuestionDialogContentNonEditProps {
 const QuestionDialogContentNonEdit = ({ question }: QuestionDialogContentNonEditProps) => {
 	const hasMedia = question?.imageUrl || question?.videoUrl;
 
-	const { questionTypes } = useContext(QuestionsContext);
+	const { fetchQuestionTypeName } = useContext(QuestionsContext);
 
 	return (
 		<DialogContent>
@@ -40,8 +40,7 @@ const QuestionDialogContentNonEdit = ({ question }: QuestionDialogContentNonEdit
 							src={question?.imageUrl}
 							alt='question_img'
 							style={{
-								height: 'auto',
-								maxHeight: '100%',
+								height: '100%',
 								width: question?.videoUrl ? '90%' : '50%',
 								borderRadius: '0.2rem',
 								boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
@@ -78,7 +77,7 @@ const QuestionDialogContentNonEdit = ({ question }: QuestionDialogContentNonEdit
 					</Box>
 
 					<Box sx={{ alignSelf: 'center', width: '80%' }}>
-						{questionTypeNameFinder(question.questionType, questionTypes) === 'Multiple Choice' &&
+						{fetchQuestionTypeName(question) === QuestionType.MULTIPLE_CHOICE &&
 							question.options &&
 							question.options.map((option, index) => {
 								const choiceLabel = String.fromCharCode(97 + index) + ')';
@@ -96,7 +95,7 @@ const QuestionDialogContentNonEdit = ({ question }: QuestionDialogContentNonEdit
 								);
 							})}
 					</Box>
-					{questionTypeNameFinder(question.questionType, questionTypes) === 'True-False' && (
+					{fetchQuestionTypeName(question) === QuestionType.TRUE_FALSE && (
 						<Box sx={{ width: '6rem' }}>
 							<Typography
 								variant='h6'

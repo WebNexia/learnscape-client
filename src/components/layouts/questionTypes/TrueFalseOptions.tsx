@@ -1,34 +1,87 @@
 import { Box, Typography, Radio, RadioGroup, FormControlLabel } from '@mui/material';
 import theme from '../../../themes';
+import { QuestionInterface } from '../../../interfaces/question';
+import { useUserCourseLessonData } from '../../../hooks/useUserCourseLessonData';
+import { LessonType } from '../../../interfaces/enums';
+import { QuizQuestionAnswer } from '../../../pages/LessonPage';
 
 interface TrueFalseOptionsProps {
+	question?: QuestionInterface;
 	correctAnswer: string;
 	fromLessonEditPage?: boolean;
 	correctAnswerAdminQuestions?: string;
+	fromLearner?: boolean;
+	isLessonCompleted?: boolean;
+	displayedQuestionNumber?: number;
+	setIsLessonCompleted?: React.Dispatch<React.SetStateAction<boolean>>;
 	setCorrectAnswer: React.Dispatch<React.SetStateAction<string>>;
-	setIsCorrectAnswerMissing: React.Dispatch<React.SetStateAction<boolean>>;
+	setIsCorrectAnswerMissing?: React.Dispatch<React.SetStateAction<boolean>>;
 	setCorrectAnswerAdminQuestions?: React.Dispatch<React.SetStateAction<string>>;
+	setHelperText?: React.Dispatch<React.SetStateAction<string>>;
+	setIsLessonUpdating?: React.Dispatch<React.SetStateAction<boolean>>;
+	isLessonUpdating?: boolean;
+	setUserAnswer?: React.Dispatch<React.SetStateAction<string>>;
+	setUserQuizAnswers?: React.Dispatch<React.SetStateAction<QuizQuestionAnswer[]>>;
+	lessonType?: string | undefined;
+	userQuizAnswer?: string;
 }
 
 const TrueFalseOptions = ({
+	question,
 	correctAnswer,
 	fromLessonEditPage,
 	correctAnswerAdminQuestions,
+	fromLearner,
+	isLessonCompleted,
+	displayedQuestionNumber = 1,
 	setCorrectAnswer,
 	setIsCorrectAnswerMissing,
 	setCorrectAnswerAdminQuestions,
+	setHelperText,
+	setIsLessonUpdating,
+	isLessonUpdating,
+	setUserAnswer,
+	setUserQuizAnswers,
+	lessonType,
+	userQuizAnswer,
 }: TrueFalseOptionsProps) => {
 	const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
 		setCorrectAnswer((event.target as HTMLInputElement).value);
-		setIsCorrectAnswerMissing(false);
+		if (isLessonCompleted && setIsLessonUpdating) setIsLessonUpdating(true);
+		if (setIsCorrectAnswerMissing) setIsCorrectAnswerMissing(false);
 		if (!fromLessonEditPage && setCorrectAnswerAdminQuestions) {
 			setCorrectAnswerAdminQuestions((event.target as HTMLInputElement).value);
 		}
+		if (setHelperText) setHelperText(' ');
+		if (setUserAnswer) setUserAnswer((event.target as HTMLInputElement).value);
+		if (setUserQuizAnswers && lessonType === LessonType.QUIZ) {
+			setUserQuizAnswers((prevData) => {
+				if (prevData) {
+					const updatedAnswers = prevData.map((answer) => {
+						if (answer.questionId === question?._id) {
+							return { ...answer, userAnswer: (event.target as HTMLInputElement).value };
+						}
+						return answer;
+					});
+					return updatedAnswers;
+				}
+				return prevData;
+			});
+		}
 	};
 
+	const { getLastQuestion } = useUserCourseLessonData();
+
+	const adminSetting = fromLessonEditPage ? correctAnswer : correctAnswerAdminQuestions;
+	const learnerSetting =
+		isLessonCompleted && displayedQuestionNumber < getLastQuestion() && isLessonUpdating
+			? question?.correctAnswer
+			: isLessonCompleted && lessonType === LessonType.QUIZ
+			? userQuizAnswer
+			: correctAnswer;
 	return (
 		<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', mt: '2rem' }}>
-			<RadioGroup row value={fromLessonEditPage ? correctAnswer : correctAnswerAdminQuestions} onChange={handleChange}>
+			<RadioGroup row value={fromLearner ? learnerSetting : adminSetting} onChange={handleChange}>
 				<Box sx={{ display: 'flex', alignItems: 'center' }}>
 					<Box
 						sx={{

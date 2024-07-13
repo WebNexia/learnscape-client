@@ -1,0 +1,424 @@
+import {
+	Box,
+	Button,
+	FormControl,
+	FormControlLabel,
+	FormHelperText,
+	IconButton,
+	MenuItem,
+	Radio,
+	RadioGroup,
+	Select,
+	SelectChangeEvent,
+	Typography,
+} from '@mui/material';
+import { QuestionInterface } from '../../interfaces/question';
+import { useContext, useEffect, useState } from 'react';
+import axios from 'axios';
+import { useNavigate, useParams } from 'react-router-dom';
+import theme from '../../themes';
+import { OrganisationContext } from '../../contexts/OrganisationContextProvider';
+import TrueFalseOptions from '../layouts/questionTypes/TrueFalseOptions';
+import { QuestionsContext } from '../../contexts/QuestionsContextProvider';
+import CustomTextField from '../forms/customFields/CustomTextField';
+import { useUserCourseLessonData } from '../../hooks/useUserCourseLessonData';
+import { Done, KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons-material';
+import { UserQuestionData } from '../../hooks/useFetchUserQuestion';
+import { LessonType, QuestionType } from '../../interfaces/enums';
+import CustomDialog from '../layouts/dialog/CustomDialog';
+import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
+import QuestionMedia from './QuestionMedia';
+import QuestionText from './QuestionText';
+
+interface PracticeQuestionProps {
+	question: QuestionInterface;
+	questionNumber: number;
+	numberOfQuestions: number;
+	displayedQuestionNumber: number;
+	lessonType?: string;
+	isLessonCompleted: boolean;
+	showQuestionSelector: boolean;
+	userAnswers: UserQuestionData[];
+	setUserAnswers: React.Dispatch<React.SetStateAction<UserQuestionData[]>>;
+	setDisplayedQuestionNumber: React.Dispatch<React.SetStateAction<number>>;
+	setIsLessonCompleted: React.Dispatch<React.SetStateAction<boolean>>;
+	setShowQuestionSelector: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+const PracticeQuestion = ({
+	question,
+	questionNumber,
+	numberOfQuestions,
+	displayedQuestionNumber,
+	lessonType,
+	isLessonCompleted,
+	showQuestionSelector,
+	userAnswers,
+	setUserAnswers,
+	setDisplayedQuestionNumber,
+	setIsLessonCompleted,
+	setShowQuestionSelector,
+}: PracticeQuestionProps) => {
+	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
+	const navigate = useNavigate();
+	const { userLessonId, handleNextLesson, nextLessonId, updateLastQuestion, getLastQuestion } = useUserCourseLessonData();
+
+	const { userId, lessonId, courseId, userCourseId } = useParams();
+	const { orgId } = useContext(OrganisationContext);
+	const { fetchQuestionTypeName } = useContext(QuestionsContext);
+
+	const [userAnswer, setUserAnswer] = useState<string>('');
+
+	const [value, setValue] = useState<string>(() => {
+		if (isLessonCompleted && question.correctAnswer) {
+			return question.correctAnswer;
+		} else if (fetchQuestionTypeName(question) === QuestionType.OPEN_ENDED) {
+			const answer: string = userAnswers?.find((data) => data.questionId == question._id)?.userAnswer || '';
+			return answer;
+		} else if (!isLessonCompleted && displayedQuestionNumber < getLastQuestion()) {
+			return question.correctAnswer;
+		} else {
+			return userAnswer;
+		}
+	});
+
+	const [error, setError] = useState<boolean>(false);
+	const [success, setSuccess] = useState<boolean>(false);
+	const [helperText, setHelperText] = useState<string>('Choose wisely');
+	const [isAnswerCorrect, setIsAnswerCorrect] = useState<boolean>(false);
+	const [isOpenEndedAnswerSubmitted, setIsOpenEndedAnswerSubmitted] = useState<boolean>(false);
+	const [selectedQuestion, setSelectedQuestion] = useState<number>(displayedQuestionNumber);
+	const [isLessonUpdating, setIsLessonUpdating] = useState<boolean>(false);
+	const [isLessonCourseCompletedModalOpen, setIsLessonCourseCompletedModalOpen] = useState<boolean>(false);
+
+	const isCompletingCourse: boolean = displayedQuestionNumber === numberOfQuestions && nextLessonId === null;
+	const isCompletingLesson: boolean = displayedQuestionNumber === numberOfQuestions && nextLessonId !== null;
+
+	useEffect(() => {
+		if (isLessonCompleted && question.correctAnswer && fetchQuestionTypeName(question) !== QuestionType.OPEN_ENDED) {
+			setValue(question.correctAnswer);
+		} else if (fetchQuestionTypeName(question) === QuestionType.OPEN_ENDED) {
+			setValue(() => {
+				const answer = userAnswers?.find((data) => data.questionId === question._id)?.userAnswer || '';
+				return answer;
+			});
+		} else if (!isLessonCompleted && displayedQuestionNumber === getLastQuestion()) {
+			setValue(userAnswer);
+		} else if (!isLessonCompleted && displayedQuestionNumber < getLastQuestion()) {
+			setValue(question.correctAnswer);
+		}
+
+		setSelectedQuestion(displayedQuestionNumber);
+
+		if (isLessonCompleted) {
+			setShowQuestionSelector(true);
+		}
+
+		if (isLessonCompleted || isAnswerCorrect || displayedQuestionNumber < getLastQuestion()) {
+			setHelperText(' ');
+		}
+
+		setIsOpenEndedAnswerSubmitted(false);
+		setIsAnswerCorrect(false);
+	}, [displayedQuestionNumber]);
+
+	const createUserQuestion = async () => {
+		const existingUserAnswer = userAnswers.find((data) => data.questionId === question._id);
+
+		if (!existingUserAnswer || existingUserAnswer.userAnswer !== userAnswer) {
+			try {
+				if ((lessonType === LessonType.PRACTICE_LESSON && fetchQuestionTypeName(question) === QuestionType.OPEN_ENDED) || lessonType === 'Quiz') {
+					const res = await axios.post(`${base_url}/userQuestions`, {
+						userLessonId,
+						questionId: question._id,
+						userId,
+						lessonId,
+						courseId,
+						isCompleted: true,
+						isInProgress: false,
+						orgId,
+						userAnswer,
+					});
+
+					const userQuestionId = res.data._id;
+					if (res.status === 200) {
+						await axios.patch(`${base_url}/userQuestions/${userQuestionId}`, { userAnswer });
+						setUserAnswers((prevData) => {
+							if (!prevData) return [];
+							return prevData.map((data) => (data.questionId === question._id ? { ...data, userAnswer } : data));
+						});
+					} else {
+						setUserAnswers((prevData) => {
+							const newUserAnswer = {
+								userQuestionId: res.data._id,
+								questionId: question._id,
+								userAnswer,
+							};
+							return [...prevData, newUserAnswer];
+						});
+					}
+
+					setIsOpenEndedAnswerSubmitted(true);
+					setValue(userAnswer);
+				}
+
+				if (displayedQuestionNumber + 1 <= numberOfQuestions && getLastQuestion() <= displayedQuestionNumber) {
+					updateLastQuestion(displayedQuestionNumber + 1);
+				}
+
+				if (displayedQuestionNumber === numberOfQuestions) {
+					await handleNextLesson();
+					setIsLessonCompleted(true);
+					setShowQuestionSelector(true);
+				}
+			} catch (error) {
+				console.log(error);
+			}
+		} else {
+			setIsOpenEndedAnswerSubmitted(true);
+		}
+	};
+
+	const handleRadioChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+		if (isLessonCompleted) {
+			setShowQuestionSelector(true);
+			setIsLessonUpdating(true);
+			setIsOpenEndedAnswerSubmitted(false);
+		}
+
+		setValue((event.target as HTMLInputElement).value);
+		setHelperText(' ');
+		setError(false);
+		setUserAnswer((event.target as HTMLInputElement).value);
+	};
+
+	const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+		event.preventDefault();
+		if (lessonType === LessonType.PRACTICE_LESSON) {
+			if (fetchQuestionTypeName(question) === QuestionType.OPEN_ENDED && value !== '') {
+				await createUserQuestion();
+				setUserAnswer(value);
+				setIsOpenEndedAnswerSubmitted(true);
+				setIsAnswerCorrect(true);
+			}
+			if (value === question.correctAnswer?.toString() && fetchQuestionTypeName(question) !== QuestionType.OPEN_ENDED) {
+				setHelperText('You got it!');
+				setError(false);
+				setIsAnswerCorrect(true);
+				setSuccess(true);
+				await createUserQuestion();
+				setUserAnswer(value);
+				setIsOpenEndedAnswerSubmitted(true);
+			} else if (value !== question.correctAnswer && value !== '') {
+				setHelperText('Sorry, wrong answer!');
+				setError(true);
+				setIsAnswerCorrect(false);
+				setUserAnswer(value);
+			} else {
+				setHelperText('Please select an option.');
+				setError(true);
+				setIsAnswerCorrect(false);
+			}
+		}
+	};
+
+	const handleQuestionChange = (event: SelectChangeEvent<number>) => {
+		const selectedValue = Number(event.target.value);
+		setSelectedQuestion(selectedValue);
+		setDisplayedQuestionNumber(selectedValue);
+		setIsOpenEndedAnswerSubmitted(false);
+		window.scrollTo({ top: 0, behavior: 'smooth' });
+	};
+
+	return (
+		<Box
+			sx={{
+				display: displayedQuestionNumber === questionNumber ? 'flex' : 'none',
+				flexDirection: 'column',
+				alignItems: 'center',
+			}}>
+			<form onSubmit={handleSubmit} style={{ width: '100%' }}>
+				<FormControl sx={{ margin: '1rem', width: '100%' }} error={error} variant='standard'>
+					<QuestionMedia question={question} />
+					<QuestionText question={question} questionNumber={questionNumber} />
+
+					{fetchQuestionTypeName(question) === QuestionType.OPEN_ENDED && (
+						<Box sx={{ width: '90%', margin: '1rem auto' }}>
+							<CustomTextField
+								required={false}
+								multiline
+								rows={4}
+								resizable
+								value={value}
+								onChange={(e) => {
+									setValue(e.target.value);
+									setUserAnswer(e.target.value);
+								}}
+							/>
+						</Box>
+					)}
+
+					{fetchQuestionTypeName(question) === QuestionType.TRUE_FALSE && (
+						<Box>
+							<TrueFalseOptions
+								correctAnswer={value}
+								setCorrectAnswer={setValue}
+								fromLearner={true}
+								question={question}
+								isLessonCompleted={isLessonCompleted}
+								displayedQuestionNumber={displayedQuestionNumber}
+								setHelperText={setHelperText}
+								setIsLessonUpdating={setIsLessonUpdating}
+								isLessonUpdating={isLessonUpdating}
+								setUserAnswer={setUserAnswer}
+								lessonType={lessonType}
+							/>
+						</Box>
+					)}
+					{fetchQuestionTypeName(question) === QuestionType.MULTIPLE_CHOICE && (
+						<RadioGroup
+							name='question'
+							value={isLessonCompleted && displayedQuestionNumber < getLastQuestion() && !isLessonUpdating ? question.correctAnswer : value}
+							onChange={handleRadioChange}
+							sx={{ alignSelf: 'center' }}>
+							{question &&
+								question.options &&
+								question.options.map((option, index) => {
+									return <FormControlLabel value={option} control={<Radio />} label={option} key={index} />;
+								})}
+						</RadioGroup>
+					)}
+					{fetchQuestionTypeName(question) !== QuestionType.OPEN_ENDED && (!isLessonCompleted || isLessonUpdating) && helperText !== ' ' && (
+						<FormHelperText sx={{ color: success ? 'green' : 'inherit', alignSelf: 'center', mt: '2rem' }}>{helperText}</FormHelperText>
+					)}
+
+					<Button
+						sx={{
+							mt: '3rem',
+							width: '13rem',
+							alignSelf: 'center',
+						}}
+						type='submit'
+						variant='outlined'>
+						Submit Answer
+					</Button>
+				</FormControl>
+			</form>
+
+			<Box
+				sx={{
+					display: 'flex',
+					justifyContent: 'space-between',
+					alignItems: 'center',
+					position: 'relative',
+					mt: '2rem',
+					width: '40%',
+				}}>
+				<IconButton
+					sx={{
+						flexShrink: 0,
+						':hover': {
+							color: theme.bgColor?.greenPrimary,
+							backgroundColor: 'transparent',
+						},
+					}}
+					onClick={() => {
+						if (!(displayedQuestionNumber - 1 === 0)) {
+							setDisplayedQuestionNumber((prev) => prev - 1);
+							setSelectedQuestion(displayedQuestionNumber - 1);
+						}
+						window.scrollTo({ top: 0, behavior: 'smooth' });
+						setIsOpenEndedAnswerSubmitted(false);
+					}}
+					disabled={displayedQuestionNumber - 1 === 0}>
+					<KeyboardArrowLeft fontSize='large' />
+				</IconButton>
+
+				{!showQuestionSelector && (
+					<Typography
+						variant='body1'
+						sx={{
+							position: 'absolute',
+							left: '50%',
+							transform: 'translateX(-50%)',
+						}}>
+						{displayedQuestionNumber} / {numberOfQuestions}
+					</Typography>
+				)}
+
+				{showQuestionSelector && (
+					<Box
+						sx={{
+							display: 'flex',
+							alignItems: 'center',
+							position: 'absolute',
+							left: '50%',
+							transform: 'translateX(-50%)',
+						}}>
+						<Select
+							labelId='question_number'
+							id='question_number'
+							sx={{ mr: '0.5rem' }}
+							value={selectedQuestion}
+							onChange={handleQuestionChange}
+							size='small'
+							label='#'
+							required>
+							{Array.from({ length: numberOfQuestions }, (_, i) => (
+								<MenuItem key={i + 1} value={i + 1}>
+									{i + 1}
+								</MenuItem>
+							))}
+						</Select>
+						<Typography> / {numberOfQuestions}</Typography>
+					</Box>
+				)}
+
+				<IconButton
+					onClick={() => {
+						if (!(displayedQuestionNumber + 1 > numberOfQuestions)) {
+							setDisplayedQuestionNumber((prev) => prev + 1);
+							setSelectedQuestion(displayedQuestionNumber + 1);
+						}
+						if (isLessonCompleted && displayedQuestionNumber === numberOfQuestions) {
+							setIsLessonCourseCompletedModalOpen(true);
+						}
+						window.scrollTo({ top: 0, behavior: 'smooth' });
+						setIsOpenEndedAnswerSubmitted(false);
+					}}
+					sx={{
+						flexShrink: 0,
+						color: !isAnswerCorrect && !isOpenEndedAnswerSubmitted ? 'gray' : theme.textColor?.common.main,
+						backgroundColor: !isAnswerCorrect && !isOpenEndedAnswerSubmitted ? 'inherit' : theme.bgColor?.greenPrimary,
+						':hover': {
+							color: theme.bgColor?.greenPrimary,
+							backgroundColor: 'transparent',
+						},
+					}}
+					disabled={
+						(!isAnswerCorrect || displayedQuestionNumber + 1 > numberOfQuestions || !isOpenEndedAnswerSubmitted) &&
+						!(isLessonCompleted || displayedQuestionNumber < getLastQuestion())
+					}>
+					{isCompletingCourse ? 'Complete Course' : isCompletingLesson ? <Done fontSize='large' /> : <KeyboardArrowRight fontSize='large' />}
+				</IconButton>
+
+				<CustomDialog
+					openModal={isLessonCourseCompletedModalOpen}
+					closeModal={() => setIsLessonCourseCompletedModalOpen(false)}
+					content={`You have completed this ${nextLessonId ? 'lesson' : 'course'}. Proceed to the next ${nextLessonId ? 'lesson' : 'course'}.`}>
+					<CustomDialogActions
+						onCancel={() => setIsLessonCourseCompletedModalOpen(false)}
+						onSubmit={async () => {
+							await handleNextLesson();
+							navigate(`/course/${courseId}/user/${userId}/userCourseId/${userCourseId}?isEnrolled=true`);
+							window.scrollTo({ top: 0, behavior: 'smooth' });
+						}}
+						submitBtnText='OK'
+					/>
+				</CustomDialog>
+			</Box>
+		</Box>
+	);
+};
+
+export default PracticeQuestion;

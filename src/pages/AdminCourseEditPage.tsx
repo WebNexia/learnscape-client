@@ -65,11 +65,12 @@ export class ChapterLessonDataImpl implements ChapterLessonData {
 const AdminCourseEditPage = () => {
 	const { userId, courseId } = useParams();
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
+
 	const { orgId } = useContext(OrganisationContext);
 	const { fetchLessons, lessonsPageNumber } = useContext(LessonsContext);
 	const { fetchDocuments, documentsPageNumber } = useContext(DocumentsContext);
+	const { updateCoursePublishing, updateCourse, coursesPageNumber, fetchCourses } = useContext(CoursesContext);
 
-	const { updateCoursePublishing, updateCourse } = useContext(CoursesContext);
 	const [isEditMode, setIsEditMode] = useState<boolean>(false);
 	const [singleCourse, setSingleCourse] = useState<SingleCourse>();
 	const [isActive, setIsActive] = useState<boolean>(false);
@@ -77,7 +78,7 @@ const AdminCourseEditPage = () => {
 	const [isMissingField, setIsMissingField] = useState<boolean>(false);
 	const [isMissingFieldMsgOpen, setIsMissingFieldMsgOpen] = useState<boolean>(false);
 	const [isNoChapterMsgOpen, setIsNoChapterMsgOpen] = useState<boolean>(false);
-	const [isChapterUpdated, setIsChapterUpdated] = useState<ChapterUpdateTrack[]>([]);
+
 	const [resetChanges, setResetChanges] = useState<boolean>(false);
 	const [deletedChapterIds, setDeletedChapterIds] = useState<string[]>([]);
 	const [newChapterTitle, setNewChapterTitle] = useState<string>('');
@@ -89,6 +90,8 @@ const AdminCourseEditPage = () => {
 	const [isDocRenameModalOpen, setIsDocRenameModalOpen] = useState<Array<boolean>>([]);
 	const [originalDocumentNames, setOriginalDocumentNames] = useState<Record<string, string>>({});
 	const [addNewDocumentModalOpen, setAddNewDocumentModalOpen] = useState<boolean>(false);
+
+	const [isChapterUpdated, setIsChapterUpdated] = useState<ChapterUpdateTrack[]>([]);
 	const [isDocumentUpdated, setIsDocumentUpdated] = useState<DocumentUpdateTrack[]>([]);
 
 	const toggleDocRenameModal = (index: number, document: Document) => {
@@ -158,7 +161,7 @@ const AdminCourseEditPage = () => {
 				try {
 					const response = await axios.get(`${base_url}/courses/${courseId}`);
 
-					const courseResponse = response?.data?.data[0];
+					const courseResponse = response?.data?.data;
 
 					setSingleCourse(courseResponse);
 					if (courseResponse?.price?.toLowerCase() === 'free') {
@@ -180,17 +183,16 @@ const AdminCourseEditPage = () => {
 						setChapterLessonDataBeforeSave(initialChapterLessonData);
 					}
 
-					const chapterUpdateData: ChapterUpdateTrack[] = courseResponse?.chapters?.reduce((acc: ChapterUpdateTrack[], value: BaseChapter) => {
-						acc.push({ chapterId: value._id, isUpdated: false });
-						return acc;
-					}, []);
+					const chapterUpdateData = courseResponse.chapters.map((chapter: BaseChapter) => ({
+						chapterId: chapter._id,
+						isUpdated: false,
+					}));
 					setIsChapterUpdated(chapterUpdateData);
 
-					const documentUpdateData: DocumentUpdateTrack[] = courseResponse?.documents?.reduce((acc: DocumentUpdateTrack[], value: Document) => {
-						acc.push({ documentId: value?._id, isUpdated: false });
-						return acc;
-					}, []);
-
+					const documentUpdateData = courseResponse.documents.map((document: Document) => ({
+						documentId: document._id,
+						isUpdated: false,
+					}));
 					setIsDocumentUpdated(documentUpdateData);
 				} catch (error) {
 					console.log(error);
@@ -219,17 +221,16 @@ const AdminCourseEditPage = () => {
 	const handleCourseUpdate = async (e: FormEvent): Promise<void> => {
 		e.preventDefault();
 
+		let updatedChapters: ChapterLessonData[] = [];
+		let updatedDocuments: Document[] = [];
+
 		try {
 			if (!chapterLessonDataBeforeSave) {
 				console.error('No chapter lesson data to save.');
 				return;
 			}
-
-			let updatedChapters: ChapterLessonData[] = [...chapterLessonDataBeforeSave];
-			let updatedDocuments: Document[] = [];
-
 			updatedChapters = await Promise.all(
-				updatedChapters.map(async (chapter) => {
+				chapterLessonDataBeforeSave.map(async (chapter) => {
 					chapter.lessons = await Promise.all(
 						chapter.lessons.map(async (lesson: Lesson) => {
 							if (lesson._id.includes('temp_lesson_id')) {
@@ -240,6 +241,7 @@ const AdminCourseEditPage = () => {
 										orgId,
 									});
 									fetchLessons(lessonsPageNumber);
+
 									return {
 										...lesson,
 										_id: lessonResponse.data._id,
@@ -260,6 +262,7 @@ const AdminCourseEditPage = () => {
 							const response = await axios.post(`${base_url}/chapters`, {
 								title: chapter.title,
 								lessonIds: chapter.lessonIds,
+								orgId,
 							});
 							chapter.chapterId = response.data._id;
 						} catch (error) {
@@ -286,6 +289,7 @@ const AdminCourseEditPage = () => {
 									documentUrl: document.documentUrl,
 								});
 								fetchDocuments(documentsPageNumber);
+
 								return { ...document, _id: response.data._id, createdAt: response.data.createdAt, updatedAt: response.data.updatedAt } as Document; // Assert as Document
 							} catch (error) {
 								console.error('Error creating document:', error);
@@ -301,7 +305,6 @@ const AdminCourseEditPage = () => {
 
 			await Promise.all(
 				updatedDocuments.map(async (doc) => {
-					console.log(isDocumentUpdated);
 					const trackData = isDocumentUpdated.find((data) => data.documentId === doc._id);
 					if (trackData?.isUpdated) {
 						try {
@@ -330,11 +333,11 @@ const AdminCourseEditPage = () => {
 				try {
 					await axios.patch(`${base_url}/courses/${courseId}`, {
 						...updatedCourse,
-						chapterIds: updatedChapters?.map((chapter) => chapter.chapterId),
 					});
 
 					updateCourse(updatedCourse);
 					setSingleCourse(updatedCourse);
+					fetchCourses(coursesPageNumber);
 
 					await Promise.all(
 						updatedChapters?.map(async (chapter) => {
@@ -369,7 +372,12 @@ const AdminCourseEditPage = () => {
 				}
 			}
 
-			setIsChapterUpdated((prevData) => prevData?.map((data) => ({ ...data, isUpdated: false })));
+			const chapterUpdateData = updatedChapters.map((chapter) => ({
+				chapterId: chapter.chapterId,
+				isUpdated: false,
+			}));
+
+			setIsChapterUpdated(chapterUpdateData);
 			setDeletedChapterIds([]);
 		} catch (error) {
 			console.error('Error updating course:', error);
@@ -544,7 +552,7 @@ const AdminCourseEditPage = () => {
 							</Box>
 
 							<DocumentsListEditBox
-								documentsSource={singleCourse}
+								documentsSource={singleCourse?.documents}
 								toggleDocRenameModal={toggleDocRenameModal}
 								closeDocRenameModal={closeDocRenameModal}
 								isDocRenameModalOpen={isDocRenameModalOpen}
@@ -555,6 +563,7 @@ const AdminCourseEditPage = () => {
 										if (prevData) {
 											const filteredDocuments = prevData.documents?.filter((thisDoc) => thisDoc._id !== document._id);
 											const filteredDocumentIds = filteredDocuments?.map((doc) => doc._id);
+
 											return {
 												...prevData,
 												documents: filteredDocuments,

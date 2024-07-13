@@ -33,7 +33,7 @@ const LessonImageCourseDisplay = ({ singleLesson }: LessonImageCourseDisplayProp
 					/>
 
 					<Typography variant='body2' sx={{ mt: '0.35rem' }}>
-						Lesson Image
+						Cover Image
 					</Typography>
 				</Box>
 				<Box sx={{ height: '8rem', width: '12rem', cursor: 'pointer' }}>
