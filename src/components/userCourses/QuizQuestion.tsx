@@ -66,13 +66,7 @@ const QuizQuestion = ({
 	const { orgId } = useContext(OrganisationContext);
 	const { fetchQuestionTypeName } = useContext(QuestionsContext);
 
-	const [userQuizAnswer, setUserQuizAnswer] = useState<string>(() => {
-		if (isLessonCompleted) {
-			const answer: string = userQuizAnswers?.find((data) => data.questionId == question._id)?.userAnswer || '';
-			return answer;
-		}
-		return '';
-	});
+	const [userQuizAnswer, setUserQuizAnswer] = useState<string>('');
 
 	const [value, setValue] = useState<string>(() => {
 		if (!isLessonCompleted) {
@@ -89,6 +83,16 @@ const QuizQuestion = ({
 
 	const isCompletingCourse: boolean = displayedQuestionNumber === numberOfQuestions && nextLessonId === null;
 	const isCompletingLesson: boolean = displayedQuestionNumber === numberOfQuestions && nextLessonId !== null;
+
+	useEffect(() => {
+		setUserQuizAnswer(() => {
+			if (isLessonCompleted) {
+				const answer: string = userQuizAnswers?.find((data) => data.questionId == question._id)?.userAnswer || '';
+				return answer;
+			}
+			return '';
+		});
+	}, []);
 
 	useEffect(() => {
 		setSelectedQuestion(displayedQuestionNumber);

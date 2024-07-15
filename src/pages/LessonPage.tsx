@@ -1,13 +1,10 @@
 import { Box, Button, Link, Typography } from '@mui/material';
 import theme from '../themes';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useQuery } from 'react-query';
 import axios from 'axios';
 import ReactPlayer from 'react-player';
 import DashboardHeader from '../components/layouts/dashboardLayout/DashboardHeader';
 import { DoneAll, Home, KeyboardBackspaceOutlined, KeyboardDoubleArrowRight } from '@mui/icons-material';
-import Loading from '../components/layouts/loading/Loading';
-import LoadingError from '../components/layouts/loading/LoadingError';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import { useContext, useEffect, useState } from 'react';
 import { sanitizeHtml } from '../utils/sanitizeHtml';
@@ -19,6 +16,7 @@ import { useFetchUserQuestion, UserQuestionData } from '../hooks/useFetchUserQue
 import { LessonType } from '../interfaces/enums';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
+import { Lesson } from '../interfaces/lessons';
 
 export interface QuizQuestionAnswer {
 	questionId: string;
@@ -40,32 +38,46 @@ const LessonPage = () => {
 	const [userAnswers, setUserAnswers] = useState<UserQuestionData[]>([]);
 	const [isLessonCourseCompletedModalOpen, setIsLessonCourseCompletedModalOpen] = useState<boolean>(false);
 	const [isQuizInProgress, setIsQuizInProgress] = useState<boolean>(false);
+	const [lessonType, setLessonType] = useState<string>('');
+
+	const defaultLesson = {
+		_id: '',
+		title: '',
+		type: '',
+		imageUrl: '',
+		videoUrl: '',
+		isActive: true,
+		createdAt: '',
+		updatedAt: '',
+		text: '',
+		orgId: '',
+		questionIds: [],
+		questions: [],
+		documentIds: [],
+		documents: [],
+	};
+
+	const [lesson, setLesson] = useState<Lesson>(defaultLesson);
 	const [userQuizAnswers, setUserQuizAnswers] = useState<QuizQuestionAnswer[]>(() => {
 		const savedAnswers = localStorage.getItem(`UserQuizAnswers-${lessonId}`);
 		return savedAnswers ? JSON.parse(savedAnswers) : [];
 	});
 
-	const fetchLesson = async (lessonId: string) => {
-		const response = await axios.get(`${base_url}/lessons/${lessonId}`);
-		return response.data;
-	};
-
-	const {
-		data: lesson,
-		isLoading,
-		isError,
-	} = useQuery(['singleLessonData', lessonId], () => fetchLesson(lessonId || ''), {
-		enabled: !!lessonId, // This line ensures the query only runs when lessonId is truthy
-	});
+	const isQuiz: boolean = lessonType === LessonType.QUIZ;
 
 	useEffect(() => {
 		const fetchData = async () => {
 			if (lessonId) {
 				try {
+					const response = await axios.get(`${base_url}/lessons/${lessonId}`);
+					setLesson(response.data);
+					setLessonType(response.data.type);
+
 					const answers = await fetchUserAnswersByLesson(lessonId);
-					if (lesson?.type === LessonType.QUIZ) {
+
+					if (response.data.type === LessonType.QUIZ) {
 						setUserQuizAnswers(() => {
-							return answers.map((answer) => {
+							return answers?.map((answer) => {
 								return { questionId: answer.questionId, userAnswer: answer.userAnswer };
 							});
 						});
@@ -80,7 +92,7 @@ const LessonPage = () => {
 
 		fetchData();
 
-		if (lesson?.type === LessonType.QUIZ && !isLessonCompleted) {
+		if (isQuiz && !isLessonCompleted) {
 			const savedQuizAnswers = localStorage.getItem(`UserQuizAnswers-${lessonId}`);
 			if (savedQuizAnswers) {
 				setUserQuizAnswers(JSON.parse(savedQuizAnswers));
@@ -88,25 +100,16 @@ const LessonPage = () => {
 			}
 		}
 
-		if (lesson?.type === LessonType.QUIZ && !isLessonCompleted && userQuizAnswers.length !== 0) {
+		if (isQuiz && !isLessonCompleted && userQuizAnswers.length !== 0) {
 			setIsQuizInProgress(true);
 		}
-	}, [lessonId, fetchUserAnswersByLesson]);
+	}, [lessonId]);
 
 	useEffect(() => {
-		if (lesson?.type === LessonType.QUIZ && !isLessonCompleted) {
+		if (isQuiz && !isLessonCompleted) {
 			localStorage.setItem(`UserQuizAnswers-${lessonId}`, JSON.stringify(userQuizAnswers));
 		}
-		console.log(userQuizAnswers);
 	}, [userQuizAnswers]);
-
-	if (isLoading) {
-		return <Loading />;
-	}
-
-	if (isError) {
-		return <LoadingError />;
-	}
 
 	return (
 		<Box
@@ -135,9 +138,9 @@ const LessonPage = () => {
 				<Box
 					sx={{
 						display: 'flex',
-						justifyContent: lesson.type !== LessonType.INSTRUCTIONAL_LESSON && isQuestionsVisible ? 'space-between' : 'flex-end',
+						justifyContent: lessonType !== LessonType.INSTRUCTIONAL_LESSON && isQuestionsVisible ? 'space-between' : 'flex-end',
 					}}>
-					{lesson.type !== LessonType.INSTRUCTIONAL_LESSON && isQuestionsVisible && (
+					{lessonType !== LessonType.INSTRUCTIONAL_LESSON && isQuestionsVisible && (
 						<Box sx={{ alignSelf: 'flex-end' }}>
 							<Button
 								variant='text'
@@ -187,7 +190,7 @@ const LessonPage = () => {
 				</Box>
 				<Box sx={{ alignSelf: 'center' }}>
 					<Typography variant='h3' sx={{ marginBottom: '1.5rem' }}>
-						{lesson.title}
+						{lesson?.title}
 					</Typography>
 				</Box>
 			</Box>
@@ -199,7 +202,7 @@ const LessonPage = () => {
 					margin: '0.5rem 0 0 0',
 					width: '100%',
 				}}>
-				{lesson.videoUrl && !isQuestionsVisible && (
+				{lesson?.videoUrl && !isQuestionsVisible && (
 					<Box
 						sx={{
 							display: 'flex',
@@ -231,19 +234,19 @@ const LessonPage = () => {
 				)}
 			</Box>
 
-			{lesson.type !== LessonType.INSTRUCTIONAL_LESSON && !isQuestionsVisible && (
+			{lessonType !== LessonType.INSTRUCTIONAL_LESSON && !isQuestionsVisible && (
 				<Box
 					sx={{
 						display: 'flex',
 						justifyContent: 'flex-start',
 						width: '85%',
-						margin: lesson.videoUrl ? '3rem 0 1rem 0' : '12rem 0 1rem 0',
+						margin: lesson?.videoUrl ? '3rem 0 1rem 0' : '12rem 0 1rem 0',
 					}}>
 					<Typography variant='h5'>Instructions</Typography>
 				</Box>
 			)}
 
-			{lesson.text && !isQuestionsVisible && (
+			{lesson?.text && !isQuestionsVisible && (
 				<Box
 					sx={{
 						display: 'flex',
@@ -267,21 +270,21 @@ const LessonPage = () => {
 				</Box>
 			)}
 
-			{lesson.type !== LessonType.INSTRUCTIONAL_LESSON && !isQuestionsVisible && (
+			{lessonType !== LessonType.INSTRUCTIONAL_LESSON && !isQuestionsVisible && (
 				<Box>
 					<CustomSubmitButton
 						onClick={() => {
 							setIsQuestionsVisible(true);
-							if (lesson.type === LessonType.QUIZ && !isLessonCompleted) {
+							if (isQuiz && !isLessonCompleted) {
 								setIsQuizInProgress(true);
 							}
 						}}
 						capitalize={false}>
-						{lesson.type === LessonType.PRACTICE_LESSON
+						{lessonType === LessonType.PRACTICE_LESSON
 							? 'Go to Questions'
-							: lesson.type === LessonType.QUIZ && !isLessonCompleted && isQuizInProgress
+							: isQuiz && !isLessonCompleted && isQuizInProgress
 							? 'Resume'
-							: lesson.type === LessonType.QUIZ && !isLessonCompleted
+							: isQuiz && !isLessonCompleted
 							? 'Start Quiz'
 							: 'Review Quiz'}
 					</CustomSubmitButton>
@@ -291,8 +294,8 @@ const LessonPage = () => {
 			{isQuestionsVisible && (
 				<Box sx={{ width: '85%' }}>
 					<Questions
-						questions={lesson.questions}
-						lessonType={lesson.type}
+						questions={lesson?.questions}
+						lessonType={lessonType}
 						userAnswers={userAnswers}
 						setUserAnswers={setUserAnswers}
 						setIsQuizInProgress={setIsQuizInProgress}
@@ -302,13 +305,13 @@ const LessonPage = () => {
 				</Box>
 			)}
 
-			{lesson.documents.length !== 0 && (
+			{lesson?.documents.length !== 0 && (
 				<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '2rem', width: '85%' }}>
 					<Box sx={{ display: 'flex', alignSelf: 'flex-start' }}>
 						<Typography variant='h5'>Lesson Materials</Typography>
 					</Box>
 					<Box sx={{ display: 'flex', flexDirection: 'column', alignSelf: 'flex-start' }}>
-						{lesson.documents
+						{lesson?.documents
 							?.filter((doc: Document) => doc !== null)
 							.map((doc: Document) => (
 								<Box sx={{ marginTop: '0.5rem' }} key={doc._id}>
@@ -321,7 +324,7 @@ const LessonPage = () => {
 				</Box>
 			)}
 
-			{lesson.type === LessonType.INSTRUCTIONAL_LESSON && (
+			{lessonType === LessonType.INSTRUCTIONAL_LESSON && (
 				<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '85%', marginTop: 'auto' }}>
 					<Box sx={{ alignSelf: 'flex-end' }}>
 						<CustomSubmitButton
