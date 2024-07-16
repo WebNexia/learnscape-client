@@ -4,6 +4,7 @@ import { QuestionInterface } from '../../../interfaces/question';
 import { useUserCourseLessonData } from '../../../hooks/useUserCourseLessonData';
 import { LessonType } from '../../../interfaces/enums';
 import { QuizQuestionAnswer } from '../../../pages/LessonPage';
+import { QuestionPrompt } from '../../../hooks/useAiResponse';
 
 interface TrueFalseOptionsProps {
 	question?: QuestionInterface;
@@ -24,6 +25,7 @@ interface TrueFalseOptionsProps {
 	setUserQuizAnswers?: React.Dispatch<React.SetStateAction<QuizQuestionAnswer[]>>;
 	lessonType?: string | undefined;
 	userQuizAnswer?: string;
+	setQuestionPrompt?: React.Dispatch<React.SetStateAction<QuestionPrompt>>;
 }
 
 const TrueFalseOptions = ({
@@ -44,6 +46,7 @@ const TrueFalseOptions = ({
 	setUserQuizAnswers,
 	lessonType,
 	userQuizAnswer,
+	setQuestionPrompt,
 }: TrueFalseOptionsProps) => {
 	const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
 		setCorrectAnswer((event.target as HTMLInputElement).value);
@@ -52,6 +55,10 @@ const TrueFalseOptions = ({
 		if (!fromLessonEditPage && setCorrectAnswerAdminQuestions) {
 			setCorrectAnswerAdminQuestions((event.target as HTMLInputElement).value);
 		}
+		if (setQuestionPrompt)
+			setQuestionPrompt((prevData) => {
+				return { ...prevData, userInput: (event.target as HTMLInputElement).value };
+			});
 		if (setHelperText) setHelperText(' ');
 		if (setUserAnswer) setUserAnswer((event.target as HTMLInputElement).value);
 		if (setUserQuizAnswers && lessonType === LessonType.QUIZ) {
