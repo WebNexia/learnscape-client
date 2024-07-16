@@ -1,6 +1,6 @@
+import React, { useState, useEffect } from 'react';
 import { Box } from '@mui/material';
 import { QuestionInterface } from '../../interfaces/question';
-import { useEffect, useState } from 'react';
 import { useUserCourseLessonData } from '../../hooks/useUserCourseLessonData';
 import { UserQuestionData } from '../../hooks/useFetchUserQuestion';
 import { LessonType } from '../../interfaces/enums';
@@ -19,7 +19,7 @@ interface QuestionsProps {
 	setUserQuizAnswers: React.Dispatch<React.SetStateAction<QuizQuestionAnswer[]>>;
 }
 
-const Questions = ({
+const Questions: React.FC<QuestionsProps> = ({
 	questions,
 	lessonType,
 	userAnswers,
@@ -27,20 +27,27 @@ const Questions = ({
 	setIsQuizInProgress,
 	userQuizAnswers,
 	setUserQuizAnswers,
-}: QuestionsProps) => {
+}) => {
 	const { getLastQuestion, isLessonCompleted, setIsLessonCompleted } = useUserCourseLessonData();
 	const [displayedQuestionNumber, setDisplayedQuestionNumber] = useState<number>(getLastQuestion);
 	const [showQuestionSelector, setShowQuestionSelector] = useState<boolean>(false);
 	const numberOfQuestions = questions.length;
 	const { lessonId } = useParams();
 
+	// State for each question's AI response drawer and icon toggle
+	const [aiDrawerOpen, setAiDrawerOpen] = useState<boolean[]>(Array(numberOfQuestions).fill(false));
+	const [isAiActive, setIsAiActive] = useState<boolean[]>(Array(numberOfQuestions).fill(false));
+
 	useEffect(() => {
 		if (lessonType === LessonType.QUIZ) {
 			setUserQuizAnswers(() => {
 				if (!localStorage.getItem(`UserQuizAnswers-${lessonId}`) || userQuizAnswers.length === 0) {
-					return questions.map((question): QuizQuestionAnswer => {
-						return { userAnswer: '', questionId: question._id };
-					});
+					return questions.map(
+						(question): QuizQuestionAnswer => ({
+							userAnswer: '',
+							questionId: question._id,
+						})
+					);
 				} else {
 					return userQuizAnswers;
 				}
@@ -48,47 +55,66 @@ const Questions = ({
 		}
 	}, [lessonType, questions]);
 
+	const openAiResponseDrawer = (index: number) => {
+		const newAiDrawerOpen = [...aiDrawerOpen];
+		newAiDrawerOpen[index] = true;
+		setAiDrawerOpen(newAiDrawerOpen);
+	};
+
+	const closeAiResponseDrawer = (index: number) => {
+		const newAiDrawerOpen = [...aiDrawerOpen];
+		newAiDrawerOpen[index] = false;
+		setAiDrawerOpen(newAiDrawerOpen);
+	};
+
+	const toggleAiIcon = (index: number) => {
+		const newIsAiActive = [...isAiActive];
+		newIsAiActive[index] = true;
+		setIsAiActive(newIsAiActive);
+	};
+
 	return (
 		<Box>
-			{questions &&
-				questions.map((question, index) => {
-					if (lessonType === LessonType.PRACTICE_LESSON) {
-						return (
-							<PracticeQuestion
-								key={question._id}
-								question={question}
-								questionNumber={index + 1}
-								numberOfQuestions={numberOfQuestions}
-								displayedQuestionNumber={displayedQuestionNumber}
-								setDisplayedQuestionNumber={setDisplayedQuestionNumber}
-								lessonType={lessonType}
-								isLessonCompleted={isLessonCompleted}
-								setIsLessonCompleted={setIsLessonCompleted}
-								showQuestionSelector={showQuestionSelector}
-								setShowQuestionSelector={setShowQuestionSelector}
-								userAnswers={userAnswers}
-								setUserAnswers={setUserAnswers}
-							/>
-						);
-					} else if (lessonType === LessonType.QUIZ) {
-						return (
-							<QuizQuestion
-								key={question._id}
-								question={question}
-								questionNumber={index + 1}
-								numberOfQuestions={numberOfQuestions}
-								displayedQuestionNumber={displayedQuestionNumber}
-								setDisplayedQuestionNumber={setDisplayedQuestionNumber}
-								lessonType={lessonType}
-								isLessonCompleted={isLessonCompleted}
-								setIsLessonCompleted={setIsLessonCompleted}
-								userQuizAnswers={userQuizAnswers}
-								setUserQuizAnswers={setUserQuizAnswers}
-								setIsQuizInProgress={setIsQuizInProgress}
-							/>
-						);
-					}
-				})}
+			{questions.map((question, index) => {
+				return lessonType === LessonType.PRACTICE_LESSON ? (
+					<PracticeQuestion
+						key={question._id}
+						question={question}
+						questionNumber={index + 1}
+						numberOfQuestions={numberOfQuestions}
+						displayedQuestionNumber={displayedQuestionNumber}
+						setDisplayedQuestionNumber={setDisplayedQuestionNumber}
+						lessonType={lessonType}
+						isLessonCompleted={isLessonCompleted}
+						setIsLessonCompleted={setIsLessonCompleted}
+						showQuestionSelector={showQuestionSelector}
+						setShowQuestionSelector={setShowQuestionSelector}
+						userAnswers={userAnswers}
+						setUserAnswers={setUserAnswers}
+						index={index}
+						aiDrawerOpen={aiDrawerOpen[index]}
+						isAiActive={isAiActive[index]}
+						openAiResponseDrawer={openAiResponseDrawer}
+						closeAiResponseDrawer={closeAiResponseDrawer}
+						toggleAiIcon={toggleAiIcon}
+					/>
+				) : lessonType === LessonType.QUIZ ? (
+					<QuizQuestion
+						key={question._id}
+						question={question}
+						questionNumber={index + 1}
+						numberOfQuestions={numberOfQuestions}
+						displayedQuestionNumber={displayedQuestionNumber}
+						setDisplayedQuestionNumber={setDisplayedQuestionNumber}
+						lessonType={lessonType}
+						isLessonCompleted={isLessonCompleted}
+						setIsLessonCompleted={setIsLessonCompleted}
+						userQuizAnswers={userQuizAnswers}
+						setUserQuizAnswers={setUserQuizAnswers}
+						setIsQuizInProgress={setIsQuizInProgress}
+					/>
+				) : null;
+			})}
 		</Box>
 	);
 };
