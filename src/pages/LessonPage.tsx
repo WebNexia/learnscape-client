@@ -467,7 +467,7 @@ const LessonPage = () => {
 					<Box sx={{ display: 'flex', flexDirection: 'column', alignSelf: 'flex-start' }}>
 						{lesson?.documents
 							?.filter((doc: Document) => doc !== null)
-							.map((doc: Document) => (
+							?.map((doc: Document) => (
 								<Box sx={{ marginTop: '0.5rem' }} key={doc._id}>
 									<Link href={doc?.documentUrl} target='_blank' rel='noopener noreferrer' variant='body2'>
 										{doc?.name}

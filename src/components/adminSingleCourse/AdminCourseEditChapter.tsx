@@ -158,7 +158,7 @@ const AdminCourseEditChapter = ({
 										return {
 											...currentChapter,
 											lessons: newLessons,
-											lessonIds: newLessons.map((lesson: Lesson) => lesson._id),
+											lessonIds: newLessons?.map((lesson: Lesson) => lesson._id),
 										};
 									}
 									return currentChapter; // Return unchanged chapter if not the one being updated

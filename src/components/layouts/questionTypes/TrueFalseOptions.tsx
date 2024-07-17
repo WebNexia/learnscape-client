@@ -64,7 +64,7 @@ const TrueFalseOptions = ({
 		if (setUserQuizAnswers && lessonType === LessonType.QUIZ) {
 			setUserQuizAnswers((prevData) => {
 				if (prevData) {
-					const updatedAnswers = prevData.map((answer) => {
+					const updatedAnswers = prevData?.map((answer) => {
 						if (answer.questionId === question?._id) {
 							return { ...answer, userAnswer: (event.target as HTMLInputElement).value };
 						}

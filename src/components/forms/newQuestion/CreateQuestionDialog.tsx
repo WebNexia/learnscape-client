@@ -271,7 +271,7 @@ const CreateQuestionDialog = ({
 							label='Type'
 							required>
 							{questionTypes &&
-								questionTypes.map((type) => (
+								questionTypes?.map((type) => (
 									<MenuItem value={type.name} key={type._id}>
 										{type.name}
 									</MenuItem>
@@ -407,7 +407,7 @@ const CreateQuestionDialog = ({
 									width: '100%',
 								}}>
 								{options &&
-									options.map((option, index) => (
+									options?.map((option, index) => (
 										<Box
 											key={index}
 											sx={{

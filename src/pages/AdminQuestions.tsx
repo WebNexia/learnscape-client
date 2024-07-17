@@ -168,7 +168,7 @@ const AdminQuestions = () => {
 					/>
 					<TableBody>
 						{sortedQuestionsData &&
-							sortedQuestionsData.map((question: QuestionInterface, index) => {
+							sortedQuestionsData?.map((question: QuestionInterface, index) => {
 								return (
 									<TableRow key={question._id}>
 										<CustomTableCell value={question.questionType} />

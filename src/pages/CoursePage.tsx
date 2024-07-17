@@ -50,7 +50,7 @@ const CoursePage = () => {
 					<Box sx={{ display: 'flex', alignSelf: 'flex-start', flexDirection: 'column' }}>
 						{singleCourse.documents
 							?.filter((doc: Document) => doc !== null)
-							.map((doc: Document) => (
+							?.map((doc: Document) => (
 								<Box sx={{ marginBottom: '0.5rem' }} key={doc._id}>
 									<Link href={doc?.documentUrl} target='_blank' rel='noopener noreferrer' variant='body2'>
 										{doc?.name}

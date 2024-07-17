@@ -105,7 +105,7 @@ const QuizQuestion = ({
 	const handleRadioChange = (event: React.ChangeEvent<HTMLInputElement>) => {
 		setUserQuizAnswers((prevData) => {
 			if (prevData) {
-				const updatedAnswers = prevData.map((answer) => {
+				const updatedAnswers = prevData?.map((answer) => {
 					if (answer.questionId === question._id) {
 						return { ...answer, userAnswer: (event.target as HTMLInputElement).value };
 					}
@@ -182,7 +182,7 @@ const QuizQuestion = ({
 									setValue(e.target.value);
 									setUserQuizAnswers((prevData) => {
 										if (prevData) {
-											const updatedAnswers = prevData.map((answer) => {
+											const updatedAnswers = prevData?.map((answer) => {
 												if (answer.questionId === question._id) {
 													return { ...answer, userAnswer: e.target.value };
 												}
@@ -217,7 +217,7 @@ const QuizQuestion = ({
 						<RadioGroup name='question' value={isLessonCompleted ? userQuizAnswer : value} onChange={handleRadioChange} sx={{ alignSelf: 'center' }}>
 							{question &&
 								question.options &&
-								question.options.map((option, index) => {
+								question.options?.map((option, index) => {
 									return <FormControlLabel value={option} control={<Radio />} label={option} key={index} />;
 								})}
 						</RadioGroup>

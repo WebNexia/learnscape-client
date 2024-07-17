@@ -20,7 +20,7 @@ const useNewQuestion = (initialOptions: string[] = ['']) => {
 	);
 
 	const checkForDuplicateOptions = useCallback((options: string[]) => {
-		const filteredOptions = options.map((option) => option.trim()).filter((option) => option.trim() !== '');
+		const filteredOptions = options?.map((option) => option.trim()).filter((option) => option.trim() !== '');
 		const uniqueOptions = new Set(filteredOptions);
 		return uniqueOptions.size !== filteredOptions.length;
 	}, []);

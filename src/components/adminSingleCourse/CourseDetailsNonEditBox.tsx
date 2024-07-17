@@ -192,7 +192,7 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters }: CourseDetailsNonEdi
 				</Box>
 				{singleCourse?.documents
 					?.filter((doc) => doc !== null)
-					.map((doc) => (
+					?.map((doc) => (
 						<Box sx={{ mb: '0.5rem' }} key={doc._id}>
 							<Link href={doc?.documentUrl} target='_blank' rel='noopener noreferrer' variant='body2'>
 								{doc?.name}

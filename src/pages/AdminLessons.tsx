@@ -104,7 +104,7 @@ const AdminLessons = () => {
 					/>
 					<TableBody>
 						{sortedLessonsData &&
-							sortedLessonsData.map((lesson: Lesson, index) => {
+							sortedLessonsData?.map((lesson: Lesson, index) => {
 								return (
 									<TableRow key={lesson._id}>
 										<CustomTableCell value={lesson.title} />

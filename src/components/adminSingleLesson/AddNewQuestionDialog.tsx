@@ -137,8 +137,8 @@ const AddNewQuestionDialog = ({
 						<TableBody>
 							{sortedQuestionsData &&
 								sortedQuestionsData
-									.filter((question) => !singleLessonBeforeSave.questionIds.includes(question._id))
-									.map((question: QuestionInterface) => {
+									?.filter((question) => !singleLessonBeforeSave.questionIds.includes(question._id))
+									?.map((question: QuestionInterface) => {
 										const isSelected = selectedQuestionIds.indexOf(question._id) !== -1;
 										return (
 											<TableRow key={question._id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>

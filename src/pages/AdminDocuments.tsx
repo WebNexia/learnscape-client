@@ -220,7 +220,7 @@ const AdminDocuments = () => {
 					/>
 					<TableBody>
 						{sortedDocumentsData &&
-							sortedDocumentsData.map((document: Document, index) => {
+							sortedDocumentsData?.map((document: Document, index) => {
 								return (
 									<TableRow key={document._id}>
 										<CustomTableCell value={document.name} />

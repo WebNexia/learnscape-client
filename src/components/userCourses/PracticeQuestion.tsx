@@ -197,7 +197,7 @@ const PracticeQuestion = ({
 						await axios.patch(`${base_url}/userQuestions/${userQuestionId}`, { userAnswer });
 						setUserAnswers((prevData) => {
 							if (!prevData) return [];
-							return prevData.map((data) => (data.questionId === question._id ? { ...data, userAnswer } : data));
+							return prevData?.map((data) => (data.questionId === question._id ? { ...data, userAnswer } : data));
 						});
 					} else {
 						setUserAnswers((prevData) => {
@@ -345,7 +345,7 @@ const PracticeQuestion = ({
 								sx={{ alignSelf: 'center' }}>
 								{question &&
 									question.options &&
-									question.options.map((option, index) => {
+									question.options?.map((option, index) => {
 										return <FormControlLabel value={option} control={<Radio />} label={option} key={index} />;
 									})}
 							</RadioGroup>

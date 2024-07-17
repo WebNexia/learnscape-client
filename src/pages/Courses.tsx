@@ -30,8 +30,8 @@ const Courses = () => {
 					}}>
 					{sortedCoursesData &&
 						sortedCoursesData
-							.filter((course: SingleCourse) => course.isActive === true)
-							.map((course: SingleCourse) => {
+							?.filter((course: SingleCourse) => course.isActive === true)
+							?.map((course: SingleCourse) => {
 								let userCourseData: UserCoursesIdsWithCourseIds[] = [];
 
 								const storedUserCourseData: string | null = localStorage.getItem('userCourseData');

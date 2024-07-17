@@ -157,7 +157,7 @@ const AdminLessonEditPage = () => {
 			if (prevData) {
 				const updatedDocuments = prevData.documents
 					?.filter((document) => document !== null)
-					.map((thisDoc) => {
+					?.map((thisDoc) => {
 						if (thisDoc._id === document._id) {
 							return { ...thisDoc, name: originalDocumentNames[document._id] || thisDoc.name }; // Revert to original name
 						} else {
@@ -271,8 +271,8 @@ const AdminLessonEditPage = () => {
 		try {
 			if (singleLessonBeforeSave?.documents) {
 				const updatedDocumentsPromises = (singleLessonBeforeSave.documents as (Document | null)[])
-					.filter((doc): doc is Document => doc !== null)
-					.map(async (document) => {
+					?.filter((doc): doc is Document => doc !== null)
+					?.map(async (document) => {
 						if (document._id.includes('temp_doc_id')) {
 							try {
 								const response = await axios.post(`${base_url}/documents`, {
@@ -301,7 +301,7 @@ const AdminLessonEditPage = () => {
 			}
 
 			await Promise.all(
-				updatedDocuments.map(async (doc) => {
+				updatedDocuments?.map(async (doc) => {
 					const trackData = isDocumentUpdated.find((data) => data.documentId === doc._id);
 					if (trackData?.isUpdated) {
 						try {
@@ -316,7 +316,7 @@ const AdminLessonEditPage = () => {
 				})
 			);
 
-			const updatedDocumentIds = updatedDocuments.map((doc) => doc._id);
+			const updatedDocumentIds = updatedDocuments?.map((doc) => doc._id);
 
 			if (singleLessonBeforeSave.type === LessonType.INSTRUCTIONAL_LESSON) {
 				setSingleLessonBeforeSave((prevData) => {
@@ -330,8 +330,8 @@ const AdminLessonEditPage = () => {
 				updatedQuestions = [];
 			} else if (singleLessonBeforeSave?.questions) {
 				const updatedQuestionsPromises = singleLessonBeforeSave.questions
-					.filter((question) => question !== null && question !== undefined)
-					.map(async (question) => {
+					?.filter((question) => question !== null && question !== undefined)
+					?.map(async (question) => {
 						if (question._id.includes('temp_question_id')) {
 							const questionTypeId = questionTypes.find((type) => type.name === question.questionType)?._id;
 							if (questionTypeId) {
@@ -366,7 +366,7 @@ const AdminLessonEditPage = () => {
 				updatedQuestions = updatedQuestionsWithNulls.filter((question): question is QuestionInterface => question !== null);
 
 				await Promise.all(
-					updatedQuestions.map(async (question) => {
+					updatedQuestions?.map(async (question) => {
 						const trackData = isQuestionUpdated.find((data) => data.questionId === question._id);
 						if (trackData?.isUpdated) {
 							try {
@@ -428,14 +428,14 @@ const AdminLessonEditPage = () => {
 				}
 			}
 
-			const questionUpdateData: QuestionUpdateTrack[] = updatedQuestions.map((question) => ({
+			const questionUpdateData: QuestionUpdateTrack[] = updatedQuestions?.map((question) => ({
 				questionId: question._id,
 				isUpdated: false,
 			}));
 
 			setIsQuestionUpdated(questionUpdateData);
 
-			const documentUpdateData: DocumentUpdateTrack[] = updatedDocuments.map((document) => ({
+			const documentUpdateData: DocumentUpdateTrack[] = updatedDocuments?.map((document) => ({
 				documentId: document._id,
 				isUpdated: false,
 			}));
@@ -452,7 +452,7 @@ const AdminLessonEditPage = () => {
 			return thisQuestion?._id !== question._id;
 		});
 
-		const updatedQuestionIds = updatedQuestions.map((question) => question._id!);
+		const updatedQuestionIds = updatedQuestions?.map((question) => question._id!);
 		setIsLessonUpdated(true);
 
 		setIsQuestionUpdated((prevData: QuestionUpdateTrack[]) => prevData.filter((data) => data.questionId !== question._id));
@@ -553,7 +553,7 @@ const AdminLessonEditPage = () => {
 							</Box>
 							{singleLesson.documents
 								?.filter((doc) => doc !== null)
-								.map((doc) => (
+								?.map((doc) => (
 									<Box sx={{ mb: '0.5rem' }} key={doc._id}>
 										<Link href={doc?.documentUrl} target='_blank' rel='noopener noreferrer' variant='body2'>
 											{doc?.name}
@@ -626,7 +626,7 @@ const AdminLessonEditPage = () => {
 											required
 											sx={{ backgroundColor: theme.bgColor?.common }}>
 											{lessonTypes &&
-												lessonTypes.map((type) => (
+												lessonTypes?.map((type) => (
 													<MenuItem value={type} key={type}>
 														{type}
 													</MenuItem>
@@ -992,7 +992,7 @@ const AdminLessonEditPage = () => {
 										if (prevData) {
 											const updatedDocuments = prevData.documents
 												?.filter((doc) => doc !== null)
-												.map((thisDoc) => {
+												?.map((thisDoc) => {
 													if (thisDoc._id === document._id) {
 														return { ...thisDoc, name: e.target.value };
 													} else {

@@ -145,7 +145,7 @@ const AddNewDocumentDialog = ({
 											? !singleLessonBeforeSave?.documentIds.includes(document._id)
 											: !singleCourse?.documentIds.includes(document._id)
 									)
-									.map((document: Document) => {
+									?.map((document: Document) => {
 										const isSelected = selectedDocumentIds.indexOf(document._id) !== -1;
 										return (
 											<TableRow key={document._id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>

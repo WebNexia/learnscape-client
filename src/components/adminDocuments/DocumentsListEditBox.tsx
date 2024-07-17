@@ -31,8 +31,8 @@ const DocumentsListEditBox = ({
 		<Box sx={{ marginBottom: '5rem' }}>
 			{documentsSource &&
 				documentsSource
-					.filter((document) => document !== null)
-					.map((document, index) => (
+					?.filter((document) => document !== null)
+					?.map((document, index) => (
 						<Box
 							key={index}
 							sx={{

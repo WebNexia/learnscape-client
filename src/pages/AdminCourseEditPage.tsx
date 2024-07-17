@@ -114,7 +114,7 @@ const AdminCourseEditPage = () => {
 			if (prevData) {
 				const updatedDocuments = prevData.documents
 					?.filter((document) => document !== null)
-					.map((thisDoc) => {
+					?.map((thisDoc) => {
 						if (thisDoc._id === document._id) {
 							return { ...thisDoc, name: originalDocumentNames[document._id] || thisDoc.name }; // Revert to original name
 						} else {
@@ -163,33 +163,34 @@ const AdminCourseEditPage = () => {
 
 					const courseResponse = response?.data?.data;
 
+					console.log(courseResponse);
 					setSingleCourse(courseResponse);
 					if (courseResponse?.price?.toLowerCase() === 'free') {
 						setIsFree(true);
 					}
 					setIsActive(courseResponse.isActive);
 
-					if (courseResponse.chapters[0].title) {
+					if (courseResponse?.chapters[0]?.title) {
 						// Initialize chapter lesson data
-						const initialChapterLessonData: ChapterLessonData[] = courseResponse.chapters.map((chapter: BaseChapter) => {
+						const initialChapterLessonData: ChapterLessonData[] = courseResponse.chapters?.map((chapter: BaseChapter) => {
 							return {
 								chapterId: chapter._id,
 								title: chapter.title,
 								lessons: chapter.lessons,
-								lessonIds: chapter.lessons.map((lesson: Lesson) => lesson._id),
+								lessonIds: chapter.lessons?.map((lesson: Lesson) => lesson._id),
 							};
 						});
 						setChapterLessonData(initialChapterLessonData);
 						setChapterLessonDataBeforeSave(initialChapterLessonData);
 					}
 
-					const chapterUpdateData = courseResponse.chapters.map((chapter: BaseChapter) => ({
+					const chapterUpdateData = courseResponse.chapters?.map((chapter: BaseChapter) => ({
 						chapterId: chapter._id,
 						isUpdated: false,
 					}));
 					setIsChapterUpdated(chapterUpdateData);
 
-					const documentUpdateData = courseResponse.documents.map((document: Document) => ({
+					const documentUpdateData = courseResponse.documents?.map((document: Document) => ({
 						documentId: document._id,
 						isUpdated: false,
 					}));
@@ -230,9 +231,9 @@ const AdminCourseEditPage = () => {
 				return;
 			}
 			updatedChapters = await Promise.all(
-				chapterLessonDataBeforeSave.map(async (chapter) => {
+				chapterLessonDataBeforeSave?.map(async (chapter) => {
 					chapter.lessons = await Promise.all(
-						chapter.lessons.map(async (lesson: Lesson) => {
+						chapter.lessons?.map(async (lesson: Lesson) => {
 							if (lesson._id.includes('temp_lesson_id')) {
 								try {
 									const lessonResponse = await axios.post(`${base_url}/lessons`, {
@@ -255,7 +256,7 @@ const AdminCourseEditPage = () => {
 						})
 					);
 
-					chapter.lessonIds = chapter.lessons.map((lesson) => lesson._id);
+					chapter.lessonIds = chapter.lessons?.map((lesson) => lesson._id);
 
 					if (chapter.chapterId.includes('temp_chapter_id')) {
 						try {
@@ -278,8 +279,8 @@ const AdminCourseEditPage = () => {
 
 			if (singleCourse?.documents) {
 				const updatedDocumentsPromises = (singleCourse?.documents as (Document | null)[]) // Assert as array of Document or null
-					.filter((doc): doc is Document => doc !== null) // Type guard to filter out nulls
-					.map(async (document) => {
+					?.filter((doc): doc is Document => doc !== null) // Type guard to filter out nulls
+					?.map(async (document) => {
 						if (document._id.includes('temp_doc_id')) {
 							try {
 								const response = await axios.post(`${base_url}/documents`, {
@@ -304,7 +305,7 @@ const AdminCourseEditPage = () => {
 			}
 
 			await Promise.all(
-				updatedDocuments.map(async (doc) => {
+				updatedDocuments?.map(async (doc) => {
 					const trackData = isDocumentUpdated.find((data) => data.documentId === doc._id);
 					if (trackData?.isUpdated) {
 						try {
@@ -319,7 +320,7 @@ const AdminCourseEditPage = () => {
 				})
 			);
 
-			const updatedDocumentIds = updatedDocuments.map((doc) => doc._id);
+			const updatedDocumentIds = updatedDocuments?.map((doc) => doc._id);
 
 			if (singleCourse) {
 				const updatedCourse = {
@@ -372,7 +373,7 @@ const AdminCourseEditPage = () => {
 				}
 			}
 
-			const chapterUpdateData = updatedChapters.map((chapter) => ({
+			const chapterUpdateData = updatedChapters?.map((chapter) => ({
 				chapterId: chapter.chapterId,
 				isUpdated: false,
 			}));
@@ -578,7 +579,7 @@ const AdminCourseEditPage = () => {
 										if (prevData) {
 											const updatedDocuments = prevData.documents
 												?.filter((document) => document !== null)
-												.map((thisDoc) => {
+												?.map((thisDoc) => {
 													if (thisDoc._id === document._id) {
 														return { ...thisDoc, name: e.target.value };
 													} else {

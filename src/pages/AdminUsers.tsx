@@ -92,7 +92,7 @@ const AdminUsers = () => {
 					/>
 					<TableBody>
 						{sortedUsersData &&
-							sortedUsersData.map((user: User, index) => {
+							sortedUsersData?.map((user: User, index) => {
 								if (user._id !== userId) {
 									return (
 										<TableRow key={user._id}>

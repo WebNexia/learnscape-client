@@ -87,6 +87,10 @@ const AdminCourses = () => {
 				priceCurrency: checked ? '' : priceCurrency,
 				startingDate: '',
 				orgId,
+				imageUrl: '',
+				durationWeeks: null,
+				durationHours: null,
+				format: '',
 			});
 
 			// Notify context provider to update sortedCoursesData with the new course
@@ -97,6 +101,10 @@ const AdminCourses = () => {
 				price: checked ? 'Free' : price,
 				priceCurrency: checked ? '' : priceCurrency,
 				orgId,
+				imageUrl: '',
+				durationWeeks: null,
+				durationHours: null,
+				format: '',
 			});
 		} catch (error) {
 			console.log(error);
@@ -226,7 +234,7 @@ const AdminCourses = () => {
 					/>
 					<TableBody>
 						{sortedCoursesData &&
-							sortedCoursesData.map((course: SingleCourse, index) => {
+							sortedCoursesData?.map((course: SingleCourse, index) => {
 								return (
 									<TableRow key={course._id}>
 										<CustomTableCell value={course.title} />

@@ -68,6 +68,9 @@ const CoursePaper = ({
 		setDeletedChapterIds([]);
 		resetImageUpload();
 	};
+
+	console.log(singleCourse);
+	console.log(singleCourse?.title);
 	return (
 		<Paper
 			elevation={10}
