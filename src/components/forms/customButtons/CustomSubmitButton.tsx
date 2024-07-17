@@ -1,6 +1,8 @@
 import { Button, ButtonOwnProps } from '@mui/material';
-import { FormEvent, MouseEvent, ReactNode } from 'react';
+import { FormEvent, MouseEvent, ReactNode, useContext } from 'react';
 import theme from '../../../themes';
+import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
+import { Roles } from '../../../interfaces/enums';
 
 interface CustomSubmitButtonProps {
 	children: ReactNode;
@@ -12,6 +14,7 @@ interface CustomSubmitButtonProps {
 	startIcon?: ReactNode;
 	endIcon?: ReactNode;
 	capitalize?: boolean;
+	size?: 'small' | 'medium' | 'large';
 }
 
 const CustomSubmitButton = ({
@@ -24,7 +27,9 @@ const CustomSubmitButton = ({
 	startIcon,
 	endIcon,
 	capitalize = true,
+	size,
 }: CustomSubmitButtonProps) => {
+	const { user } = useContext(UserAuthContext);
 	const handleClick = (event: MouseEvent<HTMLButtonElement> | FormEvent<Element>) => {
 		if (onClick) {
 			onClick(event);
@@ -38,12 +43,13 @@ const CustomSubmitButton = ({
 			sx={{
 				...sx,
 				textTransform: capitalize ? 'capitalize' : 'none',
-				backgroundColor: theme.bgColor?.greenPrimary,
+				backgroundColor: user?.role === Roles.ADMIN ? theme.bgColor?.adminSubmitBtn : theme.bgColor?.greenPrimary,
 				':hover': {
 					backgroundColor: theme.bgColor?.common,
-					color: theme.textColor?.greenPrimary.main,
+					color: theme.bgColor?.adminSubmitBtn,
 				},
 			}}
+			size={size}
 			onClick={handleClick}
 			startIcon={startIcon}
 			endIcon={endIcon}>

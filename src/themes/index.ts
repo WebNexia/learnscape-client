@@ -41,6 +41,10 @@ interface ExtendedThemeOptions extends ThemeOptions {
 		main: string;
 	};
 	bgColor?: {
+		adminSidebar: string;
+		adminHeader: string;
+		adminPaper: string;
+		adminSubmitBtn: string;
 		primary: string;
 		secondary: string;
 		lessonInProgress: string;
@@ -166,6 +170,10 @@ const theme = createTheme({
 	},
 
 	bgColor: {
+		adminSidebar: '#007270',
+		adminHeader: '#009694',
+		adminPaper: '#007270',
+		adminSubmitBtn: '#009694',
 		primary: '#01435A',
 		secondary: '#FDF7F0',
 		lessonInProgress: '#4D7B8B',
