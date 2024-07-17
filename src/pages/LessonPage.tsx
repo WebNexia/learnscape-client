@@ -149,7 +149,7 @@ const LessonPage = () => {
 		tempDiv.style.left = '-9999px';
 		tempDiv.style.top = '-9999px';
 		tempDiv.style.width = '210mm';
-		tempDiv.style.padding = '20px';
+		tempDiv.style.padding = '1.25rem';
 		tempDiv.style.fontFamily = 'Arial, sans-serif';
 
 		// Adding some inline styles for bullet points and other formatting
@@ -159,10 +159,10 @@ const LessonPage = () => {
 			  font-family: Arial, sans-serif;
 			}
 			ul, ol {
-			  margin-left: 20px; /* Indent for bullet points */
+			  margin-left: 1.25rem; /* Indent for bullet points */
 			}
 			li {
-			  margin-bottom: 5px; /* Space between list items */
+			  margin-bottom: 0.5rem; /* Space between list items */
 			}
 		  </style>
 		  ${editorContent}
