@@ -480,7 +480,16 @@ const PracticeQuestion = ({
 					</CustomDialog>
 				</Box>
 			</Box>
-			<Box sx={{ display: 'flex', justifyContent: 'flex-end', position: 'fixed', top: '10rem', width: '100%', mr: '3rem' }}>
+			<Box
+				sx={{
+					display: 'flex',
+					justifyContent: 'flex-end',
+					position: 'fixed',
+					top: '10rem',
+					right: '2rem',
+					width: '80%',
+					zIndex: 9,
+				}}>
 				{displayedQuestionNumber === questionNumber ? (
 					isAiActive || isLessonCompleted ? (
 						<Tooltip title={`Receive ${!aiDrawerOpen ? '' : 'another'} feedback`} placement='left'>
@@ -526,9 +535,9 @@ const PracticeQuestion = ({
 								width: '30%',
 								minHeight: '30%',
 								maxHeight: '50%',
-								bgcolor: 'background.paper',
 								boxShadow: 10,
 								padding: '1.75rem',
+								bgcolor: 'background.paper',
 								borderRadius: '0.35rem 0 0 0.35rem',
 								overflow: 'auto',
 							}}>

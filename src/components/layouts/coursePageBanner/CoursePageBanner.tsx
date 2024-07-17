@@ -53,6 +53,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 				currentQuestion: 1,
 				isCompleted: false,
 				isInProgress: true,
+				notes: '',
 			});
 
 			const currentUserLessonData: string | null = localStorage.getItem('userLessonData');

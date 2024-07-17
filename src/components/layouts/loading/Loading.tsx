@@ -50,7 +50,7 @@ const Loading = () => {
 							alignItems: 'center',
 							height: '3rem',
 							width: '100%',
-							backgroundColor: theme.textColor?.secondary.main,
+							backgroundColor: user?.role === Roles.USER ? theme.bgColor?.lessonInProgress : theme.bgColor?.adminHeader,
 							padding: '0 1rem 0 3rem',
 						}}>
 						<Box>
@@ -89,7 +89,7 @@ const Loading = () => {
 					alignItems: 'center',
 					width: '10rem',
 					minHeight: '100vh',
-					backgroundColor: theme.palette.primary.main,
+					backgroundColor: user?.role === Roles.USER ? theme.palette.primary.main : theme.bgColor?.adminSidebar,
 					position: 'fixed',
 					left: 0,
 					zIndex: 10,

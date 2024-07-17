@@ -1,10 +1,10 @@
-import { Box, Button, Link, Typography } from '@mui/material';
+import { Box, Button, IconButton, Link, Slide, Tooltip, Typography } from '@mui/material';
 import theme from '../themes';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import ReactPlayer from 'react-player';
 import DashboardHeader from '../components/layouts/dashboardLayout/DashboardHeader';
-import { DoneAll, Home, KeyboardBackspaceOutlined, KeyboardDoubleArrowRight } from '@mui/icons-material';
+import { Article, Close, DoneAll, GetApp, Home, KeyboardBackspaceOutlined, KeyboardDoubleArrowRight } from '@mui/icons-material';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import { useContext, useEffect, useState } from 'react';
 import { sanitizeHtml } from '../utils/sanitizeHtml';
@@ -17,6 +17,11 @@ import { LessonType } from '../interfaces/enums';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
 import { Lesson } from '../interfaces/lessons';
+import TinyMceEditor from '../components/richTextEditor/TinyMceEditor';
+import LoadingButton from '@mui/lab/LoadingButton';
+import { jsPDF } from 'jspdf';
+import 'jspdf-autotable';
+import html2canvas from 'html2canvas';
 
 export interface QuizQuestionAnswer {
 	questionId: string;
@@ -33,12 +38,17 @@ const LessonPage = () => {
 
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
-	const { handleNextLesson, nextLessonId, isLessonCompleted } = useUserCourseLessonData();
+	const { handleNextLesson, nextLessonId, isLessonCompleted, userLessonId } = useUserCourseLessonData();
 
 	const [userAnswers, setUserAnswers] = useState<UserQuestionData[]>([]);
 	const [isLessonCourseCompletedModalOpen, setIsLessonCourseCompletedModalOpen] = useState<boolean>(false);
 	const [isQuizInProgress, setIsQuizInProgress] = useState<boolean>(false);
 	const [lessonType, setLessonType] = useState<string>('');
+	const [isNotesDrawerOpen, setIsNotesDrawerOpen] = useState<boolean>(false);
+	const [editorContent, setEditorContent] = useState<string>('');
+	const [userLessonNotes, setUserLessonNotes] = useState<string>(editorContent);
+	const [isUserLessonNotesUploading, setIsUserLessonNotesUploading] = useState<boolean>(false);
+	const [isNotesUpdated, setIsNotesUpdated] = useState<boolean>(false);
 
 	const defaultLesson = {
 		_id: '',
@@ -69,13 +79,20 @@ const LessonPage = () => {
 		const fetchData = async () => {
 			if (lessonId) {
 				try {
-					const response = await axios.get(`${base_url}/lessons/${lessonId}`);
-					setLesson(response.data);
-					setLessonType(response.data.type);
+					const lessonResponse = await axios.get(`${base_url}/lessons/${lessonId}`);
+					setLesson(lessonResponse.data);
+					setLessonType(lessonResponse.data.type);
+
+					const lessonNotesResponse = await axios.get(`${base_url}/userLessons/lesson/notes/${userLessonId}`);
+
+					setUserLessonNotes(lessonNotesResponse.data.notes);
+					setEditorContent(lessonNotesResponse.data.notes);
+
+					console.log(lessonNotesResponse.data.notes);
 
 					const answers = await fetchUserAnswersByLesson(lessonId);
 
-					if (response.data.type === LessonType.QUIZ) {
+					if (lessonResponse.data.type === LessonType.QUIZ) {
 						setUserQuizAnswers(() => {
 							return answers?.map((answer) => {
 								return { questionId: answer.questionId, userAnswer: answer.userAnswer };
@@ -111,6 +128,65 @@ const LessonPage = () => {
 		}
 	}, [userQuizAnswers]);
 
+	const updateUserLessonNotes = async () => {
+		try {
+			setIsUserLessonNotesUploading(true);
+			const res = await axios.patch(`${base_url}/userlessons/${userLessonId}`, {
+				notes: editorContent,
+			});
+			setUserLessonNotes(res.data.data.notes);
+		} catch (error) {
+			console.log(error);
+		} finally {
+			setIsUserLessonNotesUploading(false);
+			setIsNotesUpdated(true);
+		}
+	};
+
+	const handleDownloadPDF = async () => {
+		const tempDiv = document.createElement('div');
+		tempDiv.style.position = 'absolute';
+		tempDiv.style.left = '-9999px';
+		tempDiv.style.top = '-9999px';
+		tempDiv.style.width = '210mm';
+		tempDiv.style.padding = '1.25rem';
+		tempDiv.style.fontFamily = 'Arial, sans-serif';
+
+		// Adding some inline styles for bullet points and other formatting
+		tempDiv.innerHTML = `
+		  <style>
+			body {
+			  font-family: Arial, sans-serif;
+			}
+			ul, ol {
+			  margin-left: 1.25rem; /* Indent for bullet points */
+			}
+			li {
+			  margin-bottom: 0.5rem; /* Space between list items */
+			}
+		  </style>
+		  ${editorContent}
+		`;
+		document.body.appendChild(tempDiv);
+
+		const canvas = await html2canvas(tempDiv, {
+			scale: 2,
+			useCORS: true,
+		});
+		const imgData = canvas.toDataURL('image/png');
+		const pdf = new jsPDF({
+			orientation: 'portrait',
+			unit: 'mm',
+			format: 'a4',
+		});
+		const pdfWidth = pdf.internal.pageSize.getWidth();
+		const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+		pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+		pdf.save(`${lesson.title}_Notes.pdf`);
+
+		document.body.removeChild(tempDiv);
+	};
+
 	return (
 		<Box
 			sx={{
@@ -122,7 +198,7 @@ const LessonPage = () => {
 				minHeight: '100vh',
 				padding: '0 0 3rem 0',
 			}}>
-			<Box sx={{ width: '100vw', position: 'fixed', top: 0, zIndex: 1111 }}>
+			<Box sx={{ width: '100vw', position: 'fixed', top: 0, zIndex: 10 }}>
 				<DashboardHeader pageName={organisation?.orgName || ''} />
 			</Box>
 			<Box
@@ -133,7 +209,7 @@ const LessonPage = () => {
 					top: '4rem',
 					width: '100%',
 					backgroundColor: theme.bgColor?.secondary,
-					zIndex: 1111,
+					zIndex: 10,
 				}}>
 				<Box
 					sx={{
@@ -182,6 +258,9 @@ const LessonPage = () => {
 							onClick={() => {
 								navigate(`/course/${courseId}/user/${userId}/userCourseId/${userCourseId === undefined ? 'none' : userCourseId}?isEnrolled=true`);
 								window.scrollTo({ top: 0, behavior: 'smooth' });
+								if (!isNotesUpdated) {
+									updateUserLessonNotes();
+								}
 							}}
 							disabled={isQuizInProgress}>
 							Course Home Page
@@ -194,6 +273,80 @@ const LessonPage = () => {
 					</Typography>
 				</Box>
 			</Box>
+			<Box sx={{ position: 'fixed', top: '10rem', left: '2rem', width: '80%', zIndex: 10 }}>
+				<Tooltip title='Take Notes' placement='right'>
+					<IconButton onClick={() => setIsNotesDrawerOpen(!isNotesDrawerOpen)}>
+						<Article />
+					</IconButton>
+				</Tooltip>
+				<Slide direction='right' in={isNotesDrawerOpen} mountOnEnter unmountOnExit timeout={{ enter: 1000, exit: 500 }}>
+					<Box
+						sx={{
+							position: 'fixed',
+							left: 0,
+							top: '13rem',
+							width: '40%',
+							minHeight: '60%',
+							maxHeight: '70%',
+							boxShadow: 10,
+							padding: '1.75rem',
+							borderRadius: '0 0.35rem  0.35rem 0 ',
+							bgcolor: 'background.paper',
+							overflow: 'auto',
+							zIndex: 10,
+						}}>
+						<Box sx={{ minHeight: '100%', width: '100%' }}>
+							<Box sx={{ display: 'flex', flexDirection: 'column' }}>
+								<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+									<Box>
+										<Typography variant='h6'>{lesson.title} Notes</Typography>
+									</Box>
+									<Box>
+										<IconButton
+											onClick={() => {
+												setIsNotesDrawerOpen(false);
+												setUserLessonNotes(editorContent);
+											}}>
+											<Close />
+										</IconButton>
+									</Box>
+								</Box>
+								<Box sx={{ mt: '0.5rem' }} id='editor-content'>
+									<TinyMceEditor
+										height='350'
+										handleEditorChange={(content) => {
+											setEditorContent(content);
+											setIsNotesUpdated(false);
+										}}
+										initialValue={userLessonNotes}
+									/>
+								</Box>
+								<Box sx={{ display: 'flex', mt: '1rem', justifyContent: 'space-between' }}>
+									<Box>
+										<Tooltip title='Download as PDF' placement='right'>
+											<IconButton onClick={handleDownloadPDF}>
+												<GetApp />
+											</IconButton>
+										</Tooltip>
+									</Box>
+									<Box>
+										{!isUserLessonNotesUploading ? (
+											<CustomSubmitButton size='small' onClick={updateUserLessonNotes}>
+												Save
+											</CustomSubmitButton>
+										) : (
+											<LoadingButton loading variant='outlined' size='small' sx={{ textTransform: 'capitalize' }}>
+												Upload
+											</LoadingButton>
+										)}
+									</Box>
+								</Box>
+							</Box>
+						</Box>
+					</Box>
+				</Slide>
+			</Box>
+
 			<Box
 				sx={{
 					display: 'flex',
@@ -278,6 +431,7 @@ const LessonPage = () => {
 							if (isQuiz && !isLessonCompleted) {
 								setIsQuizInProgress(true);
 							}
+							window.scrollTo({ top: 0, behavior: 'smooth' });
 						}}
 						capitalize={false}>
 						{lessonType === LessonType.PRACTICE_LESSON
@@ -305,7 +459,7 @@ const LessonPage = () => {
 				</Box>
 			)}
 
-			{lesson?.documents.length !== 0 && (
+			{lesson?.documents.length !== 0 && !isQuestionsVisible && (
 				<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '2rem', width: '85%' }}>
 					<Box sx={{ display: 'flex', alignSelf: 'flex-start' }}>
 						<Typography variant='h5'>Lesson Materials</Typography>

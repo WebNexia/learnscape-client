@@ -87,6 +87,7 @@ export const useUserCourseLessonData = () => {
 						isCompleted: false,
 						isInProgress: true,
 						orgId,
+						notes: '',
 					});
 
 					const newUserLessonData: UserLessonDataStorage = {

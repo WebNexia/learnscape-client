@@ -6,8 +6,10 @@ import { SingleCourse } from '../../interfaces/course';
 import { ChapterLessonData } from '../../pages/AdminCourseEditPage';
 import useImageUpload from '../../hooks/useImageUpload';
 import CustomSubmitButton from '../forms/customButtons/CustomSubmitButton';
-import { FormEvent } from 'react';
+import { FormEvent, useContext } from 'react';
 import CustomCancelButton from '../forms/customButtons/CustomCancelButton';
+import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
+import { Roles } from '../../interfaces/enums';
 
 interface CoursePaperProps {
 	userId?: string;
@@ -57,6 +59,7 @@ const CoursePaper = ({
 	const horizontal = 'center';
 
 	const { resetImageUpload } = useImageUpload();
+	const { user } = useContext(UserAuthContext);
 
 	const handleCancel = async (): Promise<void> => {
 		setIsEditMode(false);
@@ -72,7 +75,7 @@ const CoursePaper = ({
 				width: '100%',
 				height: '6rem',
 				marginTop: '2.25rem',
-				backgroundColor: theme.palette.primary.main,
+				backgroundColor: user?.role === Roles.USER ? theme.palette.primary.main : theme.bgColor?.adminPaper,
 			}}>
 			<Box
 				sx={{

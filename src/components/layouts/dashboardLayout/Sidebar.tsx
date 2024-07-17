@@ -45,7 +45,7 @@ const Sidebar = () => {
 				alignItems: 'center',
 				width: '10rem',
 				minHeight: '100vh',
-				backgroundColor: theme.palette.primary.main,
+				backgroundColor: user?.role === Roles.USER ? theme.palette.primary.main : theme.bgColor?.adminSidebar,
 				position: 'fixed',
 				left: 0,
 				zIndex: 10,

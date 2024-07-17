@@ -2,7 +2,7 @@ import { AppBar, Box, Button, IconButton, Toolbar, Tooltip, Typography } from '@
 import theme from '../../../themes';
 import { useNavigate } from 'react-router-dom';
 import { useContext, useEffect, useState } from 'react';
-import { Mode } from '../../../interfaces/enums';
+import { Mode, Roles } from '../../../interfaces/enums';
 import { DarkMode, LightMode } from '@mui/icons-material';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 import { useUserCourseLessonData } from '../../../hooks/useUserCourseLessonData';
@@ -12,7 +12,7 @@ interface DashboardHeaderProps {
 }
 
 const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
-	const { signOut } = useContext(UserAuthContext);
+	const { signOut, user } = useContext(UserAuthContext);
 	const [mode, setMode] = useState<Mode>((localStorage.getItem('mode') as Mode) || Mode.LIGHT_MODE);
 	const navigate = useNavigate();
 	const { updateInProgressLessons } = useUserCourseLessonData();
@@ -40,7 +40,7 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 					alignItems: 'center',
 					height: '3rem',
 					width: '100%',
-					backgroundColor: theme.textColor?.secondary.main,
+					backgroundColor: user?.role === Roles.USER ? theme.bgColor?.lessonInProgress : theme.bgColor?.adminHeader,
 					padding: '0 1rem 0 3rem',
 				}}>
 				<Typography variant='body1' sx={{ color: theme.textColor?.common.main }}>
