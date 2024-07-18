@@ -61,7 +61,7 @@ const LessonPaper = ({
 				width: '100%',
 				height: '6rem',
 				mt: '2.25rem',
-				backgroundColor: theme.palette.primary.main,
+				backgroundColor: theme.bgColor?.adminPaper,
 			}}>
 			<Box
 				sx={{

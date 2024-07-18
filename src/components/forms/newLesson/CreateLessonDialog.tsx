@@ -72,7 +72,7 @@ const CreateLessonDialog = ({
 		if (setLessons) {
 			setLessons((prevData) => {
 				if (prevData) {
-					return [newLessonBeforeSave, ...prevData];
+					return [...prevData, newLessonBeforeSave];
 				}
 				return prevData;
 			});
@@ -82,7 +82,7 @@ const CreateLessonDialog = ({
 				if (prevData) {
 					return prevData.map((currentChapter) => {
 						if (currentChapter.chapterId === chapter?.chapterId) {
-							const updatedLessons = [newLessonBeforeSave, ...currentChapter.lessons];
+							const updatedLessons = [...currentChapter.lessons, newLessonBeforeSave];
 							if (setIsChapterUpdated) {
 								chapterUpdateTrack(chapter.chapterId, setIsChapterUpdated);
 							}

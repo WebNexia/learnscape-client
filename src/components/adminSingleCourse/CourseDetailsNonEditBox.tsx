@@ -116,7 +116,7 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters }: CourseDetailsNonEdi
 							singleCourse.chapters &&
 							chapters.map((chapter) => {
 								return (
-									<Box key={chapter.chapterId} sx={{ margin: '1rem 0 4rem 0' }}>
+									<Box key={chapter.chapterId} sx={{ margin: '1rem 0 3rem 0' }}>
 										<Box display='flex'>
 											<Typography variant='h6' sx={{ mb: '0rem' }}>
 												{chapter.title}
@@ -155,10 +155,19 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters }: CourseDetailsNonEdi
 															/>
 														</Box>
 														<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', margin: '0 1rem' }}>
-															<Box>
+															<Box sx={{ flex: 4 }}>
 																<Typography variant='body2'>{lesson.title}</Typography>
 															</Box>
-															<Box sx={{ display: 'flex', alignItems: 'center' }}>
+															<Box sx={{ flex: 1 }}>
+																<Typography variant='body2'>{lesson.isActive ? 'Published' : 'Unpublished'}</Typography>
+															</Box>
+															<Box
+																sx={{
+																	display: 'flex',
+																	justifyContent: 'flex-end',
+																	alignItems: 'center',
+																	flex: 4,
+																}}>
 																<Box sx={{ mr: '1rem' }}>
 																	<Typography variant='body2'>{lesson.type}</Typography>
 																</Box>

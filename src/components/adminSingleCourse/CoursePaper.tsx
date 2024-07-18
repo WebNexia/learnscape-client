@@ -14,7 +14,6 @@ import { Roles } from '../../interfaces/enums';
 interface CoursePaperProps {
 	userId?: string;
 	singleCourse?: SingleCourse;
-	isActive?: boolean;
 	chapterLessonData: ChapterLessonData[];
 	chapterLessonDataBeforeSave: ChapterLessonData[];
 	isEditMode: boolean;
@@ -36,7 +35,6 @@ interface CoursePaperProps {
 const CoursePaper = ({
 	userId,
 	singleCourse,
-	isActive,
 	chapterLessonData,
 	chapterLessonDataBeforeSave,
 	isEditMode,
@@ -69,8 +67,6 @@ const CoursePaper = ({
 		resetImageUpload();
 	};
 
-	console.log(singleCourse);
-	console.log(singleCourse?.title);
 	return (
 		<Paper
 			elevation={10}
@@ -78,7 +74,7 @@ const CoursePaper = ({
 				width: '100%',
 				height: '6rem',
 				marginTop: '2.25rem',
-				backgroundColor: user?.role === Roles.USER ? theme.palette.primary.main : theme.bgColor?.adminPaper,
+				backgroundColor: theme.bgColor?.adminPaper,
 			}}>
 			<Box
 				sx={{
@@ -124,7 +120,7 @@ const CoursePaper = ({
 							</Box>
 							<Box>
 								<Typography variant='body2' sx={{ color: theme.textColor?.common.main }}>
-									{isActive ? '(Published)' : '(Unpublished)'}
+									{singleCourse?.isActive ? '(Published)' : '(Unpublished)'}
 								</Typography>
 							</Box>
 						</Box>
@@ -174,6 +170,7 @@ const CoursePaper = ({
 													setIsMissingField(true);
 													setIsMissingFieldMsgOpen(true);
 												}
+												window.scrollTo({ top: 0, behavior: 'smooth' });
 											}}>
 											Save
 										</CustomSubmitButton>
@@ -191,7 +188,7 @@ const CoursePaper = ({
 												padding: '0 0.75rem',
 											}}
 											onClick={handlePublishing}>
-											{isActive ? 'Unpublish' : 'Publish'}
+											{singleCourse?.isActive ? 'Unpublish' : 'Publish'}
 										</CustomSubmitButton>
 										<Tooltip title='Edit Course' placement='top'>
 											<IconButton

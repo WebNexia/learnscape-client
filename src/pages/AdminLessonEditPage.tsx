@@ -13,7 +13,7 @@ import CustomTextField from '../components/forms/customFields/CustomTextField';
 import CustomErrorMessage from '../components/forms/customFields/CustomErrorMessage';
 import { Reorder, useMotionValue } from 'framer-motion';
 import { useRaisedShadow } from '../hooks/useRaisedShadow';
-import LessonPaper from '../components/adminSingleLesson/Paper';
+import LessonPaper from '../components/adminSingleLesson/LessonPaper';
 import QuestionDialogContentNonEdit from '../components/adminSingleLesson/QuestionDialogContentNonEdit';
 import QuestionsBoxNonEdit from '../components/adminSingleLesson/QuestionsBoxNonEdit';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';

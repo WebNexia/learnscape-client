@@ -11,7 +11,7 @@ import { BaseChapter } from '../interfaces/chapter';
 import { Reorder, useMotionValue } from 'framer-motion';
 import { useRaisedShadow } from '../hooks/useRaisedShadow';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
-import CoursePaper from '../components/adminSingleCourse/Paper';
+import CoursePaper from '../components/adminSingleCourse/CoursePaper';
 import CourseDetailsNonEditBox from '../components/adminSingleCourse/CourseDetailsNonEditBox';
 import CourseDetailsEditBox from '../components/adminSingleCourse/CourseDetailsEditBox';
 import { Lesson } from '../interfaces/lessons';
@@ -73,7 +73,6 @@ const AdminCourseEditPage = () => {
 
 	const [isEditMode, setIsEditMode] = useState<boolean>(false);
 	const [singleCourse, setSingleCourse] = useState<SingleCourse>();
-	const [isActive, setIsActive] = useState<boolean>(false);
 	const [isFree, setIsFree] = useState<boolean>(false);
 	const [isMissingField, setIsMissingField] = useState<boolean>(false);
 	const [isMissingFieldMsgOpen, setIsMissingFieldMsgOpen] = useState<boolean>(false);
@@ -146,7 +145,7 @@ const AdminCourseEditPage = () => {
 			};
 
 			setChapterLessonDataBeforeSave((prevData) => {
-				return [newChapterBeforeSave, ...prevData];
+				return [...prevData, newChapterBeforeSave];
 			});
 		} catch (error) {
 			console.log(error);
@@ -163,12 +162,10 @@ const AdminCourseEditPage = () => {
 
 					const courseResponse = response?.data?.data;
 
-					console.log(courseResponse);
 					setSingleCourse(courseResponse);
 					if (courseResponse?.price?.toLowerCase() === 'free') {
 						setIsFree(true);
 					}
-					setIsActive(courseResponse.isActive);
 
 					if (courseResponse?.chapters[0]?.title) {
 						// Initialize chapter lesson data
@@ -204,14 +201,22 @@ const AdminCourseEditPage = () => {
 	}, [courseId, resetChanges]);
 
 	const handlePublishing = async (): Promise<void> => {
-		if (singleCourse?.chapterIds.length === 0 && !singleCourse?.isActive) {
+		if (
+			(singleCourse?.chapterIds.length === 0 || singleCourse?.chapters?.filter((chapter) => chapter !== null).length === 0) &&
+			!singleCourse?.isActive
+		) {
 			setIsNoChapterMsgOpen(true);
 		} else if (courseId !== undefined) {
 			try {
 				await axios.patch(`${base_url}/courses/${courseId}`, {
 					isActive: !singleCourse?.isActive,
 				});
-				setIsActive(!singleCourse?.isActive);
+				setSingleCourse((prevData) => {
+					if (prevData) {
+						return { ...prevData, isActive: !singleCourse?.isActive };
+					}
+					return prevData;
+				});
 				updateCoursePublishing(courseId);
 			} catch (error) {
 				console.log(error);
@@ -394,7 +399,6 @@ const AdminCourseEditPage = () => {
 				<CoursePaper
 					userId={userId}
 					singleCourse={singleCourse}
-					isActive={isActive}
 					chapterLessonData={chapterLessonData}
 					chapterLessonDataBeforeSave={chapterLessonDataBeforeSave}
 					isEditMode={isEditMode}
@@ -462,6 +466,10 @@ const AdminCourseEditPage = () => {
 											e.preventDefault();
 											createChapterTemplate();
 											closeCreateChapterModal();
+											window.scrollTo({
+												top: document.body.scrollHeight,
+												behavior: 'smooth',
+											});
 										}}
 										style={{ display: 'flex', flexDirection: 'column' }}>
 										<CustomTextField
@@ -516,6 +524,21 @@ const AdminCourseEditPage = () => {
 									</Reorder.Group>
 								)}
 							</Box>
+
+							{chapterLessonDataBeforeSave.length > 1 && (
+								<Box sx={{ display: 'flex', width: '100%', justifyContent: 'flex-end', margin: '-1rem 0 5rem 0' }}>
+									<CustomSubmitButton
+										type='button'
+										sx={{ marginBottom: '1rem' }}
+										onClick={() => {
+											setIsChapterCreateModalOpen(true);
+											setNewChapterTitle('');
+										}}>
+										New Chapter
+									</CustomSubmitButton>
+								</Box>
+							)}
+
 							<Box sx={{ margin: '2rem 0 1rem 0' }}>
 								<HandleDocUploadURL
 									label='Course Materials'
