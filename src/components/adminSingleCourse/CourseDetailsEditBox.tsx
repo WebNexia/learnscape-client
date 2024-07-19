@@ -199,8 +199,6 @@ const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree,
 							sx={{ marginTop: '0.5rem' }}
 							value={singleCourse?.durationHours || ''}
 							onChange={(e) => {
-								console.log(singleCourse?.durationHours);
-								console.log(e.target.value);
 								if (singleCourse) {
 									if (singleCourse?.durationHours !== undefined) {
 										setSingleCourse({

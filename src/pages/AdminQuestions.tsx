@@ -59,6 +59,8 @@ const AdminQuestions = () => {
 
 	useEffect(() => {
 		setQuestionsPageNumber(1);
+		console.log(isMinimumOptions);
+		console.log(isDuplicateOption);
 	}, []);
 
 	useEffect(() => {
@@ -119,7 +121,6 @@ const AdminQuestions = () => {
 						setOptions(['']);
 						setCorrectAnswer('');
 						setIsDuplicateOption(false);
-						setIsMinimumOptions(true);
 						setCorrectAnswerIndex(-1);
 					}}
 					type='button'>

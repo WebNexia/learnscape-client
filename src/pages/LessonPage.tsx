@@ -88,8 +88,6 @@ const LessonPage = () => {
 					setUserLessonNotes(lessonNotesResponse.data.notes);
 					setEditorContent(lessonNotesResponse.data.notes);
 
-					console.log(lessonNotesResponse.data.notes);
-
 					const answers = await fetchUserAnswersByLesson(lessonId);
 
 					if (lessonResponse.data.type === LessonType.QUIZ) {

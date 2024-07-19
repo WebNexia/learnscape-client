@@ -5,10 +5,14 @@ const useNewQuestion = (initialOptions: string[] = ['']) => {
 	const [correctAnswerIndex, setCorrectAnswerIndex] = useState<number>(-1);
 	const [correctAnswer, setCorrectAnswer] = useState<string>('');
 	const [isDuplicateOption, setIsDuplicateOption] = useState<boolean>(false);
-	const [isMinimumOptions, setIsMinimumOptions] = useState<boolean>(true);
+	const [isMinimumOptions, setIsMinimumOptions] = useState<boolean>(false);
 
 	const addOption = useCallback(() => {
-		setOptions((prevOptions) => [...prevOptions, '']);
+		setOptions((prevOptions) => {
+			const newOptions = [...prevOptions, ''];
+			setIsMinimumOptions(newOptions.filter((option) => option.trim() !== '').length >= 2);
+			return newOptions;
+		});
 	}, []);
 
 	const handleCorrectAnswerChange = useCallback(
@@ -30,6 +34,7 @@ const useNewQuestion = (initialOptions: string[] = ['']) => {
 			setOptions((prevOptions) => {
 				const newOptions = [...prevOptions];
 				newOptions[index] = value;
+
 				setIsDuplicateOption(checkForDuplicateOptions(newOptions));
 				setIsMinimumOptions(newOptions.filter((option) => option.trim() !== '').length >= 2);
 
@@ -38,11 +43,12 @@ const useNewQuestion = (initialOptions: string[] = ['']) => {
 		},
 		[checkForDuplicateOptions]
 	);
+
 	const removeOption = useCallback(
 		(indexToRemove: number) => {
 			setOptions((prevOptions) => {
 				const newOptions = [...prevOptions];
-				newOptions.splice(indexToRemove, 1)[0];
+				newOptions.splice(indexToRemove, 1);
 
 				if (indexToRemove === correctAnswerIndex) {
 					setCorrectAnswerIndex(-1);
@@ -52,9 +58,9 @@ const useNewQuestion = (initialOptions: string[] = ['']) => {
 					setCorrectAnswer(newOptions[correctAnswerIndex - 1] || '');
 				}
 
-				const hasDuplicate = checkForDuplicateOptions(newOptions);
-				setIsDuplicateOption(hasDuplicate);
+				setIsDuplicateOption(checkForDuplicateOptions(newOptions));
 				setIsMinimumOptions(newOptions.filter((option) => option.trim() !== '').length >= 2);
+
 				return newOptions;
 			});
 		},

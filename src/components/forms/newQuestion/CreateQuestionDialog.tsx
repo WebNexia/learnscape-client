@@ -117,6 +117,10 @@ const CreateQuestionDialog = ({
 		resetVideoUpload();
 		resetImageUpload();
 		resetEnterImageVideoUrl();
+		console.log(correctAnswer);
+		console.log(correctAnswerIndex);
+		console.log(isDuplicateOption);
+		console.log(isMinimumOptions);
 	}, []);
 
 	const resetValues = () => {
@@ -202,8 +206,8 @@ const CreateQuestionDialog = ({
 			setSingleLessonBeforeSave((prevLesson) => {
 				return {
 					...prevLesson,
-					questions: [newQuestionBeforeSave, ...prevLesson.questions],
-					questionIds: [newQuestionBeforeSave._id, ...prevLesson.questionIds],
+					questions: [...prevLesson.questions, newQuestionBeforeSave],
+					questionIds: [...prevLesson.questionIds, newQuestionBeforeSave._id],
 				};
 			});
 
@@ -223,7 +227,8 @@ const CreateQuestionDialog = ({
 			setIsCorrectAnswerMissing(true);
 			return;
 		}
-
+		console.log(options);
+		console.log(isMinimumOptions);
 		if (isDuplicateOption) return;
 		if (!isMinimumOptions) return;
 
@@ -440,6 +445,7 @@ const CreateQuestionDialog = ({
 												</Tooltip>
 											)}
 											<CustomTextField
+												required
 												label={`Option ${index + 1}`}
 												value={option}
 												onChange={(e) => {

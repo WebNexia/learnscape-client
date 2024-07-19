@@ -556,8 +556,8 @@ const AdminCourseEditPage = () => {
 												return {
 													...prevData,
 													documents: [
-														{ _id: generateUniqueId('temp_doc_id_'), name: newName, documentUrl: url, orgId, userId, createdAt: '', updatedAt: '' },
 														...prevData.documents,
+														{ _id: generateUniqueId('temp_doc_id_'), name: newName, documentUrl: url, orgId, userId, createdAt: '', updatedAt: '' },
 													],
 												};
 											}
