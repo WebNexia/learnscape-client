@@ -45,7 +45,7 @@ const Sidebar = () => {
 				alignItems: 'center',
 				width: '10rem',
 				minHeight: '100vh',
-				backgroundColor: user?.role === Roles.USER ? theme.palette.primary.main : theme.bgColor?.adminSidebar,
+				backgroundColor: user?.role === Roles.ADMIN ? theme.bgColor?.adminSidebar : theme.palette.primary.main,
 				position: 'fixed',
 				left: 0,
 				zIndex: 10,
@@ -76,6 +76,7 @@ const Sidebar = () => {
 						width: '3rem',
 						borderRadius: '50%',
 						marginBottom: '0.5rem',
+						objectFit: 'contain',
 					}}
 				/>
 				<Typography variant='body1' sx={{ color: theme.textColor?.common.main }}>

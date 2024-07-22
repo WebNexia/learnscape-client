@@ -54,7 +54,7 @@ const QuestionsContextProvider = (props: QuestionsContextProviderProps) => {
 		if (!orgId) return;
 
 		try {
-			const response = await axios.get(`${base_url}/questions/organisation/${orgId}?page=${page}&limit=50`);
+			const response = await axios.get(`${base_url}/questions/organisation/${orgId}?page=${page}&limit=100`);
 
 			// Initial sorting when fetching data
 			const sortedDataCopy = [...response.data.data].sort((a: QuestionInterface, b: QuestionInterface) => b.updatedAt.localeCompare(a.updatedAt));

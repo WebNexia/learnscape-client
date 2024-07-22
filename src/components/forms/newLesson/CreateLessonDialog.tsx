@@ -57,7 +57,7 @@ const CreateLessonDialog = ({
 			_id: generateUniqueId('temp_lesson_id_'),
 			title,
 			type,
-			isActive: true,
+			isActive: false,
 			imageUrl: 'https://directmobilityonline.co.uk/assets/img/noimage.png',
 			videoUrl: '',
 			text: '',
@@ -72,7 +72,7 @@ const CreateLessonDialog = ({
 		if (setLessons) {
 			setLessons((prevData) => {
 				if (prevData) {
-					return [newLessonBeforeSave, ...prevData];
+					return [...prevData, newLessonBeforeSave];
 				}
 				return prevData;
 			});
@@ -82,7 +82,7 @@ const CreateLessonDialog = ({
 				if (prevData) {
 					return prevData.map((currentChapter) => {
 						if (currentChapter.chapterId === chapter?.chapterId) {
-							const updatedLessons = [newLessonBeforeSave, ...currentChapter.lessons];
+							const updatedLessons = [...currentChapter.lessons, newLessonBeforeSave];
 							if (setIsChapterUpdated) {
 								chapterUpdateTrack(chapter.chapterId, setIsChapterUpdated);
 							}

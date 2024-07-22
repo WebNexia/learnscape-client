@@ -10,6 +10,7 @@ import {
 	RadioGroup,
 	Select,
 	SelectChangeEvent,
+	Tooltip,
 	Typography,
 } from '@mui/material';
 import { QuestionInterface } from '../../interfaces/question';
@@ -105,7 +106,7 @@ const QuizQuestion = ({
 	const handleRadioChange = (event: React.ChangeEvent<HTMLInputElement>) => {
 		setUserQuizAnswers((prevData) => {
 			if (prevData) {
-				const updatedAnswers = prevData.map((answer) => {
+				const updatedAnswers = prevData?.map((answer) => {
 					if (answer.questionId === question._id) {
 						return { ...answer, userAnswer: (event.target as HTMLInputElement).value };
 					}
@@ -166,7 +167,7 @@ const QuizQuestion = ({
 				alignItems: 'center',
 			}}>
 			<form style={{ width: '100%' }}>
-				<FormControl sx={{ margin: '1rem', width: '100%' }} variant='standard'>
+				<FormControl sx={{ width: '100%' }} variant='standard'>
 					<QuestionMedia question={question} />
 					<QuestionText question={question} questionNumber={questionNumber} />
 
@@ -182,7 +183,7 @@ const QuizQuestion = ({
 									setValue(e.target.value);
 									setUserQuizAnswers((prevData) => {
 										if (prevData) {
-											const updatedAnswers = prevData.map((answer) => {
+											const updatedAnswers = prevData?.map((answer) => {
 												if (answer.questionId === question._id) {
 													return { ...answer, userAnswer: e.target.value };
 												}
@@ -217,7 +218,7 @@ const QuizQuestion = ({
 						<RadioGroup name='question' value={isLessonCompleted ? userQuizAnswer : value} onChange={handleRadioChange} sx={{ alignSelf: 'center' }}>
 							{question &&
 								question.options &&
-								question.options.map((option, index) => {
+								question.options?.map((option, index) => {
 									return <FormControlLabel value={option} control={<Radio />} label={option} key={index} />;
 								})}
 						</RadioGroup>
@@ -281,37 +282,48 @@ const QuizQuestion = ({
 					</Select>
 					<Typography> / {numberOfQuestions}</Typography>
 				</Box>
-
-				<IconButton
-					onClick={() => {
-						if (displayedQuestionNumber === numberOfQuestions && !isLessonCompleted) {
-							setIsSubmitQuizModalOpen(true);
-						} else if (displayedQuestionNumber === numberOfQuestions && isLessonCompleted) {
-							navigate(`/course/${courseId}/user/${userId}/userCourseId/${userCourseId}?isEnrolled=true`);
-						}
-						if (!(displayedQuestionNumber + 1 > numberOfQuestions)) {
-							setDisplayedQuestionNumber((prev) => prev + 1);
-							setSelectedQuestion(displayedQuestionNumber + 1);
-						}
-						window.scrollTo({ top: 0, behavior: 'smooth' });
-					}}
-					sx={{
-						flexShrink: 0,
-						':hover': {
-							color: theme.bgColor?.greenPrimary,
-							backgroundColor: 'transparent',
-						},
-					}}>
-					{isLessonCompleted && displayedQuestionNumber === numberOfQuestions ? (
-						<KeyboardDoubleArrowRight fontSize='large' />
-					) : isCompletingCourse ? (
-						<DoneAll fontSize='large' />
-					) : isCompletingLesson ? (
-						<Done fontSize='large' />
-					) : (
-						<KeyboardArrowRight fontSize='large' />
-					)}
-				</IconButton>
+				<Tooltip
+					title={
+						isCompletingCourse
+							? 'Complete Course'
+							: isLessonCompleted && displayedQuestionNumber === numberOfQuestions
+							? 'Next Lesson'
+							: isCompletingLesson
+							? 'Submit Quiz'
+							: ''
+					}
+					placement='top'>
+					<IconButton
+						onClick={() => {
+							if (displayedQuestionNumber === numberOfQuestions && !isLessonCompleted) {
+								setIsSubmitQuizModalOpen(true);
+							} else if (displayedQuestionNumber === numberOfQuestions && isLessonCompleted) {
+								navigate(`/course/${courseId}/user/${userId}/userCourseId/${userCourseId}?isEnrolled=true`);
+							}
+							if (!(displayedQuestionNumber + 1 > numberOfQuestions)) {
+								setDisplayedQuestionNumber((prev) => prev + 1);
+								setSelectedQuestion(displayedQuestionNumber + 1);
+							}
+							window.scrollTo({ top: 0, behavior: 'smooth' });
+						}}
+						sx={{
+							flexShrink: 0,
+							':hover': {
+								color: theme.bgColor?.greenPrimary,
+								backgroundColor: 'transparent',
+							},
+						}}>
+						{isCompletingCourse ? (
+							<DoneAll fontSize='large' />
+						) : isLessonCompleted && displayedQuestionNumber === numberOfQuestions ? (
+							<KeyboardDoubleArrowRight fontSize='large' />
+						) : isCompletingLesson ? (
+							<Done fontSize='large' />
+						) : (
+							<KeyboardArrowRight fontSize='large' />
+						)}
+					</IconButton>
+				</Tooltip>
 				<CustomDialog
 					openModal={isSubmitQuizModalOpen}
 					closeModal={() => setIsSubmitQuizModalOpen(false)}

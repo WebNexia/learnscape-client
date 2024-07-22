@@ -43,7 +43,7 @@ const CustomSubmitButton = ({
 			sx={{
 				...sx,
 				textTransform: capitalize ? 'capitalize' : 'none',
-				backgroundColor: user?.role === Roles.ADMIN ? theme.bgColor?.adminSubmitBtn : theme.bgColor?.greenPrimary,
+				backgroundColor: user?.role === Roles.ADMIN ? theme.bgColor?.greenPrimary : theme.bgColor?.greenPrimary,
 				':hover': {
 					backgroundColor: theme.bgColor?.common,
 					color: theme.bgColor?.adminSubmitBtn,

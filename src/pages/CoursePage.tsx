@@ -8,7 +8,7 @@ import { UserCourseLessonDataContext, UserCoursesIdsWithCourseIds } from '../con
 import { Document } from '../interfaces/document';
 
 const CoursePage = () => {
-	const { singleCourseUser, fetchSingleCourseData, singleCourse } = useContext(UserCourseLessonDataContext);
+	const { singleCourseUser, fetchSingleCourseDataAdmin, fetchSingleCourseDataUser } = useContext(UserCourseLessonDataContext);
 	const { courseId, userCourseId } = useParams();
 
 	let userCourseData: UserCoursesIdsWithCourseIds[] = [];
@@ -23,7 +23,8 @@ const CoursePage = () => {
 			setIsEnrolledStatus(userCourseData.some((data) => data.courseId === courseId));
 		}
 		if (courseId) {
-			fetchSingleCourseData(courseId);
+			fetchSingleCourseDataAdmin(courseId);
+			fetchSingleCourseDataUser(courseId);
 		}
 	}, [userCourseId, courseId]);
 
@@ -40,7 +41,7 @@ const CoursePage = () => {
 					<Chapters course={singleCourseUser} isEnrolledStatus={isEnrolledStatus} />
 				</>
 			)}
-			{singleCourse?.documents && (
+			{isEnrolledStatus && singleCourseUser?.documents && (
 				<Box ref={documentsRef} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '2rem', width: '85%' }}>
 					<Box sx={{ display: 'flex', alignSelf: 'flex-start' }}>
 						<Typography variant='h4' sx={{ mb: '1.25rem' }}>
@@ -48,9 +49,9 @@ const CoursePage = () => {
 						</Typography>
 					</Box>
 					<Box sx={{ display: 'flex', alignSelf: 'flex-start', flexDirection: 'column' }}>
-						{singleCourse.documents
+						{singleCourseUser.documents
 							?.filter((doc: Document) => doc !== null)
-							.map((doc: Document) => (
+							?.map((doc: Document) => (
 								<Box sx={{ marginBottom: '0.5rem' }} key={doc._id}>
 									<Link href={doc?.documentUrl} target='_blank' rel='noopener noreferrer' variant='body2'>
 										{doc?.name}

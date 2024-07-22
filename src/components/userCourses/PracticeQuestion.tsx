@@ -25,7 +25,7 @@ import TrueFalseOptions from '../layouts/questionTypes/TrueFalseOptions';
 import { QuestionsContext } from '../../contexts/QuestionsContextProvider';
 import CustomTextField from '../forms/customFields/CustomTextField';
 import { useUserCourseLessonData } from '../../hooks/useUserCourseLessonData';
-import { AutoAwesome, Close, Done, KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons-material';
+import { AutoAwesome, Close, Done, DoneAll, KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons-material';
 import AiIcon from '@mui/icons-material/AutoAwesome';
 import { UserQuestionData } from '../../hooks/useFetchUserQuestion';
 import { QuestionType } from '../../interfaces/enums';
@@ -179,7 +179,7 @@ const PracticeQuestion = ({
 
 		if (!existingUserAnswer || existingUserAnswer.userAnswer !== userAnswer) {
 			try {
-				if (fetchQuestionTypeName(question) === QuestionType.OPEN_ENDED || lessonType === 'Quiz') {
+				if (fetchQuestionTypeName(question) === QuestionType.OPEN_ENDED) {
 					const res = await axios.post(`${base_url}/userQuestions`, {
 						userLessonId,
 						questionId: question._id,
@@ -197,7 +197,7 @@ const PracticeQuestion = ({
 						await axios.patch(`${base_url}/userQuestions/${userQuestionId}`, { userAnswer });
 						setUserAnswers((prevData) => {
 							if (!prevData) return [];
-							return prevData.map((data) => (data.questionId === question._id ? { ...data, userAnswer } : data));
+							return prevData?.map((data) => (data.questionId === question._id ? { ...data, userAnswer } : data));
 						});
 					} else {
 						setUserAnswers((prevData) => {
@@ -296,7 +296,7 @@ const PracticeQuestion = ({
 					width: '100%',
 				}}>
 				<form onSubmit={handleSubmit} style={{ width: '100%' }}>
-					<FormControl sx={{ margin: '1rem', width: '100%' }} error={error} variant='standard'>
+					<FormControl sx={{ width: '100%' }} error={error} variant='standard'>
 						<QuestionMedia question={question} />
 						<QuestionText question={question} questionNumber={questionNumber} />
 
@@ -345,7 +345,7 @@ const PracticeQuestion = ({
 								sx={{ alignSelf: 'center' }}>
 								{question &&
 									question.options &&
-									question.options.map((option, index) => {
+									question.options?.map((option, index) => {
 										return <FormControlLabel value={option} control={<Radio />} label={option} key={index} />;
 									})}
 							</RadioGroup>
@@ -436,33 +436,57 @@ const PracticeQuestion = ({
 						</Box>
 					)}
 
-					<IconButton
-						onClick={() => {
-							if (!(displayedQuestionNumber + 1 > numberOfQuestions)) {
-								setDisplayedQuestionNumber((prev) => prev + 1);
-								setSelectedQuestion(displayedQuestionNumber + 1);
-							}
-							if (isLessonCompleted && displayedQuestionNumber === numberOfQuestions) {
-								setIsLessonCourseCompletedModalOpen(true);
-							}
-							window.scrollTo({ top: 0, behavior: 'smooth' });
-							setIsOpenEndedAnswerSubmitted(false);
-						}}
-						sx={{
-							flexShrink: 0,
-							color: !isAnswerCorrect && !isOpenEndedAnswerSubmitted ? 'gray' : theme.textColor?.common.main,
-							backgroundColor: !isAnswerCorrect && !isOpenEndedAnswerSubmitted ? 'inherit' : theme.bgColor?.greenPrimary,
-							':hover': {
-								color: theme.bgColor?.greenPrimary,
-								backgroundColor: 'transparent',
-							},
-						}}
-						disabled={
-							(!isAnswerCorrect || displayedQuestionNumber + 1 > numberOfQuestions || !isOpenEndedAnswerSubmitted) &&
-							!(isLessonCompleted || displayedQuestionNumber < getLastQuestion())
-						}>
-						{isCompletingCourse ? 'Complete Course' : isCompletingLesson ? <Done fontSize='large' /> : <KeyboardArrowRight fontSize='large' />}
-					</IconButton>
+					{displayedQuestionNumber !== numberOfQuestions || !isLessonCompleted ? (
+						<IconButton
+							onClick={() => {
+								if (!(displayedQuestionNumber + 1 > numberOfQuestions)) {
+									setDisplayedQuestionNumber((prev) => prev + 1);
+									setSelectedQuestion(displayedQuestionNumber + 1);
+								}
+
+								window.scrollTo({ top: 0, behavior: 'smooth' });
+								setIsOpenEndedAnswerSubmitted(false);
+							}}
+							sx={{
+								flexShrink: 0,
+								color: !isAnswerCorrect && !isOpenEndedAnswerSubmitted ? 'gray' : theme.textColor?.common.main,
+								backgroundColor: !isAnswerCorrect && !isOpenEndedAnswerSubmitted ? 'inherit' : theme.bgColor?.greenPrimary,
+								':hover': {
+									color: theme.bgColor?.greenPrimary,
+									backgroundColor: 'transparent',
+								},
+							}}
+							disabled={
+								(!isAnswerCorrect || displayedQuestionNumber + 1 > numberOfQuestions || !isOpenEndedAnswerSubmitted) &&
+								!(isLessonCompleted || displayedQuestionNumber < getLastQuestion())
+							}>
+							<KeyboardArrowRight fontSize='large' />
+						</IconButton>
+					) : (
+						<Tooltip
+							title={isCompletingCourse && isLessonCompleted ? 'Complete Course' : isCompletingLesson && isLessonCompleted ? 'Complete Lesson' : ''}
+							placement='top'>
+							<IconButton
+								onClick={() => {
+									if (isLessonCompleted) {
+										setIsLessonCourseCompletedModalOpen(true);
+									}
+									window.scrollTo({ top: 0, behavior: 'smooth' });
+									setIsOpenEndedAnswerSubmitted(false);
+								}}
+								sx={{
+									flexShrink: 0,
+									color: !isAnswerCorrect && !isOpenEndedAnswerSubmitted ? 'gray' : theme.textColor?.common.main,
+									backgroundColor: !isAnswerCorrect && !isOpenEndedAnswerSubmitted ? 'inherit' : theme.bgColor?.greenPrimary,
+									':hover': {
+										color: theme.bgColor?.greenPrimary,
+										backgroundColor: 'transparent',
+									},
+								}}>
+								{isCompletingCourse ? <DoneAll fontSize='large' /> : <Done fontSize='large' />}
+							</IconButton>
+						</Tooltip>
+					)}
 
 					<CustomDialog
 						openModal={isLessonCourseCompletedModalOpen}
@@ -485,7 +509,7 @@ const PracticeQuestion = ({
 					display: 'flex',
 					justifyContent: 'flex-end',
 					position: 'fixed',
-					top: '10rem',
+					top: '11rem',
 					right: '2rem',
 					width: '80%',
 					zIndex: 9,
@@ -531,7 +555,7 @@ const PracticeQuestion = ({
 							sx={{
 								position: 'fixed',
 								right: 0,
-								top: '13rem',
+								top: '14rem',
 								width: '30%',
 								minHeight: '30%',
 								maxHeight: '50%',

@@ -310,7 +310,7 @@ const EditQuestionDialog = ({
 										setSingleLessonBeforeSave((prevData) => {
 											if (!prevData.questions) return prevData;
 
-											const updatedQuestions = prevData.questions.map((prevQuestion) => {
+											const updatedQuestions = prevData.questions?.map((prevQuestion) => {
 												if (prevQuestion._id === question._id) {
 													return { ...prevQuestion, imageUrl: '' };
 												} else {

@@ -10,7 +10,7 @@ interface HandleImageUploadURLProps {
 	onImageUploadLogic: (url: string) => void;
 	onChangeImgUrl?: (e: ChangeEvent<HTMLInputElement>) => void;
 	setEnterImageUrl: React.Dispatch<React.SetStateAction<boolean>>;
-	imageUrlValue?: string;
+	imageUrlValue: string;
 	imageFolderName: string;
 	enterImageUrl: boolean;
 	label?: string;

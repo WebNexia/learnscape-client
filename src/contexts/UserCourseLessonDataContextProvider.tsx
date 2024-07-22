@@ -1,7 +1,6 @@
 import axios from 'axios';
 import { ReactNode, createContext, useContext, useState, useEffect } from 'react';
 import { SingleCourse } from '../interfaces/course';
-import { BaseChapter } from '../interfaces/chapter';
 import { UserAuthContext } from './UserAuthContextProvider';
 import { OrganisationContext } from './OrganisationContextProvider';
 import { useQuery } from 'react-query';
@@ -10,7 +9,8 @@ import LoadingError from '../components/layouts/loading/LoadingError';
 import { useParams } from 'react-router-dom';
 
 interface UserCourseLessonDataContextTypes {
-	fetchSingleCourseData: (courseId: string) => void;
+	fetchSingleCourseDataAdmin: (courseId: string) => void;
+	fetchSingleCourseDataUser: (courseId: string) => void;
 	singleCourse: SingleCourse | null;
 	setSingleCourse: React.Dispatch<React.SetStateAction<SingleCourse | null>>;
 	singleCourseUser: SingleCourse | null;
@@ -38,11 +38,12 @@ export interface UserLessonDataStorage {
 }
 
 export const UserCourseLessonDataContext = createContext<UserCourseLessonDataContextTypes>({
-	fetchSingleCourseData: () => {},
+	fetchSingleCourseDataAdmin: () => {},
 	singleCourse: null,
 	setSingleCourse: () => {},
 	singleCourseUser: null,
 	setSingleCourseUser: () => {},
+	fetchSingleCourseDataUser: () => {},
 });
 
 const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProviderProps) => {
@@ -60,33 +61,42 @@ const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProvide
 
 	const [singleCourseUser, setSingleCourseUser] = useState<SingleCourse | null>(null);
 
-	const fetchSingleCourseData = async (courseId: string | undefined): Promise<void> => {
+	const fetchSingleCourseDataAdmin = async (courseId: string | undefined): Promise<void> => {
 		try {
 			if (courseId) {
 				const response = await axios.get(`${base_url}/courses/${courseId}`);
 				setSingleCourse(response.data.data || null);
 
-				setSingleCourseUser(() => {
-					const filteredChapters: BaseChapter[] | undefined = response?.data?.data?.chapters?.filter(
-						(chapter: BaseChapter) => chapter?.lessonIds?.length !== 0
-					);
-
-					return {
-						...response.data.data,
-						chapters: filteredChapters,
-					};
-				});
+				console.log(response.data.data);
 			}
 		} catch (error) {
 			console.log(error);
 		}
 	};
 
+	const fetchSingleCourseDataUser = async (courseId: string | undefined): Promise<void> => {
+		if (courseId) {
+			const res = await axios.get(`${base_url}/courses/activelessons/${courseId}`);
+
+			console.log(res.data.data);
+
+			setSingleCourseUser(res.data.data || null);
+		}
+	};
+
 	const {
-		data: singleCourseData,
-		isLoading: singleCourseDataLoading,
-		error: singleCourseDataError,
-	} = useQuery(['singleCourseData', orgId], () => fetchSingleCourseData(courseId), {
+		data: singleCourseDataAdmin,
+		isLoading: singleCourseDataAdminLoading,
+		error: singleCourseDataAdminError,
+	} = useQuery(['singleCourseData', orgId], () => fetchSingleCourseDataAdmin(courseId), {
+		enabled: !!userId && !!orgId,
+	});
+
+	const {
+		data: singleCourseDataUser,
+		isLoading: singleCourseDataUserLoading,
+		error: singleCourseDataUserError,
+	} = useQuery(['singleCourseData', orgId], () => fetchSingleCourseDataAdmin(courseId), {
 		enabled: !!userId && !!orgId,
 	});
 
@@ -126,18 +136,19 @@ const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProvide
 		}
 	}, [userCoursesData, userLessonData]);
 
-	if (isLoading || userLessonsLoading || singleCourseDataLoading) {
+	if (isLoading || userLessonsLoading || singleCourseDataAdminLoading || singleCourseDataUserLoading) {
 		return <Loading />;
 	}
 
-	if (error || userLessonsError || singleCourseDataError) {
+	if (error || userLessonsError || singleCourseDataAdminError || singleCourseDataUserError) {
 		return <LoadingError />;
 	}
 
 	return (
 		<UserCourseLessonDataContext.Provider
 			value={{
-				fetchSingleCourseData,
+				fetchSingleCourseDataAdmin,
+				fetchSingleCourseDataUser,
 				singleCourse,
 				setSingleCourse,
 				singleCourseUser,

@@ -1,6 +1,6 @@
 import { Alert, Box, Button, IconButton, Paper, Snackbar, Tooltip, Typography } from '@mui/material';
 import theme from '../../themes';
-import { Edit, KeyboardBackspaceOutlined } from '@mui/icons-material';
+import { Edit, KeyboardBackspaceOutlined, PublishedWithChanges, Unpublished } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { Lesson } from '../../interfaces/lessons';
 import { QuestionUpdateTrack } from '../../pages/AdminLessonEditPage';
@@ -61,7 +61,7 @@ const LessonPaper = ({
 				width: '100%',
 				height: '6rem',
 				mt: '2.25rem',
-				backgroundColor: theme.palette.primary.main,
+				backgroundColor: theme.bgColor?.adminPaper,
 			}}>
 			<Box
 				sx={{
@@ -99,16 +99,29 @@ const LessonPaper = ({
 							Back to lessons
 						</Button>
 					</Box>
-					<Box sx={{ width: '100%' }}>
-						<Typography
-							variant='h6'
-							sx={{
-								textTransform: 'capitalize',
-								color: theme.textColor?.common.main,
-								padding: '0.5rem',
-							}}>
-							{singleLessonBeforeSave?.type}
-						</Typography>
+					<Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+						<Box>
+							<Typography
+								variant='body1'
+								sx={{
+									textTransform: 'capitalize',
+									color: theme.textColor?.common.main,
+									padding: '0 0 0.5rem 0.5rem',
+								}}>
+								{singleLessonBeforeSave?.type}{' '}
+							</Typography>
+						</Box>
+						<Box sx={{ paddingLeft: '0.5rem', color: theme.textColor?.common.main }}>
+							{isActive ? (
+								<Tooltip title='Published' placement='right'>
+									<PublishedWithChanges fontSize='small' />
+								</Tooltip>
+							) : (
+								<Tooltip title='Unpublished' placement='right'>
+									<Unpublished fontSize='small' />
+								</Tooltip>
+							)}
+						</Box>
 					</Box>
 				</Box>
 				<Box
@@ -122,13 +135,8 @@ const LessonPaper = ({
 					<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', height: '100%' }}>
 						<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
 							<Box>
-								<Typography variant='h4' sx={{ color: theme.textColor?.common.main }}>
+								<Typography variant='h5' sx={{ color: theme.textColor?.common.main }}>
 									{singleLessonBeforeSave?.title}
-								</Typography>
-							</Box>
-							<Box>
-								<Typography variant='body2' sx={{ color: theme.textColor?.common.main, ml: '0.5rem' }}>
-									{isActive ? '(Published)' : '(Unpublished)'}
 								</Typography>
 							</Box>
 						</Box>
@@ -154,7 +162,7 @@ const LessonPaper = ({
 								{isEditMode ? (
 									<Box>
 										<CustomSubmitButton
-											sx={{ padding: '0 0.75rem' }}
+											sx={{ padding: '0 0.75rem', backgroundColor: theme.bgColor?.greenPrimary }}
 											onClick={(e) => {
 												if (singleLessonBeforeSave?.title.trim() !== '' && singleLessonBeforeSave?.title !== '') {
 													setIsEditMode(false);

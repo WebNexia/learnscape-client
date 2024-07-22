@@ -11,7 +11,7 @@ import { BaseChapter } from '../interfaces/chapter';
 import { Reorder, useMotionValue } from 'framer-motion';
 import { useRaisedShadow } from '../hooks/useRaisedShadow';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
-import CoursePaper from '../components/adminSingleCourse/Paper';
+import CoursePaper from '../components/adminSingleCourse/CoursePaper';
 import CourseDetailsNonEditBox from '../components/adminSingleCourse/CourseDetailsNonEditBox';
 import CourseDetailsEditBox from '../components/adminSingleCourse/CourseDetailsEditBox';
 import { Lesson } from '../interfaces/lessons';
@@ -73,7 +73,6 @@ const AdminCourseEditPage = () => {
 
 	const [isEditMode, setIsEditMode] = useState<boolean>(false);
 	const [singleCourse, setSingleCourse] = useState<SingleCourse>();
-	const [isActive, setIsActive] = useState<boolean>(false);
 	const [isFree, setIsFree] = useState<boolean>(false);
 	const [isMissingField, setIsMissingField] = useState<boolean>(false);
 	const [isMissingFieldMsgOpen, setIsMissingFieldMsgOpen] = useState<boolean>(false);
@@ -114,7 +113,7 @@ const AdminCourseEditPage = () => {
 			if (prevData) {
 				const updatedDocuments = prevData.documents
 					?.filter((document) => document !== null)
-					.map((thisDoc) => {
+					?.map((thisDoc) => {
 						if (thisDoc._id === document._id) {
 							return { ...thisDoc, name: originalDocumentNames[document._id] || thisDoc.name }; // Revert to original name
 						} else {
@@ -146,7 +145,7 @@ const AdminCourseEditPage = () => {
 			};
 
 			setChapterLessonDataBeforeSave((prevData) => {
-				return [newChapterBeforeSave, ...prevData];
+				return [...prevData, newChapterBeforeSave];
 			});
 		} catch (error) {
 			console.log(error);
@@ -167,29 +166,28 @@ const AdminCourseEditPage = () => {
 					if (courseResponse?.price?.toLowerCase() === 'free') {
 						setIsFree(true);
 					}
-					setIsActive(courseResponse.isActive);
 
-					if (courseResponse.chapters[0].title) {
+					if (courseResponse?.chapters[0]?.title) {
 						// Initialize chapter lesson data
-						const initialChapterLessonData: ChapterLessonData[] = courseResponse.chapters.map((chapter: BaseChapter) => {
+						const initialChapterLessonData: ChapterLessonData[] = courseResponse.chapters?.map((chapter: BaseChapter) => {
 							return {
 								chapterId: chapter._id,
 								title: chapter.title,
 								lessons: chapter.lessons,
-								lessonIds: chapter.lessons.map((lesson: Lesson) => lesson._id),
+								lessonIds: chapter.lessons?.map((lesson: Lesson) => lesson._id),
 							};
 						});
 						setChapterLessonData(initialChapterLessonData);
 						setChapterLessonDataBeforeSave(initialChapterLessonData);
 					}
 
-					const chapterUpdateData = courseResponse.chapters.map((chapter: BaseChapter) => ({
+					const chapterUpdateData = courseResponse.chapters?.map((chapter: BaseChapter) => ({
 						chapterId: chapter._id,
 						isUpdated: false,
 					}));
 					setIsChapterUpdated(chapterUpdateData);
 
-					const documentUpdateData = courseResponse.documents.map((document: Document) => ({
+					const documentUpdateData = courseResponse.documents?.map((document: Document) => ({
 						documentId: document._id,
 						isUpdated: false,
 					}));
@@ -203,14 +201,22 @@ const AdminCourseEditPage = () => {
 	}, [courseId, resetChanges]);
 
 	const handlePublishing = async (): Promise<void> => {
-		if (singleCourse?.chapterIds.length === 0 && !singleCourse?.isActive) {
+		if (
+			(singleCourse?.chapterIds.length === 0 || singleCourse?.chapters?.filter((chapter) => chapter !== null).length === 0) &&
+			!singleCourse?.isActive
+		) {
 			setIsNoChapterMsgOpen(true);
 		} else if (courseId !== undefined) {
 			try {
 				await axios.patch(`${base_url}/courses/${courseId}`, {
 					isActive: !singleCourse?.isActive,
 				});
-				setIsActive(!singleCourse?.isActive);
+				setSingleCourse((prevData) => {
+					if (prevData) {
+						return { ...prevData, isActive: !singleCourse?.isActive };
+					}
+					return prevData;
+				});
 				updateCoursePublishing(courseId);
 			} catch (error) {
 				console.log(error);
@@ -230,9 +236,9 @@ const AdminCourseEditPage = () => {
 				return;
 			}
 			updatedChapters = await Promise.all(
-				chapterLessonDataBeforeSave.map(async (chapter) => {
+				chapterLessonDataBeforeSave?.map(async (chapter) => {
 					chapter.lessons = await Promise.all(
-						chapter.lessons.map(async (lesson: Lesson) => {
+						chapter.lessons?.map(async (lesson: Lesson) => {
 							if (lesson._id.includes('temp_lesson_id')) {
 								try {
 									const lessonResponse = await axios.post(`${base_url}/lessons`, {
@@ -255,7 +261,7 @@ const AdminCourseEditPage = () => {
 						})
 					);
 
-					chapter.lessonIds = chapter.lessons.map((lesson) => lesson._id);
+					chapter.lessonIds = chapter.lessons?.map((lesson) => lesson._id);
 
 					if (chapter.chapterId.includes('temp_chapter_id')) {
 						try {
@@ -278,8 +284,8 @@ const AdminCourseEditPage = () => {
 
 			if (singleCourse?.documents) {
 				const updatedDocumentsPromises = (singleCourse?.documents as (Document | null)[]) // Assert as array of Document or null
-					.filter((doc): doc is Document => doc !== null) // Type guard to filter out nulls
-					.map(async (document) => {
+					?.filter((doc): doc is Document => doc !== null) // Type guard to filter out nulls
+					?.map(async (document) => {
 						if (document._id.includes('temp_doc_id')) {
 							try {
 								const response = await axios.post(`${base_url}/documents`, {
@@ -304,7 +310,7 @@ const AdminCourseEditPage = () => {
 			}
 
 			await Promise.all(
-				updatedDocuments.map(async (doc) => {
+				updatedDocuments?.map(async (doc) => {
 					const trackData = isDocumentUpdated.find((data) => data.documentId === doc._id);
 					if (trackData?.isUpdated) {
 						try {
@@ -319,7 +325,7 @@ const AdminCourseEditPage = () => {
 				})
 			);
 
-			const updatedDocumentIds = updatedDocuments.map((doc) => doc._id);
+			const updatedDocumentIds = updatedDocuments?.map((doc) => doc._id);
 
 			if (singleCourse) {
 				const updatedCourse = {
@@ -372,7 +378,7 @@ const AdminCourseEditPage = () => {
 				}
 			}
 
-			const chapterUpdateData = updatedChapters.map((chapter) => ({
+			const chapterUpdateData = updatedChapters?.map((chapter) => ({
 				chapterId: chapter.chapterId,
 				isUpdated: false,
 			}));
@@ -393,7 +399,6 @@ const AdminCourseEditPage = () => {
 				<CoursePaper
 					userId={userId}
 					singleCourse={singleCourse}
-					isActive={isActive}
 					chapterLessonData={chapterLessonData}
 					chapterLessonDataBeforeSave={chapterLessonDataBeforeSave}
 					isEditMode={isEditMode}
@@ -441,7 +446,7 @@ const AdminCourseEditPage = () => {
 										alignItems: 'center',
 										width: '100%',
 									}}>
-									<Typography variant='h4' sx={{ mb: '1rem' }}>
+									<Typography variant='h5' sx={{ mb: '1rem' }}>
 										CHAPTERS
 									</Typography>
 									<CustomSubmitButton
@@ -461,6 +466,10 @@ const AdminCourseEditPage = () => {
 											e.preventDefault();
 											createChapterTemplate();
 											closeCreateChapterModal();
+											window.scrollTo({
+												top: document.body.scrollHeight,
+												behavior: 'smooth',
+											});
 										}}
 										style={{ display: 'flex', flexDirection: 'column' }}>
 										<CustomTextField
@@ -484,9 +493,12 @@ const AdminCourseEditPage = () => {
 											display: 'flex',
 											justifyContent: 'center',
 											alignItems: 'center',
-											height: '30vh',
+											height: '25vh',
+											boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
+											borderRadius: '0.35rem',
+											mt: '1rem',
 										}}>
-										<Typography variant='body1'>No chapters for this course</Typography>
+										<Typography variant='body1'>No chapter for this course</Typography>
 									</Box>
 								) : (
 									<Reorder.Group
@@ -515,7 +527,22 @@ const AdminCourseEditPage = () => {
 									</Reorder.Group>
 								)}
 							</Box>
-							<Box sx={{ margin: '2rem 0 1rem 0' }}>
+
+							{chapterLessonDataBeforeSave.length > 2 && (
+								<Box sx={{ display: 'flex', width: '100%', justifyContent: 'flex-end', margin: '-1rem 0 2rem 0' }}>
+									<CustomSubmitButton
+										type='button'
+										sx={{ marginBottom: '1rem' }}
+										onClick={() => {
+											setIsChapterCreateModalOpen(true);
+											setNewChapterTitle('');
+										}}>
+										New Chapter
+									</CustomSubmitButton>
+								</Box>
+							)}
+
+							<Box sx={{ margin: '5rem 0 1rem 0' }}>
 								<HandleDocUploadURL
 									label='Course Materials'
 									onDocUploadLogic={(url, docName) => {
@@ -532,8 +559,8 @@ const AdminCourseEditPage = () => {
 												return {
 													...prevData,
 													documents: [
-														{ _id: generateUniqueId('temp_doc_id_'), name: newName, documentUrl: url, orgId, userId, createdAt: '', updatedAt: '' },
 														...prevData.documents,
+														{ _id: generateUniqueId('temp_doc_id_'), name: newName, documentUrl: url, orgId, userId, createdAt: '', updatedAt: '' },
 													],
 												};
 											}
@@ -578,7 +605,7 @@ const AdminCourseEditPage = () => {
 										if (prevData) {
 											const updatedDocuments = prevData.documents
 												?.filter((document) => document !== null)
-												.map((thisDoc) => {
+												?.map((thisDoc) => {
 													if (thisDoc._id === document._id) {
 														return { ...thisDoc, name: e.target.value };
 													} else {

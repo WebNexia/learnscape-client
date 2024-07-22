@@ -50,7 +50,7 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 	const fetchCourses = async (page: number) => {
 		if (!orgId) return;
 		try {
-			const response = await axios.get(`${base_url}/courses/organisation/${orgId}?page=${page}&limit=10`);
+			const response = await axios.get(`${base_url}/courses/organisation/${orgId}?page=${page}&limit=30`);
 
 			// Initial sorting when fetching data
 			const sortedDataCopy = [...response.data.data].sort((a: Course, b: Course) => b.updatedAt.localeCompare(a.updatedAt));

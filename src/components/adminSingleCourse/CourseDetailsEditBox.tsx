@@ -199,11 +199,13 @@ const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree,
 							sx={{ marginTop: '0.5rem' }}
 							value={singleCourse?.durationHours || ''}
 							onChange={(e) => {
-								if (singleCourse?.durationHours !== undefined) {
-									setSingleCourse({
-										...singleCourse,
-										durationHours: +e.target.value,
-									});
+								if (singleCourse) {
+									if (singleCourse?.durationHours !== undefined) {
+										setSingleCourse({
+											...singleCourse,
+											durationHours: +e.target.value,
+										});
+									}
 								}
 							}}
 							type='number'
@@ -239,7 +241,7 @@ const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree,
 					<HandleImageUploadURL
 						label='Cover Image'
 						onImageUploadLogic={(url) => {
-							if (singleCourse?.imageUrl !== undefined) {
+							if (singleCourse) {
 								setSingleCourse({
 									...singleCourse,
 									imageUrl: url,
@@ -247,13 +249,14 @@ const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree,
 							}
 						}}
 						onChangeImgUrl={(e) => {
-							setSingleCourse(() => {
-								if (singleCourse?.imageUrl !== undefined) {
-									return { ...singleCourse, imageUrl: e.target.value };
-								}
-							});
+							if (singleCourse) {
+								setSingleCourse({
+									...singleCourse,
+									imageUrl: e.target.value,
+								});
+							}
 						}}
-						imageUrlValue={singleCourse?.imageUrl}
+						imageUrlValue={singleCourse?.imageUrl || ''}
 						imageFolderName='CourseImages'
 						enterImageUrl={enterImageUrl}
 						setEnterImageUrl={setEnterImageUrl}

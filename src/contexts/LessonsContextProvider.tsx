@@ -54,7 +54,7 @@ const LessonsContextProvider = (props: LessonsContextProviderProps) => {
 		if (!orgId) return;
 
 		try {
-			const response = await axios.get(`${base_url}/lessons/organisation/${orgId}?page=${page}&limit=20`);
+			const response = await axios.get(`${base_url}/lessons/organisation/${orgId}?page=${page}&limit=50`);
 
 			// Initial sorting when fetching data
 			const sortedLessonsDataCopy = [...response.data.data].sort((a: Lesson, b: Lesson) => b.updatedAt.localeCompare(a.updatedAt));

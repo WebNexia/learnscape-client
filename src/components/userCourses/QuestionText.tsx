@@ -13,7 +13,7 @@ const QuestionText = ({ question, questionNumber }: QuestionTextProps) => {
 			sx={{
 				margin: question.videoUrl || question.imageUrl ? '3rem 0 1rem 0' : '11rem 0 1rem 0',
 			}}>
-			<Box sx={{ display: 'flex', justifyContent: 'center' }}>
+			<Box className='rich-text-content' sx={{ display: 'flex', justifyContent: 'center' }}>
 				<Typography variant='h6' sx={{ mr: '0.5rem' }}>
 					{questionNumber})
 				</Typography>
