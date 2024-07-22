@@ -166,7 +166,7 @@ const QuizQuestion = ({
 				alignItems: 'center',
 			}}>
 			<form style={{ width: '100%' }}>
-				<FormControl sx={{ margin: '1rem', width: '100%' }} variant='standard'>
+				<FormControl sx={{ width: '100%' }} variant='standard'>
 					<QuestionMedia question={question} />
 					<QuestionText question={question} questionNumber={questionNumber} />
 

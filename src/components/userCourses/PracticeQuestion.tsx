@@ -296,7 +296,7 @@ const PracticeQuestion = ({
 					width: '100%',
 				}}>
 				<form onSubmit={handleSubmit} style={{ width: '100%' }}>
-					<FormControl sx={{ margin: '1rem', width: '100%' }} error={error} variant='standard'>
+					<FormControl sx={{ width: '100%' }} error={error} variant='standard'>
 						<QuestionMedia question={question} />
 						<QuestionText question={question} questionNumber={questionNumber} />
 
@@ -436,33 +436,59 @@ const PracticeQuestion = ({
 						</Box>
 					)}
 
-					<IconButton
-						onClick={() => {
-							if (!(displayedQuestionNumber + 1 > numberOfQuestions)) {
-								setDisplayedQuestionNumber((prev) => prev + 1);
-								setSelectedQuestion(displayedQuestionNumber + 1);
-							}
-							if (isLessonCompleted && displayedQuestionNumber === numberOfQuestions) {
-								setIsLessonCourseCompletedModalOpen(true);
-							}
-							window.scrollTo({ top: 0, behavior: 'smooth' });
-							setIsOpenEndedAnswerSubmitted(false);
-						}}
-						sx={{
-							flexShrink: 0,
-							color: !isAnswerCorrect && !isOpenEndedAnswerSubmitted ? 'gray' : theme.textColor?.common.main,
-							backgroundColor: !isAnswerCorrect && !isOpenEndedAnswerSubmitted ? 'inherit' : theme.bgColor?.greenPrimary,
-							':hover': {
-								color: theme.bgColor?.greenPrimary,
-								backgroundColor: 'transparent',
-							},
-						}}
-						disabled={
-							(!isAnswerCorrect || displayedQuestionNumber + 1 > numberOfQuestions || !isOpenEndedAnswerSubmitted) &&
-							!(isLessonCompleted || displayedQuestionNumber < getLastQuestion())
-						}>
-						{isCompletingCourse ? 'Complete Course' : isCompletingLesson ? <Done fontSize='large' /> : <KeyboardArrowRight fontSize='large' />}
-					</IconButton>
+					{displayedQuestionNumber !== numberOfQuestions ? (
+						<IconButton
+							onClick={() => {
+								if (!(displayedQuestionNumber + 1 > numberOfQuestions)) {
+									setDisplayedQuestionNumber((prev) => prev + 1);
+									setSelectedQuestion(displayedQuestionNumber + 1);
+								}
+								if (isLessonCompleted && displayedQuestionNumber === numberOfQuestions) {
+									setIsLessonCourseCompletedModalOpen(true);
+								}
+								window.scrollTo({ top: 0, behavior: 'smooth' });
+								setIsOpenEndedAnswerSubmitted(false);
+							}}
+							sx={{
+								flexShrink: 0,
+								color: !isAnswerCorrect && !isOpenEndedAnswerSubmitted ? 'gray' : theme.textColor?.common.main,
+								backgroundColor: !isAnswerCorrect && !isOpenEndedAnswerSubmitted ? 'inherit' : theme.bgColor?.greenPrimary,
+								':hover': {
+									color: theme.bgColor?.greenPrimary,
+									backgroundColor: 'transparent',
+								},
+							}}
+							disabled={
+								(!isAnswerCorrect || displayedQuestionNumber + 1 > numberOfQuestions || !isOpenEndedAnswerSubmitted) &&
+								!(isLessonCompleted || displayedQuestionNumber < getLastQuestion())
+							}>
+							{isCompletingCourse ? 'Complete Course' : isCompletingLesson ? <Done fontSize='large' /> : <KeyboardArrowRight fontSize='large' />}
+						</IconButton>
+					) : (
+						<IconButton
+							onClick={() => {
+								if (isLessonCompleted) {
+									setIsLessonCourseCompletedModalOpen(true);
+								}
+								window.scrollTo({ top: 0, behavior: 'smooth' });
+								setIsOpenEndedAnswerSubmitted(false);
+							}}
+							sx={{
+								flexShrink: 0,
+								color: !isAnswerCorrect && !isOpenEndedAnswerSubmitted ? 'gray' : theme.textColor?.common.main,
+								backgroundColor: !isAnswerCorrect && !isOpenEndedAnswerSubmitted ? 'inherit' : theme.bgColor?.greenPrimary,
+								':hover': {
+									color: theme.bgColor?.greenPrimary,
+									backgroundColor: 'transparent',
+								},
+							}}
+							disabled={
+								(!isAnswerCorrect || displayedQuestionNumber + 1 > numberOfQuestions || !isOpenEndedAnswerSubmitted) &&
+								!(isLessonCompleted || displayedQuestionNumber < getLastQuestion())
+							}>
+							{isCompletingCourse ? 'Complete Course' : isCompletingLesson ? <Done fontSize='large' /> : <KeyboardArrowRight fontSize='large' />}
+						</IconButton>
+					)}
 
 					<CustomDialog
 						openModal={isLessonCourseCompletedModalOpen}
@@ -485,7 +511,7 @@ const PracticeQuestion = ({
 					display: 'flex',
 					justifyContent: 'flex-end',
 					position: 'fixed',
-					top: '10rem',
+					top: '11rem',
 					right: '2rem',
 					width: '80%',
 					zIndex: 9,

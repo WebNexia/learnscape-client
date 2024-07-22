@@ -15,7 +15,7 @@ const QuestionMedia = ({ question }: QuestionMediaProps) => {
 				alignItems: 'center',
 				width: '100%',
 				height: question?.imageUrl || question?.videoUrl ? '18rem' : '0',
-				margin: question?.imageUrl || question?.videoUrl ? '10rem 0 2rem 0' : 'none',
+				margin: question?.imageUrl || question?.videoUrl ? '11rem 0 2rem 0' : 'none',
 			}}>
 			{question?.imageUrl && (
 				<Box
@@ -31,9 +31,10 @@ const QuestionMedia = ({ question }: QuestionMediaProps) => {
 						alt='question_img'
 						style={{
 							height: '100%',
-							width: question?.videoUrl ? '90%' : '50%',
+							width: 'fit-content',
 							borderRadius: '0.2rem',
 							boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
+							objectFit: 'contain',
 						}}
 					/>
 				</Box>

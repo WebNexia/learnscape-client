@@ -120,6 +120,7 @@ const Loading = () => {
 							width: '3rem',
 							borderRadius: '50%',
 							marginBottom: '0.5rem',
+							objectFit: 'contain',
 						}}
 					/>
 					<Typography variant='body1' sx={{ color: theme.textColor?.common.main }}>

@@ -53,31 +53,34 @@ const AdminCourseEditChapter = ({
 					display: 'flex',
 					justifyContent: 'space-between',
 					alignItems: 'center',
-					mb: '1rem',
 				}}>
-				<Box>
-					<CustomTextField
-						value={chapter.title}
-						onChange={(e) => {
-							chapterUpdateTrack(chapter.chapterId, setIsChapterUpdated);
+				<Box sx={{ width: '40%' }}>
+					<Tooltip title='Max 50 Characters' placement='top'>
+						<CustomTextField
+							sx={{ marginTop: '0.85rem', width: '100%' }}
+							InputProps={{ inputProps: { maxLength: 50 } }}
+							value={chapter.title}
+							onChange={(e) => {
+								chapterUpdateTrack(chapter.chapterId, setIsChapterUpdated);
 
-							setChapterLessonDataBeforeSave((prevData) => {
-								const updatedChapters = prevData?.map((currentChapter) => {
-									if (chapter.chapterId === currentChapter.chapterId) {
-										return {
-											...currentChapter,
-											title: e.target.value,
-										};
-									}
-									return currentChapter;
+								setChapterLessonDataBeforeSave((prevData) => {
+									const updatedChapters = prevData?.map((currentChapter) => {
+										if (chapter.chapterId === currentChapter.chapterId) {
+											return {
+												...currentChapter,
+												title: e.target.value,
+											};
+										}
+										return currentChapter;
+									});
+									return updatedChapters;
 								});
-								return updatedChapters;
-							});
 
-							setIsMissingField(false);
-						}}
-						error={isMissingField && chapter?.title === ''}
-					/>
+								setIsMissingField(false);
+							}}
+							error={isMissingField && chapter?.title === ''}
+						/>
+					</Tooltip>
 					{isMissingField && chapter?.title === '' && <CustomErrorMessage>Please enter chapter title</CustomErrorMessage>}
 				</Box>
 				<Box sx={{ display: 'flex' }}>
@@ -212,13 +215,13 @@ const AdminCourseEditChapter = ({
 												margin: '0 1rem',
 												width: '100%',
 											}}>
-											<Box>
+											<Box sx={{ flex: 4 }}>
 												<Typography variant='body2'>{lesson.title}</Typography>
 											</Box>
-											<Box>
+											<Box sx={{ flex: 1 }}>
 												<Typography variant='body2'>{lesson.isActive ? 'Published' : 'Unpublished'}</Typography>
 											</Box>
-											<Box sx={{ display: 'flex', alignItems: 'center' }}>
+											<Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', flex: 4 }}>
 												<Box sx={{ mr: '1rem' }}>
 													<Typography variant='body2'>({lesson.type})</Typography>
 												</Box>

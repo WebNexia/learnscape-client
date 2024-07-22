@@ -446,7 +446,7 @@ const AdminCourseEditPage = () => {
 										alignItems: 'center',
 										width: '100%',
 									}}>
-									<Typography variant='h4' sx={{ mb: '1rem' }}>
+									<Typography variant='h5' sx={{ mb: '1rem' }}>
 										CHAPTERS
 									</Typography>
 									<CustomSubmitButton
@@ -493,9 +493,12 @@ const AdminCourseEditPage = () => {
 											display: 'flex',
 											justifyContent: 'center',
 											alignItems: 'center',
-											height: '30vh',
+											height: '25vh',
+											boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
+											borderRadius: '0.35rem',
+											mt: '1rem',
 										}}>
-										<Typography variant='body1'>No chapters for this course</Typography>
+										<Typography variant='body1'>No chapter for this course</Typography>
 									</Box>
 								) : (
 									<Reorder.Group
@@ -525,8 +528,8 @@ const AdminCourseEditPage = () => {
 								)}
 							</Box>
 
-							{chapterLessonDataBeforeSave.length > 1 && (
-								<Box sx={{ display: 'flex', width: '100%', justifyContent: 'flex-end', margin: '-1rem 0 5rem 0' }}>
+							{chapterLessonDataBeforeSave.length > 2 && (
+								<Box sx={{ display: 'flex', width: '100%', justifyContent: 'flex-end', margin: '-1rem 0 2rem 0' }}>
 									<CustomSubmitButton
 										type='button'
 										sx={{ marginBottom: '1rem' }}
@@ -539,7 +542,7 @@ const AdminCourseEditPage = () => {
 								</Box>
 							)}
 
-							<Box sx={{ margin: '2rem 0 1rem 0' }}>
+							<Box sx={{ margin: '5rem 0 1rem 0' }}>
 								<HandleDocUploadURL
 									label='Course Materials'
 									onDocUploadLogic={(url, docName) => {

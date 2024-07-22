@@ -271,7 +271,7 @@ const LessonPage = () => {
 					</Typography>
 				</Box>
 			</Box>
-			<Box sx={{ position: 'fixed', top: '10rem', left: '2rem', width: '80%', zIndex: 10 }}>
+			<Box sx={{ position: 'fixed', top: '11rem', left: '2rem', width: '80%', zIndex: 10 }}>
 				<Tooltip title='Take Notes' placement='right'>
 					<IconButton onClick={() => setIsNotesDrawerOpen(!isNotesDrawerOpen)}>
 						<Article />
@@ -284,8 +284,8 @@ const LessonPage = () => {
 							left: 0,
 							top: '13rem',
 							width: '40%',
-							minHeight: '60%',
-							maxHeight: '70%',
+							height: 'fit-content',
+							maxHeight: 'calc(100vh - 10rem)',
 							boxShadow: 10,
 							padding: '1.75rem',
 							borderRadius: '0 0.35rem  0.35rem 0 ',
@@ -311,7 +311,7 @@ const LessonPage = () => {
 								</Box>
 								<Box sx={{ mt: '0.5rem' }} id='editor-content'>
 									<TinyMceEditor
-										height='350'
+										height='400'
 										handleEditorChange={(content) => {
 											setEditorContent(content);
 											setIsNotesUpdated(false);
@@ -359,7 +359,7 @@ const LessonPage = () => {
 							display: 'flex',
 							justifyContent: 'center',
 							alignItems: 'center',
-							margin: '11rem 0 2rem 0',
+							margin: '10rem 0 2rem 0',
 							width: '100%',
 							height: '22rem',
 						}}>
@@ -385,44 +385,41 @@ const LessonPage = () => {
 				)}
 			</Box>
 
-			{lessonType !== LessonType.INSTRUCTIONAL_LESSON && !isQuestionsVisible && (
-				<Box
-					sx={{
-						display: 'flex',
-						justifyContent: 'flex-start',
-						width: '85%',
-						margin: lesson?.videoUrl ? '3rem 0 1rem 0' : '12rem 0 1rem 0',
-					}}>
-					<Typography variant='h5'>Instructions</Typography>
-				</Box>
-			)}
-
 			{lesson?.text && !isQuestionsVisible && (
 				<Box
 					sx={{
 						display: 'flex',
+						flexDirection: 'column',
 						justifyContent: 'flex-start',
-						alignItems: 'flex-start',
-						margin: lesson.videoUrl ? '1rem 0 3rem 0' : '12rem 0 3rem 0',
+						alignItems: 'center',
 						width: '85%',
-						boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
-						padding: '2rem',
-						backgroundColor: theme.bgColor?.common,
-						borderRadius: '0.35rem',
+						margin: lesson?.videoUrl ? '1rem 0' : '10rem 0 1rem 0',
 					}}>
-					<Box>
-						<Typography
-							variant='body1'
-							component='div'
-							dangerouslySetInnerHTML={{ __html: sanitizeHtml(lesson.text) }}
-							sx={{ lineHeight: 1.9, textAlign: 'justify' }}
-						/>
+					<Box sx={{ width: '100%', marginBottom: '1rem' }}>
+						<Typography variant='h5'>{lessonType !== LessonType.INSTRUCTIONAL_LESSON ? 'Instructions' : ''}</Typography>
+					</Box>
+					<Box
+						sx={{
+							boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
+							padding: '2rem',
+							backgroundColor: theme.bgColor?.common,
+							borderRadius: '0.35rem',
+							width: '100%',
+						}}>
+						<Box className='rich-text-content'>
+							<Typography
+								variant='body1'
+								component='div'
+								dangerouslySetInnerHTML={{ __html: sanitizeHtml(lesson.text) }}
+								sx={{ lineHeight: 1.9, textAlign: 'justify' }}
+							/>
+						</Box>
 					</Box>
 				</Box>
 			)}
 
 			{lessonType !== LessonType.INSTRUCTIONAL_LESSON && !isQuestionsVisible && (
-				<Box>
+				<Box sx={{ mt: '2rem' }}>
 					<CustomSubmitButton
 						onClick={() => {
 							setIsQuestionsVisible(true);
@@ -444,7 +441,7 @@ const LessonPage = () => {
 			)}
 
 			{isQuestionsVisible && (
-				<Box sx={{ width: '85%' }}>
+				<Box sx={{ width: '80%' }}>
 					<Questions
 						questions={lesson?.questions}
 						lessonType={lessonType}

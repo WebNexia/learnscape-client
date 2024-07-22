@@ -27,10 +27,11 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters }: CourseDetailsNonEdi
 					sx={{
 						mt: '3rem',
 						padding: '2rem',
-						boxShadow: '0 0 0.3rem 0 rgba(0,0,0,0.2)',
+						boxShadow: '0 0 0.4rem 0.2rem rgba(0,0,0,0.2)',
 						flex: 3,
+						borderRadius: '0.35rem',
 					}}>
-					<Typography variant='h4'>Description</Typography>
+					<Typography variant='h5'>Description</Typography>
 					<Typography variant='body2' sx={{ mt: '0.5rem' }}>
 						{singleCourse?.description}
 					</Typography>
@@ -51,7 +52,7 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters }: CourseDetailsNonEdi
 							height='115rem'
 							style={{
 								borderRadius: '0.2rem',
-								boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
+								boxShadow: '0 0 0.4rem 0.2rem rgba(0,0,0,0.2)',
 							}}
 						/>
 						<Box>
@@ -70,45 +71,51 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters }: CourseDetailsNonEdi
 					alignItems: 'center',
 					mt: '2rem',
 					padding: '2rem',
-					boxShadow: '0 0 0.3rem 0 rgba(0,0,0,0.2)',
+					boxShadow: '0 0 0.4rem 0.2rem rgba(0,0,0,0.2)',
+					borderRadius: '0.35rem',
 				}}>
 				<Box sx={{ textAlign: 'center' }}>
-					<Typography variant='h4'>Price</Typography>
+					<Typography variant='h5'>Price</Typography>
 					<Typography variant='body2' sx={{ mt: '0.5rem' }}>
 						{singleCourse?.priceCurrency}
 						{singleCourse?.price}
 					</Typography>
 				</Box>
 				<Box sx={{ textAlign: 'center' }}>
-					<Typography variant='h4'>Starting Date</Typography>
+					<Typography variant='h5'>Starting Date</Typography>
 					<Typography variant='body2' sx={{ mt: '0.5rem' }}>
 						{dateFormatter(singleCourse?.startingDate)}
 					</Typography>
 				</Box>
 				<Box sx={{ textAlign: 'center' }}>
-					<Typography variant='h4'>Weeks</Typography>
+					<Typography variant='h5'>Weeks</Typography>
 					<Typography variant='body2' sx={{ mt: '0.5rem' }}>
 						{singleCourse?.durationWeeks}
 					</Typography>
 				</Box>
 				<Box sx={{ textAlign: 'center' }}>
-					<Typography variant='h4'>Hours</Typography>
+					<Typography variant='h5'>Hours</Typography>
 					<Typography variant='body2' sx={{ mt: '0.5rem' }}>
 						{singleCourse?.durationHours}
 					</Typography>
 				</Box>
 			</Box>
 			<Box sx={{ mt: '6rem', minHeight: '40vh' }}>
-				<Typography variant='h4'>CHAPTERS</Typography>
+				<Typography variant='h5' sx={{ mb: '2.25rem' }}>
+					CHAPTERS
+				</Typography>
 				{singleCourse?.chapterIds?.length === 0 ? (
 					<Box
 						sx={{
 							display: 'flex',
 							justifyContent: 'center',
 							alignItems: 'center',
-							height: '30vh',
+							height: '25vh',
+							boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
+							borderRadius: '0.35rem',
+							mt: '1rem',
 						}}>
-						<Typography variant='body1'>No chapters for this course</Typography>
+						<Typography variant='body1'>No chapter for this course</Typography>
 					</Box>
 				) : (
 					<>
@@ -193,21 +200,36 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters }: CourseDetailsNonEdi
 					</>
 				)}
 			</Box>
-			<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', width: '90%', margin: '2rem 0 4rem 0' }}>
-				<Box>
-					<Typography variant='h4' sx={{ mb: '1.25rem' }}>
-						Course Materials
-					</Typography>
+			<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', width: '100%', margin: '2rem 0 4rem 0' }}>
+				<Box sx={{ mb: '1.25rem' }}>
+					<Typography variant='h5'>Course Materials</Typography>
 				</Box>
-				{singleCourse?.documents
-					?.filter((doc) => doc !== null)
-					?.map((doc) => (
-						<Box sx={{ mb: '0.5rem' }} key={doc._id}>
-							<Link href={doc?.documentUrl} target='_blank' rel='noopener noreferrer' variant='body2'>
-								{doc?.name}
-							</Link>
-						</Box>
-					))}
+				{singleCourse?.documents?.filter((doc) => doc !== null).length !== 0 ? (
+					<Box>
+						{singleCourse?.documents
+							?.filter((doc) => doc !== null)
+							?.map((doc) => (
+								<Box sx={{ mb: '0.5rem' }} key={doc._id}>
+									<Link href={doc?.documentUrl} target='_blank' rel='noopener noreferrer' variant='body2'>
+										{doc?.name}
+									</Link>
+								</Box>
+							))}
+					</Box>
+				) : (
+					<Box
+						sx={{
+							display: 'flex',
+							justifyContent: 'center',
+							alignItems: 'center',
+							height: '25vh',
+							boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
+							borderRadius: '0.35rem',
+							mt: '1rem',
+						}}>
+						<Typography variant='body1'>No material for this course</Typography>
+					</Box>
+				)}
 			</Box>
 		</Box>
 	);

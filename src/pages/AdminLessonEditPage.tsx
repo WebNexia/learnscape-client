@@ -530,11 +530,26 @@ const AdminLessonEditPage = () => {
 							<Typography variant='h4' sx={{ mb: '1.25rem' }}>
 								{singleLesson.type === LessonType.INSTRUCTIONAL_LESSON ? 'Lesson Instructions' : 'Instructions'}
 							</Typography>
-							<Typography
-								variant='body1'
-								dangerouslySetInnerHTML={{ __html: sanitizeHtml(singleLesson.text) }}
-								sx={{ boxShadow: singleLesson.text ? '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)' : 'none', padding: '1rem' }}
-							/>
+							{singleLesson.text ? (
+								<Typography
+									variant='body1'
+									dangerouslySetInnerHTML={{ __html: sanitizeHtml(singleLesson.text) }}
+									sx={{ boxShadow: singleLesson.text ? '0 0 0.4rem 0.2rem rgba(0,0,0,0.25)' : 'none', padding: '1rem', borderRadius: '0.35rem' }}
+								/>
+							) : (
+								<Box
+									sx={{
+										display: 'flex',
+										justifyContent: 'center',
+										alignItems: 'center',
+										height: '25vh',
+										boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
+										borderRadius: '0.35rem',
+										mt: '1rem',
+									}}>
+									<Typography variant='body1'>No instruction for this lesson</Typography>
+								</Box>
+							)}
 						</Box>
 
 						{singleLessonBeforeSave.type !== LessonType.INSTRUCTIONAL_LESSON && (
@@ -551,15 +566,32 @@ const AdminLessonEditPage = () => {
 									{singleLesson.type} Materials
 								</Typography>
 							</Box>
-							{singleLesson.documents
-								?.filter((doc) => doc !== null)
-								?.map((doc) => (
-									<Box sx={{ mb: '0.5rem' }} key={doc._id}>
-										<Link href={doc?.documentUrl} target='_blank' rel='noopener noreferrer' variant='body2'>
-											{doc?.name}
-										</Link>
-									</Box>
-								))}
+							{singleLesson.documents?.filter((doc) => doc !== null).length !== 0 ? (
+								<Box>
+									{singleLesson.documents
+										?.filter((doc) => doc !== null)
+										?.map((doc) => (
+											<Box sx={{ mb: '0.5rem' }} key={doc._id}>
+												<Link href={doc?.documentUrl} target='_blank' rel='noopener noreferrer' variant='body2'>
+													{doc?.name}
+												</Link>
+											</Box>
+										))}
+								</Box>
+							) : (
+								<Box
+									sx={{
+										display: 'flex',
+										justifyContent: 'center',
+										alignItems: 'center',
+										height: '25vh',
+										boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
+										borderRadius: '0.35rem',
+										mt: '1rem',
+									}}>
+									<Typography variant='body1'>No material for this lesson</Typography>
+								</Box>
+							)}
 						</Box>
 					</Box>
 				)}
@@ -587,23 +619,26 @@ const AdminLessonEditPage = () => {
 							<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '3rem' }}>
 								<Box sx={{ flex: 1, mr: '2rem' }}>
 									<Typography variant='h6'>Title*</Typography>
-									<CustomTextField
-										sx={{
-											marginTop: '0.5rem',
-										}}
-										value={singleLessonBeforeSave?.title}
-										placeholder='Enter title'
-										onChange={(e) => {
-											setIsLessonUpdated(true);
+									<Tooltip title='Max 50 Characters' placement='top'>
+										<CustomTextField
+											sx={{
+												marginTop: '0.5rem',
+											}}
+											value={singleLessonBeforeSave?.title}
+											InputProps={{ inputProps: { maxLength: 50 } }}
+											placeholder='Enter title'
+											onChange={(e) => {
+												setIsLessonUpdated(true);
 
-											setSingleLessonBeforeSave(() => {
-												setIsMissingField(false);
+												setSingleLessonBeforeSave(() => {
+													setIsMissingField(false);
 
-												return { ...singleLessonBeforeSave, title: e.target.value };
-											});
-										}}
-										error={isMissingField && singleLessonBeforeSave?.title === ''}
-									/>
+													return { ...singleLessonBeforeSave, title: e.target.value };
+												});
+											}}
+											error={isMissingField && singleLessonBeforeSave?.title === ''}
+										/>
+									</Tooltip>
 									{isMissingField && singleLessonBeforeSave?.title === '' && <CustomErrorMessage>Please enter a title</CustomErrorMessage>}
 								</Box>
 								<Box sx={{ flex: 1, textAlign: 'right', mt: '1rem' }}>
@@ -742,7 +777,7 @@ const AdminLessonEditPage = () => {
 											width: '100%',
 											mt: '5rem',
 										}}>
-										<Typography variant='h4' sx={{ mb: '1rem' }}>
+										<Typography variant='h5' sx={{ mb: '1rem' }}>
 											Questions
 										</Typography>
 										<Box>
@@ -788,7 +823,10 @@ const AdminLessonEditPage = () => {
 												display: 'flex',
 												justifyContent: 'center',
 												alignItems: 'center',
-												height: '30vh',
+												height: '25vh',
+												boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
+												borderRadius: '0.35rem',
+												mt: '1rem',
 											}}>
 											<Typography variant='body1'>No question for this lesson</Typography>
 										</Box>
@@ -921,6 +959,33 @@ const AdminLessonEditPage = () => {
 														}
 													})}
 											</Reorder.Group>
+											{singleLessonBeforeSave?.questions?.length >= 10 && (
+												<Box sx={{ display: 'flex', justifyContent: 'flex-end', marginTop: '2rem' }}>
+													<CustomSubmitButton
+														type='button'
+														sx={{ margin: '0 0.5rem 1rem 0' }}
+														onClick={() => {
+															setAddNewQuestionModalOpen(true);
+														}}>
+														Add Question
+													</CustomSubmitButton>
+
+													<CustomSubmitButton
+														type='button'
+														sx={{ marginBottom: '1rem' }}
+														onClick={() => {
+															setIsQuestionCreateModalOpen(true);
+															setQuestionType('');
+															setOptions(['']);
+															setCorrectAnswer('');
+															setIsDuplicateOption(false);
+															setIsMinimumOptions(true);
+															setCorrectAnswerIndex(-1);
+														}}>
+														Create Question
+													</CustomSubmitButton>
+												</Box>
+											)}
 										</Box>
 									)}
 								</>

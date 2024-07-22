@@ -57,7 +57,7 @@ const CreateLessonDialog = ({
 			_id: generateUniqueId('temp_lesson_id_'),
 			title,
 			type,
-			isActive: true,
+			isActive: false,
 			imageUrl: 'https://directmobilityonline.co.uk/assets/img/noimage.png',
 			videoUrl: '',
 			text: '',

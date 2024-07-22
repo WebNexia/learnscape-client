@@ -41,9 +41,10 @@ const QuestionDialogContentNonEdit = ({ question }: QuestionDialogContentNonEdit
 							alt='question_img'
 							style={{
 								height: '100%',
-								width: question?.videoUrl ? '90%' : '50%',
+								width: 'fit-content',
 								borderRadius: '0.2rem',
 								boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
+								objectFit: 'contain',
 							}}
 						/>
 					</Box>
