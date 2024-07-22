@@ -282,7 +282,7 @@ const LessonPage = () => {
 						sx={{
 							position: 'fixed',
 							left: 0,
-							top: '13rem',
+							top: '14rem',
 							width: '40%',
 							height: 'fit-content',
 							maxHeight: 'calc(100vh - 10rem)',
@@ -359,7 +359,7 @@ const LessonPage = () => {
 							display: 'flex',
 							justifyContent: 'center',
 							alignItems: 'center',
-							margin: '10rem 0 2rem 0',
+							margin: '11rem 0 2rem 0',
 							width: '100%',
 							height: '22rem',
 						}}>
@@ -393,7 +393,7 @@ const LessonPage = () => {
 						justifyContent: 'flex-start',
 						alignItems: 'center',
 						width: '85%',
-						margin: lesson?.videoUrl ? '1rem 0' : '10rem 0 1rem 0',
+						margin: lesson?.videoUrl ? '1rem 0' : '11rem 0 1rem 0',
 					}}>
 					<Box sx={{ width: '100%', marginBottom: '1rem' }}>
 						<Typography variant='h5'>{lessonType !== LessonType.INSTRUCTIONAL_LESSON ? 'Instructions' : ''}</Typography>

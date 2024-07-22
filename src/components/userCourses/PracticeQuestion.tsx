@@ -25,7 +25,7 @@ import TrueFalseOptions from '../layouts/questionTypes/TrueFalseOptions';
 import { QuestionsContext } from '../../contexts/QuestionsContextProvider';
 import CustomTextField from '../forms/customFields/CustomTextField';
 import { useUserCourseLessonData } from '../../hooks/useUserCourseLessonData';
-import { AutoAwesome, Close, Done, KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons-material';
+import { AutoAwesome, Close, Done, DoneAll, KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons-material';
 import AiIcon from '@mui/icons-material/AutoAwesome';
 import { UserQuestionData } from '../../hooks/useFetchUserQuestion';
 import { QuestionType } from '../../interfaces/enums';
@@ -179,7 +179,7 @@ const PracticeQuestion = ({
 
 		if (!existingUserAnswer || existingUserAnswer.userAnswer !== userAnswer) {
 			try {
-				if (fetchQuestionTypeName(question) === QuestionType.OPEN_ENDED || lessonType === 'Quiz') {
+				if (fetchQuestionTypeName(question) === QuestionType.OPEN_ENDED) {
 					const res = await axios.post(`${base_url}/userQuestions`, {
 						userLessonId,
 						questionId: question._id,
@@ -436,16 +436,14 @@ const PracticeQuestion = ({
 						</Box>
 					)}
 
-					{displayedQuestionNumber !== numberOfQuestions ? (
+					{displayedQuestionNumber !== numberOfQuestions || !isLessonCompleted ? (
 						<IconButton
 							onClick={() => {
 								if (!(displayedQuestionNumber + 1 > numberOfQuestions)) {
 									setDisplayedQuestionNumber((prev) => prev + 1);
 									setSelectedQuestion(displayedQuestionNumber + 1);
 								}
-								if (isLessonCompleted && displayedQuestionNumber === numberOfQuestions) {
-									setIsLessonCourseCompletedModalOpen(true);
-								}
+
 								window.scrollTo({ top: 0, behavior: 'smooth' });
 								setIsOpenEndedAnswerSubmitted(false);
 							}}
@@ -462,32 +460,32 @@ const PracticeQuestion = ({
 								(!isAnswerCorrect || displayedQuestionNumber + 1 > numberOfQuestions || !isOpenEndedAnswerSubmitted) &&
 								!(isLessonCompleted || displayedQuestionNumber < getLastQuestion())
 							}>
-							{isCompletingCourse ? 'Complete Course' : isCompletingLesson ? <Done fontSize='large' /> : <KeyboardArrowRight fontSize='large' />}
+							<KeyboardArrowRight fontSize='large' />
 						</IconButton>
 					) : (
-						<IconButton
-							onClick={() => {
-								if (isLessonCompleted) {
-									setIsLessonCourseCompletedModalOpen(true);
-								}
-								window.scrollTo({ top: 0, behavior: 'smooth' });
-								setIsOpenEndedAnswerSubmitted(false);
-							}}
-							sx={{
-								flexShrink: 0,
-								color: !isAnswerCorrect && !isOpenEndedAnswerSubmitted ? 'gray' : theme.textColor?.common.main,
-								backgroundColor: !isAnswerCorrect && !isOpenEndedAnswerSubmitted ? 'inherit' : theme.bgColor?.greenPrimary,
-								':hover': {
-									color: theme.bgColor?.greenPrimary,
-									backgroundColor: 'transparent',
-								},
-							}}
-							disabled={
-								(!isAnswerCorrect || displayedQuestionNumber + 1 > numberOfQuestions || !isOpenEndedAnswerSubmitted) &&
-								!(isLessonCompleted || displayedQuestionNumber < getLastQuestion())
-							}>
-							{isCompletingCourse ? 'Complete Course' : isCompletingLesson ? <Done fontSize='large' /> : <KeyboardArrowRight fontSize='large' />}
-						</IconButton>
+						<Tooltip
+							title={isCompletingCourse && isLessonCompleted ? 'Complete Course' : isCompletingLesson && isLessonCompleted ? 'Complete Lesson' : ''}
+							placement='top'>
+							<IconButton
+								onClick={() => {
+									if (isLessonCompleted) {
+										setIsLessonCourseCompletedModalOpen(true);
+									}
+									window.scrollTo({ top: 0, behavior: 'smooth' });
+									setIsOpenEndedAnswerSubmitted(false);
+								}}
+								sx={{
+									flexShrink: 0,
+									color: !isAnswerCorrect && !isOpenEndedAnswerSubmitted ? 'gray' : theme.textColor?.common.main,
+									backgroundColor: !isAnswerCorrect && !isOpenEndedAnswerSubmitted ? 'inherit' : theme.bgColor?.greenPrimary,
+									':hover': {
+										color: theme.bgColor?.greenPrimary,
+										backgroundColor: 'transparent',
+									},
+								}}>
+								{isCompletingCourse ? <DoneAll fontSize='large' /> : <Done fontSize='large' />}
+							</IconButton>
+						</Tooltip>
 					)}
 
 					<CustomDialog
@@ -557,7 +555,7 @@ const PracticeQuestion = ({
 							sx={{
 								position: 'fixed',
 								right: 0,
-								top: '13rem',
+								top: '14rem',
 								width: '30%',
 								minHeight: '30%',
 								maxHeight: '50%',

@@ -118,7 +118,7 @@ export const useUserCourseLessonData = () => {
 				localStorage.setItem('userCourseData', JSON.stringify(updatedUserCourseData));
 				setLocalStorageData((prev) => ({ ...prev, userCourseData: updatedUserCourseData }));
 
-				navigate(`/course/${courseId}/user/${userId}/userCourseId/${userCourseId}?isEnrolled=true`);
+				// navigate(`/course/${courseId}/user/${userId}/userCourseId/${userCourseId}?isEnrolled=true`);
 				window.scrollTo({ top: 0, behavior: 'smooth' });
 			}
 		} catch (error) {

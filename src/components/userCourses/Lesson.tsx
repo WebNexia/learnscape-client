@@ -82,7 +82,7 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 				height: isEnrolledStatus && isLessonInProgress ? '6rem' : '4rem',
 				borderBottom: `0.1rem solid ${theme.border.lightMain}`,
 				backgroundColor: isEnrolledStatus && isLessonInProgress ? theme.bgColor?.lessonInProgress : 'white',
-				cursor: isEnrolledStatus ? 'pointer' : 'none',
+				cursor: isEnrolledStatus ? 'pointer' : '',
 				borderRadius: '0.3rem 0.3rem 0 0 ',
 			}}
 			onClick={handleLessonClick}>
