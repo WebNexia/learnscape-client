@@ -6,6 +6,7 @@ import { ChapterLessonData } from '../../pages/AdminCourseEditPage';
 import { EditTwoTone } from '@mui/icons-material';
 import { useParams } from 'react-router-dom';
 import { dateFormatter } from '../../utils/dateFormatter';
+import NoContentBoxAdmin from '../layouts/noContentBox/noContentBoxAdmin';
 
 interface CourseDetailsNonEditBoxProps {
 	singleCourse?: SingleCourse;
@@ -105,18 +106,7 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters }: CourseDetailsNonEdi
 					CHAPTERS
 				</Typography>
 				{singleCourse?.chapterIds?.length === 0 ? (
-					<Box
-						sx={{
-							display: 'flex',
-							justifyContent: 'center',
-							alignItems: 'center',
-							height: '25vh',
-							boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
-							borderRadius: '0.35rem',
-							mt: '1rem',
-						}}>
-						<Typography variant='body1'>No chapter for this course</Typography>
-					</Box>
+					<NoContentBoxAdmin content='No chapter for this course' />
 				) : (
 					<>
 						{singleCourse &&
@@ -217,18 +207,7 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters }: CourseDetailsNonEdi
 							))}
 					</Box>
 				) : (
-					<Box
-						sx={{
-							display: 'flex',
-							justifyContent: 'center',
-							alignItems: 'center',
-							height: '25vh',
-							boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
-							borderRadius: '0.35rem',
-							mt: '1rem',
-						}}>
-						<Typography variant='body1'>No material for this course</Typography>
-					</Box>
+					<NoContentBoxAdmin content='No material for this course' />
 				)}
 			</Box>
 		</Box>

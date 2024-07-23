@@ -26,6 +26,7 @@ import { Document } from '../interfaces/document';
 import { DocumentUpdateTrack } from './AdminLessonEditPage';
 import { DocumentsContext } from '../contexts/DocumentsContextProvider';
 import DocumentsListEditBox from '../components/adminDocuments/DocumentsListEditBox';
+import NoContentBoxAdmin from '../components/layouts/noContentBox/noContentBoxAdmin';
 
 export interface ChapterUpdateTrack {
 	chapterId: string;
@@ -488,18 +489,7 @@ const AdminCourseEditPage = () => {
 								</CustomDialog>
 
 								{chapterLessonDataBeforeSave.length === 0 ? (
-									<Box
-										sx={{
-											display: 'flex',
-											justifyContent: 'center',
-											alignItems: 'center',
-											height: '25vh',
-											boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
-											borderRadius: '0.35rem',
-											mt: '1rem',
-										}}>
-										<Typography variant='body1'>No chapter for this course</Typography>
-									</Box>
+									<NoContentBoxAdmin content='No chapter for this course' />
 								) : (
 									<Reorder.Group
 										axis='y'

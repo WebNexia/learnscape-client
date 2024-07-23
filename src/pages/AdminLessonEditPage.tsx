@@ -40,6 +40,7 @@ import HandleDocUploadURL from '../components/forms/uploadImageVideoDocument/Han
 import { DocumentsContext } from '../contexts/DocumentsContextProvider';
 import DocumentsListEditBox from '../components/adminDocuments/DocumentsListEditBox';
 import { LessonType } from '../interfaces/enums';
+import NoContentBoxAdmin from '../components/layouts/noContentBox/noContentBoxAdmin';
 
 export interface QuestionUpdateTrack {
 	questionId: string;
@@ -537,18 +538,7 @@ const AdminLessonEditPage = () => {
 									sx={{ boxShadow: singleLesson.text ? '0 0 0.4rem 0.2rem rgba(0,0,0,0.25)' : 'none', padding: '1rem', borderRadius: '0.35rem' }}
 								/>
 							) : (
-								<Box
-									sx={{
-										display: 'flex',
-										justifyContent: 'center',
-										alignItems: 'center',
-										height: '25vh',
-										boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
-										borderRadius: '0.35rem',
-										mt: '1rem',
-									}}>
-									<Typography variant='body1'>No instruction for this lesson</Typography>
-								</Box>
+								<NoContentBoxAdmin content='No instruction for this lesson' />
 							)}
 						</Box>
 
@@ -579,18 +569,7 @@ const AdminLessonEditPage = () => {
 										))}
 								</Box>
 							) : (
-								<Box
-									sx={{
-										display: 'flex',
-										justifyContent: 'center',
-										alignItems: 'center',
-										height: '25vh',
-										boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
-										borderRadius: '0.35rem',
-										mt: '1rem',
-									}}>
-									<Typography variant='body1'>No material for this lesson</Typography>
-								</Box>
+								<NoContentBoxAdmin content='No material for this lesson' />
 							)}
 						</Box>
 					</Box>
@@ -818,18 +797,7 @@ const AdminLessonEditPage = () => {
 
 									{singleLessonBeforeSave?.questionIds.length === 0 ||
 									singleLessonBeforeSave?.questions?.filter((question) => question !== null).length === 0 ? (
-										<Box
-											sx={{
-												display: 'flex',
-												justifyContent: 'center',
-												alignItems: 'center',
-												height: '25vh',
-												boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
-												borderRadius: '0.35rem',
-												mt: '1rem',
-											}}>
-											<Typography variant='body1'>No question for this lesson</Typography>
-										</Box>
+										<NoContentBoxAdmin content='No question for this lesson' />
 									) : (
 										<Box sx={{ mb: '5rem' }}>
 											<Reorder.Group

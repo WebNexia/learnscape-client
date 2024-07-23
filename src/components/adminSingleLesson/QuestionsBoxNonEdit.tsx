@@ -7,6 +7,7 @@ import { truncateText } from '../../utils/utilText';
 import { useContext } from 'react';
 import { QuestionsContext } from '../../contexts/QuestionsContextProvider';
 import { LessonType } from '../../interfaces/enums';
+import NoContentBoxAdmin from '../layouts/noContentBox/noContentBoxAdmin';
 
 interface QuestionsBoxNonEditProps {
 	singleLesson?: Lesson;
@@ -28,18 +29,7 @@ const QuestionsBoxNonEdit = ({ singleLesson, setIsDisplayNonEditQuestion, setDis
 			<Box sx={{ mt: '3rem', minHeight: '40vh' }}>
 				<Typography variant='h4'>Questions</Typography>
 				{singleLesson?.questionIds?.length === 0 || singleLesson?.questions?.filter((question) => question !== null).length === 0 ? (
-					<Box
-						sx={{
-							display: 'flex',
-							justifyContent: 'center',
-							alignItems: 'center',
-							height: '25vh',
-							boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
-							borderRadius: '0.35rem',
-							mt: '1rem',
-						}}>
-						<Typography variant='body1'>No question for this lesson</Typography>
-					</Box>
+					<NoContentBoxAdmin content='No question for this lesson' />
 				) : (
 					<>
 						{singleLesson &&
