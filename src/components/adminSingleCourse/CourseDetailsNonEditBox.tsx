@@ -6,7 +6,7 @@ import { ChapterLessonData } from '../../pages/AdminCourseEditPage';
 import { EditTwoTone } from '@mui/icons-material';
 import { useParams } from 'react-router-dom';
 import { dateFormatter } from '../../utils/dateFormatter';
-import NoContentBoxAdmin from '../layouts/noContentBox/noContentBoxAdmin';
+import NoContentBoxAdmin from '../layouts/noContentBox/NoContentBoxAdmin';
 
 interface CourseDetailsNonEditBoxProps {
 	singleCourse?: SingleCourse;

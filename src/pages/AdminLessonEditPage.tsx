@@ -40,7 +40,7 @@ import HandleDocUploadURL from '../components/forms/uploadImageVideoDocument/Han
 import { DocumentsContext } from '../contexts/DocumentsContextProvider';
 import DocumentsListEditBox from '../components/adminDocuments/DocumentsListEditBox';
 import { LessonType } from '../interfaces/enums';
-import NoContentBoxAdmin from '../components/layouts/noContentBox/noContentBoxAdmin';
+import NoContentBoxAdmin from '../components/layouts/noContentBox/NoContentBoxAdmin';
 
 export interface QuestionUpdateTrack {
 	questionId: string;

@@ -7,7 +7,7 @@ import { truncateText } from '../../utils/utilText';
 import { useContext } from 'react';
 import { QuestionsContext } from '../../contexts/QuestionsContextProvider';
 import { LessonType } from '../../interfaces/enums';
-import NoContentBoxAdmin from '../layouts/noContentBox/noContentBoxAdmin';
+import NoContentBoxAdmin from '../layouts/noContentBox/NoContentBoxAdmin';
 
 interface QuestionsBoxNonEditProps {
 	singleLesson?: Lesson;
