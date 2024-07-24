@@ -38,8 +38,11 @@ const Questions: React.FC<QuestionsProps> = ({
 	const [aiDrawerOpen, setAiDrawerOpen] = useState<boolean[]>(Array(numberOfQuestions).fill(false));
 	const [isAiActive, setIsAiActive] = useState<boolean[]>(Array(numberOfQuestions).fill(false));
 
+	const isQuiz: boolean = lessonType === LessonType.QUIZ;
+	const isPracticeLesson: boolean = lessonType === LessonType.PRACTICE_LESSON;
+
 	useEffect(() => {
-		if (lessonType === LessonType.QUIZ) {
+		if (isQuiz) {
 			setUserQuizAnswers(() => {
 				if (!localStorage.getItem(`UserQuizAnswers-${lessonId}`) || userQuizAnswers.length === 0) {
 					return questions?.map(
@@ -76,7 +79,7 @@ const Questions: React.FC<QuestionsProps> = ({
 	return (
 		<Box>
 			{questions?.map((question, index) => {
-				return lessonType === LessonType.PRACTICE_LESSON ? (
+				return isPracticeLesson ? (
 					<PracticeQuestion
 						key={question._id}
 						question={question}
@@ -98,7 +101,7 @@ const Questions: React.FC<QuestionsProps> = ({
 						closeAiResponseDrawer={closeAiResponseDrawer}
 						toggleAiIcon={toggleAiIcon}
 					/>
-				) : lessonType === LessonType.QUIZ ? (
+				) : isQuiz ? (
 					<QuizQuestion
 						key={question._id}
 						question={question}

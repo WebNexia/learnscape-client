@@ -26,7 +26,7 @@ import { Document } from '../interfaces/document';
 import { DocumentUpdateTrack } from './AdminLessonEditPage';
 import { DocumentsContext } from '../contexts/DocumentsContextProvider';
 import DocumentsListEditBox from '../components/adminDocuments/DocumentsListEditBox';
-import NoContentBoxAdmin from '../components/layouts/noContentBox/noContentBoxAdmin';
+import NoContentBoxAdmin from '../components/layouts/noContentBox/NoContentBoxAdmin';
 
 export interface ChapterUpdateTrack {
 	chapterId: string;

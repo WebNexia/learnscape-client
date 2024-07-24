@@ -59,8 +59,6 @@ const AdminQuestions = () => {
 
 	useEffect(() => {
 		setQuestionsPageNumber(1);
-		console.log(isMinimumOptions);
-		console.log(isDuplicateOption);
 	}, []);
 
 	useEffect(() => {

@@ -4,7 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import ReactPlayer from 'react-player';
 import DashboardHeader from '../components/layouts/dashboardLayout/DashboardHeader';
-import { Article, Close, DoneAll, GetApp, Home, KeyboardBackspaceOutlined, KeyboardDoubleArrowRight } from '@mui/icons-material';
+import { Article, Close, DoneAll, GetApp, Home, KeyboardBackspaceOutlined, KeyboardDoubleArrowRight, NotListedLocation } from '@mui/icons-material';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import { useContext, useEffect, useState } from 'react';
 import { sanitizeHtml } from '../utils/sanitizeHtml';
@@ -22,6 +22,7 @@ import LoadingButton from '@mui/lab/LoadingButton';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import html2canvas from 'html2canvas';
+import QuizQuestionsMap from '../components/userCourses/QuizQuestionsMap';
 
 export interface QuizQuestionAnswer {
 	questionId: string;
@@ -49,6 +50,7 @@ const LessonPage = () => {
 	const [userLessonNotes, setUserLessonNotes] = useState<string>(editorContent);
 	const [isUserLessonNotesUploading, setIsUserLessonNotesUploading] = useState<boolean>(false);
 	const [isNotesUpdated, setIsNotesUpdated] = useState<boolean>(false);
+	const [isQuestionsMapOpen, setIsQuestionsMapOpen] = useState<boolean>(false);
 
 	const defaultLesson = {
 		_id: '',
@@ -74,6 +76,7 @@ const LessonPage = () => {
 	});
 
 	const isQuiz: boolean = lessonType === LessonType.QUIZ;
+	const isInstructionalLesson: boolean = lessonType === LessonType.INSTRUCTIONAL_LESSON;
 
 	useEffect(() => {
 		const fetchData = async () => {
@@ -212,9 +215,9 @@ const LessonPage = () => {
 				<Box
 					sx={{
 						display: 'flex',
-						justifyContent: lessonType !== LessonType.INSTRUCTIONAL_LESSON && isQuestionsVisible ? 'space-between' : 'flex-end',
+						justifyContent: !isInstructionalLesson && isQuestionsVisible ? 'space-between' : 'flex-end',
 					}}>
-					{lessonType !== LessonType.INSTRUCTIONAL_LESSON && isQuestionsVisible && (
+					{!isInstructionalLesson && isQuestionsVisible && (
 						<Box sx={{ alignSelf: 'flex-end' }}>
 							<Button
 								variant='text'
@@ -396,7 +399,7 @@ const LessonPage = () => {
 						margin: lesson?.videoUrl ? '1rem 0' : '11rem 0 1rem 0',
 					}}>
 					<Box sx={{ width: '100%', marginBottom: '1rem' }}>
-						<Typography variant='h5'>{lessonType !== LessonType.INSTRUCTIONAL_LESSON ? 'Instructions' : ''}</Typography>
+						<Typography variant='h5'>{!isInstructionalLesson ? 'Instructions' : ''}</Typography>
 					</Box>
 					<Box
 						sx={{
@@ -418,7 +421,7 @@ const LessonPage = () => {
 				</Box>
 			)}
 
-			{lessonType !== LessonType.INSTRUCTIONAL_LESSON && !isQuestionsVisible && (
+			{!isInstructionalLesson && !isQuestionsVisible && (
 				<Box sx={{ mt: '2rem' }}>
 					<CustomSubmitButton
 						onClick={() => {
@@ -454,6 +457,31 @@ const LessonPage = () => {
 				</Box>
 			)}
 
+			{isQuiz && isQuestionsVisible && !isLessonCompleted && (
+				<>
+					<Box
+						sx={{
+							position: 'fixed',
+							top: '90vh',
+							right: '2rem',
+							transform: 'translateY(-50%)',
+							zIndex: 1000,
+						}}>
+						<Tooltip title='Questions Map' placement='left'>
+							<IconButton onClick={() => setIsQuestionsMapOpen(!isQuestionsMapOpen)}>
+								<NotListedLocation fontSize='large' sx={{ color: '#00BFFF' }} />
+							</IconButton>
+						</Tooltip>
+					</Box>
+					<QuizQuestionsMap
+						questions={lesson?.questions}
+						userQuizAnswers={userQuizAnswers}
+						isOpen={isQuestionsMapOpen}
+						setIsOpen={setIsQuestionsMapOpen}
+					/>
+				</>
+			)}
+
 			{lesson?.documents.length !== 0 && !isQuestionsVisible && (
 				<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '2rem', width: '85%' }}>
 					<Box sx={{ display: 'flex', alignSelf: 'flex-start' }}>
@@ -473,7 +501,7 @@ const LessonPage = () => {
 				</Box>
 			)}
 
-			{lessonType === LessonType.INSTRUCTIONAL_LESSON && (
+			{isInstructionalLesson && (
 				<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '85%', marginTop: 'auto' }}>
 					<Box sx={{ alignSelf: 'flex-end' }}>
 						<CustomSubmitButton
