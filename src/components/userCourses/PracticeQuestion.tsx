@@ -107,12 +107,16 @@ const PracticeQuestion = ({
 	const { orgId } = useContext(OrganisationContext);
 	const { fetchQuestionTypeName } = useContext(QuestionsContext);
 
+	const isOpenEndedQuestion: boolean = fetchQuestionTypeName(question) === QuestionType.OPEN_ENDED;
+	const isTrueFalseQuestion: boolean = fetchQuestionTypeName(question) === QuestionType.TRUE_FALSE;
+	const isMultipleChoiceQuestion: boolean = fetchQuestionTypeName(question) === QuestionType.MULTIPLE_CHOICE;
+
 	const [userAnswer, setUserAnswer] = useState<string>('');
 
 	const [value, setValue] = useState<string>(() => {
 		if (isLessonCompleted && question.correctAnswer) {
 			return question.correctAnswer;
-		} else if (fetchQuestionTypeName(question) === QuestionType.OPEN_ENDED) {
+		} else if (isOpenEndedQuestion) {
 			const answer: string = userAnswers?.find((data) => data.questionId == question._id)?.userAnswer || '';
 			return answer;
 		} else if (!isLessonCompleted && displayedQuestionNumber < getLastQuestion()) {
@@ -131,21 +135,22 @@ const PracticeQuestion = ({
 	const [isLessonUpdating, setIsLessonUpdating] = useState<boolean>(false);
 	const [isLessonCourseCompletedModalOpen, setIsLessonCourseCompletedModalOpen] = useState<boolean>(false);
 
+	const isLastQuestion: boolean = displayedQuestionNumber === numberOfQuestions;
+	const isCompletingCourse: boolean = isLastQuestion && nextLessonId === null;
+	const isCompletingLesson: boolean = isLastQuestion && nextLessonId !== null;
+
 	const [questionPrompt, setQuestionPrompt] = useState<QuestionPrompt>({
 		question: stripHtml(question.question),
 		type: fetchQuestionTypeName(question),
-		options: fetchQuestionTypeName(question) === QuestionType.MULTIPLE_CHOICE ? question.options : [],
+		options: isMultipleChoiceQuestion ? question.options : [],
 		userInput: isLessonCompleted && !isLessonUpdating ? question.correctAnswer : userAnswer,
 		correctAnswer: question.correctAnswer,
 	});
 
-	const isCompletingCourse: boolean = displayedQuestionNumber === numberOfQuestions && nextLessonId === null;
-	const isCompletingLesson: boolean = displayedQuestionNumber === numberOfQuestions && nextLessonId !== null;
-
 	useEffect(() => {
-		if (isLessonCompleted && question.correctAnswer && fetchQuestionTypeName(question) !== QuestionType.OPEN_ENDED) {
+		if (isLessonCompleted && question.correctAnswer && !isOpenEndedQuestion) {
 			setValue(question.correctAnswer);
-		} else if (fetchQuestionTypeName(question) === QuestionType.OPEN_ENDED) {
+		} else if (isOpenEndedQuestion) {
 			setValue(() => {
 				const answer = userAnswers?.find((data) => data.questionId === question._id)?.userAnswer || '';
 				return answer;
@@ -179,7 +184,7 @@ const PracticeQuestion = ({
 
 		if (!existingUserAnswer || existingUserAnswer.userAnswer !== userAnswer) {
 			try {
-				if (fetchQuestionTypeName(question) === QuestionType.OPEN_ENDED) {
+				if (isOpenEndedQuestion) {
 					const res = await axios.post(`${base_url}/userQuestions`, {
 						userLessonId,
 						questionId: question._id,
@@ -248,13 +253,13 @@ const PracticeQuestion = ({
 		event.preventDefault();
 		toggleAiIcon(index);
 
-		if (fetchQuestionTypeName(question) === QuestionType.OPEN_ENDED && value !== '') {
+		if (isOpenEndedQuestion && value !== '') {
 			await createUserQuestion();
 			setUserAnswer(value);
 			setIsOpenEndedAnswerSubmitted(true);
 			setIsAnswerCorrect(true);
 		}
-		if (value === question.correctAnswer?.toString() && fetchQuestionTypeName(question) !== QuestionType.OPEN_ENDED) {
+		if (value === question.correctAnswer?.toString() && !isOpenEndedQuestion) {
 			setHelperText('You got it!');
 			setError(false);
 			setIsAnswerCorrect(true);
@@ -300,7 +305,7 @@ const PracticeQuestion = ({
 						<QuestionMedia question={question} />
 						<QuestionText question={question} questionNumber={questionNumber} />
 
-						{fetchQuestionTypeName(question) === QuestionType.OPEN_ENDED && (
+						{isOpenEndedQuestion && (
 							<Box sx={{ width: '90%', margin: '1rem auto' }}>
 								<CustomTextField
 									required={false}
@@ -319,7 +324,7 @@ const PracticeQuestion = ({
 							</Box>
 						)}
 
-						{fetchQuestionTypeName(question) === QuestionType.TRUE_FALSE && (
+						{isTrueFalseQuestion && (
 							<Box>
 								<TrueFalseOptions
 									correctAnswer={value}
@@ -337,7 +342,7 @@ const PracticeQuestion = ({
 								/>
 							</Box>
 						)}
-						{fetchQuestionTypeName(question) === QuestionType.MULTIPLE_CHOICE && (
+						{isMultipleChoiceQuestion && (
 							<RadioGroup
 								name='question'
 								value={isLessonCompleted && displayedQuestionNumber < getLastQuestion() && !isLessonUpdating ? question.correctAnswer : value}
@@ -350,7 +355,7 @@ const PracticeQuestion = ({
 									})}
 							</RadioGroup>
 						)}
-						{fetchQuestionTypeName(question) !== QuestionType.OPEN_ENDED && (!isLessonCompleted || isLessonUpdating) && helperText !== ' ' && (
+						{!isOpenEndedQuestion && (!isLessonCompleted || isLessonUpdating) && helperText !== ' ' && (
 							<FormHelperText sx={{ color: success ? 'green' : 'inherit', alignSelf: 'center', mt: '2rem' }}>{helperText}</FormHelperText>
 						)}
 
@@ -425,7 +430,14 @@ const PracticeQuestion = ({
 								onChange={handleQuestionChange}
 								size='small'
 								label='#'
-								required>
+								required
+								MenuProps={{
+									PaperProps: {
+										style: {
+											maxHeight: 250,
+										},
+									},
+								}}>
 								{Array.from({ length: numberOfQuestions }, (_, i) => (
 									<MenuItem key={i + 1} value={i + 1}>
 										{i + 1}

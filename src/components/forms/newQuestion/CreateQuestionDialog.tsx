@@ -117,10 +117,6 @@ const CreateQuestionDialog = ({
 		resetVideoUpload();
 		resetImageUpload();
 		resetEnterImageVideoUrl();
-		console.log(correctAnswer);
-		console.log(correctAnswerIndex);
-		console.log(isDuplicateOption);
-		console.log(isMinimumOptions);
 	}, []);
 
 	const resetValues = () => {
@@ -227,8 +223,6 @@ const CreateQuestionDialog = ({
 			setIsCorrectAnswerMissing(true);
 			return;
 		}
-		console.log(options);
-		console.log(isMinimumOptions);
 		if (isDuplicateOption) return;
 		if (!isMinimumOptions) return;
 

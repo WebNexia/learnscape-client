@@ -82,8 +82,13 @@ const QuizQuestion = ({
 	const [isSubmitQuizModalOpen, setIsSubmitQuizModalOpen] = useState<boolean>(false);
 	const [userQuizAnswersUploading, setUserQuizAnswersUploading] = useState<boolean>(false);
 
-	const isCompletingCourse: boolean = displayedQuestionNumber === numberOfQuestions && nextLessonId === null;
-	const isCompletingLesson: boolean = displayedQuestionNumber === numberOfQuestions && nextLessonId !== null;
+	const isOpenEndedQuestion: boolean = fetchQuestionTypeName(question) === QuestionType.OPEN_ENDED;
+	const isTrueFalseQuestion: boolean = fetchQuestionTypeName(question) === QuestionType.TRUE_FALSE;
+	const isMultipleChoiceQuestion: boolean = fetchQuestionTypeName(question) === QuestionType.MULTIPLE_CHOICE;
+
+	const isLastQuestion: boolean = displayedQuestionNumber === numberOfQuestions;
+	const isCompletingCourse: boolean = isLastQuestion && nextLessonId === null;
+	const isCompletingLesson: boolean = isLastQuestion && nextLessonId !== null;
 
 	useEffect(() => {
 		setUserQuizAnswer(() => {
@@ -171,7 +176,7 @@ const QuizQuestion = ({
 					<QuestionMedia question={question} />
 					<QuestionText question={question} questionNumber={questionNumber} />
 
-					{fetchQuestionTypeName(question) === QuestionType.OPEN_ENDED && (
+					{isOpenEndedQuestion && (
 						<Box sx={{ width: '90%', margin: '1rem auto' }}>
 							<CustomTextField
 								required={false}
@@ -198,7 +203,7 @@ const QuizQuestion = ({
 						</Box>
 					)}
 
-					{fetchQuestionTypeName(question) === QuestionType.TRUE_FALSE && (
+					{isTrueFalseQuestion && (
 						<Box>
 							<TrueFalseOptions
 								correctAnswer={value}
@@ -214,7 +219,7 @@ const QuizQuestion = ({
 							/>
 						</Box>
 					)}
-					{fetchQuestionTypeName(question) === QuestionType.MULTIPLE_CHOICE && (
+					{isMultipleChoiceQuestion && (
 						<RadioGroup name='question' value={isLessonCompleted ? userQuizAnswer : value} onChange={handleRadioChange} sx={{ alignSelf: 'center' }}>
 							{question &&
 								question.options &&
@@ -223,7 +228,7 @@ const QuizQuestion = ({
 								})}
 						</RadioGroup>
 					)}
-					{fetchQuestionTypeName(question) !== QuestionType.OPEN_ENDED && !isLessonCompleted && helperText !== ' ' && (
+					{!isOpenEndedQuestion && !isLessonCompleted && helperText !== ' ' && (
 						<FormHelperText sx={{ alignSelf: 'center', mt: '2rem' }}>{helperText}</FormHelperText>
 					)}
 				</FormControl>
@@ -273,7 +278,14 @@ const QuizQuestion = ({
 						onChange={handleQuestionChange}
 						size='small'
 						label='#'
-						required>
+						required
+						MenuProps={{
+							PaperProps: {
+								style: {
+									maxHeight: 250,
+								},
+							},
+						}}>
 						{Array.from({ length: numberOfQuestions }, (_, i) => (
 							<MenuItem key={i + 1} value={i + 1}>
 								{i + 1}
@@ -284,20 +296,14 @@ const QuizQuestion = ({
 				</Box>
 				<Tooltip
 					title={
-						isCompletingCourse
-							? 'Complete Course'
-							: isLessonCompleted && displayedQuestionNumber === numberOfQuestions
-							? 'Next Lesson'
-							: isCompletingLesson
-							? 'Submit Quiz'
-							: ''
+						isCompletingCourse ? 'Complete Course' : isLessonCompleted && isLastQuestion ? 'Next Lesson' : isCompletingLesson ? 'Submit Quiz' : ''
 					}
 					placement='top'>
 					<IconButton
 						onClick={() => {
-							if (displayedQuestionNumber === numberOfQuestions && !isLessonCompleted) {
+							if (isLastQuestion && !isLessonCompleted) {
 								setIsSubmitQuizModalOpen(true);
-							} else if (displayedQuestionNumber === numberOfQuestions && isLessonCompleted) {
+							} else if (isLastQuestion && isLessonCompleted) {
 								navigate(`/course/${courseId}/user/${userId}/userCourseId/${userCourseId}?isEnrolled=true`);
 							}
 							if (!(displayedQuestionNumber + 1 > numberOfQuestions)) {
@@ -315,7 +321,7 @@ const QuizQuestion = ({
 						}}>
 						{isCompletingCourse ? (
 							<DoneAll fontSize='large' />
-						) : isLessonCompleted && displayedQuestionNumber === numberOfQuestions ? (
+						) : isLessonCompleted && isLastQuestion ? (
 							<KeyboardDoubleArrowRight fontSize='large' />
 						) : isCompletingLesson ? (
 							<Done fontSize='large' />

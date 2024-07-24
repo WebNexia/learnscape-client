@@ -109,6 +109,8 @@ const EditQuestionDialog = ({
 		resetVideoUpload();
 		resetImageUpload();
 		resetEnterImageVideoUrl();
+		setIsDuplicateOption(false);
+		setIsMinimumOptions(true);
 	}, [correctAnswerIndex]);
 
 	const handleSubmit = async () => {
