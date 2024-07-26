@@ -36,6 +36,7 @@ import QuestionText from './QuestionText';
 import useAiResponse, { QuestionPrompt } from '../../hooks/useAiResponse';
 import { stripHtml } from '../../utils/stripHtml';
 import TypingAnimation from '../layouts/loading/TypingAnimation';
+import FlipCardPreview from '../layouts/flipCard/FlipCardPreview';
 
 const colorChange = keyframes`
     0% {
@@ -110,6 +111,7 @@ const PracticeQuestion = ({
 	const isOpenEndedQuestion: boolean = fetchQuestionTypeName(question) === QuestionType.OPEN_ENDED;
 	const isTrueFalseQuestion: boolean = fetchQuestionTypeName(question) === QuestionType.TRUE_FALSE;
 	const isMultipleChoiceQuestion: boolean = fetchQuestionTypeName(question) === QuestionType.MULTIPLE_CHOICE;
+	const isFlipCard: boolean = fetchQuestionTypeName(question) === QuestionType.FLIP_CARD;
 
 	const [userAnswer, setUserAnswer] = useState<string>('');
 
@@ -134,6 +136,8 @@ const PracticeQuestion = ({
 	const [selectedQuestion, setSelectedQuestion] = useState<number>(displayedQuestionNumber);
 	const [isLessonUpdating, setIsLessonUpdating] = useState<boolean>(false);
 	const [isLessonCourseCompletedModalOpen, setIsLessonCourseCompletedModalOpen] = useState<boolean>(false);
+
+	const [isCardFlipped, setIsCardFlipped] = useState<boolean>(false);
 
 	const isLastQuestion: boolean = displayedQuestionNumber === numberOfQuestions;
 	const isCompletingCourse: boolean = isLastQuestion && nextLessonId === null;
@@ -300,77 +304,85 @@ const PracticeQuestion = ({
 					alignItems: 'center',
 					width: '100%',
 				}}>
-				<form onSubmit={handleSubmit} style={{ width: '100%' }}>
-					<FormControl sx={{ width: '100%' }} error={error} variant='standard'>
-						<QuestionMedia question={question} />
-						<QuestionText question={question} questionNumber={questionNumber} />
+				{!isFlipCard && (
+					<form onSubmit={handleSubmit} style={{ width: '100%' }}>
+						<FormControl sx={{ width: '100%' }} error={error} variant='standard'>
+							<QuestionMedia question={question} />
+							<QuestionText question={question} questionNumber={questionNumber} />
 
-						{isOpenEndedQuestion && (
-							<Box sx={{ width: '90%', margin: '1rem auto' }}>
-								<CustomTextField
-									required={false}
-									multiline
-									rows={4}
-									resizable
-									value={value}
-									onChange={(e) => {
-										setValue(e.target.value);
-										setUserAnswer(e.target.value);
-										setQuestionPrompt((prevData) => {
-											return { ...prevData, userInput: e.target.value };
-										});
-									}}
-								/>
-							</Box>
-						)}
+							{isOpenEndedQuestion && (
+								<Box sx={{ width: '90%', margin: '1rem auto' }}>
+									<CustomTextField
+										required={false}
+										multiline
+										rows={4}
+										resizable
+										value={value}
+										onChange={(e) => {
+											setValue(e.target.value);
+											setUserAnswer(e.target.value);
+											setQuestionPrompt((prevData) => {
+												return { ...prevData, userInput: e.target.value };
+											});
+										}}
+									/>
+								</Box>
+							)}
 
-						{isTrueFalseQuestion && (
-							<Box>
-								<TrueFalseOptions
-									correctAnswer={value}
-									setCorrectAnswer={setValue}
-									fromLearner={true}
-									question={question}
-									isLessonCompleted={isLessonCompleted}
-									displayedQuestionNumber={displayedQuestionNumber}
-									setHelperText={setHelperText}
-									setIsLessonUpdating={setIsLessonUpdating}
-									isLessonUpdating={isLessonUpdating}
-									setUserAnswer={setUserAnswer}
-									lessonType={lessonType}
-									setQuestionPrompt={setQuestionPrompt}
-								/>
-							</Box>
-						)}
-						{isMultipleChoiceQuestion && (
-							<RadioGroup
-								name='question'
-								value={isLessonCompleted && displayedQuestionNumber < getLastQuestion() && !isLessonUpdating ? question.correctAnswer : value}
-								onChange={handleRadioChange}
-								sx={{ alignSelf: 'center' }}>
-								{question &&
-									question.options &&
-									question.options?.map((option, index) => {
-										return <FormControlLabel value={option} control={<Radio />} label={option} key={index} />;
-									})}
-							</RadioGroup>
-						)}
-						{!isOpenEndedQuestion && (!isLessonCompleted || isLessonUpdating) && helperText !== ' ' && (
-							<FormHelperText sx={{ color: success ? 'green' : 'inherit', alignSelf: 'center', mt: '2rem' }}>{helperText}</FormHelperText>
-						)}
+							{isTrueFalseQuestion && (
+								<Box>
+									<TrueFalseOptions
+										correctAnswer={value}
+										setCorrectAnswer={setValue}
+										fromLearner={true}
+										question={question}
+										isLessonCompleted={isLessonCompleted}
+										displayedQuestionNumber={displayedQuestionNumber}
+										setHelperText={setHelperText}
+										setIsLessonUpdating={setIsLessonUpdating}
+										isLessonUpdating={isLessonUpdating}
+										setUserAnswer={setUserAnswer}
+										lessonType={lessonType}
+										setQuestionPrompt={setQuestionPrompt}
+									/>
+								</Box>
+							)}
+							{isMultipleChoiceQuestion && (
+								<RadioGroup
+									name='question'
+									value={isLessonCompleted && displayedQuestionNumber < getLastQuestion() && !isLessonUpdating ? question.correctAnswer : value}
+									onChange={handleRadioChange}
+									sx={{ alignSelf: 'center' }}>
+									{question &&
+										question.options &&
+										question.options?.map((option, index) => {
+											return <FormControlLabel value={option} control={<Radio />} label={option} key={index} />;
+										})}
+								</RadioGroup>
+							)}
+							{!isOpenEndedQuestion && (!isLessonCompleted || isLessonUpdating) && helperText !== ' ' && (
+								<FormHelperText sx={{ color: success ? 'green' : 'inherit', alignSelf: 'center', mt: '2rem' }}>{helperText}</FormHelperText>
+							)}
 
-						<Button
-							sx={{
-								mt: '3rem',
-								width: '13rem',
-								alignSelf: 'center',
-							}}
-							type='submit'
-							variant='outlined'>
-							Submit Answer
-						</Button>
-					</FormControl>
-				</form>
+							<Button
+								sx={{
+									mt: '3rem',
+									width: '13rem',
+									alignSelf: 'center',
+								}}
+								type='submit'
+								variant='outlined'>
+								Submit Answer
+							</Button>
+						</FormControl>
+					</form>
+				)}
+
+				{isFlipCard && (
+					<Box sx={{ mt: '12rem' }}>
+						<FlipCardPreview question={question} fromPracticeQuestionUser={true} setIsCardFlipped={setIsCardFlipped} />
+					</Box>
+				)}
 
 				<Box
 					sx={{
@@ -470,7 +482,8 @@ const PracticeQuestion = ({
 							}}
 							disabled={
 								(!isAnswerCorrect || displayedQuestionNumber + 1 > numberOfQuestions || !isOpenEndedAnswerSubmitted) &&
-								!(isLessonCompleted || displayedQuestionNumber < getLastQuestion())
+								!(isLessonCompleted || displayedQuestionNumber < getLastQuestion()) &&
+								!isCardFlipped
 							}>
 							<KeyboardArrowRight fontSize='large' />
 						</IconButton>
@@ -526,9 +539,9 @@ const PracticeQuestion = ({
 					width: '80%',
 					zIndex: 9,
 				}}>
-				{displayedQuestionNumber === questionNumber ? (
+				{displayedQuestionNumber === questionNumber && !isFlipCard ? (
 					isAiActive || isLessonCompleted ? (
-						<Tooltip title={`Receive ${!aiDrawerOpen ? '' : 'another'} feedback`} placement='left'>
+						<Tooltip title={`Receive ${!aiDrawerOpen ? '' : 'another'} feedback from AI`} placement='left'>
 							<IconButton
 								onClick={async () => {
 									openAiResponseDrawer(index);
