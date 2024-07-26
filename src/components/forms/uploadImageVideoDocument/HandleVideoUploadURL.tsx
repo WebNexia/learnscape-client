@@ -43,7 +43,7 @@ const HandleVideoUploadURL = ({
 							variant='body2'
 							sx={{ textDecoration: !enterVideoUrl ? 'underline' : 'none', cursor: 'pointer' }}
 							onClick={() => setEnterVideoUrl(false)}>
-							Upload
+							Choose
 						</Typography>
 					</Box>
 					<Typography sx={{ margin: '0 0.5rem' }}> | </Typography>

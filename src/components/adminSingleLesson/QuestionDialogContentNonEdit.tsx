@@ -6,6 +6,7 @@ import { sanitizeHtml } from '../../utils/sanitizeHtml';
 import { useContext } from 'react';
 import { QuestionsContext } from '../../contexts/QuestionsContextProvider';
 import { QuestionType } from '../../interfaces/enums';
+import FlipCardPreview from '../layouts/flipCard/FlipCardPreview';
 
 interface QuestionDialogContentNonEditProps {
 	question: QuestionInterface | null;
@@ -25,9 +26,9 @@ const QuestionDialogContentNonEdit = ({ question }: QuestionDialogContentNonEdit
 					alignItems: 'center',
 					margin: hasMedia ? '0.5rem 0 2rem 0' : 'none',
 					width: '100%',
-					height: hasMedia ? '15rem' : 'none',
+					height: hasMedia && fetchQuestionTypeName(question) !== QuestionType.FLIP_CARD ? '15rem' : 'none',
 				}}>
-				{question?.imageUrl && (
+				{question?.imageUrl && fetchQuestionTypeName(question) !== QuestionType.FLIP_CARD && (
 					<Box
 						sx={{
 							height: '100%',
@@ -71,7 +72,7 @@ const QuestionDialogContentNonEdit = ({ question }: QuestionDialogContentNonEdit
 					</Box>
 				)}
 			</Box>
-			{question && (
+			{question && fetchQuestionTypeName(question) !== QuestionType.FLIP_CARD && (
 				<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', paddingBottom: '0.5rem' }}>
 					<Box className='rich-text-content' component='div' sx={{ padding: '0.5rem 1rem', textAlign: 'justify' }}>
 						<Typography variant='body1' component='div' dangerouslySetInnerHTML={{ __html: sanitizeHtml(question.question) }} />
@@ -114,6 +115,7 @@ const QuestionDialogContentNonEdit = ({ question }: QuestionDialogContentNonEdit
 					)}
 				</Box>
 			)}
+			{question && fetchQuestionTypeName(question) === QuestionType.FLIP_CARD && <FlipCardPreview question={question} questionNonEditModal={true} />}
 		</DialogContent>
 	);
 };

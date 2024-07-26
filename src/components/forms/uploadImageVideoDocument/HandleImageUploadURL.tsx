@@ -42,7 +42,7 @@ const HandleImageUploadURL = ({
 							variant='body2'
 							sx={{ textDecoration: !enterImageUrl ? 'underline' : 'none', cursor: 'pointer' }}
 							onClick={() => setEnterImageUrl(false)}>
-							Upload
+							Choose
 						</Typography>
 					</Box>
 					<Typography sx={{ margin: '0 0.5rem' }}> | </Typography>
