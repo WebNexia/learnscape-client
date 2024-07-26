@@ -22,6 +22,7 @@ import TinyMceEditor from '../../richTextEditor/TinyMceEditor';
 import TrueFalseOptions from '../../layouts/questionTypes/TrueFalseOptions';
 import { LessonsContext } from '../../../contexts/LessonsContextProvider';
 import { QuestionType } from '../../../interfaces/enums';
+import FlipCard from '../../layouts/flipCard/FlipCard';
 
 interface EditQuestionDialogProps {
 	fromLessonEditPage: boolean;
@@ -77,6 +78,11 @@ const EditQuestionDialog = ({
 
 	const { fetchLessons, lessonsPageNumber } = useContext(LessonsContext);
 
+	const isFlipCard: boolean = questionType === QuestionType.FLIP_CARD;
+	const isOpenEndedQuestion: boolean = questionType === QuestionType.OPEN_ENDED;
+	const isTrueFalseQuestion: boolean = questionType === QuestionType.TRUE_FALSE;
+	const isMultipleChoiceQuestion: boolean = questionType === QuestionType.MULTIPLE_CHOICE;
+
 	const [questionAdminQuestions, setQuestionAdminQuestions] = useState<string>(question.question);
 	const [imageUrlAdminQuestions, setImageUrlAdminQuestions] = useState<string>(question.imageUrl);
 	const [videoUrlAdminQuestions, setVideoUrlAdminQuestions] = useState<string>(question.videoUrl);
@@ -84,7 +90,7 @@ const EditQuestionDialog = ({
 
 	const { updateQuestion, fetchQuestions, questionsPageNumber } = useContext(QuestionsContext);
 	const [isCorrectAnswerMissing, setIsCorrectAnswerMissing] = useState<boolean>(
-		correctAnswerIndex < 0 && question.correctAnswer === '' && questionType !== QuestionType.OPEN_ENDED
+		correctAnswerIndex < 0 && question.correctAnswer === '' && !isOpenEndedQuestion
 	);
 	const [isQuestionMissing, setIsQuestionMissing] = useState<boolean>(false);
 
@@ -105,7 +111,7 @@ const EditQuestionDialog = ({
 	const { resetVideoUpload } = useVideoUpload();
 
 	useEffect(() => {
-		setIsCorrectAnswerMissing(correctAnswerIndex < 0 && question.correctAnswer === '' && questionType !== QuestionType.OPEN_ENDED);
+		setIsCorrectAnswerMissing(correctAnswerIndex < 0 && question.correctAnswer === '' && !isOpenEndedQuestion);
 		resetVideoUpload();
 		resetImageUpload();
 		resetEnterImageVideoUrl();
@@ -114,28 +120,44 @@ const EditQuestionDialog = ({
 	}, [correctAnswerIndex]);
 
 	const handleSubmit = async () => {
-		await handleInputChange('question', editorContent);
+		if (!isFlipCard) {
+			await handleInputChange('question', editorContent);
+		}
 
-		if (!editorContent) {
+		if ((isFlipCard && !correctAnswer && fromLessonEditPage) || (isFlipCard && !correctAnswerAdminQuestions && !fromLessonEditPage)) {
+			setIsCorrectAnswerMissing(true);
+			return;
+		}
+
+		if (isFlipCard && !fromLessonEditPage && !questionAdminQuestions && !imageUrlAdminQuestions) {
+			setIsQuestionMissing(true);
+			return;
+		}
+		if (isFlipCard && fromLessonEditPage && !question.question && !question.imageUrl) {
 			setIsQuestionMissing(true);
 			return;
 		}
 
-		if (questionType === QuestionType.MULTIPLE_CHOICE) {
+		if (!editorContent && !isFlipCard) {
+			setIsQuestionMissing(true);
+			return;
+		}
+
+		if (isMultipleChoiceQuestion) {
 			if (correctAnswerIndex === -1 || !correctAnswer) {
 				setIsCorrectAnswerMissing(true);
 				return;
 			}
 		}
 
-		if (questionType === QuestionType.TRUE_FALSE) {
+		if (isTrueFalseQuestion) {
 			if (!correctAnswer) {
 				setIsCorrectAnswerMissing(true);
 				return;
 			}
 		}
 
-		if (questionType === QuestionType.OPEN_ENDED) {
+		if (isOpenEndedQuestion) {
 			setIsCorrectAnswerMissing(false);
 		}
 
@@ -162,11 +184,11 @@ const EditQuestionDialog = ({
 			resetEnterImageVideoUrl();
 		} else {
 			try {
-				const updatedCorrectAnswer = questionType === QuestionType.MULTIPLE_CHOICE ? options[correctAnswerIndex] : correctAnswerAdminQuestions;
+				const updatedCorrectAnswer = isMultipleChoiceQuestion ? options[correctAnswerIndex] : correctAnswerAdminQuestions;
 
 				const response = await axios.patch(`${base_url}/questions/${question._id}`, {
 					orgId,
-					question: editorContent,
+					question: !isFlipCard ? editorContent : questionAdminQuestions,
 					options,
 					correctAnswer: updatedCorrectAnswer,
 					videoUrl: videoUrlAdminQuestions,
@@ -176,7 +198,7 @@ const EditQuestionDialog = ({
 				updateQuestion({
 					_id: question._id,
 					orgId,
-					question: editorContent,
+					question: !isFlipCard ? editorContent : questionAdminQuestions,
 					options,
 					correctAnswer: updatedCorrectAnswer,
 					videoUrl: videoUrlAdminQuestions,
@@ -212,7 +234,6 @@ const EditQuestionDialog = ({
 						return prevQuestion;
 					}
 				});
-
 				return { ...prevData, questions: updatedQuestions };
 			});
 			questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
@@ -294,117 +315,143 @@ const EditQuestionDialog = ({
 											return { ...prevData, questions: updatedQuestions };
 										});
 										questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
+										if (isFlipCard) setIsQuestionMissing(false);
 									} else {
 										setImageUrlAdminQuestions(url);
+										if (isFlipCard) setIsQuestionMissing(false);
 									}
 								}}
-								onChangeImgUrl={(e) => handleInputChange('imageUrl', e.target.value)}
+								onChangeImgUrl={(e) => {
+									handleInputChange('imageUrl', e.target.value);
+									questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
+								}}
 								imageUrlValue={fromLessonEditPage ? question.imageUrl : imageUrlAdminQuestions}
 								imageFolderName='QuestionImages'
 								enterImageUrl={enterImageUrl}
 								setEnterImageUrl={setEnterImageUrl}
 							/>
 
-							<ImageThumbnail
-								imgSource={fromLessonEditPage ? question?.imageUrl || imagePlaceHolderUrl : imageUrlAdminQuestions || imagePlaceHolderUrl}
-								removeImage={() => {
-									if (fromLessonEditPage && setSingleLessonBeforeSave) {
-										setSingleLessonBeforeSave((prevData) => {
-											if (!prevData.questions) return prevData;
+							{!isFlipCard && (
+								<ImageThumbnail
+									imgSource={fromLessonEditPage ? question?.imageUrl || imagePlaceHolderUrl : imageUrlAdminQuestions || imagePlaceHolderUrl}
+									removeImage={() => {
+										if (fromLessonEditPage && setSingleLessonBeforeSave) {
+											setSingleLessonBeforeSave((prevData) => {
+												if (!prevData.questions) return prevData;
 
-											const updatedQuestions = prevData.questions?.map((prevQuestion) => {
-												if (prevQuestion._id === question._id) {
-													return { ...prevQuestion, imageUrl: '' };
-												} else {
-													return prevQuestion;
-												}
+												const updatedQuestions = prevData.questions?.map((prevQuestion) => {
+													if (prevQuestion._id === question._id) {
+														return { ...prevQuestion, imageUrl: '' };
+													} else {
+														return prevQuestion;
+													}
+												});
+
+												return { ...prevData, questions: updatedQuestions };
 											});
-
-											return { ...prevData, questions: updatedQuestions };
-										});
-										questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
-									} else {
-										setImageUrlAdminQuestions('');
-									}
-								}}
-							/>
+											questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
+										} else {
+											setImageUrlAdminQuestions('');
+										}
+									}}
+								/>
+							)}
 						</Box>
-						<Box sx={{ flex: 1 }}>
-							<HandleVideoUploadURL
-								onVideoUploadLogic={(url) => {
-									if (fromLessonEditPage && setSingleLessonBeforeSave) {
-										setSingleLessonBeforeSave((prevData) => {
-											if (!prevData.questions) return prevData;
 
-											const updatedQuestions = prevData?.questions?.map((prevQuestion) => {
-												if (prevQuestion._id === question._id) {
-													return { ...prevQuestion, videoUrl: url };
-												} else {
-													return prevQuestion;
-												}
+						{!isFlipCard && (
+							<Box sx={{ flex: 1 }}>
+								<HandleVideoUploadURL
+									onVideoUploadLogic={(url) => {
+										if (fromLessonEditPage && setSingleLessonBeforeSave) {
+											setSingleLessonBeforeSave((prevData) => {
+												if (!prevData.questions) return prevData;
+
+												const updatedQuestions = prevData?.questions?.map((prevQuestion) => {
+													if (prevQuestion._id === question._id) {
+														return { ...prevQuestion, videoUrl: url };
+													} else {
+														return prevQuestion;
+													}
+												});
+
+												return { ...prevData, questions: updatedQuestions };
 											});
+											questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
+										} else {
+											setVideoUrlAdminQuestions(url);
+										}
+									}}
+									onChangeVideoUrl={(e) => handleInputChange('videoUrl', e.target.value)}
+									videoUrlValue={fromLessonEditPage ? question.videoUrl : videoUrlAdminQuestions}
+									videoFolderName='QuestionVideos'
+									enterVideoUrl={enterVideoUrl}
+									setEnterVideoUrl={setEnterVideoUrl}
+								/>
 
-											return { ...prevData, questions: updatedQuestions };
-										});
-										questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
-									} else {
-										setVideoUrlAdminQuestions(url);
-									}
-								}}
-								onChangeVideoUrl={(e) => handleInputChange('videoUrl', e.target.value)}
-								videoUrlValue={fromLessonEditPage ? question.videoUrl : videoUrlAdminQuestions}
-								videoFolderName='QuestionVideos'
-								enterVideoUrl={enterVideoUrl}
-								setEnterVideoUrl={setEnterVideoUrl}
-							/>
+								<VideoThumbnail
+									videoPlayCondition={!(question?.videoUrl === '' && videoUrlAdminQuestions === '')}
+									videoUrl={fromLessonEditPage ? question?.videoUrl : videoUrlAdminQuestions}
+									videoPlaceholderUrl='https://www.47pitches.com/contents/images/no-video.jpg'
+									removeVideo={() => {
+										if (fromLessonEditPage && setSingleLessonBeforeSave) {
+											setSingleLessonBeforeSave((prevData) => {
+												if (!prevData.questions) return prevData;
 
-							<VideoThumbnail
-								videoPlayCondition={!(question?.videoUrl === '' && videoUrlAdminQuestions === '')}
-								videoUrl={fromLessonEditPage ? question?.videoUrl : videoUrlAdminQuestions}
-								videoPlaceholderUrl='https://www.47pitches.com/contents/images/no-video.jpg'
-								removeVideo={() => {
-									if (fromLessonEditPage && setSingleLessonBeforeSave) {
-										setSingleLessonBeforeSave((prevData) => {
-											if (!prevData.questions) return prevData;
+												const updatedQuestions = prevData?.questions?.map((prevQuestion) => {
+													if (prevQuestion._id === question._id) {
+														return { ...prevQuestion, videoUrl: '' };
+													} else {
+														return prevQuestion;
+													}
+												});
 
-											const updatedQuestions = prevData?.questions?.map((prevQuestion) => {
-												if (prevQuestion._id === question._id) {
-													return { ...prevQuestion, videoUrl: '' };
-												} else {
-													return prevQuestion;
-												}
+												return { ...prevData, questions: updatedQuestions };
 											});
-
-											return { ...prevData, questions: updatedQuestions };
-										});
-										setVideoUrlAdminQuestions('');
-										questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
-									} else {
-										setVideoUrlAdminQuestions('');
-									}
-								}}
-							/>
-						</Box>
+											setVideoUrlAdminQuestions('');
+											questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
+										} else {
+											setVideoUrlAdminQuestions('');
+										}
+									}}
+								/>
+							</Box>
+						)}
 					</Box>
 
-					<Box sx={{ width: '100%', margin: '1rem 0' }}>
-						<Typography variant='h6' sx={{ mb: '0.5rem' }}>
-							Question
-						</Typography>
-						<TinyMceEditor
-							handleEditorChange={(content) => {
-								setEditorContent(content);
-								setIsQuestionMissing(false);
-								if (fromLessonEditPage) {
-									questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
-								}
-							}}
-							initialValue={fromLessonEditPage ? question.question : questionAdminQuestions}
+					{isFlipCard && (
+						<FlipCard
+							question={question}
+							setCorrectAnswer={setCorrectAnswer}
+							setIsQuestionMissing={setIsQuestionMissing}
+							fromLessonEditPage={fromLessonEditPage}
+							setSingleLessonBeforeSave={setSingleLessonBeforeSave}
+							setQuestionAdminQuestions={setQuestionAdminQuestions}
+							setCorrectAnswerAdminQuestions={setCorrectAnswerAdminQuestions}
+							setIsCorrectAnswerMissing={setIsCorrectAnswerMissing}
+							imageUrlAdminQuestions={imageUrlAdminQuestions}
 						/>
-					</Box>
+					)}
+
+					{!isFlipCard && (
+						<Box sx={{ width: '100%', margin: '1rem 0' }}>
+							<Typography variant='h6' sx={{ mb: '0.5rem' }}>
+								Question
+							</Typography>
+							<TinyMceEditor
+								handleEditorChange={(content) => {
+									setEditorContent(content);
+									setIsQuestionMissing(false);
+									if (fromLessonEditPage) {
+										questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
+									}
+								}}
+								initialValue={fromLessonEditPage ? question.question : questionAdminQuestions}
+							/>
+						</Box>
+					)}
 
 					<Box sx={{ width: '90%' }}>
-						{questionType === QuestionType.MULTIPLE_CHOICE &&
+						{isMultipleChoiceQuestion &&
 							options?.map((option, i) => (
 								<Box
 									key={i}
@@ -465,7 +512,7 @@ const EditQuestionDialog = ({
 								</Box>
 							))}
 
-						{questionType === QuestionType.TRUE_FALSE && (
+						{isTrueFalseQuestion && (
 							<TrueFalseOptions
 								fromLessonEditPage={fromLessonEditPage}
 								correctAnswer={correctAnswer}
@@ -477,11 +524,17 @@ const EditQuestionDialog = ({
 						)}
 					</Box>
 					<Box sx={{ alignSelf: 'flex-start', marginTop: '1.5rem' }}>
-						{isQuestionMissing && <CustomErrorMessage>- Enter question</CustomErrorMessage>}
-						{isCorrectAnswerMissing && <CustomErrorMessage>- Select correct answer</CustomErrorMessage>}
+						{isQuestionMissing &&
+							(!isFlipCard ? (
+								<CustomErrorMessage>- Enter question</CustomErrorMessage>
+							) : (!question.imageUrl && fromLessonEditPage) || (!fromLessonEditPage && !questionAdminQuestions && !imageUrlAdminQuestions) ? (
+								<CustomErrorMessage>- Enter front face text or enter image</CustomErrorMessage>
+							) : null)}
+
+						{isCorrectAnswerMissing && <CustomErrorMessage>{isFlipCard ? '- Enter back face text' : '- Select correct answer'}</CustomErrorMessage>}
 					</Box>
 
-					{questionType === QuestionType.MULTIPLE_CHOICE && (
+					{isMultipleChoiceQuestion && (
 						<Box sx={{ alignSelf: 'flex-start', marginTop: '1.5rem' }}>
 							{isDuplicateOption && <CustomErrorMessage>- Options should be unique</CustomErrorMessage>}
 							{!isMinimumOptions && <CustomErrorMessage>- At least two options are required</CustomErrorMessage>}

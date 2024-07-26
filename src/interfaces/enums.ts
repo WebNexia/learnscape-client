@@ -56,6 +56,7 @@ export const enum QuestionType {
 	MULTIPLE_CHOICE = 'Multiple Choice',
 	OPEN_ENDED = 'Open-ended',
 	TRUE_FALSE = 'True-False',
+	FLIP_CARD = 'Flip Card',
 }
 
 export const enum LessonType {

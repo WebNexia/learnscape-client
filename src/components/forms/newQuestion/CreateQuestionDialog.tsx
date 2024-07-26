@@ -34,6 +34,7 @@ import VideoThumbnail from '../uploadImageVideoDocument/VideoThumbnail';
 import TinyMceEditor from '../../richTextEditor/TinyMceEditor';
 import TrueFalseOptions from '../../layouts/questionTypes/TrueFalseOptions';
 import { QuestionType } from '../../../interfaces/enums';
+import FlipCard from '../../layouts/flipCard/FlipCard';
 
 interface CreateQuestionDialogProps {
 	isQuestionCreateModalOpen: boolean;
@@ -119,6 +120,11 @@ const CreateQuestionDialog = ({
 		resetEnterImageVideoUrl();
 	}, []);
 
+	const isFlipCard: boolean = questionType === QuestionType.FLIP_CARD;
+	const isOpenEndedQuestion: boolean = questionType === QuestionType.OPEN_ENDED;
+	const isTrueFalseQuestion: boolean = questionType === QuestionType.TRUE_FALSE;
+	const isMultipleChoiceQuestion: boolean = questionType === QuestionType.MULTIPLE_CHOICE;
+
 	const resetValues = () => {
 		setNewQuestion({
 			_id: '',
@@ -154,7 +160,7 @@ const CreateQuestionDialog = ({
 		try {
 			const response = await axios.post(`${base_url}/questions`, {
 				questionType: questionTypeId,
-				question: editorContent,
+				question: !isFlipCard ? editorContent : newQuestion.question,
 				options,
 				correctAnswer,
 				imageUrl: newQuestion?.imageUrl,
@@ -166,7 +172,7 @@ const CreateQuestionDialog = ({
 			addNewQuestion({
 				_id: response.data._id,
 				questionType: questionTypes?.filter((type) => type.name === questionType)[0].name,
-				question: editorContent,
+				question: !isFlipCard ? editorContent : newQuestion.question,
 				options,
 				correctAnswer,
 				imageUrl: newQuestion?.imageUrl,
@@ -186,7 +192,7 @@ const CreateQuestionDialog = ({
 			const newQuestionBeforeSave: QuestionInterface = {
 				_id: generateUniqueId('temp_question_id_'),
 				questionType,
-				question: editorContent,
+				question: !isFlipCard ? editorContent : newQuestion.question,
 				options,
 				correctAnswer,
 				imageUrl: newQuestion?.imageUrl,
@@ -214,12 +220,20 @@ const CreateQuestionDialog = ({
 	};
 
 	const handleSubmit = () => {
-		if (!editorContent) {
-			setIsQuestionMissing(true);
+		if (!editorContent && !newQuestion.question) {
+			if (isFlipCard && newQuestion?.imageUrl) {
+				setIsQuestionMissing(false);
+			} else {
+				setIsQuestionMissing(true);
+				return;
+			}
+		}
+		if (isFlipCard && !correctAnswer) {
+			setIsCorrectAnswerMissing(true);
 			return;
 		}
 
-		if (correctAnswerIndex === -1 && !correctAnswer && questionType !== QuestionType.OPEN_ENDED) {
+		if (correctAnswerIndex === -1 && !correctAnswer && !isOpenEndedQuestion && !isFlipCard) {
 			setIsCorrectAnswerMissing(true);
 			return;
 		}
@@ -296,6 +310,7 @@ const CreateQuestionDialog = ({
 											}
 											return prevQuestion;
 										});
+										if (isFlipCard) setIsQuestionMissing(false);
 									}}
 									onChangeImgUrl={(e) => {
 										setNewQuestion((prevQuestion) => {
@@ -307,6 +322,8 @@ const CreateQuestionDialog = ({
 											}
 											return prevQuestion;
 										});
+
+										if (isFlipCard) setIsQuestionMissing(false);
 										setIsLessonUpdated(true);
 									}}
 									imageUrlValue={newQuestion?.imageUrl}
@@ -314,90 +331,95 @@ const CreateQuestionDialog = ({
 									setEnterImageUrl={setEnterImageUrl}
 									imageFolderName='QuestionImages'
 								/>
-
-								<ImageThumbnail
-									imgSource={newQuestion?.imageUrl || 'https://savethefrogs.com/wp-content/uploads/placeholder-wire-image-white.jpg'}
-									removeImage={() => {
-										setNewQuestion((prevQuestion) => {
-											if (prevQuestion?.imageUrl !== undefined) {
-												return {
-													...prevQuestion,
-													imageUrl: '',
-												};
-											}
-											return prevQuestion;
-										});
-										setIsLessonUpdated(true);
-										resetImageUpload();
-									}}
-								/>
+								{!isFlipCard && (
+									<ImageThumbnail
+										imgSource={newQuestion?.imageUrl || 'https://savethefrogs.com/wp-content/uploads/placeholder-wire-image-white.jpg'}
+										removeImage={() => {
+											setNewQuestion((prevQuestion) => {
+												if (prevQuestion?.imageUrl !== undefined) {
+													return {
+														...prevQuestion,
+														imageUrl: '',
+													};
+												}
+												return prevQuestion;
+											});
+											setIsLessonUpdated(true);
+											resetImageUpload();
+										}}
+									/>
+								)}
 							</Box>
-							<Box sx={{ flex: 1 }}>
-								<HandleVideoUploadURL
-									label='Question Video'
-									onVideoUploadLogic={(url) => {
-										setNewQuestion((prevQuestion) => {
-											if (prevQuestion?.videoUrl !== undefined) {
-												return {
-													...prevQuestion,
-													videoUrl: url,
-												};
-											}
-											return prevQuestion;
-										});
-									}}
-									onChangeVideoUrl={(e) => {
-										setNewQuestion((prevQuestion) => {
-											if (prevQuestion?.videoUrl !== undefined) {
-												return {
-													...prevQuestion,
-													videoUrl: e.target.value,
-												};
-											}
-											return prevQuestion;
-										});
-										setIsLessonUpdated(true);
-									}}
-									videoUrlValue={newQuestion?.videoUrl}
-									enterVideoUrl={enterVideoUrl}
-									setEnterVideoUrl={setEnterVideoUrl}
-									videoFolderName='QuestionVideos'
-								/>
+							{!isFlipCard && (
+								<Box sx={{ flex: 1 }}>
+									<HandleVideoUploadURL
+										label='Question Video'
+										onVideoUploadLogic={(url) => {
+											setNewQuestion((prevQuestion) => {
+												if (prevQuestion?.videoUrl !== undefined) {
+													return {
+														...prevQuestion,
+														videoUrl: url,
+													};
+												}
+												return prevQuestion;
+											});
+										}}
+										onChangeVideoUrl={(e) => {
+											setNewQuestion((prevQuestion) => {
+												if (prevQuestion?.videoUrl !== undefined) {
+													return {
+														...prevQuestion,
+														videoUrl: e.target.value,
+													};
+												}
+												return prevQuestion;
+											});
+											setIsLessonUpdated(true);
+										}}
+										videoUrlValue={newQuestion?.videoUrl}
+										enterVideoUrl={enterVideoUrl}
+										setEnterVideoUrl={setEnterVideoUrl}
+										videoFolderName='QuestionVideos'
+									/>
 
-								<VideoThumbnail
-									videoPlayCondition={newQuestion?.videoUrl}
-									videoUrl={newQuestion?.videoUrl}
-									videoPlaceholderUrl='https://riggswealth.com/wp-content/uploads/2016/06/Riggs-Video-Placeholder.jpg'
-									removeVideo={() => {
-										setNewQuestion((prevQuestion) => {
-											if (prevQuestion?.imageUrl !== undefined) {
-												return {
-													...prevQuestion,
-													videoUrl: '',
-												};
-											}
-											return prevQuestion;
-										});
-										setIsLessonUpdated(true);
-										resetImageUpload();
-									}}
-								/>
-							</Box>
+									<VideoThumbnail
+										videoPlayCondition={newQuestion?.videoUrl}
+										videoUrl={newQuestion?.videoUrl}
+										videoPlaceholderUrl='https://riggswealth.com/wp-content/uploads/2016/06/Riggs-Video-Placeholder.jpg'
+										removeVideo={() => {
+											setNewQuestion((prevQuestion) => {
+												if (prevQuestion?.imageUrl !== undefined) {
+													return {
+														...prevQuestion,
+														videoUrl: '',
+													};
+												}
+												return prevQuestion;
+											});
+											setIsLessonUpdated(true);
+											resetImageUpload();
+										}}
+									/>
+								</Box>
+							)}
 						</Box>
 
-						<Box sx={{ width: '100%', margin: '1rem 0' }}>
-							<Typography variant='h6' sx={{ mb: '0.5rem' }}>
-								Question
-							</Typography>
-							<TinyMceEditor
-								handleEditorChange={(content) => {
-									setEditorContent(content);
-									setIsQuestionMissing(false);
-								}}
-								initialValue=''
-							/>
-						</Box>
-						{questionType === QuestionType.MULTIPLE_CHOICE && (
+						{!isFlipCard && (
+							<Box sx={{ width: '100%', margin: '1rem 0' }}>
+								<Typography variant='h6' sx={{ mb: '0.5rem' }}>
+									Question
+								</Typography>
+								<TinyMceEditor
+									handleEditorChange={(content) => {
+										setEditorContent(content);
+										setIsQuestionMissing(false);
+									}}
+									initialValue=''
+								/>
+							</Box>
+						)}
+						{isMultipleChoiceQuestion && (
 							<Box
 								sx={{
 									display: 'flex',
@@ -461,7 +483,7 @@ const CreateQuestionDialog = ({
 									))}
 							</Box>
 						)}
-						{questionType === QuestionType.TRUE_FALSE && (
+						{isTrueFalseQuestion && (
 							<Box>
 								<TrueFalseOptions
 									correctAnswer={correctAnswer}
@@ -470,19 +492,37 @@ const CreateQuestionDialog = ({
 								/>
 							</Box>
 						)}
-					</Box>
-					<Box sx={{ mt: '2rem' }}>
-						{isQuestionMissing && <CustomErrorMessage>- Enter question</CustomErrorMessage>}
-						{isCorrectAnswerMissing && <CustomErrorMessage>- Select correct answer</CustomErrorMessage>}
+
+						{isFlipCard && (
+							<FlipCard
+								newQuestion={newQuestion}
+								setCorrectAnswer={setCorrectAnswer}
+								setNewQuestion={setNewQuestion}
+								setIsQuestionMissing={setIsQuestionMissing}
+								setIsCorrectAnswerMissing={setIsCorrectAnswerMissing}
+							/>
+						)}
 					</Box>
 
-					{questionType === QuestionType.MULTIPLE_CHOICE && (
+					<Box sx={{ mt: '2rem' }}>
+						{isQuestionMissing &&
+							(isFlipCard && !newQuestion.imageUrl ? (
+								<CustomErrorMessage>- Enter front face text or enter image</CustomErrorMessage>
+							) : !isFlipCard ? (
+								<CustomErrorMessage>- Enter question</CustomErrorMessage>
+							) : null)}
+
+						{isCorrectAnswerMissing && <CustomErrorMessage>{isFlipCard ? '- Enter back face text' : '- Select correct answer'}</CustomErrorMessage>}
+					</Box>
+
+					{isMultipleChoiceQuestion && (
 						<Box sx={{ mt: '2rem' }}>
 							{isDuplicateOption && <CustomErrorMessage>- Options should be unique</CustomErrorMessage>}
 							{!isMinimumOptions && <CustomErrorMessage>- At least two options are required</CustomErrorMessage>}
 						</Box>
 					)}
 				</DialogContent>
+
 				<CustomDialogActions
 					onCancel={() => {
 						setIsQuestionCreateModalOpen(false);
