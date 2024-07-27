@@ -2,6 +2,7 @@ import { Box, styled, Typography } from '@mui/material';
 import { useState } from 'react';
 import theme from '../../../themes';
 import { QuestionInterface } from '../../../interfaces/question';
+import { useUserCourseLessonData } from '../../../hooks/useUserCourseLessonData';
 
 interface FlipCardInnerProps {
 	isFlipped: boolean;
@@ -71,8 +72,12 @@ interface FlipCardPreviewProps {
 	backText?: string;
 	fromLessonEditPage?: boolean;
 	imageUrlAdminQuestions?: string;
+	displayedQuestionNumber?: number;
+	numberOfQuestions?: number;
 	setNewQuestion?: React.Dispatch<React.SetStateAction<QuestionInterface>> | undefined;
 	setIsCardFlipped?: React.Dispatch<React.SetStateAction<boolean>>;
+	setIsLessonCompleted?: React.Dispatch<React.SetStateAction<boolean>>;
+	setShowQuestionSelector?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const FlipCardPreview = ({
@@ -84,14 +89,30 @@ const FlipCardPreview = ({
 	backText,
 	fromLessonEditPage,
 	imageUrlAdminQuestions,
+	displayedQuestionNumber,
+	numberOfQuestions,
 	setNewQuestion,
 	setIsCardFlipped,
+	setIsLessonCompleted,
+	setShowQuestionSelector,
 }: FlipCardPreviewProps) => {
 	const [isFlipped, setIsFlipped] = useState<boolean>(false);
+	const { updateLastQuestion, getLastQuestion, handleNextLesson } = useUserCourseLessonData();
 
-	const handleClick = () => {
+	const handleClick = async () => {
 		setIsFlipped(!isFlipped);
 		if (setIsCardFlipped) setIsCardFlipped(true);
+
+		if (displayedQuestionNumber && numberOfQuestions) {
+			if (displayedQuestionNumber + 1 <= numberOfQuestions && getLastQuestion() <= displayedQuestionNumber) {
+				updateLastQuestion(displayedQuestionNumber + 1);
+			}
+			if (displayedQuestionNumber === numberOfQuestions) {
+				await handleNextLesson();
+				if (setIsLessonCompleted) setIsLessonCompleted(true);
+				if (setShowQuestionSelector) setShowQuestionSelector(true);
+			}
+		}
 	};
 
 	return (

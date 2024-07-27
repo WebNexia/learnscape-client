@@ -380,7 +380,15 @@ const PracticeQuestion = ({
 
 				{isFlipCard && (
 					<Box sx={{ mt: '12rem' }}>
-						<FlipCardPreview question={question} fromPracticeQuestionUser={true} setIsCardFlipped={setIsCardFlipped} />
+						<FlipCardPreview
+							question={question}
+							fromPracticeQuestionUser={true}
+							setIsCardFlipped={setIsCardFlipped}
+							displayedQuestionNumber={displayedQuestionNumber}
+							numberOfQuestions={numberOfQuestions}
+							setIsLessonCompleted={setIsLessonCompleted}
+							setShowQuestionSelector={setShowQuestionSelector}
+						/>
 					</Box>
 				)}
 
