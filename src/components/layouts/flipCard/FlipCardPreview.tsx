@@ -26,6 +26,8 @@ const FlipCardInner = styled(Box, {
 	transition: 'transform 0.6s',
 	transformStyle: 'preserve-3d',
 	transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
+	boxShadow: '0 0 0.4rem 0.2rem rgba(0,0,0,0.2)',
+	borderRadius: '0.5rem',
 }));
 
 const FlipCardSide = styled(Box)({
@@ -40,7 +42,6 @@ const FlipCardSide = styled(Box)({
 	padding: '2rem',
 	color: 'white',
 	borderRadius: '0.5rem',
-	boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
 	overflow: 'hidden',
 });
 
