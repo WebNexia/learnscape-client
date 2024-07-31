@@ -8,6 +8,8 @@ export interface QuestionInterface {
 	imageUrl: string;
 	orgId: string;
 	isActive: boolean;
+	audio: boolean;
+	video: boolean;
 	createdAt: string;
 	updatedAt: string;
 }

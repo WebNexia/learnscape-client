@@ -12,8 +12,6 @@ interface QuizQuestionsMapProps {
 }
 
 const QuizQuestionsMap = ({ questions, userQuizAnswers, isOpen, setIsOpen }: QuizQuestionsMapProps) => {
-	console.log(questions);
-	console.log(userQuizAnswers);
 	return (
 		<Slide direction='left' in={isOpen} mountOnEnter unmountOnExit timeout={{ enter: 1000, exit: 500 }}>
 			<Box

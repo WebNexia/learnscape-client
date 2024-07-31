@@ -1,6 +1,7 @@
 import CustomDialog from '../../layouts/dialog/CustomDialog';
 import {
 	Box,
+	Checkbox,
 	DialogContent,
 	FormControl,
 	FormControlLabel,
@@ -106,12 +107,15 @@ const CreateQuestionDialog = ({
 		imageUrl: '',
 		orgId,
 		isActive: true,
+		audio: false,
+		video: false,
 		createdAt: '',
 		updatedAt: '',
 	});
 
 	const [isCorrectAnswerMissing, setIsCorrectAnswerMissing] = useState<boolean>(false);
 	const [isQuestionMissing, setIsQuestionMissing] = useState<boolean>(false);
+	const [isAudioVideoSelectionMissing, setIsAudioVideoSelectionMissing] = useState<boolean>(false);
 	const [editorContent, setEditorContent] = useState<string>('');
 
 	useEffect(() => {
@@ -124,6 +128,7 @@ const CreateQuestionDialog = ({
 	const isOpenEndedQuestion: boolean = questionType === QuestionType.OPEN_ENDED;
 	const isTrueFalseQuestion: boolean = questionType === QuestionType.TRUE_FALSE;
 	const isMultipleChoiceQuestion: boolean = questionType === QuestionType.MULTIPLE_CHOICE;
+	const isAudioVideoQuestion: boolean = questionType === QuestionType.AUDIO_VIDEO;
 
 	const resetValues = () => {
 		setNewQuestion({
@@ -136,6 +141,8 @@ const CreateQuestionDialog = ({
 			imageUrl: '',
 			orgId,
 			isActive: true,
+			audio: false,
+			video: false,
 			createdAt: '',
 			updatedAt: '',
 		});
@@ -165,6 +172,8 @@ const CreateQuestionDialog = ({
 				correctAnswer,
 				imageUrl: newQuestion?.imageUrl,
 				videoUrl: newQuestion?.videoUrl,
+				audio: newQuestion.audio,
+				video: newQuestion?.video,
 				orgId,
 				isActive: true,
 			});
@@ -177,6 +186,8 @@ const CreateQuestionDialog = ({
 				correctAnswer,
 				imageUrl: newQuestion?.imageUrl,
 				videoUrl: newQuestion?.videoUrl,
+				audio: newQuestion.audio,
+				video: newQuestion?.video,
 				orgId,
 				isActive: true,
 			});
@@ -198,6 +209,8 @@ const CreateQuestionDialog = ({
 				imageUrl: newQuestion?.imageUrl,
 				videoUrl: newQuestion?.videoUrl,
 				orgId,
+				audio: newQuestion.audio,
+				video: newQuestion?.video,
 				isActive: true,
 				createdAt: '',
 				updatedAt: '',
@@ -233,7 +246,12 @@ const CreateQuestionDialog = ({
 			return;
 		}
 
-		if (correctAnswerIndex === -1 && !correctAnswer && !isOpenEndedQuestion && !isFlipCard) {
+		if (isAudioVideoQuestion && !newQuestion.audio && !newQuestion.video) {
+			setIsAudioVideoSelectionMissing(true);
+			return;
+		}
+
+		if (correctAnswerIndex === -1 && !correctAnswer && !isOpenEndedQuestion && !isFlipCard && !isAudioVideoQuestion) {
 			setIsCorrectAnswerMissing(true);
 			return;
 		}
@@ -419,6 +437,50 @@ const CreateQuestionDialog = ({
 								/>
 							</Box>
 						)}
+
+						{isAudioVideoQuestion && (
+							<Box sx={{ display: 'flex', justifyContent: 'center' }}>
+								<Box sx={{ margin: '2rem 0 2rem 3rem' }}>
+									<FormControlLabel
+										control={
+											<Checkbox
+												checked={newQuestion.audio}
+												onChange={(e) => {
+													setNewQuestion((prevData) => {
+														if (prevData) {
+															return { ...prevData, audio: e.target.checked };
+														}
+														return prevData;
+													});
+													setIsAudioVideoSelectionMissing(false);
+												}}
+											/>
+										}
+										label='Ask Audio Recording'
+									/>
+								</Box>
+								<Box sx={{ margin: '2rem 0 2rem 3rem' }}>
+									<FormControlLabel
+										control={
+											<Checkbox
+												checked={newQuestion.video}
+												onChange={(e) => {
+													setNewQuestion((prevData) => {
+														if (prevData) {
+															return { ...prevData, video: e.target.checked };
+														}
+														return prevData;
+													});
+													setIsAudioVideoSelectionMissing(false);
+												}}
+											/>
+										}
+										label='Ask Video Recording'
+									/>
+								</Box>
+							</Box>
+						)}
+
 						{isMultipleChoiceQuestion && (
 							<Box
 								sx={{
@@ -512,7 +574,10 @@ const CreateQuestionDialog = ({
 								<CustomErrorMessage>- Enter question</CustomErrorMessage>
 							) : null)}
 
-						{isCorrectAnswerMissing && <CustomErrorMessage>{isFlipCard ? '- Enter back face text' : '- Select correct answer'}</CustomErrorMessage>}
+						{isCorrectAnswerMissing && !isAudioVideoQuestion && (
+							<CustomErrorMessage>{isFlipCard ? '- Enter back face text' : '- Select correct answer'}</CustomErrorMessage>
+						)}
+						{isAudioVideoQuestion && isAudioVideoSelectionMissing && <CustomErrorMessage>- Select one of the recording options</CustomErrorMessage>}
 					</Box>
 
 					{isMultipleChoiceQuestion && (

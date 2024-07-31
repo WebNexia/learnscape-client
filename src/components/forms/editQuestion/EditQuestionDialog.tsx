@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from 'react';
-import { Box, DialogContent, FormControlLabel, IconButton, Radio, Tooltip, Typography } from '@mui/material';
+import { Box, Checkbox, DialogContent, FormControlLabel, IconButton, Radio, Tooltip, Typography } from '@mui/material';
 import CustomDialog from '../../layouts/dialog/CustomDialog';
 import CustomTextField from '../customFields/CustomTextField';
 import { AddCircle, RemoveCircle } from '@mui/icons-material';
@@ -82,11 +82,16 @@ const EditQuestionDialog = ({
 	const isOpenEndedQuestion: boolean = questionType === QuestionType.OPEN_ENDED;
 	const isTrueFalseQuestion: boolean = questionType === QuestionType.TRUE_FALSE;
 	const isMultipleChoiceQuestion: boolean = questionType === QuestionType.MULTIPLE_CHOICE;
+	const isAudioVideoQuestion: boolean = questionType === QuestionType.AUDIO_VIDEO;
 
 	const [questionAdminQuestions, setQuestionAdminQuestions] = useState<string>(question.question);
 	const [imageUrlAdminQuestions, setImageUrlAdminQuestions] = useState<string>(question.imageUrl);
 	const [videoUrlAdminQuestions, setVideoUrlAdminQuestions] = useState<string>(question.videoUrl);
 	const [correctAnswerAdminQuestions, setCorrectAnswerAdminQuestions] = useState<string>(question.correctAnswer);
+	const [isAudioAdminQuestions, setIsAudioAdminQuestions] = useState<boolean>(question.audio);
+	const [isVideoAdminQuestions, setIsVideoAdminQuestions] = useState<boolean>(question.video);
+
+	const [isAudioVideoSelectionMissing, setIsAudioVideoSelectionMissing] = useState<boolean>(false);
 
 	const { updateQuestion, fetchQuestions, questionsPageNumber } = useContext(QuestionsContext);
 	const [isCorrectAnswerMissing, setIsCorrectAnswerMissing] = useState<boolean>(
@@ -133,8 +138,19 @@ const EditQuestionDialog = ({
 			setIsQuestionMissing(true);
 			return;
 		}
+
 		if (isFlipCard && fromLessonEditPage && !question.question && !question.imageUrl) {
 			setIsQuestionMissing(true);
+			return;
+		}
+
+		if (isAudioVideoQuestion && !fromLessonEditPage && !isAudioAdminQuestions && !isVideoAdminQuestions) {
+			setIsAudioVideoSelectionMissing(true);
+			return;
+		}
+
+		if (isAudioVideoQuestion && fromLessonEditPage && !question.audio && !question.video) {
+			setIsAudioVideoSelectionMissing(true);
 			return;
 		}
 
@@ -169,7 +185,7 @@ const EditQuestionDialog = ({
 				if (!prevData.questions) return prevData;
 
 				const updatedQuestions = prevData?.questions?.map((prevQuestion) => {
-					if (prevQuestion._id === question._id) {
+					if (prevQuestion !== null && prevQuestion._id === question._id) {
 						return { ...prevQuestion, options: options.filter((option) => option !== ''), correctAnswer };
 					} else {
 						return prevQuestion;
@@ -193,6 +209,8 @@ const EditQuestionDialog = ({
 					correctAnswer: updatedCorrectAnswer,
 					videoUrl: videoUrlAdminQuestions,
 					imageUrl: imageUrlAdminQuestions,
+					audio: isAudioVideoQuestion ? isAudioAdminQuestions : false,
+					video: isAudioVideoQuestion ? isVideoAdminQuestions : false,
 				});
 
 				updateQuestion({
@@ -207,6 +225,8 @@ const EditQuestionDialog = ({
 					createdAt: response.data.data.createdAt,
 					questionType: question.questionType,
 					isActive: true,
+					audio: response.data.data.audio,
+					video: response.data.data.video,
 				});
 
 				resetImageUpload();
@@ -228,7 +248,7 @@ const EditQuestionDialog = ({
 				if (!prevData.questions) return prevData;
 
 				const updatedQuestions = prevData?.questions?.map((prevQuestion) => {
-					if (prevQuestion._id === question._id) {
+					if (prevQuestion !== null && prevQuestion._id === question._id) {
 						return { ...prevQuestion, [field]: value };
 					} else {
 						return prevQuestion;
@@ -252,7 +272,7 @@ const EditQuestionDialog = ({
 				if (!prevData.questions) return prevData;
 
 				const updatedQuestions = prevData?.questions?.map((prevQuestion) => {
-					if (prevQuestion._id === question._id) {
+					if (prevQuestion !== null && prevQuestion._id === question._id) {
 						return questionBeforeSave;
 					} else {
 						return prevQuestion;
@@ -305,7 +325,7 @@ const EditQuestionDialog = ({
 											if (!prevData.questions) return prevData;
 
 											const updatedQuestions = prevData?.questions?.map((prevQuestion) => {
-												if (prevQuestion._id === question._id) {
+												if (prevQuestion !== null && prevQuestion._id === question._id) {
 													return { ...prevQuestion, imageUrl: url };
 												} else {
 													return prevQuestion;
@@ -340,7 +360,7 @@ const EditQuestionDialog = ({
 												if (!prevData.questions) return prevData;
 
 												const updatedQuestions = prevData.questions?.map((prevQuestion) => {
-													if (prevQuestion._id === question._id) {
+													if (prevQuestion !== null && prevQuestion._id === question._id) {
 														return { ...prevQuestion, imageUrl: '' };
 													} else {
 														return prevQuestion;
@@ -367,7 +387,7 @@ const EditQuestionDialog = ({
 												if (!prevData.questions) return prevData;
 
 												const updatedQuestions = prevData?.questions?.map((prevQuestion) => {
-													if (prevQuestion._id === question._id) {
+													if (prevQuestion !== null && prevQuestion._id === question._id) {
 														return { ...prevQuestion, videoUrl: url };
 													} else {
 														return prevQuestion;
@@ -398,7 +418,7 @@ const EditQuestionDialog = ({
 												if (!prevData.questions) return prevData;
 
 												const updatedQuestions = prevData?.questions?.map((prevQuestion) => {
-													if (prevQuestion._id === question._id) {
+													if (prevQuestion !== null && prevQuestion._id === question._id) {
 														return { ...prevQuestion, videoUrl: '' };
 													} else {
 														return prevQuestion;
@@ -522,6 +542,74 @@ const EditQuestionDialog = ({
 								setCorrectAnswerAdminQuestions={setCorrectAnswerAdminQuestions}
 							/>
 						)}
+
+						{isAudioVideoQuestion && (
+							<Box sx={{ display: 'flex', justifyContent: 'center' }}>
+								<Box sx={{ margin: '2rem 0 2rem 3rem' }}>
+									<FormControlLabel
+										control={
+											<Checkbox
+												checked={fromLessonEditPage ? question.audio : isAudioAdminQuestions}
+												onChange={(e) => {
+													if (fromLessonEditPage && setSingleLessonBeforeSave) {
+														setSingleLessonBeforeSave((prevData) => {
+															if (!prevData.questions) return prevData;
+
+															const updatedQuestions = prevData?.questions?.map((prevQuestion) => {
+																if (prevQuestion !== null && prevQuestion._id === question._id) {
+																	return { ...prevQuestion, audio: e.target.checked };
+																} else {
+																	return prevQuestion;
+																}
+															});
+
+															return { ...prevData, questions: updatedQuestions };
+														});
+														questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
+													} else {
+														setIsAudioAdminQuestions(e.target.checked);
+													}
+													setIsAudioVideoSelectionMissing(false);
+													questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
+												}}
+											/>
+										}
+										label='Ask Audio Recording'
+									/>
+								</Box>
+								<Box sx={{ margin: '2rem 0 2rem 3rem' }}>
+									<FormControlLabel
+										control={
+											<Checkbox
+												checked={fromLessonEditPage ? question.video : isVideoAdminQuestions}
+												onChange={(e) => {
+													if (fromLessonEditPage && setSingleLessonBeforeSave) {
+														setSingleLessonBeforeSave((prevData) => {
+															if (!prevData.questions) return prevData;
+															const updatedQuestions = prevData?.questions?.map((prevQuestion) => {
+																if (prevQuestion !== null && prevQuestion._id === question._id) {
+																	return { ...prevQuestion, video: e.target.checked };
+																} else {
+																	return prevQuestion;
+																}
+															});
+
+															return { ...prevData, questions: updatedQuestions };
+														});
+														questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
+													} else {
+														setIsVideoAdminQuestions(e.target.checked);
+													}
+													setIsAudioVideoSelectionMissing(false);
+													questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
+												}}
+											/>
+										}
+										label='Ask Video Recording'
+									/>
+								</Box>
+							</Box>
+						)}
 					</Box>
 					<Box sx={{ alignSelf: 'flex-start', marginTop: '1.5rem' }}>
 						{isQuestionMissing &&
@@ -531,7 +619,10 @@ const EditQuestionDialog = ({
 								<CustomErrorMessage>- Enter front face text or enter image</CustomErrorMessage>
 							) : null)}
 
-						{isCorrectAnswerMissing && <CustomErrorMessage>{isFlipCard ? '- Enter back face text' : '- Select correct answer'}</CustomErrorMessage>}
+						{isCorrectAnswerMissing && !isAudioVideoQuestion && (
+							<CustomErrorMessage>{isFlipCard ? '- Enter back face text' : '- Select correct answer'}</CustomErrorMessage>
+						)}
+						{isAudioVideoQuestion && isAudioVideoSelectionMissing && <CustomErrorMessage>- Select one of the recording options</CustomErrorMessage>}
 					</Box>
 
 					{isMultipleChoiceQuestion && (

@@ -1,4 +1,4 @@
-import { Box, DialogContent, Typography } from '@mui/material';
+import { Box, Checkbox, DialogContent, FormControlLabel, Typography } from '@mui/material';
 import ReactPlayer from 'react-player';
 import { QuestionInterface } from '../../interfaces/question';
 import theme from '../../themes';
@@ -116,6 +116,51 @@ const QuestionDialogContentNonEdit = ({ question }: QuestionDialogContentNonEdit
 				</Box>
 			)}
 			{question && fetchQuestionTypeName(question) === QuestionType.FLIP_CARD && <FlipCardPreview question={question} questionNonEditModal={true} />}
+
+			{question && fetchQuestionTypeName(question) === QuestionType.AUDIO_VIDEO && (
+				<Box sx={{ display: 'flex', justifyContent: 'center' }}>
+					<Box sx={{ margin: '1rem 3rem 1rem 0' }}>
+						<FormControlLabel
+							control={
+								<Checkbox
+									checked={question.audio}
+									sx={{
+										':hover': {
+											cursor: 'default',
+										},
+									}}
+								/>
+							}
+							label='Ask Audio Recording'
+							sx={{
+								':hover': {
+									cursor: 'default',
+								},
+							}}
+						/>
+					</Box>
+					<Box sx={{ margin: '1rem 0' }}>
+						<FormControlLabel
+							control={
+								<Checkbox
+									checked={question.video}
+									sx={{
+										':hover': {
+											cursor: 'default',
+										},
+									}}
+								/>
+							}
+							label='Ask Audio Recording'
+							sx={{
+								':hover': {
+									cursor: 'default',
+								},
+							}}
+						/>{' '}
+					</Box>
+				</Box>
+			)}
 		</DialogContent>
 	);
 };
