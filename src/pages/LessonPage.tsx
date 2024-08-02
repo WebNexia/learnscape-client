@@ -23,10 +23,13 @@ import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import html2canvas from 'html2canvas';
 import QuizQuestionsMap from '../components/userCourses/QuizQuestionsMap';
+import { QuestionInterface } from '../interfaces/question';
 
 export interface QuizQuestionAnswer {
 	questionId: string;
 	userAnswer: string;
+	videoRecordUrl: string;
+	audioRecordUrl: string;
 }
 
 const LessonPage = () => {
@@ -83,7 +86,10 @@ const LessonPage = () => {
 			if (lessonId) {
 				try {
 					const lessonResponse = await axios.get(`${base_url}/lessons/${lessonId}`);
-					setLesson(lessonResponse.data);
+					setLesson(() => {
+						const filteredQuestions = lessonResponse.data.questions.filter((question: QuestionInterface) => question !== null);
+						return { ...lessonResponse.data, questions: filteredQuestions };
+					});
 					setLessonType(lessonResponse.data.type);
 
 					const lessonNotesResponse = await axios.get(`${base_url}/userLessons/lesson/notes/${userLessonId}`);
@@ -96,7 +102,12 @@ const LessonPage = () => {
 					if (lessonResponse.data.type === LessonType.QUIZ) {
 						setUserQuizAnswers(() => {
 							return answers?.map((answer) => {
-								return { questionId: answer.questionId, userAnswer: answer.userAnswer };
+								return {
+									questionId: answer.questionId,
+									userAnswer: answer.userAnswer,
+									audioRecordUrl: answer.audioRecordUrl,
+									videoRecordUrl: answer.videoRecordUrl,
+								};
 							});
 						});
 					} else {

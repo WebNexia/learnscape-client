@@ -93,7 +93,7 @@ const HandleVideoUploadURL = ({
 							</LoadingButton>
 						)}
 					</Box>
-					{isVideoSizeLarge && <CustomErrorMessage> Please upload a video smaller than 30MB.</CustomErrorMessage>}
+					{isVideoSizeLarge && <CustomErrorMessage> Please upload a video smaller than 50MB.</CustomErrorMessage>}
 				</>
 			)}
 
