@@ -44,7 +44,9 @@ const Questions: React.FC<QuestionsProps> = ({
 	useEffect(() => {
 		if (isQuiz) {
 			setUserQuizAnswers(() => {
-				if (!localStorage.getItem(`UserQuizAnswers-${lessonId}`) || userQuizAnswers.length === 0) {
+				if (isLessonCompleted) {
+					return userQuizAnswers;
+				} else if (!localStorage.getItem(`UserQuizAnswers-${lessonId}`) || userQuizAnswers.length === 0) {
 					return questions
 						?.filter((question) => question !== null)
 						?.map(
@@ -79,6 +81,8 @@ const Questions: React.FC<QuestionsProps> = ({
 		newIsAiActive[index] = true;
 		setIsAiActive(newIsAiActive);
 	};
+
+	console.log(userQuizAnswers);
 
 	return (
 		<Box>

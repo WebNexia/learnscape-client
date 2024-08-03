@@ -1,9 +1,12 @@
-import { Box, Typography } from '@mui/material';
+import { Box, DialogActions, Typography } from '@mui/material';
 import { useState, useRef, useEffect } from 'react';
 import CustomSubmitButton from '../forms/customButtons/CustomSubmitButton';
 import CustomDeleteButton from '../forms/customButtons/CustomDeleteButton';
 import theme from '../../themes';
 import { Mic } from '@mui/icons-material';
+import CustomDialog from '../layouts/dialog/CustomDialog';
+import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
+import LoadingButton from '@mui/lab/LoadingButton';
 
 const mimeType = 'audio/webm; codecs=opus';
 const MAX_RECORDING_TIME = 180000; // 3 minutes
@@ -11,9 +14,10 @@ const QUALITY = 64000; // Medium quality (64 kbps)
 
 interface AudioRecorderProps {
 	uploadAudio: (blob: Blob) => Promise<void>;
+	isAudioUploading: boolean;
 }
 
-const AudioRecorder = ({ uploadAudio }: AudioRecorderProps) => {
+const AudioRecorder = ({ uploadAudio, isAudioUploading }: AudioRecorderProps) => {
 	const [permission, setPermission] = useState<boolean>(false);
 	const mediaRecorder = useRef<MediaRecorder | null>(null);
 	const [isRecording, setIsRecording] = useState<boolean>(false);
@@ -25,6 +29,8 @@ const AudioRecorder = ({ uploadAudio }: AudioRecorderProps) => {
 	const [remainingTime, setRemainingTime] = useState<number>(MAX_RECORDING_TIME / 1000); // in seconds
 	const recordingTimeout = useRef<NodeJS.Timeout | null>(null);
 	const countdownInterval = useRef<NodeJS.Timeout | null>(null);
+
+	const [isUploadModalOpen, setIsUploadModalOpen] = useState<boolean>(false);
 
 	const getMicrophonePermission = async () => {
 		if ('MediaRecorder' in window) {
@@ -156,15 +162,36 @@ const AudioRecorder = ({ uploadAudio }: AudioRecorderProps) => {
 			</Box>
 			{audio && !isRecording ? (
 				<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-					<audio src={audio} controls style={{ marginTop: '2rem' }}></audio>
+					<audio
+						src={audio}
+						controls
+						style={{ marginTop: '2rem', boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)', borderRadius: '0.35rem' }}></audio>
 				</Box>
 			) : null}
 
 			{audio && !isRecording && (
-				<CustomSubmitButton sx={{ marginTop: '2rem' }} type='button' size='small' onClick={() => audioBlob && uploadAudio(audioBlob)}>
+				<CustomSubmitButton sx={{ marginTop: '2rem' }} type='button' size='small' onClick={() => setIsUploadModalOpen(true)}>
 					Upload Audio
 				</CustomSubmitButton>
 			)}
+
+			<CustomDialog
+				openModal={isUploadModalOpen}
+				closeModal={() => setIsUploadModalOpen(false)}
+				content={`Are you sure you want to upload the audio recording?
+				You will not have another chance.`}>
+				{isAudioUploading ? (
+					<DialogActions sx={{ marginBottom: '1.5rem' }}>
+						<LoadingButton loading variant='outlined' sx={{ textTransform: 'capitalize', height: '2.5rem', margin: '0 0.5rem 0.5rem 0' }} />
+					</DialogActions>
+				) : (
+					<CustomDialogActions
+						onCancel={() => setIsUploadModalOpen(false)}
+						onSubmit={() => audioBlob && uploadAudio(audioBlob)}
+						submitBtnText='Upload'
+					/>
+				)}
+			</CustomDialog>
 		</Box>
 	);
 };

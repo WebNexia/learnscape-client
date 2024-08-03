@@ -1,9 +1,12 @@
-import { Box, Typography } from '@mui/material';
+import { Box, DialogActions, Typography } from '@mui/material';
 import { useState, useRef, useEffect } from 'react';
 import CustomSubmitButton from '../forms/customButtons/CustomSubmitButton';
 import CustomDeleteButton from '../forms/customButtons/CustomDeleteButton';
 import { Videocam } from '@mui/icons-material';
 import theme from '../../themes';
+import CustomDialog from '../layouts/dialog/CustomDialog';
+import LoadingButton from '@mui/lab/LoadingButton';
+import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
 
 const mimeType = 'video/webm; codecs="opus,vp8"';
 const MAX_RECORDING_TIME = 60000; // 1 minute
@@ -11,9 +14,10 @@ const QUALITY = 500000; // Medium quality (500 kbps)
 
 interface VideoRecorderProps {
 	uploadVideo: (blob: Blob) => Promise<void>;
+	isVideoUploading: boolean;
 }
 
-const VideoRecorder = ({ uploadVideo }: VideoRecorderProps) => {
+const VideoRecorder = ({ uploadVideo, isVideoUploading }: VideoRecorderProps) => {
 	const [permission, setPermission] = useState<boolean>(false);
 	const mediaRecorder = useRef<MediaRecorder | null>(null);
 	const liveVideoFeed = useRef<HTMLVideoElement | null>(null);
@@ -26,6 +30,8 @@ const VideoRecorder = ({ uploadVideo }: VideoRecorderProps) => {
 	const [remainingTime, setRemainingTime] = useState<number>(MAX_RECORDING_TIME / 1000); // in seconds
 	const recordingTimeout = useRef<NodeJS.Timeout | null>(null);
 	const countdownInterval = useRef<NodeJS.Timeout | null>(null);
+
+	const [isUploadModalOpen, setIsUploadModalOpen] = useState<boolean>(false);
 
 	const getCameraPermission = async () => {
 		setRecordedVideo(null);
@@ -128,12 +134,12 @@ const VideoRecorder = ({ uploadVideo }: VideoRecorderProps) => {
 				<Box>
 					{!permission && (
 						<CustomSubmitButton onClick={getCameraPermission} type='button' sx={{ margin: '1rem 0' }} endIcon={<Videocam />} size='small'>
-							Allow Camera
+							{hasRecorded ? 'Record Another' : 'Allow Camera'}
 						</CustomSubmitButton>
 					)}
 					{permission && !isRecording && (
 						<CustomSubmitButton onClick={startRecording} type='button' sx={{ margin: '1rem 0' }} size='small'>
-							{hasRecorded ? 'Record Another' : 'Start Recording'}
+							Start Recording
 						</CustomSubmitButton>
 					)}
 				</Box>
@@ -186,10 +192,28 @@ const VideoRecorder = ({ uploadVideo }: VideoRecorderProps) => {
 			</Box>
 
 			{recordedVideo && (
-				<CustomSubmitButton sx={{ marginTop: '2rem' }} type='button' size='small' onClick={() => videoBlob && uploadVideo(videoBlob)}>
+				<CustomSubmitButton sx={{ marginTop: '2rem' }} type='button' size='small' onClick={() => setIsUploadModalOpen(true)}>
 					Upload Video
 				</CustomSubmitButton>
 			)}
+
+			<CustomDialog
+				openModal={isUploadModalOpen}
+				closeModal={() => setIsUploadModalOpen(false)}
+				content={`Are you sure you want to upload the video recording?
+					You will not have another chance.`}>
+				{isVideoUploading ? (
+					<DialogActions sx={{ marginBottom: '1.5rem' }}>
+						<LoadingButton loading variant='outlined' sx={{ textTransform: 'capitalize', height: '2.5rem', margin: '0 0.5rem 0.5rem 0' }} />
+					</DialogActions>
+				) : (
+					<CustomDialogActions
+						onCancel={() => setIsUploadModalOpen(false)}
+						onSubmit={() => videoBlob && uploadVideo(videoBlob)}
+						submitBtnText='Upload'
+					/>
+				)}
+			</CustomDialog>
 		</Box>
 	);
 };

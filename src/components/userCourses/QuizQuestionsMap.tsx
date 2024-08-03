@@ -63,7 +63,9 @@ const QuizQuestionsMap = ({ questions, userQuizAnswers, isOpen, setIsOpen }: Qui
 						alignContent: 'flex-start',
 					}}>
 					{questions.map((question, index) => {
-						const isAnswered = userQuizAnswers.some((answer) => answer.questionId === question._id && answer.userAnswer !== '');
+						const isAnswered = userQuizAnswers.some(
+							(answer) => answer.questionId === question._id && (answer.userAnswer !== '' || answer.audioRecordUrl || answer.videoRecordUrl)
+						);
 
 						return (
 							<Box

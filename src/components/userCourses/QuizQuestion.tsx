@@ -75,20 +75,22 @@ const QuizQuestion = ({
 	const { user } = useContext(UserAuthContext);
 
 	const [userQuizAnswer, setUserQuizAnswer] = useState<string>('');
-
-	const [value, setValue] = useState<string>(() => {
-		if (!isLessonCompleted) {
-			const value: string = userQuizAnswers?.find((data) => data.questionId == question._id)?.userAnswer || '';
-			return value;
-		}
-		return '';
-	});
+	const [uploadUrlForCompletedLesson, setUploadUrlForCompletedLesson] = useState<string>('');
 
 	const [helperText, setHelperText] = useState<string>('Choose wisely');
 	const [selectedQuestion, setSelectedQuestion] = useState<number>(displayedQuestionNumber);
 	const [isSubmitQuizModalOpen, setIsSubmitQuizModalOpen] = useState<boolean>(false);
 	const [userQuizAnswersUploading, setUserQuizAnswersUploading] = useState<boolean>(false);
-	const [isAudioVideoUploaded, setIsAudioVideoUploaded] = useState<boolean>(false);
+	const [isAudioVideoUploaded, setIsAudioVideoUploaded] = useState<boolean>(() => {
+		const userUpload = userQuizAnswers?.find((data) => data.questionId === question._id);
+		if (userUpload?.audioRecordUrl || userUpload?.videoRecordUrl) {
+			return true;
+		}
+		return false;
+	});
+
+	const [isAudioUploading, setIsAudioUploading] = useState<boolean>(false);
+	const [isVideoUploading, setIsVideoUploading] = useState<boolean>(false);
 
 	const isOpenEndedQuestion: boolean = fetchQuestionTypeName(question) === QuestionType.OPEN_ENDED;
 	const isTrueFalseQuestion: boolean = fetchQuestionTypeName(question) === QuestionType.TRUE_FALSE;
@@ -102,6 +104,15 @@ const QuizQuestion = ({
 		};
 	};
 
+	const [value, setValue] = useState<string>(() => {
+		if (!isLessonCompleted && !isAudioVideoQuestion) {
+			const value: string = userQuizAnswers?.find((data) => data.questionId == question._id)?.userAnswer || '';
+			return value;
+		}
+
+		return '';
+	});
+
 	const isLastQuestion: boolean = displayedQuestionNumber === numberOfQuestions;
 	const isCompletingCourse: boolean = isLastQuestion && nextLessonId === null;
 	const isCompletingLesson: boolean = isLastQuestion && nextLessonId !== null;
@@ -111,6 +122,17 @@ const QuizQuestion = ({
 			if (isLessonCompleted) {
 				const answer: string = userQuizAnswers?.find((data) => data.questionId == question._id)?.userAnswer || '';
 				return answer;
+			}
+			return '';
+		});
+		setUploadUrlForCompletedLesson(() => {
+			if (isLessonCompleted) {
+				const answer = userQuizAnswers?.find((data) => data.questionId == question._id);
+				if (answer?.audioRecordUrl) {
+					return answer?.audioRecordUrl;
+				} else if (answer?.videoRecordUrl) {
+					return answer?.videoRecordUrl;
+				}
 			}
 			return '';
 		});
@@ -183,47 +205,61 @@ const QuizQuestion = ({
 	};
 
 	const uploadAudio = async (blob: Blob) => {
-		const audioRef = ref(storage, `audio-recordings/${user?.username}-${Date.now()}.webm`);
-		await uploadBytes(audioRef, blob);
-		const downloadURL = await getDownloadURL(audioRef);
+		setIsAudioUploading(true);
+		try {
+			const audioRef = ref(storage, `audio-recordings/${user?.username}-${Date.now()}.webm`);
+			await uploadBytes(audioRef, blob);
+			const downloadURL = await getDownloadURL(audioRef);
 
-		setUserQuizAnswers((prevData) => {
-			if (prevData) {
-				const updatedAnswers = prevData?.map((answer) => {
-					if (answer.questionId === question._id) {
-						return { ...answer, audioRecordUrl: downloadURL };
-					}
-					return answer;
-				});
-				return updatedAnswers;
-			}
-			return prevData;
-		});
+			setUserQuizAnswers((prevData) => {
+				if (prevData) {
+					const updatedAnswers = prevData?.map((answer) => {
+						if (answer.questionId === question._id) {
+							return { ...answer, audioRecordUrl: downloadURL };
+						}
+						return answer;
+					});
+					return updatedAnswers;
+				}
+				return prevData;
+			});
 
-		setIsAudioVideoUploaded(true);
-		setRecordOption('');
+			setIsAudioVideoUploaded(true);
+			setRecordOption('');
+		} catch (error) {
+			console.log(error);
+		} finally {
+			setIsAudioUploading(false);
+		}
 	};
 
 	const uploadVideo = async (blob: Blob) => {
-		const videoRef = ref(storage, `video-recordings/${user?.username}-${Date.now()}.webm`);
-		await uploadBytes(videoRef, blob);
-		const downloadURL = await getDownloadURL(videoRef);
+		setIsVideoUploading(true);
+		try {
+			const videoRef = ref(storage, `video-recordings/${user?.username}-${Date.now()}.webm`);
+			await uploadBytes(videoRef, blob);
+			const downloadURL = await getDownloadURL(videoRef);
 
-		setUserQuizAnswers((prevData) => {
-			if (prevData) {
-				const updatedAnswers = prevData?.map((answer) => {
-					if (answer.questionId === question._id) {
-						return { ...answer, videoRecordUrl: downloadURL };
-					}
-					return answer;
-				});
-				return updatedAnswers;
-			}
-			return prevData;
-		});
+			setUserQuizAnswers((prevData) => {
+				if (prevData) {
+					const updatedAnswers = prevData?.map((answer) => {
+						if (answer.questionId === question._id) {
+							return { ...answer, videoRecordUrl: downloadURL };
+						}
+						return answer;
+					});
+					return updatedAnswers;
+				}
+				return prevData;
+			});
 
-		setIsAudioVideoUploaded(true);
-		setRecordOption('');
+			setIsAudioVideoUploaded(true);
+			setRecordOption('');
+		} catch (error) {
+			console.log(error);
+		} finally {
+			setIsVideoUploading(false);
+		}
 	};
 
 	return (
@@ -268,12 +304,12 @@ const QuizQuestion = ({
 					{isAudioVideoQuestion && (
 						<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
 							<Box>
-								{question?.audio && !isAudioVideoUploaded && (
+								{question?.audio && !isAudioVideoUploaded && !isLessonCompleted && (
 									<CustomSubmitButton onClick={toggleRecordOption('audio')} sx={{ margin: '0 1rem 1rem 0' }} type='button' size='small'>
 										Record Audio
 									</CustomSubmitButton>
 								)}
-								{question?.video && !isAudioVideoUploaded && (
+								{question?.video && !isAudioVideoUploaded && !isLessonCompleted && (
 									<CustomSubmitButton onClick={toggleRecordOption('video')} sx={{ margin: '0 0 1rem 0' }} type='button' size='small'>
 										Record Video
 									</CustomSubmitButton>
@@ -281,19 +317,31 @@ const QuizQuestion = ({
 							</Box>
 							<Box sx={{ display: 'flex' }}>
 								{recordOption === 'video' ? (
-									<VideoRecorder uploadVideo={uploadVideo} />
+									<VideoRecorder uploadVideo={uploadVideo} isVideoUploading={isVideoUploading} />
 								) : recordOption === 'audio' ? (
-									<AudioRecorder uploadAudio={uploadAudio} />
+									<AudioRecorder uploadAudio={uploadAudio} isAudioUploading={isAudioUploading} />
 								) : null}
 							</Box>
 							{isAudioVideoUploaded && (
 								<Box>
-									{userQuizAnswers.map((answer) => {
+									{userQuizAnswers?.map((answer) => {
 										if (answer.questionId === question._id) {
 											if (answer.audioRecordUrl) {
-												return <audio src={answer.audioRecordUrl} controls></audio>;
+												return (
+													<audio
+														src={!isLessonCompleted ? answer.audioRecordUrl : uploadUrlForCompletedLesson}
+														controls
+														key={question._id}
+														style={{ marginTop: '1rem', boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)', borderRadius: '0.35rem' }}></audio>
+												);
 											} else if (answer.videoRecordUrl) {
-												return <video src={answer.videoRecordUrl} controls></video>;
+												return (
+													<video
+														src={!isLessonCompleted ? answer.videoRecordUrl : uploadUrlForCompletedLesson}
+														controls
+														key={question._id}
+														style={{ boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)', borderRadius: '0.25rem' }}></video>
+												);
 											}
 										}
 									})}
