@@ -11,4 +11,6 @@ export interface UserQuestion {
 	createdAt: string;
 	updatedAt: string;
 	userId: string;
+	audioRecordUrl: string;
+	videoRecordUrl: string;
 }

@@ -12,8 +12,6 @@ interface QuizQuestionsMapProps {
 }
 
 const QuizQuestionsMap = ({ questions, userQuizAnswers, isOpen, setIsOpen }: QuizQuestionsMapProps) => {
-	console.log(questions);
-	console.log(userQuizAnswers);
 	return (
 		<Slide direction='left' in={isOpen} mountOnEnter unmountOnExit timeout={{ enter: 1000, exit: 500 }}>
 			<Box
@@ -65,7 +63,9 @@ const QuizQuestionsMap = ({ questions, userQuizAnswers, isOpen, setIsOpen }: Qui
 						alignContent: 'flex-start',
 					}}>
 					{questions.map((question, index) => {
-						const isAnswered = userQuizAnswers.some((answer) => answer.questionId === question._id && answer.userAnswer !== '');
+						const isAnswered = userQuizAnswers.some(
+							(answer) => answer.questionId === question._id && (answer.userAnswer !== '' || answer.audioRecordUrl || answer.videoRecordUrl)
+						);
 
 						return (
 							<Box

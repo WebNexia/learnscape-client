@@ -6,6 +6,8 @@ export interface UserQuestionData {
 	userQuestionId: string;
 	questionId: string;
 	userAnswer: string;
+	audioRecordUrl: string;
+	videoRecordUrl: string;
 }
 
 export const useFetchUserQuestion = () => {
@@ -20,6 +22,8 @@ export const useFetchUserQuestion = () => {
 						userQuestionId: data._id,
 						questionId: data.questionId,
 						userAnswer: data.userAnswer,
+						audioRecordUrl: data.audioRecordUrl,
+						videoRecordUrl: data.videoRecordUrl,
 					})) || []
 				);
 			} catch (error) {

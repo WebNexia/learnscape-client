@@ -66,8 +66,6 @@ const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProvide
 			if (courseId) {
 				const response = await axios.get(`${base_url}/courses/${courseId}`);
 				setSingleCourse(response.data.data || null);
-
-				console.log(response.data.data);
 			}
 		} catch (error) {
 			console.log(error);
@@ -77,8 +75,6 @@ const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProvide
 	const fetchSingleCourseDataUser = async (courseId: string | undefined): Promise<void> => {
 		if (courseId) {
 			const res = await axios.get(`${base_url}/courses/activelessons/${courseId}`);
-
-			console.log(res.data.data);
 
 			setSingleCourseUser(res.data.data || null);
 		}

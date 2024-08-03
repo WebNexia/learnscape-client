@@ -57,6 +57,7 @@ export const enum QuestionType {
 	OPEN_ENDED = 'Open-ended',
 	TRUE_FALSE = 'True-False',
 	FLIP_CARD = 'Flip Card',
+	AUDIO_VIDEO = 'Audio/Video',
 }
 
 export const enum LessonType {

@@ -7,6 +7,8 @@ interface CustomDeleteButtonProps {
 	variant?: ButtonOwnProps['variant'];
 	sx?: React.CSSProperties;
 	onClick?: (event?: MouseEvent<HTMLButtonElement> | FormEvent<Element>) => void;
+	disabled?: boolean;
+	size?: 'small' | 'medium' | 'large';
 }
 
 const CustomDeleteButton = ({
@@ -15,6 +17,8 @@ const CustomDeleteButton = ({
 	variant = 'contained',
 	onClick,
 	sx,
+	disabled,
+	size,
 }: CustomDeleteButtonProps) => {
 	return (
 		<Button
@@ -29,7 +33,9 @@ const CustomDeleteButton = ({
 					backgroundColor: 'error.light',
 				},
 			}}
-			onClick={onClick}>
+			onClick={onClick}
+			disabled={disabled}
+			size={size}>
 			{children}
 		</Button>
 	);

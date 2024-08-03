@@ -10,8 +10,8 @@ const useVideoUpload = () => {
 
 	const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		if (e.target.files && e.target.files.length > 0) {
-			if (e.target.files[0].size > 30 * 1024 * 1024) {
-				// Assuming 30MB as the size limit for the video
+			if (e.target.files[0].size > 50 * 1024 * 1024) {
+				// Assuming 50MB as the size limit for the video
 				setIsVideoSizeLarge(true);
 			} else {
 				setVideoUpload(e.target.files[0]);

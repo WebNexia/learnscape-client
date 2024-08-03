@@ -31,6 +31,12 @@ import { QuizQuestionAnswer } from '../../pages/LessonPage';
 import LoadingButton from '@mui/lab/LoadingButton';
 import QuestionMedia from './QuestionMedia';
 import QuestionText from './QuestionText';
+import CustomSubmitButton from '../forms/customButtons/CustomSubmitButton';
+import VideoRecorder from './VideoRecorder';
+import AudioRecorder from './AudioRecorder';
+import { storage } from '../../firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
 
 interface QuizQuestionProps {
 	question: QuestionInterface;
@@ -66,25 +72,46 @@ const QuizQuestion = ({
 	const { userId, lessonId, courseId, userCourseId } = useParams();
 	const { orgId } = useContext(OrganisationContext);
 	const { fetchQuestionTypeName } = useContext(QuestionsContext);
+	const { user } = useContext(UserAuthContext);
 
 	const [userQuizAnswer, setUserQuizAnswer] = useState<string>('');
-
-	const [value, setValue] = useState<string>(() => {
-		if (!isLessonCompleted) {
-			const value: string = userQuizAnswers?.find((data) => data.questionId == question._id)?.userAnswer || '';
-			return value;
-		}
-		return '';
-	});
+	const [uploadUrlForCompletedLesson, setUploadUrlForCompletedLesson] = useState<string>('');
 
 	const [helperText, setHelperText] = useState<string>('Choose wisely');
 	const [selectedQuestion, setSelectedQuestion] = useState<number>(displayedQuestionNumber);
 	const [isSubmitQuizModalOpen, setIsSubmitQuizModalOpen] = useState<boolean>(false);
 	const [userQuizAnswersUploading, setUserQuizAnswersUploading] = useState<boolean>(false);
+	const [isAudioVideoUploaded, setIsAudioVideoUploaded] = useState<boolean>(() => {
+		const userUpload = userQuizAnswers?.find((data) => data.questionId === question._id);
+		if (userUpload?.audioRecordUrl || userUpload?.videoRecordUrl) {
+			return true;
+		}
+		return false;
+	});
+
+	const [isAudioUploading, setIsAudioUploading] = useState<boolean>(false);
+	const [isVideoUploading, setIsVideoUploading] = useState<boolean>(false);
 
 	const isOpenEndedQuestion: boolean = fetchQuestionTypeName(question) === QuestionType.OPEN_ENDED;
 	const isTrueFalseQuestion: boolean = fetchQuestionTypeName(question) === QuestionType.TRUE_FALSE;
 	const isMultipleChoiceQuestion: boolean = fetchQuestionTypeName(question) === QuestionType.MULTIPLE_CHOICE;
+	const isAudioVideoQuestion: boolean = fetchQuestionTypeName(question) === QuestionType.AUDIO_VIDEO;
+
+	const [recordOption, setRecordOption] = useState<string>('');
+	const toggleRecordOption = (type: string) => {
+		return () => {
+			setRecordOption(type);
+		};
+	};
+
+	const [value, setValue] = useState<string>(() => {
+		if (!isLessonCompleted && !isAudioVideoQuestion) {
+			const value: string = userQuizAnswers?.find((data) => data.questionId == question._id)?.userAnswer || '';
+			return value;
+		}
+
+		return '';
+	});
 
 	const isLastQuestion: boolean = displayedQuestionNumber === numberOfQuestions;
 	const isCompletingCourse: boolean = isLastQuestion && nextLessonId === null;
@@ -95,6 +122,17 @@ const QuizQuestion = ({
 			if (isLessonCompleted) {
 				const answer: string = userQuizAnswers?.find((data) => data.questionId == question._id)?.userAnswer || '';
 				return answer;
+			}
+			return '';
+		});
+		setUploadUrlForCompletedLesson(() => {
+			if (isLessonCompleted) {
+				const answer = userQuizAnswers?.find((data) => data.questionId == question._id);
+				if (answer?.audioRecordUrl) {
+					return answer?.audioRecordUrl;
+				} else if (answer?.videoRecordUrl) {
+					return answer?.videoRecordUrl;
+				}
 			}
 			return '';
 		});
@@ -148,6 +186,8 @@ const QuizQuestion = ({
 						isInProgress: false,
 						orgId,
 						userAnswer: answer.userAnswer,
+						videoRecordUrl: answer.videoRecordUrl,
+						audioRecordUrl: answer.audioRecordUrl,
 					});
 				} catch (error) {
 					console.log(error);
@@ -162,6 +202,64 @@ const QuizQuestion = ({
 		setUserQuizAnswersUploading(false);
 		localStorage.removeItem(`UserQuizAnswers-${lessonId}`);
 		navigate(`/course/${courseId}/user/${userId}/userCourseId/${userCourseId}?isEnrolled=true`);
+	};
+
+	const uploadAudio = async (blob: Blob) => {
+		setIsAudioUploading(true);
+		try {
+			const audioRef = ref(storage, `audio-recordings/${user?.username}-${Date.now()}.webm`);
+			await uploadBytes(audioRef, blob);
+			const downloadURL = await getDownloadURL(audioRef);
+
+			setUserQuizAnswers((prevData) => {
+				if (prevData) {
+					const updatedAnswers = prevData?.map((answer) => {
+						if (answer.questionId === question._id) {
+							return { ...answer, audioRecordUrl: downloadURL };
+						}
+						return answer;
+					});
+					return updatedAnswers;
+				}
+				return prevData;
+			});
+
+			setIsAudioVideoUploaded(true);
+			setRecordOption('');
+		} catch (error) {
+			console.log(error);
+		} finally {
+			setIsAudioUploading(false);
+		}
+	};
+
+	const uploadVideo = async (blob: Blob) => {
+		setIsVideoUploading(true);
+		try {
+			const videoRef = ref(storage, `video-recordings/${user?.username}-${Date.now()}.webm`);
+			await uploadBytes(videoRef, blob);
+			const downloadURL = await getDownloadURL(videoRef);
+
+			setUserQuizAnswers((prevData) => {
+				if (prevData) {
+					const updatedAnswers = prevData?.map((answer) => {
+						if (answer.questionId === question._id) {
+							return { ...answer, videoRecordUrl: downloadURL };
+						}
+						return answer;
+					});
+					return updatedAnswers;
+				}
+				return prevData;
+			});
+
+			setIsAudioVideoUploaded(true);
+			setRecordOption('');
+		} catch (error) {
+			console.log(error);
+		} finally {
+			setIsVideoUploading(false);
+		}
 	};
 
 	return (
@@ -203,6 +301,55 @@ const QuizQuestion = ({
 						</Box>
 					)}
 
+					{isAudioVideoQuestion && (
+						<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+							<Box>
+								{question?.audio && !isAudioVideoUploaded && !isLessonCompleted && (
+									<CustomSubmitButton onClick={toggleRecordOption('audio')} sx={{ margin: '0 1rem 1rem 0' }} type='button' size='small'>
+										Record Audio
+									</CustomSubmitButton>
+								)}
+								{question?.video && !isAudioVideoUploaded && !isLessonCompleted && (
+									<CustomSubmitButton onClick={toggleRecordOption('video')} sx={{ margin: '0 0 1rem 0' }} type='button' size='small'>
+										Record Video
+									</CustomSubmitButton>
+								)}
+							</Box>
+							<Box sx={{ display: 'flex' }}>
+								{recordOption === 'video' ? (
+									<VideoRecorder uploadVideo={uploadVideo} isVideoUploading={isVideoUploading} />
+								) : recordOption === 'audio' ? (
+									<AudioRecorder uploadAudio={uploadAudio} isAudioUploading={isAudioUploading} />
+								) : null}
+							</Box>
+							{isAudioVideoUploaded && (
+								<Box>
+									{userQuizAnswers?.map((answer) => {
+										if (answer.questionId === question._id) {
+											if (answer.audioRecordUrl) {
+												return (
+													<audio
+														src={!isLessonCompleted ? answer.audioRecordUrl : uploadUrlForCompletedLesson}
+														controls
+														key={question._id}
+														style={{ marginTop: '1rem', boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)', borderRadius: '0.35rem' }}></audio>
+												);
+											} else if (answer.videoRecordUrl) {
+												return (
+													<video
+														src={!isLessonCompleted ? answer.videoRecordUrl : uploadUrlForCompletedLesson}
+														controls
+														key={question._id}
+														style={{ boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)', borderRadius: '0.25rem' }}></video>
+												);
+											}
+										}
+									})}
+								</Box>
+							)}
+						</Box>
+					)}
+
 					{isTrueFalseQuestion && (
 						<Box>
 							<TrueFalseOptions
@@ -228,7 +375,7 @@ const QuizQuestion = ({
 								})}
 						</RadioGroup>
 					)}
-					{!isOpenEndedQuestion && !isLessonCompleted && helperText !== ' ' && (
+					{!isOpenEndedQuestion && !isLessonCompleted && helperText !== ' ' && !isAudioVideoQuestion && (
 						<FormHelperText sx={{ alignSelf: 'center', mt: '2rem' }}>{helperText}</FormHelperText>
 					)}
 				</FormControl>

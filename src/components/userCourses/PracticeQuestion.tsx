@@ -214,6 +214,8 @@ const PracticeQuestion = ({
 								userQuestionId: res.data._id,
 								questionId: question._id,
 								userAnswer,
+								audioRecordUrl: '',
+								videoRecordUrl: '',
 							};
 							return [...prevData, newUserAnswer];
 						});
@@ -380,7 +382,15 @@ const PracticeQuestion = ({
 
 				{isFlipCard && (
 					<Box sx={{ mt: '12rem' }}>
-						<FlipCardPreview question={question} fromPracticeQuestionUser={true} setIsCardFlipped={setIsCardFlipped} />
+						<FlipCardPreview
+							question={question}
+							fromPracticeQuestionUser={true}
+							setIsCardFlipped={setIsCardFlipped}
+							displayedQuestionNumber={displayedQuestionNumber}
+							numberOfQuestions={numberOfQuestions}
+							setIsLessonCompleted={setIsLessonCompleted}
+							setShowQuestionSelector={setShowQuestionSelector}
+						/>
 					</Box>
 				)}
 
@@ -593,7 +603,7 @@ const PracticeQuestion = ({
 							<Box sx={{ minHeight: '100%' }}>
 								<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
 									<Box>
-										<Typography variant='h6'>AI Explanation</Typography>
+										<Typography variant='h6'>AI Assist</Typography>
 									</Box>
 									<Box>
 										<IconButton onClick={() => closeAiResponseDrawer(index)}>
