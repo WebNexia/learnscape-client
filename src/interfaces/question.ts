@@ -1,3 +1,9 @@
+export interface MatchingPair {
+	id: string;
+	question: string;
+	answer: string;
+}
+
 export interface QuestionInterface {
 	_id: string;
 	questionType: string;
@@ -10,6 +16,7 @@ export interface QuestionInterface {
 	isActive: boolean;
 	audio: boolean;
 	video: boolean;
+	matchingPairs: MatchingPair[];
 	createdAt: string;
 	updatedAt: string;
 }

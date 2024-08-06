@@ -36,6 +36,7 @@ import TinyMceEditor from '../../richTextEditor/TinyMceEditor';
 import TrueFalseOptions from '../../layouts/questionTypes/TrueFalseOptions';
 import { QuestionType } from '../../../interfaces/enums';
 import FlipCard from '../../layouts/flipCard/FlipCard';
+import Matching from '../../layouts/matching/Matching';
 
 interface CreateQuestionDialogProps {
 	isQuestionCreateModalOpen: boolean;
@@ -109,6 +110,7 @@ const CreateQuestionDialog = ({
 		isActive: true,
 		audio: false,
 		video: false,
+		matchingPairs: [],
 		createdAt: '',
 		updatedAt: '',
 	});
@@ -117,6 +119,9 @@ const CreateQuestionDialog = ({
 	const [isQuestionMissing, setIsQuestionMissing] = useState<boolean>(false);
 	const [isAudioVideoSelectionMissing, setIsAudioVideoSelectionMissing] = useState<boolean>(false);
 	const [editorContent, setEditorContent] = useState<string>('');
+
+	const [isMinimumTwoMatchingPairs, setIsMinimumTwoMatchingPairs] = useState<boolean>(false);
+	const [isMissingPair, setIsMissingPair] = useState<boolean>(false);
 
 	useEffect(() => {
 		resetVideoUpload();
@@ -129,6 +134,7 @@ const CreateQuestionDialog = ({
 	const isTrueFalseQuestion: boolean = questionType === QuestionType.TRUE_FALSE;
 	const isMultipleChoiceQuestion: boolean = questionType === QuestionType.MULTIPLE_CHOICE;
 	const isAudioVideoQuestion: boolean = questionType === QuestionType.AUDIO_VIDEO;
+	const isMatching: boolean = questionType === QuestionType.MATCHING;
 
 	const resetValues = () => {
 		setNewQuestion({
@@ -143,6 +149,7 @@ const CreateQuestionDialog = ({
 			isActive: true,
 			audio: false,
 			video: false,
+			matchingPairs: [],
 			createdAt: '',
 			updatedAt: '',
 		});
@@ -156,6 +163,7 @@ const CreateQuestionDialog = ({
 		resetEnterImageVideoUrl();
 		setIsQuestionMissing(false);
 		setIsCorrectAnswerMissing(false);
+		setIsMinimumTwoMatchingPairs(false);
 	};
 
 	const createQuestion = async () => {
@@ -174,6 +182,7 @@ const CreateQuestionDialog = ({
 				videoUrl: newQuestion?.videoUrl,
 				audio: newQuestion.audio,
 				video: newQuestion?.video,
+				matchingPairs: newQuestion.matchingPairs,
 				orgId,
 				isActive: true,
 			});
@@ -188,6 +197,7 @@ const CreateQuestionDialog = ({
 				videoUrl: newQuestion?.videoUrl,
 				audio: newQuestion.audio,
 				video: newQuestion?.video,
+				matchingPairs: newQuestion.matchingPairs,
 				orgId,
 				isActive: true,
 			});
@@ -209,8 +219,9 @@ const CreateQuestionDialog = ({
 				imageUrl: newQuestion?.imageUrl,
 				videoUrl: newQuestion?.videoUrl,
 				orgId,
-				audio: newQuestion.audio,
+				audio: newQuestion?.audio,
 				video: newQuestion?.video,
+				matchingPairs: newQuestion.matchingPairs,
 				isActive: true,
 				createdAt: '',
 				updatedAt: '',
@@ -251,7 +262,22 @@ const CreateQuestionDialog = ({
 			return;
 		}
 
-		if (correctAnswerIndex === -1 && !correctAnswer && !isOpenEndedQuestion && !isFlipCard && !isAudioVideoQuestion) {
+		if (isMatching) {
+			const nonBlankPairs = newQuestion.matchingPairs.filter((pair) => pair.question.trim() !== '' && pair.answer.trim() !== '');
+			const missingPairExists = newQuestion.matchingPairs.find((pair) => pair.question.trim() === '' || pair.answer.trim() === '');
+
+			if (nonBlankPairs.length < 2) {
+				setIsMinimumTwoMatchingPairs(true);
+				return;
+			} else if (missingPairExists) {
+				setIsMissingPair(true);
+				return;
+			} else {
+				setIsMinimumTwoMatchingPairs(false);
+			}
+		}
+
+		if (correctAnswerIndex === -1 && !correctAnswer && !isOpenEndedQuestion && !isFlipCard && !isAudioVideoQuestion && !isMatching) {
 			setIsCorrectAnswerMissing(true);
 			return;
 		}
@@ -564,6 +590,14 @@ const CreateQuestionDialog = ({
 								setIsCorrectAnswerMissing={setIsCorrectAnswerMissing}
 							/>
 						)}
+
+						{isMatching && (
+							<Matching
+								setNewQuestion={setNewQuestion}
+								setIsMinimumTwoMatchingPairs={setIsMinimumTwoMatchingPairs}
+								setIsMissingPair={setIsMissingPair}
+							/>
+						)}
 					</Box>
 
 					<Box sx={{ mt: '2rem' }}>
@@ -574,10 +608,16 @@ const CreateQuestionDialog = ({
 								<CustomErrorMessage>- Enter question</CustomErrorMessage>
 							) : null)}
 
-						{isCorrectAnswerMissing && !isAudioVideoQuestion && (
+						{isCorrectAnswerMissing && !isAudioVideoQuestion && !isMatching && (
 							<CustomErrorMessage>{isFlipCard ? '- Enter back face text' : '- Select correct answer'}</CustomErrorMessage>
 						)}
 						{isAudioVideoQuestion && isAudioVideoSelectionMissing && <CustomErrorMessage>- Select one of the recording options</CustomErrorMessage>}
+						{isMatching && (
+							<>
+								{isMinimumTwoMatchingPairs && <CustomErrorMessage>- Enter at least 2 completed pairs</CustomErrorMessage>}
+								{isMissingPair && <CustomErrorMessage>- There is at least one incomplete pair</CustomErrorMessage>}
+							</>
+						)}
 					</Box>
 
 					{isMultipleChoiceQuestion && (

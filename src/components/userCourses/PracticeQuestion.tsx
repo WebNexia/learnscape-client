@@ -112,6 +112,7 @@ const PracticeQuestion = ({
 	const isTrueFalseQuestion: boolean = fetchQuestionTypeName(question) === QuestionType.TRUE_FALSE;
 	const isMultipleChoiceQuestion: boolean = fetchQuestionTypeName(question) === QuestionType.MULTIPLE_CHOICE;
 	const isFlipCard: boolean = fetchQuestionTypeName(question) === QuestionType.FLIP_CARD;
+	const isMatching: boolean = fetchQuestionTypeName(question) === QuestionType.MATCHING;
 
 	const [userAnswer, setUserAnswer] = useState<string>('');
 

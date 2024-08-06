@@ -7,6 +7,7 @@ import { useContext } from 'react';
 import { QuestionsContext } from '../../contexts/QuestionsContextProvider';
 import { QuestionType } from '../../interfaces/enums';
 import FlipCardPreview from '../layouts/flipCard/FlipCardPreview';
+import MatchingPreview from '../layouts/matching/MatchingPreview';
 
 interface QuestionDialogContentNonEditProps {
 	question: QuestionInterface | null;
@@ -159,6 +160,12 @@ const QuestionDialogContentNonEdit = ({ question }: QuestionDialogContentNonEdit
 							}}
 						/>{' '}
 					</Box>
+				</Box>
+			)}
+
+			{question && fetchQuestionTypeName(question) === QuestionType.MATCHING && (
+				<Box sx={{ display: 'flex', justifyContent: 'center' }}>
+					<MatchingPreview initialPairs={question.matchingPairs} />
 				</Box>
 			)}
 		</DialogContent>
