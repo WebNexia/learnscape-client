@@ -20,7 +20,6 @@ import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import useNewQuestion from '../hooks/useNewQuestion';
 import CreateQuestionDialog from '../components/forms/newQuestion/CreateQuestionDialog';
-import EditQuestionDialog from '../components/forms/editQuestion/EditQuestionDialog';
 import { QuestionsContext } from '../contexts/QuestionsContextProvider';
 import useImageUpload from '../hooks/useImageUpload';
 import useVideoUpload from '../hooks/useVideoUpload';
@@ -41,6 +40,7 @@ import { DocumentsContext } from '../contexts/DocumentsContextProvider';
 import DocumentsListEditBox from '../components/adminDocuments/DocumentsListEditBox';
 import { LessonType } from '../interfaces/enums';
 import NoContentBoxAdmin from '../components/layouts/noContentBox/NoContentBoxAdmin';
+import AdminLessonEditPageEditQuestionDialog from '../components/forms/editQuestion/AdminLessonEditPageEditQuestionDialog';
 
 export interface QuestionUpdateTrack {
 	questionId: string;
@@ -892,8 +892,8 @@ const AdminLessonEditPage = () => {
 																							<Edit />
 																						</IconButton>
 																					</Tooltip>
-																					<EditQuestionDialog
-																						fromLessonEditPage={true}
+
+																					<AdminLessonEditPageEditQuestionDialog
 																						question={question}
 																						correctAnswerIndex={correctAnswerIndex}
 																						index={index}
@@ -916,6 +916,31 @@ const AdminLessonEditPage = () => {
 																						setIsDuplicateOption={setIsDuplicateOption}
 																						setIsMinimumOptions={setIsMinimumOptions}
 																					/>
+
+																					{/* <EditQuestionDialog
+																						fromLessonEditPage={true}
+																						question={question}
+																						correctAnswerIndex={correctAnswerIndex}
+																						index={index}
+																						options={options}
+																						correctAnswer={correctAnswer}
+																						questionType={fetchQuestionTypeName(question)}
+																						isMinimumOptions={isMinimumOptions}
+																						isDuplicateOption={isDuplicateOption}
+																						setSingleLessonBeforeSave={setSingleLessonBeforeSave}
+																						setIsLessonUpdated={setIsLessonUpdated}
+																						handleCorrectAnswerChange={handleCorrectAnswerChange}
+																						setCorrectAnswerIndex={setCorrectAnswerIndex}
+																						handleOptionChange={handleOptionChange}
+																						closeQuestionEditModal={closeQuestionEditModal}
+																						setIsQuestionUpdated={setIsQuestionUpdated}
+																						editQuestionModalOpen={editQuestionModalOpen}
+																						addOption={addOption}
+																						removeOption={removeOption}
+																						setCorrectAnswer={setCorrectAnswer}
+																						setIsDuplicateOption={setIsDuplicateOption}
+																						setIsMinimumOptions={setIsMinimumOptions}
+																					/> */}
 																				</Box>
 																				<Tooltip title='Remove' placement='top'>
 																					<IconButton onClick={() => removeQuestion(question)}>

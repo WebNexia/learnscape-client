@@ -4,14 +4,11 @@ import CustomDialog from '../../layouts/dialog/CustomDialog';
 import CustomTextField from '../customFields/CustomTextField';
 import { AddCircle, RemoveCircle } from '@mui/icons-material';
 import CustomDialogActions from '../../layouts/dialog/CustomDialogActions';
-import { QuestionUpdateTrack } from '../../../pages/AdminLessonEditPage';
 import { MatchingPair, QuestionInterface } from '../../../interfaces/question';
-import { Lesson } from '../../../interfaces/lessons';
 import { QuestionsContext } from '../../../contexts/QuestionsContextProvider';
 import CustomErrorMessage from '../customFields/CustomErrorMessage';
 import axios from 'axios';
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
-import { questionLessonUpdateTrack } from '../../../utils/questionLessonUpdateTrack';
 import useImageUpload from '../../../hooks/useImageUpload';
 import useVideoUpload from '../../../hooks/useVideoUpload';
 import HandleImageUploadURL from '../uploadImageVideoDocument/HandleImageUploadURL';
@@ -23,12 +20,9 @@ import TrueFalseOptions from '../../layouts/questionTypes/TrueFalseOptions';
 import { LessonsContext } from '../../../contexts/LessonsContextProvider';
 import { QuestionType } from '../../../interfaces/enums';
 import FlipCard from '../../layouts/flipCard/FlipCard';
-import useMatchingPairs from '../../../hooks/useMatchingPairs';
-import MatchingPairsInput from '../../layouts/matching/MatchingPairsInput';
-import MatchingPreview from '../../layouts/matching/MatchingPreview';
+import Matching from '../../layouts/matching/Matching';
 
 interface EditQuestionDialogProps {
-	fromLessonEditPage: boolean;
 	index: number;
 	question: QuestionInterface;
 	correctAnswerIndex: number;
@@ -38,13 +32,10 @@ interface EditQuestionDialogProps {
 	questionType: string;
 	isMinimumOptions: boolean;
 	isDuplicateOption: boolean;
-	setSingleLessonBeforeSave?: React.Dispatch<React.SetStateAction<Lesson>>;
 	setCorrectAnswerIndex: React.Dispatch<React.SetStateAction<number>>;
 	handleCorrectAnswerChange: (index: number) => void;
 	handleOptionChange: (index: number, value: string) => void;
 	closeQuestionEditModal: (index: number) => void;
-	setIsQuestionUpdated?: React.Dispatch<React.SetStateAction<QuestionUpdateTrack[]>>;
-	setIsLessonUpdated?: React.Dispatch<React.SetStateAction<boolean>>;
 	addOption: () => void;
 	removeOption: (indexToRemove: number) => void;
 	setCorrectAnswer: React.Dispatch<React.SetStateAction<string>>;
@@ -52,8 +43,7 @@ interface EditQuestionDialogProps {
 	setIsMinimumOptions: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const EditQuestionDialog = ({
-	fromLessonEditPage,
+const AdminQuestionsEditQuestionDialog = ({
 	index,
 	question,
 	correctAnswerIndex,
@@ -63,13 +53,10 @@ const EditQuestionDialog = ({
 	questionType,
 	isMinimumOptions,
 	isDuplicateOption,
-	setSingleLessonBeforeSave,
 	handleCorrectAnswerChange,
 	setCorrectAnswerIndex,
 	handleOptionChange,
 	closeQuestionEditModal,
-	setIsQuestionUpdated,
-	setIsLessonUpdated,
 	addOption,
 	removeOption,
 	setCorrectAnswer,
@@ -107,9 +94,6 @@ const EditQuestionDialog = ({
 	const { resetImageUpload } = useImageUpload();
 	const { resetVideoUpload } = useVideoUpload();
 
-	const { pairs, handlePairChange, addPair, removePair } = useMatchingPairs(
-		fromLessonEditPage ? question.matchingPairs : matchingPairsAdminQuestions || []
-	);
 	const [isMinimumTwoMatchingPairs, setIsMinimumTwoMatchingPairs] = useState<boolean>(false);
 	const [isMissingPair, setIsMissingPair] = useState<boolean>(false);
 
@@ -139,27 +123,17 @@ const EditQuestionDialog = ({
 			await handleInputChange('question', editorContent);
 		}
 
-		if ((isFlipCard && !correctAnswer && fromLessonEditPage) || (isFlipCard && !correctAnswerAdminQuestions && !fromLessonEditPage)) {
+		if (isFlipCard && !correctAnswerAdminQuestions) {
 			setIsCorrectAnswerMissing(true);
 			return;
 		}
 
-		if (isFlipCard && !fromLessonEditPage && !questionAdminQuestions && !imageUrlAdminQuestions) {
+		if (isFlipCard && !questionAdminQuestions && !imageUrlAdminQuestions) {
 			setIsQuestionMissing(true);
 			return;
 		}
 
-		if (isFlipCard && fromLessonEditPage && !question.question && !question.imageUrl) {
-			setIsQuestionMissing(true);
-			return;
-		}
-
-		if (isAudioVideoQuestion && !fromLessonEditPage && !isAudioAdminQuestions && !isVideoAdminQuestions) {
-			setIsAudioVideoSelectionMissing(true);
-			return;
-		}
-
-		if (isAudioVideoQuestion && fromLessonEditPage && !question.audio && !question.video) {
+		if (isAudioVideoQuestion && !isAudioAdminQuestions && !isVideoAdminQuestions) {
 			setIsAudioVideoSelectionMissing(true);
 			return;
 		}
@@ -191,6 +165,8 @@ const EditQuestionDialog = ({
 			setIsCorrectAnswerMissing(false);
 		}
 
+		console.log(matchingPairsAdminQuestions);
+
 		if (isMatching) {
 			let nonBlankPairs: MatchingPair[];
 			let missingPairExists: boolean;
@@ -198,6 +174,8 @@ const EditQuestionDialog = ({
 			const checkPairs = (pairs: MatchingPair[]) => {
 				nonBlankPairs = pairs.filter((pair) => pair.question.trim() !== '' && pair.answer.trim() !== '');
 				missingPairExists = pairs.some((pair) => pair.question.trim() === '' || pair.answer.trim() === '');
+
+				console.log('deneme');
 
 				if (nonBlankPairs.length < 2) {
 					setIsMinimumTwoMatchingPairs(true);
@@ -211,124 +189,88 @@ const EditQuestionDialog = ({
 				}
 			};
 
-			if (fromLessonEditPage) {
-				if (checkPairs(pairs)) return;
-			} else {
-				if (checkPairs(matchingPairsAdminQuestions)) return;
-			}
+			if (checkPairs(matchingPairsAdminQuestions)) return;
 		}
 
 		if (isDuplicateOption) return;
 		if (!isMinimumOptions) return;
 
-		if (fromLessonEditPage && setSingleLessonBeforeSave) {
-			setSingleLessonBeforeSave((prevData) => {
-				if (!prevData.questions) return prevData;
+		try {
+			const updatedCorrectAnswer = isMultipleChoiceQuestion ? options[correctAnswerIndex] : correctAnswerAdminQuestions;
 
-				const updatedQuestions = prevData?.questions?.map((prevQuestion) => {
-					if (prevQuestion !== null && prevQuestion._id === question._id) {
-						return { ...prevQuestion, options: options.filter((option) => option !== ''), correctAnswer, matchingPairs: pairs };
-					} else {
-						return prevQuestion;
-					}
-				});
-
-				return { ...prevData, questions: updatedQuestions };
+			const response = await axios.patch(`${base_url}/questions/${question._id}`, {
+				orgId,
+				question: !isFlipCard ? editorContent : questionAdminQuestions,
+				options,
+				correctAnswer: updatedCorrectAnswer,
+				videoUrl: videoUrlAdminQuestions,
+				imageUrl: imageUrlAdminQuestions,
+				audio: isAudioVideoQuestion ? isAudioAdminQuestions : false,
+				video: isAudioVideoQuestion ? isVideoAdminQuestions : false,
+				matchingPairs: matchingPairsAdminQuestions,
 			});
-			questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
+
+			updateQuestion({
+				_id: question._id,
+				orgId,
+				question: !isFlipCard ? editorContent : questionAdminQuestions,
+				options,
+				correctAnswer: updatedCorrectAnswer,
+				videoUrl: videoUrlAdminQuestions,
+				imageUrl: imageUrlAdminQuestions,
+				updatedAt: response.data.data.updatedAt,
+				createdAt: response.data.data.createdAt,
+				questionType: question.questionType,
+				isActive: true,
+				audio: response.data.data.audio,
+				video: response.data.data.video,
+				matchingPairs: response.data.data.matchingPairs,
+			});
+
+			setQuestionBeforeSave({
+				_id: question._id,
+				orgId,
+				question: !isFlipCard ? editorContent : questionAdminQuestions,
+				options,
+				correctAnswer: updatedCorrectAnswer,
+				videoUrl: videoUrlAdminQuestions,
+				imageUrl: imageUrlAdminQuestions,
+				updatedAt: response.data.data.updatedAt,
+				createdAt: response.data.data.createdAt,
+				questionType: question.questionType,
+				isActive: true,
+				audio: isAudioAdminQuestions,
+				video: isVideoAdminQuestions,
+				matchingPairs: matchingPairsAdminQuestions,
+			});
+
 			resetImageUpload();
 			resetVideoUpload();
 			resetEnterImageVideoUrl();
-		} else {
-			try {
-				const updatedCorrectAnswer = isMultipleChoiceQuestion ? options[correctAnswerIndex] : correctAnswerAdminQuestions;
-
-				const response = await axios.patch(`${base_url}/questions/${question._id}`, {
-					orgId,
-					question: !isFlipCard ? editorContent : questionAdminQuestions,
-					options,
-					correctAnswer: updatedCorrectAnswer,
-					videoUrl: videoUrlAdminQuestions,
-					imageUrl: imageUrlAdminQuestions,
-					audio: isAudioVideoQuestion ? isAudioAdminQuestions : false,
-					video: isAudioVideoQuestion ? isVideoAdminQuestions : false,
-					matchingPairs: matchingPairsAdminQuestions,
-				});
-
-				updateQuestion({
-					_id: question._id,
-					orgId,
-					question: !isFlipCard ? editorContent : questionAdminQuestions,
-					options,
-					correctAnswer: updatedCorrectAnswer,
-					videoUrl: videoUrlAdminQuestions,
-					imageUrl: imageUrlAdminQuestions,
-					updatedAt: response.data.data.updatedAt,
-					createdAt: response.data.data.createdAt,
-					questionType: question.questionType,
-					isActive: true,
-					audio: response.data.data.audio,
-					video: response.data.data.video,
-					matchingPairs: response.data.data.matchingPairs,
-				});
-
-				resetImageUpload();
-				resetVideoUpload();
-				resetEnterImageVideoUrl();
-				fetchLessons(lessonsPageNumber);
-				fetchQuestions(questionsPageNumber);
-			} catch (error) {
-				console.error('Failed to update the question:', error);
-			}
+			fetchLessons(lessonsPageNumber);
+			fetchQuestions(questionsPageNumber);
+		} catch (error) {
+			console.error('Failed to update the question:', error);
 		}
 
 		closeQuestionEditModal(index);
 	};
 
 	const handleInputChange = async (field: 'question' | 'videoUrl' | 'imageUrl', value: string) => {
-		if (fromLessonEditPage && setSingleLessonBeforeSave) {
-			setSingleLessonBeforeSave((prevData) => {
-				if (!prevData.questions) return prevData;
-
-				const updatedQuestions = prevData?.questions?.map((prevQuestion) => {
-					if (prevQuestion !== null && prevQuestion._id === question._id) {
-						return { ...prevQuestion, [field]: value };
-					} else {
-						return prevQuestion;
-					}
-				});
-				return { ...prevData, questions: updatedQuestions };
-			});
-			questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
-		} else {
-			if (field === 'question') setQuestionAdminQuestions(value);
-			if (field === 'imageUrl') setImageUrlAdminQuestions(value);
-			if (field === 'videoUrl') setVideoUrlAdminQuestions(value);
-		}
+		if (field === 'question') setQuestionAdminQuestions(value);
+		if (field === 'imageUrl') setImageUrlAdminQuestions(value);
+		if (field === 'videoUrl') setVideoUrlAdminQuestions(value);
 	};
 
 	const imagePlaceHolderUrl = 'https://directmobilityonline.co.uk/assets/img/noimage.png';
 
 	const handleResetQuestion = () => {
-		if (fromLessonEditPage && setSingleLessonBeforeSave) {
-			setSingleLessonBeforeSave((prevData) => {
-				if (!prevData.questions) return prevData;
-
-				const updatedQuestions = prevData?.questions?.map((prevQuestion) => {
-					if (prevQuestion !== null && prevQuestion._id === question._id) {
-						return questionBeforeSave;
-					} else {
-						return prevQuestion;
-					}
-				});
-
-				return { ...prevData, questions: updatedQuestions };
-			});
-		} else {
-			setQuestionAdminQuestions(questionBeforeSave.question);
-			setImageUrlAdminQuestions(questionBeforeSave.imageUrl);
-			setVideoUrlAdminQuestions(questionBeforeSave.videoUrl);
-		}
+		setQuestionAdminQuestions(questionBeforeSave.question);
+		setImageUrlAdminQuestions(questionBeforeSave.imageUrl);
+		setVideoUrlAdminQuestions(questionBeforeSave.videoUrl);
+		setIsAudioAdminQuestions(questionBeforeSave.audio);
+		setIsVideoAdminQuestions(questionBeforeSave.video);
+		setMatchingPairsAdminQuestions(questionBeforeSave.matchingPairs);
 	};
 
 	return (
@@ -363,32 +305,13 @@ const EditQuestionDialog = ({
 						<Box sx={{ flex: 1, mr: '2rem' }}>
 							<HandleImageUploadURL
 								onImageUploadLogic={(url) => {
-									if (fromLessonEditPage && setSingleLessonBeforeSave) {
-										setSingleLessonBeforeSave((prevData) => {
-											if (!prevData.questions) return prevData;
-
-											const updatedQuestions = prevData?.questions?.map((prevQuestion) => {
-												if (prevQuestion !== null && prevQuestion._id === question._id) {
-													return { ...prevQuestion, imageUrl: url };
-												} else {
-													return prevQuestion;
-												}
-											});
-
-											return { ...prevData, questions: updatedQuestions };
-										});
-										questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
-										if (isFlipCard) setIsQuestionMissing(false);
-									} else {
-										setImageUrlAdminQuestions(url);
-										if (isFlipCard) setIsQuestionMissing(false);
-									}
+									setImageUrlAdminQuestions(url);
+									if (isFlipCard) setIsQuestionMissing(false);
 								}}
 								onChangeImgUrl={(e) => {
 									handleInputChange('imageUrl', e.target.value);
-									questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
 								}}
-								imageUrlValue={fromLessonEditPage ? question.imageUrl : imageUrlAdminQuestions}
+								imageUrlValue={imageUrlAdminQuestions}
 								imageFolderName='QuestionImages'
 								enterImageUrl={enterImageUrl}
 								setEnterImageUrl={setEnterImageUrl}
@@ -396,26 +319,9 @@ const EditQuestionDialog = ({
 
 							{!isFlipCard && (
 								<ImageThumbnail
-									imgSource={fromLessonEditPage ? question?.imageUrl || imagePlaceHolderUrl : imageUrlAdminQuestions || imagePlaceHolderUrl}
+									imgSource={imageUrlAdminQuestions || imagePlaceHolderUrl}
 									removeImage={() => {
-										if (fromLessonEditPage && setSingleLessonBeforeSave) {
-											setSingleLessonBeforeSave((prevData) => {
-												if (!prevData.questions) return prevData;
-
-												const updatedQuestions = prevData.questions?.map((prevQuestion) => {
-													if (prevQuestion !== null && prevQuestion._id === question._id) {
-														return { ...prevQuestion, imageUrl: '' };
-													} else {
-														return prevQuestion;
-													}
-												});
-
-												return { ...prevData, questions: updatedQuestions };
-											});
-											questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
-										} else {
-											setImageUrlAdminQuestions('');
-										}
+										setImageUrlAdminQuestions('');
 									}}
 								/>
 							)}
@@ -425,27 +331,10 @@ const EditQuestionDialog = ({
 							<Box sx={{ flex: 1 }}>
 								<HandleVideoUploadURL
 									onVideoUploadLogic={(url) => {
-										if (fromLessonEditPage && setSingleLessonBeforeSave) {
-											setSingleLessonBeforeSave((prevData) => {
-												if (!prevData.questions) return prevData;
-
-												const updatedQuestions = prevData?.questions?.map((prevQuestion) => {
-													if (prevQuestion !== null && prevQuestion._id === question._id) {
-														return { ...prevQuestion, videoUrl: url };
-													} else {
-														return prevQuestion;
-													}
-												});
-
-												return { ...prevData, questions: updatedQuestions };
-											});
-											questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
-										} else {
-											setVideoUrlAdminQuestions(url);
-										}
+										setVideoUrlAdminQuestions(url);
 									}}
 									onChangeVideoUrl={(e) => handleInputChange('videoUrl', e.target.value)}
-									videoUrlValue={fromLessonEditPage ? question.videoUrl : videoUrlAdminQuestions}
+									videoUrlValue={videoUrlAdminQuestions}
 									videoFolderName='QuestionVideos'
 									enterVideoUrl={enterVideoUrl}
 									setEnterVideoUrl={setEnterVideoUrl}
@@ -453,28 +342,10 @@ const EditQuestionDialog = ({
 
 								<VideoThumbnail
 									videoPlayCondition={!(question?.videoUrl === '' && videoUrlAdminQuestions === '')}
-									videoUrl={fromLessonEditPage ? question?.videoUrl : videoUrlAdminQuestions}
+									videoUrl={videoUrlAdminQuestions}
 									videoPlaceholderUrl='https://www.47pitches.com/contents/images/no-video.jpg'
 									removeVideo={() => {
-										if (fromLessonEditPage && setSingleLessonBeforeSave) {
-											setSingleLessonBeforeSave((prevData) => {
-												if (!prevData.questions) return prevData;
-
-												const updatedQuestions = prevData?.questions?.map((prevQuestion) => {
-													if (prevQuestion !== null && prevQuestion._id === question._id) {
-														return { ...prevQuestion, videoUrl: '' };
-													} else {
-														return prevQuestion;
-													}
-												});
-
-												return { ...prevData, questions: updatedQuestions };
-											});
-											setVideoUrlAdminQuestions('');
-											questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
-										} else {
-											setVideoUrlAdminQuestions('');
-										}
+										setVideoUrlAdminQuestions('');
 									}}
 								/>
 							</Box>
@@ -486,8 +357,6 @@ const EditQuestionDialog = ({
 							question={question}
 							setCorrectAnswer={setCorrectAnswer}
 							setIsQuestionMissing={setIsQuestionMissing}
-							fromLessonEditPage={fromLessonEditPage}
-							setSingleLessonBeforeSave={setSingleLessonBeforeSave}
 							setQuestionAdminQuestions={setQuestionAdminQuestions}
 							setCorrectAnswerAdminQuestions={setCorrectAnswerAdminQuestions}
 							setIsCorrectAnswerMissing={setIsCorrectAnswerMissing}
@@ -504,11 +373,8 @@ const EditQuestionDialog = ({
 								handleEditorChange={(content) => {
 									setEditorContent(content);
 									setIsQuestionMissing(false);
-									if (fromLessonEditPage) {
-										questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
-									}
 								}}
-								initialValue={fromLessonEditPage ? question.question : questionAdminQuestions}
+								initialValue={questionAdminQuestions}
 							/>
 						</Box>
 					)}
@@ -533,7 +399,6 @@ const EditQuestionDialog = ({
 													onChange={() => {
 														handleCorrectAnswerChange(i);
 														setIsCorrectAnswerMissing(false);
-														questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
 													}}
 													color='primary'
 												/>
@@ -554,7 +419,6 @@ const EditQuestionDialog = ({
 										onChange={(e) => {
 											handleOptionChange(i, e.target.value);
 											if (i === correctAnswerIndex) setCorrectAnswer(e.target.value);
-											questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
 										}}
 										sx={{
 											marginTop: '0.75rem',
@@ -577,10 +441,8 @@ const EditQuestionDialog = ({
 
 						{isTrueFalseQuestion && (
 							<TrueFalseOptions
-								fromLessonEditPage={fromLessonEditPage}
-								correctAnswer={correctAnswer}
+								fromLessonEditPage={false}
 								correctAnswerAdminQuestions={correctAnswerAdminQuestions}
-								setCorrectAnswer={setCorrectAnswer}
 								setIsCorrectAnswerMissing={setIsCorrectAnswerMissing}
 								setCorrectAnswerAdminQuestions={setCorrectAnswerAdminQuestions}
 							/>
@@ -592,28 +454,10 @@ const EditQuestionDialog = ({
 									<FormControlLabel
 										control={
 											<Checkbox
-												checked={fromLessonEditPage ? question.audio : isAudioAdminQuestions}
+												checked={isAudioAdminQuestions}
 												onChange={(e) => {
-													if (fromLessonEditPage && setSingleLessonBeforeSave) {
-														setSingleLessonBeforeSave((prevData) => {
-															if (!prevData.questions) return prevData;
-
-															const updatedQuestions = prevData?.questions?.map((prevQuestion) => {
-																if (prevQuestion !== null && prevQuestion._id === question._id) {
-																	return { ...prevQuestion, audio: e.target.checked };
-																} else {
-																	return prevQuestion;
-																}
-															});
-
-															return { ...prevData, questions: updatedQuestions };
-														});
-														questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
-													} else {
-														setIsAudioAdminQuestions(e.target.checked);
-													}
+													setIsAudioAdminQuestions(e.target.checked);
 													setIsAudioVideoSelectionMissing(false);
-													questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
 												}}
 											/>
 										}
@@ -624,27 +468,10 @@ const EditQuestionDialog = ({
 									<FormControlLabel
 										control={
 											<Checkbox
-												checked={fromLessonEditPage ? question.video : isVideoAdminQuestions}
+												checked={isVideoAdminQuestions}
 												onChange={(e) => {
-													if (fromLessonEditPage && setSingleLessonBeforeSave) {
-														setSingleLessonBeforeSave((prevData) => {
-															if (!prevData.questions) return prevData;
-															const updatedQuestions = prevData?.questions?.map((prevQuestion) => {
-																if (prevQuestion !== null && prevQuestion._id === question._id) {
-																	return { ...prevQuestion, video: e.target.checked };
-																} else {
-																	return prevQuestion;
-																}
-															});
-
-															return { ...prevData, questions: updatedQuestions };
-														});
-														questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
-													} else {
-														setIsVideoAdminQuestions(e.target.checked);
-													}
+													setIsVideoAdminQuestions(e.target.checked);
 													setIsAudioVideoSelectionMissing(false);
-													questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
 												}}
 											/>
 										}
@@ -656,16 +483,12 @@ const EditQuestionDialog = ({
 
 						{isMatching && (
 							<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-								<MatchingPairsInput
-									pairs={fromLessonEditPage ? pairs : matchingPairsAdminQuestions}
-									handlePairChange={handlePairChange}
-									addPair={addPair}
-									removePair={removePair}
+								<Matching
+									matchingPairs={matchingPairsAdminQuestions}
+									setIsMissingPair={setIsMissingPair}
+									existingQuestion={true}
+									setMatchingPairsAdminQuestions={setMatchingPairsAdminQuestions}
 								/>
-								<Box sx={{ textAlign: 'left', width: '90%', marginTop: '1rem' }}>
-									<Typography variant='h5'>PREVIEW</Typography>
-								</Box>
-								<MatchingPreview initialPairs={fromLessonEditPage ? pairs : matchingPairsAdminQuestions} />
 							</Box>
 						)}
 					</Box>
@@ -673,7 +496,7 @@ const EditQuestionDialog = ({
 						{isQuestionMissing &&
 							(!isFlipCard ? (
 								<CustomErrorMessage>- Enter question</CustomErrorMessage>
-							) : (!question.imageUrl && fromLessonEditPage) || (!fromLessonEditPage && !questionAdminQuestions && !imageUrlAdminQuestions) ? (
+							) : !questionAdminQuestions && !imageUrlAdminQuestions ? (
 								<CustomErrorMessage>- Enter front face text or enter image</CustomErrorMessage>
 							) : null)}
 
@@ -717,4 +540,4 @@ const EditQuestionDialog = ({
 	);
 };
 
-export default EditQuestionDialog;
+export default AdminQuestionsEditQuestionDialog;

@@ -21,7 +21,7 @@ const Column = styled(Box)`
 `;
 
 const Item = styled.div<{ $isCorrect: boolean | null }>`
-	padding: 0.75rem;
+	padding: 0.5rem 0.75rem;
 	margin: 0.5rem 0.75rem;
 	background-color: ${({ $isCorrect }) => ($isCorrect === null ? '#f4f4f4' : $isCorrect ? '#d4edda' : '#f8d7da')};
 	border: 1px solid ${({ $isCorrect }) => ($isCorrect === null ? '#ccc' : $isCorrect ? '#c3e6cb' : '#f5c6cb')};
@@ -35,7 +35,7 @@ const DropArea = styled(Box)`
 	margin: 0.5rem 0;
 	background-color: #e0e0e0;
 	border-radius: 0.35rem;
-	min-height: 4rem;
+	min-height: 5rem;
 	box-shadow: 0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2);
 	flex-grow: 1;
 `;
@@ -60,14 +60,8 @@ const MatchingPreview = ({ initialPairs }: MatchingPreviewProps) => {
 
 		const { source, destination } = result;
 
-		console.log('Source:', source);
-		console.log('Destination:', destination);
-
 		const newPairs = pairs.map((pair) => ({ ...pair }));
 		const newResponses = responses.map((response) => ({ ...response }));
-
-		console.log('Before Modification - Pairs:', newPairs);
-		console.log('Before Modification - Responses:', newResponses);
 
 		if (source.droppableId === 'responses' && destination.droppableId.startsWith('prompt-')) {
 			const pairIndex = parseInt(destination.droppableId.split('-')[1], 10);
@@ -96,9 +90,6 @@ const MatchingPreview = ({ initialPairs }: MatchingPreviewProps) => {
 			}
 		}
 
-		console.log('After Modification - Pairs:', newPairs);
-		console.log('After Modification - Responses:', newResponses);
-
 		setPairs(newPairs);
 		setResponses(newResponses);
 	};
@@ -120,14 +111,14 @@ const MatchingPreview = ({ initialPairs }: MatchingPreviewProps) => {
 													{...provided.draggableProps}
 													{...provided.dragHandleProps}
 													$isCorrect={pair.answer === initialPairs.find((p) => p.id === pair.id)?.answer}>
-													<Typography>{pair.answer}</Typography>
+													<Typography variant='body2'>{pair.answer}</Typography>
 												</Item>
 											)}
 										</Draggable>
 									) : (
 										<Box
 											style={{
-												minHeight: '3rem',
+												minHeight: '2.5rem',
 												border: `dashed 0.1rem ${theme.bgColor?.lessonInProgress}`,
 												backgroundColor: theme.bgColor?.commonTwo,
 												borderRadius: '0.35rem',
