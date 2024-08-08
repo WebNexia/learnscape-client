@@ -82,8 +82,6 @@ const Questions: React.FC<QuestionsProps> = ({
 		setIsAiActive(newIsAiActive);
 	};
 
-	console.log(userQuizAnswers);
-
 	return (
 		<Box>
 			{questions

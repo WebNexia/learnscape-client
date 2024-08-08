@@ -14,9 +14,9 @@ import { QuestionsContext } from '../contexts/QuestionsContextProvider';
 import { QuestionInterface } from '../interfaces/question';
 import useNewQuestion from '../hooks/useNewQuestion';
 import CreateQuestionDialog from '../components/forms/newQuestion/CreateQuestionDialog';
-import EditQuestionDialog from '../components/forms/editQuestion/EditQuestionDialog';
 import { stripHtml } from '../utils/stripHtml';
 import { truncateText } from '../utils/utilText';
+import AdminQuestionsEditQuestionDialog from '../components/forms/editQuestion/AdminQuestionsEditQuestionDialog';
 
 const AdminQuestions = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -192,8 +192,7 @@ const AdminQuestions = () => {
 												icon={<Edit />}
 											/>
 
-											<EditQuestionDialog
-												fromLessonEditPage={false}
+											<AdminQuestionsEditQuestionDialog
 												question={question}
 												correctAnswerIndex={correctAnswerIndex}
 												index={index}
@@ -213,6 +212,28 @@ const AdminQuestions = () => {
 												setIsDuplicateOption={setIsDuplicateOption}
 												setIsMinimumOptions={setIsMinimumOptions}
 											/>
+
+											{/* <EditQuestionDialog
+												fromLessonEditPage={false}
+												question={question}
+												correctAnswerIndex={correctAnswerIndex}
+												index={index}
+												options={options}
+												correctAnswer={question.correctAnswer}
+												questionType={question.questionType}
+												isMinimumOptions={isMinimumOptions}
+												isDuplicateOption={isDuplicateOption}
+												handleCorrectAnswerChange={handleCorrectAnswerChange}
+												setCorrectAnswerIndex={setCorrectAnswerIndex}
+												handleOptionChange={handleOptionChange}
+												closeQuestionEditModal={closeQuestionEditModal}
+												editQuestionModalOpen={editQuestionModalOpen}
+												addOption={addOption}
+												removeOption={removeOption}
+												setCorrectAnswer={setCorrectAnswer}
+												setIsDuplicateOption={setIsDuplicateOption}
+												setIsMinimumOptions={setIsMinimumOptions}
+											/> */}
 											<CustomActionBtn
 												title='Delete'
 												onClick={() => {

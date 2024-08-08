@@ -58,6 +58,7 @@ export const enum QuestionType {
 	TRUE_FALSE = 'True-False',
 	FLIP_CARD = 'Flip Card',
 	AUDIO_VIDEO = 'Audio/Video',
+	MATCHING = 'Matching',
 }
 
 export const enum LessonType {

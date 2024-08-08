@@ -37,6 +37,7 @@ import useAiResponse, { QuestionPrompt } from '../../hooks/useAiResponse';
 import { stripHtml } from '../../utils/stripHtml';
 import TypingAnimation from '../layouts/loading/TypingAnimation';
 import FlipCardPreview from '../layouts/flipCard/FlipCardPreview';
+import MatchingPreview from '../layouts/matching/MatchingPreview';
 
 const colorChange = keyframes`
     0% {
@@ -112,6 +113,7 @@ const PracticeQuestion = ({
 	const isTrueFalseQuestion: boolean = fetchQuestionTypeName(question) === QuestionType.TRUE_FALSE;
 	const isMultipleChoiceQuestion: boolean = fetchQuestionTypeName(question) === QuestionType.MULTIPLE_CHOICE;
 	const isFlipCard: boolean = fetchQuestionTypeName(question) === QuestionType.FLIP_CARD;
+	const isMatching: boolean = fetchQuestionTypeName(question) === QuestionType.MATCHING;
 
 	const [userAnswer, setUserAnswer] = useState<string>('');
 
@@ -130,12 +132,13 @@ const PracticeQuestion = ({
 
 	const [error, setError] = useState<boolean>(false);
 	const [success, setSuccess] = useState<boolean>(false);
-	const [helperText, setHelperText] = useState<string>('Choose wisely');
+	const [helperText, setHelperText] = useState<string>(!isMatching ? 'Choose wisely' : '');
 	const [isAnswerCorrect, setIsAnswerCorrect] = useState<boolean>(false);
 	const [isOpenEndedAnswerSubmitted, setIsOpenEndedAnswerSubmitted] = useState<boolean>(false);
 	const [selectedQuestion, setSelectedQuestion] = useState<number>(displayedQuestionNumber);
 	const [isLessonUpdating, setIsLessonUpdating] = useState<boolean>(false);
 	const [isLessonCourseCompletedModalOpen, setIsLessonCourseCompletedModalOpen] = useState<boolean>(false);
+	const [allPairsMatched, setAllPairsMatched] = useState(false);
 
 	const [isCardFlipped, setIsCardFlipped] = useState<boolean>(false);
 
@@ -349,6 +352,21 @@ const PracticeQuestion = ({
 									/>
 								</Box>
 							)}
+
+							{isMatching && (
+								<Box sx={{ display: 'flex', justifyContent: 'center', width: '80%', margin: '0 auto' }}>
+									<MatchingPreview
+										initialPairs={question.matchingPairs}
+										setAllPairsMatched={setAllPairsMatched}
+										fromPracticeQuestionUser={true}
+										displayedQuestionNumber={displayedQuestionNumber}
+										numberOfQuestions={numberOfQuestions}
+										setIsLessonCompleted={setIsLessonCompleted}
+										setShowQuestionSelector={setShowQuestionSelector}
+									/>
+								</Box>
+							)}
+
 							{isMultipleChoiceQuestion && (
 								<RadioGroup
 									name='question'
@@ -366,16 +384,18 @@ const PracticeQuestion = ({
 								<FormHelperText sx={{ color: success ? 'green' : 'inherit', alignSelf: 'center', mt: '2rem' }}>{helperText}</FormHelperText>
 							)}
 
-							<Button
-								sx={{
-									mt: '3rem',
-									width: '13rem',
-									alignSelf: 'center',
-								}}
-								type='submit'
-								variant='outlined'>
-								Submit Answer
-							</Button>
+							{!isMatching && (
+								<Button
+									sx={{
+										mt: '3rem',
+										width: '13rem',
+										alignSelf: 'center',
+									}}
+									type='submit'
+									variant='outlined'>
+									Submit Answer
+								</Button>
+							)}
 						</FormControl>
 					</form>
 				)}
@@ -493,7 +513,8 @@ const PracticeQuestion = ({
 							disabled={
 								(!isAnswerCorrect || displayedQuestionNumber + 1 > numberOfQuestions || !isOpenEndedAnswerSubmitted) &&
 								!(isLessonCompleted || displayedQuestionNumber < getLastQuestion()) &&
-								!isCardFlipped
+								!isCardFlipped &&
+								!allPairsMatched
 							}>
 							<KeyboardArrowRight fontSize='large' />
 						</IconButton>
@@ -549,7 +570,7 @@ const PracticeQuestion = ({
 					width: '80%',
 					zIndex: 9,
 				}}>
-				{displayedQuestionNumber === questionNumber && !isFlipCard ? (
+				{displayedQuestionNumber === questionNumber && !isFlipCard && !isMatching ? (
 					isAiActive || isLessonCompleted ? (
 						<Tooltip title={`Receive ${!aiDrawerOpen ? '' : 'another'} feedback from AI`} placement='left'>
 							<IconButton

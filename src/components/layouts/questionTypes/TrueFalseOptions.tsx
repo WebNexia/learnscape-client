@@ -8,14 +8,14 @@ import { QuestionPrompt } from '../../../hooks/useAiResponse';
 
 interface TrueFalseOptionsProps {
 	question?: QuestionInterface;
-	correctAnswer: string;
+	correctAnswer?: string;
 	fromLessonEditPage?: boolean;
 	correctAnswerAdminQuestions?: string;
 	fromLearner?: boolean;
 	isLessonCompleted?: boolean;
 	displayedQuestionNumber?: number;
 	setIsLessonCompleted?: React.Dispatch<React.SetStateAction<boolean>>;
-	setCorrectAnswer: React.Dispatch<React.SetStateAction<string>>;
+	setCorrectAnswer?: React.Dispatch<React.SetStateAction<string>>;
 	setIsCorrectAnswerMissing?: React.Dispatch<React.SetStateAction<boolean>>;
 	setCorrectAnswerAdminQuestions?: React.Dispatch<React.SetStateAction<string>>;
 	setHelperText?: React.Dispatch<React.SetStateAction<string>>;
@@ -49,7 +49,7 @@ const TrueFalseOptions = ({
 	setQuestionPrompt,
 }: TrueFalseOptionsProps) => {
 	const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-		setCorrectAnswer((event.target as HTMLInputElement).value);
+		if (setCorrectAnswer) setCorrectAnswer((event.target as HTMLInputElement).value);
 		if (isLessonCompleted && setIsLessonUpdating) setIsLessonUpdating(true);
 		if (setIsCorrectAnswerMissing) setIsCorrectAnswerMissing(false);
 		if (!fromLessonEditPage && setCorrectAnswerAdminQuestions) {

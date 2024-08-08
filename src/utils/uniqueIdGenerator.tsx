@@ -1,6 +1,6 @@
 export const generateUniqueId = (str: string): string => {
-	// Generate a random string of characters
-	const randomString = Math.random().toString(36).substring(2, 9);
+	// Generate a longer random string of characters
+	const randomString = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 
 	// Generate a timestamp to ensure uniqueness
 	const timestamp = Date.now().toString(36);
