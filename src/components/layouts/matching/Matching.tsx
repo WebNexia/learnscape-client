@@ -19,7 +19,7 @@ interface MatchingProps {
 	setSingleLessonBeforeSave?: React.Dispatch<React.SetStateAction<Lesson>> | undefined;
 	setIsLessonUpdated?: React.Dispatch<React.SetStateAction<boolean>> | undefined;
 	setIsQuestionUpdated?: React.Dispatch<React.SetStateAction<QuestionUpdateTrack[]>> | undefined;
-	setMatchingPairsAdminQuestions: React.Dispatch<React.SetStateAction<MatchingPair[]>>;
+	setMatchingPairsAdminQuestions?: React.Dispatch<React.SetStateAction<MatchingPair[]>>;
 }
 
 const Matching = ({
@@ -40,7 +40,7 @@ const Matching = ({
 
 	const updatePairs = (newPairs: MatchingPair[]) => {
 		setPairs(newPairs);
-		setMatchingPairsAdminQuestions(newPairs);
+		if (setMatchingPairsAdminQuestions) setMatchingPairsAdminQuestions(newPairs);
 
 		if (setNewQuestion) {
 			setNewQuestion((prevData) => ({ ...prevData, matchingPairs: newPairs }));
