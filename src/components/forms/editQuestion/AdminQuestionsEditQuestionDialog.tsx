@@ -165,8 +165,6 @@ const AdminQuestionsEditQuestionDialog = ({
 			setIsCorrectAnswerMissing(false);
 		}
 
-		console.log(matchingPairsAdminQuestions);
-
 		if (isMatching) {
 			let nonBlankPairs: MatchingPair[];
 			let missingPairExists: boolean;
@@ -174,8 +172,6 @@ const AdminQuestionsEditQuestionDialog = ({
 			const checkPairs = (pairs: MatchingPair[]) => {
 				nonBlankPairs = pairs.filter((pair) => pair.question.trim() !== '' && pair.answer.trim() !== '');
 				missingPairExists = pairs.some((pair) => pair.question.trim() === '' || pair.answer.trim() === '');
-
-				console.log('deneme');
 
 				if (nonBlankPairs.length < 2) {
 					setIsMinimumTwoMatchingPairs(true);

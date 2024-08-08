@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import { MatchingPair } from '../../../interfaces/question';
 import { Box, Typography } from '@mui/material';
 import theme from '../../../themes';
+import { useUserCourseLessonData } from '../../../hooks/useUserCourseLessonData';
 
 const Container = styled(Box)`
 	display: flex;
@@ -21,7 +22,7 @@ const Column = styled(Box)`
 `;
 
 const Item = styled.div<{ $isCorrect: boolean | null }>`
-	padding: 0.5rem 0.75rem;
+	padding: 1rem;
 	margin: 0.5rem 0.75rem;
 	background-color: ${({ $isCorrect }) => ($isCorrect === null ? '#f4f4f4' : $isCorrect ? '#d4edda' : '#f8d7da')};
 	border: 1px solid ${({ $isCorrect }) => ($isCorrect === null ? '#ccc' : $isCorrect ? '#c3e6cb' : '#f5c6cb')};
@@ -41,19 +42,53 @@ const DropArea = styled(Box)`
 `;
 
 interface MatchingPreviewProps {
+	fromPracticeQuestionUser?: boolean;
 	initialPairs: MatchingPair[];
+	displayedQuestionNumber?: number;
+	numberOfQuestions?: number;
+	setAllPairsMatched?: React.Dispatch<React.SetStateAction<boolean>>;
+	setIsLessonCompleted?: React.Dispatch<React.SetStateAction<boolean>>;
+	setShowQuestionSelector?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const MatchingPreview = ({ initialPairs }: MatchingPreviewProps) => {
+const MatchingPreview = ({
+	fromPracticeQuestionUser,
+	initialPairs,
+	displayedQuestionNumber,
+	numberOfQuestions,
+	setAllPairsMatched,
+	setIsLessonCompleted,
+	setShowQuestionSelector,
+}: MatchingPreviewProps) => {
 	const initialResponses = initialPairs.map((pair) => ({ id: pair.id, answer: pair.answer })).sort(() => Math.random() - 0.5);
 
 	const [pairs, setPairs] = useState<MatchingPair[]>([]);
 	const [responses, setResponses] = useState(initialResponses);
 
+	const { updateLastQuestion, getLastQuestion, handleNextLesson } = useUserCourseLessonData();
+
 	useEffect(() => {
 		setPairs(initialPairs.map((pair) => ({ ...pair, answer: '' })));
 		setResponses(initialPairs.map((pair) => ({ id: pair.id, answer: pair.answer })).sort(() => Math.random() - 0.5));
 	}, [initialPairs]);
+
+	useEffect(() => {
+		const allCorrect = pairs.every((pair) => pair.answer === initialPairs.find((p) => p.id === pair.id)?.answer);
+		if (setAllPairsMatched) setAllPairsMatched(allCorrect);
+
+		if (allCorrect && fromPracticeQuestionUser) {
+			if (displayedQuestionNumber && numberOfQuestions) {
+				if (displayedQuestionNumber + 1 <= numberOfQuestions && getLastQuestion() <= displayedQuestionNumber) {
+					updateLastQuestion(displayedQuestionNumber + 1);
+				}
+				if (displayedQuestionNumber === numberOfQuestions) {
+					handleNextLesson();
+					if (setIsLessonCompleted) setIsLessonCompleted(true);
+					if (setShowQuestionSelector) setShowQuestionSelector(true);
+				}
+			}
+		}
+	}, [pairs, initialPairs]);
 
 	const handleDragEnd = (result: DropResult) => {
 		if (!result.destination) return;
@@ -138,12 +173,11 @@ const MatchingPreview = ({ initialPairs }: MatchingPreviewProps) => {
 								ref={provided.innerRef}
 								{...provided.droppableProps}
 								sx={{
-									margin: '0.5rem 0',
+									margin: 'auto 0',
 									boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
 									borderRadius: '0.35rem',
 									display: 'flex',
 									flexDirection: 'column',
-									justifyContent: 'flex-start',
 									height: '100%',
 									overflow: 'auto',
 								}}>

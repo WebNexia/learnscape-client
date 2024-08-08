@@ -25,7 +25,7 @@ interface MatchingProps {
 const Matching = ({
 	question,
 	existingQuestion,
-	matchingPairs,
+	matchingPairs = [],
 	setNewQuestion,
 	setIsMinimumTwoMatchingPairs,
 	setIsMissingPair,
@@ -34,127 +34,55 @@ const Matching = ({
 	setIsQuestionUpdated,
 	setMatchingPairsAdminQuestions,
 }: MatchingProps) => {
-	const [pairs, setPairs] = useState<MatchingPair[]>(() => {
-		if (existingQuestion && matchingPairs) {
-			return matchingPairs;
-		} else {
-			return [{ id: generateUniqueId('pair-'), question: '', answer: '' }];
-		}
-	});
+	const [pairs, setPairs] = useState<MatchingPair[]>(() =>
+		existingQuestion ? matchingPairs : [{ id: generateUniqueId('pair-'), question: '', answer: '' }]
+	);
 
-	const handlePairChange = (index: number, field: 'question' | 'answer', value: string) => {
-		const newPairs = [...pairs];
-		newPairs[index][field] = value;
+	const updatePairs = (newPairs: MatchingPair[]) => {
 		setPairs(newPairs);
+		setMatchingPairsAdminQuestions(newPairs);
+
 		if (setNewQuestion) {
-			setNewQuestion((prevData) => {
-				if (prevData) {
-					return { ...prevData, matchingPairs: newPairs };
-				}
-				return prevData;
-			});
+			setNewQuestion((prevData) => ({ ...prevData, matchingPairs: newPairs }));
 		}
 
 		if (setSingleLessonBeforeSave) {
 			setSingleLessonBeforeSave((prevData) => {
 				if (!prevData.questions) return prevData;
-				const updatedQuestions = prevData?.questions?.map((prevQuestion) => {
-					if (prevQuestion !== null && prevQuestion._id === question?._id) {
-						return { ...prevQuestion, matchingPairs: newPairs };
-					} else {
-						return prevQuestion;
-					}
-				});
-
+				const updatedQuestions = prevData.questions.map((prevQuestion) =>
+					prevQuestion?._id === question?._id ? { ...prevQuestion, matchingPairs: newPairs } : prevQuestion
+				);
 				return { ...prevData, questions: updatedQuestions };
 			});
-			if (question) {
-				questionLessonUpdateTrack(question?._id, setIsLessonUpdated, setIsQuestionUpdated);
-			}
+			if (question) questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
 		}
 
-		setMatchingPairsAdminQuestions(newPairs);
+		const nonBlankPairs = newPairs.filter((pair) => pair.question.trim() && pair.answer.trim());
+		const missingPairExists = newPairs.some((pair) => !pair.question.trim() || !pair.answer.trim());
 
-		const nonBlankPairs = newPairs.filter((pair) => pair.question.trim() !== '' && pair.answer.trim() !== '');
-		const missingPairExists = newPairs.find((pair) => pair.question.trim() === '' || pair.answer.trim() === '');
+		setIsMinimumTwoMatchingPairs?.(nonBlankPairs.length < 2);
+		setIsMissingPair?.(missingPairExists);
+	};
 
-		if (nonBlankPairs.length >= 2 && setIsMinimumTwoMatchingPairs) {
-			setIsMinimumTwoMatchingPairs(false);
-		}
-
-		if (!missingPairExists && setIsMissingPair) {
-			setIsMissingPair(false);
-		}
+	const handlePairChange = (index: number, field: 'question' | 'answer', value: string) => {
+		const newPairs = pairs.map((pair, i) => (i === index ? { ...pair, [field]: value } : pair));
+		updatePairs(newPairs);
 	};
 
 	const addPair = () => {
-		setPairs([...pairs, { id: generateUniqueId('pair-'), question: '', answer: '' }]);
-		if (setNewQuestion) {
-			setNewQuestion((prevData) => {
-				if (prevData) {
-					return { ...prevData, matchingPairs: [...pairs, { id: generateUniqueId('pair-'), question: '', answer: '' }] };
-				}
-				return prevData;
-			});
-		}
-
-		if (setSingleLessonBeforeSave) {
-			setSingleLessonBeforeSave((prevData) => {
-				if (!prevData.questions) return prevData;
-				const updatedQuestions = prevData?.questions?.map((prevQuestion) => {
-					if (prevQuestion !== null && prevQuestion._id === question?._id) {
-						return { ...prevQuestion, matchingPairs: [...pairs, { id: generateUniqueId('pair-'), question: '', answer: '' }] };
-					} else {
-						return prevQuestion;
-					}
-				});
-
-				return { ...prevData, questions: updatedQuestions };
-			});
-			if (question) {
-				questionLessonUpdateTrack(question?._id, setIsLessonUpdated, setIsQuestionUpdated);
-			}
-		}
-
-		setMatchingPairsAdminQuestions([...pairs, { id: generateUniqueId('pair-'), question: '', answer: '' }]);
+		const newPair = { id: generateUniqueId('pair-'), question: '', answer: '' };
+		updatePairs([...pairs, newPair]);
 	};
 
 	const removePair = (index: number) => {
 		const newPairs = pairs.filter((_, i) => i !== index);
-		setPairs(newPairs);
-		if (setNewQuestion) {
-			setNewQuestion((prevData) => {
-				if (prevData) {
-					return { ...prevData, matchingPairs: newPairs };
-				}
-				return prevData;
-			});
-		}
-
-		if (setSingleLessonBeforeSave) {
-			setSingleLessonBeforeSave((prevData) => {
-				if (!prevData.questions) return prevData;
-				const updatedQuestions = prevData?.questions?.map((prevQuestion) => {
-					if (prevQuestion !== null && prevQuestion._id === question?._id) {
-						return { ...prevQuestion, matchingPairs: newPairs };
-					} else {
-						return prevQuestion;
-					}
-				});
-
-				return { ...prevData, questions: updatedQuestions };
-			});
-			if (question) {
-				questionLessonUpdateTrack(question?._id, setIsLessonUpdated, setIsQuestionUpdated);
-			}
-		}
-		setMatchingPairsAdminQuestions(newPairs);
+		updatePairs(newPairs);
 	};
 
 	return (
 		<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: '2rem', width: '100%' }}>
 			{pairs.map((pair, index) => (
-				<Box key={pair.id} style={{ display: 'flex', marginBottom: '0.5rem', width: '90%', alignItems: 'center' }}>
+				<Box key={pair.id} sx={{ display: 'flex', mb: '0.5rem', width: '90%', alignItems: 'center' }}>
 					<CustomTextField
 						placeholder='Pair Key'
 						value={pair.question}
@@ -173,10 +101,8 @@ const Matching = ({
 						<IconButton
 							onClick={() => removePair(index)}
 							sx={{
-								marginBottom: '0.85rem',
-								':hover': {
-									backgroundColor: 'transparent',
-								},
+								mb: '0.85rem',
+								':hover': { backgroundColor: 'transparent' },
 							}}>
 							<RemoveCircle />
 						</IconButton>
@@ -185,20 +111,13 @@ const Matching = ({
 			))}
 			<Box sx={{ width: '90%' }}>
 				<Tooltip title='Add Pair' placement='right'>
-					<IconButton
-						onClick={addPair}
-						sx={{
-							marginBottom: '0.85rem',
-							':hover': {
-								backgroundColor: 'transparent',
-							},
-						}}>
+					<IconButton onClick={addPair} sx={{ mb: '0.85rem', ':hover': { backgroundColor: 'transparent' } }}>
 						<AddCircle />
 					</IconButton>
 				</Tooltip>
 			</Box>
 			<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
-				<Box sx={{ textAlign: 'left', width: '90%', marginTop: '3rem' }}>
+				<Box sx={{ textAlign: 'left', width: '90%', mt: '3rem' }}>
 					<Typography variant='h5'>PREVIEW</Typography>
 				</Box>
 				<MatchingPreview initialPairs={pairs} />

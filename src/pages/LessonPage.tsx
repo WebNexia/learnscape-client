@@ -299,7 +299,6 @@ const LessonPage = () => {
 							top: '14rem',
 							width: '40%',
 							height: 'fit-content',
-							maxHeight: 'calc(100vh - 10rem)',
 							boxShadow: 10,
 							padding: '1.75rem',
 							borderRadius: '0 0.35rem  0.35rem 0 ',
@@ -325,7 +324,7 @@ const LessonPage = () => {
 								</Box>
 								<Box sx={{ mt: '0.5rem' }} id='editor-content'>
 									<TinyMceEditor
-										height='400'
+										height='300'
 										handleEditorChange={(content) => {
 											setEditorContent(content);
 											setIsNotesUpdated(false);
