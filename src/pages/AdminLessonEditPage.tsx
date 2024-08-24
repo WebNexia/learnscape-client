@@ -497,6 +497,7 @@ const AdminLessonEditPage = () => {
 			</Box>
 
 			<CreateQuestionDialog
+				createNewQuestion={false}
 				isQuestionCreateModalOpen={isQuestionCreateModalOpen}
 				questionType={questionType}
 				correctAnswer={correctAnswer}
@@ -512,7 +513,6 @@ const AdminLessonEditPage = () => {
 				setCorrectAnswerIndex={setCorrectAnswerIndex}
 				removeOption={removeOption}
 				addOption={addOption}
-				createNewQuestion={false}
 				handleOptionChange={handleOptionChange}
 				isMinimumOptions={isMinimumOptions}
 				isDuplicateOption={isDuplicateOption}

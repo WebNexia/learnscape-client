@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Box, Checkbox, DialogContent, FormControlLabel, IconButton, Radio, Tooltip, Typography } from '@mui/material';
 import CustomDialog from '../../layouts/dialog/CustomDialog';
 import CustomTextField from '../customFields/CustomTextField';
 import { AddCircle, RemoveCircle } from '@mui/icons-material';
 import CustomDialogActions from '../../layouts/dialog/CustomDialogActions';
 import { QuestionUpdateTrack } from '../../../pages/AdminLessonEditPage';
-import { MatchingPair, QuestionInterface } from '../../../interfaces/question';
+import { BlankValuePair, QuestionInterface } from '../../../interfaces/question';
 import { Lesson } from '../../../interfaces/lessons';
 import CustomErrorMessage from '../customFields/CustomErrorMessage';
 import { questionLessonUpdateTrack } from '../../../utils/questionLessonUpdateTrack';
@@ -20,8 +20,12 @@ import TrueFalseOptions from '../../layouts/questionTypes/TrueFalseOptions';
 import { QuestionType } from '../../../interfaces/enums';
 import FlipCard from '../../layouts/flipCard/FlipCard';
 import Matching from '../../layouts/matching/Matching';
+import { generateUniqueId } from '../../../utils/uniqueIdGenerator';
+import { updateEditorContentAndBlankPairs } from '../../../utils/updateEditorContentAndBlankPairs';
+import theme from '../../../themes';
+import FillInTheBlanksDragDropProps from '../../layouts/FITBDragDrop/FillInTheBlanksDragDrop';
 
-interface EditQuestionDialogProps {
+interface AdminLessonEditPageEditQuestionDialogProps {
 	index: number;
 	question: QuestionInterface;
 	correctAnswerIndex: number;
@@ -67,33 +71,35 @@ const AdminLessonEditPageEditQuestionDialog = ({
 	setCorrectAnswer,
 	setIsDuplicateOption,
 	setIsMinimumOptions,
-}: EditQuestionDialogProps) => {
-	const isFlipCard: boolean = questionType === QuestionType.FLIP_CARD;
-	const isOpenEndedQuestion: boolean = questionType === QuestionType.OPEN_ENDED;
-	const isTrueFalseQuestion: boolean = questionType === QuestionType.TRUE_FALSE;
-	const isMultipleChoiceQuestion: boolean = questionType === QuestionType.MULTIPLE_CHOICE;
-	const isAudioVideoQuestion: boolean = questionType === QuestionType.AUDIO_VIDEO;
-	const isMatching: boolean = questionType === QuestionType.MATCHING;
+}: AdminLessonEditPageEditQuestionDialogProps) => {
+	const editorId = generateUniqueId('editor-');
+	const editorRef = useRef<any>(null);
 
-	const [isAudioVideoSelectionMissing, setIsAudioVideoSelectionMissing] = useState<boolean>(false);
+	const isFlipCard = questionType === QuestionType.FLIP_CARD;
+	const isOpenEndedQuestion = questionType === QuestionType.OPEN_ENDED;
+	const isTrueFalseQuestion = questionType === QuestionType.TRUE_FALSE;
+	const isMultipleChoiceQuestion = questionType === QuestionType.MULTIPLE_CHOICE;
+	const isAudioVideoQuestion = questionType === QuestionType.AUDIO_VIDEO;
+	const isMatching = questionType === QuestionType.MATCHING;
+	const isFITBTyping = questionType === QuestionType.FITB_TYPING;
+	const isFITBDragDrop = questionType === QuestionType.FITB_DRAG_DROP;
 
-	const [isCorrectAnswerMissing, setIsCorrectAnswerMissing] = useState<boolean>(
+	const [isAudioVideoSelectionMissing, setIsAudioVideoSelectionMissing] = useState(false);
+	const [isCorrectAnswerMissing, setIsCorrectAnswerMissing] = useState(
 		correctAnswerIndex < 0 && question.correctAnswer === '' && !isOpenEndedQuestion && !isMatching
 	);
-	const [isQuestionMissing, setIsQuestionMissing] = useState<boolean>(false);
-
+	const [isQuestionMissing, setIsQuestionMissing] = useState(false);
 	const { resetImageUpload } = useImageUpload();
 	const { resetVideoUpload } = useVideoUpload();
-
-	const [isMinimumTwoMatchingPairs, setIsMinimumTwoMatchingPairs] = useState<boolean>(false);
-	const [isMissingPair, setIsMissingPair] = useState<boolean>(false);
-
-	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(true);
-	const [enterVideoUrl, setEnterVideoUrl] = useState<boolean>(true);
-
-	const [editorContent, setEditorContent] = useState<string>(question.question);
-
+	const [isMinimumTwoMatchingPairs, setIsMinimumTwoMatchingPairs] = useState(false);
+	const [isMinimumTwoBlanks, setIsMinimumTwoBlanks] = useState<boolean>(false);
+	const [isMissingPair, setIsMissingPair] = useState(false);
+	const [enterImageUrl, setEnterImageUrl] = useState(true);
+	const [enterVideoUrl, setEnterVideoUrl] = useState(true);
+	const [editorContent, setEditorContent] = useState(question.question);
 	const [questionBeforeSave, setQuestionBeforeSave] = useState<QuestionInterface>(question);
+
+	const [blankValuePairs, setBlankValuePairs] = useState<BlankValuePair[]>(question.blankValuePairs);
 
 	const resetEnterImageVideoUrl = () => {
 		setEnterVideoUrl(true);
@@ -101,18 +107,17 @@ const AdminLessonEditPageEditQuestionDialog = ({
 	};
 
 	useEffect(() => {
-		setIsCorrectAnswerMissing(correctAnswerIndex < 0 && question.correctAnswer === '' && !isOpenEndedQuestion);
+		setIsCorrectAnswerMissing(correctAnswerIndex < 0 && question.correctAnswer === '' && !isOpenEndedQuestion && !isFITBDragDrop && !isMatching);
 		resetVideoUpload();
 		resetImageUpload();
 		resetEnterImageVideoUrl();
 		setIsDuplicateOption(false);
 		setIsMinimumOptions(true);
+		setIsMinimumTwoBlanks(false);
 	}, [correctAnswerIndex]);
 
 	const handleSubmit = async () => {
-		if (!isFlipCard) {
-			await handleInputChange('question', editorContent);
-		}
+		if (!isFlipCard) await handleInputChange('question', editorContent);
 
 		if (isFlipCard && !correctAnswer) {
 			setIsCorrectAnswerMissing(true);
@@ -134,65 +139,56 @@ const AdminLessonEditPageEditQuestionDialog = ({
 			return;
 		}
 
-		if (isMultipleChoiceQuestion) {
-			if (correctAnswerIndex === -1 || !correctAnswer) {
-				setIsCorrectAnswerMissing(true);
-				return;
-			}
+		if (isMultipleChoiceQuestion && (correctAnswerIndex === -1 || !correctAnswer)) {
+			setIsCorrectAnswerMissing(true);
+			return;
 		}
 
-		if (isTrueFalseQuestion) {
-			if (!correctAnswer) {
-				setIsCorrectAnswerMissing(true);
-				return;
-			}
+		if (isTrueFalseQuestion && !correctAnswer) {
+			setIsCorrectAnswerMissing(true);
+			return;
 		}
 
-		if (isOpenEndedQuestion) {
+		if (isOpenEndedQuestion || isMatching || isFITBDragDrop) {
 			setIsCorrectAnswerMissing(false);
 		}
 
 		if (isMatching) {
-			setIsCorrectAnswerMissing(false);
+			const nonBlankPairs = question.matchingPairs.filter((pair) => pair.question.trim() !== '' && pair.answer.trim() !== '');
+			const missingPairExists = question.matchingPairs.some((pair) => pair.question.trim() === '' || pair.answer.trim() === '');
+
+			if (nonBlankPairs.length < 2) {
+				setIsMinimumTwoMatchingPairs(true);
+				return;
+			}
+			if (missingPairExists) {
+				setIsMissingPair(true);
+				return;
+			}
+			setIsMinimumTwoMatchingPairs(false);
+			setIsMissingPair(false);
 		}
 
-		if (isMatching) {
-			let nonBlankPairs: MatchingPair[];
-			let missingPairExists: boolean;
-
-			const checkPairs = (pairs: MatchingPair[]) => {
-				nonBlankPairs = pairs.filter((pair) => pair.question.trim() !== '' && pair.answer.trim() !== '');
-				missingPairExists = pairs.some((pair) => pair.question.trim() === '' || pair.answer.trim() === '');
-
-				if (nonBlankPairs.length < 2) {
-					setIsMinimumTwoMatchingPairs(true);
-					return true;
-				} else if (missingPairExists) {
-					setIsMissingPair(true);
-					return true;
-				} else {
-					setIsMinimumTwoMatchingPairs(false);
-					return false;
-				}
-			};
-
-			if (checkPairs(question.matchingPairs)) return;
+		if (isFITBDragDrop) {
+			if (blankValuePairs.length < 2) {
+				setIsMinimumTwoBlanks(true);
+				return;
+			}
+			setIsMinimumTwoBlanks(false);
 		}
 
-		if (isDuplicateOption) return;
-		if (!isMinimumOptions) return;
+		if (isDuplicateOption || !isMinimumOptions) return;
 
 		if (setSingleLessonBeforeSave) {
 			setSingleLessonBeforeSave((prevData) => {
 				if (!prevData.questions) return prevData;
 
-				const updatedQuestions = prevData?.questions?.map((prevQuestion) => {
-					if (prevQuestion !== null && prevQuestion._id === question._id) {
-						setQuestionBeforeSave({ ...prevQuestion, options: options.filter((option) => option !== ''), correctAnswer });
-						return { ...prevQuestion, options: options.filter((option) => option !== ''), correctAnswer };
-					} else {
-						return prevQuestion;
+				const updatedQuestions = prevData.questions.map((prevQuestion) => {
+					if (prevQuestion && prevQuestion._id === question._id) {
+						setQuestionBeforeSave({ ...prevQuestion, options: options.filter((option) => option !== ''), correctAnswer, blankValuePairs });
+						return { ...prevQuestion, options: options.filter((option) => option !== ''), correctAnswer, blankValuePairs };
 					}
+					return prevQuestion;
 				});
 
 				return { ...prevData, questions: updatedQuestions };
@@ -206,17 +202,16 @@ const AdminLessonEditPageEditQuestionDialog = ({
 		closeQuestionEditModal(index);
 	};
 
-	const handleInputChange = async (field: 'question' | 'videoUrl' | 'imageUrl', value: string) => {
+	const handleInputChange = async (field: 'question' | 'videoUrl' | 'imageUrl' | 'audio' | 'video', value: string | boolean) => {
 		if (setSingleLessonBeforeSave) {
 			setSingleLessonBeforeSave((prevData) => {
 				if (!prevData.questions) return prevData;
 
-				const updatedQuestions = prevData?.questions?.map((prevQuestion) => {
-					if (prevQuestion !== null && prevQuestion._id === question._id) {
+				const updatedQuestions = prevData.questions.map((prevQuestion) => {
+					if (prevQuestion && prevQuestion._id === question._id) {
 						return { ...prevQuestion, [field]: value };
-					} else {
-						return prevQuestion;
 					}
+					return prevQuestion;
 				});
 				return { ...prevData, questions: updatedQuestions };
 			});
@@ -231,17 +226,27 @@ const AdminLessonEditPageEditQuestionDialog = ({
 			setSingleLessonBeforeSave((prevData) => {
 				if (!prevData.questions) return prevData;
 
-				const updatedQuestions = prevData?.questions?.map((prevQuestion) => {
-					if (prevQuestion !== null && prevQuestion._id === question._id) {
+				const updatedQuestions = prevData.questions.map((prevQuestion) => {
+					if (prevQuestion && prevQuestion._id === question._id) {
 						return questionBeforeSave;
-					} else {
-						return prevQuestion;
 					}
+					return prevQuestion;
 				});
 
 				return { ...prevData, questions: updatedQuestions };
 			});
 		}
+	};
+
+	const returnBlankValues = (pair: BlankValuePair) => {
+		const editor = editorRef.current;
+		if (!editor) {
+			console.error('Editor not found or not initialized');
+			return;
+		}
+		questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
+
+		updateEditorContentAndBlankPairs(editor, pair, blankValuePairs, setBlankValuePairs);
 	};
 
 	return (
@@ -275,117 +280,38 @@ const AdminLessonEditPageEditQuestionDialog = ({
 					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: '2rem', width: '100%' }}>
 						<Box sx={{ flex: 1, mr: '2rem' }}>
 							<HandleImageUploadURL
-								onImageUploadLogic={(url) => {
-									if (setSingleLessonBeforeSave) {
-										setSingleLessonBeforeSave((prevData) => {
-											if (!prevData.questions) return prevData;
-
-											const updatedQuestions = prevData?.questions?.map((prevQuestion) => {
-												if (prevQuestion !== null && prevQuestion._id === question._id) {
-													return { ...prevQuestion, imageUrl: url };
-												} else {
-													return prevQuestion;
-												}
-											});
-
-											return { ...prevData, questions: updatedQuestions };
-										});
-										questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
-										if (isFlipCard) setIsQuestionMissing(false);
-									}
-								}}
-								onChangeImgUrl={(e) => {
-									handleInputChange('imageUrl', e.target.value);
-									questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
-								}}
+								onImageUploadLogic={(url) => handleInputChange('imageUrl', url)}
+								onChangeImgUrl={(e) => handleInputChange('imageUrl', e.target.value)}
 								imageUrlValue={question.imageUrl}
 								imageFolderName='QuestionImages'
 								enterImageUrl={enterImageUrl}
 								setEnterImageUrl={setEnterImageUrl}
 							/>
-
 							{!isFlipCard && (
-								<ImageThumbnail
-									imgSource={question?.imageUrl || imagePlaceHolderUrl}
-									removeImage={() => {
-										if (setSingleLessonBeforeSave) {
-											setSingleLessonBeforeSave((prevData) => {
-												if (!prevData.questions) return prevData;
-
-												const updatedQuestions = prevData.questions?.map((prevQuestion) => {
-													if (prevQuestion !== null && prevQuestion._id === question._id) {
-														return { ...prevQuestion, imageUrl: '' };
-													} else {
-														return prevQuestion;
-													}
-												});
-
-												return { ...prevData, questions: updatedQuestions };
-											});
-											questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
-										}
-									}}
-								/>
+								<ImageThumbnail imgSource={question.imageUrl || imagePlaceHolderUrl} removeImage={() => handleInputChange('imageUrl', '')} />
 							)}
 						</Box>
-
 						{!isFlipCard && (
 							<Box sx={{ flex: 1 }}>
 								<HandleVideoUploadURL
-									onVideoUploadLogic={(url) => {
-										if (setSingleLessonBeforeSave) {
-											setSingleLessonBeforeSave((prevData) => {
-												if (!prevData.questions) return prevData;
-
-												const updatedQuestions = prevData?.questions?.map((prevQuestion) => {
-													if (prevQuestion !== null && prevQuestion._id === question._id) {
-														return { ...prevQuestion, videoUrl: url };
-													} else {
-														return prevQuestion;
-													}
-												});
-
-												return { ...prevData, questions: updatedQuestions };
-											});
-											questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
-										}
-									}}
+									onVideoUploadLogic={(url) => handleInputChange('videoUrl', url)}
 									onChangeVideoUrl={(e) => handleInputChange('videoUrl', e.target.value)}
 									videoUrlValue={question.videoUrl}
 									videoFolderName='QuestionVideos'
 									enterVideoUrl={enterVideoUrl}
 									setEnterVideoUrl={setEnterVideoUrl}
 								/>
-
 								<VideoThumbnail
-									videoPlayCondition={!(question?.videoUrl === '')}
-									videoUrl={question?.videoUrl}
+									videoPlayCondition={question.videoUrl !== ''}
+									videoUrl={question.videoUrl}
 									videoPlaceholderUrl='https://www.47pitches.com/contents/images/no-video.jpg'
-									removeVideo={() => {
-										if (setSingleLessonBeforeSave) {
-											setSingleLessonBeforeSave((prevData) => {
-												if (!prevData.questions) return prevData;
-
-												const updatedQuestions = prevData?.questions?.map((prevQuestion) => {
-													if (prevQuestion !== null && prevQuestion._id === question._id) {
-														return { ...prevQuestion, videoUrl: '' };
-													} else {
-														return prevQuestion;
-													}
-												});
-
-												return { ...prevData, questions: updatedQuestions };
-											});
-
-											questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
-										}
-									}}
+									removeVideo={() => handleInputChange('videoUrl', '')}
 								/>
 							</Box>
 						)}
 					</Box>
 
-					{isFlipCard && (
+					{isFlipCard ? (
 						<FlipCard
 							question={question}
 							setCorrectAnswer={setCorrectAnswer}
@@ -393,9 +319,7 @@ const AdminLessonEditPageEditQuestionDialog = ({
 							setSingleLessonBeforeSave={setSingleLessonBeforeSave}
 							setIsCorrectAnswerMissing={setIsCorrectAnswerMissing}
 						/>
-					)}
-
-					{!isFlipCard && (
+					) : (
 						<Box sx={{ width: '100%', margin: '1rem 0' }}>
 							<Typography variant='h6' sx={{ mb: '0.5rem' }}>
 								Question
@@ -404,17 +328,20 @@ const AdminLessonEditPageEditQuestionDialog = ({
 								handleEditorChange={(content) => {
 									setEditorContent(content);
 									setIsQuestionMissing(false);
-
 									questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
 								}}
 								initialValue={question.question}
+								blankValuePairs={blankValuePairs}
+								setBlankValuePairs={setBlankValuePairs}
+								editorId={editorId}
+								editorRef={editorRef}
 							/>
 						</Box>
 					)}
 
 					<Box sx={{ width: '90%' }}>
 						{isMultipleChoiceQuestion &&
-							options?.map((option, i) => (
+							options.map((option, i) => (
 								<Box
 									key={i}
 									sx={{
@@ -463,10 +390,7 @@ const AdminLessonEditPageEditQuestionDialog = ({
 									/>
 									{i > 0 && (
 										<Tooltip title='Remove Option' placement='top'>
-											<IconButton
-												onClick={() => {
-													removeOption(i);
-												}}>
+											<IconButton onClick={() => removeOption(i)}>
 												<RemoveCircle />
 											</IconButton>
 										</Tooltip>
@@ -483,6 +407,64 @@ const AdminLessonEditPageEditQuestionDialog = ({
 							/>
 						)}
 
+						{isFITBDragDrop && (
+							<>
+								<Box sx={{ marginTop: '1rem' }}>
+									<Typography variant='h6'>Blank Values</Typography>
+									<Box
+										sx={{
+											display: 'flex',
+											flexWrap: 'wrap',
+											width: '100%',
+											margin: '1rem 0',
+											boxShadow: '0 0 0.4rem 0.2rem rgba(0,0,0,0.2)',
+											minHeight: '5rem',
+											borderRadius: '0.35rem',
+											padding: '0.5rem',
+										}}>
+										{blankValuePairs
+											?.sort((a, b) => a.blank - b.blank)
+											.map((pair: BlankValuePair) => {
+												return (
+													<Box
+														key={pair.id}
+														sx={{
+															border: `solid 0.1rem ${theme.border.main}`,
+															width: 'fit-content',
+															height: 'fit-content',
+															padding: '0.5rem',
+															borderRadius: '0.35rem',
+															margin: '0.25rem',
+															cursor: 'pointer',
+														}}
+														onClick={() => returnBlankValues(pair)}>
+														<Typography>
+															{pair.blank}-{pair.value}
+														</Typography>
+													</Box>
+												);
+											})}
+									</Box>
+								</Box>
+								<Box
+									sx={{
+										display: 'flex',
+										flexDirection: 'column',
+										alignItems: 'center',
+										width: '100%',
+										minHeight: '4rem',
+										margin: '3rem auto 0 auto',
+									}}>
+									<Typography variant='h5' sx={{ width: '90%' }}>
+										Student View
+									</Typography>
+									<Box sx={{ padding: '1rem 0', width: '100%' }}>
+										<FillInTheBlanksDragDropProps textWithBlanks={editorContent} blankValuePairs={blankValuePairs} />
+									</Box>
+								</Box>
+							</>
+						)}
+
 						{isAudioVideoQuestion && (
 							<Box sx={{ display: 'flex', justifyContent: 'center' }}>
 								<Box sx={{ margin: '2rem 0 2rem 3rem' }}>
@@ -491,24 +473,8 @@ const AdminLessonEditPageEditQuestionDialog = ({
 											<Checkbox
 												checked={question.audio}
 												onChange={(e) => {
-													if (setSingleLessonBeforeSave) {
-														setSingleLessonBeforeSave((prevData) => {
-															if (!prevData.questions) return prevData;
-
-															const updatedQuestions = prevData?.questions?.map((prevQuestion) => {
-																if (prevQuestion !== null && prevQuestion._id === question._id) {
-																	return { ...prevQuestion, audio: e.target.checked };
-																} else {
-																	return prevQuestion;
-																}
-															});
-
-															return { ...prevData, questions: updatedQuestions };
-														});
-														questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
-													}
+													handleInputChange('audio', e.target.checked);
 													setIsAudioVideoSelectionMissing(false);
-													questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
 												}}
 											/>
 										}
@@ -521,23 +487,8 @@ const AdminLessonEditPageEditQuestionDialog = ({
 											<Checkbox
 												checked={question.video}
 												onChange={(e) => {
-													if (setSingleLessonBeforeSave) {
-														setSingleLessonBeforeSave((prevData) => {
-															if (!prevData.questions) return prevData;
-															const updatedQuestions = prevData?.questions?.map((prevQuestion) => {
-																if (prevQuestion !== null && prevQuestion._id === question._id) {
-																	return { ...prevQuestion, video: e.target.checked };
-																} else {
-																	return prevQuestion;
-																}
-															});
-
-															return { ...prevData, questions: updatedQuestions };
-														});
-														questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
-													}
+													handleInputChange('video', e.target.checked);
 													setIsAudioVideoSelectionMissing(false);
-													questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
 												}}
 											/>
 										}
@@ -562,12 +513,9 @@ const AdminLessonEditPageEditQuestionDialog = ({
 						)}
 					</Box>
 					<Box sx={{ alignSelf: 'flex-start', marginTop: '1.5rem' }}>
-						{isQuestionMissing &&
-							(!isFlipCard ? (
-								<CustomErrorMessage>- Enter question</CustomErrorMessage>
-							) : !question.imageUrl ? (
-								<CustomErrorMessage>- Enter front face text or enter image</CustomErrorMessage>
-							) : null)}
+						{isQuestionMissing && (
+							<CustomErrorMessage>{isFlipCard ? '- Enter front face text or enter image' : '- Enter question'}</CustomErrorMessage>
+						)}
 
 						{isCorrectAnswerMissing && !isAudioVideoQuestion && !isMatching && (
 							<CustomErrorMessage>{isFlipCard ? '- Enter back face text' : '- Select correct answer'}</CustomErrorMessage>
@@ -580,6 +528,8 @@ const AdminLessonEditPageEditQuestionDialog = ({
 								{isMissingPair && <CustomErrorMessage>- There is at least one incomplete pair</CustomErrorMessage>}
 							</>
 						)}
+
+						{isFITBDragDrop && isMinimumTwoBlanks && <CustomErrorMessage>- Enter at least 2 blanks in the text</CustomErrorMessage>}
 					</Box>
 
 					{isMultipleChoiceQuestion && (

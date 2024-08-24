@@ -10,7 +10,7 @@ const Container = styled(Box)`
 	display: flex;
 	justify-content: space-between;
 	width: 90%;
-	margin-top: 1rem;
+	margin-top: 0.5rem;
 	flex-grow: 1;
 `;
 
@@ -24,7 +24,7 @@ const Column = styled(Box)`
 const Item = styled.div<{ $isCorrect: boolean | null }>`
 	padding: 1rem;
 	margin: 0.5rem 0.75rem;
-	background-color: ${({ $isCorrect }) => ($isCorrect === null ? '#f4f4f4' : $isCorrect ? '#d4edda' : '#f8d7da')};
+	background-color: ${({ $isCorrect }) => ($isCorrect === null ? '#f4f4f4' : $isCorrect ? 'green' : '#d32f2f')};
 	border: 1px solid ${({ $isCorrect }) => ($isCorrect === null ? '#ccc' : $isCorrect ? '#c3e6cb' : '#f5c6cb')};
 	border-radius: 0.25rem;
 	cursor: pointer;
@@ -32,11 +32,11 @@ const Item = styled.div<{ $isCorrect: boolean | null }>`
 `;
 
 const DropArea = styled(Box)`
-	padding: 0.75rem;
+	padding: 1rem;
 	margin: 0.5rem 0;
 	background-color: #e0e0e0;
 	border-radius: 0.35rem;
-	min-height: 5rem;
+	min-height: 6rem;
 	box-shadow: 0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2);
 	flex-grow: 1;
 `;
@@ -146,7 +146,9 @@ const MatchingPreview = ({
 													{...provided.draggableProps}
 													{...provided.dragHandleProps}
 													$isCorrect={pair.answer === initialPairs.find((p) => p.id === pair.id)?.answer}>
-													<Typography variant='body2'>{pair.answer}</Typography>
+													<Typography variant='body2' sx={{ color: 'white' }}>
+														{pair.answer}
+													</Typography>
 												</Item>
 											)}
 										</Draggable>
@@ -173,13 +175,12 @@ const MatchingPreview = ({
 								ref={provided.innerRef}
 								{...provided.droppableProps}
 								sx={{
-									margin: 'auto 0',
 									boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
 									borderRadius: '0.35rem',
 									display: 'flex',
 									flexDirection: 'column',
 									height: '100%',
-									overflow: 'auto',
+									margin: '0.5rem 0',
 								}}>
 								{responses.map((response, index) => (
 									<Draggable

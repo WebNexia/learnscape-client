@@ -118,7 +118,7 @@ const Matching = ({
 			</Box>
 			<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
 				<Box sx={{ textAlign: 'left', width: '90%', mt: '3rem' }}>
-					<Typography variant='h5'>PREVIEW</Typography>
+					<Typography variant='h5'>Student View</Typography>
 				</Box>
 				<MatchingPreview initialPairs={pairs} />
 			</Box>
