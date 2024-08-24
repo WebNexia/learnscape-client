@@ -4,6 +4,12 @@ export interface MatchingPair {
 	answer: string;
 }
 
+export interface BlankValuePair {
+	id: string;
+	blank: number;
+	value: string;
+}
+
 export interface QuestionInterface {
 	_id: string;
 	questionType: string;
@@ -17,6 +23,7 @@ export interface QuestionInterface {
 	audio: boolean;
 	video: boolean;
 	matchingPairs: MatchingPair[];
+	blankValuePairs: BlankValuePair[];
 	createdAt: string;
 	updatedAt: string;
 }

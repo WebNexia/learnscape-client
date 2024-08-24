@@ -128,11 +128,11 @@ const AdminQuestions = () => {
 
 			<CreateQuestionDialog
 				createNewQuestion={true}
+				isQuestionCreateModalOpen={isQuestionCreateModalOpen}
 				questionType={questionType}
 				options={options}
 				correctAnswer={correctAnswer}
 				correctAnswerIndex={correctAnswerIndex}
-				isQuestionCreateModalOpen={isQuestionCreateModalOpen}
 				setQuestionType={setQuestionType}
 				setOptions={setOptions}
 				setCorrectAnswer={setCorrectAnswer}

@@ -8,6 +8,7 @@ import { QuestionsContext } from '../../contexts/QuestionsContextProvider';
 import { QuestionType } from '../../interfaces/enums';
 import FlipCardPreview from '../layouts/flipCard/FlipCardPreview';
 import MatchingPreview from '../layouts/matching/MatchingPreview';
+import FillInTheBlanksDragDrop from '../layouts/FITBDragDrop/FillInTheBlanksDragDrop';
 
 interface QuestionDialogContentNonEditProps {
 	question: QuestionInterface | null;
@@ -73,7 +74,7 @@ const QuestionDialogContentNonEdit = ({ question }: QuestionDialogContentNonEdit
 					</Box>
 				)}
 			</Box>
-			{question && fetchQuestionTypeName(question) !== QuestionType.FLIP_CARD && (
+			{question && fetchQuestionTypeName(question) !== QuestionType.FLIP_CARD && fetchQuestionTypeName(question) !== QuestionType.FITB_DRAG_DROP && (
 				<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', paddingBottom: '0.5rem' }}>
 					<Box className='rich-text-content' component='div' sx={{ padding: '0.5rem 1rem', textAlign: 'justify' }}>
 						<Typography variant='body1' component='div' dangerouslySetInnerHTML={{ __html: sanitizeHtml(question.question) }} />
@@ -166,6 +167,12 @@ const QuestionDialogContentNonEdit = ({ question }: QuestionDialogContentNonEdit
 			{question && fetchQuestionTypeName(question) === QuestionType.MATCHING && (
 				<Box sx={{ display: 'flex', justifyContent: 'center' }}>
 					<MatchingPreview initialPairs={question.matchingPairs} />
+				</Box>
+			)}
+
+			{question && fetchQuestionTypeName(question) === QuestionType.FITB_DRAG_DROP && (
+				<Box sx={{ display: 'flex', justifyContent: 'center' }}>
+					<FillInTheBlanksDragDrop textWithBlanks={question.question} blankValuePairs={question.blankValuePairs} />
 				</Box>
 			)}
 		</DialogContent>

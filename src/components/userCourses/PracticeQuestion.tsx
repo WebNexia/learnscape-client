@@ -38,6 +38,7 @@ import { stripHtml } from '../../utils/stripHtml';
 import TypingAnimation from '../layouts/loading/TypingAnimation';
 import FlipCardPreview from '../layouts/flipCard/FlipCardPreview';
 import MatchingPreview from '../layouts/matching/MatchingPreview';
+import FillInTheBlanksDragDrop from '../layouts/FITBDragDrop/FillInTheBlanksDragDrop';
 
 const colorChange = keyframes`
     0% {
@@ -114,6 +115,8 @@ const PracticeQuestion = ({
 	const isMultipleChoiceQuestion: boolean = fetchQuestionTypeName(question) === QuestionType.MULTIPLE_CHOICE;
 	const isFlipCard: boolean = fetchQuestionTypeName(question) === QuestionType.FLIP_CARD;
 	const isMatching: boolean = fetchQuestionTypeName(question) === QuestionType.MATCHING;
+	const isFITBTyping = fetchQuestionTypeName(question) === QuestionType.FITB_TYPING;
+	const isFITBDragDrop = fetchQuestionTypeName(question) === QuestionType.FITB_DRAG_DROP;
 
 	const [userAnswer, setUserAnswer] = useState<string>('');
 
@@ -132,7 +135,7 @@ const PracticeQuestion = ({
 
 	const [error, setError] = useState<boolean>(false);
 	const [success, setSuccess] = useState<boolean>(false);
-	const [helperText, setHelperText] = useState<string>(!isMatching ? 'Choose wisely' : '');
+	const [helperText, setHelperText] = useState<string>(!isMatching && !isFITBDragDrop ? 'Choose wisely' : '');
 	const [isAnswerCorrect, setIsAnswerCorrect] = useState<boolean>(false);
 	const [isOpenEndedAnswerSubmitted, setIsOpenEndedAnswerSubmitted] = useState<boolean>(false);
 	const [selectedQuestion, setSelectedQuestion] = useState<number>(displayedQuestionNumber);
@@ -313,7 +316,7 @@ const PracticeQuestion = ({
 					<form onSubmit={handleSubmit} style={{ width: '100%' }}>
 						<FormControl sx={{ width: '100%' }} error={error} variant='standard'>
 							<QuestionMedia question={question} />
-							<QuestionText question={question} questionNumber={questionNumber} />
+							{!isFITBDragDrop && <QuestionText question={question} questionNumber={questionNumber} />}
 
 							{isOpenEndedQuestion && (
 								<Box sx={{ width: '90%', margin: '1rem auto' }}>
@@ -367,6 +370,21 @@ const PracticeQuestion = ({
 								</Box>
 							)}
 
+							{isFITBDragDrop && (
+								<Box sx={{ display: 'flex', justifyContent: 'center', width: '80%', margin: '11rem auto 0 auto' }}>
+									<FillInTheBlanksDragDrop
+										textWithBlanks={question.question}
+										blankValuePairs={question.blankValuePairs}
+										setAllPairsMatched={setAllPairsMatched}
+										fromPracticeQuestionUser={true}
+										displayedQuestionNumber={displayedQuestionNumber}
+										numberOfQuestions={numberOfQuestions}
+										setIsLessonCompleted={setIsLessonCompleted}
+										setShowQuestionSelector={setShowQuestionSelector}
+									/>
+								</Box>
+							)}
+
 							{isMultipleChoiceQuestion && (
 								<RadioGroup
 									name='question'
@@ -384,7 +402,7 @@ const PracticeQuestion = ({
 								<FormHelperText sx={{ color: success ? 'green' : 'inherit', alignSelf: 'center', mt: '2rem' }}>{helperText}</FormHelperText>
 							)}
 
-							{!isMatching && (
+							{!isMatching && !isFITBDragDrop && (
 								<Button
 									sx={{
 										mt: '3rem',

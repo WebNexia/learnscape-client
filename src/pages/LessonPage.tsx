@@ -1,12 +1,12 @@
+import { useContext, useEffect, useState } from 'react';
 import { Box, Button, IconButton, Link, Slide, Tooltip, Typography } from '@mui/material';
-import theme from '../themes';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import ReactPlayer from 'react-player';
-import DashboardHeader from '../components/layouts/dashboardLayout/DashboardHeader';
 import { Article, Close, DoneAll, GetApp, Home, KeyboardBackspaceOutlined, KeyboardDoubleArrowRight, NotListedLocation } from '@mui/icons-material';
+import theme from '../themes';
+import DashboardHeader from '../components/layouts/dashboardLayout/DashboardHeader';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
-import { useContext, useEffect, useState } from 'react';
 import { sanitizeHtml } from '../utils/sanitizeHtml';
 import { Document } from '../interfaces/document';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
@@ -37,25 +37,19 @@ const LessonPage = () => {
 	const { organisation } = useContext(OrganisationContext);
 	const navigate = useNavigate();
 	const { fetchUserAnswersByLesson } = useFetchUserQuestion();
-
-	const [isQuestionsVisible, setIsQuestionsVisible] = useState<boolean>(false);
-
-	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
-
 	const { handleNextLesson, nextLessonId, isLessonCompleted, userLessonId } = useUserCourseLessonData();
 
-	const [userAnswers, setUserAnswers] = useState<UserQuestionData[]>([]);
-	const [isLessonCourseCompletedModalOpen, setIsLessonCourseCompletedModalOpen] = useState<boolean>(false);
-	const [isQuizInProgress, setIsQuizInProgress] = useState<boolean>(false);
-	const [lessonType, setLessonType] = useState<string>('');
-	const [isNotesDrawerOpen, setIsNotesDrawerOpen] = useState<boolean>(false);
-	const [editorContent, setEditorContent] = useState<string>('');
-	const [userLessonNotes, setUserLessonNotes] = useState<string>(editorContent);
-	const [isUserLessonNotesUploading, setIsUserLessonNotesUploading] = useState<boolean>(false);
-	const [isNotesUpdated, setIsNotesUpdated] = useState<boolean>(false);
-	const [isQuestionsMapOpen, setIsQuestionsMapOpen] = useState<boolean>(false);
-
-	const defaultLesson = {
+	const [isQuestionsVisible, setIsQuestionsVisible] = useState(false);
+	const [isLessonCourseCompletedModalOpen, setIsLessonCourseCompletedModalOpen] = useState(false);
+	const [isQuizInProgress, setIsQuizInProgress] = useState(false);
+	const [lessonType, setLessonType] = useState('');
+	const [isNotesDrawerOpen, setIsNotesDrawerOpen] = useState(false);
+	const [editorContent, setEditorContent] = useState('');
+	const [userLessonNotes, setUserLessonNotes] = useState(editorContent);
+	const [isUserLessonNotesUploading, setIsUserLessonNotesUploading] = useState(false);
+	const [isNotesUpdated, setIsNotesUpdated] = useState(false);
+	const [isQuestionsMapOpen, setIsQuestionsMapOpen] = useState(false);
+	const [lesson, setLesson] = useState<Lesson>({
 		_id: '',
 		title: '',
 		type: '',
@@ -70,46 +64,43 @@ const LessonPage = () => {
 		questions: [],
 		documentIds: [],
 		documents: [],
-	};
-
-	const [lesson, setLesson] = useState<Lesson>(defaultLesson);
+	});
+	const [userAnswers, setUserAnswers] = useState<UserQuestionData[]>([]);
 	const [userQuizAnswers, setUserQuizAnswers] = useState<QuizQuestionAnswer[]>(() => {
 		const savedAnswers = localStorage.getItem(`UserQuizAnswers-${lessonId}`);
 		return savedAnswers ? JSON.parse(savedAnswers) : [];
 	});
 
-	const isQuiz: boolean = lessonType === LessonType.QUIZ;
-	const isInstructionalLesson: boolean = lessonType === LessonType.INSTRUCTIONAL_LESSON;
+	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
+	const isQuiz = lessonType === LessonType.QUIZ;
+	const isInstructionalLesson = lessonType === LessonType.INSTRUCTIONAL_LESSON;
 
 	useEffect(() => {
 		const fetchData = async () => {
 			if (lessonId) {
 				try {
 					const lessonResponse = await axios.get(`${base_url}/lessons/${lessonId}`);
-					setLesson(() => {
-						const filteredQuestions = lessonResponse.data.questions.filter((question: QuestionInterface) => question !== null);
-						return { ...lessonResponse.data, questions: filteredQuestions };
+					const lessonData = lessonResponse.data;
+					setLesson({
+						...lessonData,
+						questions: lessonData.questions.filter((q: QuestionInterface) => q !== null),
 					});
-					setLessonType(lessonResponse.data.type);
+					setLessonType(lessonData.type);
 
-					const lessonNotesResponse = await axios.get(`${base_url}/userLessons/lesson/notes/${userLessonId}`);
-
-					setUserLessonNotes(lessonNotesResponse.data.notes);
-					setEditorContent(lessonNotesResponse.data.notes);
+					const notesResponse = await axios.get(`${base_url}/userLessons/lesson/notes/${userLessonId}`);
+					setUserLessonNotes(notesResponse.data.notes);
+					setEditorContent(notesResponse.data.notes);
 
 					const answers = await fetchUserAnswersByLesson(lessonId);
-
-					if (lessonResponse.data.type === LessonType.QUIZ) {
-						setUserQuizAnswers(() => {
-							return answers?.map((answer) => {
-								return {
-									questionId: answer.questionId,
-									userAnswer: answer.userAnswer,
-									audioRecordUrl: answer.audioRecordUrl,
-									videoRecordUrl: answer.videoRecordUrl,
-								};
-							});
-						});
+					if (lessonData.type === LessonType.QUIZ) {
+						setUserQuizAnswers(
+							answers.map((answer) => ({
+								questionId: answer.questionId,
+								userAnswer: answer.userAnswer,
+								audioRecordUrl: answer.audioRecordUrl,
+								videoRecordUrl: answer.videoRecordUrl,
+							}))
+						);
 					} else {
 						setUserAnswers(answers);
 					}
@@ -118,7 +109,6 @@ const LessonPage = () => {
 				}
 			}
 		};
-
 		fetchData();
 
 		if (isQuiz && !isLessonCompleted) {
@@ -143,9 +133,7 @@ const LessonPage = () => {
 	const updateUserLessonNotes = async () => {
 		try {
 			setIsUserLessonNotesUploading(true);
-			const res = await axios.patch(`${base_url}/userlessons/${userLessonId}`, {
-				notes: editorContent,
-			});
+			const res = await axios.patch(`${base_url}/userlessons/${userLessonId}`, { notes: editorContent });
 			setUserLessonNotes(res.data.data.notes);
 		} catch (error) {
 			console.log(error);
@@ -164,39 +152,39 @@ const LessonPage = () => {
 		tempDiv.style.padding = '1.25rem';
 		tempDiv.style.fontFamily = 'Arial, sans-serif';
 
-		// Adding some inline styles for bullet points and other formatting
 		tempDiv.innerHTML = `
-		  <style>
-			body {
-			  font-family: Arial, sans-serif;
-			}
-			ul, ol {
-			  margin-left: 1.25rem; /* Indent for bullet points */
-			}
-			li {
-			  margin-bottom: 0.5rem; /* Space between list items */
-			}
-		  </style>
-		  ${editorContent}
-		`;
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+        }
+        ul, ol {
+          margin-left: 1.25rem;
+        }
+        li {
+          margin-bottom: 0.5rem;
+        }
+      </style>
+      ${editorContent}
+    `;
 		document.body.appendChild(tempDiv);
 
-		const canvas = await html2canvas(tempDiv, {
-			scale: 2,
-			useCORS: true,
-		});
+		const canvas = await html2canvas(tempDiv, { scale: 2, useCORS: true });
 		const imgData = canvas.toDataURL('image/png');
-		const pdf = new jsPDF({
-			orientation: 'portrait',
-			unit: 'mm',
-			format: 'a4',
-		});
+		const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 		const pdfWidth = pdf.internal.pageSize.getWidth();
 		const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 		pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
 		pdf.save(`${lesson.title}_Notes.pdf`);
 
 		document.body.removeChild(tempDiv);
+	};
+
+	const handleLessonNavigation = () => {
+		navigate(`/course/${courseId}/user/${userId}/userCourseId/${userCourseId}?isEnrolled=true`);
+		window.scrollTo({ top: 0, behavior: 'smooth' });
+		if (!isNotesUpdated) {
+			updateUserLessonNotes();
+		}
 	};
 
 	return (
@@ -223,11 +211,7 @@ const LessonPage = () => {
 					backgroundColor: theme.bgColor?.secondary,
 					zIndex: 10,
 				}}>
-				<Box
-					sx={{
-						display: 'flex',
-						justifyContent: !isInstructionalLesson && isQuestionsVisible ? 'space-between' : 'flex-end',
-					}}>
+				<Box sx={{ display: 'flex', justifyContent: !isInstructionalLesson && isQuestionsVisible ? 'space-between' : 'flex-end' }}>
 					{!isInstructionalLesson && isQuestionsVisible && (
 						<Box sx={{ alignSelf: 'flex-end' }}>
 							<Button
@@ -239,10 +223,7 @@ const LessonPage = () => {
 									margin: '0.75rem 0 0 0.25rem',
 									textTransform: 'inherit',
 									fontFamily: theme.fontFamily?.main,
-									':hover': {
-										backgroundColor: 'transparent',
-										textDecoration: 'underline',
-									},
+									':hover': { backgroundColor: 'transparent', textDecoration: 'underline' },
 								}}
 								onClick={() => {
 									setIsQuestionsVisible(false);
@@ -262,18 +243,9 @@ const LessonPage = () => {
 								margin: '0.75rem 0 0 0.25rem',
 								textTransform: 'inherit',
 								fontFamily: theme.fontFamily?.main,
-								':hover': {
-									backgroundColor: 'transparent',
-									textDecoration: 'underline',
-								},
+								':hover': { backgroundColor: 'transparent', textDecoration: 'underline' },
 							}}
-							onClick={() => {
-								navigate(`/course/${courseId}/user/${userId}/userCourseId/${userCourseId === undefined ? 'none' : userCourseId}?isEnrolled=true`);
-								window.scrollTo({ top: 0, behavior: 'smooth' });
-								if (!isNotesUpdated) {
-									updateUserLessonNotes();
-								}
-							}}
+							onClick={handleLessonNavigation}
 							disabled={isQuizInProgress}>
 							Course Home Page
 						</Button>
@@ -309,18 +281,14 @@ const LessonPage = () => {
 						<Box sx={{ minHeight: '100%', width: '100%' }}>
 							<Box sx={{ display: 'flex', flexDirection: 'column' }}>
 								<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-									<Box>
-										<Typography variant='h6'>{lesson.title} Notes</Typography>
-									</Box>
-									<Box>
-										<IconButton
-											onClick={() => {
-												setIsNotesDrawerOpen(false);
-												setUserLessonNotes(editorContent);
-											}}>
-											<Close />
-										</IconButton>
-									</Box>
+									<Typography variant='h6'>{lesson.title} Notes</Typography>
+									<IconButton
+										onClick={() => {
+											setIsNotesDrawerOpen(false);
+											setUserLessonNotes(editorContent);
+										}}>
+										<Close />
+									</IconButton>
 								</Box>
 								<Box sx={{ mt: '0.5rem' }} id='editor-content'>
 									<TinyMceEditor
@@ -333,71 +301,35 @@ const LessonPage = () => {
 									/>
 								</Box>
 								<Box sx={{ display: 'flex', mt: '1rem', justifyContent: 'space-between' }}>
-									<Box>
-										<Tooltip title='Download as PDF' placement='right'>
-											<IconButton onClick={handleDownloadPDF}>
-												<GetApp />
-											</IconButton>
-										</Tooltip>
-									</Box>
-									<Box>
-										{!isUserLessonNotesUploading ? (
-											<CustomSubmitButton size='small' onClick={updateUserLessonNotes}>
-												Save
-											</CustomSubmitButton>
-										) : (
-											<LoadingButton loading variant='outlined' size='small' sx={{ textTransform: 'capitalize' }}>
-												Upload
-											</LoadingButton>
-										)}
-									</Box>
+									<Tooltip title='Download as PDF' placement='right'>
+										<IconButton onClick={handleDownloadPDF}>
+											<GetApp />
+										</IconButton>
+									</Tooltip>
+									{!isUserLessonNotesUploading ? (
+										<CustomSubmitButton size='small' onClick={updateUserLessonNotes}>
+											Save
+										</CustomSubmitButton>
+									) : (
+										<LoadingButton loading variant='outlined' size='small' sx={{ textTransform: 'capitalize' }}>
+											Upload
+										</LoadingButton>
+									)}
 								</Box>
 							</Box>
 						</Box>
 					</Box>
 				</Slide>
 			</Box>
-
-			<Box
-				sx={{
-					display: 'flex',
-					flexDirection: 'column',
-					alignItems: 'center',
-					margin: '0.5rem 0 0 0',
-					width: '100%',
-				}}>
+			<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '0.5rem 0 0 0', width: '100%' }}>
 				{lesson?.videoUrl && !isQuestionsVisible && (
-					<Box
-						sx={{
-							display: 'flex',
-							justifyContent: 'center',
-							alignItems: 'center',
-							margin: '11rem 0 2rem 0',
-							width: '100%',
-							height: '22rem',
-						}}>
-						<Box
-							sx={{
-								height: '100%',
-								flex: 1,
-								display: 'flex',
-								justifyContent: 'center',
-								alignItems: 'center',
-							}}>
-							<ReactPlayer
-								url={lesson.videoUrl}
-								width='55%'
-								height='100%'
-								style={{
-									boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
-								}}
-								controls
-							/>
+					<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', margin: '11rem 0 2rem 0', width: '100%', height: '22rem' }}>
+						<Box sx={{ height: '100%', flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+							<ReactPlayer url={lesson.videoUrl} width='55%' height='100%' style={{ boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)' }} controls />
 						</Box>
 					</Box>
 				)}
 			</Box>
-
 			{lesson?.text && !isQuestionsVisible && (
 				<Box
 					sx={{
@@ -430,15 +362,12 @@ const LessonPage = () => {
 					</Box>
 				</Box>
 			)}
-
 			{!isInstructionalLesson && !isQuestionsVisible && (
 				<Box sx={{ mt: '2rem' }}>
 					<CustomSubmitButton
 						onClick={() => {
 							setIsQuestionsVisible(true);
-							if (isQuiz && !isLessonCompleted) {
-								setIsQuizInProgress(true);
-							}
+							if (isQuiz && !isLessonCompleted) setIsQuizInProgress(true);
 							window.scrollTo({ top: 0, behavior: 'smooth' });
 						}}
 						capitalize={false}>
@@ -452,7 +381,6 @@ const LessonPage = () => {
 					</CustomSubmitButton>
 				</Box>
 			)}
-
 			{isQuestionsVisible && (
 				<Box sx={{ width: '80%' }}>
 					<Questions
@@ -466,17 +394,9 @@ const LessonPage = () => {
 					/>
 				</Box>
 			)}
-
 			{isQuiz && isQuestionsVisible && !isLessonCompleted && (
 				<>
-					<Box
-						sx={{
-							position: 'fixed',
-							top: '90vh',
-							right: '2rem',
-							transform: 'translateY(-50%)',
-							zIndex: 1000,
-						}}>
+					<Box sx={{ position: 'fixed', top: '90vh', right: '2rem', transform: 'translateY(-50%)', zIndex: 1000 }}>
 						<Tooltip title='Questions Map' placement='left'>
 							<IconButton onClick={() => setIsQuestionsMapOpen(!isQuestionsMapOpen)}>
 								<NotListedLocation fontSize='large' sx={{ color: '#00BFFF' }} />
@@ -491,7 +411,6 @@ const LessonPage = () => {
 					/>
 				</>
 			)}
-
 			{lesson?.documents.length !== 0 && !isQuestionsVisible && (
 				<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '2rem', width: '85%' }}>
 					<Box sx={{ display: 'flex', alignSelf: 'flex-start' }}>
@@ -499,8 +418,8 @@ const LessonPage = () => {
 					</Box>
 					<Box sx={{ display: 'flex', flexDirection: 'column', alignSelf: 'flex-start' }}>
 						{lesson?.documents
-							?.filter((doc: Document) => doc !== null)
-							?.map((doc: Document) => (
+							.filter((doc: Document) => doc !== null)
+							.map((doc: Document) => (
 								<Box sx={{ marginTop: '0.5rem' }} key={doc._id}>
 									<Link href={doc?.documentUrl} target='_blank' rel='noopener noreferrer' variant='body2'>
 										{doc?.name}
@@ -510,19 +429,14 @@ const LessonPage = () => {
 					</Box>
 				</Box>
 			)}
-
 			{isInstructionalLesson && (
 				<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '85%', marginTop: 'auto' }}>
-					<Box sx={{ alignSelf: 'flex-end' }}>
-						<CustomSubmitButton
-							endIcon={!nextLessonId ? <DoneAll /> : <KeyboardDoubleArrowRight />}
-							onClick={() => {
-								setIsLessonCourseCompletedModalOpen(true);
-							}}
-							type='button'>
-							{nextLessonId ? 'Next Lesson' : 'Complete Course'}
-						</CustomSubmitButton>
-					</Box>
+					<CustomSubmitButton
+						endIcon={!nextLessonId ? <DoneAll /> : <KeyboardDoubleArrowRight />}
+						onClick={() => setIsLessonCourseCompletedModalOpen(true)}
+						type='button'>
+						{nextLessonId ? 'Next Lesson' : 'Complete Course'}
+					</CustomSubmitButton>
 					<CustomDialog
 						openModal={isLessonCourseCompletedModalOpen}
 						closeModal={() => setIsLessonCourseCompletedModalOpen(false)}

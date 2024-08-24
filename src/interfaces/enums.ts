@@ -59,6 +59,8 @@ export const enum QuestionType {
 	FLIP_CARD = 'Flip Card',
 	AUDIO_VIDEO = 'Audio/Video',
 	MATCHING = 'Matching',
+	FITB_TYPING = 'FITB-Typing',
+	FITB_DRAG_DROP = 'FITB-Drag/Drop',
 }
 
 export const enum LessonType {

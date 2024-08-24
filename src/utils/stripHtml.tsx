@@ -1,11 +1,9 @@
 export function stripHtml(html: string): string {
-	let doc = new DOMParser().parseFromString(html, 'text/html');
+	const doc = new DOMParser().parseFromString(html, 'text/html');
+	let text = doc?.body.textContent || '';
 
-	// Ignore table content
-	if (doc) {
-		const tables = doc.querySelectorAll('table');
-		tables.forEach((table) => table.parentNode?.removeChild(table));
-	}
+	// Replace line breaks to make sure they are preserved when rendering
+	text = text.replace(/\n/g, '\n');
 
-	return doc?.body.textContent || '';
+	return text;
 }
