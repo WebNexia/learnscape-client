@@ -39,6 +39,7 @@ import Matching from '../../layouts/matching/Matching';
 import { Lesson } from '../../../interfaces/lessons';
 import FillInTheBlanksDragDropProps from '../../layouts/FITBDragDrop/FillInTheBlanksDragDrop';
 import { updateEditorContentAndBlankPairs } from '../../../utils/updateEditorContentAndBlankPairs';
+import FillInTheBlanksTyping from '../../layouts/FITBTyping/FillInTheBlanksTyping';
 
 declare global {
 	interface Window {
@@ -138,6 +139,12 @@ const CreateQuestionDialog = ({
 		setEnterVideoUrl(true);
 		setEnterImageUrl(true);
 	}, []);
+
+	useEffect(() => {
+		if (blankValuePairs.length > 1) {
+			setIsMinimumTwoBlanks(false);
+		}
+	}, [blankValuePairs]);
 
 	const isFlipCard = questionType === QuestionType.FLIP_CARD;
 	const isOpenEndedQuestion = questionType === QuestionType.OPEN_ENDED;
@@ -283,7 +290,7 @@ const CreateQuestionDialog = ({
 			}
 		}
 
-		if (isFITBDragDrop && blankValuePairs.length < 2) {
+		if ((isFITBDragDrop || isFITBTyping) && blankValuePairs.length < 2) {
 			setIsMinimumTwoBlanks(true);
 			return;
 		}
@@ -294,7 +301,8 @@ const CreateQuestionDialog = ({
 			!isAudioVideoQuestion &&
 			!isMatching &&
 			(correctAnswerIndex === -1 || !correctAnswer) &&
-			!isFITBDragDrop
+			!isFITBDragDrop &&
+			!isFITBTyping
 		) {
 			setIsCorrectAnswerMissing(true);
 			return;
@@ -431,7 +439,7 @@ const CreateQuestionDialog = ({
 							</Box>
 						)}
 
-						{isFITBDragDrop && (
+						{(isFITBDragDrop || isFITBTyping) && (
 							<>
 								<Box sx={{ marginTop: '1rem' }}>
 									<Typography variant='h6'>Blank Values</Typography>
@@ -480,9 +488,16 @@ const CreateQuestionDialog = ({
 									<Typography variant='h5' sx={{ width: '90%' }}>
 										Student View
 									</Typography>
-									<Box sx={{ padding: '1rem 0', width: '100%' }}>
-										<FillInTheBlanksDragDropProps textWithBlanks={editorContent} blankValuePairs={sortedBlankValuePairs} />
-									</Box>
+									{isFITBDragDrop && (
+										<Box sx={{ padding: '1rem 0', width: '100%' }}>
+											<FillInTheBlanksDragDropProps textWithBlanks={editorContent} blankValuePairs={sortedBlankValuePairs} />
+										</Box>
+									)}
+									{isFITBTyping && (
+										<Box sx={{ padding: '1rem 0', width: '100%' }}>
+											<FillInTheBlanksTyping textWithBlanks={editorContent} blankValuePairs={sortedBlankValuePairs} />
+										</Box>
+									)}
 								</Box>
 							</>
 						)}
@@ -610,7 +625,7 @@ const CreateQuestionDialog = ({
 								{isMissingPair && <CustomErrorMessage>- There is at least one incomplete pair</CustomErrorMessage>}
 							</>
 						)}
-						{isFITBDragDrop && isMinimumTwoBlanks && <CustomErrorMessage>- Enter at least 2 blanks in the text</CustomErrorMessage>}
+						{(isFITBDragDrop || isFITBTyping) && isMinimumTwoBlanks && <CustomErrorMessage>- Enter at least 2 blanks in the text</CustomErrorMessage>}
 
 						{isMultipleChoiceQuestion && (
 							<Box sx={{ mt: '2rem' }}>

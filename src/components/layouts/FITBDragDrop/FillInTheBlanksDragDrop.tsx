@@ -5,6 +5,8 @@ import { Box, Typography } from '@mui/material';
 import { BlankValuePair } from '../../../interfaces/question';
 import { sanitizeHtml } from '../../../utils/sanitizeHtml';
 import { useUserCourseLessonData } from '../../../hooks/useUserCourseLessonData';
+import { shuffle } from 'lodash';
+import { words } from '../../../interfaces/randomWords';
 
 const Container = styled(Box)`
 	display: flex;
@@ -109,9 +111,18 @@ const FillInTheBlanksDragDrop = ({
 	const { updateLastQuestion, getLastQuestion, handleNextLesson } = useUserCourseLessonData();
 
 	useEffect(() => {
-		const sanitizedHtml = sanitizeHtml(textWithBlanks).replace(/[()]/g, '');
-		const segments = sanitizedHtml.split(/___\d+___/g).map((segment) => segment.replace(/<\/?[^>]+(>|$)/g, '').trim()); // Strip HTML tags
-		setTextSegments(segments);
+		let sanitizedHtml = sanitizeHtml(textWithBlanks)
+			.replace(/[()]/g, '')
+			.replace(/<\/?[^>]+(>|$)/g, '') // Remove HTML tags
+			.replace(/&nbsp;/g, ' ') // Replace &nbsp; with a regular space
+			.replace(/^\s*[\r\n]/gm, ''); // Remove empty lines
+
+		const segments = sanitizedHtml.split(/___\d+___/g).map((segment) => segment.trim());
+
+		// Remove trailing and leading empty spaces
+		const normalizedSegments = segments.map((segment) => segment.replace(/^\s+|\s+$/g, ''));
+
+		setTextSegments(normalizedSegments);
 
 		const initializedBlanks = blankValuePairs.map((pair) => ({
 			...pair,
@@ -119,9 +130,13 @@ const FillInTheBlanksDragDrop = ({
 		}));
 		setBlanks(initializedBlanks);
 
-		// Create a shuffled copy of blankValuePairs
-		const shuffledResponses = [...blankValuePairs].sort(() => Math.random() - 0.5);
-		setResponses(shuffledResponses);
+		// Include random words and correct answers in shuffled responses
+		const randomWords = shuffle(words).slice(0, 5);
+		const allResponses = shuffle([
+			...blankValuePairs.map((pair) => ({ ...pair })),
+			...randomWords.map((word) => ({ id: `random-${word}`, value: word, blank: -1 })),
+		]);
+		setResponses(allResponses);
 	}, [textWithBlanks, blankValuePairs]);
 
 	const handleDragEnd = (result: DropResult) => {
@@ -212,46 +227,49 @@ const FillInTheBlanksDragDrop = ({
 			<Container>
 				<Column sx={{ marginBottom: '3rem' }}>
 					<TextContainer>
-						{textSegments.map((segment, index) => (
-							<React.Fragment key={`text-${index}`}>
-								<Typography variant='body2' component='span' dangerouslySetInnerHTML={{ __html: segment }} sx={{ lineHeight: '2.25' }} />
-								{blanks[index] && (
-									<Droppable key={`blank-${blanks[index].id}`} droppableId={`blank-${blanks[index].id}`}>
-										{(provided) => (
-											<DropArea
-												key={`drop-area-${blanks[index].id}-${blanks[index].value}`}
-												ref={provided.innerRef}
-												{...provided.droppableProps}
-												$isCorrect={
-													blanks[index].value ? blanks[index].value === blankValuePairs.find((p) => p.blank === blanks[index].blank)?.value : null
-												}>
-												{blanks[index].value ? (
-													<Draggable key={`draggable-blank-${blanks[index].id}`} draggableId={`draggable-blank-${blanks[index].id}`} index={index}>
-														{(provided, snapshot) => (
-															<Item
-																ref={provided.innerRef}
-																{...provided.draggableProps}
-																{...provided.dragHandleProps}
-																$isCorrect={blanks[index].value === blankValuePairs.find((p) => p.blank === blanks[index].blank)?.value}
-																style={{
-																	...provided.draggableProps.style,
-																	boxShadow: snapshot.isDragging ? '0px 5px 10px rgba(0, 0, 0, 0.2)' : 'none',
-																	backgroundColor: snapshot.isDragging ? '#f0f0f0' : '#e0e0e0',
-																}}>
-																<Typography variant='body2' component='span' sx={{ display: 'inline-flex' }}>
-																	{blanks[index].value}
-																</Typography>
-															</Item>
-														)}
-													</Draggable>
-												) : null}
-												{provided.placeholder}
-											</DropArea>
-										)}
-									</Droppable>
-								)}
-							</React.Fragment>
-						))}
+						{textSegments.map((segment, index) => {
+							const sanitizedSegment = segment.replace(/&nbsp;/g, ' ').trim(); // Replace &nbsp; with a regular space and trim it
+							return (
+								<React.Fragment key={`text-${index}`}>
+									<Typography variant='body2' component='span' dangerouslySetInnerHTML={{ __html: sanitizedSegment }} sx={{ lineHeight: '2.25' }} />
+									{blanks[index] && (
+										<Droppable key={`blank-${blanks[index].id}`} droppableId={`blank-${blanks[index].id}`}>
+											{(provided) => (
+												<DropArea
+													key={`drop-area-${blanks[index].id}-${blanks[index].value}`}
+													ref={provided.innerRef}
+													{...provided.droppableProps}
+													$isCorrect={
+														blanks[index].value ? blanks[index].value === blankValuePairs.find((p) => p.blank === blanks[index].blank)?.value : null
+													}>
+													{blanks[index].value ? (
+														<Draggable key={`draggable-blank-${blanks[index].id}`} draggableId={`draggable-blank-${blanks[index].id}`} index={index}>
+															{(provided, snapshot) => (
+																<Item
+																	ref={provided.innerRef}
+																	{...provided.draggableProps}
+																	{...provided.dragHandleProps}
+																	$isCorrect={blanks[index].value === blankValuePairs.find((p) => p.blank === blanks[index].blank)?.value}
+																	style={{
+																		...provided.draggableProps.style,
+																		boxShadow: snapshot.isDragging ? '0px 5px 10px rgba(0, 0, 0, 0.2)' : 'none',
+																		backgroundColor: snapshot.isDragging ? '#f0f0f0' : '#e0e0e0',
+																	}}>
+																	<Typography variant='body2' component='span' sx={{ display: 'inline-flex' }}>
+																		{blanks[index].value}
+																	</Typography>
+																</Item>
+															)}
+														</Draggable>
+													) : null}
+													{provided.placeholder}
+												</DropArea>
+											)}
+										</Droppable>
+									)}
+								</React.Fragment>
+							);
+						})}
 					</TextContainer>
 				</Column>
 

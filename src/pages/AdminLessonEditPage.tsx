@@ -348,6 +348,7 @@ const AdminLessonEditPage = () => {
 										audio: question.audio,
 										video: question.video,
 										matchingPairs: question.matchingPairs,
+										blankValuePairs: question.blankValuePairs,
 										isActive: true,
 									});
 									fetchQuestions(questionsPageNumber);

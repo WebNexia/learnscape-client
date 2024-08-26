@@ -9,6 +9,7 @@ import { QuestionType } from '../../interfaces/enums';
 import FlipCardPreview from '../layouts/flipCard/FlipCardPreview';
 import MatchingPreview from '../layouts/matching/MatchingPreview';
 import FillInTheBlanksDragDrop from '../layouts/FITBDragDrop/FillInTheBlanksDragDrop';
+import FillInTheBlanksTyping from '../layouts/FITBTyping/FillInTheBlanksTyping';
 
 interface QuestionDialogContentNonEditProps {
 	question: QuestionInterface | null;
@@ -74,49 +75,52 @@ const QuestionDialogContentNonEdit = ({ question }: QuestionDialogContentNonEdit
 					</Box>
 				)}
 			</Box>
-			{question && fetchQuestionTypeName(question) !== QuestionType.FLIP_CARD && fetchQuestionTypeName(question) !== QuestionType.FITB_DRAG_DROP && (
-				<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', paddingBottom: '0.5rem' }}>
-					<Box className='rich-text-content' component='div' sx={{ padding: '0.5rem 1rem', textAlign: 'justify' }}>
-						<Typography variant='body1' component='div' dangerouslySetInnerHTML={{ __html: sanitizeHtml(question.question) }} />
-					</Box>
-
-					<Box sx={{ alignSelf: 'center', width: '80%' }}>
-						{fetchQuestionTypeName(question) === QuestionType.MULTIPLE_CHOICE &&
-							question.options &&
-							question.options.map((option, index) => {
-								const choiceLabel = String.fromCharCode(97 + index) + ')';
-								return (
-									<Typography
-										variant='body1'
-										key={index}
-										sx={{
-											margin: '1rem 0 0 2rem',
-											color: option === question.correctAnswer ? theme.textColor?.greenPrimary.main : null,
-											fontStyle: option === question.correctAnswer ? 'italic' : null,
-										}}>
-										{choiceLabel} {option}
-									</Typography>
-								);
-							})}
-					</Box>
-					{fetchQuestionTypeName(question) === QuestionType.TRUE_FALSE && (
-						<Box sx={{ width: '6rem' }}>
-							<Typography
-								variant='h6'
-								sx={{
-									textAlign: 'center',
-									color: theme.textColor?.common.main,
-									boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
-									padding: '0.5rem 1rem',
-									borderRadius: '0.35rem',
-									backgroundColor: question.correctAnswer === 'true' ? theme.bgColor?.greenPrimary : 'error.main',
-								}}>
-								{question.correctAnswer.toUpperCase()}
-							</Typography>
+			{question &&
+				fetchQuestionTypeName(question) !== QuestionType.FLIP_CARD &&
+				fetchQuestionTypeName(question) !== QuestionType.FITB_DRAG_DROP &&
+				fetchQuestionTypeName(question) !== QuestionType.FITB_TYPING && (
+					<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', paddingBottom: '0.5rem' }}>
+						<Box className='rich-text-content' component='div' sx={{ padding: '0.5rem 1rem', textAlign: 'justify' }}>
+							<Typography variant='body1' component='div' dangerouslySetInnerHTML={{ __html: sanitizeHtml(question.question) }} />
 						</Box>
-					)}
-				</Box>
-			)}
+
+						<Box sx={{ alignSelf: 'center', width: '80%' }}>
+							{fetchQuestionTypeName(question) === QuestionType.MULTIPLE_CHOICE &&
+								question.options &&
+								question.options.map((option, index) => {
+									const choiceLabel = String.fromCharCode(97 + index) + ')';
+									return (
+										<Typography
+											variant='body1'
+											key={index}
+											sx={{
+												margin: '1rem 0 0 2rem',
+												color: option === question.correctAnswer ? theme.textColor?.greenPrimary.main : null,
+												fontStyle: option === question.correctAnswer ? 'italic' : null,
+											}}>
+											{choiceLabel} {option}
+										</Typography>
+									);
+								})}
+						</Box>
+						{fetchQuestionTypeName(question) === QuestionType.TRUE_FALSE && (
+							<Box sx={{ width: '6rem' }}>
+								<Typography
+									variant='h6'
+									sx={{
+										textAlign: 'center',
+										color: theme.textColor?.common.main,
+										boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
+										padding: '0.5rem 1rem',
+										borderRadius: '0.35rem',
+										backgroundColor: question.correctAnswer === 'true' ? theme.bgColor?.greenPrimary : 'error.main',
+									}}>
+									{question.correctAnswer.toUpperCase()}
+								</Typography>
+							</Box>
+						)}
+					</Box>
+				)}
 			{question && fetchQuestionTypeName(question) === QuestionType.FLIP_CARD && <FlipCardPreview question={question} questionNonEditModal={true} />}
 
 			{question && fetchQuestionTypeName(question) === QuestionType.AUDIO_VIDEO && (
@@ -173,6 +177,12 @@ const QuestionDialogContentNonEdit = ({ question }: QuestionDialogContentNonEdit
 			{question && fetchQuestionTypeName(question) === QuestionType.FITB_DRAG_DROP && (
 				<Box sx={{ display: 'flex', justifyContent: 'center' }}>
 					<FillInTheBlanksDragDrop textWithBlanks={question.question} blankValuePairs={question.blankValuePairs} />
+				</Box>
+			)}
+
+			{question && fetchQuestionTypeName(question) === QuestionType.FITB_TYPING && (
+				<Box sx={{ display: 'flex', justifyContent: 'center' }}>
+					<FillInTheBlanksTyping textWithBlanks={question.question} blankValuePairs={question.blankValuePairs} />
 				</Box>
 			)}
 		</DialogContent>
