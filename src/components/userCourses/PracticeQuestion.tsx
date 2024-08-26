@@ -39,6 +39,7 @@ import TypingAnimation from '../layouts/loading/TypingAnimation';
 import FlipCardPreview from '../layouts/flipCard/FlipCardPreview';
 import MatchingPreview from '../layouts/matching/MatchingPreview';
 import FillInTheBlanksDragDrop from '../layouts/FITBDragDrop/FillInTheBlanksDragDrop';
+import FillInTheBlanksTyping from '../layouts/FITBTyping/FillInTheBlanksTyping';
 
 const colorChange = keyframes`
     0% {
@@ -135,13 +136,13 @@ const PracticeQuestion = ({
 
 	const [error, setError] = useState<boolean>(false);
 	const [success, setSuccess] = useState<boolean>(false);
-	const [helperText, setHelperText] = useState<string>(!isMatching && !isFITBDragDrop ? 'Choose wisely' : '');
+	const [helperText, setHelperText] = useState<string>(!isMatching && !isFITBDragDrop && isFITBTyping ? 'Choose wisely' : '');
 	const [isAnswerCorrect, setIsAnswerCorrect] = useState<boolean>(false);
 	const [isOpenEndedAnswerSubmitted, setIsOpenEndedAnswerSubmitted] = useState<boolean>(false);
 	const [selectedQuestion, setSelectedQuestion] = useState<number>(displayedQuestionNumber);
 	const [isLessonUpdating, setIsLessonUpdating] = useState<boolean>(false);
 	const [isLessonCourseCompletedModalOpen, setIsLessonCourseCompletedModalOpen] = useState<boolean>(false);
-	const [allPairsMatched, setAllPairsMatched] = useState(false);
+	const [allPairsMatched, setAllPairsMatched] = useState<boolean>(false);
 
 	const [isCardFlipped, setIsCardFlipped] = useState<boolean>(false);
 
@@ -316,7 +317,7 @@ const PracticeQuestion = ({
 					<form onSubmit={handleSubmit} style={{ width: '100%' }}>
 						<FormControl sx={{ width: '100%' }} error={error} variant='standard'>
 							<QuestionMedia question={question} />
-							{!isFITBDragDrop && <QuestionText question={question} questionNumber={questionNumber} />}
+							{!isFITBDragDrop && !isFITBTyping && <QuestionText question={question} questionNumber={questionNumber} />}
 
 							{isOpenEndedQuestion && (
 								<Box sx={{ width: '90%', margin: '1rem auto' }}>
@@ -373,6 +374,29 @@ const PracticeQuestion = ({
 							{isFITBDragDrop && (
 								<Box sx={{ display: 'flex', justifyContent: 'center', width: '80%', margin: '11rem auto 0 auto' }}>
 									<FillInTheBlanksDragDrop
+										textWithBlanks={question.question}
+										blankValuePairs={question.blankValuePairs}
+										setAllPairsMatched={setAllPairsMatched}
+										fromPracticeQuestionUser={true}
+										displayedQuestionNumber={displayedQuestionNumber}
+										numberOfQuestions={numberOfQuestions}
+										setIsLessonCompleted={setIsLessonCompleted}
+										setShowQuestionSelector={setShowQuestionSelector}
+									/>
+								</Box>
+							)}
+
+							{isFITBTyping && (
+								<Box
+									sx={{
+										display: 'flex',
+										flexDirection: 'column',
+										justifyContent: 'center',
+										alignItems: 'center',
+										width: '80%',
+										margin: '11rem auto 0 auto',
+									}}>
+									<FillInTheBlanksTyping
 										textWithBlanks={question.question}
 										blankValuePairs={question.blankValuePairs}
 										setAllPairsMatched={setAllPairsMatched}

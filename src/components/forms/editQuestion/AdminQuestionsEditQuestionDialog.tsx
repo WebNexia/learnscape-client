@@ -25,6 +25,7 @@ import { generateUniqueId } from '../../../utils/uniqueIdGenerator';
 import theme from '../../../themes';
 import { updateEditorContentAndBlankPairs } from '../../../utils/updateEditorContentAndBlankPairs';
 import FillInTheBlanksDragDropProps from '../../layouts/FITBDragDrop/FillInTheBlanksDragDrop';
+import FillInTheBlanksTyping from '../../layouts/FITBTyping/FillInTheBlanksTyping';
 
 interface EditQuestionDialogProps {
 	index: number;
@@ -117,7 +118,9 @@ const AdminQuestionsEditQuestionDialog = ({
 	};
 
 	useEffect(() => {
-		setIsCorrectAnswerMissing(correctAnswerIndex < 0 && question.correctAnswer === '' && !isOpenEndedQuestion && !isFITBDragDrop && !isMatching);
+		setIsCorrectAnswerMissing(
+			correctAnswerIndex < 0 && question.correctAnswer === '' && !isOpenEndedQuestion && !isFITBDragDrop && !isMatching && !isFITBTyping
+		);
 		resetVideoUpload();
 		resetImageUpload();
 		resetEnterImageVideoUrl();
@@ -125,6 +128,12 @@ const AdminQuestionsEditQuestionDialog = ({
 		setIsMinimumOptions(true);
 		setIsMinimumTwoBlanks(false);
 	}, [correctAnswerIndex]);
+
+	useEffect(() => {
+		if (blankValuePairsAdminQuestions?.length > 1) {
+			setIsMinimumTwoBlanks(false);
+		}
+	}, [blankValuePairsAdminQuestions]);
 
 	const handleSubmit = async () => {
 		if (!isFlipCard) await handleInputChange('question', editorContent);
@@ -159,7 +168,7 @@ const AdminQuestionsEditQuestionDialog = ({
 			return;
 		}
 
-		if (isOpenEndedQuestion || isMatching || isFITBDragDrop) {
+		if (isOpenEndedQuestion || isMatching || isFITBDragDrop || isFITBTyping) {
 			setIsCorrectAnswerMissing(false);
 		}
 
@@ -179,7 +188,7 @@ const AdminQuestionsEditQuestionDialog = ({
 			setIsMissingPair(false);
 		}
 
-		if (isFITBDragDrop) {
+		if (isFITBDragDrop || isFITBTyping) {
 			if (blankValuePairsAdminQuestions.length < 2) {
 				setIsMinimumTwoBlanks(true);
 				return;
@@ -250,6 +259,7 @@ const AdminQuestionsEditQuestionDialog = ({
 		setIsVideoAdminQuestions(questionBeforeSave.video);
 		setMatchingPairsAdminQuestions(questionBeforeSave.matchingPairs);
 		setBlankValuePairsAdminQuestions(questionBeforeSave.blankValuePairs);
+		setEditorContent(questionBeforeSave.question);
 	};
 
 	const returnBlankValues = (pair: BlankValuePair) => {
@@ -423,7 +433,7 @@ const AdminQuestionsEditQuestionDialog = ({
 							/>
 						)}
 
-						{isFITBDragDrop && (
+						{(isFITBDragDrop || isFITBTyping) && (
 							<>
 								<Box sx={{ marginTop: '1rem' }}>
 									<Typography variant='h6'>Blank Values</Typography>
@@ -474,9 +484,17 @@ const AdminQuestionsEditQuestionDialog = ({
 									<Typography variant='h5' sx={{ width: '90%' }}>
 										Student View
 									</Typography>
-									<Box sx={{ padding: '1rem 0', width: '100%' }}>
-										<FillInTheBlanksDragDropProps textWithBlanks={editorContent} blankValuePairs={blankValuePairsAdminQuestions} />
-									</Box>
+									{isFITBDragDrop && (
+										<Box sx={{ padding: '1rem 0', width: '100%' }}>
+											<FillInTheBlanksDragDropProps textWithBlanks={editorContent} blankValuePairs={blankValuePairsAdminQuestions} />
+										</Box>
+									)}
+
+									{isFITBTyping && (
+										<Box sx={{ padding: '1rem 0', width: '100%' }}>
+											<FillInTheBlanksTyping textWithBlanks={editorContent} blankValuePairs={blankValuePairsAdminQuestions} />
+										</Box>
+									)}
 								</Box>
 							</>
 						)}
@@ -542,7 +560,7 @@ const AdminQuestionsEditQuestionDialog = ({
 							</>
 						)}
 
-						{isFITBDragDrop && isMinimumTwoBlanks && <CustomErrorMessage>- Enter at least 2 blanks in the text</CustomErrorMessage>}
+						{(isFITBDragDrop || isFITBTyping) && isMinimumTwoBlanks && <CustomErrorMessage>- Enter at least 2 blanks in the text</CustomErrorMessage>}
 					</Box>
 
 					{isMultipleChoiceQuestion && (

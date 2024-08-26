@@ -60,7 +60,9 @@ const TinyMceEditor = ({
 	};
 
 	const handleEditorChangeInternal = (content: string) => {
-		handleEditorChange(content);
+		const cleanedContent = content.replace(/&nbsp;/g, ' ');
+
+		handleEditorChange(cleanedContent);
 
 		effectiveSetBlankValuePairs((prevData) => {
 			let updatedBlankValuePairs: BlankValuePair[] = [];
@@ -116,6 +118,10 @@ const TinyMceEditor = ({
 					'undo redo | formatselect | bold italic underline strikethrough subscript superscript | forecolor backcolor | \
                           alignleft aligncenter alignright alignjustify | \
                           bullist numlist outdent indent | removeformat',
+				paste_preprocess: function (plugin, args) {
+					// Replace &nbsp; with a regular space in the pasted content
+					args.content = args.content.replace(/&nbsp;/g, ' ');
+				},
 				setup: (editor) => {
 					if (editorRef && typeof editorRef === 'object') {
 						editorRef.current = editor;

@@ -24,6 +24,7 @@ import { generateUniqueId } from '../../../utils/uniqueIdGenerator';
 import { updateEditorContentAndBlankPairs } from '../../../utils/updateEditorContentAndBlankPairs';
 import theme from '../../../themes';
 import FillInTheBlanksDragDropProps from '../../layouts/FITBDragDrop/FillInTheBlanksDragDrop';
+import FillInTheBlanksTyping from '../../layouts/FITBTyping/FillInTheBlanksTyping';
 
 interface AdminLessonEditPageEditQuestionDialogProps {
 	index: number;
@@ -107,7 +108,9 @@ const AdminLessonEditPageEditQuestionDialog = ({
 	};
 
 	useEffect(() => {
-		setIsCorrectAnswerMissing(correctAnswerIndex < 0 && question.correctAnswer === '' && !isOpenEndedQuestion && !isFITBDragDrop && !isMatching);
+		setIsCorrectAnswerMissing(
+			correctAnswerIndex < 0 && question.correctAnswer === '' && !isOpenEndedQuestion && !isFITBDragDrop && !isMatching && !isFITBTyping
+		);
 		resetVideoUpload();
 		resetImageUpload();
 		resetEnterImageVideoUrl();
@@ -115,6 +118,12 @@ const AdminLessonEditPageEditQuestionDialog = ({
 		setIsMinimumOptions(true);
 		setIsMinimumTwoBlanks(false);
 	}, [correctAnswerIndex]);
+
+	useEffect(() => {
+		if (blankValuePairs?.length > 1) {
+			setIsMinimumTwoBlanks(false);
+		}
+	}, [blankValuePairs]);
 
 	const handleSubmit = async () => {
 		if (!isFlipCard) await handleInputChange('question', editorContent);
@@ -149,7 +158,7 @@ const AdminLessonEditPageEditQuestionDialog = ({
 			return;
 		}
 
-		if (isOpenEndedQuestion || isMatching || isFITBDragDrop) {
+		if (isOpenEndedQuestion || isMatching || isFITBDragDrop || isFITBTyping) {
 			setIsCorrectAnswerMissing(false);
 		}
 
@@ -169,7 +178,7 @@ const AdminLessonEditPageEditQuestionDialog = ({
 			setIsMissingPair(false);
 		}
 
-		if (isFITBDragDrop) {
+		if (isFITBDragDrop || isFITBTyping) {
 			if (blankValuePairs.length < 2) {
 				setIsMinimumTwoBlanks(true);
 				return;
@@ -222,6 +231,8 @@ const AdminLessonEditPageEditQuestionDialog = ({
 	const imagePlaceHolderUrl = 'https://directmobilityonline.co.uk/assets/img/noimage.png';
 
 	const handleResetQuestion = () => {
+		setEditorContent(questionBeforeSave.question);
+		setBlankValuePairs(questionBeforeSave.blankValuePairs);
 		if (setSingleLessonBeforeSave) {
 			setSingleLessonBeforeSave((prevData) => {
 				if (!prevData.questions) return prevData;
@@ -261,6 +272,7 @@ const AdminLessonEditPageEditQuestionDialog = ({
 				resetEnterImageVideoUrl();
 				setCorrectAnswerIndex(-1);
 				handleResetQuestion();
+				setIsMinimumTwoBlanks(false);
 			}}
 			title='Edit Question'
 			maxWidth='lg'>
@@ -407,7 +419,7 @@ const AdminLessonEditPageEditQuestionDialog = ({
 							/>
 						)}
 
-						{isFITBDragDrop && (
+						{(isFITBDragDrop || isFITBTyping) && (
 							<>
 								<Box sx={{ marginTop: '1rem' }}>
 									<Typography variant='h6'>Blank Values</Typography>
@@ -458,9 +470,16 @@ const AdminLessonEditPageEditQuestionDialog = ({
 									<Typography variant='h5' sx={{ width: '90%' }}>
 										Student View
 									</Typography>
-									<Box sx={{ padding: '1rem 0', width: '100%' }}>
-										<FillInTheBlanksDragDropProps textWithBlanks={editorContent} blankValuePairs={blankValuePairs} />
-									</Box>
+									{isFITBDragDrop && (
+										<Box sx={{ padding: '1rem 0', width: '100%' }}>
+											<FillInTheBlanksDragDropProps textWithBlanks={editorContent} blankValuePairs={blankValuePairs} />
+										</Box>
+									)}
+									{isFITBTyping && (
+										<Box sx={{ padding: '1rem 0', width: '100%' }}>
+											<FillInTheBlanksTyping textWithBlanks={editorContent} blankValuePairs={blankValuePairs} />
+										</Box>
+									)}
 								</Box>
 							</>
 						)}
@@ -529,7 +548,7 @@ const AdminLessonEditPageEditQuestionDialog = ({
 							</>
 						)}
 
-						{isFITBDragDrop && isMinimumTwoBlanks && <CustomErrorMessage>- Enter at least 2 blanks in the text</CustomErrorMessage>}
+						{(isFITBDragDrop || isFITBTyping) && isMinimumTwoBlanks && <CustomErrorMessage>- Enter at least 2 blanks in the text</CustomErrorMessage>}
 					</Box>
 
 					{isMultipleChoiceQuestion && (
@@ -548,6 +567,7 @@ const AdminLessonEditPageEditQuestionDialog = ({
 						resetVideoUpload();
 						resetEnterImageVideoUrl();
 						handleResetQuestion();
+						setIsMinimumTwoBlanks(false);
 					}}
 					cancelBtnText='Cancel'
 					onSubmit={handleSubmit}

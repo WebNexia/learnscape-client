@@ -26,6 +26,7 @@
 		"jspdf": "^2.5.1",
 		"jspdf-autotable": "^3.8.2",
 		"jwt-decode": "^4.0.0",
+		"lodash": "^4.17.21",
 		"openai": "^4.52.7",
 		"react": "^18.2.0",
 		"react-beautiful-dnd": "^13.1.1",
@@ -39,6 +40,7 @@
 	},
 	"devDependencies": {
 		"@types/dompurify": "^3.0.5",
+		"@types/lodash": "^4.17.7",
 		"@types/react": "^18.2.43",
 		"@types/react-beautiful-dnd": "^13.1.8",
 		"@types/react-dom": "^18.2.17",
