@@ -231,6 +231,8 @@ const AdminLessonEditPageEditQuestionDialog = ({
 	const imagePlaceHolderUrl = 'https://directmobilityonline.co.uk/assets/img/noimage.png';
 
 	const handleResetQuestion = () => {
+		setEditorContent(questionBeforeSave.question);
+		setBlankValuePairs(questionBeforeSave.blankValuePairs);
 		if (setSingleLessonBeforeSave) {
 			setSingleLessonBeforeSave((prevData) => {
 				if (!prevData.questions) return prevData;
@@ -270,6 +272,7 @@ const AdminLessonEditPageEditQuestionDialog = ({
 				resetEnterImageVideoUrl();
 				setCorrectAnswerIndex(-1);
 				handleResetQuestion();
+				setIsMinimumTwoBlanks(false);
 			}}
 			title='Edit Question'
 			maxWidth='lg'>
@@ -564,6 +567,7 @@ const AdminLessonEditPageEditQuestionDialog = ({
 						resetVideoUpload();
 						resetEnterImageVideoUrl();
 						handleResetQuestion();
+						setIsMinimumTwoBlanks(false);
 					}}
 					cancelBtnText='Cancel'
 					onSubmit={handleSubmit}

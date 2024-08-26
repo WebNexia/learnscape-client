@@ -259,6 +259,7 @@ const AdminQuestionsEditQuestionDialog = ({
 		setIsVideoAdminQuestions(questionBeforeSave.video);
 		setMatchingPairsAdminQuestions(questionBeforeSave.matchingPairs);
 		setBlankValuePairsAdminQuestions(questionBeforeSave.blankValuePairs);
+		setEditorContent(questionBeforeSave.question);
 	};
 
 	const returnBlankValues = (pair: BlankValuePair) => {

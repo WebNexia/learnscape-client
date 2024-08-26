@@ -77,6 +77,7 @@ const FillInTheBlanksTyping = ({
 	const [inputStatus, setInputStatus] = useState<(boolean | null)[]>([]);
 	const [showHiddenBlankValues, setShowHiddenBlankValues] = useState<boolean>(false);
 	const [hints, setHints] = useState<string[]>([]);
+	const [textSegments, setTextSegments] = useState<string[]>([]);
 
 	const { updateLastQuestion, getLastQuestion, handleNextLesson } = useUserCourseLessonData();
 
@@ -85,14 +86,25 @@ const FillInTheBlanksTyping = ({
 		const initialStatus = Array(blankValuePairs.length).fill(null);
 		setUserAnswers(initialAnswers);
 		setInputStatus(initialStatus);
-	}, [blankValuePairs.length]);
 
-	useEffect(() => {
 		const randomWords = shuffle(words).slice(0, 5);
 		const values = blankValuePairs.map((pair) => pair.value);
 		const hintWords = shuffle([...values, ...randomWords]);
 		setHints(hintWords);
 	}, [blankValuePairs]);
+
+	useEffect(() => {
+		// Sanitize and split the text
+		let sanitizedText = sanitizeHtml(textWithBlanks)
+			.replace(/[()]/g, '')
+			.replace(/<\/?[^>]+(>|$)/g, '');
+
+		console.log(textWithBlanks);
+
+		// Split the text by the placeholders
+		const segments = sanitizedText.split(/(___\d+___)/g);
+		setTextSegments(segments);
+	}, [textWithBlanks]);
 
 	useEffect(() => {
 		const allCorrect = blankValuePairs.every((pair, index) => pair.value === userAnswers[index]);
@@ -134,14 +146,6 @@ const FillInTheBlanksTyping = ({
 		setUserAnswers(newAnswers);
 		setInputStatus(newStatus);
 	};
-
-	// Sanitize and split the text
-	const sanitizedText = sanitizeHtml(textWithBlanks)
-		.replace(/[()]/g, '')
-		.replace(/<\/?[^>]+(>|$)/g, '');
-
-	// Split the text by the placeholders
-	const textSegments = sanitizedText.split(/(___\d+___)/g);
 
 	return (
 		<Container>

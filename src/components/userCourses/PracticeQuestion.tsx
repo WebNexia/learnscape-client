@@ -136,7 +136,7 @@ const PracticeQuestion = ({
 
 	const [error, setError] = useState<boolean>(false);
 	const [success, setSuccess] = useState<boolean>(false);
-	const [helperText, setHelperText] = useState<string>(!isMatching && !isFITBDragDrop ? 'Choose wisely' : '');
+	const [helperText, setHelperText] = useState<string>(!isMatching && !isFITBDragDrop && isFITBTyping ? 'Choose wisely' : '');
 	const [isAnswerCorrect, setIsAnswerCorrect] = useState<boolean>(false);
 	const [isOpenEndedAnswerSubmitted, setIsOpenEndedAnswerSubmitted] = useState<boolean>(false);
 	const [selectedQuestion, setSelectedQuestion] = useState<number>(displayedQuestionNumber);
