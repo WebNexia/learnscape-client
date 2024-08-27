@@ -13,6 +13,7 @@ import {
 	Email,
 	FilePresent,
 	Groups,
+	LibraryAddCheck,
 	LibraryBooks,
 	LightMode,
 	PeopleAltOutlined,
@@ -142,6 +143,7 @@ const Loading = () => {
 								<SidebarBtn btnText='Lessons' IconName={AssignmentIndRounded} selectedPage={selectedPage} />
 								<SidebarBtn btnText='Questions' IconName={QuizOutlined} selectedPage={selectedPage} />
 								<SidebarBtn btnText='Documents' IconName={FilePresent} selectedPage={selectedPage} />
+								<SidebarBtn btnText='Submissions' IconName={LibraryAddCheck} selectedPage={selectedPage} />
 								<SidebarBtn btnText='Schedule' IconName={CalendarMonth} selectedPage={selectedPage} />
 								<SidebarBtn btnText='Messages' IconName={Email} selectedPage={selectedPage} />
 								<SidebarBtn btnText='Community' IconName={Groups} selectedPage={selectedPage} />

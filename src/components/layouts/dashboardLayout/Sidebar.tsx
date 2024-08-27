@@ -7,6 +7,7 @@ import {
 	Email,
 	FilePresent,
 	Groups,
+	LibraryAddCheck,
 	LibraryBooks,
 	PeopleAltOutlined,
 	QuizOutlined,
@@ -126,6 +127,12 @@ const Sidebar = () => {
 								btnText='Documents'
 								IconName={FilePresent}
 								onClick={() => navigateWithPage(PageName.ADMIN_DOCUMENTS, `/admin/documents/user/${id || userId}`)}
+								selectedPage={selectedPage}
+							/>
+							<SidebarBtn
+								btnText='Submissions'
+								IconName={LibraryAddCheck}
+								onClick={() => navigateWithPage(PageName.ADMIN_DOCUMENTS, `/admin/submissions/user/${id || userId}`)}
 								selectedPage={selectedPage}
 							/>
 							<SidebarBtn

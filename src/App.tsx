@@ -17,7 +17,6 @@ import UserAuthContextProvider from './contexts/UserAuthContextProvider';
 import OrganisationContextProvider from './contexts/OrganisationContextProvider';
 import UsersContextProvider from './contexts/UsersContextProvider';
 import DocumentsContextProvider from './contexts/DocumentsContextProvider';
-import AdminDocuments from './pages/AdminDocuments';
 
 // Lazy load pages
 const Auth = React.lazy(() => import('./pages/Auth'));
@@ -41,6 +40,8 @@ const AdminMessages = React.lazy(() => import('./pages/AdminMessages'));
 const AdminUsers = React.lazy(() => import('./pages/AdminUsers'));
 const AdminSchedule = React.lazy(() => import('./pages/AdminSchedule'));
 const AdminCommunity = React.lazy(() => import('./pages/AdminCommunity'));
+const AdminDocuments = React.lazy(() => import('./pages/AdminDocuments'));
+const AdminQuizSubmissions = React.lazy(() => import('./pages/AdminQuizSubmissions'));
 
 const queryClient = new QueryClient();
 
@@ -84,6 +85,7 @@ function App() {
 																	{renderRoute('admin/lesson-edit/user/:userId/lesson/:lessonId', <AdminLessonEditPage />, Roles.ADMIN)}
 																	{renderRoute('/admin/questions/user/:userId', <AdminQuestions />, Roles.ADMIN)}
 																	{renderRoute('/admin/documents/user/:userId', <AdminDocuments />, Roles.ADMIN)}
+																	{renderRoute('/admin/submissions/user/:userId', <AdminQuizSubmissions />, Roles.ADMIN)}
 																	{renderRoute('/admin/schedule/user/:userId', <AdminSchedule />, Roles.ADMIN)}
 																	{renderRoute('/admin/messages/user/:userId', <AdminMessages />, Roles.ADMIN)}
 																	{renderRoute('/admin/community/user/:userId', <AdminCommunity />, Roles.ADMIN)}
