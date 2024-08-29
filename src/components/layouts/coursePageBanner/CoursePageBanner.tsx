@@ -5,12 +5,13 @@ import { KeyboardBackspaceOutlined } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import CoursePageBannerDataCard from './CoursePageBannerDataCard';
 import axios from 'axios';
-import { useState } from 'react';
+import { useContext, useState } from 'react';
 import { UserCoursesIdsWithCourseIds, UserLessonDataStorage } from '../../../contexts/UserCourseLessonDataContextProvider';
 import CustomSubmitButton from '../../forms/customButtons/CustomSubmitButton';
 import CustomDialog from '../dialog/CustomDialog';
 import CustomDialogActions from '../dialog/CustomDialogActions';
 import { dateFormatter } from '../../../utils/dateFormatter';
+import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
 
 interface CoursePageBannerProps {
 	course: SingleCourse;
@@ -28,6 +29,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 	const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
 
 	const { courseId, userId } = useParams();
+	const { orgId } = useContext(OrganisationContext);
 
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
@@ -41,6 +43,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 				userId,
 				isCompleted: false,
 				isInProgress: true,
+				orgId,
 			});
 
 			setIsEnrolledStatus(true);
@@ -54,6 +57,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 				isCompleted: false,
 				isInProgress: true,
 				notes: '',
+				orgId,
 			});
 
 			const currentUserLessonData: string | null = localStorage.getItem('userLessonData');
@@ -68,6 +72,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 						currentQuestion: 1,
 						isCompleted: false,
 						isInProgress: true,
+						teacherFeedback: '',
 					};
 
 					updatedUserLessonData.push(newUserLessonData);

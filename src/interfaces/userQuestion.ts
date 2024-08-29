@@ -13,4 +13,6 @@ export interface UserQuestion {
 	userId: string;
 	audioRecordUrl: string;
 	videoRecordUrl: string;
+	teacherFeedback: string;
+	teacherAudioFeedbackUrl: string;
 }

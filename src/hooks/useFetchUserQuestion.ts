@@ -24,6 +24,8 @@ export const useFetchUserQuestion = () => {
 						userAnswer: data.userAnswer,
 						audioRecordUrl: data.audioRecordUrl,
 						videoRecordUrl: data.videoRecordUrl,
+						teacherFeedback: data.teacherFeedback,
+						teacherAudioFeedbackUrl: data.teacherAudioFeedbackUrl,
 					})) || []
 				);
 			} catch (error) {

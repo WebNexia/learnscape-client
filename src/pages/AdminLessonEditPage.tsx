@@ -453,9 +453,11 @@ const AdminLessonEditPage = () => {
 	};
 
 	const removeQuestion = (question: QuestionInterface) => {
-		const updatedQuestions = singleLessonBeforeSave.questions.filter((thisQuestion) => {
-			return thisQuestion?._id !== question._id;
-		});
+		const updatedQuestions = singleLessonBeforeSave.questions
+			.filter((question) => question !== null)
+			.filter((thisQuestion) => {
+				return thisQuestion?._id !== question._id;
+			});
 
 		const updatedQuestionIds = updatedQuestions?.map((question) => question._id!);
 		setIsLessonUpdated(true);

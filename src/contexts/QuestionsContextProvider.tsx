@@ -89,7 +89,7 @@ const QuestionsContextProvider = (props: QuestionsContextProviderProps) => {
 	const fetchQuestionTypeName = (question: QuestionInterface): string => {
 		const filteredQuestionType = questionTypes.filter((type) => {
 			if (question !== null) {
-				return type._id === question.questionType || type.name === question.questionType;
+				return type._id === question?.questionType || type.name === question?.questionType;
 			}
 		});
 		let questionTypeName: string = '';

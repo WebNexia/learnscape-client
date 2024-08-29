@@ -195,6 +195,12 @@ const QuizQuestion = ({
 			})
 		);
 
+		try {
+			const response = await axios.post(`${base_url}/quizSubmissions`, { userId, lessonId, courseId, userLessonId, orgId });
+		} catch (error) {
+			console.log(error);
+		}
+
 		await handleNextLesson();
 		setIsLessonCompleted(true);
 		setIsSubmitQuizModalOpen(false);
