@@ -99,8 +99,6 @@ const FillInTheBlanksTyping = ({
 			.replace(/[()]/g, '')
 			.replace(/<\/?[^>]+(>|$)/g, '');
 
-		console.log(textWithBlanks);
-
 		// Split the text by the placeholders
 		const segments = sanitizedText.split(/(___\d+___)/g);
 		setTextSegments(segments);

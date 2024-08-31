@@ -19,14 +19,19 @@ const SidebarBtn = ({ btnText, onClick, IconName, selectedPage }: SidebarBtnProp
 
 	const isEditPage: boolean = selectedPage === `${subPageText}-edit`;
 	const isCheckSubmissionPage: boolean = selectedPage === `Check-${subPageText.toLowerCase()}`;
+	const isInstructorFeedbackPage: boolean = selectedPage === `${subPageText}-feedback`;
 
 	return (
 		<Button
 			variant='outlined'
 			startIcon={<IconName />}
 			sx={{
-				color: selectedPage === btnText || isEditPage || isCheckSubmissionPage ? theme.textColor?.primary.main : theme.textColor?.common.main,
-				backgroundColor: selectedPage === btnText || isEditPage || isCheckSubmissionPage ? theme.palette.secondary.main : 'transparent',
+				color:
+					selectedPage === btnText || isEditPage || isCheckSubmissionPage || isInstructorFeedbackPage
+						? theme.textColor?.primary.main
+						: theme.textColor?.common.main,
+				backgroundColor:
+					selectedPage === btnText || isEditPage || isCheckSubmissionPage || isInstructorFeedbackPage ? theme.palette.secondary.main : 'transparent',
 				textTransform: 'capitalize',
 				marginBottom: '0.15rem',
 				fontFamily: theme.fontFamily?.main,
@@ -40,8 +45,14 @@ const SidebarBtn = ({ btnText, onClick, IconName, selectedPage }: SidebarBtnProp
 				border: 'none',
 				cursor: 'pointer',
 				'&:hover': {
-					color: selectedPage !== btnText && !isEditPage && !isCheckSubmissionPage ? theme.submitBtn?.backgroundColor : theme.textColor?.primary.main,
-					backgroundColor: selectedPage === btnText || isEditPage || isCheckSubmissionPage ? theme.palette.secondary.main : 'transparent',
+					color:
+						selectedPage !== btnText && !isEditPage && !isCheckSubmissionPage && !isInstructorFeedbackPage
+							? theme.submitBtn?.backgroundColor
+							: theme.textColor?.primary.main,
+					backgroundColor:
+						selectedPage === btnText || isEditPage || isCheckSubmissionPage || isInstructorFeedbackPage
+							? theme.palette.secondary.main
+							: 'transparent',
 					border: 'none',
 				},
 			}}

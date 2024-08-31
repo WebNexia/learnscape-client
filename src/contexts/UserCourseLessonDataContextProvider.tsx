@@ -36,6 +36,7 @@ export interface UserLessonDataStorage {
 	isCompleted: boolean;
 	isInProgress: boolean;
 	teacherFeedback: string;
+	isFeedbackGiven: boolean;
 }
 
 export const UserCourseLessonDataContext = createContext<UserCourseLessonDataContextTypes>({

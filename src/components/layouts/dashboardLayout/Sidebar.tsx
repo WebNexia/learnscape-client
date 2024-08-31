@@ -175,6 +175,14 @@ const Sidebar = () => {
 								onClick={() => navigateWithPage(PageName.COURSES, `/courses/user/${id || userId}`)}
 								selectedPage={selectedPage}
 							/>
+
+							<SidebarBtn
+								btnText='Submissions'
+								IconName={LibraryAddCheck}
+								onClick={() => navigateWithPage(PageName.COURSES, `/submissions/user/${id || userId}`)}
+								selectedPage={selectedPage}
+							/>
+
 							<SidebarBtn
 								btnText='Schedule'
 								IconName={CalendarMonth}

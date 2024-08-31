@@ -119,6 +119,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 						isInProgress: userLesson.isInProgress,
 						currentQuestion: userLesson.currentQuestion,
 						teacherFeedback: userLesson.teacherFeedback,
+						isFeedbackGiven: userLesson.isFeedbackGiven,
 					}));
 					localStorage.setItem('userLessonData', JSON.stringify(userLessonData));
 				}

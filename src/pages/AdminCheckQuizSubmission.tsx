@@ -15,11 +15,16 @@ import CustomDialogActions from '../components/layouts/dialog/CustomDialogAction
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import { ArrowBackIosNewOutlined, ArrowForwardIosOutlined } from '@mui/icons-material';
 import LoadingButton from '@mui/lab/LoadingButton';
+import { UserAuthContext } from '../contexts/UserAuthContextProvider';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { storage } from '../firebase';
+import AudioRecorder from '../components/userCourses/AudioRecorder';
 
 export interface QuestionFeedbackData {
 	userQuestionId: string;
 	feedback: string;
 	isUpdated: boolean;
+	teacherAudioFeedbackUrl: string;
 }
 
 const AdminCheckQuizSubmission = () => {
@@ -31,6 +36,7 @@ const AdminCheckQuizSubmission = () => {
 	const { userLessonId, submissionId, userId, lessonId } = useParams();
 	const navigate = useNavigate();
 	const { fetchQuestionTypeName } = useContext(QuestionsContext);
+	const { user } = useContext(UserAuthContext);
 
 	const location = useLocation();
 	const queryParams = new URLSearchParams(location.search);
@@ -52,6 +58,8 @@ const AdminCheckQuizSubmission = () => {
 	const [displaySubmissionMsg, setDisplaySubmissionMsg] = useState<boolean>(false);
 	const [feedbackSubmitting, setFeedbackSubmitting] = useState<boolean>(false);
 
+	const [isAudioUploading, setIsAudioUploading] = useState<boolean>(false);
+
 	useEffect(() => {
 		const fetchQuizSubmissionData = async () => {
 			try {
@@ -67,7 +75,12 @@ const AdminCheckQuizSubmission = () => {
 
 				setUserQuestionsFeedbacks(() => {
 					const feedbacks = userCourseQuizData.map((data: any) => {
-						return { userQuestionId: data._id, feedback: data.teacherFeedback, isUpdated: false };
+						return {
+							userQuestionId: data._id,
+							feedback: data.teacherFeedback,
+							isUpdated: false,
+							teacherAudioFeedbackUrl: data.teacherAudioFeedbackUrl,
+						};
 					});
 
 					return feedbacks;
@@ -79,9 +92,8 @@ const AdminCheckQuizSubmission = () => {
 
 		const fetchUserLessonData = async () => {
 			try {
-				const response = await axios.get(`${base_url}/userLessons/${userLessonId}`);
+				const response = await axios.get(`${base_url}/userlessons/${userLessonId}`);
 
-				console.log(response.data.data[0]);
 				setQuizFeedback(response.data.data[0].teacherFeedback);
 			} catch (error) {
 				console.log(error);
@@ -119,6 +131,8 @@ const AdminCheckQuizSubmission = () => {
 			)
 		);
 
+		setIsQuizFeedbackUpdated(true);
+
 		setUserResponseToFeedback((prevResponse: any) => ({
 			...prevResponse,
 			teacherFeedback: updatedFeedback,
@@ -138,6 +152,25 @@ const AdminCheckQuizSubmission = () => {
 		}));
 	};
 
+	const uploadAudio = async (blob: Blob) => {
+		setIsAudioUploading(true);
+		try {
+			const audioRef = ref(storage, `audio-recordings/${user?.username}-${Date.now()}.webm`);
+			await uploadBytes(audioRef, blob);
+			const downloadURL = await getDownloadURL(audioRef);
+
+			setUserQuestionsFeedbacks((prevFeedbacks) =>
+				prevFeedbacks.map((feedback) =>
+					feedback.userQuestionId === userResponseToFeedback._id ? { ...feedback, isUpdated: true, teacherAudioFeedbackUrl: downloadURL } : feedback
+				)
+			);
+		} catch (error) {
+			console.log(error);
+		} finally {
+			setIsAudioUploading(false);
+		}
+	};
+
 	const handleSubmit = async () => {
 		try {
 			setFeedbackSubmitting(true);
@@ -145,6 +178,7 @@ const AdminCheckQuizSubmission = () => {
 			if (quizFeedback && isQuizFeedbackUpdated) {
 				await axios.patch(`${base_url}/userlessons/${userLessonId}`, {
 					teacherFeedback: quizFeedback,
+					isFeedbackGiven: true,
 				});
 			}
 
@@ -154,6 +188,7 @@ const AdminCheckQuizSubmission = () => {
 						if (feedback.feedback && feedback.isUpdated) {
 							await axios.patch(`${base_url}/userquestions/${feedback.userQuestionId}`, {
 								teacherFeedback: feedback.feedback,
+								teacherAudioFeedbackUrl: feedback.teacherAudioFeedbackUrl,
 							});
 						}
 					} catch (error) {
@@ -405,7 +440,7 @@ const AdminCheckQuizSubmission = () => {
 								<audio
 									src={userResponseToFeedback?.audioRecordUrl}
 									controls
-									style={{ marginTop: '1rem', boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)', borderRadius: '0.35rem' }}></audio>
+									style={{ marginTop: '1rem', boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)', borderRadius: '0.35rem', width: '100%' }}></audio>
 							</Box>
 						)}
 						{userResponseToFeedback?.videoRecordUrl && (
@@ -416,10 +451,52 @@ const AdminCheckQuizSubmission = () => {
 									style={{ boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)', borderRadius: '0.25rem' }}></video>
 							</Box>
 						)}
+
+						<Box sx={{ display: 'flex', flexDirection: 'column', width: '100%', mt: '6rem' }}>
+							<Box>
+								<Typography variant='h5'>Audio Feedback for Question</Typography>
+							</Box>
+							<Box sx={{ width: '100%', marginTop: '1rem' }}>
+								{!userQuestionsFeedbacks.find((feedback) => feedback.userQuestionId === userResponseToFeedback?._id)?.teacherAudioFeedbackUrl ? (
+									<AudioRecorder uploadAudio={uploadAudio} isAudioUploading={isAudioUploading} recorderTitle='' teacherFeedback={true} />
+								) : (
+									<Box sx={{ display: 'flex', alignItems: 'center' }}>
+										<Box sx={{ flex: 9 }}>
+											<audio
+												src={
+													userQuestionsFeedbacks.find((feedback) => feedback.userQuestionId === userResponseToFeedback?._id)?.teacherAudioFeedbackUrl
+												}
+												controls
+												style={{
+													marginTop: '1rem',
+													boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
+													borderRadius: '0.35rem',
+													width: '100%',
+												}}></audio>
+										</Box>
+										<Box sx={{ flex: 1, margin: '0.75rem 0 0 1.5rem' }}>
+											<CustomSubmitButton
+												sx={{ borderRadius: '0.35rem' }}
+												onClick={() => {
+													setUserQuestionsFeedbacks((prevFeedbacks) =>
+														prevFeedbacks.map((feedback) =>
+															feedback.userQuestionId === userResponseToFeedback._id
+																? { ...feedback, isUpdated: true, teacherAudioFeedbackUrl: '' }
+																: feedback
+														)
+													);
+												}}>
+												Remove
+											</CustomSubmitButton>
+										</Box>
+									</Box>
+								)}
+							</Box>
+						</Box>
 					</Box>
 				)}
 
-				<Box sx={{ display: 'flex', flexDirection: 'column', width: '90%', margin: '2rem auto' }}>
+				<Box sx={{ display: 'flex', flexDirection: 'column', width: '90%', margin: '1rem auto' }}>
 					<Box sx={{ mb: '1rem' }}>
 						<Typography variant='h5'>Feedback for Question</Typography>
 					</Box>

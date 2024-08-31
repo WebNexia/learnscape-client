@@ -92,6 +92,9 @@ const QuizQuestion = ({
 	const [isAudioUploading, setIsAudioUploading] = useState<boolean>(false);
 	const [isVideoUploading, setIsVideoUploading] = useState<boolean>(false);
 
+	const [teacherQuestionFeedback, setTeacherQuestionFeedback] = useState<string>('');
+	const [teacherQuestionAudioFeedback, setTeacherQuestionAudioFeedback] = useState<string>('');
+
 	const isOpenEndedQuestion: boolean = fetchQuestionTypeName(question) === QuestionType.OPEN_ENDED;
 	const isTrueFalseQuestion: boolean = fetchQuestionTypeName(question) === QuestionType.TRUE_FALSE;
 	const isMultipleChoiceQuestion: boolean = fetchQuestionTypeName(question) === QuestionType.MULTIPLE_CHOICE;
@@ -125,6 +128,23 @@ const QuizQuestion = ({
 			}
 			return '';
 		});
+
+		setTeacherQuestionFeedback(() => {
+			if (isLessonCompleted) {
+				const feedback: string = userQuizAnswers?.find((data) => data.questionId == question._id)?.teacherFeedback || '';
+				return feedback;
+			}
+			return '';
+		});
+
+		setTeacherQuestionAudioFeedback(() => {
+			if (isLessonCompleted) {
+				const feedback: string = userQuizAnswers?.find((data) => data.questionId == question._id)?.teacherAudioFeedbackUrl || '';
+				return feedback;
+			}
+			return '';
+		});
+
 		setUploadUrlForCompletedLesson(() => {
 			if (isLessonCompleted) {
 				const answer = userQuizAnswers?.find((data) => data.questionId == question._id);
@@ -196,7 +216,7 @@ const QuizQuestion = ({
 		);
 
 		try {
-			const response = await axios.post(`${base_url}/quizSubmissions`, { userId, lessonId, courseId, userLessonId, orgId });
+			await axios.post(`${base_url}/quizSubmissions`, { userId, lessonId, courseId, userLessonId, orgId });
 		} catch (error) {
 			console.log(error);
 		}
@@ -383,6 +403,38 @@ const QuizQuestion = ({
 					)}
 					{!isOpenEndedQuestion && !isLessonCompleted && helperText !== ' ' && !isAudioVideoQuestion && (
 						<FormHelperText sx={{ alignSelf: 'center', mt: '2rem' }}>{helperText}</FormHelperText>
+					)}
+
+					{isLessonCompleted && (teacherQuestionFeedback || teacherQuestionAudioFeedback) && (
+						<Box
+							sx={{
+								width: '80%',
+								boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
+								margin: '3rem auto 1rem auto',
+								padding: '1rem 2rem 2rem 2rem',
+								borderRadius: '0.35rem',
+							}}>
+							<Typography variant='h6' sx={{ mb: '0.5rem' }}>
+								Instructor Feedback
+							</Typography>
+							<Box>
+								<Typography variant='body2'>{teacherQuestionFeedback}</Typography>
+							</Box>
+							{teacherQuestionAudioFeedback && (
+								<Box sx={{ textAlign: 'center', width: '100%' }}>
+									<audio
+										src={teacherQuestionAudioFeedback}
+										controls
+										key={question._id}
+										style={{
+											marginTop: '1.5rem',
+											boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
+											borderRadius: '0.35rem',
+											width: '80%',
+										}}></audio>
+								</Box>
+							)}
+						</Box>
 					)}
 				</FormControl>
 			</form>

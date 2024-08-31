@@ -45,6 +45,7 @@ const AdminQuizSubmissions = () => {
 			fetchQuizSubmissions(quizSubmissionsPageNumber);
 		}
 	}, [quizSubmissionsPageNumber]);
+
 	return (
 		<DashboardPagesLayout pageName='Quiz Submissions' customSettings={{ justifyContent: 'flex-start' }}>
 			<Box

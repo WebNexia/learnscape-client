@@ -24,6 +24,8 @@ const Auth = React.lazy(() => import('./pages/Auth'));
 const HomePage = React.lazy(() => import('./pages/HomePage'));
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 const Courses = React.lazy(() => import('./pages/Courses'));
+const Submissions = React.lazy(() => import('./pages/Submissions'));
+const SubmissionFeedbackDetails = React.lazy(() => import('./pages/SubmissionFeedbackDetails'));
 const Schedule = React.lazy(() => import('./pages/Schedule'));
 const Messages = React.lazy(() => import('./pages/Messages'));
 const Community = React.lazy(() => import('./pages/Community'));
@@ -102,6 +104,12 @@ function App() {
 																	<>
 																		{renderRoute('/dashboard/user/:id', <Dashboard />, Roles.USER)}
 																		{renderRoute('/courses/user/:id', <Courses />, Roles.USER)}
+																		{renderRoute('/submissions/user/:userId', <Submissions />, Roles.USER)}
+																		{renderRoute(
+																			'/submission-feedback/user/:userId/submission/:submissionId/lesson/:lessonId/userlesson/:userLessonId',
+																			<SubmissionFeedbackDetails />,
+																			Roles.USER
+																		)}
 																		{renderRoute('/course/:courseId/user/:userId/userCourseId/:userCourseId', <CoursePage />, Roles.USER)}
 																		{renderRoute(
 																			'/user/:userId/course/:courseId/userCourseId/:userCourseId/lesson/:lessonId/',

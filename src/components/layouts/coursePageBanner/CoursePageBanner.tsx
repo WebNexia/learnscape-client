@@ -48,7 +48,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 
 			setIsEnrolledStatus(true);
 
-			const responseUserLesson = await axios.post(`${base_url}/userLessons`, {
+			const responseUserLesson = await axios.post(`${base_url}/userlessons`, {
 				lessonId: firstLessonId,
 				userId,
 				courseId,
@@ -58,6 +58,8 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 				isInProgress: true,
 				notes: '',
 				orgId,
+				teacherFeedback: '',
+				isFeedbackGiven: false,
 			});
 
 			const currentUserLessonData: string | null = localStorage.getItem('userLessonData');
@@ -73,6 +75,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 						isCompleted: false,
 						isInProgress: true,
 						teacherFeedback: '',
+						isFeedbackGiven: false,
 					};
 
 					updatedUserLessonData.push(newUserLessonData);

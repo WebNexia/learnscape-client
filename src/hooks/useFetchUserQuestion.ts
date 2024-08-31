@@ -8,6 +8,8 @@ export interface UserQuestionData {
 	userAnswer: string;
 	audioRecordUrl: string;
 	videoRecordUrl: string;
+	teacherFeedback: string;
+	teacherAudioFeedbackUrl: string;
 }
 
 export const useFetchUserQuestion = () => {
