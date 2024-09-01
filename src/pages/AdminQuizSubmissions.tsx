@@ -63,7 +63,7 @@ const AdminQuizSubmissions = () => {
 						order={order}
 						handleSort={handleSort}
 						columns={[
-							{ key: 'userName', label: 'User Name' },
+							{ key: 'userName', label: 'Student Name' },
 							{ key: 'lessonName', label: 'Quiz Name' },
 							{ key: 'courseName', label: 'Course Name' },
 							{ key: 'isChecked', label: 'Status' },

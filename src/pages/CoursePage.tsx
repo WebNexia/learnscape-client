@@ -29,7 +29,7 @@ const CoursePage = () => {
 	}, [userCourseId, courseId]);
 
 	return (
-		<DashboardPagesLayout pageName='Courses' customSettings={{ justifyContent: 'flex-start' }}>
+		<DashboardPagesLayout pageName='Course' customSettings={{ justifyContent: 'flex-start' }}>
 			{singleCourseUser && (
 				<>
 					<CoursePageBanner

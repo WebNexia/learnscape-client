@@ -4,8 +4,10 @@ import { CheckCircleOutlineRounded, Lock } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { UserLessonDataStorage } from '../../contexts/UserCourseLessonDataContextProvider';
 import { LessonById } from '../../interfaces/lessons';
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import ProgressIcon from '../../assets/ProgressIcon.png';
+import { LessonType } from '../../interfaces/enums';
+import { QuizSubmissionsContext } from '../../contexts/QuizSubmissionsContextProvider';
 
 interface LessonProps {
 	lesson: LessonById;
@@ -19,6 +21,9 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 	const { userId, courseId, userCourseId } = useParams();
 	const navigate = useNavigate();
 
+	const { sortedUserQuizSubmissionsData, isUserLoaded, userQuizSubmissionsPageNumber, fetchQuizSubmissionsByUserId } =
+		useContext(QuizSubmissionsContext);
+
 	const currentUserLessonData: string | null = localStorage.getItem('userLessonData');
 
 	let parsedUserLessonData: UserLessonDataStorage[] = [];
@@ -29,6 +34,7 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 	const [userLessonData, setUserLessonData] = useState<UserLessonDataStorage[]>(parsedUserLessonData);
 	const [isLessonInProgress, setIsLessonInProgress] = useState<boolean>(false);
 	const [isLessonCompleted, setIsLessonCompleted] = useState<boolean>(false);
+	const [isFeedbackGiven, setIsFeedbackGiven] = useState<boolean>(false);
 	const [isLessonRegisteredInThisCourse, setIsLessonRegisteredInThisCourse] = useState<boolean>(false);
 
 	useEffect(() => {
@@ -49,6 +55,28 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 
 		fetchUserLessonProgress();
 	}, [currentUserLessonData]);
+
+	useEffect(() => {
+		const fetchData = async () => {
+			if (!isUserLoaded && sortedUserQuizSubmissionsData.length === 0) {
+				try {
+					await fetchQuizSubmissionsByUserId(userId!, userQuizSubmissionsPageNumber);
+				} catch (error) {
+					console.error('Error fetching quiz submissions:', error);
+				}
+			}
+		};
+
+		fetchData();
+	}, [isUserLoaded, sortedUserQuizSubmissionsData.length, fetchQuizSubmissionsByUserId, userId, userQuizSubmissionsPageNumber]);
+
+	useEffect(() => {
+		if (sortedUserQuizSubmissionsData.length > 0) {
+			const isFeedbackGiven = sortedUserQuizSubmissionsData.find((data) => data.lessonId === lesson._id)?.isChecked;
+
+			setIsFeedbackGiven(isFeedbackGiven || false);
+		}
+	}, [sortedUserQuizSubmissionsData, lesson._id]);
 
 	const handleLessonClick = () => {
 		const navigateToLesson = (lessonId: string, nextId?: string) => {
@@ -107,7 +135,7 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 					width: '100%',
 					px: '1rem',
 				}}>
-				<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+				<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', flex: 10 }}>
 					<Typography variant='body2' sx={{ color: isEnrolledStatus && isLessonInProgress ? 'white' : null }}>
 						Lesson {lessonOrder}
 					</Typography>
@@ -115,7 +143,14 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 						{lesson.title}
 					</Typography>
 				</Box>
-				<Box sx={{ display: 'flex', alignItems: 'center' }}>
+				<Box sx={{ flex: 2 }}>
+					{lesson.type === LessonType.QUIZ && isLessonRegisteredInThisCourse && isLessonCompleted && (
+						<Box>
+							<Typography sx={{ fontSize: '0.85rem' }}>{isFeedbackGiven ? 'Feedback Given' : 'No Feedback Yet'}</Typography>
+						</Box>
+					)}
+				</Box>
+				<Box sx={{ display: 'flex', alignItems: 'center', flex: 4, justifyContent: 'flex-end' }}>
 					<Box>
 						<Typography
 							variant='body2'

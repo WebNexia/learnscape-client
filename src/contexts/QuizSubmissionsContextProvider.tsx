@@ -16,6 +16,7 @@ interface QuizSubmissionsContextTypes {
 	updateQuizSubmissionPublishing: (id: string) => void;
 	removeQuizSubmission: (id: string) => void;
 	updateQuizSubmissions: (singleQuizSubmission: QuizSubmission) => void;
+	isUserLoaded: boolean;
 	numberOfPages: number;
 	userNumberOfPages: number; // New state for user-specific pagination
 	quizSubmissionsPageNumber: number;
@@ -39,6 +40,7 @@ export const QuizSubmissionsContext = createContext<QuizSubmissionsContextTypes>
 	updateQuizSubmissionPublishing: () => {},
 	removeQuizSubmission: () => {},
 	updateQuizSubmissions: () => {},
+	isUserLoaded: false,
 	numberOfPages: 1,
 	userNumberOfPages: 1,
 	quizSubmissionsPageNumber: 1,
@@ -55,14 +57,14 @@ const QuizSubmissionsContextProvider = (props: QuizSubmissionsContextProviderPro
 	const { userId } = useParams<{ userId: string }>();
 
 	const [sortedQuizSubmissionsData, setSortedQuizSubmissionsData] = useState<QuizSubmission[]>([]);
-	const [sortedUserQuizSubmissionsData, setSortedUserQuizSubmissionsData] = useState<QuizSubmission[]>([]); // New state for user-specific submissions
+	const [sortedUserQuizSubmissionsData, setSortedUserQuizSubmissionsData] = useState<QuizSubmission[]>([]);
 	const [numberOfPages, setNumberOfPages] = useState<number>(1);
-	const [userNumberOfPages, setUserNumberOfPages] = useState<number>(1); // New state for user-specific pagination
+	const [userNumberOfPages, setUserNumberOfPages] = useState<number>(1);
 	const [quizSubmissionsPageNumber, setQuizSubmissionsPageNumber] = useState<number>(1);
-	const [userQuizSubmissionsPageNumber, setUserQuizSubmissionsPageNumber] = useState<number>(1); // New state for user-specific page number
+	const [userQuizSubmissionsPageNumber, setUserQuizSubmissionsPageNumber] = useState<number>(1);
 
 	const [isLoaded, setIsLoaded] = useState<boolean>(false);
-	const [isUserLoaded, setIsUserLoaded] = useState<boolean>(false); // New state for user-specific loading
+	const [isUserLoaded, setIsUserLoaded] = useState<boolean>(false);
 
 	const fetchQuizSubmissions = async (page: number) => {
 		if (!orgId) return;
@@ -192,6 +194,7 @@ const QuizSubmissionsContextProvider = (props: QuizSubmissionsContextProviderPro
 				removeQuizSubmission,
 				updateQuizSubmissionPublishing,
 				updateQuizSubmissions,
+				isUserLoaded,
 				numberOfPages,
 				userNumberOfPages,
 				quizSubmissionsPageNumber,

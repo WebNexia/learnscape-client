@@ -45,7 +45,7 @@ const AdminSchedule = React.lazy(() => import('./pages/AdminSchedule'));
 const AdminCommunity = React.lazy(() => import('./pages/AdminCommunity'));
 const AdminDocuments = React.lazy(() => import('./pages/AdminDocuments'));
 const AdminQuizSubmissions = React.lazy(() => import('./pages/AdminQuizSubmissions'));
-const AdminCheckQuizSubmission = React.lazy(() => import('./pages/AdminCheckQuizSubmission'));
+const AdminQuizSubmissionCheck = React.lazy(() => import('./pages/AdminQuizSubmissionCheck'));
 
 const queryClient = new QueryClient();
 
@@ -93,7 +93,7 @@ function App() {
 																		{renderRoute('/admin/submissions/user/:userId', <AdminQuizSubmissions />, Roles.ADMIN)}
 																		{renderRoute(
 																			'/admin/check-submission/user/:userId/submission/:submissionId/lesson/:lessonId/userlesson/:userLessonId',
-																			<AdminCheckQuizSubmission />,
+																			<AdminQuizSubmissionCheck />,
 																			Roles.ADMIN
 																		)}
 																		{renderRoute('/admin/schedule/user/:userId', <AdminSchedule />, Roles.ADMIN)}

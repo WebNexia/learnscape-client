@@ -9,7 +9,7 @@ import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
 import LoadingButton from '@mui/lab/LoadingButton';
 
 const mimeType = 'audio/webm; codecs=opus';
-const MAX_RECORDING_TIME = 180000; // 3 minutes
+const MAX_RECORDING_TIME = 120000; // 2 minutes
 const QUALITY = 64000; // Medium quality (64 kbps)
 
 interface AudioRecorderProps {

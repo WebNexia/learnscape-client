@@ -298,7 +298,14 @@ const QuizQuestion = ({
 			<form style={{ width: '100%' }}>
 				<FormControl sx={{ width: '100%' }} variant='standard'>
 					<QuestionMedia question={question} />
-					<QuestionText question={question} questionNumber={questionNumber} />
+					<QuestionText
+						question={question}
+						questionNumber={questionNumber}
+						isLessonCompleted={isLessonCompleted}
+						userQuizAnswer={userQuizAnswer}
+						isTrueFalseQuestion={isTrueFalseQuestion}
+						isMultipleChoiceQuestion={isMultipleChoiceQuestion}
+					/>
 
 					{isOpenEndedQuestion && (
 						<Box sx={{ width: '90%', margin: '1rem auto' }}>
@@ -348,6 +355,7 @@ const QuizQuestion = ({
 									<AudioRecorder uploadAudio={uploadAudio} isAudioUploading={isAudioUploading} />
 								) : null}
 							</Box>
+
 							{isAudioVideoUploaded && (
 								<Box>
 									{userQuizAnswers?.map((answer) => {
@@ -392,15 +400,37 @@ const QuizQuestion = ({
 							/>
 						</Box>
 					)}
+
 					{isMultipleChoiceQuestion && (
 						<RadioGroup name='question' value={isLessonCompleted ? userQuizAnswer : value} onChange={handleRadioChange} sx={{ alignSelf: 'center' }}>
 							{question &&
 								question.options &&
-								question.options?.map((option, index) => {
-									return <FormControlLabel value={option} control={<Radio />} label={option} key={index} />;
+								question.options.map((option, index) => {
+									let textColor = 'inherit'; // default color
+
+									if (isLessonCompleted) {
+										const isCorrectAnswer = option === question.correctAnswer;
+										const isSelectedAnswer = option === userQuizAnswer;
+
+										if (isCorrectAnswer) {
+											textColor = 'green'; // correct answer in green
+										} else if (isSelectedAnswer) {
+											textColor = 'red'; // incorrect selected answer in red
+										}
+									}
+
+									return (
+										<FormControlLabel
+											value={option}
+											control={<Radio />}
+											label={<Typography sx={{ color: textColor }}>{option}</Typography>}
+											key={index}
+										/>
+									);
 								})}
 						</RadioGroup>
 					)}
+
 					{!isOpenEndedQuestion && !isLessonCompleted && helperText !== ' ' && !isAudioVideoQuestion && (
 						<FormHelperText sx={{ alignSelf: 'center', mt: '2rem' }}>{helperText}</FormHelperText>
 					)}

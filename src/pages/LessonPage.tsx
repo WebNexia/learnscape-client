@@ -40,7 +40,7 @@ const LessonPage = () => {
 	const { organisation } = useContext(OrganisationContext);
 	const navigate = useNavigate();
 	const { fetchUserAnswersByLesson } = useFetchUserQuestion();
-	const { handleNextLesson, nextLessonId, isLessonCompleted, userLessonId, parsedUserLessonData } = useUserCourseLessonData();
+	const { handleNextLesson, nextLessonId, isLessonCompleted, userLessonId } = useUserCourseLessonData();
 
 	const [isQuestionsVisible, setIsQuestionsVisible] = useState(false);
 	const [isLessonCourseCompletedModalOpen, setIsLessonCourseCompletedModalOpen] = useState(false);
@@ -91,9 +91,11 @@ const LessonPage = () => {
 					});
 					setLessonType(lessonData.type);
 
-					const notesResponse = await axios.get(`${base_url}/userlessons/lesson/notes/${userLessonId}`);
-					setUserLessonNotes(notesResponse.data.notes);
-					setEditorContent(notesResponse.data.notes);
+					const userLessonResponse = await axios.get(`${base_url}/userlessons/${userLessonId}`);
+					setUserLessonNotes(userLessonResponse.data.data[0].notes);
+					setEditorContent(userLessonResponse.data.data[0].notes);
+
+					setTeacherQuizFeedback(userLessonResponse.data.data[0].teacherFeedback);
 
 					const answers = await fetchUserAnswersByLesson(lessonId);
 					if (lessonData.type === LessonType.QUIZ) {
@@ -128,10 +130,6 @@ const LessonPage = () => {
 		if (isQuiz && !isLessonCompleted && userQuizAnswers.length !== 0) {
 			setIsQuizInProgress(true);
 		}
-
-		setTeacherQuizFeedback(() => {
-			return parsedUserLessonData?.find((data) => data.lessonId === lessonId)?.teacherFeedback;
-		});
 	}, [lessonId]);
 
 	useEffect(() => {

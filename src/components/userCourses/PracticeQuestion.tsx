@@ -223,6 +223,8 @@ const PracticeQuestion = ({
 								userAnswer,
 								audioRecordUrl: '',
 								videoRecordUrl: '',
+								teacherFeedback: '',
+								teacherAudioFeedbackUrl: '',
 							};
 							return [...prevData, newUserAnswer];
 						});
