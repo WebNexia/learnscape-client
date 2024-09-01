@@ -9,15 +9,17 @@ import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
 import LoadingButton from '@mui/lab/LoadingButton';
 
 const mimeType = 'audio/webm; codecs=opus';
-const MAX_RECORDING_TIME = 180000; // 3 minutes
+const MAX_RECORDING_TIME = 120000; // 2 minutes
 const QUALITY = 64000; // Medium quality (64 kbps)
 
 interface AudioRecorderProps {
 	uploadAudio: (blob: Blob) => Promise<void>;
 	isAudioUploading: boolean;
+	recorderTitle?: string;
+	teacherFeedback?: boolean;
 }
 
-const AudioRecorder = ({ uploadAudio, isAudioUploading }: AudioRecorderProps) => {
+const AudioRecorder = ({ uploadAudio, isAudioUploading, recorderTitle = 'Audio Recorder', teacherFeedback }: AudioRecorderProps) => {
 	const [permission, setPermission] = useState<boolean>(false);
 	const mediaRecorder = useRef<MediaRecorder | null>(null);
 	const [isRecording, setIsRecording] = useState<boolean>(false);
@@ -121,7 +123,7 @@ const AudioRecorder = ({ uploadAudio, isAudioUploading }: AudioRecorderProps) =>
 
 	return (
 		<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-			<Typography variant='h6'>Audio Recorder</Typography>
+			<Typography variant='h6'>{recorderTitle}</Typography>
 
 			<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
 				{!permission ? (
@@ -176,10 +178,11 @@ const AudioRecorder = ({ uploadAudio, isAudioUploading }: AudioRecorderProps) =>
 			)}
 
 			<CustomDialog
+				maxWidth={teacherFeedback ? 'sm' : 'md'}
 				openModal={isUploadModalOpen}
 				closeModal={() => setIsUploadModalOpen(false)}
 				content={`Are you sure you want to upload the audio recording?
-				You will not have another chance.`}>
+				${!teacherFeedback ? `You will not have another chance.` : ''}`}>
 				{isAudioUploading ? (
 					<DialogActions sx={{ marginBottom: '1.5rem' }}>
 						<LoadingButton loading variant='outlined' sx={{ textTransform: 'capitalize', height: '2.5rem', margin: '0 0.5rem 0.5rem 0' }} />

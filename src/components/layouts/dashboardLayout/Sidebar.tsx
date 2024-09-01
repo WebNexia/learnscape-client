@@ -7,6 +7,7 @@ import {
 	Email,
 	FilePresent,
 	Groups,
+	LibraryAddCheck,
 	LibraryBooks,
 	PeopleAltOutlined,
 	QuizOutlined,
@@ -129,6 +130,12 @@ const Sidebar = () => {
 								selectedPage={selectedPage}
 							/>
 							<SidebarBtn
+								btnText='Submissions'
+								IconName={LibraryAddCheck}
+								onClick={() => navigateWithPage(PageName.ADMIN_DOCUMENTS, `/admin/submissions/user/${id || userId}`)}
+								selectedPage={selectedPage}
+							/>
+							<SidebarBtn
 								btnText='Schedule'
 								IconName={CalendarMonth}
 								onClick={() => navigateWithPage(PageName.ADMIN_SCHEDULE, `/admin/schedule/user/${id || userId}`)}
@@ -168,6 +175,14 @@ const Sidebar = () => {
 								onClick={() => navigateWithPage(PageName.COURSES, `/courses/user/${id || userId}`)}
 								selectedPage={selectedPage}
 							/>
+
+							<SidebarBtn
+								btnText='Submissions'
+								IconName={LibraryAddCheck}
+								onClick={() => navigateWithPage(PageName.COURSES, `/submissions/user/${id || userId}`)}
+								selectedPage={selectedPage}
+							/>
+
 							<SidebarBtn
 								btnText='Schedule'
 								IconName={CalendarMonth}

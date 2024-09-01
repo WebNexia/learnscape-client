@@ -30,9 +30,12 @@ export interface QuizQuestionAnswer {
 	userAnswer: string;
 	videoRecordUrl: string;
 	audioRecordUrl: string;
+	teacherFeedback: string;
+	teacherAudioFeedbackUrl: string;
 }
 
 const LessonPage = () => {
+	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { lessonId, userId, courseId, userCourseId } = useParams();
 	const { organisation } = useContext(OrganisationContext);
 	const navigate = useNavigate();
@@ -71,7 +74,8 @@ const LessonPage = () => {
 		return savedAnswers ? JSON.parse(savedAnswers) : [];
 	});
 
-	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
+	const [teacherQuizFeedback, setTeacherQuizFeedback] = useState<string | undefined>('');
+
 	const isQuiz = lessonType === LessonType.QUIZ;
 	const isInstructionalLesson = lessonType === LessonType.INSTRUCTIONAL_LESSON;
 
@@ -87,9 +91,11 @@ const LessonPage = () => {
 					});
 					setLessonType(lessonData.type);
 
-					const notesResponse = await axios.get(`${base_url}/userLessons/lesson/notes/${userLessonId}`);
-					setUserLessonNotes(notesResponse.data.notes);
-					setEditorContent(notesResponse.data.notes);
+					const userLessonResponse = await axios.get(`${base_url}/userlessons/${userLessonId}`);
+					setUserLessonNotes(userLessonResponse.data.data[0].notes);
+					setEditorContent(userLessonResponse.data.data[0].notes);
+
+					setTeacherQuizFeedback(userLessonResponse.data.data[0].teacherFeedback);
 
 					const answers = await fetchUserAnswersByLesson(lessonId);
 					if (lessonData.type === LessonType.QUIZ) {
@@ -99,6 +105,8 @@ const LessonPage = () => {
 								userAnswer: answer.userAnswer,
 								audioRecordUrl: answer.audioRecordUrl,
 								videoRecordUrl: answer.videoRecordUrl,
+								teacherFeedback: answer.teacherFeedback,
+								teacherAudioFeedbackUrl: answer.teacherAudioFeedbackUrl,
 							}))
 						);
 					} else {
@@ -340,26 +348,57 @@ const LessonPage = () => {
 						width: '85%',
 						margin: lesson?.videoUrl ? '1rem 0' : '11rem 0 1rem 0',
 					}}>
-					<Box sx={{ width: '100%', marginBottom: '1rem' }}>
-						<Typography variant='h5'>{!isInstructionalLesson ? 'Instructions' : ''}</Typography>
-					</Box>
 					<Box
 						sx={{
-							boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
-							padding: '2rem',
-							backgroundColor: theme.bgColor?.common,
-							borderRadius: '0.35rem',
+							display: 'flex',
+							flexDirection: 'column',
+							justifyContent: 'flex-start',
+							alignItems: 'center',
 							width: '100%',
 						}}>
-						<Box className='rich-text-content'>
-							<Typography
-								variant='body1'
-								component='div'
-								dangerouslySetInnerHTML={{ __html: sanitizeHtml(lesson.text) }}
-								sx={{ lineHeight: 1.9, textAlign: 'justify' }}
-							/>
+						<Box sx={{ width: '100%', marginBottom: '1rem' }}>
+							<Typography variant='h5'>{!isInstructionalLesson ? 'Instructions' : ''}</Typography>
+						</Box>
+						<Box
+							sx={{
+								boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
+								padding: '2rem',
+								backgroundColor: theme.bgColor?.common,
+								borderRadius: '0.35rem',
+								width: '100%',
+							}}>
+							<Box className='rich-text-content'>
+								<Typography
+									variant='body1'
+									component='div'
+									dangerouslySetInnerHTML={{ __html: sanitizeHtml(lesson.text) }}
+									sx={{ lineHeight: 1.9, textAlign: 'justify' }}
+								/>
+							</Box>
 						</Box>
 					</Box>
+					{isQuiz && teacherQuizFeedback && (
+						<>
+							<Box sx={{ width: '100%', mt: '2rem' }}>
+								<Typography variant='h5'>Instructor Feedback</Typography>
+							</Box>
+							<Box
+								sx={{
+									display: 'flex',
+									flexDirection: 'column',
+									alignItems: 'flex-start',
+									width: '100%',
+									mt: '1rem',
+									boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
+									borderRadius: '0.35rem',
+									padding: '2rem',
+								}}>
+								<Box>
+									<Typography variant='body2'>{teacherQuizFeedback}</Typography>
+								</Box>
+							</Box>
+						</>
+					)}
 				</Box>
 			)}
 			{!isInstructionalLesson && !isQuestionsVisible && (

@@ -67,7 +67,7 @@ export const useUserCourseLessonData = () => {
 				localStorage.setItem('userLessonData', JSON.stringify(updatedUserLessonData));
 				setLocalStorageData((prev) => ({ ...prev, userLessonData: updatedUserLessonData }));
 
-				await axios.patch(`${base_url}/userLessons/${userLessonId}`, {
+				await axios.patch(`${base_url}/userlessons/${userLessonId}`, {
 					isCompleted: true,
 					isInProgress: false,
 					currentQuestion: 1,
@@ -78,7 +78,7 @@ export const useUserCourseLessonData = () => {
 				const existingNextLesson = parsedUserLessonData.find((data) => data.lessonId === nextLessonId && data.courseId === courseId);
 
 				if (!existingNextLesson) {
-					const responseUserLesson = await axios.post(`${base_url}/userLessons`, {
+					const responseUserLesson = await axios.post(`${base_url}/userlessons`, {
 						lessonId: nextLessonId,
 						userId,
 						courseId,
@@ -88,6 +88,8 @@ export const useUserCourseLessonData = () => {
 						isInProgress: true,
 						orgId,
 						notes: '',
+						teacherFeedback: '',
+						isFeedbackGiven: false,
 					});
 
 					const newUserLessonData: UserLessonDataStorage = {
@@ -97,6 +99,8 @@ export const useUserCourseLessonData = () => {
 						currentQuestion: 1,
 						isCompleted: false,
 						isInProgress: true,
+						teacherFeedback: '',
+						isFeedbackGiven: false,
 					};
 
 					const updatedUserLessonData = [...parsedUserLessonData, newUserLessonData];
@@ -147,7 +151,7 @@ export const useUserCourseLessonData = () => {
 				const localStorageLesson = updatedParsedUserLessonData.find((data: UserLessonDataStorage) => data.userLessonId === lesson.userLessonId);
 				if (localStorageLesson) {
 					const currentQuestion = localStorageLesson.currentQuestion;
-					await axios.patch(`${base_url}/userLessons/${lesson.userLessonId}`, {
+					await axios.patch(`${base_url}/userlessons/${lesson.userLessonId}`, {
 						currentQuestion,
 					});
 				}
@@ -157,7 +161,6 @@ export const useUserCourseLessonData = () => {
 		}
 	}, [base_url]);
 
-	// Return the necessary data and functions from the hook
 	return {
 		isLessonCompleted,
 		setIsLessonCompleted,

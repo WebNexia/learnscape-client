@@ -300,7 +300,8 @@ const CreateQuestionDialog = ({
 			!isFlipCard &&
 			!isAudioVideoQuestion &&
 			!isMatching &&
-			(correctAnswerIndex === -1 || !correctAnswer) &&
+			correctAnswerIndex === -1 &&
+			!correctAnswer &&
 			!isFITBDragDrop &&
 			!isFITBTyping
 		) {

@@ -14,6 +14,7 @@ interface CustomDialogActionsProps {
 	submitBtnSx?: object;
 	cancelBtnText?: string;
 	submitBtnText?: string;
+	deleteBtnText?: string;
 	deleteBtn?: boolean;
 	submitBtnType?: 'submit' | 'button' | 'reset' | undefined;
 	disableBtn?: boolean;
@@ -26,6 +27,7 @@ const CustomDialogActions = ({
 	onDelete,
 	cancelBtnText = 'Cancel',
 	submitBtnText = 'Create',
+	deleteBtnText = 'Delete',
 	actionSx,
 	cancelBtnSx,
 	submitBtnSx,
@@ -65,7 +67,7 @@ const CustomDialogActions = ({
 						margin: '0 0.5rem 0.5rem 0',
 					}}
 					onClick={onDelete}>
-					Delete
+					{deleteBtnText}
 				</CustomDeleteButton>
 			)}
 		</DialogActions>

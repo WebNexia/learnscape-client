@@ -9,7 +9,7 @@ import LoadingButton from '@mui/lab/LoadingButton';
 import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
 
 const mimeType = 'video/webm; codecs="opus,vp8"';
-const MAX_RECORDING_TIME = 60000; // 1 minute
+const MAX_RECORDING_TIME = 45000; // 45 seconds
 const QUALITY = 500000; // Medium quality (500 kbps)
 
 interface VideoRecorderProps {

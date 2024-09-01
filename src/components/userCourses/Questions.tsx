@@ -55,6 +55,8 @@ const Questions: React.FC<QuestionsProps> = ({
 								questionId: question._id,
 								audioRecordUrl: '',
 								videoRecordUrl: '',
+								teacherFeedback: '',
+								teacherAudioFeedbackUrl: '',
 							})
 						);
 				} else {

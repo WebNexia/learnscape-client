@@ -42,7 +42,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 	const [username, setUsername] = useState<string>('');
 	const [email, setEmail] = useState<string>('');
 	const [password, setPassword] = useState<string>('');
-	const [orgCode, setOrgCode] = useState<string>('');
+	const [orgCode, setOrgCode] = useState<string>('6RS1YS');
 
 	const [showPassword, setShowPassword] = useState(false);
 
@@ -118,6 +118,8 @@ const Auth = ({ setUserRole }: AuthProps) => {
 						isCompleted: userLesson.isCompleted,
 						isInProgress: userLesson.isInProgress,
 						currentQuestion: userLesson.currentQuestion,
+						teacherFeedback: userLesson.teacherFeedback,
+						isFeedbackGiven: userLesson.isFeedbackGiven,
 					}));
 					localStorage.setItem('userLessonData', JSON.stringify(userLessonData));
 				}
@@ -379,7 +381,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 													),
 												}}
 											/>
-											<CustomTextField
+											{/* <CustomTextField
 												label='Organization Code'
 												type={TextFieldTypes.TEXT}
 												onChange={(e) => {
@@ -387,7 +389,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 													setErrorMsg(undefined);
 												}}
 												value={orgCode}
-											/>
+											/> */}
 										</Box>
 										<Button variant='contained' fullWidth sx={submitBtnStyles} type='submit'>
 											Sign Up

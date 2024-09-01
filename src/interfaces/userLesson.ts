@@ -22,6 +22,8 @@ export interface UserLessonsByUserId extends BaseUserLesson {
 	userId: string;
 	lessonId: Lesson;
 	courseId: string;
+	teacherFeedback: string;
+	isFeedbackGiven: boolean;
 }
 
 export interface UserLessonsByLessonId extends BaseUserLesson {
