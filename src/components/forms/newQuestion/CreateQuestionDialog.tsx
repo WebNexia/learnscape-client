@@ -33,7 +33,7 @@ import ImageThumbnail from '../uploadImageVideoDocument/ImageThumbnail';
 import VideoThumbnail from '../uploadImageVideoDocument/VideoThumbnail';
 import TinyMceEditor from '../../richTextEditor/TinyMceEditor';
 import TrueFalseOptions from '../../layouts/questionTypes/TrueFalseOptions';
-import { QuestionType } from '../../../interfaces/enums';
+import { LessonType, QuestionType } from '../../../interfaces/enums';
 import FlipCard from '../../layouts/flipCard/FlipCard';
 import Matching from '../../layouts/matching/Matching';
 import { Lesson } from '../../../interfaces/lessons';
@@ -56,6 +56,7 @@ interface CreateQuestionDialogProps {
 	createNewQuestion: boolean;
 	isMinimumOptions: boolean;
 	isDuplicateOption: boolean;
+	singleLessonBeforeSave?: Lesson;
 	setIsQuestionCreateModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
 	setQuestionType: React.Dispatch<React.SetStateAction<string>>;
 	setCorrectAnswer: React.Dispatch<React.SetStateAction<string>>;
@@ -79,6 +80,7 @@ const CreateQuestionDialog = ({
 	createNewQuestion,
 	isMinimumOptions,
 	isDuplicateOption,
+	singleLessonBeforeSave,
 	setIsQuestionCreateModalOpen,
 	setQuestionType,
 	setCorrectAnswer,
@@ -357,11 +359,37 @@ const CreateQuestionDialog = ({
 							size='medium'
 							label='Type'
 							required>
-							{questionTypes?.map((type) => (
-								<MenuItem value={type.name} key={type._id}>
-									{type.name}
-								</MenuItem>
-							))}
+							{questionTypes
+								.filter((type) => {
+									const questionTypeName = type.name as QuestionType;
+									if (singleLessonBeforeSave?.type === LessonType.QUIZ) {
+										return [
+											QuestionType.MULTIPLE_CHOICE,
+											QuestionType.TRUE_FALSE,
+											QuestionType.OPEN_ENDED,
+											QuestionType.AUDIO_VIDEO,
+											QuestionType.MATCHING,
+											QuestionType.FITB_TYPING,
+											QuestionType.FITB_DRAG_DROP,
+										].includes(questionTypeName);
+									} else if (singleLessonBeforeSave?.type === LessonType.PRACTICE_LESSON) {
+										return [
+											QuestionType.MULTIPLE_CHOICE,
+											QuestionType.TRUE_FALSE,
+											QuestionType.OPEN_ENDED,
+											QuestionType.MATCHING,
+											QuestionType.FITB_TYPING,
+											QuestionType.FITB_DRAG_DROP,
+											QuestionType.FLIP_CARD,
+										].includes(questionTypeName);
+									}
+									return true;
+								})
+								.map((type) => (
+									<MenuItem value={type.name} key={type._id}>
+										{type.name}
+									</MenuItem>
+								))}
 						</Select>
 					</FormControl>
 					<Box sx={{ display: 'flex', flexDirection: 'column' }}>

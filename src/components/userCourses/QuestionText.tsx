@@ -1,25 +1,13 @@
 import { Box, FormLabel, Typography } from '@mui/material';
 import { sanitizeHtml } from '../../utils/sanitizeHtml';
 import { QuestionInterface } from '../../interfaces/question';
-import { GppBad, GppGood } from '@mui/icons-material';
 
 interface QuestionTextProps {
 	question: QuestionInterface;
 	questionNumber: number;
-	isLessonCompleted?: boolean;
-	userQuizAnswer?: string;
-	isTrueFalseQuestion?: boolean;
-	isMultipleChoiceQuestion?: boolean;
 }
 
-const QuestionText = ({
-	question,
-	questionNumber,
-	isLessonCompleted,
-	userQuizAnswer,
-	isTrueFalseQuestion,
-	isMultipleChoiceQuestion,
-}: QuestionTextProps) => {
+const QuestionText = ({ question, questionNumber }: QuestionTextProps) => {
 	return (
 		<FormLabel
 			sx={{
@@ -37,17 +25,6 @@ const QuestionText = ({
 						sx={{ margin: '0.5rem 0.5rem 0 0' }}
 					/>
 				</Box>
-				{isLessonCompleted &&
-					(isTrueFalseQuestion || isMultipleChoiceQuestion) &&
-					(userQuizAnswer === question.correctAnswer ? (
-						<Box sx={{ marginLeft: '1rem' }}>
-							<GppGood color='success' fontSize='large' />
-						</Box>
-					) : (
-						<Box sx={{ marginLeft: '1rem' }}>
-							<GppBad color='error' fontSize='large' />
-						</Box>
-					))}
 			</Box>
 		</FormLabel>
 	);

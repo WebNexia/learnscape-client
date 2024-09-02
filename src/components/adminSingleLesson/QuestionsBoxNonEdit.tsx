@@ -8,6 +8,7 @@ import { useContext } from 'react';
 import { QuestionsContext } from '../../contexts/QuestionsContextProvider';
 import { LessonType } from '../../interfaces/enums';
 import NoContentBoxAdmin from '../layouts/noContentBox/NoContentBoxAdmin';
+import { InfoOutlined } from '@mui/icons-material';
 
 interface QuestionsBoxNonEditProps {
 	singleLesson?: Lesson;
@@ -27,6 +28,14 @@ const QuestionsBoxNonEdit = ({ singleLesson, setIsDisplayNonEditQuestion, setDis
 				mt: singleLesson?.type === LessonType.INSTRUCTIONAL_LESSON ? '1rem' : '3rem',
 			}}>
 			<Box sx={{ mt: '3rem', minHeight: '40vh' }}>
+				<Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', width: '100%' }}>
+					<Box>
+						<Typography sx={{ fontSize: '0.85rem', mr: '0.5rem' }}>Click the questions to see details</Typography>
+					</Box>
+					<Box>
+						<InfoOutlined fontSize='small' />
+					</Box>
+				</Box>
 				<Typography variant='h4'>Questions</Typography>
 				{singleLesson?.questionIds?.length === 0 || singleLesson?.questions?.filter((question) => question !== null).length === 0 ? (
 					<NoContentBoxAdmin content='No question for this lesson' />

@@ -1,7 +1,7 @@
 import { Box, FormControl, IconButton, InputLabel, Link, MenuItem, Select, SelectChangeEvent, Tooltip, Typography } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import theme from '../themes';
-import { Delete, Edit, FileCopy } from '@mui/icons-material';
+import { Delete, Edit, FileCopy, InfoOutlined } from '@mui/icons-material';
 import { useParams } from 'react-router-dom';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import { FormEvent, useContext, useEffect, useState } from 'react';
@@ -38,7 +38,7 @@ import { generateUniqueId } from '../utils/uniqueIdGenerator';
 import HandleDocUploadURL from '../components/forms/uploadImageVideoDocument/HandleDocUploadURL';
 import { DocumentsContext } from '../contexts/DocumentsContextProvider';
 import DocumentsListEditBox from '../components/adminDocuments/DocumentsListEditBox';
-import { LessonType } from '../interfaces/enums';
+import { LessonType, QuestionType } from '../interfaces/enums';
 import NoContentBoxAdmin from '../components/layouts/noContentBox/NoContentBoxAdmin';
 import AdminLessonEditPageEditQuestionDialog from '../components/forms/editQuestion/AdminLessonEditPageEditQuestionDialog';
 
@@ -319,55 +319,91 @@ const AdminLessonEditPage = () => {
 
 			const updatedDocumentIds = updatedDocuments?.map((doc) => doc._id);
 
+			const allowedQuestionTypes = (lessonType: LessonType): QuestionType[] => {
+				if (lessonType === LessonType.QUIZ) {
+					return [
+						QuestionType.MULTIPLE_CHOICE,
+						QuestionType.TRUE_FALSE,
+						QuestionType.OPEN_ENDED,
+						QuestionType.AUDIO_VIDEO,
+						QuestionType.MATCHING,
+						QuestionType.FITB_TYPING,
+						QuestionType.FITB_DRAG_DROP,
+					];
+				} else if (lessonType === LessonType.PRACTICE_LESSON) {
+					return [
+						QuestionType.MULTIPLE_CHOICE,
+						QuestionType.TRUE_FALSE,
+						QuestionType.OPEN_ENDED,
+						QuestionType.MATCHING,
+						QuestionType.FITB_TYPING,
+						QuestionType.FITB_DRAG_DROP,
+						QuestionType.FLIP_CARD,
+					];
+				} else {
+					// For INSTRUCTIONAL_LESSON
+					return [];
+				}
+			};
+
+			// Ensure lessonType is correctly typed
+			const lessonType = singleLessonBeforeSave.type as LessonType;
+
+			// Retain questions valid for both old and new lesson types
+			const filteredQuestions = singleLessonBeforeSave?.questions?.filter((question) => {
+				if (question !== null && question !== undefined) {
+					// Check if the question is valid for the current lesson type
+					return allowedQuestionTypes(lessonType).includes(question.questionType as QuestionType);
+				}
+				return false;
+			});
+
 			if (singleLessonBeforeSave.type === LessonType.INSTRUCTIONAL_LESSON) {
-				setSingleLessonBeforeSave((prevData) => {
-					return {
-						...prevData,
-						questions: [],
-						questionIds: [],
-					};
-				});
+				setSingleLessonBeforeSave((prevData) => ({
+					...prevData,
+					questions: [],
+					questionIds: [],
+				}));
 
 				updatedQuestions = [];
-			} else if (singleLessonBeforeSave?.questions) {
-				const updatedQuestionsPromises = singleLessonBeforeSave.questions
-					?.filter((question) => question !== null && question !== undefined)
-					?.map(async (question) => {
-						if (question._id.includes('temp_question_id')) {
-							const questionTypeId = questionTypes.find((type) => type.name === question.questionType)?._id;
-							if (questionTypeId) {
-								try {
-									const response = await axios.post(`${base_url}/questions`, {
-										orgId,
-										question: question.question,
-										options: question.options,
-										correctAnswer: question.correctAnswer,
-										videoUrl: question.videoUrl,
-										imageUrl: question.imageUrl,
-										questionType: questionTypeId,
-										audio: question.audio,
-										video: question.video,
-										matchingPairs: question.matchingPairs,
-										blankValuePairs: question.blankValuePairs,
-										isActive: true,
-									});
-									fetchQuestions(questionsPageNumber);
-									return {
-										...question,
-										_id: response.data._id,
-										createdAt: response.data.createdAt,
-										updatedAt: response.data.updatedAt,
-									} as QuestionInterface;
-								} catch (error) {
-									console.error('Error creating question:', error);
-									return null;
-								}
+			} else if (filteredQuestions) {
+				const updatedQuestionsPromises = filteredQuestions.map(async (question) => {
+					if (question._id.includes('temp_question_id')) {
+						const questionTypeId = questionTypes.find((type) => type.name === question.questionType)?._id;
+						if (questionTypeId) {
+							try {
+								const response = await axios.post(`${base_url}/questions`, {
+									orgId,
+									question: question.question,
+									options: question.options,
+									correctAnswer: question.correctAnswer,
+									videoUrl: question.videoUrl,
+									imageUrl: question.imageUrl,
+									questionType: questionTypeId,
+									audio: question.audio,
+									video: question.video,
+									matchingPairs: question.matchingPairs,
+									blankValuePairs: question.blankValuePairs,
+									isActive: true,
+								});
+								fetchQuestions(questionsPageNumber);
+								return {
+									...question,
+									_id: response.data._id,
+									createdAt: response.data.createdAt,
+									updatedAt: response.data.updatedAt,
+								} as QuestionInterface;
+							} catch (error) {
+								console.error('Error creating question:', error);
+								return null;
 							}
 						}
-						return question;
-					});
+					}
+					return question;
+				});
 
 				const updatedQuestionsWithNulls = await Promise.all(updatedQuestionsPromises);
+
 				updatedQuestions = updatedQuestionsWithNulls.filter((question): question is QuestionInterface => question !== null);
 
 				await Promise.all(
@@ -506,6 +542,7 @@ const AdminLessonEditPage = () => {
 				correctAnswer={correctAnswer}
 				options={options}
 				correctAnswerIndex={correctAnswerIndex}
+				singleLessonBeforeSave={singleLessonBeforeSave}
 				setIsQuestionCreateModalOpen={setIsQuestionCreateModalOpen}
 				setQuestionType={setQuestionType}
 				setCorrectAnswer={setCorrectAnswer}
@@ -760,15 +797,24 @@ const AdminLessonEditPage = () => {
 											justifyContent: 'space-between',
 											alignItems: 'center',
 											width: '100%',
-											mt: '5rem',
+											margin: '5rem 0 1.5rem 0',
 										}}>
-										<Typography variant='h5' sx={{ mb: '1rem' }}>
-											Questions
-										</Typography>
-										<Box>
+										<Box sx={{ flex: 1 }}>
+											<Typography variant='h5'>Questions</Typography>
+										</Box>
+										<Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', flex: 4 }}>
+											<Box>
+												<InfoOutlined fontSize='small' />
+											</Box>
+											<Box>
+												<Typography sx={{ fontSize: '0.8rem', ml: '0.5rem' }}>Drag the questions to reorder</Typography>
+											</Box>
+										</Box>
+										<Box sx={{ display: 'flex', justifyContent: 'flex-end', flex: 5 }}>
 											<CustomSubmitButton
 												type='button'
-												sx={{ margin: '0 0.5rem 1rem 0' }}
+												size='small'
+												sx={{ margin: 'auto 0.5rem auto 0' }}
 												onClick={() => {
 													setAddNewQuestionModalOpen(true);
 												}}>
@@ -786,7 +832,8 @@ const AdminLessonEditPage = () => {
 
 											<CustomSubmitButton
 												type='button'
-												sx={{ marginBottom: '1rem' }}
+												size='small'
+												sx={{ marginBottom: 'auto 0' }}
 												onClick={() => {
 													setIsQuestionCreateModalOpen(true);
 													setQuestionType('');

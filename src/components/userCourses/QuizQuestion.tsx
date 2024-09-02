@@ -23,7 +23,7 @@ import TrueFalseOptions from '../layouts/questionTypes/TrueFalseOptions';
 import { QuestionsContext } from '../../contexts/QuestionsContextProvider';
 import CustomTextField from '../forms/customFields/CustomTextField';
 import { useUserCourseLessonData } from '../../hooks/useUserCourseLessonData';
-import { Done, DoneAll, KeyboardArrowLeft, KeyboardArrowRight, KeyboardDoubleArrowRight } from '@mui/icons-material';
+import { CheckCircle, Done, DoneAll, KeyboardArrowLeft, KeyboardArrowRight, KeyboardDoubleArrowRight } from '@mui/icons-material';
 import { QuestionType } from '../../interfaces/enums';
 import CustomDialog from '../layouts/dialog/CustomDialog';
 import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
@@ -298,14 +298,7 @@ const QuizQuestion = ({
 			<form style={{ width: '100%' }}>
 				<FormControl sx={{ width: '100%' }} variant='standard'>
 					<QuestionMedia question={question} />
-					<QuestionText
-						question={question}
-						questionNumber={questionNumber}
-						isLessonCompleted={isLessonCompleted}
-						userQuizAnswer={userQuizAnswer}
-						isTrueFalseQuestion={isTrueFalseQuestion}
-						isMultipleChoiceQuestion={isMultipleChoiceQuestion}
-					/>
+					<QuestionText question={question} questionNumber={questionNumber} />
 
 					{isOpenEndedQuestion && (
 						<Box sx={{ width: '90%', margin: '1rem auto' }}>
@@ -406,16 +399,16 @@ const QuizQuestion = ({
 							{question &&
 								question.options &&
 								question.options.map((option, index) => {
-									let textColor = 'inherit'; // default color
+									let textColor = null;
 
 									if (isLessonCompleted) {
 										const isCorrectAnswer = option === question.correctAnswer;
 										const isSelectedAnswer = option === userQuizAnswer;
 
 										if (isCorrectAnswer) {
-											textColor = 'green'; // correct answer in green
+											textColor = 'green';
 										} else if (isSelectedAnswer) {
-											textColor = 'red'; // incorrect selected answer in red
+											textColor = 'red';
 										}
 									}
 
@@ -423,7 +416,18 @@ const QuizQuestion = ({
 										<FormControlLabel
 											value={option}
 											control={<Radio />}
-											label={<Typography sx={{ color: textColor }}>{option}</Typography>}
+											label={
+												<Typography
+													sx={{
+														color: textColor,
+														fontWeight: option === question.correctAnswer ? 900 : 'normal',
+														display: 'flex',
+														alignItems: 'center',
+													}}>
+													{option}
+													{isLessonCompleted && option === question.correctAnswer && <CheckCircle sx={{ color: 'green', marginLeft: 1 }} />}
+												</Typography>
+											}
 											key={index}
 										/>
 									);

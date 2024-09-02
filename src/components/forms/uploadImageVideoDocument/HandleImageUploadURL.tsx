@@ -1,4 +1,4 @@
-import { Box, Button, FormControl, Input, Typography } from '@mui/material';
+import { Box, FormControl, IconButton, Input, Tooltip, Typography } from '@mui/material';
 import React, { ChangeEvent } from 'react';
 import CustomErrorMessage from '../customFields/CustomErrorMessage';
 import CustomTextField from '../customFields/CustomTextField';
@@ -69,15 +69,14 @@ const HandleImageUploadURL = ({
 						inputProps={{ accept: '.jpg, .jpeg, .png' }} // Specify accepted file types
 						sx={{ width: '82.5%', backgroundColor: theme.bgColor?.common, margin: '0.5rem 0 0.85rem 0', padding: '0.25rem' }}
 					/>
-					<Button
-						onClick={handleImageUploadReusable}
-						variant='outlined'
-						sx={{ textTransform: 'capitalize', height: '2rem', width: '15%' }}
-						disabled={!imageUpload || isImgSizeLarge}
-						size='small'
-						startIcon={<CloudUpload />}>
-						Upload
-					</Button>
+					<Tooltip title='Upload' placement='top'>
+						<IconButton
+							onClick={handleImageUploadReusable}
+							sx={{ height: '2rem', width: '12.5%', border: '0.02rem solid gray', borderRadius: '0.35rem' }}
+							disabled={!imageUpload || isImgSizeLarge}>
+							<CloudUpload />
+						</IconButton>
+					</Tooltip>
 				</Box>
 			)}
 			{isImgSizeLarge && <CustomErrorMessage>File size exceeds the limit of 1 MB </CustomErrorMessage>}

@@ -1,4 +1,5 @@
 import { Box, Typography, Radio, RadioGroup, FormControlLabel } from '@mui/material';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import theme from '../../../themes';
 import { QuestionInterface } from '../../../interfaces/question';
 import { useUserCourseLessonData } from '../../../hooks/useUserCourseLessonData';
@@ -86,10 +87,16 @@ const TrueFalseOptions = ({
 			: isLessonCompleted && lessonType === LessonType.QUIZ
 			? userQuizAnswer
 			: correctAnswer;
+
+	const showCheckmark = (optionValue: string) => {
+		return isLessonCompleted && optionValue === question?.correctAnswer;
+	};
+
 	return (
 		<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', mt: '2rem' }}>
 			<RadioGroup row value={fromLearner ? learnerSetting : adminSetting} onChange={handleChange}>
 				<Box sx={{ display: 'flex', alignItems: 'center' }}>
+					{showCheckmark('true') && <CheckCircleIcon sx={{ color: 'green', marginRight: 1 }} />}
 					<Box
 						sx={{
 							width: '7rem',
@@ -120,6 +127,7 @@ const TrueFalseOptions = ({
 							}}
 						/>
 					</Box>
+
 					<Box
 						sx={{
 							width: '7rem',
@@ -151,6 +159,7 @@ const TrueFalseOptions = ({
 							}}
 						/>
 					</Box>
+					{showCheckmark('false') && <CheckCircleIcon sx={{ color: 'green', marginLeft: 1 }} />}
 				</Box>
 			</RadioGroup>
 		</Box>

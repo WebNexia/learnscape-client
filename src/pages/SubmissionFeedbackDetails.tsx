@@ -7,7 +7,7 @@ import axios from 'axios';
 import { QuestionType } from '../interfaces/enums';
 import { stripHtml } from '../utils/stripHtml';
 import { truncateText } from '../utils/utilText';
-import { ArrowBackIosNewOutlined, ArrowForwardIosOutlined } from '@mui/icons-material';
+import { ArrowBackIosNewOutlined, ArrowForwardIosOutlined, InfoOutlined } from '@mui/icons-material';
 import theme from '../themes';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import { sanitizeHtml } from '../utils/sanitizeHtml';
@@ -198,6 +198,15 @@ const SubmissionFeedbackDetails = () => {
 						<Typography variant='body2'>{value}</Typography>
 					</Box>
 				))}
+			</Box>
+
+			<Box sx={{ display: 'flex', alignItems: 'center', width: '90%', margin: '1rem 0' }}>
+				<Box>
+					<InfoOutlined fontSize='small' />
+				</Box>
+				<Box>
+					<Typography sx={{ fontSize: '0.85rem', ml: '0.5rem' }}>Click the questions to see details and feedback if given</Typography>
+				</Box>
 			</Box>
 
 			<Box sx={{ width: '90%', margin: '2rem' }}>

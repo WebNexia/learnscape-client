@@ -4,7 +4,7 @@ import { Box, Typography, TextField, TextFieldProps, IconButton, Tooltip } from 
 import { BlankValuePair } from '../../../interfaces/question';
 import { sanitizeHtml } from '../../../utils/sanitizeHtml';
 import { useUserCourseLessonData } from '../../../hooks/useUserCourseLessonData';
-import { Info } from '@mui/icons-material';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { shuffle } from 'lodash';
 import { words } from '../../../interfaces/randomWords';
 
@@ -196,7 +196,7 @@ const FillInTheBlanksTyping = ({
 					<Box>
 						<Tooltip title={showHiddenBlankValues ? 'Hide Possible Answers' : 'See Possible Answers'} placement='top'>
 							<IconButton onClick={() => setShowHiddenBlankValues(!showHiddenBlankValues)}>
-								<Info />
+								{showHiddenBlankValues ? <VisibilityOff /> : <Visibility />}
 							</IconButton>
 						</Tooltip>
 					</Box>
