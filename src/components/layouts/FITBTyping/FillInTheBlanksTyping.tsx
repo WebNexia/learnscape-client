@@ -7,6 +7,8 @@ import { useUserCourseLessonData } from '../../../hooks/useUserCourseLessonData'
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { shuffle } from 'lodash';
 import { words } from '../../../interfaces/randomWords';
+import { QuizQuestionAnswer } from '../../../pages/LessonPage';
+import { UserBlankValuePairAnswers } from '../../../interfaces/userQuestion';
 
 const Container = styled(Box)`
 	display: flex;
@@ -35,23 +37,30 @@ const TextContainer = styled(Box)`
 
 interface CustomTextFieldProps {
 	isCorrect: boolean | null;
+	fromPracticeQuestionUser: boolean;
 }
 
 type StyledInputProps = CustomTextFieldProps & TextFieldProps;
 
 const StyledInput = styled(({ isCorrect, ...otherProps }: StyledInputProps) => <TextField {...otherProps} />)`
 	& .MuiOutlinedInput-root {
-		background-color: ${({ isCorrect }) => (isCorrect === null ? '#fff' : isCorrect ? 'green' : '#d32f2f')};
+		background-color: ${({ isCorrect, ...props }) => {
+			if (!props.fromPracticeQuestionUser) return '#fff';
+			return isCorrect === null ? '#fff' : isCorrect ? 'green' : '#d32f2f';
+		}};
 		padding: 0; /* Adjust padding to reduce height */
 		font-size: 0.85rem; /* Reduce font size to make input smaller */
-		color: ${({ isCorrect }) => (isCorrect === null ? 'black' : 'white')};
+		color: ${({ isCorrect, ...props }) => (props.fromPracticeQuestionUser && isCorrect !== null ? 'white' : 'black')};
 	}
 	margin: 0 0.25rem;
 	min-width: 3rem;
 `;
 
 interface FillInTheBlanksTypingProps {
+	questionId?: string;
 	fromPracticeQuestionUser?: boolean;
+	fromQuizQuestionUser?: boolean;
+	isLessonCompleted?: boolean;
 	textWithBlanks: string;
 	blankValuePairs: BlankValuePair[];
 	onComplete?: (allCorrect: boolean) => void;
@@ -60,10 +69,14 @@ interface FillInTheBlanksTypingProps {
 	setAllPairsMatched?: React.Dispatch<React.SetStateAction<boolean>>;
 	setIsLessonCompleted?: React.Dispatch<React.SetStateAction<boolean>>;
 	setShowQuestionSelector?: React.Dispatch<React.SetStateAction<boolean>>;
+	setUserQuizAnswers?: React.Dispatch<React.SetStateAction<QuizQuestionAnswer[]>>;
 }
 
 const FillInTheBlanksTyping = ({
+	questionId,
 	fromPracticeQuestionUser,
+	fromQuizQuestionUser,
+	isLessonCompleted,
 	textWithBlanks,
 	blankValuePairs,
 	onComplete,
@@ -72,6 +85,7 @@ const FillInTheBlanksTyping = ({
 	setAllPairsMatched,
 	setIsLessonCompleted,
 	setShowQuestionSelector,
+	setUserQuizAnswers,
 }: FillInTheBlanksTypingProps) => {
 	const [userAnswers, setUserAnswers] = useState<string[]>([]);
 	const [inputStatus, setInputStatus] = useState<(boolean | null)[]>([]);
@@ -87,11 +101,31 @@ const FillInTheBlanksTyping = ({
 		setUserAnswers(initialAnswers);
 		setInputStatus(initialStatus);
 
-		const randomWords = shuffle(words).slice(0, 5);
+		const randomWords = fromQuizQuestionUser ? shuffle(words).slice(0, 15) : shuffle(words).slice(0, 5);
+
 		const values = blankValuePairs.map((pair) => pair.value);
 		const hintWords = shuffle([...values, ...randomWords]);
 		setHints(hintWords);
 	}, [blankValuePairs]);
+
+	useEffect(() => {
+		setUserQuizAnswers?.((prevData) => {
+			const blankValuePairsWithIds: UserBlankValuePairAnswers[] = blankValuePairs.map((pair) => {
+				return { id: pair.id, value: '' };
+			});
+
+			if (prevData) {
+				return prevData.map((data) => {
+					if (data.questionId === questionId) {
+						return { ...data, userBlankValuePairAnswers: blankValuePairsWithIds };
+					}
+					return data;
+				});
+			}
+
+			return prevData;
+		});
+	}, []);
 
 	useEffect(() => {
 		// Sanitize and split the text
@@ -143,6 +177,26 @@ const FillInTheBlanksTyping = ({
 
 		setUserAnswers(newAnswers);
 		setInputStatus(newStatus);
+
+		if (!isLessonCompleted && fromQuizQuestionUser) {
+			setUserQuizAnswers?.((prevData) => {
+				const updatedAnswers = newAnswers.map((answer, idx) => ({
+					id: blankValuePairs[idx].id,
+					value: answer,
+				}));
+
+				if (prevData) {
+					return prevData.map((data) => {
+						if (data.questionId === questionId) {
+							return { ...data, userBlankValuePairAnswers: updatedAnswers };
+						}
+						return data;
+					});
+				}
+
+				return prevData;
+			});
+		}
 	};
 
 	return (
@@ -161,6 +215,7 @@ const FillInTheBlanksTyping = ({
 									value={userAnswers[blankIndex] || ''}
 									onChange={handleChange(blankIndex)}
 									isCorrect={inputStatus[blankIndex]}
+									fromPracticeQuestionUser={!!fromPracticeQuestionUser}
 								/>
 							);
 						} else {
@@ -172,35 +227,45 @@ const FillInTheBlanksTyping = ({
 						}
 					})}
 				</TextContainer>
-				<Box
-					sx={{
-						display: 'flex',
-						justifyContent: 'space-between',
-						alignItems: 'center',
-						minHeight: '3rem',
-						boxShadow: '0 0 0.4rem 0.2rem rgba(0,0,0,0.2)',
-						borderRadius: '0.35rem',
-						width: '100%',
-						mt: '2rem',
-						padding: '1rem',
-					}}>
-					<Box sx={{ display: 'flex', flexWrap: 'wrap' }}>
-						{hints.map((hint, index) => {
-							return (
-								<Box key={index} sx={{ border: '0.01rem solid gray', padding: '0.25rem 0.5rem', margin: '0.25rem', borderRadius: '0.35rem' }}>
-									{showHiddenBlankValues ? <Typography variant='body2'>{hint}</Typography> : <Typography>*****</Typography>}
-								</Box>
-							);
-						})}
+
+				{!isLessonCompleted && (
+					<Box
+						sx={{
+							display: 'flex',
+							justifyContent: 'space-between',
+							alignItems: 'center',
+							minHeight: '3rem',
+							boxShadow: '0 0 0.4rem 0.2rem rgba(0,0,0,0.2)',
+							borderRadius: '0.35rem',
+							width: '100%',
+							mt: '2rem',
+							padding: '1rem',
+						}}>
+						<Box sx={{ display: 'flex', flexWrap: 'wrap' }}>
+							{hints.map((hint, index) => {
+								return (
+									<Box
+										key={index}
+										sx={{
+											border: '0.01rem solid gray',
+											padding: '0.25rem 0.5rem',
+											margin: '0.25rem 0.35rem 0.5rem 0.35rem',
+											borderRadius: '0.35rem',
+										}}>
+										{showHiddenBlankValues ? <Typography variant='body2'>{hint}</Typography> : <Typography>*****</Typography>}
+									</Box>
+								);
+							})}
+						</Box>
+						<Box>
+							<Tooltip title={showHiddenBlankValues ? 'Hide Possible Answers' : 'See Possible Answers'} placement='top'>
+								<IconButton onClick={() => setShowHiddenBlankValues(!showHiddenBlankValues)}>
+									{showHiddenBlankValues ? <VisibilityOff /> : <Visibility />}
+								</IconButton>
+							</Tooltip>
+						</Box>
 					</Box>
-					<Box>
-						<Tooltip title={showHiddenBlankValues ? 'Hide Possible Answers' : 'See Possible Answers'} placement='top'>
-							<IconButton onClick={() => setShowHiddenBlankValues(!showHiddenBlankValues)}>
-								{showHiddenBlankValues ? <VisibilityOff /> : <Visibility />}
-							</IconButton>
-						</Tooltip>
-					</Box>
-				</Box>
+				)}
 			</Column>
 		</Container>
 	);

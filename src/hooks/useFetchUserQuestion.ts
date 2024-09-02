@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import axios from 'axios';
-import { UserQuestion } from '../interfaces/userQuestion';
+import { UserBlankValuePairAnswers, UserMatchingPairAnswers, UserQuestion } from '../interfaces/userQuestion';
 
 export interface UserQuestionData {
 	userQuestionId: string;
@@ -10,6 +10,8 @@ export interface UserQuestionData {
 	videoRecordUrl: string;
 	teacherFeedback: string;
 	teacherAudioFeedbackUrl: string;
+	userMatchingPairAnswers: UserMatchingPairAnswers[];
+	userBlankValuePairAnswers: UserBlankValuePairAnswers[];
 }
 
 export const useFetchUserQuestion = () => {
@@ -28,6 +30,8 @@ export const useFetchUserQuestion = () => {
 						videoRecordUrl: data.videoRecordUrl,
 						teacherFeedback: data.teacherFeedback,
 						teacherAudioFeedbackUrl: data.teacherAudioFeedbackUrl,
+						userMatchingPairAnswers: data.userMatchingPairAnswers,
+						userBlankValuePairAnswers: data.userBlankValuePairAnswers,
 					})) || []
 				);
 			} catch (error) {

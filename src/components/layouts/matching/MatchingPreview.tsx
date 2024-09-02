@@ -5,6 +5,8 @@ import { MatchingPair } from '../../../interfaces/question';
 import { Box, Typography } from '@mui/material';
 import theme from '../../../themes';
 import { useUserCourseLessonData } from '../../../hooks/useUserCourseLessonData';
+import { QuizQuestionAnswer } from '../../../pages/LessonPage';
+import { UserMatchingPairAnswers } from '../../../interfaces/userQuestion';
 
 const Container = styled(Box)`
 	display: flex;
@@ -21,11 +23,14 @@ const Column = styled(Box)`
 	flex-grow: 1;
 `;
 
-const Item = styled.div<{ $isCorrect: boolean | null }>`
+const Item = styled.div<{ $isCorrect: boolean | null; fromQuizQuestionUser?: boolean; isLessonCompleted?: boolean }>`
 	padding: 1rem;
 	margin: 0.5rem 0.75rem;
-	background-color: ${({ $isCorrect }) => ($isCorrect === null ? '#f4f4f4' : $isCorrect ? 'green' : '#d32f2f')};
-	border: 1px solid ${({ $isCorrect }) => ($isCorrect === null ? '#ccc' : $isCorrect ? '#c3e6cb' : '#f5c6cb')};
+	background-color: ${({ $isCorrect, fromQuizQuestionUser, isLessonCompleted }) =>
+		fromQuizQuestionUser && !isLessonCompleted ? '#f4f4f4' : $isCorrect === null ? '#f4f4f4' : $isCorrect ? 'green' : '#d32f2f'};
+	border: 1px solid
+		${({ $isCorrect, fromQuizQuestionUser, isLessonCompleted }) =>
+			fromQuizQuestionUser && !isLessonCompleted ? '#ccc' : $isCorrect === null ? '#ccc' : $isCorrect ? '#c3e6cb' : '#f5c6cb'};
 	border-radius: 0.25rem;
 	cursor: pointer;
 	text-align: center;
@@ -42,23 +47,31 @@ const DropArea = styled(Box)`
 `;
 
 interface MatchingPreviewProps {
+	questionId?: string;
 	fromPracticeQuestionUser?: boolean;
+	isLessonCompleted?: boolean;
+	fromQuizQuestionUser?: boolean;
 	initialPairs: MatchingPair[];
 	displayedQuestionNumber?: number;
 	numberOfQuestions?: number;
 	setAllPairsMatched?: React.Dispatch<React.SetStateAction<boolean>>;
 	setIsLessonCompleted?: React.Dispatch<React.SetStateAction<boolean>>;
 	setShowQuestionSelector?: React.Dispatch<React.SetStateAction<boolean>>;
+	setUserQuizAnswers?: React.Dispatch<React.SetStateAction<QuizQuestionAnswer[]>>;
 }
 
 const MatchingPreview = ({
+	questionId,
 	fromPracticeQuestionUser,
+	isLessonCompleted,
+	fromQuizQuestionUser,
 	initialPairs,
 	displayedQuestionNumber,
 	numberOfQuestions,
 	setAllPairsMatched,
 	setIsLessonCompleted,
 	setShowQuestionSelector,
+	setUserQuizAnswers,
 }: MatchingPreviewProps) => {
 	const initialResponses = initialPairs.map((pair) => ({ id: pair.id, answer: pair.answer })).sort(() => Math.random() - 0.5);
 
@@ -90,6 +103,25 @@ const MatchingPreview = ({
 		}
 	}, [pairs, initialPairs]);
 
+	useEffect(() => {
+		setUserQuizAnswers?.((prevData) => {
+			const matchingPairsWithIds: UserMatchingPairAnswers[] = initialPairs.map((pair) => {
+				return { id: pair.id, answer: '' };
+			});
+
+			if (prevData) {
+				return prevData.map((data) => {
+					if (data.questionId === questionId) {
+						return { ...data, userMatchingPairAnswers: matchingPairsWithIds };
+					}
+					return data;
+				});
+			}
+
+			return prevData;
+		});
+	}, []);
+
 	const handleDragEnd = (result: DropResult) => {
 		if (!result.destination) return;
 
@@ -108,7 +140,6 @@ const MatchingPreview = ({
 			const pairIndex = parseInt(source.droppableId.split('-')[1], 10);
 			const movedResponse = newPairs[pairIndex].answer;
 			newPairs[pairIndex].answer = '';
-			// Ensure the response is not added back with a duplicate key
 			if (!newResponses.some((response) => response.answer === movedResponse)) {
 				newResponses.splice(destination.index, 0, { id: `${newPairs[pairIndex].id}-response-${destination.index}`, answer: movedResponse });
 			}
@@ -127,6 +158,26 @@ const MatchingPreview = ({
 
 		setPairs(newPairs);
 		setResponses(newResponses);
+
+		if (fromQuizQuestionUser && !isLessonCompleted) {
+			setUserQuizAnswers?.((prevData) => {
+				const updatedAnswers = newPairs.map((pair) => ({
+					id: pair.id,
+					answer: pair.answer,
+				}));
+
+				if (prevData) {
+					return prevData.map((data) => {
+						if (data.questionId === questionId) {
+							return { ...data, userMatchingPairAnswers: updatedAnswers };
+						}
+						return data;
+					});
+				}
+
+				return prevData;
+			});
+		}
 	};
 
 	return (
@@ -145,8 +196,10 @@ const MatchingPreview = ({
 													ref={provided.innerRef}
 													{...provided.draggableProps}
 													{...provided.dragHandleProps}
-													$isCorrect={pair.answer === initialPairs.find((p) => p.id === pair.id)?.answer}>
-													<Typography variant='body2' sx={{ color: 'white' }}>
+													$isCorrect={pair.answer === initialPairs.find((p) => p.id === pair.id)?.answer}
+													fromQuizQuestionUser={fromQuizQuestionUser}
+													isLessonCompleted={isLessonCompleted}>
+													<Typography variant='body2' sx={{ color: fromQuizQuestionUser && !isLessonCompleted ? null : 'white' }}>
 														{pair.answer}
 													</Typography>
 												</Item>

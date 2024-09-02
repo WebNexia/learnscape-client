@@ -24,6 +24,7 @@ import 'jspdf-autotable';
 import html2canvas from 'html2canvas';
 import QuizQuestionsMap from '../components/userCourses/QuizQuestionsMap';
 import { QuestionInterface } from '../interfaces/question';
+import { UserBlankValuePairAnswers, UserMatchingPairAnswers } from '../interfaces/userQuestion';
 
 export interface QuizQuestionAnswer {
 	questionId: string;
@@ -32,6 +33,8 @@ export interface QuizQuestionAnswer {
 	audioRecordUrl: string;
 	teacherFeedback: string;
 	teacherAudioFeedbackUrl: string;
+	userMatchingPairAnswers: UserMatchingPairAnswers[];
+	userBlankValuePairAnswers: UserBlankValuePairAnswers[];
 }
 
 const LessonPage = () => {
@@ -68,7 +71,9 @@ const LessonPage = () => {
 		documentIds: [],
 		documents: [],
 	});
-	const [userAnswers, setUserAnswers] = useState<UserQuestionData[]>([]);
+
+	const [userAnswers, setUserAnswers] = useState<UserQuestionData[]>([]); //User answers for practice questions
+
 	const [userQuizAnswers, setUserQuizAnswers] = useState<QuizQuestionAnswer[]>(() => {
 		const savedAnswers = localStorage.getItem(`UserQuizAnswers-${lessonId}`);
 		return savedAnswers ? JSON.parse(savedAnswers) : [];
@@ -107,6 +112,8 @@ const LessonPage = () => {
 								videoRecordUrl: answer.videoRecordUrl,
 								teacherFeedback: answer.teacherFeedback,
 								teacherAudioFeedbackUrl: answer.teacherAudioFeedbackUrl,
+								userMatchingPairAnswers: answer.userMatchingPairAnswers,
+								userBlankValuePairAnswers: answer.userBlankValuePairAnswers,
 							}))
 						);
 					} else {

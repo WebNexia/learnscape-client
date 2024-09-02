@@ -7,6 +7,8 @@ import { sanitizeHtml } from '../../../utils/sanitizeHtml';
 import { useUserCourseLessonData } from '../../../hooks/useUserCourseLessonData';
 import { shuffle } from 'lodash';
 import { words } from '../../../interfaces/randomWords';
+import { QuizQuestionAnswer } from '../../../pages/LessonPage';
+import { UserBlankValuePairAnswers } from '../../../interfaces/userQuestion';
 
 const Container = styled(Box)`
 	display: flex;
@@ -33,17 +35,20 @@ const TextContainer = styled(Box)`
 	padding: 0;
 `;
 
-const DropArea = styled(Box)<{ $isCorrect: boolean | null }>`
+const DropArea = styled(Box)<{ $isCorrect: boolean | null; fromQuizQuestionUser?: boolean; isLessonCompleted?: boolean }>`
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
 	min-width: 4rem;
-	height: 1.5rem;
-	background-color: ${({ $isCorrect }) => ($isCorrect === null ? '#f0f0f0' : $isCorrect ? 'green' : '#d32f2f')};
-	border: 0.1rem solid ${({ $isCorrect }) => ($isCorrect === null ? '#cccccc' : $isCorrect ? '#c3e6cb' : '#f5c6cb')};
+	height: 1.75rem;
+	background-color: ${({ $isCorrect, fromQuizQuestionUser, isLessonCompleted }) =>
+		fromQuizQuestionUser && !isLessonCompleted ? '#f0f0f0' : $isCorrect === null ? '#f0f0f0' : $isCorrect ? 'green' : '#d32f2f'};
+	border: 0.1rem solid
+		${({ $isCorrect, fromQuizQuestionUser, isLessonCompleted }) =>
+			fromQuizQuestionUser && !isLessonCompleted ? '#cccccc' : $isCorrect === null ? '#cccccc' : $isCorrect ? '#c3e6cb' : '#f5c6cb'};
 	border-radius: 0.25rem;
 	padding: 0 0.25rem;
-	margin: 0 0.25rem;
+	margin: 0 0.35rem;
 	font-size: 0.75rem;
 	color: #495057;
 	overflow: hidden;
@@ -55,11 +60,14 @@ const DropArea = styled(Box)<{ $isCorrect: boolean | null }>`
 	width: auto;
 `;
 
-const Item = styled.div<{ $isCorrect: boolean | null }>`
+const Item = styled.div<{ $isCorrect: boolean | null; fromQuizQuestionUser?: boolean }>`
 	padding: 0.25rem 0.5rem;
-	margin: 0 0.25rem;
-	background-color: ${({ $isCorrect }) => ($isCorrect === null ? '#e0e0e0' : $isCorrect ? '#d4edda' : '#e57373')}; /* Color depends on correctness */
-	border: 1px solid ${({ $isCorrect }) => ($isCorrect === null ? '#cccccc' : $isCorrect ? '#c3e6cb' : '#f5c6cb')};
+	margin: 0.5rem 0.35rem;
+	background-color: ${({ $isCorrect, fromQuizQuestionUser }) =>
+		fromQuizQuestionUser ? '#e0e0e0' : $isCorrect === null ? '#e0e0e0' : $isCorrect ? '#d4edda' : '#e57373'};
+	border: 1px solid
+		${({ $isCorrect, fromQuizQuestionUser }) =>
+			fromQuizQuestionUser ? '#cccccc' : $isCorrect === null ? '#cccccc' : $isCorrect ? '#c3e6cb' : '#f5c6cb'};
 	border-radius: 0.25rem;
 	cursor: pointer;
 	text-align: center;
@@ -82,7 +90,10 @@ const Item = styled.div<{ $isCorrect: boolean | null }>`
 `;
 
 interface FillInTheBlanksDragDropProps {
+	questionId?: string;
 	fromPracticeQuestionUser?: boolean;
+	fromQuizQuestionUser?: boolean;
+	isLessonCompleted?: boolean;
 	textWithBlanks: string;
 	blankValuePairs: BlankValuePair[];
 	onComplete?: (allCorrect: boolean) => void;
@@ -91,18 +102,23 @@ interface FillInTheBlanksDragDropProps {
 	setAllPairsMatched?: React.Dispatch<React.SetStateAction<boolean>>;
 	setIsLessonCompleted?: React.Dispatch<React.SetStateAction<boolean>>;
 	setShowQuestionSelector?: React.Dispatch<React.SetStateAction<boolean>>;
+	setUserQuizAnswers?: React.Dispatch<React.SetStateAction<QuizQuestionAnswer[]>>;
 }
 
 const FillInTheBlanksDragDrop = ({
+	questionId,
 	fromPracticeQuestionUser,
+	fromQuizQuestionUser,
+	isLessonCompleted,
 	textWithBlanks,
 	blankValuePairs,
 	onComplete,
-	setAllPairsMatched,
 	displayedQuestionNumber,
 	numberOfQuestions,
+	setAllPairsMatched,
 	setIsLessonCompleted,
 	setShowQuestionSelector,
+	setUserQuizAnswers,
 }: FillInTheBlanksDragDropProps) => {
 	const [blanks, setBlanks] = useState<BlankValuePair[]>([]);
 	const [responses, setResponses] = useState<BlankValuePair[]>([]);
@@ -131,13 +147,32 @@ const FillInTheBlanksDragDrop = ({
 		setBlanks(initializedBlanks);
 
 		// Include random words and correct answers in shuffled responses
-		const randomWords = shuffle(words).slice(0, 5);
+		const randomWords = fromQuizQuestionUser ? shuffle(words).slice(0, 15) : shuffle(words).slice(0, 5);
 		const allResponses = shuffle([
 			...blankValuePairs.map((pair) => ({ ...pair })),
 			...randomWords.map((word) => ({ id: `random-${word}`, value: word, blank: -1 })),
 		]);
 		setResponses(allResponses);
 	}, [textWithBlanks, blankValuePairs]);
+
+	useEffect(() => {
+		setUserQuizAnswers?.((prevData) => {
+			const blankValuePairsWithIds: UserBlankValuePairAnswers[] = blankValuePairs.map((pair) => {
+				return { id: pair.id, value: '' };
+			});
+
+			if (prevData) {
+				return prevData.map((data) => {
+					if (data.questionId === questionId) {
+						return { ...data, userBlankValuePairAnswers: blankValuePairsWithIds };
+					}
+					return data;
+				});
+			}
+
+			return prevData;
+		});
+	}, []);
 
 	const handleDragEnd = (result: DropResult) => {
 		if (!result.destination) {
@@ -195,6 +230,26 @@ const FillInTheBlanksDragDrop = ({
 			setBlanks(newBlanks);
 			setResponses(newResponses);
 
+			if (fromQuizQuestionUser && !isLessonCompleted) {
+				setUserQuizAnswers?.((prevData) => {
+					const updatedAnswers = newBlanks.map((blank) => ({
+						id: blank.id,
+						value: blank.value,
+					}));
+
+					if (prevData) {
+						return prevData.map((data) => {
+							if (data.questionId === questionId) {
+								return { ...data, userBlankValuePairAnswers: updatedAnswers };
+							}
+							return data;
+						});
+					}
+
+					return prevData;
+				});
+			}
+
 			// Check if all answers are correct
 			const allCorrect = newBlanks.every((blank) => blank.value === blankValuePairs.find((p) => p.blank === blank.blank)?.value);
 
@@ -240,8 +295,11 @@ const FillInTheBlanksDragDrop = ({
 													ref={provided.innerRef}
 													{...provided.droppableProps}
 													$isCorrect={
-														blanks[index].value ? blanks[index].value === blankValuePairs.find((p) => p.blank === blanks[index].blank)?.value : null
-													}>
+														!fromQuizQuestionUser && blanks[index].value
+															? blanks[index].value === blankValuePairs.find((p) => p.blank === blanks[index].blank)?.value
+															: null
+													}
+													fromQuizQuestionUser={fromQuizQuestionUser}>
 													{blanks[index].value ? (
 														<Draggable key={`draggable-blank-${blanks[index].id}`} draggableId={`draggable-blank-${blanks[index].id}`} index={index}>
 															{(provided, snapshot) => (
@@ -249,7 +307,11 @@ const FillInTheBlanksDragDrop = ({
 																	ref={provided.innerRef}
 																	{...provided.draggableProps}
 																	{...provided.dragHandleProps}
-																	$isCorrect={blanks[index].value === blankValuePairs.find((p) => p.blank === blanks[index].blank)?.value}
+																	$isCorrect={
+																		!fromQuizQuestionUser &&
+																		blanks[index].value === blankValuePairs.find((p) => p.blank === blanks[index].blank)?.value
+																	}
+																	fromQuizQuestionUser={fromQuizQuestionUser}
 																	style={{
 																		...provided.draggableProps.style,
 																		boxShadow: snapshot.isDragging ? '0px 5px 10px rgba(0, 0, 0, 0.2)' : 'none',

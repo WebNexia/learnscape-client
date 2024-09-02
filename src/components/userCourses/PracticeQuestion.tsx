@@ -116,8 +116,8 @@ const PracticeQuestion = ({
 	const isMultipleChoiceQuestion: boolean = fetchQuestionTypeName(question) === QuestionType.MULTIPLE_CHOICE;
 	const isFlipCard: boolean = fetchQuestionTypeName(question) === QuestionType.FLIP_CARD;
 	const isMatching: boolean = fetchQuestionTypeName(question) === QuestionType.MATCHING;
-	const isFITBTyping = fetchQuestionTypeName(question) === QuestionType.FITB_TYPING;
-	const isFITBDragDrop = fetchQuestionTypeName(question) === QuestionType.FITB_DRAG_DROP;
+	const isFITBTyping: boolean = fetchQuestionTypeName(question) === QuestionType.FITB_TYPING;
+	const isFITBDragDrop: boolean = fetchQuestionTypeName(question) === QuestionType.FITB_DRAG_DROP;
 
 	const [userAnswer, setUserAnswer] = useState<string>('');
 
@@ -136,7 +136,7 @@ const PracticeQuestion = ({
 
 	const [error, setError] = useState<boolean>(false);
 	const [success, setSuccess] = useState<boolean>(false);
-	const [helperText, setHelperText] = useState<string>(!isMatching && !isFITBDragDrop && isFITBTyping ? 'Choose wisely' : '');
+	const [helperText, setHelperText] = useState<string>(!isMatching && !isFITBDragDrop && !isFITBTyping ? 'Choose wisely' : '');
 	const [isAnswerCorrect, setIsAnswerCorrect] = useState<boolean>(false);
 	const [isOpenEndedAnswerSubmitted, setIsOpenEndedAnswerSubmitted] = useState<boolean>(false);
 	const [selectedQuestion, setSelectedQuestion] = useState<number>(displayedQuestionNumber);
@@ -206,6 +206,8 @@ const PracticeQuestion = ({
 						isInProgress: false,
 						orgId,
 						userAnswer,
+						teacherFeedback: '',
+						teacherAudioFeedbackUrl: '',
 					});
 
 					const userQuestionId = res.data._id;
@@ -225,6 +227,8 @@ const PracticeQuestion = ({
 								videoRecordUrl: '',
 								teacherFeedback: '',
 								teacherAudioFeedbackUrl: '',
+								userMatchingPairAnswers: [],
+								userBlankValuePairAnswers: [],
 							};
 							return [...prevData, newUserAnswer];
 						});

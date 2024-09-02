@@ -37,6 +37,9 @@ import AudioRecorder from './AudioRecorder';
 import { storage } from '../../firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
+import FillInTheBlanksTyping from '../layouts/FITBTyping/FillInTheBlanksTyping';
+import FillInTheBlanksDragDrop from '../layouts/FITBDragDrop/FillInTheBlanksDragDrop';
+import MatchingPreview from '../layouts/matching/MatchingPreview';
 
 interface QuizQuestionProps {
 	question: QuestionInterface;
@@ -74,10 +77,9 @@ const QuizQuestion = ({
 	const { fetchQuestionTypeName } = useContext(QuestionsContext);
 	const { user } = useContext(UserAuthContext);
 
-	const [userQuizAnswer, setUserQuizAnswer] = useState<string>('');
+	const [userQuizAnswer, setUserQuizAnswer] = useState<string>(''); //user's answer after submitting the quiz
 	const [uploadUrlForCompletedLesson, setUploadUrlForCompletedLesson] = useState<string>('');
 
-	const [helperText, setHelperText] = useState<string>('Choose wisely');
 	const [selectedQuestion, setSelectedQuestion] = useState<number>(displayedQuestionNumber);
 	const [isSubmitQuizModalOpen, setIsSubmitQuizModalOpen] = useState<boolean>(false);
 	const [userQuizAnswersUploading, setUserQuizAnswersUploading] = useState<boolean>(false);
@@ -99,6 +101,11 @@ const QuizQuestion = ({
 	const isTrueFalseQuestion: boolean = fetchQuestionTypeName(question) === QuestionType.TRUE_FALSE;
 	const isMultipleChoiceQuestion: boolean = fetchQuestionTypeName(question) === QuestionType.MULTIPLE_CHOICE;
 	const isAudioVideoQuestion: boolean = fetchQuestionTypeName(question) === QuestionType.AUDIO_VIDEO;
+	const isMatching: boolean = fetchQuestionTypeName(question) === QuestionType.MATCHING;
+	const isFITBTyping: boolean = fetchQuestionTypeName(question) === QuestionType.FITB_TYPING;
+	const isFITBDragDrop: boolean = fetchQuestionTypeName(question) === QuestionType.FITB_DRAG_DROP;
+
+	const [helperText, setHelperText] = useState<string>(!isMatching && !isFITBDragDrop && !isFITBTyping ? 'Choose wisely' : '');
 
 	const [recordOption, setRecordOption] = useState<string>('');
 	const toggleRecordOption = (type: string) => {
@@ -206,8 +213,12 @@ const QuizQuestion = ({
 						isInProgress: false,
 						orgId,
 						userAnswer: answer.userAnswer,
+						userBlankValuePairAnswers: answer.userBlankValuePairAnswers,
+						userMatchingPairAnswers: answer.userMatchingPairAnswers,
 						videoRecordUrl: answer.videoRecordUrl,
 						audioRecordUrl: answer.audioRecordUrl,
+						teacherFeedback: '',
+						teacherAudioFeedbackUrl: '',
 					});
 				} catch (error) {
 					console.log(error);
@@ -229,6 +240,8 @@ const QuizQuestion = ({
 		localStorage.removeItem(`UserQuizAnswers-${lessonId}`);
 		navigate(`/course/${courseId}/user/${userId}/userCourseId/${userCourseId}?isEnrolled=true`);
 	};
+
+	console.log(userQuizAnswers);
 
 	const uploadAudio = async (blob: Blob) => {
 		setIsAudioUploading(true);
@@ -298,7 +311,7 @@ const QuizQuestion = ({
 			<form style={{ width: '100%' }}>
 				<FormControl sx={{ width: '100%' }} variant='standard'>
 					<QuestionMedia question={question} />
-					<QuestionText question={question} questionNumber={questionNumber} />
+					{!isFITBDragDrop && !isFITBTyping && <QuestionText question={question} questionNumber={questionNumber} />}
 
 					{isOpenEndedQuestion && (
 						<Box sx={{ width: '90%', margin: '1rem auto' }}>
@@ -390,6 +403,61 @@ const QuizQuestion = ({
 								setUserQuizAnswers={setUserQuizAnswers}
 								lessonType={lessonType}
 								userQuizAnswer={userQuizAnswer}
+							/>
+						</Box>
+					)}
+
+					{isMatching && (
+						<Box sx={{ display: 'flex', justifyContent: 'center', width: '80%', margin: '0 auto' }}>
+							<MatchingPreview
+								questionId={question._id}
+								initialPairs={question.matchingPairs}
+								fromQuizQuestionUser={true}
+								displayedQuestionNumber={displayedQuestionNumber}
+								numberOfQuestions={numberOfQuestions}
+								setIsLessonCompleted={setIsLessonCompleted}
+								isLessonCompleted={isLessonCompleted}
+								setUserQuizAnswers={setUserQuizAnswers}
+							/>
+						</Box>
+					)}
+
+					{isFITBDragDrop && (
+						<Box sx={{ display: 'flex', justifyContent: 'center', width: '80%', margin: '11rem auto 0 auto' }}>
+							<FillInTheBlanksDragDrop
+								questionId={question._id}
+								fromQuizQuestionUser={true}
+								textWithBlanks={question.question}
+								blankValuePairs={question.blankValuePairs}
+								displayedQuestionNumber={displayedQuestionNumber}
+								numberOfQuestions={numberOfQuestions}
+								setIsLessonCompleted={setIsLessonCompleted}
+								isLessonCompleted={isLessonCompleted}
+								setUserQuizAnswers={setUserQuizAnswers}
+							/>
+						</Box>
+					)}
+
+					{isFITBTyping && (
+						<Box
+							sx={{
+								display: 'flex',
+								flexDirection: 'column',
+								justifyContent: 'center',
+								alignItems: 'center',
+								width: '80%',
+								margin: '11rem auto 0 auto',
+							}}>
+							<FillInTheBlanksTyping
+								questionId={question._id}
+								fromQuizQuestionUser={true}
+								textWithBlanks={question.question}
+								blankValuePairs={question.blankValuePairs}
+								displayedQuestionNumber={displayedQuestionNumber}
+								numberOfQuestions={numberOfQuestions}
+								setIsLessonCompleted={setIsLessonCompleted}
+								isLessonCompleted={isLessonCompleted}
+								setUserQuizAnswers={setUserQuizAnswers}
 							/>
 						</Box>
 					)}
