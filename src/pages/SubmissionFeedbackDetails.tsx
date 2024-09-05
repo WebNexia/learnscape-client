@@ -1,4 +1,4 @@
-import { Box, IconButton, Typography } from '@mui/material';
+import { Box, IconButton, Tooltip, Typography } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { useLocation, useParams } from 'react-router-dom';
 import { useContext, useEffect, useState } from 'react';
@@ -7,10 +7,13 @@ import axios from 'axios';
 import { QuestionType } from '../interfaces/enums';
 import { stripHtml } from '../utils/stripHtml';
 import { truncateText } from '../utils/utilText';
-import { ArrowBackIosNewOutlined, ArrowForwardIosOutlined, InfoOutlined } from '@mui/icons-material';
+import { ArrowBackIosNewOutlined, ArrowForwardIosOutlined, InfoOutlined, RateReviewOutlined } from '@mui/icons-material';
 import theme from '../themes';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import { sanitizeHtml } from '../utils/sanitizeHtml';
+import FillInTheBlanksTyping from '../components/layouts/FITBTyping/FillInTheBlanksTyping';
+import FillInTheBlanksDragDrop from '../components/layouts/FITBDragDrop/FillInTheBlanksDragDrop';
+import MatchingPreview from '../components/layouts/matching/MatchingPreview';
 
 const SubmissionFeedbackDetails = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -63,11 +66,14 @@ const SubmissionFeedbackDetails = () => {
 				<Typography variant='h5' sx={{ mb: '0.5rem' }}>
 					Question ({fetchQuestionTypeName(userSingleResponseWithFeedback?.questionId)})
 				</Typography>
-				<Typography
-					variant='body1'
-					component='div'
-					dangerouslySetInnerHTML={{ __html: sanitizeHtml(userSingleResponseWithFeedback?.questionId.question) }}
-				/>
+				{fetchQuestionTypeName(userSingleResponseWithFeedback?.questionId) !== QuestionType.FITB_TYPING &&
+					fetchQuestionTypeName(userSingleResponseWithFeedback?.questionId) !== QuestionType.FITB_DRAG_DROP && (
+						<Typography
+							variant='body1'
+							component='div'
+							dangerouslySetInnerHTML={{ __html: sanitizeHtml(userSingleResponseWithFeedback?.questionId.question) }}
+						/>
+					)}
 			</Box>
 
 			{fetchQuestionTypeName(userSingleResponseWithFeedback?.questionId) === QuestionType.MULTIPLE_CHOICE && (
@@ -125,6 +131,44 @@ const SubmissionFeedbackDetails = () => {
 				</Box>
 			)}
 
+			{fetchQuestionTypeName(userSingleResponseWithFeedback?.questionId) === QuestionType.MATCHING && (
+				<Box sx={{ width: '90%', margin: '0rem auto' }}>
+					<MatchingPreview
+						initialPairs={userSingleResponseWithFeedback?.questionId.matchingPairs}
+						userMatchingPairsAfterSubmission={userSingleResponseWithFeedback?.userMatchingPairAnswers}
+						questionId={userSingleResponseWithFeedback?.questionId}
+						fromQuizQuestionUser={true}
+						isLessonCompleted={true}
+					/>
+				</Box>
+			)}
+
+			{fetchQuestionTypeName(userSingleResponseWithFeedback?.questionId) === QuestionType.FITB_DRAG_DROP && (
+				<Box sx={{ width: '90%', margin: '0rem auto' }}>
+					<FillInTheBlanksDragDrop
+						textWithBlanks={userSingleResponseWithFeedback?.questionId.question}
+						blankValuePairs={userSingleResponseWithFeedback?.questionId.blankValuePairs}
+						userBlankValuePairsAfterSubmission={userSingleResponseWithFeedback?.userBlankValuePairAnswers}
+						questionId={userSingleResponseWithFeedback?.questionId}
+						fromQuizQuestionUser={true}
+						isLessonCompleted={true}
+					/>
+				</Box>
+			)}
+
+			{fetchQuestionTypeName(userSingleResponseWithFeedback?.questionId) === QuestionType.FITB_TYPING && (
+				<Box sx={{ width: '90%', margin: '0rem auto' }}>
+					<FillInTheBlanksTyping
+						textWithBlanks={userSingleResponseWithFeedback?.questionId.question}
+						blankValuePairs={userSingleResponseWithFeedback?.questionId.blankValuePairs}
+						userBlankValuePairsAfterSubmission={userSingleResponseWithFeedback?.userBlankValuePairAnswers}
+						questionId={userSingleResponseWithFeedback?.questionId}
+						fromQuizQuestionUser={true}
+						isLessonCompleted={true}
+					/>
+				</Box>
+			)}
+
 			{fetchQuestionTypeName(userSingleResponseWithFeedback?.questionId) === QuestionType.AUDIO_VIDEO && (
 				<Box sx={{ width: '90%', margin: '1rem auto' }}>
 					<Typography variant='h6'>Your Recording</Typography>
@@ -173,7 +217,7 @@ const SubmissionFeedbackDetails = () => {
 			)}
 
 			{userSingleResponseWithFeedback?.teacherFeedback && (
-				<Box sx={{ width: '90%', margin: '1rem auto 3rem auto' }}>
+				<Box sx={{ width: '90%', margin: '1.5rem auto 3rem auto' }}>
 					<Typography variant='h5' sx={{ mb: '1rem' }}>
 						Instructor's Feedback for Question
 					</Typography>
@@ -189,7 +233,7 @@ const SubmissionFeedbackDetails = () => {
 				{[
 					{ label: 'Quiz Name', value: quizName },
 					{ label: 'Course Name', value: courseName },
-					{ label: 'Feedback', value: isChecked === 'true' ? 'Given' : 'Not Given' },
+					{ label: 'Status', value: isChecked === 'true' ? 'Checked' : 'Unchecked' },
 				].map(({ label, value }, index) => (
 					<Box key={index} sx={{ textAlign: 'center' }}>
 						<Typography variant='h6' sx={{ mb: '0.35rem' }}>
@@ -200,19 +244,20 @@ const SubmissionFeedbackDetails = () => {
 				))}
 			</Box>
 
-			<Box sx={{ display: 'flex', alignItems: 'center', width: '90%', margin: '1rem 0' }}>
-				<Box>
-					<InfoOutlined fontSize='small' />
+			<Box sx={{ width: '90%', margin: '1.5rem' }}>
+				<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+					<Box>
+						<Typography variant='h5'>Questions</Typography>
+					</Box>
+					<Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', width: '100%', margin: '1rem 0' }}>
+						<Box>
+							<Typography sx={{ fontSize: '0.85rem', mr: '0.5rem' }}>Click the questions to see details and read feedback if given</Typography>
+						</Box>
+						<Box>
+							<InfoOutlined fontSize='small' color='error' />
+						</Box>
+					</Box>
 				</Box>
-				<Box>
-					<Typography sx={{ fontSize: '0.85rem', ml: '0.5rem' }}>Click the questions to see details and feedback if given</Typography>
-				</Box>
-			</Box>
-
-			<Box sx={{ width: '90%', margin: '2rem' }}>
-				<Typography variant='h5' sx={{ mb: '1rem' }}>
-					Questions
-				</Typography>
 				{userResponseData?.map((response: any, index: number) => (
 					<Box
 						key={response._id}
@@ -239,7 +284,9 @@ const SubmissionFeedbackDetails = () => {
 							setCurrentResponseIndex(index);
 						}}>
 						<Typography
+							variant='body2'
 							sx={{
+								flex: 4,
 								color:
 									fetchQuestionTypeName(response.questionId) === QuestionType.TRUE_FALSE ||
 									fetchQuestionTypeName(response.questionId) === QuestionType.MULTIPLE_CHOICE
@@ -248,9 +295,22 @@ const SubmissionFeedbackDetails = () => {
 							}}>
 							{truncateText(stripHtml(response.questionId.question), 50)}
 						</Typography>
+
+						<Box sx={{ flex: 1.5 }}>
+							{response.teacherFeedback || response.teacherAudioFeedbackUrl ? (
+								<Tooltip title='Feedback' placement='left'>
+									<RateReviewOutlined color='success' />
+								</Tooltip>
+							) : (
+								<></>
+							)}
+						</Box>
+
 						<Typography
 							variant='body2'
 							sx={{
+								textAlign: 'right',
+								flex: 1,
 								color:
 									fetchQuestionTypeName(response.questionId) === QuestionType.TRUE_FALSE ||
 									fetchQuestionTypeName(response.questionId) === QuestionType.MULTIPLE_CHOICE

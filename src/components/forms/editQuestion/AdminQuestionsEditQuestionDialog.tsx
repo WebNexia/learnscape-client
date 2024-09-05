@@ -2,7 +2,7 @@ import { useContext, useEffect, useRef, useState } from 'react';
 import { Box, Checkbox, DialogContent, FormControlLabel, IconButton, Radio, Tooltip, Typography } from '@mui/material';
 import CustomDialog from '../../layouts/dialog/CustomDialog';
 import CustomTextField from '../customFields/CustomTextField';
-import { AddCircle, RemoveCircle } from '@mui/icons-material';
+import { AddCircle, InfoOutlined, RemoveCircle } from '@mui/icons-material';
 import CustomDialogActions from '../../layouts/dialog/CustomDialogActions';
 import { BlankValuePair, MatchingPair, QuestionInterface } from '../../../interfaces/question';
 import { QuestionsContext } from '../../../contexts/QuestionsContextProvider';
@@ -481,9 +481,21 @@ const AdminQuestionsEditQuestionDialog = ({
 										minHeight: '4rem',
 										margin: '3rem auto 0 auto',
 									}}>
-									<Typography variant='h5' sx={{ width: '90%' }}>
-										Student View
-									</Typography>
+									<Box sx={{ display: 'flex', width: '100%', margin: '1rem 0rem 0rem 0rem' }}>
+										<Box sx={{ flex: 1 }}>
+											<Typography variant='h5'>Student View</Typography>
+										</Box>
+										<Box sx={{ width: '100%', flex: 1 }}>
+											<Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-start' }}>
+												<Box>
+													<Typography sx={{ fontSize: '0.8rem', mr: '0.5rem' }}>View as in a practice lesson</Typography>
+												</Box>
+												<Box>
+													<InfoOutlined fontSize='small' color='error' />
+												</Box>
+											</Box>
+										</Box>
+									</Box>
 									{isFITBDragDrop && (
 										<Box sx={{ padding: '1rem 0', width: '100%' }}>
 											<FillInTheBlanksDragDropProps textWithBlanks={editorContent} blankValuePairs={blankValuePairsAdminQuestions} />
@@ -491,8 +503,12 @@ const AdminQuestionsEditQuestionDialog = ({
 									)}
 
 									{isFITBTyping && (
-										<Box sx={{ padding: '1rem 0', width: '100%' }}>
-											<FillInTheBlanksTyping textWithBlanks={editorContent} blankValuePairs={blankValuePairsAdminQuestions} />
+										<Box sx={{ padding: '1rem 0' }}>
+											<FillInTheBlanksTyping
+												textWithBlanks={editorContent}
+												blankValuePairs={blankValuePairsAdminQuestions}
+												fromAdminQuestions={true}
+											/>
 										</Box>
 									)}
 								</Box>

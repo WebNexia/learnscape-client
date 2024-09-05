@@ -25,7 +25,7 @@ interface TrueFalseOptionsProps {
 	setUserAnswer?: React.Dispatch<React.SetStateAction<string>>;
 	setUserQuizAnswers?: React.Dispatch<React.SetStateAction<QuizQuestionAnswer[]>>;
 	lessonType?: string | undefined;
-	userQuizAnswer?: string;
+	userQuizAnswerAfterSubmission?: string;
 	setQuestionPrompt?: React.Dispatch<React.SetStateAction<QuestionPrompt>>;
 }
 
@@ -46,7 +46,7 @@ const TrueFalseOptions = ({
 	setUserAnswer,
 	setUserQuizAnswers,
 	lessonType,
-	userQuizAnswer,
+	userQuizAnswerAfterSubmission,
 	setQuestionPrompt,
 }: TrueFalseOptionsProps) => {
 	const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -85,7 +85,7 @@ const TrueFalseOptions = ({
 		isLessonCompleted && displayedQuestionNumber < getLastQuestion() && isLessonUpdating
 			? question?.correctAnswer
 			: isLessonCompleted && lessonType === LessonType.QUIZ
-			? userQuizAnswer
+			? userQuizAnswerAfterSubmission
 			: correctAnswer;
 
 	const showCheckmark = (optionValue: string) => {

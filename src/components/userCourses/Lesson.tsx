@@ -146,7 +146,7 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 				<Box sx={{ flex: 2 }}>
 					{lesson.type === LessonType.QUIZ && isLessonRegisteredInThisCourse && isLessonCompleted && (
 						<Box>
-							<Typography sx={{ fontSize: '0.85rem' }}>{isFeedbackGiven ? 'Feedback Given' : 'No Feedback Yet'}</Typography>
+							<Typography sx={{ fontSize: '0.85rem' }}>{isFeedbackGiven ? 'Checked' : 'Unchecked'}</Typography>
 						</Box>
 					)}
 				</Box>

@@ -72,7 +72,7 @@ const Submissions = () => {
 						columns={[
 							{ key: 'lessonName', label: 'Quiz Name' },
 							{ key: 'courseName', label: 'Course Name' },
-							{ key: 'isChecked', label: 'Feedback' },
+							{ key: 'isChecked', label: 'Status' },
 							{ key: 'actions', label: 'Actions' },
 						]}
 					/>
@@ -81,7 +81,7 @@ const Submissions = () => {
 							<TableRow key={submission._id}>
 								<CustomTableCell value={submission.lessonName} />
 								<CustomTableCell value={submission.courseName} />
-								<CustomTableCell value={submission.isChecked ? 'Given' : 'Not Given'} />
+								<CustomTableCell value={submission.isChecked ? 'Checked' : 'Unchecked'} />
 
 								<TableCell
 									sx={{

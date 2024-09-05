@@ -14,7 +14,7 @@ import {
 	Tooltip,
 	Typography,
 } from '@mui/material';
-import { AddCircle, RemoveCircle } from '@mui/icons-material';
+import { AddCircle, InfoOutlined, RemoveCircle } from '@mui/icons-material';
 import CustomDialog from '../../layouts/dialog/CustomDialog';
 import CustomTextField from '../customFields/CustomTextField';
 import CustomDialogActions from '../../layouts/dialog/CustomDialogActions';
@@ -37,9 +37,9 @@ import { LessonType, QuestionType } from '../../../interfaces/enums';
 import FlipCard from '../../layouts/flipCard/FlipCard';
 import Matching from '../../layouts/matching/Matching';
 import { Lesson } from '../../../interfaces/lessons';
-import FillInTheBlanksDragDropProps from '../../layouts/FITBDragDrop/FillInTheBlanksDragDrop';
 import { updateEditorContentAndBlankPairs } from '../../../utils/updateEditorContentAndBlankPairs';
 import FillInTheBlanksTyping from '../../layouts/FITBTyping/FillInTheBlanksTyping';
+import FillInTheBlanksDragDrop from '../../layouts/FITBDragDrop/FillInTheBlanksDragDrop';
 
 declare global {
 	interface Window {
@@ -469,8 +469,8 @@ const CreateQuestionDialog = ({
 						)}
 
 						{(isFITBDragDrop || isFITBTyping) && (
-							<>
-								<Box sx={{ marginTop: '1rem' }}>
+							<Box>
+								<Box sx={{ marginTop: '1rem', width: '90%', margin: '0 auto' }}>
 									<Typography variant='h6'>Blank Values</Typography>
 									<Box
 										sx={{
@@ -514,21 +514,37 @@ const CreateQuestionDialog = ({
 										minHeight: '4rem',
 										margin: '3rem auto 0 auto',
 									}}>
-									<Typography variant='h5' sx={{ width: '90%' }}>
-										Student View
-									</Typography>
+									<Box sx={{ display: 'flex', width: '90%', margin: '1rem 0rem 0rem 0rem' }}>
+										<Box sx={{ flex: 1 }}>
+											<Typography variant='h5'>Student View</Typography>
+										</Box>
+										<Box sx={{ width: '100%', flex: 1 }}>
+											<Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-start' }}>
+												<Box>
+													<Typography sx={{ fontSize: '0.8rem', mr: '0.5rem' }}>View as in a practice lesson</Typography>
+												</Box>
+												<Box>
+													<InfoOutlined fontSize='small' color='error' />
+												</Box>
+											</Box>
+										</Box>
+									</Box>
 									{isFITBDragDrop && (
-										<Box sx={{ padding: '1rem 0', width: '100%' }}>
-											<FillInTheBlanksDragDropProps textWithBlanks={editorContent} blankValuePairs={sortedBlankValuePairs} />
+										<Box sx={{ padding: '1rem 0', width: '90%' }}>
+											<FillInTheBlanksDragDrop textWithBlanks={editorContent} blankValuePairs={sortedBlankValuePairs} />
 										</Box>
 									)}
 									{isFITBTyping && (
-										<Box sx={{ padding: '1rem 0', width: '100%' }}>
-											<FillInTheBlanksTyping textWithBlanks={editorContent} blankValuePairs={sortedBlankValuePairs} />
+										<Box sx={{ padding: '1rem 0', width: '90%' }}>
+											<FillInTheBlanksTyping
+												textWithBlanks={editorContent}
+												blankValuePairs={sortedBlankValuePairs}
+												fromAdminQuestions={createNewQuestion}
+											/>
 										</Box>
 									)}
 								</Box>
-							</>
+							</Box>
 						)}
 
 						{isAudioVideoQuestion && (
@@ -634,6 +650,7 @@ const CreateQuestionDialog = ({
 								setNewQuestion={setNewQuestion}
 								setIsMinimumTwoMatchingPairs={setIsMinimumTwoMatchingPairs}
 								setIsMissingPair={setIsMissingPair}
+								lessonType={singleLessonBeforeSave?.type}
 							/>
 						)}
 					</Box>

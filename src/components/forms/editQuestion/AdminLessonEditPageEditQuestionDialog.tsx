@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Box, Checkbox, DialogContent, FormControlLabel, IconButton, Radio, Tooltip, Typography } from '@mui/material';
 import CustomDialog from '../../layouts/dialog/CustomDialog';
 import CustomTextField from '../customFields/CustomTextField';
-import { AddCircle, RemoveCircle } from '@mui/icons-material';
+import { AddCircle, InfoOutlined, RemoveCircle } from '@mui/icons-material';
 import CustomDialogActions from '../../layouts/dialog/CustomDialogActions';
 import { QuestionUpdateTrack } from '../../../pages/AdminLessonEditPage';
 import { BlankValuePair, QuestionInterface } from '../../../interfaces/question';
@@ -17,7 +17,7 @@ import ImageThumbnail from '../uploadImageVideoDocument/ImageThumbnail';
 import VideoThumbnail from '../uploadImageVideoDocument/VideoThumbnail';
 import TinyMceEditor from '../../richTextEditor/TinyMceEditor';
 import TrueFalseOptions from '../../layouts/questionTypes/TrueFalseOptions';
-import { QuestionType } from '../../../interfaces/enums';
+import { LessonType, QuestionType } from '../../../interfaces/enums';
 import FlipCard from '../../layouts/flipCard/FlipCard';
 import Matching from '../../layouts/matching/Matching';
 import { generateUniqueId } from '../../../utils/uniqueIdGenerator';
@@ -36,6 +36,7 @@ interface AdminLessonEditPageEditQuestionDialogProps {
 	questionType: string;
 	isMinimumOptions: boolean;
 	isDuplicateOption: boolean;
+	lessonType?: string;
 	setSingleLessonBeforeSave?: React.Dispatch<React.SetStateAction<Lesson>>;
 	setCorrectAnswerIndex: React.Dispatch<React.SetStateAction<number>>;
 	handleCorrectAnswerChange: (index: number) => void;
@@ -60,6 +61,7 @@ const AdminLessonEditPageEditQuestionDialog = ({
 	questionType,
 	isMinimumOptions,
 	isDuplicateOption,
+	lessonType,
 	setSingleLessonBeforeSave,
 	handleCorrectAnswerChange,
 	setCorrectAnswerIndex,
@@ -420,7 +422,7 @@ const AdminLessonEditPageEditQuestionDialog = ({
 						)}
 
 						{(isFITBDragDrop || isFITBTyping) && (
-							<>
+							<Box sx={{ width: '100%' }}>
 								<Box sx={{ marginTop: '1rem' }}>
 									<Typography variant='h6'>Blank Values</Typography>
 									<Box
@@ -465,23 +467,35 @@ const AdminLessonEditPageEditQuestionDialog = ({
 										alignItems: 'center',
 										width: '100%',
 										minHeight: '4rem',
-										margin: '3rem auto 0 auto',
+										margin: '4rem auto 0 auto',
 									}}>
-									<Typography variant='h5' sx={{ width: '90%' }}>
-										Student View
-									</Typography>
+									<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', mt: '3rem' }}>
+										<Box>
+											<Typography variant='h5'>Student View </Typography>
+										</Box>
+										<Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-start' }}>
+											<Box>
+												<Typography sx={{ fontSize: '0.8rem', mr: '0.5rem' }}>
+													View as in a {lessonType === LessonType.QUIZ ? 'quiz' : 'practice lesson'}
+												</Typography>
+											</Box>
+											<Box>
+												<InfoOutlined fontSize='small' color='error' />
+											</Box>
+										</Box>
+									</Box>
 									{isFITBDragDrop && (
-										<Box sx={{ padding: '1rem 0', width: '100%' }}>
-											<FillInTheBlanksDragDropProps textWithBlanks={editorContent} blankValuePairs={blankValuePairs} />
+										<Box sx={{ padding: '1rem 0' }}>
+											<FillInTheBlanksDragDropProps textWithBlanks={editorContent} blankValuePairs={blankValuePairs} lessonType={lessonType} />
 										</Box>
 									)}
 									{isFITBTyping && (
-										<Box sx={{ padding: '1rem 0', width: '100%' }}>
-											<FillInTheBlanksTyping textWithBlanks={editorContent} blankValuePairs={blankValuePairs} />
+										<Box sx={{ padding: '1rem 0' }}>
+											<FillInTheBlanksTyping textWithBlanks={editorContent} blankValuePairs={blankValuePairs} lessonType={lessonType} />
 										</Box>
 									)}
 								</Box>
-							</>
+							</Box>
 						)}
 
 						{isAudioVideoQuestion && (
@@ -523,6 +537,7 @@ const AdminLessonEditPageEditQuestionDialog = ({
 									question={question}
 									existingQuestion={true}
 									matchingPairs={question.matchingPairs}
+									lessonType={lessonType}
 									setIsMissingPair={setIsMissingPair}
 									setSingleLessonBeforeSave={setSingleLessonBeforeSave}
 									setIsLessonUpdated={setIsLessonUpdated}

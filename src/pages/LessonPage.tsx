@@ -197,7 +197,7 @@ const LessonPage = () => {
 	const handleLessonNavigation = () => {
 		navigate(`/course/${courseId}/user/${userId}/userCourseId/${userCourseId}?isEnrolled=true`);
 		window.scrollTo({ top: 0, behavior: 'smooth' });
-		if (!isNotesUpdated) {
+		if (isNotesUpdated) {
 			updateUserLessonNotes();
 		}
 	};
@@ -310,7 +310,7 @@ const LessonPage = () => {
 										height='300'
 										handleEditorChange={(content) => {
 											setEditorContent(content);
-											setIsNotesUpdated(false);
+											setIsNotesUpdated(true);
 										}}
 										initialValue={userLessonNotes}
 									/>
@@ -387,7 +387,7 @@ const LessonPage = () => {
 					{isQuiz && teacherQuizFeedback && (
 						<>
 							<Box sx={{ width: '100%', mt: '2rem' }}>
-								<Typography variant='h5'>Instructor Feedback</Typography>
+								<Typography variant='h5'>Instructor's Feedback for Quiz</Typography>
 							</Box>
 							<Box
 								sx={{

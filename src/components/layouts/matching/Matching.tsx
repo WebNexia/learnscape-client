@@ -2,17 +2,19 @@ import { Box, IconButton, Tooltip, Typography } from '@mui/material';
 import { useState } from 'react';
 import CustomTextField from '../../forms/customFields/CustomTextField';
 import { MatchingPair, QuestionInterface } from '../../../interfaces/question';
-import { AddCircle, RemoveCircle } from '@mui/icons-material';
+import { AddCircle, InfoOutlined, RemoveCircle } from '@mui/icons-material';
 import MatchingPreview from './MatchingPreview';
 import { generateUniqueId } from '../../../utils/uniqueIdGenerator';
 import { Lesson } from '../../../interfaces/lessons';
 import { QuestionUpdateTrack } from '../../../pages/AdminLessonEditPage';
 import { questionLessonUpdateTrack } from '../../../utils/questionLessonUpdateTrack';
+import { LessonType } from '../../../interfaces/enums';
 
 interface MatchingProps {
 	question?: QuestionInterface;
 	existingQuestion?: boolean;
 	matchingPairs?: MatchingPair[];
+	lessonType?: string;
 	setNewQuestion?: React.Dispatch<React.SetStateAction<QuestionInterface>>;
 	setIsMinimumTwoMatchingPairs?: React.Dispatch<React.SetStateAction<boolean>>;
 	setIsMissingPair: React.Dispatch<React.SetStateAction<boolean>>;
@@ -26,6 +28,7 @@ const Matching = ({
 	question,
 	existingQuestion,
 	matchingPairs = [],
+	lessonType,
 	setNewQuestion,
 	setIsMinimumTwoMatchingPairs,
 	setIsMissingPair,
@@ -117,10 +120,22 @@ const Matching = ({
 				</Tooltip>
 			</Box>
 			<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
-				<Box sx={{ textAlign: 'left', width: '90%', mt: '3rem' }}>
-					<Typography variant='h5'>Student View</Typography>
+				<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '90%', mt: '3rem' }}>
+					<Box>
+						<Typography variant='h5'>Student View </Typography>
+					</Box>
+					<Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-start' }}>
+						<Box>
+							<Typography sx={{ fontSize: '0.8rem', mr: '0.5rem' }}>
+								View as in a {lessonType === LessonType.QUIZ ? 'quiz' : 'practice lesson'}
+							</Typography>
+						</Box>
+						<Box>
+							<InfoOutlined fontSize='small' color='error' />
+						</Box>
+					</Box>
 				</Box>
-				<MatchingPreview initialPairs={pairs} />
+				<MatchingPreview initialPairs={pairs} lessonType={lessonType} />
 			</Box>
 		</Box>
 	);

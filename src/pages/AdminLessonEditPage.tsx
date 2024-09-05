@@ -625,7 +625,7 @@ const AdminLessonEditPage = () => {
 						setDisplayedQuestionNonEdit(null);
 					}}
 					titleSx={{ paddingTop: '0.5rem' }}>
-					<QuestionDialogContentNonEdit question={displayedQuestionNonEdit} />
+					<QuestionDialogContentNonEdit question={displayedQuestionNonEdit} singleLessonBeforeSave={singleLessonBeforeSave} />
 				</CustomDialog>
 
 				{isEditMode && (
@@ -804,7 +804,7 @@ const AdminLessonEditPage = () => {
 										</Box>
 										<Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', flex: 4 }}>
 											<Box>
-												<InfoOutlined fontSize='small' />
+												<InfoOutlined fontSize='small' color='error' />
 											</Box>
 											<Box>
 												<Typography sx={{ fontSize: '0.8rem', ml: '0.5rem' }}>Drag the questions to reorder</Typography>
@@ -944,6 +944,7 @@ const AdminLessonEditPage = () => {
 																					</Tooltip>
 
 																					<AdminLessonEditPageEditQuestionDialog
+																						lessonType={singleLessonBeforeSave.type}
 																						question={question}
 																						correctAnswerIndex={correctAnswerIndex}
 																						index={index}

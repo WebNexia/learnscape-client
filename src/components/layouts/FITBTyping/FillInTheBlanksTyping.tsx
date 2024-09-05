@@ -9,6 +9,7 @@ import { shuffle } from 'lodash';
 import { words } from '../../../interfaces/randomWords';
 import { QuizQuestionAnswer } from '../../../pages/LessonPage';
 import { UserBlankValuePairAnswers } from '../../../interfaces/userQuestion';
+import { LessonType } from '../../../interfaces/enums';
 
 const Container = styled(Box)`
 	display: flex;
@@ -20,7 +21,7 @@ const Container = styled(Box)`
 `;
 
 const Column = styled(Box)`
-	width: 90%;
+	width: 100%;
 	flex-grow: 1;
 `;
 
@@ -37,20 +38,46 @@ const TextContainer = styled(Box)`
 
 interface CustomTextFieldProps {
 	isCorrect: boolean | null;
-	fromPracticeQuestionUser: boolean;
+	fromQuizQuestionUser: boolean;
+	isLessonCompleted: boolean;
+	lessonType: string;
 }
 
 type StyledInputProps = CustomTextFieldProps & TextFieldProps;
 
-const StyledInput = styled(({ isCorrect, ...otherProps }: StyledInputProps) => <TextField {...otherProps} />)`
+const StyledInput = styled(({ isCorrect, isLessonCompleted, fromQuizQuestionUser, lessonType, ...otherProps }: StyledInputProps) => (
+	<TextField {...otherProps} />
+))`
 	& .MuiOutlinedInput-root {
-		background-color: ${({ isCorrect, ...props }) => {
-			if (!props.fromPracticeQuestionUser) return '#fff';
-			return isCorrect === null ? '#fff' : isCorrect ? 'green' : '#d32f2f';
+		background-color: ${({ isCorrect, fromQuizQuestionUser, isLessonCompleted, lessonType }) => {
+			if (isLessonCompleted) return isCorrect ? 'green' : '#d32f2f';
+
+			if (fromQuizQuestionUser || lessonType === LessonType.QUIZ) {
+				return '#fff';
+			}
+
+			if (isCorrect === true) return 'green';
+			if (isCorrect === false) return '#d32f2f';
+			return '#fff';
 		}};
-		padding: 0; /* Adjust padding to reduce height */
-		font-size: 0.85rem; /* Reduce font size to make input smaller */
-		color: ${({ isCorrect, ...props }) => (props.fromPracticeQuestionUser && isCorrect !== null ? 'white' : 'black')};
+	}
+
+	& .MuiOutlinedInput-input,
+	& .MuiInputBase-input,
+	& input {
+		color: ${({ isLessonCompleted, isCorrect, fromQuizQuestionUser, lessonType }) => {
+			if (isLessonCompleted) return '#fff';
+
+			// If it's a quiz question, keep the default text color
+			if (fromQuizQuestionUser || lessonType === LessonType.QUIZ) {
+				return 'black';
+			}
+
+			// If it's a practice question, use white text if correct/incorrect is determined
+			if (isCorrect !== null) return '#fff';
+			return 'black';
+		}};
+		font-size: 0.85rem;
 	}
 	margin: 0 0.25rem;
 	min-width: 3rem;
@@ -60,13 +87,16 @@ interface FillInTheBlanksTypingProps {
 	questionId?: string;
 	fromPracticeQuestionUser?: boolean;
 	fromQuizQuestionUser?: boolean;
+	fromAdminQuestions?: boolean;
 	isLessonCompleted?: boolean;
 	textWithBlanks: string;
 	blankValuePairs: BlankValuePair[];
 	onComplete?: (allCorrect: boolean) => void;
 	displayedQuestionNumber?: number;
 	numberOfQuestions?: number;
-	setAllPairsMatched?: React.Dispatch<React.SetStateAction<boolean>>;
+	userBlankValuePairsAfterSubmission?: UserBlankValuePairAnswers[];
+	lessonType?: string | undefined;
+	setAllPairsMatchedFITBTyping?: React.Dispatch<React.SetStateAction<boolean>>;
 	setIsLessonCompleted?: React.Dispatch<React.SetStateAction<boolean>>;
 	setShowQuestionSelector?: React.Dispatch<React.SetStateAction<boolean>>;
 	setUserQuizAnswers?: React.Dispatch<React.SetStateAction<QuizQuestionAnswer[]>>;
@@ -76,43 +106,70 @@ const FillInTheBlanksTyping = ({
 	questionId,
 	fromPracticeQuestionUser,
 	fromQuizQuestionUser,
+	fromAdminQuestions,
 	isLessonCompleted,
 	textWithBlanks,
 	blankValuePairs,
 	onComplete,
 	displayedQuestionNumber,
 	numberOfQuestions,
-	setAllPairsMatched,
+	userBlankValuePairsAfterSubmission,
+	lessonType,
+	setAllPairsMatchedFITBTyping,
 	setIsLessonCompleted,
 	setShowQuestionSelector,
 	setUserQuizAnswers,
 }: FillInTheBlanksTypingProps) => {
-	const [userAnswers, setUserAnswers] = useState<string[]>([]);
-	const [inputStatus, setInputStatus] = useState<(boolean | null)[]>([]);
+	const [userAnswers, setUserAnswers] = useState<Record<string, string>>({});
+	const [inputStatus, setInputStatus] = useState<Record<string, boolean | null>>({});
 	const [showHiddenBlankValues, setShowHiddenBlankValues] = useState<boolean>(false);
 	const [hints, setHints] = useState<string[]>([]);
 	const [textSegments, setTextSegments] = useState<string[]>([]);
+	const [hasInteracted, setHasInteracted] = useState(false);
 
-	const { updateLastQuestion, getLastQuestion, handleNextLesson } = useUserCourseLessonData();
+	const { updateLastQuestion, getLastQuestion } = useUserCourseLessonData();
 
 	useEffect(() => {
-		const initialAnswers = Array(blankValuePairs.length).fill('');
-		const initialStatus = Array(blankValuePairs.length).fill(null);
-		setUserAnswers(initialAnswers);
-		setInputStatus(initialStatus);
+		if (isLessonCompleted && userBlankValuePairsAfterSubmission) {
+			// Populate with submitted answers if lesson is completed
+			const submittedAnswers: Record<string, string> = {};
+			const status: Record<string, boolean | null> = {};
 
-		const randomWords = fromQuizQuestionUser ? shuffle(words).slice(0, 15) : shuffle(words).slice(0, 5);
+			userBlankValuePairsAfterSubmission.forEach((pair) => {
+				submittedAnswers[pair.id] = pair.value;
+				status[pair.id] = blankValuePairs.find((bvp) => bvp.id === pair.id)?.value === pair.value;
+			});
 
-		const values = blankValuePairs.map((pair) => pair.value);
-		const hintWords = shuffle([...values, ...randomWords]);
-		setHints(hintWords);
-	}, [blankValuePairs]);
+			setUserAnswers(submittedAnswers);
+			setInputStatus(status);
+		} else {
+			const initialAnswers: Record<string, string> = {};
+			const initialStatus: Record<string, boolean | null> = {};
+
+			blankValuePairs.forEach((pair) => {
+				initialAnswers[pair.id] = '';
+				initialStatus[pair.id] = null;
+			});
+
+			setUserAnswers(initialAnswers);
+			setInputStatus(initialStatus);
+
+			const randomWords =
+				(fromQuizQuestionUser || lessonType === LessonType.QUIZ || lessonType !== LessonType.PRACTICE_LESSON) && !fromAdminQuestions
+					? shuffle(words).slice(0, 15)
+					: shuffle(words).slice(0, 5);
+			const values = blankValuePairs.map((pair) => pair.value);
+			const hintWords = shuffle([...values, ...randomWords]);
+			setHints(hintWords);
+		}
+	}, [blankValuePairs, isLessonCompleted, userBlankValuePairsAfterSubmission]);
 
 	useEffect(() => {
 		setUserQuizAnswers?.((prevData) => {
-			const blankValuePairsWithIds: UserBlankValuePairAnswers[] = blankValuePairs.map((pair) => {
-				return { id: pair.id, value: '' };
-			});
+			const blankValuePairsWithIds: UserBlankValuePairAnswers[] = blankValuePairs.map((pair) => ({
+				id: pair.id,
+				value: '',
+			}));
 
 			if (prevData) {
 				return prevData.map((data) => {
@@ -139,40 +196,45 @@ const FillInTheBlanksTyping = ({
 	}, [textWithBlanks]);
 
 	useEffect(() => {
-		const allCorrect = blankValuePairs.every((pair, index) => pair.value === userAnswers[index]);
-		if (onComplete) onComplete(allCorrect);
+		if (hasInteracted && !isLessonCompleted && fromPracticeQuestionUser) {
+			const allCorrect = blankValuePairs.every((pair) => pair.value === userAnswers[pair.id]);
+			if (onComplete) onComplete(allCorrect);
 
-		if (setAllPairsMatched) {
-			setAllPairsMatched(allCorrect);
-		}
+			if (setAllPairsMatchedFITBTyping) {
+				setAllPairsMatchedFITBTyping(allCorrect);
+			}
 
-		if (allCorrect && fromPracticeQuestionUser) {
-			if (displayedQuestionNumber && numberOfQuestions) {
-				if (displayedQuestionNumber + 1 <= numberOfQuestions && getLastQuestion() <= displayedQuestionNumber) {
-					updateLastQuestion(displayedQuestionNumber + 1);
-				}
-				if (displayedQuestionNumber === numberOfQuestions) {
-					handleNextLesson();
-					if (setIsLessonCompleted) setIsLessonCompleted(true);
-					if (setShowQuestionSelector) setShowQuestionSelector(true);
+			if (allCorrect && fromPracticeQuestionUser) {
+				if (displayedQuestionNumber && numberOfQuestions) {
+					if (displayedQuestionNumber + 1 <= numberOfQuestions && getLastQuestion() <= displayedQuestionNumber) {
+						updateLastQuestion(displayedQuestionNumber + 1);
+					}
+					if (displayedQuestionNumber === numberOfQuestions) {
+						if (setIsLessonCompleted) setIsLessonCompleted(true);
+						if (setShowQuestionSelector) setShowQuestionSelector(true);
+					}
 				}
 			}
 		}
-	}, [userAnswers]);
+	}, [userAnswers, hasInteracted]);
 
-	const handleChange = (index: number) => (event: React.ChangeEvent<HTMLInputElement>) => {
-		const newAnswers = [...userAnswers];
-		const newStatus = [...inputStatus];
+	const handleChange = (id: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
+		if (isLessonCompleted) return;
+
+		setHasInteracted(true);
+
+		const newAnswers = { ...userAnswers };
+		const newStatus = { ...inputStatus };
 		const inputValue = event.target.value;
 
-		newAnswers[index] = inputValue;
+		newAnswers[id] = inputValue;
 
 		if (inputValue === '') {
-			newStatus[index] = null;
-		} else if (blankValuePairs[index].value === inputValue.trim()) {
-			newStatus[index] = true;
+			newStatus[id] = null;
+		} else if (blankValuePairs.find((pair) => pair.id === id)?.value === inputValue.trim()) {
+			newStatus[id] = true;
 		} else {
-			newStatus[index] = false;
+			newStatus[id] = false;
 		}
 
 		setUserAnswers(newAnswers);
@@ -180,9 +242,9 @@ const FillInTheBlanksTyping = ({
 
 		if (!isLessonCompleted && fromQuizQuestionUser) {
 			setUserQuizAnswers?.((prevData) => {
-				const updatedAnswers = newAnswers.map((answer, idx) => ({
-					id: blankValuePairs[idx].id,
-					value: answer,
+				const updatedAnswers = blankValuePairs.map((pair) => ({
+					id: pair.id,
+					value: newAnswers[pair.id] || '',
 				}));
 
 				if (prevData) {
@@ -207,15 +269,18 @@ const FillInTheBlanksTyping = ({
 						const match = segment.match(/___(\d+)___/);
 						if (match) {
 							const blankIndex = parseInt(match[1], 10) - 1;
+							const blankId = blankValuePairs[blankIndex]?.id;
 							return (
 								<StyledInput
-									key={`input-${blankIndex}`}
+									key={`input-${blankId}`}
 									variant='outlined'
 									size='small'
-									value={userAnswers[blankIndex] || ''}
-									onChange={handleChange(blankIndex)}
-									isCorrect={inputStatus[blankIndex]}
-									fromPracticeQuestionUser={!!fromPracticeQuestionUser}
+									value={userAnswers[blankId] || ''}
+									onChange={handleChange(blankId)}
+									isCorrect={inputStatus[blankId]}
+									fromQuizQuestionUser={!!fromQuizQuestionUser}
+									isLessonCompleted={!!isLessonCompleted}
+									lessonType={lessonType!}
 								/>
 							);
 						} else {
@@ -263,6 +328,53 @@ const FillInTheBlanksTyping = ({
 									{showHiddenBlankValues ? <VisibilityOff /> : <Visibility />}
 								</IconButton>
 							</Tooltip>
+						</Box>
+					</Box>
+				)}
+
+				{isLessonCompleted && (
+					<Box sx={{ margin: '3rem 0 1rem 0' }}>
+						<Box>
+							<Typography variant='h6'>Correct Text</Typography>
+						</Box>
+						<Box
+							sx={{
+								boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
+								borderRadius: '0.35rem',
+								margin: '0.5rem 0',
+								padding: '1rem',
+							}}>
+							<TextContainer>
+								{textSegments.map((segment, index) => {
+									const match = segment.match(/___(\d+)___/);
+									if (match) {
+										const blankIndex = parseInt(match[1], 10) - 1;
+										const correctValue = blankValuePairs[blankIndex].value;
+										return (
+											<Typography
+												key={`correct-${blankIndex}`}
+												variant='body2'
+												component='span'
+												sx={{
+													color: 'green',
+													fontWeight: 'bolder',
+													border: '0.075rem solid green',
+													padding: '0.25rem',
+													margin: '0 0.15rem',
+													borderRadius: '0.35rem',
+												}}>
+												{correctValue}
+											</Typography>
+										);
+									} else {
+										return (
+											<Typography key={`correct-text-${index}`} variant='body2' component='span'>
+												{segment}
+											</Typography>
+										);
+									}
+								})}
+							</TextContainer>
 						</Box>
 					</Box>
 				)}

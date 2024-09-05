@@ -10,12 +10,14 @@ import FlipCardPreview from '../layouts/flipCard/FlipCardPreview';
 import MatchingPreview from '../layouts/matching/MatchingPreview';
 import FillInTheBlanksDragDrop from '../layouts/FITBDragDrop/FillInTheBlanksDragDrop';
 import FillInTheBlanksTyping from '../layouts/FITBTyping/FillInTheBlanksTyping';
+import { Lesson } from '../../interfaces/lessons';
 
 interface QuestionDialogContentNonEditProps {
 	question: QuestionInterface | null;
+	singleLessonBeforeSave?: Lesson;
 }
 
-const QuestionDialogContentNonEdit = ({ question }: QuestionDialogContentNonEditProps) => {
+const QuestionDialogContentNonEdit = ({ question, singleLessonBeforeSave }: QuestionDialogContentNonEditProps) => {
 	const hasMedia = question?.imageUrl || question?.videoUrl;
 
 	const { fetchQuestionTypeName } = useContext(QuestionsContext);
@@ -170,19 +172,27 @@ const QuestionDialogContentNonEdit = ({ question }: QuestionDialogContentNonEdit
 
 			{question && fetchQuestionTypeName(question) === QuestionType.MATCHING && (
 				<Box sx={{ display: 'flex', justifyContent: 'center' }}>
-					<MatchingPreview initialPairs={question.matchingPairs} />
+					<MatchingPreview initialPairs={question.matchingPairs} lessonType={singleLessonBeforeSave?.type} />
 				</Box>
 			)}
 
 			{question && fetchQuestionTypeName(question) === QuestionType.FITB_DRAG_DROP && (
 				<Box sx={{ display: 'flex', justifyContent: 'center' }}>
-					<FillInTheBlanksDragDrop textWithBlanks={question.question} blankValuePairs={question.blankValuePairs} />
+					<FillInTheBlanksDragDrop
+						textWithBlanks={question.question}
+						blankValuePairs={question.blankValuePairs}
+						lessonType={singleLessonBeforeSave?.type}
+					/>
 				</Box>
 			)}
 
 			{question && fetchQuestionTypeName(question) === QuestionType.FITB_TYPING && (
-				<Box sx={{ display: 'flex', justifyContent: 'center' }}>
-					<FillInTheBlanksTyping textWithBlanks={question.question} blankValuePairs={question.blankValuePairs} />
+				<Box sx={{ display: 'flex', justifyContent: 'center', mb: '2rem' }}>
+					<FillInTheBlanksTyping
+						textWithBlanks={question.question}
+						blankValuePairs={question.blankValuePairs}
+						lessonType={singleLessonBeforeSave?.type}
+					/>
 				</Box>
 			)}
 		</DialogContent>

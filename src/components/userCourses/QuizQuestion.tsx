@@ -40,6 +40,7 @@ import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
 import FillInTheBlanksTyping from '../layouts/FITBTyping/FillInTheBlanksTyping';
 import FillInTheBlanksDragDrop from '../layouts/FITBDragDrop/FillInTheBlanksDragDrop';
 import MatchingPreview from '../layouts/matching/MatchingPreview';
+import { UserBlankValuePairAnswers, UserMatchingPairAnswers } from '../../interfaces/userQuestion';
 
 interface QuizQuestionProps {
 	question: QuestionInterface;
@@ -77,11 +78,15 @@ const QuizQuestion = ({
 	const { fetchQuestionTypeName } = useContext(QuestionsContext);
 	const { user } = useContext(UserAuthContext);
 
-	const [userQuizAnswer, setUserQuizAnswer] = useState<string>(''); //user's answer after submitting the quiz
+	const [userQuizAnswerAfterSubmission, setUserQuizAnswerAfterSubmission] = useState<string>('');
+	const [userMatchingPairsAfterSubmission, setUserMatchingPairsAfterSubmission] = useState<UserMatchingPairAnswers[]>([]);
+	const [userBlankValuePairsAfterSubmission, setUserBlankValuePairsAfterSubmission] = useState<UserBlankValuePairAnswers[]>([]);
+
 	const [uploadUrlForCompletedLesson, setUploadUrlForCompletedLesson] = useState<string>('');
 
 	const [selectedQuestion, setSelectedQuestion] = useState<number>(displayedQuestionNumber);
 	const [isSubmitQuizModalOpen, setIsSubmitQuizModalOpen] = useState<boolean>(false);
+	const [isMsgModalAfterSubmitOpen, setIsMsgModalAfterSubmitOpen] = useState<boolean>(false);
 	const [userQuizAnswersUploading, setUserQuizAnswersUploading] = useState<boolean>(false);
 	const [isAudioVideoUploaded, setIsAudioVideoUploaded] = useState<boolean>(() => {
 		const userUpload = userQuizAnswers?.find((data) => data.questionId === question._id);
@@ -128,12 +133,28 @@ const QuizQuestion = ({
 	const isCompletingLesson: boolean = isLastQuestion && nextLessonId !== null;
 
 	useEffect(() => {
-		setUserQuizAnswer(() => {
+		setUserQuizAnswerAfterSubmission(() => {
 			if (isLessonCompleted) {
 				const answer: string = userQuizAnswers?.find((data) => data.questionId == question._id)?.userAnswer || '';
 				return answer;
 			}
 			return '';
+		});
+
+		setUserMatchingPairsAfterSubmission(() => {
+			if (isLessonCompleted) {
+				const pairs: UserMatchingPairAnswers[] = userQuizAnswers?.find((data) => data.questionId == question._id)?.userMatchingPairAnswers || [];
+				return pairs;
+			}
+			return [];
+		});
+
+		setUserBlankValuePairsAfterSubmission(() => {
+			if (isLessonCompleted) {
+				const pairs: UserBlankValuePairAnswers[] = userQuizAnswers?.find((data) => data.questionId == question._id)?.userBlankValuePairAnswers || [];
+				return pairs;
+			}
+			return [];
 		});
 
 		setTeacherQuestionFeedback(() => {
@@ -230,6 +251,8 @@ const QuizQuestion = ({
 			await axios.post(`${base_url}/quizSubmissions`, { userId, lessonId, courseId, userLessonId, orgId });
 		} catch (error) {
 			console.log(error);
+		} finally {
+			setIsMsgModalAfterSubmitOpen(true);
 		}
 
 		await handleNextLesson();
@@ -238,10 +261,7 @@ const QuizQuestion = ({
 		setIsQuizInProgress(false);
 		setUserQuizAnswersUploading(false);
 		localStorage.removeItem(`UserQuizAnswers-${lessonId}`);
-		navigate(`/course/${courseId}/user/${userId}/userCourseId/${userCourseId}?isEnrolled=true`);
 	};
-
-	console.log(userQuizAnswers);
 
 	const uploadAudio = async (blob: Blob) => {
 		setIsAudioUploading(true);
@@ -320,7 +340,7 @@ const QuizQuestion = ({
 								multiline
 								rows={4}
 								resizable
-								value={isLessonCompleted ? userQuizAnswer : value}
+								value={isLessonCompleted ? userQuizAnswerAfterSubmission : value}
 								onChange={(e) => {
 									setValue(e.target.value);
 									setUserQuizAnswers((prevData) => {
@@ -402,7 +422,7 @@ const QuizQuestion = ({
 								setHelperText={setHelperText}
 								setUserQuizAnswers={setUserQuizAnswers}
 								lessonType={lessonType}
-								userQuizAnswer={userQuizAnswer}
+								userQuizAnswerAfterSubmission={userQuizAnswerAfterSubmission}
 							/>
 						</Box>
 					)}
@@ -418,6 +438,7 @@ const QuizQuestion = ({
 								setIsLessonCompleted={setIsLessonCompleted}
 								isLessonCompleted={isLessonCompleted}
 								setUserQuizAnswers={setUserQuizAnswers}
+								userMatchingPairsAfterSubmission={userMatchingPairsAfterSubmission}
 							/>
 						</Box>
 					)}
@@ -434,6 +455,8 @@ const QuizQuestion = ({
 								setIsLessonCompleted={setIsLessonCompleted}
 								isLessonCompleted={isLessonCompleted}
 								setUserQuizAnswers={setUserQuizAnswers}
+								userBlankValuePairsAfterSubmission={userBlankValuePairsAfterSubmission}
+								lessonType={lessonType}
 							/>
 						</Box>
 					)}
@@ -458,12 +481,18 @@ const QuizQuestion = ({
 								setIsLessonCompleted={setIsLessonCompleted}
 								isLessonCompleted={isLessonCompleted}
 								setUserQuizAnswers={setUserQuizAnswers}
+								userBlankValuePairsAfterSubmission={userBlankValuePairsAfterSubmission}
+								lessonType={lessonType}
 							/>
 						</Box>
 					)}
 
 					{isMultipleChoiceQuestion && (
-						<RadioGroup name='question' value={isLessonCompleted ? userQuizAnswer : value} onChange={handleRadioChange} sx={{ alignSelf: 'center' }}>
+						<RadioGroup
+							name='question'
+							value={isLessonCompleted ? userQuizAnswerAfterSubmission : value}
+							onChange={handleRadioChange}
+							sx={{ alignSelf: 'center' }}>
 							{question &&
 								question.options &&
 								question.options.map((option, index) => {
@@ -471,7 +500,7 @@ const QuizQuestion = ({
 
 									if (isLessonCompleted) {
 										const isCorrectAnswer = option === question.correctAnswer;
-										const isSelectedAnswer = option === userQuizAnswer;
+										const isSelectedAnswer = option === userQuizAnswerAfterSubmission;
 
 										if (isCorrectAnswer) {
 											textColor = 'green';
@@ -559,11 +588,11 @@ const QuizQuestion = ({
 						},
 					}}
 					onClick={() => {
+						window.scrollTo({ top: 0, behavior: 'smooth' });
 						if (!(displayedQuestionNumber - 1 === 0)) {
 							setDisplayedQuestionNumber((prev) => prev - 1);
 							setSelectedQuestion(displayedQuestionNumber - 1);
 						}
-						window.scrollTo({ top: 0, behavior: 'smooth' });
 					}}
 					disabled={displayedQuestionNumber - 1 === 0}>
 					<KeyboardArrowLeft fontSize='large' />
@@ -648,6 +677,42 @@ const QuizQuestion = ({
 					) : (
 						<CustomDialogActions onCancel={() => setIsSubmitQuizModalOpen(false)} onSubmit={handleQuizSubmission} submitBtnText='Submit' />
 					)}
+				</CustomDialog>
+
+				<CustomDialog
+					openModal={isMsgModalAfterSubmitOpen}
+					closeModal={() => {
+						setIsMsgModalAfterSubmitOpen(false);
+						navigate(`/course/${courseId}/user/${userId}/userCourseId/${userCourseId}?isEnrolled=true`);
+					}}>
+					<Box sx={{ display: 'flex', flexDirection: 'column', width: '90%', margin: '0 auto' }}>
+						<Box>
+							<Typography variant='body1' sx={{ mb: '0.75rem', lineHeight: '1.9' }}>
+								You will receive feedback on the quiz from your instructor soon. You can review the answers for the following question types by
+								revisiting the quiz:
+							</Typography>
+						</Box>
+
+						<Box sx={{ ml: '3rem' }}>
+							{[QuestionType.MULTIPLE_CHOICE, QuestionType.TRUE_FALSE, QuestionType.MATCHING, 'Fill in the Blanks'].map((type, index) => (
+								<Typography key={index} variant='body2' sx={{ lineHeight: '1.9' }}>
+									- {type}
+								</Typography>
+							))}
+						</Box>
+					</Box>
+
+					<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '90%', margin: '0 auto' }}>
+						<CustomSubmitButton
+							type='button'
+							onClick={() => {
+								setIsMsgModalAfterSubmitOpen(false);
+								navigate(`/course/${courseId}/user/${userId}/userCourseId/${userCourseId}?isEnrolled=true`);
+							}}
+							sx={{ width: 'fit-content', padding: '0.5rem 2rem', margin: '2rem  0rem' }}>
+							Close
+						</CustomSubmitButton>
+					</Box>
 				</CustomDialog>
 			</Box>
 		</Box>
