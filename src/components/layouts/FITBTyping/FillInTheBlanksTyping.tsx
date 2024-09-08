@@ -10,6 +10,8 @@ import { words } from '../../../interfaces/randomWords';
 import { QuizQuestionAnswer } from '../../../pages/LessonPage';
 import { UserBlankValuePairAnswers } from '../../../interfaces/userQuestion';
 import { LessonType } from '../../../interfaces/enums';
+import CustomInfoMessage from '../infoMessage/CustomInfoMessageAlignedLeft';
+import theme from '../../../themes';
 
 const Container = styled(Box)`
 	display: flex;
@@ -50,14 +52,14 @@ const StyledInput = styled(({ isCorrect, isLessonCompleted, fromQuizQuestionUser
 ))`
 	& .MuiOutlinedInput-root {
 		background-color: ${({ isCorrect, fromQuizQuestionUser, isLessonCompleted, lessonType }) => {
-			if (isLessonCompleted) return isCorrect ? 'green' : '#d32f2f';
+			if (isLessonCompleted) return isCorrect ? theme.palette.success.main : '#ef5350';
 
 			if (fromQuizQuestionUser || lessonType === LessonType.QUIZ) {
 				return '#fff';
 			}
 
-			if (isCorrect === true) return 'green';
-			if (isCorrect === false) return '#d32f2f';
+			if (isCorrect === true) return theme.palette.success.main;
+			if (isCorrect === false) return '#ef5350';
 			return '#fff';
 		}};
 	}
@@ -96,6 +98,7 @@ interface FillInTheBlanksTypingProps {
 	numberOfQuestions?: number;
 	userBlankValuePairsAfterSubmission?: UserBlankValuePairAnswers[];
 	lessonType?: string | undefined;
+	userQuizAnswers?: QuizQuestionAnswer[];
 	setAllPairsMatchedFITBTyping?: React.Dispatch<React.SetStateAction<boolean>>;
 	setIsLessonCompleted?: React.Dispatch<React.SetStateAction<boolean>>;
 	setShowQuestionSelector?: React.Dispatch<React.SetStateAction<boolean>>;
@@ -115,6 +118,7 @@ const FillInTheBlanksTyping = ({
 	numberOfQuestions,
 	userBlankValuePairsAfterSubmission,
 	lessonType,
+	userQuizAnswers,
 	setAllPairsMatchedFITBTyping,
 	setIsLessonCompleted,
 	setShowQuestionSelector,
@@ -131,7 +135,6 @@ const FillInTheBlanksTyping = ({
 
 	useEffect(() => {
 		if (isLessonCompleted && userBlankValuePairsAfterSubmission) {
-			// Populate with submitted answers if lesson is completed
 			const submittedAnswers: Record<string, string> = {};
 			const status: Record<string, boolean | null> = {};
 
@@ -142,6 +145,45 @@ const FillInTheBlanksTyping = ({
 
 			setUserAnswers(submittedAnswers);
 			setInputStatus(status);
+		} else if (!isLessonCompleted && fromQuizQuestionUser) {
+			const initialAnswers: Record<string, string> = {};
+			const initialStatus: Record<string, boolean | null> = {};
+
+			userQuizAnswers
+				?.find((answer) => answer.questionId === questionId)
+				?.userBlankValuePairAnswers.forEach((pair) => {
+					initialAnswers[pair.id] = pair.value;
+					initialStatus[pair.id] = true;
+				});
+
+			setUserAnswers(initialAnswers);
+			setInputStatus(initialStatus);
+
+			const randomWords = shuffle(words).slice(0, 15);
+			const values = blankValuePairs.map((pair) => pair.value);
+			const hintWords = shuffle([...values, ...randomWords]);
+
+			setHints(hintWords);
+		} else if (
+			(isLessonCompleted && fromPracticeQuestionUser) ||
+			(fromPracticeQuestionUser && !isLessonCompleted && displayedQuestionNumber! < getLastQuestion())
+		) {
+			const initialAnswers: Record<string, string> = {};
+			const initialStatus: Record<string, boolean | null> = {};
+
+			blankValuePairs.forEach((pair) => {
+				initialAnswers[pair.id] = pair.value;
+				initialStatus[pair.id] = true;
+			});
+
+			setUserAnswers(initialAnswers);
+			setInputStatus(initialStatus);
+
+			const randomWords = shuffle(words).slice(0, 5);
+			const values = blankValuePairs.map((pair) => pair.value);
+			const hintWords = shuffle([...values, ...randomWords]);
+
+			setHints(hintWords);
 		} else {
 			const initialAnswers: Record<string, string> = {};
 			const initialStatus: Record<string, boolean | null> = {};
@@ -154,15 +196,12 @@ const FillInTheBlanksTyping = ({
 			setUserAnswers(initialAnswers);
 			setInputStatus(initialStatus);
 
-			const randomWords =
-				(fromQuizQuestionUser || lessonType === LessonType.QUIZ || lessonType !== LessonType.PRACTICE_LESSON) && !fromAdminQuestions
-					? shuffle(words).slice(0, 15)
-					: shuffle(words).slice(0, 5);
+			const randomWords = lessonType === LessonType.QUIZ && !fromAdminQuestions ? shuffle(words).slice(0, 15) : shuffle(words).slice(0, 5);
 			const values = blankValuePairs.map((pair) => pair.value);
 			const hintWords = shuffle([...values, ...randomWords]);
 			setHints(hintWords);
 		}
-	}, [blankValuePairs, isLessonCompleted, userBlankValuePairsAfterSubmission]);
+	}, [blankValuePairs, isLessonCompleted, userBlankValuePairsAfterSubmission, displayedQuestionNumber, getLastQuestion()]);
 
 	useEffect(() => {
 		setUserQuizAnswers?.((prevData) => {
@@ -196,7 +235,7 @@ const FillInTheBlanksTyping = ({
 	}, [textWithBlanks]);
 
 	useEffect(() => {
-		if (hasInteracted && !isLessonCompleted && fromPracticeQuestionUser) {
+		if (hasInteracted && fromPracticeQuestionUser) {
 			const allCorrect = blankValuePairs.every((pair) => pair.value === userAnswers[pair.id]);
 			if (onComplete) onComplete(allCorrect);
 
@@ -219,7 +258,7 @@ const FillInTheBlanksTyping = ({
 	}, [userAnswers, hasInteracted]);
 
 	const handleChange = (id: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
-		if (isLessonCompleted) return;
+		if (isLessonCompleted && lessonType !== LessonType.PRACTICE_LESSON) return;
 
 		setHasInteracted(true);
 
@@ -293,47 +332,49 @@ const FillInTheBlanksTyping = ({
 					})}
 				</TextContainer>
 
-				{!isLessonCompleted && (
-					<Box
-						sx={{
-							display: 'flex',
-							justifyContent: 'space-between',
-							alignItems: 'center',
-							minHeight: '3rem',
-							boxShadow: '0 0 0.4rem 0.2rem rgba(0,0,0,0.2)',
-							borderRadius: '0.35rem',
-							width: '100%',
-							mt: '2rem',
-							padding: '1rem',
-						}}>
-						<Box sx={{ display: 'flex', flexWrap: 'wrap' }}>
-							{hints.map((hint, index) => {
-								return (
-									<Box
-										key={index}
-										sx={{
-											border: '0.01rem solid gray',
-											padding: '0.25rem 0.5rem',
-											margin: '0.25rem 0.35rem 0.5rem 0.35rem',
-											borderRadius: '0.35rem',
-										}}>
-										{showHiddenBlankValues ? <Typography variant='body2'>{hint}</Typography> : <Typography>*****</Typography>}
-									</Box>
-								);
-							})}
-						</Box>
-						<Box>
-							<Tooltip title={showHiddenBlankValues ? 'Hide Possible Answers' : 'See Possible Answers'} placement='top'>
-								<IconButton onClick={() => setShowHiddenBlankValues(!showHiddenBlankValues)}>
-									{showHiddenBlankValues ? <VisibilityOff /> : <Visibility />}
-								</IconButton>
-							</Tooltip>
+				{(!isLessonCompleted || lessonType === LessonType.PRACTICE_LESSON) && (
+					<Box sx={{ mt: '2rem' }}>
+						<CustomInfoMessage message='Type the correct word into each blank to complete the sentence(s)' />
+						<Box
+							sx={{
+								display: 'flex',
+								justifyContent: 'space-between',
+								alignItems: 'center',
+								minHeight: '3rem',
+								boxShadow: '0 0 0.4rem 0.2rem rgba(0,0,0,0.2)',
+								borderRadius: '0.35rem',
+								width: '100%',
+								padding: '1rem',
+							}}>
+							<Box sx={{ display: 'flex', flexWrap: 'wrap' }}>
+								{hints.map((hint, index) => {
+									return (
+										<Box
+											key={index}
+											sx={{
+												border: '0.01rem solid gray',
+												padding: '0.25rem 0.5rem',
+												margin: '0.25rem 0.35rem 0.5rem 0.35rem',
+												borderRadius: '0.35rem',
+											}}>
+											{showHiddenBlankValues ? <Typography variant='body2'>{hint}</Typography> : <Typography>*****</Typography>}
+										</Box>
+									);
+								})}
+							</Box>
+							<Box>
+								<Tooltip title={showHiddenBlankValues ? 'Hide Possible Answers' : 'See Possible Answers'} placement='top'>
+									<IconButton onClick={() => setShowHiddenBlankValues(!showHiddenBlankValues)}>
+										{showHiddenBlankValues ? <VisibilityOff /> : <Visibility />}
+									</IconButton>
+								</Tooltip>
+							</Box>
 						</Box>
 					</Box>
 				)}
 
-				{isLessonCompleted && (
-					<Box sx={{ margin: '3rem 0 1rem 0' }}>
+				{isLessonCompleted && lessonType !== LessonType.PRACTICE_LESSON && (
+					<Box sx={{ margin: '3rem 0 1rem 0', width: '100%' }}>
 						<Box>
 							<Typography variant='h6'>Correct Text</Typography>
 						</Box>

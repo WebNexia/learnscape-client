@@ -1,19 +1,19 @@
-import { Box, IconButton, Tooltip, Typography } from '@mui/material';
+import { Box, IconButton, Typography } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { useLocation, useParams } from 'react-router-dom';
 import { useContext, useEffect, useState } from 'react';
 import { QuestionsContext } from '../contexts/QuestionsContextProvider';
 import axios from 'axios';
 import { QuestionType } from '../interfaces/enums';
-import { stripHtml } from '../utils/stripHtml';
-import { truncateText } from '../utils/utilText';
-import { ArrowBackIosNewOutlined, ArrowForwardIosOutlined, InfoOutlined, RateReviewOutlined } from '@mui/icons-material';
+import { ArrowBackIosNewOutlined, ArrowForwardIosOutlined } from '@mui/icons-material';
 import theme from '../themes';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import { sanitizeHtml } from '../utils/sanitizeHtml';
 import FillInTheBlanksTyping from '../components/layouts/FITBTyping/FillInTheBlanksTyping';
 import FillInTheBlanksDragDrop from '../components/layouts/FITBDragDrop/FillInTheBlanksDragDrop';
 import MatchingPreview from '../components/layouts/matching/MatchingPreview';
+import CustomInfoMessageAlignedRight from '../components/layouts/infoMessage/CustomInfoMessageAlignedRight';
+import QuestionResponseCard from '../components/layouts/quizSubmissions/QuestionResponseCard';
 
 const SubmissionFeedbackDetails = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -85,7 +85,7 @@ const SubmissionFeedbackDetails = () => {
 							sx={{
 								margin: '1rem 0 0 2rem',
 								color: option === userSingleResponseWithFeedback?.questionId.correctAnswer ? theme.textColor?.greenPrimary.main : null,
-								fontStyle: option === userSingleResponseWithFeedback?.questionId.correctAnswer ? 'italic' : null,
+								fontWeight: 'bolder',
 							}}>
 							{String.fromCharCode(97 + index)}) {option}
 						</Typography>
@@ -245,81 +245,24 @@ const SubmissionFeedbackDetails = () => {
 			</Box>
 
 			<Box sx={{ width: '90%', margin: '1.5rem' }}>
-				<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+				<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', margin: '1rem 0' }}>
 					<Box>
 						<Typography variant='h5'>Questions</Typography>
 					</Box>
-					<Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', width: '100%', margin: '1rem 0' }}>
-						<Box>
-							<Typography sx={{ fontSize: '0.85rem', mr: '0.5rem' }}>Click the questions to see details and read feedback if given</Typography>
-						</Box>
-						<Box>
-							<InfoOutlined fontSize='small' color='error' />
-						</Box>
-					</Box>
+					<CustomInfoMessageAlignedRight message='Click on a question to view details and feedback (if available)' sx={{ marginRight: '2.5rem' }} />
 				</Box>
 				{userResponseData?.map((response: any, index: number) => (
-					<Box
+					<QuestionResponseCard
 						key={response._id}
-						sx={{
-							display: 'flex',
-							justifyContent: 'space-between',
-							width: '100%',
-							boxShadow: '0 0.1rem 0.4rem 0.1rem rgba(0, 0,0,0.2)',
-							borderRadius: '0.35rem',
-							padding: '0.75rem 1rem',
-							mb: '0.75rem',
-							cursor: 'pointer',
-							backgroundColor:
-								fetchQuestionTypeName(response.questionId) === QuestionType.TRUE_FALSE ||
-								fetchQuestionTypeName(response.questionId) === QuestionType.MULTIPLE_CHOICE
-									? response.userAnswer === response.questionId.correctAnswer
-										? 'green'
-										: '#B71C1C'
-									: undefined,
-						}}
-						onClick={() => {
+						response={response}
+						index={index}
+						fetchQuestionTypeName={fetchQuestionTypeName}
+						onCardClick={(response, index) => {
 							setOpenQuestionFeedbackModal(true);
 							setUserSingleResponseWithFeedback(response);
 							setCurrentResponseIndex(index);
-						}}>
-						<Typography
-							variant='body2'
-							sx={{
-								flex: 4,
-								color:
-									fetchQuestionTypeName(response.questionId) === QuestionType.TRUE_FALSE ||
-									fetchQuestionTypeName(response.questionId) === QuestionType.MULTIPLE_CHOICE
-										? 'white'
-										: undefined,
-							}}>
-							{truncateText(stripHtml(response.questionId.question), 50)}
-						</Typography>
-
-						<Box sx={{ flex: 1.5 }}>
-							{response.teacherFeedback || response.teacherAudioFeedbackUrl ? (
-								<Tooltip title='Feedback' placement='left'>
-									<RateReviewOutlined color='success' />
-								</Tooltip>
-							) : (
-								<></>
-							)}
-						</Box>
-
-						<Typography
-							variant='body2'
-							sx={{
-								textAlign: 'right',
-								flex: 1,
-								color:
-									fetchQuestionTypeName(response.questionId) === QuestionType.TRUE_FALSE ||
-									fetchQuestionTypeName(response.questionId) === QuestionType.MULTIPLE_CHOICE
-										? 'white'
-										: undefined,
-							}}>
-							{fetchQuestionTypeName(response.questionId)}
-						</Typography>
-					</Box>
+						}}
+					/>
 				))}
 			</Box>
 

@@ -437,6 +437,7 @@ const QuizQuestion = ({
 								numberOfQuestions={numberOfQuestions}
 								setIsLessonCompleted={setIsLessonCompleted}
 								isLessonCompleted={isLessonCompleted}
+								userQuizAnswers={userQuizAnswers}
 								setUserQuizAnswers={setUserQuizAnswers}
 								userMatchingPairsAfterSubmission={userMatchingPairsAfterSubmission}
 							/>
@@ -454,6 +455,7 @@ const QuizQuestion = ({
 								numberOfQuestions={numberOfQuestions}
 								setIsLessonCompleted={setIsLessonCompleted}
 								isLessonCompleted={isLessonCompleted}
+								userQuizAnswers={userQuizAnswers}
 								setUserQuizAnswers={setUserQuizAnswers}
 								userBlankValuePairsAfterSubmission={userBlankValuePairsAfterSubmission}
 								lessonType={lessonType}
@@ -480,6 +482,7 @@ const QuizQuestion = ({
 								numberOfQuestions={numberOfQuestions}
 								setIsLessonCompleted={setIsLessonCompleted}
 								isLessonCompleted={isLessonCompleted}
+								userQuizAnswers={userQuizAnswers}
 								setUserQuizAnswers={setUserQuizAnswers}
 								userBlankValuePairsAfterSubmission={userBlankValuePairsAfterSubmission}
 								lessonType={lessonType}
@@ -503,7 +506,7 @@ const QuizQuestion = ({
 										const isSelectedAnswer = option === userQuizAnswerAfterSubmission;
 
 										if (isCorrectAnswer) {
-											textColor = 'green';
+											textColor = theme.palette.success.main;
 										} else if (isSelectedAnswer) {
 											textColor = 'red';
 										}
@@ -522,7 +525,9 @@ const QuizQuestion = ({
 														alignItems: 'center',
 													}}>
 													{option}
-													{isLessonCompleted && option === question.correctAnswer && <CheckCircle sx={{ color: 'green', marginLeft: 1 }} />}
+													{isLessonCompleted && option === question.correctAnswer && (
+														<CheckCircle sx={{ color: theme.palette.success.main, marginLeft: 1 }} />
+													)}
 												</Typography>
 											}
 											key={index}

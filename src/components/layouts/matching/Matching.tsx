@@ -2,13 +2,14 @@ import { Box, IconButton, Tooltip, Typography } from '@mui/material';
 import { useState } from 'react';
 import CustomTextField from '../../forms/customFields/CustomTextField';
 import { MatchingPair, QuestionInterface } from '../../../interfaces/question';
-import { AddCircle, InfoOutlined, RemoveCircle } from '@mui/icons-material';
+import { AddCircle, RemoveCircle } from '@mui/icons-material';
 import MatchingPreview from './MatchingPreview';
 import { generateUniqueId } from '../../../utils/uniqueIdGenerator';
 import { Lesson } from '../../../interfaces/lessons';
 import { QuestionUpdateTrack } from '../../../pages/AdminLessonEditPage';
 import { questionLessonUpdateTrack } from '../../../utils/questionLessonUpdateTrack';
 import { LessonType } from '../../../interfaces/enums';
+import CustomInfoMessageAlignedRight from '../infoMessage/CustomInfoMessageAlignedRight';
 
 interface MatchingProps {
 	question?: QuestionInterface;
@@ -124,16 +125,7 @@ const Matching = ({
 					<Box>
 						<Typography variant='h5'>Student View </Typography>
 					</Box>
-					<Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-start' }}>
-						<Box>
-							<Typography sx={{ fontSize: '0.8rem', mr: '0.5rem' }}>
-								View as in a {lessonType === LessonType.QUIZ ? 'quiz' : 'practice lesson'}
-							</Typography>
-						</Box>
-						<Box>
-							<InfoOutlined fontSize='small' color='error' />
-						</Box>
-					</Box>
+					<CustomInfoMessageAlignedRight message={`View as in a ${lessonType === LessonType.QUIZ ? 'quiz' : 'practice lesson'}`} />
 				</Box>
 				<MatchingPreview initialPairs={pairs} lessonType={lessonType} />
 			</Box>

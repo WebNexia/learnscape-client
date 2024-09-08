@@ -1,7 +1,7 @@
 import { Box, FormControl, IconButton, InputLabel, Link, MenuItem, Select, SelectChangeEvent, Tooltip, Typography } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import theme from '../themes';
-import { Delete, Edit, FileCopy, InfoOutlined } from '@mui/icons-material';
+import { Delete, Edit, FileCopy } from '@mui/icons-material';
 import { useParams } from 'react-router-dom';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import { FormEvent, useContext, useEffect, useState } from 'react';
@@ -41,6 +41,7 @@ import DocumentsListEditBox from '../components/adminDocuments/DocumentsListEdit
 import { LessonType, QuestionType } from '../interfaces/enums';
 import NoContentBoxAdmin from '../components/layouts/noContentBox/NoContentBoxAdmin';
 import AdminLessonEditPageEditQuestionDialog from '../components/forms/editQuestion/AdminLessonEditPageEditQuestionDialog';
+import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/CustomInfoMessageAlignedLeft';
 
 export interface QuestionUpdateTrack {
 	questionId: string;
@@ -346,13 +347,10 @@ const AdminLessonEditPage = () => {
 				}
 			};
 
-			// Ensure lessonType is correctly typed
 			const lessonType = singleLessonBeforeSave.type as LessonType;
 
-			// Retain questions valid for both old and new lesson types
 			const filteredQuestions = singleLessonBeforeSave?.questions?.filter((question) => {
 				if (question !== null && question !== undefined) {
-					// Check if the question is valid for the current lesson type
 					return allowedQuestionTypes(lessonType).includes(question.questionType as QuestionType);
 				}
 				return false;
@@ -802,14 +800,10 @@ const AdminLessonEditPage = () => {
 										<Box sx={{ flex: 1 }}>
 											<Typography variant='h5'>Questions</Typography>
 										</Box>
-										<Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', flex: 4 }}>
-											<Box>
-												<InfoOutlined fontSize='small' color='error' />
-											</Box>
-											<Box>
-												<Typography sx={{ fontSize: '0.8rem', ml: '0.5rem' }}>Drag the questions to reorder</Typography>
-											</Box>
-										</Box>
+										<CustomInfoMessageAlignedLeft
+											message='Drag the questions to reorder'
+											sx={{ justifyContent: 'flex-end', alignItems: 'center', flex: 4, marginTop: '0.85rem' }}
+										/>
 										<Box sx={{ display: 'flex', justifyContent: 'flex-end', flex: 5 }}>
 											<CustomSubmitButton
 												type='button'

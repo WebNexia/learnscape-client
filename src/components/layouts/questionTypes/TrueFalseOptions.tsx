@@ -96,7 +96,9 @@ const TrueFalseOptions = ({
 		<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', mt: '2rem' }}>
 			<RadioGroup row value={fromLearner ? learnerSetting : adminSetting} onChange={handleChange}>
 				<Box sx={{ display: 'flex', alignItems: 'center' }}>
-					{showCheckmark('true') && <CheckCircleIcon sx={{ color: 'green', marginRight: 1 }} />}
+					{showCheckmark('true') && lessonType !== LessonType.PRACTICE_LESSON && (
+						<CheckCircleIcon sx={{ color: theme.palette.success.main, marginRight: 1 }} />
+					)}
 					<Box
 						sx={{
 							width: '7rem',
@@ -159,7 +161,7 @@ const TrueFalseOptions = ({
 							}}
 						/>
 					</Box>
-					{showCheckmark('false') && <CheckCircleIcon sx={{ color: 'green', marginLeft: 1 }} />}
+					{showCheckmark('false') && <CheckCircleIcon sx={{ color: theme.palette.success.main, marginLeft: 1 }} />}
 				</Box>
 			</RadioGroup>
 		</Box>

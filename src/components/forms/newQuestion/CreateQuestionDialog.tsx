@@ -14,7 +14,7 @@ import {
 	Tooltip,
 	Typography,
 } from '@mui/material';
-import { AddCircle, InfoOutlined, RemoveCircle } from '@mui/icons-material';
+import { AddCircle, RemoveCircle } from '@mui/icons-material';
 import CustomDialog from '../../layouts/dialog/CustomDialog';
 import CustomTextField from '../customFields/CustomTextField';
 import CustomDialogActions from '../../layouts/dialog/CustomDialogActions';
@@ -40,6 +40,7 @@ import { Lesson } from '../../../interfaces/lessons';
 import { updateEditorContentAndBlankPairs } from '../../../utils/updateEditorContentAndBlankPairs';
 import FillInTheBlanksTyping from '../../layouts/FITBTyping/FillInTheBlanksTyping';
 import FillInTheBlanksDragDrop from '../../layouts/FITBDragDrop/FillInTheBlanksDragDrop';
+import CustomInfoMessageAlignedRight from '../../layouts/infoMessage/CustomInfoMessageAlignedRight';
 
 declare global {
 	interface Window {
@@ -133,7 +134,7 @@ const CreateQuestionDialog = ({
 	const [editorContent, setEditorContent] = useState<string>('');
 	const [isMinimumTwoMatchingPairs, setIsMinimumTwoMatchingPairs] = useState<boolean>(false);
 	const [isMissingPair, setIsMissingPair] = useState<boolean>(false);
-	const [isMinimumTwoBlanks, setIsMinimumTwoBlanks] = useState<boolean>(false);
+	const [isMinimumOneBlank, setIsMinimumOneBlank] = useState<boolean>(false);
 
 	useEffect(() => {
 		resetVideoUpload();
@@ -143,8 +144,8 @@ const CreateQuestionDialog = ({
 	}, []);
 
 	useEffect(() => {
-		if (blankValuePairs.length > 1) {
-			setIsMinimumTwoBlanks(false);
+		if (blankValuePairs.length > 0) {
+			setIsMinimumOneBlank(false);
 		}
 	}, [blankValuePairs]);
 
@@ -187,7 +188,7 @@ const CreateQuestionDialog = ({
 		setIsCorrectAnswerMissing(false);
 		setIsMinimumTwoMatchingPairs(false);
 		setBlankValuePairs([]);
-		setIsMinimumTwoBlanks(false);
+		setIsMinimumOneBlank(false);
 	};
 
 	const createQuestion = async () => {
@@ -264,8 +265,15 @@ const CreateQuestionDialog = ({
 
 	const handleSubmit = () => {
 		if (!editorContent && !newQuestion.question) {
-			setIsQuestionMissing(!isFlipCard || !newQuestion.imageUrl);
-			return;
+			if (isFlipCard) {
+				if (!newQuestion.imageUrl && !newQuestion.question) {
+					setIsQuestionMissing(true);
+					return;
+				}
+			} else {
+				setIsQuestionMissing(true);
+				return;
+			}
 		}
 
 		if (isFlipCard && !correctAnswer) {
@@ -292,8 +300,8 @@ const CreateQuestionDialog = ({
 			}
 		}
 
-		if ((isFITBDragDrop || isFITBTyping) && blankValuePairs.length < 2) {
-			setIsMinimumTwoBlanks(true);
+		if ((isFITBDragDrop || isFITBTyping) && blankValuePairs.length < 1) {
+			setIsMinimumOneBlank(true);
 			return;
 		}
 
@@ -518,16 +526,7 @@ const CreateQuestionDialog = ({
 										<Box sx={{ flex: 1 }}>
 											<Typography variant='h5'>Student View</Typography>
 										</Box>
-										<Box sx={{ width: '100%', flex: 1 }}>
-											<Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-start' }}>
-												<Box>
-													<Typography sx={{ fontSize: '0.8rem', mr: '0.5rem' }}>View as in a practice lesson</Typography>
-												</Box>
-												<Box>
-													<InfoOutlined fontSize='small' color='error' />
-												</Box>
-											</Box>
-										</Box>
+										<CustomInfoMessageAlignedRight message='View as in a practice lesson' />
 									</Box>
 									{isFITBDragDrop && (
 										<Box sx={{ padding: '1rem 0', width: '90%' }}>
@@ -671,7 +670,7 @@ const CreateQuestionDialog = ({
 								{isMissingPair && <CustomErrorMessage>- There is at least one incomplete pair</CustomErrorMessage>}
 							</>
 						)}
-						{(isFITBDragDrop || isFITBTyping) && isMinimumTwoBlanks && <CustomErrorMessage>- Enter at least 2 blanks in the text</CustomErrorMessage>}
+						{(isFITBDragDrop || isFITBTyping) && isMinimumOneBlank && <CustomErrorMessage>- Enter at least 1 blank in the text</CustomErrorMessage>}
 
 						{isMultipleChoiceQuestion && (
 							<Box sx={{ mt: '2rem' }}>

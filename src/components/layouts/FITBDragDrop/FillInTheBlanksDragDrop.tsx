@@ -10,6 +10,8 @@ import { words } from '../../../interfaces/randomWords';
 import { QuizQuestionAnswer } from '../../../pages/LessonPage';
 import { UserBlankValuePairAnswers } from '../../../interfaces/userQuestion';
 import { LessonType } from '../../../interfaces/enums';
+import CustomInfoMessageAlignedLeft from '../infoMessage/CustomInfoMessageAlignedLeft';
+import theme from '../../../themes';
 
 const Container = styled(Box)`
 	display: flex;
@@ -45,15 +47,15 @@ const DropArea = styled(Box)<{ $isCorrect: boolean | null; $fromQuizQuestionUser
 	background-color: ${({ $isCorrect, $fromQuizQuestionUser, $isLessonCompleted, $lessonType }) =>
 		$isLessonCompleted
 			? $isCorrect
-				? 'green'
-				: '#d32f2f'
+				? theme.palette.success.main
+				: '#ef5350'
 			: ($fromQuizQuestionUser || $lessonType === LessonType.QUIZ) && !$isLessonCompleted
 			? '#f0f0f0'
 			: $isCorrect === null
 			? '#f0f0f0'
 			: $isCorrect
-			? 'green'
-			: '#d32f2f'};
+			? theme.palette.success.main
+			: '#ef5350'};
 	border: 0.1rem solid
 		${({ $isCorrect, $fromQuizQuestionUser, $isLessonCompleted, $lessonType }) =>
 			$isLessonCompleted
@@ -122,6 +124,7 @@ interface FillInTheBlanksDragDropProps {
 	numberOfQuestions?: number;
 	userBlankValuePairsAfterSubmission?: UserBlankValuePairAnswers[];
 	lessonType?: string | undefined;
+	userQuizAnswers?: QuizQuestionAnswer[];
 	setAllPairsMatchedFITBDragDrop?: React.Dispatch<React.SetStateAction<boolean>>;
 	setIsLessonCompleted?: React.Dispatch<React.SetStateAction<boolean>>;
 	setShowQuestionSelector?: React.Dispatch<React.SetStateAction<boolean>>;
@@ -147,6 +150,7 @@ const FillInTheBlanksDragDrop = ({
 	numberOfQuestions,
 	userBlankValuePairsAfterSubmission,
 	lessonType,
+	userQuizAnswers,
 	setAllPairsMatchedFITBDragDrop,
 	setIsLessonCompleted,
 	setShowQuestionSelector,
@@ -160,18 +164,14 @@ const FillInTheBlanksDragDrop = ({
 	const { updateLastQuestion, getLastQuestion } = useUserCourseLessonData();
 
 	useEffect(() => {
-		// Sanitize and format the text while preserving line breaks and paragraphs
-		let sanitizedHtml = sanitizeHtml(textWithBlanks)
+		const sanitizedHtml = sanitizeHtml(textWithBlanks)
 			.replace(/[()]/g, '')
 			.replace(/<\/?[^>]+(>|$)/g, '') // Remove HTML tags
 			.replace(/&nbsp;/g, ' ') // Replace &nbsp; with a regular space
 			.replace(/\n/g, '<br />') // Preserve line breaks by converting them to <br /> tags
 			.replace(/^\s*[\r\n]/gm, ''); // Remove empty lines
 
-		// Split the text by placeholders, keeping the placeholders intact
 		const segments = sanitizedHtml.split(/(___\d+___)/g);
-
-		// Set the text segments for rendering
 		setTextSegments(segments);
 
 		const initializedBlanks = blankValuePairs.map((pair) => ({
@@ -179,40 +179,44 @@ const FillInTheBlanksDragDrop = ({
 			value: '',
 		}));
 
-		if (isLessonCompleted && userBlankValuePairsAfterSubmission) {
-			userBlankValuePairsAfterSubmission.forEach((submittedPair) => {
-				const blank = initializedBlanks.find((b) => b.id === submittedPair.id);
-				if (blank) {
-					blank.value = submittedPair.value;
-				}
+		const populateBlanks = (source: BlankValuePair[] | UserBlankValuePairAnswers[]) => {
+			source.forEach((pair) => {
+				const blank = initializedBlanks.find((b) => b.id === pair.id);
+				if (blank) blank.value = pair.value;
 			});
+		};
+
+		if (isLessonCompleted && userBlankValuePairsAfterSubmission) {
+			populateBlanks(userBlankValuePairsAfterSubmission);
+		} else if (!isLessonCompleted && fromQuizQuestionUser) {
+			populateBlanks(userQuizAnswers?.find((quizAnswer) => quizAnswer.questionId === questionId)?.userBlankValuePairAnswers || []);
+		} else if (
+			(isLessonCompleted && fromPracticeQuestionUser) ||
+			(!isLessonCompleted && fromPracticeQuestionUser && displayedQuestionNumber! < getLastQuestion())
+		) {
+			populateBlanks(blankValuePairs);
+
+			const remainingResponses = blankValuePairs.filter((pair) => !initializedBlanks.some((blank) => blank.value === pair.value));
+			const randomWords = shuffle(words).slice(0, 5);
+			setResponses(shuffle([...remainingResponses, ...randomWords.map((word) => ({ id: `random-${word}`, value: word, blank: -1 }))]));
 		}
 
 		setBlanks(initializedBlanks);
 
 		if (!isLessonCompleted) {
-			const randomWords = fromQuizQuestionUser || lessonType === LessonType.QUIZ ? shuffle(words).slice(0, 15) : shuffle(words).slice(0, 5);
-			const allResponses = shuffle([
-				...blankValuePairs.map((pair) => ({ ...pair })),
-				...randomWords.map((word) => ({ id: `random-${word}`, value: word, blank: -1 })),
-			]);
-			setResponses(allResponses);
+			const wordCount = fromQuizQuestionUser || lessonType === LessonType.QUIZ ? 15 : 5;
+			const randomWords = shuffle(words).slice(0, wordCount);
+			setResponses(shuffle([...blankValuePairs, ...randomWords.map((word) => ({ id: `random-${word}`, value: word, blank: -1 }))]));
 		}
-	}, [textWithBlanks, blankValuePairs, isLessonCompleted, userBlankValuePairsAfterSubmission]);
+	}, [textWithBlanks, blankValuePairs, isLessonCompleted, userBlankValuePairsAfterSubmission, displayedQuestionNumber, getLastQuestion]);
 
 	useEffect(() => {
-		if (hasInteracted && fromPracticeQuestionUser && !isLessonCompleted) {
-			// Check if all blanks are filled correctly
+		if (hasInteracted && fromPracticeQuestionUser) {
 			const allCorrect = blanks.every((blank) => blank.value === blankValuePairs.find((p) => p.blank === blank.blank)?.value);
 
-			// Update state and handle lesson progression based on correctness
-			if (setAllPairsMatchedFITBDragDrop) {
-				setAllPairsMatchedFITBDragDrop(allCorrect);
-			}
+			if (setAllPairsMatchedFITBDragDrop) setAllPairsMatchedFITBDragDrop(allCorrect);
 
-			if (onComplete) {
-				onComplete(allCorrect);
-			}
+			if (onComplete) onComplete(allCorrect);
 
 			if (allCorrect && fromPracticeQuestionUser) {
 				if (displayedQuestionNumber && numberOfQuestions) {
@@ -253,14 +257,14 @@ const FillInTheBlanksDragDrop = ({
 			return;
 		}
 
-		setHasInteracted(true); // Mark interaction when drag happens
+		setHasInteracted(true);
 
-		// The rest of your drag-and-drop logic follows
+		if (isLessonCompleted && lessonType !== LessonType.PRACTICE_LESSON) return;
+
 		const { source, destination } = result;
 		const newBlanks = [...blanks];
 		const newResponses = [...responses];
 
-		// Handle dragging from responses to blanks
 		if (source.droppableId === 'responses' && destination.droppableId.startsWith('blank-')) {
 			const blankIndex = newBlanks.findIndex((blank) => `blank-${blank.id}` === destination.droppableId);
 			if (blankIndex !== -1 && !newBlanks[blankIndex].value) {
@@ -269,7 +273,6 @@ const FillInTheBlanksDragDrop = ({
 			}
 		}
 
-		// Handle dragging from blanks back to responses
 		if (source.droppableId.startsWith('blank-') && destination.droppableId === 'responses') {
 			const blankIndex = newBlanks.findIndex((blank) => `blank-${blank.id}` === source.droppableId);
 			const movedResponse = newBlanks[blankIndex].value;
@@ -282,13 +285,11 @@ const FillInTheBlanksDragDrop = ({
 			});
 		}
 
-		// Handle reordering within responses
 		if (source.droppableId === 'responses' && destination.droppableId === 'responses') {
 			const [movedResponse] = newResponses.splice(source.index, 1);
 			newResponses.splice(destination.index, 0, movedResponse);
 		}
 
-		// Handle moving items between blanks
 		if (source.droppableId.startsWith('blank-') && destination.droppableId.startsWith('blank-')) {
 			const blankIndexSource = newBlanks.findIndex((blank) => `blank-${blank.id}` === source.droppableId);
 			const blankIndexDestination = newBlanks.findIndex((blank) => `blank-${blank.id}` === destination.droppableId);
@@ -299,7 +300,6 @@ const FillInTheBlanksDragDrop = ({
 			}
 		}
 
-		// Update the state with the new arrays
 		setBlanks(newBlanks);
 		setResponses(newResponses);
 
@@ -393,51 +393,56 @@ const FillInTheBlanksDragDrop = ({
 					</TextContainer>
 				</Column>
 
-				{!isLessonCompleted && (
-					<Column
-						sx={{
-							display: 'flex',
-							alignItems: 'flex-start',
-							boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
-							borderRadius: '0.35rem',
-							padding: '1rem',
-						}}>
-						<Droppable droppableId='responses'>
-							{(provided) => (
-								<Box
-									ref={provided.innerRef}
-									{...provided.droppableProps}
-									sx={{
-										borderRadius: '0.35rem',
-										display: 'flex',
-										flexWrap: 'wrap',
-										height: '100%',
-										width: '100%',
-										minHeight: '4rem',
-									}}>
-									{responses.map((response, index) => (
-										<Draggable
-											key={`draggable-response-${response.id}-${index}`}
-											draggableId={`draggable-response-${response.id}-${index}`}
-											index={index}>
-											{(provided) => (
-												<Item ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} $isCorrect={null}>
-													<Typography variant='body2' component='span'>
-														{response.value}
-													</Typography>
-												</Item>
-											)}
-										</Draggable>
-									))}
-									{provided.placeholder}
-								</Box>
-							)}
-						</Droppable>
-					</Column>
+				{(!isLessonCompleted || lessonType === LessonType.PRACTICE_LESSON) && (
+					<>
+						<Box sx={{ width: '100%', flex: 1 }}>
+							<CustomInfoMessageAlignedLeft message='Select and drag the correct word cards into the blanks to complete the sentence(s)' />
+						</Box>
+						<Column
+							sx={{
+								display: 'flex',
+								alignItems: 'flex-start',
+								boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
+								borderRadius: '0.35rem',
+								padding: '1rem',
+							}}>
+							<Droppable droppableId='responses'>
+								{(provided) => (
+									<Box
+										ref={provided.innerRef}
+										{...provided.droppableProps}
+										sx={{
+											borderRadius: '0.35rem',
+											display: 'flex',
+											flexWrap: 'wrap',
+											height: '100%',
+											width: '100%',
+											minHeight: '4rem',
+										}}>
+										{responses.map((response, index) => (
+											<Draggable
+												key={`draggable-response-${response.id}-${index}`}
+												draggableId={`draggable-response-${response.id}-${index}`}
+												index={index}>
+												{(provided) => (
+													<Item ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} $isCorrect={null}>
+														<Typography variant='body2' component='span'>
+															{response.value}
+														</Typography>
+													</Item>
+												)}
+											</Draggable>
+										))}
+										{provided.placeholder}
+									</Box>
+								)}
+							</Droppable>
+						</Column>
+					</>
 				)}
 
-				{isLessonCompleted && (
-					<Box sx={{ margin: '1rem 0 1rem 0', width: '90%' }}>
+				{isLessonCompleted && lessonType !== LessonType.PRACTICE_LESSON && (
+					<Box sx={{ margin: '1rem 0 1rem 0', width: '100%' }}>
 						<Box>
 							<Typography variant='h6'>Correct Text</Typography>
 						</Box>

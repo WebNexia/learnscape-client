@@ -25,7 +25,7 @@ import TrueFalseOptions from '../layouts/questionTypes/TrueFalseOptions';
 import { QuestionsContext } from '../../contexts/QuestionsContextProvider';
 import CustomTextField from '../forms/customFields/CustomTextField';
 import { useUserCourseLessonData } from '../../hooks/useUserCourseLessonData';
-import { AutoAwesome, Close, Done, DoneAll, KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons-material';
+import { AutoAwesome, Close, Done, DoneAll, KeyboardArrowLeft, KeyboardArrowRight, KeyboardDoubleArrowRight } from '@mui/icons-material';
 import AiIcon from '@mui/icons-material/AutoAwesome';
 import { UserQuestionData } from '../../hooks/useFetchUserQuestion';
 import { QuestionType } from '../../interfaces/enums';
@@ -119,16 +119,14 @@ const PracticeQuestion = ({
 	const isFITBTyping: boolean = fetchQuestionTypeName(question) === QuestionType.FITB_TYPING;
 	const isFITBDragDrop: boolean = fetchQuestionTypeName(question) === QuestionType.FITB_DRAG_DROP;
 
-	const [userAnswer, setUserAnswer] = useState<string>('');
+	const [userAnswer, setUserAnswer] = useState<string>(''); //user answer for current question
 
 	const [value, setValue] = useState<string>(() => {
-		if (isLessonCompleted && question.correctAnswer) {
+		if ((isLessonCompleted && question.correctAnswer) || (!isLessonCompleted && displayedQuestionNumber < getLastQuestion())) {
 			return question.correctAnswer;
 		} else if (isOpenEndedQuestion) {
 			const answer: string = userAnswers?.find((data) => data.questionId == question._id)?.userAnswer || '';
 			return answer;
-		} else if (!isLessonCompleted && displayedQuestionNumber < getLastQuestion()) {
-			return question.correctAnswer;
 		} else {
 			return userAnswer;
 		}
@@ -149,8 +147,8 @@ const PracticeQuestion = ({
 	const [isCardFlipped, setIsCardFlipped] = useState<boolean>(false);
 
 	const isLastQuestion: boolean = displayedQuestionNumber === numberOfQuestions;
-	const isCompletingCourse: boolean = isLastQuestion && nextLessonId === null;
-	const isCompletingLesson: boolean = isLastQuestion && nextLessonId !== null;
+	const isCompletingCourse: boolean = isLastQuestion && nextLessonId === null && isLessonCompleted;
+	const isCompletingLesson: boolean = isLastQuestion && nextLessonId !== null && isLessonCompleted;
 
 	const [questionPrompt, setQuestionPrompt] = useState<QuestionPrompt>({
 		question: stripHtml(question.question),
@@ -272,13 +270,13 @@ const PracticeQuestion = ({
 
 	const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
-		toggleAiIcon(index);
 
 		if (isOpenEndedQuestion && value !== '') {
 			await createUserQuestion();
 			setUserAnswer(value);
 			setIsOpenEndedAnswerSubmitted(true);
 			setIsAnswerCorrect(true);
+			toggleAiIcon(index);
 		}
 		if (value === question.correctAnswer?.toString() && !isOpenEndedQuestion && !isMatching && !isFITBDragDrop && !isFITBTyping) {
 			setHelperText('You got it!');
@@ -288,6 +286,7 @@ const PracticeQuestion = ({
 			await createUserQuestion();
 			setUserAnswer(value);
 			setIsOpenEndedAnswerSubmitted(true);
+			toggleAiIcon(index);
 		} else if (value !== question.correctAnswer && value !== '') {
 			setHelperText('Sorry, wrong answer!');
 			setError(true);
@@ -322,7 +321,7 @@ const PracticeQuestion = ({
 					width: '100%',
 				}}>
 				{!isFlipCard && (
-					<form onSubmit={handleSubmit} style={{ width: '100%' }}>
+					<form onSubmit={handleSubmit} style={{ width: '90%' }}>
 						<FormControl sx={{ width: '100%' }} error={error} variant='standard'>
 							<QuestionMedia question={question} />
 							{!isFITBDragDrop && !isFITBTyping && <QuestionText question={question} questionNumber={questionNumber} />}
@@ -376,6 +375,7 @@ const PracticeQuestion = ({
 										setIsLessonCompleted={setIsLessonCompleted}
 										setShowQuestionSelector={setShowQuestionSelector}
 										lessonType={lessonType}
+										isLessonCompleted={isLessonCompleted}
 									/>
 								</Box>
 							)}
@@ -389,6 +389,7 @@ const PracticeQuestion = ({
 										fromPracticeQuestionUser={true}
 										displayedQuestionNumber={displayedQuestionNumber}
 										numberOfQuestions={numberOfQuestions}
+										isLessonCompleted={isLessonCompleted}
 										setIsLessonCompleted={setIsLessonCompleted}
 										setShowQuestionSelector={setShowQuestionSelector}
 										lessonType={lessonType}
@@ -413,6 +414,7 @@ const PracticeQuestion = ({
 										fromPracticeQuestionUser={true}
 										displayedQuestionNumber={displayedQuestionNumber}
 										numberOfQuestions={numberOfQuestions}
+										isLessonCompleted={isLessonCompleted}
 										setIsLessonCompleted={setIsLessonCompleted}
 										setShowQuestionSelector={setShowQuestionSelector}
 										lessonType={lessonType}
@@ -556,8 +558,24 @@ const PracticeQuestion = ({
 							}}
 							sx={{
 								flexShrink: 0,
-								color: !isAnswerCorrect && !isOpenEndedAnswerSubmitted ? 'gray' : theme.textColor?.common.main,
-								backgroundColor: !isAnswerCorrect && !isOpenEndedAnswerSubmitted ? 'inherit' : theme.bgColor?.greenPrimary,
+								color:
+									!isAnswerCorrect &&
+									!isOpenEndedAnswerSubmitted &&
+									!allPairsMatchedFITBDragDrop &&
+									!allPairsMatchedFITBTyping &&
+									!allPairsMatchedMatching &&
+									!isCardFlipped
+										? 'gray'
+										: theme.textColor?.common.main,
+								backgroundColor:
+									!isAnswerCorrect &&
+									!isOpenEndedAnswerSubmitted &&
+									!allPairsMatchedFITBDragDrop &&
+									!allPairsMatchedFITBTyping &&
+									!allPairsMatchedMatching &&
+									!isCardFlipped
+										? 'inherit'
+										: theme.bgColor?.greenPrimary,
 								':hover': {
 									color: theme.bgColor?.greenPrimary,
 									backgroundColor: 'transparent',
@@ -574,9 +592,7 @@ const PracticeQuestion = ({
 							<KeyboardArrowRight fontSize='large' />
 						</IconButton>
 					) : (
-						<Tooltip
-							title={isCompletingCourse && isLessonCompleted ? 'Complete Course' : isCompletingLesson && isLessonCompleted ? 'Complete Lesson' : ''}
-							placement='top'>
+						<Tooltip title={isCompletingCourse ? 'Complete Course' : isCompletingLesson ? 'Complete Lesson' : 'Next Lesson'} placement='top'>
 							<IconButton
 								onClick={() => {
 									if (isLessonCompleted) {
@@ -587,14 +603,38 @@ const PracticeQuestion = ({
 								}}
 								sx={{
 									flexShrink: 0,
-									color: !isAnswerCorrect && !isOpenEndedAnswerSubmitted ? 'gray' : theme.textColor?.common.main,
-									backgroundColor: !isAnswerCorrect && !isOpenEndedAnswerSubmitted ? 'inherit' : theme.bgColor?.greenPrimary,
+									color:
+										!isAnswerCorrect &&
+										!isOpenEndedAnswerSubmitted &&
+										!allPairsMatchedFITBDragDrop &&
+										!allPairsMatchedFITBTyping &&
+										!allPairsMatchedMatching &&
+										!isCardFlipped
+											? 'gray'
+											: theme.textColor?.common.main,
+									backgroundColor:
+										!isAnswerCorrect &&
+										!isOpenEndedAnswerSubmitted &&
+										!allPairsMatchedFITBDragDrop &&
+										!allPairsMatchedFITBTyping &&
+										!allPairsMatchedMatching &&
+										!isCardFlipped
+											? 'inherit'
+											: theme.bgColor?.greenPrimary,
 									':hover': {
 										color: theme.bgColor?.greenPrimary,
 										backgroundColor: 'transparent',
 									},
 								}}>
-								{isCompletingCourse ? <DoneAll fontSize='large' /> : <Done fontSize='large' />}
+								{isCompletingCourse ? (
+									<DoneAll fontSize='large' />
+								) : isCompletingLesson ? (
+									<Done fontSize='large' />
+								) : isLessonCompleted && isLastQuestion ? (
+									<KeyboardDoubleArrowRight fontSize='large' />
+								) : (
+									<KeyboardArrowRight fontSize='large' />
+								)}
 							</IconButton>
 						</Tooltip>
 					)}

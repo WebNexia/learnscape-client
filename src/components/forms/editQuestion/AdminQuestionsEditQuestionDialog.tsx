@@ -2,7 +2,7 @@ import { useContext, useEffect, useRef, useState } from 'react';
 import { Box, Checkbox, DialogContent, FormControlLabel, IconButton, Radio, Tooltip, Typography } from '@mui/material';
 import CustomDialog from '../../layouts/dialog/CustomDialog';
 import CustomTextField from '../customFields/CustomTextField';
-import { AddCircle, InfoOutlined, RemoveCircle } from '@mui/icons-material';
+import { AddCircle, RemoveCircle } from '@mui/icons-material';
 import CustomDialogActions from '../../layouts/dialog/CustomDialogActions';
 import { BlankValuePair, MatchingPair, QuestionInterface } from '../../../interfaces/question';
 import { QuestionsContext } from '../../../contexts/QuestionsContextProvider';
@@ -26,6 +26,7 @@ import theme from '../../../themes';
 import { updateEditorContentAndBlankPairs } from '../../../utils/updateEditorContentAndBlankPairs';
 import FillInTheBlanksDragDropProps from '../../layouts/FITBDragDrop/FillInTheBlanksDragDrop';
 import FillInTheBlanksTyping from '../../layouts/FITBTyping/FillInTheBlanksTyping';
+import CustomInfoMessageAlignedRight from '../../layouts/infoMessage/CustomInfoMessageAlignedRight';
 
 interface EditQuestionDialogProps {
 	index: number;
@@ -105,7 +106,7 @@ const AdminQuestionsEditQuestionDialog = ({
 
 	const [isMinimumTwoMatchingPairs, setIsMinimumTwoMatchingPairs] = useState(false);
 	const [isMissingPair, setIsMissingPair] = useState(false);
-	const [isMinimumTwoBlanks, setIsMinimumTwoBlanks] = useState<boolean>(false);
+	const [isMinimumOneBlank, setIsMinimumOneBlank] = useState<boolean>(false);
 
 	const [enterImageUrl, setEnterImageUrl] = useState(true);
 	const [enterVideoUrl, setEnterVideoUrl] = useState(true);
@@ -126,12 +127,12 @@ const AdminQuestionsEditQuestionDialog = ({
 		resetEnterImageVideoUrl();
 		setIsDuplicateOption(false);
 		setIsMinimumOptions(true);
-		setIsMinimumTwoBlanks(false);
+		setIsMinimumOneBlank(false);
 	}, [correctAnswerIndex]);
 
 	useEffect(() => {
-		if (blankValuePairsAdminQuestions?.length > 1) {
-			setIsMinimumTwoBlanks(false);
+		if (blankValuePairsAdminQuestions?.length > 0) {
+			setIsMinimumOneBlank(false);
 		}
 	}, [blankValuePairsAdminQuestions]);
 
@@ -189,11 +190,11 @@ const AdminQuestionsEditQuestionDialog = ({
 		}
 
 		if (isFITBDragDrop || isFITBTyping) {
-			if (blankValuePairsAdminQuestions.length < 2) {
-				setIsMinimumTwoBlanks(true);
+			if (blankValuePairsAdminQuestions.length < 1) {
+				setIsMinimumOneBlank(true);
 				return;
 			}
-			setIsMinimumTwoBlanks(false);
+			setIsMinimumOneBlank(false);
 		}
 
 		if (isDuplicateOption || !isMinimumOptions) return;
@@ -284,7 +285,7 @@ const AdminQuestionsEditQuestionDialog = ({
 				resetEnterImageVideoUrl();
 				setCorrectAnswerIndex(-1);
 				handleResetQuestion();
-				setIsMinimumTwoBlanks(false);
+				setIsMinimumOneBlank(false);
 			}}
 			title='Edit Question'
 			maxWidth='lg'>
@@ -485,16 +486,7 @@ const AdminQuestionsEditQuestionDialog = ({
 										<Box sx={{ flex: 1 }}>
 											<Typography variant='h5'>Student View</Typography>
 										</Box>
-										<Box sx={{ width: '100%', flex: 1 }}>
-											<Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-start' }}>
-												<Box>
-													<Typography sx={{ fontSize: '0.8rem', mr: '0.5rem' }}>View as in a practice lesson</Typography>
-												</Box>
-												<Box>
-													<InfoOutlined fontSize='small' color='error' />
-												</Box>
-											</Box>
-										</Box>
+										<CustomInfoMessageAlignedRight message='View as in a practice lesson' />
 									</Box>
 									{isFITBDragDrop && (
 										<Box sx={{ padding: '1rem 0', width: '100%' }}>
@@ -576,7 +568,7 @@ const AdminQuestionsEditQuestionDialog = ({
 							</>
 						)}
 
-						{(isFITBDragDrop || isFITBTyping) && isMinimumTwoBlanks && <CustomErrorMessage>- Enter at least 2 blanks in the text</CustomErrorMessage>}
+						{(isFITBDragDrop || isFITBTyping) && isMinimumOneBlank && <CustomErrorMessage>- Enter at least 1 blank in the text</CustomErrorMessage>}
 					</Box>
 
 					{isMultipleChoiceQuestion && (
@@ -595,7 +587,7 @@ const AdminQuestionsEditQuestionDialog = ({
 						resetVideoUpload();
 						resetEnterImageVideoUrl();
 						handleResetQuestion();
-						setIsMinimumTwoBlanks(false);
+						setIsMinimumOneBlank(false);
 					}}
 					cancelBtnText='Cancel'
 					onSubmit={handleSubmit}

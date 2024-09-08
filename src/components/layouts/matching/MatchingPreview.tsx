@@ -8,6 +8,7 @@ import { useUserCourseLessonData } from '../../../hooks/useUserCourseLessonData'
 import { QuizQuestionAnswer } from '../../../pages/LessonPage';
 import { UserMatchingPairAnswers } from '../../../interfaces/userQuestion';
 import { LessonType } from '../../../interfaces/enums';
+import CustomInfoMessageAlignedLeft from '../infoMessage/CustomInfoMessageAlignedLeft';
 
 const Container = styled(Box)`
 	display: flex;
@@ -30,15 +31,15 @@ const Item = styled.div<{ $isCorrect: boolean | null; $fromQuizQuestionUser?: bo
 	background-color: ${({ $isCorrect, $fromQuizQuestionUser, $isLessonCompleted, $lessonType }) =>
 		$isLessonCompleted
 			? $isCorrect
-				? 'green'
-				: '#d32f2f'
+				? theme.palette.success.main
+				: '#ef5350'
 			: ($fromQuizQuestionUser || $lessonType === LessonType.QUIZ) && !$isLessonCompleted
 			? '#f4f4f4'
 			: $isCorrect === null
 			? '#f4f4f4'
 			: $isCorrect
-			? 'green'
-			: '#d32f2f'};
+			? theme.palette.success.main
+			: '#ef5350'};
 	border: 1px solid
 		${({ $isCorrect, $fromQuizQuestionUser, $isLessonCompleted, $lessonType }) =>
 			$isLessonCompleted
@@ -77,6 +78,7 @@ interface MatchingPreviewProps {
 	numberOfQuestions?: number;
 	userMatchingPairsAfterSubmission?: UserMatchingPairAnswers[];
 	lessonType?: string | undefined;
+	userQuizAnswers?: QuizQuestionAnswer[];
 	setAllPairsMatchedMatching?: React.Dispatch<React.SetStateAction<boolean>>;
 	setIsLessonCompleted?: React.Dispatch<React.SetStateAction<boolean>>;
 	setShowQuestionSelector?: React.Dispatch<React.SetStateAction<boolean>>;
@@ -93,6 +95,7 @@ const MatchingPreview = ({
 	numberOfQuestions,
 	userMatchingPairsAfterSubmission,
 	lessonType,
+	userQuizAnswers,
 	setAllPairsMatchedMatching,
 	setIsLessonCompleted,
 	setShowQuestionSelector,
@@ -107,32 +110,69 @@ const MatchingPreview = ({
 
 	useEffect(() => {
 		if (isLessonCompleted && fromQuizQuestionUser && userMatchingPairsAfterSubmission) {
-			// If the lesson is completed and it's a quiz, show the user's matched pairs
 			const matchedPairs = initialPairs.map((pair) => {
 				const userMatch = userMatchingPairsAfterSubmission.find((match) => match.id === pair.id);
 				return {
 					...pair,
-					answer: userMatch ? userMatch.answer : '', // Use user's submitted answer or leave it empty
+					answer: userMatch ? userMatch.answer : '',
 				};
 			});
 			setPairs(matchedPairs);
 
-			// Filter out used responses and keep the unused ones in the responses column
 			const usedAnswers = userMatchingPairsAfterSubmission.map((match) => match.answer);
 			const unusedResponses = initialPairs
 				.filter((pair) => !usedAnswers.includes(pair.answer))
 				.map((pair) => ({ id: pair.id, question: pair.question, answer: pair.answer }));
 			setResponses(unusedResponses);
+		} else if (!isLessonCompleted && fromQuizQuestionUser) {
+			const userAnswer = userQuizAnswers?.find((quiz) => quiz.questionId === questionId);
+
+			if (userAnswer && userAnswer.userMatchingPairAnswers) {
+				const matchedPairs = initialPairs.map((pair) => {
+					const userMatch = userAnswer.userMatchingPairAnswers.find((match) => match.id === pair.id);
+					return {
+						...pair,
+						answer: userMatch ? userMatch.answer : '',
+					};
+				});
+				setPairs(matchedPairs);
+
+				const usedAnswers = userAnswer.userMatchingPairAnswers.map((match) => match.answer);
+				const unusedResponses = initialPairs
+					.filter((pair) => !usedAnswers.includes(pair.answer))
+					.map((pair) => ({ id: pair.id, question: pair.question, answer: pair.answer }));
+				setResponses(unusedResponses);
+			}
+		} else if ((isLessonCompleted && !fromQuizQuestionUser && initialPairs) || (!isLessonCompleted && displayedQuestionNumber! < getLastQuestion())) {
+			const correctPairs = initialPairs.map((pair) => ({
+				...pair,
+				answer: pair.answer,
+			}));
+			setPairs(correctPairs);
+
+			const usedAnswers = initialPairs.map((pair) => pair.answer);
+			const unusedResponses = initialPairs
+				.filter((pair) => !usedAnswers.includes(pair.answer))
+				.map((pair) => ({ id: pair.id, question: pair.question, answer: pair.answer }));
+			setResponses(unusedResponses);
 		} else if (!hasInteracted) {
-			// Initialize pairs with empty answers and shuffle the responses
 			setPairs(initialPairs.map((pair) => ({ ...pair, answer: '' })));
 			setResponses(initialPairs.map((pair) => ({ id: pair.id, question: pair.question, answer: pair.answer })).sort(() => Math.random() - 0.5));
 		}
-	}, [initialPairs, isLessonCompleted, fromQuizQuestionUser, userMatchingPairsAfterSubmission, questionId, displayedQuestionNumber, hasInteracted]);
+	}, [
+		initialPairs,
+		isLessonCompleted,
+		fromQuizQuestionUser,
+		userMatchingPairsAfterSubmission,
+		questionId,
+		displayedQuestionNumber,
+		hasInteracted,
+		getLastQuestion(),
+	]);
 
 	// Add a useEffect to reset `allCorrect` state when question changes
 	useEffect(() => {
-		if (hasInteracted && !isLessonCompleted && fromPracticeQuestionUser) {
+		if (hasInteracted && fromPracticeQuestionUser) {
 			const allCorrect = pairs.every((pair) => pair.answer === initialPairs.find((p) => p.id === pair.id)?.answer);
 
 			if (setAllPairsMatchedMatching) setAllPairsMatchedMatching(allCorrect);
@@ -190,20 +230,18 @@ const MatchingPreview = ({
 				newResponses.splice(source.index, 1);
 			}
 		} else if (source.droppableId.startsWith('prompt-') && destination.droppableId === 'responses') {
-			if (!isLessonCompleted) {
-				const pairIndex = parseInt(source.droppableId.split('-')[1], 10);
-				const movedResponse = newPairs[pairIndex].answer;
-				newPairs[pairIndex].answer = '';
+			const pairIndex = parseInt(source.droppableId.split('-')[1], 10);
+			const movedResponse = newPairs[pairIndex].answer;
+			newPairs[pairIndex].answer = '';
 
-				if (!newResponses.some((response) => response.answer === movedResponse)) {
-					const originalPair = initialPairs.find((pair) => pair.id === newPairs[pairIndex].id);
-					if (originalPair) {
-						newResponses.splice(destination.index, 0, {
-							id: originalPair.id,
-							question: originalPair.question,
-							answer: movedResponse,
-						});
-					}
+			if (!newResponses.some((response) => response.answer === movedResponse)) {
+				const originalPair = initialPairs.find((pair) => pair.id === newPairs[pairIndex].id);
+				if (originalPair) {
+					newResponses.splice(destination.index, 0, {
+						id: originalPair.id,
+						question: originalPair.question,
+						answer: movedResponse,
+					});
 				}
 			}
 		} else if (source.droppableId === 'responses' && destination.droppableId === 'responses') {
@@ -212,7 +250,8 @@ const MatchingPreview = ({
 		} else if (source.droppableId.startsWith('prompt-') && destination.droppableId.startsWith('prompt-')) {
 			const pairIndexSource = parseInt(source.droppableId.split('-')[1], 10);
 			const pairIndexDestination = parseInt(destination.droppableId.split('-')[1], 10);
-			if (!newPairs[pairIndexDestination].answer) {
+
+			if (!newPairs[pairIndexDestination].answer || isLessonCompleted) {
 				const movedResponse = newPairs[pairIndexSource].answer;
 				newPairs[pairIndexSource].answer = '';
 				newPairs[pairIndexDestination].answer = movedResponse;
@@ -246,6 +285,12 @@ const MatchingPreview = ({
 	return (
 		<DragDropContext onDragEnd={handleDragEnd}>
 			<Box sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+				{!isLessonCompleted && (
+					<CustomInfoMessageAlignedLeft
+						message='Drag the correct cards from the right into the dashed areas to match the pairs'
+						sx={{ margin: '1rem auto 0 auto', width: '90%' }}
+					/>
+				)}
 				<Container>
 					<Column sx={{ marginRight: '2rem' }}>
 						{pairs.map((pair, index) => (
@@ -317,7 +362,7 @@ const MatchingPreview = ({
 													$fromQuizQuestionUser={fromQuizQuestionUser}
 													$lessonType={lessonType}
 													$isLessonCompleted={isLessonCompleted}>
-													<Typography variant='body2' sx={{ color: isLessonCompleted && fromQuizQuestionUser ? '#fff' : null }}>
+													<Typography variant='body2' sx={{ color: isLessonCompleted ? '#fff' : null }}>
 														{response.answer}
 													</Typography>
 												</Item>
@@ -338,7 +383,7 @@ const MatchingPreview = ({
 						<Box>
 							{initialPairs.map((pair) => {
 								return (
-									<Box sx={{ display: 'flex' }}>
+									<Box sx={{ display: 'flex' }} key={pair.id}>
 										<Box
 											sx={{
 												display: 'flex',

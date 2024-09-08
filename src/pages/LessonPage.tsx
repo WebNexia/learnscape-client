@@ -1,6 +1,6 @@
 import { useContext, useEffect, useState } from 'react';
 import { Box, Button, IconButton, Link, Slide, Tooltip, Typography } from '@mui/material';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 import axios from 'axios';
 import ReactPlayer from 'react-player';
 import { Article, Close, DoneAll, GetApp, Home, KeyboardBackspaceOutlined, KeyboardDoubleArrowRight, NotListedLocation } from '@mui/icons-material';
@@ -25,6 +25,7 @@ import html2canvas from 'html2canvas';
 import QuizQuestionsMap from '../components/userCourses/QuizQuestionsMap';
 import { QuestionInterface } from '../interfaces/question';
 import { UserBlankValuePairAnswers, UserMatchingPairAnswers } from '../interfaces/userQuestion';
+import { useNavigate } from 'react-router-dom';
 
 export interface QuizQuestionAnswer {
 	questionId: string;
@@ -45,16 +46,17 @@ const LessonPage = () => {
 	const { fetchUserAnswersByLesson } = useFetchUserQuestion();
 	const { handleNextLesson, nextLessonId, isLessonCompleted, userLessonId } = useUserCourseLessonData();
 
-	const [isQuestionsVisible, setIsQuestionsVisible] = useState(false);
-	const [isLessonCourseCompletedModalOpen, setIsLessonCourseCompletedModalOpen] = useState(false);
-	const [isQuizInProgress, setIsQuizInProgress] = useState(false);
-	const [lessonType, setLessonType] = useState('');
-	const [isNotesDrawerOpen, setIsNotesDrawerOpen] = useState(false);
-	const [editorContent, setEditorContent] = useState('');
-	const [userLessonNotes, setUserLessonNotes] = useState(editorContent);
-	const [isUserLessonNotesUploading, setIsUserLessonNotesUploading] = useState(false);
-	const [isNotesUpdated, setIsNotesUpdated] = useState(false);
-	const [isQuestionsMapOpen, setIsQuestionsMapOpen] = useState(false);
+	const [isQuestionsVisible, setIsQuestionsVisible] = useState<boolean>(false);
+	const [isLessonCourseCompletedModalOpen, setIsLessonCourseCompletedModalOpen] = useState<boolean>(false);
+	const [isQuizInProgress, setIsQuizInProgress] = useState<boolean>(false);
+	const [lessonType, setLessonType] = useState<string>('');
+	const [isNotesDrawerOpen, setIsNotesDrawerOpen] = useState<boolean>(false);
+	const [editorContent, setEditorContent] = useState<string>('');
+	const [userLessonNotes, setUserLessonNotes] = useState<string>(editorContent);
+	const [isUserLessonNotesUploading, setIsUserLessonNotesUploading] = useState<boolean>(false);
+	const [isNotesUpdated, setIsNotesUpdated] = useState<boolean>(false);
+	const [isQuestionsMapOpen, setIsQuestionsMapOpen] = useState<boolean>(false);
+
 	const [lesson, setLesson] = useState<Lesson>({
 		_id: '',
 		title: '',
@@ -144,6 +146,22 @@ const LessonPage = () => {
 			localStorage.setItem(`UserQuizAnswers-${lessonId}`, JSON.stringify(userQuizAnswers));
 		}
 	}, [userQuizAnswers]);
+
+	useEffect(() => {
+		const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+			if (isQuiz && isQuizInProgress) {
+				event.preventDefault();
+				//@ts-ignore
+				event.returnValue = '';
+			}
+		};
+
+		window.addEventListener('beforeunload', handleBeforeUnload);
+
+		return () => {
+			window.removeEventListener('beforeunload', handleBeforeUnload);
+		};
+	}, [isQuiz, isQuizInProgress]);
 
 	const updateUserLessonNotes = async () => {
 		try {
