@@ -1,6 +1,6 @@
 import { Alert, Box, IconButton, Snackbar, Typography } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
-import { useLocation, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useContext, useEffect, useState } from 'react';
 import axios from 'axios';
 import { QuestionsContext } from '../contexts/QuestionsContextProvider';
@@ -33,9 +33,10 @@ export interface QuestionFeedbackData {
 
 const AdminQuizSubmissionCheck = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
-	const { userLessonId, submissionId } = useParams();
+	const { userId, userLessonId, submissionId, lessonId } = useParams();
 	const { fetchQuestionTypeName } = useContext(QuestionsContext);
 	const { user } = useContext(UserAuthContext);
+	const navigate = useNavigate();
 
 	const { search } = useLocation();
 	const isChecked = new URLSearchParams(search).get('isChecked');
@@ -195,6 +196,10 @@ const AdminQuizSubmissionCheck = () => {
 
 			setDisplaySubmissionMsg(true);
 			setIsQuizFeedbackUpdated(false);
+
+			setUserQuestionsFeedbacks((prev) => prev.map((feedback) => ({ ...feedback, isUpdated: false })));
+
+			navigate(`/admin/check-submission/user/${userId}/submission/${submissionId}/lesson/${lessonId}/userlesson/${userLessonId}?isChecked=true`);
 		} catch (error) {
 			console.error(error);
 		} finally {
