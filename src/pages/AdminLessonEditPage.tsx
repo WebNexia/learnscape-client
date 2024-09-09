@@ -351,7 +351,7 @@ const AdminLessonEditPage = () => {
 
 			const filteredQuestions = singleLessonBeforeSave?.questions?.filter((question) => {
 				if (question !== null && question !== undefined) {
-					return allowedQuestionTypes(lessonType).includes(question.questionType as QuestionType);
+					return allowedQuestionTypes(lessonType).includes(fetchQuestionTypeName(question) as QuestionType);
 				}
 				return false;
 			});
