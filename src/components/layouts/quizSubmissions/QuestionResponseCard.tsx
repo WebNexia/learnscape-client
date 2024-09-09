@@ -10,7 +10,7 @@ import theme from '../../../themes';
 interface QuestionResponseCardProps {
 	response: any;
 	index: number;
-	fromAdminSubmissions: boolean;
+	fromAdminSubmissions?: boolean;
 	fetchQuestionTypeName: (question: QuestionInterface) => string;
 	onCardClick: (response: any, index: number) => void;
 }
