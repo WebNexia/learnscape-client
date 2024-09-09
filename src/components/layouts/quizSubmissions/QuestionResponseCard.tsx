@@ -10,11 +10,12 @@ import theme from '../../../themes';
 interface QuestionResponseCardProps {
 	response: any;
 	index: number;
+	fromAdminSubmissions: boolean;
 	fetchQuestionTypeName: (question: QuestionInterface) => string;
 	onCardClick: (response: any, index: number) => void;
 }
 
-const QuestionResponseCard = ({ response, index, fetchQuestionTypeName, onCardClick }: QuestionResponseCardProps) => {
+const QuestionResponseCard = ({ response, index, fromAdminSubmissions, fetchQuestionTypeName, onCardClick }: QuestionResponseCardProps) => {
 	return (
 		<Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
 			<Box
@@ -41,7 +42,7 @@ const QuestionResponseCard = ({ response, index, fetchQuestionTypeName, onCardCl
 
 				<Box sx={{ flex: 1.5 }}>
 					{(response.teacherFeedback && response.teacherFeedback.trim() !== '') || response.teacherAudioFeedbackUrl ? (
-						<Tooltip title='Feedback' placement='left'>
+						<Tooltip title={`${fromAdminSubmissions ? 'Feedback' : "Instructor's Feedback"}`} placement='left'>
 							<RateReviewOutlined color='success' />
 						</Tooltip>
 					) : null}

@@ -153,6 +153,14 @@ const AdminQuizSubmissionCheck = () => {
 			);
 
 			setUserQuestionsFeedbacks(updatedFeedbacks);
+
+			setUserResponseData((prevResponses: any) =>
+				prevResponses.map((response: any) =>
+					response._id === userResponseToFeedback._id ? { ...response, teacherAudioFeedbackUrl: downloadURL } : response
+				)
+			);
+
+			setUserResponseToFeedback((prev: any) => ({ ...prev, teacherAudioFeedbackUrl: downloadURL }));
 		} catch (error) {
 			console.error(error);
 		} finally {
@@ -238,6 +246,7 @@ const AdminQuizSubmissionCheck = () => {
 						key={response._id}
 						response={response}
 						index={index}
+						fromAdminSubmissions={true}
 						fetchQuestionTypeName={fetchQuestionTypeName}
 						onCardClick={(response, index) => {
 							setOpenQuestionFeedbackModal(true);
