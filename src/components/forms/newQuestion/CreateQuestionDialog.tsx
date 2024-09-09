@@ -33,13 +33,14 @@ import ImageThumbnail from '../uploadImageVideoDocument/ImageThumbnail';
 import VideoThumbnail from '../uploadImageVideoDocument/VideoThumbnail';
 import TinyMceEditor from '../../richTextEditor/TinyMceEditor';
 import TrueFalseOptions from '../../layouts/questionTypes/TrueFalseOptions';
-import { QuestionType } from '../../../interfaces/enums';
+import { LessonType, QuestionType } from '../../../interfaces/enums';
 import FlipCard from '../../layouts/flipCard/FlipCard';
 import Matching from '../../layouts/matching/Matching';
 import { Lesson } from '../../../interfaces/lessons';
-import FillInTheBlanksDragDropProps from '../../layouts/FITBDragDrop/FillInTheBlanksDragDrop';
 import { updateEditorContentAndBlankPairs } from '../../../utils/updateEditorContentAndBlankPairs';
 import FillInTheBlanksTyping from '../../layouts/FITBTyping/FillInTheBlanksTyping';
+import FillInTheBlanksDragDrop from '../../layouts/FITBDragDrop/FillInTheBlanksDragDrop';
+import CustomInfoMessageAlignedRight from '../../layouts/infoMessage/CustomInfoMessageAlignedRight';
 
 declare global {
 	interface Window {
@@ -56,6 +57,7 @@ interface CreateQuestionDialogProps {
 	createNewQuestion: boolean;
 	isMinimumOptions: boolean;
 	isDuplicateOption: boolean;
+	singleLessonBeforeSave?: Lesson;
 	setIsQuestionCreateModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
 	setQuestionType: React.Dispatch<React.SetStateAction<string>>;
 	setCorrectAnswer: React.Dispatch<React.SetStateAction<string>>;
@@ -79,6 +81,7 @@ const CreateQuestionDialog = ({
 	createNewQuestion,
 	isMinimumOptions,
 	isDuplicateOption,
+	singleLessonBeforeSave,
 	setIsQuestionCreateModalOpen,
 	setQuestionType,
 	setCorrectAnswer,
@@ -131,7 +134,7 @@ const CreateQuestionDialog = ({
 	const [editorContent, setEditorContent] = useState<string>('');
 	const [isMinimumTwoMatchingPairs, setIsMinimumTwoMatchingPairs] = useState<boolean>(false);
 	const [isMissingPair, setIsMissingPair] = useState<boolean>(false);
-	const [isMinimumTwoBlanks, setIsMinimumTwoBlanks] = useState<boolean>(false);
+	const [isMinimumOneBlank, setIsMinimumOneBlank] = useState<boolean>(false);
 
 	useEffect(() => {
 		resetVideoUpload();
@@ -141,8 +144,8 @@ const CreateQuestionDialog = ({
 	}, []);
 
 	useEffect(() => {
-		if (blankValuePairs.length > 1) {
-			setIsMinimumTwoBlanks(false);
+		if (blankValuePairs.length > 0) {
+			setIsMinimumOneBlank(false);
 		}
 	}, [blankValuePairs]);
 
@@ -185,7 +188,7 @@ const CreateQuestionDialog = ({
 		setIsCorrectAnswerMissing(false);
 		setIsMinimumTwoMatchingPairs(false);
 		setBlankValuePairs([]);
-		setIsMinimumTwoBlanks(false);
+		setIsMinimumOneBlank(false);
 	};
 
 	const createQuestion = async () => {
@@ -262,8 +265,15 @@ const CreateQuestionDialog = ({
 
 	const handleSubmit = () => {
 		if (!editorContent && !newQuestion.question) {
-			setIsQuestionMissing(!isFlipCard || !newQuestion.imageUrl);
-			return;
+			if (isFlipCard) {
+				if (!newQuestion.imageUrl && !newQuestion.question) {
+					setIsQuestionMissing(true);
+					return;
+				}
+			} else {
+				setIsQuestionMissing(true);
+				return;
+			}
 		}
 
 		if (isFlipCard && !correctAnswer) {
@@ -290,8 +300,8 @@ const CreateQuestionDialog = ({
 			}
 		}
 
-		if ((isFITBDragDrop || isFITBTyping) && blankValuePairs.length < 2) {
-			setIsMinimumTwoBlanks(true);
+		if ((isFITBDragDrop || isFITBTyping) && blankValuePairs.length < 1) {
+			setIsMinimumOneBlank(true);
 			return;
 		}
 
@@ -357,11 +367,37 @@ const CreateQuestionDialog = ({
 							size='medium'
 							label='Type'
 							required>
-							{questionTypes?.map((type) => (
-								<MenuItem value={type.name} key={type._id}>
-									{type.name}
-								</MenuItem>
-							))}
+							{questionTypes
+								.filter((type) => {
+									const questionTypeName = type.name as QuestionType;
+									if (singleLessonBeforeSave?.type === LessonType.QUIZ) {
+										return [
+											QuestionType.MULTIPLE_CHOICE,
+											QuestionType.TRUE_FALSE,
+											QuestionType.OPEN_ENDED,
+											QuestionType.AUDIO_VIDEO,
+											QuestionType.MATCHING,
+											QuestionType.FITB_TYPING,
+											QuestionType.FITB_DRAG_DROP,
+										].includes(questionTypeName);
+									} else if (singleLessonBeforeSave?.type === LessonType.PRACTICE_LESSON) {
+										return [
+											QuestionType.MULTIPLE_CHOICE,
+											QuestionType.TRUE_FALSE,
+											QuestionType.OPEN_ENDED,
+											QuestionType.MATCHING,
+											QuestionType.FITB_TYPING,
+											QuestionType.FITB_DRAG_DROP,
+											QuestionType.FLIP_CARD,
+										].includes(questionTypeName);
+									}
+									return true;
+								})
+								.map((type) => (
+									<MenuItem value={type.name} key={type._id}>
+										{type.name}
+									</MenuItem>
+								))}
 						</Select>
 					</FormControl>
 					<Box sx={{ display: 'flex', flexDirection: 'column' }}>
@@ -441,8 +477,8 @@ const CreateQuestionDialog = ({
 						)}
 
 						{(isFITBDragDrop || isFITBTyping) && (
-							<>
-								<Box sx={{ marginTop: '1rem' }}>
+							<Box>
+								<Box sx={{ marginTop: '1rem', width: '90%', margin: '0 auto' }}>
 									<Typography variant='h6'>Blank Values</Typography>
 									<Box
 										sx={{
@@ -486,21 +522,28 @@ const CreateQuestionDialog = ({
 										minHeight: '4rem',
 										margin: '3rem auto 0 auto',
 									}}>
-									<Typography variant='h5' sx={{ width: '90%' }}>
-										Student View
-									</Typography>
+									<Box sx={{ display: 'flex', width: '90%', margin: '1rem 0rem 0rem 0rem' }}>
+										<Box sx={{ flex: 1 }}>
+											<Typography variant='h5'>Student View</Typography>
+										</Box>
+										<CustomInfoMessageAlignedRight message='View as in a practice lesson' />
+									</Box>
 									{isFITBDragDrop && (
-										<Box sx={{ padding: '1rem 0', width: '100%' }}>
-											<FillInTheBlanksDragDropProps textWithBlanks={editorContent} blankValuePairs={sortedBlankValuePairs} />
+										<Box sx={{ padding: '1rem 0', width: '90%' }}>
+											<FillInTheBlanksDragDrop textWithBlanks={editorContent} blankValuePairs={sortedBlankValuePairs} />
 										</Box>
 									)}
 									{isFITBTyping && (
-										<Box sx={{ padding: '1rem 0', width: '100%' }}>
-											<FillInTheBlanksTyping textWithBlanks={editorContent} blankValuePairs={sortedBlankValuePairs} />
+										<Box sx={{ padding: '1rem 0', width: '90%' }}>
+											<FillInTheBlanksTyping
+												textWithBlanks={editorContent}
+												blankValuePairs={sortedBlankValuePairs}
+												fromAdminQuestions={createNewQuestion}
+											/>
 										</Box>
 									)}
 								</Box>
-							</>
+							</Box>
 						)}
 
 						{isAudioVideoQuestion && (
@@ -606,6 +649,7 @@ const CreateQuestionDialog = ({
 								setNewQuestion={setNewQuestion}
 								setIsMinimumTwoMatchingPairs={setIsMinimumTwoMatchingPairs}
 								setIsMissingPair={setIsMissingPair}
+								lessonType={singleLessonBeforeSave?.type}
 							/>
 						)}
 					</Box>
@@ -626,7 +670,7 @@ const CreateQuestionDialog = ({
 								{isMissingPair && <CustomErrorMessage>- There is at least one incomplete pair</CustomErrorMessage>}
 							</>
 						)}
-						{(isFITBDragDrop || isFITBTyping) && isMinimumTwoBlanks && <CustomErrorMessage>- Enter at least 2 blanks in the text</CustomErrorMessage>}
+						{(isFITBDragDrop || isFITBTyping) && isMinimumOneBlank && <CustomErrorMessage>- Enter at least 1 blank in the text</CustomErrorMessage>}
 
 						{isMultipleChoiceQuestion && (
 							<Box sx={{ mt: '2rem' }}>

@@ -78,6 +78,7 @@ export const useUserCourseLessonData = () => {
 				const existingNextLesson = parsedUserLessonData.find((data) => data.lessonId === nextLessonId && data.courseId === courseId);
 
 				if (!existingNextLesson) {
+					// Make sure the responseUserLesson API call is completed and returns valid data
 					const responseUserLesson = await axios.post(`${base_url}/userlessons`, {
 						lessonId: nextLessonId,
 						userId,
@@ -92,20 +93,24 @@ export const useUserCourseLessonData = () => {
 						isFeedbackGiven: false,
 					});
 
-					const newUserLessonData: UserLessonDataStorage = {
-						lessonId: nextLessonId,
-						userLessonId: responseUserLesson.data._id,
-						courseId: courseId || '',
-						currentQuestion: 1,
-						isCompleted: false,
-						isInProgress: true,
-						teacherFeedback: '',
-						isFeedbackGiven: false,
-					};
+					if (responseUserLesson && responseUserLesson.data && responseUserLesson.data._id) {
+						const newUserLessonData: UserLessonDataStorage = {
+							lessonId: nextLessonId,
+							userLessonId: responseUserLesson.data._id,
+							courseId: courseId || '',
+							currentQuestion: 1,
+							isCompleted: false,
+							isInProgress: true,
+							teacherFeedback: '',
+							isFeedbackGiven: false,
+						};
 
-					const updatedUserLessonData = [...parsedUserLessonData, newUserLessonData];
-					localStorage.setItem('userLessonData', JSON.stringify(updatedUserLessonData));
-					setLocalStorageData((prev) => ({ ...prev, userLessonData: updatedUserLessonData }));
+						const updatedUserLessonData = [...parsedUserLessonData, newUserLessonData];
+						localStorage.setItem('userLessonData', JSON.stringify(updatedUserLessonData));
+						setLocalStorageData((prev) => ({ ...prev, userLessonData: updatedUserLessonData }));
+					} else {
+						console.error('Failed to get userLessonId from the response:', responseUserLesson);
+					}
 				}
 			} else {
 				await axios.patch(`${base_url}/usercourses/${userCourseId}`, {

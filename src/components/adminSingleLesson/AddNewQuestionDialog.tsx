@@ -12,6 +12,7 @@ import CustomTableCell from '../layouts/table/CustomTableCell';
 import { stripHtml } from '../../utils/stripHtml';
 import { truncateText } from '../../utils/utilText';
 import { QuestionUpdateTrack } from '../../pages/AdminLessonEditPage';
+import { LessonType, QuestionType } from '../../interfaces/enums';
 
 interface AddNewQuestionDialogProps {
 	addNewQuestionModalOpen: boolean;
@@ -137,8 +138,33 @@ const AddNewQuestionDialog = ({
 						<TableBody>
 							{sortedQuestionsData &&
 								sortedQuestionsData
-									?.filter((question) => !singleLessonBeforeSave.questionIds.includes(question._id))
-									?.map((question: QuestionInterface) => {
+									.filter((question) => {
+										const questionTypeName = question.questionType as QuestionType;
+										if (singleLessonBeforeSave.type === LessonType.QUIZ) {
+											return [
+												QuestionType.MULTIPLE_CHOICE,
+												QuestionType.TRUE_FALSE,
+												QuestionType.OPEN_ENDED,
+												QuestionType.AUDIO_VIDEO,
+												QuestionType.MATCHING,
+												QuestionType.FITB_TYPING,
+												QuestionType.FITB_DRAG_DROP,
+											].includes(questionTypeName);
+										} else if (singleLessonBeforeSave.type === LessonType.PRACTICE_LESSON) {
+											return [
+												QuestionType.MULTIPLE_CHOICE,
+												QuestionType.TRUE_FALSE,
+												QuestionType.OPEN_ENDED,
+												QuestionType.MATCHING,
+												QuestionType.FITB_TYPING,
+												QuestionType.FITB_DRAG_DROP,
+												QuestionType.FLIP_CARD,
+											].includes(questionTypeName);
+										}
+										return true;
+									})
+									.filter((question) => !singleLessonBeforeSave.questionIds.includes(question._id))
+									.map((question: QuestionInterface) => {
 										const isSelected = selectedQuestionIds.indexOf(question._id) !== -1;
 										return (
 											<TableRow key={question._id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>

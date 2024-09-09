@@ -3,7 +3,6 @@ import DashboardPagesLayout from '../components/layouts/dashboardLayout/Dashboar
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useContext, useEffect, useState } from 'react';
 import axios from 'axios';
-import { truncateText } from '../utils/utilText';
 import { QuestionsContext } from '../contexts/QuestionsContextProvider';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
@@ -18,21 +17,26 @@ import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '../firebase';
 import AudioRecorder from '../components/userCourses/AudioRecorder';
-import { stripHtml } from '../utils/stripHtml';
+import MatchingPreview from '../components/layouts/matching/MatchingPreview';
+import FillInTheBlanksDragDrop from '../components/layouts/FITBDragDrop/FillInTheBlanksDragDrop';
+import FillInTheBlanksTyping from '../components/layouts/FITBTyping/FillInTheBlanksTyping';
+import CustomInfoMessageAlignedRight from '../components/layouts/infoMessage/CustomInfoMessageAlignedRight';
+import QuestionResponseCard from '../components/layouts/quizSubmissions/QuestionResponseCard';
 
 export interface QuestionFeedbackData {
 	userQuestionId: string;
 	feedback: string;
 	isUpdated: boolean;
 	teacherAudioFeedbackUrl: string;
+	isFeedbackGiven: boolean;
 }
 
 const AdminQuizSubmissionCheck = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
-	const { userLessonId, submissionId, userId, lessonId } = useParams();
-	const navigate = useNavigate();
+	const { userId, userLessonId, submissionId, lessonId } = useParams();
 	const { fetchQuestionTypeName } = useContext(QuestionsContext);
 	const { user } = useContext(UserAuthContext);
+	const navigate = useNavigate();
 
 	const { search } = useLocation();
 	const isChecked = new URLSearchParams(search).get('isChecked');
@@ -73,6 +77,7 @@ const AdminQuizSubmissionCheck = () => {
 						feedback: data.teacherFeedback,
 						isUpdated: false,
 						teacherAudioFeedbackUrl: data.teacherAudioFeedbackUrl,
+						isFeedbackGiven: !!data.teacherFeedback,
 					}))
 				);
 			} catch (error) {
@@ -104,21 +109,34 @@ const AdminQuizSubmissionCheck = () => {
 	const handleFeedbackChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const updatedFeedback = e.target.value;
 		const updatedFeedbacks = userQuestionsFeedbacks.map((feedback) =>
-			feedback.userQuestionId === userResponseToFeedback._id ? { ...feedback, feedback: updatedFeedback, isUpdated: true } : feedback
+			feedback.userQuestionId === userResponseToFeedback._id
+				? { ...feedback, feedback: updatedFeedback, isUpdated: true, isFeedbackGiven: !!updatedFeedback }
+				: feedback
 		);
 
 		setUserQuestionsFeedbacks(updatedFeedbacks);
 		setIsQuizFeedbackUpdated(true);
+
+		setUserResponseData((prevResponses: any) =>
+			prevResponses.map((response: any) =>
+				response._id === userResponseToFeedback._id ? { ...response, teacherFeedback: updatedFeedback } : response
+			)
+		);
+
 		setUserResponseToFeedback((prev: any) => ({ ...prev, teacherFeedback: updatedFeedback }));
 	};
 
 	const resetFeedback = () => {
 		const resetFeedbacks = userQuestionsFeedbacks.map((feedback) =>
-			feedback.userQuestionId === userResponseToFeedback._id ? { ...feedback, feedback: '', isUpdated: true } : feedback
+			feedback.userQuestionId === userResponseToFeedback._id ? { ...feedback, feedback: '', isUpdated: true, isFeedbackGiven: false } : feedback
 		);
 
 		setUserQuestionsFeedbacks(resetFeedbacks);
 		setUserResponseToFeedback((prev: any) => ({ ...prev, teacherFeedback: '' }));
+
+		setUserResponseData((prevResponses: any) =>
+			prevResponses.map((response: any) => (response._id === userResponseToFeedback._id ? { ...response, teacherFeedback: '' } : response))
+		);
 	};
 
 	const uploadAudio = async (blob: Blob) => {
@@ -129,10 +147,20 @@ const AdminQuizSubmissionCheck = () => {
 			const downloadURL = await getDownloadURL(audioRef);
 
 			const updatedFeedbacks = userQuestionsFeedbacks.map((feedback) =>
-				feedback.userQuestionId === userResponseToFeedback._id ? { ...feedback, isUpdated: true, teacherAudioFeedbackUrl: downloadURL } : feedback
+				feedback.userQuestionId === userResponseToFeedback._id
+					? { ...feedback, isUpdated: true, teacherAudioFeedbackUrl: downloadURL, isFeedbackGiven: true }
+					: feedback
 			);
 
 			setUserQuestionsFeedbacks(updatedFeedbacks);
+
+			setUserResponseData((prevResponses: any) =>
+				prevResponses.map((response: any) =>
+					response._id === userResponseToFeedback._id ? { ...response, teacherAudioFeedbackUrl: downloadURL } : response
+				)
+			);
+
+			setUserResponseToFeedback((prev: any) => ({ ...prev, teacherAudioFeedbackUrl: downloadURL }));
 		} catch (error) {
 			console.error(error);
 		} finally {
@@ -154,14 +182,16 @@ const AdminQuizSubmissionCheck = () => {
 			await Promise.all(
 				userQuestionsFeedbacks.map(async (feedback) => {
 					if (feedback.feedback && feedback.isUpdated) {
-						try {
-							await axios.patch(`${base_url}/userquestions/${feedback.userQuestionId}`, {
-								teacherFeedback: feedback.feedback,
-								teacherAudioFeedbackUrl: feedback.teacherAudioFeedbackUrl,
-							});
-						} catch (error) {
-							console.error(error);
-						}
+						await axios.patch(`${base_url}/userquestions/${feedback.userQuestionId}`, {
+							teacherFeedback: feedback.feedback,
+							teacherAudioFeedbackUrl: feedback.teacherAudioFeedbackUrl,
+						});
+
+						setUserQuestionsFeedbacks((prevFeedbacks) =>
+							prevFeedbacks.map((prevFeedback) =>
+								prevFeedback.userQuestionId === feedback.userQuestionId ? { ...prevFeedback, isFeedbackGiven: true, isUpdated: false } : prevFeedback
+							)
+						);
 					}
 				})
 			);
@@ -183,6 +213,7 @@ const AdminQuizSubmissionCheck = () => {
 		} finally {
 			setFeedbackSubmitting(false);
 		}
+		window.scrollTo({ top: 0, behavior: 'smooth' });
 	};
 
 	return (
@@ -203,57 +234,26 @@ const AdminQuizSubmissionCheck = () => {
 				))}
 			</Box>
 
-			<Box sx={{ width: '90%', margin: '2rem' }}>
-				<Typography variant='h5' sx={{ mb: '1rem' }}>
-					Questions
-				</Typography>
+			<Box sx={{ width: '90%', margin: '1.5rem' }}>
+				<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', margin: '1rem 0' }}>
+					<Box>
+						<Typography variant='h5'>Questions</Typography>
+					</Box>
+					<CustomInfoMessageAlignedRight message='Click the questions to give/edit feedback for each question' sx={{ marginRight: '2.5rem' }} />
+				</Box>
 				{userResponseData?.map((response: any, index: number) => (
-					<Box
+					<QuestionResponseCard
 						key={response._id}
-						sx={{
-							display: 'flex',
-							justifyContent: 'space-between',
-							width: '100%',
-							boxShadow: '0 0.1rem 0.4rem 0.1rem rgba(0, 0,0,0.2)',
-							borderRadius: '0.35rem',
-							padding: '0.75rem 1rem',
-							mb: '0.75rem',
-							cursor: 'pointer',
-							backgroundColor:
-								fetchQuestionTypeName(response.questionId) === QuestionType.TRUE_FALSE ||
-								fetchQuestionTypeName(response.questionId) === QuestionType.MULTIPLE_CHOICE
-									? response.userAnswer === response.questionId.correctAnswer
-										? 'green'
-										: '#B71C1C'
-									: undefined,
-						}}
-						onClick={() => {
+						response={response}
+						index={index}
+						fromAdminSubmissions={true}
+						fetchQuestionTypeName={fetchQuestionTypeName}
+						onCardClick={(response, index) => {
 							setOpenQuestionFeedbackModal(true);
 							setUserResponseToFeedback(response);
 							setCurrentResponseIndex(index);
-						}}>
-						<Typography
-							sx={{
-								color:
-									fetchQuestionTypeName(response.questionId) === QuestionType.TRUE_FALSE ||
-									fetchQuestionTypeName(response.questionId) === QuestionType.MULTIPLE_CHOICE
-										? 'white'
-										: undefined,
-							}}>
-							{truncateText(stripHtml(response.questionId.question), 50)}
-						</Typography>
-						<Typography
-							variant='body2'
-							sx={{
-								color:
-									fetchQuestionTypeName(response.questionId) === QuestionType.TRUE_FALSE ||
-									fetchQuestionTypeName(response.questionId) === QuestionType.MULTIPLE_CHOICE
-										? 'white'
-										: undefined,
-							}}>
-							{fetchQuestionTypeName(response.questionId)}
-						</Typography>
-					</Box>
+						}}
+					/>
 				))}
 			</Box>
 
@@ -305,11 +305,14 @@ const AdminQuizSubmissionCheck = () => {
 					<Typography variant='h5' sx={{ mb: '0.5rem' }}>
 						Question ({fetchQuestionTypeName(userResponseToFeedback?.questionId)})
 					</Typography>
-					<Typography
-						variant='body1'
-						component='div'
-						dangerouslySetInnerHTML={{ __html: sanitizeHtml(userResponseToFeedback?.questionId.question) }}
-					/>
+					{fetchQuestionTypeName(userResponseToFeedback?.questionId) !== QuestionType.FITB_TYPING &&
+						fetchQuestionTypeName(userResponseToFeedback?.questionId) !== QuestionType.FITB_DRAG_DROP && (
+							<Typography
+								variant='body1'
+								component='div'
+								dangerouslySetInnerHTML={{ __html: sanitizeHtml(userResponseToFeedback?.questionId.question) }}
+							/>
+						)}
 				</Box>
 
 				{fetchQuestionTypeName(userResponseToFeedback?.questionId) === QuestionType.MULTIPLE_CHOICE && (
@@ -321,14 +324,14 @@ const AdminQuizSubmissionCheck = () => {
 								sx={{
 									margin: '1rem 0 0 2rem',
 									color: option === userResponseToFeedback?.questionId.correctAnswer ? theme.textColor?.greenPrimary.main : null,
-									fontStyle: option === userResponseToFeedback?.questionId.correctAnswer ? 'italic' : null,
+									fontWeight: 'bolder',
 								}}>
 								{String.fromCharCode(97 + index)}) {option}
 							</Typography>
 						))}
 						<Box sx={{ width: '100%', margin: '2rem auto 1rem auto' }}>
 							<Typography variant='h6' sx={{ mb: '0.5rem' }}>
-								Student Answer
+								Student's Answer
 							</Typography>
 							<Typography variant='body2'>
 								{userResponseToFeedback?.questionId.options?.findIndex((option: string) => option === userResponseToFeedback?.userAnswer) !== -1
@@ -345,7 +348,7 @@ const AdminQuizSubmissionCheck = () => {
 				{fetchQuestionTypeName(userResponseToFeedback?.questionId) === QuestionType.OPEN_ENDED && (
 					<Box sx={{ width: '90%', margin: '1rem auto' }}>
 						<Typography variant='h6' sx={{ mb: '0.5rem' }}>
-							Student Answer
+							Student's Answer
 						</Typography>
 						<Typography variant='body2'>{userResponseToFeedback.userAnswer}</Typography>
 					</Box>
@@ -361,16 +364,54 @@ const AdminQuizSubmissionCheck = () => {
 						</Box>
 						<Box>
 							<Typography variant='h6' sx={{ mb: '0.5rem' }}>
-								Student Answer
+								Student's Answer
 							</Typography>
 							<Typography variant='body2'>{userResponseToFeedback.userAnswer}</Typography>
 						</Box>
 					</Box>
 				)}
 
+				{fetchQuestionTypeName(userResponseToFeedback?.questionId) === QuestionType.MATCHING && (
+					<Box sx={{ width: '90%', margin: '0rem auto' }}>
+						<MatchingPreview
+							initialPairs={userResponseToFeedback?.questionId.matchingPairs}
+							userMatchingPairsAfterSubmission={userResponseToFeedback?.userMatchingPairAnswers}
+							questionId={userResponseToFeedback?.questionId}
+							fromQuizQuestionUser={true}
+							isLessonCompleted={true}
+						/>
+					</Box>
+				)}
+
+				{fetchQuestionTypeName(userResponseToFeedback?.questionId) === QuestionType.FITB_DRAG_DROP && (
+					<Box sx={{ width: '90%', margin: '0rem auto' }}>
+						<FillInTheBlanksDragDrop
+							textWithBlanks={userResponseToFeedback?.questionId.question}
+							blankValuePairs={userResponseToFeedback?.questionId.blankValuePairs}
+							userBlankValuePairsAfterSubmission={userResponseToFeedback?.userBlankValuePairAnswers}
+							questionId={userResponseToFeedback?.questionId}
+							fromQuizQuestionUser={true}
+							isLessonCompleted={true}
+						/>
+					</Box>
+				)}
+
+				{fetchQuestionTypeName(userResponseToFeedback?.questionId) === QuestionType.FITB_TYPING && (
+					<Box sx={{ width: '90%', margin: '0rem auto' }}>
+						<FillInTheBlanksTyping
+							textWithBlanks={userResponseToFeedback?.questionId.question}
+							blankValuePairs={userResponseToFeedback?.questionId.blankValuePairs}
+							userBlankValuePairsAfterSubmission={userResponseToFeedback?.userBlankValuePairAnswers}
+							questionId={userResponseToFeedback?.questionId}
+							fromQuizQuestionUser={true}
+							isLessonCompleted={true}
+						/>
+					</Box>
+				)}
+
 				{fetchQuestionTypeName(userResponseToFeedback?.questionId) === QuestionType.AUDIO_VIDEO && (
 					<Box sx={{ width: '90%', margin: '1rem auto' }}>
-						<Typography variant='h6'>Student Recording</Typography>
+						<Typography variant='h6'>Student's Recording</Typography>
 						{userResponseToFeedback?.audioRecordUrl && (
 							<Box>
 								<audio
@@ -442,7 +483,7 @@ const AdminQuizSubmissionCheck = () => {
 													setUserQuestionsFeedbacks((prevFeedbacks) =>
 														prevFeedbacks.map((feedback) =>
 															feedback.userQuestionId === userResponseToFeedback._id
-																? { ...feedback, isUpdated: true, teacherAudioFeedbackUrl: '' }
+																? { ...feedback, isUpdated: true, teacherAudioFeedbackUrl: '', isFeedbackGiven: !!feedback.feedback }
 																: feedback
 														)
 													);
@@ -457,7 +498,7 @@ const AdminQuizSubmissionCheck = () => {
 					</Box>
 				)}
 
-				<Box sx={{ width: '90%', margin: '1rem auto' }}>
+				<Box sx={{ width: '90%', margin: '1.5rem auto' }}>
 					<Typography variant='h5' sx={{ mb: '1rem' }}>
 						Feedback for Question
 					</Typography>

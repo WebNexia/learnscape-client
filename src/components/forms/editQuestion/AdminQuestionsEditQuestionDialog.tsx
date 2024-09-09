@@ -26,6 +26,7 @@ import theme from '../../../themes';
 import { updateEditorContentAndBlankPairs } from '../../../utils/updateEditorContentAndBlankPairs';
 import FillInTheBlanksDragDropProps from '../../layouts/FITBDragDrop/FillInTheBlanksDragDrop';
 import FillInTheBlanksTyping from '../../layouts/FITBTyping/FillInTheBlanksTyping';
+import CustomInfoMessageAlignedRight from '../../layouts/infoMessage/CustomInfoMessageAlignedRight';
 
 interface EditQuestionDialogProps {
 	index: number;
@@ -105,7 +106,7 @@ const AdminQuestionsEditQuestionDialog = ({
 
 	const [isMinimumTwoMatchingPairs, setIsMinimumTwoMatchingPairs] = useState(false);
 	const [isMissingPair, setIsMissingPair] = useState(false);
-	const [isMinimumTwoBlanks, setIsMinimumTwoBlanks] = useState<boolean>(false);
+	const [isMinimumOneBlank, setIsMinimumOneBlank] = useState<boolean>(false);
 
 	const [enterImageUrl, setEnterImageUrl] = useState(true);
 	const [enterVideoUrl, setEnterVideoUrl] = useState(true);
@@ -126,12 +127,12 @@ const AdminQuestionsEditQuestionDialog = ({
 		resetEnterImageVideoUrl();
 		setIsDuplicateOption(false);
 		setIsMinimumOptions(true);
-		setIsMinimumTwoBlanks(false);
+		setIsMinimumOneBlank(false);
 	}, [correctAnswerIndex]);
 
 	useEffect(() => {
-		if (blankValuePairsAdminQuestions?.length > 1) {
-			setIsMinimumTwoBlanks(false);
+		if (blankValuePairsAdminQuestions?.length > 0) {
+			setIsMinimumOneBlank(false);
 		}
 	}, [blankValuePairsAdminQuestions]);
 
@@ -189,11 +190,11 @@ const AdminQuestionsEditQuestionDialog = ({
 		}
 
 		if (isFITBDragDrop || isFITBTyping) {
-			if (blankValuePairsAdminQuestions.length < 2) {
-				setIsMinimumTwoBlanks(true);
+			if (blankValuePairsAdminQuestions.length < 1) {
+				setIsMinimumOneBlank(true);
 				return;
 			}
-			setIsMinimumTwoBlanks(false);
+			setIsMinimumOneBlank(false);
 		}
 
 		if (isDuplicateOption || !isMinimumOptions) return;
@@ -284,7 +285,7 @@ const AdminQuestionsEditQuestionDialog = ({
 				resetEnterImageVideoUrl();
 				setCorrectAnswerIndex(-1);
 				handleResetQuestion();
-				setIsMinimumTwoBlanks(false);
+				setIsMinimumOneBlank(false);
 			}}
 			title='Edit Question'
 			maxWidth='lg'>
@@ -481,9 +482,12 @@ const AdminQuestionsEditQuestionDialog = ({
 										minHeight: '4rem',
 										margin: '3rem auto 0 auto',
 									}}>
-									<Typography variant='h5' sx={{ width: '90%' }}>
-										Student View
-									</Typography>
+									<Box sx={{ display: 'flex', width: '100%', margin: '1rem 0rem 0rem 0rem' }}>
+										<Box sx={{ flex: 1 }}>
+											<Typography variant='h5'>Student View</Typography>
+										</Box>
+										<CustomInfoMessageAlignedRight message='View as in a practice lesson' />
+									</Box>
 									{isFITBDragDrop && (
 										<Box sx={{ padding: '1rem 0', width: '100%' }}>
 											<FillInTheBlanksDragDropProps textWithBlanks={editorContent} blankValuePairs={blankValuePairsAdminQuestions} />
@@ -491,8 +495,12 @@ const AdminQuestionsEditQuestionDialog = ({
 									)}
 
 									{isFITBTyping && (
-										<Box sx={{ padding: '1rem 0', width: '100%' }}>
-											<FillInTheBlanksTyping textWithBlanks={editorContent} blankValuePairs={blankValuePairsAdminQuestions} />
+										<Box sx={{ padding: '1rem 0' }}>
+											<FillInTheBlanksTyping
+												textWithBlanks={editorContent}
+												blankValuePairs={blankValuePairsAdminQuestions}
+												fromAdminQuestions={true}
+											/>
 										</Box>
 									)}
 								</Box>
@@ -560,7 +568,7 @@ const AdminQuestionsEditQuestionDialog = ({
 							</>
 						)}
 
-						{(isFITBDragDrop || isFITBTyping) && isMinimumTwoBlanks && <CustomErrorMessage>- Enter at least 2 blanks in the text</CustomErrorMessage>}
+						{(isFITBDragDrop || isFITBTyping) && isMinimumOneBlank && <CustomErrorMessage>- Enter at least 1 blank in the text</CustomErrorMessage>}
 					</Box>
 
 					{isMultipleChoiceQuestion && (
@@ -579,7 +587,7 @@ const AdminQuestionsEditQuestionDialog = ({
 						resetVideoUpload();
 						resetEnterImageVideoUrl();
 						handleResetQuestion();
-						setIsMinimumTwoBlanks(false);
+						setIsMinimumOneBlank(false);
 					}}
 					cancelBtnText='Cancel'
 					onSubmit={handleSubmit}

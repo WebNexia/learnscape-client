@@ -7,6 +7,11 @@ import { sanitizeHtml } from '../../../utils/sanitizeHtml';
 import { useUserCourseLessonData } from '../../../hooks/useUserCourseLessonData';
 import { shuffle } from 'lodash';
 import { words } from '../../../interfaces/randomWords';
+import { QuizQuestionAnswer } from '../../../pages/LessonPage';
+import { UserBlankValuePairAnswers } from '../../../interfaces/userQuestion';
+import { LessonType } from '../../../interfaces/enums';
+import CustomInfoMessageAlignedLeft from '../infoMessage/CustomInfoMessageAlignedLeft';
+import theme from '../../../themes';
 
 const Container = styled(Box)`
 	display: flex;
@@ -18,7 +23,7 @@ const Container = styled(Box)`
 `;
 
 const Column = styled(Box)`
-	width: 90%;
+	width: 100%;
 	flex-grow: 1;
 `;
 
@@ -33,17 +38,40 @@ const TextContainer = styled(Box)`
 	padding: 0;
 `;
 
-const DropArea = styled(Box)<{ $isCorrect: boolean | null }>`
+const DropArea = styled(Box)<{ $isCorrect: boolean | null; $fromQuizQuestionUser?: boolean; $isLessonCompleted?: boolean; $lessonType?: string }>`
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
 	min-width: 4rem;
-	height: 1.5rem;
-	background-color: ${({ $isCorrect }) => ($isCorrect === null ? '#f0f0f0' : $isCorrect ? 'green' : '#d32f2f')};
-	border: 0.1rem solid ${({ $isCorrect }) => ($isCorrect === null ? '#cccccc' : $isCorrect ? '#c3e6cb' : '#f5c6cb')};
+	height: 1.75rem;
+	background-color: ${({ $isCorrect, $fromQuizQuestionUser, $isLessonCompleted, $lessonType }) =>
+		$isLessonCompleted
+			? $isCorrect
+				? theme.palette.success.main
+				: '#ef5350'
+			: ($fromQuizQuestionUser || $lessonType === LessonType.QUIZ) && !$isLessonCompleted
+			? '#f0f0f0'
+			: $isCorrect === null
+			? '#f0f0f0'
+			: $isCorrect
+			? theme.palette.success.main
+			: '#ef5350'};
+	border: 0.1rem solid
+		${({ $isCorrect, $fromQuizQuestionUser, $isLessonCompleted, $lessonType }) =>
+			$isLessonCompleted
+				? $isCorrect
+					? '#c3e6cb'
+					: '#f5c6cb'
+				: ($fromQuizQuestionUser || $lessonType === LessonType.QUIZ) && !$isLessonCompleted
+				? '#cccccc'
+				: $isCorrect === null
+				? '#cccccc'
+				: $isCorrect
+				? '#c3e6cb'
+				: '#f5c6cb'};
 	border-radius: 0.25rem;
 	padding: 0 0.25rem;
-	margin: 0 0.25rem;
+	margin: 0 0.35rem;
 	font-size: 0.75rem;
 	color: #495057;
 	overflow: hidden;
@@ -55,11 +83,14 @@ const DropArea = styled(Box)<{ $isCorrect: boolean | null }>`
 	width: auto;
 `;
 
-const Item = styled.div<{ $isCorrect: boolean | null }>`
+const Item = styled.div<{ $isCorrect: boolean | null; $fromQuizQuestionUser?: boolean; $lessonType?: string }>`
 	padding: 0.25rem 0.5rem;
-	margin: 0 0.25rem;
-	background-color: ${({ $isCorrect }) => ($isCorrect === null ? '#e0e0e0' : $isCorrect ? '#d4edda' : '#e57373')}; /* Color depends on correctness */
-	border: 1px solid ${({ $isCorrect }) => ($isCorrect === null ? '#cccccc' : $isCorrect ? '#c3e6cb' : '#f5c6cb')};
+	margin: 0.5rem 0.35rem;
+	background-color: ${({ $isCorrect, $fromQuizQuestionUser, $lessonType }) =>
+		$fromQuizQuestionUser || $lessonType === LessonType.QUIZ ? '#e0e0e0' : $isCorrect === null ? '#e0e0e0' : $isCorrect ? '#d4edda' : '#e57373'};
+	border: 1px solid
+		${({ $isCorrect, $fromQuizQuestionUser, $lessonType }) =>
+			$fromQuizQuestionUser || $lessonType === LessonType.QUIZ ? '#cccccc' : $isCorrect === null ? '#cccccc' : $isCorrect ? '#c3e6cb' : '#f5c6cb'};
 	border-radius: 0.25rem;
 	cursor: pointer;
 	text-align: center;
@@ -82,143 +113,214 @@ const Item = styled.div<{ $isCorrect: boolean | null }>`
 `;
 
 interface FillInTheBlanksDragDropProps {
+	questionId?: string;
 	fromPracticeQuestionUser?: boolean;
+	fromQuizQuestionUser?: boolean;
+	isLessonCompleted?: boolean;
 	textWithBlanks: string;
 	blankValuePairs: BlankValuePair[];
 	onComplete?: (allCorrect: boolean) => void;
 	displayedQuestionNumber?: number;
 	numberOfQuestions?: number;
-	setAllPairsMatched?: React.Dispatch<React.SetStateAction<boolean>>;
+	userBlankValuePairsAfterSubmission?: UserBlankValuePairAnswers[];
+	lessonType?: string | undefined;
+	userQuizAnswers?: QuizQuestionAnswer[];
+	setAllPairsMatchedFITBDragDrop?: React.Dispatch<React.SetStateAction<boolean>>;
 	setIsLessonCompleted?: React.Dispatch<React.SetStateAction<boolean>>;
 	setShowQuestionSelector?: React.Dispatch<React.SetStateAction<boolean>>;
+	setUserQuizAnswers?: React.Dispatch<React.SetStateAction<QuizQuestionAnswer[]>>;
 }
 
+// Function to decode HTML entities
+const decodeHtmlEntities = (text: string): string => {
+	const textArea = document.createElement('textarea');
+	textArea.innerHTML = text;
+	return textArea.value;
+};
+
 const FillInTheBlanksDragDrop = ({
+	questionId,
 	fromPracticeQuestionUser,
+	fromQuizQuestionUser,
+	isLessonCompleted,
 	textWithBlanks,
 	blankValuePairs,
 	onComplete,
-	setAllPairsMatched,
 	displayedQuestionNumber,
 	numberOfQuestions,
+	userBlankValuePairsAfterSubmission,
+	lessonType,
+	userQuizAnswers,
+	setAllPairsMatchedFITBDragDrop,
 	setIsLessonCompleted,
 	setShowQuestionSelector,
+	setUserQuizAnswers,
 }: FillInTheBlanksDragDropProps) => {
 	const [blanks, setBlanks] = useState<BlankValuePair[]>([]);
 	const [responses, setResponses] = useState<BlankValuePair[]>([]);
 	const [textSegments, setTextSegments] = useState<string[]>([]);
+	const [hasInteracted, setHasInteracted] = useState(false);
 
-	const { updateLastQuestion, getLastQuestion, handleNextLesson } = useUserCourseLessonData();
+	const { updateLastQuestion, getLastQuestion } = useUserCourseLessonData();
 
 	useEffect(() => {
-		let sanitizedHtml = sanitizeHtml(textWithBlanks)
+		const sanitizedHtml = sanitizeHtml(textWithBlanks)
 			.replace(/[()]/g, '')
 			.replace(/<\/?[^>]+(>|$)/g, '') // Remove HTML tags
 			.replace(/&nbsp;/g, ' ') // Replace &nbsp; with a regular space
+			.replace(/\n/g, '<br />') // Preserve line breaks by converting them to <br /> tags
 			.replace(/^\s*[\r\n]/gm, ''); // Remove empty lines
 
-		const segments = sanitizedHtml.split(/___\d+___/g).map((segment) => segment.trim());
-
-		// Remove trailing and leading empty spaces
-		const normalizedSegments = segments.map((segment) => segment.replace(/^\s+|\s+$/g, ''));
-
-		setTextSegments(normalizedSegments);
+		const segments = sanitizedHtml.split(/(___\d+___)/g);
+		setTextSegments(segments);
 
 		const initializedBlanks = blankValuePairs.map((pair) => ({
 			...pair,
 			value: '',
 		}));
-		setBlanks(initializedBlanks);
 
-		// Include random words and correct answers in shuffled responses
-		const randomWords = shuffle(words).slice(0, 5);
-		const allResponses = shuffle([
-			...blankValuePairs.map((pair) => ({ ...pair })),
-			...randomWords.map((word) => ({ id: `random-${word}`, value: word, blank: -1 })),
-		]);
-		setResponses(allResponses);
-	}, [textWithBlanks, blankValuePairs]);
+		const populateBlanks = (source: BlankValuePair[] | UserBlankValuePairAnswers[]) => {
+			source.forEach((pair) => {
+				const blank = initializedBlanks.find((b) => b.id === pair.id);
+				if (blank) blank.value = pair.value;
+			});
+		};
 
-	const handleDragEnd = (result: DropResult) => {
-		if (!result.destination) {
-			return;
+		if (isLessonCompleted && userBlankValuePairsAfterSubmission) {
+			populateBlanks(userBlankValuePairsAfterSubmission);
+		} else if (!isLessonCompleted && fromQuizQuestionUser) {
+			populateBlanks(userQuizAnswers?.find((quizAnswer) => quizAnswer.questionId === questionId)?.userBlankValuePairAnswers || []);
+		} else if (
+			(isLessonCompleted && fromPracticeQuestionUser) ||
+			(!isLessonCompleted && fromPracticeQuestionUser && displayedQuestionNumber! < getLastQuestion())
+		) {
+			populateBlanks(blankValuePairs);
+
+			const remainingResponses = blankValuePairs.filter((pair) => !initializedBlanks.some((blank) => blank.value === pair.value));
+			const randomWords = shuffle(words).slice(0, 5);
+			setResponses(shuffle([...remainingResponses, ...randomWords.map((word) => ({ id: `random-${word}`, value: word, blank: -1 }))]));
 		}
 
-		const { source, destination } = result;
-		const newBlanks = [...blanks];
-		const newResponses = [...responses];
+		setBlanks(initializedBlanks);
 
-		const getBlankIndex = (id: string) => newBlanks.findIndex((blank) => `blank-${blank.id}` === id);
+		if (!isLessonCompleted) {
+			const wordCount = fromQuizQuestionUser || lessonType === LessonType.QUIZ ? 15 : 5;
+			const randomWords = shuffle(words).slice(0, wordCount);
+			setResponses(shuffle([...blankValuePairs, ...randomWords.map((word) => ({ id: `random-${word}`, value: word, blank: -1 }))]));
+		}
+	}, [textWithBlanks, blankValuePairs, isLessonCompleted, userBlankValuePairsAfterSubmission, displayedQuestionNumber, getLastQuestion]);
 
-		try {
-			// Handle dragging from responses to blanks
-			if (source.droppableId === 'responses' && destination.droppableId.startsWith('blank-')) {
-				const blankIndex = getBlankIndex(destination.droppableId);
-				if (blankIndex !== -1 && !newBlanks[blankIndex].value) {
-					newBlanks[blankIndex].value = newResponses[source.index].value;
-					newResponses.splice(source.index, 1);
-				}
-			}
+	useEffect(() => {
+		if (hasInteracted && fromPracticeQuestionUser) {
+			const allCorrect = blanks.every((blank) => blank.value === blankValuePairs.find((p) => p.blank === blank.blank)?.value);
 
-			// Handle dragging from blanks back to responses
-			if (source.droppableId.startsWith('blank-') && destination.droppableId === 'responses') {
-				const blankIndex = getBlankIndex(source.droppableId);
-				const movedResponse = newBlanks[blankIndex].value;
-				newBlanks[blankIndex].value = '';
+			if (setAllPairsMatchedFITBDragDrop) setAllPairsMatchedFITBDragDrop(allCorrect);
 
-				// Always insert the item back to the responses array, even if it's empty
-				newResponses.splice(destination.index, 0, {
-					id: `response-${newBlanks[blankIndex].id}`,
-					blank: newBlanks[blankIndex].blank,
-					value: movedResponse,
-				});
-			}
+			if (onComplete) onComplete(allCorrect);
 
-			// Handle reordering within responses
-			if (source.droppableId === 'responses' && destination.droppableId === 'responses') {
-				const [movedResponse] = newResponses.splice(source.index, 1);
-				newResponses.splice(destination.index, 0, movedResponse);
-			}
-
-			// Handle moving items between blanks
-			if (source.droppableId.startsWith('blank-') && destination.droppableId.startsWith('blank-')) {
-				const blankIndexSource = getBlankIndex(source.droppableId);
-				const blankIndexDestination = getBlankIndex(destination.droppableId);
-
-				if (blankIndexSource !== -1 && blankIndexDestination !== -1 && !newBlanks[blankIndexDestination].value) {
-					newBlanks[blankIndexDestination].value = newBlanks[blankIndexSource].value;
-					newBlanks[blankIndexSource].value = '';
-				}
-			}
-
-			// Update the state with the new arrays
-			setBlanks(newBlanks);
-			setResponses(newResponses);
-
-			// Check if all answers are correct
-			const allCorrect = newBlanks.every((blank) => blank.value === blankValuePairs.find((p) => p.blank === blank.blank)?.value);
-
-			if (setAllPairsMatched) {
-				setAllPairsMatched(allCorrect);
-			}
-
-			if (onComplete) {
-				onComplete(allCorrect);
-			}
 			if (allCorrect && fromPracticeQuestionUser) {
 				if (displayedQuestionNumber && numberOfQuestions) {
 					if (displayedQuestionNumber + 1 <= numberOfQuestions && getLastQuestion() <= displayedQuestionNumber) {
 						updateLastQuestion(displayedQuestionNumber + 1);
 					}
 					if (displayedQuestionNumber === numberOfQuestions) {
-						handleNextLesson();
 						if (setIsLessonCompleted) setIsLessonCompleted(true);
 						if (setShowQuestionSelector) setShowQuestionSelector(true);
 					}
 				}
 			}
-		} catch (error) {
-			console.error('Error during handleDragEnd operation:', error);
+		}
+	}, [blanks, hasInteracted]);
+
+	useEffect(() => {
+		setUserQuizAnswers?.((prevData) => {
+			const blankValuePairsWithIds: UserBlankValuePairAnswers[] = blankValuePairs.map((pair) => ({
+				id: pair.id,
+				value: '',
+			}));
+
+			if (prevData) {
+				return prevData.map((data) => {
+					if (data.questionId === questionId) {
+						return { ...data, userBlankValuePairAnswers: blankValuePairsWithIds };
+					}
+					return data;
+				});
+			}
+
+			return prevData;
+		});
+	}, []);
+
+	const handleDragEnd = (result: DropResult) => {
+		if (!result.destination) {
+			return;
+		}
+
+		setHasInteracted(true);
+
+		if (isLessonCompleted && lessonType !== LessonType.PRACTICE_LESSON) return;
+
+		const { source, destination } = result;
+		const newBlanks = [...blanks];
+		const newResponses = [...responses];
+
+		if (source.droppableId === 'responses' && destination.droppableId.startsWith('blank-')) {
+			const blankIndex = newBlanks.findIndex((blank) => `blank-${blank.id}` === destination.droppableId);
+			if (blankIndex !== -1 && !newBlanks[blankIndex].value) {
+				newBlanks[blankIndex].value = newResponses[source.index].value;
+				newResponses.splice(source.index, 1);
+			}
+		}
+
+		if (source.droppableId.startsWith('blank-') && destination.droppableId === 'responses') {
+			const blankIndex = newBlanks.findIndex((blank) => `blank-${blank.id}` === source.droppableId);
+			const movedResponse = newBlanks[blankIndex].value;
+			newBlanks[blankIndex].value = '';
+
+			newResponses.splice(destination.index, 0, {
+				id: `response-${newBlanks[blankIndex].id}`,
+				blank: newBlanks[blankIndex].blank,
+				value: movedResponse,
+			});
+		}
+
+		if (source.droppableId === 'responses' && destination.droppableId === 'responses') {
+			const [movedResponse] = newResponses.splice(source.index, 1);
+			newResponses.splice(destination.index, 0, movedResponse);
+		}
+
+		if (source.droppableId.startsWith('blank-') && destination.droppableId.startsWith('blank-')) {
+			const blankIndexSource = newBlanks.findIndex((blank) => `blank-${blank.id}` === source.droppableId);
+			const blankIndexDestination = newBlanks.findIndex((blank) => `blank-${blank.id}` === destination.droppableId);
+
+			if (blankIndexSource !== -1 && blankIndexDestination !== -1 && !newBlanks[blankIndexDestination].value) {
+				newBlanks[blankIndexDestination].value = newBlanks[blankIndexSource].value;
+				newBlanks[blankIndexSource].value = '';
+			}
+		}
+
+		setBlanks(newBlanks);
+		setResponses(newResponses);
+
+		if (fromQuizQuestionUser && !isLessonCompleted) {
+			setUserQuizAnswers?.((prevData) => {
+				const updatedAnswers = newBlanks.map((blank) => ({
+					id: blank.id,
+					value: blank.value,
+				}));
+
+				if (prevData) {
+					return prevData.map((data) => {
+						if (data.questionId === questionId) {
+							return { ...data, userBlankValuePairAnswers: updatedAnswers };
+						}
+						return data;
+					});
+				}
+
+				return prevData;
+			});
 		}
 	};
 
@@ -228,91 +330,168 @@ const FillInTheBlanksDragDrop = ({
 				<Column sx={{ marginBottom: '3rem' }}>
 					<TextContainer>
 						{textSegments.map((segment, index) => {
-							const sanitizedSegment = segment.replace(/&nbsp;/g, ' ').trim(); // Replace &nbsp; with a regular space and trim it
+							const match = segment.match(/___(\d+)___/);
+							if (match) {
+								const blankIndex = parseInt(match[1], 10) - 1;
+								return (
+									<Droppable key={`blank-${blanks[blankIndex].id}`} droppableId={`blank-${blanks[blankIndex].id}`}>
+										{(provided) => (
+											<DropArea
+												key={`drop-area-${blanks[blankIndex].id}-${blanks[blankIndex].value}`}
+												ref={provided.innerRef}
+												{...provided.droppableProps}
+												$isCorrect={
+													blanks[blankIndex].value
+														? blanks[blankIndex].value === blankValuePairs.find((p) => p.blank === blanks[blankIndex].blank)?.value
+														: null
+												}
+												$fromQuizQuestionUser={fromQuizQuestionUser}
+												$lessonType={lessonType}
+												$isLessonCompleted={isLessonCompleted}>
+												{blanks[blankIndex].value ? (
+													<Draggable
+														key={`draggable-blank-${blanks[blankIndex].id}`}
+														draggableId={`draggable-blank-${blanks[blankIndex].id}`}
+														index={index}>
+														{(provided, snapshot) => (
+															<Item
+																ref={provided.innerRef}
+																{...provided.draggableProps}
+																{...provided.dragHandleProps}
+																$isCorrect={blanks[blankIndex].value === blankValuePairs.find((p) => p.blank === blanks[blankIndex].blank)?.value}
+																$fromQuizQuestionUser={fromQuizQuestionUser}
+																$lessonType={lessonType}
+																style={{
+																	...provided.draggableProps.style,
+																	boxShadow: snapshot.isDragging ? '0px 5px 10px rgba(0, 0, 0, 0.2)' : 'none',
+																	backgroundColor: snapshot.isDragging ? '#f0f0f0' : '#e0e0e0',
+																}}>
+																<Typography variant='body2' component='span' sx={{ display: 'inline-flex' }}>
+																	{blanks[blankIndex].value}
+																</Typography>
+															</Item>
+														)}
+													</Draggable>
+												) : null}
+												{provided.placeholder}
+											</DropArea>
+										)}
+									</Droppable>
+								);
+							}
+
 							return (
-								<React.Fragment key={`text-${index}`}>
-									<Typography variant='body2' component='span' dangerouslySetInnerHTML={{ __html: sanitizedSegment }} sx={{ lineHeight: '2.25' }} />
-									{blanks[index] && (
-										<Droppable key={`blank-${blanks[index].id}`} droppableId={`blank-${blanks[index].id}`}>
-											{(provided) => (
-												<DropArea
-													key={`drop-area-${blanks[index].id}-${blanks[index].value}`}
-													ref={provided.innerRef}
-													{...provided.droppableProps}
-													$isCorrect={
-														blanks[index].value ? blanks[index].value === blankValuePairs.find((p) => p.blank === blanks[index].blank)?.value : null
-													}>
-													{blanks[index].value ? (
-														<Draggable key={`draggable-blank-${blanks[index].id}`} draggableId={`draggable-blank-${blanks[index].id}`} index={index}>
-															{(provided, snapshot) => (
-																<Item
-																	ref={provided.innerRef}
-																	{...provided.draggableProps}
-																	{...provided.dragHandleProps}
-																	$isCorrect={blanks[index].value === blankValuePairs.find((p) => p.blank === blanks[index].blank)?.value}
-																	style={{
-																		...provided.draggableProps.style,
-																		boxShadow: snapshot.isDragging ? '0px 5px 10px rgba(0, 0, 0, 0.2)' : 'none',
-																		backgroundColor: snapshot.isDragging ? '#f0f0f0' : '#e0e0e0',
-																	}}>
-																	<Typography variant='body2' component='span' sx={{ display: 'inline-flex' }}>
-																		{blanks[index].value}
-																	</Typography>
-																</Item>
-															)}
-														</Draggable>
-													) : null}
-													{provided.placeholder}
-												</DropArea>
-											)}
-										</Droppable>
-									)}
-								</React.Fragment>
+								<Typography
+									key={`text-${index}`}
+									variant='body2'
+									component='span'
+									dangerouslySetInnerHTML={{ __html: segment }}
+									sx={{ lineHeight: '2.25' }}
+								/>
 							);
 						})}
 					</TextContainer>
 				</Column>
 
-				<Column
-					sx={{
-						display: 'flex',
-						alignItems: 'flex-start',
-						boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
-						borderRadius: '0.35rem',
-						padding: '1rem',
-					}}>
-					<Droppable droppableId='responses'>
-						{(provided) => (
-							<Box
-								ref={provided.innerRef}
-								{...provided.droppableProps}
-								sx={{
-									borderRadius: '0.35rem',
-									display: 'flex',
-									flexWrap: 'wrap',
-									height: '100%',
-									width: '100%',
-									minHeight: '4rem',
-								}}>
-								{responses.map((response, index) => (
-									<Draggable
-										key={`draggable-response-${response.id}-${index}`}
-										draggableId={`draggable-response-${response.id}-${index}`}
-										index={index}>
-										{(provided) => (
-											<Item ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} $isCorrect={null}>
-												<Typography variant='body2' component='span'>
-													{response.value}
+				{(!isLessonCompleted || lessonType === LessonType.PRACTICE_LESSON) && (
+					<>
+						<Box sx={{ width: '100%', flex: 1 }}>
+							<CustomInfoMessageAlignedLeft message='Select and drag the correct word cards into the blanks to complete the sentence(s)' />
+						</Box>
+						<Column
+							sx={{
+								display: 'flex',
+								alignItems: 'flex-start',
+								boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
+								borderRadius: '0.35rem',
+								padding: '1rem',
+							}}>
+							<Droppable droppableId='responses'>
+								{(provided) => (
+									<Box
+										ref={provided.innerRef}
+										{...provided.droppableProps}
+										sx={{
+											borderRadius: '0.35rem',
+											display: 'flex',
+											flexWrap: 'wrap',
+											height: '100%',
+											width: '100%',
+											minHeight: '4rem',
+										}}>
+										{responses.map((response, index) => (
+											<Draggable
+												key={`draggable-response-${response.id}-${index}`}
+												draggableId={`draggable-response-${response.id}-${index}`}
+												index={index}>
+												{(provided) => (
+													<Item ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} $isCorrect={null}>
+														<Typography variant='body2' component='span'>
+															{response.value}
+														</Typography>
+													</Item>
+												)}
+											</Draggable>
+										))}
+										{provided.placeholder}
+									</Box>
+								)}
+							</Droppable>
+						</Column>
+					</>
+				)}
+
+				{isLessonCompleted && lessonType !== LessonType.PRACTICE_LESSON && (
+					<Box sx={{ margin: '1rem 0 1rem 0', width: '100%' }}>
+						<Box>
+							<Typography variant='h6'>Correct Text</Typography>
+						</Box>
+						<Box
+							sx={{
+								boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
+								borderRadius: '0.35rem',
+								margin: '0.5rem 0',
+								padding: '1rem',
+							}}>
+							<TextContainer>
+								{textWithBlanks.split(/(___\d+___)/g).map((segment, index) => {
+									const match = segment.match(/___(\d+)___/);
+									if (match) {
+										const blankIndex = parseInt(match[1], 10) - 1;
+										const correctValue = blankValuePairs[blankIndex]?.value;
+
+										if (correctValue !== undefined) {
+											return (
+												<Typography
+													key={`correct-${blankIndex}`}
+													variant='body2'
+													component='span'
+													sx={{
+														color: 'green',
+														fontWeight: 'bolder',
+														border: '0.075rem solid green',
+														padding: '0.25rem',
+														margin: '0 0.15rem',
+														borderRadius: '0.35rem',
+													}}>
+													{correctValue}
 												</Typography>
-											</Item>
-										)}
-									</Draggable>
-								))}
-								{provided.placeholder}
-							</Box>
-						)}
-					</Droppable>
-				</Column>
+											);
+										}
+									}
+
+									return (
+										<Typography key={`correct-text-${index}`} variant='body2' component='span' sx={{ lineHeight: '2.0' }}>
+											{decodeHtmlEntities(segment)
+												.replace(/[()]/g, '')
+												.replace(/<\/?[^>]+(>|$)/g, '')}
+										</Typography>
+									);
+								})}
+							</TextContainer>
+						</Box>
+					</Box>
+				)}
 			</Container>
 		</DragDropContext>
 	);

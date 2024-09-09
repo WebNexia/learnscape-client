@@ -1,6 +1,6 @@
 import { Box, Table, TableBody, TableCell, TableRow } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
-import { useContext, useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { QuizSubmissionsContext } from '../contexts/QuizSubmissionsContextProvider';
 import { useParams } from 'react-router-dom';
 import { QuizSubmission } from '../interfaces/quizSubmission';
@@ -22,6 +22,8 @@ const AdminQuizSubmissions = () => {
 
 	const { userId } = useParams();
 
+	const [dataLoaded, setDataLoaded] = useState(false);
+
 	const [orderBy, setOrderBy] = useState<keyof QuizSubmission>('userName');
 	const [order, setOrder] = useState<'asc' | 'desc'>('asc');
 
@@ -36,15 +38,16 @@ const AdminQuizSubmissions = () => {
 		setQuizSubmissionsPageNumber(1);
 	}, []);
 
-	const isInitialMount = useRef(true);
-
 	useEffect(() => {
-		if (isInitialMount.current) {
-			isInitialMount.current = false;
-		} else {
-			fetchQuizSubmissions(quizSubmissionsPageNumber);
+		if (!dataLoaded) {
+			try {
+				fetchQuizSubmissions(quizSubmissionsPageNumber);
+				setDataLoaded(true);
+			} catch (error) {
+				console.log(error);
+			}
 		}
-	}, [quizSubmissionsPageNumber]);
+	}, [quizSubmissionsPageNumber, dataLoaded]);
 
 	return (
 		<DashboardPagesLayout pageName='Quiz Submissions' customSettings={{ justifyContent: 'flex-start' }}>

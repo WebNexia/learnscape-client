@@ -8,11 +8,14 @@ import { generateUniqueId } from '../../../utils/uniqueIdGenerator';
 import { Lesson } from '../../../interfaces/lessons';
 import { QuestionUpdateTrack } from '../../../pages/AdminLessonEditPage';
 import { questionLessonUpdateTrack } from '../../../utils/questionLessonUpdateTrack';
+import { LessonType } from '../../../interfaces/enums';
+import CustomInfoMessageAlignedRight from '../infoMessage/CustomInfoMessageAlignedRight';
 
 interface MatchingProps {
 	question?: QuestionInterface;
 	existingQuestion?: boolean;
 	matchingPairs?: MatchingPair[];
+	lessonType?: string;
 	setNewQuestion?: React.Dispatch<React.SetStateAction<QuestionInterface>>;
 	setIsMinimumTwoMatchingPairs?: React.Dispatch<React.SetStateAction<boolean>>;
 	setIsMissingPair: React.Dispatch<React.SetStateAction<boolean>>;
@@ -26,6 +29,7 @@ const Matching = ({
 	question,
 	existingQuestion,
 	matchingPairs = [],
+	lessonType,
 	setNewQuestion,
 	setIsMinimumTwoMatchingPairs,
 	setIsMissingPair,
@@ -117,10 +121,13 @@ const Matching = ({
 				</Tooltip>
 			</Box>
 			<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
-				<Box sx={{ textAlign: 'left', width: '90%', mt: '3rem' }}>
-					<Typography variant='h5'>Student View</Typography>
+				<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '90%', mt: '3rem' }}>
+					<Box>
+						<Typography variant='h5'>Student View </Typography>
+					</Box>
+					<CustomInfoMessageAlignedRight message={`View as in a ${lessonType === LessonType.QUIZ ? 'quiz' : 'practice lesson'}`} />
 				</Box>
-				<MatchingPreview initialPairs={pairs} />
+				<MatchingPreview initialPairs={pairs} lessonType={lessonType} />
 			</Box>
 		</Box>
 	);

@@ -57,6 +57,8 @@ const Questions: React.FC<QuestionsProps> = ({
 								videoRecordUrl: '',
 								teacherFeedback: '',
 								teacherAudioFeedbackUrl: '',
+								userMatchingPairAnswers: [],
+								userBlankValuePairAnswers: [],
 							})
 						);
 				} else {

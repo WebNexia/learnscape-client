@@ -1,6 +1,6 @@
 import { CloudUpload } from '@mui/icons-material';
 import LoadingButton from '@mui/lab/LoadingButton';
-import { Box, Button, FormControl, Input, Typography } from '@mui/material';
+import { Box, FormControl, IconButton, Input, Tooltip, Typography } from '@mui/material';
 import React, { ChangeEvent } from 'react';
 import CustomErrorMessage from '../customFields/CustomErrorMessage';
 import CustomTextField from '../customFields/CustomTextField';
@@ -78,15 +78,14 @@ const HandleVideoUploadURL = ({
 							}}
 						/>
 						{!isVideoLoading ? (
-							<Button
-								variant='outlined'
-								sx={{ textTransform: 'capitalize', height: '2rem', width: '15%' }}
-								onClick={handleVideoUploadReusable}
-								disabled={!videoUpload || isVideoSizeLarge}
-								startIcon={<CloudUpload />}
-								size='small'>
-								Upload
-							</Button>
+							<Tooltip title='Upload' placement='top'>
+								<IconButton
+									onClick={handleVideoUploadReusable}
+									sx={{ height: '2rem', width: '12.5%', border: '0.02rem solid gray', borderRadius: '0.35rem' }}
+									disabled={!videoUpload || isVideoSizeLarge}>
+									<CloudUpload />
+								</IconButton>
+							</Tooltip>
 						) : (
 							<LoadingButton loading variant='outlined' sx={{ textTransform: 'capitalize', height: '2rem' }}>
 								Upload
