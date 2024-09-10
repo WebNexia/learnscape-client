@@ -50,10 +50,12 @@ const HomePage = () => {
 							variant='h1'
 							sx={{
 								color: '#fff',
-								fontSize: '4rem',
+								fontSize: '5rem',
 								zIndex: 3,
 								textAlign: 'center',
-							}}></Typography>
+							}}>
+							Coming Soon!!
+						</Typography>
 					</Box>
 				</Box>
 			</Box>
