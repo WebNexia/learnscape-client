@@ -258,7 +258,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 							backgroundColor: activeForm !== AuthForms.SIGN_IN ? 'lightgray' : null,
 							borderTop: activeForm === AuthForms.SIGN_IN ? `solid 0.3rem ${theme.bgColor?.greenPrimary}` : 'solid 0.3rem lightgray',
 						}}>
-						Sign In
+						Log In
 					</Button>
 					<Button
 						fullWidth
@@ -280,7 +280,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 							backgroundColor: activeForm !== AuthForms.SIGN_UP ? 'lightgray' : null,
 							borderTop: activeForm === AuthForms.SIGN_UP ? `solid 0.3rem ${theme.bgColor?.greenPrimary}` : 'solid 0.3rem lightgray',
 						}}>
-						Sign Up
+						Register
 					</Button>
 				</Box>
 
@@ -332,7 +332,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 											/>
 										</Box>
 										<Button variant='contained' fullWidth sx={submitBtnStyles} type='submit'>
-											Sign In
+											Log In
 										</Button>
 									</form>
 								</Box>
@@ -392,7 +392,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 											/> */}
 										</Box>
 										<Button variant='contained' fullWidth sx={submitBtnStyles} type='submit'>
-											Sign Up
+											Register
 										</Button>
 									</form>
 								</Box>
