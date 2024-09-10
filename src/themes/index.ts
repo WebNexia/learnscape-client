@@ -16,6 +16,7 @@ interface ExtendedThemeOptions extends ThemeOptions {
 			color?: string;
 			border?: string;
 		};
+		textTransform: string;
 	};
 	textColor?: {
 		primary: {
@@ -139,6 +140,7 @@ const theme = createTheme({
 			color: '#1EC28B',
 			border: 'solid #1EC28B',
 		},
+		textTransform: 'capitalize',
 	},
 	textColor: {
 		primary: {
