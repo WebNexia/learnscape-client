@@ -16,6 +16,7 @@ import {
 	LibraryAddCheck,
 	LibraryBooks,
 	LightMode,
+	Notifications,
 	PeopleAltOutlined,
 	QuizOutlined,
 	Settings,
@@ -147,6 +148,7 @@ const Loading = () => {
 								<SidebarBtn btnText='Schedule' IconName={CalendarMonth} selectedPage={selectedPage} />
 								<SidebarBtn btnText='Messages' IconName={Email} selectedPage={selectedPage} />
 								<SidebarBtn btnText='Community' IconName={Groups} selectedPage={selectedPage} />
+								<SidebarBtn btnText='Notifications' IconName={Notifications} selectedPage={selectedPage} />
 								<SidebarBtn btnText='Settings' IconName={Settings} selectedPage={selectedPage} />
 							</>
 						)}
@@ -158,6 +160,7 @@ const Loading = () => {
 								<SidebarBtn btnText='Schedule' IconName={CalendarMonth} selectedPage={selectedPage} />
 								<SidebarBtn btnText='Messages' IconName={Email} selectedPage={selectedPage} />
 								<SidebarBtn btnText='Community' IconName={Groups} selectedPage={selectedPage} />
+								<SidebarBtn btnText='Notifications' IconName={Notifications} selectedPage={selectedPage} />
 								<SidebarBtn btnText='Settings' IconName={Settings} selectedPage={selectedPage} />
 							</>
 						)}

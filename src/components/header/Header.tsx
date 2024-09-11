@@ -85,9 +85,9 @@ const Header = () => {
 							textTransform: 'capitalize',
 							fontSize: '1rem',
 							color: theme.textColor?.common.main,
-							border: '#fff 0.01rem solid',
+							border: '#fff 0.075rem solid',
 							padding: '0.5rem',
-							boxShadow: '0.1rem 0.3rem 0.2rem 0.2rem rgba(0, 0, 0, 0.3)',
+							boxShadow: '0.1rem 0.4rem 0.2rem 0rem rgba(0, 0, 0, 0.3)',
 							transition: '0.3s',
 							':hover': { backgroundColor: '#fff', color: theme.textColor?.primary.main },
 						}}

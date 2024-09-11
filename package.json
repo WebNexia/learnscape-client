@@ -10,6 +10,8 @@
 		"preview": "vite preview"
 	},
 	"dependencies": {
+		"@emoji-mart/data": "^1.2.1",
+		"@emoji-mart/react": "^1.1.1",
 		"@emotion/react": "^11.11.3",
 		"@emotion/styled": "^11.11.0",
 		"@mui/icons-material": "^5.15.4",
@@ -19,7 +21,9 @@
 		"@tinymce/tinymce-react": "^5.1.1",
 		"axios": "^1.6.5",
 		"dompurify": "^3.1.5",
+		"emoji-regex": "^10.4.0",
 		"firebase": "^10.11.1",
+		"firebase-admin": "^12.4.0",
 		"framer-motion": "^11.0.24",
 		"html2canvas": "^1.4.1",
 		"html2pdf.js": "^0.10.2",

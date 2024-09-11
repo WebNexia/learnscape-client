@@ -11,12 +11,12 @@ export const enum TextFieldTypes {
 
 export const enum AuthFormErrorMessages {
 	EMAIL_EXISTS = 'This email address is already in use!',
-	INVALID_CREDENTIALS = 'Invalid email address or password.',
-	ORG_CODE_NOT_EXIST = 'This organisation code does not exist',
+	INVALID_CREDENTIALS = 'Invalid email address or password',
+	USERNAME_EXISTS = 'Username is already taken',
 	EMAIL_NOT_VERIFIED = 'Email is not verified',
-	UNKNOWN_ERROR_OCCURRED = 'An unknown error occurred.',
-	PASSWORD_TOO_SHORT = 'Password must be at least 6 characters long.',
-	PASSWORD_NO_LETTER = 'Password must contain at least one letter.',
+	UNKNOWN_ERROR_OCCURRED = 'An unknown error occurred',
+	PASSWORD_TOO_SHORT = 'Password must be at least 6 characters long',
+	PASSWORD_NO_LETTER = 'Password must contain at least one letter',
 	// PASSWORD_NO_UPPERCASE = 'Password must contain at least one uppercase letter.',
 	// PASSWORD_NO_LOWERCASE = 'Password must contain at least one lowercase letter.',
 	PASSWORD_NO_NUMBER = 'Password must contain at least one number.',

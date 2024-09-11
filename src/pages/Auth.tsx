@@ -171,37 +171,33 @@ const Auth = ({ setUserRole }: AuthProps) => {
 		}
 
 		try {
-			const response = await axios.get(`${base_url}/organisations/code/${orgCode}`);
+			const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+			const user = userCredential.user;
 
-			if (response.data) {
-				const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-				const user = userCredential.user;
+			await sendEmailVerification(user);
 
-				await sendEmailVerification(user);
+			await axios.post(`${base_url}/users/signup`, {
+				username,
+				orgCode,
+				firebaseUserId: user.uid,
+				email,
+			});
 
-				await axios.post(`${base_url}/users/signup`, {
-					username,
-					orgCode,
-					firebaseUserId: user.uid,
-					email,
-				});
-
-				if (user) {
-					setActiveForm(AuthForms.SIGN_IN);
-					setEmail('');
-					setPassword('');
-					setUsername('');
-					setOrgCode('');
-					setErrorMsg(undefined);
-					setSignUpMessage(true);
-					setShowPassword(false);
-				}
+			if (user) {
+				setActiveForm(AuthForms.SIGN_IN);
+				setEmail('');
+				setPassword('');
+				setUsername('');
+				setOrgCode('');
+				setErrorMsg(undefined);
+				setSignUpMessage(true);
+				setShowPassword(false);
 			}
 		} catch (error) {
-			if (error instanceof FirebaseError) {
+			if (axios.isAxiosError(error) && error.response?.status === 400 && error.response?.data?.message === 'Username is already taken.') {
+				setErrorMsg(AuthFormErrorMessages.USERNAME_EXISTS);
+			} else if (error instanceof FirebaseError) {
 				handleFirebaseError(error);
-			} else {
-				setErrorMsg(AuthFormErrorMessages.ORG_CODE_NOT_EXIST);
 			}
 		}
 	};
@@ -420,7 +416,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 							{
 								[AuthFormErrorMessages.EMAIL_EXISTS]: errorMessageTypography,
 								[AuthFormErrorMessages.INVALID_CREDENTIALS]: errorMessageTypography,
-								[AuthFormErrorMessages.ORG_CODE_NOT_EXIST]: errorMessageTypography,
+								[AuthFormErrorMessages.USERNAME_EXISTS]: errorMessageTypography,
 								[AuthFormErrorMessages.EMAIL_NOT_VERIFIED]: errorMessageTypography,
 								[AuthFormErrorMessages.UNKNOWN_ERROR_OCCURRED]: errorMessageTypography,
 								[AuthFormErrorMessages.PASSWORD_TOO_SHORT]: errorMessageTypography,
