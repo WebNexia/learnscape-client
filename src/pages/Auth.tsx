@@ -1,4 +1,4 @@
-import { Alert, Box, Button, IconButton, InputAdornment, Snackbar, Typography } from '@mui/material';
+import { Alert, Box, Button, IconButton, InputAdornment, Snackbar, Tooltip, Typography } from '@mui/material';
 import * as styles from '../styles/styleAuth';
 import { FormEvent, useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -42,7 +42,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 	const [username, setUsername] = useState<string>('');
 	const [email, setEmail] = useState<string>('');
 	const [password, setPassword] = useState<string>('');
-	const [orgCode, setOrgCode] = useState<string>('6RS1YS');
+	const [orgCode, setOrgCode] = useState<string>('BR1SGC');
 
 	const [showPassword, setShowPassword] = useState(false);
 
@@ -353,12 +353,16 @@ const Auth = ({ setUserRole }: AuthProps) => {
 												value={email}
 											/>
 
-											<CustomTextField
-												label='Username'
-												type={TextFieldTypes.TEXT}
-												onChange={(e) => setUsername(e.target.value.trim())}
-												value={username}
-											/>
+											<Tooltip title='Max 15 Characters' placement='top'>
+												<CustomTextField
+													label='Username'
+													type={TextFieldTypes.TEXT}
+													onChange={(e) => setUsername(e.target.value.trim())}
+													value={username}
+													InputProps={{ inputProps: { maxLength: 15 } }}
+												/>
+											</Tooltip>
+
 											<CustomTextField
 												label='Password'
 												type={showPassword ? TextFieldTypes.TEXT : TextFieldTypes.PASSWORD}
