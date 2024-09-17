@@ -318,7 +318,8 @@ const CreateQuestionDialog = ({
 			setIsCorrectAnswerMissing(true);
 			return;
 		}
-		if (isDuplicateOption || !isMinimumOptions) return;
+
+		if (isMultipleChoiceQuestion && (isDuplicateOption || !isMinimumOptions)) return;
 
 		if (createNewQuestion) createQuestion();
 		else createQuestionTemplate();

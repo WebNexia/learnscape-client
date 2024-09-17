@@ -197,7 +197,7 @@ const AdminQuestionsEditQuestionDialog = ({
 			setIsMinimumOneBlank(false);
 		}
 
-		if (isDuplicateOption || !isMinimumOptions) return;
+		if (isMultipleChoiceQuestion && (isDuplicateOption || !isMinimumOptions)) return;
 
 		try {
 			const updatedCorrectAnswer = isMultipleChoiceQuestion ? options[correctAnswerIndex] : correctAnswerAdminQuestions;
