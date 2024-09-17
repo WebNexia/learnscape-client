@@ -1,4 +1,4 @@
-import { Alert, Box, Button, IconButton, InputAdornment, Snackbar, Typography } from '@mui/material';
+import { Alert, Box, Button, IconButton, InputAdornment, Snackbar, Tooltip, Typography } from '@mui/material';
 import * as styles from '../styles/styleAuth';
 import { FormEvent, useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -42,7 +42,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 	const [username, setUsername] = useState<string>('');
 	const [email, setEmail] = useState<string>('');
 	const [password, setPassword] = useState<string>('');
-	const [orgCode, setOrgCode] = useState<string>('6RS1YS');
+	const [orgCode, setOrgCode] = useState<string>('BR1SGC');
 
 	const [showPassword, setShowPassword] = useState(false);
 
@@ -171,37 +171,33 @@ const Auth = ({ setUserRole }: AuthProps) => {
 		}
 
 		try {
-			const response = await axios.get(`${base_url}/organisations/code/${orgCode}`);
+			const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+			const user = userCredential.user;
 
-			if (response.data) {
-				const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-				const user = userCredential.user;
+			await sendEmailVerification(user);
 
-				await sendEmailVerification(user);
+			await axios.post(`${base_url}/users/signup`, {
+				username,
+				orgCode,
+				firebaseUserId: user.uid,
+				email,
+			});
 
-				await axios.post(`${base_url}/users/signup`, {
-					username,
-					orgCode,
-					firebaseUserId: user.uid,
-					email,
-				});
-
-				if (user) {
-					setActiveForm(AuthForms.SIGN_IN);
-					setEmail('');
-					setPassword('');
-					setUsername('');
-					setOrgCode('');
-					setErrorMsg(undefined);
-					setSignUpMessage(true);
-					setShowPassword(false);
-				}
+			if (user) {
+				setActiveForm(AuthForms.SIGN_IN);
+				setEmail('');
+				setPassword('');
+				setUsername('');
+				setOrgCode('');
+				setErrorMsg(undefined);
+				setSignUpMessage(true);
+				setShowPassword(false);
 			}
 		} catch (error) {
-			if (error instanceof FirebaseError) {
+			if (axios.isAxiosError(error) && error.response?.status === 400 && error.response?.data?.message === 'Username is already taken.') {
+				setErrorMsg(AuthFormErrorMessages.USERNAME_EXISTS);
+			} else if (error instanceof FirebaseError) {
 				handleFirebaseError(error);
-			} else {
-				setErrorMsg(AuthFormErrorMessages.ORG_CODE_NOT_EXIST);
 			}
 		}
 	};
@@ -357,12 +353,16 @@ const Auth = ({ setUserRole }: AuthProps) => {
 												value={email}
 											/>
 
-											<CustomTextField
-												label='Username'
-												type={TextFieldTypes.TEXT}
-												onChange={(e) => setUsername(e.target.value.trim())}
-												value={username}
-											/>
+											<Tooltip title='Max 15 Characters' placement='top'>
+												<CustomTextField
+													label='Username'
+													type={TextFieldTypes.TEXT}
+													onChange={(e) => setUsername(e.target.value.trim())}
+													value={username}
+													InputProps={{ inputProps: { maxLength: 15 } }}
+												/>
+											</Tooltip>
+
 											<CustomTextField
 												label='Password'
 												type={showPassword ? TextFieldTypes.TEXT : TextFieldTypes.PASSWORD}
@@ -420,7 +420,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 							{
 								[AuthFormErrorMessages.EMAIL_EXISTS]: errorMessageTypography,
 								[AuthFormErrorMessages.INVALID_CREDENTIALS]: errorMessageTypography,
-								[AuthFormErrorMessages.ORG_CODE_NOT_EXIST]: errorMessageTypography,
+								[AuthFormErrorMessages.USERNAME_EXISTS]: errorMessageTypography,
 								[AuthFormErrorMessages.EMAIL_NOT_VERIFIED]: errorMessageTypography,
 								[AuthFormErrorMessages.UNKNOWN_ERROR_OCCURRED]: errorMessageTypography,
 								[AuthFormErrorMessages.PASSWORD_TOO_SHORT]: errorMessageTypography,

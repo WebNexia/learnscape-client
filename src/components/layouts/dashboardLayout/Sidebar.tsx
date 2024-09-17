@@ -9,6 +9,7 @@ import {
 	Groups,
 	LibraryAddCheck,
 	LibraryBooks,
+	Notifications,
 	PeopleAltOutlined,
 	QuizOutlined,
 	Settings,
@@ -154,6 +155,12 @@ const Sidebar = () => {
 								selectedPage={selectedPage}
 							/>
 							<SidebarBtn
+								btnText='Notifications'
+								IconName={Notifications}
+								onClick={() => navigateWithPage(PageName.ADMIN_COMMUNITY, `/admin/notifications/user/${id || userId}`)}
+								selectedPage={selectedPage}
+							/>
+							<SidebarBtn
 								btnText='Settings'
 								IconName={Settings}
 								onClick={() => navigateWithPage(PageName.ADMIN_SETTINGS, `/admin/settings/user/${id || userId}`)}
@@ -199,6 +206,12 @@ const Sidebar = () => {
 								btnText='Community'
 								IconName={Groups}
 								onClick={() => navigateWithPage(PageName.COMMUNITY, `/community/user/${id || userId}`)}
+								selectedPage={selectedPage}
+							/>
+							<SidebarBtn
+								btnText='Notifications'
+								IconName={Notifications}
+								onClick={() => navigateWithPage(PageName.ADMIN_COMMUNITY, `/notifications/user/${id || userId}`)}
 								selectedPage={selectedPage}
 							/>
 							<SidebarBtn

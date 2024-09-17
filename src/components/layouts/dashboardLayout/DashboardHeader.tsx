@@ -88,6 +88,10 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 							localStorage.removeItem('userCourseData');
 							localStorage.removeItem('userLessonData');
 							localStorage.removeItem('role');
+							localStorage.removeItem('activeChatId');
+							localStorage.removeItem('chatList');
+							localStorage.removeItem('participantCache');
+
 							clearAllQuizData();
 
 							navigate('/');

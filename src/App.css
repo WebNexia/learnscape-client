@@ -31,3 +31,8 @@ a {
 .rich-text-content b {
 	font-weight: bold;
 }
+
+.highlighted-message {
+	background-color: lightblue; /* Highlight color */
+	transition: background-color 0.5s ease; /* Smooth transition */
+}
