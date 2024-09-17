@@ -1,7 +1,7 @@
-import { Alert, Box, Dialog, IconButton, InputAdornment, Snackbar, Tooltip, Typography } from '@mui/material';
+import { Alert, Badge, Box, Dialog, IconButton, InputAdornment, Snackbar, Tooltip, Typography } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
-import { AddBox, Cancel, Image, InsertEmoticon, Person, PersonOff, Reply, Search } from '@mui/icons-material';
+import { AddBox, Cancel, Image, InsertEmoticon, Person, PersonOff, Search, SubdirectoryArrowLeft } from '@mui/icons-material';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import { useContext, useEffect, useRef, useState } from 'react';
 import { generateUniqueId } from '../utils/uniqueIdGenerator';
@@ -21,6 +21,9 @@ import {
 	arrayUnion,
 	arrayRemove,
 	deleteField,
+	deleteDoc,
+	writeBatch,
+	getDocs,
 } from 'firebase/firestore';
 import { db } from '../firebase';
 import Picker from '@emoji-mart/react';
@@ -33,6 +36,8 @@ import axios from 'axios';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import theme from '../themes';
 import { debounce } from 'lodash';
+import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
+import { formatMessageTime } from '../utils/formatTime';
 
 export interface Message {
 	id: string;
@@ -67,6 +72,8 @@ export interface Chat {
 			blockedUntil: Date | null; // The timestamp when the user was unblocked (or null if still blocked)
 		};
 	};
+	hasUnreadMessages?: boolean;
+	unreadMessagesCount?: number;
 }
 
 const Messages = () => {
@@ -78,6 +85,8 @@ const Messages = () => {
 	const [showPicker, setShowPicker] = useState<boolean>(false);
 	const [currentMessage, setCurrentMessage] = useState<string>('');
 	const [isLargeImgMessageOpen, setIsLargeImgMessageOpen] = useState<boolean>(false);
+	const [isDeleteMessageOpen, setIsDeleteMessageOpen] = useState<boolean>(false);
+	const [messageIdToDelete, setMessageIdToDelete] = useState<string>('');
 
 	const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
 	const [searchValue, setSearchValue] = useState<string>('');
@@ -134,16 +143,13 @@ const Messages = () => {
 		const originalMessageElement = messageRefs.current[messageId]; // Get the ref for the original message
 
 		if (originalMessageElement) {
-			// Scroll to the message and center it in view
 			originalMessageElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-			// Add a highlight class to the message to temporarily change background color
 			originalMessageElement.classList.add('highlighted-message');
 
-			// Remove the highlight after 2 seconds
 			setTimeout(() => {
 				originalMessageElement.classList.remove('highlighted-message');
-			}, 2500); // Highlight for 2 seconds
+			}, 2500);
 		}
 	};
 
@@ -188,7 +194,6 @@ const Messages = () => {
 		}
 	};
 
-	// Fetch chats where the user is a participant, ordered by the last message timestamp
 	useEffect(() => {
 		if (!user?.firebaseUserId) return;
 
@@ -202,12 +207,23 @@ const Messages = () => {
 				const data = doc.data();
 				const lastMessage = data.lastMessage || { text: 'No messages yet', timestamp: null };
 
-				// Only include chats the user hasn't deleted
+				// Check if the chat is deleted by the current user
 				if (data.isDeletedBy?.includes(user.firebaseUserId)) {
-					continue;
+					continue; // Skip deleted chats
 				}
 
-				// Fetch participants
+				// Fetch unread messages for the current user only (receiver)
+				const messagesRef = collection(db, 'chats', doc.id, 'messages');
+				const unreadMessagesQuery = query(
+					messagesRef,
+					where('receiverId', '==', user?.firebaseUserId), // Only messages sent to the current user
+					where('isRead', '==', false) // Unread messages
+				);
+
+				const unreadMessagesSnapshot = await getDocs(unreadMessagesQuery);
+				const unreadMessagesCount = unreadMessagesSnapshot.size; // Calculate the unread count
+
+				// Fetch participant details
 				const participantsDetails: User[] = await Promise.all(
 					data.participants.map(async (participantId: string) => {
 						const user = await fetchParticipantData(participantId);
@@ -215,6 +231,7 @@ const Messages = () => {
 					})
 				);
 
+				// Collect chat data along with unread message count and participant info
 				chatsArray.push({
 					chatId: doc.id,
 					participants: participantsDetails
@@ -224,12 +241,15 @@ const Messages = () => {
 							username: p.username,
 							imageUrl: p.imageUrl,
 						})),
-					lastMessage: lastMessage,
+					lastMessage,
+					isDeletedBy: data.isDeletedBy,
 					blockedUsers: data.blockedUsers,
+					hasUnreadMessages: unreadMessagesCount > 0, // Flag chats with unread messages
+					unreadMessagesCount, // Store unread message count for the current user
 				});
 			}
 
-			// Store chats in localStorage and update state
+			// Store the chat list in localStorage and update state
 			localStorage.setItem('chatList', JSON.stringify(chatsArray));
 			setChatList(chatsArray);
 			setFilteredChatList(chatsArray);
@@ -266,11 +286,13 @@ const Messages = () => {
 
 		const unsubscribe = onSnapshot(q, async (querySnapshot) => {
 			const messagesArray: Message[] = [];
+			const batch = writeBatch(db); // To batch update messages
 
 			querySnapshot.forEach((doc) => {
 				const data = doc.data();
 				const messageTimestamp = data.timestamp?.toDate() || new Date();
 
+				// Collect all messages
 				messagesArray.push({
 					id: doc.id,
 					senderId: data.senderId || '',
@@ -283,7 +305,16 @@ const Messages = () => {
 					replyTo: data.replyTo || '',
 					quotedText: data.quotedText || '',
 				});
+
+				// If the message is for the current user and is not read, mark it as read
+				if (data.receiverId === user.firebaseUserId && !data.isRead) {
+					const messageDocRef = doc.ref;
+					batch.update(messageDocRef, { isRead: true }); // Mark the message as read
+				}
 			});
+
+			// Commit the batch update for all unread messages
+			await batch.commit();
 
 			// Apply the filter to block messages from blocked users
 			const filteredMessages = filterBlockedMessages(messagesArray, activeChat);
@@ -296,7 +327,7 @@ const Messages = () => {
 				});
 			}
 
-			setMessages(filteredMessages);
+			setMessages(filteredMessages); // Set the messages after processing
 		});
 
 		return () => unsubscribe();
@@ -363,6 +394,8 @@ const Messages = () => {
 				],
 				lastMessage: chatData.lastMessage || { text: 'No messages yet', timestamp: null },
 				blockedUsers: chatData.blockedUsers || [],
+				isDeletedBy: chatData.isDeletedBy || [],
+				hasUnreadMessages: chatData.hasUnreadMessages,
 			};
 
 			setChatList((prev) => {
@@ -383,7 +416,9 @@ const Messages = () => {
 					{ firebaseUserId: selectedUser.firebaseUserId, imageUrl: selectedUser.imageUrl, username: selectedUser.username },
 				],
 				lastMessage: { text: 'No messages yet', timestamp: null }, // No message yet
+				isDeletedBy: [],
 				blockedUsers: {},
+				hasUnreadMessages: false,
 			};
 
 			// Add the new chat to the UI lists
@@ -400,10 +435,28 @@ const Messages = () => {
 		}
 	};
 
-	const handleSetActiveChat = (chat: Chat) => {
+	const handleSetActiveChat = async (chat: Chat) => {
 		setActiveChat(chat);
 		localStorage.setItem('activeChatId', chat.chatId);
 		setActiveChatId(chat.chatId);
+
+		// Mark unread messages as read when user opens the chat
+		const messagesRef = collection(db, 'chats', chat.chatId, 'messages');
+		const unreadMessagesQuery = query(messagesRef, where('receiverId', '==', user?.firebaseUserId), where('isRead', '==', false));
+
+		const unreadMessagesSnapshot = await getDocs(unreadMessagesQuery);
+
+		unreadMessagesSnapshot.forEach(async (doc) => {
+			await updateDoc(doc.ref, {
+				isRead: true, // Mark each message as read
+			});
+		});
+
+		// Update Firestore to reflect no unread messages for this chat
+		const chatDocRef = doc(db, 'chats', chat.chatId);
+		await updateDoc(chatDocRef, {
+			hasUnreadMessages: false, // Set unread to false after the chat is opened
+		});
 	};
 
 	const handleReplyMessage = (message: Message) => {
@@ -418,7 +471,7 @@ const Messages = () => {
 		const messageRef = collection(db, 'chats', chatId, 'messages');
 
 		try {
-			// If the chat doesn't exist yet, create it when sending the first message
+			// Ensure the chat document is created if it doesn’t exist
 			const chatDoc = await getDoc(chatRef);
 			if (!chatDoc.exists()) {
 				// Create the chat if it doesn't exist
@@ -429,16 +482,17 @@ const Messages = () => {
 						timestamp: serverTimestamp(),
 					},
 					isDeletedBy: [], // Initialize the isDeletedBy field as an empty array
-					blockedUsers: [],
+					blockedUsers: {},
+					hasUnreadMessages: false,
 				});
 			} else {
-				// If the chat exists, ensure both participants are removed from the isDeletedBy array (if they are present)
+				// Restore the chat by removing both participants from the isDeletedBy array if they are in it
 				await updateDoc(chatRef, {
-					isDeletedBy: arrayRemove(...activeChat.participants.map((p) => p.firebaseUserId)), // Remove both participants if they are in isDeletedBy
+					isDeletedBy: arrayRemove(...activeChat.participants.map((p) => p.firebaseUserId)),
 				});
 			}
 
-			// Proceed with message sending
+			// Proceed with message sending logic...
 			let imageUrl = '';
 			if (imageUpload) {
 				await handleImageUpload('messages', (url: string) => {
@@ -449,7 +503,7 @@ const Messages = () => {
 			const newMessage: Message = {
 				id: generateUniqueId(''),
 				senderId: user?.firebaseUserId!,
-				receiverId: activeChat.participants[0].firebaseUserId,
+				receiverId: activeChat.participants.find((p) => p.firebaseUserId !== user?.firebaseUserId)?.firebaseUserId || '',
 				text: currentMessage || '',
 				imageUrl: imageUrl || '',
 				timestamp: new Date(),
@@ -464,15 +518,16 @@ const Messages = () => {
 				timestamp: serverTimestamp(),
 			});
 
-			// Update the lastMessage field in the chat document
+			// Update the lastMessage field and set hasUnreadMessages to true for the receiver
 			await updateDoc(chatRef, {
 				lastMessage: {
 					text: newMessage.text || 'Image sent',
 					timestamp: serverTimestamp(),
 				},
+				hasUnreadMessages: true, // Set unread message status to true
 			});
 
-			// Clear the reply context after sending the message
+			// Clear the reply context and reset state after sending the message
 			setReplyToMessage(null);
 			setCurrentMessage('');
 			resetImageUpload();
@@ -566,6 +621,43 @@ const Messages = () => {
 		}
 	};
 
+	const handleDeleteMessage = async (messageId: string) => {
+		if (!activeChat) return;
+
+		const messageRef = doc(db, 'chats', activeChat.chatId, 'messages', messageId);
+
+		try {
+			// Delete the message from Firestore
+			await deleteDoc(messageRef);
+
+			// Update the local state to remove the deleted message
+			setMessages((prevMessages) => prevMessages.filter((msg) => msg.id !== messageId));
+
+			// Optionally, you can also update the `lastMessage` field in the chat document if the deleted message was the last message.
+			const chatRef = doc(db, 'chats', activeChat.chatId);
+			const lastMessage = messages.filter((msg) => msg.id !== messageId).slice(-1)[0];
+
+			if (lastMessage) {
+				await updateDoc(chatRef, {
+					lastMessage: {
+						text: lastMessage.text || 'Image sent',
+						timestamp: lastMessage.timestamp,
+					},
+				});
+			} else {
+				// If there are no messages left after deletion, set lastMessage to a default value
+				await updateDoc(chatRef, {
+					lastMessage: {
+						text: 'No messages yet',
+						timestamp: null,
+					},
+				});
+			}
+		} catch (error) {
+			console.error('Error deleting message:', error);
+		}
+	};
+
 	const handleBlockUnblockUser = async (firebaseUserId: string) => {
 		const chatId = activeChat?.chatId;
 		if (!chatId) return;
@@ -622,8 +714,8 @@ const Messages = () => {
 	return (
 		<DashboardPagesLayout pageName='Messages' customSettings={{ justifyContent: 'flex-start' }}>
 			<Box sx={{ display: 'flex', width: '100%', height: 'calc(100vh - 4rem)' }}>
-				<Box sx={{ display: 'flex', flexDirection: 'column', flex: 3, borderRight: '0.04rem solid gray', padding: '0 0.5rem 0 1rem' }}>
-					<Box sx={{ display: 'flex', margin: '1rem auto 0 auto', width: '100%' }}>
+				<Box sx={{ display: 'flex', flexDirection: 'column', flex: 3, borderRight: '0.04rem solid lightgray', padding: '0 0rem 0 1rem' }}>
+					<Box sx={{ display: 'flex', margin: '0.5rem auto 0 auto', width: '100%', height: '3rem', paddingTop: '0.5rem' }}>
 						<Box sx={{ flex: 9 }}>
 							<CustomTextField
 								InputProps={{
@@ -650,7 +742,7 @@ const Messages = () => {
 						</Box>
 					</Box>
 
-					<Box sx={{ display: 'flex', flexDirection: 'column', marginTop: '1rem' }}>
+					<Box sx={{ display: 'flex', flexDirection: 'column', marginTop: '0.5rem' }}>
 						{filteredChatList?.map((chat) => {
 							const otherParticipant = chat.participants.find((participant) => participant.firebaseUserId !== user?.firebaseUserId);
 
@@ -661,16 +753,16 @@ const Messages = () => {
 									key={`${chat.chatId}-${chat.participants[0].firebaseUserId}`}
 									sx={{
 										display: 'flex',
-										borderRadius: '0.25rem',
+										borderRadius: '0.35rem 0 0 0.35rem',
 										borderBottom: '0.04rem solid lightgray',
-										backgroundColor: chat.chatId === activeChatId ? theme.bgColor?.primary : null,
-										':hover': {
-											backgroundColor: chat.chatId !== activeChatId ? theme.bgColor?.lessonInProgress : null,
-											color: '#fff',
-											'& .active-hovered-chat-text-color': {
-												color: '#fff',
-											},
-										},
+										borderTop: '0.04rem solid lightgray',
+										backgroundImage: chat.chatId === activeChatId ? `url(/msg-bg.png)` : null,
+										backgroundRepeat: 'no-repeat',
+										backgroundSize: 'cover',
+										backgroundPosition: 'center',
+										marginRight: '-0.045rem',
+										// backgroundColor:
+										// 	chat.chatId === activeChatId ? 'rgba(103, 180, 207, 0.9)' : chat.hasUnreadMessages ? theme.bgColor?.primary : null, // Highlight unread chats
 									}}>
 									<Box
 										sx={{
@@ -679,29 +771,28 @@ const Messages = () => {
 											alignItems: 'start',
 											padding: '0.5rem',
 											cursor: 'pointer',
-											flex: 5,
+											flex: 6,
 										}}
 										onClick={() => {
 											handleSetActiveChat(chat);
 										}}>
 										<Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
 											<Box sx={{ borderRadius: '100%', marginRight: '1rem' }}>
-												<img
-													src={otherParticipant.imageUrl}
-													alt='profile_img'
-													style={{
-														height: '2.5rem',
-														width: '2.5rem',
-														borderRadius: '100%',
-														border: 'solid lightgray 0.1rem',
-													}}
-												/>
+												<Badge color='error' badgeContent={chat.unreadMessagesCount} max={9}>
+													<img
+														src={otherParticipant.imageUrl}
+														alt='profile_img'
+														style={{
+															height: '2.5rem',
+															width: '2.5rem',
+															borderRadius: '100%',
+															border: 'solid lightgray 0.1rem',
+														}}
+													/>
+												</Badge>
 											</Box>
 											<Box>
-												<Typography
-													variant='body2'
-													className='active-hovered-chat-text-color'
-													sx={{ color: chat.chatId === activeChatId ? theme.textColor?.common.main : null }}>
+												<Typography variant='body2' sx={{ color: chat.chatId === activeChatId ? theme.textColor?.common.main : null }}>
 													{otherParticipant.username}
 												</Typography>
 											</Box>
@@ -710,19 +801,21 @@ const Messages = () => {
 											sx={{
 												marginTop: '0.2rem',
 											}}>
-											<Typography
-												variant='caption'
-												sx={{ color: chat.chatId === activeChatId ? theme.textColor?.common.main : 'gray' }}
-												className='active-hovered-chat-text-color'>
+											<Typography variant='caption' sx={{ color: chat.chatId === activeChatId ? theme.textColor?.common.main : 'gray' }}>
 												{chat.lastMessage.text.length > 20 ? `${chat.lastMessage.text.substring(0, 20)}...` : chat.lastMessage.text}
 											</Typography>
 										</Box>
 									</Box>
-									<Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+									<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', flex: 1, mr: '0.2rem' }}>
 										<Tooltip title='Delete Chat' placement='top'>
-											<IconButton onClick={() => handleDeleteChat(chat.chatId)}>
+											<IconButton
+												onClick={() => handleDeleteChat(chat.chatId)}
+												sx={{
+													':hover': {
+														backgroundColor: 'transparent',
+													},
+												}}>
 												<Cancel
-													className='active-hovered-chat-text-color'
 													fontSize='small'
 													sx={{
 														fontSize: '1.1rem',
@@ -731,6 +824,9 @@ const Messages = () => {
 												/>
 											</IconButton>
 										</Tooltip>
+										<Typography sx={{ color: chat.chatId !== activeChatId ? 'gray' : '#fff', fontSize: '0.65rem', mt: '0.25rem' }}>
+											{chat.lastMessage.timestamp ? formatMessageTime(chat.lastMessage.timestamp) : null}
+										</Typography>
 									</Box>
 								</Box>
 							);
@@ -744,7 +840,7 @@ const Messages = () => {
 						sx={{
 							display: 'flex',
 							alignItems: 'center',
-							borderBottom: '0.04rem solid gray',
+							borderBottom: '0.04rem solid lightgray',
 							width: '100%',
 							height: '4rem',
 							flexShrink: 0,
@@ -910,21 +1006,46 @@ const Messages = () => {
 
 											<Box sx={{ alignSelf: 'flex-end' }}>
 												<Typography variant='caption' sx={{ fontSize: '0.65rem' }}>
-													{msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+													{formatMessageTime(msg.timestamp)}
 												</Typography>
 											</Box>
 										</Box>
 
-										<Box
-											sx={{
-												marginLeft: msg.senderId === user?.firebaseUserId ? '0' : '0.25rem',
-												marginRight: msg.senderId === user?.firebaseUserId ? '0.25rem' : '0',
-											}}>
+										<Box>
 											<Tooltip title='Reply' placement='top'>
-												<IconButton size='small' onClick={() => handleReplyMessage(msg)} sx={{ color: '' }}>
-													<Reply />
+												<IconButton
+													size='small'
+													onClick={() => handleReplyMessage(msg)}
+													sx={{
+														':hover': {
+															backgroundColor: 'transparent',
+														},
+													}}>
+													<SubdirectoryArrowLeft sx={{ fontSize: '1.25rem' }} />
 												</IconButton>
 											</Tooltip>
+										</Box>
+										<Box
+											sx={{
+												marginRight: 0,
+											}}>
+											{msg.senderId === user?.firebaseUserId && (
+												<Tooltip title='Delete' placement='top'>
+													<IconButton
+														size='small'
+														onClick={() => {
+															setIsDeleteMessageOpen(true);
+															setMessageIdToDelete(msg.id);
+														}}
+														sx={{
+															':hover': {
+																backgroundColor: 'transparent',
+															},
+														}}>
+														<Cancel sx={{ fontSize: '1.15rem' }} />
+													</IconButton>
+												</Tooltip>
+											)}
 										</Box>
 									</Box>
 								</Box>
@@ -932,6 +1053,30 @@ const Messages = () => {
 
 						<div ref={messagesEndRef} />
 					</Box>
+
+					<CustomDialog
+						openModal={isDeleteMessageOpen}
+						closeModal={() => {
+							setIsDeleteMessageOpen(false);
+							setMessageIdToDelete('');
+						}}
+						maxWidth='sm'
+						title='Delete Message'
+						content='Are you sure you want to delete this message?'>
+						<CustomDialogActions
+							deleteBtn
+							deleteBtnText='Delete'
+							onCancel={() => {
+								setIsDeleteMessageOpen(false);
+								setMessageIdToDelete('');
+							}}
+							onDelete={() => {
+								handleDeleteMessage(messageIdToDelete);
+								setIsDeleteMessageOpen(false);
+								setMessageIdToDelete('');
+							}}
+						/>
+					</CustomDialog>
 
 					{zoomedImage && (
 						<Dialog open={!!zoomedImage} onClose={() => setZoomedImage('')} maxWidth='sm'>

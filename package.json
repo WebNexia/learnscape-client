@@ -20,6 +20,7 @@
 		"@mui/styled-engine-sc": "6.0.0-alpha.12",
 		"@tinymce/tinymce-react": "^5.1.1",
 		"axios": "^1.6.5",
+		"date-fns": "^4.1.0",
 		"dompurify": "^3.1.5",
 		"emoji-regex": "^10.4.0",
 		"firebase": "^10.11.1",
