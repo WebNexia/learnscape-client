@@ -188,8 +188,7 @@ const AdminLessonEditPageEditQuestionDialog = ({
 			}
 			setIsMinimumOneBlank(false);
 		}
-
-		if (isDuplicateOption || !isMinimumOptions) return;
+		if (isMultipleChoiceQuestion && (isDuplicateOption || !isMinimumOptions)) return;
 
 		if (setSingleLessonBeforeSave) {
 			setSingleLessonBeforeSave((prevData) => {
