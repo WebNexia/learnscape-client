@@ -42,7 +42,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 	const [username, setUsername] = useState<string>('');
 	const [email, setEmail] = useState<string>('');
 	const [password, setPassword] = useState<string>('');
-	const [orgCode, setOrgCode] = useState<string>('BR1SGC');
+	const [orgCode, setOrgCode] = useState<string>('6RS1YS');
 
 	const [showPassword, setShowPassword] = useState(false);
 
