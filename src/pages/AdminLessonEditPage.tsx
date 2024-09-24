@@ -54,13 +54,13 @@ export interface DocumentUpdateTrack {
 }
 
 const AdminLessonEditPage = () => {
+	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { userId, lessonId } = useParams();
 	const { orgId } = useContext(OrganisationContext);
 	const { updateLessonPublishing, updateLessons, lessonTypes, fetchLessons, lessonsPageNumber } = useContext(LessonsContext);
 
 	const { questionTypes, fetchQuestions, questionsPageNumber, fetchQuestionTypeName } = useContext(QuestionsContext);
 	const { fetchDocuments, documentsPageNumber } = useContext(DocumentsContext);
-	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
 	const {
 		options,

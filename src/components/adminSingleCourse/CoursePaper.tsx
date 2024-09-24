@@ -6,10 +6,8 @@ import { SingleCourse } from '../../interfaces/course';
 import { ChapterLessonData } from '../../pages/AdminCourseEditPage';
 import useImageUpload from '../../hooks/useImageUpload';
 import CustomSubmitButton from '../forms/customButtons/CustomSubmitButton';
-import { FormEvent, useContext } from 'react';
+import { FormEvent } from 'react';
 import CustomCancelButton from '../forms/customButtons/CustomCancelButton';
-import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
-import { Roles } from '../../interfaces/enums';
 
 interface CoursePaperProps {
 	userId?: string;
@@ -57,7 +55,6 @@ const CoursePaper = ({
 	const horizontal = 'center';
 
 	const { resetImageUpload } = useImageUpload();
-	const { user } = useContext(UserAuthContext);
 
 	const handleCancel = async (): Promise<void> => {
 		setIsEditMode(false);
