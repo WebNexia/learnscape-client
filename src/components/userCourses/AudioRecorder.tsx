@@ -8,18 +8,26 @@ import CustomDialog from '../layouts/dialog/CustomDialog';
 import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
 import LoadingButton from '@mui/lab/LoadingButton';
 
-const mimeType = 'audio/webm; codecs=opus';
-const MAX_RECORDING_TIME = 120000; // 2 minutes
-const QUALITY = 64000; // Medium quality (64 kbps)
-
 interface AudioRecorderProps {
 	uploadAudio: (blob: Blob) => Promise<void>;
 	isAudioUploading: boolean;
 	recorderTitle?: string;
 	teacherFeedback?: boolean;
+	maxRecordTime?: number;
+	fromCreateCommunityTopic?: boolean;
 }
 
-const AudioRecorder = ({ uploadAudio, isAudioUploading, recorderTitle = 'Audio Recorder', teacherFeedback }: AudioRecorderProps) => {
+const AudioRecorder = ({
+	uploadAudio,
+	isAudioUploading,
+	recorderTitle = 'Audio Recorder',
+	teacherFeedback,
+	maxRecordTime = 120000,
+	fromCreateCommunityTopic,
+}: AudioRecorderProps) => {
+	const mimeType = 'audio/webm; codecs=opus';
+	const QUALITY = 64000; // Medium quality (64 kbps)
+
 	const [permission, setPermission] = useState<boolean>(false);
 	const mediaRecorder = useRef<MediaRecorder | null>(null);
 	const [isRecording, setIsRecording] = useState<boolean>(false);
@@ -28,7 +36,7 @@ const AudioRecorder = ({ uploadAudio, isAudioUploading, recorderTitle = 'Audio R
 	const [audio, setAudio] = useState<string | null>(null);
 	const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
 	const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
-	const [remainingTime, setRemainingTime] = useState<number>(MAX_RECORDING_TIME / 1000); // in seconds
+	const [remainingTime, setRemainingTime] = useState<number>(maxRecordTime / 1000); // in seconds
 	const recordingTimeout = useRef<NodeJS.Timeout | null>(null);
 	const countdownInterval = useRef<NodeJS.Timeout | null>(null);
 
@@ -55,7 +63,7 @@ const AudioRecorder = ({ uploadAudio, isAudioUploading, recorderTitle = 'Audio R
 		if (!stream) return;
 
 		setIsRecording(true);
-		setRemainingTime(MAX_RECORDING_TIME / 1000);
+		setRemainingTime(maxRecordTime / 1000);
 		const media = new MediaRecorder(stream, {
 			mimeType,
 			audioBitsPerSecond: QUALITY,
@@ -77,7 +85,7 @@ const AudioRecorder = ({ uploadAudio, isAudioUploading, recorderTitle = 'Audio R
 
 		recordingTimeout.current = setTimeout(() => {
 			stopRecording();
-		}, MAX_RECORDING_TIME);
+		}, maxRecordTime);
 
 		countdownInterval.current = setInterval(() => {
 			setRemainingTime((prevTime) => {
@@ -178,11 +186,11 @@ const AudioRecorder = ({ uploadAudio, isAudioUploading, recorderTitle = 'Audio R
 			)}
 
 			<CustomDialog
-				maxWidth={teacherFeedback ? 'sm' : 'md'}
+				maxWidth={teacherFeedback || fromCreateCommunityTopic ? 'sm' : 'md'}
 				openModal={isUploadModalOpen}
 				closeModal={() => setIsUploadModalOpen(false)}
 				content={`Are you sure you want to upload the audio recording?
-				${!teacherFeedback ? `You will not have another chance.` : ''}`}>
+				${!teacherFeedback && !fromCreateCommunityTopic ? `You will not have another chance.` : ''}`}>
 				{isAudioUploading ? (
 					<DialogActions sx={{ marginBottom: '1.5rem' }}>
 						<LoadingButton loading variant='outlined' sx={{ textTransform: 'capitalize', height: '2.5rem', margin: '0 0.5rem 0.5rem 0' }} />
@@ -190,7 +198,9 @@ const AudioRecorder = ({ uploadAudio, isAudioUploading, recorderTitle = 'Audio R
 				) : (
 					<CustomDialogActions
 						onCancel={() => setIsUploadModalOpen(false)}
-						onSubmit={() => audioBlob && uploadAudio(audioBlob)}
+						onSubmit={() => {
+							audioBlob && uploadAudio(audioBlob);
+						}}
 						submitBtnText='Upload'
 					/>
 				)}

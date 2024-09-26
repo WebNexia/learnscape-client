@@ -92,14 +92,14 @@ const AdminLessonEditPageEditQuestionDialog = ({
 	const [isCorrectAnswerMissing, setIsCorrectAnswerMissing] = useState(
 		correctAnswerIndex < 0 && question.correctAnswer === '' && !isOpenEndedQuestion && !isMatching
 	);
-	const [isQuestionMissing, setIsQuestionMissing] = useState(false);
+	const [isQuestionMissing, setIsQuestionMissing] = useState<boolean>(false);
 	const { resetImageUpload } = useImageUpload();
 	const { resetVideoUpload } = useVideoUpload();
-	const [isMinimumTwoMatchingPairs, setIsMinimumTwoMatchingPairs] = useState(false);
+	const [isMinimumTwoMatchingPairs, setIsMinimumTwoMatchingPairs] = useState<boolean>(false);
 	const [isMinimumOneBlank, setIsMinimumOneBlank] = useState<boolean>(false);
-	const [isMissingPair, setIsMissingPair] = useState(false);
-	const [enterImageUrl, setEnterImageUrl] = useState(true);
-	const [enterVideoUrl, setEnterVideoUrl] = useState(true);
+	const [isMissingPair, setIsMissingPair] = useState<boolean>(false);
+	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(true);
+	const [enterVideoUrl, setEnterVideoUrl] = useState<boolean>(true);
 	const [editorContent, setEditorContent] = useState(question.question);
 	const [questionBeforeSave, setQuestionBeforeSave] = useState<QuestionInterface>(question);
 

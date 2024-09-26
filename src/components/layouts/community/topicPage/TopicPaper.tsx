@@ -1,21 +1,53 @@
-import { Box, Button, Paper, Typography } from '@mui/material';
+import { Box, Button, IconButton, Paper, Tooltip, Typography } from '@mui/material';
 import theme from '../../../../themes';
 import { useContext } from 'react';
 import { UserAuthContext } from '../../../../contexts/UserAuthContextProvider';
 import { Roles } from '../../../../interfaces/enums';
-import { KeyboardBackspaceOutlined } from '@mui/icons-material';
+import { Delete, Flag, KeyboardBackspaceOutlined } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import { TopicInfo } from '../../../../interfaces/communityMessage';
+import { CommunityMessage, TopicInfo } from '../../../../interfaces/communityMessage';
 import { formatMessageTime } from '../../../../utils/formatTime';
+import axios from 'axios';
 
 interface TopicPaperProps {
 	topic: TopicInfo | null;
+	messages: CommunityMessage[];
+	setDisplayDeleteTopicMsg: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const TopicPaper = ({ topic }: TopicPaperProps) => {
+const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg }: TopicPaperProps) => {
+	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { user } = useContext(UserAuthContext);
 	const navigate = useNavigate();
 	const isAdmin: boolean = user?.role === Roles.ADMIN;
+	const isTopicWriter: boolean = user?._id === topic?.userId._id;
+
+	const deleteTopic = async () => {
+		try {
+			await axios.delete(`${base_url}/communityTopics/${topic?._id}`);
+
+			await Promise.all(
+				messages.map(async (message) => {
+					try {
+						await axios.delete(`${base_url}/communityMessages/${message._id}`);
+					} catch (error) {
+						console.log(error);
+					}
+				})
+			);
+			setDisplayDeleteTopicMsg(true);
+
+			setTimeout(() => {
+				if (isAdmin) {
+					navigate(`/admin/community/user/${user?._id}`);
+				} else {
+					navigate(`/community/user/${user?._id}`);
+				}
+			}, 2000);
+		} catch (error) {
+			console.log(error);
+		}
+	};
 	return (
 		<Paper
 			elevation={10}
@@ -67,8 +99,32 @@ const TopicPaper = ({ topic }: TopicPaperProps) => {
 						</Button>
 					</Box>
 					<Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-						<Box></Box>
-						<Box sx={{ paddingLeft: '0.5rem', color: theme.textColor?.common.main }}></Box>
+						<Box sx={{ display: 'flex', width: '100%', justifyContent: 'flex-start' }}>
+							{!isTopicWriter && !isAdmin ? (
+								<Tooltip title='Report Topic' placement='right'>
+									<IconButton
+										sx={{
+											':hover': {
+												backgroundColor: 'transparent',
+											},
+										}}>
+										<Flag color='secondary' />
+									</IconButton>
+								</Tooltip>
+							) : (
+								<Tooltip title='Delete Topic' placement='right'>
+									<IconButton
+										sx={{
+											':hover': {
+												backgroundColor: 'transparent',
+											},
+										}}
+										onClick={deleteTopic}>
+										<Delete color='secondary' />
+									</IconButton>
+								</Tooltip>
+							)}
+						</Box>
 					</Box>
 				</Box>
 				<Box

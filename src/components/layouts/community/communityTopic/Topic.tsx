@@ -33,7 +33,7 @@ const Topic = ({ topic }: TopicProps) => {
 						<Typography
 							variant='body2'
 							onClick={() => {
-								navigate(`/${user?.role === Roles.ADMIN ? 'admin/community' : 'community'}/user/${user?._id}/topic/${topic._id}`);
+								navigate(`/${user?.role !== Roles.ADMIN ? 'community' : 'admin/community'}/user/${user?._id}/topic/${topic._id}`);
 							}}
 							sx={{
 								cursor: 'pointer',
@@ -55,8 +55,8 @@ const Topic = ({ topic }: TopicProps) => {
 			<Box sx={{ flex: 2 }}>
 				<Typography variant='body2'>Replies: {topic.messageCount}</Typography>
 			</Box>
-			<Box sx={{ display: 'flex', justifyContent: 'space-between', flex: 1 }}>
-				<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', mr: '0.5rem' }}>
+			<Box sx={{ display: 'flex', justifyContent: 'flex-end', flex: 1 }}>
+				<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', mr: '0.75rem' }}>
 					<Box>
 						<Typography sx={{ fontSize: '0.75rem' }}>{topic?.lastMessage?.sender?.username}</Typography>
 					</Box>

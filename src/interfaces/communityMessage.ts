@@ -25,4 +25,6 @@ export interface TopicInfo {
 	createdAt: string;
 	title: string;
 	text: string;
+	imageUrl: string;
+	audioUrl: string;
 }

@@ -1,14 +1,35 @@
-import { Box, Typography } from '@mui/material';
+import { Box, DialogContent, Typography } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
-import { useContext, useEffect, useRef } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import { CommunityContext } from '../contexts/CommunityContextProvider';
 import { CommunityTopic } from '../interfaces/communityTopics';
 import Topic from '../components/layouts/community/communityTopic/Topic';
 import { PriorityHigh } from '@mui/icons-material';
+import CustomDialog from '../components/layouts/dialog/CustomDialog';
+import { communityRules, communityRulesIntro, conclusion, consequences } from '../interfaces/communityRules';
+
+import CreateTopicDialog from '../components/layouts/community/createTopic/CreateTopicDialog';
+
+export interface NewTopic {
+	title: string;
+	text: string;
+	imageUrl: string;
+	audioUrl: string;
+}
 
 const Community = () => {
 	const { sortedTopicsData, setTopicsPageNumber, topicsPageNumber, fetchTopics } = useContext(CommunityContext);
+
+	const [rulesModalOpen, setRulesModalOpen] = useState<boolean>(false);
+	const [createTopicModalOpen, setCreateTopicModalOpen] = useState<boolean>(false);
+
+	const [newTopic, setNewTopic] = useState<NewTopic>({
+		title: '',
+		text: '',
+		imageUrl: '',
+		audioUrl: '',
+	});
 
 	useEffect(() => {
 		setTopicsPageNumber(1);
@@ -48,6 +69,7 @@ const Community = () => {
 								<PriorityHigh sx={{ mr: '0.25rem' }} color='warning' />
 								<Typography
 									variant='h6'
+									onClick={() => setRulesModalOpen(true)}
 									sx={{
 										cursor: 'pointer',
 										fontSize: '0.9rem',
@@ -59,9 +81,67 @@ const Community = () => {
 								</Typography>
 								<PriorityHigh sx={{ ml: '0.25rem' }} color='warning' />
 							</Box>
+
+							<CustomDialog openModal={rulesModalOpen} closeModal={() => setRulesModalOpen(false)} title='Community Guidelines'>
+								<DialogContent>
+									<Box>
+										<Typography variant='body2' sx={{ lineHeight: 1.7, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+											{communityRulesIntro}
+										</Typography>
+									</Box>
+									<Box sx={{ mt: '2rem' }}>
+										{communityRules.map((rule, index) => (
+											<Box key={index} sx={{ mb: '2rem' }}>
+												<Box sx={{ mb: '0.5rem' }}>
+													<Typography variant='h6'>{rule.rule}</Typography>
+												</Box>
+												<Box>
+													<Typography variant='body2' sx={{ lineHeight: 1.7 }}>
+														{rule.explanation}
+													</Typography>
+												</Box>
+											</Box>
+										))}
+									</Box>
+									<Box sx={{ mt: '3rem' }}>
+										<Box sx={{ mb: '0.5rem' }}>
+											<Typography variant='h6'>{consequences.title}</Typography>
+										</Box>
+										<Box sx={{ mb: '0.5rem' }}>
+											<Typography variant='body2' sx={{ lineHeight: 1.7 }}>
+												{consequences.explanation}
+											</Typography>
+										</Box>
+										<Box>
+											{consequences.consequences.map((data, index) => (
+												<ul key={index}>
+													<li style={{ margin: '0 0 0.35rem 2rem' }}>
+														<Typography variant='body2' sx={{ lineHeight: 1.7 }}>
+															{data}
+														</Typography>
+													</li>
+												</ul>
+											))}
+										</Box>
+									</Box>
+									<Box sx={{ margin: '3rem 0' }}>
+										<Typography variant='body2' sx={{ lineHeight: 1.7, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+											{conclusion}
+										</Typography>
+									</Box>
+								</DialogContent>
+							</CustomDialog>
 							<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: 'auto' }}>
-								<CustomSubmitButton size='small'>Create Topic</CustomSubmitButton>
+								<CustomSubmitButton size='small' onClick={() => setCreateTopicModalOpen(true)}>
+									Create Topic
+								</CustomSubmitButton>
 							</Box>
+							<CreateTopicDialog
+								setCreateTopicModalOpen={setCreateTopicModalOpen}
+								createTopicModalOpen={createTopicModalOpen}
+								topic={newTopic}
+								setTopic={setNewTopic}
+							/>
 						</Box>
 					</Box>
 					<Box
