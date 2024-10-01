@@ -48,7 +48,7 @@ const CommunityContextProvider = (props: CommunityContextProviderProps) => {
 		if (!orgId) return;
 
 		try {
-			const response = await axios.get(`${base_url}/communityTopics/organisation/${orgId}?page=${page}&limit=50`);
+			const response = await axios.get(`${base_url}/communityTopics/organisation/${orgId}?page=${page}&limit=15`);
 
 			// Initial sorting when fetching data
 			const sortedTopicsDataCopy = [...response.data.data].sort((a: CommunityTopic, b: CommunityTopic) => b.updatedAt.localeCompare(a.updatedAt));
@@ -70,24 +70,24 @@ const CommunityContextProvider = (props: CommunityContextProviderProps) => {
 	const sortTopicsData = (property: keyof CommunityTopic, order: 'asc' | 'desc') => {
 		const sortedTopicsDataCopy = [...sortedTopicsData].sort((a: CommunityTopic, b: CommunityTopic) => {
 			if (order === 'asc') {
-				return a[property] > b[property] ? 1 : -1;
+				return a[property]! > b[property]! ? 1 : -1;
 			} else {
-				return a[property] < b[property] ? 1 : -1;
+				return a[property]! < b[property]! ? 1 : -1;
 			}
 		});
 		setSortedTopicsData(sortedTopicsDataCopy);
 	};
-	// Function to update sortedTopicsData with new document data
+	// Function to update sortedTopicsData with new topic data
 	const addNewTopic = (newTopic: any) => {
 		setSortedTopicsData((prevSortedData) => [newTopic, ...prevSortedData]);
 	};
 
-	const updateTopics = (singleTopic: CommunityTopic) => {
-		const updatedTopicList = sortedTopicsData?.map((document) => {
-			if (singleTopic._id === document._id) {
-				return singleTopic;
+	const updateTopics = (singleTopic: Partial<CommunityTopic>) => {
+		const updatedTopicList = sortedTopicsData?.map((topic) => {
+			if (singleTopic._id === topic._id) {
+				return { ...topic, ...singleTopic };
 			}
-			return document;
+			return topic;
 		});
 		setSortedTopicsData(updatedTopicList);
 	};

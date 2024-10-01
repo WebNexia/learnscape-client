@@ -28,7 +28,6 @@ import {
 import { db } from '../firebase';
 import Picker from '@emoji-mart/react';
 import data from '@emoji-mart/data';
-import emojiRegex from 'emoji-regex';
 import useImageUpload from '../hooks/useImageUpload'; // Import the custom hook
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import { User } from '../interfaces/user';
@@ -38,6 +37,7 @@ import theme from '../themes';
 import { debounce } from 'lodash';
 import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
 import { formatMessageTime } from '../utils/formatTime';
+import { renderMessageWithEmojis } from '../utils/renderMessageWithEmojis';
 
 export interface Message {
 	id: string;
@@ -562,33 +562,6 @@ const Messages = () => {
 		setAddUserModalOpen(false); // Close modal
 	};
 
-	// Function to render message text with emojis and custom font sizes
-	const renderMessageWithEmojis = (message: string) => {
-		const regex = emojiRegex();
-		const parts = message.split(regex); // Split the message based on where the emojis are
-		const emojis = [...message.matchAll(regex)]; // Match all emojis
-
-		return parts.reduce((acc: any[], part: string, index: number) => {
-			if (part) {
-				acc.push(
-					<span key={`text-${index}`} style={{ fontSize: '0.85rem', verticalAlign: 'middle' }}>
-						{part}
-					</span>
-				);
-			}
-
-			if (emojis[index]) {
-				acc.push(
-					<span key={`emoji-${index}`} style={{ fontSize: '1.75rem', verticalAlign: 'middle' }}>
-						{emojis[index][0]}
-					</span>
-				);
-			}
-
-			return acc;
-		}, []);
-	};
-
 	const handleDeleteChat = async (chatId: string) => {
 		try {
 			// Try updating Firestore directly
@@ -1015,7 +988,7 @@ const Messages = () => {
 												) : (
 													<Box sx={{ alignSelf: 'flex-start' }}>
 														<Typography sx={{ fontSize: '0.85rem', wordWrap: 'break-word', whiteSpace: 'pre-wrap' }}>
-															{renderMessageWithEmojis(msg.text)}
+															{renderMessageWithEmojis(msg.text, '1.75rem')}
 														</Typography>
 													</Box>
 												)}

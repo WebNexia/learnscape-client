@@ -10,6 +10,7 @@ import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import { communityRules, communityRulesIntro, conclusion, consequences } from '../interfaces/communityRules';
 
 import CreateTopicDialog from '../components/layouts/community/createTopic/CreateTopicDialog';
+import CustomTablePagination from '../components/layouts/table/CustomTablePagination';
 
 export interface NewTopic {
 	title: string;
@@ -19,7 +20,7 @@ export interface NewTopic {
 }
 
 const Community = () => {
-	const { sortedTopicsData, setTopicsPageNumber, topicsPageNumber, fetchTopics } = useContext(CommunityContext);
+	const { sortedTopicsData, setTopicsPageNumber, topicsPageNumber, fetchTopics, numberOfPages } = useContext(CommunityContext);
 
 	const [rulesModalOpen, setRulesModalOpen] = useState<boolean>(false);
 	const [createTopicModalOpen, setCreateTopicModalOpen] = useState<boolean>(false);
@@ -53,7 +54,7 @@ const Community = () => {
 						Join the Conversation!
 					</Typography>
 					<Typography variant='body1' sx={{ textAlign: 'justify', lineHeight: 1.6, mb: '0.75rem' }}>
-						Our community is here to support your English learning journey. Each topic is a chance to share your thoughts, ask questions, and improve
+						Our community is here to support your English learning journey. Each topic is a chance to share your thoughts, ask questions, and improve.
 						Dive into the discussions, help others, and don’t be afraid to make mistakes—they're part of the journey! your English in a supportive
 						environment.
 					</Typography>
@@ -175,6 +176,9 @@ const Community = () => {
 								<Topic key={topic._id} topic={topic} />
 							))}
 						</Box>
+					</Box>
+					<Box sx={{ display: 'flex', justifyContent: 'center', mt: '1.5rem', width: '95%' }}>
+						<CustomTablePagination count={numberOfPages} page={topicsPageNumber} onChange={setTopicsPageNumber} />
 					</Box>
 				</Box>
 			</Box>

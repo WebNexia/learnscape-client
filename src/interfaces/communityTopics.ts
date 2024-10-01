@@ -6,10 +6,10 @@ export interface CommunityTopic {
 	text: string;
 	imageUrl: string;
 	audioUrl: string;
-	messageCount: number;
-	isReported: boolean;
-	isActive: boolean;
-	lastMessage: LastMessage;
+	messageCount?: number;
+	isReported?: boolean;
+	isActive?: boolean;
+	lastMessage?: LastMessage;
 	createdAt: string;
 	updatedAt: string;
 }

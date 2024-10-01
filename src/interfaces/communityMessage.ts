@@ -2,7 +2,7 @@ export interface CommunityMessage {
 	_id: string;
 	orgId: string;
 	userId: UserInfo;
-	topicId: TopicInfo;
+	topicId: string;
 	parentMessageId: string;
 	text: string;
 	imageUrl: string;
@@ -23,8 +23,10 @@ export interface TopicInfo {
 	_id: string;
 	userId: UserInfo;
 	createdAt: string;
+	updatedAt: string;
 	title: string;
 	text: string;
 	imageUrl: string;
 	audioUrl: string;
+	isReported: boolean;
 }
