@@ -1,4 +1,4 @@
-import { InputLabelProps, InputProps, TextField, TextFieldProps } from '@mui/material';
+import { InputLabelProps, InputProps, SxProps, TextField, TextFieldProps } from '@mui/material';
 import React, { ChangeEvent, forwardRef } from 'react';
 import theme from '../../../themes';
 
@@ -12,7 +12,7 @@ interface CustomTextFieldProps {
 	fullWidth?: boolean;
 	required?: boolean;
 	multiline?: boolean;
-	sx?: React.CSSProperties;
+	sx?: SxProps;
 	InputLabelProps?: Partial<InputLabelProps>;
 	InputProps?: InputProps & { inputProps?: { maxLength?: number } };
 	maxRows?: number;

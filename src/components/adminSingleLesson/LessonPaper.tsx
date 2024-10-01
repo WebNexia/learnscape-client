@@ -108,7 +108,7 @@ const LessonPaper = ({
 									color: theme.textColor?.common.main,
 									padding: '0 0 0.5rem 0.5rem',
 								}}>
-								{singleLessonBeforeSave?.type}{' '}
+								{singleLessonBeforeSave?.type}
 							</Typography>
 						</Box>
 						<Box sx={{ paddingLeft: '0.5rem', color: theme.textColor?.common.main }}>
