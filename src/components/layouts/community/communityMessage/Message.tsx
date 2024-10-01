@@ -1,23 +1,28 @@
 import { Box, IconButton, Tooltip, Typography } from '@mui/material';
 import { CommunityMessage } from '../../../../interfaces/communityMessage';
-import { Delete, Edit, Flag } from '@mui/icons-material';
+import { Delete, Edit, Flag, TurnLeftOutlined } from '@mui/icons-material';
 import { formatMessageTime } from '../../../../utils/formatTime';
-import { useContext, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { UserAuthContext } from '../../../../contexts/UserAuthContextProvider';
 import { Roles } from '../../../../interfaces/enums';
 import axios from 'axios';
 import CustomDialog from '../../dialog/CustomDialog';
 import CustomDialogActions from '../../dialog/CustomDialogActions';
 import EditMessageDialog from './EditMessageDialog';
+import { renderMessageWithEmojis } from '../../../../utils/renderMessageWithEmojis';
 
 interface MessageProps {
 	message: CommunityMessage;
 	isFirst?: boolean;
 	isLast?: boolean;
 	setMessages: React.Dispatch<React.SetStateAction<CommunityMessage[]>>;
+	setReplyToMessage: React.Dispatch<React.SetStateAction<CommunityMessage | null>>;
+	messageRefs: React.MutableRefObject<{ [key: string]: HTMLDivElement | null }>;
+	setPageNumber: React.Dispatch<React.SetStateAction<number>>;
+	setHighlightedMessageId: React.Dispatch<React.SetStateAction<string>>;
 }
 
-const Message = ({ message, isFirst, isLast, setMessages }: MessageProps) => {
+const Message = ({ message, isFirst, isLast, setMessages, setReplyToMessage, messageRefs, setPageNumber, setHighlightedMessageId }: MessageProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { user } = useContext(UserAuthContext);
 	const isAdmin: boolean = user?.role === Roles.ADMIN;
@@ -29,6 +34,12 @@ const Message = ({ message, isFirst, isLast, setMessages }: MessageProps) => {
 
 	const [isMsgEdited, setIsMsgEdited] = useState<boolean>(message.updatedAt > message.createdAt);
 
+	useEffect(() => {
+		if (messageRefs.current) {
+			messageRefs.current[message._id] = messageRefs.current[message._id] || null;
+		}
+	}, [message._id, messageRefs]);
+
 	const deleteMessage = async () => {
 		try {
 			await axios.delete(`${base_url}/communityMessages/${message._id}`);
@@ -36,6 +47,34 @@ const Message = ({ message, isFirst, isLast, setMessages }: MessageProps) => {
 			setMessages((prevData) => prevData.filter((data) => data._id !== message._id));
 		} catch (error) {
 			console.log(error);
+		}
+	};
+
+	const scrollToParentMessage = async (parentMessageId: string) => {
+		const parentMessageElement = messageRefs.current[parentMessageId];
+
+		if (parentMessageElement) {
+			// Scroll the element into view on the current page
+			parentMessageElement.scrollIntoView({
+				behavior: 'smooth',
+				block: 'center',
+			});
+
+			// Highlight the message temporarily
+			parentMessageElement.classList.add('highlight-community-message');
+			setTimeout(() => {
+				parentMessageElement.classList.remove('highlight-community-message');
+			}, 2500);
+		} else {
+			// If the message is not found on the current page, navigate to the page where it's located
+			try {
+				const response = await axios.get(`${base_url}/communityMessages/message/${parentMessageId}?limit=5`);
+				const { page } = response.data;
+				setPageNumber(page);
+				setHighlightedMessageId(parentMessageId);
+			} catch (error) {
+				console.error('Failed to fetch the parent message details', error);
+			}
 		}
 	};
 
@@ -62,6 +101,7 @@ const Message = ({ message, isFirst, isLast, setMessages }: MessageProps) => {
 
 	return (
 		<Box
+			ref={(el) => (messageRefs.current[message._id] = el as HTMLDivElement | null)}
 			sx={{
 				display: 'flex',
 				justifyContent: 'flex-end',
@@ -101,116 +141,221 @@ const Message = ({ message, isFirst, isLast, setMessages }: MessageProps) => {
 					</Typography>
 				</Box>
 			</Box>
-			<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flex: 8, padding: '0.5rem' }}>
+			<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flex: 8 }}>
 				<Box>
-					<Box>
-						<Typography sx={{ lineHeight: 1.7, margin: '0.5rem 0', whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: '0.85rem' }}>
-							{message?.text}
-						</Typography>
+					{message.parentMessageId && (
+						<Box
+							sx={{
+								margin: '0.35rem',
+								borderLeft: 'solid gray 0.3rem',
+								minHeight: '4rem',
+								maxHeight: '7rem',
+								overflow: 'auto',
+								backgroundColor: '#E8E8E8',
+							}}>
+							{typeof message.parentMessageId === 'object' && message.parentMessageId.userId && (
+								<Box
+									onClick={() => {
+										if (typeof message.parentMessageId === 'object' && message.parentMessageId !== null && 'userId' in message.parentMessageId) {
+											scrollToParentMessage(message.parentMessageId._id);
+										}
+									}}
+									sx={{ cursor: 'pointer' }}>
+									<Box sx={{ padding: '0.15rem 0.5rem' }}>
+										<Typography sx={{ fontSize: '0.7rem', fontStyle: 'italic', mb: '0.35rem', color: 'gray' }}>
+											{message.parentMessageId.userId.username}
+										</Typography>
+									</Box>
+									<Box sx={{ padding: '0.5rem' }}>
+										<Box>
+											<Typography sx={{ fontSize: '0.75rem', fontStyle: 'italic', color: 'gray' }}>
+												{renderMessageWithEmojis(message.parentMessageId.text, '1rem')}
+											</Typography>
+										</Box>
+										{message.parentMessageId.imageUrl && (
+											<Box>
+												<img
+													src={message.parentMessageId.imageUrl}
+													alt='img'
+													style={{ maxHeight: '7rem', objectFit: 'contain', borderRadius: '0.15rem', margin: '0.5rem 0' }}
+												/>
+											</Box>
+										)}
+										{message.parentMessageId.audioUrl && (
+											<Box>
+												<audio
+													src={message.parentMessageId.audioUrl}
+													controls
+													style={{
+														margin: '0.25rem 0',
+														boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
+														borderRadius: '0.35rem',
+														width: '30%',
+														height: '1.5rem',
+													}}
+												/>
+											</Box>
+										)}
+									</Box>
+								</Box>
+							)}
+						</Box>
+					)}
+
+					<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'space-between', minHeight: '6rem' }}>
+						<Box sx={{ display: 'flex', justifyContent: 'space-between', flex: 9 }}>
+							<Box sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+								<Box>
+									<Typography
+										sx={{
+											lineHeight: 1.7,
+											margin: '0.5rem 0',
+											whiteSpace: 'pre-wrap',
+											wordBreak: 'break-word',
+											fontSize: '0.85rem',
+											padding: '0 0.5rem',
+										}}>
+										{renderMessageWithEmojis(message?.text, '1.25rem')}
+									</Typography>
+								</Box>
+								{message.imageUrl && (
+									<Box sx={{ padding: '0.15rem 0.5rem' }}>
+										<img src={message.imageUrl} alt='img' style={{ maxHeight: '12rem', objectFit: 'contain', borderRadius: '0.15rem' }} />
+									</Box>
+								)}
+								{message?.audioUrl && (
+									<Box sx={{ padding: '0.15rem 0.5rem' }}>
+										<audio
+											src={message.audioUrl}
+											controls
+											style={{
+												margin: '1rem 0',
+												boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
+												borderRadius: '0.35rem',
+												width: '50%',
+												height: '2rem',
+											}}
+										/>
+									</Box>
+								)}
+							</Box>
+							<Box>
+								<Tooltip title='Reply to Message' placement='right'>
+									<IconButton
+										onClick={() => {
+											setReplyToMessage(message);
+										}}
+										sx={{
+											':hover': {
+												backgroundColor: 'transparent',
+											},
+										}}>
+										<TurnLeftOutlined fontSize='small' />
+									</IconButton>
+								</Tooltip>
+							</Box>
+						</Box>
+
+						<Box
+							sx={{
+								display: 'flex',
+								flexDirection: 'column',
+								width: '100%',
+								justifyContent: 'space-between',
+								alignItems: 'flex-end',
+								mt: '0.5rem',
+								flex: 2,
+							}}>
+							<Box sx={{ display: 'flex', alignItems: 'center' }}>
+								<Box>
+									{(message.updatedAt > message.createdAt || isMsgEdited) && (
+										<Typography sx={{ color: 'gray', ml: '0.5rem', fontStyle: 'italic', fontSize: '0.65rem' }}>Edited</Typography>
+									)}
+								</Box>
+
+								{!isMessageWriter && !isAdmin && (
+									<Tooltip title='Report Message' placement='left'>
+										<IconButton
+											onClick={() => setReportMsgModalOpen(true)}
+											disabled={message.isReported}
+											sx={{
+												':hover': {
+													backgroundColor: 'transparent',
+												},
+											}}>
+											<Flag fontSize='small' color={message.isReported ? 'error' : 'inherit'} />
+											{message.isReported && (
+												<Typography sx={{ color: 'red', ml: '0.5rem', fontSize: '0.65rem' }}>Reported (Under Review)</Typography>
+											)}
+										</IconButton>
+									</Tooltip>
+								)}
+
+								<CustomDialog
+									openModal={reportMsgModalOpen}
+									closeModal={() => setReportMsgModalOpen(false)}
+									title='Report Message'
+									content='Are you sure you want to report the message?'
+									maxWidth='sm'>
+									<CustomDialogActions deleteBtn onDelete={reportMessage} onCancel={() => setReportMsgModalOpen(false)} deleteBtnText='Report' />
+								</CustomDialog>
+
+								{!isMessageWriter && isAdmin && (
+									<Tooltip title='Delete Message' placement='right'>
+										<IconButton
+											onClick={() => setDeleteMessageModalOpen(true)}
+											sx={{
+												':hover': {
+													backgroundColor: 'transparent',
+												},
+											}}>
+											<Delete fontSize='small' />
+										</IconButton>
+									</Tooltip>
+								)}
+
+								{isMessageWriter && (
+									<Box>
+										<Tooltip title='Edit Message' placement='top'>
+											<IconButton
+												onClick={() => setEditMsgModalOpen(true)}
+												sx={{
+													':hover': {
+														backgroundColor: 'transparent',
+													},
+													mr: '-0.5rem',
+												}}>
+												<Edit fontSize='small' />
+											</IconButton>
+										</Tooltip>
+										<Tooltip title='Delete Message' placement='top'>
+											<IconButton
+												onClick={() => setDeleteMessageModalOpen(true)}
+												sx={{
+													':hover': {
+														backgroundColor: 'transparent',
+													},
+												}}>
+												<Delete fontSize='small' />
+											</IconButton>
+										</Tooltip>
+									</Box>
+								)}
+
+								<EditMessageDialog
+									editMsgModalOpen={editMsgModalOpen}
+									setEditMsgModalOpen={setEditMsgModalOpen}
+									message={message}
+									setMessages={setMessages}
+									setIsMsgEdited={setIsMsgEdited}
+								/>
+
+								{message.isReported && isAdmin && (
+									<Typography sx={{ color: 'orange', mr: '0.5rem', fontStyle: 'italic', fontSize: '0.65rem' }}>Reported</Typography>
+								)}
+							</Box>
+						</Box>
 					</Box>
-					{message.imageUrl && (
-						<Box>
-							<img src={message.imageUrl} alt='img' style={{ maxHeight: '15rem', objectFit: 'contain', borderRadius: '0.15rem' }} />
-						</Box>
-					)}
-					{message?.audioUrl && (
-						<Box>
-							<audio
-								src={message.audioUrl}
-								controls
-								style={{
-									margin: '1rem 0',
-									boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
-									borderRadius: '0.35rem',
-									width: '50%',
-								}}
-							/>
-						</Box>
-					)}
-				</Box>
-				<Box sx={{ display: 'flex', width: '100%', justifyContent: 'flex-end', alignItems: 'center' }}>
-					{(message.updatedAt > message.createdAt || isMsgEdited) && (
-						<Typography sx={{ color: 'gray', ml: '0.5rem', fontStyle: 'italic', fontSize: '0.65rem' }}>Edited</Typography>
-					)}
-
-					{!isMessageWriter && !isAdmin && (
-						<Tooltip title='Report Message' placement='left'>
-							<IconButton
-								onClick={() => setReportMsgModalOpen(true)}
-								disabled={message.isReported}
-								sx={{
-									':hover': {
-										backgroundColor: 'transparent',
-									},
-								}}>
-								<Flag fontSize='small' color={message.isReported ? 'error' : 'inherit'} />
-								{message.isReported && <Typography sx={{ color: 'red', ml: '0.5rem', fontSize: '0.65rem' }}>Reported (Under Review)</Typography>}
-							</IconButton>
-						</Tooltip>
-					)}
-
-					<CustomDialog
-						openModal={reportMsgModalOpen}
-						closeModal={() => setReportMsgModalOpen(false)}
-						title='Report Message'
-						content='Are you sure you want to report the message?'
-						maxWidth='sm'>
-						<CustomDialogActions deleteBtn onDelete={reportMessage} onCancel={() => setReportMsgModalOpen(false)} deleteBtnText='Report' />
-					</CustomDialog>
-
-					{!isMessageWriter && isAdmin && (
-						<Tooltip title='Delete Message' placement='right'>
-							<IconButton
-								onClick={() => setDeleteMessageModalOpen(true)}
-								sx={{
-									':hover': {
-										backgroundColor: 'transparent',
-									},
-								}}>
-								<Delete fontSize='small' />
-							</IconButton>
-						</Tooltip>
-					)}
-
-					{isMessageWriter && (
-						<Box>
-							<Tooltip title='Edit Message' placement='left'>
-								<IconButton
-									onClick={() => setEditMsgModalOpen(true)}
-									sx={{
-										':hover': {
-											backgroundColor: 'transparent',
-										},
-										mr: '-0.5rem',
-									}}>
-									<Edit fontSize='small' />
-								</IconButton>
-							</Tooltip>
-							<Tooltip title='Delete Message' placement='top'>
-								<IconButton
-									onClick={() => setDeleteMessageModalOpen(true)}
-									sx={{
-										':hover': {
-											backgroundColor: 'transparent',
-										},
-									}}>
-									<Delete fontSize='small' />
-								</IconButton>
-							</Tooltip>
-						</Box>
-					)}
-
-					<EditMessageDialog
-						editMsgModalOpen={editMsgModalOpen}
-						setEditMsgModalOpen={setEditMsgModalOpen}
-						message={message}
-						setMessages={setMessages}
-						setIsMsgEdited={setIsMsgEdited}
-					/>
-
-					{message.isReported && isAdmin && (
-						<Typography sx={{ color: 'orange', ml: '0.5rem', fontStyle: 'italic', fontSize: '0.65rem' }}>Reported</Typography>
-					)}
 				</Box>
 			</Box>
 			<CustomDialog

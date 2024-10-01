@@ -3,7 +3,7 @@ export interface CommunityMessage {
 	orgId: string;
 	userId: UserInfo;
 	topicId: string;
-	parentMessageId: string;
+	parentMessageId: ParentMessageInfo | string | null;
 	text: string;
 	imageUrl: string;
 	audioUrl: string;
@@ -29,4 +29,15 @@ export interface TopicInfo {
 	imageUrl: string;
 	audioUrl: string;
 	isReported: boolean;
+}
+
+export interface ParentMessageInfo {
+	_id: string;
+	userId: {
+		_id: string;
+		username: string;
+	};
+	text: string;
+	imageUrl: string;
+	audioUrl: string;
 }

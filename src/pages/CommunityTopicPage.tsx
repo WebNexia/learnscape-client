@@ -11,7 +11,7 @@ import { renderMessageWithEmojis } from '../utils/renderMessageWithEmojis';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
 import Picker from '@emoji-mart/react';
 import data from '@emoji-mart/data';
-import { Image, InsertEmoticon, Mic, Send } from '@mui/icons-material';
+import { Cancel, Image, InsertEmoticon, Mic, Send } from '@mui/icons-material';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import HandleImageUploadURL from '../components/forms/uploadImageVideoDocument/HandleImageUploadURL';
 import ImageThumbnail from '../components/forms/uploadImageVideoDocument/ImageThumbnail';
@@ -24,6 +24,7 @@ import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
 import { CommunityContext } from '../contexts/CommunityContextProvider';
 import CustomTablePagination from '../components/layouts/table/CustomTablePagination';
+import { formatMessageTime } from '../utils/formatTime';
 
 const CommunityTopicPage = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -35,6 +36,7 @@ const CommunityTopicPage = () => {
 	const [messages, setMessages] = useState<CommunityMessage[]>([]);
 
 	const [currentMessage, setCurrentMessage] = useState<string>('');
+	const [replyToMessage, setReplyToMessage] = useState<CommunityMessage | null>(null);
 
 	const [topic, setTopic] = useState<TopicInfo>({
 		_id: '',
@@ -59,13 +61,13 @@ const CommunityTopicPage = () => {
 	const [uploadAudioDialogOpen, setUploadAudioDialogOpen] = useState<boolean>(false);
 	const [audioUrl, setAudioUrl] = useState<string>('');
 
-	const [parentMessageId, setParentMessageId] = useState<string>('');
-
 	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(true);
 	const [isAudioUploading, setIsAudioUploading] = useState<boolean>(false);
 
 	const [numberOfPages, setNumberOfPages] = useState<number>(1);
 	const [pageNumber, setPageNumber] = useState<number>(1);
+
+	const [highlightedMessageId, setHighlightedMessageId] = useState<string>('');
 
 	const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
@@ -73,17 +75,20 @@ const CommunityTopicPage = () => {
 		messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
 	};
 
+	const messageRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+
 	useEffect(() => {
 		if (topicId) {
 			const fetchTopicMessages = async () => {
 				try {
-					const messagesResponse = await axios.get(`${base_url}/communityMessages/topic/${topicId}?page=${pageNumber}&limit=25`);
+					const messagesResponse = await axios.get(`${base_url}/communityMessages/topic/${topicId}?page=${pageNumber}&limit=5`);
 
-					console.log(messagesResponse.data.messages);
+					setMessages(
+						messagesResponse.data.messages.sort(
+							(a: CommunityMessage, b: CommunityMessage) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+						)
+					);
 
-					console.log(messagesResponse.data.totalPages);
-
-					setMessages(messagesResponse.data.messages);
 					setTopic(messagesResponse.data.topic);
 					setNumberOfPages(messagesResponse.data.totalPages);
 				} catch (error) {
@@ -93,7 +98,29 @@ const CommunityTopicPage = () => {
 
 			fetchTopicMessages();
 		}
-	}, [pageNumber]);
+	}, [pageNumber, topicId]);
+
+	useEffect(() => {
+		if (highlightedMessageId && messages.length > 0) {
+			const messageElement = messageRefs.current[highlightedMessageId];
+
+			if (messageElement) {
+				messageElement.scrollIntoView({
+					behavior: 'smooth',
+					block: 'center',
+				});
+
+				// Add the highlight class
+				messageElement.classList.add('highlight-community-message');
+				setTimeout(() => {
+					messageElement.classList.remove('highlight-community-message');
+				}, 2500);
+
+				// Clear the highlighted message after it's been highlighted
+				setHighlightedMessageId(''); // Clear highlightedMessageId after the scroll
+			}
+		}
+	}, [highlightedMessageId, messages]);
 
 	useEffect(() => {
 		scrollToBottom();
@@ -111,11 +138,13 @@ const CommunityTopicPage = () => {
 				userId: user?._id,
 				orgId,
 				topicId: topic._id,
-				parentMessageId,
 				text: currentMessage,
 				imageUrl: imgUrl,
 				audioUrl,
+				parentMessageId: replyToMessage?._id,
 			});
+
+			console.log(response.data.parentMessageId);
 
 			setMessages((prevData) => {
 				return [...prevData, response.data];
@@ -123,18 +152,9 @@ const CommunityTopicPage = () => {
 			setCurrentMessage('');
 			setImgUrl('');
 			setAudioUrl('');
-			setParentMessageId('');
+			setReplyToMessage(null);
 		} catch (error) {
 			console.log(error);
-			console.log({
-				userId: user?._id,
-				orgId,
-				topicId: topic._id,
-				parentMessageId,
-				text: currentMessage,
-				imageUrl: imgUrl,
-				audioUrl,
-			});
 		}
 	};
 
@@ -232,7 +252,17 @@ const CommunityTopicPage = () => {
 					paddingBottom: '5rem',
 				}}>
 				{messages?.map((message: CommunityMessage, index) => (
-					<Message key={message?._id} message={message} isFirst={index === 0} isLast={index === messages.length - 1} setMessages={setMessages} />
+					<Message
+						key={message?._id}
+						message={message}
+						isFirst={index === 0}
+						isLast={index === messages.length - 1}
+						setMessages={setMessages}
+						setReplyToMessage={setReplyToMessage}
+						messageRefs={messageRefs}
+						setPageNumber={setPageNumber}
+						setHighlightedMessageId={setHighlightedMessageId}
+					/>
 				))}
 				<div ref={messagesEndRef} />
 				<Box sx={{ display: 'flex', justifyContent: 'center', mt: '1.5rem', width: '95%' }}>
@@ -243,36 +273,141 @@ const CommunityTopicPage = () => {
 			<Box
 				sx={{
 					display: 'flex',
-					justifyContent: 'center',
+					flexDirection: 'column',
+					alignItems: 'center',
 					width: '100%',
 					position: 'fixed',
 					bottom: '0',
 					backgroundColor: theme.bgColor?.secondary,
 					paddingTop: '1rem',
 				}}>
+				{replyToMessage && (
+					<Box
+						sx={{
+							border: '0.09rem solid lightgray',
+							borderBottom: 'none',
+							mt: '1rem',
+							position: 'relative',
+							width: '78%',
+							borderRadius: '0.35rem 0.35rem 0 0',
+							bgcolor: '#E8E8E8',
+						}}>
+						<Box sx={{ borderBottom: '0.09rem solid lightgray', padding: '0.5rem' }}>
+							<Typography variant='body2' sx={{ color: 'gray', mb: '0.35rem' }}>
+								Replying to:
+							</Typography>
+						</Box>
+						<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-start', maxHeight: '6rem', overflow: 'auto' }}>
+							<Box
+								sx={{
+									display: 'flex',
+									flexDirection: 'column',
+									justifyContent: 'flex-start',
+									alignItems: 'center',
+									flex: 1,
+									paddingTop: '0.45rem',
+								}}>
+								<Box>
+									<img src={replyToMessage?.userId?.imageUrl} alt='profile' style={{ height: '2rem', width: '2rem', borderRadius: '50%' }} />
+								</Box>
+								<Box>
+									<Typography sx={{ fontSize: '0.65rem' }}>{replyToMessage?.userId?.username}</Typography>
+								</Box>
+								<Box>
+									<Typography variant='caption' sx={{ fontSize: '0.5rem', color: 'gray' }}>
+										{formatMessageTime(replyToMessage?.createdAt)}
+									</Typography>
+								</Box>
+							</Box>
+							<Box sx={{ padding: '0.75rem', flex: 8, borderLeft: '0.09rem solid lightgray' }}>
+								<Typography sx={{ fontSize: '0.8rem', lineHeight: '1.8' }}> {renderMessageWithEmojis(replyToMessage.text, '1.25rem')}</Typography>
+								{replyToMessage.imageUrl && (
+									<Box>
+										<img
+											src={replyToMessage.imageUrl}
+											alt='img'
+											style={{ maxHeight: '7rem', objectFit: 'contain', borderRadius: '0.15rem', margin: '0.5rem 0' }}
+										/>
+									</Box>
+								)}
+
+								{replyToMessage?.audioUrl && (
+									<Box>
+										<audio
+											src={replyToMessage.audioUrl}
+											controls
+											style={{
+												margin: '0.5rem 0',
+												boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
+												borderRadius: '0.35rem',
+												width: '30%',
+											}}
+										/>
+									</Box>
+								)}
+							</Box>
+						</Box>
+
+						<IconButton size='small' sx={{ position: 'absolute', top: '0.2rem', right: '0.2rem' }} onClick={() => setReplyToMessage(null)}>
+							<Cancel fontSize='small' />
+						</IconButton>
+					</Box>
+				)}
+
+				<Box sx={{ display: 'flex', position: 'absolute', right: '10%', width: '78%' }}>
+					{audioUrl && (
+						<Box
+							sx={{
+								display: 'flex',
+								alignItems: 'center',
+								position: 'absolute',
+								top: '-3rem',
+								right: imgUrl ? '10rem' : '1rem',
+								width: '10rem',
+							}}>
+							<audio
+								src={audioUrl}
+								controls
+								style={{
+									boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
+									borderRadius: '0.35rem',
+									width: '100%',
+									height: '1.25rem',
+								}}
+							/>
+							<Tooltip title='Remove Recording' placement='top'>
+								<IconButton size='small' onClick={() => setAudioUrl('')} sx={{ ':hover': { backgroundColor: 'transparent' } }}>
+									<Cancel sx={{ fontSize: '1rem' }} />
+								</IconButton>
+							</Tooltip>
+						</Box>
+					)}
+
+					{imgUrl && (
+						<Box sx={{ display: 'flex', position: 'absolute', top: '-4.25rem', right: '1rem', maxHeight: '4rem' }}>
+							<img src={imgUrl} alt='Preview' style={{ maxHeight: '4rem', objectFit: 'contain', borderRadius: '0.25rem' }} />
+							<Tooltip title='Remove Image' placement='top'>
+								<IconButton size='small' onClick={() => setImgUrl('')} sx={{ ':hover': { backgroundColor: 'transparent' } }}>
+									<Cancel sx={{ fontSize: '1rem' }} />
+								</IconButton>
+							</Tooltip>
+						</Box>
+					)}
+				</Box>
+
 				<CustomTextField
 					multiline
 					rows={3}
 					value={currentMessage}
+					required={false}
 					onChange={(e) => {
 						setCurrentMessage(e.target.value);
 					}}
-					sx={{ width: '78%' }}
+					sx={{ width: '78%', border: replyToMessage ? 'none' : 'inherit', position: 'relative' }}
 					InputProps={{
 						sx: {
 							fontSize: '0.8rem',
 							padding: '0.5rem 1rem',
-							'& .MuiOutlinedInput-root': {
-								'& fieldset': {
-									borderColor: 'lightgray', // Set the default border color
-								},
-								'&:hover fieldset': {
-									borderColor: 'lightgray', // Keep the border color same when hovered
-								},
-								'&.Mui-focused fieldset': {
-									borderColor: 'lightgray !important', // Keep the border color same when focused
-								},
-							},
 						},
 						endAdornment: (
 							<InputAdornment position='end'>

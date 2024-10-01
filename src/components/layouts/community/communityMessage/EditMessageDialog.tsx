@@ -101,6 +101,7 @@ const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, set
 						required
 						multiline
 						rows={3}
+						resizable={true}
 						value={message?.text}
 						onChange={(e) => {
 							updateMessages((msg: CommunityMessage) => ({ ...msg, text: e.target.value }));

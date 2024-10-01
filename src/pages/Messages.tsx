@@ -1,7 +1,7 @@
 import { Alert, Badge, Box, Dialog, IconButton, InputAdornment, Snackbar, Tooltip, Typography } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
-import { AddBox, Cancel, Chat, Image, InsertEmoticon, Person, PersonOff, Search, SubdirectoryArrowLeft } from '@mui/icons-material';
+import { AddBox, Cancel, Chat, Image, InsertEmoticon, Person, PersonOff, Search, TurnLeftOutlined } from '@mui/icons-material';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import { useContext, useEffect, useRef, useState } from 'react';
 import { generateUniqueId } from '../utils/uniqueIdGenerator';
@@ -1010,7 +1010,7 @@ const Messages = () => {
 																backgroundColor: 'transparent',
 															},
 														}}>
-														<SubdirectoryArrowLeft sx={{ fontSize: '1.25rem' }} />
+														<TurnLeftOutlined sx={{ fontSize: '1.25rem' }} />
 													</IconButton>
 												</Tooltip>
 											</Box>

@@ -36,3 +36,8 @@ a {
 	background-color: lightblue; /* Highlight color */
 	transition: background-color 0.5s ease; /* Smooth transition */
 }
+
+.highlight-community-message {
+	background-color: lightblue; /* Or any color you want for highlighting */
+	transition: background-color 0.5s ease; /* Smooth transition effect */
+}
