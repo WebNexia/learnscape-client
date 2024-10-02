@@ -16,6 +16,7 @@ import { CommunityContext } from '../../../../contexts/CommunityContextProvider'
 import Picker from '@emoji-mart/react';
 import data from '@emoji-mart/data';
 import { HideImage, Image, InsertEmoticon, Mic, MicOff } from '@mui/icons-material';
+import ImageThumbnail from '../../../forms/uploadImageVideoDocument/ImageThumbnail';
 
 interface CreateTopicDialogProps {
 	createTopicModalOpen: boolean;
@@ -113,7 +114,7 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 					createTopic();
 				}}>
 				<Box sx={{ marginBottom: '0.5rem' }}>
-					<Tooltip title='Max 85 Characters' placement='top'>
+					<Tooltip title='Max 80 Characters' placement='top'>
 						<CustomTextField
 							label='Title'
 							value={topic?.title}
@@ -122,7 +123,7 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 									return { ...prevData, title: e.target.value };
 								})
 							}
-							InputProps={{ inputProps: { maxLength: 85 } }}
+							InputProps={{ inputProps: { maxLength: 80 } }}
 						/>
 					</Tooltip>
 				</Box>
@@ -217,6 +218,7 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 											boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
 											borderRadius: '0.35rem',
 											width: '100%',
+											height: '2.25rem',
 										}}
 									/>
 								</Box>
@@ -237,25 +239,37 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 				)}
 
 				{showImageUploader && (
-					<HandleImageUploadURL
-						onImageUploadLogic={(url) =>
-							setTopic((prevData) => {
-								if (prevData) {
-									return { ...prevData, imageUrl: url };
-								}
-								return prevData;
-							})
-						}
-						onChangeImgUrl={(e) =>
-							setTopic((prevData) => {
-								return { ...prevData, imageUrl: e.target.value };
-							})
-						}
-						imageUrlValue={topic?.imageUrl}
-						imageFolderName='TopicImages'
-						enterImageUrl={enterImageUrl}
-						setEnterImageUrl={setEnterImageUrl}
-					/>
+					<>
+						<HandleImageUploadURL
+							onImageUploadLogic={(url) =>
+								setTopic((prevData) => {
+									if (prevData) {
+										return { ...prevData, imageUrl: url };
+									}
+									return prevData;
+								})
+							}
+							onChangeImgUrl={(e) =>
+								setTopic((prevData) => {
+									return { ...prevData, imageUrl: e.target.value };
+								})
+							}
+							imageUrlValue={topic?.imageUrl}
+							imageFolderName='TopicImages'
+							enterImageUrl={enterImageUrl}
+							setEnterImageUrl={setEnterImageUrl}
+						/>
+						{topic.imageUrl && (
+							<ImageThumbnail
+								imgSource={topic.imageUrl}
+								removeImage={() => {
+									setTopic((prevData) => {
+										return { ...prevData, imageUrl: '' };
+									});
+								}}
+							/>
+						)}
+					</>
 				)}
 				<CustomDialogActions onCancel={reset} submitBtnType='submit' actionSx={{ margin: '1.5rem -1rem 0 0' }} />
 			</form>

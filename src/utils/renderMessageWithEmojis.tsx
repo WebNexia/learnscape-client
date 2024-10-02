@@ -2,7 +2,7 @@ import emojiRegex from 'emoji-regex';
 
 export const renderMessageWithEmojis = (message: string, fontSize: string) => {
 	const regex = emojiRegex();
-	const parts = message.split(regex); // Split the message based on where the emojis are
+	const parts = message?.split(regex); // Split the message based on where the emojis are
 	const emojis = [...message.matchAll(regex)]; // Match all emojis
 
 	return parts.reduce((acc: any[], part: string, index: number) => {

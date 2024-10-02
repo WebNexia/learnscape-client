@@ -22,7 +22,6 @@ import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
-import { CommunityContext } from '../contexts/CommunityContextProvider';
 import CustomTablePagination from '../components/layouts/table/CustomTablePagination';
 import { formatMessageTime } from '../utils/formatTime';
 
@@ -31,7 +30,6 @@ const CommunityTopicPage = () => {
 	const { topicId } = useParams();
 	const { user } = useContext(UserAuthContext);
 	const { orgId } = useContext(OrganisationContext);
-	const { fetchTopics } = useContext(CommunityContext);
 
 	const [messages, setMessages] = useState<CommunityMessage[]>([]);
 
@@ -124,7 +122,6 @@ const CommunityTopicPage = () => {
 
 	useEffect(() => {
 		scrollToBottom();
-		fetchTopics(1);
 	}, [messages]);
 
 	const handleEmojiSelect = (emoji: any) => {
@@ -143,8 +140,6 @@ const CommunityTopicPage = () => {
 				audioUrl,
 				parentMessageId: replyToMessage?._id,
 			});
-
-			console.log(response.data.parentMessageId);
 
 			setMessages((prevData) => {
 				return [...prevData, response.data];
@@ -236,6 +231,7 @@ const CommunityTopicPage = () => {
 									boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
 									borderRadius: '0.35rem',
 									width: '50%',
+									height: '2.25rem',
 								}}
 							/>
 						</Box>
@@ -341,6 +337,7 @@ const CommunityTopicPage = () => {
 												boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
 												borderRadius: '0.35rem',
 												width: '30%',
+												height: '1.5rem',
 											}}
 										/>
 									</Box>

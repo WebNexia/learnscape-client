@@ -3,7 +3,7 @@ import theme from '../../../../themes';
 import { useContext, useState } from 'react';
 import { UserAuthContext } from '../../../../contexts/UserAuthContextProvider';
 import { Roles } from '../../../../interfaces/enums';
-import { Delete, Edit, Flag, KeyboardBackspaceOutlined } from '@mui/icons-material';
+import { Delete, Edit, Flag, KeyboardBackspaceOutlined, Verified } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { CommunityMessage, TopicInfo } from '../../../../interfaces/communityMessage';
 import { formatMessageTime } from '../../../../utils/formatTime';
@@ -31,6 +31,7 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic }: Top
 	const [deleteTopicModalOpen, setDeleteTopicModalOpen] = useState<boolean>(false);
 	const [editTopicModalOpen, setEditTopicModalOpen] = useState<boolean>(false);
 	const [reportTopicModalOpen, setReportTopicModalOpen] = useState<boolean>(false);
+	const [clearReportModalOpen, setClearReportModalOpen] = useState<boolean>(false);
 
 	const deleteTopic = async () => {
 		try {
@@ -71,6 +72,21 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic }: Top
 
 			setTopic((prevData) => {
 				return { ...prevData, isReported: true };
+			});
+		} catch (error) {
+			console.log(error);
+		}
+	};
+
+	const clearReport = async () => {
+		try {
+			await axios.patch(`${base_url}/communityTopics/${topic?._id}`, {
+				isReported: false,
+			});
+
+			setClearReportModalOpen(false);
+			setTopic((prevData) => {
+				return { ...prevData, isReported: false };
 			});
 		} catch (error) {
 			console.log(error);
@@ -139,7 +155,7 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic }: Top
 										}}
 										onClick={() => setReportTopicModalOpen(true)}
 										disabled={topic.isReported}>
-										<Flag color={topic.isReported ? 'error' : 'secondary'} />
+										<Flag color={topic.isReported ? 'error' : 'secondary'} fontSize='small' />
 										{topic.isReported && (
 											<Typography variant='body2' sx={{ color: 'red', ml: '0.5rem' }}>
 												Reported (Under Review)
@@ -171,16 +187,30 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic }: Top
 													':hover': {
 														backgroundColor: 'transparent',
 													},
+													mr: '-0.5rem',
 												}}
 												onClick={() => setDeleteTopicModalOpen(true)}>
-												<Delete color='secondary' />
+												<Delete color='secondary' fontSize='small' />
 											</IconButton>
 										</Tooltip>
 									)}
 									{topic.isReported && isAdmin && (
-										<Typography variant='body1' sx={{ color: 'orange', ml: '0.5rem', fontStyle: 'italic' }}>
-											Reported
-										</Typography>
+										<Box sx={{ display: 'flex', alignItems: 'center' }}>
+											<Tooltip title='Clear Report' placement='top'>
+												<IconButton
+													onClick={() => setClearReportModalOpen(true)}
+													sx={{
+														':hover': {
+															backgroundColor: 'transparent',
+														},
+													}}>
+													<Verified color='secondary' fontSize='small' />
+												</IconButton>
+											</Tooltip>
+											<Typography variant='body2' sx={{ color: 'orange', ml: '0.1rem', fontStyle: 'italic', mr: '0.25rem' }}>
+												Reported
+											</Typography>
+										</Box>
 									)}
 								</>
 							)}
@@ -206,6 +236,15 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic }: Top
 					content='Are you sure you want to report the topic?'
 					maxWidth='sm'>
 					<CustomDialogActions deleteBtn onDelete={reportTopic} onCancel={() => setReportTopicModalOpen(false)} deleteBtnText='Report' />
+				</CustomDialog>
+
+				<CustomDialog
+					openModal={clearReportModalOpen}
+					closeModal={() => setClearReportModalOpen(false)}
+					title='Clear Report'
+					content='Are you sure you want to clear the report?'
+					maxWidth='sm'>
+					<CustomDialogActions onSubmit={clearReport} onCancel={() => setClearReportModalOpen(false)} submitBtnText='Clear' />
 				</CustomDialog>
 
 				<Box
