@@ -1,4 +1,4 @@
-import { useContext, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import CustomDialog from '../../dialog/CustomDialog';
 import axios from 'axios';
 import { OrganisationContext } from '../../../../contexts/OrganisationContextProvider';
@@ -36,6 +36,11 @@ const EditTopicDialog = ({ editTopicModalOpen, topic, setEditTopicModalOpen, set
 	const [showAudioRecorder, setShowAudioRecorder] = useState(!!topic.audioUrl);
 	const [showImageUploader, setShowImageUploader] = useState(!!topic.imageUrl);
 	const [showPicker, setShowPicker] = useState(false);
+
+	useEffect(() => {
+		setShowAudioRecorder(!!topic.audioUrl);
+		setShowImageUploader(!!topic.imageUrl);
+	}, [topic]);
 
 	const reset = () => {
 		setEditTopicModalOpen(false);
@@ -113,6 +118,7 @@ const EditTopicDialog = ({ editTopicModalOpen, topic, setEditTopicModalOpen, set
 					<CustomTextField
 						label='Message'
 						multiline
+						resizable={true}
 						rows={3}
 						value={topic?.text}
 						onChange={(e) => setTopic((prevData) => ({ ...prevData, text: e.target.value }))}
@@ -160,7 +166,13 @@ const EditTopicDialog = ({ editTopicModalOpen, topic, setEditTopicModalOpen, set
 									<audio
 										src={topic.audioUrl}
 										controls
-										style={{ marginTop: '1rem', boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)', borderRadius: '0.35rem', width: '100%' }}
+										style={{
+											marginTop: '1rem',
+											boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
+											borderRadius: '0.35rem',
+											width: '100%',
+											height: '2.25rem',
+										}}
 									/>
 								</Box>
 								<Box sx={{ flex: 1, margin: '0.75rem 0 0 1.5rem' }}>

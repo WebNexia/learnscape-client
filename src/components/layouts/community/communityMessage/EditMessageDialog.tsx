@@ -15,7 +15,6 @@ import HandleImageUploadURL from '../../../forms/uploadImageVideoDocument/Handle
 import CustomDialogActions from '../../dialog/CustomDialogActions';
 import axios from 'axios';
 import ImageThumbnail from '../../../forms/uploadImageVideoDocument/ImageThumbnail';
-import { CommunityContext } from '../../../../contexts/CommunityContextProvider';
 
 interface EditMessageDialogProps {
 	message: CommunityMessage;
@@ -28,7 +27,6 @@ interface EditMessageDialogProps {
 const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, setMessages, setIsMsgEdited }: EditMessageDialogProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { user } = useContext(UserAuthContext);
-	const { fetchTopics } = useContext(CommunityContext);
 	const [enterImageUrl, setEnterImageUrl] = useState(true);
 	const [isAudioUploading, setIsAudioUploading] = useState(false);
 	const [messageBeforeSave, setMessageBeforeSave] = useState(message);
@@ -63,7 +61,6 @@ const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, set
 			updateMessages((msg: CommunityMessage) => ({ ...msg, updatedAt: data.data.updatedAt }));
 		}
 		setEditMsgModalOpen(false);
-		fetchTopics(1);
 		setIsMsgEdited(true);
 		setIsMsgUpdated(false);
 	};
@@ -148,7 +145,13 @@ const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, set
 									<audio
 										src={message.audioUrl}
 										controls
-										style={{ marginTop: '1rem', boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)', borderRadius: '0.35rem', width: '100%' }}
+										style={{
+											marginTop: '1rem',
+											boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
+											borderRadius: '0.35rem',
+											width: '100%',
+											height: '2.25rem',
+										}}
 									/>
 								</Box>
 								<Box sx={{ flex: 1, margin: '0.75rem 0 0 1.5rem' }}>

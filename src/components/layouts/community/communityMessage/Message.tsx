@@ -1,6 +1,6 @@
 import { Box, IconButton, Tooltip, Typography } from '@mui/material';
 import { CommunityMessage } from '../../../../interfaces/communityMessage';
-import { Delete, Edit, Flag, TurnLeftOutlined } from '@mui/icons-material';
+import { Delete, Edit, Flag, TurnLeftOutlined, Verified } from '@mui/icons-material';
 import { formatMessageTime } from '../../../../utils/formatTime';
 import { useContext, useEffect, useState } from 'react';
 import { UserAuthContext } from '../../../../contexts/UserAuthContextProvider';
@@ -30,6 +30,7 @@ const Message = ({ message, isFirst, isLast, setMessages, setReplyToMessage, mes
 
 	const [deleteMessageModalOpen, setDeleteMessageModalOpen] = useState<boolean>(false);
 	const [reportMsgModalOpen, setReportMsgModalOpen] = useState<boolean>(false);
+	const [clearReportModalOpen, setClearReportModalOpen] = useState<boolean>(false);
 	const [editMsgModalOpen, setEditMsgModalOpen] = useState<boolean>(false);
 
 	const [isMsgEdited, setIsMsgEdited] = useState<boolean>(message.updatedAt > message.createdAt);
@@ -90,6 +91,26 @@ const Message = ({ message, isFirst, isLast, setMessages, setReplyToMessage, mes
 				return prevData.map((data) => {
 					if (data._id === message._id) {
 						return { ...data, isReported: true };
+					}
+					return data;
+				});
+			});
+		} catch (error) {
+			console.log(error);
+		}
+	};
+
+	const clearReport = async () => {
+		try {
+			await axios.patch(`${base_url}/communityMessages/${message?._id}`, {
+				isReported: false,
+			});
+
+			setClearReportModalOpen(false);
+			setMessages((prevData) => {
+				return prevData.map((data) => {
+					if (data._id === message._id) {
+						return { ...data, isReported: false };
 					}
 					return data;
 				});
@@ -274,7 +295,7 @@ const Message = ({ message, isFirst, isLast, setMessages, setReplyToMessage, mes
 								</Box>
 
 								{!isMessageWriter && !isAdmin && (
-									<Tooltip title='Report Message' placement='left'>
+									<Tooltip title='Report Message' placement='top'>
 										<IconButton
 											onClick={() => setReportMsgModalOpen(true)}
 											disabled={message.isReported}
@@ -351,8 +372,30 @@ const Message = ({ message, isFirst, isLast, setMessages, setReplyToMessage, mes
 								/>
 
 								{message.isReported && isAdmin && (
-									<Typography sx={{ color: 'orange', mr: '0.5rem', fontStyle: 'italic', fontSize: '0.65rem' }}>Reported</Typography>
+									<Box sx={{ display: 'flex', alignItems: 'center' }}>
+										<Tooltip title='Clear Report' placement='top'>
+											<IconButton
+												onClick={() => setClearReportModalOpen(true)}
+												sx={{
+													':hover': {
+														backgroundColor: 'transparent',
+													},
+												}}>
+												<Verified fontSize='small' />
+											</IconButton>
+										</Tooltip>
+										<Typography sx={{ color: 'orange', mr: '0.5rem', fontStyle: 'italic', fontSize: '0.65rem' }}>Reported</Typography>
+									</Box>
 								)}
+
+								<CustomDialog
+									openModal={clearReportModalOpen}
+									closeModal={() => setClearReportModalOpen(false)}
+									title='Clear Report'
+									content='Are you sure you want to clear the report?'
+									maxWidth='sm'>
+									<CustomDialogActions onSubmit={clearReport} onCancel={() => setClearReportModalOpen(false)} submitBtnText='Clear' />
+								</CustomDialog>
 							</Box>
 						</Box>
 					</Box>
