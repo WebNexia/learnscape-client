@@ -118,6 +118,7 @@ const EditTopicDialog = ({ editTopicModalOpen, topic, setEditTopicModalOpen, set
 					<CustomTextField
 						label='Message'
 						multiline
+						resizable={true}
 						rows={3}
 						value={topic?.text}
 						onChange={(e) => setTopic((prevData) => ({ ...prevData, text: e.target.value }))}

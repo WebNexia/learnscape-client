@@ -83,13 +83,9 @@ const CommunityTopicPage = () => {
 		if (topicId) {
 			const fetchTopicMessages = async () => {
 				try {
-					const messagesResponse = await axios.get(`${base_url}/communityMessages/topic/${topicId}?page=${pageNumber}&limit=5`);
+					const messagesResponse = await axios.get(`${base_url}/communityMessages/topic/${topicId}?page=${pageNumber}&limit=25`);
 
-					setMessages(
-						messagesResponse.data.messages.sort(
-							(a: CommunityMessage, b: CommunityMessage) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-						)
-					);
+					setMessages(messagesResponse.data.messages);
 
 					setTopic(messagesResponse.data.topic);
 					setNumberOfPages(messagesResponse.data.totalPages);
@@ -288,14 +284,14 @@ const CommunityTopicPage = () => {
 					position: 'fixed',
 					bottom: '0',
 					backgroundColor: theme.bgColor?.secondary,
-					paddingTop: '1rem',
+					paddingTop: '0.5rem',
 				}}>
 				{replyToMessage && (
 					<Box
 						sx={{
 							border: '0.09rem solid lightgray',
 							borderBottom: 'none',
-							mt: '1rem',
+							mt: '0.5rem',
 							position: 'relative',
 							width: '78%',
 							borderRadius: '0.35rem 0.35rem 0 0',
@@ -329,7 +325,10 @@ const CommunityTopicPage = () => {
 								</Box>
 							</Box>
 							<Box sx={{ padding: '0.75rem', flex: 8, borderLeft: '0.09rem solid lightgray' }}>
-								<Typography sx={{ fontSize: '0.8rem', lineHeight: '1.8' }}> {renderMessageWithEmojis(replyToMessage.text, '1.25rem')}</Typography>
+								<Typography sx={{ fontSize: '0.8rem', lineHeight: '1.8', minHeight: '3.5rem' }}>
+									{' '}
+									{renderMessageWithEmojis(replyToMessage.text, '1.25rem')}
+								</Typography>
 								{replyToMessage.imageUrl && (
 									<Box>
 										<img

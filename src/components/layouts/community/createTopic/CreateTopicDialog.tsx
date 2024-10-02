@@ -77,6 +77,7 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 			imageUrl: '',
 			audioUrl: '',
 		});
+		setShowPicker(false);
 	};
 
 	const handleEmojiSelect = (emoji: any) => {
@@ -132,6 +133,7 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 						label='Message'
 						multiline
 						rows={3}
+						resizable={true}
 						value={topic?.text}
 						onChange={(e) =>
 							setTopic((prevData) => {
