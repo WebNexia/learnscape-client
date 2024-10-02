@@ -24,12 +24,14 @@ import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
 import CustomTablePagination from '../components/layouts/table/CustomTablePagination';
 import { formatMessageTime } from '../utils/formatTime';
+import { CommunityContext } from '../contexts/CommunityContextProvider';
 
 const CommunityTopicPage = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { topicId } = useParams();
 	const { user } = useContext(UserAuthContext);
 	const { orgId } = useContext(OrganisationContext);
+	const { fetchTopics } = useContext(CommunityContext);
 
 	const [messages, setMessages] = useState<CommunityMessage[]>([]);
 
@@ -64,6 +66,8 @@ const CommunityTopicPage = () => {
 
 	const [numberOfPages, setNumberOfPages] = useState<number>(1);
 	const [pageNumber, setPageNumber] = useState<number>(1);
+
+	const [refreshTopics, setRefreshTopics] = useState<boolean>(false);
 
 	const [highlightedMessageId, setHighlightedMessageId] = useState<string>('');
 
@@ -122,6 +126,7 @@ const CommunityTopicPage = () => {
 
 	useEffect(() => {
 		scrollToBottom();
+		fetchTopics(1);
 	}, [messages]);
 
 	const handleEmojiSelect = (emoji: any) => {
@@ -140,6 +145,8 @@ const CommunityTopicPage = () => {
 				audioUrl,
 				parentMessageId: replyToMessage?._id,
 			});
+
+			setRefreshTopics(true);
 
 			setMessages((prevData) => {
 				return [...prevData, response.data];
@@ -171,7 +178,13 @@ const CommunityTopicPage = () => {
 	return (
 		<DashboardPagesLayout pageName='Community' customSettings={{ justifyContent: 'flex-start' }}>
 			<Box sx={{ width: '80%', position: 'fixed', top: '4rem', zIndex: 1000, backgroundColor: theme.bgColor?.secondary }}>
-				<TopicPaper topic={topic} messages={messages} setDisplayDeleteTopicMsg={setDisplayDeleteTopicMsg} setTopic={setTopic} />
+				<TopicPaper
+					topic={topic}
+					messages={messages}
+					setDisplayDeleteTopicMsg={setDisplayDeleteTopicMsg}
+					setTopic={setTopic}
+					refreshTopics={refreshTopics}
+				/>
 			</Box>
 			<Snackbar
 				open={displayDeleteTopicMsg}

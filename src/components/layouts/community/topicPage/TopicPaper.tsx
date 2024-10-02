@@ -14,16 +14,17 @@ import { CommunityContext } from '../../../../contexts/CommunityContextProvider'
 import EditTopicDialog from '../editTopic/EditTopicDialog';
 
 interface TopicPaperProps {
+	refreshTopics: boolean;
 	topic: TopicInfo;
 	messages: CommunityMessage[];
 	setDisplayDeleteTopicMsg: React.Dispatch<React.SetStateAction<boolean>>;
 	setTopic: React.Dispatch<React.SetStateAction<TopicInfo>>;
 }
 
-const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic }: TopicPaperProps) => {
+const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refreshTopics }: TopicPaperProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { user } = useContext(UserAuthContext);
-	const { removeTopic } = useContext(CommunityContext);
+	const { removeTopic, fetchTopics } = useContext(CommunityContext);
 	const navigate = useNavigate();
 	const isAdmin: boolean = user?.role === Roles.ADMIN;
 	const isTopicWriter: boolean = user?._id === topic?.userId._id;
@@ -132,6 +133,8 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic }: Top
 								},
 							}}
 							onClick={() => {
+								if (refreshTopics) fetchTopics(1);
+
 								if (isAdmin) {
 									navigate(`/admin/community/user/${user?._id}`);
 								} else {
