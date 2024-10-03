@@ -102,6 +102,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 									userCourseId: value._id,
 									isCourseCompleted: value.isCompleted,
 									isCourseInProgress: value.isInProgress,
+									courseTitle: value.courseId.title,
 								});
 							}
 							return acc;

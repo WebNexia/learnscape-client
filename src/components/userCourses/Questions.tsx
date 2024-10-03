@@ -12,6 +12,7 @@ import QuizQuestion from './QuizQuestion';
 interface QuestionsProps {
 	questions: QuestionInterface[];
 	lessonType?: string;
+	lessonName: string;
 	userAnswers: UserQuestionData[];
 	setUserAnswers: React.Dispatch<React.SetStateAction<UserQuestionData[]>>;
 	setIsQuizInProgress: React.Dispatch<React.SetStateAction<boolean>>;
@@ -22,6 +23,7 @@ interface QuestionsProps {
 const Questions: React.FC<QuestionsProps> = ({
 	questions,
 	lessonType,
+	lessonName,
 	userAnswers,
 	setUserAnswers,
 	setIsQuizInProgress,
@@ -127,6 +129,7 @@ const Questions: React.FC<QuestionsProps> = ({
 							userQuizAnswers={userQuizAnswers}
 							setUserQuizAnswers={setUserQuizAnswers}
 							setIsQuizInProgress={setIsQuizInProgress}
+							lessonName={lessonName}
 						/>
 					) : null;
 				})}
