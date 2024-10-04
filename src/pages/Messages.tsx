@@ -38,6 +38,7 @@ import { debounce } from 'lodash';
 import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
 import { formatMessageTime } from '../utils/formatTime';
 import { renderMessageWithEmojis } from '../utils/renderMessageWithEmojis';
+import { useLocation } from 'react-router-dom';
 
 export interface Message {
 	id: string;
@@ -80,6 +81,8 @@ const Messages = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { user } = useContext(UserAuthContext);
 	const { orgId } = useContext(OrganisationContext);
+
+	const location = useLocation();
 
 	const [messages, setMessages] = useState<Message[]>([]);
 	const [showPicker, setShowPicker] = useState<boolean>(false);
@@ -152,6 +155,21 @@ const Messages = () => {
 			}, 2500);
 		}
 	};
+
+	useEffect(() => {
+		const handleRouteChange = async () => {
+			if (user?.firebaseUserId) {
+				const userRef = doc(db, 'users', user.firebaseUserId);
+				await updateDoc(userRef, {
+					activeChatId: '', // Clear the active chat ID when navigating away
+				});
+			}
+		};
+
+		return () => {
+			handleRouteChange(); // Runs when the route changes (component unmount)
+		};
+	}, [location, user?.firebaseUserId]);
 
 	useEffect(() => {
 		scrollToBottom();
@@ -444,6 +462,11 @@ const Messages = () => {
 		const blockedUsersArray = Object.keys(chatBlockedUsers);
 		setBlockedUsers(blockedUsersArray);
 
+		const userRef = doc(db, 'users', user?.firebaseUserId!);
+		await updateDoc(userRef, {
+			activeChatId: chat.chatId, // Set the active chat ID in Firestore
+		});
+
 		// Mark unread messages as read when user opens chat
 		const messagesRef = collection(db, 'chats', chat.chatId, 'messages');
 		const unreadMessagesQuery = query(messagesRef, where('receiverId', '==', user?.firebaseUserId), where('isRead', '==', false));
@@ -478,25 +501,23 @@ const Messages = () => {
 			// Ensure the chat document is created if it doesn’t exist
 			const chatDoc = await getDoc(chatRef);
 			if (!chatDoc.exists()) {
-				// Create the chat if it doesn't exist
 				await setDoc(chatRef, {
 					participants: activeChat.participants.map((p) => p.firebaseUserId),
 					lastMessage: {
 						text: currentMessage || 'Image sent',
 						timestamp: serverTimestamp(),
 					},
-					isDeletedBy: [], // Initialize the isDeletedBy field as an empty array
+					isDeletedBy: [],
 					blockedUsers: {},
 					hasUnreadMessages: false,
 				});
 			} else {
-				// Restore the chat by removing both participants from the isDeletedBy array if they are in it
 				await updateDoc(chatRef, {
 					isDeletedBy: arrayRemove(...activeChat.participants.map((p) => p.firebaseUserId)),
 				});
 			}
 
-			// Proceed with message sending logic...
+			// Image upload handling
 			let imageUrl = '';
 			if (imageUpload) {
 				await handleImageUpload('messages', (url: string) => {
@@ -504,16 +525,18 @@ const Messages = () => {
 				});
 			}
 
+			const receiverId = activeChat.participants.find((p) => p.firebaseUserId !== user?.firebaseUserId)?.firebaseUserId;
+
 			const newMessage: Message = {
 				id: generateUniqueId(''),
 				senderId: user?.firebaseUserId!,
-				receiverId: activeChat.participants.find((p) => p.firebaseUserId !== user?.firebaseUserId)?.firebaseUserId || '',
+				receiverId: receiverId || '',
 				text: currentMessage || '',
 				imageUrl: imageUrl || '',
 				timestamp: new Date(),
 				isRead: false,
-				replyTo: replyToMessage?.id || '', // Reference the message being replied to
-				quotedText: replyToMessage?.text || '', // Include the text of the replied message
+				replyTo: replyToMessage?.id || '',
+				quotedText: replyToMessage?.text || '',
 			};
 
 			// Add the message to Firestore
@@ -522,13 +545,50 @@ const Messages = () => {
 				timestamp: serverTimestamp(),
 			});
 
+			if (receiverId) {
+				const recipientRef = doc(db, 'users', receiverId);
+				const recipientDoc = await getDoc(recipientRef);
+				const recipientData = recipientDoc.data();
+
+				const isRecipientChatting = recipientData?.activeChatId === activeChat.chatId;
+
+				// Check if the receiver has unread messages in the active chat
+				const unreadMessagesQuery = query(
+					collection(db, 'chats', activeChat.chatId, 'messages'),
+					where('receiverId', '==', receiverId),
+					where('isRead', '==', false)
+				);
+				const unreadMessagesSnapshot = await getDocs(unreadMessagesQuery);
+
+				console.log('Unread messages snapshot size:', unreadMessagesSnapshot.size);
+				unreadMessagesSnapshot.forEach((doc) => {
+					console.log('Unread message:', doc.data());
+				});
+
+				// Send a notification only if there are no unread messages and the recipient is not currently viewing the chat
+				if (unreadMessagesSnapshot.size === 1 && !isRecipientChatting) {
+					const notificationData = {
+						title: 'New Message',
+						message: `${user?.username} sent you a message.`,
+						isRead: false,
+						timestamp: serverTimestamp(),
+						type: 'MessageReceived',
+						userImageUrl: user?.imageUrl,
+					};
+
+					const notificationRef = collection(db, 'notifications', receiverId, 'userNotifications');
+					await addDoc(notificationRef, notificationData);
+					console.log('Notification sent successfully!');
+				}
+			}
+
 			// Update the lastMessage field and set hasUnreadMessages to true for the receiver
 			await updateDoc(chatRef, {
 				lastMessage: {
 					text: newMessage.text || 'Image sent',
 					timestamp: serverTimestamp(),
 				},
-				hasUnreadMessages: true, // Set unread message status to true
+				hasUnreadMessages: true,
 			});
 
 			// Clear the reply context and reset state after sending the message
@@ -736,12 +796,12 @@ const Messages = () => {
 										border: '0.04rem solid lightgray',
 										borderRight: 'none',
 										borderBottom: 'none',
-										'&:last-child': {
+										'&:last-of-type': {
 											borderBottom: '0.04rem solid lightgray',
 											borderBottomLeftRadius: '0.35rem',
 										},
 
-										'&:first-child': {
+										'&:first-of-type': {
 											borderTopLeftRadius: '0.35rem',
 										},
 										backgroundImage: chat.chatId === activeChatId ? `url(/msg-bg.png)` : null,

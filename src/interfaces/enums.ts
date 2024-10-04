@@ -73,4 +73,5 @@ export const enum LessonType {
 
 export const enum NotificationType {
 	QUIZ_SUBMISSION = 'QuizSubmission',
+	MESSAGE_RECEIVED = 'MessageReceived',
 }

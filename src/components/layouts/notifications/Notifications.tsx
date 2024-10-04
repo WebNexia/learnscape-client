@@ -31,7 +31,6 @@ const NotificationsBox = ({ showUnreadOnly }: NotificationsBoxProps) => {
 	const navigate = useNavigate();
 
 	useEffect(() => {
-		console.log(showUnreadOnly);
 		if (!user) return;
 
 		// Real-time listener for notifications
@@ -79,6 +78,8 @@ const NotificationsBox = ({ showUnreadOnly }: NotificationsBoxProps) => {
 				navigate(`/admin/check-submission/user/${user?._id}/submission/${note.submissionId}/lesson/${note.lessonId}/userlesson/${note.userLessonId}`);
 			} else if (note.type === NotificationType.QUIZ_SUBMISSION && user?.role === Roles.USER) {
 				navigate(`/submission-feedback/user/${user?._id}/submission/${note.submissionId}/lesson/${note.lessonId}/userlesson/${note.userLessonId}`);
+			} else if (note.type === NotificationType.MESSAGE_RECEIVED) {
+				navigate(`${user?.role !== Roles.ADMIN ? '' : '/admin'}/messages/user/${user?._id}`);
 			}
 			// Update local state to mark as read immediately
 			setNotifications((prevNotifications) => prevNotifications.map((n) => (n.id === note.id ? { ...n, isRead: true } : n)));
