@@ -70,3 +70,7 @@ export const enum LessonType {
 	PRACTICE_LESSON = 'Practice Lesson',
 	QUIZ = 'Quiz',
 }
+
+export const enum NotificationType {
+	QUIZ_SUBMISSION = 'QuizSubmission',
+}

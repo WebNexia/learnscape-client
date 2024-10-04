@@ -31,7 +31,6 @@ const Schedule = React.lazy(() => import('./pages/Schedule'));
 const Messages = React.lazy(() => import('./pages/Messages'));
 const Community = React.lazy(() => import('./pages/Community'));
 const CommunityTopicPage = React.lazy(() => import('./pages/CommunityTopicPage'));
-const Notifications = React.lazy(() => import('./pages/Notifications'));
 const Settings = React.lazy(() => import('./pages/Settings'));
 const CoursePage = React.lazy(() => import('./pages/CoursePage'));
 const LessonPage = React.lazy(() => import('./pages/LessonPage'));
@@ -102,7 +101,6 @@ function App() {
 																			{renderRoute('/admin/messages/user/:userId', <Messages />, Roles.ADMIN)}
 																			{renderRoute('/admin/community/user/:userId', <Community />, Roles.ADMIN)}
 																			{renderRoute('/admin/community/user/:userId/topic/:topicId', <CommunityTopicPage />, Roles.ADMIN)}
-																			{renderRoute('/admin/notifications/user/:id', <Notifications />, Roles.ADMIN)}
 																			{renderRoute('/admin/settings/user/:userId', <AdminSettings />, Roles.ADMIN)}
 																		</>
 																		<>
@@ -124,7 +122,6 @@ function App() {
 																			{renderRoute('/messages/user/:userId', <Messages />, Roles.USER)}
 																			{renderRoute('/community/user/:id', <Community />, Roles.USER)}
 																			{renderRoute('/community/user/:id/topic/:topicId', <CommunityTopicPage />, Roles.USER)}
-																			{renderRoute('/notifications/user/:id', <Notifications />, Roles.USER)}
 																			{renderRoute('/settings/user/:id', <Settings />, Roles.USER)}
 																		</>
 																	</Routes>

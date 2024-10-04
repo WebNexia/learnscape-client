@@ -239,6 +239,8 @@ const QuizQuestion = ({
 
 	const handleQuizSubmission = async () => {
 		setUserQuizAnswersUploading(true);
+
+		// Upload user answers
 		await Promise.all(
 			userQuizAnswers.map(async (answer) => {
 				try {
@@ -266,19 +268,33 @@ const QuizQuestion = ({
 		);
 
 		try {
-			const response = await axios.get(`${base_url}/users/organisation/${orgId}/admin-users`);
-			const instructors = response.data;
+			// Submit quiz
+			const submissionResponse = await axios.post(`${base_url}/quizSubmissions`, {
+				userId,
+				lessonId,
+				courseId,
+				userLessonId,
+				orgId,
+			});
+
+			// Fetch instructors
+			const instructorsResponse = await axios.get(`${base_url}/users/organisation/${orgId}/admin-users`);
+			const instructors = instructorsResponse.data.data;
 
 			// Create the notification data
 			const notificationData = {
 				title: 'Quiz Submitted',
-				message: `${user?.username} has submitted ${lessonName} in the ${courseTitle} course.`,
+				message: `${user?.username} submitted ${lessonName} in the ${courseTitle} course.`,
 				isRead: false,
 				timestamp: serverTimestamp(),
 				type: 'QuizSubmission',
+				userImageUrl: user?.imageUrl,
+				lessonId,
+				submissionId: submissionResponse.data._id,
+				userLessonId,
 			};
 
-			// Loop through each instructor and send the notification to their Firestore
+			// Send notifications to each instructor
 			for (const instructor of instructors) {
 				const notificationRef = collection(db, 'notifications', instructor.firebaseUserId, 'userNotifications');
 				await addDoc(notificationRef, notificationData);
@@ -286,13 +302,7 @@ const QuizQuestion = ({
 
 			console.log('Notification sent to instructors');
 		} catch (error) {
-			console.error('Error sending notifications:', error);
-		}
-
-		try {
-			await axios.post(`${base_url}/quizSubmissions`, { userId, lessonId, courseId, userLessonId, orgId });
-		} catch (error) {
-			console.log(error);
+			console.error('Error submitting quiz or sending notifications:', error);
 		} finally {
 			setIsMsgModalAfterSubmitOpen(true);
 		}
