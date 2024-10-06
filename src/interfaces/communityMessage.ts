@@ -17,6 +17,7 @@ interface UserInfo {
 	_id: string;
 	imageUrl: string;
 	username: string;
+	firebaseUserId: string;
 }
 
 export interface TopicInfo {

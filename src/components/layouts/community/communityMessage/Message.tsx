@@ -10,12 +10,17 @@ import CustomDialog from '../../dialog/CustomDialog';
 import CustomDialogActions from '../../dialog/CustomDialogActions';
 import EditMessageDialog from './EditMessageDialog';
 import { renderMessageWithEmojis } from '../../../../utils/renderMessageWithEmojis';
+import { OrganisationContext } from '../../../../contexts/OrganisationContextProvider';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { truncateText } from '../../../../utils/utilText';
+import { db } from '../../../../firebase';
 
 interface MessageProps {
 	message: CommunityMessage;
 	isFirst?: boolean;
 	isLast?: boolean;
 	isTopicClosed: boolean;
+	topicTitle: string;
 	setMessages: React.Dispatch<React.SetStateAction<CommunityMessage[]>>;
 	setReplyToMessage: React.Dispatch<React.SetStateAction<CommunityMessage | null>>;
 	messageRefs: React.MutableRefObject<{ [key: string]: HTMLDivElement | null }>;
@@ -28,6 +33,7 @@ const Message = ({
 	isFirst,
 	isLast,
 	isTopicClosed,
+	topicTitle,
 	setMessages,
 	setReplyToMessage,
 	messageRefs,
@@ -36,6 +42,7 @@ const Message = ({
 }: MessageProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { user } = useContext(UserAuthContext);
+	const { adminUsers } = useContext(OrganisationContext);
 	const isAdmin: boolean = user?.role === Roles.ADMIN;
 	const isMessageWriter: boolean = user?._id === message?.userId?._id;
 
@@ -106,6 +113,24 @@ const Message = ({
 					return data;
 				});
 			});
+
+			// Create the notification data
+			const notificationData = {
+				title: 'Message Reported',
+				message: `${user?.username} reported the message "${truncateText(message.text, 30)}" in ${truncateText(topicTitle, 25)} in community topics`,
+				isRead: false,
+				timestamp: serverTimestamp(),
+				type: 'ReportMessage',
+				userImageUrl: user?.imageUrl,
+				communityTopicId: message.topicId,
+				communityMessageId: message._id,
+			};
+
+			// Send notifications to each admin
+			for (const admin of adminUsers) {
+				const notificationRef = collection(db, 'notifications', admin.firebaseUserId, 'userNotifications');
+				await addDoc(notificationRef, notificationData);
+			}
 		} catch (error) {
 			console.log(error);
 		}
@@ -397,7 +422,7 @@ const Message = ({
 												<Verified fontSize='small' />
 											</IconButton>
 										</Tooltip>
-										<Typography sx={{ color: 'orange', mr: '0.5rem', fontStyle: 'italic', fontSize: '0.65rem' }}>Reported</Typography>
+										<Typography sx={{ color: 'red', mr: '0.5rem', fontStyle: 'italic', fontSize: '0.65rem' }}>Reported</Typography>
 									</Box>
 								)}
 

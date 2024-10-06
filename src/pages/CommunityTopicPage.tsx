@@ -17,7 +17,7 @@ import HandleImageUploadURL from '../components/forms/uploadImageVideoDocument/H
 import ImageThumbnail from '../components/forms/uploadImageVideoDocument/ImageThumbnail';
 import AudioRecorder from '../components/userCourses/AudioRecorder';
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
-import { storage } from '../firebase';
+import { db, storage } from '../firebase';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
@@ -25,6 +25,8 @@ import CustomCancelButton from '../components/forms/customButtons/CustomCancelBu
 import CustomTablePagination from '../components/layouts/table/CustomTablePagination';
 import { formatMessageTime } from '../utils/formatTime';
 import { CommunityContext } from '../contexts/CommunityContextProvider';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { truncateText } from '../utils/utilText';
 
 const CommunityTopicPage = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -40,7 +42,7 @@ const CommunityTopicPage = () => {
 
 	const [topic, setTopic] = useState<TopicInfo>({
 		_id: '',
-		userId: { _id: '', username: '', imageUrl: '' },
+		userId: { _id: '', username: '', imageUrl: '', firebaseUserId: '' },
 		createdAt: '',
 		updatedAt: '',
 		title: '',
@@ -88,6 +90,8 @@ const CommunityTopicPage = () => {
 					const messagesResponse = await axios.get(`${base_url}/communityMessages/topic/${topicId}?page=${pageNumber}&limit=25`);
 
 					setMessages(messagesResponse.data.messages);
+
+					console.log(messagesResponse.data.topic);
 
 					setTopic(messagesResponse.data.topic);
 					setIsTopicClosed(!messagesResponse.data.topic.isActive);
@@ -144,6 +148,45 @@ const CommunityTopicPage = () => {
 				audioUrl,
 				parentMessageId: replyToMessage?._id,
 			});
+
+			if (replyToMessage && replyToMessage.userId._id !== user?._id) {
+				// Create the notification data
+				const replyToMsgNotificationData = {
+					title: 'Community Message Replied',
+					message: `${user?.username} replied to your message "${truncateText(replyToMessage.text, 30)}" in the topic ${truncateText(
+						topic.title,
+						25
+					)} under community topics`,
+					isRead: false,
+					timestamp: serverTimestamp(),
+					type: 'ReplyToCommunityMessage',
+					userImageUrl: user?.imageUrl,
+					communityTopicId: topic._id,
+					communityMessageId: response.data._id,
+				};
+
+				const notificationRef = collection(db, 'notifications', replyToMessage.userId.firebaseUserId, 'userNotifications');
+				await addDoc(notificationRef, replyToMsgNotificationData);
+			}
+
+			if (topic.userId._id !== user?._id) {
+				const notificationToTopicOwnerData = {
+					title: 'Community Topic Replied',
+					message: `${user?.username} replied to your topic ${truncateText(topic.title, 25)} in community topics: "${truncateText(
+						currentMessage,
+						30
+					)}"`,
+					isRead: false,
+					timestamp: serverTimestamp(),
+					type: 'ReplyToCommunityTopic',
+					userImageUrl: user?.imageUrl,
+					communityTopicId: topic._id,
+					communityMessageId: response.data._id,
+				};
+
+				const notificationRef = collection(db, 'notifications', topic.userId.firebaseUserId, 'userNotifications');
+				await addDoc(notificationRef, notificationToTopicOwnerData);
+			}
 
 			setRefreshTopics(true);
 
@@ -273,6 +316,7 @@ const CommunityTopicPage = () => {
 						setPageNumber={setPageNumber}
 						setHighlightedMessageId={setHighlightedMessageId}
 						isTopicClosed={isTopicClosed}
+						topicTitle={topic.title}
 					/>
 				))}
 				<div ref={messagesEndRef} />

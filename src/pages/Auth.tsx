@@ -76,7 +76,6 @@ const Auth = ({ setUserRole }: AuthProps) => {
 				await setDoc(userRef, {
 					firebaseUserId: firebaseUser.uid,
 					email: firebaseUser.email,
-					username: username || 'Unknown',
 					activeChatId: '', // Initialize activeChatId
 				});
 			}

@@ -12,6 +12,10 @@ import CustomDialog from '../../dialog/CustomDialog';
 import CustomDialogActions from '../../dialog/CustomDialogActions';
 import { CommunityContext } from '../../../../contexts/CommunityContextProvider';
 import EditTopicDialog from '../editTopic/EditTopicDialog';
+import { OrganisationContext } from '../../../../contexts/OrganisationContextProvider';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { db } from '../../../../firebase';
+import { truncateText } from '../../../../utils/utilText';
 
 interface TopicPaperProps {
 	refreshTopics: boolean;
@@ -26,6 +30,7 @@ interface TopicPaperProps {
 const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refreshTopics, isTopicClosed, setIsTopicClosed }: TopicPaperProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { user } = useContext(UserAuthContext);
+	const { adminUsers } = useContext(OrganisationContext);
 	const { removeTopic, fetchTopics } = useContext(CommunityContext);
 	const navigate = useNavigate();
 	const isAdmin: boolean = user?.role === Roles.ADMIN;
@@ -78,6 +83,23 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refre
 			setTopic((prevData) => {
 				return { ...prevData, isReported: true };
 			});
+
+			// Create the notification data
+			const notificationData = {
+				title: 'Topic Reported',
+				message: `${user?.username} reported ${truncateText(topic.title, 25)} in community topics`,
+				isRead: false,
+				timestamp: serverTimestamp(),
+				type: 'ReportTopic',
+				userImageUrl: user?.imageUrl,
+				communityTopicId: topic._id,
+			};
+
+			// Send notifications to each admin
+			for (const admin of adminUsers) {
+				const notificationRef = collection(db, 'notifications', admin.firebaseUserId, 'userNotifications');
+				await addDoc(notificationRef, notificationData);
+			}
 		} catch (error) {
 			console.log(error);
 		}
@@ -261,7 +283,7 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refre
 													<Verified color='secondary' fontSize='small' />
 												</IconButton>
 											</Tooltip>
-											<Typography variant='body2' sx={{ color: 'orange', ml: '0.1rem', fontStyle: 'italic', mr: '0.25rem' }}>
+											<Typography variant='body2' sx={{ color: 'darkorange', ml: '0.1rem', fontStyle: 'italic', mr: '0.25rem' }}>
 												Reported
 											</Typography>
 										</Box>

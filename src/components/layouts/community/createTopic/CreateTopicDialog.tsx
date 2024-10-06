@@ -8,7 +8,7 @@ import CustomTextField from '../../../forms/customFields/CustomTextField';
 import HandleImageUploadURL from '../../../forms/uploadImageVideoDocument/HandleImageUploadURL';
 import AudioRecorder from '../../../userCourses/AudioRecorder';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { storage } from '../../../../firebase';
+import { db, storage } from '../../../../firebase';
 import { UserAuthContext } from '../../../../contexts/UserAuthContextProvider';
 import { Box, IconButton, InputAdornment, Tooltip, Typography } from '@mui/material';
 import CustomSubmitButton from '../../../forms/customButtons/CustomSubmitButton';
@@ -17,6 +17,8 @@ import Picker from '@emoji-mart/react';
 import data from '@emoji-mart/data';
 import { HideImage, Image, InsertEmoticon, Mic, MicOff } from '@mui/icons-material';
 import ImageThumbnail from '../../../forms/uploadImageVideoDocument/ImageThumbnail';
+import { truncateText } from '../../../../utils/utilText';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 
 interface CreateTopicDialogProps {
 	createTopicModalOpen: boolean;
@@ -50,6 +52,10 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 				audioUrl: topic.audioUrl,
 			});
 
+			const allUsersFBaseIds = await axios.get(`${base_url}/users/firebaseUserIds/organisation/${orgId}`);
+
+			const allIds: string[] = allUsersFBaseIds.data.data;
+
 			addNewTopic({
 				_id: response.data._id,
 				userId: { _id: user?._id, username: user?.username, imageUrl: user?.imageUrl },
@@ -63,6 +69,23 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 			});
 
 			reset();
+
+			const notificationToUsersData = {
+				title: 'Community Topic Created',
+				message: `${user?.username} created a new topic: ${truncateText(topic.title, 25)}`,
+				isRead: false,
+				timestamp: serverTimestamp(),
+				type: 'NewCommunityTopic',
+				userImageUrl: user?.imageUrl,
+				communityTopicId: response.data._id,
+			};
+
+			for (const id of allIds) {
+				if (id !== user?.firebaseUserId) {
+					const notificationRef = collection(db, 'notifications', id, 'userNotifications');
+					await addDoc(notificationRef, notificationToUsersData);
+				}
+			}
 		} catch (error) {
 			console.log(error);
 		}

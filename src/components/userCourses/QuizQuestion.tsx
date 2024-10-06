@@ -78,7 +78,7 @@ const QuizQuestion = ({
 	const { userLessonId, handleNextLesson, nextLessonId } = useUserCourseLessonData();
 
 	const { userId, lessonId, courseId, userCourseId } = useParams();
-	const { orgId } = useContext(OrganisationContext);
+	const { orgId, adminUsers } = useContext(OrganisationContext);
 	const { fetchQuestionTypeName } = useContext(QuestionsContext);
 	const { user } = useContext(UserAuthContext);
 
@@ -277,10 +277,6 @@ const QuizQuestion = ({
 				orgId,
 			});
 
-			// Fetch instructors
-			const instructorsResponse = await axios.get(`${base_url}/users/organisation/${orgId}/admin-users`);
-			const instructors = instructorsResponse.data.data;
-
 			// Create the notification data
 			const notificationData = {
 				title: 'Quiz Submitted',
@@ -295,8 +291,8 @@ const QuizQuestion = ({
 			};
 
 			// Send notifications to each instructor
-			for (const instructor of instructors) {
-				const notificationRef = collection(db, 'notifications', instructor.firebaseUserId, 'userNotifications');
+			for (const admin of adminUsers) {
+				const notificationRef = collection(db, 'notifications', admin.firebaseUserId, 'userNotifications');
 				await addDoc(notificationRef, notificationData);
 			}
 
