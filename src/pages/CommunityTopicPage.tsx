@@ -140,7 +140,7 @@ const CommunityTopicPage = () => {
 				orgId,
 				topicId: topic._id,
 				text: currentMessage.trim(),
-				imageUrl: imgUrl,
+				imageUrl: imgUrl.trim(),
 				audioUrl,
 				parentMessageId: replyToMessage?._id,
 			});

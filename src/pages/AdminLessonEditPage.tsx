@@ -278,7 +278,7 @@ const AdminLessonEditPage = () => {
 						if (document._id.includes('temp_doc_id')) {
 							try {
 								const response = await axios.post(`${base_url}/documents`, {
-									name: document.name,
+									name: document.name.trim(),
 									orgId,
 									userId,
 									documentUrl: document.documentUrl,
@@ -308,7 +308,7 @@ const AdminLessonEditPage = () => {
 					if (trackData?.isUpdated) {
 						try {
 							await axios.patch(`${base_url}/documents/${doc._id}`, {
-								name: doc.name,
+								name: doc.name.trim(),
 							});
 							fetchDocuments(documentsPageNumber);
 						} catch (error) {
@@ -372,11 +372,11 @@ const AdminLessonEditPage = () => {
 							try {
 								const response = await axios.post(`${base_url}/questions`, {
 									orgId,
-									question: question.question,
+									question: question.question.trim(),
 									options: question.options,
-									correctAnswer: question.correctAnswer,
-									videoUrl: question.videoUrl,
-									imageUrl: question.imageUrl,
+									correctAnswer: question.correctAnswer.trim(),
+									videoUrl: question.videoUrl.trim(),
+									imageUrl: question.imageUrl.trim(),
 									questionType: questionTypeId,
 									audio: question.audio,
 									video: question.video,
@@ -427,7 +427,7 @@ const AdminLessonEditPage = () => {
 					const updatedLesson = {
 						...singleLessonBeforeSave,
 						questionIds: updatedQuestionIds,
-						text: editorContent,
+						text: editorContent.trim(),
 						documentIds: updatedDocumentIds,
 					};
 
@@ -438,7 +438,7 @@ const AdminLessonEditPage = () => {
 						...singleLessonBeforeSave,
 						questions: updatedQuestions,
 						questionIds: updatedQuestionIds,
-						text: editorContent,
+						text: editorContent.trim(),
 						documentIds: updatedDocumentIds,
 						documents: updatedDocuments,
 					});
@@ -447,7 +447,7 @@ const AdminLessonEditPage = () => {
 						...singleLessonBeforeSave,
 						questions: updatedQuestions,
 						questionIds: updatedQuestionIds,
-						text: editorContent,
+						text: editorContent.trim(),
 						documentIds: updatedDocumentIds,
 						documents: updatedDocuments,
 					});
@@ -457,7 +457,7 @@ const AdminLessonEditPage = () => {
 							...prevData,
 							questions: updatedQuestions,
 							questionIds: updatedQuestionIds,
-							text: singleLessonBeforeSave.type === 'Quiz' ? '' : editorContent,
+							text: singleLessonBeforeSave.type === 'Quiz' ? '' : editorContent.trim(),
 							documentIds: updatedDocumentIds,
 							documents: updatedDocuments,
 						};
@@ -961,31 +961,6 @@ const AdminLessonEditPage = () => {
 																						setIsDuplicateOption={setIsDuplicateOption}
 																						setIsMinimumOptions={setIsMinimumOptions}
 																					/>
-
-																					{/* <EditQuestionDialog
-																						fromLessonEditPage={true}
-																						question={question}
-																						correctAnswerIndex={correctAnswerIndex}
-																						index={index}
-																						options={options}
-																						correctAnswer={correctAnswer}
-																						questionType={fetchQuestionTypeName(question)}
-																						isMinimumOptions={isMinimumOptions}
-																						isDuplicateOption={isDuplicateOption}
-																						setSingleLessonBeforeSave={setSingleLessonBeforeSave}
-																						setIsLessonUpdated={setIsLessonUpdated}
-																						handleCorrectAnswerChange={handleCorrectAnswerChange}
-																						setCorrectAnswerIndex={setCorrectAnswerIndex}
-																						handleOptionChange={handleOptionChange}
-																						closeQuestionEditModal={closeQuestionEditModal}
-																						setIsQuestionUpdated={setIsQuestionUpdated}
-																						editQuestionModalOpen={editQuestionModalOpen}
-																						addOption={addOption}
-																						removeOption={removeOption}
-																						setCorrectAnswer={setCorrectAnswer}
-																						setIsDuplicateOption={setIsDuplicateOption}
-																						setIsMinimumOptions={setIsMinimumOptions}
-																					/> */}
 																				</Box>
 																				<Tooltip title='Remove' placement='top'>
 																					<IconButton onClick={() => removeQuestion(question)}>
@@ -1052,7 +1027,15 @@ const AdminLessonEditPage = () => {
 													...prevData,
 													documents: [
 														...prevData.documents,
-														{ _id: generateUniqueId('temp_doc_id_'), name: newName, documentUrl: url, orgId, userId, createdAt: '', updatedAt: '' },
+														{
+															_id: generateUniqueId('temp_doc_id_'),
+															name: newName.trim(),
+															documentUrl: url,
+															orgId,
+															userId,
+															createdAt: '',
+															updatedAt: '',
+														},
 													],
 												};
 											}

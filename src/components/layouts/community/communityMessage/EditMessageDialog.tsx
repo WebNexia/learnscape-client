@@ -53,12 +53,18 @@ const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, set
 	const editMessage = async () => {
 		if (isMsgUpdated) {
 			const { data } = await axios.patch(`${base_url}/communityMessages/${message._id}`, {
-				text: message.text,
-				audioUrl: message.audioUrl,
-				imageUrl: message.imageUrl,
+				text: message.text.trim(),
+				audioUrl: message.audioUrl.trim(),
+				imageUrl: message.imageUrl.trim(),
 			});
 			setMessageBeforeSave(data);
-			updateMessages((msg: CommunityMessage) => ({ ...msg, updatedAt: data.data.updatedAt }));
+			updateMessages((msg: CommunityMessage) => ({
+				...msg,
+				text: message.text.trim(),
+				audioUrl: message.audioUrl.trim(),
+				imageUrl: message.imageUrl.trim(),
+				updatedAt: data.data.updatedAt,
+			}));
 		}
 		setEditMsgModalOpen(false);
 		setIsMsgEdited(true);

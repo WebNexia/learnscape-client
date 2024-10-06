@@ -151,7 +151,7 @@ const AdminQuizSubmissionCheck = () => {
 
 			const updatedFeedbacks = userQuestionsFeedbacks.map((feedback) =>
 				feedback.userQuestionId === userResponseToFeedback._id
-					? { ...feedback, isUpdated: true, teacherAudioFeedbackUrl: downloadURL, isFeedbackGiven: true }
+					? { ...feedback, isUpdated: true, teacherAudioFeedbackUrl: downloadURL.trim(), isFeedbackGiven: true }
 					: feedback
 			);
 
@@ -159,11 +159,11 @@ const AdminQuizSubmissionCheck = () => {
 
 			setUserResponseData((prevResponses: any) =>
 				prevResponses.map((response: any) =>
-					response._id === userResponseToFeedback._id ? { ...response, teacherAudioFeedbackUrl: downloadURL } : response
+					response._id === userResponseToFeedback._id ? { ...response, teacherAudioFeedbackUrl: downloadURL.trim() } : response
 				)
 			);
 
-			setUserResponseToFeedback((prev: any) => ({ ...prev, teacherAudioFeedbackUrl: downloadURL }));
+			setUserResponseToFeedback((prev: any) => ({ ...prev, teacherAudioFeedbackUrl: downloadURL.trim() }));
 		} catch (error) {
 			console.error(error);
 		} finally {
@@ -177,7 +177,7 @@ const AdminQuizSubmissionCheck = () => {
 
 			if (quizFeedback && isQuizFeedbackUpdated) {
 				await axios.patch(`${base_url}/userlessons/${userLessonId}`, {
-					teacherFeedback: quizFeedback,
+					teacherFeedback: quizFeedback.trim(),
 					isFeedbackGiven: true,
 				});
 			}
@@ -201,8 +201,8 @@ const AdminQuizSubmissionCheck = () => {
 				userQuestionsFeedbacks.map(async (feedback) => {
 					if (feedback.feedback && feedback.isUpdated) {
 						await axios.patch(`${base_url}/userquestions/${feedback.userQuestionId}`, {
-							teacherFeedback: feedback.feedback,
-							teacherAudioFeedbackUrl: feedback.teacherAudioFeedbackUrl,
+							teacherFeedback: feedback.feedback.trim(),
+							teacherAudioFeedbackUrl: feedback.teacherAudioFeedbackUrl.trim(),
 						});
 
 						setUserQuestionsFeedbacks((prevFeedbacks) =>

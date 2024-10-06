@@ -133,9 +133,7 @@ const NotificationsBox = ({ showUnreadOnly }: NotificationsBoxProps) => {
 										</Box>
 									</Box>
 								</Box>
-								<Box sx={{ margin: '0 0.5rem 0 2rem' }}>
-									<Circle sx={{ color: note.isRead ? '#9E9E9E' : '#1976D2', fontSize: '0.85rem' }} />
-								</Box>
+								<Box sx={{ margin: '0 0.5rem 0 2rem' }}>{!note.isRead && <Circle sx={{ color: '#1976D2', fontSize: '0.85rem' }} />}</Box>
 							</Box>
 						);
 					})}

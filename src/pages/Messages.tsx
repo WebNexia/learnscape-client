@@ -504,7 +504,7 @@ const Messages = () => {
 				await setDoc(chatRef, {
 					participants: activeChat.participants.map((p) => p.firebaseUserId),
 					lastMessage: {
-						text: currentMessage || 'Image sent',
+						text: currentMessage.trim() || 'Image sent',
 						timestamp: serverTimestamp(),
 					},
 					isDeletedBy: [],
@@ -531,8 +531,8 @@ const Messages = () => {
 				id: generateUniqueId(''),
 				senderId: user?.firebaseUserId!,
 				receiverId: receiverId || '',
-				text: currentMessage || '',
-				imageUrl: imageUrl || '',
+				text: currentMessage.trim() || '',
+				imageUrl: imageUrl.trim() || '',
 				timestamp: new Date(),
 				isRead: false,
 				replyTo: replyToMessage?.id || '',
@@ -579,7 +579,7 @@ const Messages = () => {
 			// Update the lastMessage field and set hasUnreadMessages to true for the receiver
 			await updateDoc(chatRef, {
 				lastMessage: {
-					text: newMessage.text || 'Image sent',
+					text: newMessage.text.trim() || 'Image sent',
 					timestamp: serverTimestamp(),
 				},
 				hasUnreadMessages: true,

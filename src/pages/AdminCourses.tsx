@@ -81,10 +81,10 @@ const AdminCourses = () => {
 	const createCourse = async (): Promise<void> => {
 		try {
 			const response = await axios.post(`${base_url}/courses`, {
-				title,
-				description,
+				title: title.trim(),
+				description: description.trim(),
 				price: checked ? 'Free' : price,
-				priceCurrency: checked ? '' : priceCurrency,
+				priceCurrency: checked ? '' : priceCurrency.trim(),
 				startingDate: '',
 				orgId,
 				imageUrl: '',
@@ -96,10 +96,10 @@ const AdminCourses = () => {
 			// Notify context provider to update sortedCoursesData with the new course
 			addNewCourse({
 				_id: response.data._id,
-				title,
-				description,
+				title: title.trim(),
+				description: description.trim(),
 				price: checked ? 'Free' : price,
-				priceCurrency: checked ? '' : priceCurrency,
+				priceCurrency: checked ? '' : priceCurrency.trim(),
 				orgId,
 				imageUrl: '',
 				durationWeeks: null,

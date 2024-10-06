@@ -213,27 +213,6 @@ const AdminQuestions = () => {
 												setIsMinimumOptions={setIsMinimumOptions}
 											/>
 
-											{/* <EditQuestionDialog
-												fromLessonEditPage={false}
-												question={question}
-												correctAnswerIndex={correctAnswerIndex}
-												index={index}
-												options={options}
-												correctAnswer={question.correctAnswer}
-												questionType={question.questionType}
-												isMinimumOptions={isMinimumOptions}
-												isDuplicateOption={isDuplicateOption}
-												handleCorrectAnswerChange={handleCorrectAnswerChange}
-												setCorrectAnswerIndex={setCorrectAnswerIndex}
-												handleOptionChange={handleOptionChange}
-												closeQuestionEditModal={closeQuestionEditModal}
-												editQuestionModalOpen={editQuestionModalOpen}
-												addOption={addOption}
-												removeOption={removeOption}
-												setCorrectAnswer={setCorrectAnswer}
-												setIsDuplicateOption={setIsDuplicateOption}
-												setIsMinimumOptions={setIsMinimumOptions}
-											/> */}
 											<CustomActionBtn
 												title='Delete'
 												onClick={() => {

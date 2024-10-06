@@ -209,7 +209,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 
 			// Step 4: Send user data to your backend server (optional, if needed)
 			await axios.post(`${base_url}/users/signup`, {
-				username,
+				username: username.trim(),
 				orgCode,
 				firebaseUserId: user.uid,
 				email,

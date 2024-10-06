@@ -205,7 +205,7 @@ const PracticeQuestion = ({
 						isCompleted: true,
 						isInProgress: false,
 						orgId,
-						userAnswer,
+						userAnswer: userAnswer.trim(),
 						teacherFeedback: '',
 						teacherAudioFeedbackUrl: '',
 					});

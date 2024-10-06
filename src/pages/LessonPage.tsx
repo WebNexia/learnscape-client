@@ -166,7 +166,7 @@ const LessonPage = () => {
 	const updateUserLessonNotes = async () => {
 		try {
 			setIsUserLessonNotesUploading(true);
-			const res = await axios.patch(`${base_url}/userlessons/${userLessonId}`, { notes: editorContent });
+			const res = await axios.patch(`${base_url}/userlessons/${userLessonId}`, { notes: editorContent.trim() });
 			setUserLessonNotes(res.data.data.notes);
 		} catch (error) {
 			console.log(error);
