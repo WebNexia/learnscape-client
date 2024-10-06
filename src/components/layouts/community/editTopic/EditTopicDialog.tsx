@@ -69,8 +69,8 @@ const EditTopicDialog = ({ editTopicModalOpen, topic, setEditTopicModalOpen, set
 	const editTopic = async () => {
 		try {
 			const response = await axios.patch(`${base_url}/communityTopics/${topic._id}`, {
-				title: topic.title,
-				text: topic.text,
+				title: topic.title.trim(),
+				text: topic.text.trim(),
 				imageUrl: topic.imageUrl,
 				audioUrl: topic.audioUrl,
 			});
@@ -79,6 +79,8 @@ const EditTopicDialog = ({ editTopicModalOpen, topic, setEditTopicModalOpen, set
 
 			updateTopics({
 				...topic,
+				title: topic.title.trim(),
+				text: topic.text.trim(),
 				userId: { _id: user?._id!, username: user?.username!, imageUrl: user?.imageUrl! },
 				orgId,
 				updatedAt: response.data.updatedAt,

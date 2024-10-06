@@ -3,7 +3,7 @@ import theme from '../../../../themes';
 import { useContext, useState } from 'react';
 import { UserAuthContext } from '../../../../contexts/UserAuthContextProvider';
 import { Roles } from '../../../../interfaces/enums';
-import { Delete, Edit, Flag, KeyboardBackspaceOutlined, Verified } from '@mui/icons-material';
+import { Cancel, Delete, Edit, Flag, KeyboardBackspaceOutlined, PlayCircleFilledOutlined, Verified } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { CommunityMessage, TopicInfo } from '../../../../interfaces/communityMessage';
 import { formatMessageTime } from '../../../../utils/formatTime';
@@ -17,11 +17,13 @@ interface TopicPaperProps {
 	refreshTopics: boolean;
 	topic: TopicInfo;
 	messages: CommunityMessage[];
+	isTopicClosed: boolean;
+	setIsTopicClosed: React.Dispatch<React.SetStateAction<boolean>>;
 	setDisplayDeleteTopicMsg: React.Dispatch<React.SetStateAction<boolean>>;
 	setTopic: React.Dispatch<React.SetStateAction<TopicInfo>>;
 }
 
-const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refreshTopics }: TopicPaperProps) => {
+const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refreshTopics, isTopicClosed, setIsTopicClosed }: TopicPaperProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { user } = useContext(UserAuthContext);
 	const { removeTopic, fetchTopics } = useContext(CommunityContext);
@@ -32,7 +34,9 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refre
 	const [deleteTopicModalOpen, setDeleteTopicModalOpen] = useState<boolean>(false);
 	const [editTopicModalOpen, setEditTopicModalOpen] = useState<boolean>(false);
 	const [reportTopicModalOpen, setReportTopicModalOpen] = useState<boolean>(false);
-	const [clearReportModalOpen, setClearReportModalOpen] = useState<boolean>(false);
+	const [closeTopicModalOpen, setCloseTopicModalOpen] = useState<boolean>(false);
+	const [restartTopicModalOpen, setRestartTopicModalOpen] = useState<boolean>(false);
+	const [resolveReportModalOpen, setResolveReportModalOpen] = useState<boolean>(false);
 
 	const deleteTopic = async () => {
 		try {
@@ -79,16 +83,36 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refre
 		}
 	};
 
-	const clearReport = async () => {
+	const resolveReport = async () => {
 		try {
 			await axios.patch(`${base_url}/communityTopics/${topic?._id}`, {
 				isReported: false,
 			});
 
-			setClearReportModalOpen(false);
+			setResolveReportModalOpen(false);
 			setTopic((prevData) => {
 				return { ...prevData, isReported: false };
 			});
+		} catch (error) {
+			console.log(error);
+		}
+	};
+
+	const closeReopenTopic = async (action: string) => {
+		try {
+			if (action === 'close') {
+				await axios.patch(`${base_url}/communityTopics/${topic?._id}`, {
+					isActive: false,
+				});
+				setIsTopicClosed(true);
+				setCloseTopicModalOpen(false);
+			} else if (action === 'restart') {
+				await axios.patch(`${base_url}/communityTopics/${topic?._id}`, {
+					isActive: true,
+				});
+				setIsTopicClosed(false);
+				setRestartTopicModalOpen(false);
+			}
 		} catch (error) {
 			console.log(error);
 		}
@@ -169,39 +193,66 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refre
 							) : (
 								<>
 									{isTopicWriter && (
-										<Tooltip title='Edit Topic' placement='left'>
+										<Tooltip title='Edit Topic' placement='top'>
 											<IconButton
 												sx={{
 													':hover': {
 														backgroundColor: 'transparent',
 													},
-													mr: '-0.5rem',
+													mr: '-0.25rem',
 												}}
 												onClick={() => setEditTopicModalOpen(true)}>
-												<Edit color='secondary' />
+												<Edit color='secondary' fontSize='small' />
 											</IconButton>
 										</Tooltip>
 									)}
 
 									{(isTopicWriter || isAdmin) && (
-										<Tooltip title='Delete Topic' placement='top'>
-											<IconButton
-												sx={{
-													':hover': {
-														backgroundColor: 'transparent',
-													},
-													mr: '-0.5rem',
-												}}
-												onClick={() => setDeleteTopicModalOpen(true)}>
-												<Delete color='secondary' fontSize='small' />
-											</IconButton>
-										</Tooltip>
+										<>
+											<Tooltip title='Delete Topic' placement='top'>
+												<IconButton
+													sx={{
+														':hover': {
+															backgroundColor: 'transparent',
+														},
+														mr: '-0.25rem',
+													}}
+													onClick={() => setDeleteTopicModalOpen(true)}>
+													<Delete color='secondary' fontSize='small' />
+												</IconButton>
+											</Tooltip>
+											{!isTopicClosed ? (
+												<Tooltip title='Close Topic' placement='top'>
+													<IconButton
+														sx={{
+															':hover': {
+																backgroundColor: 'transparent',
+															},
+														}}
+														onClick={() => setCloseTopicModalOpen(true)}>
+														<Cancel color='secondary' fontSize='small' />
+													</IconButton>
+												</Tooltip>
+											) : (
+												<Tooltip title='Restart Topic' placement='top'>
+													<IconButton
+														sx={{
+															':hover': {
+																backgroundColor: 'transparent',
+															},
+														}}
+														onClick={() => setRestartTopicModalOpen(true)}>
+														<PlayCircleFilledOutlined color='secondary' fontSize='small' />
+													</IconButton>
+												</Tooltip>
+											)}
+										</>
 									)}
 									{topic.isReported && isAdmin && (
 										<Box sx={{ display: 'flex', alignItems: 'center' }}>
-											<Tooltip title='Clear Report' placement='top'>
+											<Tooltip title='Resolve Report' placement='top'>
 												<IconButton
-													onClick={() => setClearReportModalOpen(true)}
+													onClick={() => setResolveReportModalOpen(true)}
 													sx={{
 														':hover': {
 															backgroundColor: 'transparent',
@@ -242,12 +293,39 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refre
 				</CustomDialog>
 
 				<CustomDialog
-					openModal={clearReportModalOpen}
-					closeModal={() => setClearReportModalOpen(false)}
-					title='Clear Report'
-					content='Are you sure you want to clear the report?'
+					openModal={resolveReportModalOpen}
+					closeModal={() => setResolveReportModalOpen(false)}
+					title='Resolve Report'
+					content='Are you sure you want to resolve the report?'
 					maxWidth='sm'>
-					<CustomDialogActions onSubmit={clearReport} onCancel={() => setClearReportModalOpen(false)} submitBtnText='Clear' />
+					<CustomDialogActions onSubmit={resolveReport} onCancel={() => setResolveReportModalOpen(false)} submitBtnText='Resolve' />
+				</CustomDialog>
+
+				<CustomDialog
+					openModal={closeTopicModalOpen}
+					closeModal={() => setCloseTopicModalOpen(false)}
+					title='Close Topic'
+					content='Are you sure you want to close the topic?'
+					maxWidth='sm'>
+					<CustomDialogActions
+						onDelete={() => closeReopenTopic('close')}
+						onCancel={() => setCloseTopicModalOpen(false)}
+						deleteBtn
+						deleteBtnText='Close'
+					/>
+				</CustomDialog>
+
+				<CustomDialog
+					openModal={restartTopicModalOpen}
+					closeModal={() => setRestartTopicModalOpen(false)}
+					title='Restart Topic'
+					content='Are you sure you want to restart the topic?'
+					maxWidth='sm'>
+					<CustomDialogActions
+						onSubmit={() => closeReopenTopic('restart')}
+						onCancel={() => setRestartTopicModalOpen(false)}
+						submitBtnText='Restart'
+					/>
 				</CustomDialog>
 
 				<Box
@@ -258,13 +336,11 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refre
 						flex: 5,
 						padding: '1rem',
 					}}>
-					<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', height: '100%' }}>
+					<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'space-between', height: '100%' }}>
 						<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
-							<Box>
-								<Typography variant='h5' sx={{ color: theme.textColor?.common.main }}>
-									{topic?.title}
-								</Typography>
-							</Box>
+							<Typography variant='h5' sx={{ color: theme.textColor?.common.main, textAlign: 'right' }}>
+								{topic?.title}
+							</Typography>
 						</Box>
 
 						<Box

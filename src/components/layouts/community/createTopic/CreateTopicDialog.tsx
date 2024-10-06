@@ -44,8 +44,8 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 			const response = await axios.post(`${base_url}/communityTopics`, {
 				userId: user?._id,
 				orgId,
-				title: topic.title,
-				text: topic.text,
+				title: topic.title.trim(),
+				text: topic.text.trim(),
 				imageUrl: topic.imageUrl,
 				audioUrl: topic.audioUrl,
 			});
@@ -54,8 +54,8 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 				_id: response.data._id,
 				userId: { _id: user?._id, username: user?.username, imageUrl: user?.imageUrl },
 				orgId,
-				title: topic.title,
-				text: topic.text,
+				title: topic.title.trim(),
+				text: topic.text.trim(),
 				imageUrl: topic.imageUrl,
 				audioUrl: topic.audioUrl,
 				createdAt: response.data.createdAt,

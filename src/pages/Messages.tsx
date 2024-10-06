@@ -560,11 +560,6 @@ const Messages = () => {
 				);
 				const unreadMessagesSnapshot = await getDocs(unreadMessagesQuery);
 
-				console.log('Unread messages snapshot size:', unreadMessagesSnapshot.size);
-				unreadMessagesSnapshot.forEach((doc) => {
-					console.log('Unread message:', doc.data());
-				});
-
 				// Send a notification only if there are no unread messages and the recipient is not currently viewing the chat
 				if (unreadMessagesSnapshot.size === 1 && !isRecipientChatting) {
 					const notificationData = {
@@ -578,7 +573,6 @@ const Messages = () => {
 
 					const notificationRef = collection(db, 'notifications', receiverId, 'userNotifications');
 					await addDoc(notificationRef, notificationData);
-					console.log('Notification sent successfully!');
 				}
 			}
 

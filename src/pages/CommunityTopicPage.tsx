@@ -71,6 +71,8 @@ const CommunityTopicPage = () => {
 
 	const [highlightedMessageId, setHighlightedMessageId] = useState<string>('');
 
+	const [isTopicClosed, setIsTopicClosed] = useState<boolean>(false);
+
 	const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
 	const scrollToBottom = () => {
@@ -88,6 +90,7 @@ const CommunityTopicPage = () => {
 					setMessages(messagesResponse.data.messages);
 
 					setTopic(messagesResponse.data.topic);
+					setIsTopicClosed(!messagesResponse.data.topic.isActive);
 					setNumberOfPages(messagesResponse.data.totalPages);
 				} catch (error) {
 					console.log(error);
@@ -136,7 +139,7 @@ const CommunityTopicPage = () => {
 				userId: user?._id,
 				orgId,
 				topicId: topic._id,
-				text: currentMessage,
+				text: currentMessage.trim(),
 				imageUrl: imgUrl,
 				audioUrl,
 				parentMessageId: replyToMessage?._id,
@@ -180,6 +183,8 @@ const CommunityTopicPage = () => {
 					setDisplayDeleteTopicMsg={setDisplayDeleteTopicMsg}
 					setTopic={setTopic}
 					refreshTopics={refreshTopics}
+					isTopicClosed={isTopicClosed}
+					setIsTopicClosed={setIsTopicClosed}
 				/>
 			</Box>
 			<Snackbar
@@ -267,6 +272,7 @@ const CommunityTopicPage = () => {
 						messageRefs={messageRefs}
 						setPageNumber={setPageNumber}
 						setHighlightedMessageId={setHighlightedMessageId}
+						isTopicClosed={isTopicClosed}
 					/>
 				))}
 				<div ref={messagesEndRef} />
@@ -326,7 +332,6 @@ const CommunityTopicPage = () => {
 							</Box>
 							<Box sx={{ padding: '0.75rem', flex: 8, borderLeft: '0.09rem solid lightgray' }}>
 								<Typography sx={{ fontSize: '0.8rem', lineHeight: '1.8', minHeight: '3.5rem' }}>
-									{' '}
 									{renderMessageWithEmojis(replyToMessage.text, '1.25rem')}
 								</Typography>
 								{replyToMessage.imageUrl && (
@@ -409,9 +414,11 @@ const CommunityTopicPage = () => {
 					rows={3}
 					value={currentMessage}
 					required={false}
+					disabled={isTopicClosed}
 					onChange={(e) => {
 						setCurrentMessage(e.target.value);
 					}}
+					placeholder={isTopicClosed ? 'You cannot send message since topic is closed' : ''}
 					sx={{ width: '78%', border: replyToMessage ? 'none' : 'inherit', position: 'relative' }}
 					InputProps={{
 						sx: {
@@ -422,6 +429,7 @@ const CommunityTopicPage = () => {
 							<InputAdornment position='end'>
 								<IconButton
 									onClick={() => setShowPicker(!showPicker)}
+									disabled={isTopicClosed}
 									edge='end'
 									sx={{
 										mr: '-0.25rem',
@@ -435,6 +443,7 @@ const CommunityTopicPage = () => {
 								<Tooltip title={audioUrl ? 'Update Audio' : 'Upload Audio'} placement='top'>
 									<IconButton
 										onClick={() => setUploadAudioDialogOpen(true)}
+										disabled={isTopicClosed}
 										sx={{
 											':hover': {
 												backgroundColor: 'transparent',
@@ -493,6 +502,7 @@ const CommunityTopicPage = () => {
 								<Tooltip title={imgUrl ? 'Update Image' : 'Upload Image'} placement='top'>
 									<IconButton
 										onClick={() => setUploadImgDialogOpen(true)}
+										disabled={isTopicClosed}
 										sx={{
 											':hover': {
 												backgroundColor: 'transparent',
@@ -527,6 +537,7 @@ const CommunityTopicPage = () => {
 
 								<Tooltip title='Reply' placement='top'>
 									<IconButton
+										disabled={isTopicClosed}
 										sx={{
 											':hover': {
 												backgroundColor: 'transparent',
