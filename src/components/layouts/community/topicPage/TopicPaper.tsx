@@ -3,7 +3,7 @@ import theme from '../../../../themes';
 import { useContext, useState } from 'react';
 import { UserAuthContext } from '../../../../contexts/UserAuthContextProvider';
 import { Roles } from '../../../../interfaces/enums';
-import { Cancel, Delete, Edit, Flag, KeyboardBackspaceOutlined, PlayCircleFilledOutlined, Verified } from '@mui/icons-material';
+import { Delete, Edit, Flag, KeyboardBackspaceOutlined, Lock, LockOpenOutlined, Verified } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { CommunityMessage, TopicInfo } from '../../../../interfaces/communityMessage';
 import { formatMessageTime } from '../../../../utils/formatTime';
@@ -21,13 +21,13 @@ interface TopicPaperProps {
 	refreshTopics: boolean;
 	topic: TopicInfo;
 	messages: CommunityMessage[];
-	isTopicClosed: boolean;
-	setIsTopicClosed: React.Dispatch<React.SetStateAction<boolean>>;
+	isTopicLocked: boolean;
+	setIsTopicLocked: React.Dispatch<React.SetStateAction<boolean>>;
 	setDisplayDeleteTopicMsg: React.Dispatch<React.SetStateAction<boolean>>;
 	setTopic: React.Dispatch<React.SetStateAction<TopicInfo>>;
 }
 
-const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refreshTopics, isTopicClosed, setIsTopicClosed }: TopicPaperProps) => {
+const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refreshTopics, isTopicLocked, setIsTopicLocked }: TopicPaperProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { user } = useContext(UserAuthContext);
 	const { adminUsers } = useContext(OrganisationContext);
@@ -39,7 +39,7 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refre
 	const [deleteTopicModalOpen, setDeleteTopicModalOpen] = useState<boolean>(false);
 	const [editTopicModalOpen, setEditTopicModalOpen] = useState<boolean>(false);
 	const [reportTopicModalOpen, setReportTopicModalOpen] = useState<boolean>(false);
-	const [closeTopicModalOpen, setCloseTopicModalOpen] = useState<boolean>(false);
+	const [closeTopicModalOpen, setLockTopicModalOpen] = useState<boolean>(false);
 	const [restartTopicModalOpen, setRestartTopicModalOpen] = useState<boolean>(false);
 	const [resolveReportModalOpen, setResolveReportModalOpen] = useState<boolean>(false);
 
@@ -120,19 +120,19 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refre
 		}
 	};
 
-	const closeReopenTopic = async (action: string) => {
+	const lockUnlockTopic = async (action: string) => {
 		try {
-			if (action === 'close') {
+			if (action === 'lock') {
 				await axios.patch(`${base_url}/communityTopics/${topic?._id}`, {
 					isActive: false,
 				});
-				setIsTopicClosed(true);
-				setCloseTopicModalOpen(false);
-			} else if (action === 'restart') {
+				setIsTopicLocked(true);
+				setLockTopicModalOpen(false);
+			} else if (action === 'unlock') {
 				await axios.patch(`${base_url}/communityTopics/${topic?._id}`, {
 					isActive: true,
 				});
-				setIsTopicClosed(false);
+				setIsTopicLocked(false);
 				setRestartTopicModalOpen(false);
 			}
 		} catch (error) {
@@ -243,20 +243,20 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refre
 													<Delete color='secondary' fontSize='small' />
 												</IconButton>
 											</Tooltip>
-											{!isTopicClosed ? (
-												<Tooltip title='Close Topic' placement='top'>
+											{!isTopicLocked ? (
+												<Tooltip title='Lock Topic' placement='top'>
 													<IconButton
 														sx={{
 															':hover': {
 																backgroundColor: 'transparent',
 															},
 														}}
-														onClick={() => setCloseTopicModalOpen(true)}>
-														<Cancel color='secondary' fontSize='small' />
+														onClick={() => setLockTopicModalOpen(true)}>
+														<Lock color='secondary' fontSize='small' />
 													</IconButton>
 												</Tooltip>
 											) : (
-												<Tooltip title='Restart Topic' placement='top'>
+												<Tooltip title='Unlock Topic' placement='top'>
 													<IconButton
 														sx={{
 															':hover': {
@@ -264,7 +264,7 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refre
 															},
 														}}
 														onClick={() => setRestartTopicModalOpen(true)}>
-														<PlayCircleFilledOutlined color='secondary' fontSize='small' />
+														<LockOpenOutlined color='secondary' fontSize='small' />
 													</IconButton>
 												</Tooltip>
 											)}
@@ -325,29 +325,25 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refre
 
 				<CustomDialog
 					openModal={closeTopicModalOpen}
-					closeModal={() => setCloseTopicModalOpen(false)}
-					title='Close Topic'
-					content='Are you sure you want to close the topic?'
+					closeModal={() => setLockTopicModalOpen(false)}
+					title='Lock Topic'
+					content='Are you sure you want to lock the topic?'
 					maxWidth='sm'>
 					<CustomDialogActions
-						onDelete={() => closeReopenTopic('close')}
-						onCancel={() => setCloseTopicModalOpen(false)}
+						onDelete={() => lockUnlockTopic('lock')}
+						onCancel={() => setLockTopicModalOpen(false)}
 						deleteBtn
-						deleteBtnText='Close'
+						deleteBtnText='Lock'
 					/>
 				</CustomDialog>
 
 				<CustomDialog
 					openModal={restartTopicModalOpen}
 					closeModal={() => setRestartTopicModalOpen(false)}
-					title='Restart Topic'
-					content='Are you sure you want to restart the topic?'
+					title='Unlock Topic'
+					content='Are you sure you want to unlock the topic?'
 					maxWidth='sm'>
-					<CustomDialogActions
-						onSubmit={() => closeReopenTopic('restart')}
-						onCancel={() => setRestartTopicModalOpen(false)}
-						submitBtnText='Restart'
-					/>
+					<CustomDialogActions onSubmit={() => lockUnlockTopic('unlock')} onCancel={() => setRestartTopicModalOpen(false)} submitBtnText='Unlock' />
 				</CustomDialog>
 
 				<Box

@@ -19,26 +19,28 @@ interface MessageProps {
 	message: CommunityMessage;
 	isFirst?: boolean;
 	isLast?: boolean;
-	isTopicClosed: boolean;
+	isTopicLocked: boolean;
 	topicTitle: string;
 	setMessages: React.Dispatch<React.SetStateAction<CommunityMessage[]>>;
 	setReplyToMessage: React.Dispatch<React.SetStateAction<CommunityMessage | null>>;
 	messageRefs: React.MutableRefObject<{ [key: string]: HTMLDivElement | null }>;
 	setPageNumber: React.Dispatch<React.SetStateAction<number>>;
 	setHighlightedMessageId: React.Dispatch<React.SetStateAction<string>>;
+	renderMessageContent: (text: string) => (string | JSX.Element | undefined)[];
 }
 
 const Message = ({
 	message,
 	isFirst,
 	isLast,
-	isTopicClosed,
+	isTopicLocked,
 	topicTitle,
 	setMessages,
 	setReplyToMessage,
 	messageRefs,
 	setPageNumber,
 	setHighlightedMessageId,
+	renderMessageContent,
 }: MessageProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { user } = useContext(UserAuthContext);
@@ -272,7 +274,7 @@ const Message = ({
 											fontSize: '0.85rem',
 											padding: '0 0.5rem',
 										}}>
-										{renderMessageWithEmojis(message?.text, '1.25rem')}
+										{renderMessageContent(message?.text || '')}
 									</Typography>
 								</Box>
 								{message.imageUrl && (
@@ -302,7 +304,7 @@ const Message = ({
 										onClick={() => {
 											setReplyToMessage(message);
 										}}
-										disabled={isTopicClosed}
+										disabled={isTopicLocked}
 										sx={{
 											':hover': {
 												backgroundColor: 'transparent',
@@ -377,7 +379,7 @@ const Message = ({
 										<Tooltip title='Edit Message' placement='top'>
 											<IconButton
 												onClick={() => setEditMsgModalOpen(true)}
-												disabled={isTopicClosed}
+												disabled={isTopicLocked}
 												sx={{
 													':hover': {
 														backgroundColor: 'transparent',

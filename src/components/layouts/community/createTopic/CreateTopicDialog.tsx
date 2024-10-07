@@ -19,6 +19,7 @@ import { HideImage, Image, InsertEmoticon, Mic, MicOff } from '@mui/icons-materi
 import ImageThumbnail from '../../../forms/uploadImageVideoDocument/ImageThumbnail';
 import { truncateText } from '../../../../utils/utilText';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { UsersContext } from '../../../../contexts/UsersContextProvider';
 
 interface CreateTopicDialogProps {
 	createTopicModalOpen: boolean;
@@ -31,6 +32,7 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
+	const { sortedUsersData } = useContext(UsersContext);
 	const { addNewTopic } = useContext(CommunityContext);
 
 	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(true);
@@ -52,9 +54,7 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 				audioUrl: topic.audioUrl,
 			});
 
-			const allUsersFBaseIds = await axios.get(`${base_url}/users/firebaseUserIds/organisation/${orgId}`);
-
-			const allIds: string[] = allUsersFBaseIds.data.data;
+			const allIds: string[] = sortedUsersData.map((user) => user.firebaseUserId);
 
 			addNewTopic({
 				_id: response.data._id,

@@ -247,6 +247,15 @@ const Auth = ({ setUserRole }: AuthProps) => {
 	const sharedBtnStyles = theme.tabBtnAuth || {};
 	const submitBtnStyles = theme.submitBtn || {};
 
+	const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const value = e.target.value;
+		const regex = /^[a-zA-Z0-9._]*$/; // Allow only letters, numbers, underscores, and periods
+
+		if (regex.test(value)) {
+			setUsername(value.trim()); // Only set the username if it matches the pattern
+		}
+	};
+
 	return (
 		<Box
 			sx={{
@@ -385,11 +394,11 @@ const Auth = ({ setUserRole }: AuthProps) => {
 												value={email}
 											/>
 
-											<Tooltip title='Max 15 Characters' placement='top'>
+											<Tooltip title='Max 15 characters. Only (.) and (_) are allowed' placement='top'>
 												<CustomTextField
 													label='Username'
 													type={TextFieldTypes.TEXT}
-													onChange={(e) => setUsername(e.target.value.trim())}
+													onChange={handleUsernameChange}
 													value={username}
 													InputProps={{ inputProps: { maxLength: 15 } }}
 												/>

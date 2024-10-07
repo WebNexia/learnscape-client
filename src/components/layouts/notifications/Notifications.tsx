@@ -7,6 +7,7 @@ import { formatMessageTime } from '../../../utils/formatTime';
 import { Circle } from '@mui/icons-material';
 import { NotificationType, Roles } from '../../../interfaces/enums';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 interface Notification {
 	id: string;
@@ -28,6 +29,7 @@ interface NotificationsBoxProps {
 }
 
 const NotificationsBox = ({ showUnreadOnly }: NotificationsBoxProps) => {
+	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { user } = useContext(UserAuthContext);
 	const [notifications, setNotifications] = useState<Notification[]>([]);
 	const navigate = useNavigate();
@@ -77,30 +79,31 @@ const NotificationsBox = ({ showUnreadOnly }: NotificationsBoxProps) => {
 		try {
 			await updateDoc(notificationRef, { isRead: true });
 
-			// Navigate if the notification requires it
-			if (note.type === NotificationType.QUIZ_SUBMISSION && user?.role === Roles.ADMIN) {
-				navigate(`/admin/check-submission/user/${user?._id}/submission/${note.submissionId}/lesson/${note.lessonId}/userlesson/${note.userLessonId}`);
-			} else if (note.type === NotificationType.QUIZ_SUBMISSION && user?.role === Roles.USER) {
-				navigate(`/submission-feedback/user/${user?._id}/submission/${note.submissionId}/lesson/${note.lessonId}/userlesson/${note.userLessonId}`);
+			if (note.type === NotificationType.QUIZ_SUBMISSION) {
+				const path =
+					user?.role === Roles.ADMIN
+						? `/admin/check-submission/user/${user?._id}/submission/${note.submissionId}/lesson/${note.lessonId}/userlesson/${note.userLessonId}`
+						: `/submission-feedback/user/${user?._id}/submission/${note.submissionId}/lesson/${note.lessonId}/userlesson/${note.userLessonId}`;
+				navigate(path);
 			} else if (note.type === NotificationType.MESSAGE_RECEIVED) {
 				navigate(`${user?.role !== Roles.ADMIN ? '' : '/admin'}/messages/user/${user?._id}`);
-			} else if ((note.type === NotificationType.REPORT_TOPIC || note.type === NotificationType.REPORT_MESSAGE) && user?.role === Roles.ADMIN) {
+			} else if (note.type === NotificationType.REPORT_TOPIC && user?.role === Roles.ADMIN) {
 				navigate(`/admin/community/user/${user?._id}/topic/${note.communityTopicId}`);
 			} else if (
-				(note.type === NotificationType.REPLY_TO_COMMUNITY_MESSAGE || note.type === NotificationType.REPLY_TO_COMMUNITY_TOPIC) &&
-				user?.role === Roles.ADMIN
+				note.type === NotificationType.REPLY_TO_COMMUNITY_MESSAGE ||
+				note.type === NotificationType.REPLY_TO_COMMUNITY_TOPIC ||
+				note.type === NotificationType.MENTION_USER ||
+				note.type === NotificationType.REPORT_MESSAGE
 			) {
-				navigate(`/admin/community/user/${user?._id}/topic/${note.communityTopicId}`);
-			} else if (
-				(note.type === NotificationType.REPLY_TO_COMMUNITY_MESSAGE || note.type === NotificationType.REPLY_TO_COMMUNITY_TOPIC) &&
-				user?.role !== Roles.ADMIN
-			) {
-				navigate(`/community/user/${user?._id}/topic/${note.communityTopicId}`);
+				const response = await axios.get(`${base_url}/communityMessages/message/${note.communityMessageId}?limit=5`);
+				const { page } = response.data;
+				const basePath = user?.role === Roles.ADMIN ? '/admin' : '';
+				navigate(`${basePath}/community/user/${user?._id}/topic/${note.communityTopicId}?page=${page}&messageId=${note.communityMessageId}`);
 			} else if (note.type === NotificationType.NEW_COMMUNITY_TOPIC) {
 				navigate(`${user?.role !== Roles.ADMIN ? '' : '/admin'}/community/user/${user?._id}/topic/${note.communityTopicId}`);
 			}
-			// Update local state to mark as read immediately
-			setNotifications((prevNotifications) => prevNotifications.map((n) => (n.id === note.id ? { ...n, isRead: true } : n)));
+
+			setNotifications((prev) => prev.map((n) => (n.id === note.id ? { ...n, isRead: true } : n)));
 		} catch (error) {
 			console.error('Error marking notification as read:', error);
 		}

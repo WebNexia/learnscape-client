@@ -79,4 +79,5 @@ export const enum NotificationType {
 	REPLY_TO_COMMUNITY_MESSAGE = 'ReplyToCommunityMessage',
 	REPLY_TO_COMMUNITY_TOPIC = 'ReplyToCommunityTopic',
 	NEW_COMMUNITY_TOPIC = 'NewCommunityTopic',
+	MENTION_USER = 'MentionUser',
 }
