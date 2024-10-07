@@ -26,6 +26,7 @@ export interface UserCoursesIdsWithCourseIds {
 	userCourseId: string;
 	isCourseCompleted: boolean;
 	isCourseInProgress: boolean;
+	courseTitle: string;
 }
 
 export interface UserLessonDataStorage {

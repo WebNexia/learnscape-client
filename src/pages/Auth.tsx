@@ -9,7 +9,7 @@ import CustomTextField from '../components/forms/customFields/CustomTextField';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import { AuthError, createUserWithEmailAndPassword, sendEmailVerification, signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../firebase';
+import { auth, db } from '../firebase';
 import { useQueryClient } from 'react-query';
 import { User } from '../interfaces/user';
 import { FirebaseError } from 'firebase/app';
@@ -17,6 +17,7 @@ import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { UserCoursesIdsWithCourseIds, UserLessonDataStorage } from '../contexts/UserCourseLessonDataContextProvider';
 import { UserCoursesByUserId } from '../interfaces/userCourses';
 import { UserLessonsByUserId } from '../interfaces/userLesson';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 interface AuthProps {
 	setUserRole: React.Dispatch<React.SetStateAction<string | null>>;
@@ -67,8 +68,20 @@ const Auth = ({ setUserRole }: AuthProps) => {
 				return;
 			}
 
-			await fetchUserData(firebaseUser.uid);
+			// Ensure user document exists in Firestore
+			const userRef = doc(db, 'users', firebaseUser.uid);
+			const userDoc = await getDoc(userRef);
+			if (!userDoc.exists()) {
+				// Create the document if it doesn't exist
+				await setDoc(userRef, {
+					firebaseUserId: firebaseUser.uid,
+					email: firebaseUser.email,
+					activeChatId: '', // Initialize activeChatId
+				});
+			}
 
+			// Fetch and handle user data from your backend API
+			await fetchUserData(firebaseUser.uid);
 			const updatedUser = queryClient.getQueryData<User>('userData');
 
 			if (updatedUser) {
@@ -87,11 +100,13 @@ const Auth = ({ setUserRole }: AuthProps) => {
 					navigate(`/admin/dashboard/user/${updatedUser._id}`);
 				}
 
+				// Clear inputs and handle success state
 				setEmail('');
 				setUsername('');
 				setPassword('');
 				setErrorMsg(undefined);
 
+				// Load user-specific course and lesson data if the user is not an admin
 				if (updatedUser.role !== Roles.ADMIN) {
 					const userCourseResponse = await axios.get(`${base_url}/usercourses/user/${updatedUser._id}`);
 					const userCourseData: UserCoursesIdsWithCourseIds[] = userCourseResponse.data.response.reduce(
@@ -102,6 +117,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 									userCourseId: value._id,
 									isCourseCompleted: value.isCompleted,
 									isCourseInProgress: value.isInProgress,
+									courseTitle: value.courseId.title,
 								});
 							}
 							return acc;
@@ -110,6 +126,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 					);
 					localStorage.setItem('userCourseData', JSON.stringify(userCourseData));
 
+					// Load user lesson data and store in local storage
 					const userLessonResponse = await axios.get(`${base_url}/userlessons/user/${updatedUser._id}`);
 					const userLessonData: UserLessonDataStorage[] = userLessonResponse?.data.response?.map((userLesson: UserLessonsByUserId) => ({
 						lessonId: userLesson.lessonId._id,
@@ -161,6 +178,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 		// }
 		return null;
 	};
+
 	const signUp = async (e: FormEvent) => {
 		e.preventDefault();
 
@@ -171,18 +189,32 @@ const Auth = ({ setUserRole }: AuthProps) => {
 		}
 
 		try {
+			// Step 1: Create user with Firebase Authentication
 			const userCredential = await createUserWithEmailAndPassword(auth, email, password);
 			const user = userCredential.user;
 
+			// Step 2: Send email verification
 			await sendEmailVerification(user);
 
+			// Step 3: Create a Firestore document for the user
+			const userRef = doc(db, 'users', user.uid); // Create a Firestore document reference
+			await setDoc(userRef, {
+				firebaseUserId: user.uid, // Store the Firebase user ID
+				email: user.email,
+				username: username, // Store the username entered during sign-up
+				activeChatId: '', // Initialize `activeChatId` to an empty string
+				createdAt: new Date(), // Optionally store when the user was created
+			});
+
+			// Step 4: Send user data to your backend server (optional, if needed)
 			await axios.post(`${base_url}/users/signup`, {
-				username,
+				username: username.trim(),
 				orgCode,
 				firebaseUserId: user.uid,
 				email,
 			});
 
+			// Handle UI updates after successful sign-up
 			if (user) {
 				setActiveForm(AuthForms.SIGN_IN);
 				setEmail('');
@@ -214,6 +246,15 @@ const Auth = ({ setUserRole }: AuthProps) => {
 
 	const sharedBtnStyles = theme.tabBtnAuth || {};
 	const submitBtnStyles = theme.submitBtn || {};
+
+	const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const value = e.target.value;
+		const regex = /^[a-zA-Z0-9._]*$/; // Allow only letters, numbers, underscores, and periods
+
+		if (regex.test(value)) {
+			setUsername(value.trim()); // Only set the username if it matches the pattern
+		}
+	};
 
 	return (
 		<Box
@@ -353,11 +394,11 @@ const Auth = ({ setUserRole }: AuthProps) => {
 												value={email}
 											/>
 
-											<Tooltip title='Max 15 Characters' placement='top'>
+											<Tooltip title='Max 15 characters. Only (.) and (_) are allowed' placement='top'>
 												<CustomTextField
 													label='Username'
 													type={TextFieldTypes.TEXT}
-													onChange={(e) => setUsername(e.target.value.trim())}
+													onChange={handleUsernameChange}
 													value={username}
 													InputProps={{ inputProps: { maxLength: 15 } }}
 												/>

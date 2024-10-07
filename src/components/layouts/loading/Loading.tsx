@@ -55,16 +55,40 @@ const Loading = () => {
 							backgroundColor: user?.role === Roles.ADMIN ? theme.bgColor?.adminHeader : theme.bgColor?.lessonInProgress,
 							padding: '0 1rem 0 3rem',
 						}}>
-						<Box>
+						<Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+							<IconButton
+								sx={{
+									mr: '0.75rem',
+									':hover': {
+										backgroundColor: 'transparent',
+									},
+								}}>
+								<Notifications color='secondary' />
+							</IconButton>
+
 							{
 								{
 									[Mode.DARK_MODE]: (
-										<IconButton sx={{ color: theme.textColor?.common.main }}>
+										<IconButton
+											sx={{
+												color: theme.textColor?.common.main,
+												mr: '0.75rem',
+												':hover': {
+													backgroundColor: 'transparent',
+												},
+											}}>
 											<DarkMode />
 										</IconButton>
 									),
 									[Mode.LIGHT_MODE]: (
-										<IconButton sx={{ color: theme.textColor?.common.main }}>
+										<IconButton
+											sx={{
+												color: theme.textColor?.common.main,
+												mr: '0.75rem',
+												':hover': {
+													backgroundColor: 'transparent',
+												},
+											}}>
 											<LightMode />
 										</IconButton>
 									),
@@ -148,7 +172,6 @@ const Loading = () => {
 								<SidebarBtn btnText='Schedule' IconName={CalendarMonth} selectedPage={selectedPage} />
 								<SidebarBtn btnText='Messages' IconName={Email} selectedPage={selectedPage} />
 								<SidebarBtn btnText='Community' IconName={Groups} selectedPage={selectedPage} />
-								<SidebarBtn btnText='Notifications' IconName={Notifications} selectedPage={selectedPage} />
 								<SidebarBtn btnText='Settings' IconName={Settings} selectedPage={selectedPage} />
 							</>
 						)}
@@ -160,7 +183,6 @@ const Loading = () => {
 								<SidebarBtn btnText='Schedule' IconName={CalendarMonth} selectedPage={selectedPage} />
 								<SidebarBtn btnText='Messages' IconName={Email} selectedPage={selectedPage} />
 								<SidebarBtn btnText='Community' IconName={Groups} selectedPage={selectedPage} />
-								<SidebarBtn btnText='Notifications' IconName={Notifications} selectedPage={selectedPage} />
 								<SidebarBtn btnText='Settings' IconName={Settings} selectedPage={selectedPage} />
 							</>
 						)}

@@ -41,12 +41,12 @@ const CreateLessonDialog = ({
 	const createLesson = async () => {
 		try {
 			const response = await axios.post(`${base_url}/lessons`, {
-				title,
+				title: title.trim(),
 				type,
 				orgId,
 			});
 
-			addNewLesson({ _id: response.data._id, title, type });
+			addNewLesson({ _id: response.data._id, title: title.trim(), type });
 		} catch (error) {
 			console.log(error);
 		}

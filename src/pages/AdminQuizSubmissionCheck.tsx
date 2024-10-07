@@ -15,13 +15,14 @@ import { ArrowBackIosNewOutlined, ArrowForwardIosOutlined } from '@mui/icons-mat
 import LoadingButton from '@mui/lab/LoadingButton';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { storage } from '../firebase';
+import { db, storage } from '../firebase';
 import AudioRecorder from '../components/userCourses/AudioRecorder';
 import MatchingPreview from '../components/layouts/matching/MatchingPreview';
 import FillInTheBlanksDragDrop from '../components/layouts/FITBDragDrop/FillInTheBlanksDragDrop';
 import FillInTheBlanksTyping from '../components/layouts/FITBTyping/FillInTheBlanksTyping';
 import CustomInfoMessageAlignedRight from '../components/layouts/infoMessage/CustomInfoMessageAlignedRight';
 import QuestionResponseCard from '../components/layouts/quizSubmissions/QuestionResponseCard';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 
 export interface QuestionFeedbackData {
 	userQuestionId: string;
@@ -44,6 +45,7 @@ const AdminQuizSubmissionCheck = () => {
 	const [username, setUsername] = useState<string>('');
 	const [quizName, setQuizName] = useState<string>('');
 	const [courseName, setCourseName] = useState<string>('');
+	const [studentFirebaseId, setStudentFirebaseId] = useState<string>('');
 	const [userResponseData, setUserResponseData] = useState<any>([]);
 	const [userResponseToFeedback, setUserResponseToFeedback] = useState<any>(null);
 	const [currentResponseIndex, setCurrentResponseIndex] = useState<number>(0);
@@ -66,6 +68,7 @@ const AdminQuizSubmissionCheck = () => {
 				const userCourseQuizData = quizResponse.data.response;
 				setUserResponseData(userCourseQuizData);
 				setUsername(userCourseQuizData[0].userId.username);
+				setStudentFirebaseId(userCourseQuizData[0].userId.firebaseUserId);
 				setQuizName(userCourseQuizData[0].lessonId.title);
 				setCourseName(userCourseQuizData[0].courseId.title);
 				setUserResponseToFeedback(userCourseQuizData[0]);
@@ -148,7 +151,7 @@ const AdminQuizSubmissionCheck = () => {
 
 			const updatedFeedbacks = userQuestionsFeedbacks.map((feedback) =>
 				feedback.userQuestionId === userResponseToFeedback._id
-					? { ...feedback, isUpdated: true, teacherAudioFeedbackUrl: downloadURL, isFeedbackGiven: true }
+					? { ...feedback, isUpdated: true, teacherAudioFeedbackUrl: downloadURL.trim(), isFeedbackGiven: true }
 					: feedback
 			);
 
@@ -156,11 +159,11 @@ const AdminQuizSubmissionCheck = () => {
 
 			setUserResponseData((prevResponses: any) =>
 				prevResponses.map((response: any) =>
-					response._id === userResponseToFeedback._id ? { ...response, teacherAudioFeedbackUrl: downloadURL } : response
+					response._id === userResponseToFeedback._id ? { ...response, teacherAudioFeedbackUrl: downloadURL.trim() } : response
 				)
 			);
 
-			setUserResponseToFeedback((prev: any) => ({ ...prev, teacherAudioFeedbackUrl: downloadURL }));
+			setUserResponseToFeedback((prev: any) => ({ ...prev, teacherAudioFeedbackUrl: downloadURL.trim() }));
 		} catch (error) {
 			console.error(error);
 		} finally {
@@ -174,17 +177,32 @@ const AdminQuizSubmissionCheck = () => {
 
 			if (quizFeedback && isQuizFeedbackUpdated) {
 				await axios.patch(`${base_url}/userlessons/${userLessonId}`, {
-					teacherFeedback: quizFeedback,
+					teacherFeedback: quizFeedback.trim(),
 					isFeedbackGiven: true,
 				});
 			}
+
+			const notificationData = {
+				title: 'Quiz Checked',
+				message: `${user?.username} checked ${quizName} in the ${courseName} course.`,
+				isRead: false,
+				timestamp: serverTimestamp(),
+				type: 'QuizSubmission',
+				userImageUrl: user?.imageUrl,
+				lessonId,
+				submissionId,
+				userLessonId,
+			};
+
+			const notificationRef = collection(db, 'notifications', studentFirebaseId, 'userNotifications');
+			await addDoc(notificationRef, notificationData);
 
 			await Promise.all(
 				userQuestionsFeedbacks.map(async (feedback) => {
 					if (feedback.feedback && feedback.isUpdated) {
 						await axios.patch(`${base_url}/userquestions/${feedback.userQuestionId}`, {
-							teacherFeedback: feedback.feedback,
-							teacherAudioFeedbackUrl: feedback.teacherAudioFeedbackUrl,
+							teacherFeedback: feedback.feedback.trim(),
+							teacherAudioFeedbackUrl: feedback.teacherAudioFeedbackUrl.trim(),
 						});
 
 						setUserQuestionsFeedbacks((prevFeedbacks) =>

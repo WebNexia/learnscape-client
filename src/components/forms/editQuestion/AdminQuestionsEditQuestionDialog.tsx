@@ -204,11 +204,11 @@ const AdminQuestionsEditQuestionDialog = ({
 
 			const response = await axios.patch(`${base_url}/questions/${question._id}`, {
 				orgId,
-				question: !isFlipCard ? editorContent : questionAdminQuestions,
+				question: !isFlipCard ? editorContent.trim() : questionAdminQuestions.trim(),
 				options,
-				correctAnswer: updatedCorrectAnswer,
-				videoUrl: videoUrlAdminQuestions,
-				imageUrl: imageUrlAdminQuestions,
+				correctAnswer: updatedCorrectAnswer.trim(),
+				videoUrl: videoUrlAdminQuestions.trim(),
+				imageUrl: imageUrlAdminQuestions.trim(),
 				audio: isAudioVideoQuestion ? isAudioAdminQuestions : false,
 				video: isAudioVideoQuestion ? isVideoAdminQuestions : false,
 				matchingPairs: matchingPairsAdminQuestions,
@@ -217,10 +217,10 @@ const AdminQuestionsEditQuestionDialog = ({
 
 			const updatedQuestion = {
 				...question,
-				question: !isFlipCard ? editorContent : questionAdminQuestions,
-				correctAnswer: updatedCorrectAnswer,
-				videoUrl: videoUrlAdminQuestions,
-				imageUrl: imageUrlAdminQuestions,
+				question: !isFlipCard ? editorContent.trim() : questionAdminQuestions.trim(),
+				correctAnswer: updatedCorrectAnswer.trim(),
+				videoUrl: videoUrlAdminQuestions.trim(),
+				imageUrl: imageUrlAdminQuestions.trim(),
 				updatedAt: response.data.data.updatedAt,
 				createdAt: response.data.data.createdAt,
 				audio: isAudioVideoQuestion ? isAudioAdminQuestions : false,

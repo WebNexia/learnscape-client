@@ -10,27 +10,47 @@ import CustomDialog from '../../dialog/CustomDialog';
 import CustomDialogActions from '../../dialog/CustomDialogActions';
 import EditMessageDialog from './EditMessageDialog';
 import { renderMessageWithEmojis } from '../../../../utils/renderMessageWithEmojis';
+import { OrganisationContext } from '../../../../contexts/OrganisationContextProvider';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { truncateText } from '../../../../utils/utilText';
+import { db } from '../../../../firebase';
 
 interface MessageProps {
 	message: CommunityMessage;
 	isFirst?: boolean;
 	isLast?: boolean;
+	isTopicLocked: boolean;
+	topicTitle: string;
 	setMessages: React.Dispatch<React.SetStateAction<CommunityMessage[]>>;
 	setReplyToMessage: React.Dispatch<React.SetStateAction<CommunityMessage | null>>;
 	messageRefs: React.MutableRefObject<{ [key: string]: HTMLDivElement | null }>;
 	setPageNumber: React.Dispatch<React.SetStateAction<number>>;
 	setHighlightedMessageId: React.Dispatch<React.SetStateAction<string>>;
+	renderMessageContent: (text: string) => (string | JSX.Element | undefined)[];
 }
 
-const Message = ({ message, isFirst, isLast, setMessages, setReplyToMessage, messageRefs, setPageNumber, setHighlightedMessageId }: MessageProps) => {
+const Message = ({
+	message,
+	isFirst,
+	isLast,
+	isTopicLocked,
+	topicTitle,
+	setMessages,
+	setReplyToMessage,
+	messageRefs,
+	setPageNumber,
+	setHighlightedMessageId,
+	renderMessageContent,
+}: MessageProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { user } = useContext(UserAuthContext);
+	const { adminUsers } = useContext(OrganisationContext);
 	const isAdmin: boolean = user?.role === Roles.ADMIN;
 	const isMessageWriter: boolean = user?._id === message?.userId?._id;
 
 	const [deleteMessageModalOpen, setDeleteMessageModalOpen] = useState<boolean>(false);
 	const [reportMsgModalOpen, setReportMsgModalOpen] = useState<boolean>(false);
-	const [clearReportModalOpen, setClearReportModalOpen] = useState<boolean>(false);
+	const [resolveReportModalOpen, setResolveReportModalOpen] = useState<boolean>(false);
 	const [editMsgModalOpen, setEditMsgModalOpen] = useState<boolean>(false);
 
 	const [isMsgEdited, setIsMsgEdited] = useState<boolean>(message.updatedAt > message.createdAt);
@@ -95,18 +115,36 @@ const Message = ({ message, isFirst, isLast, setMessages, setReplyToMessage, mes
 					return data;
 				});
 			});
+
+			// Create the notification data
+			const notificationData = {
+				title: 'Message Reported',
+				message: `${user?.username} reported the message "${truncateText(message.text, 30)}" in ${truncateText(topicTitle, 25)} in community topics`,
+				isRead: false,
+				timestamp: serverTimestamp(),
+				type: 'ReportMessage',
+				userImageUrl: user?.imageUrl,
+				communityTopicId: message.topicId,
+				communityMessageId: message._id,
+			};
+
+			// Send notifications to each admin
+			for (const admin of adminUsers) {
+				const notificationRef = collection(db, 'notifications', admin.firebaseUserId, 'userNotifications');
+				await addDoc(notificationRef, notificationData);
+			}
 		} catch (error) {
 			console.log(error);
 		}
 	};
 
-	const clearReport = async () => {
+	const resolveReport = async () => {
 		try {
 			await axios.patch(`${base_url}/communityMessages/${message?._id}`, {
 				isReported: false,
 			});
 
-			setClearReportModalOpen(false);
+			setResolveReportModalOpen(false);
 			setMessages((prevData) => {
 				return prevData.map((data) => {
 					if (data._id === message._id) {
@@ -236,7 +274,7 @@ const Message = ({ message, isFirst, isLast, setMessages, setReplyToMessage, mes
 											fontSize: '0.85rem',
 											padding: '0 0.5rem',
 										}}>
-										{renderMessageWithEmojis(message?.text, '1.25rem')}
+										{renderMessageContent(message?.text || '')}
 									</Typography>
 								</Box>
 								{message.imageUrl && (
@@ -266,6 +304,7 @@ const Message = ({ message, isFirst, isLast, setMessages, setReplyToMessage, mes
 										onClick={() => {
 											setReplyToMessage(message);
 										}}
+										disabled={isTopicLocked}
 										sx={{
 											':hover': {
 												backgroundColor: 'transparent',
@@ -340,6 +379,7 @@ const Message = ({ message, isFirst, isLast, setMessages, setReplyToMessage, mes
 										<Tooltip title='Edit Message' placement='top'>
 											<IconButton
 												onClick={() => setEditMsgModalOpen(true)}
+												disabled={isTopicLocked}
 												sx={{
 													':hover': {
 														backgroundColor: 'transparent',
@@ -373,9 +413,9 @@ const Message = ({ message, isFirst, isLast, setMessages, setReplyToMessage, mes
 
 								{message.isReported && isAdmin && (
 									<Box sx={{ display: 'flex', alignItems: 'center' }}>
-										<Tooltip title='Clear Report' placement='top'>
+										<Tooltip title='Resolve Report' placement='top'>
 											<IconButton
-												onClick={() => setClearReportModalOpen(true)}
+												onClick={() => setResolveReportModalOpen(true)}
 												sx={{
 													':hover': {
 														backgroundColor: 'transparent',
@@ -384,17 +424,17 @@ const Message = ({ message, isFirst, isLast, setMessages, setReplyToMessage, mes
 												<Verified fontSize='small' />
 											</IconButton>
 										</Tooltip>
-										<Typography sx={{ color: 'orange', mr: '0.5rem', fontStyle: 'italic', fontSize: '0.65rem' }}>Reported</Typography>
+										<Typography sx={{ color: 'red', mr: '0.5rem', fontStyle: 'italic', fontSize: '0.65rem' }}>Reported</Typography>
 									</Box>
 								)}
 
 								<CustomDialog
-									openModal={clearReportModalOpen}
-									closeModal={() => setClearReportModalOpen(false)}
-									title='Clear Report'
-									content='Are you sure you want to clear the report?'
+									openModal={resolveReportModalOpen}
+									closeModal={() => setResolveReportModalOpen(false)}
+									title='Resolve Report'
+									content='Are you sure you want to resolve the report?'
 									maxWidth='sm'>
-									<CustomDialogActions onSubmit={clearReport} onCancel={() => setClearReportModalOpen(false)} submitBtnText='Clear' />
+									<CustomDialogActions onSubmit={resolveReport} onCancel={() => setResolveReportModalOpen(false)} submitBtnText='Resolve' />
 								</CustomDialog>
 							</Box>
 						</Box>

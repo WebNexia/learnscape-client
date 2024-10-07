@@ -1,8 +1,8 @@
 import { Alert, Box, DialogContent, IconButton, InputAdornment, Snackbar, Tooltip, Typography } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import TopicPaper from '../components/layouts/community/topicPage/TopicPaper';
-import { useContext, useEffect, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useLocation, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { CommunityMessage, TopicInfo } from '../interfaces/communityMessage';
 import Message from '../components/layouts/community/communityMessage/Message';
@@ -17,7 +17,7 @@ import HandleImageUploadURL from '../components/forms/uploadImageVideoDocument/H
 import ImageThumbnail from '../components/forms/uploadImageVideoDocument/ImageThumbnail';
 import AudioRecorder from '../components/userCourses/AudioRecorder';
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
-import { storage } from '../firebase';
+import { db, storage } from '../firebase';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
@@ -25,13 +25,36 @@ import CustomCancelButton from '../components/forms/customButtons/CustomCancelBu
 import CustomTablePagination from '../components/layouts/table/CustomTablePagination';
 import { formatMessageTime } from '../utils/formatTime';
 import { CommunityContext } from '../contexts/CommunityContextProvider';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { truncateText } from '../utils/utilText';
+import { UsersContext } from '../contexts/UsersContextProvider';
+import { renderMessageWithMentions } from '../utils/renderMessageWithMentions';
+import { debounce } from 'lodash';
+import { processTitle } from '../utils/processTitle';
+import { Roles } from '../interfaces/enums';
+
+export interface UserSuggestion {
+	username: string;
+	imageUrl: string;
+}
+
+export interface TopicSuggestion {
+	title: string;
+	topicId: string;
+}
 
 const CommunityTopicPage = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { topicId } = useParams();
 	const { user } = useContext(UserAuthContext);
+	const { sortedUsersData } = useContext(UsersContext);
 	const { orgId } = useContext(OrganisationContext);
-	const { fetchTopics } = useContext(CommunityContext);
+	const { fetchTopics, sortedTopicsData } = useContext(CommunityContext);
+
+	const location = useLocation();
+	const queryParams = new URLSearchParams(location.search);
+	const initialPageNumber = parseInt(queryParams.get('page') || '1', 10);
+	const messageIdFromNotification = queryParams.get('messageId') || '';
 
 	const [messages, setMessages] = useState<CommunityMessage[]>([]);
 
@@ -40,7 +63,7 @@ const CommunityTopicPage = () => {
 
 	const [topic, setTopic] = useState<TopicInfo>({
 		_id: '',
-		userId: { _id: '', username: '', imageUrl: '' },
+		userId: { _id: '', username: '', imageUrl: '', firebaseUserId: '' },
 		createdAt: '',
 		updatedAt: '',
 		title: '',
@@ -54,6 +77,7 @@ const CommunityTopicPage = () => {
 	const horizontal = 'center';
 
 	const [displayDeleteTopicMsg, setDisplayDeleteTopicMsg] = useState<boolean>(false);
+	const [everyOneMsg, setEveryoneMsg] = useState<boolean>(false);
 	const [showPicker, setShowPicker] = useState<boolean>(false);
 	const [uploadImgDialogOpen, setUploadImgDialogOpen] = useState<boolean>(false);
 	const [imgUrl, setImgUrl] = useState<string>('');
@@ -65,11 +89,23 @@ const CommunityTopicPage = () => {
 	const [isAudioUploading, setIsAudioUploading] = useState<boolean>(false);
 
 	const [numberOfPages, setNumberOfPages] = useState<number>(1);
-	const [pageNumber, setPageNumber] = useState<number>(1);
+	const [pageNumber, setPageNumber] = useState<number>(initialPageNumber);
 
 	const [refreshTopics, setRefreshTopics] = useState<boolean>(false);
 
-	const [highlightedMessageId, setHighlightedMessageId] = useState<string>('');
+	const [isSending, setIsSending] = useState(false);
+
+	const [highlightedMessageId, setHighlightedMessageId] = useState<string>(messageIdFromNotification);
+
+	const [isTopicLocked, setIsTopicLocked] = useState<boolean>(false);
+
+	const [showUserSuggestions, setShowUserSuggestions] = useState<boolean>(false);
+	const [showTopicSuggestions, setShowTopicSuggestions] = useState<boolean>(false);
+
+	const [userSuggestions, setUserSuggestions] = useState<UserSuggestion[]>([]);
+	const [topicSuggestions, setTopicSuggestions] = useState<TopicSuggestion[]>([]);
+
+	const [suggestionType, setSuggestionType] = useState<string | null>(null);
 
 	const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
@@ -80,14 +116,20 @@ const CommunityTopicPage = () => {
 	const messageRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
 	useEffect(() => {
+		setPageNumber(initialPageNumber);
+		setHighlightedMessageId(messageIdFromNotification);
+	}, [initialPageNumber, messageIdFromNotification]);
+
+	useEffect(() => {
 		if (topicId) {
 			const fetchTopicMessages = async () => {
 				try {
-					const messagesResponse = await axios.get(`${base_url}/communityMessages/topic/${topicId}?page=${pageNumber}&limit=25`);
+					const messagesResponse = await axios.get(`${base_url}/communityMessages/topic/${topicId}?page=${pageNumber}&limit=5`);
 
 					setMessages(messagesResponse.data.messages);
 
 					setTopic(messagesResponse.data.topic);
+					setIsTopicLocked(!messagesResponse.data.topic.isActive);
 					setNumberOfPages(messagesResponse.data.totalPages);
 				} catch (error) {
 					console.log(error);
@@ -131,28 +173,120 @@ const CommunityTopicPage = () => {
 	};
 
 	const sendMessage = async () => {
+		if (isSending) return;
+		setIsSending(true);
 		try {
 			const response = await axios.post(`${base_url}/communityMessages`, {
 				userId: user?._id,
 				orgId,
 				topicId: topic._id,
-				text: currentMessage,
-				imageUrl: imgUrl,
+				text: currentMessage.trim(),
+				imageUrl: imgUrl.trim(),
 				audioUrl,
 				parentMessageId: replyToMessage?._id,
 			});
+
+			if (replyToMessage && replyToMessage.userId._id !== user?._id) {
+				// Create the notification data
+				const replyToMsgNotificationData = {
+					title: 'Community Message Replied',
+					message: `${user?.username} replied to your message "${truncateText(replyToMessage.text, 30)}" in the topic ${truncateText(
+						topic.title,
+						25
+					)} under community topics`,
+					isRead: false,
+					timestamp: serverTimestamp(),
+					type: 'ReplyToCommunityMessage',
+					userImageUrl: user?.imageUrl,
+					communityTopicId: topic._id,
+					communityMessageId: response.data._id,
+				};
+
+				const notificationRef = collection(db, 'notifications', replyToMessage.userId.firebaseUserId, 'userNotifications');
+				await addDoc(notificationRef, replyToMsgNotificationData);
+			}
+
+			if (topic.userId._id !== user?._id) {
+				const notificationToTopicOwnerData = {
+					title: 'Community Topic Replied',
+					message: `${user?.username} replied to your topic ${truncateText(topic.title, 25)} in community topics: "${truncateText(
+						currentMessage,
+						30
+					)}"`,
+					isRead: false,
+					timestamp: serverTimestamp(),
+					type: 'ReplyToCommunityTopic',
+					userImageUrl: user?.imageUrl,
+					communityTopicId: topic._id,
+					communityMessageId: response.data._id,
+				};
+
+				const notificationRef = collection(db, 'notifications', topic.userId.firebaseUserId, 'userNotifications');
+				await addDoc(notificationRef, notificationToTopicOwnerData);
+			}
+
+			const mentionedUsernames = extractMentions(currentMessage);
+
+			if (mentionedUsernames.includes('everyone') && user?.role === Roles.ADMIN) {
+				sortedUsersData.forEach((notifiedUser) => {
+					if (notifiedUser.firebaseUserId !== user?.firebaseUserId) {
+						const notificationData = {
+							title: 'Community Notification',
+							message: `${user?.username} mentioned @everyone in a message.`,
+							isRead: false,
+							timestamp: serverTimestamp(),
+							type: 'CommunityNotification',
+							userImageUrl: user?.imageUrl,
+							communityTopicId: topic._id,
+							communityMessageId: response.data._id,
+						};
+
+						const notificationRef = collection(db, 'notifications', notifiedUser.firebaseUserId, 'userNotifications');
+						addDoc(notificationRef, notificationData);
+					}
+				});
+			}
+
+			if (mentionedUsernames.length > 0) {
+				mentionedUsernames.forEach((username) => {
+					const mentionedUser = sortedUsersData.find((user) => user.username === username);
+					if (mentionedUser && mentionedUser.firebaseUserId !== user?.firebaseUserId) {
+						// Create the notification data
+						const notificationData = {
+							title: 'You were mentioned in a message',
+							message: `${user?.username} mentioned you in a message.`,
+							isRead: false,
+							timestamp: serverTimestamp(),
+							type: 'MentionUser',
+							userImageUrl: user?.imageUrl,
+							communityTopicId: topic._id,
+							communityMessageId: response.data._id,
+						};
+
+						const notificationRef = collection(db, 'notifications', mentionedUser.firebaseUserId, 'userNotifications');
+						addDoc(notificationRef, notificationData);
+					}
+				});
+			}
 
 			setRefreshTopics(true);
 
 			setMessages((prevData) => {
 				return [...prevData, response.data];
 			});
+			setPageNumber(numberOfPages);
 			setCurrentMessage('');
 			setImgUrl('');
 			setAudioUrl('');
 			setReplyToMessage(null);
+			setUserSuggestions([]);
+			setTopicSuggestions;
+			setShowUserSuggestions(false);
+			setShowTopicSuggestions(false);
 		} catch (error) {
 			console.log(error);
+		} finally {
+			setIsSending(false);
 		}
 	};
 
@@ -171,6 +305,147 @@ const CommunityTopicPage = () => {
 		}
 	};
 
+	useEffect(() => {
+		return () => {
+			debouncedFetchSuggestions.cancel();
+		};
+	}, []);
+
+	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const input = e.target.value;
+		// Check if non-admin user is trying to mention @everyone
+		if (input.includes('@everyone') && user?.role !== Roles.ADMIN) {
+			setEveryoneMsg(true);
+			const sanitizedInput = input.replace('@everyone', '');
+			setCurrentMessage(sanitizedInput);
+		} else {
+			setCurrentMessage(input);
+		}
+
+		// Split by spaces to isolate the word being typed
+		const words = input.split(/\s+/);
+		const lastWord = words[words.length - 1];
+
+		// Determine if the last word starts with '@' or '#'
+		if (lastWord.startsWith('@')) {
+			setSuggestionType('@');
+			setShowUserSuggestions(true);
+			setShowTopicSuggestions(false);
+
+			const searchQuery = lastWord.slice(1).toLowerCase();
+			const filteredUserSuggestions = sortedUsersData
+				.filter((user) => user.username.toLowerCase().startsWith(searchQuery))
+				.map((user) => ({ username: user.username, imageUrl: user.imageUrl }));
+
+			setUserSuggestions(filteredUserSuggestions);
+
+			// Use debounced fetch for additional data if search query is long
+			if (searchQuery.length > 8) {
+				debouncedFetchSuggestions(searchQuery);
+			}
+		} else if (lastWord.startsWith('#')) {
+			setSuggestionType('#');
+			setShowUserSuggestions(false);
+			setShowTopicSuggestions(true);
+
+			const searchQuery = lastWord.slice(1).toLowerCase();
+			const filteredTopicSuggestions = sortedTopicsData
+				.filter((topic) => topic.title.toLowerCase().startsWith(searchQuery))
+				.map((topic) => ({ title: topic.title, topicId: topic._id }));
+
+			setTopicSuggestions(filteredTopicSuggestions);
+
+			if (searchQuery.length > 8) {
+				debouncedFetchSuggestions(searchQuery);
+			}
+		} else if (!input.includes('@') && !input.includes('#')) {
+			// Only hide suggestions if there are no `@` or `#` triggers anywhere in the input
+			setShowUserSuggestions(false);
+			setShowTopicSuggestions(false);
+		}
+	};
+
+	const debouncedFetchSuggestions = debounce((input: string) => {
+		const currentWord = input.split(/\s+/).pop()?.slice(1); // Extract the text after `@` or `#`
+
+		if (suggestionType === '@') {
+			const filteredUserSuggestions = sortedUsersData
+				.filter((user) => user?.username.toLowerCase().startsWith(currentWord?.toLowerCase() || ''))
+				.map((user) => ({ username: user.username, imageUrl: user.imageUrl }));
+			setUserSuggestions(filteredUserSuggestions);
+		} else if (suggestionType === '#') {
+			const filteredTopicSuggestions = sortedTopicsData
+				.filter((topic) => topic?.title.toLowerCase().startsWith(currentWord?.toLowerCase() || ''))
+				.map((topic) => ({ title: topic.title, topicId: topic._id }));
+			setTopicSuggestions(filteredTopicSuggestions);
+		}
+	}, 300);
+
+	const handleSuggestionClick = (suggestion: UserSuggestion | TopicSuggestion) => {
+		let updatedSuggestion = '';
+
+		if (suggestionType === '@' && 'username' in suggestion) {
+			// Handle UserSuggestion
+			updatedSuggestion = suggestion.username
+				.replace(/[^a-zA-Z0-9 .]/g, '_')
+				.split(' ')
+				.join('_');
+		} else if (suggestionType === '#' && 'title' in suggestion) {
+			// Handle TopicSuggestion
+			updatedSuggestion = suggestion.title
+				.replace(/[^a-zA-Z0-9]/g, '_')
+				.split(' ')
+				.join('_');
+		}
+
+		if (updatedSuggestion) {
+			const triggerSymbol = suggestionType || '';
+			const currentMessageArray = currentMessage.split(/[@#]\w*$/);
+			const updatedMessage = `${currentMessageArray[0]}${triggerSymbol}${updatedSuggestion} `;
+
+			setCurrentMessage(updatedMessage);
+
+			// Close the appropriate suggestion dropdown
+			if (suggestionType === '@') {
+				setShowUserSuggestions(false);
+			} else if (suggestionType === '#') {
+				setShowTopicSuggestions(false);
+			}
+		}
+	};
+
+	const extractMentions = (message: string): string[] => {
+		const mentionRegex = /@([a-zA-Z0-9._]+)/g;
+		let match;
+		const mentions = [];
+
+		while ((match = mentionRegex.exec(message)) !== null) {
+			const username = match[1];
+			if (username === 'everyone') {
+				mentions.push('everyone');
+			} else {
+				mentions.push(username);
+			}
+		}
+
+		return mentions;
+	};
+
+	// Apply the conversion to all topics in sortedTopics
+	const processedTopics = sortedTopicsData.map((topic) => ({
+		title: processTitle(topic.title), // Apply the same transformation
+		topicId: topic._id,
+	}));
+
+	const renderMessageContent = (text: string) => {
+		// Step 1: Wrap mentions in links
+		const withMentions = renderMessageWithMentions(text, processedTopics, user!);
+
+		// Step 2: Pass the result to emoji rendering, handling both strings and arrays
+		return renderMessageWithEmojis(withMentions, '1.5rem');
+	};
+	const renderedTopicContent = useMemo(() => renderMessageContent(topic?.text || ''), [topic?.text]);
+
 	return (
 		<DashboardPagesLayout pageName='Community' customSettings={{ justifyContent: 'flex-start' }}>
 			<Box sx={{ width: '80%', position: 'fixed', top: '4rem', zIndex: 1000, backgroundColor: theme.bgColor?.secondary }}>
@@ -180,6 +455,8 @@ const CommunityTopicPage = () => {
 					setDisplayDeleteTopicMsg={setDisplayDeleteTopicMsg}
 					setTopic={setTopic}
 					refreshTopics={refreshTopics}
+					isTopicLocked={isTopicLocked}
+					setIsTopicLocked={setIsTopicLocked}
 				/>
 			</Box>
 			<Snackbar
@@ -189,6 +466,19 @@ const CommunityTopicPage = () => {
 				anchorOrigin={{ vertical, horizontal }}>
 				<Alert onClose={() => setDisplayDeleteTopicMsg(false)} severity='success' sx={{ width: '100%' }}>
 					You have successfully deleted the topic!
+				</Alert>
+			</Snackbar>
+
+			<Snackbar
+				open={everyOneMsg}
+				autoHideDuration={3000}
+				anchorOrigin={{ vertical, horizontal }}
+				sx={{ mt: '2rem' }}
+				onClose={() => {
+					setEveryoneMsg(false);
+				}}>
+				<Alert severity='error' variant='filled' sx={{ width: '100%' }}>
+					Only admin users can mention @everyone.
 				</Alert>
 			</Snackbar>
 			<Box
@@ -222,7 +512,7 @@ const CommunityTopicPage = () => {
 				<Box sx={{ flex: 8, padding: '1rem' }}>
 					<Box>
 						<Typography variant='body2' sx={{ lineHeight: 1.7, mb: '0.75rem', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-							{renderMessageWithEmojis(topic?.text, '1.5rem')}
+							{renderedTopicContent}
 						</Typography>
 					</Box>
 					{topic?.imageUrl && (
@@ -267,6 +557,9 @@ const CommunityTopicPage = () => {
 						messageRefs={messageRefs}
 						setPageNumber={setPageNumber}
 						setHighlightedMessageId={setHighlightedMessageId}
+						isTopicLocked={isTopicLocked}
+						topicTitle={topic.title}
+						renderMessageContent={renderMessageContent}
 					/>
 				))}
 				<div ref={messagesEndRef} />
@@ -326,7 +619,6 @@ const CommunityTopicPage = () => {
 							</Box>
 							<Box sx={{ padding: '0.75rem', flex: 8, borderLeft: '0.09rem solid lightgray' }}>
 								<Typography sx={{ fontSize: '0.8rem', lineHeight: '1.8', minHeight: '3.5rem' }}>
-									{' '}
 									{renderMessageWithEmojis(replyToMessage.text, '1.25rem')}
 								</Typography>
 								{replyToMessage.imageUrl && (
@@ -403,15 +695,67 @@ const CommunityTopicPage = () => {
 						</Box>
 					)}
 				</Box>
+				{showTopicSuggestions && topicSuggestions.length > 0 && (
+					<Box
+						sx={{
+							position: 'absolute',
+							bottom: '5.5rem',
+							left: '11%',
+							backgroundColor: '#fff',
+							borderRadius: '0.25rem',
+							boxShadow: '0 0.1rem 0.4rem rgba(0,0,0,0.3)',
+							maxHeight: '10rem',
+							overflowY: 'auto',
+							zIndex: 10,
+						}}>
+						{topicSuggestions.map((suggestion, index) => (
+							<Box
+								key={index}
+								onClick={() => handleSuggestionClick(suggestion)}
+								sx={{ padding: '0.5rem 1rem', cursor: 'pointer', '&:hover': { backgroundColor: '#f0f0f0' } }}>
+								<Typography variant='body2'>{truncateText(suggestion.title, 35)}</Typography>
+							</Box>
+						))}
+					</Box>
+				)}
+
+				{showUserSuggestions && userSuggestions.length > 0 && (
+					<Box
+						sx={{
+							position: 'absolute',
+							bottom: '5.5rem',
+							left: '11%',
+							backgroundColor: '#fff',
+							borderRadius: '0.25rem',
+							boxShadow: '0 0.1rem 0.4rem rgba(0,0,0,0.3)',
+							maxHeight: '10rem',
+							overflowY: 'auto',
+							zIndex: 10,
+						}}>
+						{userSuggestions.map((suggestion, index) => (
+							<Box
+								key={index}
+								onClick={() => handleSuggestionClick(suggestion)}
+								sx={{ display: 'flex', alignItems: 'center', padding: '0.5rem 1rem', cursor: 'pointer', '&:hover': { backgroundColor: '#f0f0f0' } }}>
+								<Box>
+									<img src={suggestion.imageUrl} alt='img' style={{ height: '2rem', width: '2rem', borderRadius: '50%', marginRight: '0.5rem' }} />
+								</Box>
+								<Box>
+									<Typography variant='body2'>{suggestion.username}</Typography>
+								</Box>
+							</Box>
+						))}
+					</Box>
+				)}
 
 				<CustomTextField
 					multiline
 					rows={3}
 					value={currentMessage}
 					required={false}
-					onChange={(e) => {
-						setCurrentMessage(e.target.value);
-					}}
+					disabled={isTopicLocked}
+					onChange={handleInputChange}
+					placeholder={isTopicLocked ? 'You cannot send a message since topic is locked' : ''}
 					sx={{ width: '78%', border: replyToMessage ? 'none' : 'inherit', position: 'relative' }}
 					InputProps={{
 						sx: {
@@ -422,6 +766,7 @@ const CommunityTopicPage = () => {
 							<InputAdornment position='end'>
 								<IconButton
 									onClick={() => setShowPicker(!showPicker)}
+									disabled={isTopicLocked}
 									edge='end'
 									sx={{
 										mr: '-0.25rem',
@@ -435,6 +780,7 @@ const CommunityTopicPage = () => {
 								<Tooltip title={audioUrl ? 'Update Audio' : 'Upload Audio'} placement='top'>
 									<IconButton
 										onClick={() => setUploadAudioDialogOpen(true)}
+										disabled={isTopicLocked}
 										sx={{
 											':hover': {
 												backgroundColor: 'transparent',
@@ -493,6 +839,7 @@ const CommunityTopicPage = () => {
 								<Tooltip title={imgUrl ? 'Update Image' : 'Upload Image'} placement='top'>
 									<IconButton
 										onClick={() => setUploadImgDialogOpen(true)}
+										disabled={isTopicLocked}
 										sx={{
 											':hover': {
 												backgroundColor: 'transparent',
@@ -527,6 +874,7 @@ const CommunityTopicPage = () => {
 
 								<Tooltip title='Reply' placement='top'>
 									<IconButton
+										disabled={isTopicLocked || isSending}
 										sx={{
 											':hover': {
 												backgroundColor: 'transparent',

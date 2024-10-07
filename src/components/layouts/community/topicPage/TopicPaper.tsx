@@ -3,7 +3,7 @@ import theme from '../../../../themes';
 import { useContext, useState } from 'react';
 import { UserAuthContext } from '../../../../contexts/UserAuthContextProvider';
 import { Roles } from '../../../../interfaces/enums';
-import { Delete, Edit, Flag, KeyboardBackspaceOutlined, Verified } from '@mui/icons-material';
+import { Delete, Edit, Flag, KeyboardBackspaceOutlined, Lock, LockOpenOutlined, Verified } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { CommunityMessage, TopicInfo } from '../../../../interfaces/communityMessage';
 import { formatMessageTime } from '../../../../utils/formatTime';
@@ -12,18 +12,25 @@ import CustomDialog from '../../dialog/CustomDialog';
 import CustomDialogActions from '../../dialog/CustomDialogActions';
 import { CommunityContext } from '../../../../contexts/CommunityContextProvider';
 import EditTopicDialog from '../editTopic/EditTopicDialog';
+import { OrganisationContext } from '../../../../contexts/OrganisationContextProvider';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { db } from '../../../../firebase';
+import { truncateText } from '../../../../utils/utilText';
 
 interface TopicPaperProps {
 	refreshTopics: boolean;
 	topic: TopicInfo;
 	messages: CommunityMessage[];
+	isTopicLocked: boolean;
+	setIsTopicLocked: React.Dispatch<React.SetStateAction<boolean>>;
 	setDisplayDeleteTopicMsg: React.Dispatch<React.SetStateAction<boolean>>;
 	setTopic: React.Dispatch<React.SetStateAction<TopicInfo>>;
 }
 
-const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refreshTopics }: TopicPaperProps) => {
+const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refreshTopics, isTopicLocked, setIsTopicLocked }: TopicPaperProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { user } = useContext(UserAuthContext);
+	const { adminUsers } = useContext(OrganisationContext);
 	const { removeTopic, fetchTopics } = useContext(CommunityContext);
 	const navigate = useNavigate();
 	const isAdmin: boolean = user?.role === Roles.ADMIN;
@@ -32,7 +39,9 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refre
 	const [deleteTopicModalOpen, setDeleteTopicModalOpen] = useState<boolean>(false);
 	const [editTopicModalOpen, setEditTopicModalOpen] = useState<boolean>(false);
 	const [reportTopicModalOpen, setReportTopicModalOpen] = useState<boolean>(false);
-	const [clearReportModalOpen, setClearReportModalOpen] = useState<boolean>(false);
+	const [closeTopicModalOpen, setLockTopicModalOpen] = useState<boolean>(false);
+	const [restartTopicModalOpen, setRestartTopicModalOpen] = useState<boolean>(false);
+	const [resolveReportModalOpen, setResolveReportModalOpen] = useState<boolean>(false);
 
 	const deleteTopic = async () => {
 		try {
@@ -74,21 +83,58 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refre
 			setTopic((prevData) => {
 				return { ...prevData, isReported: true };
 			});
+
+			// Create the notification data
+			const notificationData = {
+				title: 'Topic Reported',
+				message: `${user?.username} reported ${truncateText(topic.title, 25)} in community topics`,
+				isRead: false,
+				timestamp: serverTimestamp(),
+				type: 'ReportTopic',
+				userImageUrl: user?.imageUrl,
+				communityTopicId: topic._id,
+			};
+
+			// Send notifications to each admin
+			for (const admin of adminUsers) {
+				const notificationRef = collection(db, 'notifications', admin.firebaseUserId, 'userNotifications');
+				await addDoc(notificationRef, notificationData);
+			}
 		} catch (error) {
 			console.log(error);
 		}
 	};
 
-	const clearReport = async () => {
+	const resolveReport = async () => {
 		try {
 			await axios.patch(`${base_url}/communityTopics/${topic?._id}`, {
 				isReported: false,
 			});
 
-			setClearReportModalOpen(false);
+			setResolveReportModalOpen(false);
 			setTopic((prevData) => {
 				return { ...prevData, isReported: false };
 			});
+		} catch (error) {
+			console.log(error);
+		}
+	};
+
+	const lockUnlockTopic = async (action: string) => {
+		try {
+			if (action === 'lock') {
+				await axios.patch(`${base_url}/communityTopics/${topic?._id}`, {
+					isActive: false,
+				});
+				setIsTopicLocked(true);
+				setLockTopicModalOpen(false);
+			} else if (action === 'unlock') {
+				await axios.patch(`${base_url}/communityTopics/${topic?._id}`, {
+					isActive: true,
+				});
+				setIsTopicLocked(false);
+				setRestartTopicModalOpen(false);
+			}
 		} catch (error) {
 			console.log(error);
 		}
@@ -169,39 +215,66 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refre
 							) : (
 								<>
 									{isTopicWriter && (
-										<Tooltip title='Edit Topic' placement='left'>
+										<Tooltip title='Edit Topic' placement='top'>
 											<IconButton
 												sx={{
 													':hover': {
 														backgroundColor: 'transparent',
 													},
-													mr: '-0.5rem',
+													mr: '-0.25rem',
 												}}
 												onClick={() => setEditTopicModalOpen(true)}>
-												<Edit color='secondary' />
+												<Edit color='secondary' fontSize='small' />
 											</IconButton>
 										</Tooltip>
 									)}
 
 									{(isTopicWriter || isAdmin) && (
-										<Tooltip title='Delete Topic' placement='top'>
-											<IconButton
-												sx={{
-													':hover': {
-														backgroundColor: 'transparent',
-													},
-													mr: '-0.5rem',
-												}}
-												onClick={() => setDeleteTopicModalOpen(true)}>
-												<Delete color='secondary' fontSize='small' />
-											</IconButton>
-										</Tooltip>
+										<>
+											<Tooltip title='Delete Topic' placement='top'>
+												<IconButton
+													sx={{
+														':hover': {
+															backgroundColor: 'transparent',
+														},
+														mr: '-0.25rem',
+													}}
+													onClick={() => setDeleteTopicModalOpen(true)}>
+													<Delete color='secondary' fontSize='small' />
+												</IconButton>
+											</Tooltip>
+											{!isTopicLocked ? (
+												<Tooltip title='Lock Topic' placement='top'>
+													<IconButton
+														sx={{
+															':hover': {
+																backgroundColor: 'transparent',
+															},
+														}}
+														onClick={() => setLockTopicModalOpen(true)}>
+														<Lock color='secondary' fontSize='small' />
+													</IconButton>
+												</Tooltip>
+											) : (
+												<Tooltip title='Unlock Topic' placement='top'>
+													<IconButton
+														sx={{
+															':hover': {
+																backgroundColor: 'transparent',
+															},
+														}}
+														onClick={() => setRestartTopicModalOpen(true)}>
+														<LockOpenOutlined color='secondary' fontSize='small' />
+													</IconButton>
+												</Tooltip>
+											)}
+										</>
 									)}
 									{topic.isReported && isAdmin && (
 										<Box sx={{ display: 'flex', alignItems: 'center' }}>
-											<Tooltip title='Clear Report' placement='top'>
+											<Tooltip title='Resolve Report' placement='top'>
 												<IconButton
-													onClick={() => setClearReportModalOpen(true)}
+													onClick={() => setResolveReportModalOpen(true)}
 													sx={{
 														':hover': {
 															backgroundColor: 'transparent',
@@ -210,7 +283,7 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refre
 													<Verified color='secondary' fontSize='small' />
 												</IconButton>
 											</Tooltip>
-											<Typography variant='body2' sx={{ color: 'orange', ml: '0.1rem', fontStyle: 'italic', mr: '0.25rem' }}>
+											<Typography variant='body2' sx={{ color: 'darkorange', ml: '0.1rem', fontStyle: 'italic', mr: '0.25rem' }}>
 												Reported
 											</Typography>
 										</Box>
@@ -242,12 +315,35 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refre
 				</CustomDialog>
 
 				<CustomDialog
-					openModal={clearReportModalOpen}
-					closeModal={() => setClearReportModalOpen(false)}
-					title='Clear Report'
-					content='Are you sure you want to clear the report?'
+					openModal={resolveReportModalOpen}
+					closeModal={() => setResolveReportModalOpen(false)}
+					title='Resolve Report'
+					content='Are you sure you want to resolve the report?'
 					maxWidth='sm'>
-					<CustomDialogActions onSubmit={clearReport} onCancel={() => setClearReportModalOpen(false)} submitBtnText='Clear' />
+					<CustomDialogActions onSubmit={resolveReport} onCancel={() => setResolveReportModalOpen(false)} submitBtnText='Resolve' />
+				</CustomDialog>
+
+				<CustomDialog
+					openModal={closeTopicModalOpen}
+					closeModal={() => setLockTopicModalOpen(false)}
+					title='Lock Topic'
+					content='Are you sure you want to lock the topic?'
+					maxWidth='sm'>
+					<CustomDialogActions
+						onDelete={() => lockUnlockTopic('lock')}
+						onCancel={() => setLockTopicModalOpen(false)}
+						deleteBtn
+						deleteBtnText='Lock'
+					/>
+				</CustomDialog>
+
+				<CustomDialog
+					openModal={restartTopicModalOpen}
+					closeModal={() => setRestartTopicModalOpen(false)}
+					title='Unlock Topic'
+					content='Are you sure you want to unlock the topic?'
+					maxWidth='sm'>
+					<CustomDialogActions onSubmit={() => lockUnlockTopic('unlock')} onCancel={() => setRestartTopicModalOpen(false)} submitBtnText='Unlock' />
 				</CustomDialog>
 
 				<Box
@@ -258,13 +354,11 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refre
 						flex: 5,
 						padding: '1rem',
 					}}>
-					<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', height: '100%' }}>
+					<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'space-between', height: '100%' }}>
 						<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
-							<Box>
-								<Typography variant='h5' sx={{ color: theme.textColor?.common.main }}>
-									{topic?.title}
-								</Typography>
-							</Box>
+							<Typography variant='h5' sx={{ color: theme.textColor?.common.main, textAlign: 'right' }}>
+								{topic?.title}
+							</Typography>
 						</Box>
 
 						<Box

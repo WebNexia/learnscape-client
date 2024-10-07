@@ -70,3 +70,15 @@ export const enum LessonType {
 	PRACTICE_LESSON = 'Practice Lesson',
 	QUIZ = 'Quiz',
 }
+
+export const enum NotificationType {
+	QUIZ_SUBMISSION = 'QuizSubmission',
+	MESSAGE_RECEIVED = 'MessageReceived',
+	REPORT_TOPIC = 'ReportTopic',
+	REPORT_MESSAGE = 'ReportMessage',
+	REPLY_TO_COMMUNITY_MESSAGE = 'ReplyToCommunityMessage',
+	REPLY_TO_COMMUNITY_TOPIC = 'ReplyToCommunityTopic',
+	NEW_COMMUNITY_TOPIC = 'NewCommunityTopic',
+	MENTION_USER = 'MentionUser',
+	COMMUNITY_NOTIFICATION = 'CommunityNotification',
+}

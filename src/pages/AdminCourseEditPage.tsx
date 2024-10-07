@@ -243,7 +243,7 @@ const AdminCourseEditPage = () => {
 							if (lesson._id.includes('temp_lesson_id')) {
 								try {
 									const lessonResponse = await axios.post(`${base_url}/lessons`, {
-										title: lesson.title,
+										title: lesson.title.trim(),
 										type: lesson.type,
 										orgId,
 									});
@@ -267,7 +267,7 @@ const AdminCourseEditPage = () => {
 					if (chapter.chapterId.includes('temp_chapter_id')) {
 						try {
 							const response = await axios.post(`${base_url}/chapters`, {
-								title: chapter.title,
+								title: chapter.title.trim(),
 								lessonIds: chapter.lessonIds,
 								orgId,
 							});
@@ -290,10 +290,10 @@ const AdminCourseEditPage = () => {
 						if (document._id.includes('temp_doc_id')) {
 							try {
 								const response = await axios.post(`${base_url}/documents`, {
-									name: document.name,
+									name: document.name.trim(),
 									orgId,
 									userId,
-									documentUrl: document.documentUrl,
+									documentUrl: document.documentUrl.trim(),
 								});
 								fetchDocuments(documentsPageNumber);
 
@@ -316,7 +316,7 @@ const AdminCourseEditPage = () => {
 					if (trackData?.isUpdated) {
 						try {
 							await axios.patch(`${base_url}/documents/${doc._id}`, {
-								name: doc.name,
+								name: doc.name.trim(),
 							});
 							fetchDocuments(documentsPageNumber);
 						} catch (error) {

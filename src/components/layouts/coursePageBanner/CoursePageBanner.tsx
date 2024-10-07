@@ -92,6 +92,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 					userCourseId: response.data._id,
 					isCourseCompleted: false,
 					isCourseInProgress: true,
+					courseTitle: course.title,
 				});
 				localStorage.setItem('userCourseData', JSON.stringify(updatedUserCoursesIds));
 			}

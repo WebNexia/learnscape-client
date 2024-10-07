@@ -34,13 +34,15 @@ import QuestionText from './QuestionText';
 import CustomSubmitButton from '../forms/customButtons/CustomSubmitButton';
 import VideoRecorder from './VideoRecorder';
 import AudioRecorder from './AudioRecorder';
-import { storage } from '../../firebase';
+import { db, storage } from '../../firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
 import FillInTheBlanksTyping from '../layouts/FITBTyping/FillInTheBlanksTyping';
 import FillInTheBlanksDragDrop from '../layouts/FITBDragDrop/FillInTheBlanksDragDrop';
 import MatchingPreview from '../layouts/matching/MatchingPreview';
 import { UserBlankValuePairAnswers, UserMatchingPairAnswers } from '../../interfaces/userQuestion';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { UserCoursesIdsWithCourseIds } from '../../contexts/UserCourseLessonDataContextProvider';
 
 interface QuizQuestionProps {
 	question: QuestionInterface;
@@ -48,6 +50,7 @@ interface QuizQuestionProps {
 	numberOfQuestions: number;
 	displayedQuestionNumber: number;
 	lessonType?: string;
+	lessonName: string;
 	isLessonCompleted: boolean;
 	userQuizAnswers: QuizQuestionAnswer[];
 	setDisplayedQuestionNumber: React.Dispatch<React.SetStateAction<number>>;
@@ -62,6 +65,7 @@ const QuizQuestion = ({
 	numberOfQuestions,
 	displayedQuestionNumber,
 	lessonType,
+	lessonName,
 	isLessonCompleted,
 	userQuizAnswers,
 	setDisplayedQuestionNumber,
@@ -74,7 +78,7 @@ const QuizQuestion = ({
 	const { userLessonId, handleNextLesson, nextLessonId } = useUserCourseLessonData();
 
 	const { userId, lessonId, courseId, userCourseId } = useParams();
-	const { orgId } = useContext(OrganisationContext);
+	const { orgId, adminUsers } = useContext(OrganisationContext);
 	const { fetchQuestionTypeName } = useContext(QuestionsContext);
 	const { user } = useContext(UserAuthContext);
 
@@ -111,6 +115,7 @@ const QuizQuestion = ({
 	const isFITBDragDrop: boolean = fetchQuestionTypeName(question) === QuestionType.FITB_DRAG_DROP;
 
 	const [helperText, setHelperText] = useState<string>(!isMatching && !isFITBDragDrop && !isFITBTyping ? 'Choose wisely' : '');
+	const [courseTitle, setCourseTitle] = useState<string>('');
 
 	const [recordOption, setRecordOption] = useState<string>('');
 	const toggleRecordOption = (type: string) => {
@@ -131,6 +136,8 @@ const QuizQuestion = ({
 	const isLastQuestion: boolean = displayedQuestionNumber === numberOfQuestions;
 	const isCompletingCourse: boolean = isLastQuestion && nextLessonId === null;
 	const isCompletingLesson: boolean = isLastQuestion && nextLessonId !== null;
+
+	let userCourseData: UserCoursesIdsWithCourseIds[] = [];
 
 	useEffect(() => {
 		setUserQuizAnswerAfterSubmission(() => {
@@ -184,6 +191,17 @@ const QuizQuestion = ({
 			}
 			return '';
 		});
+
+		const storedUserCourseData: string | null = localStorage.getItem('userCourseData');
+		if (storedUserCourseData !== null) {
+			userCourseData = JSON.parse(storedUserCourseData);
+		}
+
+		setCourseTitle(() => {
+			return userCourseData.find((data) => data.courseId === courseId)?.courseTitle || '';
+		});
+
+		console.log(userCourseData.find((data) => data.courseId === courseId)?.courseTitle);
 	}, []);
 
 	useEffect(() => {
@@ -221,6 +239,8 @@ const QuizQuestion = ({
 
 	const handleQuizSubmission = async () => {
 		setUserQuizAnswersUploading(true);
+
+		// Upload user answers
 		await Promise.all(
 			userQuizAnswers.map(async (answer) => {
 				try {
@@ -233,11 +253,11 @@ const QuizQuestion = ({
 						isCompleted: true,
 						isInProgress: false,
 						orgId,
-						userAnswer: answer.userAnswer,
+						userAnswer: answer.userAnswer.trim(),
 						userBlankValuePairAnswers: answer.userBlankValuePairAnswers,
 						userMatchingPairAnswers: answer.userMatchingPairAnswers,
-						videoRecordUrl: answer.videoRecordUrl,
-						audioRecordUrl: answer.audioRecordUrl,
+						videoRecordUrl: answer.videoRecordUrl.trim(),
+						audioRecordUrl: answer.audioRecordUrl.trim(),
 						teacherFeedback: '',
 						teacherAudioFeedbackUrl: '',
 					});
@@ -248,9 +268,37 @@ const QuizQuestion = ({
 		);
 
 		try {
-			await axios.post(`${base_url}/quizSubmissions`, { userId, lessonId, courseId, userLessonId, orgId });
+			// Submit quiz
+			const submissionResponse = await axios.post(`${base_url}/quizSubmissions`, {
+				userId,
+				lessonId,
+				courseId,
+				userLessonId,
+				orgId,
+			});
+
+			// Create the notification data
+			const notificationData = {
+				title: 'Quiz Submitted',
+				message: `${user?.username} submitted ${lessonName} in the ${courseTitle} course.`,
+				isRead: false,
+				timestamp: serverTimestamp(),
+				type: 'QuizSubmission',
+				userImageUrl: user?.imageUrl,
+				lessonId,
+				submissionId: submissionResponse.data._id,
+				userLessonId,
+			};
+
+			// Send notifications to each instructor
+			for (const admin of adminUsers) {
+				const notificationRef = collection(db, 'notifications', admin.firebaseUserId, 'userNotifications');
+				await addDoc(notificationRef, notificationData);
+			}
+
+			console.log('Notification sent to instructors');
 		} catch (error) {
-			console.log(error);
+			console.error('Error submitting quiz or sending notifications:', error);
 		} finally {
 			setIsMsgModalAfterSubmitOpen(true);
 		}
@@ -537,9 +585,13 @@ const QuizQuestion = ({
 						</RadioGroup>
 					)}
 
-					{!isOpenEndedQuestion && !isLessonCompleted && helperText !== ' ' && !isAudioVideoQuestion && (
-						<FormHelperText sx={{ alignSelf: 'center', mt: '2rem' }}>{helperText}</FormHelperText>
-					)}
+					{!isOpenEndedQuestion &&
+						!isLessonCompleted &&
+						!isMatching &&
+						!isFITBDragDrop &&
+						!isFITBDragDrop &&
+						helperText !== ' ' &&
+						!isAudioVideoQuestion && <FormHelperText sx={{ alignSelf: 'center', mt: '2rem' }}>{helperText}</FormHelperText>}
 
 					{isLessonCompleted && (teacherQuestionFeedback || teacherQuestionAudioFeedback) && (
 						<Box

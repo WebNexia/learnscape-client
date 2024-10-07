@@ -10,3 +10,10 @@ export interface User {
 	createdAt: string;
 	updatedAt: string;
 }
+
+export interface AdminUser {
+	_id: string;
+	username: string;
+	firebaseUserId: string;
+	role: string;
+}

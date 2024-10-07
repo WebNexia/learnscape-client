@@ -4,12 +4,14 @@ import axios from 'axios';
 import { useQuery, useQueryClient } from 'react-query';
 import Loading from '../components/layouts/loading/Loading';
 import LoadingError from '../components/layouts/loading/LoadingError';
+import { AdminUser } from '../interfaces/user';
 
 interface OrganisationContextTypes {
 	organisation?: Organisation;
 	fetchOrganisationData: (orgId: string) => Promise<void>;
 	setOrgId: React.Dispatch<React.SetStateAction<string>>;
 	orgId: string;
+	adminUsers: AdminUser[];
 }
 
 export interface UserAuthContextProviderProps {
@@ -21,6 +23,7 @@ export const OrganisationContext = createContext<OrganisationContextTypes>({
 	organisation: undefined,
 	fetchOrganisationData: async () => {},
 	setOrgId: () => {},
+	adminUsers: [],
 });
 
 const OrganisationContextProvider = (props: UserAuthContextProviderProps) => {
@@ -30,6 +33,7 @@ const OrganisationContextProvider = (props: UserAuthContextProviderProps) => {
 	const [isLoaded, setIsLoaded] = useState<boolean>(false);
 
 	const [organisation, setOrganisation] = useState<Organisation>();
+	const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
 	const [orgId, setOrgId] = useState<string>(() => {
 		if (token) {
 			return token;
@@ -42,6 +46,8 @@ const OrganisationContextProvider = (props: UserAuthContextProviderProps) => {
 		try {
 			const responseOrgData = await axios.get(`${base_url}/organisations/${orgId}`);
 			setOrganisation(responseOrgData.data.data[0]);
+
+			setAdminUsers(responseOrgData.data.data[0].admins);
 
 			setIsLoaded(true);
 			// Store data in React Query cache
@@ -64,7 +70,9 @@ const OrganisationContextProvider = (props: UserAuthContextProviderProps) => {
 	}
 
 	return (
-		<OrganisationContext.Provider value={{ organisation, fetchOrganisationData, setOrgId, orgId }}>{props.children}</OrganisationContext.Provider>
+		<OrganisationContext.Provider value={{ organisation, fetchOrganisationData, setOrgId, orgId, adminUsers }}>
+			{props.children}
+		</OrganisationContext.Provider>
 	);
 };
 

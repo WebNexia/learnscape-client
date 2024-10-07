@@ -1,6 +1,6 @@
 import { useContext, useEffect, useState } from 'react';
 import { Box, Button, IconButton, Link, Slide, Tooltip, Typography } from '@mui/material';
-import { useLocation, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import ReactPlayer from 'react-player';
 import { Article, Close, DoneAll, GetApp, Home, KeyboardBackspaceOutlined, KeyboardDoubleArrowRight, NotListedLocation } from '@mui/icons-material';
@@ -166,7 +166,7 @@ const LessonPage = () => {
 	const updateUserLessonNotes = async () => {
 		try {
 			setIsUserLessonNotesUploading(true);
-			const res = await axios.patch(`${base_url}/userlessons/${userLessonId}`, { notes: editorContent });
+			const res = await axios.patch(`${base_url}/userlessons/${userLessonId}`, { notes: editorContent.trim() });
 			setUserLessonNotes(res.data.data.notes);
 		} catch (error) {
 			console.log(error);
@@ -231,7 +231,7 @@ const LessonPage = () => {
 				minHeight: '100vh',
 				padding: '0 0 3rem 0',
 			}}>
-			<Box sx={{ width: '100vw', position: 'fixed', top: 0, zIndex: 10 }}>
+			<Box sx={{ width: '100vw', position: 'fixed', top: 0, zIndex: 1000 }}>
 				<DashboardHeader pageName={organisation?.orgName || ''} />
 			</Box>
 			<Box
@@ -242,7 +242,7 @@ const LessonPage = () => {
 					top: '4rem',
 					width: '100%',
 					backgroundColor: theme.bgColor?.secondary,
-					zIndex: 10,
+					zIndex: 3,
 				}}>
 				<Box sx={{ display: 'flex', justifyContent: !isInstructionalLesson && isQuestionsVisible ? 'space-between' : 'flex-end' }}>
 					{!isInstructionalLesson && isQuestionsVisible && (
@@ -290,7 +290,7 @@ const LessonPage = () => {
 					</Typography>
 				</Box>
 			</Box>
-			<Box sx={{ position: 'fixed', top: '11rem', left: '2rem', width: '80%', zIndex: 10 }}>
+			<Box sx={{ position: 'fixed', top: '11rem', left: '2rem', width: '80%', zIndex: 3 }}>
 				<Tooltip title='Take Notes' placement='right'>
 					<IconButton onClick={() => setIsNotesDrawerOpen(!isNotesDrawerOpen)}>
 						<Article />
@@ -309,7 +309,7 @@ const LessonPage = () => {
 							borderRadius: '0 0.35rem  0.35rem 0 ',
 							bgcolor: 'background.paper',
 							overflow: 'auto',
-							zIndex: 10,
+							zIndex: 3,
 						}}>
 						<Box sx={{ minHeight: '100%', width: '100%' }}>
 							<Box sx={{ display: 'flex', flexDirection: 'column' }}>
@@ -455,12 +455,13 @@ const LessonPage = () => {
 						setIsQuizInProgress={setIsQuizInProgress}
 						userQuizAnswers={userQuizAnswers}
 						setUserQuizAnswers={setUserQuizAnswers}
+						lessonName={lesson.title}
 					/>
 				</Box>
 			)}
 			{isQuiz && isQuestionsVisible && !isLessonCompleted && (
 				<>
-					<Box sx={{ position: 'fixed', top: '90vh', right: '2rem', transform: 'translateY(-50%)', zIndex: 1000 }}>
+					<Box sx={{ position: 'fixed', top: '90vh', right: '2rem', transform: 'translateY(-50%)', zIndex: 10 }}>
 						<Tooltip title='Questions Map' placement='left'>
 							<IconButton onClick={() => setIsQuestionsMapOpen(!isQuestionsMapOpen)}>
 								<NotListedLocation fontSize='large' sx={{ color: '#00BFFF' }} />
