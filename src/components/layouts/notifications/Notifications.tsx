@@ -93,7 +93,8 @@ const NotificationsBox = ({ showUnreadOnly }: NotificationsBoxProps) => {
 				note.type === NotificationType.REPLY_TO_COMMUNITY_MESSAGE ||
 				note.type === NotificationType.REPLY_TO_COMMUNITY_TOPIC ||
 				note.type === NotificationType.MENTION_USER ||
-				note.type === NotificationType.REPORT_MESSAGE
+				note.type === NotificationType.REPORT_MESSAGE ||
+				note.type === NotificationType.COMMUNITY_NOTIFICATION
 			) {
 				const response = await axios.get(`${base_url}/communityMessages/message/${note.communityMessageId}?limit=5`);
 				const { page } = response.data;

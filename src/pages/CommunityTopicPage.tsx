@@ -31,6 +31,7 @@ import { UsersContext } from '../contexts/UsersContextProvider';
 import { renderMessageWithMentions } from '../utils/renderMessageWithMentions';
 import { debounce } from 'lodash';
 import { processTitle } from '../utils/processTitle';
+import { Roles } from '../interfaces/enums';
 
 export interface UserSuggestion {
 	username: string;
@@ -76,6 +77,7 @@ const CommunityTopicPage = () => {
 	const horizontal = 'center';
 
 	const [displayDeleteTopicMsg, setDisplayDeleteTopicMsg] = useState<boolean>(false);
+	const [everyOneMsg, setEveryoneMsg] = useState<boolean>(false);
 	const [showPicker, setShowPicker] = useState<boolean>(false);
 	const [uploadImgDialogOpen, setUploadImgDialogOpen] = useState<boolean>(false);
 	const [imgUrl, setImgUrl] = useState<string>('');
@@ -225,6 +227,26 @@ const CommunityTopicPage = () => {
 
 			const mentionedUsernames = extractMentions(currentMessage);
 
+			if (mentionedUsernames.includes('everyone') && user?.role === Roles.ADMIN) {
+				sortedUsersData.forEach((notifiedUser) => {
+					if (notifiedUser.firebaseUserId !== user?.firebaseUserId) {
+						const notificationData = {
+							title: 'Community Notification',
+							message: `${user?.username} mentioned @everyone in a message.`,
+							isRead: false,
+							timestamp: serverTimestamp(),
+							type: 'CommunityNotification',
+							userImageUrl: user?.imageUrl,
+							communityTopicId: topic._id,
+							communityMessageId: response.data._id,
+						};
+
+						const notificationRef = collection(db, 'notifications', notifiedUser.firebaseUserId, 'userNotifications');
+						addDoc(notificationRef, notificationData);
+					}
+				});
+			}
+
 			if (mentionedUsernames.length > 0) {
 				mentionedUsernames.forEach((username) => {
 					const mentionedUser = sortedUsersData.find((user) => user.username === username);
@@ -291,7 +313,14 @@ const CommunityTopicPage = () => {
 
 	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const input = e.target.value;
-		setCurrentMessage(input);
+		// Check if non-admin user is trying to mention @everyone
+		if (input.includes('@everyone') && user?.role !== Roles.ADMIN) {
+			setEveryoneMsg(true);
+			const sanitizedInput = input.replace('@everyone', '');
+			setCurrentMessage(sanitizedInput);
+		} else {
+			setCurrentMessage(input);
+		}
 
 		// Split by spaces to isolate the word being typed
 		const words = input.split(/\s+/);
@@ -385,14 +414,18 @@ const CommunityTopicPage = () => {
 		}
 	};
 
-	const extractMentions = (message: string) => {
-		// Update the regex to allow periods and underscores in usernames
+	const extractMentions = (message: string): string[] => {
 		const mentionRegex = /@([a-zA-Z0-9._]+)/g;
 		let match;
 		const mentions = [];
 
 		while ((match = mentionRegex.exec(message)) !== null) {
-			mentions.push(match[1]); // Add the username without the @ symbol
+			const username = match[1];
+			if (username === 'everyone') {
+				mentions.push('everyone');
+			} else {
+				mentions.push(username);
+			}
 		}
 
 		return mentions;
@@ -433,6 +466,19 @@ const CommunityTopicPage = () => {
 				anchorOrigin={{ vertical, horizontal }}>
 				<Alert onClose={() => setDisplayDeleteTopicMsg(false)} severity='success' sx={{ width: '100%' }}>
 					You have successfully deleted the topic!
+				</Alert>
+			</Snackbar>
+
+			<Snackbar
+				open={everyOneMsg}
+				autoHideDuration={3000}
+				anchorOrigin={{ vertical, horizontal }}
+				sx={{ mt: '2rem' }}
+				onClose={() => {
+					setEveryoneMsg(false);
+				}}>
+				<Alert severity='error' variant='filled' sx={{ width: '100%' }}>
+					Only admin users can mention @everyone.
 				</Alert>
 			</Snackbar>
 			<Box
