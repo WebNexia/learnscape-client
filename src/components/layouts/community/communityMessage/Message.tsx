@@ -89,7 +89,7 @@ const Message = ({
 		} else {
 			// If the message is not found on the current page, navigate to the page where it's located
 			try {
-				const response = await axios.get(`${base_url}/communityMessages/message/${parentMessageId}?limit=5`);
+				const response = await axios.get(`${base_url}/communityMessages/message/${parentMessageId}?limit=30`);
 				const { page } = response.data;
 				setPageNumber(page);
 				setHighlightedMessageId(parentMessageId);

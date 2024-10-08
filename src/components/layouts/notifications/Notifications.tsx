@@ -1,4 +1,4 @@
-import { collection, query, onSnapshot, orderBy, doc, updateDoc, where } from 'firebase/firestore';
+import { collection, query, onSnapshot, orderBy, doc, updateDoc, where, Timestamp, limit } from 'firebase/firestore';
 import { useContext, useEffect, useState } from 'react';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 import { db } from '../../../firebase';
@@ -32,6 +32,9 @@ const NotificationsBox = ({ showUnreadOnly }: NotificationsBoxProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { user } = useContext(UserAuthContext);
 	const [notifications, setNotifications] = useState<Notification[]>([]);
+	const [showAll, setShowAll] = useState<boolean>(false);
+	const [hasOlderNotifications, setHasOlderNotifications] = useState<boolean>(false);
+
 	const navigate = useNavigate();
 
 	useEffect(() => {
@@ -39,10 +42,19 @@ const NotificationsBox = ({ showUnreadOnly }: NotificationsBoxProps) => {
 
 		// Real-time listener for notifications
 		const notificationsRef = collection(db, 'notifications', user.firebaseUserId, 'userNotifications');
-		let q = query(notificationsRef, orderBy('timestamp', 'desc'));
 
+		const sevenDaysAgo = Timestamp.fromDate(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000));
+		const olderNotificationsQuery = query(notificationsRef, where('timestamp', '<', sevenDaysAgo), limit(1));
+		onSnapshot(olderNotificationsQuery, (snapshot) => {
+			setHasOlderNotifications(snapshot.size > 0);
+		});
+
+		let q = query(notificationsRef, orderBy('timestamp', 'desc'));
+		if (!showAll) {
+			q = query(q, where('timestamp', '>=', sevenDaysAgo));
+		}
 		if (showUnreadOnly) {
-			q = query(notificationsRef, where('isRead', '==', false), orderBy('timestamp', 'desc'));
+			q = query(q, where('isRead', '==', false));
 		}
 
 		const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -70,7 +82,7 @@ const NotificationsBox = ({ showUnreadOnly }: NotificationsBoxProps) => {
 
 		// Clean up the listener on component unmount
 		return () => unsubscribe();
-	}, [user, showUnreadOnly]);
+	}, [user, showUnreadOnly, showAll]);
 
 	const handleNotificationClick = async (note: Notification) => {
 		if (!user || !user.firebaseUserId) return;
@@ -96,7 +108,7 @@ const NotificationsBox = ({ showUnreadOnly }: NotificationsBoxProps) => {
 				note.type === NotificationType.REPORT_MESSAGE ||
 				note.type === NotificationType.COMMUNITY_NOTIFICATION
 			) {
-				const response = await axios.get(`${base_url}/communityMessages/message/${note.communityMessageId}?limit=5`);
+				const response = await axios.get(`${base_url}/communityMessages/message/${note.communityMessageId}?limit=30`);
 				const { page } = response.data;
 				const basePath = user?.role === Roles.ADMIN ? '/admin' : '';
 				navigate(`${basePath}/community/user/${user?._id}/topic/${note.communityTopicId}?page=${page}&messageId=${note.communityMessageId}`);
@@ -159,6 +171,24 @@ const NotificationsBox = ({ showUnreadOnly }: NotificationsBoxProps) => {
 							</Box>
 						);
 					})}
+					<Box sx={{ display: 'flex', width: '100%', justifyContent: 'center' }}>
+						{hasOlderNotifications && (
+							<Typography
+								onClick={() => setShowAll(!showAll)}
+								variant='body2'
+								sx={{
+									marginTop: '2rem',
+									textTransform: 'capitalize',
+									pointer: 'cursor',
+									':hover': {
+										backgroundColor: 'transparent',
+										textDecoration: 'underline',
+									},
+								}}>
+								{showAll ? 'Show Last 7 Days' : 'See All Notifications'}
+							</Typography>
+						)}
+					</Box>
 				</Box>
 			) : (
 				<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '15vh' }}>
