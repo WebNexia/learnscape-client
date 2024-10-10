@@ -1,5 +1,5 @@
 import { InputLabelProps, InputProps, SxProps, TextField, TextFieldProps } from '@mui/material';
-import React, { ChangeEvent, forwardRef } from 'react';
+import { ChangeEvent, forwardRef } from 'react';
 import theme from '../../../themes';
 
 interface CustomTextFieldProps {
@@ -37,7 +37,7 @@ const CustomTextField = forwardRef<HTMLDivElement, CustomTextFieldProps>(
 			required = true,
 			multiline,
 			sx,
-			InputLabelProps,
+			InputLabelProps = {}, // Initialize with an empty object to merge defaults
 			InputProps,
 			maxRows,
 			rows = 3,
@@ -73,9 +73,13 @@ const CustomTextField = forwardRef<HTMLDivElement, CustomTextFieldProps>(
 				fullWidth={fullWidth}
 				required={required}
 				multiline={multiline}
-				InputLabelProps={InputLabelProps}
+				InputLabelProps={{
+					...InputLabelProps,
+					sx: { fontSize: '0.85rem', ...InputLabelProps.sx }, // Set default font size and merge with additional styles
+				}}
 				InputProps={{
 					...InputProps,
+					sx: { '& input': { fontSize: '0.85rem' } },
 					inputProps: {
 						...InputProps?.inputProps,
 						maxLength: InputProps?.inputProps?.maxLength,

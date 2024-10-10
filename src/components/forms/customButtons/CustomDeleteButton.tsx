@@ -18,7 +18,7 @@ const CustomDeleteButton = ({
 	onClick,
 	sx,
 	disabled,
-	size,
+	size = 'small',
 }: CustomDeleteButtonProps) => {
 	return (
 		<Button

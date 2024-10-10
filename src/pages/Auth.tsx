@@ -45,7 +45,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 	const [password, setPassword] = useState<string>('');
 	const [orgCode, setOrgCode] = useState<string>('6RS1YS');
 
-	const [showPassword, setShowPassword] = useState(false);
+	const [showPassword, setShowPassword] = useState<boolean>(false);
 
 	const togglePasswordVisibility = () => {
 		setShowPassword((prevShowPassword) => !prevShowPassword);
@@ -249,7 +249,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 
 	const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const value = e.target.value;
-		const regex = /^[a-zA-Z0-9._]*$/; // Allow only letters, numbers, underscores, and periods
+		const regex = /^(?![._])(?!.*[._]$)[a-zA-Z0-9._]*$/; // No start/end with _ or .
 
 		if (regex.test(value)) {
 			setUsername(value.trim()); // Only set the username if it matches the pattern
@@ -456,19 +456,17 @@ const Auth = ({ setUserRole }: AuthProps) => {
 					</Typography>
 				</Box>
 				<Box>
-					<Box>
-						{errorMsg &&
-							{
-								[AuthFormErrorMessages.EMAIL_EXISTS]: errorMessageTypography,
-								[AuthFormErrorMessages.INVALID_CREDENTIALS]: errorMessageTypography,
-								[AuthFormErrorMessages.USERNAME_EXISTS]: errorMessageTypography,
-								[AuthFormErrorMessages.EMAIL_NOT_VERIFIED]: errorMessageTypography,
-								[AuthFormErrorMessages.UNKNOWN_ERROR_OCCURRED]: errorMessageTypography,
-								[AuthFormErrorMessages.PASSWORD_TOO_SHORT]: errorMessageTypography,
-								[AuthFormErrorMessages.PASSWORD_NO_NUMBER]: errorMessageTypography,
-								[AuthFormErrorMessages.PASSWORD_NO_LETTER]: errorMessageTypography,
-							}[errorMsg]}
-					</Box>
+					{errorMsg &&
+						{
+							[AuthFormErrorMessages.EMAIL_EXISTS]: errorMessageTypography,
+							[AuthFormErrorMessages.INVALID_CREDENTIALS]: errorMessageTypography,
+							[AuthFormErrorMessages.USERNAME_EXISTS]: errorMessageTypography,
+							[AuthFormErrorMessages.EMAIL_NOT_VERIFIED]: errorMessageTypography,
+							[AuthFormErrorMessages.UNKNOWN_ERROR_OCCURRED]: errorMessageTypography,
+							[AuthFormErrorMessages.PASSWORD_TOO_SHORT]: errorMessageTypography,
+							[AuthFormErrorMessages.PASSWORD_NO_NUMBER]: errorMessageTypography,
+							[AuthFormErrorMessages.PASSWORD_NO_LETTER]: errorMessageTypography,
+						}[errorMsg]}
 				</Box>
 			</Box>
 		</Box>

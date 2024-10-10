@@ -27,7 +27,7 @@ const CustomSubmitButton = ({
 	startIcon,
 	endIcon,
 	capitalize = true,
-	size,
+	size = 'small',
 }: CustomSubmitButtonProps) => {
 	const { user } = useContext(UserAuthContext);
 	const handleClick = (event: MouseEvent<HTMLButtonElement> | FormEvent<Element>) => {
