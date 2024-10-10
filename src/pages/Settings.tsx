@@ -292,7 +292,14 @@ const Settings = () => {
 								InputProps={{
 									endAdornment: (
 										<InputAdornment position='end'>
-											<IconButton onClick={toggleCurrentPasswordVisibility} edge='end'>
+											<IconButton
+												onClick={toggleCurrentPasswordVisibility}
+												edge='end'
+												sx={{
+													':hover': {
+														backgroundColor: 'transparent',
+													},
+												}}>
 												{!showCurrentPassword ? <Visibility fontSize='small' /> : <VisibilityOff fontSize='small' />}
 											</IconButton>
 										</InputAdornment>
@@ -313,7 +320,14 @@ const Settings = () => {
 								InputProps={{
 									endAdornment: (
 										<InputAdornment position='end'>
-											<IconButton onClick={togglePasswordVisibility} edge='end'>
+											<IconButton
+												onClick={togglePasswordVisibility}
+												edge='end'
+												sx={{
+													':hover': {
+														backgroundColor: 'transparent',
+													},
+												}}>
 												{!showPassword ? <Visibility fontSize='small' /> : <VisibilityOff fontSize='small' />}
 											</IconButton>
 										</InputAdornment>
@@ -334,7 +348,14 @@ const Settings = () => {
 								InputProps={{
 									endAdornment: (
 										<InputAdornment position='end'>
-											<IconButton onClick={toggleConfirmedPasswordVisibility} edge='end'>
+											<IconButton
+												onClick={toggleConfirmedPasswordVisibility}
+												edge='end'
+												sx={{
+													':hover': {
+														backgroundColor: 'transparent',
+													},
+												}}>
 												{!showConfirmedPassword ? <Visibility fontSize='small' /> : <VisibilityOff fontSize='small' />}
 											</IconButton>
 										</InputAdornment>

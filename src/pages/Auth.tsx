@@ -415,7 +415,14 @@ const Auth = ({ setUserRole }: AuthProps) => {
 												InputProps={{
 													endAdornment: (
 														<InputAdornment position='end'>
-															<IconButton onClick={togglePasswordVisibility} edge='end'>
+															<IconButton
+																onClick={togglePasswordVisibility}
+																edge='end'
+																sx={{
+																	':hover': {
+																		backgroundColor: 'transparent',
+																	},
+																}}>
 																{!showPassword ? <Visibility /> : <VisibilityOff />}
 															</IconButton>
 														</InputAdornment>
