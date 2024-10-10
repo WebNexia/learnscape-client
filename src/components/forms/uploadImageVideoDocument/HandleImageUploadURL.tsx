@@ -82,7 +82,16 @@ const HandleImageUploadURL = ({
 			{isImgSizeLarge && <CustomErrorMessage>File size exceeds the limit of 1 MB </CustomErrorMessage>}
 
 			{enterImageUrl && (
-				<CustomTextField placeholder='Image URL' required={false} sx={{ marginTop: '0.5rem' }} value={imageUrlValue} onChange={onChangeImgUrl} />
+				<CustomTextField
+					placeholder='Image URL'
+					required={false}
+					sx={{ marginTop: '0.5rem' }}
+					value={imageUrlValue}
+					onChange={onChangeImgUrl}
+					InputProps={{
+						sx: { '& input::placeholder': { fontSize: '0.875rem' }, '& input': { fontSize: '0.85rem' } }, // Adjust this value as needed
+					}}
+				/>
 			)}
 		</FormControl>
 	);

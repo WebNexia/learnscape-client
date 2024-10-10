@@ -124,7 +124,7 @@ const CommunityTopicPage = () => {
 		if (topicId) {
 			const fetchTopicMessages = async () => {
 				try {
-					const messagesResponse = await axios.get(`${base_url}/communityMessages/topic/${topicId}?page=${pageNumber}&limit=5`);
+					const messagesResponse = await axios.get(`${base_url}/communityMessages/topic/${topicId}?page=${pageNumber}&limit=30`);
 
 					setMessages(messagesResponse.data.messages);
 

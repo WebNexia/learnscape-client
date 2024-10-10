@@ -19,7 +19,18 @@ export const enum AuthFormErrorMessages {
 	PASSWORD_NO_LETTER = 'Password must contain at least one letter',
 	// PASSWORD_NO_UPPERCASE = 'Password must contain at least one uppercase letter.',
 	// PASSWORD_NO_LOWERCASE = 'Password must contain at least one lowercase letter.',
-	PASSWORD_NO_NUMBER = 'Password must contain at least one number.',
+	PASSWORD_NO_NUMBER = 'Password must contain at least one number',
+	// PASSWORD_NO_SPECIAL_CHAR = 'Password must contain at least one special character.',
+}
+
+export const enum PasswordUpdateErrorMessages {
+	PASSWORD_TOO_SHORT = 'Password must be at least 6 characters long',
+	PASSWORD_NO_LETTER = 'Password must contain at least one letter',
+	// PASSWORD_NO_UPPERCASE = 'Password must contain at least one uppercase letter.',
+	// PASSWORD_NO_LOWERCASE = 'Password must contain at least one lowercase letter.',
+	PASSWORD_NO_NUMBER = 'Password must contain at least one number',
+	PASSWORDS_DO_NOT_MATCH = 'Passwords do not match',
+	INVALID_CURRENT_PASSWORD = 'Invalid current password',
 	// PASSWORD_NO_SPECIAL_CHAR = 'Password must contain at least one special character.',
 }
 

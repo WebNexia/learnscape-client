@@ -40,7 +40,6 @@ const AdminLessons = React.lazy(() => import('./pages/AdminLessons'));
 const AdminLessonEditPage = React.lazy(() => import('./pages/AdminLessonEditPage'));
 const AdminDashboard = React.lazy(() => import('./pages/AdminDashboard'));
 const AdminQuestions = React.lazy(() => import('./pages/AdminQuestions'));
-const AdminSettings = React.lazy(() => import('./pages/AdminSettings'));
 const AdminUsers = React.lazy(() => import('./pages/AdminUsers'));
 const AdminSchedule = React.lazy(() => import('./pages/AdminSchedule'));
 const AdminDocuments = React.lazy(() => import('./pages/AdminDocuments'));
@@ -101,7 +100,7 @@ function App() {
 																			{renderRoute('/admin/messages/user/:userId', <Messages />, Roles.ADMIN)}
 																			{renderRoute('/admin/community/user/:userId', <Community />, Roles.ADMIN)}
 																			{renderRoute('/admin/community/user/:userId/topic/:topicId', <CommunityTopicPage />, Roles.ADMIN)}
-																			{renderRoute('/admin/settings/user/:userId', <AdminSettings />, Roles.ADMIN)}
+																			{renderRoute('/admin/settings/user/:userId', <Settings />, Roles.ADMIN)}
 																		</>
 																		<>
 																			{renderRoute('/dashboard/user/:id', <Dashboard />, Roles.USER)}

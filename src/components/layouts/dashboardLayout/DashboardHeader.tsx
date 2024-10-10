@@ -91,7 +91,7 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 	};
 
 	return (
-		<AppBar position='sticky' sx={{ zIndex: 1400 }}>
+		<AppBar position='sticky'>
 			<Toolbar
 				sx={{
 					display: 'flex',
@@ -102,7 +102,6 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 					backgroundColor: user?.role === Roles.ADMIN ? theme.bgColor?.adminHeader : theme.bgColor?.lessonInProgress,
 					padding: '0 1rem 0 3rem',
 					position: 'relative',
-					zIndex: 1400,
 				}}>
 				<Box>
 					<Typography variant='body1' sx={{ color: theme.textColor?.common.main }}>

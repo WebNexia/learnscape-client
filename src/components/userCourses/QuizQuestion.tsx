@@ -200,8 +200,6 @@ const QuizQuestion = ({
 		setCourseTitle(() => {
 			return userCourseData.find((data) => data.courseId === courseId)?.courseTitle || '';
 		});
-
-		console.log(userCourseData.find((data) => data.courseId === courseId)?.courseTitle);
 	}, []);
 
 	useEffect(() => {
