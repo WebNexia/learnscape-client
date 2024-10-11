@@ -27,7 +27,6 @@ const Settings = () => {
 	const [password, setPassword] = useState<string>('');
 	const [confirmedPassword, setConfirmedPassword] = useState<string>('');
 
-	const [isPasswordUpdated, setIsPasswordUpdated] = useState<boolean>(false);
 	const [isImgUsernameUpdated, setIsImgUsernameUpdated] = useState<boolean>(false);
 
 	const [isPasswordUpdatedMsgDisplayed, setIsPasswordUpdatedMsgDisplayed] = useState<boolean>(false);
@@ -85,6 +84,11 @@ const Settings = () => {
 		if (password.length < minLength) {
 			return PasswordUpdateErrorMessages.PASSWORD_TOO_SHORT;
 		}
+
+		if (currentPassword === password) {
+			return PasswordUpdateErrorMessages.SAME_PASSWORD;
+		}
+
 		if (!hasLetter) {
 			return PasswordUpdateErrorMessages.PASSWORD_NO_LETTER;
 		}
@@ -103,6 +107,8 @@ const Settings = () => {
 		return null;
 	};
 
+	const errorMessage = <CustomErrorMessage sx={{ fontSize: '0.75rem' }}>{errorMsg}</CustomErrorMessage>;
+
 	const handlePasswordUpdate = async () => {
 		const passwordValidationError = validatePassword(password);
 		if (passwordValidationError) {
@@ -120,21 +126,18 @@ const Settings = () => {
 
 		if (user) {
 			try {
-				if (isPasswordUpdated) {
-					// Re-authenticate user
-					const credential = EmailAuthProvider.credential(user?.email!, currentPassword);
-					await reauthenticateWithCredential(user, credential);
-					// Update password
-					await updatePassword(user, password);
+				// Re-authenticate user
+				const credential = EmailAuthProvider.credential(user?.email!, currentPassword);
+				await reauthenticateWithCredential(user, credential);
+				// Update password
+				await updatePassword(user, password);
 
-					setIsPasswordUpdatedMsgDisplayed(true);
-					setErrorMsg(undefined);
+				setIsPasswordUpdatedMsgDisplayed(true);
+				setErrorMsg(undefined);
 
-					setCurrentPassword('');
-					setPassword('');
-					setConfirmedPassword('');
-					setIsPasswordUpdated(false);
-				}
+				setCurrentPassword('');
+				setPassword('');
+				setConfirmedPassword('');
 			} catch (error) {
 				console.error('Error updating password:', error);
 				if (error instanceof FirebaseError) {
@@ -167,13 +170,26 @@ const Settings = () => {
 							handleUsernameProfilePictureUpdate();
 						}}>
 						<Box sx={{ display: 'flex', justifyContent: 'center', mb: '0rem', width: '90%' }}>
-							<Typography variant='h5'>Update Profile Picture & Username</Typography>
+							<Typography variant='h5'>Update Profile</Typography>
 						</Box>
-						<Box sx={{ display: 'flex', justifyContent: 'center', width: '90%' }}>
+						<Box
+							sx={{
+								display: 'flex',
+								justifyContent: 'center',
+								width: '90%',
+								height: '10rem',
+							}}>
 							<img
 								src={imageUrl || 'https://img.sportsbookreview.com/images/avatars/default-avatar.jpg'}
 								alt='profile_img'
-								style={{ height: '10rem', width: '10rem', objectFit: 'cover', borderRadius: '50%', marginBottom: '1rem' }}
+								style={{
+									height: '10rem',
+									width: '10rem',
+									objectFit: 'cover',
+									borderRadius: '50%',
+									marginBottom: '1rem',
+									border: 'solid lightgray 0.01rem',
+								}}
 							/>
 						</Box>
 						<Box sx={{ width: '90%' }}>
@@ -313,7 +329,6 @@ const Settings = () => {
 								value={password}
 								onChange={(e) => {
 									setPassword(e.target.value.trim());
-									setIsPasswordUpdated(true);
 									setErrorMsg(undefined);
 								}}
 								sx={{ width: '75%', margin: '0.75rem' }}
@@ -341,7 +356,6 @@ const Settings = () => {
 								value={confirmedPassword}
 								onChange={(e) => {
 									setConfirmedPassword(e.target.value.trim());
-									setIsPasswordUpdated(true);
 									setErrorMsg(undefined);
 								}}
 								sx={{ width: '75%', margin: '0.75rem' }}
@@ -366,21 +380,12 @@ const Settings = () => {
 							<Box>
 								{errorMsg &&
 									{
-										[PasswordUpdateErrorMessages.INVALID_CURRENT_PASSWORD]: (
-											<CustomErrorMessage sx={{ fontSize: '0.75rem' }}>{errorMsg}</CustomErrorMessage>
-										),
-										[PasswordUpdateErrorMessages.PASSWORDS_DO_NOT_MATCH]: (
-											<CustomErrorMessage sx={{ fontSize: '0.75rem' }}>{errorMsg}</CustomErrorMessage>
-										),
-										[PasswordUpdateErrorMessages.PASSWORD_NO_LETTER]: (
-											<CustomErrorMessage sx={{ fontSize: '0.75rem' }}>{errorMsg}</CustomErrorMessage>
-										),
-										[PasswordUpdateErrorMessages.PASSWORD_NO_NUMBER]: (
-											<CustomErrorMessage sx={{ fontSize: '0.75rem' }}>{errorMsg}</CustomErrorMessage>
-										),
-										[PasswordUpdateErrorMessages.PASSWORD_TOO_SHORT]: (
-											<CustomErrorMessage sx={{ fontSize: '0.75rem' }}>{errorMsg}</CustomErrorMessage>
-										),
+										[PasswordUpdateErrorMessages.INVALID_CURRENT_PASSWORD]: errorMessage,
+										[PasswordUpdateErrorMessages.PASSWORDS_DO_NOT_MATCH]: errorMessage,
+										[PasswordUpdateErrorMessages.PASSWORD_NO_LETTER]: errorMessage,
+										[PasswordUpdateErrorMessages.PASSWORD_NO_NUMBER]: errorMessage,
+										[PasswordUpdateErrorMessages.PASSWORD_TOO_SHORT]: errorMessage,
+										[PasswordUpdateErrorMessages.SAME_PASSWORD]: errorMessage,
 									}[errorMsg]}
 							</Box>
 							<Box sx={{ width: '75%', mt: '1rem' }}>

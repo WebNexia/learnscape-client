@@ -1,6 +1,7 @@
 export const enum AuthForms {
 	SIGN_IN = 'sign_in',
 	SIGN_UP = 'sign_up',
+	RESET = 'reset',
 }
 
 export const enum TextFieldTypes {
@@ -21,6 +22,7 @@ export const enum AuthFormErrorMessages {
 	// PASSWORD_NO_LOWERCASE = 'Password must contain at least one lowercase letter.',
 	PASSWORD_NO_NUMBER = 'Password must contain at least one number',
 	// PASSWORD_NO_SPECIAL_CHAR = 'Password must contain at least one special character.',
+	NETWORK_ERROR = 'Network error occurred. Please check your internet connection and try again.',
 }
 
 export const enum PasswordUpdateErrorMessages {
@@ -31,6 +33,7 @@ export const enum PasswordUpdateErrorMessages {
 	PASSWORD_NO_NUMBER = 'Password must contain at least one number',
 	PASSWORDS_DO_NOT_MATCH = 'Passwords do not match',
 	INVALID_CURRENT_PASSWORD = 'Invalid current password',
+	SAME_PASSWORD = 'Enter a different password',
 	// PASSWORD_NO_SPECIAL_CHAR = 'Password must contain at least one special character.',
 }
 

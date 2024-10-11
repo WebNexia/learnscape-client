@@ -46,6 +46,8 @@ const AdminDocuments = React.lazy(() => import('./pages/AdminDocuments'));
 const AdminQuizSubmissions = React.lazy(() => import('./pages/AdminQuizSubmissions'));
 const AdminQuizSubmissionCheck = React.lazy(() => import('./pages/AdminQuizSubmissionCheck'));
 
+const PasswordResetPage = React.lazy(() => import('./pages/ResetPasswordPage'));
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -80,6 +82,7 @@ function App() {
 																	<Routes>
 																		<Route path='/' element={<HomePage />} />
 																		<Route path='/auth' element={<Auth setUserRole={setUserRole} />} />
+																		<Route path='/reset-password' element={<PasswordResetPage />} />
 
 																		<>
 																			{renderRoute('/admin/dashboard/user/:userId', <AdminDashboard />, Roles.ADMIN)}
