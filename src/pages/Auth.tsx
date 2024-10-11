@@ -543,14 +543,16 @@ const Auth = ({ setUserRole }: AuthProps) => {
 													closeModal={() => setIsPasswordInfoModalOpen(false)}
 													maxWidth='sm'>
 													<DialogContent>
-														<Box sx={{ width: '75%', margin: '1rem 0 0.5rem 2rem' }}>
-															<Typography sx={{ fontSize: '0.85rem', mb: '0.5rem' }}>- Password cannot include space</Typography>
-															<Typography sx={{ fontSize: '0.85rem' }}>- Password must include at least:</Typography>
+														<Box sx={{ width: '75%', margin: '0.5rem 0 0.5rem 2rem' }}>
+															<Typography variant='body2' sx={{ mb: '0.5rem' }}>
+																- Password cannot include space
+															</Typography>
+															<Typography variant='body2'>- Password must include at least:</Typography>
 															<Box sx={{ margin: '0.75rem 0 0 3rem' }}>
 																{['6 characters', '1 letter', '1 number'].map((rule, index) => (
 																	<ul key={index}>
 																		<li style={{ color: theme.textColor?.secondary.main }}>
-																			<Typography sx={{ fontSize: '0.75rem', mb: '0.35rem' }}>{rule}</Typography>
+																			<Typography sx={{ fontSize: '0.85rem', mb: '0.35rem' }}>{rule}</Typography>
 																		</li>
 																	</ul>
 																))}
