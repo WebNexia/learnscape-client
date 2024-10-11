@@ -54,7 +54,7 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 				audioUrl: topic.audioUrl,
 			});
 
-			const allIds: string[] = sortedUsersData.map((user) => user.firebaseUserId);
+			const allIds: string[] = sortedUsersData?.map((user) => user.firebaseUserId);
 
 			addNewTopic({
 				_id: response.data._id,

@@ -61,8 +61,8 @@ const AddNewDocumentDialog = ({
 			newSelectedDocumentIds = [...selectedDocumentIds, document._id];
 			newSelectedDocuments = [...selectedDocuments, document];
 		} else {
-			newSelectedDocumentIds = selectedDocumentIds.filter((id) => id !== document._id);
-			newSelectedDocuments = selectedDocuments.filter((selectedDocument) => selectedDocument._id !== document._id);
+			newSelectedDocumentIds = selectedDocumentIds?.filter((id) => id !== document._id);
+			newSelectedDocuments = selectedDocuments?.filter((selectedDocument) => selectedDocument._id !== document._id);
 		}
 
 		setSelectedDocumentIds(newSelectedDocumentIds);
@@ -140,7 +140,7 @@ const AddNewDocumentDialog = ({
 						<TableBody>
 							{sortedDocumentsData &&
 								sortedDocumentsData
-									.filter((document) =>
+									?.filter((document) =>
 										!fromAdminCourses
 											? !singleLessonBeforeSave?.documentIds.includes(document._id)
 											: !singleCourse?.documentIds.includes(document._id)

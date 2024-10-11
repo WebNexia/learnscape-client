@@ -10,7 +10,7 @@ const useNewQuestion = (initialOptions: string[] = ['']) => {
 	const addOption = useCallback(() => {
 		setOptions((prevOptions) => {
 			const newOptions = [...prevOptions, ''];
-			setIsMinimumOptions(newOptions.filter((option) => option.trim() !== '').length >= 2);
+			setIsMinimumOptions(newOptions?.filter((option) => option.trim() !== '').length >= 2);
 			return newOptions;
 		});
 	}, []);
@@ -24,7 +24,7 @@ const useNewQuestion = (initialOptions: string[] = ['']) => {
 	);
 
 	const checkForDuplicateOptions = useCallback((options: string[]) => {
-		const filteredOptions = options?.map((option) => option.trim()).filter((option) => option.trim() !== '');
+		const filteredOptions = options?.map((option) => option.trim())?.filter((option) => option.trim() !== '');
 		const uniqueOptions = new Set(filteredOptions);
 		return uniqueOptions.size !== filteredOptions.length;
 	}, []);
@@ -36,7 +36,7 @@ const useNewQuestion = (initialOptions: string[] = ['']) => {
 				newOptions[index] = value;
 
 				setIsDuplicateOption(checkForDuplicateOptions(newOptions));
-				setIsMinimumOptions(newOptions.filter((option) => option.trim() !== '').length >= 2);
+				setIsMinimumOptions(newOptions?.filter((option) => option.trim() !== '').length >= 2);
 
 				return newOptions;
 			});
@@ -59,7 +59,7 @@ const useNewQuestion = (initialOptions: string[] = ['']) => {
 				}
 
 				setIsDuplicateOption(checkForDuplicateOptions(newOptions));
-				setIsMinimumOptions(newOptions.filter((option) => option.trim() !== '').length >= 2);
+				setIsMinimumOptions(newOptions?.filter((option) => option.trim() !== '').length >= 2);
 
 				return newOptions;
 			});

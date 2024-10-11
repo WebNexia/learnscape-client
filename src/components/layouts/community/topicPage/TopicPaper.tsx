@@ -48,7 +48,7 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refre
 			await axios.delete(`${base_url}/communityTopics/${topic?._id}`);
 
 			await Promise.all(
-				messages.map(async (message) => {
+				messages?.map(async (message) => {
 					try {
 						await axios.delete(`${base_url}/communityMessages/${message._id}`);
 					} catch (error) {

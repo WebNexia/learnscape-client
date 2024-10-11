@@ -131,7 +131,7 @@ const AdminCourseEditChapter = ({
 								onClick={() => {
 									setChapterLessonDataBeforeSave((prevData) => {
 										if (prevData !== undefined) {
-											return prevData.filter((currentChapter) => chapter.chapterId !== currentChapter.chapterId);
+											return prevData?.filter((currentChapter) => chapter.chapterId !== currentChapter.chapterId);
 										}
 										return prevData;
 									});
@@ -232,7 +232,7 @@ const AdminCourseEditChapter = ({
 																if (prevData) {
 																	return prevData.map((currentChapter) => {
 																		if (currentChapter.chapterId === chapter?.chapterId) {
-																			const updatedLessons = currentChapter.lessons.filter((currentLesson) => currentLesson._id !== lesson._id);
+																			const updatedLessons = currentChapter.lessons?.filter((currentLesson) => currentLesson._id !== lesson._id);
 																			const updatedLessonIds = updatedLessons?.map((lesson) => lesson._id);
 																			return {
 																				...currentChapter,

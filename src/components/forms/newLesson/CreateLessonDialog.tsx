@@ -80,7 +80,7 @@ const CreateLessonDialog = ({
 		if (setChapterLessonDataBeforeSave) {
 			setChapterLessonDataBeforeSave((prevData) => {
 				if (prevData) {
-					return prevData.map((currentChapter) => {
+					return prevData?.map((currentChapter) => {
 						if (currentChapter.chapterId === chapter?.chapterId) {
 							const updatedLessons = [...currentChapter.lessons, newLessonBeforeSave];
 							if (setIsChapterUpdated) {
@@ -148,7 +148,7 @@ const CreateLessonDialog = ({
 						required
 						sx={{ backgroundColor: theme.bgColor?.common }}>
 						{lessonTypes &&
-							lessonTypes.map((type) => (
+							lessonTypes?.map((type) => (
 								<MenuItem value={type} key={type}>
 									{type}
 								</MenuItem>

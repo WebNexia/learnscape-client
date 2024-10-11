@@ -150,7 +150,7 @@ export const useUserCourseLessonData = () => {
 	// Function to update in-progress lessons
 	const updateInProgressLessons = useCallback(async () => {
 		const updatedParsedUserLessonData = JSON.parse(localStorage.getItem('userLessonData') || '[]');
-		const inProgressLessons = updatedParsedUserLessonData.filter((lesson: UserLessonDataStorage) => lesson.isInProgress);
+		const inProgressLessons = updatedParsedUserLessonData?.filter((lesson: UserLessonDataStorage) => lesson.isInProgress);
 		try {
 			for (const lesson of inProgressLessons) {
 				const localStorageLesson = updatedParsedUserLessonData.find((data: UserLessonDataStorage) => data.userLessonId === lesson.userLessonId);

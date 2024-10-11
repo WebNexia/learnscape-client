@@ -91,7 +91,7 @@ const Community = () => {
 										</Typography>
 									</Box>
 									<Box sx={{ mt: '2rem' }}>
-										{communityRules.map((rule, index) => (
+										{communityRules?.map((rule, index) => (
 											<Box key={index} sx={{ mb: '2rem' }}>
 												<Box sx={{ mb: '0.5rem' }}>
 													<Typography variant='h6'>{rule.rule}</Typography>
@@ -114,7 +114,7 @@ const Community = () => {
 											</Typography>
 										</Box>
 										<Box>
-											{consequences.consequences.map((data, index) => (
+											{consequences.consequences?.map((data, index) => (
 												<ul key={index}>
 													<li style={{ margin: '0 0 0.35rem 2rem' }}>
 														<Typography variant='body2' sx={{ lineHeight: 1.7 }}>

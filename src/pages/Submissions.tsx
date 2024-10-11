@@ -40,7 +40,7 @@ const Submissions = () => {
 
 	useEffect(() => {
 		const fetchData = async () => {
-			if (!dataLoaded) {
+			if (!dataLoaded && sortedUserQuizSubmissionsData.length === 0) {
 				try {
 					fetchQuizSubmissionsByUserId(userId!, userQuizSubmissionsPageNumber);
 					setDataLoaded(true);
@@ -51,7 +51,7 @@ const Submissions = () => {
 		};
 
 		fetchData();
-	}, [userQuizSubmissionsPageNumber, userId, dataLoaded]);
+	}, [userQuizSubmissionsPageNumber, userId, dataLoaded, sortedUserQuizSubmissionsData]);
 
 	return (
 		<DashboardPagesLayout pageName='Quiz Submissions' customSettings={{ justifyContent: 'flex-start' }}>

@@ -334,8 +334,8 @@ const CommunityTopicPage = () => {
 
 			const searchQuery = lastWord.slice(1).toLowerCase();
 			const filteredUserSuggestions = sortedUsersData
-				.filter((user) => user.username.toLowerCase().startsWith(searchQuery))
-				.map((user) => ({ username: user.username, imageUrl: user.imageUrl }));
+				?.filter((user) => user.username.toLowerCase().startsWith(searchQuery))
+				?.map((user) => ({ username: user.username, imageUrl: user.imageUrl }));
 
 			setUserSuggestions(filteredUserSuggestions);
 
@@ -350,8 +350,8 @@ const CommunityTopicPage = () => {
 
 			const searchQuery = lastWord.slice(1).toLowerCase();
 			const filteredTopicSuggestions = sortedTopicsData
-				.filter((topic) => topic.title.toLowerCase().startsWith(searchQuery))
-				.map((topic) => ({ title: topic.title, topicId: topic._id }));
+				?.filter((topic) => topic.title.toLowerCase().startsWith(searchQuery))
+				?.map((topic) => ({ title: topic.title, topicId: topic._id }));
 
 			setTopicSuggestions(filteredTopicSuggestions);
 
@@ -370,13 +370,13 @@ const CommunityTopicPage = () => {
 
 		if (suggestionType === '@') {
 			const filteredUserSuggestions = sortedUsersData
-				.filter((user) => user?.username.toLowerCase().startsWith(currentWord?.toLowerCase() || ''))
-				.map((user) => ({ username: user.username, imageUrl: user.imageUrl }));
+				?.filter((user) => user?.username.toLowerCase().startsWith(currentWord?.toLowerCase() || ''))
+				?.map((user) => ({ username: user.username, imageUrl: user.imageUrl }));
 			setUserSuggestions(filteredUserSuggestions);
 		} else if (suggestionType === '#') {
 			const filteredTopicSuggestions = sortedTopicsData
-				.filter((topic) => topic?.title.toLowerCase().startsWith(currentWord?.toLowerCase() || ''))
-				.map((topic) => ({ title: topic.title, topicId: topic._id }));
+				?.filter((topic) => topic?.title.toLowerCase().startsWith(currentWord?.toLowerCase() || ''))
+				?.map((topic) => ({ title: topic.title, topicId: topic._id }));
 			setTopicSuggestions(filteredTopicSuggestions);
 		}
 	}, 300);
@@ -432,7 +432,7 @@ const CommunityTopicPage = () => {
 	};
 
 	// Apply the conversion to all topics in sortedTopics
-	const processedTopics = sortedTopicsData.map((topic) => ({
+	const processedTopics = sortedTopicsData?.map((topic) => ({
 		title: processTitle(topic.title), // Apply the same transformation
 		topicId: topic._id,
 	}));
@@ -708,7 +708,7 @@ const CommunityTopicPage = () => {
 							overflowY: 'auto',
 							zIndex: 10,
 						}}>
-						{topicSuggestions.map((suggestion, index) => (
+						{topicSuggestions?.map((suggestion, index) => (
 							<Box
 								key={index}
 								onClick={() => handleSuggestionClick(suggestion)}
@@ -732,7 +732,7 @@ const CommunityTopicPage = () => {
 							overflowY: 'auto',
 							zIndex: 10,
 						}}>
-						{userSuggestions.map((suggestion, index) => (
+						{userSuggestions?.map((suggestion, index) => (
 							<Box
 								key={index}
 								onClick={() => handleSuggestionClick(suggestion)}

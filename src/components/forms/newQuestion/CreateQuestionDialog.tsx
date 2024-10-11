@@ -287,7 +287,7 @@ const CreateQuestionDialog = ({
 		}
 
 		if (isMatching) {
-			const nonBlankPairs = newQuestion.matchingPairs.filter((pair) => pair.question.trim() && pair.answer.trim());
+			const nonBlankPairs = newQuestion.matchingPairs?.filter((pair) => pair.question.trim() && pair.answer.trim());
 			const missingPairExists = newQuestion.matchingPairs.some((pair) => !pair.question.trim() || !pair.answer.trim());
 
 			if (nonBlankPairs.length < 2) {
@@ -369,7 +369,7 @@ const CreateQuestionDialog = ({
 							label='Type'
 							required>
 							{questionTypes
-								.filter((type) => {
+								?.filter((type) => {
 									const questionTypeName = type.name as QuestionType;
 									if (singleLessonBeforeSave?.type === LessonType.QUIZ) {
 										return [

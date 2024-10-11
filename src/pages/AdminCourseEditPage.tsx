@@ -307,7 +307,7 @@ const AdminCourseEditPage = () => {
 					});
 
 				const updatedQuestionsWithNulls = await Promise.all(updatedDocumentsPromises);
-				updatedDocuments = updatedQuestionsWithNulls.filter((doc): doc is Document => doc !== null); // Type guard to filter out remaining nulls
+				updatedDocuments = updatedQuestionsWithNulls?.filter((doc): doc is Document => doc !== null); // Type guard to filter out remaining nulls
 			}
 
 			await Promise.all(

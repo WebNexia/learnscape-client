@@ -89,7 +89,7 @@ const QuestionDialogContentNonEdit = ({ question, singleLessonBeforeSave }: Ques
 						<Box sx={{ alignSelf: 'center', width: '80%' }}>
 							{fetchQuestionTypeName(question) === QuestionType.MULTIPLE_CHOICE &&
 								question.options &&
-								question.options.map((option, index) => {
+								question.options?.map((option, index) => {
 									const choiceLabel = String.fromCharCode(97 + index) + ')';
 									return (
 										<Typography
