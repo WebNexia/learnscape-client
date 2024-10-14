@@ -108,7 +108,8 @@ const CreateLessonDialog = ({
 				setType('');
 				setTitle('');
 			}}
-			title='Create New Lesson'>
+			title='Create New Lesson'
+			maxWidth='sm'>
 			<form
 				onSubmit={(e: React.FormEvent<HTMLFormElement>) => {
 					e.preventDefault();
