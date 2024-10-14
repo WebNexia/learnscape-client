@@ -5,6 +5,8 @@ export interface Event {
 	orgId: string;
 	courseId?: string;
 	learnerId?: string;
+	learnerUsername?: string;
+	courseTitle?: string;
 	start: Date | null;
 	end: Date | null;
 	location: string;

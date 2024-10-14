@@ -23,7 +23,7 @@ import CustomDialogActions from '../dialog/CustomDialogActions';
 import { Event } from '../../../interfaces/event';
 import dayjs, { Dayjs } from 'dayjs';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { useContext, useState } from 'react';
+import { useContext } from 'react';
 import { CoursesContext } from '../../../contexts/CoursesContextProvider';
 import { User } from '../../../interfaces/user';
 import theme from '../../../themes';
@@ -31,33 +31,42 @@ import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 import { UsersContext } from '../../../contexts/UsersContextProvider';
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
 import axios from 'axios';
+import { EventsContext } from '../../../contexts/EventsContextProvider';
 
 interface CreateEventDialogProps {
 	newEvent: Event;
 	searchValue: string;
 	newEventModalOpen: boolean;
-	selectedUsername: string;
 	filteredUsers: User[];
+	isAllUsersSelected: boolean;
+	learnerFirebaseId: string;
+	filteredUsersModalOpen: boolean;
 	setNewEvent: React.Dispatch<React.SetStateAction<Event>>;
 	setSearchValue: React.Dispatch<React.SetStateAction<string>>;
 	setNewEventModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
-	setSelectedUsername: React.Dispatch<React.SetStateAction<string>>;
 	setFilteredUsers: React.Dispatch<React.SetStateAction<User[]>>;
-	handleAddEvent: () => Promise<void>;
+	setIsAllUsersSelected: React.Dispatch<React.SetStateAction<boolean>>;
+	setLearnerFirebaseId: React.Dispatch<React.SetStateAction<string>>;
+	setFilteredUsersModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+	filterUsers: () => Promise<void>;
 }
 
 const CreateEventDialog = ({
 	newEvent,
 	searchValue,
 	newEventModalOpen,
-	selectedUsername,
 	filteredUsers,
+	isAllUsersSelected,
+	learnerFirebaseId,
+	filteredUsersModalOpen,
 	setNewEvent,
 	setSearchValue,
 	setNewEventModalOpen,
-	setSelectedUsername,
 	setFilteredUsers,
-	handleAddEvent,
+	setIsAllUsersSelected,
+	setLearnerFirebaseId,
+	setFilteredUsersModalOpen,
+	filterUsers,
 }: CreateEventDialogProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
@@ -65,11 +74,33 @@ const CreateEventDialog = ({
 	const { user } = useContext(UserAuthContext);
 	const { orgId } = useContext(OrganisationContext);
 	const { sortedUsersData } = useContext(UsersContext);
+	const { addNewEvent } = useContext(EventsContext);
 
-	const [filteredUsersModalOpen, setFilteredUsersModalOpen] = useState<boolean>(false);
-	const [learnerFirebaseId, setLearnerFirebaseId] = useState<string>('');
-	const [selectedCourseTitle, setSelectedCourseTitle] = useState<string>('');
-	const [isAllUsersSelected, setIsAllUsersSelected] = useState<boolean>(false);
+	// Handle form submission to create new event
+	const handleAddEvent = async () => {
+		const event = {
+			title: newEvent.title,
+			description: newEvent.description,
+			start: newEvent.start,
+			end: newEvent.end,
+			eventLinkUrl: newEvent.eventLinkUrl,
+			location: newEvent.location,
+			isAllDay: newEvent.isAllDay,
+			isActive: true,
+			orgId,
+			courseId: newEvent.courseId,
+			learnerId: newEvent.learnerId,
+			createdBy: user?._id,
+		};
+
+		try {
+			await axios.post(`${base_url}/events`, event);
+
+			addNewEvent({ ...event, username: user?.username });
+		} catch (error) {
+			console.log(error);
+		}
+	};
 
 	const resetNewEventForm = () => {
 		setNewEvent({
@@ -85,35 +116,16 @@ const CreateEventDialog = ({
 			orgId,
 			courseId: '',
 			learnerId: '',
+			learnerUsername: '',
+			courseTitle: '',
 			createdBy: user?._id || '',
 			createdAt: '',
 			updatedAt: '',
 			username: '',
 		});
-		setSelectedUsername('');
 		setSearchValue('');
-		setSelectedCourseTitle('');
 	};
 
-	const filterUsers = async () => {
-		if (!searchValue.trim()) {
-			setFilteredUsers([]);
-			return;
-		}
-
-		try {
-			const response = await axios.get(`${base_url}/users/search`, {
-				params: { searchQuery: searchValue, orgId },
-			});
-
-			setFilteredUsers(response.data.data);
-			if (response.data.data.length > 0) {
-				setFilteredUsersModalOpen(true);
-			}
-		} catch (error) {
-			console.log(error);
-		}
-	};
 	return (
 		<CustomDialog
 			openModal={newEventModalOpen}
@@ -130,13 +142,13 @@ const CreateEventDialog = ({
 					setNewEventModalOpen(false);
 					resetNewEventForm();
 				}}>
-				<DialogContent>
+				<DialogContent sx={{ mt: '-1rem' }}>
 					<CustomTextField
 						label='Title'
 						value={newEvent.title}
 						onChange={(e) => setNewEvent((prevData) => ({ ...prevData, title: e.target.value }))}
-						sx={{ mt: '0.5rem' }}
 					/>
+
 					<CustomTextField
 						label='Description'
 						multiline
@@ -145,6 +157,7 @@ const CreateEventDialog = ({
 						value={newEvent.description}
 						onChange={(e) => setNewEvent((prevData) => ({ ...prevData, description: e.target.value }))}
 					/>
+
 					<Box sx={{ display: 'flex', mb: '0.85rem' }}>
 						<LocalizationProvider dateAdapter={AdapterDayjs}>
 							<DateTimePicker
@@ -167,6 +180,7 @@ const CreateEventDialog = ({
 								disabled={newEvent.isAllDay}
 							/>
 						</LocalizationProvider>
+
 						<LocalizationProvider dateAdapter={AdapterDayjs}>
 							<DateTimePicker
 								label='End Time'
@@ -195,23 +209,26 @@ const CreateEventDialog = ({
 						onChange={(e) => setNewEvent((prevData) => ({ ...prevData, eventLinkUrl: e.target.value }))}
 						required={false}
 					/>
+
 					<CustomTextField
 						label='Location'
 						value={newEvent.location}
 						onChange={(e) => setNewEvent((prevData) => ({ ...prevData, location: e.target.value }))}
 						required={false}
 					/>
+
 					<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
 						<Box sx={{ display: 'flex', alignItems: 'center', width: '100%', position: 'relative' }}>
 							<CustomTextField
 								label=''
 								value={searchValue}
-								disabled={!!selectedUsername || !!newEvent.courseId}
-								placeholder={selectedUsername ? '' : 'Search Learner'}
+								disabled={!!newEvent.learnerId || !!newEvent.courseId}
+								placeholder={newEvent.learnerId || newEvent.courseId ? '' : 'Search Learner'}
 								onChange={(e) => {
 									setSearchValue(e.target.value);
 									setFilteredUsers([]);
 								}}
+								sx={{ backgroundColor: !!newEvent.courseId ? 'transparent' : '#fff' }}
 								required={false}
 								InputProps={{
 									endAdornment: (
@@ -222,7 +239,14 @@ const CreateEventDialog = ({
 														if (searchValue) {
 															filterUsers();
 														}
-													}}>
+													}}
+													sx={{
+														mr: '-0.75rem',
+														':hover': {
+															backgroundColor: 'transparent',
+														},
+													}}
+													disabled={!!newEvent.courseId || !!newEvent.courseTitle}>
 													<Search />
 												</IconButton>
 											</Tooltip>
@@ -230,7 +254,7 @@ const CreateEventDialog = ({
 									),
 								}}
 							/>
-							{selectedUsername && (
+							{newEvent.learnerId && (
 								<Box
 									sx={{
 										display: 'flex',
@@ -243,10 +267,10 @@ const CreateEventDialog = ({
 										height: '1.75rem',
 										borderRadius: '0.25rem',
 									}}>
-									<Typography sx={{ fontSize: '0.85rem' }}>{selectedUsername}</Typography>
+									<Typography sx={{ fontSize: '0.85rem' }}>{newEvent.learnerUsername}</Typography>
 									<IconButton
 										onClick={() => {
-											setSelectedUsername('');
+											setNewEvent((prevData) => ({ ...prevData, learnerId: '', learnerUsername: '' }));
 										}}>
 										<Cancel sx={{ fontSize: '0.95rem' }} />
 									</IconButton>
@@ -280,9 +304,9 @@ const CreateEventDialog = ({
 										}}>
 										{filteredUsers
 											?.filter((filteredUser) => filteredUser.firebaseUserId !== user?.firebaseUserId)
-											?.map((user, index) => (
+											?.map((mappedUser, index) => (
 												<Box
-													key={user.firebaseUserId}
+													key={mappedUser.firebaseUserId}
 													sx={{
 														display: 'flex',
 														justifyContent: 'flex-start',
@@ -303,15 +327,14 @@ const CreateEventDialog = ({
 														},
 													}}
 													onClick={() => {
-														setNewEvent((prevData) => ({ ...prevData, learnerId: user._id }));
-														setLearnerFirebaseId(user.firebaseUserId);
+														setNewEvent((prevData) => ({ ...prevData, learnerId: mappedUser._id, learnerUsername: mappedUser.username }));
+														setLearnerFirebaseId(mappedUser.firebaseUserId);
 														setFilteredUsersModalOpen(false);
 														setSearchValue('');
-														setSelectedUsername(user.username);
 													}}>
 													<Box sx={{ borderRadius: '100%', marginRight: '1rem' }}>
 														<img
-															src={user.imageUrl}
+															src={mappedUser.imageUrl}
 															alt='profile_img'
 															style={{
 																height: '2.5rem',
@@ -323,7 +346,7 @@ const CreateEventDialog = ({
 													</Box>
 													<Box>
 														<Typography className='username' variant='body2'>
-															{user.username}
+															{mappedUser.username}
 														</Typography>
 													</Box>
 												</Box>
@@ -378,13 +401,12 @@ const CreateEventDialog = ({
 								label='Select Course'
 								size='medium'
 								fullWidth
-								disabled={!!selectedUsername}
-								value={selectedCourseTitle}
-								sx={{ fontSize: '0.85rem', backgroundColor: '#fff' }}
+								disabled={!!newEvent.learnerUsername}
+								value={newEvent.courseTitle}
+								sx={{ fontSize: '0.85rem', backgroundColor: !!newEvent.learnerUsername ? 'transparent' : '#fff' }}
 								onChange={(e) => {
-									setSelectedCourseTitle(e.target.value);
 									const selectedCourseId = sortedCoursesData.find((course) => course.title === e.target.value)?._id;
-									setNewEvent((prevData) => ({ ...prevData, courseId: selectedCourseId ? selectedCourseId : '' }));
+									setNewEvent((prevData) => ({ ...prevData, courseId: selectedCourseId ? selectedCourseId : '', courseTitle: e.target.value }));
 								}}
 								MenuProps={{
 									PaperProps: {
@@ -410,7 +432,27 @@ const CreateEventDialog = ({
 						control={
 							<Checkbox
 								checked={newEvent.isAllDay}
-								onChange={(e) => setNewEvent((prevData) => ({ ...prevData, isAllDay: e.target.checked }))}
+								onChange={(e) => {
+									const isAllDay = e.target.checked;
+									setNewEvent((prevData) => {
+										let updatedStart = prevData.start;
+										let updatedEnd = prevData.end;
+
+										// If "All Day" is checked, set start and end to cover the full day
+										if (isAllDay && updatedStart && updatedEnd) {
+											updatedStart = new Date(updatedStart.setHours(0, 0, 0, 0));
+											updatedEnd = new Date(updatedStart); // Start with the same day
+											updatedEnd.setHours(23, 59, 59, 999);
+										}
+
+										return {
+											...prevData,
+											isAllDay,
+											start: updatedStart,
+											end: updatedEnd,
+										};
+									});
+								}}
 								sx={{
 									'& .MuiSvgIcon-root': {
 										fontSize: '1.25rem', // Adjust the checkbox icon size

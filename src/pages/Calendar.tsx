@@ -4,14 +4,13 @@ import { format, parse, startOfWeek, getDay } from 'date-fns';
 import { enUS } from 'date-fns/locale/en-US';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
-import { Box, DialogActions, DialogContent, Link, Typography } from '@mui/material';
+import { Box } from '@mui/material';
 import { EventsContext } from '../contexts/EventsContextProvider';
 import { Event } from '../interfaces/event';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import axios from 'axios';
-import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
 import { User } from '../interfaces/user';
 import { Roles } from '../interfaces/enums';
 import CreateEventDialog from '../components/layouts/calendar/CreateEventDialog';
@@ -32,7 +31,7 @@ const localizer = dateFnsLocalizer({
 
 const EventCalendar = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
-	const { sortedEventsData, addNewEvent } = useContext(EventsContext);
+	const { sortedEventsData } = useContext(EventsContext);
 	const { orgId } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
 
@@ -44,9 +43,30 @@ const EventCalendar = () => {
 	const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
 	const [searchValue, setSearchValue] = useState<string>('');
 
-	const [selectedUsername, setSelectedUsername] = useState<string>('');
-
 	const [editEventModalOpen, setEditEventModalOpen] = useState<boolean>(false);
+
+	const [filteredUsersModalOpen, setFilteredUsersModalOpen] = useState<boolean>(false);
+	const [learnerFirebaseId, setLearnerFirebaseId] = useState<string>('');
+	const [isAllUsersSelected, setIsAllUsersSelected] = useState<boolean>(false);
+
+	const filterUsers = async () => {
+		if (!searchValue.trim()) {
+			setFilteredUsers([]);
+		}
+
+		try {
+			const response = await axios.get(`${base_url}/users/search`, {
+				params: { searchQuery: searchValue, orgId },
+			});
+
+			setFilteredUsers(response.data.data);
+			if (response.data.data.length > 0) {
+				setFilteredUsersModalOpen(true);
+			}
+		} catch (error) {
+			console.log(error);
+		}
+	};
 
 	const [newEvent, setNewEvent] = useState<Event>({
 		_id: '',
@@ -73,11 +93,9 @@ const EventCalendar = () => {
 			const startDate = new Date(event.start!);
 			let endDate = new Date(event.end!);
 
-			// Check if the event is full-day
 			const isAllDayEvent = event.isAllDay || false;
 
 			if (isAllDayEvent) {
-				// Set end date to the same day for full-day events (optional: to the end of the day)
 				endDate.setHours(23, 59, 59);
 			}
 
@@ -108,32 +126,6 @@ const EventCalendar = () => {
 
 		setNewEvent({ ...newEvent, start: startTime, end: endTime });
 		setNewEventModalOpen(true);
-	};
-
-	// Handle form submission to create new event
-	const handleAddEvent = async () => {
-		const event = {
-			title: newEvent.title,
-			description: newEvent.description,
-			start: newEvent.start,
-			end: newEvent.end,
-			eventLinkUrl: newEvent.eventLinkUrl,
-			location: newEvent.location,
-			isAllDay: newEvent.isAllDay,
-			isActive: true,
-			orgId,
-			courseId: newEvent.courseId,
-			learnerId: newEvent.learnerId,
-			createdBy: user?._id,
-		};
-
-		try {
-			await axios.post(`${base_url}/events`, event);
-
-			addNewEvent({ ...event, username: user?.username });
-		} catch (error) {
-			console.log(error);
-		}
 	};
 
 	const handleEventSelect = (event: Event) => {
@@ -176,14 +168,18 @@ const EventCalendar = () => {
 				newEvent={newEvent}
 				searchValue={searchValue}
 				newEventModalOpen={newEventModalOpen}
-				selectedUsername={selectedUsername}
 				filteredUsers={filteredUsers}
+				isAllUsersSelected={isAllUsersSelected}
+				learnerFirebaseId={learnerFirebaseId}
+				filteredUsersModalOpen={filteredUsersModalOpen}
 				setFilteredUsers={setFilteredUsers}
 				setNewEvent={setNewEvent}
 				setSearchValue={setSearchValue}
 				setNewEventModalOpen={setNewEventModalOpen}
-				setSelectedUsername={setSelectedUsername}
-				handleAddEvent={handleAddEvent}
+				setIsAllUsersSelected={setIsAllUsersSelected}
+				setLearnerFirebaseId={setLearnerFirebaseId}
+				setFilteredUsersModalOpen={setFilteredUsersModalOpen}
+				filterUsers={filterUsers}
 			/>
 
 			<EventDetailsDialog
@@ -192,7 +188,23 @@ const EventCalendar = () => {
 				setEventDetailsModalOpen={setEventDetailsModalOpen}
 			/>
 
-			<EditEventDialog />
+			<EditEventDialog
+				editEventModalOpen={editEventModalOpen}
+				selectedEvent={selectedEvent}
+				searchValue={searchValue}
+				filteredUsers={filteredUsers}
+				isAllUsersSelected={isAllUsersSelected}
+				learnerFirebaseId={learnerFirebaseId}
+				filteredUsersModalOpen={filteredUsersModalOpen}
+				setFilteredUsers={setFilteredUsers}
+				setEditEventModalOpen={setEditEventModalOpen}
+				setSelectedEvent={setSelectedEvent}
+				setSearchValue={setSearchValue}
+				setIsAllUsersSelected={setIsAllUsersSelected}
+				setLearnerFirebaseId={setLearnerFirebaseId}
+				setFilteredUsersModalOpen={setFilteredUsersModalOpen}
+				filterUsers={filterUsers}
+			/>
 
 			<CustomDialog title='Edit Event'></CustomDialog>
 		</DashboardPagesLayout>
