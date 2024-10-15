@@ -1,29 +1,14 @@
-import {
-	Box,
-	Checkbox,
-	DialogActions,
-	DialogContent,
-	FormControl,
-	FormControlLabel,
-	IconButton,
-	InputAdornment,
-	InputLabel,
-	MenuItem,
-	Select,
-	Tooltip,
-	Typography,
-} from '@mui/material';
+import { Box, Checkbox, DialogContent, FormControlLabel, IconButton, InputAdornment, Typography } from '@mui/material';
 import CustomDialog from '../dialog/CustomDialog';
 import CustomTextField from '../../forms/customFields/CustomTextField';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider/LocalizationProvider';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { Cancel, Search } from '@mui/icons-material';
-import CustomCancelButton from '../../forms/customButtons/CustomCancelButton';
 import CustomDialogActions from '../dialog/CustomDialogActions';
-import { Event } from '../../../interfaces/event';
+import { AttendeeInfo, Event } from '../../../interfaces/event';
 import dayjs, { Dayjs } from 'dayjs';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 import { CoursesContext } from '../../../contexts/CoursesContextProvider';
 import { User } from '../../../interfaces/user';
 import theme from '../../../themes';
@@ -32,52 +17,110 @@ import { UsersContext } from '../../../contexts/UsersContextProvider';
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
 import axios from 'axios';
 import { EventsContext } from '../../../contexts/EventsContextProvider';
+import { truncateText } from '../../../utils/utilText';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { SingleCourse } from '../../../interfaces/course';
+import { db } from '../../../firebase';
 
 interface CreateEventDialogProps {
 	newEvent: Event;
-	searchValue: string;
 	newEventModalOpen: boolean;
 	filteredUsers: User[];
-	isAllUsersSelected: boolean;
-	learnerFirebaseId: string;
-	filteredUsersModalOpen: boolean;
+	filteredCourses: SingleCourse[];
+	isAllLearnersSelected: boolean;
+	isAllCoursesSelected: boolean;
 	setNewEvent: React.Dispatch<React.SetStateAction<Event>>;
-	setSearchValue: React.Dispatch<React.SetStateAction<string>>;
 	setNewEventModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
 	setFilteredUsers: React.Dispatch<React.SetStateAction<User[]>>;
-	setIsAllUsersSelected: React.Dispatch<React.SetStateAction<boolean>>;
-	setLearnerFirebaseId: React.Dispatch<React.SetStateAction<string>>;
-	setFilteredUsersModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
-	filterUsers: () => Promise<void>;
+	setFilteredCourses: React.Dispatch<React.SetStateAction<SingleCourse[]>>;
+	setIsAllLearnersSelected: React.Dispatch<React.SetStateAction<boolean>>;
+	setIsAllCoursesSelected: React.Dispatch<React.SetStateAction<boolean>>;
+	filterUsers: (searchQuery: string) => void;
+	filterCourses: (searchQuery: string) => void;
 }
 
 const CreateEventDialog = ({
 	newEvent,
-	searchValue,
 	newEventModalOpen,
 	filteredUsers,
-	isAllUsersSelected,
-	learnerFirebaseId,
-	filteredUsersModalOpen,
+	filteredCourses,
+	isAllLearnersSelected,
+	isAllCoursesSelected,
 	setNewEvent,
-	setSearchValue,
 	setNewEventModalOpen,
 	setFilteredUsers,
-	setIsAllUsersSelected,
-	setLearnerFirebaseId,
-	setFilteredUsersModalOpen,
+	setFilteredCourses,
+	setIsAllLearnersSelected,
+	setIsAllCoursesSelected,
 	filterUsers,
+	filterCourses,
 }: CreateEventDialogProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
-	const { sortedCoursesData } = useContext(CoursesContext);
 	const { user } = useContext(UserAuthContext);
 	const { orgId } = useContext(OrganisationContext);
 	const { sortedUsersData } = useContext(UsersContext);
+	const { sortedCoursesData } = useContext(CoursesContext);
 	const { addNewEvent } = useContext(EventsContext);
+
+	const [searchLearnerValue, setSearchLearnerValue] = useState<string>('');
+	const [searchCourseValue, setSearchCourseValue] = useState<string>('');
+
+	// const [allCoursesParticipantsInfo, setAllCoursesParticipantsInfo] = useState<AttendeeInfo[]>([]);
 
 	// Handle form submission to create new event
 	const handleAddEvent = async () => {
+		const allFirebaseUserIds: string[] = sortedUsersData
+			?.filter((filteredUser) => filteredUser._id !== user?._id)
+			?.map((mappedUser) => mappedUser.firebaseUserId);
+
+		const participants = [...newEvent.attendees]; // Start with selected attendees
+		let allParticipantsIds: string[] = [];
+		let allCoursesParticipantsInfo: AttendeeInfo[] = [];
+
+		if (newEvent.isAllLearnersSelected) {
+			// Handle All Learners selection
+			setNewEvent((prevData) => ({ ...prevData, allAttendeesIds: [], coursesIds: [], attendees: [] }));
+			allCoursesParticipantsInfo = [];
+		} else if (newEvent.isAllCoursesSelected) {
+			// Handle All Courses selection
+			try {
+				const res = await axios.get(`${base_url}/usercourses/participants/organisation/${orgId}`);
+
+				allCoursesParticipantsInfo = [...res.data.participants, ...participants];
+				allParticipantsIds = [...res.data.participants, ...participants]?.map((participant: AttendeeInfo) => participant._id);
+			} catch (error) {
+				console.log(error);
+			}
+		} else if (newEvent.coursesIds.length > 0) {
+			// Use local array to accumulate course participants
+			const courseParticipants: AttendeeInfo[] = [];
+
+			await Promise.all(
+				newEvent.coursesIds.map(async (courseId) => {
+					try {
+						const res = await axios.get(`${base_url}/userCourses/course/${courseId}`);
+						courseParticipants.push(...res.data.users); // Collect participants directly
+					} catch (error) {
+						console.log(error);
+					}
+				})
+			);
+
+			// Combine and deduplicate all participants locally
+			const combinedParticipants = Array.from(new Map([...courseParticipants, ...participants].map((user) => [user._id, user])).values());
+
+			allCoursesParticipantsInfo = combinedParticipants; // Update state once with final list
+			allParticipantsIds = combinedParticipants.map((participant) => participant._id);
+		} else {
+			// If no special selection, update with direct attendees
+			const uniqueParticipants = Array.from(new Map([...participants].map((user) => [user._id, user])).values());
+
+			allCoursesParticipantsInfo = uniqueParticipants;
+			const allParticipantsIds = uniqueParticipants.map((participant) => participant._id);
+			setNewEvent((prevData) => ({ ...prevData, allAttendeesIds: allParticipantsIds }));
+		}
+
 		const event = {
 			title: newEvent.title,
 			description: newEvent.description,
@@ -88,22 +131,62 @@ const CreateEventDialog = ({
 			isAllDay: newEvent.isAllDay,
 			isActive: true,
 			orgId,
-			courseId: newEvent.courseId,
-			learnerId: newEvent.learnerId,
-			createdBy: user?._id,
+			attendees: newEvent.attendees,
+			allAttendeesIds: allParticipantsIds,
+			isAllLearnersSelected,
+			isAllCoursesSelected,
+			coursesIds: newEvent.coursesIds,
+			createdBy: user?._id!,
 		};
 
 		try {
-			await axios.post(`${base_url}/events`, event);
+			const res = await axios.post(`${base_url}/events`, event);
 
-			addNewEvent({ ...event, username: user?.username });
+			addNewEvent({ ...event, _id: res.data.data._id });
+
+			const startDate = newEvent?.start?.toLocaleDateString('en-US', {
+				weekday: 'long',
+				year: 'numeric',
+				month: 'long',
+				day: 'numeric',
+			});
+			const startTime = newEvent?.start?.toLocaleTimeString('en-US', {
+				hour: '2-digit',
+				minute: '2-digit',
+			});
+
+			const notificationData = {
+				title: 'Event Added',
+				message: `${user?.username} added a new event to your calendar: "${truncateText(
+					newEvent.title,
+					20
+				)}". It is scheduled for ${startDate} at ${startTime} `,
+				isRead: false,
+				timestamp: serverTimestamp(),
+				type: 'NewEvent',
+				userImageUrl: user?.imageUrl,
+			};
+
+			if (newEvent.isAllLearnersSelected) {
+				for (const id of allFirebaseUserIds) {
+					const notificationRef = collection(db, 'notifications', id, 'userNotifications');
+					await addDoc(notificationRef, notificationData);
+				}
+			} else {
+				for (const participant of allCoursesParticipantsInfo) {
+					const notificationRef = collection(db, 'notifications', participant.firebaseUserId, 'userNotifications');
+					await addDoc(notificationRef, notificationData);
+				}
+			}
 		} catch (error) {
 			console.log(error);
 		}
+
+		resetNewEventForm();
 	};
 
 	const resetNewEventForm = () => {
-		setNewEvent({
+		setNewEvent(() => ({
 			_id: '',
 			title: '',
 			description: '',
@@ -114,16 +197,20 @@ const CreateEventDialog = ({
 			isAllDay: false,
 			isActive: true,
 			orgId,
-			courseId: '',
-			learnerId: '',
-			learnerUsername: '',
-			courseTitle: '',
-			createdBy: user?._id || '',
+			attendees: [],
+			createdBy: '',
 			createdAt: '',
 			updatedAt: '',
-			username: '',
-		});
-		setSearchValue('');
+			coursesIds: [],
+			allAttendeesIds: [],
+			isAllLearnersSelected: false,
+			isAllCoursesSelected: false,
+		}));
+
+		setSearchLearnerValue('');
+		setSearchCourseValue('');
+		setIsAllCoursesSelected(false);
+		setIsAllLearnersSelected(false);
 	};
 
 	return (
@@ -142,7 +229,7 @@ const CreateEventDialog = ({
 					setNewEventModalOpen(false);
 					resetNewEventForm();
 				}}>
-				<DialogContent sx={{ mt: '-1rem' }}>
+				<DialogContent sx={{ mt: '-0.5rem' }}>
 					<CustomTextField
 						label='Title'
 						value={newEvent.title}
@@ -203,6 +290,332 @@ const CreateEventDialog = ({
 						</LocalizationProvider>
 					</Box>
 
+					{newEvent.attendees.length > 0 && (
+						<Box sx={{ display: 'flex', margin: '1.5rem 0 0.75rem 0', flexWrap: 'wrap' }}>
+							{newEvent.attendees?.map((attendee) => {
+								return (
+									<Box
+										key={attendee._id}
+										sx={{
+											display: 'flex',
+											alignItems: 'center',
+											border: 'solid lightgray 0.1rem',
+											padding: '0 0.25rem',
+											height: '1.75rem',
+											borderRadius: '0.25rem',
+											margin: '0.35rem 0.35rem 0 0',
+										}}>
+										<Typography sx={{ fontSize: '0.85rem' }}>{attendee.username}</Typography>
+										<IconButton
+											onClick={() => {
+												const updatedAttendees = newEvent.attendees.filter((filteredAttendee) => attendee._id !== filteredAttendee._id);
+
+												setNewEvent((prevData) => ({ ...prevData, attendees: updatedAttendees }));
+											}}>
+											<Cancel sx={{ fontSize: '0.95rem' }} />
+										</IconButton>
+									</Box>
+								);
+							})}
+						</Box>
+					)}
+
+					<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
+						<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+							<CustomTextField
+								label=''
+								value={searchLearnerValue}
+								disabled={isAllLearnersSelected}
+								placeholder={isAllLearnersSelected ? '' : 'Search Learner'}
+								onChange={(e) => {
+									setSearchLearnerValue(e.target.value);
+									filterUsers(e.target.value);
+								}}
+								sx={{ width: '80%', backgroundColor: isAllLearnersSelected ? 'transparent' : '#fff' }}
+								required={false}
+								InputProps={{
+									endAdornment: (
+										<InputAdornment position='end'>
+											<Search
+												sx={{
+													mr: '-0.5rem',
+												}}
+											/>
+										</InputAdornment>
+									),
+								}}
+							/>
+							<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '20%', mb: '0.85rem' }}>
+								<FormControlLabel
+									labelPlacement='start'
+									control={
+										<Checkbox
+											checked={isAllLearnersSelected}
+											onChange={(e) => {
+												setIsAllLearnersSelected(e.target.checked);
+												setNewEvent((prevData) => ({ ...prevData, isAllLearnersSelected: e.target.checked }));
+
+												if (e.target.checked) {
+													setNewEvent((prevData) => ({ ...prevData, attendees: [], coursesIds: [], allAttendeesIds: [] }));
+													setIsAllCoursesSelected(false);
+												}
+											}}
+											sx={{
+												'& .MuiSvgIcon-root': {
+													fontSize: '1.25rem', // Adjust the checkbox icon size
+												},
+											}}
+										/>
+									}
+									label='All Learners'
+									sx={{
+										mt: '0rem',
+										'& .MuiFormControlLabel-label': {
+											fontSize: '0.7rem', // Adjust the label font size
+										},
+									}}
+								/>
+							</Box>
+						</Box>
+
+						{filteredUsers.length !== 0 && (
+							<Box
+								sx={{
+									display: 'flex',
+									flexDirection: 'column',
+									justifyContent: 'flex-start',
+									alignItems: 'flex-start',
+									width: '60%',
+									maxHeight: '10rem',
+									overflowY: 'auto',
+									overflowX: 'hidden',
+									margin: '-1rem auto 1.5rem auto',
+									border: 'solid 0.05rem lightgray',
+									position: 'absolute',
+									top: '3.25rem',
+									left: 0,
+									zIndex: 3,
+									backgroundColor: theme.bgColor?.common,
+									boxShadow: '0.15rem 0.2rem 0.3rem 0rem rgba(0,0,0,0.1)',
+								}}>
+								{filteredUsers
+									?.filter((filteredUser) => filteredUser.firebaseUserId !== user?.firebaseUserId)
+									?.map((mappedUser) => (
+										<Box
+											key={mappedUser.firebaseUserId}
+											sx={{
+												display: 'flex',
+												justifyContent: 'flex-start',
+												alignItems: 'center',
+												width: '100%',
+												padding: '0.5rem',
+												transition: '0.5s',
+												borderRadius: '0.25rem',
+												':hover': {
+													backgroundColor: theme.bgColor?.primary,
+													color: '#fff',
+													cursor: 'pointer',
+													'& .username': {
+														color: '#fff',
+													},
+												},
+											}}
+											onClick={() => {
+												setNewEvent((prevData) => {
+													const updatedAttendees = [...prevData.attendees];
+													updatedAttendees.push({
+														_id: mappedUser._id,
+														firebaseUserId: mappedUser.firebaseUserId,
+														username: mappedUser.username,
+													});
+													return { ...prevData, attendees: updatedAttendees };
+												});
+												setSearchLearnerValue('');
+												setFilteredUsers([]);
+											}}>
+											<Box sx={{ borderRadius: '100%', marginRight: '1rem' }}>
+												<img
+													src={mappedUser.imageUrl}
+													alt='profile_img'
+													style={{
+														height: '2rem',
+														width: '2rem',
+														borderRadius: '100%',
+														border: 'solid lightgray 0.1rem',
+													}}
+												/>
+											</Box>
+											<Box>
+												<Typography className='username' sx={{ fontSize: '0.85rem' }}>
+													{mappedUser.username}
+												</Typography>
+											</Box>
+										</Box>
+									))}
+							</Box>
+						)}
+					</Box>
+
+					{newEvent.coursesIds.length > 0 && (
+						<Box sx={{ display: 'flex', margin: '0.75rem 0 0.75rem 0', flexWrap: 'wrap' }}>
+							{newEvent.coursesIds?.map((id) => {
+								const course = sortedCoursesData.find((course) => course._id === id);
+								return (
+									<Box
+										key={course?._id}
+										sx={{
+											display: 'flex',
+											alignItems: 'center',
+											border: 'solid lightgray 0.1rem',
+											padding: '0 0.25rem',
+											height: '1.75rem',
+											borderRadius: '0.25rem',
+											margin: '0.35rem 0.35rem 0 0',
+										}}>
+										<Typography sx={{ fontSize: '0.85rem' }}>{truncateText(course?.title!, 20)}</Typography>
+										<IconButton
+											onClick={() => {
+												const updatedCourses = newEvent.coursesIds.filter((filteredCourseId) => course?._id !== filteredCourseId);
+
+												setNewEvent((prevData) => ({ ...prevData, coursesIds: updatedCourses }));
+											}}>
+											<Cancel sx={{ fontSize: '0.95rem' }} />
+										</IconButton>
+									</Box>
+								);
+							})}
+						</Box>
+					)}
+
+					<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
+						<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+							<CustomTextField
+								label=''
+								value={searchCourseValue}
+								disabled={isAllLearnersSelected || isAllCoursesSelected}
+								placeholder={isAllLearnersSelected || isAllCoursesSelected ? '' : 'Search Course'}
+								onChange={(e) => {
+									setSearchCourseValue(e.target.value);
+									filterCourses(e.target.value);
+								}}
+								sx={{ width: '80%', backgroundColor: isAllLearnersSelected || isAllCoursesSelected ? 'transparent' : '#fff' }}
+								required={false}
+								InputProps={{
+									endAdornment: (
+										<InputAdornment position='end'>
+											<Search
+												sx={{
+													mr: '-0.5rem',
+												}}
+											/>
+										</InputAdornment>
+									),
+								}}
+							/>
+							<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '20%', mb: '0.85rem' }}>
+								<FormControlLabel
+									disabled={isAllLearnersSelected}
+									labelPlacement='start'
+									control={
+										<Checkbox
+											checked={isAllCoursesSelected}
+											onChange={(e) => {
+												setIsAllCoursesSelected(e.target.checked);
+												setNewEvent((prevData) => ({ ...prevData, isAllCoursesSelected: e.target.checked }));
+												if (e.target.checked) {
+													setNewEvent((prevData) => ({ ...prevData, coursesIds: [] }));
+												}
+											}}
+											sx={{
+												'& .MuiSvgIcon-root': {
+													fontSize: '1.25rem', // Adjust the checkbox icon size
+												},
+											}}
+										/>
+									}
+									label='All Courses'
+									sx={{
+										'& .MuiFormControlLabel-label': {
+											fontSize: '0.7rem', // Adjust the label font size
+										},
+									}}
+								/>
+							</Box>
+						</Box>
+
+						{filteredCourses.length !== 0 && (
+							<Box
+								sx={{
+									display: 'flex',
+									flexDirection: 'column',
+									justifyContent: 'flex-start',
+									alignItems: 'flex-start',
+									width: '60%',
+									maxHeight: '10rem',
+									overflowY: 'auto',
+									overflowX: 'hidden',
+									margin: '-1rem auto 1.5rem auto',
+									border: 'solid 0.05rem lightgray',
+									position: 'absolute',
+									top: '3.25rem',
+									left: 0,
+									zIndex: 3,
+									backgroundColor: theme.bgColor?.common,
+								}}>
+								{filteredCourses?.map((course) => (
+									<Box
+										key={course._id}
+										sx={{
+											display: 'flex',
+											justifyContent: 'flex-start',
+											alignItems: 'center',
+											width: '100%',
+											padding: '0.5rem',
+											transition: '0.5s',
+											borderRadius: '0.25rem',
+											':hover': {
+												backgroundColor: theme.bgColor?.primary,
+												color: '#fff',
+												cursor: 'pointer',
+												'& .username': {
+													color: '#fff',
+												},
+											},
+										}}
+										onClick={() => {
+											setNewEvent((prevData) => {
+												const updatedCoursesIds = [...prevData.coursesIds];
+												updatedCoursesIds.push(course._id);
+												return { ...prevData, coursesIds: updatedCoursesIds };
+											});
+											setSearchCourseValue('');
+											setFilteredCourses([]);
+										}}>
+										{course.imageUrl && (
+											<Box sx={{ borderRadius: '100%', marginRight: '1rem' }}>
+												<img
+													src={course.imageUrl}
+													alt='img'
+													style={{
+														height: '2rem',
+														width: '2rem',
+														borderRadius: '100%',
+														border: 'solid lightgray 0.1rem',
+													}}
+												/>
+											</Box>
+										)}
+										<Box>
+											<Typography className='username' sx={{ fontSize: '0.85rem' }}>
+												{truncateText(course.title, 30)}
+											</Typography>
+										</Box>
+									</Box>
+								))}
+							</Box>
+						)}
+					</Box>
+
 					<CustomTextField
 						label='Event Link'
 						value={newEvent.eventLinkUrl}
@@ -217,217 +630,6 @@ const CreateEventDialog = ({
 						required={false}
 					/>
 
-					<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-						<Box sx={{ display: 'flex', alignItems: 'center', width: '100%', position: 'relative' }}>
-							<CustomTextField
-								label=''
-								value={searchValue}
-								disabled={!!newEvent.learnerId || !!newEvent.courseId}
-								placeholder={newEvent.learnerId || newEvent.courseId ? '' : 'Search Learner'}
-								onChange={(e) => {
-									setSearchValue(e.target.value);
-									setFilteredUsers([]);
-								}}
-								sx={{ backgroundColor: !!newEvent.courseId ? 'transparent' : '#fff' }}
-								required={false}
-								InputProps={{
-									endAdornment: (
-										<InputAdornment position='end'>
-											<Tooltip title='Search' placement='top'>
-												<IconButton
-													onClick={() => {
-														if (searchValue) {
-															filterUsers();
-														}
-													}}
-													sx={{
-														mr: '-0.75rem',
-														':hover': {
-															backgroundColor: 'transparent',
-														},
-													}}
-													disabled={!!newEvent.courseId || !!newEvent.courseTitle}>
-													<Search />
-												</IconButton>
-											</Tooltip>
-										</InputAdornment>
-									),
-								}}
-							/>
-							{newEvent.learnerId && (
-								<Box
-									sx={{
-										display: 'flex',
-										alignItems: 'center',
-										position: 'absolute',
-										left: '0.75rem',
-										bottom: '1.1rem',
-										border: 'solid lightgray 0.1rem',
-										padding: '0 0.25rem',
-										height: '1.75rem',
-										borderRadius: '0.25rem',
-									}}>
-									<Typography sx={{ fontSize: '0.85rem' }}>{newEvent.learnerUsername}</Typography>
-									<IconButton
-										onClick={() => {
-											setNewEvent((prevData) => ({ ...prevData, learnerId: '', learnerUsername: '' }));
-										}}>
-										<Cancel sx={{ fontSize: '0.95rem' }} />
-									</IconButton>
-								</Box>
-							)}
-						</Box>
-
-						<CustomDialog
-							openModal={filteredUsersModalOpen}
-							closeModal={() => {
-								setFilteredUsersModalOpen(false);
-								setSearchValue('');
-								setIsAllUsersSelected(false);
-							}}
-							maxWidth='sm'
-							title='Filtered User(s)'
-							content='Click to select'>
-							<DialogContent>
-								{filteredUsers.length !== 0 && (
-									<Box
-										sx={{
-											display: 'flex',
-											flexDirection: 'column',
-											justifyContent: 'center',
-											alignItems: 'flex-start',
-											width: '85%',
-											height: 'auto',
-											margin: '-1rem auto 1.5rem auto',
-											border: 'solid 0.05rem lightgray',
-											overflow: 'auto',
-										}}>
-										{filteredUsers
-											?.filter((filteredUser) => filteredUser.firebaseUserId !== user?.firebaseUserId)
-											?.map((mappedUser, index) => (
-												<Box
-													key={mappedUser.firebaseUserId}
-													sx={{
-														display: 'flex',
-														justifyContent: 'flex-start',
-														alignItems: 'center',
-														width: '100%',
-														padding: '0.5rem',
-														paddingTop: index === 0 ? '1.25rem' : '',
-														paddingBottom: index === filteredUsers.length - 1 ? '1.25rem' : '',
-														transition: '0.5s',
-														borderRadius: '0.25rem',
-														':hover': {
-															backgroundColor: theme.bgColor?.primary,
-															color: '#fff',
-															cursor: 'pointer',
-															'& .username': {
-																color: '#fff',
-															},
-														},
-													}}
-													onClick={() => {
-														setNewEvent((prevData) => ({ ...prevData, learnerId: mappedUser._id, learnerUsername: mappedUser.username }));
-														setLearnerFirebaseId(mappedUser.firebaseUserId);
-														setFilteredUsersModalOpen(false);
-														setSearchValue('');
-													}}>
-													<Box sx={{ borderRadius: '100%', marginRight: '1rem' }}>
-														<img
-															src={mappedUser.imageUrl}
-															alt='profile_img'
-															style={{
-																height: '2.5rem',
-																width: '2.5rem',
-																borderRadius: '100%',
-																border: 'solid lightgray 0.1rem',
-															}}
-														/>
-													</Box>
-													<Box>
-														<Typography className='username' variant='body2'>
-															{mappedUser.username}
-														</Typography>
-													</Box>
-												</Box>
-											))}
-									</Box>
-								)}
-								<Box sx={{ width: '100%', textAlign: 'center' }}>
-									<Typography
-										onClick={() => {
-											if (!isAllUsersSelected) {
-												const allOtherUsers = sortedUsersData.filter((mappedUser) => user?._id !== mappedUser._id);
-												setFilteredUsers(allOtherUsers);
-												setIsAllUsersSelected(true);
-											} else {
-												filterUsers();
-												setIsAllUsersSelected(false);
-											}
-										}}
-										sx={{
-											fontSize: '0.85rem',
-											cursor: 'pointer',
-											':hover': {
-												textDecoration: 'underline',
-											},
-										}}>
-										{!isAllUsersSelected ? 'See All Users' : 'Back to Search'}
-									</Typography>
-								</Box>
-							</DialogContent>
-							<DialogActions>
-								<Box sx={{ display: 'flex', justifyContent: 'center', margin: '0 1rem 1rem 1rem' }}>
-									<CustomCancelButton
-										onClick={() => {
-											setSearchValue('');
-											setIsAllUsersSelected(false);
-											setFilteredUsersModalOpen(false);
-										}}>
-										Close
-									</CustomCancelButton>
-								</Box>
-							</DialogActions>
-						</CustomDialog>
-					</Box>
-
-					<Box sx={{ display: 'flex', alignItems: 'center' }}>
-						<FormControl fullWidth>
-							<InputLabel id='course-label' sx={{ fontSize: '0.8rem' }}>
-								Select Course
-							</InputLabel>
-							<Select
-								labelId='course-label'
-								label='Select Course'
-								size='medium'
-								fullWidth
-								disabled={!!newEvent.learnerUsername}
-								value={newEvent.courseTitle}
-								sx={{ fontSize: '0.85rem', backgroundColor: !!newEvent.learnerUsername ? 'transparent' : '#fff' }}
-								onChange={(e) => {
-									const selectedCourseId = sortedCoursesData.find((course) => course.title === e.target.value)?._id;
-									setNewEvent((prevData) => ({ ...prevData, courseId: selectedCourseId ? selectedCourseId : '', courseTitle: e.target.value }));
-								}}
-								MenuProps={{
-									PaperProps: {
-										style: {
-											maxHeight: 250,
-										},
-									},
-								}}>
-								<MenuItem value=''>
-									<Typography sx={{ fontSize: '0.8rem', color: 'gray', fontStyle: 'italic' }}>Clear Selection</Typography>
-								</MenuItem>
-								{sortedCoursesData?.map((course) => {
-									return (
-										<MenuItem key={course._id} value={course.title}>
-											<Typography sx={{ fontSize: '0.85rem' }}>{course.title}</Typography>
-										</MenuItem>
-									);
-								})}
-							</Select>
-						</FormControl>
-					</Box>
 					<FormControlLabel
 						control={
 							<Checkbox

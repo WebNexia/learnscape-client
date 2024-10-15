@@ -51,8 +51,6 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 		try {
 			const response = await axios.get(`${base_url}/events/organisation/${orgId}?page=${page}&limit=1000`);
 
-			console.log(response.data.data);
-
 			// Initial sorting when fetching data
 			const sortedDataCopy = [...response.data.data].sort((a: Event, b: Event) => b.updatedAt.localeCompare(a.updatedAt));
 			setSortedEventsData(sortedDataCopy);

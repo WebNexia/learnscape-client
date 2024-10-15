@@ -3,18 +3,24 @@ export interface Event {
 	title: string;
 	description: string;
 	orgId: string;
-	courseId?: string;
-	learnerId?: string;
-	learnerUsername?: string;
-	courseTitle?: string;
+	attendees: AttendeeInfo[];
 	start: Date | null;
 	end: Date | null;
 	location: string;
 	createdBy: string;
 	isActive: boolean;
 	eventLinkUrl: string;
-	username: string;
 	isAllDay: boolean;
+	coursesIds: string[];
+	allAttendeesIds: string[];
+	isAllLearnersSelected: boolean;
+	isAllCoursesSelected: boolean;
 	createdAt: string;
 	updatedAt: string;
+}
+
+export interface AttendeeInfo {
+	_id: string;
+	firebaseUserId: string;
+	username: string;
 }

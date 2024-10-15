@@ -1,4 +1,4 @@
-import { useContext, useState, useEffect } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { Calendar, dateFnsLocalizer, SlotInfo } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
 import { enUS } from 'date-fns/locale/en-US';
@@ -10,12 +10,14 @@ import { Event } from '../interfaces/event';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
-import axios from 'axios';
 import { User } from '../interfaces/user';
 import { Roles } from '../interfaces/enums';
 import CreateEventDialog from '../components/layouts/calendar/CreateEventDialog';
 import EventDetailsDialog from '../components/layouts/calendar/EventDetailsDialog';
 import EditEventDialog from '../components/layouts/calendar/EditEventDialog';
+import { UsersContext } from '../contexts/UsersContextProvider';
+import { CoursesContext } from '../contexts/CoursesContextProvider';
+import { SingleCourse } from '../interfaces/course';
 
 const locales = {
 	'en-US': enUS,
@@ -30,10 +32,11 @@ const localizer = dateFnsLocalizer({
 });
 
 const EventCalendar = () => {
-	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { sortedEventsData } = useContext(EventsContext);
 	const { orgId } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
+	const { sortedUsersData } = useContext(UsersContext);
+	const { sortedCoursesData } = useContext(CoursesContext);
 
 	const [eventsData, setEventsData] = useState<Event[]>([]);
 	const [newEventModalOpen, setNewEventModalOpen] = useState<boolean>(false);
@@ -41,32 +44,14 @@ const EventCalendar = () => {
 	const [eventDetailsModalOpen, setEventDetailsModalOpen] = useState<boolean>(false);
 
 	const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
-	const [searchValue, setSearchValue] = useState<string>('');
+	const [filteredCourses, setFilteredCourses] = useState<SingleCourse[]>([]);
 
 	const [editEventModalOpen, setEditEventModalOpen] = useState<boolean>(false);
 
-	const [filteredUsersModalOpen, setFilteredUsersModalOpen] = useState<boolean>(false);
-	const [learnerFirebaseId, setLearnerFirebaseId] = useState<string>('');
-	const [isAllUsersSelected, setIsAllUsersSelected] = useState<boolean>(false);
+	const [isAllLearnersSelected, setIsAllLearnersSelected] = useState<boolean>(false);
+	const [isAllCoursesSelected, setIsAllCoursesSelected] = useState<boolean>(false);
 
-	const filterUsers = async () => {
-		if (!searchValue.trim()) {
-			setFilteredUsers([]);
-		}
-
-		try {
-			const response = await axios.get(`${base_url}/users/search`, {
-				params: { searchQuery: searchValue, orgId },
-			});
-
-			setFilteredUsers(response.data.data);
-			if (response.data.data.length > 0) {
-				setFilteredUsersModalOpen(true);
-			}
-		} catch (error) {
-			console.log(error);
-		}
-	};
+	const [isEventDeleted, setIsEventDeleted] = useState<boolean>(false);
 
 	const [newEvent, setNewEvent] = useState<Event>({
 		_id: '',
@@ -79,36 +64,52 @@ const EventCalendar = () => {
 		isAllDay: false,
 		isActive: true,
 		orgId,
-		courseId: '',
-		learnerId: '',
+		attendees: [],
 		createdBy: user?._id || '',
 		createdAt: '',
 		updatedAt: '',
-		username: '',
+		coursesIds: [],
+		allAttendeesIds: [],
+		isAllLearnersSelected: false,
+		isAllCoursesSelected: false,
 	});
 
 	useEffect(() => {
-		// Transform your data to include the end date and convert to Date objects
-		const transformedEvents = sortedEventsData.map((event) => {
-			const startDate = new Date(event.start!);
-			let endDate = new Date(event.end!);
+		setFilteredUsers([]);
+	}, []);
 
-			const isAllDayEvent = event.isAllDay || false;
+	useEffect(() => {
+		if (sortedEventsData) {
+			const transformedEvents = sortedEventsData.map((event) => {
+				const startDate = new Date(event.start!);
+				let endDate = new Date(event.end!);
+				const isAllDayEvent = event.isAllDay || false;
 
-			if (isAllDayEvent) {
-				endDate.setHours(23, 59, 59);
+				if (isAllDayEvent) {
+					endDate.setHours(23, 59, 59);
+				}
+
+				return {
+					...event,
+					start: startDate,
+					end: endDate,
+					isAllDay: isAllDayEvent,
+				};
+			});
+
+			setEventsData(transformedEvents);
+		}
+	}, [sortedEventsData, isEventDeleted]);
+
+	useEffect(() => {
+		if (selectedEvent && selectedEvent._id) {
+			if (user?.role === Roles.USER) {
+				setEventDetailsModalOpen(true);
+			} else {
+				setEditEventModalOpen(true);
 			}
-
-			return {
-				...event,
-				start: startDate,
-				end: endDate,
-				allDay: isAllDayEvent,
-			};
-		});
-
-		setEventsData(transformedEvents);
-	}, [sortedEventsData]);
+		}
+	}, [selectedEvent, user?.role]);
 
 	const eventStyleGetter = (event: Event) => {
 		const backgroundColor = event.isAllDay ? 'lightblue' : '#ffb7b2';
@@ -117,24 +118,63 @@ const EventCalendar = () => {
 		};
 	};
 
-	const handleSelectSlot = ({ start, end }: SlotInfo) => {
-		// Set default start and end for month view (full-day)
-		const isMonthView = start.getHours() === 0 && end.getHours() === 0;
+	const handleSelectSlot = React.useCallback(
+		({ start, end }: SlotInfo) => {
+			if (user?.role === Roles.ADMIN) {
+				const isMonthView = start.getHours() === 0 && end.getHours() === 0;
+				const startTime = isMonthView ? new Date(start.setHours(16, 0, 0, 0)) : start;
+				const endTime = isMonthView ? new Date(start.setHours(17, 0, 0, 0)) : end;
 
-		const startTime = isMonthView ? new Date(start.setHours(0, 0, 0, 0)) : start;
-		const endTime = isMonthView ? new Date(start.setHours(23, 59, 59, 999)) : end;
-
-		setNewEvent({ ...newEvent, start: startTime, end: endTime });
-		setNewEventModalOpen(true);
-	};
+				setNewEvent((prevEvent) => ({ ...prevEvent, start: startTime, end: endTime }));
+				setNewEventModalOpen(true);
+			}
+		},
+		[user?.role]
+	);
 
 	const handleEventSelect = (event: Event) => {
+		setIsEventDeleted(false);
+		if (!event._id) {
+			console.error('Event ID is undefined. Event not selected properly.');
+			return; // Exit early if the event has no ID
+		}
+
 		setSelectedEvent(event);
+
 		if (user?.role === Roles.USER) {
 			setEventDetailsModalOpen(true);
 		} else {
 			setEditEventModalOpen(true);
 		}
+	};
+
+	const filterUsers = (searchQuery: string) => {
+		if (!searchQuery.trim()) {
+			setFilteredUsers([]);
+			return; // Exit early if there's no search query
+		}
+
+		const searchResults = sortedUsersData.filter(
+			(mappedUser) =>
+				(mappedUser.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+					mappedUser.email.toLowerCase().includes(searchQuery.toLowerCase())) &&
+				!newEvent.attendees.some((attendee) => attendee._id === mappedUser._id)
+		);
+
+		setFilteredUsers(searchResults);
+	};
+
+	const filterCourses = (searchQuery: string) => {
+		if (!searchQuery.trim()) {
+			setFilteredCourses([]);
+			return; // Exit early if there's no search query
+		}
+
+		const searchResults = sortedCoursesData.filter(
+			(course) => course.title.toLowerCase().includes(searchQuery.toLowerCase()) && !newEvent.coursesIds.some((id) => id === course._id)
+		);
+
+		setFilteredCourses(searchResults);
 	};
 
 	return (
@@ -145,6 +185,7 @@ const EventCalendar = () => {
 					events={eventsData}
 					startAccessor='start'
 					endAccessor='end'
+					selectable={true}
 					style={{
 						height: '78vh',
 						fontFamily: 'poppins',
@@ -160,26 +201,24 @@ const EventCalendar = () => {
 					eventPropGetter={eventStyleGetter}
 					onSelectSlot={handleSelectSlot}
 					onSelectEvent={handleEventSelect}
-					selectable
 				/>
 			</Box>
 
 			<CreateEventDialog
 				newEvent={newEvent}
-				searchValue={searchValue}
 				newEventModalOpen={newEventModalOpen}
 				filteredUsers={filteredUsers}
-				isAllUsersSelected={isAllUsersSelected}
-				learnerFirebaseId={learnerFirebaseId}
-				filteredUsersModalOpen={filteredUsersModalOpen}
+				filteredCourses={filteredCourses}
+				isAllLearnersSelected={isAllLearnersSelected}
+				isAllCoursesSelected={isAllCoursesSelected}
 				setFilteredUsers={setFilteredUsers}
+				setFilteredCourses={setFilteredCourses}
 				setNewEvent={setNewEvent}
-				setSearchValue={setSearchValue}
 				setNewEventModalOpen={setNewEventModalOpen}
-				setIsAllUsersSelected={setIsAllUsersSelected}
-				setLearnerFirebaseId={setLearnerFirebaseId}
-				setFilteredUsersModalOpen={setFilteredUsersModalOpen}
+				setIsAllLearnersSelected={setIsAllLearnersSelected}
+				setIsAllCoursesSelected={setIsAllCoursesSelected}
 				filterUsers={filterUsers}
+				filterCourses={filterCourses}
 			/>
 
 			<EventDetailsDialog
@@ -189,20 +228,15 @@ const EventCalendar = () => {
 			/>
 
 			<EditEventDialog
+				setIsEventDeleted={setIsEventDeleted}
 				editEventModalOpen={editEventModalOpen}
 				selectedEvent={selectedEvent}
-				searchValue={searchValue}
 				filteredUsers={filteredUsers}
-				isAllUsersSelected={isAllUsersSelected}
-				learnerFirebaseId={learnerFirebaseId}
-				filteredUsersModalOpen={filteredUsersModalOpen}
+				isAllLearnersSelected={isAllLearnersSelected}
 				setFilteredUsers={setFilteredUsers}
 				setEditEventModalOpen={setEditEventModalOpen}
 				setSelectedEvent={setSelectedEvent}
-				setSearchValue={setSearchValue}
-				setIsAllUsersSelected={setIsAllUsersSelected}
-				setLearnerFirebaseId={setLearnerFirebaseId}
-				setFilteredUsersModalOpen={setFilteredUsersModalOpen}
+				setIsAllLearnersSelected={setIsAllLearnersSelected}
 				filterUsers={filterUsers}
 			/>
 

@@ -19,14 +19,14 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 			title='Event Details'
 			maxWidth='sm'>
 			<DialogContent sx={{ margin: '0.5rem 1rem 1rem 1rem' }}>
-				<Box sx={{ display: 'flex', alignItems: 'center', mb: '0.5rem' }}>
+				<Box sx={{ display: 'flex', alignItems: 'flex-start', mb: '0.75rem' }}>
 					<Typography variant='h6'>Title:</Typography>
 					<Typography variant='body1' sx={{ ml: '0.5rem' }}>
 						{selectedEvent?.title}
 					</Typography>
 				</Box>
 				{selectedEvent?.description && (
-					<Box sx={{ display: 'flex', alignItems: 'center', mb: '0.5rem' }}>
+					<Box sx={{ display: 'flex', alignItems: 'center', mb: '0.75rem' }}>
 						<Typography variant='h6'>Description:</Typography>
 						<Typography variant='body1' sx={{ ml: '0.5rem' }}>
 							{selectedEvent?.description}
@@ -50,7 +50,7 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 					</Box>
 				)}
 				{selectedEvent?.end && (
-					<Box sx={{ display: 'flex', alignItems: 'center', mb: '0.5rem' }}>
+					<Box sx={{ display: 'flex', alignItems: 'center', mb: '0.75rem' }}>
 						<Typography variant='h6'>Ends:</Typography>
 						<Typography variant='body1' sx={{ ml: '0.5rem' }}>
 							{selectedEvent.end.toLocaleString('en-US', {
@@ -65,7 +65,7 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 					</Box>
 				)}
 				{selectedEvent?.eventLinkUrl && (
-					<Box sx={{ display: 'flex', alignItems: 'center', mb: '0.5rem' }}>
+					<Box sx={{ display: 'flex', alignItems: 'center', mb: '0.75rem' }}>
 						<Typography variant='h6'>Link:</Typography>
 						<Link href={selectedEvent.eventLinkUrl} sx={{ ml: '0.5rem' }} rel='noopener' target='_blank'>
 							<Typography variant='body1'>{selectedEvent.eventLinkUrl}</Typography>
@@ -74,14 +74,16 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 				)}
 
 				{selectedEvent?.location && (
-					<Box sx={{ display: 'flex', alignItems: 'center', mb: '0.5rem' }}>
+					<Box sx={{ display: 'flex', alignItems: 'center', mb: '0.75rem' }}>
 						<Typography variant='h6'>Location:</Typography>
 						<Typography sx={{ ml: '0.5rem' }}>{selectedEvent.location}</Typography>
 					</Box>
 				)}
 			</DialogContent>
 			<DialogActions>
-				<CustomCancelButton onClick={() => setEventDetailsModalOpen(false)} sx={{ margin: '-1rem 1rem 0.5rem 0rem' }} />
+				<CustomCancelButton onClick={() => setEventDetailsModalOpen(false)} sx={{ margin: '-1rem 1.5rem 1rem 0rem' }}>
+					Close
+				</CustomCancelButton>
 			</DialogActions>
 		</CustomDialog>
 	);
