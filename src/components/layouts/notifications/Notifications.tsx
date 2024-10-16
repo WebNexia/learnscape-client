@@ -177,7 +177,7 @@ const NotificationsBox = ({ showUnreadOnly }: NotificationsBoxProps) => {
 								onClick={() => setShowAll(!showAll)}
 								variant='body2'
 								sx={{
-									marginTop: '2rem',
+									margin: '1rem 0',
 									textTransform: 'capitalize',
 									pointer: 'cursor',
 									':hover': {

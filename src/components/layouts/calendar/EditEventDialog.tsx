@@ -20,21 +20,17 @@ import theme from '../../../themes';
 import { truncateText } from '../../../utils/utilText';
 import { SingleCourse } from '../../../interfaces/course';
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { addDoc, collection, getDocs, query, serverTimestamp, where } from 'firebase/firestore';
 import { db } from '../../../firebase';
 
 interface EditEventDialogProps {
 	setIsEventDeleted: React.Dispatch<React.SetStateAction<boolean>>;
 	editEventModalOpen: boolean;
 	selectedEvent: Event | null;
-	isAllCoursesSelected: boolean;
-	isAllLearnersSelected: boolean;
 	filteredUsers: User[];
 	filteredCourses: SingleCourse[];
 	setEditEventModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
 	setSelectedEvent: React.Dispatch<React.SetStateAction<Event | null>>;
-	setIsAllCoursesSelected: React.Dispatch<React.SetStateAction<boolean>>;
-	setIsAllLearnersSelected: React.Dispatch<React.SetStateAction<boolean>>;
 	setFilteredUsers: React.Dispatch<React.SetStateAction<User[]>>;
 	setFilteredCourses: React.Dispatch<React.SetStateAction<SingleCourse[]>>;
 	filterUsers: (searchQuery: string) => void;
@@ -44,14 +40,10 @@ const EditEventDialog = ({
 	setIsEventDeleted,
 	editEventModalOpen,
 	selectedEvent,
-	isAllCoursesSelected,
-	isAllLearnersSelected,
 	filteredUsers,
 	filteredCourses,
 	setEditEventModalOpen,
 	setSelectedEvent,
-	setIsAllCoursesSelected,
-	setIsAllLearnersSelected,
 	setFilteredUsers,
 	setFilteredCourses,
 	filterUsers,
@@ -70,10 +62,6 @@ const EditEventDialog = ({
 	const [searchCourseValue, setSearchCourseValue] = useState<string>('');
 
 	const editEvent = async () => {
-		const allFirebaseUserIds: string[] = sortedUsersData
-			?.filter((filteredUser) => filteredUser._id !== user?._id)
-			?.map((mappedUser) => mappedUser.firebaseUserId);
-
 		const participants = [...(selectedEvent?.attendees || [])]; // Start with selected attendees
 		let allParticipantsIds: string[] = [];
 		let allCoursesParticipantsInfo: AttendeeInfo[] = [];
@@ -86,14 +74,23 @@ const EditEventDialog = ({
 				return prevData;
 			});
 
-			allCoursesParticipantsInfo = [];
+			allCoursesParticipantsInfo = sortedUsersData
+				?.filter((filteredUser) => filteredUser._id !== user?._id)
+				.map((mappedUser) => ({ _id: mappedUser._id, username: mappedUser.username, firebaseUserId: mappedUser.firebaseUserId }));
 		} else if (selectedEvent?.isAllCoursesSelected) {
 			// Handle All Courses selection
 			try {
 				const res = await axios.get(`${base_url}/usercourses/participants/organisation/${orgId}`);
 
-				allCoursesParticipantsInfo = [...res.data.participants, ...participants];
+				allCoursesParticipantsInfo = Array.from(new Map([...res.data.participants, ...participants].map((user) => [user._id, user])).values());
 				allParticipantsIds = [...res.data.participants, ...participants]?.map((participant: AttendeeInfo) => participant._id);
+
+				setSelectedEvent((prevData) => {
+					if (prevData) {
+						return { ...prevData, allAttendeesIds: allParticipantsIds };
+					}
+					return prevData;
+				});
 			} catch (error) {
 				console.log(error);
 			}
@@ -117,6 +114,13 @@ const EditEventDialog = ({
 
 			allCoursesParticipantsInfo = combinedParticipants; // Update state once with final list
 			allParticipantsIds = combinedParticipants.map((participant) => participant._id);
+
+			setSelectedEvent((prevData) => {
+				if (prevData) {
+					return { ...prevData, allAttendeesIds: allParticipantsIds };
+				}
+				return prevData;
+			});
 		} else {
 			// If no special selection, update with direct attendees
 			const uniqueParticipants = Array.from(new Map([...participants].map((user) => [user._id, user])).values());
@@ -157,19 +161,29 @@ const EditEventDialog = ({
 				timestamp: serverTimestamp(),
 				type: 'NewEvent',
 				userImageUrl: user?.imageUrl,
+				eventId: selectedEvent?._id,
 			};
 
-			if (selectedEvent?.isAllLearnersSelected) {
-				for (const id of allFirebaseUserIds) {
-					const notificationRef = collection(db, 'notifications', id, 'userNotifications');
-					await addDoc(notificationRef, notificationData);
-				}
-			} else {
-				for (const participant of allCoursesParticipantsInfo) {
+			// Step 1: Collect all firebaseUserId of participants who might need a notification
+			const participantIds = allCoursesParticipantsInfo.map((participant) => participant.firebaseUserId);
+
+			// Step 2: Fetch all existing notifications for the event in a single batch
+			const notificationSnapshots = await Promise.all(
+				participantIds.map((firebaseUserId) =>
+					getDocs(query(collection(db, 'notifications', firebaseUserId, 'userNotifications'), where('eventId', '==', selectedEvent?._id)))
+				)
+			);
+
+			// Step 3: Identify participants who have not yet received the notification
+			const unnotifiedParticipants = allCoursesParticipantsInfo.filter((_, index) => notificationSnapshots[index].empty);
+
+			// Step 4: Send notifications only to unnotified participants
+			await Promise.all(
+				unnotifiedParticipants.map((participant) => {
 					const notificationRef = collection(db, 'notifications', participant.firebaseUserId, 'userNotifications');
-					await addDoc(notificationRef, notificationData);
-				}
-			}
+					return addDoc(notificationRef, notificationData);
+				})
+			);
 
 			setEditEventModalOpen(false);
 		} catch (error) {
@@ -194,6 +208,10 @@ const EditEventDialog = ({
 			openModal={editEventModalOpen}
 			closeModal={() => {
 				setEditEventModalOpen(false);
+				setFilteredUsers([]);
+				setFilteredCourses([]);
+				setSearchLearnerValue('');
+				setSearchCourseValue('');
 			}}
 			title='Edit Event'
 			maxWidth='sm'>
@@ -320,12 +338,12 @@ const EditEventDialog = ({
 							<CustomTextField
 								label=''
 								value={searchLearnerValue}
-								placeholder={isAllLearnersSelected ? '' : 'Search Learner'}
+								placeholder={selectedEvent?.isAllLearnersSelected ? '' : 'Search Learner'}
 								onChange={(e) => {
 									setSearchLearnerValue(e.target.value);
 									filterUsers(e.target.value);
 								}}
-								sx={{ width: '80%', backgroundColor: isAllLearnersSelected ? 'transparent' : '#fff' }}
+								sx={{ width: '80%', backgroundColor: selectedEvent?.isAllLearnersSelected ? 'transparent' : '#fff' }}
 								required={false}
 								InputProps={{
 									endAdornment: (
@@ -344,10 +362,8 @@ const EditEventDialog = ({
 									labelPlacement='start'
 									control={
 										<Checkbox
-											checked={isAllLearnersSelected}
+											checked={selectedEvent?.isAllLearnersSelected}
 											onChange={(e) => {
-												setIsAllLearnersSelected(e.target.checked);
-
 												setSelectedEvent((prevData) => {
 													if (prevData) {
 														return { ...prevData, isAllLearnersSelected: e.target.checked };
@@ -358,12 +374,10 @@ const EditEventDialog = ({
 												if (e.target.checked) {
 													setSelectedEvent((prevData) => {
 														if (prevData) {
-															return { ...prevData, attendees: [], coursesIds: [], allAttendeesIds: [] };
+															return { ...prevData, attendees: [], coursesIds: [], allAttendeesIds: [], isAllCoursesSelected: false };
 														}
 														return prevData;
 													});
-
-													setIsAllCoursesSelected(false);
 												}
 											}}
 											sx={{
@@ -391,7 +405,7 @@ const EditEventDialog = ({
 									justifyContent: 'flex-start',
 									alignItems: 'flex-start',
 									width: '60%',
-									maxHeight: '10rem',
+									maxHeight: '15rem',
 									overflowY: 'auto',
 									overflowX: 'hidden',
 									margin: '-1rem auto 1.5rem auto',
@@ -505,13 +519,16 @@ const EditEventDialog = ({
 							<CustomTextField
 								label=''
 								value={searchCourseValue}
-								disabled={isAllLearnersSelected || isAllCoursesSelected}
-								placeholder={isAllLearnersSelected || isAllCoursesSelected ? '' : 'Search Course'}
+								disabled={selectedEvent?.isAllLearnersSelected || selectedEvent?.isAllCoursesSelected}
+								placeholder={selectedEvent?.isAllLearnersSelected || selectedEvent?.isAllCoursesSelected ? '' : 'Search Course'}
 								onChange={(e) => {
 									setSearchCourseValue(e.target.value);
 									filterCourses(e.target.value);
 								}}
-								sx={{ width: '80%', backgroundColor: isAllLearnersSelected || isAllCoursesSelected ? 'transparent' : '#fff' }}
+								sx={{
+									width: '80%',
+									backgroundColor: selectedEvent?.isAllLearnersSelected || selectedEvent?.isAllCoursesSelected ? 'transparent' : '#fff',
+								}}
 								required={false}
 								InputProps={{
 									endAdornment: (
@@ -527,14 +544,12 @@ const EditEventDialog = ({
 							/>
 							<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '20%', mb: '0.85rem' }}>
 								<FormControlLabel
-									disabled={isAllLearnersSelected}
+									disabled={selectedEvent?.isAllLearnersSelected}
 									labelPlacement='start'
 									control={
 										<Checkbox
-											checked={isAllCoursesSelected}
+											checked={selectedEvent?.isAllCoursesSelected}
 											onChange={(e) => {
-												setIsAllCoursesSelected(e.target.checked);
-
 												setSelectedEvent((prevData) => {
 													if (prevData) {
 														return { ...prevData, isAllCoursesSelected: e.target.checked };
@@ -725,6 +740,10 @@ const EditEventDialog = ({
 					<CustomDialogActions
 						onCancel={() => {
 							setEditEventModalOpen(false);
+							setFilteredUsers([]);
+							setFilteredCourses([]);
+							setSearchLearnerValue('');
+							setSearchCourseValue('');
 						}}
 						submitBtnText='Update'
 					/>

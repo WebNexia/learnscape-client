@@ -48,9 +48,6 @@ const EventCalendar = () => {
 
 	const [editEventModalOpen, setEditEventModalOpen] = useState<boolean>(false);
 
-	const [isAllLearnersSelected, setIsAllLearnersSelected] = useState<boolean>(false);
-	const [isAllCoursesSelected, setIsAllCoursesSelected] = useState<boolean>(false);
-
 	const [isEventDeleted, setIsEventDeleted] = useState<boolean>(false);
 
 	const [newEvent, setNewEvent] = useState<Event>({
@@ -209,14 +206,10 @@ const EventCalendar = () => {
 				newEventModalOpen={newEventModalOpen}
 				filteredUsers={filteredUsers}
 				filteredCourses={filteredCourses}
-				isAllLearnersSelected={isAllLearnersSelected}
-				isAllCoursesSelected={isAllCoursesSelected}
 				setFilteredUsers={setFilteredUsers}
 				setFilteredCourses={setFilteredCourses}
 				setNewEvent={setNewEvent}
 				setNewEventModalOpen={setNewEventModalOpen}
-				setIsAllLearnersSelected={setIsAllLearnersSelected}
-				setIsAllCoursesSelected={setIsAllCoursesSelected}
 				filterUsers={filterUsers}
 				filterCourses={filterCourses}
 			/>
@@ -233,14 +226,10 @@ const EventCalendar = () => {
 				selectedEvent={selectedEvent}
 				filteredUsers={filteredUsers}
 				filteredCourses={filteredCourses}
-				isAllLearnersSelected={isAllLearnersSelected}
-				isAllCoursesSelected={isAllCoursesSelected}
 				setFilteredUsers={setFilteredUsers}
 				setFilteredCourses={setFilteredCourses}
 				setEditEventModalOpen={setEditEventModalOpen}
 				setSelectedEvent={setSelectedEvent}
-				setIsAllLearnersSelected={setIsAllLearnersSelected}
-				setIsAllCoursesSelected={setIsAllCoursesSelected}
 				filterUsers={filterUsers}
 				filterCourses={filterCourses}
 			/>

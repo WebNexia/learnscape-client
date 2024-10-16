@@ -27,14 +27,10 @@ interface CreateEventDialogProps {
 	newEventModalOpen: boolean;
 	filteredUsers: User[];
 	filteredCourses: SingleCourse[];
-	isAllLearnersSelected: boolean;
-	isAllCoursesSelected: boolean;
 	setNewEvent: React.Dispatch<React.SetStateAction<Event>>;
 	setNewEventModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
 	setFilteredUsers: React.Dispatch<React.SetStateAction<User[]>>;
 	setFilteredCourses: React.Dispatch<React.SetStateAction<SingleCourse[]>>;
-	setIsAllLearnersSelected: React.Dispatch<React.SetStateAction<boolean>>;
-	setIsAllCoursesSelected: React.Dispatch<React.SetStateAction<boolean>>;
 	filterUsers: (searchQuery: string) => void;
 	filterCourses: (searchQuery: string) => void;
 }
@@ -44,14 +40,10 @@ const CreateEventDialog = ({
 	newEventModalOpen,
 	filteredUsers,
 	filteredCourses,
-	isAllLearnersSelected,
-	isAllCoursesSelected,
 	setNewEvent,
 	setNewEventModalOpen,
 	setFilteredUsers,
 	setFilteredCourses,
-	setIsAllLearnersSelected,
-	setIsAllCoursesSelected,
 	filterUsers,
 	filterCourses,
 }: CreateEventDialogProps) => {
@@ -133,8 +125,8 @@ const CreateEventDialog = ({
 			orgId,
 			attendees: newEvent.attendees,
 			allAttendeesIds: allParticipantsIds,
-			isAllLearnersSelected,
-			isAllCoursesSelected,
+			isAllLearnersSelected: newEvent.isAllLearnersSelected,
+			isAllCoursesSelected: newEvent.isAllCoursesSelected,
 			coursesIds: newEvent.coursesIds,
 			createdBy: user?._id!,
 		};
@@ -210,8 +202,8 @@ const CreateEventDialog = ({
 
 		setSearchLearnerValue('');
 		setSearchCourseValue('');
-		setIsAllCoursesSelected(false);
-		setIsAllLearnersSelected(false);
+		setFilteredUsers([]);
+		setFilteredCourses([]);
 	};
 
 	return (
@@ -326,13 +318,13 @@ const CreateEventDialog = ({
 							<CustomTextField
 								label=''
 								value={searchLearnerValue}
-								disabled={isAllLearnersSelected}
-								placeholder={isAllLearnersSelected ? '' : 'Search Learner'}
+								disabled={newEvent.isAllLearnersSelected}
+								placeholder={newEvent.isAllLearnersSelected ? '' : 'Search Learner'}
 								onChange={(e) => {
 									setSearchLearnerValue(e.target.value);
 									filterUsers(e.target.value);
 								}}
-								sx={{ width: '80%', backgroundColor: isAllLearnersSelected ? 'transparent' : '#fff' }}
+								sx={{ width: '80%', backgroundColor: newEvent.isAllLearnersSelected ? 'transparent' : '#fff' }}
 								required={false}
 								InputProps={{
 									endAdornment: (
@@ -351,14 +343,18 @@ const CreateEventDialog = ({
 									labelPlacement='start'
 									control={
 										<Checkbox
-											checked={isAllLearnersSelected}
+											checked={newEvent.isAllLearnersSelected}
 											onChange={(e) => {
-												setIsAllLearnersSelected(e.target.checked);
 												setNewEvent((prevData) => ({ ...prevData, isAllLearnersSelected: e.target.checked }));
 
 												if (e.target.checked) {
-													setNewEvent((prevData) => ({ ...prevData, attendees: [], coursesIds: [], allAttendeesIds: [] }));
-													setIsAllCoursesSelected(false);
+													setNewEvent((prevData) => ({
+														...prevData,
+														attendees: [],
+														coursesIds: [],
+														allAttendeesIds: [],
+														isAllCoursesSelected: false,
+													}));
 												}
 											}}
 											sx={{
@@ -387,7 +383,7 @@ const CreateEventDialog = ({
 									justifyContent: 'flex-start',
 									alignItems: 'flex-start',
 									width: '60%',
-									maxHeight: '10rem',
+									maxHeight: '15rem',
 									overflowY: 'auto',
 									overflowX: 'hidden',
 									margin: '-1rem auto 1.5rem auto',
@@ -493,13 +489,13 @@ const CreateEventDialog = ({
 							<CustomTextField
 								label=''
 								value={searchCourseValue}
-								disabled={isAllLearnersSelected || isAllCoursesSelected}
-								placeholder={isAllLearnersSelected || isAllCoursesSelected ? '' : 'Search Course'}
+								disabled={newEvent.isAllLearnersSelected || newEvent.isAllCoursesSelected}
+								placeholder={newEvent.isAllLearnersSelected || newEvent.isAllCoursesSelected ? '' : 'Search Course'}
 								onChange={(e) => {
 									setSearchCourseValue(e.target.value);
 									filterCourses(e.target.value);
 								}}
-								sx={{ width: '80%', backgroundColor: isAllLearnersSelected || isAllCoursesSelected ? 'transparent' : '#fff' }}
+								sx={{ width: '80%', backgroundColor: newEvent.isAllLearnersSelected || newEvent.isAllCoursesSelected ? 'transparent' : '#fff' }}
 								required={false}
 								InputProps={{
 									endAdornment: (
@@ -515,13 +511,12 @@ const CreateEventDialog = ({
 							/>
 							<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '20%', mb: '0.85rem' }}>
 								<FormControlLabel
-									disabled={isAllLearnersSelected}
+									disabled={newEvent.isAllLearnersSelected}
 									labelPlacement='start'
 									control={
 										<Checkbox
-											checked={isAllCoursesSelected}
+											checked={newEvent.isAllCoursesSelected}
 											onChange={(e) => {
-												setIsAllCoursesSelected(e.target.checked);
 												setNewEvent((prevData) => ({ ...prevData, isAllCoursesSelected: e.target.checked }));
 												if (e.target.checked) {
 													setNewEvent((prevData) => ({ ...prevData, coursesIds: [] }));
