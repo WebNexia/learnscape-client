@@ -49,7 +49,7 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 	const fetchEvents = async (page: number) => {
 		if (!orgId) return;
 		try {
-			const response = await axios.get(`${base_url}/events/organisation/${orgId}?page=${page}&limit=1000`);
+			const response = await axios.get(`${base_url}/events/organisation/${orgId}?page=${page}&limit=10000`);
 
 			// Initial sorting when fetching data
 			const sortedDataCopy = [...response.data.data].sort((a: Event, b: Event) => b.updatedAt.localeCompare(a.updatedAt));

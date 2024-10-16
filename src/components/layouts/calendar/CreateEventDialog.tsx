@@ -31,8 +31,8 @@ interface CreateEventDialogProps {
 	setNewEventModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
 	setFilteredUsers: React.Dispatch<React.SetStateAction<User[]>>;
 	setFilteredCourses: React.Dispatch<React.SetStateAction<SingleCourse[]>>;
-	filterUsers: (searchQuery: string) => void;
-	filterCourses: (searchQuery: string) => void;
+	filterUsers: (searchQuery: string, action: string) => void;
+	filterCourses: (searchQuery: string, action: string) => void;
 }
 
 const CreateEventDialog = ({
@@ -58,9 +58,6 @@ const CreateEventDialog = ({
 	const [searchLearnerValue, setSearchLearnerValue] = useState<string>('');
 	const [searchCourseValue, setSearchCourseValue] = useState<string>('');
 
-	// const [allCoursesParticipantsInfo, setAllCoursesParticipantsInfo] = useState<AttendeeInfo[]>([]);
-
-	// Handle form submission to create new event
 	const handleAddEvent = async () => {
 		const allFirebaseUserIds: string[] = sortedUsersData
 			?.filter((filteredUser) => filteredUser._id !== user?._id)
@@ -71,11 +68,9 @@ const CreateEventDialog = ({
 		let allCoursesParticipantsInfo: AttendeeInfo[] = [];
 
 		if (newEvent.isAllLearnersSelected) {
-			// Handle All Learners selection
 			setNewEvent((prevData) => ({ ...prevData, allAttendeesIds: [], coursesIds: [], attendees: [] }));
 			allCoursesParticipantsInfo = [];
 		} else if (newEvent.isAllCoursesSelected) {
-			// Handle All Courses selection
 			try {
 				const res = await axios.get(`${base_url}/usercourses/participants/organisation/${orgId}`);
 
@@ -85,7 +80,6 @@ const CreateEventDialog = ({
 				console.log(error);
 			}
 		} else if (newEvent.coursesIds.length > 0) {
-			// Use local array to accumulate course participants
 			const courseParticipants: AttendeeInfo[] = [];
 
 			await Promise.all(
@@ -99,7 +93,6 @@ const CreateEventDialog = ({
 				})
 			);
 
-			// Combine and deduplicate all participants locally
 			const combinedParticipants = Array.from(new Map([...courseParticipants, ...participants]?.map((user) => [user._id, user])).values());
 
 			allCoursesParticipantsInfo = combinedParticipants; // Update state once with final list
@@ -109,7 +102,7 @@ const CreateEventDialog = ({
 			const uniqueParticipants = Array.from(new Map([...participants]?.map((user) => [user._id, user])).values());
 
 			allCoursesParticipantsInfo = uniqueParticipants;
-			const allParticipantsIds = uniqueParticipants.map((participant) => participant._id);
+			allParticipantsIds = uniqueParticipants.map((participant) => participant._id);
 			setNewEvent((prevData) => ({ ...prevData, allAttendeesIds: allParticipantsIds }));
 		}
 
@@ -148,14 +141,14 @@ const CreateEventDialog = ({
 			});
 
 			const notificationData = {
-				title: 'Event Added',
+				title: 'Added to Event',
 				message: `${user?.username} added a new event to your calendar: "${truncateText(
 					newEvent.title,
 					20
 				)}". It is scheduled for ${startDate} at ${startTime} `,
 				isRead: false,
 				timestamp: serverTimestamp(),
-				type: 'NewEvent',
+				type: 'AddToEvent',
 				userImageUrl: user?.imageUrl,
 				eventId: res.data.data._id,
 			};
@@ -244,10 +237,23 @@ const CreateEventDialog = ({
 								label='Start Time'
 								value={newEvent.start ? dayjs(newEvent.start) : null}
 								onChange={(newValue: Dayjs | null) => {
-									setNewEvent((prevData) => ({
-										...prevData,
-										start: newValue ? newValue.toDate() : null,
-									}));
+									setNewEvent((prevData) => {
+										const updatedStart = newValue ? newValue.toDate() : null;
+										let updatedEnd = prevData.end;
+
+										// Check if the new start time is after the current end time
+										if (updatedStart && updatedEnd && updatedStart >= updatedEnd) {
+											// Set the end time to 1 hour after the new start time
+											updatedEnd = new Date(updatedStart);
+											updatedEnd.setHours(updatedStart.getHours() + 1);
+										}
+
+										return {
+											...prevData,
+											start: updatedStart,
+											end: updatedEnd,
+										};
+									});
 								}}
 								slotProps={{
 									textField: {
@@ -322,7 +328,7 @@ const CreateEventDialog = ({
 								placeholder={newEvent.isAllLearnersSelected ? '' : 'Search Learner'}
 								onChange={(e) => {
 									setSearchLearnerValue(e.target.value);
-									filterUsers(e.target.value);
+									filterUsers(e.target.value, 'create');
 								}}
 								sx={{ width: '80%', backgroundColor: newEvent.isAllLearnersSelected ? 'transparent' : '#fff' }}
 								required={false}
@@ -338,13 +344,15 @@ const CreateEventDialog = ({
 									),
 								}}
 							/>
-							<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '20%', mb: '0.85rem' }}>
+							<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '21%', mb: '0.85rem' }}>
 								<FormControlLabel
 									labelPlacement='start'
 									control={
 										<Checkbox
 											checked={newEvent.isAllLearnersSelected}
 											onChange={(e) => {
+												setSearchCourseValue('');
+												setSearchLearnerValue('');
 												setNewEvent((prevData) => ({ ...prevData, isAllLearnersSelected: e.target.checked }));
 
 												if (e.target.checked) {
@@ -493,7 +501,7 @@ const CreateEventDialog = ({
 								placeholder={newEvent.isAllLearnersSelected || newEvent.isAllCoursesSelected ? '' : 'Search Course'}
 								onChange={(e) => {
 									setSearchCourseValue(e.target.value);
-									filterCourses(e.target.value);
+									filterCourses(e.target.value, 'create');
 								}}
 								sx={{ width: '80%', backgroundColor: newEvent.isAllLearnersSelected || newEvent.isAllCoursesSelected ? 'transparent' : '#fff' }}
 								required={false}
@@ -509,7 +517,7 @@ const CreateEventDialog = ({
 									),
 								}}
 							/>
-							<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '20%', mb: '0.85rem' }}>
+							<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '21%', mb: '0.85rem' }}>
 								<FormControlLabel
 									disabled={newEvent.isAllLearnersSelected}
 									labelPlacement='start'
@@ -517,6 +525,7 @@ const CreateEventDialog = ({
 										<Checkbox
 											checked={newEvent.isAllCoursesSelected}
 											onChange={(e) => {
+												setSearchCourseValue('');
 												setNewEvent((prevData) => ({ ...prevData, isAllCoursesSelected: e.target.checked }));
 												if (e.target.checked) {
 													setNewEvent((prevData) => ({ ...prevData, coursesIds: [] }));

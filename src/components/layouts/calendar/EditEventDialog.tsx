@@ -33,8 +33,8 @@ interface EditEventDialogProps {
 	setSelectedEvent: React.Dispatch<React.SetStateAction<Event | null>>;
 	setFilteredUsers: React.Dispatch<React.SetStateAction<User[]>>;
 	setFilteredCourses: React.Dispatch<React.SetStateAction<SingleCourse[]>>;
-	filterUsers: (searchQuery: string) => void;
-	filterCourses: (searchQuery: string) => void;
+	filterUsers: (searchQuery: string, action: string) => void;
+	filterCourses: (searchQuery: string, action: string) => void;
 }
 const EditEventDialog = ({
 	setIsEventDeleted,
@@ -61,6 +61,8 @@ const EditEventDialog = ({
 	const [searchLearnerValue, setSearchLearnerValue] = useState<string>('');
 	const [searchCourseValue, setSearchCourseValue] = useState<string>('');
 
+	const [isEventUpdated, setIsEventUpdated] = useState<boolean>(false);
+
 	const editEvent = async () => {
 		const participants = [...(selectedEvent?.attendees || [])]; // Start with selected attendees
 		let allParticipantsIds: string[] = [];
@@ -85,9 +87,13 @@ const EditEventDialog = ({
 				allCoursesParticipantsInfo = Array.from(new Map([...res.data.participants, ...participants].map((user) => [user._id, user])).values());
 				allParticipantsIds = [...res.data.participants, ...participants]?.map((participant: AttendeeInfo) => participant._id);
 
+				console.log(allParticipantsIds);
+
+				console.log(res.data.participants);
+
 				setSelectedEvent((prevData) => {
 					if (prevData) {
-						return { ...prevData, allAttendeesIds: allParticipantsIds };
+						return { ...prevData, allAttendeesIds: allParticipantsIds, isAllCoursesSelected: true };
 					}
 					return prevData;
 				});
@@ -122,11 +128,16 @@ const EditEventDialog = ({
 				return prevData;
 			});
 		} else {
+			console.log('else');
 			// If no special selection, update with direct attendees
 			const uniqueParticipants = Array.from(new Map([...participants].map((user) => [user._id, user])).values());
 
 			allCoursesParticipantsInfo = uniqueParticipants;
-			const allParticipantsIds = uniqueParticipants.map((participant) => participant._id);
+
+			console.log(uniqueParticipants);
+			allParticipantsIds = uniqueParticipants.map((participant) => participant._id);
+
+			console.log(allParticipantsIds);
 
 			setSelectedEvent((prevData) => {
 				if (prevData) {
@@ -137,8 +148,10 @@ const EditEventDialog = ({
 		}
 
 		try {
-			await axios.patch(`${base_url}/events/${selectedEvent?._id}`, selectedEvent);
-			if (selectedEvent) updateEvent(selectedEvent);
+			if (isEventUpdated) {
+				await axios.patch(`${base_url}/events/${selectedEvent?._id}`, { ...selectedEvent, allAttendeesIds: allParticipantsIds });
+				if (selectedEvent) updateEvent({ ...selectedEvent, allAttendeesIds: allParticipantsIds });
+			}
 
 			const startDate = selectedEvent?.start?.toLocaleDateString('en-US', {
 				weekday: 'long',
@@ -152,38 +165,40 @@ const EditEventDialog = ({
 			});
 
 			const notificationData = {
-				title: 'Event Added',
+				title: 'Added to Event',
 				message: `${user?.username} added a new event to your calendar: "${truncateText(
 					selectedEvent?.title!,
 					20
 				)}". It is scheduled for ${startDate} at ${startTime} `,
 				isRead: false,
 				timestamp: serverTimestamp(),
-				type: 'NewEvent',
+				type: 'AddToEvent',
 				userImageUrl: user?.imageUrl,
 				eventId: selectedEvent?._id,
 			};
 
-			// Step 1: Collect all firebaseUserId of participants who might need a notification
-			const participantIds = allCoursesParticipantsInfo.map((participant) => participant.firebaseUserId);
+			if (isEventUpdated) {
+				// Step 1: Collect all firebaseUserId of participants who might need a notification
+				const participantIds = allCoursesParticipantsInfo.map((participant) => participant.firebaseUserId);
 
-			// Step 2: Fetch all existing notifications for the event in a single batch
-			const notificationSnapshots = await Promise.all(
-				participantIds.map((firebaseUserId) =>
-					getDocs(query(collection(db, 'notifications', firebaseUserId, 'userNotifications'), where('eventId', '==', selectedEvent?._id)))
-				)
-			);
+				// Step 2: Fetch all existing notifications for the event in a single batch
+				const notificationSnapshots = await Promise.all(
+					participantIds.map((firebaseUserId) =>
+						getDocs(query(collection(db, 'notifications', firebaseUserId, 'userNotifications'), where('eventId', '==', selectedEvent?._id)))
+					)
+				);
 
-			// Step 3: Identify participants who have not yet received the notification
-			const unnotifiedParticipants = allCoursesParticipantsInfo.filter((_, index) => notificationSnapshots[index].empty);
+				// Step 3: Identify participants who have not yet received the notification
+				const unnotifiedParticipants = allCoursesParticipantsInfo.filter((_, index) => notificationSnapshots[index].empty);
 
-			// Step 4: Send notifications only to unnotified participants
-			await Promise.all(
-				unnotifiedParticipants.map((participant) => {
-					const notificationRef = collection(db, 'notifications', participant.firebaseUserId, 'userNotifications');
-					return addDoc(notificationRef, notificationData);
-				})
-			);
+				// Step 4: Send notifications only to unnotified participants
+				await Promise.all(
+					unnotifiedParticipants.map((participant) => {
+						const notificationRef = collection(db, 'notifications', participant.firebaseUserId, 'userNotifications');
+						return addDoc(notificationRef, notificationData);
+					})
+				);
+			}
 
 			setEditEventModalOpen(false);
 		} catch (error) {
@@ -212,6 +227,7 @@ const EditEventDialog = ({
 				setFilteredCourses([]);
 				setSearchLearnerValue('');
 				setSearchCourseValue('');
+				setIsEventUpdated(true);
 			}}
 			title='Edit Event'
 			maxWidth='sm'>
@@ -224,14 +240,15 @@ const EditEventDialog = ({
 					<CustomTextField
 						label='Title'
 						value={selectedEvent?.title}
-						onChange={(e) =>
+						onChange={(e) => {
 							setSelectedEvent((prevData) => {
 								if (prevData) {
 									return { ...prevData, title: e.target.value };
 								}
 								return prevData;
-							})
-						}
+							});
+							setIsEventUpdated(true);
+						}}
 					/>
 					<CustomTextField
 						label='Description'
@@ -239,14 +256,15 @@ const EditEventDialog = ({
 						rows={3}
 						required={false}
 						value={selectedEvent?.description}
-						onChange={(e) =>
+						onChange={(e) => {
 							setSelectedEvent((prevData) => {
 								if (prevData) {
 									return { ...prevData, description: e.target.value };
 								}
 								return prevData;
-							})
-						}
+							});
+							setIsEventUpdated(true);
+						}}
 					/>
 
 					<Box sx={{ display: 'flex', mb: '0.85rem' }}>
@@ -257,10 +275,26 @@ const EditEventDialog = ({
 								onChange={(newValue: Dayjs | null) => {
 									setSelectedEvent((prevData) => {
 										if (prevData) {
-											return { ...prevData, start: newValue ? newValue.toDate() : null };
+											const updatedStart = newValue ? newValue.toDate() : null;
+											let updatedEnd = prevData?.end;
+
+											// Check if the new start time is after the current end time
+											if (updatedStart && updatedEnd && updatedStart >= updatedEnd) {
+												// Set the end time to 1 hour after the new start time
+												updatedEnd = new Date(updatedStart);
+												updatedEnd.setHours(updatedStart.getHours() + 1);
+											}
+
+											return {
+												...prevData,
+												start: updatedStart,
+												end: updatedEnd,
+											};
 										}
 										return prevData;
 									});
+
+									setIsEventUpdated(true);
 								}}
 								slotProps={{
 									textField: {
@@ -279,6 +313,7 @@ const EditEventDialog = ({
 								label='End Time'
 								value={selectedEvent?.end ? dayjs(selectedEvent?.end) : null}
 								onChange={(newValue: Dayjs | null) => {
+									setIsEventUpdated(true);
 									setSelectedEvent((prevData) => {
 										if (prevData) {
 											return { ...prevData, end: newValue ? newValue.toDate() : null };
@@ -316,6 +351,7 @@ const EditEventDialog = ({
 										<Typography sx={{ fontSize: '0.85rem' }}>{attendee.username}</Typography>
 										<IconButton
 											onClick={() => {
+												setIsEventUpdated(true);
 												const updatedAttendees = selectedEvent.attendees.filter((filteredAttendee) => attendee._id !== filteredAttendee._id);
 
 												setSelectedEvent((prevData) => {
@@ -338,10 +374,11 @@ const EditEventDialog = ({
 							<CustomTextField
 								label=''
 								value={searchLearnerValue}
+								disabled={selectedEvent?.isAllLearnersSelected}
 								placeholder={selectedEvent?.isAllLearnersSelected ? '' : 'Search Learner'}
 								onChange={(e) => {
 									setSearchLearnerValue(e.target.value);
-									filterUsers(e.target.value);
+									filterUsers(e.target.value, 'edit');
 								}}
 								sx={{ width: '80%', backgroundColor: selectedEvent?.isAllLearnersSelected ? 'transparent' : '#fff' }}
 								required={false}
@@ -357,13 +394,16 @@ const EditEventDialog = ({
 									),
 								}}
 							/>
-							<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '20%', mb: '0.85rem' }}>
+							<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '21%', mb: '0.85rem' }}>
 								<FormControlLabel
 									labelPlacement='start'
 									control={
 										<Checkbox
 											checked={selectedEvent?.isAllLearnersSelected}
 											onChange={(e) => {
+												setSearchCourseValue('');
+												setSearchLearnerValue('');
+												setIsEventUpdated(true);
 												setSelectedEvent((prevData) => {
 													if (prevData) {
 														return { ...prevData, isAllLearnersSelected: e.target.checked };
@@ -440,6 +480,7 @@ const EditEventDialog = ({
 												},
 											}}
 											onClick={() => {
+												setIsEventUpdated(true);
 												setSelectedEvent((prevData) => {
 													if (prevData) {
 														const updatedAttendees = [...prevData.attendees];
@@ -497,6 +538,7 @@ const EditEventDialog = ({
 										<Typography sx={{ fontSize: '0.85rem' }}>{truncateText(course?.title!, 20)}</Typography>
 										<IconButton
 											onClick={() => {
+												setIsEventUpdated(true);
 												const updatedCoursesIds = selectedEvent.coursesIds.filter((filteredCourseId) => course?._id !== filteredCourseId);
 
 												setSelectedEvent((prevData) => {
@@ -523,7 +565,7 @@ const EditEventDialog = ({
 								placeholder={selectedEvent?.isAllLearnersSelected || selectedEvent?.isAllCoursesSelected ? '' : 'Search Course'}
 								onChange={(e) => {
 									setSearchCourseValue(e.target.value);
-									filterCourses(e.target.value);
+									filterCourses(e.target.value, 'edit');
 								}}
 								sx={{
 									width: '80%',
@@ -542,7 +584,7 @@ const EditEventDialog = ({
 									),
 								}}
 							/>
-							<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '20%', mb: '0.85rem' }}>
+							<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '21%', mb: '0.85rem' }}>
 								<FormControlLabel
 									disabled={selectedEvent?.isAllLearnersSelected}
 									labelPlacement='start'
@@ -550,6 +592,8 @@ const EditEventDialog = ({
 										<Checkbox
 											checked={selectedEvent?.isAllCoursesSelected}
 											onChange={(e) => {
+												setSearchCourseValue('');
+												setIsEventUpdated(true);
 												setSelectedEvent((prevData) => {
 													if (prevData) {
 														return { ...prevData, isAllCoursesSelected: e.target.checked };
@@ -623,6 +667,7 @@ const EditEventDialog = ({
 											},
 										}}
 										onClick={() => {
+											setIsEventUpdated(true);
 											setSelectedEvent((prevData) => {
 												if (prevData) {
 													const updatedCoursesIds = [...prevData.coursesIds];
@@ -663,28 +708,30 @@ const EditEventDialog = ({
 					<CustomTextField
 						label='Event Link'
 						value={selectedEvent?.eventLinkUrl}
-						onChange={(e) =>
+						onChange={(e) => {
 							setSelectedEvent((prevData) => {
 								if (prevData) {
 									return { ...prevData, eventLinkUrl: e.target.value };
 								}
 								return prevData;
-							})
-						}
+							});
+							setIsEventUpdated(true);
+						}}
 						required={false}
 					/>
 
 					<CustomTextField
 						label='Location'
 						value={selectedEvent?.location}
-						onChange={(e) =>
+						onChange={(e) => {
+							setIsEventUpdated(true);
 							setSelectedEvent((prevData) => {
 								if (prevData) {
 									return { ...prevData, location: e.target.value };
 								}
 								return prevData;
-							})
-						}
+							});
+						}}
 						required={false}
 					/>
 
@@ -693,6 +740,8 @@ const EditEventDialog = ({
 							<Checkbox
 								checked={selectedEvent?.isAllDay}
 								onChange={(e) => {
+									setIsEventUpdated(true);
+
 									const isAllDay = e.target.checked;
 									setSelectedEvent((prevData) => {
 										if (prevData) {
@@ -744,6 +793,7 @@ const EditEventDialog = ({
 							setFilteredCourses([]);
 							setSearchLearnerValue('');
 							setSearchCourseValue('');
+							setIsEventUpdated(false);
 						}}
 						submitBtnText='Update'
 					/>

@@ -9,7 +9,6 @@ import { EventsContext } from '../contexts/EventsContextProvider';
 import { Event } from '../interfaces/event';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
-import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import { User } from '../interfaces/user';
 import { Roles } from '../interfaces/enums';
 import CreateEventDialog from '../components/layouts/calendar/CreateEventDialog';
@@ -72,27 +71,25 @@ const EventCalendar = () => {
 	});
 
 	useEffect(() => {
-		setFilteredUsers([]);
-	}, []);
-
-	useEffect(() => {
 		if (sortedEventsData) {
-			const transformedEvents = sortedEventsData.map((event) => {
-				const startDate = new Date(event.start!);
-				let endDate = new Date(event.end!);
-				const isAllDayEvent = event.isAllDay || false;
+			const transformedEvents = sortedEventsData
+				?.filter((event) => event.isAllLearnersSelected || event.allAttendeesIds.includes(user?._id!) || user?.role === Roles.ADMIN)
+				?.map((event) => {
+					const startDate = new Date(event.start!);
+					let endDate = new Date(event.end!);
+					const isAllDayEvent = event.isAllDay || false;
 
-				if (isAllDayEvent) {
-					endDate.setHours(23, 59, 59);
-				}
+					if (isAllDayEvent) {
+						endDate.setHours(23, 59, 59);
+					}
 
-				return {
-					...event,
-					start: startDate,
-					end: endDate,
-					isAllDay: isAllDayEvent,
-				};
-			});
+					return {
+						...event,
+						start: startDate,
+						end: endDate,
+						isAllDay: isAllDayEvent,
+					};
+				});
 
 			setEventsData(transformedEvents);
 		}
@@ -137,38 +134,34 @@ const EventCalendar = () => {
 		}
 
 		setSelectedEvent(event);
-
-		if (user?.role === Roles.USER) {
-			setEventDetailsModalOpen(true);
-		} else {
-			setEditEventModalOpen(true);
-		}
 	};
 
-	const filterUsers = (searchQuery: string) => {
+	const filterUsers = (searchQuery: string, action: string) => {
 		if (!searchQuery.trim()) {
 			setFilteredUsers([]);
-			return; // Exit early if there's no search query
+			return;
 		}
 
+		const attendees = action === 'create' ? newEvent.attendees : selectedEvent?.attendees || [];
 		const searchResults = sortedUsersData.filter(
 			(mappedUser) =>
 				(mappedUser.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
 					mappedUser.email.toLowerCase().includes(searchQuery.toLowerCase())) &&
-				!newEvent.attendees.some((attendee) => attendee._id === mappedUser._id)
+				!attendees.some((attendee) => attendee._id === mappedUser._id)
 		);
 
 		setFilteredUsers(searchResults);
 	};
 
-	const filterCourses = (searchQuery: string) => {
+	const filterCourses = (searchQuery: string, action: string) => {
 		if (!searchQuery.trim()) {
 			setFilteredCourses([]);
-			return; // Exit early if there's no search query
+			return;
 		}
 
+		const coursesIds = action === 'create' ? newEvent.coursesIds : selectedEvent?.coursesIds || [];
 		const searchResults = sortedCoursesData.filter(
-			(course) => course.title.toLowerCase().includes(searchQuery.toLowerCase()) && !newEvent.coursesIds.some((id) => id === course._id)
+			(course) => course.title.toLowerCase().includes(searchQuery.toLowerCase()) && !coursesIds.includes(course._id)
 		);
 
 		setFilteredCourses(searchResults);
@@ -233,8 +226,6 @@ const EventCalendar = () => {
 				filterUsers={filterUsers}
 				filterCourses={filterCourses}
 			/>
-
-			<CustomDialog title='Edit Event'></CustomDialog>
 		</DashboardPagesLayout>
 	);
 };
