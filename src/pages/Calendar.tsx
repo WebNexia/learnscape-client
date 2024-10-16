@@ -232,12 +232,17 @@ const EventCalendar = () => {
 				editEventModalOpen={editEventModalOpen}
 				selectedEvent={selectedEvent}
 				filteredUsers={filteredUsers}
+				filteredCourses={filteredCourses}
 				isAllLearnersSelected={isAllLearnersSelected}
+				isAllCoursesSelected={isAllCoursesSelected}
 				setFilteredUsers={setFilteredUsers}
+				setFilteredCourses={setFilteredCourses}
 				setEditEventModalOpen={setEditEventModalOpen}
 				setSelectedEvent={setSelectedEvent}
 				setIsAllLearnersSelected={setIsAllLearnersSelected}
+				setIsAllCoursesSelected={setIsAllCoursesSelected}
 				filterUsers={filterUsers}
+				filterCourses={filterCourses}
 			/>
 
 			<CustomDialog title='Edit Event'></CustomDialog>

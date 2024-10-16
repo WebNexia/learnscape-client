@@ -97,7 +97,7 @@ const CreateEventDialog = ({
 			const courseParticipants: AttendeeInfo[] = [];
 
 			await Promise.all(
-				newEvent.coursesIds.map(async (courseId) => {
+				newEvent.coursesIds?.map(async (courseId) => {
 					try {
 						const res = await axios.get(`${base_url}/userCourses/course/${courseId}`);
 						courseParticipants.push(...res.data.users); // Collect participants directly
@@ -108,13 +108,13 @@ const CreateEventDialog = ({
 			);
 
 			// Combine and deduplicate all participants locally
-			const combinedParticipants = Array.from(new Map([...courseParticipants, ...participants].map((user) => [user._id, user])).values());
+			const combinedParticipants = Array.from(new Map([...courseParticipants, ...participants]?.map((user) => [user._id, user])).values());
 
 			allCoursesParticipantsInfo = combinedParticipants; // Update state once with final list
-			allParticipantsIds = combinedParticipants.map((participant) => participant._id);
+			allParticipantsIds = combinedParticipants?.map((participant) => participant._id);
 		} else {
 			// If no special selection, update with direct attendees
-			const uniqueParticipants = Array.from(new Map([...participants].map((user) => [user._id, user])).values());
+			const uniqueParticipants = Array.from(new Map([...participants]?.map((user) => [user._id, user])).values());
 
 			allCoursesParticipantsInfo = uniqueParticipants;
 			const allParticipantsIds = uniqueParticipants.map((participant) => participant._id);
@@ -165,6 +165,7 @@ const CreateEventDialog = ({
 				timestamp: serverTimestamp(),
 				type: 'NewEvent',
 				userImageUrl: user?.imageUrl,
+				eventId: res.data.data._id,
 			};
 
 			if (newEvent.isAllLearnersSelected) {
@@ -362,7 +363,7 @@ const CreateEventDialog = ({
 											}}
 											sx={{
 												'& .MuiSvgIcon-root': {
-													fontSize: '1.25rem', // Adjust the checkbox icon size
+													fontSize: '1.25rem',
 												},
 											}}
 										/>
@@ -371,7 +372,7 @@ const CreateEventDialog = ({
 									sx={{
 										mt: '0rem',
 										'& .MuiFormControlLabel-label': {
-											fontSize: '0.7rem', // Adjust the label font size
+											fontSize: '0.7rem',
 										},
 									}}
 								/>
