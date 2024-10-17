@@ -7,7 +7,7 @@ import { QuizSubmission } from '../interfaces/quizSubmission';
 import CustomTableHead from '../components/layouts/table/CustomTableHead';
 import CustomTableCell from '../components/layouts/table/CustomTableCell';
 import CustomActionBtn from '../components/layouts/table/CustomActionBtn';
-import { Delete, Edit } from '@mui/icons-material';
+import { Edit } from '@mui/icons-material';
 import CustomTablePagination from '../components/layouts/table/CustomTablePagination';
 
 const AdminQuizSubmissions = () => {
@@ -96,10 +96,8 @@ const AdminQuizSubmissions = () => {
 													);
 													window.scrollTo({ top: 0, behavior: 'smooth' });
 												}}
-												icon={<Edit />}
+												icon={<Edit fontSize='small' />}
 											/>
-
-											<CustomActionBtn title='Delete' onClick={() => {}} icon={<Delete />} />
 										</TableCell>
 									</TableRow>
 								);

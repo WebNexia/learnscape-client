@@ -33,7 +33,7 @@ export const renderMessageWithEmojis = (messageContent: string | any[], fontSize
 	}
 
 	// If content is an array of React elements, iterate and apply emoji rendering on text elements only
-	return messageContent.map((item, _) => {
+	return messageContent?.map((item, _) => {
 		if (typeof item === 'string') {
 			return renderTextWithEmojis(item);
 		} else {

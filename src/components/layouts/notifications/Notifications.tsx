@@ -8,6 +8,7 @@ import { Circle } from '@mui/icons-material';
 import { NotificationType, Roles } from '../../../interfaces/enums';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { EventsContext } from '../../../contexts/EventsContextProvider';
 
 interface Notification {
 	id: string;
@@ -31,6 +32,7 @@ interface NotificationsBoxProps {
 const NotificationsBox = ({ showUnreadOnly }: NotificationsBoxProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { user } = useContext(UserAuthContext);
+	const { fetchEvents } = useContext(EventsContext);
 	const [notifications, setNotifications] = useState<Notification[]>([]);
 	const [showAll, setShowAll] = useState<boolean>(false);
 	const [hasOlderNotifications, setHasOlderNotifications] = useState<boolean>(false);
@@ -114,6 +116,9 @@ const NotificationsBox = ({ showUnreadOnly }: NotificationsBoxProps) => {
 				navigate(`${basePath}/community/user/${user?._id}/topic/${note.communityTopicId}?page=${page}&messageId=${note.communityMessageId}`);
 			} else if (note.type === NotificationType.NEW_COMMUNITY_TOPIC) {
 				navigate(`${user?.role !== Roles.ADMIN ? '' : '/admin'}/community/user/${user?._id}/topic/${note.communityTopicId}`);
+			} else if (note.type === NotificationType.ADD_TO_EVENT) {
+				navigate(`/calendar/user/${user._id}`);
+				fetchEvents(1);
 			}
 
 			setNotifications((prev) => prev.map((n) => (n.id === note.id ? { ...n, isRead: true } : n)));
@@ -177,7 +182,7 @@ const NotificationsBox = ({ showUnreadOnly }: NotificationsBoxProps) => {
 								onClick={() => setShowAll(!showAll)}
 								variant='body2'
 								sx={{
-									marginTop: '2rem',
+									margin: '1rem 0',
 									textTransform: 'capitalize',
 									pointer: 'cursor',
 									':hover': {

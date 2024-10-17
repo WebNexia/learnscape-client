@@ -90,7 +90,7 @@ const AdminCourseEditChapter = ({
 								onClick={() => {
 									setAddNewLessonModalOpen(true);
 								}}>
-								<NoteAdd />
+								<NoteAdd fontSize='small' />
 							</IconButton>
 						</Tooltip>
 
@@ -107,7 +107,7 @@ const AdminCourseEditChapter = ({
 								onClick={() => {
 									setIsNewLessonModalOpen(true);
 								}}>
-								<CreateTwoTone />
+								<CreateTwoTone fontSize='small' />
 							</IconButton>
 						</Tooltip>
 
@@ -123,7 +123,7 @@ const AdminCourseEditChapter = ({
 					<Box>
 						<Tooltip title='Clone Chapter' placement='top'>
 							<IconButton>
-								<FileCopy />
+								<FileCopy fontSize='small' />
 							</IconButton>
 						</Tooltip>
 						<Tooltip title='Delete Chapter' placement='top'>
@@ -131,7 +131,7 @@ const AdminCourseEditChapter = ({
 								onClick={() => {
 									setChapterLessonDataBeforeSave((prevData) => {
 										if (prevData !== undefined) {
-											return prevData.filter((currentChapter) => chapter.chapterId !== currentChapter.chapterId);
+											return prevData?.filter((currentChapter) => chapter.chapterId !== currentChapter.chapterId);
 										}
 										return prevData;
 									});
@@ -143,7 +143,7 @@ const AdminCourseEditChapter = ({
 										return prevIds;
 									});
 								}}>
-								<Delete />
+								<Delete fontSize='small' />
 							</IconButton>
 						</Tooltip>
 					</Box>
@@ -232,7 +232,7 @@ const AdminCourseEditChapter = ({
 																if (prevData) {
 																	return prevData.map((currentChapter) => {
 																		if (currentChapter.chapterId === chapter?.chapterId) {
-																			const updatedLessons = currentChapter.lessons.filter((currentLesson) => currentLesson._id !== lesson._id);
+																			const updatedLessons = currentChapter.lessons?.filter((currentLesson) => currentLesson._id !== lesson._id);
 																			const updatedLessonIds = updatedLessons?.map((lesson) => lesson._id);
 																			return {
 																				...currentChapter,
@@ -248,7 +248,7 @@ const AdminCourseEditChapter = ({
 
 															chapterUpdateTrack(chapter.chapterId, setIsChapterUpdated);
 														}}>
-														<Delete />
+														<Delete fontSize='small' />
 													</IconButton>
 												</Tooltip>
 											</Box>

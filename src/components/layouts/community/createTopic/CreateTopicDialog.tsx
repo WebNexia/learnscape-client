@@ -54,7 +54,7 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 				audioUrl: topic.audioUrl,
 			});
 
-			const allIds: string[] = sortedUsersData.map((user) => user.firebaseUserId);
+			const allIds: string[] = sortedUsersData?.map((user) => user.firebaseUserId);
 
 			addNewTopic({
 				_id: response.data._id,
@@ -130,7 +130,7 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 		}
 	};
 	return (
-		<CustomDialog openModal={createTopicModalOpen} closeModal={reset} title='Create New Topic'>
+		<CustomDialog openModal={createTopicModalOpen} closeModal={reset} title='Create New Topic' maxWidth='sm'>
 			<form
 				style={{ display: 'flex', flexDirection: 'column', padding: '1rem 3rem' }}
 				onSubmit={(e: React.FormEvent<HTMLFormElement>) => {

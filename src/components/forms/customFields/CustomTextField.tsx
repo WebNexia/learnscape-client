@@ -59,7 +59,6 @@ const CustomTextField = forwardRef<HTMLDivElement, CustomTextFieldProps>(
 				onChange={onChange}
 				size={size}
 				sx={{
-					...sx,
 					marginBottom: '0.85rem',
 					backgroundColor: theme.bgColor?.common,
 					'& .MuiInputBase-root': {
@@ -68,7 +67,9 @@ const CustomTextField = forwardRef<HTMLDivElement, CustomTextFieldProps>(
 					'& .MuiInputBase-inputMultiline': {
 						resize: resizable ? 'both' : 'none',
 						overflow: 'auto',
+						fontSize: '0.85rem',
 					},
+					...sx,
 				}}
 				fullWidth={fullWidth}
 				required={required}

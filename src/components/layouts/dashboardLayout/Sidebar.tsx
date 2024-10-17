@@ -136,9 +136,9 @@ const Sidebar = () => {
 								selectedPage={selectedPage}
 							/>
 							<SidebarBtn
-								btnText='Schedule'
+								btnText='Calendar'
 								IconName={CalendarMonth}
-								onClick={() => navigateWithPage(PageName.ADMIN_SCHEDULE, `/admin/schedule/user/${id || userId}`)}
+								onClick={() => navigateWithPage(PageName.ADMIN_SCHEDULE, `/admin/calendar/user/${id || userId}`)}
 								selectedPage={selectedPage}
 							/>
 							<SidebarBtn
@@ -184,9 +184,9 @@ const Sidebar = () => {
 							/>
 
 							<SidebarBtn
-								btnText='Schedule'
+								btnText='Calendar'
 								IconName={CalendarMonth}
-								onClick={() => navigateWithPage(PageName.SCHEDULE, `/schedule/user/${id || userId}`)}
+								onClick={() => navigateWithPage(PageName.SCHEDULE, `/calendar/user/${id || userId}`)}
 								selectedPage={selectedPage}
 							/>
 							<SidebarBtn

@@ -160,7 +160,7 @@ const FillInTheBlanksTyping = ({
 			setInputStatus(initialStatus);
 
 			const randomWords = shuffle(words).slice(0, 15);
-			const values = blankValuePairs.map((pair) => pair.value);
+			const values = blankValuePairs?.map((pair) => pair.value);
 			const hintWords = shuffle([...values, ...randomWords]);
 
 			setHints(hintWords);
@@ -180,7 +180,7 @@ const FillInTheBlanksTyping = ({
 			setInputStatus(initialStatus);
 
 			const randomWords = shuffle(words).slice(0, 5);
-			const values = blankValuePairs.map((pair) => pair.value);
+			const values = blankValuePairs?.map((pair) => pair.value);
 			const hintWords = shuffle([...values, ...randomWords]);
 
 			setHints(hintWords);
@@ -197,7 +197,7 @@ const FillInTheBlanksTyping = ({
 			setInputStatus(initialStatus);
 
 			const randomWords = lessonType === LessonType.QUIZ && !fromAdminQuestions ? shuffle(words).slice(0, 15) : shuffle(words).slice(0, 5);
-			const values = blankValuePairs.map((pair) => pair.value);
+			const values = blankValuePairs?.map((pair) => pair.value);
 			const hintWords = shuffle([...values, ...randomWords]);
 			setHints(hintWords);
 		}
@@ -205,13 +205,13 @@ const FillInTheBlanksTyping = ({
 
 	useEffect(() => {
 		setUserQuizAnswers?.((prevData) => {
-			const blankValuePairsWithIds: UserBlankValuePairAnswers[] = blankValuePairs.map((pair) => ({
+			const blankValuePairsWithIds: UserBlankValuePairAnswers[] = blankValuePairs?.map((pair) => ({
 				id: pair.id,
 				value: '',
 			}));
 
 			if (prevData) {
-				return prevData.map((data) => {
+				return prevData?.map((data) => {
 					if (data.questionId === questionId) {
 						return { ...data, userBlankValuePairAnswers: blankValuePairsWithIds };
 					}
@@ -281,13 +281,13 @@ const FillInTheBlanksTyping = ({
 
 		if (!isLessonCompleted && fromQuizQuestionUser) {
 			setUserQuizAnswers?.((prevData) => {
-				const updatedAnswers = blankValuePairs.map((pair) => ({
+				const updatedAnswers = blankValuePairs?.map((pair) => ({
 					id: pair.id,
 					value: newAnswers[pair.id] || '',
 				}));
 
 				if (prevData) {
-					return prevData.map((data) => {
+					return prevData?.map((data) => {
 						if (data.questionId === questionId) {
 							return { ...data, userBlankValuePairAnswers: updatedAnswers };
 						}
@@ -304,7 +304,7 @@ const FillInTheBlanksTyping = ({
 		<Container>
 			<Column>
 				<TextContainer>
-					{textSegments.map((segment, index) => {
+					{textSegments?.map((segment, index) => {
 						const match = segment.match(/___(\d+)___/);
 						if (match) {
 							const blankIndex = parseInt(match[1], 10) - 1;
@@ -347,7 +347,7 @@ const FillInTheBlanksTyping = ({
 								padding: '1rem',
 							}}>
 							<Box sx={{ display: 'flex', flexWrap: 'wrap' }}>
-								{hints.map((hint, index) => {
+								{hints?.map((hint, index) => {
 									return (
 										<Box
 											key={index}
@@ -386,7 +386,7 @@ const FillInTheBlanksTyping = ({
 								padding: '1rem',
 							}}>
 							<TextContainer>
-								{textSegments.map((segment, index) => {
+								{textSegments?.map((segment, index) => {
 									const match = segment.match(/___(\d+)___/);
 									if (match) {
 										const blankIndex = parseInt(match[1], 10) - 1;

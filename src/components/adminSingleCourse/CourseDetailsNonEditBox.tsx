@@ -111,7 +111,7 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters }: CourseDetailsNonEdi
 					<>
 						{singleCourse &&
 							singleCourse.chapters &&
-							chapters.map((chapter) => {
+							chapters?.map((chapter) => {
 								return (
 									<Box key={chapter.chapterId} sx={{ margin: '1rem 0 3rem 0' }}>
 										<Box display='flex'>

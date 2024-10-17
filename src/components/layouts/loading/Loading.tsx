@@ -169,7 +169,7 @@ const Loading = () => {
 								<SidebarBtn btnText='Questions' IconName={QuizOutlined} selectedPage={selectedPage} />
 								<SidebarBtn btnText='Documents' IconName={FilePresent} selectedPage={selectedPage} />
 								<SidebarBtn btnText='Submissions' IconName={LibraryAddCheck} selectedPage={selectedPage} />
-								<SidebarBtn btnText='Schedule' IconName={CalendarMonth} selectedPage={selectedPage} />
+								<SidebarBtn btnText='Calendar' IconName={CalendarMonth} selectedPage={selectedPage} />
 								<SidebarBtn btnText='Messages' IconName={Email} selectedPage={selectedPage} />
 								<SidebarBtn btnText='Community' IconName={Groups} selectedPage={selectedPage} />
 								<SidebarBtn btnText='Settings' IconName={Settings} selectedPage={selectedPage} />
@@ -180,7 +180,7 @@ const Loading = () => {
 								<SidebarBtn btnText='Dashboard' IconName={DashboardIcon} selectedPage={selectedPage} />
 								<SidebarBtn btnText='Courses' IconName={LibraryBooks} selectedPage={selectedPage} />
 								<SidebarBtn btnText='Submissions' IconName={LibraryAddCheck} selectedPage={selectedPage} />
-								<SidebarBtn btnText='Schedule' IconName={CalendarMonth} selectedPage={selectedPage} />
+								<SidebarBtn btnText='Calendar' IconName={CalendarMonth} selectedPage={selectedPage} />
 								<SidebarBtn btnText='Messages' IconName={Email} selectedPage={selectedPage} />
 								<SidebarBtn btnText='Community' IconName={Groups} selectedPage={selectedPage} />
 								<SidebarBtn btnText='Settings' IconName={Settings} selectedPage={selectedPage} />

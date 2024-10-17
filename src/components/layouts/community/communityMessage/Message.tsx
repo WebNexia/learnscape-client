@@ -65,7 +65,7 @@ const Message = ({
 		try {
 			await axios.delete(`${base_url}/communityMessages/${message._id}`);
 
-			setMessages((prevData) => prevData.filter((data) => data._id !== message._id));
+			setMessages((prevData) => prevData?.filter((data) => data._id !== message._id));
 		} catch (error) {
 			console.log(error);
 		}
@@ -108,7 +108,7 @@ const Message = ({
 			setReportMsgModalOpen(false);
 
 			setMessages((prevData) => {
-				return prevData.map((data) => {
+				return prevData?.map((data) => {
 					if (data._id === message._id) {
 						return { ...data, isReported: true };
 					}
@@ -146,7 +146,7 @@ const Message = ({
 
 			setResolveReportModalOpen(false);
 			setMessages((prevData) => {
-				return prevData.map((data) => {
+				return prevData?.map((data) => {
 					if (data._id === message._id) {
 						return { ...data, isReported: false };
 					}

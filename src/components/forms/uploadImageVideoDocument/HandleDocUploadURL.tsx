@@ -93,7 +93,7 @@ const HandleDocUploadURL = ({
 							variant='body2'
 							sx={{ textDecoration: !enterDocUrl ? 'underline' : 'none', cursor: 'pointer' }}
 							onClick={() => setEnterDocUrl(false)}>
-							Upload
+							Choose
 						</Typography>
 					</Box>
 					<Typography sx={{ margin: '0 0.5rem' }}> | </Typography>

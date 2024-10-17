@@ -132,7 +132,7 @@ const AdminCourses = () => {
 
 	return (
 		<DashboardPagesLayout pageName='Courses' customSettings={{ justifyContent: 'flex-start' }}>
-			<CustomDialog openModal={isCourseCreateModalOpen} closeModal={closeNewCourseModal} title='Create New Course'>
+			<CustomDialog openModal={isCourseCreateModalOpen} closeModal={closeNewCourseModal} title='Create New Course' maxWidth='sm'>
 				<form
 					onSubmit={(e: React.FormEvent<HTMLFormElement>) => {
 						e.preventDefault();
@@ -188,14 +188,32 @@ const AdminCourses = () => {
 							onChange={(e) => setPrice(e.target.value)}
 							type='number'
 							disabled={checked}
-							sx={{ margin: '1rem 2rem 0 0 ' }}
+							sx={{ margin: '1rem 2rem 1rem 0rem' }}
 							InputLabelProps={{
 								sx: { fontSize: '0.8rem' },
 							}}
 						/>
 					</Box>
 					<Box sx={{ margin: '2rem' }}>
-						<FormControlLabel control={<Checkbox checked={checked} onChange={(e) => setChecked(e.target.checked)} />} label='Free Course' />
+						<FormControlLabel
+							control={
+								<Checkbox
+									checked={checked}
+									onChange={(e) => setChecked(e.target.checked)}
+									sx={{
+										'& .MuiSvgIcon-root': {
+											fontSize: '1.25rem',
+										},
+									}}
+								/>
+							}
+							label='Free Course'
+							sx={{
+								'& .MuiFormControlLabel-label': {
+									fontSize: '0.85rem',
+								},
+							}}
+						/>
 					</Box>
 					<CustomDialogActions onCancel={closeNewCourseModal} />
 				</form>
@@ -246,27 +264,28 @@ const AdminCourses = () => {
 											sx={{
 												textAlign: 'center',
 											}}>
-											<CustomActionBtn title='Clone' onClick={() => {}} icon={<FileCopy />} />
+											<CustomActionBtn title='Clone' onClick={() => {}} icon={<FileCopy fontSize='small' />} />
 											<CustomActionBtn
 												title='Edit'
 												onClick={() => {
 													navigate(`/admin/course-edit/user/${userId}/course/${course._id}`);
 												}}
-												icon={<Edit />}
+												icon={<Edit fontSize='small' />}
 											/>
 											<CustomActionBtn
 												title='Delete'
 												onClick={() => {
 													openDeleteCourseModal(index);
 												}}
-												icon={<Delete />}
+												icon={<Delete fontSize='small' />}
 											/>
 											{isCourseDeleteModalOpen[index] !== undefined && (
 												<CustomDialog
 													openModal={isCourseDeleteModalOpen[index]}
 													closeModal={() => closeDeleteCourseModal(index)}
 													title='Delete'
-													content='Are you sure you want to delete this course?'>
+													content='Are you sure you want to delete this course?'
+													maxWidth='sm'>
 													<CustomDialogActions
 														onCancel={() => closeDeleteCourseModal(index)}
 														deleteBtn={true}

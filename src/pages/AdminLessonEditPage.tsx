@@ -299,7 +299,7 @@ const AdminLessonEditPage = () => {
 					});
 
 				const updatedDocumentsWithNulls = await Promise.all(updatedDocumentsPromises);
-				updatedDocuments = updatedDocumentsWithNulls.filter((doc): doc is Document => doc !== null);
+				updatedDocuments = updatedDocumentsWithNulls?.filter((doc): doc is Document => doc !== null);
 			}
 
 			await Promise.all(
@@ -402,7 +402,7 @@ const AdminLessonEditPage = () => {
 
 				const updatedQuestionsWithNulls = await Promise.all(updatedQuestionsPromises);
 
-				updatedQuestions = updatedQuestionsWithNulls.filter((question): question is QuestionInterface => question !== null);
+				updatedQuestions = updatedQuestionsWithNulls?.filter((question): question is QuestionInterface => question !== null);
 
 				await Promise.all(
 					updatedQuestions?.map(async (question) => {
@@ -488,15 +488,15 @@ const AdminLessonEditPage = () => {
 
 	const removeQuestion = (question: QuestionInterface) => {
 		const updatedQuestions = singleLessonBeforeSave.questions
-			.filter((question) => question !== null)
-			.filter((thisQuestion) => {
+			?.filter((question) => question !== null)
+			?.filter((thisQuestion) => {
 				return thisQuestion?._id !== question._id;
 			});
 
 		const updatedQuestionIds = updatedQuestions?.map((question) => question._id!);
 		setIsLessonUpdated(true);
 
-		setIsQuestionUpdated((prevData: QuestionUpdateTrack[]) => prevData.filter((data) => data.questionId !== question._id));
+		setIsQuestionUpdated((prevData: QuestionUpdateTrack[]) => prevData?.filter((data) => data.questionId !== question._id));
 
 		setSingleLessonBeforeSave((prevLesson) => {
 			return {
@@ -591,7 +591,14 @@ const AdminLessonEditPage = () => {
 							/>
 						)}
 
-						<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', width: '90%', margin: '3rem 0 4rem 0' }}>
+						<Box
+							sx={{
+								display: 'flex',
+								flexDirection: 'column',
+								justifyContent: 'flex-start',
+								width: '90%',
+								margin: singleLesson?.type === LessonType.INSTRUCTIONAL_LESSON ? '3rem 0 4rem 0' : '1rem 0 4rem 0',
+							}}>
 							<Box>
 								<Typography variant='h4' sx={{ mb: '1.25rem' }}>
 									{singleLesson.type} Materials

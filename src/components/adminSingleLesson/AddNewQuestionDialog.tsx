@@ -72,8 +72,8 @@ const AddNewQuestionDialog = ({
 			newSelectedQuestionIds = [...selectedQuestionIds, question._id];
 			newSelectedQuestions = [...selectedQuestions, question];
 		} else {
-			newSelectedQuestionIds = selectedQuestionIds.filter((id) => id !== question._id);
-			newSelectedQuestions = selectedQuestions.filter((selectedQuestion) => selectedQuestion._id !== question._id);
+			newSelectedQuestionIds = selectedQuestionIds?.filter((id) => id !== question._id);
+			newSelectedQuestions = selectedQuestions?.filter((selectedQuestion) => selectedQuestion._id !== question._id);
 		}
 
 		setSelectedQuestionIds(newSelectedQuestionIds);
@@ -138,7 +138,7 @@ const AddNewQuestionDialog = ({
 						<TableBody>
 							{sortedQuestionsData &&
 								sortedQuestionsData
-									.filter((question) => {
+									?.filter((question) => {
 										const questionTypeName = question.questionType as QuestionType;
 										if (singleLessonBeforeSave.type === LessonType.QUIZ) {
 											return [
@@ -163,8 +163,8 @@ const AddNewQuestionDialog = ({
 										}
 										return true;
 									})
-									.filter((question) => !singleLessonBeforeSave.questionIds.includes(question._id))
-									.map((question: QuestionInterface) => {
+									?.filter((question) => !singleLessonBeforeSave.questionIds.includes(question._id))
+									?.map((question: QuestionInterface) => {
 										const isSelected = selectedQuestionIds.indexOf(question._id) !== -1;
 										return (
 											<TableRow key={question._id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
@@ -175,7 +175,20 @@ const AddNewQuestionDialog = ({
 													sx={{
 														textAlign: 'center',
 													}}>
-													<FormControlLabel control={<Checkbox checked={isSelected} onChange={() => handleCheckboxChange(question)} />} label='' />
+													<FormControlLabel
+														control={
+															<Checkbox
+																checked={isSelected}
+																onChange={() => handleCheckboxChange(question)}
+																sx={{
+																	'& .MuiSvgIcon-root': {
+																		fontSize: '1.25rem',
+																	},
+																}}
+															/>
+														}
+														label=''
+													/>
 												</TableCell>
 											</TableRow>
 										);

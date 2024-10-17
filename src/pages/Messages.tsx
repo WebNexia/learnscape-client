@@ -32,13 +32,13 @@ import useImageUpload from '../hooks/useImageUpload'; // Import the custom hook
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import { User } from '../interfaces/user';
 import axios from 'axios';
-import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import theme from '../themes';
 import { debounce } from 'lodash';
 import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
 import { formatMessageTime } from '../utils/formatTime';
 import { renderMessageWithEmojis } from '../utils/renderMessageWithEmojis';
 import { useLocation } from 'react-router-dom';
+import { UsersContext } from '../contexts/UsersContextProvider';
 
 export interface Message {
 	id: string;
@@ -80,7 +80,7 @@ export interface Chat {
 const Messages = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { user } = useContext(UserAuthContext);
-	const { orgId } = useContext(OrganisationContext);
+	const { sortedUsersData } = useContext(UsersContext);
 
 	const location = useLocation();
 
@@ -243,7 +243,7 @@ const Messages = () => {
 
 				// Fetch participant details
 				const participantsDetails: User[] = await Promise.all(
-					data.participants.map(async (participantId: string) => {
+					data.participants?.map(async (participantId: string) => {
 						const user = await fetchParticipantData(participantId);
 						return { ...user, participantId };
 					})
@@ -253,8 +253,8 @@ const Messages = () => {
 				chatsArray.push({
 					chatId: doc.id,
 					participants: participantsDetails
-						.filter((p): p is User => p !== null)
-						.map((p) => ({
+						?.filter((p): p is User => p !== null)
+						?.map((p) => ({
 							firebaseUserId: p.firebaseUserId,
 							username: p.username,
 							imageUrl: p.imageUrl,
@@ -502,7 +502,7 @@ const Messages = () => {
 			const chatDoc = await getDoc(chatRef);
 			if (!chatDoc.exists()) {
 				await setDoc(chatRef, {
-					participants: activeChat.participants.map((p) => p.firebaseUserId),
+					participants: activeChat.participants?.map((p) => p.firebaseUserId),
 					lastMessage: {
 						text: currentMessage.trim() || 'Image sent',
 						timestamp: serverTimestamp(),
@@ -513,7 +513,7 @@ const Messages = () => {
 				});
 			} else {
 				await updateDoc(chatRef, {
-					isDeletedBy: arrayRemove(...activeChat.participants.map((p) => p.firebaseUserId)),
+					isDeletedBy: arrayRemove(...activeChat.participants?.map((p) => p.firebaseUserId)),
 				});
 			}
 
@@ -594,21 +594,17 @@ const Messages = () => {
 		}
 	};
 
-	const filterUsers = async () => {
-		if (!searchValue.trim()) {
+	const filterUsers = async (searchQuery: string) => {
+		if (!searchQuery.trim()) {
 			setFilteredUsers([]);
 			return;
 		}
 
-		try {
-			const response = await axios.get(`${base_url}/users/search`, {
-				params: { searchQuery: searchValue, orgId },
-			});
+		const searchResults = sortedUsersData.filter(
+			(filteredUser) => filteredUser.username.toLowerCase().includes(searchQuery) || filteredUser.email.toLowerCase().includes(searchQuery)
+		);
 
-			setFilteredUsers(response.data.data);
-		} catch (error) {
-			console.log(error);
-		}
+		setFilteredUsers(searchResults);
 	};
 
 	const handleUserSelection = async (selectedUser: User) => {
@@ -630,13 +626,13 @@ const Messages = () => {
 
 		// Update the local state, regardless of Firestore operation success or failure
 		setFilteredChatList((prevChatList) => {
-			const filteredChatListAfterDelete = prevChatList.filter((chat) => chat.chatId !== chatId);
+			const filteredChatListAfterDelete = prevChatList?.filter((chat) => chat.chatId !== chatId);
 			localStorage.setItem('chatList', JSON.stringify(filteredChatListAfterDelete));
 			return filteredChatListAfterDelete;
 		});
 
 		setChatList((prevChatList) => {
-			const filteredChatListAfterDelete = prevChatList.filter((chat) => chat.chatId !== chatId);
+			const filteredChatListAfterDelete = prevChatList?.filter((chat) => chat.chatId !== chatId);
 			localStorage.setItem('chatList', JSON.stringify(filteredChatListAfterDelete));
 			return filteredChatListAfterDelete;
 		});
@@ -662,11 +658,11 @@ const Messages = () => {
 			await deleteDoc(messageRef);
 
 			// Update the local state to remove the deleted message
-			setMessages((prevMessages) => prevMessages.filter((msg) => msg.id !== messageId));
+			setMessages((prevMessages) => prevMessages?.filter((msg) => msg.id !== messageId));
 
 			// Optionally, you can also update the `lastMessage` field in the chat document if the deleted message was the last message.
 			const chatRef = doc(db, 'chats', activeChat.chatId);
-			const lastMessage = messages.filter((msg) => msg.id !== messageId).slice(-1)[0];
+			const lastMessage = messages?.filter((msg) => msg.id !== messageId).slice(-1)[0];
 
 			if (lastMessage) {
 				await updateDoc(chatRef, {
@@ -703,7 +699,7 @@ const Messages = () => {
 			try {
 				if (isBlocked) {
 					// Unblock user by completely removing the block entry
-					setBlockedUsers((prevList) => prevList.filter((userId) => userId !== firebaseUserId));
+					setBlockedUsers((prevList) => prevList?.filter((userId) => userId !== firebaseUserId));
 					await updateDoc(chatRef, {
 						[`blockedUsers.${firebaseUserId}`]: deleteField(),
 					});
@@ -726,7 +722,7 @@ const Messages = () => {
 
 	const debouncedFilterChats = debounce((searchValue: string) => {
 		if (searchValue) {
-			const filteredList = chatList.filter((chat: Chat) =>
+			const filteredList = chatList?.filter((chat: Chat) =>
 				chat.participants.some(
 					(participant: ParticipantData) => participant.username.includes(searchValue) && participant.firebaseUserId !== user?.firebaseUserId
 				)
@@ -753,7 +749,7 @@ const Messages = () => {
 								InputProps={{
 									endAdornment: (
 										<InputAdornment position='end'>
-											<Search />
+											<Search sx={{ mr: '-0.5rem' }} />
 										</InputAdornment>
 									),
 								}}
@@ -887,8 +883,8 @@ const Messages = () => {
 						{activeChat && (
 							<Box sx={{ display: 'flex', alignItems: 'center', margin: '0 1.5rem', width: '100%' }}>
 								{activeChat.participants
-									.filter((participant) => participant.firebaseUserId !== user?.firebaseUserId)
-									.map((otherParticipant) => (
+									?.filter((participant) => participant.firebaseUserId !== user?.firebaseUserId)
+									?.map((otherParticipant) => (
 										<Box
 											key={otherParticipant.firebaseUserId}
 											sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
@@ -950,7 +946,7 @@ const Messages = () => {
 						}}>
 						{activeChat ? (
 							messages
-								.filter((msg) => {
+								?.filter((msg) => {
 									const blockInfo = activeChat?.blockedUsers?.[msg.senderId]; // Get block info for the sender
 									const messageTimestamp = new Date(msg.timestamp);
 
@@ -973,7 +969,7 @@ const Messages = () => {
 									// Show messages sent before block or after unblock
 									return true;
 								})
-								.map((msg) => (
+								?.map((msg) => (
 									<Box
 										key={msg.id}
 										sx={{
@@ -1272,16 +1268,13 @@ const Messages = () => {
 				maxWidth='sm'>
 				<Box sx={{ display: 'flex', justifyContent: 'center', width: '100%', mb: filteredUsers.length === 0 ? '1.5rem' : null }}>
 					<CustomTextField
-						sx={{ width: '50%' }}
+						sx={{ width: '80%' }}
 						value={searchValue}
 						onChange={(e) => {
 							setSearchValue(e.target.value);
-							setFilteredUsers([]);
+							filterUsers(e.target.value);
 						}}
 					/>
-					<CustomSubmitButton sx={{ marginLeft: '1rem', height: '2.35rem' }} onClick={filterUsers}>
-						Search
-					</CustomSubmitButton>
 				</Box>
 				{filteredUsers.length !== 0 && (
 					<Box
@@ -1291,12 +1284,14 @@ const Messages = () => {
 							justifyContent: 'center',
 							alignItems: 'flex-start',
 							width: '65%',
+							maxHeight: '15rem',
+							overflow: 'auto',
 							margin: '0 auto 1.5rem auto',
 							border: 'solid 0.05rem lightgray',
 						}}>
 						{filteredUsers
 							?.filter((filteredUser) => filteredUser.firebaseUserId !== user?.firebaseUserId)
-							.map((user) => (
+							?.map((user) => (
 								<Box
 									key={user.firebaseUserId}
 									sx={{

@@ -240,10 +240,10 @@ const AdminDocuments = () => {
 													toggleDocumentEditModal(index);
 													openEditDocumentModal(index);
 												}}
-												icon={<Edit />}
+												icon={<Edit fontSize='small' />}
 											/>
 
-											<CustomDialog openModal={editDocumentModalOpen[index]} closeModal={() => closeDocumentEditModal(index)}>
+											<CustomDialog openModal={editDocumentModalOpen[index]} closeModal={() => closeDocumentEditModal(index)} maxWidth='sm'>
 												<form
 													style={{ display: 'flex', flexDirection: 'column' }}
 													onSubmit={async (e: React.FormEvent<HTMLFormElement>) => {
@@ -279,14 +279,15 @@ const AdminDocuments = () => {
 												onClick={() => {
 													openDeleteDocumentModal(index);
 												}}
-												icon={<Delete />}
+												icon={<Delete fontSize='small' />}
 											/>
 											{isDocumentDeleteModalOpen[index] !== undefined && (
 												<CustomDialog
 													openModal={isDocumentDeleteModalOpen[index]}
 													closeModal={() => closeDeleteDocumentModal(index)}
 													title='Delete Document'
-													content='Are you sure you want to delete this document?'>
+													content='Are you sure you want to delete this document?'
+													maxWidth='sm'>
 													<CustomDialogActions
 														onCancel={() => {
 															closeDeleteDocumentModal(index);

@@ -54,8 +54,8 @@ const AddNewLessonDialog = ({
 			newSelectedLessonIds = [...selectedLessonIds, lesson._id];
 			newSelectedLessons = [...selectedLessons, lesson];
 		} else {
-			newSelectedLessonIds = selectedLessonIds.filter((id) => id !== lesson._id);
-			newSelectedLessons = selectedLessons.filter((selectedLesson) => selectedLesson._id !== lesson._id);
+			newSelectedLessonIds = selectedLessonIds?.filter((id) => id !== lesson._id);
+			newSelectedLessons = selectedLessons?.filter((selectedLesson) => selectedLesson._id !== lesson._id);
 		}
 
 		setSelectedLessonIds(newSelectedLessonIds);

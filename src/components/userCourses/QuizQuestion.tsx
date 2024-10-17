@@ -293,8 +293,6 @@ const QuizQuestion = ({
 				const notificationRef = collection(db, 'notifications', admin.firebaseUserId, 'userNotifications');
 				await addDoc(notificationRef, notificationData);
 			}
-
-			console.log('Notification sent to instructors');
 		} catch (error) {
 			console.error('Error submitting quiz or sending notifications:', error);
 		} finally {

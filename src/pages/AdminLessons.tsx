@@ -115,27 +115,28 @@ const AdminLessons = () => {
 											sx={{
 												textAlign: 'center',
 											}}>
-											<CustomActionBtn title='Clone' onClick={() => {}} icon={<FileCopy />} />
+											<CustomActionBtn title='Clone' onClick={() => {}} icon={<FileCopy fontSize='small' />} />
 											<CustomActionBtn
 												title='Edit'
 												onClick={() => {
 													navigate(`/admin/lesson-edit/user/${userId}/lesson/${lesson._id}`);
 												}}
-												icon={<Edit />}
+												icon={<Edit fontSize='small' />}
 											/>
 											<CustomActionBtn
 												title='Delete'
 												onClick={() => {
 													openDeleteLessonModal(index);
 												}}
-												icon={<Delete />}
+												icon={<Delete fontSize='small' />}
 											/>
 											{isLessonDeleteModalOpen[index] !== undefined && (
 												<CustomDialog
 													openModal={isLessonDeleteModalOpen[index]}
 													closeModal={() => closeDeleteLessonModal(index)}
 													title='Delete Lesson'
-													content='Are you sure you want to delete this lesson?'>
+													content='Are you sure you want to delete this lesson?'
+													maxWidth='sm'>
 													<CustomDialogActions
 														onCancel={() => closeDeleteLessonModal(index)}
 														deleteBtn={true}

@@ -35,7 +35,7 @@ const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, set
 	const [showPicker, setShowPicker] = useState(false);
 	const [isMsgUpdated, setIsMsgUpdated] = useState(false);
 
-	const updateMessages = (callback: any) => setMessages((prev) => prev.map((msg) => (msg._id === message._id ? callback(msg) : msg)));
+	const updateMessages = (callback: any) => setMessages((prev) => prev?.map((msg) => (msg._id === message._id ? callback(msg) : msg)));
 
 	const uploadAudio = async (blob: Blob) => {
 		setIsAudioUploading(true);
@@ -91,7 +91,7 @@ const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, set
 	};
 
 	return (
-		<CustomDialog openModal={editMsgModalOpen} closeModal={handleCancel} title='Edit Message'>
+		<CustomDialog openModal={editMsgModalOpen} closeModal={handleCancel} title='Edit Message' maxWidth='sm'>
 			<form
 				style={{ display: 'flex', flexDirection: 'column', padding: '1rem 3rem' }}
 				onSubmit={(e) => {

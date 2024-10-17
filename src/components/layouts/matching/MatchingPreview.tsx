@@ -110,7 +110,7 @@ const MatchingPreview = ({
 
 	useEffect(() => {
 		if (isLessonCompleted && fromQuizQuestionUser && userMatchingPairsAfterSubmission) {
-			const matchedPairs = initialPairs.map((pair) => {
+			const matchedPairs = initialPairs?.map((pair) => {
 				const userMatch = userMatchingPairsAfterSubmission.find((match) => match.id === pair.id);
 				return {
 					...pair,
@@ -119,16 +119,16 @@ const MatchingPreview = ({
 			});
 			setPairs(matchedPairs);
 
-			const usedAnswers = userMatchingPairsAfterSubmission.map((match) => match.answer);
+			const usedAnswers = userMatchingPairsAfterSubmission?.map((match) => match.answer);
 			const unusedResponses = initialPairs
-				.filter((pair) => !usedAnswers.includes(pair.answer))
-				.map((pair) => ({ id: pair.id, question: pair.question, answer: pair.answer }));
+				?.filter((pair) => !usedAnswers.includes(pair.answer))
+				?.map((pair) => ({ id: pair.id, question: pair.question, answer: pair.answer }));
 			setResponses(unusedResponses);
 		} else if (!isLessonCompleted && fromQuizQuestionUser) {
 			const userAnswer = userQuizAnswers?.find((quiz) => quiz.questionId === questionId);
 
 			if (userAnswer && userAnswer.userMatchingPairAnswers) {
-				const matchedPairs = initialPairs.map((pair) => {
+				const matchedPairs = initialPairs?.map((pair) => {
 					const userMatch = userAnswer.userMatchingPairAnswers.find((match) => match.id === pair.id);
 					return {
 						...pair,
@@ -137,27 +137,27 @@ const MatchingPreview = ({
 				});
 				setPairs(matchedPairs);
 
-				const usedAnswers = userAnswer.userMatchingPairAnswers.map((match) => match.answer);
+				const usedAnswers = userAnswer.userMatchingPairAnswers?.map((match) => match.answer);
 				const unusedResponses = initialPairs
-					.filter((pair) => !usedAnswers.includes(pair.answer))
-					.map((pair) => ({ id: pair.id, question: pair.question, answer: pair.answer }));
+					?.filter((pair) => !usedAnswers.includes(pair.answer))
+					?.map((pair) => ({ id: pair.id, question: pair.question, answer: pair.answer }));
 				setResponses(unusedResponses);
 			}
 		} else if ((isLessonCompleted && !fromQuizQuestionUser && initialPairs) || (!isLessonCompleted && displayedQuestionNumber! < getLastQuestion())) {
-			const correctPairs = initialPairs.map((pair) => ({
+			const correctPairs = initialPairs?.map((pair) => ({
 				...pair,
 				answer: pair.answer,
 			}));
 			setPairs(correctPairs);
 
-			const usedAnswers = initialPairs.map((pair) => pair.answer);
+			const usedAnswers = initialPairs?.map((pair) => pair.answer);
 			const unusedResponses = initialPairs
-				.filter((pair) => !usedAnswers.includes(pair.answer))
-				.map((pair) => ({ id: pair.id, question: pair.question, answer: pair.answer }));
+				?.filter((pair) => !usedAnswers.includes(pair.answer))
+				?.map((pair) => ({ id: pair.id, question: pair.question, answer: pair.answer }));
 			setResponses(unusedResponses);
 		} else if (!hasInteracted) {
-			setPairs(initialPairs.map((pair) => ({ ...pair, answer: '' })));
-			setResponses(initialPairs.map((pair) => ({ id: pair.id, question: pair.question, answer: pair.answer })).sort(() => Math.random() - 0.5));
+			setPairs(initialPairs?.map((pair) => ({ ...pair, answer: '' })));
+			setResponses(initialPairs?.map((pair) => ({ id: pair.id, question: pair.question, answer: pair.answer })).sort(() => Math.random() - 0.5));
 		}
 	}, [
 		initialPairs,
@@ -193,13 +193,13 @@ const MatchingPreview = ({
 
 	useEffect(() => {
 		setUserQuizAnswers?.((prevData) => {
-			const matchingPairsWithIds: UserMatchingPairAnswers[] = initialPairs.map((pair) => ({
+			const matchingPairsWithIds: UserMatchingPairAnswers[] = initialPairs?.map((pair) => ({
 				id: pair.id,
 				answer: '',
 			}));
 
 			if (prevData) {
-				return prevData.map((data) => {
+				return prevData?.map((data) => {
 					if (data.questionId === questionId) {
 						return { ...data, userMatchingPairAnswers: matchingPairsWithIds };
 					}
@@ -220,8 +220,8 @@ const MatchingPreview = ({
 
 		const { source, destination } = result;
 
-		const newPairs = pairs.map((pair) => ({ ...pair }));
-		const newResponses = responses.map((response) => ({ ...response }));
+		const newPairs = pairs?.map((pair) => ({ ...pair }));
+		const newResponses = responses?.map((response) => ({ ...response }));
 
 		if (source.droppableId === 'responses' && destination.droppableId.startsWith('prompt-')) {
 			const pairIndex = parseInt(destination.droppableId.split('-')[1], 10);
@@ -263,13 +263,13 @@ const MatchingPreview = ({
 
 		if (fromQuizQuestionUser && !isLessonCompleted) {
 			setUserQuizAnswers?.((prevData) => {
-				const updatedAnswers = newPairs.map((pair) => ({
+				const updatedAnswers = newPairs?.map((pair) => ({
 					id: pair.id,
 					answer: pair.answer,
 				}));
 
 				if (prevData) {
-					return prevData.map((data) => {
+					return prevData?.map((data) => {
 						if (data.questionId === questionId) {
 							return { ...data, userMatchingPairAnswers: updatedAnswers };
 						}
@@ -293,7 +293,7 @@ const MatchingPreview = ({
 				)}
 				<Container>
 					<Column sx={{ marginRight: '2rem' }}>
-						{pairs.map((pair, index) => (
+						{pairs?.map((pair, index) => (
 							<Droppable key={`prompt-${index}`} droppableId={`prompt-${index}`}>
 								{(provided) => (
 									<DropArea ref={provided.innerRef} {...provided.droppableProps}>
@@ -347,7 +347,7 @@ const MatchingPreview = ({
 										height: '100%',
 										margin: '0.5rem 0',
 									}}>
-									{responses.map((response, index) => (
+									{responses?.map((response, index) => (
 										<Draggable
 											key={`draggable-response-${response.id}-${index}`}
 											draggableId={`draggable-response-${response.id}-${index}`}
@@ -381,7 +381,7 @@ const MatchingPreview = ({
 							<Typography variant='h6'>Correct Matching</Typography>
 						</Box>
 						<Box>
-							{initialPairs.map((pair) => {
+							{initialPairs?.map((pair) => {
 								return (
 									<Box sx={{ display: 'flex' }} key={pair.id}>
 										<Box

@@ -105,20 +105,21 @@ const AdminUsers = () => {
 												sx={{
 													textAlign: 'center',
 												}}>
-												<CustomActionBtn title='Edit' onClick={() => {}} icon={<Edit />} />
+												<CustomActionBtn title='Edit' onClick={() => {}} icon={<Edit fontSize='small' />} />
 												<CustomActionBtn
 													title='Delete'
 													onClick={() => {
 														openDeleteUserModal(index);
 													}}
-													icon={<Delete />}
+													icon={<Delete fontSize='small' />}
 												/>
 												{isUserDeleteModalOpen[index] !== undefined && (
 													<CustomDialog
 														openModal={isUserDeleteModalOpen[index]}
 														closeModal={() => closeDeleteUserModal(index)}
 														title='Delete User'
-														content='Are you sure you want to delete this user?'>
+														content='Are you sure you want to delete this user?'
+														maxWidth='sm'>
 														<CustomDialogActions
 															onCancel={() => closeDeleteUserModal(index)}
 															deleteBtn={true}

@@ -94,7 +94,7 @@ const LessonPage = () => {
 					const lessonData = lessonResponse.data;
 					setLesson({
 						...lessonData,
-						questions: lessonData.questions.filter((q: QuestionInterface) => q !== null),
+						questions: lessonData.questions?.filter((q: QuestionInterface) => q !== null),
 					});
 					setLessonType(lessonData.type);
 
@@ -107,7 +107,7 @@ const LessonPage = () => {
 					const answers = await fetchUserAnswersByLesson(lessonId);
 					if (lessonData.type === LessonType.QUIZ) {
 						setUserQuizAnswers(
-							answers.map((answer) => ({
+							answers?.map((answer) => ({
 								questionId: answer.questionId,
 								userAnswer: answer.userAnswer,
 								audioRecordUrl: answer.audioRecordUrl,
@@ -483,8 +483,8 @@ const LessonPage = () => {
 					</Box>
 					<Box sx={{ display: 'flex', flexDirection: 'column', alignSelf: 'flex-start' }}>
 						{lesson?.documents
-							.filter((doc: Document) => doc !== null)
-							.map((doc: Document) => (
+							?.filter((doc: Document) => doc !== null)
+							?.map((doc: Document) => (
 								<Box sx={{ marginTop: '0.5rem' }} key={doc._id}>
 									<Link href={doc?.documentUrl} target='_blank' rel='noopener noreferrer' variant='body2'>
 										{doc?.name}
