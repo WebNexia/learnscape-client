@@ -591,7 +591,14 @@ const AdminLessonEditPage = () => {
 							/>
 						)}
 
-						<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', width: '90%', margin: '3rem 0 4rem 0' }}>
+						<Box
+							sx={{
+								display: 'flex',
+								flexDirection: 'column',
+								justifyContent: 'flex-start',
+								width: '90%',
+								margin: singleLesson?.type === LessonType.INSTRUCTIONAL_LESSON ? '3rem 0 4rem 0' : '1rem 0 4rem 0',
+							}}>
 							<Box>
 								<Typography variant='h4' sx={{ mb: '1.25rem' }}>
 									{singleLesson.type} Materials

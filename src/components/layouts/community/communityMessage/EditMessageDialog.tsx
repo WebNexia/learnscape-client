@@ -91,7 +91,7 @@ const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, set
 	};
 
 	return (
-		<CustomDialog openModal={editMsgModalOpen} closeModal={handleCancel} title='Edit Message'>
+		<CustomDialog openModal={editMsgModalOpen} closeModal={handleCancel} title='Edit Message' maxWidth='sm'>
 			<form
 				style={{ display: 'flex', flexDirection: 'column', padding: '1rem 3rem' }}
 				onSubmit={(e) => {

@@ -789,9 +789,11 @@ const CommunityTopicPage = () => {
 										<Mic fontSize='small' color={audioUrl ? 'success' : 'inherit'} />
 									</IconButton>
 								</Tooltip>
-								<CustomDialog openModal={uploadAudioDialogOpen} closeModal={() => setUploadAudioDialogOpen(false)}>
+								<CustomDialog openModal={uploadAudioDialogOpen} closeModal={() => setUploadAudioDialogOpen(false)} maxWidth='sm'>
 									<DialogContent>
-										<Typography variant='body2' sx={{ mb: '3rem', textAlign: 'center', color: 'gray' }}>
+										<Typography
+											variant='body2'
+											sx={{ mb: '2rem', textAlign: 'center', color: 'gray', padding: '0 1rem', fontSize: '0.85rem', lineHeight: 1.6 }}>
 											You can add a single audio recording per message and it will be displayed at the bottom the message
 										</Typography>
 										{!audioUrl ? (
@@ -848,9 +850,9 @@ const CommunityTopicPage = () => {
 										<Image fontSize='small' color={imgUrl ? 'success' : 'inherit'} />
 									</IconButton>
 								</Tooltip>
-								<CustomDialog openModal={uploadImgDialogOpen} closeModal={() => setUploadImgDialogOpen(false)}>
+								<CustomDialog openModal={uploadImgDialogOpen} closeModal={() => setUploadImgDialogOpen(false)} maxWidth='sm'>
 									<DialogContent>
-										<Typography variant='body2' sx={{ mb: '3rem', textAlign: 'center', color: 'gray' }}>
+										<Typography sx={{ mb: '2rem', textAlign: 'center', color: 'gray', fontSize: '0.85rem', lineHeight: 1.6, padding: '0 1rem' }}>
 											You can add a single image per message and it will be displayed at the bottom the message
 										</Typography>
 										<HandleImageUploadURL
@@ -874,7 +876,7 @@ const CommunityTopicPage = () => {
 
 								<Tooltip title='Reply' placement='top'>
 									<IconButton
-										disabled={isTopicLocked || isSending}
+										disabled={isTopicLocked || isSending || (!!!currentMessage && !imgUrl && !audioUrl)}
 										sx={{
 											':hover': {
 												backgroundColor: 'transparent',

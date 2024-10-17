@@ -90,7 +90,7 @@ const AdminCourseEditChapter = ({
 								onClick={() => {
 									setAddNewLessonModalOpen(true);
 								}}>
-								<NoteAdd />
+								<NoteAdd fontSize='small' />
 							</IconButton>
 						</Tooltip>
 
@@ -107,7 +107,7 @@ const AdminCourseEditChapter = ({
 								onClick={() => {
 									setIsNewLessonModalOpen(true);
 								}}>
-								<CreateTwoTone />
+								<CreateTwoTone fontSize='small' />
 							</IconButton>
 						</Tooltip>
 
@@ -123,7 +123,7 @@ const AdminCourseEditChapter = ({
 					<Box>
 						<Tooltip title='Clone Chapter' placement='top'>
 							<IconButton>
-								<FileCopy />
+								<FileCopy fontSize='small' />
 							</IconButton>
 						</Tooltip>
 						<Tooltip title='Delete Chapter' placement='top'>
@@ -143,7 +143,7 @@ const AdminCourseEditChapter = ({
 										return prevIds;
 									});
 								}}>
-								<Delete />
+								<Delete fontSize='small' />
 							</IconButton>
 						</Tooltip>
 					</Box>
@@ -248,7 +248,7 @@ const AdminCourseEditChapter = ({
 
 															chapterUpdateTrack(chapter.chapterId, setIsChapterUpdated);
 														}}>
-														<Delete />
+														<Delete fontSize='small' />
 													</IconButton>
 												</Tooltip>
 											</Box>

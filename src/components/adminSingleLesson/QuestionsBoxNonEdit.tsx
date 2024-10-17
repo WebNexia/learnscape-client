@@ -27,7 +27,7 @@ const QuestionsBoxNonEdit = ({ singleLesson, setIsDisplayNonEditQuestion, setDis
 				width: '90%',
 				mt: singleLesson?.type === LessonType.INSTRUCTIONAL_LESSON ? '1rem' : '3rem',
 			}}>
-			<Box sx={{ mt: '3rem', minHeight: '40vh' }}>
+			<Box sx={{ mt: '3rem', minHeight: '30vh' }}>
 				<Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
 					<Box>
 						<Typography variant='h4'>Questions</Typography>

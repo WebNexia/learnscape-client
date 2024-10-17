@@ -32,13 +32,13 @@ import useImageUpload from '../hooks/useImageUpload'; // Import the custom hook
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import { User } from '../interfaces/user';
 import axios from 'axios';
-import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import theme from '../themes';
 import { debounce } from 'lodash';
 import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
 import { formatMessageTime } from '../utils/formatTime';
 import { renderMessageWithEmojis } from '../utils/renderMessageWithEmojis';
 import { useLocation } from 'react-router-dom';
+import { UsersContext } from '../contexts/UsersContextProvider';
 
 export interface Message {
 	id: string;
@@ -80,7 +80,7 @@ export interface Chat {
 const Messages = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { user } = useContext(UserAuthContext);
-	const { orgId } = useContext(OrganisationContext);
+	const { sortedUsersData } = useContext(UsersContext);
 
 	const location = useLocation();
 
@@ -594,21 +594,17 @@ const Messages = () => {
 		}
 	};
 
-	const filterUsers = async () => {
-		if (!searchValue.trim()) {
+	const filterUsers = async (searchQuery: string) => {
+		if (!searchQuery.trim()) {
 			setFilteredUsers([]);
 			return;
 		}
 
-		try {
-			const response = await axios.get(`${base_url}/users/search`, {
-				params: { searchQuery: searchValue, orgId },
-			});
+		const searchResults = sortedUsersData.filter(
+			(filteredUser) => filteredUser.username.toLowerCase().includes(searchQuery) || filteredUser.email.toLowerCase().includes(searchQuery)
+		);
 
-			setFilteredUsers(response.data.data);
-		} catch (error) {
-			console.log(error);
-		}
+		setFilteredUsers(searchResults);
 	};
 
 	const handleUserSelection = async (selectedUser: User) => {
@@ -753,7 +749,7 @@ const Messages = () => {
 								InputProps={{
 									endAdornment: (
 										<InputAdornment position='end'>
-											<Search />
+											<Search sx={{ mr: '-0.5rem' }} />
 										</InputAdornment>
 									),
 								}}
@@ -1272,16 +1268,13 @@ const Messages = () => {
 				maxWidth='sm'>
 				<Box sx={{ display: 'flex', justifyContent: 'center', width: '100%', mb: filteredUsers.length === 0 ? '1.5rem' : null }}>
 					<CustomTextField
-						sx={{ width: '50%' }}
+						sx={{ width: '80%' }}
 						value={searchValue}
 						onChange={(e) => {
 							setSearchValue(e.target.value);
-							setFilteredUsers([]);
+							filterUsers(e.target.value);
 						}}
 					/>
-					<CustomSubmitButton sx={{ marginLeft: '1rem', height: '2.35rem' }} onClick={filterUsers}>
-						Search
-					</CustomSubmitButton>
 				</Box>
 				{filteredUsers.length !== 0 && (
 					<Box
@@ -1291,6 +1284,8 @@ const Messages = () => {
 							justifyContent: 'center',
 							alignItems: 'flex-start',
 							width: '65%',
+							maxHeight: '15rem',
+							overflow: 'auto',
 							margin: '0 auto 1.5rem auto',
 							border: 'solid 0.05rem lightgray',
 						}}>

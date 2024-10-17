@@ -167,9 +167,19 @@ const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree,
 											setIsMissingField(false);
 										}
 									}}
+									sx={{
+										'& .MuiSvgIcon-root': {
+											fontSize: '1.25rem',
+										},
+									}}
 								/>
 							}
 							label='Free Course'
+							sx={{
+								'& .MuiFormControlLabel-label': {
+									fontSize: '0.85rem',
+								},
+							}}
 						/>
 					</Box>
 				</Box>

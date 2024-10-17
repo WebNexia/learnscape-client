@@ -175,7 +175,20 @@ const AddNewQuestionDialog = ({
 													sx={{
 														textAlign: 'center',
 													}}>
-													<FormControlLabel control={<Checkbox checked={isSelected} onChange={() => handleCheckboxChange(question)} />} label='' />
+													<FormControlLabel
+														control={
+															<Checkbox
+																checked={isSelected}
+																onChange={() => handleCheckboxChange(question)}
+																sx={{
+																	'& .MuiSvgIcon-root': {
+																		fontSize: '1.25rem',
+																	},
+																}}
+															/>
+														}
+														label=''
+													/>
 												</TableCell>
 											</TableRow>
 										);

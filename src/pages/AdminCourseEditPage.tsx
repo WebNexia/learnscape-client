@@ -27,6 +27,7 @@ import { DocumentUpdateTrack } from './AdminLessonEditPage';
 import { DocumentsContext } from '../contexts/DocumentsContextProvider';
 import DocumentsListEditBox from '../components/adminDocuments/DocumentsListEditBox';
 import NoContentBoxAdmin from '../components/layouts/noContentBox/NoContentBoxAdmin';
+import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/CustomInfoMessageAlignedLeft';
 
 export interface ChapterUpdateTrack {
 	chapterId: string;
@@ -447,21 +448,26 @@ const AdminCourseEditPage = () => {
 										alignItems: 'center',
 										width: '100%',
 									}}>
-									<Typography variant='h5' sx={{ mb: '1rem' }}>
+									<Typography variant='h5' sx={{ flex: 2 }}>
 										CHAPTERS
 									</Typography>
-									<CustomSubmitButton
-										type='button'
-										sx={{ marginBottom: '1rem' }}
-										onClick={() => {
-											setIsChapterCreateModalOpen(true);
-											setNewChapterTitle('');
-										}}>
-										New Chapter
-									</CustomSubmitButton>
+									<CustomInfoMessageAlignedLeft
+										message='Drag the lessons in each chapter and chapters to reorder'
+										sx={{ justifyContent: 'center', alignItems: 'center', flex: 4, marginTop: '0.85rem' }}
+									/>
+									<Box sx={{ display: 'flex', justifyContent: 'flex-end', flex: 2 }}>
+										<CustomSubmitButton
+											type='button'
+											onClick={() => {
+												setIsChapterCreateModalOpen(true);
+												setNewChapterTitle('');
+											}}>
+											New Chapter
+										</CustomSubmitButton>
+									</Box>
 								</Box>
 
-								<CustomDialog openModal={isChapterCreateModalOpen} closeModal={closeCreateChapterModal} title='Create New Chapter'>
+								<CustomDialog openModal={isChapterCreateModalOpen} closeModal={closeCreateChapterModal} title='Create New Chapter' maxWidth='sm'>
 									<form
 										onSubmit={(e: React.FormEvent<HTMLFormElement>) => {
 											e.preventDefault();

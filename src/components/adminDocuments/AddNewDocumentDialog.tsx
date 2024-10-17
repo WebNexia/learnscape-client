@@ -161,7 +161,20 @@ const AddNewDocumentDialog = ({
 													sx={{
 														textAlign: 'center',
 													}}>
-													<FormControlLabel control={<Checkbox checked={isSelected} onChange={() => handleCheckboxChange(document)} />} label='' />
+													<FormControlLabel
+														control={
+															<Checkbox
+																checked={isSelected}
+																onChange={() => handleCheckboxChange(document)}
+																sx={{
+																	'& .MuiSvgIcon-root': {
+																		fontSize: '1.25rem',
+																	},
+																}}
+															/>
+														}
+														label=''
+													/>
 												</TableCell>
 											</TableRow>
 										);

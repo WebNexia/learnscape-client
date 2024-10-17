@@ -177,7 +177,7 @@ const AdminQuestions = () => {
 											sx={{
 												textAlign: 'center',
 											}}>
-											<CustomActionBtn title='Clone' onClick={() => {}} icon={<FileCopy />} />
+											<CustomActionBtn title='Clone' onClick={() => {}} icon={<FileCopy fontSize='small' />} />
 											<CustomActionBtn
 												title='Edit'
 												onClick={() => {
@@ -189,7 +189,7 @@ const AdminQuestions = () => {
 													setIsDuplicateOption(false);
 													setIsMinimumOptions(true);
 												}}
-												icon={<Edit />}
+												icon={<Edit fontSize='small' />}
 											/>
 
 											<AdminQuestionsEditQuestionDialog
@@ -218,14 +218,15 @@ const AdminQuestions = () => {
 												onClick={() => {
 													openDeleteQuestionModal(index);
 												}}
-												icon={<Delete />}
+												icon={<Delete fontSize='small' />}
 											/>
 											{isQuestionDeleteModalOpen[index] !== undefined && (
 												<CustomDialog
 													openModal={isQuestionDeleteModalOpen[index]}
 													closeModal={() => closeDeleteQuestionModal(index)}
 													title='Delete Question'
-													content='Are you sure you want to delete this question?'>
+													content='Are you sure you want to delete this question?'
+													maxWidth='sm'>
 													<CustomDialogActions
 														onCancel={() => closeDeleteQuestionModal(index)}
 														deleteBtn={true}

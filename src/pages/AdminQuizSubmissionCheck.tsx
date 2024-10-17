@@ -236,7 +236,7 @@ const AdminQuizSubmissionCheck = () => {
 
 	return (
 		<DashboardPagesLayout pageName='Check Quiz Submission' customSettings={{ justifyContent: 'flex-start' }}>
-			<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '90%', margin: '2rem' }}>
+			<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '85%', margin: '2rem' }}>
 				{[
 					{ label: 'Username', value: username },
 					{ label: 'Quiz Name', value: quizName },
@@ -252,7 +252,7 @@ const AdminQuizSubmissionCheck = () => {
 				))}
 			</Box>
 
-			<Box sx={{ width: '90%', margin: '1.5rem' }}>
+			<Box sx={{ width: '85%', margin: '1.5rem' }}>
 				<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', margin: '1rem 0' }}>
 					<Box>
 						<Typography variant='h5'>Questions</Typography>
@@ -539,7 +539,7 @@ const AdminQuizSubmissionCheck = () => {
 				/>
 			</CustomDialog>
 
-			<Box sx={{ width: '90%', margin: '2rem' }}>
+			<Box sx={{ width: '85%', margin: '2rem' }}>
 				<Typography variant='h5' sx={{ mb: '1rem' }}>
 					Feedback for Quiz
 				</Typography>
@@ -554,7 +554,7 @@ const AdminQuizSubmissionCheck = () => {
 				/>
 			</Box>
 
-			<Box sx={{ width: '90%', mb: '3rem', display: 'flex', justifyContent: 'flex-end' }}>
+			<Box sx={{ width: '85%', mb: '3rem', display: 'flex', justifyContent: 'flex-end' }}>
 				{feedbackSubmitting ? (
 					<LoadingButton loading variant='outlined' sx={{ textTransform: 'capitalize', height: '2rem' }}>
 						Submitting
