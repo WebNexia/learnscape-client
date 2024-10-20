@@ -57,7 +57,7 @@ const UpcomingEvents = ({ sortedEventsData }: UpcomingEventsProps) => {
 				</Box>
 			) : (
 				<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '7rem' }}>
-					<Typography sx={{ fontSize: '0.85rem' }}>No upcoming events</Typography>
+					<Typography sx={{ fontSize: '0.85rem', color: 'gray' }}>No upcoming events</Typography>
 				</Box>
 			)}
 		</Box>

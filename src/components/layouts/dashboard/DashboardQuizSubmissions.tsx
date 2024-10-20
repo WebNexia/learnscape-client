@@ -45,11 +45,11 @@ const DashboardQuizSubmissions = () => {
 			</Box>
 			<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '7rem' }}>
 				{user?.role === Roles.ADMIN ? (
-					<Typography sx={{ fontSize: '0.85rem' }}>
+					<Typography sx={{ fontSize: '0.85rem', color: numberOfUncheckedQuizzes > 0 ? '#ef5350' : 'gray' }}>
 						{numberOfUncheckedQuizzes > 0 ? `You have ${numberOfUncheckedQuizzes} unchecked quizzes` : 'You have no unchecked quizzes'}
 					</Typography>
 				) : (
-					<Typography sx={{ fontSize: '0.85rem' }}>
+					<Typography sx={{ fontSize: '0.85rem', color: numberOfRecentlyCheckedQuizzes > 0 ? theme.textColor?.greenPrimary.main : 'gray' }}>
 						{numberOfRecentlyCheckedQuizzes > 0
 							? `You have ${numberOfRecentlyCheckedQuizzes} recently checked quizzes`
 							: 'You have no recently checked quizzes'}
