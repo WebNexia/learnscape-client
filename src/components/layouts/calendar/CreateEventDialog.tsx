@@ -328,6 +328,8 @@ const CreateEventDialog = ({
 								placeholder={newEvent.isAllLearnersSelected ? '' : 'Search Learner'}
 								onChange={(e) => {
 									setSearchLearnerValue(e.target.value);
+									setSearchCourseValue('');
+									setFilteredCourses([]);
 									filterUsers(e.target.value, 'create');
 								}}
 								sx={{ width: '80%', backgroundColor: newEvent.isAllLearnersSelected ? 'transparent' : '#fff' }}
@@ -338,6 +340,7 @@ const CreateEventDialog = ({
 											<Search
 												sx={{
 													mr: '-0.5rem',
+													color: newEvent.isAllLearnersSelected ? 'lightgray' : null,
 												}}
 											/>
 										</InputAdornment>
@@ -501,7 +504,9 @@ const CreateEventDialog = ({
 								placeholder={newEvent.isAllLearnersSelected || newEvent.isAllCoursesSelected ? '' : 'Search Course'}
 								onChange={(e) => {
 									setSearchCourseValue(e.target.value);
+									setSearchLearnerValue('');
 									filterCourses(e.target.value, 'create');
+									setFilteredUsers([]);
 								}}
 								sx={{ width: '80%', backgroundColor: newEvent.isAllLearnersSelected || newEvent.isAllCoursesSelected ? 'transparent' : '#fff' }}
 								required={false}
@@ -511,6 +516,7 @@ const CreateEventDialog = ({
 											<Search
 												sx={{
 													mr: '-0.5rem',
+													color: newEvent.isAllLearnersSelected || newEvent.isAllCoursesSelected ? 'lightgray' : null,
 												}}
 											/>
 										</InputAdornment>
@@ -566,6 +572,7 @@ const CreateEventDialog = ({
 									left: 0,
 									zIndex: 3,
 									backgroundColor: theme.bgColor?.common,
+									boxShadow: '0.15rem 0.2rem 0.3rem 0rem rgba(0,0,0,0.1)',
 								}}>
 								{filteredCourses?.map((course) => (
 									<Box

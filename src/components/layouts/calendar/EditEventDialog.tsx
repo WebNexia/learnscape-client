@@ -378,6 +378,8 @@ const EditEventDialog = ({
 								placeholder={selectedEvent?.isAllLearnersSelected ? '' : 'Search Learner'}
 								onChange={(e) => {
 									setSearchLearnerValue(e.target.value);
+									setSearchCourseValue('');
+									setFilteredCourses([]);
 									filterUsers(e.target.value, 'edit');
 								}}
 								sx={{ width: '80%', backgroundColor: selectedEvent?.isAllLearnersSelected ? 'transparent' : '#fff' }}
@@ -388,6 +390,7 @@ const EditEventDialog = ({
 											<Search
 												sx={{
 													mr: '-0.5rem',
+													color: selectedEvent?.isAllLearnersSelected ? 'lightgray' : null,
 												}}
 											/>
 										</InputAdornment>
@@ -565,6 +568,8 @@ const EditEventDialog = ({
 								placeholder={selectedEvent?.isAllLearnersSelected || selectedEvent?.isAllCoursesSelected ? '' : 'Search Course'}
 								onChange={(e) => {
 									setSearchCourseValue(e.target.value);
+									setSearchLearnerValue('');
+									setFilteredUsers([]);
 									filterCourses(e.target.value, 'edit');
 								}}
 								sx={{
@@ -578,6 +583,7 @@ const EditEventDialog = ({
 											<Search
 												sx={{
 													mr: '-0.5rem',
+													color: selectedEvent?.isAllLearnersSelected || selectedEvent?.isAllCoursesSelected ? 'lightgray' : null,
 												}}
 											/>
 										</InputAdornment>
@@ -645,6 +651,7 @@ const EditEventDialog = ({
 									left: 0,
 									zIndex: 3,
 									backgroundColor: theme.bgColor?.common,
+									boxShadow: '0.15rem 0.2rem 0.3rem 0rem rgba(0,0,0,0.1)',
 								}}>
 								{filteredCourses?.map((course) => (
 									<Box

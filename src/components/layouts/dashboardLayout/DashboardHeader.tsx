@@ -258,6 +258,7 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 							localStorage.removeItem('activeChatId');
 							localStorage.removeItem('chatList');
 							localStorage.removeItem('participantCache');
+							localStorage.removeItem('totalUnreadMessages');
 
 							clearAllQuizData();
 

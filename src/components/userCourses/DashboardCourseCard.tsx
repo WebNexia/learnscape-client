@@ -37,7 +37,13 @@ const DashboardCourseCard = ({ course, isEnrolled, userId, displayMyCourses, use
 				position: 'relative',
 				marginBottom: '3rem',
 			}}>
-			<CardMedia sx={{ height: '12rem', width: '22rem', objectFit: 'contain' }} image={course.imageUrl} />
+			<CardMedia
+				sx={{ height: '12rem', width: '22rem', objectFit: 'contain' }}
+				image={
+					course.imageUrl ||
+					'https://images.unsplash.com/photo-1501504905252-473c47e087f8?q=80&w=2874&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
+				}
+			/>
 			<CardContent sx={{ padding: '1rem 1.5rem' }}>
 				<Typography variant='body1' sx={{ textAlign: 'center', color: theme.palette.primary.main }}>
 					{course.title}

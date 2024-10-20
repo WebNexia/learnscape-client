@@ -17,10 +17,18 @@ interface CoursesContextTypes {
 	coursesPageNumber: number;
 	setCoursesPageNumber: React.Dispatch<React.SetStateAction<number>>;
 	fetchCourses: (page: number) => void;
+	totalNumberOfEnrolledLearners: number;
+	totalCourses: number;
+	coursesSummary: CourseSummary[];
 }
 
 interface CoursesContextProviderProps {
 	children: ReactNode;
+}
+
+export interface CourseSummary {
+	title: string;
+	enrolledUsersCount: number;
 }
 
 export const CoursesContext = createContext<CoursesContextTypes>({
@@ -34,6 +42,9 @@ export const CoursesContext = createContext<CoursesContextTypes>({
 	coursesPageNumber: 1,
 	setCoursesPageNumber: () => {},
 	fetchCourses: () => {},
+	totalNumberOfEnrolledLearners: 1,
+	totalCourses: 1,
+	coursesSummary: [],
 });
 
 const CoursesContextProvider = (props: CoursesContextProviderProps) => {
@@ -44,6 +55,10 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 	const [sortedCoursesData, setSortedCoursesData] = useState<SingleCourse[]>([]);
 	const [coursesNumberOfPages, setNumberOfPages] = useState<number>(1);
 	const [coursesPageNumber, setCoursesPageNumber] = useState<number>(1);
+
+	const [totalNumberOfEnrolledLearners, setTotalNumberOfEnrolledLearners] = useState<number>(1);
+	const [totalCourses, setTotalCourses] = useState<number>(1);
+	const [coursesSummary, setCoursesSummary] = useState<CourseSummary[]>([]);
 
 	const [isLoaded, setIsLoaded] = useState<boolean>(false);
 
@@ -65,6 +80,30 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 	};
 
 	const { data, isLoading, isError } = useQuery(['allCourses', orgId, coursesPageNumber], () => fetchCourses(coursesPageNumber), {
+		enabled: !!orgId && !isLoaded,
+	});
+
+	const fetchCoursesDashboardSummary = async () => {
+		if (!orgId) return;
+		try {
+			// Fetch the course summary for the dashboard
+			const response = await axios.get(`${base_url}/courses/organisation/${orgId}/summary`);
+			const summary = response.data;
+
+			// Example: Use the summary data in your dashboard
+			setTotalCourses(summary.totalCourses);
+			setTotalNumberOfEnrolledLearners(summary.totalUniqueUsers);
+			setCoursesSummary(summary.courses); // Array of course titles and enrolledUsersCount
+		} catch (error) {
+			console.error('Error fetching dashboard summary:', error);
+		}
+	};
+
+	const {
+		data: summaryData,
+		isLoading: summaryDataLoading,
+		isError: summaryDataError,
+	} = useQuery(['allCourses', orgId], () => fetchCoursesDashboardSummary(), {
 		enabled: !!orgId && !isLoaded,
 	});
 
@@ -108,11 +147,11 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 		setSortedCoursesData((prevSortedData) => prevSortedData?.filter((data) => data._id !== id));
 	};
 
-	if (isLoading) {
+	if (isLoading || summaryDataLoading) {
 		return <Loading />;
 	}
 
-	if (isError) {
+	if (isError || summaryDataError) {
 		return <LoadingError />;
 	}
 
@@ -129,6 +168,9 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 				coursesPageNumber,
 				setCoursesPageNumber,
 				fetchCourses,
+				totalNumberOfEnrolledLearners,
+				totalCourses,
+				coursesSummary,
 			}}>
 			{props.children}
 		</CoursesContext.Provider>
