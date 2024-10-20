@@ -220,6 +220,7 @@ const Messages = () => {
 
 		const unsubscribe = onSnapshot(q, async (querySnapshot) => {
 			const chatsArray: Chat[] = [];
+			let totalUnreadMessages = 0;
 
 			for (const doc of querySnapshot.docs) {
 				const data = doc.data();
@@ -240,6 +241,8 @@ const Messages = () => {
 
 				const unreadMessagesSnapshot = await getDocs(unreadMessagesQuery);
 				const unreadMessagesCount = unreadMessagesSnapshot.size; // Calculate the unread count
+
+				totalUnreadMessages += unreadMessagesCount;
 
 				// Fetch participant details
 				const participantsDetails: User[] = await Promise.all(
@@ -269,6 +272,7 @@ const Messages = () => {
 
 			// Store the chat list in localStorage and update state
 			localStorage.setItem('chatList', JSON.stringify(chatsArray));
+			localStorage.setItem('totalUnreadMessages', JSON.stringify(totalUnreadMessages)); // Save total unread count
 			setChatList(chatsArray);
 			setFilteredChatList(chatsArray);
 		});

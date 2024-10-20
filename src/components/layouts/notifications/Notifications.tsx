@@ -184,7 +184,7 @@ const NotificationsBox = ({ showUnreadOnly }: NotificationsBoxProps) => {
 								sx={{
 									margin: '1rem 0',
 									textTransform: 'capitalize',
-									pointer: 'cursor',
+									cursor: 'pointer',
 									':hover': {
 										backgroundColor: 'transparent',
 										textDecoration: 'underline',

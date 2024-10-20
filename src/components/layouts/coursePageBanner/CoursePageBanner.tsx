@@ -76,6 +76,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 						isInProgress: true,
 						teacherFeedback: '',
 						isFeedbackGiven: false,
+						updatedAt: responseUserLesson.data.updatedAt,
 					};
 
 					updatedUserLessonData.push(newUserLessonData);
@@ -93,6 +94,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 					isCourseCompleted: false,
 					isCourseInProgress: true,
 					courseTitle: course.title,
+					createdAt: response.data.createdAt,
 				});
 				localStorage.setItem('userCourseData', JSON.stringify(updatedUserCoursesIds));
 			}

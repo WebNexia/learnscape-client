@@ -125,6 +125,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 									isCourseCompleted: value.isCompleted,
 									isCourseInProgress: value.isInProgress,
 									courseTitle: value.courseId.title,
+									createdAt: value.createdAt,
 								});
 							}
 							return acc;
@@ -144,6 +145,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 						currentQuestion: userLesson.currentQuestion,
 						teacherFeedback: userLesson.teacherFeedback,
 						isFeedbackGiven: userLesson.isFeedbackGiven,
+						updatedAt: userLesson.updatedAt,
 					}));
 					localStorage.setItem('userLessonData', JSON.stringify(userLessonData));
 				}

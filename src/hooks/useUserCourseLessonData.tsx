@@ -103,6 +103,7 @@ export const useUserCourseLessonData = () => {
 							isInProgress: true,
 							teacherFeedback: '',
 							isFeedbackGiven: false,
+							updatedAt: responseUserLesson.data.updatedAt,
 						};
 
 						const updatedUserLessonData = [...parsedUserLessonData, newUserLessonData];

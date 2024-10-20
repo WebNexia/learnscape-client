@@ -237,7 +237,7 @@ const AdminCourses = () => {
 					padding: '1rem 2rem 2rem 2rem',
 					width: '100%',
 				}}>
-				<Table sx={{ mb: '2rem' }}>
+				<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>
 					<CustomTableHead<SingleCourse>
 						orderBy={orderBy}
 						order={order}

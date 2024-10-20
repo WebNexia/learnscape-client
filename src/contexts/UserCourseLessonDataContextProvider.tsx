@@ -27,6 +27,7 @@ export interface UserCoursesIdsWithCourseIds {
 	isCourseCompleted: boolean;
 	isCourseInProgress: boolean;
 	courseTitle: string;
+	createdAt: string;
 }
 
 export interface UserLessonDataStorage {
@@ -38,6 +39,7 @@ export interface UserLessonDataStorage {
 	isInProgress: boolean;
 	teacherFeedback: string;
 	isFeedbackGiven: boolean;
+	updatedAt: string;
 }
 
 export const UserCourseLessonDataContext = createContext<UserCourseLessonDataContextTypes>({
