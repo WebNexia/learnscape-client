@@ -64,7 +64,7 @@ const AdminDashboard = () => {
 				labels, // x-axis values (dates)
 				datasets: [
 					{
-						label: 'Number of New Learners',
+						label: '# New Learners',
 						data: data, // y-axis values (number of learners)
 						fill: true,
 						backgroundColor: 'rgba(75,192,192,0.4)',
@@ -84,7 +84,7 @@ const AdminDashboard = () => {
 				labels, // x-axis values (course titles)
 				datasets: [
 					{
-						label: 'Number of Enrolled Users',
+						label: '# Enrolled Users per Course',
 						data, // y-axis values (number of enrolled users)
 						backgroundColor: 'rgba(54, 162, 235, 0.6)', // Bar color
 						borderColor: 'rgba(54, 162, 235, 1)',

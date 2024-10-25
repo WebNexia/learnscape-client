@@ -6,6 +6,10 @@ import { ThemeProvider } from '@mui/material/styles';
 import theme from './themes';
 import { Roles } from './interfaces/enums';
 import Loading from './components/layouts/loading/Loading';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements } from '@stripe/react-stripe-js';
+
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 // Import context providers directly
 import MediaQueryContextProvider from './contexts/MediaQueryContextProvider';
@@ -80,54 +84,56 @@ function App() {
 															<EventsContextProvider>
 																<Suspense fallback={<Loading />}>
 																	<Router>
-																		<Routes>
-																			<Route path='/' element={<HomePage />} />
-																			<Route path='/auth' element={<Auth setUserRole={setUserRole} />} />
-																			<Route path='/reset-password' element={<PasswordResetPage />} />
+																		<Elements stripe={stripePromise}>
+																			<Routes>
+																				<Route path='/' element={<HomePage />} />
+																				<Route path='/auth' element={<Auth setUserRole={setUserRole} />} />
+																				<Route path='/reset-password' element={<PasswordResetPage />} />
 
-																			<>
-																				{renderRoute('/admin/dashboard/user/:userId', <AdminDashboard />, Roles.ADMIN)}
-																				{renderRoute('/admin/users/user/:userId', <AdminUsers />, Roles.ADMIN)}
-																				{renderRoute('/admin/courses/user/:userId', <AdminCourses />, Roles.ADMIN)}
-																				{renderRoute('/admin/course-edit/user/:userId/course/:courseId', <AdminCourseEditPage />, Roles.ADMIN)}
-																				{renderRoute('/admin/lessons/user/:userId', <AdminLessons />, Roles.ADMIN)}
-																				{renderRoute('admin/lesson-edit/user/:userId/lesson/:lessonId', <AdminLessonEditPage />, Roles.ADMIN)}
-																				{renderRoute('/admin/questions/user/:userId', <AdminQuestions />, Roles.ADMIN)}
-																				{renderRoute('/admin/documents/user/:userId', <AdminDocuments />, Roles.ADMIN)}
-																				{renderRoute('/admin/submissions/user/:userId', <AdminQuizSubmissions />, Roles.ADMIN)}
-																				{renderRoute(
-																					'/admin/check-submission/user/:userId/submission/:submissionId/lesson/:lessonId/userlesson/:userLessonId',
-																					<AdminQuizSubmissionCheck />,
-																					Roles.ADMIN
-																				)}
-																				{renderRoute('/admin/calendar/user/:userId', <Calendar />, Roles.ADMIN)}
-																				{renderRoute('/admin/messages/user/:userId', <Messages />, Roles.ADMIN)}
-																				{renderRoute('/admin/community/user/:userId', <Community />, Roles.ADMIN)}
-																				{renderRoute('/admin/community/user/:userId/topic/:topicId', <CommunityTopicPage />, Roles.ADMIN)}
-																				{renderRoute('/admin/settings/user/:userId', <Settings />, Roles.ADMIN)}
-																			</>
-																			<>
-																				{renderRoute('/dashboard/user/:id', <Dashboard />, Roles.USER)}
-																				{renderRoute('/courses/user/:id', <Courses />, Roles.USER)}
-																				{renderRoute('/submissions/user/:userId', <Submissions />, Roles.USER)}
-																				{renderRoute(
-																					'/submission-feedback/user/:userId/submission/:submissionId/lesson/:lessonId/userlesson/:userLessonId',
-																					<SubmissionFeedbackDetails />,
-																					Roles.USER
-																				)}
-																				{renderRoute('/course/:courseId/user/:userId/userCourseId/:userCourseId', <CoursePage />, Roles.USER)}
-																				{renderRoute(
-																					'/user/:userId/course/:courseId/userCourseId/:userCourseId/lesson/:lessonId/',
-																					<LessonPage />,
-																					Roles.USER
-																				)}
-																				{renderRoute('/calendar/user/:id', <Calendar />, Roles.USER)}
-																				{renderRoute('/messages/user/:userId', <Messages />, Roles.USER)}
-																				{renderRoute('/community/user/:id', <Community />, Roles.USER)}
-																				{renderRoute('/community/user/:id/topic/:topicId', <CommunityTopicPage />, Roles.USER)}
-																				{renderRoute('/settings/user/:id', <Settings />, Roles.USER)}
-																			</>
-																		</Routes>
+																				<>
+																					{renderRoute('/admin/dashboard/user/:userId', <AdminDashboard />, Roles.ADMIN)}
+																					{renderRoute('/admin/users/user/:userId', <AdminUsers />, Roles.ADMIN)}
+																					{renderRoute('/admin/courses/user/:userId', <AdminCourses />, Roles.ADMIN)}
+																					{renderRoute('/admin/course-edit/user/:userId/course/:courseId', <AdminCourseEditPage />, Roles.ADMIN)}
+																					{renderRoute('/admin/lessons/user/:userId', <AdminLessons />, Roles.ADMIN)}
+																					{renderRoute('/admin/lesson-edit/user/:userId/lesson/:lessonId', <AdminLessonEditPage />, Roles.ADMIN)}
+																					{renderRoute('/admin/questions/user/:userId', <AdminQuestions />, Roles.ADMIN)}
+																					{renderRoute('/admin/documents/user/:userId', <AdminDocuments />, Roles.ADMIN)}
+																					{renderRoute('/admin/submissions/user/:userId', <AdminQuizSubmissions />, Roles.ADMIN)}
+																					{renderRoute(
+																						'/admin/check-submission/user/:userId/submission/:submissionId/lesson/:lessonId/userlesson/:userLessonId',
+																						<AdminQuizSubmissionCheck />,
+																						Roles.ADMIN
+																					)}
+																					{renderRoute('/admin/calendar/user/:userId', <Calendar />, Roles.ADMIN)}
+																					{renderRoute('/admin/messages/user/:userId', <Messages />, Roles.ADMIN)}
+																					{renderRoute('/admin/community/user/:userId', <Community />, Roles.ADMIN)}
+																					{renderRoute('/admin/community/user/:userId/topic/:topicId', <CommunityTopicPage />, Roles.ADMIN)}
+																					{renderRoute('/admin/settings/user/:userId', <Settings />, Roles.ADMIN)}
+																				</>
+																				<>
+																					{renderRoute('/dashboard/user/:id', <Dashboard />, Roles.USER)}
+																					{renderRoute('/courses/user/:id', <Courses />, Roles.USER)}
+																					{renderRoute('/submissions/user/:userId', <Submissions />, Roles.USER)}
+																					{renderRoute(
+																						'/submission-feedback/user/:userId/submission/:submissionId/lesson/:lessonId/userlesson/:userLessonId',
+																						<SubmissionFeedbackDetails />,
+																						Roles.USER
+																					)}
+																					{renderRoute('/course/:courseId/user/:userId/userCourseId/:userCourseId', <CoursePage />, Roles.USER)}
+																					{renderRoute(
+																						'/user/:userId/course/:courseId/userCourseId/:userCourseId/lesson/:lessonId/',
+																						<LessonPage />,
+																						Roles.USER
+																					)}
+																					{renderRoute('/calendar/user/:id', <Calendar />, Roles.USER)}
+																					{renderRoute('/messages/user/:userId', <Messages />, Roles.USER)}
+																					{renderRoute('/community/user/:id', <Community />, Roles.USER)}
+																					{renderRoute('/community/user/:id/topic/:topicId', <CommunityTopicPage />, Roles.USER)}
+																					{renderRoute('/settings/user/:id', <Settings />, Roles.USER)}
+																				</>
+																			</Routes>
+																		</Elements>
 																	</Router>
 																</Suspense>
 															</EventsContextProvider>

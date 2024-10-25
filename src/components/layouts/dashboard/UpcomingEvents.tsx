@@ -38,14 +38,14 @@ const UpcomingEvents = ({ sortedEventsData }: UpcomingEventsProps) => {
 					return event.start && new Date(event.start) >= currentDate && new Date(event.start) <= sevenDaysFromNow;
 				})
 				.sort((a: Event, b: Event) => new Date(a.start!).getTime() - new Date(b.start!).getTime()).length > 0 ? (
-				<Box sx={{ mt: '0.5rem', overflow: 'auto' }}>
+				<Box sx={{ display: 'flex', alignItems: 'center', width: '100%', mt: '0.75rem', overflow: 'auto', height: '7rem' }}>
 					{sortedEventsData
 						?.filter((event) => {
 							return event.start && new Date(event.start) >= currentDate && new Date(event.start) <= sevenDaysFromNow;
 						})
 						.sort((a: Event, b: Event) => new Date(a.start!).getTime() - new Date(b.start!).getTime())
 						.map((event) => (
-							<Box key={event._id} sx={{ marginBottom: '0.5rem' }}>
+							<Box key={event._id} sx={{ marginBottom: '0.5rem', width: '100%' }}>
 								<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
 									<Typography variant='body2'>{truncateText(event.title, 12)}</Typography>
 									<Typography sx={{ fontSize: '0.85rem', ml: '0.75rem' }}>

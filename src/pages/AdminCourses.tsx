@@ -1,4 +1,17 @@
-import { Box, Table, TableBody, TableRow, TableCell, FormControlLabel, Checkbox, Tooltip } from '@mui/material';
+import {
+	Box,
+	Table,
+	TableBody,
+	TableRow,
+	TableCell,
+	FormControlLabel,
+	Checkbox,
+	Tooltip,
+	FormControl,
+	InputLabel,
+	Select,
+	MenuItem,
+} from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { CoursesContext } from '../contexts/CoursesContextProvider';
@@ -16,6 +29,8 @@ import CustomTablePagination from '../components/layouts/table/CustomTablePagina
 import CustomActionBtn from '../components/layouts/table/CustomActionBtn';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import { dateFormatter } from '../utils/dateFormatter';
+import theme from '../themes';
+import { setCurrencySymbol } from '../utils/setCurrencySymbol';
 
 const AdminCourses = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -129,6 +144,7 @@ const AdminCourses = () => {
 		setOrderBy(property);
 		sortCoursesData(property, isAsc ? 'desc' : 'asc');
 	};
+	console.log(priceCurrency);
 
 	return (
 		<DashboardPagesLayout pageName='Courses' customSettings={{ justifyContent: 'flex-start' }}>
@@ -171,28 +187,41 @@ const AdminCourses = () => {
 						/>
 					</Tooltip>
 
-					<Box sx={{ display: 'flex' }}>
-						<CustomTextField
-							label='Price Currency'
-							value={checked ? '' : priceCurrency}
-							onChange={(e) => setPriceCurrency(e.target.value)}
-							disabled={checked}
-							sx={{ margin: '1rem 2rem' }}
-							InputLabelProps={{
-								sx: { fontSize: '0.8rem' },
-							}}
-						/>
-						<CustomTextField
-							label='Price'
-							value={checked ? '' : price}
-							onChange={(e) => setPrice(e.target.value)}
-							type='number'
-							disabled={checked}
-							sx={{ margin: '1rem 2rem 1rem 0rem' }}
-							InputLabelProps={{
-								sx: { fontSize: '0.8rem' },
-							}}
-						/>
+					<Box sx={{ display: 'flex', alignItems: 'center' }}>
+						<Box sx={{ flex: 1, width: '100%', margin: '1rem 2rem 1.85rem 2rem' }}>
+							<FormControl>
+								<InputLabel id='currency' sx={{ fontSize: '0.8rem' }} required>
+									Currency
+								</InputLabel>
+								<Select
+									labelId='currency'
+									id='price_currency'
+									value={checked ? '' : priceCurrency}
+									onChange={(e) => setPriceCurrency(e.target.value)}
+									disabled={checked}
+									label='Currency'
+									required
+									sx={{ backgroundColor: theme.bgColor?.common, width: '10rem' }}>
+									{['GBP', 'USD', 'EUR', 'TRY'].map((currency) => (
+										<MenuItem value={currency.toLowerCase()} key={currency}>
+											{currency}
+										</MenuItem>
+									))}
+								</Select>
+							</FormControl>
+						</Box>
+						<Box sx={{ margin: '1rem 2rem 1rem 0rem', flex: 2 }}>
+							<CustomTextField
+								label='Price'
+								value={checked ? '' : price}
+								onChange={(e) => setPrice(e.target.value)}
+								type='number'
+								disabled={checked}
+								InputLabelProps={{
+									sx: { fontSize: '0.8rem' },
+								}}
+							/>
+						</Box>
 					</Box>
 					<Box sx={{ margin: '2rem' }}>
 						<FormControlLabel
@@ -258,7 +287,7 @@ const AdminCourses = () => {
 										<CustomTableCell value={course.title} />
 										<CustomTableCell value={course.isActive ? 'Published' : 'Unpublished'} />
 										<CustomTableCell value={dateFormatter(course.startingDate)} />
-										<CustomTableCell value={`${course.priceCurrency}${course.price}`} />
+										<CustomTableCell value={`${setCurrencySymbol(course.priceCurrency)}${course.price}`} />
 
 										<TableCell
 											sx={{

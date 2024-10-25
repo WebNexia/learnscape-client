@@ -67,7 +67,7 @@ const UnreadMessages = () => {
 				<MarkunreadOutlined sx={{ ml: '0.5rem', color: theme.textColor?.greenPrimary.main }} />
 			</Box>
 			<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '7rem' }}>
-				<Typography sx={{ fontSize: '0.85rem', color: hasUnreadMessages ? '#ef5350' : 'gray' }}>
+				<Typography sx={{ fontSize: '0.85rem', color: hasUnreadMessages ? '#ef5350' : 'gray', textAlign: 'center' }}>
 					{hasUnreadMessages ? 'You have unread messages' : 'You have no unread messages'}
 				</Typography>
 			</Box>
