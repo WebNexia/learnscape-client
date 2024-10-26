@@ -4,6 +4,7 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import {
 	AssignmentIndRounded,
 	CalendarMonth,
+	CreditCard,
 	Email,
 	FilePresent,
 	Groups,
@@ -133,6 +134,12 @@ const Sidebar = () => {
 								btnText='Submissions'
 								IconName={LibraryAddCheck}
 								onClick={() => navigateWithPage(PageName.ADMIN_DOCUMENTS, `/admin/submissions/user/${id || userId}`)}
+								selectedPage={selectedPage}
+							/>
+							<SidebarBtn
+								btnText='Payments'
+								IconName={CreditCard}
+								onClick={() => navigateWithPage(PageName.ADMIN_DOCUMENTS, `/admin/payments/user/${id || userId}`)}
 								selectedPage={selectedPage}
 							/>
 							<SidebarBtn

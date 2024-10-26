@@ -144,7 +144,6 @@ const AdminCourses = () => {
 		setOrderBy(property);
 		sortCoursesData(property, isAsc ? 'desc' : 'asc');
 	};
-	console.log(priceCurrency);
 
 	return (
 		<DashboardPagesLayout pageName='Courses' customSettings={{ justifyContent: 'flex-start' }}>
@@ -203,7 +202,7 @@ const AdminCourses = () => {
 									required
 									sx={{ backgroundColor: theme.bgColor?.common, width: '10rem' }}>
 									{['GBP', 'USD', 'EUR', 'TRY'].map((currency) => (
-										<MenuItem value={currency.toLowerCase()} key={currency}>
+										<MenuItem value={currency.toLowerCase()} key={currency} sx={{ fontSize: '0.85rem' }}>
 											{currency}
 										</MenuItem>
 									))}

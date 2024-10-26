@@ -9,6 +9,7 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import {
 	AssignmentIndRounded,
 	CalendarMonth,
+	CreditCard,
 	DarkMode,
 	Email,
 	FilePresent,
@@ -169,6 +170,7 @@ const Loading = () => {
 								<SidebarBtn btnText='Questions' IconName={QuizOutlined} selectedPage={selectedPage} />
 								<SidebarBtn btnText='Documents' IconName={FilePresent} selectedPage={selectedPage} />
 								<SidebarBtn btnText='Submissions' IconName={LibraryAddCheck} selectedPage={selectedPage} />
+								<SidebarBtn btnText='Payments' IconName={CreditCard} selectedPage={selectedPage} />
 								<SidebarBtn btnText='Calendar' IconName={CalendarMonth} selectedPage={selectedPage} />
 								<SidebarBtn btnText='Messages' IconName={Email} selectedPage={selectedPage} />
 								<SidebarBtn btnText='Community' IconName={Groups} selectedPage={selectedPage} />
