@@ -7,6 +7,7 @@ import { EditTwoTone } from '@mui/icons-material';
 import { useParams } from 'react-router-dom';
 import { dateFormatter } from '../../utils/dateFormatter';
 import NoContentBoxAdmin from '../layouts/noContentBox/NoContentBoxAdmin';
+import { setCurrencySymbol } from '../../utils/setCurrencySymbol';
 
 interface CourseDetailsNonEditBoxProps {
 	singleCourse?: SingleCourse;
@@ -78,7 +79,7 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters }: CourseDetailsNonEdi
 				<Box sx={{ textAlign: 'center' }}>
 					<Typography variant='h5'>Price</Typography>
 					<Typography variant='body2' sx={{ mt: '0.5rem' }}>
-						{singleCourse?.priceCurrency}
+						{setCurrencySymbol(singleCourse?.priceCurrency!)}
 						{singleCourse?.price}
 					</Typography>
 				</Box>

@@ -5,6 +5,11 @@ import CustomDialogActions from '../dialog/CustomDialogActions';
 import CustomTextField from '../../forms/customFields/CustomTextField';
 import SelectApplicableCoursesEdit from './SelectApplicableCoursesEdit';
 import theme from '../../../themes';
+import axios from 'axios';
+import { useContext, useState } from 'react';
+import { PromoCodesContext } from '../../../contexts/PromoCodesContextProvider';
+import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
+import CustomErrorMessage from '../../forms/customFields/CustomErrorMessage';
 
 interface EditCodeDialogProps {
 	singleCode: PromoCode | null;
@@ -15,12 +20,58 @@ interface EditCodeDialogProps {
 }
 
 const EditCodeDialog = ({ singleCode, isEditCodeModalOpen, closeCodeEditModal, index, setSingleCode }: EditCodeDialogProps) => {
-	const formatDate = (date: Date) => {
-		if (!(date instanceof Date)) return ''; // Return empty string if date is not valid
+	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
+	const { updatePromoCode } = useContext(PromoCodesContext);
 
-		const day = String(date.getDate()).padStart(2, '0');
-		const month = String(date.getMonth() + 1).padStart(2, '0');
-		const year = date.getFullYear();
+	const [errorMsg, setErrorMsg] = useState<string>('');
+	const { orgId } = useContext(OrganisationContext);
+
+	const editCode = async () => {
+		if (singleCode?.discountAmount && singleCode?.discountAmount < 0) {
+			setErrorMsg('Discount amount cannot be negative number');
+			return;
+		}
+
+		if (singleCode?.usageLimit && singleCode?.usageLimit < 0) {
+			setErrorMsg('Usage limit cannot be negative number');
+			return;
+		}
+
+		const updatedCode = {
+			_id: singleCode?._id!,
+			code: singleCode?.code!,
+			discountType: singleCode?.discountType!,
+			discountAmount: singleCode?.discountAmount || 0,
+			expirationDate: singleCode?.expirationDate!,
+			usageLimit: singleCode?.usageLimit || 0,
+			isActive: singleCode?.isActive!,
+			coursesApplicable: singleCode?.coursesApplicable!,
+			isAllCoursesSelected: singleCode?.isAllCoursesSelected!,
+			orgId,
+			usersUsed: singleCode?.usersUsed!,
+		};
+		const res = await axios.patch(`${base_url}/promocodes/${singleCode?._id}`, updatedCode);
+
+		closeCodeEditModal(index);
+
+		updatePromoCode({
+			...updatedCode,
+			createdAt: res.data.createdAt,
+			updatedAt: res.data.updatedAt,
+		});
+		try {
+		} catch (error) {
+			console.log(error);
+		}
+	};
+
+	const formatDate = (date: string | Date) => {
+		const dateObj = typeof date === 'string' ? new Date(date) : date;
+		if (!(dateObj instanceof Date) || isNaN(dateObj.getTime())) return ''; // Check for valid Date
+
+		const day = String(dateObj.getDate()).padStart(2, '0');
+		const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+		const year = dateObj.getFullYear();
 
 		return `${year}-${month}-${day}`;
 	};
@@ -29,6 +80,7 @@ const EditCodeDialog = ({ singleCode, isEditCodeModalOpen, closeCodeEditModal, i
 		const [year, month, day] = dateString.split('-');
 		return new Date(`${year}-${month}-${day}`);
 	};
+
 	return (
 		<CustomDialog
 			openModal={isEditCodeModalOpen[index]}
@@ -38,8 +90,9 @@ const EditCodeDialog = ({ singleCode, isEditCodeModalOpen, closeCodeEditModal, i
 			title='Edit Promo Code'
 			maxWidth='sm'>
 			<form
-				onSubmit={() => {
-					closeCodeEditModal(index);
+				onSubmit={(e) => {
+					e.preventDefault();
+					editCode();
 				}}>
 				<DialogContent sx={{ mt: '-0.5rem' }}>
 					<Box>
@@ -86,7 +139,7 @@ const EditCodeDialog = ({ singleCode, isEditCodeModalOpen, closeCodeEditModal, i
 								Discount Amount
 							</Typography>
 							<CustomTextField
-								value={singleCode?.discountAmount}
+								value={singleCode?.discountAmount || undefined}
 								onChange={(e) => setSingleCode((prevData) => ({ ...prevData!, discountAmount: +e.target.value }))}
 								type='number'
 								InputLabelProps={{
@@ -120,7 +173,7 @@ const EditCodeDialog = ({ singleCode, isEditCodeModalOpen, closeCodeEditModal, i
 							</Typography>
 							<CustomTextField
 								required={false}
-								value={singleCode?.usageLimit}
+								value={singleCode?.usageLimit || undefined}
 								onChange={(e) => setSingleCode((prevData) => ({ ...prevData!, usageLimit: +e.target.value }))}
 								InputProps={{
 									inputProps: {
@@ -155,6 +208,7 @@ const EditCodeDialog = ({ singleCode, isEditCodeModalOpen, closeCodeEditModal, i
 							}}
 						/>
 					</Box>
+					{errorMsg && <CustomErrorMessage sx={{ width: '100%' }}>{errorMsg}</CustomErrorMessage>}
 				</DialogContent>
 				<CustomDialogActions
 					onCancel={() => {

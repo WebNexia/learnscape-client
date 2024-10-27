@@ -16,6 +16,7 @@ import { OrganisationContext } from '../../../contexts/OrganisationContextProvid
 import CustomErrorMessage from '../../forms/customFields/CustomErrorMessage';
 import theme from '../../../themes';
 import { setCurrencySymbol } from '../../../utils/setCurrencySymbol';
+import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 
 interface PaymentDialogProps {
 	course: SingleCourse;
@@ -27,6 +28,7 @@ interface PaymentDialogProps {
 const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, courseRegistration }: PaymentDialogProps) => {
 	const { userId } = useParams();
 	const { orgId } = useContext(OrganisationContext);
+	const { user } = useContext(UserAuthContext);
 
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
@@ -42,6 +44,8 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 	const [discountedAmount, setDiscountedAmount] = useState<number>(+course.price);
 	const [isPromoCodeApplied, setIsPromoCodeApplied] = useState<boolean>(false);
 	const [usersUsedPromoCode, setUsersUsedPromoCode] = useState<string[]>([]);
+
+	const [promoCodeId, setPromoCodeId] = useState<string>('');
 
 	const stripe = useStripe();
 	const elements = useElements();
@@ -65,6 +69,8 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 	const handlePayment = async () => {
 		setIsProcessing(true);
 
+		let usersUsedCode = [...usersUsedPromoCode];
+
 		if (!stripe || !elements) {
 			setErrorMessage('Stripe has not loaded properly.');
 			console.log('Stripe has not loaded properly.');
@@ -79,7 +85,6 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 		// Ensure all elements are not null before proceeding
 		if (!cardNumberElement || !cardExpiryElement || !cardCvcElement) {
 			setErrorMessage('One or more card elements are not loaded properly.');
-			console.log('One or more card elements are not loaded properly.');
 			setIsProcessing(false);
 			return;
 		}
@@ -108,7 +113,6 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 			});
 
 			if (methodError) {
-				console.error('Payment method creation failed:', methodError);
 				setErrorMessage(methodError.message ?? 'An unknown error occurred while creating payment method');
 				setIsProcessing(false);
 				return;
@@ -120,7 +124,6 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 			});
 
 			if (error) {
-				console.error('Payment failed:', error);
 				setErrorMessage(error.message ?? 'An unknown error occurred');
 			} else {
 				// 3. Send the paymentIntentId and details to your backend to update the payment record
@@ -130,23 +133,28 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 					lastName,
 				});
 
+				if (!user?.firstName && !user?.lastName) {
+					await axios.patch(`${base_url}/users/${user?._id}`, {
+						firstName,
+						lastName,
+					});
+				}
+
 				setUsersUsedPromoCode((prevData) => {
-					prevData.push(userId!);
+					prevData.push(user?._id!);
 
 					return prevData;
 				});
 
-				if (isPromoCodeApplied) {
-					console.log(usersUsedPromoCode);
-					const res = await axios.patch(`${base_url}/promocodes/${promoCode}`, {
-						usersUsed: usersUsedPromoCode,
-					});
+				usersUsedCode.push(user?._id!);
 
-					console.log(res);
+				if (isPromoCodeApplied) {
+					await axios.patch(`${base_url}/promocodes/${promoCodeId}`, {
+						usersUsed: usersUsedCode,
+					});
 				}
 			}
 		} catch (error) {
-			console.error('Error processing payment:', error);
 			setErrorMessage('An error occurred while processing the payment.');
 		}
 
@@ -161,7 +169,9 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 				userId,
 				orgId,
 			});
-			const { discountAmount, discountType, usersUsed } = response.data;
+			const { discountAmount, discountType, usersUsed, _id } = response.data;
+
+			setPromoCodeId(_id);
 
 			// Calculate the discounted amount based on the type
 			let newTotal: number = +course.price;
@@ -185,15 +195,29 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 			setDiscountedAmount(+course.price); // Reset to original price
 		}
 	};
-
+	const resetForm = () => {
+		setFirstName('');
+		setLastName('');
+		setPromoCode('');
+		setDiscountedAmount(+course.price);
+		setIsPromoCodeApplied(false);
+		setIsPaymentDialogOpen(false);
+		setAgreed(false);
+	};
 	return (
-		<CustomDialog openModal={isPaymentDialogOpen} closeModal={() => setIsPaymentDialogOpen(false)} title='Make Payment' maxWidth='sm'>
+		<CustomDialog
+			openModal={isPaymentDialogOpen}
+			closeModal={() => {
+				resetForm();
+			}}
+			title='Make Payment'
+			maxWidth='sm'>
 			<form
 				onSubmit={async (e) => {
 					e.preventDefault();
 					await handlePayment();
 					await courseRegistration();
-					setIsPaymentDialogOpen(false);
+					resetForm();
 				}}>
 				<Box
 					sx={{
@@ -391,7 +415,7 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 
 				<CustomDialogActions
 					onCancel={() => {
-						setIsPaymentDialogOpen(false);
+						resetForm();
 					}}
 					submitBtnText={isProcessing ? 'Processing' : 'Enroll'}
 				/>

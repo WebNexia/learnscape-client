@@ -1,4 +1,4 @@
-import { Box, Checkbox, FormControlLabel, Tooltip, Typography } from '@mui/material';
+import { Box, Checkbox, FormControl, FormControlLabel, MenuItem, Select, Tooltip, Typography } from '@mui/material';
 import CustomTextField from '../forms/customFields/CustomTextField';
 import CustomErrorMessage from '../forms/customFields/CustomErrorMessage';
 import { SingleCourse } from '../../interfaces/course';
@@ -60,7 +60,7 @@ const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree,
 							error={isMissingField && singleCourse?.title === ''}
 						/>
 					</Tooltip>
-					{isMissingField && singleCourse?.title === '' && <CustomErrorMessage>Please enter a title</CustomErrorMessage>}
+					{isMissingField && singleCourse?.title === '' && <CustomErrorMessage>Enter a title</CustomErrorMessage>}
 				</Box>
 				<Box sx={{ flex: 1.5, marginLeft: '2rem' }}>
 					<Typography variant='h6'>Description*</Typography>
@@ -83,7 +83,7 @@ const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree,
 						/>
 					</Tooltip>
 
-					{isMissingField && singleCourse?.description === '' && <CustomErrorMessage>Please enter a description</CustomErrorMessage>}
+					{isMissingField && singleCourse?.description === '' && <CustomErrorMessage>Enter a description</CustomErrorMessage>}
 				</Box>
 			</Box>
 
@@ -96,28 +96,34 @@ const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree,
 				}}>
 				<Box sx={{ flex: 1 }}>
 					<Typography variant='h6'>Price*</Typography>
-					<Box sx={{ display: 'flex' }}>
+					<Box sx={{ display: 'flex', alignItems: 'center' }}>
 						<Box sx={{ flex: 2 }}>
-							<CustomTextField
-								sx={{
-									marginTop: '0.5rem',
-									backgroundColor: !isFree ? theme.bgColor?.common : 'inherit',
-								}}
-								value={isFree ? '' : singleCourse?.priceCurrency}
-								onChange={(e) => {
-									if (singleCourse?.priceCurrency !== undefined) {
-										setSingleCourse({
-											...singleCourse,
-											priceCurrency: isFree ? '' : e.target.value,
-										});
-									}
-									setIsMissingField(false);
-								}}
-								disabled={isFree}
-								error={isMissingField && singleCourse?.priceCurrency === ''}
-								placeholder={isFree ? '' : 'Enter currency symbol'}
-							/>
-							{isMissingField && singleCourse?.priceCurrency === '' && !isFree && <CustomErrorMessage>Please enter a currency</CustomErrorMessage>}
+							<FormControl>
+								<Select
+									size='small'
+									value={isFree ? '' : singleCourse?.priceCurrency}
+									onChange={(e) => {
+										if (singleCourse?.priceCurrency !== undefined) {
+											setSingleCourse({
+												...singleCourse,
+												priceCurrency: isFree ? '' : e.target.value,
+											});
+										}
+										setIsMissingField(false);
+									}}
+									disabled={isFree}
+									required
+									error={isMissingField && singleCourse?.priceCurrency === ''}
+									sx={{ backgroundColor: !isFree ? theme.bgColor?.common : 'inherit', width: '8rem', fontSize: '0.85rem', marginTop: '0.5rem' }}>
+									{['GBP', 'USD', 'EUR', 'TRY'].map((currency) => (
+										<MenuItem value={currency.toLowerCase()} key={currency} sx={{ fontSize: '0.85rem' }}>
+											{currency}
+										</MenuItem>
+									))}
+								</Select>
+							</FormControl>
+
+							{isMissingField && singleCourse?.priceCurrency === '' && !isFree && <CustomErrorMessage>Select currency</CustomErrorMessage>}
 						</Box>
 						<Box
 							sx={{
@@ -146,7 +152,7 @@ const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree,
 								error={isMissingField && singleCourse?.price === ''}
 								placeholder={isFree ? '' : 'Enter price value'}
 							/>
-							{isMissingField && singleCourse?.price === '' && <CustomErrorMessage>Please enter a price value</CustomErrorMessage>}
+							{isMissingField && singleCourse?.price === '' && <CustomErrorMessage>Enter a price value</CustomErrorMessage>}
 						</Box>
 					</Box>
 					<Box sx={{ margin: '0 0 1rem 0.5rem' }}>

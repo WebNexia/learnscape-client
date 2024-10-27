@@ -3,6 +3,7 @@ import { SingleCourse } from '../../interfaces/course';
 import theme from '../../themes';
 import { useNavigate } from 'react-router-dom';
 import { truncateText } from '../../utils/utilText';
+import { setCurrencySymbol } from '../../utils/setCurrencySymbol';
 
 interface DashboardCourseCardProps {
 	course: SingleCourse;
@@ -93,7 +94,7 @@ const DashboardCourseCard = ({ course, isEnrolled, userId, displayMyCourses, use
 							visibility: isEnrolled ? 'hidden' : 'visible',
 							color: theme.palette.primary.main,
 						}}>
-						{course.priceCurrency}
+						{setCurrencySymbol(course.priceCurrency)}
 						{course.price}
 					</Typography>
 

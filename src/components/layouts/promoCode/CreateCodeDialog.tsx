@@ -9,6 +9,7 @@ import axios from 'axios';
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
 import { PromoCodesContext } from '../../../contexts/PromoCodesContextProvider';
 import SelectApplicableCoursesCreate from './SelectApplicableCoursesCreate';
+import CustomErrorMessage from '../../forms/customFields/CustomErrorMessage';
 
 interface CreateCodeDialogProps {
 	isNewCodeModalOpen: boolean;
@@ -56,11 +57,23 @@ const CreateCodeDialog = ({ isNewCodeModalOpen, setIsNewCodeModalOpen }: CreateC
 		setIsNewCodeModalOpen(false);
 	};
 
+	const [errorMsg, setErrorMsg] = useState<string>('');
+
 	const createPromoCode = async () => {
+		if (newPromoCode?.discountAmount && newPromoCode?.discountAmount < 0) {
+			setErrorMsg('Discount amount cannot be negative number');
+			return;
+		}
+
+		if (newPromoCode?.usageLimit && newPromoCode?.usageLimit < 0) {
+			setErrorMsg('Usage limit cannot be negative number');
+			return;
+		}
+
 		const newCode = {
 			code: newPromoCode.code,
 			discountType: newPromoCode.discountType,
-			discountAmount: newPromoCode.discountAmount,
+			discountAmount: newPromoCode.discountAmount || 0,
 			expirationDate: newPromoCode.expirationDate,
 			usageLimit: newPromoCode.usageLimit || 0,
 			coursesApplicable: newPromoCode.isAllCoursesSelected ? [] : newPromoCode.coursesApplicable,
@@ -72,6 +85,8 @@ const CreateCodeDialog = ({ isNewCodeModalOpen, setIsNewCodeModalOpen }: CreateC
 		try {
 			const res = await axios.post(`${base_url}/promocodes`, newCode);
 			addNewPromoCode({ ...newCode, createdAt: res.data.createdAt, _id: res.data._id });
+
+			resetForm();
 		} catch (error) {
 			console.log(error);
 		}
@@ -103,7 +118,6 @@ const CreateCodeDialog = ({ isNewCodeModalOpen, setIsNewCodeModalOpen }: CreateC
 				onSubmit={(e) => {
 					e.preventDefault();
 					createPromoCode();
-					resetForm();
 				}}>
 				<DialogContent sx={{ mt: '-0.5rem' }}>
 					<Box>
@@ -219,6 +233,7 @@ const CreateCodeDialog = ({ isNewCodeModalOpen, setIsNewCodeModalOpen }: CreateC
 							}}
 						/>
 					</Box>
+					{errorMsg && <CustomErrorMessage sx={{ width: '100%' }}>{errorMsg}</CustomErrorMessage>}
 				</DialogContent>
 				<CustomDialogActions
 					onCancel={() => {

@@ -8,9 +8,9 @@ import {
 	Checkbox,
 	Tooltip,
 	FormControl,
-	InputLabel,
 	Select,
 	MenuItem,
+	Typography,
 } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import React, { useContext, useEffect, useRef, useState } from 'react';
@@ -188,19 +188,17 @@ const AdminCourses = () => {
 
 					<Box sx={{ display: 'flex', alignItems: 'center' }}>
 						<Box sx={{ flex: 1, width: '100%', margin: '1rem 2rem 1.85rem 2rem' }}>
+							<Typography variant='h6' sx={{ fontSize: '0.9rem', mb: '0.25rem' }}>
+								Currency*
+							</Typography>
 							<FormControl>
-								<InputLabel id='currency' sx={{ fontSize: '0.8rem' }} required>
-									Currency
-								</InputLabel>
 								<Select
-									labelId='currency'
-									id='price_currency'
+									size='small'
 									value={checked ? '' : priceCurrency}
 									onChange={(e) => setPriceCurrency(e.target.value)}
 									disabled={checked}
-									label='Currency'
 									required
-									sx={{ backgroundColor: theme.bgColor?.common, width: '10rem' }}>
+									sx={{ backgroundColor: theme.bgColor?.common, width: '10rem', fontSize: '0.85rem' }}>
 									{['GBP', 'USD', 'EUR', 'TRY'].map((currency) => (
 										<MenuItem value={currency.toLowerCase()} key={currency} sx={{ fontSize: '0.85rem' }}>
 											{currency}
@@ -210,8 +208,10 @@ const AdminCourses = () => {
 							</FormControl>
 						</Box>
 						<Box sx={{ margin: '1rem 2rem 1rem 0rem', flex: 2 }}>
+							<Typography variant='h6' sx={{ fontSize: '0.9rem', mb: '0.25rem' }}>
+								Price*
+							</Typography>
 							<CustomTextField
-								label='Price'
 								value={checked ? '' : price}
 								onChange={(e) => setPrice(e.target.value)}
 								type='number'
