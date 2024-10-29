@@ -30,7 +30,7 @@ const QuestionsBoxNonEdit = ({ singleLesson, setIsDisplayNonEditQuestion, setDis
 			<Box sx={{ mt: '3rem', minHeight: '30vh' }}>
 				<Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
 					<Box>
-						<Typography variant='h4'>Questions</Typography>
+						<Typography variant='h5'>Questions</Typography>
 					</Box>
 					<CustomInfoMessageAlignedRight message='Click the questions to preview as a student' />
 				</Box>
