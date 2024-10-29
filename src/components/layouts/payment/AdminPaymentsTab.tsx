@@ -1,5 +1,5 @@
 import { Box, Table, TableBody, TableRow } from '@mui/material';
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import { PaymentsContext } from '../../../contexts/PaymentsContextProvider';
 import { Payment } from '../../../interfaces/payment';
 import CustomTableHead from '../table/CustomTableHead';
@@ -10,8 +10,6 @@ import CustomTablePagination from '../table/CustomTablePagination';
 const AdminPaymentsTab = () => {
 	const { sortedPaymentsData, sortPaymentsData, numberOfPages, setPaymentsPageNumber, paymentsPageNumber, fetchPayments } =
 		useContext(PaymentsContext);
-
-	const [dataLoaded, setDataLoaded] = useState<boolean>(false);
 
 	const [orderBy, setOrderBy] = useState<keyof Payment>('createdAt');
 	const [order, setOrder] = useState<'asc' | 'desc'>('asc');
@@ -27,16 +25,16 @@ const AdminPaymentsTab = () => {
 		setPaymentsPageNumber(1);
 	}, []);
 
+	const isInitialMount = useRef(true);
+
 	useEffect(() => {
-		if (!dataLoaded) {
-			try {
-				fetchPayments(paymentsPageNumber);
-				setDataLoaded(true);
-			} catch (error) {
-				console.log(error);
-			}
+		if (isInitialMount.current) {
+			isInitialMount.current = false;
+		} else {
+			fetchPayments(paymentsPageNumber);
 		}
-	}, [paymentsPageNumber, dataLoaded]);
+	}, [paymentsPageNumber]);
+
 	return (
 		<Box
 			sx={{
@@ -57,7 +55,8 @@ const AdminPaymentsTab = () => {
 						{ key: 'lastName', label: 'Last Name' },
 						{ key: 'username', label: 'Username' },
 						{ key: 'courseName', label: 'Course' },
-						{ key: 'amount', label: 'Amount' },
+						{ key: 'amount', label: 'Price' },
+						{ key: 'amountReceivedInGbp', label: 'Received' },
 						{ key: 'createdAt', label: 'Date' },
 					]}
 				/>
@@ -71,6 +70,8 @@ const AdminPaymentsTab = () => {
 									<CustomTableCell value={payment.username} />
 									<CustomTableCell value={payment.courseTitle} />
 									<CustomTableCell value={`${setCurrencySymbol(payment.currency)}${payment.amount}`} />
+									<CustomTableCell value={`£${payment.amountReceivedInGbp}`} />
+
 									<CustomTableCell
 										value={new Date(payment.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
 									/>

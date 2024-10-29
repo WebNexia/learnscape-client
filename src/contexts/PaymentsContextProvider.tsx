@@ -13,6 +13,8 @@ interface PaymentsContextTypes {
 	paymentsPageNumber: number;
 	setPaymentsPageNumber: React.Dispatch<React.SetStateAction<number>>;
 	fetchPayments: (page: number) => void;
+	totalPaymentAmountGBP: number;
+	totalNumberOfPayments: number;
 }
 
 interface PaymentsContextProviderProps {
@@ -26,6 +28,8 @@ export const PaymentsContext = createContext<PaymentsContextTypes>({
 	paymentsPageNumber: 1,
 	setPaymentsPageNumber: () => {},
 	fetchPayments: () => {},
+	totalPaymentAmountGBP: 0,
+	totalNumberOfPayments: 0,
 });
 
 const PaymentsContextProvider = (props: PaymentsContextProviderProps) => {
@@ -35,6 +39,8 @@ const PaymentsContextProvider = (props: PaymentsContextProviderProps) => {
 	const [sortedPaymentsData, setSortedPaymentsData] = useState<Payment[]>([]);
 	const [numberOfPages, setNumberOfPages] = useState<number>(1);
 	const [paymentsPageNumber, setPaymentsPageNumber] = useState<number>(1);
+	const [totalPaymentAmountGBP, setTotalPaymentAmountGBP] = useState<number>(0);
+	const [totalNumberOfPayments, setTotalNumberOfPayments] = useState<number>(0);
 
 	const [isLoaded, setIsLoaded] = useState<boolean>(false);
 
@@ -49,6 +55,8 @@ const PaymentsContextProvider = (props: PaymentsContextProviderProps) => {
 			setSortedPaymentsData(sortedPaymentsDataCopy);
 			setNumberOfPages(response.data.pages);
 			setIsLoaded(true);
+			setTotalPaymentAmountGBP(response.data.totalAmountReceivedInGbp);
+			setTotalNumberOfPayments(response.data.total);
 			return response.data.data;
 		} catch (error) {
 			setIsLoaded(true); // Set isLoading to false in case of an error
@@ -89,6 +97,8 @@ const PaymentsContextProvider = (props: PaymentsContextProviderProps) => {
 				paymentsPageNumber,
 				setPaymentsPageNumber,
 				fetchPayments,
+				totalPaymentAmountGBP,
+				totalNumberOfPayments,
 			}}>
 			{props.children}
 		</PaymentsContext.Provider>

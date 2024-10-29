@@ -27,12 +27,22 @@ const AdminPayments = () => {
 					<Tab
 						value='Payments'
 						label='Payments'
-						sx={{ '&.Mui-selected': { color: theme.bgColor?.adminHeader }, textTransform: 'capitalize', fontFamily: 'Poppins' }}
+						sx={{
+							'&.Mui-selected': { color: theme.bgColor?.adminHeader },
+							textTransform: 'capitalize',
+							fontFamily: 'Poppins',
+							'&.MuiTab-root': { textTransform: 'capitalize' }, // Ensure capitalization
+						}}
 					/>
 					<Tab
 						value='PromoCodes'
 						label='Promo Codes'
-						sx={{ '&.Mui-selected': { color: theme.bgColor?.adminHeader, textTransform: 'capitalize', fontFamily: 'Poppins' } }}
+						sx={{
+							'&.Mui-selected': { color: theme.bgColor?.adminHeader },
+							textTransform: 'capitalize',
+							fontFamily: 'Poppins',
+							'&.MuiTab-root': { textTransform: 'capitalize' }, // Ensure capitalization
+						}}
 					/>
 				</Tabs>
 			</Box>

@@ -1,9 +1,9 @@
-import { Box, Checkbox, FormControl, FormControlLabel, MenuItem, Select, Tooltip, Typography } from '@mui/material';
+import { Box, Checkbox, FormControlLabel, Tooltip, Typography } from '@mui/material';
 import CustomTextField from '../forms/customFields/CustomTextField';
 import CustomErrorMessage from '../forms/customFields/CustomErrorMessage';
 import { SingleCourse } from '../../interfaces/course';
 import theme from '../../themes';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import HandleImageUploadURL from '../forms/uploadImageVideoDocument/HandleImageUploadURL';
 import useImageUpload from '../../hooks/useImageUpload';
 
@@ -20,6 +20,41 @@ const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree,
 	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(true);
 
 	const { resetImageUpload } = useImageUpload();
+
+	const [GBP, setGBP] = useState<string>('');
+	const [USD, setUSD] = useState<string>('');
+	const [EUR, setEUR] = useState<string>('');
+	const [TRY, setTRY] = useState<string>('');
+
+	useEffect(() => {
+		// Initialize price states from `singleCourse.prices`
+		if (singleCourse) {
+			setGBP(singleCourse.prices.find((price) => price.currency === 'gbp')?.amount || '');
+			setUSD(singleCourse.prices.find((price) => price.currency === 'usd')?.amount || '');
+			setEUR(singleCourse.prices.find((price) => price.currency === 'eur')?.amount || '');
+			setTRY(singleCourse.prices.find((price) => price.currency === 'try')?.amount || '');
+		}
+	}, [singleCourse]);
+
+	const updatePriceInSingleCourse = (currency: 'gbp' | 'usd' | 'eur' | 'try', amount: string) => {
+		setSingleCourse((prevCourse) => {
+			if (prevCourse) {
+				const prices = [...prevCourse.prices];
+				const index = prices.findIndex((price) => price.currency === currency);
+
+				if (index > -1) {
+					// Update existing currency price
+					prices[index] = { ...prices[index], amount };
+				} else {
+					// Add new currency price
+					prices.push({ currency, amount });
+				}
+
+				return { ...prevCourse, prices };
+			}
+			return prevCourse;
+		});
+	};
 
 	const formatDate = (date: Date) => {
 		if (!(date instanceof Date)) return ''; // Return empty string if date is not valid
@@ -95,64 +130,69 @@ const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree,
 					mt: '1.5rem',
 				}}>
 				<Box sx={{ flex: 1 }}>
-					<Typography variant='h6'>Price*</Typography>
+					<Typography variant='h6'>Prices</Typography>
 					<Box sx={{ display: 'flex', alignItems: 'center' }}>
-						<Box sx={{ flex: 2 }}>
-							<FormControl>
-								<Select
-									size='small'
-									value={isFree ? '' : singleCourse?.priceCurrency}
-									onChange={(e) => {
-										if (singleCourse?.priceCurrency !== undefined) {
-											setSingleCourse({
-												...singleCourse,
-												priceCurrency: isFree ? '' : e.target.value,
-											});
-										}
-										setIsMissingField(false);
-									}}
-									disabled={isFree}
-									required
-									error={isMissingField && singleCourse?.priceCurrency === ''}
-									sx={{ backgroundColor: !isFree ? theme.bgColor?.common : 'inherit', width: '8rem', fontSize: '0.85rem', marginTop: '0.5rem' }}>
-									{['GBP', 'USD', 'EUR', 'TRY'].map((currency) => (
-										<MenuItem value={currency.toLowerCase()} key={currency} sx={{ fontSize: '0.85rem' }}>
-											{currency}
-										</MenuItem>
-									))}
-								</Select>
-							</FormControl>
-
-							{isMissingField && singleCourse?.priceCurrency === '' && !isFree && <CustomErrorMessage>Select currency</CustomErrorMessage>}
-						</Box>
 						<Box
 							sx={{
 								display: 'flex',
 								flexDirection: 'column',
 								justifyContent: 'flex-start',
-								flex: 3,
+								flex: 1,
 							}}>
 							<CustomTextField
-								sx={{
-									margin: '0.5rem 0 0 0.5rem',
-									backgroundColor: !isFree ? theme.bgColor?.common : 'inherit',
-								}}
-								value={isFree ? '' : singleCourse?.price}
+								label='GBP'
+								sx={{ margin: '0.5rem 0 0.5rem 0rem', backgroundColor: !isFree ? theme.bgColor?.common : 'inherit' }}
+								value={isFree ? '' : GBP}
 								onChange={(e) => {
-									if (singleCourse?.price !== undefined) {
-										setSingleCourse({
-											...singleCourse,
-											price: isFree ? 'Free' : e.target.value,
-										});
-									}
+									setGBP(e.target.value);
+									updatePriceInSingleCourse('gbp', e.target.value);
 									setIsMissingField(false);
 								}}
 								type='number'
 								disabled={isFree}
-								error={isMissingField && singleCourse?.price === ''}
-								placeholder={isFree ? '' : 'Enter price value'}
+								error={!isFree && GBP === ''}
 							/>
-							{isMissingField && singleCourse?.price === '' && <CustomErrorMessage>Enter a price value</CustomErrorMessage>}
+							<CustomTextField
+								label='USD'
+								sx={{ margin: '0.5rem 0 0 0rem', backgroundColor: !isFree ? theme.bgColor?.common : 'inherit' }}
+								value={isFree ? '' : USD}
+								onChange={(e) => {
+									setUSD(e.target.value);
+									updatePriceInSingleCourse('usd', e.target.value);
+									setIsMissingField(false);
+								}}
+								type='number'
+								disabled={isFree}
+								error={!isFree && USD === ''}
+							/>
+						</Box>
+						<Box sx={{ flex: 1, ml: '1rem' }}>
+							<CustomTextField
+								label='EUR'
+								sx={{ margin: '0.5rem 0 0.5rem 0rem', backgroundColor: !isFree ? theme.bgColor?.common : 'inherit' }}
+								value={isFree ? '' : EUR}
+								onChange={(e) => {
+									setEUR(e.target.value);
+									updatePriceInSingleCourse('eur', e.target.value);
+									setIsMissingField(false);
+								}}
+								type='number'
+								disabled={isFree}
+								error={!isFree && EUR === ''}
+							/>
+							<CustomTextField
+								label='TRY'
+								sx={{ margin: '0.5rem 0 0 0rem', backgroundColor: !isFree ? theme.bgColor?.common : 'inherit' }}
+								value={isFree ? '' : TRY}
+								onChange={(e) => {
+									setTRY(e.target.value);
+									updatePriceInSingleCourse('try', e.target.value);
+									setIsMissingField(false);
+								}}
+								type='number'
+								disabled={isFree}
+								error={!isFree && TRY === ''}
+							/>
 						</Box>
 					</Box>
 					<Box sx={{ margin: '0 0 1rem 0.5rem' }}>
@@ -162,14 +202,25 @@ const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree,
 									checked={isFree}
 									onChange={(e) => {
 										setIsFree(e.target.checked);
-										if (singleCourse?.price !== undefined && singleCourse?.priceCurrency !== undefined) {
-											setSingleCourse({
-												...singleCourse!,
-												priceCurrency: '',
-												price: e.target.checked ? 'Free' : '',
-											});
-										}
 										if (e.target.checked) {
+											// Clear prices for a free course
+											setGBP('');
+											setUSD('');
+											setEUR('');
+											setTRY('');
+											setSingleCourse((prevCourse) =>
+												prevCourse
+													? {
+															...prevCourse,
+															prices: [
+																{ amount: 'Free', currency: 'gbp' },
+																{ amount: 'Free', currency: 'usd' },
+																{ amount: 'Free', currency: 'eur' },
+																{ amount: 'Free', currency: 'try' },
+															],
+													  }
+													: prevCourse
+											);
 											setIsMissingField(false);
 										}
 									}}
@@ -188,6 +239,7 @@ const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree,
 							}}
 						/>
 					</Box>
+					{isMissingField && singleCourse?.prices.some((price) => price.amount === '') && <CustomErrorMessage>Enter price amount</CustomErrorMessage>}
 				</Box>
 				<Box sx={{ display: 'flex', marginLeft: '4rem', flex: 1 }}>
 					<Box sx={{ flex: 2 }}>

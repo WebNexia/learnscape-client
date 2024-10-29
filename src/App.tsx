@@ -54,6 +54,8 @@ const AdminQuizSubmissionCheck = React.lazy(() => import('./pages/AdminQuizSubmi
 const AdminPayments = React.lazy(() => import('./pages/AdminPayments'));
 
 const PasswordResetPage = React.lazy(() => import('./pages/ResetPasswordPage'));
+const VerifyEmailPage = React.lazy(() => import('./pages/VerifyEmailPage'));
+const HandleAuthResetPassword = React.lazy(() => import('./pages/HandleAuthResetPassword'));
 
 const queryClient = new QueryClient();
 
@@ -94,6 +96,8 @@ function App() {
 																						<Route path='/' element={<HomePage />} />
 																						<Route path='/auth' element={<Auth setUserRole={setUserRole} />} />
 																						<Route path='/reset-password' element={<PasswordResetPage />} />
+																						<Route path='/verify-email' element={<VerifyEmailPage />} />
+																						<Route path='/handle-auth-reset' element={<HandleAuthResetPassword />} />
 
 																						<>
 																							{renderRoute('/admin/dashboard/user/:userId', <AdminDashboard />, Roles.ADMIN)}

@@ -46,7 +46,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 	const [username, setUsername] = useState<string>('');
 	const [email, setEmail] = useState<string>('');
 	const [password, setPassword] = useState<string>('');
-	const [orgCode, setOrgCode] = useState<string>('6RS1YS');
+	const [orgCode, setOrgCode] = useState<string>('BR1SGC');
 
 	const [showPassword, setShowPassword] = useState<boolean>(false);
 	const [isUserNameImageInfoModalOpen, setIsUserNameImageInfoModalOpen] = useState<boolean>(false);
@@ -234,10 +234,12 @@ const Auth = ({ setUserRole }: AuthProps) => {
 				createdAt: new Date(), // Optionally store when the user was created
 			});
 
+			console.log(orgCode);
+
 			// Step 4: Send user data to your backend server (optional, if needed)
 			await axios.post(`${base_url}/users/signup`, {
 				username: username.trim(),
-				orgCode,
+				orgCode: 'BR1SGC',
 				firebaseUserId: user.uid,
 				email,
 			});

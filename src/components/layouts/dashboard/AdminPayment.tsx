@@ -1,6 +1,9 @@
 import { Box, Typography } from '@mui/material';
+import { useContext } from 'react';
+import { PaymentsContext } from '../../../contexts/PaymentsContextProvider';
 
 const AdminPayment = () => {
+	const { totalPaymentAmountGBP, totalNumberOfPayments } = useContext(PaymentsContext);
 	return (
 		<Box
 			sx={{
@@ -20,7 +23,12 @@ const AdminPayment = () => {
 				<Typography variant='h5'>Payment Summary</Typography>
 			</Box>
 			<Box sx={{ display: 'flex', alignItems: 'center', flex: 8 }}>
-				<Typography variant='h2'>£0</Typography>
+				<Typography variant='h2'>£{totalPaymentAmountGBP}</Typography>
+			</Box>
+			<Box sx={{ display: 'flex', justifyContent: 'flex-start', width: '100%' }}>
+				<Typography variant='h6' sx={{ fontSize: '0.9rem', margin: '1rem 0 0 1rem' }}>
+					Total Number of Payments: {totalNumberOfPayments}
+				</Typography>
 			</Box>
 		</Box>
 	);

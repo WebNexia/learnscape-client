@@ -1,7 +1,7 @@
 import { AppBar, Badge, Box, Button, IconButton, Switch, Toolbar, Tooltip, Typography } from '@mui/material';
 import theme from '../../../themes';
 import { useNavigate } from 'react-router-dom';
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import { Mode, Roles } from '../../../interfaces/enums';
 import { Cancel, DarkMode, DoneAll, LightMode, Notifications } from '@mui/icons-material';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
@@ -24,6 +24,21 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 	const [numberOfUnreadNotifications, setNumberOfUnreadNotifications] = useState<number>(0);
 
 	const [showUnreadOnly, setShowUnreadOnly] = useState<boolean>(false);
+
+	const notificationsRef = useRef<HTMLDivElement>(null); // Create a ref for the notifications box
+
+	useEffect(() => {
+		const handleClickOutside = (event: MouseEvent) => {
+			// Close notifications if click is outside the notifications box
+			if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) {
+				setNotificationsOpen(false);
+			}
+		};
+
+		// Attach the event listener to detect outside clicks
+		document.addEventListener('mousedown', handleClickOutside);
+		return () => document.removeEventListener('mousedown', handleClickOutside); // Cleanup on unmount
+	}, [notificationsRef]);
 
 	const clearAllQuizData = () => {
 		Object.keys(localStorage).forEach((key) => {
@@ -70,7 +85,6 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 			const querySnapshot = await getDocs(q);
 
 			if (querySnapshot.empty) {
-				console.log('No unread notifications found');
 				return;
 			}
 
@@ -84,7 +98,6 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 
 			// Commit the batch
 			await batch.commit();
-			console.log('All unread notifications marked as read');
 		} catch (error) {
 			console.error('Error marking notifications as read:', error);
 		}
@@ -139,6 +152,7 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 
 					{notificationsOpen && (
 						<Box
+							ref={notificationsRef}
 							sx={{
 								position: 'absolute',
 								right: 0,

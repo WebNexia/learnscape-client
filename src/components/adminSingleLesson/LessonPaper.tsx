@@ -153,10 +153,10 @@ const LessonPaper = ({
 									open={isMissingFieldMsgOpen}
 									autoHideDuration={3000}
 									anchorOrigin={{ vertical, horizontal }}
-									sx={{ mt: '14rem' }}
+									sx={{ mt: '5rem' }}
 									onClose={() => setIsMissingFieldMsgOpen(false)}>
 									<Alert severity='error' variant='filled' sx={{ width: '100%' }}>
-										Fill the required field(s)
+										Fill in the required field(s)
 									</Alert>
 								</Snackbar>
 								{isEditMode ? (

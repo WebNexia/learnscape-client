@@ -88,7 +88,7 @@ const AdminLearnersLineGraph = ({ chartData, totalUsers, totalNumberOfEnrolledLe
 				)}
 			</Box>
 			<Box sx={{ display: 'flex', justifyContent: 'flex-start', width: '100%' }}>
-				<Typography variant='h6' sx={{ fontSize: '0.9rem', margin: '1rem 0 0 2rem' }}>
+				<Typography variant='h6' sx={{ fontSize: '0.9rem', margin: '1rem 0 0 1rem' }}>
 					Total Number of Enrolled Users: {totalNumberOfEnrolledLearners}
 				</Typography>
 			</Box>

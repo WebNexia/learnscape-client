@@ -103,13 +103,31 @@ const AdminDashboard = () => {
 		<DashboardPagesLayout pageName='Dashboard' customSettings={{ justifyContent: 'flex-start' }}>
 			<Box sx={{ display: 'flex', width: '100%', padding: '1.5rem', flexDirection: 'column', alignItems: 'center' }}>
 				<Grid container spacing={3}>
-					<Grid item md={4}>
+					<Grid
+						item
+						md={4}
+						onClick={() => {
+							navigate(`/admin/users/user/${user?._id}`);
+						}}
+						sx={{ cursor: 'pointer' }}>
 						<AdminLearnersLineGraph chartData={chartData} totalUsers={totalUsers} totalNumberOfEnrolledLearners={totalNumberOfEnrolledLearners} />
 					</Grid>
-					<Grid item md={4}>
+					<Grid
+						item
+						md={4}
+						onClick={() => {
+							navigate(`/admin/courses/user/${user?._id}`);
+						}}
+						sx={{ cursor: 'pointer' }}>
 						<AdminCoursesBarGraph barChartData={barChartData} totalCourses={totalCourses} />
 					</Grid>
-					<Grid item md={4}>
+					<Grid
+						item
+						md={4}
+						onClick={() => {
+							navigate(`/admin/payments/user/${user?._id}`);
+						}}
+						sx={{ cursor: 'pointer' }}>
 						<AdminPayment />
 					</Grid>
 					<Grid item xs={3} onClick={() => navigate(`/admin/calendar/user/${user?._id}`)}>

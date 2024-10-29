@@ -722,7 +722,8 @@ const QuizQuestion = ({
 				<CustomDialog
 					openModal={isSubmitQuizModalOpen}
 					closeModal={() => setIsSubmitQuizModalOpen(false)}
-					content='Are you sure you want to submit the quiz?'>
+					content='Are you sure you want to submit the quiz?'
+					maxWidth='sm'>
 					{userQuizAnswersUploading ? (
 						<DialogActions sx={{ marginBottom: '1.5rem' }}>
 							<LoadingButton loading variant='outlined' sx={{ textTransform: 'capitalize', height: '2.5rem', margin: '0 0.5rem 0.5rem 0' }} />
@@ -737,7 +738,8 @@ const QuizQuestion = ({
 					closeModal={() => {
 						setIsMsgModalAfterSubmitOpen(false);
 						navigate(`/course/${courseId}/user/${userId}/userCourseId/${userCourseId}?isEnrolled=true`);
-					}}>
+					}}
+					maxWidth='sm'>
 					<Box sx={{ display: 'flex', flexDirection: 'column', width: '90%', margin: '0 auto' }}>
 						<Box>
 							<Typography variant='body1' sx={{ mb: '0.75rem', lineHeight: '1.9' }}>
@@ -762,7 +764,7 @@ const QuizQuestion = ({
 								setIsMsgModalAfterSubmitOpen(false);
 								navigate(`/course/${courseId}/user/${userId}/userCourseId/${userCourseId}?isEnrolled=true`);
 							}}
-							sx={{ width: 'fit-content', padding: '0.5rem 2rem', margin: '2rem  0rem' }}>
+							sx={{ width: '2rem', padding: '0.5rem 2rem', margin: '1rem  0rem 2rem 0', height: '2rem' }}>
 							Close
 						</CustomSubmitButton>
 					</Box>

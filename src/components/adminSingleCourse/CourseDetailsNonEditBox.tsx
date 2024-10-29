@@ -8,6 +8,10 @@ import { useParams } from 'react-router-dom';
 import { dateFormatter } from '../../utils/dateFormatter';
 import NoContentBoxAdmin from '../layouts/noContentBox/NoContentBoxAdmin';
 import { setCurrencySymbol } from '../../utils/setCurrencySymbol';
+import UKFlag from '../../assets/uk_flag_icon_round.svg.png';
+import USFlag from '../../assets/usa_flag_united_states_america_icon_228698.png';
+import EUFlag from '../../assets/european_flag_icon_228671.png';
+import TRFlag from '../../assets/tr-flag-round-500.png';
 
 interface CourseDetailsNonEditBoxProps {
 	singleCourse?: SingleCourse;
@@ -70,18 +74,42 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters }: CourseDetailsNonEdi
 				sx={{
 					display: 'flex',
 					justifyContent: 'space-between',
-					alignItems: 'center',
+					alignItems: 'flex-start',
 					mt: '2rem',
 					padding: '2rem',
 					boxShadow: '0 0 0.4rem 0.2rem rgba(0,0,0,0.2)',
 					borderRadius: '0.35rem',
 				}}>
-				<Box sx={{ textAlign: 'center' }}>
-					<Typography variant='h5'>Price</Typography>
-					<Typography variant='body2' sx={{ mt: '0.5rem' }}>
-						{setCurrencySymbol(singleCourse?.priceCurrency!)}
-						{singleCourse?.price}
-					</Typography>
+				<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+					<Typography variant='h5'>Prices</Typography>
+
+					<Box sx={{ display: 'flex', mt: '0.5rem' }}>
+						{singleCourse?.prices?.map((price) => {
+							return (
+								<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mr: '2rem' }} key={price.currency}>
+									<Typography variant='body2'>
+										{price.amount !== 'Free' ? setCurrencySymbol(price.currency) : ''}
+										{price.amount}
+									</Typography>
+									<img
+										src={
+											price.currency === 'gbp'
+												? UKFlag
+												: price.currency === 'usd'
+												? USFlag
+												: price.currency === 'eur'
+												? EUFlag
+												: price.currency === 'try'
+												? TRFlag
+												: undefined
+										}
+										alt='flag'
+										style={{ height: '2rem', width: '2rem', borderRadius: '50%', marginTop: '0.35rem' }}
+									/>
+								</Box>
+							);
+						})}
+					</Box>
 				</Box>
 				<Box sx={{ textAlign: 'center' }}>
 					<Typography variant='h5'>Starting Date</Typography>

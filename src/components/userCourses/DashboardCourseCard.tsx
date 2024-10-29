@@ -4,6 +4,9 @@ import theme from '../../themes';
 import { useNavigate } from 'react-router-dom';
 import { truncateText } from '../../utils/utilText';
 import { setCurrencySymbol } from '../../utils/setCurrencySymbol';
+import { useContext } from 'react';
+import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
+import { getPriceForCountry } from '../../utils/getPriceForCountry';
 
 interface DashboardCourseCardProps {
 	course: SingleCourse;
@@ -16,6 +19,7 @@ interface DashboardCourseCardProps {
 
 const DashboardCourseCard = ({ course, isEnrolled, userId, displayMyCourses, userCourseId, isCourseCompleted }: DashboardCourseCardProps) => {
 	const navigate = useNavigate();
+	const { user } = useContext(UserAuthContext);
 
 	const buttonStyles = {
 		fontFamily: theme.fontFamily?.main,
@@ -94,8 +98,8 @@ const DashboardCourseCard = ({ course, isEnrolled, userId, displayMyCourses, use
 							visibility: isEnrolled ? 'hidden' : 'visible',
 							color: theme.palette.primary.main,
 						}}>
-						{setCurrencySymbol(course.priceCurrency)}
-						{course.price}
+						{setCurrencySymbol(getPriceForCountry(course, user?.countryCode!).currency)}
+						{getPriceForCountry(course, user?.countryCode!).amount}
 					</Typography>
 
 					<Button

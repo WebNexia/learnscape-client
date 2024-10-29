@@ -17,6 +17,7 @@ import CustomErrorMessage from '../../forms/customFields/CustomErrorMessage';
 import theme from '../../../themes';
 import { setCurrencySymbol } from '../../../utils/setCurrencySymbol';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
+import { getPriceForCountry } from '../../../utils/getPriceForCountry';
 
 interface PaymentDialogProps {
 	course: SingleCourse;
@@ -41,7 +42,7 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 	const [firstName, setFirstName] = useState<string>('');
 	const [lastName, setLastName] = useState<string>('');
 	const [promoCode, setPromoCode] = useState<string>('');
-	const [discountedAmount, setDiscountedAmount] = useState<number>(+course.price);
+	const [discountedAmount, setDiscountedAmount] = useState<number>(+getPriceForCountry(course, user?.countryCode!).amount);
 	const [isPromoCodeApplied, setIsPromoCodeApplied] = useState<boolean>(false);
 	const [usersUsedPromoCode, setUsersUsedPromoCode] = useState<string[]>([]);
 
@@ -95,7 +96,7 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 				firstName: firstName.trim(),
 				lastName: lastName.trim(),
 				amount: discountedAmount, // Assuming course.price is in currency units (not cents)
-				currency: course.priceCurrency, // Set your preferred currency
+				currency: getPriceForCountry(course, user?.countryCode!).currency, // Set your preferred currency
 				orgId,
 				userId,
 				courseId: course._id,
@@ -154,6 +155,8 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 					});
 				}
 			}
+			setIsPaymentDialogOpen(false);
+			await courseRegistration();
 		} catch (error) {
 			setErrorMessage('An error occurred while processing the payment.');
 		}
@@ -174,9 +177,9 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 			setPromoCodeId(_id);
 
 			// Calculate the discounted amount based on the type
-			let newTotal: number = +course.price;
+			let newTotal: number = +getPriceForCountry(course, user?.countryCode!).amount;
 			if (discountType === 'percentage') {
-				newTotal -= (+course.price * discountAmount) / 100;
+				newTotal -= (+getPriceForCountry(course, user?.countryCode!).amount * discountAmount) / 100;
 			} else if (discountType === 'fixed') {
 				newTotal -= discountAmount;
 			}
@@ -192,23 +195,24 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 				// Fallback in case it's not an AxiosError or the message isn't available
 				setErrorMessage('Invalid promo code');
 			}
-			setDiscountedAmount(+course.price); // Reset to original price
+			setDiscountedAmount(+getPriceForCountry(course, user?.countryCode!).amount); // Reset to original price
 		}
 	};
 	const resetForm = () => {
 		setFirstName('');
 		setLastName('');
 		setPromoCode('');
-		setDiscountedAmount(+course.price);
+		setDiscountedAmount(+getPriceForCountry(course, user?.countryCode!).amount);
 		setIsPromoCodeApplied(false);
-		setIsPaymentDialogOpen(false);
 		setAgreed(false);
+		setErrorMessage('');
 	};
 	return (
 		<CustomDialog
 			openModal={isPaymentDialogOpen}
 			closeModal={() => {
 				resetForm();
+				setIsPaymentDialogOpen(false);
 			}}
 			title='Make Payment'
 			maxWidth='sm'>
@@ -216,7 +220,6 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 				onSubmit={async (e) => {
 					e.preventDefault();
 					await handlePayment();
-					await courseRegistration();
 					resetForm();
 				}}>
 				<Box
@@ -258,7 +261,7 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 								setPromoCode(e.target.value);
 								setErrorMessage('');
 								setIsPromoCodeApplied(false);
-								setDiscountedAmount(+course.price);
+								setDiscountedAmount(+getPriceForCountry(course, user?.countryCode!).amount);
 								setUsersUsedPromoCode((prevData) => prevData.filter((id) => id !== userId));
 							}}
 						/>
@@ -268,7 +271,7 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 					</Box>
 					<Box sx={{ display: 'flex', alignItems: 'center', width: '100%', padding: '0 0.75rem' }}>
 						<Typography variant='h6' sx={{ boxShadow: '0.1rem 0.1rem 0.5rem 0.1rem rgba(0,0,0,0.3)', borderRadius: '0.35rem', padding: '0.75rem' }}>
-							Final Price: {setCurrencySymbol(course.priceCurrency)}
+							Final Price: {setCurrencySymbol(getPriceForCountry(course, user?.countryCode!).currency)}
 							{discountedAmount}
 						</Typography>
 						{isPromoCodeApplied && (
@@ -416,6 +419,7 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 				<CustomDialogActions
 					onCancel={() => {
 						resetForm();
+						setIsPaymentDialogOpen(false);
 					}}
 					submitBtnText={isProcessing ? 'Processing' : 'Enroll'}
 				/>

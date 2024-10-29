@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAuth, confirmPasswordReset, checkActionCode } from 'firebase/auth';
 import { FirebaseError } from 'firebase/app';
@@ -8,8 +8,11 @@ import { Box, IconButton, InputAdornment, Typography } from '@mui/material';
 import theme from '../themes';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
+import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 
 const PasswordResetPage = () => {
+	const { organisation } = useContext(OrganisationContext);
+
 	const [newPassword, setNewPassword] = useState<string>('');
 	const [confirmNewPassword, setConfirmNewPassword] = useState<string>('');
 	const [resetErrorMsg, setResetErrorMsg] = useState<string | null>(null);
@@ -54,7 +57,30 @@ const PasswordResetPage = () => {
 
 	// Extract the oobCode from the URL
 	useEffect(() => {
-		const code = new URLSearchParams(window.location.search).get('oobCode');
+		const queryParams = new URLSearchParams(location.search);
+		const mode = queryParams.get('mode'); // Firebase action type
+		const code = queryParams.get('oobCode');
+
+		if (!mode || !oobCode) {
+			// If missing required parameters, show an error or redirect to home
+			navigate('/');
+			return;
+		}
+
+		switch (mode) {
+			case 'verifyEmail':
+				// Redirect to email verification page and pass the oobCode
+				navigate(`/verify-email?oobCode=${oobCode}`);
+				break;
+			case 'resetPassword':
+				// Redirect to password reset page and pass the oobCode
+				navigate(`/reset-password?oobCode=${oobCode}`);
+				break;
+			default:
+				// Handle unknown action types or redirect to a fallback page
+				navigate('/');
+		}
+
 		if (code) {
 			setOobCode(code);
 
@@ -71,7 +97,7 @@ const PasswordResetPage = () => {
 			setResetErrorMsg('Invalid or missing password reset code. Please try again.');
 			setIsLinkValid(false);
 		}
-	}, []);
+	}, [navigate, location]);
 
 	const handlePasswordResetSubmit = async () => {
 		if (!oobCode) {
@@ -131,7 +157,7 @@ const PasswordResetPage = () => {
 			}}>
 			<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
 				<Typography variant='h1' sx={{ textAlign: 'center', mb: '4rem' }}>
-					KAIZEN
+					{organisation?.orgName}
 				</Typography>
 				<Typography variant='h4' sx={{ textAlign: 'center', mb: '1rem' }}>
 					Reset Your Password

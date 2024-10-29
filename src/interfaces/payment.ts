@@ -5,6 +5,7 @@ export interface Payment {
 	paymentId: string;
 	amount: number;
 	currency: string;
+	amountReceivedInGbp: number;
 	status: string;
 	orgId: string;
 	userId: string;

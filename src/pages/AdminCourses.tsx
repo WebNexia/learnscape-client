@@ -1,21 +1,8 @@
-import {
-	Box,
-	Table,
-	TableBody,
-	TableRow,
-	TableCell,
-	FormControlLabel,
-	Checkbox,
-	Tooltip,
-	FormControl,
-	Select,
-	MenuItem,
-	Typography,
-} from '@mui/material';
+import { Box, Table, TableBody, TableRow, TableCell, FormControlLabel, Checkbox, Tooltip, Typography } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { CoursesContext } from '../contexts/CoursesContextProvider';
-import { SingleCourse } from '../interfaces/course';
+import { Price, SingleCourse } from '../interfaces/course';
 import { Delete, Edit, FileCopy } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
@@ -29,8 +16,6 @@ import CustomTablePagination from '../components/layouts/table/CustomTablePagina
 import CustomActionBtn from '../components/layouts/table/CustomActionBtn';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import { dateFormatter } from '../utils/dateFormatter';
-import theme from '../themes';
-import { setCurrencySymbol } from '../utils/setCurrencySymbol';
 
 const AdminCourses = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -54,9 +39,12 @@ const AdminCourses = () => {
 		setIsCourseCreateModalOpen(true);
 		setTitle('');
 		setDescription('');
-		setPrice('');
-		setPriceCurrency('');
 		setChecked(false);
+
+		setGBP({ amount: '', currency: 'gbp' });
+		setUSD({ amount: '', currency: 'usd' });
+		setEUR({ amount: '', currency: 'eur' });
+		setTRY({ amount: '', currency: 'try' });
 	};
 	const closeNewCourseModal = () => setIsCourseCreateModalOpen(false);
 
@@ -89,17 +77,25 @@ const AdminCourses = () => {
 
 	const [title, setTitle] = useState<string>('');
 	const [description, setDescription] = useState<string>('');
-	const [price, setPrice] = useState<string>('');
-	const [priceCurrency, setPriceCurrency] = useState<string>('');
+	const [GBP, setGBP] = useState<Price | null>(null);
+	const [USD, setUSD] = useState<Price | null>(null);
+	const [EUR, setEUR] = useState<Price | null>(null);
+	const [TRY, setTRY] = useState<Price | null>(null);
+
 	const [checked, setChecked] = useState<boolean>(false);
 
 	const createCourse = async (): Promise<void> => {
+		const prices: Price[] = [
+			{ amount: checked ? 'Free' : GBP?.amount!, currency: 'gbp' },
+			{ amount: checked ? 'Free' : USD?.amount!, currency: 'usd' },
+			{ amount: checked ? 'Free' : EUR?.amount!, currency: 'eur' },
+			{ amount: checked ? 'Free' : TRY?.amount!, currency: 'try' },
+		];
 		try {
 			const response = await axios.post(`${base_url}/courses`, {
 				title: title.trim(),
 				description: description.trim(),
-				price: checked ? 'Free' : price,
-				priceCurrency: checked ? '' : priceCurrency.trim(),
+				prices,
 				startingDate: '',
 				orgId,
 				imageUrl: '',
@@ -113,8 +109,7 @@ const AdminCourses = () => {
 				_id: response.data._id,
 				title: title.trim(),
 				description: description.trim(),
-				price: checked ? 'Free' : price,
-				priceCurrency: checked ? '' : priceCurrency.trim(),
+				prices,
 				orgId,
 				imageUrl: '',
 				durationWeeks: null,
@@ -187,47 +182,68 @@ const AdminCourses = () => {
 					</Tooltip>
 
 					<Box sx={{ display: 'flex', alignItems: 'center' }}>
-						<Box sx={{ flex: 1, width: '100%', margin: '1rem 2rem 1.85rem 2rem' }}>
+						<Box sx={{ margin: '1rem 2rem 1rem 2rem', flex: 2 }}>
 							<Typography variant='h6' sx={{ fontSize: '0.9rem', mb: '0.25rem' }}>
-								Currency*
-							</Typography>
-							<FormControl>
-								<Select
-									size='small'
-									value={checked ? '' : priceCurrency}
-									onChange={(e) => setPriceCurrency(e.target.value)}
-									disabled={checked}
-									required
-									sx={{ backgroundColor: theme.bgColor?.common, width: '10rem', fontSize: '0.85rem' }}>
-									{['GBP', 'USD', 'EUR', 'TRY'].map((currency) => (
-										<MenuItem value={currency.toLowerCase()} key={currency} sx={{ fontSize: '0.85rem' }}>
-											{currency}
-										</MenuItem>
-									))}
-								</Select>
-							</FormControl>
-						</Box>
-						<Box sx={{ margin: '1rem 2rem 1rem 0rem', flex: 2 }}>
-							<Typography variant='h6' sx={{ fontSize: '0.9rem', mb: '0.25rem' }}>
-								Price*
+								Prices
 							</Typography>
 							<CustomTextField
-								value={checked ? '' : price}
-								onChange={(e) => setPrice(e.target.value)}
+								label='GBP'
+								value={checked ? '' : GBP?.amount}
+								onChange={(e) => setGBP((prevData) => ({ ...prevData!, amount: e.target.value }))}
 								type='number'
 								disabled={checked}
+								sx={{ backgroundColor: checked ? 'transparent' : '#fff' }}
+								InputLabelProps={{
+									sx: { fontSize: '0.8rem' },
+								}}
+							/>
+							<CustomTextField
+								label='USD'
+								value={checked ? '' : USD?.amount}
+								onChange={(e) => setUSD((prevData) => ({ ...prevData!, amount: e.target.value }))}
+								type='number'
+								disabled={checked}
+								sx={{ backgroundColor: checked ? 'transparent' : '#fff' }}
+								InputLabelProps={{
+									sx: { fontSize: '0.8rem' },
+								}}
+							/>
+							<CustomTextField
+								label='EUR'
+								value={checked ? '' : EUR?.amount}
+								onChange={(e) => setEUR((prevData) => ({ ...prevData!, amount: e.target.value }))}
+								type='number'
+								disabled={checked}
+								sx={{ backgroundColor: checked ? 'transparent' : '#fff' }}
+								InputLabelProps={{
+									sx: { fontSize: '0.8rem' },
+								}}
+							/>
+							<CustomTextField
+								label='TRY'
+								value={checked ? '' : TRY?.amount}
+								onChange={(e) => setTRY((prevData) => ({ ...prevData!, amount: e.target.value }))}
+								type='number'
+								disabled={checked}
+								sx={{ backgroundColor: checked ? 'transparent' : '#fff' }}
 								InputLabelProps={{
 									sx: { fontSize: '0.8rem' },
 								}}
 							/>
 						</Box>
 					</Box>
-					<Box sx={{ margin: '2rem' }}>
+					<Box sx={{ margin: '0 2rem' }}>
 						<FormControlLabel
 							control={
 								<Checkbox
 									checked={checked}
-									onChange={(e) => setChecked(e.target.checked)}
+									onChange={(e) => {
+										setChecked(e.target.checked);
+										setTRY((prevData) => ({ ...prevData!, amount: '' }));
+										setEUR((prevData) => ({ ...prevData!, amount: '' }));
+										setUSD((prevData) => ({ ...prevData!, amount: '' }));
+										setGBP((prevData) => ({ ...prevData!, amount: '' }));
+									}}
 									sx={{
 										'& .MuiSvgIcon-root': {
 											fontSize: '1.25rem',
@@ -274,7 +290,8 @@ const AdminCourses = () => {
 							{ key: 'title', label: 'Title' },
 							{ key: 'isActive', label: 'Status' },
 							{ key: 'startingDate', label: 'Starting Date' },
-							{ key: 'price', label: 'Price' },
+							{ key: 'durationWeeks', label: 'Weeks #' },
+							{ key: 'durationHours', label: 'Hours #' },
 							{ key: 'actions', label: 'Actions' },
 						]}
 					/>
@@ -286,7 +303,8 @@ const AdminCourses = () => {
 										<CustomTableCell value={course.title} />
 										<CustomTableCell value={course.isActive ? 'Published' : 'Unpublished'} />
 										<CustomTableCell value={dateFormatter(course.startingDate)} />
-										<CustomTableCell value={`${setCurrencySymbol(course.priceCurrency)}${course.price}`} />
+										<CustomTableCell value={course.durationWeeks} />
+										<CustomTableCell value={course.durationHours} />
 
 										<TableCell
 											sx={{

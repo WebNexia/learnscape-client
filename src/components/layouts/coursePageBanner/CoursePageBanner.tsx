@@ -11,6 +11,9 @@ import CustomSubmitButton from '../../forms/customButtons/CustomSubmitButton';
 import { dateFormatter } from '../../../utils/dateFormatter';
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
 import PaymentDialog from './PaymentDialog';
+import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
+import { getPriceForCountry } from '../../../utils/getPriceForCountry';
+import { setCurrencySymbol } from '../../../utils/setCurrencySymbol';
 
 interface CoursePageBannerProps {
 	course: SingleCourse;
@@ -29,6 +32,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 
 	const { courseId, userId } = useParams();
 	const { orgId } = useContext(OrganisationContext);
+	const { user } = useContext(UserAuthContext);
 
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
@@ -107,7 +111,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 	};
 
 	const handleEnrollment = async (): Promise<void> => {
-		if (course.price.toLowerCase() === 'free') {
+		if (getPriceForCountry(course, user?.countryCode!).amount === 'Free') {
 			await courseRegistration();
 			setIsEnrolledStatus(true);
 		} else {
@@ -219,7 +223,11 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 					<Box>
 						<CoursePageBannerDataCard
 							title='Price'
-							content={`${course.price.toLowerCase() === 'free' ? '' : course.priceCurrency === null ? '' : course.priceCurrency}${course.price}`}
+							content={`${
+								getPriceForCountry(course, user?.countryCode!).amount === 'Free'
+									? ''
+									: setCurrencySymbol(getPriceForCountry(course, user?.countryCode!).currency)
+							}${getPriceForCountry(course, user?.countryCode!).amount}`}
 							customSettings={{
 								color: theme.textColor?.common.main,
 								bgColor: theme.bgColor?.greenSecondary,
