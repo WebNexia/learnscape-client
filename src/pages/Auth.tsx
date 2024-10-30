@@ -30,6 +30,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 	const queryClient = useQueryClient();
 
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
+	const organisationCode = import.meta.env.VITE_ORG_CODE;
 
 	const vertical = 'top';
 	const horizontal = 'center';
@@ -46,7 +47,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 	const [username, setUsername] = useState<string>('');
 	const [email, setEmail] = useState<string>('');
 	const [password, setPassword] = useState<string>('');
-	const [orgCode, setOrgCode] = useState<string>('BR1SGC');
+	const [orgCode, setOrgCode] = useState<string>(organisationCode);
 
 	const [showPassword, setShowPassword] = useState<boolean>(false);
 	const [isUserNameImageInfoModalOpen, setIsUserNameImageInfoModalOpen] = useState<boolean>(false);
@@ -239,7 +240,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 			// Step 4: Send user data to your backend server (optional, if needed)
 			await axios.post(`${base_url}/users/signup`, {
 				username: username.trim(),
-				orgCode: 'BR1SGC',
+				orgCode: organisationCode,
 				firebaseUserId: user.uid,
 				email,
 			});
