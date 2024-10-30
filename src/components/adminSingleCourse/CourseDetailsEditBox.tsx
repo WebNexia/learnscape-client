@@ -213,10 +213,10 @@ const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree,
 													? {
 															...prevCourse,
 															prices: [
-																{ amount: 'Free', currency: 'gbp' },
-																{ amount: 'Free', currency: 'usd' },
-																{ amount: 'Free', currency: 'eur' },
-																{ amount: 'Free', currency: 'try' },
+																{ amount: '', currency: 'gbp' },
+																{ amount: '', currency: 'usd' },
+																{ amount: '', currency: 'eur' },
+																{ amount: '', currency: 'try' },
 															],
 													  }
 													: prevCourse

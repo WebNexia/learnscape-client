@@ -111,7 +111,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 	};
 
 	const handleEnrollment = async (): Promise<void> => {
-		if (getPriceForCountry(course, user?.countryCode!).amount === 'Free') {
+		if (getPriceForCountry(course, user?.countryCode!).amount === 'Free' || getPriceForCountry(course, user?.countryCode!).amount === '0') {
 			await courseRegistration();
 			setIsEnrolledStatus(true);
 		} else {

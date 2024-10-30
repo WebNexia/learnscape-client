@@ -126,6 +126,8 @@ const AdminLessonEditPage = () => {
 	const [editorContent, setEditorContent] = useState<string>('');
 	const [prevEditorContent, setPrevEditorContent] = useState<string>('');
 
+	const [errorMsg, setErrorMsg] = useState<string>('');
+
 	const resetEnterImageVideoUrl = () => {
 		setEnterVideoUrl(true);
 		setEnterImageUrl(true);
@@ -519,6 +521,7 @@ const AdminLessonEditPage = () => {
 					isEditMode={isEditMode}
 					isMissingFieldMsgOpen={isMissingFieldMsgOpen}
 					resetChanges={resetChanges}
+					editorContent={editorContent}
 					setIsEditMode={setIsEditMode}
 					setIsMissingFieldMsgOpen={setIsMissingFieldMsgOpen}
 					setIsMissingField={setIsMissingField}
@@ -530,6 +533,7 @@ const AdminLessonEditPage = () => {
 					resetImageUpload={resetImageUpload}
 					resetVideoUpload={resetVideoUpload}
 					resetEnterImageVideoUrl={resetEnterImageVideoUrl}
+					setErrorMsg={setErrorMsg}
 				/>
 			</Box>
 
@@ -779,7 +783,7 @@ const AdminLessonEditPage = () => {
 								</Box>
 							</Box>
 
-							<Box sx={{ mt: '5rem' }}>
+							<Box sx={{ mt: '5rem', mb: '1rem' }}>
 								<Typography variant='h6' sx={{ mb: '1rem' }}>
 									{singleLessonBeforeSave.type === LessonType.INSTRUCTIONAL_LESSON ? 'Lesson Instructions' : 'Instructions'}
 								</Typography>
@@ -793,6 +797,7 @@ const AdminLessonEditPage = () => {
 									initialValue={singleLesson.text}
 								/>
 							</Box>
+							{!editorContent && <CustomErrorMessage>{errorMsg}</CustomErrorMessage>}
 
 							{singleLessonBeforeSave.type !== LessonType.INSTRUCTIONAL_LESSON && (
 								<>

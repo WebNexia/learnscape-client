@@ -32,6 +32,9 @@ const DashboardCourseCard = ({ course, isEnrolled, userId, displayMyCourses, use
 			backgroundColor: isEnrolled ? theme.bgColor?.common : theme.bgColor?.greenSecondary,
 		},
 	};
+
+	const isCourseFree: boolean =
+		getPriceForCountry(course, user?.countryCode!).amount === '0' || getPriceForCountry(course, user?.countryCode!).amount === 'Free';
 	return (
 		<Card
 			sx={{
@@ -98,8 +101,8 @@ const DashboardCourseCard = ({ course, isEnrolled, userId, displayMyCourses, use
 							visibility: isEnrolled ? 'hidden' : 'visible',
 							color: theme.palette.primary.main,
 						}}>
-						{setCurrencySymbol(getPriceForCountry(course, user?.countryCode!).currency)}
-						{getPriceForCountry(course, user?.countryCode!).amount}
+						{isCourseFree ? '' : setCurrencySymbol(getPriceForCountry(course, user?.countryCode!).currency)}
+						{isCourseFree ? 'Free' : getPriceForCountry(course, user?.countryCode!).amount}
 					</Typography>
 
 					<Button

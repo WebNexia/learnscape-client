@@ -16,6 +16,7 @@ interface LessonPaperProps {
 	isEditMode: boolean;
 	isMissingFieldMsgOpen: boolean;
 	resetChanges: boolean;
+	editorContent: string;
 	setSingleLessonBeforeSave: React.Dispatch<React.SetStateAction<Lesson>>;
 	setIsEditMode: React.Dispatch<React.SetStateAction<boolean>>;
 	setIsMissingFieldMsgOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -28,6 +29,7 @@ interface LessonPaperProps {
 	resetImageUpload: () => void;
 	resetVideoUpload: () => void;
 	resetEnterImageVideoUrl: () => void;
+	setErrorMsg: React.Dispatch<React.SetStateAction<string>>;
 }
 
 const LessonPaper = ({
@@ -38,6 +40,7 @@ const LessonPaper = ({
 	isEditMode,
 	isMissingFieldMsgOpen,
 	resetChanges,
+	editorContent,
 	setSingleLessonBeforeSave,
 	setIsEditMode,
 	setIsMissingFieldMsgOpen,
@@ -50,6 +53,7 @@ const LessonPaper = ({
 	resetImageUpload,
 	resetVideoUpload,
 	resetEnterImageVideoUrl,
+	setErrorMsg,
 }: LessonPaperProps) => {
 	const navigate = useNavigate();
 	const vertical = 'top';
@@ -164,12 +168,13 @@ const LessonPaper = ({
 										<CustomSubmitButton
 											sx={{ padding: '0 0.75rem', backgroundColor: theme.bgColor?.greenPrimary }}
 											onClick={(e) => {
-												if (singleLessonBeforeSave?.title.trim() !== '' && singleLessonBeforeSave?.title !== '') {
+												if (singleLessonBeforeSave?.title.trim() !== '' && singleLessonBeforeSave?.title !== '' && editorContent.trim() !== '') {
 													setIsEditMode(false);
 													handleLessonUpdate(e as FormEvent<Element>);
 													resetImageUpload();
 													resetVideoUpload();
 													resetEnterImageVideoUrl();
+													setErrorMsg('Enter lesson instructions');
 												} else {
 													setIsMissingField(true);
 													setIsMissingFieldMsgOpen(true);
