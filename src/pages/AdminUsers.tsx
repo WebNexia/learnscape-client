@@ -83,6 +83,8 @@ const AdminUsers = () => {
 						order={order}
 						handleSort={handleSort}
 						columns={[
+							{ key: 'firstName', label: 'First Name' },
+							{ key: 'lastName', label: 'Last Name' },
 							{ key: 'username', label: 'Username' },
 							{ key: 'email', label: 'Email Address' },
 							{ key: 'isActive', label: 'Status' },
@@ -96,6 +98,8 @@ const AdminUsers = () => {
 								if (user._id !== userId) {
 									return (
 										<TableRow key={user._id}>
+											<CustomTableCell value={user.firstName} />
+											<CustomTableCell value={user.lastName} />
 											<CustomTableCell value={user.username} />
 											<CustomTableCell value={user.email} />
 											<CustomTableCell value={user.isActive ? 'Active' : 'Inactive'} />

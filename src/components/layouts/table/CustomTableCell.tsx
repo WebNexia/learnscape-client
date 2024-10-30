@@ -8,7 +8,7 @@ interface CustomTableCellProps {
 
 const CustomTableCell = ({ children, value }: CustomTableCellProps) => {
 	return (
-		<TableCell sx={{ textAlign: 'center' }}>
+		<TableCell sx={{ textAlign: 'center', padding: '0.75rem 0' }}>
 			<Typography variant='body2'>{value}</Typography>
 			{children}
 		</TableCell>

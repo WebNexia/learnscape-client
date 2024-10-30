@@ -87,10 +87,6 @@ const EditEventDialog = ({
 				allCoursesParticipantsInfo = Array.from(new Map([...res.data.participants, ...participants].map((user) => [user._id, user])).values());
 				allParticipantsIds = [...res.data.participants, ...participants]?.map((participant: AttendeeInfo) => participant._id);
 
-				console.log(allParticipantsIds);
-
-				console.log(res.data.participants);
-
 				setSelectedEvent((prevData) => {
 					if (prevData) {
 						return { ...prevData, allAttendeesIds: allParticipantsIds, isAllCoursesSelected: true };
@@ -134,10 +130,7 @@ const EditEventDialog = ({
 
 			allCoursesParticipantsInfo = uniqueParticipants;
 
-			console.log(uniqueParticipants);
 			allParticipantsIds = uniqueParticipants.map((participant) => participant._id);
-
-			console.log(allParticipantsIds);
 
 			setSelectedEvent((prevData) => {
 				if (prevData) {

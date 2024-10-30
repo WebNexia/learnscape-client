@@ -3,6 +3,10 @@ import { SingleCourse } from '../../interfaces/course';
 import theme from '../../themes';
 import { useNavigate } from 'react-router-dom';
 import { truncateText } from '../../utils/utilText';
+import { setCurrencySymbol } from '../../utils/setCurrencySymbol';
+import { useContext } from 'react';
+import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
+import { getPriceForCountry } from '../../utils/getPriceForCountry';
 
 interface DashboardCourseCardProps {
 	course: SingleCourse;
@@ -15,6 +19,7 @@ interface DashboardCourseCardProps {
 
 const DashboardCourseCard = ({ course, isEnrolled, userId, displayMyCourses, userCourseId, isCourseCompleted }: DashboardCourseCardProps) => {
 	const navigate = useNavigate();
+	const { user } = useContext(UserAuthContext);
 
 	const buttonStyles = {
 		fontFamily: theme.fontFamily?.main,
@@ -27,6 +32,9 @@ const DashboardCourseCard = ({ course, isEnrolled, userId, displayMyCourses, use
 			backgroundColor: isEnrolled ? theme.bgColor?.common : theme.bgColor?.greenSecondary,
 		},
 	};
+
+	const isCourseFree: boolean =
+		getPriceForCountry(course, user?.countryCode!).amount === '0' || getPriceForCountry(course, user?.countryCode!).amount === 'Free';
 	return (
 		<Card
 			sx={{
@@ -93,8 +101,8 @@ const DashboardCourseCard = ({ course, isEnrolled, userId, displayMyCourses, use
 							visibility: isEnrolled ? 'hidden' : 'visible',
 							color: theme.palette.primary.main,
 						}}>
-						{course.priceCurrency}
-						{course.price}
+						{isCourseFree ? '' : setCurrencySymbol(getPriceForCountry(course, user?.countryCode!).currency)}
+						{isCourseFree ? 'Free' : getPriceForCountry(course, user?.countryCode!).amount}
 					</Typography>
 
 					<Button

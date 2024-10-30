@@ -143,7 +143,7 @@ const CoursePaper = ({
 									open={isNoChapterMsgOpen}
 									autoHideDuration={2000}
 									anchorOrigin={{ vertical, horizontal }}
-									sx={{ mt: '14rem' }}
+									sx={{ mt: '5rem' }}
 									onClose={() => setIsNoChapterMsgOpen(false)}>
 									<Alert severity='error' variant='filled' sx={{ width: '100%' }}>
 										Add chapter(s) to publish
@@ -154,10 +154,10 @@ const CoursePaper = ({
 									open={isMissingFieldMsgOpen}
 									autoHideDuration={3000}
 									anchorOrigin={{ vertical, horizontal }}
-									sx={{ mt: '14rem' }}
+									sx={{ mt: '5rem' }}
 									onClose={() => setIsMissingFieldMsgOpen(false)}>
 									<Alert severity='error' variant='filled' sx={{ width: '100%' }}>
-										Fill the required field(s)
+										Fill in the required field(s)
 									</Alert>
 								</Snackbar>
 								{isEditMode ? (
@@ -168,7 +168,7 @@ const CoursePaper = ({
 												if (
 													singleCourse?.title.trim() !== '' &&
 													singleCourse?.description.trim() !== '' &&
-													(isFree || (singleCourse?.priceCurrency !== '' && singleCourse?.price !== '')) &&
+													(isFree || !singleCourse?.prices.some((price) => price.amount === '')) &&
 													!chapterLessonDataBeforeSave.some((chapter) => chapter.title === '')
 												) {
 													setIsEditMode(false);

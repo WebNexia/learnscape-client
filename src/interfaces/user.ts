@@ -1,5 +1,7 @@
 export interface User {
 	_id: string;
+	firstName: string;
+	lastName: string;
 	username: string;
 	email: string;
 	firebaseUserId: string;
@@ -9,6 +11,7 @@ export interface User {
 	isActive: boolean;
 	createdAt: string;
 	updatedAt: string;
+	countryCode: string;
 }
 
 export interface AdminUser {

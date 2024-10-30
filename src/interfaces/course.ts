@@ -5,7 +5,7 @@ export interface BaseCourse {
 	_id: string;
 	title: string;
 	description: string;
-	price: string;
+	prices: Price[];
 	imageUrl: string;
 	isActive: boolean;
 	createdAt: string;
@@ -34,10 +34,14 @@ export interface SingleCourse extends BaseCourse {
 	format: string;
 	durationWeeks: number;
 	durationHours: number;
-	priceCurrency: string;
 	chapterIds: string[];
 	chapters: ChapterLessonData[];
 	orgId: string;
 	documentIds: string[];
 	documents: Document[];
+}
+
+export interface Price {
+	currency: 'gbp' | 'usd' | 'eur' | 'try';
+	amount: string;
 }

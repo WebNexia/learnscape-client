@@ -8,10 +8,12 @@ import axios from 'axios';
 import { useContext, useState } from 'react';
 import { UserCoursesIdsWithCourseIds, UserLessonDataStorage } from '../../../contexts/UserCourseLessonDataContextProvider';
 import CustomSubmitButton from '../../forms/customButtons/CustomSubmitButton';
-import CustomDialog from '../dialog/CustomDialog';
-import CustomDialogActions from '../dialog/CustomDialogActions';
 import { dateFormatter } from '../../../utils/dateFormatter';
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
+import PaymentDialog from './PaymentDialog';
+import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
+import { getPriceForCountry } from '../../../utils/getPriceForCountry';
+import { setCurrencySymbol } from '../../../utils/setCurrencySymbol';
 
 interface CoursePageBannerProps {
 	course: SingleCourse;
@@ -26,10 +28,11 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 	const navigate = useNavigate();
 
 	const [displayEnrollmentMsg, setDisplayEnrollmentMsg] = useState<boolean>(false);
-	const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
+	const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState<boolean>(false);
 
 	const { courseId, userId } = useParams();
 	const { orgId } = useContext(OrganisationContext);
+	const { user } = useContext(UserAuthContext);
 
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
@@ -108,11 +111,11 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 	};
 
 	const handleEnrollment = async (): Promise<void> => {
-		if (course.price.toLowerCase() === 'free') {
+		if (getPriceForCountry(course, user?.countryCode!).amount === 'Free' || getPriceForCountry(course, user?.countryCode!).amount === '0') {
 			await courseRegistration();
 			setIsEnrolledStatus(true);
 		} else {
-			setIsDialogOpen(true);
+			setIsPaymentDialogOpen(true);
 		}
 	};
 
@@ -134,19 +137,6 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 					You have successfully enrolled in the course!
 				</Alert>
 			</Snackbar>
-
-			<CustomDialog openModal={isDialogOpen} closeModal={() => setIsDialogOpen(false)} title='Make Payment'>
-				<CustomDialogActions
-					onCancel={() => {
-						setIsDialogOpen(false);
-					}}
-					onSubmit={() => {
-						courseRegistration();
-						setIsDialogOpen(false);
-					}}
-					submitBtnText='Enroll'
-				/>
-			</CustomDialog>
 
 			<Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
 				<Box
@@ -233,7 +223,11 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 					<Box>
 						<CoursePageBannerDataCard
 							title='Price'
-							content={`${course.price.toLowerCase() === 'free' ? '' : course.priceCurrency === null ? '' : course.priceCurrency}${course.price}`}
+							content={`${
+								getPriceForCountry(course, user?.countryCode!).amount === 'Free'
+									? ''
+									: setCurrencySymbol(getPriceForCountry(course, user?.countryCode!).currency)
+							}${getPriceForCountry(course, user?.countryCode!).amount}`}
 							customSettings={{
 								color: theme.textColor?.common.main,
 								bgColor: theme.bgColor?.greenSecondary,
@@ -247,6 +241,13 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 						<CoursePageBannerDataCard title='Hours(#)' content={course.durationHours} />
 					</Box>
 				</Box>
+
+				<PaymentDialog
+					course={course}
+					isPaymentDialogOpen={isPaymentDialogOpen}
+					setIsPaymentDialogOpen={setIsPaymentDialogOpen}
+					courseRegistration={courseRegistration}
+				/>
 			</Box>
 		</Paper>
 	);

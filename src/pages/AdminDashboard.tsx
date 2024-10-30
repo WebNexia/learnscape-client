@@ -64,7 +64,7 @@ const AdminDashboard = () => {
 				labels, // x-axis values (dates)
 				datasets: [
 					{
-						label: 'Number of New Learners',
+						label: '# New Learners',
 						data: data, // y-axis values (number of learners)
 						fill: true,
 						backgroundColor: 'rgba(75,192,192,0.4)',
@@ -84,7 +84,7 @@ const AdminDashboard = () => {
 				labels, // x-axis values (course titles)
 				datasets: [
 					{
-						label: 'Number of Enrolled Users',
+						label: '# Enrolled Users per Course',
 						data, // y-axis values (number of enrolled users)
 						backgroundColor: 'rgba(54, 162, 235, 0.6)', // Bar color
 						borderColor: 'rgba(54, 162, 235, 1)',
@@ -103,13 +103,31 @@ const AdminDashboard = () => {
 		<DashboardPagesLayout pageName='Dashboard' customSettings={{ justifyContent: 'flex-start' }}>
 			<Box sx={{ display: 'flex', width: '100%', padding: '1.5rem', flexDirection: 'column', alignItems: 'center' }}>
 				<Grid container spacing={3}>
-					<Grid item md={4}>
+					<Grid
+						item
+						md={4}
+						onClick={() => {
+							navigate(`/admin/users/user/${user?._id}`);
+						}}
+						sx={{ cursor: 'pointer' }}>
 						<AdminLearnersLineGraph chartData={chartData} totalUsers={totalUsers} totalNumberOfEnrolledLearners={totalNumberOfEnrolledLearners} />
 					</Grid>
-					<Grid item md={4}>
+					<Grid
+						item
+						md={4}
+						onClick={() => {
+							navigate(`/admin/courses/user/${user?._id}`);
+						}}
+						sx={{ cursor: 'pointer' }}>
 						<AdminCoursesBarGraph barChartData={barChartData} totalCourses={totalCourses} />
 					</Grid>
-					<Grid item md={4}>
+					<Grid
+						item
+						md={4}
+						onClick={() => {
+							navigate(`/admin/payments/user/${user?._id}`);
+						}}
+						sx={{ cursor: 'pointer' }}>
 						<AdminPayment />
 					</Grid>
 					<Grid item xs={3} onClick={() => navigate(`/admin/calendar/user/${user?._id}`)}>

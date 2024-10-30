@@ -126,6 +126,8 @@ const AdminLessonEditPage = () => {
 	const [editorContent, setEditorContent] = useState<string>('');
 	const [prevEditorContent, setPrevEditorContent] = useState<string>('');
 
+	const [errorMsg, setErrorMsg] = useState<string>('');
+
 	const resetEnterImageVideoUrl = () => {
 		setEnterVideoUrl(true);
 		setEnterImageUrl(true);
@@ -427,7 +429,7 @@ const AdminLessonEditPage = () => {
 					const updatedLesson = {
 						...singleLessonBeforeSave,
 						questionIds: updatedQuestionIds,
-						text: editorContent.trim(),
+						text: editorContent.trim() || '',
 						documentIds: updatedDocumentIds,
 					};
 
@@ -438,7 +440,7 @@ const AdminLessonEditPage = () => {
 						...singleLessonBeforeSave,
 						questions: updatedQuestions,
 						questionIds: updatedQuestionIds,
-						text: editorContent.trim(),
+						text: editorContent.trim() || '',
 						documentIds: updatedDocumentIds,
 						documents: updatedDocuments,
 					});
@@ -447,7 +449,7 @@ const AdminLessonEditPage = () => {
 						...singleLessonBeforeSave,
 						questions: updatedQuestions,
 						questionIds: updatedQuestionIds,
-						text: editorContent.trim(),
+						text: editorContent.trim() || '',
 						documentIds: updatedDocumentIds,
 						documents: updatedDocuments,
 					});
@@ -457,7 +459,7 @@ const AdminLessonEditPage = () => {
 							...prevData,
 							questions: updatedQuestions,
 							questionIds: updatedQuestionIds,
-							text: singleLessonBeforeSave.type === 'Quiz' ? '' : editorContent.trim(),
+							text: singleLessonBeforeSave.type === 'Quiz' ? '' : editorContent.trim() || '',
 							documentIds: updatedDocumentIds,
 							documents: updatedDocuments,
 						};
@@ -519,6 +521,7 @@ const AdminLessonEditPage = () => {
 					isEditMode={isEditMode}
 					isMissingFieldMsgOpen={isMissingFieldMsgOpen}
 					resetChanges={resetChanges}
+					editorContent={editorContent}
 					setIsEditMode={setIsEditMode}
 					setIsMissingFieldMsgOpen={setIsMissingFieldMsgOpen}
 					setIsMissingField={setIsMissingField}
@@ -530,6 +533,7 @@ const AdminLessonEditPage = () => {
 					resetImageUpload={resetImageUpload}
 					resetVideoUpload={resetVideoUpload}
 					resetEnterImageVideoUrl={resetEnterImageVideoUrl}
+					setErrorMsg={setErrorMsg}
 				/>
 			</Box>
 
@@ -569,7 +573,7 @@ const AdminLessonEditPage = () => {
 						<LessonImageCourseDisplay singleLesson={singleLesson} />
 
 						<Box className='rich-text-content' component='div' sx={{ textAlign: 'justify', width: '90%', mt: '6rem' }}>
-							<Typography variant='h4' sx={{ mb: '1.25rem' }}>
+							<Typography variant='h5' sx={{ mb: '1.25rem' }}>
 								{singleLesson.type === LessonType.INSTRUCTIONAL_LESSON ? 'Lesson Instructions' : 'Instructions'}
 							</Typography>
 							{singleLesson.text ? (
@@ -597,10 +601,10 @@ const AdminLessonEditPage = () => {
 								flexDirection: 'column',
 								justifyContent: 'flex-start',
 								width: '90%',
-								margin: singleLesson?.type === LessonType.INSTRUCTIONAL_LESSON ? '3rem 0 4rem 0' : '1rem 0 4rem 0',
+								margin: singleLesson?.type === LessonType.INSTRUCTIONAL_LESSON ? '3rem 0 4rem 0' : '3rem 0 4rem 0',
 							}}>
 							<Box>
-								<Typography variant='h4' sx={{ mb: '1.25rem' }}>
+								<Typography variant='h5' sx={{ mb: '1.25rem' }}>
 									{singleLesson.type} Materials
 								</Typography>
 							</Box>
@@ -779,7 +783,7 @@ const AdminLessonEditPage = () => {
 								</Box>
 							</Box>
 
-							<Box sx={{ mt: '5rem' }}>
+							<Box sx={{ mt: '5rem', mb: '1rem' }}>
 								<Typography variant='h6' sx={{ mb: '1rem' }}>
 									{singleLessonBeforeSave.type === LessonType.INSTRUCTIONAL_LESSON ? 'Lesson Instructions' : 'Instructions'}
 								</Typography>
@@ -793,6 +797,7 @@ const AdminLessonEditPage = () => {
 									initialValue={singleLesson.text}
 								/>
 							</Box>
+							{!editorContent && <CustomErrorMessage>{errorMsg}</CustomErrorMessage>}
 
 							{singleLessonBeforeSave.type !== LessonType.INSTRUCTIONAL_LESSON && (
 								<>

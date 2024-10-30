@@ -7,7 +7,7 @@ interface ErrorMessageProps {
 
 const CustomErrorMessage = ({ children, sx }: ErrorMessageProps) => {
 	return (
-		<Typography variant='body2' sx={{ color: 'red', backgroundColor: 'transparent', ...sx }}>
+		<Typography variant='body2' sx={{ color: 'red', fontSize: '0.85rem', backgroundColor: 'transparent', ...sx }}>
 			{children}
 		</Typography>
 	);

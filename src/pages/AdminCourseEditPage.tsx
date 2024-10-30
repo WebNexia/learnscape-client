@@ -4,7 +4,7 @@ import { FormEvent, useContext, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import { CoursesContext } from '../contexts/CoursesContextProvider';
-import { SingleCourse } from '../interfaces/course';
+import { Price, SingleCourse } from '../interfaces/course';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
 import AdminCourseEditChapter from '../components/adminSingleCourse/AdminCourseEditChapter';
 import { BaseChapter } from '../interfaces/chapter';
@@ -165,7 +165,7 @@ const AdminCourseEditPage = () => {
 					const courseResponse = response?.data?.data;
 
 					setSingleCourse(courseResponse);
-					if (courseResponse?.price?.toLowerCase() === 'free') {
+					if (courseResponse?.prices.some((price: Price) => price.amount === 'Free')) {
 						setIsFree(true);
 					}
 
