@@ -31,6 +31,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const organisationCode = import.meta.env.VITE_ORG_CODE;
+	const orgId = import.meta.env.VITE_ORG_ID;
 
 	const vertical = 'top';
 	const horizontal = 'center';
@@ -93,13 +94,13 @@ const Auth = ({ setUserRole }: AuthProps) => {
 			const updatedUser = queryClient.getQueryData<User>('userData');
 
 			if (updatedUser) {
-				await fetchOrganisationData(updatedUser?.orgId);
+				await fetchOrganisationData(orgId);
 
 				localStorage.setItem('role', updatedUser.role);
-				localStorage.setItem('orgId', '61b23' + updatedUser.orgId + '078a9');
+				localStorage.setItem('orgId', '61b23' + orgId + '078a9');
 
 				setUserId(updatedUser._id);
-				setOrgId(updatedUser.orgId);
+				setOrgId(orgId);
 				setUserRole(updatedUser.role);
 
 				if (updatedUser.role === Roles.USER) {
@@ -234,8 +235,6 @@ const Auth = ({ setUserRole }: AuthProps) => {
 				activeChatId: '', // Initialize `activeChatId` to an empty string
 				createdAt: new Date(), // Optionally store when the user was created
 			});
-
-			console.log(orgCode);
 
 			// Step 4: Send user data to your backend server (optional, if needed)
 			await axios.post(`${base_url}/users/signup`, {
