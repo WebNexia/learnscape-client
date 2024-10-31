@@ -327,7 +327,7 @@ const PracticeQuestion = ({
 							{!isFITBDragDrop && !isFITBTyping && <QuestionText question={question} questionNumber={questionNumber} />}
 
 							{isOpenEndedQuestion && (
-								<Box sx={{ width: '90%', margin: '1rem auto' }}>
+								<Box sx={{ width: '90%', margin: '0rem auto' }}>
 									<CustomTextField
 										required={false}
 										multiline
@@ -381,7 +381,13 @@ const PracticeQuestion = ({
 							)}
 
 							{isFITBDragDrop && (
-								<Box sx={{ display: 'flex', justifyContent: 'center', width: '80%', margin: '11rem auto 0 auto' }}>
+								<Box
+									sx={{
+										display: 'flex',
+										justifyContent: 'center',
+										width: '80%',
+										margin: question.imageUrl || question.videoUrl ? '2rem auto 0 auto' : '11rem auto 0 auto',
+									}}>
 									<FillInTheBlanksDragDrop
 										textWithBlanks={question.question}
 										blankValuePairs={question.blankValuePairs}
@@ -405,7 +411,7 @@ const PracticeQuestion = ({
 										justifyContent: 'center',
 										alignItems: 'center',
 										width: '80%',
-										margin: '11rem auto 0 auto',
+										margin: question.imageUrl || question.videoUrl ? '2rem auto 0 auto' : '11rem auto 0 auto',
 									}}>
 									<FillInTheBlanksTyping
 										textWithBlanks={question.question}
@@ -642,7 +648,8 @@ const PracticeQuestion = ({
 					<CustomDialog
 						openModal={isLessonCourseCompletedModalOpen}
 						closeModal={() => setIsLessonCourseCompletedModalOpen(false)}
-						content={`You have completed this ${nextLessonId ? 'lesson' : 'course'}. Proceed to the next ${nextLessonId ? 'lesson' : 'course'}.`}>
+						content={`You have completed this ${nextLessonId ? 'lesson' : 'course'}. Proceed to the next ${nextLessonId ? 'lesson' : 'course'}.`}
+						maxWidth='sm'>
 						<CustomDialogActions
 							onCancel={() => setIsLessonCourseCompletedModalOpen(false)}
 							onSubmit={async () => {

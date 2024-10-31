@@ -1,8 +1,11 @@
 import { AppBar, Box, Button, Toolbar, Typography } from '@mui/material';
 import theme from '../../themes';
 import { useNavigate } from 'react-router-dom';
+import { useContext } from 'react';
+import { OrganisationContext } from '../../contexts/OrganisationContextProvider';
 
 const Header = () => {
+	const { organisation } = useContext(OrganisationContext);
 	const navigate = useNavigate();
 	return (
 		<AppBar position='sticky'>
@@ -23,7 +26,7 @@ const Header = () => {
 							sx={{ color: theme.textColor?.common.main, fontSize: '3.5rem', cursor: 'pointer' }}
 							style={{ textShadow: '0.2rem 0.2rem rgba(0, 0, 0, 0.15)' }}
 							onClick={() => navigate('/')}>
-							KAIZEN
+							{organisation?.orgName}
 						</Typography>
 					</Box>
 					<Box>

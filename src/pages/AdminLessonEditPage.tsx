@@ -272,6 +272,10 @@ const AdminLessonEditPage = () => {
 		let updatedQuestions: QuestionInterface[] = [];
 		let updatedDocuments: Document[] = [];
 
+		if (!editorContent) {
+			return;
+		}
+
 		try {
 			if (singleLessonBeforeSave?.documents) {
 				const updatedDocumentsPromises = (singleLessonBeforeSave.documents as (Document | null)[])
@@ -426,14 +430,12 @@ const AdminLessonEditPage = () => {
 
 			if (isLessonUpdated || isQuestionUpdated.some((data) => data.isUpdated === true)) {
 				try {
-					const updatedLesson = {
+					const res = await axios.patch(`${base_url}/lessons/${lessonId}`, {
 						...singleLessonBeforeSave,
 						questionIds: updatedQuestionIds,
 						text: editorContent.trim() || '',
 						documentIds: updatedDocumentIds,
-					};
-
-					await axios.patch(`${base_url}/lessons/${lessonId}`, updatedLesson);
+					});
 
 					fetchLessons(lessonsPageNumber);
 					updateLessons({
@@ -578,9 +580,17 @@ const AdminLessonEditPage = () => {
 							</Typography>
 							{singleLesson.text ? (
 								<Typography
-									variant='body1'
+									variant='body2'
 									dangerouslySetInnerHTML={{ __html: sanitizeHtml(singleLesson.text) }}
-									sx={{ boxShadow: singleLesson.text ? '0 0 0.4rem 0.2rem rgba(0,0,0,0.25)' : 'none', padding: '1rem', borderRadius: '0.35rem' }}
+									sx={{
+										boxShadow: singleLesson.text ? '0 0 0.4rem 0.2rem rgba(0,0,0,0.25)' : 'none',
+										padding: '2rem',
+										borderRadius: '0.35rem',
+										lineHeight: 1.7,
+										'& strong, & b': {
+											fontWeight: 'bolder',
+										},
+									}}
 								/>
 							) : (
 								<NoContentBoxAdmin content='No instruction for this lesson' />
@@ -797,7 +807,7 @@ const AdminLessonEditPage = () => {
 									initialValue={singleLesson.text}
 								/>
 							</Box>
-							{!editorContent && <CustomErrorMessage>{errorMsg}</CustomErrorMessage>}
+							{editorContent === '' && <CustomErrorMessage>{errorMsg}</CustomErrorMessage>}
 
 							{singleLessonBeforeSave.type !== LessonType.INSTRUCTIONAL_LESSON && (
 								<>

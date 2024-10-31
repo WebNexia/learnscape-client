@@ -327,7 +327,7 @@ const FillInTheBlanksDragDrop = ({
 	return (
 		<DragDropContext onDragEnd={handleDragEnd}>
 			<Container>
-				<Column sx={{ marginBottom: '3rem' }}>
+				<Column sx={{ marginBottom: '1.5rem' }}>
 					<TextContainer>
 						{textSegments?.map((segment, index) => {
 							const match = segment.match(/___(\d+)___/);
@@ -468,7 +468,7 @@ const FillInTheBlanksDragDrop = ({
 													component='span'
 													sx={{
 														color: 'green',
-														fontWeight: 'bolder',
+														fontWeight: 600,
 														border: '0.075rem solid green',
 														padding: '0.25rem',
 														margin: '0 0.15rem',

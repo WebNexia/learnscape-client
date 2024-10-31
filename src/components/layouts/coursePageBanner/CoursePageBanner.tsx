@@ -36,6 +36,11 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
+	const isCourseFree: boolean =
+		getPriceForCountry(course, user?.countryCode!).amount === 'Free' ||
+		getPriceForCountry(course, user?.countryCode!).amount === '' ||
+		getPriceForCountry(course, user?.countryCode!).amount === '0';
+
 	const vertical = 'top';
 	const horizontal = 'center';
 
@@ -111,7 +116,11 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 	};
 
 	const handleEnrollment = async (): Promise<void> => {
-		if (getPriceForCountry(course, user?.countryCode!).amount === 'Free' || getPriceForCountry(course, user?.countryCode!).amount === '0') {
+		if (
+			getPriceForCountry(course, user?.countryCode!).amount === 'Free' ||
+			getPriceForCountry(course, user?.countryCode!).amount === '0' ||
+			getPriceForCountry(course, user?.countryCode!).amount === ''
+		) {
 			await courseRegistration();
 			setIsEnrolledStatus(true);
 		} else {
@@ -223,11 +232,9 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 					<Box>
 						<CoursePageBannerDataCard
 							title='Price'
-							content={`${
-								getPriceForCountry(course, user?.countryCode!).amount === 'Free'
-									? ''
-									: setCurrencySymbol(getPriceForCountry(course, user?.countryCode!).currency)
-							}${getPriceForCountry(course, user?.countryCode!).amount}`}
+							content={`${isCourseFree ? '' : setCurrencySymbol(getPriceForCountry(course, user?.countryCode!).currency)}${
+								isCourseFree ? 'Free' : getPriceForCountry(course, user?.countryCode!).amount
+							}`}
 							customSettings={{
 								color: theme.textColor?.common.main,
 								bgColor: theme.bgColor?.greenSecondary,

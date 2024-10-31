@@ -49,17 +49,17 @@ const Community = () => {
 	return (
 		<DashboardPagesLayout pageName='Community' customSettings={{ justifyContent: 'flex-start' }}>
 			<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '2rem', width: '100%' }}>
-				<Box sx={{ mb: '2.5rem' }}>
-					<Typography variant='h4' sx={{ textAlign: 'center', mb: '1.5rem' }}>
+				<Box sx={{ mb: '1rem' }}>
+					<Typography variant='h5' sx={{ textAlign: 'center', mb: '1rem', fontWeight: 500 }}>
 						Join the Conversation!
 					</Typography>
-					<Typography variant='body1' sx={{ textAlign: 'justify', lineHeight: 1.6, mb: '0.75rem' }}>
+					<Typography variant='body2' sx={{ textAlign: 'justify', lineHeight: 1.6, mb: '0.75rem' }}>
 						Our community is here to support your English learning journey. Each topic is a chance to share your thoughts, ask questions, and improve.
 						Dive into the discussions, help others, and don’t be afraid to make mistakes—they're part of the journey! your English in a supportive
 						environment.
 					</Typography>
 
-					<Typography variant='body1' sx={{ textDecoration: 'underline' }}>
+					<Typography variant='body2' sx={{ textDecoration: 'underline' }}>
 						The more you participate, the more you'll grow!
 					</Typography>
 				</Box>

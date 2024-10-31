@@ -398,7 +398,7 @@ const FillInTheBlanksTyping = ({
 												component='span'
 												sx={{
 													color: 'green',
-													fontWeight: 'bolder',
+													fontWeight: 600,
 													border: '0.075rem solid green',
 													padding: '0.25rem',
 													margin: '0 0.15rem',

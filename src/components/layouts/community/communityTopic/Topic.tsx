@@ -26,7 +26,11 @@ const Topic = ({ topic }: TopicProps) => {
 			}}>
 			<Box sx={{ display: 'flex', alignItems: 'center', flex: 5, height: '4.5rem' }}>
 				<Box sx={{ mr: '0.85rem' }}>
-					<img src={topic?.userId?.imageUrl} alt='profile_pic' style={{ height: '3rem', width: '3rem', borderRadius: '50%' }} />
+					<img
+						src={topic?.userId?.imageUrl || 'https://img.sportsbookreview.com/images/avatars/default-avatar.jpg'}
+						alt='profile_pic'
+						style={{ height: '3rem', width: '3rem', borderRadius: '50%' }}
+					/>
 				</Box>
 				<Box sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
 					<Box sx={{ mb: '0.25rem' }}>
@@ -44,8 +48,8 @@ const Topic = ({ topic }: TopicProps) => {
 							{topic.title}
 						</Typography>
 					</Box>
-					<Box sx={{ display: 'flex', width: '30%' }}>
-						<Typography sx={{ fontSize: '0.75rem', mr: '1rem' }}>{topic?.userId?.username}</Typography>
+					<Box sx={{ display: 'flex', width: '50%' }}>
+						<Typography sx={{ fontSize: '0.75rem', mr: '1rem' }}>{topic?.userId?.username || 'Deleted User'}</Typography>
 						<Typography variant='caption' sx={{ fontSize: '0.65rem', color: 'gray' }}>
 							{formatMessageTime(topic.createdAt)}
 						</Typography>

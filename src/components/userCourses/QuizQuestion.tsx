@@ -489,7 +489,13 @@ const QuizQuestion = ({
 					)}
 
 					{isFITBDragDrop && (
-						<Box sx={{ display: 'flex', justifyContent: 'center', width: '80%', margin: '11rem auto 0 auto' }}>
+						<Box
+							sx={{
+								display: 'flex',
+								justifyContent: 'center',
+								width: '80%',
+								margin: question.imageUrl || question.videoUrl ? '3rem auto 0 auto' : '11rem auto 0 auto',
+							}}>
 							<FillInTheBlanksDragDrop
 								questionId={question._id}
 								fromQuizQuestionUser={true}
@@ -515,7 +521,7 @@ const QuizQuestion = ({
 								justifyContent: 'center',
 								alignItems: 'center',
 								width: '80%',
-								margin: '11rem auto 0 auto',
+								margin: question.imageUrl || question.videoUrl ? '3rem auto 0 auto' : '11rem auto 0 auto',
 							}}>
 							<FillInTheBlanksTyping
 								questionId={question._id}
@@ -564,7 +570,7 @@ const QuizQuestion = ({
 												<Typography
 													sx={{
 														color: textColor,
-														fontWeight: option === question.correctAnswer ? 900 : 'normal',
+														fontWeight: option === question.correctAnswer ? 600 : 'normal',
 														display: 'flex',
 														alignItems: 'center',
 													}}>

@@ -88,8 +88,8 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters }: CourseDetailsNonEdi
 							return (
 								<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mr: '2rem' }} key={price.currency}>
 									<Typography variant='body2'>
-										{price.amount !== 'Free' && price.amount !== '0' ? setCurrencySymbol(price.currency) : ''}
-										{price.amount === '0' ? 'Free' : price.amount}
+										{price.amount !== 'Free' && price.amount !== '0' && price.amount !== '' ? setCurrencySymbol(price.currency) : ''}
+										{price.amount === 'Free' || price.amount === '0' || price.amount === '' ? 'Free' : price.amount}
 									</Typography>
 									<img
 										src={

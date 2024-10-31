@@ -93,7 +93,7 @@ const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, set
 	return (
 		<CustomDialog openModal={editMsgModalOpen} closeModal={handleCancel} title='Edit Message' maxWidth='sm'>
 			<form
-				style={{ display: 'flex', flexDirection: 'column', padding: '1rem 3rem' }}
+				style={{ display: 'flex', flexDirection: 'column', padding: '1rem 1.5rem' }}
 				onSubmit={(e) => {
 					e.preventDefault();
 					editMessage();
@@ -203,7 +203,7 @@ const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, set
 					</>
 				)}
 
-				<CustomDialogActions onCancel={handleCancel} submitBtnType='submit' submitBtnText='Update' actionSx={{ margin: '1.5rem -1rem 0 0' }} />
+				<CustomDialogActions onCancel={handleCancel} submitBtnType='submit' submitBtnText='Save' actionSx={{ margin: '1.5rem -1rem 0 0' }} />
 			</form>
 		</CustomDialog>
 	);

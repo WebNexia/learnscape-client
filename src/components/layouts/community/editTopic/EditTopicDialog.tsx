@@ -98,9 +98,9 @@ const EditTopicDialog = ({ editTopicModalOpen, topic, setEditTopicModalOpen, set
 	};
 
 	return (
-		<CustomDialog openModal={editTopicModalOpen} closeModal={reset} title='Edit Topic'>
+		<CustomDialog openModal={editTopicModalOpen} closeModal={reset} title='Edit Topic' maxWidth='sm'>
 			<form
-				style={{ display: 'flex', flexDirection: 'column', padding: '1rem 3rem' }}
+				style={{ display: 'flex', flexDirection: 'column', padding: '1rem 1.5rem' }}
 				onSubmit={(e) => {
 					e.preventDefault();
 					editTopic();
@@ -203,7 +203,7 @@ const EditTopicDialog = ({ editTopicModalOpen, topic, setEditTopicModalOpen, set
 					</>
 				)}
 
-				<CustomDialogActions onCancel={reset} submitBtnType='submit' submitBtnText='Update' actionSx={{ margin: '1.5rem -1rem 0 0' }} />
+				<CustomDialogActions onCancel={reset} submitBtnType='submit' submitBtnText='Save' actionSx={{ margin: '1.5rem -1rem 0 0' }} />
 			</form>
 		</CustomDialog>
 	);

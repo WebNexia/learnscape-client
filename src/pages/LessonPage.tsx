@@ -92,6 +92,7 @@ const LessonPage = () => {
 				try {
 					const lessonResponse = await axios.get(`${base_url}/lessons/${lessonId}`);
 					const lessonData = lessonResponse.data;
+
 					setLesson({
 						...lessonData,
 						questions: lessonData.questions?.filter((q: QuestionInterface) => q !== null),
@@ -139,6 +140,8 @@ const LessonPage = () => {
 		if (isQuiz && !isLessonCompleted && userQuizAnswers.length !== 0) {
 			setIsQuizInProgress(true);
 		}
+
+		console.log(lesson.documents);
 	}, [lessonId]);
 
 	useEffect(() => {
@@ -166,7 +169,7 @@ const LessonPage = () => {
 	const updateUserLessonNotes = async () => {
 		try {
 			setIsUserLessonNotesUploading(true);
-			const res = await axios.patch(`${base_url}/userlessons/${userLessonId}`, { notes: editorContent.trim() });
+			const res = await axios.patch(`${base_url}/userlessons/${userLessonId}`, { notes: editorContent?.trim() });
 			setUserLessonNotes(res.data.data.notes);
 		} catch (error) {
 			console.log(error);
@@ -394,7 +397,7 @@ const LessonPage = () => {
 							}}>
 							<Box className='rich-text-content'>
 								<Typography
-									variant='body1'
+									variant='body2'
 									component='div'
 									dangerouslySetInnerHTML={{ __html: sanitizeHtml(lesson.text) }}
 									sx={{ lineHeight: 1.9, textAlign: 'justify' }}
@@ -499,13 +502,15 @@ const LessonPage = () => {
 					<CustomSubmitButton
 						endIcon={!nextLessonId ? <DoneAll /> : <KeyboardDoubleArrowRight />}
 						onClick={() => setIsLessonCourseCompletedModalOpen(true)}
-						type='button'>
+						type='button'
+						sx={{ marginTop: lesson.documents.length === 0 ? '1rem' : '0rem' }}>
 						{nextLessonId ? 'Next Lesson' : 'Complete Course'}
 					</CustomSubmitButton>
 					<CustomDialog
 						openModal={isLessonCourseCompletedModalOpen}
 						closeModal={() => setIsLessonCourseCompletedModalOpen(false)}
-						content={`You have completed this ${nextLessonId ? 'lesson' : 'course'}. Proceed to the next ${nextLessonId ? 'lesson' : 'course'}.`}>
+						content={`You have completed this ${nextLessonId ? 'lesson' : 'course'}. Proceed to the next ${nextLessonId ? 'lesson' : 'course'}.`}
+						maxWidth='sm'>
 						<CustomDialogActions
 							onCancel={() => setIsLessonCourseCompletedModalOpen(false)}
 							onSubmit={async () => {
