@@ -1,4 +1,4 @@
-import { AppBar, Box, Button, CircularProgress, IconButton, Toolbar, Typography } from '@mui/material';
+import { AppBar, Box, Button, IconButton, Toolbar, Typography } from '@mui/material';
 import theme from '../../../themes';
 import { useContext, useState } from 'react';
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
@@ -22,6 +22,7 @@ import {
 	QuizOutlined,
 	Settings,
 } from '@mui/icons-material';
+import TypingAnimation from './TypingAnimation';
 
 const Loading = () => {
 	const { organisation } = useContext(OrganisationContext);
@@ -201,7 +202,7 @@ const Loading = () => {
 					height: '110vh',
 					marginLeft: '10rem',
 				}}>
-				<CircularProgress />
+				<TypingAnimation />
 				<Typography
 					sx={{
 						margin: '2rem',
