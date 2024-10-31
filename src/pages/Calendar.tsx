@@ -178,7 +178,7 @@ const EventCalendar = () => {
 					selectable={true}
 					style={{
 						height: '78vh',
-						fontFamily: 'poppins',
+						fontFamily: 'Poppins',
 						fontSize: '0.85rem',
 						width: '80vw',
 						backgroundColor: '#fff',

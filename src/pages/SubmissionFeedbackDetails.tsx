@@ -85,16 +85,22 @@ const SubmissionFeedbackDetails = () => {
 							sx={{
 								margin: '1rem 0 0 2rem',
 								color: option === userSingleResponseWithFeedback?.questionId.correctAnswer ? theme.textColor?.greenPrimary.main : null,
-								fontWeight: 'bolder',
+								fontWeight: 500,
 							}}>
 							{String.fromCharCode(97 + index)}) {option}
 						</Typography>
 					))}
-					<Box sx={{ width: '100%', margin: '2rem auto 1rem auto' }}>
+					<Box sx={{ width: '100%', margin: '2rem auto' }}>
 						<Typography variant='h6' sx={{ mb: '0.5rem' }}>
 							Your Answer
 						</Typography>
-						<Typography variant='body2'>
+						<Typography
+							variant='body2'
+							color={
+								userSingleResponseWithFeedback?.userAnswer === userSingleResponseWithFeedback?.questionId.correctAnswer
+									? theme.palette.success.main
+									: '#ef5350'
+							}>
 							{(() => {
 								const userAnswerIndex = userSingleResponseWithFeedback?.questionId.options?.findIndex(
 									(option: string) => option === userSingleResponseWithFeedback?.userAnswer
@@ -108,7 +114,7 @@ const SubmissionFeedbackDetails = () => {
 			)}
 
 			{fetchQuestionTypeName(userSingleResponseWithFeedback?.questionId) === QuestionType.OPEN_ENDED && (
-				<Box sx={{ width: '90%', margin: '1rem auto' }}>
+				<Box sx={{ width: '90%', margin: '2rem auto' }}>
 					<Typography variant='h6' sx={{ mb: '0.5rem' }}>
 						Your Answer
 					</Typography>
@@ -117,7 +123,7 @@ const SubmissionFeedbackDetails = () => {
 			)}
 
 			{fetchQuestionTypeName(userSingleResponseWithFeedback?.questionId) === QuestionType.TRUE_FALSE && (
-				<Box sx={{ width: '90%', margin: '1rem auto' }}>
+				<Box sx={{ width: '90%', margin: '2rem auto' }}>
 					<Box sx={{ marginBottom: '2rem' }}>
 						<Typography variant='h6' sx={{ mb: '0.5rem' }}>
 							Correct Answer
@@ -144,7 +150,7 @@ const SubmissionFeedbackDetails = () => {
 			)}
 
 			{fetchQuestionTypeName(userSingleResponseWithFeedback?.questionId) === QuestionType.FITB_DRAG_DROP && (
-				<Box sx={{ width: '90%', margin: '0rem auto' }}>
+				<Box sx={{ width: '90%', margin: '1rem auto' }}>
 					<FillInTheBlanksDragDrop
 						textWithBlanks={userSingleResponseWithFeedback?.questionId.question}
 						blankValuePairs={userSingleResponseWithFeedback?.questionId.blankValuePairs}
@@ -157,7 +163,7 @@ const SubmissionFeedbackDetails = () => {
 			)}
 
 			{fetchQuestionTypeName(userSingleResponseWithFeedback?.questionId) === QuestionType.FITB_TYPING && (
-				<Box sx={{ width: '90%', margin: '0rem auto' }}>
+				<Box sx={{ width: '90%', margin: '1rem auto' }}>
 					<FillInTheBlanksTyping
 						textWithBlanks={userSingleResponseWithFeedback?.questionId.question}
 						blankValuePairs={userSingleResponseWithFeedback?.questionId.blankValuePairs}
@@ -170,7 +176,7 @@ const SubmissionFeedbackDetails = () => {
 			)}
 
 			{fetchQuestionTypeName(userSingleResponseWithFeedback?.questionId) === QuestionType.AUDIO_VIDEO && (
-				<Box sx={{ width: '90%', margin: '1rem auto' }}>
+				<Box sx={{ width: '90%', margin: '2rem auto' }}>
 					<Typography variant='h6'>Your Recording</Typography>
 					{userSingleResponseWithFeedback?.audioRecordUrl && (
 						<audio

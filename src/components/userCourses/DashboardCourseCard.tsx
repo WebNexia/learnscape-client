@@ -34,7 +34,9 @@ const DashboardCourseCard = ({ course, isEnrolled, userId, displayMyCourses, use
 	};
 
 	const isCourseFree: boolean =
-		getPriceForCountry(course, user?.countryCode!).amount === '0' || getPriceForCountry(course, user?.countryCode!).amount === 'Free';
+		getPriceForCountry(course, user?.countryCode!).amount === '0' ||
+		getPriceForCountry(course, user?.countryCode!).amount === 'Free' ||
+		getPriceForCountry(course, user?.countryCode!).amount === '';
 	return (
 		<Card
 			sx={{

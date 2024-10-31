@@ -168,7 +168,7 @@ const LessonPaper = ({
 										<CustomSubmitButton
 											sx={{ padding: '0 0.75rem', backgroundColor: theme.bgColor?.greenPrimary }}
 											onClick={(e) => {
-												if (singleLessonBeforeSave?.title.trim() !== '' && singleLessonBeforeSave?.title !== '' && editorContent.trim() !== '') {
+												if (singleLessonBeforeSave?.title.trim() !== '' && singleLessonBeforeSave?.title !== '' && editorContent?.trim() !== '') {
 													setIsEditMode(false);
 													handleLessonUpdate(e as FormEvent<Element>);
 													resetImageUpload();

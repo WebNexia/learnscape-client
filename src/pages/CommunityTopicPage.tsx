@@ -503,10 +503,14 @@ const CommunityTopicPage = () => {
 						borderRight: 'solid lightgray 0.1rem',
 					}}>
 					<Box>
-						<img src={topic?.userId.imageUrl} alt='profile' style={{ height: '4rem', width: '4rem', borderRadius: '50%' }} />
+						<img
+							src={topic?.userId?.imageUrl || 'https://img.sportsbookreview.com/images/avatars/default-avatar.jpg'}
+							alt='profile'
+							style={{ height: '4rem', width: '4rem', borderRadius: '50%' }}
+						/>
 					</Box>
 					<Box>
-						<Typography variant='body2'>{topic?.userId.username}</Typography>
+						<Typography variant='body2'>{topic?.userId?.username}</Typography>
 					</Box>
 				</Box>
 				<Box sx={{ flex: 8, padding: '1rem' }}>

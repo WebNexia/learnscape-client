@@ -34,7 +34,7 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refre
 	const { removeTopic, fetchTopics } = useContext(CommunityContext);
 	const navigate = useNavigate();
 	const isAdmin: boolean = user?.role === Roles.ADMIN;
-	const isTopicWriter: boolean = user?._id === topic?.userId._id;
+	const isTopicWriter: boolean = user?._id === topic?.userId?._id;
 
 	const [deleteTopicModalOpen, setDeleteTopicModalOpen] = useState<boolean>(false);
 	const [editTopicModalOpen, setEditTopicModalOpen] = useState<boolean>(false);
@@ -370,7 +370,7 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refre
 							}}>
 							<Box sx={{ display: 'flex', alignItems: 'center' }}>
 								<Typography variant='body2' sx={{ color: theme.textColor?.common.main }}>
-									{topic?.userId.username}
+									{topic?.userId?.username || 'Deleted User'}
 								</Typography>
 								<Typography sx={{ mx: 1, color: '#fff' }}>-</Typography>
 								<Typography variant='caption' sx={{ color: theme.textColor?.common.main }}>

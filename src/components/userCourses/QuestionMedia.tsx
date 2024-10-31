@@ -15,7 +15,7 @@ const QuestionMedia = ({ question }: QuestionMediaProps) => {
 				alignItems: 'center',
 				width: '100%',
 				height: question?.imageUrl || question?.videoUrl ? '18rem' : '0',
-				margin: question?.imageUrl || question?.videoUrl ? '11rem 0 2rem 0' : 'none',
+				margin: question?.imageUrl || question?.videoUrl ? '11rem 0 0 0' : 'none',
 			}}>
 			{question?.imageUrl && (
 				<Box
