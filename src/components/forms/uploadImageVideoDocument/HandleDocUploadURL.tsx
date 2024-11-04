@@ -172,11 +172,10 @@ const HandleDocUploadURL = ({
 								<Button
 									onClick={handleDocUploadReusable}
 									variant='outlined'
-									sx={{ textTransform: 'capitalize', height: '2rem', width: fromAdminDocs ? '17.5%' : '15%' }}
+									sx={{ textTransform: 'capitalize', height: '2rem', width: fromAdminDocs ? '17.5%' : '15%', ml: '0.55rem' }}
 									disabled={!docUpload || isDocSizeLarge}
-									size='small'
-									startIcon={<CloudUpload />}>
-									Upload
+									size='small'>
+									<CloudUpload />
 								</Button>
 							) : (
 								<LoadingButton loading variant='outlined' sx={{ textTransform: 'capitalize', height: '2rem' }}>
@@ -201,11 +200,10 @@ const HandleDocUploadURL = ({
 						<Button
 							onClick={handleManualUrlAddition}
 							variant='outlined'
-							sx={{ textTransform: 'capitalize', height: '2rem', width: fromAdminDocs ? '17.5%' : '15%' }}
+							sx={{ textTransform: 'capitalize', height: '2rem', width: fromAdminDocs ? '17.5%' : '15%', ml: '0.5rem', mb: '0.25rem' }}
 							disabled={!manualDocUrl}
-							size='small'
-							startIcon={<Article />}>
-							Upload
+							size='small'>
+							<CloudUpload />
 						</Button>
 					</Box>
 				)}

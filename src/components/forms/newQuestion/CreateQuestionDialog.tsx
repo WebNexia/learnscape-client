@@ -352,22 +352,20 @@ const CreateQuestionDialog = ({
 			maxWidth='lg'>
 			<form onSubmit={(e) => e.preventDefault()} style={{ display: 'flex', flexDirection: 'column' }}>
 				<DialogContent>
+					<Typography variant='h6' sx={{ mb: '0.5rem' }}>
+						Type
+					</Typography>
 					<FormControl sx={{ mb: '1rem', width: '15rem', backgroundColor: theme.bgColor?.common }}>
-						<InputLabel id='type' sx={{ fontSize: '0.9rem' }} required>
-							Type
-						</InputLabel>
 						<Select
-							labelId='type'
-							id='question_type'
 							value={questionType}
 							onChange={(event: SelectChangeEvent) => {
 								setQuestionType(event.target.value);
 								setCorrectAnswer('');
 								setOptions(['']);
 							}}
-							size='medium'
-							label='Type'
-							required>
+							size='small'
+							required
+							sx={{ fontSize: '0.85rem' }}>
 							{questionTypes
 								?.filter((type) => {
 									const questionTypeName = type.name as QuestionType;
@@ -395,7 +393,7 @@ const CreateQuestionDialog = ({
 									return true;
 								})
 								.map((type) => (
-									<MenuItem value={type.name} key={type._id}>
+									<MenuItem value={type.name} key={type._id} sx={{ fontSize: '0.85rem' }}>
 										{type.name}
 									</MenuItem>
 								))}
@@ -473,6 +471,7 @@ const CreateQuestionDialog = ({
 									setBlankValuePairs={setBlankValuePairs}
 									editorId={editorId}
 									editorRef={editorRef}
+									isFITB={questionType === QuestionType.FITB_DRAG_DROP || questionType === QuestionType.FITB_TYPING}
 								/>
 							</Box>
 						)}

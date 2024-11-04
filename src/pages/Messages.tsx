@@ -75,6 +75,7 @@ export interface Chat {
 	};
 	hasUnreadMessages?: boolean;
 	unreadMessagesCount?: number;
+	unreadBy?: string[];
 }
 
 const Messages = () => {
@@ -487,6 +488,7 @@ const Messages = () => {
 		const chatDocRef = doc(db, 'chats', chat.chatId);
 		await updateDoc(chatDocRef, {
 			hasUnreadMessages: false, // Set unread to false after the chat is opened
+			unreadBy: arrayRemove(user?.firebaseUserId),
 		});
 	};
 
@@ -587,6 +589,7 @@ const Messages = () => {
 					timestamp: serverTimestamp(),
 				},
 				hasUnreadMessages: true,
+				unreadBy: arrayUnion(receiverId),
 			});
 
 			// Clear the reply context and reset state after sending the message
@@ -1273,6 +1276,7 @@ const Messages = () => {
 				<Box sx={{ display: 'flex', justifyContent: 'center', width: '100%', mb: filteredUsers.length === 0 ? '1.5rem' : null }}>
 					<CustomTextField
 						sx={{ width: '80%' }}
+						required={false}
 						value={searchValue}
 						onChange={(e) => {
 							setSearchValue(e.target.value);

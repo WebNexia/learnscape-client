@@ -119,7 +119,7 @@ const theme = createTheme({
 			color: '#4D7B8B',
 		},
 		body2: {
-			fontSize: '0.9rem',
+			fontSize: '0.85rem',
 			fontFamily: 'Poppins',
 			fontWeight: 500,
 			color: '#4D7B8B',

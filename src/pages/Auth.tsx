@@ -103,7 +103,9 @@ const Auth = ({ setUserRole }: AuthProps) => {
 				setOrgId(orgId);
 				setUserRole(updatedUser.role);
 
-				if (updatedUser.role === Roles.USER) {
+				if (!updatedUser.isActive) {
+					navigate(`/`);
+				} else if (updatedUser.role === Roles.USER) {
 					navigate(`/dashboard/user/${updatedUser._id}`);
 				} else if (updatedUser.role === Roles.ADMIN) {
 					navigate(`/admin/dashboard/user/${updatedUser._id}`);

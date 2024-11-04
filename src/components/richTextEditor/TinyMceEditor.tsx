@@ -11,6 +11,7 @@ interface TinyMceEditorProps {
 	setBlankValuePairs?: React.Dispatch<React.SetStateAction<BlankValuePair[]>>;
 	editorId?: string;
 	editorRef?: React.MutableRefObject<any>;
+	isFITB?: boolean;
 }
 
 const TinyMceEditor = ({
@@ -21,6 +22,7 @@ const TinyMceEditor = ({
 	setBlankValuePairs,
 	editorId,
 	editorRef,
+	isFITB = false,
 }: TinyMceEditorProps) => {
 	const apiKey = import.meta.env.VITE_TINY_MCE_API_KEY;
 	const [internalBlankValuePairs, setInternalBlankValuePairs] = useState<BlankValuePair[]>(blankValuePairs || []);
@@ -34,6 +36,18 @@ const TinyMceEditor = ({
 		// Update the blank counter when blankValuePairs change
 		blankCounterRef.current = effectiveBlankValuePairs.length;
 	}, [effectiveBlankValuePairs]);
+
+	useEffect(() => {
+		if (editorRef?.current) {
+			const editor = editorRef.current;
+
+			if (isFITB) {
+				handleWordClick(editor); // Attach event if isFITB is true
+			} else {
+				editor.off('click'); // Detach event if isFITB is false
+			}
+		}
+	}, [isFITB]);
 
 	const handleWordClick = (editor: any) => {
 		editor.on('click', (_: MouseEvent) => {
@@ -126,10 +140,12 @@ const TinyMceEditor = ({
 					if (editorRef && typeof editorRef === 'object') {
 						editorRef.current = editor;
 					}
-					handleWordClick(editor);
+					if (isFITB) {
+						handleWordClick(editor);
+					}
 				},
 			}}
-			onEditorChange={handleEditorChangeInternal}
+			onEditorChange={isFITB ? handleEditorChangeInternal : undefined}
 		/>
 	);
 };

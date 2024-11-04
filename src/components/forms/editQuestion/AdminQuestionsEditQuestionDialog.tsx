@@ -364,6 +364,7 @@ const AdminQuestionsEditQuestionDialog = ({
 								setBlankValuePairs={setBlankValuePairsAdminQuestions}
 								editorId={editorId}
 								editorRef={editorRef}
+								isFITB={isFITBDragDrop || isFITBTyping}
 							/>
 						</Box>
 					)}

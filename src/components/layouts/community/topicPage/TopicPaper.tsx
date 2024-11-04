@@ -370,7 +370,7 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refre
 							}}>
 							<Box sx={{ display: 'flex', alignItems: 'center' }}>
 								<Typography variant='body2' sx={{ color: theme.textColor?.common.main }}>
-									{topic?.userId?.username || 'Deleted User'}
+									{topic?.userId?.username || 'Deactivated User'}
 								</Typography>
 								<Typography sx={{ mx: 1, color: '#fff' }}>-</Typography>
 								<Typography variant='caption' sx={{ color: theme.textColor?.common.main }}>
