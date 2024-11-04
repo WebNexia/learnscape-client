@@ -133,19 +133,19 @@ const Sidebar = () => {
 							<SidebarBtn
 								btnText='Submissions'
 								IconName={LibraryAddCheck}
-								onClick={() => navigateWithPage(PageName.ADMIN_DOCUMENTS, `/admin/submissions/user/${id || userId}`)}
+								onClick={() => navigateWithPage(PageName.ADMIN_QUIZ_SUBMISSIONS, `/admin/submissions/user/${id || userId}`)}
 								selectedPage={selectedPage}
 							/>
 							<SidebarBtn
 								btnText='Payments'
 								IconName={CreditCard}
-								onClick={() => navigateWithPage(PageName.ADMIN_DOCUMENTS, `/admin/payments/user/${id || userId}`)}
+								onClick={() => navigateWithPage(PageName.ADMIN_PAYMENTS, `/admin/payments/user/${id || userId}`)}
 								selectedPage={selectedPage}
 							/>
 							<SidebarBtn
 								btnText='Calendar'
 								IconName={CalendarMonth}
-								onClick={() => navigateWithPage(PageName.ADMIN_SCHEDULE, `/admin/calendar/user/${id || userId}`)}
+								onClick={() => navigateWithPage(PageName.CALENDAR, `/admin/calendar/user/${id || userId}`)}
 								selectedPage={selectedPage}
 							/>
 							<SidebarBtn
@@ -186,14 +186,14 @@ const Sidebar = () => {
 							<SidebarBtn
 								btnText='Submissions'
 								IconName={LibraryAddCheck}
-								onClick={() => navigateWithPage(PageName.COURSES, `/submissions/user/${id || userId}`)}
+								onClick={() => navigateWithPage(PageName.SUBMISSIONS, `/submissions/user/${id || userId}`)}
 								selectedPage={selectedPage}
 							/>
 
 							<SidebarBtn
 								btnText='Calendar'
 								IconName={CalendarMonth}
-								onClick={() => navigateWithPage(PageName.SCHEDULE, `/calendar/user/${id || userId}`)}
+								onClick={() => navigateWithPage(PageName.CALENDAR, `/calendar/user/${id || userId}`)}
 								selectedPage={selectedPage}
 							/>
 							<SidebarBtn

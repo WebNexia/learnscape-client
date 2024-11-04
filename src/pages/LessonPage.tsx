@@ -140,8 +140,6 @@ const LessonPage = () => {
 		if (isQuiz && !isLessonCompleted && userQuizAnswers.length !== 0) {
 			setIsQuizInProgress(true);
 		}
-
-		console.log(lesson.documents);
 	}, [lessonId]);
 
 	useEffect(() => {

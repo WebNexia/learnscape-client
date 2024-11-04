@@ -941,7 +941,7 @@ const AdminLessonEditPage = () => {
 																							onClick={() => {
 																								// cloneQuestion(question);
 																							}}>
-																							<FileCopy />
+																							<FileCopy fontSize='small' />
 																						</IconButton>
 																					</Tooltip>
 																				</Box>
@@ -955,7 +955,7 @@ const AdminLessonEditPage = () => {
 																								setCorrectAnswerIndex(correctAnswerIndex);
 																								toggleQuestionEditModal(index);
 																							}}>
-																							<Edit />
+																							<Edit fontSize='small' />
 																						</IconButton>
 																					</Tooltip>
 
@@ -986,7 +986,7 @@ const AdminLessonEditPage = () => {
 																				</Box>
 																				<Tooltip title='Remove' placement='top'>
 																					<IconButton onClick={() => removeQuestion(question)}>
-																						<Delete />
+																						<Delete fontSize='small' />
 																					</IconButton>
 																				</Tooltip>
 																			</Box>

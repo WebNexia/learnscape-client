@@ -186,7 +186,7 @@ const CommunityTopicPage = () => {
 				parentMessageId: replyToMessage?._id,
 			});
 
-			if (replyToMessage && replyToMessage.userId._id !== user?._id) {
+			if (replyToMessage && replyToMessage.userId?._id !== user?._id) {
 				// Create the notification data
 				const replyToMsgNotificationData = {
 					title: 'Community Message Replied',
@@ -202,11 +202,11 @@ const CommunityTopicPage = () => {
 					communityMessageId: response.data._id,
 				};
 
-				const notificationRef = collection(db, 'notifications', replyToMessage.userId.firebaseUserId, 'userNotifications');
+				const notificationRef = collection(db, 'notifications', replyToMessage.userId?.firebaseUserId, 'userNotifications');
 				await addDoc(notificationRef, replyToMsgNotificationData);
 			}
 
-			if (topic.userId._id !== user?._id) {
+			if (topic.userId?._id !== user?._id) {
 				const notificationToTopicOwnerData = {
 					title: 'Community Topic Replied',
 					message: `${user?.username} replied to your topic ${truncateText(topic.title, 25)} in community topics: "${truncateText(
@@ -221,7 +221,7 @@ const CommunityTopicPage = () => {
 					communityMessageId: response.data._id,
 				};
 
-				const notificationRef = collection(db, 'notifications', topic.userId.firebaseUserId, 'userNotifications');
+				const notificationRef = collection(db, 'notifications', topic.userId?.firebaseUserId, 'userNotifications');
 				await addDoc(notificationRef, notificationToTopicOwnerData);
 			}
 
@@ -229,7 +229,7 @@ const CommunityTopicPage = () => {
 
 			if (mentionedUsernames.includes('everyone') && user?.role === Roles.ADMIN) {
 				sortedUsersData.forEach((notifiedUser) => {
-					if (notifiedUser.firebaseUserId !== user?.firebaseUserId) {
+					if (notifiedUser?.firebaseUserId !== user?.firebaseUserId) {
 						const notificationData = {
 							title: 'Community Notification',
 							message: `${user?.username} mentioned @everyone in a message.`,
@@ -241,7 +241,7 @@ const CommunityTopicPage = () => {
 							communityMessageId: response.data._id,
 						};
 
-						const notificationRef = collection(db, 'notifications', notifiedUser.firebaseUserId, 'userNotifications');
+						const notificationRef = collection(db, 'notifications', notifiedUser?.firebaseUserId, 'userNotifications');
 						addDoc(notificationRef, notificationData);
 					}
 				});
@@ -250,7 +250,7 @@ const CommunityTopicPage = () => {
 			if (mentionedUsernames.length > 0) {
 				mentionedUsernames.forEach((username) => {
 					const mentionedUser = sortedUsersData.find((user) => user.username === username);
-					if (mentionedUser && mentionedUser.firebaseUserId !== user?.firebaseUserId) {
+					if (mentionedUser && mentionedUser?.firebaseUserId !== user?.firebaseUserId) {
 						// Create the notification data
 						const notificationData = {
 							title: 'You were mentioned in a message',
@@ -263,7 +263,7 @@ const CommunityTopicPage = () => {
 							communityMessageId: response.data._id,
 						};
 
-						const notificationRef = collection(db, 'notifications', mentionedUser.firebaseUserId, 'userNotifications');
+						const notificationRef = collection(db, 'notifications', mentionedUser?.firebaseUserId, 'userNotifications');
 						addDoc(notificationRef, notificationData);
 					}
 				});
@@ -798,7 +798,7 @@ const CommunityTopicPage = () => {
 										<Typography
 											variant='body2'
 											sx={{ mb: '2rem', textAlign: 'center', color: 'gray', padding: '0 1rem', fontSize: '0.85rem', lineHeight: 1.6 }}>
-											You can add a single audio recording per message and it will be displayed at the bottom the message
+											You can add a single audio recording per message and it will be displayed at the bottom of the message
 										</Typography>
 										{!audioUrl ? (
 											<AudioRecorder
@@ -857,7 +857,7 @@ const CommunityTopicPage = () => {
 								<CustomDialog openModal={uploadImgDialogOpen} closeModal={() => setUploadImgDialogOpen(false)} maxWidth='sm'>
 									<DialogContent>
 										<Typography sx={{ mb: '2rem', textAlign: 'center', color: 'gray', fontSize: '0.85rem', lineHeight: 1.6, padding: '0 1rem' }}>
-											You can add a single image per message and it will be displayed at the bottom the message
+											You can add a single image per message and it will be displayed at the bottom of the message
 										</Typography>
 										<HandleImageUploadURL
 											onImageUploadLogic={(url) => setImgUrl(url)}
@@ -878,18 +878,16 @@ const CommunityTopicPage = () => {
 									</CustomCancelButton>
 								</CustomDialog>
 
-								<Tooltip title='Reply' placement='top'>
-									<IconButton
-										disabled={isTopicLocked || isSending || (!!!currentMessage && !imgUrl && !audioUrl)}
-										sx={{
-											':hover': {
-												backgroundColor: 'transparent',
-											},
-										}}
-										onClick={sendMessage}>
-										<Send fontSize='small' />
-									</IconButton>
-								</Tooltip>
+								<IconButton
+									disabled={isTopicLocked || isSending || (!!!currentMessage && !imgUrl && !audioUrl)}
+									sx={{
+										':hover': {
+											backgroundColor: 'transparent',
+										},
+									}}
+									onClick={sendMessage}>
+									<Send fontSize='small' />
+								</IconButton>
 							</InputAdornment>
 						),
 					}}

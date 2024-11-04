@@ -27,8 +27,8 @@ const UnreadMessages = () => {
 			// Loop through chats to see if any hasUnreadMessages is true
 			querySnapshot.forEach((doc) => {
 				const data = doc.data();
-				if (data.hasUnreadMessages) {
-					hasUnread = true; // As soon as we find unread messages, we can set the flag
+				if (data.unreadBy && data.unreadBy.includes(user.firebaseUserId)) {
+					hasUnread = true; // As soon as we find unread messages for this user, set the flag
 				}
 			});
 

@@ -326,8 +326,9 @@ const AdminQuizSubmissionCheck = () => {
 					{fetchQuestionTypeName(userResponseToFeedback?.questionId) !== QuestionType.FITB_TYPING &&
 						fetchQuestionTypeName(userResponseToFeedback?.questionId) !== QuestionType.FITB_DRAG_DROP && (
 							<Typography
-								variant='body1'
+								variant='body2'
 								component='div'
+								sx={{ lineHeight: 1.8 }}
 								dangerouslySetInnerHTML={{ __html: sanitizeHtml(userResponseToFeedback?.questionId.question) }}
 							/>
 						)}
@@ -338,11 +339,10 @@ const AdminQuizSubmissionCheck = () => {
 						{userResponseToFeedback?.questionId?.options?.map((option: string, index: number) => (
 							<Typography
 								key={index}
-								variant='body1'
+								variant='body2'
 								sx={{
 									margin: '1rem 0 0 2rem',
 									color: option === userResponseToFeedback?.questionId.correctAnswer ? theme.textColor?.greenPrimary.main : null,
-									fontWeight: 'bolder',
 								}}>
 								{String.fromCharCode(97 + index)}) {option}
 							</Typography>
@@ -351,7 +351,14 @@ const AdminQuizSubmissionCheck = () => {
 							<Typography variant='h6' sx={{ mb: '0.5rem' }}>
 								Student's Answer
 							</Typography>
-							<Typography variant='body2'>
+							<Typography
+								variant='body2'
+								sx={{
+									color:
+										userResponseToFeedback?.userAnswer === userResponseToFeedback?.questionId.correctAnswer
+											? theme.textColor?.greenPrimary.main
+											: '#ef5350',
+								}}>
 								{userResponseToFeedback?.questionId.options?.findIndex((option: string) => option === userResponseToFeedback?.userAnswer) !== -1
 									? `${String.fromCharCode(
 											97 + userResponseToFeedback?.questionId.options?.findIndex((option: string) => option === userResponseToFeedback?.userAnswer)
@@ -368,7 +375,7 @@ const AdminQuizSubmissionCheck = () => {
 						<Typography variant='h6' sx={{ mb: '0.5rem' }}>
 							Student's Answer
 						</Typography>
-						<Typography variant='body2'>{userResponseToFeedback.userAnswer}</Typography>
+						<Typography sx={{ fontSize: '0.85rem', lineHeight: 1.7 }}>{userResponseToFeedback.userAnswer}</Typography>
 					</Box>
 				)}
 

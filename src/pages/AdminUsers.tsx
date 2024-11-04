@@ -1,8 +1,8 @@
-import { Box, Table, TableBody, TableCell, TableRow } from '@mui/material';
+import { Box, FormControl, MenuItem, Select, Table, TableBody, TableCell, TableRow } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { useContext, useEffect, useRef, useState } from 'react';
 import axios from 'axios';
-import { Delete, Edit } from '@mui/icons-material';
+import { Edit, Person, PersonOff } from '@mui/icons-material';
 
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
@@ -13,13 +13,15 @@ import CustomActionBtn from '../components/layouts/table/CustomActionBtn';
 import { UsersContext } from '../contexts/UsersContextProvider';
 import { User } from '../interfaces/user';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
+import theme from '../themes';
+import { Roles } from '../interfaces/enums';
 
 const AdminUsers = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
 	const { userId } = useContext(UserAuthContext);
 
-	const { sortUsersData, sortedUsersData, removeUser, usersNumberOfPages, usersPageNumber, setUsersPageNumber, fetchUsers } =
+	const { sortUsersData, sortedUsersData, usersNumberOfPages, usersPageNumber, setUsersPageNumber, fetchUsers, updateUser } =
 		useContext(UsersContext);
 
 	const [orderBy, setOrderBy] = useState<keyof User>('username');
@@ -32,10 +34,14 @@ const AdminUsers = () => {
 		sortUsersData(property, isAsc ? 'desc' : 'asc');
 	};
 
-	const [isUserDeleteModalOpen, setIsUserDeleteModalOpen] = useState<boolean[]>([]);
+	const [isUserStatusUpdateModalOpen, setIsUserStatusUpdateModalOpen] = useState<boolean[]>([]);
+	const [isUserEditModalOpen, setIsUserEditModalOpen] = useState<boolean[]>([]);
+
+	const [singleUser, setSingleUser] = useState<User | null>(null);
 
 	useEffect(() => {
-		setIsUserDeleteModalOpen(Array(sortedUsersData.length).fill(false));
+		setIsUserStatusUpdateModalOpen(Array(sortedUsersData.length).fill(false));
+		setIsUserEditModalOpen(Array(sortedUsersData.length).fill(false));
 	}, [sortedUsersData, usersPageNumber]);
 
 	const isInitialMount = useRef(true);
@@ -48,25 +54,63 @@ const AdminUsers = () => {
 		}
 	}, [usersPageNumber]);
 
-	const openDeleteUserModal = (index: number) => {
-		const updatedState = [...isUserDeleteModalOpen];
-		updatedState[index] = true;
-		setIsUserDeleteModalOpen(updatedState);
-	};
-	const closeDeleteUserModal = (index: number) => {
-		const updatedState = [...isUserDeleteModalOpen];
-		updatedState[index] = false;
-		setIsUserDeleteModalOpen(updatedState);
+	const toggleStatusUpdateEditModal = (index: number) => {
+		const newEditModalOpen = [...isUserStatusUpdateModalOpen];
+		newEditModalOpen[index] = !newEditModalOpen[index];
+		setIsUserStatusUpdateModalOpen(newEditModalOpen);
 	};
 
-	const deleteUser = async (userId: string): Promise<void> => {
+	const openStatusUpdateUserModal = (index: number) => {
+		const userToEdit = sortedUsersData[index];
+		setSingleUser(userToEdit);
+		toggleStatusUpdateEditModal(index);
+	};
+	const closeStatusUpdateUserModal = (index: number) => {
+		const updatedState = [...isUserStatusUpdateModalOpen];
+		updatedState[index] = false;
+		setIsUserStatusUpdateModalOpen(updatedState);
+	};
+
+	const handleUserStatus = async (): Promise<void> => {
 		try {
-			removeUser(userId);
-			await axios.delete(`${base_url}/users/${userId}`);
+			await axios.patch(`${base_url}/users/${singleUser?._id}`, {
+				isActive: !singleUser?.isActive,
+			});
+			updateUser({ ...singleUser!, isActive: !singleUser?.isActive });
 		} catch (error) {
 			console.log(error);
 		}
 	};
+
+	const toggleUserEditModal = (index: number) => {
+		const newEditModalOpen = [...isUserEditModalOpen];
+		newEditModalOpen[index] = !newEditModalOpen[index];
+		setIsUserEditModalOpen(newEditModalOpen);
+	};
+
+	const openEditUserModal = (index: number) => {
+		const userToEdit = sortedUsersData[index];
+		setSingleUser(userToEdit);
+		toggleUserEditModal(index);
+	};
+
+	const closeUserEditModal = (index: number) => {
+		const newEditModalOpen = [...isUserEditModalOpen];
+		newEditModalOpen[index] = false;
+		setIsUserEditModalOpen(newEditModalOpen);
+	};
+
+	const handleUpdateUserRole = async () => {
+		try {
+			await axios.patch(`${base_url}/users/${singleUser?._id}`, {
+				role: singleUser?.role,
+			});
+			updateUser(singleUser!);
+		} catch (error) {
+			console.log(error);
+		}
+	};
+
 	return (
 		<DashboardPagesLayout pageName='Users' customSettings={{ justifyContent: 'flex-start' }}>
 			<Box
@@ -102,35 +146,89 @@ const AdminUsers = () => {
 											<CustomTableCell value={user.lastName} />
 											<CustomTableCell value={user.username} />
 											<CustomTableCell value={user.email} />
-											<CustomTableCell value={user.isActive ? 'Active' : 'Inactive'} />
+											<CustomTableCell value={user.isActive ? 'Active' : 'Deactivated'} />
 											<CustomTableCell value={user.role.charAt(0).toUpperCase() + user.role.slice(1)} />
 
 											<TableCell
 												sx={{
 													textAlign: 'center',
 												}}>
-												<CustomActionBtn title='Edit' onClick={() => {}} icon={<Edit fontSize='small' />} />
 												<CustomActionBtn
-													title='Delete'
+													title='Edit'
 													onClick={() => {
-														openDeleteUserModal(index);
+														toggleUserEditModal(index);
+														openEditUserModal(index);
 													}}
-													icon={<Delete fontSize='small' />}
+													icon={<Edit fontSize='small' />}
 												/>
-												{isUserDeleteModalOpen[index] !== undefined && (
+
+												<CustomDialog
+													openModal={isUserEditModalOpen[index]}
+													closeModal={() => closeUserEditModal(index)}
+													maxWidth='sm'
+													title='Edit User Role'>
+													<form
+														style={{ display: 'flex', flexDirection: 'column' }}
+														onSubmit={async (e: React.FormEvent<HTMLFormElement>) => {
+															e.preventDefault();
+															handleUpdateUserRole();
+														}}>
+														<FormControl>
+															<Select
+																size='small'
+																value={singleUser?.role}
+																onChange={(e) => setSingleUser((prevData) => ({ ...prevData!, role: e.target.value }))}
+																required
+																sx={{
+																	backgroundColor: theme.bgColor?.common,
+																	width: '11.25rem',
+																	mr: '0.75rem',
+																	ml: '1.5rem',
+																	fontSize: '0.85rem',
+																	textTransform: 'capitalize',
+																}}>
+																{[Roles.ADMIN, Roles.USER].map((type) => (
+																	<MenuItem value={type.toLowerCase()} key={type} sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
+																		{type}
+																	</MenuItem>
+																))}
+															</Select>
+														</FormControl>
+														<CustomDialogActions
+															onCancel={() => closeUserEditModal(index)}
+															submitBtnText='Save'
+															actionSx={{ mt: '1rem' }}
+															submitBtnType='submit'
+														/>
+													</form>
+												</CustomDialog>
+												<CustomActionBtn
+													title={user?.isActive ? 'Deactivate' : 'Activate'}
+													onClick={() => {
+														openStatusUpdateUserModal(index);
+													}}
+													icon={user?.isActive ? <Person fontSize='small' /> : <PersonOff fontSize='small' />}
+												/>
+												{isUserStatusUpdateModalOpen[index] !== undefined && (
 													<CustomDialog
-														openModal={isUserDeleteModalOpen[index]}
-														closeModal={() => closeDeleteUserModal(index)}
-														title='Delete User'
-														content='Are you sure you want to delete this user?'
+														openModal={isUserStatusUpdateModalOpen[index]}
+														closeModal={() => closeStatusUpdateUserModal(index)}
+														title={user?.isActive ? 'Deactivate User' : 'Activate User'}
+														content={`Are you sure you want to ${user?.isActive ? 'deactivate' : 'activate'} this user?`}
 														maxWidth='sm'>
 														<CustomDialogActions
-															onCancel={() => closeDeleteUserModal(index)}
-															deleteBtn={true}
+															onCancel={() => closeStatusUpdateUserModal(index)}
+															deleteBtn={user?.isActive}
+															deleteBtnText='Deactivate'
 															onDelete={() => {
-																deleteUser(user._id);
-																closeDeleteUserModal(index);
+																handleUserStatus();
+																closeStatusUpdateUserModal(index);
 															}}
+															onSubmit={() => {
+																handleUserStatus();
+																closeStatusUpdateUserModal(index);
+															}}
+															submitBtnText='Activate'
 														/>
 													</CustomDialog>
 												)}

@@ -49,7 +49,7 @@ const Topic = ({ topic }: TopicProps) => {
 						</Typography>
 					</Box>
 					<Box sx={{ display: 'flex', width: '50%' }}>
-						<Typography sx={{ fontSize: '0.75rem', mr: '1rem' }}>{topic?.userId?.username || 'Deleted User'}</Typography>
+						<Typography sx={{ fontSize: '0.75rem', mr: '1rem' }}>{topic?.userId?.username || 'Deactivated User'}</Typography>
 						<Typography variant='caption' sx={{ fontSize: '0.65rem', color: 'gray' }}>
 							{formatMessageTime(topic.createdAt)}
 						</Typography>

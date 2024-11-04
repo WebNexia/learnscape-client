@@ -72,7 +72,7 @@ const DocumentsListEditBox = ({
 									}}>
 									Rename
 								</Typography>
-								<CustomDialog openModal={isDocRenameModalOpen[index]} closeModal={() => closeDocRenameModal(index, document)}>
+								<CustomDialog openModal={isDocRenameModalOpen[index]} closeModal={() => closeDocRenameModal(index, document)} maxWidth='sm'>
 									<form
 										style={{ display: 'flex', flexDirection: 'column' }}
 										onSubmit={(e: React.FormEvent<HTMLFormElement>) => {
@@ -83,7 +83,7 @@ const DocumentsListEditBox = ({
 											required={true}
 											label='Rename Document'
 											value={document.name}
-											sx={{ margin: '2rem 1rem 3rem 1rem' }}
+											sx={{ margin: '1rem' }}
 											onChange={(e) => renameDocOnChange(e, document)}
 										/>
 										<CustomDialogActions

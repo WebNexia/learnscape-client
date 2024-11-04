@@ -171,7 +171,8 @@ const AdminDocuments = () => {
 				closeModal={() => {
 					setIsDocumentCreateModalOpen(false);
 					setEnterDocUrl(true);
-				}}>
+				}}
+				maxWidth='sm'>
 				<form
 					onSubmit={async (e: React.FormEvent<HTMLFormElement>) => {
 						e.preventDefault();
@@ -235,7 +236,7 @@ const AdminDocuments = () => {
 												textAlign: 'center',
 											}}>
 											<CustomActionBtn
-												title='Edit'
+												title='Rename'
 												onClick={() => {
 													toggleDocumentEditModal(index);
 													openEditDocumentModal(index);

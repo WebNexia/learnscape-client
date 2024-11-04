@@ -204,7 +204,7 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters }: CourseDetailsNonEdi
 																				window.open(`/admin/lesson-edit/user/${userId}/lesson/${lesson._id}`, '_blank');
 																				window.scrollTo({ top: 0, behavior: 'smooth' });
 																			}}>
-																			<EditTwoTone />
+																			<EditTwoTone fontSize='small' />
 																		</IconButton>
 																	</Tooltip>
 																</Box>
