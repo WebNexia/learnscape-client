@@ -291,7 +291,7 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 							margin: '0 0.75rem',
 						}}>
 						<Box sx={{ width: '100%', textAlign: 'left' }}>
-							<Typography variant='body2'>Card Number</Typography>
+							<Typography variant='body2'>Card Number*</Typography>
 						</Box>
 						<Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
 							<Box
@@ -332,7 +332,7 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 								width: '100%',
 								mr: '0.75rem',
 							}}>
-							<Typography variant='body2'>Expiry Date</Typography>
+							<Typography variant='body2'>Expiry Date*</Typography>
 							<Box sx={{ border: '1px solid #ccc', padding: '0.5rem', borderRadius: '0.35rem', backgroundColor: '#fff' }}>
 								<Box>
 									<CardExpiryElement
@@ -361,7 +361,7 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 							sx={{
 								width: '100%',
 							}}>
-							<Typography variant='body2'>CVC</Typography>
+							<Typography variant='body2'>CVC*</Typography>
 							<Box sx={{ border: '1px solid #ccc', padding: '0.5rem', borderRadius: '0.35rem', backgroundColor: '#fff' }}>
 								<CardCvcElement
 									options={{
