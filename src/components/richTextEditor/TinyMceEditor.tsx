@@ -145,7 +145,13 @@ const TinyMceEditor = ({
 					}
 				},
 			}}
-			onEditorChange={isFITB ? handleEditorChangeInternal : undefined}
+			onEditorChange={(content) => {
+				if (isFITB) {
+					handleEditorChangeInternal(content);
+				} else {
+					handleEditorChange(content);
+				}
+			}}
 		/>
 	);
 };
