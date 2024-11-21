@@ -1,9 +1,23 @@
-import { Box, Table, TableBody, TableRow, TableCell, FormControlLabel, Checkbox, Tooltip, Typography } from '@mui/material';
+import {
+	Box,
+	Table,
+	TableBody,
+	TableRow,
+	TableCell,
+	FormControlLabel,
+	Checkbox,
+	Tooltip,
+	Typography,
+	FormControl,
+	Select,
+	MenuItem,
+	InputAdornment,
+} from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { CoursesContext } from '../contexts/CoursesContextProvider';
 import { Price, SingleCourse } from '../interfaces/course';
-import { Delete, Edit, FileCopy } from '@mui/icons-material';
+import { Delete, Edit, FileCopy, Search } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
@@ -16,6 +30,7 @@ import CustomTablePagination from '../components/layouts/table/CustomTablePagina
 import CustomActionBtn from '../components/layouts/table/CustomActionBtn';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import { dateFormatter } from '../utils/dateFormatter';
+import theme from '../themes';
 
 const AdminCourses = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -25,11 +40,28 @@ const AdminCourses = () => {
 	const { orgId } = useContext(OrganisationContext);
 
 	const [coursesPageNumber, setCoursesPageNumber] = useState<number>(1);
+	const [searchValue, setSearchValue] = useState<string>('');
+	const [filterValue, setFilterValue] = useState<string>('');
 
 	const pageSize = 50;
-	const coursesNumberOfPages = Math.ceil(sortedCoursesData.length / pageSize);
 
-	const paginatedCourses = sortedCoursesData.slice((coursesPageNumber - 1) * pageSize, coursesPageNumber * pageSize);
+	const filteredCourses = sortedCoursesData.filter((course) => {
+		if (searchValue) {
+			const lowerSearch = searchValue.toLowerCase();
+			return course?.title?.toLowerCase().includes(lowerSearch);
+		}
+		if (filterValue) {
+			if (filterValue === 'published courses' && course.isActive) return true;
+			if (filterValue === 'unpublished courses' && !course.isActive) return true;
+			if (filterValue === 'free courses' && course.prices.find((price) => price.amount == '' || price.amount == 'Free' || price.amount == '0'))
+				return true;
+		}
+		return !searchValue && !filterValue;
+	});
+
+	const coursesNumberOfPages = Math.ceil(filteredCourses.length / pageSize);
+
+	const paginatedCourses = filteredCourses.slice((coursesPageNumber - 1) * pageSize, coursesPageNumber * pageSize);
 
 	const [isCourseCreateModalOpen, setIsCourseCreateModalOpen] = useState<boolean>(false);
 
@@ -270,6 +302,60 @@ const AdminCourses = () => {
 					width: '100%',
 				}}>
 				<CustomSubmitButton onClick={openNewCourseModal}>New Course</CustomSubmitButton>
+			</Box>
+			<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', padding: '0 2rem' }}>
+				<Box sx={{ alignSelf: 'flex-start', width: '35%' }}>
+					<CustomTextField
+						value={searchValue}
+						placeholder={'Search Course'}
+						onChange={(e) => {
+							setFilterValue('');
+							setSearchValue(e.target.value);
+						}}
+						sx={{ backgroundColor: '#fff' }}
+						required={false}
+						InputProps={{
+							endAdornment: (
+								<InputAdornment position='end'>
+									<Search
+										sx={{
+											mr: '-0.5rem',
+										}}
+									/>
+								</InputAdornment>
+							),
+						}}
+					/>
+				</Box>
+				<Box>
+					<FormControl>
+						<Select
+							size='small'
+							value={filterValue}
+							onChange={(e) => {
+								setSearchValue('');
+								setFilterValue(e.target.value);
+							}}
+							displayEmpty
+							sx={{
+								backgroundColor: theme.bgColor?.common,
+								width: '13.25rem',
+								mr: '0.75rem',
+								ml: '1.5rem',
+								fontSize: '0.85rem',
+								textTransform: 'capitalize',
+							}}>
+							<MenuItem value='' selected sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
+								All Courses
+							</MenuItem>
+							{['Published Courses', 'Unpublished Courses', 'Free Courses'].map((type) => (
+								<MenuItem value={type.toLowerCase()} key={type} sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
+									{type}
+								</MenuItem>
+							))}
+						</Select>
+					</FormControl>
+				</Box>
 			</Box>
 			<Box
 				sx={{
