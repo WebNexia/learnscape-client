@@ -71,7 +71,7 @@ const AdminQuestionsEditQuestionDialog = ({
 }: EditQuestionDialogProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
-	const { fetchLessons, lessonsPageNumber } = useContext(LessonsContext);
+	const { fetchLessons } = useContext(LessonsContext);
 	const { updateQuestion, fetchQuestions, questionsPageNumber } = useContext(QuestionsContext);
 
 	const editorId = generateUniqueId('editor-');
@@ -235,7 +235,7 @@ const AdminQuestionsEditQuestionDialog = ({
 			resetImageUpload();
 			resetVideoUpload();
 			resetEnterImageVideoUrl();
-			fetchLessons(lessonsPageNumber);
+			fetchLessons();
 			fetchQuestions(questionsPageNumber);
 		} catch (error) {
 			console.error('Failed to update the question:', error);

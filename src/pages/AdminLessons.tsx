@@ -20,8 +20,14 @@ const AdminLessons = () => {
 	const { userId } = useParams();
 	const navigate = useNavigate();
 
-	const { sortLessonsData, sortedLessonsData, removeLesson, numberOfPages, lessonsPageNumber, setLessonsPageNumber, fetchLessons } =
-		useContext(LessonsContext);
+	const { sortLessonsData, sortedLessonsData, removeLesson, fetchLessons } = useContext(LessonsContext);
+
+	const [lessonsPageNumber, setLessonsPageNumber] = useState<number>(1);
+
+	const pageSize = 2;
+	const lessonsNumberOfPages = Math.ceil(sortedLessonsData.length / pageSize);
+
+	const paginatedLessons = sortedLessonsData.slice((lessonsPageNumber - 1) * pageSize, lessonsPageNumber * pageSize);
 
 	const [isNewLessonModalOpen, setIsNewLessonModalOpen] = useState<boolean>(false);
 
@@ -38,8 +44,8 @@ const AdminLessons = () => {
 	const [isLessonDeleteModalOpen, setIsLessonDeleteModalOpen] = useState<boolean[]>([]);
 
 	useEffect(() => {
-		setIsLessonDeleteModalOpen(Array(sortedLessonsData.length).fill(false));
-	}, [sortedLessonsData, lessonsPageNumber]);
+		setIsLessonDeleteModalOpen(Array(paginatedLessons.length).fill(false));
+	}, [paginatedLessons, lessonsPageNumber]);
 
 	const isInitialMount = useRef(true);
 
@@ -47,9 +53,9 @@ const AdminLessons = () => {
 		if (isInitialMount.current) {
 			isInitialMount.current = false;
 		} else {
-			fetchLessons(lessonsPageNumber);
+			fetchLessons();
 		}
-	}, [lessonsPageNumber]);
+	}, []);
 
 	useEffect(() => {
 		setLessonsPageNumber(1);
@@ -70,7 +76,7 @@ const AdminLessons = () => {
 		try {
 			removeLesson(lessonId);
 			await axios.delete(`${base_url}/lessons/${lessonId}`);
-			fetchLessons(lessonsPageNumber);
+			fetchLessons();
 		} catch (error) {
 			console.log(error);
 		}
@@ -103,8 +109,8 @@ const AdminLessons = () => {
 						]}
 					/>
 					<TableBody>
-						{sortedLessonsData &&
-							sortedLessonsData?.map((lesson: Lesson, index) => {
+						{paginatedLessons &&
+							paginatedLessons?.map((lesson: Lesson, index) => {
 								return (
 									<TableRow key={lesson._id}>
 										<CustomTableCell value={lesson.title} />
@@ -153,7 +159,7 @@ const AdminLessons = () => {
 							})}
 					</TableBody>
 				</Table>
-				<CustomTablePagination count={numberOfPages} page={lessonsPageNumber} onChange={setLessonsPageNumber} />
+				<CustomTablePagination count={lessonsNumberOfPages} page={lessonsPageNumber} onChange={setLessonsPageNumber} />
 			</Box>
 		</DashboardPagesLayout>
 	);

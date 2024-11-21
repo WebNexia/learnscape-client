@@ -13,10 +13,10 @@ interface LessonsContextTypes {
 	updateLessonPublishing: (id: string) => void;
 	removeLesson: (id: string) => void;
 	updateLessons: (singleLesson: Lesson) => void;
-	numberOfPages: number;
-	lessonsPageNumber: number;
-	setLessonsPageNumber: React.Dispatch<React.SetStateAction<number>>;
-	fetchLessons: (page: number) => void;
+	// numberOfPages: number;
+	// lessonsPageNumber: number;
+	// setLessonsPageNumber: React.Dispatch<React.SetStateAction<number>>;
+	fetchLessons: () => void;
 	lessonTypes: string[];
 }
 
@@ -31,9 +31,9 @@ export const LessonsContext = createContext<LessonsContextTypes>({
 	updateLessonPublishing: () => {},
 	removeLesson: () => {},
 	updateLessons: () => {},
-	numberOfPages: 1,
-	lessonsPageNumber: 1,
-	setLessonsPageNumber: () => {},
+	// numberOfPages: 1,
+	// lessonsPageNumber: 1,
+	// setLessonsPageNumber: () => {},
 	fetchLessons: () => {},
 	lessonTypes: [],
 });
@@ -43,23 +43,22 @@ const LessonsContextProvider = (props: LessonsContextProviderProps) => {
 	const { orgId } = useContext(OrganisationContext);
 
 	const [sortedLessonsData, setSortedLessonsData] = useState<Lesson[]>([]);
-	const [numberOfPages, setNumberOfPages] = useState<number>(1);
-	const [lessonsPageNumber, setLessonsPageNumber] = useState<number>(1);
+	// const [numberOfPages, setNumberOfPages] = useState<number>(1);
+	// const [lessonsPageNumber, setLessonsPageNumber] = useState<number>(1);
 
 	const [isLoaded, setIsLoaded] = useState<boolean>(false);
 
 	const lessonTypes: string[] = ['Instructional Lesson', 'Practice Lesson', 'Quiz'];
 
-	const fetchLessons = async (page: number) => {
+	const fetchLessons = async () => {
 		if (!orgId) return;
 
 		try {
-			const response = await axios.get(`${base_url}/lessons/organisation/${orgId}?page=${page}&limit=50`);
+			const response = await axios.get(`${base_url}/lessons/organisation/${orgId}`);
 
 			// Initial sorting when fetching data
 			const sortedLessonsDataCopy = [...response.data.data].sort((a: Lesson, b: Lesson) => b.updatedAt.localeCompare(a.updatedAt));
 			setSortedLessonsData(sortedLessonsDataCopy);
-			setNumberOfPages(response.data.pages);
 			setIsLoaded(true);
 			return response.data.data;
 		} catch (error) {
@@ -68,7 +67,7 @@ const LessonsContextProvider = (props: LessonsContextProviderProps) => {
 		}
 	};
 
-	const { data, isLoading, isError } = useQuery(['allLessons', orgId, lessonsPageNumber], () => fetchLessons(lessonsPageNumber), {
+	const { data, isLoading, isError } = useQuery(['allLessons', orgId], () => fetchLessons(), {
 		enabled: !!orgId && !isLoaded,
 	});
 
@@ -129,9 +128,9 @@ const LessonsContextProvider = (props: LessonsContextProviderProps) => {
 				removeLesson,
 				updateLessonPublishing,
 				updateLessons,
-				numberOfPages,
-				lessonsPageNumber,
-				setLessonsPageNumber,
+				// numberOfPages,
+				// lessonsPageNumber,
+				// setLessonsPageNumber,
 				fetchLessons,
 				lessonTypes,
 			}}>

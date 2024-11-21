@@ -21,17 +21,15 @@ const AdminCourses = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { userId } = useParams();
 	const navigate = useNavigate();
-	const {
-		sortedCoursesData,
-		sortCoursesData,
-		addNewCourse,
-		removeCourse,
-		coursesNumberOfPages,
-		coursesPageNumber,
-		setCoursesPageNumber,
-		fetchCourses,
-	} = useContext(CoursesContext);
+	const { sortedCoursesData, sortCoursesData, addNewCourse, removeCourse, fetchCourses } = useContext(CoursesContext);
 	const { orgId } = useContext(OrganisationContext);
+
+	const [coursesPageNumber, setCoursesPageNumber] = useState<number>(1);
+
+	const pageSize = 50;
+	const coursesNumberOfPages = Math.ceil(sortedCoursesData.length / pageSize);
+
+	const paginatedCourses = sortedCoursesData.slice((coursesPageNumber - 1) * pageSize, coursesPageNumber * pageSize);
 
 	const [isCourseCreateModalOpen, setIsCourseCreateModalOpen] = useState<boolean>(false);
 
@@ -51,8 +49,8 @@ const AdminCourses = () => {
 	const [isCourseDeleteModalOpen, setIsCourseDeleteModalOpen] = useState<boolean[]>([]);
 
 	useEffect(() => {
-		setIsCourseDeleteModalOpen(Array(sortedCoursesData.length).fill(false));
-	}, [sortedCoursesData]);
+		setIsCourseDeleteModalOpen(Array(paginatedCourses.length).fill(false));
+	}, [paginatedCourses, coursesPageNumber]);
 
 	const isInitialMount = useRef(true);
 
@@ -60,9 +58,9 @@ const AdminCourses = () => {
 		if (isInitialMount.current) {
 			isInitialMount.current = false;
 		} else {
-			fetchCourses(coursesPageNumber);
+			fetchCourses();
 		}
-	}, [coursesPageNumber]);
+	}, []);
 
 	const openDeleteCourseModal = (index: number) => {
 		const updatedState = [...isCourseDeleteModalOpen];
@@ -296,8 +294,8 @@ const AdminCourses = () => {
 						]}
 					/>
 					<TableBody>
-						{sortedCoursesData &&
-							sortedCoursesData?.map((course: SingleCourse, index) => {
+						{paginatedCourses &&
+							paginatedCourses?.map((course: SingleCourse, index) => {
 								return (
 									<TableRow key={course._id}>
 										<CustomTableCell value={course.title} />

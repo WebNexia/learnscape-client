@@ -13,10 +13,10 @@ interface UserContextTypes {
 	activateUser: (id: string) => void;
 	removeUser: (id: string) => void;
 	updateUser: (user: User) => void;
-	usersNumberOfPages: number;
-	usersPageNumber: number;
-	setUsersPageNumber: React.Dispatch<React.SetStateAction<number>>;
-	fetchUsers: (page: number) => void;
+	// usersNumberOfPages: number;
+	// usersPageNumber: number;
+	// setUsersPageNumber: React.Dispatch<React.SetStateAction<number>>;
+	fetchUsers: () => void;
 }
 
 interface UserContextProviderProps {
@@ -30,9 +30,9 @@ export const UsersContext = createContext<UserContextTypes>({
 	activateUser: () => {},
 	removeUser: () => {},
 	updateUser: () => {},
-	usersNumberOfPages: 1,
-	usersPageNumber: 1,
-	setUsersPageNumber: () => {},
+	// usersNumberOfPages: 1,
+	// usersPageNumber: 1,
+	// setUsersPageNumber: () => {},
 	fetchUsers: () => {},
 });
 
@@ -41,21 +41,21 @@ const UsersContextProvider = (props: UserContextProviderProps) => {
 	const { orgId } = useContext(OrganisationContext);
 
 	const [sortedUsersData, setSortedUsersData] = useState<User[]>([]);
-	const [usersNumberOfPages, setUsersNumberOfPages] = useState<number>(1);
-	const [usersPageNumber, setUsersPageNumber] = useState<number>(1);
+	// const [usersNumberOfPages, setUsersNumberOfPages] = useState<number>(1);
+	// const [usersPageNumber, setUsersPageNumber] = useState<number>(1);
 
 	const [isLoaded, setIsLoaded] = useState<boolean>(false);
 
-	const fetchUsers = async (page: number) => {
+	const fetchUsers = async () => {
 		if (!orgId) return;
 
 		try {
-			const response = await axios.get(`${base_url}/users/organisation/${orgId}?page=${page}&limit=50`);
+			const response = await axios.get(`${base_url}/users/organisation/${orgId}`);
 
 			// Initial sorting when fetching data
 			const sortedDataCopy = [...response.data.data].sort((a: User, b: User) => b.updatedAt.localeCompare(a.updatedAt));
 			setSortedUsersData(sortedDataCopy);
-			setUsersNumberOfPages(response.data.pages);
+			// setUsersNumberOfPages(response.data.pages);
 			setIsLoaded(true);
 			return response.data.data;
 		} catch (error) {
@@ -64,7 +64,7 @@ const UsersContextProvider = (props: UserContextProviderProps) => {
 		}
 	};
 
-	const { data, isLoading, isError } = useQuery(['allUsers', orgId, usersPageNumber], () => fetchUsers(usersPageNumber), {
+	const { data, isLoading, isError } = useQuery(['allUsers', orgId], () => fetchUsers(), {
 		enabled: !!orgId && !isLoaded,
 	});
 
@@ -125,9 +125,9 @@ const UsersContextProvider = (props: UserContextProviderProps) => {
 				removeUser,
 				activateUser,
 				updateUser,
-				usersNumberOfPages,
-				usersPageNumber,
-				setUsersPageNumber,
+				// usersNumberOfPages,
+				// usersPageNumber,
+				// setUsersPageNumber,
 				fetchUsers,
 			}}>
 			{props.children}
