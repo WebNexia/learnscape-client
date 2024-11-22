@@ -17,7 +17,7 @@ import DashboardPagesLayout from '../components/layouts/dashboardLayout/Dashboar
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { CoursesContext } from '../contexts/CoursesContextProvider';
 import { Price, SingleCourse } from '../interfaces/course';
-import { Delete, Edit, FileCopy, Search } from '@mui/icons-material';
+import { Delete, Edit, Search } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
@@ -394,7 +394,6 @@ const AdminCourses = () => {
 											sx={{
 												textAlign: 'center',
 											}}>
-											<CustomActionBtn title='Clone' onClick={() => {}} icon={<FileCopy fontSize='small' />} />
 											<CustomActionBtn
 												title='Edit'
 												onClick={() => {

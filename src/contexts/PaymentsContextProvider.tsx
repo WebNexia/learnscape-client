@@ -9,10 +9,10 @@ import { Payment } from '../interfaces/payment';
 interface PaymentsContextTypes {
 	sortedPaymentsData: Payment[];
 	sortPaymentsData: (property: keyof Payment, order: 'asc' | 'desc') => void;
-	numberOfPages: number;
-	paymentsPageNumber: number;
-	setPaymentsPageNumber: React.Dispatch<React.SetStateAction<number>>;
-	fetchPayments: (page: number) => void;
+	// numberOfPages: number;
+	// paymentsPageNumber: number;
+	// setPaymentsPageNumber: React.Dispatch<React.SetStateAction<number>>;
+	fetchPayments: () => void;
 	totalPaymentAmountGBP: number;
 	totalNumberOfPayments: number;
 }
@@ -24,9 +24,9 @@ interface PaymentsContextProviderProps {
 export const PaymentsContext = createContext<PaymentsContextTypes>({
 	sortedPaymentsData: [],
 	sortPaymentsData: () => {},
-	numberOfPages: 1,
-	paymentsPageNumber: 1,
-	setPaymentsPageNumber: () => {},
+	// numberOfPages: 1,
+	// paymentsPageNumber: 1,
+	// setPaymentsPageNumber: () => {},
 	fetchPayments: () => {},
 	totalPaymentAmountGBP: 0,
 	totalNumberOfPayments: 0,
@@ -37,23 +37,23 @@ const PaymentsContextProvider = (props: PaymentsContextProviderProps) => {
 	const { orgId } = useContext(OrganisationContext);
 
 	const [sortedPaymentsData, setSortedPaymentsData] = useState<Payment[]>([]);
-	const [numberOfPages, setNumberOfPages] = useState<number>(1);
-	const [paymentsPageNumber, setPaymentsPageNumber] = useState<number>(1);
+	// const [numberOfPages, setNumberOfPages] = useState<number>(1);
+	// const [paymentsPageNumber, setPaymentsPageNumber] = useState<number>(1);
 	const [totalPaymentAmountGBP, setTotalPaymentAmountGBP] = useState<number>(0);
 	const [totalNumberOfPayments, setTotalNumberOfPayments] = useState<number>(0);
 
 	const [isLoaded, setIsLoaded] = useState<boolean>(false);
 
-	const fetchPayments = async (page: number) => {
+	const fetchPayments = async () => {
 		if (!orgId) return;
 
 		try {
-			const response = await axios.get(`${base_url}/payments/organisation/${orgId}?page=${page}&limit=100`);
+			const response = await axios.get(`${base_url}/payments/organisation/${orgId}`);
 
 			// Initial sorting when fetching data
 			const sortedPaymentsDataCopy = [...response.data.data].sort((a: Payment, b: Payment) => b.updatedAt.localeCompare(a.updatedAt));
 			setSortedPaymentsData(sortedPaymentsDataCopy);
-			setNumberOfPages(response.data.pages);
+			// setNumberOfPages(response.data.pages);
 			setIsLoaded(true);
 			setTotalPaymentAmountGBP(response.data.totalAmountReceivedInGbp);
 			setTotalNumberOfPayments(response.data.total);
@@ -64,7 +64,7 @@ const PaymentsContextProvider = (props: PaymentsContextProviderProps) => {
 		}
 	};
 
-	const { data, isLoading, isError } = useQuery(['allPayments', orgId, paymentsPageNumber], () => fetchPayments(paymentsPageNumber), {
+	const { data, isLoading, isError } = useQuery(['allPayments', orgId], () => fetchPayments(), {
 		enabled: !!orgId && !isLoaded,
 	});
 
@@ -93,9 +93,9 @@ const PaymentsContextProvider = (props: PaymentsContextProviderProps) => {
 			value={{
 				sortedPaymentsData,
 				sortPaymentsData,
-				numberOfPages,
-				paymentsPageNumber,
-				setPaymentsPageNumber,
+				// numberOfPages,
+				// paymentsPageNumber,
+				// setPaymentsPageNumber,
 				fetchPayments,
 				totalPaymentAmountGBP,
 				totalNumberOfPayments,

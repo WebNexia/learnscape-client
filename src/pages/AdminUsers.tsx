@@ -174,7 +174,7 @@ const AdminUsers = () => {
 								),
 							}}
 						/>
-						<CustomInfoMessageAlignedLeft message='Search in First Name, Last Name, Username and Email Address' messageSx={{ fontSize: '0.7rem' }} />
+						<CustomInfoMessageAlignedLeft message='Search in First Name, Last Name, Username and Email Address' messageSx={{ fontSize: '0.75rem' }} />
 					</Box>
 					<Box>
 						<FormControl>
@@ -194,8 +194,8 @@ const AdminUsers = () => {
 									fontSize: '0.85rem',
 									textTransform: 'capitalize',
 								}}>
-								<MenuItem value='' selected disabled sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
-									Filter Users
+								<MenuItem value='' selected sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
+									All Users
 								</MenuItem>
 								{['Admin Users', 'Learners', 'Active Users', 'Inactive Users'].map((type) => (
 									<MenuItem value={type.toLowerCase()} key={type} sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>

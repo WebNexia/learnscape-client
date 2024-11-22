@@ -1,8 +1,8 @@
-import { Box, Link, Table, TableBody, TableCell, TableRow } from '@mui/material';
+import { Box, InputAdornment, Link, Table, TableBody, TableCell, TableRow } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { useContext, useEffect, useRef, useState } from 'react';
 import axios from 'axios';
-import { Delete, Edit } from '@mui/icons-material';
+import { Delete, Edit, Search } from '@mui/icons-material';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
@@ -20,20 +20,28 @@ import CustomTextField from '../components/forms/customFields/CustomTextField';
 
 const AdminDocuments = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
-
-	const {
-		addNewDocument,
-		sortDocumentsData,
-		sortedDocumentsData,
-		removeDocument,
-		numberOfPages,
-		documentsPageNumber,
-		setDocumentsPageNumber,
-		fetchDocuments,
-	} = useContext(DocumentsContext);
-
 	const { orgId } = useContext(OrganisationContext);
 	const { userId } = useParams();
+
+	const { addNewDocument, sortDocumentsData, sortedDocumentsData, removeDocument, fetchDocuments } = useContext(DocumentsContext);
+
+	const [documentsPageNumber, setDocumentsPageNumber] = useState<number>(1);
+	const [searchValue, setSearchValue] = useState<string>('');
+
+	const pageSize = 50;
+
+	const filteredDocuments = sortedDocumentsData.filter((doc) => {
+		if (searchValue) {
+			const lowerSearch = searchValue.toLowerCase();
+			return doc?.name?.toLowerCase().includes(lowerSearch);
+		}
+
+		return !searchValue;
+	});
+
+	const documentsNumberOfPages = Math.ceil(filteredDocuments.length / pageSize);
+
+	const paginatedDocuments = filteredDocuments.slice((documentsPageNumber - 1) * pageSize, documentsPageNumber * pageSize);
 
 	const [orderBy, setOrderBy] = useState<keyof Document>('name');
 	const [order, setOrder] = useState<'asc' | 'desc'>('asc');
@@ -72,9 +80,9 @@ const AdminDocuments = () => {
 		if (isInitialMount.current) {
 			isInitialMount.current = false;
 		} else {
-			fetchDocuments(documentsPageNumber);
+			fetchDocuments();
 		}
-	}, [documentsPageNumber]);
+	}, []);
 
 	const createDocument = async (): Promise<void> => {
 		try {
@@ -104,7 +112,7 @@ const AdminDocuments = () => {
 					name: singleDocument.name.trim(),
 				});
 
-				fetchDocuments(documentsPageNumber);
+				fetchDocuments();
 				setSingleDocument(null);
 			} catch (error) {
 				console.log(error);
@@ -116,7 +124,7 @@ const AdminDocuments = () => {
 		try {
 			removeDocument(documentId);
 			await axios.delete(`${base_url}/documents/${documentId}`);
-			fetchDocuments(documentsPageNumber);
+			fetchDocuments();
 		} catch (error) {
 			console.log(error);
 		}
@@ -200,6 +208,31 @@ const AdminDocuments = () => {
 				</form>
 			</CustomDialog>
 
+			<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', pl: '2rem' }}>
+				<Box sx={{ alignSelf: 'flex-start', width: '35%', pb: '1rem' }}>
+					<CustomTextField
+						value={searchValue}
+						placeholder={'Search Document'}
+						onChange={(e) => {
+							setSearchValue(e.target.value);
+						}}
+						sx={{ backgroundColor: '#fff' }}
+						required={false}
+						InputProps={{
+							endAdornment: (
+								<InputAdornment position='end'>
+									<Search
+										sx={{
+											mr: '-0.5rem',
+										}}
+									/>
+								</InputAdornment>
+							),
+						}}
+					/>
+				</Box>
+			</Box>
+
 			<Box
 				sx={{
 					display: 'flex',
@@ -220,8 +253,8 @@ const AdminDocuments = () => {
 						]}
 					/>
 					<TableBody>
-						{sortedDocumentsData &&
-							sortedDocumentsData?.map((document: Document, index) => {
+						{paginatedDocuments &&
+							paginatedDocuments?.map((document: Document, index) => {
 								return (
 									<TableRow key={document._id}>
 										<CustomTableCell value={document.name} />
@@ -308,7 +341,7 @@ const AdminDocuments = () => {
 							})}
 					</TableBody>
 				</Table>
-				<CustomTablePagination count={numberOfPages} page={documentsPageNumber} onChange={setDocumentsPageNumber} />
+				<CustomTablePagination count={documentsNumberOfPages} page={documentsPageNumber} onChange={setDocumentsPageNumber} />
 			</Box>
 		</DashboardPagesLayout>
 	);
