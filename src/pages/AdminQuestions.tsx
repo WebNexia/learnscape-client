@@ -1,8 +1,8 @@
-import { Box, Table, TableBody, TableCell, TableRow } from '@mui/material';
+import { Box, FormControl, InputAdornment, MenuItem, Select, Table, TableBody, TableCell, TableRow } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { useContext, useEffect, useRef, useState } from 'react';
 import axios from 'axios';
-import { Delete, Edit, FileCopy } from '@mui/icons-material';
+import { Delete, Edit, FileCopy, Search } from '@mui/icons-material';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
@@ -17,12 +17,33 @@ import CreateQuestionDialog from '../components/forms/newQuestion/CreateQuestion
 import { stripHtml } from '../utils/stripHtml';
 import { truncateText } from '../utils/utilText';
 import AdminQuestionsEditQuestionDialog from '../components/forms/editQuestion/AdminQuestionsEditQuestionDialog';
+import CustomTextField from '../components/forms/customFields/CustomTextField';
+import theme from '../themes';
+import { OrganisationContext } from '../contexts/OrganisationContextProvider';
+import CustomDeleteButton from '../components/forms/customButtons/CustomDeleteButton';
 
 const AdminQuestions = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
+	const { orgId } = useContext(OrganisationContext);
 
-	const { sortQuestionsData, sortedQuestionsData, removeQuestion, numberOfPages, questionsPageNumber, setQuestionsPageNumber, fetchQuestions } =
-		useContext(QuestionsContext);
+	const {
+		sortQuestionsData,
+		sortedQuestionsData,
+		removeQuestion,
+		numberOfPages,
+		questionsPageNumber,
+		setQuestionsPageNumber,
+		setNumberOfPages,
+		fetchQuestions,
+		questionTypes,
+	} = useContext(QuestionsContext);
+
+	const [filteredQuestions, setFilteredQuestions] = useState<QuestionInterface[]>(sortedQuestionsData);
+	const [originalQuestions, setOriginalQuestions] = useState<QuestionInterface[]>(sortedQuestionsData);
+	const [numberOfPagesOfAllQuestions, setNumberOfPagesOfAllQuestions] = useState<number>(numberOfPages);
+
+	const [searchValue, setSearchValue] = useState<string>('');
+	const [filterValue, setFilterValue] = useState<string>('');
 
 	const [orderBy, setOrderBy] = useState<keyof QuestionInterface>('questionType');
 	const [order, setOrder] = useState<'asc' | 'desc'>('asc');
@@ -64,6 +85,7 @@ const AdminQuestions = () => {
 	useEffect(() => {
 		setIsQuestionDeleteModalOpen(Array(sortedQuestionsData.length).fill(false));
 		setEditQuestionModalOpen(Array(sortedQuestionsData.length).fill(false));
+		setFilteredQuestions(sortedQuestionsData);
 	}, [sortedQuestionsData, questionsPageNumber]);
 
 	const isInitialMount = useRef(true);
@@ -72,7 +94,9 @@ const AdminQuestions = () => {
 		if (isInitialMount.current) {
 			isInitialMount.current = false;
 		} else {
-			fetchQuestions(questionsPageNumber);
+			if (!searchValue && !filterValue) {
+				fetchQuestions(questionsPageNumber);
+			}
 		}
 	}, [questionsPageNumber]);
 
@@ -107,6 +131,49 @@ const AdminQuestions = () => {
 		const newEditModalOpen = [...editQuestionModalOpen];
 		newEditModalOpen[index] = false;
 		setEditQuestionModalOpen(newEditModalOpen);
+	};
+
+	const handleSearchQuestions = async (page: number) => {
+		if (!searchValue) {
+			setNumberOfPages(numberOfPagesOfAllQuestions);
+			setFilteredQuestions(originalQuestions);
+
+			return;
+		}
+
+		try {
+			const response = await axios.post(`${base_url}/questions/search`, {
+				orgId,
+				page,
+				limit: 75,
+				search: searchValue,
+			});
+			setFilteredQuestions(response.data.data);
+			setNumberOfPages(response.data.pages);
+		} catch (error) {
+			console.error(error);
+		}
+	};
+
+	const handleFilterQuestions = async (page: number, filterValue: string) => {
+		if (!filterValue) {
+			setNumberOfPages(numberOfPagesOfAllQuestions);
+			setFilteredQuestions(originalQuestions);
+			return;
+		}
+
+		try {
+			const response = await axios.post(`${base_url}/questions/filter`, {
+				orgId,
+				page,
+				limit: 75,
+				questionTypeName: filterValue,
+			});
+			setFilteredQuestions(response.data.data);
+			setNumberOfPages(response.data.pages);
+		} catch (error) {
+			console.error(error);
+		}
 	};
 
 	return (
@@ -146,6 +213,86 @@ const AdminQuestions = () => {
 				isDuplicateOption={isDuplicateOption}
 			/>
 
+			<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', padding: '0 1rem 0 2rem' }}>
+				<Box sx={{ display: 'flex', alignSelf: 'flex-start', width: '35%' }}>
+					<CustomTextField
+						value={searchValue}
+						placeholder='Search Question'
+						onChange={(e) => {
+							setFilterValue('');
+							setSearchValue(e.target.value);
+						}}
+						sx={{ backgroundColor: '#fff' }}
+						required={false}
+						InputProps={{
+							endAdornment: (
+								<InputAdornment position='end'>
+									<Search
+										sx={{
+											mr: '-0.5rem',
+										}}
+									/>
+								</InputAdornment>
+							),
+						}}
+					/>
+					<CustomSubmitButton
+						sx={{ height: '2.1rem', marginLeft: '0.5rem' }}
+						type='button'
+						onClick={async () => {
+							await handleSearchQuestions(1);
+						}}>
+						Search
+					</CustomSubmitButton>
+					<CustomDeleteButton
+						sx={{ height: '2.1rem', marginLeft: '0.5rem' }}
+						type='button'
+						onClick={async () => {
+							setFilterValue('');
+							setSearchValue('');
+							setFilteredQuestions(originalQuestions);
+							setQuestionsPageNumber(1);
+							setNumberOfPages(numberOfPagesOfAllQuestions);
+						}}>
+						Reset
+					</CustomDeleteButton>
+				</Box>
+				<Box>
+					<FormControl>
+						<Select
+							size='small'
+							value={filterValue}
+							onChange={async (e) => {
+								setSearchValue('');
+								setFilterValue(e.target.value);
+								if (e.target.value !== '') {
+									await handleFilterQuestions(1, e.target.value);
+								} else {
+									setFilteredQuestions(originalQuestions);
+								}
+							}}
+							displayEmpty
+							sx={{
+								backgroundColor: theme.bgColor?.common,
+								width: '13.25rem',
+								mr: '0.75rem',
+								ml: '1.5rem',
+								fontSize: '0.85rem',
+								textTransform: 'capitalize',
+							}}>
+							<MenuItem value='' selected sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
+								All Questions
+							</MenuItem>
+							{questionTypes.map((type) => (
+								<MenuItem value={type.name.toLowerCase()} key={type._id} sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
+									{type.name}
+								</MenuItem>
+							))}
+						</Select>
+					</FormControl>
+				</Box>
+			</Box>
+
 			<Box
 				sx={{
 					display: 'flex',
@@ -166,8 +313,8 @@ const AdminQuestions = () => {
 						]}
 					/>
 					<TableBody>
-						{sortedQuestionsData &&
-							sortedQuestionsData?.map((question: QuestionInterface, index) => {
+						{filteredQuestions &&
+							filteredQuestions?.map((question: QuestionInterface, index) => {
 								return (
 									<TableRow key={question._id}>
 										<CustomTableCell value={question.questionType} />
@@ -243,7 +390,18 @@ const AdminQuestions = () => {
 							})}
 					</TableBody>
 				</Table>
-				<CustomTablePagination count={numberOfPages} page={questionsPageNumber} onChange={setQuestionsPageNumber} />
+				<CustomTablePagination
+					count={numberOfPages}
+					page={questionsPageNumber}
+					onChange={(newPage) => {
+						setQuestionsPageNumber(newPage);
+						if (searchValue) {
+							handleSearchQuestions(newPage); // Search with pagination
+						} else if (filterValue) {
+							handleFilterQuestions(newPage, filterValue); // Filter with pagination
+						}
+					}}
+				/>
 			</Box>
 		</DashboardPagesLayout>
 	);

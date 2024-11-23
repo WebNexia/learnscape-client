@@ -18,8 +18,6 @@ const AdminPaymentsTab = () => {
 
 	const courses: string[] = sortedCoursesData.map((course) => course.title);
 
-	console.log(courses);
-
 	const [paymentsPageNumber, setPaymentsPageNumber] = useState<number>(1);
 	const [searchValue, setSearchValue] = useState<string>('');
 	const [filterValue, setFilterValue] = useState<string>('');

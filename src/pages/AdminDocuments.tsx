@@ -162,16 +162,43 @@ const AdminDocuments = () => {
 
 	return (
 		<DashboardPagesLayout pageName='Documents' customSettings={{ justifyContent: 'flex-start' }}>
-			<Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'flex-end', padding: '2rem', width: '100%' }}>
-				<CustomSubmitButton
-					onClick={() => {
-						setIsDocumentCreateModalOpen(true);
-						setEnterDocUrl(true);
-						setFileUploaded(false);
-					}}
-					type='button'>
-					New Document
-				</CustomSubmitButton>
+			<Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'flex-end', padding: '2rem 2rem 1rem 2rem', width: '100%' }}>
+				<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+					<Box sx={{ alignSelf: 'flex-start', width: '50%' }}>
+						<CustomTextField
+							value={searchValue}
+							placeholder={'Search Document'}
+							onChange={(e) => {
+								setSearchValue(e.target.value);
+							}}
+							sx={{ backgroundColor: '#fff' }}
+							required={false}
+							InputProps={{
+								endAdornment: (
+									<InputAdornment position='end'>
+										<Search
+											sx={{
+												mr: '-0.5rem',
+											}}
+										/>
+									</InputAdornment>
+								),
+							}}
+						/>
+					</Box>
+				</Box>
+				<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '100%' }}>
+					<CustomSubmitButton
+						onClick={() => {
+							setIsDocumentCreateModalOpen(true);
+							setEnterDocUrl(true);
+							setFileUploaded(false);
+						}}
+						sx={{ height: '2.1rem' }}
+						type='button'>
+						New Document
+					</CustomSubmitButton>
+				</Box>
 			</Box>
 
 			<CustomDialog
@@ -207,31 +234,6 @@ const AdminDocuments = () => {
 					/>
 				</form>
 			</CustomDialog>
-
-			<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', pl: '2rem' }}>
-				<Box sx={{ alignSelf: 'flex-start', width: '35%', pb: '1rem' }}>
-					<CustomTextField
-						value={searchValue}
-						placeholder={'Search Document'}
-						onChange={(e) => {
-							setSearchValue(e.target.value);
-						}}
-						sx={{ backgroundColor: '#fff' }}
-						required={false}
-						InputProps={{
-							endAdornment: (
-								<InputAdornment position='end'>
-									<Search
-										sx={{
-											mr: '-0.5rem',
-										}}
-									/>
-								</InputAdornment>
-							),
-						}}
-					/>
-				</Box>
-			</Box>
 
 			<Box
 				sx={{
@@ -277,7 +279,11 @@ const AdminDocuments = () => {
 												icon={<Edit fontSize='small' />}
 											/>
 
-											<CustomDialog openModal={editDocumentModalOpen[index]} closeModal={() => closeDocumentEditModal(index)} maxWidth='sm'>
+											<CustomDialog
+												openModal={editDocumentModalOpen[index]}
+												closeModal={() => closeDocumentEditModal(index)}
+												maxWidth='sm'
+												title='Rename Document'>
 												<form
 													style={{ display: 'flex', flexDirection: 'column' }}
 													onSubmit={async (e: React.FormEvent<HTMLFormElement>) => {
@@ -288,10 +294,9 @@ const AdminDocuments = () => {
 														}
 													}}>
 													<CustomTextField
-														label='Rename Document'
 														fullWidth={false}
 														required={true}
-														sx={{ margin: '2rem 1rem' }}
+														sx={{ margin: '0.75rem 1rem' }}
 														value={singleDocument?.name}
 														onChange={(e) => {
 															if (singleDocument) {
