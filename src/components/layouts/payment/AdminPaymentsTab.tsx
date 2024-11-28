@@ -10,7 +10,6 @@ import CustomTextField from '../../forms/customFields/CustomTextField';
 import { Search } from '@mui/icons-material';
 import theme from '../../../themes';
 import { CoursesContext } from '../../../contexts/CoursesContextProvider';
-import CustomInfoMessageAlignedLeft from '../infoMessage/CustomInfoMessageAlignedLeft';
 import { truncateText } from '../../../utils/utilText';
 
 const AdminPaymentsTab = () => {

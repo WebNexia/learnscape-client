@@ -16,7 +16,6 @@ import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitBu
 import CustomDeleteButton from '../components/forms/customButtons/CustomDeleteButton';
 import theme from '../themes';
 import { CoursesContext } from '../contexts/CoursesContextProvider';
-import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/CustomInfoMessageAlignedLeft';
 import { truncateText } from '../utils/utilText';
 
 const AdminQuizSubmissions = () => {

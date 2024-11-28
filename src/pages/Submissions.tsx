@@ -1,26 +1,50 @@
-import { Box, Table, TableBody, TableCell, TableRow } from '@mui/material';
+import { Box, FormControl, InputAdornment, MenuItem, Select, Table, TableBody, TableCell, TableRow } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { useContext, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import CustomTableHead from '../components/layouts/table/CustomTableHead';
 import CustomTableCell from '../components/layouts/table/CustomTableCell';
 import CustomActionBtn from '../components/layouts/table/CustomActionBtn';
-import { PendingOutlined } from '@mui/icons-material';
+import { PendingOutlined, Search } from '@mui/icons-material';
 import CustomTablePagination from '../components/layouts/table/CustomTablePagination';
 import { QuizSubmission } from '../interfaces/quizSubmission';
 import { QuizSubmissionsContext } from '../contexts/QuizSubmissionsContextProvider';
+import theme from '../themes';
+import CustomTextField from '../components/forms/customFields/CustomTextField';
+import { truncateText } from '../utils/utilText';
+import { UserCoursesIdsWithCourseIds } from '../contexts/UserCourseLessonDataContextProvider';
 
 const Submissions = () => {
-	const {
-		sortedUserQuizSubmissionsData,
-		sortUserQuizSubmissionsData,
-		userNumberOfPages,
-		userQuizSubmissionsPageNumber,
-		setUserQuizSubmissionsPageNumber,
-		fetchQuizSubmissionsByUserId,
-	} = useContext(QuizSubmissionsContext);
+	const { sortedUserQuizSubmissionsData, sortUserQuizSubmissionsData, fetchQuizSubmissionsByUserId } = useContext(QuizSubmissionsContext);
 
 	const { userId } = useParams();
+
+	const userCourseData: string[] = JSON.parse(localStorage.getItem('userCourseData') || '[]').map(
+		(data: UserCoursesIdsWithCourseIds) => data.courseTitle
+	);
+
+	const [submissionsPageNumber, setSubmissionsPageNumber] = useState<number>(1);
+	const [searchValue, setSearchValue] = useState<string>('');
+	const [filterValue, setFilterValue] = useState<string>('');
+
+	const pageSize = 50;
+
+	const filteredSubmissions = sortedUserQuizSubmissionsData.filter((submission) => {
+		if (searchValue) {
+			const lowerSearch = searchValue.toLowerCase();
+			return submission?.lessonName?.toLowerCase().includes(lowerSearch);
+		}
+		if (filterValue) {
+			if (filterValue === 'checked' && submission.isChecked) return true;
+			if (filterValue === 'unchecked' && !submission.isChecked) return true;
+			if (filterValue === submission.courseName.toLowerCase()) return true;
+		}
+		return !searchValue && !filterValue;
+	});
+
+	const submissionsNumberOfPages = Math.ceil(filteredSubmissions.length / pageSize);
+
+	const paginatedSubmissions = filteredSubmissions.slice((submissionsPageNumber - 1) * pageSize, submissionsPageNumber * pageSize);
 
 	const [dataLoaded, setDataLoaded] = useState(false);
 
@@ -35,14 +59,14 @@ const Submissions = () => {
 	};
 
 	useEffect(() => {
-		setUserQuizSubmissionsPageNumber(1);
+		setSubmissionsPageNumber(1);
 	}, []);
 
 	useEffect(() => {
 		const fetchData = async () => {
 			if (!dataLoaded && sortedUserQuizSubmissionsData.length === 0) {
 				try {
-					fetchQuizSubmissionsByUserId(userId!, userQuizSubmissionsPageNumber);
+					fetchQuizSubmissionsByUserId(userId!);
 					setDataLoaded(true);
 				} catch (error) {
 					console.error('Error fetching quiz submissions:', error);
@@ -51,7 +75,7 @@ const Submissions = () => {
 		};
 
 		fetchData();
-	}, [userQuizSubmissionsPageNumber, userId, dataLoaded, sortedUserQuizSubmissionsData]);
+	}, [submissionsPageNumber, userId, dataLoaded, sortedUserQuizSubmissionsData]);
 
 	return (
 		<DashboardPagesLayout pageName='Quiz Submissions' customSettings={{ justifyContent: 'flex-start' }}>
@@ -64,7 +88,83 @@ const Submissions = () => {
 					width: '100%',
 					mt: '2rem',
 				}}>
-				<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>
+				<Box
+					sx={{
+						display: 'flex',
+						flexDirection: 'row',
+						justifyContent: 'space-between',
+						width: '100%',
+					}}>
+					<Box sx={{ display: 'flex', justifyContent: 'flex-start', alignContent: 'center', width: '100%' }}>
+						<Box>
+							<FormControl>
+								<Select
+									size='small'
+									value={filterValue}
+									onChange={(e) => {
+										setSearchValue('');
+										setFilterValue(e.target.value);
+									}}
+									displayEmpty
+									sx={{
+										backgroundColor: theme.bgColor?.common,
+										width: '12rem',
+										fontSize: '0.85rem',
+										textTransform: 'capitalize',
+										mr: '1rem',
+									}}>
+									<MenuItem disabled value='filter' selected sx={{ fontSize: '0.85rem', fontStyle: 'italic', textTransform: 'capitalize' }}>
+										Filter Submissions
+									</MenuItem>
+									<MenuItem value='' selected sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
+										All Submissions
+									</MenuItem>
+									<MenuItem value='checked' sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
+										Checked
+									</MenuItem>
+									<MenuItem value='unchecked' sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
+										Unchecked
+									</MenuItem>
+									<MenuItem disabled value='types' selected sx={{ fontSize: '0.7rem', textTransform: 'inherit', fontWeight: 'lighter' }}>
+										------ Filter by Course ------
+									</MenuItem>
+									{userCourseData.map((course) => (
+										<MenuItem value={course.toLowerCase()} key={course} sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
+											{truncateText(course, 25)}
+										</MenuItem>
+									))}
+								</Select>
+							</FormControl>
+						</Box>
+						<Box sx={{ alignSelf: 'flex-start', width: '17.5rem' }}>
+							<CustomTextField
+								value={searchValue}
+								placeholder={'Search in Quiz Name'}
+								onChange={(e) => {
+									setSearchValue(e.target.value);
+									setFilterValue('filter');
+									if (e.target.value === '') {
+										setFilterValue('');
+									}
+								}}
+								sx={{ backgroundColor: '#fff' }}
+								required={false}
+								InputProps={{
+									endAdornment: (
+										<InputAdornment position='end'>
+											<Search
+												sx={{
+													mr: '-0.5rem',
+												}}
+											/>
+										</InputAdornment>
+									),
+								}}
+							/>
+						</Box>
+					</Box>
+				</Box>
+				<Table sx={{ margin: '1rem 0' }} size='small' aria-label='a dense table'>
 					<CustomTableHead<QuizSubmission>
 						orderBy={orderBy}
 						order={order}
@@ -77,33 +177,34 @@ const Submissions = () => {
 						]}
 					/>
 					<TableBody>
-						{sortedUserQuizSubmissionsData.map((submission: QuizSubmission) => (
-							<TableRow key={submission._id}>
-								<CustomTableCell value={submission.lessonName} />
-								<CustomTableCell value={submission.courseName} />
-								<CustomTableCell value={submission.isChecked ? 'Checked' : 'Unchecked'} />
+						{paginatedSubmissions &&
+							paginatedSubmissions.map((submission: QuizSubmission) => (
+								<TableRow key={submission._id}>
+									<CustomTableCell value={submission.lessonName} />
+									<CustomTableCell value={submission.courseName} />
+									<CustomTableCell value={submission.isChecked ? 'Checked' : 'Unchecked'} />
 
-								<TableCell
-									sx={{
-										textAlign: 'center',
-									}}>
-									<CustomActionBtn
-										title='See Details'
-										onClick={() => {
-											window.open(
-												`/submission-feedback/user/${userId}/submission/${submission._id}/lesson/${submission.lessonId}/userlesson/${submission.userLessonId}?isChecked=${submission.isChecked}`,
-												'_blank'
-											);
-											window.scrollTo({ top: 0, behavior: 'smooth' });
-										}}
-										icon={<PendingOutlined />}
-									/>
-								</TableCell>
-							</TableRow>
-						))}
+									<TableCell
+										sx={{
+											textAlign: 'center',
+										}}>
+										<CustomActionBtn
+											title='See Details'
+											onClick={() => {
+												window.open(
+													`/submission-feedback/user/${userId}/submission/${submission._id}/lesson/${submission.lessonId}/userlesson/${submission.userLessonId}?isChecked=${submission.isChecked}`,
+													'_blank'
+												);
+												window.scrollTo({ top: 0, behavior: 'smooth' });
+											}}
+											icon={<PendingOutlined />}
+										/>
+									</TableCell>
+								</TableRow>
+							))}
 					</TableBody>
 				</Table>
-				<CustomTablePagination count={userNumberOfPages} page={userQuizSubmissionsPageNumber} onChange={setUserQuizSubmissionsPageNumber} />
+				<CustomTablePagination count={submissionsNumberOfPages} page={submissionsPageNumber} onChange={setSubmissionsPageNumber} />
 			</Box>
 		</DashboardPagesLayout>
 	);
