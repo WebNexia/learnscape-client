@@ -19,13 +19,13 @@ interface QuizSubmissionsContextTypes {
 	isUserLoaded: boolean;
 	numberOfPages: number;
 	setNumberOfPages: React.Dispatch<React.SetStateAction<number>>;
-	userNumberOfPages: number; // New state for user-specific pagination
+	// userNumberOfPages: number; // New state for user-specific pagination
 	quizSubmissionsPageNumber: number;
-	userQuizSubmissionsPageNumber: number; // New state for user-specific page number
+	// userQuizSubmissionsPageNumber: number; // New state for user-specific page number
 	setQuizSubmissionsPageNumber: React.Dispatch<React.SetStateAction<number>>;
-	setUserQuizSubmissionsPageNumber: React.Dispatch<React.SetStateAction<number>>; // New state setter for user-specific page number
+	// setUserQuizSubmissionsPageNumber: React.Dispatch<React.SetStateAction<number>>; // New state setter for user-specific page number
 	fetchQuizSubmissions: (page: number) => void;
-	fetchQuizSubmissionsByUserId: (userId: string, page: number) => void;
+	fetchQuizSubmissionsByUserId: (userId: string) => void;
 }
 
 interface QuizSubmissionsContextProviderProps {
@@ -44,11 +44,11 @@ export const QuizSubmissionsContext = createContext<QuizSubmissionsContextTypes>
 	isUserLoaded: false,
 	numberOfPages: 1,
 	setNumberOfPages: () => {},
-	userNumberOfPages: 1,
+	// userNumberOfPages: 1,
 	quizSubmissionsPageNumber: 1,
-	userQuizSubmissionsPageNumber: 1,
+	// userQuizSubmissionsPageNumber: 1,
 	setQuizSubmissionsPageNumber: () => {},
-	setUserQuizSubmissionsPageNumber: () => {},
+	// setUserQuizSubmissionsPageNumber: () => {},
 	fetchQuizSubmissions: () => {},
 	fetchQuizSubmissionsByUserId: () => {},
 });
@@ -61,9 +61,7 @@ const QuizSubmissionsContextProvider = (props: QuizSubmissionsContextProviderPro
 	const [sortedQuizSubmissionsData, setSortedQuizSubmissionsData] = useState<QuizSubmission[]>([]);
 	const [sortedUserQuizSubmissionsData, setSortedUserQuizSubmissionsData] = useState<QuizSubmission[]>([]);
 	const [numberOfPages, setNumberOfPages] = useState<number>(1);
-	const [userNumberOfPages, setUserNumberOfPages] = useState<number>(1);
 	const [quizSubmissionsPageNumber, setQuizSubmissionsPageNumber] = useState<number>(1);
-	const [userQuizSubmissionsPageNumber, setUserQuizSubmissionsPageNumber] = useState<number>(1);
 
 	const [isLoaded, setIsLoaded] = useState<boolean>(false);
 	const [isUserLoaded, setIsUserLoaded] = useState<boolean>(false);
@@ -72,7 +70,7 @@ const QuizSubmissionsContextProvider = (props: QuizSubmissionsContextProviderPro
 		if (!orgId) return;
 
 		try {
-			const response = await axios.get(`${base_url}/quizsubmissions/organisation/${orgId}?page=${page}&limit=100`);
+			const response = await axios.get(`${base_url}/quizsubmissions/organisation/${orgId}?page=${page}&limit=75`);
 			const sortedQuizSubmissionsDataCopy = [...response.data.data].sort((a: QuizSubmission, b: QuizSubmission) =>
 				b.updatedAt.localeCompare(a.updatedAt)
 			);
@@ -86,17 +84,16 @@ const QuizSubmissionsContextProvider = (props: QuizSubmissionsContextProviderPro
 		}
 	};
 
-	const fetchQuizSubmissionsByUserId = async (userId: string, page: number): Promise<void> => {
+	const fetchQuizSubmissionsByUserId = async (userId: string): Promise<void> => {
 		if (!orgId) return;
 
 		try {
-			const response = await axios.get(`${base_url}/quizsubmissions/user/${userId}?page=${page}&limit=100`);
+			const response = await axios.get(`${base_url}/quizsubmissions/user/${userId}`);
 
 			const sortedQuizSubmissionsDataCopy = [...response.data.data].sort((a: QuizSubmission, b: QuizSubmission) =>
 				b.updatedAt.localeCompare(a.updatedAt)
 			);
 			setSortedUserQuizSubmissionsData(sortedQuizSubmissionsDataCopy);
-			setUserNumberOfPages(response.data.pages);
 			setIsUserLoaded(true);
 			return response.data.data;
 		} catch (error) {
@@ -120,8 +117,8 @@ const QuizSubmissionsContextProvider = (props: QuizSubmissionsContextProviderPro
 		isLoading: isUserLoading,
 		isError: isUserError,
 	} = useQuery(
-		['userQuizSubmissions', orgId, userQuizSubmissionsPageNumber],
-		() => fetchQuizSubmissionsByUserId(userId!, userQuizSubmissionsPageNumber), // Pass userId here
+		['userQuizSubmissions', orgId],
+		() => fetchQuizSubmissionsByUserId(userId!), // Pass userId here
 		{
 			enabled: !!orgId && !!userId && !isUserLoaded, // Ensure userId exists
 		}
@@ -199,11 +196,11 @@ const QuizSubmissionsContextProvider = (props: QuizSubmissionsContextProviderPro
 				isUserLoaded,
 				numberOfPages,
 				setNumberOfPages,
-				userNumberOfPages,
+				// userNumberOfPages,
 				quizSubmissionsPageNumber,
-				userQuizSubmissionsPageNumber,
+				// userQuizSubmissionsPageNumber,
 				setQuizSubmissionsPageNumber,
-				setUserQuizSubmissionsPageNumber,
+				// setUserQuizSubmissionsPageNumber,
 				fetchQuizSubmissions,
 				fetchQuizSubmissionsByUserId,
 			}}>

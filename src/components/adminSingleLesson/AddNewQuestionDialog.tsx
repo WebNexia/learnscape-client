@@ -196,7 +196,45 @@ const AddNewQuestionDialog = ({
 	return (
 		<CustomDialog openModal={addNewQuestionModalOpen} closeModal={closeAddNewQuestionModal} title='Add New Question'>
 			<DialogContent>
-				<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', padding: '1rem 2rem' }}>
+				<Box sx={{ display: 'flex', justifyContent: 'flex-start', width: '100%', padding: '1rem 2rem' }}>
+					<Box sx={{ mr: '1rem' }}>
+						<FormControl>
+							<Select
+								size='small'
+								value={filterValue}
+								onChange={async (e) => {
+									setSearchValue('');
+									setFilterValue(e.target.value);
+									if (e.target.value !== '') {
+										await handleFilterQuestions(1, e.target.value);
+									} else {
+										setFilteredQuestions(originalQuestions);
+									}
+								}}
+								displayEmpty
+								sx={{
+									backgroundColor: theme.bgColor?.common,
+									width: '12rem',
+									fontSize: '0.85rem',
+									textTransform: 'capitalize',
+								}}>
+								<MenuItem disabled value='filter' selected sx={{ fontSize: '0.85rem', fontStyle: 'italic', textTransform: 'capitalize' }}>
+									Filter Questions
+								</MenuItem>
+								<MenuItem value='' selected sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
+									All Questions
+								</MenuItem>
+								<MenuItem disabled value='types' selected sx={{ fontSize: '0.7rem', textTransform: 'inherit', fontWeight: 'lighter' }}>
+									------ Filter by Type ------
+								</MenuItem>
+								{questionTypes.map((type) => (
+									<MenuItem value={type.name.toLowerCase()} key={type._id} sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
+										{type.name}
+									</MenuItem>
+								))}
+							</Select>
+						</FormControl>
+					</Box>
 					<Box sx={{ display: 'flex', alignSelf: 'flex-start', width: '25rem' }}>
 						<CustomTextField
 							value={searchValue}
@@ -242,44 +280,6 @@ const AddNewQuestionDialog = ({
 							}}>
 							Reset
 						</CustomDeleteButton>
-					</Box>
-					<Box>
-						<FormControl>
-							<Select
-								size='small'
-								value={filterValue}
-								onChange={async (e) => {
-									setSearchValue('');
-									setFilterValue(e.target.value);
-									if (e.target.value !== '') {
-										await handleFilterQuestions(1, e.target.value);
-									} else {
-										setFilteredQuestions(originalQuestions);
-									}
-								}}
-								displayEmpty
-								sx={{
-									backgroundColor: theme.bgColor?.common,
-									width: '12rem',
-									fontSize: '0.85rem',
-									textTransform: 'capitalize',
-								}}>
-								<MenuItem disabled value='filter' selected sx={{ fontSize: '0.85rem', fontStyle: 'italic', textTransform: 'capitalize' }}>
-									Filter Questions
-								</MenuItem>
-								<MenuItem value='' selected sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
-									All Questions
-								</MenuItem>
-								<MenuItem disabled value='types' selected sx={{ fontSize: '0.7rem', textTransform: 'inherit', fontWeight: 'lighter' }}>
-									------ Filter by Type ------
-								</MenuItem>
-								{questionTypes.map((type) => (
-									<MenuItem value={type.name.toLowerCase()} key={type._id} sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
-										{type.name}
-									</MenuItem>
-								))}
-							</Select>
-						</FormControl>
 					</Box>
 				</Box>
 				<Box

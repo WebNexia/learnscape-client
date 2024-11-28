@@ -148,34 +148,8 @@ const AddNewLessonDialog = ({
 	return (
 		<CustomDialog openModal={addNewLessonModalOpen} closeModal={closeAddNewLessonModalOpen} title='Add New Lesson'>
 			<DialogContent>
-				<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', padding: '1rem 2rem 0 2rem' }}>
-					<Box sx={{ alignSelf: 'flex-start', width: '35%' }}>
-						<CustomTextField
-							value={searchValue}
-							placeholder={'Search Lesson'}
-							onChange={(e) => {
-								setSearchValue(e.target.value);
-								setFilterValue('filter');
-								if (e.target.value === '') {
-									setFilterValue('');
-								}
-							}}
-							sx={{ backgroundColor: '#fff' }}
-							required={false}
-							InputProps={{
-								endAdornment: (
-									<InputAdornment position='end'>
-										<Search
-											sx={{
-												mr: '-0.5rem',
-											}}
-										/>
-									</InputAdornment>
-								),
-							}}
-						/>
-					</Box>
-					<Box>
+				<Box sx={{ display: 'flex', justifyContent: 'flex-start', width: '100%', padding: '1rem 2rem 0 2rem' }}>
+					<Box sx={{ mr: '1rem' }}>
 						<FormControl>
 							<Select
 								size='small'
@@ -212,6 +186,32 @@ const AddNewLessonDialog = ({
 								))}
 							</Select>
 						</FormControl>
+					</Box>
+					<Box sx={{ alignSelf: 'flex-start', width: '35%' }}>
+						<CustomTextField
+							value={searchValue}
+							placeholder={'Search Lesson in Title'}
+							onChange={(e) => {
+								setSearchValue(e.target.value);
+								setFilterValue('filter');
+								if (e.target.value === '') {
+									setFilterValue('');
+								}
+							}}
+							sx={{ backgroundColor: '#fff' }}
+							required={false}
+							InputProps={{
+								endAdornment: (
+									<InputAdornment position='end'>
+										<Search
+											sx={{
+												mr: '-0.5rem',
+											}}
+										/>
+									</InputAdornment>
+								),
+							}}
+						/>
 					</Box>
 				</Box>
 				<Box

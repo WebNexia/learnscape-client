@@ -138,7 +138,7 @@ const AddNewDocumentDialog = ({
 		<CustomDialog openModal={addNewDocumentModalOpen} closeModal={closeAddNewDocumentModalOpen} title='Add New Document'>
 			<DialogContent>
 				<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-					<Box sx={{ alignSelf: 'flex-start', width: '40%' }}>
+					<Box sx={{ alignSelf: 'flex-start', width: '20rem', ml: '2rem' }}>
 						<CustomTextField
 							value={searchValue}
 							placeholder={'Search Document'}
@@ -166,8 +166,9 @@ const AddNewDocumentDialog = ({
 						display: 'flex',
 						flexDirection: 'column',
 						alignItems: 'center',
-						padding: '2rem',
+						padding: '1rem 2rem 2rem 2rem',
 						width: '100%',
+						height: '20rem',
 					}}>
 					<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>
 						<CustomTableHead<Document>

@@ -118,75 +118,76 @@ const AdminPromoCodesTab = () => {
 	return (
 		<Box sx={{ width: '100%' }}>
 			<Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'flex-end', padding: '1rem 2rem 0rem 2rem', width: '100%' }}>
-				<CustomSubmitButton
-					onClick={() => {
-						setIsNewCodeModalOpen(true);
-					}}
-					type='button'>
-					New Promo Code
-				</CustomSubmitButton>
+				<Box sx={{ display: 'flex', justifyContent: 'flex-start', width: '100%' }}>
+					<Box sx={{ mr: '1rem' }}>
+						<FormControl>
+							<Select
+								size='small'
+								value={filterValue}
+								onChange={(e) => {
+									setSearchValue('');
+									setFilterValue(e.target.value);
+								}}
+								displayEmpty
+								sx={{
+									backgroundColor: theme.bgColor?.common,
+									width: '10rem',
+									fontSize: '0.85rem',
+									textTransform: 'capitalize',
+								}}>
+								<MenuItem disabled value='filter' selected sx={{ fontSize: '0.85rem', fontStyle: 'italic', textTransform: 'capitalize' }}>
+									Filter Codes
+								</MenuItem>
+								<MenuItem value='' selected sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
+									All Codes
+								</MenuItem>
+								{['Percentage', 'Fixed', 'Active', 'Inactive', 'Unlimited Usage', 'Limited Usage'].map((type) => (
+									<MenuItem value={type.toLowerCase()} key={type} sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
+										{type}
+									</MenuItem>
+								))}
+							</Select>
+						</FormControl>
+					</Box>
+					<Box sx={{ alignSelf: 'flex-start', width: '17.5rem' }}>
+						<CustomTextField
+							value={searchValue}
+							placeholder={'Search Promo Code'}
+							onChange={(e) => {
+								setSearchValue(e.target.value);
+								setFilterValue('filter');
+								if (e.target.value === '') {
+									setFilterValue('');
+								}
+							}}
+							sx={{ backgroundColor: '#fff' }}
+							required={false}
+							InputProps={{
+								endAdornment: (
+									<InputAdornment position='end'>
+										<Search
+											sx={{
+												mr: '-0.5rem',
+											}}
+										/>
+									</InputAdornment>
+								),
+							}}
+						/>
+					</Box>
+				</Box>
+				<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '15%', height: '2rem' }}>
+					<CustomSubmitButton
+						onClick={() => {
+							setIsNewCodeModalOpen(true);
+						}}
+						type='button'>
+						New Promo Code
+					</CustomSubmitButton>
+				</Box>
 			</Box>
 
 			<CreateCodeDialog isNewCodeModalOpen={isNewCodeModalOpen} setIsNewCodeModalOpen={setIsNewCodeModalOpen} />
-
-			<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', padding: '2rem 2rem 0rem 2rem' }}>
-				<Box sx={{ alignSelf: 'flex-start', width: '17.5rem' }}>
-					<CustomTextField
-						value={searchValue}
-						placeholder={'Search Promo Code'}
-						onChange={(e) => {
-							setSearchValue(e.target.value);
-							setFilterValue('filter');
-							if (e.target.value === '') {
-								setFilterValue('');
-							}
-						}}
-						sx={{ backgroundColor: '#fff' }}
-						required={false}
-						InputProps={{
-							endAdornment: (
-								<InputAdornment position='end'>
-									<Search
-										sx={{
-											mr: '-0.5rem',
-										}}
-									/>
-								</InputAdornment>
-							),
-						}}
-					/>
-				</Box>
-				<Box>
-					<FormControl>
-						<Select
-							size='small'
-							value={filterValue}
-							onChange={(e) => {
-								setSearchValue('');
-								setFilterValue(e.target.value);
-							}}
-							displayEmpty
-							sx={{
-								backgroundColor: theme.bgColor?.common,
-								width: '10rem',
-								fontSize: '0.85rem',
-								textTransform: 'capitalize',
-							}}>
-							<MenuItem disabled value='filter' selected sx={{ fontSize: '0.85rem', fontStyle: 'italic', textTransform: 'capitalize' }}>
-								Filter Codes
-							</MenuItem>
-							<MenuItem value='' selected sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
-								All Codes
-							</MenuItem>
-							{['Percentage', 'Fixed', 'Active', 'Inactive', 'Unlimited Usage', 'Limited Usage'].map((type) => (
-								<MenuItem value={type.toLowerCase()} key={type} sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
-									{type}
-								</MenuItem>
-							))}
-						</Select>
-					</FormControl>
-				</Box>
-			</Box>
 
 			<Box
 				sx={{
