@@ -21,8 +21,7 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 	const { userId, courseId, userCourseId } = useParams();
 	const navigate = useNavigate();
 
-	const { sortedUserQuizSubmissionsData, isUserLoaded, userQuizSubmissionsPageNumber, fetchQuizSubmissionsByUserId } =
-		useContext(QuizSubmissionsContext);
+	const { sortedUserQuizSubmissionsData, isUserLoaded, fetchQuizSubmissionsByUserId } = useContext(QuizSubmissionsContext);
 
 	const currentUserLessonData: string | null = localStorage.getItem('userLessonData');
 
@@ -60,7 +59,7 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 		const fetchData = async () => {
 			if (!isUserLoaded && sortedUserQuizSubmissionsData.length === 0) {
 				try {
-					await fetchQuizSubmissionsByUserId(userId!, userQuizSubmissionsPageNumber);
+					await fetchQuizSubmissionsByUserId(userId!);
 				} catch (error) {
 					console.error('Error fetching quiz submissions:', error);
 				}
@@ -68,7 +67,7 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 		};
 
 		fetchData();
-	}, [isUserLoaded, sortedUserQuizSubmissionsData.length, fetchQuizSubmissionsByUserId, userId, userQuizSubmissionsPageNumber]);
+	}, [isUserLoaded, sortedUserQuizSubmissionsData.length, fetchQuizSubmissionsByUserId, userId]);
 
 	useEffect(() => {
 		if (sortedUserQuizSubmissionsData.length > 0) {
