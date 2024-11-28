@@ -129,57 +129,8 @@ const AdminQuizSubmissions = () => {
 
 	return (
 		<DashboardPagesLayout pageName='Quiz Submissions' customSettings={{ justifyContent: 'flex-start' }}>
-			<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', padding: '0 2rem', mt: '3rem' }}>
-				<Box sx={{ display: 'flex', flexDirection: 'column', alignSelf: 'flex-start', width: '27.5rem' }}>
-					<Box sx={{ display: 'flex' }}>
-						<CustomTextField
-							value={searchValue}
-							placeholder='Search Submission'
-							onChange={(e) => {
-								setSearchValue(e.target.value);
-								setFilterValue('filter');
-								if (e.target.value === '') {
-									setFilterValue('');
-								}
-							}}
-							sx={{ backgroundColor: '#fff' }}
-							required={false}
-							InputProps={{
-								endAdornment: (
-									<InputAdornment position='end'>
-										<Search
-											sx={{
-												mr: '-0.5rem',
-											}}
-										/>
-									</InputAdornment>
-								),
-							}}
-						/>
-						<CustomSubmitButton
-							sx={{ height: '2.1rem', marginLeft: '0.5rem' }}
-							type='button'
-							onClick={async () => {
-								await handleSearchQuestions(1);
-							}}>
-							Search
-						</CustomSubmitButton>
-						<CustomDeleteButton
-							sx={{ height: '2.1rem', marginLeft: '0.5rem' }}
-							type='button'
-							onClick={async () => {
-								setFilterValue('');
-								setSearchValue('');
-								setFilteredSubmissions(originalSubmissions);
-								setQuizSubmissionsPageNumber(1);
-								setNumberOfPages(numberOfPagesOfAllSubmissions);
-							}}>
-							Reset
-						</CustomDeleteButton>
-					</Box>
-					<CustomInfoMessageAlignedLeft message='Search in Student Username and Quiz Name' messageSx={{ fontSize: '0.75rem' }} />
-				</Box>
-				<Box>
+			<Box sx={{ display: 'flex', justifyContent: 'flex-start', width: '100%', padding: '2rem 2rem 1rem 2rem' }}>
+				<Box sx={{ mr: '1rem' }}>
 					<FormControl>
 						<Select
 							size='small'
@@ -223,13 +174,66 @@ const AdminQuizSubmissions = () => {
 						</Select>
 					</FormControl>
 				</Box>
+				<Box sx={{ display: 'flex', flexDirection: 'column', alignSelf: 'flex-start', width: '30rem' }}>
+					<Box sx={{ display: 'flex' }}>
+						<CustomTextField
+							value={searchValue}
+							placeholder='Search in Student Username and Quiz Name'
+							onChange={(e) => {
+								setSearchValue(e.target.value);
+								setFilterValue('filter');
+								if (e.target.value === '') {
+									setFilterValue('');
+								}
+							}}
+							sx={{
+								backgroundColor: '#fff',
+								'& .MuiInputBase-input::placeholder': {
+									fontSize: '0.75rem', // Change this to your desired font size
+								},
+							}}
+							required={false}
+							InputProps={{
+								endAdornment: (
+									<InputAdornment position='end'>
+										<Search
+											sx={{
+												mr: '-0.5rem',
+											}}
+										/>
+									</InputAdornment>
+								),
+							}}
+						/>
+						<CustomSubmitButton
+							sx={{ height: '2rem', marginLeft: '0.5rem' }}
+							type='button'
+							onClick={async () => {
+								await handleSearchQuestions(1);
+							}}>
+							Search
+						</CustomSubmitButton>
+						<CustomDeleteButton
+							sx={{ height: '2rem', marginLeft: '0.5rem' }}
+							type='button'
+							onClick={async () => {
+								setFilterValue('');
+								setSearchValue('');
+								setFilteredSubmissions(originalSubmissions);
+								setQuizSubmissionsPageNumber(1);
+								setNumberOfPages(numberOfPagesOfAllSubmissions);
+							}}>
+							Reset
+						</CustomDeleteButton>
+					</Box>
+				</Box>
 			</Box>
 			<Box
 				sx={{
 					display: 'flex',
 					flexDirection: 'column',
 					alignItems: 'center',
-					padding: '1rem 2rem 2rem 2rem',
+					padding: '0rem 2rem 2rem 2rem',
 					width: '100%',
 				}}>
 				<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>

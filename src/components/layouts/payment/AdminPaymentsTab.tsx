@@ -74,39 +74,11 @@ const AdminPaymentsTab = () => {
 				display: 'flex',
 				flexDirection: 'column',
 				alignItems: 'center',
-				padding: '0rem 2rem 2rem 2rem',
+				padding: '1rem 2rem 2rem 2rem',
 				width: '100%',
-				mt: '2rem',
 			}}>
-			<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-				<Box sx={{ alignSelf: 'flex-start', width: '20rem' }}>
-					<CustomTextField
-						value={searchValue}
-						placeholder={'Search Payment'}
-						onChange={(e) => {
-							setSearchValue(e.target.value);
-							setFilterValue('filter');
-							if (e.target.value === '') {
-								setFilterValue('');
-							}
-						}}
-						sx={{ backgroundColor: '#fff' }}
-						required={false}
-						InputProps={{
-							endAdornment: (
-								<InputAdornment position='end'>
-									<Search
-										sx={{
-											mr: '-0.5rem',
-										}}
-									/>
-								</InputAdornment>
-							),
-						}}
-					/>
-					<CustomInfoMessageAlignedLeft message='Search in First Name, Last Name, and Username' messageSx={{ fontSize: '0.75rem' }} />
-				</Box>
-				<Box>
+			<Box sx={{ display: 'flex', justifyContent: 'flex-start', width: '100%' }}>
+				<Box sx={{ mr: '1rem' }}>
 					<FormControl>
 						<Select
 							size='small'
@@ -138,6 +110,37 @@ const AdminPaymentsTab = () => {
 							))}
 						</Select>
 					</FormControl>
+				</Box>
+				<Box sx={{ alignSelf: 'flex-start', width: '22rem' }}>
+					<CustomTextField
+						value={searchValue}
+						placeholder='Search in First Name, Last Name, and Username'
+						onChange={(e) => {
+							setSearchValue(e.target.value);
+							setFilterValue('filter');
+							if (e.target.value === '') {
+								setFilterValue('');
+							}
+						}}
+						sx={{
+							backgroundColor: '#fff',
+							'& .MuiInputBase-input::placeholder': {
+								fontSize: '0.75rem', // Change this to your desired font size
+							},
+						}}
+						required={false}
+						InputProps={{
+							endAdornment: (
+								<InputAdornment position='end'>
+									<Search
+										sx={{
+											mr: '-0.5rem',
+										}}
+									/>
+								</InputAdornment>
+							),
+						}}
+					/>
 				</Box>
 			</Box>
 

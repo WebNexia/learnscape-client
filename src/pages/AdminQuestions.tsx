@@ -178,19 +178,107 @@ const AdminQuestions = () => {
 
 	return (
 		<DashboardPagesLayout pageName='Questions' customSettings={{ justifyContent: 'flex-start' }}>
-			<Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'flex-end', padding: '2rem', width: '100%' }}>
-				<CustomSubmitButton
-					onClick={() => {
-						setIsQuestionCreateModalOpen(true);
-						setQuestionType('');
-						setOptions(['']);
-						setCorrectAnswer('');
-						setIsDuplicateOption(false);
-						setCorrectAnswerIndex(-1);
-					}}
-					type='button'>
-					New Question
-				</CustomSubmitButton>
+			<Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'flex-end', padding: '2rem 2rem 1rem 2rem', width: '100%' }}>
+				<Box sx={{ display: 'flex', justifyContent: 'flex-start', width: '100%' }}>
+					<Box sx={{ mr: '1rem' }}>
+						<FormControl>
+							<Select
+								size='small'
+								value={filterValue}
+								onChange={async (e) => {
+									setFilterValue(e.target.value);
+									setSearchValue('');
+									if (e.target.value !== '') {
+										await handleFilterQuestions(1, e.target.value);
+									} else {
+										setFilteredQuestions(originalQuestions);
+									}
+								}}
+								displayEmpty
+								sx={{
+									backgroundColor: theme.bgColor?.common,
+									width: '10rem',
+									fontSize: '0.85rem',
+									textTransform: 'capitalize',
+								}}>
+								<MenuItem disabled value='filter' selected sx={{ fontSize: '0.85rem', fontStyle: 'italic', textTransform: 'capitalize' }}>
+									Filter Questions
+								</MenuItem>
+								<MenuItem value='' selected sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
+									All Questions
+								</MenuItem>
+								<MenuItem disabled value='types' selected sx={{ fontSize: '0.7rem', textTransform: 'inherit', fontWeight: 'lighter' }}>
+									------ Filter by Type ------
+								</MenuItem>
+								{questionTypes.map((type) => (
+									<MenuItem value={type.name.toLowerCase()} key={type._id} sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
+										{type.name}
+									</MenuItem>
+								))}
+							</Select>
+						</FormControl>
+					</Box>
+					<Box sx={{ display: 'flex', alignSelf: 'flex-start', width: '30rem' }}>
+						<CustomTextField
+							value={searchValue}
+							placeholder='Search Question'
+							onChange={(e) => {
+								setSearchValue(e.target.value);
+								setFilterValue('filter');
+								if (e.target.value === '') {
+									setFilterValue('');
+								}
+							}}
+							sx={{ backgroundColor: '#fff' }}
+							required={false}
+							InputProps={{
+								endAdornment: (
+									<InputAdornment position='end'>
+										<Search
+											sx={{
+												mr: '-0.5rem',
+											}}
+										/>
+									</InputAdornment>
+								),
+							}}
+						/>
+						<CustomSubmitButton
+							sx={{ height: '2rem', marginLeft: '0.5rem' }}
+							type='button'
+							onClick={async () => {
+								await handleSearchQuestions(1);
+							}}>
+							Search
+						</CustomSubmitButton>
+						<CustomDeleteButton
+							sx={{ height: '2rem' }}
+							type='button'
+							onClick={async () => {
+								setFilterValue('');
+								setSearchValue('');
+								setFilteredQuestions(originalQuestions);
+								setQuestionsPageNumber(1);
+								setNumberOfPages(numberOfPagesOfAllQuestions);
+							}}>
+							Reset
+						</CustomDeleteButton>
+					</Box>
+				</Box>
+				<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '10%', height: '2rem' }}>
+					<CustomSubmitButton
+						onClick={() => {
+							setIsQuestionCreateModalOpen(true);
+							setQuestionType('');
+							setOptions(['']);
+							setCorrectAnswer('');
+							setIsDuplicateOption(false);
+							setCorrectAnswerIndex(-1);
+						}}
+						type='button'>
+						New Question
+					</CustomSubmitButton>
+				</Box>
 			</Box>
 
 			<CreateQuestionDialog
@@ -213,99 +301,12 @@ const AdminQuestions = () => {
 				isDuplicateOption={isDuplicateOption}
 			/>
 
-			<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', padding: '0 2rem 0 2rem' }}>
-				<Box sx={{ display: 'flex', alignSelf: 'flex-start', width: '27.5rem' }}>
-					<CustomTextField
-						value={searchValue}
-						placeholder='Search Question'
-						onChange={(e) => {
-							setSearchValue(e.target.value);
-							setFilterValue('filter');
-							if (e.target.value === '') {
-								setFilterValue('');
-							}
-						}}
-						sx={{ backgroundColor: '#fff' }}
-						required={false}
-						InputProps={{
-							endAdornment: (
-								<InputAdornment position='end'>
-									<Search
-										sx={{
-											mr: '-0.5rem',
-										}}
-									/>
-								</InputAdornment>
-							),
-						}}
-					/>
-					<CustomSubmitButton
-						sx={{ height: '2.1rem', marginLeft: '0.5rem' }}
-						type='button'
-						onClick={async () => {
-							await handleSearchQuestions(1);
-						}}>
-						Search
-					</CustomSubmitButton>
-					<CustomDeleteButton
-						sx={{ height: '2.1rem', marginLeft: '0.5rem' }}
-						type='button'
-						onClick={async () => {
-							setFilterValue('');
-							setSearchValue('');
-							setFilteredQuestions(originalQuestions);
-							setQuestionsPageNumber(1);
-							setNumberOfPages(numberOfPagesOfAllQuestions);
-						}}>
-						Reset
-					</CustomDeleteButton>
-				</Box>
-				<Box>
-					<FormControl>
-						<Select
-							size='small'
-							value={filterValue}
-							onChange={async (e) => {
-								setFilterValue(e.target.value);
-								setSearchValue('filter');
-								if (e.target.value !== '') {
-									await handleFilterQuestions(1, e.target.value);
-								} else {
-									setFilteredQuestions(originalQuestions);
-								}
-							}}
-							displayEmpty
-							sx={{
-								backgroundColor: theme.bgColor?.common,
-								width: '10rem',
-								fontSize: '0.85rem',
-								textTransform: 'capitalize',
-							}}>
-							<MenuItem disabled value='filter' selected sx={{ fontSize: '0.85rem', fontStyle: 'italic', textTransform: 'capitalize' }}>
-								Filter Questions
-							</MenuItem>
-							<MenuItem value='' selected sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
-								All Questions
-							</MenuItem>
-							<MenuItem disabled value='types' selected sx={{ fontSize: '0.7rem', textTransform: 'inherit', fontWeight: 'lighter' }}>
-								------ Filter by Type ------
-							</MenuItem>
-							{questionTypes.map((type) => (
-								<MenuItem value={type.name.toLowerCase()} key={type._id} sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
-									{type.name}
-								</MenuItem>
-							))}
-						</Select>
-					</FormControl>
-				</Box>
-			</Box>
-
 			<Box
 				sx={{
 					display: 'flex',
 					flexDirection: 'column',
 					alignItems: 'center',
-					padding: '1rem 2rem 2rem 2rem',
+					padding: '0rem 2rem 2rem 2rem',
 					width: '100%',
 				}}>
 				<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>
@@ -325,7 +326,7 @@ const AdminQuestions = () => {
 								return (
 									<TableRow key={question._id}>
 										<CustomTableCell value={question.questionType} />
-										<CustomTableCell value={truncateText(stripHtml(question.question), 30)} />
+										<CustomTableCell value={truncateText(stripHtml(question.question), 45)} />
 
 										<TableCell
 											sx={{

@@ -299,76 +299,80 @@ const AdminCourses = () => {
 				sx={{
 					display: 'flex',
 					flexDirection: 'row',
-					justifyContent: 'flex-end',
-					padding: '2rem',
+					justifyContent: 'space-between',
+					padding: '2rem 2rem 1rem 2rem',
 					width: '100%',
 				}}>
-				<CustomSubmitButton onClick={openNewCourseModal}>New Course</CustomSubmitButton>
-			</Box>
-			<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', padding: '0 2rem' }}>
-				<Box sx={{ alignSelf: 'flex-start', width: '17.5rem' }}>
-					<CustomTextField
-						value={searchValue}
-						placeholder={'Search Course in Title'}
-						onChange={(e) => {
-							setSearchValue(e.target.value);
-							setFilterValue('filter');
-							if (e.target.value === '') {
-								setFilterValue('');
-							}
-						}}
-						sx={{ backgroundColor: '#fff' }}
-						required={false}
-						InputProps={{
-							endAdornment: (
-								<InputAdornment position='end'>
-									<Search
-										sx={{
-											mr: '-0.5rem',
-										}}
-									/>
-								</InputAdornment>
-							),
-						}}
-					/>
-				</Box>
-				<Box>
-					<FormControl>
-						<Select
-							size='small'
-							value={filterValue}
-							onChange={(e) => {
-								setSearchValue('');
-								setFilterValue(e.target.value);
-							}}
-							displayEmpty
-							sx={{
-								backgroundColor: theme.bgColor?.common,
-								width: '12rem',
-								fontSize: '0.85rem',
-								textTransform: 'capitalize',
-							}}>
-							<MenuItem disabled value='filter' selected sx={{ fontSize: '0.85rem', fontStyle: 'italic', textTransform: 'capitalize' }}>
-								Filter Courses
-							</MenuItem>
-							<MenuItem value='' selected sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
-								All Courses
-							</MenuItem>
-							{['Published Courses', 'Unpublished Courses', 'Paid Courses', 'Free Courses'].map((type) => (
-								<MenuItem value={type.toLowerCase()} key={type} sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
-									{type}
+				<Box sx={{ display: 'flex', justifyContent: 'flex-start', alignContent: 'center', width: '100%' }}>
+					<Box>
+						<FormControl>
+							<Select
+								size='small'
+								value={filterValue}
+								onChange={(e) => {
+									setSearchValue('');
+									setFilterValue(e.target.value);
+								}}
+								displayEmpty
+								sx={{
+									backgroundColor: theme.bgColor?.common,
+									width: '12rem',
+									fontSize: '0.85rem',
+									textTransform: 'capitalize',
+									mr: '1rem',
+								}}>
+								<MenuItem disabled value='filter' selected sx={{ fontSize: '0.85rem', fontStyle: 'italic', textTransform: 'capitalize' }}>
+									Filter Courses
 								</MenuItem>
-							))}
-						</Select>
-					</FormControl>
+								<MenuItem value='' selected sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
+									All Courses
+								</MenuItem>
+								{['Published Courses', 'Unpublished Courses', 'Paid Courses', 'Free Courses'].map((type) => (
+									<MenuItem value={type.toLowerCase()} key={type} sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
+										{type}
+									</MenuItem>
+								))}
+							</Select>
+						</FormControl>
+					</Box>
+					<Box sx={{ alignSelf: 'flex-start', width: '17.5rem' }}>
+						<CustomTextField
+							value={searchValue}
+							placeholder={'Search Course in Title'}
+							onChange={(e) => {
+								setSearchValue(e.target.value);
+								setFilterValue('filter');
+								if (e.target.value === '') {
+									setFilterValue('');
+								}
+							}}
+							sx={{ backgroundColor: '#fff' }}
+							required={false}
+							InputProps={{
+								endAdornment: (
+									<InputAdornment position='end'>
+										<Search
+											sx={{
+												mr: '-0.5rem',
+											}}
+										/>
+									</InputAdornment>
+								),
+							}}
+						/>
+					</Box>
+				</Box>
+				<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '10%', height: '2rem' }}>
+					<CustomSubmitButton onClick={openNewCourseModal}>New Course</CustomSubmitButton>
 				</Box>
 			</Box>
+
 			<Box
 				sx={{
 					display: 'flex',
 					flexDirection: 'column',
 					alignItems: 'center',
-					padding: '1rem 2rem 2rem 2rem',
+					padding: '0rem 2rem 2rem 2rem',
 					width: '100%',
 				}}>
 				<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>

@@ -148,38 +148,11 @@ const AdminUsers = () => {
 					display: 'flex',
 					flexDirection: 'column',
 					alignItems: 'center',
-					padding: '3rem 2rem 2rem 2rem',
+					padding: '2rem',
 					width: '100%',
 				}}>
-				<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-					<Box sx={{ alignSelf: 'flex-start', width: '20rem', pb: '1rem' }}>
-						<CustomTextField
-							value={searchValue}
-							placeholder={'Search User'}
-							onChange={(e) => {
-								setSearchValue(e.target.value);
-								setFilterValue('filter');
-								if (e.target.value === '') {
-									setFilterValue('');
-								}
-							}}
-							sx={{ backgroundColor: '#fff' }}
-							required={false}
-							InputProps={{
-								endAdornment: (
-									<InputAdornment position='end'>
-										<Search
-											sx={{
-												mr: '-0.5rem',
-											}}
-										/>
-									</InputAdornment>
-								),
-							}}
-						/>
-						<CustomInfoMessageAlignedLeft message='Search in First Name, Last Name, Username and Email Address' messageSx={{ fontSize: '0.75rem' }} />
-					</Box>
-					<Box>
+				<Box sx={{ display: 'flex', justifyContent: 'flex-start', width: '100%' }}>
+					<Box sx={{ display: 'flex' }}>
 						<FormControl>
 							<Select
 								size='small'
@@ -208,6 +181,45 @@ const AdminUsers = () => {
 								))}
 							</Select>
 						</FormControl>
+					</Box>
+					<Box
+						sx={{
+							display: 'flex',
+							alignItems: 'center',
+							pb: '1rem',
+							ml: '1rem',
+						}}>
+						<CustomTextField
+							value={searchValue}
+							placeholder={'Search in First & Last Name, Username and Email'}
+							onChange={(e) => {
+								setSearchValue(e.target.value);
+								setFilterValue('filter');
+								if (e.target.value === '') {
+									setFilterValue('');
+								}
+							}}
+							sx={{
+								backgroundColor: '#fff',
+								width: '22.5rem',
+								'& .MuiInputBase-input::placeholder': {
+									fontSize: '0.75rem', // Change this to your desired font size
+								},
+							}}
+							required={false}
+							InputProps={{
+								endAdornment: (
+									<InputAdornment position='end'>
+										<Search
+											sx={{
+												mr: '-0.5rem',
+											}}
+										/>
+									</InputAdornment>
+								),
+							}}
+						/>
+						{/* <CustomInfoMessageAlignedLeft message='Search in First Name, Last Name, Username and Email Address' messageSx={{ fontSize: '0.75rem' }} /> */}
 					</Box>
 				</Box>
 				<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>
