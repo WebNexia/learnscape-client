@@ -13,10 +13,10 @@ interface CoursesContextTypes {
 	updateCoursePublishing: (id: string) => void;
 	removeCourse: (id: string) => void;
 	updateCourse: (singleCourse: SingleCourse) => void;
-	coursesNumberOfPages: number;
-	coursesPageNumber: number;
-	setCoursesPageNumber: React.Dispatch<React.SetStateAction<number>>;
-	fetchCourses: (page: number) => void;
+	// coursesNumberOfPages: number;
+	// coursesPageNumber: number;
+	// setCoursesPageNumber: React.Dispatch<React.SetStateAction<number>>;
+	fetchCourses: () => void;
 	totalNumberOfEnrolledLearners: number;
 	totalCourses: number;
 	coursesSummary: CourseSummary[];
@@ -38,9 +38,9 @@ export const CoursesContext = createContext<CoursesContextTypes>({
 	updateCoursePublishing: () => {},
 	removeCourse: () => {},
 	updateCourse: () => {},
-	coursesNumberOfPages: 1,
-	coursesPageNumber: 1,
-	setCoursesPageNumber: () => {},
+	// coursesNumberOfPages: 1,
+	// coursesPageNumber: 1,
+	// setCoursesPageNumber: () => {},
 	fetchCourses: () => {},
 	totalNumberOfEnrolledLearners: 1,
 	totalCourses: 1,
@@ -53,8 +53,8 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 	const { orgId } = useContext(OrganisationContext);
 
 	const [sortedCoursesData, setSortedCoursesData] = useState<SingleCourse[]>([]);
-	const [coursesNumberOfPages, setNumberOfPages] = useState<number>(1);
-	const [coursesPageNumber, setCoursesPageNumber] = useState<number>(1);
+	// const [coursesNumberOfPages, setNumberOfPages] = useState<number>(1);
+	// const [coursesPageNumber, setCoursesPageNumber] = useState<number>(1);
 
 	const [totalNumberOfEnrolledLearners, setTotalNumberOfEnrolledLearners] = useState<number>(1);
 	const [totalCourses, setTotalCourses] = useState<number>(1);
@@ -62,15 +62,15 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 
 	const [isLoaded, setIsLoaded] = useState<boolean>(false);
 
-	const fetchCourses = async (page: number) => {
+	const fetchCourses = async () => {
 		if (!orgId) return;
 		try {
-			const response = await axios.get(`${base_url}/courses/organisation/${orgId}?page=${page}&limit=30`);
+			const response = await axios.get(`${base_url}/courses/organisation/${orgId}`);
 
 			// Initial sorting when fetching data
 			const sortedDataCopy = [...response.data.data].sort((a: Course, b: Course) => b.updatedAt.localeCompare(a.updatedAt));
 			setSortedCoursesData(sortedDataCopy);
-			setNumberOfPages(response.data.pages);
+			// setNumberOfPages(response.data.pages);
 			setIsLoaded(true);
 			return response.data.data;
 		} catch (error) {
@@ -79,7 +79,7 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 		}
 	};
 
-	const { data, isLoading, isError } = useQuery(['allCourses', orgId, coursesPageNumber], () => fetchCourses(coursesPageNumber), {
+	const { data, isLoading, isError } = useQuery(['allCourses', orgId], () => fetchCourses(), {
 		enabled: !!orgId && !isLoaded,
 	});
 
@@ -164,9 +164,9 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 				removeCourse,
 				updateCoursePublishing,
 				updateCourse,
-				coursesNumberOfPages,
-				coursesPageNumber,
-				setCoursesPageNumber,
+				// coursesNumberOfPages,
+				// coursesPageNumber,
+				// setCoursesPageNumber,
 				fetchCourses,
 				totalNumberOfEnrolledLearners,
 				totalCourses,

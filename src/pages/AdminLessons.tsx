@@ -1,10 +1,10 @@
-import { Box, Table, TableBody, TableCell, TableRow } from '@mui/material';
+import { Box, FormControl, InputAdornment, MenuItem, Select, Table, TableBody, TableCell, TableRow } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { useContext, useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import { LessonsContext } from '../contexts/LessonsContextProvider';
 import { Lesson } from '../interfaces/lessons';
-import { Delete, Edit, FileCopy } from '@mui/icons-material';
+import { Delete, Edit, Search } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import CreateLessonDialog from '../components/forms/newLesson/CreateLessonDialog';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
@@ -14,14 +14,41 @@ import CustomTableHead from '../components/layouts/table/CustomTableHead';
 import CustomTableCell from '../components/layouts/table/CustomTableCell';
 import CustomTablePagination from '../components/layouts/table/CustomTablePagination';
 import CustomActionBtn from '../components/layouts/table/CustomActionBtn';
+import CustomTextField from '../components/forms/customFields/CustomTextField';
+import theme from '../themes';
+import { LessonType } from '../interfaces/enums';
 
 const AdminLessons = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { userId } = useParams();
 	const navigate = useNavigate();
 
-	const { sortLessonsData, sortedLessonsData, removeLesson, numberOfPages, lessonsPageNumber, setLessonsPageNumber, fetchLessons } =
-		useContext(LessonsContext);
+	const { sortLessonsData, sortedLessonsData, removeLesson, fetchLessons } = useContext(LessonsContext);
+
+	const [lessonsPageNumber, setLessonsPageNumber] = useState<number>(1);
+	const [searchValue, setSearchValue] = useState<string>('');
+	const [filterValue, setFilterValue] = useState<string>('');
+
+	const pageSize = 50;
+
+	const filteredLessons = sortedLessonsData.filter((lesson) => {
+		if (searchValue) {
+			const lowerSearch = searchValue.toLowerCase();
+			return lesson?.title?.toLowerCase().includes(lowerSearch);
+		}
+		if (filterValue) {
+			if (filterValue === 'published lessons' && lesson.isActive) return true;
+			if (filterValue === 'unpublished lessons' && !lesson.isActive) return true;
+			if (filterValue === 'instructional lessons' && lesson.type === LessonType.INSTRUCTIONAL_LESSON) return true;
+			if (filterValue === 'practice lessons' && lesson.type === LessonType.PRACTICE_LESSON) return true;
+			if (filterValue === 'quizzes' && lesson.type === LessonType.QUIZ) return true;
+		}
+		return !searchValue && !filterValue;
+	});
+
+	const lessonsNumberOfPages = Math.ceil(filteredLessons.length / pageSize);
+
+	const paginatedLessons = filteredLessons.slice((lessonsPageNumber - 1) * pageSize, lessonsPageNumber * pageSize);
 
 	const [isNewLessonModalOpen, setIsNewLessonModalOpen] = useState<boolean>(false);
 
@@ -38,8 +65,8 @@ const AdminLessons = () => {
 	const [isLessonDeleteModalOpen, setIsLessonDeleteModalOpen] = useState<boolean[]>([]);
 
 	useEffect(() => {
-		setIsLessonDeleteModalOpen(Array(sortedLessonsData.length).fill(false));
-	}, [sortedLessonsData, lessonsPageNumber]);
+		setIsLessonDeleteModalOpen(Array(paginatedLessons.length).fill(false));
+	}, [paginatedLessons, lessonsPageNumber]);
 
 	const isInitialMount = useRef(true);
 
@@ -47,9 +74,9 @@ const AdminLessons = () => {
 		if (isInitialMount.current) {
 			isInitialMount.current = false;
 		} else {
-			fetchLessons(lessonsPageNumber);
+			fetchLessons();
 		}
-	}, [lessonsPageNumber]);
+	}, []);
 
 	useEffect(() => {
 		setLessonsPageNumber(1);
@@ -70,7 +97,7 @@ const AdminLessons = () => {
 		try {
 			removeLesson(lessonId);
 			await axios.delete(`${base_url}/lessons/${lessonId}`);
-			fetchLessons(lessonsPageNumber);
+			fetchLessons();
 		} catch (error) {
 			console.log(error);
 		}
@@ -81,6 +108,73 @@ const AdminLessons = () => {
 				<CustomSubmitButton onClick={() => setIsNewLessonModalOpen(true)}>New Lesson</CustomSubmitButton>
 			</Box>
 			<CreateLessonDialog isNewLessonModalOpen={isNewLessonModalOpen} createNewLesson={true} setIsNewLessonModalOpen={setIsNewLessonModalOpen} />
+
+			<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', padding: '0 2rem' }}>
+				<Box sx={{ alignSelf: 'flex-start', width: '17.5rem' }}>
+					<CustomTextField
+						value={searchValue}
+						placeholder={'Search Lesson in Title'}
+						onChange={(e) => {
+							setSearchValue(e.target.value);
+							setFilterValue('filter');
+							if (e.target.value === '') {
+								setFilterValue('');
+							}
+						}}
+						sx={{ backgroundColor: '#fff' }}
+						required={false}
+						InputProps={{
+							endAdornment: (
+								<InputAdornment position='end'>
+									<Search
+										sx={{
+											mr: '-0.5rem',
+										}}
+									/>
+								</InputAdornment>
+							),
+						}}
+					/>
+				</Box>
+				<Box>
+					<FormControl>
+						<Select
+							size='small'
+							value={filterValue}
+							onChange={(e) => {
+								setSearchValue('');
+								setFilterValue(e.target.value);
+							}}
+							displayEmpty
+							sx={{
+								backgroundColor: theme.bgColor?.common,
+								width: '12rem',
+								fontSize: '0.85rem',
+								textTransform: 'capitalize',
+							}}>
+							<MenuItem disabled value='filter' selected sx={{ fontSize: '0.85rem', fontStyle: 'italic', textTransform: 'capitalize' }}>
+								Filter Lessons
+							</MenuItem>
+							<MenuItem value='' selected sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
+								All Lessons
+							</MenuItem>
+							{['Published Lessons', 'Unpublished Lessons'].map((type) => (
+								<MenuItem value={type.toLowerCase()} key={type} sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
+									{type}
+								</MenuItem>
+							))}
+							<MenuItem disabled value='types' selected sx={{ fontSize: '0.7rem', textTransform: 'inherit', fontWeight: 'lighter' }}>
+								----- Filter by Type -----
+							</MenuItem>
+							{['Instructional Lessons', 'Practice Lessons', 'Quizzes'].map((type) => (
+								<MenuItem value={type.toLowerCase()} key={type} sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
+									{type}
+								</MenuItem>
+							))}
+						</Select>
+					</FormControl>
+				</Box>
+			</Box>
 
 			<Box
 				sx={{
@@ -103,8 +197,8 @@ const AdminLessons = () => {
 						]}
 					/>
 					<TableBody>
-						{sortedLessonsData &&
-							sortedLessonsData?.map((lesson: Lesson, index) => {
+						{paginatedLessons &&
+							paginatedLessons?.map((lesson: Lesson, index) => {
 								return (
 									<TableRow key={lesson._id}>
 										<CustomTableCell value={lesson.title} />
@@ -115,7 +209,6 @@ const AdminLessons = () => {
 											sx={{
 												textAlign: 'center',
 											}}>
-											<CustomActionBtn title='Clone' onClick={() => {}} icon={<FileCopy fontSize='small' />} />
 											<CustomActionBtn
 												title='Edit'
 												onClick={() => {
@@ -153,7 +246,7 @@ const AdminLessons = () => {
 							})}
 					</TableBody>
 				</Table>
-				<CustomTablePagination count={numberOfPages} page={lessonsPageNumber} onChange={setLessonsPageNumber} />
+				<CustomTablePagination count={lessonsNumberOfPages} page={lessonsPageNumber} onChange={setLessonsPageNumber} />
 			</Box>
 		</DashboardPagesLayout>
 	);

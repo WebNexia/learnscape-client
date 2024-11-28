@@ -1,9 +1,23 @@
-import { Box, Table, TableBody, TableRow, TableCell, FormControlLabel, Checkbox, Tooltip, Typography } from '@mui/material';
+import {
+	Box,
+	Table,
+	TableBody,
+	TableRow,
+	TableCell,
+	FormControlLabel,
+	Checkbox,
+	Tooltip,
+	Typography,
+	FormControl,
+	Select,
+	MenuItem,
+	InputAdornment,
+} from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { CoursesContext } from '../contexts/CoursesContextProvider';
 import { Price, SingleCourse } from '../interfaces/course';
-import { Delete, Edit, FileCopy } from '@mui/icons-material';
+import { Delete, Edit, Search } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
@@ -16,22 +30,40 @@ import CustomTablePagination from '../components/layouts/table/CustomTablePagina
 import CustomActionBtn from '../components/layouts/table/CustomActionBtn';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import { dateFormatter } from '../utils/dateFormatter';
+import theme from '../themes';
 
 const AdminCourses = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { userId } = useParams();
 	const navigate = useNavigate();
-	const {
-		sortedCoursesData,
-		sortCoursesData,
-		addNewCourse,
-		removeCourse,
-		coursesNumberOfPages,
-		coursesPageNumber,
-		setCoursesPageNumber,
-		fetchCourses,
-	} = useContext(CoursesContext);
+	const { sortedCoursesData, sortCoursesData, addNewCourse, removeCourse, fetchCourses } = useContext(CoursesContext);
 	const { orgId } = useContext(OrganisationContext);
+
+	const [coursesPageNumber, setCoursesPageNumber] = useState<number>(1);
+	const [searchValue, setSearchValue] = useState<string>('');
+	const [filterValue, setFilterValue] = useState<string>('');
+
+	const pageSize = 50;
+
+	const filteredCourses = sortedCoursesData.filter((course) => {
+		if (searchValue) {
+			const lowerSearch = searchValue.toLowerCase();
+			return course?.title?.toLowerCase().includes(lowerSearch);
+		}
+		if (filterValue) {
+			if (filterValue === 'published courses' && course.isActive) return true;
+			if (filterValue === 'unpublished courses' && !course.isActive) return true;
+			if (filterValue === 'paid courses' && course.prices.find((price) => !(price.amount == '' || price.amount == 'Free' || price.amount == '0')))
+				return true;
+			if (filterValue === 'free courses' && course.prices.find((price) => price.amount == '' || price.amount == 'Free' || price.amount == '0'))
+				return true;
+		}
+		return !searchValue && !filterValue;
+	});
+
+	const coursesNumberOfPages = Math.ceil(filteredCourses.length / pageSize);
+
+	const paginatedCourses = filteredCourses.slice((coursesPageNumber - 1) * pageSize, coursesPageNumber * pageSize);
 
 	const [isCourseCreateModalOpen, setIsCourseCreateModalOpen] = useState<boolean>(false);
 
@@ -51,8 +83,8 @@ const AdminCourses = () => {
 	const [isCourseDeleteModalOpen, setIsCourseDeleteModalOpen] = useState<boolean[]>([]);
 
 	useEffect(() => {
-		setIsCourseDeleteModalOpen(Array(sortedCoursesData.length).fill(false));
-	}, [sortedCoursesData]);
+		setIsCourseDeleteModalOpen(Array(paginatedCourses.length).fill(false));
+	}, [paginatedCourses, coursesPageNumber]);
 
 	const isInitialMount = useRef(true);
 
@@ -60,9 +92,9 @@ const AdminCourses = () => {
 		if (isInitialMount.current) {
 			isInitialMount.current = false;
 		} else {
-			fetchCourses(coursesPageNumber);
+			fetchCourses();
 		}
-	}, [coursesPageNumber]);
+	}, []);
 
 	const openDeleteCourseModal = (index: number) => {
 		const updatedState = [...isCourseDeleteModalOpen];
@@ -273,6 +305,64 @@ const AdminCourses = () => {
 				}}>
 				<CustomSubmitButton onClick={openNewCourseModal}>New Course</CustomSubmitButton>
 			</Box>
+			<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', padding: '0 2rem' }}>
+				<Box sx={{ alignSelf: 'flex-start', width: '17.5rem' }}>
+					<CustomTextField
+						value={searchValue}
+						placeholder={'Search Course in Title'}
+						onChange={(e) => {
+							setSearchValue(e.target.value);
+							setFilterValue('filter');
+							if (e.target.value === '') {
+								setFilterValue('');
+							}
+						}}
+						sx={{ backgroundColor: '#fff' }}
+						required={false}
+						InputProps={{
+							endAdornment: (
+								<InputAdornment position='end'>
+									<Search
+										sx={{
+											mr: '-0.5rem',
+										}}
+									/>
+								</InputAdornment>
+							),
+						}}
+					/>
+				</Box>
+				<Box>
+					<FormControl>
+						<Select
+							size='small'
+							value={filterValue}
+							onChange={(e) => {
+								setSearchValue('');
+								setFilterValue(e.target.value);
+							}}
+							displayEmpty
+							sx={{
+								backgroundColor: theme.bgColor?.common,
+								width: '12rem',
+								fontSize: '0.85rem',
+								textTransform: 'capitalize',
+							}}>
+							<MenuItem disabled value='filter' selected sx={{ fontSize: '0.85rem', fontStyle: 'italic', textTransform: 'capitalize' }}>
+								Filter Courses
+							</MenuItem>
+							<MenuItem value='' selected sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
+								All Courses
+							</MenuItem>
+							{['Published Courses', 'Unpublished Courses', 'Paid Courses', 'Free Courses'].map((type) => (
+								<MenuItem value={type.toLowerCase()} key={type} sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
+									{type}
+								</MenuItem>
+							))}
+						</Select>
+					</FormControl>
+				</Box>
+			</Box>
 			<Box
 				sx={{
 					display: 'flex',
@@ -296,8 +386,8 @@ const AdminCourses = () => {
 						]}
 					/>
 					<TableBody>
-						{sortedCoursesData &&
-							sortedCoursesData?.map((course: SingleCourse, index) => {
+						{paginatedCourses &&
+							paginatedCourses?.map((course: SingleCourse, index) => {
 								return (
 									<TableRow key={course._id}>
 										<CustomTableCell value={course.title} />
@@ -310,7 +400,6 @@ const AdminCourses = () => {
 											sx={{
 												textAlign: 'center',
 											}}>
-											<CustomActionBtn title='Clone' onClick={() => {}} icon={<FileCopy fontSize='small' />} />
 											<CustomActionBtn
 												title='Edit'
 												onClick={() => {

@@ -1,8 +1,8 @@
-import { Box, FormControl, MenuItem, Select, Table, TableBody, TableCell, TableRow } from '@mui/material';
+import { Box, FormControl, InputAdornment, MenuItem, Select, Table, TableBody, TableCell, TableRow } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { useContext, useEffect, useRef, useState } from 'react';
 import axios from 'axios';
-import { Edit, Person, PersonOff } from '@mui/icons-material';
+import { Edit, Person, PersonOff, Search } from '@mui/icons-material';
 
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
@@ -15,14 +15,44 @@ import { User } from '../interfaces/user';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 import theme from '../themes';
 import { Roles } from '../interfaces/enums';
+import CustomTextField from '../components/forms/customFields/CustomTextField';
+import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/CustomInfoMessageAlignedLeft';
 
 const AdminUsers = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
 	const { userId } = useContext(UserAuthContext);
 
-	const { sortUsersData, sortedUsersData, usersNumberOfPages, usersPageNumber, setUsersPageNumber, fetchUsers, updateUser } =
-		useContext(UsersContext);
+	const { sortUsersData, sortedUsersData, fetchUsers, updateUser } = useContext(UsersContext);
+
+	const [usersPageNumber, setUsersPageNumber] = useState<number>(1);
+	const [searchValue, setSearchValue] = useState<string>('');
+	const [filterValue, setFilterValue] = useState<string>('');
+
+	const pageSize = 50;
+
+	const filteredUsers = sortedUsersData.filter((user) => {
+		if (searchValue) {
+			const lowerSearch = searchValue.toLowerCase();
+			return (
+				user?.firstName?.toLowerCase().includes(lowerSearch) ||
+				user?.lastName?.toLowerCase().includes(lowerSearch) ||
+				user?.username?.toLowerCase().includes(lowerSearch) ||
+				user?.email?.toLowerCase().includes(lowerSearch)
+			);
+		}
+		if (filterValue) {
+			if (filterValue === 'active users' && user.isActive) return true;
+			if (filterValue === 'admin users' && user.role === Roles.ADMIN) return true;
+			if (filterValue === 'learners' && user.role === Roles.USER) return true;
+			if (filterValue === 'inactive users' && !user.isActive) return true;
+		}
+		return !searchValue && !filterValue;
+	});
+
+	const usersNumberOfPages = Math.ceil(filteredUsers.length / pageSize);
+
+	const paginatedUsers = filteredUsers.slice((usersPageNumber - 1) * pageSize, usersPageNumber * pageSize);
 
 	const [orderBy, setOrderBy] = useState<keyof User>('username');
 	const [order, setOrder] = useState<'asc' | 'desc'>('asc');
@@ -40,9 +70,9 @@ const AdminUsers = () => {
 	const [singleUser, setSingleUser] = useState<User | null>(null);
 
 	useEffect(() => {
-		setIsUserStatusUpdateModalOpen(Array(sortedUsersData.length).fill(false));
-		setIsUserEditModalOpen(Array(sortedUsersData.length).fill(false));
-	}, [sortedUsersData, usersPageNumber]);
+		setIsUserStatusUpdateModalOpen(Array(paginatedUsers.length).fill(false));
+		setIsUserEditModalOpen(Array(paginatedUsers.length).fill(false));
+	}, [paginatedUsers, usersPageNumber]);
 
 	const isInitialMount = useRef(true);
 
@@ -50,9 +80,9 @@ const AdminUsers = () => {
 		if (isInitialMount.current) {
 			isInitialMount.current = false;
 		} else {
-			fetchUsers(usersPageNumber);
+			fetchUsers();
 		}
-	}, [usersPageNumber]);
+	}, []);
 
 	const toggleStatusUpdateEditModal = (index: number) => {
 		const newEditModalOpen = [...isUserStatusUpdateModalOpen];
@@ -61,7 +91,7 @@ const AdminUsers = () => {
 	};
 
 	const openStatusUpdateUserModal = (index: number) => {
-		const userToEdit = sortedUsersData[index];
+		const userToEdit = paginatedUsers[index];
 		setSingleUser(userToEdit);
 		toggleStatusUpdateEditModal(index);
 	};
@@ -89,7 +119,7 @@ const AdminUsers = () => {
 	};
 
 	const openEditUserModal = (index: number) => {
-		const userToEdit = sortedUsersData[index];
+		const userToEdit = paginatedUsers[index];
 		setSingleUser(userToEdit);
 		toggleUserEditModal(index);
 	};
@@ -118,9 +148,68 @@ const AdminUsers = () => {
 					display: 'flex',
 					flexDirection: 'column',
 					alignItems: 'center',
-					padding: '5rem 2rem 2rem 2rem',
+					padding: '3rem 2rem 2rem 2rem',
 					width: '100%',
 				}}>
+				<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+					<Box sx={{ alignSelf: 'flex-start', width: '20rem', pb: '1rem' }}>
+						<CustomTextField
+							value={searchValue}
+							placeholder={'Search User'}
+							onChange={(e) => {
+								setSearchValue(e.target.value);
+								setFilterValue('filter');
+								if (e.target.value === '') {
+									setFilterValue('');
+								}
+							}}
+							sx={{ backgroundColor: '#fff' }}
+							required={false}
+							InputProps={{
+								endAdornment: (
+									<InputAdornment position='end'>
+										<Search
+											sx={{
+												mr: '-0.5rem',
+											}}
+										/>
+									</InputAdornment>
+								),
+							}}
+						/>
+						<CustomInfoMessageAlignedLeft message='Search in First Name, Last Name, Username and Email Address' messageSx={{ fontSize: '0.75rem' }} />
+					</Box>
+					<Box>
+						<FormControl>
+							<Select
+								size='small'
+								value={filterValue}
+								onChange={(e) => {
+									setSearchValue('');
+									setFilterValue(e.target.value);
+								}}
+								displayEmpty
+								sx={{
+									backgroundColor: theme.bgColor?.common,
+									width: '10rem',
+									fontSize: '0.85rem',
+									textTransform: 'capitalize',
+								}}>
+								<MenuItem disabled value='filter' selected sx={{ fontSize: '0.85rem', fontStyle: 'italic', textTransform: 'capitalize' }}>
+									Filter Users
+								</MenuItem>
+								<MenuItem value='' selected sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
+									All Users
+								</MenuItem>
+								{['Admin Users', 'Learners', 'Active Users', 'Inactive Users'].map((type) => (
+									<MenuItem value={type.toLowerCase()} key={type} sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
+										{type}
+									</MenuItem>
+								))}
+							</Select>
+						</FormControl>
+					</Box>
+				</Box>
 				<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>
 					<CustomTableHead<User>
 						orderBy={orderBy}
@@ -137,8 +226,8 @@ const AdminUsers = () => {
 						]}
 					/>
 					<TableBody>
-						{sortedUsersData &&
-							sortedUsersData?.map((user: User, index) => {
+						{paginatedUsers &&
+							paginatedUsers?.map((user: User, index) => {
 								if (user._id !== userId) {
 									return (
 										<TableRow key={user._id}>
@@ -181,7 +270,7 @@ const AdminUsers = () => {
 																required
 																sx={{
 																	backgroundColor: theme.bgColor?.common,
-																	width: '11.25rem',
+																	width: '13.25rem',
 																	mr: '0.75rem',
 																	ml: '1.5rem',
 																	fontSize: '0.85rem',

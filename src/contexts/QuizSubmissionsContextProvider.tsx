@@ -18,6 +18,7 @@ interface QuizSubmissionsContextTypes {
 	updateQuizSubmissions: (singleQuizSubmission: QuizSubmission) => void;
 	isUserLoaded: boolean;
 	numberOfPages: number;
+	setNumberOfPages: React.Dispatch<React.SetStateAction<number>>;
 	userNumberOfPages: number; // New state for user-specific pagination
 	quizSubmissionsPageNumber: number;
 	userQuizSubmissionsPageNumber: number; // New state for user-specific page number
@@ -42,6 +43,7 @@ export const QuizSubmissionsContext = createContext<QuizSubmissionsContextTypes>
 	updateQuizSubmissions: () => {},
 	isUserLoaded: false,
 	numberOfPages: 1,
+	setNumberOfPages: () => {},
 	userNumberOfPages: 1,
 	quizSubmissionsPageNumber: 1,
 	userQuizSubmissionsPageNumber: 1,
@@ -196,6 +198,7 @@ const QuizSubmissionsContextProvider = (props: QuizSubmissionsContextProviderPro
 				updateQuizSubmissions,
 				isUserLoaded,
 				numberOfPages,
+				setNumberOfPages,
 				userNumberOfPages,
 				quizSubmissionsPageNumber,
 				userQuizSubmissionsPageNumber,

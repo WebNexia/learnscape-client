@@ -1,4 +1,4 @@
-import { Box, Checkbox, DialogContent, FormControlLabel, Link, Table, TableBody, TableCell, TableRow } from '@mui/material';
+import { Box, Checkbox, DialogContent, FormControlLabel, InputAdornment, Link, Table, TableBody, TableCell, TableRow } from '@mui/material';
 import CustomCancelButton from '../forms/customButtons/CustomCancelButton';
 import { useContext, useEffect, useState } from 'react';
 import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
@@ -11,6 +11,8 @@ import { Document } from '../../interfaces/document';
 import { truncateText } from '../../utils/utilText';
 import { Lesson } from '../../interfaces/lessons';
 import { SingleCourse } from '../../interfaces/course';
+import CustomTextField from '../forms/customFields/CustomTextField';
+import { Search } from '@mui/icons-material';
 
 interface AddNewDocumentDialogProps {
 	addNewDocumentModalOpen?: boolean;
@@ -33,7 +35,25 @@ const AddNewDocumentDialog = ({
 	singleCourse,
 	setSingleCourse,
 }: AddNewDocumentDialogProps) => {
-	const { sortDocumentsData, sortedDocumentsData, numberOfPages, documentsPageNumber, setDocumentsPageNumber } = useContext(DocumentsContext);
+	const { sortDocumentsData, sortedDocumentsData } = useContext(DocumentsContext);
+	const [documentsPageNumber, setDocumentsPageNumber] = useState<number>(1);
+	const [searchValue, setSearchValue] = useState<string>('');
+
+	const pageSize = 50;
+
+	const filteredDocuments = sortedDocumentsData.filter((doc) => {
+		if (searchValue) {
+			const lowerSearch = searchValue.toLowerCase();
+			return doc?.name?.toLowerCase().includes(lowerSearch);
+		}
+
+		return !searchValue;
+	});
+
+	const documentsNumberOfPages = Math.ceil(filteredDocuments.length / pageSize);
+
+	const paginatedDocuments = filteredDocuments.slice((documentsPageNumber - 1) * pageSize, documentsPageNumber * pageSize);
+
 	const [selectedDocuments, setSelectedDocuments] = useState<Document[]>([]);
 	const [selectedDocumentIds, setSelectedDocumentIds] = useState<string[]>([]);
 	const [orderBy, setOrderBy] = useState<keyof Document>('name');
@@ -117,13 +137,36 @@ const AddNewDocumentDialog = ({
 	return (
 		<CustomDialog openModal={addNewDocumentModalOpen} closeModal={closeAddNewDocumentModalOpen} title='Add New Document'>
 			<DialogContent>
+				<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+					<Box sx={{ alignSelf: 'flex-start', width: '40%' }}>
+						<CustomTextField
+							value={searchValue}
+							placeholder={'Search Document'}
+							onChange={(e) => {
+								setSearchValue(e.target.value);
+							}}
+							sx={{ backgroundColor: '#fff' }}
+							required={false}
+							InputProps={{
+								endAdornment: (
+									<InputAdornment position='end'>
+										<Search
+											sx={{
+												mr: '-0.5rem',
+											}}
+										/>
+									</InputAdornment>
+								),
+							}}
+						/>
+					</Box>
+				</Box>
 				<Box
 					sx={{
 						display: 'flex',
 						flexDirection: 'column',
 						alignItems: 'center',
 						padding: '2rem',
-						mt: '1rem',
 						width: '100%',
 					}}>
 					<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>
@@ -138,8 +181,8 @@ const AddNewDocumentDialog = ({
 							]}
 						/>
 						<TableBody>
-							{sortedDocumentsData &&
-								sortedDocumentsData
+							{paginatedDocuments &&
+								paginatedDocuments
 									?.filter((document) =>
 										!fromAdminCourses
 											? !singleLessonBeforeSave?.documentIds.includes(document._id)
@@ -181,7 +224,7 @@ const AddNewDocumentDialog = ({
 									})}
 						</TableBody>
 					</Table>
-					<CustomTablePagination count={numberOfPages} page={documentsPageNumber} onChange={setDocumentsPageNumber} />
+					<CustomTablePagination count={documentsNumberOfPages} page={documentsPageNumber} onChange={setDocumentsPageNumber} />
 				</Box>
 			</DialogContent>
 			<CustomDialogActions

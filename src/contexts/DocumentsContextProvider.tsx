@@ -12,10 +12,10 @@ interface DocumentsContextTypes {
 	addNewDocument: (newDocument: any) => void;
 	removeDocument: (id: string) => void;
 	updateDocuments: (singleDocument: Document) => void;
-	numberOfPages: number;
-	documentsPageNumber: number;
-	setDocumentsPageNumber: React.Dispatch<React.SetStateAction<number>>;
-	fetchDocuments: (page: number) => void;
+	// numberOfPages: number;
+	// documentsPageNumber: number;
+	// setDocumentsPageNumber: React.Dispatch<React.SetStateAction<number>>;
+	fetchDocuments: () => void;
 }
 
 interface DocumentsContextProviderProps {
@@ -28,9 +28,9 @@ export const DocumentsContext = createContext<DocumentsContextTypes>({
 	addNewDocument: () => {},
 	removeDocument: () => {},
 	updateDocuments: () => {},
-	numberOfPages: 1,
-	documentsPageNumber: 1,
-	setDocumentsPageNumber: () => {},
+	// numberOfPages: 1,
+	// documentsPageNumber: 1,
+	// setDocumentsPageNumber: () => {},
 	fetchDocuments: () => {},
 });
 
@@ -39,21 +39,21 @@ const DocumentsContextProvider = (props: DocumentsContextProviderProps) => {
 	const { orgId } = useContext(OrganisationContext);
 
 	const [sortedDocumentsData, setSortedDocumentsData] = useState<Document[]>([]);
-	const [numberOfPages, setNumberOfPages] = useState<number>(1);
-	const [documentsPageNumber, setDocumentsPageNumber] = useState<number>(1);
+	// const [numberOfPages, setNumberOfPages] = useState<number>(1);
+	// const [documentsPageNumber, setDocumentsPageNumber] = useState<number>(1);
 
 	const [isLoaded, setIsLoaded] = useState<boolean>(false);
 
-	const fetchDocuments = async (page: number) => {
+	const fetchDocuments = async () => {
 		if (!orgId) return;
 
 		try {
-			const response = await axios.get(`${base_url}/documents/organisation/${orgId}?page=${page}&limit=50`);
+			const response = await axios.get(`${base_url}/documents/organisation/${orgId}`);
 
 			// Initial sorting when fetching data
 			const sortedDocumentsDataCopy = [...response.data.data].sort((a: Document, b: Document) => b.updatedAt.localeCompare(a.updatedAt));
 			setSortedDocumentsData(sortedDocumentsDataCopy);
-			setNumberOfPages(response.data.pages);
+			// setNumberOfPages(response.data.pages);
 			setIsLoaded(true);
 			return response.data.data;
 		} catch (error) {
@@ -62,7 +62,7 @@ const DocumentsContextProvider = (props: DocumentsContextProviderProps) => {
 		}
 	};
 
-	const { data, isLoading, isError } = useQuery(['allDocuments', orgId, documentsPageNumber], () => fetchDocuments(documentsPageNumber), {
+	const { data, isLoading, isError } = useQuery(['allDocuments', orgId], () => fetchDocuments(), {
 		enabled: !!orgId && !isLoaded,
 	});
 
@@ -112,9 +112,9 @@ const DocumentsContextProvider = (props: DocumentsContextProviderProps) => {
 				addNewDocument,
 				removeDocument,
 				updateDocuments,
-				numberOfPages,
-				documentsPageNumber,
-				setDocumentsPageNumber,
+				// numberOfPages,
+				// documentsPageNumber,
+				// setDocumentsPageNumber,
 				fetchDocuments,
 			}}>
 			{props.children}

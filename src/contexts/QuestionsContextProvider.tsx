@@ -16,6 +16,7 @@ interface QuestionsContextTypes {
 	numberOfPages: number;
 	questionsPageNumber: number;
 	setQuestionsPageNumber: React.Dispatch<React.SetStateAction<number>>;
+	setNumberOfPages: React.Dispatch<React.SetStateAction<number>>;
 	questionTypes: QuestionType[];
 	fetchQuestions: (page: number) => void;
 	fetchQuestionTypeName: (question: QuestionInterface) => string;
@@ -34,6 +35,7 @@ export const QuestionsContext = createContext<QuestionsContextTypes>({
 	numberOfPages: 1,
 	questionsPageNumber: 1,
 	setQuestionsPageNumber: () => {},
+	setNumberOfPages: () => {},
 	questionTypes: [],
 	fetchQuestions: () => {},
 	fetchQuestionTypeName: () => '',
@@ -54,7 +56,7 @@ const QuestionsContextProvider = (props: QuestionsContextProviderProps) => {
 		if (!orgId) return;
 
 		try {
-			const response = await axios.get(`${base_url}/questions/organisation/${orgId}?page=${page}&limit=100`);
+			const response = await axios.get(`${base_url}/questions/organisation/${orgId}?page=${page}&limit=75`);
 
 			// Initial sorting when fetching data
 			const sortedDataCopy = [...response.data.data].sort((a: QuestionInterface, b: QuestionInterface) => b.updatedAt.localeCompare(a.updatedAt));
@@ -157,6 +159,7 @@ const QuestionsContextProvider = (props: QuestionsContextProviderProps) => {
 				numberOfPages,
 				questionsPageNumber,
 				setQuestionsPageNumber,
+				setNumberOfPages,
 				questionTypes,
 				fetchQuestions,
 				fetchQuestionTypeName,
