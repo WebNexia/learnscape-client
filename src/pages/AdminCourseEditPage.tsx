@@ -69,9 +69,9 @@ const AdminCourseEditPage = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
 	const { orgId } = useContext(OrganisationContext);
-	const { fetchLessons, lessonsPageNumber } = useContext(LessonsContext);
-	const { fetchDocuments, documentsPageNumber } = useContext(DocumentsContext);
-	const { updateCoursePublishing, updateCourse, coursesPageNumber, fetchCourses } = useContext(CoursesContext);
+	const { fetchLessons } = useContext(LessonsContext);
+	const { fetchDocuments } = useContext(DocumentsContext);
+	const { updateCoursePublishing, updateCourse, fetchCourses } = useContext(CoursesContext);
 
 	const [isEditMode, setIsEditMode] = useState<boolean>(false);
 	const [singleCourse, setSingleCourse] = useState<SingleCourse>();
@@ -248,7 +248,7 @@ const AdminCourseEditPage = () => {
 										type: lesson.type,
 										orgId,
 									});
-									fetchLessons(lessonsPageNumber);
+									fetchLessons();
 
 									return {
 										...lesson,
@@ -296,7 +296,7 @@ const AdminCourseEditPage = () => {
 									userId,
 									documentUrl: document.documentUrl.trim(),
 								});
-								fetchDocuments(documentsPageNumber);
+								fetchDocuments();
 
 								return { ...document, _id: response.data._id, createdAt: response.data.createdAt, updatedAt: response.data.updatedAt } as Document; // Assert as Document
 							} catch (error) {
@@ -319,7 +319,7 @@ const AdminCourseEditPage = () => {
 							await axios.patch(`${base_url}/documents/${doc._id}`, {
 								name: doc.name.trim(),
 							});
-							fetchDocuments(documentsPageNumber);
+							fetchDocuments();
 						} catch (error) {
 							console.error('Error updating question:', error);
 						}
@@ -345,7 +345,7 @@ const AdminCourseEditPage = () => {
 
 					updateCourse(updatedCourse);
 					setSingleCourse(updatedCourse);
-					fetchCourses(coursesPageNumber);
+					fetchCourses();
 
 					await Promise.all(
 						updatedChapters?.map(async (chapter) => {

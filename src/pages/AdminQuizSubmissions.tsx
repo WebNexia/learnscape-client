@@ -17,6 +17,7 @@ import CustomDeleteButton from '../components/forms/customButtons/CustomDeleteBu
 import theme from '../themes';
 import { CoursesContext } from '../contexts/CoursesContextProvider';
 import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/CustomInfoMessageAlignedLeft';
+import { truncateText } from '../utils/utilText';
 
 const AdminQuizSubmissions = () => {
 	const { userId } = useParams();
@@ -119,7 +120,6 @@ const AdminQuizSubmissions = () => {
 				isChecked,
 				courseId,
 			});
-			console.log(response.data.data);
 			setFilteredSubmissions(response.data.data);
 			setNumberOfPages(response.data.pages);
 		} catch (error) {
@@ -130,14 +130,17 @@ const AdminQuizSubmissions = () => {
 	return (
 		<DashboardPagesLayout pageName='Quiz Submissions' customSettings={{ justifyContent: 'flex-start' }}>
 			<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', padding: '0 2rem', mt: '3rem' }}>
-				<Box sx={{ display: 'flex', flexDirection: 'column', alignSelf: 'flex-start', width: '35%' }}>
+				<Box sx={{ display: 'flex', flexDirection: 'column', alignSelf: 'flex-start', width: '27.5rem' }}>
 					<Box sx={{ display: 'flex' }}>
 						<CustomTextField
 							value={searchValue}
 							placeholder='Search Submission'
 							onChange={(e) => {
-								setFilterValue('');
 								setSearchValue(e.target.value);
+								setFilterValue('filter');
+								if (e.target.value === '') {
+									setFilterValue('');
+								}
 							}}
 							sx={{ backgroundColor: '#fff' }}
 							required={false}
@@ -193,12 +196,13 @@ const AdminQuizSubmissions = () => {
 							displayEmpty
 							sx={{
 								backgroundColor: theme.bgColor?.common,
-								width: '13.25rem',
-								mr: '0.75rem',
-								ml: '1.5rem',
+								width: '13rem',
 								fontSize: '0.85rem',
 								textTransform: 'capitalize',
 							}}>
+							<MenuItem disabled value='filter' selected sx={{ fontSize: '0.85rem', fontStyle: 'italic', textTransform: 'capitalize' }}>
+								Filter Submissions
+							</MenuItem>
 							<MenuItem value='' selected sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
 								All Submissions
 							</MenuItem>
@@ -208,9 +212,12 @@ const AdminQuizSubmissions = () => {
 							<MenuItem value='unchecked' sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
 								Unchecked
 							</MenuItem>
+							<MenuItem disabled value='types' selected sx={{ fontSize: '0.7rem', textTransform: 'inherit', fontWeight: 'lighter' }}>
+								------ Filter by Course ------
+							</MenuItem>
 							{courses.map((course) => (
 								<MenuItem value={course.courseId} key={course.courseId} sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
-									{course.courseTitle}
+									{truncateText(course.courseTitle, 25)}
 								</MenuItem>
 							))}
 						</Select>

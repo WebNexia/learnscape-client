@@ -57,10 +57,10 @@ const AdminLessonEditPage = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { userId, lessonId } = useParams();
 	const { orgId } = useContext(OrganisationContext);
-	const { updateLessonPublishing, updateLessons, lessonTypes, fetchLessons, lessonsPageNumber } = useContext(LessonsContext);
+	const { updateLessonPublishing, updateLessons, lessonTypes, fetchLessons } = useContext(LessonsContext);
 
 	const { questionTypes, fetchQuestions, questionsPageNumber, fetchQuestionTypeName } = useContext(QuestionsContext);
-	const { fetchDocuments, documentsPageNumber } = useContext(DocumentsContext);
+	const { fetchDocuments } = useContext(DocumentsContext);
 
 	const {
 		options,
@@ -289,7 +289,7 @@ const AdminLessonEditPage = () => {
 									userId,
 									documentUrl: document.documentUrl,
 								});
-								fetchDocuments(documentsPageNumber);
+								fetchDocuments();
 								return {
 									...document,
 									_id: response.data._id,
@@ -316,7 +316,7 @@ const AdminLessonEditPage = () => {
 							await axios.patch(`${base_url}/documents/${doc._id}`, {
 								name: doc.name.trim(),
 							});
-							fetchDocuments(documentsPageNumber);
+							fetchDocuments();
 						} catch (error) {
 							console.error('Error updating document:', error);
 						}
@@ -437,7 +437,7 @@ const AdminLessonEditPage = () => {
 						documentIds: updatedDocumentIds,
 					});
 
-					fetchLessons(lessonsPageNumber);
+					fetchLessons();
 					updateLessons({
 						...singleLessonBeforeSave,
 						questions: updatedQuestions,

@@ -11,6 +11,7 @@ import { Search } from '@mui/icons-material';
 import theme from '../../../themes';
 import { CoursesContext } from '../../../contexts/CoursesContextProvider';
 import CustomInfoMessageAlignedLeft from '../infoMessage/CustomInfoMessageAlignedLeft';
+import { truncateText } from '../../../utils/utilText';
 
 const AdminPaymentsTab = () => {
 	const { sortedPaymentsData, sortPaymentsData, fetchPayments } = useContext(PaymentsContext);
@@ -77,14 +78,17 @@ const AdminPaymentsTab = () => {
 				width: '100%',
 				mt: '2rem',
 			}}>
-			<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', padding: '0 1rem' }}>
-				<Box sx={{ alignSelf: 'flex-start', width: '35%' }}>
+			<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+				<Box sx={{ alignSelf: 'flex-start', width: '20rem' }}>
 					<CustomTextField
 						value={searchValue}
 						placeholder={'Search Payment'}
 						onChange={(e) => {
-							setFilterValue('');
 							setSearchValue(e.target.value);
+							setFilterValue('filter');
+							if (e.target.value === '') {
+								setFilterValue('');
+							}
 						}}
 						sx={{ backgroundColor: '#fff' }}
 						required={false}
@@ -114,18 +118,22 @@ const AdminPaymentsTab = () => {
 							displayEmpty
 							sx={{
 								backgroundColor: theme.bgColor?.common,
-								width: '13.25rem',
-								mr: '0.75rem',
-								ml: '1.5rem',
+								width: '13rem',
 								fontSize: '0.85rem',
 								textTransform: 'capitalize',
 							}}>
+							<MenuItem disabled value='filter' selected sx={{ fontSize: '0.85rem', fontStyle: 'italic', textTransform: 'capitalize' }}>
+								Filter Payments
+							</MenuItem>
 							<MenuItem value='' selected sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
 								All Payments
 							</MenuItem>
-							{courses.map((type) => (
-								<MenuItem value={type.toLowerCase()} key={type} sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
-									{type}
+							<MenuItem disabled value='types' selected sx={{ fontSize: '0.7rem', textTransform: 'inherit', fontWeight: 'lighter' }}>
+								------ Filter by Course ------
+							</MenuItem>
+							{courses.map((course) => (
+								<MenuItem value={course.toLowerCase()} key={course} sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
+									{truncateText(course, 25)}
 								</MenuItem>
 							))}
 						</Select>

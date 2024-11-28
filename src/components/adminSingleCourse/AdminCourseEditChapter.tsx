@@ -84,7 +84,7 @@ const AdminCourseEditChapter = ({
 					{isMissingField && chapter?.title === '' && <CustomErrorMessage>Please enter chapter title</CustomErrorMessage>}
 				</Box>
 				<Box sx={{ display: 'flex' }}>
-					<Box sx={{ marginRight: '1rem' }}>
+					<Box sx={{ marginRight: '0.25rem' }}>
 						<Tooltip title='Add Lesson' placement='top'>
 							<IconButton
 								onClick={() => {
@@ -121,11 +121,11 @@ const AdminCourseEditChapter = ({
 						/>
 					</Box>
 					<Box>
-						<Tooltip title='Clone Chapter' placement='top'>
+						{/* <Tooltip title='Clone Chapter' placement='top'>
 							<IconButton>
 								<FileCopy fontSize='small' />
 							</IconButton>
-						</Tooltip>
+						</Tooltip> */}
 						<Tooltip title='Delete Chapter' placement='top'>
 							<IconButton
 								onClick={() => {

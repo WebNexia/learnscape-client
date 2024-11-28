@@ -37,11 +37,11 @@ const AdminLessons = () => {
 			return lesson?.title?.toLowerCase().includes(lowerSearch);
 		}
 		if (filterValue) {
+			if (filterValue === 'published lessons' && lesson.isActive) return true;
+			if (filterValue === 'unpublished lessons' && !lesson.isActive) return true;
 			if (filterValue === 'instructional lessons' && lesson.type === LessonType.INSTRUCTIONAL_LESSON) return true;
 			if (filterValue === 'practice lessons' && lesson.type === LessonType.PRACTICE_LESSON) return true;
 			if (filterValue === 'quizzes' && lesson.type === LessonType.QUIZ) return true;
-			if (filterValue === 'published lessons' && lesson.isActive) return true;
-			if (filterValue === 'unpublished lessons' && !lesson.isActive) return true;
 		}
 		return !searchValue && !filterValue;
 	});
@@ -110,13 +110,16 @@ const AdminLessons = () => {
 			<CreateLessonDialog isNewLessonModalOpen={isNewLessonModalOpen} createNewLesson={true} setIsNewLessonModalOpen={setIsNewLessonModalOpen} />
 
 			<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', padding: '0 2rem' }}>
-				<Box sx={{ alignSelf: 'flex-start', width: '35%' }}>
+				<Box sx={{ alignSelf: 'flex-start', width: '17.5rem' }}>
 					<CustomTextField
 						value={searchValue}
-						placeholder={'Search Lesson'}
+						placeholder={'Search Lesson in Title'}
 						onChange={(e) => {
-							setFilterValue('');
 							setSearchValue(e.target.value);
+							setFilterValue('filter');
+							if (e.target.value === '') {
+								setFilterValue('');
+							}
 						}}
 						sx={{ backgroundColor: '#fff' }}
 						required={false}
@@ -145,16 +148,25 @@ const AdminLessons = () => {
 							displayEmpty
 							sx={{
 								backgroundColor: theme.bgColor?.common,
-								width: '13.25rem',
-								mr: '0.75rem',
-								ml: '1.5rem',
+								width: '12rem',
 								fontSize: '0.85rem',
 								textTransform: 'capitalize',
 							}}>
+							<MenuItem disabled value='filter' selected sx={{ fontSize: '0.85rem', fontStyle: 'italic', textTransform: 'capitalize' }}>
+								Filter Lessons
+							</MenuItem>
 							<MenuItem value='' selected sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
 								All Lessons
 							</MenuItem>
-							{['Instructional Lessons', 'Practice Lessons', 'Quizzes', 'Published Lessons', 'Unpublished Lessons'].map((type) => (
+							{['Published Lessons', 'Unpublished Lessons'].map((type) => (
+								<MenuItem value={type.toLowerCase()} key={type} sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
+									{type}
+								</MenuItem>
+							))}
+							<MenuItem disabled value='types' selected sx={{ fontSize: '0.7rem', textTransform: 'inherit', fontWeight: 'lighter' }}>
+								----- Filter by Type -----
+							</MenuItem>
+							{['Instructional Lessons', 'Practice Lessons', 'Quizzes'].map((type) => (
 								<MenuItem value={type.toLowerCase()} key={type} sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
 									{type}
 								</MenuItem>

@@ -129,14 +129,17 @@ const AdminPromoCodesTab = () => {
 
 			<CreateCodeDialog isNewCodeModalOpen={isNewCodeModalOpen} setIsNewCodeModalOpen={setIsNewCodeModalOpen} />
 
-			<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', padding: '2rem 1rem 0rem 2rem' }}>
-				<Box sx={{ alignSelf: 'flex-start', width: '35%' }}>
+			<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', padding: '2rem 2rem 0rem 2rem' }}>
+				<Box sx={{ alignSelf: 'flex-start', width: '17.5rem' }}>
 					<CustomTextField
 						value={searchValue}
 						placeholder={'Search Promo Code'}
 						onChange={(e) => {
-							setFilterValue('');
 							setSearchValue(e.target.value);
+							setFilterValue('filter');
+							if (e.target.value === '') {
+								setFilterValue('');
+							}
 						}}
 						sx={{ backgroundColor: '#fff' }}
 						required={false}
@@ -165,12 +168,13 @@ const AdminPromoCodesTab = () => {
 							displayEmpty
 							sx={{
 								backgroundColor: theme.bgColor?.common,
-								width: '13.25rem',
-								mr: '0.75rem',
-								ml: '1.5rem',
+								width: '10rem',
 								fontSize: '0.85rem',
 								textTransform: 'capitalize',
 							}}>
+							<MenuItem disabled value='filter' selected sx={{ fontSize: '0.85rem', fontStyle: 'italic', textTransform: 'capitalize' }}>
+								Filter Codes
+							</MenuItem>
 							<MenuItem value='' selected sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
 								All Codes
 							</MenuItem>

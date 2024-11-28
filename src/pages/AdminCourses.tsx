@@ -53,6 +53,8 @@ const AdminCourses = () => {
 		if (filterValue) {
 			if (filterValue === 'published courses' && course.isActive) return true;
 			if (filterValue === 'unpublished courses' && !course.isActive) return true;
+			if (filterValue === 'paid courses' && course.prices.find((price) => !(price.amount == '' || price.amount == 'Free' || price.amount == '0')))
+				return true;
 			if (filterValue === 'free courses' && course.prices.find((price) => price.amount == '' || price.amount == 'Free' || price.amount == '0'))
 				return true;
 		}
@@ -304,13 +306,16 @@ const AdminCourses = () => {
 				<CustomSubmitButton onClick={openNewCourseModal}>New Course</CustomSubmitButton>
 			</Box>
 			<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', padding: '0 2rem' }}>
-				<Box sx={{ alignSelf: 'flex-start', width: '35%' }}>
+				<Box sx={{ alignSelf: 'flex-start', width: '17.5rem' }}>
 					<CustomTextField
 						value={searchValue}
-						placeholder={'Search Course'}
+						placeholder={'Search Course in Title'}
 						onChange={(e) => {
-							setFilterValue('');
 							setSearchValue(e.target.value);
+							setFilterValue('filter');
+							if (e.target.value === '') {
+								setFilterValue('');
+							}
 						}}
 						sx={{ backgroundColor: '#fff' }}
 						required={false}
@@ -339,16 +344,17 @@ const AdminCourses = () => {
 							displayEmpty
 							sx={{
 								backgroundColor: theme.bgColor?.common,
-								width: '13.25rem',
-								mr: '0.75rem',
-								ml: '1.5rem',
+								width: '12rem',
 								fontSize: '0.85rem',
 								textTransform: 'capitalize',
 							}}>
+							<MenuItem disabled value='filter' selected sx={{ fontSize: '0.85rem', fontStyle: 'italic', textTransform: 'capitalize' }}>
+								Filter Courses
+							</MenuItem>
 							<MenuItem value='' selected sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
 								All Courses
 							</MenuItem>
-							{['Published Courses', 'Unpublished Courses', 'Free Courses'].map((type) => (
+							{['Published Courses', 'Unpublished Courses', 'Paid Courses', 'Free Courses'].map((type) => (
 								<MenuItem value={type.toLowerCase()} key={type} sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
 									{type}
 								</MenuItem>

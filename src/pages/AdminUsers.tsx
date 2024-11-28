@@ -152,13 +152,16 @@ const AdminUsers = () => {
 					width: '100%',
 				}}>
 				<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-					<Box sx={{ alignSelf: 'flex-start', width: '35%', pb: '1rem' }}>
+					<Box sx={{ alignSelf: 'flex-start', width: '20rem', pb: '1rem' }}>
 						<CustomTextField
 							value={searchValue}
 							placeholder={'Search User'}
 							onChange={(e) => {
-								setFilterValue('');
 								setSearchValue(e.target.value);
+								setFilterValue('filter');
+								if (e.target.value === '') {
+									setFilterValue('');
+								}
 							}}
 							sx={{ backgroundColor: '#fff' }}
 							required={false}
@@ -188,12 +191,13 @@ const AdminUsers = () => {
 								displayEmpty
 								sx={{
 									backgroundColor: theme.bgColor?.common,
-									width: '13.25rem',
-									mr: '0.75rem',
-									ml: '1.5rem',
+									width: '10rem',
 									fontSize: '0.85rem',
 									textTransform: 'capitalize',
 								}}>
+								<MenuItem disabled value='filter' selected sx={{ fontSize: '0.85rem', fontStyle: 'italic', textTransform: 'capitalize' }}>
+									Filter Users
+								</MenuItem>
 								<MenuItem value='' selected sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
 									All Users
 								</MenuItem>

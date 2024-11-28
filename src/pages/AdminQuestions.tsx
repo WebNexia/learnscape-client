@@ -213,14 +213,17 @@ const AdminQuestions = () => {
 				isDuplicateOption={isDuplicateOption}
 			/>
 
-			<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', padding: '0 1rem 0 2rem' }}>
-				<Box sx={{ display: 'flex', alignSelf: 'flex-start', width: '35%' }}>
+			<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', padding: '0 2rem 0 2rem' }}>
+				<Box sx={{ display: 'flex', alignSelf: 'flex-start', width: '27.5rem' }}>
 					<CustomTextField
 						value={searchValue}
 						placeholder='Search Question'
 						onChange={(e) => {
-							setFilterValue('');
 							setSearchValue(e.target.value);
+							setFilterValue('filter');
+							if (e.target.value === '') {
+								setFilterValue('');
+							}
 						}}
 						sx={{ backgroundColor: '#fff' }}
 						required={false}
@@ -263,8 +266,8 @@ const AdminQuestions = () => {
 							size='small'
 							value={filterValue}
 							onChange={async (e) => {
-								setSearchValue('');
 								setFilterValue(e.target.value);
+								setSearchValue('filter');
 								if (e.target.value !== '') {
 									await handleFilterQuestions(1, e.target.value);
 								} else {
@@ -274,14 +277,18 @@ const AdminQuestions = () => {
 							displayEmpty
 							sx={{
 								backgroundColor: theme.bgColor?.common,
-								width: '13.25rem',
-								mr: '0.75rem',
-								ml: '1.5rem',
+								width: '10rem',
 								fontSize: '0.85rem',
 								textTransform: 'capitalize',
 							}}>
+							<MenuItem disabled value='filter' selected sx={{ fontSize: '0.85rem', fontStyle: 'italic', textTransform: 'capitalize' }}>
+								Filter Questions
+							</MenuItem>
 							<MenuItem value='' selected sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
 								All Questions
+							</MenuItem>
+							<MenuItem disabled value='types' selected sx={{ fontSize: '0.7rem', textTransform: 'inherit', fontWeight: 'lighter' }}>
+								------ Filter by Type ------
 							</MenuItem>
 							{questionTypes.map((type) => (
 								<MenuItem value={type.name.toLowerCase()} key={type._id} sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
