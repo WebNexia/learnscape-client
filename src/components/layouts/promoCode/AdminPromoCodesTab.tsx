@@ -25,6 +25,8 @@ const AdminPromoCodesTab = () => {
 	const [searchValue, setSearchValue] = useState<string>('');
 	const [filterValue, setFilterValue] = useState<string>('');
 
+	const currentDate = new Date().toISOString().split('T')[0];
+
 	const pageSize = 50;
 
 	const filteredPromoCodes = sortedPromoCodesData.filter((promoCode) => {
@@ -32,6 +34,9 @@ const AdminPromoCodesTab = () => {
 			const lowerSearch = searchValue.toLowerCase();
 			return promoCode?.code?.toLowerCase().includes(lowerSearch);
 		}
+
+		const expireDate = new Date(promoCode.expirationDate).toISOString().split('T')[0];
+
 		if (filterValue) {
 			if (filterValue === 'percentage' && promoCode.discountType === 'percentage') return true;
 			if (filterValue === 'fixed' && promoCode.discountType === 'fixed') return true;
@@ -39,6 +44,8 @@ const AdminPromoCodesTab = () => {
 			if (filterValue === 'inactive' && !promoCode.isActive) return true;
 			if (filterValue === 'unlimited usage' && promoCode.usageLimit === 0) return true;
 			if (filterValue === 'limited usage' && promoCode.usageLimit !== 0) return true;
+			if (filterValue === 'expired' && expireDate < currentDate) return true;
+			if (filterValue === 'unexpired' && expireDate >= currentDate) return true;
 		}
 		return !searchValue && !filterValue;
 	});
@@ -141,7 +148,7 @@ const AdminPromoCodesTab = () => {
 								<MenuItem value='' selected sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
 									All Codes
 								</MenuItem>
-								{['Percentage', 'Fixed', 'Active', 'Inactive', 'Unlimited Usage', 'Limited Usage'].map((type) => (
+								{['Percentage', 'Fixed', 'Active', 'Inactive', 'Unlimited Usage', 'Limited Usage', 'Expired', 'Unexpired'].map((type) => (
 									<MenuItem value={type.toLowerCase()} key={type} sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
 										{type}
 									</MenuItem>

@@ -3,7 +3,7 @@ export interface PromoCode {
 	code: string;
 	discountType: string;
 	discountAmount: number | undefined;
-	expirationDate: Date | null;
+	expirationDate: Date;
 	usageLimit: number | undefined;
 	coursesApplicable: string[];
 	isAllCoursesSelected: boolean;
