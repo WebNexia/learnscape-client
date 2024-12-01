@@ -345,7 +345,7 @@ const AdminCourseEditPage = () => {
 
 					updateCourse(updatedCourse);
 					setSingleCourse(updatedCourse);
-					fetchCourses();
+					// fetchCourses();
 
 					await Promise.all(
 						updatedChapters?.map(async (chapter) => {

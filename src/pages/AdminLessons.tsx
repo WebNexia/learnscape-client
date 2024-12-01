@@ -66,7 +66,7 @@ const AdminLessons = () => {
 
 	useEffect(() => {
 		setIsLessonDeleteModalOpen(Array(paginatedLessons.length).fill(false));
-	}, [paginatedLessons, lessonsPageNumber]);
+	}, [sortedLessonsData, lessonsPageNumber]);
 
 	const isInitialMount = useRef(true);
 

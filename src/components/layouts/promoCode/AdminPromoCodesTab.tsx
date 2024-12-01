@@ -238,7 +238,6 @@ const AdminPromoCodesTab = () => {
 											sx={{
 												textAlign: 'center',
 											}}>
-											<CustomActionBtn title='Clone' onClick={() => {}} icon={<FileCopy fontSize='small' />} />
 											<CustomActionBtn
 												title='Edit'
 												onClick={() => {
@@ -247,7 +246,6 @@ const AdminPromoCodesTab = () => {
 												}}
 												icon={<Edit fontSize='small' />}
 											/>
-
 											<EditCodeDialog
 												isEditCodeModalOpen={isEditCodeModalOpen}
 												closeCodeEditModal={closeCodeEditModal}
@@ -255,7 +253,6 @@ const AdminPromoCodesTab = () => {
 												singleCode={singleCode}
 												setSingleCode={setSingleCode}
 											/>
-
 											<CustomActionBtn
 												title='Delete'
 												onClick={() => {
