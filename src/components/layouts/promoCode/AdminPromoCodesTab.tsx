@@ -35,7 +35,7 @@ const AdminPromoCodesTab = () => {
 			return promoCode?.code?.toLowerCase().includes(lowerSearch);
 		}
 
-		const expireDate = new Date(promoCode.expirationDate).toISOString().split('T')[0];
+		const expireDate = new Date(promoCode.expirationDate!).toISOString().split('T')[0];
 
 		if (filterValue) {
 			if (filterValue === 'percentage' && promoCode.discountType === 'percentage') return true;
