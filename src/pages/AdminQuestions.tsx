@@ -36,6 +36,8 @@ const AdminQuestions = () => {
 		setNumberOfPages,
 		fetchQuestions,
 		questionTypes,
+		addNewQuestion,
+		fetchQuestionTypeName,
 	} = useContext(QuestionsContext);
 
 	const [filteredQuestions, setFilteredQuestions] = useState<QuestionInterface[]>(sortedQuestionsData);
@@ -57,6 +59,7 @@ const AdminQuestions = () => {
 
 	const [questionType, setQuestionType] = useState<string>('');
 
+	const [isQuestionCloneModalOpen, setIsQuestionCloneModalOpen] = useState<boolean[]>([]);
 	const [isQuestionDeleteModalOpen, setIsQuestionDeleteModalOpen] = useState<boolean[]>([]);
 	const [editQuestionModalOpen, setEditQuestionModalOpen] = useState<boolean[]>([]);
 	const [isQuestionCreateModalOpen, setIsQuestionCreateModalOpen] = useState<boolean>(false);
@@ -83,8 +86,8 @@ const AdminQuestions = () => {
 	}, []);
 
 	useEffect(() => {
-		setIsQuestionDeleteModalOpen(Array(sortedQuestionsData.length).fill(false));
-		setEditQuestionModalOpen(Array(sortedQuestionsData.length).fill(false));
+		setIsQuestionDeleteModalOpen(Array(filteredQuestions.length).fill(false));
+		setEditQuestionModalOpen(Array(filteredQuestions.length).fill(false));
 		setFilteredQuestions(sortedQuestionsData);
 	}, [sortedQuestionsData, questionsPageNumber]);
 
@@ -176,6 +179,28 @@ const AdminQuestions = () => {
 		}
 	};
 
+	const openCloneQuestionModal = (index: number) => {
+		const updatedState = [...isQuestionCloneModalOpen];
+		updatedState[index] = true;
+		setIsQuestionCloneModalOpen(updatedState);
+	};
+	const closeCloneQuestionModal = (index: number) => {
+		const updatedState = [...isQuestionCloneModalOpen];
+		updatedState[index] = false;
+		setIsQuestionCloneModalOpen(updatedState);
+	};
+
+	const handleCloneQuestion = async (question: QuestionInterface) => {
+		const questionTypeId = questionTypes.filter((type) => type.name === question.questionType)[0]._id;
+
+		try {
+			const res = await axios.post(`${base_url}/questions`, { ...question, questionType: questionTypeId });
+			addNewQuestion({ ...res.data, questionType: fetchQuestionTypeName(res.data) });
+		} catch (error) {
+			console.log(error);
+		}
+	};
+
 	return (
 		<DashboardPagesLayout pageName='Questions' customSettings={{ justifyContent: 'flex-start' }}>
 			<Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'flex-end', padding: '2rem 2rem 1rem 2rem', width: '100%' }}>
@@ -197,7 +222,7 @@ const AdminQuestions = () => {
 								displayEmpty
 								sx={{
 									backgroundColor: theme.bgColor?.common,
-									width: '10rem',
+									width: '12rem',
 									fontSize: '0.85rem',
 									textTransform: 'capitalize',
 								}}>
@@ -265,7 +290,7 @@ const AdminQuestions = () => {
 						</CustomDeleteButton>
 					</Box>
 				</Box>
-				<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '10%', height: '2rem' }}>
+				<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '15%', height: '2rem' }}>
 					<CustomSubmitButton
 						onClick={() => {
 							setIsQuestionCreateModalOpen(true);
@@ -332,7 +357,24 @@ const AdminQuestions = () => {
 											sx={{
 												textAlign: 'center',
 											}}>
-											<CustomActionBtn title='Clone' onClick={() => {}} icon={<FileCopy fontSize='small' />} />
+											<CustomActionBtn title='Clone' onClick={() => openCloneQuestionModal(index)} icon={<FileCopy fontSize='small' />} />
+
+											<CustomDialog
+												openModal={isQuestionCloneModalOpen[index]}
+												closeModal={() => closeCloneQuestionModal(index)}
+												title='Clone Question'
+												content='Are you sure you want to clone this question?'
+												maxWidth='sm'>
+												<CustomDialogActions
+													onCancel={() => closeCloneQuestionModal(index)}
+													onSubmit={() => {
+														handleCloneQuestion(question);
+														closeCloneQuestionModal(index);
+													}}
+													submitBtnText='Clone'
+												/>
+											</CustomDialog>
+
 											<CustomActionBtn
 												title='Edit'
 												onClick={() => {

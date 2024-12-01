@@ -26,7 +26,7 @@ const CustomDialog = ({ children, openModal = false, closeModal, title, titleSx,
 				},
 			}}
 			sx={{ ...dialogPaperSx }}>
-			<DialogTitle variant='h5' sx={{ paddingTop: '2rem', ...titleSx }}>
+			<DialogTitle variant='h5' sx={{ marginBottom: '-1rem', paddingTop: '2rem', ...titleSx }}>
 				{title}
 			</DialogTitle>
 			{content && (
