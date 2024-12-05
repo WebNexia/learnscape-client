@@ -1,5 +1,7 @@
 import { Button } from '@mui/material';
 import theme from '../../../themes';
+import { useContext } from 'react';
+import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 interface SidebarBtnProps {
 	btnText?: string;
@@ -9,6 +11,10 @@ interface SidebarBtnProps {
 }
 
 const SidebarBtn = ({ btnText, onClick, IconName, selectedPage }: SidebarBtnProps) => {
+	const { isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
+
+	const isMobileSize: boolean = isVerySmallScreen || isRotated;
+
 	const btnTextChars: string[] | undefined = btnText?.split('');
 	let subPageText = '';
 
@@ -35,9 +41,9 @@ const SidebarBtn = ({ btnText, onClick, IconName, selectedPage }: SidebarBtnProp
 				textTransform: 'capitalize',
 				marginBottom: '0.15rem',
 				fontFamily: theme.fontFamily?.main,
-				fontSize: '1rem',
+				fontSize: isMobileSize ? '0.75rem' : '1rem',
 				lineHeight: '2.25',
-				width: '77%',
+				width: isMobileSize ? '72%' : '76%',
 				justifyContent: 'flex-start',
 				paddingRight: '1.5rem',
 				borderRadius: '1.5rem 0 0 1.5rem',

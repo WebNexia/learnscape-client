@@ -5,9 +5,13 @@ import theme from '../../../themes';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../../../firebase';
+import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 const UnreadMessages = () => {
 	const { user } = useContext(UserAuthContext);
+	const { isRotated, isSmallScreen } = useContext(MediaQueryContext);
+
+	const isMobileSize: boolean = isSmallScreen || isRotated;
 	const [hasUnreadMessages, setHasUnreadMessages] = useState<boolean>(false);
 
 	useEffect(() => {
@@ -63,11 +67,13 @@ const UnreadMessages = () => {
 				},
 			}}>
 			<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-				<Typography variant='h5'>Unread Messages</Typography>
-				<MarkunreadOutlined sx={{ ml: '0.5rem', color: theme.textColor?.greenPrimary.main }} />
+				<Typography variant='h5' sx={{ fontSize: isMobileSize ? '0.85rem' : null }}>
+					Unread Messages
+				</Typography>
+				<MarkunreadOutlined sx={{ ml: '0.5rem', color: theme.textColor?.greenPrimary.main }} fontSize={isMobileSize ? 'small' : 'medium'} />
 			</Box>
 			<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '7rem' }}>
-				<Typography sx={{ fontSize: '0.85rem', color: hasUnreadMessages ? '#ef5350' : 'gray', textAlign: 'center' }}>
+				<Typography sx={{ fontSize: isMobileSize ? '0.65rem' : '0.85rem', color: hasUnreadMessages ? '#ef5350' : 'gray', textAlign: 'center' }}>
 					{hasUnreadMessages ? 'You have unread messages' : 'You have no unread messages'}
 				</Typography>
 			</Box>

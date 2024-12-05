@@ -2,7 +2,8 @@ import { Box } from '@mui/material';
 import DashboardHeader from './DashboardHeader';
 import Sidebar from './Sidebar';
 import theme from '../../../themes';
-import { ReactNode } from 'react';
+import { ReactNode, useContext } from 'react';
+import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 interface DashboardPagesLayoutProps {
 	children: ReactNode;
@@ -15,6 +16,7 @@ interface DashboardPagesLayoutProps {
 }
 
 const DashboardPagesLayout = ({ children, pageName, customSettings }: DashboardPagesLayoutProps) => {
+	const { isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
 	return (
 		<Box
 			sx={{
@@ -22,13 +24,13 @@ const DashboardPagesLayout = ({ children, pageName, customSettings }: DashboardP
 				minHeight: '100vh',
 				position: 'relative',
 			}}>
-			<Sidebar />
+			{!isVerySmallScreen && !isRotated && <Sidebar />}
 			<Box
 				sx={{
 					display: 'flex',
 					flexDirection: 'column',
 					minHeight: '100vh',
-					width: 'calc(100% - 10rem)',
+					width: isVerySmallScreen || isRotated ? '100%' : 'calc(100% - 10rem)',
 					marginLeft: '10rem',
 					position: 'absolute',
 					right: 0,

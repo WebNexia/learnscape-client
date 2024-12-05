@@ -6,10 +6,15 @@ import CoursePageBanner from '../components/layouts/coursePageBanner/CoursePageB
 import Chapters from '../components/userCourses/Chapters';
 import { UserCourseLessonDataContext, UserCoursesIdsWithCourseIds } from '../contexts/UserCourseLessonDataContextProvider';
 import { Document } from '../interfaces/document';
+import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 
 const CoursePage = () => {
 	const { singleCourseUser, fetchSingleCourseDataAdmin, fetchSingleCourseDataUser } = useContext(UserCourseLessonDataContext);
 	const { courseId, userCourseId } = useParams();
+
+	const { isRotated, isSmallScreen } = useContext(MediaQueryContext);
+
+	const isMobileSize: boolean = isSmallScreen || isRotated;
 
 	let userCourseData: UserCoursesIdsWithCourseIds[] = [];
 

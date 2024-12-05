@@ -7,6 +7,7 @@ import { setCurrencySymbol } from '../../utils/setCurrencySymbol';
 import { useContext } from 'react';
 import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
 import { getPriceForCountry } from '../../utils/getPriceForCountry';
+import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 
 interface DashboardCourseCardProps {
 	course: SingleCourse;
@@ -21,12 +22,17 @@ const DashboardCourseCard = ({ course, isEnrolled, userId, displayMyCourses, use
 	const navigate = useNavigate();
 	const { user } = useContext(UserAuthContext);
 
+	const { isRotated, isSmallScreen } = useContext(MediaQueryContext);
+
+	const isMobileSize: boolean = isSmallScreen || isRotated;
+
 	const buttonStyles = {
 		fontFamily: theme.fontFamily?.main,
 		textTransform: 'capitalize',
 		border: `${theme.textColor?.greenSecondary.main} solid 0.1rem`,
 		borderRadius: '0.5rem',
-		px: '2rem',
+		px: isMobileSize ? '1rem' : '2rem',
+		fontSize: isMobileSize ? '0.7rem' : '0.85rem',
 		':hover': {
 			color: isEnrolled ? theme.textColor?.greenSecondary.main : theme.textColor?.common.main,
 			backgroundColor: isEnrolled ? theme.bgColor?.common : theme.bgColor?.greenSecondary,
@@ -41,30 +47,30 @@ const DashboardCourseCard = ({ course, isEnrolled, userId, displayMyCourses, use
 		<Card
 			sx={{
 				display: !isEnrolled && displayMyCourses ? 'none' : 'block',
-				height: '30rem',
-				width: '22rem',
+				height: isMobileSize ? '24rem' : '30rem',
+				width: isMobileSize ? '16rem' : '22rem',
 				borderRadius: '0.65rem',
 				position: 'relative',
-				marginBottom: '3rem',
+				margin: '0 0.2rem 2rem 0.2rem',
 			}}>
 			<CardMedia
-				sx={{ height: '12rem', width: '22rem', objectFit: 'contain' }}
+				sx={{ height: isMobileSize ? '9rem' : '12rem', width: isMobileSize ? '17rem' : '22rem', objectFit: 'contain' }}
 				image={
 					course.imageUrl ||
 					'https://images.unsplash.com/photo-1501504905252-473c47e087f8?q=80&w=2874&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
 				}
 			/>
 			<CardContent sx={{ padding: '1rem 1.5rem' }}>
-				<Typography variant='body1' sx={{ textAlign: 'center', color: theme.palette.primary.main }}>
+				<Typography sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem', textAlign: 'center', color: theme.palette.primary.main }}>
 					{course.title}
 				</Typography>
 				<Typography
 					variant='body2'
 					sx={{
 						textAlign: 'justify',
-						fontSize: '0.85rem',
-						lineHeight: '1.6',
-						marginTop: '0.75rem',
+						fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+						lineHeight: isMobileSize ? '1.5' : '1.6',
+						marginTop: isMobileSize ? '0.5rem' : '0.75rem',
 						width: '100%',
 					}}>
 					{truncateText(course.description, 175)}
@@ -85,7 +91,7 @@ const DashboardCourseCard = ({ course, isEnrolled, userId, displayMyCourses, use
 						width: '90%',
 						alignSelf: 'center',
 					}}>
-					<Typography variant='body2' sx={{ textAlign: 'center', marginBottom: '0.2rem' }}>
+					<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', textAlign: 'center', marginBottom: '0.2rem' }}>
 						{isCourseCompleted ? 'Completed' : 'In Progress'}
 					</Typography>
 					<LinearProgress variant='determinate' color='success' value={isCourseCompleted ? 100 : 70} />
@@ -98,8 +104,8 @@ const DashboardCourseCard = ({ course, isEnrolled, userId, displayMyCourses, use
 						padding: '1rem',
 					}}>
 					<Typography
-						variant='body2'
 						sx={{
+							fontSize: isMobileSize ? '0.7rem' : '0.85rem',
 							visibility: isEnrolled ? 'hidden' : 'visible',
 							color: theme.palette.primary.main,
 						}}>
@@ -113,6 +119,7 @@ const DashboardCourseCard = ({ course, isEnrolled, userId, displayMyCourses, use
 							backgroundColor: isEnrolled ? theme.bgColor?.greenSecondary : 'inherit',
 							color: isEnrolled ? theme.textColor?.common.main : theme.textColor?.greenSecondary.main,
 						}}
+						size={isMobileSize ? 'small' : 'medium'}
 						onClick={() => {
 							navigate(
 								`/course/${course._id}/user/${userId}/userCourseId/${userCourseId === undefined ? 'none' : userCourseId}?isEnrolled=${isEnrolled}`

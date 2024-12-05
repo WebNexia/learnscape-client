@@ -41,23 +41,23 @@ const Dashboard = ({}: DashboardProps) => {
 		const userCourses = JSON.parse(localStorage.getItem('userCourseData')!);
 		const userLessons = JSON.parse(localStorage.getItem('userLessonData')!)?.filter((lesson: UserLessonDataStorage) => lesson.isCompleted);
 
-		setTotalEnrolledCourses(userCourses.length);
-		setNumberOfCompletedLessons(userLessons.length);
-		setTotalCompletedCourses(userCourses.filter((userCourse: UserCoursesIdsWithCourseIds) => userCourse.isCourseCompleted).length);
+		setTotalEnrolledCourses(userCourses?.length);
+		setNumberOfCompletedLessons(userLessons?.length);
+		setTotalCompletedCourses(userCourses?.filter((userCourse: UserCoursesIdsWithCourseIds) => userCourse.isCourseCompleted).length);
 		// Process user data to create chart data
 		const processUserData = () => {
 			const dataMap: { [date: string]: number } = {};
 			userCourses
 				?.sort((a: UserCoursesIdsWithCourseIds, b: UserCoursesIdsWithCourseIds) => a.createdAt.localeCompare(b.createdAt))
-				.forEach((userCourse: UserCoursesIdsWithCourseIds) => {
+				?.forEach((userCourse: UserCoursesIdsWithCourseIds) => {
 					const date = new Date(userCourse.createdAt).toISOString().split('T')[0];
 					dataMap[date] = (dataMap[date] || 0) + 1;
 				});
 
 			const labels = Object.keys(dataMap)
-				.map((date) => new Date(date)) // Convert to Date objects
-				.sort((a: any, b: any) => a - b) // Sort in ascending order
-				.map((date) => format(date, 'yyyy-MM-dd')); // Convert back to formatted string
+				?.map((date) => new Date(date)) // Convert to Date objects
+				?.sort((a: any, b: any) => a - b) // Sort in ascending order
+				?.map((date) => format(date, 'yyyy-MM-dd')); // Convert back to formatted string
 
 			const data = Object.values(dataMap);
 			setChartData({
@@ -86,9 +86,9 @@ const Dashboard = ({}: DashboardProps) => {
 
 			// Create labels (sorted dates) and data (lesson counts)
 			const labels = Object.keys(lessonsDataMap)
-				.map((date) => new Date(date))
-				.sort((a: any, b: any) => a - b) // Sort in ascending order
-				.map((date) => format(date, 'dd MMM yyyy')); // Format dates for display
+				?.map((date) => new Date(date))
+				?.sort((a: any, b: any) => a - b) // Sort in ascending order
+				?.map((date) => format(date, 'dd MMM yyyy')); // Format dates for display
 
 			const data = Object.values(lessonsDataMap); // The number of lessons created on each date
 
@@ -114,23 +114,24 @@ const Dashboard = ({}: DashboardProps) => {
 		<DashboardPagesLayout pageName='Dashboard' customSettings={{ justifyContent: 'flex-start' }}>
 			<Box sx={{ width: '100%', padding: '1.5rem' }}>
 				<Grid container spacing={2}>
-					<Grid item md={6}>
+					<Grid item md={6} sm={12} xs={12}>
 						<EnrolledCoursesLineGraph
 							chartData={chartData}
 							totalEnrolledCourses={totalEnrolledCourses}
 							totalCompletedCourses={totalCompletedCourses}
 						/>
 					</Grid>
-					<Grid item md={6}>
+					<Grid item md={6} sm={12} xs={12}>
 						<CompletedLessonsBarGraph barChartData={barChartData} numberOfCompletedLessons={numberOfCompletedLessons} />
 					</Grid>
 
-					<Grid item xs={3} onClick={() => navigate(`/calendar/user/${user?._id}`)}>
+					<Grid item sm={3} xs={6} onClick={() => navigate(`/calendar/user/${user?._id}`)}>
 						<UpcomingEvents sortedEventsData={sortedEventsData} />
 					</Grid>
 					<Grid
 						item
-						xs={3}
+						sm={3}
+						xs={6}
 						onClick={() => {
 							navigate(`/messages/user/${user?._id}`);
 						}}>
@@ -138,7 +139,8 @@ const Dashboard = ({}: DashboardProps) => {
 					</Grid>
 					<Grid
 						item
-						xs={3}
+						sm={3}
+						xs={6}
 						onClick={() => {
 							navigate(`/submissions/user/${user?._id}`);
 						}}>
@@ -146,7 +148,8 @@ const Dashboard = ({}: DashboardProps) => {
 					</Grid>
 					<Grid
 						item
-						xs={3}
+						sm={3}
+						xs={6}
 						onClick={() => {
 							navigate(`/community/user/${user?._id}`);
 						}}>

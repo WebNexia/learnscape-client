@@ -4,12 +4,18 @@ import { Event } from '../../../interfaces/event';
 import { truncateText } from '../../../utils/utilText';
 import { EventNote } from '@mui/icons-material';
 import theme from '../../../themes';
+import { useContext } from 'react';
+import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 interface UpcomingEventsProps {
 	sortedEventsData: Event[];
 }
 
 const UpcomingEvents = ({ sortedEventsData }: UpcomingEventsProps) => {
+	const { isRotated, isSmallScreen } = useContext(MediaQueryContext);
+
+	const isMobileSize: boolean = isSmallScreen || isRotated;
+
 	const currentDate = new Date(); // Current date
 	const sevenDaysFromNow = new Date();
 	sevenDaysFromNow.setDate(currentDate.getDate() + 7);
@@ -29,8 +35,10 @@ const UpcomingEvents = ({ sortedEventsData }: UpcomingEventsProps) => {
 				},
 			}}>
 			<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-				<Typography variant='h5'>Upcoming Events</Typography>
-				<EventNote sx={{ ml: '0.5rem', color: theme.textColor?.greenPrimary.main }} />
+				<Typography variant='h5' sx={{ fontSize: isMobileSize ? '0.85rem' : null }}>
+					Upcoming Events
+				</Typography>
+				<EventNote sx={{ ml: '0.5rem', color: theme.textColor?.greenPrimary.main }} fontSize={isMobileSize ? 'small' : 'medium'} />
 			</Box>
 
 			{sortedEventsData
@@ -47,8 +55,10 @@ const UpcomingEvents = ({ sortedEventsData }: UpcomingEventsProps) => {
 						.map((event) => (
 							<Box key={event._id} sx={{ marginBottom: '0.5rem', width: '100%' }}>
 								<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-									<Typography variant='body2'>{truncateText(event.title, 12)}</Typography>
-									<Typography sx={{ fontSize: '0.85rem', ml: '0.75rem' }}>
+									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.65rem' : '0.85rem' }}>
+										{truncateText(event.title, 12)}
+									</Typography>
+									<Typography sx={{ fontSize: isMobileSize ? '0.65rem' : '0.85rem', ml: '0.75rem' }}>
 										{event.start ? format(new Date(event.start), 'dd MMM yy, HH:mm') : 'No start date'}
 									</Typography>
 								</Box>
@@ -57,7 +67,7 @@ const UpcomingEvents = ({ sortedEventsData }: UpcomingEventsProps) => {
 				</Box>
 			) : (
 				<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '7rem' }}>
-					<Typography sx={{ fontSize: '0.85rem', color: 'gray' }}>No upcoming events</Typography>
+					<Typography sx={{ fontSize: isMobileSize ? '0.65rem' : '0.85rem', color: 'gray' }}>No upcoming events</Typography>
 				</Box>
 			)}
 		</Box>

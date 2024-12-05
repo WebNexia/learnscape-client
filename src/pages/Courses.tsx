@@ -6,19 +6,42 @@ import { SingleCourse } from '../interfaces/course';
 import { CoursesContext } from '../contexts/CoursesContextProvider';
 import { useParams } from 'react-router-dom';
 import { UserCoursesIdsWithCourseIds } from '../contexts/UserCourseLessonDataContextProvider';
+import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 
 const Courses = () => {
 	const [checked, setChecked] = useState<boolean>(false);
 
 	const { sortedCoursesData } = useContext(CoursesContext);
 
+	const { isRotated, isSmallScreen } = useContext(MediaQueryContext);
+
+	const isMobileSize: boolean = isSmallScreen || isRotated;
+
 	const { id } = useParams();
 
 	return (
 		<DashboardPagesLayout pageName='Courses' customSettings={{ flexDirection: 'row', alignItems: 'flex-start' }}>
 			<Box sx={{ width: '100%' }}>
-				<Box sx={{ margin: '2rem 0 2rem 3rem' }}>
-					<FormControlLabel control={<Checkbox checked={checked} onChange={(e) => setChecked(e.target.checked)} />} label='Show only my courses' />
+				<Box sx={{ margin: isMobileSize ? '1rem 0 1rem 2rem' : '2rem 0 2rem 3rem' }}>
+					<FormControlLabel
+						control={
+							<Checkbox
+								checked={checked}
+								onChange={(e) => setChecked(e.target.checked)}
+								sx={{
+									'& .MuiSvgIcon-root': {
+										fontSize: isMobileSize ? '1.1rem' : '1.35rem',
+									},
+								}}
+							/>
+						}
+						label='Show only my courses'
+						sx={{
+							'& .MuiFormControlLabel-label': {
+								fontSize: isMobileSize ? '0.8rem' : '0.95rem',
+							},
+						}}
+					/>
 				</Box>
 				<Box
 					sx={{
@@ -26,7 +49,7 @@ const Courses = () => {
 						flexWrap: 'wrap',
 						justifyContent: 'space-around',
 						alignItems: 'center',
-						margin: '0 3rem',
+						margin: '0 2rem',
 					}}>
 					{sortedCoursesData &&
 						sortedCoursesData

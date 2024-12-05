@@ -1,6 +1,8 @@
 import { Bar } from 'react-chartjs-2';
 import { Box, Typography } from '@mui/material';
 import { format } from 'date-fns';
+import { useContext } from 'react';
+import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 interface CompletedLessonsBarGraphProps {
 	barChartData: any;
@@ -8,6 +10,9 @@ interface CompletedLessonsBarGraphProps {
 }
 
 const CompletedLessonsBarGraph = ({ barChartData, numberOfCompletedLessons }: CompletedLessonsBarGraphProps) => {
+	const { isRotated, isSmallScreen } = useContext(MediaQueryContext);
+
+	const isMobileSize: boolean = isSmallScreen || isRotated;
 	return (
 		<Box
 			sx={{
@@ -23,8 +28,10 @@ const CompletedLessonsBarGraph = ({ barChartData, numberOfCompletedLessons }: Co
 					boxShadow: '0rem 0.1rem 0.2rem 0.1rem rgba(0,0,0,0.3)',
 				},
 			}}>
-			<Typography variant='h5'>Completed Lessons</Typography>
-			<Typography sx={{ fontSize: '3rem' }}>{numberOfCompletedLessons}</Typography>
+			<Typography variant='h5' sx={{ fontSize: isMobileSize ? '1rem' : null }}>
+				Completed Lessons
+			</Typography>
+			<Typography sx={{ fontSize: isMobileSize ? '2rem' : '3rem' }}>{numberOfCompletedLessons}</Typography>
 
 			<Box sx={{ marginTop: '1rem', height: 250, width: '95%' }}>
 				{barChartData && (

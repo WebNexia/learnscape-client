@@ -377,7 +377,6 @@ const CreateEventDialog = ({
 									}
 									label='All Learners'
 									sx={{
-										mt: '0rem',
 										'& .MuiFormControlLabel-label': {
 											fontSize: '0.7rem',
 										},

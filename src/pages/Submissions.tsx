@@ -125,9 +125,11 @@ const Submissions = () => {
 									<MenuItem value='unchecked' sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
 										Unchecked
 									</MenuItem>
-									<MenuItem disabled value='types' selected sx={{ fontSize: '0.7rem', textTransform: 'inherit', fontWeight: 'lighter' }}>
-										------ Filter by Course ------
-									</MenuItem>
+									{userCourseData.length > 0 && (
+										<MenuItem disabled value='types' selected sx={{ fontSize: '0.7rem', textTransform: 'inherit', fontWeight: 'lighter' }}>
+											------ Filter by Course ------
+										</MenuItem>
+									)}
 									{userCourseData.map((course) => (
 										<MenuItem value={course.toLowerCase()} key={course} sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
 											{truncateText(course, 25)}
