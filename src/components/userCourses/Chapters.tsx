@@ -1,6 +1,8 @@
 import { Box } from '@mui/material';
 import { SingleCourse } from '../../interfaces/course';
 import Chapter from './Chapter';
+import { useContext } from 'react';
+import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 
 interface ChaptersProps {
 	course: SingleCourse;
@@ -8,8 +10,10 @@ interface ChaptersProps {
 }
 
 const Chapters = ({ course, isEnrolledStatus }: ChaptersProps) => {
+	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
+	const isMobileSize = isRotatedMedium || isSmallScreen;
 	return (
-		<Box sx={{ width: '85%', marginBottom: isEnrolledStatus ? '0rem' : '2rem' }}>
+		<Box sx={{ width: isMobileSize ? '90%' : '85%', marginBottom: isEnrolledStatus ? '0rem' : '2rem' }}>
 			{course &&
 				course.chapters &&
 				course.chapterIds.length !== 0 &&

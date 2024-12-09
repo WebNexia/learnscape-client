@@ -1,6 +1,7 @@
 import { InputLabelProps, InputProps, SxProps, TextField, TextFieldProps } from '@mui/material';
-import { ChangeEvent, forwardRef } from 'react';
+import { ChangeEvent, forwardRef, useContext } from 'react';
 import theme from '../../../themes';
+import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 interface CustomTextFieldProps {
 	label?: string;
@@ -50,6 +51,9 @@ const CustomTextField = forwardRef<HTMLDivElement, CustomTextFieldProps>(
 		},
 		ref
 	) => {
+		const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
+
+		const isMobileSize: boolean = isSmallScreen || isRotatedMedium;
 		return (
 			<TextField
 				variant={variant}
@@ -67,7 +71,7 @@ const CustomTextField = forwardRef<HTMLDivElement, CustomTextFieldProps>(
 					'& .MuiInputBase-inputMultiline': {
 						resize: resizable ? 'both' : 'none',
 						overflow: 'auto',
-						fontSize: '0.85rem',
+						fontSize: isMobileSize ? '0.7rem' : '0.85rem',
 					},
 					...sx,
 				}}
@@ -76,11 +80,11 @@ const CustomTextField = forwardRef<HTMLDivElement, CustomTextFieldProps>(
 				multiline={multiline}
 				InputLabelProps={{
 					...InputLabelProps,
-					sx: { fontSize: '0.85rem', ...InputLabelProps.sx }, // Set default font size and merge with additional styles
+					sx: { fontSize: isMobileSize ? '0.7rem' : '0.85rem', ...InputLabelProps.sx }, // Set default font size and merge with additional styles
 				}}
 				InputProps={{
 					...InputProps,
-					sx: { '& input': { fontSize: '0.85rem' } },
+					sx: { '& input': { fontSize: isMobileSize ? '0.7rem' : '0.85rem' } },
 					inputProps: {
 						...InputProps?.inputProps,
 						maxLength: InputProps?.inputProps?.maxLength,

@@ -12,9 +12,8 @@ const CoursePage = () => {
 	const { singleCourseUser, fetchSingleCourseDataAdmin, fetchSingleCourseDataUser } = useContext(UserCourseLessonDataContext);
 	const { courseId, userCourseId } = useParams();
 
-	const { isRotated, isSmallScreen } = useContext(MediaQueryContext);
-
-	const isMobileSize: boolean = isSmallScreen || isRotated;
+	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
+	const isMobileSize = isRotatedMedium || isSmallScreen;
 
 	let userCourseData: UserCoursesIdsWithCourseIds[] = [];
 
@@ -47,9 +46,11 @@ const CoursePage = () => {
 				</>
 			)}
 			{isEnrolledStatus && singleCourseUser?.documents && (
-				<Box ref={documentsRef} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '2rem', width: '85%' }}>
+				<Box
+					ref={documentsRef}
+					sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '2rem 0', width: isMobileSize ? '90%' : '85%' }}>
 					<Box sx={{ display: 'flex', alignSelf: 'flex-start' }}>
-						<Typography variant='h4' sx={{ mb: '1.25rem' }}>
+						<Typography variant='h4' sx={{ mb: isMobileSize ? '0.5rem' : '1rem', fontSize: isMobileSize ? '0.9rem' : null }}>
 							Course Materials
 						</Typography>
 					</Box>
@@ -58,7 +59,12 @@ const CoursePage = () => {
 							?.filter((doc: Document) => doc !== null)
 							?.map((doc: Document) => (
 								<Box sx={{ marginBottom: '0.5rem' }} key={doc._id}>
-									<Link href={doc?.documentUrl} target='_blank' rel='noopener noreferrer' variant='body2'>
+									<Link
+										href={doc?.documentUrl}
+										target='_blank'
+										rel='noopener noreferrer'
+										variant='body2'
+										sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 										{doc?.name}
 									</Link>
 								</Box>

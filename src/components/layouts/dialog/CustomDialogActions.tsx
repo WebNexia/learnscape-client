@@ -2,7 +2,8 @@ import { DialogActions } from '@mui/material';
 import CustomCancelButton from '../../forms/customButtons/CustomCancelButton';
 import CustomSubmitButton from '../../forms/customButtons/CustomSubmitButton';
 import CustomDeleteButton from '../../forms/customButtons/CustomDeleteButton';
-import { ReactNode } from 'react';
+import { ReactNode, useContext } from 'react';
+import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 interface CustomDialogActionsProps {
 	children?: ReactNode;
@@ -35,10 +36,13 @@ const CustomDialogActions = ({
 	submitBtnType,
 	disableBtn = false,
 }: CustomDialogActionsProps) => {
+	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
+
+	const isMobileSize: boolean = isSmallScreen || isRotatedMedium;
 	return (
 		<DialogActions
 			sx={{
-				marginBottom: '1.5rem',
+				marginBottom: isMobileSize ? '1rem' : '1.5rem',
 				...actionSx,
 			}}>
 			{children}
@@ -46,6 +50,8 @@ const CustomDialogActions = ({
 				onClick={onCancel}
 				sx={{
 					margin: '0 0.5rem 0.5rem 0',
+					height: isMobileSize ? '1.75rem' : '2.15rem',
+					fontSize: isMobileSize ? '0.75rem' : '0.85rem',
 					...cancelBtnSx,
 				}}>
 				{cancelBtnText}
@@ -56,6 +62,8 @@ const CustomDialogActions = ({
 					disabled={disableBtn}
 					sx={{
 						margin: '0 0.5rem 0.5rem 0',
+						height: isMobileSize ? '1.75rem' : '2.15rem',
+						fontSize: isMobileSize ? '0.75rem' : '0.85rem',
 						...submitBtnSx,
 					}}
 					onClick={onSubmit}>

@@ -1,6 +1,7 @@
 import { Dialog, DialogContent, DialogTitle, Typography } from '@mui/material';
 import theme from '../../../themes';
-import { ReactNode } from 'react';
+import { ReactNode, useContext } from 'react';
+import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 interface CustomDialogProps {
 	children?: ReactNode;
@@ -14,6 +15,9 @@ interface CustomDialogProps {
 }
 
 const CustomDialog = ({ children, openModal = false, closeModal, title, titleSx, content, dialogPaperSx, maxWidth = 'md' }: CustomDialogProps) => {
+	const { isRotatedMedium, isVerySmallScreen } = useContext(MediaQueryContext);
+
+	const isMobileSize: boolean = isVerySmallScreen || isRotatedMedium;
 	return (
 		<Dialog
 			open={openModal}
@@ -26,7 +30,7 @@ const CustomDialog = ({ children, openModal = false, closeModal, title, titleSx,
 				},
 			}}
 			sx={{ ...dialogPaperSx }}>
-			<DialogTitle variant='h5' sx={{ marginBottom: '-1rem', paddingTop: '2rem', ...titleSx }}>
+			<DialogTitle variant={isMobileSize ? 'h6' : 'h5'} sx={{ marginBottom: '-1rem', paddingTop: '2rem', ...titleSx }}>
 				{title}
 			</DialogTitle>
 			{content && (

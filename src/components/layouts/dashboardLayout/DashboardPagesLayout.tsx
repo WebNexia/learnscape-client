@@ -16,7 +16,7 @@ interface DashboardPagesLayoutProps {
 }
 
 const DashboardPagesLayout = ({ children, pageName, customSettings }: DashboardPagesLayoutProps) => {
-	const { isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
+	const { isRotatedMedium, isVerySmallScreen } = useContext(MediaQueryContext);
 	return (
 		<Box
 			sx={{
@@ -24,13 +24,13 @@ const DashboardPagesLayout = ({ children, pageName, customSettings }: DashboardP
 				minHeight: '100vh',
 				position: 'relative',
 			}}>
-			{!isVerySmallScreen && !isRotated && <Sidebar />}
+			{!isVerySmallScreen && !isRotatedMedium && <Sidebar />}
 			<Box
 				sx={{
 					display: 'flex',
 					flexDirection: 'column',
 					minHeight: '100vh',
-					width: isVerySmallScreen || isRotated ? '100%' : 'calc(100% - 10rem)',
+					width: isVerySmallScreen || isRotatedMedium ? '100%' : 'calc(100% - 10rem)',
 					marginLeft: '10rem',
 					position: 'absolute',
 					right: 0,

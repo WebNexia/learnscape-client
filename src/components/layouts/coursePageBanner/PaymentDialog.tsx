@@ -18,6 +18,7 @@ import theme from '../../../themes';
 import { setCurrencySymbol } from '../../../utils/setCurrencySymbol';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 import { getPriceForCountry } from '../../../utils/getPriceForCountry';
+import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 interface PaymentDialogProps {
 	course: SingleCourse;
@@ -32,6 +33,9 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 	const { user } = useContext(UserAuthContext);
 
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
+	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
+
+	const isMobileSize: boolean = isSmallScreen || isRotatedMedium;
 
 	const [isProcessing, setIsProcessing] = useState<boolean>(false);
 	const [termsConditionsModalOpen, setTermsConditionsModalOpen] = useState<boolean>(false);
@@ -229,9 +233,16 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 						alignItems: 'center',
 						justifyContent: 'center',
 						gap: '1rem',
-						padding: '0 0.75rem',
+						padding: '0.5rem 0.75rem',
 					}}>
-					<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', padding: '0 0.75rem', mb: '-1rem' }}>
+					<Box
+						sx={{
+							display: 'flex',
+							justifyContent: 'space-between',
+							width: '100%',
+							padding: isSmallScreen || isRotatedMedium ? '0 0.35rem' : '0 0.75rem',
+							mb: '-1rem',
+						}}>
 						<CustomTextField
 							label='First Name'
 							size='small'
@@ -250,7 +261,14 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 							}}
 						/>
 					</Box>
-					<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', padding: '0 0.75rem', mb: '-1rem' }}>
+					<Box
+						sx={{
+							display: 'flex',
+							justifyContent: 'space-between',
+							width: '100%',
+							padding: isSmallScreen || isRotatedMedium ? '0 0.35rem' : '0 0.75rem',
+							mb: '-1rem',
+						}}>
 						<CustomTextField
 							label='Promo Code'
 							size='small'
@@ -265,17 +283,27 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 								setUsersUsedPromoCode((prevData) => prevData.filter((id) => id !== userId));
 							}}
 						/>
-						<CustomSubmitButton size='small' type='button' sx={{ height: '2.15rem' }} onClick={handleApplyPromoCode}>
+						<CustomSubmitButton
+							size='small'
+							type='button'
+							sx={{ height: isMobileSize ? '1.85rem' : '2.15rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}
+							onClick={handleApplyPromoCode}>
 							Apply
 						</CustomSubmitButton>
 					</Box>
-					<Box sx={{ display: 'flex', alignItems: 'center', width: '100%', padding: '0 0.75rem' }}>
-						<Typography variant='h6' sx={{ boxShadow: '0.1rem 0.1rem 0.5rem 0.1rem rgba(0,0,0,0.3)', borderRadius: '0.35rem', padding: '0.75rem' }}>
+					<Box sx={{ display: 'flex', alignItems: 'center', width: '100%', padding: isSmallScreen || isRotatedMedium ? '0 0.35rem' : '0 0.75rem' }}>
+						<Typography
+							variant={isMobileSize ? 'body2' : 'h6'}
+							sx={{
+								boxShadow: '0.1rem 0.1rem 0.5rem 0.1rem rgba(0,0,0,0.3)',
+								borderRadius: '0.35rem',
+								padding: isMobileSize ? '0.5rem' : '0.75rem',
+							}}>
 							Final Price: {setCurrencySymbol(getPriceForCountry(course, user?.countryCode!).currency)}
 							{discountedAmount}
 						</Typography>
 						{isPromoCodeApplied && (
-							<Typography variant='body2' sx={{ color: theme.textColor?.greenPrimary.main, ml: '2rem' }}>
+							<Typography variant='body2' sx={{ color: theme.textColor?.greenPrimary.main, ml: isMobileSize ? '1rem' : '2rem' }}>
 								Promo Code is applied
 							</Typography>
 						)}
@@ -287,11 +315,11 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 							justifyContent: 'space-between',
 							alignItems: 'center',
 							width: '100%',
-							padding: '0.75rem',
+							padding: isSmallScreen || isRotatedMedium ? '0rem 0.35rem' : '0 0.75rem 1rem 0.75rem',
 							margin: '0 0.75rem',
 						}}>
 						<Box sx={{ width: '100%', textAlign: 'left' }}>
-							<Typography variant='body2'>Card Number*</Typography>
+							<Typography sx={{ fontSize: isMobileSize ? '0.7rem' : '0.85rem' }}>Card Number*</Typography>
 						</Box>
 						<Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
 							<Box
@@ -306,7 +334,7 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 									options={{
 										style: {
 											base: {
-												fontSize: '14px',
+												fontSize: isMobileSize ? '11px' : '14px',
 												color: '#424770',
 												'::placeholder': {
 													color: '#aab7c4',
@@ -326,21 +354,26 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 						</Box>
 					</Box>
 
-					<Box sx={{ display: 'flex', width: '100%', padding: '0 0.75rem 2rem 0.75rem', mb: '-2rem' }}>
+					<Box
+						sx={{
+							display: 'flex',
+							width: '100%',
+							padding: isSmallScreen || isRotatedMedium ? '0rem 0.35rem' : '0 0.75rem 2rem 0.75rem',
+							mb: isSmallScreen || isRotatedMedium ? '-0.5rem' : '-2rem',
+						}}>
 						<Box
 							sx={{
 								width: '100%',
 								mr: '0.75rem',
 							}}>
-							<Typography variant='body2'>Expiry Date*</Typography>
+							<Typography sx={{ fontSize: isMobileSize ? '0.7rem' : '0.85rem', paddingBottom: '0.25rem' }}>Expiry Date*</Typography>
 							<Box sx={{ border: '1px solid #ccc', padding: '0.5rem', borderRadius: '0.35rem', backgroundColor: '#fff' }}>
 								<Box>
 									<CardExpiryElement
 										options={{
 											style: {
 												base: {
-													fontSize: '14px',
-
+													fontSize: isMobileSize ? '11px' : '14px',
 													color: '#424770',
 													'::placeholder': {
 														color: '#aab7c4',
@@ -361,13 +394,13 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 							sx={{
 								width: '100%',
 							}}>
-							<Typography variant='body2'>CVC*</Typography>
+							<Typography sx={{ fontSize: isMobileSize ? '0.7rem' : '0.85rem', paddingBottom: '0.25rem' }}>CVC*</Typography>
 							<Box sx={{ border: '1px solid #ccc', padding: '0.5rem', borderRadius: '0.35rem', backgroundColor: '#fff' }}>
 								<CardCvcElement
 									options={{
 										style: {
 											base: {
-												fontSize: '14px',
+												fontSize: isMobileSize ? '11px' : '14px',
 												color: '#424770',
 												'::placeholder': {
 													color: '#aab7c4',
@@ -382,7 +415,14 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 							</Box>
 						</Box>
 					</Box>
-					<Box sx={{ display: 'flex', alignItems: 'center', textAlign: 'left', width: '100%', padding: '0 0.75rem' }}>
+					<Box
+						sx={{
+							display: 'flex',
+							alignItems: 'center',
+							textAlign: 'left',
+							width: '100%',
+							padding: isSmallScreen || isRotatedMedium ? '0rem 0.35rem' : '0 0.75rem',
+						}}>
 						<FormControlLabel
 							required
 							control={
@@ -392,21 +432,25 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 										setAgreed(e.target.checked);
 									}}
 									sx={{
+										display: 'flex',
+										alignItems: 'center',
 										'& .MuiSvgIcon-root': {
-											fontSize: '1.25rem', // Adjust the checkbox icon size
+											fontSize: isMobileSize ? '0.8rem' : '1.25rem', // Adjust the checkbox icon size
 										},
 									}}
 								/>
 							}
 							label='I agree to the Terms & Conditions'
 							sx={{
-								mt: '0.5rem',
+								mt: isSmallScreen ? '0rem' : '0.5rem',
 								'& .MuiFormControlLabel-label': {
-									fontSize: '0.8rem', // Adjust the label font size
+									fontSize: isMobileSize ? '0.6rem' : '0.8rem', // Adjust the label font size
 								},
 							}}
 						/>
-						<Typography sx={{ fontSize: '0.75rem', mb: '-0.5rem', cursor: 'pointer' }} onClick={() => setTermsConditionsModalOpen(true)}>
+						<Typography
+							sx={{ fontSize: isSmallScreen ? '0.5rem' : '0.75rem', mb: '-0.5rem', cursor: 'pointer' }}
+							onClick={() => setTermsConditionsModalOpen(true)}>
 							(<span style={{ textDecoration: 'underline' }}>Read T&C</span>)
 						</Typography>
 					</Box>
@@ -414,7 +458,11 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 
 				<TermsConditions termsConditionsModalOpen={termsConditionsModalOpen} setTermsConditionsModalOpen={setTermsConditionsModalOpen} />
 
-				{errorMessage && <CustomErrorMessage sx={{ width: '100%', padding: '0.75rem 1.25rem' }}>{errorMessage}</CustomErrorMessage>}
+				{errorMessage && (
+					<CustomErrorMessage sx={{ width: '100%', padding: '0.75rem 1.25rem', fontSize: isMobileSize ? '0.7rem' : '0.85rem' }}>
+						{errorMessage}
+					</CustomErrorMessage>
+				)}
 
 				<CustomDialogActions
 					onCancel={() => {

@@ -14,6 +14,8 @@ import PaymentDialog from './PaymentDialog';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 import { getPriceForCountry } from '../../../utils/getPriceForCountry';
 import { setCurrencySymbol } from '../../../utils/setCurrencySymbol';
+import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
+import { truncateText } from '../../../utils/utilText';
 
 interface CoursePageBannerProps {
 	course: SingleCourse;
@@ -26,6 +28,10 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 	const firstLessonId: string = course && course?.chapters[0]?.lessonIds && course?.chapters[0]?.lessonIds[0];
 
 	const navigate = useNavigate();
+
+	const { isRotated, isSmallScreen, isVerySmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+
+	const isMobileSize: boolean = isSmallScreen || isRotated;
 
 	const [displayEnrollmentMsg, setDisplayEnrollmentMsg] = useState<boolean>(false);
 	const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState<boolean>(false);
@@ -133,8 +139,8 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 			elevation={10}
 			sx={{
 				width: '90%',
-				height: '23rem',
-				margin: '3rem 0 2rem 0',
+				height: isRotated ? '18rem' : '23rem',
+				margin: isSmallScreen || isRotatedMedium ? '1.25rem 0 1.5rem 0' : '3rem 0 2rem 0',
 				backgroundColor: theme.palette.primary.main,
 			}}>
 			<Snackbar
@@ -147,12 +153,12 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 				</Alert>
 			</Snackbar>
 
-			<Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+			<Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', height: isRotated ? '18rem' : '23rem' }}>
 				<Box
 					sx={{
 						display: 'flex',
 						flexDirection: 'column',
-						margin: '1rem 3rem 1rem 2rem',
+						margin: isVerySmallScreen ? '1rem 2rem 1rem 1rem' : '1rem 3rem 1rem 2rem',
 						flex: 3,
 						position: 'relative',
 						height: '20rem',
@@ -160,7 +166,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 					<Box>
 						<Button
 							variant='text'
-							startIcon={<KeyboardBackspaceOutlined />}
+							startIcon={<KeyboardBackspaceOutlined fontSize='small' />}
 							sx={{
 								color: theme.textColor?.common.main,
 								textTransform: 'inherit',
@@ -169,6 +175,8 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 									backgroundColor: 'transparent',
 									textDecoration: 'underline',
 								},
+
+								fontSize: isSmallScreen ? '0.75rem' : null,
 							}}
 							onClick={() => {
 								navigate(`/courses/user/${userId}`);
@@ -176,42 +184,45 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 							}}>
 							Back to courses
 						</Button>
-						<Typography variant='h3' sx={{ color: theme.textColor?.common.main, margin: '0.5rem 0 1rem 0' }}>
+						<Typography variant={isSmallScreen ? 'h6' : 'h3'} sx={{ color: theme.textColor?.common.main, margin: '0.5rem 0 1rem 0' }}>
 							{course.title}
 						</Typography>
 						<Typography
 							variant='body2'
 							sx={{
 								color: theme.textColor?.common.main,
-								fontSize: '0.85rem',
-								lineHeight: 1.8,
-								textAlign: 'justify',
+								fontSize: isSmallScreen ? '0.65rem' : '0.85rem',
+								lineHeight: isSmallScreen ? 1.6 : 1.7,
+								textAlign: 'left',
 							}}>
-							{course.description}
+							{isVerySmallScreen
+								? truncateText(course.description, 200)
+								: isSmallScreen
+								? truncateText(course.description, 250)
+								: truncateText(course.description, 450)}
 						</Typography>
 						{!isEnrolledStatus ? (
 							<CustomSubmitButton
 								variant='contained'
 								sx={{
-									width: '8rem',
+									width: isMobileSize ? '3rem' : '6rem',
 									position: 'absolute',
-									bottom: 5,
-									fontSize: '1rem',
+									bottom: isRotated ? 60 : 5,
+									fontSize: isMobileSize ? '0.75rem' : '0.9rem',
 								}}
 								onClick={handleEnrollment}>
 								Enroll
 							</CustomSubmitButton>
 						) : (
 							<Typography
-								variant='body1'
 								onClick={() => {
 									documentsRef.current?.scrollIntoView({ behavior: 'smooth' });
 								}}
 								sx={{
 									width: 'fit-content',
 									position: 'absolute',
-									bottom: 5,
-									fontSize: '0.85rem',
+									bottom: isRotated ? 60 : 5,
+									fontSize: isVerySmallScreen || isRotated ? '0.65rem' : '0.9rem',
 									textTransform: 'capitalize',
 									color: theme.textColor?.common.main,
 									cursor: 'pointer',
@@ -225,9 +236,11 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 				<Box
 					sx={{
 						display: 'flex',
+						flexDirection: isVerySmallScreen ? 'column' : ' row',
 						justifyContent: 'center',
 						alignItems: 'center',
 						flex: 2,
+						mr: isRotatedMedium ? '1rem' : '0rem',
 					}}>
 					<Box>
 						<CoursePageBannerDataCard
