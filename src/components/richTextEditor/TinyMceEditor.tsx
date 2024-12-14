@@ -1,7 +1,8 @@
 import { Editor } from '@tinymce/tinymce-react';
 import { generateUniqueId } from '../../utils/uniqueIdGenerator';
 import { BlankValuePair } from '../../interfaces/question';
-import { useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
+import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 
 interface TinyMceEditorProps {
 	handleEditorChange: (content: string) => void;
@@ -27,6 +28,8 @@ const TinyMceEditor = ({
 	const apiKey = import.meta.env.VITE_TINY_MCE_API_KEY;
 	const [internalBlankValuePairs, setInternalBlankValuePairs] = useState<BlankValuePair[]>(blankValuePairs || []);
 	const blankCounterRef = useRef<number>(internalBlankValuePairs.length);
+
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 
 	// If external blankValuePairs are provided, use them, otherwise use internal state
 	const effectiveBlankValuePairs = blankValuePairs || internalBlankValuePairs;
@@ -132,7 +135,14 @@ const TinyMceEditor = ({
 					'undo redo | formatselect | bold italic underline strikethrough subscript superscript | forecolor backcolor | \
                           alignleft aligncenter alignright alignjustify | \
                           bullist numlist outdent indent | removeformat',
-				paste_preprocess: function (plugin, args) {
+
+				content_style: `
+					body {
+						font-size: ${isSmallScreen || isRotatedMedium ? '14px' : '16px'};
+					}
+				`,
+				branding: false,
+				paste_preprocess: function (_, args) {
 					// Replace &nbsp; with a regular space in the pasted content
 					args.content = args.content.replace(/&nbsp;/g, ' ');
 				},

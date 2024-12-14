@@ -26,6 +26,7 @@ import QuizQuestionsMap from '../components/userCourses/QuizQuestionsMap';
 import { QuestionInterface } from '../interfaces/question';
 import { UserBlankValuePairAnswers, UserMatchingPairAnswers } from '../interfaces/userQuestion';
 import { useNavigate } from 'react-router-dom';
+import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 
 export interface QuizQuestionAnswer {
 	questionId: string;
@@ -42,6 +43,10 @@ const LessonPage = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { lessonId, userId, courseId, userCourseId } = useParams();
 	const { organisation } = useContext(OrganisationContext);
+	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
+	const isMobileSizeSmall = isVerySmallScreen || isRotated;
+
 	const navigate = useNavigate();
 	const { fetchUserAnswersByLesson } = useFetchUserQuestion();
 	const { handleNextLesson, nextLessonId, isLessonCompleted, userLessonId } = useUserCourseLessonData();
@@ -230,7 +235,7 @@ const LessonPage = () => {
 				alignItems: 'center',
 				backgroundColor: theme.bgColor?.secondary,
 				minHeight: '100vh',
-				padding: '0 0 3rem 0',
+				padding: isMobileSize ? '0 0 1rem 0' : '0 0 3rem 0',
 			}}>
 			<Box sx={{ width: '100vw', position: 'fixed', top: 0, zIndex: 1000 }}>
 				<DashboardHeader pageName={organisation?.orgName || ''} />
@@ -250,7 +255,7 @@ const LessonPage = () => {
 						<Box sx={{ alignSelf: 'flex-end' }}>
 							<Button
 								variant='text'
-								startIcon={<KeyboardBackspaceOutlined />}
+								startIcon={<KeyboardBackspaceOutlined fontSize='small' />}
 								sx={{
 									color: theme.textColor?.primary,
 									width: 'fit-content',
@@ -258,6 +263,7 @@ const LessonPage = () => {
 									textTransform: 'inherit',
 									fontFamily: theme.fontFamily?.main,
 									':hover': { backgroundColor: 'transparent', textDecoration: 'underline' },
+									fontSize: isMobileSize ? '0.7rem' : '1rem',
 								}}
 								onClick={() => {
 									setIsQuestionsVisible(false);
@@ -272,6 +278,7 @@ const LessonPage = () => {
 							variant='text'
 							startIcon={<Home />}
 							sx={{
+								fontSize: isMobileSize ? '0.7rem' : '1rem',
 								color: theme.textColor?.primary,
 								width: 'fit-content',
 								margin: '0.75rem 0 0 0.25rem',
@@ -286,15 +293,24 @@ const LessonPage = () => {
 					</Box>
 				</Box>
 				<Box sx={{ alignSelf: 'center' }}>
-					<Typography variant='h3' sx={{ marginBottom: '1.5rem' }}>
+					<Typography
+						variant={isMobileSize ? 'h6' : 'h3'}
+						sx={{ marginBottom: isMobileSize ? '0.5rem' : '1rem', fontSize: isMobileSize ? '0.9rem' : undefined, mt: '0.5rem' }}>
 						{lesson?.title}
 					</Typography>
 				</Box>
 			</Box>
-			<Box sx={{ position: 'fixed', top: '11rem', left: '2rem', width: '80%', zIndex: 3 }}>
+			<Box
+				sx={{
+					position: 'fixed',
+					top: isMobileSize ? '9rem' : '11rem',
+					left: isSmallScreen ? '0.15rem' : isRotatedMedium ? '1rem' : '2rem',
+					width: '80%',
+					zIndex: 3,
+				}}>
 				<Tooltip title='Take Notes' placement='right'>
 					<IconButton onClick={() => setIsNotesDrawerOpen(!isNotesDrawerOpen)}>
-						<Article />
+						<Article fontSize={isMobileSize ? 'small' : 'medium'} />
 					</IconButton>
 				</Tooltip>
 				<Slide direction='right' in={isNotesDrawerOpen} mountOnEnter unmountOnExit timeout={{ enter: 1000, exit: 500 }}>
@@ -302,11 +318,11 @@ const LessonPage = () => {
 						sx={{
 							position: 'fixed',
 							left: 0,
-							top: '14rem',
-							width: '40%',
-							height: 'fit-content',
+							top: isMobileSize ? '11rem' : '14rem',
+							width: isVerySmallScreen ? '95%' : isRotatedMedium ? '60%' : '40%',
+							height: isRotatedMedium ? '50vh' : 'fit-content',
 							boxShadow: 10,
-							padding: '1.75rem',
+							padding: '1.5rem 1.5rem 1rem 1.5rem',
 							borderRadius: '0 0.35rem  0.35rem 0 ',
 							bgcolor: 'background.paper',
 							overflow: 'auto',
@@ -315,13 +331,15 @@ const LessonPage = () => {
 						<Box sx={{ minHeight: '100%', width: '100%' }}>
 							<Box sx={{ display: 'flex', flexDirection: 'column' }}>
 								<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-									<Typography variant='h6'>{lesson.title} Notes</Typography>
+									<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }}>
+										{lesson.title} Notes
+									</Typography>
 									<IconButton
 										onClick={() => {
 											setIsNotesDrawerOpen(false);
 											setUserLessonNotes(editorContent);
 										}}>
-										<Close />
+										<Close sx={{ fontSize: isMobileSize ? '0.85rem' : '1.25rem' }} />
 									</IconButton>
 								</Box>
 								<Box sx={{ mt: '0.5rem' }} id='editor-content'>
@@ -337,11 +355,14 @@ const LessonPage = () => {
 								<Box sx={{ display: 'flex', mt: '1rem', justifyContent: 'space-between' }}>
 									<Tooltip title='Download as PDF' placement='right'>
 										<IconButton onClick={handleDownloadPDF}>
-											<GetApp />
+											<GetApp sx={{ fontSize: isMobileSize ? '1rem' : '1.25rem' }} />
 										</IconButton>
 									</Tooltip>
 									{!isUserLessonNotesUploading ? (
-										<CustomSubmitButton size='small' onClick={updateUserLessonNotes}>
+										<CustomSubmitButton
+											size='small'
+											onClick={updateUserLessonNotes}
+											sx={{ height: '1.75rem', fontSize: isMobileSize ? '0.75rem' : undefined }}>
 											Save
 										</CustomSubmitButton>
 									) : (
@@ -357,9 +378,31 @@ const LessonPage = () => {
 			</Box>
 			<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '0.5rem 0 0 0', width: '100%' }}>
 				{lesson?.videoUrl && !isQuestionsVisible && (
-					<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', margin: '11rem 0 2rem 0', width: '100%', height: '22rem' }}>
-						<Box sx={{ height: '100%', flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-							<ReactPlayer url={lesson.videoUrl} width='55%' height='100%' style={{ boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)' }} controls />
+					<Box
+						sx={{
+							display: 'flex',
+							justifyContent: 'center',
+							alignItems: 'center',
+							margin: isMobileSize ? '8.5rem 0 1rem 0' : '11rem 0 2rem 0',
+							width: '100%',
+							height: '22rem',
+						}}>
+						<Box
+							sx={{
+								height: '100%',
+								flex: 1,
+								display: 'flex',
+								justifyContent: 'center',
+								alignItems: 'flex-start',
+								ml: isSmallScreen ? '1rem' : '0rem',
+							}}>
+							<ReactPlayer
+								url={lesson.videoUrl}
+								width={isSmallScreen ? '80%' : isRotatedMedium ? '75%' : '55%'}
+								height='100%'
+								style={{ boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)' }}
+								controls
+							/>
 						</Box>
 					</Box>
 				)}
@@ -371,8 +414,8 @@ const LessonPage = () => {
 						flexDirection: 'column',
 						justifyContent: 'flex-start',
 						alignItems: 'center',
-						width: '85%',
-						margin: lesson?.videoUrl ? '1rem 0' : '11rem 0 1rem 0',
+						width: isVerySmallScreen ? '80%' : '85%',
+						margin: lesson?.videoUrl ? '1rem 0' : isSmallScreen ? '8rem 0 1rem 0' : isRotatedMedium ? '8.5rem 0 1rem 0' : '11rem 0 1rem 0',
 					}}>
 					<Box
 						sx={{
@@ -382,23 +425,28 @@ const LessonPage = () => {
 							alignItems: 'center',
 							width: '100%',
 						}}>
-						<Box sx={{ width: '100%', marginBottom: '1rem' }}>
-							<Typography variant='h5'>{!isInstructionalLesson ? 'Instructions' : ''}</Typography>
-						</Box>
+						{!isMobileSizeSmall && (
+							<Box sx={{ width: '100%', marginBottom: '1rem' }}>
+								<Typography variant='h5' sx={{ fontSize: isRotatedMedium || isSmallScreen ? '0.85rem' : undefined }}>
+									{!isInstructionalLesson ? 'Instructions' : ''}
+								</Typography>
+							</Box>
+						)}
 						<Box
 							sx={{
 								boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
-								padding: '2rem',
+								padding: isMobileSize ? '0.75rem' : '2rem',
 								backgroundColor: theme.bgColor?.common,
 								borderRadius: '0.35rem',
 								width: '100%',
+								mt: isMobileSizeSmall ? '0.85rem' : '',
+								ml: isMobileSizeSmall ? '1rem' : '',
 							}}>
 							<Box className='rich-text-content'>
 								<Typography
-									variant='body2'
 									component='div'
 									dangerouslySetInnerHTML={{ __html: sanitizeHtml(lesson.text) }}
-									sx={{ lineHeight: 1.9, textAlign: 'justify' }}
+									sx={{ lineHeight: 1.9, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}
 								/>
 							</Box>
 						</Box>
@@ -406,7 +454,9 @@ const LessonPage = () => {
 					{isQuiz && teacherQuizFeedback && (
 						<>
 							<Box sx={{ width: '100%', mt: '2rem' }}>
-								<Typography variant='h5'>Instructor's Feedback for Quiz</Typography>
+								<Typography variant='h5' sx={{ fontSize: isMobileSize ? '0.9rem' : undefined }}>
+									Instructor's Feedback for Quiz
+								</Typography>
 							</Box>
 							<Box
 								sx={{
@@ -420,7 +470,9 @@ const LessonPage = () => {
 									padding: '2rem',
 								}}>
 								<Box>
-									<Typography variant='body2'>{teacherQuizFeedback}</Typography>
+									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+										{teacherQuizFeedback}
+									</Typography>
 								</Box>
 							</Box>
 						</>
@@ -428,14 +480,15 @@ const LessonPage = () => {
 				</Box>
 			)}
 			{!isInstructionalLesson && !isQuestionsVisible && (
-				<Box sx={{ mt: '2rem' }}>
+				<Box sx={{ mt: isMobileSize ? '1rem' : '2rem' }}>
 					<CustomSubmitButton
 						onClick={() => {
 							setIsQuestionsVisible(true);
 							if (isQuiz && !isLessonCompleted) setIsQuizInProgress(true);
 							window.scrollTo({ top: 0, behavior: 'smooth' });
 						}}
-						capitalize={false}>
+						capitalize={false}
+						sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 						{lessonType === LessonType.PRACTICE_LESSON
 							? 'Go to Questions'
 							: isQuiz && !isLessonCompleted && isQuizInProgress
@@ -462,10 +515,10 @@ const LessonPage = () => {
 			)}
 			{isQuiz && isQuestionsVisible && !isLessonCompleted && (
 				<>
-					<Box sx={{ position: 'fixed', top: '90vh', right: '2rem', transform: 'translateY(-50%)', zIndex: 10 }}>
+					<Box sx={{ position: 'fixed', top: '90vh', right: isMobileSize ? '0.5rem' : '2rem', transform: 'translateY(-50%)', zIndex: 10 }}>
 						<Tooltip title='Questions Map' placement='left'>
 							<IconButton onClick={() => setIsQuestionsMapOpen(!isQuestionsMapOpen)}>
-								<NotListedLocation fontSize='large' sx={{ color: '#00BFFF' }} />
+								<NotListedLocation fontSize={isMobileSize ? 'medium' : 'large'} sx={{ color: '#00BFFF' }} />
 							</IconButton>
 						</Tooltip>
 					</Box>
@@ -480,14 +533,21 @@ const LessonPage = () => {
 			{lesson?.documents.length !== 0 && !isQuestionsVisible && (
 				<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '2rem', width: '85%' }}>
 					<Box sx={{ display: 'flex', alignSelf: 'flex-start' }}>
-						<Typography variant='h5'>Lesson Materials</Typography>
+						<Typography variant='h5' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }}>
+							Lesson Materials
+						</Typography>
 					</Box>
 					<Box sx={{ display: 'flex', flexDirection: 'column', alignSelf: 'flex-start' }}>
 						{lesson?.documents
 							?.filter((doc: Document) => doc !== null)
 							?.map((doc: Document) => (
 								<Box sx={{ marginTop: '0.5rem' }} key={doc._id}>
-									<Link href={doc?.documentUrl} target='_blank' rel='noopener noreferrer' variant='body2'>
+									<Link
+										href={doc?.documentUrl}
+										target='_blank'
+										variant='body2'
+										rel='noopener noreferrer'
+										sx={{ fontSize: isMobileSize ? '0.7rem' : '0.85rem' }}>
 										{doc?.name}
 									</Link>
 								</Box>
@@ -496,12 +556,12 @@ const LessonPage = () => {
 				</Box>
 			)}
 			{isInstructionalLesson && (
-				<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '85%', marginTop: 'auto' }}>
+				<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: isMobileSize ? '80%' : '85%', marginTop: 'auto' }}>
 					<CustomSubmitButton
 						endIcon={!nextLessonId ? <DoneAll /> : <KeyboardDoubleArrowRight />}
 						onClick={() => setIsLessonCourseCompletedModalOpen(true)}
 						type='button'
-						sx={{ marginTop: lesson.documents.length === 0 ? '1rem' : '0rem' }}>
+						sx={{ marginTop: lesson.documents.length === 0 ? '1rem' : '0rem', fontSize: isMobileSize ? '0.7rem' : '0.85rem' }}>
 						{nextLessonId ? 'Next Lesson' : 'Complete Course'}
 					</CustomSubmitButton>
 					<CustomDialog

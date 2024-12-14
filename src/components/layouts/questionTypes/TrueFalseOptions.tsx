@@ -6,6 +6,8 @@ import { useUserCourseLessonData } from '../../../hooks/useUserCourseLessonData'
 import { LessonType } from '../../../interfaces/enums';
 import { QuizQuestionAnswer } from '../../../pages/LessonPage';
 import { QuestionPrompt } from '../../../hooks/useAiResponse';
+import { useContext } from 'react';
+import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 interface TrueFalseOptionsProps {
 	question?: QuestionInterface;
@@ -78,6 +80,9 @@ const TrueFalseOptions = ({
 		}
 	};
 
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
+
 	const { getLastQuestion } = useUserCourseLessonData();
 
 	const adminSetting = fromLessonEditPage ? correctAnswer : correctAnswerAdminQuestions;
@@ -93,7 +98,7 @@ const TrueFalseOptions = ({
 	};
 
 	return (
-		<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', mt: '2rem' }}>
+		<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', mt: isMobileSize ? '0rem' : '2rem' }}>
 			<RadioGroup row value={fromLearner ? learnerSetting : adminSetting} onChange={handleChange}>
 				<Box sx={{ display: 'flex', alignItems: 'center' }}>
 					{showCheckmark('true') && lessonType !== LessonType.PRACTICE_LESSON && (
@@ -101,8 +106,8 @@ const TrueFalseOptions = ({
 					)}
 					<Box
 						sx={{
-							width: '7rem',
-							padding: '1.5rem 2rem',
+							width: isMobileSize ? '5rem' : '7rem',
+							padding: isMobileSize ? '1.15rem 1.75rem' : '1.5rem 2rem',
 							boxShadow: '0 0 0.4rem 0.2rem rgba(0, 0, 0, 0.2)',
 							transition: '0.3s',
 							backgroundColor: theme.bgColor?.greenPrimary,
@@ -115,9 +120,19 @@ const TrueFalseOptions = ({
 						}}>
 						<FormControlLabel
 							value='true'
-							control={<Radio sx={{ color: theme.textColor?.common.main }} color='secondary' />}
+							control={
+								<Radio
+									sx={{
+										color: theme.textColor?.common.main,
+										'& .MuiSvgIcon-root': {
+											fontSize: isMobileSize ? '0.9rem' : '1.15rem', // Resize radio button
+										},
+									}}
+									color='secondary'
+								/>
+							}
 							label={
-								<Typography variant='body1' sx={{ color: theme.textColor?.common.main }}>
+								<Typography variant={isMobileSize ? 'body2' : 'body1'} sx={{ color: theme.textColor?.common.main }}>
 									True
 								</Typography>
 							}
@@ -132,8 +147,8 @@ const TrueFalseOptions = ({
 
 					<Box
 						sx={{
-							width: '7rem',
-							padding: '1.5rem 2rem',
+							width: isMobileSize ? '5rem' : '7rem',
+							padding: isMobileSize ? '1.15rem 1.75rem' : '1.5rem 2rem',
 							boxShadow: '0 0 0.4rem 0.2rem rgba(0, 0, 0, 0.2)',
 							transition: '0.3s',
 							marginLeft: '1.5rem',
@@ -147,9 +162,19 @@ const TrueFalseOptions = ({
 						}}>
 						<FormControlLabel
 							value='false'
-							control={<Radio sx={{ color: theme.textColor?.common.main }} color='secondary' />}
+							control={
+								<Radio
+									sx={{
+										color: theme.textColor?.common.main,
+										'& .MuiSvgIcon-root': {
+											fontSize: isMobileSize ? '0.9rem' : '1.15rem', // Resize radio button
+										},
+									}}
+									color='secondary'
+								/>
+							}
 							label={
-								<Typography variant='body1' sx={{ color: theme.textColor?.common.main }}>
+								<Typography variant={isMobileSize ? 'body2' : 'body1'} sx={{ color: theme.textColor?.common.main }}>
 									False
 								</Typography>
 							}

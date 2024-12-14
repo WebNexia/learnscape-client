@@ -151,68 +151,70 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters }: CourseDetailsNonEdi
 										{chapter &&
 											chapter.lessons &&
 											chapter.lessons.length !== 0 &&
-											chapter.lessons.map((lesson) => {
-												return (
-													<Box
-														key={lesson._id}
-														sx={{
-															display: 'flex',
-															alignItems: 'center',
-															height: '3rem',
-															width: '100%',
-															backgroundColor: theme.bgColor?.common,
-															margin: '1rem 0',
-															borderRadius: '0.25rem',
-															boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
-														}}>
+											chapter.lessons
+												?.filter((lesson) => lesson !== null)
+												.map((lesson) => {
+													return (
 														<Box
+															key={lesson._id}
 															sx={{
+																display: 'flex',
+																alignItems: 'center',
 																height: '3rem',
-																width: '4rem',
+																width: '100%',
+																backgroundColor: theme.bgColor?.common,
+																margin: '1rem 0',
+																borderRadius: '0.25rem',
+																boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
 															}}>
-															<img
-																src={lesson?.imageUrl || 'https://directmobilityonline.co.uk/assets/img/noimage.png'}
-																alt='lesson_img'
-																height='100%'
-																width='100%'
-																style={{
-																	borderRadius: '0.25rem 0 0 0.25rem',
-																}}
-															/>
-														</Box>
-														<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', margin: '0 1rem' }}>
-															<Box sx={{ flex: 4 }}>
-																<Typography variant='body2'>{lesson.title}</Typography>
-															</Box>
-															<Box sx={{ flex: 1 }}>
-																<Typography variant='body2'>{lesson.isActive ? 'Published' : 'Unpublished'}</Typography>
-															</Box>
 															<Box
 																sx={{
-																	display: 'flex',
-																	justifyContent: 'flex-end',
-																	alignItems: 'center',
-																	flex: 4,
+																	height: '3rem',
+																	width: '4rem',
 																}}>
-																<Box sx={{ mr: '1rem' }}>
-																	<Typography variant='body2'>{lesson.type}</Typography>
+																<img
+																	src={lesson?.imageUrl || 'https://directmobilityonline.co.uk/assets/img/noimage.png'}
+																	alt='lesson_img'
+																	height='100%'
+																	width='100%'
+																	style={{
+																		borderRadius: '0.25rem 0 0 0.25rem',
+																	}}
+																/>
+															</Box>
+															<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', margin: '0 1rem' }}>
+																<Box sx={{ flex: 4 }}>
+																	<Typography variant='body2'>{lesson?.title}</Typography>
 																</Box>
-																<Box>
-																	<Tooltip title='Edit Lesson' placement='top'>
-																		<IconButton
-																			onClick={() => {
-																				window.open(`/admin/lesson-edit/user/${userId}/lesson/${lesson._id}`, '_blank');
-																				window.scrollTo({ top: 0, behavior: 'smooth' });
-																			}}>
-																			<EditTwoTone fontSize='small' />
-																		</IconButton>
-																	</Tooltip>
+																<Box sx={{ flex: 1 }}>
+																	<Typography variant='body2'>{lesson?.isActive ? 'Published' : 'Unpublished'}</Typography>
+																</Box>
+																<Box
+																	sx={{
+																		display: 'flex',
+																		justifyContent: 'flex-end',
+																		alignItems: 'center',
+																		flex: 4,
+																	}}>
+																	<Box sx={{ mr: '1rem' }}>
+																		<Typography variant='body2'>{lesson?.type}</Typography>
+																	</Box>
+																	<Box>
+																		<Tooltip title='Edit Lesson' placement='top'>
+																			<IconButton
+																				onClick={() => {
+																					window.open(`/admin/lesson-edit/user/${userId}/lesson/${lesson._id}`, '_blank');
+																					window.scrollTo({ top: 0, behavior: 'smooth' });
+																				}}>
+																				<EditTwoTone fontSize='small' />
+																			</IconButton>
+																		</Tooltip>
+																	</Box>
 																</Box>
 															</Box>
 														</Box>
-													</Box>
-												);
-											})}
+													);
+												})}
 									</Box>
 								);
 							})}

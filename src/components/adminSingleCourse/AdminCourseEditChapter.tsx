@@ -1,7 +1,7 @@
 import { Box, IconButton, Tooltip, Typography } from '@mui/material';
 import { useMotionValue, Reorder } from 'framer-motion';
 import theme from '../../themes';
-import { CreateTwoTone, Delete, FileCopy, NoteAdd } from '@mui/icons-material';
+import { CreateTwoTone, Delete, NoteAdd } from '@mui/icons-material';
 import { useState } from 'react';
 import { Lesson } from '../../interfaces/lessons';
 import { useRaisedShadow } from '../../hooks/useRaisedShadow';
@@ -172,91 +172,93 @@ const AdminCourseEditChapter = ({
 						chapterUpdateTrack(chapter.chapterId, setIsChapterUpdated);
 					}}>
 					{chapter?.lessons &&
-						chapter.lessons?.map((lesson) => {
-							return (
-								<Reorder.Item key={lesson._id} value={lesson} style={{ boxShadow, listStyle: 'none' }}>
-									<Box
-										key={lesson._id}
-										sx={{
-											display: 'flex',
-											alignItems: 'center',
-											height: '2.25rem',
-											width: '100%',
-											backgroundColor: theme.bgColor?.common,
-											margin: '1rem 0',
-											borderRadius: '0.25rem',
-											boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
-											transition: '0.4s',
-											':hover': {
-												boxShadow: '0.1rem 0 0.5rem 0.3rem rgba(0, 0, 0, 0.3)',
-												cursor: 'pointer',
-											},
-										}}>
+						chapter.lessons
+							?.filter((lesson) => lesson !== null)
+							.map((lesson) => {
+								return (
+									<Reorder.Item key={lesson._id} value={lesson} style={{ boxShadow, listStyle: 'none' }}>
 										<Box
-											sx={{
-												height: '2.25rem',
-												width: '3rem',
-											}}>
-											<img
-												src={lesson.imageUrl || 'https://directmobilityonline.co.uk/assets/img/noimage.png'}
-												alt='lesson_img'
-												height='100%'
-												width='100%'
-												style={{
-													borderRadius: '0.25rem 0 0 0.25rem',
-												}}
-											/>
-										</Box>
-										<Box
+											key={lesson._id}
 											sx={{
 												display: 'flex',
-												justifyContent: 'space-between',
 												alignItems: 'center',
-												margin: '0 1rem',
+												height: '2.25rem',
 												width: '100%',
+												backgroundColor: theme.bgColor?.common,
+												margin: '1rem 0',
+												borderRadius: '0.25rem',
+												boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
+												transition: '0.4s',
+												':hover': {
+													boxShadow: '0.1rem 0 0.5rem 0.3rem rgba(0, 0, 0, 0.3)',
+													cursor: 'pointer',
+												},
 											}}>
-											<Box sx={{ flex: 4 }}>
-												<Typography variant='body2'>{lesson.title}</Typography>
+											<Box
+												sx={{
+													height: '2.25rem',
+													width: '3rem',
+												}}>
+												<img
+													src={lesson?.imageUrl || 'https://directmobilityonline.co.uk/assets/img/noimage.png'}
+													alt='lesson_img'
+													height='100%'
+													width='100%'
+													style={{
+														borderRadius: '0.25rem 0 0 0.25rem',
+													}}
+												/>
 											</Box>
-											<Box sx={{ flex: 1 }}>
-												<Typography variant='body2'>{lesson.isActive ? 'Published' : 'Unpublished'}</Typography>
-											</Box>
-											<Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', flex: 4 }}>
-												<Box sx={{ mr: '1rem' }}>
-													<Typography variant='body2'>({lesson.type})</Typography>
+											<Box
+												sx={{
+													display: 'flex',
+													justifyContent: 'space-between',
+													alignItems: 'center',
+													margin: '0 1rem',
+													width: '100%',
+												}}>
+												<Box sx={{ flex: 4 }}>
+													<Typography variant='body2'>{lesson.title}</Typography>
 												</Box>
-												<Tooltip title='Remove Lesson' placement='right'>
-													<IconButton
-														onClick={() => {
-															setChapterLessonDataBeforeSave((prevData) => {
-																if (prevData) {
-																	return prevData.map((currentChapter) => {
-																		if (currentChapter.chapterId === chapter?.chapterId) {
-																			const updatedLessons = currentChapter.lessons?.filter((currentLesson) => currentLesson._id !== lesson._id);
-																			const updatedLessonIds = updatedLessons?.map((lesson) => lesson._id);
-																			return {
-																				...currentChapter,
-																				lessons: updatedLessons,
-																				lessonIds: updatedLessonIds,
-																			};
-																		}
-																		return currentChapter; // Return unchanged chapter if not the one being updated
-																	});
-																}
-																return prevData;
-															});
+												<Box sx={{ flex: 1 }}>
+													<Typography variant='body2'>{lesson.isActive ? 'Published' : 'Unpublished'}</Typography>
+												</Box>
+												<Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', flex: 4 }}>
+													<Box sx={{ mr: '1rem' }}>
+														<Typography variant='body2'>({lesson.type})</Typography>
+													</Box>
+													<Tooltip title='Remove Lesson' placement='right'>
+														<IconButton
+															onClick={() => {
+																setChapterLessonDataBeforeSave((prevData) => {
+																	if (prevData) {
+																		return prevData.map((currentChapter) => {
+																			if (currentChapter.chapterId === chapter?.chapterId) {
+																				const updatedLessons = currentChapter.lessons?.filter((currentLesson) => currentLesson._id !== lesson._id);
+																				const updatedLessonIds = updatedLessons?.map((lesson) => lesson._id);
+																				return {
+																					...currentChapter,
+																					lessons: updatedLessons,
+																					lessonIds: updatedLessonIds,
+																				};
+																			}
+																			return currentChapter; // Return unchanged chapter if not the one being updated
+																		});
+																	}
+																	return prevData;
+																});
 
-															chapterUpdateTrack(chapter.chapterId, setIsChapterUpdated);
-														}}>
-														<Delete fontSize='small' />
-													</IconButton>
-												</Tooltip>
+																chapterUpdateTrack(chapter.chapterId, setIsChapterUpdated);
+															}}>
+															<Delete fontSize='small' />
+														</IconButton>
+													</Tooltip>
+												</Box>
 											</Box>
 										</Box>
-									</Box>
-								</Reorder.Item>
-							);
-						})}
+									</Reorder.Item>
+								);
+							})}
 				</Reorder.Group>
 			)}
 		</Box>

@@ -15,9 +15,9 @@ interface CustomDialogProps {
 }
 
 const CustomDialog = ({ children, openModal = false, closeModal, title, titleSx, content, dialogPaperSx, maxWidth = 'md' }: CustomDialogProps) => {
-	const { isRotatedMedium, isVerySmallScreen } = useContext(MediaQueryContext);
+	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
 
-	const isMobileSize: boolean = isVerySmallScreen || isRotatedMedium;
+	const isMobileSize: boolean = isSmallScreen || isRotatedMedium;
 	return (
 		<Dialog
 			open={openModal}
@@ -30,12 +30,14 @@ const CustomDialog = ({ children, openModal = false, closeModal, title, titleSx,
 				},
 			}}
 			sx={{ ...dialogPaperSx }}>
-			<DialogTitle variant={isMobileSize ? 'h6' : 'h5'} sx={{ marginBottom: '-1rem', paddingTop: '2rem', ...titleSx }}>
+			<DialogTitle variant={isMobileSize ? 'h6' : 'h5'} sx={{ marginBottom: isMobileSize ? '-0.5rem' : '0rem', paddingTop: '2rem', ...titleSx }}>
 				{title}
 			</DialogTitle>
 			{content && (
 				<DialogContent>
-					<Typography variant='body2'>{content}</Typography>
+					<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+						{content}
+					</Typography>
 				</DialogContent>
 			)}
 			{children}

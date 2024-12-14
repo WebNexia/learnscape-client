@@ -43,6 +43,7 @@ import MatchingPreview from '../layouts/matching/MatchingPreview';
 import { UserBlankValuePairAnswers, UserMatchingPairAnswers } from '../../interfaces/userQuestion';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { UserCoursesIdsWithCourseIds } from '../../contexts/UserCourseLessonDataContextProvider';
+import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 
 interface QuizQuestionProps {
 	question: QuestionInterface;
@@ -81,6 +82,10 @@ const QuizQuestion = ({
 	const { orgId, adminUsers } = useContext(OrganisationContext);
 	const { fetchQuestionTypeName } = useContext(QuestionsContext);
 	const { user } = useContext(UserAuthContext);
+
+	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
+	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
 	const [userQuizAnswerAfterSubmission, setUserQuizAnswerAfterSubmission] = useState<string>('');
 	const [userMatchingPairsAfterSubmission, setUserMatchingPairsAfterSubmission] = useState<UserMatchingPairAnswers[]>([]);
@@ -408,12 +413,20 @@ const QuizQuestion = ({
 						<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
 							<Box>
 								{question?.audio && !isAudioVideoUploaded && !isLessonCompleted && (
-									<CustomSubmitButton onClick={toggleRecordOption('audio')} sx={{ margin: '0 1rem 1rem 0' }} type='button' size='small'>
+									<CustomSubmitButton
+										onClick={toggleRecordOption('audio')}
+										sx={{ margin: '0 1rem 1rem 0', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}
+										type='button'
+										size='small'>
 										Record Audio
 									</CustomSubmitButton>
 								)}
 								{question?.video && !isAudioVideoUploaded && !isLessonCompleted && (
-									<CustomSubmitButton onClick={toggleRecordOption('video')} sx={{ margin: '0 0 1rem 0' }} type='button' size='small'>
+									<CustomSubmitButton
+										onClick={toggleRecordOption('video')}
+										sx={{ margin: '0 0 1rem 0', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}
+										type='button'
+										size='small'>
 										Record Video
 									</CustomSubmitButton>
 								)}
@@ -472,7 +485,7 @@ const QuizQuestion = ({
 					)}
 
 					{isMatching && (
-						<Box sx={{ display: 'flex', justifyContent: 'center', width: '80%', margin: '0 auto' }}>
+						<Box sx={{ display: 'flex', justifyContent: 'center', width: isMobileSize ? '100%' : '80%', margin: '0 auto' }}>
 							<MatchingPreview
 								questionId={question._id}
 								initialPairs={question.matchingPairs}
@@ -493,8 +506,8 @@ const QuizQuestion = ({
 							sx={{
 								display: 'flex',
 								justifyContent: 'center',
-								width: '80%',
-								margin: question.imageUrl || question.videoUrl ? '3rem auto 0 auto' : '11rem auto 0 auto',
+								width: '100%',
+								margin: question.imageUrl || question.videoUrl ? '3rem auto 0 auto' : isMobileSize ? '8.75rem auto 0 auto' : '11rem auto 0 auto',
 							}}>
 							<FillInTheBlanksDragDrop
 								questionId={question._id}
@@ -520,8 +533,8 @@ const QuizQuestion = ({
 								flexDirection: 'column',
 								justifyContent: 'center',
 								alignItems: 'center',
-								width: '80%',
-								margin: question.imageUrl || question.videoUrl ? '3rem auto 0 auto' : '11rem auto 0 auto',
+								width: '100%',
+								margin: question.imageUrl || question.videoUrl ? '3rem auto 0 auto' : isMobileSize ? '8.75rem auto 0 auto' : '11rem auto 0 auto',
 							}}>
 							<FillInTheBlanksTyping
 								questionId={question._id}
@@ -565,18 +578,27 @@ const QuizQuestion = ({
 									return (
 										<FormControlLabel
 											value={option}
-											control={<Radio />}
+											control={
+												<Radio
+													sx={{
+														'& .MuiSvgIcon-root': {
+															fontSize: isMobileSize ? '0.9rem' : '1.15rem', // Resize radio button
+														},
+													}}
+												/>
+											}
 											label={
 												<Typography
 													sx={{
 														color: textColor,
-														fontWeight: option === question.correctAnswer ? 600 : 'normal',
+														fontWeight: isLessonCompleted && option === question.correctAnswer ? 600 : 'normal',
 														display: 'flex',
 														alignItems: 'center',
+														fontSize: isMobileSize ? '0.75rem' : '1rem',
 													}}>
 													{option}
 													{isLessonCompleted && option === question.correctAnswer && (
-														<CheckCircle sx={{ color: theme.palette.success.main, marginLeft: 1 }} />
+														<CheckCircle sx={{ color: theme.palette.success.main, marginLeft: 1 }} fontSize={isMobileSize ? 'small' : 'medium'} />
 													)}
 												</Typography>
 											}
@@ -635,12 +657,13 @@ const QuizQuestion = ({
 					justifyContent: 'space-between',
 					alignItems: 'center',
 					position: 'relative',
-					mt: '2rem',
-					width: '40%',
+					mt: isMobileSize ? '1.5rem' : '2rem',
+					width: '50%',
 				}}>
 				<IconButton
 					sx={{
 						flexShrink: 0,
+						padding: isVerySmallScreen ? '0.1rem' : '0.25rem',
 						':hover': {
 							color: theme.bgColor?.greenPrimary,
 							backgroundColor: 'transparent',
@@ -654,7 +677,7 @@ const QuizQuestion = ({
 						}
 					}}
 					disabled={displayedQuestionNumber - 1 === 0}>
-					<KeyboardArrowLeft fontSize='large' />
+					<KeyboardArrowLeft fontSize={isMobileSize ? 'medium' : 'large'} />
 				</IconButton>
 
 				<Box
@@ -668,7 +691,7 @@ const QuizQuestion = ({
 					<Select
 						labelId='question_number'
 						id='question_number'
-						sx={{ mr: '0.5rem' }}
+						sx={{ mr: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.9rem' }}
 						value={selectedQuestion}
 						onChange={handleQuestionChange}
 						size='small'
@@ -677,17 +700,29 @@ const QuizQuestion = ({
 						MenuProps={{
 							PaperProps: {
 								style: {
-									maxHeight: 250,
+									maxHeight: isMobileSize ? 200 : 250,
 								},
 							},
 						}}>
 						{Array.from({ length: numberOfQuestions }, (_, i) => (
-							<MenuItem key={i + 1} value={i + 1}>
+							<MenuItem
+								key={i + 1}
+								value={i + 1}
+								sx={{
+									display: 'flex',
+									justifyContent: 'center',
+									fontSize: isMobileSize ? '0.75rem' : '0.9rem',
+									minHeight: '2rem',
+									padding: isMobileSize ? '4px 8px' : undefined,
+								}}>
 								{i + 1}
 							</MenuItem>
 						))}
 					</Select>
-					<Typography> / {numberOfQuestions}</Typography>
+					{/* <Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+						{' '}
+						/ {numberOfQuestions}
+					</Typography> */}
 				</Box>
 				<Tooltip
 					title={
@@ -715,13 +750,13 @@ const QuizQuestion = ({
 							},
 						}}>
 						{isCompletingCourse ? (
-							<DoneAll fontSize='large' />
+							<DoneAll fontSize={isMobileSize ? 'medium' : 'large'} />
 						) : isLessonCompleted && isLastQuestion ? (
-							<KeyboardDoubleArrowRight fontSize='large' />
+							<KeyboardDoubleArrowRight fontSize={isMobileSize ? 'medium' : 'large'} />
 						) : isCompletingLesson ? (
 							<Done fontSize='large' />
 						) : (
-							<KeyboardArrowRight fontSize='large' />
+							<KeyboardArrowRight fontSize={isMobileSize ? 'medium' : 'large'} />
 						)}
 					</IconButton>
 				</Tooltip>
@@ -748,7 +783,7 @@ const QuizQuestion = ({
 					maxWidth='sm'>
 					<Box sx={{ display: 'flex', flexDirection: 'column', width: '90%', margin: '0 auto' }}>
 						<Box>
-							<Typography variant='body1' sx={{ mb: '0.75rem', lineHeight: '1.9' }}>
+							<Typography variant='body1' sx={{ mb: '0.75rem', lineHeight: '1.9', fontSize: isMobileSize ? '0.85rem' : '0.95rem' }}>
 								You will receive feedback on the quiz from your instructor soon. You can review the answers for the following question types by
 								revisiting the quiz:
 							</Typography>
@@ -756,7 +791,7 @@ const QuizQuestion = ({
 
 						<Box sx={{ ml: '3rem' }}>
 							{[QuestionType.MULTIPLE_CHOICE, QuestionType.TRUE_FALSE, QuestionType.MATCHING, 'Fill in the Blanks'].map((type, index) => (
-								<Typography key={index} variant='body2' sx={{ lineHeight: '1.9' }}>
+								<Typography key={index} variant='body2' sx={{ lineHeight: '1.9', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 									- {type}
 								</Typography>
 							))}
@@ -770,7 +805,7 @@ const QuizQuestion = ({
 								setIsMsgModalAfterSubmitOpen(false);
 								navigate(`/course/${courseId}/user/${userId}/userCourseId/${userCourseId}?isEnrolled=true`);
 							}}
-							sx={{ width: '2rem', padding: '0.5rem 2rem', margin: '1rem  0rem 2rem 0', height: '2rem' }}>
+							sx={{ width: '2rem', padding: '0.5rem 2rem', margin: '1rem  0rem 2rem 0', height: isMobileSize ? '1.75rem' : '2rem' }}>
 							Close
 						</CustomSubmitButton>
 					</Box>

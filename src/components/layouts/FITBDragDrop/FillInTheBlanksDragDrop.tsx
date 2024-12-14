@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import styled from 'styled-components';
 import { Box, Typography } from '@mui/material';
@@ -12,13 +12,14 @@ import { UserBlankValuePairAnswers } from '../../../interfaces/userQuestion';
 import { LessonType } from '../../../interfaces/enums';
 import CustomInfoMessageAlignedLeft from '../infoMessage/CustomInfoMessageAlignedLeft';
 import theme from '../../../themes';
+import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 const Container = styled(Box)`
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 	width: 100%;
-	margin-top: 0.5rem;
+	margin-top: '0.5rem';
 	flex-grow: 1;
 `;
 
@@ -162,6 +163,10 @@ const FillInTheBlanksDragDrop = ({
 	const [hasInteracted, setHasInteracted] = useState(false);
 
 	const { updateLastQuestion, getLastQuestion } = useUserCourseLessonData();
+
+	const { isRotated, isVerySmallScreen, isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
+	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
 	useEffect(() => {
 		const sanitizedHtml = sanitizeHtml(textWithBlanks)
@@ -366,7 +371,10 @@ const FillInTheBlanksDragDrop = ({
 																	boxShadow: snapshot.isDragging ? '0px 5px 10px rgba(0, 0, 0, 0.2)' : 'none',
 																	backgroundColor: snapshot.isDragging ? '#f0f0f0' : '#e0e0e0',
 																}}>
-																<Typography variant='body2' component='span' sx={{ display: 'inline-flex' }}>
+																<Typography
+																	variant='body2'
+																	component='span'
+																	sx={{ display: 'inline-flex', fontSize: isMobileSizeSmall ? '0.75rem' : '0.85rem' }}>
 																	{blanks[blankIndex].value}
 																</Typography>
 															</Item>
@@ -386,7 +394,7 @@ const FillInTheBlanksDragDrop = ({
 									variant='body2'
 									component='span'
 									dangerouslySetInnerHTML={{ __html: segment }}
-									sx={{ lineHeight: '2.25' }}
+									sx={{ lineHeight: '2.25', fontSize: isMobileSizeSmall ? '0.75rem' : '0.85rem' }}
 								/>
 							);
 						})}
@@ -426,7 +434,7 @@ const FillInTheBlanksDragDrop = ({
 												index={index}>
 												{(provided) => (
 													<Item ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} $isCorrect={null}>
-														<Typography variant='body2' component='span'>
+														<Typography variant='body2' component='span' sx={{ fontSize: isMobileSizeSmall ? '0.75rem' : '0.85rem' }}>
 															{response.value}
 														</Typography>
 													</Item>
@@ -442,9 +450,11 @@ const FillInTheBlanksDragDrop = ({
 				)}
 
 				{isLessonCompleted && lessonType !== LessonType.PRACTICE_LESSON && (
-					<Box sx={{ margin: '1rem 0 1rem 0', width: '100%' }}>
+					<Box sx={{ margin: isMobileSize ? '0' : '1rem 0 1rem 0', width: '100%' }}>
 						<Box>
-							<Typography variant='h6'>Correct Text</Typography>
+							<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '1rem' }}>
+								Correct Text
+							</Typography>
 						</Box>
 						<Box
 							sx={{
@@ -473,6 +483,7 @@ const FillInTheBlanksDragDrop = ({
 														padding: '0.25rem',
 														margin: '0 0.15rem',
 														borderRadius: '0.35rem',
+														fontSize: isMobileSize ? '0.75rem' : '0.85rem',
 													}}>
 													{correctValue}
 												</Typography>
@@ -481,7 +492,11 @@ const FillInTheBlanksDragDrop = ({
 									}
 
 									return (
-										<Typography key={`correct-text-${index}`} variant='body2' component='span' sx={{ lineHeight: '2.0' }}>
+										<Typography
+											key={`correct-text-${index}`}
+											variant='body2'
+											component='span'
+											sx={{ lineHeight: 2, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 											{decodeHtmlEntities(segment)
 												.replace(/[()]/g, '')
 												.replace(/<\/?[^>]+(>|$)/g, '')}

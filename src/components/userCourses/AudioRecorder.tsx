@@ -1,5 +1,5 @@
 import { Box, DialogActions, Typography } from '@mui/material';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useContext } from 'react';
 import CustomSubmitButton from '../forms/customButtons/CustomSubmitButton';
 import CustomDeleteButton from '../forms/customButtons/CustomDeleteButton';
 import theme from '../../themes';
@@ -7,6 +7,7 @@ import { Mic } from '@mui/icons-material';
 import CustomDialog from '../layouts/dialog/CustomDialog';
 import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
 import LoadingButton from '@mui/lab/LoadingButton';
+import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 
 interface AudioRecorderProps {
 	uploadAudio: (blob: Blob) => Promise<void>;
@@ -27,6 +28,10 @@ const AudioRecorder = ({
 }: AudioRecorderProps) => {
 	const mimeType = 'audio/webm; codecs=opus';
 	const QUALITY = 64000; // Medium quality (64 kbps)
+
+	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
+	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
 	const [permission, setPermission] = useState<boolean>(false);
 	const mediaRecorder = useRef<MediaRecorder | null>(null);
@@ -130,17 +135,28 @@ const AudioRecorder = ({
 	}, [stream]);
 
 	return (
-		<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-			<Typography variant='h6'>{recorderTitle}</Typography>
+		<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: isMobileSize ? '1.5rem' : '2rem' }}>
+			<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '1rem' }}>
+				{recorderTitle}
+			</Typography>
 
 			<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
 				{!permission ? (
-					<CustomSubmitButton onClick={getMicrophonePermission} type='button' sx={{ margin: '1rem 0' }} endIcon={<Mic />} size='small'>
+					<CustomSubmitButton
+						onClick={getMicrophonePermission}
+						type='button'
+						sx={{ margin: '1rem 0', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}
+						endIcon={<Mic />}
+						size='small'>
 						Allow Microphone
 					</CustomSubmitButton>
 				) : null}
 				{permission && !isRecording ? (
-					<CustomSubmitButton onClick={startRecording} type='button' sx={{ margin: '1rem 0' }} size='small'>
+					<CustomSubmitButton
+						onClick={startRecording}
+						type='button'
+						sx={{ margin: '1rem 0', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}
+						size='small'>
 						{hasRecorded ? 'Record Another' : 'Start Recording'}
 					</CustomSubmitButton>
 				) : null}
@@ -155,7 +171,7 @@ const AudioRecorder = ({
 								borderRadius: '0.35rem',
 								margin: '1rem 0',
 							}}>
-							<Typography variant='body2' sx={{ margin: '1rem' }}>
+							<Typography variant='body2' sx={{ margin: '1rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 								Remaining Time: {remainingTime}s
 							</Typography>
 							<Box sx={bouncingDotsContainerStyle}>
@@ -175,12 +191,22 @@ const AudioRecorder = ({
 					<audio
 						src={audio}
 						controls
-						style={{ marginTop: '2rem', boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)', borderRadius: '0.35rem' }}></audio>
+						style={{
+							height: '2.25rem',
+							width: isMobileSizeSmall ? '90vw' : isRotatedMedium ? '75vw' : '50vw',
+							marginTop: '2rem',
+							boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
+							borderRadius: '0.35rem',
+						}}></audio>
 				</Box>
 			) : null}
 
 			{audio && !isRecording && (
-				<CustomSubmitButton sx={{ marginTop: '2rem' }} type='button' size='small' onClick={() => setIsUploadModalOpen(true)}>
+				<CustomSubmitButton
+					sx={{ marginTop: '2rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}
+					type='button'
+					size='small'
+					onClick={() => setIsUploadModalOpen(true)}>
 					Upload Audio
 				</CustomSubmitButton>
 			)}

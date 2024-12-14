@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import styled from 'styled-components';
 import { MatchingPair } from '../../../interfaces/question';
@@ -9,11 +9,12 @@ import { QuizQuestionAnswer } from '../../../pages/LessonPage';
 import { UserMatchingPairAnswers } from '../../../interfaces/userQuestion';
 import { LessonType } from '../../../interfaces/enums';
 import CustomInfoMessageAlignedLeft from '../infoMessage/CustomInfoMessageAlignedLeft';
+import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 const Container = styled(Box)`
 	display: flex;
 	justify-content: space-between;
-	width: 90%;
+	width: 100%;
 	margin: 0.5rem auto 0 auto;
 	flex-grow: 1;
 `;
@@ -25,9 +26,15 @@ const Column = styled(Box)`
 	flex-grow: 1;
 `;
 
-const Item = styled.div<{ $isCorrect: boolean | null; $fromQuizQuestionUser?: boolean; $isLessonCompleted?: boolean; $lessonType?: string }>`
-	padding: 0.75rem;
-	margin: 0.5rem 0.75rem;
+const Item = styled.div<{
+	$isCorrect: boolean | null;
+	$fromQuizQuestionUser?: boolean;
+	$isLessonCompleted?: boolean;
+	$lessonType?: string;
+	$isMobileSize?: boolean;
+}>`
+	padding: ${({ $isMobileSize }) => ($isMobileSize ? '0.5rem' : '0.75rem')};
+	margin: ${({ $isMobileSize }) => ($isMobileSize ? '0.35rem 0.5rem' : '0.5rem 0.75rem')};
 	background-color: ${({ $isCorrect, $fromQuizQuestionUser, $isLessonCompleted, $lessonType }) =>
 		$isLessonCompleted
 			? $isCorrect
@@ -58,12 +65,12 @@ const Item = styled.div<{ $isCorrect: boolean | null; $fromQuizQuestionUser?: bo
 	text-align: center;
 `;
 
-const DropArea = styled(Box)`
-	padding: 0.75rem;
+const DropArea = styled(Box)<{ isMobileSize: boolean }>`
+	padding: ${({ isMobileSize }) => (isMobileSize ? '0.65rem' : '0.75rem')};
 	margin: 0.5rem 0;
 	background-color: #e0e0e0;
 	border-radius: 0.35rem;
-	min-height: 6rem;
+	min-height: ${({ isMobileSize }) => (isMobileSize ? '5rem' : '6rem')};
 	box-shadow: 0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2);
 	flex-grow: 1;
 `;
@@ -107,6 +114,9 @@ const MatchingPreview = ({
 	const [hasInteracted, setHasInteracted] = useState(false);
 
 	const { updateLastQuestion, getLastQuestion } = useUserCourseLessonData();
+
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
 
 	useEffect(() => {
 		if (isLessonCompleted && fromQuizQuestionUser && userMatchingPairsAfterSubmission) {
@@ -288,16 +298,18 @@ const MatchingPreview = ({
 				{!isLessonCompleted && (
 					<CustomInfoMessageAlignedLeft
 						message='Drag the correct cards from the right into the dashed areas to match the pairs'
-						sx={{ margin: '1rem auto 0 auto', width: '90%' }}
+						sx={{ margin: '0 rem auto 0 auto', width: '90%' }}
 					/>
 				)}
 				<Container>
-					<Column sx={{ marginRight: '2rem' }}>
+					<Column sx={{ marginRight: isMobileSize ? '1rem' : '2rem' }}>
 						{pairs?.map((pair, index) => (
 							<Droppable key={`prompt-${index}`} droppableId={`prompt-${index}`}>
 								{(provided) => (
-									<DropArea ref={provided.innerRef} {...provided.droppableProps}>
-										<Typography variant='body2'>{pair.question}</Typography>
+									<DropArea ref={provided.innerRef} {...provided.droppableProps} isMobileSize={isMobileSize}>
+										<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+											{pair.question}
+										</Typography>
 										{pair.answer ? (
 											<Draggable key={`draggable-prompt-${pair.id}`} draggableId={`draggable-prompt-${pair.id}`} index={index}>
 												{(provided) => (
@@ -311,7 +323,10 @@ const MatchingPreview = ({
 														$isLessonCompleted={isLessonCompleted}>
 														<Typography
 															variant='body2'
-															sx={{ color: (!isLessonCompleted && fromQuizQuestionUser) || lessonType === LessonType.QUIZ ? null : '#fff' }}>
+															sx={{
+																color: (!isLessonCompleted && fromQuizQuestionUser) || lessonType === LessonType.QUIZ ? null : '#fff',
+																fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+															}}>
 															{pair.answer}
 														</Typography>
 													</Item>
@@ -320,7 +335,7 @@ const MatchingPreview = ({
 										) : (
 											<Box
 												style={{
-													minHeight: '2.5rem',
+													minHeight: isMobileSize ? '2rem' : '2.5rem',
 													border: `dashed 0.1rem ${theme.bgColor?.lessonInProgress}`,
 													backgroundColor: theme.bgColor?.commonTwo,
 													borderRadius: '0.35rem',
@@ -361,8 +376,11 @@ const MatchingPreview = ({
 													$isCorrect={null}
 													$fromQuizQuestionUser={fromQuizQuestionUser}
 													$lessonType={lessonType}
-													$isLessonCompleted={isLessonCompleted}>
-													<Typography variant='body2' sx={{ color: isLessonCompleted ? '#fff' : null }}>
+													$isLessonCompleted={isLessonCompleted}
+													$isMobileSize={isMobileSize}>
+													<Typography
+														variant='body2'
+														sx={{ color: isLessonCompleted ? '#fff' : null, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 														{response.answer}
 													</Typography>
 												</Item>
@@ -378,7 +396,9 @@ const MatchingPreview = ({
 				{isLessonCompleted && fromQuizQuestionUser && (
 					<Box sx={{ margin: '3rem 0 1.5rem 0' }}>
 						<Box sx={{ margin: '1rem 0 1rem 0' }}>
-							<Typography variant='h6'>Correct Matching</Typography>
+							<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '1rem' }}>
+								Correct Matching
+							</Typography>
 						</Box>
 						<Box>
 							{initialPairs?.map((pair) => {
@@ -391,9 +411,9 @@ const MatchingPreview = ({
 												alignItems: 'center',
 												flex: 1,
 												border: '0.05rem solid gray',
-												padding: '0.75rem 1rem',
+												padding: isMobileSize ? '0.35rem 0.5rem' : '0.75rem 1rem',
 											}}>
-											<Typography>{pair.question}</Typography>
+											<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>{pair.question}</Typography>
 										</Box>
 										<Box
 											sx={{
@@ -402,9 +422,9 @@ const MatchingPreview = ({
 												alignItems: 'center',
 												flex: 1,
 												border: '0.05rem solid gray',
-												padding: '0.75rem 1rem',
+												padding: isMobileSize ? '0.35rem 0.5rem' : '0.75rem 1rem',
 											}}>
-											<Typography>{pair.answer}</Typography>
+											<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>{pair.answer}</Typography>
 										</Box>
 									</Box>
 								);

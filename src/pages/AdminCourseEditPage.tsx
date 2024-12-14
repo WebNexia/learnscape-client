@@ -71,7 +71,7 @@ const AdminCourseEditPage = () => {
 	const { orgId } = useContext(OrganisationContext);
 	const { fetchLessons } = useContext(LessonsContext);
 	const { fetchDocuments } = useContext(DocumentsContext);
-	const { updateCoursePublishing, updateCourse, fetchCourses } = useContext(CoursesContext);
+	const { updateCoursePublishing, updateCourse } = useContext(CoursesContext);
 
 	const [isEditMode, setIsEditMode] = useState<boolean>(false);
 	const [singleCourse, setSingleCourse] = useState<SingleCourse>();
@@ -171,14 +171,16 @@ const AdminCourseEditPage = () => {
 
 					if (courseResponse?.chapters[0]?.title) {
 						// Initialize chapter lesson data
-						const initialChapterLessonData: ChapterLessonData[] = courseResponse.chapters?.map((chapter: BaseChapter) => {
-							return {
-								chapterId: chapter._id,
-								title: chapter.title,
-								lessons: chapter.lessons,
-								lessonIds: chapter.lessons?.map((lesson: Lesson) => lesson._id),
-							};
-						});
+						const initialChapterLessonData: ChapterLessonData[] = courseResponse.chapters
+							?.filter((chapter: BaseChapter) => chapter !== null)
+							.map((chapter: BaseChapter) => {
+								return {
+									chapterId: chapter._id,
+									title: chapter.title,
+									lessons: chapter.lessons,
+									lessonIds: chapter.lessons?.filter((lesson) => lesson !== null).map((lesson: Lesson) => lesson?._id),
+								};
+							});
 						setChapterLessonData(initialChapterLessonData);
 						setChapterLessonDataBeforeSave(initialChapterLessonData);
 					}
@@ -240,30 +242,32 @@ const AdminCourseEditPage = () => {
 			updatedChapters = await Promise.all(
 				chapterLessonDataBeforeSave?.map(async (chapter) => {
 					chapter.lessons = await Promise.all(
-						chapter.lessons?.map(async (lesson: Lesson) => {
-							if (lesson._id.includes('temp_lesson_id')) {
-								try {
-									const lessonResponse = await axios.post(`${base_url}/lessons`, {
-										title: lesson.title.trim(),
-										type: lesson.type,
-										orgId,
-									});
-									fetchLessons();
+						chapter.lessons
+							?.filter((lesson) => lesson !== null)
+							.map(async (lesson: Lesson) => {
+								if (lesson._id.includes('temp_lesson_id')) {
+									try {
+										const lessonResponse = await axios.post(`${base_url}/lessons`, {
+											title: lesson.title.trim(),
+											type: lesson.type,
+											orgId,
+										});
+										fetchLessons();
 
-									return {
-										...lesson,
-										_id: lessonResponse.data._id,
-									};
-								} catch (error) {
-									console.error('Error creating lesson:', error);
-									return lesson;
+										return {
+											...lesson,
+											_id: lessonResponse.data._id,
+										};
+									} catch (error) {
+										console.error('Error creating lesson:', error);
+										return lesson;
+									}
 								}
-							}
-							return lesson;
-						})
+								return lesson;
+							})
 					);
 
-					chapter.lessonIds = chapter.lessons?.map((lesson) => lesson._id);
+					chapter.lessonIds = chapter.lessons?.filter((lesson) => lesson !== null).map((lesson) => lesson._id);
 
 					if (chapter.chapterId.includes('temp_chapter_id')) {
 						try {

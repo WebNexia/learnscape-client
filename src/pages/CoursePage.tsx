@@ -50,7 +50,7 @@ const CoursePage = () => {
 					ref={documentsRef}
 					sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '2rem 0', width: isMobileSize ? '90%' : '85%' }}>
 					<Box sx={{ display: 'flex', alignSelf: 'flex-start' }}>
-						<Typography variant='h4' sx={{ mb: isMobileSize ? '0.5rem' : '1rem', fontSize: isMobileSize ? '0.9rem' : null }}>
+						<Typography variant='h4' sx={{ mb: isMobileSize ? '0.5rem' : '1rem', fontSize: isMobileSize ? '0.9rem' : undefined }}>
 							Course Materials
 						</Typography>
 					</Box>
