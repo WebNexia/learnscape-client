@@ -415,7 +415,7 @@ const LessonPage = () => {
 						justifyContent: 'flex-start',
 						alignItems: 'center',
 						width: isVerySmallScreen ? '80%' : '85%',
-						margin: lesson?.videoUrl ? '1rem 0' : isSmallScreen ? '8rem 0 1rem 0' : isRotatedMedium ? '8.5rem 0 1rem 0' : '11rem 0 1rem 0',
+						margin: lesson?.videoUrl ? '1rem 0' : isSmallScreen ? '8.75rem 0 1rem 0' : isRotatedMedium ? '8.5rem 0 1rem 0' : '11rem 0 1rem 0',
 					}}>
 					<Box
 						sx={{

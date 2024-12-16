@@ -391,7 +391,14 @@ const PracticeQuestion = ({
 										display: 'flex',
 										justifyContent: 'center',
 										width: '100%',
-										margin: question.imageUrl || question.videoUrl ? '2rem auto 0 auto' : isMobileSize ? '8.25rem auto 0 auto' : '11rem auto 0 auto',
+										margin:
+											question.imageUrl && question.videoUrl && isVerySmallScreen
+												? '3.5rem auto 0 auto'
+												: question.imageUrl || question.videoUrl
+												? '2.5rem auto 0 auto'
+												: isMobileSize
+												? '8.75rem auto 0 auto'
+												: '11rem auto 0 auto',
 									}}>
 									<FillInTheBlanksDragDrop
 										textWithBlanks={question.question}
@@ -416,7 +423,8 @@ const PracticeQuestion = ({
 										justifyContent: 'center',
 										alignItems: 'center',
 										width: '100%',
-										margin: question.imageUrl || question.videoUrl ? '2rem auto 0 auto' : isMobileSize ? '8.25rem auto 0 auto' : '11rem auto 0 auto',
+										margin:
+											question.imageUrl || question.videoUrl ? '2.5rem auto 0 auto' : isMobileSize ? '8.75rem auto 0 auto' : '11rem auto 0 auto',
 									}}>
 									<FillInTheBlanksTyping
 										textWithBlanks={question.question}
@@ -668,15 +676,16 @@ const PracticeQuestion = ({
 										color: theme.bgColor?.greenPrimary,
 										backgroundColor: 'transparent',
 									},
+									padding: '0.3rem',
 								}}>
 								{isCompletingCourse ? (
-									<DoneAll fontSize={isMobileSize ? 'medium' : 'large'} />
+									<DoneAll fontSize={isMobileSize ? 'small' : 'medium'} />
 								) : isCompletingLesson ? (
-									<Done fontSize={isMobileSize ? 'medium' : 'large'} />
+									<Done fontSize={isMobileSize ? 'small' : 'medium'} />
 								) : isLessonCompleted && isLastQuestion ? (
-									<KeyboardDoubleArrowRight fontSize={isMobileSize ? 'medium' : 'large'} />
+									<KeyboardDoubleArrowRight fontSize={isMobileSize ? 'small' : 'medium'} />
 								) : (
-									<KeyboardArrowRight fontSize={isMobileSize ? 'medium' : 'large'} />
+									<KeyboardArrowRight fontSize={isMobileSize ? 'small' : 'medium'} />
 								)}
 							</IconButton>
 						</Tooltip>

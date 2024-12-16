@@ -326,6 +326,7 @@ const MatchingPreview = ({
 															sx={{
 																color: (!isLessonCompleted && fromQuizQuestionUser) || lessonType === LessonType.QUIZ ? null : '#fff',
 																fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+																margin: isMobileSize ? '-0.35rem 0rem' : '0rem',
 															}}>
 															{pair.answer}
 														</Typography>

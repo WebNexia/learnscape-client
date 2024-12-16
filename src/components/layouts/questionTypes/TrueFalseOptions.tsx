@@ -186,7 +186,9 @@ const TrueFalseOptions = ({
 							}}
 						/>
 					</Box>
-					{showCheckmark('false') && <CheckCircleIcon sx={{ color: theme.palette.success.main, marginLeft: 1 }} />}
+					{showCheckmark('false') && lessonType !== LessonType.PRACTICE_LESSON && (
+						<CheckCircleIcon sx={{ color: theme.palette.success.main, marginLeft: 1 }} />
+					)}
 				</Box>
 			</RadioGroup>
 		</Box>

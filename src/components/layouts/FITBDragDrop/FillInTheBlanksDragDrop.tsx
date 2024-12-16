@@ -72,7 +72,7 @@ const DropArea = styled(Box)<{ $isCorrect: boolean | null; $fromQuizQuestionUser
 				: '#f5c6cb'};
 	border-radius: 0.25rem;
 	padding: 0 0.25rem;
-	margin: 0 0.35rem;
+	margin: 0.1rem 0.35rem;
 	font-size: 0.75rem;
 	color: #495057;
 	overflow: hidden;
