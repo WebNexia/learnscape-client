@@ -13,9 +13,14 @@ import theme from '../themes';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
 import { truncateText } from '../utils/utilText';
 import { UserCoursesIdsWithCourseIds } from '../contexts/UserCourseLessonDataContextProvider';
+import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 
 const Submissions = () => {
 	const { sortedUserQuizSubmissionsData, sortUserQuizSubmissionsData, fetchQuizSubmissionsByUserId } = useContext(QuizSubmissionsContext);
+
+	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
+	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
 	const { userId } = useParams();
 
@@ -84,18 +89,17 @@ const Submissions = () => {
 					display: 'flex',
 					flexDirection: 'column',
 					alignItems: 'center',
-					padding: '1rem 2rem 2rem 2rem',
+					padding: isMobileSize ? '1rem' : '1rem 2rem 2rem 2rem',
 					width: '100%',
-					mt: '2rem',
+					mt: isMobileSize ? '0.75rem' : '2rem',
 				}}>
 				<Box
 					sx={{
 						display: 'flex',
-						flexDirection: 'row',
 						justifyContent: 'space-between',
 						width: '100%',
 					}}>
-					<Box sx={{ display: 'flex', justifyContent: 'flex-start', alignContent: 'center', width: '100%' }}>
+					<Box sx={{ display: 'flex', justifyContent: isMobileSize ? 'center' : 'flex-start', alignContent: 'center', width: '100%' }}>
 						<Box>
 							<FormControl>
 								<Select
@@ -109,29 +113,79 @@ const Submissions = () => {
 									sx={{
 										backgroundColor: theme.bgColor?.common,
 										width: '12rem',
-										fontSize: '0.85rem',
+										fontSize: isMobileSize ? '0.7rem' : '0.85rem',
 										textTransform: 'capitalize',
-										mr: '1rem',
+										mr: isMobileSize ? '0.5rem' : '1rem',
 									}}>
-									<MenuItem disabled value='filter' selected sx={{ fontSize: '0.85rem', fontStyle: 'italic', textTransform: 'capitalize' }}>
+									<MenuItem
+										disabled
+										value='filter'
+										selected
+										sx={{
+											fontSize: isMobileSizeSmall ? '0.65rem' : '0.85rem',
+											fontStyle: 'italic',
+											textTransform: 'capitalize',
+											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+											minHeight: '2rem',
+										}}>
 										Filter Submissions
 									</MenuItem>
-									<MenuItem value='' selected sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
+									<MenuItem
+										value=''
+										selected
+										sx={{
+											fontSize: isMobileSizeSmall ? '0.7rem' : '0.85rem',
+											textTransform: 'capitalize',
+											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+											minHeight: '2rem',
+										}}>
 										All Submissions
 									</MenuItem>
-									<MenuItem value='checked' sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
+									<MenuItem
+										value='checked'
+										sx={{
+											fontSize: isMobileSizeSmall ? '0.7rem' : '0.85rem',
+											textTransform: 'capitalize',
+											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+											minHeight: '2rem',
+										}}>
 										Checked
 									</MenuItem>
-									<MenuItem value='unchecked' sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
+									<MenuItem
+										value='unchecked'
+										sx={{
+											fontSize: isMobileSizeSmall ? '0.7rem' : '0.85rem',
+											textTransform: 'capitalize',
+											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+											minHeight: '2rem',
+										}}>
 										Unchecked
 									</MenuItem>
 									{userCourseData.length > 0 && (
-										<MenuItem disabled value='types' selected sx={{ fontSize: '0.7rem', textTransform: 'inherit', fontWeight: 'lighter' }}>
+										<MenuItem
+											disabled
+											value='types'
+											selected
+											sx={{
+												fontSize: '0.65rem',
+												textTransform: 'inherit',
+												fontWeight: 'lighter',
+												padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+												minHeight: '2rem',
+											}}>
 											------ Filter by Course ------
 										</MenuItem>
 									)}
 									{userCourseData.map((course) => (
-										<MenuItem value={course.toLowerCase()} key={course} sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
+										<MenuItem
+											value={course.toLowerCase()}
+											key={course}
+											sx={{
+												fontSize: isMobileSizeSmall ? '0.7rem' : '0.85rem',
+												textTransform: 'capitalize',
+												padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+												minHeight: '2rem',
+											}}>
 											{truncateText(course, 25)}
 										</MenuItem>
 									))}
@@ -158,6 +212,7 @@ const Submissions = () => {
 												sx={{
 													mr: '-0.5rem',
 												}}
+												fontSize={isMobileSize ? 'small' : 'medium'}
 											/>
 										</InputAdornment>
 									),
@@ -189,6 +244,7 @@ const Submissions = () => {
 									<TableCell
 										sx={{
 											textAlign: 'center',
+											padding: isMobileSizeSmall ? '0' : undefined,
 										}}>
 										<CustomActionBtn
 											title='See Details'
@@ -199,7 +255,7 @@ const Submissions = () => {
 												);
 												window.scrollTo({ top: 0, behavior: 'smooth' });
 											}}
-											icon={<PendingOutlined />}
+											icon={<PendingOutlined fontSize={isMobileSize ? 'small' : 'medium'} />}
 										/>
 									</TableCell>
 								</TableRow>

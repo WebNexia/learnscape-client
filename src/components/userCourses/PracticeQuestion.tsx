@@ -585,7 +585,7 @@ const PracticeQuestion = ({
 											justifyContent: 'center',
 											fontSize: isMobileSize ? '0.75rem' : '0.9rem',
 											minHeight: '2rem',
-											padding: isMobileSize ? '4px 8px' : undefined,
+											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
 										}}>
 										{i + 1}
 									</MenuItem>

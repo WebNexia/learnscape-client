@@ -71,7 +71,7 @@ const CustomTextField = forwardRef<HTMLDivElement, CustomTextFieldProps>(
 					'& .MuiInputBase-inputMultiline': {
 						resize: resizable ? 'both' : 'none',
 						overflow: 'auto',
-						fontSize: isMobileSize ? '0.75rem' : '0.9rem',
+						fontSize: isMobileSize ? '0.7rem' : '0.9rem',
 					},
 					...sx,
 				}}

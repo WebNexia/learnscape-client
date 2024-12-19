@@ -14,9 +14,15 @@ import FillInTheBlanksDragDrop from '../components/layouts/FITBDragDrop/FillInTh
 import MatchingPreview from '../components/layouts/matching/MatchingPreview';
 import CustomInfoMessageAlignedRight from '../components/layouts/infoMessage/CustomInfoMessageAlignedRight';
 import QuestionResponseCard from '../components/layouts/quizSubmissions/QuestionResponseCard';
+import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
+import QuestionMedia from '../components/userCourses/QuestionMedia';
 
 const SubmissionFeedbackDetails = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
+
+	const { isSmallScreen, isRotatedMedium, isVerySmallScreen, isRotated } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
+	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
 	const { userLessonId } = useParams();
 	const { fetchQuestionTypeName } = useContext(QuestionsContext);
@@ -63,14 +69,18 @@ const SubmissionFeedbackDetails = () => {
 	const renderFeedbackModal = () => (
 		<CustomDialog openModal={openQuestionFeedbackModal} closeModal={() => setOpenQuestionFeedbackModal(false)} titleSx={{ paddingTop: '0.5rem' }}>
 			<Box sx={{ width: '90%', margin: '1rem auto' }}>
-				<Typography variant='h5' sx={{ mb: '0.5rem' }}>
+				<Typography variant={isMobileSize ? 'h6' : 'h5'} sx={{ mb: '0.5rem' }}>
 					Question ({fetchQuestionTypeName(userSingleResponseWithFeedback?.questionId)})
 				</Typography>
+
+				<QuestionMedia question={userSingleResponseWithFeedback?.questionId} isStudentFeedbackPage={true} />
+
 				{fetchQuestionTypeName(userSingleResponseWithFeedback?.questionId) !== QuestionType.FITB_TYPING &&
 					fetchQuestionTypeName(userSingleResponseWithFeedback?.questionId) !== QuestionType.FITB_DRAG_DROP && (
 						<Typography
-							variant='body1'
+							variant={isMobileSize ? 'body2' : 'body1'}
 							component='div'
+							sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.8 }}
 							dangerouslySetInnerHTML={{ __html: sanitizeHtml(userSingleResponseWithFeedback?.questionId.question) }}
 						/>
 					)}
@@ -80,22 +90,24 @@ const SubmissionFeedbackDetails = () => {
 				<Box sx={{ width: '90%', margin: '0 auto' }}>
 					{userSingleResponseWithFeedback?.questionId?.options?.map((option: string, index: number) => (
 						<Typography
-							variant='body1'
+							variant={isMobileSize ? 'body2' : 'body1'}
 							key={index}
 							sx={{
-								margin: '1rem 0 0 2rem',
+								margin: isMobileSize ? '0.5rem 0 0 1.5rem' : '1rem 0 0 2rem',
 								color: option === userSingleResponseWithFeedback?.questionId.correctAnswer ? theme.textColor?.greenPrimary.main : null,
 								fontWeight: 500,
+								fontSize: isMobileSize ? '0.75rem' : undefined,
 							}}>
 							{String.fromCharCode(97 + index)}) {option}
 						</Typography>
 					))}
-					<Box sx={{ width: '100%', margin: '2rem auto' }}>
-						<Typography variant='h6' sx={{ mb: '0.5rem' }}>
+					<Box sx={{ width: '100%', margin: isMobileSize ? '1rem auto' : '2rem auto' }}>
+						<Typography variant='h6' sx={{ mb: '0.5rem', fontSize: isMobileSize ? '0.9rem' : undefined }}>
 							Your Answer
 						</Typography>
 						<Typography
 							variant='body2'
+							sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}
 							color={
 								userSingleResponseWithFeedback?.userAnswer === userSingleResponseWithFeedback?.questionId.correctAnswer
 									? theme.palette.success.main
@@ -114,26 +126,32 @@ const SubmissionFeedbackDetails = () => {
 			)}
 
 			{fetchQuestionTypeName(userSingleResponseWithFeedback?.questionId) === QuestionType.OPEN_ENDED && (
-				<Box sx={{ width: '90%', margin: '2rem auto' }}>
-					<Typography variant='h6' sx={{ mb: '0.5rem' }}>
+				<Box sx={{ width: '90%', margin: isMobileSize ? '1rem auto' : '2rem auto' }}>
+					<Typography variant={isMobileSize ? 'h6' : 'h5'} sx={{ mb: '0.5rem', fontSize: isMobileSize ? '0.9rem' : undefined }}>
 						Your Answer
 					</Typography>
-					<Typography variant='body2'>{userSingleResponseWithFeedback.userAnswer}</Typography>
+					<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+						{userSingleResponseWithFeedback.userAnswer}
+					</Typography>
 				</Box>
 			)}
 
 			{fetchQuestionTypeName(userSingleResponseWithFeedback?.questionId) === QuestionType.TRUE_FALSE && (
-				<Box sx={{ width: '90%', margin: '2rem auto' }}>
-					<Box sx={{ marginBottom: '2rem' }}>
-						<Typography variant='h6' sx={{ mb: '0.5rem' }}>
+				<Box sx={{ width: '90%', margin: isMobileSize ? '1rem auto' : '2rem auto' }}>
+					<Box sx={{ marginBottom: isMobileSize ? '1rem' : '2rem' }}>
+						<Typography variant={isMobileSize ? 'h6' : 'h5'} sx={{ mb: '0.5rem', fontSize: isMobileSize ? '0.9rem' : undefined }}>
 							Correct Answer
 						</Typography>
-						<Typography variant='body2'>{userSingleResponseWithFeedback?.questionId.correctAnswer}</Typography>
+						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+							{userSingleResponseWithFeedback?.questionId.correctAnswer}
+						</Typography>
 					</Box>
-					<Typography variant='h6' sx={{ mb: '0.5rem' }}>
+					<Typography variant={isMobileSize ? 'h6' : 'h5'} sx={{ mb: '0.5rem', fontSize: isMobileSize ? '0.9rem' : undefined }}>
 						Your Answer
 					</Typography>
-					<Typography variant='body2'>{userSingleResponseWithFeedback.userAnswer}</Typography>
+					<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+						{userSingleResponseWithFeedback.userAnswer}
+					</Typography>
 				</Box>
 			)}
 
@@ -150,7 +168,7 @@ const SubmissionFeedbackDetails = () => {
 			)}
 
 			{fetchQuestionTypeName(userSingleResponseWithFeedback?.questionId) === QuestionType.FITB_DRAG_DROP && (
-				<Box sx={{ width: '90%', margin: '1rem auto' }}>
+				<Box sx={{ width: '90%', margin: isMobileSize ? '0 auto' : '1rem auto' }}>
 					<FillInTheBlanksDragDrop
 						textWithBlanks={userSingleResponseWithFeedback?.questionId.question}
 						blankValuePairs={userSingleResponseWithFeedback?.questionId.blankValuePairs}
@@ -163,7 +181,7 @@ const SubmissionFeedbackDetails = () => {
 			)}
 
 			{fetchQuestionTypeName(userSingleResponseWithFeedback?.questionId) === QuestionType.FITB_TYPING && (
-				<Box sx={{ width: '90%', margin: '1rem auto' }}>
+				<Box sx={{ width: '90%', margin: isMobileSize ? '-1rem auto' : '1rem auto' }}>
 					<FillInTheBlanksTyping
 						textWithBlanks={userSingleResponseWithFeedback?.questionId.question}
 						blankValuePairs={userSingleResponseWithFeedback?.questionId.blankValuePairs}
@@ -176,8 +194,10 @@ const SubmissionFeedbackDetails = () => {
 			)}
 
 			{fetchQuestionTypeName(userSingleResponseWithFeedback?.questionId) === QuestionType.AUDIO_VIDEO && (
-				<Box sx={{ width: '90%', margin: '2rem auto' }}>
-					<Typography variant='h6'>Your Recording</Typography>
+				<Box sx={{ width: '90%', margin: isMobileSize ? '1rem auto' : '2rem auto' }}>
+					<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.9rem' : undefined }}>
+						Your Recording
+					</Typography>
 					{userSingleResponseWithFeedback?.audioRecordUrl && (
 						<audio
 							src={userSingleResponseWithFeedback?.audioRecordUrl}
@@ -206,7 +226,9 @@ const SubmissionFeedbackDetails = () => {
 					)}
 					{userSingleResponseWithFeedback?.teacherAudioFeedbackUrl && (
 						<Box sx={{ mt: '3rem' }}>
-							<Typography variant='h5'>Instructor's Audio Feedback for Question</Typography>
+							<Typography variant='h5' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem' }}>
+								Instructor's Audio Feedback for Question
+							</Typography>
 							<audio
 								src={userSingleResponseWithFeedback?.teacherAudioFeedbackUrl}
 								controls
@@ -215,6 +237,7 @@ const SubmissionFeedbackDetails = () => {
 									boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
 									borderRadius: '0.35rem',
 									width: '100%',
+									height: '2rem',
 								}}
 							/>
 						</Box>
@@ -224,10 +247,12 @@ const SubmissionFeedbackDetails = () => {
 
 			{userSingleResponseWithFeedback?.teacherFeedback && (
 				<Box sx={{ width: '90%', margin: '1.5rem auto 3rem auto' }}>
-					<Typography variant='h5' sx={{ mb: '1rem' }}>
+					<Typography variant={isMobileSize ? 'h6' : 'h5'} sx={{ mb: isMobileSize ? '0.5rem' : '1rem', fontSize: isMobileSize ? '0.9rem' : '1rem' }}>
 						Instructor's Feedback for Question
 					</Typography>
-					<Typography variant='body2'>{userSingleResponseWithFeedback?.teacherFeedback}</Typography>
+					<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.7 }}>
+						{userSingleResponseWithFeedback?.teacherFeedback}
+					</Typography>
 				</Box>
 			)}
 		</CustomDialog>
@@ -235,27 +260,41 @@ const SubmissionFeedbackDetails = () => {
 
 	return (
 		<DashboardPagesLayout pageName='Instructor Feedback' customSettings={{ justifyContent: 'flex-start' }}>
-			<Box sx={{ display: 'flex', justifyContent: 'space-around', width: '90%', margin: '2rem' }}>
+			<Box sx={{ display: 'flex', justifyContent: 'space-around', width: '90%', margin: isMobileSize ? '1rem 0rem' : '2rem' }}>
 				{[
 					{ label: 'Quiz Name', value: quizName },
 					{ label: 'Course Name', value: courseName },
 					{ label: 'Status', value: isChecked === 'true' ? 'Checked' : 'Unchecked' },
 				].map(({ label, value }, index) => (
 					<Box key={index} sx={{ textAlign: 'center' }}>
-						<Typography variant='h6' sx={{ mb: '0.35rem' }}>
+						<Typography variant='h6' sx={{ mb: '0.35rem', fontSize: isMobileSizeSmall ? '0.85rem' : undefined }}>
 							{label}
 						</Typography>
-						<Typography variant='body2'>{value}</Typography>
+						<Typography variant='body2' sx={{ fontSize: isMobileSizeSmall ? '0.75rem' : '0.85rem' }}>
+							{value}
+						</Typography>
 					</Box>
 				))}
 			</Box>
 
-			<Box sx={{ width: '90%', margin: '1.5rem' }}>
-				<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', margin: '1rem 0' }}>
+			<Box sx={{ width: '90%', margin: isMobileSize ? '0.5rem' : '1rem' }}>
+				<Box
+					sx={{
+						display: 'flex',
+						justifyContent: 'space-between',
+						alignItems: 'center',
+						width: '100%',
+						margin: isMobileSize ? '0.25rem 0' : '0 0 0.75rem 0',
+					}}>
 					<Box>
-						<Typography variant='h5'>Questions</Typography>
+						<Typography variant='h5' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem' }}>
+							Questions
+						</Typography>
 					</Box>
-					<CustomInfoMessageAlignedRight message='Click on a question to view details and feedback (if available)' sx={{ marginRight: '2.5rem' }} />
+					<CustomInfoMessageAlignedRight
+						message={isVerySmallScreen ? 'Click on a question to view details' : 'Click on a question to view details and feedback (if available)'}
+						sx={{ marginRight: isMobileSize ? '0.85rem' : '2.5rem' }}
+					/>
 				</Box>
 				{userResponseData?.map((response: any, index: number) => (
 					<QuestionResponseCard
@@ -279,38 +318,38 @@ const SubmissionFeedbackDetails = () => {
 						disabled={currentResponseIndex === 0}
 						sx={{
 							position: 'fixed',
-							left: '10%',
+							left: isMobileSize ? '2%' : '10%',
 							top: '50%',
 							transform: 'translateY(-50%)',
 							backgroundColor: theme.bgColor?.greenPrimary,
 							color: 'white',
 							border: 'none',
 							borderRadius: '50%',
-							padding: '0.75rem',
+							padding: isMobileSize ? '0.5rem' : '0.75rem',
 							cursor: currentResponseIndex === 0 ? 'not-allowed' : 'pointer',
 							zIndex: 13000,
 							':hover': { backgroundColor: theme.bgColor?.adminHeader },
 						}}>
-						<ArrowBackIosNewOutlined />
+						<ArrowBackIosNewOutlined fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
 					</IconButton>
 					<IconButton
 						onClick={() => handleResponseNavigation('next')}
 						disabled={currentResponseIndex === userResponseData.length - 1}
 						sx={{
 							position: 'fixed',
-							right: '10%',
+							right: isMobileSize ? '2%' : '10%',
 							top: '50%',
 							transform: 'translateY(-50%)',
 							backgroundColor: theme.bgColor?.greenPrimary,
 							color: 'white',
 							border: 'none',
 							borderRadius: '50%',
-							padding: '0.75rem',
+							padding: isMobileSize ? '0.5rem' : '0.75rem',
 							cursor: currentResponseIndex === userResponseData.length - 1 ? 'not-allowed' : 'pointer',
 							zIndex: 13000,
 							':hover': { backgroundColor: theme.bgColor?.adminHeader },
 						}}>
-						<ArrowForwardIosOutlined />
+						<ArrowForwardIosOutlined fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
 					</IconButton>
 				</>
 			)}
@@ -318,11 +357,13 @@ const SubmissionFeedbackDetails = () => {
 			{renderFeedbackModal()}
 
 			{quizFeedback && (
-				<Box sx={{ width: '90%', margin: '2rem' }}>
-					<Typography variant='h5' sx={{ mb: '1rem' }}>
+				<Box sx={{ width: '90%', margin: isMobileSize ? '1rem 0' : '2rem' }}>
+					<Typography variant='h5' sx={{ mb: '1rem', fontSize: isMobileSize ? '0.9rem' : '1rem' }}>
 						Instructor's Feedback for Quiz
 					</Typography>
-					<Typography variant='body2'>{quizFeedback}</Typography>
+					<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+						{quizFeedback}
+					</Typography>
 				</Box>
 			)}
 		</DashboardPagesLayout>

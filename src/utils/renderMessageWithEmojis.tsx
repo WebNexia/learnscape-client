@@ -1,6 +1,6 @@
 import emojiRegex from 'emoji-regex';
 
-export const renderMessageWithEmojis = (messageContent: string | any[], fontSize: string) => {
+export const renderMessageWithEmojis = (messageContent: string | any[], fontSize: string, isMobileSize: boolean) => {
 	const regex = emojiRegex();
 
 	// Helper function to split and render text with emojis
@@ -11,7 +11,7 @@ export const renderMessageWithEmojis = (messageContent: string | any[], fontSize
 		return parts.reduce((acc: any[], part: string, index: number) => {
 			if (part) {
 				acc.push(
-					<span key={`text-${index}`} style={{ fontSize: '0.85rem', verticalAlign: 'middle' }}>
+					<span key={`text-${index}`} style={{ fontSize: isMobileSize ? '0.6rem' : '0.85rem', verticalAlign: 'middle' }}>
 						{part}
 					</span>
 				);

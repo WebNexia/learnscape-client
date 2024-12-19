@@ -1,7 +1,19 @@
 import { Alert, Badge, Box, Dialog, IconButton, InputAdornment, Snackbar, Tooltip, Typography } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
-import { AddBox, Cancel, Chat, Image, InsertEmoticon, Person, PersonOff, Search, TurnLeftOutlined } from '@mui/icons-material';
+import {
+	AddBox,
+	Cancel,
+	Chat,
+	Image,
+	InsertEmoticon,
+	KeyboardArrowRight,
+	Person,
+	PersonOff,
+	Search,
+	Send,
+	TurnLeftOutlined,
+} from '@mui/icons-material';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import { useContext, useEffect, useRef, useState } from 'react';
 import { generateUniqueId } from '../utils/uniqueIdGenerator';
@@ -39,6 +51,7 @@ import { formatMessageTime } from '../utils/formatTime';
 import { renderMessageWithEmojis } from '../utils/renderMessageWithEmojis';
 import { useLocation } from 'react-router-dom';
 import { UsersContext } from '../contexts/UsersContextProvider';
+import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 
 export interface Message {
 	id: string;
@@ -83,6 +96,10 @@ const Messages = () => {
 	const { user } = useContext(UserAuthContext);
 	const { sortedUsersData } = useContext(UsersContext);
 
+	const { isSmallScreen, isRotatedMedium, isVerySmallScreen, isRotated } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
+	const isMobileSizeSmall = isVerySmallScreen || isRotated;
+
 	const location = useLocation();
 
 	const [messages, setMessages] = useState<Message[]>([]);
@@ -91,6 +108,8 @@ const Messages = () => {
 	const [isLargeImgMessageOpen, setIsLargeImgMessageOpen] = useState<boolean>(false);
 	const [isDeleteMessageOpen, setIsDeleteMessageOpen] = useState<boolean>(false);
 	const [messageIdToDelete, setMessageIdToDelete] = useState<string>('');
+
+	const [isChatsListVisible, setIsChatsListVisible] = useState<boolean>(false);
 
 	const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
 	const [searchValue, setSearchValue] = useState<string>('');
@@ -749,518 +768,653 @@ const Messages = () => {
 	return (
 		<DashboardPagesLayout pageName='Messages' customSettings={{ justifyContent: 'flex-start' }}>
 			<Box sx={{ display: 'flex', width: '100%', height: 'calc(100vh - 4rem)' }}>
-				<Box sx={{ display: 'flex', flexDirection: 'column', flex: 3, borderRight: '0.04rem solid lightgray', padding: '0 0rem 0 1rem' }}>
-					<Box sx={{ display: 'flex', margin: '0.5rem auto 0 auto', width: '100%', height: '3rem', paddingTop: '0.5rem' }}>
-						<Box sx={{ flex: 9 }}>
-							<CustomTextField
-								InputProps={{
-									endAdornment: (
-										<InputAdornment position='end'>
-											<Search sx={{ mr: '-0.5rem' }} />
-										</InputAdornment>
-									),
-								}}
-								value={searchChatValue}
-								onChange={handleFilterChats}
-							/>
-						</Box>
-						<Box sx={{ flex: 1 }}>
-							<Tooltip title='Find User' placement='top'>
-								<IconButton
-									sx={{ ':hover': { backgroundColor: 'transparent' } }}
-									onClick={() => {
-										setAddUserModalOpen(true);
-										setFilteredUsers([]);
-										setSearchValue('');
-									}}>
-									<AddBox />
-								</IconButton>
-							</Tooltip>
-						</Box>
+				{!isChatsListVisible && isVerySmallScreen && (
+					<Box
+						sx={{
+							display: 'flex',
+							justifyContent: 'center',
+							height: 'calc(100vh - 4rem)',
+							width: '1rem',
+							borderRight: 'solid 0.01rem lightgray',
+						}}
+						onClick={() => setIsChatsListVisible(true)}>
+						<IconButton>
+							<KeyboardArrowRight fontSize='medium' />
+						</IconButton>
 					</Box>
+				)}
+				{(isChatsListVisible || !isVerySmallScreen) && (
+					<Box
+						sx={{
+							display: 'flex',
+							flexDirection: 'column',
+							flex: 3,
+							borderRight: '0.04rem solid lightgray',
+							padding: isMobileSize ? '0 0rem 0 0.5rem' : '0 0rem 0 1rem',
+						}}>
+						<Box sx={{ display: 'flex', margin: '0.5rem auto 0 auto', width: '100%', height: '3rem', paddingTop: '0.5rem' }}>
+							<Box sx={{ flex: 9 }}>
+								<CustomTextField
+									InputProps={{
+										endAdornment: (
+											<InputAdornment position='end'>
+												<Search sx={{ mr: '-0.5rem' }} fontSize={isMobileSize ? 'small' : 'medium'} />
+											</InputAdornment>
+										),
+									}}
+									placeholder='Search Chat by Username'
+									value={searchChatValue}
+									onChange={handleFilterChats}
+								/>
+							</Box>
+							<Box sx={{ flex: 1 }}>
+								<Tooltip title='Find User' placement='top'>
+									<IconButton
+										sx={{ ':hover': { backgroundColor: 'transparent' } }}
+										onClick={() => {
+											setAddUserModalOpen(true);
+											setFilteredUsers([]);
+											setSearchValue('');
+										}}>
+										<AddBox fontSize={isMobileSize ? 'small' : 'medium'} />
+									</IconButton>
+								</Tooltip>
+							</Box>
+						</Box>
 
-					<Box sx={{ display: 'flex', flexDirection: 'column', marginTop: '0.5rem', overflow: 'auto', width: '100%' }}>
-						{filteredChatList?.map((chat) => {
-							const otherParticipant = chat.participants.find((participant) => participant.firebaseUserId !== user?.firebaseUserId);
+						<Box sx={{ display: 'flex', flexDirection: 'column', marginTop: '0.5rem', overflow: 'auto', width: '100%' }}>
+							{filteredChatList?.map((chat) => {
+								const otherParticipant = chat.participants.find((participant) => participant.firebaseUserId !== user?.firebaseUserId);
 
-							if (!otherParticipant) return null;
+								if (!otherParticipant) return null;
 
-							return (
-								<Box
-									key={`${chat.chatId}-${chat.participants[0].firebaseUserId}`}
-									sx={{
-										display: 'flex',
-										border: '0.04rem solid lightgray',
-										borderRight: 'none',
-										borderBottom: 'none',
-										'&:last-of-type': {
-											borderBottom: '0.04rem solid lightgray',
-											borderBottomLeftRadius: '0.35rem',
-										},
-
-										'&:first-of-type': {
-											borderTopLeftRadius: '0.35rem',
-										},
-										backgroundImage: chat.chatId === activeChatId ? `url(/msg-bg.png)` : null,
-										backgroundRepeat: 'no-repeat',
-										backgroundSize: 'cover',
-										backgroundPosition: 'center',
-									}}>
+								return (
 									<Box
+										key={`${chat.chatId}-${chat.participants[0].firebaseUserId}`}
 										sx={{
 											display: 'flex',
-											flexDirection: 'column',
-											alignItems: 'start',
-											padding: '0.5rem',
-											cursor: 'pointer',
-											flex: 6,
-										}}
-										onClick={() => {
-											handleSetActiveChat(chat);
+											border: '0.04rem solid lightgray',
+											borderRight: 'none',
+											borderBottom: 'none',
+											'&:last-of-type': {
+												borderBottom: '0.04rem solid lightgray',
+												borderBottomLeftRadius: '0.35rem',
+											},
+
+											'&:first-of-type': {
+												borderTopLeftRadius: '0.35rem',
+											},
+											backgroundImage: chat.chatId === activeChatId ? `url(/msg-bg.png)` : null,
+											backgroundRepeat: 'no-repeat',
+											backgroundSize: 'cover',
+											backgroundPosition: 'center',
 										}}>
-										<Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-											<Box sx={{ borderRadius: '100%', marginRight: '1rem' }}>
-												<Badge color='error' badgeContent={chat.unreadMessagesCount} max={9} sx={{ margin: '0.5rem 0.5rem 0 0' }}>
-													<img
-														src={otherParticipant.imageUrl}
-														alt='profile_img'
-														style={{
-															height: '2.5rem',
-															width: '2.5rem',
-															borderRadius: '100%',
-															border: 'solid lightgray 0.1rem',
-														}}
-													/>
-												</Badge>
+										<Box
+											sx={{
+												display: 'flex',
+												flexDirection: 'column',
+												alignItems: 'start',
+												padding: isMobileSize ? '0.35rem' : '0.5rem',
+												cursor: 'pointer',
+												flex: 6,
+											}}
+											onClick={() => {
+												handleSetActiveChat(chat);
+												if (isVerySmallScreen) {
+													setIsChatsListVisible(false);
+												}
+											}}>
+											<Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+												<Box sx={{ borderRadius: '100%', marginRight: isMobileSize ? '0.35rem' : '1rem' }}>
+													<Badge
+														color='error'
+														badgeContent={chat.unreadMessagesCount}
+														max={9}
+														sx={{
+															margin: '0.5rem 0.5rem 0 0',
+															'& .MuiBadge-badge': {
+																fontSize: '0.6rem',
+																height: '1rem',
+																minWidth: '1rem',
+																right: 5,
+																top: 1,
+															},
+														}}>
+														<img
+															src={otherParticipant.imageUrl}
+															alt='profile_img'
+															style={{
+																height: isMobileSize ? '1.75rem' : '2.5rem',
+																width: isMobileSize ? '1.75rem' : '2.5rem',
+																borderRadius: '100%',
+																border: 'solid lightgray 0.1rem',
+															}}
+														/>
+													</Badge>
+												</Box>
+												<Box>
+													<Typography
+														variant='body2'
+														sx={{
+															color: chat.chatId === activeChatId ? theme.textColor?.common.main : null,
+															fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+														}}>
+														{otherParticipant.username}
+													</Typography>
+												</Box>
 											</Box>
-											<Box>
-												<Typography variant='body2' sx={{ color: chat.chatId === activeChatId ? theme.textColor?.common.main : null }}>
-													{otherParticipant.username}
+											<Box
+												sx={{
+													marginTop: '0.2rem',
+												}}>
+												<Typography
+													variant='caption'
+													sx={{
+														color: chat.chatId === activeChatId ? theme.textColor?.common.main : 'gray',
+														fontSize: isMobileSize ? '0.6rem' : undefined,
+													}}>
+													{chat.lastMessage.text.length > 20 ? `${chat.lastMessage.text.substring(0, 20)}...` : chat.lastMessage.text}
 												</Typography>
 											</Box>
 										</Box>
 										<Box
 											sx={{
-												marginTop: '0.2rem',
+												display: 'flex',
+												flexDirection: 'column',
+												justifyContent: 'center',
+												alignItems: 'center',
+												flex: 1,
+												mr: isMobileSize ? '0rem' : '0.2rem',
 											}}>
-											<Typography variant='caption' sx={{ color: chat.chatId === activeChatId ? theme.textColor?.common.main : 'gray' }}>
-												{chat.lastMessage.text.length > 20 ? `${chat.lastMessage.text.substring(0, 20)}...` : chat.lastMessage.text}
+											<Tooltip title='Delete Chat' placement='top'>
+												<IconButton
+													onClick={() => handleDeleteChat(chat.chatId)}
+													sx={{
+														':hover': {
+															backgroundColor: 'transparent',
+														},
+													}}>
+													<Cancel
+														fontSize='small'
+														sx={{
+															color: chat.chatId === activeChatId ? theme.textColor?.common.main : theme.palette.primary.main,
+															fontSize: isMobileSize ? '0.8rem' : undefined,
+														}}
+													/>
+												</IconButton>
+											</Tooltip>
+											<Typography
+												variant='caption'
+												sx={{
+													color: chat.chatId !== activeChatId ? 'gray' : '#fff',
+													fontSize: isMobileSize ? '0.55rem' : '0.65rem',
+													mt: '0.25rem',
+												}}>
+												{chat.lastMessage.timestamp ? formatMessageTime(chat.lastMessage.timestamp) : null}
 											</Typography>
 										</Box>
 									</Box>
-									<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', flex: 1, mr: '0.2rem' }}>
-										<Tooltip title='Delete Chat' placement='top'>
-											<IconButton
-												onClick={() => handleDeleteChat(chat.chatId)}
-												sx={{
-													':hover': {
-														backgroundColor: 'transparent',
-													},
-												}}>
-												<Cancel
-													fontSize='small'
-													sx={{
-														fontSize: '1.1rem',
-														color: chat.chatId === activeChatId ? theme.textColor?.common.main : theme.palette.primary.main,
-													}}
-												/>
-											</IconButton>
-										</Tooltip>
-										<Typography variant='caption' sx={{ color: chat.chatId !== activeChatId ? 'gray' : '#fff', fontSize: '0.65rem', mt: '0.25rem' }}>
-											{chat.lastMessage.timestamp ? formatMessageTime(chat.lastMessage.timestamp) : null}
-										</Typography>
-									</Box>
-								</Box>
-							);
-						})}
+								);
+							})}
+						</Box>
 					</Box>
-				</Box>
+				)}
 
 				{/* Message Display */}
-				<Box sx={{ display: 'flex', flexDirection: 'column', flex: 10, height: '100%', marginLeft: '-0.04rem' }}>
-					<Box
-						sx={{
-							display: 'flex',
-							alignItems: 'center',
-							borderBottom: '0.04rem solid lightgray',
-							width: '100%',
-							height: '4rem',
-							flexShrink: 0,
-						}}>
-						{activeChat && (
-							<Box sx={{ display: 'flex', alignItems: 'center', margin: '0 1.5rem', width: '100%' }}>
-								{activeChat.participants
-									?.filter((participant) => participant.firebaseUserId !== user?.firebaseUserId)
-									?.map((otherParticipant) => (
-										<Box
-											key={otherParticipant.firebaseUserId}
-											sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-											<Box sx={{ display: 'flex', alignItems: 'center' }}>
-												<Box sx={{ borderRadius: '100%', marginRight: '1rem' }}>
-													<img
-														src={otherParticipant.imageUrl}
-														alt='profile_img'
-														style={{
-															height: '3rem',
-															width: '3rem',
-															borderRadius: '100%',
-															border: 'solid lightgray 0.1rem',
-														}}
-													/>
-												</Box>
-												<Box>
-													<Typography variant='body2'>{otherParticipant.username}</Typography>
-												</Box>
-											</Box>
-											<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-												<IconButton
-													size='small'
-													onClick={() => handleBlockUnblockUser(otherParticipant.firebaseUserId)}
-													sx={{ ':hover': { backgroundColor: 'transparent' } }}>
-													{blockedUsers.includes(otherParticipant.firebaseUserId) ? (
-														<Tooltip title='Unblock User' placement='top'>
-															<PersonOff color='error' />
-														</Tooltip>
-													) : (
-														<Tooltip title='Block User' placement='top'>
-															<Person color='success' />
-														</Tooltip>
-													)}
-												</IconButton>
-
-												{isBlockingUser && <Typography sx={{ fontSize: '0.75rem' }}>You have blocked this user</Typography>}
-											</Box>
-										</Box>
-									))}
-							</Box>
-						)}
-					</Box>
-
-					<Box
-						sx={{
-							display: 'flex',
-							flexDirection: 'column',
-							flexGrow: 1,
-							overflowY: 'auto',
-							padding: '1rem',
-							backgroundImage: `linear-gradient(rgba(80, 144, 166, 0.9), rgba(103, 180, 207, 0.95)), url('https://img.freepik.com/premium-vector/dialogue-balloon-chat-bubble-icons-seamless-pattern-textile-pattern-wrapping-paper-linear-vector-print-fabric-seamless-background-wallpaper-backdrop-with-speak-bubbles-chat-message-frame_8071-58894.jpg?w=1060')`,
-							backgroundRepeat: 'repeat',
-							backgroundSize: 'contain',
-							backgroundPosition: 'center',
-							maxHeight: '70vh',
-							position: 'relative',
-							borderLeft: 'none',
-						}}>
-						{activeChat ? (
-							messages
-								?.filter((msg) => {
-									const blockInfo = activeChat?.blockedUsers?.[msg.senderId]; // Get block info for the sender
-									const messageTimestamp = new Date(msg.timestamp);
-
-									// If the current user is the sender, show their own messages
-									if (msg.senderId === user?.firebaseUserId) {
-										return true;
-									}
-
-									// If the sender is blocked and the message was sent during the blocked period, hide it
-									if (blockInfo && blockInfo.blockedSince) {
-										const blockedSince = new Date(blockInfo.blockedSince);
-										const blockedUntil = blockInfo.blockedUntil ? new Date(blockInfo.blockedUntil) : null;
-
-										// Check if the message was sent after the block started and during the blocked period
-										if (messageTimestamp >= blockedSince && (!blockedUntil || messageTimestamp <= blockedUntil)) {
-											return false; // Filter out the message
-										}
-									}
-
-									// Show messages sent before block or after unblock
-									return true;
-								})
-								?.map((msg) => (
-									<Box
-										key={msg.id}
-										sx={{
-											display: 'flex',
-											flexDirection: 'column',
-											justifyContent: 'flex-end',
-											alignItems: 'center',
-											width: '100%',
-										}}>
-										<Box
-											ref={(el) => {
-												messageRefs.current[msg.id] = el as HTMLDivElement | null;
-											}}
-											sx={{
-												display: 'flex',
-												flexDirection: msg.senderId === user?.firebaseUserId ? 'row-reverse' : 'row',
-												justifyContent: 'flex-start',
-												alignItems: 'center',
-												width: '100%',
-												borderRadius: '0.35rem',
-											}}>
+				{(!isChatsListVisible || !isVerySmallScreen) && (
+					<Box sx={{ display: 'flex', flexDirection: 'column', flex: 10, height: 'calc(100vh - 4rem)', marginLeft: '-0.04rem' }}>
+						<Box
+							sx={{
+								display: 'flex',
+								alignItems: 'center',
+								borderBottom: '0.04rem solid lightgray',
+								width: '100%',
+								height: '4rem',
+								flexShrink: 0,
+							}}>
+							{activeChat && (
+								<Box sx={{ display: 'flex', alignItems: 'center', margin: isMobileSize ? '0 0.5rem' : '0 1.5rem', width: '100%' }}>
+									{activeChat.participants
+										?.filter((participant) => participant.firebaseUserId !== user?.firebaseUserId)
+										?.map((otherParticipant) => (
 											<Box
-												sx={{
-													display: 'flex',
-													flexDirection: 'column',
-													padding: '0.5rem 1rem',
-													borderRadius: '0.75rem',
-													margin: '0.5rem 0',
-													transition: 'background-color 0.5s ease',
-													backgroundColor: msg.senderId === user?.firebaseUserId ? '#DCF8C6' : '#FFF',
-													alignSelf: msg.senderId === user?.firebaseUserId ? 'flex-end' : 'flex-start',
-													maxWidth: '60%',
-													minWidth: '15%',
-													wordWrap: 'break-word',
-													wordBreak: 'break-all',
-												}}>
-												{msg.replyTo && (
-													<Box
-														sx={{
-															backgroundColor: '#f1f1f1',
-															borderLeft: '0.25rem solid #aaa',
-															padding: '0.5rem',
-															marginBottom: '0.5rem',
-															borderRadius: '0.25rem',
-															cursor: 'pointer',
-														}}
-														onClick={() => scrollToOriginalMessage(msg.replyTo)}>
-														<Typography sx={{ color: 'gray', fontSize: '0.75rem' }}>{msg.quotedText}</Typography>
+												key={otherParticipant.firebaseUserId}
+												sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+												<Box sx={{ display: 'flex', alignItems: 'center' }}>
+													<Box sx={{ borderRadius: '100%', marginRight: '1rem' }}>
+														<img
+															src={otherParticipant.imageUrl}
+															alt='profile_img'
+															style={{
+																height: isMobileSize ? '2.25rem' : '3rem',
+																width: isMobileSize ? '2.25rem' : '3rem',
+																borderRadius: '100%',
+																border: 'solid lightgray 0.1rem',
+															}}
+														/>
 													</Box>
-												)}
-
-												{msg.imageUrl ? (
-													<img
-														src={msg.imageUrl}
-														alt='uploaded'
-														style={{
-															height: '6rem',
-															maxHeight: '8rem',
-															objectFit: 'contain',
-															maxWidth: '100%',
-															borderRadius: '0.35rem',
-															cursor: 'pointer',
-														}}
-														onClick={() => setZoomedImage(msg.imageUrl)}
-													/>
-												) : (
-													<Box sx={{ alignSelf: 'flex-start' }}>
-														<Typography sx={{ fontSize: '0.85rem', wordWrap: 'break-word', whiteSpace: 'pre-wrap' }}>
-															{renderMessageWithEmojis(msg.text, '1.75rem')}
+													<Box>
+														<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+															{otherParticipant.username}
 														</Typography>
 													</Box>
-												)}
-
-												<Box sx={{ alignSelf: 'flex-end' }}>
-													<Typography variant='caption' sx={{ fontSize: '0.65rem', color: 'gray' }}>
-														{formatMessageTime(msg.timestamp)}
-													</Typography>
 												</Box>
-											</Box>
-
-											<Box>
-												<Tooltip title='Reply' placement='top'>
+												<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
 													<IconButton
 														size='small'
-														onClick={() => handleReplyMessage(msg)}
-														sx={{
-															':hover': {
-																backgroundColor: 'transparent',
-															},
-														}}>
-														<TurnLeftOutlined sx={{ fontSize: '1.25rem' }} />
+														onClick={() => handleBlockUnblockUser(otherParticipant.firebaseUserId)}
+														sx={{ ':hover': { backgroundColor: 'transparent' } }}>
+														{blockedUsers.includes(otherParticipant.firebaseUserId) ? (
+															<Tooltip title='Unblock User' placement='top'>
+																<PersonOff color='error' fontSize={isMobileSize ? 'small' : 'medium'} />
+															</Tooltip>
+														) : (
+															<Tooltip title='Block User' placement='top'>
+																<Person color='success' fontSize={isMobileSize ? 'small' : 'medium'} />
+															</Tooltip>
+														)}
 													</IconButton>
-												</Tooltip>
+
+													{isBlockingUser && (
+														<Typography sx={{ fontSize: isMobileSize ? '0.6rem' : '0.75rem' }}>
+															{isVerySmallScreen ? 'Blocked' : 'You have blocked this user'}
+														</Typography>
+													)}
+												</Box>
 											</Box>
+										))}
+								</Box>
+							)}
+						</Box>
+
+						<Box
+							sx={{
+								display: 'flex',
+								flexDirection: 'column',
+								flexGrow: 1,
+								overflowY: 'auto',
+								padding: '1rem',
+								backgroundImage: `linear-gradient(rgba(80, 144, 166, 0.9), rgba(103, 180, 207, 0.95)), url('https://img.freepik.com/premium-vector/dialogue-balloon-chat-bubble-icons-seamless-pattern-textile-pattern-wrapping-paper-linear-vector-print-fabric-seamless-background-wallpaper-backdrop-with-speak-bubbles-chat-message-frame_8071-58894.jpg?w=1060')`,
+								backgroundRepeat: 'repeat',
+								backgroundSize: 'contain',
+								backgroundPosition: 'center',
+								maxHeight: '85vh',
+								position: 'relative',
+								borderLeft: 'none',
+							}}>
+							{activeChat ? (
+								messages
+									?.filter((msg) => {
+										const blockInfo = activeChat?.blockedUsers?.[msg.senderId]; // Get block info for the sender
+										const messageTimestamp = new Date(msg.timestamp);
+
+										// If the current user is the sender, show their own messages
+										if (msg.senderId === user?.firebaseUserId) {
+											return true;
+										}
+
+										// If the sender is blocked and the message was sent during the blocked period, hide it
+										if (blockInfo && blockInfo.blockedSince) {
+											const blockedSince = new Date(blockInfo.blockedSince);
+											const blockedUntil = blockInfo.blockedUntil ? new Date(blockInfo.blockedUntil) : null;
+
+											// Check if the message was sent after the block started and during the blocked period
+											if (messageTimestamp >= blockedSince && (!blockedUntil || messageTimestamp <= blockedUntil)) {
+												return false; // Filter out the message
+											}
+										}
+
+										// Show messages sent before block or after unblock
+										return true;
+									})
+									?.map((msg) => (
+										<Box
+											key={msg.id}
+											sx={{
+												display: 'flex',
+												flexDirection: 'column',
+												justifyContent: 'flex-end',
+												alignItems: 'center',
+												width: '100%',
+											}}>
 											<Box
+												ref={(el) => {
+													messageRefs.current[msg.id] = el as HTMLDivElement | null;
+												}}
 												sx={{
-													marginRight: 0,
+													display: 'flex',
+													flexDirection: msg.senderId === user?.firebaseUserId ? 'row-reverse' : 'row',
+													justifyContent: 'flex-start',
+													alignItems: 'center',
+													width: '100%',
+													borderRadius: '0.35rem',
 												}}>
-												{msg.senderId === user?.firebaseUserId && (
-													<Tooltip title='Delete' placement='top'>
+												<Box
+													sx={{
+														display: 'flex',
+														flexDirection: 'column',
+														padding: '0.5rem 1rem',
+														borderRadius: '0.75rem',
+														margin: '0.5rem 0',
+														transition: 'background-color 0.5s ease',
+														backgroundColor: msg.senderId === user?.firebaseUserId ? '#DCF8C6' : '#FFF',
+														alignSelf: msg.senderId === user?.firebaseUserId ? 'flex-end' : 'flex-start',
+														maxWidth: '60%',
+														minWidth: '15%',
+														wordWrap: 'break-word',
+														wordBreak: 'break-all',
+													}}>
+													{msg.replyTo && (
+														<Box
+															sx={{
+																backgroundColor: '#f1f1f1',
+																borderLeft: '0.25rem solid #aaa',
+																padding: '0.5rem',
+																marginBottom: '0.5rem',
+																borderRadius: '0.25rem',
+																cursor: 'pointer',
+															}}
+															onClick={() => scrollToOriginalMessage(msg.replyTo)}>
+															<Typography sx={{ color: 'gray', fontSize: isMobileSize ? '0.6rem' : '0.75rem' }}>{msg.quotedText}</Typography>
+														</Box>
+													)}
+
+													{msg.imageUrl ? (
+														<img
+															src={msg.imageUrl}
+															alt='uploaded'
+															style={{
+																height: isMobileSize ? '4rem' : '6rem',
+																maxHeight: isMobileSize ? '6rem' : '8rem',
+																objectFit: 'contain',
+																maxWidth: '100%',
+																borderRadius: '0.35rem',
+																cursor: 'pointer',
+															}}
+															onClick={() => setZoomedImage(msg.imageUrl)}
+														/>
+													) : (
+														<Box sx={{ alignSelf: 'flex-start' }}>
+															<Typography sx={{ fontSize: '0.85rem', wordWrap: 'break-word', whiteSpace: 'pre-wrap' }}>
+																{renderMessageWithEmojis(msg.text, isMobileSize ? '1.15rem' : '1.75rem', isMobileSize)}
+															</Typography>
+														</Box>
+													)}
+
+													<Box sx={{ alignSelf: 'flex-end' }}>
+														<Typography variant='caption' sx={{ fontSize: isMobileSize ? '0.5rem' : '0.65rem', color: 'gray' }}>
+															{formatMessageTime(msg.timestamp)}
+														</Typography>
+													</Box>
+												</Box>
+
+												<Box>
+													<Tooltip title='Reply' placement='top'>
 														<IconButton
 															size='small'
-															onClick={() => {
-																setIsDeleteMessageOpen(true);
-																setMessageIdToDelete(msg.id);
-															}}
+															onClick={() => handleReplyMessage(msg)}
 															sx={{
 																':hover': {
 																	backgroundColor: 'transparent',
 																},
 															}}>
-															<Cancel sx={{ fontSize: '1.15rem' }} />
+															<TurnLeftOutlined sx={{ fontSize: isMobileSize ? '0.95rem' : '1.25rem' }} />
 														</IconButton>
 													</Tooltip>
-												)}
+												</Box>
+												<Box
+													sx={{
+														marginRight: isMobileSize ? '-0.35rem' : 0,
+													}}>
+													{msg.senderId === user?.firebaseUserId && (
+														<Tooltip title='Delete' placement='top'>
+															<IconButton
+																size='small'
+																onClick={() => {
+																	setIsDeleteMessageOpen(true);
+																	setMessageIdToDelete(msg.id);
+																}}
+																sx={{
+																	':hover': {
+																		backgroundColor: 'transparent',
+																	},
+																}}>
+																<Cancel sx={{ fontSize: isMobileSize ? '0.9rem' : '1.15rem' }} />
+															</IconButton>
+														</Tooltip>
+													)}
+												</Box>
 											</Box>
 										</Box>
+									))
+							) : (
+								<Box
+									sx={{
+										display: 'flex',
+										flexDirection: 'column',
+										justifyContent: 'center',
+										alignItems: 'center',
+										textAlign: 'center',
+										height: '100%',
+										width: '100%',
+									}}>
+									<Box>
+										<Chat sx={{ color: theme.textColor?.common.main, fontSize: isMobileSize ? '3rem' : '6rem', mb: '1rem' }} />
 									</Box>
-								))
-						) : (
-							<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100%', width: '100%' }}>
-								<Box>
-									<Chat sx={{ color: theme.textColor?.common.main, fontSize: '6rem', mb: '1rem' }} />
-								</Box>
-								<Box>
-									<Typography variant='body1' sx={{ color: theme.textColor?.common.main }}>
-										Select an existing chat or start a new chat by adding a user
-									</Typography>
-								</Box>
-							</Box>
-						)}
-
-						<div ref={messagesEndRef} />
-					</Box>
-
-					<CustomDialog
-						openModal={isDeleteMessageOpen}
-						closeModal={() => {
-							setIsDeleteMessageOpen(false);
-							setMessageIdToDelete('');
-						}}
-						maxWidth='sm'
-						title='Delete Message'
-						content='Are you sure you want to delete this message?'>
-						<CustomDialogActions
-							deleteBtn
-							deleteBtnText='Delete'
-							onCancel={() => {
-								setIsDeleteMessageOpen(false);
-								setMessageIdToDelete('');
-							}}
-							onDelete={() => {
-								handleDeleteMessage(messageIdToDelete);
-								setIsDeleteMessageOpen(false);
-								setMessageIdToDelete('');
-							}}
-						/>
-					</CustomDialog>
-
-					{zoomedImage && (
-						<Dialog open={!!zoomedImage} onClose={() => setZoomedImage('')} maxWidth='sm'>
-							<img src={zoomedImage} alt='Zoomed' style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '0.25rem' }} />
-						</Dialog>
-					)}
-
-					{replyToMessage && activeChat && (
-						<Box
-							sx={{
-								border: '0.01rem solid lightgray',
-								padding: '0.75rem',
-								position: 'relative',
-							}}>
-							<Typography variant='body2' sx={{ color: 'gray', mb: '0.35rem' }}>
-								Replying to:
-							</Typography>
-							<Typography sx={{ fontSize: '0.8rem', lineHeight: '1.8' }}> {replyToMessage.text}</Typography>
-							<IconButton size='small' sx={{ position: 'absolute', top: '0.2rem', right: '0.2rem' }} onClick={() => setReplyToMessage(null)}>
-								<Cancel fontSize='small' />
-							</IconButton>
-						</Box>
-					)}
-
-					{/* Input Box */}
-					<Box sx={{ display: 'flex', alignItems: 'center', borderTop: '0.04rem solid gray', padding: '1rem', flexShrink: 0, position: 'relative' }}>
-						<input
-							type='file'
-							accept='image/*'
-							onChange={(e) => {
-								handleImageChange(e);
-								setCurrentMessage('');
-							}}
-							style={{ display: 'none' }}
-							id='image-upload'
-							disabled={isUploading || isBlockedUser || isBlockingUser || !activeChat}
-						/>
-						<label htmlFor='image-upload'>
-							<IconButton component='span' disabled={isUploading || isBlockedUser || isBlockingUser || !activeChat}>
-								<Image />
-							</IconButton>
-						</label>
-
-						<Box sx={{ width: '100%', mt: '0.5rem', position: 'relative' }}>
-							<CustomTextField
-								fullWidth
-								placeholder={
-									imageUpload
-										? ''
-										: isBlockedUser
-										? 'Can not send message since you are blocked'
-										: isBlockingUser
-										? 'Can not send message to a blocked contact'
-										: 'Type a message...'
-								}
-								multiline
-								rows={3}
-								value={currentMessage}
-								onChange={(e) => {
-									if (imageUpload) {
-										setCurrentMessage('');
-									} else {
-										setCurrentMessage(e.target.value);
-									}
-									resetImageUpload();
-								}}
-								InputProps={{
-									sx: {
-										padding: '0.5rem 1rem',
-									},
-									endAdornment: (
-										<InputAdornment position='end'>
-											<IconButton
-												onClick={() => setShowPicker(!showPicker)}
-												edge='end'
-												disabled={isUploading || isBlockedUser || isBlockingUser || !activeChat}>
-												<InsertEmoticon color={showPicker ? 'success' : 'disabled'} />
-											</IconButton>
-										</InputAdornment>
-									),
-								}}
-								sx={{ overflowY: 'auto' }}
-								disabled={!!imageUpload || isBlockedUser || isBlockingUser || !activeChat}
-							/>
-
-							<Snackbar
-								open={isLargeImgMessageOpen}
-								autoHideDuration={3000}
-								anchorOrigin={{ vertical, horizontal }}
-								sx={{ mt: '5rem' }}
-								onClose={() => {
-									setIsLargeImgMessageOpen(false);
-									resetImageUpload();
-								}}>
-								<Alert severity='error' variant='filled' sx={{ width: '100%' }}>
-									Image size exceeds the limit of 1 MB
-								</Alert>
-							</Snackbar>
-
-							{imagePreview && (
-								<Box sx={{ display: 'flex', position: 'absolute', bottom: '1rem', left: '1rem', maxHeight: '5rem' }}>
-									<img src={imagePreview} alt='Preview' style={{ maxHeight: '5rem', objectFit: 'contain' }} />
-									<Tooltip title='Remove Preview' placement='right'>
-										<IconButton size='small' onClick={resetImageUpload} sx={{ ':hover': { backgroundColor: 'transparent' } }}>
-											<Cancel fontSize='small' />
-										</IconButton>
-									</Tooltip>
+									<Box>
+										<Typography variant={isMobileSize ? 'body2' : 'body1'} sx={{ color: theme.textColor?.common.main }}>
+											Select an existing chat or start a new chat by adding a user
+										</Typography>
+									</Box>
 								</Box>
 							)}
+
+							<div ref={messagesEndRef} />
 						</Box>
 
-						{showPicker && !(isUploading || isBlockedUser || isBlockingUser || !activeChat) && (
-							<Box sx={{ position: 'absolute', bottom: '6rem', right: '3rem', zIndex: 10 }}>
-								<Picker data={data} onEmojiSelect={handleEmojiSelect} theme='dark' />
+						<CustomDialog
+							openModal={isDeleteMessageOpen}
+							closeModal={() => {
+								setIsDeleteMessageOpen(false);
+								setMessageIdToDelete('');
+							}}
+							maxWidth='sm'
+							title='Delete Message'
+							content='Are you sure you want to delete this message?'>
+							<CustomDialogActions
+								deleteBtn
+								deleteBtnText='Delete'
+								onCancel={() => {
+									setIsDeleteMessageOpen(false);
+									setMessageIdToDelete('');
+								}}
+								onDelete={() => {
+									handleDeleteMessage(messageIdToDelete);
+									setIsDeleteMessageOpen(false);
+									setMessageIdToDelete('');
+								}}
+							/>
+						</CustomDialog>
+
+						{zoomedImage && (
+							<Dialog open={!!zoomedImage} onClose={() => setZoomedImage('')} maxWidth='sm'>
+								<img src={zoomedImage} alt='Zoomed' style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '0.25rem' }} />
+							</Dialog>
+						)}
+
+						{replyToMessage && activeChat && (
+							<Box
+								sx={{
+									border: '0.01rem solid lightgray',
+									padding: isMobileSize ? '0.5rem' : '0.75rem',
+									position: 'relative',
+								}}>
+								<Typography
+									variant='body2'
+									sx={{ color: 'gray', mb: isMobileSize ? '0.15rem' : '0.35rem', fontSize: isMobileSize ? '0.7rem' : '0.85rem' }}>
+									Replying to:
+								</Typography>
+								<Typography sx={{ fontSize: isMobileSize ? '0.65rem' : '0.8rem', lineHeight: isMobileSize ? '1.6' : '1.8' }}>
+									{replyToMessage.text}
+								</Typography>
+								<IconButton size='small' sx={{ position: 'absolute', top: '0.2rem', right: '0.2rem' }} onClick={() => setReplyToMessage(null)}>
+									<Cancel fontSize='small' sx={{ fontSize: isMobileSize ? '0.9rem' : undefined }} />
+								</IconButton>
 							</Box>
 						)}
 
-						<CustomSubmitButton
-							sx={{ margin: '0 0 1rem 1rem' }}
-							size='small'
-							onClick={handleSendMessage}
-							disabled={isUploading || isBlockedUser || isBlockingUser || !activeChat}>
-							Send
-						</CustomSubmitButton>
+						{/* Input Box */}
+						<Box
+							sx={{
+								display: 'flex',
+								alignItems: 'center',
+								borderTop: '0.04rem solid gray',
+								padding: isMobileSize ? '0.25rem' : '1rem',
+								flexShrink: 0,
+								position: 'relative',
+							}}>
+							<input
+								type='file'
+								accept='image/*'
+								onChange={(e) => {
+									handleImageChange(e);
+									setCurrentMessage('');
+								}}
+								style={{ display: 'none' }}
+								id='image-upload'
+								disabled={isUploading || isBlockedUser || isBlockingUser || !activeChat}
+							/>
+							<label htmlFor='image-upload'>
+								<IconButton
+									component='span'
+									disabled={isUploading || isBlockedUser || isBlockingUser || !activeChat}
+									sx={{
+										':hover': {
+											backgroundColor: 'transparent',
+										},
+									}}>
+									<Image fontSize={isMobileSize ? 'small' : 'medium'} />
+								</IconButton>
+							</label>
+
+							<Box sx={{ width: '100%', mt: '0.5rem', position: 'relative' }}>
+								<CustomTextField
+									fullWidth
+									placeholder={
+										imageUpload
+											? ''
+											: isBlockedUser
+											? 'Can not send message since you are blocked'
+											: isBlockingUser
+											? 'Can not send message to a blocked contact'
+											: 'Type a message...'
+									}
+									multiline
+									rows={isRotatedMedium ? 1 : 2}
+									value={currentMessage}
+									onChange={(e) => {
+										if (imageUpload) {
+											setCurrentMessage('');
+										} else {
+											setCurrentMessage(e.target.value);
+										}
+										resetImageUpload();
+									}}
+									InputProps={{
+										sx: {
+											padding: '0.5rem 1rem',
+										},
+										endAdornment: (
+											<InputAdornment position='end'>
+												<IconButton
+													onClick={() => setShowPicker(!showPicker)}
+													edge='end'
+													disabled={isUploading || isBlockedUser || isBlockingUser || !activeChat}>
+													<InsertEmoticon color={showPicker ? 'success' : 'disabled'} sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
+												</IconButton>
+											</InputAdornment>
+										),
+									}}
+									sx={{ overflowY: 'auto' }}
+									disabled={!!imageUpload || isBlockedUser || isBlockingUser || !activeChat}
+								/>
+
+								<Snackbar
+									open={isLargeImgMessageOpen}
+									autoHideDuration={3000}
+									anchorOrigin={{ vertical, horizontal }}
+									sx={{ mt: isMobileSize ? '3rem' : '5rem' }}
+									onClose={() => {
+										setIsLargeImgMessageOpen(false);
+										resetImageUpload();
+									}}>
+									<Alert
+										severity='error'
+										variant='filled'
+										sx={{ width: isMobileSize ? '90%' : '100%', fontSize: isMobileSize ? '0.8rem' : undefined, textAlign: 'center' }}>
+										Image size exceeds the limit of 1 MB
+									</Alert>
+								</Snackbar>
+
+								{imagePreview && (
+									<Box
+										sx={{
+											display: 'flex',
+											position: 'absolute',
+											bottom: '1rem',
+											left: isRotatedMedium ? '0.5rem' : '1rem',
+											maxHeight: isRotatedMedium ? '2rem' : isSmallScreen ? '3.25rem' : '3.75rem',
+										}}>
+										<img
+											src={imagePreview}
+											alt='Preview'
+											style={{ maxHeight: isRotatedMedium ? '2rem' : isSmallScreen ? '3.25rem' : '3.75rem', objectFit: 'contain' }}
+										/>
+										<Tooltip title='Remove Preview' placement='right'>
+											<IconButton size='small' onClick={resetImageUpload} sx={{ ':hover': { backgroundColor: 'transparent' } }}>
+												<Cancel fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />
+											</IconButton>
+										</Tooltip>
+									</Box>
+								)}
+							</Box>
+
+							{showPicker && !(isUploading || isBlockedUser || isBlockingUser || !activeChat) && (
+								<Box
+									sx={{
+										position: 'absolute',
+										bottom: isVerySmallScreen ? '2.75rem' : isRotated ? '-2.75rem' : isRotatedMedium ? '-1rem' : '6rem',
+										right: isVerySmallScreen ? '1rem' : isRotated ? '-0.5rem' : isRotatedMedium ? '1rem' : '6rem',
+										zIndex: 10,
+										transform: isVerySmallScreen ? 'scale(0.8)' : isRotated ? 'scale(0.55)' : isRotatedMedium ? 'scale(0.65)' : 'scale(1)',
+									}}>
+									<Picker data={data} onEmojiSelect={handleEmojiSelect} theme='dark' />
+								</Box>
+							)}
+
+							<IconButton
+								onClick={handleSendMessage}
+								disabled={isUploading || isBlockedUser || isBlockingUser || !activeChat}
+								sx={{
+									':hover': {
+										backgroundColor: 'transparent',
+									},
+								}}>
+								<Send fontSize='small' />
+							</IconButton>
+
+							{/* {!isMobileSize && (
+								<CustomSubmitButton
+									sx={{ margin: isMobileSize ? '0 0 0 0.5rem' : '0 0 1rem 1rem', fontSize: isMobileSize ? '0.7rem' : undefined }}
+									size='small'
+									onClick={handleSendMessage}
+									disabled={isUploading || isBlockedUser || isBlockingUser || !activeChat}>
+									Send
+								</CustomSubmitButton>
+							)} */}
+						</Box>
 					</Box>
-				</Box>
+				)}
 			</Box>
 
 			{/* Custom Dialog for User Search */}
@@ -1273,7 +1427,7 @@ const Messages = () => {
 				title='Find User'
 				content='Search users by username or email address to start a chat'
 				maxWidth='sm'>
-				<Box sx={{ display: 'flex', justifyContent: 'center', width: '100%', mb: filteredUsers.length === 0 ? '1.5rem' : null }}>
+				<Box sx={{ display: 'flex', justifyContent: 'center', width: '100%', mb: filteredUsers.length === 0 ? '1.5rem' : '-1rem' }}>
 					<CustomTextField
 						sx={{ width: '80%' }}
 						required={false}
@@ -1291,11 +1445,12 @@ const Messages = () => {
 							flexDirection: 'column',
 							justifyContent: 'center',
 							alignItems: 'flex-start',
-							width: '65%',
-							maxHeight: '15rem',
+							width: isMobileSize ? '75%' : '65%',
+							maxHeight: '16rem',
 							overflow: 'auto',
 							margin: '0 auto 1.5rem auto',
 							border: 'solid 0.05rem lightgray',
+							paddingTop: isMobileSize ? '0.5rem' : filteredUsers.length < 6 ? '0rem' : '2.5rem',
 						}}>
 						{filteredUsers
 							?.filter((filteredUser) => filteredUser.firebaseUserId !== user?.firebaseUserId)
@@ -1325,15 +1480,15 @@ const Messages = () => {
 											src={user.imageUrl}
 											alt='profile_img'
 											style={{
-												height: '2.5rem',
-												width: '2.5rem',
+												height: isMobileSize ? '2rem' : '2.5rem',
+												width: isMobileSize ? '2rem' : '2.5rem',
 												borderRadius: '100%',
 												border: 'solid lightgray 0.1rem',
 											}}
 										/>
 									</Box>
 									<Box>
-										<Typography className='username' variant='body2'>
+										<Typography className='username' variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 											{user.username}
 										</Typography>
 									</Box>

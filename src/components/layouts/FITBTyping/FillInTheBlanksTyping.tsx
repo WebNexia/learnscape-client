@@ -412,7 +412,7 @@ const FillInTheBlanksTyping = ({
 									const match = segment.match(/___(\d+)___/);
 									if (match) {
 										const blankIndex = parseInt(match[1], 10) - 1;
-										const correctValue = blankValuePairs[blankIndex].value;
+										const correctValue = blankValuePairs[blankIndex]?.value;
 										return (
 											<Typography
 												key={`correct-${blankIndex}`}

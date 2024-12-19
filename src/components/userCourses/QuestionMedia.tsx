@@ -6,9 +6,10 @@ import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 
 interface QuestionMediaProps {
 	question: QuestionInterface;
+	isStudentFeedbackPage?: boolean;
 }
 
-const QuestionMedia = ({ question }: QuestionMediaProps) => {
+const QuestionMedia = ({ question, isStudentFeedbackPage }: QuestionMediaProps) => {
 	const { isSmallScreen, isRotatedMedium, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	// const isMobileSizeSmall = isVerySmallScreen || isRotated;
@@ -31,7 +32,11 @@ const QuestionMedia = ({ question }: QuestionMediaProps) => {
 						? '18rem'
 						: '0',
 				margin:
-					question?.imageUrl && question?.videoUrl && isVerySmallScreen
+					isStudentFeedbackPage && question?.imageUrl && question?.videoUrl && isVerySmallScreen
+						? '6.5rem 0'
+						: isStudentFeedbackPage && (question?.imageUrl || question?.videoUrl)
+						? '1.5rem 0'
+						: question?.imageUrl && question?.videoUrl && isVerySmallScreen
 						? '14.5rem 0 3rem 0'
 						: question?.imageUrl && question?.videoUrl && isRotatedMedium
 						? '9.5rem 0 -1rem 0'
