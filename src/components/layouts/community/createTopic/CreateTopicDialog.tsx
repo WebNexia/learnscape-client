@@ -20,6 +20,7 @@ import ImageThumbnail from '../../../forms/uploadImageVideoDocument/ImageThumbna
 import { truncateText } from '../../../../utils/utilText';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { UsersContext } from '../../../../contexts/UsersContextProvider';
+import { MediaQueryContext } from '../../../../contexts/MediaQueryContextProvider';
 
 interface CreateTopicDialogProps {
 	createTopicModalOpen: boolean;
@@ -34,6 +35,9 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 	const { user } = useContext(UserAuthContext);
 	const { sortedUsersData } = useContext(UsersContext);
 	const { addNewTopic } = useContext(CommunityContext);
+
+	const { isSmallScreen, isRotatedMedium, isVerySmallScreen, isRotated } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
 
 	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(true);
 	const [isAudioUploading, setIsAudioUploading] = useState<boolean>(false);
@@ -101,6 +105,8 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 			audioUrl: '',
 		});
 		setShowPicker(false);
+		setShowAudioRecorder(false);
+		setShowImageUploader(false);
 	};
 
 	const handleEmojiSelect = (emoji: any) => {
@@ -132,7 +138,7 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 	return (
 		<CustomDialog openModal={createTopicModalOpen} closeModal={reset} title='Create New Topic' maxWidth='sm'>
 			<form
-				style={{ display: 'flex', flexDirection: 'column', padding: '1rem 1.5rem' }}
+				style={{ display: 'flex', flexDirection: 'column', padding: isMobileSize ? '0.5rem 0.75rem' : '1rem 1.5rem' }}
 				onSubmit={(e: React.FormEvent<HTMLFormElement>) => {
 					e.preventDefault();
 					createTopic();
@@ -177,7 +183,7 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 												backgroundColor: 'transparent',
 											},
 										}}>
-										<InsertEmoticon color={showPicker ? 'success' : 'disabled'} />
+										<InsertEmoticon color={showPicker ? 'success' : 'disabled'} sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
 									</IconButton>
 								</InputAdornment>
 							),
@@ -185,7 +191,20 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 					/>
 
 					{showPicker && (
-						<Box sx={{ position: 'absolute', bottom: '-17rem', right: '3rem', zIndex: 10 }}>
+						<Box
+							sx={{
+								position: 'absolute',
+								bottom: isVerySmallScreen ? '-7rem' : isRotated ? '-8rem' : isRotatedMedium || isSmallScreen ? '-9.5rem' : '-9.5rem',
+								right: isVerySmallScreen ? '-3.5rem' : isRotated ? '-3rem' : isRotatedMedium || isSmallScreen ? '-2rem' : '0.5rem',
+								zIndex: 10,
+								transform: isVerySmallScreen
+									? 'scale(0.5)'
+									: isRotated
+									? 'scale(0.55)'
+									: isRotatedMedium || isSmallScreen
+									? 'scale(0.65)'
+									: 'scale(0.8)',
+							}}>
 							<Picker data={data} onEmojiSelect={handleEmojiSelect} theme='dark' />
 						</Box>
 					)}
@@ -200,7 +219,11 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 										},
 									}}
 									onClick={() => setShowAudioRecorder(!showAudioRecorder)}>
-									{!showAudioRecorder ? <Mic fontSize='small' /> : <MicOff fontSize='small' />}
+									{!showAudioRecorder ? (
+										<Mic fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
+									) : (
+										<MicOff fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
+									)}
 								</IconButton>
 							</Tooltip>
 						</Box>
@@ -213,7 +236,11 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 										},
 									}}
 									onClick={() => setShowImageUploader(!showImageUploader)}>
-									{!showImageUploader ? <Image fontSize='small' /> : <HideImage fontSize='small' />}
+									{!showImageUploader ? (
+										<Image fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
+									) : (
+										<HideImage fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
+									)}
 								</IconButton>
 							</Tooltip>
 						</Box>
@@ -222,7 +249,9 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 
 				{showAudioRecorder && (
 					<Box sx={{ marginBottom: '1rem' }}>
-						<Typography variant='h6'>Audio Recording</Typography>
+						<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.9rem' : undefined }}>
+							Audio Recording
+						</Typography>
 
 						{!topic.audioUrl ? (
 							<AudioRecorder
@@ -243,13 +272,13 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 											boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
 											borderRadius: '0.35rem',
 											width: '100%',
-											height: '2.25rem',
+											height: '2rem',
 										}}
 									/>
 								</Box>
 								<Box sx={{ flex: 1, margin: '0.75rem 0 0 1.5rem' }}>
 									<CustomSubmitButton
-										sx={{ borderRadius: '0.35rem' }}
+										sx={{ borderRadius: '0.35rem', fontSize: isMobileSize ? '0.75rem' : undefined }}
 										onClick={() => {
 											setTopic((prevData) => {
 												return { ...prevData, audioUrl: '' };
@@ -296,7 +325,13 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 						)}
 					</>
 				)}
-				<CustomDialogActions onCancel={reset} submitBtnType='submit' actionSx={{ margin: '1.5rem -1rem 0 0' }} />
+				<CustomDialogActions
+					onCancel={reset}
+					submitBtnType='submit'
+					actionSx={{ margin: isMobileSize ? '0.5rem 0rem 0 0' : '1.5rem -1rem 0 0' }}
+					submitBtnSx={{ padding: isMobileSize ? '0.1rem 0.25rem' : undefined, marginRight: isMobileSize ? '-0.5rem' : undefined }}
+					cancelBtnSx={{ padding: isMobileSize ? '0.1rem 0.25rem' : undefined }}
+				/>
 			</form>
 		</CustomDialog>
 	);

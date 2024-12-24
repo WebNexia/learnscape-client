@@ -110,7 +110,6 @@ const PracticeQuestion = ({
 
 	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
-	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
 	const { userId, lessonId, courseId, userCourseId } = useParams();
 	const { orgId } = useContext(OrganisationContext);
@@ -517,6 +516,7 @@ const PracticeQuestion = ({
 						position: 'relative',
 						mt: isMobileSize ? '1.5rem' : '2rem',
 						width: '50%',
+						mb: '1rem',
 					}}>
 					<IconButton
 						sx={{

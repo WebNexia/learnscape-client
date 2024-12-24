@@ -180,7 +180,7 @@ const EventCalendar = () => {
 	};
 
 	return (
-		<DashboardPagesLayout pageName='Calendar'>
+		<DashboardPagesLayout pageName='Calendar' showCopyRight={true}>
 			<Box sx={{ display: 'flex', padding: isMobileSize ? '1rem' : '3rem' }}>
 				<Calendar
 					localizer={localizer}

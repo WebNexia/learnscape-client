@@ -1,4 +1,4 @@
-import { Alert, Box, DialogContent, IconButton, InputAdornment, Snackbar, Tooltip, Typography } from '@mui/material';
+import { Alert, Box, Dialog, DialogContent, IconButton, InputAdornment, Snackbar, Tooltip, Typography } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import TopicPaper from '../components/layouts/community/topicPage/TopicPaper';
 import { useContext, useEffect, useMemo, useRef, useState } from 'react';
@@ -32,6 +32,7 @@ import { renderMessageWithMentions } from '../utils/renderMessageWithMentions';
 import { debounce } from 'lodash';
 import { processTitle } from '../utils/processTitle';
 import { Roles } from '../interfaces/enums';
+import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 
 export interface UserSuggestion {
 	username: string;
@@ -51,6 +52,9 @@ const CommunityTopicPage = () => {
 	const { orgId } = useContext(OrganisationContext);
 	const { fetchTopics, sortedTopicsData } = useContext(CommunityContext);
 
+	const { isRotated, isVerySmallScreen, isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
+
 	const location = useLocation();
 	const queryParams = new URLSearchParams(location.search);
 	const initialPageNumber = parseInt(queryParams.get('page') || '1', 10);
@@ -60,6 +64,8 @@ const CommunityTopicPage = () => {
 
 	const [currentMessage, setCurrentMessage] = useState<string>('');
 	const [replyToMessage, setReplyToMessage] = useState<CommunityMessage | null>(null);
+
+	const [zoomedImage, setZoomedImage] = useState<string | undefined>('');
 
 	const [topic, setTopic] = useState<TopicInfo>({
 		_id: '',
@@ -442,13 +448,20 @@ const CommunityTopicPage = () => {
 		const withMentions = renderMessageWithMentions(text, processedTopics, user!);
 
 		// Step 2: Pass the result to emoji rendering, handling both strings and arrays
-		return renderMessageWithEmojis(withMentions, '1.5rem');
+		return renderMessageWithEmojis(withMentions, '1.5rem', isMobileSize);
 	};
 	const renderedTopicContent = useMemo(() => renderMessageContent(topic?.text || ''), [topic?.text]);
 
 	return (
 		<DashboardPagesLayout pageName='Community' customSettings={{ justifyContent: 'flex-start' }}>
-			<Box sx={{ width: '80%', position: 'fixed', top: '4rem', zIndex: 1000, backgroundColor: theme.bgColor?.secondary }}>
+			<Box
+				sx={{
+					width: isVerySmallScreen ? '95%' : isMobileSize ? '90%' : '80%',
+					position: 'fixed',
+					top: isMobileSize ? '3rem' : '4rem',
+					zIndex: 1000,
+					backgroundColor: theme.bgColor?.secondary,
+				}}>
 				<TopicPaper
 					topic={topic}
 					messages={messages}
@@ -484,11 +497,11 @@ const CommunityTopicPage = () => {
 			<Box
 				sx={{
 					display: 'flex',
-
 					width: '87%',
-					minHeight: '5rem',
+					minHeight: isMobileSize ? '3rem' : '5rem',
+					maxHeight: isMobileSize ? '5rem' : '7rem',
 					border: 'solid lightgray 0.1rem',
-					marginTop: '9rem',
+					marginTop: isMobileSize ? '5.15rem' : '9rem',
 					borderRadius: '0.35rem',
 					boxShadow: '0rem 0.2rem 0.5rem 0.1rem rgba(0,0,0,0.2)',
 				}}>
@@ -506,24 +519,45 @@ const CommunityTopicPage = () => {
 						<img
 							src={topic?.userId?.imageUrl || 'https://img.sportsbookreview.com/images/avatars/default-avatar.jpg'}
 							alt='profile'
-							style={{ height: '4rem', width: '4rem', borderRadius: '50%' }}
+							style={{ height: isMobileSize ? '2rem' : '4rem', width: isMobileSize ? '2rem' : '4rem', borderRadius: '50%' }}
 						/>
 					</Box>
 					<Box>
-						<Typography variant='body2'>{topic?.userId?.username}</Typography>
+						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.65rem' : undefined }}>
+							{topic?.userId?.username}
+						</Typography>
 					</Box>
 				</Box>
-				<Box sx={{ flex: 8, padding: '1rem' }}>
+				<Box sx={{ flex: 8, padding: isMobileSize ? '0.25rem' : '1rem', overflow: 'auto' }}>
 					<Box>
-						<Typography variant='body2' sx={{ lineHeight: 1.7, mb: '0.75rem', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+						<Typography
+							variant='body2'
+							sx={{
+								lineHeight: 1.7,
+								mb: '0.75rem',
+								whiteSpace: 'pre-wrap',
+								wordBreak: 'break-word',
+								fontSize: isMobileSize ? '0.65rem' : undefined,
+							}}>
 							{renderedTopicContent}
 						</Typography>
 					</Box>
 					{topic?.imageUrl && (
-						<Box>
-							<img src={topic.imageUrl} alt='img' style={{ maxHeight: '15rem', objectFit: 'contain', borderRadius: '0.15rem' }} />
+						<Box onClick={() => setZoomedImage(topic?.imageUrl)} sx={{ cursor: 'pointer' }}>
+							<img
+								src={topic.imageUrl}
+								alt='img'
+								style={{ maxHeight: isMobileSize ? '11rem' : '15rem', objectFit: 'contain', borderRadius: '0.15rem' }}
+							/>
 						</Box>
 					)}
+
+					{zoomedImage && (
+						<Dialog open={!!zoomedImage} onClose={() => setZoomedImage('')} maxWidth='sm'>
+							<img src={zoomedImage} alt='Zoomed' style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '0.25rem' }} />
+						</Dialog>
+					)}
+
 					{topic?.audioUrl && (
 						<Box>
 							<audio
@@ -533,8 +567,8 @@ const CommunityTopicPage = () => {
 									margin: '1rem 0',
 									boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
 									borderRadius: '0.35rem',
-									width: '50%',
-									height: '2.25rem',
+									width: isVerySmallScreen ? '95%' : isMobileSize ? '80%' : '50%',
+									height: isMobileSize ? '1.5rem' : '2rem',
 								}}
 							/>
 						</Box>
@@ -590,16 +624,23 @@ const CommunityTopicPage = () => {
 							borderBottom: 'none',
 							mt: '0.5rem',
 							position: 'relative',
-							width: '78%',
+							width: isVerySmallScreen ? '95%' : isMobileSize ? '90%' : '78%',
 							borderRadius: '0.35rem 0.35rem 0 0',
 							bgcolor: '#E8E8E8',
 						}}>
-						<Box sx={{ borderBottom: '0.09rem solid lightgray', padding: '0.5rem' }}>
-							<Typography variant='body2' sx={{ color: 'gray', mb: '0.35rem' }}>
+						<Box sx={{ borderBottom: '0.09rem solid lightgray', padding: isMobileSize ? '0.15rem' : '0.5rem' }}>
+							<Typography variant='body2' sx={{ color: 'gray', mb: '0.35rem', fontSize: isMobileSize ? '0.7rem' : '0.85rem' }}>
 								Replying to:
 							</Typography>
 						</Box>
-						<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-start', maxHeight: '6rem', overflow: 'auto' }}>
+						<Box
+							sx={{
+								display: 'flex',
+								justifyContent: 'center',
+								alignItems: 'flex-start',
+								maxHeight: isMobileSize ? '4rem' : '6rem',
+								overflow: 'auto',
+							}}>
 							<Box
 								sx={{
 									display: 'flex',
@@ -610,20 +651,24 @@ const CommunityTopicPage = () => {
 									paddingTop: '0.45rem',
 								}}>
 								<Box>
-									<img src={replyToMessage?.userId?.imageUrl} alt='profile' style={{ height: '2rem', width: '2rem', borderRadius: '50%' }} />
+									<img
+										src={replyToMessage?.userId?.imageUrl}
+										alt='profile'
+										style={{ height: isMobileSize ? '1.5rem' : '2rem', width: isMobileSize ? '1.5rem' : '2rem', borderRadius: '50%' }}
+									/>
 								</Box>
 								<Box>
-									<Typography sx={{ fontSize: '0.65rem' }}>{replyToMessage?.userId?.username}</Typography>
+									<Typography sx={{ fontSize: isMobileSize ? '0.55rem' : '0.65rem' }}>{replyToMessage?.userId?.username}</Typography>
 								</Box>
 								<Box>
-									<Typography variant='caption' sx={{ fontSize: '0.5rem', color: 'gray' }}>
+									<Typography variant='caption' sx={{ fontSize: isMobileSize ? '0.45rem' : '0.5rem', color: 'gray' }}>
 										{formatMessageTime(replyToMessage?.createdAt)}
 									</Typography>
 								</Box>
 							</Box>
-							<Box sx={{ padding: '0.75rem', flex: 8, borderLeft: '0.09rem solid lightgray' }}>
-								<Typography sx={{ fontSize: '0.8rem', lineHeight: '1.8', minHeight: '3.5rem' }}>
-									{renderMessageWithEmojis(replyToMessage.text, '1.25rem')}
+							<Box sx={{ padding: isMobileSize ? '0.15rem' : '0.75rem', flex: 8, borderLeft: '0.09rem solid lightgray' }}>
+								<Typography sx={{ fontSize: '0.8rem', lineHeight: '1.8', minHeight: '3.5rem', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+									{renderMessageWithEmojis(replyToMessage.text, '1.25rem', isMobileSize)}
 								</Typography>
 								{replyToMessage.imageUrl && (
 									<Box>
@@ -654,7 +699,7 @@ const CommunityTopicPage = () => {
 						</Box>
 
 						<IconButton size='small' sx={{ position: 'absolute', top: '0.2rem', right: '0.2rem' }} onClick={() => setReplyToMessage(null)}>
-							<Cancel fontSize='small' />
+							<Cancel fontSize='small' sx={{ fontSize: isMobileSize ? '0.85rem' : undefined }} />
 						</IconButton>
 					</Box>
 				)}
@@ -666,8 +711,8 @@ const CommunityTopicPage = () => {
 								display: 'flex',
 								alignItems: 'center',
 								position: 'absolute',
-								top: '-3rem',
-								right: imgUrl ? '10rem' : '1rem',
+								top: isMobileSize ? '-2rem' : '-3rem',
+								right: !imgUrl && isMobileSize ? '-2rem' : imgUrl && isMobileSize ? '2rem' : imgUrl ? '10rem' : '1rem',
 								width: '10rem',
 							}}>
 							<audio
@@ -682,15 +727,22 @@ const CommunityTopicPage = () => {
 							/>
 							<Tooltip title='Remove Recording' placement='top'>
 								<IconButton size='small' onClick={() => setAudioUrl('')} sx={{ ':hover': { backgroundColor: 'transparent' } }}>
-									<Cancel sx={{ fontSize: '1rem' }} />
+									<Cancel sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem' }} />
 								</IconButton>
 							</Tooltip>
 						</Box>
 					)}
 
 					{imgUrl && (
-						<Box sx={{ display: 'flex', position: 'absolute', top: '-4.25rem', right: '1rem', maxHeight: '4rem' }}>
-							<img src={imgUrl} alt='Preview' style={{ maxHeight: '4rem', objectFit: 'contain', borderRadius: '0.25rem' }} />
+						<Box
+							sx={{
+								display: 'flex',
+								position: 'absolute',
+								top: isMobileSize ? '-3.25rem' : '-4.25rem',
+								right: isMobileSize ? '-2rem' : '1rem',
+								maxHeight: '4rem',
+							}}>
+							<img src={imgUrl} alt='Preview' style={{ maxHeight: isMobileSize ? '3rem' : '4rem', objectFit: 'contain', borderRadius: '0.25rem' }} />
 							<Tooltip title='Remove Image' placement='top'>
 								<IconButton size='small' onClick={() => setImgUrl('')} sx={{ ':hover': { backgroundColor: 'transparent' } }}>
 									<Cancel sx={{ fontSize: '1rem' }} />
@@ -703,8 +755,8 @@ const CommunityTopicPage = () => {
 					<Box
 						sx={{
 							position: 'absolute',
-							bottom: '5.5rem',
-							left: '11%',
+							bottom: isMobileSize ? '4rem' : '6rem',
+							left: isVerySmallScreen ? '2.5%' : isMobileSize ? '5%' : '11%',
 							backgroundColor: '#fff',
 							borderRadius: '0.25rem',
 							boxShadow: '0 0.1rem 0.4rem rgba(0,0,0,0.3)',
@@ -712,14 +764,18 @@ const CommunityTopicPage = () => {
 							overflowY: 'auto',
 							zIndex: 10,
 						}}>
-						{topicSuggestions?.map((suggestion, index) => (
-							<Box
-								key={index}
-								onClick={() => handleSuggestionClick(suggestion)}
-								sx={{ padding: '0.5rem 1rem', cursor: 'pointer', '&:hover': { backgroundColor: '#f0f0f0' } }}>
-								<Typography variant='body2'>{truncateText(suggestion.title, 35)}</Typography>
-							</Box>
-						))}
+						{topicSuggestions
+							?.filter((suggestedTopic) => suggestedTopic.topicId !== topicId)
+							?.map((suggestion, index) => (
+								<Box
+									key={index}
+									onClick={() => handleSuggestionClick(suggestion)}
+									sx={{ padding: isMobileSize ? '0.35rem 0.75rem' : '0.5rem 1rem', cursor: 'pointer', '&:hover': { backgroundColor: '#f0f0f0' } }}>
+									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.85rem' }}>
+										{truncateText(suggestion.title, 35)}
+									</Typography>
+								</Box>
+							))}
 					</Box>
 				)}
 
@@ -727,8 +783,8 @@ const CommunityTopicPage = () => {
 					<Box
 						sx={{
 							position: 'absolute',
-							bottom: '5.5rem',
-							left: '11%',
+							bottom: isMobileSize ? '4rem' : '6rem',
+							left: isVerySmallScreen ? '2.5%' : isMobileSize ? '5%' : '11%',
 							backgroundColor: '#fff',
 							borderRadius: '0.25rem',
 							boxShadow: '0 0.1rem 0.4rem rgba(0,0,0,0.3)',
@@ -736,36 +792,55 @@ const CommunityTopicPage = () => {
 							overflowY: 'auto',
 							zIndex: 10,
 						}}>
-						{userSuggestions?.map((suggestion, index) => (
-							<Box
-								key={index}
-								onClick={() => handleSuggestionClick(suggestion)}
-								sx={{ display: 'flex', alignItems: 'center', padding: '0.5rem 1rem', cursor: 'pointer', '&:hover': { backgroundColor: '#f0f0f0' } }}>
-								<Box>
-									<img src={suggestion.imageUrl} alt='img' style={{ height: '2rem', width: '2rem', borderRadius: '50%', marginRight: '0.5rem' }} />
+						{userSuggestions
+							?.filter((suggestedUser) => user?.username !== suggestedUser.username)
+							?.map((suggestion, index) => (
+								<Box
+									key={index}
+									onClick={() => handleSuggestionClick(suggestion)}
+									sx={{
+										display: 'flex',
+										alignItems: 'center',
+										padding: isMobileSize ? '0.25rem 0.75rem' : '0.5rem 1rem',
+										cursor: 'pointer',
+										'&:hover': { backgroundColor: '#f0f0f0' },
+									}}>
+									<Box>
+										<img
+											src={suggestion.imageUrl}
+											alt='img'
+											style={{
+												height: isMobileSize ? '1.5rem' : '2rem',
+												width: isMobileSize ? '1.5rem' : '2rem',
+												borderRadius: '50%',
+												marginRight: '0.5rem',
+											}}
+										/>
+									</Box>
+									<Box>
+										<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.85rem' }}>
+											{suggestion.username}
+										</Typography>
+									</Box>
 								</Box>
-								<Box>
-									<Typography variant='body2'>{suggestion.username}</Typography>
-								</Box>
-							</Box>
-						))}
+							))}
 					</Box>
 				)}
 
 				<CustomTextField
 					multiline
-					rows={3}
+					rows={isMobileSize ? 2 : 3}
 					value={currentMessage}
 					required={false}
 					disabled={isTopicLocked}
 					onChange={handleInputChange}
 					placeholder={isTopicLocked ? 'You cannot send a message since topic is locked' : ''}
-					sx={{ width: '78%', border: replyToMessage ? 'none' : 'inherit', position: 'relative' }}
+					sx={{
+						width: isVerySmallScreen ? '95%' : isMobileSize ? '90%' : '78%',
+						border: replyToMessage ? 'none' : 'inherit',
+						position: 'relative',
+					}}
 					InputProps={{
-						sx: {
-							fontSize: '0.8rem',
-							padding: '0.5rem 1rem',
-						},
 						endAdornment: (
 							<InputAdornment position='end'>
 								<IconButton
@@ -773,12 +848,16 @@ const CommunityTopicPage = () => {
 									disabled={isTopicLocked}
 									edge='end'
 									sx={{
-										mr: '-0.25rem',
+										mr: isMobileSize ? '-0.5rem' : '-0.25rem',
 										':hover': {
 											backgroundColor: 'transparent',
 										},
 									}}>
-									<InsertEmoticon color={showPicker ? 'success' : 'disabled'} fontSize='small' />
+									<InsertEmoticon
+										color={showPicker ? 'success' : 'disabled'}
+										fontSize='small'
+										sx={{ fontSize: isMobileSize ? '0.85rem' : undefined }}
+									/>
 								</IconButton>
 
 								<Tooltip title={audioUrl ? 'Update Audio' : 'Upload Audio'} placement='top'>
@@ -790,14 +869,25 @@ const CommunityTopicPage = () => {
 												backgroundColor: 'transparent',
 											},
 										}}>
-										<Mic fontSize='small' color={audioUrl ? 'success' : 'inherit'} />
+										<Mic
+											fontSize='small'
+											color={audioUrl ? 'success' : 'inherit'}
+											sx={{ fontSize: isMobileSize ? '0.85rem' : undefined, mr: isMobileSize ? '-0.5rem' : '-0.25rem' }}
+										/>
 									</IconButton>
 								</Tooltip>
 								<CustomDialog openModal={uploadAudioDialogOpen} closeModal={() => setUploadAudioDialogOpen(false)} maxWidth='sm'>
 									<DialogContent>
 										<Typography
 											variant='body2'
-											sx={{ mb: '2rem', textAlign: 'center', color: 'gray', padding: '0 1rem', fontSize: '0.85rem', lineHeight: 1.6 }}>
+											sx={{
+												mb: '2rem',
+												textAlign: 'center',
+												color: 'gray',
+												padding: '0 1rem',
+												fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+												lineHeight: 1.6,
+											}}>
 											You can add a single audio recording per message and it will be displayed at the bottom of the message
 										</Typography>
 										{!audioUrl ? (
@@ -808,7 +898,7 @@ const CommunityTopicPage = () => {
 												fromCreateCommunityTopic={true}
 											/>
 										) : (
-											<Box sx={{ display: 'flex', alignItems: 'center', mb: '2rem' }}>
+											<Box sx={{ display: 'flex', alignItems: 'center', mb: isMobileSize ? '1rem' : '2rem' }}>
 												<Box sx={{ flex: 9 }}>
 													<audio
 														src={audioUrl}
@@ -818,12 +908,13 @@ const CommunityTopicPage = () => {
 															boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
 															borderRadius: '0.35rem',
 															width: '100%',
+															height: isMobileSize ? '1.75rem' : '2rem',
 														}}
 													/>
 												</Box>
-												<Box sx={{ flex: 1, margin: '0.75rem 0 0 1.5rem' }}>
+												<Box sx={{ flex: 1, margin: isMobileSize ? '0.75rem -0.5rem 0 1.5rem' : '0.75rem 0 0 1.5rem' }}>
 													<CustomSubmitButton
-														sx={{ borderRadius: '0.35rem' }}
+														sx={{ borderRadius: '0.35rem', padding: isMobileSize ? '0.1rem' : undefined }}
 														onClick={() => {
 															setAudioUrl('');
 														}}>
@@ -837,7 +928,13 @@ const CommunityTopicPage = () => {
 										onClick={() => {
 											setUploadAudioDialogOpen(false);
 										}}
-										sx={{ margin: '0 1.5rem 1.5rem 0', width: '8%', alignSelf: 'flex-end' }}>
+										sx={{
+											margin: isMobileSize ? '0 1rem 1rem 0' : '0 1.5rem 1.5rem 0',
+											width: '8%',
+											alignSelf: 'flex-end',
+											padding: 0,
+											fontSize: isMobileSize ? '0.7rem' : undefined,
+										}}>
 										Close
 									</CustomCancelButton>
 								</CustomDialog>
@@ -851,12 +948,24 @@ const CommunityTopicPage = () => {
 												backgroundColor: 'transparent',
 											},
 										}}>
-										<Image fontSize='small' color={imgUrl ? 'success' : 'inherit'} />
+										<Image
+											fontSize='small'
+											color={imgUrl ? 'success' : 'inherit'}
+											sx={{ fontSize: isMobileSize ? '0.85rem' : undefined, mr: isMobileSize ? '-0.5rem' : '-0.25rem' }}
+										/>
 									</IconButton>
 								</Tooltip>
 								<CustomDialog openModal={uploadImgDialogOpen} closeModal={() => setUploadImgDialogOpen(false)} maxWidth='sm'>
 									<DialogContent>
-										<Typography sx={{ mb: '2rem', textAlign: 'center', color: 'gray', fontSize: '0.85rem', lineHeight: 1.6, padding: '0 1rem' }}>
+										<Typography
+											sx={{
+												mb: '2rem',
+												textAlign: 'center',
+												color: 'gray',
+												fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+												lineHeight: 1.6,
+												padding: '0 1rem',
+											}}>
 											You can add a single image per message and it will be displayed at the bottom of the message
 										</Typography>
 										<HandleImageUploadURL
@@ -873,7 +982,13 @@ const CommunityTopicPage = () => {
 										onClick={() => {
 											setUploadImgDialogOpen(false);
 										}}
-										sx={{ margin: '0 1.5rem 1.5rem 0', width: '8%', alignSelf: 'flex-end' }}>
+										sx={{
+											margin: isMobileSize ? '0 1rem 1rem 0' : '0 1.5rem 1.5rem 0',
+											width: '8%',
+											alignSelf: 'flex-end',
+											padding: 0,
+											fontSize: isMobileSize ? '0.7rem' : undefined,
+										}}>
 										Close
 									</CustomCancelButton>
 								</CustomDialog>
@@ -886,7 +1001,7 @@ const CommunityTopicPage = () => {
 										},
 									}}
 									onClick={sendMessage}>
-									<Send fontSize='small' />
+									<Send fontSize='small' sx={{ fontSize: isMobileSize ? '0.85rem' : undefined }} />
 								</IconButton>
 							</InputAdornment>
 						),
@@ -894,7 +1009,22 @@ const CommunityTopicPage = () => {
 				/>
 
 				{showPicker && (
-					<Box sx={{ position: 'absolute', bottom: '1rem', right: '20rem', zIndex: 10 }}>
+					<Box
+						sx={{
+							position: 'absolute',
+							bottom: isVerySmallScreen ? '-5.5rem' : isRotated ? '-7rem' : isRotatedMedium ? '-5.5rem' : isSmallScreen ? '0.5rem' : '1rem',
+							right: isVerySmallScreen ? '2.25rem' : isRotated ? '3rem' : isRotatedMedium ? '4.5rem' : isSmallScreen ? '8rem' : '20rem',
+							zIndex: 10,
+							transform: isVerySmallScreen
+								? 'scale(0.55)'
+								: isRotated
+								? 'scale(0.5)'
+								: isRotatedMedium
+								? 'scale(0.55)'
+								: isSmallScreen
+								? 'scale(0.8)'
+								: 'scale(1)',
+						}}>
 						<Picker data={data} onEmojiSelect={handleEmojiSelect} theme='dark' />
 					</Box>
 				)}

@@ -83,9 +83,8 @@ const QuizQuestion = ({
 	const { fetchQuestionTypeName } = useContext(QuestionsContext);
 	const { user } = useContext(UserAuthContext);
 
-	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
+	const { isSmallScreen, isRotatedMedium, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
-	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
 	const [userQuizAnswerAfterSubmission, setUserQuizAnswerAfterSubmission] = useState<string>('');
 	const [userMatchingPairsAfterSubmission, setUserMatchingPairsAfterSubmission] = useState<UserMatchingPairAnswers[]>([]);
@@ -659,6 +658,7 @@ const QuizQuestion = ({
 					position: 'relative',
 					mt: isMobileSize ? '1.5rem' : '2rem',
 					width: '50%',
+					mb: '1rem',
 				}}>
 				<IconButton
 					sx={{

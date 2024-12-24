@@ -14,7 +14,7 @@ import {
 	Send,
 	TurnLeftOutlined,
 } from '@mui/icons-material';
-import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
+
 import { useContext, useEffect, useRef, useState } from 'react';
 import { generateUniqueId } from '../utils/uniqueIdGenerator';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
@@ -98,7 +98,6 @@ const Messages = () => {
 
 	const { isSmallScreen, isRotatedMedium, isVerySmallScreen, isRotated } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
-	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
 	const location = useLocation();
 
@@ -1402,16 +1401,6 @@ const Messages = () => {
 								}}>
 								<Send fontSize='small' />
 							</IconButton>
-
-							{/* {!isMobileSize && (
-								<CustomSubmitButton
-									sx={{ margin: isMobileSize ? '0 0 0 0.5rem' : '0 0 1rem 1rem', fontSize: isMobileSize ? '0.7rem' : undefined }}
-									size='small'
-									onClick={handleSendMessage}
-									disabled={isUploading || isBlockedUser || isBlockingUser || !activeChat}>
-									Send
-								</CustomSubmitButton>
-							)} */}
 						</Box>
 					</Box>
 				)}

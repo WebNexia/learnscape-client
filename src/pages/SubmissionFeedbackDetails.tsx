@@ -259,7 +259,7 @@ const SubmissionFeedbackDetails = () => {
 	);
 
 	return (
-		<DashboardPagesLayout pageName='Instructor Feedback' customSettings={{ justifyContent: 'flex-start' }}>
+		<DashboardPagesLayout pageName='Instructor Feedback' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
 			<Box sx={{ display: 'flex', justifyContent: 'space-around', width: '90%', margin: isMobileSize ? '1rem 0rem' : '2rem' }}>
 				{[
 					{ label: 'Quiz Name', value: quizName },

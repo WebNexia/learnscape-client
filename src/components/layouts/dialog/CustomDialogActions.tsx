@@ -42,7 +42,7 @@ const CustomDialogActions = ({
 	return (
 		<DialogActions
 			sx={{
-				marginBottom: isMobileSize ? '1rem' : '1.5rem',
+				marginBottom: isMobileSize ? '0.5rem' : '1.5rem',
 				...actionSx,
 			}}>
 			{children}
@@ -50,8 +50,8 @@ const CustomDialogActions = ({
 				onClick={onCancel}
 				sx={{
 					margin: '0 0.5rem 0.5rem 0',
-					height: isMobileSize ? '1.75rem' : '2.15rem',
-					fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+					height: isMobileSize ? '1.5rem' : '2.15rem',
+					fontSize: isMobileSize ? '0.7rem' : '0.85rem',
 					...cancelBtnSx,
 				}}>
 				{cancelBtnText}
@@ -62,8 +62,8 @@ const CustomDialogActions = ({
 					disabled={disableBtn}
 					sx={{
 						margin: '0 0.5rem 0.5rem 0',
-						height: isMobileSize ? '1.75rem' : '2.15rem',
-						fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+						height: isMobileSize ? '1.5rem' : '2.15rem',
+						fontSize: isMobileSize ? '0.7rem' : '0.85rem',
 						...submitBtnSx,
 					}}
 					onClick={onSubmit}>
@@ -73,6 +73,8 @@ const CustomDialogActions = ({
 				<CustomDeleteButton
 					sx={{
 						margin: '0 0.5rem 0.5rem 0',
+						height: isMobileSize ? '1.5rem' : '2.15rem',
+						fontSize: isMobileSize ? '0.7rem' : '0.85rem',
 					}}
 					onClick={onDelete}>
 					{deleteBtnText}

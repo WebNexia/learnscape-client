@@ -236,7 +236,13 @@ const LessonPage = () => {
 				backgroundColor: theme.bgColor?.secondary,
 				minHeight: '100vh',
 				padding: isMobileSize ? '0 0 1rem 0' : '0 0 3rem 0',
+				position: 'relative',
 			}}>
+			<Box sx={{ position: 'absolute', bottom: 3, paddingTop: '1rem' }}>
+				<Typography sx={{ fontSize: isSmallScreen ? '0.55rem' : '0.65rem' }}>
+					&copy; 2025 Webnexia Software Solutions Ltd. All rights reserved.
+				</Typography>
+			</Box>
 			<Box sx={{ width: '100vw', position: 'fixed', top: 0, zIndex: 1000 }}>
 				<DashboardHeader pageName={organisation?.orgName || ''} />
 			</Box>
@@ -245,7 +251,7 @@ const LessonPage = () => {
 					display: 'flex',
 					flexDirection: 'column',
 					position: 'fixed',
-					top: '4rem',
+					top: '3.5rem',
 					width: '100%',
 					backgroundColor: theme.bgColor?.secondary,
 					zIndex: 3,
@@ -555,8 +561,9 @@ const LessonPage = () => {
 					</Box>
 				</Box>
 			)}
+
 			{isInstructionalLesson && (
-				<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: isMobileSize ? '80%' : '85%', marginTop: 'auto' }}>
+				<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: isMobileSize ? '80%' : '85%', marginTop: 'auto', mb: '1rem' }}>
 					<CustomSubmitButton
 						endIcon={!nextLessonId ? <DoneAll /> : <KeyboardDoubleArrowRight />}
 						onClick={() => setIsLessonCourseCompletedModalOpen(true)}

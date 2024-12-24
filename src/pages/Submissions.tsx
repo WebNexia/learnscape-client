@@ -83,7 +83,7 @@ const Submissions = () => {
 	}, [submissionsPageNumber, userId, dataLoaded, sortedUserQuizSubmissionsData]);
 
 	return (
-		<DashboardPagesLayout pageName='Quiz Submissions' customSettings={{ justifyContent: 'flex-start' }}>
+		<DashboardPagesLayout pageName='Quiz Submissions' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
 			<Box
 				sx={{
 					display: 'flex',

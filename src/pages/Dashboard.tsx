@@ -111,7 +111,7 @@ const Dashboard = ({}: DashboardProps) => {
 		processUserData();
 	}, []);
 	return (
-		<DashboardPagesLayout pageName='Dashboard' customSettings={{ justifyContent: 'flex-start' }}>
+		<DashboardPagesLayout pageName='Dashboard' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
 			<Box sx={{ width: '100%', padding: '1.5rem' }}>
 				<Grid container spacing={2}>
 					<Grid item md={6} sm={12} xs={12}>

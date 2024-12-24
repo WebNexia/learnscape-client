@@ -681,7 +681,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 			</Box>
 			<Box sx={{ display: 'flex', justifyContent: 'center', mt: isRotated ? '0.75rem' : '2rem', width: '100%', padding: '0 1rem' }}>
 				<Typography sx={{ fontSize: isVerySmallScreen || isRotated ? '0.6rem' : '0.75rem' }}>
-					&copy; 2024 Webnexia Software Solutions Ltd. All rights reserved.
+					&copy; 2025 Webnexia Software Solutions Ltd. All rights reserved.
 				</Typography>
 			</Box>
 		</Box>

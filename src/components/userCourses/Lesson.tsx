@@ -22,8 +22,8 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 	const { userId, courseId, userCourseId } = useParams();
 	const navigate = useNavigate();
 
-	const { isRotated, isSmallScreen } = useContext(MediaQueryContext);
-	const isMobileSize = isRotated || isSmallScreen;
+	const { isSmallScreen, isVerySmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const isMobileSize = isRotatedMedium || isSmallScreen;
 
 	const { sortedUserQuizSubmissionsData, isUserLoaded, fetchQuizSubmissionsByUserId } = useContext(QuizSubmissionsContext);
 
@@ -112,9 +112,9 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 				display: 'flex',
 				height:
 					isEnrolledStatus && isLessonInProgress && isMobileSize
-						? '3rem'
+						? '3.5rem'
 						: !(isEnrolledStatus && isLessonInProgress) && isMobileSize
-						? '2rem'
+						? '2.5rem'
 						: isEnrolledStatus && isLessonInProgress
 						? '6rem'
 						: '4rem',
@@ -164,17 +164,27 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 					px: isMobileSize ? '0.5rem' : '1rem',
 				}}>
 				<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', flex: 10 }}>
-					<Typography sx={{ fontSize: isMobileSize ? '0.5rem' : '0.85rem', color: isEnrolledStatus && isLessonInProgress ? 'white' : null }}>
+					{/* <Typography
+						sx={{
+							fontSize: isVerySmallScreen ? '0.5rem' : isRotatedMedium ? '0.6rem' : '0.85rem',
+							color: isEnrolledStatus && isLessonInProgress ? 'white' : null,
+						}}>
 						Lesson {lessonOrder}
-					</Typography>
-					<Typography sx={{ fontSize: isMobileSize ? '0.6rem' : '1rem', color: isEnrolledStatus && isLessonInProgress ? 'white' : null }}>
+					</Typography> */}
+					<Typography
+						sx={{
+							fontSize: isVerySmallScreen ? '0.6rem' : isRotatedMedium ? '0.75rem' : isSmallScreen ? '0.85rem' : '1rem',
+							color: isEnrolledStatus && isLessonInProgress ? 'white' : null,
+						}}>
 						{lesson.title}
 					</Typography>
 				</Box>
 				<Box sx={{ flex: 2 }}>
 					{lesson.type === LessonType.QUIZ && isLessonRegisteredInThisCourse && isLessonCompleted && (
 						<Box>
-							<Typography sx={{ fontSize: isMobileSize ? '0.45rem' : '0.85rem' }}>{isFeedbackGiven ? 'Checked' : 'Unchecked'}</Typography>
+							<Typography sx={{ fontSize: isVerySmallScreen ? '0.45rem' : isRotatedMedium ? '0.65rem' : isSmallScreen ? '0.75rem' : '0.85rem' }}>
+								{isFeedbackGiven ? 'Checked' : 'Unchecked'}
+							</Typography>
 						</Box>
 					)}
 				</Box>
@@ -182,7 +192,7 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 					<Box>
 						<Typography
 							sx={{
-								fontSize: isMobileSize ? '0.45rem' : '0.85rem',
+								fontSize: isVerySmallScreen ? '0.45rem' : isRotatedMedium ? '0.65rem' : isSmallScreen ? '0.75rem' : '0.85rem',
 								marginRight: '1rem',
 								color: isEnrolledStatus && isLessonInProgress && isLessonRegisteredInThisCourse ? theme.textColor?.common.main : 'inherit',
 							}}>

@@ -187,13 +187,13 @@ const AudioRecorder = ({
 				)}
 			</Box>
 			{audio && !isRecording ? (
-				<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+				<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
 					<audio
 						src={audio}
 						controls
 						style={{
-							height: '2.25rem',
-							width: isMobileSizeSmall ? '90vw' : isRotatedMedium ? '75vw' : '50vw',
+							height: '2rem',
+							width: isMobileSizeSmall ? '95%' : isRotatedMedium ? '75%' : '50%',
 							marginTop: '2rem',
 							boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
 							borderRadius: '0.35rem',

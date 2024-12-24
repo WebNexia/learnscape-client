@@ -11,9 +11,9 @@ interface SidebarBtnProps {
 }
 
 const SidebarBtn = ({ btnText, onClick, IconName, selectedPage }: SidebarBtnProps) => {
-	const { isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
+	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
 
-	const isMobileSize: boolean = isVerySmallScreen || isRotated;
+	const isMobileSize: boolean = isSmallScreen || isRotatedMedium;
 
 	const btnTextChars: string[] | undefined = btnText?.split('');
 	let subPageText = '';

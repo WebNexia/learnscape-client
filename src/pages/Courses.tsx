@@ -20,7 +20,7 @@ const Courses = () => {
 	const { id } = useParams();
 
 	return (
-		<DashboardPagesLayout pageName='Courses' customSettings={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+		<DashboardPagesLayout pageName='Courses' customSettings={{ flexDirection: 'row', alignItems: 'flex-start' }} showCopyRight={true}>
 			<Box sx={{ width: '100%' }}>
 				<Box sx={{ margin: isMobileSize ? '1rem 0 1rem 2rem' : '2rem 0 2rem 3rem' }}>
 					<FormControlLabel

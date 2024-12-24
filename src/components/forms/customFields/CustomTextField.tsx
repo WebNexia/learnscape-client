@@ -72,6 +72,7 @@ const CustomTextField = forwardRef<HTMLDivElement, CustomTextFieldProps>(
 						resize: resizable ? 'both' : 'none',
 						overflow: 'auto',
 						fontSize: isMobileSize ? '0.7rem' : '0.9rem',
+						lineHeight: isMobileSize ? 1.4 : 1.5,
 					},
 					...sx,
 				}}

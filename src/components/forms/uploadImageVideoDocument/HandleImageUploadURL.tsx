@@ -1,10 +1,11 @@
 import { Box, FormControl, IconButton, Input, Tooltip, Typography } from '@mui/material';
-import React, { ChangeEvent } from 'react';
+import React, { ChangeEvent, useContext } from 'react';
 import CustomErrorMessage from '../customFields/CustomErrorMessage';
 import CustomTextField from '../customFields/CustomTextField';
 import { CloudUpload } from '@mui/icons-material';
 import theme from '../../../themes';
 import useImageUpload from '../../../hooks/useImageUpload';
+import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 interface HandleImageUploadURLProps {
 	onImageUploadLogic: (url: string) => void;
@@ -27,6 +28,9 @@ const HandleImageUploadURL = ({
 }: HandleImageUploadURLProps) => {
 	const { imageUpload, isImgSizeLarge, handleImageChange, resetImageUpload, handleImageUpload } = useImageUpload();
 
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
+
 	const handleImageUploadReusable = () => {
 		handleImageUpload(imageFolderName, (url: string) => {
 			onImageUploadLogic(url);
@@ -35,12 +39,12 @@ const HandleImageUploadURL = ({
 	return (
 		<FormControl sx={{ display: 'flex' }}>
 			<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-				<Typography variant='h6'>{label}</Typography>
+				<Typography variant={isMobileSize ? 'body2' : 'h6'}>{label}</Typography>
 				<Box sx={{ display: 'flex', alignItems: 'center' }}>
 					<Box>
 						<Typography
 							variant='body2'
-							sx={{ textDecoration: !enterImageUrl ? 'underline' : 'none', cursor: 'pointer' }}
+							sx={{ textDecoration: !enterImageUrl ? 'underline' : 'none', cursor: 'pointer', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}
 							onClick={() => setEnterImageUrl(false)}>
 							Choose
 						</Typography>
@@ -49,7 +53,7 @@ const HandleImageUploadURL = ({
 					<Box>
 						<Typography
 							variant='body2'
-							sx={{ textDecoration: enterImageUrl ? 'underline' : 'none', cursor: 'pointer' }}
+							sx={{ textDecoration: enterImageUrl ? 'underline' : 'none', cursor: 'pointer', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}
 							onClick={() => {
 								setEnterImageUrl(true);
 								resetImageUpload();
@@ -67,19 +71,27 @@ const HandleImageUploadURL = ({
 							handleImageChange(e);
 						}}
 						inputProps={{ accept: '.jpg, .jpeg, .png' }} // Specify accepted file types
-						sx={{ width: '82.5%', backgroundColor: theme.bgColor?.common, margin: '0.5rem 0 0.85rem 0', padding: '0.25rem' }}
+						sx={{
+							width: '82.5%',
+							backgroundColor: theme.bgColor?.common,
+							margin: '0.5rem 0 0.85rem 0',
+							padding: '0.25rem',
+							fontSize: isMobileSize ? '0.75rem' : '0.9rem',
+						}}
 					/>
 					<Tooltip title='Upload' placement='top'>
 						<IconButton
 							onClick={handleImageUploadReusable}
 							sx={{ height: '2rem', width: '12.5%', border: '0.02rem solid gray', borderRadius: '0.35rem' }}
 							disabled={!imageUpload || isImgSizeLarge}>
-							<CloudUpload />
+							<CloudUpload fontSize='small' />
 						</IconButton>
 					</Tooltip>
 				</Box>
 			)}
-			{isImgSizeLarge && <CustomErrorMessage>File size exceeds the limit of 1 MB </CustomErrorMessage>}
+			{isImgSizeLarge && (
+				<CustomErrorMessage sx={{ margin: isMobileSize ? '-0.5rem 0 1rem 0' : undefined }}>File size exceeds the limit of 1 MB </CustomErrorMessage>
+			)}
 
 			{enterImageUrl && (
 				<CustomTextField

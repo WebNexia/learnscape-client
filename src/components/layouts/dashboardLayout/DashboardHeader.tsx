@@ -18,12 +18,12 @@ interface DashboardHeaderProps {
 
 const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 	const { signOut, user } = useContext(UserAuthContext);
-	const { isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
+	const { isRotated, isVerySmallScreen, isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const [mode, setMode] = useState<Mode>((localStorage.getItem('mode') as Mode) || Mode.LIGHT_MODE);
 	const navigate = useNavigate();
 	const { updateInProgressLessons } = useUserCourseLessonData();
 
-	const isMobileSize: boolean = isVerySmallScreen || isRotated;
+	const isMobileSize: boolean = isSmallScreen || isRotatedMedium;
 
 	const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
 
@@ -117,20 +117,22 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 					display: 'flex',
 					justifyContent: 'space-between',
 					alignItems: 'center',
-					height: '4rem',
+					height: '3.5rem',
 					width: '100%',
 					backgroundColor: user?.role === Roles.ADMIN ? theme.bgColor?.adminHeader : theme.bgColor?.lessonInProgress,
-					padding: isVerySmallScreen || isRotated ? '0 0.5rem' : '0 1rem 0 3rem',
+					padding: isVerySmallScreen || isRotated ? '0 0.5rem 0 0.25rem' : '0 0rem',
 					position: 'relative',
 				}}>
 				<Box sx={{ display: 'flex', alignItems: 'center' }}>
-					{isMobileSize && (
+					{(isSmallScreen || isRotatedMedium) && (
 						<IconButton>
-							<Menu sx={{ color: '#fff' }} fontSize='small' onClick={() => setIsDrawerOpen(true)} />
+							<Menu sx={{ color: '#fff', padding: 0 }} fontSize='small' onClick={() => setIsDrawerOpen(true)} />
 						</IconButton>
 					)}
 
-					<Typography variant={isMobileSize ? 'body2' : 'body1'} sx={{ color: theme.textColor?.common.main }}>
+					<Typography
+						variant={isMobileSize ? 'body2' : 'body1'}
+						sx={{ color: theme.textColor?.common.main, fontSize: isMobileSize ? '0.8rem' : undefined }}>
 						{pageName}
 					</Typography>
 				</Box>
@@ -148,9 +150,9 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 						}}
 						sx={{
 							'& .MuiBadge-badge': {
-								fontSize: '0.65rem',
-								height: '0.9rem',
-								minWidth: '1rem',
+								fontSize: isMobileSize ? '0.5rem' : '0.65rem',
+								height: isMobileSize ? '0.75rem' : '0.9rem',
+								minWidth: isMobileSize ? '0.75rem' : '1rem',
 								right: 8,
 								top: 8,
 							},
@@ -162,7 +164,7 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 									backgroundColor: 'transparent',
 								},
 							}}>
-							<Notifications color='secondary' fontSize={isMobileSize ? 'small' : 'medium'} />
+							<Notifications color='secondary' fontSize={isMobileSize ? 'small' : 'medium'} sx={{ fontSize: isMobileSize ? '1rem' : undefined }} />
 						</IconButton>
 					</Badge>
 
@@ -248,7 +250,7 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 											setMode(Mode.LIGHT_MODE);
 											localStorage.setItem('mode', Mode.LIGHT_MODE);
 										}}>
-										<DarkMode fontSize={isMobileSize ? 'small' : 'medium'} />
+										<DarkMode fontSize={isMobileSize ? 'small' : 'medium'} sx={{ fontSize: isMobileSize ? '1rem' : undefined }} />
 									</IconButton>
 								</Tooltip>
 							),
@@ -266,7 +268,7 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 											setMode(Mode.DARK_MODE);
 											localStorage.setItem('mode', Mode.DARK_MODE);
 										}}>
-										<LightMode fontSize={isMobileSize ? 'small' : 'medium'} />
+										<LightMode fontSize={isMobileSize ? 'small' : 'medium'} sx={{ fontSize: isMobileSize ? '1rem' : undefined }} />
 									</IconButton>
 								</Tooltip>
 							),

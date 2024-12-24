@@ -30,7 +30,14 @@ const CustomDialog = ({ children, openModal = false, closeModal, title, titleSx,
 				},
 			}}
 			sx={{ ...dialogPaperSx }}>
-			<DialogTitle variant={isMobileSize ? 'h6' : 'h5'} sx={{ marginBottom: isMobileSize ? '-0.5rem' : '0rem', paddingTop: '2rem', ...titleSx }}>
+			<DialogTitle
+				variant={isMobileSize ? 'h6' : 'h5'}
+				sx={{
+					marginBottom: isMobileSize ? '-0.5rem' : '0rem',
+					paddingTop: isMobileSize ? '1rem' : '2rem',
+					...titleSx,
+					fontSize: isMobileSize ? '0.9rem' : undefined,
+				}}>
 				{title}
 			</DialogTitle>
 			{content && (
