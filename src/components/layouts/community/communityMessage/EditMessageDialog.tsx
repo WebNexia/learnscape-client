@@ -15,6 +15,7 @@ import HandleImageUploadURL from '../../../forms/uploadImageVideoDocument/Handle
 import CustomDialogActions from '../../dialog/CustomDialogActions';
 import axios from 'axios';
 import ImageThumbnail from '../../../forms/uploadImageVideoDocument/ImageThumbnail';
+import { MediaQueryContext } from '../../../../contexts/MediaQueryContextProvider';
 
 interface EditMessageDialogProps {
 	message: CommunityMessage;
@@ -27,6 +28,10 @@ interface EditMessageDialogProps {
 const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, setMessages, setIsMsgEdited }: EditMessageDialogProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { user } = useContext(UserAuthContext);
+
+	const { isSmallScreen, isRotatedMedium, isVerySmallScreen, isRotated } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
+
 	const [enterImageUrl, setEnterImageUrl] = useState(true);
 	const [isAudioUploading, setIsAudioUploading] = useState(false);
 	const [messageBeforeSave, setMessageBeforeSave] = useState(message);
@@ -83,6 +88,7 @@ const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, set
 		setIsMsgUpdated(false);
 		setShowImageUploader(!!messageBeforeSave.imageUrl);
 		setShowAudioRecorder(!!messageBeforeSave.audioUrl);
+		setShowPicker(false);
 	};
 
 	const toggleShow = (type: string) => {
@@ -93,7 +99,7 @@ const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, set
 	return (
 		<CustomDialog openModal={editMsgModalOpen} closeModal={handleCancel} title='Edit Message' maxWidth='sm'>
 			<form
-				style={{ display: 'flex', flexDirection: 'column', padding: '1rem 1.5rem' }}
+				style={{ display: 'flex', flexDirection: 'column', padding: isMobileSize ? '0.5rem 0.75rem' : '1rem 1.5rem' }}
 				onSubmit={(e) => {
 					e.preventDefault();
 					editMessage();
@@ -115,26 +121,47 @@ const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, set
 							endAdornment: (
 								<InputAdornment position='end'>
 									<IconButton onClick={() => setShowPicker(!showPicker)} edge='end'>
-										<InsertEmoticon color={showPicker ? 'success' : 'disabled'} />
+										<InsertEmoticon color={showPicker ? 'success' : 'disabled'} sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
 									</IconButton>
 								</InputAdornment>
 							),
 						}}
 					/>
 					{showPicker && (
-						<Box sx={{ position: 'absolute', bottom: '-17rem', right: '3rem', zIndex: 10 }}>
+						<Box
+							sx={{
+								position: 'absolute',
+								bottom: isVerySmallScreen ? '-7rem' : isRotated ? '-8rem' : isRotatedMedium || isSmallScreen ? '-9.5rem' : '-10rem',
+								right: isVerySmallScreen ? '-3.5rem' : isRotated ? '-3rem' : isRotatedMedium || isSmallScreen ? '-2rem' : '-0.5rem',
+								zIndex: 10,
+								transform: isVerySmallScreen
+									? 'scale(0.5)'
+									: isRotated
+									? 'scale(0.55)'
+									: isRotatedMedium || isSmallScreen
+									? 'scale(0.65)'
+									: 'scale(0.7)',
+							}}>
 							<Picker data={data} onEmojiSelect={handleEmojiSelect} theme='dark' />
 						</Box>
 					)}
 					<Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
 						<Tooltip title={!showAudioRecorder ? 'Upload Audio' : 'Hide Recorder'} placement='top'>
 							<IconButton onClick={() => toggleShow('audio')}>
-								{!showAudioRecorder ? <Mic fontSize='small' /> : <MicOff fontSize='small' />}
+								{!showAudioRecorder ? (
+									<Mic fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
+								) : (
+									<MicOff fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
+								)}
 							</IconButton>
 						</Tooltip>
 						<Tooltip title={!showImageUploader ? 'Upload Image' : 'Hide Uploader'} placement='top'>
 							<IconButton onClick={() => toggleShow('image')}>
-								{!showImageUploader ? <Image fontSize='small' /> : <HideImage fontSize='small' />}
+								{!showImageUploader ? (
+									<Image fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
+								) : (
+									<HideImage fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
+								)}
 							</IconButton>
 						</Tooltip>
 					</Box>
@@ -144,7 +171,7 @@ const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, set
 					<Box sx={{ marginBottom: '1rem' }}>
 						<Typography variant='h6'>Audio Recording</Typography>
 						{!message.audioUrl ? (
-							<AudioRecorder uploadAudio={uploadAudio} isAudioUploading={isAudioUploading} maxRecordTime={45000} />
+							<AudioRecorder uploadAudio={uploadAudio} isAudioUploading={isAudioUploading} maxRecordTime={45000} fromCreateCommunityTopic={true} />
 						) : (
 							<Box sx={{ display: 'flex', alignItems: 'center', mb: '2rem' }}>
 								<Box sx={{ flex: 9 }}>
@@ -203,7 +230,12 @@ const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, set
 					</>
 				)}
 
-				<CustomDialogActions onCancel={handleCancel} submitBtnType='submit' submitBtnText='Save' actionSx={{ margin: '1.5rem -1rem 0 0' }} />
+				<CustomDialogActions
+					onCancel={handleCancel}
+					submitBtnType='submit'
+					submitBtnText='Save'
+					actionSx={{ margin: isMobileSize ? '0.75rem -0.75rem 0 0' : '1.5rem -1rem 0 0' }}
+				/>
 			</form>
 		</CustomDialog>
 	);

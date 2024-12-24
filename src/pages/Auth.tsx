@@ -20,6 +20,7 @@ import { UserLessonsByUserId } from '../interfaces/userLesson';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
+import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 
 interface AuthProps {
 	setUserRole: React.Dispatch<React.SetStateAction<string | null>>;
@@ -38,6 +39,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 
 	const { setUserId, fetchUserData } = useContext(UserAuthContext);
 	const { fetchOrganisationData, setOrgId } = useContext(OrganisationContext);
+	const { isVerySmallScreen, isSmallScreen, isRotated } = useContext(MediaQueryContext);
 
 	const [activeForm, setActiveForm] = useState<AuthForms>(AuthForms.SIGN_UP);
 
@@ -141,15 +143,15 @@ const Auth = ({ setUserRole }: AuthProps) => {
 					// Load user lesson data and store in local storage
 					const userLessonResponse = await axios.get(`${base_url}/userlessons/user/${updatedUser._id}`);
 					const userLessonData: UserLessonDataStorage[] = userLessonResponse?.data.response?.map((userLesson: UserLessonsByUserId) => ({
-						lessonId: userLesson.lessonId._id,
-						userLessonId: userLesson._id,
-						courseId: userLesson.courseId,
-						isCompleted: userLesson.isCompleted,
-						isInProgress: userLesson.isInProgress,
-						currentQuestion: userLesson.currentQuestion,
-						teacherFeedback: userLesson.teacherFeedback,
-						isFeedbackGiven: userLesson.isFeedbackGiven,
-						updatedAt: userLesson.updatedAt,
+						lessonId: userLesson?.lessonId?._id,
+						userLessonId: userLesson?._id,
+						courseId: userLesson?.courseId,
+						isCompleted: userLesson?.isCompleted,
+						isInProgress: userLesson?.isInProgress,
+						currentQuestion: userLesson?.currentQuestion,
+						teacherFeedback: userLesson?.teacherFeedback,
+						isFeedbackGiven: userLesson?.isFeedbackGiven,
+						updatedAt: userLesson?.updatedAt,
 					}));
 					localStorage.setItem('userLessonData', JSON.stringify(userLessonData));
 				}
@@ -292,12 +294,14 @@ const Auth = ({ setUserRole }: AuthProps) => {
 		<Box
 			sx={{
 				display: 'flex',
+				flexDirection: 'column',
 				justifyContent: 'center',
 				alignItems: 'center',
 				backgroundColor: '#FDF7F0',
 				height: '100vh',
+				padding: isRotated ? '5rem 0' : '',
 			}}>
-			<Box sx={styles.formContainerStyles()}>
+			<Box sx={styles.formContainerStyles(isVerySmallScreen, isSmallScreen, isRotated)}>
 				<Box
 					sx={{
 						display: 'flex',
@@ -325,10 +329,10 @@ const Auth = ({ setUserRole }: AuthProps) => {
 								size='large'
 								sx={{
 									...sharedBtnStyles,
-									padding: '1rem 0',
+									padding: isRotated ? '0.5rem' : '1rem 0',
 									backgroundColor: activeForm !== AuthForms.SIGN_IN ? 'lightgray' : null,
 									borderTop: activeForm === AuthForms.SIGN_IN ? `solid 0.3rem ${theme.bgColor?.greenPrimary}` : 'solid 0.3rem lightgray',
-									fontSize: '1.15rem',
+									fontSize: isVerySmallScreen || isRotated ? '0.9rem' : '1.15rem',
 								}}>
 								Log In
 							</Button>
@@ -348,10 +352,10 @@ const Auth = ({ setUserRole }: AuthProps) => {
 								size='large'
 								sx={{
 									...sharedBtnStyles,
-									padding: '1rem 0',
+									padding: isRotated ? '0.5rem' : '1rem 0',
 									backgroundColor: activeForm !== AuthForms.SIGN_UP ? 'lightgray' : null,
 									borderTop: activeForm === AuthForms.SIGN_UP ? `solid 0.3rem ${theme.bgColor?.greenPrimary}` : 'solid 0.3rem lightgray',
-									fontSize: '1.15rem',
+									fontSize: isVerySmallScreen || isRotated ? '0.9rem' : '1.15rem',
 								}}>
 								Register
 							</Button>
@@ -369,7 +373,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 					{
 						{
 							[AuthForms.SIGN_IN]: (
-								<Box sx={{ marginTop: '1.5rem', width: '80%' }}>
+								<Box sx={{ marginTop: '1.5rem', width: isVerySmallScreen ? '100%' : '80%' }}>
 									<form onSubmit={signIn}>
 										<Box
 											sx={{
@@ -399,7 +403,11 @@ const Auth = ({ setUserRole }: AuthProps) => {
 													endAdornment: (
 														<InputAdornment position='end'>
 															<IconButton onClick={togglePasswordVisibility} edge='end'>
-																{!showPassword ? <Visibility fontSize='small' /> : <VisibilityOff fontSize='small' />}
+																{!showPassword ? (
+																	<Visibility sx={{ fontSize: isVerySmallScreen || isRotated ? '1rem' : '1.25rem' }} />
+																) : (
+																	<VisibilityOff sx={{ fontSize: isVerySmallScreen || isRotated ? '1rem' : '1.25rem' }} />
+																)}
 															</IconButton>
 														</InputAdornment>
 													),
@@ -467,7 +475,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 																	backgroundColor: 'transparent',
 																},
 															}}>
-															<Info fontSize='small' />
+															<Info sx={{ fontSize: isVerySmallScreen || isRotated ? '1rem' : '1.25rem' }} />
 														</IconButton>
 													</Tooltip>
 												</Box>
@@ -523,7 +531,11 @@ const Auth = ({ setUserRole }: AuthProps) => {
 																			backgroundColor: 'transparent',
 																		},
 																	}}>
-																	{!showPassword ? <Visibility fontSize='small' /> : <VisibilityOff fontSize='small' />}
+																	{!showPassword ? (
+																		<Visibility sx={{ fontSize: isVerySmallScreen || isRotated ? '1rem' : '1.25rem' }} />
+																	) : (
+																		<VisibilityOff sx={{ fontSize: isVerySmallScreen || isRotated ? '1rem' : '1.25rem' }} />
+																	)}
 																</IconButton>
 															</InputAdornment>
 														),
@@ -538,7 +550,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 																	backgroundColor: 'transparent',
 																},
 															}}>
-															<Info fontSize='small' />
+															<Info sx={{ fontSize: isVerySmallScreen || isRotated ? '1rem' : '1.25rem' }} />
 														</IconButton>
 													</Tooltip>
 												</Box>
@@ -631,7 +643,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 
 				<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
 					<Typography
-						variant='body1'
+						variant={isVerySmallScreen || isRotated ? 'body2' : 'body1'}
 						sx={{
 							marginTop: '1.25rem',
 							color: theme.textColor?.primary.main,
@@ -666,6 +678,11 @@ const Auth = ({ setUserRole }: AuthProps) => {
 							[AuthFormErrorMessages.NETWORK_ERROR]: errorMessageTypography,
 						}[errorMsg]}
 				</Box>
+			</Box>
+			<Box sx={{ display: 'flex', justifyContent: 'center', mt: isRotated ? '0.75rem' : '2rem', width: '100%', padding: '0 1rem' }}>
+				<Typography sx={{ fontSize: isVerySmallScreen || isRotated ? '0.6rem' : '0.75rem' }}>
+					&copy; 2025 Webnexia Software Solutions Ltd. All rights reserved.
+				</Typography>
 			</Box>
 		</Box>
 	);

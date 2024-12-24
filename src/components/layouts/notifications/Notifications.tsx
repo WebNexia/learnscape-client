@@ -9,6 +9,7 @@ import { NotificationType, Roles } from '../../../interfaces/enums';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { EventsContext } from '../../../contexts/EventsContextProvider';
+import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 interface Notification {
 	id: string;
@@ -38,6 +39,9 @@ const NotificationsBox = ({ showUnreadOnly }: NotificationsBoxProps) => {
 	const [hasOlderNotifications, setHasOlderNotifications] = useState<boolean>(false);
 
 	const navigate = useNavigate();
+
+	const { isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
+	const isMobileSize: boolean = isVerySmallScreen || isRotated;
 
 	useEffect(() => {
 		if (!user) return;
@@ -197,7 +201,7 @@ const NotificationsBox = ({ showUnreadOnly }: NotificationsBoxProps) => {
 				</Box>
 			) : (
 				<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '15vh' }}>
-					<Typography variant='body2'>You don't have any/unread notifications right now</Typography>
+					<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>You don't have any/unread notifications right now</Typography>
 				</Box>
 			)}
 		</Box>

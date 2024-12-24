@@ -5,6 +5,8 @@ interface MediaQueryContextTypes {
 	isVerySmallScreen: boolean;
 	isSmallScreen: boolean;
 	isMediumScreen: boolean;
+	isRotated: boolean;
+	isRotatedMedium: boolean;
 }
 
 interface MediaQueryContextProviderProps {
@@ -15,14 +17,22 @@ export const MediaQueryContext = createContext<MediaQueryContextTypes>({
 	isVerySmallScreen: false,
 	isMediumScreen: false,
 	isSmallScreen: false,
+	isRotated: false,
+	isRotatedMedium: false,
 });
 
 const MediaQueryContextProvider = (props: MediaQueryContextProviderProps) => {
-	const isVerySmallScreen = useMediaQuery('(max-width: 435px)');
-	const isSmallScreen = useMediaQuery('(max-width: 700px)');
-	const isMediumScreen = useMediaQuery('(max-width:960px)');
+	const isRotated = useMediaQuery('(max-height: 395px)');
+	const isRotatedMedium = useMediaQuery('(max-height: 495px)');
+	const isVerySmallScreen = useMediaQuery('(max-width: 525px)');
+	const isSmallScreen = useMediaQuery('(max-width: 898px)');
+	const isMediumScreen = useMediaQuery('(max-width:1180px)');
 
-	return <MediaQueryContext.Provider value={{ isVerySmallScreen, isSmallScreen, isMediumScreen }}>{props.children}</MediaQueryContext.Provider>;
+	return (
+		<MediaQueryContext.Provider value={{ isVerySmallScreen, isSmallScreen, isMediumScreen, isRotated, isRotatedMedium }}>
+			{props.children}
+		</MediaQueryContext.Provider>
+	);
 };
 
 export default MediaQueryContextProvider;

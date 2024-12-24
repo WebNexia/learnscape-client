@@ -17,6 +17,7 @@ import data from '@emoji-mart/data';
 import { HideImage, Image, InsertEmoticon, Mic, MicOff } from '@mui/icons-material';
 import { TopicInfo } from '../../../../interfaces/communityMessage';
 import ImageThumbnail from '../../../forms/uploadImageVideoDocument/ImageThumbnail';
+import { MediaQueryContext } from '../../../../contexts/MediaQueryContextProvider';
 
 interface EditTopicDialogProps {
 	editTopicModalOpen: boolean;
@@ -30,6 +31,9 @@ const EditTopicDialog = ({ editTopicModalOpen, topic, setEditTopicModalOpen, set
 	const { orgId } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
 	const { updateTopics, fetchTopics } = useContext(CommunityContext);
+
+	const { isSmallScreen, isRotatedMedium, isVerySmallScreen, isRotated } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
 
 	const [enterImageUrl, setEnterImageUrl] = useState(true);
 	const [isAudioUploading, setIsAudioUploading] = useState(false);
@@ -100,7 +104,7 @@ const EditTopicDialog = ({ editTopicModalOpen, topic, setEditTopicModalOpen, set
 	return (
 		<CustomDialog openModal={editTopicModalOpen} closeModal={reset} title='Edit Topic' maxWidth='sm'>
 			<form
-				style={{ display: 'flex', flexDirection: 'column', padding: '1rem 1.5rem' }}
+				style={{ display: 'flex', flexDirection: 'column', padding: isMobileSize ? '0.5rem 0.75rem' : '1rem 1.5rem' }}
 				onSubmit={(e) => {
 					e.preventDefault();
 					editTopic();
@@ -129,14 +133,28 @@ const EditTopicDialog = ({ editTopicModalOpen, topic, setEditTopicModalOpen, set
 							endAdornment: (
 								<InputAdornment position='end'>
 									<IconButton onClick={() => setShowPicker(!showPicker)} edge='end'>
-										<InsertEmoticon color={showPicker ? 'success' : 'disabled'} />
+										<InsertEmoticon color={showPicker ? 'success' : 'disabled'} sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
 									</IconButton>
 								</InputAdornment>
 							),
 						}}
 					/>
+
 					{showPicker && (
-						<Box sx={{ position: 'absolute', bottom: '-17rem', right: '3rem', zIndex: 10 }}>
+						<Box
+							sx={{
+								position: 'absolute',
+								bottom: isVerySmallScreen ? '-7rem' : isRotated ? '-8rem' : isRotatedMedium || isSmallScreen ? '-9.5rem' : '-10rem',
+								right: isVerySmallScreen ? '-3.5rem' : isRotated ? '-3rem' : isRotatedMedium || isSmallScreen ? '-2rem' : '0.5rem',
+								zIndex: 10,
+								transform: isVerySmallScreen
+									? 'scale(0.5)'
+									: isRotated
+									? 'scale(0.55)'
+									: isRotatedMedium || isSmallScreen
+									? 'scale(0.65)'
+									: 'scale(0.8)',
+							}}>
 							<Picker data={data} onEmojiSelect={handleEmojiSelect} theme='dark' />
 						</Box>
 					)}
@@ -144,13 +162,21 @@ const EditTopicDialog = ({ editTopicModalOpen, topic, setEditTopicModalOpen, set
 					<Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
 						<Tooltip title={!showAudioRecorder ? 'Upload Audio' : 'Hide Recorder'} placement='top'>
 							<IconButton onClick={() => toggleFeature('audio')}>
-								{!showAudioRecorder ? <Mic fontSize='small' /> : <MicOff fontSize='small' />}
+								{!showAudioRecorder ? (
+									<Mic fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
+								) : (
+									<MicOff fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
+								)}
 							</IconButton>
 						</Tooltip>
 
 						<Tooltip title={!showImageUploader ? 'Upload Image' : 'Hide Uploader'} placement='top'>
 							<IconButton onClick={() => toggleFeature('image')}>
-								{!showImageUploader ? <Image fontSize='small' /> : <HideImage fontSize='small' />}
+								{!showImageUploader ? (
+									<Image fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
+								) : (
+									<HideImage fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
+								)}
 							</IconButton>
 						</Tooltip>
 					</Box>
@@ -161,7 +187,7 @@ const EditTopicDialog = ({ editTopicModalOpen, topic, setEditTopicModalOpen, set
 						<Typography variant='h6'>Audio Recording</Typography>
 
 						{!topic.audioUrl ? (
-							<AudioRecorder uploadAudio={uploadAudio} isAudioUploading={isAudioUploading} maxRecordTime={45000} />
+							<AudioRecorder uploadAudio={uploadAudio} isAudioUploading={isAudioUploading} maxRecordTime={45000} fromCreateCommunityTopic={true} />
 						) : (
 							<Box sx={{ display: 'flex', alignItems: 'center', mb: '2rem' }}>
 								<Box sx={{ flex: 9 }}>
@@ -203,7 +229,12 @@ const EditTopicDialog = ({ editTopicModalOpen, topic, setEditTopicModalOpen, set
 					</>
 				)}
 
-				<CustomDialogActions onCancel={reset} submitBtnType='submit' submitBtnText='Save' actionSx={{ margin: '1.5rem -1rem 0 0' }} />
+				<CustomDialogActions
+					onCancel={reset}
+					submitBtnType='submit'
+					submitBtnText='Save'
+					actionSx={{ margin: isMobileSize ? '0.75rem -0.75rem 0 0' : '1.5rem -1rem 0 0' }}
+				/>
 			</form>
 		</CustomDialog>
 	);

@@ -15,10 +15,15 @@ import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
 import { FirebaseError } from 'firebase/app';
 import CustomErrorMessage from '../components/forms/customFields/CustomErrorMessage';
+import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 
 const Settings = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { user, setUser } = useContext(UserAuthContext);
+
+	const { isSmallScreen, isRotatedMedium, isVerySmallScreen } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
+
 	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(true);
 	const [username, setUsername] = useState<string>(user?.username || '');
 	const [imageUrl, setImageUrl] = useState<string>(user?.imageUrl || '');
@@ -160,34 +165,49 @@ const Settings = () => {
 	};
 
 	return (
-		<DashboardPagesLayout pageName='Settings' customSettings={{ justifyContent: 'flex-start' }}>
-			<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3rem', width: '100%' }}>
-				<Box sx={{ display: 'flex' }}>
+		<DashboardPagesLayout pageName='Settings' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
+			<Box
+				sx={{
+					display: 'flex',
+					flexDirection: 'column',
+					justifyContent: 'center',
+					padding: isVerySmallScreen ? '1rem 1.5rem' : isRotatedMedium ? '1rem' : '3rem',
+					width: '100%',
+				}}>
+				<Box sx={{ display: 'flex', flexDirection: isVerySmallScreen ? 'column' : 'row', mb: isMobileSize ? '1rem' : '0rem' }}>
 					<form
-						style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'space-between', flex: 3, height: '29rem' }}
+						style={{
+							display: 'flex',
+							flexDirection: 'column',
+							alignItems: 'flex-start',
+							justifyContent: 'space-between',
+							flex: isVerySmallScreen ? undefined : 3,
+							height: isVerySmallScreen ? 'fit-content' : isRotatedMedium ? '23rem' : '29rem',
+							marginBottom: isVerySmallScreen ? '3rem' : '',
+						}}
 						onSubmit={(e) => {
 							e.preventDefault();
 							handleUsernameProfilePictureUpdate();
 						}}>
 						<Box sx={{ display: 'flex', justifyContent: 'center', mb: '0rem', width: '90%' }}>
-							<Typography variant='h5'>Update Profile</Typography>
+							<Typography variant={isMobileSize ? 'h6' : 'h5'}>Update Profile</Typography>
 						</Box>
 						<Box
 							sx={{
 								display: 'flex',
 								justifyContent: 'center',
 								width: '90%',
-								height: '10rem',
+								height: isMobileSize ? '8rem' : '10rem',
+								margin: '1rem 0 0.5rem 0',
 							}}>
 							<img
 								src={imageUrl || 'https://img.sportsbookreview.com/images/avatars/default-avatar.jpg'}
 								alt='profile_img'
 								style={{
-									height: '10rem',
-									width: '10rem',
+									height: isMobileSize ? '7rem' : '10rem',
+									width: isMobileSize ? '7rem' : '10rem',
 									objectFit: 'cover',
 									borderRadius: '50%',
-									marginBottom: '1rem',
 									border: 'solid lightgray 0.01rem',
 								}}
 							/>
@@ -224,7 +244,7 @@ const Settings = () => {
 												backgroundColor: 'transparent',
 											},
 										}}>
-										<Info fontSize='small' />
+										<Info fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
 									</IconButton>
 								</Tooltip>
 							</Box>
@@ -236,32 +256,36 @@ const Settings = () => {
 							closeModal={() => setIsUserNameImageInfoModalOpen(false)}
 							maxWidth='sm'>
 							<DialogContent>
-								<Box sx={{ display: 'flex', flexDirection: 'column', margin: '0.5rem 0 0.5rem 1.5rem' }}>
-									<Typography variant='body2'>- Username can include:</Typography>
+								<Box sx={{ display: 'flex', flexDirection: 'column', margin: '0.5rem 0 0.75rem 1.5rem' }}>
+									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+										- Username can include:
+									</Typography>
 									<Box sx={{ margin: '0.85rem 0 0 3rem' }}>
 										{['max 15 characters', 'underscore (_) and period (.)'].map((rule, index) => (
 											<ul key={index}>
 												<li style={{ color: theme.textColor?.secondary.main }}>
-													<Typography sx={{ fontSize: '0.85rem', mb: '0.35rem' }}>{rule}</Typography>
+													<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.35rem' }}>{rule}</Typography>
 												</li>
 											</ul>
 										))}
 									</Box>
-									<Typography variant='body2' sx={{ mt: '0.5rem' }}>
+									<Typography variant='body2' sx={{ mt: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 										- Username cannot start/end with underscore and period
 									</Typography>
-									<Typography variant='body2' sx={{ mt: '0.5rem' }}>
+									<Typography variant='body2' sx={{ mt: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 										- Username cannot include space
 									</Typography>
 								</Box>
 								<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '100%', mb: '0.5rem' }}>
-									<CustomCancelButton onClick={() => setIsUserNameImageInfoModalOpen(false)}>Close</CustomCancelButton>
+									<CustomCancelButton onClick={() => setIsUserNameImageInfoModalOpen(false)} sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+										Close
+									</CustomCancelButton>
 								</Box>
 							</DialogContent>
 						</CustomDialog>
 
 						<Box sx={{ display: 'flex', width: '90%', justifyContent: 'flex-end' }}>
-							<CustomSubmitButton size='small' type='submit'>
+							<CustomSubmitButton size='small' type='submit' sx={{ fontSize: isMobileSize ? '0.7rem' : undefined, height: '1.65rem' }}>
 								Update
 							</CustomSubmitButton>
 						</Box>
@@ -276,23 +300,31 @@ const Settings = () => {
 							</Alert>
 						</Snackbar>
 					</form>
-					<Box sx={{ height: 'calc(100vh - 4rem)', width: '1px', margin: '0 0 0 2rem', borderRight: '0.1rem solid lightgray' }}></Box>
+					{!isVerySmallScreen && (
+						<Box
+							sx={{
+								height: isRotatedMedium ? '23rem' : '29.25rem',
+								width: '1px',
+								margin: '0 0 0 2rem',
+								borderRight: '0.1rem solid lightgray',
+							}}></Box>
+					)}
 					<form
 						style={{
 							display: 'flex',
 							flexDirection: 'column',
 							justifyContent: 'space-between',
 							alignItems: 'center',
-							flex: 3,
-							height: '29rem',
+							flex: isVerySmallScreen ? undefined : 3,
+							height: isVerySmallScreen ? 'fit-content' : isRotatedMedium ? '23rem' : '29rem',
 						}}
 						onSubmit={(e) => {
 							e.preventDefault();
 							handlePasswordUpdate();
 						}}>
 						<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
-							<Box sx={{ mb: '1.5rem' }}>
-								<Typography variant='h5'>Update Password</Typography>
+							<Box sx={{ mb: isMobileSize ? '0.5rem' : '1.5rem' }}>
+								<Typography variant={isMobileSize ? 'h6' : 'h5'}>Update Password</Typography>
 							</Box>
 
 							<CustomTextField
@@ -304,7 +336,7 @@ const Settings = () => {
 									setCurrentPassword(e.target.value.trim());
 									setErrorMsg(undefined);
 								}}
-								sx={{ width: '75%', margin: '0.75rem' }}
+								sx={{ width: isVerySmallScreen ? '90%' : isMobileSize ? '80%' : '75%', margin: isMobileSize ? '0.35rem' : '0.75rem' }}
 								InputProps={{
 									endAdornment: (
 										<InputAdornment position='end'>
@@ -316,7 +348,11 @@ const Settings = () => {
 														backgroundColor: 'transparent',
 													},
 												}}>
-												{!showCurrentPassword ? <Visibility fontSize='small' /> : <VisibilityOff fontSize='small' />}
+												{!showCurrentPassword ? (
+													<Visibility fontSize='small' sx={{ fontSize: isMobileSize ? '0.9rem' : undefined }} />
+												) : (
+													<VisibilityOff fontSize='small' sx={{ fontSize: isMobileSize ? '0.9rem' : undefined }} />
+												)}
 											</IconButton>
 										</InputAdornment>
 									),
@@ -331,7 +367,7 @@ const Settings = () => {
 									setPassword(e.target.value.trim());
 									setErrorMsg(undefined);
 								}}
-								sx={{ width: '75%', margin: '0.75rem' }}
+								sx={{ width: isVerySmallScreen ? '90%' : isMobileSize ? '80%' : '75%', margin: isMobileSize ? '0.35rem' : '0.75rem' }}
 								InputProps={{
 									endAdornment: (
 										<InputAdornment position='end'>
@@ -343,7 +379,11 @@ const Settings = () => {
 														backgroundColor: 'transparent',
 													},
 												}}>
-												{!showPassword ? <Visibility fontSize='small' /> : <VisibilityOff fontSize='small' />}
+												{!showPassword ? (
+													<Visibility fontSize='small' sx={{ fontSize: isMobileSize ? '0.9rem' : undefined }} />
+												) : (
+													<VisibilityOff fontSize='small' sx={{ fontSize: isMobileSize ? '0.9rem' : undefined }} />
+												)}
 											</IconButton>
 										</InputAdornment>
 									),
@@ -358,7 +398,7 @@ const Settings = () => {
 									setConfirmedPassword(e.target.value.trim());
 									setErrorMsg(undefined);
 								}}
-								sx={{ width: '75%', margin: '0.75rem' }}
+								sx={{ width: isVerySmallScreen ? '90%' : isMobileSize ? '80%' : '75%', margin: isMobileSize ? '0.35rem' : '0.75rem' }}
 								InputProps={{
 									endAdornment: (
 										<InputAdornment position='end'>
@@ -370,7 +410,11 @@ const Settings = () => {
 														backgroundColor: 'transparent',
 													},
 												}}>
-												{!showConfirmedPassword ? <Visibility fontSize='small' /> : <VisibilityOff fontSize='small' />}
+												{!showConfirmedPassword ? (
+													<Visibility fontSize='small' sx={{ fontSize: isMobileSize ? '0.9rem' : undefined }} />
+												) : (
+													<VisibilityOff fontSize='small' sx={{ fontSize: isMobileSize ? '0.9rem' : undefined }} />
+												)}
 											</IconButton>
 										</InputAdornment>
 									),
@@ -388,22 +432,25 @@ const Settings = () => {
 										[PasswordUpdateErrorMessages.SAME_PASSWORD]: errorMessage,
 									}[errorMsg]}
 							</Box>
-							<Box sx={{ width: '75%', mt: '1rem' }}>
-								<Typography sx={{ fontSize: '0.85rem', mb: '0.5rem' }}>- Password cannot include space</Typography>
-								<Typography sx={{ fontSize: '0.85rem' }}>- Password must include at least:</Typography>
+							<Box sx={{ width: isVerySmallScreen ? '90%' : isMobileSize ? '80%' : '75%', mt: '1rem' }}>
+								<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem' }}>- Password cannot include space</Typography>
+								<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>- Password must include at least:</Typography>
 								<Box sx={{ margin: '0.75rem 0 0 3rem' }}>
 									{['6 characters', '1 letter', '1 number'].map((rule, index) => (
 										<ul key={index}>
 											<li style={{ color: theme.textColor?.secondary.main }}>
-												<Typography sx={{ fontSize: '0.75rem', mb: '0.35rem' }}>{rule}</Typography>
+												<Typography sx={{ fontSize: isMobileSize ? '0.65rem' : '0.75rem', mb: '0.35rem' }}>{rule}</Typography>
 											</li>
 										</ul>
 									))}
 								</Box>
 							</Box>
 						</Box>
-						<Box sx={{ display: 'flex', width: '75%', justifyContent: 'flex-end', mt: '0.5rem' }}>
-							<CustomSubmitButton size='small' sx={{ alignSelf: 'flex-end' }} type='submit'>
+						<Box sx={{ display: 'flex', width: isVerySmallScreen ? '90%' : isMobileSize ? '80%' : '75%', justifyContent: 'flex-end', mt: '0.5rem' }}>
+							<CustomSubmitButton
+								size='small'
+								sx={{ alignSelf: 'flex-end', fontSize: isMobileSize ? '0.7rem' : undefined, height: '1.65rem' }}
+								type='submit'>
 								Update
 							</CustomSubmitButton>
 						</Box>

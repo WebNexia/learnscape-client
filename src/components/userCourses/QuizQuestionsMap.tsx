@@ -3,6 +3,8 @@ import { QuestionInterface } from '../../interfaces/question';
 import { QuizQuestionAnswer } from '../../pages/LessonPage';
 import theme from '../../themes';
 import { Close } from '@mui/icons-material';
+import { useContext } from 'react';
+import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 
 interface QuizQuestionsMapProps {
 	questions: QuestionInterface[];
@@ -12,6 +14,9 @@ interface QuizQuestionsMapProps {
 }
 
 const QuizQuestionsMap = ({ questions, userQuizAnswers, isOpen, setIsOpen }: QuizQuestionsMapProps) => {
+	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
+	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 	return (
 		<Slide direction='left' in={isOpen} mountOnEnter unmountOnExit timeout={{ enter: 1000, exit: 500 }}>
 			<Box
@@ -19,32 +24,50 @@ const QuizQuestionsMap = ({ questions, userQuizAnswers, isOpen, setIsOpen }: Qui
 					position: 'fixed',
 					bottom: '15vh',
 					right: 0,
-					width: '30vw',
-					height: '40vh',
+					width: isMobileSizeSmall ? '65vw' : isMobileSize ? '45vw' : '33vw',
+					height: isRotatedMedium ? '50vh' : '40vh',
 					boxShadow: 10,
-					padding: '1.5rem',
+					padding: isMobileSize ? '1.15rem' : '1.5rem',
 					bgcolor: 'background.paper',
 					borderRadius: '0.35rem 0 0 0.35rem',
 					overflow: 'auto',
 				}}>
 				<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
 					<Box sx={{ display: 'flex' }}>
-						<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginRight: '2rem' }}>
-							<Box sx={{ height: '2rem', width: '2rem', backgroundColor: theme.bgColor?.greenPrimary, mr: '0.25rem', borderRadius: '0.35rem' }}></Box>
+						<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginRight: isMobileSize ? '1rem' : '2rem' }}>
+							<Box
+								sx={{
+									height: isMobileSize ? '1rem' : '2rem',
+									width: isMobileSize ? '1rem' : '2rem',
+									backgroundColor: theme.bgColor?.greenPrimary,
+									mr: '0.25rem',
+									borderRadius: isMobileSize ? '0.15rem' : '0.35rem',
+								}}></Box>
 							<Box>
-								<Typography>= Answered</Typography>
+								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.65rem' : '0.85rem' }}>
+									Answered
+								</Typography>
 							</Box>
 						</Box>
 						<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-							<Box sx={{ height: '2rem', width: '2rem', backgroundColor: 'lightgray', mr: '0.25rem', borderRadius: '0.35rem' }}></Box>
+							<Box
+								sx={{
+									height: isMobileSize ? '1rem' : '2rem',
+									width: isMobileSize ? '1rem' : '2rem',
+									backgroundColor: 'lightgray',
+									mr: '0.25rem',
+									borderRadius: isMobileSize ? '0.15rem' : '0.35rem',
+								}}></Box>
 							<Box>
-								<Typography>= Unanswered</Typography>
+								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.65rem' : '0.85rem' }}>
+									Unanswered
+								</Typography>
 							</Box>
 						</Box>
 					</Box>
 					<Box>
 						<IconButton onClick={() => setIsOpen(false)} sx={{ mr: '-1rem' }}>
-							<Close />
+							<Close fontSize={isMobileSize ? 'small' : 'medium'} />
 						</IconButton>
 					</Box>
 				</Box>
@@ -80,13 +103,13 @@ const QuizQuestionsMap = ({ questions, userQuizAnswers, isOpen, setIsOpen }: Qui
 									display: 'flex',
 									justifyContent: 'center',
 									alignItems: 'center',
-									height: '2rem',
-									width: '2rem',
-									margin: '0.5rem',
+									height: isMobileSize ? '1.25rem' : '2rem',
+									width: isMobileSize ? '1.25rem' : '2rem',
+									margin: isMobileSize ? '0.3rem' : '0.5rem',
 									backgroundColor: isAnswered ? theme.bgColor?.greenPrimary : 'lightgray',
-									borderRadius: '0.35rem',
+									borderRadius: isMobileSize ? '0.15rem' : '0.35rem',
 								}}>
-								<Typography variant='body2' sx={{ color: theme.textColor?.common.main }}>
+								<Typography variant='body2' sx={{ color: theme.textColor?.common.main, fontSize: isMobileSize ? '0.7rem' : '0.85rem' }}>
 									{index + 1}
 								</Typography>
 							</Box>

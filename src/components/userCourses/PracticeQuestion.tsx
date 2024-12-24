@@ -40,6 +40,7 @@ import FlipCardPreview from '../layouts/flipCard/FlipCardPreview';
 import MatchingPreview from '../layouts/matching/MatchingPreview';
 import FillInTheBlanksDragDrop from '../layouts/FITBDragDrop/FillInTheBlanksDragDrop';
 import FillInTheBlanksTyping from '../layouts/FITBTyping/FillInTheBlanksTyping';
+import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 
 const colorChange = keyframes`
     0% {
@@ -106,6 +107,9 @@ const PracticeQuestion = ({
 	const navigate = useNavigate();
 	const { userLessonId, handleNextLesson, nextLessonId, updateLastQuestion, getLastQuestion } = useUserCourseLessonData();
 	const { aiResponse, handleInitialSubmit, isLoadingAiResponse } = useAiResponse();
+
+	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
 
 	const { userId, lessonId, courseId, userCourseId } = useParams();
 	const { orgId } = useContext(OrganisationContext);
@@ -321,13 +325,13 @@ const PracticeQuestion = ({
 					width: '100%',
 				}}>
 				{!isFlipCard && (
-					<form onSubmit={handleSubmit} style={{ width: '90%' }}>
+					<form onSubmit={handleSubmit} style={{ width: '100%' }}>
 						<FormControl sx={{ width: '100%' }} error={error} variant='standard'>
 							<QuestionMedia question={question} />
-							{!isFITBDragDrop && !isFITBTyping && <QuestionText question={question} questionNumber={questionNumber} />}
+							{!isFITBDragDrop && !isFITBTyping && <QuestionText question={question} isMatching={isMatching} questionNumber={questionNumber} />}
 
 							{isOpenEndedQuestion && (
-								<Box sx={{ width: '90%', margin: '0rem auto' }}>
+								<Box sx={{ width: '95%', margin: '0rem auto' }}>
 									<CustomTextField
 										required={false}
 										multiline
@@ -365,7 +369,7 @@ const PracticeQuestion = ({
 							)}
 
 							{isMatching && (
-								<Box sx={{ display: 'flex', justifyContent: 'center', width: '80%', margin: '0 auto' }}>
+								<Box sx={{ display: 'flex', justifyContent: 'center', width: '100%', margin: '0 auto' }}>
 									<MatchingPreview
 										initialPairs={question.matchingPairs}
 										setAllPairsMatchedMatching={setAllPairsMatchedMatching}
@@ -385,8 +389,15 @@ const PracticeQuestion = ({
 									sx={{
 										display: 'flex',
 										justifyContent: 'center',
-										width: '80%',
-										margin: question.imageUrl || question.videoUrl ? '2rem auto 0 auto' : '11rem auto 0 auto',
+										width: '100%',
+										margin:
+											question.imageUrl && question.videoUrl && isVerySmallScreen
+												? '3.5rem auto 0 auto'
+												: question.imageUrl || question.videoUrl
+												? '2.5rem auto 0 auto'
+												: isMobileSize
+												? '8.75rem auto 0 auto'
+												: '11rem auto 0 auto',
 									}}>
 									<FillInTheBlanksDragDrop
 										textWithBlanks={question.question}
@@ -410,8 +421,9 @@ const PracticeQuestion = ({
 										flexDirection: 'column',
 										justifyContent: 'center',
 										alignItems: 'center',
-										width: '80%',
-										margin: question.imageUrl || question.videoUrl ? '2rem auto 0 auto' : '11rem auto 0 auto',
+										width: '100%',
+										margin:
+											question.imageUrl || question.videoUrl ? '2.5rem auto 0 auto' : isMobileSize ? '8.75rem auto 0 auto' : '11rem auto 0 auto',
 									}}>
 									<FillInTheBlanksTyping
 										textWithBlanks={question.question}
@@ -437,7 +449,27 @@ const PracticeQuestion = ({
 									{question &&
 										question.options &&
 										question.options?.map((option, index) => {
-											return <FormControlLabel value={option} control={<Radio />} label={option} key={index} />;
+											return (
+												<FormControlLabel
+													value={option}
+													control={
+														<Radio
+															sx={{
+																'& .MuiSvgIcon-root': {
+																	fontSize: isMobileSize ? '0.9rem' : '1.15rem', // Resize radio button
+																},
+															}}
+														/>
+													}
+													label={option}
+													key={index}
+													sx={{
+														'& .MuiFormControlLabel-label': {
+															fontSize: isMobileSize ? '0.75rem' : '1rem', // Resize text
+														},
+													}}
+												/>
+											);
 										})}
 								</RadioGroup>
 							)}
@@ -448,9 +480,10 @@ const PracticeQuestion = ({
 							{!isMatching && !isFITBDragDrop && !isFITBTyping && (
 								<Button
 									sx={{
-										mt: '3rem',
-										width: '13rem',
+										mt: isMobileSize ? '2rem' : '3rem',
+										width: isMobileSize ? '9rem' : '13rem',
 										alignSelf: 'center',
+										fontSize: isMobileSize ? '0.7rem' : undefined,
 									}}
 									type='submit'
 									variant='outlined'>
@@ -481,12 +514,14 @@ const PracticeQuestion = ({
 						justifyContent: 'space-between',
 						alignItems: 'center',
 						position: 'relative',
-						mt: '2rem',
-						width: '40%',
+						mt: isMobileSize ? '1.5rem' : '2rem',
+						width: '50%',
+						mb: '1rem',
 					}}>
 					<IconButton
 						sx={{
 							flexShrink: 0,
+							padding: isVerySmallScreen ? '0.1rem' : '0.25rem',
 							':hover': {
 								color: theme.bgColor?.greenPrimary,
 								backgroundColor: 'transparent',
@@ -501,12 +536,12 @@ const PracticeQuestion = ({
 							setIsOpenEndedAnswerSubmitted(false);
 						}}
 						disabled={displayedQuestionNumber - 1 === 0}>
-						<KeyboardArrowLeft fontSize='large' />
+						<KeyboardArrowLeft fontSize={isMobileSize ? 'medium' : 'large'} />
 					</IconButton>
 
 					{!showQuestionSelector && (
 						<Typography
-							variant='body1'
+							variant={isMobileSize ? 'body2' : 'body1'}
 							sx={{
 								position: 'absolute',
 								left: '50%',
@@ -528,7 +563,7 @@ const PracticeQuestion = ({
 							<Select
 								labelId='question_number'
 								id='question_number'
-								sx={{ mr: '0.5rem' }}
+								sx={{ fontSize: isMobileSize ? '0.75rem' : '0.9rem' }}
 								value={selectedQuestion}
 								onChange={handleQuestionChange}
 								size='small'
@@ -537,17 +572,26 @@ const PracticeQuestion = ({
 								MenuProps={{
 									PaperProps: {
 										style: {
-											maxHeight: 250,
+											maxHeight: isMobileSize ? 200 : 250,
 										},
 									},
 								}}>
 								{Array.from({ length: numberOfQuestions }, (_, i) => (
-									<MenuItem key={i + 1} value={i + 1}>
+									<MenuItem
+										key={i + 1}
+										value={i + 1}
+										sx={{
+											display: 'flex',
+											justifyContent: 'center',
+											fontSize: isMobileSize ? '0.75rem' : '0.9rem',
+											minHeight: '2rem',
+											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+										}}>
 										{i + 1}
 									</MenuItem>
 								))}
 							</Select>
-							<Typography> / {numberOfQuestions}</Typography>
+							{/* <Typography sx={{ fontSize: isMobileSize ? '0.85rem' : '1rem', margin: '0 2rem 0 0' }}> / {numberOfQuestions}</Typography> */}
 						</Box>
 					)}
 
@@ -564,6 +608,7 @@ const PracticeQuestion = ({
 							}}
 							sx={{
 								flexShrink: 0,
+								padding: isVerySmallScreen ? '0.1rem' : '0.25rem',
 								color:
 									!isAnswerCorrect &&
 									!isOpenEndedAnswerSubmitted &&
@@ -595,7 +640,7 @@ const PracticeQuestion = ({
 								!allPairsMatchedFITBTyping &&
 								!allPairsMatchedMatching
 							}>
-							<KeyboardArrowRight fontSize='large' />
+							<KeyboardArrowRight fontSize={isMobileSize ? 'medium' : 'large'} />
 						</IconButton>
 					) : (
 						<Tooltip title={isCompletingCourse ? 'Complete Course' : isCompletingLesson ? 'Complete Lesson' : 'Next Lesson'} placement='top'>
@@ -631,15 +676,16 @@ const PracticeQuestion = ({
 										color: theme.bgColor?.greenPrimary,
 										backgroundColor: 'transparent',
 									},
+									padding: '0.3rem',
 								}}>
 								{isCompletingCourse ? (
-									<DoneAll fontSize='large' />
+									<DoneAll fontSize={isMobileSize ? 'small' : 'medium'} />
 								) : isCompletingLesson ? (
-									<Done fontSize='large' />
+									<Done fontSize={isMobileSize ? 'small' : 'medium'} />
 								) : isLessonCompleted && isLastQuestion ? (
-									<KeyboardDoubleArrowRight fontSize='large' />
+									<KeyboardDoubleArrowRight fontSize={isMobileSize ? 'small' : 'medium'} />
 								) : (
-									<KeyboardArrowRight fontSize='large' />
+									<KeyboardArrowRight fontSize={isMobileSize ? 'small' : 'medium'} />
 								)}
 							</IconButton>
 						</Tooltip>
@@ -667,8 +713,8 @@ const PracticeQuestion = ({
 					display: 'flex',
 					justifyContent: 'flex-end',
 					position: 'fixed',
-					top: '11rem',
-					right: '2rem',
+					top: isMobileSize ? '9rem' : '11rem',
+					right: isSmallScreen ? '0.15rem' : isRotatedMedium ? '1rem' : '2rem',
 					width: '80%',
 					zIndex: 9,
 				}}>
@@ -683,8 +729,8 @@ const PracticeQuestion = ({
 								<AiIcon
 									sx={{
 										fontSize: '2rem',
-										width: '1.5rem',
-										height: '1.5rem',
+										width: isMobileSize ? '1.25rem' : '1.5rem',
+										height: isMobileSize ? '1.25rem' : '1.5rem',
 										border: 'none',
 										ml: 0.8,
 										color: '#4D7B8B',
@@ -701,7 +747,7 @@ const PracticeQuestion = ({
 										backgroundColor: 'transparent',
 									},
 								}}>
-								<AutoAwesome />
+								<AutoAwesome fontSize={isMobileSize ? 'small' : 'medium'} />
 							</IconButton>
 						</Tooltip>
 					)
@@ -713,12 +759,12 @@ const PracticeQuestion = ({
 							sx={{
 								position: 'fixed',
 								right: 0,
-								top: '14rem',
-								width: '30%',
+								top: isMobileSize ? '11rem' : '14rem',
+								width: isSmallScreen ? '70%' : isRotated ? '50%' : '30%',
 								minHeight: '30%',
 								maxHeight: '50%',
 								boxShadow: 10,
-								padding: '1.75rem',
+								padding: isMobileSize ? '0.75rem 1.5rem' : '1.75rem',
 								bgcolor: 'background.paper',
 								borderRadius: '0.35rem 0 0 0.35rem',
 								overflow: 'auto',
@@ -726,11 +772,13 @@ const PracticeQuestion = ({
 							<Box sx={{ minHeight: '100%' }}>
 								<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
 									<Box>
-										<Typography variant='h6'>AI Assist</Typography>
+										<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '1rem' }}>
+											AI Assist
+										</Typography>
 									</Box>
 									<Box>
 										<IconButton onClick={() => closeAiResponseDrawer(index)}>
-											<Close />
+											<Close fontSize={isMobileSize ? 'small' : 'medium'} />
 										</IconButton>
 									</Box>
 								</Box>
@@ -739,7 +787,7 @@ const PracticeQuestion = ({
 										<TypingAnimation />
 									</Box>
 								) : (
-									<Typography variant='body2' sx={{ mt: '0.5rem', lineHeight: 1.9 }}>
+									<Typography variant='body2' sx={{ mt: '0.5rem', lineHeight: 1.9, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 										{aiResponse}
 									</Typography>
 								)}

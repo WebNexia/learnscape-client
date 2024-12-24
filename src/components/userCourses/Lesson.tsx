@@ -8,6 +8,7 @@ import { useContext, useEffect, useState } from 'react';
 import ProgressIcon from '../../assets/ProgressIcon.png';
 import { LessonType } from '../../interfaces/enums';
 import { QuizSubmissionsContext } from '../../contexts/QuizSubmissionsContextProvider';
+import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 
 interface LessonProps {
 	lesson: LessonById;
@@ -20,6 +21,9 @@ interface LessonProps {
 const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLessonId, lessonOrder }: LessonProps) => {
 	const { userId, courseId, userCourseId } = useParams();
 	const navigate = useNavigate();
+
+	const { isSmallScreen, isVerySmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const isMobileSize = isRotatedMedium || isSmallScreen;
 
 	const { sortedUserQuizSubmissionsData, isUserLoaded, fetchQuizSubmissionsByUserId } = useContext(QuizSubmissionsContext);
 
@@ -106,24 +110,49 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 		<Box
 			sx={{
 				display: 'flex',
-				height: isEnrolledStatus && isLessonInProgress ? '6rem' : '4rem',
+				height:
+					isEnrolledStatus && isLessonInProgress && isMobileSize
+						? '3.5rem'
+						: !(isEnrolledStatus && isLessonInProgress) && isMobileSize
+						? '2.5rem'
+						: isEnrolledStatus && isLessonInProgress
+						? '6rem'
+						: '4rem',
 				borderBottom: `0.1rem solid ${theme.border.lightMain}`,
 				backgroundColor: isEnrolledStatus && isLessonInProgress ? theme.bgColor?.lessonInProgress : 'white',
 				cursor: isEnrolledStatus ? 'pointer' : '',
-				borderRadius: '0.3rem 0.3rem 0 0 ',
+				borderRadius: lessonOrder === 1 ? '0.3rem 0.3rem 0 0 ' : '0rem',
 			}}
 			onClick={handleLessonClick}>
 			<Box
 				sx={{
-					height: isEnrolledStatus && isLessonInProgress ? '6rem' : '4rem',
-					width: isEnrolledStatus && isLessonInProgress ? '10rem' : '5rem',
+					height:
+						isEnrolledStatus && isLessonInProgress && isMobileSize
+							? '3rem'
+							: !(isEnrolledStatus && isLessonInProgress) && isMobileSize
+							? '2rem'
+							: isEnrolledStatus && isLessonInProgress
+							? '6rem'
+							: '4rem',
+					width:
+						isEnrolledStatus && isLessonInProgress && isMobileSize
+							? '3rem'
+							: !(isEnrolledStatus && isLessonInProgress) && isMobileSize
+							? '2rem'
+							: isEnrolledStatus && isLessonInProgress
+							? '10rem'
+							: '5rem',
 				}}>
 				<img
 					src={lesson.imageUrl || 'https://directmobilityonline.co.uk/assets/img/noimage.png'}
 					alt='lesson_pic'
 					width='100%'
 					height='100%'
-					style={{ borderBottom: `0.1rem solid ${theme.border.lightMain}`, borderTopLeftRadius: lessonOrder === 1 ? '0.3rem' : 0 }}
+					style={{
+						borderBottom: `0.1rem solid ${theme.border.lightMain}`,
+						borderTopLeftRadius: lessonOrder === 1 ? '0.3rem' : 0,
+						objectFit: 'cover',
+					}}
 				/>
 			</Box>
 			<Box
@@ -132,28 +161,38 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 					justifyContent: 'space-between',
 					alignItems: 'center',
 					width: '100%',
-					px: '1rem',
+					px: isMobileSize ? '0.5rem' : '1rem',
 				}}>
 				<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', flex: 10 }}>
-					<Typography variant='body2' sx={{ color: isEnrolledStatus && isLessonInProgress ? 'white' : null }}>
+					{/* <Typography
+						sx={{
+							fontSize: isVerySmallScreen ? '0.5rem' : isRotatedMedium ? '0.6rem' : '0.85rem',
+							color: isEnrolledStatus && isLessonInProgress ? 'white' : null,
+						}}>
 						Lesson {lessonOrder}
-					</Typography>
-					<Typography variant='body1' sx={{ color: isEnrolledStatus && isLessonInProgress ? 'white' : null }}>
+					</Typography> */}
+					<Typography
+						sx={{
+							fontSize: isVerySmallScreen ? '0.6rem' : isRotatedMedium ? '0.75rem' : isSmallScreen ? '0.85rem' : '1rem',
+							color: isEnrolledStatus && isLessonInProgress ? 'white' : null,
+						}}>
 						{lesson.title}
 					</Typography>
 				</Box>
 				<Box sx={{ flex: 2 }}>
 					{lesson.type === LessonType.QUIZ && isLessonRegisteredInThisCourse && isLessonCompleted && (
 						<Box>
-							<Typography sx={{ fontSize: '0.85rem' }}>{isFeedbackGiven ? 'Checked' : 'Unchecked'}</Typography>
+							<Typography sx={{ fontSize: isVerySmallScreen ? '0.45rem' : isRotatedMedium ? '0.65rem' : isSmallScreen ? '0.75rem' : '0.85rem' }}>
+								{isFeedbackGiven ? 'Checked' : 'Unchecked'}
+							</Typography>
 						</Box>
 					)}
 				</Box>
 				<Box sx={{ display: 'flex', alignItems: 'center', flex: 4, justifyContent: 'flex-end' }}>
 					<Box>
 						<Typography
-							variant='body2'
 							sx={{
+								fontSize: isVerySmallScreen ? '0.45rem' : isRotatedMedium ? '0.65rem' : isSmallScreen ? '0.75rem' : '0.85rem',
 								marginRight: '1rem',
 								color: isEnrolledStatus && isLessonInProgress && isLessonRegisteredInThisCourse ? theme.textColor?.common.main : 'inherit',
 							}}>
@@ -162,11 +201,11 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 					</Box>
 					<Box>
 						{isEnrolledStatus && isLessonInProgress && isLessonRegisteredInThisCourse ? (
-							<img src={ProgressIcon} alt='' />
+							<img src={ProgressIcon} alt='' style={{ height: isMobileSize ? '0.9rem' : '1.5rem' }} />
 						) : !isEnrolledStatus || (!isLessonInProgress && !isLessonCompleted) || !isLessonRegisteredInThisCourse ? (
-							<Lock sx={{ color: theme.border.lightMain }} />
+							<Lock sx={{ color: theme.border.lightMain, fontSize: isMobileSize ? '0.9rem' : '1.35rem' }} />
 						) : (
-							<CheckCircleOutlineRounded sx={{ color: theme.palette.success.main }} />
+							<CheckCircleOutlineRounded sx={{ color: theme.palette.success.main, fontSize: isMobileSize ? '0.9rem' : '1.35rem' }} />
 						)}
 					</Box>
 				</Box>

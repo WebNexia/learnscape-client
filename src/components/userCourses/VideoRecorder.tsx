@@ -1,5 +1,5 @@
 import { Box, DialogActions, Typography } from '@mui/material';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useContext } from 'react';
 import CustomSubmitButton from '../forms/customButtons/CustomSubmitButton';
 import CustomDeleteButton from '../forms/customButtons/CustomDeleteButton';
 import { Videocam } from '@mui/icons-material';
@@ -7,6 +7,7 @@ import theme from '../../themes';
 import CustomDialog from '../layouts/dialog/CustomDialog';
 import LoadingButton from '@mui/lab/LoadingButton';
 import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
+import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 
 const mimeType = 'video/webm; codecs="opus,vp8"';
 const MAX_RECORDING_TIME = 45000; // 45 seconds
@@ -18,6 +19,10 @@ interface VideoRecorderProps {
 }
 
 const VideoRecorder = ({ uploadVideo, isVideoUploading }: VideoRecorderProps) => {
+	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
+	const isMobileSizeSmall = isVerySmallScreen || isRotated;
+
 	const [permission, setPermission] = useState<boolean>(false);
 	const mediaRecorder = useRef<MediaRecorder | null>(null);
 	const liveVideoFeed = useRef<HTMLVideoElement | null>(null);
@@ -125,20 +130,29 @@ const VideoRecorder = ({ uploadVideo, isVideoUploading }: VideoRecorderProps) =>
 	}, [stream]);
 
 	return (
-		<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+		<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: isMobileSize ? '1.5rem' : '2rem' }}>
 			<Box>
-				<Typography variant='h6' sx={{ mb: isRecording ? '1rem' : '0rem' }}>
+				<Typography variant='h6' sx={{ mb: isRecording ? '1rem' : '0rem', fontSize: isMobileSize ? '0.85rem' : '1rem' }}>
 					Video Recorder
 				</Typography>
 
 				<Box>
 					{!permission && (
-						<CustomSubmitButton onClick={getCameraPermission} type='button' sx={{ margin: '1rem 0' }} endIcon={<Videocam />} size='small'>
+						<CustomSubmitButton
+							onClick={getCameraPermission}
+							type='button'
+							sx={{ margin: '1rem 0', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}
+							endIcon={<Videocam />}
+							size='small'>
 							{hasRecorded ? 'Record Another' : 'Allow Camera'}
 						</CustomSubmitButton>
 					)}
 					{permission && !isRecording && (
-						<CustomSubmitButton onClick={startRecording} type='button' sx={{ margin: '1rem 0' }} size='small'>
+						<CustomSubmitButton
+							onClick={startRecording}
+							type='button'
+							sx={{ margin: '1rem 0', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}
+							size='small'>
 							Start Recording
 						</CustomSubmitButton>
 					)}
@@ -150,7 +164,7 @@ const VideoRecorder = ({ uploadVideo, isVideoUploading }: VideoRecorderProps) =>
 					<video
 						ref={liveVideoFeed}
 						autoPlay
-						height={275}
+						height={isMobileSize ? 150 : 250}
 						style={{ boxShadow: '0 0 0.4rem 0.2rem rgba(0,0,0,0.2)', borderRadius: '0.25rem' }}></video>
 				)}
 
@@ -164,7 +178,7 @@ const VideoRecorder = ({ uploadVideo, isVideoUploading }: VideoRecorderProps) =>
 								borderRadius: '0.35rem',
 								margin: '1.5rem 0',
 							}}>
-							<Typography variant='body2' sx={{ margin: '1rem' }}>
+							<Typography variant='body2' sx={{ margin: '1rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 								Remaining Time: {remainingTime}s
 							</Typography>
 							<Box sx={bouncingDotsContainerStyle}>
@@ -174,7 +188,11 @@ const VideoRecorder = ({ uploadVideo, isVideoUploading }: VideoRecorderProps) =>
 							</Box>
 						</Box>
 
-						<CustomDeleteButton onClick={stopRecording} type='button' sx={{ margin: '1rem 0' }} size='small'>
+						<CustomDeleteButton
+							onClick={stopRecording}
+							type='button'
+							sx={{ margin: '1rem 0', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}
+							size='small'>
 							Stop Recording
 						</CustomDeleteButton>
 					</>
@@ -185,14 +203,18 @@ const VideoRecorder = ({ uploadVideo, isVideoUploading }: VideoRecorderProps) =>
 						<video
 							src={recordedVideo}
 							controls
-							height={350}
+							height={isVerySmallScreen ? 225 : isMobileSize ? 250 : 350}
 							style={{ boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)', borderRadius: '0.25rem' }}></video>
 					</Box>
 				)}
 			</Box>
 
 			{recordedVideo && (
-				<CustomSubmitButton sx={{ marginTop: '2rem' }} type='button' size='small' onClick={() => setIsUploadModalOpen(true)}>
+				<CustomSubmitButton
+					sx={{ marginTop: '2rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}
+					type='button'
+					size='small'
+					onClick={() => setIsUploadModalOpen(true)}>
 					Upload Video
 				</CustomSubmitButton>
 			)}

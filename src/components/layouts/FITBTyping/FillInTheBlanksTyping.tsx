@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import styled from 'styled-components';
 import { Box, Typography, TextField, TextFieldProps, IconButton, Tooltip } from '@mui/material';
 import { BlankValuePair } from '../../../interfaces/question';
@@ -10,15 +10,16 @@ import { words } from '../../../interfaces/randomWords';
 import { QuizQuestionAnswer } from '../../../pages/LessonPage';
 import { UserBlankValuePairAnswers } from '../../../interfaces/userQuestion';
 import { LessonType } from '../../../interfaces/enums';
-import CustomInfoMessage from '../infoMessage/CustomInfoMessageAlignedLeft';
+import CustomInfoMessageAlignedLeft from '../infoMessage/CustomInfoMessageAlignedLeft';
 import theme from '../../../themes';
+import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 const Container = styled(Box)`
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 	width: 100%;
-	margin-top: 0.5rem;
+	margin-top: '0.5rem';
 	flex-grow: 1;
 `;
 
@@ -27,11 +28,11 @@ const Column = styled(Box)`
 	flex-grow: 1;
 `;
 
-const TextContainer = styled(Box)`
+const TextContainer = styled(Box)<{ isMobileSizeSmall: boolean }>`
 	display: inline;
 	flex-wrap: wrap;
 	align-items: baseline;
-	line-height: 2.5;
+	line-height: ${({ isMobileSizeSmall }) => (isMobileSizeSmall ? 1.7 : 2.5)};
 	width: 100%;
 	white-space: pre-wrap;
 	margin: 0;
@@ -43,13 +44,16 @@ interface CustomTextFieldProps {
 	fromQuizQuestionUser: boolean;
 	isLessonCompleted: boolean;
 	lessonType: string;
+	isMobileSizeSmall: boolean;
 }
 
 type StyledInputProps = CustomTextFieldProps & TextFieldProps;
 
-const StyledInput = styled(({ isCorrect, isLessonCompleted, fromQuizQuestionUser, lessonType, ...otherProps }: StyledInputProps) => (
-	<TextField {...otherProps} />
-))`
+const StyledInput = styled(
+	({ isCorrect, isLessonCompleted, fromQuizQuestionUser, lessonType, isMobileSizeSmall, ...otherProps }: StyledInputProps) => (
+		<TextField {...otherProps} />
+	)
+)`
 	& .MuiOutlinedInput-root {
 		background-color: ${({ isCorrect, fromQuizQuestionUser, isLessonCompleted, lessonType }) => {
 			if (isLessonCompleted) return isCorrect ? theme.palette.success.main : '#ef5350';
@@ -79,9 +83,10 @@ const StyledInput = styled(({ isCorrect, isLessonCompleted, fromQuizQuestionUser
 			if (isCorrect !== null) return '#fff';
 			return 'black';
 		}};
-		font-size: 0.85rem;
+		font-size: ${({ isMobileSizeSmall }) => (isMobileSizeSmall ? '0.75rem' : '0.85rem')};
+		height: ${({ isMobileSizeSmall }) => (isMobileSizeSmall ? '0.75rem' : undefined)};
 	}
-	margin: 0 0.25rem;
+	margin: 0.1rem 0.25rem;
 	min-width: 3rem;
 `;
 
@@ -132,6 +137,10 @@ const FillInTheBlanksTyping = ({
 	const [hasInteracted, setHasInteracted] = useState(false);
 
 	const { updateLastQuestion, getLastQuestion } = useUserCourseLessonData();
+
+	const { isRotated, isVerySmallScreen, isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
+	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
 	useEffect(() => {
 		if (isLessonCompleted && userBlankValuePairsAfterSubmission) {
@@ -303,7 +312,7 @@ const FillInTheBlanksTyping = ({
 	return (
 		<Container>
 			<Column>
-				<TextContainer>
+				<TextContainer isMobileSizeSmall={isMobileSizeSmall}>
 					{textSegments?.map((segment, index) => {
 						const match = segment.match(/___(\d+)___/);
 						if (match) {
@@ -320,11 +329,12 @@ const FillInTheBlanksTyping = ({
 									fromQuizQuestionUser={!!fromQuizQuestionUser}
 									isLessonCompleted={!!isLessonCompleted}
 									lessonType={lessonType!}
+									isMobileSizeSmall={isMobileSizeSmall}
 								/>
 							);
 						} else {
 							return (
-								<Typography key={`text-${index}`} variant='body2' component='span'>
+								<Typography key={`text-${index}`} variant='body2' component='span' sx={{ fontSize: isMobileSizeSmall ? '0.75rem' : '0.85rem' }}>
 									{segment}
 								</Typography>
 							);
@@ -334,7 +344,7 @@ const FillInTheBlanksTyping = ({
 
 				{(!isLessonCompleted || lessonType === LessonType.PRACTICE_LESSON) && (
 					<Box sx={{ mt: '2rem' }}>
-						<CustomInfoMessage message='Type the correct word into each blank to complete the sentence(s)' />
+						<CustomInfoMessageAlignedLeft message='Type the correct word into each blank to complete the sentence(s)' />
 						<Box
 							sx={{
 								display: 'flex',
@@ -357,7 +367,13 @@ const FillInTheBlanksTyping = ({
 												margin: '0.25rem 0.35rem 0.5rem 0.35rem',
 												borderRadius: '0.35rem',
 											}}>
-											{showHiddenBlankValues ? <Typography variant='body2'>{hint}</Typography> : <Typography>*****</Typography>}
+											{showHiddenBlankValues ? (
+												<Typography variant='body2' sx={{ fontSize: isMobileSizeSmall ? '0.75rem' : '0.85rem' }}>
+													{hint}
+												</Typography>
+											) : (
+												<Typography sx={{ fontSize: isMobileSizeSmall ? '0.75rem' : '0.85rem' }}>*****</Typography>
+											)}
 										</Box>
 									);
 								})}
@@ -365,7 +381,11 @@ const FillInTheBlanksTyping = ({
 							<Box>
 								<Tooltip title={showHiddenBlankValues ? 'Hide Possible Answers' : 'See Possible Answers'} placement='top'>
 									<IconButton onClick={() => setShowHiddenBlankValues(!showHiddenBlankValues)}>
-										{showHiddenBlankValues ? <VisibilityOff /> : <Visibility />}
+										{showHiddenBlankValues ? (
+											<VisibilityOff fontSize={isMobileSizeSmall ? 'small' : 'medium'} />
+										) : (
+											<Visibility fontSize={isMobileSizeSmall ? 'small' : 'medium'} />
+										)}
 									</IconButton>
 								</Tooltip>
 							</Box>
@@ -374,9 +394,11 @@ const FillInTheBlanksTyping = ({
 				)}
 
 				{isLessonCompleted && lessonType !== LessonType.PRACTICE_LESSON && (
-					<Box sx={{ margin: '3rem 0 1rem 0', width: '100%' }}>
+					<Box sx={{ margin: isMobileSize ? '2rem 0 1rem 0' : '3rem 0 1rem 0', width: '100%' }}>
 						<Box>
-							<Typography variant='h6'>Correct Text</Typography>
+							<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '1rem' }}>
+								Correct Text
+							</Typography>
 						</Box>
 						<Box
 							sx={{
@@ -385,12 +407,12 @@ const FillInTheBlanksTyping = ({
 								margin: '0.5rem 0',
 								padding: '1rem',
 							}}>
-							<TextContainer>
+							<TextContainer isMobileSizeSmall={isMobileSizeSmall}>
 								{textSegments?.map((segment, index) => {
 									const match = segment.match(/___(\d+)___/);
 									if (match) {
 										const blankIndex = parseInt(match[1], 10) - 1;
-										const correctValue = blankValuePairs[blankIndex].value;
+										const correctValue = blankValuePairs[blankIndex]?.value;
 										return (
 											<Typography
 												key={`correct-${blankIndex}`}
@@ -403,13 +425,18 @@ const FillInTheBlanksTyping = ({
 													padding: '0.25rem',
 													margin: '0 0.15rem',
 													borderRadius: '0.35rem',
+													fontSize: isMobileSize ? '0.75rem' : '0.85rem',
 												}}>
 												{correctValue}
 											</Typography>
 										);
 									} else {
 										return (
-											<Typography key={`correct-text-${index}`} variant='body2' component='span'>
+											<Typography
+												key={`correct-text-${index}`}
+												variant='body2'
+												component='span'
+												sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 												{segment}
 											</Typography>
 										);

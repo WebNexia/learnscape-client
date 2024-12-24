@@ -1,22 +1,25 @@
 import { Box, styled, Typography } from '@mui/material';
-import { useState } from 'react';
+import { useContext, useState } from 'react';
 import theme from '../../../themes';
 import { QuestionInterface } from '../../../interfaces/question';
 import { useUserCourseLessonData } from '../../../hooks/useUserCourseLessonData';
+import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 interface FlipCardInnerProps {
 	isFlipped: boolean;
 }
 
-const FlipCardContainer = styled(Box)({
-	position: 'relative',
-	display: 'flex',
-	width: '50vh',
-	height: '40vh',
-	perspective: '50rem',
-	margin: '0 auto 3rem auto',
-	cursor: 'pointer',
-});
+const FlipCardContainer = styled(Box)(
+	({ isMobileSize, isVerySmallScreen, isSmallScreen }: { isMobileSize: boolean; isVerySmallScreen: boolean; isSmallScreen: boolean }) => ({
+		position: 'relative',
+		display: 'flex',
+		width: isVerySmallScreen ? '70vw' : isSmallScreen ? '50vw' : '35vw',
+		height: isVerySmallScreen ? '30vh' : isSmallScreen ? '35vh' : '40vh',
+		perspective: '50rem',
+		margin: isMobileSize ? '-2.5rem auto 1.5rem auto' : '0rem auto 3rem auto',
+		cursor: 'pointer',
+	})
+);
 
 const FlipCardInner = styled(Box, {
 	shouldForwardProp: (prop) => prop !== 'isFlipped',
@@ -99,6 +102,9 @@ const FlipCardPreview = ({
 	const [isFlipped, setIsFlipped] = useState<boolean>(false);
 	const { updateLastQuestion, getLastQuestion, handleNextLesson } = useUserCourseLessonData();
 
+	const { isSmallScreen, isRotatedMedium, isVerySmallScreen } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
+
 	const handleClick = async () => {
 		setIsFlipped(!isFlipped);
 		if (setIsCardFlipped) setIsCardFlipped(true);
@@ -116,7 +122,7 @@ const FlipCardPreview = ({
 	};
 
 	return (
-		<FlipCardContainer>
+		<FlipCardContainer isMobileSize={isMobileSize} isVerySmallScreen={isVerySmallScreen} isSmallScreen={isSmallScreen}>
 			<FlipCardInner isFlipped={isFlipped} onClick={handleClick}>
 				<FlipCardFront>
 					{/* <Label>Front</Label> */}
@@ -162,7 +168,7 @@ const FlipCardPreview = ({
 				<FlipCardBack>
 					{/* <Label>Back</Label> */}
 					<Typography
-						variant='body1'
+						variant={isMobileSize ? 'body2' : 'body1'}
 						sx={{
 							color: theme.textColor?.common.main,
 						}}>

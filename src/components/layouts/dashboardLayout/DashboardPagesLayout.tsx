@@ -1,8 +1,9 @@
-import { Box } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import DashboardHeader from './DashboardHeader';
 import Sidebar from './Sidebar';
 import theme from '../../../themes';
-import { ReactNode } from 'react';
+import { ReactNode, useContext } from 'react';
+import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 interface DashboardPagesLayoutProps {
 	children: ReactNode;
@@ -12,9 +13,12 @@ interface DashboardPagesLayoutProps {
 		alignItems?: string;
 		flexDirection?: string;
 	};
+	showCopyRight?: boolean;
 }
 
-const DashboardPagesLayout = ({ children, pageName, customSettings }: DashboardPagesLayoutProps) => {
+const DashboardPagesLayout = ({ children, pageName, customSettings, showCopyRight }: DashboardPagesLayoutProps) => {
+	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
+
 	return (
 		<Box
 			sx={{
@@ -22,13 +26,13 @@ const DashboardPagesLayout = ({ children, pageName, customSettings }: DashboardP
 				minHeight: '100vh',
 				position: 'relative',
 			}}>
-			<Sidebar />
+			{!isSmallScreen && !isRotatedMedium && <Sidebar />}
 			<Box
 				sx={{
 					display: 'flex',
 					flexDirection: 'column',
 					minHeight: '100vh',
-					width: 'calc(100% - 10rem)',
+					width: isSmallScreen || isRotatedMedium ? '100%' : 'calc(100% - 10rem)',
 					marginLeft: '10rem',
 					position: 'absolute',
 					right: 0,
@@ -43,8 +47,15 @@ const DashboardPagesLayout = ({ children, pageName, customSettings }: DashboardP
 						minHeight: 'calc(100vh - 4rem)',
 						backgroundColor: theme.palette.secondary.main,
 						overflowY: 'auto',
+						position: 'relative',
 					}}>
 					{children}
+
+					{showCopyRight && (
+						<Typography sx={{ fontSize: isSmallScreen ? '0.55rem' : '0.65rem', position: 'absolute', bottom: 3 }}>
+							&copy; 2025 Webnexia Software Solutions Ltd. All rights reserved.
+						</Typography>
+					)}
 				</Box>
 			</Box>
 		</Box>

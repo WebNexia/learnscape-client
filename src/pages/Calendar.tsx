@@ -17,6 +17,7 @@ import EditEventDialog from '../components/layouts/calendar/EditEventDialog';
 import { UsersContext } from '../contexts/UsersContextProvider';
 import { CoursesContext } from '../contexts/CoursesContextProvider';
 import { SingleCourse } from '../interfaces/course';
+import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 
 const locales = {
 	'en-US': enUS,
@@ -36,6 +37,10 @@ const EventCalendar = () => {
 	const { user } = useContext(UserAuthContext);
 	const { sortedUsersData } = useContext(UsersContext);
 	const { sortedCoursesData } = useContext(CoursesContext);
+
+	const { isRotated, isVerySmallScreen, isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
+	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
 	const [eventsData, setEventsData] = useState<Event[]>([]);
 	const [newEventModalOpen, setNewEventModalOpen] = useState<boolean>(false);
@@ -108,7 +113,14 @@ const EventCalendar = () => {
 	const eventStyleGetter = (event: Event) => {
 		const backgroundColor = event.isAllDay ? 'lightblue' : '#ffb7b2';
 		return {
-			style: { backgroundColor, borderRadius: '0.35rem', color: '#333', border: 'none', display: 'block' },
+			style: {
+				backgroundColor,
+				borderRadius: isMobileSize ? '0.2rem' : '0.35rem',
+				color: '#333',
+				border: 'none',
+				display: 'block',
+				fontSize: isMobileSize ? '0.6rem' : undefined,
+			},
 		};
 	};
 
@@ -168,8 +180,8 @@ const EventCalendar = () => {
 	};
 
 	return (
-		<DashboardPagesLayout pageName='Calendar'>
-			<Box sx={{ display: 'flex', padding: '3rem' }}>
+		<DashboardPagesLayout pageName='Calendar' showCopyRight={true}>
+			<Box sx={{ display: 'flex', padding: isMobileSize ? '1rem' : '3rem' }}>
 				<Calendar
 					localizer={localizer}
 					events={eventsData}
@@ -177,10 +189,10 @@ const EventCalendar = () => {
 					endAccessor='end'
 					selectable={true}
 					style={{
-						height: '78vh',
+						height: isVerySmallScreen ? '65vh' : '78vh',
 						fontFamily: 'Poppins',
-						fontSize: '0.85rem',
-						width: '80vw',
+						fontSize: isMobileSizeSmall ? '0.7rem' : '0.85rem',
+						width: isMobileSizeSmall ? '92vw' : '80vw',
 						backgroundColor: '#fff',
 						padding: '0.5rem',
 						borderRadius: '0.5rem',

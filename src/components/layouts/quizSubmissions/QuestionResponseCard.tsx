@@ -6,6 +6,8 @@ import { truncateText } from '../../../utils/utilText';
 import { getQuestionResult } from '../../../utils/getQuestionResult';
 import { QuestionType } from '../../../interfaces/enums';
 import theme from '../../../themes';
+import { useContext } from 'react';
+import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 interface QuestionResponseCardProps {
 	response: any;
@@ -16,6 +18,9 @@ interface QuestionResponseCardProps {
 }
 
 const QuestionResponseCard = ({ response, index, fromAdminSubmissions, fetchQuestionTypeName, onCardClick }: QuestionResponseCardProps) => {
+	const { isSmallScreen, isRotatedMedium, isVerySmallScreen, isRotated } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
+	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 	return (
 		<Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
 			<Box
@@ -27,23 +32,28 @@ const QuestionResponseCard = ({ response, index, fromAdminSubmissions, fetchQues
 					width: '100%',
 					boxShadow: '0 0.1rem 0.4rem 0.1rem rgba(0, 0,0,0.2)',
 					borderRadius: '0.35rem',
-					padding: '0.75rem 1rem',
-					mb: '0.75rem',
+					padding: isMobileSizeSmall ? '0.5rem 0.75rem' : '0.75rem 1rem',
+					mb: isMobileSizeSmall ? '0.6rem' : '0.75rem',
 					cursor: 'pointer',
 				}}
 				onClick={() => onCardClick(response, index)}>
 				<Typography
 					variant='body2'
 					sx={{
-						flex: 4,
+						flex: isMobileSize ? 3 : 4,
+						fontSize: isMobileSize ? '0.65rem' : '0.85rem',
 					}}>
-					{truncateText(stripHtml(response.questionId.question), 50)}
+					{isVerySmallScreen
+						? truncateText(stripHtml(response.questionId.question), 25)
+						: isMobileSize
+						? truncateText(stripHtml(response.questionId.question), 40)
+						: truncateText(stripHtml(response.questionId.question), 60)}
 				</Typography>
 
-				<Box sx={{ flex: 1.5 }}>
+				<Box sx={{ flex: isMobileSize ? 1 : 1.5 }}>
 					{(response.teacherFeedback && response.teacherFeedback.trim() !== '') || response.teacherAudioFeedbackUrl ? (
 						<Tooltip title={`${fromAdminSubmissions ? 'Feedback' : "Instructor's Feedback"}`} placement='left'>
-							<RateReviewOutlined color='success' />
+							<RateReviewOutlined color='success' fontSize='small' sx={{ fontSize: isMobileSize ? '1rem' : undefined }} />
 						</Tooltip>
 					) : null}
 				</Box>
@@ -53,23 +63,31 @@ const QuestionResponseCard = ({ response, index, fromAdminSubmissions, fetchQues
 					sx={{
 						textAlign: 'right',
 						flex: 1,
+						fontSize: isMobileSize ? '0.65rem' : '0.85rem',
 					}}>
 					{fetchQuestionTypeName(response.questionId)}
 				</Typography>
 			</Box>
 
-			<Box sx={{ width: '1.5rem', height: '1.5rem', marginLeft: '1rem', display: 'flex', alignItems: 'center' }}>
+			<Box
+				sx={{
+					width: isMobileSize ? '0.5rem' : '1.5rem',
+					height: isMobileSize ? '0.5rem' : '1.5rem',
+					marginLeft: isMobileSizeSmall ? '0.5rem' : '1rem',
+					display: 'flex',
+					alignItems: 'center',
+				}}>
 				{fetchQuestionTypeName(response.questionId) !== QuestionType.AUDIO_VIDEO &&
 				fetchQuestionTypeName(response.questionId) !== QuestionType.OPEN_ENDED ? (
 					<>
 						{getQuestionResult(response, fetchQuestionTypeName) ? (
-							<CheckCircle sx={{ color: theme.palette.success.main }} />
+							<CheckCircle sx={{ color: theme.palette.success.main, fontSize: isMobileSize ? '1rem' : undefined }} fontSize='small' />
 						) : (
-							<Cancel sx={{ color: '#ef5350' }} />
+							<Cancel sx={{ color: '#ef5350', fontSize: isMobileSize ? '1rem' : undefined }} fontSize='small' />
 						)}
 					</>
 				) : (
-					<DoNotDisturbAltOutlined color='disabled' />
+					<DoNotDisturbAltOutlined color='disabled' fontSize='small' sx={{ fontSize: isMobileSize ? '1rem' : undefined }} />
 				)}
 			</Box>
 		</Box>

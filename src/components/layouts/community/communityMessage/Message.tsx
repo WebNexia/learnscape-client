@@ -1,4 +1,4 @@
-import { Box, IconButton, Tooltip, Typography } from '@mui/material';
+import { Box, Dialog, IconButton, Tooltip, Typography } from '@mui/material';
 import { CommunityMessage } from '../../../../interfaces/communityMessage';
 import { Delete, Edit, Flag, TurnLeftOutlined, Verified } from '@mui/icons-material';
 import { formatMessageTime } from '../../../../utils/formatTime';
@@ -14,6 +14,7 @@ import { OrganisationContext } from '../../../../contexts/OrganisationContextPro
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { truncateText } from '../../../../utils/utilText';
 import { db } from '../../../../firebase';
+import { MediaQueryContext } from '../../../../contexts/MediaQueryContextProvider';
 
 interface MessageProps {
 	message: CommunityMessage;
@@ -48,10 +49,15 @@ const Message = ({
 	const isAdmin: boolean = user?.role === Roles.ADMIN;
 	const isMessageWriter: boolean = user?._id === message?.userId?._id;
 
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
+
 	const [deleteMessageModalOpen, setDeleteMessageModalOpen] = useState<boolean>(false);
 	const [reportMsgModalOpen, setReportMsgModalOpen] = useState<boolean>(false);
 	const [resolveReportModalOpen, setResolveReportModalOpen] = useState<boolean>(false);
 	const [editMsgModalOpen, setEditMsgModalOpen] = useState<boolean>(false);
+
+	const [zoomedImage, setZoomedImage] = useState<string | undefined>('');
 
 	const [isMsgEdited, setIsMsgEdited] = useState<boolean>(message.updatedAt > message.createdAt);
 
@@ -189,13 +195,17 @@ const Message = ({
 					borderRight: 'solid lightgray 0.1rem',
 				}}>
 				<Box>
-					<img src={message?.userId?.imageUrl} alt='profile' style={{ height: '2.25rem', width: '2.25rem', borderRadius: '50%' }} />
+					<img
+						src={message?.userId?.imageUrl}
+						alt='profile'
+						style={{ height: isMobileSize ? '1.75rem' : '2.25rem', width: isMobileSize ? '1.75rem' : '2.25rem', borderRadius: '50%' }}
+					/>
 				</Box>
 				<Box>
-					<Typography sx={{ fontSize: '0.75rem' }}>{message?.userId?.username}</Typography>
+					<Typography sx={{ fontSize: isMobileSize ? '0.6rem' : '0.75rem' }}>{message?.userId?.username}</Typography>
 				</Box>
 				<Box>
-					<Typography variant='caption' sx={{ fontSize: '0.55rem', color: 'gray' }}>
+					<Typography variant='caption' sx={{ fontSize: isMobileSize ? '0.5rem' : '0.55rem', color: 'gray' }}>
 						{formatMessageTime(message?.createdAt)}
 					</Typography>
 				</Box>
@@ -207,8 +217,8 @@ const Message = ({
 							sx={{
 								margin: '0.35rem',
 								borderLeft: 'solid gray 0.3rem',
-								minHeight: '4rem',
-								maxHeight: '7rem',
+								minHeight: isMobileSize ? '3rem' : '4rem',
+								maxHeight: isMobileSize ? '5.5rem' : '7rem',
 								overflow: 'auto',
 								backgroundColor: '#E8E8E8',
 							}}>
@@ -221,14 +231,14 @@ const Message = ({
 									}}
 									sx={{ cursor: 'pointer' }}>
 									<Box sx={{ padding: '0.15rem 0.5rem' }}>
-										<Typography sx={{ fontSize: '0.7rem', fontStyle: 'italic', mb: '0.35rem', color: 'gray' }}>
+										<Typography sx={{ fontSize: isMobileSize ? '0.55rem' : '0.7rem', fontStyle: 'italic', mb: '0.35rem', color: 'gray' }}>
 											{message.parentMessageId.userId.username}
 										</Typography>
 									</Box>
 									<Box sx={{ padding: '0.5rem' }}>
 										<Box>
-											<Typography sx={{ fontSize: '0.75rem', fontStyle: 'italic', color: 'gray' }}>
-												{renderMessageWithEmojis(message.parentMessageId.text, '1rem')}
+											<Typography sx={{ fontSize: isMobileSize ? '0.5rem' : '0.75rem', fontStyle: 'italic', color: 'gray' }}>
+												{renderMessageWithEmojis(message.parentMessageId.text, '1rem', isMobileSize)}
 											</Typography>
 										</Box>
 										{message.parentMessageId.imageUrl && (
@@ -236,7 +246,7 @@ const Message = ({
 												<img
 													src={message.parentMessageId.imageUrl}
 													alt='img'
-													style={{ maxHeight: '7rem', objectFit: 'contain', borderRadius: '0.15rem', margin: '0.5rem 0' }}
+													style={{ maxHeight: isMobileSize ? '5rem' : '7rem', objectFit: 'contain', borderRadius: '0.15rem', margin: '0.5rem 0' }}
 												/>
 											</Box>
 										)}
@@ -249,7 +259,7 @@ const Message = ({
 														margin: '0.25rem 0',
 														boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
 														borderRadius: '0.35rem',
-														width: '30%',
+														width: isMobileSize ? '90%' : '30%',
 														height: '1.5rem',
 													}}
 												/>
@@ -261,14 +271,22 @@ const Message = ({
 						</Box>
 					)}
 
-					<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'space-between', minHeight: '6rem' }}>
+					<Box
+						sx={{
+							display: 'flex',
+							flexDirection: 'column',
+							alignItems: 'space-between',
+							minHeight: isMobileSize ? '3rem' : '5rem',
+							maxHeight: isMobileSize ? '5rem' : '10rem',
+							overflow: 'auto',
+						}}>
 						<Box sx={{ display: 'flex', justifyContent: 'space-between', flex: 9 }}>
 							<Box sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
 								<Box>
 									<Typography
 										sx={{
-											lineHeight: 1.7,
-											margin: '0.5rem 0',
+											lineHeight: isMobileSize ? 1.2 : 1.7,
+											margin: isMobileSize ? '0.15rem 0' : '0.5rem 0',
 											whiteSpace: 'pre-wrap',
 											wordBreak: 'break-word',
 											fontSize: '0.85rem',
@@ -278,10 +296,21 @@ const Message = ({
 									</Typography>
 								</Box>
 								{message.imageUrl && (
-									<Box sx={{ padding: '0.15rem 0.5rem' }}>
-										<img src={message.imageUrl} alt='img' style={{ maxHeight: '12rem', objectFit: 'contain', borderRadius: '0.15rem' }} />
+									<Box sx={{ padding: '0.15rem 0.5rem', cursor: 'pointer' }} onClick={() => setZoomedImage(message.imageUrl)}>
+										<img
+											src={message.imageUrl}
+											alt='img'
+											style={{ maxHeight: isMobileSize ? '8rem' : '12rem', objectFit: 'contain', borderRadius: '0.15rem' }}
+										/>
 									</Box>
 								)}
+
+								{zoomedImage && (
+									<Dialog open={!!zoomedImage} onClose={() => setZoomedImage('')} maxWidth='sm'>
+										<img src={zoomedImage} alt='Zoomed' style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '0.25rem' }} />
+									</Dialog>
+								)}
+
 								{message?.audioUrl && (
 									<Box sx={{ padding: '0.15rem 0.5rem' }}>
 										<audio
@@ -291,8 +320,8 @@ const Message = ({
 												margin: '1rem 0',
 												boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
 												borderRadius: '0.35rem',
-												width: '50%',
-												height: '2rem',
+												width: isMobileSize ? '85%' : '50%',
+												height: isMobileSize ? '1.5rem' : '2rem',
 											}}
 										/>
 									</Box>
@@ -310,7 +339,7 @@ const Message = ({
 												backgroundColor: 'transparent',
 											},
 										}}>
-										<TurnLeftOutlined fontSize='small' />
+										<TurnLeftOutlined fontSize='small' sx={{ fontSize: isMobileSize ? '0.85rem' : undefined }} />
 									</IconButton>
 								</Tooltip>
 							</Box>
@@ -323,13 +352,15 @@ const Message = ({
 								width: '100%',
 								justifyContent: 'space-between',
 								alignItems: 'flex-end',
-								mt: '0.5rem',
+								mt: isMobileSize ? '0.1rem' : '0.5rem',
 								flex: 2,
 							}}>
 							<Box sx={{ display: 'flex', alignItems: 'center' }}>
 								<Box>
 									{(message.updatedAt > message.createdAt || isMsgEdited) && (
-										<Typography sx={{ color: 'gray', ml: '0.5rem', fontStyle: 'italic', fontSize: '0.65rem' }}>Edited</Typography>
+										<Typography sx={{ color: 'gray', ml: '0.5rem', fontStyle: 'italic', fontSize: isMobileSize ? '0.55rem' : '0.65rem' }}>
+											Edited
+										</Typography>
 									)}
 								</Box>
 
@@ -343,7 +374,11 @@ const Message = ({
 													backgroundColor: 'transparent',
 												},
 											}}>
-											<Flag fontSize='small' color={message.isReported ? 'error' : 'inherit'} />
+											<Flag
+												fontSize='small'
+												color={message.isReported ? 'error' : 'inherit'}
+												sx={{ fontSize: isMobileSize ? '0.85rem' : undefined }}
+											/>
 											{message.isReported && (
 												<Typography sx={{ color: 'red', ml: '0.5rem', fontSize: '0.65rem' }}>Reported (Under Review)</Typography>
 											)}
@@ -369,7 +404,7 @@ const Message = ({
 													backgroundColor: 'transparent',
 												},
 											}}>
-											<Delete fontSize='small' />
+											<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.85rem' : undefined }} />
 										</IconButton>
 									</Tooltip>
 								)}
@@ -386,7 +421,7 @@ const Message = ({
 													},
 													mr: '-0.5rem',
 												}}>
-												<Edit fontSize='small' />
+												<Edit fontSize='small' sx={{ fontSize: isMobileSize ? '0.85rem' : undefined }} />
 											</IconButton>
 										</Tooltip>
 										<Tooltip title='Delete Message' placement='top'>
@@ -397,7 +432,7 @@ const Message = ({
 														backgroundColor: 'transparent',
 													},
 												}}>
-												<Delete fontSize='small' />
+												<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.85rem' : undefined }} />
 											</IconButton>
 										</Tooltip>
 									</Box>

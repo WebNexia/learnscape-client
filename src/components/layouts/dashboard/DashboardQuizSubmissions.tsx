@@ -5,10 +5,14 @@ import { CheckBoxOutlined } from '@mui/icons-material';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 import { Roles } from '../../../interfaces/enums';
 import theme from '../../../themes';
+import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 const DashboardQuizSubmissions = () => {
 	const { user } = useContext(UserAuthContext);
 	const { sortedQuizSubmissionsData } = useContext(QuizSubmissionsContext);
+	const { isRotated, isSmallScreen } = useContext(MediaQueryContext);
+
+	const isMobileSize: boolean = isSmallScreen || isRotated;
 	const [numberOfUncheckedQuizzes, setNumberOfUncheckedQuizzes] = useState<number>(0);
 	const [numberOfRecentlyCheckedQuizzes, setNumberOfRecentlyCheckedQuizzes] = useState<number>(0);
 
@@ -40,18 +44,21 @@ const DashboardQuizSubmissions = () => {
 				},
 			}}>
 			<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-				<Typography variant='h5'>{user?.role === Roles.ADMIN ? 'Unchecked' : 'Checked'} Quizzes</Typography>
-				<CheckBoxOutlined sx={{ ml: '0.5rem', color: theme.textColor?.greenPrimary.main }} />
+				<Typography variant='h5' sx={{ fontSize: isMobileSize ? '0.85rem' : null }}>
+					{user?.role === Roles.ADMIN ? 'Unchecked' : 'Checked'} Quizzes
+				</Typography>
+				<CheckBoxOutlined sx={{ ml: '0.5rem', color: theme.textColor?.greenPrimary.main }} fontSize={isMobileSize ? 'small' : 'medium'} />
 			</Box>
 			<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '7rem' }}>
 				{user?.role === Roles.ADMIN ? (
-					<Typography sx={{ fontSize: '0.85rem', color: numberOfUncheckedQuizzes > 0 ? '#ef5350' : 'gray', textAlign: 'center' }}>
+					<Typography
+						sx={{ fontSize: isMobileSize ? '0.65rem' : '0.85rem', color: numberOfUncheckedQuizzes > 0 ? '#ef5350' : 'gray', textAlign: 'center' }}>
 						{numberOfUncheckedQuizzes > 0 ? `You have ${numberOfUncheckedQuizzes} unchecked quizzes` : 'You have no unchecked quizzes'}
 					</Typography>
 				) : (
 					<Typography
 						sx={{
-							fontSize: '0.85rem',
+							fontSize: isMobileSize ? '0.65rem' : '0.85rem',
 							color: numberOfRecentlyCheckedQuizzes > 0 ? theme.textColor?.greenPrimary.main : 'gray',
 							textAlign: 'center',
 						}}>

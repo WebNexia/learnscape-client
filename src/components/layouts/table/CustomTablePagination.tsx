@@ -1,4 +1,6 @@
 import { Stack, Pagination } from '@mui/material';
+import { useContext } from 'react';
+import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 interface CustomPaginationProps {
 	count: number;
@@ -7,6 +9,9 @@ interface CustomPaginationProps {
 }
 
 const CustomTablePagination = ({ count, page, onChange }: CustomPaginationProps) => {
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
+
 	const handleChange = (event: React.ChangeEvent<unknown>, value: number) => {
 		event.preventDefault();
 		event.stopPropagation();
@@ -16,7 +21,22 @@ const CustomTablePagination = ({ count, page, onChange }: CustomPaginationProps)
 
 	return (
 		<Stack spacing={3}>
-			<Pagination showFirstButton showLastButton count={count} page={page} onChange={handleChange} />
+			<Pagination
+				showFirstButton
+				showLastButton
+				count={count}
+				page={page}
+				onChange={handleChange}
+				sx={{
+					'& .MuiPaginationItem-root': {
+						fontSize: isMobileSize ? '0.75rem' : '1rem',
+						mt: isMobileSize ? '1rem' : '2rem',
+					},
+					'& .MuiPaginationItem-icon': {
+						fontSize: isMobileSize ? '1rem' : '1.35rem', // Adjust icon size
+					},
+				}}
+			/>
 		</Stack>
 	);
 };

@@ -1,13 +1,18 @@
-import { Box, Typography } from '@mui/material';
+import { Box, ListItem, Typography } from '@mui/material';
 import { useContext, useEffect, useState } from 'react';
 import { CommunityContext } from '../../../contexts/CommunityContextProvider';
 import { CommunityTopic } from '../../../interfaces/communityTopics';
 import { truncateText } from '../../../utils/utilText';
 import { LightbulbOutlined } from '@mui/icons-material';
 import theme from '../../../themes';
+import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 const DashboardCommunityTopics = () => {
 	const { sortedTopicsData } = useContext(CommunityContext);
+	const { isRotated, isSmallScreen } = useContext(MediaQueryContext);
+
+	const isMobileSize: boolean = isSmallScreen || isRotated;
+
 	const [recentTopics, setRecentTopics] = useState<CommunityTopic[]>([]);
 
 	useEffect(() => {
@@ -31,17 +36,21 @@ const DashboardCommunityTopics = () => {
 				},
 			}}>
 			<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-				<Typography variant='h5'>Recent Topics</Typography>
-				<LightbulbOutlined sx={{ ml: '0.5rem', color: theme.textColor?.greenPrimary.main }} />
+				<Typography variant='h5' sx={{ fontSize: isMobileSize ? '0.85rem' : null }}>
+					Recent Topics
+				</Typography>
+				<LightbulbOutlined sx={{ ml: '0.5rem', color: theme.textColor?.greenPrimary.main }} fontSize={isMobileSize ? 'small' : 'medium'} />
 			</Box>
-			<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', mt: '0.65rem', height: '7rem' }}>
-				{recentTopics?.map((topic) => {
-					return (
-						<Typography key={topic._id} sx={{ fontSize: '0.85rem', mb: '0.35rem' }}>
-							{truncateText(topic.title, 35)}
-						</Typography>
-					);
-				})}
+			<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', margin: '0.65rem 0 0 0.75rem', height: '7rem' }}>
+				<ul>
+					{recentTopics?.map((topic) => {
+						return (
+							<Typography key={topic._id} sx={{ fontSize: isMobileSize ? '0.65rem' : '0.85rem', mb: '0.35rem' }}>
+								<li>{truncateText(topic.title, 35)}</li>
+							</Typography>
+						);
+					})}
+				</ul>
 			</Box>
 		</Box>
 	);

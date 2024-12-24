@@ -16,6 +16,7 @@ import { OrganisationContext } from '../../../../contexts/OrganisationContextPro
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../../../firebase';
 import { truncateText } from '../../../../utils/utilText';
+import { MediaQueryContext } from '../../../../contexts/MediaQueryContextProvider';
 
 interface TopicPaperProps {
 	refreshTopics: boolean;
@@ -32,6 +33,10 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refre
 	const { user } = useContext(UserAuthContext);
 	const { adminUsers } = useContext(OrganisationContext);
 	const { removeTopic, fetchTopics } = useContext(CommunityContext);
+
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
+
 	const navigate = useNavigate();
 	const isAdmin: boolean = user?.role === Roles.ADMIN;
 	const isTopicWriter: boolean = user?._id === topic?.userId?._id;
@@ -145,7 +150,7 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refre
 			elevation={10}
 			sx={{
 				width: '100%',
-				height: '6rem',
+				height: isMobileSize ? '4rem' : '6rem',
 				marginTop: '1.5rem',
 				backgroundColor: !isAdmin ? theme.bgColor?.primary : theme.bgColor?.adminPaper,
 			}}>
@@ -163,7 +168,7 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refre
 						justifyContent: 'space-between',
 						alignItems: 'flex-start',
 						flex: 2,
-						padding: '0.5rem',
+						padding: isMobileSize ? '0.1rem' : '0.5rem',
 					}}>
 					<Box>
 						<Button
@@ -177,6 +182,7 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refre
 									backgroundColor: 'transparent',
 									textDecoration: 'underline',
 								},
+								fontSize: isMobileSize ? '0.65rem' : undefined,
 							}}
 							onClick={() => {
 								if (refreshTopics) fetchTopics(1);
@@ -189,7 +195,7 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refre
 
 								window.scrollTo({ top: 0, behavior: 'smooth' });
 							}}>
-							Back to topics
+							{isMobileSize ? 'Topics' : 'Back to topics'}
 						</Button>
 					</Box>
 					<Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
@@ -204,9 +210,9 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refre
 										}}
 										onClick={() => setReportTopicModalOpen(true)}
 										disabled={topic.isReported}>
-										<Flag color={topic.isReported ? 'error' : 'secondary'} fontSize='small' />
+										<Flag color={topic.isReported ? 'error' : 'secondary'} fontSize='small' sx={{ fontSize: isMobileSize ? '0.85rem' : undefined }} />
 										{topic.isReported && (
-											<Typography variant='body2' sx={{ color: 'red', ml: '0.5rem' }}>
+											<Typography variant='body2' sx={{ color: 'red', ml: '0.5rem', fontSize: isMobileSize ? '0.75rem' : undefined }}>
 												Reported (Under Review)
 											</Typography>
 										)}
@@ -224,7 +230,7 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refre
 													mr: '-0.25rem',
 												}}
 												onClick={() => setEditTopicModalOpen(true)}>
-												<Edit color='secondary' fontSize='small' />
+												<Edit color='secondary' fontSize='small' sx={{ fontSize: isMobileSize ? '0.85rem' : undefined }} />
 											</IconButton>
 										</Tooltip>
 									)}
@@ -240,7 +246,7 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refre
 														mr: '-0.25rem',
 													}}
 													onClick={() => setDeleteTopicModalOpen(true)}>
-													<Delete color='secondary' fontSize='small' />
+													<Delete color='secondary' fontSize='small' sx={{ fontSize: isMobileSize ? '0.85rem' : undefined }} />
 												</IconButton>
 											</Tooltip>
 											{!isTopicLocked ? (
@@ -252,7 +258,7 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refre
 															},
 														}}
 														onClick={() => setLockTopicModalOpen(true)}>
-														<Lock color='secondary' fontSize='small' />
+														<Lock color='secondary' fontSize='small' sx={{ fontSize: isMobileSize ? '0.85rem' : undefined }} />
 													</IconButton>
 												</Tooltip>
 											) : (
@@ -264,7 +270,7 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refre
 															},
 														}}
 														onClick={() => setRestartTopicModalOpen(true)}>
-														<LockOpenOutlined color='secondary' fontSize='small' />
+														<LockOpenOutlined color='secondary' fontSize='small' sx={{ fontSize: isMobileSize ? '0.85rem' : undefined }} />
 													</IconButton>
 												</Tooltip>
 											)}
@@ -280,10 +286,18 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refre
 															backgroundColor: 'transparent',
 														},
 													}}>
-													<Verified color='secondary' fontSize='small' />
+													<Verified color='secondary' fontSize='small' sx={{ fontSize: isMobileSize ? '0.85rem' : undefined }} />
 												</IconButton>
 											</Tooltip>
-											<Typography variant='body2' sx={{ color: 'darkorange', ml: '0.1rem', fontStyle: 'italic', mr: '0.25rem' }}>
+											<Typography
+												variant='body2'
+												sx={{
+													color: 'darkorange',
+													ml: '0.1rem',
+													fontStyle: 'italic',
+													mr: '0.25rem',
+													fontSize: isMobileSize ? '0.75rem' : undefined,
+												}}>
 												Reported
 											</Typography>
 										</Box>
@@ -352,11 +366,13 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refre
 						justifyContent: 'flex-end',
 						alignItems: 'flex-start',
 						flex: 5,
-						padding: '1rem',
+						padding: isMobileSize ? '0.5rem' : '1rem',
 					}}>
 					<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'space-between', height: '100%' }}>
 						<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
-							<Typography variant='h5' sx={{ color: theme.textColor?.common.main, textAlign: 'right' }}>
+							<Typography
+								variant='h5'
+								sx={{ color: theme.textColor?.common.main, textAlign: 'right', fontSize: isMobileSize ? '0.8rem' : undefined }}>
 								{topic?.title}
 							</Typography>
 						</Box>
@@ -369,11 +385,11 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refre
 								width: '100%',
 							}}>
 							<Box sx={{ display: 'flex', alignItems: 'center' }}>
-								<Typography variant='body2' sx={{ color: theme.textColor?.common.main }}>
+								<Typography variant='body2' sx={{ color: theme.textColor?.common.main, fontSize: isMobileSize ? '0.7rem' : '0.85rem' }}>
 									{topic?.userId?.username || 'Deactivated User'}
 								</Typography>
 								<Typography sx={{ mx: 1, color: '#fff' }}>-</Typography>
-								<Typography variant='caption' sx={{ color: theme.textColor?.common.main }}>
+								<Typography variant='caption' sx={{ color: theme.textColor?.common.main, fontSize: isMobileSize ? '0.6rem' : undefined }}>
 									{formatMessageTime(topic?.createdAt)}
 								</Typography>
 							</Box>
