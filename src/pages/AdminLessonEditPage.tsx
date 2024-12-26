@@ -430,7 +430,7 @@ const AdminLessonEditPage = () => {
 
 			if (isLessonUpdated || isQuestionUpdated.some((data) => data.isUpdated === true)) {
 				try {
-					const res = await axios.patch(`${base_url}/lessons/${lessonId}`, {
+					await axios.patch(`${base_url}/lessons/${lessonId}`, {
 						...singleLessonBeforeSave,
 						questionIds: updatedQuestionIds,
 						text: editorContent.trim() || '',

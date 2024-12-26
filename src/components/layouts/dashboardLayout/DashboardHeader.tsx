@@ -174,7 +174,7 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 							sx={{
 								position: 'absolute',
 								right: 0,
-								top: '4rem',
+								top: isMobileSize ? '3.5rem' : '4rem',
 								height: 'calc(100vh - 4rem)',
 								width: isMobileSize ? '100vw' : '27.5rem',
 								overflow: 'auto',

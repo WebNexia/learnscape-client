@@ -9,9 +9,10 @@ interface EventDetailsDialogProps {
 	eventDetailsModalOpen: boolean;
 	selectedEvent: Event | null;
 	setEventDetailsModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+	setSelectedEvent: React.Dispatch<React.SetStateAction<Event | null>>;
 }
 
-const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDetailsModalOpen }: EventDetailsDialogProps) => {
+const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDetailsModalOpen, setSelectedEvent }: EventDetailsDialogProps) => {
 	const { isRotated, isVerySmallScreen, isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
@@ -20,6 +21,7 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 			openModal={eventDetailsModalOpen}
 			closeModal={() => {
 				setEventDetailsModalOpen(false);
+				setSelectedEvent(null);
 			}}
 			title='Event Details'
 			maxWidth='sm'>
@@ -102,7 +104,12 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 				)}
 			</DialogContent>
 			<DialogActions>
-				<CustomCancelButton onClick={() => setEventDetailsModalOpen(false)} sx={{ margin: '-1rem 1.5rem 1rem 0rem' }}>
+				<CustomCancelButton
+					onClick={() => {
+						setEventDetailsModalOpen(false);
+						setSelectedEvent(null);
+					}}
+					sx={{ margin: '-1rem 1.5rem 1rem 0rem' }}>
 					Close
 				</CustomCancelButton>
 			</DialogActions>

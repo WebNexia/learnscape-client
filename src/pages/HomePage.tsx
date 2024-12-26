@@ -1,7 +1,13 @@
 import { Box, Typography } from '@mui/material';
 import Header from '../components/header/Header';
+import { useContext } from 'react';
+import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 
 const HomePage = () => {
+	const { isVerySmallScreen, isSmallScreen, isRotated, isRotatedMedium } = useContext(MediaQueryContext);
+
+	const isMobileSize = isSmallScreen || isRotatedMedium;
+	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 	return (
 		<Box
 			sx={{
@@ -17,9 +23,9 @@ const HomePage = () => {
 					sx={{
 						position: 'relative',
 						width: '100vw',
-						height: '87vh',
+						height: isMobileSize ? '90vh' : '87vh',
 						overflow: 'hidden',
-						marginTop: '13vh',
+						marginTop: isMobileSize ? '10vh' : '13vh',
 					}}>
 					<Box
 						sx={{
@@ -50,7 +56,7 @@ const HomePage = () => {
 							variant='h1'
 							sx={{
 								color: '#fff',
-								fontSize: '5rem',
+								fontSize: isMobileSizeSmall ? '2.5rem' : isMobileSize ? '4rem' : '5rem',
 								zIndex: 3,
 								textAlign: 'center',
 							}}>

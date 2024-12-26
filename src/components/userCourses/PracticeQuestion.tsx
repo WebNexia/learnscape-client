@@ -521,7 +521,7 @@ const PracticeQuestion = ({
 					<IconButton
 						sx={{
 							flexShrink: 0,
-							padding: isVerySmallScreen ? '0.1rem' : '0.25rem',
+							padding: '0.35rem',
 							':hover': {
 								color: theme.bgColor?.greenPrimary,
 								backgroundColor: 'transparent',
@@ -608,7 +608,7 @@ const PracticeQuestion = ({
 							}}
 							sx={{
 								flexShrink: 0,
-								padding: isVerySmallScreen ? '0.1rem' : '0.25rem',
+								padding: '0.35rem',
 								color:
 									!isAnswerCorrect &&
 									!isOpenEndedAnswerSubmitted &&
@@ -676,7 +676,7 @@ const PracticeQuestion = ({
 										color: theme.bgColor?.greenPrimary,
 										backgroundColor: 'transparent',
 									},
-									padding: '0.3rem',
+									padding: '0.35rem',
 								}}>
 								{isCompletingCourse ? (
 									<DoneAll fontSize={isMobileSize ? 'small' : 'medium'} />

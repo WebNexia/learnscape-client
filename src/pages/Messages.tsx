@@ -773,7 +773,7 @@ const Messages = () => {
 							display: 'flex',
 							justifyContent: 'center',
 							height: 'calc(100vh - 4rem)',
-							width: '1rem',
+							width: '1.35rem',
 							borderRight: 'solid 0.01rem lightgray',
 						}}
 						onClick={() => setIsChatsListVisible(true)}>
