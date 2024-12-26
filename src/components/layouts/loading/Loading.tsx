@@ -17,16 +17,22 @@ import {
 	LibraryAddCheck,
 	LibraryBooks,
 	LightMode,
+	Menu,
 	Notifications,
 	PeopleAltOutlined,
 	QuizOutlined,
 	Settings,
 } from '@mui/icons-material';
 import TypingAnimation from './TypingAnimation';
+import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 const Loading = () => {
 	const { organisation } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
+
+	const { isRotatedMedium, isSmallScreen, isVerySmallScreen } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
+
 	const [mode, setMode] = useState<Mode>((localStorage.getItem('mode') as Mode) || Mode.LIGHT_MODE);
 
 	const currentPage = window.location.pathname.includes('admin')
@@ -36,192 +42,305 @@ const Loading = () => {
 	const [selectedPage, setSelectedPage] = useState<string>(currentPage);
 	return (
 		<>
-			<Box
-				sx={{
-					display: 'flex',
-					flexDirection: 'column',
-					minHeight: '110vh',
-					width: 'calc(100% - 10rem)',
-					marginLeft: '10rem',
-					position: 'absolute',
-					right: 0,
-				}}>
-				<AppBar position='sticky'>
-					<Toolbar
+			{isMobileSize ? (
+				<>
+					<Box
 						sx={{
 							display: 'flex',
-							justifyContent: 'flex-end',
-							alignItems: 'center',
-							height: '3rem',
+							flexDirection: 'column',
+							minHeight: '110vh',
 							width: '100%',
-							backgroundColor: user?.role === Roles.ADMIN ? theme.bgColor?.adminHeader : theme.bgColor?.lessonInProgress,
-							padding: '0 1rem 0 3rem',
+							marginLeft: '10rem',
+							position: 'absolute',
+							right: 0,
 						}}>
-						<Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-							<IconButton
+						<AppBar position='sticky'>
+							<Toolbar
 								sx={{
-									mr: '0.75rem',
-									':hover': {
-										backgroundColor: 'transparent',
-									},
+									display: 'flex',
+									justifyContent: 'space-between',
+									alignItems: 'center',
+									height: '3rem',
+									width: '100%',
+									backgroundColor: user?.role === Roles.ADMIN ? theme.bgColor?.adminHeader : theme.bgColor?.lessonInProgress,
+									padding: '0 1rem',
 								}}>
-								<Notifications color='secondary' />
-							</IconButton>
+								<IconButton>
+									<Menu sx={{ color: '#fff', padding: 0 }} fontSize='small' />
+								</IconButton>
+								<Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+									<IconButton
+										sx={{
+											mr: '0.75rem',
+											':hover': {
+												backgroundColor: 'transparent',
+											},
+										}}>
+										<Notifications color='secondary' sx={{ fontSize: '1rem' }} />
+									</IconButton>
 
-							{
-								{
-									[Mode.DARK_MODE]: (
-										<IconButton
-											sx={{
-												color: theme.textColor?.common.main,
-												mr: '0.75rem',
-												':hover': {
-													backgroundColor: 'transparent',
-												},
-											}}>
-											<DarkMode />
-										</IconButton>
-									),
-									[Mode.LIGHT_MODE]: (
-										<IconButton
-											sx={{
-												color: theme.textColor?.common.main,
-												mr: '0.75rem',
-												':hover': {
-													backgroundColor: 'transparent',
-												},
-											}}>
-											<LightMode />
-										</IconButton>
-									),
-								}[mode]
-							}
-							<Button
+									{
+										{
+											[Mode.DARK_MODE]: (
+												<IconButton
+													sx={{
+														color: theme.textColor?.common.main,
+														mr: '0.75rem',
+														':hover': {
+															backgroundColor: 'transparent',
+														},
+													}}>
+													<DarkMode sx={{ fontSize: '1rem' }} />
+												</IconButton>
+											),
+											[Mode.LIGHT_MODE]: (
+												<IconButton
+													sx={{
+														color: theme.textColor?.common.main,
+														mr: '0.75rem',
+														':hover': {
+															backgroundColor: 'transparent',
+														},
+													}}>
+													<LightMode sx={{ fontSize: '1rem' }} />
+												</IconButton>
+											),
+										}[mode]
+									}
+									<Button
+										sx={{
+											textTransform: 'capitalize',
+											color: theme.textColor?.common.main,
+											fontFamily: theme.fontFamily?.main,
+											fontSize: '0.75rem',
+										}}>
+										Log Out
+									</Button>
+								</Box>
+							</Toolbar>
+						</AppBar>
+					</Box>
+
+					<Box
+						sx={{
+							display: 'flex',
+							flexDirection: 'column',
+							justifyContent: 'center',
+							alignItems: 'center',
+							backgroundColor: theme.bgColor?.secondary,
+							height: '110vh',
+						}}>
+						<TypingAnimation />
+						<Typography
+							sx={{
+								margin: '2rem',
+								fontSize: isVerySmallScreen ? '1rem' : '1.5rem',
+								fontFamily: 'Poppins',
+								fontWeight: 500,
+								color: '#01435A',
+							}}>
+							Loading...
+						</Typography>
+						<Typography
+							sx={{
+								fontSize: isVerySmallScreen ? '2rem' : '3rem',
+								fontFamily: 'Permanent Marker, cursive',
+								color: '#01435A',
+							}}>
+							{organisation?.orgName}
+						</Typography>
+					</Box>
+				</>
+			) : (
+				<>
+					<Box
+						sx={{
+							display: 'flex',
+							flexDirection: 'column',
+							minHeight: '110vh',
+							width: 'calc(100% - 10rem)',
+							marginLeft: '10rem',
+							position: 'absolute',
+							right: 0,
+						}}>
+						<AppBar position='sticky'>
+							<Toolbar
 								sx={{
-									textTransform: 'capitalize',
-									color: theme.textColor?.common.main,
-									fontFamily: theme.fontFamily?.main,
+									display: 'flex',
+									justifyContent: 'flex-end',
+									alignItems: 'center',
+									height: '3rem',
+									width: '100%',
+									backgroundColor: user?.role === Roles.ADMIN ? theme.bgColor?.adminHeader : theme.bgColor?.lessonInProgress,
+									padding: '0 1rem 0 3rem',
 								}}>
-								Log Out
-							</Button>
-						</Box>
-					</Toolbar>
-				</AppBar>
-			</Box>
+								<Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+									<IconButton
+										sx={{
+											mr: '0.75rem',
+											':hover': {
+												backgroundColor: 'transparent',
+											},
+										}}>
+										<Notifications color='secondary' />
+									</IconButton>
 
-			<Box
-				sx={{
-					display: 'flex',
-					flexDirection: 'column',
-					justifyContent: 'flex-start',
-					alignItems: 'center',
-					width: '10rem',
-					minHeight: '100vh',
-					backgroundColor: user?.role === Roles.ADMIN ? theme.bgColor?.adminSidebar : theme.palette.primary.main,
-					position: 'fixed',
-					left: 0,
-					zIndex: 10,
-				}}>
-				<Box
-					sx={{
-						display: 'flex',
-						alignItems: 'center',
-						height: '3rem',
-						marginBottom: '0.5rem',
-					}}>
-					<Typography variant='h1' sx={{ color: theme.textColor?.common.main, fontSize: '1.5rem' }}>
-						{organisation?.orgName}
-					</Typography>
-				</Box>
-				<Box
-					sx={{
-						display: 'flex',
-						flexDirection: 'column',
-						alignItems: 'center',
-						marginBottom: '0.5rem',
-					}}>
-					<img
-						src={user?.imageUrl}
-						alt='user_profile_pic'
-						style={{
-							height: '3rem',
-							width: '3rem',
-							borderRadius: '50%',
-							marginBottom: '0.5rem',
-							objectFit: 'cover',
-						}}
-					/>
-					<Typography variant='body1' sx={{ color: theme.textColor?.common.main }}>
-						{user?.username}
-					</Typography>
+									{
+										{
+											[Mode.DARK_MODE]: (
+												<IconButton
+													sx={{
+														color: theme.textColor?.common.main,
+														mr: '0.75rem',
+														':hover': {
+															backgroundColor: 'transparent',
+														},
+													}}>
+													<DarkMode />
+												</IconButton>
+											),
+											[Mode.LIGHT_MODE]: (
+												<IconButton
+													sx={{
+														color: theme.textColor?.common.main,
+														mr: '0.75rem',
+														':hover': {
+															backgroundColor: 'transparent',
+														},
+													}}>
+													<LightMode />
+												</IconButton>
+											),
+										}[mode]
+									}
+									<Button
+										sx={{
+											textTransform: 'capitalize',
+											color: theme.textColor?.common.main,
+											fontFamily: theme.fontFamily?.main,
+										}}>
+										Log Out
+									</Button>
+								</Box>
+							</Toolbar>
+						</AppBar>
+					</Box>
+
 					<Box
 						sx={{
 							display: 'flex',
 							flexDirection: 'column',
 							justifyContent: 'flex-start',
-							alignItems: 'flex-start',
-							marginTop: '1.5rem',
+							alignItems: 'center',
+							width: '10rem',
+							minHeight: '100vh',
+							backgroundColor: user?.role === Roles.ADMIN ? theme.bgColor?.adminSidebar : theme.palette.primary.main,
+							position: 'fixed',
+							left: 0,
+							zIndex: 10,
 						}}>
-						{user?.role === Roles.ADMIN && (
-							<>
-								<SidebarBtn btnText='Dashboard' IconName={DashboardIcon} selectedPage={selectedPage} />
-								<SidebarBtn btnText='Users' IconName={PeopleAltOutlined} selectedPage={selectedPage} />
-								<SidebarBtn btnText='Courses' IconName={LibraryBooks} selectedPage={selectedPage} />
-								<SidebarBtn btnText='Lessons' IconName={AssignmentIndRounded} selectedPage={selectedPage} />
-								<SidebarBtn btnText='Questions' IconName={QuizOutlined} selectedPage={selectedPage} />
-								<SidebarBtn btnText='Documents' IconName={FilePresent} selectedPage={selectedPage} />
-								<SidebarBtn btnText='Submissions' IconName={LibraryAddCheck} selectedPage={selectedPage} />
-								<SidebarBtn btnText='Payments' IconName={CreditCard} selectedPage={selectedPage} />
-								<SidebarBtn btnText='Calendar' IconName={CalendarMonth} selectedPage={selectedPage} />
-								<SidebarBtn btnText='Messages' IconName={Email} selectedPage={selectedPage} />
-								<SidebarBtn btnText='Community' IconName={Groups} selectedPage={selectedPage} />
-								<SidebarBtn btnText='Settings' IconName={Settings} selectedPage={selectedPage} />
-							</>
-						)}
-						{user?.role === Roles.USER && (
-							<>
-								<SidebarBtn btnText='Dashboard' IconName={DashboardIcon} selectedPage={selectedPage} />
-								<SidebarBtn btnText='Courses' IconName={LibraryBooks} selectedPage={selectedPage} />
-								<SidebarBtn btnText='Submissions' IconName={LibraryAddCheck} selectedPage={selectedPage} />
-								<SidebarBtn btnText='Calendar' IconName={CalendarMonth} selectedPage={selectedPage} />
-								<SidebarBtn btnText='Messages' IconName={Email} selectedPage={selectedPage} />
-								<SidebarBtn btnText='Community' IconName={Groups} selectedPage={selectedPage} />
-								<SidebarBtn btnText='Settings' IconName={Settings} selectedPage={selectedPage} />
-							</>
-						)}
+						<Box
+							sx={{
+								display: 'flex',
+								alignItems: 'center',
+								height: '3rem',
+								marginBottom: '0.5rem',
+							}}>
+							<Typography variant='h1' sx={{ color: theme.textColor?.common.main, fontSize: '1.5rem' }}>
+								{organisation?.orgName}
+							</Typography>
+						</Box>
+						<Box
+							sx={{
+								display: 'flex',
+								flexDirection: 'column',
+								alignItems: 'center',
+								marginBottom: '0.5rem',
+							}}>
+							<img
+								src={user?.imageUrl}
+								alt='user_profile_pic'
+								style={{
+									height: '3rem',
+									width: '3rem',
+									borderRadius: '50%',
+									marginBottom: '0.5rem',
+									objectFit: 'cover',
+								}}
+							/>
+							<Typography variant='body1' sx={{ color: theme.textColor?.common.main }}>
+								{user?.username}
+							</Typography>
+							<Box
+								sx={{
+									display: 'flex',
+									flexDirection: 'column',
+									justifyContent: 'flex-start',
+									alignItems: 'flex-start',
+									marginTop: '1.5rem',
+								}}>
+								{user?.role === Roles.ADMIN && (
+									<>
+										<SidebarBtn btnText='Dashboard' IconName={DashboardIcon} selectedPage={selectedPage} />
+										<SidebarBtn btnText='Users' IconName={PeopleAltOutlined} selectedPage={selectedPage} />
+										<SidebarBtn btnText='Courses' IconName={LibraryBooks} selectedPage={selectedPage} />
+										<SidebarBtn btnText='Lessons' IconName={AssignmentIndRounded} selectedPage={selectedPage} />
+										<SidebarBtn btnText='Questions' IconName={QuizOutlined} selectedPage={selectedPage} />
+										<SidebarBtn btnText='Documents' IconName={FilePresent} selectedPage={selectedPage} />
+										<SidebarBtn btnText='Submissions' IconName={LibraryAddCheck} selectedPage={selectedPage} />
+										<SidebarBtn btnText='Payments' IconName={CreditCard} selectedPage={selectedPage} />
+										<SidebarBtn btnText='Calendar' IconName={CalendarMonth} selectedPage={selectedPage} />
+										<SidebarBtn btnText='Messages' IconName={Email} selectedPage={selectedPage} />
+										<SidebarBtn btnText='Community' IconName={Groups} selectedPage={selectedPage} />
+										<SidebarBtn btnText='Settings' IconName={Settings} selectedPage={selectedPage} />
+									</>
+								)}
+								{user?.role === Roles.USER && (
+									<>
+										<SidebarBtn btnText='Dashboard' IconName={DashboardIcon} selectedPage={selectedPage} />
+										<SidebarBtn btnText='Courses' IconName={LibraryBooks} selectedPage={selectedPage} />
+										<SidebarBtn btnText='Submissions' IconName={LibraryAddCheck} selectedPage={selectedPage} />
+										<SidebarBtn btnText='Calendar' IconName={CalendarMonth} selectedPage={selectedPage} />
+										<SidebarBtn btnText='Messages' IconName={Email} selectedPage={selectedPage} />
+										<SidebarBtn btnText='Community' IconName={Groups} selectedPage={selectedPage} />
+										<SidebarBtn btnText='Settings' IconName={Settings} selectedPage={selectedPage} />
+									</>
+								)}
+							</Box>
+						</Box>
 					</Box>
-				</Box>
-			</Box>
-			<Box
-				sx={{
-					display: 'flex',
-					flexDirection: 'column',
-					justifyContent: 'center',
-					alignItems: 'center',
-					backgroundColor: theme.bgColor?.secondary,
-					height: '110vh',
-					marginLeft: '10rem',
-				}}>
-				<TypingAnimation />
-				<Typography
-					sx={{
-						margin: '2rem',
-						fontSize: '2rem',
-						fontFamily: 'Poppins',
-						fontWeight: 500,
-						color: '#01435A',
-					}}>
-					Loading...
-				</Typography>
-				<Typography
-					sx={{
-						fontSize: '4rem',
-						fontFamily: 'Permanent Marker, cursive',
-						color: '#01435A',
-					}}>
-					{organisation?.orgName}
-				</Typography>
-			</Box>
+					<Box
+						sx={{
+							display: 'flex',
+							flexDirection: 'column',
+							justifyContent: 'center',
+							alignItems: 'center',
+							backgroundColor: theme.bgColor?.secondary,
+							height: '110vh',
+							marginLeft: '10rem',
+						}}>
+						<TypingAnimation />
+						<Typography
+							sx={{
+								margin: '2rem',
+								fontSize: '2rem',
+								fontFamily: 'Poppins',
+								fontWeight: 500,
+								color: '#01435A',
+							}}>
+							Loading...
+						</Typography>
+						<Typography
+							sx={{
+								fontSize: '4rem',
+								fontFamily: 'Permanent Marker, cursive',
+								color: '#01435A',
+							}}>
+							{organisation?.orgName}
+						</Typography>
+					</Box>
+				</>
+			)}
 		</>
 	);
 };
