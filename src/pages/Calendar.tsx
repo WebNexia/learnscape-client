@@ -182,6 +182,27 @@ const EventCalendar = () => {
 	return (
 		<DashboardPagesLayout pageName='Calendar' showCopyRight={true}>
 			<Box sx={{ display: 'flex', padding: isMobileSize ? '1rem' : '3rem' }}>
+				<style>
+					{`
+						.rbc-toolbar button {
+							font-size:${isMobileSize ? '0.75rem' : '0.95rem'}; /* Modify button font size */
+						}
+						.rbc-toolbar-label {
+							font-size:${isMobileSize ? '0.9rem' : '1rem'}; /* Modify label font size */
+							margin:${isMobileSize ? '0.5rem 0rem' : '0rem'};
+						}
+						.rbc-month-view .rbc-date-cell {
+							display: flex;
+							justify-content: center;
+							align-items: center;
+							font-size: 14px !important;
+							font-weight: bold;
+							line-height: normal;
+							height: 100%; /* Ensure it spans the cell */
+						}
+
+   					 `}
+				</style>
 				<Calendar
 					localizer={localizer}
 					events={eventsData}
@@ -191,8 +212,8 @@ const EventCalendar = () => {
 					style={{
 						height: isVerySmallScreen ? '65vh' : '78vh',
 						fontFamily: 'Poppins',
-						fontSize: isMobileSizeSmall ? '0.7rem' : '0.85rem',
-						width: isMobileSizeSmall ? '92vw' : '80vw',
+						fontSize: isMobileSizeSmall ? '0.75rem' : '0.85rem',
+						width: isMobileSizeSmall ? '91vw' : '76vw',
 						backgroundColor: '#fff',
 						padding: '0.5rem',
 						borderRadius: '0.5rem',
@@ -222,6 +243,7 @@ const EventCalendar = () => {
 			<EventDetailsDialog
 				eventDetailsModalOpen={eventDetailsModalOpen}
 				selectedEvent={selectedEvent}
+				setSelectedEvent={setSelectedEvent}
 				setEventDetailsModalOpen={setEventDetailsModalOpen}
 			/>
 

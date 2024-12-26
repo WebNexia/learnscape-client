@@ -344,8 +344,9 @@ const LessonPage = () => {
 										onClick={() => {
 											setIsNotesDrawerOpen(false);
 											setUserLessonNotes(editorContent);
-										}}>
-										<Close sx={{ fontSize: isMobileSize ? '0.85rem' : '1.25rem' }} />
+										}}
+										sx={{ padding: isMobileSize ? '0.5rem' : undefined }}>
+										<Close sx={{ fontSize: isMobileSize ? '1.1rem' : '1.25rem' }} />
 									</IconButton>
 								</Box>
 								<Box sx={{ mt: '0.5rem' }} id='editor-content'>
@@ -360,8 +361,8 @@ const LessonPage = () => {
 								</Box>
 								<Box sx={{ display: 'flex', mt: '1rem', justifyContent: 'space-between' }}>
 									<Tooltip title='Download as PDF' placement='right'>
-										<IconButton onClick={handleDownloadPDF}>
-											<GetApp sx={{ fontSize: isMobileSize ? '1rem' : '1.25rem' }} />
+										<IconButton onClick={handleDownloadPDF} sx={{ padding: isMobileSize ? '0.5rem' : undefined }}>
+											<GetApp sx={{ fontSize: isMobileSize ? '1.15rem' : '1.25rem' }} />
 										</IconButton>
 									</Tooltip>
 									{!isUserLessonNotesUploading ? (

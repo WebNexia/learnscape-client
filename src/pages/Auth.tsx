@@ -39,7 +39,9 @@ const Auth = ({ setUserRole }: AuthProps) => {
 
 	const { setUserId, fetchUserData } = useContext(UserAuthContext);
 	const { fetchOrganisationData, setOrgId } = useContext(OrganisationContext);
-	const { isVerySmallScreen, isSmallScreen, isRotated } = useContext(MediaQueryContext);
+	const { isVerySmallScreen, isSmallScreen, isRotated, isRotatedMedium } = useContext(MediaQueryContext);
+
+	const isMobileSize = isSmallScreen || isRotatedMedium;
 
 	const [activeForm, setActiveForm] = useState<AuthForms>(AuthForms.SIGN_UP);
 
@@ -301,7 +303,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 				height: '100vh',
 				padding: isRotated ? '5rem 0' : '',
 			}}>
-			<Box sx={styles.formContainerStyles(isVerySmallScreen, isSmallScreen, isRotated)}>
+			<Box sx={styles.formContainerStyles(isVerySmallScreen, isSmallScreen, isRotated, isRotatedMedium)}>
 				<Box
 					sx={{
 						display: 'flex',
@@ -332,7 +334,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 									padding: isRotated ? '0.5rem' : '1rem 0',
 									backgroundColor: activeForm !== AuthForms.SIGN_IN ? 'lightgray' : null,
 									borderTop: activeForm === AuthForms.SIGN_IN ? `solid 0.3rem ${theme.bgColor?.greenPrimary}` : 'solid 0.3rem lightgray',
-									fontSize: isVerySmallScreen || isRotated ? '0.9rem' : '1.15rem',
+									fontSize: isMobileSize ? '0.9rem' : '1.15rem',
 								}}>
 								Log In
 							</Button>
@@ -355,7 +357,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 									padding: isRotated ? '0.5rem' : '1rem 0',
 									backgroundColor: activeForm !== AuthForms.SIGN_UP ? 'lightgray' : null,
 									borderTop: activeForm === AuthForms.SIGN_UP ? `solid 0.3rem ${theme.bgColor?.greenPrimary}` : 'solid 0.3rem lightgray',
-									fontSize: isVerySmallScreen || isRotated ? '0.9rem' : '1.15rem',
+									fontSize: isMobileSize ? '0.9rem' : '1.15rem',
 								}}>
 								Register
 							</Button>
@@ -373,7 +375,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 					{
 						{
 							[AuthForms.SIGN_IN]: (
-								<Box sx={{ marginTop: '1.5rem', width: isVerySmallScreen ? '100%' : '80%' }}>
+								<Box sx={{ marginTop: '1.5rem', width: isVerySmallScreen ? '85%' : '80%' }}>
 									<form onSubmit={signIn}>
 										<Box
 											sx={{
@@ -404,9 +406,9 @@ const Auth = ({ setUserRole }: AuthProps) => {
 														<InputAdornment position='end'>
 															<IconButton onClick={togglePasswordVisibility} edge='end'>
 																{!showPassword ? (
-																	<Visibility sx={{ fontSize: isVerySmallScreen || isRotated ? '1rem' : '1.25rem' }} />
+																	<Visibility sx={{ fontSize: isMobileSize ? '1rem' : '1.25rem' }} />
 																) : (
-																	<VisibilityOff sx={{ fontSize: isVerySmallScreen || isRotated ? '1rem' : '1.25rem' }} />
+																	<VisibilityOff sx={{ fontSize: isMobileSize ? '1rem' : '1.25rem' }} />
 																)}
 															</IconButton>
 														</InputAdornment>
@@ -426,7 +428,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 														':hover': {
 															textDecoration: 'underline',
 														},
-														fontSize: '0.8rem',
+														fontSize: isMobileSize ? '0.7rem' : '0.8rem',
 													}}>
 													Forgot Your Password?
 												</Typography>
@@ -439,7 +441,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 								</Box>
 							),
 							[AuthForms.SIGN_UP]: (
-								<Box sx={{ marginTop: '1.5rem', width: '80%' }}>
+								<Box sx={{ marginTop: '1.5rem', width: isVerySmallScreen ? '85%' : '80%' }}>
 									<form onSubmit={signUp}>
 										<Box
 											sx={{
@@ -475,7 +477,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 																	backgroundColor: 'transparent',
 																},
 															}}>
-															<Info sx={{ fontSize: isVerySmallScreen || isRotated ? '1rem' : '1.25rem' }} />
+															<Info sx={{ fontSize: isMobileSize ? '1rem' : '1.25rem' }} />
 														</IconButton>
 													</Tooltip>
 												</Box>
@@ -532,9 +534,9 @@ const Auth = ({ setUserRole }: AuthProps) => {
 																		},
 																	}}>
 																	{!showPassword ? (
-																		<Visibility sx={{ fontSize: isVerySmallScreen || isRotated ? '1rem' : '1.25rem' }} />
+																		<Visibility sx={{ fontSize: isMobileSize ? '1rem' : '1.25rem' }} />
 																	) : (
-																		<VisibilityOff sx={{ fontSize: isVerySmallScreen || isRotated ? '1rem' : '1.25rem' }} />
+																		<VisibilityOff sx={{ fontSize: isMobileSize ? '1rem' : '1.25rem' }} />
 																	)}
 																</IconButton>
 															</InputAdornment>
@@ -550,7 +552,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 																	backgroundColor: 'transparent',
 																},
 															}}>
-															<Info sx={{ fontSize: isVerySmallScreen || isRotated ? '1rem' : '1.25rem' }} />
+															<Info sx={{ fontSize: isMobileSize ? '1rem' : '1.25rem' }} />
 														</IconButton>
 													</Tooltip>
 												</Box>
@@ -643,7 +645,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 
 				<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
 					<Typography
-						variant={isVerySmallScreen || isRotated ? 'body2' : 'body1'}
+						variant={isMobileSize ? 'body2' : 'body1'}
 						sx={{
 							marginTop: '1.25rem',
 							color: theme.textColor?.primary.main,
@@ -680,7 +682,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 				</Box>
 			</Box>
 			<Box sx={{ display: 'flex', justifyContent: 'center', mt: isRotated ? '0.75rem' : '2rem', width: '100%', padding: '0 1rem' }}>
-				<Typography sx={{ fontSize: isVerySmallScreen || isRotated ? '0.6rem' : '0.75rem' }}>
+				<Typography sx={{ fontSize: isSmallScreen ? '0.55rem' : '0.65rem', position: 'absolute', bottom: 3 }}>
 					&copy; 2025 Webnexia Software Solutions Ltd. All rights reserved.
 				</Typography>
 			</Box>

@@ -16,6 +16,7 @@ import CustomInfoMessageAlignedRight from '../components/layouts/infoMessage/Cus
 import QuestionResponseCard from '../components/layouts/quizSubmissions/QuestionResponseCard';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import QuestionMedia from '../components/userCourses/QuestionMedia';
+import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
 
 const SubmissionFeedbackDetails = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -69,7 +70,7 @@ const SubmissionFeedbackDetails = () => {
 	const renderFeedbackModal = () => (
 		<CustomDialog openModal={openQuestionFeedbackModal} closeModal={() => setOpenQuestionFeedbackModal(false)} titleSx={{ paddingTop: '0.5rem' }}>
 			<Box sx={{ width: '90%', margin: '1rem auto' }}>
-				<Typography variant={isMobileSize ? 'h6' : 'h5'} sx={{ mb: '0.5rem' }}>
+				<Typography variant={isMobileSize ? 'h6' : 'h5'} sx={{ mb: '0.5rem', fontSize: isMobileSize ? '0.95rem' : undefined }}>
 					Question ({fetchQuestionTypeName(userSingleResponseWithFeedback?.questionId)})
 				</Typography>
 
@@ -246,7 +247,7 @@ const SubmissionFeedbackDetails = () => {
 			)}
 
 			{userSingleResponseWithFeedback?.teacherFeedback && (
-				<Box sx={{ width: '90%', margin: '1.5rem auto 3rem auto' }}>
+				<Box sx={{ width: '90%', margin: '1.5rem auto 2rem auto' }}>
 					<Typography variant={isMobileSize ? 'h6' : 'h5'} sx={{ mb: isMobileSize ? '0.5rem' : '1rem', fontSize: isMobileSize ? '0.9rem' : '1rem' }}>
 						Instructor's Feedback for Question
 					</Typography>
@@ -255,6 +256,11 @@ const SubmissionFeedbackDetails = () => {
 					</Typography>
 				</Box>
 			)}
+			<CustomCancelButton
+				sx={{ alignSelf: 'end', width: isMobileSize ? '20%' : '10%', margin: isMobileSize ? '0 1rem 1rem 0' : '0 2rem 1rem 0', padding: 0 }}
+				onClick={() => setOpenQuestionFeedbackModal(false)}>
+				Close
+			</CustomCancelButton>
 		</CustomDialog>
 	);
 

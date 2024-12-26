@@ -83,7 +83,7 @@ const QuizQuestion = ({
 	const { fetchQuestionTypeName } = useContext(QuestionsContext);
 	const { user } = useContext(UserAuthContext);
 
-	const { isSmallScreen, isRotatedMedium, isVerySmallScreen } = useContext(MediaQueryContext);
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
 	const [userQuizAnswerAfterSubmission, setUserQuizAnswerAfterSubmission] = useState<string>('');
@@ -663,7 +663,7 @@ const QuizQuestion = ({
 				<IconButton
 					sx={{
 						flexShrink: 0,
-						padding: isVerySmallScreen ? '0.1rem' : '0.25rem',
+						padding: '0.35rem',
 						':hover': {
 							color: theme.bgColor?.greenPrimary,
 							backgroundColor: 'transparent',
@@ -748,6 +748,7 @@ const QuizQuestion = ({
 								color: theme.bgColor?.greenPrimary,
 								backgroundColor: 'transparent',
 							},
+							padding: '0.35rem',
 						}}>
 						{isCompletingCourse ? (
 							<DoneAll fontSize={isMobileSize ? 'medium' : 'large'} />
