@@ -12,6 +12,7 @@ import { communityRules, communityRulesIntro, conclusion, consequences } from '.
 import CreateTopicDialog from '../components/layouts/community/createTopic/CreateTopicDialog';
 import CustomTablePagination from '../components/layouts/table/CustomTablePagination';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
+import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
 
 export interface NewTopic {
 	title: string;
@@ -143,6 +144,11 @@ const Community = () => {
 										</Typography>
 									</Box>
 								</DialogContent>
+								<CustomCancelButton
+									sx={{ alignSelf: 'end', width: isMobileSize ? '20%' : '10%', margin: isMobileSize ? '0 1rem 1rem 0' : '0 2rem 1rem 0', padding: 0 }}
+									onClick={() => setRulesModalOpen(false)}>
+									Close
+								</CustomCancelButton>
 							</CustomDialog>
 							<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: 'auto' }}>
 								<CustomSubmitButton

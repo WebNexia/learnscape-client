@@ -11,7 +11,7 @@ export const renderMessageWithEmojis = (messageContent: string | any[], fontSize
 		return parts.reduce((acc: any[], part: string, index: number) => {
 			if (part) {
 				acc.push(
-					<span key={`text-${index}`} style={{ fontSize: isMobileSize ? '0.6rem' : '0.85rem', verticalAlign: 'middle' }}>
+					<span key={`text-${index}`} style={{ fontSize: isMobileSize ? '0.7rem' : '0.85rem', verticalAlign: 'middle' }}>
 						{part}
 					</span>
 				);
