@@ -366,7 +366,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 				</Box>
 
 				<Snackbar open={signUpMessage} autoHideDuration={15000} onClose={() => setSignUpMessage(false)} anchorOrigin={{ vertical, horizontal }}>
-					<Alert onClose={() => setSignUpMessage(false)} severity='success' sx={{ width: '100%' }}>
+					<Alert onClose={() => setSignUpMessage(false)} severity='success' sx={{ width: '100%', fontSize: isMobileSize ? '0.7rem' : undefined }}>
 						You successfully signed up! Please verify your email address.
 					</Alert>
 				</Snackbar>
@@ -661,7 +661,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 				</Box>
 
 				<Snackbar open={resetPasswordMsg} autoHideDuration={15000} onClose={() => setResetPasswordMsg(false)} anchorOrigin={{ vertical, horizontal }}>
-					<Alert onClose={() => setResetPasswordMsg(false)} severity='success' sx={{ width: '100%' }}>
+					<Alert onClose={() => setResetPasswordMsg(false)} severity='success' sx={{ width: '100%', fontSize: isMobileSize ? '0.7rem' : undefined }}>
 						Password reset email sent! Check your inbox.
 					</Alert>
 				</Snackbar>

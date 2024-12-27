@@ -477,7 +477,10 @@ const CommunityTopicPage = () => {
 				autoHideDuration={7000}
 				onClose={() => setDisplayDeleteTopicMsg(false)}
 				anchorOrigin={{ vertical, horizontal }}>
-				<Alert onClose={() => setDisplayDeleteTopicMsg(false)} severity='success' sx={{ width: '100%' }}>
+				<Alert
+					onClose={() => setDisplayDeleteTopicMsg(false)}
+					severity='success'
+					sx={{ width: '100%', fontSize: isMobileSize ? '0.7rem' : undefined }}>
 					You have successfully deleted the topic!
 				</Alert>
 			</Snackbar>
@@ -490,7 +493,7 @@ const CommunityTopicPage = () => {
 				onClose={() => {
 					setEveryoneMsg(false);
 				}}>
-				<Alert severity='error' variant='filled' sx={{ width: '100%' }}>
+				<Alert severity='error' variant='filled' sx={{ width: '100%', fontSize: isMobileSize ? '0.7rem' : undefined }}>
 					Only admin users can mention @everyone.
 				</Alert>
 			</Snackbar>

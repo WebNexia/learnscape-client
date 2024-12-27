@@ -147,7 +147,8 @@ const Loading = () => {
 								fontFamily: 'Permanent Marker, cursive',
 								color: '#01435A',
 							}}>
-							{organisation?.orgName}
+							{/* {organisation?.orgName} */}
+							LearnScape
 						</Typography>
 					</Box>
 				</>
@@ -247,7 +248,8 @@ const Loading = () => {
 								marginBottom: '0.5rem',
 							}}>
 							<Typography variant='h1' sx={{ color: theme.textColor?.common.main, fontSize: '1.5rem' }}>
-								{organisation?.orgName}
+								{/* {organisation?.orgName} */}
+								LearnScape
 							</Typography>
 						</Box>
 						<Box
@@ -336,7 +338,8 @@ const Loading = () => {
 								fontFamily: 'Permanent Marker, cursive',
 								color: '#01435A',
 							}}>
-							{organisation?.orgName}
+							{/* {organisation?.orgName} */}
+							LearnScape
 						</Typography>
 					</Box>
 				</>

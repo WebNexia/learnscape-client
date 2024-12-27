@@ -295,7 +295,7 @@ const Settings = () => {
 							anchorOrigin={{ vertical, horizontal }}
 							sx={{ mt: '1rem' }}
 							onClose={() => setIsImgUsernameUpdatedMsgDisplayed(false)}>
-							<Alert severity='success' variant='filled' sx={{ width: '100%', color: '#fff' }}>
+							<Alert severity='success' variant='filled' sx={{ width: '100%', color: '#fff', fontSize: isMobileSize ? '0.7rem' : undefined }}>
 								You have successfully updated your profile picture and/or username!
 							</Alert>
 						</Snackbar>
@@ -461,7 +461,7 @@ const Settings = () => {
 							anchorOrigin={{ vertical, horizontal }}
 							sx={{ mt: '1rem' }}
 							onClose={() => setIsPasswordUpdatedMsgDisplayed(false)}>
-							<Alert severity='success' variant='filled' sx={{ width: '100%', color: '#fff' }}>
+							<Alert severity='success' variant='filled' sx={{ width: '100%', color: '#fff', fontSize: isMobileSize ? '0.7rem' : undefined }}>
 								You have successfully updated your password!
 							</Alert>
 						</Snackbar>
