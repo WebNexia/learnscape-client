@@ -23,6 +23,7 @@ import FillInTheBlanksTyping from '../components/layouts/FITBTyping/FillInTheBla
 import CustomInfoMessageAlignedRight from '../components/layouts/infoMessage/CustomInfoMessageAlignedRight';
 import QuestionResponseCard from '../components/layouts/quizSubmissions/QuestionResponseCard';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import QuestionMedia from '../components/userCourses/QuestionMedia';
 
 export interface QuestionFeedbackData {
 	userQuestionId: string;
@@ -323,6 +324,9 @@ const AdminQuizSubmissionCheck = () => {
 					<Typography variant='h5' sx={{ mb: '0.5rem' }}>
 						Question ({fetchQuestionTypeName(userResponseToFeedback?.questionId)})
 					</Typography>
+
+					<QuestionMedia question={userResponseToFeedback?.questionId} isStudentFeedbackPage={true} />
+
 					{fetchQuestionTypeName(userResponseToFeedback?.questionId) !== QuestionType.FITB_TYPING &&
 						fetchQuestionTypeName(userResponseToFeedback?.questionId) !== QuestionType.FITB_DRAG_DROP && (
 							<Typography
