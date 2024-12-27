@@ -364,10 +364,10 @@ const SubmissionFeedbackDetails = () => {
 
 			{quizFeedback && (
 				<Box sx={{ width: '90%', margin: isMobileSize ? '1rem 0' : '2rem' }}>
-					<Typography variant='h5' sx={{ mb: '1rem', fontSize: isMobileSize ? '0.9rem' : '1rem' }}>
+					<Typography variant='h5' sx={{ mb: '0.5rem', fontSize: isMobileSize ? '0.9rem' : '1rem' }}>
 						Instructor's Feedback for Quiz
 					</Typography>
-					<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+					<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '1rem' }}>
 						{quizFeedback}
 					</Typography>
 				</Box>

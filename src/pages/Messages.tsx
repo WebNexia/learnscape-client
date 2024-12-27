@@ -761,7 +761,7 @@ const Messages = () => {
 	const handleFilterChats = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const newSearchValue = e.target.value.trim(); // Capture and trim the new search value
 		setSearchChatValue(newSearchValue); // Update the search state
-		debouncedFilterChats(newSearchValue); // Call the debounced function with the new value
+		debouncedFilterChats(newSearchValue.toLowerCase()); // Call the debounced function with the new value
 	};
 
 	return (
@@ -776,7 +776,10 @@ const Messages = () => {
 							width: '1.35rem',
 							borderRight: 'solid 0.01rem lightgray',
 						}}
-						onClick={() => setIsChatsListVisible(true)}>
+						onClick={() => {
+							setIsChatsListVisible(true);
+							window.scrollTo({ top: 0, behavior: 'smooth' });
+						}}>
 						<IconButton>
 							<KeyboardArrowRight fontSize='medium' />
 						</IconButton>
@@ -1423,7 +1426,7 @@ const Messages = () => {
 						value={searchValue}
 						onChange={(e) => {
 							setSearchValue(e.target.value);
-							filterUsers(e.target.value);
+							filterUsers(e.target.value.toLowerCase());
 						}}
 					/>
 				</Box>
