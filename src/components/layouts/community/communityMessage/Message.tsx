@@ -352,7 +352,7 @@ const Message = ({
 								width: '100%',
 								justifyContent: 'space-between',
 								alignItems: 'flex-end',
-								mt: isMobileSize ? '0.1rem' : '0.5rem',
+								mt: isMobileSize ? '1rem' : '0.5rem',
 								flex: 2,
 							}}>
 							<Box sx={{ display: 'flex', alignItems: 'center' }}>

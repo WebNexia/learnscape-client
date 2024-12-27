@@ -448,7 +448,7 @@ const CommunityTopicPage = () => {
 		const withMentions = renderMessageWithMentions(text, processedTopics, user!);
 
 		// Step 2: Pass the result to emoji rendering, handling both strings and arrays
-		return renderMessageWithEmojis(withMentions, '1.5rem', isMobileSize);
+		return renderMessageWithEmojis(withMentions, isMobileSize ? '1rem' : '1.5rem', isMobileSize);
 	};
 	const renderedTopicContent = useMemo(() => renderMessageContent(topic?.text || ''), [topic?.text]);
 
@@ -501,9 +501,9 @@ const CommunityTopicPage = () => {
 					minHeight: isMobileSize ? '3rem' : '5rem',
 					maxHeight: isMobileSize ? '5rem' : '7rem',
 					border: 'solid lightgray 0.1rem',
-					marginTop: isMobileSize ? '5.15rem' : '9rem',
+					marginTop: isMobileSize ? '5.5rem' : '9rem',
 					borderRadius: '0.35rem',
-					boxShadow: '0rem 0.2rem 0.5rem 0.1rem rgba(0,0,0,0.2)',
+					boxShadow: isMobileSize ? '0rem 0.1rem 0.3rem 0.1rem rgba(0,0,0,0.2)' : '0rem 0.2rem 0.5rem 0.1rem rgba(0,0,0,0.2)',
 				}}>
 				<Box
 					sx={{
@@ -856,7 +856,7 @@ const CommunityTopicPage = () => {
 									<InsertEmoticon
 										color={showPicker ? 'success' : 'disabled'}
 										fontSize='small'
-										sx={{ fontSize: isMobileSize ? '0.85rem' : undefined }}
+										sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }}
 									/>
 								</IconButton>
 
@@ -872,7 +872,7 @@ const CommunityTopicPage = () => {
 										<Mic
 											fontSize='small'
 											color={audioUrl ? 'success' : 'inherit'}
-											sx={{ fontSize: isMobileSize ? '0.85rem' : undefined, mr: isMobileSize ? '-0.5rem' : '-0.25rem' }}
+											sx={{ fontSize: isMobileSize ? '0.95rem' : undefined, mr: isMobileSize ? '-0.5rem' : '-0.25rem' }}
 										/>
 									</IconButton>
 								</Tooltip>
@@ -951,7 +951,7 @@ const CommunityTopicPage = () => {
 										<Image
 											fontSize='small'
 											color={imgUrl ? 'success' : 'inherit'}
-											sx={{ fontSize: isMobileSize ? '0.85rem' : undefined, mr: isMobileSize ? '-0.5rem' : '-0.25rem' }}
+											sx={{ fontSize: isMobileSize ? '0.95rem' : undefined, mr: isMobileSize ? '-0.5rem' : '-0.25rem' }}
 										/>
 									</IconButton>
 								</Tooltip>
@@ -1001,7 +1001,7 @@ const CommunityTopicPage = () => {
 										},
 									}}
 									onClick={sendMessage}>
-									<Send fontSize='small' sx={{ fontSize: isMobileSize ? '0.85rem' : undefined }} />
+									<Send fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
 								</IconButton>
 							</InputAdornment>
 						),
