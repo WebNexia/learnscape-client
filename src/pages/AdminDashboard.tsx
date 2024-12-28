@@ -100,12 +100,14 @@ const AdminDashboard = () => {
 	}, [sortedUsersData, coursesSummary]);
 
 	return (
-		<DashboardPagesLayout pageName='Dashboard' customSettings={{ justifyContent: 'flex-start' }}>
+		<DashboardPagesLayout pageName='Dashboard' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
 			<Box sx={{ display: 'flex', width: '100%', padding: '1.5rem', flexDirection: 'column', alignItems: 'center' }}>
-				<Grid container spacing={3}>
+				<Grid container spacing={2}>
 					<Grid
 						item
 						md={4}
+						sm={12}
+						xs={12}
 						onClick={() => {
 							navigate(`/admin/users/user/${user?._id}`);
 						}}
@@ -115,6 +117,8 @@ const AdminDashboard = () => {
 					<Grid
 						item
 						md={4}
+						sm={12}
+						xs={12}
 						onClick={() => {
 							navigate(`/admin/courses/user/${user?._id}`);
 						}}
@@ -124,18 +128,21 @@ const AdminDashboard = () => {
 					<Grid
 						item
 						md={4}
+						sm={12}
+						xs={12}
 						onClick={() => {
 							navigate(`/admin/payments/user/${user?._id}`);
 						}}
 						sx={{ cursor: 'pointer' }}>
 						<AdminPayment />
 					</Grid>
-					<Grid item xs={3} onClick={() => navigate(`/admin/calendar/user/${user?._id}`)}>
+					<Grid item sm={3} xs={6} onClick={() => navigate(`/admin/calendar/user/${user?._id}`)}>
 						<UpcomingEvents sortedEventsData={sortedEventsData} />
 					</Grid>
 					<Grid
 						item
-						xs={3}
+						sm={3}
+						xs={6}
 						onClick={() => {
 							navigate(`/admin/messages/user/${user?._id}`);
 						}}>
@@ -143,7 +150,8 @@ const AdminDashboard = () => {
 					</Grid>
 					<Grid
 						item
-						xs={3}
+						sm={3}
+						xs={6}
 						onClick={() => {
 							navigate(`/admin/submissions/user/${user?._id}`);
 						}}>
@@ -151,7 +159,8 @@ const AdminDashboard = () => {
 					</Grid>
 					<Grid
 						item
-						xs={3}
+						sm={3}
+						xs={6}
 						onClick={() => {
 							navigate(`/admin/community/user/${user?._id}`);
 						}}>

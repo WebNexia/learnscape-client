@@ -24,6 +24,7 @@ import CustomInfoMessageAlignedRight from '../components/layouts/infoMessage/Cus
 import QuestionResponseCard from '../components/layouts/quizSubmissions/QuestionResponseCard';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import QuestionMedia from '../components/userCourses/QuestionMedia';
+import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 
 export interface QuestionFeedbackData {
 	userQuestionId: string;
@@ -42,6 +43,10 @@ const AdminQuizSubmissionCheck = () => {
 
 	const { search } = useLocation();
 	const isChecked = new URLSearchParams(search).get('isChecked');
+
+	const { isSmallScreen, isRotatedMedium, isVerySmallScreen, isRotated } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
+	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
 	const [username, setUsername] = useState<string>('');
 	const [quizName, setQuizName] = useState<string>('');
@@ -236,8 +241,14 @@ const AdminQuizSubmissionCheck = () => {
 	};
 
 	return (
-		<DashboardPagesLayout pageName='Check Quiz Submission' customSettings={{ justifyContent: 'flex-start' }}>
-			<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '85%', margin: '2rem' }}>
+		<DashboardPagesLayout pageName='Check Quiz Submission' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
+			<Box
+				sx={{
+					display: 'flex',
+					justifyContent: 'space-between',
+					width: isVerySmallScreen ? '90%' : '85%',
+					margin: isMobileSizeSmall ? '1rem' : '2rem',
+				}}>
 				{[
 					{ label: 'Username', value: username },
 					{ label: 'Quiz Name', value: quizName },
@@ -245,20 +256,34 @@ const AdminQuizSubmissionCheck = () => {
 					{ label: 'Status', value: isChecked === 'true' ? 'Checked' : 'Unchecked' },
 				].map(({ label, value }, index) => (
 					<Box key={index} sx={{ textAlign: 'center' }}>
-						<Typography variant='h6' sx={{ mb: '0.35rem' }}>
+						<Typography variant='h6' sx={{ mb: '0.35rem', fontSize: isMobileSizeSmall ? '0.85rem' : undefined }}>
 							{label}
 						</Typography>
-						<Typography variant='body2'>{value}</Typography>
+						<Typography variant='body2' sx={{ fontSize: isMobileSizeSmall ? '0.75rem' : '0.85rem' }}>
+							{value}
+						</Typography>
 					</Box>
 				))}
 			</Box>
 
-			<Box sx={{ width: '85%', margin: '1.5rem' }}>
-				<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', margin: '1rem 0' }}>
+			<Box sx={{ width: isVerySmallScreen ? '90%' : '85%', margin: isMobileSizeSmall ? '1rem' : '1.5rem' }}>
+				<Box
+					sx={{
+						display: 'flex',
+						justifyContent: 'space-between',
+						alignItems: 'center',
+						width: '100%',
+						margin: isMobileSize ? '0.25rem 0' : '0 0 0.75rem 0',
+					}}>
 					<Box>
-						<Typography variant='h5'>Questions</Typography>
+						<Typography variant='h5' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem' }}>
+							Questions
+						</Typography>
 					</Box>
-					<CustomInfoMessageAlignedRight message='Click the questions to give/edit feedback for each question' sx={{ marginRight: '2.5rem' }} />
+					<CustomInfoMessageAlignedRight
+						message={isVerySmallScreen ? 'Click questions to give feedback' : 'Click the questions to give/edit feedback for each question'}
+						sx={{ marginRight: isMobileSize ? '0.85rem' : '2.5rem' }}
+					/>
 				</Box>
 				{userResponseData?.map((response: any, index: number) => (
 					<QuestionResponseCard
@@ -283,45 +308,45 @@ const AdminQuizSubmissionCheck = () => {
 						disabled={currentResponseIndex === 0}
 						sx={{
 							position: 'fixed',
-							left: '10%',
+							left: isMobileSize ? '2%' : '10%',
 							top: '50%',
 							transform: 'translateY(-50%)',
 							backgroundColor: theme.bgColor?.greenPrimary,
 							color: 'white',
 							border: 'none',
 							borderRadius: '50%',
-							padding: '0.75rem',
+							padding: isMobileSize ? '0.5rem' : '0.75rem',
 							cursor: currentResponseIndex === 0 ? 'not-allowed' : 'pointer',
 							zIndex: 13000,
 							':hover': { backgroundColor: theme.bgColor?.adminHeader },
 						}}>
-						<ArrowBackIosNewOutlined />
+						<ArrowBackIosNewOutlined fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
 					</IconButton>
 					<IconButton
 						onClick={handleNextResponse}
 						disabled={currentResponseIndex === userResponseData.length - 1}
 						sx={{
 							position: 'fixed',
-							right: '10%',
+							right: isMobileSize ? '2%' : '10%',
 							top: '50%',
 							transform: 'translateY(-50%)',
 							backgroundColor: theme.bgColor?.greenPrimary,
 							color: 'white',
 							border: 'none',
 							borderRadius: '50%',
-							padding: '0.75rem',
+							padding: isMobileSize ? '0.5rem' : '0.75rem',
 							cursor: currentResponseIndex === userResponseData.length - 1 ? 'not-allowed' : 'pointer',
 							zIndex: 13000,
 							':hover': { backgroundColor: theme.bgColor?.adminHeader },
 						}}>
-						<ArrowForwardIosOutlined />
+						<ArrowForwardIosOutlined fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
 					</IconButton>
 				</>
 			)}
 
 			<CustomDialog openModal={openQuestionFeedbackModal} closeModal={() => setOpenQuestionFeedbackModal(false)} titleSx={{ paddingTop: '0.5rem' }}>
 				<Box sx={{ width: '90%', margin: '1rem auto' }}>
-					<Typography variant='h5' sx={{ mb: '0.5rem' }}>
+					<Typography variant='h5' sx={{ mb: '0.5rem', fontSize: isMobileSize ? '0.95rem' : undefined }}>
 						Question ({fetchQuestionTypeName(userResponseToFeedback?.questionId)})
 					</Typography>
 
@@ -332,7 +357,7 @@ const AdminQuizSubmissionCheck = () => {
 							<Typography
 								variant='body2'
 								component='div'
-								sx={{ lineHeight: 1.8 }}
+								sx={{ lineHeight: 1.8, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}
 								dangerouslySetInnerHTML={{ __html: sanitizeHtml(userResponseToFeedback?.questionId.question) }}
 							/>
 						)}
@@ -347,12 +372,13 @@ const AdminQuizSubmissionCheck = () => {
 								sx={{
 									margin: '1rem 0 0 2rem',
 									color: option === userResponseToFeedback?.questionId.correctAnswer ? theme.textColor?.greenPrimary.main : null,
+									fontSize: isMobileSize ? '0.75rem' : '0.85rem',
 								}}>
 								{String.fromCharCode(97 + index)}) {option}
 							</Typography>
 						))}
 						<Box sx={{ width: '100%', margin: '2rem auto 1rem auto' }}>
-							<Typography variant='h6' sx={{ mb: '0.5rem' }}>
+							<Typography variant='h6' sx={{ mb: '0.5rem', fontSize: isMobileSize ? '0.95rem' : undefined }}>
 								Student's Answer
 							</Typography>
 							<Typography
@@ -362,6 +388,7 @@ const AdminQuizSubmissionCheck = () => {
 										userResponseToFeedback?.userAnswer === userResponseToFeedback?.questionId.correctAnswer
 											? theme.textColor?.greenPrimary.main
 											: '#ef5350',
+									fontSize: isMobileSize ? '0.75rem' : '0.85rem',
 								}}>
 								{userResponseToFeedback?.questionId.options?.findIndex((option: string) => option === userResponseToFeedback?.userAnswer) !== -1
 									? `${String.fromCharCode(
@@ -440,13 +467,16 @@ const AdminQuizSubmissionCheck = () => {
 
 				{fetchQuestionTypeName(userResponseToFeedback?.questionId) === QuestionType.AUDIO_VIDEO && (
 					<Box sx={{ width: '90%', margin: '1rem auto' }}>
-						<Typography variant='h6'>Student's Recording</Typography>
+						<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem' }}>
+							Student's Recording
+						</Typography>
 						{userResponseToFeedback?.audioRecordUrl && (
 							<Box>
 								<audio
 									src={userResponseToFeedback?.audioRecordUrl}
 									controls
 									style={{
+										height: '1.5rem',
 										marginTop: '1rem',
 										boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
 										borderRadius: '0.35rem',
@@ -485,7 +515,9 @@ const AdminQuizSubmissionCheck = () => {
 						)}
 
 						<Box sx={{ display: 'flex', flexDirection: 'column', width: '100%', mt: '5rem' }}>
-							<Typography variant='h5'>Audio Feedback for Question</Typography>
+							<Typography variant='h5' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem' }}>
+								Audio Feedback for Question
+							</Typography>
 							<Box sx={{ width: '100%', marginTop: '1rem' }}>
 								{!userQuestionsFeedbacks.find((feedback) => feedback.userQuestionId === userResponseToFeedback?._id)?.teacherAudioFeedbackUrl ? (
 									<AudioRecorder uploadAudio={uploadAudio} isAudioUploading={isAudioUploading} recorderTitle='' teacherFeedback={true} />
@@ -498,6 +530,7 @@ const AdminQuizSubmissionCheck = () => {
 												}
 												controls
 												style={{
+													height: '1.5rem',
 													marginTop: '1rem',
 													boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
 													borderRadius: '0.35rem',
@@ -528,7 +561,7 @@ const AdminQuizSubmissionCheck = () => {
 				)}
 
 				<Box sx={{ width: '90%', margin: '1.5rem auto' }}>
-					<Typography variant='h5' sx={{ mb: '1rem' }}>
+					<Typography variant='h5' sx={{ mb: '1rem', fontSize: isMobileSize ? '0.9rem' : '1rem' }}>
 						Feedback for Question
 					</Typography>
 					<CustomTextField
@@ -550,8 +583,8 @@ const AdminQuizSubmissionCheck = () => {
 				/>
 			</CustomDialog>
 
-			<Box sx={{ width: '85%', margin: '2rem' }}>
-				<Typography variant='h5' sx={{ mb: '1rem' }}>
+			<Box sx={{ width: isVerySmallScreen ? '90%' : '85%', margin: isMobileSize ? '1rem 0' : '2rem' }}>
+				<Typography variant='h5' sx={{ mb: '1rem', fontSize: isMobileSize ? '0.9rem' : '1rem' }}>
 					Feedback for Quiz
 				</Typography>
 				<CustomTextField
@@ -567,11 +600,15 @@ const AdminQuizSubmissionCheck = () => {
 
 			<Box sx={{ width: '85%', mb: '3rem', display: 'flex', justifyContent: 'flex-end' }}>
 				{feedbackSubmitting ? (
-					<LoadingButton loading variant='outlined' sx={{ textTransform: 'capitalize', height: '2rem' }}>
+					<LoadingButton loading variant='outlined' sx={{ textTransform: 'capitalize', height: isMobileSizeSmall ? '1.5rem' : '2rem' }}>
 						Submitting
 					</LoadingButton>
 				) : (
-					<CustomSubmitButton onClick={handleSubmit}>Submit</CustomSubmitButton>
+					<CustomSubmitButton
+						onClick={handleSubmit}
+						sx={{ fontSize: isMobileSizeSmall ? '0.75rem' : undefined, height: isMobileSizeSmall ? '1.5rem' : undefined }}>
+						Submit
+					</CustomSubmitButton>
 				)}
 			</Box>
 

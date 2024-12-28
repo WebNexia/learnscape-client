@@ -21,10 +21,16 @@ import CustomTextField from '../components/forms/customFields/CustomTextField';
 import theme from '../themes';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import CustomDeleteButton from '../components/forms/customButtons/CustomDeleteButton';
+import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
+import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/CustomInfoMessageAlignedLeft';
 
 const AdminQuestions = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
+
+	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
+	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
 	const {
 		sortQuestionsData,
@@ -202,95 +208,149 @@ const AdminQuestions = () => {
 	};
 
 	return (
-		<DashboardPagesLayout pageName='Questions' customSettings={{ justifyContent: 'flex-start' }}>
-			<Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'flex-end', padding: '2rem 2rem 1rem 2rem', width: '100%' }}>
-				<Box sx={{ display: 'flex', justifyContent: 'flex-start', width: '100%' }}>
-					<Box sx={{ mr: '1rem' }}>
-						<FormControl>
-							<Select
-								size='small'
-								value={filterValue}
-								onChange={async (e) => {
-									setFilterValue(e.target.value);
-									setSearchValue('');
-									if (e.target.value !== '') {
-										await handleFilterQuestions(1, e.target.value);
-									} else {
-										setFilteredQuestions(originalQuestions);
+		<DashboardPagesLayout pageName='Questions' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
+			<Box
+				sx={{
+					display: 'flex',
+					flexDirection: 'row',
+					justifyContent: isVerySmallScreen ? 'space-between' : 'flex-end',
+					alignItems: 'center',
+					padding: isMobileSizeSmall ? '1rem 1rem 0.5rem 1rem' : '2rem 2rem 1rem 2rem',
+					width: '100%',
+				}}>
+				{isVerySmallScreen && <CustomInfoMessageAlignedLeft message='Rotate your device for search & filter' />}
+				{!isVerySmallScreen && (
+					<Box sx={{ display: 'flex', justifyContent: 'flex-start', width: '100%' }}>
+						<Box sx={{ mr: '1rem' }}>
+							<FormControl>
+								<Select
+									size='small'
+									value={filterValue}
+									onChange={async (e) => {
+										setFilterValue(e.target.value);
+										setSearchValue('');
+										if (e.target.value !== '') {
+											await handleFilterQuestions(1, e.target.value);
+										} else {
+											setFilteredQuestions(originalQuestions);
+										}
+									}}
+									displayEmpty
+									sx={{
+										backgroundColor: theme.bgColor?.common,
+										width: isMobileSizeSmall ? '8rem' : '12rem',
+										fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+										textTransform: 'capitalize',
+									}}>
+									<MenuItem
+										disabled
+										value='filter'
+										selected
+										sx={{
+											fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+											fontStyle: 'italic',
+											textTransform: 'capitalize',
+											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+											minHeight: '2rem',
+										}}>
+										Filter Questions
+									</MenuItem>
+									<MenuItem
+										value=''
+										selected
+										sx={{
+											fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+											textTransform: 'capitalize',
+											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+											minHeight: '2rem',
+										}}>
+										All Questions
+									</MenuItem>
+									<MenuItem
+										disabled
+										value='types'
+										selected
+										sx={{
+											fontSize: isMobileSize ? '0.6rem' : '0.7rem',
+											textTransform: 'inherit',
+											fontWeight: 'lighter',
+											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+											minHeight: '2rem',
+										}}>
+										------ Filter by Type ------
+									</MenuItem>
+									{questionTypes.map((type) => (
+										<MenuItem
+											value={type.name.toLowerCase()}
+											key={type._id}
+											sx={{
+												fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+												textTransform: 'capitalize',
+												padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+												minHeight: '2rem',
+											}}>
+											{type.name}
+										</MenuItem>
+									))}
+								</Select>
+							</FormControl>
+						</Box>
+						<Box sx={{ display: 'flex', alignSelf: 'flex-start', width: isVerySmallScreen ? '7rem' : isMobileSize ? '20rem' : '30rem' }}>
+							<CustomTextField
+								value={searchValue}
+								placeholder='Search Question'
+								onChange={(e) => {
+									setSearchValue(e.target.value);
+									setFilterValue('filter');
+									if (e.target.value === '') {
+										setFilterValue('');
 									}
 								}}
-								displayEmpty
-								sx={{
-									backgroundColor: theme.bgColor?.common,
-									width: '12rem',
-									fontSize: '0.85rem',
-									textTransform: 'capitalize',
+								sx={{ backgroundColor: '#fff' }}
+								required={false}
+								InputProps={{
+									endAdornment: (
+										<InputAdornment position='end'>
+											<Search
+												sx={{
+													mr: '-0.5rem',
+												}}
+												fontSize={isMobileSize ? 'small' : 'medium'}
+											/>
+										</InputAdornment>
+									),
+								}}
+							/>
+							<CustomSubmitButton
+								sx={{ height: '2rem', marginLeft: '0.5rem' }}
+								type='button'
+								onClick={async () => {
+									await handleSearchQuestions(1);
 								}}>
-								<MenuItem disabled value='filter' selected sx={{ fontSize: '0.85rem', fontStyle: 'italic', textTransform: 'capitalize' }}>
-									Filter Questions
-								</MenuItem>
-								<MenuItem value='' selected sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
-									All Questions
-								</MenuItem>
-								<MenuItem disabled value='types' selected sx={{ fontSize: '0.7rem', textTransform: 'inherit', fontWeight: 'lighter' }}>
-									------ Filter by Type ------
-								</MenuItem>
-								{questionTypes.map((type) => (
-									<MenuItem value={type.name.toLowerCase()} key={type._id} sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
-										{type.name}
-									</MenuItem>
-								))}
-							</Select>
-						</FormControl>
-					</Box>
-					<Box sx={{ display: 'flex', alignSelf: 'flex-start', width: '30rem' }}>
-						<CustomTextField
-							value={searchValue}
-							placeholder='Search Question'
-							onChange={(e) => {
-								setSearchValue(e.target.value);
-								setFilterValue('filter');
-								if (e.target.value === '') {
+								Search
+							</CustomSubmitButton>
+							<CustomDeleteButton
+								sx={{ height: '2rem' }}
+								type='button'
+								onClick={async () => {
 									setFilterValue('');
-								}
-							}}
-							sx={{ backgroundColor: '#fff' }}
-							required={false}
-							InputProps={{
-								endAdornment: (
-									<InputAdornment position='end'>
-										<Search
-											sx={{
-												mr: '-0.5rem',
-											}}
-										/>
-									</InputAdornment>
-								),
-							}}
-						/>
-						<CustomSubmitButton
-							sx={{ height: '2rem', marginLeft: '0.5rem' }}
-							type='button'
-							onClick={async () => {
-								await handleSearchQuestions(1);
-							}}>
-							Search
-						</CustomSubmitButton>
-						<CustomDeleteButton
-							sx={{ height: '2rem' }}
-							type='button'
-							onClick={async () => {
-								setFilterValue('');
-								setSearchValue('');
-								setFilteredQuestions(originalQuestions);
-								setQuestionsPageNumber(1);
-								setNumberOfPages(numberOfPagesOfAllQuestions);
-							}}>
-							Reset
-						</CustomDeleteButton>
+									setSearchValue('');
+									setFilteredQuestions(originalQuestions);
+									setQuestionsPageNumber(1);
+									setNumberOfPages(numberOfPagesOfAllQuestions);
+								}}>
+								Reset
+							</CustomDeleteButton>
+						</Box>
 					</Box>
-				</Box>
-				<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '15%', height: '2rem' }}>
+				)}
+				<Box
+					sx={{
+						display: 'flex',
+						justifyContent: 'flex-end',
+						width: isVerySmallScreen ? '5%' : isMobileSize ? '20%' : '25%',
+						height: isVerySmallScreen ? '1.5rem' : '2rem',
+					}}>
 					<CustomSubmitButton
 						onClick={() => {
 							setIsQuestionCreateModalOpen(true);
@@ -300,8 +360,9 @@ const AdminQuestions = () => {
 							setIsDuplicateOption(false);
 							setCorrectAnswerIndex(-1);
 						}}
-						type='button'>
-						New Question
+						type='button'
+						sx={{ fontSize: isMobileSize ? '0.7rem' : undefined }}>
+						{isVerySmallScreen ? 'New' : 'New Question'}
 					</CustomSubmitButton>
 				</Box>
 			</Box>
@@ -331,7 +392,7 @@ const AdminQuestions = () => {
 					display: 'flex',
 					flexDirection: 'column',
 					alignItems: 'center',
-					padding: '0rem 2rem 2rem 2rem',
+					padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : '0rem 2rem 2rem 2rem',
 					width: '100%',
 				}}>
 				<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>
@@ -351,13 +412,19 @@ const AdminQuestions = () => {
 								return (
 									<TableRow key={question._id}>
 										<CustomTableCell value={question.questionType} />
-										<CustomTableCell value={truncateText(stripHtml(question.question), 45)} />
+										<CustomTableCell
+											value={isVerySmallScreen ? truncateText(stripHtml(question.question), 25) : truncateText(stripHtml(question.question), 45)}
+										/>
 
 										<TableCell
 											sx={{
 												textAlign: 'center',
 											}}>
-											<CustomActionBtn title='Clone' onClick={() => openCloneQuestionModal(index)} icon={<FileCopy fontSize='small' />} />
+											<CustomActionBtn
+												title='Clone'
+												onClick={() => openCloneQuestionModal(index)}
+												icon={<FileCopy fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
+											/>
 
 											<CustomDialog
 												openModal={isQuestionCloneModalOpen[index]}
@@ -386,7 +453,7 @@ const AdminQuestions = () => {
 													setIsDuplicateOption(false);
 													setIsMinimumOptions(true);
 												}}
-												icon={<Edit fontSize='small' />}
+												icon={<Edit fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 											/>
 
 											<AdminQuestionsEditQuestionDialog
@@ -415,7 +482,7 @@ const AdminQuestions = () => {
 												onClick={() => {
 													openDeleteQuestionModal(index);
 												}}
-												icon={<Delete fontSize='small' />}
+												icon={<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 											/>
 											{isQuestionDeleteModalOpen[index] !== undefined && (
 												<CustomDialog

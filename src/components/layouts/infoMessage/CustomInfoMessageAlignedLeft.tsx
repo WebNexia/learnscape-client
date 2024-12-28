@@ -15,10 +15,10 @@ const CustomInfoMessageAlignedLeft = ({ message, sx, messageSx }: infoMessagePro
 	return (
 		<Box sx={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'flex-start', mb: '0.5rem', ...sx }}>
 			<Box>
-				<InfoOutlined fontSize='small' color='error' />
+				<InfoOutlined fontSize='small' color='error' sx={{ fontSize: isMobileSizeSmall ? '0.8rem' : undefined }} />
 			</Box>
 			<Box>
-				<Typography sx={{ fontSize: isMobileSizeSmall ? '0.65rem' : '0.8rem', ml: '0.5rem', ...messageSx }}>{message}</Typography>
+				<Typography sx={{ fontSize: isMobileSizeSmall ? '0.6rem' : '0.8rem', ml: '0.5rem', ...messageSx }}>{message}</Typography>
 			</Box>
 		</Box>
 	);

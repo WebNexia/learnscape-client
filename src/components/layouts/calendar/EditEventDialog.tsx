@@ -22,6 +22,7 @@ import { SingleCourse } from '../../../interfaces/course';
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
 import { addDoc, collection, getDocs, query, serverTimestamp, where } from 'firebase/firestore';
 import { db } from '../../../firebase';
+import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 interface EditEventDialogProps {
 	setIsEventDeleted: React.Dispatch<React.SetStateAction<boolean>>;
@@ -55,6 +56,9 @@ const EditEventDialog = ({
 	const { orgId } = useContext(OrganisationContext);
 	const { sortedCoursesData } = useContext(CoursesContext);
 	const { updateEvent, removeEvent } = useContext(EventsContext);
+
+	const { isSmallScreen, isRotatedMedium, isVerySmallScreen } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
 
 	const [deleteEventModalOpen, setDeleteEventModalOpen] = useState<boolean>(false);
 
@@ -294,6 +298,9 @@ const EditEventDialog = ({
 										fullWidth: true,
 										variant: 'outlined',
 										required: true,
+										InputProps: {
+											sx: { fontSize: isMobileSize ? '0.75rem' : undefined }, // Set font size
+										},
 									},
 								}}
 								sx={{ backgroundColor: '#fff', mr: '0.5rem' }}
@@ -318,6 +325,9 @@ const EditEventDialog = ({
 									textField: {
 										fullWidth: true,
 										variant: 'outlined',
+										InputProps: {
+											sx: { fontSize: isMobileSize ? '0.75rem' : undefined }, // Set font size
+										},
 									},
 								}}
 								sx={{ backgroundColor: '#fff' }}
@@ -341,7 +351,7 @@ const EditEventDialog = ({
 											borderRadius: '0.25rem',
 											margin: '0.35rem 0.35rem 0 0',
 										}}>
-										<Typography sx={{ fontSize: '0.85rem' }}>{attendee.username}</Typography>
+										<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>{attendee.username}</Typography>
 										<IconButton
 											onClick={() => {
 												setIsEventUpdated(true);
@@ -354,7 +364,7 @@ const EditEventDialog = ({
 													return prevData;
 												});
 											}}>
-											<Cancel sx={{ fontSize: '0.95rem' }} />
+											<Cancel sx={{ fontSize: isMobileSize ? '0.85rem' : '0.95rem' }} />
 										</IconButton>
 									</Box>
 								);
@@ -375,7 +385,7 @@ const EditEventDialog = ({
 									setFilteredCourses([]);
 									filterUsers(e.target.value, 'edit');
 								}}
-								sx={{ width: '80%', backgroundColor: selectedEvent?.isAllLearnersSelected ? 'transparent' : '#fff' }}
+								sx={{ width: isVerySmallScreen ? '70%' : '80%', backgroundColor: selectedEvent?.isAllLearnersSelected ? 'transparent' : '#fff' }}
 								required={false}
 								InputProps={{
 									endAdornment: (
@@ -385,6 +395,7 @@ const EditEventDialog = ({
 													mr: '-0.5rem',
 													color: selectedEvent?.isAllLearnersSelected ? 'lightgray' : null,
 												}}
+												fontSize={isMobileSize ? 'small' : 'medium'}
 											/>
 										</InputAdornment>
 									),
@@ -418,7 +429,7 @@ const EditEventDialog = ({
 											}}
 											sx={{
 												'& .MuiSvgIcon-root': {
-													fontSize: '1.25rem',
+													fontSize: isVerySmallScreen ? '0.9rem' : '1.25rem',
 												},
 											}}
 										/>
@@ -427,7 +438,7 @@ const EditEventDialog = ({
 									sx={{
 										mt: '0rem',
 										'& .MuiFormControlLabel-label': {
-											fontSize: '0.7rem',
+											fontSize: isVerySmallScreen ? '0.6rem' : '0.7rem',
 										},
 									}}
 								/>
@@ -492,20 +503,20 @@ const EditEventDialog = ({
 												setSearchLearnerValue('');
 												setFilteredUsers([]);
 											}}>
-											<Box sx={{ borderRadius: '100%', marginRight: '1rem' }}>
+											<Box sx={{ borderRadius: '100%', marginRight: isMobileSize ? '0.75rem' : '1rem' }}>
 												<img
 													src={mappedUser.imageUrl}
 													alt='profile_img'
 													style={{
-														height: '2rem',
-														width: '2rem',
+														height: isMobileSize ? '1.25rem' : '2rem',
+														width: isMobileSize ? '1.25rem' : '2rem',
 														borderRadius: '100%',
 														border: 'solid lightgray 0.1rem',
 													}}
 												/>
 											</Box>
 											<Box>
-												<Typography className='username' sx={{ fontSize: '0.85rem' }}>
+												<Typography className='username' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.85rem' }}>
 													{mappedUser.username}
 												</Typography>
 											</Box>
@@ -531,7 +542,7 @@ const EditEventDialog = ({
 											borderRadius: '0.25rem',
 											margin: '0.35rem 0.35rem 0 0',
 										}}>
-										<Typography sx={{ fontSize: '0.85rem' }}>{truncateText(course?.title!, 20)}</Typography>
+										<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>{truncateText(course?.title!, 20)}</Typography>
 										<IconButton
 											onClick={() => {
 												setIsEventUpdated(true);
@@ -544,7 +555,7 @@ const EditEventDialog = ({
 													return prevData;
 												});
 											}}>
-											<Cancel sx={{ fontSize: '0.95rem' }} />
+											<Cancel sx={{ fontSize: isMobileSize ? '0.85rem' : '0.95rem' }} />
 										</IconButton>
 									</Box>
 								);
@@ -566,7 +577,7 @@ const EditEventDialog = ({
 									filterCourses(e.target.value, 'edit');
 								}}
 								sx={{
-									width: '80%',
+									width: isVerySmallScreen ? '70%' : '80%',
 									backgroundColor: selectedEvent?.isAllLearnersSelected || selectedEvent?.isAllCoursesSelected ? 'transparent' : '#fff',
 								}}
 								required={false}
@@ -578,6 +589,7 @@ const EditEventDialog = ({
 													mr: '-0.5rem',
 													color: selectedEvent?.isAllLearnersSelected || selectedEvent?.isAllCoursesSelected ? 'lightgray' : null,
 												}}
+												fontSize={isMobileSize ? 'small' : 'medium'}
 											/>
 										</InputAdornment>
 									),
@@ -611,7 +623,7 @@ const EditEventDialog = ({
 											}}
 											sx={{
 												'& .MuiSvgIcon-root': {
-													fontSize: '1.25rem', // Adjust the checkbox icon size
+													fontSize: isVerySmallScreen ? '0.9rem' : '1.25rem',
 												},
 											}}
 										/>
@@ -619,7 +631,7 @@ const EditEventDialog = ({
 									label='All Courses'
 									sx={{
 										'& .MuiFormControlLabel-label': {
-											fontSize: '0.7rem', // Adjust the label font size
+											fontSize: isVerySmallScreen ? '0.6rem' : '0.7rem', // Adjust the label font size
 										},
 									}}
 								/>
@@ -681,13 +693,13 @@ const EditEventDialog = ({
 											setFilteredCourses([]);
 										}}>
 										{course.imageUrl && (
-											<Box sx={{ borderRadius: '100%', marginRight: '1rem' }}>
+											<Box sx={{ borderRadius: '100%', marginRight: isMobileSize ? '0.75rem' : '1rem' }}>
 												<img
 													src={course.imageUrl}
 													alt='img'
 													style={{
-														height: '2rem',
-														width: '2rem',
+														height: isMobileSize ? '1.25rem' : '2rem',
+														width: isMobileSize ? '1.25rem' : '2rem',
 														borderRadius: '100%',
 														border: 'solid lightgray 0.1rem',
 													}}
@@ -695,7 +707,7 @@ const EditEventDialog = ({
 											</Box>
 										)}
 										<Box>
-											<Typography className='username' sx={{ fontSize: '0.85rem' }}>
+											<Typography className='username' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 												{truncateText(course.title, 30)}
 											</Typography>
 										</Box>
@@ -766,7 +778,7 @@ const EditEventDialog = ({
 								}}
 								sx={{
 									'& .MuiSvgIcon-root': {
-										fontSize: '1.25rem', // Adjust the checkbox icon size
+										fontSize: isVerySmallScreen ? '0.9rem' : '1.25rem', // Adjust the checkbox icon size
 									},
 								}}
 							/>
@@ -775,15 +787,15 @@ const EditEventDialog = ({
 						sx={{
 							mt: '0.5rem',
 							'& .MuiFormControlLabel-label': {
-								fontSize: '0.8rem', // Adjust the label font size
+								fontSize: isVerySmallScreen ? '0.7rem' : '0.8rem', // Adjust the label font size
 							},
 						}}
 					/>
 				</DialogContent>
 				<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0 0.75rem' }}>
 					<Box sx={{ marginBottom: '1.5rem' }}>
-						<CustomDeleteButton type='button' onClick={() => setDeleteEventModalOpen(true)}>
-							Delete Event
+						<CustomDeleteButton type='button' onClick={() => setDeleteEventModalOpen(true)} sx={{ height: isMobileSize ? '1.5rem' : undefined }}>
+							{isVerySmallScreen ? 'Delete' : 'Delete Event'}
 						</CustomDeleteButton>
 					</Box>
 					<CustomDialogActions

@@ -553,7 +553,7 @@ const AdminLessonEditPage = () => {
 	};
 
 	return (
-		<DashboardPagesLayout pageName='Edit Lesson' customSettings={{ justifyContent: 'flex-start' }}>
+		<DashboardPagesLayout pageName='Edit Lesson' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
 			<Box sx={{ width: '80%', position: 'fixed', top: '4rem', zIndex: 1000, backgroundColor: theme.bgColor?.secondary }}>
 				<LessonPaper
 					userId={userId}

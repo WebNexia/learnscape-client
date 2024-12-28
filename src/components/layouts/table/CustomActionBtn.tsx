@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { Tooltip, IconButton } from '@mui/material';
 import theme from '../../../themes';
+import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 interface CustomActionBtnProps {
 	title: string;
@@ -23,9 +24,11 @@ interface CustomActionBtnProps {
 }
 
 const CustomActionBtn = ({ title, onClick, icon, placement = 'top' }: CustomActionBtnProps) => {
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
 	return (
 		<Tooltip title={title} placement={placement}>
-			<IconButton sx={{ color: theme.textColor?.secondary.main }} onClick={onClick}>
+			<IconButton sx={{ color: theme.textColor?.secondary.main, padding: isMobileSize ? '0.1rem' : undefined }} onClick={onClick}>
 				{icon}
 			</IconButton>
 		</Tooltip>

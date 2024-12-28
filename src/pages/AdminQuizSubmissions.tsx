@@ -17,6 +17,7 @@ import CustomDeleteButton from '../components/forms/customButtons/CustomDeleteBu
 import theme from '../themes';
 import { CoursesContext } from '../contexts/CoursesContextProvider';
 import { truncateText } from '../utils/utilText';
+import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 
 const AdminQuizSubmissions = () => {
 	const { userId } = useParams();
@@ -26,6 +27,10 @@ const AdminQuizSubmissions = () => {
 	const { sortedCoursesData } = useContext(CoursesContext);
 
 	const courses = sortedCoursesData.map((course) => ({ courseId: course._id, courseTitle: course.title }));
+
+	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
+	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
 	const {
 		sortedQuizSubmissionsData,
@@ -127,8 +132,14 @@ const AdminQuizSubmissions = () => {
 	};
 
 	return (
-		<DashboardPagesLayout pageName='Quiz Submissions' customSettings={{ justifyContent: 'flex-start' }}>
-			<Box sx={{ display: 'flex', justifyContent: 'flex-start', width: '100%', padding: '2rem 2rem 1rem 2rem' }}>
+		<DashboardPagesLayout pageName='Quiz Submissions' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
+			<Box
+				sx={{
+					display: 'flex',
+					justifyContent: isMobileSize ? 'center' : 'flex-start',
+					width: '100%',
+					padding: isMobileSizeSmall ? '1rem 1rem 0.5rem 1rem' : '2rem 2rem 1rem 2rem',
+				}}>
 				<Box sx={{ mr: '1rem' }}>
 					<FormControl>
 						<Select
@@ -146,34 +157,84 @@ const AdminQuizSubmissions = () => {
 							displayEmpty
 							sx={{
 								backgroundColor: theme.bgColor?.common,
-								width: '13rem',
-								fontSize: '0.85rem',
+								width: isMobileSizeSmall ? '8rem' : '12rem',
+								fontSize: isMobileSize ? '0.7rem' : '0.85rem',
 								textTransform: 'capitalize',
 							}}>
-							<MenuItem disabled value='filter' selected sx={{ fontSize: '0.85rem', fontStyle: 'italic', textTransform: 'capitalize' }}>
+							<MenuItem
+								disabled
+								value='filter'
+								selected
+								sx={{
+									fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+									fontStyle: 'italic',
+									textTransform: 'capitalize',
+									padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+									minHeight: '2rem',
+								}}>
 								Filter Submissions
 							</MenuItem>
-							<MenuItem value='' selected sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
+							<MenuItem
+								value=''
+								selected
+								sx={{
+									fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+									textTransform: 'capitalize',
+									padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+									minHeight: '2rem',
+								}}>
 								All Submissions
 							</MenuItem>
-							<MenuItem value='checked' sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
+							<MenuItem
+								value='checked'
+								sx={{
+									fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+									textTransform: 'capitalize',
+									padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+									minHeight: '2rem',
+								}}>
 								Checked
 							</MenuItem>
-							<MenuItem value='unchecked' sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
+							<MenuItem
+								value='unchecked'
+								sx={{
+									fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+									textTransform: 'capitalize',
+									padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+									minHeight: '2rem',
+								}}>
 								Unchecked
 							</MenuItem>
-							<MenuItem disabled value='types' selected sx={{ fontSize: '0.7rem', textTransform: 'inherit', fontWeight: 'lighter' }}>
+							<MenuItem
+								disabled
+								value='types'
+								selected
+								sx={{
+									fontSize: isMobileSize ? '0.6rem' : '0.7rem',
+									textTransform: 'inherit',
+									fontWeight: 'lighter',
+									padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+									minHeight: '2rem',
+								}}>
 								------ Filter by Course ------
 							</MenuItem>
 							{courses.map((course) => (
-								<MenuItem value={course.courseId} key={course.courseId} sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
+								<MenuItem
+									value={course.courseId}
+									key={course.courseId}
+									sx={{
+										fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+										textTransform: 'capitalize',
+										padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+										minHeight: '2rem',
+									}}>
 									{truncateText(course.courseTitle, 25)}
 								</MenuItem>
 							))}
 						</Select>
 					</FormControl>
 				</Box>
-				<Box sx={{ display: 'flex', flexDirection: 'column', alignSelf: 'flex-start', width: '30rem' }}>
+				<Box sx={{ display: 'flex', flexDirection: 'column', alignSelf: 'flex-start', width: isRotatedMedium ? '25rem' : '30rem' }}>
 					<Box sx={{ display: 'flex' }}>
 						<CustomTextField
 							value={searchValue}
@@ -199,13 +260,18 @@ const AdminQuizSubmissions = () => {
 											sx={{
 												mr: '-0.5rem',
 											}}
+											fontSize={isMobileSize ? 'small' : 'medium'}
 										/>
 									</InputAdornment>
 								),
 							}}
 						/>
 						<CustomSubmitButton
-							sx={{ height: '2rem', marginLeft: '0.5rem' }}
+							sx={{
+								height: isVerySmallScreen ? '1.75rem' : '2rem',
+								marginLeft: '0.5rem',
+								fontSize: isMobileSize ? '0.7rem' : undefined,
+							}}
 							type='button'
 							onClick={async () => {
 								await handleSearchQuestions(1);
@@ -213,7 +279,7 @@ const AdminQuizSubmissions = () => {
 							Search
 						</CustomSubmitButton>
 						<CustomDeleteButton
-							sx={{ height: '2rem', marginLeft: '0.5rem' }}
+							sx={{ height: isVerySmallScreen ? '1.75rem' : '2rem', marginLeft: '0.5rem', fontSize: isMobileSize ? '0.7rem' : undefined }}
 							type='button'
 							onClick={async () => {
 								setFilterValue('');
@@ -232,7 +298,7 @@ const AdminQuizSubmissions = () => {
 					display: 'flex',
 					flexDirection: 'column',
 					alignItems: 'center',
-					padding: '0rem 2rem 2rem 2rem',
+					padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : '0rem 2rem 2rem 2rem',
 					width: '100%',
 				}}>
 				<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>
@@ -241,9 +307,9 @@ const AdminQuizSubmissions = () => {
 						order={order}
 						handleSort={handleSort}
 						columns={[
-							{ key: 'userName', label: 'Student Username' },
-							{ key: 'lessonName', label: 'Quiz Name' },
-							{ key: 'courseName', label: 'Course Name' },
+							{ key: 'userName', label: isVerySmallScreen ? 'Username' : 'Student Username' },
+							{ key: 'lessonName', label: isVerySmallScreen ? 'Quiz' : 'Quiz Name' },
+							{ key: 'courseName', label: isVerySmallScreen ? 'Course' : 'Course Name' },
 							{ key: 'isChecked', label: 'Status' },
 							{ key: 'actions', label: 'Actions' },
 						]}
@@ -271,7 +337,7 @@ const AdminQuizSubmissions = () => {
 													);
 													window.scrollTo({ top: 0, behavior: 'smooth' });
 												}}
-												icon={<Edit fontSize='small' />}
+												icon={<Edit fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 											/>
 										</TableCell>
 									</TableRow>

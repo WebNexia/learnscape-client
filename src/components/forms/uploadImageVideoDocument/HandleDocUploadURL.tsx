@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useContext, useState } from 'react';
 import { Box, Button, FormControl, IconButton, Input, Tooltip, Typography } from '@mui/material';
 import { Article, CloudUpload, PostAddOutlined } from '@mui/icons-material';
 import theme from '../../../themes';
@@ -9,6 +9,7 @@ import AddNewDocumentDialog from '../../adminDocuments/AddNewDocumentDialog';
 import { Lesson } from '../../../interfaces/lessons';
 import LoadingButton from '@mui/lab/LoadingButton';
 import { SingleCourse } from '../../../interfaces/course';
+import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 interface HandleDocUploadURLProps {
 	onDocUploadLogic?: (url: string, docName: string) => void;
@@ -50,6 +51,10 @@ const HandleDocUploadURL = ({
 	fromAdminCourses,
 }: HandleDocUploadURLProps) => {
 	const { docUpload, isDocSizeLarge, handleDocChange, resetDocUpload, handleDocUpload, isDocLoading } = useDocUpload();
+
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
+
 	const [manualDocUrl, setManualDocUrl] = useState<string>('');
 	const [docName, setDocName] = useState<string>('');
 
@@ -86,12 +91,12 @@ const HandleDocUploadURL = ({
 	return (
 		<FormControl sx={{ display: 'flex' }}>
 			<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-				<Typography variant='h6'>{label}</Typography>
+				<Typography variant={isMobileSize ? 'body2' : 'h6'}>{label}</Typography>
 				<Box sx={{ display: 'flex', alignItems: 'center' }}>
 					<Box>
 						<Typography
 							variant='body2'
-							sx={{ textDecoration: !enterDocUrl ? 'underline' : 'none', cursor: 'pointer' }}
+							sx={{ textDecoration: !enterDocUrl ? 'underline' : 'none', cursor: 'pointer', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}
 							onClick={() => setEnterDocUrl(false)}>
 							Choose
 						</Typography>
@@ -100,7 +105,7 @@ const HandleDocUploadURL = ({
 					<Box>
 						<Typography
 							variant='body2'
-							sx={{ textDecoration: enterDocUrl ? 'underline' : 'none', cursor: 'pointer' }}
+							sx={{ textDecoration: enterDocUrl ? 'underline' : 'none', cursor: 'pointer', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}
 							onClick={() => {
 								setEnterDocUrl(true);
 								resetDocUpload();

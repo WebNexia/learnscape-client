@@ -1,6 +1,8 @@
 import { Box, Typography } from '@mui/material';
 import { Line } from 'react-chartjs-2';
 import { format } from 'date-fns';
+import { useContext } from 'react';
+import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 interface AdminLearnersLineGraphProps {
 	chartData: any;
@@ -9,6 +11,9 @@ interface AdminLearnersLineGraphProps {
 }
 
 const AdminLearnersLineGraph = ({ chartData, totalUsers, totalNumberOfEnrolledLearners }: AdminLearnersLineGraphProps) => {
+	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
+
+	const isMobileSize: boolean = isSmallScreen || isRotatedMedium;
 	return (
 		<Box
 			sx={{
@@ -24,8 +29,8 @@ const AdminLearnersLineGraph = ({ chartData, totalUsers, totalNumberOfEnrolledLe
 					boxShadow: '0rem 0.1rem 0.2rem 0.1rem rgba(0,0,0,0.3)',
 				},
 			}}>
-			<Typography variant='h5'>Total Learners</Typography>
-			<Typography sx={{ fontSize: '3rem' }}>{totalUsers}</Typography>
+			<Typography variant={isMobileSize ? 'h6' : 'h5'}>Total Learners</Typography>
+			<Typography sx={{ fontSize: isMobileSize ? '2rem' : '3rem' }}>{totalUsers}</Typography>
 			<Box sx={{ height: 250, width: '95%' }}>
 				{chartData && (
 					<Line
@@ -88,7 +93,7 @@ const AdminLearnersLineGraph = ({ chartData, totalUsers, totalNumberOfEnrolledLe
 				)}
 			</Box>
 			<Box sx={{ display: 'flex', justifyContent: 'flex-start', width: '100%' }}>
-				<Typography variant='h6' sx={{ fontSize: '0.9rem', margin: '1rem 0 0 1rem' }}>
+				<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.8rem' : '0.9rem', margin: '1rem 0 0 1rem' }}>
 					Total Number of Enrolled Users: {totalNumberOfEnrolledLearners}
 				</Typography>
 			</Box>

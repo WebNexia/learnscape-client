@@ -400,7 +400,7 @@ const AdminCourseEditPage = () => {
 	const boxShadow = useRaisedShadow(y);
 
 	return (
-		<DashboardPagesLayout pageName='Edit Course' customSettings={{ justifyContent: 'flex-start' }}>
+		<DashboardPagesLayout pageName='Edit Course' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
 			<Box sx={{ width: '80%', position: 'fixed', top: '4rem', zIndex: 1, backgroundColor: theme.bgColor?.secondary }}>
 				<CoursePaper
 					userId={userId}
