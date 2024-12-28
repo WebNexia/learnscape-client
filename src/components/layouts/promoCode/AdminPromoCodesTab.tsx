@@ -9,17 +9,23 @@ import CustomTableHead from '../table/CustomTableHead';
 import CustomTableCell from '../table/CustomTableCell';
 import CustomActionBtn from '../table/CustomActionBtn';
 import CustomTablePagination from '../table/CustomTablePagination';
-import { Delete, Edit, FileCopy, Search } from '@mui/icons-material';
+import { Delete, Edit, Search } from '@mui/icons-material';
 import axios from 'axios';
 import CustomDialog from '../dialog/CustomDialog';
 import CustomDialogActions from '../dialog/CustomDialogActions';
 import CustomTextField from '../../forms/customFields/CustomTextField';
 import theme from '../../../themes';
+import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
+import CustomInfoMessageAlignedLeft from '../infoMessage/CustomInfoMessageAlignedLeft';
 
 const AdminPromoCodesTab = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
 	const { sortedPromoCodesData, sortPromoCodesData, fetchPromoCodes, removePromoCode } = useContext(PromoCodesContext);
+
+	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
+	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
 	const [promoCodesPageNumber, setPromoCodesPageNumber] = useState<number>(1);
 	const [searchValue, setSearchValue] = useState<string>('');
@@ -124,7 +130,14 @@ const AdminPromoCodesTab = () => {
 
 	return (
 		<Box sx={{ width: '100%' }}>
-			<Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'flex-end', padding: '1rem 2rem 0rem 2rem', width: '100%' }}>
+			<Box
+				sx={{
+					display: 'flex',
+					flexDirection: 'row',
+					justifyContent: 'flex-end',
+					padding: isMobileSizeSmall ? '1rem 1rem 0.5rem 1rem' : '2rem 2rem 1rem 2rem',
+					width: '100%',
+				}}>
 				<Box sx={{ display: 'flex', justifyContent: 'flex-start', width: '100%' }}>
 					<Box sx={{ mr: '1rem' }}>
 						<FormControl>
@@ -138,28 +151,54 @@ const AdminPromoCodesTab = () => {
 								displayEmpty
 								sx={{
 									backgroundColor: theme.bgColor?.common,
-									width: '10rem',
-									fontSize: '0.85rem',
+									width: isMobileSizeSmall ? '8rem' : '12rem',
+									fontSize: isMobileSize ? '0.7rem' : '0.85rem',
 									textTransform: 'capitalize',
 								}}>
-								<MenuItem disabled value='filter' selected sx={{ fontSize: '0.85rem', fontStyle: 'italic', textTransform: 'capitalize' }}>
+								<MenuItem
+									disabled
+									value='filter'
+									selected
+									sx={{
+										fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+										fontStyle: 'italic',
+										textTransform: 'capitalize',
+										padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+										minHeight: '2rem',
+									}}>
 									Filter Codes
 								</MenuItem>
-								<MenuItem value='' selected sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
+								<MenuItem
+									value=''
+									selected
+									sx={{
+										fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+										textTransform: 'capitalize',
+										padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+										minHeight: '2rem',
+									}}>
 									All Codes
 								</MenuItem>
 								{['Percentage', 'Fixed', 'Active', 'Inactive', 'Unlimited Usage', 'Limited Usage', 'Expired', 'Unexpired'].map((type) => (
-									<MenuItem value={type.toLowerCase()} key={type} sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
+									<MenuItem
+										value={type.toLowerCase()}
+										key={type}
+										sx={{
+											fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+											textTransform: 'capitalize',
+											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+											minHeight: '2rem',
+										}}>
 										{type}
 									</MenuItem>
 								))}
 							</Select>
 						</FormControl>
 					</Box>
-					<Box sx={{ alignSelf: 'flex-start', width: '17.5rem' }}>
+					<Box sx={{ alignSelf: 'flex-start', width: isVerySmallScreen ? '7rem' : isMobileSize ? '15rem' : '17.5rem' }}>
 						<CustomTextField
 							value={searchValue}
-							placeholder={'Search Promo Code'}
+							placeholder={isVerySmallScreen ? 'Search Code' : 'Search Promo Code'}
 							onChange={(e) => {
 								setSearchValue(e.target.value);
 								setFilterValue('filter');
@@ -176,6 +215,7 @@ const AdminPromoCodesTab = () => {
 											sx={{
 												mr: '-0.5rem',
 											}}
+											fontSize={isMobileSize ? 'small' : 'medium'}
 										/>
 									</InputAdornment>
 								),
@@ -183,13 +223,14 @@ const AdminPromoCodesTab = () => {
 						/>
 					</Box>
 				</Box>
-				<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '15%', height: '2rem' }}>
+				<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '15%', height: isVerySmallScreen ? '1.75rem' : '2rem' }}>
 					<CustomSubmitButton
 						onClick={() => {
 							setIsNewCodeModalOpen(true);
 						}}
+						sx={{ fontSize: isMobileSize ? '0.7rem' : undefined }}
 						type='button'>
-						New Promo Code
+						{isMobileSize ? 'New' : 'New Promo Code'}
 					</CustomSubmitButton>
 				</Box>
 			</Box>
@@ -210,15 +251,25 @@ const AdminPromoCodesTab = () => {
 						orderBy={orderBy}
 						order={order}
 						handleSort={handleSort}
-						columns={[
-							{ key: 'code', label: 'Promo Code' },
-							{ key: 'discountType', label: 'Discount Type' },
-							{ key: 'discountAmount', label: 'Discount Amount' },
-							{ key: 'expirationDate', label: 'Expiration Date' },
-							{ key: 'usageLimit', label: 'Usage Limit' },
-							{ key: 'isActive', label: 'Status' },
-							{ key: 'actions', label: 'Actions' },
-						]}
+						columns={
+							isVerySmallScreen
+								? [
+										{ key: 'code', label: 'Promo Code' },
+										{ key: 'discountType', label: 'Discount Type' },
+										{ key: 'discountAmount', label: 'Discount Amount' },
+										{ key: 'isActive', label: 'Status' },
+										{ key: 'actions', label: 'Actions' },
+								  ]
+								: [
+										{ key: 'code', label: 'Promo Code' },
+										{ key: 'discountType', label: 'Discount Type' },
+										{ key: 'discountAmount', label: 'Discount Amount' },
+										{ key: 'expirationDate', label: 'Expiration Date' },
+										{ key: 'usageLimit', label: 'Usage Limit' },
+										{ key: 'isActive', label: 'Status' },
+										{ key: 'actions', label: 'Actions' },
+								  ]
+						}
 					/>
 					<TableBody>
 						{paginatedPromoCodes &&
@@ -228,10 +279,12 @@ const AdminPromoCodesTab = () => {
 										<CustomTableCell value={promoCode.code} />
 										<CustomTableCell value={promoCode.discountType.charAt(0).toUpperCase() + promoCode.discountType.slice(1)} />
 										<CustomTableCell value={promoCode.discountAmount} />
-										<CustomTableCell
-											value={new Date(promoCode.expirationDate!).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-										/>
-										<CustomTableCell value={promoCode.usageLimit === 0 ? 'Unlimited' : promoCode.usageLimit} />
+										{!isVerySmallScreen && (
+											<CustomTableCell
+												value={new Date(promoCode.expirationDate!).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+											/>
+										)}
+										{!isVerySmallScreen && <CustomTableCell value={promoCode.usageLimit === 0 ? 'Unlimited' : promoCode.usageLimit} />}
 										<CustomTableCell value={promoCode.isActive ? 'Active' : 'Inactive'} />
 
 										<TableCell
@@ -244,7 +297,7 @@ const AdminPromoCodesTab = () => {
 													toggleCodeEditModal(index);
 													setSingleCode(promoCode);
 												}}
-												icon={<Edit fontSize='small' />}
+												icon={<Edit fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 											/>
 											<EditCodeDialog
 												isEditCodeModalOpen={isEditCodeModalOpen}
@@ -258,7 +311,7 @@ const AdminPromoCodesTab = () => {
 												onClick={() => {
 													openDeleteCodeModal(index);
 												}}
-												icon={<Delete fontSize='small' />}
+												icon={<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 											/>
 										</TableCell>
 										{isDeleteCodeModalOpen[index] !== undefined && (
@@ -285,6 +338,7 @@ const AdminPromoCodesTab = () => {
 							})}
 					</TableBody>
 				</Table>
+				{isVerySmallScreen && <CustomInfoMessageAlignedLeft message='Rotate your device for more info' />}
 				<CustomTablePagination count={promoCodesNumberOfPages} page={promoCodesPageNumber} onChange={setPromoCodesPageNumber} />
 			</Box>
 		</Box>

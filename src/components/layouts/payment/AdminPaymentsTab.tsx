@@ -11,10 +11,15 @@ import { Search } from '@mui/icons-material';
 import theme from '../../../themes';
 import { CoursesContext } from '../../../contexts/CoursesContextProvider';
 import { truncateText } from '../../../utils/utilText';
+import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 const AdminPaymentsTab = () => {
 	const { sortedPaymentsData, sortPaymentsData, fetchPayments } = useContext(PaymentsContext);
 	const { sortedCoursesData } = useContext(CoursesContext);
+
+	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
+	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
 	const courses: string[] = sortedCoursesData.map((course) => course.title);
 
@@ -76,7 +81,7 @@ const AdminPaymentsTab = () => {
 				padding: '1rem 2rem 2rem 2rem',
 				width: '100%',
 			}}>
-			<Box sx={{ display: 'flex', justifyContent: 'flex-start', width: '100%' }}>
+			<Box sx={{ display: 'flex', justifyContent: isMobileSize ? 'center' : 'flex-start', width: '100%' }}>
 				<Box sx={{ mr: '1rem' }}>
 					<FormControl>
 						<Select
@@ -89,21 +94,57 @@ const AdminPaymentsTab = () => {
 							displayEmpty
 							sx={{
 								backgroundColor: theme.bgColor?.common,
-								width: '13rem',
-								fontSize: '0.85rem',
+								width: isMobileSizeSmall ? '8rem' : '12rem',
+								fontSize: isMobileSize ? '0.7rem' : '0.85rem',
 								textTransform: 'capitalize',
 							}}>
-							<MenuItem disabled value='filter' selected sx={{ fontSize: '0.85rem', fontStyle: 'italic', textTransform: 'capitalize' }}>
+							<MenuItem
+								disabled
+								value='filter'
+								selected
+								sx={{
+									fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+									fontStyle: 'italic',
+									textTransform: 'capitalize',
+									padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+									minHeight: '2rem',
+								}}>
 								Filter Payments
 							</MenuItem>
-							<MenuItem value='' selected sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
+							<MenuItem
+								value=''
+								selected
+								sx={{
+									fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+									textTransform: 'capitalize',
+									padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+									minHeight: '2rem',
+								}}>
 								All Payments
 							</MenuItem>
-							<MenuItem disabled value='types' selected sx={{ fontSize: '0.7rem', textTransform: 'inherit', fontWeight: 'lighter' }}>
+							<MenuItem
+								disabled
+								value='types'
+								selected
+								sx={{
+									fontSize: isMobileSize ? '0.6rem' : '0.7rem',
+									textTransform: 'inherit',
+									fontWeight: 'lighter',
+									padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+									minHeight: '2rem',
+								}}>
 								------ Filter by Course ------
 							</MenuItem>
 							{courses.map((course) => (
-								<MenuItem value={course.toLowerCase()} key={course} sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
+								<MenuItem
+									value={course.toLowerCase()}
+									key={course}
+									sx={{
+										fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+										textTransform: 'capitalize',
+										padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+										minHeight: '2rem',
+									}}>
 									{truncateText(course, 25)}
 								</MenuItem>
 							))}
@@ -113,7 +154,7 @@ const AdminPaymentsTab = () => {
 				<Box sx={{ alignSelf: 'flex-start', width: '22rem' }}>
 					<CustomTextField
 						value={searchValue}
-						placeholder='Search in First Name, Last Name, and Username'
+						placeholder={isVerySmallScreen ? 'Search in Username' : 'Search in First Name, Last Name, and Username'}
 						onChange={(e) => {
 							setSearchValue(e.target.value);
 							setFilterValue('filter');
@@ -135,6 +176,7 @@ const AdminPaymentsTab = () => {
 										sx={{
 											mr: '-0.5rem',
 										}}
+										fontSize={isMobileSize ? 'small' : 'medium'}
 									/>
 								</InputAdornment>
 							),
@@ -143,42 +185,61 @@ const AdminPaymentsTab = () => {
 				</Box>
 			</Box>
 
-			<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>
-				<CustomTableHead<Payment>
-					orderBy={orderBy}
-					order={order}
-					handleSort={handleSort}
-					columns={[
-						{ key: 'firstName', label: 'First Name' },
-						{ key: 'lastName', label: 'Last Name' },
-						{ key: 'username', label: 'Username' },
-						{ key: 'courseName', label: 'Course' },
-						{ key: 'amount', label: 'Price' },
-						{ key: 'amountReceivedInGbp', label: 'Received' },
-						{ key: 'createdAt', label: 'Date' },
-					]}
-				/>
-				<TableBody>
-					{paginatedPayments &&
-						paginatedPayments?.map((payment: Payment) => {
-							return (
-								<TableRow key={payment._id}>
-									<CustomTableCell value={payment.firstName} />
-									<CustomTableCell value={payment.lastName} />
-									<CustomTableCell value={payment.username} />
-									<CustomTableCell value={payment.courseTitle} />
-									<CustomTableCell value={`${setCurrencySymbol(payment.currency)}${payment.amount}`} />
-									<CustomTableCell value={`£${payment.amountReceivedInGbp}`} />
+			<Box
+				sx={{
+					display: 'flex',
+					flexDirection: 'column',
+					alignItems: 'center',
+					padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : isMobileSize ? '0rem 0rem 2rem 0rem' : '0rem 1rem 2rem 1rem',
+					width: '100%',
+				}}>
+				<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>
+					<CustomTableHead<Payment>
+						orderBy={orderBy}
+						order={order}
+						handleSort={handleSort}
+						columns={
+							isVerySmallScreen
+								? [
+										{ key: 'username', label: 'Username' },
+										{ key: 'courseName', label: 'Course' },
+										{ key: 'amount', label: 'Price' },
+										{ key: 'amountReceivedInGbp', label: 'Received' },
+										{ key: 'createdAt', label: 'Date' },
+								  ]
+								: [
+										{ key: 'firstName', label: 'First Name' },
+										{ key: 'lastName', label: 'Last Name' },
+										{ key: 'username', label: 'Username' },
+										{ key: 'courseName', label: 'Course' },
+										{ key: 'amount', label: 'Price' },
+										{ key: 'amountReceivedInGbp', label: 'Received' },
+										{ key: 'createdAt', label: 'Date' },
+								  ]
+						}
+					/>
+					<TableBody>
+						{paginatedPayments &&
+							paginatedPayments?.map((payment: Payment) => {
+								return (
+									<TableRow key={payment._id}>
+										{!isVerySmallScreen && <CustomTableCell value={payment.firstName} />}
+										{!isVerySmallScreen && <CustomTableCell value={payment.lastName} />}
+										<CustomTableCell value={payment.username} />
+										<CustomTableCell value={payment.courseTitle} />
+										<CustomTableCell value={`${setCurrencySymbol(payment.currency)}${payment.amount}`} />
+										<CustomTableCell value={`£${payment.amountReceivedInGbp}`} />
 
-									<CustomTableCell
-										value={new Date(payment.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-									/>
-								</TableRow>
-							);
-						})}
-				</TableBody>
-			</Table>
-			<CustomTablePagination count={paymentsNumberOfPages} page={paymentsPageNumber} onChange={setPaymentsPageNumber} />
+										<CustomTableCell
+											value={new Date(payment.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+										/>
+									</TableRow>
+								);
+							})}
+					</TableBody>
+				</Table>
+				<CustomTablePagination count={paymentsNumberOfPages} page={paymentsPageNumber} onChange={setPaymentsPageNumber} />
+			</Box>
 		</Box>
 	);
 };

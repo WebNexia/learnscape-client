@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect } from 'react';
+import { useContext, useState, useEffect } from 'react';
 import { Calendar, dateFnsLocalizer, SlotInfo } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
 import { enUS } from 'date-fns/locale/en-US';
@@ -124,19 +124,16 @@ const EventCalendar = () => {
 		};
 	};
 
-	const handleSelectSlot = React.useCallback(
-		({ start, end }: SlotInfo) => {
-			if (user?.role === Roles.ADMIN) {
-				const isMonthView = start.getHours() === 0 && end.getHours() === 0;
-				const startTime = isMonthView ? new Date(start.setHours(16, 0, 0, 0)) : start;
-				const endTime = isMonthView ? new Date(start.setHours(17, 0, 0, 0)) : end;
+	const handleSelectSlot = ({ start, end }: SlotInfo) => {
+		if (user?.role === Roles.ADMIN) {
+			const isMonthView = start.getHours() === 0 && end.getHours() === 0;
+			const startTime = isMonthView ? new Date(start.setHours(16, 0, 0, 0)) : start;
+			const endTime = isMonthView ? new Date(start.setHours(17, 0, 0, 0)) : end;
 
-				setNewEvent((prevEvent) => ({ ...prevEvent, start: startTime, end: endTime }));
-				setNewEventModalOpen(true);
-			}
-		},
-		[user?.role]
-	);
+			setNewEvent((prevEvent) => ({ ...prevEvent, start: startTime, end: endTime }));
+			setNewEventModalOpen(true);
+		}
+	};
 
 	const handleEventSelect = (event: Event) => {
 		setIsEventDeleted(false);

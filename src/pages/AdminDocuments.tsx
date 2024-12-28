@@ -17,6 +17,7 @@ import HandleDocUploadURL from '../components/forms/uploadImageVideoDocument/Han
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import { useParams } from 'react-router-dom';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
+import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 
 const AdminDocuments = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -24,6 +25,10 @@ const AdminDocuments = () => {
 	const { userId } = useParams();
 
 	const { addNewDocument, sortDocumentsData, sortedDocumentsData, removeDocument, fetchDocuments } = useContext(DocumentsContext);
+
+	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
+	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
 	const [documentsPageNumber, setDocumentsPageNumber] = useState<number>(1);
 	const [searchValue, setSearchValue] = useState<string>('');
@@ -161,10 +166,17 @@ const AdminDocuments = () => {
 	};
 
 	return (
-		<DashboardPagesLayout pageName='Documents' customSettings={{ justifyContent: 'flex-start' }}>
-			<Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'flex-end', padding: '2rem 2rem 1rem 2rem', width: '100%' }}>
+		<DashboardPagesLayout pageName='Documents' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
+			<Box
+				sx={{
+					display: 'flex',
+					flexDirection: 'row',
+					justifyContent: 'flex-end',
+					padding: isMobileSizeSmall ? '1rem 1rem 0.5rem 1rem' : '2rem 2rem 1rem 2rem',
+					width: '100%',
+				}}>
 				<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-					<Box sx={{ alignSelf: 'flex-start', width: '20rem' }}>
+					<Box sx={{ alignSelf: 'flex-start', width: isVerySmallScreen ? '12.5rem' : '20rem' }}>
 						<CustomTextField
 							value={searchValue}
 							placeholder={'Search Document'}
@@ -180,6 +192,7 @@ const AdminDocuments = () => {
 											sx={{
 												mr: '-0.5rem',
 											}}
+											fontSize={isMobileSize ? 'small' : 'medium'}
 										/>
 									</InputAdornment>
 								),
@@ -187,16 +200,21 @@ const AdminDocuments = () => {
 						/>
 					</Box>
 				</Box>
-				<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '100%' }}>
+				<Box
+					sx={{
+						display: 'flex',
+						justifyContent: 'flex-end',
+						width: '100%',
+					}}>
 					<CustomSubmitButton
 						onClick={() => {
 							setIsDocumentCreateModalOpen(true);
 							setEnterDocUrl(true);
 							setFileUploaded(false);
 						}}
-						sx={{ height: '2.1rem' }}
+						sx={{ height: isVerySmallScreen ? '1.75rem' : '2.1rem', fontSize: isMobileSize ? '0.7rem' : undefined }}
 						type='button'>
-						New Document
+						{isVerySmallScreen ? 'New' : 'New Document'}
 					</CustomSubmitButton>
 				</Box>
 			</Box>
@@ -240,7 +258,7 @@ const AdminDocuments = () => {
 					display: 'flex',
 					flexDirection: 'column',
 					alignItems: 'center',
-					padding: '0rem 2rem 2rem 2rem',
+					padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : '0rem 2rem 2rem 2rem',
 					width: '100%',
 				}}>
 				<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>
@@ -261,8 +279,12 @@ const AdminDocuments = () => {
 									<TableRow key={document._id}>
 										<CustomTableCell value={document.name} />
 										<CustomTableCell>
-											<Link href={document.documentUrl} target='_blank' rel='noopener noreferrer'>
-												{truncateText(document.documentUrl, 40)}
+											<Link
+												href={document.documentUrl}
+												target='_blank'
+												rel='noopener noreferrer'
+												sx={{ fontSize: isMobileSize ? '0.6rem' : undefined }}>
+												{isVerySmallScreen ? truncateText(document.documentUrl, 25) : truncateText(document.documentUrl, 40)}
 											</Link>
 										</CustomTableCell>
 
@@ -276,7 +298,7 @@ const AdminDocuments = () => {
 													toggleDocumentEditModal(index);
 													openEditDocumentModal(index);
 												}}
-												icon={<Edit fontSize='small' />}
+												icon={<Edit fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 											/>
 
 											<CustomDialog
@@ -318,7 +340,7 @@ const AdminDocuments = () => {
 												onClick={() => {
 													openDeleteDocumentModal(index);
 												}}
-												icon={<Delete fontSize='small' />}
+												icon={<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 											/>
 											{isDocumentDeleteModalOpen[index] !== undefined && (
 												<CustomDialog

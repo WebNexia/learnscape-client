@@ -1,11 +1,12 @@
 import { CloudUpload } from '@mui/icons-material';
 import LoadingButton from '@mui/lab/LoadingButton';
 import { Box, FormControl, IconButton, Input, Tooltip, Typography } from '@mui/material';
-import React, { ChangeEvent } from 'react';
+import React, { ChangeEvent, useContext } from 'react';
 import CustomErrorMessage from '../customFields/CustomErrorMessage';
 import CustomTextField from '../customFields/CustomTextField';
 import useVideoUpload from '../../../hooks/useVideoUpload';
 import theme from '../../../themes';
+import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 interface HandleVideoUploadURLProps {
 	onVideoUploadLogic: (url: string) => void;
@@ -28,6 +29,9 @@ const HandleVideoUploadURL = ({
 }: HandleVideoUploadURLProps) => {
 	const { videoUpload, isVideoSizeLarge, handleVideoChange, resetVideoUpload, handleVideoUpload, isVideoLoading } = useVideoUpload();
 
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
+
 	const handleVideoUploadReusable = () => {
 		handleVideoUpload(videoFolderName, (url: string) => {
 			onVideoUploadLogic(url);
@@ -36,12 +40,12 @@ const HandleVideoUploadURL = ({
 	return (
 		<FormControl sx={{ display: 'flex' }}>
 			<Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-				<Typography variant='h6'>{label}</Typography>
+				<Typography variant={isMobileSize ? 'body2' : 'h6'}>{label}</Typography>
 				<Box sx={{ display: 'flex', alignItems: 'center' }}>
 					<Box>
 						<Typography
 							variant='body2'
-							sx={{ textDecoration: !enterVideoUrl ? 'underline' : 'none', cursor: 'pointer' }}
+							sx={{ textDecoration: !enterVideoUrl ? 'underline' : 'none', cursor: 'pointer', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}
 							onClick={() => setEnterVideoUrl(false)}>
 							Choose
 						</Typography>
@@ -50,7 +54,7 @@ const HandleVideoUploadURL = ({
 					<Box>
 						<Typography
 							variant='body2'
-							sx={{ textDecoration: enterVideoUrl ? 'underline' : 'none', cursor: 'pointer' }}
+							sx={{ textDecoration: enterVideoUrl ? 'underline' : 'none', cursor: 'pointer', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}
 							onClick={() => {
 								setEnterVideoUrl(true);
 								resetVideoUpload();

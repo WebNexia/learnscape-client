@@ -1,5 +1,7 @@
 import { Box, Typography } from '@mui/material';
+import { useContext } from 'react';
 import { Bar } from 'react-chartjs-2';
+import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 interface AdminCoursesBarGraphProps {
 	barChartData: any;
@@ -7,6 +9,9 @@ interface AdminCoursesBarGraphProps {
 }
 
 const AdminCoursesBarGraph = ({ barChartData, totalCourses }: AdminCoursesBarGraphProps) => {
+	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
+
+	const isMobileSize: boolean = isSmallScreen || isRotatedMedium;
 	return (
 		<Box
 			sx={{
@@ -22,8 +27,8 @@ const AdminCoursesBarGraph = ({ barChartData, totalCourses }: AdminCoursesBarGra
 					boxShadow: '0rem 0.1rem 0.2rem 0.1rem rgba(0,0,0,0.3)',
 				},
 			}}>
-			<Typography variant='h5'>Total Courses</Typography>
-			<Typography sx={{ fontSize: '3rem' }}>{totalCourses}</Typography>
+			<Typography variant={isMobileSize ? 'h6' : 'h5'}>Total Courses</Typography>
+			<Typography sx={{ fontSize: isMobileSize ? '2rem' : '3rem' }}>{totalCourses}</Typography>
 
 			<Box sx={{ height: 250, width: '95%' }}>
 				{barChartData && (

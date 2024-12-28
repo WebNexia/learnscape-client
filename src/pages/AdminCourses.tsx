@@ -31,6 +31,8 @@ import CustomActionBtn from '../components/layouts/table/CustomActionBtn';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import { dateFormatter } from '../utils/dateFormatter';
 import theme from '../themes';
+import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
+import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/CustomInfoMessageAlignedLeft';
 
 const AdminCourses = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -38,6 +40,10 @@ const AdminCourses = () => {
 	const navigate = useNavigate();
 	const { sortedCoursesData, sortCoursesData, addNewCourse, removeCourse, fetchCourses } = useContext(CoursesContext);
 	const { orgId } = useContext(OrganisationContext);
+
+	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
+	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
 	const [coursesPageNumber, setCoursesPageNumber] = useState<number>(1);
 	const [searchValue, setSearchValue] = useState<string>('');
@@ -173,7 +179,7 @@ const AdminCourses = () => {
 	};
 
 	return (
-		<DashboardPagesLayout pageName='Courses' customSettings={{ justifyContent: 'flex-start' }}>
+		<DashboardPagesLayout pageName='Courses' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
 			<CustomDialog openModal={isCourseCreateModalOpen} closeModal={closeNewCourseModal} title='Create New Course' maxWidth='sm'>
 				<form
 					onSubmit={(e: React.FormEvent<HTMLFormElement>) => {
@@ -300,10 +306,10 @@ const AdminCourses = () => {
 					display: 'flex',
 					flexDirection: 'row',
 					justifyContent: 'space-between',
-					padding: '2rem 2rem 1rem 2rem',
+					padding: isMobileSizeSmall ? '1rem 1rem 0.5rem 1rem' : '2rem 2rem 1rem 2rem',
 					width: '100%',
 				}}>
-				<Box sx={{ display: 'flex', justifyContent: 'flex-start', alignContent: 'center', width: '100%' }}>
+				<Box sx={{ display: 'flex', justifyContent: 'flex-start', alignContent: 'center', width: isMobileSize ? '70%' : '100%' }}>
 					<Box>
 						<FormControl>
 							<Select
@@ -316,29 +322,55 @@ const AdminCourses = () => {
 								displayEmpty
 								sx={{
 									backgroundColor: theme.bgColor?.common,
-									width: '12rem',
-									fontSize: '0.85rem',
+									width: isMobileSizeSmall ? '8rem' : '12rem',
+									fontSize: isMobileSize ? '0.7rem' : '0.85rem',
 									textTransform: 'capitalize',
 									mr: '1rem',
 								}}>
-								<MenuItem disabled value='filter' selected sx={{ fontSize: '0.85rem', fontStyle: 'italic', textTransform: 'capitalize' }}>
+								<MenuItem
+									disabled
+									value='filter'
+									selected
+									sx={{
+										fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+										fontStyle: 'italic',
+										textTransform: 'capitalize',
+										padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+										minHeight: '2rem',
+									}}>
 									Filter Courses
 								</MenuItem>
-								<MenuItem value='' selected sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
+								<MenuItem
+									value=''
+									selected
+									sx={{
+										fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+										textTransform: 'capitalize',
+										padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+										minHeight: '2rem',
+									}}>
 									All Courses
 								</MenuItem>
 								{['Published Courses', 'Unpublished Courses', 'Paid Courses', 'Free Courses'].map((type) => (
-									<MenuItem value={type.toLowerCase()} key={type} sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
+									<MenuItem
+										value={type.toLowerCase()}
+										key={type}
+										sx={{
+											fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+											textTransform: 'capitalize',
+											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+											minHeight: '2rem',
+										}}>
 										{type}
 									</MenuItem>
 								))}
 							</Select>
 						</FormControl>
 					</Box>
-					<Box sx={{ alignSelf: 'flex-start', width: '17.5rem' }}>
+					<Box sx={{ alignSelf: 'flex-start', width: isVerySmallScreen ? '7rem' : isMobileSize ? '15rem' : '17.5rem' }}>
 						<CustomTextField
 							value={searchValue}
-							placeholder={'Search Course in Title'}
+							placeholder={isVerySmallScreen ? 'Search in Title' : 'Search Course in Title'}
 							onChange={(e) => {
 								setSearchValue(e.target.value);
 								setFilterValue('filter');
@@ -355,6 +387,7 @@ const AdminCourses = () => {
 											sx={{
 												mr: '-0.5rem',
 											}}
+											fontSize={isMobileSize ? 'small' : 'medium'}
 										/>
 									</InputAdornment>
 								),
@@ -362,8 +395,17 @@ const AdminCourses = () => {
 						/>
 					</Box>
 				</Box>
-				<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '10%', height: '2rem' }}>
-					<CustomSubmitButton onClick={openNewCourseModal}>New Course</CustomSubmitButton>
+				<Box
+					sx={{
+						display: 'flex',
+						justifyContent: 'flex-end',
+						width: isVerySmallScreen ? '5%' : isMobileSize ? '20%' : '25%',
+						height: isVerySmallScreen ? '1.75rem' : '2rem',
+						fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+					}}>
+					<CustomSubmitButton onClick={openNewCourseModal} sx={{ fontSize: isMobileSize ? '0.7rem' : undefined }}>
+						{isVerySmallScreen ? 'New' : 'New Course'}
+					</CustomSubmitButton>
 				</Box>
 			</Box>
 
@@ -372,7 +414,7 @@ const AdminCourses = () => {
 					display: 'flex',
 					flexDirection: 'column',
 					alignItems: 'center',
-					padding: '0rem 2rem 2rem 2rem',
+					padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : '0rem 2rem 2rem 2rem',
 					width: '100%',
 				}}>
 				<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>
@@ -380,14 +422,23 @@ const AdminCourses = () => {
 						orderBy={orderBy}
 						order={order}
 						handleSort={handleSort}
-						columns={[
-							{ key: 'title', label: 'Title' },
-							{ key: 'isActive', label: 'Status' },
-							{ key: 'startingDate', label: 'Starting Date' },
-							{ key: 'durationWeeks', label: 'Weeks #' },
-							{ key: 'durationHours', label: 'Hours #' },
-							{ key: 'actions', label: 'Actions' },
-						]}
+						columns={
+							isVerySmallScreen
+								? [
+										{ key: 'title', label: 'Title' },
+										{ key: 'isActive', label: 'Status' },
+										{ key: 'startingDate', label: 'Starting Date' },
+										{ key: 'actions', label: 'Actions' },
+								  ]
+								: [
+										{ key: 'title', label: 'Title' },
+										{ key: 'isActive', label: 'Status' },
+										{ key: 'startingDate', label: 'Starting Date' },
+										{ key: 'durationWeeks', label: 'Weeks #' },
+										{ key: 'durationHours', label: 'Hours #' },
+										{ key: 'actions', label: 'Actions' },
+								  ]
+						}
 					/>
 					<TableBody>
 						{paginatedCourses &&
@@ -397,8 +448,8 @@ const AdminCourses = () => {
 										<CustomTableCell value={course.title} />
 										<CustomTableCell value={course.isActive ? 'Published' : 'Unpublished'} />
 										<CustomTableCell value={dateFormatter(course.startingDate)} />
-										<CustomTableCell value={course.durationWeeks} />
-										<CustomTableCell value={course.durationHours} />
+										{!isVerySmallScreen && <CustomTableCell value={course.durationWeeks} />}
+										{!isVerySmallScreen && <CustomTableCell value={course.durationHours} />}
 
 										<TableCell
 											sx={{
@@ -409,14 +460,14 @@ const AdminCourses = () => {
 												onClick={() => {
 													navigate(`/admin/course-edit/user/${userId}/course/${course._id}`);
 												}}
-												icon={<Edit fontSize='small' />}
+												icon={<Edit fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 											/>
 											<CustomActionBtn
 												title='Delete'
 												onClick={() => {
 													openDeleteCourseModal(index);
 												}}
-												icon={<Delete fontSize='small' />}
+												icon={<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 											/>
 											{isCourseDeleteModalOpen[index] !== undefined && (
 												<CustomDialog
@@ -441,6 +492,7 @@ const AdminCourses = () => {
 							})}
 					</TableBody>
 				</Table>
+				{isVerySmallScreen && <CustomInfoMessageAlignedLeft message='Rotate your device for more info' />}
 				<CustomTablePagination count={coursesNumberOfPages} page={coursesPageNumber} onChange={setCoursesPageNumber} />
 			</Box>
 		</DashboardPagesLayout>

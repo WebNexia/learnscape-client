@@ -42,6 +42,7 @@ import { LessonType, QuestionType } from '../interfaces/enums';
 import NoContentBoxAdmin from '../components/layouts/noContentBox/NoContentBoxAdmin';
 import AdminLessonEditPageEditQuestionDialog from '../components/forms/editQuestion/AdminLessonEditPageEditQuestionDialog';
 import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/CustomInfoMessageAlignedLeft';
+import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
 
 export interface QuestionUpdateTrack {
 	questionId: string;
@@ -115,6 +116,8 @@ const AdminLessonEditPage = () => {
 	const [isLessonUpdated, setIsLessonUpdated] = useState<boolean>(false);
 	const [isQuestionUpdated, setIsQuestionUpdated] = useState<QuestionUpdateTrack[]>([]);
 	const [isDocumentUpdated, setIsDocumentUpdated] = useState<DocumentUpdateTrack[]>([]);
+
+	const [isQuestionCloneModalOpen, setIsQuestionCloneModalOpen] = useState<boolean[]>([]);
 
 	const [addNewQuestionModalOpen, setAddNewQuestionModalOpen] = useState<boolean>(false);
 	const [addNewDocumentModalOpen, setAddNewDocumentModalOpen] = useState<boolean>(false);
@@ -511,8 +514,46 @@ const AdminLessonEditPage = () => {
 		});
 	};
 
+	const openCloneQuestionModal = (index: number) => {
+		const updatedState = [...isQuestionCloneModalOpen];
+		updatedState[index] = true;
+		setIsQuestionCloneModalOpen(updatedState);
+	};
+	const closeCloneQuestionModal = (index: number) => {
+		const updatedState = [...isQuestionCloneModalOpen];
+		updatedState[index] = false;
+		setIsQuestionCloneModalOpen(updatedState);
+	};
+
+	const cloneQuestion = (question: QuestionInterface, index: number) => {
+		const clonedQuestion: QuestionInterface = {
+			...question,
+			_id: generateUniqueId('temp_question_id_'),
+		};
+
+		setSingleLessonBeforeSave((prevData) => {
+			if (prevData) {
+				// Use immutability to update state
+				return {
+					...prevData,
+					questions: [
+						...prevData.questions.slice(0, index + 1), // Questions before the index
+						clonedQuestion, // The cloned question
+						...prevData.questions.slice(index + 1), // Questions after the index
+					],
+					questionIds: [
+						...prevData.questionIds.slice(0, index + 1), // IDs before the index
+						clonedQuestion._id, // The cloned question ID
+						...prevData.questionIds.slice(index + 1), // IDs after the index
+					],
+				};
+			}
+			return prevData;
+		});
+	};
+
 	return (
-		<DashboardPagesLayout pageName='Edit Lesson' customSettings={{ justifyContent: 'flex-start' }}>
+		<DashboardPagesLayout pageName='Edit Lesson' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
 			<Box sx={{ width: '80%', position: 'fixed', top: '4rem', zIndex: 1000, backgroundColor: theme.bgColor?.secondary }}>
 				<LessonPaper
 					userId={userId}
@@ -939,12 +980,29 @@ const AdminLessonEditPage = () => {
 																					<Tooltip title='Clone' placement='top'>
 																						<IconButton
 																							onClick={() => {
-																								// cloneQuestion(question);
+																								openCloneQuestionModal(index);
 																							}}>
 																							<FileCopy fontSize='small' />
 																						</IconButton>
 																					</Tooltip>
 																				</Box>
+
+																				<CustomDialog
+																					openModal={isQuestionCloneModalOpen[index]}
+																					closeModal={() => closeCloneQuestionModal(index)}
+																					title='Clone Question'
+																					content='Are you sure you want to clone the question?'
+																					maxWidth='sm'>
+																					<CustomDialogActions
+																						onSubmit={() => {
+																							cloneQuestion(question, index);
+																							closeCloneQuestionModal(index);
+																						}}
+																						onCancel={() => closeCloneQuestionModal(index)}
+																						submitBtnText='Clone'
+																					/>
+																				</CustomDialog>
+
 																				<Box>
 																					<Tooltip title='Edit' placement='top'>
 																						<IconButton

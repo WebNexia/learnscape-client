@@ -125,8 +125,8 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 				}}>
 				<Box sx={{ display: 'flex', alignItems: 'center' }}>
 					{(isSmallScreen || isRotatedMedium) && (
-						<IconButton>
-							<Menu sx={{ color: '#fff', padding: 0 }} fontSize='small' onClick={() => setIsDrawerOpen(true)} />
+						<IconButton onClick={() => setIsDrawerOpen(true)}>
+							<Menu sx={{ color: '#fff', padding: 0 }} fontSize='small' />
 						</IconButton>
 					)}
 

@@ -17,6 +17,7 @@ import CustomActionBtn from '../components/layouts/table/CustomActionBtn';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
 import theme from '../themes';
 import { LessonType } from '../interfaces/enums';
+import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 
 const AdminLessons = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -24,6 +25,10 @@ const AdminLessons = () => {
 	const navigate = useNavigate();
 
 	const { sortLessonsData, sortedLessonsData, removeLesson, fetchLessons } = useContext(LessonsContext);
+
+	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
+	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
 	const [lessonsPageNumber, setLessonsPageNumber] = useState<number>(1);
 	const [searchValue, setSearchValue] = useState<string>('');
@@ -103,8 +108,15 @@ const AdminLessons = () => {
 		}
 	};
 	return (
-		<DashboardPagesLayout pageName='Lessons' customSettings={{ justifyContent: 'flex-start' }}>
-			<Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', padding: '2rem 2rem 1rem 2rem', width: '100%' }}>
+		<DashboardPagesLayout pageName='Lessons' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
+			<Box
+				sx={{
+					display: 'flex',
+					flexDirection: 'row',
+					justifyContent: 'space-between',
+					padding: isMobileSizeSmall ? '1rem 1rem 0.5rem 1rem' : '2rem 2rem 1rem 2rem',
+					width: '100%',
+				}}>
 				<Box sx={{ display: 'flex', justifyContent: 'flex-start', width: '100%' }}>
 					<Box sx={{ mr: '1rem' }}>
 						<FormControl>
@@ -118,36 +130,80 @@ const AdminLessons = () => {
 								displayEmpty
 								sx={{
 									backgroundColor: theme.bgColor?.common,
-									width: '12rem',
-									fontSize: '0.85rem',
+									width: isMobileSizeSmall ? '8rem' : '12rem',
+									fontSize: isMobileSize ? '0.7rem' : '0.85rem',
 									textTransform: 'capitalize',
 								}}>
-								<MenuItem disabled value='filter' selected sx={{ fontSize: '0.85rem', fontStyle: 'italic', textTransform: 'capitalize' }}>
+								<MenuItem
+									disabled
+									value='filter'
+									selected
+									sx={{
+										fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+										fontStyle: 'italic',
+										textTransform: 'capitalize',
+										padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+										minHeight: '2rem',
+									}}>
 									Filter Lessons
 								</MenuItem>
-								<MenuItem value='' selected sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
+								<MenuItem
+									value=''
+									selected
+									sx={{
+										fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+										textTransform: 'capitalize',
+										padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+										minHeight: '2rem',
+									}}>
 									All Lessons
 								</MenuItem>
 								{['Published Lessons', 'Unpublished Lessons'].map((type) => (
-									<MenuItem value={type.toLowerCase()} key={type} sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
+									<MenuItem
+										value={type.toLowerCase()}
+										key={type}
+										sx={{
+											fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+											textTransform: 'capitalize',
+											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+											minHeight: '2rem',
+										}}>
 										{type}
 									</MenuItem>
 								))}
-								<MenuItem disabled value='types' selected sx={{ fontSize: '0.7rem', textTransform: 'inherit', fontWeight: 'lighter' }}>
+								<MenuItem
+									disabled
+									value='types'
+									selected
+									sx={{
+										fontSize: isMobileSize ? '0.6rem' : '0.7rem',
+										textTransform: 'inherit',
+										fontWeight: 'lighter',
+										padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+										minHeight: '2rem',
+									}}>
 									----- Filter by Type -----
 								</MenuItem>
 								{['Instructional Lessons', 'Practice Lessons', 'Quizzes'].map((type) => (
-									<MenuItem value={type.toLowerCase()} key={type} sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
+									<MenuItem
+										value={type.toLowerCase()}
+										key={type}
+										sx={{
+											fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+											textTransform: 'capitalize',
+											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+											minHeight: '2rem',
+										}}>
 										{type}
 									</MenuItem>
 								))}
 							</Select>
 						</FormControl>
 					</Box>
-					<Box sx={{ alignSelf: 'flex-start', width: '17.5rem' }}>
+					<Box sx={{ alignSelf: 'flex-start', width: isVerySmallScreen ? '7rem' : isMobileSize ? '15rem' : '17.5rem' }}>
 						<CustomTextField
 							value={searchValue}
-							placeholder={'Search Lesson in Title'}
+							placeholder={isVerySmallScreen ? 'Search in Title' : 'Search Lesson in Title'}
 							onChange={(e) => {
 								setSearchValue(e.target.value);
 								setFilterValue('filter');
@@ -164,6 +220,7 @@ const AdminLessons = () => {
 											sx={{
 												mr: '-0.5rem',
 											}}
+											fontSize={isMobileSize ? 'small' : 'medium'}
 										/>
 									</InputAdornment>
 								),
@@ -171,8 +228,16 @@ const AdminLessons = () => {
 						/>
 					</Box>
 				</Box>
-				<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '10%', height: '2rem' }}>
-					<CustomSubmitButton onClick={() => setIsNewLessonModalOpen(true)}>New Lesson</CustomSubmitButton>
+				<Box
+					sx={{
+						display: 'flex',
+						justifyContent: 'flex-end',
+						width: isVerySmallScreen ? '5%' : isMobileSize ? '20%' : '25%',
+						height: isVerySmallScreen ? '1.75rem' : '2rem',
+					}}>
+					<CustomSubmitButton onClick={() => setIsNewLessonModalOpen(true)} sx={{ fontSize: isMobileSize ? '0.7rem' : undefined }}>
+						{isVerySmallScreen ? 'New' : 'New Lesson'}
+					</CustomSubmitButton>
 				</Box>
 			</Box>
 			<CreateLessonDialog isNewLessonModalOpen={isNewLessonModalOpen} createNewLesson={true} setIsNewLessonModalOpen={setIsNewLessonModalOpen} />
@@ -182,7 +247,7 @@ const AdminLessons = () => {
 					display: 'flex',
 					flexDirection: 'column',
 					alignItems: 'center',
-					padding: '0rem 2rem 2rem 2rem',
+					padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : '0rem 2rem 2rem 2rem',
 					width: '100%',
 				}}>
 				<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>
@@ -215,14 +280,14 @@ const AdminLessons = () => {
 												onClick={() => {
 													navigate(`/admin/lesson-edit/user/${userId}/lesson/${lesson._id}`);
 												}}
-												icon={<Edit fontSize='small' />}
+												icon={<Edit fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 											/>
 											<CustomActionBtn
 												title='Delete'
 												onClick={() => {
 													openDeleteLessonModal(index);
 												}}
-												icon={<Delete fontSize='small' />}
+												icon={<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 											/>
 											{isLessonDeleteModalOpen[index] !== undefined && (
 												<CustomDialog
