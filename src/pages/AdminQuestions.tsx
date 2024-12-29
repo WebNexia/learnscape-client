@@ -420,11 +420,11 @@ const AdminQuestions = () => {
 											sx={{
 												textAlign: 'center',
 											}}>
-											<CustomActionBtn
+											{/* <CustomActionBtn
 												title='Clone'
 												onClick={() => openCloneQuestionModal(index)}
 												icon={<FileCopy fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
-											/>
+											/> */}
 
 											<CustomDialog
 												openModal={isQuestionCloneModalOpen[index]}
