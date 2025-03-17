@@ -49,6 +49,8 @@ const Auth = ({ setUserRole }: AuthProps) => {
 	const [signUpMessage, setSignUpMessage] = useState<boolean>(false);
 	const [resetPasswordMsg, setResetPasswordMsg] = useState<boolean>(false);
 
+	const [firstName, setFirstName] = useState<string>('');
+	const [lastName, setLastName] = useState<string>('');
 	const [username, setUsername] = useState<string>('');
 	const [email, setEmail] = useState<string>('');
 	const [password, setPassword] = useState<string>('');
@@ -244,15 +246,19 @@ const Auth = ({ setUserRole }: AuthProps) => {
 
 			// Step 4: Send user data to your backend server (optional, if needed)
 			await axios.post(`${base_url}/users/signup`, {
+				firstName: firstName.trim(),
+				lastName: lastName.trim(),
 				username: username.trim(),
 				orgCode: organisationCode,
 				firebaseUserId: user.uid,
-				email,
+				email: email.trim(),
 			});
 
 			// Handle UI updates after successful sign-up
 			if (user) {
 				setActiveForm(AuthForms.SIGN_IN);
+				setFirstName('');
+				setLastName('');
 				setEmail('');
 				setPassword('');
 				setUsername('');
@@ -323,6 +329,8 @@ const Auth = ({ setUserRole }: AuthProps) => {
 									setShowPassword(false);
 									if (activeForm !== AuthForms.SIGN_IN) {
 										setErrorMsg(undefined);
+										setFirstName('');
+										setLastName('');
 										setEmail('');
 										setUsername('');
 										setPassword('');
@@ -450,6 +458,27 @@ const Auth = ({ setUserRole }: AuthProps) => {
 												justifyContent: 'center',
 												alignItems: 'flex-start',
 											}}>
+											<Box sx={{ display: 'flex', width: '100%' }}>
+												<CustomTextField
+													label='First Name'
+													type={TextFieldTypes.TEXT}
+													onChange={(e) => {
+														setFirstName(e.target.value.trim());
+														setErrorMsg(undefined);
+													}}
+													value={firstName}
+												/>
+												<CustomTextField
+													label='Last Name'
+													type={TextFieldTypes.TEXT}
+													onChange={(e) => {
+														setLastName(e.target.value.trim());
+														setErrorMsg(undefined);
+													}}
+													value={lastName}
+													sx={{ ml: '0.5rem' }}
+												/>
+											</Box>
 											<CustomTextField
 												label='Email Address'
 												type={TextFieldTypes.EMAIL}

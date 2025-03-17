@@ -9,7 +9,6 @@ import { useContext, useState } from 'react';
 import { UserCoursesIdsWithCourseIds, UserLessonDataStorage } from '../../../contexts/UserCourseLessonDataContextProvider';
 import CustomSubmitButton from '../../forms/customButtons/CustomSubmitButton';
 import { dateFormatter } from '../../../utils/dateFormatter';
-import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
 import PaymentDialog from './PaymentDialog';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 import { getPriceForCountry } from '../../../utils/getPriceForCountry';
@@ -19,13 +18,14 @@ import { truncateText } from '../../../utils/utilText';
 
 interface CoursePageBannerProps {
 	course: SingleCourse;
-	isEnrolledStatus: boolean;
-	setIsEnrolledStatus: React.Dispatch<React.SetStateAction<boolean>>;
-	documentsRef: React.RefObject<HTMLDivElement>;
+	isEnrolledStatus?: boolean;
+	setIsEnrolledStatus?: React.Dispatch<React.SetStateAction<boolean>>;
+	documentsRef?: React.RefObject<HTMLDivElement>;
+	fromHomePage?: boolean;
 }
 
-const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, documentsRef }: CoursePageBannerProps) => {
-	const firstLessonId: string = course && course?.chapters[0]?.lessonIds && course?.chapters[0]?.lessonIds[0];
+const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, documentsRef, fromHomePage }: CoursePageBannerProps) => {
+	const firstLessonId: string = course && course.chapters && course?.chapters[0]?.lessonIds && course?.chapters[0]?.lessonIds[0];
 
 	const navigate = useNavigate();
 
@@ -37,41 +37,40 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 	const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState<boolean>(false);
 
 	const { courseId, userId } = useParams();
-	const { orgId } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
 
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
 	const isCourseFree: boolean =
-		getPriceForCountry(course, user?.countryCode!).amount === 'Free' ||
-		getPriceForCountry(course, user?.countryCode!).amount === '' ||
-		getPriceForCountry(course, user?.countryCode!).amount === '0';
+		getPriceForCountry(course, user?.countryCode!)?.amount === 'Free' ||
+		getPriceForCountry(course, user?.countryCode!)?.amount === '' ||
+		getPriceForCountry(course, user?.countryCode!)?.amount === '0';
 
 	const vertical = 'top';
 	const horizontal = 'center';
 
-	const courseRegistration = async (): Promise<void> => {
+	const courseRegistration = async (resolvedUserId: string, resolvedOrgId: string): Promise<void> => {
 		try {
 			const response = await axios.post(`${base_url}/userCourses/`, {
 				courseId,
-				userId,
+				userId: resolvedUserId,
 				isCompleted: false,
 				isInProgress: true,
-				orgId,
+				orgId: resolvedOrgId,
 			});
 
-			setIsEnrolledStatus(true);
+			if (setIsEnrolledStatus) setIsEnrolledStatus(true);
 
 			const responseUserLesson = await axios.post(`${base_url}/userlessons`, {
-				lessonId: firstLessonId,
-				userId,
+				lessonId: fromHomePage ? course.firstLessonId : firstLessonId,
+				userId: resolvedUserId,
 				courseId,
 				userCourseId: response.data._id,
 				currentQuestion: 1,
 				isCompleted: false,
 				isInProgress: true,
 				notes: '',
-				orgId,
+				orgId: resolvedOrgId,
 				teacherFeedback: '',
 				isFeedbackGiven: false,
 			});
@@ -115,33 +114,40 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 
 			setDisplayEnrollmentMsg(true);
 
-			navigate(`/course/${course._id}/user/${userId}/userCourseId/${response.data._id}?isEnrolled=true`);
+			if (!fromHomePage) {
+				navigate(`/course/${course._id}/user/${userId}/userCourseId/${response.data._id}?isEnrolled=true`);
+			}
 		} catch (error) {
 			console.log(error);
 		}
 	};
 
-	const handleEnrollment = async (): Promise<void> => {
-		if (
-			getPriceForCountry(course, user?.countryCode!).amount === 'Free' ||
-			getPriceForCountry(course, user?.countryCode!).amount === '0' ||
-			getPriceForCountry(course, user?.countryCode!).amount === ''
-		) {
-			await courseRegistration();
-			setIsEnrolledStatus(true);
-		} else {
-			setIsPaymentDialogOpen(true);
-		}
-	};
+	// const handleEnrollment = async (): Promise<void> => {
+	// 	if (
+	// 		getPriceForCountry(course, user?.countryCode!).amount === 'Free' ||
+	// 		getPriceForCountry(course, user?.countryCode!).amount === '0' ||
+	// 		getPriceForCountry(course, user?.countryCode!).amount === ''
+	// 	) {
+	// 		await courseRegistration();
+	// 		if (setIsEnrolledStatus) setIsEnrolledStatus(true);
+	// 	} else {
+	// 		setIsPaymentDialogOpen(true);
+	// 	}
+	// };
 
 	return (
 		<Paper
 			elevation={10}
 			sx={{
-				width: '90%',
+				width: fromHomePage ? '85%' : '90%',
 				height: isRotated ? '18rem' : '23rem',
-				margin: isSmallScreen || isRotatedMedium ? '1.25rem 0 1.5rem 0' : '3rem 0 2rem 0',
-				backgroundColor: theme.palette.primary.main,
+				margin:
+					fromHomePage && !isSmallScreen && !isRotatedMedium
+						? '3rem 0 2rem 0'
+						: isSmallScreen || isRotatedMedium
+						? '1.25rem 0 1.5rem 0'
+						: '3rem 0 2rem 0',
+				backgroundColor: fromHomePage ? theme.bgColor?.lessonInProgress : theme.palette.primary.main,
 			}}>
 			<Snackbar
 				open={displayEnrollmentMsg}
@@ -167,26 +173,28 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 						height: '20rem',
 					}}>
 					<Box>
-						<Button
-							variant='text'
-							startIcon={<KeyboardBackspaceOutlined fontSize='small' />}
-							sx={{
-								color: theme.textColor?.common.main,
-								textTransform: 'inherit',
-								fontFamily: theme.fontFamily?.main,
-								':hover': {
-									backgroundColor: 'transparent',
-									textDecoration: 'underline',
-								},
+						{!fromHomePage && (
+							<Button
+								variant='text'
+								startIcon={<KeyboardBackspaceOutlined fontSize='small' />}
+								sx={{
+									color: theme.textColor?.common.main,
+									textTransform: 'inherit',
+									fontFamily: theme.fontFamily?.main,
+									':hover': {
+										backgroundColor: 'transparent',
+										textDecoration: 'underline',
+									},
 
-								fontSize: isSmallScreen ? '0.75rem' : null,
-							}}
-							onClick={() => {
-								navigate(`/courses/user/${userId}`);
-								window.scrollTo({ top: 0, behavior: 'smooth' });
-							}}>
-							Back to courses
-						</Button>
+									fontSize: isSmallScreen ? '0.75rem' : null,
+								}}
+								onClick={() => {
+									navigate(`/courses/user/${userId}`);
+									window.scrollTo({ top: 0, behavior: 'smooth' });
+								}}>
+								Back to courses
+							</Button>
+						)}
 						<Typography variant={isSmallScreen ? 'h6' : 'h3'} sx={{ color: theme.textColor?.common.main, margin: '0.5rem 0 1rem 0' }}>
 							{course.title}
 						</Typography>
@@ -213,13 +221,13 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 									bottom: isRotated ? 60 : 5,
 									fontSize: isMobileSize ? '0.75rem' : '0.9rem',
 								}}
-								onClick={handleEnrollment}>
+								onClick={() => setIsPaymentDialogOpen(true)}>
 								Enroll
 							</CustomSubmitButton>
 						) : (
 							<Typography
 								onClick={() => {
-									documentsRef.current?.scrollIntoView({ behavior: 'smooth' });
+									documentsRef?.current?.scrollIntoView({ behavior: 'smooth' });
 								}}
 								sx={{
 									width: 'fit-content',
@@ -248,8 +256,8 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 					<Box>
 						<CoursePageBannerDataCard
 							title='Price'
-							content={`${isCourseFree ? '' : setCurrencySymbol(getPriceForCountry(course, user?.countryCode!).currency)}${
-								isCourseFree ? 'Free' : getPriceForCountry(course, user?.countryCode!).amount
+							content={`${isCourseFree ? '' : setCurrencySymbol(getPriceForCountry(course, user?.countryCode!)?.currency)}${
+								isCourseFree ? 'Free' : getPriceForCountry(course, user?.countryCode!)?.amount
 							}`}
 							customSettings={{
 								color: theme.textColor?.common.main,
@@ -270,6 +278,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 					isPaymentDialogOpen={isPaymentDialogOpen}
 					setIsPaymentDialogOpen={setIsPaymentDialogOpen}
 					courseRegistration={courseRegistration}
+					fromHomePage={fromHomePage}
 				/>
 			</Box>
 		</Paper>
