@@ -8,6 +8,7 @@ import { useContext } from 'react';
 import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
 import { getPriceForCountry } from '../../utils/getPriceForCountry';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
+import { useGeoLocation } from '../../hooks/useGeoLocation';
 
 interface DashboardCourseCardProps {
 	course: SingleCourse;
@@ -31,6 +32,10 @@ const DashboardCourseCard = ({
 	const navigate = useNavigate();
 	const { user } = useContext(UserAuthContext);
 
+	const location = useGeoLocation();
+
+	let resolvedCountryCode = user?.countryCode || location?.countryCode || 'US';
+
 	const { isRotated, isSmallScreen } = useContext(MediaQueryContext);
 
 	const isMobileSize: boolean = isSmallScreen || isRotated;
@@ -49,9 +54,9 @@ const DashboardCourseCard = ({
 	};
 
 	const isCourseFree: boolean =
-		getPriceForCountry(course, user?.countryCode!)?.amount === '0' ||
-		getPriceForCountry(course, user?.countryCode!)?.amount === 'Free' ||
-		getPriceForCountry(course, user?.countryCode!)?.amount === '';
+		getPriceForCountry(course, resolvedCountryCode!)?.amount === '0' ||
+		getPriceForCountry(course, resolvedCountryCode!)?.amount === 'Free' ||
+		getPriceForCountry(course, resolvedCountryCode!)?.amount === '';
 	return (
 		<Card
 			sx={{
@@ -123,8 +128,8 @@ const DashboardCourseCard = ({
 							visibility: isEnrolled ? 'hidden' : 'visible',
 							color: theme.palette.primary.main,
 						}}>
-						{isCourseFree ? '' : setCurrencySymbol(getPriceForCountry(course, user?.countryCode!)?.currency)}
-						{isCourseFree ? 'Free' : getPriceForCountry(course, user?.countryCode!)?.amount}
+						{isCourseFree ? '' : setCurrencySymbol(getPriceForCountry(course, resolvedCountryCode!)?.currency)}
+						{isCourseFree ? 'Free' : getPriceForCountry(course, resolvedCountryCode!)?.amount}
 					</Typography>
 
 					<Button
