@@ -15,6 +15,7 @@ import { getPriceForCountry } from '../../../utils/getPriceForCountry';
 import { setCurrencySymbol } from '../../../utils/setCurrencySymbol';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 import { truncateText } from '../../../utils/utilText';
+import { useGeoLocation } from '../../../hooks/useGeoLocation';
 
 interface CoursePageBannerProps {
 	course: SingleCourse;
@@ -41,10 +42,14 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
+	const location = useGeoLocation();
+
+	let resolvedCountryCode = user?.countryCode || location?.countryCode || 'US';
+
 	const isCourseFree: boolean =
-		getPriceForCountry(course, user?.countryCode!)?.amount === 'Free' ||
-		getPriceForCountry(course, user?.countryCode!)?.amount === '' ||
-		getPriceForCountry(course, user?.countryCode!)?.amount === '0';
+		getPriceForCountry(course, resolvedCountryCode!)?.amount === 'Free' ||
+		getPriceForCountry(course, resolvedCountryCode!)?.amount === '' ||
+		getPriceForCountry(course, resolvedCountryCode!)?.amount === '0';
 
 	const vertical = 'top';
 	const horizontal = 'center';
@@ -124,9 +129,9 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 
 	// const handleEnrollment = async (): Promise<void> => {
 	// 	if (
-	// 		getPriceForCountry(course, user?.countryCode!).amount === 'Free' ||
-	// 		getPriceForCountry(course, user?.countryCode!).amount === '0' ||
-	// 		getPriceForCountry(course, user?.countryCode!).amount === ''
+	// 		getPriceForCountry(course, resolvedCountryCode!).amount === 'Free' ||
+	// 		getPriceForCountry(course, resolvedCountryCode!).amount === '0' ||
+	// 		getPriceForCountry(course, resolvedCountryCode!).amount === ''
 	// 	) {
 	// 		await courseRegistration();
 	// 		if (setIsEnrolledStatus) setIsEnrolledStatus(true);
@@ -256,8 +261,8 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 					<Box>
 						<CoursePageBannerDataCard
 							title='Price'
-							content={`${isCourseFree ? '' : setCurrencySymbol(getPriceForCountry(course, user?.countryCode!)?.currency)}${
-								isCourseFree ? 'Free' : getPriceForCountry(course, user?.countryCode!)?.amount
+							content={`${isCourseFree ? '' : setCurrencySymbol(getPriceForCountry(course, resolvedCountryCode!)?.currency)}${
+								isCourseFree ? 'Free' : getPriceForCountry(course, resolvedCountryCode!)?.amount
 							}`}
 							customSettings={{
 								color: theme.textColor?.common.main,

@@ -4,7 +4,7 @@ import CustomTextField from '../../forms/customFields/CustomTextField';
 import TermsConditions from './TermsConditions';
 import CustomDialogActions from '../dialog/CustomDialogActions';
 import CustomSubmitButton from '../../forms/customButtons/CustomSubmitButton';
-import { useContext, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { CardCvcElement, CardExpiryElement, CardNumberElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import axios from 'axios';
 import visaIcon from '../../../assets/visa.png';
@@ -19,6 +19,7 @@ import { setCurrencySymbol } from '../../../utils/setCurrencySymbol';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 import { getPriceForCountry } from '../../../utils/getPriceForCountry';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
+import { useGeoLocation } from '../../../hooks/useGeoLocation';
 
 interface PaymentDialogProps {
 	course: SingleCourse;
@@ -38,6 +39,15 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
 
+	const location = useGeoLocation();
+
+	let resolvedCountryCode = user?.countryCode || location?.countryCode || 'US';
+
+	useEffect(() => {
+		const price = +getPriceForCountry(course, resolvedCountryCode).amount;
+		setDiscountedAmount(price);
+	}, [user, location, course]);
+
 	const isMobileSize: boolean = isSmallScreen || isRotatedMedium;
 
 	const [isProcessing, setIsProcessing] = useState<boolean>(false);
@@ -51,7 +61,8 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 	const [email, setEmail] = useState<string>('');
 	const [isUserAccountExist, setIsUserAccountExist] = useState<boolean>(false);
 	const [promoCode, setPromoCode] = useState<string>('');
-	const [discountedAmount, setDiscountedAmount] = useState<number>(+getPriceForCountry(course, user?.countryCode!).amount);
+	const [discountedAmount, setDiscountedAmount] = useState<number>(+getPriceForCountry(course, resolvedCountryCode).amount);
+
 	const [isPromoCodeApplied, setIsPromoCodeApplied] = useState<boolean>(false);
 	const [usersUsedPromoCode, setUsersUsedPromoCode] = useState<string[]>([]);
 
@@ -78,7 +89,6 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 
 	let resolvedUserId = userId || '';
 	let resolvedOrgId = orgId;
-	let resolvedCountryCode = user?.countryCode;
 
 	const handlePayment = async () => {
 		setIsProcessing(true);
@@ -218,9 +228,9 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 			setPromoCodeId(_id);
 
 			// Calculate the discounted amount based on the type
-			let newTotal: number = +getPriceForCountry(course, user?.countryCode!).amount;
+			let newTotal: number = +getPriceForCountry(course, resolvedCountryCode).amount;
 			if (discountType === 'percentage') {
-				newTotal -= (+getPriceForCountry(course, user?.countryCode!).amount * discountAmount) / 100;
+				newTotal -= (+getPriceForCountry(course, resolvedCountryCode).amount * discountAmount) / 100;
 			} else if (discountType === 'fixed') {
 				newTotal -= discountAmount;
 			}
@@ -236,15 +246,16 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 				// Fallback in case it's not an AxiosError or the message isn't available
 				setErrorMessage('Invalid promo code');
 			}
-			setDiscountedAmount(+getPriceForCountry(course, user?.countryCode!).amount); // Reset to original price
+			setDiscountedAmount(+getPriceForCountry(course, resolvedCountryCode).amount); // Reset to original price
 		}
 	};
+
 	const resetForm = () => {
 		setFirstName('');
 		setLastName('');
 		setEmail('');
 		setPromoCode('');
-		setDiscountedAmount(+getPriceForCountry(course, user?.countryCode!).amount);
+		setDiscountedAmount(+getPriceForCountry(course, resolvedCountryCode).amount);
 		setIsPromoCodeApplied(false);
 		setAgreed(false);
 		setErrorMessage('');
@@ -354,7 +365,7 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 								setPromoCode(e.target.value);
 								setErrorMessage('');
 								setIsPromoCodeApplied(false);
-								setDiscountedAmount(+getPriceForCountry(course, user?.countryCode!).amount);
+								setDiscountedAmount(+getPriceForCountry(course, resolvedCountryCode).amount);
 								setUsersUsedPromoCode((prevData) => prevData.filter((id) => id !== userId));
 							}}
 						/>
@@ -374,7 +385,7 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 								borderRadius: '0.35rem',
 								padding: isMobileSize ? '0.5rem' : '0.75rem',
 							}}>
-							Final Price: {setCurrencySymbol(getPriceForCountry(course, user?.countryCode!).currency)}
+							Final Price: {setCurrencySymbol(getPriceForCountry(course, resolvedCountryCode).currency)}
 							{discountedAmount}
 						</Typography>
 						{isPromoCodeApplied && (
