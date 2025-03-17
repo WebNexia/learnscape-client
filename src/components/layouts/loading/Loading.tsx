@@ -148,7 +148,7 @@ const Loading = () => {
 								color: '#01435A',
 							}}>
 							{/* {organisation?.orgName} */}
-							LearnScape
+							Kaizenglish
 						</Typography>
 					</Box>
 				</>
@@ -249,7 +249,7 @@ const Loading = () => {
 							}}>
 							<Typography variant='h1' sx={{ color: theme.textColor?.common.main, fontSize: '1.5rem' }}>
 								{/* {organisation?.orgName} */}
-								LearnScape
+								Kaizenglish
 							</Typography>
 						</Box>
 						<Box
@@ -339,7 +339,7 @@ const Loading = () => {
 								color: '#01435A',
 							}}>
 							{/* {organisation?.orgName} */}
-							LearnScape
+							Kaizenglish
 						</Typography>
 					</Box>
 				</>

@@ -11,14 +11,23 @@ import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 
 interface DashboardCourseCardProps {
 	course: SingleCourse;
-	isEnrolled: boolean;
-	userId: string | undefined;
-	displayMyCourses: boolean;
-	userCourseId: string;
-	isCourseCompleted: boolean;
+	isEnrolled?: boolean;
+	userId?: string | undefined;
+	displayMyCourses?: boolean;
+	userCourseId?: string;
+	isCourseCompleted?: boolean;
+	fromHomePage?: boolean;
 }
 
-const DashboardCourseCard = ({ course, isEnrolled, userId, displayMyCourses, userCourseId, isCourseCompleted }: DashboardCourseCardProps) => {
+const DashboardCourseCard = ({
+	course,
+	isEnrolled,
+	userId,
+	displayMyCourses,
+	userCourseId,
+	isCourseCompleted,
+	fromHomePage,
+}: DashboardCourseCardProps) => {
 	const navigate = useNavigate();
 	const { user } = useContext(UserAuthContext);
 
@@ -40,9 +49,9 @@ const DashboardCourseCard = ({ course, isEnrolled, userId, displayMyCourses, use
 	};
 
 	const isCourseFree: boolean =
-		getPriceForCountry(course, user?.countryCode!).amount === '0' ||
-		getPriceForCountry(course, user?.countryCode!).amount === 'Free' ||
-		getPriceForCountry(course, user?.countryCode!).amount === '';
+		getPriceForCountry(course, user?.countryCode!)?.amount === '0' ||
+		getPriceForCountry(course, user?.countryCode!)?.amount === 'Free' ||
+		getPriceForCountry(course, user?.countryCode!)?.amount === '';
 	return (
 		<Card
 			sx={{
@@ -52,6 +61,11 @@ const DashboardCourseCard = ({ course, isEnrolled, userId, displayMyCourses, use
 				borderRadius: '0.65rem',
 				position: 'relative',
 				margin: '0 0.2rem 2rem 0.2rem',
+				boxShadow: '0.1rem 0rem 0.4rem 0.1rem rgba(0,0,0,0.1)',
+				transition: '0.3s',
+				':hover': {
+					boxShadow: '0.1rem 0.2rem 0.4rem 0.2rem rgba(0,0,0,0.2)',
+				},
 			}}>
 			<CardMedia
 				sx={{ height: isMobileSize ? '9rem' : '12rem', width: isMobileSize ? '17rem' : '22rem', objectFit: 'contain' }}
@@ -109,8 +123,8 @@ const DashboardCourseCard = ({ course, isEnrolled, userId, displayMyCourses, use
 							visibility: isEnrolled ? 'hidden' : 'visible',
 							color: theme.palette.primary.main,
 						}}>
-						{isCourseFree ? '' : setCurrencySymbol(getPriceForCountry(course, user?.countryCode!).currency)}
-						{isCourseFree ? 'Free' : getPriceForCountry(course, user?.countryCode!).amount}
+						{isCourseFree ? '' : setCurrencySymbol(getPriceForCountry(course, user?.countryCode!)?.currency)}
+						{isCourseFree ? 'Free' : getPriceForCountry(course, user?.countryCode!)?.amount}
 					</Typography>
 
 					<Button
@@ -121,9 +135,13 @@ const DashboardCourseCard = ({ course, isEnrolled, userId, displayMyCourses, use
 						}}
 						size={isMobileSize ? 'small' : 'medium'}
 						onClick={() => {
-							navigate(
-								`/course/${course._id}/user/${userId}/userCourseId/${userCourseId === undefined ? 'none' : userCourseId}?isEnrolled=${isEnrolled}`
-							);
+							if (!fromHomePage) {
+								navigate(
+									`/course/${course._id}/user/${userId}/userCourseId/${userCourseId === undefined ? 'none' : userCourseId}?isEnrolled=${isEnrolled}`
+								);
+							} else {
+								navigate(`/course/${course.title}/${course._id}`);
+							}
 							window.scrollTo({ top: 0, behavior: 'smooth' });
 						}}>
 						{isEnrolled && isCourseCompleted ? 'Review Course' : isEnrolled && !isCourseCompleted ? 'Continue' : 'Explore'}

@@ -11,7 +11,7 @@ import visaIcon from '../../../assets/visa.png';
 import masterCardIcon from '../../../assets/mastercard.png';
 import defaultCardIcon from '../../../assets/credit-card.png';
 import { SingleCourse } from '../../../interfaces/course';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
 import CustomErrorMessage from '../../forms/customFields/CustomErrorMessage';
 import theme from '../../../themes';
@@ -24,13 +24,16 @@ interface PaymentDialogProps {
 	course: SingleCourse;
 	isPaymentDialogOpen: boolean;
 	setIsPaymentDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
-	courseRegistration: () => Promise<void>;
+	courseRegistration: (resolvedUserId: string, resolvedOrgId: string) => Promise<void>;
+	fromHomePage?: boolean;
 }
 
-const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, courseRegistration }: PaymentDialogProps) => {
+const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, courseRegistration, fromHomePage }: PaymentDialogProps) => {
 	const { userId } = useParams();
 	const { orgId } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
+
+	const navigate = useNavigate();
 
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
@@ -45,6 +48,8 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 
 	const [firstName, setFirstName] = useState<string>('');
 	const [lastName, setLastName] = useState<string>('');
+	const [email, setEmail] = useState<string>('');
+	const [isUserAccountExist, setIsUserAccountExist] = useState<boolean>(false);
 	const [promoCode, setPromoCode] = useState<string>('');
 	const [discountedAmount, setDiscountedAmount] = useState<number>(+getPriceForCountry(course, user?.countryCode!).amount);
 	const [isPromoCodeApplied, setIsPromoCodeApplied] = useState<boolean>(false);
@@ -52,13 +57,13 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 
 	const [promoCodeId, setPromoCodeId] = useState<string>('');
 
+	const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
+	const [cardNumberComplete, setCardNumberComplete] = useState<boolean>(false);
+	const [cardExpiryComplete, setCardExpiryComplete] = useState<boolean>(false);
+	const [cardCvcComplete, setCardCvcComplete] = useState<boolean>(false);
+
 	const stripe = useStripe();
 	const elements = useElements();
-
-	const handleCardNumberChange = (event: any) => {
-		// Set the card brand based on the Stripe event
-		setCardBrand(event.brand || 'unknown');
-	};
 
 	const getCardIcon = (brand: string) => {
 		switch (brand) {
@@ -71,13 +76,36 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 		}
 	};
 
+	let resolvedUserId = userId || '';
+	let resolvedOrgId = orgId;
+	let resolvedCountryCode = user?.countryCode;
+
 	const handlePayment = async () => {
 		setIsProcessing(true);
+		setIsSubmitted(true);
+
+		if (fromHomePage) {
+			const userExistsResponse = await axios.post(`${base_url}/users/check-user-exists`, { email });
+
+			setIsUserAccountExist(userExistsResponse.data.exists);
+
+			if (!userExistsResponse.data.exists) {
+				setErrorMessage(`Create a free account to make payment.`);
+				setIsProcessing(false);
+				return;
+			}
+
+			// Override userId and orgId with response data
+			resolvedUserId = userExistsResponse.data.userId;
+			resolvedOrgId = userExistsResponse.data.orgId;
+			resolvedCountryCode = userExistsResponse.data.countryCode;
+		}
 
 		let usersUsedCode = [...usersUsedPromoCode];
 
 		if (!stripe || !elements) {
 			setErrorMessage('Stripe has not loaded properly.');
+			setIsProcessing(false);
 			console.log('Stripe has not loaded properly.');
 			return;
 		}
@@ -89,7 +117,13 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 
 		// Ensure all elements are not null before proceeding
 		if (!cardNumberElement || !cardExpiryElement || !cardCvcElement) {
-			setErrorMessage('One or more card elements are not loaded properly.');
+			setErrorMessage('Please fill in all card details.');
+			setIsProcessing(false);
+			return;
+		}
+
+		if (!cardNumberComplete || !cardExpiryComplete || !cardCvcComplete) {
+			setErrorMessage('Please fill in all card details.');
 			setIsProcessing(false);
 			return;
 		}
@@ -100,10 +134,11 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 				firstName: firstName.trim(),
 				lastName: lastName.trim(),
 				amount: discountedAmount, // Assuming course.price is in currency units (not cents)
-				currency: getPriceForCountry(course, user?.countryCode!).currency, // Set your preferred currency
-				orgId,
-				userId,
+				currency: getPriceForCountry(course, resolvedCountryCode!).currency, // Set your preferred currency
+				orgId: resolvedOrgId,
+				userId: resolvedUserId,
 				courseId: course._id,
+				email,
 			});
 
 			const { clientSecret } = response.data; // Make sure _id and clientSecret are present in the response
@@ -138,20 +173,21 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 					lastName,
 				});
 
-				if (!user?.firstName && !user?.lastName) {
-					await axios.patch(`${base_url}/users/${user?._id}`, {
-						firstName,
-						lastName,
-					});
-				}
-
 				setUsersUsedPromoCode((prevData) => {
-					prevData.push(user?._id!);
+					if (fromHomePage && resolvedUserId) {
+						prevData.push(resolvedUserId);
+					} else {
+						prevData.push(user?._id!);
+					}
 
 					return prevData;
 				});
 
-				usersUsedCode.push(user?._id!);
+				if (fromHomePage && resolvedUserId) {
+					usersUsedCode.push(resolvedUserId);
+				} else {
+					usersUsedCode.push(user?._id!);
+				}
 
 				if (isPromoCodeApplied) {
 					await axios.patch(`${base_url}/promocodes/${promoCodeId}`, {
@@ -160,12 +196,13 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 				}
 			}
 			setIsPaymentDialogOpen(false);
-			await courseRegistration();
+			await courseRegistration(resolvedUserId, resolvedOrgId);
+			resetForm();
+			setIsProcessing(false);
 		} catch (error) {
 			setErrorMessage('An error occurred while processing the payment.');
+			setIsProcessing(false);
 		}
-
-		setIsProcessing(false);
 	};
 
 	const handleApplyPromoCode = async () => {
@@ -205,11 +242,17 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 	const resetForm = () => {
 		setFirstName('');
 		setLastName('');
+		setEmail('');
 		setPromoCode('');
 		setDiscountedAmount(+getPriceForCountry(course, user?.countryCode!).amount);
 		setIsPromoCodeApplied(false);
 		setAgreed(false);
 		setErrorMessage('');
+		setCardCvcComplete(false);
+		setCardExpiryComplete(false);
+		setCardNumberComplete(false);
+		setIsSubmitted(false);
+		setIsProcessing(false);
 	};
 	return (
 		<CustomDialog
@@ -224,7 +267,6 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 				onSubmit={async (e) => {
 					e.preventDefault();
 					await handlePayment();
-					resetForm();
 				}}>
 				<Box
 					sx={{
@@ -261,6 +303,39 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 							}}
 						/>
 					</Box>
+					{fromHomePage && (
+						<Box
+							sx={{
+								display: 'flex',
+								justifyContent: 'space-between',
+								width: '100%',
+								padding: isSmallScreen || isRotatedMedium ? '0 0.35rem' : '0 0.75rem',
+								mb: '-1rem',
+							}}>
+							<CustomTextField
+								label='Email Address'
+								size='small'
+								value={email}
+								type='email'
+								onChange={(e) => {
+									setEmail(e.target.value);
+								}}
+							/>
+						</Box>
+					)}
+					{fromHomePage && (
+						<Box sx={{ display: 'flex', justifyContent: 'flex-start', width: '100%', margin: '0 0 1rem 1.5rem' }}>
+							<Typography variant='body2'>
+								If you do not have account, please click{' '}
+								<span
+									onClick={() => navigate('/auth')}
+									style={{ color: theme.textColor?.greenSecondary.main, textDecoration: 'underline', cursor: 'pointer' }}>
+									here
+								</span>{' '}
+								to create free account
+							</Typography>
+						</Box>
+					)}
 					<Box
 						sx={{
 							display: 'flex',
@@ -324,7 +399,7 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 						<Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
 							<Box
 								sx={{
-									border: '1px solid #ccc',
+									border: isSubmitted && !cardNumberComplete ? '1px solid red' : '1px solid #ccc',
 									padding: '0.5rem',
 									borderRadius: '0.35rem',
 									backgroundColor: '#fff',
@@ -345,7 +420,10 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 											},
 										},
 									}}
-									onChange={handleCardNumberChange}
+									onChange={(event) => {
+										setCardNumberComplete(event.complete);
+										setCardBrand(event.brand || 'unknown');
+									}}
 								/>
 							</Box>
 							<Box>
@@ -367,7 +445,13 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 								mr: '0.75rem',
 							}}>
 							<Typography sx={{ fontSize: isMobileSize ? '0.7rem' : '0.85rem', paddingBottom: '0.25rem' }}>Expiry Date*</Typography>
-							<Box sx={{ border: '1px solid #ccc', padding: '0.5rem', borderRadius: '0.35rem', backgroundColor: '#fff' }}>
+							<Box
+								sx={{
+									border: isSubmitted && !cardExpiryComplete ? '1px solid red' : '1px solid #ccc',
+									padding: '0.5rem',
+									borderRadius: '0.35rem',
+									backgroundColor: '#fff',
+								}}>
 								<Box>
 									<CardExpiryElement
 										options={{
@@ -384,6 +468,7 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 												},
 											},
 										}}
+										onChange={(event) => setCardExpiryComplete(event.complete)}
 									/>
 								</Box>
 							</Box>
@@ -395,12 +480,19 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 								width: '100%',
 							}}>
 							<Typography sx={{ fontSize: isMobileSize ? '0.7rem' : '0.85rem', paddingBottom: '0.25rem' }}>CVC*</Typography>
-							<Box sx={{ border: '1px solid #ccc', padding: '0.5rem', borderRadius: '0.35rem', backgroundColor: '#fff' }}>
+							<Box
+								sx={{
+									border: isSubmitted && !cardCvcComplete ? '1px solid red' : '1px solid #ccc',
+									padding: '0.5rem',
+									borderRadius: '0.35rem',
+									backgroundColor: '#fff',
+								}}>
 								<CardCvcElement
 									options={{
 										style: {
 											base: {
 												fontSize: isMobileSize ? '11px' : '14px',
+
 												color: '#424770',
 												'::placeholder': {
 													color: '#aab7c4',
@@ -411,6 +503,7 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 											},
 										},
 									}}
+									onChange={(event) => setCardCvcComplete(event.complete)}
 								/>
 							</Box>
 						</Box>
@@ -460,7 +553,14 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 
 				{errorMessage && (
 					<CustomErrorMessage sx={{ width: '100%', padding: '0.75rem 1.25rem', fontSize: isMobileSize ? '0.7rem' : '0.85rem' }}>
-						{errorMessage}
+						{errorMessage}{' '}
+						{!isUserAccountExist && (
+							<span
+								onClick={() => navigate('/auth')}
+								style={{ color: theme.textColor?.greenSecondary.main, textDecoration: 'underline', cursor: 'pointer' }}>
+								Click here
+							</span>
+						)}
 					</CustomErrorMessage>
 				)}
 

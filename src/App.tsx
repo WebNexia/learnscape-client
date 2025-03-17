@@ -29,7 +29,9 @@ import PromoCodesContextProvider from './contexts/PromoCodesContextProvider';
 
 // Lazy load pages
 const Auth = React.lazy(() => import('./pages/Auth'));
-const HomePage = React.lazy(() => import('./pages/HomePage'));
+const LandingPage = React.lazy(() => import('./pages/LandingPage'));
+const LandingPageResources = React.lazy(() => import('./pages/LandingPageResources'));
+const LandingPageCourse = React.lazy(() => import('./pages/LandingPageCourse'));
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 const Courses = React.lazy(() => import('./pages/Courses'));
 const Submissions = React.lazy(() => import('./pages/Submissions'));
@@ -69,7 +71,7 @@ function App() {
 	};
 
 	const renderRoute = (path: string, element: JSX.Element, requiredRole: string) => {
-		return hasRole(requiredRole) ? <Route path={path} element={element} /> : <Route path='/' element={<HomePage />} />;
+		return hasRole(requiredRole) ? <Route path={path} element={element} /> : <Route path='/' element={<LandingPage />} />;
 	};
 
 	return (
@@ -93,7 +95,9 @@ function App() {
 																			<Router>
 																				<Elements stripe={stripePromise}>
 																					<Routes>
-																						<Route path='/' element={<HomePage />} />
+																						<Route path='/' element={<LandingPage />} />
+																						<Route path='/resources' element={<LandingPageResources />} />
+																						<Route path='/course/:title/:courseId' element={<LandingPageCourse />} />
 																						<Route path='/auth' element={<Auth setUserRole={setUserRole} />} />
 																						<Route path='/reset-password' element={<PasswordResetPage />} />
 																						<Route path='/verify-email' element={<VerifyEmailPage />} />

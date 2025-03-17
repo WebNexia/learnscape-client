@@ -8,6 +8,7 @@ import { OrganisationContext } from './OrganisationContextProvider';
 
 interface CoursesContextTypes {
 	sortedCoursesData: SingleCourse[];
+	sortedPublicCoursesData: SingleCourse[];
 	sortCoursesData: (property: keyof SingleCourse, order: 'asc' | 'desc') => void;
 	addNewCourse: (newCourse: any) => void;
 	updateCoursePublishing: (id: string) => void;
@@ -17,6 +18,8 @@ interface CoursesContextTypes {
 	// coursesPageNumber: number;
 	// setCoursesPageNumber: React.Dispatch<React.SetStateAction<number>>;
 	fetchCourses: () => void;
+	fetchPublicCourses: () => void;
+
 	totalNumberOfEnrolledLearners: number;
 	totalCourses: number;
 	coursesSummary: CourseSummary[];
@@ -33,6 +36,7 @@ export interface CourseSummary {
 
 export const CoursesContext = createContext<CoursesContextTypes>({
 	sortedCoursesData: [],
+	sortedPublicCoursesData: [],
 	sortCoursesData: () => {},
 	addNewCourse: () => {},
 	updateCoursePublishing: () => {},
@@ -42,6 +46,7 @@ export const CoursesContext = createContext<CoursesContextTypes>({
 	// coursesPageNumber: 1,
 	// setCoursesPageNumber: () => {},
 	fetchCourses: () => {},
+	fetchPublicCourses: () => {},
 	totalNumberOfEnrolledLearners: 1,
 	totalCourses: 1,
 	coursesSummary: [],
@@ -53,6 +58,8 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 	const { orgId } = useContext(OrganisationContext);
 
 	const [sortedCoursesData, setSortedCoursesData] = useState<SingleCourse[]>([]);
+	const [sortedPublicCoursesData, setSortedPublicCoursesData] = useState<SingleCourse[]>([]);
+
 	// const [coursesNumberOfPages, setNumberOfPages] = useState<number>(1);
 	// const [coursesPageNumber, setCoursesPageNumber] = useState<number>(1);
 
@@ -81,6 +88,28 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 
 	const { data, isLoading, isError } = useQuery(['allCourses', orgId], () => fetchCourses(), {
 		enabled: !!orgId && !isLoaded,
+	});
+
+	const fetchPublicCourses = async () => {
+		try {
+			const response = await axios.get(`${base_url}/courses/public`);
+			return response.data.data; // Let useQuery handle sorting in onSuccess
+		} catch (error) {
+			throw error; // React Query will handle errors
+		}
+	};
+
+	const {
+		data: publicCourses,
+		isLoading: publicCoursesDataLoading,
+		isError: publicCoursesDataError,
+	} = useQuery(['allPublicCourses'], fetchPublicCourses, {
+		staleTime: 60000, // Cache for 1 min
+		onSuccess: (data) => {
+			const sortedDataCopy = [...data].sort((a: Course, b: Course) => b.updatedAt.localeCompare(a.updatedAt));
+			setSortedPublicCoursesData(sortedDataCopy);
+			setIsLoaded(true);
+		},
 	});
 
 	const fetchCoursesDashboardSummary = async () => {
@@ -147,11 +176,11 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 		setSortedCoursesData((prevSortedData) => prevSortedData?.filter((data) => data._id !== id));
 	};
 
-	if (isLoading || summaryDataLoading) {
+	if (isLoading || summaryDataLoading || publicCoursesDataLoading) {
 		return <Loading />;
 	}
 
-	if (isError || summaryDataError) {
+	if (isError || summaryDataError || publicCoursesDataError) {
 		return <LoadingError />;
 	}
 
@@ -159,6 +188,7 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 		<CoursesContext.Provider
 			value={{
 				sortedCoursesData,
+				sortedPublicCoursesData,
 				sortCoursesData,
 				addNewCourse,
 				removeCourse,
@@ -168,6 +198,7 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 				// coursesPageNumber,
 				// setCoursesPageNumber,
 				fetchCourses,
+				fetchPublicCourses,
 				totalNumberOfEnrolledLearners,
 				totalCourses,
 				coursesSummary,

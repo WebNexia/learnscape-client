@@ -39,6 +39,7 @@ export interface SingleCourse extends BaseCourse {
 	orgId: string;
 	documentIds: string[];
 	documents: Document[];
+	firstLessonId: string;
 }
 
 export interface Price {
