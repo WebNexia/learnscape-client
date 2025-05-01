@@ -56,8 +56,6 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 	const [cardBrand, setCardBrand] = useState<string>('unknown');
 	const [errorMessage, setErrorMessage] = useState<string>('');
 
-	const [firstName, setFirstName] = useState<string>('');
-	const [lastName, setLastName] = useState<string>('');
 	const [email, setEmail] = useState<string>('');
 	const [isUserAccountExist, setIsUserAccountExist] = useState<boolean>(false);
 	const [promoCode, setPromoCode] = useState<string>('');
@@ -90,6 +88,9 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 	let resolvedUserId = userId || '';
 	let resolvedOrgId = orgId;
 
+	let resolvedFirstName = user?.firstName || '';
+	let resolvedLastName = user?.lastName || '';
+
 	const handlePayment = async () => {
 		setIsProcessing(true);
 		setIsSubmitted(true);
@@ -109,6 +110,8 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 			resolvedUserId = userExistsResponse.data.userId;
 			resolvedOrgId = userExistsResponse.data.orgId;
 			resolvedCountryCode = userExistsResponse.data.countryCode;
+			resolvedFirstName = userExistsResponse.data.firstName;
+			resolvedLastName = userExistsResponse.data.lastName;
 		}
 
 		let usersUsedCode = [...usersUsedPromoCode];
@@ -141,8 +144,6 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 		try {
 			// 1. Make a request to your backend to create a Payment Intent
 			const response = await axios.post(`${base_url}/payments`, {
-				firstName: firstName.trim(),
-				lastName: lastName.trim(),
 				amount: discountedAmount, // Assuming course.price is in currency units (not cents)
 				currency: getPriceForCountry(course, resolvedCountryCode!).currency, // Set your preferred currency
 				orgId: resolvedOrgId,
@@ -158,7 +159,7 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 				type: 'card',
 				card: cardNumberElement, // Pass only the card number element
 				billing_details: {
-					name: `${firstName} ${lastName}`,
+					name: `${resolvedFirstName} ${resolvedLastName}`,
 				},
 			});
 
@@ -179,8 +180,6 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 				// 3. Send the paymentIntentId and details to your backend to update the payment record
 				await axios.patch(`${base_url}/payments/${paymentIntent.id}`, {
 					paymentIntentId: paymentIntent.id,
-					firstName,
-					lastName,
 				});
 
 				setUsersUsedPromoCode((prevData) => {
@@ -222,6 +221,7 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 				courseId: course._id,
 				userId,
 				orgId,
+				email,
 			});
 			const { discountAmount, discountType, usersUsed, _id } = response.data;
 
@@ -251,8 +251,6 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 	};
 
 	const resetForm = () => {
-		setFirstName('');
-		setLastName('');
 		setEmail('');
 		setPromoCode('');
 		setDiscountedAmount(+getPriceForCountry(course, resolvedCountryCode).amount);
@@ -291,118 +289,12 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 					<Box
 						sx={{
 							display: 'flex',
-							justifyContent: 'space-between',
-							width: '100%',
-							padding: isSmallScreen || isRotatedMedium ? '0 0.35rem' : '0 0.75rem',
-							mb: '-1rem',
-						}}>
-						<CustomTextField
-							label='First Name'
-							size='small'
-							sx={{ mr: '0.5rem' }}
-							value={firstName}
-							onChange={(e) => {
-								setFirstName(e.target.value);
-							}}
-						/>
-						<CustomTextField
-							label='Last Name'
-							size='small'
-							value={lastName}
-							onChange={(e) => {
-								setLastName(e.target.value);
-							}}
-						/>
-					</Box>
-					{fromHomePage && (
-						<Box
-							sx={{
-								display: 'flex',
-								justifyContent: 'space-between',
-								width: '100%',
-								padding: isSmallScreen || isRotatedMedium ? '0 0.35rem' : '0 0.75rem',
-								mb: '-1rem',
-							}}>
-							<CustomTextField
-								label='Email Address'
-								size='small'
-								value={email}
-								type='email'
-								onChange={(e) => {
-									setEmail(e.target.value);
-								}}
-							/>
-						</Box>
-					)}
-					{fromHomePage && (
-						<Box sx={{ display: 'flex', justifyContent: 'flex-start', width: '100%', margin: '0 0 1rem 1.5rem' }}>
-							<Typography variant='body2'>
-								If you do not have account, please click{' '}
-								<span
-									onClick={() => navigate('/auth')}
-									style={{ color: theme.textColor?.greenSecondary.main, textDecoration: 'underline', cursor: 'pointer' }}>
-									here
-								</span>{' '}
-								to create free account
-							</Typography>
-						</Box>
-					)}
-					<Box
-						sx={{
-							display: 'flex',
-							justifyContent: 'space-between',
-							width: '100%',
-							padding: isSmallScreen || isRotatedMedium ? '0 0.35rem' : '0 0.75rem',
-							mb: '-1rem',
-						}}>
-						<CustomTextField
-							label='Promo Code'
-							size='small'
-							required={false}
-							sx={{ mr: '0.75rem' }}
-							value={promoCode}
-							onChange={(e) => {
-								setPromoCode(e.target.value);
-								setErrorMessage('');
-								setIsPromoCodeApplied(false);
-								setDiscountedAmount(+getPriceForCountry(course, resolvedCountryCode).amount);
-								setUsersUsedPromoCode((prevData) => prevData.filter((id) => id !== userId));
-							}}
-						/>
-						<CustomSubmitButton
-							size='small'
-							type='button'
-							sx={{ height: isMobileSize ? '1.85rem' : '2.15rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}
-							onClick={handleApplyPromoCode}>
-							Apply
-						</CustomSubmitButton>
-					</Box>
-					<Box sx={{ display: 'flex', alignItems: 'center', width: '100%', padding: isSmallScreen || isRotatedMedium ? '0 0.35rem' : '0 0.75rem' }}>
-						<Typography
-							variant={isMobileSize ? 'body2' : 'h6'}
-							sx={{
-								boxShadow: '0.1rem 0.1rem 0.5rem 0.1rem rgba(0,0,0,0.3)',
-								borderRadius: '0.35rem',
-								padding: isMobileSize ? '0.5rem' : '0.75rem',
-							}}>
-							Final Price: {setCurrencySymbol(getPriceForCountry(course, resolvedCountryCode).currency)}
-							{discountedAmount}
-						</Typography>
-						{isPromoCodeApplied && (
-							<Typography variant='body2' sx={{ color: theme.textColor?.greenPrimary.main, ml: isMobileSize ? '1rem' : '2rem' }}>
-								Promo Code is applied
-							</Typography>
-						)}
-					</Box>
-					<Box
-						sx={{
-							display: 'flex',
 							flexDirection: 'column',
 							justifyContent: 'space-between',
 							alignItems: 'center',
 							width: '100%',
 							padding: isSmallScreen || isRotatedMedium ? '0rem 0.35rem' : '0 0.75rem 1rem 0.75rem',
-							margin: '0 0.75rem',
+							margin: '0 0.75rem -1.5rem 0.75rem',
 						}}>
 						<Box sx={{ width: '100%', textAlign: 'left' }}>
 							<Typography sx={{ fontSize: isMobileSize ? '0.7rem' : '0.85rem' }}>Card Number*</Typography>
@@ -518,6 +410,87 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 								/>
 							</Box>
 						</Box>
+					</Box>
+					{fromHomePage && (
+						<Box
+							sx={{
+								display: 'flex',
+								justifyContent: 'space-between',
+								width: '100%',
+								padding: isSmallScreen || isRotatedMedium ? '0 0.35rem' : '0 0.75rem',
+								margin: '1.5rem 0 -1rem 0',
+							}}>
+							<CustomTextField
+								label='Email Address'
+								size='small'
+								value={email}
+								type='email'
+								onChange={(e) => {
+									setEmail(e.target.value);
+								}}
+							/>
+						</Box>
+					)}
+
+					<Box
+						sx={{
+							display: 'flex',
+							justifyContent: 'space-between',
+							width: '100%',
+							padding: isSmallScreen || isRotatedMedium ? '0 0.35rem' : '0 0.75rem',
+							mb: '-1rem',
+						}}>
+						<CustomTextField
+							label='Promo Code'
+							size='small'
+							required={false}
+							sx={{ mr: '0.75rem' }}
+							value={promoCode}
+							onChange={(e) => {
+								setPromoCode(e.target.value);
+								setErrorMessage('');
+								setIsPromoCodeApplied(false);
+								setDiscountedAmount(+getPriceForCountry(course, resolvedCountryCode).amount);
+								setUsersUsedPromoCode((prevData) => prevData.filter((id) => id !== userId));
+							}}
+						/>
+						<CustomSubmitButton
+							size='small'
+							type='button'
+							sx={{ height: isMobileSize ? '1.85rem' : '2.15rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}
+							onClick={handleApplyPromoCode}>
+							Apply
+						</CustomSubmitButton>
+					</Box>
+					{fromHomePage && (
+						<Box sx={{ display: 'flex', justifyContent: 'flex-start', width: '100%', margin: '0 0 1rem 1.5rem' }}>
+							<Typography variant='body2'>
+								If you do not have account, please click{' '}
+								<span
+									onClick={() => navigate('/auth')}
+									style={{ color: theme.textColor?.greenSecondary.main, textDecoration: 'underline', cursor: 'pointer' }}>
+									here
+								</span>{' '}
+								to create free account
+							</Typography>
+						</Box>
+					)}
+					<Box sx={{ display: 'flex', alignItems: 'center', width: '100%', padding: isSmallScreen || isRotatedMedium ? '0 0.35rem' : '0 0.75rem' }}>
+						<Typography
+							variant={isMobileSize ? 'body2' : 'h6'}
+							sx={{
+								boxShadow: '0.1rem 0.1rem 0.5rem 0.1rem rgba(0,0,0,0.3)',
+								borderRadius: '0.35rem',
+								padding: isMobileSize ? '0.5rem' : '0.75rem',
+							}}>
+							Final Price: {setCurrencySymbol(getPriceForCountry(course, resolvedCountryCode).currency)}
+							{discountedAmount}
+						</Typography>
+						{isPromoCodeApplied && (
+							<Typography variant='body2' sx={{ color: theme.textColor?.greenPrimary.main, ml: isMobileSize ? '1rem' : '2rem' }}>
+								Promo Code is applied
+							</Typography>
+						)}
 					</Box>
 					<Box
 						sx={{

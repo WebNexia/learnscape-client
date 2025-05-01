@@ -21,6 +21,7 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
+import PhoneInput from 'react-phone-input-2';
 
 interface AuthProps {
 	setUserRole: React.Dispatch<React.SetStateAction<string | null>>;
@@ -53,6 +54,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 	const [lastName, setLastName] = useState<string>('');
 	const [username, setUsername] = useState<string>('');
 	const [email, setEmail] = useState<string>('');
+	const [phone, setPhone] = useState<string>('');
 	const [password, setPassword] = useState<string>('');
 	const [orgCode, setOrgCode] = useState<string>(organisationCode);
 
@@ -71,6 +73,8 @@ const Auth = ({ setUserRole }: AuthProps) => {
 			{errorMsg}
 		</Typography>
 	);
+
+	console.log(phone);
 
 	const signIn = async (e: FormEvent) => {
 		e.preventDefault();
@@ -252,6 +256,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 				orgCode: organisationCode,
 				firebaseUserId: user.uid,
 				email: email.trim(),
+				phone,
 			});
 
 			// Handle UI updates after successful sign-up
@@ -262,14 +267,17 @@ const Auth = ({ setUserRole }: AuthProps) => {
 				setEmail('');
 				setPassword('');
 				setUsername('');
+				setPhone('');
 				setOrgCode('');
 				setErrorMsg(undefined);
 				setSignUpMessage(true);
 				setShowPassword(false);
 			}
 		} catch (error) {
-			if (axios.isAxiosError(error) && error.response?.status === 400 && error.response?.data?.message === 'Username is already taken.') {
+			if (axios.isAxiosError(error) && error.response?.status === 400 && error.response?.data?.message === 'username') {
 				setErrorMsg(AuthFormErrorMessages.USERNAME_EXISTS);
+			} else if (axios.isAxiosError(error) && error.response?.status === 400 && error.response?.data?.message === 'phone') {
+				setErrorMsg(AuthFormErrorMessages.PHONE_NUMBER_EXISTS);
 			} else if (error instanceof FirebaseError) {
 				handleFirebaseError(error);
 			}
@@ -309,6 +317,11 @@ const Auth = ({ setUserRole }: AuthProps) => {
 				height: '100vh',
 				padding: isRotated ? '5rem 0' : '',
 			}}>
+			<Box>
+				<Typography variant='h1' sx={{ fontSize: '2.5rem', mb: '1.5rem' }}>
+					KAIZENGLISH
+				</Typography>
+			</Box>
 			<Box sx={styles.formContainerStyles(isVerySmallScreen, isSmallScreen, isRotated, isRotatedMedium)}>
 				<Box
 					sx={{
@@ -334,6 +347,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 										setEmail('');
 										setUsername('');
 										setPassword('');
+										setPhone('');
 									}
 								}}
 								size='large'
@@ -356,6 +370,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 										setUsername('');
 										setPassword('');
 										setOrgCode('');
+										setPhone('');
 										setErrorMsg(undefined);
 									}
 								}}
@@ -488,6 +503,21 @@ const Auth = ({ setUserRole }: AuthProps) => {
 												}}
 												value={email}
 											/>
+
+											<Box sx={{ width: '100%', mb: '1.5rem' }}>
+												<PhoneInput
+													country={'tr'}
+													enableSearch={true}
+													inputStyle={{ width: '100%', height: '2rem', fontFamily: 'Poppins' }}
+													containerStyle={{ marginBottom: '0.85rem', color: theme.textColor?.secondary.main, fontFamily: 'Poppins' }}
+													value={phone}
+													onChange={(phoneNumber, country) => {
+														const formattedNumber = phoneNumber.startsWith('+') ? phoneNumber : `+${phoneNumber}`;
+														setPhone(formattedNumber);
+														setErrorMsg(undefined);
+													}}
+												/>
+											</Box>
 
 											<Box sx={{ display: 'flex', width: '110%' }}>
 												<CustomTextField
@@ -701,6 +731,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 							[AuthFormErrorMessages.EMAIL_EXISTS]: errorMessageTypography,
 							[AuthFormErrorMessages.INVALID_CREDENTIALS]: errorMessageTypography,
 							[AuthFormErrorMessages.USERNAME_EXISTS]: errorMessageTypography,
+							[AuthFormErrorMessages.PHONE_NUMBER_EXISTS]: errorMessageTypography,
 							[AuthFormErrorMessages.EMAIL_NOT_VERIFIED]: errorMessageTypography,
 							[AuthFormErrorMessages.UNKNOWN_ERROR_OCCURRED]: errorMessageTypography,
 							[AuthFormErrorMessages.PASSWORD_TOO_SHORT]: errorMessageTypography,

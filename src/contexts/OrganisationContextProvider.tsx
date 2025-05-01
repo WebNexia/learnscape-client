@@ -30,21 +30,22 @@ const OrganisationContextProvider = (props: UserAuthContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const token = localStorage.getItem('orgId')?.slice(5, -5);
 
+	const DEFAULT_ORG_ID = import.meta.env.VITE_ORG_ID;
+
 	const [isLoaded, setIsLoaded] = useState<boolean>(false);
 
 	const [organisation, setOrganisation] = useState<Organisation>();
 	const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
 	const [orgId, setOrgId] = useState<string>(() => {
-		if (token) {
-			return token;
-		}
-		return '';
+		return token || DEFAULT_ORG_ID;
 	});
 	const queryClient = useQueryClient();
 
 	const fetchOrganisationData = async (orgId: string) => {
 		try {
-			const responseOrgData = await axios.get(`${base_url}/organisations/${orgId}`);
+			const resolvedOrgId = orgId || DEFAULT_ORG_ID;
+
+			const responseOrgData = await axios.get(`${base_url}/organisations/${resolvedOrgId}`);
 			setOrganisation(responseOrgData.data.data[0]);
 
 			setAdminUsers(responseOrgData.data.data[0].admins);
