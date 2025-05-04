@@ -13,7 +13,8 @@ export const enum TextFieldTypes {
 export const enum AuthFormErrorMessages {
 	EMAIL_EXISTS = 'This email address is already in use!',
 	INVALID_CREDENTIALS = 'Invalid email address or password',
-	USERNAME_EXISTS = 'Username is already taken',
+	USERNAME_EXISTS = 'This username is already taken',
+	PHONE_NUMBER_EXISTS = 'This phone number is already registered',
 	EMAIL_NOT_VERIFIED = 'Email is not verified',
 	UNKNOWN_ERROR_OCCURRED = 'An unknown error occurred',
 	PASSWORD_TOO_SHORT = 'Password must be at least 6 characters long',

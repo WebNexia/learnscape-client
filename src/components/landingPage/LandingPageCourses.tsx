@@ -1,26 +1,17 @@
 import { ArrowBackIosNew, ArrowForwardIos } from '@mui/icons-material';
 import { Box, IconButton, Typography } from '@mui/material';
 import DashboardCourseCard from '../userCourses/DashboardCourseCard';
-import { forwardRef, useContext, useEffect, useRef, useState } from 'react';
+import { forwardRef, useContext, useState } from 'react';
 import { CoursesContext } from '../../contexts/CoursesContextProvider';
 import { motion } from 'framer-motion';
 import { SingleCourse } from '../../interfaces/course';
 
 const LandingPageCourses = forwardRef<HTMLDivElement>((_, ref) => {
-	const { sortedPublicCoursesData, fetchPublicCourses } = useContext(CoursesContext);
-	const isInitialMount = useRef(true);
-
-	useEffect(() => {
-		if (isInitialMount.current) {
-			isInitialMount.current = false;
-		} else {
-			fetchPublicCourses();
-		}
-	}, []);
+	const { sortedCoursesData } = useContext(CoursesContext);
 
 	const coursesPerPage = 3; // Number of visible courses
 	const [currentIndex, setCurrentIndex] = useState<number>(0);
-	const totalCourses = sortedPublicCoursesData.length;
+	const totalCourses = sortedCoursesData.filter((course: SingleCourse) => course.isActive).length;
 
 	const nextCourses = () => {
 		if (currentIndex + 1 <= totalCourses - coursesPerPage) {
@@ -75,11 +66,13 @@ const LandingPageCourses = forwardRef<HTMLDivElement>((_, ref) => {
 						}}
 						animate={{ x: `-${(currentIndex * 100) / coursesPerPage}%` }} // Moves left by one course
 						transition={{ type: 'tween', duration: 0.5, ease: 'easeInOut' }}>
-						{sortedPublicCoursesData.map((course: SingleCourse) => (
-							<Box key={course._id} sx={{ flex: '1 0 calc(100% / 3)' }}>
-								<DashboardCourseCard course={course} fromHomePage />
-							</Box>
-						))}
+						{sortedCoursesData
+							.filter((course: SingleCourse) => course.isActive)
+							.map((course: SingleCourse) => (
+								<Box key={course._id} sx={{ flex: '1 0 calc(100% / 3)' }}>
+									<DashboardCourseCard course={course} fromHomePage />
+								</Box>
+							))}
 					</motion.div>
 				</Box>
 

@@ -156,14 +156,25 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 			}}>
 			<Snackbar
 				open={displayEnrollmentMsg}
-				autoHideDuration={4000}
+				autoHideDuration={!fromHomePage ? 4000 : 6000}
 				onClose={() => setDisplayEnrollmentMsg(false)}
 				anchorOrigin={{ vertical, horizontal }}>
 				<Alert
 					onClose={() => setDisplayEnrollmentMsg(false)}
 					severity='success'
-					sx={{ width: '100%', fontSize: isMobileSize ? '0.75rem' : '0.9rem' }}>
-					You have successfully enrolled in the course!
+					sx={{
+						width: '100%',
+						fontSize: isMobileSize ? '0.75rem' : '0.9rem',
+						backgroundColor: theme.bgColor?.greenSecondary,
+						color: theme.textColor?.common.main,
+					}}>
+					You have successfully enrolled in the course!{' '}
+					{fromHomePage && (
+						<>
+							<br />
+							Login to see the course details.
+						</>
+					)}
 				</Alert>
 			</Snackbar>
 
