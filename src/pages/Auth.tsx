@@ -74,8 +74,6 @@ const Auth = ({ setUserRole }: AuthProps) => {
 		</Typography>
 	);
 
-	console.log(phone);
-
 	const signIn = async (e: FormEvent) => {
 		e.preventDefault();
 		try {

@@ -96,22 +96,30 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 		setIsSubmitted(true);
 
 		if (fromHomePage) {
-			const userExistsResponse = await axios.post(`${base_url}/users/check-user-exists`, { email });
+			try {
+				const userExistsResponse = await axios.post(`${base_url}/users/check-user-exists`, { email, courseId: course._id });
 
-			setIsUserAccountExist(userExistsResponse.data.exists);
+				setIsUserAccountExist(userExistsResponse.data.exists);
 
-			if (!userExistsResponse.data.exists) {
-				setErrorMessage(`Create a free account to make payment.`);
-				setIsProcessing(false);
-				return;
+				if (!userExistsResponse.data.exists) {
+					setErrorMessage(`This email address isn't linked to any account.\nCreate a free account to join the course! - `);
+					setIsProcessing(false);
+					return;
+				} else if (userExistsResponse.data.isEnrolledInCourse) {
+					setErrorMessage(`You are already enrolled in this course!`);
+					setIsProcessing(false);
+					return;
+				}
+
+				// Override userId and orgId with response data
+				resolvedUserId = userExistsResponse.data.userId;
+				resolvedOrgId = userExistsResponse.data.orgId;
+				resolvedCountryCode = userExistsResponse.data.countryCode;
+				resolvedFirstName = userExistsResponse.data.firstName;
+				resolvedLastName = userExistsResponse.data.lastName;
+			} catch (error) {
+				console.log(error);
 			}
-
-			// Override userId and orgId with response data
-			resolvedUserId = userExistsResponse.data.userId;
-			resolvedOrgId = userExistsResponse.data.orgId;
-			resolvedCountryCode = userExistsResponse.data.countryCode;
-			resolvedFirstName = userExistsResponse.data.firstName;
-			resolvedLastName = userExistsResponse.data.lastName;
 		}
 
 		let usersUsedCode = [...usersUsedPromoCode];
@@ -130,12 +138,6 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 
 		// Ensure all elements are not null before proceeding
 		if (!cardNumberElement || !cardExpiryElement || !cardCvcElement) {
-			setErrorMessage('Please fill in all card details.');
-			setIsProcessing(false);
-			return;
-		}
-
-		if (!cardNumberComplete || !cardExpiryComplete || !cardCvcComplete) {
 			setErrorMessage('Please fill in all card details.');
 			setIsProcessing(false);
 			return;
@@ -176,38 +178,33 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 
 			if (error) {
 				setErrorMessage(error.message ?? 'An unknown error occurred');
-			} else {
+				setIsProcessing(false);
+			} else if (paymentIntent?.status === 'succeeded') {
 				// 3. Send the paymentIntentId and details to your backend to update the payment record
 				await axios.patch(`${base_url}/payments/${paymentIntent.id}`, {
 					paymentIntentId: paymentIntent.id,
 				});
 
-				setUsersUsedPromoCode((prevData) => {
-					if (fromHomePage && resolvedUserId) {
-						prevData.push(resolvedUserId);
-					} else {
-						prevData.push(user?._id!);
-					}
+				const updatedUserId = fromHomePage && resolvedUserId ? resolvedUserId : user?._id!;
+				const updatedUsersUsedCode = [...usersUsedPromoCode, updatedUserId];
 
-					return prevData;
-				});
-
-				if (fromHomePage && resolvedUserId) {
-					usersUsedCode.push(resolvedUserId);
-				} else {
-					usersUsedCode.push(user?._id!);
-				}
+				setUsersUsedPromoCode(updatedUsersUsedCode);
+				usersUsedCode = [...updatedUsersUsedCode];
 
 				if (isPromoCodeApplied) {
 					await axios.patch(`${base_url}/promocodes/${promoCodeId}`, {
 						usersUsed: usersUsedCode,
 					});
 				}
+
+				setIsPaymentDialogOpen(false);
+				await courseRegistration(resolvedUserId, resolvedOrgId);
+				resetForm();
+				setIsProcessing(false);
+			} else {
+				setErrorMessage('Payment could not be completed. Please try again.');
+				setIsProcessing(false);
 			}
-			setIsPaymentDialogOpen(false);
-			await courseRegistration(resolvedUserId, resolvedOrgId);
-			resetForm();
-			setIsProcessing(false);
 		} catch (error) {
 			setErrorMessage('An error occurred while processing the payment.');
 			setIsProcessing(false);
@@ -216,10 +213,29 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 
 	const handleApplyPromoCode = async () => {
 		try {
+			if (fromHomePage) {
+				const userExistsResponse = await axios.post(`${base_url}/users/check-user-exists`, { email });
+
+				setIsUserAccountExist(userExistsResponse.data.exists);
+
+				resolvedUserId = userExistsResponse?.data?.userId;
+
+				if (!userExistsResponse.data.exists) {
+					setErrorMessage(`This email address isn't linked to any account. Create a free account - `);
+					setIsProcessing(false);
+					return;
+				}
+			}
+
+			if (!promoCode) {
+				setErrorMessage('Enter a promo code');
+				return;
+			}
+
 			const response = await axios.post(`${base_url}/promocodes/apply`, {
 				code: promoCode.trim(),
 				courseId: course._id,
-				userId,
+				userId: resolvedUserId,
 				orgId,
 				email,
 			});
@@ -326,6 +342,7 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 									onChange={(event) => {
 										setCardNumberComplete(event.complete);
 										setCardBrand(event.brand || 'unknown');
+										setErrorMessage('');
 									}}
 								/>
 							</Box>
@@ -371,7 +388,10 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 												},
 											},
 										}}
-										onChange={(event) => setCardExpiryComplete(event.complete)}
+										onChange={(event) => {
+											setCardExpiryComplete(event.complete);
+											setErrorMessage('');
+										}}
 									/>
 								</Box>
 							</Box>
@@ -406,7 +426,10 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 											},
 										},
 									}}
-									onChange={(event) => setCardCvcComplete(event.complete)}
+									onChange={(event) => {
+										setCardCvcComplete(event.complete);
+										setErrorMessage('');
+									}}
 								/>
 							</Box>
 						</Box>
@@ -427,6 +450,9 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 								type='email'
 								onChange={(e) => {
 									setEmail(e.target.value);
+									setIsPromoCodeApplied(false);
+									setDiscountedAmount(+getPriceForCountry(course, resolvedCountryCode).amount);
+									setUsersUsedPromoCode((prevData) => prevData.filter((id) => id !== userId));
 								}}
 							/>
 						</Box>
@@ -467,7 +493,7 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 							<Typography variant='body2'>
 								If you do not have account, please click{' '}
 								<span
-									onClick={() => navigate('/auth')}
+									onClick={() => window.open('/auth', '_blank')}
 									style={{ color: theme.textColor?.greenSecondary.main, textDecoration: 'underline', cursor: 'pointer' }}>
 									here
 								</span>{' '}
@@ -536,15 +562,22 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 				<TermsConditions termsConditionsModalOpen={termsConditionsModalOpen} setTermsConditionsModalOpen={setTermsConditionsModalOpen} />
 
 				{errorMessage && (
-					<CustomErrorMessage sx={{ width: '100%', padding: '0.75rem 1.25rem', fontSize: isMobileSize ? '0.7rem' : '0.85rem' }}>
-						{errorMessage}{' '}
-						{!isUserAccountExist && (
+					<CustomErrorMessage sx={{ width: '100%', padding: '0.75rem 1.25rem', fontSize: isMobileSize ? '0.65rem' : '0.75rem' }}>
+					<span style={{whiteSpace: 'pre-line'}}>
+					{errorMessage}{' '}
+						{!isUserAccountExist && fromHomePage && (
 							<span
-								onClick={() => navigate('/auth')}
-								style={{ color: theme.textColor?.greenSecondary.main, textDecoration: 'underline', cursor: 'pointer' }}>
+								onClick={() => window.open('/auth', '_blank')}
+								style={{
+									color: theme.textColor?.greenSecondary.main,
+									textDecoration: 'underline',
+									cursor: 'pointer',
+									fontSize: isMobileSize ? '0.65rem' : '0.75rem',
+								}}>
 								Click here
 							</span>
 						)}
+					</span>
 					</CustomErrorMessage>
 				)}
 

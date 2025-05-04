@@ -18,7 +18,7 @@ const LandingPageBanner = () => {
 	const [isGetMoreDetailsModalOpen, setIsGetMoreDetailsModalOpen] = useState<boolean>(false);
 
 	const isMobileSize = isSmallScreen || isRotatedMedium;
-	const isMobileSizeSmall = isVerySmallScreen || isRotated;
+	// const isMobileSizeSmall = isVerySmallScreen || isRotated;
 	return (
 		<Box
 			sx={{

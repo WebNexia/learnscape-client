@@ -300,7 +300,6 @@ const AdminUsers = () => {
 													onClick={() => {
 														toggleUserEditModal(index);
 														openEditUserModal(index);
-														console.log('first');
 													}}
 													icon={<Edit fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 												/>

@@ -1,7 +1,7 @@
 import { ArrowBackIosNew, ArrowForwardIos } from '@mui/icons-material';
 import { Box, IconButton, Typography } from '@mui/material';
 import DashboardCourseCard from '../userCourses/DashboardCourseCard';
-import { forwardRef, useContext, useEffect, useRef, useState } from 'react';
+import { forwardRef, useContext, useState } from 'react';
 import { CoursesContext } from '../../contexts/CoursesContextProvider';
 import { motion } from 'framer-motion';
 import { SingleCourse } from '../../interfaces/course';
@@ -18,8 +18,6 @@ const LandingPageCourses = forwardRef<HTMLDivElement>((_, ref) => {
 			setCurrentIndex((prev) => prev + 1);
 		}
 	};
-
-	console.log(sortedCoursesData);
 
 	const prevCourses = () => {
 		if (currentIndex > 0) {
