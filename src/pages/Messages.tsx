@@ -800,19 +800,21 @@ const Messages = () => {
 									InputProps={{
 										endAdornment: (
 											<InputAdornment position='end'>
-												<Search sx={{ mr: '-0.5rem' }} fontSize={isMobileSize ? 'small' : 'medium'} />
+												<Search sx={{ mr: '-0.5rem', color: !user?.hasRegisteredCourse && user?.role !=='admin' ? 'lightgray' : 'inherit'}} fontSize={isMobileSize ? 'small' : 'medium'} />
 											</InputAdornment>
 										),
 									}}
 									placeholder='Search Chat by Username'
 									value={searchChatValue}
 									onChange={handleFilterChats}
+									disabled={!user?.hasRegisteredCourse && user?.role !=='admin' }
 								/>
 							</Box>
 							<Box sx={{ flex: 1 }}>
 								<Tooltip title='Find User' placement='top'>
 									<IconButton
-										sx={{ ':hover': { backgroundColor: 'transparent' } }}
+									disabled={!user?.hasRegisteredCourse && user?.role !=='admin' }
+										sx={{ ':hover': { backgroundColor: 'transparent', } }}
 										onClick={() => {
 											setAddUserModalOpen(true);
 											setFilteredUsers([]);
@@ -1205,7 +1207,7 @@ const Messages = () => {
 									</Box>
 									<Box>
 										<Typography variant={isMobileSize ? 'body2' : 'body1'} sx={{ color: theme.textColor?.common.main }}>
-											Select an existing chat or start a new chat by adding a user
+											{user?.hasRegisteredCourse || user?.role ==='admin' ? "Select an existing chat or start a new chat by adding a user" : "To use messages, you must first register for a course"}
 										</Typography>
 									</Box>
 								</Box>

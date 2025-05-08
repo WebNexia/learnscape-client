@@ -9,6 +9,7 @@ export interface User {
 	orgId: string;
 	imageUrl: string;
 	isActive: boolean;
+	hasRegisteredCourse: boolean;
 	createdAt: string;
 	updatedAt: string;
 	countryCode: string;

@@ -28,6 +28,8 @@ export interface UserCoursesIdsWithCourseIds {
 	isCourseInProgress: boolean;
 	courseTitle: string;
 	createdAt: string;
+	isActive: boolean;
+	validUntil: string;
 }
 
 export interface UserLessonDataStorage {
