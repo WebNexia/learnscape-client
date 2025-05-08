@@ -7,6 +7,8 @@ interface BaseUserCourse {
 	isCompleted: boolean;
 	createdAt: string;
 	updatedAt: string;
+	isActive: boolean;
+	validUntil: string;
 }
 
 export interface UserCoursesByUserId extends BaseUserCourse {

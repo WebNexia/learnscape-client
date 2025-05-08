@@ -22,6 +22,7 @@ import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import PhoneInput from 'react-phone-input-2';
+import { useGeoLocation } from '../hooks/useGeoLocation';
 
 interface AuthProps {
 	setUserRole: React.Dispatch<React.SetStateAction<string | null>>;
@@ -37,6 +38,8 @@ const Auth = ({ setUserRole }: AuthProps) => {
 
 	const vertical = 'top';
 	const horizontal = 'center';
+
+	const location = useGeoLocation();
 
 	const { setUserId, fetchUserData } = useContext(UserAuthContext);
 	const { fetchOrganisationData, setOrgId } = useContext(OrganisationContext);
@@ -138,6 +141,8 @@ const Auth = ({ setUserRole }: AuthProps) => {
 									isCourseInProgress: value.isInProgress,
 									courseTitle: value.courseId.title,
 									createdAt: value.createdAt,
+									isActive: value.isActive,
+									validUntil: value.validUntil,
 								});
 							}
 							return acc;
@@ -255,6 +260,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 				firebaseUserId: user.uid,
 				email: email.trim(),
 				phone,
+				countryCode: location?.countryCode,
 			});
 
 			// Handle UI updates after successful sign-up

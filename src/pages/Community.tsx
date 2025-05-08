@@ -13,6 +13,9 @@ import CreateTopicDialog from '../components/layouts/community/createTopic/Creat
 import CustomTablePagination from '../components/layouts/table/CustomTablePagination';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
+import { UserAuthContext } from '../contexts/UserAuthContextProvider';
+import theme from '../themes';
+
 
 export interface NewTopic {
 	title: string;
@@ -24,11 +27,17 @@ export interface NewTopic {
 const Community = () => {
 	const { sortedTopicsData, setTopicsPageNumber, topicsPageNumber, fetchTopics, numberOfPages } = useContext(CommunityContext);
 
+	const {user} = useContext(UserAuthContext)
+
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
+	
+
 	const [rulesModalOpen, setRulesModalOpen] = useState<boolean>(false);
 	const [createTopicModalOpen, setCreateTopicModalOpen] = useState<boolean>(false);
+
+	const [messageNonRegisteredModalOpen, setMessageNonRegisteredModalOpen] = useState<boolean>(false);
 
 	const [newTopic, setNewTopic] = useState<NewTopic>({
 		title: '',
@@ -153,7 +162,13 @@ const Community = () => {
 							<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: 'auto' }}>
 								<CustomSubmitButton
 									size='small'
-									onClick={() => setCreateTopicModalOpen(true)}
+									onClick={() =>{
+										if(user?.hasRegisteredCourse || user?.role === 'admin'){ 
+											setCreateTopicModalOpen(true);
+										} else {
+											setMessageNonRegisteredModalOpen(true);
+										}
+									}}
 									sx={{ fontSize: isMobileSize ? '0.7rem' : undefined, padding: isMobileSize ? '0.1rem 0.35rem' : undefined }}>
 									Create Topic
 								</CustomSubmitButton>
@@ -164,6 +179,20 @@ const Community = () => {
 								topic={newTopic}
 								setTopic={setNewTopic}
 							/>
+							<CustomDialog openModal={messageNonRegisteredModalOpen} closeModal={() => setMessageNonRegisteredModalOpen(false)} maxWidth='sm'>
+								<DialogContent>
+									<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+										<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.85rem' : undefined,color:theme.textColor?.error.main, }}>
+											You need to register for a course to create a topic.
+										</Typography>
+									</Box>
+								</DialogContent>
+								<CustomCancelButton
+									sx={{ alignSelf: 'end', width: isMobileSize ? '20%' : '10%', margin: isMobileSize ? '0 1rem 1rem 0' : '0 2rem 1rem 0', padding: 0 }}
+									onClick={() => setMessageNonRegisteredModalOpen(false)}>
+									Close
+								</CustomCancelButton>
+							</CustomDialog>
 						</Box>
 					</Box>
 					<Box

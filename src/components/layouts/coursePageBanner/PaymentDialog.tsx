@@ -11,7 +11,7 @@ import visaIcon from '../../../assets/visa.png';
 import masterCardIcon from '../../../assets/mastercard.png';
 import defaultCardIcon from '../../../assets/credit-card.png';
 import { SingleCourse } from '../../../interfaces/course';
-import { useNavigate, useParams } from 'react-router-dom';
+import {  useNavigate, useParams } from 'react-router-dom';
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
 import CustomErrorMessage from '../../forms/customFields/CustomErrorMessage';
 import theme from '../../../themes';
@@ -25,21 +25,23 @@ interface PaymentDialogProps {
 	course: SingleCourse;
 	isPaymentDialogOpen: boolean;
 	setIsPaymentDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
-	courseRegistration: (resolvedUserId: string, resolvedOrgId: string) => Promise<void>;
+	courseRegistration: (resolvedUserId: string, resolvedOrgId: string) => Promise<string>;
 	fromHomePage?: boolean;
+	setDisplayEnrollmentMsg: React.Dispatch<React.SetStateAction<boolean>>
+	setIsEnrolledStatus?: React.Dispatch<React.SetStateAction<boolean>> | undefined
 }
 
-const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, courseRegistration, fromHomePage }: PaymentDialogProps) => {
+const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, courseRegistration, fromHomePage,setDisplayEnrollmentMsg,setIsEnrolledStatus }: PaymentDialogProps) => {
 	const { userId } = useParams();
 	const { orgId } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
 
-	const navigate = useNavigate();
 
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
 
 	const location = useGeoLocation();
+	const navigate = useNavigate();
 
 	let resolvedCountryCode = user?.countryCode || location?.countryCode || 'US';
 
@@ -94,13 +96,13 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 	const handlePayment = async () => {
 		setIsProcessing(true);
 		setIsSubmitted(true);
-
+	
 		if (fromHomePage) {
 			try {
 				const userExistsResponse = await axios.post(`${base_url}/users/check-user-exists`, { email, courseId: course._id });
-
+	
 				setIsUserAccountExist(userExistsResponse.data.exists);
-
+	
 				if (!userExistsResponse.data.exists) {
 					setErrorMessage(`This email address isn't linked to any account.\nCreate a free account to join the course! - `);
 					setIsProcessing(false);
@@ -110,8 +112,8 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 					setIsProcessing(false);
 					return;
 				}
-
-				// Override userId and orgId with response data
+	
+				// Override IDs and user info
 				resolvedUserId = userExistsResponse.data.userId;
 				resolvedOrgId = userExistsResponse.data.orgId;
 				resolvedCountryCode = userExistsResponse.data.countryCode;
@@ -121,95 +123,159 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 				console.log(error);
 			}
 		}
-
+	
 		let usersUsedCode = [...usersUsedPromoCode];
-
+	
 		if (!stripe || !elements) {
 			setErrorMessage('Stripe has not loaded properly.');
 			setIsProcessing(false);
-			console.log('Stripe has not loaded properly.');
 			return;
 		}
-
-		// Retrieve individual elements
+	
 		const cardNumberElement = elements.getElement(CardNumberElement);
 		const cardExpiryElement = elements.getElement(CardExpiryElement);
 		const cardCvcElement = elements.getElement(CardCvcElement);
-
-		// Ensure all elements are not null before proceeding
+	
 		if (!cardNumberElement || !cardExpiryElement || !cardCvcElement) {
 			setErrorMessage('Please fill in all card details.');
 			setIsProcessing(false);
 			return;
 		}
-
+	
 		try {
-			// 1. Make a request to your backend to create a Payment Intent
+			// Step 1: Create PaymentIntent (manual capture)
 			const response = await axios.post(`${base_url}/payments`, {
-				amount: discountedAmount, // Assuming course.price is in currency units (not cents)
-				currency: getPriceForCountry(course, resolvedCountryCode!).currency, // Set your preferred currency
+				amount: discountedAmount,
+				currency: getPriceForCountry(course, resolvedCountryCode!).currency,
 				orgId: resolvedOrgId,
 				userId: resolvedUserId,
 				courseId: course._id,
 				email,
 			});
-
-			const { clientSecret } = response.data; // Make sure _id and clientSecret are present in the response
-
-			// 2. Create a payment method using the cardNumberElement
+	
+			const { clientSecret, paymentIntentId } = response.data;
+	
+			// Step 2: Create Payment Method
 			const { error: methodError, paymentMethod } = await stripe.createPaymentMethod({
 				type: 'card',
-				card: cardNumberElement, // Pass only the card number element
+				card: cardNumberElement,
 				billing_details: {
 					name: `${resolvedFirstName} ${resolvedLastName}`,
 				},
 			});
-
+	
 			if (methodError) {
+				resetForm(true);
 				setErrorMessage(methodError.message ?? 'An unknown error occurred while creating payment method');
-				setIsProcessing(false);
 				return;
 			}
-
-			// 3. Confirm the payment using the payment method
+	
+			// Step 3: Confirm the PaymentIntent (authorize only)
 			const { paymentIntent, error } = await stripe.confirmCardPayment(clientSecret, {
-				payment_method: paymentMethod.id, // Pass the payment method ID
+				payment_method: paymentMethod.id,
 			});
-
-			if (error) {
-				setErrorMessage(error.message ?? 'An unknown error occurred');
-				setIsProcessing(false);
-			} else if (paymentIntent?.status === 'succeeded') {
-				// 3. Send the paymentIntentId and details to your backend to update the payment record
-				await axios.patch(`${base_url}/payments/${paymentIntent.id}`, {
-					paymentIntentId: paymentIntent.id,
-				});
-
+	
+			if (error || paymentIntent?.status !== 'requires_capture') {
+				resetForm(true);
+				setErrorMessage(error?.message ?? 'Payment confirmation failed.');
+				return;
+			}
+	
+			// Step 4: Register the course
+			try {
+				const userCourseId = await courseRegistration(resolvedUserId, resolvedOrgId);
+	
+				// Step 5: Capture the authorized payment
+				try {
+					await axios.patch(`${base_url}/payments/capture/${paymentIntentId}`, {
+						userId: resolvedUserId,
+						orgId: resolvedOrgId,
+						courseId: course._id,
+						firstName: resolvedFirstName,
+						lastName: resolvedLastName,
+					});
+				} catch (captureError) {
+					resetForm(true);
+					console.error(`❌ Payment capture failed for paymentIntentId: ${paymentIntentId}, userId: ${resolvedUserId}`, captureError);
+	
+					try {
+						await axios.delete(`${base_url}/userCourses/remove-by-user-course`, {
+							data: {
+								userId: resolvedUserId,
+								courseId: course._id,
+							},
+						});
+	
+						if (isPromoCodeApplied && promoCodeId) {
+							try {
+								const rolledBackUsers = usersUsedPromoCode.filter((id) => id !== resolvedUserId);
+								await axios.patch(`${base_url}/promocodes/${promoCodeId}`, {
+									usersUsed: rolledBackUsers,
+								});
+								console.info(`🔁 Promo code rollback successful for userId: ${resolvedUserId}`);
+							} catch (promoRollbackErr) {
+								console.error(`❌ Failed to roll back promo code for userId: ${resolvedUserId}`, promoRollbackErr);
+							}
+						}
+	
+						// 🧹 LocalStorage cleanup
+						const updatedCourses = JSON.parse(localStorage.getItem('userCourseData') || '[]').filter(
+							(item: any) => item.courseId !== course._id
+						);
+						localStorage.setItem('userCourseData', JSON.stringify(updatedCourses));
+	
+						const updatedLessons = JSON.parse(localStorage.getItem('userLessonData') || '[]').filter(
+							(item: any) => item.courseId !== course._id
+						);
+						localStorage.setItem('userLessonData', JSON.stringify(updatedLessons));
+					} catch (cleanupErr) {
+						resetForm(true);
+						console.error(`❌ Rollback failed for userId: ${resolvedUserId}, courseId: ${course._id}`, cleanupErr);
+					}
+	
+					resetForm(true);
+					setErrorMessage('Payment failed after registration. You have not been charged, and your access was rolled back.');
+					return;
+				}
+	
+				// Step 6: Update promo code (if applied)
 				const updatedUserId = fromHomePage && resolvedUserId ? resolvedUserId : user?._id!;
 				const updatedUsersUsedCode = [...usersUsedPromoCode, updatedUserId];
-
+	
 				setUsersUsedPromoCode(updatedUsersUsedCode);
 				usersUsedCode = [...updatedUsersUsedCode];
-
+	
 				if (isPromoCodeApplied) {
 					await axios.patch(`${base_url}/promocodes/${promoCodeId}`, {
 						usersUsed: usersUsedCode,
 					});
 				}
-
+	
+				// ✅ Final UI actions (ONLY if everything succeeded)
 				setIsPaymentDialogOpen(false);
-				await courseRegistration(resolvedUserId, resolvedOrgId);
 				resetForm();
 				setIsProcessing(false);
-			} else {
-				setErrorMessage('Payment could not be completed. Please try again.');
-				setIsProcessing(false);
+	
+				if (setIsEnrolledStatus) setIsEnrolledStatus(true);
+	
+				setDisplayEnrollmentMsg(true); // ✅ success message after capture + reg
+	
+				if (!fromHomePage) {
+					navigate(`/course/${course._id}/user/${resolvedUserId}/userCourseId/${userCourseId}?isEnrolled=true`);
+				}
+			} catch (regErr) {
+				resetForm(true);
+				setErrorMessage('Course registration failed. You have not been charged.');
+				return;
 			}
-		} catch (error) {
+		} catch (err) {
+			console.log(err);
+			resetForm(true);
 			setErrorMessage('An error occurred while processing the payment.');
-			setIsProcessing(false);
 		}
 	};
+	
+	
 
 	const handleApplyPromoCode = async () => {
 		try {
@@ -266,19 +332,22 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 		}
 	};
 
-	const resetForm = () => {
-		setEmail('');
-		setPromoCode('');
-		setDiscountedAmount(+getPriceForCountry(course, resolvedCountryCode).amount);
-		setIsPromoCodeApplied(false);
-		setAgreed(false);
+const resetForm = (preserveError = false) => {
+	setEmail('');
+	setPromoCode('');
+	setDiscountedAmount(+getPriceForCountry(course, resolvedCountryCode).amount);
+	setIsPromoCodeApplied(false);
+	setAgreed(false);
+
+	if (!preserveError) {
 		setErrorMessage('');
-		setCardCvcComplete(false);
-		setCardExpiryComplete(false);
-		setCardNumberComplete(false);
-		setIsSubmitted(false);
-		setIsProcessing(false);
-	};
+	}
+
+
+	setIsSubmitted(false);
+	setIsProcessing(false);
+};
+
 	return (
 		<CustomDialog
 			openModal={isPaymentDialogOpen}
@@ -453,6 +522,7 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 									setIsPromoCodeApplied(false);
 									setDiscountedAmount(+getPriceForCountry(course, resolvedCountryCode).amount);
 									setUsersUsedPromoCode((prevData) => prevData.filter((id) => id !== userId));
+									setErrorMessage('');
 								}}
 							/>
 						</Box>
@@ -533,6 +603,7 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 									checked={agreed}
 									onChange={(e) => {
 										setAgreed(e.target.checked);
+										setErrorMessage('');
 									}}
 									sx={{
 										display: 'flex',

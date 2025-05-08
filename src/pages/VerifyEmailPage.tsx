@@ -54,7 +54,7 @@ const VerifyEmailPage = () => {
 			<Box sx={{ textAlign: 'center' }}>
 				<Typography variant='h1' sx={{ mb: '4rem' }}>
 					{/* {organisation?.orgName} */}
-					LearnScape
+					KAIZENGLISH
 				</Typography>
 				<Typography variant='h4' sx={{ mb: '2rem' }}>
 					Verify Your Email

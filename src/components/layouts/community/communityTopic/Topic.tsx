@@ -1,12 +1,15 @@
-import { Box, Typography } from '@mui/material';
+import { Box, DialogContent, Typography } from '@mui/material';
 import { CommunityTopic } from '../../../../interfaces/communityTopics';
 import { formatMessageTime } from '../../../../utils/formatTime';
 import { useNavigate } from 'react-router-dom';
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 import { UserAuthContext } from '../../../../contexts/UserAuthContextProvider';
 import { Roles } from '../../../../interfaces/enums';
 import { MediaQueryContext } from '../../../../contexts/MediaQueryContextProvider';
 import { truncateText } from '../../../../utils/utilText';
+import CustomDialog from '../../dialog/CustomDialog';
+import CustomCancelButton from '../../../forms/customButtons/CustomCancelButton';
+import theme from '../../../../themes';
 
 interface TopicProps {
 	topic: CommunityTopic;
@@ -18,6 +21,8 @@ const Topic = ({ topic }: TopicProps) => {
 
 	const { isVerySmallScreen, isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
+
+	const [messageNonRegisteredModalOpen, setMessageNonRegisteredModalOpen] = useState<boolean>(false);
 
 	return (
 		<Box
@@ -42,7 +47,9 @@ const Topic = ({ topic }: TopicProps) => {
 						<Typography
 							variant='body2'
 							onClick={() => {
-								navigate(`/${user?.role !== Roles.ADMIN ? 'community' : 'admin/community'}/user/${user?._id}/topic/${topic._id}`);
+								if(user?.hasRegisteredCourse || user?.role === Roles.ADMIN) {
+									navigate(`/${user?.role !== Roles.ADMIN ? 'community' : 'admin/community'}/user/${user?._id}/topic/${topic._id}`);
+								} else {setMessageNonRegisteredModalOpen(true);}
 							}}
 							sx={{
 								cursor: 'pointer',
@@ -92,6 +99,20 @@ const Topic = ({ topic }: TopicProps) => {
 					</Box>
 				</Box>
 			)}
+			<CustomDialog openModal={messageNonRegisteredModalOpen} closeModal={() => setMessageNonRegisteredModalOpen(false)} maxWidth='sm'>
+				<DialogContent>
+					<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+						<Typography variant='body2' sx={{color:theme.textColor?.error.main, fontSize: isMobileSize ? '0.85rem' : undefined }}>
+							You need to register for a course to join the community and topic discussions.
+						</Typography>
+					</Box>
+				</DialogContent>
+				<CustomCancelButton
+					sx={{ alignSelf: 'end', width: isMobileSize ? '20%' : '10%', margin: isMobileSize ? '0 1rem 1rem 0' : '0 2rem 1rem 0', padding: 0 }}
+					onClick={() => setMessageNonRegisteredModalOpen(false)}>
+					Close
+				</CustomCancelButton>
+			</CustomDialog>
 		</Box>
 	);
 };

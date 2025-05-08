@@ -38,7 +38,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 	const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState<boolean>(false);
 
 	const { courseId, userId } = useParams();
-	const { user } = useContext(UserAuthContext);
+	const { user, setUser } = useContext(UserAuthContext);
 
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
@@ -54,23 +54,44 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 	const vertical = 'top';
 	const horizontal = 'center';
 
-	const courseRegistration = async (resolvedUserId: string, resolvedOrgId: string): Promise<void> => {
+	const courseRegistration = async (resolvedUserId: string, resolvedOrgId: string): Promise<string> => {
 		try {
+			if (!courseId || !resolvedUserId || !resolvedOrgId) {
+				throw new Error('Missing required data for course registration');
+			}
+	
+			if (!user?.hasRegisteredCourse) {
+				await axios.patch(`${base_url}/users/${resolvedUserId}`, {
+					hasRegisteredCourse: true,
+				});
+	
+				setUser((prevUser) => {
+					if (prevUser) {
+						return { ...prevUser, hasRegisteredCourse: true };
+					}
+					return prevUser;
+				});
+			}
+	
 			const response = await axios.post(`${base_url}/userCourses/`, {
-				courseId,
 				userId: resolvedUserId,
+				courseId,
 				isCompleted: false,
 				isInProgress: true,
 				orgId: resolvedOrgId,
 			});
-
-			if (setIsEnrolledStatus) setIsEnrolledStatus(true);
-
+	
+			if (!response.data?._id) {
+				throw new Error('User course creation failed: Missing ID');
+			}
+	
+			const userCourseId = response.data._id;
+	
 			const responseUserLesson = await axios.post(`${base_url}/userlessons`, {
 				lessonId: fromHomePage ? course.firstLessonId : firstLessonId,
 				userId: resolvedUserId,
 				courseId,
-				userCourseId: response.data._id,
+				userCourseId,
 				currentQuestion: 1,
 				isCompleted: false,
 				isInProgress: true,
@@ -79,12 +100,12 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 				teacherFeedback: '',
 				isFeedbackGiven: false,
 			});
-
+	
+			// Update localStorage: userLessonData
 			const currentUserLessonData: string | null = localStorage.getItem('userLessonData');
-
 			if (currentUserLessonData !== null) {
 				const updatedUserLessonData: UserLessonDataStorage[] = JSON.parse(currentUserLessonData);
-				if (!updatedUserLessonData.some((data: UserLessonDataStorage) => data.lessonId === firstLessonId && data.courseId === courseId) && courseId) {
+				if (!updatedUserLessonData.some((data) => data.lessonId === firstLessonId && data.courseId === courseId)) {
 					const newUserLessonData: UserLessonDataStorage = {
 						lessonId: firstLessonId,
 						userLessonId: responseUserLesson.data._id,
@@ -96,36 +117,36 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 						isFeedbackGiven: false,
 						updatedAt: responseUserLesson.data.updatedAt,
 					};
-
 					updatedUserLessonData.push(newUserLessonData);
 					localStorage.setItem('userLessonData', JSON.stringify(updatedUserLessonData));
 				}
 			}
-
+	
+			// Update localStorage: userCourseData
 			let updatedUserCoursesIds: UserCoursesIdsWithCourseIds[] = [];
 			const storedUserCoursesIds = localStorage.getItem('userCourseData');
-			if (storedUserCoursesIds !== null && courseId) {
+			if (storedUserCoursesIds !== null) {
 				updatedUserCoursesIds = JSON.parse(storedUserCoursesIds);
-				updatedUserCoursesIds.push({
-					courseId,
-					userCourseId: response.data._id,
-					isCourseCompleted: false,
-					isCourseInProgress: true,
-					courseTitle: course.title,
-					createdAt: response.data.createdAt,
-				});
-				localStorage.setItem('userCourseData', JSON.stringify(updatedUserCoursesIds));
 			}
-
-			setDisplayEnrollmentMsg(true);
-
-			if (!fromHomePage) {
-				navigate(`/course/${course._id}/user/${userId}/userCourseId/${response.data._id}?isEnrolled=true`);
-			}
+			updatedUserCoursesIds.push({
+				courseId,
+				userCourseId,
+				isCourseCompleted: false,
+				isCourseInProgress: true,
+				courseTitle: course.title,
+				createdAt: response.data.createdAt,
+				isActive: true,
+				validUntil: response.data.validUntil,
+			});
+			localStorage.setItem('userCourseData', JSON.stringify(updatedUserCoursesIds));
+	
+			return userCourseId;
 		} catch (error) {
-			console.log(error);
+			console.error('❌ Error during course registration:', error);
+			throw error; // ⚠️ Propagate to prevent payment from proceeding
 		}
 	};
+	
 
 	// const handleEnrollment = async (): Promise<void> => {
 	// 	if (
@@ -295,6 +316,8 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 					setIsPaymentDialogOpen={setIsPaymentDialogOpen}
 					courseRegistration={courseRegistration}
 					fromHomePage={fromHomePage}
+					setDisplayEnrollmentMsg={setDisplayEnrollmentMsg}
+					setIsEnrolledStatus={setIsEnrolledStatus}
 				/>
 			</Box>
 		</Paper>
