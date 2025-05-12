@@ -77,6 +77,8 @@ const LessonPage = () => {
 		questions: [],
 		documentIds: [],
 		documents: [],
+		clonedFromId: '',
+		usedInCourses: [],
 	});
 
 	const [userAnswers, setUserAnswers] = useState<UserQuestionData[]>([]); //User answers for practice questions
@@ -263,13 +265,13 @@ const LessonPage = () => {
 								variant='text'
 								startIcon={<KeyboardBackspaceOutlined fontSize='small' />}
 								sx={{
-									color: theme.textColor?.primary,
-									width: 'fit-content',
-									margin: '0.75rem 0 0 0.25rem',
-									textTransform: 'inherit',
-									fontFamily: theme.fontFamily?.main,
+									'color': theme.textColor?.primary,
+									'width': 'fit-content',
+									'margin': '0.75rem 0 0 0.25rem',
+									'textTransform': 'inherit',
+									'fontFamily': theme.fontFamily?.main,
 									':hover': { backgroundColor: 'transparent', textDecoration: 'underline' },
-									fontSize: isMobileSize ? '0.7rem' : '1rem',
+									'fontSize': isMobileSize ? '0.7rem' : '1rem',
 								}}
 								onClick={() => {
 									setIsQuestionsVisible(false);
@@ -284,12 +286,12 @@ const LessonPage = () => {
 							variant='text'
 							startIcon={<Home />}
 							sx={{
-								fontSize: isMobileSize ? '0.7rem' : '1rem',
-								color: theme.textColor?.primary,
-								width: 'fit-content',
-								margin: '0.75rem 0 0 0.25rem',
-								textTransform: 'inherit',
-								fontFamily: theme.fontFamily?.main,
+								'fontSize': isMobileSize ? '0.7rem' : '1rem',
+								'color': theme.textColor?.primary,
+								'width': 'fit-content',
+								'margin': '0.75rem 0 0 0.25rem',
+								'textTransform': 'inherit',
+								'fontFamily': theme.fontFamily?.main,
 								':hover': { backgroundColor: 'transparent', textDecoration: 'underline' },
 							}}
 							onClick={handleLessonNavigation}

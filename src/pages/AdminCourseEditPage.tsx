@@ -560,7 +560,16 @@ const AdminCourseEditPage = () => {
 													...prevData,
 													documents: [
 														...prevData.documents,
-														{ _id: generateUniqueId('temp_doc_id_'), name: newName, documentUrl: url, orgId, userId, createdAt: '', updatedAt: '' },
+														{
+															_id: generateUniqueId('temp_doc_id_'),
+															name: newName,
+															documentUrl: url,
+															orgId,
+															userId,
+															createdAt: '',
+															updatedAt: '',
+															clonedFromId: '',
+														},
 													],
 												};
 											}

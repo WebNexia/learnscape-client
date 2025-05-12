@@ -101,6 +101,8 @@ const AdminLessonEditPage = () => {
 		questions: [],
 		documentIds: [],
 		documents: [],
+		clonedFromId: '',
+		usedInCourses: [],
 	};
 
 	const [isEditMode, setIsEditMode] = useState<boolean>(false);
@@ -624,10 +626,10 @@ const AdminLessonEditPage = () => {
 									variant='body2'
 									dangerouslySetInnerHTML={{ __html: sanitizeHtml(singleLesson.text) }}
 									sx={{
-										boxShadow: singleLesson.text ? '0 0 0.4rem 0.2rem rgba(0,0,0,0.25)' : 'none',
-										padding: '2rem',
-										borderRadius: '0.35rem',
-										lineHeight: 1.7,
+										'boxShadow': singleLesson.text ? '0 0 0.4rem 0.2rem rgba(0,0,0,0.25)' : 'none',
+										'padding': '2rem',
+										'borderRadius': '0.35rem',
+										'lineHeight': 1.7,
 										'& strong, & b': {
 											fontWeight: 'bolder',
 										},
@@ -1115,6 +1117,7 @@ const AdminLessonEditPage = () => {
 															userId,
 															createdAt: '',
 															updatedAt: '',
+															clonedFromId: '',
 														},
 													],
 												};

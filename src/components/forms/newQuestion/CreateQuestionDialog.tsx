@@ -127,6 +127,8 @@ const CreateQuestionDialog = ({
 		blankValuePairs,
 		createdAt: '',
 		updatedAt: '',
+		clonedFromId: '',
+		usedInLessons: [],
 	});
 	const [isCorrectAnswerMissing, setIsCorrectAnswerMissing] = useState<boolean>(false);
 	const [isQuestionMissing, setIsQuestionMissing] = useState<boolean>(false);
@@ -175,6 +177,8 @@ const CreateQuestionDialog = ({
 			blankValuePairs: [],
 			createdAt: '',
 			updatedAt: '',
+			clonedFromId: '',
+			usedInLessons: [],
 		});
 		setCorrectAnswer('');
 		setOptions(['']);
@@ -248,6 +252,8 @@ const CreateQuestionDialog = ({
 				isActive: true,
 				createdAt: '',
 				updatedAt: '',
+				clonedFromId: '',
+				usedInLessons: [],
 			};
 
 			setIsLessonUpdated?.(true);

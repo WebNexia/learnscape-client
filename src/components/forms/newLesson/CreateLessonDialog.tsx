@@ -68,6 +68,8 @@ const CreateLessonDialog = ({
 			orgId,
 			documentIds: [],
 			documents: [],
+			clonedFromId: '',
+			usedInCourses: [],
 		};
 		if (setLessons) {
 			setLessons((prevData) => {
