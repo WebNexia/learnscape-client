@@ -1,13 +1,16 @@
-import { Alert, Box, Button, IconButton, Paper, Snackbar, Tooltip, Typography } from '@mui/material';
+import { Alert, Box, Button,  DialogContent, IconButton, Paper, Snackbar, Tooltip, Typography } from '@mui/material';
 import theme from '../../themes';
-import { useNavigate } from 'react-router-dom';
-import { Edit, KeyboardBackspaceOutlined, PublishedWithChanges, Unpublished } from '@mui/icons-material';
+import { useNavigate, useParams } from 'react-router-dom';
+import { Edit, FileCopy, KeyboardBackspaceOutlined, PublishedWithChanges, Unpublished } from '@mui/icons-material';
 import { SingleCourse } from '../../interfaces/course';
 import { ChapterLessonData } from '../../pages/AdminCourseEditPage';
 import useImageUpload from '../../hooks/useImageUpload';
 import CustomSubmitButton from '../forms/customButtons/CustomSubmitButton';
-import { FormEvent } from 'react';
+import { FormEvent, useState } from 'react';
 import CustomCancelButton from '../forms/customButtons/CustomCancelButton';
+import CustomDialog from '../layouts/dialog/CustomDialog';
+import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
+import axios from 'axios';
 
 interface CoursePaperProps {
 	userId?: string;
@@ -54,6 +57,9 @@ const CoursePaper = ({
 	const vertical = 'top';
 	const horizontal = 'center';
 
+	const { courseId } = useParams();
+	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
+
 	const { resetImageUpload } = useImageUpload();
 
 	const handleCancel = async (): Promise<void> => {
@@ -62,6 +68,21 @@ const CoursePaper = ({
 		setResetChanges(!resetChanges);
 		setDeletedChapterIds([]);
 		resetImageUpload();
+	};
+
+	const [isCloning, setIsCloning] = useState<boolean>(false);
+	const [isCloneCourseDialogOpen, setIsCloneCourseDialogOpen] = useState<boolean>(false);
+
+	const handleClone = async () => {
+		setIsCloning(true);
+		try {
+			await axios.post(`${base_url}/courses/${courseId}/clone`, { courseId });
+			setIsCloneCourseDialogOpen(false);
+		} catch (error) {
+			console.log(error);
+		} finally {
+			setIsCloning(false);
+		}
 	};
 
 	return (
@@ -86,9 +107,9 @@ const CoursePaper = ({
 							variant='text'
 							startIcon={<KeyboardBackspaceOutlined />}
 							sx={{
-								color: theme.textColor?.common.main,
-								textTransform: 'inherit',
-								fontFamily: theme.fontFamily?.main,
+								'color': theme.textColor?.common.main,
+								'textTransform': 'inherit',
+								'fontFamily': theme.fontFamily?.main,
 								':hover': {
 									backgroundColor: 'transparent',
 									textDecoration: 'underline',
@@ -197,18 +218,61 @@ const CoursePaper = ({
 											onClick={handlePublishing}>
 											{singleCourse?.isActive ? 'Unpublish' : 'Publish'}
 										</CustomSubmitButton>
-										<Tooltip title='Edit Course' placement='top'>
-											<IconButton
-												sx={{ padding: '0 0.75rem' }}
-												onClick={() => {
-													setIsEditMode(true);
-												}}>
-												<Edit sx={{ color: 'white' }} fontSize='small' />
-											</IconButton>
-										</Tooltip>
+										{!singleCourse?.isExpired ? (
+											<Tooltip title='Edit Course' placement='top'>
+												<IconButton
+													sx={{ padding: '0 0.75rem' }}
+													onClick={() => {
+														setIsEditMode(true);
+													}}>
+													<Edit sx={{ color: 'white' }} fontSize='small' />
+												</IconButton>
+											</Tooltip>
+										) : (
+											<Tooltip title='Clone Course' placement='top'>
+												<IconButton
+													sx={{ padding: '0 0.75rem' }}
+													onClick={() => {
+														setIsCloneCourseDialogOpen(true);
+													}}>
+													<FileCopy sx={{ color: 'white' }} fontSize='small' />
+												</IconButton>
+											</Tooltip>
+										)}
 									</Box>
 								)}
 							</Box>
+
+							<CustomDialog
+								openModal={isCloneCourseDialogOpen}
+								closeModal={() => setIsCloneCourseDialogOpen(false)}
+								title='Clone Course'
+								content='Are you sure you want to clone the course?'
+								maxWidth='sm'>
+								<DialogContent>
+									<Typography variant='body2'>Cloning this course will:</Typography>
+									<ul style={{ paddingLeft: '1.2rem', marginTop: '0.5rem' }}>
+										<li>
+											<Typography variant='body2'>Create a new course with a copy of all its chapters, lessons, and questions</Typography>
+										</li>
+										<li>
+											<Typography variant='body2'>Preserve the original course and its content without any changes</Typography>
+										</li>
+										<li>
+											<Typography variant='body2'>Allow you to safely edit the new course without affecting previous versions</Typography>
+										</li>
+										<li>
+											<Typography variant='body2'>Mark the cloned course as unpublished by default</Typography>
+										</li>
+									</ul>
+									<Typography variant='body2' sx={{ marginTop: '1rem' }}>
+										You can customize the cloned course before publishing it.
+									</Typography>
+								</DialogContent>
+
+								<CustomDialogActions onCancel={() => setIsCloneCourseDialogOpen(false)}   submitBtnText={isCloning ? 'Cloning...' : 'Clone'}
+ onSubmit={handleClone} />
+							</CustomDialog>
 						</Box>
 					</Box>
 				</Box>

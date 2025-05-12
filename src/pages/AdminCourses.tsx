@@ -17,7 +17,7 @@ import DashboardPagesLayout from '../components/layouts/dashboardLayout/Dashboar
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { CoursesContext } from '../contexts/CoursesContextProvider';
 import { Price, SingleCourse } from '../interfaces/course';
-import { Delete, Edit, Search } from '@mui/icons-material';
+import { Delete, Edit, Search, Visibility } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
@@ -63,6 +63,8 @@ const AdminCourses = () => {
 				return true;
 			if (filterValue === 'free courses' && course.prices.find((price) => price.amount == '' || price.amount == 'Free' || price.amount == '0'))
 				return true;
+			if (filterValue === 'open courses' && !course.isExpired) return true;
+			if (filterValue === 'closed courses' && course.isExpired) return true;
 		}
 		return !searchValue && !filterValue;
 	});
@@ -351,7 +353,7 @@ const AdminCourses = () => {
 									}}>
 									All Courses
 								</MenuItem>
-								{['Published Courses', 'Unpublished Courses', 'Paid Courses', 'Free Courses'].map((type) => (
+								{['Published Courses', 'Unpublished Courses', 'Paid Courses', 'Free Courses', 'Open Courses', 'Closed Courses'].map((type) => (
 									<MenuItem
 										value={type.toLowerCase()}
 										key={type}
@@ -435,7 +437,9 @@ const AdminCourses = () => {
 										{ key: 'isActive', label: 'Status' },
 										{ key: 'startingDate', label: 'Starting Date' },
 										{ key: 'durationWeeks', label: 'Weeks #' },
-										{ key: 'durationHours', label: 'Hours #' },
+										{ key: 'createdAt', label: 'Created At' },
+										{ key: 'updatedAt', label: 'Updated At' },
+										{ key: 'clonedFromId', label: 'Origin' },
 										{ key: 'actions', label: 'Actions' },
 								  ]
 						}
@@ -446,22 +450,46 @@ const AdminCourses = () => {
 								return (
 									<TableRow key={course._id}>
 										<CustomTableCell value={course.title} />
-										<CustomTableCell value={course.isActive ? 'Published' : 'Unpublished'} />
+										<CustomTableCell
+											value={
+												course.isActive
+													? course.isExpired
+														? 'Published - Closed'
+														: 'Published - Open'
+													: course.isExpired
+													? 'Unpublished - Closed'
+													: 'Unpublished - Open'
+											}
+										/>
+
 										<CustomTableCell value={dateFormatter(course.startingDate)} />
 										{!isVerySmallScreen && <CustomTableCell value={course.durationWeeks} />}
-										{!isVerySmallScreen && <CustomTableCell value={course.durationHours} />}
+										{!isVerySmallScreen && <CustomTableCell value={dateFormatter(course.createdAt)} />}
+										{!isVerySmallScreen && <CustomTableCell value={dateFormatter(course.updatedAt)} />}
+									{!isVerySmallScreen && 	<CustomTableCell value={course.clonedFromId ? 'Clone' : 'Original'} />}
+
 
 										<TableCell
 											sx={{
 												textAlign: 'center',
 											}}>
-											<CustomActionBtn
-												title='Edit'
-												onClick={() => {
-													navigate(`/admin/course-edit/user/${userId}/course/${course._id}`);
-												}}
-												icon={<Edit fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
-											/>
+											{!course.isExpired ? (
+												<CustomActionBtn
+													title='Edit'
+													onClick={() => {
+														navigate(`/admin/course-edit/user/${userId}/course/${course._id}`);
+													}}
+													icon={<Edit fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
+												/>
+											) : (
+												<CustomActionBtn
+													title='View'
+													onClick={() => {
+														navigate(`/admin/course-edit/user/${userId}/course/${course._id}`);
+													}}
+													icon={<Visibility fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
+												/>
+											)}
 											<CustomActionBtn
 												title='Delete'
 												onClick={() => {

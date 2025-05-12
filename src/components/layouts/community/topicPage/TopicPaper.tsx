@@ -336,6 +336,7 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refre
 					maxWidth='sm'>
 					<CustomDialogActions onSubmit={resolveReport} onCancel={() => setResolveReportModalOpen(false)} submitBtnText='Resolve' />
 				</CustomDialog>
+				
 
 				<CustomDialog
 					openModal={closeTopicModalOpen}

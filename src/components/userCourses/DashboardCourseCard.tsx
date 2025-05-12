@@ -72,6 +72,25 @@ const DashboardCourseCard = ({
 					boxShadow: '0.1rem 0.2rem 0.4rem 0.2rem rgba(0,0,0,0.2)',
 				},
 			}}>
+			{course.isExpired && (
+				<Box
+					sx={{
+						position: 'absolute',
+						top: 5,
+						right: 5,
+						backgroundColor: theme.palette.error.main,
+						color: 'white',
+						px: 1.5,
+						py: 0.25,
+						borderRadius: '4px',
+						fontSize: '0.7rem',
+						fontWeight: 500,
+						zIndex: 1,
+					}}>
+					<Typography variant='body2' sx={{color:theme.textColor?.common.main,fontSize: isMobileSize ? '0.7rem' : '0.8rem',}}>Closed</Typography>
+				</Box>
+			)}
+
 			<CardMedia
 				sx={{ height: isMobileSize ? '9rem' : '12rem', width: isMobileSize ? '17rem' : '22rem', objectFit: 'contain' }}
 				image={

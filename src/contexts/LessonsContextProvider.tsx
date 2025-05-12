@@ -57,7 +57,7 @@ const LessonsContextProvider = (props: LessonsContextProviderProps) => {
 			const response = await axios.get(`${base_url}/lessons/organisation/${orgId}`);
 
 			// Initial sorting when fetching data
-			const sortedLessonsDataCopy = [...response.data.data].sort((a: Lesson, b: Lesson) => b.updatedAt.localeCompare(a.updatedAt));
+			const sortedLessonsDataCopy = [...response.data.data].sort((a: Lesson, b: Lesson) => b.createdAt.localeCompare(a.createdAt));
 			setSortedLessonsData(sortedLessonsDataCopy);
 			setIsLoaded(true);
 			return response.data.data;

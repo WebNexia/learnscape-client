@@ -51,7 +51,7 @@ const DocumentsContextProvider = (props: DocumentsContextProviderProps) => {
 			const response = await axios.get(`${base_url}/documents/organisation/${orgId}`);
 
 			// Initial sorting when fetching data
-			const sortedDocumentsDataCopy = [...response.data.data].sort((a: Document, b: Document) => b.updatedAt.localeCompare(a.updatedAt));
+			const sortedDocumentsDataCopy = [...response.data.data].sort((a: Document, b: Document) => b.createdAt.localeCompare(a.createdAt));
 			setSortedDocumentsData(sortedDocumentsDataCopy);
 			// setNumberOfPages(response.data.pages);
 			setIsLoaded(true);

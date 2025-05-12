@@ -26,4 +26,6 @@ export interface QuestionInterface {
 	blankValuePairs: BlankValuePair[];
 	createdAt: string;
 	updatedAt: string;
+	clonedFromId: string;
+	usedInLessons: string[];
 }

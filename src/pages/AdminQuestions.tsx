@@ -23,6 +23,7 @@ import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import CustomDeleteButton from '../components/forms/customButtons/CustomDeleteButton';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/CustomInfoMessageAlignedLeft';
+import { dateFormatter } from '../utils/dateFormatter';
 
 const AdminQuestions = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -403,6 +404,9 @@ const AdminQuestions = () => {
 						columns={[
 							{ key: 'questionType', label: 'Question Type' },
 							{ key: 'question', label: 'Question' },
+							{ key: 'createdAt', label: 'Created At' },
+							{ key: 'updatedAt', label: 'Updated At' },
+							{ key: 'clonedFromId', label: 'Origin' },
 							{ key: 'actions', label: 'Actions' },
 						]}
 					/>
@@ -415,6 +419,9 @@ const AdminQuestions = () => {
 										<CustomTableCell
 											value={isVerySmallScreen ? truncateText(stripHtml(question.question), 25) : truncateText(stripHtml(question.question), 45)}
 										/>
+										<CustomTableCell value={dateFormatter(question.createdAt)} />
+										<CustomTableCell value={dateFormatter(question.updatedAt)} />
+										<CustomTableCell value={question.clonedFromId ? 'Clone' : 'Original'} />
 
 										<TableCell
 											sx={{

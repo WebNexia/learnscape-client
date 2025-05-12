@@ -249,7 +249,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 								? truncateText(course.description, 250)
 								: truncateText(course.description, 450)}
 						</Typography>
-						{!isEnrolledStatus ? (
+						{!isEnrolledStatus && !course.isExpired ? (
 							<CustomSubmitButton
 								variant='contained'
 								sx={{
@@ -261,24 +261,36 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 								onClick={() => setIsPaymentDialogOpen(true)}>
 								Enroll
 							</CustomSubmitButton>
-						) : (
-							<Typography
-								onClick={() => {
-									documentsRef?.current?.scrollIntoView({ behavior: 'smooth' });
-								}}
-								sx={{
-									width: 'fit-content',
-									position: 'absolute',
-									bottom: isRotated ? 60 : 5,
-									fontSize: isVerySmallScreen || isRotated ? '0.65rem' : '0.9rem',
-									textTransform: 'capitalize',
-									color: theme.textColor?.common.main,
-									cursor: 'pointer',
-									textDecoration: 'underline',
-								}}>
-								See Course Materials
-							</Typography>
-						)}
+						) : (!isEnrolledStatus && course.isExpired) ? (<Alert
+							severity='warning'
+							sx={{
+							  position: 'absolute',
+							  bottom: isRotated ? 60 : 5,
+							  fontSize: isVerySmallScreen || isRotated ? '0.65rem' : '0.9rem',
+							  backgroundColor:!fromHomePage ? theme.bgColor?.lessonInProgress : theme.bgColor?.greenSecondary,
+							  color: theme.textColor?.common.main,
+							  width: 'fit-content',
+							}}
+						  >
+							Enrollment is closed
+						  </Alert>
+						
+						) : (	<Typography
+							onClick={() => {
+								documentsRef?.current?.scrollIntoView({ behavior: 'smooth' });
+							}}
+							sx={{
+								width: 'fit-content',
+								position: 'absolute',
+								bottom: isRotated ? 60 : 5,
+								fontSize: isVerySmallScreen || isRotated ? '0.65rem' : '0.9rem',
+								textTransform: 'capitalize',
+								color: theme.textColor?.common.main,
+								cursor: 'pointer',
+								textDecoration: 'underline',
+							}}>
+							See Course Materials
+						</Typography>)}
 					</Box>
 				</Box>
 				<Box

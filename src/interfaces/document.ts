@@ -6,4 +6,5 @@ export interface Document {
 	documentUrl: string;
 	createdAt: string;
 	updatedAt: string;
+	clonedFromId:string
 }

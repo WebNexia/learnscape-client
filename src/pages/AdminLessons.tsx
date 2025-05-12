@@ -18,6 +18,7 @@ import CustomTextField from '../components/forms/customFields/CustomTextField';
 import theme from '../themes';
 import { LessonType } from '../interfaces/enums';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
+import { dateFormatter } from '../utils/dateFormatter';
 
 const AdminLessons = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -259,6 +260,9 @@ const AdminLessons = () => {
 							{ key: 'title', label: 'Title' },
 							{ key: 'type', label: 'Type' },
 							{ key: 'isActive', label: 'Status' },
+							{ key: 'createdAt', label: 'Created At' },
+							{ key: 'updatedAt', label: 'Updated At' },
+							{ key: 'clonedFromId', label: 'Origin' },
 							{ key: 'actions', label: 'Actions' },
 						]}
 					/>
@@ -270,6 +274,9 @@ const AdminLessons = () => {
 										<CustomTableCell value={lesson.title} />
 										<CustomTableCell value={lesson.type.charAt(0).toUpperCase() + lesson.type.slice(1)} />
 										<CustomTableCell value={lesson.isActive ? 'Published' : 'Unpublished'} />
+										<CustomTableCell value={dateFormatter(lesson.createdAt)} />
+										<CustomTableCell value={dateFormatter(lesson.updatedAt)} />
+										<CustomTableCell value={lesson.clonedFromId ? 'Clone' : 'Original'} />
 
 										<TableCell
 											sx={{

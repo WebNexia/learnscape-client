@@ -18,6 +18,7 @@ import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import { useParams } from 'react-router-dom';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
+import { dateFormatter } from '../utils/dateFormatter';
 
 const AdminDocuments = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -269,6 +270,9 @@ const AdminDocuments = () => {
 						columns={[
 							{ key: 'name', label: 'Document Name' },
 							{ key: 'documentId', label: 'Document URL' },
+							{ key: 'createdAt', label: 'Created At' },
+							{ key: 'updatedAt', label: 'Updated At' },
+							{ key: 'clonedFromId', label: 'Origin' },
 							{ key: 'actions', label: 'Actions' },
 						]}
 					/>
@@ -287,6 +291,10 @@ const AdminDocuments = () => {
 												{isVerySmallScreen ? truncateText(document.documentUrl, 25) : truncateText(document.documentUrl, 40)}
 											</Link>
 										</CustomTableCell>
+										<CustomTableCell value={dateFormatter(document.createdAt)} />
+										<CustomTableCell value={dateFormatter(document.updatedAt)} />
+
+										<CustomTableCell value={document.clonedFromId ? 'Clone' : 'Original'} />
 
 										<TableCell
 											sx={{
