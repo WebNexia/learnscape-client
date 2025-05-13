@@ -14,7 +14,7 @@ import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 import { CoursesContext } from '../../../contexts/CoursesContextProvider';
 import CustomDialogActions from '../dialog/CustomDialogActions';
 import { EventsContext } from '../../../contexts/EventsContextProvider';
-import axios from 'axios';
+
 import CustomDeleteButton from '../../forms/customButtons/CustomDeleteButton';
 import theme from '../../../themes';
 import { truncateText } from '../../../utils/utilText';
@@ -23,6 +23,8 @@ import { OrganisationContext } from '../../../contexts/OrganisationContextProvid
 import { addDoc, collection, getDocs, query, serverTimestamp, where } from 'firebase/firestore';
 import { db } from '../../../firebase';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
+import axios from '@utils/axiosInstance';
+
 
 interface EditEventDialogProps {
 	setIsEventDeleted: React.Dispatch<React.SetStateAction<boolean>>;

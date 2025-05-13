@@ -10,7 +10,7 @@ import CustomActionBtn from '../components/layouts/table/CustomActionBtn';
 import { Edit, Search } from '@mui/icons-material';
 import CustomTablePagination from '../components/layouts/table/CustomTablePagination';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
-import axios from 'axios';
+import axios from '@utils/axiosInstance';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import CustomDeleteButton from '../components/forms/customButtons/CustomDeleteButton';

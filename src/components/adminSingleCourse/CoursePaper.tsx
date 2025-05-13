@@ -10,7 +10,8 @@ import { FormEvent, useState } from 'react';
 import CustomCancelButton from '../forms/customButtons/CustomCancelButton';
 import CustomDialog from '../layouts/dialog/CustomDialog';
 import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
-import axios from 'axios';
+import axios from '@utils/axiosInstance';
+
 
 interface CoursePaperProps {
 	userId?: string;

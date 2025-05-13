@@ -2,7 +2,7 @@ import { Box, Typography } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { FormEvent, useContext, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import axios from 'axios';
+import axios from '@utils/axiosInstance';
 import { CoursesContext } from '../contexts/CoursesContextProvider';
 import { Price, SingleCourse } from '../interfaces/course';
 import CustomTextField from '../components/forms/customFields/CustomTextField';

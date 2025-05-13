@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios from '@utils/axiosInstance';
 import { ReactNode, createContext, useContext, useState, useEffect } from 'react';
 import { SingleCourse } from '../interfaces/course';
 import { UserAuthContext } from './UserAuthContextProvider';

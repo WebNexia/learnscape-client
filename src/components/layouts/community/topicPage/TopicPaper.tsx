@@ -7,7 +7,7 @@ import { Delete, Edit, Flag, KeyboardBackspaceOutlined, Lock, LockOpenOutlined, 
 import { useNavigate } from 'react-router-dom';
 import { CommunityMessage, TopicInfo } from '../../../../interfaces/communityMessage';
 import { formatMessageTime } from '../../../../utils/formatTime';
-import axios from 'axios';
+import axios from '@utils/axiosInstance';
 import CustomDialog from '../../dialog/CustomDialog';
 import CustomDialogActions from '../../dialog/CustomDialogActions';
 import { CommunityContext } from '../../../../contexts/CommunityContextProvider';

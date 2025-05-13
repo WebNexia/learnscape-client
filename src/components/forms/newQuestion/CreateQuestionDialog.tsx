@@ -22,7 +22,7 @@ import theme from '../../../themes';
 import { BlankValuePair, QuestionInterface } from '../../../interfaces/question';
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
 import { generateUniqueId } from '../../../utils/uniqueIdGenerator';
-import axios from 'axios';
+
 import { QuestionsContext } from '../../../contexts/QuestionsContextProvider';
 import CustomErrorMessage from '../customFields/CustomErrorMessage';
 import useImageUpload from '../../../hooks/useImageUpload';
@@ -41,6 +41,8 @@ import { updateEditorContentAndBlankPairs } from '../../../utils/updateEditorCon
 import FillInTheBlanksTyping from '../../layouts/FITBTyping/FillInTheBlanksTyping';
 import FillInTheBlanksDragDrop from '../../layouts/FITBDragDrop/FillInTheBlanksDragDrop';
 import CustomInfoMessageAlignedRight from '../../layouts/infoMessage/CustomInfoMessageAlignedRight';
+import axios from '@utils/axiosInstance';
+
 
 declare global {
 	interface Window {

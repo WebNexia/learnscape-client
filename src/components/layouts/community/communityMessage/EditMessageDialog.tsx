@@ -13,9 +13,11 @@ import AudioRecorder from '../../../userCourses/AudioRecorder';
 import CustomSubmitButton from '../../../forms/customButtons/CustomSubmitButton';
 import HandleImageUploadURL from '../../../forms/uploadImageVideoDocument/HandleImageUploadURL';
 import CustomDialogActions from '../../dialog/CustomDialogActions';
-import axios from 'axios';
+
 import ImageThumbnail from '../../../forms/uploadImageVideoDocument/ImageThumbnail';
 import { MediaQueryContext } from '../../../../contexts/MediaQueryContextProvider';
+import axios from '@utils/axiosInstance';
+
 
 interface EditMessageDialogProps {
 	message: CommunityMessage;

@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import axios from 'axios';
+import axios from '@utils/axiosInstance';
 import { UserBlankValuePairAnswers, UserMatchingPairAnswers, UserQuestion } from '../interfaces/userQuestion';
 
 export interface UserQuestionData {

@@ -1,7 +1,7 @@
 import { Box, FormControl, InputAdornment, MenuItem, Select, Table, TableBody, TableCell, TableRow } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { useContext, useEffect, useRef, useState } from 'react';
-import axios from 'axios';
+import axios from '@utils/axiosInstance';
 import { Edit, Person, PersonOff, Search } from '@mui/icons-material';
 
 import CustomDialog from '../components/layouts/dialog/CustomDialog';

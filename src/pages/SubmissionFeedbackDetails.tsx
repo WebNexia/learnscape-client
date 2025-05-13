@@ -3,7 +3,7 @@ import DashboardPagesLayout from '../components/layouts/dashboardLayout/Dashboar
 import { useLocation, useParams } from 'react-router-dom';
 import { useContext, useEffect, useState } from 'react';
 import { QuestionsContext } from '../contexts/QuestionsContextProvider';
-import axios from 'axios';
+import axios from '@utils/axiosInstance';
 import { QuestionType } from '../interfaces/enums';
 import { ArrowBackIosNewOutlined, ArrowForwardIosOutlined } from '@mui/icons-material';
 import theme from '../themes';

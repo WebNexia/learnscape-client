@@ -2,7 +2,7 @@ import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from '@m
 import CustomTextField from '../customFields/CustomTextField';
 import { useContext, useState } from 'react';
 import { LessonsContext } from '../../../contexts/LessonsContextProvider';
-import axios from 'axios';
+
 import { Lesson } from '../../../interfaces/lessons';
 import { ChapterLessonData, ChapterUpdateTrack } from '../../../pages/AdminCourseEditPage';
 import theme from '../../../themes';
@@ -11,6 +11,8 @@ import CustomDialogActions from '../../layouts/dialog/CustomDialogActions';
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
 import { generateUniqueId } from '../../../utils/uniqueIdGenerator';
 import { chapterUpdateTrack } from '../../../utils/chapterUpdateTrack';
+import axios from '@utils/axiosInstance';
+
 
 interface CreateLessonDialogProps {
 	chapter?: ChapterLessonData;

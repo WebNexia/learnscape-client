@@ -2,6 +2,7 @@ import { Alert, Box, Button, DialogContent, IconButton, InputAdornment, Snackbar
 import * as styles from '../styles/styleAuth';
 import { FormEvent, useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axiosInstance from '@utils/axiosInstance';
 import axios from 'axios';
 import theme from '../themes';
 import { AuthFormErrorMessages, AuthForms, Roles, TextFieldTypes } from '../interfaces/enums';
@@ -130,7 +131,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 
 				// Load user-specific course and lesson data if the user is not an admin
 				if (updatedUser.role !== Roles.ADMIN) {
-					const userCourseResponse = await axios.get(`${base_url}/usercourses/user/${updatedUser._id}`);
+					const userCourseResponse = await axiosInstance.get(`${base_url}/usercourses/user/${updatedUser._id}`);
 					const userCourseData: UserCoursesIdsWithCourseIds[] = userCourseResponse.data.response.reduce(
 						(acc: UserCoursesIdsWithCourseIds[], value: UserCoursesByUserId) => {
 							if (value.courseId && value.courseId._id) {
@@ -152,7 +153,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 					localStorage.setItem('userCourseData', JSON.stringify(userCourseData));
 
 					// Load user lesson data and store in local storage
-					const userLessonResponse = await axios.get(`${base_url}/userlessons/user/${updatedUser._id}`);
+					const userLessonResponse = await axiosInstance.get(`${base_url}/userlessons/user/${updatedUser._id}`);
 					const userLessonData: UserLessonDataStorage[] = userLessonResponse?.data.response?.map((userLesson: UserLessonsByUserId) => ({
 						lessonId: userLesson?.lessonId?._id,
 						userLessonId: userLesson?._id,
@@ -252,7 +253,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 			});
 
 			// Step 4: Send user data to your backend server (optional, if needed)
-			await axios.post(`${base_url}/users/signup`, {
+			await axiosInstance.post(`${base_url}/users/signup`, {
 				firstName: firstName.trim(),
 				lastName: lastName.trim(),
 				username: username.trim(),

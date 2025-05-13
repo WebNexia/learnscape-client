@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from 'react';
 import { Box, Button, IconButton, Link, Slide, Tooltip, Typography } from '@mui/material';
 import { useParams } from 'react-router-dom';
-import axios from 'axios';
+import axios from '@utils/axiosInstance';
 import ReactPlayer from 'react-player';
 import { Article, Close, DoneAll, GetApp, Home, KeyboardBackspaceOutlined, KeyboardDoubleArrowRight, NotListedLocation } from '@mui/icons-material';
 import theme from '../themes';

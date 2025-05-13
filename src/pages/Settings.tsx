@@ -10,7 +10,7 @@ import { EmailAuthProvider, getAuth, reauthenticateWithCredential, updatePasswor
 import theme from '../themes';
 import { Info, Visibility, VisibilityOff } from '@mui/icons-material';
 import { PasswordUpdateErrorMessages, TextFieldTypes } from '../interfaces/enums';
-import axios from 'axios';
+import axios from '@utils/axiosInstance';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
 import { FirebaseError } from 'firebase/app';

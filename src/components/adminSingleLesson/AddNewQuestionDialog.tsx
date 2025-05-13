@@ -31,7 +31,7 @@ import { Search } from '@mui/icons-material';
 import CustomSubmitButton from '../forms/customButtons/CustomSubmitButton';
 import CustomDeleteButton from '../forms/customButtons/CustomDeleteButton';
 import theme from '../../themes';
-import axios from 'axios';
+import axios from '@utils/axiosInstance';
 import { OrganisationContext } from '../../contexts/OrganisationContextProvider';
 
 interface AddNewQuestionDialogProps {

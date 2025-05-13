@@ -4,7 +4,7 @@ import { SingleCourse } from '../../../interfaces/course';
 import { KeyboardBackspaceOutlined } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import CoursePageBannerDataCard from './CoursePageBannerDataCard';
-import axios from 'axios';
+import axios from '@utils/axiosInstance';
 import { useContext, useState } from 'react';
 import { UserCoursesIdsWithCourseIds, UserLessonDataStorage } from '../../../contexts/UserCourseLessonDataContextProvider';
 import CustomSubmitButton from '../../forms/customButtons/CustomSubmitButton';

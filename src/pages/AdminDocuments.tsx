@@ -1,7 +1,7 @@
 import { Box, InputAdornment, Link, Table, TableBody, TableCell, TableRow } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { useContext, useEffect, useRef, useState } from 'react';
-import axios from 'axios';
+import axios from '@utils/axiosInstance';
 import { Delete, Edit, Search } from '@mui/icons-material';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';

@@ -7,7 +7,7 @@ import CustomDialogActions from '../../layouts/dialog/CustomDialogActions';
 import { BlankValuePair, MatchingPair, QuestionInterface } from '../../../interfaces/question';
 import { QuestionsContext } from '../../../contexts/QuestionsContextProvider';
 import CustomErrorMessage from '../customFields/CustomErrorMessage';
-import axios from 'axios';
+
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
 import useImageUpload from '../../../hooks/useImageUpload';
 import useVideoUpload from '../../../hooks/useVideoUpload';
@@ -27,6 +27,8 @@ import { updateEditorContentAndBlankPairs } from '../../../utils/updateEditorCon
 import FillInTheBlanksDragDropProps from '../../layouts/FITBDragDrop/FillInTheBlanksDragDrop';
 import FillInTheBlanksTyping from '../../layouts/FITBTyping/FillInTheBlanksTyping';
 import CustomInfoMessageAlignedRight from '../../layouts/infoMessage/CustomInfoMessageAlignedRight';
+import axios from '@utils/axiosInstance';
+
 
 interface EditQuestionDialogProps {
 	index: number;

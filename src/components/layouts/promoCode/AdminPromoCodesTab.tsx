@@ -10,7 +10,7 @@ import CustomTableCell from '../table/CustomTableCell';
 import CustomActionBtn from '../table/CustomActionBtn';
 import CustomTablePagination from '../table/CustomTablePagination';
 import { Delete, Edit, Search } from '@mui/icons-material';
-import axios from 'axios';
+import axios from '@utils/axiosInstance';
 import CustomDialog from '../dialog/CustomDialog';
 import CustomDialogActions from '../dialog/CustomDialogActions';
 import CustomTextField from '../../forms/customFields/CustomTextField';

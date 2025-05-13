@@ -19,7 +19,7 @@ import { CoursesContext } from '../contexts/CoursesContextProvider';
 import { Price, SingleCourse } from '../interfaces/course';
 import { Delete, Edit, Search, Visibility } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
-import axios from 'axios';
+
 import CustomTextField from '../components/forms/customFields/CustomTextField';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
@@ -33,6 +33,7 @@ import { dateFormatter } from '../utils/dateFormatter';
 import theme from '../themes';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/CustomInfoMessageAlignedLeft';
+import axios from '@utils/axiosInstance';
 
 const AdminCourses = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;

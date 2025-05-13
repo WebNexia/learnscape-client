@@ -5,7 +5,7 @@ import { formatMessageTime } from '../../../../utils/formatTime';
 import { useContext, useEffect, useState } from 'react';
 import { UserAuthContext } from '../../../../contexts/UserAuthContextProvider';
 import { Roles } from '../../../../interfaces/enums';
-import axios from 'axios';
+
 import CustomDialog from '../../dialog/CustomDialog';
 import CustomDialogActions from '../../dialog/CustomDialogActions';
 import EditMessageDialog from './EditMessageDialog';
@@ -15,6 +15,8 @@ import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { truncateText } from '../../../../utils/utilText';
 import { db } from '../../../../firebase';
 import { MediaQueryContext } from '../../../../contexts/MediaQueryContextProvider';
+import axios from '@utils/axiosInstance';
+
 
 interface MessageProps {
 	message: CommunityMessage;

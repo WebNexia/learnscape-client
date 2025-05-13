@@ -6,7 +6,7 @@ import { useParams } from 'react-router-dom';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import { FormEvent, useContext, useEffect, useState } from 'react';
 import { Lesson } from '../interfaces/lessons';
-import axios from 'axios';
+import axios from '@utils/axiosInstance';
 import { QuestionInterface } from '../interfaces/question';
 import { LessonsContext } from '../contexts/LessonsContextProvider';
 import CustomTextField from '../components/forms/customFields/CustomTextField';

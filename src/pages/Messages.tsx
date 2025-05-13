@@ -43,7 +43,7 @@ import data from '@emoji-mart/data';
 import useImageUpload from '../hooks/useImageUpload'; // Import the custom hook
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import { User } from '../interfaces/user';
-import axios from 'axios';
+import axios from '@utils/axiosInstance';
 import theme from '../themes';
 import { debounce } from 'lodash';
 import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';

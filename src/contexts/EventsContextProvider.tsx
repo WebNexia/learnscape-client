@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios from '@utils/axiosInstance';
 import { ReactNode, createContext, useContext, useState } from 'react';
 import { useQuery } from 'react-query';
 

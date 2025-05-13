@@ -5,7 +5,7 @@ import CustomDialogActions from '../dialog/CustomDialogActions';
 import { useContext, useState } from 'react';
 import { PromoCode } from '../../../interfaces/promoCode';
 import theme from '../../../themes';
-import axios from 'axios';
+import axios from '@utils/axiosInstance';
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
 import { PromoCodesContext } from '../../../contexts/PromoCodesContextProvider';
 import SelectApplicableCoursesCreate from './SelectApplicableCoursesCreate';
