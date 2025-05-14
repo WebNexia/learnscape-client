@@ -13,7 +13,6 @@ import { generateUniqueId } from '../../../utils/uniqueIdGenerator';
 import { chapterUpdateTrack } from '../../../utils/chapterUpdateTrack';
 import axios from '@utils/axiosInstance';
 
-
 interface CreateLessonDialogProps {
 	chapter?: ChapterLessonData;
 	isNewLessonModalOpen: boolean;
@@ -48,7 +47,7 @@ const CreateLessonDialog = ({
 				orgId,
 			});
 
-			addNewLesson({ _id: response.data._id, title: title.trim(), type });
+			addNewLesson({ _id: response.data._id, title: title.trim(), type, createdAt: response.data.createdAt, updatedAt: response.data.updatedAt });
 		} catch (error) {
 			console.log(error);
 		}
@@ -72,6 +71,9 @@ const CreateLessonDialog = ({
 			documents: [],
 			clonedFromId: '',
 			usedInCourses: [],
+			createdBy: '',
+			updatedBy: '',
+			publishedAt: '',
 		};
 		if (setLessons) {
 			setLessons((prevData) => {

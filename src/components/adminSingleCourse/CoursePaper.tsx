@@ -1,4 +1,4 @@
-import { Alert, Box, Button,  DialogContent, IconButton, Paper, Snackbar, Tooltip, Typography } from '@mui/material';
+import { Alert, Box, Button, DialogContent, IconButton, Paper, Snackbar, Tooltip, Typography } from '@mui/material';
 import theme from '../../themes';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Edit, FileCopy, KeyboardBackspaceOutlined, PublishedWithChanges, Unpublished } from '@mui/icons-material';
@@ -6,12 +6,12 @@ import { SingleCourse } from '../../interfaces/course';
 import { ChapterLessonData } from '../../pages/AdminCourseEditPage';
 import useImageUpload from '../../hooks/useImageUpload';
 import CustomSubmitButton from '../forms/customButtons/CustomSubmitButton';
-import { FormEvent, useState } from 'react';
+import { FormEvent, useContext, useState } from 'react';
 import CustomCancelButton from '../forms/customButtons/CustomCancelButton';
 import CustomDialog from '../layouts/dialog/CustomDialog';
 import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
 import axios from '@utils/axiosInstance';
-
+import { CoursesContext } from '../../contexts/CoursesContextProvider';
 
 interface CoursePaperProps {
 	userId?: string;
@@ -58,6 +58,8 @@ const CoursePaper = ({
 	const vertical = 'top';
 	const horizontal = 'center';
 
+	const { addNewCourse } = useContext(CoursesContext);
+
 	const { courseId } = useParams();
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
@@ -74,11 +76,23 @@ const CoursePaper = ({
 	const [isCloning, setIsCloning] = useState<boolean>(false);
 	const [isCloneCourseDialogOpen, setIsCloneCourseDialogOpen] = useState<boolean>(false);
 
+	const [isCourseCloned, setIsCourseCloned] = useState<boolean>(false);
+
 	const handleClone = async () => {
 		setIsCloning(true);
 		try {
-			await axios.post(`${base_url}/courses/${courseId}/clone`, { courseId });
+			const response = await axios.post(`${base_url}/courses/${courseId}/clone`, { courseId });
 			setIsCloneCourseDialogOpen(false);
+
+			addNewCourse({
+				_id: response.data._id,
+				title: response.data.clonedCourse.title,
+				clonedFromId: response.data.clonedCourse.clonedFromId,
+				createdAt: response.data.clonedCourse.createdAt,
+				updatedAt: response.data.clonedCourse.updatedAt,
+			});
+
+			setIsCourseCloned(true);
 		} catch (error) {
 			console.log(error);
 		} finally {
@@ -173,6 +187,17 @@ const CoursePaper = ({
 								</Snackbar>
 
 								<Snackbar
+									open={isCourseCloned}
+									autoHideDuration={2250}
+									anchorOrigin={{ vertical, horizontal }}
+									sx={{ mt: '5rem' }}
+									onClose={() => setIsCourseCloned(false)}>
+									<Alert severity='success' variant='filled' sx={{ width: '100%', color:theme.textColor?.common.main }}>
+										Course is cloned successfully!
+									</Alert>
+								</Snackbar>
+
+								<Snackbar
 									open={isMissingFieldMsgOpen}
 									autoHideDuration={3000}
 									anchorOrigin={{ vertical, horizontal }}
@@ -250,7 +275,7 @@ const CoursePaper = ({
 								title='Clone Course'
 								content='Are you sure you want to clone the course?'
 								maxWidth='sm'>
-								<DialogContent>
+								<DialogContent sx={{mt:'-0.75rem'}}>
 									<Typography variant='body2'>Cloning this course will:</Typography>
 									<ul style={{ paddingLeft: '1.2rem', marginTop: '0.5rem' }}>
 										<li>
@@ -271,8 +296,11 @@ const CoursePaper = ({
 									</Typography>
 								</DialogContent>
 
-								<CustomDialogActions onCancel={() => setIsCloneCourseDialogOpen(false)}   submitBtnText={isCloning ? 'Cloning...' : 'Clone'}
- onSubmit={handleClone} />
+								<CustomDialogActions
+									onCancel={() => setIsCloneCourseDialogOpen(false)}
+									submitBtnText={isCloning ? 'Cloning...' : 'Clone'}
+									onSubmit={handleClone}
+								/>
 							</CustomDialog>
 						</Box>
 					</Box>

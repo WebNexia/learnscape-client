@@ -79,6 +79,9 @@ const LessonPage = () => {
 		documents: [],
 		clonedFromId: '',
 		usedInCourses: [],
+		createdBy: '',
+		updatedBy: '',
+		publishedAt: '',
 	});
 
 	const [userAnswers, setUserAnswers] = useState<UserQuestionData[]>([]); //User answers for practice questions

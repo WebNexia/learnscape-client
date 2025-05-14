@@ -103,6 +103,9 @@ const AdminLessonEditPage = () => {
 		documents: [],
 		clonedFromId: '',
 		usedInCourses: [],
+		createdBy: '',
+		updatedBy: '',
+		publishedAt: '',
 	};
 
 	const [isEditMode, setIsEditMode] = useState<boolean>(false);

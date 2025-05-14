@@ -15,9 +15,8 @@ export interface BaseCourse {
 	versionNote: string;
 	createdBy: string;
 	updatedBy: string;
-	isArchived: boolean;
 	publishedAt: string;
-	archivedAt: string;
+	
 }
 
 export interface Course extends BaseCourse {
