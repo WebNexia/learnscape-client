@@ -28,4 +28,6 @@ export interface QuestionInterface {
 	updatedAt: string;
 	clonedFromId: string;
 	usedInLessons: string[];
+	createdBy: string;
+	updatedBy: string;
 }

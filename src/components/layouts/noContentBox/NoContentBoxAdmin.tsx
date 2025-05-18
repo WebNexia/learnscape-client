@@ -16,7 +16,7 @@ const NoContentBoxAdmin = ({ content }: NoContentBoxAdminProps) => {
 				borderRadius: '0.35rem',
 				mt: '1rem',
 			}}>
-			<Typography variant='body1'>{content}</Typography>
+			<Typography variant='body1' sx={{fontSize:'0.9rem'}}>{content}</Typography>
 		</Box>
 	);
 };

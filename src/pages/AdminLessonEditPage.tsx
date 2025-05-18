@@ -1,4 +1,17 @@
-import { Box, FormControl, IconButton, InputLabel, Link, MenuItem, Select, SelectChangeEvent, Tooltip, Typography } from '@mui/material';
+import {
+	Alert,
+	Box,
+	FormControl,
+	IconButton,
+	InputLabel,
+	Link,
+	MenuItem,
+	Select,
+	SelectChangeEvent,
+	Snackbar,
+	Tooltip,
+	Typography,
+} from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import theme from '../themes';
 import { Delete, Edit, FileCopy } from '@mui/icons-material';
@@ -63,6 +76,9 @@ const AdminLessonEditPage = () => {
 	const { questionTypes, fetchQuestions, questionsPageNumber, fetchQuestionTypeName } = useContext(QuestionsContext);
 	const { fetchDocuments } = useContext(DocumentsContext);
 
+	const vertical = 'top';
+	const horizontal = 'center';
+
 	const {
 		options,
 		setOptions,
@@ -123,9 +139,10 @@ const AdminLessonEditPage = () => {
 	const [isDocumentUpdated, setIsDocumentUpdated] = useState<DocumentUpdateTrack[]>([]);
 
 	const [isQuestionCloneModalOpen, setIsQuestionCloneModalOpen] = useState<boolean[]>([]);
-
 	const [addNewQuestionModalOpen, setAddNewQuestionModalOpen] = useState<boolean>(false);
 	const [addNewDocumentModalOpen, setAddNewDocumentModalOpen] = useState<boolean>(false);
+
+	const [isPublishAllowedMsgOpen, setIsPublishAllowedMsgOpen] = useState<boolean>(false);
 
 	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(true);
 	const [enterVideoUrl, setEnterVideoUrl] = useState<boolean>(true);
@@ -261,16 +278,23 @@ const AdminLessonEditPage = () => {
 	}, [singleLessonBeforeSave.type]);
 
 	const handlePublishing = async (): Promise<void> => {
-		if (lessonId !== undefined) {
+		if (
+			lessonId &&
+			singleLesson.text &&
+			(((singleLesson.type === LessonType.PRACTICE_LESSON || singleLesson.type === LessonType.QUIZ) && singleLesson.questionIds.length !== 0) ||
+				singleLesson.type === LessonType.INSTRUCTIONAL_LESSON)
+		) {
 			try {
 				await axios.patch(`${base_url}/lessons/${lessonId}`, {
 					isActive: !singleLesson?.isActive,
 				});
 				setIsActive(!singleLesson?.isActive);
-				updateLessonPublishing(lessonId);
+				if (lessonId) updateLessonPublishing(lessonId);
 			} catch (error) {
 				console.log(error);
 			}
+		} else {
+			setIsPublishAllowedMsgOpen(true);
 		}
 	};
 
@@ -281,6 +305,8 @@ const AdminLessonEditPage = () => {
 		let updatedDocuments: Document[] = [];
 
 		if (!editorContent) {
+			setIsMissingFieldMsgOpen(true);
+			setIsMissingField(true);
 			return;
 		}
 
@@ -381,7 +407,8 @@ const AdminLessonEditPage = () => {
 			} else if (filteredQuestions) {
 				const updatedQuestionsPromises = filteredQuestions.map(async (question) => {
 					if (question._id.includes('temp_question_id')) {
-						const questionTypeId = questionTypes.find((type) => type.name === question.questionType)?._id;
+						const questionTypeId = questionTypes.find((type) => type.name === question.questionType || type._id === question.questionType)?._id;
+
 						if (questionTypeId) {
 							try {
 								const response = await axios.post(`${base_url}/questions`, {
@@ -397,7 +424,10 @@ const AdminLessonEditPage = () => {
 									matchingPairs: question.matchingPairs,
 									blankValuePairs: question.blankValuePairs,
 									isActive: true,
+									...(question.clonedFromId ? { clonedFromId: question.clonedFromId } : {}),
+									usedInLessons: [lessonId],
 								});
+
 								fetchQuestions(questionsPageNumber);
 								return {
 									...question,
@@ -440,9 +470,16 @@ const AdminLessonEditPage = () => {
 				try {
 					await axios.patch(`${base_url}/lessons/${lessonId}`, {
 						...singleLessonBeforeSave,
-						questionIds: updatedQuestionIds,
+						title: singleLessonBeforeSave.title,
+						type: singleLessonBeforeSave.type,
+						orgId,
+						isActive: singleLessonBeforeSave.isActive,
+						imageUrl: singleLessonBeforeSave.imageUrl,
+						videoUrl: singleLessonBeforeSave.videoUrl,
 						text: editorContent.trim() || '',
 						documentIds: updatedDocumentIds,
+						questionIds: updatedQuestionIds,
+						usedInCourses: singleLessonBeforeSave.usedInCourses,
 					});
 
 					fetchLessons();
@@ -534,6 +571,8 @@ const AdminLessonEditPage = () => {
 		const clonedQuestion: QuestionInterface = {
 			...question,
 			_id: generateUniqueId('temp_question_id_'),
+			clonedFromId: question._id,
+			usedInLessons: lessonId ? [lessonId] : [],
 		};
 
 		setSingleLessonBeforeSave((prevData) => {
@@ -555,6 +594,8 @@ const AdminLessonEditPage = () => {
 			}
 			return prevData;
 		});
+
+		setIsLessonUpdated(true);
 	};
 
 	return (
@@ -585,6 +626,17 @@ const AdminLessonEditPage = () => {
 				/>
 			</Box>
 
+			<Snackbar
+				open={isPublishAllowedMsgOpen}
+				autoHideDuration={3000}
+				anchorOrigin={{ vertical, horizontal }}
+				sx={{ mt: '5rem' }}
+				onClose={() => setIsPublishAllowedMsgOpen(false)}>
+				<Alert severity='error' variant='filled' sx={{ width: '100%' }}>
+					Add instruction or question(s) to publish the lesson
+				</Alert>
+			</Snackbar>
+
 			<CreateQuestionDialog
 				createNewQuestion={false}
 				isQuestionCreateModalOpen={isQuestionCreateModalOpen}
@@ -604,11 +656,12 @@ const AdminLessonEditPage = () => {
 				removeOption={removeOption}
 				addOption={addOption}
 				handleOptionChange={handleOptionChange}
+				setIsMinimumOptions={setIsMinimumOptions}
 				isMinimumOptions={isMinimumOptions}
 				isDuplicateOption={isDuplicateOption}
 			/>
 
-			<Box sx={{ display: 'flex', width: '95%', justifyContent: 'center', marginTop: isEditMode ? '5rem' : '11rem' }}>
+			<Box sx={{ display: 'flex', width: '95%', justifyContent: 'center', marginTop: isEditMode ? '5rem' : '9.5rem' }}>
 				{!isEditMode && (
 					<Box
 						sx={{
@@ -620,7 +673,7 @@ const AdminLessonEditPage = () => {
 						}}>
 						<LessonImageCourseDisplay singleLesson={singleLesson} />
 
-						<Box className='rich-text-content' component='div' sx={{ textAlign: 'justify', width: '90%', mt: '6rem' }}>
+						<Box className='rich-text-content' component='div' sx={{ textAlign: 'justify', width: '90%', mt: '5rem' }}>
 							<Typography variant='h5' sx={{ mb: '1.25rem' }}>
 								{singleLesson.type === LessonType.INSTRUCTIONAL_LESSON ? 'Lesson Instructions' : 'Instructions'}
 							</Typography>
@@ -657,7 +710,7 @@ const AdminLessonEditPage = () => {
 								flexDirection: 'column',
 								justifyContent: 'flex-start',
 								width: '90%',
-								margin: singleLesson?.type === LessonType.INSTRUCTIONAL_LESSON ? '3rem 0 4rem 0' : '3rem 0 4rem 0',
+								margin: singleLesson?.type === LessonType.INSTRUCTIONAL_LESSON ? '3rem 0 4rem 0' : '0rem 0 4rem 0',
 							}}>
 							<Box>
 								<Typography variant='h5' sx={{ mb: '1.25rem' }}>
@@ -703,7 +756,7 @@ const AdminLessonEditPage = () => {
 							mt: '3rem',
 						}}>
 						<form onSubmit={(e) => handleLessonUpdate(e)}>
-							<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '3rem' }}>
+							<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem' }}>
 								<Box sx={{ flex: 1, mr: '2rem' }}>
 									<Typography variant='h6'>Title*</Typography>
 									<Tooltip title='Max 50 Characters' placement='top'>
@@ -746,10 +799,10 @@ const AdminLessonEditPage = () => {
 											size='small'
 											label='Type'
 											required
-											sx={{ backgroundColor: theme.bgColor?.common }}>
+											sx={{ backgroundColor: theme.bgColor?.common, fontSize:'0.85rem' }}>
 											{lessonTypes &&
 												lessonTypes?.map((type) => (
-													<MenuItem value={type} key={type}>
+													<MenuItem value={type} key={type} sx={{fontSize:'0.8rem'}}>
 														{type}
 													</MenuItem>
 												))}
@@ -839,7 +892,7 @@ const AdminLessonEditPage = () => {
 								</Box>
 							</Box>
 
-							<Box sx={{ mt: '5rem', mb: '1rem' }}>
+							<Box sx={{ mt: '4.5rem', mb: '1rem' }}>
 								<Typography variant='h6' sx={{ mb: '1rem' }}>
 									{singleLessonBeforeSave.type === LessonType.INSTRUCTIONAL_LESSON ? 'Lesson Instructions' : 'Instructions'}
 								</Typography>
@@ -863,7 +916,7 @@ const AdminLessonEditPage = () => {
 											justifyContent: 'space-between',
 											alignItems: 'center',
 											width: '100%',
-											margin: '5rem 0 1.5rem 0',
+											margin: '4rem 0 1.5rem 0',
 										}}>
 										<Box sx={{ flex: 1 }}>
 											<Typography variant='h5'>Questions</Typography>

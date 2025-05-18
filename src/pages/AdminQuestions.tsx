@@ -384,6 +384,7 @@ const AdminQuestions = () => {
 				removeOption={removeOption}
 				handleCorrectAnswerChange={handleCorrectAnswerChange}
 				handleOptionChange={handleOptionChange}
+				setIsMinimumOptions={setIsMinimumOptions}
 				isMinimumOptions={isMinimumOptions}
 				isDuplicateOption={isDuplicateOption}
 			/>

@@ -25,7 +25,7 @@ const QuestionsBoxNonEdit = ({ singleLesson, setIsDisplayNonEditQuestion, setDis
 				flexDirection: 'column',
 				justifyContent: 'flex-start',
 				width: '90%',
-				mt: singleLesson?.type === LessonType.INSTRUCTIONAL_LESSON ? '1rem' : '3rem',
+				mt: singleLesson?.type === LessonType.INSTRUCTIONAL_LESSON ? '1rem' : '0rem',
 			}}>
 			<Box sx={{ mt: '3rem', minHeight: '30vh' }}>
 				<Box sx={{ display: 'flex', justifyContent: 'space-between' }}>

@@ -72,7 +72,7 @@ const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree,
 	};
 	return (
 		<>
-			<Box sx={{ display: 'flex', mt: '1.5rem' }}>
+			<Box sx={{ display: 'flex', mt: '0.5rem' }}>
 				<Box sx={{ flex: 1 }}>
 					<Typography variant='h6'>Title*</Typography>
 					<Tooltip title='Max 50 Characters' placement='top'>
@@ -247,7 +247,7 @@ const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree,
 						<CustomTextField
 							required={false}
 							sx={{ marginTop: '0.5rem' }}
-							value={singleCourse?.durationWeeks || ''}
+							value={singleCourse?.durationWeeks ?? ''}
 							onChange={(e) => {
 								if (singleCourse?.durationWeeks !== undefined) {
 									setSingleCourse({
@@ -265,7 +265,7 @@ const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree,
 						<CustomTextField
 							required={false}
 							sx={{ marginTop: '0.5rem' }}
-							value={singleCourse?.durationHours || ''}
+							value={singleCourse?.durationHours ?? ''}
 							onChange={(e) => {
 								if (singleCourse) {
 									if (singleCourse?.durationHours !== undefined) {

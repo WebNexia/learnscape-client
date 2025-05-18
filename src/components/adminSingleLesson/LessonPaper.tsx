@@ -64,7 +64,7 @@ const LessonPaper = ({
 			sx={{
 				width: '100%',
 				height: '6rem',
-				mt: '2.25rem',
+				mt: '1.25rem',
 				backgroundColor: theme.bgColor?.adminPaper,
 			}}>
 			<Box
@@ -174,10 +174,11 @@ const LessonPaper = ({
 													resetImageUpload();
 													resetVideoUpload();
 													resetEnterImageVideoUrl();
-													setErrorMsg('Enter lesson instructions');
+													
 												} else {
 													setIsMissingField(true);
 													setIsMissingFieldMsgOpen(true);
+													setErrorMsg('Enter lesson instructions');
 												}
 												window.scrollTo({ top: 0, behavior: 'smooth' });
 											}}>

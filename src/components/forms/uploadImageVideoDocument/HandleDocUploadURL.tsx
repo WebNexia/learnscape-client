@@ -1,6 +1,6 @@
 import { useContext, useState } from 'react';
 import { Box, Button, FormControl, IconButton, Input, Tooltip, Typography } from '@mui/material';
-import { Article, CloudUpload, PostAddOutlined } from '@mui/icons-material';
+import {  CloudUpload, PostAddOutlined } from '@mui/icons-material';
 import theme from '../../../themes';
 import CustomErrorMessage from '../customFields/CustomErrorMessage';
 import CustomTextField from '../customFields/CustomTextField';

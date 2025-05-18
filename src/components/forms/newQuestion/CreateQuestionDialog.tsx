@@ -6,7 +6,6 @@ import {
 	FormControl,
 	FormControlLabel,
 	IconButton,
-	InputLabel,
 	MenuItem,
 	Radio,
 	Select,
@@ -43,7 +42,6 @@ import FillInTheBlanksDragDrop from '../../layouts/FITBDragDrop/FillInTheBlanksD
 import CustomInfoMessageAlignedRight from '../../layouts/infoMessage/CustomInfoMessageAlignedRight';
 import axios from '@utils/axiosInstance';
 
-
 declare global {
 	interface Window {
 		tinymce: any;
@@ -72,6 +70,7 @@ interface CreateQuestionDialogProps {
 	addOption: () => void;
 	handleOptionChange?: (index: number, value: string) => void;
 	setQuestionsUpdated?: React.Dispatch<React.SetStateAction<boolean>>;
+	setIsMinimumOptions: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const CreateQuestionDialog = ({
@@ -95,6 +94,7 @@ const CreateQuestionDialog = ({
 	removeOption,
 	addOption,
 	handleOptionChange,
+	setIsMinimumOptions,
 }: CreateQuestionDialogProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
@@ -131,6 +131,8 @@ const CreateQuestionDialog = ({
 		updatedAt: '',
 		clonedFromId: '',
 		usedInLessons: [],
+		createdBy: '',
+		updatedBy: '',
 	});
 	const [isCorrectAnswerMissing, setIsCorrectAnswerMissing] = useState<boolean>(false);
 	const [isQuestionMissing, setIsQuestionMissing] = useState<boolean>(false);
@@ -181,6 +183,8 @@ const CreateQuestionDialog = ({
 			updatedAt: '',
 			clonedFromId: '',
 			usedInLessons: [],
+			createdBy: '',
+			updatedBy: '',
 		});
 		setCorrectAnswer('');
 		setOptions(['']);
@@ -255,7 +259,9 @@ const CreateQuestionDialog = ({
 				createdAt: '',
 				updatedAt: '',
 				clonedFromId: '',
-				usedInLessons: [],
+				usedInLessons: singleLessonBeforeSave?._id ? [singleLessonBeforeSave?._id] : [],
+				createdBy: '',
+				updatedBy: '',
 			};
 
 			setIsLessonUpdated?.(true);
@@ -283,6 +289,13 @@ const CreateQuestionDialog = ({
 				return;
 			}
 		}
+
+		if (isMultipleChoiceQuestion && options.length <= 1) {
+			setIsMinimumOptions(false);
+			return;
+		}
+
+		if (isMultipleChoiceQuestion && (isDuplicateOption || !isMinimumOptions)) return;
 
 		if (isFlipCard && !correctAnswer) {
 			setIsCorrectAnswerMissing(true);
@@ -326,8 +339,6 @@ const CreateQuestionDialog = ({
 			setIsCorrectAnswerMissing(true);
 			return;
 		}
-
-		if (isMultipleChoiceQuestion && (isDuplicateOption || !isMinimumOptions)) return;
 
 		if (createNewQuestion) createQuestion();
 		else createQuestionTemplate();
@@ -373,7 +384,11 @@ const CreateQuestionDialog = ({
 							}}
 							size='small'
 							required
+							displayEmpty
 							sx={{ fontSize: '0.85rem' }}>
+							<MenuItem disabled value='' sx={{ fontSize: '0.85rem' }}>
+								Select Type
+							</MenuItem>
 							{questionTypes
 								?.filter((type) => {
 									const questionTypeName = type.name as QuestionType;
@@ -466,9 +481,14 @@ const CreateQuestionDialog = ({
 						</Box>
 						{!isFlipCard && (
 							<Box sx={{ width: '100%', margin: '1rem 0' }}>
-								<Typography variant='h6' sx={{ mb: '0.5rem' }}>
-									Question
-								</Typography>
+								<Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+									<Typography variant='h6' sx={{ mb: '0.5rem' }}>
+										Question
+									</Typography>
+									{(isFITBDragDrop || isFITBTyping) && (
+										<CustomInfoMessageAlignedRight message='Double-click a word to turn it into a blank' sx={{ marginBottom: '0.5rem' }} />
+									)}
+								</Box>
 								<TinyMceEditor
 									handleEditorChange={(content) => {
 										setEditorContent(content);
@@ -487,7 +507,10 @@ const CreateQuestionDialog = ({
 						{(isFITBDragDrop || isFITBTyping) && (
 							<Box>
 								<Box sx={{ marginTop: '1rem', width: '90%', margin: '0 auto' }}>
-									<Typography variant='h6'>Blank Values</Typography>
+									<Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+										<Typography variant='h6'>Blank Values</Typography>
+										{(isFITBDragDrop || isFITBTyping) && <CustomInfoMessageAlignedRight message='Click a word below to remove it from the blanks' />}
+									</Box>
 									<Box
 										sx={{
 											display: 'flex',
@@ -664,13 +687,15 @@ const CreateQuestionDialog = ({
 					<Box sx={{ mt: '2rem' }}>
 						{isQuestionMissing && (
 							<CustomErrorMessage>
-								{isFlipCard && !newQuestion.imageUrl ? '- Enter front face text or enter image' : '- Enter question'}
+								{isFlipCard && !newQuestion.imageUrl ? '- Enter front face text and/or image' : '- Enter question'}
 							</CustomErrorMessage>
 						)}
 						{isCorrectAnswerMissing && !isAudioVideoQuestion && !isMatching && (
 							<CustomErrorMessage>{isFlipCard ? '- Enter back face text' : '- Select correct answer'}</CustomErrorMessage>
 						)}
-						{isAudioVideoQuestion && isAudioVideoSelectionMissing && <CustomErrorMessage>- Select one of the recording options</CustomErrorMessage>}
+						{isAudioVideoQuestion && isAudioVideoSelectionMissing && (
+							<CustomErrorMessage>- Select at least one of the recording options</CustomErrorMessage>
+						)}
 
 						{isMatching && (
 							<>
@@ -695,6 +720,7 @@ const CreateQuestionDialog = ({
 						resetImageUpload();
 						resetVideoUpload();
 					}}
+					disableBtn={questionType == ''}
 					onSubmit={handleSubmit}
 					cancelBtnSx={{ margin: '0 0.5rem 1rem 0' }}
 					submitBtnSx={{ margin: '0 1rem 1rem 0' }}

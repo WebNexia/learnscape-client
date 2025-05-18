@@ -205,11 +205,13 @@ const AdminCourseEditPage = () => {
 	}, [courseId, resetChanges]);
 
 	const handlePublishing = async (): Promise<void> => {
-		if (
-			(singleCourse?.chapterIds.length === 0 || singleCourse?.chapters?.filter((chapter) => chapter !== null).length === 0) &&
-			!singleCourse?.isActive
-		) {
+		const isTryingToPublish = !singleCourse?.isActive;
+
+		const hasPublishedLesson = chapterLessonDataBeforeSave.some((chapter) => chapter.lessons?.some((lesson) => lesson?.isActive));
+
+		if (isTryingToPublish && !hasPublishedLesson) {
 			setIsNoChapterMsgOpen(true);
+			return;
 		} else if (courseId !== undefined) {
 			try {
 				await axios.patch(`${base_url}/courses/${courseId}`, {
@@ -230,6 +232,34 @@ const AdminCourseEditPage = () => {
 
 	const handleCourseUpdate = async (e: FormEvent): Promise<void> => {
 		e.preventDefault();
+
+		let validUntil: Date | null = null;
+
+		const startingDate = new Date(singleCourse?.startingDate || '');
+		const durationWeeks = singleCourse?.durationWeeks || 0;
+
+		if (!isNaN(startingDate.getTime()) && durationWeeks > 0) {
+			validUntil = new Date(startingDate.getTime() + durationWeeks * 7 * 24 * 60 * 60 * 1000);
+
+			if (validUntil < new Date()) {
+				const confirmContinue = window.confirm(
+					'This course appears to be expired based on its starting date and duration.\n\nOnce expired, it will no longer be editable — only cloning will be allowed.\n\nDo you still want to continue editing?'
+				);
+
+				if (!confirmContinue) {
+					setSingleCourse((prev) =>
+						prev
+							? {
+									...prev,
+									startingDate: null,
+									durationWeeks: 0,
+							  }
+							: prev
+					);
+					return;
+				}
+			}
+		}
 
 		let updatedChapters: ChapterLessonData[] = [];
 		let updatedDocuments: Document[] = [];
@@ -340,6 +370,7 @@ const AdminCourseEditPage = () => {
 					chapterIds: updatedChapters?.map((chapter) => chapter.chapterId),
 					documentIds: updatedDocumentIds,
 					documents: updatedDocuments,
+					isExpired: validUntil ? validUntil < new Date() : false,
 				};
 
 				try {
@@ -444,7 +475,7 @@ const AdminCourseEditPage = () => {
 								setIsMissingField={setIsMissingField}
 								setSingleCourse={setSingleCourse}
 							/>
-							<Box sx={{ mt: '3rem', minHeight: '40vh' }}>
+							<Box sx={{ mt: '2rem', minHeight: '40vh' }}>
 								<Box
 									sx={{
 										display: 'flex',
@@ -542,7 +573,7 @@ const AdminCourseEditPage = () => {
 								</Box>
 							)}
 
-							<Box sx={{ margin: '5rem 0 1rem 0' }}>
+							<Box sx={{ margin: '3rem 0 1rem 0' }}>
 								<HandleDocUploadURL
 									label='Course Materials'
 									onDocUploadLogic={(url, docName) => {
