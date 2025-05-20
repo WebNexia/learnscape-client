@@ -542,7 +542,7 @@ const LessonPage = () => {
 					/>
 				</>
 			)}
-			{lesson?.documents.length !== 0 && !isQuestionsVisible && (
+			{lesson?.documents?.length !== 0 && !isQuestionsVisible && (
 				<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '2rem', width: '85%' }}>
 					<Box sx={{ display: 'flex', alignSelf: 'flex-start' }}>
 						<Typography variant='h5' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }}>
@@ -574,7 +574,7 @@ const LessonPage = () => {
 						endIcon={!nextLessonId ? <DoneAll /> : <KeyboardDoubleArrowRight />}
 						onClick={() => setIsLessonCourseCompletedModalOpen(true)}
 						type='button'
-						sx={{ marginTop: lesson.documents.length === 0 ? '1rem' : '0rem', fontSize: isMobileSize ? '0.7rem' : '0.85rem' }}>
+						sx={{ marginTop: lesson?.documents.length === 0 ? '1rem' : '0rem', fontSize: isMobileSize ? '0.7rem' : '0.85rem' }}>
 						{nextLessonId ? 'Next Lesson' : 'Complete Course'}
 					</CustomSubmitButton>
 					<CustomDialog

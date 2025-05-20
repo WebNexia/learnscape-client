@@ -152,7 +152,7 @@ const AdminCourseEditChapter = ({
 			{chapter?.lessonIds?.length !== 0 && (
 				<Reorder.Group
 					axis='y'
-					values={chapter?.lessons}
+					values={chapter?.lessons || []}
 					onReorder={(newLessons: Lesson[]): void => {
 						setChapterLessonDataBeforeSave((prevData) => {
 							if (prevData) {
@@ -172,7 +172,7 @@ const AdminCourseEditChapter = ({
 						chapterUpdateTrack(chapter.chapterId, setIsChapterUpdated);
 					}}>
 					{chapter?.lessons &&
-						chapter.lessons
+						chapter?.lessons
 							?.filter((lesson) => lesson !== null)
 							.map((lesson) => {
 								return (

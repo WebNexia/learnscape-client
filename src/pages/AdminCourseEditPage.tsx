@@ -97,6 +97,7 @@ const AdminCourseEditPage = () => {
 
 	const toggleDocRenameModal = (index: number, document: Document) => {
 		const newRenameModalOpen = [...isDocRenameModalOpen];
+
 		if (!newRenameModalOpen[index]) {
 			setOriginalDocumentNames((prevNames) => ({
 				...prevNames,
@@ -113,7 +114,7 @@ const AdminCourseEditPage = () => {
 
 		setSingleCourse((prevData) => {
 			if (prevData) {
-				const updatedDocuments = prevData.documents
+				const updatedDocuments = prevData?.documents
 					?.filter((document) => document !== null)
 					?.map((thisDoc) => {
 						if (thisDoc._id === document._id) {
@@ -164,6 +165,8 @@ const AdminCourseEditPage = () => {
 
 					const courseResponse = response?.data?.data;
 
+					console.log(courseResponse.documentIds)
+
 					setSingleCourse(courseResponse);
 					if (courseResponse?.prices.some((price: Price) => price.amount === 'Free' || price.amount === '' || price.amount === '0')) {
 						setIsFree(true);
@@ -171,13 +174,13 @@ const AdminCourseEditPage = () => {
 
 					if (courseResponse?.chapters[0]?.title) {
 						// Initialize chapter lesson data
-						const initialChapterLessonData: ChapterLessonData[] = courseResponse.chapters
+						const initialChapterLessonData: ChapterLessonData[] = courseResponse?.chapters
 							?.filter((chapter: BaseChapter) => chapter !== null)
 							.map((chapter: BaseChapter) => {
 								return {
 									chapterId: chapter._id,
 									title: chapter.title,
-									lessons: chapter.lessons,
+									lessons: chapter?.lessons,
 									lessonIds: chapter.lessons?.filter((lesson) => lesson !== null).map((lesson: Lesson) => lesson?._id),
 								};
 							});
@@ -185,13 +188,13 @@ const AdminCourseEditPage = () => {
 						setChapterLessonDataBeforeSave(initialChapterLessonData);
 					}
 
-					const chapterUpdateData = courseResponse.chapters?.map((chapter: BaseChapter) => ({
+					const chapterUpdateData = courseResponse?.chapters?.map((chapter: BaseChapter) => ({
 						chapterId: chapter._id,
 						isUpdated: false,
 					}));
 					setIsChapterUpdated(chapterUpdateData);
 
-					const documentUpdateData = courseResponse.documents?.map((document: Document) => ({
+					const documentUpdateData = courseResponse?.documents?.map((document: Document) => ({
 						documentId: document._id,
 						isUpdated: false,
 					}));
@@ -253,7 +256,7 @@ const AdminCourseEditPage = () => {
 									...prev,
 									startingDate: null,
 									durationWeeks: 0,
-							  }
+								}
 							: prev
 					);
 					return;
@@ -272,7 +275,7 @@ const AdminCourseEditPage = () => {
 			updatedChapters = await Promise.all(
 				chapterLessonDataBeforeSave?.map(async (chapter) => {
 					chapter.lessons = await Promise.all(
-						chapter.lessons
+						chapter?.lessons
 							?.filter((lesson) => lesson !== null)
 							.map(async (lesson: Lesson) => {
 								if (lesson._id.includes('temp_lesson_id')) {
@@ -297,7 +300,7 @@ const AdminCourseEditPage = () => {
 							})
 					);
 
-					chapter.lessonIds = chapter.lessons?.filter((lesson) => lesson !== null).map((lesson) => lesson._id);
+					chapter.lessonIds = chapter?.lessons?.filter((lesson) => lesson !== null).map((lesson) => lesson._id);
 
 					if (chapter.chapterId.includes('temp_chapter_id')) {
 						try {
@@ -534,7 +537,7 @@ const AdminCourseEditPage = () => {
 								) : (
 									<Reorder.Group
 										axis='y'
-										values={chapterLessonDataBeforeSave}
+										values={chapterLessonDataBeforeSave || []}
 										onReorder={(newChapters): void => {
 											setChapterLessonDataBeforeSave(newChapters);
 										}}>
@@ -579,7 +582,7 @@ const AdminCourseEditPage = () => {
 									onDocUploadLogic={(url, docName) => {
 										setSingleCourse((prevData) => {
 											if (prevData && userId) {
-												const maxNumber = prevData.documents
+												const maxNumber = prevData?.documents
 													.filter((doc) => doc !== null)
 													.reduce((max, doc) => {
 														const match = doc.name.match(/Untitled Document (\d+)/);
@@ -590,7 +593,7 @@ const AdminCourseEditPage = () => {
 												return {
 													...prevData,
 													documents: [
-														...prevData.documents,
+														...prevData?.documents,
 														{
 															_id: generateUniqueId('temp_doc_id_'),
 															name: newName,
@@ -628,7 +631,7 @@ const AdminCourseEditPage = () => {
 								removeDocOnClick={(document: Document) => {
 									setSingleCourse((prevData) => {
 										if (prevData) {
-											const filteredDocuments = prevData.documents?.filter((thisDoc) => thisDoc._id !== document._id);
+											const filteredDocuments = prevData?.documents?.filter((thisDoc) => thisDoc._id !== document._id);
 											const filteredDocumentIds = filteredDocuments?.map((doc) => doc._id);
 
 											return {
@@ -643,7 +646,7 @@ const AdminCourseEditPage = () => {
 								renameDocOnChange={(e: React.ChangeEvent<HTMLInputElement>, document: Document) => {
 									setSingleCourse((prevData) => {
 										if (prevData) {
-											const updatedDocuments = prevData.documents
+											const updatedDocuments = prevData?.documents
 												?.filter((document) => document !== null)
 												?.map((thisDoc) => {
 													if (thisDoc._id === document._id) {

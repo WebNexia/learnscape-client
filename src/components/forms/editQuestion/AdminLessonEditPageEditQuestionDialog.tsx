@@ -239,7 +239,7 @@ const AdminLessonEditPageEditQuestionDialog = ({
 			setSingleLessonBeforeSave((prevData) => {
 				if (!prevData.questions) return prevData;
 
-				const updatedQuestions = prevData.questions.map((prevQuestion) => {
+				const updatedQuestions = prevData.questions?.map((prevQuestion) => {
 					if (prevQuestion && prevQuestion._id === question._id) {
 						return questionBeforeSave;
 					}

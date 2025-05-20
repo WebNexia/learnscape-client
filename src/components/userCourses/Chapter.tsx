@@ -28,12 +28,12 @@ const Chapter = ({ chapter, isEnrolledStatus, nextChapterFirstLessonId }: Chapte
 			</Box>
 			<Box sx={{ boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)', borderRadius: '0.5rem' }}>
 				{chapter &&
-					chapter.lessons &&
-					chapter.lessons
+					chapter?.lessons &&
+					chapter?.lessons
 						?.filter((lesson) => lesson !== null)
 						?.map((lesson: LessonById, index) => {
 							let nextLessonId: string = '';
-							if (index !== chapter.lessons.length - 1) {
+							if (index !== chapter.lessons?.length - 1) {
 								nextLessonId = chapter.lessons[index + 1]._id;
 							}
 							let lessonOrder: number = index + 1;

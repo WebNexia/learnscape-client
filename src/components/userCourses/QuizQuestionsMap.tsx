@@ -85,7 +85,7 @@ const QuizQuestionsMap = ({ questions, userQuizAnswers, isOpen, setIsOpen }: Qui
 						overflow: 'auto',
 						alignContent: 'flex-start',
 					}}>
-					{questions.map((question, index) => {
+					{questions?.map((question, index) => {
 						const isAnswered = userQuizAnswers.some(
 							(answer) =>
 								answer.questionId === question._id &&

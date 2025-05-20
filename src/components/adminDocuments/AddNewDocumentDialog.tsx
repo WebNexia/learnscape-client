@@ -95,8 +95,8 @@ const AddNewDocumentDialog = ({
 					if (prevData) {
 						return {
 							...prevData,
-							documents: [...selectedDocuments, ...prevData.documents],
-							documentIds: [...selectedDocumentIds, ...prevData.documentIds],
+							documents: [...selectedDocuments, ...prevData?.documents],
+							documentIds: [...selectedDocumentIds, ...prevData?.documentIds],
 						};
 					}
 					return prevData;
@@ -109,8 +109,8 @@ const AddNewDocumentDialog = ({
 					if (prevData) {
 						return {
 							...prevData,
-							documents: [...selectedDocuments, ...prevData.documents],
-							documentIds: [...selectedDocumentIds, ...prevData.documentIds],
+							documents: [...selectedDocuments, ...prevData?.documents],
+							documentIds: [...selectedDocumentIds, ...prevData?.documentIds],
 						};
 					}
 					return prevData;
@@ -186,8 +186,8 @@ const AddNewDocumentDialog = ({
 								paginatedDocuments
 									?.filter((document) =>
 										!fromAdminCourses
-											? !singleLessonBeforeSave?.documentIds.includes(document._id)
-											: !singleCourse?.documentIds.includes(document._id)
+											? !singleLessonBeforeSave?.documentIds?.includes(document._id)
+											: !singleCourse?.documentIds?.includes(document._id)
 									)
 									?.map((document: Document) => {
 										const isSelected = selectedDocumentIds.indexOf(document._id) !== -1;

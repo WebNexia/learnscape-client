@@ -184,7 +184,7 @@ const AdminLessonEditPage = () => {
 
 		setSingleLessonBeforeSave((prevData) => {
 			if (prevData) {
-				const updatedDocuments = prevData.documents
+				const updatedDocuments = prevData?.documents
 					?.filter((document) => document !== null)
 					?.map((thisDoc) => {
 						if (thisDoc._id === document._id) {
@@ -235,6 +235,9 @@ const AdminLessonEditPage = () => {
 					setSingleLesson(lessonsResponse);
 					setSingleLessonBeforeSave(lessonsResponse);
 
+					console.log(lessonsResponse)
+					console.log(lessonsResponse.text)
+
 					setEditorContent(lessonsResponse.text);
 					setPrevEditorContent(lessonsResponse.text);
 
@@ -281,7 +284,7 @@ const AdminLessonEditPage = () => {
 		if (
 			lessonId &&
 			singleLesson.text &&
-			(((singleLesson.type === LessonType.PRACTICE_LESSON || singleLesson.type === LessonType.QUIZ) && singleLesson.questionIds.length !== 0) ||
+			(((singleLesson.type === LessonType.PRACTICE_LESSON || singleLesson.type === LessonType.QUIZ) && singleLesson.questionIds?.length !== 0) ||
 				singleLesson.type === LessonType.INSTRUCTIONAL_LESSON)
 		) {
 			try {
@@ -307,12 +310,13 @@ const AdminLessonEditPage = () => {
 		if (!editorContent) {
 			setIsMissingFieldMsgOpen(true);
 			setIsMissingField(true);
+			setIsEditMode(true)
 			return;
 		}
 
 		try {
 			if (singleLessonBeforeSave?.documents) {
-				const updatedDocumentsPromises = (singleLessonBeforeSave.documents as (Document | null)[])
+				const updatedDocumentsPromises = (singleLessonBeforeSave?.documents as (Document | null)[])
 					?.filter((doc): doc is Document => doc !== null)
 					?.map(async (document) => {
 						if (document._id.includes('temp_doc_id')) {
@@ -581,14 +585,14 @@ const AdminLessonEditPage = () => {
 				return {
 					...prevData,
 					questions: [
-						...prevData.questions.slice(0, index + 1), // Questions before the index
+						...prevData.questions?.slice(0, index + 1), // Questions before the index
 						clonedQuestion, // The cloned question
-						...prevData.questions.slice(index + 1), // Questions after the index
+						...prevData.questions?.slice(index + 1), // Questions after the index
 					],
 					questionIds: [
-						...prevData.questionIds.slice(0, index + 1), // IDs before the index
+						...prevData.questionIds?.slice(0, index + 1), // IDs before the index
 						clonedQuestion._id, // The cloned question ID
-						...prevData.questionIds.slice(index + 1), // IDs after the index
+						...prevData.questionIds?.slice(index + 1), // IDs after the index
 					],
 				};
 			}
@@ -633,7 +637,7 @@ const AdminLessonEditPage = () => {
 				sx={{ mt: '5rem' }}
 				onClose={() => setIsPublishAllowedMsgOpen(false)}>
 				<Alert severity='error' variant='filled' sx={{ width: '100%' }}>
-					Add instruction or question(s) to publish the lesson
+					Add instruction and/or question(s) to publish the lesson
 				</Alert>
 			</Snackbar>
 
@@ -717,9 +721,9 @@ const AdminLessonEditPage = () => {
 									{singleLesson.type} Materials
 								</Typography>
 							</Box>
-							{singleLesson.documents?.filter((doc) => doc !== null).length !== 0 ? (
+							{singleLesson?.documents?.filter((doc) => doc !== null).length !== 0 ? (
 								<Box>
-									{singleLesson.documents
+									{singleLesson?.documents
 										?.filter((doc) => doc !== null)
 										?.map((doc) => (
 											<Box sx={{ mb: '0.5rem' }} key={doc._id}>
@@ -963,14 +967,14 @@ const AdminLessonEditPage = () => {
 										</Box>
 									</Box>
 
-									{singleLessonBeforeSave?.questionIds.length === 0 ||
+									{singleLessonBeforeSave?.questionIds?.length === 0 ||
 									singleLessonBeforeSave?.questions?.filter((question) => question !== null).length === 0 ? (
 										<NoContentBoxAdmin content='No question for this lesson' />
 									) : (
 										<Box sx={{ mb: '5rem' }}>
 											<Reorder.Group
 												axis='y'
-												values={singleLessonBeforeSave.questions}
+												values={singleLessonBeforeSave?.questions || []}
 												onReorder={(newQuestions): void => {
 													setIsLessonUpdated(true);
 													setSingleLessonBeforeSave((prevData) => {
@@ -978,7 +982,7 @@ const AdminLessonEditPage = () => {
 													});
 												}}>
 												{singleLessonBeforeSave.questions &&
-													singleLessonBeforeSave.questions.length !== 0 &&
+													singleLessonBeforeSave.questions?.length !== 0 &&
 													singleLessonBeforeSave.questions?.map((question, index) => {
 														if (question !== null) {
 															return (
@@ -1152,7 +1156,7 @@ const AdminLessonEditPage = () => {
 
 										setSingleLessonBeforeSave((prevData) => {
 											if (prevData && userId) {
-												const maxNumber = prevData.documents
+												const maxNumber = prevData?.documents
 													.filter((doc) => doc !== null)
 													.reduce((max, doc) => {
 														const match = doc.name.match(/Untitled Document (\d+)/);
@@ -1164,7 +1168,7 @@ const AdminLessonEditPage = () => {
 												return {
 													...prevData,
 													documents: [
-														...prevData.documents,
+														...prevData?.documents,
 														{
 															_id: generateUniqueId('temp_doc_id_'),
 															name: newName.trim(),
@@ -1193,7 +1197,7 @@ const AdminLessonEditPage = () => {
 							</Box>
 
 							<DocumentsListEditBox
-								documentsSource={singleLessonBeforeSave.documents}
+								documentsSource={singleLessonBeforeSave?.documents}
 								toggleDocRenameModal={toggleDocRenameModal}
 								closeDocRenameModal={closeDocRenameModal}
 								isDocRenameModalOpen={isDocRenameModalOpen}
@@ -1203,7 +1207,7 @@ const AdminLessonEditPage = () => {
 									setIsLessonUpdated(true);
 									setSingleLessonBeforeSave((prevData) => {
 										if (prevData) {
-											const filteredDocuments = prevData.documents?.filter((thisDoc) => thisDoc._id !== document._id);
+											const filteredDocuments = prevData?.documents?.filter((thisDoc) => thisDoc._id !== document._id);
 											const filteredDocumentsIds = filteredDocuments?.map((doc) => doc._id);
 
 											return {
@@ -1218,7 +1222,7 @@ const AdminLessonEditPage = () => {
 								renameDocOnChange={(e: React.ChangeEvent<HTMLInputElement>, document: Document) => {
 									setSingleLessonBeforeSave((prevData) => {
 										if (prevData) {
-											const updatedDocuments = prevData.documents
+											const updatedDocuments = prevData?.documents
 												?.filter((doc) => doc !== null)
 												?.map((thisDoc) => {
 													if (thisDoc._id === document._id) {

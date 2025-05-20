@@ -53,7 +53,7 @@ const Matching = ({
 		if (setSingleLessonBeforeSave) {
 			setSingleLessonBeforeSave((prevData) => {
 				if (!prevData.questions) return prevData;
-				const updatedQuestions = prevData.questions.map((prevQuestion) =>
+				const updatedQuestions = prevData.questions?.map((prevQuestion) =>
 					prevQuestion?._id === question?._id ? { ...prevQuestion, matchingPairs: newPairs } : prevQuestion
 				);
 				return { ...prevData, questions: updatedQuestions };

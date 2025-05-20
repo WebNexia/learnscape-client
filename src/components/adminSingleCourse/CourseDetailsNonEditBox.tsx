@@ -28,6 +28,27 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters }: CourseDetailsNonEdi
 				justifyContent: 'flex-start',
 				width: '90%',
 			}}>
+			<Box sx={{ display: 'flex', width: '100%', justifyContent: 'space-between', mt: '-1rem', mb: '1rem' }}>
+				<Box sx={{ display: 'flex' }}>
+					<Typography variant='body2' sx={{ fontSize: '0.75rem', mr:'0.25rem' }}>
+						Created By:
+					</Typography>
+
+					<Typography variant='body2' sx={{ fontSize: '0.75rem' }}>
+						{singleCourse?.createdByName} ({singleCourse?.createdByRole}) on {dateFormatter(singleCourse?.createdAt)}{' '}
+					</Typography>
+				</Box>
+				<Box sx={{ display: 'flex' }}>
+					<Typography variant='body2' sx={{ fontSize: '0.75rem', mr:'0.25rem' }}>
+						Last Updated By:
+					</Typography>
+
+					<Typography variant='body2' sx={{ fontSize: '0.75rem' }}>
+						{singleCourse?.updatedByName} ({singleCourse?.updatedByRole}) on {dateFormatter(singleCourse?.createdAt)}{' '}
+					</Typography>
+				</Box>
+			</Box>
+
 			<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
 				<Box
 					sx={{
@@ -95,12 +116,12 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters }: CourseDetailsNonEdi
 											price.currency === 'gbp'
 												? UKFlag
 												: price.currency === 'usd'
-												? USFlag
-												: price.currency === 'eur'
-												? EUFlag
-												: price.currency === 'try'
-												? TRFlag
-												: undefined
+													? USFlag
+													: price.currency === 'eur'
+														? EUFlag
+														: price.currency === 'try'
+															? TRFlag
+															: undefined
 										}
 										alt='flag'
 										style={{ height: '2rem', width: '2rem', borderRadius: '50%', marginTop: '0.35rem' }}
@@ -129,26 +150,7 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters }: CourseDetailsNonEdi
 					</Typography>
 				</Box>
 			</Box>
-			<Box sx={{ display: 'flex', width: '100%', justifyContent: 'space-between', mt: '1rem' }}>
-				<Box>
-					<Typography variant='body2'>Created By: </Typography>
-					<Box sx={{ display: 'flex', alignItems: 'center', mt: '0.25rem' }}>
-						<Avatar src={singleCourse?.createdByImageUrl} sx={{ mr: '0.5rem', height: '2rem', width: '2rem' }} />
-						<Typography variant='body2' sx={{fontSize:'0.75rem'}}>
-							{singleCourse?.createdByName} ({singleCourse?.createdByRole}) on {dateFormatter(singleCourse?.createdAt)}{' '}
-						</Typography>
-					</Box>
-				</Box>
-				<Box>
-					<Typography variant='body2'>Last Updated By: </Typography>
-					<Box sx={{ display: 'flex', alignItems: 'center', mt: '0.25rem' }}>
-						<Avatar src={singleCourse?.updatedByImageUrl} sx={{ mr: '0.5rem', height: '2rem', width: '2rem' }} />
-						<Typography variant='body2'  sx={{fontSize:'0.75rem'}}>
-							{singleCourse?.updatedByName} ({singleCourse?.updatedByRole}) on {dateFormatter(singleCourse?.createdAt)}{' '}
-						</Typography>
-					</Box>
-				</Box>
-			</Box>
+
 			<Box sx={{ mt: '4rem', minHeight: '40vh' }}>
 				<Typography variant='h5' sx={{ mb: '2.25rem' }}>
 					CHAPTERS
@@ -158,7 +160,7 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters }: CourseDetailsNonEdi
 				) : (
 					<>
 						{singleCourse &&
-							singleCourse.chapters &&
+							singleCourse?.chapters &&
 							chapters?.map((chapter) => {
 								return (
 									<Box key={chapter.chapterId} sx={{ margin: '1rem 0 3rem 0' }}>
@@ -168,9 +170,9 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters }: CourseDetailsNonEdi
 											</Typography>
 										</Box>
 										{chapter &&
-											chapter.lessons &&
-											chapter.lessons.length !== 0 &&
-											chapter.lessons
+											chapter?.lessons &&
+											chapter?.lessons?.length !== 0 &&
+											chapter?.lessons
 												?.filter((lesson) => lesson !== null)
 												.map((lesson) => {
 													return (

@@ -385,7 +385,7 @@ const CreateQuestionDialog = ({
 							size='small'
 							required
 							displayEmpty
-							sx={{ fontSize: '0.85rem' }}>
+							sx={{ color: questionType == '' ? 'lightgray' : 'inherit', fontSize: '0.8rem' }}>
 							<MenuItem disabled value='' sx={{ fontSize: '0.85rem' }}>
 								Select Type
 							</MenuItem>

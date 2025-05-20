@@ -1,4 +1,4 @@
-import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from '@mui/material';
+import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent, Typography } from '@mui/material';
 import CustomTextField from '../customFields/CustomTextField';
 import { useContext, useState } from 'react';
 import { LessonsContext } from '../../../contexts/LessonsContextProvider';
@@ -140,23 +140,25 @@ const CreateLessonDialog = ({
 					}}
 				/>
 				<FormControl sx={{ margin: '1rem 2rem' }}>
-					<InputLabel id='type' sx={{ fontSize: '0.8rem' }} required>
+				<Typography variant='body2' sx={{ mb: '0.5rem' }}>
 						Type
-					</InputLabel>
+					</Typography>
 					<Select
-						labelId='type'
 						id='lesson_type'
 						value={type}
 						onChange={(event: SelectChangeEvent) => {
 							setType(event.target.value);
 						}}
-						size='medium'
-						label='Type'
+						size='small'
 						required
-						sx={{ backgroundColor: theme.bgColor?.common }}>
+						displayEmpty
+						sx={{ backgroundColor: theme.bgColor?.common, color: type == '' ? 'lightgray' : 'inherit',  fontSize:'0.8rem' }}>
+							<MenuItem disabled value='' sx={{ fontSize: '0.85rem' }}>
+								Select Type
+							</MenuItem>
 						{lessonTypes &&
 							lessonTypes?.map((type) => (
-								<MenuItem value={type} key={type}>
+								<MenuItem value={type} key={type} sx={{fontSize:'0.85rem'}}>
 									{type}
 								</MenuItem>
 							))}

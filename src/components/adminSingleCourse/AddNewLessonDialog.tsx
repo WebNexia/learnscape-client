@@ -52,7 +52,7 @@ const AddNewLessonDialog = ({
 	const pageSize = 50;
 
 	const filteredLessons = sortedLessonsData
-		?.filter((lesson) => !chapter.lessonIds.includes(lesson._id))
+		?.filter((lesson) => !chapter.lessonIds?.includes(lesson._id))
 		.filter((lesson) => {
 			if (searchValue) {
 				const lowerSearch = searchValue.toLowerCase();
@@ -115,8 +115,8 @@ const AddNewLessonDialog = ({
 					if (currentChapter.chapterId === chapter?.chapterId) {
 						return {
 							...currentChapter,
-							lessons: currentChapter.lessons.concat(selectedLessons),
-							lessonIds: currentChapter.lessonIds.concat(selectedLessonIds),
+							lessons: currentChapter?.lessons?.concat(selectedLessons),
+							lessonIds: currentChapter?.lessonIds?.concat(selectedLessonIds),
 						};
 					}
 					return currentChapter; // Return unchanged chapter if not the one being updated

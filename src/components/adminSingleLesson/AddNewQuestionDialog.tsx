@@ -124,8 +124,8 @@ const AddNewQuestionDialog = ({
 		setSingleLessonBeforeSave((prevData) => {
 			return {
 				...prevData,
-				questions: prevData.questions.concat(selectedQuestions),
-				questionIds: prevData.questionIds.concat(selectedQuestionIds),
+				questions: prevData.questions?.concat(selectedQuestions),
+				questionIds: prevData.questionIds?.concat(selectedQuestionIds),
 			};
 		});
 
@@ -330,7 +330,7 @@ const AddNewQuestionDialog = ({
 										}
 										return true;
 									})
-									?.filter((question) => !singleLessonBeforeSave.questionIds.includes(question._id))
+									?.filter((question) => !singleLessonBeforeSave.questionIds?.includes(question._id))
 									?.map((question: QuestionInterface) => {
 										const isSelected = selectedQuestionIds.indexOf(question._id) !== -1;
 										return (

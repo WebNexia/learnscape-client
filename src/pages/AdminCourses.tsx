@@ -479,7 +479,7 @@ const AdminCourses = () => {
 										{ key: 'isActive', label: 'Status' },
 										{ key: 'startingDate', label: 'Starting Date' },
 										{ key: 'actions', label: 'Actions' },
-								  ]
+									]
 								: [
 										{ key: 'title', label: 'Title' },
 										{ key: 'isActive', label: 'Status' },
@@ -489,7 +489,7 @@ const AdminCourses = () => {
 										{ key: 'updatedAt', label: 'Updated At' },
 										{ key: 'clonedFromId', label: 'Origin' },
 										{ key: 'actions', label: 'Actions' },
-								  ]
+									]
 						}
 					/>
 					<TableBody>
@@ -505,8 +505,8 @@ const AdminCourses = () => {
 														? 'Published - Closed'
 														: 'Published - Open'
 													: course.isExpired
-													? 'Unpublished - Closed'
-													: 'Unpublished - Open'
+														? 'Unpublished - Closed'
+														: 'Unpublished - Open'
 											}
 										/>
 
@@ -575,17 +575,23 @@ const AdminCourses = () => {
 													title='Clone Course'
 													content='Are you sure you want to clone the course?'
 													maxWidth='sm'>
-													<DialogContent sx={{mt:'-0.75rem'}}>
+													<DialogContent sx={{ mt: '-0.75rem' }}>
 														<Typography variant='body2'>Cloning this course will:</Typography>
 														<ul style={{ paddingLeft: '1.2rem', marginTop: '0.5rem' }}>
 															<li>
-																<Typography variant='body2' sx={{mb:'0.25rem'}}>Create a new course with a copy of all its chapters, lessons, questions, and documents</Typography>
+																<Typography variant='body2' sx={{ mb: '0.25rem' }}>
+																	Create a new course with a copy of all its chapters, lessons, questions, and documents
+																</Typography>
 															</li>
 															<li>
-																<Typography variant='body2' sx={{mb:'0.25rem'}}>Preserve the original course and its content without any changes</Typography>
+																<Typography variant='body2' sx={{ mb: '0.25rem' }}>
+																	Preserve the original course and its content without any changes
+																</Typography>
 															</li>
 															<li>
-																<Typography variant='body2' sx={{mb:'0.25rem'}}>Allow you to safely edit the new course without affecting previous versions</Typography>
+																<Typography variant='body2' sx={{ mb: '0.25rem' }}>
+																	Allow you to safely edit the new course without affecting previous versions
+																</Typography>
 															</li>
 															<li>
 																<Typography variant='body2'>Mark the cloned course as unpublished by default</Typography>
