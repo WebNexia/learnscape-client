@@ -12,6 +12,7 @@ export interface BaseCourse {
 	updatedAt: string;
 	isExpired: boolean;
 	clonedFromId: string;
+	clonedFromTitle: string;
 	versionNote: string;
 	createdByName: string;
 	createdByImageUrl: string;
@@ -19,7 +20,7 @@ export interface BaseCourse {
 	updatedByName: string;
 	updatedByImageUrl: string;
 	updatedByRole: string;
-	publishedAt: string;
+	publishedAt: string | null;
 }
 
 export interface Course extends BaseCourse {

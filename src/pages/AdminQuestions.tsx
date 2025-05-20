@@ -2,7 +2,7 @@ import { Box, FormControl, InputAdornment, MenuItem, Select, Table, TableBody, T
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { useContext, useEffect, useRef, useState } from 'react';
 import axios from '@utils/axiosInstance';
-import { Delete, Edit, FileCopy, Search } from '@mui/icons-material';
+import { Delete, Edit,  Search } from '@mui/icons-material';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
@@ -403,11 +403,11 @@ const AdminQuestions = () => {
 						order={order}
 						handleSort={handleSort}
 						columns={[
+							{ key: 'clone', label: '' },
 							{ key: 'questionType', label: 'Question Type' },
 							{ key: 'question', label: 'Question' },
 							{ key: 'createdAt', label: 'Created At' },
 							{ key: 'updatedAt', label: 'Updated At' },
-							{ key: 'clonedFromId', label: 'Origin' },
 							{ key: 'actions', label: 'Actions' },
 						]}
 					/>
@@ -416,13 +416,29 @@ const AdminQuestions = () => {
 							filteredQuestions?.map((question: QuestionInterface, index) => {
 								return (
 									<TableRow key={question._id}>
+										<TableCell sx={{ textAlign: 'center', width: '0px' }}>
+											{question.clonedFromId && (
+												<Box
+													sx={{
+														backgroundColor: theme.palette.info.main,
+														color: 'white',
+														borderRadius: '50%',
+														width: '15px',
+														height: '15px',
+														display: 'flex',
+														alignItems: 'center',
+														justifyContent: 'center',
+														fontSize: '0.65rem',
+														margin: '0 auto'
+													}}>
+														C
+												</Box>
+											)}
+										</TableCell>
 										<CustomTableCell value={question.questionType} />
-										<CustomTableCell
-											value={isVerySmallScreen ? truncateText(stripHtml(question.question), 25) : truncateText(stripHtml(question.question), 45)}
-										/>
+										<CustomTableCell value={isVerySmallScreen ? truncateText(stripHtml(question.question), 25) : truncateText(stripHtml(question.question), 45)} />
 										<CustomTableCell value={dateFormatter(question.createdAt)} />
 										<CustomTableCell value={dateFormatter(question.updatedAt)} />
-										<CustomTableCell value={question.clonedFromId ? 'Clone' : 'Original'} />
 
 										<TableCell
 											sx={{

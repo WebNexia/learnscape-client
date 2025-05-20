@@ -1,4 +1,4 @@
-import { Avatar, Box, IconButton, Link, Tooltip, Typography } from '@mui/material';
+import {  Box, IconButton, Link, Tooltip, Typography } from '@mui/material';
 import theme from '../../themes';
 import { SingleCourse } from '../../interfaces/course';
 
@@ -28,27 +28,6 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters }: CourseDetailsNonEdi
 				justifyContent: 'flex-start',
 				width: '90%',
 			}}>
-			<Box sx={{ display: 'flex', width: '100%', justifyContent: 'space-between', mt: '-1rem', mb: '1rem' }}>
-				<Box sx={{ display: 'flex' }}>
-					<Typography variant='body2' sx={{ fontSize: '0.75rem', mr:'0.25rem' }}>
-						Created By:
-					</Typography>
-
-					<Typography variant='body2' sx={{ fontSize: '0.75rem' }}>
-						{singleCourse?.createdByName} ({singleCourse?.createdByRole}) on {dateFormatter(singleCourse?.createdAt)}{' '}
-					</Typography>
-				</Box>
-				<Box sx={{ display: 'flex' }}>
-					<Typography variant='body2' sx={{ fontSize: '0.75rem', mr:'0.25rem' }}>
-						Last Updated By:
-					</Typography>
-
-					<Typography variant='body2' sx={{ fontSize: '0.75rem' }}>
-						{singleCourse?.updatedByName} ({singleCourse?.updatedByRole}) on {dateFormatter(singleCourse?.createdAt)}{' '}
-					</Typography>
-				</Box>
-			</Box>
-
 			<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
 				<Box
 					sx={{

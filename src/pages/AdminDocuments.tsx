@@ -19,6 +19,7 @@ import { useParams } from 'react-router-dom';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import { dateFormatter } from '../utils/dateFormatter';
+import { useTheme } from '@mui/material/styles';
 
 const AdminDocuments = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -70,6 +71,8 @@ const AdminDocuments = () => {
 	const [documentUrl, setDocumentUrl] = useState<string>('');
 	const [documentName, setDocumentName] = useState<string>('');
 	const [fileUploaded, setFileUploaded] = useState<boolean>(false);
+
+	const theme = useTheme();
 
 	useEffect(() => {
 		setDocumentsPageNumber(1);
@@ -268,11 +271,11 @@ const AdminDocuments = () => {
 						order={order}
 						handleSort={handleSort}
 						columns={[
+							{ key: 'clone', label: '' },
 							{ key: 'name', label: 'Document Name' },
 							{ key: 'documentId', label: 'Document URL' },
 							{ key: 'createdAt', label: 'Created At' },
 							{ key: 'updatedAt', label: 'Updated At' },
-							{ key: 'clonedFromId', label: 'Origin' },
 							{ key: 'actions', label: 'Actions' },
 						]}
 					/>
@@ -280,9 +283,27 @@ const AdminDocuments = () => {
 						{paginatedDocuments &&
 							paginatedDocuments?.map((document: Document, index) => {
 								return (
-									<TableRow key={document._id}>
+									<TableRow key={document._id}>	<TableCell sx={{ textAlign: 'center', width: '0px' }}>
+									{document.clonedFromId && (
+										<Box
+											sx={{
+												backgroundColor: theme.palette.info.main,
+												color: 'white',
+												borderRadius: '50%',
+												width: '15px',
+												height: '15px',
+												display: 'flex',
+												alignItems: 'center',
+												justifyContent: 'center',
+												fontSize: '0.65rem',
+												margin: '0 auto'
+											}}>
+												C
+										</Box>
+									)}
+								</TableCell>
 										<CustomTableCell value={document.name} />
-										<CustomTableCell>
+										<TableCell sx={{ textAlign: 'center' }}>
 											<Link
 												href={document.documentUrl}
 												target='_blank'
@@ -290,11 +311,9 @@ const AdminDocuments = () => {
 												sx={{ fontSize: isMobileSize ? '0.6rem' : undefined }}>
 												{isVerySmallScreen ? truncateText(document.documentUrl, 25) : truncateText(document.documentUrl, 40)}
 											</Link>
-										</CustomTableCell>
+										</TableCell>
 										<CustomTableCell value={dateFormatter(document.createdAt)} />
 										<CustomTableCell value={dateFormatter(document.updatedAt)} />
-
-										<CustomTableCell value={document.clonedFromId ? 'Clone' : 'Original'} />
 
 										<TableCell
 											sx={{

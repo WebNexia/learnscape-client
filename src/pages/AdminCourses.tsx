@@ -205,6 +205,7 @@ const AdminCourses = () => {
 				_id: response.data.clonedCourse._id,
 				title: response.data.clonedCourse.title,
 				clonedFromId: response.data.clonedCourse.clonedFromId,
+				clonedFromTitle: response.data.clonedCourse.clonedFromTitle,
 				createdAt: response.data.clonedCourse.createdAt,
 				updatedAt: response.data.clonedCourse.updatedAt,
 			});
@@ -483,19 +484,20 @@ const AdminCourses = () => {
 						columns={
 							isVerySmallScreen
 								? [
+										{ key: 'clone', label: '' },
 										{ key: 'title', label: 'Title' },
 										{ key: 'isActive', label: 'Status' },
 										{ key: 'startingDate', label: 'Starting Date' },
 										{ key: 'actions', label: 'Actions' },
 									]
 								: [
+										{ key: 'clone', label: '' },
 										{ key: 'title', label: 'Title' },
 										{ key: 'isActive', label: 'Status' },
 										{ key: 'startingDate', label: 'Starting Date' },
 										{ key: 'durationWeeks', label: 'Weeks #' },
 										{ key: 'createdAt', label: 'Created At' },
 										{ key: 'updatedAt', label: 'Updated At' },
-										{ key: 'clonedFromId', label: 'Origin' },
 										{ key: 'actions', label: 'Actions' },
 									]
 						}
@@ -505,6 +507,25 @@ const AdminCourses = () => {
 							paginatedCourses?.map((course: SingleCourse, index) => {
 								return (
 									<TableRow key={course._id}>
+										<TableCell sx={{ textAlign: 'center', width: '0px' }}>
+											{course.clonedFromId && (
+												<Box
+													sx={{
+														backgroundColor: theme.palette.info.main,
+														color: 'white',
+														borderRadius: '50%',
+														width: '15px',
+														height: '15px',
+														display: 'flex',
+														alignItems: 'center',
+														justifyContent: 'center',
+														fontSize: '0.65rem',
+														margin: '0 auto'
+													}}>
+														C
+												</Box>
+											)}
+										</TableCell>
 										<CustomTableCell value={course.title} />
 										<CustomTableCell
 											value={
@@ -522,7 +543,6 @@ const AdminCourses = () => {
 										{!isVerySmallScreen && <CustomTableCell value={course.durationWeeks} />}
 										{!isVerySmallScreen && <CustomTableCell value={dateFormatter(course.createdAt)} />}
 										{!isVerySmallScreen && <CustomTableCell value={dateFormatter(course.updatedAt)} />}
-										{!isVerySmallScreen && <CustomTableCell value={course.clonedFromId ? 'Clone' : 'Original'} />}
 
 										<TableCell
 											sx={{
@@ -584,13 +604,13 @@ const AdminCourses = () => {
 													content='You cannot delete published course. Please unpublish it first.'
 													maxWidth='sm'>
 													<DialogActions>
-													<CustomCancelButton
-														onClick={() => closeDeleteCourseModal(index)}
-														sx={{
-															margin: '0 0.5rem 0.5rem 0',
-														}}>
-														Cancel
-													</CustomCancelButton>
+														<CustomCancelButton
+															onClick={() => closeDeleteCourseModal(index)}
+															sx={{
+																margin: '0 0.5rem 0.5rem 0',
+															}}>
+															Cancel
+														</CustomCancelButton>
 													</DialogActions>
 												</CustomDialog>
 											)}

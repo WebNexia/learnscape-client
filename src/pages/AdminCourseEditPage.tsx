@@ -217,10 +217,17 @@ const AdminCourseEditPage = () => {
 			try {
 				await axios.patch(`${base_url}/courses/${courseId}`, {
 					isActive: !singleCourse?.isActive,
+					// publishedAt will be handled by the backend when publishing
+					// When unpublishing, we explicitly set it to null
+					publishedAt: isTryingToPublish ? undefined : null
 				});
 				setSingleCourse((prevData) => {
 					if (prevData) {
-						return { ...prevData, isActive: !singleCourse?.isActive };
+						return { 
+							...prevData, 
+							isActive: !singleCourse?.isActive,
+							publishedAt: isTryingToPublish ? new Date().toISOString() : null 
+						};
 					}
 					return prevData;
 				});

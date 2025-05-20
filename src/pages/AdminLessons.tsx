@@ -258,12 +258,12 @@ const AdminLessons = () => {
 						order={order}
 						handleSort={handleSort}
 						columns={[
+							{ key: 'clone', label: '' },
 							{ key: 'title', label: 'Title' },
 							{ key: 'type', label: 'Type' },
 							{ key: 'isActive', label: 'Status' },
 							{ key: 'createdAt', label: 'Created At' },
 							{ key: 'updatedAt', label: 'Updated At' },
-							{ key: 'clonedFromId', label: 'Origin' },
 							{ key: 'actions', label: 'Actions' },
 						]}
 					/>
@@ -272,12 +272,30 @@ const AdminLessons = () => {
 							paginatedLessons?.map((lesson: Lesson, index) => {
 								return (
 									<TableRow key={lesson._id}>
+											<TableCell sx={{ textAlign: 'center', width: '0px' }}>
+											{lesson.clonedFromId && (
+												<Box
+													sx={{
+														backgroundColor: theme.palette.info.main,
+														color: 'white',
+														borderRadius: '50%',
+														width: '15px',
+														height: '15px',
+														display: 'flex',
+														alignItems: 'center',
+														justifyContent: 'center',
+														fontSize: '0.65rem',
+														margin: '0 auto'
+													}}>
+														C
+												</Box>
+											)}
+										</TableCell>
 										<CustomTableCell value={lesson.title} />
 										<CustomTableCell value={lesson.type.charAt(0).toUpperCase() + lesson.type.slice(1)} />
 										<CustomTableCell value={lesson.isActive ? 'Published' : 'Unpublished'} />
 										<CustomTableCell value={dateFormatter(lesson.createdAt)} />
 										<CustomTableCell value={dateFormatter(lesson.updatedAt)} />
-										<CustomTableCell value={lesson.clonedFromId ? 'Clone' : 'Original'} />
 
 										<TableCell
 											sx={{

@@ -1,7 +1,7 @@
-import { Alert, Box, Button, DialogContent, IconButton, Paper, Snackbar, Tooltip, Typography } from '@mui/material';
+import { Alert, Avatar, Box, Button, DialogActions, DialogContent, Grid, IconButton, Paper, Snackbar, Tooltip, Typography } from '@mui/material';
 import theme from '../../themes';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Edit, FileCopy, KeyboardBackspaceOutlined, PublishedWithChanges, Unpublished } from '@mui/icons-material';
+import { Edit, FileCopy, Info, KeyboardBackspaceOutlined, PublishedWithChanges, Unpublished } from '@mui/icons-material';
 import { SingleCourse } from '../../interfaces/course';
 import { ChapterLessonData } from '../../pages/AdminCourseEditPage';
 import useImageUpload from '../../hooks/useImageUpload';
@@ -12,6 +12,7 @@ import CustomDialog from '../layouts/dialog/CustomDialog';
 import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
 import axios from '@utils/axiosInstance';
 import { CoursesContext } from '../../contexts/CoursesContextProvider';
+import { dateTimeFormatter } from '@utils/dateFormatter';
 
 interface CoursePaperProps {
 	userId?: string;
@@ -75,7 +76,7 @@ const CoursePaper = ({
 
 	const [isCloning, setIsCloning] = useState<boolean>(false);
 	const [isCloneCourseDialogOpen, setIsCloneCourseDialogOpen] = useState<boolean>(false);
-
+	const [isCourseInfoDialogOpen, setIsCourseInfoDialogOpen] = useState<boolean>(false);
 	const [isCourseCloned, setIsCourseCloned] = useState<boolean>(false);
 
 	const handleClone = async () => {
@@ -265,6 +266,15 @@ const CoursePaper = ({
 												</IconButton>
 											</Tooltip>
 										)}
+										<Tooltip title='More Info' placement='top'>
+											<IconButton
+												sx={{ padding: '0 0.75rem', ml: '-0.75rem' }}
+												onClick={() => {
+													setIsCourseInfoDialogOpen(true);
+												}}>
+												<Info sx={{ color: 'white' }} fontSize='small' />
+											</IconButton>
+										</Tooltip>
 									</Box>
 								)}
 							</Box>
@@ -279,13 +289,19 @@ const CoursePaper = ({
 									<Typography variant='body2'>Cloning this course will:</Typography>
 									<ul style={{ paddingLeft: '1.2rem', marginTop: '0.5rem' }}>
 										<li>
-											<Typography variant='body2' sx={{mb:'0.25rem'}}>Create a new course with a copy of all its chapters, lessons, questions, and documents</Typography>
+											<Typography variant='body2' sx={{ mb: '0.25rem' }}>
+												Create a new course with a copy of all its chapters, lessons, questions, and documents
+											</Typography>
 										</li>
 										<li>
-											<Typography variant='body2' sx={{mb:'0.25rem'}}>Preserve the original course and its content without any changes</Typography>
+											<Typography variant='body2' sx={{ mb: '0.25rem' }}>
+												Preserve the original course and its content without any changes
+											</Typography>
 										</li>
 										<li>
-											<Typography variant='body2' sx={{mb:'0.25rem'}}>Allow you to safely edit the new course without affecting previous versions</Typography>
+											<Typography variant='body2' sx={{ mb: '0.25rem' }}>
+												Allow you to safely edit the new course without affecting previous versions
+											</Typography>
 										</li>
 										<li>
 											<Typography variant='body2'>Mark the cloned course as unpublished by default</Typography>
@@ -301,6 +317,116 @@ const CoursePaper = ({
 									submitBtnText={isCloning ? 'Cloning...' : 'Clone'}
 									onSubmit={handleClone}
 								/>
+							</CustomDialog>
+							<CustomDialog
+								openModal={isCourseInfoDialogOpen}
+								closeModal={() => setIsCourseInfoDialogOpen(false)}
+								title={singleCourse?.title}
+								maxWidth='sm'>
+								<DialogContent>
+									<Box display='flex' flexDirection='column' gap={1}>
+										<Grid container spacing={2.25}>
+											<Grid item xs={3}>
+												<Typography variant='body2' fontWeight='bold'>
+													Created By:
+												</Typography>
+											</Grid>
+											<Grid item xs={9} display='flex' alignItems='center'>
+												<Avatar sx={{ width: 25, height: 25, mr: '0.5rem' }} src={singleCourse?.createdByImageUrl} />
+												<Typography variant='body2'>
+													{singleCourse?.createdByName} ({singleCourse?.createdByRole}) on {dateTimeFormatter(singleCourse?.createdAt)}
+												</Typography>
+											</Grid>
+
+											<Grid item xs={3}>
+												<Typography variant='body2' fontWeight='bold'>
+													Last Updated By:
+												</Typography>
+											</Grid>
+											<Grid item xs={9} display='flex' alignItems='center'>
+												<Avatar sx={{ width: 25, height: 25, mr: '0.5rem' }} src={singleCourse?.updatedByImageUrl} />
+												<Typography variant='body2'>
+													{singleCourse?.updatedByName} ({singleCourse?.updatedByRole}) on {dateTimeFormatter(singleCourse?.updatedAt)}
+												</Typography>
+											</Grid>
+
+											<Grid item xs={3}>
+												<Typography variant='body2' fontWeight='bold'>
+													Cloned From:
+												</Typography>
+											</Grid>
+											{singleCourse?.clonedFromTitle ? (
+												<Grid item xs={9}>
+													<Typography
+														variant='body2'
+														onClick={() => {
+															setIsCourseInfoDialogOpen(false);
+															navigate(`/admin/course-edit/user/${userId}/course/${singleCourse?.clonedFromId}`);
+														}}
+														sx={{
+															'cursor': 'pointer',
+															':hover': {
+																textDecoration: 'underline',
+															},
+														}}>
+														📄 {singleCourse?.clonedFromTitle}
+													</Typography>
+												</Grid>
+											) : (
+												<Grid item xs={9}>
+													<Typography
+														variant='body2'
+														sx={{
+															'cursor': 'pointer',
+															':hover': {
+																textDecoration: 'underline',
+															},
+														}}>
+														{' N/A '}
+													</Typography>
+												</Grid>
+											)}
+
+											{singleCourse?.versionNote && (
+												<>
+													<Grid item xs={3}>
+														<Typography variant='body2' fontWeight='bold'>
+															Version Note:
+														</Typography>
+													</Grid>
+													<Grid item xs={9}>
+														<Typography variant='body2'>"{singleCourse.versionNote}"</Typography>
+													</Grid>
+												</>
+											)}
+
+											<Grid item xs={3}>
+												<Typography variant='body2' fontWeight='bold'>
+													Published At:
+												</Typography>
+											</Grid>
+											{singleCourse?.publishedAt ? (
+												<Grid item xs={9}>
+													<Typography variant='body2'>🗓️ {dateTimeFormatter(singleCourse.publishedAt)}</Typography>
+												</Grid>
+											) : (
+												<Grid item xs={9}>
+													<Typography variant='body2'>{'N/A'}</Typography>
+												</Grid>
+											)}
+										</Grid>
+									</Box>
+								</DialogContent>
+
+								<DialogActions>
+									<CustomCancelButton
+										onClick={() => setIsCourseInfoDialogOpen(false)}
+										sx={{
+											margin: '0 0.5rem 0.5rem 0',
+										}}>
+										Cancel
+									</CustomCancelButton>
+								</DialogActions>
 							</CustomDialog>
 						</Box>
 					</Box>
