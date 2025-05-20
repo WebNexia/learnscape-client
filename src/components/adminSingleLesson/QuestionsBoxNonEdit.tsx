@@ -27,7 +27,7 @@ const QuestionsBoxNonEdit = ({ singleLesson, setIsDisplayNonEditQuestion, setDis
 				width: '90%',
 				mt: singleLesson?.type === LessonType.INSTRUCTIONAL_LESSON ? '1rem' : '0rem',
 			}}>
-			<Box sx={{ mt: '3rem', minHeight: '30vh' }}>
+			<Box sx={{ margin: '3rem 0' }}>
 				<Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
 					<Box>
 						<Typography variant='h5'>Questions</Typography>
@@ -35,9 +35,7 @@ const QuestionsBoxNonEdit = ({ singleLesson, setIsDisplayNonEditQuestion, setDis
 					<CustomInfoMessageAlignedRight message='Click the questions to preview as a student' />
 				</Box>
 				{singleLesson?.questionIds?.length === 0 || singleLesson?.questions?.filter((question) => question !== null).length === 0 ? (
-					<Box sx={{mb:'3rem'}}>
-						<NoContentBoxAdmin content='No question for this lesson' />
-					</Box>
+					<NoContentBoxAdmin content='No question for this lesson' />
 				) : (
 					<>
 						{singleLesson &&

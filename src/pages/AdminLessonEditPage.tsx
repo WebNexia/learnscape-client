@@ -130,7 +130,6 @@ const AdminLessonEditPage = () => {
 	const [singleLessonBeforeSave, setSingleLessonBeforeSave] = useState<Lesson>(defaultLesson);
 
 	const [isActive, setIsActive] = useState<boolean>(false);
-	const [isMissingField, setIsMissingField] = useState<boolean>(false);
 	const [isMissingFieldMsgOpen, setIsMissingFieldMsgOpen] = useState<boolean>(false);
 	const [displayedQuestionNonEdit, setDisplayedQuestionNonEdit] = useState<QuestionInterface | null>(null);
 	const [isDisplayNonEditQuestion, setIsDisplayNonEditQuestion] = useState<boolean>(false);
@@ -150,8 +149,9 @@ const AdminLessonEditPage = () => {
 
 	const [editorContent, setEditorContent] = useState<string>('');
 	const [prevEditorContent, setPrevEditorContent] = useState<string>('');
-
-	const [errorMsg, setErrorMsg] = useState<string>('');
+	const [titleError, setTitleError] = useState<boolean>(false);
+	const [instructionError, setInstructionError] = useState<boolean>(false);
+	const [questionError, setQuestionError] = useState<boolean>(false);
 
 	const resetEnterImageVideoUrl = () => {
 		setEnterVideoUrl(true);
@@ -235,8 +235,8 @@ const AdminLessonEditPage = () => {
 					setSingleLesson(lessonsResponse);
 					setSingleLessonBeforeSave(lessonsResponse);
 
-					console.log(lessonsResponse)
-					console.log(lessonsResponse.text)
+					console.log(lessonsResponse);
+					console.log(lessonsResponse.text);
 
 					setEditorContent(lessonsResponse.text);
 					setPrevEditorContent(lessonsResponse.text);
@@ -307,10 +307,10 @@ const AdminLessonEditPage = () => {
 		let updatedQuestions: QuestionInterface[] = [];
 		let updatedDocuments: Document[] = [];
 
-		if (!editorContent) {
+		if (!editorContent || editorContent === '' || editorContent === null) {
 			setIsMissingFieldMsgOpen(true);
-			setIsMissingField(true);
-			setIsEditMode(true)
+			setIsEditMode(true);
+
 			return;
 		}
 
@@ -617,7 +617,6 @@ const AdminLessonEditPage = () => {
 					editorContent={editorContent}
 					setIsEditMode={setIsEditMode}
 					setIsMissingFieldMsgOpen={setIsMissingFieldMsgOpen}
-					setIsMissingField={setIsMissingField}
 					handlePublishing={handlePublishing}
 					setResetChanges={setResetChanges}
 					handleLessonUpdate={handleLessonUpdate}
@@ -626,7 +625,9 @@ const AdminLessonEditPage = () => {
 					resetImageUpload={resetImageUpload}
 					resetVideoUpload={resetVideoUpload}
 					resetEnterImageVideoUrl={resetEnterImageVideoUrl}
-					setErrorMsg={setErrorMsg}
+					setTitleError={setTitleError}
+					setInstructionError={setInstructionError}
+					setQuestionError={setQuestionError}
 				/>
 			</Box>
 
@@ -773,17 +774,15 @@ const AdminLessonEditPage = () => {
 											placeholder='Enter title'
 											onChange={(e) => {
 												setIsLessonUpdated(true);
-
+												setTitleError(false);
 												setSingleLessonBeforeSave(() => {
-													setIsMissingField(false);
-
 													return { ...singleLessonBeforeSave, title: e.target.value };
 												});
 											}}
-											error={isMissingField && singleLessonBeforeSave?.title === ''}
+											error={titleError}
 										/>
 									</Tooltip>
-									{isMissingField && singleLessonBeforeSave?.title === '' && <CustomErrorMessage>Please enter a title</CustomErrorMessage>}
+									{titleError && <CustomErrorMessage>Please enter a title</CustomErrorMessage>}
 								</Box>
 								<Box sx={{ flex: 1, textAlign: 'right', mt: '1rem' }}>
 									<FormControl>
@@ -803,10 +802,10 @@ const AdminLessonEditPage = () => {
 											size='small'
 											label='Type'
 											required
-											sx={{ backgroundColor: theme.bgColor?.common, fontSize:'0.85rem' }}>
+											sx={{ backgroundColor: theme.bgColor?.common, fontSize: '0.85rem' }}>
 											{lessonTypes &&
 												lessonTypes?.map((type) => (
-													<MenuItem value={type} key={type} sx={{fontSize:'0.8rem'}}>
+													<MenuItem value={type} key={type} sx={{ fontSize: '0.8rem' }}>
 														{type}
 													</MenuItem>
 												))}
@@ -906,11 +905,14 @@ const AdminLessonEditPage = () => {
 										setEditorContent(content);
 										setPrevEditorContent(content);
 										setIsLessonUpdated(true);
+										setInstructionError(false);
 									}}
 									initialValue={singleLesson.text}
 								/>
+								<Box sx={{ margin: '1rem 0' }}>
+									{instructionError && <CustomErrorMessage>Enter lesson instructions</CustomErrorMessage>}
+								</Box>
 							</Box>
-							{editorContent === '' && <CustomErrorMessage>{errorMsg}</CustomErrorMessage>}
 
 							{singleLessonBeforeSave.type !== LessonType.INSTRUCTIONAL_LESSON && (
 								<>
@@ -925,6 +927,7 @@ const AdminLessonEditPage = () => {
 										<Box sx={{ flex: 1 }}>
 											<Typography variant='h5'>Questions</Typography>
 										</Box>
+										
 										<CustomInfoMessageAlignedLeft
 											message='Drag the questions to reorder'
 											sx={{ justifyContent: 'flex-end', alignItems: 'center', flex: 4, marginTop: '0.85rem' }}
@@ -1146,6 +1149,10 @@ const AdminLessonEditPage = () => {
 											)}
 										</Box>
 									)}
+									<Box sx={{ margin: '1rem 0' }}>
+									{questionError && <CustomErrorMessage>Add at least one question</CustomErrorMessage>}
+
+									</Box>
 								</>
 							)}
 							<Box sx={{ margin: '2rem 0 1rem 0' }}>

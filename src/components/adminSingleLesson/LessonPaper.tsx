@@ -7,6 +7,7 @@ import { QuestionUpdateTrack } from '../../pages/AdminLessonEditPage';
 import CustomSubmitButton from '../forms/customButtons/CustomSubmitButton';
 import { FormEvent } from 'react';
 import CustomCancelButton from '../forms/customButtons/CustomCancelButton';
+import { LessonType } from '../../interfaces/enums';
 
 interface LessonPaperProps {
 	userId?: string;
@@ -20,7 +21,6 @@ interface LessonPaperProps {
 	setSingleLessonBeforeSave: React.Dispatch<React.SetStateAction<Lesson>>;
 	setIsEditMode: React.Dispatch<React.SetStateAction<boolean>>;
 	setIsMissingFieldMsgOpen: React.Dispatch<React.SetStateAction<boolean>>;
-	setIsMissingField: React.Dispatch<React.SetStateAction<boolean>>;
 	handlePublishing: () => void;
 	setResetChanges: React.Dispatch<React.SetStateAction<boolean>>;
 	handleLessonUpdate: (event: React.FormEvent<Element>) => void;
@@ -29,7 +29,9 @@ interface LessonPaperProps {
 	resetImageUpload: () => void;
 	resetVideoUpload: () => void;
 	resetEnterImageVideoUrl: () => void;
-	setErrorMsg: React.Dispatch<React.SetStateAction<string>>;
+	setTitleError: React.Dispatch<React.SetStateAction<boolean>>;
+	setInstructionError: React.Dispatch<React.SetStateAction<boolean>>;
+	setQuestionError: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const LessonPaper = ({
@@ -44,7 +46,6 @@ const LessonPaper = ({
 	setSingleLessonBeforeSave,
 	setIsEditMode,
 	setIsMissingFieldMsgOpen,
-	setIsMissingField,
 	handlePublishing,
 	setResetChanges,
 	handleLessonUpdate,
@@ -53,7 +54,9 @@ const LessonPaper = ({
 	resetImageUpload,
 	resetVideoUpload,
 	resetEnterImageVideoUrl,
-	setErrorMsg,
+	setTitleError,
+	setInstructionError,
+	setQuestionError,
 }: LessonPaperProps) => {
 	const navigate = useNavigate();
 	const vertical = 'top';
@@ -88,9 +91,9 @@ const LessonPaper = ({
 							variant='text'
 							startIcon={<KeyboardBackspaceOutlined />}
 							sx={{
-								color: theme.textColor?.common.main,
-								textTransform: 'inherit',
-								fontFamily: theme.fontFamily?.main,
+								'color': theme.textColor?.common.main,
+								'textTransform': 'inherit',
+								'fontFamily': theme.fontFamily?.main,
 								':hover': {
 									backgroundColor: 'transparent',
 									textDecoration: 'underline',
@@ -160,7 +163,7 @@ const LessonPaper = ({
 									sx={{ mt: '5rem' }}
 									onClose={() => setIsMissingFieldMsgOpen(false)}>
 									<Alert severity='error' variant='filled' sx={{ width: '100%' }}>
-										Fill in the required field(s)
+										Enter title / instructions / questions !!!
 									</Alert>
 								</Snackbar>
 								{isEditMode ? (
@@ -168,17 +171,56 @@ const LessonPaper = ({
 										<CustomSubmitButton
 											sx={{ padding: '0 0.75rem', backgroundColor: theme.bgColor?.greenPrimary }}
 											onClick={(e) => {
-												if (singleLessonBeforeSave?.title.trim() !== '' && singleLessonBeforeSave?.title !== '' && editorContent?.trim() !== '') {
-													setIsEditMode(false);
-													handleLessonUpdate(e as FormEvent<Element>);
-													resetImageUpload();
-													resetVideoUpload();
-													resetEnterImageVideoUrl();
-													
+												if (singleLessonBeforeSave.type === LessonType.INSTRUCTIONAL_LESSON) {
+													if (singleLessonBeforeSave?.title.trim() !== '' && singleLessonBeforeSave?.title !== '' && editorContent?.trim() !== '') {
+														setIsEditMode(false);
+														handleLessonUpdate(e as FormEvent<Element>);
+														resetImageUpload();
+														resetVideoUpload();
+														resetEnterImageVideoUrl();
+													} else {
+														setIsMissingFieldMsgOpen(true);
+														if (!singleLessonBeforeSave?.title.trim()) {
+															setTitleError(true);
+														} else {
+															setTitleError(false);
+														}
+														if (!editorContent?.trim()) {
+															setInstructionError(true);
+														} else {
+															setInstructionError(false);
+														}
+													}
 												} else {
-													setIsMissingField(true);
-													setIsMissingFieldMsgOpen(true);
-													setErrorMsg('Enter lesson instructions');
+													if (
+														singleLessonBeforeSave?.title.trim() !== '' &&
+														singleLessonBeforeSave?.title !== '' &&
+														editorContent?.trim() !== '' &&
+														singleLessonBeforeSave.questionIds.length > 0
+													) {
+														setIsEditMode(false);
+														handleLessonUpdate(e as FormEvent<Element>);
+														resetImageUpload();
+														resetVideoUpload();
+														resetEnterImageVideoUrl();
+													} else {
+														setIsMissingFieldMsgOpen(true);
+														if (!singleLessonBeforeSave?.title.trim()) {
+															setTitleError(true);
+														} else {
+															setTitleError(false);
+														}
+														if (!editorContent?.trim()) {
+															setInstructionError(true);
+														} else {
+															setInstructionError(false);
+														}
+														if (singleLessonBeforeSave.questionIds.length === 0) {
+															setQuestionError(true);
+														} else {
+															setQuestionError(false);
+														}
+													}
 												}
 												window.scrollTo({ top: 0, behavior: 'smooth' });
 											}}>
