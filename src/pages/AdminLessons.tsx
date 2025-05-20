@@ -1,4 +1,4 @@
-import { Box, FormControl, InputAdornment, MenuItem, Select, Table, TableBody, TableCell, TableRow } from '@mui/material';
+import { Box, DialogActions, FormControl, InputAdornment, MenuItem, Select, Table, TableBody, TableCell, TableRow } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { useContext, useEffect, useRef, useState } from 'react';
 import axios from '@utils/axiosInstance';
@@ -19,6 +19,7 @@ import theme from '../themes';
 import { LessonType } from '../interfaces/enums';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import { dateFormatter } from '../utils/dateFormatter';
+import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
 
 const AdminLessons = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -296,7 +297,7 @@ const AdminLessons = () => {
 												}}
 												icon={<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 											/>
-											{isLessonDeleteModalOpen[index] !== undefined && (
+											{isLessonDeleteModalOpen[index] !== undefined && !lesson.isActive && (
 												<CustomDialog
 													openModal={isLessonDeleteModalOpen[index]}
 													closeModal={() => closeDeleteLessonModal(index)}
@@ -311,6 +312,25 @@ const AdminLessons = () => {
 															closeDeleteLessonModal(index);
 														}}
 													/>
+												</CustomDialog>
+											)}
+
+											{isLessonDeleteModalOpen[index] !== undefined && lesson.isActive && (
+												<CustomDialog
+													openModal={isLessonDeleteModalOpen[index]}
+													closeModal={() => closeDeleteLessonModal(index)}
+													title='Unpublish Lesson'
+													content='You cannot delete published lesson. Please unpublish it first.'
+													maxWidth='sm'>
+													<DialogActions>
+														<CustomCancelButton
+															onClick={() => closeDeleteLessonModal(index)}
+															sx={{
+																margin: '0 0.5rem 0.5rem 0',
+															}}>
+															Cancel
+														</CustomCancelButton>
+													</DialogActions>
 												</CustomDialog>
 											)}
 										</TableCell>

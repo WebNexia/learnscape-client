@@ -241,6 +241,9 @@ const LessonPaper = ({
 												resetImageUpload();
 												resetVideoUpload();
 												resetEnterImageVideoUrl();
+												setInstructionError(false);
+												setQuestionError(false);
+												setTitleError(false);
 											}}
 											sx={{ color: theme.textColor?.common.main, borderColor: theme.textColor?.common.main, padding: '0 0.75rem' }}>
 											Cancel

@@ -165,8 +165,6 @@ const AdminCourseEditPage = () => {
 
 					const courseResponse = response?.data?.data;
 
-					console.log(courseResponse.documentIds)
-
 					setSingleCourse(courseResponse);
 					if (courseResponse?.prices.some((price: Price) => price.amount === 'Free' || price.amount === '' || price.amount === '0')) {
 						setIsFree(true);

@@ -15,6 +15,7 @@ import {
 	DialogContent,
 	Snackbar,
 	Alert,
+	DialogActions,
 } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import React, { useContext, useEffect, useRef, useState } from 'react';
@@ -37,6 +38,7 @@ import theme from '../themes';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/CustomInfoMessageAlignedLeft';
 import axios from '@utils/axiosInstance';
+import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
 
 const AdminCourses = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -96,14 +98,20 @@ const AdminCourses = () => {
 	const closeNewCourseModal = () => setIsCourseCreateModalOpen(false);
 
 	const [isCloning, setIsCloning] = useState<boolean>(false);
-	const [isCourseCloneModalOpen, setIsCourseCloneModalOpen] = useState<boolean[]>([]);
 	const [isCourseDeleteModalOpen, setIsCourseDeleteModalOpen] = useState<boolean[]>([]);
+	const [isCourseCloneModalOpen, setIsCourseCloneModalOpen] = useState<boolean[]>([]);
 
 	const [isCourseCloned, setIsCourseCloned] = useState<boolean>(false);
 
+	// Keep track of previous length to avoid unnecessary resets
+	const prevLengthRef = useRef<number>(0);
+
 	useEffect(() => {
-		setIsCourseDeleteModalOpen(Array(paginatedCourses.length).fill(false));
-		setIsCourseCloneModalOpen(Array(paginatedCourses.length).fill(false));
+		if (paginatedCourses && paginatedCourses.length !== prevLengthRef.current) {
+			prevLengthRef.current = paginatedCourses.length;
+			setIsCourseDeleteModalOpen(Array(paginatedCourses.length).fill(false));
+			setIsCourseCloneModalOpen(Array(paginatedCourses.length).fill(false));
+		}
 	}, [sortedCoursesData, coursesPageNumber]);
 
 	const isInitialMount = useRef(true);
@@ -550,7 +558,7 @@ const AdminCourses = () => {
 												}}
 												icon={<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 											/>
-											{isCourseDeleteModalOpen[index] !== undefined && (
+											{isCourseDeleteModalOpen[index] !== undefined && !course.isActive && (
 												<CustomDialog
 													openModal={isCourseDeleteModalOpen[index]}
 													closeModal={() => closeDeleteCourseModal(index)}
@@ -565,6 +573,25 @@ const AdminCourses = () => {
 															closeDeleteCourseModal(index);
 														}}
 													/>
+												</CustomDialog>
+											)}
+
+											{isCourseDeleteModalOpen[index] !== undefined && course.isActive && (
+												<CustomDialog
+													openModal={isCourseDeleteModalOpen[index]}
+													closeModal={() => closeDeleteCourseModal(index)}
+													title='Unpublish Course'
+													content='You cannot delete published course. Please unpublish it first.'
+													maxWidth='sm'>
+													<DialogActions>
+													<CustomCancelButton
+														onClick={() => closeDeleteCourseModal(index)}
+														sx={{
+															margin: '0 0.5rem 0.5rem 0',
+														}}>
+														Cancel
+													</CustomCancelButton>
+													</DialogActions>
 												</CustomDialog>
 											)}
 

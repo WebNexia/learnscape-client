@@ -281,6 +281,30 @@ const AdminLessonEditPage = () => {
 	}, [singleLessonBeforeSave.type]);
 
 	const handlePublishing = async (): Promise<void> => {
+		// If unpublishing, allow it regardless of content
+		if (singleLesson?.isActive) {
+			try {
+				await axios.patch(`${base_url}/lessons/${lessonId}`, {
+					isActive: false,
+					publishedAt: null, // Clear publishedAt when unpublishing
+					questionIds: singleLesson.questionIds,
+					documentIds: singleLesson.documentIds,
+					text: singleLesson.text,
+					title: singleLesson.title,
+					type: singleLesson.type,
+					orgId: singleLesson.orgId,
+					imageUrl: singleLesson.imageUrl,
+					videoUrl: singleLesson.videoUrl
+				});
+				setIsActive(false);
+				if (lessonId) updateLessonPublishing(lessonId);
+			} catch (error) {
+				console.log(error);
+			}
+			return;
+		}
+
+		// For publishing, check requirements
 		if (
 			lessonId &&
 			singleLesson.text &&
@@ -288,10 +312,20 @@ const AdminLessonEditPage = () => {
 				singleLesson.type === LessonType.INSTRUCTIONAL_LESSON)
 		) {
 			try {
+				const now = new Date().toISOString();
 				await axios.patch(`${base_url}/lessons/${lessonId}`, {
-					isActive: !singleLesson?.isActive,
+					isActive: true,
+					publishedAt: now, // Set publishedAt when publishing
+					questionIds: singleLesson.questionIds,
+					documentIds: singleLesson.documentIds,
+					text: singleLesson.text,
+					title: singleLesson.title,
+					type: singleLesson.type,
+					orgId: singleLesson.orgId,
+					imageUrl: singleLesson.imageUrl,
+					videoUrl: singleLesson.videoUrl
 				});
-				setIsActive(!singleLesson?.isActive);
+				setIsActive(true);
 				if (lessonId) updateLessonPublishing(lessonId);
 			} catch (error) {
 				console.log(error);
