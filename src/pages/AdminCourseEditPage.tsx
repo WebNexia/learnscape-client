@@ -219,14 +219,14 @@ const AdminCourseEditPage = () => {
 					isActive: !singleCourse?.isActive,
 					// publishedAt will be handled by the backend when publishing
 					// When unpublishing, we explicitly set it to null
-					publishedAt: isTryingToPublish ? undefined : null
+					publishedAt: isTryingToPublish ? undefined : null,
 				});
 				setSingleCourse((prevData) => {
 					if (prevData) {
-						return { 
-							...prevData, 
+						return {
+							...prevData,
 							isActive: !singleCourse?.isActive,
-							publishedAt: isTryingToPublish ? new Date().toISOString() : null 
+							publishedAt: isTryingToPublish ? new Date().toISOString() : null,
 						};
 					}
 					return prevData;
@@ -382,12 +382,26 @@ const AdminCourseEditPage = () => {
 				};
 
 				try {
-					await axios.patch(`${base_url}/courses/${courseId}`, {
+					const response = await axios.patch(`${base_url}/courses/${courseId}`, {
 						...updatedCourse,
 					});
 
-					updateCourse(updatedCourse);
-					setSingleCourse(updatedCourse);
+					const responseUpdatedData = response.data.data;
+
+					updateCourse({
+						...updatedCourse,
+						updatedAt: responseUpdatedData.updatedAt,
+						updatedByName: responseUpdatedData.updatedByName,
+						updatedByImageUrl: responseUpdatedData.updatedByImageUrl,
+						updatedByRole: responseUpdatedData.updatedByRole,
+					});
+					setSingleCourse({
+						...updatedCourse,
+						updatedAt: responseUpdatedData.updatedAt,
+						updatedByName: responseUpdatedData.updatedByName,
+						updatedByImageUrl: responseUpdatedData.updatedByImageUrl,
+						updatedByRole: responseUpdatedData.updatedByRole,
+					});
 					// fetchCourses();
 
 					await Promise.all(

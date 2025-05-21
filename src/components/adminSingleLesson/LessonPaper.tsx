@@ -293,7 +293,7 @@ const LessonPaper = ({
 												<Box display='flex' flexDirection='column' gap={1} sx={{ mt: '0.75rem' }}>
 													<Grid container spacing={2.25}>
 														<Grid item xs={3}>
-															<Typography variant='body2' fontWeight='bold'>
+															<Typography variant='body2'>
 																Created By:
 															</Typography>
 														</Grid>
@@ -305,7 +305,7 @@ const LessonPaper = ({
 														</Grid>
 
 														<Grid item xs={3}>
-															<Typography variant='body2' fontWeight='bold'>
+															<Typography variant='body2'>
 																Last Updated By:
 															</Typography>
 														</Grid>
@@ -317,7 +317,7 @@ const LessonPaper = ({
 														</Grid>
 
 														<Grid item xs={3}>
-															<Typography variant='body2' fontWeight='bold'>
+															<Typography variant='body2'>
 																Cloned From:
 															</Typography>
 														</Grid>
@@ -355,7 +355,7 @@ const LessonPaper = ({
 														)}
 
 														<Grid item xs={3}>
-															<Typography variant='body2' fontWeight='bold'>
+															<Typography variant='body2'>
 																Published At:
 															</Typography>
 														</Grid>

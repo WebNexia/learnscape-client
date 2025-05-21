@@ -71,7 +71,7 @@ const AdminLessonEditPage = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { userId, lessonId } = useParams();
 	const { orgId } = useContext(OrganisationContext);
-	const { updateLessonPublishing, updateLessons, lessonTypes, fetchLessons } = useContext(LessonsContext);
+	const { updateLessonPublishing, updateLessons, lessonTypes } = useContext(LessonsContext);
 
 	const { questionTypes, fetchQuestions, questionsPageNumber, fetchQuestionTypeName } = useContext(QuestionsContext);
 	const { fetchDocuments } = useContext(DocumentsContext);
@@ -118,7 +118,7 @@ const AdminLessonEditPage = () => {
 		documentIds: [],
 		documents: [],
 		clonedFromId: '',
-		clonedFromTitle:'',
+		clonedFromTitle: '',
 		usedInCourses: [],
 		createdBy: '',
 		updatedBy: '',
@@ -301,7 +301,7 @@ const AdminLessonEditPage = () => {
 					type: singleLesson.type,
 					orgId: singleLesson.orgId,
 					imageUrl: singleLesson.imageUrl,
-					videoUrl: singleLesson.videoUrl
+					videoUrl: singleLesson.videoUrl,
 				});
 				setIsActive(false);
 				if (lessonId) updateLessonPublishing(lessonId);
@@ -330,7 +330,7 @@ const AdminLessonEditPage = () => {
 					type: singleLesson.type,
 					orgId: singleLesson.orgId,
 					imageUrl: singleLesson.imageUrl,
-					videoUrl: singleLesson.videoUrl
+					videoUrl: singleLesson.videoUrl,
 				});
 				setIsActive(true);
 				if (lessonId) updateLessonPublishing(lessonId);
@@ -513,7 +513,7 @@ const AdminLessonEditPage = () => {
 
 			if (isLessonUpdated || isQuestionUpdated.some((data) => data.isUpdated === true)) {
 				try {
-					await axios.patch(`${base_url}/lessons/${lessonId}`, {
+					const response = await axios.patch(`${base_url}/lessons/${lessonId}`, {
 						...singleLessonBeforeSave,
 						title: singleLessonBeforeSave.title,
 						type: singleLessonBeforeSave.type,
@@ -527,7 +527,9 @@ const AdminLessonEditPage = () => {
 						usedInCourses: singleLessonBeforeSave.usedInCourses,
 					});
 
-					fetchLessons();
+					const responseUpdatedData = response.data.data;
+
+					// fetchLessons();
 					updateLessons({
 						...singleLessonBeforeSave,
 						questions: updatedQuestions,
@@ -535,6 +537,10 @@ const AdminLessonEditPage = () => {
 						text: editorContent.trim() || '',
 						documentIds: updatedDocumentIds,
 						documents: updatedDocuments,
+						updatedAt: responseUpdatedData.updatedAt,
+						updatedByName: responseUpdatedData.updatedByName,
+						updatedByImageUrl: responseUpdatedData.updatedByImageUrl,
+						updatedByRole: responseUpdatedData.updatedByRole,
 					});
 
 					setSingleLesson({
@@ -544,6 +550,10 @@ const AdminLessonEditPage = () => {
 						text: editorContent.trim() || '',
 						documentIds: updatedDocumentIds,
 						documents: updatedDocuments,
+						updatedAt: responseUpdatedData.updatedAt,
+						updatedByName: responseUpdatedData.updatedByName,
+						updatedByImageUrl: responseUpdatedData.updatedByImageUrl,
+						updatedByRole: responseUpdatedData.updatedByRole,
 					});
 
 					setSingleLessonBeforeSave((prevData) => {
@@ -950,9 +960,7 @@ const AdminLessonEditPage = () => {
 									}}
 									initialValue={singleLesson.text}
 								/>
-								<Box sx={{ margin: '1rem 0' }}>
-									{instructionError && <CustomErrorMessage>Enter lesson instructions</CustomErrorMessage>}
-								</Box>
+								<Box sx={{ margin: '1rem 0' }}>{instructionError && <CustomErrorMessage>Enter lesson instructions</CustomErrorMessage>}</Box>
 							</Box>
 
 							{singleLessonBeforeSave.type !== LessonType.INSTRUCTIONAL_LESSON && (
@@ -968,7 +976,7 @@ const AdminLessonEditPage = () => {
 										<Box sx={{ flex: 1 }}>
 											<Typography variant='h5'>Questions</Typography>
 										</Box>
-										
+
 										<CustomInfoMessageAlignedLeft
 											message='Drag the questions to reorder'
 											sx={{ justifyContent: 'flex-end', alignItems: 'center', flex: 4, marginTop: '0.85rem' }}
@@ -1190,10 +1198,7 @@ const AdminLessonEditPage = () => {
 											)}
 										</Box>
 									)}
-									<Box sx={{ margin: '1rem 0' }}>
-									{questionError && <CustomErrorMessage>Add at least one question</CustomErrorMessage>}
-
-									</Box>
+									<Box sx={{ margin: '1rem 0' }}>{questionError && <CustomErrorMessage>Add at least one question</CustomErrorMessage>}</Box>
 								</>
 							)}
 							<Box sx={{ margin: '2rem 0 1rem 0' }}>

@@ -327,9 +327,7 @@ const CoursePaper = ({
 									<Box display='flex' flexDirection='column' gap={1}>
 										<Grid container spacing={2.25}>
 											<Grid item xs={3}>
-												<Typography variant='body2' fontWeight='bold'>
-													Created By:
-												</Typography>
+												<Typography variant='body2'>Created By:</Typography>
 											</Grid>
 											<Grid item xs={9} display='flex' alignItems='center'>
 												<Avatar sx={{ width: 25, height: 25, mr: '0.5rem' }} src={singleCourse?.createdByImageUrl} />
@@ -339,9 +337,7 @@ const CoursePaper = ({
 											</Grid>
 
 											<Grid item xs={3}>
-												<Typography variant='body2' fontWeight='bold'>
-													Last Updated By:
-												</Typography>
+												<Typography variant='body2'>Last Updated By:</Typography>
 											</Grid>
 											<Grid item xs={9} display='flex' alignItems='center'>
 												<Avatar sx={{ width: 25, height: 25, mr: '0.5rem' }} src={singleCourse?.updatedByImageUrl} />
@@ -351,9 +347,7 @@ const CoursePaper = ({
 											</Grid>
 
 											<Grid item xs={3}>
-												<Typography variant='body2' fontWeight='bold'>
-													Cloned From:
-												</Typography>
+												<Typography variant='body2'>Cloned From:</Typography>
 											</Grid>
 											{singleCourse?.clonedFromTitle ? (
 												<Grid item xs={9}>
@@ -390,9 +384,7 @@ const CoursePaper = ({
 											{singleCourse?.versionNote && (
 												<>
 													<Grid item xs={3}>
-														<Typography variant='body2' fontWeight='bold'>
-															Version Note:
-														</Typography>
+														<Typography variant='body2'>Version Note:</Typography>
 													</Grid>
 													<Grid item xs={9}>
 														<Typography variant='body2'>"{singleCourse.versionNote}"</Typography>
@@ -401,9 +393,7 @@ const CoursePaper = ({
 											)}
 
 											<Grid item xs={3}>
-												<Typography variant='body2' fontWeight='bold'>
-													Published At:
-												</Typography>
+												<Typography variant='body2'>Published At:</Typography>
 											</Grid>
 											{singleCourse?.publishedAt ? (
 												<Grid item xs={9}>
