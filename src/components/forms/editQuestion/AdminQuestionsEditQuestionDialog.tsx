@@ -29,7 +29,6 @@ import FillInTheBlanksTyping from '../../layouts/FITBTyping/FillInTheBlanksTypin
 import CustomInfoMessageAlignedRight from '../../layouts/infoMessage/CustomInfoMessageAlignedRight';
 import axios from '@utils/axiosInstance';
 
-
 interface EditQuestionDialogProps {
 	index: number;
 	question: QuestionInterface;
@@ -217,6 +216,7 @@ const AdminQuestionsEditQuestionDialog = ({
 				blankValuePairs: blankValuePairsAdminQuestions,
 			});
 
+			const questionResponseData = response.data.data;
 
 			const updatedQuestion = {
 				...question,
@@ -224,12 +224,18 @@ const AdminQuestionsEditQuestionDialog = ({
 				correctAnswer: updatedCorrectAnswer.trim(),
 				videoUrl: videoUrlAdminQuestions.trim(),
 				imageUrl: imageUrlAdminQuestions.trim(),
-				updatedAt: response.data.data.updatedAt,
-				createdAt: response.data.data.createdAt,
+				updatedAt: questionResponseData.updatedAt,
+				createdAt: questionResponseData.createdAt,
 				audio: isAudioVideoQuestion ? isAudioAdminQuestions : false,
 				video: isAudioVideoQuestion ? isVideoAdminQuestions : false,
 				matchingPairs: matchingPairsAdminQuestions,
 				blankValuePairs: blankValuePairsAdminQuestions,
+				updatedByName: questionResponseData.updatedByName,
+				createdByName: questionResponseData.createdByName,
+				updatedByImageUrl: questionResponseData.updatedByImageUrl,
+				createdByImageUrl: questionResponseData.createdByImageUrl,
+				updatedByRole: questionResponseData.updatedByRole,
+				createdByRole: questionResponseData.createdByRole,
 			};
 
 			updateQuestion(updatedQuestion);
@@ -290,7 +296,7 @@ const AdminQuestionsEditQuestionDialog = ({
 				handleResetQuestion();
 				setIsMinimumOneBlank(false);
 			}}
-			title='Edit Question'
+			title={`Edit Question (${questionType})`}
 			maxWidth='lg'>
 			<form onSubmit={(e) => e.preventDefault()}>
 				<DialogContent
@@ -301,10 +307,6 @@ const AdminQuestionsEditQuestionDialog = ({
 						alignItems: 'center',
 						margin: '0.5rem 0.5rem 2rem 0.5rem',
 					}}>
-					<Box sx={{ display: 'flex', justifyContent: 'flex-start', mb: '2rem', width: '100%' }}>
-						{question && <Typography>{questionType}</Typography>}
-					</Box>
-
 					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: '2rem', width: '100%' }}>
 						<Box sx={{ flex: 1, mr: '2rem' }}>
 							<HandleImageUploadURL

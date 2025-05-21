@@ -368,16 +368,7 @@ const CoursePaper = ({
 												</Grid>
 											) : (
 												<Grid item xs={9}>
-													<Typography
-														variant='body2'
-														sx={{
-															'cursor': 'pointer',
-															':hover': {
-																textDecoration: 'underline',
-															},
-														}}>
-														{' N/A '}
-													</Typography>
+													<Typography variant='body2'>{' N/A '}</Typography>
 												</Grid>
 											)}
 

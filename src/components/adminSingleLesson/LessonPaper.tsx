@@ -1,4 +1,4 @@
-import { Alert, Avatar, Box, Button, DialogActions, DialogContent, Grid, IconButton, Paper, Snackbar, Tooltip, Typography } from '@mui/material';
+import { Alert, Box, Button,  IconButton, Paper, Snackbar, Tooltip, Typography } from '@mui/material';
 import theme from '../../themes';
 import { Edit, Info, KeyboardBackspaceOutlined, PublishedWithChanges, Unpublished } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
@@ -8,8 +8,8 @@ import CustomSubmitButton from '../forms/customButtons/CustomSubmitButton';
 import { FormEvent, useState } from 'react';
 import CustomCancelButton from '../forms/customButtons/CustomCancelButton';
 import { LessonType } from '../../interfaces/enums';
-import { dateTimeFormatter } from '@utils/dateFormatter';
 import CustomDialog from '../layouts/dialog/CustomDialog';
+import LessonInfoModal from '../lessons/LessonInfoModal';
 
 interface LessonPaperProps {
 	userId?: string;
@@ -289,99 +289,7 @@ const LessonPaper = ({
 											closeModal={() => setIsLessonInfoDialogOpen(false)}
 											title={singleLesson?.title}
 											maxWidth='sm'>
-											<DialogContent>
-												<Box display='flex' flexDirection='column' gap={1} sx={{ mt: '0.75rem' }}>
-													<Grid container spacing={2.25}>
-														<Grid item xs={3}>
-															<Typography variant='body2'>
-																Created By:
-															</Typography>
-														</Grid>
-														<Grid item xs={9} display='flex' alignItems='center'>
-															<Avatar sx={{ width: 25, height: 25, mr: '0.5rem' }} src={singleLesson?.createdByImageUrl} />
-															<Typography variant='body2'>
-																{singleLesson?.createdByName} ({singleLesson?.createdByRole}) on {dateTimeFormatter(singleLesson?.createdAt)}
-															</Typography>
-														</Grid>
-
-														<Grid item xs={3}>
-															<Typography variant='body2'>
-																Last Updated By:
-															</Typography>
-														</Grid>
-														<Grid item xs={9} display='flex' alignItems='center'>
-															<Avatar sx={{ width: 25, height: 25, mr: '0.5rem' }} src={singleLesson?.updatedByImageUrl} />
-															<Typography variant='body2'>
-																{singleLesson?.updatedByName} ({singleLesson?.updatedByRole}) on {dateTimeFormatter(singleLesson?.updatedAt)}
-															</Typography>
-														</Grid>
-
-														<Grid item xs={3}>
-															<Typography variant='body2'>
-																Cloned From:
-															</Typography>
-														</Grid>
-
-														{singleLesson?.clonedFromTitle ? (
-															<Grid item xs={9}>
-																<Typography
-																	variant='body2'
-																	onClick={() => {
-																		setIsLessonInfoDialogOpen(false);
-																		navigate(`/admin/lesson-edit/user/${userId}/lesson/${singleLesson?.clonedFromId}`);
-																	}}
-																	sx={{
-																		'cursor': 'pointer',
-																		':hover': {
-																			textDecoration: 'underline',
-																		},
-																	}}>
-																	📄 {singleLesson?.clonedFromTitle}
-																</Typography>
-															</Grid>
-														) : (
-															<Grid item xs={9}>
-																<Typography
-																	variant='body2'
-																	sx={{
-																		'cursor': 'pointer',
-																		':hover': {
-																			textDecoration: 'underline',
-																		},
-																	}}>
-																	{' N/A '}
-																</Typography>
-															</Grid>
-														)}
-
-														<Grid item xs={3}>
-															<Typography variant='body2'>
-																Published At:
-															</Typography>
-														</Grid>
-
-														{singleLesson?.publishedAt ? (
-															<Grid item xs={9}>
-																<Typography variant='body2'>🗓️ {dateTimeFormatter(singleLesson.publishedAt)}</Typography>
-															</Grid>
-														) : (
-															<Grid item xs={9}>
-																<Typography variant='body2'>{'N/A'}</Typography>
-															</Grid>
-														)}
-													</Grid>
-												</Box>
-											</DialogContent>
-
-											<DialogActions>
-												<CustomCancelButton
-													onClick={() => setIsLessonInfoDialogOpen(false)}
-													sx={{
-														margin: '0 0.5rem 0.5rem 0',
-													}}>
-													Cancel
-												</CustomCancelButton>
-											</DialogActions>
+											<LessonInfoModal lesson={singleLesson} onClose={() => setIsLessonInfoDialogOpen(false)} />
 										</CustomDialog>
 									</Box>
 								)}

@@ -4,7 +4,7 @@ import { useContext, useEffect, useRef, useState } from 'react';
 import axios from '@utils/axiosInstance';
 import { LessonsContext } from '../contexts/LessonsContextProvider';
 import { Lesson } from '../interfaces/lessons';
-import { Delete, Edit, Search } from '@mui/icons-material';
+import { Delete, Edit, Info, Search } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import CreateLessonDialog from '../components/forms/newLesson/CreateLessonDialog';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
@@ -20,6 +20,7 @@ import { LessonType } from '../interfaces/enums';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import { dateFormatter } from '../utils/dateFormatter';
 import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
+import LessonInfoModal from '../components/lessons/LessonInfoModal';
 
 const AdminLessons = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -70,9 +71,11 @@ const AdminLessons = () => {
 	};
 
 	const [isLessonDeleteModalOpen, setIsLessonDeleteModalOpen] = useState<boolean[]>([]);
+	const [isLessonInfoModalOpen, setIsLessonInfoModalOpen] = useState<boolean[]>([]);
 
 	useEffect(() => {
 		setIsLessonDeleteModalOpen(Array(paginatedLessons.length).fill(false));
+		setIsLessonInfoModalOpen(Array(paginatedLessons.length).fill(false));
 	}, [sortedLessonsData, lessonsPageNumber]);
 
 	const isInitialMount = useRef(true);
@@ -109,6 +112,19 @@ const AdminLessons = () => {
 			console.log(error);
 		}
 	};
+
+	const openLessonInfoModal = (index: number) => {
+		const updatedState = [...isLessonInfoModalOpen];
+		updatedState[index] = true;
+		setIsLessonInfoModalOpen(updatedState);
+	};
+
+	const closeLessonInfoModal = (index: number) => {
+		const updatedState = [...isLessonInfoModalOpen];
+		updatedState[index] = false;
+		setIsLessonInfoModalOpen(updatedState);
+	};
+
 	return (
 		<DashboardPagesLayout pageName='Lessons' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
 			<Box
@@ -315,6 +331,13 @@ const AdminLessons = () => {
 												}}
 												icon={<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 											/>
+											<CustomActionBtn
+												title='More Info'
+												onClick={() => {
+													openLessonInfoModal(index);
+												}}
+												icon={<Info fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
+											/>
 											{isLessonDeleteModalOpen[index] !== undefined && !lesson.isActive && (
 												<CustomDialog
 													openModal={isLessonDeleteModalOpen[index]}
@@ -359,6 +382,19 @@ const AdminLessons = () => {
 				</Table>
 				<CustomTablePagination count={lessonsNumberOfPages} page={lessonsPageNumber} onChange={setLessonsPageNumber} />
 			</Box>
+
+			{isLessonInfoModalOpen.map((isOpen, index) => (
+				isOpen && (
+					<CustomDialog
+						key={index}
+						openModal={isOpen}
+						closeModal={() => closeLessonInfoModal(index)}
+						title={paginatedLessons[index].title}
+						maxWidth='sm'>
+						<LessonInfoModal lesson={paginatedLessons[index]} onClose={() => closeLessonInfoModal(index)} />
+					</CustomDialog>
+				)
+			))}
 		</DashboardPagesLayout>
 	);
 };

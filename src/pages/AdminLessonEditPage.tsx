@@ -3,7 +3,6 @@ import {
 	Box,
 	FormControl,
 	IconButton,
-	InputLabel,
 	Link,
 	MenuItem,
 	Select,
@@ -835,14 +834,10 @@ const AdminLessonEditPage = () => {
 									</Tooltip>
 									{titleError && <CustomErrorMessage>Please enter a title</CustomErrorMessage>}
 								</Box>
-								<Box sx={{ flex: 1, textAlign: 'right', mt: '1rem' }}>
+								<Box sx={{ flex: 1, textAlign: 'right', mb: '0.75rem' }}>
 									<FormControl>
-										<InputLabel id='type' sx={{ fontSize: '0.8rem' }} required>
-											Type
-										</InputLabel>
+										<Typography variant='h6'>Type</Typography>
 										<Select
-											labelId='type'
-											id='lesson_type'
 											value={singleLessonBeforeSave.type}
 											onChange={(e: SelectChangeEvent) => {
 												setSingleLessonBeforeSave(() => {
@@ -851,9 +846,8 @@ const AdminLessonEditPage = () => {
 												setIsLessonUpdated(true);
 											}}
 											size='small'
-											label='Type'
 											required
-											sx={{ backgroundColor: theme.bgColor?.common, fontSize: '0.85rem' }}>
+											sx={{ backgroundColor: theme.bgColor?.common, fontSize: '0.85rem', mt: '0.5rem' }}>
 											{lessonTypes &&
 												lessonTypes?.map((type) => (
 													<MenuItem value={type} key={type} sx={{ fontSize: '0.8rem' }}>
@@ -1231,6 +1225,16 @@ const AdminLessonEditPage = () => {
 															createdAt: '',
 															updatedAt: '',
 															clonedFromId: '',
+															clonedFromTitle: '',
+															usedInLessons: [],
+															createdBy: '',
+															updatedBy: '',
+															createdByName: '',
+															updatedByName: '',
+															createdByImageUrl: '',
+															updatedByImageUrl: '',
+															createdByRole: '',
+															updatedByRole: '',
 														},
 													],
 												};

@@ -2,7 +2,7 @@ import { Box, FormControl, InputAdornment, MenuItem, Select, Table, TableBody, T
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { useContext, useEffect, useRef, useState } from 'react';
 import axios from '@utils/axiosInstance';
-import { Delete, Edit,  Search } from '@mui/icons-material';
+import { Delete, Edit, Info, Search } from '@mui/icons-material';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
@@ -24,6 +24,7 @@ import CustomDeleteButton from '../components/forms/customButtons/CustomDeleteBu
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/CustomInfoMessageAlignedLeft';
 import { dateFormatter } from '../utils/dateFormatter';
+import QuestionInfoModal from '../components/questions/QuestionInfoModal';
 
 const AdminQuestions = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -70,6 +71,7 @@ const AdminQuestions = () => {
 	const [isQuestionDeleteModalOpen, setIsQuestionDeleteModalOpen] = useState<boolean[]>([]);
 	const [editQuestionModalOpen, setEditQuestionModalOpen] = useState<boolean[]>([]);
 	const [isQuestionCreateModalOpen, setIsQuestionCreateModalOpen] = useState<boolean>(false);
+	const [isQuestionInfoModalOpen, setIsQuestionInfoModalOpen] = useState<boolean[]>([]);
 
 	const {
 		options,
@@ -95,6 +97,7 @@ const AdminQuestions = () => {
 	useEffect(() => {
 		setIsQuestionDeleteModalOpen(Array(filteredQuestions.length).fill(false));
 		setEditQuestionModalOpen(Array(filteredQuestions.length).fill(false));
+		setIsQuestionInfoModalOpen(Array(filteredQuestions.length).fill(false));
 		setFilteredQuestions(sortedQuestionsData);
 	}, [sortedQuestionsData, questionsPageNumber]);
 
@@ -206,6 +209,18 @@ const AdminQuestions = () => {
 		} catch (error) {
 			console.log(error);
 		}
+	};
+
+	const openQuestionInfoModal = (index: number) => {
+		const updatedState = [...isQuestionInfoModalOpen];
+		updatedState[index] = true;
+		setIsQuestionInfoModalOpen(updatedState);
+	};
+
+	const closeQuestionInfoModal = (index: number) => {
+		const updatedState = [...isQuestionInfoModalOpen];
+		updatedState[index] = false;
+		setIsQuestionInfoModalOpen(updatedState);
 	};
 
 	return (
@@ -508,6 +523,15 @@ const AdminQuestions = () => {
 												}}
 												icon={<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 											/>
+
+											<CustomActionBtn
+												title='More Info'
+												onClick={() => {
+													openQuestionInfoModal(index);
+												}}
+												icon={<Info fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
+											/>
+
 											{isQuestionDeleteModalOpen[index] !== undefined && (
 												<CustomDialog
 													openModal={isQuestionDeleteModalOpen[index]}
@@ -544,6 +568,19 @@ const AdminQuestions = () => {
 					}}
 				/>
 			</Box>
+
+			{isQuestionInfoModalOpen.map((isOpen, index) => (
+				isOpen && (
+					<CustomDialog
+						key={index}
+						openModal={isOpen}
+						closeModal={() => closeQuestionInfoModal(index)}
+						title='Question Information'
+						maxWidth='sm'>
+						<QuestionInfoModal question={filteredQuestions[index]} onClose={() => closeQuestionInfoModal(index)} />
+					</CustomDialog>
+				)
+			))}
 		</DashboardPagesLayout>
 	);
 };

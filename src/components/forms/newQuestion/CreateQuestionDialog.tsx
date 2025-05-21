@@ -130,9 +130,16 @@ const CreateQuestionDialog = ({
 		createdAt: '',
 		updatedAt: '',
 		clonedFromId: '',
+		clonedFromQuestion: '',
 		usedInLessons: [],
 		createdBy: '',
 		updatedBy: '',
+		createdByName: '',
+		updatedByName: '',
+		createdByImageUrl: '',
+		updatedByImageUrl: '',
+		createdByRole: '',
+		updatedByRole: '',
 	});
 	const [isCorrectAnswerMissing, setIsCorrectAnswerMissing] = useState<boolean>(false);
 	const [isQuestionMissing, setIsQuestionMissing] = useState<boolean>(false);
@@ -182,9 +189,16 @@ const CreateQuestionDialog = ({
 			createdAt: '',
 			updatedAt: '',
 			clonedFromId: '',
+			clonedFromQuestion: '',
 			usedInLessons: [],
 			createdBy: '',
 			updatedBy: '',
+			createdByName: '',
+			updatedByName: '',
+			createdByImageUrl: '',
+			updatedByImageUrl: '',
+			createdByRole: '',
+			updatedByRole: '',
 		});
 		setCorrectAnswer('');
 		setOptions(['']);
@@ -219,8 +233,10 @@ const CreateQuestionDialog = ({
 				isActive: true,
 			});
 
+			const questionResponseData = response.data;
+
 			addNewQuestion({
-				_id: response.data._id,
+				_id: questionResponseData._id,
 				questionType,
 				question: isFlipCard ? newQuestion.question.trim() : editorContent.trim(),
 				options,
@@ -233,6 +249,14 @@ const CreateQuestionDialog = ({
 				blankValuePairs,
 				orgId,
 				isActive: true,
+				createdAt: questionResponseData.createdAt,
+				updatedAt: questionResponseData.updatedAt,
+				createdByName: questionResponseData.createdByName,
+				updatedByName: questionResponseData.updatedByName,
+				createdByImageUrl: questionResponseData.createdByImageUrl,
+				updatedByImageUrl: questionResponseData.updatedByImageUrl,
+				createdByRole: questionResponseData.createdByRole,
+				updatedByRole: questionResponseData.updatedByRole,
 			});
 			resetValues();
 		} catch (error) {
@@ -259,9 +283,16 @@ const CreateQuestionDialog = ({
 				createdAt: '',
 				updatedAt: '',
 				clonedFromId: '',
+				clonedFromQuestion: '',
 				usedInLessons: singleLessonBeforeSave?._id ? [singleLessonBeforeSave?._id] : [],
 				createdBy: '',
 				updatedBy: '',
+				createdByName: '',
+				updatedByName: '',
+				createdByImageUrl: '',
+				updatedByImageUrl: '',
+				createdByRole: '',
+				updatedByRole: '',
 			};
 
 			setIsLessonUpdated?.(true);
@@ -370,58 +401,60 @@ const CreateQuestionDialog = ({
 			title='Create Question'
 			maxWidth='lg'>
 			<form onSubmit={(e) => e.preventDefault()} style={{ display: 'flex', flexDirection: 'column' }}>
-				<DialogContent>
-					<Typography variant='h6' sx={{ mb: '0.5rem' }}>
-						Type
-					</Typography>
-					<FormControl sx={{ mb: '1rem', width: '15rem', backgroundColor: theme.bgColor?.common }}>
-						<Select
-							value={questionType}
-							onChange={(event: SelectChangeEvent) => {
-								setQuestionType(event.target.value);
-								setCorrectAnswer('');
-								setOptions(['']);
-							}}
-							size='small'
-							required
-							displayEmpty
-							sx={{ color: questionType == '' ? 'lightgray' : 'inherit', fontSize: '0.8rem' }}>
-							<MenuItem disabled value='' sx={{ fontSize: '0.85rem' }}>
-								Select Type
-							</MenuItem>
-							{questionTypes
-								?.filter((type) => {
-									const questionTypeName = type.name as QuestionType;
-									if (singleLessonBeforeSave?.type === LessonType.QUIZ) {
-										return [
-											QuestionType.MULTIPLE_CHOICE,
-											QuestionType.TRUE_FALSE,
-											QuestionType.OPEN_ENDED,
-											QuestionType.AUDIO_VIDEO,
-											QuestionType.MATCHING,
-											QuestionType.FITB_TYPING,
-											QuestionType.FITB_DRAG_DROP,
-										].includes(questionTypeName);
-									} else if (singleLessonBeforeSave?.type === LessonType.PRACTICE_LESSON) {
-										return [
-											QuestionType.MULTIPLE_CHOICE,
-											QuestionType.TRUE_FALSE,
-											QuestionType.OPEN_ENDED,
-											QuestionType.MATCHING,
-											QuestionType.FITB_TYPING,
-											QuestionType.FITB_DRAG_DROP,
-											QuestionType.FLIP_CARD,
-										].includes(questionTypeName);
-									}
-									return true;
-								})
-								.map((type) => (
-									<MenuItem value={type.name} key={type._id} sx={{ fontSize: '0.85rem' }}>
-										{type.name}
-									</MenuItem>
-								))}
-						</Select>
-					</FormControl>
+				<DialogContent sx={{ mt: '-4rem' }}>
+					<Box sx={{display:'flex',flexDirection:'column', width:'100%', alignItems:'flex-end', mb:'0.75rem'}}>
+						<Typography variant='body2' sx={{ mb: '0.5rem', fontSize:'0.95rem' }}>
+							Type
+						</Typography>
+						<FormControl sx={{ mb: '1rem', width: '15rem', backgroundColor: theme.bgColor?.common }}>
+							<Select
+								value={questionType}
+								onChange={(event: SelectChangeEvent) => {
+									setQuestionType(event.target.value);
+									setCorrectAnswer('');
+									setOptions(['']);
+								}}
+								size='small'
+								required
+								displayEmpty
+								sx={{ color: questionType == '' ? 'lightgray' : 'inherit', fontSize: '0.8rem' }}>
+								<MenuItem disabled value='' sx={{ fontSize: '0.85rem' }}>
+									Select Type
+								</MenuItem>
+								{questionTypes
+									?.filter((type) => {
+										const questionTypeName = type.name as QuestionType;
+										if (singleLessonBeforeSave?.type === LessonType.QUIZ) {
+											return [
+												QuestionType.MULTIPLE_CHOICE,
+												QuestionType.TRUE_FALSE,
+												QuestionType.OPEN_ENDED,
+												QuestionType.AUDIO_VIDEO,
+												QuestionType.MATCHING,
+												QuestionType.FITB_TYPING,
+												QuestionType.FITB_DRAG_DROP,
+											].includes(questionTypeName);
+										} else if (singleLessonBeforeSave?.type === LessonType.PRACTICE_LESSON) {
+											return [
+												QuestionType.MULTIPLE_CHOICE,
+												QuestionType.TRUE_FALSE,
+												QuestionType.OPEN_ENDED,
+												QuestionType.MATCHING,
+												QuestionType.FITB_TYPING,
+												QuestionType.FITB_DRAG_DROP,
+												QuestionType.FLIP_CARD,
+											].includes(questionTypeName);
+										}
+										return true;
+									})
+									.map((type) => (
+										<MenuItem value={type.name} key={type._id} sx={{ fontSize: '0.85rem' }}>
+											{type.name}
+										</MenuItem>
+									))}
+							</Select>
+						</FormControl>
+					</Box>
 					<Box sx={{ display: 'flex', flexDirection: 'column' }}>
 						<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: '2rem', width: '100%' }}>
 							<Box sx={{ flex: 1, mr: '2rem' }}>

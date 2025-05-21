@@ -276,7 +276,7 @@ const AdminLessonEditPageEditQuestionDialog = ({
 				handleResetQuestion();
 				setIsMinimumOneBlank(false);
 			}}
-			title='Edit Question'
+			title={`Edit Question (${questionType})`}
 			maxWidth='lg'>
 			<form onSubmit={(e) => e.preventDefault()}>
 				<DialogContent
@@ -287,10 +287,6 @@ const AdminLessonEditPageEditQuestionDialog = ({
 						alignItems: 'center',
 						margin: '0.5rem 0.5rem 2rem 0.5rem',
 					}}>
-					<Box sx={{ display: 'flex', justifyContent: 'flex-start', mb: '2rem', width: '100%' }}>
-						{question && <Typography>{questionType}</Typography>}
-					</Box>
-
 					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: '2rem', width: '100%' }}>
 						<Box sx={{ flex: 1, mr: '2rem' }}>
 							<HandleImageUploadURL
