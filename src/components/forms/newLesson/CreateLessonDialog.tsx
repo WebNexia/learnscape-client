@@ -1,4 +1,4 @@
-import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent, Typography } from '@mui/material';
+import { FormControl, MenuItem, Select, SelectChangeEvent, Typography } from '@mui/material';
 import CustomTextField from '../customFields/CustomTextField';
 import { useContext, useState } from 'react';
 import { LessonsContext } from '../../../contexts/LessonsContextProvider';
@@ -70,10 +70,17 @@ const CreateLessonDialog = ({
 			documentIds: [],
 			documents: [],
 			clonedFromId: '',
+			clonedFromTitle: '',
 			usedInCourses: [],
 			createdBy: '',
 			updatedBy: '',
 			publishedAt: '',
+			createdByName: '',
+			updatedByName: '',
+			createdByImageUrl: '',
+			updatedByImageUrl: '',
+			createdByRole: '',
+			updatedByRole: '',
 		};
 		if (setLessons) {
 			setLessons((prevData) => {
@@ -140,7 +147,7 @@ const CreateLessonDialog = ({
 					}}
 				/>
 				<FormControl sx={{ margin: '1rem 2rem' }}>
-				<Typography variant='body2' sx={{ mb: '0.5rem' }}>
+					<Typography variant='body2' sx={{ mb: '0.5rem' }}>
 						Type
 					</Typography>
 					<Select
@@ -152,13 +159,13 @@ const CreateLessonDialog = ({
 						size='small'
 						required
 						displayEmpty
-						sx={{ backgroundColor: theme.bgColor?.common, color: type == '' ? 'lightgray' : 'inherit',  fontSize:'0.8rem' }}>
-							<MenuItem disabled value='' sx={{ fontSize: '0.85rem' }}>
-								Select Type
-							</MenuItem>
+						sx={{ backgroundColor: theme.bgColor?.common, color: type == '' ? 'lightgray' : 'inherit', fontSize: '0.8rem' }}>
+						<MenuItem disabled value='' sx={{ fontSize: '0.85rem' }}>
+							Select Type
+						</MenuItem>
 						{lessonTypes &&
 							lessonTypes?.map((type) => (
-								<MenuItem value={type} key={type} sx={{fontSize:'0.85rem'}}>
+								<MenuItem value={type} key={type} sx={{ fontSize: '0.85rem' }}>
 									{type}
 								</MenuItem>
 							))}
