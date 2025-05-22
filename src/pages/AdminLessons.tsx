@@ -135,7 +135,7 @@ const AdminLessons = () => {
 					padding: isMobileSizeSmall ? '1rem 1rem 0.5rem 1rem' : '2rem 2rem 1rem 2rem',
 					width: '100%',
 				}}>
-				<Box sx={{ display: 'flex', justifyContent: 'flex-start', width: '100%' }}>
+				<Box sx={{ display: 'flex', justifyContent: 'flex-start', width: '100%',  }}>
 					<Box sx={{ mr: '1rem' }}>
 						<FormControl>
 							<Select

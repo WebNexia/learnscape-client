@@ -236,7 +236,7 @@ const AdminQuestions = () => {
 				}}>
 				{isVerySmallScreen && <CustomInfoMessageAlignedLeft message='Rotate your device for search & filter' />}
 				{!isVerySmallScreen && (
-					<Box sx={{ display: 'flex', justifyContent: 'flex-start', width: '100%' }}>
+					<Box sx={{ display: 'flex', justifyContent: 'flex-start', width: '100%',  }}>
 						<Box sx={{ mr: '1rem' }}>
 							<FormControl>
 								<Select
@@ -364,6 +364,7 @@ const AdminQuestions = () => {
 					sx={{
 						display: 'flex',
 						justifyContent: 'flex-end',
+						mb:'1.25rem',
 						width: isVerySmallScreen ? '5%' : isMobileSize ? '20%' : '25%',
 						height: isVerySmallScreen ? '1.5rem' : '2rem',
 					}}>

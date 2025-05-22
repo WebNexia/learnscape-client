@@ -47,7 +47,21 @@ const CreateLessonDialog = ({
 				orgId,
 			});
 
-			addNewLesson({ _id: response.data._id, title: title.trim(), type, createdAt: response.data.createdAt, updatedAt: response.data.updatedAt });
+			const responseNewLessonData = response.data;
+
+			addNewLesson({
+				_id: responseNewLessonData._id,
+				title: title.trim(),
+				type,
+				createdAt: responseNewLessonData.createdAt,
+				updatedAt: responseNewLessonData.updatedAt,
+				createdByName: responseNewLessonData.createdByName,
+				updatedByName: responseNewLessonData.updatedByName,
+				createdByImageUrl: responseNewLessonData.createdByImageUrl,
+				updatedByImageUrl: responseNewLessonData.updatedByImageUrl,
+				createdByRole: responseNewLessonData.createdByRole,
+				updatedByRole: responseNewLessonData.updatedByRole,
+			});
 		} catch (error) {
 			console.log(error);
 		}

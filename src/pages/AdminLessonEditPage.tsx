@@ -1,16 +1,4 @@
-import {
-	Alert,
-	Box,
-	FormControl,
-	IconButton,
-	Link,
-	MenuItem,
-	Select,
-	SelectChangeEvent,
-	Snackbar,
-	Tooltip,
-	Typography,
-} from '@mui/material';
+import { Alert, Box, FormControl, IconButton, Link, MenuItem, Select, SelectChangeEvent, Snackbar, Tooltip, Typography } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import theme from '../themes';
 import { Delete, Edit, FileCopy } from '@mui/icons-material';
@@ -73,7 +61,7 @@ const AdminLessonEditPage = () => {
 	const { updateLessonPublishing, updateLessons, lessonTypes } = useContext(LessonsContext);
 
 	const { questionTypes, fetchQuestions, questionsPageNumber, fetchQuestionTypeName } = useContext(QuestionsContext);
-	const { fetchDocuments } = useContext(DocumentsContext);
+	const {  addNewDocument, updateDocuments } = useContext(DocumentsContext);
 
 	const vertical = 'top';
 	const horizontal = 'center';
@@ -241,9 +229,6 @@ const AdminLessonEditPage = () => {
 					setSingleLesson(lessonsResponse);
 					setSingleLessonBeforeSave(lessonsResponse);
 
-					console.log(lessonsResponse);
-					console.log(lessonsResponse.text);
-
 					setEditorContent(lessonsResponse.text);
 					setPrevEditorContent(lessonsResponse.text);
 
@@ -367,7 +352,22 @@ const AdminLessonEditPage = () => {
 									userId,
 									documentUrl: document.documentUrl,
 								});
-								fetchDocuments();
+
+								const documentResponseData = response.data;
+
+								addNewDocument({
+									_id:documentResponseData._id,
+									name: document.name.trim(),
+									orgId,
+									userId,
+									documentUrl: document.documentUrl,
+									createdByName: documentResponseData.createdByName,
+									updatedByName: documentResponseData.updatedByName,
+									createdByImageUrl: documentResponseData.createdByImageUrl,
+									updatedByImageUrl: documentResponseData.updatedByImageUrl,
+									createdByRole: documentResponseData.createdByRole,
+									updatedByRole: documentResponseData.updatedByRole,
+								});
 								return {
 									...document,
 									_id: response.data._id,
@@ -391,10 +391,19 @@ const AdminLessonEditPage = () => {
 					const trackData = isDocumentUpdated.find((data) => data.documentId === doc._id);
 					if (trackData?.isUpdated) {
 						try {
-							await axios.patch(`${base_url}/documents/${doc._id}`, {
+							const response = await axios.patch(`${base_url}/documents/${doc._id}`, {
 								name: doc.name.trim(),
 							});
-							fetchDocuments();
+
+							const documentUpdateData = response.data.data;
+
+							updateDocuments({
+								...doc,
+								name: doc.name.trim(),
+								updatedByName: documentUpdateData.updatedByName,
+								updatedByImageUrl: documentUpdateData.updatedByImageUrl,
+								updatedByRole: documentUpdateData.updatedByRole,
+							});
 						} catch (error) {
 							console.error('Error updating document:', error);
 						}
@@ -1227,6 +1236,7 @@ const AdminLessonEditPage = () => {
 															clonedFromId: '',
 															clonedFromTitle: '',
 															usedInLessons: [],
+															usedInCourses: [],
 															createdBy: '',
 															updatedBy: '',
 															createdByName: '',

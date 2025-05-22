@@ -35,7 +35,7 @@ const AddNewDocumentDialog = ({
 	singleCourse,
 	setSingleCourse,
 }: AddNewDocumentDialogProps) => {
-	const { sortDocumentsData, sortedDocumentsData } = useContext(DocumentsContext);
+	const { sortDocumentsData, sortedDocumentsData, updateDocuments } = useContext(DocumentsContext);
 	const [documentsPageNumber, setDocumentsPageNumber] = useState<number>(1);
 	const [searchValue, setSearchValue] = useState<string>('');
 
@@ -107,9 +107,24 @@ const AddNewDocumentDialog = ({
 			if (setSingleCourse) {
 				setSingleCourse((prevData) => {
 					if (prevData) {
+						// Update selected documents with usedInCourses and temp update info
+						const updatedSelectedDocuments = selectedDocuments.map(doc => {
+							const updatedDoc = {
+								...doc,
+								usedInCourses:doc.usedInCourses? [...doc.usedInCourses, prevData._id] : [prevData._id],
+								updatedAt: new Date().toISOString(),
+								updatedByName: doc.updatedByName,
+								updatedByImageUrl: doc.updatedByImageUrl,
+								updatedByRole: doc.updatedByRole,
+							};
+							// Update document in DocumentsContext
+							updateDocuments(updatedDoc);
+							return updatedDoc;
+						});
+
 						return {
 							...prevData,
-							documents: [...selectedDocuments, ...prevData?.documents],
+							documents: [...updatedSelectedDocuments, ...prevData?.documents],
 							documentIds: [...selectedDocumentIds, ...prevData?.documentIds],
 						};
 					}

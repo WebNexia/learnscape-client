@@ -79,7 +79,10 @@ const DocumentsContextProvider = (props: DocumentsContextProviderProps) => {
 	};
 	// Function to update sortedDocumentsData with new document data
 	const addNewDocument = (newDocument: any) => {
-		setSortedDocumentsData((prevSortedData) => [newDocument, ...prevSortedData]);
+		
+		setSortedDocumentsData((prevSortedData) => {
+			return [newDocument, ...prevSortedData]
+		});
 	};
 
 	const updateDocuments = (singleDocument: Document) => {

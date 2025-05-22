@@ -70,7 +70,7 @@ const AdminCourseEditPage = () => {
 
 	const { orgId } = useContext(OrganisationContext);
 	const { fetchLessons } = useContext(LessonsContext);
-	const { fetchDocuments } = useContext(DocumentsContext);
+	const { addNewDocument, updateDocuments } = useContext(DocumentsContext);
 	const { updateCoursePublishing, updateCourse } = useContext(CoursesContext);
 
 	const [isEditMode, setIsEditMode] = useState<boolean>(false);
@@ -164,7 +164,6 @@ const AdminCourseEditPage = () => {
 					const response = await axios.get(`${base_url}/courses/${courseId}`);
 
 					const courseResponse = response?.data?.data;
-
 					setSingleCourse(courseResponse);
 					if (courseResponse?.prices.some((price: Price) => price.amount === 'Free' || price.amount === '' || price.amount === '0')) {
 						setIsFree(true);
@@ -337,10 +336,29 @@ const AdminCourseEditPage = () => {
 									orgId,
 									userId,
 									documentUrl: document.documentUrl.trim(),
+									usedInCourses: courseId ? [courseId] : [],
 								});
-								fetchDocuments();
 
-								return { ...document, _id: response.data._id, createdAt: response.data.createdAt, updatedAt: response.data.updatedAt } as Document; // Assert as Document
+								const newDocumentResponseData = response.data;
+
+								const newDocument: Document = {
+									...document,
+									_id: newDocumentResponseData._id,
+									createdAt: newDocumentResponseData.createdAt,
+									updatedAt: newDocumentResponseData.updatedAt,
+									usedInCourses: courseId ? [courseId] : [],
+									usedInLessons: document.usedInLessons || [],
+									createdByName: newDocumentResponseData.createdByName,
+									createdByImageUrl: newDocumentResponseData.createdByImageUrl,
+									createdByRole: newDocumentResponseData.createdByRole,
+									updatedByName: newDocumentResponseData.updatedByName,
+									updatedByImageUrl: newDocumentResponseData.updatedByImageUrl,
+									updatedByRole: newDocumentResponseData.updatedByRole,
+								};
+
+								addNewDocument(newDocument);
+
+								return newDocument;
 							} catch (error) {
 								console.error('Error creating document:', error);
 								return null;
@@ -358,10 +376,23 @@ const AdminCourseEditPage = () => {
 					const trackData = isDocumentUpdated.find((data) => data.documentId === doc._id);
 					if (trackData?.isUpdated) {
 						try {
-							await axios.patch(`${base_url}/documents/${doc._id}`, {
+							const response = await axios.patch(`${base_url}/documents/${doc._id}`, {
 								name: doc.name.trim(),
 							});
-							fetchDocuments();
+							const updatedDocumentResponseData = response.data.data;
+							const updatedDocument: Document = {
+								...doc,
+								_id: updatedDocumentResponseData._id,
+								createdAt: updatedDocumentResponseData.createdAt,
+								updatedAt: updatedDocumentResponseData.updatedAt,
+								updatedByName: updatedDocumentResponseData.updatedByName,
+								updatedByImageUrl: updatedDocumentResponseData.updatedByImageUrl,
+								updatedByRole: updatedDocumentResponseData.updatedByRole,
+								createdByName: updatedDocumentResponseData.createdByName,
+								createdByImageUrl: updatedDocumentResponseData.createdByImageUrl,
+								createdByRole: updatedDocumentResponseData.createdByRole,
+							};
+							updateDocuments(updatedDocument);
 						} catch (error) {
 							console.error('Error updating question:', error);
 						}
@@ -600,7 +631,7 @@ const AdminCourseEditPage = () => {
 									label='Course Materials'
 									onDocUploadLogic={(url, docName) => {
 										setSingleCourse((prevData) => {
-											if (prevData && userId) {
+											if (prevData && userId && courseId) {
 												const maxNumber = prevData?.documents
 													.filter((doc) => doc !== null)
 													.reduce((max, doc) => {
@@ -609,21 +640,31 @@ const AdminCourseEditPage = () => {
 														return num > max ? num : max;
 													}, 0);
 												const newName = docName || `Untitled Document ${maxNumber + 1}`;
+												const newDocument: Document = {
+													_id: generateUniqueId('temp_doc_id_'),
+													name: newName,
+													documentUrl: url,
+													orgId,
+													userId,
+													createdAt: '',
+													updatedAt: '',
+													clonedFromId: '',
+													clonedFromTitle: '',
+													usedInLessons: [],
+													usedInCourses: courseId ? [courseId] : [],
+													createdBy: '',
+													updatedBy: '',
+													createdByName: '',
+													updatedByName: '',
+													createdByImageUrl: '',
+													updatedByImageUrl: '',
+													createdByRole: '',
+													updatedByRole: '',
+												};
+
 												return {
 													...prevData,
-													documents: [
-														...prevData?.documents,
-														{
-															_id: generateUniqueId('temp_doc_id_'),
-															name: newName,
-															documentUrl: url,
-															orgId,
-															userId,
-															createdAt: '',
-															updatedAt: '',
-															clonedFromId: '',
-														},
-													],
+													documents: [...prevData?.documents, newDocument],
 												};
 											}
 											return prevData;
@@ -653,6 +694,21 @@ const AdminCourseEditPage = () => {
 											const filteredDocuments = prevData?.documents?.filter((thisDoc) => thisDoc._id !== document._id);
 											const filteredDocumentIds = filteredDocuments?.map((doc) => doc._id);
 
+											// Update document's usedInCourses in the documents context
+											const updatedDocument = {
+												...document,
+												usedInCourses: document.usedInCourses.filter((id) => id !== courseId),
+												createdByName: document.createdByName,
+												createdByImageUrl: document.createdByImageUrl,
+												createdByRole: document.createdByRole,
+												updatedByName: document.updatedByName,
+												updatedByImageUrl: document.updatedByImageUrl,
+												updatedByRole: document.updatedByRole,
+												createdAt: document.createdAt,
+												updatedAt: new Date().toISOString(),
+											};
+											updateDocuments(updatedDocument);
+											console.log(prevData.documents)
 											return {
 												...prevData,
 												documents: filteredDocuments,
