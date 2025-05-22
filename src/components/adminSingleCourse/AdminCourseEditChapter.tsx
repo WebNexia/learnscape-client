@@ -2,7 +2,7 @@ import { Box, IconButton, Tooltip, Typography } from '@mui/material';
 import { useMotionValue, Reorder } from 'framer-motion';
 import theme from '../../themes';
 import { CreateTwoTone, Delete, NoteAdd } from '@mui/icons-material';
-import { useState } from 'react';
+import { useState, useContext } from 'react';
 import { Lesson } from '../../interfaces/lessons';
 import { useRaisedShadow } from '../../hooks/useRaisedShadow';
 import { ChapterLessonData, ChapterUpdateTrack } from '../../pages/AdminCourseEditPage';
@@ -11,6 +11,9 @@ import CustomErrorMessage from '../forms/customFields/CustomErrorMessage';
 import CreateLessonDialog from '../forms/newLesson/CreateLessonDialog';
 import AddNewLessonDialog from './AddNewLessonDialog';
 import { chapterUpdateTrack } from '../../utils/chapterUpdateTrack';
+import { LessonsContext } from '../../contexts/LessonsContextProvider';
+import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
+import { useParams } from 'react-router-dom';
 
 interface AdminCourseEditChapterProps {
 	chapter: ChapterLessonData;
@@ -34,6 +37,9 @@ const AdminCourseEditChapter = ({
 
 	const y = useMotionValue(0);
 	const boxShadow = useRaisedShadow(y);
+	const { updateLessons } = useContext(LessonsContext);
+	const { user } = useContext(UserAuthContext);
+	const { courseId } = useParams();
 
 	return (
 		<Box
@@ -242,10 +248,23 @@ const AdminCourseEditChapter = ({
 																					lessonIds: updatedLessonIds,
 																				};
 																			}
-																			return currentChapter; // Return unchanged chapter if not the one being updated
+																			return currentChapter;
 																		});
 																	}
 																	return prevData;
+																});
+
+																updateLessons({
+																	...lesson,
+																	usedInCourses: lesson.usedInCourses?.filter(id => id !== courseId) || [],
+																	updatedAt: new Date().toISOString(),
+																	updatedByName: user ? `${user.firstName} ${user.lastName}` : '',
+																	updatedByImageUrl: user?.imageUrl || '',
+																	updatedByRole: user?.role || '',
+																	createdByName: lesson.createdByName,
+																	createdByImageUrl: lesson.createdByImageUrl,
+																	createdByRole: lesson.createdByRole,
+																	createdAt: lesson.createdAt,
 																});
 
 																chapterUpdateTrack(chapter.chapterId, setIsChapterUpdated);

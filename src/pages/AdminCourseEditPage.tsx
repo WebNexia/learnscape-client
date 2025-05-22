@@ -69,7 +69,7 @@ const AdminCourseEditPage = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
 	const { orgId } = useContext(OrganisationContext);
-	const { fetchLessons } = useContext(LessonsContext);
+	const { addNewLesson, updateLessons } = useContext(LessonsContext);
 	const { addNewDocument, updateDocuments } = useContext(DocumentsContext);
 	const { updateCoursePublishing, updateCourse } = useContext(CoursesContext);
 
@@ -289,11 +289,25 @@ const AdminCourseEditPage = () => {
 											type: lesson.type,
 											orgId,
 										});
-										fetchLessons();
+										const lessonResponseData = lessonResponse.data;
+
+										addNewLesson({
+											...lesson,
+											_id: lessonResponseData._id,
+											createdAt: lessonResponseData.createdAt,
+											updatedAt: lessonResponseData.updatedAt,
+											createdByName: lessonResponseData.createdByName,
+											createdByImageUrl: lessonResponseData.createdByImageUrl,
+											createdByRole: lessonResponseData.createdByRole,
+											updatedByName: lessonResponseData.updatedByName,
+											updatedByImageUrl: lessonResponseData.updatedByImageUrl,
+											updatedByRole: lessonResponseData.updatedByRole,
+											usedInCourses: courseId ? [courseId] : [],
+										});
 
 										return {
 											...lesson,
-											_id: lessonResponse.data._id,
+											_id: lessonResponseData._id,
 										};
 									} catch (error) {
 										console.error('Error creating lesson:', error);
@@ -426,6 +440,16 @@ const AdminCourseEditPage = () => {
 						updatedByImageUrl: responseUpdatedData.updatedByImageUrl,
 						updatedByRole: responseUpdatedData.updatedByRole,
 					});
+
+					updatedChapters?.forEach(chapter => {
+						chapter.lessons?.forEach(lesson => {
+							updateLessons({
+								...lesson,
+								usedInCourses: lesson.usedInCourses || [],
+							});
+						});
+					});
+
 					setSingleCourse({
 						...updatedCourse,
 						updatedAt: responseUpdatedData.updatedAt,
@@ -708,7 +732,6 @@ const AdminCourseEditPage = () => {
 												updatedAt: new Date().toISOString(),
 											};
 											updateDocuments(updatedDocument);
-											console.log(prevData.documents)
 											return {
 												...prevData,
 												documents: filteredDocuments,

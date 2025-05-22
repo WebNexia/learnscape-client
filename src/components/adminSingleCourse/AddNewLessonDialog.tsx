@@ -27,6 +27,8 @@ import { LessonType } from '../../interfaces/enums';
 import CustomTextField from '../forms/customFields/CustomTextField';
 import { Search } from '@mui/icons-material';
 import theme from '../../themes';
+import { useParams } from 'react-router-dom';
+import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
 
 interface AddNewLessonDialogProps {
 	addNewLessonModalOpen: boolean;
@@ -44,6 +46,8 @@ const AddNewLessonDialog = ({
 	setChapterLessonDataBeforeSave,
 }: AddNewLessonDialogProps) => {
 	const { sortLessonsData, sortedLessonsData } = useContext(LessonsContext);
+	const { courseId } = useParams();
+	const { user } = useContext(UserAuthContext);
 
 	const [lessonsPageNumber, setLessonsPageNumber] = useState<number>(1);
 	const [searchValue, setSearchValue] = useState<string>('');
@@ -107,33 +111,49 @@ const AddNewLessonDialog = ({
 		setSelectedLessons(newSelectedLessons);
 
 		chapterUpdateTrack(chapter.chapterId, setIsChapterUpdated);
+
+
 	};
 	const handleAddLessons = () => {
+		if (!courseId || !user) return;
+		
 		setChapterLessonDataBeforeSave((prevData) => {
 			if (prevData) {
+				const updatedSelectedLessons = selectedLessons.map(lesson => ({
+					...lesson,
+					usedInCourses: lesson.usedInCourses ? [...lesson.usedInCourses, courseId] : [courseId],
+					updatedAt: new Date().toISOString(),
+					updatedByName: `${user.firstName} ${user.lastName}`,
+					updatedByImageUrl: user.imageUrl,
+					updatedByRole: user.role,
+				}));
+
 				return prevData.map((currentChapter) => {
 					if (currentChapter.chapterId === chapter?.chapterId) {
 						return {
 							...currentChapter,
-							lessons: currentChapter?.lessons?.concat(selectedLessons),
+							lessons: currentChapter?.lessons?.concat(updatedSelectedLessons),
 							lessonIds: currentChapter?.lessonIds?.concat(selectedLessonIds),
 						};
 					}
-					return currentChapter; // Return unchanged chapter if not the one being updated
+					return currentChapter;
 				});
 			}
-			// Handle the case when prevData is undefined
-			return [
-				{
-					chapterId: chapter?.chapterId,
-					title: chapter?.title,
-					lessons: selectedLessons,
-					lessonIds: selectedLessonIds,
-				},
-			];
+			return [{
+				chapterId: chapter?.chapterId,
+				title: chapter?.title,
+				lessons: selectedLessons.map(lesson => ({
+					...lesson,
+					usedInCourses: lesson.usedInCourses ? [...lesson.usedInCourses, courseId] : [courseId],
+					updatedAt: new Date().toISOString(),
+					updatedByName: `${user.firstName} ${user.lastName}`,
+					updatedByImageUrl: user.imageUrl,
+					updatedByRole: user.role,
+				})),
+				lessonIds: selectedLessonIds,
+			}];
 		});
 
-		// Close the dialog
 		setAddNewLessonModalOpen(false);
 		setSelectedLessons([]);
 		setSelectedLessonIds([]);

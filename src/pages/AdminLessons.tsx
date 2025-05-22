@@ -29,6 +29,7 @@ const AdminLessons = () => {
 
 	const { sortLessonsData, sortedLessonsData, removeLesson, fetchLessons } = useContext(LessonsContext);
 
+
 	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
@@ -83,7 +84,6 @@ const AdminLessons = () => {
 	useEffect(() => {
 		if (isInitialMount.current) {
 			isInitialMount.current = false;
-		} else {
 			fetchLessons();
 		}
 	}, []);
@@ -308,7 +308,7 @@ const AdminLessons = () => {
 											)}
 										</TableCell>
 										<CustomTableCell value={lesson.title} />
-										<CustomTableCell value={lesson.type.charAt(0).toUpperCase() + lesson.type.slice(1)} />
+										<CustomTableCell value={lesson.type} />
 										<CustomTableCell value={lesson.isActive ? 'Published' : 'Unpublished'} />
 										<CustomTableCell value={dateFormatter(lesson.createdAt)} />
 										<CustomTableCell value={dateFormatter(lesson.updatedAt)} />
