@@ -93,9 +93,24 @@ const AddNewDocumentDialog = ({
 			if (setSingleLessonBeforeSave) {
 				setSingleLessonBeforeSave((prevData) => {
 					if (prevData) {
+						// Update selected documents with usedInLessons and temp update info
+						const updatedSelectedDocuments = selectedDocuments.map(doc => {
+							const updatedDoc = {
+								...doc,
+								usedInLessons: doc.usedInLessons ? [...doc.usedInLessons, prevData._id] : [prevData._id],
+								updatedAt: new Date().toISOString(),
+								updatedByName: doc.updatedByName,
+								updatedByImageUrl: doc.updatedByImageUrl,
+								updatedByRole: doc.updatedByRole,
+							};
+							// Update document in DocumentsContext
+							updateDocuments(updatedDoc);
+							return updatedDoc;
+						});
+
 						return {
 							...prevData,
-							documents: [...selectedDocuments, ...prevData?.documents],
+							documents: [...updatedSelectedDocuments, ...prevData?.documents],
 							documentIds: [...selectedDocumentIds, ...prevData?.documentIds],
 						};
 					}
@@ -111,7 +126,7 @@ const AddNewDocumentDialog = ({
 						const updatedSelectedDocuments = selectedDocuments.map(doc => {
 							const updatedDoc = {
 								...doc,
-								usedInCourses:doc.usedInCourses? [...doc.usedInCourses, prevData._id] : [prevData._id],
+								usedInCourses: doc.usedInCourses ? [...doc.usedInCourses, prevData._id] : [prevData._id],
 								updatedAt: new Date().toISOString(),
 								updatedByName: doc.updatedByName,
 								updatedByImageUrl: doc.updatedByImageUrl,

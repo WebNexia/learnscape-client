@@ -61,7 +61,7 @@ const AdminLessonEditPage = () => {
 	const { updateLessonPublishing, updateLessons, lessonTypes } = useContext(LessonsContext);
 
 	const { questionTypes, fetchQuestions, questionsPageNumber, fetchQuestionTypeName } = useContext(QuestionsContext);
-	const {  addNewDocument, updateDocuments } = useContext(DocumentsContext);
+	const { addNewDocument, updateDocuments } = useContext(DocumentsContext);
 
 	const vertical = 'top';
 	const horizontal = 'center';
@@ -338,7 +338,6 @@ const AdminLessonEditPage = () => {
 
 			return;
 		}
-
 		try {
 			if (singleLessonBeforeSave?.documents) {
 				const updatedDocumentsPromises = (singleLessonBeforeSave?.documents as (Document | null)[])
@@ -356,11 +355,15 @@ const AdminLessonEditPage = () => {
 								const documentResponseData = response.data;
 
 								addNewDocument({
-									_id:documentResponseData._id,
+									_id: documentResponseData._id,
 									name: document.name.trim(),
 									orgId,
 									userId,
 									documentUrl: document.documentUrl,
+									usedInLessons: lessonId ? [lessonId] : [],
+									usedInCourses: document.usedInCourses,
+									createdAt: documentResponseData.createdAt,
+									updatedAt: documentResponseData.updatedAt,
 									createdByName: documentResponseData.createdByName,
 									updatedByName: documentResponseData.updatedByName,
 									createdByImageUrl: documentResponseData.createdByImageUrl,
@@ -396,12 +399,18 @@ const AdminLessonEditPage = () => {
 							});
 
 							const documentUpdateData = response.data.data;
+							console.log(documentUpdateData);
 
 							updateDocuments({
 								...doc,
 								name: doc.name.trim(),
+								createdAt: documentUpdateData.createdAt,
+								updatedAt: documentUpdateData.updatedAt,
+								createdByName: documentUpdateData.createdByName,
 								updatedByName: documentUpdateData.updatedByName,
+								createdByImageUrl: documentUpdateData.createdByImageUrl,
 								updatedByImageUrl: documentUpdateData.updatedByImageUrl,
+								createdByRole: documentUpdateData.createdByRole,
 								updatedByRole: documentUpdateData.updatedByRole,
 							});
 						} catch (error) {
@@ -1221,32 +1230,31 @@ const AdminLessonEditPage = () => {
 													}, 0);
 
 												const newName = docName || `Untitled Document ${maxNumber + 1}`;
+												const newDocument: Document = {
+													_id: generateUniqueId('temp_doc_id_'),
+													name: newName.trim(),
+													documentUrl: url,
+													orgId,
+													userId,
+													createdAt: '',
+													updatedAt: new Date().toISOString(),
+													clonedFromId: '',
+													clonedFromTitle: '',
+													usedInLessons: lessonId ? [lessonId] : [],
+													usedInCourses: [],
+													createdBy: '',
+													updatedBy: '',
+													createdByName: '',
+													updatedByName: '',
+													createdByImageUrl: '',
+													updatedByImageUrl: '',
+													createdByRole: '',
+													updatedByRole: '',
+												};
+
 												return {
 													...prevData,
-													documents: [
-														...prevData?.documents,
-														{
-															_id: generateUniqueId('temp_doc_id_'),
-															name: newName.trim(),
-															documentUrl: url,
-															orgId,
-															userId,
-															createdAt: '',
-															updatedAt: '',
-															clonedFromId: '',
-															clonedFromTitle: '',
-															usedInLessons: [],
-															usedInCourses: [],
-															createdBy: '',
-															updatedBy: '',
-															createdByName: '',
-															updatedByName: '',
-															createdByImageUrl: '',
-															updatedByImageUrl: '',
-															createdByRole: '',
-															updatedByRole: '',
-														},
-													],
+													documents: [...prevData?.documents, newDocument],
 												};
 											}
 											return prevData;
@@ -1276,6 +1284,23 @@ const AdminLessonEditPage = () => {
 										if (prevData) {
 											const filteredDocuments = prevData?.documents?.filter((thisDoc) => thisDoc._id !== document._id);
 											const filteredDocumentsIds = filteredDocuments?.map((doc) => doc._id);
+
+											console.log(filteredDocuments);
+
+											// Update document's usedInLessons in the documents context
+											const updatedDocument = {
+												...document,
+												usedInLessons: document.usedInLessons.filter((id) => id !== lessonId),
+												createdAt: document.createdAt,
+												createdByName: document.createdByName,
+												createdByImageUrl: document.createdByImageUrl,
+												createdByRole: document.createdByRole,
+												updatedAt: new Date().toISOString(),
+												updatedByName: document.updatedByName,
+												updatedByImageUrl: document.updatedByImageUrl,
+												updatedByRole: document.updatedByRole,
+											};
+											updateDocuments(updatedDocument);
 
 											return {
 												...prevData,
