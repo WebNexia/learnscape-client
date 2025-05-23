@@ -7,7 +7,7 @@ import CustomDialogActions from '../../layouts/dialog/CustomDialogActions';
 import { BlankValuePair, MatchingPair, QuestionInterface } from '../../../interfaces/question';
 import { QuestionsContext } from '../../../contexts/QuestionsContextProvider';
 import CustomErrorMessage from '../customFields/CustomErrorMessage';
-import axios from 'axios';
+
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
 import useImageUpload from '../../../hooks/useImageUpload';
 import useVideoUpload from '../../../hooks/useVideoUpload';
@@ -27,6 +27,7 @@ import { updateEditorContentAndBlankPairs } from '../../../utils/updateEditorCon
 import FillInTheBlanksDragDropProps from '../../layouts/FITBDragDrop/FillInTheBlanksDragDrop';
 import FillInTheBlanksTyping from '../../layouts/FITBTyping/FillInTheBlanksTyping';
 import CustomInfoMessageAlignedRight from '../../layouts/infoMessage/CustomInfoMessageAlignedRight';
+import axios from '@utils/axiosInstance';
 
 interface EditQuestionDialogProps {
 	index: number;
@@ -215,18 +216,26 @@ const AdminQuestionsEditQuestionDialog = ({
 				blankValuePairs: blankValuePairsAdminQuestions,
 			});
 
+			const questionResponseData = response.data.data;
+
 			const updatedQuestion = {
 				...question,
 				question: !isFlipCard ? editorContent.trim() : questionAdminQuestions.trim(),
 				correctAnswer: updatedCorrectAnswer.trim(),
 				videoUrl: videoUrlAdminQuestions.trim(),
 				imageUrl: imageUrlAdminQuestions.trim(),
-				updatedAt: response.data.data.updatedAt,
-				createdAt: response.data.data.createdAt,
+				updatedAt: questionResponseData.updatedAt,
+				createdAt: questionResponseData.createdAt,
 				audio: isAudioVideoQuestion ? isAudioAdminQuestions : false,
 				video: isAudioVideoQuestion ? isVideoAdminQuestions : false,
 				matchingPairs: matchingPairsAdminQuestions,
 				blankValuePairs: blankValuePairsAdminQuestions,
+				updatedByName: questionResponseData.updatedByName,
+				createdByName: questionResponseData.createdByName,
+				updatedByImageUrl: questionResponseData.updatedByImageUrl,
+				createdByImageUrl: questionResponseData.createdByImageUrl,
+				updatedByRole: questionResponseData.updatedByRole,
+				createdByRole: questionResponseData.createdByRole,
 			};
 
 			updateQuestion(updatedQuestion);
@@ -287,7 +296,7 @@ const AdminQuestionsEditQuestionDialog = ({
 				handleResetQuestion();
 				setIsMinimumOneBlank(false);
 			}}
-			title='Edit Question'
+			title={`Edit Question (${questionType})`}
 			maxWidth='lg'>
 			<form onSubmit={(e) => e.preventDefault()}>
 				<DialogContent
@@ -298,10 +307,6 @@ const AdminQuestionsEditQuestionDialog = ({
 						alignItems: 'center',
 						margin: '0.5rem 0.5rem 2rem 0.5rem',
 					}}>
-					<Box sx={{ display: 'flex', justifyContent: 'flex-start', mb: '2rem', width: '100%' }}>
-						{question && <Typography>{questionType}</Typography>}
-					</Box>
-
 					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: '2rem', width: '100%' }}>
 						<Box sx={{ flex: 1, mr: '2rem' }}>
 							<HandleImageUploadURL

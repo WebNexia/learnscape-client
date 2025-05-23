@@ -3,7 +3,7 @@ import DashboardPagesLayout from '../components/layouts/dashboardLayout/Dashboar
 import TopicPaper from '../components/layouts/community/topicPage/TopicPaper';
 import { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
-import axios from 'axios';
+import axios from '@utils/axiosInstance';
 import { CommunityMessage, TopicInfo } from '../interfaces/communityMessage';
 import Message from '../components/layouts/community/communityMessage/Message';
 import theme from '../themes';

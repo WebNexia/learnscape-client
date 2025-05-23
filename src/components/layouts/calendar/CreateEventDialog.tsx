@@ -15,13 +15,15 @@ import theme from '../../../themes';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 import { UsersContext } from '../../../contexts/UsersContextProvider';
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
-import axios from 'axios';
+
 import { EventsContext } from '../../../contexts/EventsContextProvider';
 import { truncateText } from '../../../utils/utilText';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { SingleCourse } from '../../../interfaces/course';
 import { db } from '../../../firebase';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
+import axios from '@utils/axiosInstance';
+
 
 interface CreateEventDialogProps {
 	newEvent: Event;

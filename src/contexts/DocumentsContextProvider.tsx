@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios from '@utils/axiosInstance';
 import { ReactNode, createContext, useContext, useState } from 'react';
 import { useQuery } from 'react-query';
 import Loading from '../components/layouts/loading/Loading';
@@ -51,7 +51,7 @@ const DocumentsContextProvider = (props: DocumentsContextProviderProps) => {
 			const response = await axios.get(`${base_url}/documents/organisation/${orgId}`);
 
 			// Initial sorting when fetching data
-			const sortedDocumentsDataCopy = [...response.data.data].sort((a: Document, b: Document) => b.updatedAt.localeCompare(a.updatedAt));
+			const sortedDocumentsDataCopy = [...response.data.data].sort((a: Document, b: Document) => b.createdAt.localeCompare(a.createdAt));
 			setSortedDocumentsData(sortedDocumentsDataCopy);
 			// setNumberOfPages(response.data.pages);
 			setIsLoaded(true);
@@ -79,7 +79,10 @@ const DocumentsContextProvider = (props: DocumentsContextProviderProps) => {
 	};
 	// Function to update sortedDocumentsData with new document data
 	const addNewDocument = (newDocument: any) => {
-		setSortedDocumentsData((prevSortedData) => [newDocument, ...prevSortedData]);
+		
+		setSortedDocumentsData((prevSortedData) => {
+			return [newDocument, ...prevSortedData]
+		});
 	};
 
 	const updateDocuments = (singleDocument: Document) => {

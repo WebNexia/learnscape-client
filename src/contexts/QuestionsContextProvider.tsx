@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios from '@utils/axiosInstance';
 import { ReactNode, createContext, useContext, useState } from 'react';
 import { useQuery } from 'react-query';
 import Loading from '../components/layouts/loading/Loading';
@@ -59,7 +59,7 @@ const QuestionsContextProvider = (props: QuestionsContextProviderProps) => {
 			const response = await axios.get(`${base_url}/questions/organisation/${orgId}?page=${page}&limit=75`);
 
 			// Initial sorting when fetching data
-			const sortedDataCopy = [...response.data.data].sort((a: QuestionInterface, b: QuestionInterface) => b.updatedAt.localeCompare(a.updatedAt));
+			const sortedDataCopy = [...response.data.data].sort((a: QuestionInterface, b: QuestionInterface) => b.createdAt.localeCompare(a.createdAt));
 			setSortedQuestionsData(sortedDataCopy);
 			setNumberOfPages(response.data.pages);
 			setIsLoaded(true);

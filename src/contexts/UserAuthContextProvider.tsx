@@ -1,6 +1,6 @@
 import { createContext, ReactNode, useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
-import axios from 'axios';
+import axios from '@utils/axiosInstance';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from '../firebase';
 import { User } from '../interfaces/user';

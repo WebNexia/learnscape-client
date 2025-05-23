@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from 'react';
 import { Box, Button, IconButton, Link, Slide, Tooltip, Typography } from '@mui/material';
 import { useParams } from 'react-router-dom';
-import axios from 'axios';
+import axios from '@utils/axiosInstance';
 import ReactPlayer from 'react-player';
 import { Article, Close, DoneAll, GetApp, Home, KeyboardBackspaceOutlined, KeyboardDoubleArrowRight, NotListedLocation } from '@mui/icons-material';
 import theme from '../themes';
@@ -77,6 +77,18 @@ const LessonPage = () => {
 		questions: [],
 		documentIds: [],
 		documents: [],
+		clonedFromId: '',
+		clonedFromTitle: '',
+		usedInCourses: [],
+		createdBy: '',
+		updatedBy: '',
+		publishedAt: '',
+		createdByName: '',
+		updatedByName: '',
+		createdByImageUrl: '',
+		updatedByImageUrl: '',
+		createdByRole: '',
+		updatedByRole: '',
 	});
 
 	const [userAnswers, setUserAnswers] = useState<UserQuestionData[]>([]); //User answers for practice questions
@@ -263,13 +275,13 @@ const LessonPage = () => {
 								variant='text'
 								startIcon={<KeyboardBackspaceOutlined fontSize='small' />}
 								sx={{
-									color: theme.textColor?.primary,
-									width: 'fit-content',
-									margin: '0.75rem 0 0 0.25rem',
-									textTransform: 'inherit',
-									fontFamily: theme.fontFamily?.main,
+									'color': theme.textColor?.primary,
+									'width': 'fit-content',
+									'margin': '0.75rem 0 0 0.25rem',
+									'textTransform': 'inherit',
+									'fontFamily': theme.fontFamily?.main,
 									':hover': { backgroundColor: 'transparent', textDecoration: 'underline' },
-									fontSize: isMobileSize ? '0.7rem' : '1rem',
+									'fontSize': isMobileSize ? '0.7rem' : '1rem',
 								}}
 								onClick={() => {
 									setIsQuestionsVisible(false);
@@ -284,12 +296,12 @@ const LessonPage = () => {
 							variant='text'
 							startIcon={<Home />}
 							sx={{
-								fontSize: isMobileSize ? '0.7rem' : '1rem',
-								color: theme.textColor?.primary,
-								width: 'fit-content',
-								margin: '0.75rem 0 0 0.25rem',
-								textTransform: 'inherit',
-								fontFamily: theme.fontFamily?.main,
+								'fontSize': isMobileSize ? '0.7rem' : '1rem',
+								'color': theme.textColor?.primary,
+								'width': 'fit-content',
+								'margin': '0.75rem 0 0 0.25rem',
+								'textTransform': 'inherit',
+								'fontFamily': theme.fontFamily?.main,
 								':hover': { backgroundColor: 'transparent', textDecoration: 'underline' },
 							}}
 							onClick={handleLessonNavigation}
@@ -537,7 +549,7 @@ const LessonPage = () => {
 					/>
 				</>
 			)}
-			{lesson?.documents.length !== 0 && !isQuestionsVisible && (
+			{lesson?.documents?.length !== 0 && !isQuestionsVisible && (
 				<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '2rem', width: '85%' }}>
 					<Box sx={{ display: 'flex', alignSelf: 'flex-start' }}>
 						<Typography variant='h5' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }}>
@@ -569,7 +581,7 @@ const LessonPage = () => {
 						endIcon={!nextLessonId ? <DoneAll /> : <KeyboardDoubleArrowRight />}
 						onClick={() => setIsLessonCourseCompletedModalOpen(true)}
 						type='button'
-						sx={{ marginTop: lesson.documents.length === 0 ? '1rem' : '0rem', fontSize: isMobileSize ? '0.7rem' : '0.85rem' }}>
+						sx={{ marginTop: lesson?.documents.length === 0 ? '1rem' : '0rem', fontSize: isMobileSize ? '0.7rem' : '0.85rem' }}>
 						{nextLessonId ? 'Next Lesson' : 'Complete Course'}
 					</CustomSubmitButton>
 					<CustomDialog

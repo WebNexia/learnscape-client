@@ -1,7 +1,7 @@
 import { useContext, useState } from 'react';
 import { NewTopic } from '../../../../pages/Community';
 import CustomDialog from '../../dialog/CustomDialog';
-import axios from 'axios';
+import axios from '@utils/axiosInstance';
 import { OrganisationContext } from '../../../../contexts/OrganisationContextProvider';
 import CustomDialogActions from '../../dialog/CustomDialogActions';
 import CustomTextField from '../../../forms/customFields/CustomTextField';

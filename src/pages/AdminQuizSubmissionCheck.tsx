@@ -2,7 +2,7 @@ import { Alert, Box, IconButton, Snackbar, Typography } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useContext, useEffect, useState } from 'react';
-import axios from 'axios';
+import axios from '@utils/axiosInstance';
 import { QuestionsContext } from '../contexts/QuestionsContextProvider';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';

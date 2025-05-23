@@ -1,8 +1,8 @@
-import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from '@mui/material';
+import { FormControl, MenuItem, Select, SelectChangeEvent, Typography } from '@mui/material';
 import CustomTextField from '../customFields/CustomTextField';
 import { useContext, useState } from 'react';
 import { LessonsContext } from '../../../contexts/LessonsContextProvider';
-import axios from 'axios';
+
 import { Lesson } from '../../../interfaces/lessons';
 import { ChapterLessonData, ChapterUpdateTrack } from '../../../pages/AdminCourseEditPage';
 import theme from '../../../themes';
@@ -11,6 +11,7 @@ import CustomDialogActions from '../../layouts/dialog/CustomDialogActions';
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
 import { generateUniqueId } from '../../../utils/uniqueIdGenerator';
 import { chapterUpdateTrack } from '../../../utils/chapterUpdateTrack';
+import axios from '@utils/axiosInstance';
 
 interface CreateLessonDialogProps {
 	chapter?: ChapterLessonData;
@@ -46,7 +47,21 @@ const CreateLessonDialog = ({
 				orgId,
 			});
 
-			addNewLesson({ _id: response.data._id, title: title.trim(), type });
+			const responseNewLessonData = response.data;
+
+			addNewLesson({
+				_id: responseNewLessonData._id,
+				title: title.trim(),
+				type,
+				createdAt: responseNewLessonData.createdAt,
+				updatedAt: responseNewLessonData.updatedAt,
+				createdByName: responseNewLessonData.createdByName,
+				updatedByName: responseNewLessonData.updatedByName,
+				createdByImageUrl: responseNewLessonData.createdByImageUrl,
+				updatedByImageUrl: responseNewLessonData.updatedByImageUrl,
+				createdByRole: responseNewLessonData.createdByRole,
+				updatedByRole: responseNewLessonData.updatedByRole,
+			});
 		} catch (error) {
 			console.log(error);
 		}
@@ -68,6 +83,18 @@ const CreateLessonDialog = ({
 			orgId,
 			documentIds: [],
 			documents: [],
+			clonedFromId: '',
+			clonedFromTitle: '',
+			usedInCourses: [],
+			createdBy: '',
+			updatedBy: '',
+			publishedAt: '',
+			createdByName: '',
+			updatedByName: '',
+			createdByImageUrl: '',
+			updatedByImageUrl: '',
+			createdByRole: '',
+			updatedByRole: '',
 		};
 		if (setLessons) {
 			setLessons((prevData) => {
@@ -134,23 +161,25 @@ const CreateLessonDialog = ({
 					}}
 				/>
 				<FormControl sx={{ margin: '1rem 2rem' }}>
-					<InputLabel id='type' sx={{ fontSize: '0.8rem' }} required>
+					<Typography variant='body2' sx={{ mb: '0.5rem' }}>
 						Type
-					</InputLabel>
+					</Typography>
 					<Select
-						labelId='type'
 						id='lesson_type'
 						value={type}
 						onChange={(event: SelectChangeEvent) => {
 							setType(event.target.value);
 						}}
-						size='medium'
-						label='Type'
+						size='small'
 						required
-						sx={{ backgroundColor: theme.bgColor?.common }}>
+						displayEmpty
+						sx={{ backgroundColor: theme.bgColor?.common, color: type == '' ? 'lightgray' : 'inherit', fontSize: '0.8rem' }}>
+						<MenuItem disabled value='' sx={{ fontSize: '0.85rem' }}>
+							Select Type
+						</MenuItem>
 						{lessonTypes &&
 							lessonTypes?.map((type) => (
-								<MenuItem value={type} key={type}>
+								<MenuItem value={type} key={type} sx={{ fontSize: '0.85rem' }}>
 									{type}
 								</MenuItem>
 							))}

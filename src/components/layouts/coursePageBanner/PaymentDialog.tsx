@@ -6,6 +6,7 @@ import CustomDialogActions from '../dialog/CustomDialogActions';
 import CustomSubmitButton from '../../forms/customButtons/CustomSubmitButton';
 import { useContext, useEffect, useState } from 'react';
 import { CardCvcElement, CardExpiryElement, CardNumberElement, useElements, useStripe } from '@stripe/react-stripe-js';
+import axiosInstance from '@utils/axiosInstance';
 import axios from 'axios';
 import visaIcon from '../../../assets/visa.png';
 import masterCardIcon from '../../../assets/mastercard.png';
@@ -99,7 +100,7 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 	
 		if (fromHomePage) {
 			try {
-				const userExistsResponse = await axios.post(`${base_url}/users/check-user-exists`, { email, courseId: course._id });
+				const userExistsResponse = await axiosInstance.post(`${base_url}/users/check-user-exists`, { email, courseId: course._id });
 	
 				setIsUserAccountExist(userExistsResponse.data.exists);
 	
@@ -144,7 +145,7 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 	
 		try {
 			// Step 1: Create PaymentIntent (manual capture)
-			const response = await axios.post(`${base_url}/payments`, {
+			const response = await axiosInstance.post(`${base_url}/payments`, {
 				amount: discountedAmount,
 				currency: getPriceForCountry(course, resolvedCountryCode!).currency,
 				orgId: resolvedOrgId,
@@ -187,7 +188,7 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 	
 				// Step 5: Capture the authorized payment
 				try {
-					await axios.patch(`${base_url}/payments/capture/${paymentIntentId}`, {
+					await axiosInstance.patch(`${base_url}/payments/capture/${paymentIntentId}`, {
 						userId: resolvedUserId,
 						orgId: resolvedOrgId,
 						courseId: course._id,
@@ -199,7 +200,7 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 					console.error(`❌ Payment capture failed for paymentIntentId: ${paymentIntentId}, userId: ${resolvedUserId}`, captureError);
 	
 					try {
-						await axios.delete(`${base_url}/userCourses/remove-by-user-course`, {
+						await axiosInstance.delete(`${base_url}/userCourses/remove-by-user-course`, {
 							data: {
 								userId: resolvedUserId,
 								courseId: course._id,
@@ -209,7 +210,7 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 						if (isPromoCodeApplied && promoCodeId) {
 							try {
 								const rolledBackUsers = usersUsedPromoCode.filter((id) => id !== resolvedUserId);
-								await axios.patch(`${base_url}/promocodes/${promoCodeId}`, {
+								await axiosInstance.patch(`${base_url}/promocodes/${promoCodeId}`, {
 									usersUsed: rolledBackUsers,
 								});
 								console.info(`🔁 Promo code rollback successful for userId: ${resolvedUserId}`);
@@ -246,7 +247,7 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 				usersUsedCode = [...updatedUsersUsedCode];
 	
 				if (isPromoCodeApplied) {
-					await axios.patch(`${base_url}/promocodes/${promoCodeId}`, {
+					await axiosInstance.patch(`${base_url}/promocodes/${promoCodeId}`, {
 						usersUsed: usersUsedCode,
 					});
 				}
@@ -280,7 +281,7 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 	const handleApplyPromoCode = async () => {
 		try {
 			if (fromHomePage) {
-				const userExistsResponse = await axios.post(`${base_url}/users/check-user-exists`, { email });
+				const userExistsResponse = await axiosInstance.post(`${base_url}/users/check-user-exists`, { email });
 
 				setIsUserAccountExist(userExistsResponse.data.exists);
 
@@ -298,7 +299,7 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 				return;
 			}
 
-			const response = await axios.post(`${base_url}/promocodes/apply`, {
+			const response = await axiosInstance.post(`${base_url}/promocodes/apply`, {
 				code: promoCode.trim(),
 				courseId: course._id,
 				userId: resolvedUserId,

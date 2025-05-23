@@ -33,7 +33,7 @@ const Questions: React.FC<QuestionsProps> = ({
 	const { getLastQuestion, isLessonCompleted, setIsLessonCompleted } = useUserCourseLessonData();
 	const [displayedQuestionNumber, setDisplayedQuestionNumber] = useState<number>(getLastQuestion);
 	const [showQuestionSelector, setShowQuestionSelector] = useState<boolean>(false);
-	const numberOfQuestions = questions.length;
+	const numberOfQuestions = questions?.length;
 	const { lessonId } = useParams();
 
 	// State for each question's AI response drawer and icon toggle

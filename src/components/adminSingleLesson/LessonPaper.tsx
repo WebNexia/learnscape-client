@@ -1,12 +1,14 @@
-import { Alert, Box, Button, IconButton, Paper, Snackbar, Tooltip, Typography } from '@mui/material';
+import { Alert, Box, Button,  IconButton, Paper, Snackbar, Tooltip, Typography } from '@mui/material';
 import theme from '../../themes';
-import { Edit, KeyboardBackspaceOutlined, PublishedWithChanges, Unpublished } from '@mui/icons-material';
+import { Edit, Info, KeyboardBackspaceOutlined, PublishedWithChanges, Unpublished } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { Lesson } from '../../interfaces/lessons';
 import { QuestionUpdateTrack } from '../../pages/AdminLessonEditPage';
 import CustomSubmitButton from '../forms/customButtons/CustomSubmitButton';
-import { FormEvent } from 'react';
+import { FormEvent, useState } from 'react';
 import CustomCancelButton from '../forms/customButtons/CustomCancelButton';
+import CustomDialog from '../layouts/dialog/CustomDialog';
+import LessonInfoModal from '../lessons/LessonInfoModal';
 
 interface LessonPaperProps {
 	userId?: string;
@@ -20,7 +22,6 @@ interface LessonPaperProps {
 	setSingleLessonBeforeSave: React.Dispatch<React.SetStateAction<Lesson>>;
 	setIsEditMode: React.Dispatch<React.SetStateAction<boolean>>;
 	setIsMissingFieldMsgOpen: React.Dispatch<React.SetStateAction<boolean>>;
-	setIsMissingField: React.Dispatch<React.SetStateAction<boolean>>;
 	handlePublishing: () => void;
 	setResetChanges: React.Dispatch<React.SetStateAction<boolean>>;
 	handleLessonUpdate: (event: React.FormEvent<Element>) => void;
@@ -29,7 +30,9 @@ interface LessonPaperProps {
 	resetImageUpload: () => void;
 	resetVideoUpload: () => void;
 	resetEnterImageVideoUrl: () => void;
-	setErrorMsg: React.Dispatch<React.SetStateAction<string>>;
+	setTitleError: React.Dispatch<React.SetStateAction<boolean>>;
+	setInstructionError: React.Dispatch<React.SetStateAction<boolean>>;
+	setQuestionError: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const LessonPaper = ({
@@ -40,11 +43,9 @@ const LessonPaper = ({
 	isEditMode,
 	isMissingFieldMsgOpen,
 	resetChanges,
-	editorContent,
 	setSingleLessonBeforeSave,
 	setIsEditMode,
 	setIsMissingFieldMsgOpen,
-	setIsMissingField,
 	handlePublishing,
 	setResetChanges,
 	handleLessonUpdate,
@@ -53,18 +54,22 @@ const LessonPaper = ({
 	resetImageUpload,
 	resetVideoUpload,
 	resetEnterImageVideoUrl,
-	setErrorMsg,
+	setTitleError,
+	setInstructionError,
+	setQuestionError,
 }: LessonPaperProps) => {
 	const navigate = useNavigate();
 	const vertical = 'top';
 	const horizontal = 'center';
+
+	const [isLessonInfoDialogOpen, setIsLessonInfoDialogOpen] = useState<boolean>(false);
 	return (
 		<Paper
 			elevation={10}
 			sx={{
 				width: '100%',
 				height: '6rem',
-				mt: '2.25rem',
+				mt: '1.25rem',
 				backgroundColor: theme.bgColor?.adminPaper,
 			}}>
 			<Box
@@ -88,9 +93,9 @@ const LessonPaper = ({
 							variant='text'
 							startIcon={<KeyboardBackspaceOutlined />}
 							sx={{
-								color: theme.textColor?.common.main,
-								textTransform: 'inherit',
-								fontFamily: theme.fontFamily?.main,
+								'color': theme.textColor?.common.main,
+								'textTransform': 'inherit',
+								'fontFamily': theme.fontFamily?.main,
 								':hover': {
 									backgroundColor: 'transparent',
 									textDecoration: 'underline',
@@ -160,7 +165,7 @@ const LessonPaper = ({
 									sx={{ mt: '5rem' }}
 									onClose={() => setIsMissingFieldMsgOpen(false)}>
 									<Alert severity='error' variant='filled' sx={{ width: '100%' }}>
-										Fill in the required field(s)
+										Enter title to save lesson
 									</Alert>
 								</Snackbar>
 								{isEditMode ? (
@@ -168,16 +173,19 @@ const LessonPaper = ({
 										<CustomSubmitButton
 											sx={{ padding: '0 0.75rem', backgroundColor: theme.bgColor?.greenPrimary }}
 											onClick={(e) => {
-												if (singleLessonBeforeSave?.title.trim() !== '' && singleLessonBeforeSave?.title !== '' && editorContent?.trim() !== '') {
+												if (singleLessonBeforeSave?.title.trim() !== '' && singleLessonBeforeSave?.title !== '') {
 													setIsEditMode(false);
 													handleLessonUpdate(e as FormEvent<Element>);
 													resetImageUpload();
 													resetVideoUpload();
 													resetEnterImageVideoUrl();
-													setErrorMsg('Enter lesson instructions');
 												} else {
-													setIsMissingField(true);
 													setIsMissingFieldMsgOpen(true);
+													if (!singleLessonBeforeSave?.title.trim()) {
+														setTitleError(true);
+													} else {
+														setTitleError(false);
+													}
 												}
 												window.scrollTo({ top: 0, behavior: 'smooth' });
 											}}>
@@ -198,6 +206,9 @@ const LessonPaper = ({
 												resetImageUpload();
 												resetVideoUpload();
 												resetEnterImageVideoUrl();
+												setInstructionError(false);
+												setQuestionError(false);
+												setTitleError(false);
 											}}
 											sx={{ color: theme.textColor?.common.main, borderColor: theme.textColor?.common.main, padding: '0 0.75rem' }}>
 											Cancel
@@ -225,6 +236,22 @@ const LessonPaper = ({
 												<Edit sx={{ color: 'white' }} fontSize='small' />
 											</IconButton>
 										</Tooltip>
+										<Tooltip title='More Info' placement='top'>
+											<IconButton
+												sx={{ padding: '0 0.75rem', ml: '-0.75rem' }}
+												onClick={() => {
+													setIsLessonInfoDialogOpen(true);
+												}}>
+												<Info sx={{ color: 'white' }} fontSize='small' />
+											</IconButton>
+										</Tooltip>
+										<CustomDialog
+											openModal={isLessonInfoDialogOpen}
+											closeModal={() => setIsLessonInfoDialogOpen(false)}
+											title={singleLesson?.title}
+											maxWidth='sm'>
+											<LessonInfoModal lesson={singleLesson} onClose={() => setIsLessonInfoDialogOpen(false)} />
+										</CustomDialog>
 									</Box>
 								)}
 							</Box>

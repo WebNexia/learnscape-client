@@ -3,6 +3,7 @@ import CustomDialog from '../layouts/dialog/CustomDialog';
 import { QuestionsContext } from '../../contexts/QuestionsContextProvider';
 import { QuestionInterface } from '../../interfaces/question';
 import { Lesson } from '../../interfaces/lessons';
+import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
 import {
 	Box,
 	Checkbox,
@@ -31,7 +32,7 @@ import { Search } from '@mui/icons-material';
 import CustomSubmitButton from '../forms/customButtons/CustomSubmitButton';
 import CustomDeleteButton from '../forms/customButtons/CustomDeleteButton';
 import theme from '../../themes';
-import axios from 'axios';
+import axios from '@utils/axiosInstance';
 import { OrganisationContext } from '../../contexts/OrganisationContextProvider';
 
 interface AddNewQuestionDialogProps {
@@ -53,6 +54,8 @@ const AddNewQuestionDialog = ({
 }: AddNewQuestionDialogProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
+	const { user } = useContext(UserAuthContext);
+	const lessonId = singleLessonBeforeSave._id;
 
 	const {
 		sortQuestionsData,
@@ -63,6 +66,7 @@ const AddNewQuestionDialog = ({
 		setNumberOfPages,
 		fetchQuestions,
 		questionTypes,
+		updateQuestion,
 	} = useContext(QuestionsContext);
 	const closeAddNewQuestionModal = () => setAddNewQuestionModalOpen(false);
 
@@ -121,12 +125,26 @@ const AddNewQuestionDialog = ({
 	};
 
 	const handleAddQuestions = () => {
+		const updatedSelectedQuestions = selectedQuestions.map(question => ({
+			...question,
+			usedInLessons: question.usedInLessons ? [...question.usedInLessons, lessonId] : [lessonId],
+			updatedAt: new Date().toISOString(),
+			updatedByName: user ? `${user.firstName} ${user.lastName}` : '',
+			updatedByImageUrl: user?.imageUrl || '',
+			updatedByRole: user?.role || '',
+		}));
+
 		setSingleLessonBeforeSave((prevData) => {
 			return {
 				...prevData,
-				questions: prevData.questions.concat(selectedQuestions),
-				questionIds: prevData.questionIds.concat(selectedQuestionIds),
+				questions: prevData.questions?.concat(updatedSelectedQuestions),
+				questionIds: prevData.questionIds?.concat(selectedQuestionIds),
 			};
+		});
+
+		// Update questions in the context
+		updatedSelectedQuestions.forEach(question => {
+			updateQuestion(question);
 		});
 
 		const addedQuestionsUpdateData: QuestionUpdateTrack[] = selectedQuestions?.reduce((acc: QuestionUpdateTrack[], value: QuestionInterface) => {
@@ -330,7 +348,7 @@ const AddNewQuestionDialog = ({
 										}
 										return true;
 									})
-									?.filter((question) => !singleLessonBeforeSave.questionIds.includes(question._id))
+									?.filter((question) => !singleLessonBeforeSave.questionIds?.includes(question._id))
 									?.map((question: QuestionInterface) => {
 										const isSelected = selectedQuestionIds.indexOf(question._id) !== -1;
 										return (

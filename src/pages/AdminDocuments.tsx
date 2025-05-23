@@ -1,8 +1,8 @@
 import { Box, InputAdornment, Link, Table, TableBody, TableCell, TableRow } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { useContext, useEffect, useRef, useState } from 'react';
-import axios from 'axios';
-import { Delete, Edit, Search } from '@mui/icons-material';
+import axios from '@utils/axiosInstance';
+import { Delete, Edit, Info, Search } from '@mui/icons-material';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
@@ -18,13 +18,16 @@ import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import { useParams } from 'react-router-dom';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
+import { dateFormatter } from '../utils/dateFormatter';
+import { useTheme } from '@mui/material/styles';
+import DocumentInfoModal from '../components/documents/DocumentInfoModal';
 
 const AdminDocuments = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
 	const { userId } = useParams();
 
-	const { addNewDocument, sortDocumentsData, sortedDocumentsData, removeDocument, fetchDocuments } = useContext(DocumentsContext);
+	const { addNewDocument, sortDocumentsData, sortedDocumentsData, removeDocument, fetchDocuments, updateDocuments } = useContext(DocumentsContext);
 
 	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -60,6 +63,7 @@ const AdminDocuments = () => {
 
 	const [isDocumentDeleteModalOpen, setIsDocumentDeleteModalOpen] = useState<boolean[]>([]);
 	const [editDocumentModalOpen, setEditDocumentModalOpen] = useState<boolean[]>([]);
+	const [isDocumentInfoModalOpen, setIsDocumentInfoModalOpen] = useState<boolean[]>([]);
 	const [isDocumentCreateModalOpen, setIsDocumentCreateModalOpen] = useState<boolean>(false);
 
 	const [singleDocument, setSingleDocument] = useState<Document | null>(null);
@@ -70,6 +74,8 @@ const AdminDocuments = () => {
 	const [documentName, setDocumentName] = useState<string>('');
 	const [fileUploaded, setFileUploaded] = useState<boolean>(false);
 
+	const theme = useTheme();
+
 	useEffect(() => {
 		setDocumentsPageNumber(1);
 	}, []);
@@ -77,6 +83,7 @@ const AdminDocuments = () => {
 	useEffect(() => {
 		setIsDocumentDeleteModalOpen(Array(sortedDocumentsData.length).fill(false));
 		setEditDocumentModalOpen(Array(sortedDocumentsData.length).fill(false));
+		setIsDocumentInfoModalOpen(Array(sortedDocumentsData.length).fill(false));
 	}, [sortedDocumentsData, documentsPageNumber]);
 
 	const isInitialMount = useRef(true);
@@ -98,12 +105,22 @@ const AdminDocuments = () => {
 				orgId,
 			});
 
+			const documentResponseData = documentResponse.data;
+
 			addNewDocument({
-				_id: documentResponse.data._id,
+				_id: documentResponseData._id,
 				name: documentName.trim(),
 				documentUrl,
 				userId,
 				orgId,
+				createdAt: documentResponseData.createdAt,
+				createdByImageUrl: documentResponseData.createdByImageUrl,
+				createdByName: documentResponseData.createdByName,
+				createdByRole: documentResponseData.createdByRole,
+				updatedAt: documentResponseData.updatedAt,
+				updatedByImageUrl: documentResponseData.updatedByImageUrl,
+				updatedByName: documentResponseData.updatedByName,
+				updatedByRole: documentResponseData.updatedByRole,
 			});
 		} catch (error) {
 			console.log(error);
@@ -113,12 +130,22 @@ const AdminDocuments = () => {
 	const handleDocUpdate = async (): Promise<void> => {
 		if (singleDocument) {
 			try {
-				axios.patch(`${base_url}/documents/${singleDocument._id}`, {
+				const response = await axios.patch(`${base_url}/documents/${singleDocument._id}`, {
 					name: singleDocument.name.trim(),
 				});
 
-				fetchDocuments();
+				const responseData = response.data.data;
+
 				setSingleDocument(null);
+				updateDocuments({
+					...singleDocument,
+					name: singleDocument.name.trim(),
+					_id: responseData._id,
+					updatedAt: responseData.updatedAt,
+					updatedByImageUrl: responseData.updatedByImageUrl,
+					updatedByName: responseData.updatedByName,
+					updatedByRole: responseData.updatedByRole,
+				});
 			} catch (error) {
 				console.log(error);
 			}
@@ -127,9 +154,8 @@ const AdminDocuments = () => {
 
 	const deleteDocument = async (documentId: string): Promise<void> => {
 		try {
-			removeDocument(documentId);
-			await axios.delete(`${base_url}/documents/${documentId}`);
-			fetchDocuments();
+			const response = await axios.delete(`${base_url}/documents/${documentId}`);
+			removeDocument(response.data.data._id);
 		} catch (error) {
 			console.log(error);
 		}
@@ -163,6 +189,18 @@ const AdminDocuments = () => {
 		const newEditModalOpen = [...editDocumentModalOpen];
 		newEditModalOpen[index] = false;
 		setEditDocumentModalOpen(newEditModalOpen);
+	};
+
+	const openDocumentInfoModal = (index: number) => {
+		const updatedState = [...isDocumentInfoModalOpen];
+		updatedState[index] = true;
+		setIsDocumentInfoModalOpen(updatedState);
+	};
+
+	const closeDocumentInfoModal = (index: number) => {
+		const updatedState = [...isDocumentInfoModalOpen];
+		updatedState[index] = false;
+		setIsDocumentInfoModalOpen(updatedState);
 	};
 
 	return (
@@ -267,8 +305,11 @@ const AdminDocuments = () => {
 						order={order}
 						handleSort={handleSort}
 						columns={[
+							{ key: 'clone', label: '' },
 							{ key: 'name', label: 'Document Name' },
 							{ key: 'documentId', label: 'Document URL' },
+							{ key: 'createdAt', label: 'Created At' },
+							{ key: 'updatedAt', label: 'Updated At' },
 							{ key: 'actions', label: 'Actions' },
 						]}
 					/>
@@ -277,8 +318,28 @@ const AdminDocuments = () => {
 							paginatedDocuments?.map((document: Document, index) => {
 								return (
 									<TableRow key={document._id}>
+										{' '}
+										<TableCell sx={{ textAlign: 'center', width: '0px' }}>
+											{document.clonedFromId && (
+												<Box
+													sx={{
+														backgroundColor: theme.palette.info.main,
+														color: 'white',
+														borderRadius: '50%',
+														width: '15px',
+														height: '15px',
+														display: 'flex',
+														alignItems: 'center',
+														justifyContent: 'center',
+														fontSize: '0.65rem',
+														margin: '0 auto',
+													}}>
+													C
+												</Box>
+											)}
+										</TableCell>
 										<CustomTableCell value={document.name} />
-										<CustomTableCell>
+										<TableCell sx={{ textAlign: 'center' }}>
 											<Link
 												href={document.documentUrl}
 												target='_blank'
@@ -286,8 +347,9 @@ const AdminDocuments = () => {
 												sx={{ fontSize: isMobileSize ? '0.6rem' : undefined }}>
 												{isVerySmallScreen ? truncateText(document.documentUrl, 25) : truncateText(document.documentUrl, 40)}
 											</Link>
-										</CustomTableCell>
-
+										</TableCell>
+										<CustomTableCell value={dateFormatter(document.createdAt)} />
+										<CustomTableCell value={dateFormatter(document.updatedAt)} />
 										<TableCell
 											sx={{
 												textAlign: 'center',
@@ -342,6 +404,7 @@ const AdminDocuments = () => {
 												}}
 												icon={<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 											/>
+
 											{isDocumentDeleteModalOpen[index] !== undefined && (
 												<CustomDialog
 													openModal={isDocumentDeleteModalOpen[index]}
@@ -362,6 +425,14 @@ const AdminDocuments = () => {
 													/>
 												</CustomDialog>
 											)}
+
+											<CustomActionBtn
+												title='More Info'
+												onClick={() => {
+													openDocumentInfoModal(index);
+												}}
+												icon={<Info fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
+											/>
 										</TableCell>
 									</TableRow>
 								);
@@ -370,6 +441,15 @@ const AdminDocuments = () => {
 				</Table>
 				<CustomTablePagination count={documentsNumberOfPages} page={documentsPageNumber} onChange={setDocumentsPageNumber} />
 			</Box>
+
+			{isDocumentInfoModalOpen.map(
+				(isOpen, index) =>
+					isOpen && (
+						<CustomDialog openModal={isOpen} closeModal={() => closeDocumentInfoModal(index)} title={sortedDocumentsData[index].name} maxWidth='sm'>
+							<DocumentInfoModal document={sortedDocumentsData[index]} onClose={() => closeDocumentInfoModal(index)} />
+						</CustomDialog>
+					)
+			)}
 		</DashboardPagesLayout>
 	);
 };

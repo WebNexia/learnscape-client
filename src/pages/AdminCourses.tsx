@@ -12,14 +12,18 @@ import {
 	Select,
 	MenuItem,
 	InputAdornment,
+	DialogContent,
+	Snackbar,
+	Alert,
+	DialogActions,
 } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { CoursesContext } from '../contexts/CoursesContextProvider';
 import { Price, SingleCourse } from '../interfaces/course';
-import { Delete, Edit, Search } from '@mui/icons-material';
+import { Delete, Edit, FileCopy, Search, Visibility } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
-import axios from 'axios';
+
 import CustomTextField from '../components/forms/customFields/CustomTextField';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
@@ -33,6 +37,8 @@ import { dateFormatter } from '../utils/dateFormatter';
 import theme from '../themes';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/CustomInfoMessageAlignedLeft';
+import axios from '@utils/axiosInstance';
+import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
 
 const AdminCourses = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -40,6 +46,9 @@ const AdminCourses = () => {
 	const navigate = useNavigate();
 	const { sortedCoursesData, sortCoursesData, addNewCourse, removeCourse, fetchCourses } = useContext(CoursesContext);
 	const { orgId } = useContext(OrganisationContext);
+
+	const vertical = 'top';
+	const horizontal = 'center';
 
 	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -63,6 +72,8 @@ const AdminCourses = () => {
 				return true;
 			if (filterValue === 'free courses' && course.prices.find((price) => price.amount == '' || price.amount == 'Free' || price.amount == '0'))
 				return true;
+			if (filterValue === 'open courses' && !course.isExpired) return true;
+			if (filterValue === 'closed courses' && course.isExpired) return true;
 		}
 		return !searchValue && !filterValue;
 	});
@@ -86,10 +97,21 @@ const AdminCourses = () => {
 	};
 	const closeNewCourseModal = () => setIsCourseCreateModalOpen(false);
 
+	const [isCloning, setIsCloning] = useState<boolean>(false);
 	const [isCourseDeleteModalOpen, setIsCourseDeleteModalOpen] = useState<boolean[]>([]);
+	const [isCourseCloneModalOpen, setIsCourseCloneModalOpen] = useState<boolean[]>([]);
+
+	const [isCourseCloned, setIsCourseCloned] = useState<boolean>(false);
+
+	// Keep track of previous length to avoid unnecessary resets
+	const prevLengthRef = useRef<number>(0);
 
 	useEffect(() => {
-		setIsCourseDeleteModalOpen(Array(paginatedCourses.length).fill(false));
+		if (paginatedCourses && paginatedCourses.length !== prevLengthRef.current) {
+			prevLengthRef.current = paginatedCourses.length;
+			setIsCourseDeleteModalOpen(Array(paginatedCourses.length).fill(false));
+			setIsCourseCloneModalOpen(Array(paginatedCourses.length).fill(false));
+		}
 	}, [sortedCoursesData, coursesPageNumber]);
 
 	const isInitialMount = useRef(true);
@@ -101,6 +123,18 @@ const AdminCourses = () => {
 			fetchCourses();
 		}
 	}, []);
+
+	const openCloneCourseModal = (index: number) => {
+		const updatedState = [...isCourseCloneModalOpen];
+		updatedState[index] = true;
+		setIsCourseCloneModalOpen(updatedState);
+	};
+
+	const closeCloneCourseModal = (index: number) => {
+		const updatedState = [...isCourseCloneModalOpen];
+		updatedState[index] = false;
+		setIsCourseCloneModalOpen(updatedState);
+	};
 
 	const openDeleteCourseModal = (index: number) => {
 		const updatedState = [...isCourseDeleteModalOpen];
@@ -153,9 +187,34 @@ const AdminCourses = () => {
 				durationWeeks: null,
 				durationHours: null,
 				format: '',
+				createdAt: response.data.createdAt,
+				updatedAt: response.data.updatedAt,
 			});
 		} catch (error) {
 			console.log(error);
+		}
+	};
+
+	const handleClone = async (courseId: string, index: number) => {
+		setIsCloning(true);
+		try {
+			const response = await axios.post(`${base_url}/courses/${courseId}/clone`, { courseId });
+			closeCloneCourseModal(index);
+
+			addNewCourse({
+				_id: response.data.clonedCourse._id,
+				title: response.data.clonedCourse.title,
+				clonedFromId: response.data.clonedCourse.clonedFromId,
+				clonedFromTitle: response.data.clonedCourse.clonedFromTitle,
+				createdAt: response.data.clonedCourse.createdAt,
+				updatedAt: response.data.clonedCourse.updatedAt,
+			});
+
+			setIsCourseCloned(true);
+		} catch (error) {
+			console.log(error);
+		} finally {
+			setIsCloning(false);
 		}
 	};
 
@@ -351,7 +410,7 @@ const AdminCourses = () => {
 									}}>
 									All Courses
 								</MenuItem>
-								{['Published Courses', 'Unpublished Courses', 'Paid Courses', 'Free Courses'].map((type) => (
+								{['Published Courses', 'Unpublished Courses', 'Paid Courses', 'Free Courses', 'Open Courses', 'Closed Courses'].map((type) => (
 									<MenuItem
 										value={type.toLowerCase()}
 										key={type}
@@ -425,19 +484,22 @@ const AdminCourses = () => {
 						columns={
 							isVerySmallScreen
 								? [
+										{ key: 'clone', label: '' },
 										{ key: 'title', label: 'Title' },
 										{ key: 'isActive', label: 'Status' },
 										{ key: 'startingDate', label: 'Starting Date' },
 										{ key: 'actions', label: 'Actions' },
-								  ]
+									]
 								: [
+										{ key: 'clone', label: '' },
 										{ key: 'title', label: 'Title' },
 										{ key: 'isActive', label: 'Status' },
 										{ key: 'startingDate', label: 'Starting Date' },
 										{ key: 'durationWeeks', label: 'Weeks #' },
-										{ key: 'durationHours', label: 'Hours #' },
+										{ key: 'createdAt', label: 'Created At' },
+										{ key: 'updatedAt', label: 'Updated At' },
 										{ key: 'actions', label: 'Actions' },
-								  ]
+									]
 						}
 					/>
 					<TableBody>
@@ -445,23 +507,70 @@ const AdminCourses = () => {
 							paginatedCourses?.map((course: SingleCourse, index) => {
 								return (
 									<TableRow key={course._id}>
+										<TableCell sx={{ textAlign: 'center', width: '0px' }}>
+											{course.clonedFromId && (
+												<Box
+													sx={{
+														backgroundColor: theme.palette.info.main,
+														color: 'white',
+														borderRadius: '50%',
+														width: '15px',
+														height: '15px',
+														display: 'flex',
+														alignItems: 'center',
+														justifyContent: 'center',
+														fontSize: '0.65rem',
+														margin: '0 auto'
+													}}>
+														C
+												</Box>
+											)}
+										</TableCell>
 										<CustomTableCell value={course.title} />
-										<CustomTableCell value={course.isActive ? 'Published' : 'Unpublished'} />
+										<CustomTableCell
+											value={
+												course.isActive
+													? course.isExpired
+														? 'Published - Closed'
+														: 'Published - Open'
+													: course.isExpired
+														? 'Unpublished - Closed'
+														: 'Unpublished - Open'
+											}
+										/>
+
 										<CustomTableCell value={dateFormatter(course.startingDate)} />
 										{!isVerySmallScreen && <CustomTableCell value={course.durationWeeks} />}
-										{!isVerySmallScreen && <CustomTableCell value={course.durationHours} />}
+										{!isVerySmallScreen && <CustomTableCell value={dateFormatter(course.createdAt)} />}
+										{!isVerySmallScreen && <CustomTableCell value={dateFormatter(course.updatedAt)} />}
 
 										<TableCell
 											sx={{
 												textAlign: 'center',
 											}}>
 											<CustomActionBtn
-												title='Edit'
-												onClick={() => {
-													navigate(`/admin/course-edit/user/${userId}/course/${course._id}`);
-												}}
-												icon={<Edit fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
+												title='Clone'
+												onClick={() => openCloneCourseModal(index)}
+												icon={<FileCopy fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 											/>
+
+											{!course.isExpired ? (
+												<CustomActionBtn
+													title='Edit'
+													onClick={() => {
+														navigate(`/admin/course-edit/user/${userId}/course/${course._id}`);
+													}}
+													icon={<Edit fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
+												/>
+											) : (
+												<CustomActionBtn
+													title='View'
+													onClick={() => {
+														navigate(`/admin/course-edit/user/${userId}/course/${course._id}`);
+													}}
+													icon={<Visibility fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
+												/>
+											)}
 											<CustomActionBtn
 												title='Delete'
 												onClick={() => {
@@ -469,7 +578,7 @@ const AdminCourses = () => {
 												}}
 												icon={<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 											/>
-											{isCourseDeleteModalOpen[index] !== undefined && (
+											{isCourseDeleteModalOpen[index] !== undefined && !course.isActive && (
 												<CustomDialog
 													openModal={isCourseDeleteModalOpen[index]}
 													closeModal={() => closeDeleteCourseModal(index)}
@@ -486,6 +595,77 @@ const AdminCourses = () => {
 													/>
 												</CustomDialog>
 											)}
+
+											{isCourseDeleteModalOpen[index] !== undefined && course.isActive && (
+												<CustomDialog
+													openModal={isCourseDeleteModalOpen[index]}
+													closeModal={() => closeDeleteCourseModal(index)}
+													title='Unpublish Course'
+													content='You cannot delete published course. Please unpublish it first.'
+													maxWidth='sm'>
+													<DialogActions>
+														<CustomCancelButton
+															onClick={() => closeDeleteCourseModal(index)}
+															sx={{
+																margin: '0 0.5rem 0.5rem 0',
+															}}>
+															Cancel
+														</CustomCancelButton>
+													</DialogActions>
+												</CustomDialog>
+											)}
+
+											{isCourseCloneModalOpen[index] !== undefined && (
+												<CustomDialog
+													openModal={isCourseCloneModalOpen[index]}
+													closeModal={() => closeCloneCourseModal(index)}
+													title='Clone Course'
+													content='Are you sure you want to clone the course?'
+													maxWidth='sm'>
+													<DialogContent sx={{ mt: '-0.75rem' }}>
+														<Typography variant='body2'>Cloning this course will:</Typography>
+														<ul style={{ paddingLeft: '1.2rem', marginTop: '0.5rem' }}>
+															<li>
+																<Typography variant='body2' sx={{ mb: '0.25rem' }}>
+																	Create a new course with a copy of all its chapters, lessons, questions, and documents
+																</Typography>
+															</li>
+															<li>
+																<Typography variant='body2' sx={{ mb: '0.25rem' }}>
+																	Preserve the original course and its content without any changes
+																</Typography>
+															</li>
+															<li>
+																<Typography variant='body2' sx={{ mb: '0.25rem' }}>
+																	Allow you to safely edit the new course without affecting previous versions
+																</Typography>
+															</li>
+															<li>
+																<Typography variant='body2'>Mark the cloned course as unpublished by default</Typography>
+															</li>
+														</ul>
+														<Typography variant='body2' sx={{ marginTop: '1rem' }}>
+															You can customize the cloned course before publishing it.
+														</Typography>
+													</DialogContent>
+
+													<CustomDialogActions
+														onCancel={() => closeCloneCourseModal(index)}
+														submitBtnText={isCloning ? 'Cloning...' : 'Clone'}
+														onSubmit={() => handleClone(course._id, index)}
+													/>
+												</CustomDialog>
+											)}
+											<Snackbar
+												open={isCourseCloned}
+												autoHideDuration={2250}
+												anchorOrigin={{ vertical, horizontal }}
+												sx={{ mt: '5rem' }}
+												onClose={() => setIsCourseCloned(false)}>
+												<Alert severity='success' variant='filled' sx={{ width: '100%', color: theme.textColor?.common.main }}>
+													Course is cloned successfully!
+												</Alert>
+											</Snackbar>
 										</TableCell>
 									</TableRow>
 								);

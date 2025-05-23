@@ -17,7 +17,7 @@ import {
 } from '@mui/material';
 import { QuestionInterface } from '../../interfaces/question';
 import { useContext, useEffect, useState } from 'react';
-import axios from 'axios';
+import axios from '@utils/axiosInstance';
 import { useNavigate, useParams } from 'react-router-dom';
 import theme from '../../themes';
 import { OrganisationContext } from '../../contexts/OrganisationContextProvider';

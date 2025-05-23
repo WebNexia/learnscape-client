@@ -4,7 +4,7 @@ import { SingleCourse } from '../../../interfaces/course';
 import { KeyboardBackspaceOutlined } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import CoursePageBannerDataCard from './CoursePageBannerDataCard';
-import axios from 'axios';
+import axios from '@utils/axiosInstance';
 import { useContext, useState } from 'react';
 import { UserCoursesIdsWithCourseIds, UserLessonDataStorage } from '../../../contexts/UserCourseLessonDataContextProvider';
 import CustomSubmitButton from '../../forms/customButtons/CustomSubmitButton';
@@ -26,7 +26,7 @@ interface CoursePageBannerProps {
 }
 
 const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, documentsRef, fromHomePage }: CoursePageBannerProps) => {
-	const firstLessonId: string = course && course.chapters && course?.chapters[0]?.lessonIds && course?.chapters[0]?.lessonIds[0];
+	const firstLessonId: string = course && course?.chapters && course?.chapters[0]?.lessonIds && course?.chapters[0]?.lessonIds[0];
 
 	const navigate = useNavigate();
 
@@ -249,7 +249,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 								? truncateText(course.description, 250)
 								: truncateText(course.description, 450)}
 						</Typography>
-						{!isEnrolledStatus ? (
+						{!isEnrolledStatus && !course.isExpired ? (
 							<CustomSubmitButton
 								variant='contained'
 								sx={{
@@ -261,24 +261,36 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 								onClick={() => setIsPaymentDialogOpen(true)}>
 								Enroll
 							</CustomSubmitButton>
-						) : (
-							<Typography
-								onClick={() => {
-									documentsRef?.current?.scrollIntoView({ behavior: 'smooth' });
-								}}
-								sx={{
-									width: 'fit-content',
-									position: 'absolute',
-									bottom: isRotated ? 60 : 5,
-									fontSize: isVerySmallScreen || isRotated ? '0.65rem' : '0.9rem',
-									textTransform: 'capitalize',
-									color: theme.textColor?.common.main,
-									cursor: 'pointer',
-									textDecoration: 'underline',
-								}}>
-								See Course Materials
-							</Typography>
-						)}
+						) : (!isEnrolledStatus && course.isExpired) ? (<Alert
+							severity='warning'
+							sx={{
+							  position: 'absolute',
+							  bottom: isRotated ? 60 : 5,
+							  fontSize: isVerySmallScreen || isRotated ? '0.65rem' : '0.9rem',
+							  backgroundColor:!fromHomePage ? theme.bgColor?.lessonInProgress : theme.bgColor?.greenSecondary,
+							  color: theme.textColor?.common.main,
+							  width: 'fit-content',
+							}}
+						  >
+							Enrollment is closed
+						  </Alert>
+						
+						) : (	<Typography
+							onClick={() => {
+								documentsRef?.current?.scrollIntoView({ behavior: 'smooth' });
+							}}
+							sx={{
+								width: 'fit-content',
+								position: 'absolute',
+								bottom: isRotated ? 60 : 5,
+								fontSize: isVerySmallScreen || isRotated ? '0.65rem' : '0.9rem',
+								textTransform: 'capitalize',
+								color: theme.textColor?.common.main,
+								cursor: 'pointer',
+								textDecoration: 'underline',
+							}}>
+							See Course Materials
+						</Typography>)}
 					</Box>
 				</Box>
 				<Box

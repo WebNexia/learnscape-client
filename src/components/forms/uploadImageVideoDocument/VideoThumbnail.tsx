@@ -29,7 +29,7 @@ const VideoThumbnail = ({
 				flexDirection: 'column',
 				justifyContent: 'center',
 				alignItems: 'center',
-				height: '9rem',
+				height: '8rem',
 				width: '100%',
 				marginTop: '1rem',
 				...boxStyle,

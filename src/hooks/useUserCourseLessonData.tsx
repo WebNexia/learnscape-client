@@ -2,7 +2,7 @@ import { useCallback, useContext, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import { useLocalStorageData } from './useLocalStorageData';
-import axios from 'axios';
+import axios from '@utils/axiosInstance';
 import { UserLessonDataStorage } from '../contexts/UserCourseLessonDataContextProvider';
 
 export const useUserCourseLessonData = () => {

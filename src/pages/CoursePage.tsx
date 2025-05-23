@@ -55,7 +55,7 @@ const CoursePage = () => {
 						</Typography>
 					</Box>
 					<Box sx={{ display: 'flex', alignSelf: 'flex-start', flexDirection: 'column' }}>
-						{singleCourseUser.documents
+						{singleCourseUser?.documents
 							?.filter((doc: Document) => doc !== null)
 							?.map((doc: Document) => (
 								<Box sx={{ marginBottom: '0.5rem' }} key={doc._id}>

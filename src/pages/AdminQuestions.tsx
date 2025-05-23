@@ -1,8 +1,8 @@
 import { Box, FormControl, InputAdornment, MenuItem, Select, Table, TableBody, TableCell, TableRow } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { useContext, useEffect, useRef, useState } from 'react';
-import axios from 'axios';
-import { Delete, Edit, FileCopy, Search } from '@mui/icons-material';
+import axios from '@utils/axiosInstance';
+import { Delete, Edit, Info, Search } from '@mui/icons-material';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
@@ -23,6 +23,8 @@ import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import CustomDeleteButton from '../components/forms/customButtons/CustomDeleteButton';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/CustomInfoMessageAlignedLeft';
+import { dateFormatter } from '../utils/dateFormatter';
+import QuestionInfoModal from '../components/questions/QuestionInfoModal';
 
 const AdminQuestions = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -69,6 +71,7 @@ const AdminQuestions = () => {
 	const [isQuestionDeleteModalOpen, setIsQuestionDeleteModalOpen] = useState<boolean[]>([]);
 	const [editQuestionModalOpen, setEditQuestionModalOpen] = useState<boolean[]>([]);
 	const [isQuestionCreateModalOpen, setIsQuestionCreateModalOpen] = useState<boolean>(false);
+	const [isQuestionInfoModalOpen, setIsQuestionInfoModalOpen] = useState<boolean[]>([]);
 
 	const {
 		options,
@@ -94,6 +97,7 @@ const AdminQuestions = () => {
 	useEffect(() => {
 		setIsQuestionDeleteModalOpen(Array(filteredQuestions.length).fill(false));
 		setEditQuestionModalOpen(Array(filteredQuestions.length).fill(false));
+		setIsQuestionInfoModalOpen(Array(filteredQuestions.length).fill(false));
 		setFilteredQuestions(sortedQuestionsData);
 	}, [sortedQuestionsData, questionsPageNumber]);
 
@@ -207,6 +211,18 @@ const AdminQuestions = () => {
 		}
 	};
 
+	const openQuestionInfoModal = (index: number) => {
+		const updatedState = [...isQuestionInfoModalOpen];
+		updatedState[index] = true;
+		setIsQuestionInfoModalOpen(updatedState);
+	};
+
+	const closeQuestionInfoModal = (index: number) => {
+		const updatedState = [...isQuestionInfoModalOpen];
+		updatedState[index] = false;
+		setIsQuestionInfoModalOpen(updatedState);
+	};
+
 	return (
 		<DashboardPagesLayout pageName='Questions' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
 			<Box
@@ -220,7 +236,7 @@ const AdminQuestions = () => {
 				}}>
 				{isVerySmallScreen && <CustomInfoMessageAlignedLeft message='Rotate your device for search & filter' />}
 				{!isVerySmallScreen && (
-					<Box sx={{ display: 'flex', justifyContent: 'flex-start', width: '100%' }}>
+					<Box sx={{ display: 'flex', justifyContent: 'flex-start', width: '100%',  }}>
 						<Box sx={{ mr: '1rem' }}>
 							<FormControl>
 								<Select
@@ -348,6 +364,7 @@ const AdminQuestions = () => {
 					sx={{
 						display: 'flex',
 						justifyContent: 'flex-end',
+						mb:'1.25rem',
 						width: isVerySmallScreen ? '5%' : isMobileSize ? '20%' : '25%',
 						height: isVerySmallScreen ? '1.5rem' : '2rem',
 					}}>
@@ -383,6 +400,7 @@ const AdminQuestions = () => {
 				removeOption={removeOption}
 				handleCorrectAnswerChange={handleCorrectAnswerChange}
 				handleOptionChange={handleOptionChange}
+				setIsMinimumOptions={setIsMinimumOptions}
 				isMinimumOptions={isMinimumOptions}
 				isDuplicateOption={isDuplicateOption}
 			/>
@@ -401,8 +419,11 @@ const AdminQuestions = () => {
 						order={order}
 						handleSort={handleSort}
 						columns={[
+							{ key: 'clone', label: '' },
 							{ key: 'questionType', label: 'Question Type' },
 							{ key: 'question', label: 'Question' },
+							{ key: 'createdAt', label: 'Created At' },
+							{ key: 'updatedAt', label: 'Updated At' },
 							{ key: 'actions', label: 'Actions' },
 						]}
 					/>
@@ -411,10 +432,29 @@ const AdminQuestions = () => {
 							filteredQuestions?.map((question: QuestionInterface, index) => {
 								return (
 									<TableRow key={question._id}>
+										<TableCell sx={{ textAlign: 'center', width: '0px' }}>
+											{question.clonedFromId && (
+												<Box
+													sx={{
+														backgroundColor: theme.palette.info.main,
+														color: 'white',
+														borderRadius: '50%',
+														width: '15px',
+														height: '15px',
+														display: 'flex',
+														alignItems: 'center',
+														justifyContent: 'center',
+														fontSize: '0.65rem',
+														margin: '0 auto'
+													}}>
+														C
+												</Box>
+											)}
+										</TableCell>
 										<CustomTableCell value={question.questionType} />
-										<CustomTableCell
-											value={isVerySmallScreen ? truncateText(stripHtml(question.question), 25) : truncateText(stripHtml(question.question), 45)}
-										/>
+										<CustomTableCell value={isVerySmallScreen ? truncateText(stripHtml(question.question), 25) : truncateText(stripHtml(question.question), 45)} />
+										<CustomTableCell value={dateFormatter(question.createdAt)} />
+										<CustomTableCell value={dateFormatter(question.updatedAt)} />
 
 										<TableCell
 											sx={{
@@ -484,6 +524,15 @@ const AdminQuestions = () => {
 												}}
 												icon={<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 											/>
+
+											<CustomActionBtn
+												title='More Info'
+												onClick={() => {
+													openQuestionInfoModal(index);
+												}}
+												icon={<Info fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
+											/>
+
 											{isQuestionDeleteModalOpen[index] !== undefined && (
 												<CustomDialog
 													openModal={isQuestionDeleteModalOpen[index]}
@@ -520,6 +569,19 @@ const AdminQuestions = () => {
 					}}
 				/>
 			</Box>
+
+			{isQuestionInfoModalOpen.map((isOpen, index) => (
+				isOpen && (
+					<CustomDialog
+						key={index}
+						openModal={isOpen}
+						closeModal={() => closeQuestionInfoModal(index)}
+						title='Question Information'
+						maxWidth='sm'>
+						<QuestionInfoModal question={filteredQuestions[index]} onClose={() => closeQuestionInfoModal(index)} />
+					</CustomDialog>
+				)
+			))}
 		</DashboardPagesLayout>
 	);
 };

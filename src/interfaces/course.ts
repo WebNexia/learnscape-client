@@ -10,6 +10,17 @@ export interface BaseCourse {
 	isActive: boolean;
 	createdAt: string;
 	updatedAt: string;
+	isExpired: boolean;
+	clonedFromId: string;
+	clonedFromTitle: string;
+	versionNote: string;
+	createdByName: string;
+	createdByImageUrl: string;
+	createdByRole: string;
+	updatedByName: string;
+	updatedByImageUrl: string;
+	updatedByRole: string;
+	publishedAt: string | null;
 }
 
 export interface Course extends BaseCourse {
@@ -18,7 +29,6 @@ export interface Course extends BaseCourse {
 	format: string;
 	durationWeeks: number;
 	durationHours: number;
-	priceCurrency: string;
 }
 
 export interface FilteredCourse extends BaseCourse {
@@ -30,7 +40,7 @@ export interface UserCourseByUserId extends BaseCourse {
 }
 
 export interface SingleCourse extends BaseCourse {
-	startingDate: Date;
+	startingDate: Date | null;
 	format: string;
 	durationWeeks: number;
 	durationHours: number;

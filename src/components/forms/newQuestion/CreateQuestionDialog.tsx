@@ -6,7 +6,6 @@ import {
 	FormControl,
 	FormControlLabel,
 	IconButton,
-	InputLabel,
 	MenuItem,
 	Radio,
 	Select,
@@ -22,7 +21,7 @@ import theme from '../../../themes';
 import { BlankValuePair, QuestionInterface } from '../../../interfaces/question';
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
 import { generateUniqueId } from '../../../utils/uniqueIdGenerator';
-import axios from 'axios';
+
 import { QuestionsContext } from '../../../contexts/QuestionsContextProvider';
 import CustomErrorMessage from '../customFields/CustomErrorMessage';
 import useImageUpload from '../../../hooks/useImageUpload';
@@ -41,6 +40,7 @@ import { updateEditorContentAndBlankPairs } from '../../../utils/updateEditorCon
 import FillInTheBlanksTyping from '../../layouts/FITBTyping/FillInTheBlanksTyping';
 import FillInTheBlanksDragDrop from '../../layouts/FITBDragDrop/FillInTheBlanksDragDrop';
 import CustomInfoMessageAlignedRight from '../../layouts/infoMessage/CustomInfoMessageAlignedRight';
+import axios from '@utils/axiosInstance';
 
 declare global {
 	interface Window {
@@ -70,6 +70,7 @@ interface CreateQuestionDialogProps {
 	addOption: () => void;
 	handleOptionChange?: (index: number, value: string) => void;
 	setQuestionsUpdated?: React.Dispatch<React.SetStateAction<boolean>>;
+	setIsMinimumOptions: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const CreateQuestionDialog = ({
@@ -93,6 +94,7 @@ const CreateQuestionDialog = ({
 	removeOption,
 	addOption,
 	handleOptionChange,
+	setIsMinimumOptions,
 }: CreateQuestionDialogProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
@@ -127,6 +129,17 @@ const CreateQuestionDialog = ({
 		blankValuePairs,
 		createdAt: '',
 		updatedAt: '',
+		clonedFromId: '',
+		clonedFromQuestion: '',
+		usedInLessons: [],
+		createdBy: '',
+		updatedBy: '',
+		createdByName: '',
+		updatedByName: '',
+		createdByImageUrl: '',
+		updatedByImageUrl: '',
+		createdByRole: '',
+		updatedByRole: '',
 	});
 	const [isCorrectAnswerMissing, setIsCorrectAnswerMissing] = useState<boolean>(false);
 	const [isQuestionMissing, setIsQuestionMissing] = useState<boolean>(false);
@@ -175,6 +188,17 @@ const CreateQuestionDialog = ({
 			blankValuePairs: [],
 			createdAt: '',
 			updatedAt: '',
+			clonedFromId: '',
+			clonedFromQuestion: '',
+			usedInLessons: [],
+			createdBy: '',
+			updatedBy: '',
+			createdByName: '',
+			updatedByName: '',
+			createdByImageUrl: '',
+			updatedByImageUrl: '',
+			createdByRole: '',
+			updatedByRole: '',
 		});
 		setCorrectAnswer('');
 		setOptions(['']);
@@ -209,8 +233,10 @@ const CreateQuestionDialog = ({
 				isActive: true,
 			});
 
+			const questionResponseData = response.data;
+
 			addNewQuestion({
-				_id: response.data._id,
+				_id: questionResponseData._id,
 				questionType,
 				question: isFlipCard ? newQuestion.question.trim() : editorContent.trim(),
 				options,
@@ -223,6 +249,14 @@ const CreateQuestionDialog = ({
 				blankValuePairs,
 				orgId,
 				isActive: true,
+				createdAt: questionResponseData.createdAt,
+				updatedAt: questionResponseData.updatedAt,
+				createdByName: questionResponseData.createdByName,
+				updatedByName: questionResponseData.updatedByName,
+				createdByImageUrl: questionResponseData.createdByImageUrl,
+				updatedByImageUrl: questionResponseData.updatedByImageUrl,
+				createdByRole: questionResponseData.createdByRole,
+				updatedByRole: questionResponseData.updatedByRole,
 			});
 			resetValues();
 		} catch (error) {
@@ -248,6 +282,17 @@ const CreateQuestionDialog = ({
 				isActive: true,
 				createdAt: '',
 				updatedAt: '',
+				clonedFromId: '',
+				clonedFromQuestion: '',
+				usedInLessons: singleLessonBeforeSave?._id ? [singleLessonBeforeSave?._id] : [],
+				createdBy: '',
+				updatedBy: '',
+				createdByName: '',
+				updatedByName: '',
+				createdByImageUrl: '',
+				updatedByImageUrl: '',
+				createdByRole: '',
+				updatedByRole: '',
 			};
 
 			setIsLessonUpdated?.(true);
@@ -275,6 +320,13 @@ const CreateQuestionDialog = ({
 				return;
 			}
 		}
+
+		if (isMultipleChoiceQuestion && options.length <= 1) {
+			setIsMinimumOptions(false);
+			return;
+		}
+
+		if (isMultipleChoiceQuestion && (isDuplicateOption || !isMinimumOptions)) return;
 
 		if (isFlipCard && !correctAnswer) {
 			setIsCorrectAnswerMissing(true);
@@ -319,8 +371,6 @@ const CreateQuestionDialog = ({
 			return;
 		}
 
-		if (isMultipleChoiceQuestion && (isDuplicateOption || !isMinimumOptions)) return;
-
 		if (createNewQuestion) createQuestion();
 		else createQuestionTemplate();
 
@@ -351,54 +401,60 @@ const CreateQuestionDialog = ({
 			title='Create Question'
 			maxWidth='lg'>
 			<form onSubmit={(e) => e.preventDefault()} style={{ display: 'flex', flexDirection: 'column' }}>
-				<DialogContent>
-					<Typography variant='h6' sx={{ mb: '0.5rem' }}>
-						Type
-					</Typography>
-					<FormControl sx={{ mb: '1rem', width: '15rem', backgroundColor: theme.bgColor?.common }}>
-						<Select
-							value={questionType}
-							onChange={(event: SelectChangeEvent) => {
-								setQuestionType(event.target.value);
-								setCorrectAnswer('');
-								setOptions(['']);
-							}}
-							size='small'
-							required
-							sx={{ fontSize: '0.85rem' }}>
-							{questionTypes
-								?.filter((type) => {
-									const questionTypeName = type.name as QuestionType;
-									if (singleLessonBeforeSave?.type === LessonType.QUIZ) {
-										return [
-											QuestionType.MULTIPLE_CHOICE,
-											QuestionType.TRUE_FALSE,
-											QuestionType.OPEN_ENDED,
-											QuestionType.AUDIO_VIDEO,
-											QuestionType.MATCHING,
-											QuestionType.FITB_TYPING,
-											QuestionType.FITB_DRAG_DROP,
-										].includes(questionTypeName);
-									} else if (singleLessonBeforeSave?.type === LessonType.PRACTICE_LESSON) {
-										return [
-											QuestionType.MULTIPLE_CHOICE,
-											QuestionType.TRUE_FALSE,
-											QuestionType.OPEN_ENDED,
-											QuestionType.MATCHING,
-											QuestionType.FITB_TYPING,
-											QuestionType.FITB_DRAG_DROP,
-											QuestionType.FLIP_CARD,
-										].includes(questionTypeName);
-									}
-									return true;
-								})
-								.map((type) => (
-									<MenuItem value={type.name} key={type._id} sx={{ fontSize: '0.85rem' }}>
-										{type.name}
-									</MenuItem>
-								))}
-						</Select>
-					</FormControl>
+				<DialogContent sx={{ mt: '-4rem' }}>
+					<Box sx={{display:'flex',flexDirection:'column', width:'100%', alignItems:'flex-end', mb:'0.75rem'}}>
+						<Typography variant='body2' sx={{ mb: '0.5rem', fontSize:'0.95rem' }}>
+							Type
+						</Typography>
+						<FormControl sx={{ mb: '1rem', width: '15rem', backgroundColor: theme.bgColor?.common }}>
+							<Select
+								value={questionType}
+								onChange={(event: SelectChangeEvent) => {
+									setQuestionType(event.target.value);
+									setCorrectAnswer('');
+									setOptions(['']);
+								}}
+								size='small'
+								required
+								displayEmpty
+								sx={{ color: questionType == '' ? 'lightgray' : 'inherit', fontSize: '0.8rem' }}>
+								<MenuItem disabled value='' sx={{ fontSize: '0.85rem' }}>
+									Select Type
+								</MenuItem>
+								{questionTypes
+									?.filter((type) => {
+										const questionTypeName = type.name as QuestionType;
+										if (singleLessonBeforeSave?.type === LessonType.QUIZ) {
+											return [
+												QuestionType.MULTIPLE_CHOICE,
+												QuestionType.TRUE_FALSE,
+												QuestionType.OPEN_ENDED,
+												QuestionType.AUDIO_VIDEO,
+												QuestionType.MATCHING,
+												QuestionType.FITB_TYPING,
+												QuestionType.FITB_DRAG_DROP,
+											].includes(questionTypeName);
+										} else if (singleLessonBeforeSave?.type === LessonType.PRACTICE_LESSON) {
+											return [
+												QuestionType.MULTIPLE_CHOICE,
+												QuestionType.TRUE_FALSE,
+												QuestionType.OPEN_ENDED,
+												QuestionType.MATCHING,
+												QuestionType.FITB_TYPING,
+												QuestionType.FITB_DRAG_DROP,
+												QuestionType.FLIP_CARD,
+											].includes(questionTypeName);
+										}
+										return true;
+									})
+									.map((type) => (
+										<MenuItem value={type.name} key={type._id} sx={{ fontSize: '0.85rem' }}>
+											{type.name}
+										</MenuItem>
+									))}
+							</Select>
+						</FormControl>
+					</Box>
 					<Box sx={{ display: 'flex', flexDirection: 'column' }}>
 						<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: '2rem', width: '100%' }}>
 							<Box sx={{ flex: 1, mr: '2rem' }}>
@@ -458,9 +514,14 @@ const CreateQuestionDialog = ({
 						</Box>
 						{!isFlipCard && (
 							<Box sx={{ width: '100%', margin: '1rem 0' }}>
-								<Typography variant='h6' sx={{ mb: '0.5rem' }}>
-									Question
-								</Typography>
+								<Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+									<Typography variant='h6' sx={{ mb: '0.5rem' }}>
+										Question
+									</Typography>
+									{(isFITBDragDrop || isFITBTyping) && (
+										<CustomInfoMessageAlignedRight message='Double-click a word to turn it into a blank' sx={{ marginBottom: '0.5rem' }} />
+									)}
+								</Box>
 								<TinyMceEditor
 									handleEditorChange={(content) => {
 										setEditorContent(content);
@@ -479,7 +540,10 @@ const CreateQuestionDialog = ({
 						{(isFITBDragDrop || isFITBTyping) && (
 							<Box>
 								<Box sx={{ marginTop: '1rem', width: '90%', margin: '0 auto' }}>
-									<Typography variant='h6'>Blank Values</Typography>
+									<Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+										<Typography variant='h6'>Blank Values</Typography>
+										{(isFITBDragDrop || isFITBTyping) && <CustomInfoMessageAlignedRight message='Click a word below to remove it from the blanks' />}
+									</Box>
 									<Box
 										sx={{
 											display: 'flex',
@@ -656,13 +720,15 @@ const CreateQuestionDialog = ({
 					<Box sx={{ mt: '2rem' }}>
 						{isQuestionMissing && (
 							<CustomErrorMessage>
-								{isFlipCard && !newQuestion.imageUrl ? '- Enter front face text or enter image' : '- Enter question'}
+								{isFlipCard && !newQuestion.imageUrl ? '- Enter front face text and/or image' : '- Enter question'}
 							</CustomErrorMessage>
 						)}
 						{isCorrectAnswerMissing && !isAudioVideoQuestion && !isMatching && (
 							<CustomErrorMessage>{isFlipCard ? '- Enter back face text' : '- Select correct answer'}</CustomErrorMessage>
 						)}
-						{isAudioVideoQuestion && isAudioVideoSelectionMissing && <CustomErrorMessage>- Select one of the recording options</CustomErrorMessage>}
+						{isAudioVideoQuestion && isAudioVideoSelectionMissing && (
+							<CustomErrorMessage>- Select at least one of the recording options</CustomErrorMessage>
+						)}
 
 						{isMatching && (
 							<>
@@ -687,6 +753,7 @@ const CreateQuestionDialog = ({
 						resetImageUpload();
 						resetVideoUpload();
 					}}
+					disableBtn={questionType == ''}
 					onSubmit={handleSubmit}
 					cancelBtnSx={{ margin: '0 0.5rem 1rem 0' }}
 					submitBtnSx={{ margin: '0 1rem 1rem 0' }}

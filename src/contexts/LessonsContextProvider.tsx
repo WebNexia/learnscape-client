@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios from '@utils/axiosInstance';
 import { ReactNode, createContext, useContext, useState } from 'react';
 import { useQuery } from 'react-query';
 import { Lesson } from '../interfaces/lessons';
@@ -57,7 +57,7 @@ const LessonsContextProvider = (props: LessonsContextProviderProps) => {
 			const response = await axios.get(`${base_url}/lessons/organisation/${orgId}`);
 
 			// Initial sorting when fetching data
-			const sortedLessonsDataCopy = [...response.data.data].sort((a: Lesson, b: Lesson) => b.updatedAt.localeCompare(a.updatedAt));
+			const sortedLessonsDataCopy = [...response.data.data].sort((a: Lesson, b: Lesson) => b.createdAt.localeCompare(a.createdAt));
 			setSortedLessonsData(sortedLessonsDataCopy);
 			setIsLoaded(true);
 			return response.data.data;
@@ -84,7 +84,20 @@ const LessonsContextProvider = (props: LessonsContextProviderProps) => {
 	};
 	// Function to update sortedLessonsData with new lesson data
 	const addNewLesson = (newLesson: any) => {
-		setSortedLessonsData((prevSortedData) => [newLesson, ...prevSortedData]);
+		setSortedLessonsData((prevSortedData) => {
+			// Check if lesson already exists
+			const exists = prevSortedData.some(lesson => lesson._id === newLesson._id);
+			if (exists) {
+				// If exists, update it
+				const updatedData = prevSortedData.map(lesson => 
+					lesson._id === newLesson._id ? newLesson : lesson
+				);
+				return updatedData;
+			}
+			// If doesn't exist, add it to the beginning
+			const newData = [newLesson, ...prevSortedData];
+			return newData;
+		});
 	};
 
 	const updateLessonPublishing = (id: string) => {

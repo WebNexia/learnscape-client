@@ -12,6 +12,18 @@ interface BaseLesson {
 	updatedAt: string;
 	text: string;
 	orgId: string;
+	clonedFromId: string;
+	clonedFromTitle: string;
+	usedInCourses: string[];
+	createdBy: string;
+	updatedBy: string;
+	publishedAt: string;
+	createdByName: string;
+	updatedByName: string;
+	createdByImageUrl: string;
+	updatedByImageUrl: string;
+	createdByRole: string;
+	updatedByRole: string;
 }
 
 export interface Lesson extends BaseLesson {
