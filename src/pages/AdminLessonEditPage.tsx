@@ -60,7 +60,7 @@ const AdminLessonEditPage = () => {
 	const { orgId } = useContext(OrganisationContext);
 	const { updateLessonPublishing, updateLessons, lessonTypes } = useContext(LessonsContext);
 
-	const { questionTypes, fetchQuestions, questionsPageNumber, fetchQuestionTypeName } = useContext(QuestionsContext);
+	const { questionTypes, fetchQuestionTypeName, addNewQuestion, updateQuestion } = useContext(QuestionsContext);
 	const { addNewDocument, updateDocuments } = useContext(DocumentsContext);
 
 	const vertical = 'top';
@@ -296,12 +296,16 @@ const AdminLessonEditPage = () => {
 		}
 
 		// For publishing, check requirements
-		if (
-			lessonId &&
-			singleLesson.text &&
-			(((singleLesson.type === LessonType.PRACTICE_LESSON || singleLesson.type === LessonType.QUIZ) && singleLesson.questionIds?.length !== 0) ||
-				singleLesson.type === LessonType.INSTRUCTIONAL_LESSON)
-		) {
+		const hasRequiredFields = 
+			lessonId && 
+			singleLesson.title?.trim() && 
+			singleLesson.text?.trim() && 
+			(
+				singleLesson.type === LessonType.INSTRUCTIONAL_LESSON || 
+				(singleLesson.type !== LessonType.INSTRUCTIONAL_LESSON && singleLesson.questionIds?.length > 0)
+			);
+
+		if (hasRequiredFields) {
 			try {
 				const now = new Date().toISOString();
 				await axios.patch(`${base_url}/lessons/${lessonId}`, {
@@ -332,12 +336,6 @@ const AdminLessonEditPage = () => {
 		let updatedQuestions: QuestionInterface[] = [];
 		let updatedDocuments: Document[] = [];
 
-		if (!editorContent || editorContent === '' || editorContent === null) {
-			setIsMissingFieldMsgOpen(true);
-			setIsEditMode(true);
-
-			return;
-		}
 		try {
 			if (singleLessonBeforeSave?.documents) {
 				const updatedDocumentsPromises = (singleLessonBeforeSave?.documents as (Document | null)[])
@@ -399,7 +397,6 @@ const AdminLessonEditPage = () => {
 							});
 
 							const documentUpdateData = response.data.data;
-							console.log(documentUpdateData);
 
 							updateDocuments({
 								...doc,
@@ -490,7 +487,9 @@ const AdminLessonEditPage = () => {
 									usedInLessons: [lessonId],
 								});
 
-								fetchQuestions(questionsPageNumber);
+								const newQuestionResponseData = response.data;
+
+								addNewQuestion({ ...newQuestionResponseData });
 								return {
 									...question,
 									_id: response.data._id,
@@ -516,8 +515,11 @@ const AdminLessonEditPage = () => {
 						if (trackData?.isUpdated) {
 							try {
 								const { questionType, ...questionWithoutType } = question;
-								await axios.patch(`${base_url}/questions/${question._id}`, questionWithoutType);
-								fetchQuestions(questionsPageNumber);
+								const response = await axios.patch(`${base_url}/questions/${question._id}`, questionWithoutType);
+
+								const questionUpdateResponseData = response.data.data;
+
+								updateQuestion({ ...questionUpdateResponseData });
 							} catch (error) {
 								console.error('Error updating question:', error);
 							}
@@ -1284,8 +1286,6 @@ const AdminLessonEditPage = () => {
 										if (prevData) {
 											const filteredDocuments = prevData?.documents?.filter((thisDoc) => thisDoc._id !== document._id);
 											const filteredDocumentsIds = filteredDocuments?.map((doc) => doc._id);
-
-											console.log(filteredDocuments);
 
 											// Update document's usedInLessons in the documents context
 											const updatedDocument = {

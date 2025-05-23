@@ -154,8 +154,8 @@ const AdminDocuments = () => {
 
 	const deleteDocument = async (documentId: string): Promise<void> => {
 		try {
-			removeDocument(documentId);
-			await axios.delete(`${base_url}/documents/${documentId}`);
+			const response = await axios.delete(`${base_url}/documents/${documentId}`);
+			removeDocument(response.data.data._id);
 		} catch (error) {
 			console.log(error);
 		}

@@ -7,7 +7,6 @@ import { QuestionUpdateTrack } from '../../pages/AdminLessonEditPage';
 import CustomSubmitButton from '../forms/customButtons/CustomSubmitButton';
 import { FormEvent, useState } from 'react';
 import CustomCancelButton from '../forms/customButtons/CustomCancelButton';
-import { LessonType } from '../../interfaces/enums';
 import CustomDialog from '../layouts/dialog/CustomDialog';
 import LessonInfoModal from '../lessons/LessonInfoModal';
 
@@ -44,7 +43,6 @@ const LessonPaper = ({
 	isEditMode,
 	isMissingFieldMsgOpen,
 	resetChanges,
-	editorContent,
 	setSingleLessonBeforeSave,
 	setIsEditMode,
 	setIsMissingFieldMsgOpen,
@@ -167,7 +165,7 @@ const LessonPaper = ({
 									sx={{ mt: '5rem' }}
 									onClose={() => setIsMissingFieldMsgOpen(false)}>
 									<Alert severity='error' variant='filled' sx={{ width: '100%' }}>
-										Enter title / instructions / questions !!!
+										Enter title to save lesson
 									</Alert>
 								</Snackbar>
 								{isEditMode ? (
@@ -175,55 +173,18 @@ const LessonPaper = ({
 										<CustomSubmitButton
 											sx={{ padding: '0 0.75rem', backgroundColor: theme.bgColor?.greenPrimary }}
 											onClick={(e) => {
-												if (singleLessonBeforeSave.type === LessonType.INSTRUCTIONAL_LESSON) {
-													if (singleLessonBeforeSave?.title.trim() !== '' && singleLessonBeforeSave?.title !== '' && editorContent?.trim() !== '') {
-														setIsEditMode(false);
-														handleLessonUpdate(e as FormEvent<Element>);
-														resetImageUpload();
-														resetVideoUpload();
-														resetEnterImageVideoUrl();
-													} else {
-														setIsMissingFieldMsgOpen(true);
-														if (!singleLessonBeforeSave?.title.trim()) {
-															setTitleError(true);
-														} else {
-															setTitleError(false);
-														}
-														if (!editorContent?.trim()) {
-															setInstructionError(true);
-														} else {
-															setInstructionError(false);
-														}
-													}
+												if (singleLessonBeforeSave?.title.trim() !== '' && singleLessonBeforeSave?.title !== '') {
+													setIsEditMode(false);
+													handleLessonUpdate(e as FormEvent<Element>);
+													resetImageUpload();
+													resetVideoUpload();
+													resetEnterImageVideoUrl();
 												} else {
-													if (
-														singleLessonBeforeSave?.title.trim() !== '' &&
-														singleLessonBeforeSave?.title !== '' &&
-														editorContent?.trim() !== '' &&
-														singleLessonBeforeSave.questionIds.length > 0
-													) {
-														setIsEditMode(false);
-														handleLessonUpdate(e as FormEvent<Element>);
-														resetImageUpload();
-														resetVideoUpload();
-														resetEnterImageVideoUrl();
+													setIsMissingFieldMsgOpen(true);
+													if (!singleLessonBeforeSave?.title.trim()) {
+														setTitleError(true);
 													} else {
-														setIsMissingFieldMsgOpen(true);
-														if (!singleLessonBeforeSave?.title.trim()) {
-															setTitleError(true);
-														} else {
-															setTitleError(false);
-														}
-														if (!editorContent?.trim()) {
-															setInstructionError(true);
-														} else {
-															setInstructionError(false);
-														}
-														if (singleLessonBeforeSave.questionIds.length === 0) {
-															setQuestionError(true);
-														} else {
-															setQuestionError(false);
-														}
+														setTitleError(false);
 													}
 												}
 												window.scrollTo({ top: 0, behavior: 'smooth' });
