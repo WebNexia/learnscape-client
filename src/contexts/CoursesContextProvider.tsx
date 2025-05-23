@@ -139,10 +139,12 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 	// Function to handle sorting
 	const sortCoursesData = (property: keyof SingleCourse, order: 'asc' | 'desc') => {
 		const sortedDataCopy = [...sortedCoursesData].sort((a: SingleCourse, b: SingleCourse) => {
+			const aValue = a[property] ?? '';
+			const bValue = b[property] ?? '';
 			if (order === 'asc') {
-				return a[property] > b[property] ? 1 : -1;
+				return aValue > bValue ? 1 : -1;
 			} else {
-				return a[property] < b[property] ? 1 : -1;
+				return aValue < bValue ? 1 : -1;
 			}
 		});
 		setSortedCoursesData(sortedDataCopy);
