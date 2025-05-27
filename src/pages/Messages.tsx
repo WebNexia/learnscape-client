@@ -52,6 +52,7 @@ import { renderMessageWithEmojis } from '../utils/renderMessageWithEmojis';
 import { useLocation } from 'react-router-dom';
 import { UsersContext } from '../contexts/UsersContextProvider';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
+import UserSearchSelect from '../components/UserSearchSelect';
 
 export interface Message {
 	id: string;
@@ -522,7 +523,7 @@ const Messages = () => {
 		const messageRef = collection(db, 'chats', chatId, 'messages');
 
 		try {
-			// Ensure the chat document is created if it doesn’t exist
+			// Ensure the chat document is created if it doesn't exist
 			const chatDoc = await getDoc(chatRef);
 			if (!chatDoc.exists()) {
 				await setDoc(chatRef, {
@@ -617,19 +618,6 @@ const Messages = () => {
 		} catch (error) {
 			console.error('Error sending message: ', error);
 		}
-	};
-
-	const filterUsers = async (searchQuery: string) => {
-		if (!searchQuery.trim()) {
-			setFilteredUsers([]);
-			return;
-		}
-
-		const searchResults = sortedUsersData.filter(
-			(filteredUser) => filteredUser.username.toLowerCase().includes(searchQuery) || filteredUser.email.toLowerCase().includes(searchQuery)
-		);
-
-		setFilteredUsers(searchResults);
 	};
 
 	const handleUserSelection = async (selectedUser: User) => {
@@ -1419,77 +1407,22 @@ const Messages = () => {
 					setSearchValue('');
 				}}
 				title='Find User'
-				content='Search users by username or email address to start a chat'
 				maxWidth='sm'>
 				<Box sx={{ display: 'flex', justifyContent: 'center', width: '100%', mb: filteredUsers.length === 0 ? '1.5rem' : '-1rem' }}>
-					<CustomTextField
-						sx={{ width: '80%' }}
-						required={false}
+					<UserSearchSelect
+						users={sortedUsersData}
 						value={searchValue}
-						onChange={(e) => {
-							setSearchValue(e.target.value);
-							filterUsers(e.target.value.toLowerCase());
+						onChange={setSearchValue}
+						onSelect={handleUserSelection}
+						currentUserId={user?.firebaseUserId}
+						placeholder="Search users by username or email address"
+						sx={{ width: '80%' }}
+						listSx={{
+							width: isMobileSize ? '75%' : '65%',
+							paddingTop: isMobileSize ? '0.5rem' : filteredUsers.length < 6 ? '0rem' : '2.5rem',
 						}}
 					/>
 				</Box>
-				{filteredUsers.length !== 0 && (
-					<Box
-						sx={{
-							display: 'flex',
-							flexDirection: 'column',
-							justifyContent: 'center',
-							alignItems: 'flex-start',
-							width: isMobileSize ? '75%' : '65%',
-							maxHeight: '16rem',
-							overflow: 'auto',
-							margin: '0 auto 1.5rem auto',
-							border: 'solid 0.05rem lightgray',
-							paddingTop: isMobileSize ? '0.5rem' : filteredUsers.length < 6 ? '0rem' : '2.5rem',
-						}}>
-						{filteredUsers
-							?.filter((filteredUser) => filteredUser.firebaseUserId !== user?.firebaseUserId)
-							?.map((user) => (
-								<Box
-									key={user.firebaseUserId}
-									sx={{
-										display: 'flex',
-										justifyContent: 'flex-start',
-										alignItems: 'center',
-										width: '100%',
-										padding: '0.5rem',
-										transition: '0.5s',
-										borderRadius: '0.25rem',
-										':hover': {
-											backgroundColor: theme.bgColor?.primary,
-											color: '#fff',
-											cursor: 'pointer',
-											'& .username': {
-												color: '#fff',
-											},
-										},
-									}}
-									onClick={() => handleUserSelection(user)}>
-									<Box sx={{ borderRadius: '100%', marginRight: '1rem' }}>
-										<img
-											src={user.imageUrl}
-											alt='profile_img'
-											style={{
-												height: isMobileSize ? '2rem' : '2.5rem',
-												width: isMobileSize ? '2rem' : '2.5rem',
-												borderRadius: '100%',
-												border: 'solid lightgray 0.1rem',
-											}}
-										/>
-									</Box>
-									<Box>
-										<Typography className='username' variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-											{user.username}
-										</Typography>
-									</Box>
-								</Box>
-							))}
-					</Box>
-				)}
 			</CustomDialog>
 		</DashboardPagesLayout>
 	);

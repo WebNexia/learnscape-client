@@ -1,7 +1,7 @@
 import { Alert, Avatar, Box, Button, DialogActions, DialogContent, Grid, IconButton, Paper, Snackbar, Tooltip, Typography } from '@mui/material';
 import theme from '../../themes';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Edit, FileCopy, Info, KeyboardBackspaceOutlined, PublishedWithChanges, Unpublished } from '@mui/icons-material';
+import { Edit, FileCopy, Info, KeyboardBackspaceOutlined } from '@mui/icons-material';
 import { SingleCourse } from '../../interfaces/course';
 import { ChapterLessonData } from '../../pages/AdminCourseEditPage';
 import useImageUpload from '../../hooks/useImageUpload';
@@ -140,15 +140,8 @@ const CoursePaper = ({
 					</Box>
 					<Box sx={{ paddingLeft: '0.5rem' }}>
 						<Typography variant='body2' sx={{ color: theme.textColor?.common.main }}>
-							{singleCourse?.isActive ? (
-								<Tooltip title='Published' placement='right'>
-									<PublishedWithChanges />
-								</Tooltip>
-							) : (
-								<Tooltip title='Unpublished' placement='right'>
-									<Unpublished />
-								</Tooltip>
-							)}
+							{singleCourse?.isActive ? 'Published' : 'Unpublished'} - {singleCourse?.isExpired ? 'Closed' : 'Open'} - {' '}
+							{singleCourse?.courseManagement?.isExternal ? 'External' : 'Platform'}
 						</Typography>
 					</Box>
 				</Box>
@@ -395,6 +388,14 @@ const CoursePaper = ({
 													<Typography variant='body2'>{'N/A'}</Typography>
 												</Grid>
 											)}
+
+											<Grid item xs={3}>
+												<Typography variant='body2'>External Course:</Typography>
+											</Grid>
+
+											<Grid item xs={9}>
+												<Typography variant='body2'>{singleCourse?.courseManagement?.isExternal ? 'Yes' : 'No'}</Typography>
+											</Grid>
 										</Grid>
 									</Box>
 								</DialogContent>

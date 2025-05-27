@@ -1,4 +1,4 @@
-import {  Box, IconButton, Link, Tooltip, Typography } from '@mui/material';
+import { Avatar, Box, IconButton, Link, Tooltip, Typography } from '@mui/material';
 import theme from '../../themes';
 import { SingleCourse } from '../../interfaces/course';
 
@@ -12,14 +12,20 @@ import UKFlag from '../../assets/uk_flag_icon_round.svg.png';
 import USFlag from '../../assets/usa_flag_united_states_america_icon_228698.png';
 import EUFlag from '../../assets/european_flag_icon_228671.png';
 import TRFlag from '../../assets/tr-flag-round-500.png';
+import EditInstructorDialog from './EditInstructorDialog';
+import { useState } from 'react';
 
 interface CourseDetailsNonEditBoxProps {
 	singleCourse?: SingleCourse;
 	chapters: ChapterLessonData[];
+	setSingleCourse: React.Dispatch<React.SetStateAction<SingleCourse | undefined>>
 }
 
-const CourseDetailsNonEditBox = ({ singleCourse, chapters }: CourseDetailsNonEditBoxProps) => {
+const CourseDetailsNonEditBox = ({ singleCourse, chapters,setSingleCourse }: CourseDetailsNonEditBoxProps) => {
 	const { userId } = useParams();
+
+	const [isEditInstructorDialogOpen, setIsEditInstructorDialogOpen] = useState<boolean>(false);
+
 	return (
 		<Box
 			sx={{
@@ -28,11 +34,35 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters }: CourseDetailsNonEdi
 				justifyContent: 'flex-start',
 				width: '90%',
 			}}>
-			<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
+			<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%', gap: '2rem' }}>
 				<Box
 					sx={{
 						mt: '1rem',
-						padding: '2rem',
+						padding: '1.55rem',
+						height: '7.25rem',
+						boxShadow: '0 0 0.4rem 0.2rem rgba(0,0,0,0.2)',
+						flex: 1,
+						borderRadius: '0.35rem',
+					}}>
+					<Typography variant='h5'>Instructor</Typography>
+					<Box sx={{ display: 'flex', alignItems: 'center', gap: '0.5rem', mt: '0.5rem' }}>
+						<Avatar src={singleCourse?.instructor?.imageUrl} sx={{ width: '2rem', height: '2rem' }} />
+						<Typography variant='body2' sx={{ 'textTransform': 'capitalize', 'cursor': 'pointer', ':hover': { textDecoration: 'underline' } }} onClick={() => setIsEditInstructorDialogOpen(true)}>
+							{singleCourse?.instructor?.name}
+						</Typography>
+					</Box>
+					<EditInstructorDialog
+						isEditInstructorDialogOpen={isEditInstructorDialogOpen}
+						setIsEditInstructorDialogOpen={setIsEditInstructorDialogOpen}
+						singleCourse={singleCourse}
+						setSingleCourse={setSingleCourse}
+					/>
+				</Box>
+				<Box
+					sx={{
+						mt: '1rem',
+						padding: '1.55rem',
+						height: '7.25rem',
 						boxShadow: '0 0 0.4rem 0.2rem rgba(0,0,0,0.2)',
 						flex: 3,
 						borderRadius: '0.35rem',
@@ -48,7 +78,7 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters }: CourseDetailsNonEdi
 						flexDirection: 'column',
 						alignItems: 'flex-end',
 						mt: '1rem',
-						padding: '0 0 2rem 2rem',
+						padding: '0 0 2rem 0rem',
 						flex: 1,
 					}}>
 					<Box sx={{ textAlign: 'center' }}>
