@@ -21,6 +21,8 @@ export interface BaseCourse {
 	updatedByImageUrl: string;
 	updatedByRole: string;
 	publishedAt: string | null;
+	instructor: Instructor;
+	courseManagement: CourseManagement;
 }
 
 export interface Course extends BaseCourse {
@@ -55,4 +57,23 @@ export interface SingleCourse extends BaseCourse {
 export interface Price {
 	currency: 'gbp' | 'usd' | 'eur' | 'try';
 	amount: string;
+}
+
+export interface Instructor {
+	name: string;
+	userId: string;
+	imageUrl: string;
+	email: string;
+	bio: string;
+	expertise: string[];
+	title: string;
+	linkedInUrl: string;
+	website: string;
+}
+
+export interface CourseManagement {
+	isExternal: boolean;
+	externalProvider: string;
+	externalUrl: string;
+	externalNotes: string;
 }

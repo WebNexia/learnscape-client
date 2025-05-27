@@ -72,7 +72,79 @@ const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree,
 	};
 	return (
 		<>
-			<Box sx={{ display: 'flex', mt: '0.5rem' }}>
+			<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',  width: '100%' }}>
+				<Box sx={{ flex: 3 }}>
+					<HandleImageUploadURL
+						label='Cover Image'
+						onImageUploadLogic={(url) => {
+							if (singleCourse) {
+								setSingleCourse({
+									...singleCourse,
+									imageUrl: url,
+								});
+							}
+						}}
+						onChangeImgUrl={(e) => {
+							if (singleCourse) {
+								setSingleCourse({
+									...singleCourse,
+									imageUrl: e.target.value,
+								});
+							}
+						}}
+						imageUrlValue={singleCourse?.imageUrl || ''}
+						imageFolderName='CourseImages'
+						enterImageUrl={enterImageUrl}
+						setEnterImageUrl={setEnterImageUrl}
+					/>
+				</Box>
+				<Box
+					sx={{
+						display: 'flex',
+						flexDirection: 'column',
+						alignItems: 'flex-end',
+						mt: '1.5rem',
+						padding: '0 0 2rem 2rem',
+						flex: 1,
+					}}>
+					<Box sx={{ textAlign: 'center' }}>
+						<img
+							src={singleCourse?.imageUrl || 'https://directmobilityonline.co.uk/assets/img/noimage.png'}
+							alt='course_img'
+							height='115rem'
+							style={{
+								borderRadius: '0.2rem',
+								boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
+							}}
+						/>
+						<Box>
+							<Typography variant='body2' sx={{ mt: '0.25rem' }}>
+								Cover Image
+							</Typography>
+							{singleCourse?.imageUrl && (
+								<Typography
+									variant='body2'
+									sx={{ fontSize: '0.75rem', textDecoration: 'underline', cursor: 'pointer' }}
+									onClick={() => {
+										setSingleCourse((prevData) => {
+											if (prevData !== undefined) {
+												return {
+													...prevData,
+													imageUrl: '',
+												};
+											}
+										});
+
+										resetImageUpload();
+									}}>
+									Remove
+								</Typography>
+							)}
+						</Box>
+					</Box>
+				</Box>
+			</Box>
+			<Box sx={{ display: 'flex', justifyContent: 'space-between', mt: '-1.75rem' }}>
 				<Box sx={{ flex: 1 }}>
 					<Typography variant='h6'>Title*</Typography>
 					<Tooltip title='Max 50 Characters' placement='top'>
@@ -112,13 +184,41 @@ const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree,
 								setIsMissingField(false);
 							}}
 							multiline
-							resizable
 							InputProps={{ inputProps: { maxLength: 500 } }}
 							error={isMissingField && singleCourse?.description === ''}
 						/>
 					</Tooltip>
 
 					{isMissingField && singleCourse?.description === '' && <CustomErrorMessage>Enter a description</CustomErrorMessage>}
+				</Box>
+				<Box sx={{ display: 'flex', alignItems: 'center', ml: '2rem' }}>
+					<Tooltip title='This course will be managed outside the platform.' placement='top'>
+						<FormControlLabel
+							control={
+								<Checkbox
+									checked={singleCourse?.courseManagement?.isExternal}
+									onChange={(e) => {
+										setSingleCourse(() => {
+											if (singleCourse?.courseManagement !== undefined) {
+												return { ...singleCourse, courseManagement: { ...singleCourse.courseManagement, isExternal: e.target.checked } };
+											}
+										});
+									}}
+									sx={{
+										'& .MuiSvgIcon-root': {
+											fontSize: '1.25rem',
+										},
+									}}
+								/>
+							}
+							label='External Course'
+							sx={{
+								'& .MuiFormControlLabel-label': {
+									fontSize: '0.85rem',
+								},
+							}}
+						/>
+					</Tooltip>
 				</Box>
 			</Box>
 
@@ -129,7 +229,7 @@ const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree,
 					alignItems: 'flex-start',
 					mt: '1.5rem',
 				}}>
-				<Box sx={{ flex: 1 }}>
+				<Box sx={{ flex: 1, zIndex: 1 }}>
 					<Typography variant='h6'>Prices</Typography>
 					<Box sx={{ display: 'flex', alignItems: 'center' }}>
 						<Box
@@ -218,7 +318,7 @@ const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree,
 																{ amount: '', currency: 'eur' },
 																{ amount: '', currency: 'try' },
 															],
-													  }
+														}
 													: prevCourse
 											);
 											setIsMissingField(false);
@@ -302,78 +402,6 @@ const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree,
 						}}
 						type='date'
 					/>
-				</Box>
-			</Box>
-			<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mt: '1.5rem', width: '100%' }}>
-				<Box sx={{ flex: 3 }}>
-					<HandleImageUploadURL
-						label='Cover Image'
-						onImageUploadLogic={(url) => {
-							if (singleCourse) {
-								setSingleCourse({
-									...singleCourse,
-									imageUrl: url,
-								});
-							}
-						}}
-						onChangeImgUrl={(e) => {
-							if (singleCourse) {
-								setSingleCourse({
-									...singleCourse,
-									imageUrl: e.target.value,
-								});
-							}
-						}}
-						imageUrlValue={singleCourse?.imageUrl || ''}
-						imageFolderName='CourseImages'
-						enterImageUrl={enterImageUrl}
-						setEnterImageUrl={setEnterImageUrl}
-					/>
-				</Box>
-				<Box
-					sx={{
-						display: 'flex',
-						flexDirection: 'column',
-						alignItems: 'flex-end',
-						mt: '1.5rem',
-						padding: '0 0 2rem 2rem',
-						flex: 1,
-					}}>
-					<Box sx={{ textAlign: 'center' }}>
-						<img
-							src={singleCourse?.imageUrl || 'https://directmobilityonline.co.uk/assets/img/noimage.png'}
-							alt='course_img'
-							height='115rem'
-							style={{
-								borderRadius: '0.2rem',
-								boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
-							}}
-						/>
-						<Box>
-							<Typography variant='body2' sx={{ mt: '0.25rem' }}>
-								Cover Image
-							</Typography>
-							{singleCourse?.imageUrl && (
-								<Typography
-									variant='body2'
-									sx={{ fontSize: '0.75rem', textDecoration: 'underline', cursor: 'pointer' }}
-									onClick={() => {
-										setSingleCourse((prevData) => {
-											if (prevData !== undefined) {
-												return {
-													...prevData,
-													imageUrl: '',
-												};
-											}
-										});
-
-										resetImageUpload();
-									}}>
-									Remove
-								</Typography>
-							)}
-						</Box>
-					</Box>
 				</Box>
 			</Box>
 		</>

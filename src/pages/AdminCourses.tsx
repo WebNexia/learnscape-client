@@ -39,6 +39,7 @@ import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/CustomInfoMessageAlignedLeft';
 import axios from '@utils/axiosInstance';
 import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
+import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 
 const AdminCourses = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -46,6 +47,7 @@ const AdminCourses = () => {
 	const navigate = useNavigate();
 	const { sortedCoursesData, sortCoursesData, addNewCourse, removeCourse, fetchCourses } = useContext(CoursesContext);
 	const { orgId } = useContext(OrganisationContext);
+	const { user } = useContext(UserAuthContext);
 
 	const vertical = 'top';
 	const horizontal = 'center';
@@ -57,6 +59,16 @@ const AdminCourses = () => {
 	const [coursesPageNumber, setCoursesPageNumber] = useState<number>(1);
 	const [searchValue, setSearchValue] = useState<string>('');
 	const [filterValue, setFilterValue] = useState<string>('');
+
+	const [title, setTitle] = useState<string>('');
+	const [description, setDescription] = useState<string>('');
+	const [GBP, setGBP] = useState<Price | null>(null);
+	const [USD, setUSD] = useState<Price | null>(null);
+	const [EUR, setEUR] = useState<Price | null>(null);
+	const [TRY, setTRY] = useState<Price | null>(null);
+
+	const [checked, setChecked] = useState<boolean>(false);
+	const [isExternal, setIsExternal] = useState<boolean>(false);
 
 	const pageSize = 50;
 
@@ -147,15 +159,6 @@ const AdminCourses = () => {
 		setIsCourseDeleteModalOpen(updatedState);
 	};
 
-	const [title, setTitle] = useState<string>('');
-	const [description, setDescription] = useState<string>('');
-	const [GBP, setGBP] = useState<Price | null>(null);
-	const [USD, setUSD] = useState<Price | null>(null);
-	const [EUR, setEUR] = useState<Price | null>(null);
-	const [TRY, setTRY] = useState<Price | null>(null);
-
-	const [checked, setChecked] = useState<boolean>(false);
-
 	const createCourse = async (): Promise<void> => {
 		const prices: Price[] = [
 			{ amount: checked ? 'Free' : GBP?.amount!, currency: 'gbp' },
@@ -174,6 +177,18 @@ const AdminCourses = () => {
 				durationWeeks: null,
 				durationHours: null,
 				format: '',
+				courseManagement: {
+					isExternal: isExternal,
+					externalProvider: '',
+					externalUrl: '',
+					externalNotes: '',
+				},
+				instructor: {
+					name: `${(user?.firstName ?? '').charAt(0).toUpperCase()}${(user?.firstName ?? '').slice(1)} ${(user?.lastName ?? '').charAt(0).toUpperCase()}${(user?.lastName ?? '').slice(1)}`,
+					userId: user?._id,
+					imageUrl: user?.imageUrl,
+					email: user?.email,
+				},
 			});
 
 			// Notify context provider to update sortedCoursesData with the new course
@@ -189,6 +204,18 @@ const AdminCourses = () => {
 				format: '',
 				createdAt: response.data.createdAt,
 				updatedAt: response.data.updatedAt,
+				courseManagement: {
+					isExternal: isExternal,
+					externalProvider: '',
+					externalUrl: '',
+					externalNotes: '',
+				},
+				instructor: {
+					name: user?.firstName.toUpperCase() + ' ' + user?.lastName.toUpperCase(),
+					userId: user?._id,
+					imageUrl: user?.imageUrl,
+					email: user?.email,
+				},
 			});
 		} catch (error) {
 			console.log(error);
@@ -246,7 +273,7 @@ const AdminCourses = () => {
 						createCourse();
 						closeNewCourseModal();
 					}}
-					style={{ display: 'flex', flexDirection: 'column' }}>
+					style={{ display: 'flex', flexDirection: 'column', marginTop: '-1rem' }}>
 					<Tooltip title='Max 50 Characters' placement='top'>
 						<CustomTextField
 							fullWidth={false}
@@ -280,9 +307,40 @@ const AdminCourses = () => {
 
 					<Box sx={{ display: 'flex', alignItems: 'center' }}>
 						<Box sx={{ margin: '1rem 2rem 1rem 2rem', flex: 2 }}>
-							<Typography variant='h6' sx={{ fontSize: '0.9rem', mb: '0.25rem' }}>
-								Prices
-							</Typography>
+							<Box sx={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+								<Typography variant='h6' sx={{ fontSize: '0.9rem', mb: '0.25rem' }}>
+									Prices
+								</Typography>
+								<Tooltip title='Check to make this course free in all currencies.' placement='top'>
+									<FormControlLabel
+										control={
+											<Checkbox
+												checked={checked}
+												onChange={(e) => {
+													setChecked(e.target.checked);
+													setTRY((prevData) => ({ ...prevData!, amount: '' }));
+													setEUR((prevData) => ({ ...prevData!, amount: '' }));
+													setUSD((prevData) => ({ ...prevData!, amount: '' }));
+													setGBP((prevData) => ({ ...prevData!, amount: '' }));
+												}}
+												sx={{
+													'& .MuiSvgIcon-root': {
+														fontSize: '1rem',
+													},
+												}}
+											/>
+										}
+										label='Free Course'
+										sx={{
+											'mr': '0rem',
+											'& .MuiFormControlLabel-label': {
+												fontSize: '0.75rem',
+											},
+										}}
+									/>
+								</Tooltip>
+							</Box>
+
 							<CustomTextField
 								label='GBP'
 								value={checked ? '' : GBP?.amount}
@@ -329,34 +387,32 @@ const AdminCourses = () => {
 							/>
 						</Box>
 					</Box>
-					<Box sx={{ margin: '0 2rem' }}>
-						<FormControlLabel
-							control={
-								<Checkbox
-									checked={checked}
-									onChange={(e) => {
-										setChecked(e.target.checked);
-										setTRY((prevData) => ({ ...prevData!, amount: '' }));
-										setEUR((prevData) => ({ ...prevData!, amount: '' }));
-										setUSD((prevData) => ({ ...prevData!, amount: '' }));
-										setGBP((prevData) => ({ ...prevData!, amount: '' }));
-									}}
-									sx={{
-										'& .MuiSvgIcon-root': {
-											fontSize: '1.25rem',
-										},
-									}}
-								/>
-							}
-							label='Free Course'
-							sx={{
-								'& .MuiFormControlLabel-label': {
-									fontSize: '0.85rem',
-								},
-							}}
-						/>
+					<Box sx={{ margin: '0 2rem', display: 'flex', alignItems: 'center' }}>
+						<Tooltip title='This course will be managed outside the platform.' placement='top'>
+							<FormControlLabel
+								control={
+									<Checkbox
+										checked={isExternal}
+										onChange={(e) => {
+											setIsExternal(e.target.checked);
+										}}
+										sx={{
+											'& .MuiSvgIcon-root': {
+												fontSize: '1.25rem',
+											},
+										}}
+									/>
+								}
+								label='External Course'
+								sx={{
+									'& .MuiFormControlLabel-label': {
+										fontSize: '0.85rem',
+									},
+								}}
+							/>
+						</Tooltip>
 					</Box>
-					<CustomDialogActions onCancel={closeNewCourseModal} />
+					<CustomDialogActions onCancel={closeNewCourseModal} actionSx={{ width: '95%', margin: '0.75rem auto' }}/>
 				</form>
 			</CustomDialog>
 
@@ -520,9 +576,9 @@ const AdminCourses = () => {
 														alignItems: 'center',
 														justifyContent: 'center',
 														fontSize: '0.65rem',
-														margin: '0 auto'
+														margin: '0 auto',
 													}}>
-														C
+													C
 												</Box>
 											)}
 										</TableCell>

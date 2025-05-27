@@ -1,4 +1,4 @@
-import { Box, Typography } from '@mui/material';
+import { Box, DialogContent, Typography } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { FormEvent, useContext, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
@@ -94,6 +94,9 @@ const AdminCourseEditPage = () => {
 
 	const [isChapterUpdated, setIsChapterUpdated] = useState<ChapterUpdateTrack[]>([]);
 	const [isDocumentUpdated, setIsDocumentUpdated] = useState<DocumentUpdateTrack[]>([]);
+
+	const [isExpiredDialogOpen, setIsExpiredDialogOpen] = useState(false);
+	const [pendingCourseUpdate, setPendingCourseUpdate] = useState<null | (() => void)>(null);
 
 	const toggleDocRenameModal = (index: number, document: Document) => {
 		const newRenameModalOpen = [...isDocRenameModalOpen];
@@ -204,72 +207,17 @@ const AdminCourseEditPage = () => {
 		}
 	}, [courseId, resetChanges]);
 
-	const handlePublishing = async (): Promise<void> => {
-		const isTryingToPublish = !singleCourse?.isActive;
-
-		const hasPublishedLesson = chapterLessonDataBeforeSave.some((chapter) => chapter.lessons?.some((lesson) => lesson?.isActive));
-
-		if (isTryingToPublish && !hasPublishedLesson) {
-			setIsNoChapterMsgOpen(true);
-			return;
-		} else if (courseId !== undefined) {
-			try {
-				await axios.patch(`${base_url}/courses/${courseId}`, {
-					isActive: !singleCourse?.isActive,
-					// publishedAt will be handled by the backend when publishing
-					// When unpublishing, we explicitly set it to null
-					publishedAt: isTryingToPublish ? undefined : null,
-				});
-				setSingleCourse((prevData) => {
-					if (prevData) {
-						return {
-							...prevData,
-							isActive: !singleCourse?.isActive,
-							publishedAt: isTryingToPublish ? new Date().toISOString() : null,
-						};
-					}
-					return prevData;
-				});
-				updateCoursePublishing(courseId);
-			} catch (error) {
-				console.log(error);
-			}
-		}
-	};
-
-	const handleCourseUpdate = async (e: FormEvent): Promise<void> => {
-		e.preventDefault();
-
-		let validUntil: Date | null = null;
-
-		const startingDate = new Date(singleCourse?.startingDate || '');
-		const durationWeeks = singleCourse?.durationWeeks || 0;
-
-		if (!isNaN(startingDate.getTime()) && durationWeeks > 0) {
-			validUntil = new Date(startingDate.getTime() + durationWeeks * 7 * 24 * 60 * 60 * 1000);
-
-			if (validUntil < new Date()) {
-				const confirmContinue = window.confirm(
-					'This course appears to be expired based on its starting date and duration.\n\nOnce expired, it will no longer be editable — only cloning will be allowed.\n\nDo you still want to continue editing?'
-				);
-
-				if (!confirmContinue) {
-					setSingleCourse((prev) =>
-						prev
-							? {
-									...prev,
-									startingDate: null,
-									durationWeeks: 0,
-								}
-							: prev
-					);
-					return;
-				}
-			}
-		}
-
+	const actuallyUpdateCourse = async () => {
 		let updatedChapters: ChapterLessonData[] = [];
 		let updatedDocuments: Document[] = [];
+
+		// Calculate validUntil here
+		const startingDate = new Date(singleCourse?.startingDate || '');
+		const durationWeeks = singleCourse?.durationWeeks || 0;
+		const validUntil =
+			!isNaN(startingDate.getTime()) && durationWeeks > 0
+				? new Date(startingDate.getTime() + durationWeeks * 7 * 24 * 60 * 60 * 1000)
+				: null;
 
 		try {
 			if (!chapterLessonDataBeforeSave) {
@@ -457,7 +405,6 @@ const AdminCourseEditPage = () => {
 						updatedByImageUrl: responseUpdatedData.updatedByImageUrl,
 						updatedByRole: responseUpdatedData.updatedByRole,
 					});
-					// fetchCourses();
 
 					await Promise.all(
 						updatedChapters?.map(async (chapter) => {
@@ -504,12 +451,67 @@ const AdminCourseEditPage = () => {
 		}
 	};
 
+	const handlePublishing = async (): Promise<void> => {
+		const isTryingToPublish = !singleCourse?.isActive;
+
+		const hasPublishedLesson = chapterLessonDataBeforeSave.some((chapter) => chapter.lessons?.some((lesson) => lesson?.isActive));
+
+		if (isTryingToPublish && !hasPublishedLesson) {
+			setIsNoChapterMsgOpen(true);
+			return;
+		} else if (courseId !== undefined) {
+			try {
+				await axios.patch(`${base_url}/courses/${courseId}`, {
+					isActive: !singleCourse?.isActive,
+					// publishedAt will be handled by the backend when publishing
+					// When unpublishing, we explicitly set it to null
+					publishedAt: isTryingToPublish ? undefined : null,
+				});
+				setSingleCourse((prevData) => {
+					if (prevData) {
+						return {
+							...prevData,
+							isActive: !singleCourse?.isActive,
+							publishedAt: isTryingToPublish ? new Date().toISOString() : null,
+						};
+					}
+					return prevData;
+				});
+				updateCoursePublishing(courseId);
+			} catch (error) {
+				console.log(error);
+			}
+		}
+	};
+
+	const handleCourseUpdate = async (e: FormEvent): Promise<void> => {
+		e.preventDefault();
+
+		let validUntil: Date | null = null;
+		const startingDate = new Date(singleCourse?.startingDate || '');
+		const durationWeeks = singleCourse?.durationWeeks || 0;
+
+		if (!isNaN(startingDate.getTime()) && durationWeeks > 0) {
+			validUntil = new Date(startingDate.getTime() + durationWeeks * 7 * 24 * 60 * 60 * 1000);
+			if (validUntil < new Date()) {
+				setIsExpiredDialogOpen(true);
+				setPendingCourseUpdate(() => () => {
+					actuallyUpdateCourse();
+				});
+				return;
+			}
+		}
+
+		// If not expired, proceed as normal
+		await actuallyUpdateCourse();
+	};
+
 	const y = useMotionValue(0);
 	const boxShadow = useRaisedShadow(y);
 
 	return (
 		<DashboardPagesLayout pageName='Edit Course' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
-			<Box sx={{ width: '80%', position: 'fixed', top: '4rem', zIndex: 1, backgroundColor: theme.bgColor?.secondary }}>
+			<Box sx={{ width: '80%', position: 'fixed', top: '4rem', zIndex: 1000, backgroundColor: theme.bgColor?.secondary }}>
 				<CoursePaper
 					userId={userId}
 					singleCourse={singleCourse}
@@ -533,7 +535,7 @@ const AdminCourseEditPage = () => {
 			</Box>
 
 			<Box sx={{ display: 'flex', width: '95%', justifyContent: 'center', marginTop: '9rem' }}>
-				{!isEditMode && <CourseDetailsNonEditBox singleCourse={singleCourse} chapters={chapterLessonData} />}
+				{!isEditMode && <CourseDetailsNonEditBox singleCourse={singleCourse} chapters={chapterLessonData} setSingleCourse={setSingleCourse}/>}
 
 				{isEditMode && (
 					<Box
@@ -763,6 +765,31 @@ const AdminCourseEditPage = () => {
 					</Box>
 				)}
 			</Box>
+
+			{/* CustomDialog for expired course confirmation */}
+			<CustomDialog
+				openModal={isExpiredDialogOpen}
+				closeModal={() => setIsExpiredDialogOpen(false)}
+				title="Course Expired"
+				maxWidth="sm"
+			>
+				<DialogContent>
+					<Typography variant='body2'>
+					This course appears to be expired based on its starting date and duration.<br /><br />
+					Once expired, it will no longer be editable — only cloning will be allowed.<br /><br />
+					Do you still want to continue editing?
+					</Typography>
+				</DialogContent>
+				<CustomDialogActions
+					onCancel={() => setIsExpiredDialogOpen(false)}
+					onSubmit={() => {
+						if (pendingCourseUpdate) pendingCourseUpdate();
+						setIsExpiredDialogOpen(false);
+					}}
+					submitBtnText="Continue Editing"
+					cancelBtnText="Cancel"
+				/>
+			</CustomDialog>
 		</DashboardPagesLayout>
 	);
 };

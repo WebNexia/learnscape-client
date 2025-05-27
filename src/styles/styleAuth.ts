@@ -8,7 +8,7 @@ export const formContainerStyles = (isVerySmallScreen: boolean, isSmallScreen: b
 		? '3rem 1rem 2rem 1rem'
 		: isRotatedMedium
 		? '5rem 1rem 2rem 1rem'
-		: '6rem 2rem 4rem 2rem',
+		: '6rem 2rem 2rem 2rem',
 	border: 'none',
 	borderRadius: '0.35rem',
 	boxShadow: isVerySmallScreen || isRotated ? '0.1rem 0.2rem 0.2rem 0.1rem rgba(0,0,0,0.1)' : '0.1rem 0.3rem 0.2rem 0.2rem rgba(0,0,0,0.1)',
@@ -16,4 +16,5 @@ export const formContainerStyles = (isVerySmallScreen: boolean, isSmallScreen: b
 	':hover': {
 		boxShadow: '0rem 0.1rem 0.4rem 0.1rem rgba(0,0,0,0.2)',
 	},
+	
 });

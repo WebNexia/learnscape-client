@@ -24,6 +24,7 @@ import CustomCancelButton from '../components/forms/customButtons/CustomCancelBu
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import PhoneInput from 'react-phone-input-2';
 import { useGeoLocation } from '../hooks/useGeoLocation';
+import 'react-phone-input-2/lib/style.css';
 
 interface AuthProps {
 	setUserRole: React.Dispatch<React.SetStateAction<string | null>>;
@@ -73,7 +74,17 @@ const Auth = ({ setUserRole }: AuthProps) => {
 	};
 
 	const errorMessageTypography = (
-		<Typography variant='body2' sx={{ textAlign: 'center', color: 'red', marginTop: '1rem' }}>
+		<Typography
+			variant='body2'
+			sx={{
+				textAlign: 'center',
+				color: '#ff4d4f',
+				backgroundColor: 'rgba(255, 77, 79, 0.08)',
+				padding: '0.5rem 1rem',
+				borderRadius: '0.5rem',
+				marginTop: '0.75rem',
+				fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+			}}>
 			{errorMsg}
 		</Typography>
 	);
@@ -314,270 +325,237 @@ const Auth = ({ setUserRole }: AuthProps) => {
 	return (
 		<Box
 			sx={{
+				minHeight: '100vh',
 				display: 'flex',
 				flexDirection: 'column',
-				justifyContent: 'center',
-				alignItems: 'center',
 				backgroundColor: '#FDF7F0',
-				height: '100vh',
-				padding: isRotated ? '5rem 0' : '',
 			}}>
-			<Box>
-				<Typography variant='h1' sx={{ fontSize: '2.5rem', mb: '1.5rem' }}>
-					KAIZENGLISH
-				</Typography>
-			</Box>
-			<Box sx={styles.formContainerStyles(isVerySmallScreen, isSmallScreen, isRotated, isRotatedMedium)}>
+			{/* Main content */}
+			<Box
+				sx={{
+					flex: 1,
+					display: 'flex',
+					flexDirection: 'column',
+					alignItems: 'center',
+					justifyContent: 'flex-start',
+					position: 'relative',
+					overflow: 'hidden',
+					paddingTop: '10vh',
+				}}>
+				{/* Background Pattern */}
 				<Box
 					sx={{
-						display: 'flex',
-						justifyContent: 'center',
-						alignItems: 'center',
-						width: '100%',
 						position: 'absolute',
 						top: 0,
 						left: 0,
-					}}>
-					{!isResetPassword && (
-						<>
-							<Button
-								fullWidth
-								onClick={() => {
-									setActiveForm(AuthForms.SIGN_IN);
-									setShowPassword(false);
-									if (activeForm !== AuthForms.SIGN_IN) {
-										setErrorMsg(undefined);
-										setFirstName('');
-										setLastName('');
-										setEmail('');
-										setUsername('');
-										setPassword('');
-										setPhone('');
-									}
-								}}
-								size='large'
-								sx={{
-									...sharedBtnStyles,
-									padding: isRotated ? '0.5rem' : '1rem 0',
-									backgroundColor: activeForm !== AuthForms.SIGN_IN ? 'lightgray' : null,
-									borderTop: activeForm === AuthForms.SIGN_IN ? `solid 0.3rem ${theme.bgColor?.greenPrimary}` : 'solid 0.3rem lightgray',
-									fontSize: isMobileSize ? '0.9rem' : '1.15rem',
-								}}>
-								Log In
-							</Button>
-							<Button
-								fullWidth
-								onClick={() => {
-									setActiveForm(AuthForms.SIGN_UP);
-									setShowPassword(false);
-									if (activeForm !== AuthForms.SIGN_UP) {
-										setEmail('');
-										setUsername('');
-										setPassword('');
-										setOrgCode('');
-										setPhone('');
-										setErrorMsg(undefined);
-									}
-								}}
-								size='large'
-								sx={{
-									...sharedBtnStyles,
-									padding: isRotated ? '0.5rem' : '1rem 0',
-									backgroundColor: activeForm !== AuthForms.SIGN_UP ? 'lightgray' : null,
-									borderTop: activeForm === AuthForms.SIGN_UP ? `solid 0.3rem ${theme.bgColor?.greenPrimary}` : 'solid 0.3rem lightgray',
-									fontSize: isMobileSize ? '0.9rem' : '1.15rem',
-								}}>
-								Register
-							</Button>
-						</>
-					)}
+						right: 0,
+						bottom: 0,
+						background: `
+							radial-gradient(circle at 20% 20%, rgba(77, 123, 139, 0.08) 0%, transparent 50%),
+							radial-gradient(circle at 80% 80%, rgba(1, 67, 90, 0.08) 0%, transparent 50%)
+						`,
+						zIndex: 0,
+					}}
+				/>
+				{/* Logo and Title */}
+				<Box sx={{ position: 'relative', zIndex: 1, mb: '1.5rem' }}>
+					<Typography
+						variant='h1'
+						sx={{
+							fontSize: { xs: '2rem', sm: '2.75rem' },
+							fontWeight: 700,
+							background: 'linear-gradient(270deg, #4D7B8B, #01435A)',
+							backgroundClip: 'text',
+							textFillColor: 'transparent',
+							WebkitBackgroundClip: 'text',
+							WebkitTextFillColor: 'transparent',
+							textAlign: 'center',
+						}}>
+						KAIZENGLISH
+					</Typography>
 				</Box>
 
-				<Snackbar open={signUpMessage} autoHideDuration={15000} onClose={() => setSignUpMessage(false)} anchorOrigin={{ vertical, horizontal }}>
-					<Alert onClose={() => setSignUpMessage(false)} severity='success' sx={{ width: '100%', fontSize: isMobileSize ? '0.7rem' : undefined }}>
-						You successfully signed up! Please verify your email address.
-					</Alert>
-				</Snackbar>
+				{/* Auth Form Container */}
+				<Box
+					sx={{
+						...styles.formContainerStyles(isVerySmallScreen, isSmallScreen, isRotated, isRotatedMedium),
+						'position': 'relative',
+						'zIndex': 1,
+						'backdropFilter': 'blur(10px)',
+						'backgroundColor': 'rgba(255, 255, 255, 0.95)',
+						'borderRadius': '1rem',
+						'boxShadow': '0 8px 32px rgba(0, 0, 0, 0.08)',
+						'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+						'border': '1px solid rgba(255, 255, 255, 0.2)',
+						'&:hover': {
+							boxShadow: '0 12px 48px rgba(0, 0, 0, 0.12)',
+							transform: 'translateY(-2px)',
+						},
+						'animation': 'fadeIn 0.5s ease-out',
+						'@keyframes fadeIn': {
+							'0%': {
+								opacity: 0,
+								transform: 'translateY(10px)',
+							},
+							'100%': {
+								opacity: 1,
+								transform: 'translateY(0)',
+							},
+						},
+					}}>
+					{/* Auth Tabs */}
+					<Box
+						sx={{
+							display: 'flex',
+							justifyContent: 'center',
+							alignItems: 'center',
+							width: '100%',
+							position: 'absolute',
+							top: 0,
+							left: 0,
+							borderRadius: '1rem 1rem 0 0',
+							overflow: 'hidden',
+						}}>
+						{!isResetPassword && (
+							<>
+								<Button
+									fullWidth
+									onClick={(e) => {
+										e.preventDefault();
+										setActiveForm(AuthForms.SIGN_IN);
+										setShowPassword(false);
+										if (activeForm !== AuthForms.SIGN_IN) {
+											setErrorMsg(undefined);
+											setFirstName('');
+											setLastName('');
+											setEmail('');
+											setUsername('');
+											setPassword('');
+											setPhone('');
+										}
+									}}
+									size='large'
+									sx={{
+										...sharedBtnStyles,
+										'padding': '0.75rem',
+										'backgroundColor': activeForm !== AuthForms.SIGN_IN ? 'rgba(0, 0, 0, 0.02)' : 'transparent',
+										'borderTop': 'none',
+										'fontSize': isMobileSize ? '0.85rem' : '1rem',
+										'fontWeight': 500,
+										'letterSpacing': '0.3px',
+										'transition': 'all 0.2s ease',
+										'position': 'relative',
+										'&:after': {
+											content: '""',
+											position: 'absolute',
+											bottom: 0,
+											left: '50%',
+											transform: 'translateX(-50%)',
+											width: activeForm === AuthForms.SIGN_IN ? '30%' : '0%',
+											height: '2px',
+											backgroundColor: theme.bgColor?.greenPrimary,
+											transition: 'width 0.3s ease',
+										},
+										'&:hover': {
+											'backgroundColor': 'rgba(0, 0, 0, 0.04)',
+											'&:after': {
+												width: '30%',
+											},
+										},
+									}}>
+									Log In
+								</Button>
+								<Button
+									fullWidth
+									onClick={(e) => {
+										e.preventDefault();
+										setActiveForm(AuthForms.SIGN_UP);
+										setShowPassword(false);
+										if (activeForm !== AuthForms.SIGN_UP) {
+											setEmail('');
+											setUsername('');
+											setPassword('');
+											setOrgCode('');
+											setPhone('');
+											setErrorMsg(undefined);
+										}
+									}}
+									size='large'
+									sx={{
+										...sharedBtnStyles,
+										'padding': '0.75rem',
+										'backgroundColor': activeForm !== AuthForms.SIGN_UP ? 'rgba(0, 0, 0, 0.02)' : 'transparent',
+										'borderTop': 'none',
+										'fontSize': isMobileSize ? '0.85rem' : '1rem',
+										'fontWeight': 500,
+										'letterSpacing': '0.3px',
+										'transition': 'all 0.2s ease',
+										'position': 'relative',
+										'&:after': {
+											content: '""',
+											position: 'absolute',
+											bottom: 0,
+											left: '50%',
+											transform: 'translateX(-50%)',
+											width: activeForm === AuthForms.SIGN_UP ? '30%' : '0%',
+											height: '2px',
+											backgroundColor: theme.bgColor?.greenPrimary,
+											transition: 'width 0.3s ease',
+										},
+										'&:hover': {
+											'backgroundColor': 'rgba(0, 0, 0, 0.04)',
+											'&:after': {
+												width: '30%',
+											},
+										},
+									}}>
+									Register
+								</Button>
+							</>
+						)}
+					</Box>
 
-				<Box sx={{ display: 'flex', justifyContent: 'center' }}>
-					{
+					{/* Form Content */}
+					<Box
+						sx={{
+							display: 'flex',
+							justifyContent: 'center',
+							mt: '0rem',
+							px: { xs: 0.5, sm: 0 },
+						}}>
 						{
-							[AuthForms.SIGN_IN]: (
-								<Box sx={{ marginTop: '1.5rem', width: isVerySmallScreen ? '85%' : '80%' }}>
-									<form onSubmit={signIn}>
-										<Box
-											sx={{
-												display: 'flex',
-												flexDirection: 'column',
-												justifyContent: 'center',
-												alignItems: 'center',
-											}}>
-											<CustomTextField
-												label='Email Address'
-												type={TextFieldTypes.EMAIL}
-												onChange={(e) => {
-													setEmail(e.target.value.trim());
-													setErrorMsg(undefined);
-												}}
-												value={email}
-											/>
-											<CustomTextField
-												label='Password'
-												type={showPassword ? TextFieldTypes.TEXT : TextFieldTypes.PASSWORD}
-												onChange={(e) => {
-													setPassword(e.target.value.trim());
-													setErrorMsg(undefined);
-												}}
-												value={password}
-												InputProps={{
-													endAdornment: (
-														<InputAdornment position='end'>
-															<IconButton onClick={togglePasswordVisibility} edge='end'>
-																{!showPassword ? (
-																	<Visibility sx={{ fontSize: isMobileSize ? '1rem' : '1.25rem' }} />
-																) : (
-																	<VisibilityOff sx={{ fontSize: isMobileSize ? '1rem' : '1.25rem' }} />
-																)}
-															</IconButton>
-														</InputAdornment>
-													),
-												}}
-											/>
-
-											<Box sx={{ width: '100%' }}>
-												<Typography
-													onClick={() => {
-														setActiveForm(AuthForms.RESET);
-														setIsResetPassword(true);
-														setEmail('');
+							{
+								[AuthForms.SIGN_IN]: (
+									<Box sx={{ marginTop: '0.25rem', width: isVerySmallScreen ? '85%' : '80%' }}>
+										<form onSubmit={signIn}>
+											<Box
+												sx={{
+													display: 'flex',
+													flexDirection: 'column',
+													justifyContent: 'center',
+													alignItems: 'center',
+												}}>
+												<CustomTextField
+													label='Email Address'
+													type={TextFieldTypes.EMAIL}
+													onChange={(e) => {
+														setEmail(e.target.value.trim());
+														setErrorMsg(undefined);
 													}}
+													value={email}
 													sx={{
-														cursor: 'pointer',
-														':hover': {
-															textDecoration: 'underline',
+														'& .MuiOutlinedInput-root': {
+															'borderRadius': '0.35rem',
+															'transition': 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+															'&:hover': {
+																backgroundColor: 'rgba(0, 0, 0, 0.02)',
+															},
+															'&.Mui-focused': {
+																boxShadow: '0 0 0 2px rgba(30, 194, 139, 0.2)',
+															},
 														},
-														fontSize: isMobileSize ? '0.7rem' : '0.8rem',
-													}}>
-													Forgot Your Password?
-												</Typography>
-											</Box>
-										</Box>
-										<Button variant='contained' fullWidth sx={submitBtnStyles} type='submit'>
-											Log In
-										</Button>
-									</form>
-								</Box>
-							),
-							[AuthForms.SIGN_UP]: (
-								<Box sx={{ marginTop: '1.5rem', width: isVerySmallScreen ? '85%' : '80%' }}>
-									<form onSubmit={signUp}>
-										<Box
-											sx={{
-												display: 'flex',
-												flexDirection: 'column',
-												justifyContent: 'center',
-												alignItems: 'flex-start',
-											}}>
-											<Box sx={{ display: 'flex', width: '100%' }}>
-												<CustomTextField
-													label='First Name'
-													type={TextFieldTypes.TEXT}
-													onChange={(e) => {
-														setFirstName(e.target.value.trim());
-														setErrorMsg(undefined);
-													}}
-													value={firstName}
-												/>
-												<CustomTextField
-													label='Last Name'
-													type={TextFieldTypes.TEXT}
-													onChange={(e) => {
-														setLastName(e.target.value.trim());
-														setErrorMsg(undefined);
-													}}
-													value={lastName}
-													sx={{ ml: '0.5rem' }}
-												/>
-											</Box>
-											<CustomTextField
-												label='Email Address'
-												type={TextFieldTypes.EMAIL}
-												onChange={(e) => {
-													setEmail(e.target.value.trim());
-													setErrorMsg(undefined);
-												}}
-												value={email}
-											/>
-
-											<Box sx={{ width: '100%', mb: '1.5rem' }}>
-												<PhoneInput
-													country={'tr'}
-													enableSearch={true}
-													inputStyle={{ width: '100%', height: '2rem', fontFamily: 'Poppins' }}
-													containerStyle={{ marginBottom: '0.85rem', color: theme.textColor?.secondary.main, fontFamily: 'Poppins' }}
-													value={phone}
-													onChange={(phoneNumber, country) => {
-														const formattedNumber = phoneNumber.startsWith('+') ? phoneNumber : `+${phoneNumber}`;
-														setPhone(formattedNumber);
-														setErrorMsg(undefined);
 													}}
 												/>
-											</Box>
-
-											<Box sx={{ display: 'flex', width: '110%' }}>
-												<CustomTextField
-													label='Username'
-													type={TextFieldTypes.TEXT}
-													onChange={handleUsernameChange}
-													value={username}
-													InputProps={{ inputProps: { maxLength: 15 } }}
-												/>
-												<Box sx={{ display: 'flex', width: '10%', justifyContent: 'flex-end', mb: '0.85rem' }}>
-													<Tooltip title='Username Rules' placement='right'>
-														<IconButton
-															onClick={() => setIsUserNameImageInfoModalOpen(true)}
-															sx={{
-																':hover': {
-																	backgroundColor: 'transparent',
-																},
-															}}>
-															<Info sx={{ fontSize: isMobileSize ? '1rem' : '1.25rem' }} />
-														</IconButton>
-													</Tooltip>
-												</Box>
-											</Box>
-
-											<CustomDialog
-												title='Username Rules'
-												openModal={isUserNameImageInfoModalOpen}
-												closeModal={() => setIsUserNameImageInfoModalOpen(false)}
-												maxWidth='sm'>
-												<DialogContent>
-													<Box sx={{ display: 'flex', flexDirection: 'column', margin: '0.5rem 0 0.5rem 1.5rem' }}>
-														<Typography variant='body2'>- Username can include:</Typography>
-														<Box sx={{ margin: '0.85rem 0 0 3rem' }}>
-															{['max 15 characters', 'underscore (_) and period (.)'].map((rule, index) => (
-																<ul key={index}>
-																	<li style={{ color: theme.textColor?.secondary.main }}>
-																		<Typography sx={{ fontSize: '0.85rem', mb: '0.35rem' }}>{rule}</Typography>
-																	</li>
-																</ul>
-															))}
-														</Box>
-														<Typography variant='body2' sx={{ mt: '0.5rem' }}>
-															- Username cannot start/end with underscore and period
-														</Typography>
-														<Typography variant='body2' sx={{ mt: '0.5rem' }}>
-															- Username cannot include space
-														</Typography>
-													</Box>
-													<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '100%', mb: '0.5rem' }}>
-														<CustomCancelButton onClick={() => setIsUserNameImageInfoModalOpen(false)}>Close</CustomCancelButton>
-													</Box>
-												</DialogContent>
-											</CustomDialog>
-
-											<Box sx={{ display: 'flex', width: '110%' }}>
 												<CustomTextField
 													label='Password'
 													type={showPassword ? TextFieldTypes.TEXT : TextFieldTypes.PASSWORD}
@@ -586,17 +564,22 @@ const Auth = ({ setUserRole }: AuthProps) => {
 														setErrorMsg(undefined);
 													}}
 													value={password}
+													sx={{
+														'& .MuiOutlinedInput-root': {
+															'borderRadius': '0.35rem',
+															'transition': 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+															'&:hover': {
+																backgroundColor: 'rgba(0, 0, 0, 0.02)',
+															},
+															'&.Mui-focused': {
+																boxShadow: '0 0 0 2px rgba(30, 194, 139, 0.2)',
+															},
+														},
+													}}
 													InputProps={{
 														endAdornment: (
 															<InputAdornment position='end'>
-																<IconButton
-																	onClick={togglePasswordVisibility}
-																	edge='end'
-																	sx={{
-																		':hover': {
-																			backgroundColor: 'transparent',
-																		},
-																	}}>
+																<IconButton onClick={togglePasswordVisibility} edge='end'>
 																	{!showPassword ? (
 																		<Visibility sx={{ fontSize: isMobileSize ? '1rem' : '1.25rem' }} />
 																	) : (
@@ -607,146 +590,502 @@ const Auth = ({ setUserRole }: AuthProps) => {
 														),
 													}}
 												/>
-												<Box sx={{ display: 'flex', width: '10%', justifyContent: 'flex-end', mt: '-1rem' }}>
-													<Tooltip title='Password Rules' placement='right'>
-														<IconButton
-															onClick={() => setIsPasswordInfoModalOpen(true)}
-															sx={{
-																':hover': {
-																	backgroundColor: 'transparent',
+
+												<Box sx={{ width: '100%' }}>
+													<Typography
+														onClick={() => {
+															setActiveForm(AuthForms.RESET);
+															setIsResetPassword(true);
+															setEmail('');
+														}}
+														sx={{
+															'cursor': 'pointer',
+															':hover': {
+																textDecoration: 'underline',
+															},
+															'fontSize': isMobileSize ? '0.7rem' : '0.8rem',
+														}}>
+														Forgot Your Password?
+													</Typography>
+												</Box>
+											</Box>
+											<Button
+												variant='contained'
+												fullWidth
+												sx={{
+													...submitBtnStyles,
+													'borderRadius': '0.35rem',
+													'padding': '0.45rem',
+													'fontSize': '0.9rem',
+													'fontWeight': 400,
+													'letterSpacing': '0.3px',
+													'textTransform': 'none',
+													'boxShadow': '0 4px 12px rgba(30, 194, 139, 0.15)',
+													'transition': 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+													'&:hover': {
+														transform: 'translateY(-1px)',
+														boxShadow: '0 6px 16px rgba(30, 194, 139, 0.2)',
+													},
+													'&:active': {
+														transform: 'translateY(0)',
+														boxShadow: '0 4px 12px rgba(30, 194, 139, 0.15)',
+													},
+												}}
+												type='submit'>
+												Log In
+											</Button>
+										</form>
+									</Box>
+								),
+								[AuthForms.SIGN_UP]: (
+									<Box sx={{ marginTop: '0.5rem', width: isVerySmallScreen ? '85%' : '80%' }}>
+										<form onSubmit={signUp}>
+											<Box
+												sx={{
+													display: 'flex',
+													flexDirection: 'column',
+													justifyContent: 'center',
+													alignItems: 'flex-start',
+												}}>
+												<Box sx={{ display: 'flex', width: '100%' }}>
+													<CustomTextField
+														label='First Name'
+														type={TextFieldTypes.TEXT}
+														onChange={(e) => {
+															setFirstName(e.target.value.trim());
+															setErrorMsg(undefined);
+														}}
+														value={firstName}
+														sx={{
+															'& .MuiOutlinedInput-root': {
+																'borderRadius': '0.35rem',
+																'transition': 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+																'&:hover': {
+																	backgroundColor: 'rgba(0, 0, 0, 0.02)',
 																},
-															}}>
-															<Info sx={{ fontSize: isMobileSize ? '1rem' : '1.25rem' }} />
-														</IconButton>
-													</Tooltip>
+																'&.Mui-focused': {
+																	boxShadow: '0 0 0 2px rgba(30, 194, 139, 0.2)',
+																},
+															},
+														}}
+													/>
+													<CustomTextField
+														label='Last Name'
+														type={TextFieldTypes.TEXT}
+														onChange={(e) => {
+															setLastName(e.target.value.trim());
+															setErrorMsg(undefined);
+														}}
+														value={lastName}
+														sx={{
+															'ml': '0.5rem',
+															'& .MuiOutlinedInput-root': {
+																'borderRadius': '0.35rem',
+																'transition': 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+																'&:hover': {
+																	backgroundColor: 'rgba(0, 0, 0, 0.02)',
+																},
+																'&.Mui-focused': {
+																	boxShadow: '0 0 0 2px rgba(30, 194, 139, 0.2)',
+																},
+															},
+														}}
+													/>
 												</Box>
 
-												<CustomDialog
-													title='Password Rules'
-													openModal={isPasswordInfoModalOpen}
-													closeModal={() => setIsPasswordInfoModalOpen(false)}
-													maxWidth='sm'>
-													<DialogContent>
-														<Box sx={{ width: '75%', margin: '0.5rem 0 0.5rem 2rem' }}>
-															<Typography variant='body2' sx={{ mb: '0.5rem' }}>
-																- Password cannot include space
-															</Typography>
-															<Typography variant='body2'>- Password must include at least:</Typography>
-															<Box sx={{ margin: '0.75rem 0 0 3rem' }}>
-																{['6 characters', '1 letter', '1 number'].map((rule, index) => (
-																	<ul key={index}>
-																		<li style={{ color: theme.textColor?.secondary.main }}>
-																			<Typography sx={{ fontSize: '0.85rem', mb: '0.35rem' }}>{rule}</Typography>
-																		</li>
-																	</ul>
-																))}
-															</Box>
-														</Box>
-														<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '100%', mb: '0.5rem' }}>
-															<CustomCancelButton onClick={() => setIsPasswordInfoModalOpen(false)}>Close</CustomCancelButton>
-														</Box>
-													</DialogContent>
-												</CustomDialog>
+												<CustomTextField
+														label='Username'
+														type={TextFieldTypes.TEXT}
+														onChange={handleUsernameChange}
+														value={username}
+														InputProps={{ inputProps: { maxLength: 15 } }}
+														sx={{
+															'& .MuiOutlinedInput-root': {
+																'borderRadius': '0.35rem',
+																'transition': 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+																'&:hover': {
+																	backgroundColor: 'rgba(0, 0, 0, 0.02)',
+																},
+																'&.Mui-focused': {
+																	boxShadow: '0 0 0 2px rgba(30, 194, 139, 0.2)',
+																},
+															},
+														}}
+													/>
+												
+
+												<Box sx={{ width: '100%', mb: '1.75rem' }}>
+													<PhoneInput
+														country={'tr'}
+														enableSearch={true}
+														searchPlaceholder='Search country...'
+														searchNotFound='No country found'
+														enableAreaCodes={false}
+														countryCodeEditable={false}
+														inputStyle={{
+															width: '100%',
+															height: '2.25rem',
+															fontFamily: 'Poppins',
+															fontSize: isMobileSize ? '0.85rem' : '0.9rem',
+															borderRadius: '0.35rem',
+															border: '1px solid rgba(0, 0, 0, 0.23)',
+															transition: 'all 0.2s ease',
+														}}
+														containerStyle={{
+															marginBottom: '0.5rem',
+															color: theme.textColor?.secondary.main,
+															fontFamily: 'Poppins',
+															transition: 'all 0.2s ease',
+														}}
+														buttonStyle={{
+															borderRadius: '0.35rem 0 0 0.35rem',
+															border: '1px solid rgba(0, 0, 0, 0.23)',
+															backgroundColor: 'transparent',
+														}}
+														dropdownStyle={{
+															borderRadius: '0.35rem',
+															border: '1px solid rgba(0, 0, 0, 0.23)',
+															boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+														}}
+														searchStyle={{
+															width: '100%',
+															height: '2rem',
+															fontFamily: 'Poppins',
+															fontSize: '0.85rem',
+															borderRadius: '0.35rem',
+															border: '1px solid rgba(0, 0, 0, 0.23)',
+															margin: '0.5rem 0',
+														}}
+														value={phone}
+														onChange={(phoneNumber, country) => {
+															const formattedNumber = phoneNumber.startsWith('+') ? phoneNumber : `+${phoneNumber}`;
+															setPhone(formattedNumber);
+															setErrorMsg(undefined);
+														}}
+													/>
+												</Box>
+
+												<Box sx={{ display: 'flex', width: '110%' }}>
+													
+													<CustomTextField
+													label='Email Address'
+													type={TextFieldTypes.EMAIL}
+													onChange={(e) => {
+														setEmail(e.target.value.trim());
+														setErrorMsg(undefined);
+													}}
+													value={email}
+													sx={{
+														'& .MuiOutlinedInput-root': {
+															'borderRadius': '0.35rem',
+															'transition': 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+															'&:hover': {
+																backgroundColor: 'rgba(0, 0, 0, 0.02)',
+															},
+															'&.Mui-focused': {
+																boxShadow: '0 0 0 2px rgba(30, 194, 139, 0.2)',
+															},
+														},
+													}}
+												/>
+													<Box sx={{ display: 'flex', width: '10%', justifyContent: 'flex-end', mb: '0.85rem' }}>
+														<Tooltip title='Username Rules' placement='right'>
+															<IconButton
+																onClick={() => setIsUserNameImageInfoModalOpen(true)}
+																sx={{
+																	':hover': {
+																		backgroundColor: 'transparent',
+																	},
+																}}>
+																<Info sx={{ fontSize: isMobileSize ? '1rem' : '1.25rem' }} />
+															</IconButton>
+														</Tooltip>
+													</Box>
+												</Box>
+
+												<Box sx={{ display: 'flex', width: '110%' }}>
+													<CustomTextField
+														label='Password'
+														type={showPassword ? TextFieldTypes.TEXT : TextFieldTypes.PASSWORD}
+														onChange={(e) => {
+															setPassword(e.target.value.trim());
+															setErrorMsg(undefined);
+														}}
+														value={password}
+														sx={{
+															'& .MuiOutlinedInput-root': {
+																'borderRadius': '0.35rem',
+																'transition': 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+																'&:hover': {
+																	backgroundColor: 'rgba(0, 0, 0, 0.02)',
+																},
+																'&.Mui-focused': {
+																	boxShadow: '0 0 0 2px rgba(30, 194, 139, 0.2)',
+																},
+															},
+														}}
+														InputProps={{
+															endAdornment: (
+																<InputAdornment position='end'>
+																	<IconButton
+																		onClick={togglePasswordVisibility}
+																		edge='end'
+																		sx={{
+																			':hover': {
+																				backgroundColor: 'transparent',
+																			},
+																		}}>
+																		{!showPassword ? (
+																			<Visibility sx={{ fontSize: isMobileSize ? '1rem' : '1.25rem' }} />
+																		) : (
+																			<VisibilityOff sx={{ fontSize: isMobileSize ? '1rem' : '1.25rem' }} />
+																		)}
+																	</IconButton>
+																</InputAdornment>
+															),
+														}}
+													/>
+													<Box sx={{ display: 'flex', width: '10%', justifyContent: 'flex-end', mt: '-1rem' }}>
+														<Tooltip title='Password Rules' placement='right'>
+															<IconButton
+																onClick={() => setIsPasswordInfoModalOpen(true)}
+																sx={{
+																	':hover': {
+																		backgroundColor: 'transparent',
+																	},
+																}}>
+																<Info sx={{ fontSize: isMobileSize ? '1rem' : '1.25rem' }} />
+															</IconButton>
+														</Tooltip>
+													</Box>
+												</Box>
 											</Box>
-											{/* <CustomTextField
-												label='Organization Code'
-												type={TextFieldTypes.TEXT}
-												onChange={(e) => {
-													setOrgCode(e.target.value.trim());
-													setErrorMsg(undefined);
+											<Button
+												variant='contained'
+												fullWidth
+												sx={{
+													...submitBtnStyles,
+													'borderRadius': '0.35rem',
+													'padding': '0.45rem',
+													'fontSize': '0.9rem',
+													'fontWeight': 400,
+													'letterSpacing': '0.3px',
+													'textTransform': 'none',
+													'boxShadow': '0 4px 12px rgba(30, 194, 139, 0.15)',
+													'transition': 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+													'&:hover': {
+														transform: 'translateY(-1px)',
+														boxShadow: '0 6px 16px rgba(30, 194, 139, 0.2)',
+													},
+													'&:active': {
+														transform: 'translateY(0)',
+														boxShadow: '0 4px 12px rgba(30, 194, 139, 0.15)',
+													},
 												}}
-												value={orgCode}
-											/> */}
-										</Box>
-										<Button variant='contained' fullWidth sx={submitBtnStyles} type='submit'>
-											Register
-										</Button>
-									</form>
-								</Box>
-							),
-							[AuthForms.RESET]: (
-								<form
-									style={{ marginTop: '-2rem', width: '80%' }}
-									onSubmit={(e) => {
-										e.preventDefault();
-										handlePasswordReset();
-									}}>
-									<Typography variant='body1' sx={{ marginBottom: '1rem' }}>
-										Reset Password
-									</Typography>
-									<CustomTextField
-										label='Email Address'
-										type='email'
-										value={email}
-										onChange={(e) => {
-											setEmail(e.target.value.trim());
-											setErrorMsg(undefined);
-										}}
-									/>
-									<Button variant='contained' fullWidth sx={submitBtnStyles} type='submit'>
-										Send Password Reset Email
-									</Button>
-									<Typography
-										sx={{
-											cursor: 'pointer',
-											marginTop: '1rem',
-											textAlign: 'center',
-											':hover': { textDecoration: 'underline' },
-											fontSize: '0.8rem',
-										}}
-										onClick={() => {
-											setActiveForm(AuthForms.SIGN_IN);
-											setIsResetPassword(false);
-											setEmail('');
+												type='submit'>
+												Register
+											</Button>
+										</form>
+									</Box>
+								),
+								[AuthForms.RESET]: (
+									<form
+										style={{ marginTop: '-2rem', width: '80%' }}
+										onSubmit={(e) => {
+											e.preventDefault();
+											handlePasswordReset();
 										}}>
-										Back to Log In
-									</Typography>
-								</form>
-							),
-						}[activeForm]
-					}
+										<Typography variant='body1' sx={{ marginBottom: '1rem' }}>
+											Reset Password
+										</Typography>
+										<CustomTextField
+											label='Email Address'
+											type='email'
+											value={email}
+											onChange={(e) => {
+												setEmail(e.target.value.trim());
+												setErrorMsg(undefined);
+											}}
+										/>
+										<Button variant='contained' fullWidth sx={submitBtnStyles} type='submit'>
+											Send Password Reset Email
+										</Button>
+										<Typography
+											sx={{
+												'cursor': 'pointer',
+												'marginTop': '1rem',
+												'textAlign': 'center',
+												':hover': { textDecoration: 'underline' },
+												'fontSize': '0.8rem',
+											}}
+											onClick={() => {
+												setActiveForm(AuthForms.SIGN_IN);
+												setIsResetPassword(false);
+												setEmail('');
+											}}>
+											Back to Log In
+										</Typography>
+									</form>
+								),
+							}[activeForm]
+						}
+					</Box>
+
+					{/* Home Page Link */}
+					<Box
+						sx={{
+							display: 'flex',
+							justifyContent: 'center',
+							alignItems: 'center',
+							mt: '1.5rem',
+							mb: '0.5rem',
+						}}>
+						<Typography
+							variant='body2'
+							sx={{
+								'color': theme.textColor?.primary.main,
+								'cursor': 'pointer',
+								'transition': 'all 0.3s ease',
+								'&:hover': {
+									color: theme.bgColor?.greenPrimary,
+									textDecoration: 'underline',
+								},
+							}}
+							onClick={() => {
+								navigate('/');
+								setIsResetPassword(false);
+							}}>
+							Home Page
+						</Typography>
+					</Box>
+
+					{/* Error Messages */}
+					<Box
+						sx={{
+							display: 'flex',
+							justifyContent: 'center',
+							mb: '0.5rem',
+						}}>
+						{errorMsg &&
+							{
+								[AuthFormErrorMessages.EMAIL_EXISTS]: errorMessageTypography,
+								[AuthFormErrorMessages.INVALID_CREDENTIALS]: errorMessageTypography,
+								[AuthFormErrorMessages.USERNAME_EXISTS]: errorMessageTypography,
+								[AuthFormErrorMessages.PHONE_NUMBER_EXISTS]: errorMessageTypography,
+								[AuthFormErrorMessages.EMAIL_NOT_VERIFIED]: errorMessageTypography,
+								[AuthFormErrorMessages.UNKNOWN_ERROR_OCCURRED]: errorMessageTypography,
+								[AuthFormErrorMessages.PASSWORD_TOO_SHORT]: errorMessageTypography,
+								[AuthFormErrorMessages.PASSWORD_NO_NUMBER]: errorMessageTypography,
+								[AuthFormErrorMessages.PASSWORD_NO_LETTER]: errorMessageTypography,
+								[AuthFormErrorMessages.NETWORK_ERROR]: errorMessageTypography,
+							}[errorMsg]}
+					</Box>
 				</Box>
 
-				<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-					<Typography
-						variant={isMobileSize ? 'body2' : 'body1'}
+				{/* Success Messages */}
+				<Snackbar open={signUpMessage} autoHideDuration={15000} onClose={() => setSignUpMessage(false)} anchorOrigin={{ vertical, horizontal }}>
+					<Alert
+						onClose={() => setSignUpMessage(false)}
+						severity='success'
 						sx={{
-							marginTop: '1.25rem',
-							color: theme.textColor?.primary.main,
-							cursor: 'pointer',
-							':hover': { textDecoration: 'underline' },
-						}}
-						onClick={() => {
-							navigate('/');
-							setIsResetPassword(false);
+							'width': '100%',
+							'fontSize': isMobileSize ? '0.7rem' : undefined,
+							'boxShadow': '0 4px 12px rgba(0, 0, 0, 0.1)',
+							'borderRadius': '0.5rem',
+							'& .MuiAlert-icon': {
+								color: '#1EC28B',
+							},
 						}}>
-						Home Page
-					</Typography>
-				</Box>
+						You successfully signed up! Please verify your email address.
+					</Alert>
+				</Snackbar>
 
 				<Snackbar open={resetPasswordMsg} autoHideDuration={15000} onClose={() => setResetPasswordMsg(false)} anchorOrigin={{ vertical, horizontal }}>
-					<Alert onClose={() => setResetPasswordMsg(false)} severity='success' sx={{ width: '100%', fontSize: isMobileSize ? '0.7rem' : undefined }}>
+					<Alert
+						onClose={() => setResetPasswordMsg(false)}
+						severity='success'
+						sx={{
+							'width': '100%',
+							'fontSize': isMobileSize ? '0.7rem' : undefined,
+							'boxShadow': '0 4px 12px rgba(0, 0, 0, 0.1)',
+							'borderRadius': '0.5rem',
+							'& .MuiAlert-icon': {
+								color: '#1EC28B',
+							},
+						}}>
 						Password reset email sent! Check your inbox.
 					</Alert>
 				</Snackbar>
 
-				<Box>
-					{errorMsg &&
-						{
-							[AuthFormErrorMessages.EMAIL_EXISTS]: errorMessageTypography,
-							[AuthFormErrorMessages.INVALID_CREDENTIALS]: errorMessageTypography,
-							[AuthFormErrorMessages.USERNAME_EXISTS]: errorMessageTypography,
-							[AuthFormErrorMessages.PHONE_NUMBER_EXISTS]: errorMessageTypography,
-							[AuthFormErrorMessages.EMAIL_NOT_VERIFIED]: errorMessageTypography,
-							[AuthFormErrorMessages.UNKNOWN_ERROR_OCCURRED]: errorMessageTypography,
-							[AuthFormErrorMessages.PASSWORD_TOO_SHORT]: errorMessageTypography,
-							[AuthFormErrorMessages.PASSWORD_NO_NUMBER]: errorMessageTypography,
-							[AuthFormErrorMessages.PASSWORD_NO_LETTER]: errorMessageTypography,
-							[AuthFormErrorMessages.NETWORK_ERROR]: errorMessageTypography,
-						}[errorMsg]}
-				</Box>
-			</Box>
-			<Box sx={{ display: 'flex', justifyContent: 'center', mt: isRotated ? '0.75rem' : '2rem', width: '100%', padding: '0 1rem' }}>
+				{/* Username Rules Modal */}
+				<CustomDialog
+					title='Username Rules'
+					openModal={isUserNameImageInfoModalOpen}
+					closeModal={() => setIsUserNameImageInfoModalOpen(false)}
+					maxWidth='sm'>
+					<DialogContent>
+						<Box sx={{ display: 'flex', flexDirection: 'column', margin: '0.5rem 0 0.75rem 1.5rem' }}>
+							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+								- Username can include:
+							</Typography>
+							<Box sx={{ margin: '0.85rem 0 0 3rem' }}>
+								{['max 15 characters', 'underscore (_) and period (.)'].map((rule, index) => (
+									<ul key={index}>
+										<li style={{ color: theme.textColor?.secondary.main }}>
+											<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.35rem' }}>{rule}</Typography>
+										</li>
+									</ul>
+								))}
+							</Box>
+							<Typography variant='body2' sx={{ mt: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+								- Username cannot start/end with underscore and period
+							</Typography>
+							<Typography variant='body2' sx={{ mt: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+								- Username cannot include space
+							</Typography>
+						</Box>
+						<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '100%', mb: '0.5rem' }}>
+							<CustomCancelButton onClick={() => setIsUserNameImageInfoModalOpen(false)} sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+								Close
+							</CustomCancelButton>
+						</Box>
+					</DialogContent>
+				</CustomDialog>
+
+				{/* Password Rules Modal */}
+				<CustomDialog title='Password Rules' openModal={isPasswordInfoModalOpen} closeModal={() => setIsPasswordInfoModalOpen(false)} maxWidth='sm'>
+					<DialogContent>
+						<Box sx={{ display: 'flex', flexDirection: 'column', margin: '0.5rem 0 0.75rem 1.5rem' }}>
+							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+								Your password must:
+							</Typography>
+							<Box sx={{ margin: '0.85rem 0 0 3rem' }}>
+								{['be at least 6 characters long', 'contain at least one letter', 'contain at least one number'].map((rule, index) => (
+									<ul key={index}>
+										<li style={{ color: theme.textColor?.secondary.main }}>
+											<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.35rem' }}>{rule}</Typography>
+										</li>
+									</ul>
+								))}
+							</Box>
+							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mt: '1rem' }}>
+								Your password cannot:
+							</Typography>
+							<Box sx={{ margin: '0.5rem 0 0 3rem' }}>
+								<ul>
+									<li style={{ color: theme.textColor?.secondary.main }}>
+										<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.35rem' }}>include space</Typography>
+									</li>
+								</ul>
+							</Box>
+						</Box>
+						<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '100%', mb: '0.5rem' }}>
+							<CustomCancelButton onClick={() => setIsPasswordInfoModalOpen(false)} sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+								Close
+							</CustomCancelButton>
+						</Box>
+					</DialogContent>
+				</CustomDialog>
 				<Typography sx={{ fontSize: isSmallScreen ? '0.55rem' : '0.65rem', position: 'absolute', bottom: 3 }}>
 					&copy; 2025 Webnexia Software Solutions Ltd. All rights reserved.
 				</Typography>
