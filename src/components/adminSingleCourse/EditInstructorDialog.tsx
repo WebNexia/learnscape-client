@@ -129,7 +129,7 @@ const EditInstructorDialog = ({
 						<img
 							src={singleCourse?.instructor?.imageUrl || 'https://img.sportsbookreview.com/images/avatars/default-avatar.jpg'}
 							alt='img'
-							style={{ width: '4.25rem', height: '4.25rem', borderRadius: '50%' }}
+							style={{ width: '4.25rem', height: '4.25rem', borderRadius: '50%', objectFit: 'cover' }}
 						/>
 						<CustomTextField
 							fullWidth={false}

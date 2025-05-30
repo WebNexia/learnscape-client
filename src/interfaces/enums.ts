@@ -11,19 +11,20 @@ export const enum TextFieldTypes {
 }
 
 export const enum AuthFormErrorMessages {
-	EMAIL_EXISTS = 'This email address is already in use!',
-	INVALID_CREDENTIALS = 'Invalid email address or password',
-	USERNAME_EXISTS = 'This username is already taken',
-	PHONE_NUMBER_EXISTS = 'This phone number is already registered',
-	EMAIL_NOT_VERIFIED = 'Email is not verified',
-	UNKNOWN_ERROR_OCCURRED = 'An unknown error occurred',
-	PASSWORD_TOO_SHORT = 'Password must be at least 6 characters long',
-	PASSWORD_NO_LETTER = 'Password must contain at least one letter',
-	// PASSWORD_NO_UPPERCASE = 'Password must contain at least one uppercase letter.',
-	// PASSWORD_NO_LOWERCASE = 'Password must contain at least one lowercase letter.',
-	PASSWORD_NO_NUMBER = 'Password must contain at least one number',
-	// PASSWORD_NO_SPECIAL_CHAR = 'Password must contain at least one special character.',
-	NETWORK_ERROR = 'Network error occurred. Please check your internet connection and try again.',
+	EMAIL_EXISTS = 'Bu e-posta adresi zaten kullanımda!',
+	INVALID_CREDENTIALS = 'Geçersiz e-posta adresi veya şifre',
+	USERNAME_EXISTS = 'Bu kullanıcı adı zaten alınmış',
+	PHONE_NUMBER_EXISTS = 'Bu telefon numarası zaten kayıtlı',
+	EMAIL_NOT_VERIFIED = 'E-posta doğrulanmadı',
+	UNKNOWN_ERROR_OCCURRED = 'Bilinmeyen bir hata oluştu',
+	PASSWORD_TOO_SHORT = 'Şifre en az 6 karakter olmalıdır',
+	PASSWORD_NO_LETTER = 'Şifre en az bir harf içermelidir',
+	// PASSWORD_NO_UPPERCASE = 'Şifre en az bir büyük harf içermelidir.',
+	// PASSWORD_NO_LOWERCASE = 'Şifre en az bir küçük harf içermelidir.',
+	PASSWORD_NO_NUMBER = 'Şifre en az bir rakam içermelidir',
+	// PASSWORD_NO_SPECIAL_CHAR = 'Şifre en az bir özel karakter içermelidir.',
+	NETWORK_ERROR = 'Ağ hatası oluştu. Lütfen internet bağlantınızı kontrol edin ve tekrar deneyin.',
+	INVALID_PHONE_NUMBER = 'Lütfen geçerli bir telefon numarası girin.',
 }
 
 export const enum PasswordUpdateErrorMessages {
