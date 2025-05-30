@@ -12,9 +12,22 @@ interface CustomDialogProps {
 	dialogPaperSx?: object;
 	content?: string;
 	maxWidth?: 'md' | 'sm' | 'lg';
+	PaperProps?: object;
+	BackdropProps?: object;
 }
 
-const CustomDialog = ({ children, openModal = false, closeModal, title, titleSx, content, dialogPaperSx, maxWidth = 'md' }: CustomDialogProps) => {
+const CustomDialog = ({
+	children,
+	openModal = false,
+	closeModal,
+	title,
+	titleSx,
+	content,
+	dialogPaperSx,
+	maxWidth = 'md',
+	PaperProps,
+	BackdropProps,
+}: CustomDialogProps) => {
 	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
 
 	const isMobileSize: boolean = isSmallScreen || isRotatedMedium;
@@ -28,18 +41,24 @@ const CustomDialog = ({ children, openModal = false, closeModal, title, titleSx,
 				style: {
 					backgroundColor: theme.palette.secondary.main,
 				},
+				...PaperProps,
 			}}
-			sx={{ ...dialogPaperSx }}>
-			<DialogTitle
-				variant={isMobileSize ? 'h6' : 'h5'}
-				sx={{
-					marginBottom: isMobileSize ? '-0.5rem' : '0rem',
-					paddingTop: isMobileSize ? '1rem' : '2rem',
-					...titleSx,
-					fontSize: isMobileSize ? '0.9rem' : undefined,
-				}}>
-				{title}
-			</DialogTitle>
+			BackdropProps={BackdropProps}
+			sx={{ ...dialogPaperSx }}
+		>
+			{title && (
+				<DialogTitle
+					variant={isMobileSize ? 'h6' : 'h5'}
+					sx={{
+						marginBottom: isMobileSize ? '-0.5rem' : '0rem',
+						paddingTop: isMobileSize ? '1rem' : '2rem',
+						...titleSx,
+						fontSize: isMobileSize ? '0.9rem' : undefined,
+					}}
+				>
+					{title}
+				</DialogTitle>
+			)}
 			{content && (
 				<DialogContent>
 					<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>

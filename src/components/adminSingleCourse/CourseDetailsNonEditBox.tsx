@@ -14,6 +14,7 @@ import EUFlag from '../../assets/european_flag_icon_228671.png';
 import TRFlag from '../../assets/tr-flag-round-500.png';
 import EditInstructorDialog from './EditInstructorDialog';
 import { useState } from 'react';
+import { truncateText } from '@utils/utilText';
 
 interface CourseDetailsNonEditBoxProps {
 	singleCourse?: SingleCourse;
@@ -38,15 +39,15 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters,setSingleCourse }: Cou
 				<Box
 					sx={{
 						mt: '1rem',
-						padding: '1.55rem',
+						padding: '1rem',
 						height: '7.25rem',
 						boxShadow: '0 0 0.4rem 0.2rem rgba(0,0,0,0.2)',
 						flex: 1,
 						borderRadius: '0.35rem',
 					}}>
-					<Typography variant='h5'>Instructor</Typography>
+					<Typography variant='h6'>Instructor</Typography>
 					<Box sx={{ display: 'flex', alignItems: 'center', gap: '0.5rem', mt: '0.5rem' }}>
-						<Avatar src={singleCourse?.instructor?.imageUrl} sx={{ width: '2rem', height: '2rem' }} />
+						<Avatar src={singleCourse?.instructor?.imageUrl} sx={{ width: '2rem', height: '2rem',objectFit: 'cover' }}/>
 						<Typography variant='body2' sx={{ 'textTransform': 'capitalize', 'cursor': 'pointer', ':hover': { textDecoration: 'underline' } }} onClick={() => setIsEditInstructorDialogOpen(true)}>
 							{singleCourse?.instructor?.name}
 						</Typography>
@@ -61,15 +62,15 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters,setSingleCourse }: Cou
 				<Box
 					sx={{
 						mt: '1rem',
-						padding: '1.55rem',
+						padding: '1rem',
 						height: '7.25rem',
 						boxShadow: '0 0 0.4rem 0.2rem rgba(0,0,0,0.2)',
 						flex: 3,
 						borderRadius: '0.35rem',
 					}}>
-					<Typography variant='h5'>Description</Typography>
+					<Typography variant='h6'>Description</Typography>
 					<Typography variant='body2' sx={{ mt: '0.5rem' }}>
-						{singleCourse?.description}
+						{truncateText(singleCourse?.description || '', 200)}
 					</Typography>
 				</Box>
 				<Box
@@ -110,7 +111,7 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters,setSingleCourse }: Cou
 					borderRadius: '0.35rem',
 				}}>
 				<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-					<Typography variant='h5'>Prices</Typography>
+					<Typography variant='h6'>Prices</Typography>
 
 					<Box sx={{ display: 'flex', mt: '0.5rem' }}>
 						{singleCourse?.prices?.map((price) => {
@@ -141,19 +142,19 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters,setSingleCourse }: Cou
 					</Box>
 				</Box>
 				<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%' }}>
-					<Typography variant='h5'>Starting Date</Typography>
+					<Typography variant='h6'>Starting Date</Typography>
 					<Typography variant='body2' sx={{ mt: '1.5rem' }}>
 						{dateFormatter(singleCourse?.startingDate) || 'N/A'}
 					</Typography>
 				</Box>
 				<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
-					<Typography variant='h5'>Weeks</Typography>
+					<Typography variant='h6'>Weeks</Typography>
 					<Typography variant='body2' sx={{ mt: '1.5rem' }}>
 						{singleCourse?.durationWeeks || 'N/A'}
 					</Typography>
 				</Box>
 				<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
-					<Typography variant='h5'>Hours</Typography>
+					<Typography variant='h6'>Hours</Typography>
 					<Typography variant='body2' sx={{ mt: '1.5rem' }}>
 						{singleCourse?.durationHours || 'N/A'}
 					</Typography>
@@ -161,7 +162,7 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters,setSingleCourse }: Cou
 			</Box>
 
 			<Box sx={{ mt: '4rem', minHeight: '40vh' }}>
-				<Typography variant='h5' sx={{ mb: '2.25rem' }}>
+				<Typography variant='h5' sx={{ mb: '2.25rem', fontWeight: '600' }}>
 					CHAPTERS
 				</Typography>
 				{singleCourse?.chapterIds?.length === 0 ? (

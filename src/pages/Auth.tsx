@@ -79,7 +79,6 @@ const Auth = ({ setUserRole }: AuthProps) => {
 			sx={{
 				textAlign: 'center',
 				color: '#ff4d4f',
-				backgroundColor: 'rgba(255, 77, 79, 0.08)',
 				padding: '0.5rem 1rem',
 				borderRadius: '0.5rem',
 				marginTop: '0.75rem',
@@ -238,6 +237,12 @@ const Auth = ({ setUserRole }: AuthProps) => {
 
 	const signUp = async (e: FormEvent) => {
 		e.preventDefault();
+
+		// Phone number validation: must be longer than just the country code (e.g., +90)
+		if (!phone || phone.length <= 3 || !/^\+\d{10,15}$/.test(phone)) {
+			setErrorMsg(AuthFormErrorMessages.INVALID_PHONE_NUMBER);
+			return;
+		}
 
 		const passwordValidationError = validatePassword(password);
 		if (passwordValidationError) {
@@ -438,11 +443,11 @@ const Auth = ({ setUserRole }: AuthProps) => {
 									sx={{
 										...sharedBtnStyles,
 										'padding': '0.75rem',
-										'backgroundColor': activeForm !== AuthForms.SIGN_IN ? 'rgba(0, 0, 0, 0.02)' : 'transparent',
+										'backgroundColor': activeForm !== AuthForms.SIGN_IN ? 'rgba(0, 0, 0, 0.07)' : 'transparent',
 										'borderTop': 'none',
 										'fontSize': isMobileSize ? '0.85rem' : '1rem',
 										'fontWeight': 500,
-										'letterSpacing': '0.3px',
+										'letterSpacing': '1px',
 										'transition': 'all 0.2s ease',
 										'position': 'relative',
 										'&:after': {
@@ -463,7 +468,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 											},
 										},
 									}}>
-									Log In
+									GİRİŞ YAP
 								</Button>
 								<Button
 									fullWidth
@@ -484,11 +489,11 @@ const Auth = ({ setUserRole }: AuthProps) => {
 									sx={{
 										...sharedBtnStyles,
 										'padding': '0.75rem',
-										'backgroundColor': activeForm !== AuthForms.SIGN_UP ? 'rgba(0, 0, 0, 0.02)' : 'transparent',
+										'backgroundColor': activeForm !== AuthForms.SIGN_UP ? 'rgba(0, 0, 0, 0.07)' : 'transparent',
 										'borderTop': 'none',
 										'fontSize': isMobileSize ? '0.85rem' : '1rem',
 										'fontWeight': 500,
-										'letterSpacing': '0.3px',
+										'letterSpacing': '1px',
 										'transition': 'all 0.2s ease',
 										'position': 'relative',
 										'&:after': {
@@ -509,7 +514,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 											},
 										},
 									}}>
-									Register
+									Kayıt Ol
 								</Button>
 							</>
 						)}
@@ -536,7 +541,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 													alignItems: 'center',
 												}}>
 												<CustomTextField
-													label='Email Address'
+													label='E-posta Adresi'
 													type={TextFieldTypes.EMAIL}
 													onChange={(e) => {
 														setEmail(e.target.value.trim());
@@ -557,7 +562,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 													}}
 												/>
 												<CustomTextField
-													label='Password'
+													label='Şifre'
 													type={showPassword ? TextFieldTypes.TEXT : TextFieldTypes.PASSWORD}
 													onChange={(e) => {
 														setPassword(e.target.value.trim());
@@ -605,7 +610,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 															},
 															'fontSize': isMobileSize ? '0.7rem' : '0.8rem',
 														}}>
-														Forgot Your Password?
+														Şifrenizi mi unuttunuz?
 													</Typography>
 												</Box>
 											</Box>
@@ -632,7 +637,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 													},
 												}}
 												type='submit'>
-												Log In
+												Giriş Yap
 											</Button>
 										</form>
 									</Box>
@@ -649,7 +654,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 												}}>
 												<Box sx={{ display: 'flex', width: '100%' }}>
 													<CustomTextField
-														label='First Name'
+														label='İsim'
 														type={TextFieldTypes.TEXT}
 														onChange={(e) => {
 															setFirstName(e.target.value.trim());
@@ -670,7 +675,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 														}}
 													/>
 													<CustomTextField
-														label='Last Name'
+														label='Soyisim'
 														type={TextFieldTypes.TEXT}
 														onChange={(e) => {
 															setLastName(e.target.value.trim());
@@ -693,8 +698,9 @@ const Auth = ({ setUserRole }: AuthProps) => {
 													/>
 												</Box>
 
-												<CustomTextField
-														label='Username'
+												<Box sx={{ display: 'flex', width: '110%', alignItems: 'flex-start' }}>
+													<CustomTextField
+														label='Kullanıcı Adı'
 														type={TextFieldTypes.TEXT}
 														onChange={handleUsernameChange}
 														value={username}
@@ -712,16 +718,30 @@ const Auth = ({ setUserRole }: AuthProps) => {
 															},
 														}}
 													/>
-												
+													<Tooltip title='Kullanıcı Adı Kuralları' placement='right'>
+														<IconButton
+															onClick={() => setIsUserNameImageInfoModalOpen(true)}
+															sx={{
+																'ml': '0.5rem',
+																'mt': '0.5rem',
+																':hover': {
+																	backgroundColor: 'transparent',
+																},
+															}}>
+															<Info sx={{ fontSize: isMobileSize ? '1rem' : '1.25rem' }} />
+														</IconButton>
+													</Tooltip>
+												</Box>
 
 												<Box sx={{ width: '100%', mb: '1.75rem' }}>
 													<PhoneInput
 														country={'tr'}
 														enableSearch={true}
-														searchPlaceholder='Search country...'
-														searchNotFound='No country found'
+														searchPlaceholder='Ülke arayın...'
+														searchNotFound='Ülke bulunamadı'
 														enableAreaCodes={false}
 														countryCodeEditable={false}
+														inputProps={{ required: true }}
 														inputStyle={{
 															width: '100%',
 															height: '2.25rem',
@@ -765,47 +785,33 @@ const Auth = ({ setUserRole }: AuthProps) => {
 													/>
 												</Box>
 
-												<Box sx={{ display: 'flex', width: '110%' }}>
-													
+												<Box sx={{ display: 'flex', width: '100%' }}>
 													<CustomTextField
-													label='Email Address'
-													type={TextFieldTypes.EMAIL}
-													onChange={(e) => {
-														setEmail(e.target.value.trim());
-														setErrorMsg(undefined);
-													}}
-													value={email}
-													sx={{
-														'& .MuiOutlinedInput-root': {
-															'borderRadius': '0.35rem',
-															'transition': 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-															'&:hover': {
-																backgroundColor: 'rgba(0, 0, 0, 0.02)',
+														label='E-posta Adresi'
+														type={TextFieldTypes.EMAIL}
+														onChange={(e) => {
+															setEmail(e.target.value.trim());
+															setErrorMsg(undefined);
+														}}
+														value={email}
+														sx={{
+															'& .MuiOutlinedInput-root': {
+																'borderRadius': '0.35rem',
+																'transition': 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+																'&:hover': {
+																	backgroundColor: 'rgba(0, 0, 0, 0.02)',
+																},
+																'&.Mui-focused': {
+																	boxShadow: '0 0 0 2px rgba(30, 194, 139, 0.2)',
+																},
 															},
-															'&.Mui-focused': {
-																boxShadow: '0 0 0 2px rgba(30, 194, 139, 0.2)',
-															},
-														},
-													}}
-												/>
-													<Box sx={{ display: 'flex', width: '10%', justifyContent: 'flex-end', mb: '0.85rem' }}>
-														<Tooltip title='Username Rules' placement='right'>
-															<IconButton
-																onClick={() => setIsUserNameImageInfoModalOpen(true)}
-																sx={{
-																	':hover': {
-																		backgroundColor: 'transparent',
-																	},
-																}}>
-																<Info sx={{ fontSize: isMobileSize ? '1rem' : '1.25rem' }} />
-															</IconButton>
-														</Tooltip>
-													</Box>
+														}}
+													/>
 												</Box>
 
 												<Box sx={{ display: 'flex', width: '110%' }}>
 													<CustomTextField
-														label='Password'
+														label='Şifre'
 														type={showPassword ? TextFieldTypes.TEXT : TextFieldTypes.PASSWORD}
 														onChange={(e) => {
 															setPassword(e.target.value.trim());
@@ -846,7 +852,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 														}}
 													/>
 													<Box sx={{ display: 'flex', width: '10%', justifyContent: 'flex-end', mt: '-1rem' }}>
-														<Tooltip title='Password Rules' placement='right'>
+														<Tooltip title='Şifre Kuralları' placement='right'>
 															<IconButton
 																onClick={() => setIsPasswordInfoModalOpen(true)}
 																sx={{
@@ -883,7 +889,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 													},
 												}}
 												type='submit'>
-												Register
+												Kayıt Ol
 											</Button>
 										</form>
 									</Box>
@@ -896,10 +902,10 @@ const Auth = ({ setUserRole }: AuthProps) => {
 											handlePasswordReset();
 										}}>
 										<Typography variant='body1' sx={{ marginBottom: '1rem' }}>
-											Reset Password
+											Şifre Sıfırlama
 										</Typography>
 										<CustomTextField
-											label='Email Address'
+											label='E-posta Adresi'
 											type='email'
 											value={email}
 											onChange={(e) => {
@@ -908,7 +914,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 											}}
 										/>
 										<Button variant='contained' fullWidth sx={submitBtnStyles} type='submit'>
-											Send Password Reset Email
+											Şifre Sıfırlama E-postası Gönder
 										</Button>
 										<Typography
 											sx={{
@@ -923,7 +929,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 												setIsResetPassword(false);
 												setEmail('');
 											}}>
-											Back to Log In
+											Giriş Yap'a Dön
 										</Typography>
 									</form>
 								),
@@ -955,7 +961,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 								navigate('/');
 								setIsResetPassword(false);
 							}}>
-							Home Page
+							Ana Sayfa
 						</Typography>
 					</Box>
 
@@ -978,6 +984,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 								[AuthFormErrorMessages.PASSWORD_NO_NUMBER]: errorMessageTypography,
 								[AuthFormErrorMessages.PASSWORD_NO_LETTER]: errorMessageTypography,
 								[AuthFormErrorMessages.NETWORK_ERROR]: errorMessageTypography,
+								[AuthFormErrorMessages.INVALID_PHONE_NUMBER]: errorMessageTypography,
 							}[errorMsg]}
 					</Box>
 				</Box>
@@ -996,7 +1003,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 								color: '#1EC28B',
 							},
 						}}>
-						You successfully signed up! Please verify your email address.
+						Kayıt işlemi başarılı! Lütfen e-posta adresinizi doğrulayın.
 					</Alert>
 				</Snackbar>
 
@@ -1013,23 +1020,23 @@ const Auth = ({ setUserRole }: AuthProps) => {
 								color: '#1EC28B',
 							},
 						}}>
-						Password reset email sent! Check your inbox.
+						Şifre sıfırlama e-postası gönderildi! Gelen kutunuzu kontrol edin.
 					</Alert>
 				</Snackbar>
 
 				{/* Username Rules Modal */}
 				<CustomDialog
-					title='Username Rules'
+					title='Kullanıcı Adı Kuralları'
 					openModal={isUserNameImageInfoModalOpen}
 					closeModal={() => setIsUserNameImageInfoModalOpen(false)}
 					maxWidth='sm'>
 					<DialogContent>
 						<Box sx={{ display: 'flex', flexDirection: 'column', margin: '0.5rem 0 0.75rem 1.5rem' }}>
 							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-								- Username can include:
+								Kullanıcı adı şunları içerebilir:
 							</Typography>
 							<Box sx={{ margin: '0.85rem 0 0 3rem' }}>
-								{['max 15 characters', 'underscore (_) and period (.)'].map((rule, index) => (
+								{['en fazla 15 karakter', 'alt çizgi (_) ve nokta (.)'].map((rule, index) => (
 									<ul key={index}>
 										<li style={{ color: theme.textColor?.secondary.main }}>
 											<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.35rem' }}>{rule}</Typography>
@@ -1038,29 +1045,29 @@ const Auth = ({ setUserRole }: AuthProps) => {
 								))}
 							</Box>
 							<Typography variant='body2' sx={{ mt: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-								- Username cannot start/end with underscore and period
+								Kullanıcı adı alt çizgi veya nokta ile başlayamaz/bitemez
 							</Typography>
 							<Typography variant='body2' sx={{ mt: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-								- Username cannot include space
+								Kullanıcı adı boşluk içeremez
 							</Typography>
 						</Box>
 						<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '100%', mb: '0.5rem' }}>
 							<CustomCancelButton onClick={() => setIsUserNameImageInfoModalOpen(false)} sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-								Close
+								Kapat
 							</CustomCancelButton>
 						</Box>
 					</DialogContent>
 				</CustomDialog>
 
 				{/* Password Rules Modal */}
-				<CustomDialog title='Password Rules' openModal={isPasswordInfoModalOpen} closeModal={() => setIsPasswordInfoModalOpen(false)} maxWidth='sm'>
+				<CustomDialog title='Şifre Kuralları' openModal={isPasswordInfoModalOpen} closeModal={() => setIsPasswordInfoModalOpen(false)} maxWidth='sm'>
 					<DialogContent>
 						<Box sx={{ display: 'flex', flexDirection: 'column', margin: '0.5rem 0 0.75rem 1.5rem' }}>
 							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-								Your password must:
+								Şifreniz şunları içermelidir:
 							</Typography>
 							<Box sx={{ margin: '0.85rem 0 0 3rem' }}>
-								{['be at least 6 characters long', 'contain at least one letter', 'contain at least one number'].map((rule, index) => (
+								{['en az 6 karakter uzunluğunda olmalı', 'en az bir harf içermeli', 'en az bir rakam içermeli'].map((rule, index) => (
 									<ul key={index}>
 										<li style={{ color: theme.textColor?.secondary.main }}>
 											<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.35rem' }}>{rule}</Typography>
@@ -1069,25 +1076,25 @@ const Auth = ({ setUserRole }: AuthProps) => {
 								))}
 							</Box>
 							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mt: '1rem' }}>
-								Your password cannot:
+								Şifreniz şunları içeremez:
 							</Typography>
 							<Box sx={{ margin: '0.5rem 0 0 3rem' }}>
 								<ul>
 									<li style={{ color: theme.textColor?.secondary.main }}>
-										<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.35rem' }}>include space</Typography>
+										<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.35rem' }}>boşluk içeremez</Typography>
 									</li>
 								</ul>
 							</Box>
 						</Box>
 						<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '100%', mb: '0.5rem' }}>
 							<CustomCancelButton onClick={() => setIsPasswordInfoModalOpen(false)} sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-								Close
+								Kapat
 							</CustomCancelButton>
 						</Box>
 					</DialogContent>
 				</CustomDialog>
 				<Typography sx={{ fontSize: isSmallScreen ? '0.55rem' : '0.65rem', position: 'absolute', bottom: 3 }}>
-					&copy; 2025 Webnexia Software Solutions Ltd. All rights reserved.
+					&copy; 2025 Webnexia Software Solutions Ltd. Tüm hakları saklıdır.
 				</Typography>
 			</Box>
 		</Box>

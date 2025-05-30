@@ -48,7 +48,8 @@ const LandingPageBanner = () => {
 					}}>
 					<Box>
 						<Typography sx={{ fontSize: '2.5rem', color: theme.textColor?.secondary.main }}>
-							Speak with confidence, learn with passion, grow without limits!
+							{/* Speak with confidence, learn with passion, grow without limits! */}
+							Kendine güvenle konuş, tutkuyla öğren, sınır tanıma!
 						</Typography>
 					</Box>
 
@@ -58,14 +59,16 @@ const LandingPageBanner = () => {
 							endIcon={<PlayCircle />}
 							sx={{ mr: '2rem', borderRadius: '5rem', padding: '0.75rem 1.75rem', ':hover': { backgroundColor: ' #4D7B8B', color: '#ffff' } }}
 							onClick={() => setIsIntroVideoModalOpen(true)}>
-							Watch
+							{/* Watch */}
+							İzle
 						</Button>
 						<Button
 							variant='outlined'
 							endIcon={<ContactPage />}
 							sx={{ borderRadius: '5rem', padding: '0.75rem 1.75rem', ':hover': { backgroundColor: ' #4D7B8B', color: '#ffff' } }}
 							onClick={() => setIsGetMoreDetailsModalOpen(true)}>
-							More Info
+							{/* More Info */}
+							Daha Fazla Bilgi
 						</Button>
 					</Box>
 					<ChatWhatsApp />
@@ -88,15 +91,18 @@ const LandingPageBanner = () => {
 				</DialogContent>
 			</CustomDialog>
 			<CustomDialog openModal={isGetMoreDetailsModalOpen} closeModal={() => setIsGetMoreDetailsModalOpen(false)} maxWidth='sm'>
-				<DialogTitle sx={{ paddingTop: '0rem' }}>Get more details about courses</DialogTitle>
+				<DialogTitle sx={{ paddingTop: '0rem' }}>
+					{/* Get more details about courses */}
+					Kurslar hakkında daha fazla bilgi alın
+				</DialogTitle>
 				<form>
 					<Box sx={{ margin: '0 2rem' }}>
 						<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-							<CustomTextField label='First Name' fullWidth={false} sx={{ width: '48%' }} />
-							<CustomTextField label='Last Name' fullWidth={false} sx={{ width: '48%' }} />
+							<CustomTextField label={/* 'First Name' */ 'Ad'} fullWidth={false} sx={{ width: '48%' }} />
+							<CustomTextField label={/* 'Last Name' */ 'Soyad'} fullWidth={false} sx={{ width: '48%' }} />
 						</Box>
 						<Box>
-							<CustomTextField label='Email Address' type='email' />
+							<CustomTextField label={/* 'Email Address' */ 'E-posta Adresi'} type='email' />
 						</Box>
 						<Box>
 							<PhoneInput
@@ -107,7 +113,7 @@ const LandingPageBanner = () => {
 							/>
 						</Box>
 					</Box>
-					<CustomDialogActions submitBtnText='Send' />
+					<CustomDialogActions submitBtnText={/* 'Send' */ 'Gönder'} />
 				</form>
 			</CustomDialog>
 		</Box>
