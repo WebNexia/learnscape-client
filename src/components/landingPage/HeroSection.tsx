@@ -1,8 +1,8 @@
-import { Box, Button, Container, Typography } from '@mui/material';
+import { Box, Button, Typography, Alert } from '@mui/material';
 import { motion } from 'framer-motion';
 import { useContext, useState } from 'react';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
-import Instructor_Img from '../../assets/instructor-new.png';
+import Instructor_Img from '../../assets/instructor-new1.png';
 import { ContactPage, PlayCircle } from '@mui/icons-material';
 import CustomDialog from '../layouts/dialog/CustomDialog';
 import DialogContent from '@mui/material/DialogContent';
@@ -12,12 +12,62 @@ import CustomTextField from '../forms/customFields/CustomTextField';
 import PhoneInput from 'react-phone-input-2';
 import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
 import ChatWhatsApp from './ChatWhatsApp';
+import { useGeoLocation } from '../../hooks/useGeoLocation';
+import theme from '../../themes';
+import axios from 'axios';
+import Snackbar from '@mui/material/Snackbar';
 
 const HeroSection = () => {
+	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
+
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const [isIntroVideoModalOpen, setIsIntroVideoModalOpen] = useState<boolean>(false);
 	const [isGetMoreDetailsModalOpen, setIsGetMoreDetailsModalOpen] = useState<boolean>(false);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
+	const location = useGeoLocation();
+	const [firstName, setFirstName] = useState<string>('');
+	const [lastName, setLastName] = useState<string>('');
+	const [email, setEmail] = useState<string>('');
+	const [phone, setPhone] = useState<string>('');
+	const [message, setMessage] = useState<string>('');
+	const [sending, setSending] = useState<boolean>(false);
+	const [showSuccess, setShowSuccess] = useState<boolean>(false);
+
+	const isValidPhone = (phone: string) => /^\+\d{8,}$/.test(phone);
+
+	const resetForm = () => {
+		setFirstName('');
+		setLastName('');
+		setEmail('');
+		setPhone('');
+		setMessage('');
+	};
+
+	const handleMoreInfoRequest = async (e: React.FormEvent<HTMLFormElement>) => {
+		e.preventDefault();
+		if (!isValidPhone(phone)) {
+			alert('Lütfen geçerli bir telefon numarası girin.');
+			return;
+		}
+		setSending(true);
+		try {
+			await axios.post(`${base_url}/course-information-requests`, {
+				firstName,
+				lastName,
+				email,
+				phone,
+				countryCode: location?.countryCode?.toUpperCase() || 'tr',
+				orgId: import.meta.env.VITE_ORG_ID,
+				message,
+			});
+			setShowSuccess(true);
+			// Do not close modal or reset form yet
+		} catch (error) {
+			console.log(error);
+		} finally {
+			setSending(false);
+		}
+	};
 
 	return (
 		<Box
@@ -28,9 +78,9 @@ const HeroSection = () => {
 				background: 'linear-gradient(135deg, rgba(44, 62, 80, 0.05), rgba(52, 152, 219, 0.05))',
 				position: 'relative',
 				overflow: 'hidden',
-				pt: { xs: '7vh', md: '9vh' },
-				width:'100%',
-				px:'7.5%'
+				pt: { xs: '5vh', md: '6vh' },
+				width: '100%',
+				px: '8%',
 			}}>
 			{/* Animated background elements */}
 			<Box
@@ -44,14 +94,14 @@ const HeroSection = () => {
 				}}
 			/>
 
-			<Box sx={{width:'100%'}}>
+			<Box sx={{ width: '100%' }}>
 				<Box
 					sx={{
 						display: 'flex',
 						flexDirection: { xs: 'column', md: 'row' },
 						justifyContent: 'space-between',
 						alignItems: 'center',
-						gap: 15,
+						gap: 13,
 						py: 8,
 					}}>
 					{/* Content */}
@@ -149,8 +199,7 @@ const HeroSection = () => {
 									src={Instructor_Img}
 									alt='Instructor'
 									sx={{
-										'height': '95%',
-										'maxHeight': '75vh',
+										'maxHeight': '70vh',
 										'borderRadius': '50%',
 										// 'backgroundColor': 'rgba(255, 255, 255, 0.1)',
 										// 'boxShadow': '0 4px 30px rgba(44, 62, 80, 0.1)',
@@ -158,8 +207,8 @@ const HeroSection = () => {
 										// 'border': '1px solid rgba(44, 62, 80, 0.1)',
 										'transition': 'all 0.3s ease',
 										'&:hover': {
-											transform: 'scale(1.02)',
-											boxShadow: '0 8px 40px rgba(44, 62, 80, 0.15)',
+											transform: 'scale(1.05) translateY(-15px) rotate(-1deg)',
+											boxShadow: '1px 6px 12px rgba(44, 62, 80, 0.15)',
 										},
 									}}
 								/>
@@ -204,24 +253,265 @@ const HeroSection = () => {
 				</DialogContent>
 			</CustomDialog>
 
-			<CustomDialog openModal={isGetMoreDetailsModalOpen} closeModal={() => setIsGetMoreDetailsModalOpen(false)} maxWidth='sm'>
-				<DialogTitle sx={{ color: '#2C3E50', mt:'1rem' }}>Kurslar hakkında daha fazla bilgi alın</DialogTitle>
-				<form>
-					<Box sx={{ margin: '0 2rem' }}>
+			<CustomDialog
+				title='DETAYLI BİLGİ ALIN'
+				openModal={isGetMoreDetailsModalOpen}
+				closeModal={() => {
+					setIsGetMoreDetailsModalOpen(false);
+					resetForm();
+					setShowSuccess(false);
+				}}
+				maxWidth='sm'
+				titleSx={{
+					fontSize: '1.5rem',
+					fontWeight: 600,
+					fontFamily: 'Varela Round',
+					color: '#2C3E50',
+					ml: '0.5rem',
+					textAlign: 'center',
+					mb: 1,
+				}}
+				PaperProps={{
+					sx: {
+						height: 'auto',
+						maxHeight: '90vh',
+						overflow: 'visible',
+						borderRadius: '1.5rem',
+						background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.98))',
+						boxShadow: '0 8px 32px rgba(44, 62, 80, 0.1)',
+						backdropFilter: 'blur(8px)',
+						border: '1px solid rgba(255, 255, 255, 0.18)',
+					},
+				}}>
+				<DialogTitle
+					sx={{
+						color: '#2C3E50',
+						fontFamily: 'Varela Round',
+						ml: '0.5rem',
+						textAlign: 'center',
+						fontSize: '1.1rem',
+						opacity: 0.9,
+						lineHeight: 1.6,
+						mb: 2,
+					}}>
+					Kurslarımız hakkında bilgi alın, yeni eğitimlerden öncelikli olarak haberdar olun.
+				</DialogTitle>
+				<form onSubmit={handleMoreInfoRequest}>
+					<Box
+						sx={{
+							'margin': '0 2rem',
+							'& .MuiOutlinedInput-root': {
+								'&:hover fieldset': {
+									borderColor: '#3498DB',
+								},
+								'&.Mui-focused fieldset': {
+									borderColor: '#3498DB',
+								},
+							},
+						}}>
 						<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-							<CustomTextField label='Ad' fullWidth={false} sx={{ width: '48%' }} />
-							<CustomTextField label='Soyad' fullWidth={false} sx={{ width: '48%' }} />
+							<CustomTextField
+								label='İsim'
+								value={firstName}
+								onChange={(e) => setFirstName(e.target.value)}
+								fullWidth={false}
+								sx={{
+									'width': '48%',
+									'mb': '1.25rem',
+									'& .MuiOutlinedInput-root': {
+										fontFamily: 'Varela Round',
+										borderRadius: '0.5rem',
+									},
+									'& .MuiInputBase-input': {
+										fontFamily: 'Varela Round',
+										fontSize: '0.95rem',
+									},
+									'& .MuiInputBase-input::placeholder': {
+										fontFamily: 'Varela Round',
+										opacity: 1,
+									},
+									'& .MuiInputLabel-root': {
+										fontFamily: 'Varela Round',
+										fontSize: '0.95rem',
+									},
+								}}
+							/>
+							<CustomTextField
+								label='Soyisim'
+								value={lastName}
+								onChange={(e) => setLastName(e.target.value)}
+								fullWidth={false}
+								sx={{
+									'width': '48%',
+									'mb': '1.25rem',
+									'& .MuiOutlinedInput-root': {
+										fontFamily: 'Varela Round',
+										borderRadius: '0.5rem',
+									},
+									'& .MuiInputBase-input': {
+										fontFamily: 'Varela Round',
+										fontSize: '0.95rem',
+									},
+									'& .MuiInputBase-input::placeholder': {
+										fontFamily: 'Varela Round',
+										opacity: 1,
+									},
+									'& .MuiInputLabel-root': {
+										fontFamily: 'Varela Round',
+										fontSize: '0.95rem',
+									},
+								}}
+							/>
 						</Box>
 						<Box>
-							<CustomTextField label='E-posta Adresi' type='email' />
+							<CustomTextField
+								label='E-posta Adresi'
+								type='email'
+								value={email}
+								onChange={(e) => setEmail(e.target.value)}
+								sx={{
+									'mb': '1.25rem',
+									'& .MuiOutlinedInput-root': {
+										fontFamily: 'Varela Round',
+										borderRadius: '0.5rem',
+									},
+									'& .MuiInputBase-input': {
+										fontFamily: 'Varela Round',
+										fontSize: '0.95rem',
+									},
+									'& .MuiInputBase-input::placeholder': {
+										fontFamily: 'Varela Round',
+										opacity: 1,
+									},
+									'& .MuiInputLabel-root': {
+										fontFamily: 'Varela Round',
+										fontSize: '0.95rem',
+									},
+								}}
+							/>
 						</Box>
 						<Box>
-							<PhoneInput country={'tr'} enableSearch={false} inputStyle={{ width: '100%', height: '40px' }} containerStyle={{ marginTop: '1rem' }} />
+							<PhoneInput
+								country={location?.countryCode?.toLowerCase() || 'tr'}
+								enableSearch={true}
+								searchPlaceholder='Ülke arayın...'
+								searchNotFound='Ülke bulunamadı'
+								enableAreaCodes={false}
+								countryCodeEditable={false}
+								value={phone}
+								onChange={(phoneNumber, country) => {
+									const formattedNumber = phoneNumber.startsWith('+') ? phoneNumber : `+${phoneNumber}`;
+									setPhone(formattedNumber);
+								}}
+								inputProps={{
+									required: true,
+									style: {
+										width: '100%',
+										height: '2.25rem',
+										fontFamily: 'Varela Round',
+										fontSize: '0.9rem',
+										borderRadius: '0.5rem',
+										border: '1px solid rgba(0, 0, 0, 0.23)',
+										transition: 'all 0.2s ease',
+									},
+								}}
+								containerStyle={{
+									marginBottom: '0.5rem',
+									color: theme.textColor?.secondary.main,
+									fontFamily: 'Varela Round',
+									transition: 'all 0.2s ease',
+								}}
+								buttonStyle={{
+									borderRadius: '0.35rem 0 0 0.35rem',
+									border: '1px solid rgba(0, 0, 0, 0.23)',
+									backgroundColor: 'transparent',
+								}}
+								dropdownStyle={{
+									borderRadius: '0.35rem',
+									border: '1px solid rgba(0, 0, 0, 0.23)',
+									boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+									fontFamily: 'Varela Round',
+								}}
+								searchStyle={{
+									width: '100%',
+									height: '2rem',
+									fontFamily: 'Varela Round',
+									fontSize: '0.85rem',
+									borderRadius: '0.5rem',
+									border: '1px solid rgba(0, 0, 0, 0.23)',
+									margin: '0.5rem 0',
+								}}
+							/>
 						</Box>
+						<CustomTextField
+							label='Mesajınız'
+							value={message}
+							onChange={(e) => setMessage(e.target.value)}
+							fullWidth={false}
+							multiline
+							required={false}
+							rows={4}
+							sx={{
+								'width': '100%',
+								'mt': '1.25rem',
+								'& .MuiOutlinedInput-root': {
+									fontFamily: 'Varela Round',
+									borderRadius: '0.5rem',
+								},
+								'& .MuiInputBase-input': {
+									fontFamily: 'Varela Round',
+									fontSize: '0.95rem',
+								},
+								'& .MuiInputBase-input::placeholder': {
+									fontFamily: 'Varela Round',
+									opacity: 1,
+								},
+								'& .MuiInputLabel-root': {
+									fontFamily: 'Varela Round',
+									fontSize: '0.95rem',
+								},
+							}}
+						/>
 					</Box>
-					<CustomDialogActions submitBtnText='Gönder' cancelBtnText='Kapat' onCancel={() => setIsGetMoreDetailsModalOpen(false)} actionSx={{margin:'1rem 1rem 0.75rem 0'}}/>
+					<CustomDialogActions
+						submitBtnText={sending ? 'Gönderiliyor...' : 'Gönder'}
+						cancelBtnText='Kapat'
+						onCancel={() => {
+							setIsGetMoreDetailsModalOpen(false);
+							resetForm();
+							setShowSuccess(false);
+						}}
+						actionSx={{ margin: '1rem 1rem 0.75rem 0' }}
+						submitBtnSx={{ fontFamily: 'Varela Round' }}
+						cancelBtnSx={{ fontFamily: 'Varela Round' }}
+						disableBtn={sending || !isValidPhone(phone)}
+					/>
 				</form>
 			</CustomDialog>
+
+			<Snackbar
+				open={showSuccess}
+				autoHideDuration={3100}
+				anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+				onClose={() => {
+					setShowSuccess(false);
+					resetForm();
+					setIsGetMoreDetailsModalOpen(false);
+				}}
+				sx={{ mt: '2.5rem' }}>
+				<Alert
+					severity='success'
+					variant='filled'
+					sx={{
+						width: '100%',
+						fontFamily: 'Varela Round',
+						fontSize: '1rem',
+						letterSpacing: 0,
+						color: theme.textColor?.common.main,
+					}}>
+					Bilgileriniz alınmıştır, lütfen email'inizi kontrol edin
+				</Alert>
+			</Snackbar>
 		</Box>
 	);
 };

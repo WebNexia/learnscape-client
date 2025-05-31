@@ -1,0 +1,245 @@
+import { Box, DialogActions, DialogContent, TableCell } from '@mui/material';
+import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
+import { format } from 'date-fns';
+import * as XLSX from 'xlsx';
+import DownloadIcon from '@mui/icons-material/Download';
+import { Typography, Table, TableBody, TableRow } from '@mui/material';
+import { useContext, useState, useEffect } from 'react';
+import CustomTableHead from '../components/layouts/table/CustomTableHead';
+import CustomTableCell from '../components/layouts/table/CustomTableCell';
+import CustomTablePagination from '../components/layouts/table/CustomTablePagination';
+import { InfoRequestsContext } from '../contexts/InfoRequestsContextProvider';
+import { InfoRequest } from '../interfaces/infoRequest';
+import CustomActionBtn from '../components/layouts/table/CustomActionBtn';
+import { dateFormatter, dateTimeFormatter } from '@utils/dateFormatter';
+import { Delete, Visibility } from '@mui/icons-material';
+import CustomDialog from '../components/layouts/dialog/CustomDialog';
+import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
+import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
+import axios from '@utils/axiosInstance';
+import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
+import { truncateText } from '@utils/utilText';
+import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
+
+const columns = [
+	{ key: 'name', label: 'Name' },
+	{ key: 'email', label: 'Email' },
+	{ key: 'phone', label: 'Phone' },
+	{ key: 'country', label: 'Country' },
+	{ key: 'message', label: 'Message' },
+	{ key: 'date', label: 'Date' },
+	{ key: 'actions', label: 'Actions' },
+];
+
+const AdminInfoRequests = () => {
+	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
+	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
+	const isMobileSizeSmall = isVerySmallScreen || isRotated;
+
+	const { infoRequests, loading, error, removeRequest, numberOfPages, requestsPageNumber, setRequestsPageNumber, fetchInfoRequests } =
+		useContext(InfoRequestsContext);
+
+	const [orderBy, setOrderBy] = useState<keyof InfoRequest>('createdAt');
+	const [order, setOrder] = useState<'asc' | 'desc'>('desc');
+
+	// Modal states
+	const [viewModalOpen, setViewModalOpen] = useState<{ [key: number]: boolean }>({});
+	const [deleteModalOpen, setDeleteModalOpen] = useState<{ [key: number]: boolean }>({});
+	const [selectedRequest, setSelectedRequest] = useState<InfoRequest | null>(null);
+
+	useEffect(() => {
+		fetchInfoRequests(requestsPageNumber);
+	}, [requestsPageNumber]);
+
+	const handlePageChange = (newPage: number) => {
+		setRequestsPageNumber(newPage);
+	};
+
+	const handleSort = (property: keyof InfoRequest) => {
+		const isAsc = orderBy === property && order === 'asc';
+		setOrder(isAsc ? 'desc' : 'asc');
+		setOrderBy(property);
+	};
+
+	const handleViewRequest = (index: number, request: InfoRequest) => {
+		setSelectedRequest(request);
+		setViewModalOpen((prev) => ({ ...prev, [index]: true }));
+	};
+
+	const handleCloseViewModal = (index: number) => {
+		setViewModalOpen((prev) => ({ ...prev, [index]: false }));
+		setSelectedRequest(null);
+	};
+
+	const handleDeleteRequest = (index: number, request: InfoRequest) => {
+		setSelectedRequest(request);
+		setDeleteModalOpen((prev) => ({ ...prev, [index]: true }));
+	};
+
+	const handleCloseDeleteModal = (index: number) => {
+		setDeleteModalOpen((prev) => ({ ...prev, [index]: false }));
+		setSelectedRequest(null);
+	};
+
+	const handleConfirmDelete = async () => {
+		if (!selectedRequest) return;
+
+		try {
+			await axios.delete(`${base_url}/course-information-requests/${selectedRequest._id}`);
+			removeRequest(selectedRequest._id);
+			// Close all modals
+			setDeleteModalOpen({});
+			setViewModalOpen({});
+			setSelectedRequest(null);
+		} catch (error) {
+			console.error('Error deleting request:', error);
+		}
+	};
+
+	const handleDownload = () => {
+		const excelData = infoRequests.map((request: InfoRequest) => ({
+			'First Name': request.firstName,
+			'Last Name': request.lastName,
+			'Email': request.email,
+			'Phone': request.phone,
+			'Country': request.countryCode,
+			'Message': request.message || '',
+			'Submitted At': format(new Date(request.createdAt), 'yyyy-MM-dd HH:mm:ss'),
+		}));
+
+		const ws = XLSX.utils.json_to_sheet(excelData);
+		const wb = XLSX.utils.book_new();
+		XLSX.utils.book_append_sheet(wb, ws, 'Info Requests');
+		XLSX.writeFile(wb, `information-requests-${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+	};
+
+	if (loading) return <Typography>Loading...</Typography>;
+	if (error) return <Typography color='error'>{error}</Typography>;
+
+	return (
+		<DashboardPagesLayout pageName='Information Requests' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
+			<Box sx={{ width: '100%', height: '100%' }}>
+				<Box
+					sx={{
+						display: 'flex',
+						justifyContent: 'flex-end',
+						alignItems: 'center',
+						padding: isMobileSizeSmall ? '1rem 1rem 0.5rem 1rem' : '2rem 2rem 1rem 2rem',
+						width: '100%',
+						mb: '1.25rem',
+					}}>
+					<Box sx={{ display: 'flex', gap: 1 }}>
+						<CustomSubmitButton
+							startIcon={<DownloadIcon />}
+							onClick={handleDownload}
+							sx={{
+								fontSize: isMobileSize ? '0.7rem' : undefined,
+							}}>
+							Download
+						</CustomSubmitButton>
+					</Box>
+				</Box>
+				<Box
+					sx={{
+						display: 'flex',
+						flexDirection: 'column',
+						alignItems: 'center',
+						padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : '0rem 2rem 2rem 2rem',
+						width: '100%',
+					}}>
+					<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>
+						<CustomTableHead<InfoRequest> orderBy={orderBy} order={order} handleSort={handleSort} columns={columns} />
+						<TableBody>
+							{infoRequests &&
+								infoRequests?.map((req: InfoRequest, index) => {
+									return (
+										<TableRow key={req._id}>
+											<CustomTableCell value={req.firstName + ' ' + req.lastName} />
+											<CustomTableCell value={req.email} />
+											<CustomTableCell value={req.phone} />
+											<CustomTableCell value={req.countryCode} />
+											<CustomTableCell value={truncateText(req.message || '', 25)} />
+											<CustomTableCell value={dateFormatter(req.createdAt)} />
+											<TableCell
+												sx={{
+													textAlign: 'center',
+												}}>
+												<CustomActionBtn
+													title='View'
+													onClick={() => handleViewRequest(index, req)}
+													icon={<Visibility fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
+												/>
+
+												<CustomDialog
+													openModal={viewModalOpen[index]}
+													closeModal={() => handleCloseViewModal(index)}
+													maxWidth='sm'
+													title='Request Details'>
+													{selectedRequest && (
+														<DialogContent>
+															<Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 2 }}>
+																<Box>
+																	<Typography variant='body2' sx={{ mb: '0.75rem' }}>
+																		<strong>Name:</strong> {selectedRequest.firstName} {selectedRequest.lastName}
+																	</Typography>
+																	<Typography variant='body2' sx={{ mb: '0.75rem' }}>
+																		<strong>Phone:</strong> {selectedRequest.phone}
+																	</Typography>
+																</Box>
+																<Box>
+																	<Typography variant='body2' sx={{ mb: '0.75rem' }}>
+																		<strong>Email:</strong> {selectedRequest.email}
+																	</Typography>
+																	<Typography variant='body2' sx={{ mb: '0.75rem' }}>
+																		<strong>Country:</strong> {selectedRequest.countryCode}
+																	</Typography>
+																</Box>
+															</Box>
+															<Typography variant='body2' sx={{ mb: '0.75rem' }}>
+																<strong>Message:</strong> {selectedRequest.message || '-'}
+															</Typography>
+															<Typography variant='body2'>
+																<strong>Submitted:</strong> {dateTimeFormatter(selectedRequest.createdAt)}
+															</Typography>
+														</DialogContent>
+													)}
+													<DialogActions>
+														<CustomCancelButton
+															onClick={() => handleCloseViewModal(index)}
+															sx={{
+																margin: '0 1rem 1rem 0',
+															}}>
+															Cancel
+														</CustomCancelButton>
+													</DialogActions>
+												</CustomDialog>
+
+												<CustomActionBtn
+													title='Delete'
+													onClick={() => handleDeleteRequest(index, req)}
+													icon={<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
+												/>
+
+												<CustomDialog
+													openModal={deleteModalOpen[index]}
+													closeModal={() => handleCloseDeleteModal(index)}
+													title='Delete Request'
+													content='Are you sure you want to delete this request?'
+													maxWidth='sm'>
+													<CustomDialogActions onCancel={() => handleCloseDeleteModal(index)} deleteBtn={true} onDelete={handleConfirmDelete} />
+												</CustomDialog>
+											</TableCell>
+										</TableRow>
+									);
+								})}
+						</TableBody>
+					</Table>
+					<CustomTablePagination count={numberOfPages} page={requestsPageNumber} onChange={handlePageChange} />
+				</Box>
+			</Box>
+		</DashboardPagesLayout>
+	);
+};
+
+export default AdminInfoRequests;

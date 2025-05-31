@@ -44,7 +44,7 @@ const DashboardQuizSubmissions = () => {
 				},
 			}}>
 			<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-				<Typography variant='h5' sx={{ fontSize: isMobileSize ? '0.85rem' : null }}>
+				<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : null }}>
 					{user?.role === Roles.ADMIN ? 'Unchecked' : 'Checked'} Quizzes
 				</Typography>
 				<CheckBoxOutlined sx={{ ml: '0.5rem', color: theme.textColor?.greenPrimary.main }} fontSize={isMobileSize ? 'small' : 'medium'} />
