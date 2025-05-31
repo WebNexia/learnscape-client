@@ -25,6 +25,8 @@ import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import PhoneInput from 'react-phone-input-2';
 import { useGeoLocation } from '../hooks/useGeoLocation';
 import 'react-phone-input-2/lib/style.css';
+import logo from '../assets/logo.png';
+import { fontFamily } from 'html2canvas/dist/types/css/property-descriptors/font-family';
 
 interface AuthProps {
 	setUserRole: React.Dispatch<React.SetStateAction<string | null>>;
@@ -83,6 +85,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 				borderRadius: '0.5rem',
 				marginTop: '0.75rem',
 				fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+				fontFamily: 'Varela Round',
 			}}>
 			{errorMsg}
 		</Typography>
@@ -363,21 +366,10 @@ const Auth = ({ setUserRole }: AuthProps) => {
 					}}
 				/>
 				{/* Logo and Title */}
-				<Box sx={{ position: 'relative', zIndex: 1, mb: '1.5rem' }}>
-					<Typography
-						variant='h1'
-						sx={{
-							fontSize: { xs: '2rem', sm: '2.75rem' },
-							fontWeight: 700,
-							background: 'linear-gradient(270deg, #4D7B8B, #01435A)',
-							backgroundClip: 'text',
-							textFillColor: 'transparent',
-							WebkitBackgroundClip: 'text',
-							WebkitTextFillColor: 'transparent',
-							textAlign: 'center',
-						}}>
-						KAIZENGLISH
-					</Typography>
+				<Box sx={{ position: 'relative', zIndex: 1, mb: '1.5rem', mt: '-2rem' }}>
+					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }} onClick={() => navigate('/')}>
+						<img src={logo} alt='logo' style={{ height: '13vh' }} />
+					</Box>
 				</Box>
 
 				{/* Auth Form Container */}
@@ -488,6 +480,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 									size='large'
 									sx={{
 										...sharedBtnStyles,
+										'fontFamily': 'Varela Round',
 										'padding': '0.75rem',
 										'backgroundColor': activeForm !== AuthForms.SIGN_UP ? 'rgba(0, 0, 0, 0.07)' : 'transparent',
 										'borderTop': 'none',
@@ -550,6 +543,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 													value={email}
 													sx={{
 														'& .MuiOutlinedInput-root': {
+															'fontFamily': 'Varela Round',
 															'borderRadius': '0.35rem',
 															'transition': 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
 															'&:hover': {
@@ -559,6 +553,9 @@ const Auth = ({ setUserRole }: AuthProps) => {
 																boxShadow: '0 0 0 2px rgba(30, 194, 139, 0.2)',
 															},
 														},
+														'& .MuiInputBase-input': { fontFamily: 'Varela Round' },
+														'& .MuiInputBase-input::placeholder': { fontFamily: 'Varela Round', opacity: 1 },
+														'& .MuiInputLabel-root': { fontFamily: 'Varela Round' },
 													}}
 												/>
 												<CustomTextField
@@ -571,6 +568,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 													value={password}
 													sx={{
 														'& .MuiOutlinedInput-root': {
+															'fontFamily': 'Varela Round',
 															'borderRadius': '0.35rem',
 															'transition': 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
 															'&:hover': {
@@ -580,6 +578,9 @@ const Auth = ({ setUserRole }: AuthProps) => {
 																boxShadow: '0 0 0 2px rgba(30, 194, 139, 0.2)',
 															},
 														},
+														'& .MuiInputBase-input': { fontFamily: 'Varela Round' },
+														'& .MuiInputBase-input::placeholder': { fontFamily: 'Varela Round', opacity: 1 },
+														'& .MuiInputLabel-root': { fontFamily: 'Varela Round' },
 													}}
 													InputProps={{
 														endAdornment: (
@@ -609,6 +610,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 																textDecoration: 'underline',
 															},
 															'fontSize': isMobileSize ? '0.7rem' : '0.8rem',
+															'fontFamily': 'Varela Round',
 														}}>
 														Şifrenizi mi unuttunuz?
 													</Typography>
@@ -619,6 +621,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 												fullWidth
 												sx={{
 													...submitBtnStyles,
+													'fontFamily': 'Varela Round',
 													'borderRadius': '0.35rem',
 													'padding': '0.45rem',
 													'fontSize': '0.9rem',
@@ -663,6 +666,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 														value={firstName}
 														sx={{
 															'& .MuiOutlinedInput-root': {
+																'fontFamily': 'Varela Round',
 																'borderRadius': '0.35rem',
 																'transition': 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
 																'&:hover': {
@@ -672,6 +676,9 @@ const Auth = ({ setUserRole }: AuthProps) => {
 																	boxShadow: '0 0 0 2px rgba(30, 194, 139, 0.2)',
 																},
 															},
+															'& .MuiInputBase-input': { fontFamily: 'Varela Round' },
+															'& .MuiInputBase-input::placeholder': { fontFamily: 'Varela Round', opacity: 1 },
+															'& .MuiInputLabel-root': { fontFamily: 'Varela Round' },
 														}}
 													/>
 													<CustomTextField
@@ -683,8 +690,8 @@ const Auth = ({ setUserRole }: AuthProps) => {
 														}}
 														value={lastName}
 														sx={{
-															'ml': '0.5rem',
 															'& .MuiOutlinedInput-root': {
+																'fontFamily': 'Varela Round',
 																'borderRadius': '0.35rem',
 																'transition': 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
 																'&:hover': {
@@ -694,6 +701,10 @@ const Auth = ({ setUserRole }: AuthProps) => {
 																	boxShadow: '0 0 0 2px rgba(30, 194, 139, 0.2)',
 																},
 															},
+															'& .MuiInputBase-input': { fontFamily: 'Varela Round' },
+															'& .MuiInputBase-input::placeholder': { fontFamily: 'Varela Round', opacity: 1 },
+															'& .MuiInputLabel-root': { fontFamily: 'Varela Round' },
+															'ml': '0.5rem',
 														}}
 													/>
 												</Box>
@@ -707,6 +718,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 														InputProps={{ inputProps: { maxLength: 15 } }}
 														sx={{
 															'& .MuiOutlinedInput-root': {
+																'fontFamily': 'Varela Round',
 																'borderRadius': '0.35rem',
 																'transition': 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
 																'&:hover': {
@@ -716,6 +728,9 @@ const Auth = ({ setUserRole }: AuthProps) => {
 																	boxShadow: '0 0 0 2px rgba(30, 194, 139, 0.2)',
 																},
 															},
+															'& .MuiInputBase-input': { fontFamily: 'Varela Round' },
+															'& .MuiInputBase-input::placeholder': { fontFamily: 'Varela Round', opacity: 1 },
+															'& .MuiInputLabel-root': { fontFamily: 'Varela Round' },
 														}}
 													/>
 													<Tooltip title='Kullanıcı Adı Kuralları' placement='right'>
@@ -735,7 +750,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 
 												<Box sx={{ width: '100%', mb: '1.75rem' }}>
 													<PhoneInput
-														country={'tr'}
+														country={location?.countryCode?.toLowerCase() || 'tr'}
 														enableSearch={true}
 														searchPlaceholder='Ülke arayın...'
 														searchNotFound='Ülke bulunamadı'
@@ -745,7 +760,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 														inputStyle={{
 															width: '100%',
 															height: '2.25rem',
-															fontFamily: 'Poppins',
+															fontFamily: 'Varela Round',
 															fontSize: isMobileSize ? '0.85rem' : '0.9rem',
 															borderRadius: '0.35rem',
 															border: '1px solid rgba(0, 0, 0, 0.23)',
@@ -754,7 +769,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 														containerStyle={{
 															marginBottom: '0.5rem',
 															color: theme.textColor?.secondary.main,
-															fontFamily: 'Poppins',
+															fontFamily: 'Varela Round',
 															transition: 'all 0.2s ease',
 														}}
 														buttonStyle={{
@@ -766,11 +781,12 @@ const Auth = ({ setUserRole }: AuthProps) => {
 															borderRadius: '0.35rem',
 															border: '1px solid rgba(0, 0, 0, 0.23)',
 															boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+															fontFamily: 'Varela Round',
 														}}
 														searchStyle={{
 															width: '100%',
 															height: '2rem',
-															fontFamily: 'Poppins',
+															fontFamily: 'Varela Round',
 															fontSize: '0.85rem',
 															borderRadius: '0.35rem',
 															border: '1px solid rgba(0, 0, 0, 0.23)',
@@ -795,16 +811,10 @@ const Auth = ({ setUserRole }: AuthProps) => {
 														}}
 														value={email}
 														sx={{
-															'& .MuiOutlinedInput-root': {
-																'borderRadius': '0.35rem',
-																'transition': 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-																'&:hover': {
-																	backgroundColor: 'rgba(0, 0, 0, 0.02)',
-																},
-																'&.Mui-focused': {
-																	boxShadow: '0 0 0 2px rgba(30, 194, 139, 0.2)',
-																},
-															},
+															'& .MuiOutlinedInput-root': { fontFamily: 'Varela Round' },
+															'& .MuiInputBase-input': { fontFamily: 'Varela Round' },
+															'& .MuiInputBase-input::placeholder': { fontFamily: 'Varela Round', opacity: 1 },
+															'& .MuiInputLabel-root': { fontFamily: 'Varela Round' },
 														}}
 													/>
 												</Box>
@@ -820,6 +830,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 														value={password}
 														sx={{
 															'& .MuiOutlinedInput-root': {
+																'fontFamily': 'Varela Round',
 																'borderRadius': '0.35rem',
 																'transition': 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
 																'&:hover': {
@@ -829,6 +840,9 @@ const Auth = ({ setUserRole }: AuthProps) => {
 																	boxShadow: '0 0 0 2px rgba(30, 194, 139, 0.2)',
 																},
 															},
+															'& .MuiInputBase-input': { fontFamily: 'Varela Round' },
+															'& .MuiInputBase-input::placeholder': { fontFamily: 'Varela Round', opacity: 1 },
+															'& .MuiInputLabel-root': { fontFamily: 'Varela Round' },
 														}}
 														InputProps={{
 															endAdornment: (
@@ -912,6 +926,12 @@ const Auth = ({ setUserRole }: AuthProps) => {
 												setEmail(e.target.value.trim());
 												setErrorMsg(undefined);
 											}}
+											sx={{
+												'& .MuiOutlinedInput-root': { fontFamily: 'Varela Round' },
+												'& .MuiInputBase-input': { fontFamily: 'Varela Round' },
+												'& .MuiInputBase-input::placeholder': { fontFamily: 'Varela Round', opacity: 1 },
+												'& .MuiInputLabel-root': { fontFamily: 'Varela Round' },
+											}}
 										/>
 										<Button variant='contained' fullWidth sx={submitBtnStyles} type='submit'>
 											Şifre Sıfırlama E-postası Gönder
@@ -923,6 +943,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 												'textAlign': 'center',
 												':hover': { textDecoration: 'underline' },
 												'fontSize': '0.8rem',
+												'fontFamily': 'Varela Round',
 											}}
 											onClick={() => {
 												setActiveForm(AuthForms.SIGN_IN);
@@ -949,6 +970,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 						<Typography
 							variant='body2'
 							sx={{
+								'fontFamily': 'Varela Round',
 								'color': theme.textColor?.primary.main,
 								'cursor': 'pointer',
 								'transition': 'all 0.3s ease',
@@ -995,6 +1017,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 						onClose={() => setSignUpMessage(false)}
 						severity='success'
 						sx={{
+							'fontFamily': 'Varela Round',
 							'width': '100%',
 							'fontSize': isMobileSize ? '0.7rem' : undefined,
 							'boxShadow': '0 4px 12px rgba(0, 0, 0, 0.1)',
@@ -1012,6 +1035,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 						onClose={() => setResetPasswordMsg(false)}
 						severity='success'
 						sx={{
+							'fontFamily': 'Varela Round',
 							'width': '100%',
 							'fontSize': isMobileSize ? '0.7rem' : undefined,
 							'boxShadow': '0 4px 12px rgba(0, 0, 0, 0.1)',
@@ -1029,30 +1053,35 @@ const Auth = ({ setUserRole }: AuthProps) => {
 					title='Kullanıcı Adı Kuralları'
 					openModal={isUserNameImageInfoModalOpen}
 					closeModal={() => setIsUserNameImageInfoModalOpen(false)}
-					maxWidth='sm'>
+					maxWidth='sm'
+					titleSx={{ fontFamily: 'Varela Round' }}>
 					<DialogContent>
 						<Box sx={{ display: 'flex', flexDirection: 'column', margin: '0.5rem 0 0.75rem 1.5rem' }}>
-							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontFamily: 'Varela Round' }}>
 								Kullanıcı adı şunları içerebilir:
 							</Typography>
 							<Box sx={{ margin: '0.85rem 0 0 3rem' }}>
 								{['en fazla 15 karakter', 'alt çizgi (_) ve nokta (.)'].map((rule, index) => (
 									<ul key={index}>
 										<li style={{ color: theme.textColor?.secondary.main }}>
-											<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.35rem' }}>{rule}</Typography>
+											<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.35rem', fontFamily: 'Varela Round' }}>
+												{rule}
+											</Typography>
 										</li>
 									</ul>
 								))}
 							</Box>
-							<Typography variant='body2' sx={{ mt: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+							<Typography variant='body2' sx={{ mt: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontFamily: 'Varela Round' }}>
 								Kullanıcı adı alt çizgi veya nokta ile başlayamaz/bitemez
 							</Typography>
-							<Typography variant='body2' sx={{ mt: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+							<Typography variant='body2' sx={{ mt: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontFamily: 'Varela Round' }}>
 								Kullanıcı adı boşluk içeremez
 							</Typography>
 						</Box>
 						<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '100%', mb: '0.5rem' }}>
-							<CustomCancelButton onClick={() => setIsUserNameImageInfoModalOpen(false)} sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+							<CustomCancelButton
+								onClick={() => setIsUserNameImageInfoModalOpen(false)}
+								sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontFamily: 'Varela Round' }}>
 								Kapat
 							</CustomCancelButton>
 						</Box>
@@ -1060,40 +1089,51 @@ const Auth = ({ setUserRole }: AuthProps) => {
 				</CustomDialog>
 
 				{/* Password Rules Modal */}
-				<CustomDialog title='Şifre Kuralları' openModal={isPasswordInfoModalOpen} closeModal={() => setIsPasswordInfoModalOpen(false)} maxWidth='sm'>
+				<CustomDialog
+					title='Şifre Kuralları'
+					openModal={isPasswordInfoModalOpen}
+					closeModal={() => setIsPasswordInfoModalOpen(false)}
+					maxWidth='sm'
+					titleSx={{ fontFamily: 'Varela Round' }}>
 					<DialogContent>
 						<Box sx={{ display: 'flex', flexDirection: 'column', margin: '0.5rem 0 0.75rem 1.5rem' }}>
-							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontFamily: 'Varela Round' }}>
 								Şifreniz şunları içermelidir:
 							</Typography>
 							<Box sx={{ margin: '0.85rem 0 0 3rem' }}>
 								{['en az 6 karakter uzunluğunda olmalı', 'en az bir harf içermeli', 'en az bir rakam içermeli'].map((rule, index) => (
 									<ul key={index}>
 										<li style={{ color: theme.textColor?.secondary.main }}>
-											<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.35rem' }}>{rule}</Typography>
+											<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.35rem', fontFamily: 'Varela Round' }}>
+												{rule}
+											</Typography>
 										</li>
 									</ul>
 								))}
 							</Box>
-							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mt: '1rem' }}>
+							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mt: '1rem', fontFamily: 'Varela Round' }}>
 								Şifreniz şunları içeremez:
 							</Typography>
 							<Box sx={{ margin: '0.5rem 0 0 3rem' }}>
 								<ul>
 									<li style={{ color: theme.textColor?.secondary.main }}>
-										<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.35rem' }}>boşluk içeremez</Typography>
+										<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.35rem', fontFamily: 'Varela Round' }}>
+											boşluk içeremez
+										</Typography>
 									</li>
 								</ul>
 							</Box>
 						</Box>
 						<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '100%', mb: '0.5rem' }}>
-							<CustomCancelButton onClick={() => setIsPasswordInfoModalOpen(false)} sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+							<CustomCancelButton
+								onClick={() => setIsPasswordInfoModalOpen(false)}
+								sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontFamily: 'Varela Round' }}>
 								Kapat
 							</CustomCancelButton>
 						</Box>
 					</DialogContent>
 				</CustomDialog>
-				<Typography sx={{ fontSize: isSmallScreen ? '0.55rem' : '0.65rem', position: 'absolute', bottom: 3 }}>
+				<Typography sx={{ fontSize: isSmallScreen ? '0.55rem' : '0.65rem', position: 'absolute', bottom: 3, fontFamily: 'Varela Round' }}>
 					&copy; 2025 Webnexia Software Solutions Ltd. Tüm hakları saklıdır.
 				</Typography>
 			</Box>

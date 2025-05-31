@@ -63,8 +63,8 @@ const CustomTextField = forwardRef<HTMLDivElement, CustomTextFieldProps>(
 				onChange={onChange}
 				size={size}
 				sx={{
-					marginBottom: '0.85rem',
-					backgroundColor: theme.bgColor?.common,
+					'marginBottom': '0.85rem',
+					'backgroundColor': theme.bgColor?.common,
 					'& .MuiInputBase-root': {
 						resize: resizable ? 'both' : 'none',
 					},

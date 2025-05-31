@@ -1,4 +1,4 @@
-import { Box, Grid } from '@mui/material';
+import { Box, Grid, } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { useContext, useEffect, useState } from 'react';
 import { UsersContext } from '../contexts/UsersContextProvider';
@@ -17,6 +17,7 @@ import { useNavigate } from 'react-router-dom';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 import DashboardQuizSubmissions from '../components/layouts/dashboard/DashboardQuizSubmissions';
 import DashboardCommunityTopics from '../components/layouts/dashboard/DashboardCommunityTopics';
+import AdminInformationRequests from '../components/layouts/dashboard/AdminInformationRequests';
 
 Chart.register(...registerables);
 
@@ -136,12 +137,12 @@ const AdminDashboard = () => {
 						sx={{ cursor: 'pointer' }}>
 						<AdminPayment />
 					</Grid>
-					<Grid item sm={3} xs={6} onClick={() => navigate(`/admin/calendar/user/${user?._id}`)}>
+					<Grid item sm={2.4} xs={6} onClick={() => navigate(`/admin/calendar/user/${user?._id}`)}>
 						<UpcomingEvents sortedEventsData={sortedEventsData} />
 					</Grid>
 					<Grid
 						item
-						sm={3}
+						sm={2.4}
 						xs={6}
 						onClick={() => {
 							navigate(`/admin/messages/user/${user?._id}`);
@@ -150,7 +151,7 @@ const AdminDashboard = () => {
 					</Grid>
 					<Grid
 						item
-						sm={3}
+						sm={2.4}
 						xs={6}
 						onClick={() => {
 							navigate(`/admin/submissions/user/${user?._id}`);
@@ -159,12 +160,21 @@ const AdminDashboard = () => {
 					</Grid>
 					<Grid
 						item
-						sm={3}
+						sm={2.4}
 						xs={6}
 						onClick={() => {
 							navigate(`/admin/community/user/${user?._id}`);
 						}}>
 						<DashboardCommunityTopics />
+					</Grid>
+					<Grid
+						item
+						sm={2.4}
+						xs={6}
+						onClick={() => {
+							navigate(`/admin/info-requests/user/${user?._id}`);
+						}}>
+						<AdminInformationRequests />
 					</Grid>
 				</Grid>
 			</Box>

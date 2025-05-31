@@ -1,4 +1,4 @@
-import { Box, ListItem, Typography } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import { useContext, useEffect, useState } from 'react';
 import { CommunityContext } from '../../../contexts/CommunityContextProvider';
 import { CommunityTopic } from '../../../interfaces/communityTopics';
@@ -23,20 +23,20 @@ const DashboardCommunityTopics = () => {
 	return (
 		<Box
 			sx={{
-				display: 'flex',
-				flexDirection: 'column',
-				boxShadow: '0.1rem 0.3rem 0.3rem 0.3rem rgba(0,0,0,0.2)',
-				padding: '1rem',
-				height: '12rem',
-				borderRadius: '0.35rem',
-				cursor: 'pointer',
-				transition: '0.3s',
+				'display': 'flex',
+				'flexDirection': 'column',
+				'boxShadow': '0.1rem 0.3rem 0.3rem 0.3rem rgba(0,0,0,0.2)',
+				'padding': '1rem',
+				'height': '12rem',
+				'borderRadius': '0.35rem',
+				'cursor': 'pointer',
+				'transition': '0.3s',
 				':hover': {
 					boxShadow: '0rem 0.1rem 0.2rem 0.1rem rgba(0,0,0,0.3)',
 				},
 			}}>
 			<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-				<Typography variant='h5' sx={{ fontSize: isMobileSize ? '0.85rem' : null }}>
+				<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : null }}>
 					Recent Topics
 				</Typography>
 				<LightbulbOutlined sx={{ ml: '0.5rem', color: theme.textColor?.greenPrimary.main }} fontSize={isMobileSize ? 'small' : 'medium'} />

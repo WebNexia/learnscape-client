@@ -127,11 +127,12 @@ const theme = createTheme({
 	},
 	tabBtnAuth: {
 		fontSize: '1.25rem',
-		fontFamily: 'Poppins',
+		fontFamily: 'Varela Round',
 		fontWeight: 500,
 		color: '#01435A',
 	},
 	submitBtn: {
+		fontFamily: 'Varela Round',
 		backgroundColor: '#1EC28B',
 		marginTop: '1.25rem',
 		fontWeight: 500,
