@@ -67,7 +67,7 @@ const TestimonialsSection = () => {
             }}
           >
             {/* What Our Students Say */}
-            Öğrencilerimiz Ne Diyor
+            Öğrencilerimiz Ne Diyor?
           </Typography>
           
           <Box sx={{ 

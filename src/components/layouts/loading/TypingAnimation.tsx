@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Box, styled } from '@mui/material';
 
 const Dot = styled('div')(({ theme }) => ({
@@ -18,16 +18,18 @@ const Dot = styled('div')(({ theme }) => ({
 		animationDelay: '0.6s',
 	},
 	'@keyframes typing': {
-		'0%, 60%, 100%': {
+		'0%, 100%': {
 			transform: 'translateY(0)',
+			opacity: 0.3,
 		},
-		'30%': {
+		'50%': {
 			transform: 'translateY(-10px)',
+			opacity: 1,
 		},
 	},
 }));
 
-const TypingAnimation: React.FC = () => {
+const TypingAnimation: React.FC = memo(() => {
 	return (
 		<Box display='flex' justifyContent='center' alignItems='center'>
 			<Dot />
@@ -35,6 +37,8 @@ const TypingAnimation: React.FC = () => {
 			<Dot />
 		</Box>
 	);
-};
+});
+
+TypingAnimation.displayName = 'TypingAnimation';
 
 export default TypingAnimation;

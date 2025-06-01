@@ -47,8 +47,8 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 	let resolvedCountryCode = user?.countryCode || location?.countryCode || 'US';
 
 	useEffect(() => {
-		const price = +getPriceForCountry(course, resolvedCountryCode).amount;
-		setDiscountedAmount(price);
+		const amount = +getPriceForCountry(course, resolvedCountryCode).amount;
+		setDiscountedAmount(isNaN(amount) ? 0 : amount);
 	}, [user, location, course]);
 
 	const isMobileSize: boolean = isSmallScreen || isRotatedMedium;
@@ -62,7 +62,10 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 	const [email, setEmail] = useState<string>('');
 	const [isUserAccountExist, setIsUserAccountExist] = useState<boolean>(false);
 	const [promoCode, setPromoCode] = useState<string>('');
-	const [discountedAmount, setDiscountedAmount] = useState<number>(+getPriceForCountry(course, resolvedCountryCode).amount);
+	const [discountedAmount, setDiscountedAmount] = useState<number>(() => {
+		const amount = +getPriceForCountry(course, resolvedCountryCode).amount;
+		return isNaN(amount) ? 0 : amount;
+	});
 
 	const [isPromoCodeApplied, setIsPromoCodeApplied] = useState<boolean>(false);
 	const [usersUsedPromoCode, setUsersUsedPromoCode] = useState<string[]>([]);
@@ -312,8 +315,12 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 
 			// Calculate the discounted amount based on the type
 			let newTotal: number = +getPriceForCountry(course, resolvedCountryCode).amount;
+			if (isNaN(newTotal)) {
+				newTotal = 0;
+			}
+
 			if (discountType === 'percentage') {
-				newTotal -= (+getPriceForCountry(course, resolvedCountryCode).amount * discountAmount) / 100;
+				newTotal -= (newTotal * discountAmount) / 100;
 			} else if (discountType === 'fixed') {
 				newTotal -= discountAmount;
 			}
@@ -329,14 +336,16 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 				// Fallback in case it's not an AxiosError or the message isn't available
 				setErrorMessage('Invalid promo code');
 			}
-			setDiscountedAmount(+getPriceForCountry(course, resolvedCountryCode).amount); // Reset to original price
+			const amount = +getPriceForCountry(course, resolvedCountryCode).amount;
+			setDiscountedAmount(isNaN(amount) ? 0 : amount); // Reset to original price
 		}
 	};
 
 const resetForm = (preserveError = false) => {
 	setEmail('');
 	setPromoCode('');
-	setDiscountedAmount(+getPriceForCountry(course, resolvedCountryCode).amount);
+	const amount = +getPriceForCountry(course, resolvedCountryCode).amount;
+	setDiscountedAmount(isNaN(amount) ? 0 : amount);
 	setIsPromoCodeApplied(false);
 	setAgreed(false);
 

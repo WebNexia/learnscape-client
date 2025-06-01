@@ -1,5 +1,6 @@
 import { Box, Button, Container, Typography } from '@mui/material';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 
 const colorScheme = {
   primary: '#2C3E50',
@@ -8,7 +9,24 @@ const colorScheme = {
   text: '#34495E'
 };
 
-const CTASection = () => {
+interface CTASectionProps {
+  coursesRef: React.RefObject<HTMLDivElement>;
+}
+
+const CTASection = ({ coursesRef }: CTASectionProps) => {
+  const navigate = useNavigate();
+
+  const handleScrollToCourses = () => {
+    if (coursesRef.current) {
+      const offset = 100;
+      const elementPosition = coursesRef.current.getBoundingClientRect().top + window.scrollY;
+      window.scrollTo({
+        top: elementPosition - offset,
+        behavior: 'smooth',
+      });
+    }
+  };
+
   return (
     <Box sx={{ position: 'relative', backgroundColor: 'rgba(44, 62, 80, 0.02)' }}>
       {/* Soft shadow at the top for modern transition */}
@@ -81,6 +99,7 @@ const CTASection = () => {
                   transition: 'all 0.3s ease',
                   borderRadius: '1.1rem'
                 }}
+                onClick={() => navigate('/auth')}
               >
                 {/* Get Started Now */}
                 Hemen Başla
@@ -105,6 +124,7 @@ const CTASection = () => {
                   transition: 'all 0.3s ease',
                   borderRadius: '1.1rem'
                 }}
+                onClick={handleScrollToCourses}
               >
                 {/* View Courses */}
                 Kursları Görüntüle

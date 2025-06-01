@@ -1,11 +1,12 @@
-import { AppBar, Box, Button, IconButton, Toolbar, Typography } from '@mui/material';
+import { AppBar, Box, Button, IconButton, Toolbar, Typography, keyframes } from '@mui/material';
 import theme from '../../../themes';
-import { useContext, useState } from 'react';
+import { useContext, useState, useEffect, useMemo, memo } from 'react';
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 import SidebarBtn from '../dashboardLayout/SidebarBtn';
 import { Mode, Roles } from '../../../interfaces/enums';
 import DashboardIcon from '@mui/icons-material/Dashboard';
+import logo from '../../../assets/logo.png';
 import {
 	AssignmentIndRounded,
 	CalendarMonth,
@@ -26,20 +27,147 @@ import {
 import TypingAnimation from './TypingAnimation';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
+const float = keyframes`
+  0% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-10px) rotate(2deg);
+  }
+  50% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  75% {
+    transform: translateY(10px) rotate(-2deg);
+  }
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+`;
+
+const dotsAnimation = keyframes`
+  0% { content: ''; }
+  25% { content: '.'; }
+  50% { content: '..'; }
+  75% { content: '...'; }
+  100% { content: ''; }
+`;
+
+const blink = keyframes`
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+`;
+
+// Memoize the logo component to prevent unnecessary re-renders
+const Logo = memo(() => (
+	<Box
+		sx={{
+			position: 'relative',
+			zIndex: 1,
+			mb: 4,
+			animation: `${float} 4s ease-in-out infinite`,
+		}}
+	>
+		<img
+			src={logo}
+			alt="Kaizen Logo"
+			style={{
+				width: '20rem',
+				height: 'auto',
+				filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))',
+			}}
+		/>
+	</Box>
+));
+
+// Memoize the base loading screen to prevent unnecessary re-renders
+const BaseLoadingScreen = memo(() => (
+	<Box
+		sx={{
+			height: '100vh',
+			width: '100vw',
+			display: 'flex',
+			flexDirection: 'column',
+			alignItems: 'center',
+			justifyContent: 'center',
+			background: '#ffffff',
+			position: 'relative',
+			overflow: 'hidden',
+			'&::before': {
+				content: '""',
+				position: 'absolute',
+				top: 0,
+				left: 0,
+				right: 0,
+				bottom: 0,
+				backgroundImage: 'radial-gradient(#e0e0e0 1px, transparent 1px)',
+				backgroundSize: '40px 40px',
+				opacity: 0.3,
+			},
+		}}
+	>
+		<Logo />
+		<Box
+			sx={{
+				position: 'relative',
+				zIndex: 1,
+				display: 'flex',
+				flexDirection: 'column',
+				alignItems: 'center',
+				gap: 2,
+			}}
+		>
+			<TypingAnimation />
+			<Typography
+				sx={{
+					color: '#2C3E50',
+					fontSize: '2.25rem',
+					fontWeight: 500,
+					fontFamily: 'Varela Round',
+					display: 'flex',
+					alignItems: 'center',
+					gap: '4px',
+					minHeight: '3rem',
+				}}
+			>
+				<span>Loading</span>
+			</Typography>
+		</Box>
+	</Box>
+));
+
 const Loading = () => {
 	const { organisation } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
-
 	const { isRotatedMedium, isSmallScreen, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
+	
+	// Use useMemo for mode to prevent unnecessary re-renders
+	const mode = useMemo(() => 
+		(localStorage.getItem('mode') as Mode) || Mode.LIGHT_MODE,
+		[]
+	);
 
-	const [mode, setMode] = useState<Mode>((localStorage.getItem('mode') as Mode) || Mode.LIGHT_MODE);
-
-	const currentPage = window.location.pathname.includes('admin')
-		? window.location.pathname.split('/')[2].charAt(0).toUpperCase() + window.location.pathname.split('/')[2].slice(1)
-		: window.location.pathname.split('/')[1].charAt(0).toUpperCase() + window.location.pathname.split('/')[1].slice(1);
+	// Use useMemo for currentPage to prevent unnecessary re-renders
+	const currentPage = useMemo(() => {
+		const path = window.location.pathname;
+		return path.includes('admin')
+			? path.split('/')[2].charAt(0).toUpperCase() + path.split('/')[2].slice(1)
+			: path.split('/')[1].charAt(0).toUpperCase() + path.split('/')[1].slice(1);
+	}, []);
 
 	const [selectedPage, setSelectedPage] = useState<string>(currentPage);
+
+	// If user is not logged in, show the base loading screen
+	if (!user) {
+		return <BaseLoadingScreen />;
+	}
+
+	// For logged-in users, show the dashboard loading screen
 	return (
 		<>
 			{isMobileSize ? (
@@ -141,15 +269,7 @@ const Loading = () => {
 							}}>
 							Loading...
 						</Typography>
-						<Typography
-							sx={{
-								fontSize: isVerySmallScreen ? '2rem' : '3rem',
-								fontFamily: 'Permanent Marker, cursive',
-								color: '#01435A',
-							}}>
-							{/* {organisation?.orgName} */}
-							Kaizenglish
-						</Typography>
+						<Logo />
 					</Box>
 				</>
 			) : (
@@ -197,8 +317,8 @@ const Loading = () => {
 															backgroundColor: 'transparent',
 														},
 													}}>
-													<DarkMode />
-												</IconButton>
+														<DarkMode />
+													</IconButton>
 											),
 											[Mode.LIGHT_MODE]: (
 												<IconButton
@@ -209,8 +329,8 @@ const Loading = () => {
 															backgroundColor: 'transparent',
 														},
 													}}>
-													<LightMode />
-												</IconButton>
+														<LightMode />
+													</IconButton>
 											),
 										}[mode]
 									}
@@ -248,7 +368,6 @@ const Loading = () => {
 								marginBottom: '0.5rem',
 							}}>
 							<Typography variant='h1' sx={{ color: theme.textColor?.common.main, fontSize: '1.5rem' }}>
-								{/* {organisation?.orgName} */}
 								Kaizenglish
 							</Typography>
 						</Box>
@@ -332,15 +451,7 @@ const Loading = () => {
 							}}>
 							Loading...
 						</Typography>
-						<Typography
-							sx={{
-								fontSize: '4rem',
-								fontFamily: 'Permanent Marker, cursive',
-								color: '#01435A',
-							}}>
-							{/* {organisation?.orgName} */}
-							Kaizenglish
-						</Typography>
+						<Logo />
 					</Box>
 				</>
 			)}

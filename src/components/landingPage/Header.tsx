@@ -8,7 +8,7 @@ import logo from '../../assets/logo.png';
 const Header = ({ coursesRef }: { coursesRef: React.RefObject<HTMLDivElement> }) => {
 	const handleScrollToCourses = () => {
 		if (coursesRef.current) {
-			const offset = -50;
+			const offset = 100;
 			const elementPosition = coursesRef.current.getBoundingClientRect().top + window.scrollY;
 			window.scrollTo({
 				top: elementPosition - offset,

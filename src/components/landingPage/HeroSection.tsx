@@ -74,6 +74,7 @@ const HeroSection = () => {
 			sx={{
 				height: '100vh',
 				display: 'flex',
+				justifyContent: 'center',
 				alignItems: 'center',
 				background: 'linear-gradient(135deg, rgba(44, 62, 80, 0.05), rgba(52, 152, 219, 0.05))',
 				position: 'relative',
@@ -94,15 +95,16 @@ const HeroSection = () => {
 				}}
 			/>
 
-			<Box sx={{ width: '100%' }}>
 				<Box
 					sx={{
 						display: 'flex',
 						flexDirection: { xs: 'column', md: 'row' },
-						justifyContent: 'space-between',
+						justifyContent: 'center',
 						alignItems: 'center',
 						gap: 13,
 						py: 8,
+						maxWidth: '100rem',
+						width:'100%'
 					}}>
 					{/* Content */}
 					<motion.div initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }} style={{ flex: 2 }}>
@@ -216,7 +218,7 @@ const HeroSection = () => {
 						</motion.div>
 					)}
 				</Box>
-			</Box>
+
 
 			<Box
 				sx={{
