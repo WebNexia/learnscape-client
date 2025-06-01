@@ -11,7 +11,7 @@ const colorScheme = {
 const StatisticsSection = () => {
   const stats = [
     { number: "10K+", label: "Active Students" },
-    { number: "500+", label: "Courses" },
+    { number: "50+", label: "Courses" },
     { number: "95%", label: "Completion Rate" },
     { number: "24/7", label: "Support" }
   ];
