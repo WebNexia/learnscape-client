@@ -27,15 +27,18 @@ const Settings = () => {
 	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(true);
 	const [username, setUsername] = useState<string>(user?.username || '');
 	const [imageUrl, setImageUrl] = useState<string>(user?.imageUrl || '');
+	const [firstName, setFirstName] = useState<string>(user?.firstName || '');
+	const [lastName, setLastName] = useState<string>(user?.lastName || '');
+	const [email, setEmail] = useState<string>(user?.email || '');
 
 	const [currentPassword, setCurrentPassword] = useState<string>('');
 	const [password, setPassword] = useState<string>('');
 	const [confirmedPassword, setConfirmedPassword] = useState<string>('');
 
-	const [isImgUsernameUpdated, setIsImgUsernameUpdated] = useState<boolean>(false);
+	const [isProfileUpdated, setIsProfileUpdated] = useState<boolean>(false);
 
 	const [isPasswordUpdatedMsgDisplayed, setIsPasswordUpdatedMsgDisplayed] = useState<boolean>(false);
-	const [isImgUsernameUpdatedMsgDisplayed, setIsImgUsernameUpdatedMsgDisplayed] = useState<boolean>(false);
+	const [isProfileUpdatedMsgDisplayed, setIsProfileUpdatedMsgDisplayed] = useState<boolean>(false);
 
 	const [isUserNameImageInfoModalOpen, setIsUserNameImageInfoModalOpen] = useState<boolean>(false);
 
@@ -44,6 +47,7 @@ const Settings = () => {
 	const [showConfirmedPassword, setShowConfirmedPassword] = useState<boolean>(false);
 
 	const [errorMsg, setErrorMsg] = useState<PasswordUpdateErrorMessages>();
+	const [profileErrorMsg, setProfileErrorMsg] = useState<string | undefined>();
 
 	const toggleCurrentPasswordVisibility = () => {
 		setShowCurrentPassword((prevShowPassword) => !prevShowPassword);
@@ -60,21 +64,27 @@ const Settings = () => {
 	const vertical = 'top';
 	const horizontal = 'center';
 
-	const handleUsernameProfilePictureUpdate = async () => {
+	const handleProfileUpdate = async () => {
 		try {
-			if (isImgUsernameUpdated) {
-				await axios.patch(`${base_url}/users/${user?._id}`, { imageUrl, username });
+			setProfileErrorMsg(undefined);
+			if (isProfileUpdated) {
+				await axios.patch(`${base_url}/users/${user?._id}`, { imageUrl, username, firstName, lastName, email });
 			}
 			setUser((prevData) => {
 				if (prevData) {
-					return { ...prevData, username, imageUrl };
+					return { ...prevData, username, imageUrl, firstName, lastName, email };
 				}
 				return prevData;
 			});
-			setIsImgUsernameUpdatedMsgDisplayed(true);
-			setIsImgUsernameUpdated(false);
-		} catch (error) {
-			console.log(error);
+			setIsProfileUpdatedMsgDisplayed(true);
+			setIsProfileUpdated(false);
+		} catch (error: any) {
+			const msg = error?.response?.data?.message;
+			if (msg === 'Email already in use' || msg === 'Username already in use') {
+				setProfileErrorMsg(msg);
+			} else {
+				setProfileErrorMsg('An error occurred while updating your profile.');
+			}
 		}
 	};
 
@@ -160,7 +170,7 @@ const Settings = () => {
 
 		if (regex.test(value)) {
 			setUsername(value.trim()); // Only set the username if it matches the pattern
-			setIsImgUsernameUpdated(true);
+			setIsProfileUpdated(true);
 		}
 	};
 
@@ -187,7 +197,7 @@ const Settings = () => {
 						}}
 						onSubmit={(e) => {
 							e.preventDefault();
-							handleUsernameProfilePictureUpdate();
+							handleProfileUpdate();
 						}}>
 						<Box sx={{ display: 'flex', justifyContent: 'center', mb: '0rem', width: '90%' }}>
 							<Typography variant={isMobileSize ? 'h6' : 'h5'}>Update Profile</Typography>
@@ -218,7 +228,7 @@ const Settings = () => {
 								onImageUploadLogic={(url) => setImageUrl(url)}
 								onChangeImgUrl={(e) => {
 									setImageUrl(e.target.value);
-									setIsImgUsernameUpdated(true);
+									setIsProfileUpdated(true);
 								}}
 								imageUrlValue={imageUrl}
 								imageFolderName='ProfileImages'
@@ -226,16 +236,57 @@ const Settings = () => {
 								setEnterImageUrl={setEnterImageUrl}
 							/>
 						</Box>
-						<Box sx={{ display: 'flex', width: '100%' }}>
-							<CustomTextField
-								label='Username'
-								required={true}
-								value={username}
-								onChange={handleUsernameChange}
-								sx={{ width: '100%' }}
-								InputProps={{ inputProps: { maxLength: 15 } }}
-							/>
-							<Box sx={{ display: 'flex', width: '11%', justifyContent: 'flex-end', mt: '-1rem' }}>
+						<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '90%' }}>
+							<Box sx={{ flex: 1 }}>
+								<CustomTextField
+									label='First Name'
+									required={true}
+									value={firstName}
+									onChange={(e) => {
+										setFirstName(e.target.value);
+										setIsProfileUpdated(true);
+									}}
+									sx={{ width: '100%' }}
+								/>
+							</Box>
+							<Box sx={{ flex: 1, ml: '1.5rem' }}>
+								<CustomTextField
+									label='Last Name'
+									required={true}
+									value={lastName}
+									onChange={(e) => {
+										setLastName(e.target.value);
+										setIsProfileUpdated(true);
+									}}
+									sx={{ width: '100%' }}
+								/>
+							</Box>
+						</Box>
+						<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+							<Box sx={{ flex: 1 }}>
+								<CustomTextField
+									label='Email Address'
+									type={TextFieldTypes.EMAIL}
+									required={true}
+									value={email}
+									onChange={(e) => {
+										setEmail(e.target.value);
+										setIsProfileUpdated(true);
+									}}
+									sx={{ width: '100%' }}
+								/>
+							</Box>
+							<Box sx={{ display: 'flex', flex: 1, ml: '1.5rem' }}>
+								<CustomTextField
+									label='Username'
+									required={true}
+									value={username}
+									onChange={handleUsernameChange}
+									sx={{ width: '100%' }}
+									InputProps={{ inputProps: { maxLength: 15 } }}
+								/>
+							</Box>
+							<Box sx={{ display: 'flex', width: '10%', justifyContent: 'flex-end', mt: '-1rem' }}>
 								<Tooltip title='Username Rules' placement='top'>
 									<IconButton
 										onClick={() => setIsUserNameImageInfoModalOpen(true)}
@@ -284,19 +335,20 @@ const Settings = () => {
 							</DialogContent>
 						</CustomDialog>
 
+						{profileErrorMsg && <CustomErrorMessage sx={{ width: '100%', fontSize: '0.75rem', mb: 1 }}>{profileErrorMsg}</CustomErrorMessage>}
 						<Box sx={{ display: 'flex', width: '90%', justifyContent: 'flex-end' }}>
-							<CustomSubmitButton size='small' type='submit' sx={{ fontSize: isMobileSize ? '0.7rem' : undefined, height: '1.65rem' }}>
+							<CustomSubmitButton size='small' type='submit' sx={{ fontSize: isMobileSize ? '0.7rem' : undefined }}>
 								Update
 							</CustomSubmitButton>
 						</Box>
 						<Snackbar
-							open={isImgUsernameUpdatedMsgDisplayed}
+							open={isProfileUpdatedMsgDisplayed}
 							autoHideDuration={3000}
 							anchorOrigin={{ vertical, horizontal }}
 							sx={{ mt: '1rem' }}
-							onClose={() => setIsImgUsernameUpdatedMsgDisplayed(false)}>
+							onClose={() => setIsProfileUpdatedMsgDisplayed(false)}>
 							<Alert severity='success' variant='filled' sx={{ width: '100%', color: '#fff', fontSize: isMobileSize ? '0.7rem' : undefined }}>
-								You have successfully updated your profile picture and/or username!
+								You have successfully updated your profile!
 							</Alert>
 						</Snackbar>
 					</form>
@@ -447,10 +499,7 @@ const Settings = () => {
 							</Box>
 						</Box>
 						<Box sx={{ display: 'flex', width: isVerySmallScreen ? '90%' : isMobileSize ? '80%' : '75%', justifyContent: 'flex-end', mt: '0.5rem' }}>
-							<CustomSubmitButton
-								size='small'
-								sx={{ alignSelf: 'flex-end', fontSize: isMobileSize ? '0.7rem' : undefined, height: '1.65rem' }}
-								type='submit'>
+							<CustomSubmitButton size='small' sx={{ alignSelf: 'flex-end', fontSize: isMobileSize ? '0.7rem' : undefined }} type='submit'>
 								Update
 							</CustomSubmitButton>
 						</Box>

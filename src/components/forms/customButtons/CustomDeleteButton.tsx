@@ -26,12 +26,13 @@ const CustomDeleteButton = ({
 			variant={variant}
 			sx={{
 				...sx,
-				textTransform: 'capitalize',
-				backgroundColor: 'error.main',
-				ml: '0.75rem',
+				'textTransform': 'capitalize',
+				'backgroundColor': 'error.main',
+				'ml': '0.75rem',
 				':hover': {
 					backgroundColor: 'error.light',
 				},
+				'height': '1.75rem',
 			}}
 			onClick={onClick}
 			disabled={disabled}
