@@ -276,7 +276,7 @@ const CreateNewDocumentDialog = ({
 						<CustomTextField
 							label='Description'
 							value={singleDocument?.description || ''}
-							placeholder='Enter a description for the document (max 150 characters)'
+							placeholder='Enter a description for the document (max 100 characters)'
 							onChange={(e) => {
 								if (singleDocument) {
 									setSingleDocument({ ...singleDocument, description: e.target.value });
@@ -291,7 +291,7 @@ const CreateNewDocumentDialog = ({
 							}}
 							InputProps={{
 								inputProps: {
-									maxLength: 150,
+									maxLength: 100,
 								},
 							}}
 						/>

@@ -42,12 +42,13 @@ const CustomSubmitButton = ({
 			disabled={disabled}
 			sx={{
 				...sx,
-				textTransform: capitalize ? 'capitalize' : 'none',
-				backgroundColor: user?.role === Roles.ADMIN ? theme.bgColor?.greenPrimary : theme.bgColor?.greenPrimary,
+				'textTransform': capitalize ? 'capitalize' : 'none',
+				'backgroundColor': user?.role === Roles.ADMIN ? theme.bgColor?.greenPrimary : theme.bgColor?.greenPrimary,
 				':hover': {
 					backgroundColor: theme.bgColor?.common,
 					color: theme.bgColor?.adminSubmitBtn,
 				},
+				'height': '1.75rem',
 			}}
 			size={size}
 			onClick={handleClick}

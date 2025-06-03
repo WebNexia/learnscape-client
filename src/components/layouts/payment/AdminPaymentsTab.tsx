@@ -23,7 +23,7 @@ const AdminPaymentsTab = () => {
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
-	const courses: string[] = sortedCoursesData.map((course) => course.title);
+	const courses: string[] = sortedCoursesData?.map((course) => course.title);
 
 	const [paymentsPageNumber, setPaymentsPageNumber] = useState<number>(1);
 	const [searchValue, setSearchValue] = useState<string>('');
@@ -43,7 +43,7 @@ const AdminPaymentsTab = () => {
 			);
 		}
 		if (filterValue) {
-			if (filterValue === payment.courseTitle.toLowerCase()) return true;
+			if (filterValue === payment?.courseTitle?.toLowerCase()) return true;
 		}
 		return !searchValue && !filterValue;
 	});
@@ -144,9 +144,9 @@ const AdminPaymentsTab = () => {
 								}}>
 								------ Filter by Course ------
 							</MenuItem>
-							{courses.map((course) => (
+							{courses?.map((course) => (
 								<MenuItem
-									value={course.toLowerCase()}
+									value={course?.toLowerCase()}
 									key={course}
 									sx={{
 										fontSize: isMobileSize ? '0.65rem' : '0.85rem',

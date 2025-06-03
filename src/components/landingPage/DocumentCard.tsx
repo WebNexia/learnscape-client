@@ -131,7 +131,7 @@ const DocumentCard = ({ document, userCurrency }: DocumentCardProps) => {
 
 						<Box
 							sx={{
-								'height': '4.2em', // 3 lines * 1.4 line height
+								'height': '4.5em', // 3 lines * 1.4 line height
 								'overflow': 'auto',
 								'marginBottom': '20px',
 								'&::-webkit-scrollbar': {
@@ -155,9 +155,10 @@ const DocumentCard = ({ document, userCurrency }: DocumentCardProps) => {
 									color: theme.palette.text.secondary,
 									lineHeight: 1.4,
 									fontFamily: "'Varela Round', sans-serif",
-									paddingRight: '4px',
+									paddingRight: '0.1rem',
 									whiteSpace: 'pre-wrap',
 									wordBreak: 'break-word',
+									fontSize: '0.8rem',
 								}}>
 								{document.description || 'No description available'}
 							</Typography>
