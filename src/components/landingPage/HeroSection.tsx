@@ -95,130 +95,129 @@ const HeroSection = () => {
 				}}
 			/>
 
-				<Box
-					sx={{
-						display: 'flex',
-						flexDirection: { xs: 'column', md: 'row' },
-						justifyContent: 'center',
-						alignItems: 'center',
-						gap: 13,
-						py: 8,
-						maxWidth: '100rem',
-						width:'100%'
-					}}>
-					{/* Content */}
-					<motion.div initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }} style={{ flex: 2 }}>
-						<Typography
-							variant='h2'
-							className='gradient-text kaizen-title'
+			<Box
+				sx={{
+					display: 'flex',
+					flexDirection: { xs: 'column', md: 'row' },
+					justifyContent: 'center',
+					alignItems: 'center',
+					gap: 13,
+					py: 8,
+					maxWidth: '100rem',
+					width: '100%',
+				}}>
+				{/* Content */}
+				<motion.div initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }} style={{ flex: 2 }}>
+					<Typography
+						variant='h2'
+						className='gradient-text kaizen-title'
+						sx={{
+							fontSize: { xs: '2.5rem', md: '3.5rem' },
+							fontWeight: 600,
+							mb: 2,
+							background: 'linear-gradient(45deg, #2C3E50, #3498DB)',
+							WebkitBackgroundClip: 'text',
+							WebkitTextFillColor: 'transparent',
+							backgroundClip: 'text',
+							letterSpacing: '-0.02em',
+							lineHeight: 1.2,
+							fontFamily: 'Varela Round',
+						}}>
+						{/* Speak with confidence, learn with passion, grow without limits! */}
+						Güvenle konuşun, tutkuyla öğrenin, sınırsızca gelişin!
+					</Typography>
+					<Typography
+						variant='h5'
+						sx={{
+							mb: 4,
+							color: '#34495E',
+							opacity: 0.9,
+							fontSize: { xs: '1.1rem', md: '1.3rem' },
+							fontWeight: 400,
+							lineHeight: 1.6,
+							fontFamily: 'Varela Round',
+						}}>
+						{/* Access world-class courses, expert instructors, and a supportive community */}
+						Dünya standartlarında kurslar, uzman eğitmenler ve destekleyici bir topluluk
+					</Typography>
+					<Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+						<Button
+							variant='outlined'
+							endIcon={<PlayCircle />}
+							onClick={() => setIsIntroVideoModalOpen(true)}
 							sx={{
-								fontSize: { xs: '2.5rem', md: '3.5rem' },
-								fontWeight: 600,
-								mb: 2,
-								background: 'linear-gradient(45deg, #2C3E50, #3498DB)',
-								WebkitBackgroundClip: 'text',
-								WebkitTextFillColor: 'transparent',
-								backgroundClip: 'text',
-								letterSpacing: '-0.02em',
-								lineHeight: 1.2,
-								fontFamily: 'Varela Round',
+								'fontFamily': 'Varela Round',
+								'borderColor': '#2C3E50',
+								'color': '#2C3E50',
+								'borderRadius': '1.1rem',
+								'padding': '0.75rem 1.75rem',
+								'fontWeight': 400,
+								'&:hover': {
+									borderColor: '#2C3E50',
+									backgroundColor: 'rgba(44, 62, 80, 0.05)',
+									transform: 'translateY(-2px)',
+								},
+								'transition': 'all 0.3s ease',
 							}}>
-							{/* Speak with confidence, learn with passion, grow without limits! */}
-							Güvenle konuşun, tutkuyla öğrenin, sınırsızca gelişin!
-						</Typography>
-						<Typography
-							variant='h5'
+							{/* Watch */}
+							İzle
+						</Button>
+						<Button
+							variant='outlined'
+							endIcon={<ContactPage />}
+							onClick={() => setIsGetMoreDetailsModalOpen(true)}
 							sx={{
-								mb: 4,
-								color: '#34495E',
-								opacity: 0.9,
-								fontSize: { xs: '1.1rem', md: '1.3rem' },
-								fontWeight: 400,
-								lineHeight: 1.6,
-								fontFamily: 'Varela Round',
+								'borderColor': '#3498DB',
+								'color': '#3498DB',
+								'borderRadius': '1.1rem',
+								'padding': '0.75rem 1.75rem',
+								'fontFamily': 'Varela Round',
+								'fontWeight': 400,
+								'&:hover': {
+									borderColor: '#3498DB',
+									backgroundColor: 'rgba(52, 152, 219, 0.05)',
+									transform: 'translateY(-2px)',
+								},
+								'transition': 'all 0.3s ease',
 							}}>
-							{/* Access world-class courses, expert instructors, and a supportive community */}
-							Dünya standartlarında kurslar, uzman eğitmenler ve destekleyici bir topluluk
-						</Typography>
-						<Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-							<Button
-								variant='outlined'
-								endIcon={<PlayCircle />}
-								onClick={() => setIsIntroVideoModalOpen(true)}
+							{/* More Info */}
+							Daha Fazla Bİlgİ
+						</Button>
+					</Box>
+				</motion.div>
+
+				{/* Instructor Image */}
+				{!isSmallScreen && (
+					<motion.div initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8, delay: 0.2 }} style={{ flex: 1 }}>
+						<Box
+							sx={{
+								display: 'flex',
+								justifyContent: 'center',
+								width: '100%',
+								position: 'relative',
+							}}>
+							<Box
+								component='img'
+								src={Instructor_Img}
+								alt='Instructor'
 								sx={{
-									'fontFamily': 'Varela Round',
-									'borderColor': '#2C3E50',
-									'color': '#2C3E50',
-									'borderRadius': '1.1rem',
-									'padding': '0.75rem 1.75rem',
-									'fontWeight': 400,
-									'&:hover': {
-										borderColor: '#2C3E50',
-										backgroundColor: 'rgba(44, 62, 80, 0.05)',
-										transform: 'translateY(-2px)',
-									},
+									'maxHeight': '70vh',
+									'borderRadius': '50%',
+									// 'backgroundColor': 'rgba(255, 255, 255, 0.1)',
+									// 'boxShadow': '0 4px 30px rgba(44, 62, 80, 0.1)',
+									// 'backdropFilter': 'blur(5px)',
+									// 'border': '1px solid rgba(44, 62, 80, 0.1)',
 									'transition': 'all 0.3s ease',
-								}}>
-								{/* Watch */}
-								İzle
-							</Button>
-							<Button
-								variant='outlined'
-								endIcon={<ContactPage />}
-								onClick={() => setIsGetMoreDetailsModalOpen(true)}
-								sx={{
-									'borderColor': '#3498DB',
-									'color': '#3498DB',
-									'borderRadius': '1.1rem',
-									'padding': '0.75rem 1.75rem',
-									'fontFamily': 'Varela Round',
-									'fontWeight': 400,
 									'&:hover': {
-										borderColor: '#3498DB',
-										backgroundColor: 'rgba(52, 152, 219, 0.05)',
-										transform: 'translateY(-2px)',
+										transform: 'scale(1.05) translateY(-15px) rotate(-1deg)',
+										boxShadow: '1px 6px 12px rgba(44, 62, 80, 0.15)',
 									},
-									'transition': 'all 0.3s ease',
-								}}>
-								{/* More Info */}
-								Daha Fazla Bİlgİ
-							</Button>
+								}}
+							/>
 						</Box>
 					</motion.div>
-
-					{/* Instructor Image */}
-					{!isSmallScreen && (
-						<motion.div initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8, delay: 0.2 }} style={{ flex: 1 }}>
-							<Box
-								sx={{
-									display: 'flex',
-									justifyContent: 'center',
-									width: '100%',
-									position: 'relative',
-								}}>
-								<Box
-									component='img'
-									src={Instructor_Img}
-									alt='Instructor'
-									sx={{
-										'maxHeight': '70vh',
-										'borderRadius': '50%',
-										// 'backgroundColor': 'rgba(255, 255, 255, 0.1)',
-										// 'boxShadow': '0 4px 30px rgba(44, 62, 80, 0.1)',
-										// 'backdropFilter': 'blur(5px)',
-										// 'border': '1px solid rgba(44, 62, 80, 0.1)',
-										'transition': 'all 0.3s ease',
-										'&:hover': {
-											transform: 'scale(1.05) translateY(-15px) rotate(-1deg)',
-											boxShadow: '1px 6px 12px rgba(44, 62, 80, 0.15)',
-										},
-									}}
-								/>
-							</Box>
-						</motion.div>
-					)}
-				</Box>
-
+				)}
+			</Box>
 
 			<Box
 				sx={{
@@ -401,7 +400,7 @@ const HeroSection = () => {
 								enableAreaCodes={false}
 								countryCodeEditable={false}
 								value={phone}
-								onChange={(phoneNumber, country) => {
+								onChange={(phoneNumber, _) => {
 									const formattedNumber = phoneNumber.startsWith('+') ? phoneNumber : `+${phoneNumber}`;
 									setPhone(formattedNumber);
 								}}

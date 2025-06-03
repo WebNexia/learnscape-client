@@ -1,4 +1,4 @@
-import { Box, FormControl, InputAdornment, MenuItem, Select, Table, TableBody, TableRow } from '@mui/material';
+import { Box, FormControl, InputAdornment, MenuItem, Select, Table, TableBody, TableCell, TableRow } from '@mui/material';
 import { useContext, useEffect, useRef, useState } from 'react';
 import { PaymentsContext } from '../../../contexts/PaymentsContextProvider';
 import { Payment } from '../../../interfaces/payment';
@@ -7,11 +7,13 @@ import CustomTableCell from '../table/CustomTableCell';
 import { setCurrencySymbol } from '../../../utils/setCurrencySymbol';
 import CustomTablePagination from '../table/CustomTablePagination';
 import CustomTextField from '../../forms/customFields/CustomTextField';
-import { Search } from '@mui/icons-material';
+import { Search, Visibility } from '@mui/icons-material';
 import theme from '../../../themes';
 import { CoursesContext } from '../../../contexts/CoursesContextProvider';
 import { truncateText } from '../../../utils/utilText';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
+import CustomActionBtn from '../table/CustomActionBtn';
+import PaymentDetailsDialog from './PaymentDetailsDialog';
 
 const AdminPaymentsTab = () => {
 	const { sortedPaymentsData, sortPaymentsData, fetchPayments } = useContext(PaymentsContext);
@@ -26,6 +28,8 @@ const AdminPaymentsTab = () => {
 	const [paymentsPageNumber, setPaymentsPageNumber] = useState<number>(1);
 	const [searchValue, setSearchValue] = useState<string>('');
 	const [filterValue, setFilterValue] = useState<string>('');
+	const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
+	const [isDialogOpen, setIsDialogOpen] = useState(false);
 
 	const pageSize = 50;
 
@@ -58,6 +62,11 @@ const AdminPaymentsTab = () => {
 		sortPaymentsData(property, isAsc ? 'desc' : 'asc');
 	};
 
+	const handleViewPayment = (payment: Payment) => {
+		setSelectedPayment(payment);
+		setIsDialogOpen(true);
+	};
+
 	useEffect(() => {
 		setPaymentsPageNumber(1);
 	}, []);
@@ -78,7 +87,7 @@ const AdminPaymentsTab = () => {
 				display: 'flex',
 				flexDirection: 'column',
 				alignItems: 'center',
-				padding: '1rem 2rem 2rem 2rem',
+				padding: '2rem',
 				width: '100%',
 			}}>
 			<Box sx={{ display: 'flex', justifyContent: isMobileSize ? 'center' : 'flex-start', width: '100%' }}>
@@ -163,7 +172,7 @@ const AdminPaymentsTab = () => {
 							}
 						}}
 						sx={{
-							backgroundColor: '#fff',
+							'backgroundColor': '#fff',
 							'& .MuiInputBase-input::placeholder': {
 								fontSize: '0.75rem', // Change this to your desired font size
 							},
@@ -206,16 +215,17 @@ const AdminPaymentsTab = () => {
 										{ key: 'amount', label: 'Price' },
 										{ key: 'amountReceivedInGbp', label: 'Received' },
 										{ key: 'createdAt', label: 'Date' },
-								  ]
+									]
 								: [
 										{ key: 'firstName', label: 'First Name' },
 										{ key: 'lastName', label: 'Last Name' },
-										{ key: 'username', label: 'Username' },
 										{ key: 'courseName', label: 'Course' },
+										{ key: 'documentName', label: 'Document' },
 										{ key: 'amount', label: 'Price' },
 										{ key: 'amountReceivedInGbp', label: 'Received' },
 										{ key: 'createdAt', label: 'Date' },
-								  ]
+										{ key: 'actions', label: 'Actions' },
+									]
 						}
 					/>
 					<TableBody>
@@ -225,14 +235,24 @@ const AdminPaymentsTab = () => {
 									<TableRow key={payment._id}>
 										{!isVerySmallScreen && <CustomTableCell value={payment.firstName} />}
 										{!isVerySmallScreen && <CustomTableCell value={payment.lastName} />}
-										<CustomTableCell value={payment.username} />
 										<CustomTableCell value={payment.courseTitle} />
+										<CustomTableCell value={payment.documentName} />
 										<CustomTableCell value={`${setCurrencySymbol(payment.currency)}${payment.amount}`} />
 										<CustomTableCell value={`£${payment.amountReceivedInGbp}`} />
 
 										<CustomTableCell
 											value={new Date(payment.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
 										/>
+										<TableCell
+											sx={{
+												textAlign: 'center',
+											}}>
+											<CustomActionBtn
+												title='View Payment'
+												onClick={() => handleViewPayment(payment)}
+												icon={<Visibility fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
+											/>
+										</TableCell>
 									</TableRow>
 								);
 							})}
@@ -240,6 +260,15 @@ const AdminPaymentsTab = () => {
 				</Table>
 				<CustomTablePagination count={paymentsNumberOfPages} page={paymentsPageNumber} onChange={setPaymentsPageNumber} />
 			</Box>
+
+			<PaymentDetailsDialog
+				open={isDialogOpen}
+				onClose={() => {
+					setIsDialogOpen(false);
+					setSelectedPayment(null);
+				}}
+				payment={selectedPayment}
+			/>
 		</Box>
 	);
 };

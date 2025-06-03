@@ -39,7 +39,9 @@ const HandleImageUploadURL = ({
 	return (
 		<FormControl sx={{ display: 'flex' }}>
 			<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-				<Typography variant={isMobileSize ? 'body2' : 'h6'}>{label}</Typography>
+				<Typography variant={isMobileSize ? 'body2' : 'h6'} sx={{ fontSize: !isMobileSize ? '0.9rem' : 'inherit' }}>
+					{label}
+				</Typography>
 				<Box sx={{ display: 'flex', alignItems: 'center' }}>
 					<Box>
 						<Typography

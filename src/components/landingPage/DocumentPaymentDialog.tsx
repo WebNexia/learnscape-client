@@ -1,0 +1,536 @@
+import { Alert, Box, Snackbar, Typography } from '@mui/material';
+import CustomDialog from '../layouts/dialog/CustomDialog';
+import CustomTextField from '../forms/customFields/CustomTextField';
+import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
+import { useContext, useState } from 'react';
+import { CardCvcElement, CardExpiryElement, CardNumberElement, useElements, useStripe } from '@stripe/react-stripe-js';
+import axios from 'axios';
+import visaIcon from '../../assets/visa.png';
+import masterCardIcon from '../../assets/mastercard.png';
+import defaultCardIcon from '../../assets/credit-card.png';
+import { Document } from '../../interfaces/document';
+import CustomErrorMessage from '../forms/customFields/CustomErrorMessage';
+import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
+import { setCurrencySymbol } from '../../utils/setCurrencySymbol';
+import theme from '../../themes';
+
+interface DocumentPaymentDialogProps {
+	document: Pick<Document, '_id' | 'name' | 'prices' | 'documentUrl' | 'orgId'>;
+	isPaymentDialogOpen: boolean;
+	setIsPaymentDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
+	userCurrency: string;
+}
+
+const DIALOG_BG = 'linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.98))';
+const DIALOG_BORDERRADIUS = '1.5rem';
+const DIALOG_BOXSHADOW = '0 0.5rem 2rem rgba(44, 62, 80, 0.1)';
+const DIALOG_BORDER = '0.5rem solid rgba(255, 255, 255, 0.18)';
+const DIALOG_FONT = 'Varela Round';
+const INPUT_BORDERRADIUS = '0.5rem';
+const INPUT_FONT = 'Varela Round';
+const INPUT_FONTSIZE = '0.95rem';
+
+const DocumentPaymentDialog = ({ document, isPaymentDialogOpen, setIsPaymentDialogOpen, userCurrency }: DocumentPaymentDialogProps) => {
+	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
+	const isMobileSize: boolean = isSmallScreen || isRotatedMedium;
+
+	const [isProcessing, setIsProcessing] = useState<boolean>(false);
+	const [cardBrand, setCardBrand] = useState<string>('unknown');
+	const [errorMessage, setErrorMessage] = useState<string>('');
+	const [firstName, setFirstName] = useState<string>('');
+	const [lastName, setLastName] = useState<string>('');
+	const [email, setEmail] = useState<string>('');
+	const [showSuccess, setShowSuccess] = useState<boolean>(false);
+	const [showEmailWarning, setShowEmailWarning] = useState<boolean>(false);
+	const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
+	const [cardNumberComplete, setCardNumberComplete] = useState<boolean>(false);
+	const [cardExpiryComplete, setCardExpiryComplete] = useState<boolean>(false);
+	const [cardCvcComplete, setCardCvcComplete] = useState<boolean>(false);
+
+	const stripe = useStripe();
+	const elements = useElements();
+	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
+
+	const getCardIcon = (brand: string) => {
+		switch (brand) {
+			case 'visa':
+				return visaIcon;
+			case 'mastercard':
+				return masterCardIcon;
+			default:
+				return defaultCardIcon;
+		}
+	};
+
+	const handlePayment = async () => {
+		setIsProcessing(true);
+		setIsSubmitted(true);
+
+		if (!stripe || !elements) {
+			setErrorMessage('Stripe yüklenemedi.');
+			setIsProcessing(false);
+			return;
+		}
+
+		const cardNumberElement = elements.getElement(CardNumberElement);
+		const cardExpiryElement = elements.getElement(CardExpiryElement);
+		const cardCvcElement = elements.getElement(CardCvcElement);
+
+		if (!cardNumberElement || !cardExpiryElement || !cardCvcElement) {
+			setErrorMessage('Lütfen tüm kart bilgilerini doldurun.');
+			setIsProcessing(false);
+			return;
+		}
+
+		if (!cardNumberComplete || !cardExpiryComplete || !cardCvcComplete) {
+			setErrorMessage('Lütfen tüm kart bilgilerini doldurun.');
+			setIsProcessing(false);
+			return;
+		}
+
+		try {
+			// Step 1: Create PaymentIntent
+			const response = await axios.post(`${base_url}/payments`, {
+				amount: document.prices.find((p) => p.currency === userCurrency)?.amount,
+				currency: userCurrency,
+				documentId: document._id,
+				orgId: document.orgId,
+				email,
+				firstName,
+				lastName,
+				paymentType: 'document',
+			});
+
+			const { clientSecret, paymentIntentId } = response.data;
+
+			// Step 2: Create Payment Method
+			const { error: methodError, paymentMethod } = await stripe.createPaymentMethod({
+				type: 'card',
+				card: cardNumberElement,
+				billing_details: {
+					name: `${firstName} ${lastName}`,
+					email: email,
+				},
+			});
+
+			if (methodError) {
+				setErrorMessage(methodError.message ?? 'Ödeme yöntemi oluşturulurken bir hata oluştu');
+				setIsProcessing(false);
+				return;
+			}
+
+			// Step 3: Confirm the PaymentIntent
+			const { paymentIntent, error } = await stripe.confirmCardPayment(clientSecret, {
+				payment_method: paymentMethod.id,
+			});
+
+			if (error) {
+				setErrorMessage(error.message ?? 'Ödeme başarısız oldu');
+				setIsProcessing(false);
+				return;
+			}
+
+			// Step 4: Capture the payment
+			const captureResponse = await axios.patch(`${base_url}/payments/capture/${paymentIntentId}`, {
+				documentId: document._id,
+				orgId: document.orgId,
+				email,
+				firstName,
+				lastName,
+				paymentType: 'document',
+			});
+
+			if (captureResponse.data && captureResponse.data.emailWarning) {
+				setShowEmailWarning(true);
+				setIsProcessing(false);
+			} else {
+				setShowSuccess(true);
+				setIsProcessing(false);
+			}
+		} catch (err) {
+			console.error(err);
+			setErrorMessage('Ödeme işlemi sırasında bir hata oluştu.');
+			setIsProcessing(false);
+		}
+	};
+
+	const resetForm = () => {
+		setFirstName('');
+		setLastName('');
+		setEmail('');
+		setErrorMessage('');
+		setIsSubmitted(false);
+		setIsProcessing(false);
+	};
+
+	return (
+		<CustomDialog
+			title={`Kaynak Satın Al \n (${document.name})`}
+			titleSx={{
+				fontSize: '1.5rem',
+				fontWeight: 600,
+				fontFamily: DIALOG_FONT,
+				color: '#2C3E50',
+				ml: '0.5rem',
+				textAlign: 'center',
+				mb: 1,
+			}}
+			openModal={isPaymentDialogOpen}
+			closeModal={() => {
+				resetForm();
+				setIsPaymentDialogOpen(false);
+			}}
+			maxWidth='sm'
+			PaperProps={{
+				sx: {
+					height: 'auto',
+					maxHeight: '90vh',
+					overflow: 'visible',
+					borderRadius: DIALOG_BORDERRADIUS,
+					background: DIALOG_BG,
+					boxShadow: DIALOG_BOXSHADOW,
+					backdropFilter: 'blur(8px)',
+					border: DIALOG_BORDER,
+					fontFamily: DIALOG_FONT,
+				},
+			}}>
+			<form
+				onSubmit={async (e) => {
+					e.preventDefault();
+					await handlePayment();
+				}}>
+				<Box
+					sx={{
+						'margin': '0 2rem',
+						'& .MuiOutlinedInput-root': {
+							'&:hover fieldset': {
+								borderColor: '#3498DB',
+							},
+							'&.Mui-focused fieldset': {
+								borderColor: '#3498DB',
+							},
+						},
+					}}>
+					<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+						<CustomTextField
+							label='İsim'
+							value={firstName}
+							onChange={(e) => setFirstName(e.target.value)}
+							fullWidth={false}
+							sx={{
+								'width': '48%',
+								'mb': '1.25rem',
+								'& .MuiOutlinedInput-root': {
+									fontFamily: INPUT_FONT,
+									borderRadius: INPUT_BORDERRADIUS,
+								},
+								'& .MuiInputBase-input': {
+									fontFamily: INPUT_FONT,
+									fontSize: INPUT_FONTSIZE,
+								},
+								'& .MuiInputBase-input::placeholder': {
+									fontFamily: INPUT_FONT,
+									opacity: 1,
+								},
+								'& .MuiInputLabel-root': {
+									fontFamily: INPUT_FONT,
+									fontSize: INPUT_FONTSIZE,
+								},
+							}}
+						/>
+						<CustomTextField
+							label='Soyisim'
+							value={lastName}
+							onChange={(e) => setLastName(e.target.value)}
+							fullWidth={false}
+							sx={{
+								'width': '48%',
+								'mb': '1.25rem',
+								'& .MuiOutlinedInput-root': {
+									fontFamily: INPUT_FONT,
+									borderRadius: INPUT_BORDERRADIUS,
+								},
+								'& .MuiInputBase-input': {
+									fontFamily: INPUT_FONT,
+									fontSize: INPUT_FONTSIZE,
+								},
+								'& .MuiInputBase-input::placeholder': {
+									fontFamily: INPUT_FONT,
+									opacity: 1,
+								},
+								'& .MuiInputLabel-root': {
+									fontFamily: INPUT_FONT,
+									fontSize: INPUT_FONTSIZE,
+								},
+							}}
+						/>
+					</Box>
+					<CustomTextField
+						label='E-posta Adresi'
+						type='email'
+						value={email}
+						onChange={(e) => setEmail(e.target.value)}
+						sx={{
+							'mb': '1.25rem',
+							'& .MuiOutlinedInput-root': {
+								fontFamily: INPUT_FONT,
+								borderRadius: INPUT_BORDERRADIUS,
+							},
+							'& .MuiInputBase-input': {
+								fontFamily: INPUT_FONT,
+								fontSize: INPUT_FONTSIZE,
+							},
+							'& .MuiInputBase-input::placeholder': {
+								fontFamily: INPUT_FONT,
+								opacity: 1,
+							},
+							'& .MuiInputLabel-root': {
+								fontFamily: INPUT_FONT,
+								fontSize: INPUT_FONTSIZE,
+							},
+						}}
+					/>
+
+					<Box
+						sx={{
+							display: 'flex',
+							flexDirection: 'column',
+							justifyContent: 'space-between',
+							alignItems: 'center',
+							width: '100%',
+							padding: isSmallScreen || isRotatedMedium ? '0rem 0.35rem' : '0rem',
+							fontFamily: DIALOG_FONT,
+							mb: '1.25rem',
+						}}>
+						<Box sx={{ width: '100%', textAlign: 'left' }}>
+							<Typography sx={{ fontSize: isMobileSize ? '0.7rem' : '0.9rem', fontFamily: DIALOG_FONT, color: '#223354' }}>Kart Numarası*</Typography>
+						</Box>
+						<Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+							<Box
+								sx={{
+									'border': isSubmitted && !cardNumberComplete ? '1px solid red' : '1px solid #ccc',
+									'padding': '0.6rem',
+									'borderRadius': INPUT_BORDERRADIUS,
+									'backgroundColor': '#fff',
+									'width': '100%',
+									'fontFamily': DIALOG_FONT,
+									'& .MuiOutlinedInput-root': {
+										'&:hover fieldset': {
+											borderColor: '#3498DB',
+										},
+										'&.Mui-focused fieldset': {
+											borderColor: '#3498DB',
+										},
+									},
+								}}>
+								<CardNumberElement
+									options={{
+										style: {
+											base: {
+												'fontSize': isMobileSize ? '11px' : '14px',
+												'color': '#223354',
+												'fontFamily': 'Arial, sans-serif',
+												'::placeholder': {
+													color: '#aab7c4',
+												},
+											},
+											invalid: {
+												color: '#9e2146',
+											},
+										},
+									}}
+									onChange={(event) => {
+										setCardNumberComplete(event.complete);
+										setCardBrand(event.brand || 'unknown');
+										setErrorMessage('');
+									}}
+								/>
+							</Box>
+							<Box>
+								<img src={getCardIcon(cardBrand)} alt={`${cardBrand} icon`} style={{ marginLeft: '10px', width: '40px' }} />
+							</Box>
+						</Box>
+					</Box>
+
+					<Box
+						sx={{
+							display: 'flex',
+							width: '100%',
+							padding: isSmallScreen || isRotatedMedium ? '0rem 0.35rem' : '0rem',
+							mb: isSmallScreen || isRotatedMedium ? '-0.5rem' : '1.25rem',
+							fontFamily: DIALOG_FONT,
+						}}>
+						<Box
+							sx={{
+								width: '100%',
+								mr: '0.75rem',
+							}}>
+							<Typography sx={{ fontSize: isMobileSize ? '0.7rem' : '0.9rem', paddingBottom: '0.25rem', fontFamily: DIALOG_FONT, color: '#223354' }}>
+								Son Kullanma Tarihi*
+							</Typography>
+							<Box
+								sx={{
+									border: isSubmitted && !cardExpiryComplete ? '1px solid red' : '1px solid #ccc',
+									padding: '0.6rem',
+									borderRadius: INPUT_BORDERRADIUS,
+									backgroundColor: '#fff',
+									fontFamily: DIALOG_FONT,
+								}}>
+								<CardExpiryElement
+									options={{
+										style: {
+											base: {
+												'fontSize': isMobileSize ? '11px' : '14px',
+												'color': '#223354',
+												'fontFamily': 'Arial, sans-serif',
+												'::placeholder': {
+													color: '#aab7c4',
+												},
+											},
+											invalid: {
+												color: '#9e2146',
+											},
+										},
+									}}
+									onChange={(event) => {
+										setCardExpiryComplete(event.complete);
+										setErrorMessage('');
+									}}
+								/>
+							</Box>
+						</Box>
+
+						<Box
+							sx={{
+								width: '100%',
+							}}>
+							<Typography sx={{ fontSize: isMobileSize ? '0.7rem' : '0.9rem', paddingBottom: '0.25rem', fontFamily: DIALOG_FONT, color: '#223354' }}>
+								CVC*
+							</Typography>
+							<Box
+								sx={{
+									border: isSubmitted && !cardCvcComplete ? '1px solid red' : '1px solid #ccc',
+									padding: '0.6rem',
+									borderRadius: INPUT_BORDERRADIUS,
+									backgroundColor: '#fff',
+									fontFamily: DIALOG_FONT,
+								}}>
+								<CardCvcElement
+									options={{
+										style: {
+											base: {
+												'fontSize': isMobileSize ? '11px' : '14px',
+												'color': '#223354',
+												'fontFamily': 'Arial, sans-serif',
+												'::placeholder': {
+													color: '#aab7c4',
+												},
+											},
+											invalid: {
+												color: '#9e2146',
+											},
+										},
+									}}
+									onChange={(event) => {
+										setCardCvcComplete(event.complete);
+										setErrorMessage('');
+									}}
+								/>
+							</Box>
+						</Box>
+					</Box>
+
+					<Box
+						sx={{
+							display: 'flex',
+							alignItems: 'center',
+							width: '100%',
+							padding: isSmallScreen || isRotatedMedium ? '0 0.35rem' : '0rem',
+							fontFamily: DIALOG_FONT,
+							mt: '2rem',
+						}}>
+						<Typography
+							variant={isMobileSize ? 'body2' : 'h6'}
+							sx={{
+								boxShadow: '0.1rem 0.1rem 0.5rem 0.1rem rgba(0,0,0,0.3)',
+								borderRadius: INPUT_BORDERRADIUS,
+								padding: isMobileSize ? '0.5rem' : '0.75rem',
+								fontFamily: DIALOG_FONT,
+								color: '#223354',
+							}}>
+							Toplam Tutar: {setCurrencySymbol(userCurrency)}
+							{document.prices.find((p) => p.currency === userCurrency)?.amount}
+						</Typography>
+					</Box>
+				</Box>
+
+				{errorMessage && (
+					<CustomErrorMessage
+						sx={{ width: '100%', padding: '1.5rem 2rem 0 2rem', fontSize: isMobileSize ? '0.65rem' : '0.75rem', fontFamily: DIALOG_FONT }}>
+						{errorMessage}
+					</CustomErrorMessage>
+				)}
+
+				<CustomDialogActions
+					onCancel={() => {
+						resetForm();
+						setIsPaymentDialogOpen(false);
+					}}
+					cancelBtnText='Kapat'
+					cancelBtnSx={{ fontFamily: DIALOG_FONT, borderRadius: INPUT_BORDERRADIUS }}
+					submitBtnText={isProcessing ? 'İşleniyor' : 'Satın Al'}
+					submitBtnSx={{ fontFamily: DIALOG_FONT, borderRadius: INPUT_BORDERRADIUS }}
+				/>
+			</form>
+			<Snackbar
+				open={showSuccess}
+				autoHideDuration={4500}
+				anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+				onClose={() => {
+					setShowSuccess(false);
+					setIsPaymentDialogOpen(false);
+					resetForm();
+				}}
+				sx={{ mt: '2.5rem' }}>
+				<Alert
+					severity='success'
+					variant='filled'
+					sx={{
+						width: '100%',
+						fontFamily: 'Varela Round',
+						fontSize: '1rem',
+						letterSpacing: 0,
+						color: theme.textColor?.common.main,
+					}}>
+					Ödeme başarıyla tamamlandı! Satın aldığınız kaynağa email'inizden ulaşabilirsiniz.
+				</Alert>
+			</Snackbar>
+			<Snackbar
+				open={showEmailWarning}
+				autoHideDuration={5000}
+				anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+				onClose={() => {
+					setShowEmailWarning(false);
+					setIsPaymentDialogOpen(false);
+					resetForm();
+				}}
+				sx={{ mt: '5rem' }}>
+				<Alert
+					severity='warning'
+					variant='filled'
+					sx={{
+						width: '100%',
+						fontFamily: 'Varela Round',
+						fontSize: '1rem',
+						letterSpacing: 0,
+						color: '#fff',
+						backgroundColor: '#FFA726',
+					}}>
+					Ödeme başarılı, ancak email gönderilemedi. Lütfen destek için iletişime geçin.
+				</Alert>
+			</Snackbar>
+		</CustomDialog>
+	);
+};
+
+export default DocumentPaymentDialog;

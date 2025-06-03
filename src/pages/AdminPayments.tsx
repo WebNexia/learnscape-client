@@ -24,7 +24,7 @@ const AdminPayments = () => {
 					textColor='primary'
 					indicatorColor='secondary'
 					sx={{
-						paddingTop: isMobileSize ? '0.75rem' : '1.5rem',
+						'paddingTop': isMobileSize ? '0.75rem' : '1.5rem',
 						'& .MuiTabs-indicator': {
 							backgroundColor: theme.bgColor?.adminHeader, // Custom indicator color
 						},
@@ -34,9 +34,9 @@ const AdminPayments = () => {
 						label='Payments'
 						sx={{
 							'&.Mui-selected': { color: theme.bgColor?.adminHeader },
-							textTransform: 'capitalize',
-							fontFamily: 'Poppins',
-							fontSize: isMobileSize ? '0.75rem' : undefined,
+							'textTransform': 'capitalize',
+							'fontFamily': 'Poppins',
+							'fontSize': isMobileSize ? '0.75rem' : undefined,
 							'&.MuiTab-root': { textTransform: 'capitalize' }, // Ensure capitalization
 						}}
 					/>
@@ -45,9 +45,9 @@ const AdminPayments = () => {
 						label='Promo Codes'
 						sx={{
 							'&.Mui-selected': { color: theme.bgColor?.adminHeader },
-							textTransform: 'capitalize',
-							fontFamily: 'Poppins',
-							fontSize: isMobileSize ? '0.75rem' : undefined,
+							'textTransform': 'capitalize',
+							'fontFamily': 'Poppins',
+							'fontSize': isMobileSize ? '0.75rem' : undefined,
 							'&.MuiTab-root': { textTransform: 'capitalize' }, // Ensure capitalization
 						}}
 					/>

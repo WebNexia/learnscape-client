@@ -11,9 +11,8 @@ import CustomTableCell from '../components/layouts/table/CustomTableCell';
 import CustomTablePagination from '../components/layouts/table/CustomTablePagination';
 import CustomActionBtn from '../components/layouts/table/CustomActionBtn';
 import { DocumentsContext } from '../contexts/DocumentsContextProvider';
-import { Document } from '../interfaces/document';
+import { Document, Price } from '../interfaces/document';
 import { truncateText } from '../utils/utilText';
-import HandleDocUploadURL from '../components/forms/uploadImageVideoDocument/HandleDocUploadURL';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import { useParams } from 'react-router-dom';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
@@ -21,9 +20,12 @@ import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import { dateFormatter } from '../utils/dateFormatter';
 import { useTheme } from '@mui/material/styles';
 import DocumentInfoModal from '../components/documents/DocumentInfoModal';
+import CreateNewDocumentDialog from '../components/documents/CreateNewDocumentDialog';
+import EditDocumentDialog from '../components/documents/EditDocumentDialog';
 
 const AdminDocuments = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
+
 	const { orgId } = useContext(OrganisationContext);
 	const { userId } = useParams();
 
@@ -69,15 +71,22 @@ const AdminDocuments = () => {
 	const [singleDocument, setSingleDocument] = useState<Document | null>(null);
 
 	const [enterDocUrl, setEnterDocUrl] = useState<boolean>(true);
+	const [enterDocImageUrl, setEnterDocImageUrl] = useState<boolean>(true);
+	const [enterSamplePageImageUrl, setEnterSamplePageImageUrl] = useState<boolean>(true);
 
-	const [documentUrl, setDocumentUrl] = useState<string>('');
-	const [documentName, setDocumentName] = useState<string>('');
 	const [fileUploaded, setFileUploaded] = useState<boolean>(false);
+	const [isFree, setIsFree] = useState<boolean>(false);
+	const [GBP, setGBP] = useState<Price>({ currency: 'gbp', amount: '0' });
+	const [USD, setUSD] = useState<Price>({ currency: 'usd', amount: '0' });
+	const [EUR, setEUR] = useState<Price>({ currency: 'eur', amount: '0' });
+	const [TRY, setTRY] = useState<Price>({ currency: 'try', amount: '0' });
 
 	const theme = useTheme();
 
 	useEffect(() => {
 		setDocumentsPageNumber(1);
+
+		console.log(singleDocument);
 	}, []);
 
 	useEffect(() => {
@@ -96,23 +105,56 @@ const AdminDocuments = () => {
 		}
 	}, []);
 
+	const resetForm = () => {
+		setIsDocumentCreateModalOpen(false);
+		setEnterDocUrl(true);
+		setEnterDocImageUrl(true);
+		setEnterSamplePageImageUrl(true);
+		setSingleDocument(null);
+		setGBP({ currency: 'gbp', amount: '0' });
+		setUSD({ currency: 'usd', amount: '0' });
+		setEUR({ currency: 'eur', amount: '0' });
+		setTRY({ currency: 'try', amount: '0' });
+		setIsFree(false);
+		setFileUploaded(false);
+	};
+
 	const createDocument = async (): Promise<void> => {
 		try {
+			const prices: Price[] = [
+				{ currency: 'gbp', amount: isFree ? 'Free' : GBP.amount },
+				{ currency: 'usd', amount: isFree ? 'Free' : USD.amount },
+				{ currency: 'eur', amount: isFree ? 'Free' : EUR.amount },
+				{ currency: 'try', amount: isFree ? 'Free' : TRY.amount },
+			];
+
 			const documentResponse = await axios.post(`${base_url}/documents`, {
-				name: documentName.trim(),
-				documentUrl,
+				name: singleDocument?.name.trim(),
+				documentUrl: singleDocument?.documentUrl,
 				userId,
 				orgId,
+				imageUrl: singleDocument?.imageUrl,
+				samplePageImageUrl: singleDocument?.samplePageImageUrl,
+				isOnLandingPage: singleDocument?.isOnLandingPage,
+				prices,
+				description: singleDocument?.description,
+				pageCount: singleDocument?.pageCount,
 			});
 
 			const documentResponseData = documentResponse.data;
 
 			addNewDocument({
 				_id: documentResponseData._id,
-				name: documentName.trim(),
-				documentUrl,
+				name: singleDocument?.name.trim(),
+				documentUrl: singleDocument?.documentUrl,
 				userId,
 				orgId,
+				imageUrl: singleDocument?.imageUrl,
+				samplePageImageUrl: singleDocument?.samplePageImageUrl,
+				isOnLandingPage: singleDocument?.isOnLandingPage,
+				prices,
+				description: singleDocument?.description,
+				pageCount: singleDocument?.pageCount,
 				createdAt: documentResponseData.createdAt,
 				createdByImageUrl: documentResponseData.createdByImageUrl,
 				createdByName: documentResponseData.createdByName,
@@ -130,24 +172,70 @@ const AdminDocuments = () => {
 	const handleDocUpdate = async (): Promise<void> => {
 		if (singleDocument) {
 			try {
-				const response = await axios.patch(`${base_url}/documents/${singleDocument._id}`, {
+				const prices: Price[] = [
+					{ currency: 'gbp', amount: isFree ? 'Free' : GBP.amount },
+					{ currency: 'usd', amount: isFree ? 'Free' : USD.amount },
+					{ currency: 'eur', amount: isFree ? 'Free' : EUR.amount },
+					{ currency: 'try', amount: isFree ? 'Free' : TRY.amount },
+				];
+
+				// Ensure we have all required fields
+				if (!singleDocument.name || !singleDocument.documentUrl) {
+					console.error('Missing required fields');
+					return;
+				}
+
+				const updateData = {
 					name: singleDocument.name.trim(),
-				});
+					documentUrl: singleDocument.documentUrl,
+					imageUrl: singleDocument.imageUrl || '',
+					samplePageImageUrl: singleDocument.samplePageImageUrl || '',
+					isOnLandingPage: singleDocument.isOnLandingPage || false,
+					prices,
+					description: singleDocument.description || '',
+					pageCount: singleDocument.pageCount || 0,
+				};
+
+				console.log(updateData);
+
+				const response = await axios.patch(`${base_url}/documents/${singleDocument._id}`, updateData);
+
+				if (!response.data || !response.data.data) {
+					throw new Error('Invalid response format from server');
+				}
 
 				const responseData = response.data.data;
 
 				setSingleDocument(null);
 				updateDocuments({
 					...singleDocument,
-					name: singleDocument.name.trim(),
+					...updateData,
 					_id: responseData._id,
 					updatedAt: responseData.updatedAt,
 					updatedByImageUrl: responseData.updatedByImageUrl,
 					updatedByName: responseData.updatedByName,
 					updatedByRole: responseData.updatedByRole,
 				});
-			} catch (error) {
-				console.log(error);
+			} catch (error: any) {
+				console.error('Error updating document:', error);
+				if (error.response) {
+					// The request was made and the server responded with a status code
+					// that falls out of the range of 2xx
+					console.error('Error response:', error.response.data);
+					console.error('Error status:', error.response.status);
+					if (error.response.status === 401) {
+						console.error('Authentication error: Please make sure you are logged in');
+					} else if (error.response.status === 403) {
+						console.error('Authorization error: You do not have permission to update documents');
+					}
+				} else if (error.request) {
+					// The request was made but no response was received
+					console.error('Error request:', error.request);
+					console.error('No response received. Please check if the server is running.');
+				} else {
+					// Something happened in setting up the request that triggered an Error
+					console.error('Error message:', error.message);
+				}
 			}
 		}
 	};
@@ -182,6 +270,26 @@ const AdminDocuments = () => {
 	const openEditDocumentModal = (index: number) => {
 		const documentToEdit = sortedDocumentsData[index];
 		setSingleDocument(documentToEdit);
+
+		// Set initial price states
+		const gbpPrice = documentToEdit.prices.find((p) => p.currency === 'gbp');
+		const usdPrice = documentToEdit.prices.find((p) => p.currency === 'usd');
+		const eurPrice = documentToEdit.prices.find((p) => p.currency === 'eur');
+		const tryPrice = documentToEdit.prices.find((p) => p.currency === 'try');
+
+		setGBP(gbpPrice || { currency: 'gbp', amount: '0' });
+		setUSD(usdPrice || { currency: 'usd', amount: '0' });
+		setEUR(eurPrice || { currency: 'eur', amount: '0' });
+		setTRY(tryPrice || { currency: 'try', amount: '0' });
+
+		setIsFree(documentToEdit.prices.every((p) => p.amount === '0' || p.amount === 'Free'));
+		setFileUploaded(true);
+
+		// Set initial URL states
+		setEnterDocUrl(true);
+		setEnterDocImageUrl(true);
+		setEnterSamplePageImageUrl(true);
+
 		toggleDocumentEditModal(index);
 	};
 
@@ -249,6 +357,38 @@ const AdminDocuments = () => {
 							setIsDocumentCreateModalOpen(true);
 							setEnterDocUrl(true);
 							setFileUploaded(false);
+							setSingleDocument({
+								_id: '',
+								name: '',
+								orgId,
+								userId: userId || '',
+								documentUrl: '',
+								imageUrl: '',
+								prices: [
+									{ currency: 'gbp', amount: '0' },
+									{ currency: 'usd', amount: '0' },
+									{ currency: 'eur', amount: '0' },
+									{ currency: 'try', amount: '0' },
+								],
+								description: '',
+								pageCount: 0,
+								createdAt: '',
+								updatedAt: '',
+								clonedFromId: '',
+								clonedFromTitle: '',
+								usedInLessons: [],
+								usedInCourses: [],
+								samplePageImageUrl: '',
+								isOnLandingPage: false,
+								createdBy: '',
+								updatedBy: '',
+								createdByName: '',
+								updatedByName: '',
+								createdByImageUrl: '',
+								updatedByImageUrl: '',
+								createdByRole: '',
+								updatedByRole: '',
+							});
 						}}
 						sx={{ height: isVerySmallScreen ? '1.75rem' : '2.1rem', fontSize: isMobileSize ? '0.7rem' : undefined }}
 						type='button'>
@@ -257,39 +397,35 @@ const AdminDocuments = () => {
 				</Box>
 			</Box>
 
-			<CustomDialog
-				openModal={isDocumentCreateModalOpen}
-				closeModal={() => {
-					setIsDocumentCreateModalOpen(false);
-					setEnterDocUrl(true);
+			<CreateNewDocumentDialog
+				isOpen={isDocumentCreateModalOpen}
+				onClose={resetForm}
+				onSubmit={async (e: React.FormEvent<HTMLFormElement>) => {
+					e.preventDefault();
+					createDocument();
+					resetForm();
 				}}
-				maxWidth='sm'>
-				<form
-					onSubmit={async (e: React.FormEvent<HTMLFormElement>) => {
-						e.preventDefault();
-						createDocument();
-						setIsDocumentCreateModalOpen(false);
-					}}
-					style={{ display: 'flex', flexDirection: 'column', padding: '0 1rem' }}>
-					<Box sx={{ margin: '0 1rem' }}>
-						<HandleDocUploadURL
-							enterDocUrl={enterDocUrl}
-							setEnterDocUrl={setEnterDocUrl}
-							docFolderName='Materials'
-							fromAdminDocs={true}
-							setDocumentUrl={setDocumentUrl}
-							setDocumentName={setDocumentName}
-							setFileUploaded={setFileUploaded}
-						/>
-					</Box>
-					<CustomDialogActions
-						onCancel={() => setIsDocumentCreateModalOpen(false)}
-						submitBtnType='submit'
-						disableBtn={!fileUploaded}
-						actionSx={{ mt: '1rem' }}
-					/>
-				</form>
-			</CustomDialog>
+				singleDocument={singleDocument}
+				setSingleDocument={setSingleDocument}
+				enterDocUrl={enterDocUrl}
+				setEnterDocUrl={setEnterDocUrl}
+				enterDocImageUrl={enterDocImageUrl}
+				setEnterDocImageUrl={setEnterDocImageUrl}
+				enterSamplePageImageUrl={enterSamplePageImageUrl}
+				setEnterSamplePageImageUrl={setEnterSamplePageImageUrl}
+				fileUploaded={fileUploaded}
+				setFileUploaded={setFileUploaded}
+				isFree={isFree}
+				setIsFree={setIsFree}
+				GBP={GBP}
+				setGBP={setGBP}
+				USD={USD}
+				setUSD={setUSD}
+				EUR={EUR}
+				setEUR={setEUR}
+				TRY={TRY}
+				setTRY={setTRY}
+			/>
 
 			<Box
 				sx={{
@@ -355,7 +491,7 @@ const AdminDocuments = () => {
 												textAlign: 'center',
 											}}>
 											<CustomActionBtn
-												title='Rename'
+												title='Edit'
 												onClick={() => {
 													toggleDocumentEditModal(index);
 													openEditDocumentModal(index);
@@ -363,39 +499,36 @@ const AdminDocuments = () => {
 												icon={<Edit fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 											/>
 
-											<CustomDialog
-												openModal={editDocumentModalOpen[index]}
-												closeModal={() => closeDocumentEditModal(index)}
-												maxWidth='sm'
-												title='Rename Document'>
-												<form
-													style={{ display: 'flex', flexDirection: 'column' }}
-													onSubmit={async (e: React.FormEvent<HTMLFormElement>) => {
-														e.preventDefault();
-														if (singleDocument?.name && singleDocument.name.trim()) {
-															handleDocUpdate();
-															closeDocumentEditModal(index);
-														}
-													}}>
-													<CustomTextField
-														fullWidth={false}
-														required={true}
-														sx={{ margin: '0.75rem 1rem' }}
-														value={singleDocument?.name}
-														onChange={(e) => {
-															if (singleDocument) {
-																setSingleDocument({ ...singleDocument, name: e.target.value });
-															}
-														}}
-													/>
-													<CustomDialogActions
-														onCancel={() => closeDocumentEditModal(index)}
-														submitBtnText='Rename'
-														actionSx={{ mt: '1rem' }}
-														submitBtnType='submit'
-													/>
-												</form>
-											</CustomDialog>
+											<EditDocumentDialog
+												isOpen={editDocumentModalOpen[index]}
+												onClose={() => closeDocumentEditModal(index)}
+												onSubmit={async (e: React.FormEvent<HTMLFormElement>) => {
+													e.preventDefault();
+													if (singleDocument?.name && singleDocument.name.trim()) {
+														handleDocUpdate();
+														closeDocumentEditModal(index);
+													}
+												}}
+												document={singleDocument}
+												setDocument={setSingleDocument}
+												enterDocUrl={enterDocUrl}
+												setEnterDocUrl={setEnterDocUrl}
+												enterDocImageUrl={enterDocImageUrl}
+												setEnterDocImageUrl={setEnterDocImageUrl}
+												enterSamplePageImageUrl={enterSamplePageImageUrl}
+												setEnterSamplePageImageUrl={setEnterSamplePageImageUrl}
+												setFileUploaded={setFileUploaded}
+												isFree={isFree}
+												setIsFree={setIsFree}
+												GBP={GBP}
+												setGBP={setGBP}
+												USD={USD}
+												setUSD={setUSD}
+												EUR={EUR}
+												setEUR={setEUR}
+												TRY={TRY}
+												setTRY={setTRY}
+											/>
 
 											<CustomActionBtn
 												title='Delete'

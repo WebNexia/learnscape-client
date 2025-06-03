@@ -29,7 +29,6 @@ const AdminLessons = () => {
 
 	const { sortLessonsData, sortedLessonsData, removeLesson, fetchLessons } = useContext(LessonsContext);
 
-
 	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
@@ -135,7 +134,7 @@ const AdminLessons = () => {
 					padding: isMobileSizeSmall ? '1rem 1rem 0.5rem 1rem' : '2rem 2rem 1rem 2rem',
 					width: '100%',
 				}}>
-				<Box sx={{ display: 'flex', justifyContent: 'flex-start', width: '100%',  }}>
+				<Box sx={{ display: 'flex', justifyContent: 'flex-start', width: '100%' }}>
 					<Box sx={{ mr: '1rem' }}>
 						<FormControl>
 							<Select
@@ -288,7 +287,7 @@ const AdminLessons = () => {
 							paginatedLessons?.map((lesson: Lesson, index) => {
 								return (
 									<TableRow key={lesson._id}>
-											<TableCell sx={{ textAlign: 'center', width: '0px' }}>
+										<TableCell sx={{ textAlign: 'center', width: '0px' }}>
 											{lesson.clonedFromId && (
 												<Box
 													sx={{
@@ -301,9 +300,9 @@ const AdminLessons = () => {
 														alignItems: 'center',
 														justifyContent: 'center',
 														fontSize: '0.65rem',
-														margin: '0 auto'
+														margin: '0 auto',
 													}}>
-														C
+													C
 												</Box>
 											)}
 										</TableCell>
@@ -383,18 +382,19 @@ const AdminLessons = () => {
 				<CustomTablePagination count={lessonsNumberOfPages} page={lessonsPageNumber} onChange={setLessonsPageNumber} />
 			</Box>
 
-			{isLessonInfoModalOpen.map((isOpen, index) => (
-				isOpen && (
-					<CustomDialog
-						key={index}
-						openModal={isOpen}
-						closeModal={() => closeLessonInfoModal(index)}
-						title={paginatedLessons[index].title}
-						maxWidth='sm'>
-						<LessonInfoModal lesson={paginatedLessons[index]} onClose={() => closeLessonInfoModal(index)} />
-					</CustomDialog>
-				)
-			))}
+			{isLessonInfoModalOpen.map(
+				(isOpen, index) =>
+					isOpen && (
+						<CustomDialog
+							key={index}
+							openModal={isOpen}
+							closeModal={() => closeLessonInfoModal(index)}
+							title={paginatedLessons[index].title}
+							maxWidth='sm'>
+							<LessonInfoModal lesson={paginatedLessons[index]} onClose={() => closeLessonInfoModal(index)} />
+						</CustomDialog>
+					)
+			)}
 		</DashboardPagesLayout>
 	);
 };

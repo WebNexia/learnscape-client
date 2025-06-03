@@ -12,7 +12,7 @@ import visaIcon from '../../../assets/visa.png';
 import masterCardIcon from '../../../assets/mastercard.png';
 import defaultCardIcon from '../../../assets/credit-card.png';
 import { SingleCourse } from '../../../interfaces/course';
-import {  useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
 import CustomErrorMessage from '../../forms/customFields/CustomErrorMessage';
 import theme from '../../../themes';
@@ -23,20 +23,27 @@ import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 import { useGeoLocation } from '../../../hooks/useGeoLocation';
 
 interface PaymentDialogProps {
-	course: SingleCourse;
+	course: SingleCourse | undefined;
 	isPaymentDialogOpen: boolean;
 	setIsPaymentDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
 	courseRegistration: (resolvedUserId: string, resolvedOrgId: string) => Promise<string>;
 	fromHomePage?: boolean;
-	setDisplayEnrollmentMsg: React.Dispatch<React.SetStateAction<boolean>>
-	setIsEnrolledStatus?: React.Dispatch<React.SetStateAction<boolean>> | undefined
+	setDisplayEnrollmentMsg: React.Dispatch<React.SetStateAction<boolean>>;
+	setIsEnrolledStatus?: React.Dispatch<React.SetStateAction<boolean>> | undefined;
 }
 
-const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, courseRegistration, fromHomePage,setDisplayEnrollmentMsg,setIsEnrolledStatus }: PaymentDialogProps) => {
+const PaymentDialog = ({
+	course,
+	isPaymentDialogOpen,
+	setIsPaymentDialogOpen,
+	courseRegistration,
+	fromHomePage,
+	setDisplayEnrollmentMsg,
+	setIsEnrolledStatus,
+}: PaymentDialogProps) => {
 	const { userId } = useParams();
 	const { orgId } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
-
 
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
@@ -47,6 +54,7 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 	let resolvedCountryCode = user?.countryCode || location?.countryCode || 'US';
 
 	useEffect(() => {
+		if (!course) return;
 		const amount = +getPriceForCountry(course, resolvedCountryCode).amount;
 		setDiscountedAmount(isNaN(amount) ? 0 : amount);
 	}, [user, location, course]);
@@ -63,6 +71,7 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 	const [isUserAccountExist, setIsUserAccountExist] = useState<boolean>(false);
 	const [promoCode, setPromoCode] = useState<string>('');
 	const [discountedAmount, setDiscountedAmount] = useState<number>(() => {
+		if (!course) return 0;
 		const amount = +getPriceForCountry(course, resolvedCountryCode).amount;
 		return isNaN(amount) ? 0 : amount;
 	});
@@ -98,15 +107,16 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 	let resolvedLastName = user?.lastName || '';
 
 	const handlePayment = async () => {
+		if (!course) return;
 		setIsProcessing(true);
 		setIsSubmitted(true);
-	
+
 		if (fromHomePage) {
 			try {
 				const userExistsResponse = await axiosInstance.post(`${base_url}/users/check-user-exists`, { email, courseId: course._id });
-	
+
 				setIsUserAccountExist(userExistsResponse.data.exists);
-	
+
 				if (!userExistsResponse.data.exists) {
 					setErrorMessage(`This email address isn't linked to any account.\nCreate a free account to join the course! - `);
 					setIsProcessing(false);
@@ -116,7 +126,7 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 					setIsProcessing(false);
 					return;
 				}
-	
+
 				// Override IDs and user info
 				resolvedUserId = userExistsResponse.data.userId;
 				resolvedOrgId = userExistsResponse.data.orgId;
@@ -127,25 +137,25 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 				console.log(error);
 			}
 		}
-	
+
 		let usersUsedCode = [...usersUsedPromoCode];
-	
+
 		if (!stripe || !elements) {
 			setErrorMessage('Stripe has not loaded properly.');
 			setIsProcessing(false);
 			return;
 		}
-	
+
 		const cardNumberElement = elements.getElement(CardNumberElement);
 		const cardExpiryElement = elements.getElement(CardExpiryElement);
 		const cardCvcElement = elements.getElement(CardCvcElement);
-	
+
 		if (!cardNumberElement || !cardExpiryElement || !cardCvcElement) {
 			setErrorMessage('Please fill in all card details.');
 			setIsProcessing(false);
 			return;
 		}
-	
+
 		try {
 			// Step 1: Create PaymentIntent (manual capture)
 			const response = await axiosInstance.post(`${base_url}/payments`, {
@@ -154,11 +164,14 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 				orgId: resolvedOrgId,
 				userId: resolvedUserId,
 				courseId: course._id,
-				email,
+				email: email || user?.email,
+				firstName: resolvedFirstName,
+				lastName: resolvedLastName,
+				paymentType: 'course',
 			});
-	
+
 			const { clientSecret, paymentIntentId } = response.data;
-	
+
 			// Step 2: Create Payment Method
 			const { error: methodError, paymentMethod } = await stripe.createPaymentMethod({
 				type: 'card',
@@ -167,49 +180,51 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 					name: `${resolvedFirstName} ${resolvedLastName}`,
 				},
 			});
-	
+
 			if (methodError) {
 				resetForm(true);
 				setErrorMessage(methodError.message ?? 'An unknown error occurred while creating payment method');
 				return;
 			}
-	
+
 			// Step 3: Confirm the PaymentIntent (authorize only)
 			const { paymentIntent, error } = await stripe.confirmCardPayment(clientSecret, {
 				payment_method: paymentMethod.id,
 			});
-	
+
 			if (error || paymentIntent?.status !== 'requires_capture') {
 				resetForm(true);
 				setErrorMessage(error?.message ?? 'Payment confirmation failed.');
 				return;
 			}
-	
+
 			// Step 4: Register the course
 			try {
 				const userCourseId = await courseRegistration(resolvedUserId, resolvedOrgId);
-	
+
 				// Step 5: Capture the authorized payment
 				try {
 					await axiosInstance.patch(`${base_url}/payments/capture/${paymentIntentId}`, {
 						userId: resolvedUserId,
 						orgId: resolvedOrgId,
-						courseId: course._id,
+						courseId: course?._id,
 						firstName: resolvedFirstName,
 						lastName: resolvedLastName,
+						email: email || user?.email,
+						paymentType: 'course',
 					});
 				} catch (captureError) {
 					resetForm(true);
 					console.error(`❌ Payment capture failed for paymentIntentId: ${paymentIntentId}, userId: ${resolvedUserId}`, captureError);
-	
+
 					try {
 						await axiosInstance.delete(`${base_url}/userCourses/remove-by-user-course`, {
 							data: {
 								userId: resolvedUserId,
-								courseId: course._id,
+								courseId: course?._id,
 							},
 						});
-	
+
 						if (isPromoCodeApplied && promoCodeId) {
 							try {
 								const rolledBackUsers = usersUsedPromoCode.filter((id) => id !== resolvedUserId);
@@ -221,51 +236,47 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 								console.error(`❌ Failed to roll back promo code for userId: ${resolvedUserId}`, promoRollbackErr);
 							}
 						}
-	
+
 						// 🧹 LocalStorage cleanup
-						const updatedCourses = JSON.parse(localStorage.getItem('userCourseData') || '[]').filter(
-							(item: any) => item.courseId !== course._id
-						);
+						const updatedCourses = JSON.parse(localStorage.getItem('userCourseData') || '[]').filter((item: any) => item.courseId !== course?._id);
 						localStorage.setItem('userCourseData', JSON.stringify(updatedCourses));
-	
-						const updatedLessons = JSON.parse(localStorage.getItem('userLessonData') || '[]').filter(
-							(item: any) => item.courseId !== course._id
-						);
+
+						const updatedLessons = JSON.parse(localStorage.getItem('userLessonData') || '[]').filter((item: any) => item.courseId !== course?._id);
 						localStorage.setItem('userLessonData', JSON.stringify(updatedLessons));
 					} catch (cleanupErr) {
 						resetForm(true);
-						console.error(`❌ Rollback failed for userId: ${resolvedUserId}, courseId: ${course._id}`, cleanupErr);
+						console.error(`❌ Rollback failed for userId: ${resolvedUserId}, courseId: ${course?._id}`, cleanupErr);
 					}
-	
+
 					resetForm(true);
 					setErrorMessage('Payment failed after registration. You have not been charged, and your access was rolled back.');
 					return;
 				}
-	
+
 				// Step 6: Update promo code (if applied)
 				const updatedUserId = fromHomePage && resolvedUserId ? resolvedUserId : user?._id!;
 				const updatedUsersUsedCode = [...usersUsedPromoCode, updatedUserId];
-	
+
 				setUsersUsedPromoCode(updatedUsersUsedCode);
 				usersUsedCode = [...updatedUsersUsedCode];
-	
+
 				if (isPromoCodeApplied) {
 					await axiosInstance.patch(`${base_url}/promocodes/${promoCodeId}`, {
 						usersUsed: usersUsedCode,
 					});
 				}
-	
+
 				// ✅ Final UI actions (ONLY if everything succeeded)
 				setIsPaymentDialogOpen(false);
 				resetForm();
 				setIsProcessing(false);
-	
+
 				if (setIsEnrolledStatus) setIsEnrolledStatus(true);
-	
+
 				setDisplayEnrollmentMsg(true); // ✅ success message after capture + reg
-	
+
 				if (!fromHomePage) {
-					navigate(`/course/${course._id}/user/${resolvedUserId}/userCourseId/${userCourseId}?isEnrolled=true`);
+					navigate(`/course/${course?._id}/user/${resolvedUserId}/userCourseId/${userCourseId}?isEnrolled=true`);
 				}
 			} catch (regErr) {
 				resetForm(true);
@@ -278,10 +289,9 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 			setErrorMessage('An error occurred while processing the payment.');
 		}
 	};
-	
-	
 
 	const handleApplyPromoCode = async () => {
+		if (!course) return;
 		try {
 			if (fromHomePage) {
 				const userExistsResponse = await axiosInstance.post(`${base_url}/users/check-user-exists`, { email });
@@ -304,7 +314,7 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 
 			const response = await axiosInstance.post(`${base_url}/promocodes/apply`, {
 				code: promoCode.trim(),
-				courseId: course._id,
+				courseId: course?._id,
 				userId: resolvedUserId,
 				orgId,
 				email,
@@ -341,22 +351,22 @@ const PaymentDialog = ({ course, isPaymentDialogOpen, setIsPaymentDialogOpen, co
 		}
 	};
 
-const resetForm = (preserveError = false) => {
-	setEmail('');
-	setPromoCode('');
-	const amount = +getPriceForCountry(course, resolvedCountryCode).amount;
-	setDiscountedAmount(isNaN(amount) ? 0 : amount);
-	setIsPromoCodeApplied(false);
-	setAgreed(false);
+	const resetForm = (preserveError = false) => {
+		setEmail('');
+		setPromoCode('');
+		if (!course) return;
+		const amount = +getPriceForCountry(course, resolvedCountryCode).amount;
+		setDiscountedAmount(isNaN(amount) ? 0 : amount);
+		setIsPromoCodeApplied(false);
+		setAgreed(false);
 
-	if (!preserveError) {
-		setErrorMessage('');
-	}
+		if (!preserveError) {
+			setErrorMessage('');
+		}
 
-
-	setIsSubmitted(false);
-	setIsProcessing(false);
-};
+		setIsSubmitted(false);
+		setIsProcessing(false);
+	};
 
 	return (
 		<CustomDialog
@@ -407,8 +417,8 @@ const resetForm = (preserveError = false) => {
 									options={{
 										style: {
 											base: {
-												fontSize: isMobileSize ? '11px' : '14px',
-												color: '#424770',
+												'fontSize': isMobileSize ? '11px' : '14px',
+												'color': '#424770',
 												'::placeholder': {
 													color: '#aab7c4',
 												},
@@ -456,8 +466,8 @@ const resetForm = (preserveError = false) => {
 										options={{
 											style: {
 												base: {
-													fontSize: isMobileSize ? '11px' : '14px',
-													color: '#424770',
+													'fontSize': isMobileSize ? '11px' : '14px',
+													'color': '#424770',
 													'::placeholder': {
 														color: '#aab7c4',
 													},
@@ -493,9 +503,9 @@ const resetForm = (preserveError = false) => {
 									options={{
 										style: {
 											base: {
-												fontSize: isMobileSize ? '11px' : '14px',
+												'fontSize': isMobileSize ? '11px' : '14px',
 
-												color: '#424770',
+												'color': '#424770',
 												'::placeholder': {
 													color: '#aab7c4',
 												},
@@ -530,6 +540,7 @@ const resetForm = (preserveError = false) => {
 								onChange={(e) => {
 									setEmail(e.target.value);
 									setIsPromoCodeApplied(false);
+									if (!course) return;
 									setDiscountedAmount(+getPriceForCountry(course, resolvedCountryCode).amount);
 									setUsersUsedPromoCode((prevData) => prevData.filter((id) => id !== userId));
 									setErrorMessage('');
@@ -556,6 +567,7 @@ const resetForm = (preserveError = false) => {
 								setPromoCode(e.target.value);
 								setErrorMessage('');
 								setIsPromoCodeApplied(false);
+								if (!course) return;
 								setDiscountedAmount(+getPriceForCountry(course, resolvedCountryCode).amount);
 								setUsersUsedPromoCode((prevData) => prevData.filter((id) => id !== userId));
 							}}
@@ -589,7 +601,7 @@ const resetForm = (preserveError = false) => {
 								borderRadius: '0.35rem',
 								padding: isMobileSize ? '0.5rem' : '0.75rem',
 							}}>
-							Final Price: {setCurrencySymbol(getPriceForCountry(course, resolvedCountryCode).currency)}
+							Final Price: {course && setCurrencySymbol(getPriceForCountry(course, resolvedCountryCode).currency)}
 							{discountedAmount}
 						</Typography>
 						{isPromoCodeApplied && (
@@ -616,8 +628,8 @@ const resetForm = (preserveError = false) => {
 										setErrorMessage('');
 									}}
 									sx={{
-										display: 'flex',
-										alignItems: 'center',
+										'display': 'flex',
+										'alignItems': 'center',
 										'& .MuiSvgIcon-root': {
 											fontSize: isMobileSize ? '0.8rem' : '1.25rem', // Adjust the checkbox icon size
 										},
@@ -626,7 +638,7 @@ const resetForm = (preserveError = false) => {
 							}
 							label='I agree to the Terms & Conditions'
 							sx={{
-								mt: isSmallScreen ? '0rem' : '0.5rem',
+								'mt': isSmallScreen ? '0rem' : '0.5rem',
 								'& .MuiFormControlLabel-label': {
 									fontSize: isMobileSize ? '0.6rem' : '0.8rem', // Adjust the label font size
 								},
@@ -644,21 +656,21 @@ const resetForm = (preserveError = false) => {
 
 				{errorMessage && (
 					<CustomErrorMessage sx={{ width: '100%', padding: '0.75rem 1.25rem', fontSize: isMobileSize ? '0.65rem' : '0.75rem' }}>
-					<span style={{whiteSpace: 'pre-line'}}>
-					{errorMessage}{' '}
-						{!isUserAccountExist && fromHomePage && (
-							<span
-								onClick={() => window.open('/auth', '_blank')}
-								style={{
-									color: theme.textColor?.greenSecondary.main,
-									textDecoration: 'underline',
-									cursor: 'pointer',
-									fontSize: isMobileSize ? '0.65rem' : '0.75rem',
-								}}>
-								Click here
-							</span>
-						)}
-					</span>
+						<span style={{ whiteSpace: 'pre-line' }}>
+							{errorMessage}{' '}
+							{!isUserAccountExist && fromHomePage && (
+								<span
+									onClick={() => window.open('/auth', '_blank')}
+									style={{
+										color: theme.textColor?.greenSecondary.main,
+										textDecoration: 'underline',
+										cursor: 'pointer',
+										fontSize: isMobileSize ? '0.65rem' : '0.75rem',
+									}}>
+									Click here
+								</span>
+							)}
+						</span>
 					</CustomErrorMessage>
 				)}
 

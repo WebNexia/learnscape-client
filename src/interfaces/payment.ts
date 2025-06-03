@@ -12,6 +12,10 @@ export interface Payment {
 	username: string;
 	courseId: string;
 	courseTitle: string;
+	documentId: string;
+	documentName: string;
+	paymentType: string;
+	email: string;
 	transactionDetails?: TransactionDetails;
 	isRefunded?: boolean;
 	refundId?: string;
