@@ -7,6 +7,7 @@ import { OrganisationContext } from './OrganisationContextProvider';
 import { Document } from '../interfaces/document';
 
 interface DocumentsContextTypes {
+	sortedLandingPageDocumentsData: Document[];
 	sortedDocumentsData: Document[];
 	sortDocumentsData: (property: keyof Document, order: 'asc' | 'desc') => void;
 	addNewDocument: (newDocument: any) => void;
@@ -23,6 +24,7 @@ interface DocumentsContextProviderProps {
 }
 
 export const DocumentsContext = createContext<DocumentsContextTypes>({
+	sortedLandingPageDocumentsData: [],
 	sortedDocumentsData: [],
 	sortDocumentsData: () => {},
 	addNewDocument: () => {},
@@ -39,6 +41,7 @@ const DocumentsContextProvider = (props: DocumentsContextProviderProps) => {
 	const { orgId } = useContext(OrganisationContext);
 
 	const [sortedDocumentsData, setSortedDocumentsData] = useState<Document[]>([]);
+	const [sortedLandingPageDocumentsData, setSortedLandingPageDocumentsData] = useState<Document[]>([]);
 	// const [numberOfPages, setNumberOfPages] = useState<number>(1);
 	// const [documentsPageNumber, setDocumentsPageNumber] = useState<number>(1);
 
@@ -66,6 +69,32 @@ const DocumentsContextProvider = (props: DocumentsContextProviderProps) => {
 		enabled: !!orgId && !isLoaded,
 	});
 
+	const fetchLandingPageDocuments = async () => {
+		if (!orgId) return;
+
+		try {
+			const response = await axios.get(`${base_url}/documents/landing/${orgId}`);
+
+			// Initial sorting when fetching data
+			const sortedLandingPageDocumentsDataCopy = [...response.data.data].sort((a: Document, b: Document) => b.createdAt.localeCompare(a.createdAt));
+			setSortedLandingPageDocumentsData(sortedLandingPageDocumentsDataCopy);
+			// setNumberOfPages(response.data.pages);
+			setIsLoaded(true);
+			return response.data.data;
+		} catch (error) {
+			setIsLoaded(true); // Set isLoading to false in case of an error
+			throw error; // Rethrow the error to be handled by React Query
+		}
+	};
+
+	const {
+		data: landingPageDocuments,
+		isLoading: landingPageDocumentsLoading,
+		isError: landingPageDocumentsError,
+	} = useQuery(['landingPageDocuments', orgId], () => fetchLandingPageDocuments(), {
+		enabled: !!orgId && !isLoaded,
+	});
+
 	// Function to handle sorting
 	const sortDocumentsData = (property: keyof Document, order: 'asc' | 'desc') => {
 		const sortedDocumentsDataCopy = [...sortedDocumentsData].sort((a: Document, b: Document) => {
@@ -79,9 +108,8 @@ const DocumentsContextProvider = (props: DocumentsContextProviderProps) => {
 	};
 	// Function to update sortedDocumentsData with new document data
 	const addNewDocument = (newDocument: any) => {
-		
 		setSortedDocumentsData((prevSortedData) => {
-			return [newDocument, ...prevSortedData]
+			return [newDocument, ...prevSortedData];
 		});
 	};
 
@@ -99,11 +127,11 @@ const DocumentsContextProvider = (props: DocumentsContextProviderProps) => {
 		setSortedDocumentsData((prevSortedData) => prevSortedData?.filter((data) => data._id !== id));
 	};
 
-	if (isLoading) {
+	if (isLoading || landingPageDocumentsLoading) {
 		return <Loading />;
 	}
 
-	if (isError) {
+	if (isError || landingPageDocumentsError) {
 		return <LoadingError />;
 	}
 
@@ -111,6 +139,7 @@ const DocumentsContextProvider = (props: DocumentsContextProviderProps) => {
 		<DocumentsContext.Provider
 			value={{
 				sortedDocumentsData,
+				sortedLandingPageDocumentsData,
 				sortDocumentsData,
 				addNewDocument,
 				removeDocument,

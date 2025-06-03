@@ -59,12 +59,12 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 			if (!courseId || !resolvedUserId || !resolvedOrgId) {
 				throw new Error('Missing required data for course registration');
 			}
-	
+
 			if (!user?.hasRegisteredCourse) {
 				await axios.patch(`${base_url}/users/${resolvedUserId}`, {
 					hasRegisteredCourse: true,
 				});
-	
+
 				setUser((prevUser) => {
 					if (prevUser) {
 						return { ...prevUser, hasRegisteredCourse: true };
@@ -72,7 +72,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 					return prevUser;
 				});
 			}
-	
+
 			const response = await axios.post(`${base_url}/userCourses/`, {
 				userId: resolvedUserId,
 				courseId,
@@ -80,13 +80,13 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 				isInProgress: true,
 				orgId: resolvedOrgId,
 			});
-	
+
 			if (!response.data?._id) {
 				throw new Error('User course creation failed: Missing ID');
 			}
-	
+
 			const userCourseId = response.data._id;
-	
+
 			const responseUserLesson = await axios.post(`${base_url}/userlessons`, {
 				lessonId: fromHomePage ? course.firstLessonId : firstLessonId,
 				userId: resolvedUserId,
@@ -100,7 +100,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 				teacherFeedback: '',
 				isFeedbackGiven: false,
 			});
-	
+
 			// Update localStorage: userLessonData
 			const currentUserLessonData: string | null = localStorage.getItem('userLessonData');
 			if (currentUserLessonData !== null) {
@@ -121,7 +121,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 					localStorage.setItem('userLessonData', JSON.stringify(updatedUserLessonData));
 				}
 			}
-	
+
 			// Update localStorage: userCourseData
 			let updatedUserCoursesIds: UserCoursesIdsWithCourseIds[] = [];
 			const storedUserCoursesIds = localStorage.getItem('userCourseData');
@@ -139,14 +139,13 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 				validUntil: response.data.validUntil,
 			});
 			localStorage.setItem('userCourseData', JSON.stringify(updatedUserCoursesIds));
-	
+
 			return userCourseId;
 		} catch (error) {
 			console.error('❌ Error during course registration:', error);
 			throw error; // ⚠️ Propagate to prevent payment from proceeding
 		}
 	};
-	
 
 	// const handleEnrollment = async (): Promise<void> => {
 	// 	if (
@@ -171,8 +170,8 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 					fromHomePage && !isSmallScreen && !isRotatedMedium
 						? '3rem 0 2rem 0'
 						: isSmallScreen || isRotatedMedium
-						? '1.25rem 0 1.5rem 0'
-						: '3rem 0 2rem 0',
+							? '1.25rem 0 1.5rem 0'
+							: '3rem 0 2rem 0',
 				backgroundColor: fromHomePage ? theme.bgColor?.lessonInProgress : theme.palette.primary.main,
 			}}>
 			<Snackbar
@@ -215,15 +214,15 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 								variant='text'
 								startIcon={<KeyboardBackspaceOutlined fontSize='small' />}
 								sx={{
-									color: theme.textColor?.common.main,
-									textTransform: 'inherit',
-									fontFamily: theme.fontFamily?.main,
+									'color': theme.textColor?.common.main,
+									'textTransform': 'inherit',
+									'fontFamily': theme.fontFamily?.main,
 									':hover': {
 										backgroundColor: 'transparent',
 										textDecoration: 'underline',
 									},
 
-									fontSize: isSmallScreen ? '0.75rem' : null,
+									'fontSize': isSmallScreen ? '0.75rem' : null,
 								}}
 								onClick={() => {
 									navigate(`/courses/user/${userId}`);
@@ -246,8 +245,8 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 							{isVerySmallScreen
 								? truncateText(course.description, 200)
 								: isSmallScreen
-								? truncateText(course.description, 250)
-								: truncateText(course.description, 450)}
+									? truncateText(course.description, 250)
+									: truncateText(course.description, 450)}
 						</Typography>
 						{!isEnrolledStatus && !course.isExpired ? (
 							<CustomSubmitButton
@@ -261,36 +260,37 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 								onClick={() => setIsPaymentDialogOpen(true)}>
 								Enroll
 							</CustomSubmitButton>
-						) : (!isEnrolledStatus && course.isExpired) ? (<Alert
-							severity='warning'
-							sx={{
-							  position: 'absolute',
-							  bottom: isRotated ? 60 : 5,
-							  fontSize: isVerySmallScreen || isRotated ? '0.65rem' : '0.9rem',
-							  backgroundColor:!fromHomePage ? theme.bgColor?.lessonInProgress : theme.bgColor?.greenSecondary,
-							  color: theme.textColor?.common.main,
-							  width: 'fit-content',
-							}}
-						  >
-							Enrollment is closed
-						  </Alert>
-						
-						) : (	<Typography
-							onClick={() => {
-								documentsRef?.current?.scrollIntoView({ behavior: 'smooth' });
-							}}
-							sx={{
-								width: 'fit-content',
-								position: 'absolute',
-								bottom: isRotated ? 60 : 5,
-								fontSize: isVerySmallScreen || isRotated ? '0.65rem' : '0.9rem',
-								textTransform: 'capitalize',
-								color: theme.textColor?.common.main,
-								cursor: 'pointer',
-								textDecoration: 'underline',
-							}}>
-							See Course Materials
-						</Typography>)}
+						) : !isEnrolledStatus && course.isExpired ? (
+							<Alert
+								severity='warning'
+								sx={{
+									position: 'absolute',
+									bottom: isRotated ? 60 : 5,
+									fontSize: isVerySmallScreen || isRotated ? '0.65rem' : '0.9rem',
+									backgroundColor: !fromHomePage ? theme.bgColor?.lessonInProgress : theme.bgColor?.greenSecondary,
+									color: theme.textColor?.common.main,
+									width: 'fit-content',
+								}}>
+								Enrollment is closed
+							</Alert>
+						) : (
+							<Typography
+								onClick={() => {
+									documentsRef?.current?.scrollIntoView({ behavior: 'smooth' });
+								}}
+								sx={{
+									width: 'fit-content',
+									position: 'absolute',
+									bottom: isRotated ? 60 : 5,
+									fontSize: isVerySmallScreen || isRotated ? '0.65rem' : '0.9rem',
+									textTransform: 'capitalize',
+									color: theme.textColor?.common.main,
+									cursor: 'pointer',
+									textDecoration: 'underline',
+								}}>
+								See Course Materials
+							</Typography>
+						)}
 					</Box>
 				</Box>
 				<Box

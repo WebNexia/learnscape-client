@@ -215,9 +215,7 @@ const AdminCourseEditPage = () => {
 		const startingDate = new Date(singleCourse?.startingDate || '');
 		const durationWeeks = singleCourse?.durationWeeks || 0;
 		const validUntil =
-			!isNaN(startingDate.getTime()) && durationWeeks > 0
-				? new Date(startingDate.getTime() + durationWeeks * 7 * 24 * 60 * 60 * 1000)
-				: null;
+			!isNaN(startingDate.getTime()) && durationWeeks > 0 ? new Date(startingDate.getTime() + durationWeeks * 7 * 24 * 60 * 60 * 1000) : null;
 
 		try {
 			if (!chapterLessonDataBeforeSave) {
@@ -389,8 +387,8 @@ const AdminCourseEditPage = () => {
 						updatedByRole: responseUpdatedData.updatedByRole,
 					});
 
-					updatedChapters?.forEach(chapter => {
-						chapter.lessons?.forEach(lesson => {
+					updatedChapters?.forEach((chapter) => {
+						chapter.lessons?.forEach((lesson) => {
 							updateLessons({
 								...lesson,
 								usedInCourses: lesson.usedInCourses || [],
@@ -535,7 +533,7 @@ const AdminCourseEditPage = () => {
 			</Box>
 
 			<Box sx={{ display: 'flex', width: '95%', justifyContent: 'center', marginTop: '9rem' }}>
-				{!isEditMode && <CourseDetailsNonEditBox singleCourse={singleCourse} chapters={chapterLessonData} setSingleCourse={setSingleCourse}/>}
+				{!isEditMode && <CourseDetailsNonEditBox singleCourse={singleCourse} chapters={chapterLessonData} setSingleCourse={setSingleCourse} />}
 
 				{isEditMode && (
 					<Box
@@ -672,12 +670,23 @@ const AdminCourseEditPage = () => {
 													documentUrl: url,
 													orgId,
 													userId,
+													imageUrl: '',
+													prices: [
+														{ currency: 'gbp', amount: '0' },
+														{ currency: 'usd', amount: '0' },
+														{ currency: 'eur', amount: '0' },
+														{ currency: 'try', amount: '0' },
+													],
+													description: '',
 													createdAt: '',
 													updatedAt: '',
 													clonedFromId: '',
 													clonedFromTitle: '',
 													usedInLessons: [],
 													usedInCourses: courseId ? [courseId] : [],
+													samplePageImageUrl: '',
+													isOnLandingPage: false,
+													pageCount: 0,
 													createdBy: '',
 													updatedBy: '',
 													createdByName: '',
@@ -767,17 +776,16 @@ const AdminCourseEditPage = () => {
 			</Box>
 
 			{/* CustomDialog for expired course confirmation */}
-			<CustomDialog
-				openModal={isExpiredDialogOpen}
-				closeModal={() => setIsExpiredDialogOpen(false)}
-				title="Course Expired"
-				maxWidth="sm"
-			>
+			<CustomDialog openModal={isExpiredDialogOpen} closeModal={() => setIsExpiredDialogOpen(false)} title='Course Expired' maxWidth='sm'>
 				<DialogContent>
 					<Typography variant='body2'>
-					This course appears to be expired based on its starting date and duration.<br /><br />
-					Once expired, it will no longer be editable — only cloning will be allowed.<br /><br />
-					Do you still want to continue editing?
+						This course appears to be expired based on its starting date and duration.
+						<br />
+						<br />
+						Once expired, it will no longer be editable — only cloning will be allowed.
+						<br />
+						<br />
+						Do you still want to continue editing?
 					</Typography>
 				</DialogContent>
 				<CustomDialogActions
@@ -786,8 +794,8 @@ const AdminCourseEditPage = () => {
 						if (pendingCourseUpdate) pendingCourseUpdate();
 						setIsExpiredDialogOpen(false);
 					}}
-					submitBtnText="Continue Editing"
-					cancelBtnText="Cancel"
+					submitBtnText='Continue Editing'
+					cancelBtnText='Cancel'
 				/>
 			</CustomDialog>
 		</DashboardPagesLayout>

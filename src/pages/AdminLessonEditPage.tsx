@@ -296,14 +296,12 @@ const AdminLessonEditPage = () => {
 		}
 
 		// For publishing, check requirements
-		const hasRequiredFields = 
-			lessonId && 
-			singleLesson.title?.trim() && 
-			singleLesson.text?.trim() && 
-			(
-				singleLesson.type === LessonType.INSTRUCTIONAL_LESSON || 
-				(singleLesson.type !== LessonType.INSTRUCTIONAL_LESSON && singleLesson.questionIds?.length > 0)
-			);
+		const hasRequiredFields =
+			lessonId &&
+			singleLesson.title?.trim() &&
+			singleLesson.text?.trim() &&
+			(singleLesson.type === LessonType.INSTRUCTIONAL_LESSON ||
+				(singleLesson.type !== LessonType.INSTRUCTIONAL_LESSON && singleLesson.questionIds?.length > 0));
 
 		if (hasRequiredFields) {
 			try {
@@ -1244,6 +1242,17 @@ const AdminLessonEditPage = () => {
 													clonedFromTitle: '',
 													usedInLessons: lessonId ? [lessonId] : [],
 													usedInCourses: [],
+													imageUrl: '',
+													prices: [
+														{ currency: 'gbp', amount: '0' },
+														{ currency: 'usd', amount: '0' },
+														{ currency: 'try', amount: '0' },
+														{ currency: 'eur', amount: '0' },
+													],
+													description: '',
+													samplePageImageUrl: '',
+													isOnLandingPage: false,
+													pageCount: 0,
 													createdBy: '',
 													updatedBy: '',
 													createdByName: '',

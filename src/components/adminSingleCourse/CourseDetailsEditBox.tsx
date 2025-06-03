@@ -72,7 +72,7 @@ const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree,
 	};
 	return (
 		<>
-			<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',  width: '100%' }}>
+			<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
 				<Box sx={{ flex: 3 }}>
 					<HandleImageUploadURL
 						label='Cover Image'

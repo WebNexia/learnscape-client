@@ -1,6 +1,6 @@
-import { useContext, useState } from 'react';
+import { useContext, useState, useEffect } from 'react';
 import { Box, Button, FormControl, IconButton, Input, Tooltip, Typography } from '@mui/material';
-import {  CloudUpload, PostAddOutlined } from '@mui/icons-material';
+import { CloudUpload, PostAddOutlined } from '@mui/icons-material';
 import theme from '../../../themes';
 import CustomErrorMessage from '../customFields/CustomErrorMessage';
 import CustomTextField from '../customFields/CustomTextField';
@@ -29,6 +29,8 @@ interface HandleDocUploadURLProps {
 	singleCourse?: SingleCourse | undefined;
 	setSingleCourse?: React.Dispatch<React.SetStateAction<SingleCourse | undefined>>;
 	fromAdminCourses?: boolean | undefined;
+	initialDocumentUrl?: string;
+	initialDocumentName?: string;
 }
 
 const HandleDocUploadURL = ({
@@ -49,6 +51,8 @@ const HandleDocUploadURL = ({
 	singleCourse,
 	setSingleCourse,
 	fromAdminCourses,
+	initialDocumentUrl,
+	initialDocumentName,
 }: HandleDocUploadURLProps) => {
 	const { docUpload, isDocSizeLarge, handleDocChange, resetDocUpload, handleDocUpload, isDocLoading } = useDocUpload();
 
@@ -58,17 +62,36 @@ const HandleDocUploadURL = ({
 	const [manualDocUrl, setManualDocUrl] = useState<string>('');
 	const [docName, setDocName] = useState<string>('');
 
+	// Set initial values when they change
+	useEffect(() => {
+		if (initialDocumentUrl) {
+			setManualDocUrl(initialDocumentUrl);
+			setEnterDocUrl(true);
+			if (setDocumentUrl) {
+				setDocumentUrl(initialDocumentUrl);
+			}
+		}
+		if (initialDocumentName) {
+			setDocName(initialDocumentName);
+			if (setDocumentName) {
+				setDocumentName(initialDocumentName);
+			}
+		}
+	}, [initialDocumentUrl, initialDocumentName]);
+
 	const handleDocUploadReusable = () => {
 		handleDocUpload(docFolderName, (url: string) => {
 			if (onDocUploadLogic) {
 				onDocUploadLogic(url, docName);
 			}
 			if (setDocumentName) setDocumentName(docName);
-
 			if (setDocumentUrl) setDocumentUrl(url);
-
 			if (setFileUploaded) setFileUploaded(true);
-			if (!fromAdminDocs) setDocName('');
+
+			// Don't clear the name when in admin docs mode
+			if (!fromAdminDocs) {
+				setDocName('');
+			}
 		});
 	};
 
@@ -81,6 +104,8 @@ const HandleDocUploadURL = ({
 			if (setDocumentName) setDocumentName(docName);
 			if (setFileUploaded) setFileUploaded(true);
 			if (setDocumentUrl) setDocumentUrl(manualDocUrl);
+
+			// Don't clear the fields when in admin docs mode
 			if (!fromAdminDocs) {
 				setManualDocUrl('');
 				setDocName('');
@@ -91,7 +116,9 @@ const HandleDocUploadURL = ({
 	return (
 		<FormControl sx={{ display: 'flex' }}>
 			<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-				<Typography variant={isMobileSize ? 'body2' : 'h6'}>{label}</Typography>
+				<Typography variant={isMobileSize ? 'body2' : 'h6'} sx={{ fontSize: !isMobileSize ? '0.9rem' : 'inherit' }}>
+					{label}
+				</Typography>
 				<Box sx={{ display: 'flex', alignItems: 'center' }}>
 					<Box>
 						<Typography
@@ -154,6 +181,11 @@ const HandleDocUploadURL = ({
 							setDocumentName(e.target.value);
 						}
 					}}
+					InputProps={{
+						inputProps: {
+							maxLength: 50,
+						},
+					}}
 				/>
 
 				{!enterDocUrl && (
@@ -171,6 +203,7 @@ const HandleDocUploadURL = ({
 									backgroundColor: theme.bgColor?.common,
 									margin: '0.5rem 0 0.85rem 0',
 									padding: '0.25rem',
+									fontSize: '0.85rem',
 								}}
 							/>
 							{!isDocLoading ? (
@@ -194,13 +227,15 @@ const HandleDocUploadURL = ({
 
 				{enterDocUrl && (
 					<Box sx={{ display: 'flex', width: fromAdminDocs ? '60%' : '55%', justifyContent: 'space-between', alignItems: 'center' }}>
-						<CustomTextField
-							placeholder='Doc URL'
-							required={enterDocUrl ? true : false}
-							sx={{ width: fromAdminDocs ? '80%' : '82.5%', marginTop: '0.5rem' }}
-							value={manualDocUrl}
-							onChange={(e) => setManualDocUrl(e.target.value)}
-						/>
+						<Tooltip title='Click the upload button to enter/update the document URL' placement='top'>
+							<CustomTextField
+								placeholder='Doc URL'
+								required={enterDocUrl ? true : false}
+								sx={{ width: fromAdminDocs ? '80%' : '82.5%', marginTop: '0.5rem' }}
+								value={manualDocUrl}
+								onChange={(e) => setManualDocUrl(e.target.value)}
+							/>
+						</Tooltip>
 
 						<Button
 							onClick={handleManualUrlAddition}

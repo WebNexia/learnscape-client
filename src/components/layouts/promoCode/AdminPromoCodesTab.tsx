@@ -259,7 +259,7 @@ const AdminPromoCodesTab = () => {
 										{ key: 'discountAmount', label: 'Discount Amount' },
 										{ key: 'isActive', label: 'Status' },
 										{ key: 'actions', label: 'Actions' },
-								  ]
+									]
 								: [
 										{ key: 'code', label: 'Promo Code' },
 										{ key: 'discountType', label: 'Discount Type' },
@@ -268,7 +268,7 @@ const AdminPromoCodesTab = () => {
 										{ key: 'usageLimit', label: 'Usage Limit' },
 										{ key: 'isActive', label: 'Status' },
 										{ key: 'actions', label: 'Actions' },
-								  ]
+									]
 						}
 					/>
 					<TableBody>
