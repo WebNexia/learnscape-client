@@ -110,16 +110,24 @@ function App() {
 																								{renderRoute('/admin/dashboard/user/:userId', <AdminDashboard />, Roles.ADMIN)}
 																								{renderRoute('/admin/users/user/:userId', <AdminUsers />, Roles.ADMIN)}
 																								{renderRoute('/admin/courses/user/:userId', <AdminCourses />, Roles.ADMIN)}
-																								{renderRoute('/admin/course-edit/user/:userId/course/:courseId', <AdminCourseEditPage />, Roles.ADMIN)}
+																								{renderRoute(
+																									'/admin/course-edit/user/:userId/course/:courseId',
+																									<AdminCourseEditPage />,
+																									Roles.ADMIN
+																								)}
 																								{renderRoute('/admin/lessons/user/:userId', <AdminLessons />, Roles.ADMIN)}
-																								{renderRoute('/admin/lesson-edit/user/:userId/lesson/:lessonId', <AdminLessonEditPage />, Roles.ADMIN)}
+																								{renderRoute(
+																									'/admin/lesson-edit/user/:userId/lesson/:lessonId',
+																									<AdminLessonEditPage />,
+																									Roles.ADMIN
+																								)}
 																								{renderRoute('/admin/questions/user/:userId', <AdminQuestions />, Roles.ADMIN)}
 																								{renderRoute('/admin/documents/user/:userId', <AdminDocuments />, Roles.ADMIN)}
 																								{renderRoute('/admin/submissions/user/:userId', <AdminQuizSubmissions />, Roles.ADMIN)}
 																								{renderRoute(
-																										'/admin/check-submission/user/:userId/submission/:submissionId/lesson/:lessonId/userlesson/:userLessonId',
-																										<AdminQuizSubmissionCheck />,
-																										Roles.ADMIN
+																									'/admin/check-submission/user/:userId/submission/:submissionId/lesson/:lessonId/userlesson/:userLessonId',
+																									<AdminQuizSubmissionCheck />,
+																									Roles.ADMIN
 																								)}
 																								{renderRoute('/admin/payments/user/:userId', <AdminPayments />, Roles.ADMIN)}
 																								{renderRoute('/admin/calendar/user/:userId', <Calendar />, Roles.ADMIN)}
@@ -134,15 +142,15 @@ function App() {
 																								{renderRoute('/courses/user/:id', <Courses />, Roles.USER)}
 																								{renderRoute('/submissions/user/:userId', <Submissions />, Roles.USER)}
 																								{renderRoute(
-																										'/submission-feedback/user/:userId/submission/:submissionId/lesson/:lessonId/userlesson/:userLessonId',
-																										<SubmissionFeedbackDetails />,
-																										Roles.USER
+																									'/submission-feedback/user/:userId/submission/:submissionId/lesson/:lessonId/userlesson/:userLessonId',
+																									<SubmissionFeedbackDetails />,
+																									Roles.USER
 																								)}
 																								{renderRoute('/course/:courseId/user/:userId/userCourseId/:userCourseId', <CoursePage />, Roles.USER)}
 																								{renderRoute(
-																										'/user/:userId/course/:courseId/userCourseId/:userCourseId/lesson/:lessonId/',
-																										<LessonPage />,
-																										Roles.USER
+																									'/user/:userId/course/:courseId/userCourseId/:userCourseId/lesson/:lessonId/',
+																									<LessonPage />,
+																									Roles.USER
 																								)}
 																								{renderRoute('/calendar/user/:id', <Calendar />, Roles.USER)}
 																								{renderRoute('/messages/user/:userId', <Messages />, Roles.USER)}

@@ -16,16 +16,13 @@ const HandleActionPage = () => {
 		}
 
 		// Redirect based on the mode parameter
-		switch (mode) {
-			case 'verifyEmail':
-				navigate(`/verify-email?oobCode=${oobCode}`);
-				break;
-			case 'resetPassword':
-				navigate(`/reset-password?oobCode=${oobCode}`);
-				break;
-			default:
-				// Handle unknown action types or redirect to a fallback page
-				navigate('/');
+		if (mode === 'verifyEmail' || mode === 'verifyAndChangeEmail') {
+			navigate(`/verify-email?oobCode=${oobCode}`);
+		} else if (mode === 'resetPassword') {
+			navigate(`/reset-password?oobCode=${oobCode}`);
+		} else {
+			// Handle unknown action types or redirect to a fallback page
+			navigate('/');
 		}
 	}, [navigate]);
 

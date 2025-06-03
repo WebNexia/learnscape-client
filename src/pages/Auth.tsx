@@ -26,7 +26,6 @@ import PhoneInput from 'react-phone-input-2';
 import { useGeoLocation } from '../hooks/useGeoLocation';
 import 'react-phone-input-2/lib/style.css';
 import logo from '../assets/logo.png';
-import { fontFamily } from 'html2canvas/dist/types/css/property-descriptors/font-family';
 
 interface AuthProps {
 	setUserRole: React.Dispatch<React.SetStateAction<string | null>>;
@@ -45,7 +44,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 
 	const location = useGeoLocation();
 
-	const { setUserId, fetchUserData } = useContext(UserAuthContext);
+	const { setUserId, fetchUserData, setUser } = useContext(UserAuthContext);
 	const { fetchOrganisationData, setOrgId } = useContext(OrganisationContext);
 	const { isVerySmallScreen, isSmallScreen, isRotated, isRotatedMedium } = useContext(MediaQueryContext);
 
@@ -117,6 +116,14 @@ const Auth = ({ setUserRole }: AuthProps) => {
 			// Fetch and handle user data from your backend API
 			await fetchUserData(firebaseUser.uid);
 			const updatedUser = queryClient.getQueryData<User>('userData');
+
+			// --- SYNC EMAIL TO MONGODB IF DIFFERENT ---
+			if (firebaseUser.email && updatedUser?.email !== firebaseUser.email) {
+				await axiosInstance.patch(`${base_url}/users/${updatedUser?._id}`, { email: firebaseUser.email });
+				// Optionally update the user context
+				setUser((prev) => (prev ? { ...prev, email: firebaseUser.email! } : prev));
+			}
+			// --- END SYNC ---
 
 			if (updatedUser) {
 				await fetchOrganisationData(orgId);

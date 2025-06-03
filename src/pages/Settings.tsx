@@ -1,12 +1,11 @@
 import { Alert, Box, DialogContent, IconButton, InputAdornment, Snackbar, Tooltip, Typography } from '@mui/material';
-
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
-import { useContext, useState } from 'react';
+import { useContext, useState, useEffect } from 'react';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 import HandleImageUploadURL from '../components/forms/uploadImageVideoDocument/HandleImageUploadURL';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
-import { EmailAuthProvider, getAuth, reauthenticateWithCredential, updatePassword } from 'firebase/auth';
+import { EmailAuthProvider, getAuth, reauthenticateWithCredential, updatePassword, onAuthStateChanged, verifyBeforeUpdateEmail } from 'firebase/auth';
 import theme from '../themes';
 import { Info, Visibility, VisibilityOff } from '@mui/icons-material';
 import { PasswordUpdateErrorMessages, TextFieldTypes } from '../interfaces/enums';
@@ -16,10 +15,14 @@ import CustomCancelButton from '../components/forms/customButtons/CustomCancelBu
 import { FirebaseError } from 'firebase/app';
 import CustomErrorMessage from '../components/forms/customFields/CustomErrorMessage';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
+import { useNavigate } from 'react-router-dom';
+import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
 
 const Settings = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { user, setUser } = useContext(UserAuthContext);
+	const navigate = useNavigate();
+	const auth = getAuth();
 
 	const { isSmallScreen, isRotatedMedium, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -36,9 +39,11 @@ const Settings = () => {
 	const [confirmedPassword, setConfirmedPassword] = useState<string>('');
 
 	const [isProfileUpdated, setIsProfileUpdated] = useState<boolean>(false);
+	const [profileUpdateStatus, setProfileUpdateStatus] = useState<'updated' | 'nochange'>('updated');
 
 	const [isPasswordUpdatedMsgDisplayed, setIsPasswordUpdatedMsgDisplayed] = useState<boolean>(false);
 	const [isProfileUpdatedMsgDisplayed, setIsProfileUpdatedMsgDisplayed] = useState<boolean>(false);
+	const [isEmailUpdatedMsgDisplayed, setIsEmailUpdatedMsgDisplayed] = useState<boolean>(false);
 
 	const [isUserNameImageInfoModalOpen, setIsUserNameImageInfoModalOpen] = useState<boolean>(false);
 
@@ -48,6 +53,28 @@ const Settings = () => {
 
 	const [errorMsg, setErrorMsg] = useState<PasswordUpdateErrorMessages>();
 	const [profileErrorMsg, setProfileErrorMsg] = useState<string | undefined>();
+
+	const [showVerifyEmailMsg, setShowVerifyEmailMsg] = useState(false);
+
+	const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+	const [emailToUpdate, setEmailToUpdate] = useState<string | null>(null);
+	const [dialogPassword, setDialogPassword] = useState('');
+	const [dialogError, setDialogError] = useState<string | undefined>(undefined);
+
+	// Add auth state listener
+	useEffect(() => {
+		const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+			if (!firebaseUser) {
+				// User is signed out, redirect to login
+				navigate('/auth', { replace: true });
+			} else if (!firebaseUser.emailVerified) {
+				// Email not verified, show message
+				setProfileErrorMsg('Please verify your email before continuing.');
+			}
+		});
+
+		return () => unsubscribe();
+	}, [auth, navigate]);
 
 	const toggleCurrentPasswordVisibility = () => {
 		setShowCurrentPassword((prevShowPassword) => !prevShowPassword);
@@ -64,24 +91,89 @@ const Settings = () => {
 	const vertical = 'top';
 	const horizontal = 'center';
 
-	const handleProfileUpdate = async () => {
+	const handleEmailUpdate = async () => {
+		setProfileErrorMsg(undefined);
+
+		if (email === user?.email) {
+			setIsEmailUpdatedMsgDisplayed(true);
+			return;
+		}
+
+		// Proactive check if email exists in Firebase
 		try {
-			setProfileErrorMsg(undefined);
-			if (isProfileUpdated) {
-				await axios.patch(`${base_url}/users/${user?._id}`, { imageUrl, username, firstName, lastName, email });
+			const { data } = await axios.post('/check-email-firebase', { email });
+			if (data.exists) {
+				setProfileErrorMsg('This email address is already in use.');
+				return;
 			}
-			setUser((prevData) => {
-				if (prevData) {
-					return { ...prevData, username, imageUrl, firstName, lastName, email };
-				}
-				return prevData;
-			});
+		} catch (checkError) {
+			setProfileErrorMsg('Failed to check email. Please try again.');
+			return;
+		}
+
+		// If email is available, open the password dialog
+		setEmailToUpdate(email);
+		setShowPasswordDialog(true);
+	};
+
+	const handleProfileUpdate = async () => {
+		if (!isProfileUpdated) {
+			setProfileUpdateStatus('nochange');
 			setIsProfileUpdatedMsgDisplayed(true);
-			setIsProfileUpdated(false);
+			return;
+		}
+		try {
+			// For other profile updates (not email)
+			if (isProfileUpdated) {
+				try {
+					await axios.patch(`${base_url}/users/${user?._id}`, {
+						imageUrl,
+						username,
+						firstName,
+						lastName,
+						...(email === user?.email ? { email } : {}), // Only include email if it hasn't changed
+					});
+
+					setUser((prevData) => {
+						if (prevData) {
+							return {
+								...prevData,
+								username,
+								imageUrl,
+								firstName,
+								lastName,
+								...(email === user?.email ? { email } : {}), // Only update email if it hasn't changed
+							};
+						}
+						return prevData;
+					});
+					setProfileUpdateStatus('updated');
+					setIsProfileUpdatedMsgDisplayed(true);
+					setIsProfileUpdated(false);
+				} catch (error: any) {
+					console.error('Profile update error:', error);
+					const msg = error?.response?.data?.message;
+					if (msg === 'Username already in use') {
+						setProfileErrorMsg('This username is already in use.');
+					} else {
+						setProfileErrorMsg('An error occurred while updating your profile.');
+					}
+				}
+			}
 		} catch (error: any) {
-			const msg = error?.response?.data?.message;
-			if (msg === 'Email already in use' || msg === 'Username already in use') {
-				setProfileErrorMsg(msg);
+			console.error('Profile update error:', error);
+
+			// Firebase Auth error
+			if (error.code === 'auth/email-already-in-use' || error.message === 'EMAIL_EXISTS') {
+				setProfileErrorMsg('This email address is already in use.');
+			} else if (error.code === 'auth/invalid-email') {
+				setProfileErrorMsg('The email address is invalid.');
+			} else if (error.code) {
+				setProfileErrorMsg(error.message || error.code);
+			}
+			// Axios backend error
+			else if (error?.response?.data?.message) {
+				setProfileErrorMsg(error.response.data.message);
 			} else {
 				setProfileErrorMsg('An error occurred while updating your profile.');
 			}
@@ -174,6 +266,55 @@ const Settings = () => {
 		}
 	};
 
+	const handleDialogSubmit = async () => {
+		setDialogError(undefined);
+		const auth = getAuth();
+		const firebaseUser = auth.currentUser;
+		if (!firebaseUser || !emailToUpdate) return;
+		if (!dialogPassword) {
+			setDialogError('Please enter your current password.');
+			return;
+		}
+		// Proactive check if email exists in Firebase
+		try {
+			const { data } = await axios.post('/check-email-firebase', { email: emailToUpdate });
+			if (data.exists) {
+				setDialogError('This email address is already in use.');
+				return;
+			}
+		} catch (checkError) {
+			setDialogError('Failed to check email. Please try again.');
+			return;
+		}
+		const credential = EmailAuthProvider.credential(firebaseUser.email!, dialogPassword);
+		try {
+			await reauthenticateWithCredential(firebaseUser, credential);
+			console.log('About to call verifyBeforeUpdateEmail with', emailToUpdate);
+			await verifyBeforeUpdateEmail(firebaseUser, emailToUpdate);
+			console.log('verifyBeforeUpdateEmail succeeded');
+			setShowVerifyEmailMsg(true);
+			setShowPasswordDialog(false);
+			setDialogPassword('');
+			setEmailToUpdate(null);
+		} catch (reauthError: any) {
+			console.error('verifyBeforeUpdateEmail error:', reauthError);
+			if (reauthError.code === 'auth/email-already-in-use' || reauthError.message === 'EMAIL_EXISTS') {
+				setDialogError('This email address is already in use.');
+			} else if (reauthError.code === 'auth/wrong-password') {
+				setDialogError('Incorrect password. Please try again.');
+			} else {
+				setDialogError('Re-authentication failed. Please try again.');
+			}
+		}
+	};
+
+	const handleDialogClose = () => {
+		setShowPasswordDialog(false);
+		setDialogPassword('');
+		setDialogError(undefined);
+		setEmailToUpdate(null);
+	};
+
 	return (
 		<DashboardPagesLayout pageName='Settings' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
 			<Box
@@ -197,7 +338,6 @@ const Settings = () => {
 						}}
 						onSubmit={(e) => {
 							e.preventDefault();
-							handleProfileUpdate();
 						}}>
 						<Box sx={{ display: 'flex', justifyContent: 'center', mb: '0rem', width: '90%' }}>
 							<Typography variant={isMobileSize ? 'h6' : 'h5'}>Update Profile</Typography>
@@ -271,7 +411,6 @@ const Settings = () => {
 									value={email}
 									onChange={(e) => {
 										setEmail(e.target.value);
-										setIsProfileUpdated(true);
 									}}
 									sx={{ width: '100%' }}
 								/>
@@ -336,9 +475,12 @@ const Settings = () => {
 						</CustomDialog>
 
 						{profileErrorMsg && <CustomErrorMessage sx={{ width: '100%', fontSize: '0.75rem', mb: 1 }}>{profileErrorMsg}</CustomErrorMessage>}
-						<Box sx={{ display: 'flex', width: '90%', justifyContent: 'flex-end' }}>
-							<CustomSubmitButton size='small' type='submit' sx={{ fontSize: isMobileSize ? '0.7rem' : undefined }}>
-								Update
+						<Box sx={{ display: 'flex', width: '90%', justifyContent: 'space-between' }}>
+							<CustomSubmitButton size='small' type='submit' sx={{ fontSize: isMobileSize ? '0.7rem' : undefined }} onClick={handleEmailUpdate}>
+								Update Email
+							</CustomSubmitButton>
+							<CustomSubmitButton size='small' type='submit' sx={{ fontSize: isMobileSize ? '0.7rem' : undefined }} onClick={handleProfileUpdate}>
+								Update Profile
 							</CustomSubmitButton>
 						</Box>
 						<Snackbar
@@ -347,8 +489,21 @@ const Settings = () => {
 							anchorOrigin={{ vertical, horizontal }}
 							sx={{ mt: '1rem' }}
 							onClose={() => setIsProfileUpdatedMsgDisplayed(false)}>
-							<Alert severity='success' variant='filled' sx={{ width: '100%', color: '#fff', fontSize: isMobileSize ? '0.7rem' : undefined }}>
-								You have successfully updated your profile!
+							<Alert
+								severity={profileUpdateStatus === 'updated' ? 'success' : 'info'}
+								variant='filled'
+								sx={{ width: '100%', color: '#fff', fontSize: isMobileSize ? '0.7rem' : undefined }}>
+								{profileUpdateStatus === 'updated' ? 'You have successfully updated your profile!' : 'No changes were made to your profile.'}
+							</Alert>
+						</Snackbar>
+						<Snackbar
+							open={isEmailUpdatedMsgDisplayed}
+							autoHideDuration={3000}
+							anchorOrigin={{ vertical, horizontal }}
+							sx={{ mt: '1rem' }}
+							onClose={() => setIsEmailUpdatedMsgDisplayed(false)}>
+							<Alert severity='info' variant='filled' sx={{ width: '100%', color: '#fff', fontSize: isMobileSize ? '0.7rem' : undefined }}>
+								Your email address is already up to date!
 							</Alert>
 						</Snackbar>
 					</form>
@@ -500,7 +655,7 @@ const Settings = () => {
 						</Box>
 						<Box sx={{ display: 'flex', width: isVerySmallScreen ? '90%' : isMobileSize ? '80%' : '75%', justifyContent: 'flex-end', mt: '0.5rem' }}>
 							<CustomSubmitButton size='small' sx={{ alignSelf: 'flex-end', fontSize: isMobileSize ? '0.7rem' : undefined }} type='submit'>
-								Update
+								Update Password
 							</CustomSubmitButton>
 						</Box>
 
@@ -517,6 +672,42 @@ const Settings = () => {
 					</form>
 				</Box>
 			</Box>
+			<Snackbar
+				open={showVerifyEmailMsg}
+				autoHideDuration={6000}
+				anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+				onClose={() => setShowVerifyEmailMsg(false)}
+				sx={{ mt: '2.5rem' }}>
+				<Alert
+					severity='info'
+					variant='filled'
+					sx={{
+						'width': '100%',
+						'fontSize': '0.85rem',
+						'letterSpacing': 0,
+						'color': '#fff',
+						'backgroundColor': '#1976d2',
+						'& .MuiAlert-message': {
+							lineHeight: 1.5,
+						},
+					}}>
+					A verification email has been sent to your new address. Please check your inbox and verify your email.
+				</Alert>
+			</Snackbar>
+
+			<CustomDialog openModal={showPasswordDialog} closeModal={handleDialogClose} title='Enter Current Password' maxWidth='sm'>
+				<DialogContent>
+					<CustomTextField
+						type='password'
+						label='Current Password'
+						value={dialogPassword}
+						onChange={(e) => setDialogPassword(e.target.value)}
+						sx={{ mt: '0.75rem' }}
+					/>
+					{dialogError && <CustomErrorMessage sx={{ mt: 1 }}>{dialogError}</CustomErrorMessage>}
+				</DialogContent>
+				<CustomDialogActions onCancel={handleDialogClose} onSubmit={handleDialogSubmit} submitBtnText='Submit' />
+			</CustomDialog>
 		</DashboardPagesLayout>
 	);
 };
