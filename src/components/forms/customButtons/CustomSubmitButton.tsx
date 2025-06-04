@@ -49,6 +49,7 @@ const CustomSubmitButton = ({
 					color: theme.bgColor?.adminSubmitBtn,
 				},
 				'height': '1.75rem',
+				'mt': '0.2rem',
 			}}
 			size={size}
 			onClick={handleClick}

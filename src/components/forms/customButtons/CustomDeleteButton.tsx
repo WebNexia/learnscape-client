@@ -33,6 +33,7 @@ const CustomDeleteButton = ({
 					backgroundColor: 'error.light',
 				},
 				'height': '1.75rem',
+				'mt': '0.2rem',
 			}}
 			onClick={onClick}
 			disabled={disabled}

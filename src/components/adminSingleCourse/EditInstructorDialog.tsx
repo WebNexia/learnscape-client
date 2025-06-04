@@ -191,6 +191,7 @@ const EditInstructorDialog = ({
 				<CustomTextField
 					fullWidth={false}
 					label='Bio'
+					placeholder='Enter bio (max 200 characters)'
 					value={singleCourse?.instructor?.bio}
 					onChange={(e) =>
 						setSingleCourse((prevData) => {
@@ -209,6 +210,7 @@ const EditInstructorDialog = ({
 					InputLabelProps={{
 						sx: { fontSize: '0.8rem' },
 					}}
+					InputProps={{ inputProps: { maxLength: 200 } }}
 					required={false}
 				/>
 
@@ -240,25 +242,26 @@ const EditInstructorDialog = ({
 						multiple
 						freeSolo
 						options={[]}
-						value={singleCourse?.instructor?.expertise || []}
+						value={singleCourse?.instructor?.expertise?.slice(0, 5) || []}
 						isOptionEqualToValue={(option, value) => {
 							if (typeof option === 'string' && typeof value === 'string') {
 								return option === value;
 							}
 							return false;
 						}}
-						onChange={(_, newValue) =>
+						onChange={(_, newValue) => {
+							const limitedValue = newValue.slice(0, 5);
 							setSingleCourse((prevData) => {
 								if (!prevData) return prevData;
 								return {
 									...prevData,
 									instructor: {
 										...prevData.instructor,
-										expertise: newValue,
+										expertise: limitedValue,
 									},
 								};
-							})
-						}
+							});
+						}}
 						renderTags={(value, getTagProps) =>
 							value.map((option, index) => {
 								const { key, ...chipProps } = getTagProps({ index });
@@ -287,6 +290,7 @@ const EditInstructorDialog = ({
 								label='Expertise'
 								placeholder='Add expertise (Enter to add)'
 								size='small'
+								helperText={singleCourse?.instructor?.expertise?.length === 5 ? 'Maximum 5 expertise items allowed' : ''}
 								sx={{
 									'margin': '0.5rem 2rem',
 									'backgroundColor': theme.bgColor?.common,
@@ -308,7 +312,7 @@ const EditInstructorDialog = ({
 										e.preventDefault();
 										const input = e.target as HTMLInputElement;
 										const value = input.value.trim();
-										if (value) {
+										if (value && (!singleCourse?.instructor?.expertise || singleCourse.instructor.expertise.length < 5)) {
 											setSingleCourse((prevData) => {
 												if (!prevData) return prevData;
 												return {

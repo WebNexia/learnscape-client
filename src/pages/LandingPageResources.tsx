@@ -104,7 +104,7 @@ const LandingPageResources = () => {
 							<Grid container spacing={3} justifyContent='center' sx={{ maxWidth: '80rem', margin: '0 auto' }}>
 								{paidDocuments.map((doc) => (
 									<Grid item xs={12} sm={6} md={3} key={doc._id}>
-										<DocumentCard document={doc} userCurrency={userCurrency} />
+										<DocumentCard document={doc} userCurrency={userCurrency} fromHomePage={true} />
 									</Grid>
 								))}
 								{paidDocuments.length === 0 && (

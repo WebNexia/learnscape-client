@@ -22,6 +22,15 @@ import { getPriceForCountry } from '../../../utils/getPriceForCountry';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 import { useGeoLocation } from '../../../hooks/useGeoLocation';
 
+const DIALOG_BG = 'linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.98))';
+const DIALOG_BORDERRADIUS = '1.5rem';
+const DIALOG_BOXSHADOW = '0 0.5rem 2rem rgba(44, 62, 80, 0.1)';
+const DIALOG_BORDER = '0.5rem solid rgba(255, 255, 255, 0.18)';
+const DIALOG_FONT = 'Varela Round';
+const INPUT_BORDERRADIUS = '0.5rem';
+const INPUT_FONT = 'Varela Round';
+const INPUT_FONTSIZE = '0.95rem';
+
 interface PaymentDialogProps {
 	course: SingleCourse | undefined;
 	isPaymentDialogOpen: boolean;
@@ -43,7 +52,7 @@ const PaymentDialog = ({
 }: PaymentDialogProps) => {
 	const { userId } = useParams();
 	const { orgId } = useContext(OrganisationContext);
-	const { user } = useContext(UserAuthContext);
+	const { user, setUser } = useContext(UserAuthContext);
 
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
@@ -68,7 +77,7 @@ const PaymentDialog = ({
 	const [errorMessage, setErrorMessage] = useState<string>('');
 
 	const [email, setEmail] = useState<string>('');
-	const [isUserAccountExist, setIsUserAccountExist] = useState<boolean>(false);
+	const [isUserAccountExist, setIsUserAccountExist] = useState<boolean>(true);
 	const [promoCode, setPromoCode] = useState<string>('');
 	const [discountedAmount, setDiscountedAmount] = useState<number>(() => {
 		if (!course) return 0;
@@ -111,6 +120,22 @@ const PaymentDialog = ({
 		setIsProcessing(true);
 		setIsSubmitted(true);
 
+		if (!stripe || !elements) {
+			setErrorMessage(fromHomePage ? 'Stripe düzgün yüklenemedi.' : 'Stripe has not loaded properly.');
+			setIsProcessing(false);
+			return;
+		}
+
+		const cardNumberElement = elements.getElement(CardNumberElement);
+		elements.getElement(CardExpiryElement);
+		elements.getElement(CardCvcElement);
+
+		if (!cardNumberComplete || !cardExpiryComplete || !cardCvcComplete) {
+			setErrorMessage(fromHomePage ? 'Lütfen tüm kart bilgilerini doldurun.' : 'Please fill in all card details.');
+			setIsProcessing(false);
+			return;
+		}
+
 		if (fromHomePage) {
 			try {
 				const userExistsResponse = await axiosInstance.post(`${base_url}/users/check-user-exists`, { email, courseId: course._id });
@@ -118,11 +143,15 @@ const PaymentDialog = ({
 				setIsUserAccountExist(userExistsResponse.data.exists);
 
 				if (!userExistsResponse.data.exists) {
-					setErrorMessage(`This email address isn't linked to any account.\nCreate a free account to join the course! - `);
+					setErrorMessage(
+						fromHomePage
+							? `Bu e-posta adresi herhangi bir hesaba bağlı değil.\nKursa katılmak için ücretsiz hesap oluşturun! - `
+							: `This email address isn't linked to any account.\nCreate a free account to join the course! - `
+					);
 					setIsProcessing(false);
 					return;
 				} else if (userExistsResponse.data.isEnrolledInCourse) {
-					setErrorMessage(`You are already enrolled in this course!`);
+					setErrorMessage(fromHomePage ? `Bu kursa zaten kayıtlısınız!` : `You are already enrolled in this course!`);
 					setIsProcessing(false);
 					return;
 				}
@@ -139,22 +168,6 @@ const PaymentDialog = ({
 		}
 
 		let usersUsedCode = [...usersUsedPromoCode];
-
-		if (!stripe || !elements) {
-			setErrorMessage('Stripe has not loaded properly.');
-			setIsProcessing(false);
-			return;
-		}
-
-		const cardNumberElement = elements.getElement(CardNumberElement);
-		const cardExpiryElement = elements.getElement(CardExpiryElement);
-		const cardCvcElement = elements.getElement(CardCvcElement);
-
-		if (!cardNumberElement || !cardExpiryElement || !cardCvcElement) {
-			setErrorMessage('Please fill in all card details.');
-			setIsProcessing(false);
-			return;
-		}
 
 		try {
 			// Step 1: Create PaymentIntent (manual capture)
@@ -173,6 +186,10 @@ const PaymentDialog = ({
 			const { clientSecret, paymentIntentId } = response.data;
 
 			// Step 2: Create Payment Method
+			if (!cardNumberElement) {
+				setErrorMessage(fromHomePage ? 'Kart bilgileri eksik.' : 'Card details are missing.');
+				return;
+			}
 			const { error: methodError, paymentMethod } = await stripe.createPaymentMethod({
 				type: 'card',
 				card: cardNumberElement,
@@ -183,7 +200,15 @@ const PaymentDialog = ({
 
 			if (methodError) {
 				resetForm(true);
-				setErrorMessage(methodError.message ?? 'An unknown error occurred while creating payment method');
+				setErrorMessage(
+					methodError.message
+						? fromHomePage
+							? `Ödeme yöntemi oluşturulurken bir hata oluştu`
+							: `An error occurred while creating payment method: ${methodError.message}`
+						: fromHomePage
+							? 'Ödeme yöntemi oluşturulurken bilinmeyen bir hata oluştu'
+							: 'An unknown error occurred while creating payment method'
+				);
 				return;
 			}
 
@@ -194,7 +219,15 @@ const PaymentDialog = ({
 
 			if (error || paymentIntent?.status !== 'requires_capture') {
 				resetForm(true);
-				setErrorMessage(error?.message ?? 'Payment confirmation failed.');
+				setErrorMessage(
+					error?.message
+						? fromHomePage
+							? `Ödeme onayı başarısız: ${error.message}`
+							: `Payment confirmation failed: ${error.message}`
+						: fromHomePage
+							? 'Ödeme onayı başarısız oldu.'
+							: 'Payment confirmation failed.'
+				);
 				return;
 			}
 
@@ -213,6 +246,20 @@ const PaymentDialog = ({
 						email: email || user?.email,
 						paymentType: 'course',
 					});
+
+					// Update hasRegisteredCourse using new endpoint
+					if (!user?.hasRegisteredCourse) {
+						await axiosInstance.post(`${base_url}/users/update-registration-status`, {
+							userId: resolvedUserId,
+						});
+
+						setUser((prevUser) => {
+							if (prevUser) {
+								return { ...prevUser, hasRegisteredCourse: true };
+							}
+							return prevUser;
+						});
+					}
 				} catch (captureError) {
 					resetForm(true);
 					console.error(`❌ Payment capture failed for paymentIntentId: ${paymentIntentId}, userId: ${resolvedUserId}`, captureError);
@@ -249,7 +296,11 @@ const PaymentDialog = ({
 					}
 
 					resetForm(true);
-					setErrorMessage('Payment failed after registration. You have not been charged, and your access was rolled back.');
+					setErrorMessage(
+						fromHomePage
+							? 'Kayıt sonrası ödeme başarısız oldu. Ücretlendirilmediniz ve erişiminiz geri alındı.'
+							: 'Payment failed after registration. You have not been charged, and your access was rolled back.'
+					);
 					return;
 				}
 
@@ -280,20 +331,29 @@ const PaymentDialog = ({
 				}
 			} catch (regErr) {
 				resetForm(true);
-				setErrorMessage('Course registration failed. You have not been charged.');
+				setErrorMessage(fromHomePage ? 'Kurs kaydı başarısız oldu. Ücretlendirilmediniz.' : 'Course registration failed. You have not been charged.');
 				return;
 			}
 		} catch (err) {
 			console.log(err);
 			resetForm(true);
-			setErrorMessage('An error occurred while processing the payment.');
+			setErrorMessage(fromHomePage ? 'Ödeme işlenirken bir hata oluştu.' : 'An error occurred while processing the payment.');
 		}
 	};
 
 	const handleApplyPromoCode = async () => {
 		if (!course) return;
+		if (!email && fromHomePage) {
+			setErrorMessage(fromHomePage ? 'Lütfen e-posta adresinizi giriniz.' : 'Please enter your email address.');
+			return;
+		}
+
+		if (!promoCode) {
+			setErrorMessage(fromHomePage ? 'Promosyon kodu girin' : 'Enter a promo code');
+			return;
+		}
 		try {
-			if (fromHomePage) {
+			if (fromHomePage && email) {
 				const userExistsResponse = await axiosInstance.post(`${base_url}/users/check-user-exists`, { email });
 
 				setIsUserAccountExist(userExistsResponse.data.exists);
@@ -301,15 +361,14 @@ const PaymentDialog = ({
 				resolvedUserId = userExistsResponse?.data?.userId;
 
 				if (!userExistsResponse.data.exists) {
-					setErrorMessage(`This email address isn't linked to any account. Create a free account - `);
+					setErrorMessage(
+						fromHomePage
+							? `Bu e-posta adresi herhangi bir hesaba bağlı değil.\nKursa katılmak için ücretsiz hesap oluşturun! - `
+							: `This email address isn't linked to any account.\nCreate a free account to join the course! - `
+					);
 					setIsProcessing(false);
 					return;
 				}
-			}
-
-			if (!promoCode) {
-				setErrorMessage('Enter a promo code');
-				return;
 			}
 
 			const response = await axiosInstance.post(`${base_url}/promocodes/apply`, {
@@ -341,10 +400,10 @@ const PaymentDialog = ({
 			setUsersUsedPromoCode(usersUsed);
 		} catch (error) {
 			if (axios.isAxiosError(error) && error.response?.data?.message) {
-				setErrorMessage(error.response.data.message);
+				setErrorMessage(fromHomePage ? `Geçersiz promosyon kodu` : error.response.data.message);
 			} else {
 				// Fallback in case it's not an AxiosError or the message isn't available
-				setErrorMessage('Invalid promo code');
+				setErrorMessage(fromHomePage ? 'Geçersiz promosyon kodu' : 'Invalid promo code');
 			}
 			const amount = +getPriceForCountry(course, resolvedCountryCode).amount;
 			setDiscountedAmount(isNaN(amount) ? 0 : amount); // Reset to original price
@@ -375,8 +434,30 @@ const PaymentDialog = ({
 				resetForm();
 				setIsPaymentDialogOpen(false);
 			}}
-			title='Make Payment'
-			maxWidth='sm'>
+			title={fromHomePage ? 'Ödeme Yap' : 'Make Payment'}
+			maxWidth='sm'
+			titleSx={{
+				fontSize: '1.5rem',
+				fontWeight: 600,
+				fontFamily: DIALOG_FONT,
+				color: '#2C3E50',
+				ml: '0.5rem',
+				textAlign: 'center',
+				mb: 1,
+			}}
+			PaperProps={{
+				sx: {
+					height: 'auto',
+					maxHeight: '90vh',
+					overflow: 'visible',
+					borderRadius: DIALOG_BORDERRADIUS,
+					background: DIALOG_BG,
+					boxShadow: DIALOG_BOXSHADOW,
+					backdropFilter: 'blur(8px)',
+					border: DIALOG_BORDER,
+					fontFamily: DIALOG_FONT,
+				},
+			}}>
 			<form
 				onSubmit={async (e) => {
 					e.preventDefault();
@@ -384,13 +465,109 @@ const PaymentDialog = ({
 				}}>
 				<Box
 					sx={{
-						display: 'flex',
-						flexDirection: 'column',
-						alignItems: 'center',
-						justifyContent: 'center',
-						gap: '1rem',
-						padding: '0.5rem 0.75rem',
+						'margin': '0 2rem',
+						'& .MuiOutlinedInput-root': {
+							'&:hover fieldset': {
+								borderColor: '#3498DB',
+							},
+							'&.Mui-focused fieldset': {
+								borderColor: '#3498DB',
+							},
+						},
 					}}>
+					{fromHomePage && (
+						<Box>
+							<CustomTextField
+								label={fromHomePage ? 'E-posta Adresi' : 'Email Address'}
+								size='small'
+								value={email}
+								type='email'
+								onChange={(e) => {
+									setEmail(e.target.value);
+									setIsPromoCodeApplied(false);
+									if (!course) return;
+									setDiscountedAmount(+getPriceForCountry(course, resolvedCountryCode).amount);
+									setUsersUsedPromoCode((prevData) => prevData.filter((id) => id !== userId));
+									setErrorMessage('');
+								}}
+								sx={{
+									'mb': '1.25rem',
+									'& .MuiOutlinedInput-root': {
+										fontFamily: INPUT_FONT,
+										borderRadius: INPUT_BORDERRADIUS,
+									},
+									'& .MuiInputBase-input': {
+										fontFamily: INPUT_FONT,
+										fontSize: INPUT_FONTSIZE,
+									},
+									'& .MuiInputBase-input::placeholder': {
+										fontFamily: INPUT_FONT,
+										opacity: 1,
+									},
+									'& .MuiInputLabel-root': {
+										fontFamily: INPUT_FONT,
+										fontSize: INPUT_FONTSIZE,
+									},
+								}}
+							/>
+						</Box>
+					)}
+
+					<Box
+						sx={{
+							display: 'flex',
+							justifyContent: 'space-between',
+							width: '100%',
+							mb: '1.25rem',
+						}}>
+						<CustomTextField
+							label={fromHomePage ? 'Promosyon Kodu' : 'Promo Code'}
+							size='small'
+							required={false}
+							sx={{
+								'width': '70%',
+								'& .MuiOutlinedInput-root': {
+									fontFamily: INPUT_FONT,
+									borderRadius: INPUT_BORDERRADIUS,
+								},
+								'& .MuiInputBase-input': {
+									fontFamily: INPUT_FONT,
+									fontSize: INPUT_FONTSIZE,
+								},
+								'& .MuiInputBase-input::placeholder': {
+									fontFamily: INPUT_FONT,
+									opacity: 1,
+								},
+								'& .MuiInputLabel-root': {
+									fontFamily: INPUT_FONT,
+									fontSize: INPUT_FONTSIZE,
+								},
+							}}
+							value={promoCode}
+							onChange={(e) => {
+								setPromoCode(e.target.value);
+								setErrorMessage('');
+								setIsPromoCodeApplied(false);
+								if (!course) return;
+								setDiscountedAmount(+getPriceForCountry(course, resolvedCountryCode).amount);
+								setUsersUsedPromoCode((prevData) => prevData.filter((id) => id !== userId));
+							}}
+						/>
+						<CustomSubmitButton
+							size='small'
+							type='button'
+							sx={{
+								width: '25%',
+								height: '2.5rem',
+								fontFamily: DIALOG_FONT,
+								borderRadius: INPUT_BORDERRADIUS,
+								fontSize: INPUT_FONTSIZE,
+							}}
+							onClick={handleApplyPromoCode}>
+							{fromHomePage ? 'Uygula' : 'Apply'}
+						</CustomSubmitButton>
+					</Box>
+
 					<Box
 						sx={{
 							display: 'flex',
@@ -398,27 +575,38 @@ const PaymentDialog = ({
 							justifyContent: 'space-between',
 							alignItems: 'center',
 							width: '100%',
-							padding: isSmallScreen || isRotatedMedium ? '0rem 0.35rem' : '0 0.75rem 1rem 0.75rem',
-							margin: '0 0.75rem -1.5rem 0.75rem',
+							mb: '1.25rem',
 						}}>
 						<Box sx={{ width: '100%', textAlign: 'left' }}>
-							<Typography sx={{ fontSize: isMobileSize ? '0.7rem' : '0.85rem' }}>Card Number*</Typography>
+							<Typography sx={{ fontSize: isMobileSize ? '0.7rem' : '0.9rem', fontFamily: DIALOG_FONT, color: '#223354' }}>
+								{fromHomePage ? 'Kart Numarası*' : 'Card Number*'}
+							</Typography>
 						</Box>
 						<Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
 							<Box
 								sx={{
-									border: isSubmitted && !cardNumberComplete ? '1px solid red' : '1px solid #ccc',
-									padding: '0.5rem',
-									borderRadius: '0.35rem',
-									backgroundColor: '#fff',
-									width: '100%',
+									'border': isSubmitted && !cardNumberComplete ? '1px solid red' : '1px solid #ccc',
+									'padding': '0.6rem',
+									'borderRadius': INPUT_BORDERRADIUS,
+									'backgroundColor': '#fff',
+									'width': '100%',
+									'fontFamily': DIALOG_FONT,
+									'& .MuiOutlinedInput-root': {
+										'&:hover fieldset': {
+											borderColor: '#3498DB',
+										},
+										'&.Mui-focused fieldset': {
+											borderColor: '#3498DB',
+										},
+									},
 								}}>
 								<CardNumberElement
 									options={{
 										style: {
 											base: {
 												'fontSize': isMobileSize ? '11px' : '14px',
-												'color': '#424770',
+												'color': '#223354',
+												'fontFamily': 'Arial, sans-serif',
 												'::placeholder': {
 													color: '#aab7c4',
 												},
@@ -445,67 +633,70 @@ const PaymentDialog = ({
 						sx={{
 							display: 'flex',
 							width: '100%',
-							padding: isSmallScreen || isRotatedMedium ? '0rem 0.35rem' : '0 0.75rem 2rem 0.75rem',
-							mb: isSmallScreen || isRotatedMedium ? '-0.5rem' : '-2rem',
+							mb: '1.25rem',
 						}}>
 						<Box
 							sx={{
 								width: '100%',
 								mr: '0.75rem',
 							}}>
-							<Typography sx={{ fontSize: isMobileSize ? '0.7rem' : '0.85rem', paddingBottom: '0.25rem' }}>Expiry Date*</Typography>
+							<Typography sx={{ fontSize: isMobileSize ? '0.7rem' : '0.9rem', paddingBottom: '0.25rem', fontFamily: DIALOG_FONT, color: '#223354' }}>
+								{fromHomePage ? 'Son Kullanma Tarihi*' : 'Expiry Date*'}
+							</Typography>
 							<Box
 								sx={{
 									border: isSubmitted && !cardExpiryComplete ? '1px solid red' : '1px solid #ccc',
-									padding: '0.5rem',
-									borderRadius: '0.35rem',
+									padding: '0.6rem',
+									borderRadius: INPUT_BORDERRADIUS,
 									backgroundColor: '#fff',
+									fontFamily: DIALOG_FONT,
 								}}>
-								<Box>
-									<CardExpiryElement
-										options={{
-											style: {
-												base: {
-													'fontSize': isMobileSize ? '11px' : '14px',
-													'color': '#424770',
-													'::placeholder': {
-														color: '#aab7c4',
-													},
-												},
-												invalid: {
-													color: '#9e2146',
+								<CardExpiryElement
+									options={{
+										style: {
+											base: {
+												'fontSize': isMobileSize ? '11px' : '14px',
+												'color': '#223354',
+												'fontFamily': 'Arial, sans-serif',
+												'::placeholder': {
+													color: '#aab7c4',
 												},
 											},
-										}}
-										onChange={(event) => {
-											setCardExpiryComplete(event.complete);
-											setErrorMessage('');
-										}}
-									/>
-								</Box>
+											invalid: {
+												color: '#9e2146',
+											},
+										},
+									}}
+									onChange={(event) => {
+										setCardExpiryComplete(event.complete);
+										setErrorMessage('');
+									}}
+								/>
 							</Box>
 						</Box>
 
-						{/* CVC Field */}
 						<Box
 							sx={{
 								width: '100%',
 							}}>
-							<Typography sx={{ fontSize: isMobileSize ? '0.7rem' : '0.85rem', paddingBottom: '0.25rem' }}>CVC*</Typography>
+							<Typography sx={{ fontSize: isMobileSize ? '0.7rem' : '0.9rem', paddingBottom: '0.25rem', fontFamily: DIALOG_FONT, color: '#223354' }}>
+								CVC*
+							</Typography>
 							<Box
 								sx={{
 									border: isSubmitted && !cardCvcComplete ? '1px solid red' : '1px solid #ccc',
-									padding: '0.5rem',
-									borderRadius: '0.35rem',
+									padding: '0.6rem',
+									borderRadius: INPUT_BORDERRADIUS,
 									backgroundColor: '#fff',
+									fontFamily: DIALOG_FONT,
 								}}>
 								<CardCvcElement
 									options={{
 										style: {
 											base: {
 												'fontSize': isMobileSize ? '11px' : '14px',
-
-												'color': '#424770',
+												'color': '#223354',
+												'fontFamily': 'Arial, sans-serif',
 												'::placeholder': {
 													color: '#aab7c4',
 												},
@@ -523,100 +714,47 @@ const PaymentDialog = ({
 							</Box>
 						</Box>
 					</Box>
-					{fromHomePage && (
-						<Box
-							sx={{
-								display: 'flex',
-								justifyContent: 'space-between',
-								width: '100%',
-								padding: isSmallScreen || isRotatedMedium ? '0 0.35rem' : '0 0.75rem',
-								margin: '1.5rem 0 -1rem 0',
-							}}>
-							<CustomTextField
-								label='Email Address'
-								size='small'
-								value={email}
-								type='email'
-								onChange={(e) => {
-									setEmail(e.target.value);
-									setIsPromoCodeApplied(false);
-									if (!course) return;
-									setDiscountedAmount(+getPriceForCountry(course, resolvedCountryCode).amount);
-									setUsersUsedPromoCode((prevData) => prevData.filter((id) => id !== userId));
-									setErrorMessage('');
-								}}
-							/>
-						</Box>
-					)}
 
 					<Box
 						sx={{
 							display: 'flex',
-							justifyContent: 'space-between',
+							alignItems: 'center',
 							width: '100%',
-							padding: isSmallScreen || isRotatedMedium ? '0 0.35rem' : '0 0.75rem',
-							mb: '-1rem',
+							mt: '2rem',
 						}}>
-						<CustomTextField
-							label='Promo Code'
-							size='small'
-							required={false}
-							sx={{ mr: '0.75rem' }}
-							value={promoCode}
-							onChange={(e) => {
-								setPromoCode(e.target.value);
-								setErrorMessage('');
-								setIsPromoCodeApplied(false);
-								if (!course) return;
-								setDiscountedAmount(+getPriceForCountry(course, resolvedCountryCode).amount);
-								setUsersUsedPromoCode((prevData) => prevData.filter((id) => id !== userId));
-							}}
-						/>
-						<CustomSubmitButton
-							size='small'
-							type='button'
-							sx={{ height: isMobileSize ? '1.85rem' : '2.15rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}
-							onClick={handleApplyPromoCode}>
-							Apply
-						</CustomSubmitButton>
-					</Box>
-					{fromHomePage && (
-						<Box sx={{ display: 'flex', justifyContent: 'flex-start', width: '100%', margin: '0 0 1rem 1.5rem' }}>
-							<Typography variant='body2'>
-								If you do not have account, please click{' '}
-								<span
-									onClick={() => window.open('/auth', '_blank')}
-									style={{ color: theme.textColor?.greenSecondary.main, textDecoration: 'underline', cursor: 'pointer' }}>
-									here
-								</span>{' '}
-								to create free account
-							</Typography>
-						</Box>
-					)}
-					<Box sx={{ display: 'flex', alignItems: 'center', width: '100%', padding: isSmallScreen || isRotatedMedium ? '0 0.35rem' : '0 0.75rem' }}>
 						<Typography
 							variant={isMobileSize ? 'body2' : 'h6'}
 							sx={{
 								boxShadow: '0.1rem 0.1rem 0.5rem 0.1rem rgba(0,0,0,0.3)',
-								borderRadius: '0.35rem',
+								borderRadius: INPUT_BORDERRADIUS,
 								padding: isMobileSize ? '0.5rem' : '0.75rem',
+								fontFamily: DIALOG_FONT,
+								color: '#223354',
 							}}>
-							Final Price: {course && setCurrencySymbol(getPriceForCountry(course, resolvedCountryCode).currency)}
+							{fromHomePage ? 'Toplam Tutar: ' : 'Total Amount: '}
+							{course && setCurrencySymbol(getPriceForCountry(course, resolvedCountryCode).currency)}
 							{discountedAmount}
 						</Typography>
 						{isPromoCodeApplied && (
-							<Typography variant='body2' sx={{ color: theme.textColor?.greenPrimary.main, ml: isMobileSize ? '1rem' : '2rem' }}>
-								Promo Code is applied
+							<Typography
+								variant='body2'
+								sx={{
+									color: theme.textColor?.greenPrimary.main,
+									ml: isMobileSize ? '1rem' : '2rem',
+									fontFamily: DIALOG_FONT,
+								}}>
+								{fromHomePage ? 'Promosyon Kodu Uygulandı' : 'Promo Code is applied'}
 							</Typography>
 						)}
 					</Box>
+
 					<Box
 						sx={{
 							display: 'flex',
 							alignItems: 'center',
 							textAlign: 'left',
 							width: '100%',
-							padding: isSmallScreen || isRotatedMedium ? '0rem 0.35rem' : '0 0.75rem',
+							mt: '1.5rem',
 						}}>
 						<FormControlLabel
 							required
@@ -631,23 +769,29 @@ const PaymentDialog = ({
 										'display': 'flex',
 										'alignItems': 'center',
 										'& .MuiSvgIcon-root': {
-											fontSize: isMobileSize ? '0.8rem' : '1.25rem', // Adjust the checkbox icon size
+											fontSize: isMobileSize ? '0.8rem' : '1.15rem',
 										},
 									}}
 								/>
 							}
-							label='I agree to the Terms & Conditions'
+							label={fromHomePage ? 'Kabul ediyorum' : 'I agree to the Terms & Conditions'}
 							sx={{
 								'mt': isSmallScreen ? '0rem' : '0.5rem',
 								'& .MuiFormControlLabel-label': {
-									fontSize: isMobileSize ? '0.6rem' : '0.8rem', // Adjust the label font size
+									fontSize: isMobileSize ? '0.6rem' : '0.8rem',
+									fontFamily: DIALOG_FONT,
 								},
 							}}
 						/>
 						<Typography
-							sx={{ fontSize: isSmallScreen ? '0.5rem' : '0.75rem', mb: '-0.5rem', cursor: 'pointer' }}
+							sx={{
+								fontSize: isSmallScreen ? '0.5rem' : '0.75rem',
+								mb: '-0.5rem',
+								cursor: 'pointer',
+								fontFamily: DIALOG_FONT,
+							}}
 							onClick={() => setTermsConditionsModalOpen(true)}>
-							(<span style={{ textDecoration: 'underline' }}>Read T&C</span>)
+							(<span style={{ textDecoration: 'underline' }}>{fromHomePage ? 'Şartlar ve Koşullar' : 'Read T&C'} </span>)
 						</Typography>
 					</Box>
 				</Box>
@@ -655,9 +799,15 @@ const PaymentDialog = ({
 				<TermsConditions termsConditionsModalOpen={termsConditionsModalOpen} setTermsConditionsModalOpen={setTermsConditionsModalOpen} />
 
 				{errorMessage && (
-					<CustomErrorMessage sx={{ width: '100%', padding: '0.75rem 1.25rem', fontSize: isMobileSize ? '0.65rem' : '0.75rem' }}>
+					<CustomErrorMessage
+						sx={{
+							width: '100%',
+							padding: '1.5rem 2rem 0 2rem',
+							fontSize: isMobileSize ? '0.65rem' : '0.75rem',
+							fontFamily: DIALOG_FONT,
+						}}>
 						<span style={{ whiteSpace: 'pre-line' }}>
-							{errorMessage}{' '}
+							{errorMessage}
 							{!isUserAccountExist && fromHomePage && (
 								<span
 									onClick={() => window.open('/auth', '_blank')}
@@ -667,7 +817,7 @@ const PaymentDialog = ({
 										cursor: 'pointer',
 										fontSize: isMobileSize ? '0.65rem' : '0.75rem',
 									}}>
-									Click here
+									{fromHomePage ? 'Buraya tıklayın' : 'Click here'}
 								</span>
 							)}
 						</span>
@@ -679,7 +829,16 @@ const PaymentDialog = ({
 						resetForm();
 						setIsPaymentDialogOpen(false);
 					}}
-					submitBtnText={isProcessing ? 'Processing' : 'Enroll'}
+					cancelBtnText={fromHomePage ? 'Kapat' : 'Cancel'}
+					cancelBtnSx={{
+						fontFamily: DIALOG_FONT,
+						borderRadius: INPUT_BORDERRADIUS,
+					}}
+					submitBtnText={isProcessing ? (fromHomePage ? 'İşleniyor' : 'Processing') : fromHomePage ? 'Ödeme Yap' : 'Make Payment'}
+					submitBtnSx={{
+						fontFamily: DIALOG_FONT,
+						borderRadius: INPUT_BORDERRADIUS,
+					}}
 				/>
 			</form>
 		</CustomDialog>

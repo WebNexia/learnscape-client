@@ -8,9 +8,10 @@ import DocumentPaymentDialog from './DocumentPaymentDialog';
 interface DocumentCardProps {
 	document: Pick<Document, '_id' | 'name' | 'prices' | 'imageUrl' | 'description' | 'samplePageImageUrl' | 'documentUrl' | 'orgId' | 'pageCount'>;
 	userCurrency: string;
+	fromHomePage?: boolean;
 }
 
-const DocumentCard = ({ document, userCurrency }: DocumentCardProps) => {
+const DocumentCard = ({ document, userCurrency, fromHomePage }: DocumentCardProps) => {
 	const theme = useTheme();
 	const [openSample, setOpenSample] = useState(false);
 	const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
@@ -293,6 +294,7 @@ const DocumentCard = ({ document, userCurrency }: DocumentCardProps) => {
 				isPaymentDialogOpen={isPaymentDialogOpen}
 				setIsPaymentDialogOpen={setIsPaymentDialogOpen}
 				userCurrency={userCurrency}
+				fromHomePage={fromHomePage}
 			/>
 		</>
 	);

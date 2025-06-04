@@ -76,7 +76,13 @@ const HeroSection = () => {
 				display: 'flex',
 				justifyContent: 'center',
 				alignItems: 'center',
-				background: 'linear-gradient(135deg, rgba(44, 62, 80, 0.05), rgba(52, 152, 219, 0.05))',
+				background: '#FDF7F0',
+				backgroundImage: `
+					linear-gradient(135deg, rgba(44, 62, 80, 0.05), rgba(52, 152, 219, 0.05)),
+					radial-gradient(circle, rgba(44,62,80,0.08) 1px, transparent 1px)
+				`,
+				backgroundSize: 'auto, 30px 30px',
+				backgroundRepeat: 'repeat, repeat',
 				position: 'relative',
 				overflow: 'hidden',
 				pt: { xs: '5vh', md: '6vh' },
@@ -90,7 +96,7 @@ const HeroSection = () => {
 					width: '100%',
 					height: '100%',
 					opacity: 0.1,
-					background: 'radial-gradient(circle, #2C3E50 1px, transparent 1px)',
+					// background: 'radial-gradient(circle, #2C3E50 1px, transparent 1px)',
 					backgroundSize: '30px 30px',
 				}}
 			/>

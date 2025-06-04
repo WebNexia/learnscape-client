@@ -29,19 +29,13 @@ const Footer = () => {
 			<Container>
 				<Box sx={{ display: 'flex', justifyContent: 'space-between', padding: '0rem 5rem', maxWidth: '120rem', width: '100%' }}>
 					<Box>
-						<Typography
-							variant='h4'
-							sx={{ color: theme.textColor?.common.main, mb: '1rem', fontFamily: fontFamilyLandingPage }}>
+						<Typography variant='h4' sx={{ color: theme.textColor?.common.main, mb: '1rem', fontFamily: fontFamilyLandingPage }}>
 							Kaizenglish
 						</Typography>
-						<Typography
-							variant='body2'
-							sx={{ color: theme.textColor?.common.main, fontFamily: fontFamilyLandingPage }}>
+						<Typography variant='body2' sx={{ color: theme.textColor?.common.main, fontFamily: fontFamilyLandingPage }}>
 							275 New North Road,
 						</Typography>
-						<Typography
-							variant='body2'
-							sx={{ color: theme.textColor?.common.main, fontFamily: fontFamilyLandingPage }}>
+						<Typography variant='body2' sx={{ color: theme.textColor?.common.main, fontFamily: fontFamilyLandingPage }}>
 							{' '}
 							London, England, N1 7AA
 						</Typography>
@@ -51,15 +45,11 @@ const Footer = () => {
 						</Box>
 					</Box>
 					<Box>
-						<Typography
-							variant='h4'
-							sx={{ color: theme.textColor?.common.main, mb: '1rem', fontFamily: fontFamilyLandingPage }}>
+						<Typography variant='h4' sx={{ color: theme.textColor?.common.main, mb: '1rem', fontFamily: fontFamilyLandingPage }}>
 							{/* Contact Us */}
 							İletişim
 						</Typography>
-						<Typography
-							variant='body2'
-							sx={{ color: theme.textColor?.common.main, fontFamily: fontFamilyLandingPage }}>
+						<Typography variant='body2' sx={{ color: theme.textColor?.common.main, fontFamily: fontFamilyLandingPage }}>
 							info@kaizenglish.com
 						</Typography>
 						<Box
@@ -68,29 +58,21 @@ const Footer = () => {
 							target='_blank'
 							rel='noopener noreferrer'
 							sx={{ display: 'flex', alignItems: 'center', mt: '0.5rem', cursor: 'pointer' }}>
-							<Typography
-								variant='body2'
-								sx={{ color: theme.textColor?.common.main, fontFamily: fontFamilyLandingPage }}>
+							<Typography variant='body2' sx={{ color: theme.textColor?.common.main, fontFamily: fontFamilyLandingPage }}>
 								WhatsApp
 							</Typography>
 							<WhatsApp sx={{ ml: '0.25rem', color: theme.textColor?.greenSecondary.main }} fontSize='small' />
 						</Box>
 					</Box>
 					<Box>
-						<Typography
-							variant='h4'
-							sx={{ color: theme.textColor?.common.main, mb: '1rem', fontFamily: fontFamilyLandingPage }}>
+						<Typography variant='h4' sx={{ color: theme.textColor?.common.main, mb: '1rem', fontFamily: fontFamilyLandingPage }}>
 							{/* Corporate */}
 							Kurumsal
 						</Typography>
-						<Typography
-							variant='body2'
-							sx={{ color: theme.textColor?.common.main, fontFamily: fontFamilyLandingPage }}>
+						<Typography variant='body2' sx={{ color: theme.textColor?.common.main, fontFamily: fontFamilyLandingPage }}>
 							{/* Terms of Service */}Kullanıcı Sözleşmesi
 						</Typography>
-						<Typography
-							variant='body2'
-							sx={{ color: theme.textColor?.common.main, fontFamily: fontFamilyLandingPage }}>
+						<Typography variant='body2' sx={{ color: theme.textColor?.common.main, fontFamily: fontFamilyLandingPage }}>
 							{/* Privacy */}Gizlilik
 						</Typography>
 					</Box>

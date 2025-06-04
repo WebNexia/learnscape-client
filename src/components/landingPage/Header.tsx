@@ -45,10 +45,9 @@ const Header = ({ coursesRef }: { coursesRef: React.RefObject<HTMLDivElement> })
 						zIndex: 1201,
 					}}>
 					<Box
-						sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '33%', cursor: 'pointer', }}
+						sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '33%', cursor: 'pointer' }}
 						onClick={() => navigate('/')}>
-					
-						<img src={logo} alt='logo' style={{height: '11vh' }} />
+						<img src={logo} alt='logo' style={{ height: '11vh' }} />
 					</Box>
 					<Box sx={{ display: 'flex', justifyContent: 'center', width: '33%' }}>
 						<Box>

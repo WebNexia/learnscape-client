@@ -10,9 +10,10 @@ interface CoursePageBannerDataCardProps {
 		bgColor?: string;
 		color?: string;
 	};
+	fromHomePage?: boolean;
 }
 
-const CoursePageBannerDataCard = ({ title, content, customSettings }: CoursePageBannerDataCardProps) => {
+const CoursePageBannerDataCard = ({ title, content, customSettings, fromHomePage }: CoursePageBannerDataCardProps) => {
 	const { isRotated, isSmallScreen } = useContext(MediaQueryContext);
 
 	const isMobileSize: boolean = isSmallScreen || isRotated;
@@ -29,11 +30,19 @@ const CoursePageBannerDataCard = ({ title, content, customSettings }: CoursePage
 				margin: '0 0.3rem 0.3rem 0',
 				padding: '0.5rem 0.5rem 1rem 0.5rem',
 			}}>
-			<Typography sx={{ fontSize: isMobileSize ? '0.6rem' : '0.85rem', color: customSettings?.color || 'inherit' }}>{title}</Typography>
+			<Typography
+				sx={{
+					fontSize: isMobileSize ? '0.6rem' : '0.85rem',
+					color: customSettings?.color || 'inherit',
+					fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
+				}}>
+				{title}
+			</Typography>
 			<Typography
 				sx={{
 					color: customSettings?.color || theme.textColor?.primary.main,
 					fontSize: isMobileSize ? '0.65rem' : '1rem',
+					fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
 				}}>
 				{content}
 			</Typography>
