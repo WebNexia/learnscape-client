@@ -124,9 +124,9 @@ const LandingPageCourses = forwardRef<HTMLDivElement>((_, ref) => {
 					},
 				}}>
 				<DialogContent>
-					<Box sx={{ p: 2 }}>
+					<Box sx={{ p: 1, pt: 2 }}>
 						<Typography sx={{ mb: '2rem', mt: '-1rem', fontFamily: 'Varela Round', fontSize: '1rem', color: 'text.secondary' }}>
-							LearnScape'de iki tür kurs bulunmaktadır. Her kurs türü farklı bir deneyim sunar:
+							Sitemizde iki tür kurs bulunmaktadır. Her kurs türü farklı bir deneyim sunar:
 						</Typography>
 						<Box sx={{ display: 'flex', alignItems: 'center', mb: '2rem' }}>
 							<Chip
@@ -150,7 +150,7 @@ const LandingPageCourses = forwardRef<HTMLDivElement>((_, ref) => {
 					</Box>
 				</DialogContent>
 				<DialogActions sx={{ mt: '-1rem' }}>
-					<CustomCancelButton onClick={() => setIsInfoDialogOpen(false)} sx={{ fontFamily: 'Varela Round', margin: '0 2rem 1rem 0' }}>
+					<CustomCancelButton onClick={() => setIsInfoDialogOpen(false)} sx={{ fontFamily: 'Varela Round', margin: '0 1rem 1rem 0' }}>
 						Kapat
 					</CustomCancelButton>
 				</DialogActions>

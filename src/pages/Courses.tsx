@@ -47,13 +47,13 @@ const Courses = () => {
 					sx={{
 						display: 'flex',
 						flexWrap: 'wrap',
-						justifyContent: 'space-around',
+						justifyContent: 'center',
 						alignItems: 'center',
 						margin: '0 2rem',
 					}}>
 					{sortedCoursesData &&
 						sortedCoursesData
-							?.filter((course: SingleCourse) => course.isActive === true)
+							?.filter((course: SingleCourse) => course.isActive === true && course.courseManagement.isExternal === false)
 							?.map((course: SingleCourse) => {
 								let userCourseData: UserCoursesIdsWithCourseIds[] = [];
 

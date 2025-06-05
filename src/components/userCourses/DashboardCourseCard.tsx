@@ -1,9 +1,8 @@
-import { Avatar, Box, Button, Card, CardContent, CardMedia, LinearProgress, Typography } from '@mui/material';
+import { Avatar, Box, Button, Card, CardContent, CardMedia, LinearProgress, Typography, Chip } from '@mui/material';
 import { SingleCourse } from '../../interfaces/course';
 import theme from '../../themes';
 import { useNavigate } from 'react-router-dom';
 import { truncateText } from '../../utils/utilText';
-import { setCurrencySymbol } from '../../utils/setCurrencySymbol';
 import { useContext } from 'react';
 import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
 import { getPriceForCountry } from '../../utils/getPriceForCountry';
@@ -65,14 +64,13 @@ const DashboardCourseCard = ({
 				'width': isMobileSize ? '14rem' : '19rem',
 				'borderRadius': '0.65rem',
 				'position': 'relative',
-				'margin': '0 0.2rem 2rem 0.2rem',
+				'margin': '0 1rem 3rem 1rem',
 				'boxShadow': '0.1rem 0rem 0.4rem 0.1rem rgba(0,0,0,0.15)',
 				'transition': '0.3s',
 				':hover': {
 					boxShadow: '0.1rem 0.2rem 0.4rem 0.2rem rgba(0,0,0,0.25)',
 				},
 				'cursor': 'pointer',
-				
 			}}
 			onClick={() => {
 				if (!fromHomePage) {
@@ -83,8 +81,7 @@ const DashboardCourseCard = ({
 					navigate(`/course/${course.title}/${course._id}`);
 				}
 				window.scrollTo({ top: 0, behavior: 'smooth' });
-			}}
-			>
+			}}>
 			{course.isExpired && (
 				<Box
 					sx={{
@@ -156,18 +153,32 @@ const DashboardCourseCard = ({
 						alignItems: 'center',
 						padding: '1rem',
 					}}>
-				<Box sx={{display:'flex',alignItems:'center',gap:'0.5rem'}}>
-				<Avatar src={course?.instructor?.imageUrl} sx={{ width: '1.5rem', height: '1.5rem',objectFit:'cover' }} />
-					<Typography
-						variant='body2'
-						sx={{
-							fontSize: isMobileSize ? '0.7rem' : '0.8rem',
-							visibility: isEnrolled ? 'hidden' : 'visible',
-							color: theme.palette.primary.main,
-						}}>
-						{course?.instructor?.name}
-					</Typography>
-				</Box>
+					<Box sx={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%' }}>
+						<Avatar src={course?.instructor?.imageUrl} sx={{ width: '1.5rem', height: '1.5rem', objectFit: 'cover' }} />
+						<Typography
+							variant='body2'
+							sx={{
+								fontSize: isMobileSize ? '0.7rem' : '0.8rem',
+								visibility: isEnrolled ? 'hidden' : 'visible',
+								color: theme.palette.primary.main,
+							}}>
+							{course?.instructor?.name}
+						</Typography>
+						{fromHomePage && (
+							<Chip
+								label={course.courseManagement.isExternal ? <span>Partner</span> : <span>Platform</span>}
+								color={course.courseManagement.isExternal ? 'info' : 'success'}
+								size='small'
+								sx={{
+									fontFamily: 'Varela Round',
+									fontWeight: 500,
+									color: 'white',
+									ml: 'auto',
+									px: 1,
+								}}
+							/>
+						)}
+					</Box>
 
 					{!fromHomePage && (
 						<Button
