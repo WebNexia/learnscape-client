@@ -30,7 +30,7 @@ const DIALOG_BORDER = '0.5rem solid rgba(255, 255, 255, 0.18)';
 const DIALOG_FONT = 'Varela Round';
 const INPUT_BORDERRADIUS = '0.5rem';
 const INPUT_FONT = 'Varela Round';
-const INPUT_FONTSIZE = '0.95rem';
+const INPUT_FONTSIZE = '0.85rem';
 
 const DocumentPaymentDialog = ({ document, isPaymentDialogOpen, setIsPaymentDialogOpen, userCurrency, fromHomePage }: DocumentPaymentDialogProps) => {
 	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
