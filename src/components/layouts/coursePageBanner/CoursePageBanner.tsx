@@ -222,7 +222,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 							</Button>
 						)}
 						<Typography
-							variant={isSmallScreen ? 'h6' : 'h3'}
+							variant={isSmallScreen ? 'h6' : 'h4'}
 							sx={{
 								color: theme.textColor?.common.main,
 								margin: '0.5rem 0 1rem 0',
@@ -253,7 +253,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 									position: 'absolute',
 									bottom: isRotated ? 60 : 5,
 									fontSize: isMobileSize ? '0.75rem' : '0.9rem',
-									fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
+									fontFamily: fromHomePage ? 'Varela Round' : '',
 								}}
 								onClick={() => setIsPaymentDialogOpen(true)}>
 								{fromHomePage ? 'Kayıt Ol' : 'Enroll'}
@@ -312,18 +312,18 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 								color: theme.textColor?.common.main,
 								bgColor: theme.bgColor?.greenSecondary,
 							}}
-							fromHomePage
+							fromHomePage={fromHomePage}
 						/>
-						<CoursePageBannerDataCard title={fromHomePage ? 'Hafta(#)' : 'Weeks(#)'} content={course.durationWeeks} fromHomePage />
+						<CoursePageBannerDataCard title={fromHomePage ? 'Hafta(#)' : 'Weeks(#)'} content={course.durationWeeks} fromHomePage={fromHomePage} />
 					</Box>
 					<Box>
 						<CoursePageBannerDataCard
 							title={fromHomePage ? 'Başlangıç Tarihi' : 'Starting Date'}
 							content={dateFormatter(course.startingDate)}
-							fromHomePage
+							fromHomePage={fromHomePage}
 						/>
 
-						<CoursePageBannerDataCard title={fromHomePage ? 'Saat(#)' : 'Hours(#)'} content={course.durationHours} fromHomePage />
+						<CoursePageBannerDataCard title={fromHomePage ? 'Saat(#)' : 'Hours(#)'} content={course.durationHours} fromHomePage={fromHomePage} />
 					</Box>
 				</Box>
 

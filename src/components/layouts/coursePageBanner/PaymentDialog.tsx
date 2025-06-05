@@ -436,28 +436,32 @@ const PaymentDialog = ({
 			}}
 			title={fromHomePage ? 'Ödeme Yap' : 'Make Payment'}
 			maxWidth='sm'
-			titleSx={{
-				fontSize: '1.5rem',
-				fontWeight: 600,
-				fontFamily: DIALOG_FONT,
-				color: '#2C3E50',
-				ml: '0.5rem',
-				textAlign: 'center',
-				mb: 1,
-			}}
-			PaperProps={{
-				sx: {
-					height: 'auto',
-					maxHeight: '90vh',
-					overflow: 'visible',
-					borderRadius: DIALOG_BORDERRADIUS,
-					background: DIALOG_BG,
-					boxShadow: DIALOG_BOXSHADOW,
-					backdropFilter: 'blur(8px)',
-					border: DIALOG_BORDER,
-					fontFamily: DIALOG_FONT,
-				},
-			}}>
+			{...(fromHomePage
+				? {
+						titleSx: {
+							fontSize: '1.5rem',
+							fontWeight: 600,
+							fontFamily: DIALOG_FONT,
+							color: '#2C3E50',
+							ml: '0.5rem',
+							textAlign: 'center',
+							mb: 1,
+						},
+						PaperProps: {
+							sx: {
+								height: 'auto',
+								maxHeight: '90vh',
+								overflow: 'visible',
+								borderRadius: DIALOG_BORDERRADIUS,
+								background: DIALOG_BG,
+								boxShadow: DIALOG_BOXSHADOW,
+								backdropFilter: 'blur(8px)',
+								border: DIALOG_BORDER,
+								fontFamily: DIALOG_FONT,
+							},
+						},
+					}
+				: {})}>
 			<form
 				onSubmit={async (e) => {
 					e.preventDefault();
@@ -465,15 +469,19 @@ const PaymentDialog = ({
 				}}>
 				<Box
 					sx={{
-						'margin': '0 2rem',
-						'& .MuiOutlinedInput-root': {
-							'&:hover fieldset': {
-								borderColor: '#3498DB',
-							},
-							'&.Mui-focused fieldset': {
-								borderColor: '#3498DB',
-							},
-						},
+						margin: '0 2rem',
+						...(fromHomePage
+							? {
+									'& .MuiOutlinedInput-root': {
+										'&:hover fieldset': {
+											borderColor: '#3498DB',
+										},
+										'&.Mui-focused fieldset': {
+											borderColor: '#3498DB',
+										},
+									},
+								}
+							: {}),
 					}}>
 					{fromHomePage && (
 						<Box>
@@ -513,36 +521,35 @@ const PaymentDialog = ({
 						</Box>
 					)}
 
-					<Box
-						sx={{
-							display: 'flex',
-							justifyContent: 'space-between',
-							width: '100%',
-							mb: '1.25rem',
-						}}>
+					<Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
 						<CustomTextField
 							label={fromHomePage ? 'Promosyon Kodu' : 'Promo Code'}
 							size='small'
 							required={false}
-							sx={{
-								'width': '70%',
-								'& .MuiOutlinedInput-root': {
-									fontFamily: INPUT_FONT,
-									borderRadius: INPUT_BORDERRADIUS,
-								},
-								'& .MuiInputBase-input': {
-									fontFamily: INPUT_FONT,
-									fontSize: INPUT_FONTSIZE,
-								},
-								'& .MuiInputBase-input::placeholder': {
-									fontFamily: INPUT_FONT,
-									opacity: 1,
-								},
-								'& .MuiInputLabel-root': {
-									fontFamily: INPUT_FONT,
-									fontSize: INPUT_FONTSIZE,
-								},
-							}}
+							sx={
+								fromHomePage
+									? {
+											'fontFamily': 'Varela Round',
+											'mb': 2,
+											'& .MuiOutlinedInput-root': {
+												fontFamily: 'Varela Round',
+												borderRadius: '8px',
+											},
+											'& .MuiInputBase-input': {
+												fontFamily: 'Varela Round',
+												fontSize: '0.95rem',
+											},
+											'& .MuiInputBase-input::placeholder': {
+												fontFamily: 'Varela Round',
+												opacity: 1,
+											},
+											'& .MuiInputLabel-root': {
+												fontFamily: 'Varela Round',
+												fontSize: '0.95rem',
+											},
+										}
+									: {}
+							}
 							value={promoCode}
 							onChange={(e) => {
 								setPromoCode(e.target.value);
@@ -556,50 +563,47 @@ const PaymentDialog = ({
 						<CustomSubmitButton
 							size='small'
 							type='button'
-							sx={{
-								width: '25%',
-								height: '2.5rem',
-								fontFamily: DIALOG_FONT,
-								borderRadius: INPUT_BORDERRADIUS,
-								fontSize: INPUT_FONTSIZE,
-							}}
+							sx={
+								fromHomePage
+									? {
+											fontFamily: 'Varela Round',
+											borderRadius: '8px',
+										}
+									: {}
+							}
 							onClick={handleApplyPromoCode}>
 							{fromHomePage ? 'Uygula' : 'Apply'}
 						</CustomSubmitButton>
 					</Box>
 
-					<Box
-						sx={{
-							display: 'flex',
-							flexDirection: 'column',
-							justifyContent: 'space-between',
-							alignItems: 'center',
-							width: '100%',
-							mb: '1.25rem',
-						}}>
-						<Box sx={{ width: '100%', textAlign: 'left' }}>
-							<Typography sx={{ fontSize: isMobileSize ? '0.7rem' : '0.9rem', fontFamily: DIALOG_FONT, color: '#223354' }}>
-								{fromHomePage ? 'Kart Numarası*' : 'Card Number*'}
-							</Typography>
-						</Box>
-						<Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+					<Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 3, mt: 2 }}>
+						<Typography
+							variant='h6'
+							sx={
+								fromHomePage ? { fontFamily: 'Varela Round', color: '#2C3E50', fontWeight: 500, mb: '-1rem' } : { fontSize: '0.9rem', mb: '-1rem' }
+							}>
+							{fromHomePage ? 'Kart Numarası*' : 'Card Number*'}
+						</Typography>
+						<Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
 							<Box
-								sx={{
-									'border': isSubmitted && !cardNumberComplete ? '1px solid red' : '1px solid #ccc',
-									'padding': '0.6rem',
-									'borderRadius': INPUT_BORDERRADIUS,
-									'backgroundColor': '#fff',
-									'width': '100%',
-									'fontFamily': DIALOG_FONT,
-									'& .MuiOutlinedInput-root': {
-										'&:hover fieldset': {
-											borderColor: '#3498DB',
-										},
-										'&.Mui-focused fieldset': {
-											borderColor: '#3498DB',
-										},
-									},
-								}}>
+								sx={
+									fromHomePage
+										? {
+												border: isSubmitted && !cardNumberComplete ? '1px solid red' : '1px solid #ccc',
+												padding: '0.6rem',
+												borderRadius: '8px',
+												backgroundColor: '#fff',
+												width: '100%',
+												fontFamily: 'Varela Round',
+											}
+										: {
+												border: isSubmitted && !cardNumberComplete ? '1px solid red' : '1px solid #ccc',
+												padding: '0.6rem',
+												borderRadius: '4px',
+												backgroundColor: '#fff',
+												width: '100%',
+											}
+								}>
 								<CardNumberElement
 									options={{
 										style: {
@@ -607,13 +611,9 @@ const PaymentDialog = ({
 												'fontSize': isMobileSize ? '11px' : '14px',
 												'color': '#223354',
 												'fontFamily': 'Arial, sans-serif',
-												'::placeholder': {
-													color: '#aab7c4',
-												},
+												'::placeholder': { color: '#aab7c4' },
 											},
-											invalid: {
-												color: '#9e2146',
-											},
+											invalid: { color: '#9e2146' },
 										},
 									}}
 									onChange={(event) => {
@@ -629,28 +629,30 @@ const PaymentDialog = ({
 						</Box>
 					</Box>
 
-					<Box
-						sx={{
-							display: 'flex',
-							width: '100%',
-							mb: '1.25rem',
-						}}>
-						<Box
-							sx={{
-								width: '100%',
-								mr: '0.75rem',
-							}}>
-							<Typography sx={{ fontSize: isMobileSize ? '0.7rem' : '0.9rem', paddingBottom: '0.25rem', fontFamily: DIALOG_FONT, color: '#223354' }}>
+					<Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+						<Box sx={{ width: '50%' }}>
+							<Typography
+								variant='h6'
+								sx={fromHomePage ? { fontFamily: 'Varela Round', color: '#2C3E50', fontWeight: 500, mb: 0.5 } : { fontSize: '0.9rem', mb: 0.5 }}>
 								{fromHomePage ? 'Son Kullanma Tarihi*' : 'Expiry Date*'}
 							</Typography>
 							<Box
-								sx={{
-									border: isSubmitted && !cardExpiryComplete ? '1px solid red' : '1px solid #ccc',
-									padding: '0.6rem',
-									borderRadius: INPUT_BORDERRADIUS,
-									backgroundColor: '#fff',
-									fontFamily: DIALOG_FONT,
-								}}>
+								sx={
+									fromHomePage
+										? {
+												border: isSubmitted && !cardExpiryComplete ? '1px solid red' : '1px solid #ccc',
+												padding: '0.6rem',
+												borderRadius: '8px',
+												backgroundColor: '#fff',
+												fontFamily: 'Varela Round',
+											}
+										: {
+												border: isSubmitted && !cardExpiryComplete ? '1px solid red' : '1px solid #ccc',
+												padding: '0.6rem',
+												borderRadius: '4px',
+												backgroundColor: '#fff',
+											}
+								}>
 								<CardExpiryElement
 									options={{
 										style: {
@@ -658,13 +660,9 @@ const PaymentDialog = ({
 												'fontSize': isMobileSize ? '11px' : '14px',
 												'color': '#223354',
 												'fontFamily': 'Arial, sans-serif',
-												'::placeholder': {
-													color: '#aab7c4',
-												},
+												'::placeholder': { color: '#aab7c4' },
 											},
-											invalid: {
-												color: '#9e2146',
-											},
+											invalid: { color: '#9e2146' },
 										},
 									}}
 									onChange={(event) => {
@@ -674,22 +672,29 @@ const PaymentDialog = ({
 								/>
 							</Box>
 						</Box>
-
-						<Box
-							sx={{
-								width: '100%',
-							}}>
-							<Typography sx={{ fontSize: isMobileSize ? '0.7rem' : '0.9rem', paddingBottom: '0.25rem', fontFamily: DIALOG_FONT, color: '#223354' }}>
+						<Box sx={{ width: '50%' }}>
+							<Typography
+								variant='h6'
+								sx={fromHomePage ? { fontFamily: 'Varela Round', color: '#2C3E50', fontWeight: 500, mb: 0.5 } : { fontSize: '0.9rem', mb: 0.5 }}>
 								CVC*
 							</Typography>
 							<Box
-								sx={{
-									border: isSubmitted && !cardCvcComplete ? '1px solid red' : '1px solid #ccc',
-									padding: '0.6rem',
-									borderRadius: INPUT_BORDERRADIUS,
-									backgroundColor: '#fff',
-									fontFamily: DIALOG_FONT,
-								}}>
+								sx={
+									fromHomePage
+										? {
+												border: isSubmitted && !cardCvcComplete ? '1px solid red' : '1px solid #ccc',
+												padding: '0.6rem',
+												borderRadius: '8px',
+												backgroundColor: '#fff',
+												fontFamily: 'Varela Round',
+											}
+										: {
+												border: isSubmitted && !cardCvcComplete ? '1px solid red' : '1px solid #ccc',
+												padding: '0.6rem',
+												borderRadius: '4px',
+												backgroundColor: '#fff',
+											}
+								}>
 								<CardCvcElement
 									options={{
 										style: {
@@ -697,13 +702,9 @@ const PaymentDialog = ({
 												'fontSize': isMobileSize ? '11px' : '14px',
 												'color': '#223354',
 												'fontFamily': 'Arial, sans-serif',
-												'::placeholder': {
-													color: '#aab7c4',
-												},
+												'::placeholder': { color: '#aab7c4' },
 											},
-											invalid: {
-												color: '#9e2146',
-											},
+											invalid: { color: '#9e2146' },
 										},
 									}}
 									onChange={(event) => {
@@ -728,7 +729,7 @@ const PaymentDialog = ({
 								boxShadow: '0.1rem 0.1rem 0.5rem 0.1rem rgba(0,0,0,0.3)',
 								borderRadius: INPUT_BORDERRADIUS,
 								padding: isMobileSize ? '0.5rem' : '0.75rem',
-								fontFamily: DIALOG_FONT,
+								fontFamily: fromHomePage ? DIALOG_FONT : theme.fontFamily?.main,
 								color: '#223354',
 							}}>
 							{fromHomePage ? 'Toplam Tutar: ' : 'Total Amount: '}
@@ -741,7 +742,7 @@ const PaymentDialog = ({
 								sx={{
 									color: theme.textColor?.greenPrimary.main,
 									ml: isMobileSize ? '1rem' : '2rem',
-									fontFamily: DIALOG_FONT,
+									fontFamily: fromHomePage ? DIALOG_FONT : theme.fontFamily?.main,
 								}}>
 								{fromHomePage ? 'Promosyon Kodu Uygulandı' : 'Promo Code is applied'}
 							</Typography>
@@ -779,7 +780,7 @@ const PaymentDialog = ({
 								'mt': isSmallScreen ? '0rem' : '0.5rem',
 								'& .MuiFormControlLabel-label': {
 									fontSize: isMobileSize ? '0.6rem' : '0.8rem',
-									fontFamily: DIALOG_FONT,
+									fontFamily: fromHomePage ? DIALOG_FONT : theme.fontFamily?.main,
 								},
 							}}
 						/>
@@ -788,7 +789,7 @@ const PaymentDialog = ({
 								fontSize: isSmallScreen ? '0.5rem' : '0.75rem',
 								mb: '-0.5rem',
 								cursor: 'pointer',
-								fontFamily: DIALOG_FONT,
+								fontFamily: fromHomePage ? DIALOG_FONT : theme.fontFamily?.main,
 							}}
 							onClick={() => setTermsConditionsModalOpen(true)}>
 							(<span style={{ textDecoration: 'underline' }}>{fromHomePage ? 'Şartlar ve Koşullar' : 'Read T&C'} </span>)
@@ -796,7 +797,11 @@ const PaymentDialog = ({
 					</Box>
 				</Box>
 
-				<TermsConditions termsConditionsModalOpen={termsConditionsModalOpen} setTermsConditionsModalOpen={setTermsConditionsModalOpen} />
+				<TermsConditions
+					termsConditionsModalOpen={termsConditionsModalOpen}
+					setTermsConditionsModalOpen={setTermsConditionsModalOpen}
+					fromHomePage={fromHomePage}
+				/>
 
 				{errorMessage && (
 					<CustomErrorMessage
@@ -804,7 +809,7 @@ const PaymentDialog = ({
 							width: '100%',
 							padding: '1.5rem 2rem 0 2rem',
 							fontSize: isMobileSize ? '0.65rem' : '0.75rem',
-							fontFamily: DIALOG_FONT,
+							fontFamily: fromHomePage ? DIALOG_FONT : theme.fontFamily?.main,
 						}}>
 						<span style={{ whiteSpace: 'pre-line' }}>
 							{errorMessage}
@@ -831,13 +836,13 @@ const PaymentDialog = ({
 					}}
 					cancelBtnText={fromHomePage ? 'Kapat' : 'Cancel'}
 					cancelBtnSx={{
-						fontFamily: DIALOG_FONT,
-						borderRadius: INPUT_BORDERRADIUS,
+						fontFamily: fromHomePage ? DIALOG_FONT : '',
+						borderRadius: fromHomePage ? INPUT_BORDERRADIUS : '',
 					}}
 					submitBtnText={isProcessing ? (fromHomePage ? 'İşleniyor' : 'Processing') : fromHomePage ? 'Ödeme Yap' : 'Make Payment'}
 					submitBtnSx={{
-						fontFamily: DIALOG_FONT,
-						borderRadius: INPUT_BORDERRADIUS,
+						fontFamily: fromHomePage ? DIALOG_FONT : '',
+						borderRadius: fromHomePage ? INPUT_BORDERRADIUS : '',
 					}}
 				/>
 			</form>

@@ -17,6 +17,7 @@ const CoursePageBannerDataCard = ({ title, content, customSettings, fromHomePage
 	const { isRotated, isSmallScreen } = useContext(MediaQueryContext);
 
 	const isMobileSize: boolean = isSmallScreen || isRotated;
+
 	return (
 		<Card
 			sx={{
