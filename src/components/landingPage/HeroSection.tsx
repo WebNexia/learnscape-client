@@ -296,7 +296,7 @@ const HeroSection = () => {
 						fontFamily: 'Varela Round',
 						ml: '0.5rem',
 						textAlign: 'center',
-						fontSize: '1.1rem',
+						fontSize: '1rem',
 						opacity: 0.9,
 						lineHeight: 1.6,
 						mb: 2,
@@ -331,7 +331,7 @@ const HeroSection = () => {
 									},
 									'& .MuiInputBase-input': {
 										fontFamily: 'Varela Round',
-										fontSize: '0.95rem',
+										fontSize: '0.85rem',
 									},
 									'& .MuiInputBase-input::placeholder': {
 										fontFamily: 'Varela Round',
@@ -339,7 +339,7 @@ const HeroSection = () => {
 									},
 									'& .MuiInputLabel-root': {
 										fontFamily: 'Varela Round',
-										fontSize: '0.95rem',
+										fontSize: '0.85rem',
 									},
 								}}
 							/>
@@ -357,7 +357,7 @@ const HeroSection = () => {
 									},
 									'& .MuiInputBase-input': {
 										fontFamily: 'Varela Round',
-										fontSize: '0.95rem',
+										fontSize: '0.85rem',
 									},
 									'& .MuiInputBase-input::placeholder': {
 										fontFamily: 'Varela Round',
@@ -365,7 +365,7 @@ const HeroSection = () => {
 									},
 									'& .MuiInputLabel-root': {
 										fontFamily: 'Varela Round',
-										fontSize: '0.95rem',
+										fontSize: '0.85rem',
 									},
 								}}
 							/>
@@ -384,7 +384,7 @@ const HeroSection = () => {
 									},
 									'& .MuiInputBase-input': {
 										fontFamily: 'Varela Round',
-										fontSize: '0.95rem',
+										fontSize: '0.85rem',
 									},
 									'& .MuiInputBase-input::placeholder': {
 										fontFamily: 'Varela Round',
@@ -392,7 +392,7 @@ const HeroSection = () => {
 									},
 									'& .MuiInputLabel-root': {
 										fontFamily: 'Varela Round',
-										fontSize: '0.95rem',
+										fontSize: '0.85rem',
 									},
 								}}
 							/>
@@ -467,7 +467,7 @@ const HeroSection = () => {
 								},
 								'& .MuiInputBase-input': {
 									fontFamily: 'Varela Round',
-									fontSize: '0.95rem',
+									fontSize: '0.85rem',
 								},
 								'& .MuiInputBase-input::placeholder': {
 									fontFamily: 'Varela Round',
@@ -475,7 +475,7 @@ const HeroSection = () => {
 								},
 								'& .MuiInputLabel-root': {
 									fontFamily: 'Varela Round',
-									fontSize: '0.95rem',
+									fontSize: '0.85rem',
 								},
 							}}
 						/>

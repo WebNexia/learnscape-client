@@ -29,7 +29,7 @@ const DIALOG_BORDER = '0.5rem solid rgba(255, 255, 255, 0.18)';
 const DIALOG_FONT = 'Varela Round';
 const INPUT_BORDERRADIUS = '0.5rem';
 const INPUT_FONT = 'Varela Round';
-const INPUT_FONTSIZE = '0.95rem';
+const INPUT_FONTSIZE = '0.85rem';
 
 interface PaymentDialogProps {
 	course: SingleCourse | undefined;
@@ -494,7 +494,8 @@ const PaymentDialog = ({
 									setEmail(e.target.value);
 									setIsPromoCodeApplied(false);
 									if (!course) return;
-									setDiscountedAmount(+getPriceForCountry(course, resolvedCountryCode).amount);
+									const amount = +getPriceForCountry(course, resolvedCountryCode).amount;
+									setDiscountedAmount(isNaN(amount) ? 0 : amount);
 									setUsersUsedPromoCode((prevData) => prevData.filter((id) => id !== userId));
 									setErrorMessage('');
 								}}
@@ -537,7 +538,7 @@ const PaymentDialog = ({
 											},
 											'& .MuiInputBase-input': {
 												fontFamily: 'Varela Round',
-												fontSize: '0.95rem',
+												fontSize: '0.85rem',
 											},
 											'& .MuiInputBase-input::placeholder': {
 												fontFamily: 'Varela Round',
@@ -545,7 +546,7 @@ const PaymentDialog = ({
 											},
 											'& .MuiInputLabel-root': {
 												fontFamily: 'Varela Round',
-												fontSize: '0.95rem',
+												fontSize: '0.85rem',
 											},
 										}
 									: {}
@@ -556,7 +557,8 @@ const PaymentDialog = ({
 								setErrorMessage('');
 								setIsPromoCodeApplied(false);
 								if (!course) return;
-								setDiscountedAmount(+getPriceForCountry(course, resolvedCountryCode).amount);
+								const amount = +getPriceForCountry(course, resolvedCountryCode).amount;
+								setDiscountedAmount(isNaN(amount) ? 0 : amount);
 								setUsersUsedPromoCode((prevData) => prevData.filter((id) => id !== userId));
 							}}
 						/>
@@ -567,7 +569,6 @@ const PaymentDialog = ({
 								fromHomePage
 									? {
 											fontFamily: 'Varela Round',
-											borderRadius: '8px',
 										}
 									: {}
 							}
@@ -837,12 +838,10 @@ const PaymentDialog = ({
 					cancelBtnText={fromHomePage ? 'Kapat' : 'Cancel'}
 					cancelBtnSx={{
 						fontFamily: fromHomePage ? DIALOG_FONT : '',
-						borderRadius: fromHomePage ? INPUT_BORDERRADIUS : '',
 					}}
 					submitBtnText={isProcessing ? (fromHomePage ? 'İşleniyor' : 'Processing') : fromHomePage ? 'Ödeme Yap' : 'Make Payment'}
 					submitBtnSx={{
 						fontFamily: fromHomePage ? DIALOG_FONT : '',
-						borderRadius: fromHomePage ? INPUT_BORDERRADIUS : '',
 					}}
 				/>
 			</form>

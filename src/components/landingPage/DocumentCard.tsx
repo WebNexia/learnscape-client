@@ -191,11 +191,12 @@ const DocumentCard = ({ document, userCurrency, fromHomePage }: DocumentCardProp
 									'fontFamily': "'Varela Round', sans-serif",
 									'fontSize': '0.85rem',
 									'textTransform': 'none',
+									'height': '1.85rem',
 								}}>
 								Örnek Sayfa
 							</Button>
 							<Button
-								variant='contained'
+								variant='text'
 								fullWidth
 								onClick={() => {
 									if (isFree) {
@@ -215,8 +216,9 @@ const DocumentCard = ({ document, userCurrency, fromHomePage }: DocumentCardProp
 									'padding': '0.5rem',
 									'textTransform': 'none',
 									'px': '0',
+									'height': '1.85rem',
 								}}>
-								{isFree ? 'İndİr' : 'Satın Al'}
+								{isFree ? 'İndir' : 'Satın Al'}
 							</Button>
 						</Box>
 					</CardContent>
@@ -288,7 +290,6 @@ const DocumentCard = ({ document, userCurrency, fromHomePage }: DocumentCardProp
 				</DialogContent>
 			</Dialog>
 
-			{/* Payment Dialog */}
 			<DocumentPaymentDialog
 				document={document}
 				isPaymentDialogOpen={isPaymentDialogOpen}

@@ -1,11 +1,10 @@
 import { Button, ButtonOwnProps } from '@mui/material';
-import { FormEvent, MouseEvent, ReactNode, useContext } from 'react';
+import { FormEvent, MouseEvent, ReactNode } from 'react';
 import theme from '../../../themes';
-import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
-import { Roles } from '../../../interfaces/enums';
 
 interface CustomSubmitButtonProps {
 	children: ReactNode;
+	fullWidth?: boolean;
 	type?: 'submit' | 'button' | 'reset' | undefined;
 	variant?: ButtonOwnProps['variant'];
 	sx?: React.CSSProperties;
@@ -19,6 +18,7 @@ interface CustomSubmitButtonProps {
 
 const CustomSubmitButton = ({
 	children,
+	fullWidth = false,
 	type = 'submit',
 	variant = 'contained',
 	sx,
@@ -29,7 +29,6 @@ const CustomSubmitButton = ({
 	capitalize = true,
 	size = 'small',
 }: CustomSubmitButtonProps) => {
-	const { user } = useContext(UserAuthContext);
 	const handleClick = (event: MouseEvent<HTMLButtonElement> | FormEvent<Element>) => {
 		if (onClick) {
 			onClick(event);
@@ -40,10 +39,11 @@ const CustomSubmitButton = ({
 			type={type}
 			variant={variant}
 			disabled={disabled}
+			fullWidth={fullWidth}
 			sx={{
 				...sx,
 				'textTransform': capitalize ? 'capitalize' : 'none',
-				'backgroundColor': user?.role === Roles.ADMIN ? theme.bgColor?.greenPrimary : theme.bgColor?.greenPrimary,
+				'backgroundColor': theme.bgColor?.greenPrimary,
 				':hover': {
 					backgroundColor: theme.bgColor?.common,
 					color: theme.bgColor?.adminSubmitBtn,

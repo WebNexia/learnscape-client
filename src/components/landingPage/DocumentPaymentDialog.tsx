@@ -30,7 +30,7 @@ const DIALOG_BORDER = '0.5rem solid rgba(255, 255, 255, 0.18)';
 const DIALOG_FONT = 'Varela Round';
 const INPUT_BORDERRADIUS = '0.5rem';
 const INPUT_FONT = 'Varela Round';
-const INPUT_FONTSIZE = '0.95rem';
+const INPUT_FONTSIZE = '0.85rem';
 
 const DocumentPaymentDialog = ({ document, isPaymentDialogOpen, setIsPaymentDialogOpen, userCurrency, fromHomePage }: DocumentPaymentDialogProps) => {
 	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
@@ -534,9 +534,9 @@ const DocumentPaymentDialog = ({ document, isPaymentDialogOpen, setIsPaymentDial
 						setIsPaymentDialogOpen(false);
 					}}
 					cancelBtnText='Kapat'
-					cancelBtnSx={{ fontFamily: DIALOG_FONT, borderRadius: INPUT_BORDERRADIUS }}
+					cancelBtnSx={{ fontFamily: DIALOG_FONT, borderRadius: '' }}
 					submitBtnText={isProcessing ? 'İşleniyor' : 'Satın Al'}
-					submitBtnSx={{ fontFamily: DIALOG_FONT, borderRadius: INPUT_BORDERRADIUS }}
+					submitBtnSx={{ fontFamily: DIALOG_FONT, borderRadius: '' }}
 				/>
 			</form>
 			<Snackbar
