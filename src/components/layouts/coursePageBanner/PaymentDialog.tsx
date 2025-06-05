@@ -567,7 +567,6 @@ const PaymentDialog = ({
 								fromHomePage
 									? {
 											fontFamily: 'Varela Round',
-											borderRadius: '8px',
 										}
 									: {}
 							}
@@ -837,12 +836,10 @@ const PaymentDialog = ({
 					cancelBtnText={fromHomePage ? 'Kapat' : 'Cancel'}
 					cancelBtnSx={{
 						fontFamily: fromHomePage ? DIALOG_FONT : '',
-						borderRadius: fromHomePage ? INPUT_BORDERRADIUS : '',
 					}}
 					submitBtnText={isProcessing ? (fromHomePage ? 'İşleniyor' : 'Processing') : fromHomePage ? 'Ödeme Yap' : 'Make Payment'}
 					submitBtnSx={{
 						fontFamily: fromHomePage ? DIALOG_FONT : '',
-						borderRadius: fromHomePage ? INPUT_BORDERRADIUS : '',
 					}}
 				/>
 			</form>
