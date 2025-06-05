@@ -140,7 +140,7 @@ const CoursePaper = ({
 					</Box>
 					<Box sx={{ paddingLeft: '0.5rem' }}>
 						<Typography variant='body2' sx={{ color: theme.textColor?.common.main }}>
-							{singleCourse?.isActive ? 'Published' : 'Unpublished'} - {singleCourse?.isExpired ? 'Closed' : 'Open'} - {' '}
+							{singleCourse?.isActive ? 'Published' : 'Unpublished'} - {singleCourse?.isExpired ? 'Closed' : 'Open'} -{' '}
 							{singleCourse?.courseManagement?.isExternal ? 'External' : 'Platform'}
 						</Typography>
 					</Box>

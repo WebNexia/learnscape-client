@@ -1,4 +1,4 @@
-import { Alert, Box, Snackbar, Typography } from '@mui/material';
+import { Alert, Box, Checkbox, FormControlLabel, Snackbar, Typography } from '@mui/material';
 import CustomDialog from '../layouts/dialog/CustomDialog';
 import CustomTextField from '../forms/customFields/CustomTextField';
 import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
@@ -13,12 +13,14 @@ import CustomErrorMessage from '../forms/customFields/CustomErrorMessage';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import { setCurrencySymbol } from '../../utils/setCurrencySymbol';
 import theme from '../../themes';
+import DocumentTermsConditions from './DocumentTermsConditions';
 
 interface DocumentPaymentDialogProps {
 	document: Pick<Document, '_id' | 'name' | 'prices' | 'documentUrl' | 'orgId'>;
 	isPaymentDialogOpen: boolean;
 	setIsPaymentDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
 	userCurrency: string;
+	fromHomePage?: boolean;
 }
 
 const DIALOG_BG = 'linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.98))';
@@ -30,7 +32,7 @@ const INPUT_BORDERRADIUS = '0.5rem';
 const INPUT_FONT = 'Varela Round';
 const INPUT_FONTSIZE = '0.95rem';
 
-const DocumentPaymentDialog = ({ document, isPaymentDialogOpen, setIsPaymentDialogOpen, userCurrency }: DocumentPaymentDialogProps) => {
+const DocumentPaymentDialog = ({ document, isPaymentDialogOpen, setIsPaymentDialogOpen, userCurrency, fromHomePage }: DocumentPaymentDialogProps) => {
 	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize: boolean = isSmallScreen || isRotatedMedium;
 
@@ -46,6 +48,8 @@ const DocumentPaymentDialog = ({ document, isPaymentDialogOpen, setIsPaymentDial
 	const [cardNumberComplete, setCardNumberComplete] = useState<boolean>(false);
 	const [cardExpiryComplete, setCardExpiryComplete] = useState<boolean>(false);
 	const [cardCvcComplete, setCardCvcComplete] = useState<boolean>(false);
+	const [agreed, setAgreed] = useState<boolean>(false);
+	const [termsConditionsModalOpen, setTermsConditionsModalOpen] = useState<boolean>(false);
 
 	const stripe = useStripe();
 	const elements = useElements();
@@ -462,7 +466,60 @@ const DocumentPaymentDialog = ({ document, isPaymentDialogOpen, setIsPaymentDial
 							{document.prices.find((p) => p.currency === userCurrency)?.amount}
 						</Typography>
 					</Box>
+
+					<Box
+						sx={{
+							display: 'flex',
+							alignItems: 'center',
+							textAlign: 'left',
+							width: '100%',
+							mt: '1.5rem',
+						}}>
+						<FormControlLabel
+							required
+							control={
+								<Checkbox
+									checked={agreed}
+									onChange={(e) => {
+										setAgreed(e.target.checked);
+										setErrorMessage('');
+									}}
+									sx={{
+										'display': 'flex',
+										'alignItems': 'center',
+										'& .MuiSvgIcon-root': {
+											fontSize: isMobileSize ? '0.8rem' : '1.15rem',
+										},
+									}}
+								/>
+							}
+							label={fromHomePage ? 'Kabul ediyorum' : 'I agree to the Terms & Conditions'}
+							sx={{
+								'mt': isSmallScreen ? '0rem' : '0.5rem',
+								'& .MuiFormControlLabel-label': {
+									fontSize: isMobileSize ? '0.6rem' : '0.8rem',
+									fontFamily: DIALOG_FONT,
+								},
+							}}
+						/>
+						<Typography
+							sx={{
+								fontSize: isSmallScreen ? '0.5rem' : '0.75rem',
+								mb: '-0.5rem',
+								cursor: 'pointer',
+								fontFamily: DIALOG_FONT,
+							}}
+							onClick={() => setTermsConditionsModalOpen(true)}>
+							(<span style={{ textDecoration: 'underline' }}>{fromHomePage ? 'Şartlar ve Koşullar' : 'Read T&C'} </span>)
+						</Typography>
+					</Box>
 				</Box>
+
+				<DocumentTermsConditions
+					termsConditionsModalOpen={termsConditionsModalOpen}
+					setTermsConditionsModalOpen={setTermsConditionsModalOpen}
+					fromHomePage={fromHomePage}
+				/>
 
 				{errorMessage && (
 					<CustomErrorMessage

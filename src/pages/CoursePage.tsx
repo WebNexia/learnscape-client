@@ -41,6 +41,7 @@ const CoursePage = () => {
 						isEnrolledStatus={isEnrolledStatus}
 						setIsEnrolledStatus={setIsEnrolledStatus}
 						documentsRef={documentsRef}
+						fromHomePage={false}
 					/>
 					<Chapters course={singleCourseUser} isEnrolledStatus={isEnrolledStatus} />
 				</>

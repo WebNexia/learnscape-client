@@ -12,7 +12,12 @@ interface CustomCancelButtonProps {
 
 const CustomCancelButton = ({ children = 'Cancel', type = 'reset', variant = 'outlined', sx, onClick, size = 'small' }: CustomCancelButtonProps) => {
 	return (
-		<Button type={type} variant={variant} sx={{ ...sx, textTransform: 'capitalize', ml: '0.5rem', height: '1.75rem' }} onClick={onClick} size={size}>
+		<Button
+			type={type}
+			variant={variant}
+			sx={{ ...sx, textTransform: 'capitalize', ml: '0.5rem', height: '1.75rem', mt: '0.2rem' }}
+			onClick={onClick}
+			size={size}>
 			{children}
 		</Button>
 	);

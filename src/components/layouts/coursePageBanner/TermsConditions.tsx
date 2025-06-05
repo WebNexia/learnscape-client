@@ -7,12 +7,166 @@ import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 interface TermsConditionsProps {
 	termsConditionsModalOpen: boolean;
 	setTermsConditionsModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+	fromHomePage?: boolean;
 }
 
-const TermsConditions = ({ termsConditionsModalOpen, setTermsConditionsModalOpen }: TermsConditionsProps) => {
-	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
+const DIALOG_FONT = 'Varela Round';
+const DIALOG_BG = 'linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.98))';
+const DIALOG_BORDERRADIUS = '1.5rem';
+const DIALOG_BOXSHADOW = '0 0.5rem 2rem rgba(44, 62, 80, 0.1)';
+const DIALOG_BORDER = '0.5rem solid rgba(255, 255, 255, 0.18)';
 
+const TermsConditions = ({ termsConditionsModalOpen, setTermsConditionsModalOpen, fromHomePage = false }: TermsConditionsProps) => {
+	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize: boolean = isSmallScreen || isRotatedMedium;
+
+	if (fromHomePage) {
+		return (
+			<CustomDialog
+				title='Şartlar ve Koşullar'
+				titleSx={{
+					fontSize: '1.75rem',
+					fontWeight: 700,
+					fontFamily: DIALOG_FONT,
+					color: '#2C3E50',
+					ml: '0.5rem',
+					textAlign: 'center',
+					mb: 1,
+				}}
+				openModal={termsConditionsModalOpen}
+				closeModal={() => setTermsConditionsModalOpen(false)}
+				maxWidth='md'
+				PaperProps={{
+					sx: {
+						height: 'auto',
+						maxHeight: '90vh',
+						overflow: 'visible',
+						borderRadius: DIALOG_BORDERRADIUS,
+						background: DIALOG_BG,
+						boxShadow: DIALOG_BOXSHADOW,
+						backdropFilter: 'blur(8px)',
+						border: DIALOG_BORDER,
+						fontFamily: DIALOG_FONT,
+					},
+				}}>
+				<Box
+					sx={{
+						'padding': '2rem',
+						'maxHeight': '60vh',
+						'overflowY': 'auto',
+						'&::-webkit-scrollbar': {
+							width: '8px',
+						},
+						'&::-webkit-scrollbar-track': {
+							background: '#f1f1f1',
+							borderRadius: '4px',
+						},
+						'&::-webkit-scrollbar-thumb': {
+							'background': '#888',
+							'borderRadius': '4px',
+							'&:hover': {
+								background: '#555',
+							},
+						},
+					}}>
+					<Typography variant='h6' gutterBottom sx={{ fontSize: isMobileSize ? '0.85rem' : undefined, fontFamily: DIALOG_FONT, mt: '-1.5rem' }}>
+						1. Genel Bilgiler
+					</Typography>
+					<Typography variant='body2' paragraph sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontFamily: DIALOG_FONT }}>
+						Bu platform, [Şirket Adı] tarafından işletilmektedir. Kurslarımızdan herhangi birini satın alarak, bu Şartları ve Koşulları ve diğer
+						ilgili politikaları okuduğunuzu, anladığınızı ve kabul ettiğinizi onaylamış olursunuz.
+					</Typography>
+
+					<Typography variant='h6' gutterBottom sx={{ fontSize: isMobileSize ? '0.85rem' : undefined, fontFamily: DIALOG_FONT }}>
+						2. Uygunluk
+					</Typography>
+					<Typography variant='body2' paragraph sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontFamily: DIALOG_FONT }}>
+						Hizmetimizi kullanmak için en az 18 yaşında olmalısınız. 18 yaşın altındaysanız, hizmetimizi yalnızca bir ebeveyn veya vasinin katılımıyla
+						kullanabilirsiniz.
+					</Typography>
+
+					<Typography variant='h6' gutterBottom sx={{ fontSize: isMobileSize ? '0.85rem' : undefined, fontFamily: DIALOG_FONT }}>
+						3. Kurs Kaydı ve Erişim
+					</Typography>
+					<Typography variant='body2' paragraph sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontFamily: DIALOG_FONT }}>
+						Kayıt ve ödeme işlemini tamamladıktan sonra, satın aldığınız kursa erişim sağlanacaktır. Erişim, aksi belirtilmedikçe hemen sağlanacaktır.
+						Kurs materyallerine erişim yalnızca kişisel, ticari olmayan kullanımınız içindir. Erişim bilgilerinizi başkalarıyla paylaşamazsınız.
+					</Typography>
+
+					<Typography variant='h6' gutterBottom sx={{ fontSize: isMobileSize ? '0.85rem' : undefined, fontFamily: DIALOG_FONT }}>
+						4. Ödemeler ve Ücretler
+					</Typography>
+					<Typography variant='body2' paragraph sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontFamily: DIALOG_FONT }}>
+						Tüm kurs ücretleri, kurs materyallerine erişim sağlanmadan önce tam olarak ödenmelidir. Kurslarımızın fiyatları önceden haber vermeksizin
+						değiştirilebilir. Satın alma anındaki fiyat nihai fiyattır.
+					</Typography>
+
+					<Typography variant='h6' gutterBottom sx={{ fontSize: isMobileSize ? '0.85rem' : undefined, fontFamily: DIALOG_FONT }}>
+						5. İade Politikası
+					</Typography>
+					<Typography variant='body2' paragraph sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontFamily: DIALOG_FONT }}>
+						Kursu beğenmediyseniz, satın alma tarihinden itibaren [X gün] içinde iade talep edebilirsiniz. Kursun [X yüzdesi]'inden fazlasına
+						erişilmiş veya tamamlanmışsa iade yapılmayacaktır.
+					</Typography>
+
+					<Typography variant='h6' gutterBottom sx={{ fontSize: isMobileSize ? '0.85rem' : undefined, fontFamily: DIALOG_FONT }}>
+						6. Fikri Mülkiyet
+					</Typography>
+					<Typography variant='body2' paragraph sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontFamily: DIALOG_FONT }}>
+						Tüm kurs içeriği, [Şirket Adı]'nin mülkiyetindedir ve telif hakkı yasalarıyla korunmaktadır. Önceden yazılı izin olmadan kurs içeriğinin
+						hiçbir kısmını çoğaltamaz, dağıtamaz veya türev çalışmalar oluşturamazsınız.
+					</Typography>
+
+					<Typography variant='h6' gutterBottom sx={{ fontSize: isMobileSize ? '0.85rem' : undefined, fontFamily: DIALOG_FONT }}>
+						7. Sorumluluk Reddi
+					</Typography>
+					<Typography variant='body2' paragraph sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontFamily: DIALOG_FONT }}>
+						Kurslar "olduğu gibi" sunulmaktadır ve materyallerin kullanımından elde edilecek sonuçların doğruluğu, eksiksizliği veya sonuçları
+						konusunda herhangi bir garanti vermemekteyiz.
+					</Typography>
+
+					<Typography variant='h6' gutterBottom sx={{ fontSize: isMobileSize ? '0.85rem' : undefined, fontFamily: DIALOG_FONT }}>
+						8. Fesih
+					</Typography>
+					<Typography variant='body2' paragraph sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontFamily: DIALOG_FONT }}>
+						Bu Şartları ihlal etmeniz durumunda, tek taraflı olarak hizmete erişiminizi sonlandırma hakkını saklı tutarız.
+					</Typography>
+
+					<Typography variant='h6' gutterBottom sx={{ fontSize: isMobileSize ? '0.85rem' : undefined, fontFamily: DIALOG_FONT }}>
+						9. Uygulanacak Hukuk
+					</Typography>
+					<Typography variant='body2' paragraph sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontFamily: DIALOG_FONT }}>
+						Bu Şartlar, [Ülkeniz/Eyaletiniz] yasalarına göre yönetilir ve yorumlanır.
+					</Typography>
+
+					<Typography variant='h6' gutterBottom sx={{ fontSize: isMobileSize ? '0.85rem' : undefined, fontFamily: DIALOG_FONT }}>
+						10. Şartlarda Değişiklik
+					</Typography>
+					<Typography variant='body2' paragraph sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontFamily: DIALOG_FONT }}>
+						Bu Şartları herhangi bir zamanda güncelleme hakkını saklı tutarız. Değişiklikler yapıldığında, bu Şartların üst kısmındaki "Son
+						Güncelleme" tarihini güncelleyerek sizi bilgilendireceğiz.
+					</Typography>
+
+					<Typography variant='h6' gutterBottom sx={{ fontSize: isMobileSize ? '0.85rem' : undefined, fontFamily: DIALOG_FONT }}>
+						11. İletişim Bilgileri
+					</Typography>
+					<Typography variant='body2' paragraph sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontFamily: DIALOG_FONT }}>
+						Bu Şartlar hakkında herhangi bir sorunuz varsa, lütfen bizimle iletişime geçin:
+					</Typography>
+					<Typography variant='body2' paragraph sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontFamily: DIALOG_FONT }}>
+						- E-posta: [e-posta adresiniz]
+					</Typography>
+					<Typography variant='body2' paragraph sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontFamily: DIALOG_FONT }}>
+						- Telefon: [telefon numaranız]
+					</Typography>
+					<Typography variant='body2' paragraph sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontFamily: DIALOG_FONT }}>
+						- Adres: [şirket adresiniz]
+					</Typography>
+				</Box>
+			</CustomDialog>
+		);
+	}
+
 	return (
 		<CustomDialog
 			openModal={termsConditionsModalOpen}
@@ -21,7 +175,7 @@ const TermsConditions = ({ termsConditionsModalOpen, setTermsConditionsModalOpen
 			}}
 			title='Terms and Conditions'>
 			<DialogContent>
-				<Box sx={{ padding: isMobileSize ? '0.75rem' : '2rem', borderRadius: '8px', maxHeight: '33rem', overflowY: 'auto' }}>
+				<Box sx={{ padding: isMobileSize ? '0.75rem' : '2rem', borderRadius: '8px', maxHeight: '33rem', overflowY: 'auto', mt: '-1rem' }}>
 					<Typography variant='h6' gutterBottom sx={{ fontSize: isMobileSize ? '0.85rem' : undefined }}>
 						1. General Information
 					</Typography>

@@ -16,6 +16,12 @@ const LandingPageLayout = ({ children, coursesRef }: LandingPageLayoutProps) => 
 				display: 'flex',
 				flexDirection: 'column',
 				backgroundColor: '#FDF7F0',
+				backgroundImage: `
+					linear-gradient(135deg, rgba(44, 62, 80, 0.05), rgba(52, 152, 219, 0.05)),
+					radial-gradient(circle, rgba(44,62,80,0.08) 1px, transparent 1px)
+				`,
+				backgroundSize: 'auto, 30px 30px',
+				backgroundRepeat: 'repeat, repeat',
 				minHeight: '100vh',
 				position: 'relative',
 			}}>

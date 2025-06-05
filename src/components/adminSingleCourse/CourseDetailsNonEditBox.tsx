@@ -19,10 +19,10 @@ import { truncateText } from '@utils/utilText';
 interface CourseDetailsNonEditBoxProps {
 	singleCourse?: SingleCourse;
 	chapters: ChapterLessonData[];
-	setSingleCourse: React.Dispatch<React.SetStateAction<SingleCourse | undefined>>
+	setSingleCourse: React.Dispatch<React.SetStateAction<SingleCourse | undefined>>;
 }
 
-const CourseDetailsNonEditBox = ({ singleCourse, chapters,setSingleCourse }: CourseDetailsNonEditBoxProps) => {
+const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: CourseDetailsNonEditBoxProps) => {
 	const { userId } = useParams();
 
 	const [isEditInstructorDialogOpen, setIsEditInstructorDialogOpen] = useState<boolean>(false);
@@ -47,8 +47,11 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters,setSingleCourse }: Cou
 					}}>
 					<Typography variant='h6'>Instructor</Typography>
 					<Box sx={{ display: 'flex', alignItems: 'center', gap: '0.5rem', mt: '0.5rem' }}>
-						<Avatar src={singleCourse?.instructor?.imageUrl} sx={{ width: '2rem', height: '2rem',objectFit: 'cover' }}/>
-						<Typography variant='body2' sx={{ 'textTransform': 'capitalize', 'cursor': 'pointer', ':hover': { textDecoration: 'underline' } }} onClick={() => setIsEditInstructorDialogOpen(true)}>
+						<Avatar src={singleCourse?.instructor?.imageUrl} sx={{ width: '2rem', height: '2rem', objectFit: 'cover' }} />
+						<Typography
+							variant='body2'
+							sx={{ 'textTransform': 'capitalize', 'cursor': 'pointer', ':hover': { textDecoration: 'underline' } }}
+							onClick={() => setIsEditInstructorDialogOpen(true)}>
 							{singleCourse?.instructor?.name}
 						</Typography>
 					</Box>

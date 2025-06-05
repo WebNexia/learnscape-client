@@ -38,7 +38,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 	const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState<boolean>(false);
 
 	const { courseId, userId } = useParams();
-	const { user, setUser } = useContext(UserAuthContext);
+	const { user } = useContext(UserAuthContext);
 
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
@@ -58,19 +58,6 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 		try {
 			if (!courseId || !resolvedUserId || !resolvedOrgId) {
 				throw new Error('Missing required data for course registration');
-			}
-
-			if (!user?.hasRegisteredCourse) {
-				await axios.patch(`${base_url}/users/${resolvedUserId}`, {
-					hasRegisteredCourse: true,
-				});
-
-				setUser((prevUser) => {
-					if (prevUser) {
-						return { ...prevUser, hasRegisteredCourse: true };
-					}
-					return prevUser;
-				});
 			}
 
 			const response = await axios.post(`${base_url}/userCourses/`, {
@@ -164,14 +151,10 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 		<Paper
 			elevation={10}
 			sx={{
-				width: fromHomePage ? '85%' : '90%',
-				height: isRotated ? '18rem' : '23rem',
+				width: fromHomePage ? '57.5vw' : '90%',
+				height: isRotated ? '18rem' : fromHomePage ? '48vh' : '45vh',
 				margin:
-					fromHomePage && !isSmallScreen && !isRotatedMedium
-						? '3rem 0 2rem 0'
-						: isSmallScreen || isRotatedMedium
-							? '1.25rem 0 1.5rem 0'
-							: '3rem 0 2rem 0',
+					fromHomePage && !isSmallScreen && !isRotatedMedium ? '3rem 0 2rem 0' : isSmallScreen || isRotatedMedium ? '1.25rem 0 1.5rem 0' : '2rem 0',
 				backgroundColor: fromHomePage ? theme.bgColor?.lessonInProgress : theme.palette.primary.main,
 			}}>
 			<Snackbar
@@ -188,17 +171,24 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 						backgroundColor: theme.bgColor?.greenSecondary,
 						color: theme.textColor?.common.main,
 					}}>
-					You have successfully enrolled in the course!{' '}
+					{fromHomePage ? 'Kursa başarıyla kayıt oldunuz!' : 'You have successfully enrolled in the course!'}
 					{fromHomePage && (
 						<>
 							<br />
-							Login to see the course details.
+							{fromHomePage ? 'Kurs detaylarını görmek için giriş yapın.' : 'To view course details, please log in.'}
 						</>
 					)}
 				</Alert>
 			</Snackbar>
 
-			<Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', height: isRotated ? '18rem' : '23rem' }}>
+			<Box
+				sx={{
+					display: 'flex',
+					flexDirection: 'row',
+					justifyContent: 'space-between',
+					height: isRotated ? '18rem' : fromHomePage ? '48vh' : '45vh',
+					padding: fromHomePage ? '1rem' : '0',
+				}}>
 				<Box
 					sx={{
 						display: 'flex',
@@ -206,7 +196,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 						margin: isVerySmallScreen ? '1rem 2rem 1rem 1rem' : '1rem 3rem 1rem 2rem',
 						flex: 3,
 						position: 'relative',
-						height: '20rem',
+						height: fromHomePage ? '40vh' : '37.5vh',
 					}}>
 					<Box>
 						{!fromHomePage && (
@@ -228,10 +218,16 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 									navigate(`/courses/user/${userId}`);
 									window.scrollTo({ top: 0, behavior: 'smooth' });
 								}}>
-								Back to courses
+								{fromHomePage ? 'Kurslara Dön' : 'Back to courses'}
 							</Button>
 						)}
-						<Typography variant={isSmallScreen ? 'h6' : 'h3'} sx={{ color: theme.textColor?.common.main, margin: '0.5rem 0 1rem 0' }}>
+						<Typography
+							variant={isSmallScreen ? 'h6' : 'h4'}
+							sx={{
+								color: theme.textColor?.common.main,
+								margin: '0.5rem 0 1rem 0',
+								fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
+							}}>
 							{course.title}
 						</Typography>
 						<Typography
@@ -241,6 +237,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 								fontSize: isSmallScreen ? '0.65rem' : '0.85rem',
 								lineHeight: isSmallScreen ? 1.6 : 1.7,
 								textAlign: 'left',
+								fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
 							}}>
 							{isVerySmallScreen
 								? truncateText(course.description, 200)
@@ -256,9 +253,10 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 									position: 'absolute',
 									bottom: isRotated ? 60 : 5,
 									fontSize: isMobileSize ? '0.75rem' : '0.9rem',
+									fontFamily: fromHomePage ? 'Varela Round' : '',
 								}}
 								onClick={() => setIsPaymentDialogOpen(true)}>
-								Enroll
+								{fromHomePage ? 'Kayıt Ol' : 'Enroll'}
 							</CustomSubmitButton>
 						) : !isEnrolledStatus && course.isExpired ? (
 							<Alert
@@ -270,8 +268,9 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 									backgroundColor: !fromHomePage ? theme.bgColor?.lessonInProgress : theme.bgColor?.greenSecondary,
 									color: theme.textColor?.common.main,
 									width: 'fit-content',
+									fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
 								}}>
-								Enrollment is closed
+								{fromHomePage ? 'Kayıt süresi doldu' : 'Enrollment is closed'}
 							</Alert>
 						) : (
 							<Typography
@@ -287,8 +286,9 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 									color: theme.textColor?.common.main,
 									cursor: 'pointer',
 									textDecoration: 'underline',
+									fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
 								}}>
-								See Course Materials
+								{fromHomePage ? 'Kurs Materyallerini Gör' : 'See Course Materials'}
 							</Typography>
 						)}
 					</Box>
@@ -304,21 +304,26 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 					}}>
 					<Box>
 						<CoursePageBannerDataCard
-							title='Price'
+							title={fromHomePage ? 'Fiyat' : 'Price'}
 							content={`${isCourseFree ? '' : setCurrencySymbol(getPriceForCountry(course, resolvedCountryCode!)?.currency)}${
-								isCourseFree ? 'Free' : getPriceForCountry(course, resolvedCountryCode!)?.amount
+								isCourseFree ? (fromHomePage ? 'Ücretsiz' : 'Free') : getPriceForCountry(course, resolvedCountryCode!)?.amount
 							}`}
 							customSettings={{
 								color: theme.textColor?.common.main,
 								bgColor: theme.bgColor?.greenSecondary,
 							}}
+							fromHomePage={fromHomePage}
 						/>
-						<CoursePageBannerDataCard title='Weeks(#)' content={course.durationWeeks} />
+						<CoursePageBannerDataCard title={fromHomePage ? 'Hafta(#)' : 'Weeks(#)'} content={course.durationWeeks} fromHomePage={fromHomePage} />
 					</Box>
 					<Box>
-						<CoursePageBannerDataCard title='Starting Date' content={dateFormatter(course.startingDate)} />
+						<CoursePageBannerDataCard
+							title={fromHomePage ? 'Başlangıç Tarihi' : 'Starting Date'}
+							content={dateFormatter(course.startingDate)}
+							fromHomePage={fromHomePage}
+						/>
 
-						<CoursePageBannerDataCard title='Hours(#)' content={course.durationHours} />
+						<CoursePageBannerDataCard title={fromHomePage ? 'Saat(#)' : 'Hours(#)'} content={course.durationHours} fromHomePage={fromHomePage} />
 					</Box>
 				</Box>
 
