@@ -340,7 +340,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 	return (
 		<Box
 			sx={{
-				minHeight: '100vh',
+				height: '100vh',
 				display: 'flex',
 				flexDirection: 'column',
 				backgroundColor: '#FDF7F0',
@@ -375,7 +375,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 				{/* Logo and Title */}
 				<Box sx={{ position: 'relative', zIndex: 1, mb: '1.5rem', mt: '-2rem' }}>
 					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }} onClick={() => navigate('/')}>
-						<img src={logo} alt='logo' style={{ height: '13vh' }} />
+						<img src={logo} alt='logo' style={{ height: isRotated ? '15vh' : isSmallScreen ? '8vh' : '11vh' }} />
 					</Box>
 				</Box>
 
@@ -525,8 +525,6 @@ const Auth = ({ setUserRole }: AuthProps) => {
 						sx={{
 							display: 'flex',
 							justifyContent: 'center',
-							mt: '0rem',
-							px: { xs: 0.5, sm: 0 },
 						}}>
 						{
 							{
@@ -618,6 +616,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 															},
 															'fontSize': isMobileSize ? '0.7rem' : '0.8rem',
 															'fontFamily': 'Varela Round',
+															'color': 'gray',
 														}}>
 														Şifrenizi mi unuttunuz?
 													</Typography>
@@ -922,7 +921,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 											e.preventDefault();
 											handlePasswordReset();
 										}}>
-										<Typography variant='body1' sx={{ marginBottom: '1rem' }}>
+										<Typography variant='body1' sx={{ marginBottom: '1rem', fontFamily: 'Varela Round' }}>
 											Şifre Sıfırlama
 										</Typography>
 										<CustomTextField
@@ -972,7 +971,6 @@ const Auth = ({ setUserRole }: AuthProps) => {
 							justifyContent: 'center',
 							alignItems: 'center',
 							mt: '1.5rem',
-							mb: '0.5rem',
 						}}>
 						<Typography
 							variant='body2'

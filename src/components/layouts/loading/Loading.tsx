@@ -1,7 +1,6 @@
-import { AppBar, Box, Button, IconButton, Toolbar, Typography, keyframes } from '@mui/material';
+import { AppBar, Box, Button, IconButton, Toolbar, Typography, keyframes, useTheme, useMediaQuery } from '@mui/material';
 import theme from '../../../themes';
-import { useContext, useState, useEffect, useMemo, memo } from 'react';
-import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
+import { useContext, useState, useMemo, memo } from 'react';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 import SidebarBtn from '../dashboardLayout/SidebarBtn';
 import { Mode, Roles } from '../../../interfaces/enums';
@@ -63,20 +62,19 @@ const blink = keyframes`
 `;
 
 // Memoize the logo component to prevent unnecessary re-renders
-const Logo = memo(() => (
+const Logo = memo(({ small }: { small?: boolean }) => (
 	<Box
 		sx={{
 			position: 'relative',
 			zIndex: 1,
 			mb: 4,
 			animation: `${float} 4s ease-in-out infinite`,
-		}}
-	>
+		}}>
 		<img
 			src={logo}
-			alt="Kaizen Logo"
+			alt='Kaizen Logo'
 			style={{
-				width: '20rem',
+				width: small ? '15rem' : '20rem',
 				height: 'auto',
 				filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))',
 			}}
@@ -85,72 +83,74 @@ const Logo = memo(() => (
 ));
 
 // Memoize the base loading screen to prevent unnecessary re-renders
-const BaseLoadingScreen = memo(() => (
-	<Box
-		sx={{
-			height: '100vh',
-			width: '100vw',
-			display: 'flex',
-			flexDirection: 'column',
-			alignItems: 'center',
-			justifyContent: 'center',
-			background: '#ffffff',
-			position: 'relative',
-			overflow: 'hidden',
-			'&::before': {
-				content: '""',
-				position: 'absolute',
-				top: 0,
-				left: 0,
-				right: 0,
-				bottom: 0,
-				backgroundImage: 'radial-gradient(#e0e0e0 1px, transparent 1px)',
-				backgroundSize: '40px 40px',
-				opacity: 0.3,
-			},
-		}}
-	>
-		<Logo />
+const BaseLoadingScreen = memo(() => {
+	const themeMUI = useTheme();
+	const isSmall = useMediaQuery(themeMUI.breakpoints.down('sm'));
+
+	const { isRotatedMedium } = useContext(MediaQueryContext);
+
+	const isSmallScreen = isSmall || isRotatedMedium;
+
+	return (
 		<Box
 			sx={{
-				position: 'relative',
-				zIndex: 1,
-				display: 'flex',
-				flexDirection: 'column',
-				alignItems: 'center',
-				gap: 2,
-			}}
-		>
-			<TypingAnimation />
-			<Typography
+				'height': '100vh',
+				'width': '100vw',
+				'display': 'flex',
+				'flexDirection': 'column',
+				'alignItems': 'center',
+				'justifyContent': 'center',
+				'background': '#ffffff',
+				'position': 'relative',
+				'overflow': 'hidden',
+				'&::before': {
+					content: '""',
+					position: 'absolute',
+					top: 0,
+					left: 0,
+					right: 0,
+					bottom: 0,
+					backgroundImage: 'radial-gradient(#e0e0e0 1px, transparent 1px)',
+					backgroundSize: '40px 40px',
+					opacity: 0.3,
+				},
+			}}>
+			<Logo small={isSmallScreen} />
+			<Box
 				sx={{
-					color: '#2C3E50',
-					fontSize: '2.25rem',
-					fontWeight: 500,
-					fontFamily: 'Varela Round',
+					position: 'relative',
+					zIndex: 1,
 					display: 'flex',
+					flexDirection: 'column',
 					alignItems: 'center',
-					gap: '4px',
-					minHeight: '3rem',
-				}}
-			>
-				<span>Loading</span>
-			</Typography>
+					gap: 2,
+				}}>
+				<TypingAnimation />
+				<Typography
+					sx={{
+						color: '#2C3E50',
+						fontSize: isSmallScreen ? '1.5rem' : '2rem',
+						fontWeight: 500,
+						fontFamily: 'Varela Round',
+						display: 'flex',
+						alignItems: 'center',
+						gap: '4px',
+						minHeight: '3rem',
+					}}>
+					<span>Loading</span>
+				</Typography>
+			</Box>
 		</Box>
-	</Box>
-));
+	);
+});
 
 const Loading = () => {
-	const { organisation } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
 	const { isRotatedMedium, isSmallScreen, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
-	
+
 	// Use useMemo for mode to prevent unnecessary re-renders
-	const mode = useMemo(() => 
-		(localStorage.getItem('mode') as Mode) || Mode.LIGHT_MODE,
-		[]
-	);
+	const mode = useMemo(() => (localStorage.getItem('mode') as Mode) || Mode.LIGHT_MODE, []);
 
 	// Use useMemo for currentPage to prevent unnecessary re-renders
 	const currentPage = useMemo(() => {
@@ -199,7 +199,7 @@ const Loading = () => {
 								<Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
 									<IconButton
 										sx={{
-											mr: '0.75rem',
+											'mr': '0.75rem',
 											':hover': {
 												backgroundColor: 'transparent',
 											},
@@ -212,8 +212,8 @@ const Loading = () => {
 											[Mode.DARK_MODE]: (
 												<IconButton
 													sx={{
-														color: theme.textColor?.common.main,
-														mr: '0.75rem',
+														'color': theme.textColor?.common.main,
+														'mr': '0.75rem',
 														':hover': {
 															backgroundColor: 'transparent',
 														},
@@ -224,8 +224,8 @@ const Loading = () => {
 											[Mode.LIGHT_MODE]: (
 												<IconButton
 													sx={{
-														color: theme.textColor?.common.main,
-														mr: '0.75rem',
+														'color': theme.textColor?.common.main,
+														'mr': '0.75rem',
 														':hover': {
 															backgroundColor: 'transparent',
 														},
@@ -298,7 +298,7 @@ const Loading = () => {
 								<Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
 									<IconButton
 										sx={{
-											mr: '0.75rem',
+											'mr': '0.75rem',
 											':hover': {
 												backgroundColor: 'transparent',
 											},
@@ -311,26 +311,26 @@ const Loading = () => {
 											[Mode.DARK_MODE]: (
 												<IconButton
 													sx={{
-														color: theme.textColor?.common.main,
-														mr: '0.75rem',
+														'color': theme.textColor?.common.main,
+														'mr': '0.75rem',
 														':hover': {
 															backgroundColor: 'transparent',
 														},
 													}}>
-														<DarkMode />
-													</IconButton>
+													<DarkMode />
+												</IconButton>
 											),
 											[Mode.LIGHT_MODE]: (
 												<IconButton
 													sx={{
-														color: theme.textColor?.common.main,
-														mr: '0.75rem',
+														'color': theme.textColor?.common.main,
+														'mr': '0.75rem',
 														':hover': {
 															backgroundColor: 'transparent',
 														},
 													}}>
-														<LightMode />
-													</IconButton>
+													<LightMode />
+												</IconButton>
 											),
 										}[mode]
 									}

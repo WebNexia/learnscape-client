@@ -1,9 +1,11 @@
-import { AppBar, Box, Button, Toolbar, Typography } from '@mui/material';
+import { AppBar, Box, Button, IconButton, Toolbar, Typography } from '@mui/material';
 import theme from '../../themes';
 import { useNavigate } from 'react-router-dom';
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import logo from '../../assets/logo.png';
+import { Menu } from '@mui/icons-material';
+import LandingPageDrawer from '../landingPage/LandingPageDrawer';
 
 const Header = ({ coursesRef }: { coursesRef: React.RefObject<HTMLDivElement> }) => {
 	const handleScrollToCourses = () => {
@@ -21,6 +23,15 @@ const Header = ({ coursesRef }: { coursesRef: React.RefObject<HTMLDivElement> })
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 	const navigate = useNavigate();
+	const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
+
+	const navItems = [
+		{ label: 'Ana Sayfa', action: () => navigate('/') },
+		{ label: 'Kurslar', action: handleScrollToCourses },
+		{ label: 'Kaynaklar', action: () => navigate('/resources') },
+		{ label: 'İletişim', action: () => navigate('/contact') },
+		{ label: 'Hakkımızda', action: () => navigate('/about') },
+	];
 
 	return (
 		<AppBar position='sticky' sx={{ background: 'none', boxShadow: 'none' }}>
@@ -44,71 +55,54 @@ const Header = ({ coursesRef }: { coursesRef: React.RefObject<HTMLDivElement> })
 						transition: 'all 0.3s ease',
 						zIndex: 1201,
 					}}>
-					<Box
-						sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '33%', cursor: 'pointer' }}
-						onClick={() => navigate('/')}>
-						<img src={logo} alt='logo' style={{ height: '11vh' }} />
-					</Box>
-					<Box sx={{ display: 'flex', justifyContent: 'center', width: '33%' }}>
-						<Box>
-							<Typography
-								variant='h4'
-								onClick={handleScrollToCourses}
+					<Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+						{(isVerySmallScreen || isRotatedMedium) && (
+							<IconButton onClick={() => setIsDrawerOpen(true)}>
+								<Menu sx={{ color: theme.textColor?.primary.main, padding: 0 }} fontSize='small' />
+							</IconButton>
+						)}
+						<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', cursor: 'pointer' }} onClick={() => navigate('/')}>
+							<Box
+								component='img'
+								src={logo}
+								alt='logo'
 								sx={{
-									'fontFamily': 'tahoma',
-									'color': theme.textColor?.primary.main,
-									':hover': {
-										color: '#3498DB',
-										textDecoration: 'underline',
-									},
-									'cursor': 'pointer',
-									'fontSize': isMobileSizeSmall ? '0.65rem' : isMobileSize ? '0.85rem' : undefined,
-									'transition': 'all 0.3s ease',
-								}}>
-								{/* Courses */}
-								Kurslar
-							</Typography>
-						</Box>
-						<Box>
-							<Typography
-								variant='h4'
-								sx={{
-									'fontFamily': 'Varela Round',
-									'color': theme.textColor?.primary.main,
-									':hover': {
-										color: '#3498DB',
-										textDecoration: 'underline',
-									},
-									'cursor': 'pointer',
-									'fontSize': isMobileSizeSmall ? '0.65rem' : isMobileSize ? '0.85rem' : undefined,
-									'paddingLeft': isVerySmallScreen ? '0.5rem' : '1.25rem',
-									'transition': 'all 0.3s ease',
-								}}>
-								{/* News */}
-								Blog
-							</Typography>
-						</Box>
-						<Box onClick={() => navigate('/resources')}>
-							<Typography
-								variant='h4'
-								sx={{
-									'fontFamily': 'Varela Round',
-									'color': theme.textColor?.primary.main,
-									':hover': {
-										color: '#3498DB',
-										textDecoration: 'underline',
-									},
-									'cursor': 'pointer',
-									'fontSize': isMobileSizeSmall ? '0.65rem' : isMobileSize ? '0.85rem' : undefined,
-									'paddingLeft': isVerySmallScreen ? '0.5rem' : '1.25rem',
-									'transition': 'all 0.3s ease',
-								}}>
-								{/* Resources */}
-								Kaynaklar
-							</Typography>
+									height: { xs: '6vh', sm: '6vh', md: '10vh' },
+									minHeight: '2rem',
+									maxHeight: '4.5rem',
+									width: 'auto',
+								}}
+							/>
 						</Box>
 					</Box>
-					<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '33%' }}>
+					<LandingPageDrawer isDrawerOpen={isDrawerOpen} setIsDrawerOpen={setIsDrawerOpen} navItems={navItems} />
+
+					{!(isVerySmallScreen || isRotatedMedium) && (
+						<Box sx={{ display: 'flex', justifyContent: 'center', flex: 1 }}>
+							{navItems
+								.filter((item) => item.label !== 'Ana Sayfa')
+								.map((item, index) => (
+									<Box key={index} onClick={item.action} sx={{ ml: index === 0 ? 0 : isSmallScreen ? '0.5rem' : '1rem' }}>
+										<Typography
+											variant='h6'
+											sx={{
+												'fontFamily': 'Varela Round',
+												'color': theme.textColor?.primary.main,
+												'&:hover': {
+													color: '#3498DB',
+													textDecoration: 'underline',
+												},
+												'cursor': 'pointer',
+												'fontSize': isMobileSizeSmall ? '0.65rem' : isMobileSize ? '0.85rem' : undefined,
+												'transition': 'all 0.3s ease',
+											}}>
+											{item.label}
+										</Typography>
+									</Box>
+								))}
+						</Box>
+					)}
+					<Box sx={{ display: 'flex', justifyContent: 'flex-end', flex: 1, alignItems: 'center', gap: 1 }}>
 						<Button
 							sx={{
 								'fontFamily': 'Varela Round',
@@ -116,9 +110,9 @@ const Header = ({ coursesRef }: { coursesRef: React.RefObject<HTMLDivElement> })
 								'fontSize': isMobileSizeSmall ? '0.7rem' : isMobileSize ? '0.85rem' : '1rem',
 								'color': '#2C3E50',
 								'border': '1px solid #2C3E50',
-								'padding': isMobileSizeSmall ? '0.1rem 0.2rem' : '0.5rem 1.75rem',
+								'padding': isMobileSize ? '0.3rem 0.75rem' : '0.35rem 1.5rem',
 								'borderRadius': '1rem',
-								':hover': {
+								'&:hover': {
 									backgroundColor: theme.bgColor?.greenPrimary,
 									color: '#fff',
 									transform: 'translateY(-2px)',
@@ -127,7 +121,6 @@ const Header = ({ coursesRef }: { coursesRef: React.RefObject<HTMLDivElement> })
 								'transition': 'all 0.3s ease',
 							}}
 							onClick={() => navigate('/auth')}>
-							{/* Login */}
 							Giriş Yap
 						</Button>
 					</Box>
