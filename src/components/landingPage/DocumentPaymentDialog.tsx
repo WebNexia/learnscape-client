@@ -307,7 +307,9 @@ const DocumentPaymentDialog = ({ document, isPaymentDialogOpen, setIsPaymentDial
 							mb: '1.25rem',
 						}}>
 						<Box sx={{ width: '100%', textAlign: 'left' }}>
-							<Typography sx={{ fontSize: isMobileSize ? '0.7rem' : '0.9rem', fontFamily: DIALOG_FONT, color: '#223354' }}>Kart Numarası*</Typography>
+							<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.9rem', fontFamily: DIALOG_FONT, color: '#223354' }}>
+								Kart Numarası*
+							</Typography>
 						</Box>
 						<Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
 							<Box
@@ -523,7 +525,12 @@ const DocumentPaymentDialog = ({ document, isPaymentDialogOpen, setIsPaymentDial
 
 				{errorMessage && (
 					<CustomErrorMessage
-						sx={{ width: '100%', padding: '1.5rem 2rem 0 2rem', fontSize: isMobileSize ? '0.65rem' : '0.75rem', fontFamily: DIALOG_FONT }}>
+						sx={{
+							width: '100%',
+							padding: { xs: '1.5rem 0.75rem 0 0.75rem', sm: '1.5rem 1rem 0 1rem', md: '1.5rem 2rem 0 2rem', lg: '1.5rem 2rem 0 2rem' },
+							fontSize: isMobileSize ? '0.65rem' : '0.75rem',
+							fontFamily: DIALOG_FONT,
+						}}>
 						{errorMessage}
 					</CustomErrorMessage>
 				)}
@@ -548,14 +555,14 @@ const DocumentPaymentDialog = ({ document, isPaymentDialogOpen, setIsPaymentDial
 					setIsPaymentDialogOpen(false);
 					resetForm();
 				}}
-				sx={{ mt: '2.5rem' }}>
+				sx={{ mt: { xs: '1.5rem', sm: '1.5rem', md: '2.5rem', lg: '2.5rem' } }}>
 				<Alert
 					severity='success'
 					variant='filled'
 					sx={{
 						width: '100%',
 						fontFamily: 'Varela Round',
-						fontSize: '1rem',
+						fontSize: { xs: '0.8rem', sm: '0.9rem', md: '1rem', lg: '1rem' },
 						letterSpacing: 0,
 						color: theme.textColor?.common.main,
 					}}>
@@ -571,14 +578,14 @@ const DocumentPaymentDialog = ({ document, isPaymentDialogOpen, setIsPaymentDial
 					setIsPaymentDialogOpen(false);
 					resetForm();
 				}}
-				sx={{ mt: '5rem' }}>
+				sx={{ mt: { xs: '1.5rem', sm: '1.5rem', md: '2.5rem', lg: '2.5rem' } }}>
 				<Alert
 					severity='warning'
 					variant='filled'
 					sx={{
 						width: '100%',
 						fontFamily: 'Varela Round',
-						fontSize: '1rem',
+						fontSize: { xs: '0.8rem', sm: '0.9rem', md: '1rem', lg: '1rem' },
 						letterSpacing: 0,
 						color: '#fff',
 						backgroundColor: '#FFA726',

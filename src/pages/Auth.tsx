@@ -254,6 +254,16 @@ const Auth = ({ setUserRole }: AuthProps) => {
 			return;
 		}
 
+		if (username.length < 5) {
+			setErrorMsg(AuthFormErrorMessages.USERNAME_TOO_SHORT);
+			return;
+		}
+
+		if (username.length > 15) {
+			setErrorMsg(AuthFormErrorMessages.USERNAME_TOO_LONG);
+			return;
+		}
+
 		const passwordValidationError = validatePassword(password);
 		if (passwordValidationError) {
 			setErrorMsg(passwordValidationError);
@@ -739,19 +749,21 @@ const Auth = ({ setUserRole }: AuthProps) => {
 															'& .MuiInputLabel-root': { fontFamily: 'Varela Round' },
 														}}
 													/>
-													<Tooltip title='Kullanıcı Adı Kuralları' placement='right'>
-														<IconButton
-															onClick={() => setIsUserNameImageInfoModalOpen(true)}
-															sx={{
-																'ml': '0.5rem',
-																'mt': '0.5rem',
-																':hover': {
-																	backgroundColor: 'transparent',
-																},
-															}}>
-															<Info sx={{ fontSize: isMobileSize ? '1rem' : '1.25rem' }} />
-														</IconButton>
-													</Tooltip>
+													<Box sx={{ display: 'flex', width: '10%', justifyContent: 'flex-end', mt: '-0.5rem' }}>
+														<Tooltip title='Kullanıcı Adı Kuralları' placement='right'>
+															<IconButton
+																onClick={() => setIsUserNameImageInfoModalOpen(true)}
+																sx={{
+																	'ml': '0.5rem',
+																	'mt': '0.5rem',
+																	':hover': {
+																		backgroundColor: 'transparent',
+																	},
+																}}>
+																<Info sx={{ fontSize: isMobileSize ? '1rem' : '1.25rem' }} />
+															</IconButton>
+														</Tooltip>
+													</Box>
 												</Box>
 
 												<Box sx={{ width: '100%', mb: '1.75rem' }}>
@@ -1012,6 +1024,8 @@ const Auth = ({ setUserRole }: AuthProps) => {
 								[AuthFormErrorMessages.PASSWORD_NO_LETTER]: errorMessageTypography,
 								[AuthFormErrorMessages.NETWORK_ERROR]: errorMessageTypography,
 								[AuthFormErrorMessages.INVALID_PHONE_NUMBER]: errorMessageTypography,
+								[AuthFormErrorMessages.USERNAME_TOO_SHORT]: errorMessageTypography,
+								[AuthFormErrorMessages.USERNAME_TOO_LONG]: errorMessageTypography,
 							}[errorMsg]}
 					</Box>
 				</Box>
@@ -1066,7 +1080,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 								Kullanıcı adı şunları içerebilir:
 							</Typography>
 							<Box sx={{ margin: '0.85rem 0 0 3rem' }}>
-								{['en fazla 15 karakter', 'alt çizgi (_) ve nokta (.)'].map((rule, index) => (
+								{['en fazla 15 karakter', 'en az 5 karakter', 'alt çizgi (_) ve nokta (.)'].map((rule, index) => (
 									<ul key={index}>
 										<li style={{ color: theme.textColor?.secondary.main }}>
 											<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.35rem', fontFamily: 'Varela Round' }}>

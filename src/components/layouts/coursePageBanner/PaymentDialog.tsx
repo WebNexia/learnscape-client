@@ -469,7 +469,7 @@ const PaymentDialog = ({
 				}}>
 				<Box
 					sx={{
-						margin: '0 2rem',
+						margin: { xs: '0 0.75rem', sm: '0 1rem', md: '0 2rem', lg: '0 2rem' },
 						...(fromHomePage
 							? {
 									'& .MuiOutlinedInput-root': {
@@ -581,7 +581,9 @@ const PaymentDialog = ({
 						<Typography
 							variant='h6'
 							sx={
-								fromHomePage ? { fontFamily: 'Varela Round', color: '#2C3E50', fontWeight: 500, mb: '-1rem' } : { fontSize: '0.9rem', mb: '-1rem' }
+								fromHomePage
+									? { fontFamily: 'Varela Round', color: '#2C3E50', fontWeight: 500, mb: '-1rem', fontSize: isMobileSize ? '0.75rem' : '0.9rem' }
+									: { fontSize: '0.9rem', mb: '-1rem' }
 							}>
 							{fromHomePage ? 'Kart Numarası*' : 'Card Number*'}
 						</Typography>
@@ -634,7 +636,11 @@ const PaymentDialog = ({
 						<Box sx={{ width: '50%' }}>
 							<Typography
 								variant='h6'
-								sx={fromHomePage ? { fontFamily: 'Varela Round', color: '#2C3E50', fontWeight: 500, mb: 0.5 } : { fontSize: '0.9rem', mb: 0.5 }}>
+								sx={
+									fromHomePage
+										? { fontFamily: 'Varela Round', color: '#2C3E50', fontWeight: 500, mb: 0.5, fontSize: isMobileSize ? '0.75rem' : '0.9rem' }
+										: { fontSize: '0.9rem', mb: 0.5 }
+								}>
 								{fromHomePage ? 'Son Kullanma Tarihi*' : 'Expiry Date*'}
 							</Typography>
 							<Box
@@ -676,7 +682,11 @@ const PaymentDialog = ({
 						<Box sx={{ width: '50%' }}>
 							<Typography
 								variant='h6'
-								sx={fromHomePage ? { fontFamily: 'Varela Round', color: '#2C3E50', fontWeight: 500, mb: 0.5 } : { fontSize: '0.9rem', mb: 0.5 }}>
+								sx={
+									fromHomePage
+										? { fontFamily: 'Varela Round', color: '#2C3E50', fontWeight: 500, mb: 0.5, fontSize: isMobileSize ? '0.75rem' : '0.9rem' }
+										: { fontSize: '0.9rem', mb: 0.5 }
+								}>
 								CVC*
 							</Typography>
 							<Box
@@ -722,6 +732,8 @@ const PaymentDialog = ({
 							display: 'flex',
 							alignItems: 'center',
 							width: '100%',
+							padding: isSmallScreen || isRotatedMedium ? '0 0.35rem' : '0rem',
+							fontFamily: DIALOG_FONT,
 							mt: '2rem',
 						}}>
 						<Typography
@@ -771,7 +783,7 @@ const PaymentDialog = ({
 										'display': 'flex',
 										'alignItems': 'center',
 										'& .MuiSvgIcon-root': {
-											fontSize: isMobileSize ? '0.8rem' : '1.15rem',
+											fontSize: isMobileSize ? '0.9rem' : '1.15rem',
 										},
 									}}
 								/>
@@ -780,7 +792,7 @@ const PaymentDialog = ({
 							sx={{
 								'mt': isSmallScreen ? '0rem' : '0.5rem',
 								'& .MuiFormControlLabel-label': {
-									fontSize: isMobileSize ? '0.6rem' : '0.8rem',
+									fontSize: isMobileSize ? '0.65rem' : '0.8rem',
 									fontFamily: fromHomePage ? DIALOG_FONT : theme.fontFamily?.main,
 								},
 							}}
@@ -808,7 +820,7 @@ const PaymentDialog = ({
 					<CustomErrorMessage
 						sx={{
 							width: '100%',
-							padding: '1.5rem 2rem 0 2rem',
+							padding: { xs: '1.5rem 0.75rem 0 0.75rem', sm: '1.5rem 1rem 0 1rem', md: '1.5rem 2rem 0 2rem', lg: '1.5rem 2rem 0 2rem' },
 							fontSize: isMobileSize ? '0.65rem' : '0.75rem',
 							fontFamily: fromHomePage ? DIALOG_FONT : theme.fontFamily?.main,
 						}}>
@@ -822,6 +834,7 @@ const PaymentDialog = ({
 										textDecoration: 'underline',
 										cursor: 'pointer',
 										fontSize: isMobileSize ? '0.65rem' : '0.75rem',
+										fontFamily: fromHomePage ? DIALOG_FONT : theme.fontFamily?.main,
 									}}>
 									{fromHomePage ? 'Buraya tıklayın' : 'Click here'}
 								</span>
@@ -835,6 +848,7 @@ const PaymentDialog = ({
 						resetForm();
 						setIsPaymentDialogOpen(false);
 					}}
+					actionSx={{ backgroundColor: 'pink' }}
 					cancelBtnText={fromHomePage ? 'Kapat' : 'Cancel'}
 					cancelBtnSx={{
 						fontFamily: fromHomePage ? DIALOG_FONT : '',

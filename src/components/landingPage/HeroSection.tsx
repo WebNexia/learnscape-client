@@ -1,5 +1,5 @@
 import { Box, Button, Typography, Alert } from '@mui/material';
-import { motion } from 'framer-motion';
+import { backIn, motion } from 'framer-motion';
 import { useContext, useState } from 'react';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import Instructor_Img from '../../assets/instructor-new1.png';
@@ -16,6 +16,7 @@ import { useGeoLocation } from '../../hooks/useGeoLocation';
 import theme from '../../themes';
 import axios from 'axios';
 import Snackbar from '@mui/material/Snackbar';
+import { display } from 'html2canvas/dist/types/css/property-descriptors/display';
 
 const HeroSection = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -23,7 +24,6 @@ const HeroSection = () => {
 	const { isSmallScreen, isRotatedMedium, isVerySmallScreen } = useContext(MediaQueryContext);
 	const [isIntroVideoModalOpen, setIsIntroVideoModalOpen] = useState<boolean>(false);
 	const [isGetMoreDetailsModalOpen, setIsGetMoreDetailsModalOpen] = useState<boolean>(false);
-	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const location = useGeoLocation();
 	const [firstName, setFirstName] = useState<string>('');
 	const [lastName, setLastName] = useState<string>('');
@@ -317,7 +317,7 @@ const HeroSection = () => {
 				<form onSubmit={handleMoreInfoRequest}>
 					<Box
 						sx={{
-							'margin': '0 2rem',
+							'margin': { xs: '0 0.75rem', sm: '0 1rem', md: '0 2rem', lg: '0 2rem' },
 							'& .MuiOutlinedInput-root': {
 								'&:hover fieldset': {
 									borderColor: '#3498DB',
@@ -499,10 +499,12 @@ const HeroSection = () => {
 							resetForm();
 							setShowSuccess(false);
 						}}
-						actionSx={{ margin: '1rem 1rem 0.75rem 0' }}
 						submitBtnSx={{ fontFamily: 'Varela Round' }}
 						cancelBtnSx={{ fontFamily: 'Varela Round' }}
 						disableBtn={sending || !isValidPhone(phone)}
+						actionSx={{
+							padding: { xs: '1rem 0.5rem 0.75rem 0', sm: '1rem 1rem 0.75rem 0', md: '1rem 2rem 0.75rem 0', lg: '1rem 1.5rem 0.75rem 0' },
+						}}
 					/>
 				</form>
 			</CustomDialog>
@@ -516,14 +518,14 @@ const HeroSection = () => {
 					resetForm();
 					setIsGetMoreDetailsModalOpen(false);
 				}}
-				sx={{ mt: '2.5rem' }}>
+				sx={{ mt: { xs: '1.5rem', sm: '1.5rem', md: '2.5rem', lg: '2.5rem' } }}>
 				<Alert
 					severity='success'
 					variant='filled'
 					sx={{
 						width: '100%',
 						fontFamily: 'Varela Round',
-						fontSize: '1rem',
+						fontSize: { xs: '0.8rem', sm: '0.9rem', md: '1rem', lg: '1rem' },
 						letterSpacing: 0,
 						color: theme.textColor?.common.main,
 					}}>
