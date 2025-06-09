@@ -28,10 +28,10 @@ const DocumentCard = ({ document, userCurrency, fromHomePage }: DocumentCardProp
 
 	return (
 		<>
-			<motion.div whileHover={{ scale: 1.02 }} transition={{ duration: 0.2 }} style={{ width: '100%', maxWidth: '17rem' }}>
+			<motion.div whileHover={{ scale: 1.02 }} transition={{ duration: 0.2 }} style={{ width: '100%', maxWidth: '17.5rem' }}>
 				<Card
 					sx={{
-						height: '24rem',
+						height: { xs: '22rem', sm: '22rem', md: '24rem', lg: '24rem' },
 						display: 'flex',
 						flexDirection: 'column',
 						borderRadius: '1rem',
@@ -39,11 +39,13 @@ const DocumentCard = ({ document, userCurrency, fromHomePage }: DocumentCardProp
 						overflow: 'hidden',
 						backgroundColor: theme.palette.background.paper,
 						position: 'relative',
+						width: { xs: '15.5rem', sm: '15.5rem', md: '17.5rem', lg: '17.5rem' },
+						maxWidth: '17.5rem',
 					}}>
 					{/* Cover Image */}
 					<Box
 						sx={{
-							height: '15rem',
+							height: { xs: '12rem', sm: '12rem', md: '15rem', lg: '15rem' },
 							position: 'relative',
 							backgroundColor: theme.palette.grey[100],
 							display: 'flex',
@@ -56,7 +58,7 @@ const DocumentCard = ({ document, userCurrency, fromHomePage }: DocumentCardProp
 								image={document.imageUrl}
 								alt={document.name}
 								sx={{
-									'height': '9rem',
+									'height': { xs: '8rem', sm: '8rem', md: '9rem', lg: '9rem' },
 									'objectFit': 'cover',
 									'transition': 'transform 0.3s ease-in-out',
 									'&:hover': {
@@ -72,7 +74,7 @@ const DocumentCard = ({ document, userCurrency, fromHomePage }: DocumentCardProp
 									alignItems: 'center',
 									gap: 1,
 									color: theme.palette.grey[500],
-									height: '9rem',
+									height: { xs: '8rem', sm: '8rem', md: '9rem', lg: '9rem' },
 									padding: '1.5rem',
 								}}>
 								<svg width='3rem' height='5rem' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>
@@ -111,21 +113,22 @@ const DocumentCard = ({ document, userCurrency, fromHomePage }: DocumentCardProp
 								fontWeight: 'bold',
 								boxShadow: '0 0.25rem 0.5rem rgba(0, 0, 0, 0.2)',
 								fontFamily: "'Varela Round', sans-serif",
-								fontSize: '0.9rem',
+								fontSize: { xs: '0.7rem', sm: '0.8rem', md: '0.85rem', lg: '0.85rem' },
 							}}>
 							{price?.amount} {userCurrency.toUpperCase()}
 						</Box>
 					)}
 
-					<CardContent sx={{ flexGrow: 1, padding: '20px' }}>
+					<CardContent sx={{ flexGrow: 1, padding: { xs: '0.75rem', sm: '0.75rem', md: '1.25rem', lg: '1.25rem' } }}>
 						<Typography
 							variant='h6'
 							component='h3'
 							sx={{
 								fontFamily: "'Varela Round', sans-serif",
 								fontWeight: 'bold',
-								marginBottom: '12px',
+								marginBottom: { xs: '0.5rem', sm: '0.5rem', md: '0.75rem', lg: '0.75rem' },
 								color: theme.palette.text.primary,
+								fontSize: { xs: '0.9rem', sm: '0.9rem', md: '1rem', lg: '1rem' },
 							}}>
 							{document.name}
 						</Typography>
@@ -159,7 +162,8 @@ const DocumentCard = ({ document, userCurrency, fromHomePage }: DocumentCardProp
 									paddingRight: '0.1rem',
 									whiteSpace: 'pre-wrap',
 									wordBreak: 'break-word',
-									fontSize: '0.8rem',
+									fontSize: { xs: '0.75rem', sm: '0.8rem', md: '0.85rem', lg: '0.85rem' },
+									overflow: 'hidden',
 								}}>
 								{document.description || 'No description available'}
 							</Typography>
@@ -170,7 +174,7 @@ const DocumentCard = ({ document, userCurrency, fromHomePage }: DocumentCardProp
 							sx={{
 								color: theme.palette.text.secondary,
 								fontFamily: "'Varela Round', sans-serif",
-								fontSize: '0.85rem',
+								fontSize: { xs: '0.8rem', sm: '0.8rem', md: '0.85rem', lg: '0.85rem' },
 								mb: 2,
 							}}>
 							{document.pageCount} sayfa
@@ -189,7 +193,7 @@ const DocumentCard = ({ document, userCurrency, fromHomePage }: DocumentCardProp
 										backgroundColor: 'rgba(25, 118, 210, 0.04)',
 									},
 									'fontFamily': "'Varela Round', sans-serif",
-									'fontSize': '0.85rem',
+									'fontSize': { xs: '0.75rem', sm: '0.8rem', md: '0.85rem', lg: '0.85rem' },
 									'textTransform': 'none',
 									'height': '1.85rem',
 								}}>
@@ -212,7 +216,7 @@ const DocumentCard = ({ document, userCurrency, fromHomePage }: DocumentCardProp
 										backgroundColor: theme.palette.primary.dark,
 									},
 									'fontFamily': "'Varela Round', sans-serif",
-									'fontSize': '0.85rem',
+									'fontSize': { xs: '0.75rem', sm: '0.8rem', md: '0.85rem', lg: '0.85rem' },
 									'padding': '0.5rem',
 									'textTransform': 'none',
 									'px': '0',
@@ -233,14 +237,22 @@ const DocumentCard = ({ document, userCurrency, fromHomePage }: DocumentCardProp
 				PaperProps={{
 					sx: {
 						borderRadius: '16px',
-						backgroundColor: theme.palette.background.paper,
+						backgroundColor: 'transparent',
 						width: !document.samplePageImageUrl ? '30rem' : 'fit-content',
-						height: '600px',
-						maxWidth: '90vw',
-						maxHeight: '90vh',
+						height: !document.samplePageImageUrl ? '60vh' : 'fit-content',
+						maxWidth: '80vw',
+						maxHeight: '80vh',
+						objectFit: 'contain',
+						overflow: 'hidden',
 					},
 				}}>
-				<DialogContent sx={{ position: 'relative', padding: 0, height: '100%' }}>
+				<DialogContent
+					sx={{
+						position: 'relative',
+						padding: 0,
+						height: 'auto',
+						width: !document?.samplePageImageUrl ? '100%' : { xs: '80vw', sm: '50vw', md: '25vw', lg: '30vw' },
+					}}>
 					<IconButton
 						onClick={handleCloseSample}
 						sx={{
@@ -254,11 +266,12 @@ const DocumentCard = ({ document, userCurrency, fromHomePage }: DocumentCardProp
 								backgroundColor: 'rgba(255, 255, 255, 0.9)',
 							},
 						}}>
-						<CloseIcon />
+						<CloseIcon fontSize='small' />
 					</IconButton>
 					{document.samplePageImageUrl ? (
 						<Box
 							sx={{
+								width: '100%',
 								height: '100%',
 								display: 'flex',
 								alignItems: 'center',

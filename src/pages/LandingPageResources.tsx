@@ -60,8 +60,8 @@ const LandingPageResources = () => {
 
 	return (
 		<LandingPageLayout>
-			<Box sx={{ paddingTop: '13vh', width: '100%' }}>
-				<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '1rem' }}>
+			<Box sx={{ paddingTop: { xs: '10vh', sm: '10vh', md: '13vh' }, width: '100%' }}>
+				<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '1rem' }}>
 					<Tabs
 						value={value}
 						onChange={handleChange}
@@ -73,7 +73,7 @@ const LandingPageResources = () => {
 							},
 							'& .MuiTab-root': {
 								'fontFamily': "'Varela Round', 'Segoe UI', 'Arial', sans-serif !important",
-								'fontSize': '1.1rem',
+								'fontSize': { xs: '0.8rem', sm: '0.9rem', md: '1rem' },
 								'textTransform': 'none',
 								'color': theme.textColor?.primary.main,
 								'&.Mui-selected': {
@@ -85,11 +85,18 @@ const LandingPageResources = () => {
 						<Tab value='paid' label='Ücretli Kaynaklar' />
 					</Tabs>
 
-					<Box sx={{ margin: '2rem 0 3rem 0', width: '100%' }}>
+					<Box
+						sx={{
+							display: 'flex',
+							justifyContent: 'center',
+							alignItems: 'center',
+							margin: '1rem 0 3rem 0',
+							width: { xs: '90%', sm: '90%', md: '100%', lg: '85%' },
+						}}>
 						{value === 'free' && (
-							<Grid container spacing={3} justifyContent='center' sx={{ maxWidth: '80rem', margin: '0 auto' }}>
+							<Grid container spacing={3} justifyContent='center' alignItems='stretch' sx={{ margin: '0 auto', width: '100%' }}>
 								{freeDocuments.map((doc) => (
-									<Grid item xs={12} sm={6} md={3} key={doc._id}>
+									<Grid item xs={12} sm={6} md={4} lg={4} display='flex' justifyContent='center' key={doc._id}>
 										<DocumentCard document={doc} userCurrency={userCurrency} />
 									</Grid>
 								))}
@@ -103,9 +110,9 @@ const LandingPageResources = () => {
 							</Grid>
 						)}
 						{value === 'paid' && (
-							<Grid container spacing={3} justifyContent='center' sx={{ maxWidth: '80rem', margin: '0 auto' }}>
+							<Grid container spacing={3} justifyContent='center' alignItems='stretch' sx={{ maxWidth: '80rem', margin: '0 auto', width: '100%' }}>
 								{paidDocuments.map((doc) => (
-									<Grid item xs={12} sm={6} md={3} key={doc._id}>
+									<Grid item xs={12} sm={6} md={4} lg={4} display='flex' justifyContent='center' key={doc._id}>
 										<DocumentCard document={doc} userCurrency={userCurrency} fromHomePage={true} />
 									</Grid>
 								))}

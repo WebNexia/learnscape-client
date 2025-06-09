@@ -169,7 +169,7 @@ const DocumentPaymentDialog = ({ document, isPaymentDialogOpen, setIsPaymentDial
 
 	return (
 		<CustomDialog
-			title={`Kaynak Satın Al \n (${document.name})`}
+			title={`Kaynak Satın Al (${document.name})`}
 			titleSx={{
 				fontSize: '1.5rem',
 				fontWeight: 600,
@@ -205,7 +205,7 @@ const DocumentPaymentDialog = ({ document, isPaymentDialogOpen, setIsPaymentDial
 				}}>
 				<Box
 					sx={{
-						'margin': '0 2rem',
+						'margin': { xs: '0 0.75rem', sm: '0 1rem', md: '0 2rem', lg: '0 2rem' },
 						'& .MuiOutlinedInput-root': {
 							'&:hover fieldset': {
 								borderColor: '#3498DB',
@@ -488,7 +488,7 @@ const DocumentPaymentDialog = ({ document, isPaymentDialogOpen, setIsPaymentDial
 										'display': 'flex',
 										'alignItems': 'center',
 										'& .MuiSvgIcon-root': {
-											fontSize: isMobileSize ? '0.8rem' : '1.15rem',
+											fontSize: isMobileSize ? '0.9rem' : '1.15rem',
 										},
 									}}
 								/>
@@ -497,7 +497,7 @@ const DocumentPaymentDialog = ({ document, isPaymentDialogOpen, setIsPaymentDial
 							sx={{
 								'mt': isSmallScreen ? '0rem' : '0.5rem',
 								'& .MuiFormControlLabel-label': {
-									fontSize: isMobileSize ? '0.6rem' : '0.8rem',
+									fontSize: isMobileSize ? '0.65rem' : '0.8rem',
 									fontFamily: DIALOG_FONT,
 								},
 							}}

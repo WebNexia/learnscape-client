@@ -134,7 +134,7 @@ const Header = () => {
 								'color': '#2C3E50',
 								'border': '1px solid #2C3E50',
 								'padding': isMobileSize ? '0.3rem 0.75rem' : '0.35rem 1.5rem',
-								'borderRadius': '1rem',
+								'borderRadius': { xs: '0.5rem', sm: '0.9rem', md: '1.1rem' },
 								'&:hover': {
 									backgroundColor: theme.bgColor?.greenPrimary,
 									color: '#fff',
