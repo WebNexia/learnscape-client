@@ -1,7 +1,6 @@
 import 'react-phone-input-2/lib/material.css';
-import { useRef, useState, useEffect } from 'react';
-import { Box, Fab, Zoom } from '@mui/material';
-import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import { useRef } from 'react';
+import { Box } from '@mui/material';
 import LandingPageLayout from '../components/landingPage/LandingPageLayout';
 import FeaturesSection from '../components/landingPage/FeaturesSection';
 import LandingPageCourses from '../components/landingPage/LandingPageCourses';
@@ -9,56 +8,7 @@ import TestimonialsSection from '../components/landingPage/TestimonialsSection';
 import CTASection from '../components/landingPage/CTASection';
 import HeroSection from '../components/landingPage/HeroSection';
 import StatisticsSection from '../components/landingPage/StatisticsSection';
-
-const ScrollToTop = () => {
-	const [isVisible, setIsVisible] = useState(false);
-
-	useEffect(() => {
-		const toggleVisibility = () => {
-			if (window.pageYOffset > 300) {
-				setIsVisible(true);
-			} else {
-				setIsVisible(false);
-			}
-		};
-
-		window.addEventListener('scroll', toggleVisibility);
-		return () => window.removeEventListener('scroll', toggleVisibility);
-	}, []);
-
-	const scrollToTop = () => {
-		window.scrollTo({
-			top: 0,
-			behavior: 'smooth',
-		});
-	};
-
-	return (
-		<Zoom in={isVisible}>
-			<Fab
-				size='small'
-				onClick={scrollToTop}
-				sx={{
-					'position': 'fixed',
-					'bottom': 35,
-					'left': 20,
-					'backgroundColor': '#3498DB',
-					'color': '#fff',
-					'&:hover': {
-						backgroundColor: '#2980B9',
-						transform: 'translateY(-2px)',
-						boxShadow: '0 4px 12px rgba(44, 62, 80, 0.1)',
-					},
-					'zIndex': 1000,
-					'transition': 'all 0.3s ease',
-					'width': '40px',
-					'height': '40px',
-				}}>
-				<KeyboardArrowUpIcon />
-			</Fab>
-		</Zoom>
-	);
-};
+import ScrollToTopButton from '../components/landingPage/ScrollToTopButton';
 
 const LandingPage = () => {
 	const coursesRef = useRef<HTMLDivElement>(null);
@@ -102,7 +52,7 @@ const LandingPage = () => {
 				<TestimonialsSection />
 				<CTASection coursesRef={coursesRef} />
 			</LandingPageLayout>
-			<ScrollToTop />
+			<ScrollToTopButton />
 		</Box>
 	);
 };

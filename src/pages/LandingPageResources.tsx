@@ -6,6 +6,8 @@ import { DocumentsContext } from '../contexts/DocumentsContextProvider';
 import { useLocation } from 'react-router-dom';
 import DocumentCard from '../components/landingPage/DocumentCard';
 import { Document } from '../interfaces/document';
+import ChatWhatsApp from '../components/landingPage/ChatWhatsApp';
+import ScrollToTopButton from '../components/landingPage/ScrollToTopButton';
 
 interface Price {
 	currency: string;
@@ -117,6 +119,8 @@ const LandingPageResources = () => {
 							</Grid>
 						)}
 					</Box>
+					<ChatWhatsApp />
+					<ScrollToTopButton />
 				</Box>
 			</Box>
 		</LandingPageLayout>

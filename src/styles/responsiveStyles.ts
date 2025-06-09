@@ -2,12 +2,12 @@ export const responsiveStyles = {
 	// Typography
 	typography: {
 		h1: { xs: '2rem', sm: '2.5rem', md: '3rem', lg: '3.5rem' },
-		h2: { xs: '1.75rem', sm: '2rem', md: '2.5rem', lg: '3rem' },
+		h2: { xs: '1.5rem', sm: '2rem', md: '2.25rem', lg: '2.5rem' },
 		h3: { xs: '1.5rem', sm: '1.75rem', md: '2rem', lg: '2.5rem' },
 		h4: { xs: '1.25rem', sm: '1.5rem', md: '1.75rem', lg: '2rem' },
 		h5: { xs: '0.85rem', sm: '1.1rem', md: '1.5rem', lg: '1.75rem' },
 		body1: { xs: '0.875rem', sm: '1rem', md: '1.125rem', lg: '1.25rem' },
-		body2: { xs: '0.75rem', sm: '0.875rem', md: '1rem', lg: '1.125rem' },
+		body2: { xs: '0.85rem', sm: '0.875rem', md: '1rem', lg: '1.125rem' },
 		button: {
 			xs: '0.7rem',
 			sm: '0.85rem',
@@ -27,9 +27,9 @@ export const responsiveStyles = {
 
 	// Spacing
 	spacing: {
-		section: { xs: 2, sm: 4, md: 6, lg: 8 },
-		container: { xs: 1, sm: 2, md: 3, lg: 4 },
-		item: { xs: 1, sm: 2, md: 3, lg: 4 },
+		section: { xs: 6, sm: 4, md: 6, lg: 8 },
+		container: { xs: 0.75, sm: 1, md: 2, lg: 3 },
+		item: { xs: 0.75, sm: 1, md: 1.5, lg: 2 },
 		navigation: { xs: 1, sm: 2, md: 3 },
 		button: {
 			xs: '0.1rem 0.2rem',

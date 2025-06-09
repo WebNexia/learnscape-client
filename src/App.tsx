@@ -33,6 +33,7 @@ const Auth = React.lazy(() => import('./pages/Auth'));
 const LandingPage = React.lazy(() => import('./pages/LandingPage'));
 const LandingPageResources = React.lazy(() => import('./pages/LandingPageResources'));
 const LandingPageCourse = React.lazy(() => import('./pages/LandingPageCourse'));
+const LandingPageCourses = React.lazy(() => import('./pages/LandingPageCourses'));
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 const Courses = React.lazy(() => import('./pages/Courses'));
 const Submissions = React.lazy(() => import('./pages/Submissions'));
@@ -101,6 +102,7 @@ function App() {
 																							<Route path='/' element={<LandingPage />} />
 																							<Route path='/resources' element={<LandingPageResources />} />
 																							<Route path='/course/:title/:courseId' element={<LandingPageCourse />} />
+																							<Route path='/landing-page-courses' element={<LandingPageCourses />} />
 																							<Route path='/auth' element={<Auth setUserRole={setUserRole} />} />
 																							<Route path='/reset-password' element={<PasswordResetPage />} />
 																							<Route path='/verify-email' element={<VerifyEmailPage />} />

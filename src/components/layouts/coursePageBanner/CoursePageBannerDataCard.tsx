@@ -24,8 +24,8 @@ const CoursePageBannerDataCard = ({ title, content, customSettings, fromHomePage
 				display: 'flex',
 				flexDirection: 'column',
 				justifyContent: 'space-between',
-				width: isMobileSize ? '5.5rem' : '9rem',
-				height: isMobileSize ? '4rem' : '6rem',
+				width: { xs: '5.5rem', sm: '6rem', md: '7rem' },
+				height: { xs: '4rem', sm: '4rem', md: '6rem' },
 				backgroundColor: customSettings?.bgColor || theme.bgColor?.common,
 				borderRadius: '0.4rem',
 				margin: '0 0.3rem 0.3rem 0',
@@ -36,14 +36,16 @@ const CoursePageBannerDataCard = ({ title, content, customSettings, fromHomePage
 					fontSize: isMobileSize ? '0.6rem' : '0.85rem',
 					color: customSettings?.color || 'inherit',
 					fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
+					textAlign: 'center',
 				}}>
 				{title}
 			</Typography>
 			<Typography
 				sx={{
 					color: customSettings?.color || theme.textColor?.primary.main,
-					fontSize: isMobileSize ? '0.65rem' : '1rem',
+					fontSize: isMobileSize ? '0.65rem' : '0.85rem',
 					fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
+					textAlign: 'center',
 				}}>
 				{content}
 			</Typography>

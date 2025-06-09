@@ -7,18 +7,7 @@ import logo from '../../assets/logo.png';
 import { Menu } from '@mui/icons-material';
 import LandingPageDrawer from '../landingPage/LandingPageDrawer';
 
-const Header = ({ coursesRef }: { coursesRef: React.RefObject<HTMLDivElement> }) => {
-	const handleScrollToCourses = () => {
-		if (coursesRef.current) {
-			const offset = 100;
-			const elementPosition = coursesRef.current.getBoundingClientRect().top + window.scrollY;
-			window.scrollTo({
-				top: elementPosition - offset,
-				behavior: 'smooth',
-			});
-		}
-	};
-
+const Header = () => {
 	const { isVerySmallScreen, isSmallScreen, isRotated, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
@@ -26,11 +15,41 @@ const Header = ({ coursesRef }: { coursesRef: React.RefObject<HTMLDivElement> })
 	const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
 
 	const navItems = [
-		{ label: 'Ana Sayfa', action: () => navigate('/') },
-		{ label: 'Kurslar', action: handleScrollToCourses },
-		{ label: 'Kaynaklar', action: () => navigate('/resources') },
-		{ label: 'İletişim', action: () => navigate('/contact') },
-		{ label: 'Hakkımızda', action: () => navigate('/about') },
+		{
+			label: 'Ana Sayfa',
+			action: () => {
+				navigate('/');
+				window.scrollTo({ top: 0, behavior: 'smooth' });
+			},
+		},
+		{
+			label: 'Kurslar',
+			action: () => {
+				navigate('/landing-page-courses');
+				window.scrollTo({ top: 0, behavior: 'smooth' });
+			},
+		},
+		{
+			label: 'Kaynaklar',
+			action: () => {
+				navigate('/resources');
+				window.scrollTo({ top: 0, behavior: 'smooth' });
+			},
+		},
+		{
+			label: 'İletişim',
+			action: () => {
+				navigate('/contact');
+				window.scrollTo({ top: 0, behavior: 'smooth' });
+			},
+		},
+		{
+			label: 'Hakkımızda',
+			action: () => {
+				navigate('/about');
+				window.scrollTo({ top: 0, behavior: 'smooth' });
+			},
+		},
 	];
 
 	return (
@@ -61,7 +80,12 @@ const Header = ({ coursesRef }: { coursesRef: React.RefObject<HTMLDivElement> })
 								<Menu sx={{ color: theme.textColor?.primary.main, padding: 0 }} fontSize='small' />
 							</IconButton>
 						)}
-						<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', cursor: 'pointer' }} onClick={() => navigate('/')}>
+						<Box
+							sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', cursor: 'pointer' }}
+							onClick={() => {
+								navigate('/');
+								window.scrollTo({ top: 0, behavior: 'smooth' });
+							}}>
 							<Box
 								component='img'
 								src={logo}
@@ -84,7 +108,6 @@ const Header = ({ coursesRef }: { coursesRef: React.RefObject<HTMLDivElement> })
 								.map((item, index) => (
 									<Box key={index} onClick={item.action} sx={{ ml: index === 0 ? 0 : isSmallScreen ? '0.5rem' : '1rem' }}>
 										<Typography
-											variant='h6'
 											sx={{
 												'fontFamily': 'Varela Round',
 												'color': theme.textColor?.primary.main,
@@ -93,7 +116,7 @@ const Header = ({ coursesRef }: { coursesRef: React.RefObject<HTMLDivElement> })
 													textDecoration: 'underline',
 												},
 												'cursor': 'pointer',
-												'fontSize': isMobileSizeSmall ? '0.65rem' : isMobileSize ? '0.85rem' : undefined,
+												'fontSize': isMobileSizeSmall ? '0.65rem' : isMobileSize ? '0.85rem' : '1.25rem',
 												'transition': 'all 0.3s ease',
 											}}>
 											{item.label}
