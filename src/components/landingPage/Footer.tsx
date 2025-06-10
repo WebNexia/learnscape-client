@@ -3,11 +3,10 @@ import { useContext } from 'react';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import theme from '../../themes';
 import { Instagram, WhatsApp } from '@mui/icons-material';
+import { responsiveStyles } from '../../styles/responsiveStyles';
 
 const Footer = () => {
-	const { isVerySmallScreen, isSmallScreen, isRotated, isRotatedMedium } = useContext(MediaQueryContext);
-	const isMobileSize = isSmallScreen || isRotatedMedium;
-	const isMobileSizeSmall = isVerySmallScreen || isRotated;
+	const { isSmallScreen } = useContext(MediaQueryContext);
 
 	const fontFamilyLandingPage = "'Varela Round', 'Segoe UI', 'Arial', sans-serif !important";
 
@@ -18,38 +17,92 @@ const Footer = () => {
 				flexDirection: 'column',
 				justifyContent: 'center',
 				alignItems: 'center',
-				height: '22vh',
+				height: { xs: 'auto', sm: 'auto', md: 'auto' },
+				minHeight: { xs: '300px', sm: 'auto' },
 				backgroundColor: theme.bgColor?.primary,
 				position: 'relative',
 				bottom: 0,
 				width: '100%',
+				py: { xs: 3, sm: 3, md: 2 },
 				backgroundImage: `radial-gradient(circle, rgba(52,73,94,0.3) 1px, transparent 1px)`,
 				backgroundSize: '28px 28px',
 			}}>
-			<Container>
-				<Box sx={{ display: 'flex', justifyContent: 'space-between', padding: '0rem 5rem', maxWidth: '120rem', width: '100%' }}>
-					<Box>
-						<Typography variant='h4' sx={{ color: theme.textColor?.common.main, mb: '1rem', fontFamily: fontFamilyLandingPage }}>
+			<Container maxWidth='lg' sx={{ px: responsiveStyles.spacing.container }}>
+				<Box
+					sx={{
+						display: 'flex',
+						flexDirection: { xs: 'column', sm: 'row' },
+						justifyContent: 'space-between',
+						gap: { xs: 3, sm: 4 },
+						width: '100%',
+						px: { xs: 2, sm: 4, md: 5 },
+					}}>
+					<Box sx={{ textAlign: { xs: 'center', sm: 'left' } }}>
+						<Typography
+							variant='body2'
+							sx={{
+								color: theme.textColor?.common.main,
+								mb: responsiveStyles.spacing.item,
+								fontSize: responsiveStyles.typography.body2,
+								fontFamily: fontFamilyLandingPage,
+							}}>
 							Kaizenglish
 						</Typography>
-						<Typography variant='body2' sx={{ color: theme.textColor?.common.main, fontFamily: fontFamilyLandingPage }}>
+						<Typography
+							variant='body2'
+							sx={{
+								color: theme.textColor?.common.main,
+								fontSize: { xs: '0.65rem', sm: '0.85rem', md: '0.9rem' },
+								fontFamily: fontFamilyLandingPage,
+							}}>
 							275 New North Road,
 						</Typography>
-						<Typography variant='body2' sx={{ color: theme.textColor?.common.main, fontFamily: fontFamilyLandingPage }}>
-							{' '}
+						<Typography
+							variant='body2'
+							sx={{
+								color: theme.textColor?.common.main,
+								fontSize: { xs: '0.65rem', sm: '0.85rem', md: '0.9rem' },
+								fontFamily: fontFamilyLandingPage,
+							}}>
 							London, England, N1 7AA
 						</Typography>
 
-						<Box component='a' href='https://www.instagram.com/learnwithlondoner/' target='_blank' rel='noopener noreferrer'>
-							<Instagram sx={{ color: theme.textColor?.common.main, mt: '0.75rem' }} />
+						<Box
+							component='a'
+							href='https://www.instagram.com/learnwithlondoner/'
+							target='_blank'
+							rel='noopener noreferrer'
+							sx={{
+								display: 'inline-block',
+								mt: responsiveStyles.spacing.item,
+							}}>
+							<Instagram
+								sx={{
+									color: theme.textColor?.common.main,
+									fontSize: { xs: '0.85rem', sm: '1rem', md: '1.25rem' },
+								}}
+							/>
 						</Box>
 					</Box>
-					<Box>
-						<Typography variant='h4' sx={{ color: theme.textColor?.common.main, mb: '1rem', fontFamily: fontFamilyLandingPage }}>
-							{/* Contact Us */}
+
+					<Box sx={{ textAlign: { xs: 'center', sm: 'left' } }}>
+						<Typography
+							variant='body2'
+							sx={{
+								color: theme.textColor?.common.main,
+								mb: responsiveStyles.spacing.item,
+								fontSize: responsiveStyles.typography.body2,
+								fontFamily: fontFamilyLandingPage,
+							}}>
 							İletişim
 						</Typography>
-						<Typography variant='body2' sx={{ color: theme.textColor?.common.main, fontFamily: fontFamilyLandingPage }}>
+						<Typography
+							variant='body2'
+							sx={{
+								color: theme.textColor?.common.main,
+								fontSize: { xs: '0.65rem', sm: '0.85rem', md: '0.9rem' },
+								fontFamily: fontFamilyLandingPage,
+							}}>
 							info@kaizenglish.com
 						</Typography>
 						<Box
@@ -57,35 +110,79 @@ const Footer = () => {
 							href={`https://wa.me/447498163458?text=${encodeURIComponent('Feel free to ask us anything about our courses!')}`}
 							target='_blank'
 							rel='noopener noreferrer'
-							sx={{ display: 'flex', alignItems: 'center', mt: '0.5rem', cursor: 'pointer' }}>
-							<Typography variant='body2' sx={{ color: theme.textColor?.common.main, fontFamily: fontFamilyLandingPage }}>
+							sx={{
+								display: 'flex',
+								justifyContent: { xs: 'center', sm: 'left' },
+								alignItems: 'center',
+								mt: responsiveStyles.spacing.item,
+								cursor: 'pointer',
+							}}>
+							<Typography
+								variant='body2'
+								sx={{
+									color: theme.textColor?.common.main,
+									fontSize: { xs: '0.65rem', sm: '0.85rem', md: '0.9rem' },
+									fontFamily: fontFamilyLandingPage,
+								}}>
 								WhatsApp
 							</Typography>
-							<WhatsApp sx={{ ml: '0.25rem', color: theme.textColor?.greenSecondary.main }} fontSize='small' />
+							<WhatsApp
+								sx={{
+									ml: '0.25rem',
+									color: theme.textColor?.greenSecondary.main,
+									fontSize: { xs: '0.85rem', sm: '1rem', md: '1.25rem' },
+								}}
+							/>
 						</Box>
 					</Box>
-					<Box>
-						<Typography variant='h4' sx={{ color: theme.textColor?.common.main, mb: '1rem', fontFamily: fontFamilyLandingPage }}>
-							{/* Corporate */}
+
+					<Box sx={{ textAlign: { xs: 'center', sm: 'left' } }}>
+						<Typography
+							variant='body2'
+							sx={{
+								color: theme.textColor?.common.main,
+								mb: responsiveStyles.spacing.item,
+								fontSize: responsiveStyles.typography.body2,
+								fontFamily: fontFamilyLandingPage,
+							}}>
 							Kurumsal
 						</Typography>
-						<Typography variant='body2' sx={{ color: theme.textColor?.common.main, fontFamily: fontFamilyLandingPage }}>
-							{/* Terms of Service */}Kullanıcı Sözleşmesi
+						<Typography
+							variant='body2'
+							sx={{
+								color: theme.textColor?.common.main,
+								fontSize: { xs: '0.65rem', sm: '0.85rem', md: '0.9rem' },
+								fontFamily: fontFamilyLandingPage,
+							}}>
+							Kullanıcı Sözleşmesi
 						</Typography>
-						<Typography variant='body2' sx={{ color: theme.textColor?.common.main, fontFamily: fontFamilyLandingPage }}>
-							{/* Privacy */}Gizlilik
+						<Typography
+							variant='body2'
+							sx={{
+								color: theme.textColor?.common.main,
+								fontSize: { xs: '0.65rem', sm: '0.85rem', md: '0.9rem' },
+								fontFamily: fontFamilyLandingPage,
+							}}>
+							Gizlilik
 						</Typography>
 					</Box>
 				</Box>
 			</Container>
-			<Box sx={{ display: 'flex', justifyContent: 'center', position: 'absolute', bottom: 1, width: '100%' }}>
+
+			<Box
+				sx={{
+					display: 'flex',
+					justifyContent: 'center',
+					position: 'absolute',
+					bottom: 1,
+					width: '100%',
+				}}>
 				<Typography
 					sx={{
-						fontSize: isSmallScreen ? '0.55rem' : '0.75rem',
+						fontSize: isSmallScreen ? '0.5rem' : '0.65rem',
 						color: theme.textColor?.common.main,
 						fontFamily: fontFamilyLandingPage,
 					}}>
-					{/* &copy; 2025 Webnexia Software Solutions Ltd. All rights reserved. */}
 					&copy; 2025 Webnexia Software Solutions Ltd. Tüm hakları saklıdır.
 				</Typography>
 			</Box>

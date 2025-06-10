@@ -6,8 +6,8 @@ const ChatWhatsApp = () => {
 		<Box
 			sx={{
 				position: 'fixed',
-				bottom: '2rem',
-				right: '2rem',
+				bottom: { xs: '1rem', sm: '1rem', md: '2rem' },
+				right: { xs: '0.5rem', sm: '1rem', md: '2rem' },
 				zIndex: 1000,
 			}}>
 			<Tooltip
@@ -22,14 +22,14 @@ const ChatWhatsApp = () => {
 					},
 				}}>
 				<IconButton
-					href='https://wa.me/905555555555'
+					href='https://wa.me/447498163458'
 					target='_blank'
 					rel='noopener noreferrer'
 					sx={{
 						'backgroundColor': '#25D366',
 						'color': '#fff',
-						'width': '60px',
-						'height': '60px',
+						'width': { xs: '3rem', sm: '3.5rem', md: '4rem' },
+						'height': { xs: '3rem', sm: '3.5rem', md: '4rem' },
 						'boxShadow': '0 4px 20px rgba(0,0,0,0.2)',
 						'&:hover': {
 							backgroundColor: '#128C7E',
@@ -60,7 +60,7 @@ const ChatWhatsApp = () => {
 							},
 						},
 					}}>
-					<WhatsAppIcon sx={{ fontSize: 35 }} />
+					<WhatsAppIcon sx={{ fontSize: { xs: '1.5rem', sm: '2rem', md: '2rem' } }} />
 				</IconButton>
 			</Tooltip>
 		</Box>

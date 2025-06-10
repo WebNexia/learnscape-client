@@ -14,7 +14,6 @@ import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 import { getPriceForCountry } from '../../../utils/getPriceForCountry';
 import { setCurrencySymbol } from '../../../utils/setCurrencySymbol';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
-import { truncateText } from '../../../utils/utilText';
 import { useGeoLocation } from '../../../hooks/useGeoLocation';
 
 interface CoursePageBannerProps {
@@ -151,11 +150,15 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 		<Paper
 			elevation={10}
 			sx={{
-				width: fromHomePage ? '57.5vw' : '90%',
-				height: isRotated ? '18rem' : fromHomePage ? '48vh' : '45vh',
-				margin:
+				'width': fromHomePage ? { xs: '90%', sm: '80%', md: '57.5vw' } : '90%',
+				'height': { xs: 'auto', sm: 'auto', md: 'auto', lg: fromHomePage ? '48vh' : 'auto' },
+				'margin':
 					fromHomePage && !isSmallScreen && !isRotatedMedium ? '3rem 0 2rem 0' : isSmallScreen || isRotatedMedium ? '1.25rem 0 1.5rem 0' : '2rem 0',
-				backgroundColor: fromHomePage ? theme.bgColor?.lessonInProgress : theme.palette.primary.main,
+				'backgroundColor': fromHomePage ? theme.bgColor?.lessonInProgress : theme.palette.primary.main,
+				'padding': '0.75rem',
+				'&:hover': {
+					transform: fromHomePage ? 'translateY(-5px)' : 'none',
+				},
 			}}>
 			<Snackbar
 				open={displayEnrollmentMsg}
@@ -186,17 +189,17 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 					display: 'flex',
 					flexDirection: 'row',
 					justifyContent: 'space-between',
-					height: isRotated ? '18rem' : fromHomePage ? '48vh' : '45vh',
-					padding: fromHomePage ? '1rem' : '0',
+					height: '100%',
+					padding: { xs: '1rem 0rem 1rem 1rem', sm: '1rem', md: '1rem' },
 				}}>
 				<Box
 					sx={{
 						display: 'flex',
 						flexDirection: 'column',
-						margin: isVerySmallScreen ? '1rem 2rem 1rem 1rem' : '1rem 3rem 1rem 2rem',
-						flex: 3,
+						margin: { xs: 'auto 1rem auto 0rem', sm: 'auto 1rem auto 0rem', md: 'auto 1rem auto 0rem' },
+						flex: { xs: 4, sm: 4, md: 3 },
 						position: 'relative',
-						height: fromHomePage ? '40vh' : '37.5vh',
+						height: 'fit-content',
 					}}>
 					<Box>
 						{!fromHomePage && (
@@ -234,22 +237,19 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 							variant='body2'
 							sx={{
 								color: theme.textColor?.common.main,
-								fontSize: isSmallScreen ? '0.65rem' : '0.85rem',
+								fontSize: { xs: '0.75rem', sm: '0.85rem' },
 								lineHeight: isSmallScreen ? 1.6 : 1.7,
 								textAlign: 'left',
 								fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
+								mb: '3.5rem',
 							}}>
-							{isVerySmallScreen
-								? truncateText(course.description, 200)
-								: isSmallScreen
-									? truncateText(course.description, 250)
-									: truncateText(course.description, 450)}
+							{course.description}
 						</Typography>
 						{!isEnrolledStatus && !course.isExpired ? (
 							<CustomSubmitButton
 								variant='contained'
 								sx={{
-									width: isMobileSize ? '3rem' : '6rem',
+									width: 'fit-content',
 									position: 'absolute',
 									bottom: isRotated ? 60 : 5,
 									fontSize: isMobileSize ? '0.75rem' : '0.9rem',
@@ -296,11 +296,13 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 				<Box
 					sx={{
 						display: 'flex',
-						flexDirection: isVerySmallScreen ? 'column' : ' row',
+						flexDirection: { xs: 'column', sm: 'column', md: 'row' },
 						justifyContent: 'center',
 						alignItems: 'center',
-						flex: 2,
+						flex: { xs: 1, sm: 1, md: 1.5 },
 						mr: isRotatedMedium ? '1rem' : '0rem',
+						height: 'fit-content',
+						my: 'auto',
 					}}>
 					<Box>
 						<CoursePageBannerDataCard

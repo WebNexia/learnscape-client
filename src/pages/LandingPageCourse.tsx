@@ -8,6 +8,7 @@ import CoursePageBanner from '../components/layouts/coursePageBanner/CoursePageB
 import ChatWhatsApp from '../components/landingPage/ChatWhatsApp';
 import { LinkedIn, Language } from '@mui/icons-material';
 import theme from '../themes';
+import ScrollToTopButton from '../components/landingPage/ScrollToTopButton';
 
 const InstructorCard = ({ instructor }: { instructor: SingleCourse['instructor'] }) => {
 	// Ensure URLs have proper protocol
@@ -20,27 +21,32 @@ const InstructorCard = ({ instructor }: { instructor: SingleCourse['instructor']
 	return (
 		<Card
 			sx={{
-				'width': '30vw',
-				'maxWidth': '400px',
-				'height': '48vh',
+				'width': { xs: '85%', sm: '60%', md: '30vw' },
+				'maxWidth': '35rem',
+				'minHeight': '15rem',
+				'height': { xs: 'auto', sm: 'auto', md: 'auto', lg: '48vh' },
+				'maxHeight': { md: '480px' },
 				'borderRadius': '0.5rem',
 				'boxShadow': '0 4px 20px rgba(0,0,0,0.1)',
 				'background': 'linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%)',
 				'transition': 'transform 0.2s ease-in-out',
+				'display': 'flex', // ✅ ensures flexible layout inside
+				'flexDirection': 'column',
+				'mt': { xs: '-1rem', sm: '-1rem', md: '1rem' },
+				'justifyContent': 'space-between',
 				'&:hover': {
 					transform: 'translateY(-5px)',
 				},
-				'mt': '1rem',
 				'position': 'relative',
 			}}>
-			<CardContent sx={{ p: 3, position: 'absolute', top: 0, bottom: '0', width: '100%' }}>
+			<CardContent sx={{ p: 3, flexGrow: 1 }}>
 				<Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
 					<Avatar
 						src={instructor.imageUrl}
 						alt={instructor.name}
 						sx={{
-							width: 100,
-							height: 100,
+							width: { xs: '4.5rem', sm: '5.5rem' },
+							height: { xs: '4.5rem', sm: '5.5rem' },
 							border: '3px solid',
 							borderColor: theme.palette.primary.main,
 						}}
@@ -55,11 +61,11 @@ const InstructorCard = ({ instructor }: { instructor: SingleCourse['instructor']
 					</Box>
 				</Box>
 
-				<Typography variant='body2' color='text.secondary' sx={{ mb: 3, fontFamily: 'Varela Round' }}>
+				<Typography variant='body2' color='text.secondary' sx={{ mb: 2, fontFamily: 'Varela Round', fontSize: { xs: '0.75rem', sm: '0.85rem' } }}>
 					{instructor.bio}
 				</Typography>
 
-				<Stack direction='row' spacing={1} sx={{ mb: 2, flexWrap: 'wrap', gap: 1 }}>
+				<Stack direction='row' spacing={1} sx={{ mb: 2, flexWrap: 'wrap', gap: 0.5 }}>
 					{instructor.expertise.map((skill, index) => (
 						<Chip
 							key={index}
@@ -77,7 +83,18 @@ const InstructorCard = ({ instructor }: { instructor: SingleCourse['instructor']
 					))}
 				</Stack>
 
-				<Box sx={{ display: 'flex', gap: 1, position: 'absolute', bottom: '1rem', right: '1rem' }}>
+				<Box
+					sx={{
+						display: 'flex',
+						justifyContent: 'flex-end',
+						gap: { xs: 0.25, sm: 0.25 },
+						mt: 'auto',
+						mb: '-1.25rem',
+						mr: '-1.25rem',
+						position: 'absolute',
+						bottom: '1.5rem',
+						right: '1.5rem',
+					}}>
 					<IconButton
 						href={formatUrl(instructor.linkedInUrl)}
 						target='_blank'
@@ -85,7 +102,7 @@ const InstructorCard = ({ instructor }: { instructor: SingleCourse['instructor']
 							'color': theme.palette.primary.main,
 							'&:hover': { backgroundColor: theme.palette.primary.light, color: '#fff' },
 						}}>
-						<LinkedIn />
+						<LinkedIn fontSize='small' />
 					</IconButton>
 
 					<IconButton
@@ -95,7 +112,7 @@ const InstructorCard = ({ instructor }: { instructor: SingleCourse['instructor']
 							'color': theme.palette.primary.main,
 							'&:hover': { backgroundColor: theme.palette.primary.light, color: '#fff' },
 						}}>
-						<Language />
+						<Language fontSize='small' />
 					</IconButton>
 				</Box>
 			</CardContent>
@@ -121,11 +138,12 @@ const LandingPageCourse = () => {
 			<Box
 				sx={{
 					display: 'flex',
+					flexDirection: { xs: 'column', sm: 'column', md: 'row' },
 					justifyContent: 'center',
 					alignItems: 'center',
 					width: '100%',
 					paddingTop: '13vh',
-					gap: '3rem',
+					gap: '2rem',
 					flexWrap: { xs: 'wrap', md: 'nowrap' },
 				}}>
 				{course && (
@@ -137,6 +155,7 @@ const LandingPageCourse = () => {
 			</Box>
 			<Box sx={{ margin: '1rem 0 3rem 0' }}>
 				<ChatWhatsApp />
+				<ScrollToTopButton />
 			</Box>
 		</LandingPageLayout>
 	);

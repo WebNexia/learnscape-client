@@ -44,8 +44,7 @@ const CustomDialog = ({
 				...PaperProps,
 			}}
 			BackdropProps={BackdropProps}
-			sx={{ ...dialogPaperSx }}
-		>
+			sx={{ ...dialogPaperSx }}>
 			{title && (
 				<DialogTitle
 					variant={isMobileSize ? 'h6' : 'h5'}
@@ -53,9 +52,8 @@ const CustomDialog = ({
 						marginBottom: isMobileSize ? '-0.5rem' : '0rem',
 						paddingTop: isMobileSize ? '1rem' : '2rem',
 						...titleSx,
-						fontSize: isMobileSize ? '0.9rem' : undefined,
-					}}
-				>
+						fontSize: { xs: '1rem', sm: '1.25rem' },
+					}}>
 					{title}
 				</DialogTitle>
 			)}

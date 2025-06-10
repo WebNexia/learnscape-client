@@ -240,8 +240,8 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 								<Tooltip title='Light Mode' placement='top'>
 									<IconButton
 										sx={{
-											color: theme.textColor?.common.main,
-											margin: '0 0.75rem',
+											'color': theme.textColor?.common.main,
+											'margin': '0 0.75rem',
 											':hover': {
 												backgroundColor: 'transparent',
 											},
@@ -258,8 +258,8 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 								<Tooltip title='Dark Mode' placement='top'>
 									<IconButton
 										sx={{
-											color: theme.textColor?.common.main,
-											margin: '0 0.75rem',
+											'color': theme.textColor?.common.main,
+											'margin': '0 0.75rem',
 											':hover': {
 												backgroundColor: 'transparent',
 											},

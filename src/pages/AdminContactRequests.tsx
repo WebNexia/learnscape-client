@@ -8,8 +8,8 @@ import { useContext, useState, useEffect } from 'react';
 import CustomTableHead from '../components/layouts/table/CustomTableHead';
 import CustomTableCell from '../components/layouts/table/CustomTableCell';
 import CustomTablePagination from '../components/layouts/table/CustomTablePagination';
-import { InfoRequestsContext } from '../contexts/InfoRequestsContextProvider';
-import { InfoRequest } from '../interfaces/infoRequest';
+import { ContactRequestsContext } from '../contexts/ContactRequestsContextProvider';
+import { ContactRequest } from '../interfaces/contactRequest';
 import CustomActionBtn from '../components/layouts/table/CustomActionBtn';
 import { dateFormatter, dateTimeFormatter } from '@utils/dateFormatter';
 import { Delete, Visibility } from '@mui/icons-material';
@@ -31,38 +31,38 @@ const columns = [
 	{ key: 'actions', label: 'Actions' },
 ];
 
-const AdminInfoRequests = () => {
+const AdminContactRequests = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
-	const { infoRequests, loading, error, removeRequest, numberOfPages, requestsPageNumber, setRequestsPageNumber, fetchInfoRequests } =
-		useContext(InfoRequestsContext);
+	const { contactRequests, loading, error, removeRequest, numberOfPages, requestsPageNumber, setRequestsPageNumber, fetchContactRequests } =
+		useContext(ContactRequestsContext);
 
-	const [orderBy, setOrderBy] = useState<keyof InfoRequest>('createdAt');
+	const [orderBy, setOrderBy] = useState<keyof ContactRequest>('createdAt');
 	const [order, setOrder] = useState<'asc' | 'desc'>('desc');
 
 	// Modal states
 	const [viewModalOpen, setViewModalOpen] = useState<{ [key: number]: boolean }>({});
 	const [deleteModalOpen, setDeleteModalOpen] = useState<{ [key: number]: boolean }>({});
-	const [selectedRequest, setSelectedRequest] = useState<InfoRequest | null>(null);
+	const [selectedRequest, setSelectedRequest] = useState<ContactRequest | null>(null);
 
 	useEffect(() => {
-		fetchInfoRequests(requestsPageNumber);
+		fetchContactRequests(requestsPageNumber);
 	}, [requestsPageNumber]);
 
 	const handlePageChange = (newPage: number) => {
 		setRequestsPageNumber(newPage);
 	};
 
-	const handleSort = (property: keyof InfoRequest) => {
+	const handleSort = (property: keyof ContactRequest) => {
 		const isAsc = orderBy === property && order === 'asc';
 		setOrder(isAsc ? 'desc' : 'asc');
 		setOrderBy(property);
 	};
 
-	const handleViewRequest = (index: number, request: InfoRequest) => {
+	const handleViewRequest = (index: number, request: ContactRequest) => {
 		setSelectedRequest(request);
 		setViewModalOpen((prev) => ({ ...prev, [index]: true }));
 	};
@@ -72,7 +72,7 @@ const AdminInfoRequests = () => {
 		setSelectedRequest(null);
 	};
 
-	const handleDeleteRequest = (index: number, request: InfoRequest) => {
+	const handleDeleteRequest = (index: number, request: ContactRequest) => {
 		setSelectedRequest(request);
 		setDeleteModalOpen((prev) => ({ ...prev, [index]: true }));
 	};
@@ -86,7 +86,7 @@ const AdminInfoRequests = () => {
 		if (!selectedRequest) return;
 
 		try {
-			await axios.delete(`${base_url}/course-information-requests/${selectedRequest._id}`);
+			await axios.delete(`${base_url}/contact-requests/${selectedRequest._id}`);
 			removeRequest(selectedRequest._id);
 			// Close all modals
 			setDeleteModalOpen({});
@@ -98,7 +98,7 @@ const AdminInfoRequests = () => {
 	};
 
 	const handleDownload = () => {
-		const excelData = infoRequests.map((request: InfoRequest) => ({
+		const excelData = contactRequests.map((request: ContactRequest) => ({
 			'First Name': request.firstName,
 			'Last Name': request.lastName,
 			'Email': request.email,
@@ -110,15 +110,15 @@ const AdminInfoRequests = () => {
 
 		const ws = XLSX.utils.json_to_sheet(excelData);
 		const wb = XLSX.utils.book_new();
-		XLSX.utils.book_append_sheet(wb, ws, 'Info Requests');
-		XLSX.writeFile(wb, `information-requests-${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+		XLSX.utils.book_append_sheet(wb, ws, 'Contact Requests');
+		XLSX.writeFile(wb, `contact-requests-${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
 	};
 
 	if (loading) return <Typography>Loading...</Typography>;
 	if (error) return <Typography color='error'>{error}</Typography>;
 
 	return (
-		<DashboardPagesLayout pageName='Information Requests' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
+		<DashboardPagesLayout pageName='Contact Requests' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
 			<Box sx={{ width: '100%', height: '100%' }}>
 				<Box
 					sx={{
@@ -135,7 +135,8 @@ const AdminInfoRequests = () => {
 							onClick={handleDownload}
 							sx={{
 								fontSize: isMobileSize ? '0.7rem' : undefined,
-							}}>
+							}}
+							disabled={contactRequests.length === 0}>
 							Download
 						</CustomSubmitButton>
 					</Box>
@@ -149,10 +150,10 @@ const AdminInfoRequests = () => {
 						width: '100%',
 					}}>
 					<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>
-						<CustomTableHead<InfoRequest> orderBy={orderBy} order={order} handleSort={handleSort} columns={columns} />
+						<CustomTableHead<ContactRequest> orderBy={orderBy} order={order} handleSort={handleSort} columns={columns} />
 						<TableBody>
-							{infoRequests &&
-								infoRequests?.map((req: InfoRequest, index) => {
+							{contactRequests &&
+								contactRequests?.map((req: ContactRequest, index) => {
 									return (
 										<TableRow key={req._id}>
 											<CustomTableCell value={req.firstName + ' ' + req.lastName} />
@@ -242,4 +243,4 @@ const AdminInfoRequests = () => {
 	);
 };
 
-export default AdminInfoRequests;
+export default AdminContactRequests;

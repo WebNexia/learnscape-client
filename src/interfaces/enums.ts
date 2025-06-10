@@ -25,6 +25,8 @@ export const enum AuthFormErrorMessages {
 	// PASSWORD_NO_SPECIAL_CHAR = 'Şifre en az bir özel karakter içermelidir.',
 	NETWORK_ERROR = 'Ağ hatası oluştu. Lütfen internet bağlantınızı kontrol edin ve tekrar deneyin.',
 	INVALID_PHONE_NUMBER = 'Lütfen geçerli bir telefon numarası girin.',
+	USERNAME_TOO_SHORT = 'Kullanıcı adı en az 5 karakter olmalıdır',
+	USERNAME_TOO_LONG = 'Kullanıcı adı en fazla 15 karakter olmalıdır',
 }
 
 export const enum PasswordUpdateErrorMessages {

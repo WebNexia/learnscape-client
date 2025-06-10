@@ -60,11 +60,11 @@ const DashboardCourseCard = ({
 		<Card
 			sx={{
 				'display': !isEnrolled && displayMyCourses ? 'none' : 'block',
-				'height': isMobileSize ? '20rem' : '25rem',
-				'width': isMobileSize ? '14rem' : '19rem',
+				'height': isMobileSize ? '21rem' : '25rem',
+				'width': isMobileSize ? '15rem' : '19rem',
 				'borderRadius': '0.65rem',
 				'position': 'relative',
-				'margin': '0 1rem 3rem 1rem',
+				'margin': '0 1rem 2rem 1rem',
 				'boxShadow': '0.1rem 0rem 0.4rem 0.1rem rgba(0,0,0,0.15)',
 				'transition': '0.3s',
 				':hover': {
@@ -96,6 +96,7 @@ const DashboardCourseCard = ({
 						fontSize: '0.7rem',
 						fontWeight: 500,
 						zIndex: 1,
+						fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
 					}}>
 					<Typography variant='body2' sx={{ color: theme.textColor?.common.main, fontSize: isMobileSize ? '0.7rem' : '0.8rem' }}>
 						Closed
@@ -111,7 +112,13 @@ const DashboardCourseCard = ({
 				}
 			/>
 			<CardContent sx={{ padding: '1rem 1.5rem' }}>
-				<Typography sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem', textAlign: 'center', color: theme.palette.primary.main }}>
+				<Typography
+					sx={{
+						fontSize: isMobileSize ? '0.9rem' : '1rem',
+						textAlign: 'center',
+						color: theme.palette.primary.main,
+						fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
+					}}>
 					{course.title}
 				</Typography>
 				<Typography
@@ -122,6 +129,7 @@ const DashboardCourseCard = ({
 						lineHeight: isMobileSize ? '1.4' : '1.5',
 						marginTop: isMobileSize ? '0.5rem' : '0.75rem',
 						width: '100%',
+						fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
 					}}>
 					{truncateText(course.description, 200)}
 				</Typography>
@@ -141,7 +149,13 @@ const DashboardCourseCard = ({
 						width: '90%',
 						alignSelf: 'center',
 					}}>
-					<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', textAlign: 'center', marginBottom: '0.2rem' }}>
+					<Typography
+						sx={{
+							fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+							textAlign: 'center',
+							marginBottom: '0.2rem',
+							fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
+						}}>
 						{isCourseCompleted ? 'Completed' : 'In Progress'}
 					</Typography>
 					<LinearProgress variant='determinate' color='success' value={isCourseCompleted ? 100 : 70} />
@@ -161,6 +175,7 @@ const DashboardCourseCard = ({
 								fontSize: isMobileSize ? '0.7rem' : '0.8rem',
 								visibility: isEnrolled ? 'hidden' : 'visible',
 								color: theme.palette.primary.main,
+								fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
 							}}>
 							{course?.instructor?.name}
 						</Typography>

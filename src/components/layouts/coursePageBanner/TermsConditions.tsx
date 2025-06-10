@@ -163,6 +163,17 @@ const TermsConditions = ({ termsConditionsModalOpen, setTermsConditionsModalOpen
 						- Adres: [şirket adresiniz]
 					</Typography>
 				</Box>
+				<CustomCancelButton
+					sx={{
+						alignSelf: 'end',
+						width: isMobileSize ? '20%' : '10%',
+						margin: isMobileSize ? '0 1rem 1rem 0' : '0 2rem 1rem 0',
+						padding: 0,
+						fontFamily: DIALOG_FONT,
+					}}
+					onClick={() => setTermsConditionsModalOpen(false)}>
+					Kapat
+				</CustomCancelButton>
 			</CustomDialog>
 		);
 	}

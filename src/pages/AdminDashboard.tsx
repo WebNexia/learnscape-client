@@ -1,4 +1,4 @@
-import { Box, Grid, } from '@mui/material';
+import { Box, Grid } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { useContext, useEffect, useState } from 'react';
 import { UsersContext } from '../contexts/UsersContextProvider';
@@ -17,7 +17,7 @@ import { useNavigate } from 'react-router-dom';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 import DashboardQuizSubmissions from '../components/layouts/dashboard/DashboardQuizSubmissions';
 import DashboardCommunityTopics from '../components/layouts/dashboard/DashboardCommunityTopics';
-import AdminInformationRequests from '../components/layouts/dashboard/AdminInformationRequests';
+import AdminContactRequests from '../components/layouts/dashboard/AdminContactRequests';
 
 Chart.register(...registerables);
 
@@ -172,9 +172,9 @@ const AdminDashboard = () => {
 						sm={2.4}
 						xs={6}
 						onClick={() => {
-							navigate(`/admin/info-requests/user/${user?._id}`);
+							navigate(`/admin/contact-requests/user/${user?._id}`);
 						}}>
-						<AdminInformationRequests />
+						<AdminContactRequests />
 					</Grid>
 				</Grid>
 			</Box>

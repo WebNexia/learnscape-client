@@ -1,7 +1,8 @@
-import { Box, Typography } from '@mui/material';
+import { Box, DialogActions, Typography } from '@mui/material';
 import CustomDialog from '../layouts/dialog/CustomDialog';
 import { useContext } from 'react';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
+import CustomCancelButton from '../../components/forms/customButtons/CustomCancelButton';
 
 interface DocumentTermsConditionsProps {
 	termsConditionsModalOpen: boolean;
@@ -38,7 +39,6 @@ const DocumentTermsConditions = ({ termsConditionsModalOpen, setTermsConditionsM
 				sx: {
 					height: 'auto',
 					maxHeight: '90vh',
-					overflow: 'visible',
 					borderRadius: DIALOG_BORDERRADIUS,
 					background: DIALOG_BG,
 					boxShadow: DIALOG_BOXSHADOW,
@@ -87,6 +87,11 @@ Your personal information is protected in accordance with our privacy policy.
 The accuracy and currency of resources provided through the platform are not guaranteed.`}
 				</Typography>
 			</Box>
+			<DialogActions>
+				<CustomCancelButton onClick={() => setTermsConditionsModalOpen(false)} sx={{ margin: '0 1rem 1rem 0', fontFamily: DIALOG_FONT }}>
+					Kapat
+				</CustomCancelButton>
+			</DialogActions>
 		</CustomDialog>
 	);
 };

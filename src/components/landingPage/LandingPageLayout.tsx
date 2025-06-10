@@ -25,7 +25,7 @@ const LandingPageLayout = ({ children, coursesRef }: LandingPageLayoutProps) => 
 				minHeight: '100vh',
 				position: 'relative',
 			}}>
-			<Header coursesRef={coursesRef ?? defaultRef} />
+			<Header />
 			<Box sx={{ flexGrow: 1 }}>{children}</Box>
 			<Footer />
 		</Box>
