@@ -39,14 +39,14 @@ const Header = () => {
 		{
 			label: 'İletişim',
 			action: () => {
-				navigate('/contact');
+				navigate('/contact-us');
 				window.scrollTo({ top: 0, behavior: 'smooth' });
 			},
 		},
 		{
 			label: 'Hakkımızda',
 			action: () => {
-				navigate('/about');
+				navigate('/about-us');
 				window.scrollTo({ top: 0, behavior: 'smooth' });
 			},
 		},

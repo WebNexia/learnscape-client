@@ -26,7 +26,7 @@ import CommunityContextProvider from './contexts/CommunityContextProvider';
 import EventsContextProvider from './contexts/EventsContextProvider';
 import PaymentsContextProvider from './contexts/PaymentsContextProvider';
 import PromoCodesContextProvider from './contexts/PromoCodesContextProvider';
-import InfoRequestsProvider from './contexts/InfoRequestsContextProvider';
+import ContactRequestsProvider from './contexts/ContactRequestsContextProvider';
 
 // Lazy load pages
 const Auth = React.lazy(() => import('./pages/Auth'));
@@ -34,6 +34,8 @@ const LandingPage = React.lazy(() => import('./pages/LandingPage'));
 const LandingPageResources = React.lazy(() => import('./pages/LandingPageResources'));
 const LandingPageCourse = React.lazy(() => import('./pages/LandingPageCourse'));
 const LandingPageCourses = React.lazy(() => import('./pages/LandingPageCourses'));
+const AboutUs = React.lazy(() => import('./pages/AboutUs'));
+const ContactUs = React.lazy(() => import('./pages/ContactUs'));
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 const Courses = React.lazy(() => import('./pages/Courses'));
 const Submissions = React.lazy(() => import('./pages/Submissions'));
@@ -56,7 +58,7 @@ const AdminDocuments = React.lazy(() => import('./pages/AdminDocuments'));
 const AdminQuizSubmissions = React.lazy(() => import('./pages/AdminQuizSubmissions'));
 const AdminQuizSubmissionCheck = React.lazy(() => import('./pages/AdminQuizSubmissionCheck'));
 const AdminPayments = React.lazy(() => import('./pages/AdminPayments'));
-const AdminInfoRequests = React.lazy(() => import('./pages/AdminInfoRequests'));
+const AdminContactRequests = React.lazy(() => import('./pages/AdminContactRequests'));
 
 const PasswordResetPage = React.lazy(() => import('./pages/ResetPasswordPage'));
 const VerifyEmailPage = React.lazy(() => import('./pages/VerifyEmailPage'));
@@ -94,7 +96,7 @@ function App() {
 															<EventsContextProvider>
 																<PaymentsContextProvider>
 																	<PromoCodesContextProvider>
-																		<InfoRequestsProvider>
+																		<ContactRequestsProvider>
 																			<Suspense fallback={<Loading />}>
 																				<Router>
 																					<Elements stripe={stripePromise}>
@@ -107,7 +109,8 @@ function App() {
 																							<Route path='/reset-password' element={<PasswordResetPage />} />
 																							<Route path='/verify-email' element={<VerifyEmailPage />} />
 																							<Route path='/handle-auth-reset' element={<HandleAuthResetPassword />} />
-
+																							<Route path='/about-us' element={<AboutUs />} />
+																							<Route path='/contact-us' element={<ContactUs />} />
 																							<>
 																								{renderRoute('/admin/dashboard/user/:userId', <AdminDashboard />, Roles.ADMIN)}
 																								{renderRoute('/admin/users/user/:userId', <AdminUsers />, Roles.ADMIN)}
@@ -137,7 +140,7 @@ function App() {
 																								{renderRoute('/admin/community/user/:userId', <Community />, Roles.ADMIN)}
 																								{renderRoute('/admin/community/user/:userId/topic/:topicId', <CommunityTopicPage />, Roles.ADMIN)}
 																								{renderRoute('/admin/settings/user/:userId', <Settings />, Roles.ADMIN)}
-																								{renderRoute('/admin/info-requests/user/:userId', <AdminInfoRequests />, Roles.ADMIN)}
+																								{renderRoute('/admin/contact-requests/user/:userId', <AdminContactRequests />, Roles.ADMIN)}
 																							</>
 																							<>
 																								{renderRoute('/dashboard/user/:id', <Dashboard />, Roles.USER)}
@@ -164,7 +167,7 @@ function App() {
 																					</Elements>
 																				</Router>
 																			</Suspense>
-																		</InfoRequestsProvider>
+																		</ContactRequestsProvider>
 																	</PromoCodesContextProvider>
 																</PaymentsContextProvider>
 															</EventsContextProvider>

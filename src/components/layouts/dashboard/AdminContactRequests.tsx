@@ -2,16 +2,16 @@ import { Box, Typography } from '@mui/material';
 
 import { useContext } from 'react';
 
-import { InfoRequestsContext } from '../../../contexts/InfoRequestsContextProvider';
+import { ContactRequestsContext } from '../../../contexts/ContactRequestsContextProvider';
 import { InfoOutlined } from '@mui/icons-material';
 import theme from '../../../themes';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
-const AdminInformationRequests = () => {
+const AdminContactRequests = () => {
 	const { isRotated, isSmallScreen } = useContext(MediaQueryContext);
 
 	const isMobileSize: boolean = isSmallScreen || isRotated;
-	const { infoRequests } = useContext(InfoRequestsContext);
+	const { contactRequests } = useContext(ContactRequestsContext);
 
 	return (
 		<Box
@@ -30,16 +30,16 @@ const AdminInformationRequests = () => {
 				},
 			}}>
 			<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-				<Typography variant='h6'>Info Requests</Typography>
+				<Typography variant='h6'>Contact Requests</Typography>
 				<InfoOutlined sx={{ ml: '0.5rem', color: theme.textColor?.greenPrimary.main }} fontSize={isMobileSize ? 'small' : 'medium'} />
 			</Box>
 			<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '7rem' }}>
-				<Typography variant='h6' sx={{ fontSize: '1.75rem', textAlign: 'center', }}>
-					{infoRequests.length}
+				<Typography variant='h6' sx={{ fontSize: '1.75rem', textAlign: 'center' }}>
+					{contactRequests.length}
 				</Typography>
 			</Box>
 		</Box>
 	);
 };
 
-export default AdminInformationRequests;
+export default AdminContactRequests;

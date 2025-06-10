@@ -4,15 +4,15 @@ import { OrganisationContext } from './OrganisationContextProvider';
 import { useQuery } from 'react-query';
 import Loading from '../components/layouts/loading/Loading';
 import LoadingError from '../components/layouts/loading/LoadingError';
-import { InfoRequest } from '../interfaces/infoRequest';
+import { ContactRequest } from '../interfaces/contactRequest';
 
-interface InfoRequestsContextTypes {
-	infoRequests: InfoRequest[];
+interface ContactRequestsContextTypes {
+	contactRequests: ContactRequest[];
 	loading: boolean;
 	error: string | null;
-	fetchInfoRequests: (page: number) => Promise<void>;
+	fetchContactRequests: (page: number) => Promise<void>;
 	refreshData: () => void;
-	sortInfoRequests: (property: keyof InfoRequest, order: 'asc' | 'desc') => void;
+	sortContactRequests: (property: keyof ContactRequest, order: 'asc' | 'desc') => void;
 	removeRequest: (requestId: string) => void;
 	numberOfPages: number;
 	requestsPageNumber: number;
@@ -20,17 +20,17 @@ interface InfoRequestsContextTypes {
 	setNumberOfPages: React.Dispatch<React.SetStateAction<number>>;
 }
 
-interface InfoRequestsContextProviderProps {
+interface ContactRequestsContextProviderProps {
 	children: ReactNode;
 }
 
-export const InfoRequestsContext = createContext<InfoRequestsContextTypes>({
-	infoRequests: [],
+export const ContactRequestsContext = createContext<ContactRequestsContextTypes>({
+	contactRequests: [],
 	loading: false,
 	error: null,
-	fetchInfoRequests: async () => {},
+	fetchContactRequests: async () => {},
 	refreshData: () => {},
-	sortInfoRequests: () => {},
+	sortContactRequests: () => {},
 	removeRequest: () => {},
 	numberOfPages: 1,
 	requestsPageNumber: 1,
@@ -38,21 +38,21 @@ export const InfoRequestsContext = createContext<InfoRequestsContextTypes>({
 	setNumberOfPages: () => {},
 });
 
-const InfoRequestsContextProvider = (props: InfoRequestsContextProviderProps) => {
+const ContactRequestsContextProvider = (props: ContactRequestsContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
-	const [infoRequests, setInfoRequests] = useState<InfoRequest[]>([]);
+	const [contactRequests, setContactRequests] = useState<ContactRequest[]>([]);
 	const [isLoaded, setIsLoaded] = useState<boolean>(false);
 	const [numberOfPages, setNumberOfPages] = useState<number>(1);
 	const [requestsPageNumber, setRequestsPageNumber] = useState<number>(1);
 
-	const fetchInfoRequests = async (page: number) => {
+	const fetchContactRequests = async (page: number) => {
 		if (!orgId) return;
 		try {
-			const response = await axios.get(`${base_url}/course-information-requests/organisation/${orgId}?page=${page}&limit=100`);
+			const response = await axios.get(`${base_url}/contact-requests/organisation/${orgId}?page=${page}&limit=100`);
 			// Initial sorting when fetching data
-			const sortedDataCopy = [...response.data.data].sort((a: InfoRequest, b: InfoRequest) => b.createdAt.localeCompare(a.createdAt));
-			setInfoRequests(sortedDataCopy);
+			const sortedDataCopy = [...response.data.data].sort((a: ContactRequest, b: ContactRequest) => b.createdAt.localeCompare(a.createdAt));
+			setContactRequests(sortedDataCopy);
 			// Update to use the pagination data from the response
 			setNumberOfPages(response.data.pagination.totalPages);
 			setIsLoaded(true);
@@ -63,13 +63,13 @@ const InfoRequestsContextProvider = (props: InfoRequestsContextProviderProps) =>
 		}
 	};
 
-	const { isLoading, isError } = useQuery(['infoRequests', orgId, requestsPageNumber], () => fetchInfoRequests(requestsPageNumber), {
+	const { isLoading, isError } = useQuery(['contactRequests', orgId, requestsPageNumber], () => fetchContactRequests(requestsPageNumber), {
 		enabled: !!orgId && !isLoaded,
 		// keepPreviousData: true,
 	});
 
-	const sortInfoRequests = (property: keyof InfoRequest, order: 'asc' | 'desc') => {
-		const sortedDataCopy = [...infoRequests].sort((a: InfoRequest, b: InfoRequest) => {
+	const sortContactRequests = (property: keyof ContactRequest, order: 'asc' | 'desc') => {
+		const sortedDataCopy = [...contactRequests].sort((a: ContactRequest, b: ContactRequest) => {
 			const aValue = a[property];
 			const bValue = b[property];
 
@@ -81,7 +81,7 @@ const InfoRequestsContextProvider = (props: InfoRequestsContextProviderProps) =>
 				return aValue < bValue ? 1 : -1;
 			}
 		});
-		setInfoRequests(sortedDataCopy);
+		setContactRequests(sortedDataCopy);
 	};
 
 	const refreshData = () => {
@@ -89,7 +89,7 @@ const InfoRequestsContextProvider = (props: InfoRequestsContextProviderProps) =>
 	};
 
 	const removeRequest = (requestId: string) => {
-		setInfoRequests(prev => prev.filter(request => request._id !== requestId));
+		setContactRequests((prev) => prev.filter((request) => request._id !== requestId));
 	};
 
 	if (isLoading) {
@@ -101,14 +101,14 @@ const InfoRequestsContextProvider = (props: InfoRequestsContextProviderProps) =>
 	}
 
 	return (
-		<InfoRequestsContext.Provider
+		<ContactRequestsContext.Provider
 			value={{
-				infoRequests,
+				contactRequests,
 				loading: isLoading,
 				error: isError ? 'Failed to fetch info requests' : null,
-				fetchInfoRequests,
+				fetchContactRequests,
 				refreshData,
-				sortInfoRequests,
+				sortContactRequests,
 				removeRequest,
 				numberOfPages,
 				requestsPageNumber,
@@ -116,8 +116,8 @@ const InfoRequestsContextProvider = (props: InfoRequestsContextProviderProps) =>
 				setNumberOfPages,
 			}}>
 			{props.children}
-		</InfoRequestsContext.Provider>
+		</ContactRequestsContext.Provider>
 	);
 };
 
-export default InfoRequestsContextProvider;
+export default ContactRequestsContextProvider;
