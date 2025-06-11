@@ -79,7 +79,7 @@ const DashboardCourseCard = ({
 						`/course/${course._id}/user/${userId}/userCourseId/${userCourseId === undefined ? 'none' : userCourseId}?isEnrolled=${isEnrolled}`
 					);
 				} else {
-					navigate(`/course/${course.title}/${course._id}`);
+					navigate(`/course/${encodeURIComponent(course?.title)}/${course?._id}`);
 				}
 				window.scrollTo({ top: 0, behavior: 'smooth' });
 			}}>
@@ -225,7 +225,7 @@ const DashboardCourseCard = ({
 										`/course/${course._id}/user/${userId}/userCourseId/${userCourseId === undefined ? 'none' : userCourseId}?isEnrolled=${isEnrolled}`
 									);
 								} else {
-									navigate(`/course/${course.title}/${course._id}`);
+									navigate(`/course/${encodeURIComponent(course?.title)}/${course?._id}`);
 								}
 								window.scrollTo({ top: 0, behavior: 'smooth' });
 							}}>
