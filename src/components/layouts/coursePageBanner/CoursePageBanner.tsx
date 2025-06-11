@@ -231,7 +231,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 								margin: '0.5rem 0 1rem 0',
 								fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
 							}}>
-							{course.title}
+							{course.title} {fromHomePage && course.courseManagement.isExternal ? `(Partner Kursu)` : `(Platform Kursu)`}
 						</Typography>
 						<Typography
 							variant='body2'
@@ -262,9 +262,9 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 							<Alert
 								severity='warning'
 								sx={{
-									position: 'absolute',
-									bottom: isRotated ? 60 : 5,
-									fontSize: isVerySmallScreen || isRotated ? '0.65rem' : '0.9rem',
+									// position: 'absolute',
+									// bottom: isRotated ? 60 : 5,
+									fontSize: isVerySmallScreen || isRotated ? '0.75rem' : '0.9rem',
 									backgroundColor: !fromHomePage ? theme.bgColor?.lessonInProgress : theme.bgColor?.greenSecondary,
 									color: theme.textColor?.common.main,
 									width: 'fit-content',

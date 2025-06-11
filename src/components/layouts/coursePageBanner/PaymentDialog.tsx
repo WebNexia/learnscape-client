@@ -848,7 +848,6 @@ const PaymentDialog = ({
 						resetForm();
 						setIsPaymentDialogOpen(false);
 					}}
-					actionSx={{ backgroundColor: 'pink' }}
 					cancelBtnText={fromHomePage ? 'Kapat' : 'Cancel'}
 					cancelBtnSx={{
 						fontFamily: fromHomePage ? DIALOG_FONT : '',

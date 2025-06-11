@@ -295,7 +295,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 				username: username.trim(),
 				orgCode: organisationCode,
 				firebaseUserId: user.uid,
-				email: email.trim(),
+				email: email.trim().toLowerCase(),
 				phone,
 				countryCode: location?.countryCode,
 			});

@@ -68,7 +68,7 @@ const AboutUs = () => {
 			<Box
 				sx={{
 					width: '100%',
-					minHeight: { xs: '20vh', sm: '25vh', md: '30vh' },
+					minHeight: { xs: '25vh', sm: '25vh', md: '30vh' },
 					display: 'flex',
 					alignItems: 'center',
 					justifyContent: 'center',
@@ -78,7 +78,7 @@ const AboutUs = () => {
 					marginTop: { xs: '10vh', md: '13vh' },
 				}}>
 				<Container maxWidth='md' sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-					<Typography variant='h2' sx={{ fontWeight: 700, mb: 2, fontSize: { xs: '1.5rem', md: '3rem' }, fontFamily: 'Varela Round' }}>
+					<Typography variant='h2' sx={{ fontWeight: 700, mb: 2, fontSize: { xs: '1.5rem', md: '2.5rem' }, fontFamily: 'Varela Round' }}>
 						Hakkımızda
 					</Typography>
 					<Typography
@@ -153,7 +153,7 @@ const AboutUs = () => {
 						variant='contained'
 						color='secondary'
 						size='large'
-						sx={{ fontWeight: 600, borderRadius: 2 }}
+						sx={{ 'fontWeight': 600, 'borderRadius': 2, ':hover': { backgroundColor: 'primary.main', color: 'white' }, 'fontFamily': 'Varela Round' }}
 						onClick={() => setIsGetMoreDetailsModalOpen(true)}>
 						İletİşİm Formu
 					</Button>

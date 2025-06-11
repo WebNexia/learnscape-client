@@ -8,6 +8,7 @@ import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
 import { getPriceForCountry } from '../../utils/getPriceForCountry';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import { useGeoLocation } from '../../hooks/useGeoLocation';
+import { setCurrencySymbol } from '@utils/setCurrencySymbol';
 
 interface DashboardCourseCardProps {
 	course: SingleCourse;
@@ -78,7 +79,7 @@ const DashboardCourseCard = ({
 						`/course/${course._id}/user/${userId}/userCourseId/${userCourseId === undefined ? 'none' : userCourseId}?isEnrolled=${isEnrolled}`
 					);
 				} else {
-					navigate(`/course/${course.title}/${course._id}`);
+					navigate(`/course/${encodeURIComponent(course?.title)}/${course?._id}`);
 				}
 				window.scrollTo({ top: 0, behavior: 'smooth' });
 			}}>
@@ -86,8 +87,8 @@ const DashboardCourseCard = ({
 				<Box
 					sx={{
 						position: 'absolute',
-						top: 5,
-						right: 5,
+						top: '0.5rem',
+						right: '0.5rem',
 						backgroundColor: theme.palette.error.main,
 						color: 'white',
 						px: 1.5,
@@ -102,6 +103,24 @@ const DashboardCourseCard = ({
 						Closed
 					</Typography>
 				</Box>
+			)}
+
+			{fromHomePage && (
+				<Chip
+					label={course.courseManagement.isExternal ? <span>Partner</span> : <span>Platform</span>}
+					color={course.courseManagement.isExternal ? 'info' : 'success'}
+					size='small'
+					sx={{
+						position: 'absolute',
+						top: '0.5rem',
+						left: '0.5rem',
+						fontFamily: 'Varela Round',
+						fontWeight: 500,
+						color: 'white',
+						ml: 'auto',
+						px: 1,
+					}}
+				/>
 			)}
 
 			<CardMedia
@@ -179,21 +198,18 @@ const DashboardCourseCard = ({
 							}}>
 							{course?.instructor?.name}
 						</Typography>
-						{fromHomePage && (
-							<Chip
-								label={course.courseManagement.isExternal ? <span>Partner</span> : <span>Platform</span>}
-								color={course.courseManagement.isExternal ? 'info' : 'success'}
-								size='small'
-								sx={{
-									fontFamily: 'Varela Round',
-									fontWeight: 500,
-									color: 'white',
-									ml: 'auto',
-									px: 1,
-								}}
-							/>
-						)}
 					</Box>
+
+					{fromHomePage && (
+						<Typography
+							sx={{
+								fontSize: isMobileSize ? '0.7rem' : '0.8rem',
+								fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
+							}}>
+							{isCourseFree ? '' : setCurrencySymbol(getPriceForCountry(course, resolvedCountryCode!)?.currency)}
+							{getPriceForCountry(course, resolvedCountryCode!)?.amount}
+						</Typography>
+					)}
 
 					{!fromHomePage && (
 						<Button
@@ -209,7 +225,7 @@ const DashboardCourseCard = ({
 										`/course/${course._id}/user/${userId}/userCourseId/${userCourseId === undefined ? 'none' : userCourseId}?isEnrolled=${isEnrolled}`
 									);
 								} else {
-									navigate(`/course/${course.title}/${course._id}`);
+									navigate(`/course/${encodeURIComponent(course?.title)}/${course?._id}`);
 								}
 								window.scrollTo({ top: 0, behavior: 'smooth' });
 							}}>
