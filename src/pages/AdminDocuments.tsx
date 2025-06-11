@@ -85,8 +85,6 @@ const AdminDocuments = () => {
 
 	useEffect(() => {
 		setDocumentsPageNumber(1);
-
-		console.log(singleDocument);
 	}, []);
 
 	useEffect(() => {
@@ -195,8 +193,6 @@ const AdminDocuments = () => {
 					description: singleDocument.description || '',
 					pageCount: singleDocument.pageCount || 0,
 				};
-
-				console.log(updateData);
 
 				const response = await axios.patch(`${base_url}/documents/${singleDocument._id}`, updateData);
 

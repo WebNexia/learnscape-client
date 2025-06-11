@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import CloseIcon from '@mui/icons-material/Close';
 import { useState } from 'react';
 import DocumentPaymentDialog from './DocumentPaymentDialog';
+import { Download, ShoppingCart } from '@mui/icons-material';
 
 interface DocumentCardProps {
 	document: Pick<Document, '_id' | 'name' | 'prices' | 'imageUrl' | 'description' | 'samplePageImageUrl' | 'documentUrl' | 'orgId' | 'pageCount'>;
@@ -221,7 +222,8 @@ const DocumentCard = ({ document, userCurrency, fromHomePage }: DocumentCardProp
 									'textTransform': 'none',
 									'px': '0',
 									'height': '1.85rem',
-								}}>
+								}}
+								endIcon={isFree ? <Download /> : <ShoppingCart />}>
 								{isFree ? 'İndir' : 'Satın Al'}
 							</Button>
 						</Box>
