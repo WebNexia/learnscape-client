@@ -6,6 +6,7 @@ import LoadingError from '../components/layouts/loading/LoadingError';
 import { OrganisationContext } from './OrganisationContextProvider';
 import { QuizSubmission } from '../interfaces/quizSubmission';
 import { useParams } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 
 interface QuizSubmissionsContextTypes {
 	sortedQuizSubmissionsData: QuizSubmission[];
@@ -56,6 +57,7 @@ export const QuizSubmissionsContext = createContext<QuizSubmissionsContextTypes>
 const QuizSubmissionsContextProvider = (props: QuizSubmissionsContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
+	const { isAuthenticated, isAdmin, isLearner } = useAuth();
 	const { userId } = useParams<{ userId: string }>();
 
 	const [sortedQuizSubmissionsData, setSortedQuizSubmissionsData] = useState<QuizSubmission[]>([]);
@@ -107,7 +109,7 @@ const QuizSubmissionsContextProvider = (props: QuizSubmissionsContextProviderPro
 		['allQuizSubmissions', orgId, quizSubmissionsPageNumber],
 		() => fetchQuizSubmissions(quizSubmissionsPageNumber),
 		{
-			enabled: !!orgId && !isLoaded,
+			enabled: !!orgId && isAuthenticated && (isAdmin || isLearner) && !isLoaded,
 		}
 	);
 

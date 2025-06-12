@@ -5,6 +5,7 @@ import { Lesson } from '../interfaces/lessons';
 import Loading from '../components/layouts/loading/Loading';
 import LoadingError from '../components/layouts/loading/LoadingError';
 import { OrganisationContext } from './OrganisationContextProvider';
+import { useAuth } from '../hooks/useAuth';
 
 interface LessonsContextTypes {
 	sortedLessonsData: Lesson[];
@@ -41,6 +42,7 @@ export const LessonsContext = createContext<LessonsContextTypes>({
 const LessonsContextProvider = (props: LessonsContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
+	const { isAuthenticated, isAdmin, isLearner } = useAuth();
 
 	const [sortedLessonsData, setSortedLessonsData] = useState<Lesson[]>([]);
 	// const [numberOfPages, setNumberOfPages] = useState<number>(1);
@@ -67,8 +69,8 @@ const LessonsContextProvider = (props: LessonsContextProviderProps) => {
 		}
 	};
 
-	const { data, isLoading, isError } = useQuery(['allLessons', orgId], () => fetchLessons(), {
-		enabled: !!orgId && !isLoaded,
+	const { isLoading, isError } = useQuery(['allLessons', orgId], () => fetchLessons(), {
+		enabled: !!orgId && isAuthenticated && (isAdmin || isLearner) && !isLoaded,
 	});
 
 	// Function to handle sorting
@@ -86,12 +88,10 @@ const LessonsContextProvider = (props: LessonsContextProviderProps) => {
 	const addNewLesson = (newLesson: any) => {
 		setSortedLessonsData((prevSortedData) => {
 			// Check if lesson already exists
-			const exists = prevSortedData.some(lesson => lesson._id === newLesson._id);
+			const exists = prevSortedData.some((lesson) => lesson._id === newLesson._id);
 			if (exists) {
 				// If exists, update it
-				const updatedData = prevSortedData.map(lesson => 
-					lesson._id === newLesson._id ? newLesson : lesson
-				);
+				const updatedData = prevSortedData.map((lesson) => (lesson._id === newLesson._id ? newLesson : lesson));
 				return updatedData;
 			}
 			// If doesn't exist, add it to the beginning

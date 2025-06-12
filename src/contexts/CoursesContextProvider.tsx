@@ -5,6 +5,7 @@ import { Course, SingleCourse } from '../interfaces/course';
 import Loading from '../components/layouts/loading/Loading';
 import LoadingError from '../components/layouts/loading/LoadingError';
 import { OrganisationContext } from './OrganisationContextProvider';
+import { useAuth } from '../hooks/useAuth';
 
 interface CoursesContextTypes {
 	sortedCoursesData: SingleCourse[];
@@ -54,14 +55,11 @@ export const CoursesContext = createContext<CoursesContextTypes>({
 
 const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
-
 	const { orgId } = useContext(OrganisationContext);
+	const { isAuthenticated, isAdmin, isLearner } = useAuth();
 
 	const [sortedCoursesData, setSortedCoursesData] = useState<SingleCourse[]>([]);
 	const [sortedPublicCoursesData, setSortedPublicCoursesData] = useState<SingleCourse[]>([]);
-
-	// const [coursesNumberOfPages, setNumberOfPages] = useState<number>(1);
-	// const [coursesPageNumber, setCoursesPageNumber] = useState<number>(1);
 
 	const [totalNumberOfEnrolledLearners, setTotalNumberOfEnrolledLearners] = useState<number>(1);
 	const [totalCourses, setTotalCourses] = useState<number>(1);
@@ -77,52 +75,45 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 			// Initial sorting when fetching data
 			const sortedDataCopy = [...response.data.data].sort((a: Course, b: Course) => b.updatedAt.localeCompare(a.updatedAt));
 			setSortedCoursesData(sortedDataCopy);
-			// setNumberOfPages(response.data.pages);
 			setIsLoaded(true);
 			return response.data.data;
 		} catch (error) {
-			setIsLoaded(true); // Set isLoading to false in case of an error
-			throw error; // Rethrow the error to be handled by React Query
+			setIsLoaded(true);
+			throw error;
 		}
 	};
 
 	const { data, isLoading, isError } = useQuery(['allCourses', orgId], () => fetchCourses(), {
-		enabled: !!orgId && !isLoaded,
+		enabled: !!orgId && !isLoaded && isAuthenticated && (isAdmin || isLearner),
 	});
 
 	const fetchPublicCourses = async () => {
 		try {
 			const response = await axios.get(`${base_url}/courses/public`);
-			return response.data.data; // Let useQuery handle sorting in onSuccess
+			return response.data.data;
 		} catch (error) {
-			throw error; // React Query will handle errors
+			throw error;
 		}
 	};
 
-	const {
-		data: publicCourses,
-		isLoading: publicCoursesDataLoading,
-		isError: publicCoursesDataError,
-	} = useQuery(['allPublicCourses'], fetchPublicCourses, {
+	const { data: publicCourses } = useQuery(['allPublicCourses'], fetchPublicCourses, {
+		enabled: !isAuthenticated,
 		staleTime: 60000, // Cache for 1 min
-		onSuccess: (data) => {
+		onSuccess: (data: any) => {
 			const sortedDataCopy = [...data].sort((a: Course, b: Course) => b.updatedAt.localeCompare(a.updatedAt));
 			setSortedPublicCoursesData(sortedDataCopy);
-			setIsLoaded(true);
 		},
 	});
 
 	const fetchCoursesDashboardSummary = async () => {
 		if (!orgId) return;
 		try {
-			// Fetch the course summary for the dashboard
 			const response = await axios.get(`${base_url}/courses/organisation/${orgId}/summary`);
 			const summary = response.data;
 
-			// Example: Use the summary data in your dashboard
 			setTotalCourses(summary.totalCourses);
 			setTotalNumberOfEnrolledLearners(summary.totalUniqueUsers);
-			setCoursesSummary(summary.courses); // Array of course titles and enrolledUsersCount
+			setCoursesSummary(summary.courses);
 		} catch (error) {
 			console.error('Error fetching dashboard summary:', error);
 		}
@@ -133,7 +124,7 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 		isLoading: summaryDataLoading,
 		isError: summaryDataError,
 	} = useQuery(['allCourses', orgId], () => fetchCoursesDashboardSummary(), {
-		enabled: !!orgId && !isLoaded,
+		enabled: !!orgId && !isLoaded && isAuthenticated && (isAdmin || isLearner),
 	});
 
 	// Function to handle sorting
@@ -178,11 +169,11 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 		setSortedCoursesData((prevSortedData) => prevSortedData?.filter((data) => data._id !== id));
 	};
 
-	if (isLoading || summaryDataLoading || publicCoursesDataLoading) {
+	if ((isLoading || summaryDataLoading) && isAuthenticated) {
 		return <Loading />;
 	}
 
-	if (isError || summaryDataError || publicCoursesDataError) {
+	if ((isError || summaryDataError) && isAuthenticated) {
 		return <LoadingError />;
 	}
 
@@ -196,9 +187,6 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 				removeCourse,
 				updateCoursePublishing,
 				updateCourse,
-				// coursesNumberOfPages,
-				// coursesPageNumber,
-				// setCoursesPageNumber,
 				fetchCourses,
 				fetchPublicCourses,
 				totalNumberOfEnrolledLearners,

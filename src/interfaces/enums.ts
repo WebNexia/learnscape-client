@@ -27,6 +27,7 @@ export const enum AuthFormErrorMessages {
 	INVALID_PHONE_NUMBER = 'Lütfen geçerli bir telefon numarası girin.',
 	USERNAME_TOO_SHORT = 'Kullanıcı adı en az 5 karakter olmalıdır',
 	USERNAME_TOO_LONG = 'Kullanıcı adı en fazla 15 karakter olmalıdır',
+	VISIBILITY_CHECK_ERROR = 'Lütfen tekrar giriş yapmayı deneyin. Sorun devam ederse, sayfayı yenileyin.',
 }
 
 export const enum PasswordUpdateErrorMessages {

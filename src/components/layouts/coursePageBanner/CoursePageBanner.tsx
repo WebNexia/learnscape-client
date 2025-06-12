@@ -150,15 +150,12 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 		<Paper
 			elevation={10}
 			sx={{
-				'width': fromHomePage ? { xs: '90%', sm: '80%', md: '57.5vw' } : '90%',
-				'height': { xs: 'auto', sm: 'auto', md: 'auto', lg: fromHomePage ? '48vh' : 'auto' },
-				'margin':
+				width: fromHomePage ? { xs: '90%', sm: '80%', md: '57.5vw' } : '90%',
+				height: { xs: 'auto', sm: 'auto', md: 'auto', lg: fromHomePage ? '48vh' : 'auto' },
+				margin:
 					fromHomePage && !isSmallScreen && !isRotatedMedium ? '3rem 0 2rem 0' : isSmallScreen || isRotatedMedium ? '1.25rem 0 1.5rem 0' : '2rem 0',
-				'backgroundColor': fromHomePage ? theme.bgColor?.lessonInProgress : theme.palette.primary.main,
-				'padding': '0.75rem',
-				'&:hover': {
-					transform: fromHomePage ? 'translateY(-5px)' : 'none',
-				},
+				backgroundColor: fromHomePage ? theme.bgColor?.lessonInProgress : theme.palette.primary.main,
+				padding: '0.75rem',
 			}}>
 			<Snackbar
 				open={displayEnrollmentMsg}

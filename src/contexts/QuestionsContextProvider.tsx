@@ -6,6 +6,7 @@ import LoadingError from '../components/layouts/loading/LoadingError';
 import { QuestionInterface } from '../interfaces/question';
 import { OrganisationContext } from './OrganisationContextProvider';
 import { QuestionType } from '../interfaces/questionTypes';
+import { useAuth } from '../hooks/useAuth';
 
 interface QuestionsContextTypes {
 	sortedQuestionsData: QuestionInterface[];
@@ -44,6 +45,7 @@ export const QuestionsContext = createContext<QuestionsContextTypes>({
 const QuestionsContextProvider = (props: QuestionsContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
+	const { isAuthenticated, isAdmin, isLearner } = useAuth();
 
 	const [sortedQuestionsData, setSortedQuestionsData] = useState<QuestionInterface[]>([]);
 	const [numberOfPages, setNumberOfPages] = useState<number>(1);
@@ -65,16 +67,13 @@ const QuestionsContextProvider = (props: QuestionsContextProviderProps) => {
 			setIsLoaded(true);
 			return response.data.data;
 		} catch (error) {
-			throw error; // Rethrow the error to be handled by React Query
+			setIsLoaded(true);
+			throw error;
 		}
 	};
 
-	const {
-		data: allQuestionsData,
-		isLoading: allQuestionsLoading,
-		isError: allQuestionsError,
-	} = useQuery(['allQuestions', orgId, questionsPageNumber], () => fetchQuestions(questionsPageNumber), {
-		enabled: !!orgId && !isLoaded,
+	const { isLoading, isError } = useQuery(['allQuestions', orgId, questionsPageNumber], () => fetchQuestions(questionsPageNumber), {
+		enabled: !!orgId && !isLoaded && isAuthenticated && (isAdmin || isLearner),
 	});
 
 	const fetchQuestionTypes = async () => {
@@ -106,7 +105,7 @@ const QuestionsContextProvider = (props: QuestionsContextProviderProps) => {
 		isLoading: allQuestionTypesLoading,
 		isError: allQuestionTypesError,
 	} = useQuery('allQuestionTypes', () => fetchQuestionTypes(), {
-		enabled: !!orgId && !isLoaded,
+		enabled: !!orgId && !isLoaded && isAuthenticated && (isAdmin || isLearner),
 	});
 
 	// Function to handle sorting
@@ -140,11 +139,11 @@ const QuestionsContextProvider = (props: QuestionsContextProviderProps) => {
 		setSortedQuestionsData((prevSortedData) => prevSortedData?.filter((data) => data._id !== id));
 	};
 
-	if (allQuestionsLoading || allQuestionTypesLoading) {
+	if (isLoading || allQuestionTypesLoading) {
 		return <Loading />;
 	}
 
-	if (allQuestionsError || allQuestionTypesError) {
+	if (isError || allQuestionTypesError) {
 		return <LoadingError />;
 	}
 

@@ -6,6 +6,7 @@ import Loading from '../components/layouts/loading/Loading';
 import LoadingError from '../components/layouts/loading/LoadingError';
 import { OrganisationContext } from './OrganisationContextProvider';
 import { PromoCode } from '../interfaces/promoCode';
+import { useAuth } from '../hooks/useAuth';
 
 interface PromoCodesContextTypes {
 	sortedPromoCodesData: PromoCode[];
@@ -37,8 +38,8 @@ export const PromoCodesContext = createContext<PromoCodesContextTypes>({
 
 const PromoCodesContextProvider = (props: PromoCodesContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
-
 	const { orgId } = useContext(OrganisationContext);
+	const { isAuthenticated, isAdmin } = useAuth();
 
 	const [sortedPromoCodesData, setSortedPromoCodesData] = useState<PromoCode[]>([]);
 	// const [promoCodesNumberOfPages, setNumberOfPages] = useState<number>(1);
@@ -48,6 +49,7 @@ const PromoCodesContextProvider = (props: PromoCodesContextProviderProps) => {
 
 	const fetchPromoCodes = async () => {
 		if (!orgId) return;
+
 		try {
 			const response = await axios.get(`${base_url}/promoCodes/organisation/${orgId}`);
 
@@ -58,13 +60,13 @@ const PromoCodesContextProvider = (props: PromoCodesContextProviderProps) => {
 			setIsLoaded(true);
 			return response.data.data;
 		} catch (error) {
-			setIsLoaded(true); // Set isLoading to false in case of an error
-			throw error; // Rethrow the error to be handled by React Query
+			setIsLoaded(true);
+			throw error;
 		}
 	};
 
-	const { data, isLoading, isError } = useQuery(['allPromoCodes', orgId], () => fetchPromoCodes(), {
-		enabled: !!orgId && !isLoaded,
+	const { isLoading, isError } = useQuery(['allPromoCodes', orgId], () => fetchPromoCodes(), {
+		enabled: !!orgId && isAuthenticated && isAdmin && !isLoaded,
 	});
 
 	// Function to handle sorting

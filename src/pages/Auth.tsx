@@ -192,8 +192,11 @@ const Auth = ({ setUserRole }: AuthProps) => {
 			const firebaseError = error as AuthError;
 			if (firebaseError.code === 'auth/invalid-credential') {
 				setErrorMsg(AuthFormErrorMessages.INVALID_CREDENTIALS);
+			} else if (firebaseError.code === 'auth/visibility-check-was-unavailable') {
+				setErrorMsg(AuthFormErrorMessages.VISIBILITY_CHECK_ERROR);
 			}
 			console.log(firebaseError, 'Failed to sign in');
+			setErrorMsg(AuthFormErrorMessages.VISIBILITY_CHECK_ERROR);
 		}
 	};
 
@@ -1026,6 +1029,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 								[AuthFormErrorMessages.INVALID_PHONE_NUMBER]: errorMessageTypography,
 								[AuthFormErrorMessages.USERNAME_TOO_SHORT]: errorMessageTypography,
 								[AuthFormErrorMessages.USERNAME_TOO_LONG]: errorMessageTypography,
+								[AuthFormErrorMessages.VISIBILITY_CHECK_ERROR]: errorMessageTypography,
 							}[errorMsg]}
 					</Box>
 				</Box>
