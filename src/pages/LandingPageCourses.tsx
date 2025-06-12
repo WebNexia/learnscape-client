@@ -9,17 +9,20 @@ import { InfoOutlined } from '@mui/icons-material';
 import LandingPageCoursesInfoDialog from '../components/landingPage/LandingPageCoursesInfoDialog';
 import ChatWhatsApp from '../components/landingPage/ChatWhatsApp';
 import ScrollToTopButton from '../components/landingPage/ScrollToTopButton';
+import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 
 const LandingPageCourses = () => {
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
-	const { sortedCoursesData } = useContext(CoursesContext);
+	const { orgId } = useContext(OrganisationContext);
+
+	const { sortedPublicCoursesData } = useContext(CoursesContext);
 
 	const [isInfoDialogOpen, setIsInfoDialogOpen] = useState<boolean>(false);
 
-	const publishedCourses = sortedCoursesData
-		.filter((course: SingleCourse) => course.isActive && course.publishedAt)
+	const publishedCourses = sortedPublicCoursesData
+		.filter((course: SingleCourse) => course.isActive && course.publishedAt && course.orgId === orgId)
 		.sort((a, b) => new Date(b.publishedAt!).getTime() - new Date(a.publishedAt!).getTime());
 
 	return (

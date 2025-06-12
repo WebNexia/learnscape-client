@@ -5,6 +5,7 @@ import Loading from '../components/layouts/loading/Loading';
 import LoadingError from '../components/layouts/loading/LoadingError';
 import { OrganisationContext } from './OrganisationContextProvider';
 import { Document } from '../interfaces/document';
+import { useAuth } from '../hooks/useAuth';
 
 interface DocumentsContextTypes {
 	sortedLandingPageDocumentsData: Document[];
@@ -39,6 +40,7 @@ export const DocumentsContext = createContext<DocumentsContextTypes>({
 const DocumentsContextProvider = (props: DocumentsContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
+	const { isAuthenticated, isAdmin, isLearner } = useAuth();
 
 	const [sortedDocumentsData, setSortedDocumentsData] = useState<Document[]>([]);
 	const [sortedLandingPageDocumentsData, setSortedLandingPageDocumentsData] = useState<Document[]>([]);
@@ -66,7 +68,7 @@ const DocumentsContextProvider = (props: DocumentsContextProviderProps) => {
 	};
 
 	const { data, isLoading, isError } = useQuery(['allDocuments', orgId], () => fetchDocuments(), {
-		enabled: !!orgId && !isLoaded,
+		enabled: !!orgId && isAuthenticated && !isLoaded,
 	});
 
 	const fetchLandingPageDocuments = async () => {

@@ -5,6 +5,7 @@ import Loading from '../components/layouts/loading/Loading';
 import LoadingError from '../components/layouts/loading/LoadingError';
 import { User } from '../interfaces/user';
 import { OrganisationContext } from './OrganisationContextProvider';
+import { useAuth } from '../hooks/useAuth';
 
 interface UserContextTypes {
 	sortedUsersData: User[];
@@ -39,6 +40,7 @@ export const UsersContext = createContext<UserContextTypes>({
 const UsersContextProvider = (props: UserContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
+	const { isAuthenticated } = useAuth();
 
 	const [sortedUsersData, setSortedUsersData] = useState<User[]>([]);
 	// const [usersNumberOfPages, setUsersNumberOfPages] = useState<number>(1);
@@ -64,8 +66,8 @@ const UsersContextProvider = (props: UserContextProviderProps) => {
 		}
 	};
 
-	const { data, isLoading, isError } = useQuery(['allUsers', orgId], () => fetchUsers(), {
-		enabled: !!orgId && !isLoaded,
+	const { isLoading, isError } = useQuery(['allUsers', orgId], () => fetchUsers(), {
+		enabled: !!orgId && isAuthenticated && !isLoaded,
 	});
 
 	// Function to handle sorting

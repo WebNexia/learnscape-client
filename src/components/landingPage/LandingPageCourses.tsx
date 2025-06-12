@@ -6,16 +6,19 @@ import { CoursesContext } from '../../contexts/CoursesContextProvider';
 import { SingleCourse } from '../../interfaces/course';
 import LandingPageCoursesInfoDialog from './LandingPageCoursesInfoDialog';
 import { responsiveStyles } from '../../styles/responsiveStyles';
+import { OrganisationContext } from '../../contexts/OrganisationContextProvider';
 
 const DIALOG_FONT = 'Varela Round';
 
 const LandingPageCourses = forwardRef<HTMLDivElement>((_, ref) => {
-	const { sortedCoursesData } = useContext(CoursesContext);
+	const { sortedPublicCoursesData } = useContext(CoursesContext);
+
+	const { orgId } = useContext(OrganisationContext);
 
 	const [isInfoDialogOpen, setIsInfoDialogOpen] = useState<boolean>(false);
 
-	const publishedCourses = sortedCoursesData
-		.filter((course: SingleCourse) => course.isActive && course.publishedAt)
+	const publishedCourses = sortedPublicCoursesData
+		.filter((course: SingleCourse) => course.isActive && course.publishedAt && course.orgId === orgId)
 		.sort((a, b) => new Date(b.publishedAt!).getTime() - new Date(a.publishedAt!).getTime())
 		.slice(0, 3);
 

@@ -6,6 +6,7 @@ import Loading from '../components/layouts/loading/Loading';
 import LoadingError from '../components/layouts/loading/LoadingError';
 import { OrganisationContext } from './OrganisationContextProvider';
 import { Event } from '../interfaces/event';
+import { useAuth } from '../hooks/useAuth';
 
 interface EventsContextTypes {
 	sortedEventsData: Event[];
@@ -37,8 +38,8 @@ export const EventsContext = createContext<EventsContextTypes>({
 
 const EventsContextProvider = (props: EventsContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
-
 	const { orgId } = useContext(OrganisationContext);
+	const { isAuthenticated, isAdmin, isLearner } = useAuth();
 
 	const [sortedEventsData, setSortedEventsData] = useState<Event[]>([]);
 	const [eventsNumberOfPages, setNumberOfPages] = useState<number>(1);
@@ -58,13 +59,13 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 			setIsLoaded(true);
 			return response.data.data;
 		} catch (error) {
-			setIsLoaded(true); // Set isLoading to false in case of an error
-			throw error; // Rethrow the error to be handled by React Query
+			setIsLoaded(true);
+			throw error;
 		}
 	};
 
-	const { data, isLoading, isError } = useQuery(['allEvents', orgId, eventsPageNumber], () => fetchEvents(eventsPageNumber), {
-		enabled: !!orgId && !isLoaded,
+	const { isLoading, isError } = useQuery(['allEvents', orgId, eventsPageNumber], () => fetchEvents(eventsPageNumber), {
+		enabled: !!orgId && !isLoaded && isAuthenticated && (isAdmin || isLearner),
 	});
 
 	// Function to handle sorting

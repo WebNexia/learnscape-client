@@ -21,23 +21,20 @@ const InstructorCard = ({ instructor }: { instructor: SingleCourse['instructor']
 	return (
 		<Card
 			sx={{
-				'width': { xs: '85%', sm: '60%', md: '30vw' },
-				'maxWidth': '35rem',
-				'minHeight': '15rem',
-				'height': { xs: 'auto', sm: 'auto', md: 'auto', lg: '48vh' },
-				'maxHeight': { md: '480px' },
-				'borderRadius': '0.5rem',
-				'boxShadow': '0 4px 20px rgba(0,0,0,0.1)',
-				'background': 'linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%)',
-				'transition': 'transform 0.2s ease-in-out',
-				'display': 'flex', // ✅ ensures flexible layout inside
-				'flexDirection': 'column',
-				'mt': { xs: '-1rem', sm: '-1rem', md: '1rem' },
-				'justifyContent': 'space-between',
-				'&:hover': {
-					transform: 'translateY(-5px)',
-				},
-				'position': 'relative',
+				width: { xs: '85%', sm: '60%', md: '30vw' },
+				maxWidth: '35rem',
+				minHeight: '15rem',
+				height: { xs: 'auto', sm: 'auto', md: 'auto', lg: '48vh' },
+				maxHeight: { md: '480px' },
+				borderRadius: '0.5rem',
+				boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+				background: 'linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%)',
+				transition: 'transform 0.2s ease-in-out',
+				display: 'flex', // ✅ ensures flexible layout inside
+				flexDirection: 'column',
+				mt: { xs: '-1rem', sm: '-1rem', md: '1rem' },
+				justifyContent: 'space-between',
+				position: 'relative',
 			}}>
 			<CardContent sx={{ p: 3, flexGrow: 1 }}>
 				<Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>

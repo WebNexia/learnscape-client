@@ -5,6 +5,7 @@ import Loading from '../components/layouts/loading/Loading';
 import LoadingError from '../components/layouts/loading/LoadingError';
 import { OrganisationContext } from './OrganisationContextProvider';
 import { Payment } from '../interfaces/payment';
+import { useAuth } from '../hooks/useAuth';
 
 interface PaymentsContextTypes {
 	sortedPaymentsData: Payment[];
@@ -35,6 +36,7 @@ export const PaymentsContext = createContext<PaymentsContextTypes>({
 const PaymentsContextProvider = (props: PaymentsContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
+	const { isAuthenticated, isAdmin } = useAuth();
 
 	const [sortedPaymentsData, setSortedPaymentsData] = useState<Payment[]>([]);
 	// const [numberOfPages, setNumberOfPages] = useState<number>(1);
@@ -64,8 +66,8 @@ const PaymentsContextProvider = (props: PaymentsContextProviderProps) => {
 		}
 	};
 
-	const { data, isLoading, isError } = useQuery(['allPayments', orgId], () => fetchPayments(), {
-		enabled: !!orgId && !isLoaded,
+	const { isLoading, isError } = useQuery(['allPayments', orgId], () => fetchPayments(), {
+		enabled: !!orgId && isAuthenticated && isAdmin && !isLoaded,
 	});
 
 	// Function to handle sorting

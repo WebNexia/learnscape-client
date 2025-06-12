@@ -7,6 +7,7 @@ import { useQuery } from 'react-query';
 import Loading from '../components/layouts/loading/Loading';
 import LoadingError from '../components/layouts/loading/LoadingError';
 import { useParams } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 
 interface UserCourseLessonDataContextTypes {
 	fetchSingleCourseDataAdmin: (courseId: string) => void;
@@ -57,6 +58,7 @@ const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProvide
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { userId } = useContext(UserAuthContext);
 	const { orgId } = useContext(OrganisationContext);
+	const { isAuthenticated, isLearner, isAdmin } = useAuth();
 
 	const { courseId } = useParams();
 
@@ -91,16 +93,16 @@ const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProvide
 		data: singleCourseDataAdmin,
 		isLoading: singleCourseDataAdminLoading,
 		error: singleCourseDataAdminError,
-	} = useQuery(['singleCourseData', orgId], () => fetchSingleCourseDataAdmin(courseId), {
-		enabled: !!userId && !!orgId,
+	} = useQuery(['singleCourseDataAdmin', orgId], () => fetchSingleCourseDataAdmin(courseId), {
+		enabled: !!userId && !!orgId && isAuthenticated && isAdmin && !isLoaded,
 	});
 
 	const {
 		data: singleCourseDataUser,
 		isLoading: singleCourseDataUserLoading,
 		error: singleCourseDataUserError,
-	} = useQuery(['singleCourseData', orgId], () => fetchSingleCourseDataAdmin(courseId), {
-		enabled: !!userId && !!orgId,
+	} = useQuery(['singleCourseDataUser', orgId], () => fetchSingleCourseDataUser(courseId), {
+		enabled: !!userId && !!orgId && isAuthenticated && isLearner && !isLoaded,
 	});
 
 	const {
@@ -114,7 +116,7 @@ const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProvide
 			return userCourseData;
 		},
 		{
-			enabled: !!userId && !!orgId,
+			enabled: !!userId && !!orgId && isAuthenticated && isLearner && !isLoaded,
 		}
 	);
 
@@ -129,9 +131,31 @@ const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProvide
 			return userLessonData;
 		},
 		{
-			enabled: !!userId && !!orgId,
+			enabled: !!userId && !!orgId && isAuthenticated && isLearner && !isLoaded,
 		}
 	);
+
+	// const fetchUserCourseLessonData = async () => {
+	// 	if (!orgId) return;
+
+	// 	try {
+	// 		const response = await axios.get(`${base_url}/userCourseLessonData/organisation/${orgId}`);
+	// 		setUserCourseLessonData(response.data.data);
+	// 		setIsLoaded(true);
+	// 		return response.data.data;
+	// 	} catch (error) {
+	// 		setIsLoaded(true);
+	// 		throw error;
+	// 	}
+	// };
+
+	// const {
+	// 	data: userCourseLessonData,
+	// 	isLoading: userCourseLessonDataLoading,
+	// 	isError: userCourseLessonDataError,
+	// } = useQuery(['allUserCourseLessonData', orgId], () => fetchUserCourseLessonData(), {
+	// 	enabled: !!orgId && isAuthenticated && isLearner && !isLoaded,
+	// });
 
 	useEffect(() => {
 		if (userCoursesData && userLessonData) {

@@ -5,6 +5,7 @@ import { useQuery } from 'react-query';
 import Loading from '../components/layouts/loading/Loading';
 import LoadingError from '../components/layouts/loading/LoadingError';
 import { ContactRequest } from '../interfaces/contactRequest';
+import { useAuth } from '../hooks/useAuth';
 
 interface ContactRequestsContextTypes {
 	contactRequests: ContactRequest[];
@@ -41,6 +42,7 @@ export const ContactRequestsContext = createContext<ContactRequestsContextTypes>
 const ContactRequestsContextProvider = (props: ContactRequestsContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
+	const { isAuthenticated, isAdmin } = useAuth();
 	const [contactRequests, setContactRequests] = useState<ContactRequest[]>([]);
 	const [isLoaded, setIsLoaded] = useState<boolean>(false);
 	const [numberOfPages, setNumberOfPages] = useState<number>(1);
@@ -64,7 +66,7 @@ const ContactRequestsContextProvider = (props: ContactRequestsContextProviderPro
 	};
 
 	const { isLoading, isError } = useQuery(['contactRequests', orgId, requestsPageNumber], () => fetchContactRequests(requestsPageNumber), {
-		enabled: !!orgId && !isLoaded,
+		enabled: !!orgId && isAuthenticated && isAdmin && !isLoaded,
 		// keepPreviousData: true,
 	});
 
