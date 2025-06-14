@@ -62,6 +62,11 @@ const PaymentDialog = ({
 
 	let resolvedCountryCode = user?.countryCode || location?.countryCode || 'US';
 
+	const isCourseFree: boolean =
+		getPriceForCountry(course!, resolvedCountryCode!)?.amount === 'Free' ||
+		getPriceForCountry(course!, resolvedCountryCode!)?.amount === '' ||
+		getPriceForCountry(course!, resolvedCountryCode!)?.amount === '0';
+
 	useEffect(() => {
 		if (!course) return;
 		const amount = +getPriceForCountry(course, resolvedCountryCode).amount;
@@ -78,6 +83,7 @@ const PaymentDialog = ({
 
 	const [email, setEmail] = useState<string>('');
 	const [isUserAccountExist, setIsUserAccountExist] = useState<boolean>(true);
+	const [isAlreadyEnrolled, setIsAlreadyEnrolled] = useState<boolean>(false);
 	const [promoCode, setPromoCode] = useState<string>('');
 	const [discountedAmount, setDiscountedAmount] = useState<number>(() => {
 		if (!course) return 0;
@@ -115,229 +121,301 @@ const PaymentDialog = ({
 	let resolvedFirstName = user?.firstName || '';
 	let resolvedLastName = user?.lastName || '';
 
+	// Add cleanup on unmount
+	useEffect(() => {
+		return () => {
+			setIsProcessing(false);
+			setIsSubmitted(false);
+			setErrorMessage('');
+			setIsAlreadyEnrolled(false);
+		};
+	}, []);
+
 	const handlePayment = async () => {
 		if (!course) return;
 		setIsProcessing(true);
 		setIsSubmitted(true);
 
-		if (!stripe || !elements) {
-			setErrorMessage(fromHomePage ? 'Stripe düzgün yüklenemedi.' : 'Stripe has not loaded properly.');
-			setIsProcessing(false);
-			return;
-		}
-
-		const cardNumberElement = elements.getElement(CardNumberElement);
-		elements.getElement(CardExpiryElement);
-		elements.getElement(CardCvcElement);
-
-		if (!cardNumberComplete || !cardExpiryComplete || !cardCvcComplete) {
-			setErrorMessage(fromHomePage ? 'Lütfen tüm kart bilgilerini doldurun.' : 'Please fill in all card details.');
-			setIsProcessing(false);
-			return;
-		}
-
-		if (fromHomePage) {
-			try {
-				const userExistsResponse = await axiosInstance.post(`${base_url}/users/check-user-exists`, { email, courseId: course._id });
-
-				setIsUserAccountExist(userExistsResponse.data.exists);
-
-				if (!userExistsResponse.data.exists) {
-					setErrorMessage(
-						fromHomePage
-							? `Bu e-posta adresi herhangi bir hesaba bağlı değil.\nKursa katılmak için ücretsiz hesap oluşturun! - `
-							: `This email address isn't linked to any account.\nCreate a free account to join the course! - `
-					);
-					setIsProcessing(false);
-					return;
-				} else if (userExistsResponse.data.isEnrolledInCourse) {
-					setErrorMessage(fromHomePage ? `Bu kursa zaten kayıtlısınız!` : `You are already enrolled in this course!`);
-					setIsProcessing(false);
-					return;
-				}
-
-				// Override IDs and user info
-				resolvedUserId = userExistsResponse.data.userId;
-				resolvedOrgId = userExistsResponse.data.orgId;
-				resolvedCountryCode = userExistsResponse.data.countryCode;
-				resolvedFirstName = userExistsResponse.data.firstName;
-				resolvedLastName = userExistsResponse.data.lastName;
-			} catch (error) {
-				console.log(error);
-			}
-		}
-
-		let usersUsedCode = [...usersUsedPromoCode];
-
 		try {
-			// Step 1: Create PaymentIntent (manual capture)
-			const response = await axiosInstance.post(`${base_url}/payments`, {
-				amount: discountedAmount,
-				currency: getPriceForCountry(course, resolvedCountryCode!).currency,
-				orgId: resolvedOrgId,
-				userId: resolvedUserId,
-				courseId: course._id,
-				email: email || user?.email,
-				firstName: resolvedFirstName,
-				lastName: resolvedLastName,
-				paymentType: 'course',
+			// Add timeout to axios requests
+			const axiosInstanceWithTimeout = axios.create({
+				...axiosInstance.defaults,
+				timeout: 10000, // 10 seconds timeout
 			});
 
-			const { clientSecret, paymentIntentId } = response.data;
-
-			// Step 2: Create Payment Method
-			if (!cardNumberElement) {
-				setErrorMessage(fromHomePage ? 'Kart bilgileri eksik.' : 'Card details are missing.');
-				return;
-			}
-			const { error: methodError, paymentMethod } = await stripe.createPaymentMethod({
-				type: 'card',
-				card: cardNumberElement,
-				billing_details: {
-					name: `${resolvedFirstName} ${resolvedLastName}`,
-				},
-			});
-
-			if (methodError) {
-				resetForm(true);
-				setErrorMessage(
-					methodError.message
-						? fromHomePage
-							? `Ödeme yöntemi oluşturulurken bir hata oluştu`
-							: `An error occurred while creating payment method: ${methodError.message}`
-						: fromHomePage
-							? 'Ödeme yöntemi oluşturulurken bilinmeyen bir hata oluştu'
-							: 'An unknown error occurred while creating payment method'
-				);
-				return;
-			}
-
-			// Step 3: Confirm the PaymentIntent (authorize only)
-			const { paymentIntent, error } = await stripe.confirmCardPayment(clientSecret, {
-				payment_method: paymentMethod.id,
-			});
-
-			if (error || paymentIntent?.status !== 'requires_capture') {
-				resetForm(true);
-				setErrorMessage(
-					error?.message
-						? fromHomePage
-							? `Ödeme onayı başarısız: ${error.message}`
-							: `Payment confirmation failed: ${error.message}`
-						: fromHomePage
-							? 'Ödeme onayı başarısız oldu.'
-							: 'Payment confirmation failed.'
-				);
-				return;
-			}
-
-			// Step 4: Register the course
-			try {
-				const userCourseId = await courseRegistration(resolvedUserId, resolvedOrgId);
-
-				// Step 5: Capture the authorized payment
+			// Check email registration for all homepage registrations
+			if (fromHomePage) {
 				try {
-					await axiosInstance.patch(`${base_url}/payments/capture/${paymentIntentId}`, {
-						userId: resolvedUserId,
-						orgId: resolvedOrgId,
-						courseId: course?._id,
-						firstName: resolvedFirstName,
-						lastName: resolvedLastName,
-						email: email || user?.email,
-						paymentType: 'course',
+					const userExistsResponse = await axiosInstanceWithTimeout.post(`${base_url}/users/check-user-exists`, {
+						email,
+						courseId: course._id,
 					});
 
-					// Update hasRegisteredCourse using new endpoint
-					if (!user?.hasRegisteredCourse) {
-						await axiosInstance.post(`${base_url}/users/update-registration-status`, {
-							userId: resolvedUserId,
-						});
+					setIsUserAccountExist(userExistsResponse.data.exists);
 
-						setUser((prevUser) => {
-							if (prevUser) {
-								return { ...prevUser, hasRegisteredCourse: true };
-							}
-							return prevUser;
-						});
+					if (!userExistsResponse.data.exists) {
+						setErrorMessage(
+							fromHomePage
+								? `Bu e-posta adresi herhangi bir hesaba bağlı değil.\nKursa katılmak için ücretsiz hesap oluşturun! - `
+								: `This email address isn't linked to any account.\nCreate a free account to join the course! - `
+						);
+						setIsUserAccountExist(false);
+						setIsProcessing(false);
+						return;
 					}
-				} catch (captureError) {
-					resetForm(true);
-					console.error(`❌ Payment capture failed for paymentIntentId: ${paymentIntentId}, userId: ${resolvedUserId}`, captureError);
 
-					try {
-						await axiosInstance.delete(`${base_url}/userCourses/remove-by-user-course`, {
-							data: {
-								userId: resolvedUserId,
-								courseId: course?._id,
-							},
-						});
+					if (userExistsResponse.data.isEnrolledInCourse) {
+						setErrorMessage(fromHomePage ? `Bu kursa zaten kayıtlısınız!` : `You are already enrolled in this course!`);
+						setIsAlreadyEnrolled(true);
+						setIsProcessing(false);
+						return;
+					}
 
-						if (isPromoCodeApplied && promoCodeId) {
+					// Override IDs and user info for homepage registrations
+					resolvedUserId = userExistsResponse.data.userId;
+					resolvedOrgId = userExistsResponse.data.orgId;
+					resolvedCountryCode = userExistsResponse.data.countryCode;
+					resolvedFirstName = userExistsResponse.data.firstName;
+					resolvedLastName = userExistsResponse.data.lastName;
+
+					// For free courses, proceed with registration
+					if (isCourseFree) {
+						let retryCount = 0;
+						const maxRetries = 3;
+
+						while (retryCount < maxRetries) {
 							try {
-								const rolledBackUsers = usersUsedPromoCode.filter((id) => id !== resolvedUserId);
-								await axiosInstance.patch(`${base_url}/promocodes/${promoCodeId}`, {
-									usersUsed: rolledBackUsers,
-								});
-								console.info(`🔁 Promo code rollback successful for userId: ${resolvedUserId}`);
-							} catch (promoRollbackErr) {
-								console.error(`❌ Failed to roll back promo code for userId: ${resolvedUserId}`, promoRollbackErr);
+								await courseRegistration(resolvedUserId, resolvedOrgId);
+
+								setIsPaymentDialogOpen(false);
+								resetForm();
+								setIsProcessing(false);
+								setDisplayEnrollmentMsg(true);
+								return;
+							} catch (error) {
+								retryCount++;
+								if (retryCount === maxRetries) {
+									throw error;
+								}
+								await new Promise((resolve) => setTimeout(resolve, 1000 * Math.pow(2, retryCount)));
 							}
 						}
-
-						// 🧹 LocalStorage cleanup
-						const updatedCourses = JSON.parse(localStorage.getItem('userCourseData') || '[]').filter((item: any) => item.courseId !== course?._id);
-						localStorage.setItem('userCourseData', JSON.stringify(updatedCourses));
-
-						const updatedLessons = JSON.parse(localStorage.getItem('userLessonData') || '[]').filter((item: any) => item.courseId !== course?._id);
-						localStorage.setItem('userLessonData', JSON.stringify(updatedLessons));
-					} catch (cleanupErr) {
-						resetForm(true);
-						console.error(`❌ Rollback failed for userId: ${resolvedUserId}, courseId: ${course?._id}`, cleanupErr);
 					}
+				} catch (error) {
+					if (axios.isAxiosError(error)) {
+						if (error.code === 'ECONNABORTED') {
+							setErrorMessage(fromHomePage ? 'Bağlantı zaman aşımına uğradı. Lütfen tekrar deneyin.' : 'Connection timed out. Please try again.');
+						} else if (!error.response) {
+							setErrorMessage(
+								fromHomePage ? 'İnternet bağlantınızı kontrol edin ve tekrar deneyin.' : 'Please check your internet connection and try again.'
+							);
+						} else {
+							setErrorMessage(fromHomePage ? 'Bir hata oluştu. Lütfen tekrar deneyin.' : 'An error occurred. Please try again.');
+						}
+					} else {
+						setErrorMessage(fromHomePage ? 'Beklenmeyen bir hata oluştu.' : 'An unexpected error occurred.');
+					}
+					setIsProcessing(false);
+					return;
+				}
+			}
 
+			if (!stripe || !elements) {
+				setErrorMessage(fromHomePage ? 'Stripe düzgün yüklenemedi.' : 'Stripe has not loaded properly.');
+				setIsProcessing(false);
+				return;
+			}
+
+			const cardNumberElement = elements.getElement(CardNumberElement);
+			const cardExpiryElement = elements.getElement(CardExpiryElement);
+			const cardCvcElement = elements.getElement(CardCvcElement);
+
+			if (!cardNumberComplete || !cardExpiryComplete || !cardCvcComplete) {
+				setErrorMessage(fromHomePage ? 'Lütfen tüm kart bilgilerini doldurun.' : 'Please fill in all card details.');
+				setIsProcessing(false);
+				return;
+			}
+
+			let usersUsedCode = [...usersUsedPromoCode];
+
+			try {
+				// Step 1: Create PaymentIntent (manual capture)
+				const response = await axiosInstance.post(`${base_url}/payments`, {
+					amount: discountedAmount,
+					currency: getPriceForCountry(course, resolvedCountryCode!).currency,
+					orgId: resolvedOrgId,
+					userId: resolvedUserId,
+					courseId: course._id,
+					email: email || user?.email,
+					firstName: resolvedFirstName,
+					lastName: resolvedLastName,
+					paymentType: 'course',
+				});
+
+				const { clientSecret, paymentIntentId } = response.data;
+
+				// Step 2: Create Payment Method
+				if (!cardNumberElement) {
+					setErrorMessage(fromHomePage ? 'Kart bilgileri eksik.' : 'Card details are missing.');
+					return;
+				}
+				const { error: methodError, paymentMethod } = await stripe.createPaymentMethod({
+					type: 'card',
+					card: cardNumberElement,
+					billing_details: {
+						name: `${resolvedFirstName} ${resolvedLastName}`,
+					},
+				});
+
+				if (methodError) {
 					resetForm(true);
 					setErrorMessage(
-						fromHomePage
-							? 'Kayıt sonrası ödeme başarısız oldu. Ücretlendirilmediniz ve erişiminiz geri alındı.'
-							: 'Payment failed after registration. You have not been charged, and your access was rolled back.'
+						methodError.message
+							? fromHomePage
+								? `Ödeme yöntemi oluşturulurken bir hata oluştu`
+								: `An error occurred while creating payment method: ${methodError.message}`
+							: fromHomePage
+								? 'Ödeme yöntemi oluşturulurken bilinmeyen bir hata oluştu'
+								: 'An unknown error occurred while creating payment method'
 					);
 					return;
 				}
 
-				// Step 6: Update promo code (if applied)
-				const updatedUserId = fromHomePage && resolvedUserId ? resolvedUserId : user?._id!;
-				const updatedUsersUsedCode = [...usersUsedPromoCode, updatedUserId];
+				// Step 3: Confirm the PaymentIntent (authorize only)
+				const { paymentIntent, error } = await stripe.confirmCardPayment(clientSecret, {
+					payment_method: paymentMethod.id,
+				});
 
-				setUsersUsedPromoCode(updatedUsersUsedCode);
-				usersUsedCode = [...updatedUsersUsedCode];
-
-				if (isPromoCodeApplied) {
-					await axiosInstance.patch(`${base_url}/promocodes/${promoCodeId}`, {
-						usersUsed: usersUsedCode,
-					});
+				if (error || paymentIntent?.status !== 'requires_capture') {
+					resetForm(true);
+					setErrorMessage(
+						error?.message
+							? fromHomePage
+								? `Ödeme onayı başarısız: ${error.message}`
+								: `Payment confirmation failed: ${error.message}`
+							: fromHomePage
+								? 'Ödeme onayı başarısız oldu.'
+								: 'Payment confirmation failed.'
+					);
+					return;
 				}
 
-				// ✅ Final UI actions (ONLY if everything succeeded)
-				setIsPaymentDialogOpen(false);
-				resetForm();
-				setIsProcessing(false);
+				// Step 4: Register the course
+				try {
+					const userCourseId = await courseRegistration(resolvedUserId, resolvedOrgId);
 
-				if (setIsEnrolledStatus) setIsEnrolledStatus(true);
+					// Step 5: Capture the authorized payment
+					try {
+						await axiosInstance.patch(`${base_url}/payments/capture/${paymentIntentId}`, {
+							userId: resolvedUserId,
+							orgId: resolvedOrgId,
+							courseId: course?._id,
+							firstName: resolvedFirstName,
+							lastName: resolvedLastName,
+							email: email || user?.email,
+							paymentType: 'course',
+						});
 
-				setDisplayEnrollmentMsg(true); // ✅ success message after capture + reg
+						// Update hasRegisteredCourse using new endpoint
+						if (!user?.hasRegisteredCourse && !isCourseFree) {
+							await axiosInstance.post(`${base_url}/users/update-registration-status`, {
+								userId: resolvedUserId,
+							});
 
-				if (!fromHomePage) {
-					navigate(`/course/${course?._id}/user/${resolvedUserId}/userCourseId/${userCourseId}?isEnrolled=true`);
+							setUser((prevUser) => {
+								if (prevUser) {
+									return { ...prevUser, hasRegisteredCourse: true };
+								}
+								return prevUser;
+							});
+						}
+					} catch (captureError) {
+						resetForm(true);
+						console.error(`❌ Payment capture failed for paymentIntentId: ${paymentIntentId}, userId: ${resolvedUserId}`, captureError);
+
+						try {
+							await axiosInstance.delete(`${base_url}/userCourses/remove-by-user-course`, {
+								data: {
+									userId: resolvedUserId,
+									courseId: course?._id,
+								},
+							});
+
+							if (isPromoCodeApplied && promoCodeId) {
+								try {
+									const rolledBackUsers = usersUsedPromoCode.filter((id) => id !== resolvedUserId);
+									await axiosInstance.patch(`${base_url}/promocodes/${promoCodeId}`, {
+										usersUsed: rolledBackUsers,
+									});
+									console.info(`🔁 Promo code rollback successful for userId: ${resolvedUserId}`);
+								} catch (promoRollbackErr) {
+									console.error(`❌ Failed to roll back promo code for userId: ${resolvedUserId}`, promoRollbackErr);
+								}
+							}
+
+							// 🧹 LocalStorage cleanup
+							const updatedCourses = JSON.parse(localStorage.getItem('userCourseData') || '[]').filter((item: any) => item.courseId !== course?._id);
+							localStorage.setItem('userCourseData', JSON.stringify(updatedCourses));
+
+							const updatedLessons = JSON.parse(localStorage.getItem('userLessonData') || '[]').filter((item: any) => item.courseId !== course?._id);
+							localStorage.setItem('userLessonData', JSON.stringify(updatedLessons));
+						} catch (cleanupErr) {
+							resetForm(true);
+							console.error(`❌ Rollback failed for userId: ${resolvedUserId}, courseId: ${course?._id}`, cleanupErr);
+						}
+
+						resetForm(true);
+						setErrorMessage(
+							fromHomePage
+								? 'Kayıt sonrası ödeme başarısız oldu. Ücretlendirilmediniz ve erişiminiz geri alındı.'
+								: 'Payment failed after registration. You have not been charged, and your access was rolled back.'
+						);
+						return;
+					}
+
+					// Step 6: Update promo code (if applied)
+					const updatedUserId = fromHomePage && resolvedUserId ? resolvedUserId : user?._id!;
+					const updatedUsersUsedCode = [...usersUsedPromoCode, updatedUserId];
+
+					setUsersUsedPromoCode(updatedUsersUsedCode);
+					usersUsedCode = [...updatedUsersUsedCode];
+
+					if (isPromoCodeApplied) {
+						await axiosInstance.patch(`${base_url}/promocodes/${promoCodeId}`, {
+							usersUsed: usersUsedCode,
+						});
+					}
+
+					// ✅ Final UI actions (ONLY if everything succeeded)
+					setIsPaymentDialogOpen(false);
+					resetForm();
+					setIsProcessing(false);
+
+					if (setIsEnrolledStatus) setIsEnrolledStatus(true);
+
+					setDisplayEnrollmentMsg(true); // ✅ success message after capture + reg
+
+					if (!fromHomePage) {
+						navigate(`/course/${course?._id}/user/${resolvedUserId}/userCourseId/${userCourseId}?isEnrolled=true`);
+					}
+				} catch (regErr) {
+					resetForm(true);
+					setErrorMessage(
+						fromHomePage ? 'Kurs kaydı başarısız oldu. Ücretlendirilmediniz.' : 'Course registration failed. You have not been charged.'
+					);
+					return;
 				}
-			} catch (regErr) {
+			} catch (err) {
+				console.log(err);
 				resetForm(true);
-				setErrorMessage(fromHomePage ? 'Kurs kaydı başarısız oldu. Ücretlendirilmediniz.' : 'Course registration failed. You have not been charged.');
-				return;
+				setErrorMessage(fromHomePage ? 'Ödeme işlenirken bir hata oluştu.' : 'An error occurred while processing the payment.');
 			}
-		} catch (err) {
-			console.log(err);
+		} catch (error) {
+			console.error(error);
 			resetForm(true);
 			setErrorMessage(fromHomePage ? 'Ödeme işlenirken bir hata oluştu.' : 'An error occurred while processing the payment.');
+		} finally {
+			setIsProcessing(false);
 		}
 	};
 
@@ -366,6 +444,7 @@ const PaymentDialog = ({
 							? `Bu e-posta adresi herhangi bir hesaba bağlı değil.\nKursa katılmak için ücretsiz hesap oluşturun! - `
 							: `This email address isn't linked to any account.\nCreate a free account to join the course! - `
 					);
+					setIsUserAccountExist(false);
 					setIsProcessing(false);
 					return;
 				}
@@ -425,6 +504,7 @@ const PaymentDialog = ({
 
 		setIsSubmitted(false);
 		setIsProcessing(false);
+		setIsAlreadyEnrolled(false);
 	};
 
 	return (
@@ -434,7 +514,7 @@ const PaymentDialog = ({
 				resetForm();
 				setIsPaymentDialogOpen(false);
 			}}
-			title={fromHomePage ? 'Ödeme Yap' : 'Make Payment'}
+			title={fromHomePage && !isCourseFree ? 'Ödeme Yap' : isCourseFree ? 'Kayıt Ol' : 'Make Payment'}
 			maxWidth='sm'
 			{...(fromHomePage
 				? {
@@ -527,6 +607,7 @@ const PaymentDialog = ({
 							label={fromHomePage ? 'Promosyon Kodu' : 'Promo Code'}
 							size='small'
 							required={false}
+							disabled={isCourseFree}
 							sx={
 								fromHomePage
 									? {
@@ -565,6 +646,7 @@ const PaymentDialog = ({
 						<CustomSubmitButton
 							size='small'
 							type='button'
+							disabled={isCourseFree}
 							sx={
 								fromHomePage
 									? {
@@ -582,7 +664,13 @@ const PaymentDialog = ({
 							variant='h6'
 							sx={
 								fromHomePage
-									? { fontFamily: 'Varela Round', color: '#2C3E50', fontWeight: 500, mb: '-1rem', fontSize: isMobileSize ? '0.75rem' : '0.9rem' }
+									? {
+											fontFamily: 'Varela Round',
+											fontWeight: 500,
+											mb: '-1rem',
+											fontSize: isMobileSize ? '0.75rem' : '0.9rem',
+											color: isCourseFree ? '#aab7c4' : '#2C3E50',
+										}
 									: { fontSize: '0.9rem', mb: '-1rem' }
 							}>
 							{fromHomePage ? 'Kart Numarası*' : 'Card Number*'}
@@ -592,7 +680,10 @@ const PaymentDialog = ({
 								sx={
 									fromHomePage
 										? {
-												border: isSubmitted && !cardNumberComplete ? '1px solid red' : '1px solid #ccc',
+												border:
+													isSubmitted && !isCourseFree && isUserAccountExist && !isAlreadyEnrolled && !cardNumberComplete
+														? '1px solid red'
+														: '1px solid #ccc',
 												padding: '0.6rem',
 												borderRadius: '8px',
 												backgroundColor: '#fff',
@@ -600,7 +691,10 @@ const PaymentDialog = ({
 												fontFamily: 'Varela Round',
 											}
 										: {
-												border: isSubmitted && !cardNumberComplete ? '1px solid red' : '1px solid #ccc',
+												border:
+													isSubmitted && !isCourseFree && isUserAccountExist && !isAlreadyEnrolled && !cardNumberComplete
+														? '1px solid red'
+														: '1px solid #ccc',
 												padding: '0.6rem',
 												borderRadius: '4px',
 												backgroundColor: '#fff',
@@ -609,6 +703,7 @@ const PaymentDialog = ({
 								}>
 								<CardNumberElement
 									options={{
+										disabled: isCourseFree,
 										style: {
 											base: {
 												'fontSize': isMobileSize ? '11px' : '14px',
@@ -638,7 +733,13 @@ const PaymentDialog = ({
 								variant='h6'
 								sx={
 									fromHomePage
-										? { fontFamily: 'Varela Round', color: '#2C3E50', fontWeight: 500, mb: 0.5, fontSize: isMobileSize ? '0.75rem' : '0.9rem' }
+										? {
+												fontFamily: 'Varela Round',
+												fontWeight: 500,
+												mb: 0.5,
+												fontSize: isMobileSize ? '0.75rem' : '0.9rem',
+												color: isCourseFree ? '#aab7c4' : '#2C3E50',
+											}
 										: { fontSize: '0.9rem', mb: 0.5 }
 								}>
 								{fromHomePage ? 'Son Kullanma Tarihi*' : 'Expiry Date*'}
@@ -647,14 +748,20 @@ const PaymentDialog = ({
 								sx={
 									fromHomePage
 										? {
-												border: isSubmitted && !cardExpiryComplete ? '1px solid red' : '1px solid #ccc',
+												border:
+													isSubmitted && !cardExpiryComplete && !isCourseFree && isUserAccountExist && !isAlreadyEnrolled
+														? '1px solid red'
+														: '1px solid #ccc',
 												padding: '0.6rem',
 												borderRadius: '8px',
 												backgroundColor: '#fff',
 												fontFamily: 'Varela Round',
 											}
 										: {
-												border: isSubmitted && !cardExpiryComplete ? '1px solid red' : '1px solid #ccc',
+												border:
+													isSubmitted && !cardExpiryComplete && !isCourseFree && isUserAccountExist && !isAlreadyEnrolled
+														? '1px solid red'
+														: '1px solid #ccc',
 												padding: '0.6rem',
 												borderRadius: '4px',
 												backgroundColor: '#fff',
@@ -662,6 +769,7 @@ const PaymentDialog = ({
 								}>
 								<CardExpiryElement
 									options={{
+										disabled: isCourseFree,
 										style: {
 											base: {
 												'fontSize': isMobileSize ? '11px' : '14px',
@@ -684,7 +792,13 @@ const PaymentDialog = ({
 								variant='h6'
 								sx={
 									fromHomePage
-										? { fontFamily: 'Varela Round', color: '#2C3E50', fontWeight: 500, mb: 0.5, fontSize: isMobileSize ? '0.75rem' : '0.9rem' }
+										? {
+												fontFamily: 'Varela Round',
+												color: isCourseFree ? '#aab7c4' : '#2C3E50',
+												fontWeight: 500,
+												mb: 0.5,
+												fontSize: isMobileSize ? '0.75rem' : '0.9rem',
+											}
 										: { fontSize: '0.9rem', mb: 0.5 }
 								}>
 								CVC*
@@ -693,14 +807,20 @@ const PaymentDialog = ({
 								sx={
 									fromHomePage
 										? {
-												border: isSubmitted && !cardCvcComplete ? '1px solid red' : '1px solid #ccc',
+												border:
+													isSubmitted && !cardCvcComplete && !isCourseFree && isUserAccountExist && !isAlreadyEnrolled
+														? '1px solid red'
+														: '1px solid #ccc',
 												padding: '0.6rem',
 												borderRadius: '8px',
 												backgroundColor: '#fff',
 												fontFamily: 'Varela Round',
 											}
 										: {
-												border: isSubmitted && !cardCvcComplete ? '1px solid red' : '1px solid #ccc',
+												border:
+													isSubmitted && !cardCvcComplete && !isCourseFree && isUserAccountExist && !isAlreadyEnrolled
+														? '1px solid red'
+														: '1px solid #ccc',
 												padding: '0.6rem',
 												borderRadius: '4px',
 												backgroundColor: '#fff',
@@ -708,6 +828,7 @@ const PaymentDialog = ({
 								}>
 								<CardCvcElement
 									options={{
+										disabled: isCourseFree,
 										style: {
 											base: {
 												'fontSize': isMobileSize ? '11px' : '14px',
@@ -852,10 +973,25 @@ const PaymentDialog = ({
 					cancelBtnSx={{
 						fontFamily: fromHomePage ? DIALOG_FONT : '',
 					}}
-					submitBtnText={isProcessing ? (fromHomePage ? 'İşleniyor' : 'Processing') : fromHomePage ? 'Ödeme Yap' : 'Make Payment'}
+					submitBtnText={
+						isProcessing
+							? fromHomePage
+								? 'İşleniyor'
+								: 'Processing'
+							: fromHomePage && !isCourseFree
+								? 'Ödeme Yap'
+								: isCourseFree
+									? 'Kayıt Ol'
+									: 'Make Payment'
+					}
 					submitBtnSx={{
 						fontFamily: fromHomePage ? DIALOG_FONT : '',
+						cursor: isProcessing ? 'not-allowed' : 'pointer',
+						cursorEvents: isProcessing ? 'none' : 'auto',
+						pointerEvents: isProcessing ? 'none' : 'auto',
 					}}
+					disableBtn={isProcessing}
+					disableCancelBtn={isProcessing}
 				/>
 			</form>
 		</CustomDialog>

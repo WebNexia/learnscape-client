@@ -1,4 +1,4 @@
-import { Avatar, Box, Button, Card, CardContent, CardMedia, LinearProgress, Typography, Chip } from '@mui/material';
+import { Avatar, Box, Card, CardContent, CardMedia, LinearProgress, Typography, Chip } from '@mui/material';
 import { SingleCourse } from '../../interfaces/course';
 import theme from '../../themes';
 import { useNavigate } from 'react-router-dom';
@@ -39,19 +39,6 @@ const DashboardCourseCard = ({
 	const { isRotated, isSmallScreen } = useContext(MediaQueryContext);
 
 	const isMobileSize: boolean = isSmallScreen || isRotated;
-
-	const buttonStyles = {
-		'fontFamily': theme.fontFamily?.main,
-		'textTransform': 'capitalize',
-		'border': `${theme.textColor?.greenSecondary.main} solid 0.1rem`,
-		'borderRadius': '0.5rem',
-		'px': '0.75rem',
-		'fontSize': isMobileSize ? '0.7rem' : '0.8rem',
-		':hover': {
-			color: isEnrolled ? theme.textColor?.greenSecondary.main : theme.textColor?.common.main,
-			backgroundColor: isEnrolled ? theme.bgColor?.common : theme.bgColor?.greenSecondary,
-		},
-	};
 
 	const isCourseFree: boolean =
 		getPriceForCountry(course, resolvedCountryCode!)?.amount === '0' ||
@@ -150,7 +137,7 @@ const DashboardCourseCard = ({
 						width: '100%',
 						fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
 					}}>
-					{truncateText(course.description, 200)}
+					{truncateText(course.description, isEnrolled && isMobileSize ? 125 : isEnrolled ? 150 : 200)}
 				</Typography>
 			</CardContent>
 
@@ -206,31 +193,28 @@ const DashboardCourseCard = ({
 								fontSize: isMobileSize ? '0.7rem' : '0.8rem',
 								fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
 							}}>
-							{isCourseFree ? '' : setCurrencySymbol(getPriceForCountry(course, resolvedCountryCode!)?.currency)}
-							{getPriceForCountry(course, resolvedCountryCode!)?.amount}
+							{isCourseFree
+								? 'Ücretsiz'
+								: `${setCurrencySymbol(getPriceForCountry(course, resolvedCountryCode!)?.currency)}${getPriceForCountry(course, resolvedCountryCode!)?.amount}`}
 						</Typography>
 					)}
 
 					{!fromHomePage && (
-						<Button
+						<Typography
 							sx={{
-								...buttonStyles,
-								backgroundColor: isEnrolled ? theme.bgColor?.greenSecondary : 'inherit',
-								color: isEnrolled ? theme.textColor?.common.main : theme.textColor?.greenSecondary.main,
-							}}
-							size={isMobileSize ? 'small' : 'small'}
-							onClick={() => {
-								if (!fromHomePage) {
-									navigate(
-										`/course/${course._id}/user/${userId}/userCourseId/${userCourseId === undefined ? 'none' : userCourseId}?isEnrolled=${isEnrolled}`
-									);
-								} else {
-									navigate(`/course/${encodeURIComponent(course?.title)}/${course?._id}`);
-								}
-								window.scrollTo({ top: 0, behavior: 'smooth' });
+								fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+								fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
+								width: '100%',
+								textAlign: 'right',
 							}}>
-							{isEnrolled && isCourseCompleted ? 'Review Course' : isEnrolled && !isCourseCompleted ? 'Continue' : 'Explore'}
-						</Button>
+							{isEnrolled && isCourseCompleted
+								? 'Review Course'
+								: isEnrolled && !isCourseCompleted
+									? 'Continue'
+									: isCourseFree
+										? 'Free'
+										: `${setCurrencySymbol(getPriceForCountry(course, resolvedCountryCode!)?.currency)}${getPriceForCountry(course, resolvedCountryCode!)?.amount}`}
+						</Typography>
 					)}
 				</Box>
 			</Box>

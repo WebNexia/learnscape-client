@@ -49,7 +49,7 @@ const Courses = () => {
 						flexWrap: 'wrap',
 						justifyContent: 'center',
 						alignItems: 'center',
-						margin: '0 2rem',
+						margin: '0 2rem 2rem 2rem',
 					}}>
 					{sortedCoursesData &&
 						sortedCoursesData

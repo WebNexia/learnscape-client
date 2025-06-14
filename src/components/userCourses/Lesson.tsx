@@ -114,10 +114,10 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 					isEnrolledStatus && isLessonInProgress && isMobileSize
 						? '3.5rem'
 						: !(isEnrolledStatus && isLessonInProgress) && isMobileSize
-						? '2.5rem'
-						: isEnrolledStatus && isLessonInProgress
-						? '6rem'
-						: '4rem',
+							? '2.5rem'
+							: isEnrolledStatus && isLessonInProgress
+								? '6rem'
+								: '4rem',
 				borderBottom: `0.1rem solid ${theme.border.lightMain}`,
 				backgroundColor: isEnrolledStatus && isLessonInProgress ? theme.bgColor?.lessonInProgress : 'white',
 				cursor: isEnrolledStatus ? 'pointer' : '',
@@ -128,20 +128,20 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 				sx={{
 					height:
 						isEnrolledStatus && isLessonInProgress && isMobileSize
-							? '3rem'
+							? '3.5rem'
 							: !(isEnrolledStatus && isLessonInProgress) && isMobileSize
-							? '2rem'
-							: isEnrolledStatus && isLessonInProgress
-							? '6rem'
-							: '4rem',
+								? '2.5rem'
+								: isEnrolledStatus && isLessonInProgress
+									? '6rem'
+									: '4rem',
 					width:
 						isEnrolledStatus && isLessonInProgress && isMobileSize
 							? '3rem'
 							: !(isEnrolledStatus && isLessonInProgress) && isMobileSize
-							? '2rem'
-							: isEnrolledStatus && isLessonInProgress
-							? '10rem'
-							: '5rem',
+								? '2rem'
+								: isEnrolledStatus && isLessonInProgress
+									? '10rem'
+									: '5rem',
 				}}>
 				<img
 					src={lesson.imageUrl || 'https://directmobilityonline.co.uk/assets/img/noimage.png'}
@@ -164,13 +164,6 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 					px: isMobileSize ? '0.5rem' : '1rem',
 				}}>
 				<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', flex: 10 }}>
-					{/* <Typography
-						sx={{
-							fontSize: isVerySmallScreen ? '0.5rem' : isRotatedMedium ? '0.6rem' : '0.85rem',
-							color: isEnrolledStatus && isLessonInProgress ? 'white' : null,
-						}}>
-						Lesson {lessonOrder}
-					</Typography> */}
 					<Typography
 						sx={{
 							fontSize: isVerySmallScreen ? '0.6rem' : isRotatedMedium ? '0.75rem' : isSmallScreen ? '0.85rem' : '1rem',

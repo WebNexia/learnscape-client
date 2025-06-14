@@ -47,16 +47,18 @@ const Topic = ({ topic }: TopicProps) => {
 						<Typography
 							variant='body2'
 							onClick={() => {
-								if(user?.hasRegisteredCourse || user?.role === Roles.ADMIN) {
+								if (user?.hasRegisteredCourse || user?.role === Roles.ADMIN) {
 									navigate(`/${user?.role !== Roles.ADMIN ? 'community' : 'admin/community'}/user/${user?._id}/topic/${topic._id}`);
-								} else {setMessageNonRegisteredModalOpen(true);}
+								} else {
+									setMessageNonRegisteredModalOpen(true);
+								}
 							}}
 							sx={{
-								cursor: 'pointer',
+								'cursor': 'pointer',
 								':hover': {
 									textDecoration: 'underline',
 								},
-								fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+								'fontSize': isMobileSize ? '0.7rem' : '0.85rem',
 							}}>
 							{isVerySmallScreen ? truncateText(topic.title, 15) : isMobileSize ? truncateText(topic.title, 35) : topic.title}
 						</Typography>
@@ -102,8 +104,8 @@ const Topic = ({ topic }: TopicProps) => {
 			<CustomDialog openModal={messageNonRegisteredModalOpen} closeModal={() => setMessageNonRegisteredModalOpen(false)} maxWidth='sm'>
 				<DialogContent>
 					<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-						<Typography variant='body2' sx={{color:theme.textColor?.error.main, fontSize: isMobileSize ? '0.85rem' : undefined }}>
-							You need to register for a course to join the community and topic discussions.
+						<Typography variant='body2' sx={{ color: theme.textColor?.error.main, fontSize: isMobileSize ? '0.85rem' : undefined }}>
+							You need to register for a paid course to join the community and topic discussions.
 						</Typography>
 					</Box>
 				</DialogContent>

@@ -19,6 +19,7 @@ interface CustomDialogActionsProps {
 	deleteBtn?: boolean;
 	submitBtnType?: 'submit' | 'button' | 'reset' | undefined;
 	disableBtn?: boolean;
+	disableCancelBtn?: boolean;
 }
 
 const CustomDialogActions = ({
@@ -35,6 +36,7 @@ const CustomDialogActions = ({
 	deleteBtn = false,
 	submitBtnType,
 	disableBtn = false,
+	disableCancelBtn = false,
 }: CustomDialogActionsProps) => {
 	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
 
@@ -52,6 +54,8 @@ const CustomDialogActions = ({
 					margin: '0 0.5rem 0.5rem 0',
 					height: isMobileSize ? '1.5rem' : '2.15rem',
 					fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+					cursor: disableCancelBtn ? 'not-allowed' : 'pointer',
+					pointerEvents: disableCancelBtn ? 'none' : 'auto',
 					...cancelBtnSx,
 				}}>
 				{cancelBtnText}

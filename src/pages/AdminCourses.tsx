@@ -412,7 +412,7 @@ const AdminCourses = () => {
 							/>
 						</Tooltip>
 					</Box>
-					<CustomDialogActions onCancel={closeNewCourseModal} actionSx={{ width: '95%', margin: '0.75rem auto' }}/>
+					<CustomDialogActions onCancel={closeNewCourseModal} actionSx={{ width: '95%', margin: '0.75rem auto' }} />
 				</form>
 			</CustomDialog>
 
