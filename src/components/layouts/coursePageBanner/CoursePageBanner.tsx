@@ -35,6 +35,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 
 	const [displayEnrollmentMsg, setDisplayEnrollmentMsg] = useState<boolean>(false);
 	const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState<boolean>(false);
+	const [isProcessing, setIsProcessing] = useState<boolean>(false);
 
 	const { courseId, userId } = useParams();
 	const { user } = useContext(UserAuthContext);
@@ -133,18 +134,24 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 		}
 	};
 
-	// const handleEnrollment = async (): Promise<void> => {
-	// 	if (
-	// 		getPriceForCountry(course, resolvedCountryCode!).amount === 'Free' ||
-	// 		getPriceForCountry(course, resolvedCountryCode!).amount === '0' ||
-	// 		getPriceForCountry(course, resolvedCountryCode!).amount === ''
-	// 	) {
-	// 		await courseRegistration();
-	// 		if (setIsEnrolledStatus) setIsEnrolledStatus(true);
-	// 	} else {
-	// 		setIsPaymentDialogOpen(true);
-	// 	}
-	// };
+	const handleEnroll = async () => {
+		if (isProcessing) return; // Prevent multiple clicks
+
+		if (isCourseFree && !fromHomePage) {
+			setIsProcessing(true);
+			try {
+				await courseRegistration(userId!, course?.orgId!);
+				setDisplayEnrollmentMsg(true);
+				if (setIsEnrolledStatus) setIsEnrolledStatus(true);
+			} catch (error) {
+				console.error('Course registration failed:', error);
+			} finally {
+				setIsProcessing(false);
+			}
+		} else {
+			setIsPaymentDialogOpen(true);
+		}
+	};
 
 	return (
 		<Paper
@@ -245,15 +252,16 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 						{!isEnrolledStatus && !course.isExpired ? (
 							<CustomSubmitButton
 								variant='contained'
+								onClick={handleEnroll}
 								sx={{
 									width: 'fit-content',
 									position: 'absolute',
 									bottom: isRotated ? 60 : 5,
 									fontSize: isMobileSize ? '0.75rem' : '0.9rem',
 									fontFamily: fromHomePage ? 'Varela Round' : '',
-								}}
-								onClick={() => setIsPaymentDialogOpen(true)}>
-								{fromHomePage ? 'Kayıt Ol' : 'Enroll'}
+									pointerEvents: isProcessing ? 'none' : 'auto',
+								}}>
+								{fromHomePage ? 'Kayıt Ol' : isProcessing ? 'Processing...' : 'Enroll'}
 							</CustomSubmitButton>
 						) : !isEnrolledStatus && course.isExpired ? (
 							<Alert

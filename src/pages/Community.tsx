@@ -16,7 +16,6 @@ import CustomCancelButton from '../components/forms/customButtons/CustomCancelBu
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 import theme from '../themes';
 
-
 export interface NewTopic {
 	title: string;
 	text: string;
@@ -27,12 +26,10 @@ export interface NewTopic {
 const Community = () => {
 	const { sortedTopicsData, setTopicsPageNumber, topicsPageNumber, fetchTopics, numberOfPages } = useContext(CommunityContext);
 
-	const {user} = useContext(UserAuthContext)
+	const { user } = useContext(UserAuthContext);
 
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
-
-	
 
 	const [rulesModalOpen, setRulesModalOpen] = useState<boolean>(false);
 	const [createTopicModalOpen, setCreateTopicModalOpen] = useState<boolean>(false);
@@ -86,8 +83,8 @@ const Community = () => {
 									variant='h6'
 									onClick={() => setRulesModalOpen(true)}
 									sx={{
-										cursor: 'pointer',
-										fontSize: isMobileSize ? '0.7rem' : '0.9rem',
+										'cursor': 'pointer',
+										'fontSize': isMobileSize ? '0.7rem' : '0.9rem',
 										':hover': {
 											textDecoration: 'underline',
 										},
@@ -162,8 +159,8 @@ const Community = () => {
 							<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: 'auto' }}>
 								<CustomSubmitButton
 									size='small'
-									onClick={() =>{
-										if(user?.hasRegisteredCourse || user?.role === 'admin'){ 
+									onClick={() => {
+										if (user?.hasRegisteredCourse || user?.role === 'admin') {
 											setCreateTopicModalOpen(true);
 										} else {
 											setMessageNonRegisteredModalOpen(true);
@@ -182,8 +179,8 @@ const Community = () => {
 							<CustomDialog openModal={messageNonRegisteredModalOpen} closeModal={() => setMessageNonRegisteredModalOpen(false)} maxWidth='sm'>
 								<DialogContent>
 									<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-										<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.85rem' : undefined,color:theme.textColor?.error.main, }}>
-											You need to register for a course to create a topic.
+										<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.85rem' : undefined, color: theme.textColor?.error.main }}>
+											You need to register for a paid course to create a topic.
 										</Typography>
 									</Box>
 								</DialogContent>
@@ -225,11 +222,7 @@ const Community = () => {
 								</Typography>
 							</Box>
 						</Box>
-						<Box>
-							{sortedTopicsData?.map((topic: CommunityTopic) => (
-								<Topic key={topic._id} topic={topic} />
-							))}
-						</Box>
+						<Box>{sortedTopicsData?.map((topic: CommunityTopic) => <Topic key={topic._id} topic={topic} />)}</Box>
 					</Box>
 					<Box sx={{ display: 'flex', justifyContent: 'center', margin: isMobileSize ? '0.75rem' : '1.5rem', width: '95%' }}>
 						<CustomTablePagination count={numberOfPages} page={topicsPageNumber} onChange={setTopicsPageNumber} />

@@ -52,7 +52,12 @@ const DashboardPagesLayout = ({ children, pageName, customSettings, showCopyRigh
 					{children}
 
 					{showCopyRight && (
-						<Typography sx={{ fontSize: isSmallScreen ? '0.55rem' : '0.65rem', position: 'absolute', bottom: 3 }}>
+						<Typography
+							sx={{
+								fontSize: isSmallScreen ? '0.55rem' : '0.65rem',
+								position: 'absolute',
+								bottom: 3,
+							}}>
 							&copy; 2025 Webnexia Software Solutions Ltd. All rights reserved.
 						</Typography>
 					)}

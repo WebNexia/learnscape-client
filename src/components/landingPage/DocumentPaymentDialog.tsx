@@ -543,7 +543,15 @@ const DocumentPaymentDialog = ({ document, isPaymentDialogOpen, setIsPaymentDial
 					cancelBtnText='Kapat'
 					cancelBtnSx={{ fontFamily: DIALOG_FONT, borderRadius: '' }}
 					submitBtnText={isProcessing ? 'İşleniyor' : 'Satın Al'}
-					submitBtnSx={{ fontFamily: DIALOG_FONT, borderRadius: '' }}
+					submitBtnSx={{
+						fontFamily: DIALOG_FONT,
+						borderRadius: '',
+						cursor: isProcessing ? 'not-allowed' : 'pointer',
+						cursorEvents: isProcessing ? 'none' : 'auto',
+						pointerEvents: isProcessing ? 'none' : 'auto',
+					}}
+					disableBtn={isProcessing}
+					disableCancelBtn={isProcessing}
 				/>
 			</form>
 			<Snackbar

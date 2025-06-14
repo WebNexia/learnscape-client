@@ -788,21 +788,24 @@ const Messages = () => {
 									InputProps={{
 										endAdornment: (
 											<InputAdornment position='end'>
-												<Search sx={{ mr: '-0.5rem', color: !user?.hasRegisteredCourse && user?.role !=='admin' ? 'lightgray' : 'inherit'}} fontSize={isMobileSize ? 'small' : 'medium'} />
+												<Search
+													sx={{ mr: '-0.5rem', color: !user?.hasRegisteredCourse && user?.role !== 'admin' ? 'lightgray' : 'inherit' }}
+													fontSize={isMobileSize ? 'small' : 'medium'}
+												/>
 											</InputAdornment>
 										),
 									}}
 									placeholder='Search Chat by Username'
 									value={searchChatValue}
 									onChange={handleFilterChats}
-									disabled={!user?.hasRegisteredCourse && user?.role !=='admin' }
+									disabled={!user?.hasRegisteredCourse && user?.role !== 'admin'}
 								/>
 							</Box>
 							<Box sx={{ flex: 1 }}>
 								<Tooltip title='Find User' placement='top'>
 									<IconButton
-									disabled={!user?.hasRegisteredCourse && user?.role !=='admin' }
-										sx={{ ':hover': { backgroundColor: 'transparent', } }}
+										disabled={!user?.hasRegisteredCourse && user?.role !== 'admin'}
+										sx={{ ':hover': { backgroundColor: 'transparent' } }}
 										onClick={() => {
 											setAddUserModalOpen(true);
 											setFilteredUsers([]);
@@ -824,10 +827,10 @@ const Messages = () => {
 									<Box
 										key={`${chat.chatId}-${chat.participants[0].firebaseUserId}`}
 										sx={{
-											display: 'flex',
-											border: '0.04rem solid lightgray',
-											borderRight: 'none',
-											borderBottom: 'none',
+											'display': 'flex',
+											'border': '0.04rem solid lightgray',
+											'borderRight': 'none',
+											'borderBottom': 'none',
 											'&:last-of-type': {
 												borderBottom: '0.04rem solid lightgray',
 												borderBottomLeftRadius: '0.35rem',
@@ -836,10 +839,10 @@ const Messages = () => {
 											'&:first-of-type': {
 												borderTopLeftRadius: '0.35rem',
 											},
-											backgroundImage: chat.chatId === activeChatId ? `url(/msg-bg.png)` : null,
-											backgroundRepeat: 'no-repeat',
-											backgroundSize: 'cover',
-											backgroundPosition: 'center',
+											'backgroundImage': chat.chatId === activeChatId ? `url(/msg-bg.png)` : null,
+											'backgroundRepeat': 'no-repeat',
+											'backgroundSize': 'cover',
+											'backgroundPosition': 'center',
 										}}>
 										<Box
 											sx={{
@@ -863,7 +866,7 @@ const Messages = () => {
 														badgeContent={chat.unreadMessagesCount}
 														max={9}
 														sx={{
-															margin: '0.5rem 0.5rem 0 0',
+															'margin': '0.5rem 0.5rem 0 0',
 															'& .MuiBadge-badge': {
 																fontSize: '0.6rem',
 																height: '1rem',
@@ -1195,7 +1198,9 @@ const Messages = () => {
 									</Box>
 									<Box>
 										<Typography variant={isMobileSize ? 'body2' : 'body1'} sx={{ color: theme.textColor?.common.main }}>
-											{user?.hasRegisteredCourse || user?.role ==='admin' ? "Select an existing chat or start a new chat by adding a user" : "To use messages, you must first register for a course"}
+											{user?.hasRegisteredCourse || user?.role === 'admin'
+												? 'Select an existing chat or start a new chat by adding a user'
+												: 'To use messages, you must first register for a paid course'}
 										</Typography>
 									</Box>
 								</Box>
@@ -1296,10 +1301,10 @@ const Messages = () => {
 										imageUpload
 											? ''
 											: isBlockedUser
-											? 'Can not send message since you are blocked'
-											: isBlockingUser
-											? 'Can not send message to a blocked contact'
-											: 'Type a message...'
+												? 'Can not send message since you are blocked'
+												: isBlockingUser
+													? 'Can not send message to a blocked contact'
+													: 'Type a message...'
 									}
 									multiline
 									rows={isRotatedMedium ? 1 : 2}
@@ -1415,7 +1420,7 @@ const Messages = () => {
 						onChange={setSearchValue}
 						onSelect={handleUserSelection}
 						currentUserId={user?.firebaseUserId}
-						placeholder="Search users by username or email address"
+						placeholder='Search users by username or email address'
 						sx={{ width: '80%' }}
 						listSx={{
 							width: isMobileSize ? '75%' : '65%',
