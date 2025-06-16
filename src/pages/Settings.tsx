@@ -101,7 +101,7 @@ const Settings = () => {
 
 		// Proactive check if email exists in Firebase
 		try {
-			const { data } = await axios.post('/check-email-firebase', { email });
+			const { data } = await axios.post('/users/check-email-firebase', { email });
 			if (data.exists) {
 				setProfileErrorMsg('This email address is already in use.');
 				return;
@@ -277,7 +277,7 @@ const Settings = () => {
 		}
 		// Proactive check if email exists in Firebase
 		try {
-			const { data } = await axios.post('/check-email-firebase', { email: emailToUpdate });
+			const { data } = await axios.post('/users/check-email-firebase', { email: emailToUpdate });
 			if (data.exists) {
 				setDialogError('This email address is already in use.');
 				return;

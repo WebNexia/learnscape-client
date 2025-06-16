@@ -6,7 +6,7 @@ import { OrganisationContext } from './OrganisationContextProvider';
 import { useQuery } from 'react-query';
 import Loading from '../components/layouts/loading/Loading';
 import LoadingError from '../components/layouts/loading/LoadingError';
-import { useParams } from 'react-router-dom';
+import { useParams, BrowserRouter as Router } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 
 interface UserCourseLessonDataContextTypes {
@@ -168,7 +168,11 @@ const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProvide
 	}
 
 	if (error || userLessonsError || singleCourseDataAdminError || singleCourseDataUserError) {
-		return <LoadingError />;
+		return (
+			<Router>
+				<LoadingError />
+			</Router>
+		);
 	}
 
 	return (

@@ -1,8 +1,21 @@
 import { Box, Typography } from '@mui/material';
 import theme from '../../../themes';
 import { SentimentVeryDissatisfied } from '@mui/icons-material';
+import { useEffect } from 'react';
 
 const LoadingError = () => {
+	useEffect(() => {
+		// Check if we have rate limit info
+		const rateLimitInfo = localStorage.getItem('rateLimitInfo');
+		if (rateLimitInfo) {
+			// If we have rate limit info, redirect to rate limit error page
+			// Only redirect if we're not already on the rate limit error page
+			if (window.location.pathname !== '/rate-limit-error') {
+				window.location.href = '/rate-limit-error';
+			}
+		}
+	}, []);
+
 	return (
 		<Box
 			sx={{

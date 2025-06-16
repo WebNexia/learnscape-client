@@ -64,6 +64,8 @@ const PasswordResetPage = React.lazy(() => import('./pages/ResetPasswordPage'));
 const VerifyEmailPage = React.lazy(() => import('./pages/VerifyEmailPage'));
 const HandleAuthResetPassword = React.lazy(() => import('./pages/HandleAuthResetPassword'));
 
+const RateLimitError = React.lazy(() => import('./pages/RateLimitError'));
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -111,6 +113,7 @@ function App() {
 																							<Route path='/handle-auth-reset' element={<HandleAuthResetPassword />} />
 																							<Route path='/about-us' element={<AboutUs />} />
 																							<Route path='/contact-us' element={<ContactUs />} />
+																							<Route path='/rate-limit-error' element={<RateLimitError />} />
 																							<>
 																								{renderRoute('/admin/dashboard/user/:userId', <AdminDashboard />, Roles.ADMIN)}
 																								{renderRoute('/admin/users/user/:userId', <AdminUsers />, Roles.ADMIN)}

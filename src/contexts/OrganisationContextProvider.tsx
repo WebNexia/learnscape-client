@@ -53,13 +53,24 @@ const OrganisationContextProvider = (props: UserAuthContextProviderProps) => {
 			setIsLoaded(true);
 			// Store data in React Query cache
 			queryClient.setQueryData('organisation', responseOrgData.data.data[0]);
-		} catch (error) {
+		} catch (error: any) {
+			// Don't throw error for rate limit - let the axios interceptor handle it
+			if (error.response?.status === 429) {
+				return;
+			}
 			throw new Error('Failed to fetch organization data');
 		}
 	};
 
 	const organisationQuery = useQuery('organisation', () => fetchOrganisationData(orgId), {
 		enabled: !!orgId && !isLoaded,
+		retry: (failureCount, error: any) => {
+			// Don't retry on rate limit errors
+			if (error.response?.status === 429) {
+				return false;
+			}
+			return failureCount < 3;
+		},
 	});
 
 	if (organisationQuery.isLoading) {
@@ -67,6 +78,11 @@ const OrganisationContextProvider = (props: UserAuthContextProviderProps) => {
 	}
 
 	if (organisationQuery.isError) {
+		// Don't show error for rate limit - let the axios interceptor handle it
+		const error: any = organisationQuery.error;
+		if (error.response?.status === 429) {
+			return <Loading />;
+		}
 		return <LoadingError />;
 	}
 
