@@ -1,4 +1,4 @@
-import { Box, InputAdornment, Link, Table, TableBody, TableCell, TableRow } from '@mui/material';
+import { Box, FormControl, InputAdornment, Link, MenuItem, Select, Table, TableBody, TableCell, TableRow } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { useContext, useEffect, useRef, useState } from 'react';
 import axios from '@utils/axiosInstance';
@@ -18,10 +18,10 @@ import { useParams } from 'react-router-dom';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import { dateFormatter } from '../utils/dateFormatter';
-import { useTheme } from '@mui/material/styles';
 import DocumentInfoModal from '../components/documents/DocumentInfoModal';
 import CreateNewDocumentDialog from '../components/documents/CreateNewDocumentDialog';
 import EditDocumentDialog from '../components/documents/EditDocumentDialog';
+import theme from '../themes';
 
 const AdminDocuments = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -37,6 +37,7 @@ const AdminDocuments = () => {
 
 	const [documentsPageNumber, setDocumentsPageNumber] = useState<number>(1);
 	const [searchValue, setSearchValue] = useState<string>('');
+	const [filterValue, setFilterValue] = useState<string>('');
 
 	const pageSize = 50;
 
@@ -46,7 +47,30 @@ const AdminDocuments = () => {
 			return doc?.name?.toLowerCase().includes(lowerSearch);
 		}
 
-		return !searchValue;
+		if (filterValue) {
+			if (
+				filterValue === 'paid documents' &&
+				doc.prices.some((p) => {
+					const amt = p.amount?.toString().trim().toLowerCase();
+					return amt !== '0' && amt !== 'free' && amt !== '';
+				})
+			)
+				return true;
+
+			if (
+				filterValue === 'free documents' &&
+				doc.prices.every((p) => {
+					const amt = p.amount?.toString().trim().toLowerCase();
+					return amt === '0' || amt === 'free' || amt === '';
+				})
+			)
+				return true;
+
+			if (filterValue === 'on landing page' && doc.isOnLandingPage) return true;
+			if (filterValue === 'on platform only' && !doc.isOnLandingPage) return true;
+		}
+
+		return !searchValue && !filterValue;
 	});
 
 	const documentsNumberOfPages = Math.ceil(filteredDocuments.length / pageSize);
@@ -80,8 +104,6 @@ const AdminDocuments = () => {
 	const [USD, setUSD] = useState<Price>({ currency: 'usd', amount: '0' });
 	const [EUR, setEUR] = useState<Price>({ currency: 'eur', amount: '0' });
 	const [TRY, setTRY] = useState<Price>({ currency: 'try', amount: '0' });
-
-	const theme = useTheme();
 
 	useEffect(() => {
 		setDocumentsPageNumber(1);
@@ -256,16 +278,16 @@ const AdminDocuments = () => {
 		setIsDocumentDeleteModalOpen(updatedState);
 	};
 
-	// Function to toggle edit modal for a specific doc
-	const toggleDocumentEditModal = (index: number) => {
-		const newEditModalOpen = [...editDocumentModalOpen];
-		newEditModalOpen[index] = !newEditModalOpen[index];
-		setEditDocumentModalOpen(newEditModalOpen);
-	};
+	const openEditDocumentModal = (docId: string) => {
+		const documentIndex = sortedDocumentsData.findIndex((d) => d._id === docId);
+		if (documentIndex === -1) return;
 
-	const openEditDocumentModal = (index: number) => {
-		const documentToEdit = sortedDocumentsData[index];
+		const documentToEdit = sortedDocumentsData[documentIndex];
 		setSingleDocument(documentToEdit);
+
+		const updatedState = [...editDocumentModalOpen];
+		updatedState[documentIndex] = true;
+		setEditDocumentModalOpen(updatedState);
 
 		// Set initial price states
 		const gbpPrice = documentToEdit.prices.find((p) => p.currency === 'gbp');
@@ -285,8 +307,6 @@ const AdminDocuments = () => {
 		setEnterDocUrl(true);
 		setEnterDocImageUrl(true);
 		setEnterSamplePageImageUrl(true);
-
-		toggleDocumentEditModal(index);
 	};
 
 	const closeDocumentEditModal = (index: number) => {
@@ -318,12 +338,72 @@ const AdminDocuments = () => {
 					width: '100%',
 				}}>
 				<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-					<Box sx={{ alignSelf: 'flex-start', width: isVerySmallScreen ? '12.5rem' : '20rem' }}>
+					<Box sx={{ display: 'flex', alignSelf: 'flex-start', width: isVerySmallScreen ? '12.5rem' : '30rem' }}>
+						<Box sx={{ mr: '1rem' }}>
+							<FormControl>
+								<Select
+									size='small'
+									value={filterValue}
+									onChange={(e) => {
+										setSearchValue('');
+										setFilterValue(e.target.value);
+									}}
+									displayEmpty
+									sx={{
+										backgroundColor: theme.bgColor?.common,
+										width: isMobileSizeSmall ? '8rem' : '12rem',
+										fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+										textTransform: 'capitalize',
+									}}>
+									<MenuItem
+										disabled
+										value='filter'
+										selected
+										sx={{
+											fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+											fontStyle: 'italic',
+											textTransform: 'capitalize',
+											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+											minHeight: '2rem',
+										}}>
+										Filter Documents
+									</MenuItem>
+									<MenuItem
+										value=''
+										selected
+										sx={{
+											fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+											textTransform: 'capitalize',
+											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+											minHeight: '2rem',
+										}}>
+										All Documents
+									</MenuItem>
+									{['Paid Documents', 'Free Documents', 'On Landing Page', 'On Platform Only'].map((type) => (
+										<MenuItem
+											value={type.toLowerCase()}
+											key={type}
+											sx={{
+												fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+												textTransform: 'capitalize',
+												padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+												minHeight: '2rem',
+											}}>
+											{type}
+										</MenuItem>
+									))}
+								</Select>
+							</FormControl>
+						</Box>
 						<CustomTextField
 							value={searchValue}
 							placeholder={'Search Document'}
 							onChange={(e) => {
 								setSearchValue(e.target.value);
+								setFilterValue('filter');
+								if (e.target.value === '') {
+									setFilterValue('');
+								}
 							}}
 							sx={{ backgroundColor: '#fff' }}
 							required={false}
@@ -489,21 +569,26 @@ const AdminDocuments = () => {
 											<CustomActionBtn
 												title='Edit'
 												onClick={() => {
-													toggleDocumentEditModal(index);
-													openEditDocumentModal(index);
+													openEditDocumentModal(document._id);
 												}}
 												icon={<Edit fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 											/>
 
 											<EditDocumentDialog
-												isOpen={editDocumentModalOpen[index]}
-												onClose={() => closeDocumentEditModal(index)}
+												isOpen={editDocumentModalOpen[sortedDocumentsData.findIndex((d) => d._id === document._id)]}
+												onClose={() => {
+													closeDocumentEditModal(sortedDocumentsData.findIndex((d) => d._id === document._id));
+													resetForm();
+												}}
 												onSubmit={async (e: React.FormEvent<HTMLFormElement>) => {
 													e.preventDefault();
+													const fullIndex = sortedDocumentsData.findIndex((d) => d._id === document._id);
+
 													if (singleDocument?.name && singleDocument.name.trim()) {
 														handleDocUpdate();
-														closeDocumentEditModal(index);
+														closeDocumentEditModal(fullIndex);
 													}
+													resetForm();
 												}}
 												document={singleDocument}
 												setDocument={setSingleDocument}

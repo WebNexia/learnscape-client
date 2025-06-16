@@ -1,4 +1,4 @@
-import { Box, DialogActions, DialogContent, TableCell } from '@mui/material';
+import { Box, DialogActions, DialogContent, FormControl, InputAdornment, MenuItem, Select, TableCell } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { format } from 'date-fns';
 import * as XLSX from 'xlsx';
@@ -12,7 +12,7 @@ import { ContactRequestsContext } from '../contexts/ContactRequestsContextProvid
 import { ContactRequest } from '../interfaces/contactRequest';
 import CustomActionBtn from '../components/layouts/table/CustomActionBtn';
 import { dateFormatter, dateTimeFormatter } from '@utils/dateFormatter';
-import { Delete, Visibility } from '@mui/icons-material';
+import { Delete, Search, Visibility } from '@mui/icons-material';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
@@ -20,6 +20,8 @@ import axios from '@utils/axiosInstance';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import { truncateText } from '@utils/utilText';
 import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
+import CustomTextField from '../components/forms/customFields/CustomTextField';
+import theme from '../themes';
 
 const columns = [
 	{ key: 'name', label: 'Name' },
@@ -37,8 +39,37 @@ const AdminContactRequests = () => {
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
-	const { contactRequests, loading, error, removeRequest, numberOfPages, requestsPageNumber, setRequestsPageNumber, fetchContactRequests } =
-		useContext(ContactRequestsContext);
+	const { contactRequests, loading, error, removeRequest, fetchContactRequests } = useContext(ContactRequestsContext);
+
+	const [requestsPageNumber, setRequestsPageNumber] = useState<number>(1);
+	const [searchValue, setSearchValue] = useState<string>('');
+	const [filterValue, setFilterValue] = useState<string>('');
+
+	const pageSize = 50;
+
+	const filteredRequests = contactRequests.filter((req: ContactRequest) => {
+		if (searchValue) {
+			const lowerSearch = searchValue.toLowerCase();
+			return (
+				req.firstName.toLowerCase().includes(lowerSearch) ||
+				req.lastName.toLowerCase().includes(lowerSearch) ||
+				req.email.toLowerCase().includes(lowerSearch) ||
+				req.message?.toLowerCase().includes(lowerSearch)
+			);
+		}
+
+		if (filterValue) {
+			if (filterValue === 'from home page') return req.category === 'HeroSection';
+			if (filterValue === 'from contact us') return req.category === 'ContactUs';
+			if (filterValue === 'from about us') return req.category === 'AboutUs';
+		}
+
+		return !searchValue && !filterValue;
+	});
+
+	const requestsNumberOfPages = Math.ceil(filteredRequests.length / pageSize);
+
+	const paginatedRequests = filteredRequests.slice((requestsPageNumber - 1) * pageSize, requestsPageNumber * pageSize);
 
 	const [orderBy, setOrderBy] = useState<keyof ContactRequest>('createdAt');
 	const [order, setOrder] = useState<'asc' | 'desc'>('desc');
@@ -129,6 +160,91 @@ const AdminContactRequests = () => {
 						width: '100%',
 						mb: '1.25rem',
 					}}>
+					<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+						<Box sx={{ display: 'flex', alignSelf: 'flex-start', width: isVerySmallScreen ? '12.5rem' : '30rem' }}>
+							<Box sx={{ mr: '1rem' }}>
+								<FormControl>
+									<Select
+										size='small'
+										value={filterValue}
+										onChange={(e) => {
+											setSearchValue('');
+											setFilterValue(e.target.value);
+										}}
+										displayEmpty
+										sx={{
+											backgroundColor: theme.bgColor?.common,
+											width: isMobileSizeSmall ? '8rem' : '12rem',
+											fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+											textTransform: 'capitalize',
+										}}>
+										<MenuItem
+											disabled
+											value='filter'
+											selected
+											sx={{
+												fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+												fontStyle: 'italic',
+												textTransform: 'capitalize',
+												padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+												minHeight: '2rem',
+											}}>
+											Filter Requests
+										</MenuItem>
+										<MenuItem
+											value=''
+											selected
+											sx={{
+												fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+												textTransform: 'capitalize',
+												padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+												minHeight: '2rem',
+											}}>
+											All Requests
+										</MenuItem>
+										{['From Home Page', 'From Contact Us', 'From About Us'].map((type) => (
+											<MenuItem
+												value={type.toLowerCase()}
+												key={type}
+												sx={{
+													fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+													textTransform: 'capitalize',
+													padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+													minHeight: '2rem',
+												}}>
+												{type}
+											</MenuItem>
+										))}
+									</Select>
+								</FormControl>
+							</Box>
+							<CustomTextField
+								value={searchValue}
+								placeholder={'Search in name, email, message'}
+								onChange={(e) => {
+									setSearchValue(e.target.value);
+									setFilterValue('filter');
+									if (e.target.value === '') {
+										setFilterValue('');
+									}
+								}}
+								sx={{ backgroundColor: '#fff' }}
+								required={false}
+								InputProps={{
+									endAdornment: (
+										<InputAdornment position='end'>
+											<Search
+												sx={{
+													mr: '-0.5rem',
+												}}
+												fontSize={isMobileSize ? 'small' : 'medium'}
+											/>
+										</InputAdornment>
+									),
+								}}
+							/>
+						</Box>
+					</Box>
 					<Box sx={{ display: 'flex', gap: 1 }}>
 						<CustomSubmitButton
 							startIcon={<DownloadIcon />}
@@ -152,8 +268,8 @@ const AdminContactRequests = () => {
 					<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>
 						<CustomTableHead<ContactRequest> orderBy={orderBy} order={order} handleSort={handleSort} columns={columns} />
 						<TableBody>
-							{contactRequests &&
-								contactRequests?.map((req: ContactRequest, index) => {
+							{paginatedRequests &&
+								paginatedRequests?.map((req: ContactRequest, index) => {
 									return (
 										<TableRow key={req._id}>
 											<CustomTableCell value={req.firstName + ' ' + req.lastName} />
@@ -200,8 +316,16 @@ const AdminContactRequests = () => {
 															<Typography variant='body2' sx={{ mb: '0.75rem' }}>
 																<strong>Message:</strong> {selectedRequest.message || '-'}
 															</Typography>
-															<Typography variant='body2'>
+															<Typography variant='body2' sx={{ mb: '0.75rem' }}>
 																<strong>Submitted:</strong> {dateTimeFormatter(selectedRequest.createdAt)}
+															</Typography>
+															<Typography variant='body2'>
+																<strong>From:</strong>{' '}
+																{selectedRequest.category === 'HeroSection'
+																	? 'Home Page'
+																	: selectedRequest.category === 'ContactUs'
+																		? 'Contact Us'
+																		: 'About Us'}
 															</Typography>
 														</DialogContent>
 													)}
@@ -236,7 +360,7 @@ const AdminContactRequests = () => {
 								})}
 						</TableBody>
 					</Table>
-					<CustomTablePagination count={numberOfPages} page={requestsPageNumber} onChange={handlePageChange} />
+					<CustomTablePagination count={requestsNumberOfPages} page={requestsPageNumber} onChange={handlePageChange} />
 				</Box>
 			</Box>
 		</DashboardPagesLayout>
