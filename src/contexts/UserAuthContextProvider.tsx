@@ -59,12 +59,27 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 
 	const fetchUserData = async (firebaseUserId: string) => {
 		try {
+			// Check session expiry
+			const sessionTimestamp = localStorage.getItem('sessionTimestamp');
+			const currentTime = Date.now();
+			const SESSION_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
+			// If no session timestamp exists, this is a new login
+			if (!sessionTimestamp) {
+				localStorage.setItem('sessionTimestamp', currentTime.toString());
+			} else if (currentTime - parseInt(sessionTimestamp) > SESSION_DURATION) {
+				// Session expired, clear data and sign out
+				await signOutUser();
+				throw new Error('Session expired');
+			}
+
 			const responseUserData = await axios.get(`${base_url}/users/${firebaseUserId}`);
 			localStorage.setItem('role', responseUserData.data.data[0].role);
 			setUser(responseUserData.data.data[0]);
 			setUserId(responseUserData.data.data[0]._id);
 			queryClient.setQueryData('userData', responseUserData.data.data[0]);
 		} catch (error) {
+			console.error('Failed to fetch user data:', error);
 			throw new Error('Failed to fetch user data');
 		}
 	};
