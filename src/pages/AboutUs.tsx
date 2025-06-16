@@ -53,6 +53,7 @@ const AboutUs = () => {
 				countryCode: location?.countryCode?.toUpperCase() || 'tr',
 				orgId: import.meta.env.VITE_ORG_ID,
 				message,
+				category: 'AboutUs',
 			});
 			setShowSuccess(true);
 			// Do not close modal or reset form yet

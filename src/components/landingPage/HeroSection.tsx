@@ -53,6 +53,7 @@ const HeroSection = () => {
 				countryCode: location?.countryCode?.toUpperCase() || 'tr',
 				orgId: import.meta.env.VITE_ORG_ID,
 				message,
+				category: 'HeroSection',
 			});
 			setShowSuccess(true);
 			// Do not close modal or reset form yet

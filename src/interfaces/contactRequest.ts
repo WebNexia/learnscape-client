@@ -9,4 +9,5 @@ export interface ContactRequest {
 	createdAt: string;
 	updatedAt: string;
 	orgId: string;
+	category: string;
 }

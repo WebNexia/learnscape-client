@@ -193,7 +193,7 @@ const CreateNewDocumentDialog = ({
 									onChange={(e) => {
 										const value = e.target.value;
 										if (value === '' || parseFloat(value) >= 0) {
-											setGBP({ currency: 'gbp', amount: value });
+											setGBP({ currency: 'gbp', amount: String(value) });
 										}
 									}}
 									type='number'
@@ -214,7 +214,7 @@ const CreateNewDocumentDialog = ({
 									onChange={(e) => {
 										const value = e.target.value;
 										if (value === '' || parseFloat(value) >= 0) {
-											setUSD({ currency: 'usd', amount: value });
+											setUSD({ currency: 'usd', amount: String(value) });
 										}
 									}}
 									type='number'
@@ -235,7 +235,7 @@ const CreateNewDocumentDialog = ({
 									onChange={(e) => {
 										const value = e.target.value;
 										if (value === '' || parseFloat(value) >= 0) {
-											setEUR({ currency: 'eur', amount: value });
+											setEUR({ currency: 'eur', amount: String(value) });
 										}
 									}}
 									type='number'
@@ -256,7 +256,7 @@ const CreateNewDocumentDialog = ({
 									onChange={(e) => {
 										const value = e.target.value;
 										if (value === '' || parseFloat(value) >= 0) {
-											setTRY({ currency: 'try', amount: value });
+											setTRY({ currency: 'try', amount: String(value) });
 										}
 									}}
 									type='number'

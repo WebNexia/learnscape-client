@@ -38,6 +38,7 @@ const ContactUs = () => {
 				countryCode: location?.countryCode?.toUpperCase() || 'tr',
 				orgId: import.meta.env.VITE_ORG_ID,
 				message,
+				category: 'ContactUs',
 			});
 			setShowSuccess(true);
 			// Do not close modal or reset form yet
