@@ -1,5 +1,5 @@
 import { createContext, ReactNode, useEffect, useState } from 'react';
-import { useQuery, useQueryClient } from 'react-query';
+import { useQueryClient } from 'react-query';
 import axios from '@utils/axiosInstance';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from '../firebase';
@@ -40,21 +40,38 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 	useEffect(() => {
 		const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
 			if (currentUser) {
+				let sessionTimestamp = localStorage.getItem('sessionTimestamp');
+				const currentTime = Date.now();
+				const SESSION_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
+
+				// If no timestamp, set it now (first login or after clearing storage)
+				if (!sessionTimestamp) {
+					localStorage.setItem('sessionTimestamp', currentTime.toString());
+					sessionTimestamp = currentTime.toString();
+				}
+
+				// Now check expiry
+				if (currentTime - parseInt(sessionTimestamp) > SESSION_DURATION) {
+					await signOut(auth);
+					localStorage.removeItem('sessionTimestamp');
+					console.warn('Session expired');
+					window.location.href = '/auth';
+					return;
+				}
+
 				setFirebaseUserId(currentUser.uid);
 				try {
-					await fetchUserData(currentUser.uid); // Fetch user data immediately upon authentication
+					await fetchUserData(currentUser.uid);
 				} catch (error) {
 					console.error('Failed to fetch user data:', error);
 				}
 			} else {
-				setUser(() => undefined);
+				setUser(undefined);
 				setUserId('');
 			}
 		});
 
-		return () => {
-			unsubscribe();
-		};
+		return () => unsubscribe();
 	}, []);
 
 	const fetchUserData = async (firebaseUserId: string) => {
@@ -65,13 +82,23 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 			setUserId(responseUserData.data.data[0]._id);
 			queryClient.setQueryData('userData', responseUserData.data.data[0]);
 		} catch (error) {
+			console.error('Failed to fetch user data:', error);
 			throw new Error('Failed to fetch user data');
 		}
 	};
 
 	const signOutUser = async () => {
 		await signOut(auth);
-		setUser(() => undefined);
+		localStorage.removeItem('sessionTimestamp');
+		localStorage.removeItem('orgId');
+		localStorage.removeItem('userCourseData');
+		localStorage.removeItem('userLessonData');
+		localStorage.removeItem('role');
+		localStorage.removeItem('activeChatId');
+		localStorage.removeItem('chatList');
+		localStorage.removeItem('participantCache');
+		localStorage.removeItem('totalUnreadMessages');
+		setUser(undefined);
 		setUserId('');
 		queryClient.clear();
 	};

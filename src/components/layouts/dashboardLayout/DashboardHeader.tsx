@@ -284,17 +284,7 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 						onClick={async () => {
 							await signOut();
 							await updateInProgressLessons();
-							localStorage.removeItem('orgId');
-							localStorage.removeItem('userCourseData');
-							localStorage.removeItem('userLessonData');
-							localStorage.removeItem('role');
-							localStorage.removeItem('activeChatId');
-							localStorage.removeItem('chatList');
-							localStorage.removeItem('participantCache');
-							localStorage.removeItem('totalUnreadMessages');
-
 							clearAllQuizData();
-
 							navigate('/');
 						}}>
 						Log Out

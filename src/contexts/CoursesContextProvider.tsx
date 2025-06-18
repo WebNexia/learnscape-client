@@ -92,16 +92,13 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 			const response = await axios.get(`${base_url}/courses/public`);
 			const sortedDataCopy = [...response.data.data].sort((a: SingleCourse, b: SingleCourse) => b.updatedAt.localeCompare(a.updatedAt));
 			setSortedPublicCoursesData(sortedDataCopy);
-			console.log(response.data.data);
 			return response.data.data;
 		} catch (error) {
 			throw error;
 		}
 	};
 
-	const { data: publicCourses } = useQuery(['allPublicCourses'], fetchPublicCourses, {
-		enabled: !isAuthenticated,
-	});
+	const { data: publicCourses } = useQuery(['allPublicCourses'], fetchPublicCourses);
 
 	const fetchCoursesDashboardSummary = async () => {
 		if (!orgId) return;

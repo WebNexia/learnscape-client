@@ -1,4 +1,4 @@
-import { Box, Checkbox, FormControlLabel, Typography } from '@mui/material';
+import { Box, Checkbox, FormControlLabel, Typography, Button } from '@mui/material';
 import CustomDialog from '../dialog/CustomDialog';
 import CustomTextField from '../../forms/customFields/CustomTextField';
 import TermsConditions from './TermsConditions';
@@ -84,6 +84,7 @@ const PaymentDialog = ({
 	const [email, setEmail] = useState<string>('');
 	const [isUserAccountExist, setIsUserAccountExist] = useState<boolean>(true);
 	const [isAlreadyEnrolled, setIsAlreadyEnrolled] = useState<boolean>(false);
+	const [isEmailVerified, setIsEmailVerified] = useState<boolean>(true);
 	const [promoCode, setPromoCode] = useState<string>('');
 	const [discountedAmount, setDiscountedAmount] = useState<number>(() => {
 		if (!course) return 0;
@@ -103,6 +104,9 @@ const PaymentDialog = ({
 
 	const stripe = useStripe();
 	const elements = useElements();
+
+	const [isResendingVerification, setIsResendingVerification] = useState<boolean>(false);
+	const [verificationSent, setVerificationSent] = useState<boolean>(false);
 
 	const getCardIcon = (brand: string) => {
 		switch (brand) {
@@ -160,6 +164,18 @@ const PaymentDialog = ({
 								: `This email address isn't linked to any account.\nCreate a free account to join the course! - `
 						);
 						setIsUserAccountExist(false);
+						setIsProcessing(false);
+						return;
+					}
+
+					// Add email verification check
+					if (!userExistsResponse.data.isEmailVerified) {
+						setErrorMessage(
+							fromHomePage
+								? `Lütfen önce e-posta adresinizi doğrulayın. E-posta adresinize gönderilen doğrulama bağlantısını kontrol edin.`
+								: `Please verify your email address first. Check your inbox for the verification link.`
+						);
+						setIsEmailVerified(false);
 						setIsProcessing(false);
 						return;
 					}
@@ -489,6 +505,32 @@ const PaymentDialog = ({
 		}
 	};
 
+	const handleResendVerification = async () => {
+		if (!email) return;
+		setIsResendingVerification(true);
+		try {
+			await axiosInstance.post(`${base_url}/users/resend-verification`, { email });
+			setVerificationSent(true);
+			setErrorMessage(
+				fromHomePage ? 'Doğrulama e-postası gönderildi. Lütfen gelen kutunuzu kontrol edin.' : 'Verification email sent. Please check your inbox.'
+			);
+		} catch (error) {
+			if (axios.isAxiosError(error)) {
+				if (error.response?.data?.isEmailVerified) {
+					setErrorMessage(fromHomePage ? 'E-posta adresiniz zaten doğrulanmış.' : 'Your email is already verified.');
+				} else {
+					setErrorMessage(
+						fromHomePage
+							? 'Doğrulama e-postası gönderilirken bir hata oluştu. Lütfen tekrar deneyin.'
+							: 'Error sending verification email. Please try again.'
+					);
+				}
+			}
+		} finally {
+			setIsResendingVerification(false);
+		}
+	};
+
 	const resetForm = (preserveError = false) => {
 		setEmail('');
 		setPromoCode('');
@@ -505,6 +547,7 @@ const PaymentDialog = ({
 		setIsSubmitted(false);
 		setIsProcessing(false);
 		setIsAlreadyEnrolled(false);
+		setIsEmailVerified(true);
 	};
 
 	return (
@@ -681,7 +724,7 @@ const PaymentDialog = ({
 									fromHomePage
 										? {
 												border:
-													isSubmitted && !isCourseFree && isUserAccountExist && !isAlreadyEnrolled && !cardNumberComplete
+													isSubmitted && !isCourseFree && isUserAccountExist && !isAlreadyEnrolled && !cardNumberComplete && isEmailVerified
 														? '1px solid red'
 														: '1px solid #ccc',
 												padding: '0.6rem',
@@ -692,7 +735,7 @@ const PaymentDialog = ({
 											}
 										: {
 												border:
-													isSubmitted && !isCourseFree && isUserAccountExist && !isAlreadyEnrolled && !cardNumberComplete
+													isSubmitted && !isCourseFree && isUserAccountExist && !isAlreadyEnrolled && !cardNumberComplete && isEmailVerified
 														? '1px solid red'
 														: '1px solid #ccc',
 												padding: '0.6rem',
@@ -749,7 +792,7 @@ const PaymentDialog = ({
 									fromHomePage
 										? {
 												border:
-													isSubmitted && !cardExpiryComplete && !isCourseFree && isUserAccountExist && !isAlreadyEnrolled
+													isSubmitted && !cardExpiryComplete && !isCourseFree && isUserAccountExist && !isAlreadyEnrolled && isEmailVerified
 														? '1px solid red'
 														: '1px solid #ccc',
 												padding: '0.6rem',
@@ -759,7 +802,7 @@ const PaymentDialog = ({
 											}
 										: {
 												border:
-													isSubmitted && !cardExpiryComplete && !isCourseFree && isUserAccountExist && !isAlreadyEnrolled
+													isSubmitted && !cardExpiryComplete && !isCourseFree && isUserAccountExist && !isAlreadyEnrolled && isEmailVerified
 														? '1px solid red'
 														: '1px solid #ccc',
 												padding: '0.6rem',
@@ -808,7 +851,7 @@ const PaymentDialog = ({
 									fromHomePage
 										? {
 												border:
-													isSubmitted && !cardCvcComplete && !isCourseFree && isUserAccountExist && !isAlreadyEnrolled
+													isSubmitted && !cardCvcComplete && !isCourseFree && isUserAccountExist && !isAlreadyEnrolled && isEmailVerified
 														? '1px solid red'
 														: '1px solid #ccc',
 												padding: '0.6rem',
@@ -818,7 +861,7 @@ const PaymentDialog = ({
 											}
 										: {
 												border:
-													isSubmitted && !cardCvcComplete && !isCourseFree && isUserAccountExist && !isAlreadyEnrolled
+													isSubmitted && !cardCvcComplete && !isCourseFree && isUserAccountExist && !isAlreadyEnrolled && isEmailVerified
 														? '1px solid red'
 														: '1px solid #ccc',
 												padding: '0.6rem',
@@ -959,6 +1002,40 @@ const PaymentDialog = ({
 									}}>
 									{fromHomePage ? 'Buraya tıklayın' : 'Click here'}
 								</span>
+							)}
+							{errorMessage.includes('e-posta adresinizi doğrulayın') && !verificationSent && (
+								<Box sx={{ mt: 1 }}>
+									<Button
+										onClick={handleResendVerification}
+										disabled={isResendingVerification}
+										sx={{
+											'color': theme.textColor?.greenSecondary.main,
+											'textDecoration': 'underline',
+											'cursor': 'pointer',
+											'fontSize': isMobileSize ? '0.65rem' : '0.75rem',
+											'fontFamily': fromHomePage ? DIALOG_FONT : theme.fontFamily?.main,
+											'textTransform': 'none',
+											'&:hover': {
+												backgroundColor: 'transparent',
+												textDecoration: 'underline',
+											},
+										}}>
+										{isResendingVerification
+											? fromHomePage
+												? 'Gönderiliyor...'
+												: 'Sending...'
+											: fromHomePage
+												? 'Doğrulama e-postasını tekrar gönder'
+												: 'Resend verification email'}
+									</Button>
+								</Box>
+							)}
+							{verificationSent && (
+								<Typography color='success.main' sx={{ mt: 1 }}>
+									{fromHomePage
+										? 'Doğrulama e-postası gönderildi. Lütfen gelen kutunuzu kontrol edin.'
+										: 'Verification email sent. Please check your inbox.'}
+								</Typography>
 							)}
 						</span>
 					</CustomErrorMessage>

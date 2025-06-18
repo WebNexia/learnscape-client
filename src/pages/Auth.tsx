@@ -69,6 +69,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 	const [isPasswordInfoModalOpen, setIsPasswordInfoModalOpen] = useState<boolean>(false);
 
 	const [isResetPassword, setIsResetPassword] = useState<boolean>(false);
+	const [isResendingVerification, setIsResendingVerification] = useState<boolean>(false);
 
 	const togglePasswordVisibility = () => {
 		setShowPassword((prevShowPassword) => !prevShowPassword);
@@ -113,21 +114,58 @@ const Auth = ({ setUserRole }: AuthProps) => {
 				});
 			}
 
+			// Check session validity
+			const sessionTimestamp = localStorage.getItem('sessionTimestamp');
+			const currentTime = Date.now();
+			const SESSION_DURATION = 24 * 60 * 60 * 1000;
+
+			if (!sessionTimestamp || currentTime - parseInt(sessionTimestamp) > SESSION_DURATION) {
+				localStorage.setItem('sessionTimestamp', currentTime.toString());
+			} else {
+				// Update timestamp on successful login
+				localStorage.setItem('sessionTimestamp', currentTime.toString());
+			}
+
 			// Fetch and handle user data from your backend API
 			await fetchUserData(firebaseUser.uid);
 			const updatedUser = queryClient.getQueryData<User>('userData');
 
-			// --- SYNC EMAIL TO MONGODB IF DIFFERENT ---
-			if (firebaseUser.email && updatedUser?.email !== firebaseUser.email) {
-				await axiosInstance.patch(`${base_url}/users/${updatedUser?._id}`, { email: firebaseUser.email });
-				// Optionally update the user context
-				setUser((prev) => (prev ? { ...prev, email: firebaseUser.email! } : prev));
+			// Update email verification status in MongoDB if needed
+			if (updatedUser && !updatedUser.isEmailVerified) {
+				await axiosInstance.patch(`${base_url}/users/${updatedUser._id}`, {
+					isEmailVerified: true,
+					email: firebaseUser.email,
+					activeChatId: userDoc.data()?.activeChatId || null,
+				});
+				setUser((prev) =>
+					prev
+						? {
+								...prev,
+								isEmailVerified: true,
+								email: firebaseUser.email!,
+								activeChatId: userDoc.data()?.activeChatId || null,
+							}
+						: prev
+				);
+			} else if (firebaseUser.email && updatedUser?.email !== firebaseUser.email) {
+				// Sync email and activeChatId to MongoDB if different
+				await axiosInstance.patch(`${base_url}/users/${updatedUser?._id}`, {
+					email: firebaseUser.email,
+					activeChatId: userDoc.data()?.activeChatId || null,
+				});
+				setUser((prev) =>
+					prev
+						? {
+								...prev,
+								email: firebaseUser.email!,
+								activeChatId: userDoc.data()?.activeChatId || null,
+							}
+						: prev
+				);
 			}
-			// --- END SYNC ---
 
 			if (updatedUser) {
 				await fetchOrganisationData(orgId);
-
 				localStorage.setItem('role', updatedUser.role);
 				localStorage.setItem('orgId', '61b23' + orgId + '078a9');
 
@@ -194,9 +232,10 @@ const Auth = ({ setUserRole }: AuthProps) => {
 				setErrorMsg(AuthFormErrorMessages.INVALID_CREDENTIALS);
 			} else if (firebaseError.code === 'auth/visibility-check-was-unavailable') {
 				setErrorMsg(AuthFormErrorMessages.VISIBILITY_CHECK_ERROR);
+			} else {
+				console.log(firebaseError, 'Failed to sign in');
+				setErrorMsg(AuthFormErrorMessages.UNKNOWN_ERROR_OCCURRED);
 			}
-			console.log(firebaseError, 'Failed to sign in');
-			setErrorMsg(AuthFormErrorMessages.VISIBILITY_CHECK_ERROR);
 		}
 	};
 
@@ -251,12 +290,13 @@ const Auth = ({ setUserRole }: AuthProps) => {
 	const signUp = async (e: FormEvent) => {
 		e.preventDefault();
 
-		// Phone number validation: must be longer than just the country code (e.g., +90)
+		// Phone number validation
 		if (!phone || phone.length <= 3 || !/^\+\d{10,15}$/.test(phone)) {
 			setErrorMsg(AuthFormErrorMessages.INVALID_PHONE_NUMBER);
 			return;
 		}
 
+		// Username validation
 		if (username.length < 5) {
 			setErrorMsg(AuthFormErrorMessages.USERNAME_TOO_SHORT);
 			return;
@@ -267,6 +307,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 			return;
 		}
 
+		// Password validation
 		const passwordValidationError = validatePassword(password);
 		if (passwordValidationError) {
 			setErrorMsg(passwordValidationError);
@@ -282,41 +323,42 @@ const Auth = ({ setUserRole }: AuthProps) => {
 			await sendEmailVerification(user);
 
 			// Step 3: Create a Firestore document for the user
-			const userRef = doc(db, 'users', user.uid); // Create a Firestore document reference
+			const userRef = doc(db, 'users', user.uid);
 			await setDoc(userRef, {
-				firebaseUserId: user.uid, // Store the Firebase user ID
+				firebaseUserId: user.uid,
 				email: user.email,
-				username: username, // Store the username entered during sign-up
-				activeChatId: '', // Initialize `activeChatId` to an empty string
-				createdAt: new Date(), // Optionally store when the user was created
+				username: username,
+				activeChatId: null,
+				createdAt: new Date(),
 			});
 
-			// Step 4: Send user data to your backend server (optional, if needed)
-			await axiosInstance.post(`${base_url}/users/signup`, {
+			// Step 4: Create MongoDB user record immediately
+			const signupData = {
 				firstName: firstName.trim(),
 				lastName: lastName.trim(),
 				username: username.trim(),
 				orgCode: organisationCode,
-				firebaseUserId: user.uid,
 				email: email.trim().toLowerCase(),
 				phone,
 				countryCode: location?.countryCode,
-			});
+				firebaseUserId: user.uid,
+				isEmailVerified: false,
+			};
+
+			await axiosInstance.post(`${base_url}/users/signup`, signupData);
 
 			// Handle UI updates after successful sign-up
-			if (user) {
-				setActiveForm(AuthForms.SIGN_IN);
-				setFirstName('');
-				setLastName('');
-				setEmail('');
-				setPassword('');
-				setUsername('');
-				setPhone('');
-				setOrgCode('');
-				setErrorMsg(undefined);
-				setSignUpMessage(true);
-				setShowPassword(false);
-			}
+			setActiveForm(AuthForms.SIGN_IN);
+			setFirstName('');
+			setLastName('');
+			setEmail('');
+			setPassword('');
+			setUsername('');
+			setPhone('');
+			setOrgCode('');
+			setErrorMsg(undefined);
+			setSignUpMessage(true);
+			setShowPassword(false);
 		} catch (error) {
 			if (axios.isAxiosError(error) && error.response?.status === 400 && error.response?.data?.message === 'username') {
 				setErrorMsg(AuthFormErrorMessages.USERNAME_EXISTS);
@@ -347,6 +389,21 @@ const Auth = ({ setUserRole }: AuthProps) => {
 
 		if (regex.test(value)) {
 			setUsername(value.trim()); // Only set the username if it matches the pattern
+		}
+	};
+
+	const handleResendVerification = async () => {
+		if (!email) return;
+		setIsResendingVerification(true);
+		try {
+			const userCredential = await signInWithEmailAndPassword(auth, email, password);
+			await sendEmailVerification(userCredential.user);
+			setErrorMsg(AuthFormErrorMessages.VERIFICATION_EMAIL_SENT);
+		} catch (error) {
+			console.error('Error resending verification email:', error);
+			setErrorMsg(AuthFormErrorMessages.VERIFICATION_EMAIL_ERROR);
+		} finally {
+			setIsResendingVerification(false);
 		}
 	};
 
@@ -1020,7 +1077,28 @@ const Auth = ({ setUserRole }: AuthProps) => {
 								[AuthFormErrorMessages.INVALID_CREDENTIALS]: errorMessageTypography,
 								[AuthFormErrorMessages.USERNAME_EXISTS]: errorMessageTypography,
 								[AuthFormErrorMessages.PHONE_NUMBER_EXISTS]: errorMessageTypography,
-								[AuthFormErrorMessages.EMAIL_NOT_VERIFIED]: errorMessageTypography,
+								[AuthFormErrorMessages.EMAIL_NOT_VERIFIED]: (
+									<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+										{errorMessageTypography}
+										<Button
+											variant='contained'
+											color='primary'
+											onClick={handleResendVerification}
+											disabled={isResendingVerification}
+											sx={{
+												'mt': 1,
+												'fontFamily': 'Varela Round',
+												'fontSize': isMobileSize ? '0.75rem' : '0.85rem',
+												'textTransform': 'none',
+												'backgroundColor': theme.bgColor?.greenPrimary,
+												'&:hover': {
+													backgroundColor: theme.bgColor?.greenSecondary,
+												},
+											}}>
+											{isResendingVerification ? 'Gönderiliyor...' : 'Doğrulama E-postasını Tekrar Gönder'}
+										</Button>
+									</Box>
+								),
 								[AuthFormErrorMessages.UNKNOWN_ERROR_OCCURRED]: errorMessageTypography,
 								[AuthFormErrorMessages.PASSWORD_TOO_SHORT]: errorMessageTypography,
 								[AuthFormErrorMessages.PASSWORD_NO_NUMBER]: errorMessageTypography,
@@ -1030,6 +1108,8 @@ const Auth = ({ setUserRole }: AuthProps) => {
 								[AuthFormErrorMessages.USERNAME_TOO_SHORT]: errorMessageTypography,
 								[AuthFormErrorMessages.USERNAME_TOO_LONG]: errorMessageTypography,
 								[AuthFormErrorMessages.VISIBILITY_CHECK_ERROR]: errorMessageTypography,
+								[AuthFormErrorMessages.VERIFICATION_EMAIL_SENT]: errorMessageTypography,
+								[AuthFormErrorMessages.VERIFICATION_EMAIL_ERROR]: errorMessageTypography,
 							}[errorMsg]}
 					</Box>
 				</Box>

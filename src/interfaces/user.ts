@@ -13,6 +13,7 @@ export interface User {
 	createdAt: string;
 	updatedAt: string;
 	countryCode: string;
+	isEmailVerified: boolean;
 }
 
 export interface AdminUser {

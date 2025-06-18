@@ -28,6 +28,8 @@ export const enum AuthFormErrorMessages {
 	USERNAME_TOO_SHORT = 'Kullanıcı adı en az 5 karakter olmalıdır',
 	USERNAME_TOO_LONG = 'Kullanıcı adı en fazla 15 karakter olmalıdır',
 	VISIBILITY_CHECK_ERROR = 'Lütfen tekrar giriş yapmayı deneyin. Sorun devam ederse, sayfayı yenileyin.',
+	VERIFICATION_EMAIL_SENT = 'Doğrulama e-postası gönderildi. Lütfen gelen kutunuzu kontrol edin.',
+	VERIFICATION_EMAIL_ERROR = 'Doğrulama e-postası gönderilirken bir hata oluştu. Lütfen tekrar deneyin.',
 }
 
 export const enum PasswordUpdateErrorMessages {
