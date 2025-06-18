@@ -114,6 +114,18 @@ const Auth = ({ setUserRole }: AuthProps) => {
 				});
 			}
 
+			// Check session validity
+			const sessionTimestamp = localStorage.getItem('sessionTimestamp');
+			const currentTime = Date.now();
+			const SESSION_DURATION = 24 * 60 * 60 * 1000;
+
+			if (!sessionTimestamp || currentTime - parseInt(sessionTimestamp) > SESSION_DURATION) {
+				localStorage.setItem('sessionTimestamp', currentTime.toString());
+			} else {
+				// Update timestamp on successful login
+				localStorage.setItem('sessionTimestamp', currentTime.toString());
+			}
+
 			// Fetch and handle user data from your backend API
 			await fetchUserData(firebaseUser.uid);
 			const updatedUser = queryClient.getQueryData<User>('userData');

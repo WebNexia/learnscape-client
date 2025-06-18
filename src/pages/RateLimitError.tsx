@@ -18,13 +18,26 @@ const RateLimitError = () => {
 	useEffect(() => {
 		const storedInfo = localStorage.getItem('rateLimitInfo');
 		if (storedInfo) {
-			const info = JSON.parse(storedInfo);
-			// Add timestamp if it doesn't exist (for backward compatibility)
-			if (!info.timestamp) {
-				info.timestamp = Date.now();
-				localStorage.setItem('rateLimitInfo', JSON.stringify(info));
+			try {
+				const info = JSON.parse(storedInfo);
+
+				// Basic validation
+				if (!info.retryAfter || !info.type) {
+					localStorage.removeItem('rateLimitInfo');
+					return;
+				}
+
+				// Add timestamp if it doesn't exist (for backward compatibility)
+				if (!info.timestamp) {
+					info.timestamp = Date.now();
+					localStorage.setItem('rateLimitInfo', JSON.stringify(info));
+				}
+
+				setRateLimitInfo(info);
+			} catch (e) {
+				// In case JSON.parse fails
+				localStorage.removeItem('rateLimitInfo');
 			}
-			setRateLimitInfo(info);
 		}
 	}, []);
 
@@ -57,7 +70,38 @@ const RateLimitError = () => {
 	}, [rateLimitInfo, navigate]);
 
 	if (!rateLimitInfo) {
-		return null;
+		return (
+			<Box
+				sx={{
+					display: 'flex',
+					flexDirection: 'column',
+					alignItems: 'center',
+					justifyContent: 'center',
+					minHeight: '100vh',
+					backgroundColor: theme.bgColor?.secondary,
+					padding: '2rem',
+				}}>
+				<img src={logo} alt='LearnScape Logo' style={{ width: '200px', marginBottom: '2rem' }} />
+				<Typography variant='h4' sx={{ color: theme.textColor?.primary, marginBottom: '1rem', textAlign: 'center', fontFamily: 'Poppins' }}>
+					Rate limit bilgisi bulunamadı.
+				</Typography>
+				<Typography variant='h5' sx={{ color: theme.textColor?.secondary, marginBottom: '2rem', textAlign: 'center', fontFamily: 'Poppins' }}>
+					Lütfen daha sonra tekrar deneyin.
+				</Typography>
+				<Button
+					variant='contained'
+					onClick={() => {
+						localStorage.removeItem('rateLimitInfo');
+						navigate(-1);
+					}}
+					sx={{
+						'backgroundColor': '#01435A',
+						'&:hover': { backgroundColor: '#012B3A' },
+					}}>
+					Geri Dön
+				</Button>
+			</Box>
+		);
 	}
 
 	const minutes = Math.ceil(remainingTime / 60);
@@ -107,6 +151,21 @@ const RateLimitError = () => {
 					fontFamily: 'Poppins',
 				}}>
 				{minutes} dakika sonra tekrar deneyin
+			</Typography>
+
+			<Typography
+				variant='body1'
+				sx={{
+					color: theme.textColor?.secondary,
+					marginBottom: '2rem',
+					textAlign: 'center',
+					fontFamily: 'Poppins',
+					fontSize: '1rem',
+					maxWidth: '500px',
+					marginX: 'auto',
+				}}>
+				Sayfayı yenilerseniz veya pencereyi kapatıp tekrar açarsanız, bekleme süresi sunucu tarafından tekrar başlatılabilir. Lütfen sayaç bitene
+				kadar bekleyin ve ardından tekrar deneyin.
 			</Typography>
 
 			<Button

@@ -98,9 +98,7 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 		}
 	};
 
-	const { data: publicCourses } = useQuery(['allPublicCourses'], fetchPublicCourses, {
-		enabled: !isAuthenticated,
-	});
+	const { data: publicCourses } = useQuery(['allPublicCourses'], fetchPublicCourses);
 
 	const fetchCoursesDashboardSummary = async () => {
 		if (!orgId) return;

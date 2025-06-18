@@ -1,5 +1,5 @@
 import { createContext, ReactNode, useEffect, useState } from 'react';
-import { useQuery, useQueryClient } from 'react-query';
+import { useQueryClient } from 'react-query';
 import axios from '@utils/axiosInstance';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from '../firebase';
@@ -40,39 +40,42 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 	useEffect(() => {
 		const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
 			if (currentUser) {
+				let sessionTimestamp = localStorage.getItem('sessionTimestamp');
+				const currentTime = Date.now();
+				const SESSION_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
+
+				// If no timestamp, set it now (first login or after clearing storage)
+				if (!sessionTimestamp) {
+					localStorage.setItem('sessionTimestamp', currentTime.toString());
+					sessionTimestamp = currentTime.toString();
+				}
+
+				// Now check expiry
+				if (currentTime - parseInt(sessionTimestamp) > SESSION_DURATION) {
+					await signOut(auth);
+					localStorage.removeItem('sessionTimestamp');
+					console.warn('Session expired');
+					window.location.href = '/auth';
+					return;
+				}
+
 				setFirebaseUserId(currentUser.uid);
 				try {
-					await fetchUserData(currentUser.uid); // Fetch user data immediately upon authentication
+					await fetchUserData(currentUser.uid);
 				} catch (error) {
 					console.error('Failed to fetch user data:', error);
 				}
 			} else {
-				setUser(() => undefined);
+				setUser(undefined);
 				setUserId('');
 			}
 		});
 
-		return () => {
-			unsubscribe();
-		};
+		return () => unsubscribe();
 	}, []);
 
 	const fetchUserData = async (firebaseUserId: string) => {
 		try {
-			// Check session expiry
-			const sessionTimestamp = localStorage.getItem('sessionTimestamp');
-			const currentTime = Date.now();
-			const SESSION_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
-
-			// If no session timestamp exists, this is a new login
-			if (!sessionTimestamp) {
-				localStorage.setItem('sessionTimestamp', currentTime.toString());
-			} else if (currentTime - parseInt(sessionTimestamp) > SESSION_DURATION) {
-				// Session expired, clear data and sign out
-				await signOutUser();
-				throw new Error('Session expired');
-			}
-
 			const responseUserData = await axios.get(`${base_url}/users/${firebaseUserId}`);
 			localStorage.setItem('role', responseUserData.data.data[0].role);
 			setUser(responseUserData.data.data[0]);
@@ -86,7 +89,16 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 
 	const signOutUser = async () => {
 		await signOut(auth);
-		setUser(() => undefined);
+		localStorage.removeItem('sessionTimestamp');
+		localStorage.removeItem('orgId');
+		localStorage.removeItem('userCourseData');
+		localStorage.removeItem('userLessonData');
+		localStorage.removeItem('role');
+		localStorage.removeItem('activeChatId');
+		localStorage.removeItem('chatList');
+		localStorage.removeItem('participantCache');
+		localStorage.removeItem('totalUnreadMessages');
+		setUser(undefined);
 		setUserId('');
 		queryClient.clear();
 	};

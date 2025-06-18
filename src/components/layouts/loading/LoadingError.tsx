@@ -16,6 +16,11 @@ const LoadingError = () => {
 		}
 	}, []);
 
+	// Eğer rate limit sayfasındaysan, hiçbir şey gösterme
+	if (window.location.pathname === '/rate-limit-error') {
+		return null;
+	}
+
 	return (
 		<Box
 			sx={{
