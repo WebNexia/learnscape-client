@@ -124,8 +124,13 @@ axiosInstance.interceptors.response.use(
 			return Promise.reject(error);
 		}
 
-		// Retry mechanism for other errors
-		if (config && typeof config.retryCount === 'number' && config.retryCount < 3) {
+		// Retry mechanism for network errors or 5xx server errors only
+		if (
+			config &&
+			typeof config.retryCount === 'number' &&
+			config.retryCount < 3 &&
+			(!error.response || (error.response.status >= 500 && error.response.status < 600))
+		) {
 			config.retryCount += 1;
 			const delay = Math.pow(2, config.retryCount) * 1000;
 			console.warn(`Retrying request (${config.retryCount}/3) after ${delay}ms`);

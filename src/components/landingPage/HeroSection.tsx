@@ -1,4 +1,4 @@
-import { Box, Button, Typography } from '@mui/material';
+import { Box, Button, DialogActions, Typography } from '@mui/material';
 import { motion } from 'framer-motion';
 import { useContext, useState } from 'react';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
@@ -11,6 +11,7 @@ import ChatWhatsApp from './ChatWhatsApp';
 import { useGeoLocation } from '../../hooks/useGeoLocation';
 import axios from 'axios';
 import ContactFormDialog from './ContactFormDialog';
+import CustomCancelButton from '../forms/customButtons/CustomCancelButton';
 
 const HeroSection = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -27,6 +28,13 @@ const HeroSection = () => {
 	const [sending, setSending] = useState<boolean>(false);
 	const [showSuccess, setShowSuccess] = useState<boolean>(false);
 
+	const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+	const [errorDialogOpen, setErrorDialogOpen] = useState(false);
+	const [errorDialogMsg, setErrorDialogMsg] = useState('');
+
+	const handleRecaptchaChange = (token: string | null) => {
+		setRecaptchaToken(token);
+	};
 	const isValidPhone = (phone: string) => /^\+\d{8,}$/.test(phone);
 
 	const resetForm = () => {
@@ -35,14 +43,22 @@ const HeroSection = () => {
 		setEmail('');
 		setPhone('');
 		setMessage('');
+		setRecaptchaToken(null);
 	};
 
 	const handleMoreInfoRequest = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 		if (!isValidPhone(phone)) {
-			alert('Lütfen geçerli bir telefon numarası girin.');
+			setErrorDialogMsg('Lütfen geçerli bir telefon numarası girin.');
+			setErrorDialogOpen(true);
 			return;
 		}
+		if (!recaptchaToken) {
+			setErrorDialogMsg('Lütfen reCAPTCHA doğrulamasını tamamlayın.');
+			setErrorDialogOpen(true);
+			return;
+		}
+
 		setSending(true);
 		try {
 			await axios.post(`${base_url}/contact-requests`, {
@@ -54,8 +70,10 @@ const HeroSection = () => {
 				orgId: import.meta.env.VITE_ORG_ID,
 				message,
 				category: 'HeroSection',
+				recaptchaToken,
 			});
 			setShowSuccess(true);
+			resetForm();
 			// Do not close modal or reset form yet
 		} catch (error) {
 			console.log(error);
@@ -266,6 +284,20 @@ const HeroSection = () => {
 				</DialogContent>
 			</CustomDialog>
 
+			{/* Error Dialog */}
+			<CustomDialog openModal={errorDialogOpen} closeModal={() => setErrorDialogOpen(false)} title='' maxWidth='xs'>
+				<DialogContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+					<Typography variant='body2' sx={{ mb: 1, mt: '1rem', fontFamily: 'Varela Round' }}>
+						{errorDialogMsg}
+					</Typography>
+					<DialogActions sx={{ display: 'flex', justifyContent: 'flex-end', width: '100%' }}>
+						<CustomCancelButton onClick={() => setErrorDialogOpen(false)} sx={{ fontFamily: 'Varela Round' }}>
+							Kapat
+						</CustomCancelButton>
+					</DialogActions>
+				</DialogContent>
+			</CustomDialog>
+
 			<ContactFormDialog
 				isGetMoreDetailsModalOpen={isGetMoreDetailsModalOpen}
 				setIsGetMoreDetailsModalOpen={setIsGetMoreDetailsModalOpen}
@@ -287,6 +319,7 @@ const HeroSection = () => {
 				sending={sending}
 				title='DETAYLI BİLGİ ALIN'
 				description='Kurslarımız hakkında bilgi alın, yeni eğitimlerden öncelikli olarak haberdar olun.'
+				handleRecaptchaChange={handleRecaptchaChange}
 			/>
 		</Box>
 	);

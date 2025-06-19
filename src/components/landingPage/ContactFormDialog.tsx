@@ -4,6 +4,7 @@ import CustomTextField from '../forms/customFields/CustomTextField';
 import PhoneInput from 'react-phone-input-2';
 import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
 import theme from '../../themes';
+import ReCAPTCHA from 'react-google-recaptcha';
 
 interface ContactFormDialogProps {
 	isGetMoreDetailsModalOpen: boolean;
@@ -26,6 +27,7 @@ interface ContactFormDialogProps {
 	sending: boolean;
 	title: string;
 	description: string;
+	handleRecaptchaChange: (token: string | null) => void;
 }
 const ContactFormDialog = ({
 	isGetMoreDetailsModalOpen,
@@ -48,6 +50,7 @@ const ContactFormDialog = ({
 	sending,
 	title,
 	description,
+	handleRecaptchaChange,
 }: ContactFormDialogProps) => {
 	const isValidPhone = (phone: string) => /^\+\d{8,}$/.test(phone);
 	return (
@@ -269,6 +272,11 @@ const ContactFormDialog = ({
 								fontSize: '0.85rem',
 							},
 						}}
+					/>
+					<ReCAPTCHA
+						sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
+						onChange={handleRecaptchaChange}
+						key={isGetMoreDetailsModalOpen ? 'active' : 'inactive'}
 					/>
 				</Box>
 				<CustomDialogActions

@@ -30,6 +30,8 @@ export const enum AuthFormErrorMessages {
 	VISIBILITY_CHECK_ERROR = 'Lütfen tekrar giriş yapmayı deneyin. Sorun devam ederse, sayfayı yenileyin.',
 	VERIFICATION_EMAIL_SENT = 'Doğrulama e-postası gönderildi. Lütfen gelen kutunuzu kontrol edin.',
 	VERIFICATION_EMAIL_ERROR = 'Doğrulama e-postası gönderilirken bir hata oluştu. Lütfen tekrar deneyin.',
+	RECAPTCHA_ERROR = 'Lütfen reCAPTCHA doğrulamasını tamamlayın.',
+	RECAPTCHA_ERROR_OCCURRED = 'reCAPTCHA doğrulaması sırasında hata oluştu.',
 }
 
 export const enum PasswordUpdateErrorMessages {
