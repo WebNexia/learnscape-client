@@ -29,10 +29,17 @@ const ContactUs = () => {
 	const [errorDialogMsg, setErrorDialogMsg] = useState('');
 	const [recaptchaKey, setRecaptchaKey] = useState(0);
 
-	const recaptchaRef = useRef<any>(null);
-
 	const handleRecaptchaChange = (token: string | null) => {
 		setRecaptchaToken(token);
+	};
+
+	const recaptchaRef = useRef<any>(null);
+
+	const resetRecaptcha = () => {
+		setRecaptchaToken(null);
+		if (recaptchaRef.current) {
+			recaptchaRef.current.reset();
+		}
 	};
 
 	const { isVerySmallScreen } = useContext(MediaQueryContext);
@@ -81,7 +88,7 @@ const ContactUs = () => {
 		setEmail('');
 		setPhone('');
 		setMessage('');
-		setRecaptchaToken(null);
+		resetRecaptcha();
 		setRecaptchaKey((prev) => prev + 1);
 	};
 
@@ -226,10 +233,9 @@ const ContactUs = () => {
 								<ReCAPTCHA
 									key={recaptchaKey}
 									ref={recaptchaRef}
-									size='invisible'
 									sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
 									onChange={handleRecaptchaChange}
-									onExpired={() => setRecaptchaToken(null)}
+									onExpired={() => resetRecaptcha()}
 								/>
 							</Grid>
 							<Grid item xs={12}>

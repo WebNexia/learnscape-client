@@ -28,6 +28,8 @@ interface ContactFormDialogProps {
 	title: string;
 	description: string;
 	handleRecaptchaChange: (token: string | null) => void;
+	resetRecaptcha: () => void;
+	recaptchaRef: React.MutableRefObject<any>;
 }
 const ContactFormDialog = ({
 	isGetMoreDetailsModalOpen,
@@ -51,8 +53,11 @@ const ContactFormDialog = ({
 	title,
 	description,
 	handleRecaptchaChange,
+	resetRecaptcha,
+	recaptchaRef,
 }: ContactFormDialogProps) => {
 	const isValidPhone = (phone: string) => /^\+\d{8,}$/.test(phone);
+
 	return (
 		<CustomDialog
 			title={title}
@@ -61,6 +66,7 @@ const ContactFormDialog = ({
 				setIsGetMoreDetailsModalOpen(false);
 				resetForm();
 				setShowSuccess(false);
+				resetRecaptcha();
 			}}
 			maxWidth='sm'
 			titleSx={{
@@ -276,6 +282,8 @@ const ContactFormDialog = ({
 					<ReCAPTCHA
 						sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
 						onChange={handleRecaptchaChange}
+						onExpired={() => resetRecaptcha()}
+						ref={recaptchaRef}
 						key={isGetMoreDetailsModalOpen ? 'active' : 'inactive'}
 					/>
 				</Box>
@@ -286,6 +294,7 @@ const ContactFormDialog = ({
 						setIsGetMoreDetailsModalOpen(false);
 						resetForm();
 						setShowSuccess(false);
+						resetRecaptcha();
 					}}
 					submitBtnSx={{ fontFamily: 'Varela Round' }}
 					cancelBtnSx={{ fontFamily: 'Varela Round' }}

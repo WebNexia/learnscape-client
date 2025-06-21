@@ -1,5 +1,5 @@
-import { useState, useEffect, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { getAuth, confirmPasswordReset, checkActionCode } from 'firebase/auth';
 import { FirebaseError } from 'firebase/app';
 import { PasswordUpdateErrorMessages, TextFieldTypes } from '../interfaces/enums';
@@ -8,11 +8,9 @@ import { Box, IconButton, InputAdornment, Typography } from '@mui/material';
 import theme from '../themes';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
-import { OrganisationContext } from '../contexts/OrganisationContextProvider';
+import logo from '../assets/logo.png';
 
 const PasswordResetPage = () => {
-	const { organisation } = useContext(OrganisationContext);
-
 	const [newPassword, setNewPassword] = useState<string>('');
 	const [confirmNewPassword, setConfirmNewPassword] = useState<string>('');
 	const [resetErrorMsg, setResetErrorMsg] = useState<string | null>(null);
@@ -24,8 +22,15 @@ const PasswordResetPage = () => {
 	const [isLinkValid, setIsLinkValid] = useState<boolean | null>(null);
 
 	const navigate = useNavigate();
+	const location = useLocation();
 
-	const validatePassword = (password: string): PasswordUpdateErrorMessages | null => {
+	// Debug logs for query params
+	// console.log('location.search:', location.search);
+	// const queryParams = new URLSearchParams(location.search);
+	// console.log('mode:', queryParams.get('mode'));
+	// console.log('oobCode:', queryParams.get('oobCode'));
+
+	const validatePassword = (password: string): string | null => {
 		const minLength = 6;
 		// const hasUppercase = /[A-Z]/.test(password);
 		// const hasLowercase = /[a-z]/.test(password);
@@ -34,11 +39,11 @@ const PasswordResetPage = () => {
 		const hasLetter = /[a-zA-Z]/.test(password);
 
 		if (password.length < minLength) {
-			return PasswordUpdateErrorMessages.PASSWORD_TOO_SHORT;
+			return 'Şifre en az 6 karakter olmalıdır.';
 		}
 
 		if (!hasLetter) {
-			return PasswordUpdateErrorMessages.PASSWORD_NO_LETTER;
+			return 'Şifre en az bir harf içermelidir.';
 		}
 		// if (!hasUppercase) {
 		// 	return PasswordUpdateErrorMessages.PASSWORD_NO_UPPERCASE;
@@ -47,7 +52,7 @@ const PasswordResetPage = () => {
 		// 	return PasswordUpdateErrorMessages.PASSWORD_NO_LOWERCASE;
 		// }
 		if (!hasNumber) {
-			return PasswordUpdateErrorMessages.PASSWORD_NO_NUMBER;
+			return 'Şifre en az bir rakam içermelidir.';
 		}
 		// if (!hasSpecialChar) {
 		// 	return PasswordUpdateErrorMessages.PASSWORD_NO_SPECIAL_CHAR;
@@ -58,50 +63,38 @@ const PasswordResetPage = () => {
 	// Extract the oobCode from the URL
 	useEffect(() => {
 		const queryParams = new URLSearchParams(location.search);
-		const mode = queryParams.get('mode'); // Firebase action type
+		const mode = queryParams.get('mode');
 		const code = queryParams.get('oobCode');
 
-		if (!mode || !oobCode) {
-			// If missing required parameters, show an error or redirect to home
+		if (!mode || !code) {
 			navigate('/');
 			return;
 		}
 
-		switch (mode) {
-			case 'verifyEmail':
-				// Redirect to email verification page and pass the oobCode
-				navigate(`/verify-email?oobCode=${oobCode}`);
-				break;
-			case 'resetPassword':
-				// Redirect to password reset page and pass the oobCode
-				navigate(`/reset-password?oobCode=${oobCode}`);
-				break;
-			default:
-				// Handle unknown action types or redirect to a fallback page
-				navigate('/');
+		if (mode === 'verifyEmail') {
+			navigate(`/verify-email?oobCode=${code}`);
+			return;
 		}
 
-		if (code) {
-			setOobCode(code);
-
-			const auth = getAuth();
-			checkActionCode(auth, code)
-				.then(() => {
-					setIsLinkValid(true);
-				})
-				.catch(() => {
-					setIsLinkValid(false);
-					setResetErrorMsg('This link is invalid or has expired. Please request a new password reset.');
-				});
-		} else {
-			setResetErrorMsg('Invalid or missing password reset code. Please try again.');
-			setIsLinkValid(false);
+		if (mode !== 'resetPassword') {
+			navigate('/');
+			return;
 		}
-	}, [navigate, location]);
+
+		setOobCode(code); // Always set code if valid for reset
+
+		const auth = getAuth();
+		checkActionCode(auth, code)
+			.then(() => setIsLinkValid(true))
+			.catch(() => {
+				setIsLinkValid(false);
+				setResetErrorMsg('Bu bağlantı geçersiz veya süresi dolmuş. Lütfen yeni bir şifre sıfırlama isteğinde bulunun.');
+			});
+	}, [location, navigate]);
 
 	const handlePasswordResetSubmit = async () => {
 		if (!oobCode) {
-			setResetErrorMsg('Password reset code is missing. Please try again.');
+			setResetErrorMsg('Şifre sıfırlama kodu eksik. Lütfen tekrar deneyin.');
 			return;
 		}
 
@@ -114,7 +107,7 @@ const PasswordResetPage = () => {
 
 		// Ensure passwords match
 		if (newPassword !== confirmNewPassword) {
-			setResetErrorMsg('Passwords do not match. Please try again.');
+			setResetErrorMsg('Şifreler eşleşmiyor. Lütfen tekrar deneyin.');
 			return;
 		}
 
@@ -122,17 +115,17 @@ const PasswordResetPage = () => {
 		try {
 			const auth = getAuth();
 			await confirmPasswordReset(auth, oobCode, newPassword);
-			setSuccessMessage('Your password has been successfully reset.');
+			setSuccessMessage('Şifreniz başarıyla sıfırlandı. Giriş sayfasına yönlendiriliyorsunuz...');
 			setTimeout(() => navigate('/auth'), 2000); // Redirect to login page
 		} catch (error) {
 			if (error instanceof FirebaseError) {
 				if (error.code === 'auth/invalid-action-code') {
-					setResetErrorMsg('The password reset link is invalid or has expired.');
+					setResetErrorMsg('Şifre sıfırlama bağlantısı geçersiz veya süresi dolmuş.');
 				} else {
-					setResetErrorMsg('An error occurred. Please try again.');
+					setResetErrorMsg('Bir hata oluştu. Lütfen tekrar deneyin.');
 				}
 			} else {
-				setResetErrorMsg('An unexpected error occurred. Please try again.');
+				setResetErrorMsg('Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.');
 			}
 		}
 	};
@@ -155,18 +148,17 @@ const PasswordResetPage = () => {
 				height: '100vh',
 				padding: '3rem',
 			}}>
-			<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
-				<Typography variant='h1' sx={{ textAlign: 'center', mb: '4rem' }}>
-					{organisation?.orgName}
-				</Typography>
-				<Typography variant='h4' sx={{ textAlign: 'center', mb: '1rem' }}>
-					Reset Your Password
+			<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'center' }}>
+				<img src={logo} alt='logo' style={{ height: '6rem', marginBottom: '2rem' }} />
+				<Typography variant='h4' sx={{ textAlign: 'center', mb: '1rem', fontFamily: 'Varela Round' }}>
+					Şifreni Yenile
 				</Typography>
 
 				{isLinkValid && (
 					<>
 						<CustomTextField
-							label='New Password'
+							label='Yeni Şifre'
+							placeholder='Yeni şifrenizi girin'
 							type={showNewPassword ? TextFieldTypes.TEXT : TextFieldTypes.PASSWORD}
 							value={newPassword}
 							onChange={(e) => setNewPassword(e.target.value)}
@@ -188,7 +180,8 @@ const PasswordResetPage = () => {
 							}}
 						/>
 						<CustomTextField
-							label='Confirm New Password'
+							label='Yeni Şifre (Tekrar)'
+							placeholder='Yeni şifrenizi tekrar girin'
 							type={showConfirmPassword ? TextFieldTypes.TEXT : TextFieldTypes.PASSWORD}
 							value={confirmNewPassword}
 							onChange={(e) => setConfirmNewPassword(e.target.value)}
@@ -209,17 +202,19 @@ const PasswordResetPage = () => {
 								),
 							}}
 						/>
-						<CustomSubmitButton onClick={handlePasswordResetSubmit}>Reset Password</CustomSubmitButton>
+						<CustomSubmitButton onClick={handlePasswordResetSubmit} sx={{ fontFamily: 'Varela Round' }}>
+							Şifreyi Yenile
+						</CustomSubmitButton>
 					</>
 				)}
 
 				{resetErrorMsg && (
-					<Typography variant='body2' sx={{ mt: '0.75rem', color: 'red' }}>
+					<Typography variant='body2' sx={{ mt: '0.75rem', color: 'red', textAlign: 'center', fontFamily: 'Varela Round' }}>
 						{resetErrorMsg}
 					</Typography>
 				)}
 				{successMessage && (
-					<Typography variant='body2' sx={{ mt: '0.75rem', color: 'green' }}>
+					<Typography variant='body2' sx={{ mt: '0.75rem', color: 'green', textAlign: 'center', fontFamily: 'Varela Round' }}>
 						{successMessage}
 					</Typography>
 				)}

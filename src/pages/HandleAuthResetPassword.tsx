@@ -19,7 +19,7 @@ const HandleActionPage = () => {
 		if (mode === 'verifyEmail' || mode === 'verifyAndChangeEmail') {
 			navigate(`/verify-email?oobCode=${oobCode}`);
 		} else if (mode === 'resetPassword') {
-			navigate(`/reset-password?oobCode=${oobCode}`);
+			navigate(`/reset-password?mode=resetPassword&oobCode=${oobCode}`);
 		} else {
 			// Handle unknown action types or redirect to a fallback page
 			navigate('/');

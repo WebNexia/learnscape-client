@@ -73,10 +73,12 @@ const Auth = ({ setUserRole }: AuthProps) => {
 	const [isResendingVerification, setIsResendingVerification] = useState<boolean>(false);
 
 	const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+	const [resetRecaptchaToken, setResetRecaptchaToken] = useState<string | null>(null);
 
 	const [signingUp, setSigningUp] = useState(false);
 
 	const recaptchaRef = useRef<any>(null);
+	const resetRecaptchaRef = useRef<any>(null);
 
 	const togglePasswordVisibility = () => {
 		setShowPassword((prevShowPassword) => !prevShowPassword);
@@ -247,12 +249,21 @@ const Auth = ({ setUserRole }: AuthProps) => {
 	};
 
 	const handlePasswordReset = async () => {
+		if (!resetRecaptchaToken) {
+			setErrorMsg(AuthFormErrorMessages.RECAPTCHA_ERROR);
+			return;
+		}
 		try {
-			await sendPasswordResetEmail(auth, email);
+			await axiosInstance.post(`${base_url}/users/forgot-password`, {
+				email,
+				recaptchaToken: resetRecaptchaToken,
+			});
 			setResetPasswordMsg(true);
 			setEmail('');
 			setActiveForm(AuthForms.SIGN_IN);
 			setIsResetPassword(false);
+			resetResetRecaptcha();
+			setErrorMsg(undefined);
 		} catch (error) {
 			if (error instanceof FirebaseError) {
 				switch (error.code) {
@@ -262,6 +273,8 @@ const Auth = ({ setUserRole }: AuthProps) => {
 			}
 			console.log(error);
 			setErrorMsg(AuthFormErrorMessages.UNKNOWN_ERROR_OCCURRED);
+			resetResetRecaptcha();
+			setErrorMsg(undefined);
 		}
 	};
 
@@ -449,6 +462,17 @@ const Auth = ({ setUserRole }: AuthProps) => {
 			setErrorMsg(AuthFormErrorMessages.VERIFICATION_EMAIL_ERROR);
 		} finally {
 			setIsResendingVerification(false);
+		}
+	};
+
+	const handleResetRecaptchaChange = (token: string | null) => {
+		setResetRecaptchaToken(token);
+		setErrorMsg(undefined);
+	};
+	const resetResetRecaptcha = () => {
+		setResetRecaptchaToken(null);
+		if (resetRecaptchaRef.current) {
+			resetRecaptchaRef.current.reset();
 		}
 	};
 
@@ -1067,6 +1091,13 @@ const Auth = ({ setUserRole }: AuthProps) => {
 												'& .MuiInputBase-input::placeholder': { fontFamily: 'Varela Round', opacity: 1 },
 												'& .MuiInputLabel-root': { fontFamily: 'Varela Round' },
 											}}
+										/>
+										<ReCAPTCHA
+											ref={resetRecaptchaRef}
+											sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
+											onChange={handleResetRecaptchaChange}
+											onExpired={resetResetRecaptcha}
+											key={activeForm === AuthForms.RESET ? 'reset' : 'other'}
 										/>
 										<Button variant='contained' fullWidth sx={submitBtnStyles} type='submit'>
 											Şifre Sıfırlama E-postası Gönder

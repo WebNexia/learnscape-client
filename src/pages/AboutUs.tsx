@@ -8,6 +8,7 @@ import ChatWhatsApp from '../components/landingPage/ChatWhatsApp';
 import ScrollToTopButton from '../components/landingPage/ScrollToTopButton';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
+import { useRef } from 'react';
 
 const team = [
 	{ name: 'John Doe', role: 'Founder & CEO', img: 'https://randomuser.me/api/portraits/men/32.jpg' },
@@ -37,6 +38,15 @@ const AboutUs = () => {
 		setRecaptchaToken(token);
 	};
 
+	const recaptchaRef = useRef<any>(null);
+
+	const resetRecaptcha = () => {
+		setRecaptchaToken(null);
+		if (recaptchaRef.current) {
+			recaptchaRef.current.reset();
+		}
+	};
+
 	const isValidPhone = (phone: string) => /^\+\d{8,}$/.test(phone);
 
 	const resetForm = () => {
@@ -45,7 +55,7 @@ const AboutUs = () => {
 		setEmail('');
 		setPhone('');
 		setMessage('');
-		setRecaptchaToken(null);
+		resetRecaptcha();
 	};
 
 	const handleMoreInfoRequest = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -216,6 +226,8 @@ const AboutUs = () => {
 				title='BİZE ULAŞIN'
 				description='Sorularınız, önerileriniz veya işbirliği talepleriniz için bize ulaşmaktan çekinmeyin.'
 				handleRecaptchaChange={handleRecaptchaChange}
+				resetRecaptcha={resetRecaptcha}
+				recaptchaRef={recaptchaRef}
 			/>
 			<ChatWhatsApp />
 			<ScrollToTopButton />

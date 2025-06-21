@@ -12,6 +12,7 @@ import { useGeoLocation } from '../../hooks/useGeoLocation';
 import axios from 'axios';
 import ContactFormDialog from './ContactFormDialog';
 import CustomCancelButton from '../forms/customButtons/CustomCancelButton';
+import { useRef } from 'react';
 
 const HeroSection = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -35,6 +36,16 @@ const HeroSection = () => {
 	const handleRecaptchaChange = (token: string | null) => {
 		setRecaptchaToken(token);
 	};
+
+	const recaptchaRef = useRef<any>(null);
+
+	const resetRecaptcha = () => {
+		setRecaptchaToken(null);
+		if (recaptchaRef.current) {
+			recaptchaRef.current.reset();
+		}
+	};
+
 	const isValidPhone = (phone: string) => /^\+\d{8,}$/.test(phone);
 
 	const resetForm = () => {
@@ -43,7 +54,7 @@ const HeroSection = () => {
 		setEmail('');
 		setPhone('');
 		setMessage('');
-		setRecaptchaToken(null);
+		resetRecaptcha();
 	};
 
 	const handleMoreInfoRequest = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -320,6 +331,8 @@ const HeroSection = () => {
 				title='DETAYLI BİLGİ ALIN'
 				description='Kurslarımız hakkında bilgi alın, yeni eğitimlerden öncelikli olarak haberdar olun.'
 				handleRecaptchaChange={handleRecaptchaChange}
+				resetRecaptcha={resetRecaptcha}
+				recaptchaRef={recaptchaRef}
 			/>
 		</Box>
 	);
