@@ -11,7 +11,7 @@ interface CustomDialogProps {
 	titleSx?: object;
 	dialogPaperSx?: object;
 	content?: string;
-	maxWidth?: 'md' | 'sm' | 'lg';
+	maxWidth?: 'xs' | 'sm' | 'md' | 'lg';
 	PaperProps?: object;
 	BackdropProps?: object;
 }

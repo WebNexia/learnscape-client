@@ -1,6 +1,6 @@
 import { Alert, Box, Button, DialogContent, IconButton, InputAdornment, Snackbar, Tooltip, Typography } from '@mui/material';
 import * as styles from '../styles/styleAuth';
-import { FormEvent, useContext, useState } from 'react';
+import { FormEvent, useContext, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from '@utils/axiosInstance';
 import axios from 'axios';
@@ -26,6 +26,7 @@ import PhoneInput from 'react-phone-input-2';
 import { useGeoLocation } from '../hooks/useGeoLocation';
 import 'react-phone-input-2/lib/style.css';
 import logo from '../assets/logo.png';
+import ReCAPTCHA from 'react-google-recaptcha';
 
 interface AuthProps {
 	setUserRole: React.Dispatch<React.SetStateAction<string | null>>;
@@ -70,6 +71,14 @@ const Auth = ({ setUserRole }: AuthProps) => {
 
 	const [isResetPassword, setIsResetPassword] = useState<boolean>(false);
 	const [isResendingVerification, setIsResendingVerification] = useState<boolean>(false);
+
+	const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+	const [resetRecaptchaToken, setResetRecaptchaToken] = useState<string | null>(null);
+
+	const [signingUp, setSigningUp] = useState(false);
+
+	const recaptchaRef = useRef<any>(null);
+	const resetRecaptchaRef = useRef<any>(null);
 
 	const togglePasswordVisibility = () => {
 		setShowPassword((prevShowPassword) => !prevShowPassword);
@@ -240,12 +249,21 @@ const Auth = ({ setUserRole }: AuthProps) => {
 	};
 
 	const handlePasswordReset = async () => {
+		if (!resetRecaptchaToken) {
+			setErrorMsg(AuthFormErrorMessages.RECAPTCHA_ERROR);
+			return;
+		}
 		try {
-			await sendPasswordResetEmail(auth, email);
+			await axiosInstance.post(`${base_url}/users/forgot-password`, {
+				email,
+				recaptchaToken: resetRecaptchaToken,
+			});
 			setResetPasswordMsg(true);
 			setEmail('');
 			setActiveForm(AuthForms.SIGN_IN);
 			setIsResetPassword(false);
+			resetResetRecaptcha();
+			setErrorMsg(undefined);
 		} catch (error) {
 			if (error instanceof FirebaseError) {
 				switch (error.code) {
@@ -255,6 +273,8 @@ const Auth = ({ setUserRole }: AuthProps) => {
 			}
 			console.log(error);
 			setErrorMsg(AuthFormErrorMessages.UNKNOWN_ERROR_OCCURRED);
+			resetResetRecaptcha();
+			setErrorMsg(undefined);
 		}
 	};
 
@@ -286,7 +306,6 @@ const Auth = ({ setUserRole }: AuthProps) => {
 		// }
 		return null;
 	};
-
 	const signUp = async (e: FormEvent) => {
 		e.preventDefault();
 
@@ -314,10 +333,19 @@ const Auth = ({ setUserRole }: AuthProps) => {
 			return;
 		}
 
+		// reCAPTCHA validation (move this BEFORE Firebase call)
+		if (!recaptchaToken) {
+			setErrorMsg(AuthFormErrorMessages.RECAPTCHA_ERROR);
+			return;
+		}
+
+		setSigningUp(true);
+		let userCreated = false;
 		try {
 			// Step 1: Create user with Firebase Authentication
 			const userCredential = await createUserWithEmailAndPassword(auth, email, password);
 			const user = userCredential.user;
+			userCreated = true;
 
 			// Step 2: Send email verification
 			await sendEmailVerification(user);
@@ -343,6 +371,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 				countryCode: location?.countryCode,
 				firebaseUserId: user.uid,
 				isEmailVerified: false,
+				recaptchaToken,
 			};
 
 			await axiosInstance.post(`${base_url}/users/signup`, signupData);
@@ -359,14 +388,43 @@ const Auth = ({ setUserRole }: AuthProps) => {
 			setErrorMsg(undefined);
 			setSignUpMessage(true);
 			setShowPassword(false);
+			setRecaptchaToken(null);
 		} catch (error) {
-			if (axios.isAxiosError(error) && error.response?.status === 400 && error.response?.data?.message === 'username') {
-				setErrorMsg(AuthFormErrorMessages.USERNAME_EXISTS);
-			} else if (axios.isAxiosError(error) && error.response?.status === 400 && error.response?.data?.message === 'phone') {
-				setErrorMsg(AuthFormErrorMessages.PHONE_NUMBER_EXISTS);
+			// Clean up Firebase user if backend registration fails
+			if (userCreated && auth.currentUser) {
+				try {
+					await auth.currentUser.delete();
+				} catch (cleanupError) {
+					console.error('Failed to delete Firebase user after backend failure:', cleanupError);
+				}
+			}
+			if (axios.isAxiosError(error) && error.response) {
+				const msg = error.response.data?.message;
+
+				if (error.response.status === 400 && error.response.data?.message === 'username') {
+					setErrorMsg(AuthFormErrorMessages.USERNAME_EXISTS);
+				} else if (error.response.status === 400 && error.response.data?.message === 'phone') {
+					setErrorMsg(AuthFormErrorMessages.PHONE_NUMBER_EXISTS);
+				} else if (
+					msg === 'reCAPTCHA doğrulama tokeni eksik.' ||
+					msg === 'reCAPTCHA doğrulaması başarısız.' ||
+					msg === 'reCAPTCHA doğrulaması sırasında hata oluştu.'
+				) {
+					setErrorMsg(AuthFormErrorMessages.RECAPTCHA_ERROR_OCCURRED);
+				} else {
+					setErrorMsg(error.response.data?.message || 'Bilinmeyen bir hata oluştu.');
+				}
 			} else if (error instanceof FirebaseError) {
 				handleFirebaseError(error);
+			} else {
+				setErrorMsg(AuthFormErrorMessages.UNKNOWN_ERROR_OCCURRED);
 			}
+			if (recaptchaRef.current) {
+				recaptchaRef.current.reset();
+			}
+			setRecaptchaToken(null);
+		} finally {
+			setSigningUp(false);
 		}
 	};
 
@@ -407,6 +465,17 @@ const Auth = ({ setUserRole }: AuthProps) => {
 		}
 	};
 
+	const handleResetRecaptchaChange = (token: string | null) => {
+		setResetRecaptchaToken(token);
+		setErrorMsg(undefined);
+	};
+	const resetResetRecaptcha = () => {
+		setResetRecaptchaToken(null);
+		if (resetRecaptchaRef.current) {
+			resetRecaptchaRef.current.reset();
+		}
+	};
+
 	return (
 		<Box
 			sx={{
@@ -443,16 +512,16 @@ const Auth = ({ setUserRole }: AuthProps) => {
 					}}
 				/>
 				{/* Logo and Title */}
-				<Box sx={{ position: 'relative', zIndex: 1, mb: '1.5rem', mt: '-2rem' }}>
+				<Box sx={{ position: 'relative', zIndex: 1, mb: '1rem', mt: '-3rem' }}>
 					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }} onClick={() => navigate('/')}>
-						<img src={logo} alt='logo' style={{ height: isRotated ? '15vh' : isSmallScreen ? '8vh' : '11vh' }} />
+						<img src={logo} alt='logo' style={{ height: isRotated ? '15vh' : isSmallScreen ? '8vh' : '10vh' }} />
 					</Box>
 				</Box>
 
 				{/* Auth Form Container */}
 				<Box
 					sx={{
-						...styles.formContainerStyles(isVerySmallScreen, isSmallScreen, isRotated, isRotatedMedium),
+						...styles.formContainerStyles(isVerySmallScreen, isSmallScreen, isRotated, isRotatedMedium, activeForm === AuthForms.SIGN_IN),
 						'position': 'relative',
 						'zIndex': 1,
 						'backdropFilter': 'blur(10px)',
@@ -672,7 +741,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 													}}
 												/>
 
-												<Box sx={{ width: '100%' }}>
+												<Box sx={{ width: '100%', mb: '0.75rem' }}>
 													<Typography
 														onClick={() => {
 															setActiveForm(AuthForms.RESET);
@@ -871,7 +940,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 															margin: '0.5rem 0',
 														}}
 														value={phone}
-														onChange={(phoneNumber, country) => {
+														onChange={(phoneNumber, _) => {
 															const formattedNumber = phoneNumber.startsWith('+') ? phoneNumber : `+${phoneNumber}`;
 															setPhone(formattedNumber);
 															setErrorMsg(undefined);
@@ -958,6 +1027,17 @@ const Auth = ({ setUserRole }: AuthProps) => {
 													</Box>
 												</Box>
 											</Box>
+											<Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+												<ReCAPTCHA
+													ref={recaptchaRef}
+													sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
+													onChange={(token) => {
+														setRecaptchaToken(token);
+														setErrorMsg(undefined);
+													}}
+													key={activeForm === AuthForms.SIGN_UP ? 'signup' : 'other'}
+												/>
+											</Box>
 											<Button
 												variant='contained'
 												fullWidth
@@ -980,8 +1060,9 @@ const Auth = ({ setUserRole }: AuthProps) => {
 														boxShadow: '0 4px 12px rgba(30, 194, 139, 0.15)',
 													},
 												}}
-												type='submit'>
-												Kayıt Ol
+												type='submit'
+												disabled={signingUp}>
+												{signingUp ? 'İşleniyor...' : 'Kayıt Ol'}
 											</Button>
 										</form>
 									</Box>
@@ -1010,6 +1091,13 @@ const Auth = ({ setUserRole }: AuthProps) => {
 												'& .MuiInputBase-input::placeholder': { fontFamily: 'Varela Round', opacity: 1 },
 												'& .MuiInputLabel-root': { fontFamily: 'Varela Round' },
 											}}
+										/>
+										<ReCAPTCHA
+											ref={resetRecaptchaRef}
+											sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
+											onChange={handleResetRecaptchaChange}
+											onExpired={resetResetRecaptcha}
+											key={activeForm === AuthForms.RESET ? 'reset' : 'other'}
 										/>
 										<Button variant='contained' fullWidth sx={submitBtnStyles} type='submit'>
 											Şifre Sıfırlama E-postası Gönder
@@ -1042,7 +1130,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 							display: 'flex',
 							justifyContent: 'center',
 							alignItems: 'center',
-							mt: '1.5rem',
+							mt: '1.25rem',
 						}}>
 						<Typography
 							variant='body2'
@@ -1069,7 +1157,6 @@ const Auth = ({ setUserRole }: AuthProps) => {
 						sx={{
 							display: 'flex',
 							justifyContent: 'center',
-							mb: '0.5rem',
 						}}>
 						{errorMsg &&
 							{
@@ -1110,6 +1197,8 @@ const Auth = ({ setUserRole }: AuthProps) => {
 								[AuthFormErrorMessages.VISIBILITY_CHECK_ERROR]: errorMessageTypography,
 								[AuthFormErrorMessages.VERIFICATION_EMAIL_SENT]: errorMessageTypography,
 								[AuthFormErrorMessages.VERIFICATION_EMAIL_ERROR]: errorMessageTypography,
+								[AuthFormErrorMessages.RECAPTCHA_ERROR]: errorMessageTypography,
+								[AuthFormErrorMessages.RECAPTCHA_ERROR_OCCURRED]: errorMessageTypography,
 							}[errorMsg]}
 					</Box>
 				</Box>

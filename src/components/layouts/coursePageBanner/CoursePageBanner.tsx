@@ -74,38 +74,41 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 
 			const userCourseId = response.data._id;
 
-			const responseUserLesson = await axios.post(`${base_url}/userlessons`, {
-				lessonId: fromHomePage ? course.firstLessonId : firstLessonId,
-				userId: resolvedUserId,
-				courseId,
-				userCourseId,
-				currentQuestion: 1,
-				isCompleted: false,
-				isInProgress: true,
-				notes: '',
-				orgId: resolvedOrgId,
-				teacherFeedback: '',
-				isFeedbackGiven: false,
-			});
+			// Only create userLesson if course is NOT external
+			if (!course.courseManagement?.isExternal) {
+				const responseUserLesson = await axios.post(`${base_url}/userlessons`, {
+					lessonId: fromHomePage ? course.firstLessonId : firstLessonId,
+					userId: resolvedUserId,
+					courseId,
+					userCourseId,
+					currentQuestion: 1,
+					isCompleted: false,
+					isInProgress: true,
+					notes: '',
+					orgId: resolvedOrgId,
+					teacherFeedback: '',
+					isFeedbackGiven: false,
+				});
 
-			// Update localStorage: userLessonData
-			const currentUserLessonData: string | null = localStorage.getItem('userLessonData');
-			if (currentUserLessonData !== null) {
-				const updatedUserLessonData: UserLessonDataStorage[] = JSON.parse(currentUserLessonData);
-				if (!updatedUserLessonData.some((data) => data.lessonId === firstLessonId && data.courseId === courseId)) {
-					const newUserLessonData: UserLessonDataStorage = {
-						lessonId: firstLessonId,
-						userLessonId: responseUserLesson.data._id,
-						courseId,
-						currentQuestion: 1,
-						isCompleted: false,
-						isInProgress: true,
-						teacherFeedback: '',
-						isFeedbackGiven: false,
-						updatedAt: responseUserLesson.data.updatedAt,
-					};
-					updatedUserLessonData.push(newUserLessonData);
-					localStorage.setItem('userLessonData', JSON.stringify(updatedUserLessonData));
+				// Update localStorage: userLessonData
+				const currentUserLessonData: string | null = localStorage.getItem('userLessonData');
+				if (currentUserLessonData !== null) {
+					const updatedUserLessonData: UserLessonDataStorage[] = JSON.parse(currentUserLessonData);
+					if (!updatedUserLessonData.some((data) => data.lessonId === firstLessonId && data.courseId === courseId)) {
+						const newUserLessonData: UserLessonDataStorage = {
+							lessonId: firstLessonId,
+							userLessonId: responseUserLesson.data._id,
+							courseId,
+							currentQuestion: 1,
+							isCompleted: false,
+							isInProgress: true,
+							teacherFeedback: '',
+							isFeedbackGiven: false,
+							updatedAt: responseUserLesson.data.updatedAt,
+						};
+						updatedUserLessonData.push(newUserLessonData);
+						localStorage.setItem('userLessonData', JSON.stringify(updatedUserLessonData));
+					}
 				}
 			}
 

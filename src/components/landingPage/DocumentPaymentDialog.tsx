@@ -2,7 +2,7 @@ import { Alert, Box, Checkbox, FormControlLabel, Snackbar, Typography } from '@m
 import CustomDialog from '../layouts/dialog/CustomDialog';
 import CustomTextField from '../forms/customFields/CustomTextField';
 import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
-import { useContext, useState } from 'react';
+import { useContext, useState, useRef } from 'react';
 import { CardCvcElement, CardExpiryElement, CardNumberElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import axios from 'axios';
 import visaIcon from '../../assets/visa.png';
@@ -14,6 +14,7 @@ import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import { setCurrencySymbol } from '../../utils/setCurrencySymbol';
 import theme from '../../themes';
 import DocumentTermsConditions from './DocumentTermsConditions';
+import ReCAPTCHA from 'react-google-recaptcha';
 
 interface DocumentPaymentDialogProps {
 	document: Pick<Document, '_id' | 'name' | 'prices' | 'documentUrl' | 'orgId'>;
@@ -50,6 +51,8 @@ const DocumentPaymentDialog = ({ document, isPaymentDialogOpen, setIsPaymentDial
 	const [cardCvcComplete, setCardCvcComplete] = useState<boolean>(false);
 	const [agreed, setAgreed] = useState<boolean>(false);
 	const [termsConditionsModalOpen, setTermsConditionsModalOpen] = useState<boolean>(false);
+	const recaptchaRef = useRef<any>(null);
+	const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
 
 	const stripe = useStripe();
 	const elements = useElements();
@@ -66,13 +69,32 @@ const DocumentPaymentDialog = ({ document, isPaymentDialogOpen, setIsPaymentDial
 		}
 	};
 
+	const handleRecaptchaChange = (token: string | null) => {
+		setRecaptchaToken(token);
+		setErrorMessage('');
+	};
+
+	const resetRecaptcha = () => {
+		setRecaptchaToken(null);
+		if (recaptchaRef.current) {
+			recaptchaRef.current.reset();
+		}
+	};
+
 	const handlePayment = async () => {
 		setIsProcessing(true);
 		setIsSubmitted(true);
 
+		if (!recaptchaToken) {
+			setErrorMessage('Lütfen reCAPTCHA doğrulamasını tamamlayın.');
+			setIsProcessing(false);
+			return;
+		}
+
 		if (!stripe || !elements) {
 			setErrorMessage('Stripe yüklenemedi.');
 			setIsProcessing(false);
+			resetRecaptcha();
 			return;
 		}
 
@@ -83,12 +105,14 @@ const DocumentPaymentDialog = ({ document, isPaymentDialogOpen, setIsPaymentDial
 		if (!cardNumberElement || !cardExpiryElement || !cardCvcElement) {
 			setErrorMessage('Lütfen tüm kart bilgilerini doldurun.');
 			setIsProcessing(false);
+			resetRecaptcha();
 			return;
 		}
 
 		if (!cardNumberComplete || !cardExpiryComplete || !cardCvcComplete) {
 			setErrorMessage('Lütfen tüm kart bilgilerini doldurun.');
 			setIsProcessing(false);
+			resetRecaptcha();
 			return;
 		}
 
@@ -103,6 +127,7 @@ const DocumentPaymentDialog = ({ document, isPaymentDialogOpen, setIsPaymentDial
 				firstName,
 				lastName,
 				paymentType: 'document',
+				recaptchaToken,
 			});
 
 			const { clientSecret, paymentIntentId } = response.data;
@@ -131,6 +156,7 @@ const DocumentPaymentDialog = ({ document, isPaymentDialogOpen, setIsPaymentDial
 			if (error) {
 				setErrorMessage(error.message ?? 'Ödeme başarısız oldu');
 				setIsProcessing(false);
+				resetRecaptcha();
 				return;
 			}
 
@@ -155,6 +181,7 @@ const DocumentPaymentDialog = ({ document, isPaymentDialogOpen, setIsPaymentDial
 			console.error(err);
 			setErrorMessage('Ödeme işlemi sırasında bir hata oluştu.');
 			setIsProcessing(false);
+			resetRecaptcha();
 		}
 	};
 
@@ -165,6 +192,7 @@ const DocumentPaymentDialog = ({ document, isPaymentDialogOpen, setIsPaymentDial
 		setErrorMessage('');
 		setIsSubmitted(false);
 		setIsProcessing(false);
+		resetRecaptcha();
 	};
 
 	return (
@@ -314,7 +342,7 @@ const DocumentPaymentDialog = ({ document, isPaymentDialogOpen, setIsPaymentDial
 						<Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
 							<Box
 								sx={{
-									'border': isSubmitted && !cardNumberComplete ? '1px solid red' : '1px solid #ccc',
+									'border': isSubmitted && !cardNumberComplete && recaptchaToken ? '1px solid red' : '1px solid #ccc',
 									'padding': '0.6rem',
 									'borderRadius': INPUT_BORDERRADIUS,
 									'backgroundColor': '#fff',
@@ -376,7 +404,7 @@ const DocumentPaymentDialog = ({ document, isPaymentDialogOpen, setIsPaymentDial
 							</Typography>
 							<Box
 								sx={{
-									border: isSubmitted && !cardExpiryComplete ? '1px solid red' : '1px solid #ccc',
+									border: isSubmitted && !cardExpiryComplete && recaptchaToken ? '1px solid red' : '1px solid #ccc',
 									padding: '0.6rem',
 									borderRadius: INPUT_BORDERRADIUS,
 									backgroundColor: '#fff',
@@ -415,7 +443,7 @@ const DocumentPaymentDialog = ({ document, isPaymentDialogOpen, setIsPaymentDial
 							</Typography>
 							<Box
 								sx={{
-									border: isSubmitted && !cardCvcComplete ? '1px solid red' : '1px solid #ccc',
+									border: isSubmitted && !cardCvcComplete && recaptchaToken ? '1px solid red' : '1px solid #ccc',
 									padding: '0.6rem',
 									borderRadius: INPUT_BORDERRADIUS,
 									backgroundColor: '#fff',
@@ -472,48 +500,70 @@ const DocumentPaymentDialog = ({ document, isPaymentDialogOpen, setIsPaymentDial
 					<Box
 						sx={{
 							display: 'flex',
+							flexDirection: isSmallScreen ? 'column' : 'row',
 							alignItems: 'center',
 							textAlign: 'left',
 							width: '100%',
-							mt: '1.5rem',
+							mt: isSmallScreen ? '1rem' : '1.5rem',
+							mb: '1rem',
 						}}>
-						<FormControlLabel
-							required
-							control={
-								<Checkbox
-									checked={agreed}
-									onChange={(e) => {
-										setAgreed(e.target.checked);
-										setErrorMessage('');
-									}}
-									sx={{
-										'display': 'flex',
-										'alignItems': 'center',
-										'& .MuiSvgIcon-root': {
-											fontSize: isMobileSize ? '0.9rem' : '1.15rem',
-										},
-									}}
-								/>
-							}
-							label={fromHomePage ? 'Kabul ediyorum' : 'I agree to the Terms & Conditions'}
+						<Box
 							sx={{
-								'mt': isSmallScreen ? '0rem' : '0.5rem',
-								'& .MuiFormControlLabel-label': {
-									fontSize: isMobileSize ? '0.65rem' : '0.8rem',
+								display: 'flex',
+								flexDirection: isSmallScreen ? 'row' : 'column',
+								alignItems: isSmallScreen ? 'center' : 'flex-start',
+								justifyContent: isSmallScreen ? 'flex-start' : 'space-between',
+								width: '100%',
+								height: '5rem',
+								flex: 2,
+								py: '0.5rem',
+							}}>
+							<FormControlLabel
+								required
+								control={
+									<Checkbox
+										checked={agreed}
+										onChange={(e) => {
+											setAgreed(e.target.checked);
+											setErrorMessage('');
+											resetRecaptcha();
+										}}
+										sx={{
+											'display': 'flex',
+											'alignItems': 'center',
+											'& .MuiSvgIcon-root': {
+												fontSize: isMobileSize ? '0.9rem' : '1.15rem',
+											},
+										}}
+									/>
+								}
+								label={fromHomePage ? 'Kabul ediyorum' : 'I agree to the Terms & Conditions'}
+								sx={{
+									'& .MuiFormControlLabel-label': {
+										fontSize: isMobileSize ? '0.65rem' : '0.8rem',
+										fontFamily: DIALOG_FONT,
+									},
+								}}
+							/>
+							<Typography
+								sx={{
+									fontSize: isSmallScreen ? '0.5rem' : '0.75rem',
+									cursor: 'pointer',
 									fontFamily: DIALOG_FONT,
-								},
-							}}
-						/>
-						<Typography
-							sx={{
-								fontSize: isSmallScreen ? '0.5rem' : '0.75rem',
-								mb: '-0.5rem',
-								cursor: 'pointer',
-								fontFamily: DIALOG_FONT,
-							}}
-							onClick={() => setTermsConditionsModalOpen(true)}>
-							(<span style={{ textDecoration: 'underline' }}>{fromHomePage ? 'Şartlar ve Koşullar' : 'Read T&C'} </span>)
-						</Typography>
+								}}
+								onClick={() => setTermsConditionsModalOpen(true)}>
+								(<span style={{ textDecoration: 'underline' }}>{fromHomePage ? 'Şartlar ve Koşullar' : 'Read T&C'} </span>)
+							</Typography>
+						</Box>
+						<Box sx={{ flex: 1, display: 'flex', justifyContent: 'flex-start' }}>
+							<ReCAPTCHA
+								ref={recaptchaRef}
+								sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
+								onChange={handleRecaptchaChange}
+								onExpired={() => setRecaptchaToken(null)}
+								key={isPaymentDialogOpen ? 'active' : 'inactive'}
+							/>
+						</Box>
 					</Box>
 				</Box>
 

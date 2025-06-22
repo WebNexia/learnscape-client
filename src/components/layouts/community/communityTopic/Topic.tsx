@@ -104,8 +104,8 @@ const Topic = ({ topic }: TopicProps) => {
 			<CustomDialog openModal={messageNonRegisteredModalOpen} closeModal={() => setMessageNonRegisteredModalOpen(false)} maxWidth='sm'>
 				<DialogContent>
 					<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-						<Typography variant='body2' sx={{ color: theme.textColor?.error.main, fontSize: isMobileSize ? '0.85rem' : undefined }}>
-							You need to register for a paid course to join the community and topic discussions.
+						<Typography variant='body2' sx={{ color: theme.textColor?.error.main, fontSize: isMobileSize ? '0.85rem' : undefined, mt: '1rem' }}>
+							You need to register for a paid platform course to join the community and topic discussions.
 						</Typography>
 					</Box>
 				</DialogContent>

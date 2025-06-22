@@ -4,7 +4,7 @@ import CustomTextField from '../../forms/customFields/CustomTextField';
 import TermsConditions from './TermsConditions';
 import CustomDialogActions from '../dialog/CustomDialogActions';
 import CustomSubmitButton from '../../forms/customButtons/CustomSubmitButton';
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useState, useRef } from 'react';
 import { CardCvcElement, CardExpiryElement, CardNumberElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import axiosInstance from '@utils/axiosInstance';
 import axios from 'axios';
@@ -21,6 +21,7 @@ import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 import { getPriceForCountry } from '../../../utils/getPriceForCountry';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 import { useGeoLocation } from '../../../hooks/useGeoLocation';
+import ReCAPTCHA from 'react-google-recaptcha';
 
 const DIALOG_BG = 'linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.98))';
 const DIALOG_BORDERRADIUS = '1.5rem';
@@ -59,6 +60,8 @@ const PaymentDialog = ({
 
 	const location = useGeoLocation();
 	const navigate = useNavigate();
+
+	const recaptchaRef = useRef<any>(null);
 
 	let resolvedCountryCode = user?.countryCode || location?.countryCode || 'US';
 
@@ -108,6 +111,20 @@ const PaymentDialog = ({
 	const [isResendingVerification, setIsResendingVerification] = useState<boolean>(false);
 	const [verificationSent, setVerificationSent] = useState<boolean>(false);
 
+	const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+
+	const handleRecaptchaChange = (token: string | null) => {
+		setRecaptchaToken(token);
+		setErrorMessage('');
+	};
+
+	const resetRecaptcha = () => {
+		setRecaptchaToken(null);
+		if (recaptchaRef.current) {
+			recaptchaRef.current.reset();
+		}
+	};
+
 	const getCardIcon = (brand: string) => {
 		switch (brand) {
 			case 'visa':
@@ -132,6 +149,7 @@ const PaymentDialog = ({
 			setIsSubmitted(false);
 			setErrorMessage('');
 			setIsAlreadyEnrolled(false);
+			resetRecaptcha();
 		};
 	}, []);
 
@@ -139,6 +157,12 @@ const PaymentDialog = ({
 		if (!course) return;
 		setIsProcessing(true);
 		setIsSubmitted(true);
+
+		if (!recaptchaToken) {
+			setErrorMessage(fromHomePage ? 'Lütfen reCAPTCHA doğrulamasını tamamlayın.' : 'Please complete the reCAPTCHA verification.');
+			setIsProcessing(false);
+			return;
+		}
 
 		try {
 			// Add timeout to axios requests
@@ -165,6 +189,7 @@ const PaymentDialog = ({
 						);
 						setIsUserAccountExist(false);
 						setIsProcessing(false);
+						resetRecaptcha();
 						return;
 					}
 
@@ -177,6 +202,7 @@ const PaymentDialog = ({
 						);
 						setIsEmailVerified(false);
 						setIsProcessing(false);
+						resetRecaptcha();
 						return;
 					}
 
@@ -184,6 +210,7 @@ const PaymentDialog = ({
 						setErrorMessage(fromHomePage ? `Bu kursa zaten kayıtlısınız!` : `You are already enrolled in this course!`);
 						setIsAlreadyEnrolled(true);
 						setIsProcessing(false);
+						resetRecaptcha();
 						return;
 					}
 
@@ -196,40 +223,45 @@ const PaymentDialog = ({
 
 					// For free courses, proceed with registration
 					if (isCourseFree) {
-						let retryCount = 0;
-						const maxRetries = 3;
+						try {
+							await courseRegistration(resolvedUserId, resolvedOrgId);
 
-						while (retryCount < maxRetries) {
-							try {
-								await courseRegistration(resolvedUserId, resolvedOrgId);
-
-								setIsPaymentDialogOpen(false);
-								resetForm();
-								setIsProcessing(false);
-								setDisplayEnrollmentMsg(true);
-								return;
-							} catch (error) {
-								retryCount++;
-								if (retryCount === maxRetries) {
-									throw error;
-								}
-								await new Promise((resolve) => setTimeout(resolve, 1000 * Math.pow(2, retryCount)));
-							}
+							setIsPaymentDialogOpen(false);
+							resetForm();
+							setIsProcessing(false);
+							setDisplayEnrollmentMsg(true);
+							return;
+						} catch (error) {
+							console.log(error);
 						}
 					}
 				} catch (error) {
 					if (axios.isAxiosError(error)) {
 						if (error.code === 'ECONNABORTED') {
 							setErrorMessage(fromHomePage ? 'Bağlantı zaman aşımına uğradı. Lütfen tekrar deneyin.' : 'Connection timed out. Please try again.');
+							resetRecaptcha();
 						} else if (!error.response) {
 							setErrorMessage(
 								fromHomePage ? 'İnternet bağlantınızı kontrol edin ve tekrar deneyin.' : 'Please check your internet connection and try again.'
 							);
+							resetRecaptcha();
+						} else if (error.response?.data?.message) {
+							const backendMsg = error.response.data.message;
+							if (backendMsg.toLowerCase().includes('recaptcha')) {
+								setErrorMessage(
+									fromHomePage ? 'reCAPTCHA doğrulaması başarısız. Lütfen tekrar deneyin.' : 'reCAPTCHA verification failed. Please try again.'
+								);
+							} else {
+								setErrorMessage(backendMsg);
+							}
+							resetRecaptcha();
 						} else {
 							setErrorMessage(fromHomePage ? 'Bir hata oluştu. Lütfen tekrar deneyin.' : 'An error occurred. Please try again.');
+							resetRecaptcha();
 						}
 					} else {
 						setErrorMessage(fromHomePage ? 'Beklenmeyen bir hata oluştu.' : 'An unexpected error occurred.');
+						resetRecaptcha();
 					}
 					setIsProcessing(false);
 					return;
@@ -238,6 +270,7 @@ const PaymentDialog = ({
 
 			if (!stripe || !elements) {
 				setErrorMessage(fromHomePage ? 'Stripe düzgün yüklenemedi.' : 'Stripe has not loaded properly.');
+				resetRecaptcha();
 				setIsProcessing(false);
 				return;
 			}
@@ -249,6 +282,7 @@ const PaymentDialog = ({
 			if (!cardNumberComplete || !cardExpiryComplete || !cardCvcComplete) {
 				setErrorMessage(fromHomePage ? 'Lütfen tüm kart bilgilerini doldurun.' : 'Please fill in all card details.');
 				setIsProcessing(false);
+				resetRecaptcha();
 				return;
 			}
 
@@ -266,6 +300,7 @@ const PaymentDialog = ({
 					firstName: resolvedFirstName,
 					lastName: resolvedLastName,
 					paymentType: 'course',
+					recaptchaToken,
 				});
 
 				const { clientSecret, paymentIntentId } = response.data;
@@ -273,6 +308,7 @@ const PaymentDialog = ({
 				// Step 2: Create Payment Method
 				if (!cardNumberElement) {
 					setErrorMessage(fromHomePage ? 'Kart bilgileri eksik.' : 'Card details are missing.');
+					resetRecaptcha();
 					return;
 				}
 				const { error: methodError, paymentMethod } = await stripe.createPaymentMethod({
@@ -294,6 +330,7 @@ const PaymentDialog = ({
 								? 'Ödeme yöntemi oluşturulurken bilinmeyen bir hata oluştu'
 								: 'An unknown error occurred while creating payment method'
 					);
+					resetRecaptcha();
 					return;
 				}
 
@@ -313,6 +350,7 @@ const PaymentDialog = ({
 								? 'Ödeme onayı başarısız oldu.'
 								: 'Payment confirmation failed.'
 					);
+					resetRecaptcha();
 					return;
 				}
 
@@ -333,7 +371,7 @@ const PaymentDialog = ({
 						});
 
 						// Update hasRegisteredCourse using new endpoint
-						if (!user?.hasRegisteredCourse && !isCourseFree) {
+						if (!user?.hasRegisteredCourse && !isCourseFree && !course?.courseManagement.isExternal) {
 							await axiosInstance.post(`${base_url}/users/update-registration-status`, {
 								userId: resolvedUserId,
 							});
@@ -419,17 +457,20 @@ const PaymentDialog = ({
 					setErrorMessage(
 						fromHomePage ? 'Kurs kaydı başarısız oldu. Ücretlendirilmediniz.' : 'Course registration failed. You have not been charged.'
 					);
+					resetRecaptcha();
 					return;
 				}
 			} catch (err) {
 				console.log(err);
 				resetForm(true);
 				setErrorMessage(fromHomePage ? 'Ödeme işlenirken bir hata oluştu.' : 'An error occurred while processing the payment.');
+				resetRecaptcha();
 			}
 		} catch (error) {
 			console.error(error);
 			resetForm(true);
 			setErrorMessage(fromHomePage ? 'Ödeme işlenirken bir hata oluştu.' : 'An error occurred while processing the payment.');
+			resetRecaptcha();
 		} finally {
 			setIsProcessing(false);
 		}
@@ -439,11 +480,13 @@ const PaymentDialog = ({
 		if (!course) return;
 		if (!email && fromHomePage) {
 			setErrorMessage(fromHomePage ? 'Lütfen e-posta adresinizi giriniz.' : 'Please enter your email address.');
+			resetRecaptcha();
 			return;
 		}
 
 		if (!promoCode) {
 			setErrorMessage(fromHomePage ? 'Promosyon kodu girin' : 'Enter a promo code');
+			resetRecaptcha();
 			return;
 		}
 		try {
@@ -502,6 +545,7 @@ const PaymentDialog = ({
 			}
 			const amount = +getPriceForCountry(course, resolvedCountryCode).amount;
 			setDiscountedAmount(isNaN(amount) ? 0 : amount); // Reset to original price
+			resetRecaptcha();
 		}
 	};
 
@@ -514,6 +558,7 @@ const PaymentDialog = ({
 			setErrorMessage(
 				fromHomePage ? 'Doğrulama e-postası gönderildi. Lütfen gelen kutunuzu kontrol edin.' : 'Verification email sent. Please check your inbox.'
 			);
+			resetRecaptcha();
 		} catch (error) {
 			if (axios.isAxiosError(error)) {
 				if (error.response?.data?.isEmailVerified) {
@@ -525,9 +570,12 @@ const PaymentDialog = ({
 							: 'Error sending verification email. Please try again.'
 					);
 				}
+				resetRecaptcha();
 			}
+			resetRecaptcha();
 		} finally {
 			setIsResendingVerification(false);
+			resetRecaptcha();
 		}
 	};
 
@@ -542,12 +590,14 @@ const PaymentDialog = ({
 
 		if (!preserveError) {
 			setErrorMessage('');
+			resetRecaptcha();
 		}
 
 		setIsSubmitted(false);
 		setIsProcessing(false);
 		setIsAlreadyEnrolled(false);
 		setIsEmailVerified(true);
+		resetRecaptcha();
 	};
 
 	return (
@@ -573,7 +623,7 @@ const PaymentDialog = ({
 						PaperProps: {
 							sx: {
 								height: 'auto',
-								maxHeight: '90vh',
+								maxHeight: '100vh',
 								overflow: 'visible',
 								borderRadius: DIALOG_BORDERRADIUS,
 								background: DIALOG_BG,
@@ -621,6 +671,7 @@ const PaymentDialog = ({
 									setDiscountedAmount(isNaN(amount) ? 0 : amount);
 									setUsersUsedPromoCode((prevData) => prevData.filter((id) => id !== userId));
 									setErrorMessage('');
+									setIsUserAccountExist(true);
 								}}
 								sx={{
 									'mb': '1.25rem',
@@ -724,7 +775,13 @@ const PaymentDialog = ({
 									fromHomePage
 										? {
 												border:
-													isSubmitted && !isCourseFree && isUserAccountExist && !isAlreadyEnrolled && !cardNumberComplete && isEmailVerified
+													isSubmitted &&
+													!isCourseFree &&
+													isUserAccountExist &&
+													!isAlreadyEnrolled &&
+													!cardNumberComplete &&
+													isEmailVerified &&
+													recaptchaToken
 														? '1px solid red'
 														: '1px solid #ccc',
 												padding: '0.6rem',
@@ -735,7 +792,13 @@ const PaymentDialog = ({
 											}
 										: {
 												border:
-													isSubmitted && !isCourseFree && isUserAccountExist && !isAlreadyEnrolled && !cardNumberComplete && isEmailVerified
+													isSubmitted &&
+													!isCourseFree &&
+													isUserAccountExist &&
+													!isAlreadyEnrolled &&
+													!cardNumberComplete &&
+													isEmailVerified &&
+													recaptchaToken
 														? '1px solid red'
 														: '1px solid #ccc',
 												padding: '0.6rem',
@@ -792,7 +855,13 @@ const PaymentDialog = ({
 									fromHomePage
 										? {
 												border:
-													isSubmitted && !cardExpiryComplete && !isCourseFree && isUserAccountExist && !isAlreadyEnrolled && isEmailVerified
+													isSubmitted &&
+													!cardExpiryComplete &&
+													!isCourseFree &&
+													isUserAccountExist &&
+													!isAlreadyEnrolled &&
+													isEmailVerified &&
+													recaptchaToken
 														? '1px solid red'
 														: '1px solid #ccc',
 												padding: '0.6rem',
@@ -802,7 +871,13 @@ const PaymentDialog = ({
 											}
 										: {
 												border:
-													isSubmitted && !cardExpiryComplete && !isCourseFree && isUserAccountExist && !isAlreadyEnrolled && isEmailVerified
+													isSubmitted &&
+													!cardExpiryComplete &&
+													!isCourseFree &&
+													isUserAccountExist &&
+													!isAlreadyEnrolled &&
+													isEmailVerified &&
+													recaptchaToken
 														? '1px solid red'
 														: '1px solid #ccc',
 												padding: '0.6rem',
@@ -851,7 +926,13 @@ const PaymentDialog = ({
 									fromHomePage
 										? {
 												border:
-													isSubmitted && !cardCvcComplete && !isCourseFree && isUserAccountExist && !isAlreadyEnrolled && isEmailVerified
+													isSubmitted &&
+													!cardCvcComplete &&
+													!isCourseFree &&
+													isUserAccountExist &&
+													!isAlreadyEnrolled &&
+													isEmailVerified &&
+													recaptchaToken
 														? '1px solid red'
 														: '1px solid #ccc',
 												padding: '0.6rem',
@@ -861,7 +942,13 @@ const PaymentDialog = ({
 											}
 										: {
 												border:
-													isSubmitted && !cardCvcComplete && !isCourseFree && isUserAccountExist && !isAlreadyEnrolled && isEmailVerified
+													isSubmitted &&
+													!cardCvcComplete &&
+													!isCourseFree &&
+													isUserAccountExist &&
+													!isAlreadyEnrolled &&
+													isEmailVerified &&
+													recaptchaToken
 														? '1px solid red'
 														: '1px solid #ccc',
 												padding: '0.6rem',
@@ -929,48 +1016,70 @@ const PaymentDialog = ({
 					<Box
 						sx={{
 							display: 'flex',
+							flexDirection: isSmallScreen ? 'column' : 'row',
 							alignItems: 'center',
 							textAlign: 'left',
 							width: '100%',
-							mt: '1.5rem',
+							mt: isSmallScreen ? '1rem' : '1.5rem',
+							mb: '1rem',
 						}}>
-						<FormControlLabel
-							required
-							control={
-								<Checkbox
-									checked={agreed}
-									onChange={(e) => {
-										setAgreed(e.target.checked);
-										setErrorMessage('');
-									}}
-									sx={{
-										'display': 'flex',
-										'alignItems': 'center',
-										'& .MuiSvgIcon-root': {
-											fontSize: isMobileSize ? '0.9rem' : '1.15rem',
-										},
-									}}
-								/>
-							}
-							label={fromHomePage ? 'Kabul ediyorum' : 'I agree to the Terms & Conditions'}
+						<Box
 							sx={{
-								'mt': isSmallScreen ? '0rem' : '0.5rem',
-								'& .MuiFormControlLabel-label': {
-									fontSize: isMobileSize ? '0.65rem' : '0.8rem',
+								display: 'flex',
+								flexDirection: isSmallScreen ? 'row' : 'column',
+								alignItems: isSmallScreen ? 'center' : 'flex-start',
+								justifyContent: isSmallScreen ? 'flex-start' : 'space-between',
+								width: '100%',
+								height: '5rem',
+								flex: 2,
+								py: '0.5rem',
+							}}>
+							<FormControlLabel
+								required
+								control={
+									<Checkbox
+										checked={agreed}
+										onChange={(e) => {
+											setAgreed(e.target.checked);
+											setErrorMessage('');
+											resetRecaptcha();
+										}}
+										sx={{
+											'display': 'flex',
+											'alignItems': 'center',
+											'& .MuiSvgIcon-root': {
+												fontSize: isMobileSize ? '0.9rem' : '1.15rem',
+											},
+										}}
+									/>
+								}
+								label={fromHomePage ? 'Kabul ediyorum' : 'I agree to the Terms & Conditions'}
+								sx={{
+									'& .MuiFormControlLabel-label': {
+										fontSize: isMobileSize ? '0.65rem' : '0.8rem',
+										fontFamily: fromHomePage ? DIALOG_FONT : theme.fontFamily?.main,
+									},
+								}}
+							/>
+							<Typography
+								sx={{
+									fontSize: isSmallScreen ? '0.5rem' : '0.75rem',
+									cursor: 'pointer',
 									fontFamily: fromHomePage ? DIALOG_FONT : theme.fontFamily?.main,
-								},
-							}}
-						/>
-						<Typography
-							sx={{
-								fontSize: isSmallScreen ? '0.5rem' : '0.75rem',
-								mb: '-0.5rem',
-								cursor: 'pointer',
-								fontFamily: fromHomePage ? DIALOG_FONT : theme.fontFamily?.main,
-							}}
-							onClick={() => setTermsConditionsModalOpen(true)}>
-							(<span style={{ textDecoration: 'underline' }}>{fromHomePage ? 'Şartlar ve Koşullar' : 'Read T&C'} </span>)
-						</Typography>
+								}}
+								onClick={() => setTermsConditionsModalOpen(true)}>
+								(<span style={{ textDecoration: 'underline' }}>{fromHomePage ? 'Şartlar ve Koşullar' : 'Read T&C'} </span>)
+							</Typography>
+						</Box>
+						<Box sx={{ flex: 1, display: 'flex', justifyContent: 'flex-start' }}>
+							<ReCAPTCHA
+								ref={recaptchaRef}
+								sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
+								onChange={handleRecaptchaChange}
+								onExpired={() => setRecaptchaToken(null)}
+								key={isPaymentDialogOpen ? 'active' : 'inactive'}
+							/>
+						</Box>
 					</Box>
 				</Box>
 
@@ -1069,6 +1178,7 @@ const PaymentDialog = ({
 					}}
 					disableBtn={isProcessing}
 					disableCancelBtn={isProcessing}
+					actionSx={{ mr: '1rem' }}
 				/>
 			</form>
 		</CustomDialog>

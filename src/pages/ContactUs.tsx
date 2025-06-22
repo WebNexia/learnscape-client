@@ -1,4 +1,4 @@
-import { Box, Typography, Container, Paper, Button, Grid, Snackbar, Alert } from '@mui/material';
+import { Box, Typography, Container, Paper, Button, Grid, Snackbar, Alert, DialogContent, DialogActions } from '@mui/material';
 import LandingPageLayout from '../components/landingPage/LandingPageLayout';
 import ChatWhatsApp from '../components/landingPage/ChatWhatsApp';
 import ScrollToTopButton from '../components/landingPage/ScrollToTopButton';
@@ -6,8 +6,12 @@ import CustomTextField from '../components/forms/customFields/CustomTextField';
 import PhoneInput from 'react-phone-input-2';
 import theme from '../themes';
 import { useGeoLocation } from '../hooks/useGeoLocation';
-import { useState } from 'react';
+import { useContext, useState, useRef } from 'react';
 import axios from 'axios';
+import ReCAPTCHA from 'react-google-recaptcha';
+import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
+import CustomDialog from '../components/layouts/dialog/CustomDialog';
+import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
 
 const ContactUs = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -20,14 +24,41 @@ const ContactUs = () => {
 	const [sending, setSending] = useState<boolean>(false);
 	const [showSuccess, setShowSuccess] = useState<boolean>(false);
 
+	const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+	const [errorDialogOpen, setErrorDialogOpen] = useState(false);
+	const [errorDialogMsg, setErrorDialogMsg] = useState('');
+	const [recaptchaKey, setRecaptchaKey] = useState(0);
+
+	const handleRecaptchaChange = (token: string | null) => {
+		setRecaptchaToken(token);
+	};
+
+	const recaptchaRef = useRef<any>(null);
+
+	const resetRecaptcha = () => {
+		setRecaptchaToken(null);
+		if (recaptchaRef.current) {
+			recaptchaRef.current.reset();
+		}
+	};
+
+	const { isVerySmallScreen } = useContext(MediaQueryContext);
+
 	const isValidPhone = (phone: string) => /^\+\d{8,}$/.test(phone);
 
 	const handleMoreInfoRequest = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 		if (!isValidPhone(phone)) {
-			alert('Lütfen geçerli bir telefon numarası girin.');
+			setErrorDialogMsg('Lütfen geçerli bir telefon numarası girin.');
+			setErrorDialogOpen(true);
 			return;
 		}
+		if (!recaptchaToken) {
+			setErrorDialogMsg('Lütfen reCAPTCHA doğrulamasını tamamlayın.');
+			setErrorDialogOpen(true);
+			return;
+		}
+
 		setSending(true);
 		try {
 			await axios.post(`${base_url}/contact-requests`, {
@@ -39,8 +70,10 @@ const ContactUs = () => {
 				orgId: import.meta.env.VITE_ORG_ID,
 				message,
 				category: 'ContactUs',
+				recaptchaToken,
 			});
 			setShowSuccess(true);
+			resetForm();
 			// Do not close modal or reset form yet
 		} catch (error) {
 			console.log(error);
@@ -55,6 +88,8 @@ const ContactUs = () => {
 		setEmail('');
 		setPhone('');
 		setMessage('');
+		resetRecaptcha();
+		setRecaptchaKey((prev) => prev + 1);
 	};
 
 	return (
@@ -145,7 +180,7 @@ const ContactUs = () => {
 											width: '100%',
 											height: '2.25rem',
 											fontFamily: 'Varela Round',
-											fontSize: '0.9rem',
+											fontSize: isVerySmallScreen ? '0.7rem' : '0.85rem',
 											borderRadius: '0.25rem',
 											border: '1px solid rgba(0, 0, 0, 0.23)',
 											transition: 'all 0.2s ease',
@@ -194,6 +229,15 @@ const ContactUs = () => {
 									placeholder='Mesajınızı yazın'
 								/>
 							</Grid>
+							<Grid item xs={12} sx={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
+								<ReCAPTCHA
+									key={recaptchaKey}
+									ref={recaptchaRef}
+									sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
+									onChange={handleRecaptchaChange}
+									onExpired={() => resetRecaptcha()}
+								/>
+							</Grid>
 							<Grid item xs={12}>
 								<Button
 									type='submit'
@@ -201,8 +245,8 @@ const ContactUs = () => {
 									color='primary'
 									size='small'
 									fullWidth
-									disabled={sending || !isValidPhone(phone)}
-									sx={{ fontWeight: 600, borderRadius: 2, fontFamily: 'Varela Round', py: 1.2 }}>
+									disabled={sending}
+									sx={{ fontWeight: 600, borderRadius: 2, fontFamily: 'Varela Round', py: 1.2, fontSize: { xs: '0.7rem', sm: '0.85rem' } }}>
 									{sending ? 'Gönderiliyor...' : 'Gönder'}
 								</Button>
 							</Grid>
@@ -214,7 +258,6 @@ const ContactUs = () => {
 							anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
 							onClose={() => {
 								setShowSuccess(false);
-								resetForm();
 							}}
 							sx={{ mt: { xs: '1.5rem', sm: '1.5rem', md: '2.5rem', lg: '2.5rem' } }}>
 							<Alert
@@ -235,6 +278,19 @@ const ContactUs = () => {
 			</Container>
 			<ChatWhatsApp />
 			<ScrollToTopButton />
+			{/* Error Dialog */}
+			<CustomDialog openModal={errorDialogOpen} closeModal={() => setErrorDialogOpen(false)} title='' maxWidth='xs'>
+				<DialogContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+					<Typography variant='body2' sx={{ mb: 1, mt: '1rem', fontFamily: 'Varela Round' }}>
+						{errorDialogMsg}
+					</Typography>
+					<DialogActions sx={{ display: 'flex', justifyContent: 'flex-end', width: '100%' }}>
+						<CustomCancelButton onClick={() => setErrorDialogOpen(false)} sx={{ fontFamily: 'Varela Round' }}>
+							Kapat
+						</CustomCancelButton>
+					</DialogActions>
+				</DialogContent>
+			</CustomDialog>
 		</LandingPageLayout>
 	);
 };

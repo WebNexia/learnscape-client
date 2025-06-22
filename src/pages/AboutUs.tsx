@@ -1,4 +1,4 @@
-import { Box, Typography, Avatar, Grid, Paper, Button, Container } from '@mui/material';
+import { Box, Typography, Avatar, Grid, Paper, Button, Container, DialogContent, DialogActions } from '@mui/material';
 import LandingPageLayout from '../components/landingPage/LandingPageLayout';
 import { useGeoLocation } from '../hooks/useGeoLocation';
 import { useState } from 'react';
@@ -6,6 +6,9 @@ import ContactFormDialog from '../components/landingPage/ContactFormDialog';
 import axios from 'axios';
 import ChatWhatsApp from '../components/landingPage/ChatWhatsApp';
 import ScrollToTopButton from '../components/landingPage/ScrollToTopButton';
+import CustomDialog from '../components/layouts/dialog/CustomDialog';
+import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
+import { useRef } from 'react';
 
 const team = [
 	{ name: 'John Doe', role: 'Founder & CEO', img: 'https://randomuser.me/api/portraits/men/32.jpg' },
@@ -27,6 +30,23 @@ const AboutUs = () => {
 	const [showSuccess, setShowSuccess] = useState<boolean>(false);
 	const [isGetMoreDetailsModalOpen, setIsGetMoreDetailsModalOpen] = useState<boolean>(false);
 
+	const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+	const [errorDialogOpen, setErrorDialogOpen] = useState(false);
+	const [errorDialogMsg, setErrorDialogMsg] = useState('');
+
+	const handleRecaptchaChange = (token: string | null) => {
+		setRecaptchaToken(token);
+	};
+
+	const recaptchaRef = useRef<any>(null);
+
+	const resetRecaptcha = () => {
+		setRecaptchaToken(null);
+		if (recaptchaRef.current) {
+			recaptchaRef.current.reset();
+		}
+	};
+
 	const isValidPhone = (phone: string) => /^\+\d{8,}$/.test(phone);
 
 	const resetForm = () => {
@@ -35,12 +55,19 @@ const AboutUs = () => {
 		setEmail('');
 		setPhone('');
 		setMessage('');
+		resetRecaptcha();
 	};
 
 	const handleMoreInfoRequest = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 		if (!isValidPhone(phone)) {
-			alert('Lütfen geçerli bir telefon numarası girin.');
+			setErrorDialogMsg('Lütfen geçerli bir telefon numarası girin.');
+			setErrorDialogOpen(true);
+			return;
+		}
+		if (!recaptchaToken) {
+			setErrorDialogMsg('Lütfen reCAPTCHA doğrulamasını tamamlayın.');
+			setErrorDialogOpen(true);
 			return;
 		}
 		setSending(true);
@@ -54,8 +81,10 @@ const AboutUs = () => {
 				orgId: import.meta.env.VITE_ORG_ID,
 				message,
 				category: 'AboutUs',
+				recaptchaToken,
 			});
 			setShowSuccess(true);
+			resetForm();
 			// Do not close modal or reset form yet
 		} catch (error) {
 			console.log(error);
@@ -160,6 +189,21 @@ const AboutUs = () => {
 					</Button>
 				</Paper>
 			</Container>
+
+			{/* Error Dialog */}
+			<CustomDialog openModal={errorDialogOpen} closeModal={() => setErrorDialogOpen(false)} title='' maxWidth='xs'>
+				<DialogContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+					<Typography variant='body2' sx={{ mb: 1, mt: '1rem', fontFamily: 'Varela Round' }}>
+						{errorDialogMsg}
+					</Typography>
+					<DialogActions sx={{ display: 'flex', justifyContent: 'flex-end', width: '100%' }}>
+						<CustomCancelButton onClick={() => setErrorDialogOpen(false)} sx={{ fontFamily: 'Varela Round' }}>
+							Kapat
+						</CustomCancelButton>
+					</DialogActions>
+				</DialogContent>
+			</CustomDialog>
+
 			<ContactFormDialog
 				isGetMoreDetailsModalOpen={isGetMoreDetailsModalOpen}
 				setIsGetMoreDetailsModalOpen={setIsGetMoreDetailsModalOpen}
@@ -181,6 +225,9 @@ const AboutUs = () => {
 				sending={sending}
 				title='BİZE ULAŞIN'
 				description='Sorularınız, önerileriniz veya işbirliği talepleriniz için bize ulaşmaktan çekinmeyin.'
+				handleRecaptchaChange={handleRecaptchaChange}
+				resetRecaptcha={resetRecaptcha}
+				recaptchaRef={recaptchaRef}
 			/>
 			<ChatWhatsApp />
 			<ScrollToTopButton />
