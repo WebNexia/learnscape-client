@@ -211,6 +211,52 @@ const AdminCourseEditPage = () => {
 		let updatedChapters: ChapterLessonData[] = [];
 		let updatedDocuments: Document[] = [];
 
+		// If course is external, skip all chapter/lesson/document creation/updating
+		if (singleCourse?.courseManagement?.isExternal) {
+			const extStartingDate = new Date(singleCourse?.startingDate || '');
+			const extDurationWeeks = singleCourse?.durationWeeks || 0;
+			const extValidUntil =
+				!isNaN(extStartingDate.getTime()) && extDurationWeeks > 0
+					? new Date(extStartingDate.getTime() + extDurationWeeks * 7 * 24 * 60 * 60 * 1000)
+					: null;
+
+			const updatedCourse = {
+				...singleCourse,
+				chapters: [],
+				chapterIds: [],
+				documents: [],
+				documentIds: [],
+				isExpired: extValidUntil ? extValidUntil < new Date() : false,
+			};
+
+			try {
+				const response = await axios.patch(`${base_url}/courses/${courseId}`, {
+					...updatedCourse,
+				});
+
+				const responseUpdatedData = response.data.data;
+
+				setSingleCourse({
+					...updatedCourse,
+					updatedAt: responseUpdatedData.updatedAt,
+					updatedByName: responseUpdatedData.updatedByName,
+					updatedByImageUrl: responseUpdatedData.updatedByImageUrl,
+					updatedByRole: responseUpdatedData.updatedByRole,
+				});
+
+				updateCourse({
+					...updatedCourse,
+					updatedAt: responseUpdatedData.updatedAt,
+					updatedByName: responseUpdatedData.updatedByName,
+					updatedByImageUrl: responseUpdatedData.updatedByImageUrl,
+					updatedByRole: responseUpdatedData.updatedByRole,
+				});
+			} catch (error) {
+				console.error('Error updating external course:', error);
+			}
+			return; // Stop further processing
+		}
+
 		// Calculate validUntil here
 		const startingDate = new Date(singleCourse?.startingDate || '');
 		const durationWeeks = singleCourse?.durationWeeks || 0;
@@ -552,89 +598,91 @@ const AdminCourseEditPage = () => {
 								setIsMissingField={setIsMissingField}
 								setSingleCourse={setSingleCourse}
 							/>
-							<Box sx={{ mt: '2rem', minHeight: '40vh' }}>
-								<Box
-									sx={{
-										display: 'flex',
-										justifyContent: 'space-between',
-										alignItems: 'center',
-										width: '100%',
-									}}>
-									<Typography variant='h5' sx={{ flex: 2 }}>
-										CHAPTERS
-									</Typography>
-									<CustomInfoMessageAlignedLeft
-										message='Drag the lessons in each chapter and chapters to reorder'
-										sx={{ justifyContent: 'center', alignItems: 'center', flex: 4, marginTop: '0.85rem' }}
-									/>
-									<Box sx={{ display: 'flex', justifyContent: 'flex-end', flex: 2 }}>
-										<CustomSubmitButton
-											type='button'
-											onClick={() => {
-												setIsChapterCreateModalOpen(true);
-												setNewChapterTitle('');
-											}}>
-											New Chapter
-										</CustomSubmitButton>
-									</Box>
-								</Box>
-
-								<CustomDialog openModal={isChapterCreateModalOpen} closeModal={closeCreateChapterModal} title='Create New Chapter' maxWidth='sm'>
-									<form
-										onSubmit={(e: React.FormEvent<HTMLFormElement>) => {
-											e.preventDefault();
-											createChapterTemplate();
-											closeCreateChapterModal();
-											window.scrollTo({
-												top: document.body.scrollHeight,
-												behavior: 'smooth',
-											});
-										}}
-										style={{ display: 'flex', flexDirection: 'column' }}>
-										<CustomTextField
-											fullWidth={false}
-											label='Chapter Title'
-											value={newChapterTitle}
-											onChange={(e) => setNewChapterTitle(e.target.value)}
-											sx={{ margin: '2rem 1rem' }}
-											InputLabelProps={{
-												sx: { fontSize: '0.8rem' },
-											}}
-										/>
-
-										<CustomDialogActions onCancel={closeCreateChapterModal} />
-									</form>
-								</CustomDialog>
-
-								{chapterLessonDataBeforeSave.length === 0 ? (
-									<NoContentBoxAdmin content='No chapter for this course' />
-								) : (
-									<Reorder.Group
-										axis='y'
-										values={chapterLessonDataBeforeSave || []}
-										onReorder={(newChapters): void => {
-											setChapterLessonDataBeforeSave(newChapters);
+							{!singleCourse?.courseManagement.isExternal && (
+								<Box sx={{ mt: '2rem', minHeight: '40vh' }}>
+									<Box
+										sx={{
+											display: 'flex',
+											justifyContent: 'space-between',
+											alignItems: 'center',
+											width: '100%',
 										}}>
-										{chapterLessonDataBeforeSave &&
-											chapterLessonDataBeforeSave.length !== 0 &&
-											chapterLessonDataBeforeSave?.map((chapter) => {
-												return (
-													<Reorder.Item key={chapter.chapterId} value={chapter} style={{ listStyle: 'none', boxShadow }}>
-														<AdminCourseEditChapter
-															key={chapter.chapterId}
-															chapter={chapter}
-															setChapterLessonDataBeforeSave={setChapterLessonDataBeforeSave}
-															setIsChapterUpdated={setIsChapterUpdated}
-															setIsMissingField={setIsMissingField}
-															isMissingField={isMissingField}
-															setDeletedChapterIds={setDeletedChapterIds}
-														/>
-													</Reorder.Item>
-												);
-											})}
-									</Reorder.Group>
-								)}
-							</Box>
+										<Typography variant='h5' sx={{ flex: 2 }}>
+											CHAPTERS
+										</Typography>
+										<CustomInfoMessageAlignedLeft
+											message='Drag the lessons in each chapter and chapters to reorder'
+											sx={{ justifyContent: 'center', alignItems: 'center', flex: 4, marginTop: '0.85rem' }}
+										/>
+										<Box sx={{ display: 'flex', justifyContent: 'flex-end', flex: 2 }}>
+											<CustomSubmitButton
+												type='button'
+												onClick={() => {
+													setIsChapterCreateModalOpen(true);
+													setNewChapterTitle('');
+												}}>
+												New Chapter
+											</CustomSubmitButton>
+										</Box>
+									</Box>
+
+									<CustomDialog openModal={isChapterCreateModalOpen} closeModal={closeCreateChapterModal} title='Create New Chapter' maxWidth='sm'>
+										<form
+											onSubmit={(e: React.FormEvent<HTMLFormElement>) => {
+												e.preventDefault();
+												createChapterTemplate();
+												closeCreateChapterModal();
+												window.scrollTo({
+													top: document.body.scrollHeight,
+													behavior: 'smooth',
+												});
+											}}
+											style={{ display: 'flex', flexDirection: 'column' }}>
+											<CustomTextField
+												fullWidth={false}
+												label='Chapter Title'
+												value={newChapterTitle}
+												onChange={(e) => setNewChapterTitle(e.target.value)}
+												sx={{ margin: '2rem 1rem' }}
+												InputLabelProps={{
+													sx: { fontSize: '0.8rem' },
+												}}
+											/>
+
+											<CustomDialogActions onCancel={closeCreateChapterModal} />
+										</form>
+									</CustomDialog>
+
+									{chapterLessonDataBeforeSave.length === 0 ? (
+										<NoContentBoxAdmin content='No chapter for this course' />
+									) : (
+										<Reorder.Group
+											axis='y'
+											values={chapterLessonDataBeforeSave || []}
+											onReorder={(newChapters): void => {
+												setChapterLessonDataBeforeSave(newChapters);
+											}}>
+											{chapterLessonDataBeforeSave &&
+												chapterLessonDataBeforeSave.length !== 0 &&
+												chapterLessonDataBeforeSave?.map((chapter) => {
+													return (
+														<Reorder.Item key={chapter.chapterId} value={chapter} style={{ listStyle: 'none', boxShadow }}>
+															<AdminCourseEditChapter
+																key={chapter.chapterId}
+																chapter={chapter}
+																setChapterLessonDataBeforeSave={setChapterLessonDataBeforeSave}
+																setIsChapterUpdated={setIsChapterUpdated}
+																setIsMissingField={setIsMissingField}
+																isMissingField={isMissingField}
+																setDeletedChapterIds={setDeletedChapterIds}
+															/>
+														</Reorder.Item>
+													);
+												})}
+										</Reorder.Group>
+									)}
+								</Box>
+							)}
 
 							{chapterLessonDataBeforeSave.length > 2 && (
 								<Box sx={{ display: 'flex', width: '100%', justifyContent: 'flex-end', margin: '-1rem 0 2rem 0' }}>
@@ -650,126 +698,130 @@ const AdminCourseEditPage = () => {
 								</Box>
 							)}
 
-							<Box sx={{ margin: '3rem 0 1rem 0' }}>
-								<HandleDocUploadURL
-									label='Course Materials'
-									onDocUploadLogic={(url, docName) => {
-										setSingleCourse((prevData) => {
-											if (prevData && userId && courseId) {
-												const maxNumber = prevData?.documents
-													.filter((doc) => doc !== null)
-													.reduce((max, doc) => {
-														const match = doc.name.match(/Untitled Document (\d+)/);
-														const num = match ? parseInt(match[1], 10) : 0;
-														return num > max ? num : max;
-													}, 0);
-												const newName = docName || `Untitled Document ${maxNumber + 1}`;
-												const newDocument: Document = {
-													_id: generateUniqueId('temp_doc_id_'),
-													name: newName,
-													documentUrl: url,
-													orgId,
-													userId,
-													imageUrl: '',
-													prices: [
-														{ currency: 'gbp', amount: '0' },
-														{ currency: 'usd', amount: '0' },
-														{ currency: 'eur', amount: '0' },
-														{ currency: 'try', amount: '0' },
-													],
-													description: '',
-													createdAt: '',
-													updatedAt: '',
-													clonedFromId: '',
-													clonedFromTitle: '',
-													usedInLessons: [],
-													usedInCourses: courseId ? [courseId] : [],
-													samplePageImageUrl: '',
-													isOnLandingPage: false,
-													pageCount: 0,
-													createdBy: '',
-													updatedBy: '',
-													createdByName: '',
-													updatedByName: '',
-													createdByImageUrl: '',
-													updatedByImageUrl: '',
-													createdByRole: '',
-													updatedByRole: '',
-												};
+							{!singleCourse?.courseManagement.isExternal && (
+								<Box sx={{ margin: '3rem 0 1rem 0' }}>
+									<HandleDocUploadURL
+										label='Course Materials'
+										onDocUploadLogic={(url, docName) => {
+											setSingleCourse((prevData) => {
+												if (prevData && userId && courseId) {
+													const maxNumber = prevData?.documents
+														.filter((doc) => doc !== null)
+														.reduce((max, doc) => {
+															const match = doc.name.match(/Untitled Document (\d+)/);
+															const num = match ? parseInt(match[1], 10) : 0;
+															return num > max ? num : max;
+														}, 0);
+													const newName = docName || `Untitled Document ${maxNumber + 1}`;
+													const newDocument: Document = {
+														_id: generateUniqueId('temp_doc_id_'),
+														name: newName,
+														documentUrl: url,
+														orgId,
+														userId,
+														imageUrl: '',
+														prices: [
+															{ currency: 'gbp', amount: '0' },
+															{ currency: 'usd', amount: '0' },
+															{ currency: 'eur', amount: '0' },
+															{ currency: 'try', amount: '0' },
+														],
+														description: '',
+														createdAt: '',
+														updatedAt: '',
+														clonedFromId: '',
+														clonedFromTitle: '',
+														usedInLessons: [],
+														usedInCourses: courseId ? [courseId] : [],
+														samplePageImageUrl: '',
+														isOnLandingPage: false,
+														pageCount: 0,
+														createdBy: '',
+														updatedBy: '',
+														createdByName: '',
+														updatedByName: '',
+														createdByImageUrl: '',
+														updatedByImageUrl: '',
+														createdByRole: '',
+														updatedByRole: '',
+													};
 
+													return {
+														...prevData,
+														documents: [...prevData?.documents, newDocument],
+													};
+												}
+												return prevData;
+											});
+										}}
+										enterDocUrl={enterDocUrl}
+										setEnterDocUrl={setEnterDocUrl}
+										docFolderName='Course Materials'
+										addNewDocumentModalOpen={addNewDocumentModalOpen}
+										setAddNewDocumentModalOpen={setAddNewDocumentModalOpen}
+										singleCourse={singleCourse}
+										setSingleCourse={setSingleCourse}
+										fromAdminCourses={true}
+									/>
+								</Box>
+							)}
+
+							{!singleCourse?.courseManagement.isExternal && (
+								<DocumentsListEditBox
+									documentsSource={singleCourse?.documents}
+									toggleDocRenameModal={toggleDocRenameModal}
+									closeDocRenameModal={closeDocRenameModal}
+									isDocRenameModalOpen={isDocRenameModalOpen}
+									saveDocRename={saveDocRename}
+									setIsDocumentUpdated={setIsDocumentUpdated}
+									removeDocOnClick={(document: Document) => {
+										setSingleCourse((prevData) => {
+											if (prevData) {
+												const filteredDocuments = prevData?.documents?.filter((thisDoc) => thisDoc._id !== document._id);
+												const filteredDocumentIds = filteredDocuments?.map((doc) => doc._id);
+
+												// Update document's usedInCourses in the documents context
+												const updatedDocument = {
+													...document,
+													usedInCourses: document.usedInCourses.filter((id) => id !== courseId),
+													createdByName: document.createdByName,
+													createdByImageUrl: document.createdByImageUrl,
+													createdByRole: document.createdByRole,
+													updatedByName: document.updatedByName,
+													updatedByImageUrl: document.updatedByImageUrl,
+													updatedByRole: document.updatedByRole,
+													createdAt: document.createdAt,
+													updatedAt: new Date().toISOString(),
+												};
+												updateDocuments(updatedDocument);
 												return {
 													...prevData,
-													documents: [...prevData?.documents, newDocument],
+													documents: filteredDocuments,
+													documentIds: filteredDocumentIds,
 												};
 											}
 											return prevData;
 										});
 									}}
-									enterDocUrl={enterDocUrl}
-									setEnterDocUrl={setEnterDocUrl}
-									docFolderName='Course Materials'
-									addNewDocumentModalOpen={addNewDocumentModalOpen}
-									setAddNewDocumentModalOpen={setAddNewDocumentModalOpen}
-									singleCourse={singleCourse}
-									setSingleCourse={setSingleCourse}
-									fromAdminCourses={true}
+									renameDocOnChange={(e: React.ChangeEvent<HTMLInputElement>, document: Document) => {
+										setSingleCourse((prevData) => {
+											if (prevData) {
+												const updatedDocuments = prevData?.documents
+													?.filter((document) => document !== null)
+													?.map((thisDoc) => {
+														if (thisDoc._id === document._id) {
+															return { ...thisDoc, name: e.target.value };
+														} else {
+															return thisDoc;
+														}
+													});
+												return { ...prevData, documents: updatedDocuments };
+											}
+											return prevData;
+										});
+									}}
 								/>
-							</Box>
-
-							<DocumentsListEditBox
-								documentsSource={singleCourse?.documents}
-								toggleDocRenameModal={toggleDocRenameModal}
-								closeDocRenameModal={closeDocRenameModal}
-								isDocRenameModalOpen={isDocRenameModalOpen}
-								saveDocRename={saveDocRename}
-								setIsDocumentUpdated={setIsDocumentUpdated}
-								removeDocOnClick={(document: Document) => {
-									setSingleCourse((prevData) => {
-										if (prevData) {
-											const filteredDocuments = prevData?.documents?.filter((thisDoc) => thisDoc._id !== document._id);
-											const filteredDocumentIds = filteredDocuments?.map((doc) => doc._id);
-
-											// Update document's usedInCourses in the documents context
-											const updatedDocument = {
-												...document,
-												usedInCourses: document.usedInCourses.filter((id) => id !== courseId),
-												createdByName: document.createdByName,
-												createdByImageUrl: document.createdByImageUrl,
-												createdByRole: document.createdByRole,
-												updatedByName: document.updatedByName,
-												updatedByImageUrl: document.updatedByImageUrl,
-												updatedByRole: document.updatedByRole,
-												createdAt: document.createdAt,
-												updatedAt: new Date().toISOString(),
-											};
-											updateDocuments(updatedDocument);
-											return {
-												...prevData,
-												documents: filteredDocuments,
-												documentIds: filteredDocumentIds,
-											};
-										}
-										return prevData;
-									});
-								}}
-								renameDocOnChange={(e: React.ChangeEvent<HTMLInputElement>, document: Document) => {
-									setSingleCourse((prevData) => {
-										if (prevData) {
-											const updatedDocuments = prevData?.documents
-												?.filter((document) => document !== null)
-												?.map((thisDoc) => {
-													if (thisDoc._id === document._id) {
-														return { ...thisDoc, name: e.target.value };
-													} else {
-														return thisDoc;
-													}
-												});
-											return { ...prevData, documents: updatedDocuments };
-										}
-										return prevData;
-									});
-								}}
-							/>
+							)}
 						</form>
 					</Box>
 				)}

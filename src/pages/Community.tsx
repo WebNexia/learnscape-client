@@ -179,8 +179,10 @@ const Community = () => {
 							<CustomDialog openModal={messageNonRegisteredModalOpen} closeModal={() => setMessageNonRegisteredModalOpen(false)} maxWidth='sm'>
 								<DialogContent>
 									<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-										<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.85rem' : undefined, color: theme.textColor?.error.main }}>
-											You need to register for a paid course to create a topic.
+										<Typography
+											variant='body2'
+											sx={{ fontSize: isMobileSize ? '0.85rem' : undefined, color: theme.textColor?.error.main, mt: '1rem' }}>
+											You need to register for a paid platform course to create a topic.
 										</Typography>
 									</Box>
 								</DialogContent>

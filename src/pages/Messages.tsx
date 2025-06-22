@@ -1200,7 +1200,7 @@ const Messages = () => {
 										<Typography variant={isMobileSize ? 'body2' : 'body1'} sx={{ color: theme.textColor?.common.main }}>
 											{user?.hasRegisteredCourse || user?.role === 'admin'
 												? 'Select an existing chat or start a new chat by adding a user'
-												: 'To use messages, you must first register for a paid course'}
+												: 'To use messages, you must first register for a paid platform course'}
 										</Typography>
 									</Box>
 								</Box>

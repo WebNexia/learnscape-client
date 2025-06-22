@@ -50,9 +50,16 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 						<Avatar src={singleCourse?.instructor?.imageUrl} sx={{ width: '2rem', height: '2rem', objectFit: 'cover' }} />
 						<Typography
 							variant='body2'
-							sx={{ 'textTransform': 'capitalize', 'cursor': 'pointer', ':hover': { textDecoration: 'underline' } }}
+							sx={{
+								'textTransform': 'capitalize',
+								'cursor': 'pointer',
+								':hover': { textDecoration: 'underline' },
+								'display': 'flex',
+								'alignItems': 'center',
+								'gap': '0.5rem',
+							}}
 							onClick={() => setIsEditInstructorDialogOpen(true)}>
-							{singleCourse?.instructor?.name}
+							{singleCourse?.instructor?.name} <EditTwoTone fontSize='small' />
 						</Typography>
 					</Box>
 					<EditInstructorDialog
@@ -164,117 +171,121 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 				</Box>
 			</Box>
 
-			<Box sx={{ mt: '4rem', minHeight: '40vh' }}>
-				<Typography variant='h5' sx={{ mb: '2.25rem', fontWeight: '600' }}>
-					CHAPTERS
-				</Typography>
-				{singleCourse?.chapterIds?.length === 0 ? (
-					<NoContentBoxAdmin content='No chapter for this course' />
-				) : (
-					<>
-						{singleCourse &&
-							singleCourse?.chapters &&
-							chapters?.map((chapter) => {
-								return (
-									<Box key={chapter.chapterId} sx={{ margin: '1rem 0 3rem 0' }}>
-										<Box display='flex'>
-											<Typography variant='h6' sx={{ mb: '0rem' }}>
-												{chapter.title}
-											</Typography>
-										</Box>
-										{chapter &&
-											chapter?.lessons &&
-											chapter?.lessons?.length !== 0 &&
-											chapter?.lessons
-												?.filter((lesson) => lesson !== null)
-												.map((lesson) => {
-													return (
-														<Box
-															key={lesson._id}
-															sx={{
-																display: 'flex',
-																alignItems: 'center',
-																height: '3rem',
-																width: '100%',
-																backgroundColor: theme.bgColor?.common,
-																margin: '1rem 0',
-																borderRadius: '0.25rem',
-																boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
-															}}>
+			{!singleCourse?.courseManagement.isExternal && (
+				<Box sx={{ mt: '4rem', minHeight: '40vh' }}>
+					<Typography variant='h5' sx={{ mb: '2.25rem', fontWeight: '600' }}>
+						CHAPTERS
+					</Typography>
+					{singleCourse?.chapterIds?.length === 0 ? (
+						<NoContentBoxAdmin content='No chapter for this course' />
+					) : (
+						<>
+							{singleCourse &&
+								singleCourse?.chapters &&
+								chapters?.map((chapter) => {
+									return (
+										<Box key={chapter.chapterId} sx={{ margin: '1rem 0 3rem 0' }}>
+											<Box display='flex'>
+												<Typography variant='h6' sx={{ mb: '0rem' }}>
+													{chapter.title}
+												</Typography>
+											</Box>
+											{chapter &&
+												chapter?.lessons &&
+												chapter?.lessons?.length !== 0 &&
+												chapter?.lessons
+													?.filter((lesson) => lesson !== null)
+													.map((lesson) => {
+														return (
 															<Box
+																key={lesson._id}
 																sx={{
+																	display: 'flex',
+																	alignItems: 'center',
 																	height: '3rem',
-																	width: '4rem',
+																	width: '100%',
+																	backgroundColor: theme.bgColor?.common,
+																	margin: '1rem 0',
+																	borderRadius: '0.25rem',
+																	boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
 																}}>
-																<img
-																	src={lesson?.imageUrl || 'https://directmobilityonline.co.uk/assets/img/noimage.png'}
-																	alt='lesson_img'
-																	height='100%'
-																	width='100%'
-																	style={{
-																		borderRadius: '0.25rem 0 0 0.25rem',
-																	}}
-																/>
-															</Box>
-															<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', margin: '0 1rem' }}>
-																<Box sx={{ flex: 4 }}>
-																	<Typography variant='body2'>{lesson?.title}</Typography>
-																</Box>
-																<Box sx={{ flex: 1 }}>
-																	<Typography variant='body2'>{lesson?.isActive ? 'Published' : 'Unpublished'}</Typography>
-																</Box>
 																<Box
 																	sx={{
-																		display: 'flex',
-																		justifyContent: 'flex-end',
-																		alignItems: 'center',
-																		flex: 4,
+																		height: '3rem',
+																		width: '4rem',
 																	}}>
-																	<Box sx={{ mr: '1rem' }}>
-																		<Typography variant='body2'>{lesson?.type}</Typography>
+																	<img
+																		src={lesson?.imageUrl || 'https://directmobilityonline.co.uk/assets/img/noimage.png'}
+																		alt='lesson_img'
+																		height='100%'
+																		width='100%'
+																		style={{
+																			borderRadius: '0.25rem 0 0 0.25rem',
+																		}}
+																	/>
+																</Box>
+																<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', margin: '0 1rem' }}>
+																	<Box sx={{ flex: 4 }}>
+																		<Typography variant='body2'>{lesson?.title}</Typography>
 																	</Box>
-																	<Box>
-																		<Tooltip title='Edit Lesson' placement='top'>
-																			<IconButton
-																				onClick={() => {
-																					window.open(`/admin/lesson-edit/user/${userId}/lesson/${lesson._id}`, '_blank');
-																					window.scrollTo({ top: 0, behavior: 'smooth' });
-																				}}>
-																				<EditTwoTone fontSize='small' />
-																			</IconButton>
-																		</Tooltip>
+																	<Box sx={{ flex: 1 }}>
+																		<Typography variant='body2'>{lesson?.isActive ? 'Published' : 'Unpublished'}</Typography>
+																	</Box>
+																	<Box
+																		sx={{
+																			display: 'flex',
+																			justifyContent: 'flex-end',
+																			alignItems: 'center',
+																			flex: 4,
+																		}}>
+																		<Box sx={{ mr: '1rem' }}>
+																			<Typography variant='body2'>{lesson?.type}</Typography>
+																		</Box>
+																		<Box>
+																			<Tooltip title='Edit Lesson' placement='top'>
+																				<IconButton
+																					onClick={() => {
+																						window.open(`/admin/lesson-edit/user/${userId}/lesson/${lesson._id}`, '_blank');
+																						window.scrollTo({ top: 0, behavior: 'smooth' });
+																					}}>
+																					<EditTwoTone fontSize='small' />
+																				</IconButton>
+																			</Tooltip>
+																		</Box>
 																	</Box>
 																</Box>
 															</Box>
-														</Box>
-													);
-												})}
-									</Box>
-								);
-							})}
-					</>
-				)}
-			</Box>
-			<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', width: '100%', mb: '4rem' }}>
-				<Box sx={{ mb: '1.25rem' }}>
-					<Typography variant='h5'>Course Materials</Typography>
+														);
+													})}
+										</Box>
+									);
+								})}
+						</>
+					)}
 				</Box>
-				{singleCourse?.documents?.filter((doc) => doc !== null).length !== 0 ? (
-					<Box>
-						{singleCourse?.documents
-							?.filter((doc) => doc !== null)
-							?.map((doc) => (
-								<Box sx={{ mb: '0.5rem' }} key={doc._id}>
-									<Link href={doc?.documentUrl} target='_blank' rel='noopener noreferrer' variant='body2'>
-										{doc?.name}
-									</Link>
-								</Box>
-							))}
+			)}
+			{!singleCourse?.courseManagement.isExternal && (
+				<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', width: '100%', mb: '4rem' }}>
+					<Box sx={{ mb: '1.25rem' }}>
+						<Typography variant='h5'>Course Materials</Typography>
 					</Box>
-				) : (
-					<NoContentBoxAdmin content='No material for this course' />
-				)}
-			</Box>
+					{singleCourse?.documents?.filter((doc) => doc !== null).length !== 0 ? (
+						<Box>
+							{singleCourse?.documents
+								?.filter((doc) => doc !== null)
+								?.map((doc) => (
+									<Box sx={{ mb: '0.5rem' }} key={doc._id}>
+										<Link href={doc?.documentUrl} target='_blank' rel='noopener noreferrer' variant='body2'>
+											{doc?.name}
+										</Link>
+									</Box>
+								))}
+						</Box>
+					) : (
+						<NoContentBoxAdmin content='No material for this course' />
+					)}
+				</Box>
+			)}
 		</Box>
 	);
 };

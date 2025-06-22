@@ -371,7 +371,7 @@ const PaymentDialog = ({
 						});
 
 						// Update hasRegisteredCourse using new endpoint
-						if (!user?.hasRegisteredCourse && !isCourseFree) {
+						if (!user?.hasRegisteredCourse && !isCourseFree && !course?.courseManagement.isExternal) {
 							await axiosInstance.post(`${base_url}/users/update-registration-status`, {
 								userId: resolvedUserId,
 							});
@@ -671,6 +671,7 @@ const PaymentDialog = ({
 									setDiscountedAmount(isNaN(amount) ? 0 : amount);
 									setUsersUsedPromoCode((prevData) => prevData.filter((id) => id !== userId));
 									setErrorMessage('');
+									setIsUserAccountExist(true);
 								}}
 								sx={{
 									'mb': '1.25rem',
@@ -774,7 +775,13 @@ const PaymentDialog = ({
 									fromHomePage
 										? {
 												border:
-													isSubmitted && !isCourseFree && isUserAccountExist && !isAlreadyEnrolled && !cardNumberComplete && isEmailVerified
+													isSubmitted &&
+													!isCourseFree &&
+													isUserAccountExist &&
+													!isAlreadyEnrolled &&
+													!cardNumberComplete &&
+													isEmailVerified &&
+													recaptchaToken
 														? '1px solid red'
 														: '1px solid #ccc',
 												padding: '0.6rem',
@@ -785,7 +792,13 @@ const PaymentDialog = ({
 											}
 										: {
 												border:
-													isSubmitted && !isCourseFree && isUserAccountExist && !isAlreadyEnrolled && !cardNumberComplete && isEmailVerified
+													isSubmitted &&
+													!isCourseFree &&
+													isUserAccountExist &&
+													!isAlreadyEnrolled &&
+													!cardNumberComplete &&
+													isEmailVerified &&
+													recaptchaToken
 														? '1px solid red'
 														: '1px solid #ccc',
 												padding: '0.6rem',
@@ -842,7 +855,13 @@ const PaymentDialog = ({
 									fromHomePage
 										? {
 												border:
-													isSubmitted && !cardExpiryComplete && !isCourseFree && isUserAccountExist && !isAlreadyEnrolled && isEmailVerified
+													isSubmitted &&
+													!cardExpiryComplete &&
+													!isCourseFree &&
+													isUserAccountExist &&
+													!isAlreadyEnrolled &&
+													isEmailVerified &&
+													recaptchaToken
 														? '1px solid red'
 														: '1px solid #ccc',
 												padding: '0.6rem',
@@ -852,7 +871,13 @@ const PaymentDialog = ({
 											}
 										: {
 												border:
-													isSubmitted && !cardExpiryComplete && !isCourseFree && isUserAccountExist && !isAlreadyEnrolled && isEmailVerified
+													isSubmitted &&
+													!cardExpiryComplete &&
+													!isCourseFree &&
+													isUserAccountExist &&
+													!isAlreadyEnrolled &&
+													isEmailVerified &&
+													recaptchaToken
 														? '1px solid red'
 														: '1px solid #ccc',
 												padding: '0.6rem',
@@ -901,7 +926,13 @@ const PaymentDialog = ({
 									fromHomePage
 										? {
 												border:
-													isSubmitted && !cardCvcComplete && !isCourseFree && isUserAccountExist && !isAlreadyEnrolled && isEmailVerified
+													isSubmitted &&
+													!cardCvcComplete &&
+													!isCourseFree &&
+													isUserAccountExist &&
+													!isAlreadyEnrolled &&
+													isEmailVerified &&
+													recaptchaToken
 														? '1px solid red'
 														: '1px solid #ccc',
 												padding: '0.6rem',
@@ -911,7 +942,13 @@ const PaymentDialog = ({
 											}
 										: {
 												border:
-													isSubmitted && !cardCvcComplete && !isCourseFree && isUserAccountExist && !isAlreadyEnrolled && isEmailVerified
+													isSubmitted &&
+													!cardCvcComplete &&
+													!isCourseFree &&
+													isUserAccountExist &&
+													!isAlreadyEnrolled &&
+													isEmailVerified &&
+													recaptchaToken
 														? '1px solid red'
 														: '1px solid #ccc',
 												padding: '0.6rem',

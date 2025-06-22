@@ -192,7 +192,7 @@ const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree,
 					{isMissingField && singleCourse?.description === '' && <CustomErrorMessage>Enter a description</CustomErrorMessage>}
 				</Box>
 				<Box sx={{ display: 'flex', alignItems: 'center', ml: '2rem' }}>
-					<Tooltip title='This course will be managed outside the platform.' placement='top'>
+					<Tooltip title='External courses will be managed outside the platform.' placement='top'>
 						<FormControlLabel
 							control={
 								<Checkbox
