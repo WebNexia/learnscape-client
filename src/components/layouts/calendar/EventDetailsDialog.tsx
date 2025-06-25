@@ -51,13 +51,14 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 							Starts:
 						</Typography>
 						<Typography variant='body1' sx={{ ml: '0.5rem', fontSize: isMobileSizeSmall ? '0.75rem' : isMobileSize ? '0.85rem' : undefined }}>
-							{selectedEvent.start.toLocaleString('en-US', {
+							{selectedEvent.start.toLocaleString(undefined, {
 								weekday: 'long',
 								year: 'numeric',
 								month: 'long',
 								day: 'numeric',
 								hour: '2-digit',
 								minute: '2-digit',
+								timeZoneName: 'short',
 							})}
 						</Typography>
 					</Box>
@@ -68,13 +69,14 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 							Ends:
 						</Typography>
 						<Typography variant='body1' sx={{ ml: '0.5rem', fontSize: isMobileSizeSmall ? '0.75rem' : isMobileSize ? '0.85rem' : undefined }}>
-							{selectedEvent.end.toLocaleString('en-US', {
+							{selectedEvent.end.toLocaleString(undefined, {
 								weekday: 'long',
 								year: 'numeric',
 								month: 'long',
 								day: 'numeric',
 								hour: '2-digit',
 								minute: '2-digit',
+								timeZoneName: 'short',
 							})}
 						</Typography>
 					</Box>

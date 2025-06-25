@@ -10,6 +10,7 @@ import { useAuth } from '../hooks/useAuth';
 
 interface EventsContextTypes {
 	sortedEventsData: Event[];
+	sortedPublicEventsData: Event[];
 	sortEventsData: (property: keyof Event, order: 'asc' | 'desc') => void;
 	addNewEvent: (newEvent: any) => void;
 	removeEvent: (id: string) => void;
@@ -26,6 +27,7 @@ interface EventsContextProviderProps {
 
 export const EventsContext = createContext<EventsContextTypes>({
 	sortedEventsData: [],
+	sortedPublicEventsData: [],
 	sortEventsData: () => {},
 	addNewEvent: () => {},
 	removeEvent: () => {},
@@ -42,6 +44,7 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 	const { isAuthenticated, isAdmin, isLearner } = useAuth();
 
 	const [sortedEventsData, setSortedEventsData] = useState<Event[]>([]);
+	const [sortedPublicEventsData, setSortedPublicEventsData] = useState<Event[]>([]);
 	const [eventsNumberOfPages, setNumberOfPages] = useState<number>(1);
 	const [eventsPageNumber, setEventsPageNumber] = useState<number>(1);
 
@@ -98,11 +101,31 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 		setSortedEventsData((prevSortedData) => prevSortedData?.filter((data) => data._id !== id));
 	};
 
-	if (isLoading) {
+	const fetchPublicEvents = async () => {
+		if (!orgId) return;
+		try {
+			const response = await axios.get(`${base_url}/events/public/${orgId}`);
+
+			// Initial sorting when fetching data
+			const sortedDataCopy = [...response.data.data].sort((a: Event, b: Event) => b.updatedAt.localeCompare(a.updatedAt));
+			setSortedPublicEventsData(sortedDataCopy);
+			setIsLoaded(true);
+			return response.data.data;
+		} catch (error) {
+			setIsLoaded(true);
+			throw error;
+		}
+	};
+
+	const { isLoading: isPublicEventsLoading, isError: isPublicEventsError } = useQuery(['allPublicEvents', orgId], () => fetchPublicEvents(), {
+		enabled: !!orgId && !isLoaded,
+	});
+
+	if (isLoading || isPublicEventsLoading) {
 		return <Loading />;
 	}
 
-	if (isError) {
+	if (isError || isPublicEventsError) {
 		return <LoadingError />;
 	}
 
@@ -110,6 +133,7 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 		<EventsContext.Provider
 			value={{
 				sortedEventsData,
+				sortedPublicEventsData,
 				sortEventsData,
 				addNewEvent,
 				removeEvent,

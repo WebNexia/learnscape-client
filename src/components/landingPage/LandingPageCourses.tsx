@@ -29,7 +29,6 @@ const LandingPageCourses = forwardRef<HTMLDivElement>((_, ref) => {
 					variant='h2'
 					sx={{
 						fontSize: responsiveStyles.typography.h2,
-						fontWeight: 600,
 						fontFamily: DIALOG_FONT,
 						color: '#2C3E50',
 						letterSpacing: '-0.02em',

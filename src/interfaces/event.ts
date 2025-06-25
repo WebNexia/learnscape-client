@@ -15,6 +15,9 @@ export interface Event {
 	allAttendeesIds: string[];
 	isAllLearnersSelected: boolean;
 	isAllCoursesSelected: boolean;
+	isPublic: boolean;
+	type: string;
+	coverImageUrl: string;
 	createdAt: string;
 	updatedAt: string;
 }
