@@ -67,8 +67,8 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 		}
 	};
 
-	const { isLoading, isError } = useQuery(['allEvents', orgId, eventsPageNumber], () => fetchEvents(eventsPageNumber), {
-		enabled: !!orgId && !isLoaded && isAuthenticated && (isAdmin || isLearner),
+	const { isLoading, isError, refetch } = useQuery(['allEvents', orgId, eventsPageNumber], () => fetchEvents(eventsPageNumber), {
+		enabled: !!orgId && isAuthenticated && (isAdmin || isLearner),
 	});
 
 	// Function to handle sorting
@@ -83,11 +83,12 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 		setSortedEventsData(sortedDataCopy);
 	};
 	// Function to update sortedEventsData with new event data
-	const addNewEvent = (newEvent: any) => {
+	const addNewEvent = async (newEvent: any) => {
 		setSortedEventsData((prevSortedData) => [newEvent, ...prevSortedData]);
+		await refetch();
 	};
 
-	const updateEvent = (singleEvent: Event) => {
+	const updateEvent = async (singleEvent: Event) => {
 		const updatedEventList = sortedEventsData?.map((event) => {
 			if (singleEvent._id === event._id) {
 				return singleEvent;
@@ -95,10 +96,12 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 			return event;
 		});
 		setSortedEventsData(updatedEventList);
+		await refetch();
 	};
 
-	const removeEvent = (id: string) => {
+	const removeEvent = async (id: string) => {
 		setSortedEventsData((prevSortedData) => prevSortedData?.filter((data) => data._id !== id));
+		await refetch();
 	};
 
 	const fetchPublicEvents = async () => {
@@ -107,7 +110,9 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 			const response = await axios.get(`${base_url}/events/public/${orgId}`);
 
 			// Initial sorting when fetching data
-			const sortedDataCopy = [...response.data.data].sort((a: Event, b: Event) => b.updatedAt.localeCompare(a.updatedAt));
+			const sortedDataCopy = [...response.data.data].sort((a: Event, b: Event) =>
+				(a.start ? new Date(a.start).toISOString() : '').localeCompare(b.start ? new Date(b.start).toISOString() : '')
+			);
 			setSortedPublicEventsData(sortedDataCopy);
 			setIsLoaded(true);
 			return response.data.data;

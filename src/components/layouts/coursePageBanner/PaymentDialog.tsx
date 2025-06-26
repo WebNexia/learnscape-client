@@ -1176,7 +1176,7 @@ const PaymentDialog = ({
 						cursorEvents: isProcessing ? 'none' : 'auto',
 						pointerEvents: isProcessing ? 'none' : 'auto',
 					}}
-					disableBtn={isProcessing}
+					disableBtn={isProcessing || !recaptchaToken}
 					disableCancelBtn={isProcessing}
 					actionSx={{ mr: '1rem' }}
 				/>

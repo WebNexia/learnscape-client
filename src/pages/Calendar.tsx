@@ -73,12 +73,15 @@ const EventCalendar = () => {
 		allAttendeesIds: [],
 		isAllLearnersSelected: false,
 		isAllCoursesSelected: false,
+		isPublic: false,
+		type: '',
+		coverImageUrl: '',
 	});
 
 	useEffect(() => {
 		if (sortedEventsData) {
 			const transformedEvents = sortedEventsData
-				?.filter((event) => event.isAllLearnersSelected || event.allAttendeesIds.includes(user?._id!) || user?.role === Roles.ADMIN)
+				?.filter((event) => event.isAllLearnersSelected || event.allAttendeesIds.includes(user?._id!) || user?.role === Roles.ADMIN || event.isPublic)
 				?.map((event) => {
 					const startDate = new Date(event.start!);
 					let endDate = new Date(event.end!);

@@ -142,8 +142,8 @@ const CreateEventDialog = ({
 			coursesIds: newEvent.coursesIds,
 			createdBy: user?._id!,
 			isPublic: newEvent.isPublic,
-			coverImageUrl: newEvent.coverImageUrl,
-			type: newEvent.type,
+			coverImageUrl: newEvent.isPublic ? newEvent.coverImageUrl : '',
+			type: newEvent.isPublic ? newEvent.type : '',
 		};
 
 		try {
@@ -151,23 +151,25 @@ const CreateEventDialog = ({
 
 			addNewEvent({ ...event, _id: res.data.data._id });
 
-			const startDate = newEvent?.start?.toLocaleDateString('en-US', {
+			const startDate = newEvent?.start?.toLocaleDateString(undefined, {
 				weekday: 'long',
 				year: 'numeric',
 				month: 'long',
 				day: 'numeric',
+				timeZoneName: 'short',
 			});
-			const startTime = newEvent?.start?.toLocaleTimeString('en-US', {
+			const startTime = newEvent?.start?.toLocaleTimeString(undefined, {
 				hour: '2-digit',
 				minute: '2-digit',
+				timeZoneName: 'short',
 			});
 
 			const notificationData = {
-				title: 'Added to Event',
-				message: `${user?.username} added a new event to your calendar: "${truncateText(
+				title: 'Etkinliğe Eklendiniz',
+				message: `${user?.username} sizi yeni bir etkinliğe ekledi: "${truncateText(
 					newEvent.title,
 					20
-				)}". It is scheduled for ${startDate} at ${startTime} `,
+				)}". Etkinlik ${startDate} tarihinde, saat ${startTime} başlayacak.`,
 				isRead: false,
 				timestamp: serverTimestamp(),
 				type: 'AddToEvent',
@@ -175,7 +177,7 @@ const CreateEventDialog = ({
 				eventId: res.data.data._id,
 			};
 
-			if (newEvent.isAllLearnersSelected) {
+			if (newEvent.isAllLearnersSelected || newEvent.isPublic) {
 				for (const id of allFirebaseUserIds) {
 					const notificationRef = collection(db, 'notifications', id, 'userNotifications');
 					await addDoc(notificationRef, notificationData);
@@ -256,7 +258,7 @@ const CreateEventDialog = ({
 								<Checkbox
 									checked={newEvent.isPublic}
 									onChange={(e) => {
-										setNewEvent((prevData) => ({ ...prevData, isPublic: e.target.checked, type: '' }));
+										setNewEvent((prevData) => ({ ...prevData, isPublic: e.target.checked }));
 
 										if (e.target.checked) {
 											setNewEvent((prevData) => ({

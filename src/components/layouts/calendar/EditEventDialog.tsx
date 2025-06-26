@@ -144,7 +144,6 @@ const EditEventDialog = ({
 				return prevData;
 			});
 		} else {
-			console.log('else');
 			// If no special selection, update with direct attendees
 			const uniqueParticipants = Array.from(new Map([...participants].map((user) => [user._id, user])).values());
 
@@ -162,8 +161,23 @@ const EditEventDialog = ({
 
 		try {
 			if (isEventUpdated) {
-				await axios.patch(`${base_url}/events/${selectedEvent?._id}`, { ...selectedEvent, allAttendeesIds: allParticipantsIds });
-				if (selectedEvent) updateEvent({ ...selectedEvent, allAttendeesIds: allParticipantsIds });
+				await axios.patch(`${base_url}/events/${selectedEvent?._id}`, {
+					...selectedEvent,
+					allAttendeesIds: allParticipantsIds,
+					type: !selectedEvent?.isPublic ? '' : selectedEvent?.type,
+					coverImageUrl: !selectedEvent?.isPublic ? '' : selectedEvent?.coverImageUrl,
+				});
+				if (selectedEvent)
+					updateEvent({
+						...selectedEvent,
+						allAttendeesIds: allParticipantsIds,
+						type: !selectedEvent?.isPublic ? '' : selectedEvent?.type,
+						coverImageUrl: !selectedEvent?.isPublic ? '' : selectedEvent?.coverImageUrl,
+					});
+			} else {
+				setIsEventUpdated(false);
+				setEditEventModalOpen(false);
+				return;
 			}
 
 			const startDate = selectedEvent?.start?.toLocaleDateString('en-US', {
@@ -240,7 +254,7 @@ const EditEventDialog = ({
 				setFilteredCourses([]);
 				setSearchLearnerValue('');
 				setSearchCourseValue('');
-				setIsEventUpdated(true);
+				setIsEventUpdated(false);
 			}}
 			title='Edit Event'
 			maxWidth='sm'>
@@ -379,11 +393,13 @@ const EditEventDialog = ({
 										if (selectedEvent) {
 											setSelectedEvent({ ...selectedEvent, coverImageUrl: url });
 										}
+										setIsEventUpdated(true);
 									}}
 									onChangeImgUrl={(e) => {
 										if (selectedEvent) {
 											setSelectedEvent({ ...selectedEvent, coverImageUrl: e.target.value });
 										}
+										setIsEventUpdated(true);
 									}}
 									imageUrlValue={selectedEvent?.coverImageUrl || ''}
 									imageFolderName='EventImages'
@@ -398,6 +414,7 @@ const EditEventDialog = ({
 										if (selectedEvent) {
 											setSelectedEvent({ ...selectedEvent, coverImageUrl: '' });
 										}
+										setIsEventUpdated(true);
 									}}
 									boxStyle={{ width: '8rem', height: '8rem' }}
 									imgStyle={{ objectFit: 'cover', maxWidth: '100%', maxHeight: '100%' }}
@@ -413,6 +430,7 @@ const EditEventDialog = ({
 									label='Start Time'
 									value={selectedEvent?.start ? dayjs(selectedEvent.start) : null}
 									onChange={(newValue: Dayjs | null) => {
+										setIsEventUpdated(true);
 										setSelectedEvent((prevData) => {
 											if (prevData) {
 												const updatedStart = newValue ? newValue.toDate() : null;
@@ -433,8 +451,6 @@ const EditEventDialog = ({
 											}
 											return prevData;
 										});
-
-										setIsEventUpdated(true);
 									}}
 									slotProps={{
 										textField: {
@@ -574,6 +590,7 @@ const EditEventDialog = ({
 										setSearchCourseValue('');
 										setFilteredCourses([]);
 										filterUsers(e.target.value, 'edit');
+										setIsEventUpdated(true);
 									}}
 									sx={{
 										flex: 3,
@@ -773,6 +790,7 @@ const EditEventDialog = ({
 										setSearchLearnerValue('');
 										setFilteredUsers([]);
 										filterCourses(e.target.value, 'edit');
+										setIsEventUpdated(true);
 									}}
 									sx={{
 										flex: 3,

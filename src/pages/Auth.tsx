@@ -1061,7 +1061,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 													},
 												}}
 												type='submit'
-												disabled={signingUp}>
+												disabled={signingUp || !recaptchaToken}>
 												{signingUp ? 'İşleniyor...' : 'Kayıt Ol'}
 											</Button>
 										</form>
@@ -1099,7 +1099,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 											onExpired={resetResetRecaptcha}
 											key={activeForm === AuthForms.RESET ? 'reset' : 'other'}
 										/>
-										<Button variant='contained' fullWidth sx={submitBtnStyles} type='submit'>
+										<Button variant='contained' fullWidth sx={submitBtnStyles} type='submit' disabled={!resetRecaptchaToken}>
 											Şifre Sıfırlama E-postası Gönder
 										</Button>
 										<Typography
