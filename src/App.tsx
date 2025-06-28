@@ -59,6 +59,7 @@ const AdminQuizSubmissions = React.lazy(() => import('./pages/AdminQuizSubmissio
 const AdminQuizSubmissionCheck = React.lazy(() => import('./pages/AdminQuizSubmissionCheck'));
 const AdminPayments = React.lazy(() => import('./pages/AdminPayments'));
 const AdminContactRequests = React.lazy(() => import('./pages/AdminContactRequests'));
+const AdminPublicEvents = React.lazy(() => import('./pages/AdminPublicEvents'));
 
 const PasswordResetPage = React.lazy(() => import('./pages/ResetPasswordPage'));
 const VerifyEmailPage = React.lazy(() => import('./pages/VerifyEmailPage'));
@@ -159,6 +160,10 @@ function App() {
 																										</>
 																										<>{renderRoute('/admin/settings/user/:userId', <Settings />, Roles.ADMIN)}</>
 																										<>{renderRoute('/admin/contact-requests/user/:userId', <AdminContactRequests />, Roles.ADMIN)}</>
+																										<>
+																											{renderRoute('/admin/calendar/public-events/user/:userId', <AdminPublicEvents />, Roles.ADMIN)}
+																										</>
+
 																										<>{renderRoute('/dashboard/user/:id', <Dashboard />, Roles.USER)}</>
 																										<>{renderRoute('/courses/user/:id', <Courses />, Roles.USER)}</>
 																										<>{renderRoute('/submissions/user/:userId', <Submissions />, Roles.USER)}</>

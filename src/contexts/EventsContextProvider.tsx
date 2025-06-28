@@ -12,6 +12,7 @@ interface EventsContextTypes {
 	sortedEventsData: Event[];
 	sortedPublicEventsData: Event[];
 	sortEventsData: (property: keyof Event, order: 'asc' | 'desc') => void;
+	sortPublicEventsData: (property: keyof Event, order: 'asc' | 'desc') => void;
 	addNewEvent: (newEvent: any) => void;
 	removeEvent: (id: string) => void;
 	updateEvent: (singleEvent: Event) => void;
@@ -19,6 +20,7 @@ interface EventsContextTypes {
 	eventsPageNumber: number;
 	setEventsPageNumber: React.Dispatch<React.SetStateAction<number>>;
 	fetchEvents: (page: number) => void;
+	fetchPublicEvents: () => void;
 }
 
 interface EventsContextProviderProps {
@@ -29,6 +31,7 @@ export const EventsContext = createContext<EventsContextTypes>({
 	sortedEventsData: [],
 	sortedPublicEventsData: [],
 	sortEventsData: () => {},
+	sortPublicEventsData: () => {},
 	addNewEvent: () => {},
 	removeEvent: () => {},
 	updateEvent: () => {},
@@ -36,6 +39,7 @@ export const EventsContext = createContext<EventsContextTypes>({
 	eventsPageNumber: 1,
 	setEventsPageNumber: () => {},
 	fetchEvents: () => {},
+	fetchPublicEvents: () => {},
 });
 
 const EventsContextProvider = (props: EventsContextProviderProps) => {
@@ -122,6 +126,18 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 		}
 	};
 
+	// Function to handle sorting
+	const sortPublicEventsData = (property: keyof Event, order: 'asc' | 'desc') => {
+		const sortedDataCopy = [...sortedPublicEventsData].sort((a: Event, b: Event) => {
+			if (order === 'asc') {
+				return a[property]! > b[property]! ? 1 : -1;
+			} else {
+				return a[property]! < b[property]! ? 1 : -1;
+			}
+		});
+		setSortedPublicEventsData(sortedDataCopy);
+	};
+
 	const { isLoading: isPublicEventsLoading, isError: isPublicEventsError } = useQuery(['allPublicEvents', orgId], () => fetchPublicEvents(), {
 		enabled: !!orgId && !isLoaded,
 	});
@@ -140,6 +156,7 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 				sortedEventsData,
 				sortedPublicEventsData,
 				sortEventsData,
+				sortPublicEventsData,
 				addNewEvent,
 				removeEvent,
 				updateEvent,
@@ -147,6 +164,7 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 				eventsPageNumber,
 				setEventsPageNumber,
 				fetchEvents,
+				fetchPublicEvents,
 			}}>
 			{props.children}
 		</EventsContext.Provider>

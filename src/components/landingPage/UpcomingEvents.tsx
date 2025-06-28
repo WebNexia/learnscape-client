@@ -78,6 +78,7 @@ export default function UpcomingEvents() {
 			} else {
 				setRegisterErrorMsg('Kayıt işlemi sırasında bir hata oluştu');
 			}
+			resetRecaptcha();
 		} finally {
 			setIsRegisterForEventSending(false);
 		}
@@ -468,14 +469,20 @@ export default function UpcomingEvents() {
 							<CustomTextField
 								label='İsminiz'
 								value={firstName}
-								onChange={(e) => setFirstName(e.target.value)}
+								onChange={(e) => {
+									setFirstName(e.target.value);
+									setRegisterErrorMsg(null);
+								}}
 								fullWidth={false}
 								sx={{ width: '48%', mb: '1.25rem', fontFamily: 'Varela Round' }}
 							/>
 							<CustomTextField
 								label='Soy İsminiz'
 								value={lastName}
-								onChange={(e) => setLastName(e.target.value)}
+								onChange={(e) => {
+									setLastName(e.target.value);
+									setRegisterErrorMsg(null);
+								}}
 								fullWidth={false}
 								sx={{ width: '48%', mb: '1.25rem', fontFamily: 'Varela Round' }}
 							/>
@@ -485,7 +492,10 @@ export default function UpcomingEvents() {
 								label='E-posta Adresi'
 								type='email'
 								value={email}
-								onChange={(e) => setEmail(e.target.value)}
+								onChange={(e) => {
+									setEmail(e.target.value);
+									setRegisterErrorMsg(null);
+								}}
 								sx={{ mb: '1.25rem', fontFamily: 'Varela Round' }}
 							/>
 						</Box>
