@@ -527,6 +527,7 @@ export default function UpcomingEvents() {
 							cancelBtnText='Kapat'
 							submitBtnText={isRegisterForEventSending ? 'İşleniyor...' : 'Kayıt Ol'}
 							disableBtn={!recaptchaToken || isRegisterForEventSending}
+							disableCancelBtn={isRegisterForEventSending}
 							submitBtnSx={{ fontFamily: 'Varela Round' }}
 							cancelBtnSx={{ fontFamily: 'Varela Round' }}
 							actionSx={{ mr: '-1rem', mb: '-0.5rem' }}

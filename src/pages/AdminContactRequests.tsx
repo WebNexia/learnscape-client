@@ -22,6 +22,8 @@ import { truncateText } from '@utils/utilText';
 import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
 import theme from '../themes';
+import EmailSender from '../components/EmailSender';
+import EmailIcon from '@mui/icons-material/Email';
 
 const columns = [
 	{ key: 'name', label: 'Name' },
@@ -78,6 +80,7 @@ const AdminContactRequests = () => {
 	const [viewModalOpen, setViewModalOpen] = useState<{ [key: number]: boolean }>({});
 	const [deleteModalOpen, setDeleteModalOpen] = useState<{ [key: number]: boolean }>({});
 	const [selectedRequest, setSelectedRequest] = useState<ContactRequest | null>(null);
+	const [emailDialogOpen, setEmailDialogOpen] = useState(false);
 
 	useEffect(() => {
 		fetchContactRequests(requestsPageNumber);
@@ -154,13 +157,13 @@ const AdminContactRequests = () => {
 				<Box
 					sx={{
 						display: 'flex',
-						justifyContent: 'flex-end',
+						justifyContent: 'space-between',
 						alignItems: 'center',
 						padding: isMobileSizeSmall ? '1rem 1rem 0.5rem 1rem' : '2rem 2rem 1rem 2rem',
 						width: '100%',
 						mb: '1.25rem',
 					}}>
-					<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+					<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', flex: 4 }}>
 						<Box sx={{ display: 'flex', alignSelf: 'flex-start', width: isVerySmallScreen ? '12.5rem' : '30rem' }}>
 							<Box sx={{ mr: '1rem' }}>
 								<FormControl>
@@ -253,7 +256,16 @@ const AdminContactRequests = () => {
 								fontSize: isMobileSize ? '0.7rem' : undefined,
 							}}
 							disabled={contactRequests.length === 0}>
-							Download
+							Download Inquiries
+						</CustomSubmitButton>
+						<CustomSubmitButton
+							startIcon={<EmailIcon />}
+							onClick={() => setEmailDialogOpen(true)}
+							sx={{
+								fontSize: isMobileSize ? '0.7rem' : undefined,
+								width: 'fit-content',
+							}}>
+							Send Bulk Email
 						</CustomSubmitButton>
 					</Box>
 				</Box>
@@ -363,6 +375,11 @@ const AdminContactRequests = () => {
 					<CustomTablePagination count={requestsNumberOfPages} page={requestsPageNumber} onChange={handlePageChange} />
 				</Box>
 			</Box>
+			<CustomDialog openModal={emailDialogOpen} closeModal={() => setEmailDialogOpen(false)} maxWidth='md' title='Send Bulk Email'>
+				<DialogContent>
+					<EmailSender setEmailDialogOpen={setEmailDialogOpen} />
+				</DialogContent>
+			</CustomDialog>
 		</DashboardPagesLayout>
 	);
 };

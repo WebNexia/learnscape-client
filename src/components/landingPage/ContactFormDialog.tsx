@@ -301,6 +301,7 @@ const ContactFormDialog = ({
 					submitBtnSx={{ fontFamily: 'Varela Round' }}
 					cancelBtnSx={{ fontFamily: 'Varela Round' }}
 					disableBtn={sending || !isValidPhone(phone) || !recaptchaToken}
+					disableCancelBtn={sending}
 					actionSx={{
 						padding: { xs: '1rem 0.5rem 0.75rem 0', sm: '1rem 1rem 0.75rem 0', md: '1rem 2rem 0.75rem 0', lg: '1rem 1.5rem 0.75rem 0' },
 					}}

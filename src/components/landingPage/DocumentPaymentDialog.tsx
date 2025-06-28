@@ -193,6 +193,7 @@ const DocumentPaymentDialog = ({ document, isPaymentDialogOpen, setIsPaymentDial
 		setIsSubmitted(false);
 		setIsProcessing(false);
 		resetRecaptcha();
+		setAgreed(false);
 	};
 
 	return (
@@ -606,7 +607,7 @@ const DocumentPaymentDialog = ({ document, isPaymentDialogOpen, setIsPaymentDial
 			</form>
 			<Snackbar
 				open={showSuccess}
-				autoHideDuration={4500}
+				autoHideDuration={4000}
 				anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
 				onClose={() => {
 					setShowSuccess(false);

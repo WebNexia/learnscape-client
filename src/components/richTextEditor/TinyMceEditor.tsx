@@ -6,7 +6,8 @@ import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 
 interface TinyMceEditorProps {
 	handleEditorChange: (content: string) => void;
-	initialValue: string;
+	initialValue?: string;
+	// value?: string;
 	height?: string | number | undefined;
 	blankValuePairs?: BlankValuePair[];
 	setBlankValuePairs?: React.Dispatch<React.SetStateAction<BlankValuePair[]>>;
@@ -18,6 +19,7 @@ interface TinyMceEditorProps {
 const TinyMceEditor = ({
 	handleEditorChange,
 	initialValue,
+	// value,
 	height = 300,
 	blankValuePairs,
 	setBlankValuePairs,
@@ -111,6 +113,7 @@ const TinyMceEditor = ({
 			id={editorId}
 			apiKey={apiKey}
 			initialValue={initialValue}
+			// {...(value !== undefined ? { value } : {})}
 			init={{
 				height: height,
 				width: '100%',
@@ -130,17 +133,25 @@ const TinyMceEditor = ({
 					table: { title: 'Table', items: 'inserttable | cell row column | advtablesort | tableprops deletetable' },
 				},
 				plugins:
-					'lists bullist numlist link image media charmap print preview media searchreplace visualblocks code fullscreen insertdatetime table paste code help wordcount',
+					'lists bullist numlist link image media charmap print preview media searchreplace visualblocks code fullscreen insertdatetime table paste code help wordcount fontfamily',
 				toolbar:
-					'undo redo | formatselect | bold italic underline strikethrough subscript superscript | forecolor backcolor | \
-                          alignleft aligncenter alignright alignjustify | \
-                          bullist numlist outdent indent | removeformat',
-
+					'undo redo | fontfamily fontsize | formatselect | bold italic underline strikethrough subscript superscript | forecolor backcolor | image | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | code',
+				font_family_formats:
+					'Arial=arial,helvetica,sans-serif; Comic Sans MS=comic sans ms,sans-serif; Courier New=courier new,courier,monospace; Georgia=georgia,palatino,serif; Lucida=Lucida Sans Unicode, Lucida Grande,sans-serif; Roboto=Roboto,sans-serif; Times New Roman=times new roman,times,serif; Verdana=verdana,geneva,sans-serif;',
 				content_style: `
 					body {
 						font-size: ${isSmallScreen || isRotatedMedium ? '14px' : '16px'};
 					}
 				`,
+				image_title: true,
+				automatic_uploads: false,
+				file_picker_types: 'image',
+				file_picker_callback: function (callback) {
+					const url = prompt('Enter Image URL:');
+					if (url) {
+						callback(url, { alt: '' });
+					}
+				},
 				branding: false,
 				paste_preprocess: function (_, args) {
 					// Replace &nbsp; with a regular space in the pasted content
