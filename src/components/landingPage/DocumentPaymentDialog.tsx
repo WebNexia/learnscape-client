@@ -600,7 +600,7 @@ const DocumentPaymentDialog = ({ document, isPaymentDialogOpen, setIsPaymentDial
 						cursorEvents: isProcessing ? 'none' : 'auto',
 						pointerEvents: isProcessing ? 'none' : 'auto',
 					}}
-					disableBtn={isProcessing}
+					disableBtn={isProcessing || !recaptchaToken}
 					disableCancelBtn={isProcessing}
 				/>
 			</form>

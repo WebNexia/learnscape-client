@@ -228,6 +228,7 @@ const AboutUs = () => {
 				handleRecaptchaChange={handleRecaptchaChange}
 				resetRecaptcha={resetRecaptcha}
 				recaptchaRef={recaptchaRef}
+				recaptchaToken={recaptchaToken}
 			/>
 			<ChatWhatsApp />
 			<ScrollToTopButton />

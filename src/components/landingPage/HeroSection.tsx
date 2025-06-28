@@ -333,6 +333,7 @@ const HeroSection = () => {
 				handleRecaptchaChange={handleRecaptchaChange}
 				resetRecaptcha={resetRecaptcha}
 				recaptchaRef={recaptchaRef}
+				recaptchaToken={recaptchaToken}
 			/>
 		</Box>
 	);

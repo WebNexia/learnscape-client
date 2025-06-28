@@ -18,6 +18,8 @@ import { UsersContext } from '../contexts/UsersContextProvider';
 import { CoursesContext } from '../contexts/CoursesContextProvider';
 import { SingleCourse } from '../interfaces/course';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
+import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
+import { useNavigate } from 'react-router-dom';
 
 const locales = {
 	'en-US': enUS,
@@ -37,6 +39,8 @@ const EventCalendar = () => {
 	const { user } = useContext(UserAuthContext);
 	const { sortedUsersData } = useContext(UsersContext);
 	const { sortedCoursesData } = useContext(CoursesContext);
+
+	const navigate = useNavigate();
 
 	const { isRotated, isVerySmallScreen, isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -73,12 +77,15 @@ const EventCalendar = () => {
 		allAttendeesIds: [],
 		isAllLearnersSelected: false,
 		isAllCoursesSelected: false,
+		isPublic: false,
+		type: '',
+		coverImageUrl: '',
 	});
 
 	useEffect(() => {
 		if (sortedEventsData) {
 			const transformedEvents = sortedEventsData
-				?.filter((event) => event.isAllLearnersSelected || event.allAttendeesIds.includes(user?._id!) || user?.role === Roles.ADMIN)
+				?.filter((event) => event.isAllLearnersSelected || event.allAttendeesIds.includes(user?._id!) || user?.role === Roles.ADMIN || event.isPublic)
 				?.map((event) => {
 					const startDate = new Date(event.start!);
 					let endDate = new Date(event.end!);
@@ -178,7 +185,14 @@ const EventCalendar = () => {
 
 	return (
 		<DashboardPagesLayout pageName='Calendar' showCopyRight={true}>
-			<Box sx={{ display: 'flex', padding: isMobileSize ? '1rem' : '3rem' }}>
+			<Box sx={{ display: 'flex', flexDirection: 'column', padding: isMobileSize ? '1rem' : '1rem 2rem 2rem 2rem' }}>
+				<Box sx={{ display: 'flex', width: '100%', justifyContent: 'flex-end' }}>
+					<CustomSubmitButton
+						sx={{ width: 'fit-content', marginBottom: '1rem' }}
+						onClick={() => navigate(`/admin/calendar/public-events/user/${user?._id}`)}>
+						Public Events
+					</CustomSubmitButton>
+				</Box>
 				<style>
 					{`
 						.rbc-toolbar button {

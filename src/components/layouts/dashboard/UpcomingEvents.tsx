@@ -6,6 +6,7 @@ import { EventNote } from '@mui/icons-material';
 import theme from '../../../themes';
 import { useContext } from 'react';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
+import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 
 interface UpcomingEventsProps {
 	sortedEventsData: Event[];
@@ -13,7 +14,7 @@ interface UpcomingEventsProps {
 
 const UpcomingEvents = ({ sortedEventsData }: UpcomingEventsProps) => {
 	const { isRotated, isSmallScreen } = useContext(MediaQueryContext);
-
+	const { user } = useContext(UserAuthContext);
 	const isMobileSize: boolean = isSmallScreen || isRotated;
 
 	const currentDate = new Date(); // Current date
@@ -22,14 +23,14 @@ const UpcomingEvents = ({ sortedEventsData }: UpcomingEventsProps) => {
 	return (
 		<Box
 			sx={{
-				display: 'flex',
-				flexDirection: 'column',
-				height: '12rem',
-				boxShadow: '0.1rem 0.3rem 0.3rem 0.3rem rgba(0,0,0,0.2)',
-				padding: '1rem',
-				borderRadius: '0.35rem',
-				cursor: 'pointer',
-				transition: '0.3s',
+				'display': 'flex',
+				'flexDirection': 'column',
+				'height': '12rem',
+				'boxShadow': '0.1rem 0.3rem 0.3rem 0.3rem rgba(0,0,0,0.2)',
+				'padding': '1rem',
+				'borderRadius': '0.35rem',
+				'cursor': 'pointer',
+				'transition': '0.3s',
 				':hover': {
 					boxShadow: '0rem 0.1rem 0.2rem 0.1rem rgba(0,0,0,0.3)',
 				},
@@ -43,13 +44,33 @@ const UpcomingEvents = ({ sortedEventsData }: UpcomingEventsProps) => {
 
 			{sortedEventsData
 				?.filter((event) => {
-					return event.start && new Date(event.start) >= currentDate && new Date(event.start) <= sevenDaysFromNow;
+					return (
+						event.start &&
+						new Date(event.start) >= currentDate &&
+						new Date(event.start) <= sevenDaysFromNow &&
+						(event.isPublic || event.allAttendeesIds.includes(user?._id!))
+					);
 				})
 				.sort((a: Event, b: Event) => new Date(a.start!).getTime() - new Date(b.start!).getTime()).length > 0 ? (
-				<Box sx={{ display: 'flex', alignItems: 'center', width: '100%', mt: '0.75rem', overflow: 'auto', height: '7rem' }}>
+				<Box
+					sx={{
+						display: 'flex',
+						flexDirection: 'column',
+						alignItems: 'center',
+						justifyContent: 'center',
+						width: '100%',
+						mt: '0.75rem',
+						overflow: 'auto',
+						height: '7rem',
+					}}>
 					{sortedEventsData
 						?.filter((event) => {
-							return event.start && new Date(event.start) >= currentDate && new Date(event.start) <= sevenDaysFromNow;
+							return (
+								event.start &&
+								new Date(event.start) >= currentDate &&
+								new Date(event.start) <= sevenDaysFromNow &&
+								(event.isPublic || event.allAttendeesIds.includes(user?._id!))
+							);
 						})
 						.sort((a: Event, b: Event) => new Date(a.start!).getTime() - new Date(b.start!).getTime())
 						.map((event) => (

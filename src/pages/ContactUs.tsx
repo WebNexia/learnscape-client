@@ -245,7 +245,7 @@ const ContactUs = () => {
 									color='primary'
 									size='small'
 									fullWidth
-									disabled={sending}
+									disabled={sending || !recaptchaToken || !isValidPhone(phone)}
 									sx={{ fontWeight: 600, borderRadius: 2, fontFamily: 'Varela Round', py: 1.2, fontSize: { xs: '0.7rem', sm: '0.85rem' } }}>
 									{sending ? 'Gönderiliyor...' : 'Gönder'}
 								</Button>

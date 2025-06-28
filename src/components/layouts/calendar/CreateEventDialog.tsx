@@ -1,4 +1,16 @@
-import { Box, Checkbox, DialogContent, FormControlLabel, IconButton, InputAdornment, Typography } from '@mui/material';
+import {
+	Box,
+	Checkbox,
+	DialogContent,
+	FormControl,
+	FormControlLabel,
+	IconButton,
+	InputAdornment,
+	MenuItem,
+	Select,
+	SelectChangeEvent,
+	Typography,
+} from '@mui/material';
 import CustomDialog from '../dialog/CustomDialog';
 import CustomTextField from '../../forms/customFields/CustomTextField';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider/LocalizationProvider';
@@ -23,7 +35,8 @@ import { SingleCourse } from '../../../interfaces/course';
 import { db } from '../../../firebase';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 import axios from '@utils/axiosInstance';
-
+import HandleImageUploadURL from '../../forms/uploadImageVideoDocument/HandleImageUploadURL';
+import ImageThumbnail from '../../forms/uploadImageVideoDocument/ImageThumbnail';
 
 interface CreateEventDialogProps {
 	newEvent: Event;
@@ -63,7 +76,7 @@ const CreateEventDialog = ({
 
 	const [searchLearnerValue, setSearchLearnerValue] = useState<string>('');
 	const [searchCourseValue, setSearchCourseValue] = useState<string>('');
-
+	const [enterCoverImageUrl, setEnterCoverImageUrl] = useState<boolean>(true);
 	const handleAddEvent = async () => {
 		const allFirebaseUserIds: string[] = sortedUsersData
 			?.filter((filteredUser) => filteredUser._id !== user?._id)
@@ -128,6 +141,9 @@ const CreateEventDialog = ({
 			isAllCoursesSelected: newEvent.isAllCoursesSelected,
 			coursesIds: newEvent.coursesIds,
 			createdBy: user?._id!,
+			isPublic: newEvent.isPublic,
+			coverImageUrl: newEvent.isPublic ? newEvent.coverImageUrl : '',
+			type: newEvent.isPublic ? newEvent.type : '',
 		};
 
 		try {
@@ -135,23 +151,25 @@ const CreateEventDialog = ({
 
 			addNewEvent({ ...event, _id: res.data.data._id });
 
-			const startDate = newEvent?.start?.toLocaleDateString('en-US', {
+			const startDate = newEvent?.start?.toLocaleDateString(undefined, {
 				weekday: 'long',
 				year: 'numeric',
 				month: 'long',
 				day: 'numeric',
+				timeZoneName: 'short',
 			});
-			const startTime = newEvent?.start?.toLocaleTimeString('en-US', {
+			const startTime = newEvent?.start?.toLocaleTimeString(undefined, {
 				hour: '2-digit',
 				minute: '2-digit',
+				timeZoneName: 'short',
 			});
 
 			const notificationData = {
-				title: 'Added to Event',
-				message: `${user?.username} added a new event to your calendar: "${truncateText(
+				title: 'Etkinliğe Eklendiniz',
+				message: `${user?.username} sizi yeni bir etkinliğe ekledi: "${truncateText(
 					newEvent.title,
 					20
-				)}". It is scheduled for ${startDate} at ${startTime} `,
+				)}". Etkinlik ${startDate} tarihinde, saat ${startTime} başlayacak.`,
 				isRead: false,
 				timestamp: serverTimestamp(),
 				type: 'AddToEvent',
@@ -159,7 +177,7 @@ const CreateEventDialog = ({
 				eventId: res.data.data._id,
 			};
 
-			if (newEvent.isAllLearnersSelected) {
+			if (newEvent.isAllLearnersSelected || newEvent.isPublic) {
 				for (const id of allFirebaseUserIds) {
 					const notificationRef = collection(db, 'notifications', id, 'userNotifications');
 					await addDoc(notificationRef, notificationData);
@@ -197,6 +215,9 @@ const CreateEventDialog = ({
 			allAttendeesIds: [],
 			isAllLearnersSelected: false,
 			isAllCoursesSelected: false,
+			isPublic: false,
+			coverImageUrl: '',
+			type: '',
 		}));
 
 		setSearchLearnerValue('');
@@ -222,83 +243,239 @@ const CreateEventDialog = ({
 					resetNewEventForm();
 				}}>
 				<DialogContent sx={{ mt: '-0.5rem' }}>
-					<CustomTextField
-						label='Title'
-						value={newEvent.title}
-						onChange={(e) => setNewEvent((prevData) => ({ ...prevData, title: e.target.value }))}
-					/>
+					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+						<CustomTextField
+							label='Title'
+							value={newEvent.title}
+							onChange={(e) => setNewEvent((prevData) => ({ ...prevData, title: e.target.value }))}
+							InputProps={{ inputProps: { maxLength: 40 } }}
+							sx={{ flex: 3 }}
+						/>
 
-					<CustomTextField
-						label='Description'
-						multiline
-						rows={3}
-						required={false}
-						value={newEvent.description}
-						onChange={(e) => setNewEvent((prevData) => ({ ...prevData, description: e.target.value }))}
-					/>
+						<FormControlLabel
+							labelPlacement='start'
+							control={
+								<Checkbox
+									checked={newEvent.isPublic}
+									onChange={(e) => {
+										setNewEvent((prevData) => ({ ...prevData, isPublic: e.target.checked }));
 
-					<Box sx={{ display: 'flex', mb: '0.85rem' }}>
-						<LocalizationProvider dateAdapter={AdapterDayjs}>
-							<DateTimePicker
-								label='Start Time'
-								value={newEvent.start ? dayjs(newEvent.start) : null}
-								onChange={(newValue: Dayjs | null) => {
-									setNewEvent((prevData) => {
-										const updatedStart = newValue ? newValue.toDate() : null;
-										let updatedEnd = prevData.end;
-
-										// Check if the new start time is after the current end time
-										if (updatedStart && updatedEnd && updatedStart >= updatedEnd) {
-											// Set the end time to 1 hour after the new start time
-											updatedEnd = new Date(updatedStart);
-											updatedEnd.setHours(updatedStart.getHours() + 1);
+										if (e.target.checked) {
+											setNewEvent((prevData) => ({
+												...prevData,
+												attendees: [],
+												coursesIds: [],
+												allAttendeesIds: [],
+												isAllCoursesSelected: false,
+												isAllLearnersSelected: false,
+											}));
 										}
+									}}
+									sx={{
+										'& .MuiSvgIcon-root': {
+											fontSize: isMobileSize ? '0.9rem' : '1.25rem',
+										},
+									}}
+								/>
+							}
+							label='Public Event'
+							sx={{
+								'& .MuiFormControlLabel-label': {
+									fontSize: isMobileSize ? '0.6rem' : '0.7rem',
+								},
+								'mb': '0.85rem',
+								'flex': 1,
+								'ml': '1.65rem',
+							}}
+						/>
+					</Box>
 
-										return {
+					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+						<CustomTextField
+							label='Description'
+							multiline
+							rows={3}
+							required={false}
+							value={newEvent.description}
+							onChange={(e) => setNewEvent((prevData) => ({ ...prevData, description: e.target.value }))}
+							InputProps={{ inputProps: { maxLength: 75 } }}
+							sx={{ flex: 3, mr: newEvent.isPublic ? '1rem' : '0rem' }}
+						/>
+						{newEvent.isPublic && (
+							<FormControl sx={{ flex: 1, mb: '0.5rem' }}>
+								<Select
+									displayEmpty
+									value={newEvent.type}
+									onChange={(e: SelectChangeEvent) => {
+										setNewEvent(() => {
+											return { ...newEvent, type: e.target.value };
+										});
+									}}
+									size='small'
+									required
+									sx={{ backgroundColor: theme.bgColor?.common, fontSize: '0.8rem' }}>
+									<MenuItem
+										value=''
+										selected
+										sx={{
+											fontSize: isMobileSize ? '0.65rem' : '0.8rem',
+											textTransform: 'capitalize',
+											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+											minHeight: '2rem',
+										}}>
+										Select Type
+									</MenuItem>
+									{['Webinar', 'Guest Talk', 'Workshop', 'Training', 'Meeting', 'Other']?.map((type) => (
+										<MenuItem value={type} key={type} sx={{ fontSize: '0.8rem' }}>
+											{type}
+										</MenuItem>
+									))}
+								</Select>
+							</FormControl>
+						)}
+					</Box>
+
+					{newEvent.isPublic && (
+						<Box sx={{ display: 'flex', mt: '1rem', mb: '1.5rem', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+							<Box sx={{ flex: 1 }}>
+								<HandleImageUploadURL
+									label='Cover Image'
+									onImageUploadLogic={(url) => {
+										if (newEvent) {
+											setNewEvent({ ...newEvent, coverImageUrl: url });
+										}
+									}}
+									onChangeImgUrl={(e) => {
+										if (newEvent) {
+											setNewEvent({ ...newEvent, coverImageUrl: e.target.value });
+										}
+									}}
+									imageUrlValue={newEvent?.coverImageUrl || ''}
+									imageFolderName='EventImages'
+									enterImageUrl={enterCoverImageUrl}
+									setEnterImageUrl={setEnterCoverImageUrl}
+								/>
+							</Box>
+							<Box sx={{ ml: '3rem' }}>
+								<ImageThumbnail
+									imgSource={newEvent?.coverImageUrl || 'https://placehold.co/400x300/e2e8f0/64748b?text=Cover+Image'}
+									removeImage={() => {
+										if (newEvent) {
+											setNewEvent({ ...newEvent, coverImageUrl: '' });
+										}
+									}}
+									boxStyle={{ width: '8rem', height: '8rem' }}
+									imgStyle={{ objectFit: 'cover', maxWidth: '100%', maxHeight: '100%' }}
+								/>
+							</Box>
+						</Box>
+					)}
+
+					<Box sx={{ display: 'flex', mb: '0.85rem', justifyContent: 'space-between' }}>
+						<Box sx={{ display: 'flex', flex: 4, justifyContent: 'space-between', mr: '0.5rem' }}>
+							<LocalizationProvider dateAdapter={AdapterDayjs}>
+								<DateTimePicker
+									label='Start Time'
+									value={newEvent.start ? dayjs(newEvent.start) : null}
+									onChange={(newValue: Dayjs | null) => {
+										setNewEvent((prevData) => {
+											const updatedStart = newValue ? newValue.toDate() : null;
+											let updatedEnd = prevData.end;
+
+											// Check if the new start time is after the current end time
+											if (updatedStart && updatedEnd && updatedStart >= updatedEnd) {
+												// Set the end time to 1 hour after the new start time
+												updatedEnd = new Date(updatedStart);
+												updatedEnd.setHours(updatedStart.getHours() + 1);
+											}
+
+											return {
+												...prevData,
+												start: updatedStart,
+												end: updatedEnd,
+											};
+										});
+									}}
+									slotProps={{
+										textField: {
+											fullWidth: true,
+											variant: 'outlined',
+											required: true,
+											InputProps: {
+												sx: { fontSize: isMobileSize ? '0.75rem' : '0.85rem' }, // Set font size
+											},
+										},
+									}}
+									sx={{ backgroundColor: '#fff', mr: '0.5rem' }}
+									disabled={newEvent.isAllDay}
+								/>
+							</LocalizationProvider>
+
+							<LocalizationProvider dateAdapter={AdapterDayjs}>
+								<DateTimePicker
+									label='End Time'
+									value={newEvent.end ? dayjs(newEvent.end) : null}
+									onChange={(newValue: Dayjs | null) => {
+										setNewEvent((prevData) => ({
 											...prevData,
-											start: updatedStart,
-											end: updatedEnd,
-										};
-									});
-								}}
-								slotProps={{
-									textField: {
-										fullWidth: true,
-										variant: 'outlined',
-										required: true,
-										InputProps: {
-											sx: { fontSize: isMobileSize ? '0.75rem' : undefined }, // Set font size
+											end: newValue ? newValue.toDate() : null,
+										}));
+									}}
+									slotProps={{
+										textField: {
+											fullWidth: true,
+											variant: 'outlined',
+											InputProps: {
+												sx: { fontSize: isMobileSize ? '0.75rem' : '0.85rem' }, // Set font size
+											},
 										},
-									},
-								}}
-								sx={{ backgroundColor: '#fff', mr: '0.5rem' }}
-								disabled={newEvent.isAllDay}
-							/>
-						</LocalizationProvider>
+									}}
+									sx={{ backgroundColor: '#fff' }}
+									disabled={newEvent.isAllDay}
+								/>
+							</LocalizationProvider>
+						</Box>
+						<FormControlLabel
+							labelPlacement='start'
+							control={
+								<Checkbox
+									checked={newEvent.isAllDay}
+									onChange={(e) => {
+										const isAllDay = e.target.checked;
+										setNewEvent((prevData) => {
+											let updatedStart = prevData.start;
+											let updatedEnd = prevData.end;
 
-						<LocalizationProvider dateAdapter={AdapterDayjs}>
-							<DateTimePicker
-								label='End Time'
-								value={newEvent.end ? dayjs(newEvent.end) : null}
-								onChange={(newValue: Dayjs | null) => {
-									setNewEvent((prevData) => ({
-										...prevData,
-										end: newValue ? newValue.toDate() : null,
-									}));
-								}}
-								slotProps={{
-									textField: {
-										fullWidth: true,
-										variant: 'outlined',
-										InputProps: {
-											sx: { fontSize: isMobileSize ? '0.75rem' : undefined }, // Set font size
+											// If "All Day" is checked, set start and end to cover the full day
+											if (isAllDay && updatedStart && updatedEnd) {
+												updatedStart = new Date(updatedStart.setHours(0, 0, 0, 0));
+												updatedEnd = new Date(updatedStart); // Start with the same day
+												updatedEnd.setHours(23, 59, 59, 999);
+											}
+
+											return {
+												...prevData,
+												isAllDay,
+												start: updatedStart,
+												end: updatedEnd,
+											};
+										});
+									}}
+									sx={{
+										'& .MuiSvgIcon-root': {
+											fontSize: isVerySmallScreen ? '0.9rem' : '1.25rem', // Adjust the checkbox icon size
 										},
-									},
-								}}
-								sx={{ backgroundColor: '#fff' }}
-								disabled={newEvent.isAllDay}
-							/>
-						</LocalizationProvider>
+									}}
+								/>
+							}
+							label='All Day'
+							sx={{
+								'mt': '0.5rem',
+								'& .MuiFormControlLabel-label': {
+									fontSize: isMobileSize ? '0.7rem' : '0.8rem',
+								},
+							}}
+						/>
 					</Box>
 
 					{newEvent.attendees.length > 0 && (
@@ -331,150 +508,156 @@ const CreateEventDialog = ({
 						</Box>
 					)}
 
-					<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
-						<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-							<CustomTextField
-								label=''
-								value={searchLearnerValue}
-								disabled={newEvent.isAllLearnersSelected}
-								placeholder={newEvent.isAllLearnersSelected ? '' : 'Search Learner'}
-								onChange={(e) => {
-									setSearchLearnerValue(e.target.value);
-									setSearchCourseValue('');
-									setFilteredCourses([]);
-									filterUsers(e.target.value, 'create');
-								}}
-								sx={{ width: isVerySmallScreen ? '70%' : '80%', backgroundColor: newEvent.isAllLearnersSelected ? 'transparent' : '#fff' }}
-								required={false}
-								InputProps={{
-									endAdornment: (
-										<InputAdornment position='end'>
-											<Search
-												sx={{
-													mr: '-0.5rem',
-													color: newEvent.isAllLearnersSelected ? 'lightgray' : null,
-												}}
-												fontSize={isMobileSize ? 'small' : 'medium'}
-											/>
-										</InputAdornment>
-									),
-								}}
-							/>
-							<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '21%', mb: '0.85rem' }}>
-								<FormControlLabel
-									labelPlacement='start'
-									control={
-										<Checkbox
-											checked={newEvent.isAllLearnersSelected}
-											onChange={(e) => {
-												setSearchCourseValue('');
-												setSearchLearnerValue('');
-												setNewEvent((prevData) => ({ ...prevData, isAllLearnersSelected: e.target.checked }));
-
-												if (e.target.checked) {
-													setNewEvent((prevData) => ({
-														...prevData,
-														attendees: [],
-														coursesIds: [],
-														allAttendeesIds: [],
-														isAllCoursesSelected: false,
-													}));
-												}
-											}}
-											sx={{
-												'& .MuiSvgIcon-root': {
-													fontSize: isMobileSize ? '0.9rem' : '1.25rem',
-												},
-											}}
-										/>
-									}
-									label='All Learners'
+					{!newEvent.isPublic && (
+						<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
+							<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+								<CustomTextField
+									label=''
+									value={searchLearnerValue}
+									disabled={newEvent.isAllLearnersSelected || newEvent.isPublic}
+									placeholder={newEvent.isAllLearnersSelected || newEvent.isPublic ? '' : 'Search Learner'}
+									onChange={(e) => {
+										setSearchLearnerValue(e.target.value);
+										setSearchCourseValue('');
+										setFilteredCourses([]);
+										filterUsers(e.target.value, 'create');
+									}}
 									sx={{
-										'& .MuiFormControlLabel-label': {
-											fontSize: isMobileSize ? '0.6rem' : '0.7rem',
-										},
+										backgroundColor: newEvent.isAllLearnersSelected || newEvent.isPublic ? 'transparent' : '#fff',
+										flex: 3,
+									}}
+									required={false}
+									InputProps={{
+										endAdornment: (
+											<InputAdornment position='end'>
+												<Search
+													sx={{
+														mr: '-0.5rem',
+														color: newEvent.isAllLearnersSelected || newEvent.isPublic ? 'lightgray' : null,
+													}}
+													fontSize={isMobileSize ? 'small' : 'medium'}
+												/>
+											</InputAdornment>
+										),
 									}}
 								/>
-							</Box>
-						</Box>
+								<Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: '0.85rem' }}>
+									<FormControlLabel
+										labelPlacement='start'
+										disabled={newEvent.isPublic}
+										control={
+											<Checkbox
+												checked={newEvent.isAllLearnersSelected}
+												onChange={(e) => {
+													setSearchCourseValue('');
+													setSearchLearnerValue('');
+													setNewEvent((prevData) => ({ ...prevData, isAllLearnersSelected: e.target.checked }));
 
-						{filteredUsers.length !== 0 && (
-							<Box
-								sx={{
-									display: 'flex',
-									flexDirection: 'column',
-									justifyContent: 'flex-start',
-									alignItems: 'flex-start',
-									width: '60%',
-									maxHeight: '15rem',
-									overflowY: 'auto',
-									overflowX: 'hidden',
-									margin: '-1rem auto 1.5rem auto',
-									border: 'solid 0.05rem lightgray',
-									position: 'absolute',
-									top: '3.25rem',
-									left: 0,
-									zIndex: 3,
-									backgroundColor: theme.bgColor?.common,
-									boxShadow: '0.15rem 0.2rem 0.3rem 0rem rgba(0,0,0,0.1)',
-								}}>
-								{filteredUsers
-									?.filter((filteredUser) => filteredUser.firebaseUserId !== user?.firebaseUserId)
-									?.map((mappedUser) => (
-										<Box
-											key={mappedUser.firebaseUserId}
-											sx={{
-												display: 'flex',
-												justifyContent: 'flex-start',
-												alignItems: 'center',
-												width: '100%',
-												padding: '0.5rem',
-												transition: '0.5s',
-												borderRadius: '0.25rem',
-												':hover': {
-													backgroundColor: theme.bgColor?.primary,
-													color: '#fff',
-													cursor: 'pointer',
-													'& .username': {
-														color: '#fff',
+													if (e.target.checked) {
+														setNewEvent((prevData) => ({
+															...prevData,
+															attendees: [],
+															coursesIds: [],
+															allAttendeesIds: [],
+															isAllCoursesSelected: false,
+														}));
+													}
+												}}
+												sx={{
+													'& .MuiSvgIcon-root': {
+														fontSize: isMobileSize ? '0.9rem' : '1.25rem',
 													},
-												},
-											}}
-											onClick={() => {
-												setNewEvent((prevData) => {
-													const updatedAttendees = [...prevData.attendees];
-													updatedAttendees.push({
-														_id: mappedUser._id,
-														firebaseUserId: mappedUser.firebaseUserId,
-														username: mappedUser.username,
-													});
-													return { ...prevData, attendees: updatedAttendees };
-												});
-												setSearchLearnerValue('');
-												setFilteredUsers([]);
-											}}>
-											<Box sx={{ borderRadius: '100%', marginRight: isMobileSize ? '0.75rem' : '1rem' }}>
-												<img
-													src={mappedUser.imageUrl}
-													alt='profile_img'
-													style={{
-														height: isMobileSize ? '1.25rem' : '2rem',
-														width: isMobileSize ? '1.25rem' : '2rem',
-														borderRadius: '100%',
-														border: 'solid lightgray 0.1rem',
-													}}
-												/>
-											</Box>
-											<Box>
-												<Typography className='username' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-													{mappedUser.username}
-												</Typography>
-											</Box>
-										</Box>
-									))}
+												}}
+											/>
+										}
+										label='All Learners'
+										sx={{
+											'& .MuiFormControlLabel-label': {
+												fontSize: isMobileSize ? '0.6rem' : '0.7rem',
+											},
+										}}
+									/>
+								</Box>
 							</Box>
-						)}
-					</Box>
+
+							{filteredUsers.length !== 0 && (
+								<Box
+									sx={{
+										display: 'flex',
+										flexDirection: 'column',
+										justifyContent: 'flex-start',
+										alignItems: 'flex-start',
+										width: '60%',
+										maxHeight: '15rem',
+										overflowY: 'auto',
+										overflowX: 'hidden',
+										margin: '-1rem auto 1.5rem auto',
+										border: 'solid 0.05rem lightgray',
+										position: 'absolute',
+										top: '3.25rem',
+										left: 0,
+										zIndex: 3,
+										backgroundColor: theme.bgColor?.common,
+										boxShadow: '0.15rem 0.2rem 0.3rem 0rem rgba(0,0,0,0.1)',
+									}}>
+									{filteredUsers
+										?.filter((filteredUser) => filteredUser.firebaseUserId !== user?.firebaseUserId)
+										?.map((mappedUser) => (
+											<Box
+												key={mappedUser.firebaseUserId}
+												sx={{
+													'display': 'flex',
+													'justifyContent': 'flex-start',
+													'alignItems': 'center',
+													'width': '100%',
+													'padding': '0.5rem',
+													'transition': '0.5s',
+													'borderRadius': '0.25rem',
+													':hover': {
+														'backgroundColor': theme.bgColor?.primary,
+														'color': '#fff',
+														'cursor': 'pointer',
+														'& .username': {
+															color: '#fff',
+														},
+													},
+												}}
+												onClick={() => {
+													setNewEvent((prevData) => {
+														const updatedAttendees = [...prevData.attendees];
+														updatedAttendees.push({
+															_id: mappedUser._id,
+															firebaseUserId: mappedUser.firebaseUserId,
+															username: mappedUser.username,
+														});
+														return { ...prevData, attendees: updatedAttendees };
+													});
+													setSearchLearnerValue('');
+													setFilteredUsers([]);
+												}}>
+												<Box sx={{ borderRadius: '100%', marginRight: isMobileSize ? '0.75rem' : '1rem' }}>
+													<img
+														src={mappedUser.imageUrl}
+														alt='profile_img'
+														style={{
+															height: isMobileSize ? '1.25rem' : '2rem',
+															width: isMobileSize ? '1.25rem' : '2rem',
+															borderRadius: '100%',
+															border: 'solid lightgray 0.1rem',
+														}}
+													/>
+												</Box>
+												<Box>
+													<Typography className='username' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+														{mappedUser.username}
+													</Typography>
+												</Box>
+											</Box>
+										))}
+								</Box>
+							)}
+						</Box>
+					)}
 
 					{newEvent.coursesIds.length > 0 && (
 						<Box sx={{ display: 'flex', margin: '0.75rem 0 0.75rem 0', flexWrap: 'wrap' }}>
@@ -507,142 +690,144 @@ const CreateEventDialog = ({
 						</Box>
 					)}
 
-					<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
-						<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-							<CustomTextField
-								label=''
-								value={searchCourseValue}
-								disabled={newEvent.isAllLearnersSelected || newEvent.isAllCoursesSelected}
-								placeholder={newEvent.isAllLearnersSelected || newEvent.isAllCoursesSelected ? '' : 'Search Course'}
-								onChange={(e) => {
-									setSearchCourseValue(e.target.value);
-									setSearchLearnerValue('');
-									filterCourses(e.target.value, 'create');
-									setFilteredUsers([]);
-								}}
-								sx={{
-									width: isVerySmallScreen ? '70%' : '80%',
-									backgroundColor: newEvent.isAllLearnersSelected || newEvent.isAllCoursesSelected ? 'transparent' : '#fff',
-								}}
-								required={false}
-								InputProps={{
-									endAdornment: (
-										<InputAdornment position='end'>
-											<Search
-												sx={{
-													mr: '-0.5rem',
-													color: newEvent.isAllLearnersSelected || newEvent.isAllCoursesSelected ? 'lightgray' : null,
-												}}
-												fontSize={isMobileSize ? 'small' : 'medium'}
-											/>
-										</InputAdornment>
-									),
-								}}
-							/>
-							<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '21%', mb: '0.85rem' }}>
-								<FormControlLabel
-									disabled={newEvent.isAllLearnersSelected}
-									labelPlacement='start'
-									control={
-										<Checkbox
-											checked={newEvent.isAllCoursesSelected}
-											onChange={(e) => {
-												setSearchCourseValue('');
-												setNewEvent((prevData) => ({ ...prevData, isAllCoursesSelected: e.target.checked }));
-												if (e.target.checked) {
-													setNewEvent((prevData) => ({ ...prevData, coursesIds: [] }));
-												}
-											}}
-											sx={{
-												'& .MuiSvgIcon-root': {
-													fontSize: isMobileSize ? '0.9rem' : '1.25rem', // Adjust the checkbox icon size
-												},
-											}}
-										/>
-									}
-									label='All Courses'
+					{!newEvent.isPublic && (
+						<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
+							<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+								<CustomTextField
+									label=''
+									value={searchCourseValue}
+									disabled={newEvent.isAllLearnersSelected || newEvent.isAllCoursesSelected || newEvent.isPublic}
+									placeholder={newEvent.isAllLearnersSelected || newEvent.isAllCoursesSelected || newEvent.isPublic ? '' : 'Search Course'}
+									onChange={(e) => {
+										setSearchCourseValue(e.target.value);
+										setSearchLearnerValue('');
+										filterCourses(e.target.value, 'create');
+										setFilteredUsers([]);
+									}}
 									sx={{
-										'& .MuiFormControlLabel-label': {
-											fontSize: isMobileSize ? '0.6rem' : '0.7rem', // Adjust the label font size
-										},
+										backgroundColor: newEvent.isAllLearnersSelected || newEvent.isAllCoursesSelected || newEvent.isPublic ? 'transparent' : '#fff',
+										flex: 3,
+									}}
+									required={false}
+									InputProps={{
+										endAdornment: (
+											<InputAdornment position='end'>
+												<Search
+													sx={{
+														mr: '-0.5rem',
+														color: newEvent.isAllLearnersSelected || newEvent.isAllCoursesSelected || newEvent.isPublic ? 'lightgray' : null,
+													}}
+													fontSize={isMobileSize ? 'small' : 'medium'}
+												/>
+											</InputAdornment>
+										),
 									}}
 								/>
-							</Box>
-						</Box>
-
-						{filteredCourses.length !== 0 && (
-							<Box
-								sx={{
-									display: 'flex',
-									flexDirection: 'column',
-									justifyContent: 'flex-start',
-									alignItems: 'flex-start',
-									width: '60%',
-									maxHeight: '10rem',
-									overflowY: 'auto',
-									overflowX: 'hidden',
-									margin: '-1rem auto 1.5rem auto',
-									border: 'solid 0.05rem lightgray',
-									position: 'absolute',
-									top: '3.25rem',
-									left: 0,
-									zIndex: 3,
-									backgroundColor: theme.bgColor?.common,
-									boxShadow: '0.15rem 0.2rem 0.3rem 0rem rgba(0,0,0,0.1)',
-								}}>
-								{filteredCourses?.map((course) => (
-									<Box
-										key={course._id}
+								<Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: '0.85rem' }}>
+									<FormControlLabel
+										disabled={newEvent.isAllLearnersSelected || newEvent.isPublic}
+										labelPlacement='start'
+										control={
+											<Checkbox
+												checked={newEvent.isAllCoursesSelected}
+												onChange={(e) => {
+													setSearchCourseValue('');
+													setNewEvent((prevData) => ({ ...prevData, isAllCoursesSelected: e.target.checked }));
+													if (e.target.checked) {
+														setNewEvent((prevData) => ({ ...prevData, coursesIds: [] }));
+													}
+												}}
+												sx={{
+													'& .MuiSvgIcon-root': {
+														fontSize: isMobileSize ? '0.9rem' : '1.25rem', // Adjust the checkbox icon size
+													},
+												}}
+											/>
+										}
+										label='All Courses'
 										sx={{
-											display: 'flex',
-											justifyContent: 'flex-start',
-											alignItems: 'center',
-											width: '100%',
-											padding: '0.5rem',
-											transition: '0.5s',
-											borderRadius: '0.25rem',
-											':hover': {
-												backgroundColor: theme.bgColor?.primary,
-												color: '#fff',
-												cursor: 'pointer',
-												'& .username': {
-													color: '#fff',
-												},
+											'& .MuiFormControlLabel-label': {
+												fontSize: isMobileSize ? '0.6rem' : '0.7rem', // Adjust the label font size
 											},
 										}}
-										onClick={() => {
-											setNewEvent((prevData) => {
-												const updatedCoursesIds = [...prevData.coursesIds];
-												updatedCoursesIds.push(course._id);
-												return { ...prevData, coursesIds: updatedCoursesIds };
-											});
-											setSearchCourseValue('');
-											setFilteredCourses([]);
-										}}>
-										{course.imageUrl && (
-											<Box sx={{ borderRadius: '100%', marginRight: isMobileSize ? '0.75rem' : '1rem' }}>
-												<img
-													src={course.imageUrl}
-													alt='img'
-													style={{
-														height: isMobileSize ? '1.25rem' : '2rem',
-														width: isMobileSize ? '1.25rem' : '2rem',
-														borderRadius: '100%',
-														border: 'solid lightgray 0.1rem',
-													}}
-												/>
-											</Box>
-										)}
-										<Box>
-											<Typography className='username' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-												{truncateText(course.title, 30)}
-											</Typography>
-										</Box>
-									</Box>
-								))}
+									/>
+								</Box>
 							</Box>
-						)}
-					</Box>
+
+							{filteredCourses.length !== 0 && (
+								<Box
+									sx={{
+										display: 'flex',
+										flexDirection: 'column',
+										justifyContent: 'flex-start',
+										alignItems: 'flex-start',
+										width: '60%',
+										maxHeight: '10rem',
+										overflowY: 'auto',
+										overflowX: 'hidden',
+										margin: '-1rem auto 1.5rem auto',
+										border: 'solid 0.05rem lightgray',
+										position: 'absolute',
+										top: '3.25rem',
+										left: 0,
+										zIndex: 3,
+										backgroundColor: theme.bgColor?.common,
+										boxShadow: '0.15rem 0.2rem 0.3rem 0rem rgba(0,0,0,0.1)',
+									}}>
+									{filteredCourses?.map((course) => (
+										<Box
+											key={course._id}
+											sx={{
+												'display': 'flex',
+												'justifyContent': 'flex-start',
+												'alignItems': 'center',
+												'width': '100%',
+												'padding': '0.5rem',
+												'transition': '0.5s',
+												'borderRadius': '0.25rem',
+												':hover': {
+													'backgroundColor': theme.bgColor?.primary,
+													'color': '#fff',
+													'cursor': 'pointer',
+													'& .username': {
+														color: '#fff',
+													},
+												},
+											}}
+											onClick={() => {
+												setNewEvent((prevData) => {
+													const updatedCoursesIds = [...prevData.coursesIds];
+													updatedCoursesIds.push(course._id);
+													return { ...prevData, coursesIds: updatedCoursesIds };
+												});
+												setSearchCourseValue('');
+												setFilteredCourses([]);
+											}}>
+											{course.imageUrl && (
+												<Box sx={{ borderRadius: '100%', marginRight: isMobileSize ? '0.75rem' : '1rem' }}>
+													<img
+														src={course.imageUrl}
+														alt='img'
+														style={{
+															height: isMobileSize ? '1.25rem' : '2rem',
+															width: isMobileSize ? '1.25rem' : '2rem',
+															borderRadius: '100%',
+															border: 'solid lightgray 0.1rem',
+														}}
+													/>
+												</Box>
+											)}
+											<Box>
+												<Typography className='username' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+													{truncateText(course.title, 30)}
+												</Typography>
+											</Box>
+										</Box>
+									))}
+								</Box>
+							)}
+						</Box>
+					)}
 
 					<CustomTextField
 						label='Event Link'
@@ -656,47 +841,6 @@ const CreateEventDialog = ({
 						value={newEvent.location}
 						onChange={(e) => setNewEvent((prevData) => ({ ...prevData, location: e.target.value }))}
 						required={false}
-					/>
-
-					<FormControlLabel
-						control={
-							<Checkbox
-								checked={newEvent.isAllDay}
-								onChange={(e) => {
-									const isAllDay = e.target.checked;
-									setNewEvent((prevData) => {
-										let updatedStart = prevData.start;
-										let updatedEnd = prevData.end;
-
-										// If "All Day" is checked, set start and end to cover the full day
-										if (isAllDay && updatedStart && updatedEnd) {
-											updatedStart = new Date(updatedStart.setHours(0, 0, 0, 0));
-											updatedEnd = new Date(updatedStart); // Start with the same day
-											updatedEnd.setHours(23, 59, 59, 999);
-										}
-
-										return {
-											...prevData,
-											isAllDay,
-											start: updatedStart,
-											end: updatedEnd,
-										};
-									});
-								}}
-								sx={{
-									'& .MuiSvgIcon-root': {
-										fontSize: isVerySmallScreen ? '0.9rem' : '1.25rem', // Adjust the checkbox icon size
-									},
-								}}
-							/>
-						}
-						label='All Day'
-						sx={{
-							mt: '0.5rem',
-							'& .MuiFormControlLabel-label': {
-								fontSize: isMobileSize ? '0.7rem' : '0.8rem',
-							},
-						}}
 					/>
 				</DialogContent>
 				<CustomDialogActions

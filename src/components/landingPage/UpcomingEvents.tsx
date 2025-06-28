@@ -1,0 +1,563 @@
+import {
+	Box,
+	Typography,
+	Card,
+	CardContent,
+	CardMedia,
+	Chip,
+	Button,
+	useMediaQuery,
+	useTheme,
+	MobileStepper,
+	IconButton,
+	DialogContent,
+	Snackbar,
+	Alert,
+} from '@mui/material';
+import { useState, useRef, useEffect, useContext } from 'react';
+import KeyboardArrowLeft from '@mui/icons-material/KeyboardArrowLeft';
+import KeyboardArrowRight from '@mui/icons-material/KeyboardArrowRight';
+import SwipeableViews from 'react-swipeable-views';
+import { responsiveStyles } from '../../styles/responsiveStyles';
+import { EventsContext } from '../../contexts/EventsContextProvider';
+import { dateTimeFormatter } from '@utils/dateFormatter';
+import axios from 'axios';
+import CustomDialog from '../../components/layouts/dialog/CustomDialog';
+import CustomTextField from '../../components/forms/customFields/CustomTextField';
+import ReCAPTCHA from 'react-google-recaptcha';
+import CustomDialogActions from '../../components/layouts/dialog/CustomDialogActions';
+import CustomErrorMessage from '../../components/forms/customFields/CustomErrorMessage';
+
+export default function UpcomingEvents() {
+	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
+	const defaultOrgId = import.meta.env.VITE_ORG_ID;
+	const { sortedPublicEventsData } = useContext(EventsContext);
+	const [isRegisterForEventModalOpen, setIsRegisterForEventModalOpen] = useState<boolean>(false);
+	const [isRegisterForEventSuccess, setIsRegisterForEventSuccess] = useState<boolean>(false);
+	const [isRegisterForEventSending, setIsRegisterForEventSending] = useState<boolean>(false);
+	const [firstName, setFirstName] = useState<string>('');
+	const [lastName, setLastName] = useState<string>('');
+	const [email, setEmail] = useState<string>('');
+	const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+	const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+	const [registerErrorMsg, setRegisterErrorMsg] = useState<string | null>(null);
+
+	const recaptchaRef = useRef<any>(null);
+	const isMobile = useMediaQuery('(max-width:600px)');
+
+	const resetRecaptcha = () => {
+		setRecaptchaToken(null);
+		if (recaptchaRef.current) {
+			recaptchaRef.current.reset();
+		}
+	};
+
+	const handleRecaptchaChange = (token: string | null) => {
+		setRecaptchaToken(token);
+	};
+
+	const handleRegisterForEvent = async (e: React.FormEvent<HTMLFormElement>) => {
+		e.preventDefault();
+		if (!selectedEventId || !recaptchaToken) return;
+		try {
+			setIsRegisterForEventSending(true);
+			setRegisterErrorMsg(null);
+			await axios.post(`${base_url}/event-registrations`, {
+				eventId: selectedEventId,
+				firstName,
+				lastName,
+				email,
+				recaptchaToken,
+				orgId: defaultOrgId,
+			});
+			setIsRegisterForEventSuccess(true);
+			setIsRegisterForEventSending(false);
+		} catch (error: any) {
+			if (axios.isAxiosError(error) && error.response?.status === 409) {
+				setRegisterErrorMsg('Bu etkinliğe bu email adresiyle daha önce kayıt oldunuz');
+			} else {
+				setRegisterErrorMsg('Kayıt işlemi sırasında bir hata oluştu');
+			}
+			resetRecaptcha();
+		} finally {
+			setIsRegisterForEventSending(false);
+		}
+	};
+
+	const handleOpenRegisterDialog = (eventId: string) => {
+		setSelectedEventId(eventId);
+		setIsRegisterForEventModalOpen(true);
+		setIsRegisterForEventSuccess(false);
+		setFirstName('');
+		setLastName('');
+		setEmail('');
+		resetRecaptcha();
+	};
+
+	function TimelineDesktop() {
+		const { sortedPublicEventsData } = useContext(EventsContext);
+		const scrollRef = useRef<HTMLDivElement>(null);
+		const CARD_HEIGHT = 360;
+		const IMAGE_HEIGHT = 120;
+		const DOT_SIZE = 20;
+		const LINE_THICKNESS = 4;
+		const DOT_OFFSET = CARD_HEIGHT + 16;
+		const GAP = 32; // 4 * 8px (theme.spacing(4))
+		const CONTAINER_WIDTH = 1180;
+		const CARD_WIDTH = (960 - 64) / 3;
+
+		const [canScrollLeft, setCanScrollLeft] = useState(false);
+		const [canScrollRight, setCanScrollRight] = useState(false);
+
+		const checkScroll = () => {
+			if (!scrollRef.current) return;
+			const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+			setCanScrollLeft(scrollLeft > 0);
+			setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 1);
+		};
+
+		useEffect(() => {
+			checkScroll();
+			const ref = scrollRef.current;
+			if (ref) {
+				ref.addEventListener('scroll', checkScroll);
+				window.addEventListener('resize', checkScroll);
+			}
+			return () => {
+				if (ref) ref.removeEventListener('scroll', checkScroll);
+				window.removeEventListener('resize', checkScroll);
+			};
+		}, []);
+
+		const scrollBy = (offset: number) => {
+			if (scrollRef.current) {
+				scrollRef.current.scrollBy({ left: offset, behavior: 'smooth' });
+				setTimeout(checkScroll, 300); // ensure state updates after scroll
+			}
+		};
+
+		// Touch/drag support
+		let startX = 0;
+		let scrollLeft = 0;
+
+		const handleTouchStart = (e: React.TouchEvent) => {
+			if (!scrollRef.current) return;
+			startX = e.touches[0].pageX - scrollRef.current.offsetLeft;
+			scrollLeft = scrollRef.current.scrollLeft;
+		};
+
+		const handleTouchMove = (e: React.TouchEvent) => {
+			if (!scrollRef.current) return;
+			const x = e.touches[0].pageX - scrollRef.current.offsetLeft;
+			const walk = startX - x;
+			scrollRef.current.scrollLeft = scrollLeft + walk;
+		};
+
+		return (
+			<Box
+				sx={{
+					position: 'relative',
+					width: { md: CONTAINER_WIDTH },
+					maxWidth: '100%',
+					mx: 'auto',
+					py: 2,
+					px: 8,
+					overflow: 'hidden',
+					display: 'flex',
+					justifyContent: 'center',
+				}}>
+				<IconButton
+					onClick={() => scrollBy(-(CARD_WIDTH + GAP))}
+					disabled={!canScrollLeft}
+					sx={{
+						position: 'absolute',
+						left: 10,
+						top: '50%',
+						zIndex: 10,
+						transform: 'translateY(-50%)',
+						background: 'white',
+						boxShadow: 2,
+						display: { xs: 'none', md: 'flex' },
+						opacity: canScrollLeft ? 1 : 0.3,
+						pointerEvents: canScrollLeft ? 'auto' : 'none',
+					}}
+					aria-label='Sola kaydır'>
+					<KeyboardArrowLeft />
+				</IconButton>
+				<Box
+					ref={scrollRef}
+					sx={{
+						'display': 'flex',
+						'flexDirection': 'row',
+						'justifyContent': sortedPublicEventsData.length <= 3 ? 'center' : 'flex-start',
+						'gap': `${GAP}px`,
+						'overflowX': sortedPublicEventsData.length > 3 ? 'auto' : 'visible',
+						'scrollBehavior': 'smooth',
+						'py': 2,
+						'px': 0,
+						'position': 'relative',
+						'scrollbarWidth': 'none',
+						'msOverflowStyle': 'none',
+						'&::-webkit-scrollbar': {
+							display: 'none',
+						},
+						'mx': '2rem',
+						'width': 960,
+					}}
+					onTouchStart={handleTouchStart}
+					onTouchMove={handleTouchMove}>
+					{sortedPublicEventsData.map((event, idx) => (
+						<Box
+							key={event._id}
+							sx={{
+								minWidth: CARD_WIDTH,
+								maxWidth: CARD_WIDTH,
+								flex: '0 0 auto',
+								position: 'relative',
+								display: 'flex',
+								flexDirection: 'column',
+								alignItems: 'center',
+								height: CARD_HEIGHT + 40,
+							}}>
+							<Card
+								sx={{
+									width: CARD_WIDTH,
+									minHeight: CARD_HEIGHT,
+									maxHeight: CARD_HEIGHT,
+									borderRadius: 4,
+									boxShadow: 3,
+									mb: 2,
+									position: 'relative',
+									zIndex: 2,
+									display: 'flex',
+									flexDirection: 'column',
+								}}>
+								<CardMedia
+									component='img'
+									height={IMAGE_HEIGHT}
+									image={event.coverImageUrl}
+									alt={event.title}
+									sx={{ objectFit: 'cover', borderTopLeftRadius: 16, borderTopRightRadius: 16, height: IMAGE_HEIGHT }}
+								/>
+								<CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+									<Box display='flex' alignItems='center' mb={1}>
+										<Chip label={event.type} color={event.type === 'Webinar' ? 'primary' : 'secondary'} size='small' sx={{ mr: 1 }} />
+										<Typography variant='body2' color='text.secondary'>
+											{dateTimeFormatter(event.start)}
+										</Typography>
+									</Box>
+									<Typography variant='h6' fontWeight={600} gutterBottom>
+										{event.title}
+									</Typography>
+									<Typography variant='body2' color='text.secondary' mb={2}>
+										{event.description}
+									</Typography>
+									<Button
+										variant='contained'
+										color='primary'
+										size='small'
+										sx={{ borderRadius: 2, textTransform: 'none' }}
+										onClick={() => handleOpenRegisterDialog(event._id)}>
+										Kayıt Ol
+									</Button>
+								</CardContent>
+							</Card>
+							{/* Timeline dot (below the card) */}
+							<Box
+								sx={{
+									width: DOT_SIZE,
+									height: DOT_SIZE,
+									background: '#8ec5fc',
+									borderRadius: '50%',
+									border: '4px solid white',
+									position: 'absolute',
+									left: '50%',
+									top: DOT_OFFSET,
+									transform: 'translateX(-50%)',
+									zIndex: 3,
+									boxShadow: 2,
+								}}
+							/>
+							{/* Timeline line segment (except after last card) */}
+							{idx < sortedPublicEventsData.length - 1 && (
+								<Box
+									sx={{
+										position: 'absolute',
+										left: `calc(50% + ${DOT_SIZE / 2}px)`,
+										top: DOT_OFFSET + DOT_SIZE / 2 - LINE_THICKNESS / 2,
+										width: GAP + CARD_WIDTH - DOT_SIZE,
+										height: LINE_THICKNESS,
+										background: 'linear-gradient(90deg, #e0e7ef 0%, #c3dafe 100%)',
+										zIndex: 1,
+										borderRadius: 2,
+									}}
+								/>
+							)}
+						</Box>
+					))}
+				</Box>
+				<IconButton
+					onClick={() => scrollBy(CARD_WIDTH + GAP)}
+					disabled={!canScrollRight}
+					sx={{
+						position: 'absolute',
+						right: 10,
+						top: '50%',
+						zIndex: 10,
+						transform: 'translateY(-50%)',
+						background: 'white',
+						boxShadow: 2,
+						display: { xs: 'none', md: 'flex' },
+						opacity: canScrollRight ? 1 : 0.3,
+						pointerEvents: canScrollRight ? 'auto' : 'none',
+					}}
+					aria-label='Sağa kaydır'>
+					<KeyboardArrowRight />
+				</IconButton>
+			</Box>
+		);
+	}
+
+	function CarouselMobile() {
+		const { sortedPublicEventsData } = useContext(EventsContext);
+		const [activeStep, setActiveStep] = useState(0);
+		const maxSteps = sortedPublicEventsData.length;
+
+		const handleStepChange = (step: number) => setActiveStep(step);
+
+		return (
+			<Box sx={{ maxWidth: 360, position: 'relative' }}>
+				<SwipeableViews index={activeStep} onChangeIndex={handleStepChange} enableMouseEvents resistance>
+					{sortedPublicEventsData.map((event, _) => (
+						<div key={event._id}>
+							<Card
+								sx={{
+									mt: '1.5rem',
+									mb: '1rem',
+									mx: 'auto',
+									width: 250,
+									borderRadius: 4,
+									boxShadow: 3,
+									height: 360,
+									minHeight: 360,
+									maxHeight: 360,
+									position: 'relative',
+									zIndex: 2,
+									display: 'flex',
+									flexDirection: 'column',
+								}}>
+								<CardMedia
+									component='img'
+									height='120'
+									image={event.coverImageUrl}
+									alt={event.title}
+									sx={{ objectFit: 'cover', borderTopLeftRadius: 16, borderTopRightRadius: 16 }}
+								/>
+								<CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+									<Box display='flex' alignItems='center' mb={1}>
+										<Chip label={event?.type} size='small' sx={{ mr: 1, fontSize: '0.7rem' }} />
+										<Typography variant='body2' color='text.secondary' sx={{ fontSize: '0.7rem' }}>
+											{dateTimeFormatter(event.start)}
+										</Typography>
+									</Box>
+									<Typography variant='h6' fontWeight={600} gutterBottom sx={{ fontSize: '0.9rem' }}>
+										{event.title}
+									</Typography>
+									<Typography variant='body2' color='text.secondary' mb={2} sx={{ fontSize: '0.75rem' }}>
+										{event.description}
+									</Typography>
+									<Button
+										variant='contained'
+										color='primary'
+										size='small'
+										sx={{ borderRadius: 2, textTransform: 'none', float: 'right', fontSize: '0.75rem' }}
+										onClick={() => handleOpenRegisterDialog(event._id)}>
+										Kayıt Ol
+									</Button>
+								</CardContent>
+							</Card>
+						</div>
+					))}
+				</SwipeableViews>
+				<MobileStepper
+					steps={maxSteps}
+					position='static'
+					activeStep={activeStep}
+					nextButton={
+						<IconButton
+							size='small'
+							onClick={() => setActiveStep((prev) => Math.min(prev + 1, maxSteps - 1))}
+							disabled={activeStep === maxSteps - 1}
+							aria-label='Sonraki'>
+							<KeyboardArrowRight />
+						</IconButton>
+					}
+					backButton={
+						<IconButton size='small' onClick={() => setActiveStep((prev) => Math.max(prev - 1, 0))} disabled={activeStep === 0} aria-label='Önceki'>
+							<KeyboardArrowLeft />
+						</IconButton>
+					}
+					sx={{ justifyContent: 'center', mt: 2, background: 'transparent' }}
+				/>
+			</Box>
+		);
+	}
+
+	const theme = useTheme();
+	const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
+	return (
+		<Box
+			sx={{
+				display: 'flex',
+				flexDirection: 'column',
+				alignItems: 'center',
+				py: 6,
+				background: 'linear-gradient(90deg, #f8fafc 0%, #e0e7ef 100%)',
+			}}>
+			<Typography
+				sx={{
+					fontSize: responsiveStyles.typography.h2,
+					fontFamily: 'Varela Round',
+					color: '#2C3E50',
+					letterSpacing: '-0.02em',
+					lineHeight: 1.2,
+				}}>
+				Yaklaşan Etkinlikler
+			</Typography>
+			{sortedPublicEventsData.length > 0 && (isDesktop ? <TimelineDesktop /> : <CarouselMobile />)}
+			{sortedPublicEventsData.length === 0 && (
+				<Typography
+					variant='body1'
+					color='text.secondary'
+					sx={{ fontFamily: 'Varela Round', fontSize: { xs: '1rem', md: '1.2rem' }, marginTop: '1rem' }}>
+					Henüz yaklaşan etkinlik bulunmamaktadır.
+				</Typography>
+			)}
+			<CustomDialog
+				title={'Kayıt Ol'}
+				openModal={isRegisterForEventModalOpen}
+				closeModal={() => {
+					setIsRegisterForEventModalOpen(false);
+					setIsRegisterForEventSuccess(false);
+					setRegisterErrorMsg(null);
+				}}
+				maxWidth='xs'
+				titleSx={{
+					fontSize: '1.5rem',
+					fontWeight: 600,
+					fontFamily: 'Varela Round',
+					color: '#2C3E50',
+					ml: '0.5rem',
+					textAlign: 'center',
+					mb: 1,
+				}}
+				PaperProps={{
+					sx: {
+						height: 'auto',
+						maxHeight: '90vh',
+						overflow: 'visible',
+						borderRadius: '1.5rem',
+						background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.98))',
+						boxShadow: '0 8px 32px rgba(44, 62, 80, 0.1)',
+						backdropFilter: 'blur(8px)',
+						border: '1px solid rgba(255, 255, 255, 0.18)',
+					},
+				}}>
+				<DialogContent sx={{ paddingTop: '1rem' }}>
+					<form onSubmit={handleRegisterForEvent}>
+						<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', mt: '1rem' }}>
+							<CustomTextField
+								label='İsminiz'
+								value={firstName}
+								onChange={(e) => {
+									setFirstName(e.target.value);
+									setRegisterErrorMsg(null);
+								}}
+								fullWidth={false}
+								sx={{ width: '48%', mb: '1.25rem', fontFamily: 'Varela Round' }}
+							/>
+							<CustomTextField
+								label='Soy İsminiz'
+								value={lastName}
+								onChange={(e) => {
+									setLastName(e.target.value);
+									setRegisterErrorMsg(null);
+								}}
+								fullWidth={false}
+								sx={{ width: '48%', mb: '1.25rem', fontFamily: 'Varela Round' }}
+							/>
+						</Box>
+						<Box>
+							<CustomTextField
+								label='E-posta Adresi'
+								type='email'
+								value={email}
+								onChange={(e) => {
+									setEmail(e.target.value);
+									setRegisterErrorMsg(null);
+								}}
+								sx={{ mb: '1.25rem', fontFamily: 'Varela Round' }}
+							/>
+						</Box>
+						<div
+							style={{
+								transform: isMobile ? 'scale(0.9)' : 'scale(1)',
+								transformOrigin: '0 0',
+								width: isMobile ? 304 * 0.9 : 304,
+								maxWidth: '100%',
+								margin: '0 auto',
+								overflow: 'hidden',
+							}}>
+							<ReCAPTCHA
+								sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
+								onChange={handleRecaptchaChange}
+								onExpired={resetRecaptcha}
+								ref={recaptchaRef}
+								key={isRegisterForEventModalOpen ? 'active' : 'inactive'}
+								style={{ marginBottom: '1rem' }}
+							/>
+						</div>
+						{registerErrorMsg && <CustomErrorMessage sx={{ mt: isMobile ? '0.5rem' : '1rem' }}>{registerErrorMsg}</CustomErrorMessage>}
+						<CustomDialogActions
+							onCancel={() => {
+								setIsRegisterForEventModalOpen(false);
+								setIsRegisterForEventSuccess(false);
+								setRegisterErrorMsg(null);
+							}}
+							cancelBtnText='Kapat'
+							submitBtnText={isRegisterForEventSending ? 'İşleniyor...' : 'Kayıt Ol'}
+							disableBtn={!recaptchaToken || isRegisterForEventSending}
+							submitBtnSx={{ fontFamily: 'Varela Round' }}
+							cancelBtnSx={{ fontFamily: 'Varela Round' }}
+							actionSx={{ mr: '-1rem', mb: '-0.5rem' }}
+						/>
+					</form>
+				</DialogContent>
+				{isRegisterForEventSuccess && (
+					<Snackbar
+						open={isRegisterForEventSuccess}
+						autoHideDuration={3000}
+						anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+						onClose={() => {
+							setIsRegisterForEventSuccess(false);
+							setIsRegisterForEventModalOpen(false);
+						}}
+						sx={{ mt: { xs: '1.5rem', sm: '1.5rem', md: '2.5rem', lg: '2.5rem' } }}>
+						<Alert
+							severity='success'
+							variant='filled'
+							sx={{
+								width: '100%',
+								fontFamily: 'Varela Round',
+								fontSize: { xs: '0.8rem', sm: '0.9rem', md: '1rem', lg: '1rem' },
+								letterSpacing: 0,
+								color: theme.palette.common.white,
+							}}>
+							Kaydınız alınmıştır, lütfen email'inizi kontrol edin.
+						</Alert>
+					</Snackbar>
+				)}
+			</CustomDialog>
+		</Box>
+	);
+}
