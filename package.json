@@ -48,6 +48,7 @@
 		"react-player": "^2.14.1",
 		"react-query": "^3.39.3",
 		"react-router-dom": "^6.21.2",
+		"react-swipeable-views": "^0.14.0",
 		"styled-components": "^6.1.8",
 		"tinymce": "^7.1.2",
 		"uuid": "^9.0.1",
