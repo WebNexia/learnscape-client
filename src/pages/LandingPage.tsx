@@ -10,6 +10,7 @@ import HeroSection from '../components/landingPage/HeroSection';
 import StatisticsSection from '../components/landingPage/StatisticsSection';
 import ScrollToTopButton from '../components/landingPage/ScrollToTopButton';
 import UpcomingEvents from '../components/landingPage/UpcomingEvents';
+import LandingPageFAQ from '../components/landingPage/LandingPageFAQ';
 
 const LandingPage = () => {
 	const coursesRef = useRef<HTMLDivElement>(null);
@@ -52,6 +53,7 @@ const LandingPage = () => {
 				<TestimonialsSection />
 				<LandingPageCourses ref={coursesRef} />
 				<UpcomingEvents />
+				<LandingPageFAQ />
 				<CTASection coursesRef={coursesRef} />
 			</LandingPageLayout>
 			<ScrollToTopButton />
