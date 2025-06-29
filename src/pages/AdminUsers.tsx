@@ -3,6 +3,7 @@ import DashboardPagesLayout from '../components/layouts/dashboardLayout/Dashboar
 import { useContext, useEffect, useRef, useState } from 'react';
 import axios from '@utils/axiosInstance';
 import { Edit, Person, PersonOff, Search } from '@mui/icons-material';
+import DownloadIcon from '@mui/icons-material/Download';
 
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
@@ -18,9 +19,13 @@ import { Roles } from '../interfaces/enums';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/CustomInfoMessageAlignedLeft';
+import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
+import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 
 const AdminUsers = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
+
+	const { orgId, organisation } = useContext(OrganisationContext);
 
 	const { userId } = useContext(UserAuthContext);
 
@@ -106,6 +111,31 @@ const AdminUsers = () => {
 		setIsUserStatusUpdateModalOpen(updatedState);
 	};
 
+	const handleDownloadUsers = async () => {
+		try {
+			const response = await axios.get(`${base_url}/users/export-excel/${orgId}`, { responseType: 'blob' });
+
+			// Get filename from Content-Disposition header if available
+			let filename = `${organisation?.orgName}_Users.xlsx`;
+			const disposition = response.headers['content-disposition'];
+			if (disposition && disposition.indexOf('filename=') !== -1) {
+				filename = disposition.split('filename=')[1].replace(/['"]/g, '').trim();
+			}
+
+			// Create a blob URL and trigger download
+			const url = window.URL.createObjectURL(new Blob([response.data]));
+			const link = document.createElement('a');
+			link.href = url;
+			link.setAttribute('download', filename);
+			document.body.appendChild(link);
+			link.click();
+			link.remove();
+			window.URL.revokeObjectURL(url);
+		} catch (error) {
+			console.log(error);
+		}
+	};
+
 	const handleUserStatus = async (): Promise<void> => {
 		try {
 			await axios.patch(`${base_url}/users/${singleUser?._id}`, {
@@ -157,101 +187,116 @@ const AdminUsers = () => {
 					padding: '2rem',
 					width: '100%',
 				}}>
-				<Box sx={{ display: 'flex', justifyContent: isMobileSize ? 'center' : 'flex-start', width: '100%' }}>
+				<Box sx={{ display: 'flex', justifyContent: isMobileSize ? 'center' : 'space-between', width: '100%' }}>
 					<Box sx={{ display: 'flex' }}>
-						<FormControl>
-							<Select
-								size='small'
-								value={filterValue}
-								onChange={(e) => {
-									setSearchValue('');
-									setFilterValue(e.target.value);
-								}}
-								displayEmpty
-								sx={{
-									backgroundColor: theme.bgColor?.common,
-									width: '10rem',
-									fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-									textTransform: 'capitalize',
-								}}>
-								<MenuItem
-									disabled
-									value='filter'
-									selected
+						<Box>
+							<FormControl>
+								<Select
+									size='small'
+									value={filterValue}
+									onChange={(e) => {
+										setSearchValue('');
+										setFilterValue(e.target.value);
+									}}
+									displayEmpty
 									sx={{
-										fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-										fontStyle: 'italic',
+										backgroundColor: theme.bgColor?.common,
+										width: '10rem',
+										fontSize: isMobileSize ? '0.7rem' : '0.85rem',
 										textTransform: 'capitalize',
-										padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-										minHeight: '2rem',
 									}}>
-									Filter Users
-								</MenuItem>
-								<MenuItem
-									value=''
-									selected
-									sx={{
-										fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-										textTransform: 'capitalize',
-										padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-										minHeight: '2rem',
-									}}>
-									All Users
-								</MenuItem>
-								{['Admin Users', 'Learners', 'Active Users', 'Inactive Users'].map((type) => (
 									<MenuItem
-										value={type.toLowerCase()}
-										key={type}
+										disabled
+										value='filter'
+										selected
+										sx={{
+											fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+											fontStyle: 'italic',
+											textTransform: 'capitalize',
+											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+											minHeight: '2rem',
+										}}>
+										Filter Users
+									</MenuItem>
+									<MenuItem
+										value=''
+										selected
 										sx={{
 											fontSize: isMobileSize ? '0.65rem' : '0.85rem',
 											textTransform: 'capitalize',
 											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
 											minHeight: '2rem',
 										}}>
-										{type}
+										All Users
 									</MenuItem>
-								))}
-							</Select>
-						</FormControl>
+									{['Admin Users', 'Learners', 'Active Users', 'Inactive Users'].map((type) => (
+										<MenuItem
+											value={type.toLowerCase()}
+											key={type}
+											sx={{
+												fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+												textTransform: 'capitalize',
+												padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+												minHeight: '2rem',
+											}}>
+											{type}
+										</MenuItem>
+									))}
+								</Select>
+							</FormControl>
+						</Box>
+						<Box
+							sx={{
+								display: 'flex',
+								alignItems: 'center',
+								pb: '1rem',
+								ml: '1rem',
+							}}>
+							<CustomTextField
+								value={searchValue}
+								placeholder={'Search in First & Last Name, Username and Email'}
+								onChange={(e) => {
+									setSearchValue(e.target.value);
+									setFilterValue('filter');
+									if (e.target.value === '') {
+										setFilterValue('');
+									}
+								}}
+								sx={{
+									'backgroundColor': '#fff',
+									'width': isVerySmallScreen ? '10rem' : '22.5rem',
+									'& .MuiInputBase-input::placeholder': {
+										fontSize: '0.75rem', // Change this to your desired font size
+									},
+								}}
+								required={false}
+								InputProps={{
+									endAdornment: (
+										<InputAdornment position='end'>
+											<Search
+												sx={{
+													mr: '-0.5rem',
+												}}
+												fontSize={isMobileSize ? 'small' : 'medium'}
+											/>
+										</InputAdornment>
+									),
+								}}
+							/>
+						</Box>
 					</Box>
+
 					<Box
 						sx={{
 							display: 'flex',
-							alignItems: 'center',
-							pb: '1rem',
-							ml: '1rem',
+							justifyContent: 'flex-end',
+							width: isVerySmallScreen ? '5%' : isMobileSize ? '20%' : '25%',
+							height: isVerySmallScreen ? '1.75rem' : '2rem',
+							fontSize: isMobileSize ? '0.65rem' : '0.85rem',
 						}}>
-						<CustomTextField
-							value={searchValue}
-							placeholder={'Search in First & Last Name, Username and Email'}
-							onChange={(e) => {
-								setSearchValue(e.target.value);
-								setFilterValue('filter');
-								if (e.target.value === '') {
-									setFilterValue('');
-								}
-							}}
-							sx={{
-								backgroundColor: '#fff',
-								width: isVerySmallScreen ? '10rem' : '22.5rem',
-								'& .MuiInputBase-input::placeholder': {
-									fontSize: '0.75rem', // Change this to your desired font size
-								},
-							}}
-							required={false}
-							InputProps={{
-								endAdornment: (
-									<InputAdornment position='end'>
-										<Search
-											sx={{
-												mr: '-0.5rem',
-											}}
-											fontSize={isMobileSize ? 'small' : 'medium'}
-										/>
-									</InputAdornment>
-								),
-							}}
-						/>
+						<CustomSubmitButton startIcon={<DownloadIcon />} sx={{ fontSize: isMobileSize ? '0.7rem' : undefined }} onClick={handleDownloadUsers}>
+							Download Users
+						</CustomSubmitButton>
 					</Box>
 				</Box>
 				<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>
@@ -265,7 +310,7 @@ const AdminUsers = () => {
 										{ key: 'username', label: 'Username' },
 										{ key: 'email', label: 'Email Address' },
 										{ key: 'actions', label: 'Actions' },
-								  ]
+									]
 								: [
 										{ key: 'firstName', label: 'First Name' },
 										{ key: 'lastName', label: 'Last Name' },
@@ -274,7 +319,7 @@ const AdminUsers = () => {
 										{ key: 'isActive', label: 'Status' },
 										{ key: 'role', label: 'Role' },
 										{ key: 'actions', label: 'Actions' },
-								  ]
+									]
 						}
 					/>
 					<TableBody>

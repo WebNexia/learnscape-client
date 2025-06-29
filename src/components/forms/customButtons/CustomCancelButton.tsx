@@ -8,16 +8,26 @@ interface CustomCancelButtonProps {
 	sx?: React.CSSProperties;
 	onClick?: (event?: MouseEvent<HTMLButtonElement> | FormEvent<Element>) => void;
 	size?: 'small' | 'medium' | 'large';
+	disabled?: boolean;
 }
 
-const CustomCancelButton = ({ children = 'Cancel', type = 'reset', variant = 'outlined', sx, onClick, size = 'small' }: CustomCancelButtonProps) => {
+const CustomCancelButton = ({
+	children = 'Cancel',
+	type = 'reset',
+	variant = 'outlined',
+	sx,
+	onClick,
+	size = 'small',
+	disabled,
+}: CustomCancelButtonProps) => {
 	return (
 		<Button
 			type={type}
 			variant={variant}
 			sx={{ ...sx, textTransform: 'capitalize', ml: '0.5rem', height: '1.75rem', mt: '0.2rem' }}
 			onClick={onClick}
-			size={size}>
+			size={size}
+			disabled={disabled}>
 			{children}
 		</Button>
 	);

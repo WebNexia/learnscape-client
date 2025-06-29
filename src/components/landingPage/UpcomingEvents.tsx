@@ -70,6 +70,10 @@ export default function UpcomingEvents() {
 				recaptchaToken,
 				orgId: defaultOrgId,
 			});
+			setFirstName('');
+			setLastName('');
+			setEmail('');
+			resetRecaptcha();
 			setIsRegisterForEventSuccess(true);
 			setIsRegisterForEventSending(false);
 		} catch (error: any) {
@@ -527,6 +531,7 @@ export default function UpcomingEvents() {
 							cancelBtnText='Kapat'
 							submitBtnText={isRegisterForEventSending ? 'İşleniyor...' : 'Kayıt Ol'}
 							disableBtn={!recaptchaToken || isRegisterForEventSending}
+							disableCancelBtn={isRegisterForEventSending}
 							submitBtnSx={{ fontFamily: 'Varela Round' }}
 							cancelBtnSx={{ fontFamily: 'Varela Round' }}
 							actionSx={{ mr: '-1rem', mb: '-0.5rem' }}

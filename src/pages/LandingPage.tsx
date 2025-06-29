@@ -47,11 +47,11 @@ const LandingPage = () => {
 			}}>
 			<LandingPageLayout coursesRef={coursesRef}>
 				<HeroSection />
-				<UpcomingEvents />
 				<FeaturesSection />
-				<LandingPageCourses ref={coursesRef} />
 				<StatisticsSection />
 				<TestimonialsSection />
+				<LandingPageCourses ref={coursesRef} />
+				<UpcomingEvents />
 				<CTASection coursesRef={coursesRef} />
 			</LandingPageLayout>
 			<ScrollToTopButton />

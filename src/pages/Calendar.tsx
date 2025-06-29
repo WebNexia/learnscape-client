@@ -80,6 +80,7 @@ const EventCalendar = () => {
 		isPublic: false,
 		type: '',
 		coverImageUrl: '',
+		participantCount: 0,
 	});
 
 	useEffect(() => {
