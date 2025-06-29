@@ -152,7 +152,7 @@ const AdminContactRequests = () => {
 	if (error) return <Typography color='error'>{error}</Typography>;
 
 	return (
-		<DashboardPagesLayout pageName='Contact Requests' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
+		<DashboardPagesLayout pageName='Inquiries' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
 			<Box sx={{ width: '100%', height: '100%' }}>
 				<Box
 					sx={{
@@ -203,7 +203,7 @@ const AdminContactRequests = () => {
 												padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
 												minHeight: '2rem',
 											}}>
-											All Requests
+											All Inquiries
 										</MenuItem>
 										{['From Home Page', 'From Contact Us', 'From About Us'].map((type) => (
 											<MenuItem
@@ -248,7 +248,7 @@ const AdminContactRequests = () => {
 							/>
 						</Box>
 					</Box>
-					<Box sx={{ display: 'flex', gap: 1 }}>
+					<Box sx={{ display: 'flex', gap: 1, mb: '0.85rem' }}>
 						<CustomSubmitButton
 							startIcon={<DownloadIcon />}
 							onClick={handleDownload}

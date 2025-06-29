@@ -18,6 +18,7 @@ export interface Event {
 	isPublic: boolean;
 	type: string;
 	coverImageUrl: string;
+	participantCount: number;
 	createdAt: string;
 	updatedAt: string;
 }

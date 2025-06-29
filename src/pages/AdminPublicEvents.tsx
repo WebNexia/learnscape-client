@@ -28,6 +28,7 @@ import { dateTimeFormatter } from '../utils/dateFormatter';
 import { EventsContext } from '../contexts/EventsContextProvider';
 import { Event } from '../interfaces/event';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
+import axios from '@utils/axiosInstance';
 
 const AdminPublicEvents = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -93,11 +94,34 @@ const AdminPublicEvents = () => {
 		}
 	}, []);
 
-	console.log(selectedEvent);
-
 	useEffect(() => {
 		setPublicEventsPageNumber(1);
 	}, []);
+
+	const handleDownloadParticipants = async (eventId: string, eventTitle: string) => {
+		try {
+			const response = await axios.get(`${base_url}/event-registrations/event/${eventId}/excel`, { responseType: 'blob' });
+
+			// Get filename from Content-Disposition header if available
+			let filename = `${eventTitle}_participants.xlsx`;
+			const disposition = response.headers['content-disposition'];
+			if (disposition && disposition.indexOf('filename=') !== -1) {
+				filename = disposition.split('filename=')[1].replace(/['"]/g, '').trim();
+			}
+
+			// Create a blob URL and trigger download
+			const url = window.URL.createObjectURL(new Blob([response.data]));
+			const link = document.createElement('a');
+			link.href = url;
+			link.setAttribute('download', filename);
+			document.body.appendChild(link);
+			link.click();
+			link.remove();
+			window.URL.revokeObjectURL(url);
+		} catch (error) {
+			console.log(error);
+		}
+	};
 
 	return (
 		<DashboardPagesLayout pageName='Public Events' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
@@ -241,6 +265,7 @@ const AdminPublicEvents = () => {
 							{ key: 'type', label: 'Type' },
 							{ key: 'start', label: 'Start' },
 							{ key: 'end', label: 'End' },
+							{ key: 'participantCount', label: 'Participants(#)' },
 							{ key: 'actions', label: 'Actions' },
 						]}
 					/>
@@ -253,6 +278,7 @@ const AdminPublicEvents = () => {
 										<CustomTableCell value={event.type} />
 										<CustomTableCell value={dateTimeFormatter(event.start)} />
 										<CustomTableCell value={dateTimeFormatter(event.end)} />
+										<CustomTableCell value={event.participantCount} />
 										<TableCell
 											sx={{
 												textAlign: 'center',
@@ -267,9 +293,7 @@ const AdminPublicEvents = () => {
 											/>
 											<CustomActionBtn
 												title='Download List of Participants'
-												onClick={() => {
-													window.open(`${base_url}/event-registrations/event/${event._id}/excel`, '_blank');
-												}}
+												onClick={() => handleDownloadParticipants(event._id, event.title)}
 												icon={<Download fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 											/>
 										</TableCell>

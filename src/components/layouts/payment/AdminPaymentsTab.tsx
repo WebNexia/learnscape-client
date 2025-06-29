@@ -14,8 +14,16 @@ import { truncateText } from '../../../utils/utilText';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 import CustomActionBtn from '../table/CustomActionBtn';
 import PaymentDetailsDialog from './PaymentDetailsDialog';
+import CustomSubmitButton from '../../forms/customButtons/CustomSubmitButton';
+import DownloadIcon from '@mui/icons-material/Download';
+import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
+import axios from '@utils/axiosInstance';
 
 const AdminPaymentsTab = () => {
+	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
+
+	const { orgId, organisation } = useContext(OrganisationContext);
+
 	const { sortedPaymentsData, sortPaymentsData, fetchPayments } = useContext(PaymentsContext);
 	const { sortedCoursesData } = useContext(CoursesContext);
 
@@ -81,6 +89,31 @@ const AdminPaymentsTab = () => {
 		}
 	}, []);
 
+	const handleDownloadPayments = async () => {
+		try {
+			const response = await axios.get(`${base_url}/payments/export-excel/${orgId}`, { responseType: 'blob' });
+
+			// Get filename from Content-Disposition header if available
+			let filename = `${organisation?.orgName}_Payments.xlsx`;
+			const disposition = response.headers['content-disposition'];
+			if (disposition && disposition.indexOf('filename=') !== -1) {
+				filename = disposition.split('filename=')[1].replace(/['"]/g, '').trim();
+			}
+
+			// Create a blob URL and trigger download
+			const url = window.URL.createObjectURL(new Blob([response.data]));
+			const link = document.createElement('a');
+			link.href = url;
+			link.setAttribute('download', filename);
+			document.body.appendChild(link);
+			link.click();
+			link.remove();
+			window.URL.revokeObjectURL(url);
+		} catch (error) {
+			console.log(error);
+		}
+	};
+
 	return (
 		<Box
 			sx={{
@@ -90,107 +123,121 @@ const AdminPaymentsTab = () => {
 				padding: '2rem',
 				width: '100%',
 			}}>
-			<Box sx={{ display: 'flex', justifyContent: isMobileSize ? 'center' : 'flex-start', width: '100%' }}>
-				<Box sx={{ mr: '1rem' }}>
-					<FormControl>
-						<Select
-							size='small'
-							value={filterValue}
-							onChange={(e) => {
-								setSearchValue('');
-								setFilterValue(e.target.value);
-							}}
-							displayEmpty
-							sx={{
-								backgroundColor: theme.bgColor?.common,
-								width: isMobileSizeSmall ? '8rem' : '12rem',
-								fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-								textTransform: 'capitalize',
-							}}>
-							<MenuItem
-								disabled
-								value='filter'
-								selected
+			<Box sx={{ display: 'flex', justifyContent: isMobileSize ? 'center' : 'space-between', width: '100%' }}>
+				<Box sx={{ display: 'flex' }}>
+					<Box sx={{ mr: '1rem' }}>
+						<FormControl>
+							<Select
+								size='small'
+								value={filterValue}
+								onChange={(e) => {
+									setSearchValue('');
+									setFilterValue(e.target.value);
+								}}
+								displayEmpty
 								sx={{
-									fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-									fontStyle: 'italic',
+									backgroundColor: theme.bgColor?.common,
+									width: isMobileSizeSmall ? '8rem' : '12rem',
+									fontSize: isMobileSize ? '0.7rem' : '0.85rem',
 									textTransform: 'capitalize',
-									padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-									minHeight: '2rem',
 								}}>
-								Filter Payments
-							</MenuItem>
-							<MenuItem
-								value=''
-								selected
-								sx={{
-									fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-									textTransform: 'capitalize',
-									padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-									minHeight: '2rem',
-								}}>
-								All Payments
-							</MenuItem>
-							<MenuItem
-								disabled
-								value='types'
-								selected
-								sx={{
-									fontSize: isMobileSize ? '0.6rem' : '0.7rem',
-									textTransform: 'inherit',
-									fontWeight: 'lighter',
-									padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-									minHeight: '2rem',
-								}}>
-								------ Filter by Course ------
-							</MenuItem>
-							{courses?.map((course) => (
 								<MenuItem
-									value={course?.toLowerCase()}
-									key={course}
+									disabled
+									value='filter'
+									selected
+									sx={{
+										fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+										fontStyle: 'italic',
+										textTransform: 'capitalize',
+										padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+										minHeight: '2rem',
+									}}>
+									Filter Payments
+								</MenuItem>
+								<MenuItem
+									value=''
+									selected
 									sx={{
 										fontSize: isMobileSize ? '0.65rem' : '0.85rem',
 										textTransform: 'capitalize',
 										padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
 										minHeight: '2rem',
 									}}>
-									{truncateText(course, 25)}
+									All Payments
 								</MenuItem>
-							))}
-						</Select>
-					</FormControl>
-				</Box>
-				<Box sx={{ alignSelf: 'flex-start', width: '22rem' }}>
-					<CustomTextField
-						value={searchValue}
-						placeholder={isVerySmallScreen ? 'Search in Username' : 'Search in First Name, Last Name, and Username'}
-						onChange={(e) => {
-							setSearchValue(e.target.value);
-							setFilterValue('filter');
-							if (e.target.value === '') {
-								setFilterValue('');
-							}
-						}}
-						sx={{
-							'backgroundColor': '#fff',
-							'& .MuiInputBase-input::placeholder': {
-								fontSize: '0.75rem', // Change this to your desired font size
-							},
-						}}
-						required={false}
-						InputProps={{
-							endAdornment: (
-								<InputAdornment position='end'>
-									<Search
+								<MenuItem
+									disabled
+									value='types'
+									selected
+									sx={{
+										fontSize: isMobileSize ? '0.6rem' : '0.7rem',
+										textTransform: 'inherit',
+										fontWeight: 'lighter',
+										padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+										minHeight: '2rem',
+									}}>
+									------ Filter by Course ------
+								</MenuItem>
+								{courses?.map((course) => (
+									<MenuItem
+										value={course?.toLowerCase()}
+										key={course}
 										sx={{
-											mr: '-0.5rem',
-										}}
-										fontSize={isMobileSize ? 'small' : 'medium'}
-									/>
-								</InputAdornment>
-							),
-						}}
-					/>
+											fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+											textTransform: 'capitalize',
+											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+											minHeight: '2rem',
+										}}>
+										{truncateText(course, 25)}
+									</MenuItem>
+								))}
+							</Select>
+						</FormControl>
+					</Box>
+					<Box sx={{ alignSelf: 'flex-start', width: '22rem' }}>
+						<CustomTextField
+							value={searchValue}
+							placeholder={isVerySmallScreen ? 'Search in Username' : 'Search in First Name, Last Name, and Username'}
+							onChange={(e) => {
+								setSearchValue(e.target.value);
+								setFilterValue('filter');
+								if (e.target.value === '') {
+									setFilterValue('');
+								}
+							}}
+							sx={{
+								'backgroundColor': '#fff',
+								'& .MuiInputBase-input::placeholder': {
+									fontSize: '0.75rem', // Change this to your desired font size
+								},
+							}}
+							required={false}
+							InputProps={{
+								endAdornment: (
+									<InputAdornment position='end'>
+										<Search
+											sx={{
+												mr: '-0.5rem',
+											}}
+											fontSize={isMobileSize ? 'small' : 'medium'}
+										/>
+									</InputAdornment>
+								),
+							}}
+						/>
+					</Box>
+				</Box>
+				<Box
+					sx={{
+						display: 'flex',
+						justifyContent: 'flex-end',
+						width: isVerySmallScreen ? '5%' : isMobileSize ? '20%' : '25%',
+						height: isVerySmallScreen ? '1.75rem' : '2rem',
+						fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+					}}>
+					<CustomSubmitButton startIcon={<DownloadIcon />} sx={{ fontSize: isMobileSize ? '0.7rem' : undefined }} onClick={handleDownloadPayments}>
+						Download Payments
+					</CustomSubmitButton>
 				</Box>
 			</Box>
 

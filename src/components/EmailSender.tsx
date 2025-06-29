@@ -79,7 +79,7 @@ const EmailSender = ({ setEmailDialogOpen }: EmailSenderProps) => {
 	};
 
 	return (
-		<Box sx={{ maxWidth: 800, mx: 'auto', p: 2 }}>
+		<Box sx={{ mx: 'auto', padding: '0.5rem' }}>
 			<Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
 				<FormControl sx={{ width: '50%' }}>
 					<Select

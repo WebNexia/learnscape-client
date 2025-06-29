@@ -70,6 +70,10 @@ export default function UpcomingEvents() {
 				recaptchaToken,
 				orgId: defaultOrgId,
 			});
+			setFirstName('');
+			setLastName('');
+			setEmail('');
+			resetRecaptcha();
 			setIsRegisterForEventSuccess(true);
 			setIsRegisterForEventSending(false);
 		} catch (error: any) {
