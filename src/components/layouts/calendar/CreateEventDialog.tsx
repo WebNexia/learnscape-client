@@ -217,6 +217,7 @@ const CreateEventDialog = ({
 			isAllCoursesSelected: false,
 			isPublic: false,
 			coverImageUrl: '',
+			participantCount: 0,
 			type: '',
 		}));
 
