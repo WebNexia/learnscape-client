@@ -33,7 +33,6 @@ const splitFaqData = (data: typeof faqData) => {
 };
 
 const LandingPageFAQ = () => {
-	const theme = useTheme();
 	const [expanded, setExpanded] = useState<number | false>(false);
 
 	const handleChange = (panel: number) => (_event: React.SyntheticEvent, isExpanded: boolean) => {
@@ -46,7 +45,7 @@ const LandingPageFAQ = () => {
 		<Box
 			sx={{
 				maxWidth: 1200,
-				mx: { xs: 3, sm: 4, md: 'auto', lg: 'auto' },
+				mx: { xs: 3, sm: 4, md: '10%', lg: '15%' },
 				my: { xs: 4, md: 8 },
 				px: { xs: 3, sm: 4, md: 2 },
 				py: { xs: 3, sm: 6 },
@@ -54,7 +53,7 @@ const LandingPageFAQ = () => {
 				position: 'relative',
 				overflow: 'hidden',
 				fontFamily: 'Varela Round, Arial, sans-serif',
-				background: 'linear-gradient(120deg, #b6e0fe 0%, #e0c3fc 100%)',
+				background: 'linear-gradient(120deg, #b6e0fe 0%, #031f3b 100%)',
 				boxShadow: 8,
 			}}>
 			{/* Decorative SVG Wave */}
@@ -65,7 +64,11 @@ const LandingPageFAQ = () => {
 			</Box>
 			<Box sx={{ display: 'flex', alignItems: 'center', mb: 4, zIndex: 1, position: 'relative' }}>
 				<EmojiObjectsIcon sx={{ fontSize: 40, color: '#ff7043', mr: 1 }} />
-				<Typography variant='h4' fontWeight={700} color='#2d3a4a' sx={{ fontFamily: 'Varela Round' }}>
+				<Typography
+					variant='h3'
+					fontWeight={700}
+					color='#2d3a4a'
+					sx={{ fontFamily: 'Varela Round', fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.75rem' } }}>
 					Sıkça Sorulan Sorular
 				</Typography>
 			</Box>

@@ -14,6 +14,7 @@ interface CustomSubmitButtonProps {
 	endIcon?: ReactNode;
 	capitalize?: boolean;
 	size?: 'small' | 'medium' | 'large';
+	unsaved?: boolean;
 }
 
 const CustomSubmitButton = ({
@@ -28,6 +29,7 @@ const CustomSubmitButton = ({
 	endIcon,
 	capitalize = true,
 	size = 'small',
+	unsaved = false,
 }: CustomSubmitButtonProps) => {
 	const handleClick = (event: MouseEvent<HTMLButtonElement> | FormEvent<Element>) => {
 		if (onClick) {
@@ -43,7 +45,7 @@ const CustomSubmitButton = ({
 			sx={{
 				...sx,
 				'textTransform': capitalize ? 'capitalize' : 'none',
-				'backgroundColor': theme.bgColor?.greenPrimary,
+				'backgroundColor': unsaved ? '#ff9800' : theme.bgColor?.greenPrimary,
 				':hover': {
 					backgroundColor: theme.bgColor?.common,
 					color: theme.bgColor?.adminSubmitBtn,

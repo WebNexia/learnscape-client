@@ -36,6 +36,7 @@ interface AddNewLessonDialogProps {
 	chapter: ChapterLessonData;
 	setChapterLessonDataBeforeSave: React.Dispatch<React.SetStateAction<ChapterLessonData[]>>;
 	setIsChapterUpdated: React.Dispatch<React.SetStateAction<ChapterUpdateTrack[]>>;
+	setHasUnsavedChanges: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const AddNewLessonDialog = ({
@@ -44,6 +45,7 @@ const AddNewLessonDialog = ({
 	chapter,
 	setIsChapterUpdated,
 	setChapterLessonDataBeforeSave,
+	setHasUnsavedChanges,
 }: AddNewLessonDialogProps) => {
 	const { sortLessonsData, sortedLessonsData } = useContext(LessonsContext);
 	const { courseId } = useParams();
@@ -111,15 +113,14 @@ const AddNewLessonDialog = ({
 		setSelectedLessons(newSelectedLessons);
 
 		chapterUpdateTrack(chapter.chapterId, setIsChapterUpdated);
-
-
+		setHasUnsavedChanges(true);
 	};
 	const handleAddLessons = () => {
 		if (!courseId || !user) return;
-		
+
 		setChapterLessonDataBeforeSave((prevData) => {
 			if (prevData) {
-				const updatedSelectedLessons = selectedLessons.map(lesson => ({
+				const updatedSelectedLessons = selectedLessons.map((lesson) => ({
 					...lesson,
 					usedInCourses: lesson.usedInCourses ? [...lesson.usedInCourses, courseId] : [courseId],
 					updatedAt: new Date().toISOString(),
@@ -139,24 +140,27 @@ const AddNewLessonDialog = ({
 					return currentChapter;
 				});
 			}
-			return [{
-				chapterId: chapter?.chapterId,
-				title: chapter?.title,
-				lessons: selectedLessons.map(lesson => ({
-					...lesson,
-					usedInCourses: lesson.usedInCourses ? [...lesson.usedInCourses, courseId] : [courseId],
-					updatedAt: new Date().toISOString(),
-					updatedByName: `${user.firstName} ${user.lastName}`,
-					updatedByImageUrl: user.imageUrl,
-					updatedByRole: user.role,
-				})),
-				lessonIds: selectedLessonIds,
-			}];
+			return [
+				{
+					chapterId: chapter?.chapterId,
+					title: chapter?.title,
+					lessons: selectedLessons.map((lesson) => ({
+						...lesson,
+						usedInCourses: lesson.usedInCourses ? [...lesson.usedInCourses, courseId] : [courseId],
+						updatedAt: new Date().toISOString(),
+						updatedByName: `${user.firstName} ${user.lastName}`,
+						updatedByImageUrl: user.imageUrl,
+						updatedByRole: user.role,
+					})),
+					lessonIds: selectedLessonIds,
+				},
+			];
 		});
 
 		setAddNewLessonModalOpen(false);
 		setSelectedLessons([]);
 		setSelectedLessonIds([]);
+		setHasUnsavedChanges(true);
 	};
 
 	const handleResetCheckboxes = () => {

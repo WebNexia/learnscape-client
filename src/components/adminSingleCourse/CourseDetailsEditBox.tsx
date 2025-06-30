@@ -14,9 +14,18 @@ interface CourseDetailsEditBoxProps {
 	setSingleCourse: React.Dispatch<React.SetStateAction<SingleCourse | undefined>>;
 	setIsMissingField: React.Dispatch<React.SetStateAction<boolean>>;
 	setIsFree: React.Dispatch<React.SetStateAction<boolean>>;
+	setHasUnsavedChanges: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree, setIsMissingField, setSingleCourse }: CourseDetailsEditBoxProps) => {
+const CourseDetailsEditBox = ({
+	singleCourse,
+	isFree,
+	isMissingField,
+	setIsFree,
+	setIsMissingField,
+	setSingleCourse,
+	setHasUnsavedChanges,
+}: CourseDetailsEditBoxProps) => {
 	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(true);
 
 	const { resetImageUpload } = useImageUpload();
@@ -82,6 +91,7 @@ const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree,
 									...singleCourse,
 									imageUrl: url,
 								});
+								setHasUnsavedChanges(true);
 							}
 						}}
 						onChangeImgUrl={(e) => {
@@ -90,6 +100,7 @@ const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree,
 									...singleCourse,
 									imageUrl: e.target.value,
 								});
+								setHasUnsavedChanges(true);
 							}
 						}}
 						imageUrlValue={singleCourse?.imageUrl || ''}
@@ -162,6 +173,7 @@ const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree,
 									}
 								});
 								setIsMissingField(false);
+								setHasUnsavedChanges(true);
 							}}
 							InputProps={{ inputProps: { maxLength: 50 } }}
 							error={isMissingField && singleCourse?.title === ''}
@@ -182,6 +194,7 @@ const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree,
 									}
 								});
 								setIsMissingField(false);
+								setHasUnsavedChanges(true);
 							}}
 							multiline
 							InputProps={{ inputProps: { maxLength: 500 } }}
@@ -203,6 +216,7 @@ const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree,
 												return { ...singleCourse, courseManagement: { ...singleCourse.courseManagement, isExternal: e.target.checked } };
 											}
 										});
+										setHasUnsavedChanges(true);
 									}}
 									sx={{
 										'& .MuiSvgIcon-root': {
@@ -247,6 +261,7 @@ const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree,
 									setGBP(e.target.value);
 									updatePriceInSingleCourse('gbp', e.target.value);
 									setIsMissingField(false);
+									setHasUnsavedChanges(true);
 								}}
 								type='number'
 								disabled={isFree}
@@ -260,6 +275,7 @@ const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree,
 									setUSD(e.target.value);
 									updatePriceInSingleCourse('usd', e.target.value);
 									setIsMissingField(false);
+									setHasUnsavedChanges(true);
 								}}
 								type='number'
 								disabled={isFree}
@@ -275,6 +291,7 @@ const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree,
 									setEUR(e.target.value);
 									updatePriceInSingleCourse('eur', e.target.value);
 									setIsMissingField(false);
+									setHasUnsavedChanges(true);
 								}}
 								type='number'
 								disabled={isFree}
@@ -288,6 +305,7 @@ const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree,
 									setTRY(e.target.value);
 									updatePriceInSingleCourse('try', e.target.value);
 									setIsMissingField(false);
+									setHasUnsavedChanges(true);
 								}}
 								type='number'
 								disabled={isFree}
@@ -322,6 +340,7 @@ const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree,
 													: prevCourse
 											);
 											setIsMissingField(false);
+											setHasUnsavedChanges(true);
 										}
 									}}
 									sx={{
@@ -354,6 +373,7 @@ const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree,
 										...singleCourse,
 										durationWeeks: +e.target.value,
 									});
+									setHasUnsavedChanges(true);
 								}
 							}}
 							type='number'
@@ -373,6 +393,7 @@ const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree,
 											...singleCourse,
 											durationHours: +e.target.value,
 										});
+										setHasUnsavedChanges(true);
 									}
 								}
 							}}
@@ -398,6 +419,7 @@ const CourseDetailsEditBox = ({ singleCourse, isFree, isMissingField, setIsFree,
 									...singleCourse,
 									startingDate: selectedDate, // Assign parsed date object here
 								});
+								setHasUnsavedChanges(true);
 							}
 						}}
 						type='date'

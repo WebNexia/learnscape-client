@@ -21,6 +21,7 @@ interface CreateLessonDialogProps {
 	setLessons?: React.Dispatch<React.SetStateAction<Lesson[]>>;
 	setChapterLessonDataBeforeSave?: React.Dispatch<React.SetStateAction<ChapterLessonData[]>>;
 	setIsChapterUpdated?: React.Dispatch<React.SetStateAction<ChapterUpdateTrack[]>>;
+	setHasUnsavedChanges?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const CreateLessonDialog = ({
@@ -31,6 +32,7 @@ const CreateLessonDialog = ({
 	setLessons,
 	setChapterLessonDataBeforeSave,
 	setIsChapterUpdated,
+	setHasUnsavedChanges,
 }: CreateLessonDialogProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
@@ -125,6 +127,7 @@ const CreateLessonDialog = ({
 				return prevData;
 			});
 		}
+		setHasUnsavedChanges?.(true);
 	};
 
 	return (

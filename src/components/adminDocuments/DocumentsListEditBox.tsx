@@ -15,6 +15,7 @@ interface DocumentsListEditBoxProps {
 	removeDocOnClick: (document: Document) => void;
 	renameDocOnChange: (e: React.ChangeEvent<HTMLInputElement>, document: Document) => void;
 	setIsDocumentUpdated: React.Dispatch<React.SetStateAction<DocumentUpdateTrack[]>>;
+	setHasUnsavedChanges: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const DocumentsListEditBox = ({
@@ -26,6 +27,7 @@ const DocumentsListEditBox = ({
 	removeDocOnClick,
 	renameDocOnChange,
 	setIsDocumentUpdated,
+	setHasUnsavedChanges,
 }: DocumentsListEditBoxProps) => {
 	return (
 		<Box sx={{ marginBottom: '5rem' }}>
@@ -52,7 +54,7 @@ const DocumentsListEditBox = ({
 								<Typography
 									variant='body2'
 									sx={{
-										mr: '0.5rem',
+										'mr': '0.5rem',
 										':hover': {
 											textDecoration: 'underline',
 											cursor: 'pointer',
@@ -104,6 +106,7 @@ const DocumentsListEditBox = ({
 													}
 													return prevData;
 												});
+												setHasUnsavedChanges(true);
 											}}
 											disableBtn={document.name.trim() === ''}
 										/>

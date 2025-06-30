@@ -1,10 +1,23 @@
-import { Alert, Box, FormControl, IconButton, Link, MenuItem, Select, SelectChangeEvent, Snackbar, Tooltip, Typography } from '@mui/material';
+import {
+	Alert,
+	Box,
+	DialogContent,
+	FormControl,
+	IconButton,
+	Link,
+	MenuItem,
+	Select,
+	SelectChangeEvent,
+	Snackbar,
+	Tooltip,
+	Typography,
+} from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import theme from '../themes';
 import { Delete, Edit, FileCopy } from '@mui/icons-material';
 import { useParams } from 'react-router-dom';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
-import { FormEvent, useContext, useEffect, useState } from 'react';
+import { FormEvent, useContext, useEffect, useState, useCallback } from 'react';
 import { Lesson } from '../interfaces/lessons';
 import axios from '@utils/axiosInstance';
 import { QuestionInterface } from '../interfaces/question';
@@ -43,6 +56,7 @@ import NoContentBoxAdmin from '../components/layouts/noContentBox/NoContentBoxAd
 import AdminLessonEditPageEditQuestionDialog from '../components/forms/editQuestion/AdminLessonEditPageEditQuestionDialog';
 import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/CustomInfoMessageAlignedLeft';
 import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
+import { useBlocker, useNavigate } from 'react-router-dom';
 
 export interface QuestionUpdateTrack {
 	questionId: string;
@@ -130,6 +144,7 @@ const AdminLessonEditPage = () => {
 	const [isLessonUpdated, setIsLessonUpdated] = useState<boolean>(false);
 	const [isQuestionUpdated, setIsQuestionUpdated] = useState<QuestionUpdateTrack[]>([]);
 	const [isDocumentUpdated, setIsDocumentUpdated] = useState<DocumentUpdateTrack[]>([]);
+	const [hasUnsavedChanges, setHasUnsavedChanges] = useState<boolean>(false);
 
 	const [isQuestionCloneModalOpen, setIsQuestionCloneModalOpen] = useState<boolean[]>([]);
 	const [addNewQuestionModalOpen, setAddNewQuestionModalOpen] = useState<boolean>(false);
@@ -170,6 +185,7 @@ const AdminLessonEditPage = () => {
 		newRenameModalOpen[index] = !newRenameModalOpen[index];
 		setIsDocRenameModalOpen(newRenameModalOpen);
 		setIsLessonUpdated(true);
+		setHasUnsavedChanges(true);
 	};
 
 	const closeDocRenameModal = (index: number, document: Document) => {
@@ -201,6 +217,7 @@ const AdminLessonEditPage = () => {
 
 		setIsDocRenameModalOpen(newRenameModalOpen);
 		setIsLessonUpdated(true);
+		setHasUnsavedChanges(true);
 	};
 
 	// Define state for tracking edit modal visibility for each question
@@ -217,6 +234,62 @@ const AdminLessonEditPage = () => {
 		newEditModalOpen[index] = false;
 		setEditQuestionModalOpen(newEditModalOpen);
 	};
+
+	const [isPopStateNavigation, setIsPopStateNavigation] = useState(false);
+
+	useEffect(() => {
+		const handlePopState = () => {
+			setIsPopStateNavigation(true);
+		};
+		window.addEventListener('popstate', handlePopState);
+
+		return () => {
+			window.removeEventListener('popstate', handlePopState);
+		};
+	}, []);
+
+	const navigate = useNavigate();
+
+	const [allowNavigation, setAllowNavigation] = useState(false);
+	const [nextLocation, setNextLocation] = useState<string | null>(null);
+	const [pendingTx, setPendingTx] = useState<any>(null);
+
+	// Warn on browser/tab close or refresh
+	useEffect(() => {
+		const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+			if (hasUnsavedChanges) {
+				e.preventDefault();
+				e.returnValue = '';
+			}
+		};
+		window.addEventListener('beforeunload', handleBeforeUnload);
+		return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+	}, [hasUnsavedChanges]);
+
+	// Warn on in-app navigation (Data Router only) with custom dialog
+	useBlocker((tx) => {
+		if (allowNavigation || isPopStateNavigation) {
+			return false; // Allow navigation
+		}
+		if (hasUnsavedChanges) {
+			setPendingTx(tx);
+			setNextLocation(tx.nextLocation.pathname);
+			return true; // Block navigation
+		}
+		return false;
+	});
+
+	useEffect(() => {
+		if (allowNavigation && nextLocation) {
+			navigate(nextLocation);
+			setAllowNavigation(false);
+			setNextLocation(null);
+		}
+		// Reset popstate flag after transition completes
+		if (isPopStateNavigation) {
+			setIsPopStateNavigation(false);
+		}
+	}, [allowNavigation, nextLocation, navigate, isPopStateNavigation]);
 
 	useEffect(() => {
 		if (lessonId) {
@@ -602,6 +675,7 @@ const AdminLessonEditPage = () => {
 
 			setIsDocumentUpdated(documentUpdateData);
 			setIsLessonUpdated(false);
+			setHasUnsavedChanges(false);
 		} catch (error) {
 			console.error('Error during lesson update process:', error);
 		}
@@ -616,6 +690,7 @@ const AdminLessonEditPage = () => {
 
 		const updatedQuestionIds = updatedQuestions?.map((question) => question._id!);
 		setIsLessonUpdated(true);
+		setHasUnsavedChanges(true);
 
 		setIsQuestionUpdated((prevData: QuestionUpdateTrack[]) => prevData?.filter((data) => data.questionId !== question._id));
 
@@ -668,6 +743,7 @@ const AdminLessonEditPage = () => {
 		});
 
 		setIsLessonUpdated(true);
+		setHasUnsavedChanges(true);
 	};
 
 	return (
@@ -696,6 +772,8 @@ const AdminLessonEditPage = () => {
 					setTitleError={setTitleError}
 					setInstructionError={setInstructionError}
 					setQuestionError={setQuestionError}
+					hasUnsavedChanges={hasUnsavedChanges}
+					setHasUnsavedChanges={setHasUnsavedChanges}
 				/>
 			</Box>
 
@@ -732,6 +810,7 @@ const AdminLessonEditPage = () => {
 				setIsMinimumOptions={setIsMinimumOptions}
 				isMinimumOptions={isMinimumOptions}
 				isDuplicateOption={isDuplicateOption}
+				setHasUnsavedChanges={setHasUnsavedChanges}
 			/>
 
 			<Box sx={{ display: 'flex', width: '95%', justifyContent: 'center', marginTop: isEditMode ? '5rem' : '9.5rem' }}>
@@ -842,6 +921,7 @@ const AdminLessonEditPage = () => {
 											placeholder='Enter title'
 											onChange={(e) => {
 												setIsLessonUpdated(true);
+												setHasUnsavedChanges(true);
 												setTitleError(false);
 												setSingleLessonBeforeSave(() => {
 													return { ...singleLessonBeforeSave, title: e.target.value };
@@ -862,6 +942,7 @@ const AdminLessonEditPage = () => {
 													return { ...singleLessonBeforeSave, type: e.target.value };
 												});
 												setIsLessonUpdated(true);
+												setHasUnsavedChanges(true);
 											}}
 											size='small'
 											required
@@ -883,6 +964,7 @@ const AdminLessonEditPage = () => {
 										label='Cover Image'
 										onImageUploadLogic={(url) => {
 											setIsLessonUpdated(true);
+											setHasUnsavedChanges(true);
 
 											setSingleLessonBeforeSave(() => {
 												return { ...singleLessonBeforeSave, imageUrl: url };
@@ -894,6 +976,7 @@ const AdminLessonEditPage = () => {
 												imageUrl: e.target.value,
 											}));
 											setIsLessonUpdated(true);
+											setHasUnsavedChanges(true);
 										}}
 										imageUrlValue={singleLessonBeforeSave?.imageUrl}
 										imageFolderName='LessonImages'
@@ -905,6 +988,7 @@ const AdminLessonEditPage = () => {
 										removeImage={() => {
 											{
 												setIsLessonUpdated(true);
+												setHasUnsavedChanges(true);
 												setSingleLessonBeforeSave((prevData) => {
 													return {
 														...prevData,
@@ -922,6 +1006,7 @@ const AdminLessonEditPage = () => {
 										label='Lesson Video'
 										onVideoUploadLogic={(url) => {
 											setIsLessonUpdated(true);
+											setHasUnsavedChanges(true);
 
 											setSingleLessonBeforeSave(() => {
 												return { ...singleLessonBeforeSave, videoUrl: url };
@@ -933,6 +1018,7 @@ const AdminLessonEditPage = () => {
 												videoUrl: e.target.value,
 											}));
 											setIsLessonUpdated(true);
+											setHasUnsavedChanges(true);
 										}}
 										videoUrlValue={singleLessonBeforeSave?.videoUrl}
 										videoFolderName='LessonVideos'
@@ -945,6 +1031,7 @@ const AdminLessonEditPage = () => {
 										videoPlaceholderUrl='https://riggswealth.com/wp-content/uploads/2016/06/Riggs-Video-Placeholder.jpg'
 										removeVideo={() => {
 											setIsLessonUpdated(true);
+											setHasUnsavedChanges(true);
 											setSingleLessonBeforeSave((prevData) => {
 												return {
 													...prevData,
@@ -968,6 +1055,7 @@ const AdminLessonEditPage = () => {
 										setEditorContent(content);
 										setPrevEditorContent(content);
 										setIsLessonUpdated(true);
+										setHasUnsavedChanges(true);
 										setInstructionError(false);
 									}}
 									initialValue={singleLesson.text}
@@ -1011,6 +1099,7 @@ const AdminLessonEditPage = () => {
 												setIsLessonUpdated={setIsLessonUpdated}
 												setSingleLessonBeforeSave={setSingleLessonBeforeSave}
 												setIsQuestionUpdated={setIsQuestionUpdated}
+												setHasUnsavedChanges={setHasUnsavedChanges}
 											/>
 
 											<CustomSubmitButton
@@ -1041,6 +1130,7 @@ const AdminLessonEditPage = () => {
 												values={singleLessonBeforeSave?.questions || []}
 												onReorder={(newQuestions): void => {
 													setIsLessonUpdated(true);
+													setHasUnsavedChanges(true);
 													setSingleLessonBeforeSave((prevData) => {
 														return { ...prevData, questions: newQuestions, questionIds: newQuestions?.map((question) => question._id) };
 													});
@@ -1166,6 +1256,7 @@ const AdminLessonEditPage = () => {
 																						setCorrectAnswer={setCorrectAnswer}
 																						setIsDuplicateOption={setIsDuplicateOption}
 																						setIsMinimumOptions={setIsMinimumOptions}
+																						setHasUnsavedChanges={setHasUnsavedChanges}
 																					/>
 																				</Box>
 																				<Tooltip title='Remove' placement='top'>
@@ -1218,6 +1309,7 @@ const AdminLessonEditPage = () => {
 									label={singleLessonBeforeSave.type === 'Quiz' ? 'Quiz Materials' : 'Lesson Materials'}
 									onDocUploadLogic={(url, docName) => {
 										setIsLessonUpdated(true);
+										setHasUnsavedChanges(true);
 
 										setSingleLessonBeforeSave((prevData) => {
 											if (prevData && userId) {
@@ -1289,8 +1381,10 @@ const AdminLessonEditPage = () => {
 								isDocRenameModalOpen={isDocRenameModalOpen}
 								saveDocRename={saveDocRename}
 								setIsDocumentUpdated={setIsDocumentUpdated}
+								setHasUnsavedChanges={setHasUnsavedChanges}
 								removeDocOnClick={(document: Document) => {
 									setIsLessonUpdated(true);
+									setHasUnsavedChanges(true);
 									setSingleLessonBeforeSave((prevData) => {
 										if (prevData) {
 											const filteredDocuments = prevData?.documents?.filter((thisDoc) => thisDoc._id !== document._id);
@@ -1321,6 +1415,7 @@ const AdminLessonEditPage = () => {
 									});
 								}}
 								renameDocOnChange={(e: React.ChangeEvent<HTMLInputElement>, document: Document) => {
+									setHasUnsavedChanges(true);
 									setSingleLessonBeforeSave((prevData) => {
 										if (prevData) {
 											const updatedDocuments = prevData?.documents
@@ -1342,6 +1437,27 @@ const AdminLessonEditPage = () => {
 					</Box>
 				)}
 			</Box>
+
+			{/* CustomDialog for unsaved changes confirmation */}
+			<CustomDialog openModal={!!pendingTx} closeModal={() => setPendingTx(null)} title='Unsaved Changes' maxWidth='sm'>
+				<DialogContent>
+					<Typography variant='body2'>You have unsaved changes. Are you sure you want to leave this page?</Typography>
+					<Typography variant='body2' sx={{ mt: '0.75rem' }}>
+						If you leave this page, you will lose your unsaved changes.
+					</Typography>
+				</DialogContent>
+				<CustomDialogActions
+					onCancel={() => setPendingTx(null)}
+					onSubmit={() => {
+						if (nextLocation) {
+							setAllowNavigation(true);
+							setPendingTx(null);
+						}
+					}}
+					submitBtnText='Leave Page'
+					cancelBtnText='Stay'
+				/>
+			</CustomDialog>
 		</DashboardPagesLayout>
 	);
 };

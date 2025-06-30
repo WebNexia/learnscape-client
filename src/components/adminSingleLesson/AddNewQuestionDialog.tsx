@@ -42,6 +42,7 @@ interface AddNewQuestionDialogProps {
 	setIsLessonUpdated: React.Dispatch<React.SetStateAction<boolean>>;
 	setSingleLessonBeforeSave: React.Dispatch<React.SetStateAction<Lesson>>;
 	setIsQuestionUpdated: React.Dispatch<React.SetStateAction<QuestionUpdateTrack[]>>;
+	setHasUnsavedChanges: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const AddNewQuestionDialog = ({
@@ -51,6 +52,7 @@ const AddNewQuestionDialog = ({
 	setIsLessonUpdated,
 	setSingleLessonBeforeSave,
 	setIsQuestionUpdated,
+	setHasUnsavedChanges,
 }: AddNewQuestionDialogProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
@@ -122,10 +124,11 @@ const AddNewQuestionDialog = ({
 		setSelectedQuestions(newSelectedQuestions);
 
 		setIsLessonUpdated(true);
+		setHasUnsavedChanges(true);
 	};
 
 	const handleAddQuestions = () => {
-		const updatedSelectedQuestions = selectedQuestions.map(question => ({
+		const updatedSelectedQuestions = selectedQuestions.map((question) => ({
 			...question,
 			usedInLessons: question.usedInLessons ? [...question.usedInLessons, lessonId] : [lessonId],
 			updatedAt: new Date().toISOString(),
@@ -143,7 +146,7 @@ const AddNewQuestionDialog = ({
 		});
 
 		// Update questions in the context
-		updatedSelectedQuestions.forEach(question => {
+		updatedSelectedQuestions.forEach((question) => {
 			updateQuestion(question);
 		});
 
@@ -161,6 +164,7 @@ const AddNewQuestionDialog = ({
 		setSelectedQuestions([]);
 		setSelectedQuestionIds([]);
 		closeAddNewQuestionModal();
+		setHasUnsavedChanges(true);
 	};
 
 	const handleResetCheckboxes = () => {
