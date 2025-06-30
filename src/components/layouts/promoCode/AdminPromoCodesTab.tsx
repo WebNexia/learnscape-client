@@ -44,8 +44,6 @@ const AdminPromoCodesTab = () => {
 		const expireDate = new Date(promoCode.expirationDate!).toISOString().split('T')[0];
 
 		if (filterValue) {
-			if (filterValue === 'percentage' && promoCode.discountType === 'percentage') return true;
-			if (filterValue === 'fixed' && promoCode.discountType === 'fixed') return true;
 			if (filterValue === 'active' && promoCode.isActive) return true;
 			if (filterValue === 'inactive' && !promoCode.isActive) return true;
 			if (filterValue === 'unlimited usage' && promoCode.usageLimit === 0) return true;
@@ -179,7 +177,7 @@ const AdminPromoCodesTab = () => {
 									}}>
 									All Codes
 								</MenuItem>
-								{['Percentage', 'Fixed', 'Active', 'Inactive', 'Unlimited Usage', 'Limited Usage', 'Expired', 'Unexpired'].map((type) => (
+								{['Active', 'Inactive', 'Unlimited Usage', 'Limited Usage', 'Expired', 'Unexpired'].map((type) => (
 									<MenuItem
 										value={type.toLowerCase()}
 										key={type}
@@ -255,15 +253,13 @@ const AdminPromoCodesTab = () => {
 							isVerySmallScreen
 								? [
 										{ key: 'code', label: 'Promo Code' },
-										{ key: 'discountType', label: 'Discount Type' },
 										{ key: 'discountAmount', label: 'Discount Amount' },
 										{ key: 'isActive', label: 'Status' },
 										{ key: 'actions', label: 'Actions' },
 									]
 								: [
 										{ key: 'code', label: 'Promo Code' },
-										{ key: 'discountType', label: 'Discount Type' },
-										{ key: 'discountAmount', label: 'Discount Amount' },
+										{ key: 'discountAmount', label: 'Discount Percentage' },
 										{ key: 'expirationDate', label: 'Expiration Date' },
 										{ key: 'usageLimit', label: 'Usage Limit' },
 										{ key: 'isActive', label: 'Status' },
@@ -277,7 +273,6 @@ const AdminPromoCodesTab = () => {
 								return (
 									<TableRow key={promoCode._id}>
 										<CustomTableCell value={promoCode.code} />
-										<CustomTableCell value={promoCode.discountType.charAt(0).toUpperCase() + promoCode.discountType.slice(1)} />
 										<CustomTableCell value={promoCode.discountAmount} />
 										{!isVerySmallScreen && (
 											<CustomTableCell

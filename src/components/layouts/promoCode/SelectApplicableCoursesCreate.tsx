@@ -145,17 +145,17 @@ const SelectApplicableCoursesCreate = ({ newPromoCode, setNewPromoCode }: Select
 							<Box
 								key={course._id}
 								sx={{
-									display: 'flex',
-									justifyContent: 'flex-start',
-									alignItems: 'center',
-									width: '100%',
-									padding: '0.5rem',
-									transition: '0.5s',
-									borderRadius: '0.25rem',
+									'display': 'flex',
+									'justifyContent': 'flex-start',
+									'alignItems': 'center',
+									'width': '100%',
+									'padding': '0.5rem',
+									'transition': '0.5s',
+									'borderRadius': '0.25rem',
 									':hover': {
-										backgroundColor: theme.bgColor?.primary,
-										color: '#fff',
-										cursor: 'pointer',
+										'backgroundColor': theme.bgColor?.primary,
+										'color': '#fff',
+										'cursor': 'pointer',
 										'& .username': {
 											color: '#fff',
 										},

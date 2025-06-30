@@ -1,7 +1,6 @@
 export interface PromoCode {
 	_id: string;
 	code: string;
-	discountType: string;
 	discountAmount: number | undefined;
 	expirationDate: Date | null;
 	usageLimit: number | undefined;

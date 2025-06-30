@@ -40,7 +40,6 @@ const EditCodeDialog = ({ singleCode, isEditCodeModalOpen, closeCodeEditModal, i
 		const updatedCode = {
 			_id: singleCode?._id!,
 			code: singleCode?.code!,
-			discountType: singleCode?.discountType!,
 			discountAmount: singleCode?.discountAmount || 0,
 			expirationDate: singleCode?.expirationDate!,
 			usageLimit: singleCode?.usageLimit || 0,
@@ -95,60 +94,43 @@ const EditCodeDialog = ({ singleCode, isEditCodeModalOpen, closeCodeEditModal, i
 					editCode();
 				}}>
 				<DialogContent sx={{ mt: '-0.5rem' }}>
-					<Box>
-						<Typography variant='h6' sx={{ fontSize: '0.9rem', mb: '0.25rem' }}>
-							Code
-						</Typography>
-						<Tooltip title='Max 15 Characters' placement='top'>
-							<CustomTextField
-								value={singleCode?.code}
-								onChange={(e) => setSingleCode((prevData) => ({ ...prevData!, code: e.target.value.trim() }))}
-								InputProps={{
-									inputProps: {
-										maxLength: 15,
-									},
-								}}
-							/>
-						</Tooltip>
+					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+						<Box sx={{ width: '100%', mr: '1rem' }}>
+							<Typography variant='h6' sx={{ fontSize: '0.9rem', mb: '0.25rem' }}>
+								Code
+							</Typography>
+							<Tooltip title='Max 15 Characters' placement='top'>
+								<CustomTextField
+									value={singleCode?.code}
+									onChange={(e) => setSingleCode((prevData) => ({ ...prevData!, code: e.target.value.trim() }))}
+									InputProps={{
+										inputProps: {
+											maxLength: 15,
+										},
+									}}
+								/>
+							</Tooltip>
+						</Box>
+						<Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+							<Box sx={{ width: '100%' }}>
+								<Typography variant='h6' sx={{ fontSize: '0.9rem', mb: '0.25rem' }}>
+									Discount Percentage
+								</Typography>
+								<CustomTextField
+									value={singleCode?.discountAmount || undefined}
+									onChange={(e) => setSingleCode((prevData) => ({ ...prevData!, discountAmount: +e.target.value }))}
+									type='number'
+									InputLabelProps={{
+										sx: { fontSize: '0.8rem' },
+									}}
+								/>
+							</Box>
+						</Box>
 					</Box>
 
 					<SelectApplicableCoursesEdit singleCode={singleCode} setSingleCode={setSingleCode} />
 
-					<Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-						<Box sx={{ flex: 1, margin: '1rem 0rem 1.85rem 0rem' }}>
-							<Typography variant='h6' sx={{ fontSize: '0.9rem', mb: '0.25rem' }}>
-								Discount Type
-							</Typography>
-							<FormControl>
-								<Select
-									size='small'
-									value={singleCode?.discountType}
-									onChange={(e) => setSingleCode((prevData) => ({ ...prevData!, discountType: e.target.value }))}
-									required
-									sx={{ backgroundColor: theme.bgColor?.common, width: '11.25rem', mr: '0.75rem', fontSize: '0.85rem' }}>
-									{['Percentage', 'Fixed'].map((type) => (
-										<MenuItem value={type.toLowerCase()} key={type} sx={{ fontSize: '0.85rem' }}>
-											{type}
-										</MenuItem>
-									))}
-								</Select>
-							</FormControl>
-						</Box>
-						<Box sx={{ margin: '1rem 0rem', flex: 2 }}>
-							<Typography variant='h6' sx={{ fontSize: '0.9rem', mb: '0.25rem' }}>
-								Discount Amount
-							</Typography>
-							<CustomTextField
-								value={singleCode?.discountAmount || undefined}
-								onChange={(e) => setSingleCode((prevData) => ({ ...prevData!, discountAmount: +e.target.value }))}
-								type='number'
-								InputLabelProps={{
-									sx: { fontSize: '0.8rem' },
-								}}
-							/>
-						</Box>
-					</Box>
-					<Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+					<Box sx={{ display: 'flex', alignItems: 'center', width: '100%', mt: '1rem' }}>
 						<Box sx={{ flex: 1 }}>
 							<Typography variant='h6' sx={{ fontSize: '0.9rem', mb: '0.25rem' }}>
 								Expiration Date
@@ -211,6 +193,7 @@ const EditCodeDialog = ({ singleCode, isEditCodeModalOpen, closeCodeEditModal, i
 					{errorMsg && <CustomErrorMessage sx={{ width: '100%' }}>{errorMsg}</CustomErrorMessage>}
 				</DialogContent>
 				<CustomDialogActions
+					actionSx={{ mt: '-1.5rem', mr: '0.5rem' }}
 					onCancel={() => {
 						closeCodeEditModal(index);
 					}}
