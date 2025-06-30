@@ -164,12 +164,10 @@ const CreateEventDialog = ({
 				timeZoneName: 'short',
 			});
 
+			const adminName = user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : user?.username || 'Admin';
 			const notificationData = {
-				title: 'Etkinliğe Eklendiniz',
-				message: `${user?.username} sizi yeni bir etkinliğe ekledi: "${truncateText(
-					newEvent.title,
-					20
-				)}". Etkinlik ${startDate} tarihinde, saat ${startTime} başlayacak.`,
+				title: 'Added to Event',
+				message: `${adminName} has added you to a new event: "${truncateText(newEvent.title, 20)}". The event will start on ${startDate} at ${startTime}.`,
 				isRead: false,
 				timestamp: serverTimestamp(),
 				type: 'AddToEvent',
@@ -177,7 +175,7 @@ const CreateEventDialog = ({
 				eventId: res.data.data._id,
 			};
 
-			if (newEvent.isAllLearnersSelected || newEvent.isPublic) {
+			if (newEvent.isAllLearnersSelected) {
 				for (const id of allFirebaseUserIds) {
 					const notificationRef = collection(db, 'notifications', id, 'userNotifications');
 					await addDoc(notificationRef, notificationData);
@@ -186,6 +184,28 @@ const CreateEventDialog = ({
 				for (const participant of allCoursesParticipantsInfo) {
 					const notificationRef = collection(db, 'notifications', participant.firebaseUserId, 'userNotifications');
 					await addDoc(notificationRef, notificationData);
+				}
+			}
+
+			if (newEvent.isPublic) {
+				const allFirebaseUserIds: string[] = sortedUsersData
+					?.filter((filteredUser) => filteredUser._id !== user?._id)
+					?.map((mappedUser) => mappedUser.firebaseUserId);
+
+				const adminName = user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : user?.username || 'Admin';
+				const publicEventNotification = {
+					title: 'New Public Event',
+					message: `${adminName} has added a public event: "${newEvent.title}". It will take place on ${startDate} at ${startTime}.`,
+					isRead: false,
+					timestamp: serverTimestamp(),
+					type: 'PublicEvent',
+					userImageUrl: user?.imageUrl,
+					eventId: res.data.data._id,
+				};
+
+				for (const id of allFirebaseUserIds) {
+					const notificationRef = collection(db, 'notifications', id, 'userNotifications');
+					await addDoc(notificationRef, publicEventNotification);
 				}
 			}
 		} catch (error) {

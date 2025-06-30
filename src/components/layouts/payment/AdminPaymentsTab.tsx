@@ -120,10 +120,15 @@ const AdminPaymentsTab = () => {
 				display: 'flex',
 				flexDirection: 'column',
 				alignItems: 'center',
-				padding: '2rem',
 				width: '100%',
 			}}>
-			<Box sx={{ display: 'flex', justifyContent: isMobileSize ? 'center' : 'space-between', width: '100%' }}>
+			<Box
+				sx={{
+					display: 'flex',
+					justifyContent: isMobileSize ? 'center' : 'space-between',
+					padding: isMobileSizeSmall ? '1rem 1rem 0.5rem 1rem' : '2rem 2rem 1rem 2rem',
+					width: '100%',
+				}}>
 				<Box sx={{ display: 'flex' }}>
 					<Box sx={{ mr: '1rem' }}>
 						<FormControl>
@@ -246,8 +251,9 @@ const AdminPaymentsTab = () => {
 					display: 'flex',
 					flexDirection: 'column',
 					alignItems: 'center',
-					padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : isMobileSize ? '0rem 0rem 2rem 0rem' : '0rem 1rem 2rem 1rem',
+					padding: '0rem 2rem 2rem 2rem',
 					width: '100%',
+					mt: '1rem',
 				}}>
 				<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>
 					<CustomTableHead<Payment>

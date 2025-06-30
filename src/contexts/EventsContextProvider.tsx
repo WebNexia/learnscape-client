@@ -139,7 +139,7 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 	};
 
 	const { isLoading: isPublicEventsLoading, isError: isPublicEventsError } = useQuery(['allPublicEvents', orgId], () => fetchPublicEvents(), {
-		enabled: !!orgId && !isLoaded,
+		enabled: !isAuthenticated,
 	});
 
 	if (isLoading || isPublicEventsLoading) {

@@ -20,7 +20,7 @@ import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import dayjs, { Dayjs } from 'dayjs';
 import { Cancel, Search } from '@mui/icons-material';
 import { User } from '../../../interfaces/user';
-import { useContext, useState } from 'react';
+import { useContext, useState, useRef, useEffect } from 'react';
 import { UsersContext } from '../../../contexts/UsersContextProvider';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 import { CoursesContext } from '../../../contexts/CoursesContextProvider';
@@ -83,7 +83,19 @@ const EditEventDialog = ({
 	const [isEventUpdated, setIsEventUpdated] = useState<boolean>(false);
 	const [enterCoverImageUrl, setEnterCoverImageUrl] = useState<boolean>(true);
 
+	const originalIsPublic = useRef<boolean>(false);
+
+	// Store the original isPublic value when the dialog was opened
+	useEffect(() => {
+		if (editEventModalOpen && selectedEvent) {
+			originalIsPublic.current = selectedEvent.isPublic;
+		}
+	}, [editEventModalOpen]);
+
 	const editEvent = async () => {
+		// Use the original isPublic value from when the dialog was opened
+		const wasPublic = originalIsPublic.current;
+		const previousAttendeeIds = selectedEvent?.allAttendeesIds || [];
 		const participants = [...(selectedEvent?.attendees || [])]; // Start with selected attendees
 		let allParticipantsIds: string[] = [];
 		let allCoursesParticipantsInfo: AttendeeInfo[] = [];
@@ -191,40 +203,46 @@ const EditEventDialog = ({
 				minute: '2-digit',
 			});
 
-			const notificationData = {
-				title: 'Added to Event',
-				message: `${user?.username} added a new event to your calendar: "${truncateText(
-					selectedEvent?.title!,
-					20
-				)}". It is scheduled for ${startDate} at ${startTime} `,
-				isRead: false,
-				timestamp: serverTimestamp(),
-				type: 'AddToEvent',
-				userImageUrl: user?.imageUrl,
-				eventId: selectedEvent?._id,
-			};
+			// Notify all users only if event is being made public now
+			if (!wasPublic && selectedEvent?.isPublic) {
+				const allFirebaseUserIds: string[] = sortedUsersData
+					?.filter((filteredUser) => filteredUser._id !== user?._id)
+					?.map((mappedUser) => mappedUser.firebaseUserId);
 
-			if (isEventUpdated) {
-				// Step 1: Collect all firebaseUserId of participants who might need a notification
-				const participantIds = allCoursesParticipantsInfo.map((participant) => participant.firebaseUserId);
+				const adminName = user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : user?.username || 'Admin';
+				const publicEventNotification = {
+					title: 'New Public Event',
+					message: `${adminName} has added a public event: "${selectedEvent.title}". It will take place on ${startDate} at ${startTime}.`,
+					isRead: false,
+					timestamp: serverTimestamp(),
+					type: 'PublicEvent',
+					userImageUrl: user?.imageUrl,
+					eventId: selectedEvent._id,
+				};
 
-				// Step 2: Fetch all existing notifications for the event in a single batch
-				const notificationSnapshots = await Promise.all(
-					participantIds.map((firebaseUserId) =>
-						getDocs(query(collection(db, 'notifications', firebaseUserId, 'userNotifications'), where('eventId', '==', selectedEvent?._id)))
-					)
-				);
+				for (const id of allFirebaseUserIds) {
+					const notificationRef = collection(db, 'notifications', id, 'userNotifications');
+					await addDoc(notificationRef, publicEventNotification);
+				}
+			}
 
-				// Step 3: Identify participants who have not yet received the notification
-				const unNotifiedParticipants = allCoursesParticipantsInfo.filter((_, index) => notificationSnapshots[index].empty);
-
-				// Step 4: Send notifications only to unnotified participants
-				await Promise.all(
-					unNotifiedParticipants.map((participant) => {
-						const notificationRef = collection(db, 'notifications', participant.firebaseUserId, 'userNotifications');
-						return addDoc(notificationRef, notificationData);
-					})
-				);
+			// Notify newly added participants
+			const newAttendeeIds = allParticipantsIds;
+			const newlyAddedIds = newAttendeeIds.filter((id) => !previousAttendeeIds.includes(id));
+			const adminName = user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : user?.username || 'Admin';
+			for (const participant of allCoursesParticipantsInfo) {
+				if (newlyAddedIds.includes(participant._id)) {
+					const notificationRef = collection(db, 'notifications', participant.firebaseUserId, 'userNotifications');
+					await addDoc(notificationRef, {
+						title: 'Added to Event',
+						message: `${adminName} has added you to the event: "${truncateText(selectedEvent?.title || '', 20)}". The event will start on ${startDate} at ${startTime}.`,
+						isRead: false,
+						timestamp: serverTimestamp(),
+						type: 'AddToEvent',
+						userImageUrl: user?.imageUrl,
+						eventId: selectedEvent?._id,
+					});
+				}
 			}
 
 			setEditEventModalOpen(false);
@@ -991,7 +1009,7 @@ const EditEventDialog = ({
 					closeModal={() => setDeleteEventModalOpen(false)}
 					title='Delete Event'
 					content='Are you sure you want to delete the event?'
-					maxWidth='sm'>
+					maxWidth='xs'>
 					<CustomDialogActions deleteBtn onCancel={() => setDeleteEventModalOpen(false)} onDelete={deleteEvent} />
 				</CustomDialog>
 			</form>
