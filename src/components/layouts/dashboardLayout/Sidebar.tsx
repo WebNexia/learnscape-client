@@ -15,25 +15,21 @@ import {
 	Settings,
 } from '@mui/icons-material';
 import SidebarBtn from './SidebarBtn';
-import { useNavigate, useParams } from 'react-router-dom';
-import { useContext, useState } from 'react';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { useContext } from 'react';
 import { PageName, Roles } from '../../../interfaces/enums';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
-
 
 const Sidebar = () => {
 	const navigate = useNavigate();
 	const { id, userId } = useParams();
 	const { user } = useContext(UserAuthContext);
+	const location = useLocation();
 
-	const currentPage = window.location.pathname.includes('admin')
-		? window.location.pathname.split('/')[2].charAt(0).toUpperCase() + window.location.pathname.split('/')[2].slice(1)
-		: window.location.pathname.split('/')[1].charAt(0).toUpperCase() + window.location.pathname.split('/')[1].slice(1);
+	// Determine the current page from the route
+	const currentPath = location.pathname;
 
-	const [selectedPage, setSelectedPage] = useState<string>(currentPage);
-
-	const navigateWithPage = (pageName: string, path: string) => {
-		setSelectedPage(pageName);
+	const navigateWithPage = (path: string) => {
 		navigate(path);
 	};
 
@@ -59,7 +55,6 @@ const Sidebar = () => {
 					marginBottom: '0.5rem',
 				}}>
 				<Typography variant='h1' sx={{ color: theme.textColor?.common.main, fontSize: '1.5rem' }}>
-					{/* {organisation?.orgName} */}
 					Kaizenglish
 				</Typography>
 			</Box>
@@ -97,74 +92,74 @@ const Sidebar = () => {
 							<SidebarBtn
 								btnText='Dashboard'
 								IconName={DashboardIcon}
-								onClick={() => navigateWithPage(PageName.ADMIN_DASHBOARD, `/admin/dashboard/user/${id || userId}`)}
-								selectedPage={selectedPage}
+								onClick={() => navigateWithPage(`/admin/dashboard/user/${id || userId}`)}
+								active={currentPath.includes('/admin/dashboard') || currentPath.includes('/admin/contact-requests')}
 							/>
 							<SidebarBtn
 								btnText='Users'
 								IconName={PeopleAltOutlined}
-								onClick={() => navigateWithPage(PageName.ADMIN_USERS, `/admin/users/user/${id || userId}`)}
-								selectedPage={selectedPage}
+								onClick={() => navigateWithPage(`/admin/users/user/${id || userId}`)}
+								active={currentPath.includes('/admin/users')}
 							/>
 							<SidebarBtn
 								btnText='Courses'
 								IconName={LibraryBooks}
-								onClick={() => navigateWithPage(PageName.ADMIN_COURSES, `/admin/courses/user/${id || userId}`)}
-								selectedPage={selectedPage}
+								onClick={() => navigateWithPage(`/admin/courses/user/${id || userId}`)}
+								active={currentPath.includes('/admin/courses') || currentPath.includes('/admin/course-edit')}
 							/>
 							<SidebarBtn
 								btnText='Lessons'
 								IconName={AssignmentIndRounded}
-								onClick={() => navigateWithPage(PageName.ADMIN_LESSONS, `/admin/lessons/user/${id || userId}`)}
-								selectedPage={selectedPage}
+								onClick={() => navigateWithPage(`/admin/lessons/user/${id || userId}`)}
+								active={currentPath.includes('/admin/lessons') || currentPath.includes('/admin/lesson-edit')}
 							/>
 							<SidebarBtn
 								btnText='Questions'
 								IconName={QuizOutlined}
-								onClick={() => navigateWithPage(PageName.ADMIN_QUESTIONS, `/admin/questions/user/${id || userId}`)}
-								selectedPage={selectedPage}
+								onClick={() => navigateWithPage(`/admin/questions/user/${id || userId}`)}
+								active={currentPath.includes('/admin/questions')}
 							/>
 							<SidebarBtn
 								btnText='Documents'
 								IconName={FilePresent}
-								onClick={() => navigateWithPage(PageName.ADMIN_DOCUMENTS, `/admin/documents/user/${id || userId}`)}
-								selectedPage={selectedPage}
+								onClick={() => navigateWithPage(`/admin/documents/user/${id || userId}`)}
+								active={currentPath.includes('/admin/documents')}
 							/>
 							<SidebarBtn
 								btnText='Submissions'
 								IconName={LibraryAddCheck}
-								onClick={() => navigateWithPage(PageName.ADMIN_QUIZ_SUBMISSIONS, `/admin/submissions/user/${id || userId}`)}
-								selectedPage={selectedPage}
+								onClick={() => navigateWithPage(`/admin/submissions/user/${id || userId}`)}
+								active={currentPath.includes('/admin/submissions')}
 							/>
 							<SidebarBtn
 								btnText='Payments'
 								IconName={CreditCard}
-								onClick={() => navigateWithPage(PageName.ADMIN_PAYMENTS, `/admin/payments/user/${id || userId}`)}
-								selectedPage={selectedPage}
+								onClick={() => navigateWithPage(`/admin/payments/user/${id || userId}`)}
+								active={currentPath.includes('/admin/payments')}
 							/>
 							<SidebarBtn
 								btnText='Calendar'
 								IconName={CalendarMonth}
-								onClick={() => navigateWithPage(PageName.CALENDAR, `/admin/calendar/user/${id || userId}`)}
-								selectedPage={selectedPage}
+								onClick={() => navigateWithPage(`/admin/calendar/user/${id || userId}`)}
+								active={currentPath.includes('/admin/calendar')}
 							/>
 							<SidebarBtn
 								btnText='Messages'
 								IconName={Email}
-								onClick={() => navigateWithPage(PageName.ADMIN_MESSAGES, `/admin/messages/user/${id || userId}`)}
-								selectedPage={selectedPage}
+								onClick={() => navigateWithPage(`/admin/messages/user/${id || userId}`)}
+								active={currentPath.includes('/admin/messages')}
 							/>
 							<SidebarBtn
 								btnText='Community'
 								IconName={Groups}
-								onClick={() => navigateWithPage(PageName.ADMIN_COMMUNITY, `/admin/community/user/${id || userId}`)}
-								selectedPage={selectedPage}
+								onClick={() => navigateWithPage(`/admin/community/user/${id || userId}`)}
+								active={currentPath.includes('/admin/community')}
 							/>
 							<SidebarBtn
 								btnText='Settings'
 								IconName={Settings}
-								onClick={() => navigateWithPage(PageName.ADMIN_SETTINGS, `/admin/settings/user/${id || userId}`)}
-								selectedPage={selectedPage}
+								onClick={() => navigateWithPage(`/admin/settings/user/${id || userId}`)}
+								active={currentPath.includes('/admin/settings')}
 							/>
 						</>
 					)}
@@ -173,46 +168,44 @@ const Sidebar = () => {
 							<SidebarBtn
 								btnText='Dashboard'
 								IconName={DashboardIcon}
-								onClick={() => navigateWithPage(PageName.DASHBOARD, `/dashboard/user/${id || userId}`)}
-								selectedPage={selectedPage}
+								onClick={() => navigateWithPage(`/dashboard/user/${id || userId}`)}
+								active={currentPath.includes('/dashboard')}
 							/>
 							<SidebarBtn
 								btnText='Courses'
 								IconName={LibraryBooks}
-								onClick={() => navigateWithPage(PageName.COURSES, `/courses/user/${id || userId}`)}
-								selectedPage={selectedPage}
+								onClick={() => navigateWithPage(`/courses/user/${id || userId}`)}
+								active={currentPath.includes('/courses')}
 							/>
-
 							<SidebarBtn
 								btnText='Submissions'
 								IconName={LibraryAddCheck}
-								onClick={() => navigateWithPage(PageName.SUBMISSIONS, `/submissions/user/${id || userId}`)}
-								selectedPage={selectedPage}
+								onClick={() => navigateWithPage(`/submissions/user/${id || userId}`)}
+								active={currentPath.includes('/submissions')}
 							/>
-
 							<SidebarBtn
 								btnText='Calendar'
 								IconName={CalendarMonth}
-								onClick={() => navigateWithPage(PageName.CALENDAR, `/calendar/user/${id || userId}`)}
-								selectedPage={selectedPage}
+								onClick={() => navigateWithPage(`/calendar/user/${id || userId}`)}
+								active={currentPath.includes('/calendar')}
 							/>
 							<SidebarBtn
 								btnText='Messages'
 								IconName={Email}
-								onClick={() => navigateWithPage(PageName.MESSAGES, `/messages/user/${id || userId}`)}
-								selectedPage={selectedPage}
+								onClick={() => navigateWithPage(`/messages/user/${id || userId}`)}
+								active={currentPath.includes('/messages')}
 							/>
 							<SidebarBtn
 								btnText='Community'
 								IconName={Groups}
-								onClick={() => navigateWithPage(PageName.COMMUNITY, `/community/user/${id || userId}`)}
-								selectedPage={selectedPage}
+								onClick={() => navigateWithPage(`/community/user/${id || userId}`)}
+								active={currentPath.includes('/community')}
 							/>
 							<SidebarBtn
 								btnText='Settings'
 								IconName={Settings}
-								onClick={() => navigateWithPage(PageName.SETTINGS, `/settings/user/${id || userId}`)}
-								selectedPage={selectedPage}
+								onClick={() => navigateWithPage(`/settings/user/${id || userId}`)}
+								active={currentPath.includes('/settings')}
 							/>
 						</>
 					)}

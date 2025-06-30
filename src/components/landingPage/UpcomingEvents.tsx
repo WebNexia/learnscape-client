@@ -27,6 +27,7 @@ import CustomTextField from '../../components/forms/customFields/CustomTextField
 import ReCAPTCHA from 'react-google-recaptcha';
 import CustomDialogActions from '../../components/layouts/dialog/CustomDialogActions';
 import CustomErrorMessage from '../../components/forms/customFields/CustomErrorMessage';
+import logo from '../../assets/logo.png';
 
 export default function UpcomingEvents() {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -239,9 +240,14 @@ export default function UpcomingEvents() {
 								<CardMedia
 									component='img'
 									height={IMAGE_HEIGHT}
-									image={event.coverImageUrl}
+									image={event.coverImageUrl || logo}
 									alt={event.title}
-									sx={{ objectFit: 'cover', borderTopLeftRadius: 16, borderTopRightRadius: 16, height: IMAGE_HEIGHT }}
+									sx={{
+										objectFit: event.coverImageUrl ? 'cover' : 'contain',
+										borderTopLeftRadius: 16,
+										borderTopRightRadius: 16,
+										height: IMAGE_HEIGHT,
+									}}
 								/>
 								<CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
 									<Box display='flex' alignItems='center' mb={1}>
@@ -353,9 +359,9 @@ export default function UpcomingEvents() {
 								<CardMedia
 									component='img'
 									height='120'
-									image={event.coverImageUrl}
+									image={event.coverImageUrl || logo}
 									alt={event.title}
-									sx={{ objectFit: 'cover', borderTopLeftRadius: 16, borderTopRightRadius: 16 }}
+									sx={{ objectFit: event.coverImageUrl ? 'cover' : 'contain', borderTopLeftRadius: 16, borderTopRightRadius: 16 }}
 								/>
 								<CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
 									<Box display='flex' alignItems='center' mb={1}>
