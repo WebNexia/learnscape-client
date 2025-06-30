@@ -984,7 +984,7 @@ const AdminLessonEditPage = () => {
 										setEnterImageUrl={setEnterImageUrl}
 									/>
 									<ImageThumbnail
-										imgSource={singleLessonBeforeSave?.imageUrl || 'https://directmobilityonline.co.uk/assets/img/noimage.png'}
+										imgSource={singleLessonBeforeSave?.imageUrl || 'https://placehold.co/500x400/e2e8f0/64748b?text=No+Image'}
 										removeImage={() => {
 											{
 												setIsLessonUpdated(true);
@@ -1028,7 +1028,7 @@ const AdminLessonEditPage = () => {
 									<VideoThumbnail
 										videoPlayCondition={singleLessonBeforeSave?.videoUrl}
 										videoUrl={singleLessonBeforeSave?.videoUrl}
-										videoPlaceholderUrl='https://riggswealth.com/wp-content/uploads/2016/06/Riggs-Video-Placeholder.jpg'
+										videoPlaceholderUrl='https://placehold.co/500x400/e2e8f0/64748b?text=No+Video'
 										removeVideo={() => {
 											setIsLessonUpdated(true);
 											setHasUnsavedChanges(true);

@@ -75,7 +75,7 @@ const CreateLessonDialog = ({
 			title,
 			type,
 			isActive: false,
-			imageUrl: 'https://directmobilityonline.co.uk/assets/img/noimage.png',
+			imageUrl: 'https://placehold.co/500x400/e2e8f0/64748b?text=No+Image',
 			videoUrl: '',
 			text: '',
 			questionIds: [],

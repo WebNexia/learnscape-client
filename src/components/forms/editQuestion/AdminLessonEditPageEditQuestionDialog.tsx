@@ -233,7 +233,7 @@ const AdminLessonEditPageEditQuestionDialog = ({
 		}
 	};
 
-	const imagePlaceHolderUrl = 'https://directmobilityonline.co.uk/assets/img/noimage.png';
+	const imagePlaceHolderUrl = 'https://placehold.co/600x400/e2e8f0/64748b?text=No+Image';
 
 	const handleResetQuestion = () => {
 		setEditorContent(questionBeforeSave.question);
@@ -317,7 +317,7 @@ const AdminLessonEditPageEditQuestionDialog = ({
 								<VideoThumbnail
 									videoPlayCondition={question.videoUrl !== ''}
 									videoUrl={question.videoUrl}
-									videoPlaceholderUrl='https://www.47pitches.com/contents/images/no-video.jpg'
+									videoPlaceholderUrl='https://placehold.co/600x400/e2e8f0/64748b?text=No+Video'
 									removeVideo={() => handleInputChange('videoUrl', '')}
 								/>
 							</Box>

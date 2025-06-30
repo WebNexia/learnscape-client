@@ -120,7 +120,7 @@ const CourseDetailsEditBox = ({
 					}}>
 					<Box sx={{ textAlign: 'center' }}>
 						<img
-							src={singleCourse?.imageUrl || 'https://directmobilityonline.co.uk/assets/img/noimage.png'}
+							src={singleCourse?.imageUrl || 'https://placehold.co/500x400/e2e8f0/64748b?text=No+Image'}
 							alt='course_img'
 							height='115rem'
 							style={{
