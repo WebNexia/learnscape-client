@@ -33,6 +33,8 @@ interface CoursePaperProps {
 	setIsNoChapterMsgOpen: React.Dispatch<React.SetStateAction<boolean>>;
 	setChapterLessonDataBeforeSave: React.Dispatch<React.SetStateAction<ChapterLessonData[]>>;
 	setDeletedChapterIds: React.Dispatch<React.SetStateAction<string[]>>;
+	hasUnsavedChanges: boolean;
+	setHasUnsavedChanges: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const CoursePaper = ({
@@ -54,6 +56,8 @@ const CoursePaper = ({
 	handleCourseUpdate,
 	setIsNoChapterMsgOpen,
 	setDeletedChapterIds,
+	hasUnsavedChanges,
+	setHasUnsavedChanges,
 }: CoursePaperProps) => {
 	const navigate = useNavigate();
 	const vertical = 'top';
@@ -72,6 +76,7 @@ const CoursePaper = ({
 		setResetChanges(!resetChanges);
 		setDeletedChapterIds([]);
 		resetImageUpload();
+		setHasUnsavedChanges(false);
 	};
 
 	const [isCloning, setIsCloning] = useState<boolean>(false);
@@ -204,6 +209,7 @@ const CoursePaper = ({
 								{isEditMode ? (
 									<Box>
 										<CustomSubmitButton
+											unsaved={hasUnsavedChanges}
 											sx={{ padding: '0 0.75rem' }}
 											onClick={(e) => {
 												if (
@@ -214,6 +220,7 @@ const CoursePaper = ({
 												) {
 													setIsEditMode(false);
 													handleCourseUpdate(e as FormEvent<Element>);
+													setHasUnsavedChanges(false);
 												} else {
 													setIsMissingField(true);
 													setIsMissingFieldMsgOpen(true);

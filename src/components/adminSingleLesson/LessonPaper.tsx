@@ -1,4 +1,4 @@
-import { Alert, Box, Button,  IconButton, Paper, Snackbar, Tooltip, Typography } from '@mui/material';
+import { Alert, Box, Button, IconButton, Paper, Snackbar, Tooltip, Typography } from '@mui/material';
 import theme from '../../themes';
 import { Edit, Info, KeyboardBackspaceOutlined, PublishedWithChanges, Unpublished } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
@@ -33,6 +33,8 @@ interface LessonPaperProps {
 	setTitleError: React.Dispatch<React.SetStateAction<boolean>>;
 	setInstructionError: React.Dispatch<React.SetStateAction<boolean>>;
 	setQuestionError: React.Dispatch<React.SetStateAction<boolean>>;
+	hasUnsavedChanges: boolean;
+	setHasUnsavedChanges: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const LessonPaper = ({
@@ -57,6 +59,8 @@ const LessonPaper = ({
 	setTitleError,
 	setInstructionError,
 	setQuestionError,
+	hasUnsavedChanges,
+	setHasUnsavedChanges,
 }: LessonPaperProps) => {
 	const navigate = useNavigate();
 	const vertical = 'top';
@@ -171,6 +175,7 @@ const LessonPaper = ({
 								{isEditMode ? (
 									<Box>
 										<CustomSubmitButton
+											unsaved={hasUnsavedChanges}
 											sx={{ padding: '0 0.75rem', backgroundColor: theme.bgColor?.greenPrimary }}
 											onClick={(e) => {
 												if (singleLessonBeforeSave?.title.trim() !== '' && singleLessonBeforeSave?.title !== '') {
@@ -179,6 +184,7 @@ const LessonPaper = ({
 													resetImageUpload();
 													resetVideoUpload();
 													resetEnterImageVideoUrl();
+													setHasUnsavedChanges(false);
 												} else {
 													setIsMissingFieldMsgOpen(true);
 													if (!singleLessonBeforeSave?.title.trim()) {
@@ -209,6 +215,7 @@ const LessonPaper = ({
 												setInstructionError(false);
 												setQuestionError(false);
 												setTitleError(false);
+												setHasUnsavedChanges(false);
 											}}
 											sx={{ color: theme.textColor?.common.main, borderColor: theme.textColor?.common.main, padding: '0 0.75rem' }}>
 											Cancel

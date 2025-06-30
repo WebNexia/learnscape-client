@@ -71,6 +71,7 @@ interface CreateQuestionDialogProps {
 	handleOptionChange?: (index: number, value: string) => void;
 	setQuestionsUpdated?: React.Dispatch<React.SetStateAction<boolean>>;
 	setIsMinimumOptions: React.Dispatch<React.SetStateAction<boolean>>;
+	setHasUnsavedChanges?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const CreateQuestionDialog = ({
@@ -95,6 +96,7 @@ const CreateQuestionDialog = ({
 	addOption,
 	handleOptionChange,
 	setIsMinimumOptions,
+	setHasUnsavedChanges,
 }: CreateQuestionDialogProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
@@ -379,6 +381,7 @@ const CreateQuestionDialog = ({
 		resetVideoUpload();
 		setEnterVideoUrl(true);
 		setEnterImageUrl(true);
+		setHasUnsavedChanges?.(true);
 	};
 
 	const returnBlankValues = (pair: BlankValuePair) => {
@@ -402,8 +405,8 @@ const CreateQuestionDialog = ({
 			maxWidth='lg'>
 			<form onSubmit={(e) => e.preventDefault()} style={{ display: 'flex', flexDirection: 'column' }}>
 				<DialogContent sx={{ mt: '-4rem' }}>
-					<Box sx={{display:'flex',flexDirection:'column', width:'100%', alignItems:'flex-end', mb:'0.75rem'}}>
-						<Typography variant='body2' sx={{ mb: '0.5rem', fontSize:'0.95rem' }}>
+					<Box sx={{ display: 'flex', flexDirection: 'column', width: '100%', alignItems: 'flex-end', mb: '0.75rem' }}>
+						<Typography variant='body2' sx={{ mb: '0.5rem', fontSize: '0.95rem' }}>
 							Type
 						</Typography>
 						<FormControl sx={{ mb: '1rem', width: '15rem', backgroundColor: theme.bgColor?.common }}>

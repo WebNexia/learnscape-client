@@ -1,7 +1,7 @@
 import { Box, DialogContent, Typography } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
-import { FormEvent, useContext, useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { FormEvent, useContext, useEffect, useState, useCallback } from 'react';
+import { useParams, useBlocker, useNavigate } from 'react-router-dom';
 import axios from '@utils/axiosInstance';
 import { CoursesContext } from '../contexts/CoursesContextProvider';
 import { Price, SingleCourse } from '../interfaces/course';
@@ -67,6 +67,7 @@ export class ChapterLessonDataImpl implements ChapterLessonData {
 const AdminCourseEditPage = () => {
 	const { userId, courseId } = useParams();
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
+	const navigate = useNavigate();
 
 	const { orgId } = useContext(OrganisationContext);
 	const { addNewLesson, updateLessons } = useContext(LessonsContext);
@@ -94,9 +95,63 @@ const AdminCourseEditPage = () => {
 
 	const [isChapterUpdated, setIsChapterUpdated] = useState<ChapterUpdateTrack[]>([]);
 	const [isDocumentUpdated, setIsDocumentUpdated] = useState<DocumentUpdateTrack[]>([]);
+	const [hasUnsavedChanges, setHasUnsavedChanges] = useState<boolean>(false);
 
 	const [isExpiredDialogOpen, setIsExpiredDialogOpen] = useState(false);
 	const [pendingCourseUpdate, setPendingCourseUpdate] = useState<null | (() => void)>(null);
+	const [pendingTx, setPendingTx] = useState<any>(null);
+	const [allowNavigation, setAllowNavigation] = useState(false);
+	const [nextLocation, setNextLocation] = useState<string | null>(null);
+
+	const [isPopStateNavigation, setIsPopStateNavigation] = useState(false);
+
+	useEffect(() => {
+		const handlePopState = () => {
+			setIsPopStateNavigation(true);
+		};
+		window.addEventListener('popstate', handlePopState);
+
+		return () => {
+			window.removeEventListener('popstate', handlePopState);
+		};
+	}, []);
+
+	// Warn on browser/tab close or refresh
+	useEffect(() => {
+		const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+			if (hasUnsavedChanges) {
+				e.preventDefault();
+				e.returnValue = '';
+			}
+		};
+		window.addEventListener('beforeunload', handleBeforeUnload);
+		return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+	}, [hasUnsavedChanges]);
+
+	// Warn on in-app navigation (Data Router only) with custom dialog
+	useBlocker((tx) => {
+		if (allowNavigation || isPopStateNavigation) {
+			return false; // Allow navigation
+		}
+		if (hasUnsavedChanges) {
+			setPendingTx(tx);
+			setNextLocation(tx.nextLocation.pathname);
+			return true; // Block navigation
+		}
+		return false;
+	});
+
+	useEffect(() => {
+		if (allowNavigation && nextLocation) {
+			navigate(nextLocation);
+			setAllowNavigation(false);
+			setNextLocation(null);
+		}
+		// Reset popstate flag after transition completes
+		if (isPopStateNavigation) {
+			setIsPopStateNavigation(false);
+		}
+	}, [allowNavigation, nextLocation, navigate, isPopStateNavigation]);
 
 	const toggleDocRenameModal = (index: number, document: Document) => {
 		const newRenameModalOpen = [...isDocRenameModalOpen];
@@ -159,6 +214,8 @@ const AdminCourseEditPage = () => {
 	};
 
 	const closeCreateChapterModal = () => setIsChapterCreateModalOpen(false);
+
+	console.log('pendingTx:', pendingTx);
 
 	useEffect(() => {
 		if (courseId) {
@@ -575,6 +632,8 @@ const AdminCourseEditPage = () => {
 					handleCourseUpdate={handleCourseUpdate}
 					setChapterLessonDataBeforeSave={setChapterLessonDataBeforeSave}
 					setDeletedChapterIds={setDeletedChapterIds}
+					hasUnsavedChanges={hasUnsavedChanges}
+					setHasUnsavedChanges={setHasUnsavedChanges}
 				/>
 			</Box>
 
@@ -597,6 +656,7 @@ const AdminCourseEditPage = () => {
 								setIsFree={setIsFree}
 								setIsMissingField={setIsMissingField}
 								setSingleCourse={setSingleCourse}
+								setHasUnsavedChanges={setHasUnsavedChanges}
 							/>
 							{!singleCourse?.courseManagement.isExternal && (
 								<Box sx={{ mt: '2rem', minHeight: '40vh' }}>
@@ -675,6 +735,7 @@ const AdminCourseEditPage = () => {
 																setIsMissingField={setIsMissingField}
 																isMissingField={isMissingField}
 																setDeletedChapterIds={setDeletedChapterIds}
+																setHasUnsavedChanges={setHasUnsavedChanges}
 															/>
 														</Reorder.Item>
 													);
@@ -753,6 +814,7 @@ const AdminCourseEditPage = () => {
 												}
 												return prevData;
 											});
+											setHasUnsavedChanges(true);
 										}}
 										enterDocUrl={enterDocUrl}
 										setEnterDocUrl={setEnterDocUrl}
@@ -774,6 +836,7 @@ const AdminCourseEditPage = () => {
 									isDocRenameModalOpen={isDocRenameModalOpen}
 									saveDocRename={saveDocRename}
 									setIsDocumentUpdated={setIsDocumentUpdated}
+									setHasUnsavedChanges={setHasUnsavedChanges}
 									removeDocOnClick={(document: Document) => {
 										setSingleCourse((prevData) => {
 											if (prevData) {
@@ -848,6 +911,27 @@ const AdminCourseEditPage = () => {
 					}}
 					submitBtnText='Continue Editing'
 					cancelBtnText='Cancel'
+				/>
+			</CustomDialog>
+
+			{/* CustomDialog for unsaved changes confirmation */}
+			<CustomDialog openModal={!!pendingTx} closeModal={() => setPendingTx(null)} title='Unsaved Changes' maxWidth='sm'>
+				<DialogContent>
+					<Typography variant='body2'>You have unsaved changes. Are you sure you want to leave this page?</Typography>
+					<Typography variant='body2' sx={{ mt: '0.75rem' }}>
+						If you leave this page, you will lose your unsaved changes.
+					</Typography>
+				</DialogContent>
+				<CustomDialogActions
+					onCancel={() => setPendingTx(null)}
+					onSubmit={() => {
+						if (nextLocation) {
+							setAllowNavigation(true);
+							setPendingTx(null);
+						}
+					}}
+					submitBtnText='Leave Page'
+					cancelBtnText='Stay'
 				/>
 			</CustomDialog>
 		</DashboardPagesLayout>

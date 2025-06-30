@@ -22,6 +22,7 @@ interface AdminCourseEditChapterProps {
 	setIsMissingField: React.Dispatch<React.SetStateAction<boolean>>;
 	isMissingField: boolean;
 	setDeletedChapterIds: React.Dispatch<React.SetStateAction<string[]>>;
+	setHasUnsavedChanges: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const AdminCourseEditChapter = ({
@@ -31,6 +32,7 @@ const AdminCourseEditChapter = ({
 	setIsMissingField,
 	isMissingField,
 	setDeletedChapterIds,
+	setHasUnsavedChanges,
 }: AdminCourseEditChapterProps) => {
 	const [isNewLessonModalOpen, setIsNewLessonModalOpen] = useState<boolean>(false);
 	const [addNewLessonModalOpen, setAddNewLessonModalOpen] = useState<boolean>(false);
@@ -44,12 +46,12 @@ const AdminCourseEditChapter = ({
 	return (
 		<Box
 			sx={{
-				margin: '1.5rem 0 3rem 0',
-				width: '100%',
-				padding: '1rem',
-				boxShadow: '0 0.3rem 1rem 0 rgba(0,0,0,0.25)',
-				transition: '0.3s',
-				borderRadius: '0.3rem',
+				'margin': '1.5rem 0 3rem 0',
+				'width': '100%',
+				'padding': '1rem',
+				'boxShadow': '0 0.3rem 1rem 0 rgba(0,0,0,0.25)',
+				'transition': '0.3s',
+				'borderRadius': '0.3rem',
 				':hover': {
 					boxShadow: '0 0.3rem 1rem 0.3rem rgba(0,0,0,0.5)',
 				},
@@ -68,6 +70,7 @@ const AdminCourseEditChapter = ({
 							value={chapter.title}
 							onChange={(e) => {
 								chapterUpdateTrack(chapter.chapterId, setIsChapterUpdated);
+								setHasUnsavedChanges(true);
 
 								setChapterLessonDataBeforeSave((prevData) => {
 									const updatedChapters = prevData?.map((currentChapter) => {
@@ -106,6 +109,7 @@ const AdminCourseEditChapter = ({
 							chapter={chapter}
 							setChapterLessonDataBeforeSave={setChapterLessonDataBeforeSave}
 							setIsChapterUpdated={setIsChapterUpdated}
+							setHasUnsavedChanges={setHasUnsavedChanges}
 						/>
 
 						<Tooltip title='Create Lesson' placement='top'>
@@ -124,6 +128,7 @@ const AdminCourseEditChapter = ({
 							createNewLesson={false}
 							setChapterLessonDataBeforeSave={setChapterLessonDataBeforeSave}
 							setIsChapterUpdated={setIsChapterUpdated}
+							setHasUnsavedChanges={setHasUnsavedChanges}
 						/>
 					</Box>
 					<Box>
@@ -176,6 +181,7 @@ const AdminCourseEditChapter = ({
 							return prevData;
 						});
 						chapterUpdateTrack(chapter.chapterId, setIsChapterUpdated);
+						setHasUnsavedChanges(true);
 					}}>
 					{chapter?.lessons &&
 						chapter?.lessons
@@ -186,15 +192,15 @@ const AdminCourseEditChapter = ({
 										<Box
 											key={lesson._id}
 											sx={{
-												display: 'flex',
-												alignItems: 'center',
-												height: '2.25rem',
-												width: '100%',
-												backgroundColor: theme.bgColor?.common,
-												margin: '1rem 0',
-												borderRadius: '0.25rem',
-												boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
-												transition: '0.4s',
+												'display': 'flex',
+												'alignItems': 'center',
+												'height': '2.25rem',
+												'width': '100%',
+												'backgroundColor': theme.bgColor?.common,
+												'margin': '1rem 0',
+												'borderRadius': '0.25rem',
+												'boxShadow': '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
+												'transition': '0.4s',
 												':hover': {
 													boxShadow: '0.1rem 0 0.5rem 0.3rem rgba(0, 0, 0, 0.3)',
 													cursor: 'pointer',
@@ -256,7 +262,7 @@ const AdminCourseEditChapter = ({
 
 																updateLessons({
 																	...lesson,
-																	usedInCourses: lesson.usedInCourses?.filter(id => id !== courseId) || [],
+																	usedInCourses: lesson.usedInCourses?.filter((id) => id !== courseId) || [],
 																	updatedAt: new Date().toISOString(),
 																	updatedByName: user ? `${user.firstName} ${user.lastName}` : '',
 																	updatedByImageUrl: user?.imageUrl || '',
@@ -268,6 +274,7 @@ const AdminCourseEditChapter = ({
 																});
 
 																chapterUpdateTrack(chapter.chapterId, setIsChapterUpdated);
+																setHasUnsavedChanges(true);
 															}}>
 															<Delete fontSize='small' />
 														</IconButton>

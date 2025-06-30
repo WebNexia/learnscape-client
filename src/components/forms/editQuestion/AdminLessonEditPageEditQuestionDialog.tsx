@@ -50,6 +50,7 @@ interface AdminLessonEditPageEditQuestionDialogProps {
 	setCorrectAnswer: React.Dispatch<React.SetStateAction<string>>;
 	setIsDuplicateOption: React.Dispatch<React.SetStateAction<boolean>>;
 	setIsMinimumOptions: React.Dispatch<React.SetStateAction<boolean>>;
+	setHasUnsavedChanges: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const AdminLessonEditPageEditQuestionDialog = ({
@@ -75,6 +76,7 @@ const AdminLessonEditPageEditQuestionDialog = ({
 	setCorrectAnswer,
 	setIsDuplicateOption,
 	setIsMinimumOptions,
+	setHasUnsavedChanges,
 }: AdminLessonEditPageEditQuestionDialogProps) => {
 	const editorId = generateUniqueId('editor-');
 	const editorRef = useRef<any>(null);
@@ -208,6 +210,7 @@ const AdminLessonEditPageEditQuestionDialog = ({
 			resetImageUpload();
 			resetVideoUpload();
 			resetEnterImageVideoUrl();
+			setHasUnsavedChanges(true);
 		}
 
 		closeQuestionEditModal(index);

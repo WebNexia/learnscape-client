@@ -1,5 +1,6 @@
 import ReactDOM from 'react-dom/client';
-import App from './App.tsx';
+import { RouterProvider } from 'react-router-dom';
+import { router } from './router';
 import './index.css';
 import UserAuthContextProvider from './contexts/UserAuthContextProvider.tsx';
 import { QueryClient, QueryClientProvider } from 'react-query';
@@ -10,7 +11,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 	<>
 		<QueryClientProvider client={queryClient}>
 			<UserAuthContextProvider>
-				<App />
+				<RouterProvider router={router} />
 			</UserAuthContextProvider>
 		</QueryClientProvider>
 	</>
