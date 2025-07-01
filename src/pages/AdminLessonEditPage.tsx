@@ -911,13 +911,13 @@ const AdminLessonEditPage = () => {
 							<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem' }}>
 								<Box sx={{ flex: 1, mr: '2rem' }}>
 									<Typography variant='h6'>Title*</Typography>
-									<Tooltip title='Max 50 Characters' placement='top'>
+									<Tooltip title='Max 100 Characters' placement='top' arrow>
 										<CustomTextField
 											sx={{
 												marginTop: '0.5rem',
 											}}
 											value={singleLessonBeforeSave?.title}
-											InputProps={{ inputProps: { maxLength: 50 } }}
+											InputProps={{ inputProps: { maxLength: 100 } }}
 											placeholder='Enter title'
 											onChange={(e) => {
 												setIsLessonUpdated(true);
@@ -1059,6 +1059,7 @@ const AdminLessonEditPage = () => {
 										setInstructionError(false);
 									}}
 									initialValue={singleLesson.text}
+									maxLength={15000}
 								/>
 								<Box sx={{ margin: '1rem 0' }}>{instructionError && <CustomErrorMessage>Enter lesson instructions</CustomErrorMessage>}</Box>
 							</Box>

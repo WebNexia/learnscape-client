@@ -688,6 +688,11 @@ const PaymentDialog = ({
 										fontSize: INPUT_FONTSIZE,
 									},
 								}}
+								InputProps={{
+									inputProps: {
+										maxLength: 254,
+									},
+								}}
 							/>
 						</Box>
 					)}
@@ -731,6 +736,11 @@ const PaymentDialog = ({
 								const amount = +getPriceForCountry(course, resolvedCountryCode).amount;
 								setDiscountedAmount(isNaN(amount) ? 0 : amount);
 								setUsersUsedPromoCode((prevData) => prevData.filter((id) => id !== userId));
+							}}
+							InputProps={{
+								inputProps: {
+									maxLength: 25,
+								},
 							}}
 						/>
 						<CustomSubmitButton

@@ -404,6 +404,11 @@ const QuizQuestion = ({
 										return prevData;
 									});
 								}}
+								InputProps={{
+									inputProps: {
+										maxLength: 5000,
+									},
+								}}
 							/>
 						</Box>
 					)}
@@ -662,8 +667,8 @@ const QuizQuestion = ({
 				}}>
 				<IconButton
 					sx={{
-						flexShrink: 0,
-						padding: '0.35rem',
+						'flexShrink': 0,
+						'padding': '0.35rem',
 						':hover': {
 							color: theme.bgColor?.greenPrimary,
 							backgroundColor: 'transparent',
@@ -743,12 +748,12 @@ const QuizQuestion = ({
 							window.scrollTo({ top: 0, behavior: 'smooth' });
 						}}
 						sx={{
-							flexShrink: 0,
+							'flexShrink': 0,
 							':hover': {
 								color: theme.bgColor?.greenPrimary,
 								backgroundColor: 'transparent',
 							},
-							padding: '0.35rem',
+							'padding': '0.35rem',
 						}}>
 						{isCompletingCourse ? (
 							<DoneAll fontSize={isMobileSize ? 'medium' : 'large'} />

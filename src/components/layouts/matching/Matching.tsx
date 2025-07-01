@@ -93,6 +93,11 @@ const Matching = ({
 						onChange={(e) => handlePairChange(index, 'question', e.target.value)}
 						required
 						sx={{ marginRight: '1.5rem' }}
+						InputProps={{
+							inputProps: {
+								maxLength: 500,
+							},
+						}}
 					/>
 					<CustomTextField
 						placeholder='Pair Value'
@@ -100,12 +105,17 @@ const Matching = ({
 						onChange={(e) => handlePairChange(index, 'answer', e.target.value)}
 						required
 						sx={{ marginRight: '1.5rem' }}
+						InputProps={{
+							inputProps: {
+								maxLength: 500,
+							},
+						}}
 					/>
 					<Tooltip title='Remove Pair' placement='right'>
 						<IconButton
 							onClick={() => removePair(index)}
 							sx={{
-								mb: '0.85rem',
+								'mb': '0.85rem',
 								':hover': { backgroundColor: 'transparent' },
 							}}>
 							<RemoveCircle />
@@ -115,7 +125,7 @@ const Matching = ({
 			))}
 			<Box sx={{ width: '90%' }}>
 				<Tooltip title='Add Pair' placement='right'>
-					<IconButton onClick={addPair} sx={{ mb: '0.85rem', ':hover': { backgroundColor: 'transparent' } }}>
+					<IconButton onClick={addPair} sx={{ 'mb': '0.85rem', ':hover': { backgroundColor: 'transparent' } }}>
 						<AddCircle />
 					</IconButton>
 				</Tooltip>

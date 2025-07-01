@@ -99,6 +99,11 @@ const EditInstructorDialog = ({
 							InputLabelProps={{
 								sx: { fontSize: '0.8rem' },
 							}}
+							InputProps={{
+								inputProps: {
+									maxLength: 100,
+								},
+							}}
 						/>
 						<CustomTextField
 							fullWidth={false}
@@ -123,6 +128,11 @@ const EditInstructorDialog = ({
 								sx: { fontSize: '0.8rem' },
 							}}
 							required={false}
+							InputProps={{
+								inputProps: {
+									maxLength: 254,
+								},
+							}}
 						/>
 					</Box>
 					<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 3 }}>
@@ -235,6 +245,11 @@ const EditInstructorDialog = ({
 						sx: { fontSize: '0.8rem' },
 					}}
 					required={false}
+					InputProps={{
+						inputProps: {
+							maxLength: 50,
+						},
+					}}
 				/>
 
 				<Box>
@@ -303,6 +318,10 @@ const EditInstructorDialog = ({
 									'& .MuiInputBase-input::placeholder': {
 										fontSize: '0.75rem',
 									},
+								}}
+								inputProps={{
+									...params.inputProps,
+									maxLength: 50,
 								}}
 								InputLabelProps={{
 									sx: { fontSize: '0.75rem' },
@@ -377,6 +396,11 @@ const EditInstructorDialog = ({
 						sx: { fontSize: '0.8rem' },
 					}}
 					required={false}
+					InputProps={{
+						inputProps: {
+							maxLength: 250,
+						},
+					}}
 				/>
 
 				<CustomDialogActions

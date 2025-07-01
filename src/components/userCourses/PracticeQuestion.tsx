@@ -345,6 +345,11 @@ const PracticeQuestion = ({
 												return { ...prevData, userInput: e.target.value };
 											});
 										}}
+										InputProps={{
+											inputProps: {
+												maxLength: 5000,
+											},
+										}}
 									/>
 								</Box>
 							)}
@@ -394,10 +399,10 @@ const PracticeQuestion = ({
 											question.imageUrl && question.videoUrl && isVerySmallScreen
 												? '3.5rem auto 0 auto'
 												: question.imageUrl || question.videoUrl
-												? '2.5rem auto 0 auto'
-												: isMobileSize
-												? '8.75rem auto 0 auto'
-												: '11rem auto 0 auto',
+													? '2.5rem auto 0 auto'
+													: isMobileSize
+														? '8.75rem auto 0 auto'
+														: '11rem auto 0 auto',
 									}}>
 									<FillInTheBlanksDragDrop
 										textWithBlanks={question.question}
@@ -520,8 +525,8 @@ const PracticeQuestion = ({
 					}}>
 					<IconButton
 						sx={{
-							flexShrink: 0,
-							padding: '0.35rem',
+							'flexShrink': 0,
+							'padding': '0.35rem',
 							':hover': {
 								color: theme.bgColor?.greenPrimary,
 								backgroundColor: 'transparent',
@@ -607,9 +612,9 @@ const PracticeQuestion = ({
 								setIsOpenEndedAnswerSubmitted(false);
 							}}
 							sx={{
-								flexShrink: 0,
-								padding: '0.35rem',
-								color:
+								'flexShrink': 0,
+								'padding': '0.35rem',
+								'color':
 									!isAnswerCorrect &&
 									!isOpenEndedAnswerSubmitted &&
 									!allPairsMatchedFITBDragDrop &&
@@ -618,7 +623,7 @@ const PracticeQuestion = ({
 									!isCardFlipped
 										? 'gray'
 										: theme.textColor?.common.main,
-								backgroundColor:
+								'backgroundColor':
 									!isAnswerCorrect &&
 									!isOpenEndedAnswerSubmitted &&
 									!allPairsMatchedFITBDragDrop &&
@@ -653,8 +658,8 @@ const PracticeQuestion = ({
 									setIsOpenEndedAnswerSubmitted(false);
 								}}
 								sx={{
-									flexShrink: 0,
-									color:
+									'flexShrink': 0,
+									'color':
 										!isAnswerCorrect &&
 										!isOpenEndedAnswerSubmitted &&
 										!allPairsMatchedFITBDragDrop &&
@@ -663,7 +668,7 @@ const PracticeQuestion = ({
 										!isCardFlipped
 											? 'gray'
 											: theme.textColor?.common.main,
-									backgroundColor:
+									'backgroundColor':
 										!isAnswerCorrect &&
 										!isOpenEndedAnswerSubmitted &&
 										!allPairsMatchedFITBDragDrop &&
@@ -676,7 +681,7 @@ const PracticeQuestion = ({
 										color: theme.bgColor?.greenPrimary,
 										backgroundColor: 'transparent',
 									},
-									padding: '0.35rem',
+									'padding': '0.35rem',
 								}}>
 								{isCompletingCourse ? (
 									<DoneAll fontSize={isMobileSize ? 'small' : 'medium'} />

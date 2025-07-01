@@ -330,6 +330,11 @@ const FillInTheBlanksTyping = ({
 									isLessonCompleted={!!isLessonCompleted}
 									lessonType={lessonType!}
 									isMobileSizeSmall={isMobileSizeSmall}
+									InputProps={{
+										inputProps: {
+											maxLength: 50,
+										},
+									}}
 								/>
 							);
 						} else {

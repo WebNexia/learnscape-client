@@ -144,6 +144,11 @@ const ContactFormDialog = ({
 									fontSize: '0.85rem',
 								},
 							}}
+							InputProps={{
+								inputProps: {
+									maxLength: 50,
+								},
+							}}
 						/>
 						<CustomTextField
 							label='Soy İsminiz'
@@ -168,6 +173,11 @@ const ContactFormDialog = ({
 								'& .MuiInputLabel-root': {
 									fontFamily: 'Varela Round',
 									fontSize: '0.85rem',
+								},
+							}}
+							InputProps={{
+								inputProps: {
+									maxLength: 50,
 								},
 							}}
 						/>
@@ -197,6 +207,11 @@ const ContactFormDialog = ({
 									fontSize: '0.85rem',
 								},
 							}}
+							InputProps={{
+								inputProps: {
+									maxLength: 254,
+								},
+							}}
 						/>
 					</Box>
 					<Box>
@@ -214,6 +229,7 @@ const ContactFormDialog = ({
 							}}
 							inputProps={{
 								required: true,
+								maxLength: 20,
 								style: {
 									width: '100%',
 									height: '2.25rem',
@@ -278,6 +294,11 @@ const ContactFormDialog = ({
 							'& .MuiInputLabel-root': {
 								fontFamily: 'Varela Round',
 								fontSize: '0.85rem',
+							},
+						}}
+						InputProps={{
+							inputProps: {
+								maxLength: 1000,
 							},
 						}}
 					/>

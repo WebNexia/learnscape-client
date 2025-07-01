@@ -80,6 +80,7 @@ const FlipCardFrontFace = ({
 
 			<textarea
 				value={frontText}
+				maxLength={255}
 				onChange={(e) => {
 					setFrontText(e.target.value);
 					if (setNewQuestion) {

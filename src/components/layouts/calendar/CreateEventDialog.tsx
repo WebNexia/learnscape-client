@@ -9,6 +9,7 @@ import {
 	MenuItem,
 	Select,
 	SelectChangeEvent,
+	Tooltip,
 	Typography,
 } from '@mui/material';
 import CustomDialog from '../dialog/CustomDialog';
@@ -265,13 +266,15 @@ const CreateEventDialog = ({
 				}}>
 				<DialogContent sx={{ mt: '-0.5rem' }}>
 					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-						<CustomTextField
-							label='Title'
-							value={newEvent.title}
-							onChange={(e) => setNewEvent((prevData) => ({ ...prevData, title: e.target.value }))}
-							InputProps={{ inputProps: { maxLength: 40 } }}
-							sx={{ flex: 3 }}
-						/>
+						<Tooltip title='Max 40 characters' placement='top' arrow>
+							<CustomTextField
+								label='Title'
+								value={newEvent.title}
+								onChange={(e) => setNewEvent((prevData) => ({ ...prevData, title: e.target.value }))}
+								InputProps={{ inputProps: { maxLength: 40 } }}
+								sx={{ flex: 3 }}
+							/>
+						</Tooltip>
 
 						<FormControlLabel
 							labelPlacement='start'
@@ -321,6 +324,7 @@ const CreateEventDialog = ({
 							onChange={(e) => setNewEvent((prevData) => ({ ...prevData, description: e.target.value }))}
 							InputProps={{ inputProps: { maxLength: 75 } }}
 							sx={{ flex: 3, mr: newEvent.isPublic ? '1rem' : '0rem' }}
+							placeholder='Enter a description for the event (max 75 characters)'
 						/>
 						{newEvent.isPublic && (
 							<FormControl sx={{ flex: 1, mb: '0.5rem' }}>
@@ -862,6 +866,7 @@ const CreateEventDialog = ({
 						value={newEvent.location}
 						onChange={(e) => setNewEvent((prevData) => ({ ...prevData, location: e.target.value }))}
 						required={false}
+						InputProps={{ inputProps: { maxLength: 150 } }}
 					/>
 				</DialogContent>
 				<CustomDialogActions

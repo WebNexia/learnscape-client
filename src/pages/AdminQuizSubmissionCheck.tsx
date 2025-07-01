@@ -307,17 +307,17 @@ const AdminQuizSubmissionCheck = () => {
 						onClick={handlePreviousResponse}
 						disabled={currentResponseIndex === 0}
 						sx={{
-							position: 'fixed',
-							left: isMobileSize ? '2%' : '10%',
-							top: '50%',
-							transform: 'translateY(-50%)',
-							backgroundColor: theme.bgColor?.greenPrimary,
-							color: 'white',
-							border: 'none',
-							borderRadius: '50%',
-							padding: isMobileSize ? '0.5rem' : '0.75rem',
-							cursor: currentResponseIndex === 0 ? 'not-allowed' : 'pointer',
-							zIndex: 13000,
+							'position': 'fixed',
+							'left': isMobileSize ? '2%' : '10%',
+							'top': '50%',
+							'transform': 'translateY(-50%)',
+							'backgroundColor': theme.bgColor?.greenPrimary,
+							'color': 'white',
+							'border': 'none',
+							'borderRadius': '50%',
+							'padding': isMobileSize ? '0.5rem' : '0.75rem',
+							'cursor': currentResponseIndex === 0 ? 'not-allowed' : 'pointer',
+							'zIndex': 13000,
 							':hover': { backgroundColor: theme.bgColor?.adminHeader },
 						}}>
 						<ArrowBackIosNewOutlined fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
@@ -326,17 +326,17 @@ const AdminQuizSubmissionCheck = () => {
 						onClick={handleNextResponse}
 						disabled={currentResponseIndex === userResponseData.length - 1}
 						sx={{
-							position: 'fixed',
-							right: isMobileSize ? '2%' : '10%',
-							top: '50%',
-							transform: 'translateY(-50%)',
-							backgroundColor: theme.bgColor?.greenPrimary,
-							color: 'white',
-							border: 'none',
-							borderRadius: '50%',
-							padding: isMobileSize ? '0.5rem' : '0.75rem',
-							cursor: currentResponseIndex === userResponseData.length - 1 ? 'not-allowed' : 'pointer',
-							zIndex: 13000,
+							'position': 'fixed',
+							'right': isMobileSize ? '2%' : '10%',
+							'top': '50%',
+							'transform': 'translateY(-50%)',
+							'backgroundColor': theme.bgColor?.greenPrimary,
+							'color': 'white',
+							'border': 'none',
+							'borderRadius': '50%',
+							'padding': isMobileSize ? '0.5rem' : '0.75rem',
+							'cursor': currentResponseIndex === userResponseData.length - 1 ? 'not-allowed' : 'pointer',
+							'zIndex': 13000,
 							':hover': { backgroundColor: theme.bgColor?.adminHeader },
 						}}>
 						<ArrowForwardIosOutlined fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
@@ -393,7 +393,7 @@ const AdminQuizSubmissionCheck = () => {
 								{userResponseToFeedback?.questionId.options?.findIndex((option: string) => option === userResponseToFeedback?.userAnswer) !== -1
 									? `${String.fromCharCode(
 											97 + userResponseToFeedback?.questionId.options?.findIndex((option: string) => option === userResponseToFeedback?.userAnswer)
-									  )})`
+										)})`
 									: ''}{' '}
 								{userResponseToFeedback?.userAnswer}
 							</Typography>
@@ -569,6 +569,12 @@ const AdminQuizSubmissionCheck = () => {
 						resizable
 						value={userQuestionsFeedbacks.find((feedback) => feedback.userQuestionId === userResponseToFeedback?._id)?.feedback || ''}
 						onChange={handleFeedbackChange}
+						placeholder='Enter feedback for the question (max 1000 characters)'
+						InputProps={{
+							inputProps: {
+								maxLength: 1000,
+							},
+						}}
 					/>
 				</Box>
 
@@ -594,6 +600,12 @@ const AdminQuizSubmissionCheck = () => {
 					onChange={(e) => {
 						setQuizFeedback(e.target.value);
 						setIsQuizFeedbackUpdated(true);
+					}}
+					placeholder='Enter feedback for the quiz (max 1000 characters)'
+					InputProps={{
+						inputProps: {
+							maxLength: 1000,
+						},
 					}}
 				/>
 			</Box>

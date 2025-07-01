@@ -1331,6 +1331,9 @@ const Messages = () => {
 												</IconButton>
 											</InputAdornment>
 										),
+										inputProps: {
+											maxLength: 1000,
+										},
 									}}
 									sx={{ overflowY: 'auto' }}
 									disabled={!!imageUpload || isBlockedUser || isBlockingUser || !activeChat}
@@ -1415,7 +1418,7 @@ const Messages = () => {
 				maxWidth='sm'>
 				<Box sx={{ display: 'flex', justifyContent: 'center', width: '100%', mb: filteredUsers.length === 0 ? '1.5rem' : '-1rem' }}>
 					<UserSearchSelect
-						users={sortedUsersData}
+						users={user?.role === 'admin' ? sortedUsersData : sortedUsersData.filter((user) => user.hasRegisteredCourse || user.role === 'admin')}
 						value={searchValue}
 						onChange={setSearchValue}
 						onSelect={handleUserSelection}

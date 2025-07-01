@@ -270,6 +270,11 @@ const DocumentPaymentDialog = ({ document, isPaymentDialogOpen, setIsPaymentDial
 									fontSize: INPUT_FONTSIZE,
 								},
 							}}
+							InputProps={{
+								inputProps: {
+									maxLength: 50,
+								},
+							}}
 						/>
 						<CustomTextField
 							label='Soyisim'
@@ -296,6 +301,11 @@ const DocumentPaymentDialog = ({ document, isPaymentDialogOpen, setIsPaymentDial
 									fontSize: INPUT_FONTSIZE,
 								},
 							}}
+							InputProps={{
+								inputProps: {
+									maxLength: 50,
+								},
+							}}
 						/>
 					</Box>
 					<CustomTextField
@@ -320,6 +330,11 @@ const DocumentPaymentDialog = ({ document, isPaymentDialogOpen, setIsPaymentDial
 							'& .MuiInputLabel-root': {
 								fontFamily: INPUT_FONT,
 								fontSize: INPUT_FONTSIZE,
+							},
+						}}
+						InputProps={{
+							inputProps: {
+								maxLength: 254,
 							},
 						}}
 					/>

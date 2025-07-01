@@ -511,10 +511,10 @@ const LessonPage = () => {
 						{lessonType === LessonType.PRACTICE_LESSON
 							? 'Go to Questions'
 							: isQuiz && !isLessonCompleted && isQuizInProgress
-							? 'Resume'
-							: isQuiz && !isLessonCompleted
-							? 'Start Quiz'
-							: 'Review Quiz'}
+								? 'Resume'
+								: isQuiz && !isLessonCompleted
+									? 'Start Quiz'
+									: 'Review Quiz'}
 					</CustomSubmitButton>
 				</Box>
 			)}

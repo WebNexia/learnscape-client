@@ -387,6 +387,11 @@ const Settings = () => {
 										setIsProfileUpdated(true);
 									}}
 									sx={{ width: '100%' }}
+									InputProps={{
+										inputProps: {
+											maxLength: 50,
+										},
+									}}
 								/>
 							</Box>
 							<Box sx={{ flex: 1, ml: '1.5rem' }}>
@@ -399,6 +404,11 @@ const Settings = () => {
 										setIsProfileUpdated(true);
 									}}
 									sx={{ width: '100%' }}
+									InputProps={{
+										inputProps: {
+											maxLength: 50,
+										},
+									}}
 								/>
 							</Box>
 						</Box>
@@ -413,6 +423,11 @@ const Settings = () => {
 										setEmail(e.target.value);
 									}}
 									sx={{ width: '100%' }}
+									InputProps={{
+										inputProps: {
+											maxLength: 254,
+										},
+									}}
 								/>
 							</Box>
 							<Box sx={{ display: 'flex', flex: 1, ml: '1.5rem' }}>
@@ -563,6 +578,9 @@ const Settings = () => {
 											</IconButton>
 										</InputAdornment>
 									),
+									inputProps: {
+										maxLength: 50,
+									},
 								}}
 							/>
 							<CustomTextField
@@ -594,6 +612,9 @@ const Settings = () => {
 											</IconButton>
 										</InputAdornment>
 									),
+									inputProps: {
+										maxLength: 50,
+									},
 								}}
 							/>
 							<CustomTextField
@@ -625,6 +646,9 @@ const Settings = () => {
 											</IconButton>
 										</InputAdornment>
 									),
+									inputProps: {
+										maxLength: 50,
+									},
 								}}
 							/>
 

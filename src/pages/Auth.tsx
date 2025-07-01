@@ -701,6 +701,11 @@ const Auth = ({ setUserRole }: AuthProps) => {
 														'& .MuiInputBase-input::placeholder': { fontFamily: 'Varela Round', opacity: 1 },
 														'& .MuiInputLabel-root': { fontFamily: 'Varela Round' },
 													}}
+													InputProps={{
+														inputProps: {
+															maxLength: 254,
+														},
+													}}
 												/>
 												<CustomTextField
 													label='Şifre'
@@ -738,6 +743,9 @@ const Auth = ({ setUserRole }: AuthProps) => {
 																</IconButton>
 															</InputAdornment>
 														),
+														inputProps: {
+															maxLength: 50,
+														},
 													}}
 												/>
 
@@ -825,6 +833,11 @@ const Auth = ({ setUserRole }: AuthProps) => {
 															'& .MuiInputBase-input::placeholder': { fontFamily: 'Varela Round', opacity: 1 },
 															'& .MuiInputLabel-root': { fontFamily: 'Varela Round' },
 														}}
+														InputProps={{
+															inputProps: {
+																maxLength: 50,
+															},
+														}}
 													/>
 													<CustomTextField
 														label='Soyisim'
@@ -850,6 +863,11 @@ const Auth = ({ setUserRole }: AuthProps) => {
 															'& .MuiInputBase-input::placeholder': { fontFamily: 'Varela Round', opacity: 1 },
 															'& .MuiInputLabel-root': { fontFamily: 'Varela Round' },
 															'ml': '0.5rem',
+														}}
+														InputProps={{
+															inputProps: {
+																maxLength: 50,
+															},
 														}}
 													/>
 												</Box>
@@ -903,7 +921,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 														searchNotFound='Ülke bulunamadı'
 														enableAreaCodes={false}
 														countryCodeEditable={false}
-														inputProps={{ required: true }}
+														inputProps={{ required: true, maxLength: 20 }}
 														inputStyle={{
 															width: '100%',
 															height: '2.25rem',
@@ -963,6 +981,11 @@ const Auth = ({ setUserRole }: AuthProps) => {
 															'& .MuiInputBase-input::placeholder': { fontFamily: 'Varela Round', opacity: 1 },
 															'& .MuiInputLabel-root': { fontFamily: 'Varela Round' },
 														}}
+														InputProps={{
+															inputProps: {
+																maxLength: 254,
+															},
+														}}
 													/>
 												</Box>
 
@@ -1010,6 +1033,9 @@ const Auth = ({ setUserRole }: AuthProps) => {
 																	</IconButton>
 																</InputAdornment>
 															),
+															inputProps: {
+																maxLength: 50,
+															},
 														}}
 													/>
 													<Box sx={{ display: 'flex', width: '10%', justifyContent: 'flex-end', mt: '-1rem' }}>
@@ -1090,6 +1116,11 @@ const Auth = ({ setUserRole }: AuthProps) => {
 												'& .MuiInputBase-input': { fontFamily: 'Varela Round' },
 												'& .MuiInputBase-input::placeholder': { fontFamily: 'Varela Round', opacity: 1 },
 												'& .MuiInputLabel-root': { fontFamily: 'Varela Round' },
+											}}
+											InputProps={{
+												inputProps: {
+													maxLength: 254,
+												},
 											}}
 										/>
 										<ReCAPTCHA
@@ -1293,7 +1324,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 								Şifreniz şunları içermelidir:
 							</Typography>
 							<Box sx={{ margin: '0.85rem 0 0 3rem' }}>
-								{['en az 6 karakter uzunluğunda olmalı', 'en az bir harf içermeli', 'en az bir rakam içermeli'].map((rule, index) => (
+								{['en az 6, en fazla 50 karakter uzunluğunda olmalı', 'en az bir harf içermeli', 'en az bir rakam içermeli'].map((rule, index) => (
 									<ul key={index}>
 										<li style={{ color: theme.textColor?.secondary.main }}>
 											<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.35rem', fontFamily: 'Varela Round' }}>

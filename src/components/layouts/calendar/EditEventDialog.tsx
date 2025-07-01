@@ -9,6 +9,7 @@ import {
 	MenuItem,
 	Select,
 	SelectChangeEvent,
+	Tooltip,
 	Typography,
 } from '@mui/material';
 import { AttendeeInfo, Event } from '../../../interfaces/event';
@@ -283,21 +284,23 @@ const EditEventDialog = ({
 				}}>
 				<DialogContent sx={{ mt: '-1rem' }}>
 					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-						<CustomTextField
-							label='Title'
-							value={selectedEvent?.title}
-							onChange={(e) => {
-								setSelectedEvent((prevData) => {
-									if (prevData) {
-										return { ...prevData, title: e.target.value };
-									}
-									return prevData;
-								});
-								setIsEventUpdated(true);
-							}}
-							InputProps={{ inputProps: { maxLength: 40 } }}
-							sx={{ flex: 3 }}
-						/>
+						<Tooltip title='Max 40 characters' placement='top' arrow>
+							<CustomTextField
+								label='Title'
+								value={selectedEvent?.title}
+								onChange={(e) => {
+									setSelectedEvent((prevData) => {
+										if (prevData) {
+											return { ...prevData, title: e.target.value };
+										}
+										return prevData;
+									});
+									setIsEventUpdated(true);
+								}}
+								InputProps={{ inputProps: { maxLength: 40 } }}
+								sx={{ flex: 3 }}
+							/>
+						</Tooltip>
 						<FormControlLabel
 							labelPlacement='start'
 							control={
@@ -363,6 +366,7 @@ const EditEventDialog = ({
 							}}
 							InputProps={{ inputProps: { maxLength: 75 } }}
 							sx={{ flex: 3, mr: selectedEvent?.isPublic ? '1rem' : '0rem' }}
+							placeholder='Enter a description for the event (max 75 characters)'
 						/>
 						{selectedEvent?.isPublic && (
 							<FormControl sx={{ flex: 1, mb: '0.5rem' }}>
@@ -984,6 +988,7 @@ const EditEventDialog = ({
 							});
 						}}
 						required={false}
+						InputProps={{ inputProps: { maxLength: 150 } }}
 					/>
 				</DialogContent>
 				<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0 0.75rem' }}>

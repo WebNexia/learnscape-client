@@ -485,6 +485,11 @@ export default function UpcomingEvents() {
 								}}
 								fullWidth={false}
 								sx={{ width: '48%', mb: '1.25rem', fontFamily: 'Varela Round' }}
+								InputProps={{
+									inputProps: {
+										maxLength: 50,
+									},
+								}}
 							/>
 							<CustomTextField
 								label='Soy İsminiz'
@@ -495,6 +500,11 @@ export default function UpcomingEvents() {
 								}}
 								fullWidth={false}
 								sx={{ width: '48%', mb: '1.25rem', fontFamily: 'Varela Round' }}
+								InputProps={{
+									inputProps: {
+										maxLength: 50,
+									},
+								}}
 							/>
 						</Box>
 						<Box>
@@ -507,6 +517,11 @@ export default function UpcomingEvents() {
 									setRegisterErrorMsg(null);
 								}}
 								sx={{ mb: '1.25rem', fontFamily: 'Varela Round' }}
+								InputProps={{
+									inputProps: {
+										maxLength: 254,
+									},
+								}}
 							/>
 						</Box>
 						<div

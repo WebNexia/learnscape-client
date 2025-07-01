@@ -215,8 +215,6 @@ const AdminCourseEditPage = () => {
 
 	const closeCreateChapterModal = () => setIsChapterCreateModalOpen(false);
 
-	console.log('pendingTx:', pendingTx);
-
 	useEffect(() => {
 		if (courseId) {
 			const fetchSingleCourseData = async (courseId: string): Promise<void> => {
@@ -706,6 +704,11 @@ const AdminCourseEditPage = () => {
 												sx={{ margin: '2rem 1rem' }}
 												InputLabelProps={{
 													sx: { fontSize: '0.8rem' },
+												}}
+												InputProps={{
+													inputProps: {
+														maxLength: 100,
+													},
 												}}
 											/>
 

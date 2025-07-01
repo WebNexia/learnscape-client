@@ -479,7 +479,7 @@ const CreateQuestionDialog = ({
 								/>
 								{!isFlipCard && (
 									<ImageThumbnail
-										imgSource={newQuestion.imageUrl || 'https://savethefrogs.com/wp-content/uploads/placeholder-wire-image-white.jpg'}
+										imgSource={newQuestion.imageUrl || 'https://placehold.co/600x400/e2e8f0/64748b?text=No+Image'}
 										removeImage={() => {
 											setNewQuestion((prevQuestion) => ({ ...prevQuestion, imageUrl: '' }));
 											setIsLessonUpdated?.(true);
@@ -505,7 +505,7 @@ const CreateQuestionDialog = ({
 									<VideoThumbnail
 										videoPlayCondition={newQuestion.videoUrl}
 										videoUrl={newQuestion.videoUrl}
-										videoPlaceholderUrl='https://riggswealth.com/wp-content/uploads/2016/06/Riggs-Video-Placeholder.jpg'
+										videoPlaceholderUrl='https://placehold.co/600x400/e2e8f0/64748b?text=No+Video'
 										removeVideo={() => {
 											setNewQuestion((prevQuestion) => ({ ...prevQuestion, videoUrl: '' }));
 											setIsLessonUpdated?.(true);
@@ -519,7 +519,14 @@ const CreateQuestionDialog = ({
 							<Box sx={{ width: '100%', margin: '1rem 0' }}>
 								<Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
 									<Typography variant='h6' sx={{ mb: '0.5rem' }}>
-										Question
+										Question{' '}
+										<span style={{ fontSize: '0.8rem', color: 'gray' }}>
+											{isOpenEndedQuestion
+												? '(Students can enter max 5000 characters while answering)'
+												: isFITBTyping
+													? '(Students can enter max 50 characters for each blank)'
+													: ''}
+										</span>
 									</Typography>
 									{(isFITBDragDrop || isFITBTyping) && (
 										<CustomInfoMessageAlignedRight message='Double-click a word to turn it into a blank' sx={{ marginBottom: '0.5rem' }} />
@@ -536,6 +543,7 @@ const CreateQuestionDialog = ({
 									editorId={editorId}
 									editorRef={editorRef}
 									isFITB={questionType === QuestionType.FITB_DRAG_DROP || questionType === QuestionType.FITB_TYPING}
+									maxLength={5000}
 								/>
 							</Box>
 						)}
@@ -683,6 +691,11 @@ const CreateQuestionDialog = ({
 											value={option}
 											onChange={(e) => handleOptionChange?.(index, e.target.value)}
 											sx={{ marginTop: '0.75rem', marginRight: index === 0 ? '2.5rem' : 0 }}
+											InputProps={{
+												inputProps: {
+													maxLength: 255,
+												},
+											}}
 										/>
 										{index > 0 && (
 											<Tooltip title='Remove Option' placement='top'>

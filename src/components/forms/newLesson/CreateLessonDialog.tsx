@@ -162,6 +162,7 @@ const CreateLessonDialog = ({
 					InputLabelProps={{
 						sx: { fontSize: '0.8rem' },
 					}}
+					InputProps={{ inputProps: { maxLength: 100 } }}
 				/>
 				<FormControl sx={{ margin: '1rem 2rem' }}>
 					<Typography variant='body2' sx={{ mb: '0.5rem' }}>
