@@ -19,6 +19,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider/L
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import dayjs, { Dayjs } from 'dayjs';
+import 'dayjs/locale/en-gb';
 import { Cancel, Search } from '@mui/icons-material';
 import { User } from '../../../interfaces/user';
 import { useContext, useState, useRef, useEffect } from 'react';
@@ -53,6 +54,22 @@ interface EditEventDialogProps {
 	filterUsers: (searchQuery: string, action: string) => void;
 	filterCourses: (searchQuery: string, action: string) => void;
 }
+
+const getDateTimeFormat = (locale: string) => {
+	switch (locale.toLowerCase()) {
+		case 'en-gb':
+			return 'DD/MM/YYYY HH:mm';
+		case 'tr':
+		case 'tr-tr':
+			return 'DD.MM.YYYY HH:mm';
+		case 'de':
+		case 'de-de':
+			return 'DD.MM.YYYY HH:mm';
+		default:
+			return 'MM/DD/YYYY hh:mm A'; // fallback to US
+	}
+};
+
 const EditEventDialog = ({
 	setIsEventDeleted,
 	editEventModalOpen,
@@ -92,6 +109,17 @@ const EditEventDialog = ({
 			originalIsPublic.current = selectedEvent.isPublic;
 		}
 	}, [editEventModalOpen]);
+
+	useEffect(() => {
+		let locale = navigator.language;
+		// Map known browser locales to Dayjs locales
+		if (locale.toLowerCase() === 'en-gb') {
+			locale = 'en-gb';
+		} else if (locale.toLowerCase() === 'tr' || locale.toLowerCase() === 'tr-tr') {
+			locale = 'tr';
+		} // Add more mappings as needed
+		dayjs.locale(locale);
+	}, []);
 
 	const editEvent = async () => {
 		// Use the original isPublic value from when the dialog was opened
@@ -193,15 +221,17 @@ const EditEventDialog = ({
 				return;
 			}
 
-			const startDate = selectedEvent?.start?.toLocaleDateString('en-US', {
+			const startDate = selectedEvent?.start?.toLocaleDateString(navigator.language || undefined, {
 				weekday: 'long',
 				year: 'numeric',
 				month: 'long',
 				day: 'numeric',
+				timeZoneName: 'short',
 			});
-			const startTime = selectedEvent?.start?.toLocaleTimeString('en-US', {
+			const startTime = selectedEvent?.start?.toLocaleTimeString(navigator.language || undefined, {
 				hour: '2-digit',
 				minute: '2-digit',
+				timeZoneName: 'short',
 			});
 
 			// Notify all users only if event is being made public now
@@ -486,6 +516,7 @@ const EditEventDialog = ({
 									}}
 									sx={{ backgroundColor: '#fff', mr: '0.5rem' }}
 									disabled={selectedEvent?.isAllDay}
+									format={getDateTimeFormat(navigator.language)}
 								/>
 							</LocalizationProvider>
 
@@ -513,6 +544,7 @@ const EditEventDialog = ({
 									}}
 									sx={{ backgroundColor: '#fff' }}
 									disabled={selectedEvent?.isAllDay}
+									format={getDateTimeFormat(navigator.language)}
 								/>
 							</LocalizationProvider>
 						</Box>

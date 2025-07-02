@@ -91,7 +91,7 @@ const CommunityTopicPage = () => {
 	const [uploadAudioDialogOpen, setUploadAudioDialogOpen] = useState<boolean>(false);
 	const [audioUrl, setAudioUrl] = useState<string>('');
 
-	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(true);
+	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(user?.role === 'admin' ? true : false);
 	const [isAudioUploading, setIsAudioUploading] = useState<boolean>(false);
 
 	const [numberOfPages, setNumberOfPages] = useState<number>(1);

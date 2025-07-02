@@ -20,8 +20,9 @@ import { Cancel, Search } from '@mui/icons-material';
 import CustomDialogActions from '../dialog/CustomDialogActions';
 import { AttendeeInfo, Event } from '../../../interfaces/event';
 import dayjs, { Dayjs } from 'dayjs';
+import 'dayjs/locale/en-gb';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { useContext, useState } from 'react';
+import { useContext, useState, useEffect } from 'react';
 import { CoursesContext } from '../../../contexts/CoursesContextProvider';
 import { User } from '../../../interfaces/user';
 import theme from '../../../themes';
@@ -52,6 +53,21 @@ interface CreateEventDialogProps {
 	filterCourses: (searchQuery: string, action: string) => void;
 }
 
+const getDateTimeFormat = (locale: string) => {
+	switch (locale.toLowerCase()) {
+		case 'en-gb':
+			return 'DD/MM/YYYY HH:mm';
+		case 'tr':
+		case 'tr-tr':
+			return 'DD.MM.YYYY HH:mm';
+		case 'de':
+		case 'de-de':
+			return 'DD.MM.YYYY HH:mm';
+		default:
+			return 'MM/DD/YYYY hh:mm A'; // fallback to US
+	}
+};
+
 const CreateEventDialog = ({
 	newEvent,
 	newEventModalOpen,
@@ -78,6 +94,18 @@ const CreateEventDialog = ({
 	const [searchLearnerValue, setSearchLearnerValue] = useState<string>('');
 	const [searchCourseValue, setSearchCourseValue] = useState<string>('');
 	const [enterCoverImageUrl, setEnterCoverImageUrl] = useState<boolean>(true);
+
+	useEffect(() => {
+		let locale = navigator.language;
+		// Map known browser locales to Dayjs locales
+		if (locale.toLowerCase() === 'en-gb') {
+			locale = 'en-gb';
+		} else if (locale.toLowerCase() === 'tr' || locale.toLowerCase() === 'tr-tr') {
+			locale = 'tr';
+		} // Add more mappings as needed
+		dayjs.locale(locale);
+	}, []);
+
 	const handleAddEvent = async () => {
 		const allFirebaseUserIds: string[] = sortedUsersData
 			?.filter((filteredUser) => filteredUser._id !== user?._id)
@@ -152,19 +180,18 @@ const CreateEventDialog = ({
 
 			addNewEvent({ ...event, _id: res.data.data._id });
 
-			const startDate = newEvent?.start?.toLocaleDateString(undefined, {
+			const startDate = newEvent?.start?.toLocaleDateString(navigator.language || undefined, {
 				weekday: 'long',
 				year: 'numeric',
 				month: 'long',
 				day: 'numeric',
 				timeZoneName: 'short',
 			});
-			const startTime = newEvent?.start?.toLocaleTimeString(undefined, {
+			const startTime = newEvent?.start?.toLocaleTimeString(navigator.language || undefined, {
 				hour: '2-digit',
 				minute: '2-digit',
 				timeZoneName: 'short',
 			});
-
 			const adminName = user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : user?.username || 'Admin';
 			const notificationData = {
 				title: 'Added to Event',
@@ -433,6 +460,7 @@ const CreateEventDialog = ({
 									}}
 									sx={{ backgroundColor: '#fff', mr: '0.5rem' }}
 									disabled={newEvent.isAllDay}
+									format={getDateTimeFormat(navigator.language)}
 								/>
 							</LocalizationProvider>
 
@@ -457,6 +485,7 @@ const CreateEventDialog = ({
 									}}
 									sx={{ backgroundColor: '#fff' }}
 									disabled={newEvent.isAllDay}
+									format={getDateTimeFormat(navigator.language)}
 								/>
 							</LocalizationProvider>
 						</Box>

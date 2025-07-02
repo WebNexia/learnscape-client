@@ -111,6 +111,11 @@ const EmailSender = ({ setEmailDialogOpen }: EmailSenderProps) => {
 					}}
 					size='small'
 					fullWidth
+					InputProps={{
+						inputProps: {
+							maxLength: 100,
+						},
+					}}
 				/>
 			</Box>
 			<Box sx={{ mb: 3 }}>

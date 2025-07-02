@@ -6,6 +6,7 @@ import { CloudUpload } from '@mui/icons-material';
 import theme from '../../../themes';
 import useImageUpload from '../../../hooks/useImageUpload';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
+import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 
 interface HandleImageUploadURLProps {
 	onImageUploadLogic: (url: string) => void;
@@ -31,6 +32,8 @@ const HandleImageUploadURL = ({
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
+	const { user } = useContext(UserAuthContext);
+
 	const handleImageUploadReusable = () => {
 		handleImageUpload(imageFolderName, (url: string) => {
 			onImageUploadLogic(url);
@@ -43,26 +46,32 @@ const HandleImageUploadURL = ({
 					{label}
 				</Typography>
 				<Box sx={{ display: 'flex', alignItems: 'center' }}>
-					<Box>
-						<Typography
-							variant='body2'
-							sx={{ textDecoration: !enterImageUrl ? 'underline' : 'none', cursor: 'pointer', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}
-							onClick={() => setEnterImageUrl(false)}>
-							Choose
-						</Typography>
-					</Box>
-					<Typography sx={{ margin: '0 0.5rem' }}> | </Typography>
-					<Box>
-						<Typography
-							variant='body2'
-							sx={{ textDecoration: enterImageUrl ? 'underline' : 'none', cursor: 'pointer', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}
-							onClick={() => {
-								setEnterImageUrl(true);
-								resetImageUpload();
-							}}>
-							Enter URL
-						</Typography>
-					</Box>
+					{user?.role === 'admin' && (
+						<>
+							<Box>
+								<Typography
+									variant='body2'
+									sx={{ textDecoration: !enterImageUrl ? 'underline' : 'none', cursor: 'pointer', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}
+									onClick={() => setEnterImageUrl(false)}>
+									Choose
+								</Typography>
+							</Box>
+
+							<Typography sx={{ margin: '0 0.5rem' }}> | </Typography>
+
+							<Box>
+								<Typography
+									variant='body2'
+									sx={{ textDecoration: enterImageUrl ? 'underline' : 'none', cursor: 'pointer', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}
+									onClick={() => {
+										setEnterImageUrl(true);
+										resetImageUpload();
+									}}>
+									Enter URL
+								</Typography>
+							</Box>
+						</>
+					)}
 				</Box>
 			</Box>
 			{!enterImageUrl && (
@@ -95,7 +104,7 @@ const HandleImageUploadURL = ({
 				<CustomErrorMessage sx={{ margin: isMobileSize ? '-0.5rem 0 1rem 0' : undefined }}>File size exceeds the limit of 1 MB </CustomErrorMessage>
 			)}
 
-			{enterImageUrl && (
+			{enterImageUrl && user?.role === 'admin' && (
 				<CustomTextField
 					placeholder='Image URL'
 					required={false}
