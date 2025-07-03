@@ -6,6 +6,7 @@ import Loading from '../components/layouts/loading/Loading';
 import LoadingError from '../components/layouts/loading/LoadingError';
 import { OrganisationContext } from './OrganisationContextProvider';
 import { useAuth } from '../hooks/useAuth';
+import { useLocation } from 'react-router-dom';
 
 interface CoursesContextTypes {
 	sortedCoursesData: SingleCourse[];
@@ -57,6 +58,15 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
 	const { isAuthenticated, isAdmin, isLearner } = useAuth();
+	const location = useLocation();
+	const isLandingPageRoute =
+		location.pathname === '/' ||
+		location.pathname === '/landing-page-courses' ||
+		location.pathname === '/resources' ||
+		location.pathname === '/contact-us' ||
+		location.pathname === '/about-us' ||
+		location.pathname === '/auth' ||
+		location.pathname.startsWith('/course/');
 
 	const [sortedCoursesData, setSortedCoursesData] = useState<SingleCourse[]>([]);
 	const [sortedPublicCoursesData, setSortedPublicCoursesData] = useState<SingleCourse[]>([]);
@@ -84,7 +94,7 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 	};
 
 	const { data, isLoading, isError } = useQuery(['allCourses', orgId], () => fetchCourses(), {
-		enabled: !!orgId && !isLoaded && isAuthenticated && (isAdmin || isLearner),
+		enabled: !!orgId && !isLoaded && isAuthenticated && (isAdmin || isLearner) && !isLandingPageRoute,
 	});
 
 	const fetchPublicCourses = async () => {
@@ -99,7 +109,7 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 	};
 
 	const { data: publicCourses } = useQuery(['allPublicCourses'], fetchPublicCourses, {
-		enabled: !isAuthenticated,
+		enabled: isLandingPageRoute,
 	});
 
 	const fetchCoursesDashboardSummary = async () => {
@@ -121,7 +131,7 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 		isLoading: summaryDataLoading,
 		isError: summaryDataError,
 	} = useQuery(['allCourses', orgId], () => fetchCoursesDashboardSummary(), {
-		enabled: !!orgId && !isLoaded && isAuthenticated && (isAdmin || isLearner),
+		enabled: !!orgId && !isLoaded && isAuthenticated && (isAdmin || isLearner) && !isLandingPageRoute,
 	});
 
 	// Function to handle sorting

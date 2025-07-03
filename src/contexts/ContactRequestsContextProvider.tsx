@@ -6,6 +6,7 @@ import Loading from '../components/layouts/loading/Loading';
 import LoadingError from '../components/layouts/loading/LoadingError';
 import { ContactRequest } from '../interfaces/contactRequest';
 import { useAuth } from '../hooks/useAuth';
+import { useLocation } from 'react-router-dom';
 
 interface ContactRequestsContextTypes {
 	contactRequests: ContactRequest[];
@@ -47,6 +48,15 @@ const ContactRequestsContextProvider = (props: ContactRequestsContextProviderPro
 	const [isLoaded, setIsLoaded] = useState<boolean>(false);
 	const [numberOfPages, setNumberOfPages] = useState<number>(1);
 	const [requestsPageNumber, setRequestsPageNumber] = useState<number>(1);
+	const location = useLocation();
+	const isLandingPageRoute =
+		location.pathname === '/' ||
+		location.pathname === '/landing-page-courses' ||
+		location.pathname === '/resources' ||
+		location.pathname === '/contact-us' ||
+		location.pathname === '/about-us' ||
+		location.pathname === '/auth' ||
+		location.pathname.startsWith('/course/');
 
 	const fetchContactRequests = async (page: number) => {
 		if (!orgId) return;
@@ -66,7 +76,7 @@ const ContactRequestsContextProvider = (props: ContactRequestsContextProviderPro
 	};
 
 	const { isLoading, isError } = useQuery(['contactRequests', orgId, requestsPageNumber], () => fetchContactRequests(requestsPageNumber), {
-		enabled: !!orgId && isAuthenticated && isAdmin && !isLoaded,
+		enabled: !!orgId && isAuthenticated && isAdmin && !isLoaded && !isLandingPageRoute,
 		// keepPreviousData: true,
 	});
 

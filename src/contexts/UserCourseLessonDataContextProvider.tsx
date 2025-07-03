@@ -6,7 +6,7 @@ import { OrganisationContext } from './OrganisationContextProvider';
 import { useQuery } from 'react-query';
 import Loading from '../components/layouts/loading/Loading';
 import LoadingError from '../components/layouts/loading/LoadingError';
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 
 interface UserCourseLessonDataContextTypes {
@@ -62,6 +62,16 @@ const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProvide
 
 	const { courseId } = useParams();
 
+	const location = useLocation();
+	const isLandingPageRoute =
+		location.pathname === '/' ||
+		location.pathname === '/landing-page-courses' ||
+		location.pathname === '/resources' ||
+		location.pathname === '/contact-us' ||
+		location.pathname === '/about-us' ||
+		location.pathname === '/auth' ||
+		location.pathname.startsWith('/course/');
+
 	const role = localStorage.getItem('role');
 
 	const [isLoaded, setIsLoaded] = useState<boolean>(false);
@@ -94,7 +104,7 @@ const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProvide
 		isLoading: singleCourseDataAdminLoading,
 		error: singleCourseDataAdminError,
 	} = useQuery(['singleCourseDataAdmin', orgId], () => fetchSingleCourseDataAdmin(courseId), {
-		enabled: !!userId && !!orgId && isAuthenticated && isAdmin && !isLoaded,
+		enabled: !!userId && !!orgId && isAuthenticated && isAdmin && !isLoaded && !isLandingPageRoute,
 	});
 
 	const {
@@ -102,7 +112,7 @@ const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProvide
 		isLoading: singleCourseDataUserLoading,
 		error: singleCourseDataUserError,
 	} = useQuery(['singleCourseDataUser', orgId], () => fetchSingleCourseDataUser(courseId), {
-		enabled: !!userId && !!orgId && isAuthenticated && isLearner && !isLoaded,
+		enabled: !!userId && !!orgId && isAuthenticated && isLearner && !isLoaded && !isLandingPageRoute,
 	});
 
 	const {
@@ -116,7 +126,7 @@ const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProvide
 			return userCourseData;
 		},
 		{
-			enabled: !!userId && !!orgId && isAuthenticated && isLearner && !isLoaded,
+			enabled: !!userId && !!orgId && isAuthenticated && isLearner && !isLoaded && !isLandingPageRoute,
 		}
 	);
 
@@ -131,7 +141,7 @@ const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProvide
 			return userLessonData;
 		},
 		{
-			enabled: !!userId && !!orgId && isAuthenticated && isLearner && !isLoaded,
+			enabled: !!userId && !!orgId && isAuthenticated && isLearner && !isLoaded && !isLandingPageRoute,
 		}
 	);
 

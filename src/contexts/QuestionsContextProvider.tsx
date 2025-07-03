@@ -7,6 +7,7 @@ import { QuestionInterface } from '../interfaces/question';
 import { OrganisationContext } from './OrganisationContextProvider';
 import { QuestionType } from '../interfaces/questionTypes';
 import { useAuth } from '../hooks/useAuth';
+import { useLocation } from 'react-router-dom';
 
 interface QuestionsContextTypes {
 	sortedQuestionsData: QuestionInterface[];
@@ -46,6 +47,16 @@ const QuestionsContextProvider = (props: QuestionsContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
 	const { isAuthenticated, isAdmin, isLearner } = useAuth();
+	const location = useLocation();
+
+	const isLandingPageRoute =
+		location.pathname === '/' ||
+		location.pathname === '/landing-page-courses' ||
+		location.pathname === '/resources' ||
+		location.pathname === '/contact-us' ||
+		location.pathname === '/about-us' ||
+		location.pathname === '/auth' ||
+		location.pathname.startsWith('/course/');
 
 	const [sortedQuestionsData, setSortedQuestionsData] = useState<QuestionInterface[]>([]);
 	const [numberOfPages, setNumberOfPages] = useState<number>(1);
@@ -73,7 +84,7 @@ const QuestionsContextProvider = (props: QuestionsContextProviderProps) => {
 	};
 
 	const { isLoading, isError } = useQuery(['allQuestions', orgId, questionsPageNumber], () => fetchQuestions(questionsPageNumber), {
-		enabled: !!orgId && !isLoaded && isAuthenticated && (isAdmin || isLearner),
+		enabled: !!orgId && !isLoaded && isAuthenticated && (isAdmin || isLearner) && !isLandingPageRoute,
 	});
 
 	const fetchQuestionTypes = async () => {
@@ -105,7 +116,7 @@ const QuestionsContextProvider = (props: QuestionsContextProviderProps) => {
 		isLoading: allQuestionTypesLoading,
 		isError: allQuestionTypesError,
 	} = useQuery('allQuestionTypes', () => fetchQuestionTypes(), {
-		enabled: !!orgId && !isLoaded && isAuthenticated && (isAdmin || isLearner),
+		enabled: !!orgId && !isLoaded && isAuthenticated && (isAdmin || isLearner) && !isLandingPageRoute,
 	});
 
 	// Function to handle sorting

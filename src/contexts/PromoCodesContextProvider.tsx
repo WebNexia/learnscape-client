@@ -1,6 +1,7 @@
 import axios from '@utils/axiosInstance';
 import { ReactNode, createContext, useContext, useState } from 'react';
 import { useQuery } from 'react-query';
+import { useLocation } from 'react-router-dom';
 
 import Loading from '../components/layouts/loading/Loading';
 import LoadingError from '../components/layouts/loading/LoadingError';
@@ -40,6 +41,15 @@ const PromoCodesContextProvider = (props: PromoCodesContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
 	const { isAuthenticated, isAdmin } = useAuth();
+	const location = useLocation();
+	const isLandingPageRoute =
+		location.pathname === '/' ||
+		location.pathname === '/landing-page-courses' ||
+		location.pathname === '/resources' ||
+		location.pathname === '/contact-us' ||
+		location.pathname === '/about-us' ||
+		location.pathname === '/auth' ||
+		location.pathname.startsWith('/course/');
 
 	const [sortedPromoCodesData, setSortedPromoCodesData] = useState<PromoCode[]>([]);
 	// const [promoCodesNumberOfPages, setNumberOfPages] = useState<number>(1);
@@ -66,7 +76,7 @@ const PromoCodesContextProvider = (props: PromoCodesContextProviderProps) => {
 	};
 
 	const { isLoading, isError } = useQuery(['allPromoCodes', orgId], () => fetchPromoCodes(), {
-		enabled: !!orgId && isAuthenticated && isAdmin && !isLoaded,
+		enabled: !!orgId && isAuthenticated && isAdmin && !isLoaded && !isLandingPageRoute,
 	});
 
 	// Function to handle sorting

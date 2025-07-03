@@ -6,6 +6,7 @@ import LoadingError from '../components/layouts/loading/LoadingError';
 import { OrganisationContext } from './OrganisationContextProvider';
 import { Document } from '../interfaces/document';
 import { useAuth } from '../hooks/useAuth';
+import { useLocation } from 'react-router-dom';
 
 interface DocumentsContextTypes {
 	sortedLandingPageDocumentsData: Document[];
@@ -41,6 +42,15 @@ const DocumentsContextProvider = (props: DocumentsContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
 	const { isAuthenticated, isAdmin, isLearner } = useAuth();
+	const location = useLocation();
+	const isLandingPageRoute =
+		location.pathname === '/' ||
+		location.pathname === '/landing-page-courses' ||
+		location.pathname === '/resources' ||
+		location.pathname === '/contact-us' ||
+		location.pathname === '/about-us' ||
+		location.pathname === '/auth' ||
+		location.pathname.startsWith('/course/');
 
 	const [sortedDocumentsData, setSortedDocumentsData] = useState<Document[]>([]);
 	const [sortedLandingPageDocumentsData, setSortedLandingPageDocumentsData] = useState<Document[]>([]);
@@ -68,7 +78,7 @@ const DocumentsContextProvider = (props: DocumentsContextProviderProps) => {
 	};
 
 	const { data, isLoading, isError } = useQuery(['allDocuments', orgId], () => fetchDocuments(), {
-		enabled: !!orgId && isAuthenticated && !isLoaded,
+		enabled: !!orgId && isAuthenticated && !isLoaded && !isLandingPageRoute,
 	});
 
 	const fetchLandingPageDocuments = async () => {
@@ -94,7 +104,7 @@ const DocumentsContextProvider = (props: DocumentsContextProviderProps) => {
 		isLoading: landingPageDocumentsLoading,
 		isError: landingPageDocumentsError,
 	} = useQuery(['landingPageDocuments', orgId], () => fetchLandingPageDocuments(), {
-		enabled: !isAuthenticated,
+		enabled: isLandingPageRoute,
 	});
 
 	// Function to handle sorting

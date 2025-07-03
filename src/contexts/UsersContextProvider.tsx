@@ -6,6 +6,7 @@ import LoadingError from '../components/layouts/loading/LoadingError';
 import { User } from '../interfaces/user';
 import { OrganisationContext } from './OrganisationContextProvider';
 import { useAuth } from '../hooks/useAuth';
+import { useLocation } from 'react-router-dom';
 
 interface UserContextTypes {
 	sortedUsersData: User[];
@@ -41,6 +42,15 @@ const UsersContextProvider = (props: UserContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
 	const { isAuthenticated } = useAuth();
+	const location = useLocation();
+	const isLandingPageRoute =
+		location.pathname === '/' ||
+		location.pathname === '/landing-page-courses' ||
+		location.pathname === '/resources' ||
+		location.pathname === '/contact-us' ||
+		location.pathname === '/about-us' ||
+		location.pathname === '/auth' ||
+		location.pathname.startsWith('/course/');
 
 	const [sortedUsersData, setSortedUsersData] = useState<User[]>([]);
 	// const [usersNumberOfPages, setUsersNumberOfPages] = useState<number>(1);
@@ -67,7 +77,7 @@ const UsersContextProvider = (props: UserContextProviderProps) => {
 	};
 
 	const { isLoading, isError } = useQuery(['allUsers', orgId], () => fetchUsers(), {
-		enabled: !!orgId && isAuthenticated && !isLoaded,
+		enabled: !!orgId && isAuthenticated && !isLoaded && !isLandingPageRoute,
 	});
 
 	// Function to handle sorting

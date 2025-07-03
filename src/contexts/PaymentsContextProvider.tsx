@@ -6,6 +6,7 @@ import LoadingError from '../components/layouts/loading/LoadingError';
 import { OrganisationContext } from './OrganisationContextProvider';
 import { Payment } from '../interfaces/payment';
 import { useAuth } from '../hooks/useAuth';
+import { useLocation } from 'react-router-dom';
 
 interface PaymentsContextTypes {
 	sortedPaymentsData: Payment[];
@@ -37,6 +38,15 @@ const PaymentsContextProvider = (props: PaymentsContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
 	const { isAuthenticated, isAdmin } = useAuth();
+	const location = useLocation();
+	const isLandingPageRoute =
+		location.pathname === '/' ||
+		location.pathname === '/landing-page-courses' ||
+		location.pathname === '/resources' ||
+		location.pathname === '/contact-us' ||
+		location.pathname === '/about-us' ||
+		location.pathname === '/auth' ||
+		location.pathname.startsWith('/course/');
 
 	const [sortedPaymentsData, setSortedPaymentsData] = useState<Payment[]>([]);
 	// const [numberOfPages, setNumberOfPages] = useState<number>(1);
@@ -67,7 +77,7 @@ const PaymentsContextProvider = (props: PaymentsContextProviderProps) => {
 	};
 
 	const { isLoading, isError } = useQuery(['allPayments', orgId], () => fetchPayments(), {
-		enabled: !!orgId && isAuthenticated && isAdmin && !isLoaded,
+		enabled: !!orgId && isAuthenticated && isAdmin && !isLoaded && !isLandingPageRoute,
 	});
 
 	// Function to handle sorting
