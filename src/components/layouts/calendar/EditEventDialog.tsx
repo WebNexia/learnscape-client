@@ -1010,6 +1010,7 @@ const EditEventDialog = ({
 					<CustomTextField
 						label='Location'
 						value={selectedEvent?.location}
+						sx={{ marginBottom: '-0.5rem' }}
 						onChange={(e) => {
 							setIsEventUpdated(true);
 							setSelectedEvent((prevData) => {
@@ -1021,6 +1022,9 @@ const EditEventDialog = ({
 						}}
 						required={false}
 						InputProps={{ inputProps: { maxLength: 150 } }}
+						placeholder='Enter a location for the event (max 150 characters)'
+						multiline
+						rows={3}
 					/>
 				</DialogContent>
 				<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0 0.75rem' }}>

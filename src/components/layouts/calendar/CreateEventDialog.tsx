@@ -896,9 +896,13 @@ const CreateEventDialog = ({
 						onChange={(e) => setNewEvent((prevData) => ({ ...prevData, location: e.target.value }))}
 						required={false}
 						InputProps={{ inputProps: { maxLength: 150 } }}
+						placeholder='Enter a location for the event (max 150 characters)'
+						multiline
+						rows={3}
 					/>
 				</DialogContent>
 				<CustomDialogActions
+					actionSx={{ margin: '-1rem 0.5rem 0.5rem 0' }}
 					onCancel={() => {
 						setNewEventModalOpen(false);
 						resetNewEventForm();
