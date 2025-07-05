@@ -12,6 +12,7 @@ import Autocomplete from '@mui/material/Autocomplete';
 import Chip from '@mui/material/Chip';
 import theme from '../../themes';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
+import HandleImageUploadURL from '../../components/forms/uploadImageVideoDocument/HandleImageUploadURL';
 
 interface EditInstructorDialogProps {
 	isEditInstructorDialogOpen: boolean;
@@ -37,6 +38,7 @@ const EditInstructorDialog = ({
 	const [singleCourseCopy, setSingleCourseCopy] = useState<SingleCourse | undefined>(singleCourse);
 
 	const [isUserSelected, setIsUserSelected] = useState<boolean>(false);
+	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(true);
 
 	useEffect(() => {
 		if (isEditInstructorDialogOpen) {
@@ -46,13 +48,14 @@ const EditInstructorDialog = ({
 
 	const handleInstructorUpdate = async () => {
 		try {
-			const response = await axios.patch(`${base_url}/courses/${singleCourse?._id}`, {
-				instructor: singleCourse?.instructor,
+			const response = await axios.patch(`${base_url}/courses/${singleCourseCopy?._id}`, {
+				instructor: singleCourseCopy?.instructor,
 			});
 
 			const responseUpdatedData = response.data.data;
 
 			updateCourse(responseUpdatedData as SingleCourse);
+			setSingleCourse(singleCourseCopy);
 		} catch (error) {
 			console.log(error);
 		}
@@ -61,7 +64,10 @@ const EditInstructorDialog = ({
 	return (
 		<CustomDialog
 			openModal={isEditInstructorDialogOpen}
-			closeModal={() => setIsEditInstructorDialogOpen(false)}
+			closeModal={() => {
+				setIsEditInstructorDialogOpen(false);
+				setSingleCourseCopy(singleCourse);
+			}}
 			title='Edit Instructor'
 			maxWidth='sm'>
 			<form
@@ -73,14 +79,14 @@ const EditInstructorDialog = ({
 					}
 				}}
 				style={{ display: 'flex', flexDirection: 'column' }}>
-				<Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', mb: '0.75rem', mt: '-0.5rem' }}>
-					<Box sx={{ display: 'flex', flexDirection: 'column', flex: 3 }}>
+				<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', mb: '0.75rem', mt: '-0.5rem' }}>
+					<Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
 						<CustomTextField
 							fullWidth={false}
 							label='Name'
-							value={singleCourse?.instructor?.name}
+							value={singleCourseCopy?.instructor?.name}
 							onChange={(e) => {
-								setSingleCourse((prevData) => {
+								setSingleCourseCopy((prevData) => {
 									if (!prevData) return prevData;
 									return {
 										...prevData,
@@ -95,7 +101,7 @@ const EditInstructorDialog = ({
 								});
 								setIsUserSelected(false);
 							}}
-							sx={{ margin: '1rem 2rem' }}
+							sx={{ margin: '1rem 0rem 0rem 2rem', width: '100%' }}
 							InputLabelProps={{
 								sx: { fontSize: '0.8rem' },
 							}}
@@ -109,10 +115,10 @@ const EditInstructorDialog = ({
 							fullWidth={false}
 							type='email'
 							label='Email Address'
-							value={singleCourse?.instructor?.email}
-							disabled={isUserSelected || !!singleCourse?.instructor?.userId}
+							value={singleCourseCopy?.instructor?.email}
+							disabled={isUserSelected || !!singleCourseCopy?.instructor?.userId}
 							onChange={(e) =>
-								setSingleCourse((prevData) => {
+								setSingleCourseCopy((prevData) => {
 									if (!prevData) return prevData;
 									return {
 										...prevData,
@@ -123,7 +129,7 @@ const EditInstructorDialog = ({
 									};
 								})
 							}
-							sx={{ margin: '1rem 2rem' }}
+							sx={{ margin: '1rem 2rem 0rem 1rem', width: '100%' }}
 							InputLabelProps={{
 								sx: { fontSize: '0.8rem' },
 							}}
@@ -135,34 +141,44 @@ const EditInstructorDialog = ({
 							}}
 						/>
 					</Box>
-					<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 3 }}>
+					<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '1rem 4rem 0rem 2rem' }}>
+						<Box sx={{ width: '100%', mr: '3rem' }}>
+							<HandleImageUploadURL
+								label='Instructor Image'
+								disabled={isUserSelected || !!singleCourseCopy?.instructor?.userId}
+								onImageUploadLogic={(url) => {
+									if (singleCourseCopy) {
+										setSingleCourseCopy({
+											...singleCourseCopy,
+											instructor: {
+												...singleCourseCopy.instructor,
+												imageUrl: url,
+											},
+										});
+									}
+								}}
+								onChangeImgUrl={(e) => {
+									if (singleCourseCopy) {
+										setSingleCourseCopy({
+											...singleCourseCopy,
+											instructor: {
+												...singleCourseCopy.instructor,
+												imageUrl: e.target.value,
+											},
+										});
+									}
+								}}
+								imageUrlValue={singleCourseCopy?.instructor?.imageUrl || ''}
+								imageFolderName='InstructorImages'
+								enterImageUrl={enterImageUrl}
+								setEnterImageUrl={setEnterImageUrl}
+							/>
+						</Box>
+
 						<img
-							src={singleCourse?.instructor?.imageUrl || 'https://img.sportsbookreview.com/images/avatars/default-avatar.jpg'}
+							src={singleCourseCopy?.instructor?.imageUrl || 'https://img.sportsbookreview.com/images/avatars/default-avatar.jpg'}
 							alt='img'
 							style={{ width: '4.25rem', height: '4.25rem', borderRadius: '50%', objectFit: 'cover' }}
-						/>
-						<CustomTextField
-							fullWidth={false}
-							label='Image'
-							value={singleCourse?.instructor?.imageUrl}
-							disabled={isUserSelected || !!singleCourse?.instructor?.userId}
-							onChange={(e) =>
-								setSingleCourse((prevData) => {
-									if (!prevData) return prevData;
-									return {
-										...prevData,
-										instructor: {
-											...prevData.instructor,
-											imageUrl: e.target.value,
-										},
-									};
-								})
-							}
-							sx={{ margin: '1rem 2rem', width: '80%' }}
-							InputLabelProps={{
-								sx: { fontSize: '0.8rem' },
-							}}
-							required={false}
 						/>
 					</Box>
 				</Box>
@@ -172,7 +188,7 @@ const EditInstructorDialog = ({
 					value={searchValue}
 					onChange={setSearchValue}
 					onSelect={(selectedUser) => {
-						setSingleCourse((prevData) => {
+						setSingleCourseCopy((prevData) => {
 							if (!prevData) return prevData;
 							return {
 								...prevData,
@@ -202,9 +218,9 @@ const EditInstructorDialog = ({
 					fullWidth={false}
 					label='Bio'
 					placeholder='Enter bio (max 200 characters)'
-					value={singleCourse?.instructor?.bio}
+					value={singleCourseCopy?.instructor?.bio}
 					onChange={(e) =>
-						setSingleCourse((prevData) => {
+						setSingleCourseCopy((prevData) => {
 							if (!prevData) return prevData;
 							return {
 								...prevData,
@@ -227,9 +243,9 @@ const EditInstructorDialog = ({
 				<CustomTextField
 					fullWidth={false}
 					label='Title'
-					value={singleCourse?.instructor?.title}
+					value={singleCourseCopy?.instructor?.title}
 					onChange={(e) =>
-						setSingleCourse((prevData) => {
+						setSingleCourseCopy((prevData) => {
 							if (!prevData) return prevData;
 							return {
 								...prevData,
@@ -257,7 +273,7 @@ const EditInstructorDialog = ({
 						multiple
 						freeSolo
 						options={[]}
-						value={singleCourse?.instructor?.expertise?.slice(0, 5) || []}
+						value={singleCourseCopy?.instructor?.expertise?.slice(0, 5) || []}
 						isOptionEqualToValue={(option, value) => {
 							if (typeof option === 'string' && typeof value === 'string') {
 								return option === value;
@@ -266,7 +282,7 @@ const EditInstructorDialog = ({
 						}}
 						onChange={(_, newValue) => {
 							const limitedValue = newValue.slice(0, 5);
-							setSingleCourse((prevData) => {
+							setSingleCourseCopy((prevData) => {
 								if (!prevData) return prevData;
 								return {
 									...prevData,
@@ -305,7 +321,7 @@ const EditInstructorDialog = ({
 								label='Expertise'
 								placeholder='Add expertise (Enter to add)'
 								size='small'
-								helperText={singleCourse?.instructor?.expertise?.length === 5 ? 'Maximum 5 expertise items allowed' : ''}
+								helperText={singleCourseCopy?.instructor?.expertise?.length === 5 ? 'Maximum 5 expertise items allowed' : ''}
 								sx={{
 									'margin': '0.5rem 2rem',
 									'backgroundColor': theme.bgColor?.common,
@@ -331,8 +347,8 @@ const EditInstructorDialog = ({
 										e.preventDefault();
 										const input = e.target as HTMLInputElement;
 										const value = input.value.trim();
-										if (value && (!singleCourse?.instructor?.expertise || singleCourse.instructor.expertise.length < 5)) {
-											setSingleCourse((prevData) => {
+										if (value && (!singleCourseCopy?.instructor?.expertise || singleCourseCopy.instructor.expertise.length < 5)) {
+											setSingleCourseCopy((prevData) => {
 												if (!prevData) return prevData;
 												return {
 													...prevData,
@@ -355,9 +371,9 @@ const EditInstructorDialog = ({
 				<CustomTextField
 					fullWidth={false}
 					label='LinkedIn URL'
-					value={singleCourse?.instructor?.linkedInUrl}
+					value={singleCourseCopy?.instructor?.linkedInUrl}
 					onChange={(e) =>
-						setSingleCourse((prevData) => {
+						setSingleCourseCopy((prevData) => {
 							if (!prevData) return prevData;
 							return {
 								...prevData,
@@ -378,9 +394,9 @@ const EditInstructorDialog = ({
 				<CustomTextField
 					fullWidth={false}
 					label='Website'
-					value={singleCourse?.instructor?.website}
+					value={singleCourseCopy?.instructor?.website}
 					onChange={(e) =>
-						setSingleCourse((prevData) => {
+						setSingleCourseCopy((prevData) => {
 							if (!prevData) return prevData;
 							return {
 								...prevData,
@@ -406,7 +422,7 @@ const EditInstructorDialog = ({
 				<CustomDialogActions
 					onCancel={() => {
 						setIsEditInstructorDialogOpen(false);
-						setSingleCourse(singleCourseCopy);
+						setSingleCourseCopy(singleCourse);
 					}}
 					submitBtnText='Save'
 					actionSx={{ width: '95%', margin: '0.75rem auto' }}

@@ -16,6 +16,7 @@ interface HandleImageUploadURLProps {
 	imageFolderName: string;
 	enterImageUrl: boolean;
 	label?: string;
+	disabled?: boolean;
 }
 
 const HandleImageUploadURL = ({
@@ -26,6 +27,7 @@ const HandleImageUploadURL = ({
 	imageFolderName,
 	enterImageUrl,
 	label = 'Image',
+	disabled = false,
 }: HandleImageUploadURLProps) => {
 	const { imageUpload, isImgSizeLarge, handleImageChange, resetImageUpload, handleImageUpload } = useImageUpload();
 
@@ -81,6 +83,7 @@ const HandleImageUploadURL = ({
 						onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
 							handleImageChange(e);
 						}}
+						disabled={disabled}
 						inputProps={{ accept: '.jpg, .jpeg, .png' }} // Specify accepted file types
 						sx={{
 							width: '82.5%',
@@ -106,6 +109,7 @@ const HandleImageUploadURL = ({
 
 			{enterImageUrl && user?.role === 'admin' && (
 				<CustomTextField
+					disabled={disabled}
 					placeholder='Image URL'
 					required={false}
 					sx={{ marginTop: '0.5rem' }}

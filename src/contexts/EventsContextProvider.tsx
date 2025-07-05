@@ -81,7 +81,7 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 	};
 
 	const { isLoading, isError, refetch } = useQuery(['allEvents', orgId, eventsPageNumber], () => fetchEvents(eventsPageNumber), {
-		enabled: !!orgId && isAuthenticated && (isAdmin || isLearner) && !isLandingPageRoute,
+		enabled: !!orgId && isAuthenticated && (isAdmin || isLearner) && !isLandingPageRoute && !isLoaded,
 	});
 
 	// Function to handle sorting

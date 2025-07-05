@@ -76,12 +76,12 @@ const AdminCourseEditPage = () => {
 
 	const [isEditMode, setIsEditMode] = useState<boolean>(false);
 	const [singleCourse, setSingleCourse] = useState<SingleCourse>();
+	const [singleCourseBeforeSave, setSingleCourseBeforeSave] = useState<SingleCourse>();
 	const [isFree, setIsFree] = useState<boolean>(false);
 	const [isMissingField, setIsMissingField] = useState<boolean>(false);
 	const [isMissingFieldMsgOpen, setIsMissingFieldMsgOpen] = useState<boolean>(false);
 	const [isNoChapterMsgOpen, setIsNoChapterMsgOpen] = useState<boolean>(false);
 
-	const [resetChanges, setResetChanges] = useState<boolean>(false);
 	const [deletedChapterIds, setDeletedChapterIds] = useState<string[]>([]);
 	const [newChapterTitle, setNewChapterTitle] = useState<string>('');
 	const [isChapterCreateModalOpen, setIsChapterCreateModalOpen] = useState<boolean>(false);
@@ -170,7 +170,7 @@ const AdminCourseEditPage = () => {
 		const newRenameModalOpen = [...isDocRenameModalOpen];
 		newRenameModalOpen[index] = false;
 
-		setSingleCourse((prevData) => {
+		setSingleCourseBeforeSave((prevData) => {
 			if (prevData) {
 				const updatedDocuments = prevData?.documents
 					?.filter((document) => document !== null)
@@ -223,6 +223,7 @@ const AdminCourseEditPage = () => {
 
 					const courseResponse = response?.data?.data;
 					setSingleCourse(courseResponse);
+					setSingleCourseBeforeSave(courseResponse);
 					if (courseResponse?.prices.some((price: Price) => price.amount === 'Free' || price.amount === '' || price.amount === '0')) {
 						setIsFree(true);
 					}
@@ -260,23 +261,23 @@ const AdminCourseEditPage = () => {
 			};
 			fetchSingleCourseData(courseId);
 		}
-	}, [courseId, resetChanges]);
+	}, [courseId]);
 
 	const actuallyUpdateCourse = async () => {
 		let updatedChapters: ChapterLessonData[] = [];
 		let updatedDocuments: Document[] = [];
 
 		// If course is external, skip all chapter/lesson/document creation/updating
-		if (singleCourse?.courseManagement?.isExternal) {
-			const extStartingDate = new Date(singleCourse?.startingDate || '');
-			const extDurationWeeks = singleCourse?.durationWeeks || 0;
+		if (singleCourseBeforeSave?.courseManagement?.isExternal) {
+			const extStartingDate = new Date(singleCourseBeforeSave?.startingDate || '');
+			const extDurationWeeks = singleCourseBeforeSave?.durationWeeks || 0;
 			const extValidUntil =
 				!isNaN(extStartingDate.getTime()) && extDurationWeeks > 0
 					? new Date(extStartingDate.getTime() + extDurationWeeks * 7 * 24 * 60 * 60 * 1000)
 					: null;
 
 			const updatedCourse = {
-				...singleCourse,
+				...singleCourseBeforeSave,
 				chapters: [],
 				chapterIds: [],
 				documents: [],
@@ -313,8 +314,8 @@ const AdminCourseEditPage = () => {
 		}
 
 		// Calculate validUntil here
-		const startingDate = new Date(singleCourse?.startingDate || '');
-		const durationWeeks = singleCourse?.durationWeeks || 0;
+		const startingDate = new Date(singleCourseBeforeSave?.startingDate || '');
+		const durationWeeks = singleCourseBeforeSave?.durationWeeks || 0;
 		const validUntil =
 			!isNaN(startingDate.getTime()) && durationWeeks > 0 ? new Date(startingDate.getTime() + durationWeeks * 7 * 24 * 60 * 60 * 1000) : null;
 
@@ -386,8 +387,8 @@ const AdminCourseEditPage = () => {
 
 			setChapterLessonData(updatedChapters);
 
-			if (singleCourse?.documents) {
-				const updatedDocumentsPromises = (singleCourse?.documents as (Document | null)[]) // Assert as array of Document or null
+			if (singleCourseBeforeSave?.documents) {
+				const updatedDocumentsPromises = (singleCourseBeforeSave?.documents as (Document | null)[]) // Assert as array of Document or null
 					?.filter((doc): doc is Document => doc !== null) // Type guard to filter out nulls
 					?.map(async (document) => {
 						if (document._id.includes('temp_doc_id')) {
@@ -463,9 +464,9 @@ const AdminCourseEditPage = () => {
 
 			const updatedDocumentIds = updatedDocuments?.map((doc) => doc._id);
 
-			if (singleCourse) {
+			if (singleCourseBeforeSave) {
 				const updatedCourse = {
-					...singleCourse,
+					...singleCourseBeforeSave,
 					chapters: updatedChapters,
 					chapterIds: updatedChapters?.map((chapter) => chapter.chapterId),
 					documentIds: updatedDocumentIds,
@@ -551,7 +552,7 @@ const AdminCourseEditPage = () => {
 	};
 
 	const handlePublishing = async (): Promise<void> => {
-		const isTryingToPublish = !singleCourse?.isActive;
+		const isTryingToPublish = !singleCourseBeforeSave?.isActive;
 
 		const hasPublishedLesson = chapterLessonDataBeforeSave.some((chapter) => chapter.lessons?.some((lesson) => lesson?.isActive));
 
@@ -561,7 +562,7 @@ const AdminCourseEditPage = () => {
 		} else if (courseId !== undefined) {
 			try {
 				await axios.patch(`${base_url}/courses/${courseId}`, {
-					isActive: !singleCourse?.isActive,
+					isActive: !singleCourseBeforeSave?.isActive,
 					// publishedAt will be handled by the backend when publishing
 					// When unpublishing, we explicitly set it to null
 					publishedAt: isTryingToPublish ? undefined : null,
@@ -570,7 +571,7 @@ const AdminCourseEditPage = () => {
 					if (prevData) {
 						return {
 							...prevData,
-							isActive: !singleCourse?.isActive,
+							isActive: !singleCourseBeforeSave?.isActive,
 							publishedAt: isTryingToPublish ? new Date().toISOString() : null,
 						};
 					}
@@ -587,8 +588,8 @@ const AdminCourseEditPage = () => {
 		e.preventDefault();
 
 		let validUntil: Date | null = null;
-		const startingDate = new Date(singleCourse?.startingDate || '');
-		const durationWeeks = singleCourse?.durationWeeks || 0;
+		const startingDate = new Date(singleCourseBeforeSave?.startingDate || '');
+		const durationWeeks = singleCourseBeforeSave?.durationWeeks || 0;
 
 		if (!isNaN(startingDate.getTime()) && durationWeeks > 0) {
 			validUntil = new Date(startingDate.getTime() + durationWeeks * 7 * 24 * 60 * 60 * 1000);
@@ -614,29 +615,31 @@ const AdminCourseEditPage = () => {
 				<CoursePaper
 					userId={userId}
 					singleCourse={singleCourse}
+					singleCourseBeforeSave={singleCourseBeforeSave}
 					chapterLessonData={chapterLessonData}
 					chapterLessonDataBeforeSave={chapterLessonDataBeforeSave}
 					isEditMode={isEditMode}
 					isMissingFieldMsgOpen={isMissingFieldMsgOpen}
 					isNoChapterMsgOpen={isNoChapterMsgOpen}
-					resetChanges={resetChanges}
 					isFree={isFree}
 					setIsEditMode={setIsEditMode}
 					setIsMissingFieldMsgOpen={setIsMissingFieldMsgOpen}
 					setIsNoChapterMsgOpen={setIsNoChapterMsgOpen}
 					setIsMissingField={setIsMissingField}
 					handlePublishing={handlePublishing}
-					setResetChanges={setResetChanges}
 					handleCourseUpdate={handleCourseUpdate}
 					setChapterLessonDataBeforeSave={setChapterLessonDataBeforeSave}
 					setDeletedChapterIds={setDeletedChapterIds}
 					hasUnsavedChanges={hasUnsavedChanges}
 					setHasUnsavedChanges={setHasUnsavedChanges}
+					setSingleCourseBeforeSave={setSingleCourseBeforeSave}
 				/>
 			</Box>
 
 			<Box sx={{ display: 'flex', width: '95%', justifyContent: 'center', marginTop: '9rem' }}>
-				{!isEditMode && <CourseDetailsNonEditBox singleCourse={singleCourse} chapters={chapterLessonData} setSingleCourse={setSingleCourse} />}
+				{!isEditMode && (
+					<CourseDetailsNonEditBox singleCourse={singleCourseBeforeSave} chapters={chapterLessonData} setSingleCourse={setSingleCourseBeforeSave} />
+				)}
 
 				{isEditMode && (
 					<Box
@@ -649,14 +652,15 @@ const AdminCourseEditPage = () => {
 						<form>
 							<CourseDetailsEditBox
 								singleCourse={singleCourse}
+								singleCourseBeforeSave={singleCourseBeforeSave}
 								isFree={isFree}
 								isMissingField={isMissingField}
 								setIsFree={setIsFree}
 								setIsMissingField={setIsMissingField}
-								setSingleCourse={setSingleCourse}
+								setSingleCourseBeforeSave={setSingleCourseBeforeSave}
 								setHasUnsavedChanges={setHasUnsavedChanges}
 							/>
-							{!singleCourse?.courseManagement.isExternal && (
+							{!singleCourseBeforeSave?.courseManagement.isExternal && (
 								<Box sx={{ mt: '2rem', minHeight: '40vh' }}>
 									<Box
 										sx={{
@@ -762,12 +766,12 @@ const AdminCourseEditPage = () => {
 								</Box>
 							)}
 
-							{!singleCourse?.courseManagement.isExternal && (
+							{!singleCourseBeforeSave?.courseManagement.isExternal && (
 								<Box sx={{ margin: '3rem 0 1rem 0' }}>
 									<HandleDocUploadURL
 										label='Course Materials'
 										onDocUploadLogic={(url, docName) => {
-											setSingleCourse((prevData) => {
+											setSingleCourseBeforeSave((prevData) => {
 												if (prevData && userId && courseId) {
 													const maxNumber = prevData?.documents
 														.filter((doc) => doc !== null)
@@ -824,16 +828,16 @@ const AdminCourseEditPage = () => {
 										docFolderName='Course Materials'
 										addNewDocumentModalOpen={addNewDocumentModalOpen}
 										setAddNewDocumentModalOpen={setAddNewDocumentModalOpen}
-										singleCourse={singleCourse}
-										setSingleCourse={setSingleCourse}
+										singleCourseBeforeSave={singleCourseBeforeSave}
+										setSingleCourseBeforeSave={setSingleCourseBeforeSave}
 										fromAdminCourses={true}
 									/>
 								</Box>
 							)}
 
-							{!singleCourse?.courseManagement.isExternal && (
+							{!singleCourseBeforeSave?.courseManagement.isExternal && (
 								<DocumentsListEditBox
-									documentsSource={singleCourse?.documents}
+									documentsSource={singleCourseBeforeSave?.documents}
 									toggleDocRenameModal={toggleDocRenameModal}
 									closeDocRenameModal={closeDocRenameModal}
 									isDocRenameModalOpen={isDocRenameModalOpen}
@@ -841,7 +845,7 @@ const AdminCourseEditPage = () => {
 									setIsDocumentUpdated={setIsDocumentUpdated}
 									setHasUnsavedChanges={setHasUnsavedChanges}
 									removeDocOnClick={(document: Document) => {
-										setSingleCourse((prevData) => {
+										setSingleCourseBeforeSave((prevData) => {
 											if (prevData) {
 												const filteredDocuments = prevData?.documents?.filter((thisDoc) => thisDoc._id !== document._id);
 												const filteredDocumentIds = filteredDocuments?.map((doc) => doc._id);
@@ -870,7 +874,7 @@ const AdminCourseEditPage = () => {
 										});
 									}}
 									renameDocOnChange={(e: React.ChangeEvent<HTMLInputElement>, document: Document) => {
-										setSingleCourse((prevData) => {
+										setSingleCourseBeforeSave((prevData) => {
 											if (prevData) {
 												const updatedDocuments = prevData?.documents
 													?.filter((document) => document !== null)

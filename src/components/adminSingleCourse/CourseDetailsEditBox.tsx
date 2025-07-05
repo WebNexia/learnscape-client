@@ -9,9 +9,10 @@ import useImageUpload from '../../hooks/useImageUpload';
 
 interface CourseDetailsEditBoxProps {
 	singleCourse?: SingleCourse;
+	singleCourseBeforeSave?: SingleCourse;
 	isFree: boolean;
 	isMissingField: boolean;
-	setSingleCourse: React.Dispatch<React.SetStateAction<SingleCourse | undefined>>;
+	setSingleCourseBeforeSave: React.Dispatch<React.SetStateAction<SingleCourse | undefined>>;
 	setIsMissingField: React.Dispatch<React.SetStateAction<boolean>>;
 	setIsFree: React.Dispatch<React.SetStateAction<boolean>>;
 	setHasUnsavedChanges: React.Dispatch<React.SetStateAction<boolean>>;
@@ -19,11 +20,12 @@ interface CourseDetailsEditBoxProps {
 
 const CourseDetailsEditBox = ({
 	singleCourse,
+	singleCourseBeforeSave,
 	isFree,
 	isMissingField,
 	setIsFree,
 	setIsMissingField,
-	setSingleCourse,
+	setSingleCourseBeforeSave,
 	setHasUnsavedChanges,
 }: CourseDetailsEditBoxProps) => {
 	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(true);
@@ -37,16 +39,16 @@ const CourseDetailsEditBox = ({
 
 	useEffect(() => {
 		// Initialize price states from `singleCourse.prices`
-		if (singleCourse) {
-			setGBP(singleCourse.prices.find((price) => price.currency === 'gbp')?.amount || '');
-			setUSD(singleCourse.prices.find((price) => price.currency === 'usd')?.amount || '');
-			setEUR(singleCourse.prices.find((price) => price.currency === 'eur')?.amount || '');
-			setTRY(singleCourse.prices.find((price) => price.currency === 'try')?.amount || '');
+		if (singleCourseBeforeSave) {
+			setGBP(singleCourseBeforeSave.prices.find((price) => price.currency === 'gbp')?.amount || '');
+			setUSD(singleCourseBeforeSave.prices.find((price) => price.currency === 'usd')?.amount || '');
+			setEUR(singleCourseBeforeSave.prices.find((price) => price.currency === 'eur')?.amount || '');
+			setTRY(singleCourseBeforeSave.prices.find((price) => price.currency === 'try')?.amount || '');
 		}
-	}, [singleCourse]);
+	}, [singleCourseBeforeSave]);
 
 	const updatePriceInSingleCourse = (currency: 'gbp' | 'usd' | 'eur' | 'try', amount: string) => {
-		setSingleCourse((prevCourse) => {
+		setSingleCourseBeforeSave((prevCourse) => {
 			if (prevCourse) {
 				const prices = [...prevCourse.prices];
 				const index = prices.findIndex((price) => price.currency === currency);
@@ -86,24 +88,24 @@ const CourseDetailsEditBox = ({
 					<HandleImageUploadURL
 						label='Cover Image'
 						onImageUploadLogic={(url) => {
-							if (singleCourse) {
-								setSingleCourse({
-									...singleCourse,
+							if (singleCourseBeforeSave) {
+								setSingleCourseBeforeSave({
+									...singleCourseBeforeSave,
 									imageUrl: url,
 								});
 								setHasUnsavedChanges(true);
 							}
 						}}
 						onChangeImgUrl={(e) => {
-							if (singleCourse) {
-								setSingleCourse({
-									...singleCourse,
+							if (singleCourseBeforeSave) {
+								setSingleCourseBeforeSave({
+									...singleCourseBeforeSave,
 									imageUrl: e.target.value,
 								});
 								setHasUnsavedChanges(true);
 							}
 						}}
-						imageUrlValue={singleCourse?.imageUrl || ''}
+						imageUrlValue={singleCourseBeforeSave?.imageUrl || ''}
 						imageFolderName='CourseImages'
 						enterImageUrl={enterImageUrl}
 						setEnterImageUrl={setEnterImageUrl}
@@ -120,7 +122,7 @@ const CourseDetailsEditBox = ({
 					}}>
 					<Box sx={{ textAlign: 'center' }}>
 						<img
-							src={singleCourse?.imageUrl || 'https://placehold.co/500x400/e2e8f0/64748b?text=No+Image'}
+							src={singleCourseBeforeSave?.imageUrl || 'https://placehold.co/500x400/e2e8f0/64748b?text=No+Image'}
 							alt='course_img'
 							height='115rem'
 							style={{
@@ -132,12 +134,12 @@ const CourseDetailsEditBox = ({
 							<Typography variant='body2' sx={{ mt: '0.25rem' }}>
 								Cover Image
 							</Typography>
-							{singleCourse?.imageUrl && (
+							{singleCourseBeforeSave?.imageUrl && (
 								<Typography
 									variant='body2'
 									sx={{ fontSize: '0.75rem', textDecoration: 'underline', cursor: 'pointer' }}
 									onClick={() => {
-										setSingleCourse((prevData) => {
+										setSingleCourseBeforeSave((prevData) => {
 											if (prevData !== undefined) {
 												return {
 													...prevData,
@@ -165,56 +167,62 @@ const CourseDetailsEditBox = ({
 								backgroundColor: theme.bgColor?.common,
 							}}
 							multiline
-							value={singleCourse?.title}
+							value={singleCourseBeforeSave?.title}
 							onChange={(e) => {
-								setSingleCourse(() => {
-									if (singleCourse?.title !== undefined) {
-										return { ...singleCourse, title: e.target.value };
+								setSingleCourseBeforeSave((prevData) => {
+									if (prevData) {
+										return { ...prevData, title: e.target.value };
 									}
+									return prevData;
 								});
 								setIsMissingField(false);
 								setHasUnsavedChanges(true);
 							}}
 							InputProps={{ inputProps: { maxLength: 50 } }}
-							error={isMissingField && singleCourse?.title === ''}
+							error={isMissingField && singleCourseBeforeSave?.title === ''}
 						/>
 					</Tooltip>
-					{isMissingField && singleCourse?.title === '' && <CustomErrorMessage>Enter a title</CustomErrorMessage>}
+					{isMissingField && singleCourseBeforeSave?.title === '' && <CustomErrorMessage>Enter a title</CustomErrorMessage>}
 				</Box>
 				<Box sx={{ flex: 1.5, marginLeft: '2rem' }}>
 					<Typography variant='h6'>Description*</Typography>
 					<Tooltip title='Max 500 characters' placement='top'>
 						<CustomTextField
 							sx={{ marginTop: '0.5rem' }}
-							value={singleCourse?.description}
+							value={singleCourseBeforeSave?.description}
 							onChange={(e) => {
-								setSingleCourse(() => {
-									if (singleCourse?.description !== undefined) {
-										return { ...singleCourse, description: e.target.value };
+								setSingleCourseBeforeSave((prevData) => {
+									if (prevData) {
+										return { ...prevData, description: e.target.value };
 									}
+									return prevData;
 								});
 								setIsMissingField(false);
 								setHasUnsavedChanges(true);
 							}}
 							multiline
 							InputProps={{ inputProps: { maxLength: 500 } }}
-							error={isMissingField && singleCourse?.description === ''}
+							error={isMissingField && singleCourseBeforeSave?.description === ''}
 						/>
 					</Tooltip>
 
-					{isMissingField && singleCourse?.description === '' && <CustomErrorMessage>Enter a description</CustomErrorMessage>}
+					{isMissingField && singleCourseBeforeSave?.description === '' && <CustomErrorMessage>Enter a description</CustomErrorMessage>}
 				</Box>
 				<Box sx={{ display: 'flex', alignItems: 'center', ml: '2rem' }}>
 					<Tooltip title='External courses will be managed outside the platform.' placement='top'>
 						<FormControlLabel
 							control={
 								<Checkbox
-									checked={singleCourse?.courseManagement?.isExternal}
+									checked={singleCourseBeforeSave?.courseManagement?.isExternal}
 									onChange={(e) => {
-										setSingleCourse(() => {
-											if (singleCourse?.courseManagement !== undefined) {
-												return { ...singleCourse, courseManagement: { ...singleCourse.courseManagement, isExternal: e.target.checked } };
+										setSingleCourseBeforeSave((prevData) => {
+											if (prevData) {
+												return {
+													...prevData,
+													courseManagement: { ...prevData.courseManagement, isExternal: e.target.checked },
+												};
 											}
+											return prevData;
 										});
 										setHasUnsavedChanges(true);
 									}}
@@ -326,7 +334,7 @@ const CourseDetailsEditBox = ({
 											setUSD('');
 											setEUR('');
 											setTRY('');
-											setSingleCourse((prevCourse) =>
+											setSingleCourseBeforeSave((prevCourse) =>
 												prevCourse
 													? {
 															...prevCourse,
@@ -358,7 +366,9 @@ const CourseDetailsEditBox = ({
 							}}
 						/>
 					</Box>
-					{isMissingField && singleCourse?.prices.some((price) => price.amount === '') && <CustomErrorMessage>Enter price amount</CustomErrorMessage>}
+					{isMissingField && singleCourseBeforeSave?.prices.some((price) => price.amount === '') && (
+						<CustomErrorMessage>Enter price amount</CustomErrorMessage>
+					)}
 				</Box>
 				<Box sx={{ display: 'flex', marginLeft: '4rem', flex: 1 }}>
 					<Box sx={{ flex: 2 }}>
@@ -366,11 +376,11 @@ const CourseDetailsEditBox = ({
 						<CustomTextField
 							required={false}
 							sx={{ marginTop: '0.5rem' }}
-							value={singleCourse?.durationWeeks ?? ''}
+							value={singleCourseBeforeSave?.durationWeeks ?? ''}
 							onChange={(e) => {
-								if (singleCourse?.durationWeeks !== undefined) {
-									setSingleCourse({
-										...singleCourse,
+								if (singleCourseBeforeSave) {
+									setSingleCourseBeforeSave({
+										...singleCourseBeforeSave,
 										durationWeeks: +e.target.value,
 									});
 									setHasUnsavedChanges(true);
@@ -385,16 +395,14 @@ const CourseDetailsEditBox = ({
 						<CustomTextField
 							required={false}
 							sx={{ marginTop: '0.5rem' }}
-							value={singleCourse?.durationHours ?? ''}
+							value={singleCourseBeforeSave?.durationHours ?? ''}
 							onChange={(e) => {
-								if (singleCourse) {
-									if (singleCourse?.durationHours !== undefined) {
-										setSingleCourse({
-											...singleCourse,
-											durationHours: +e.target.value,
-										});
-										setHasUnsavedChanges(true);
-									}
+								if (singleCourseBeforeSave) {
+									setSingleCourseBeforeSave({
+										...singleCourseBeforeSave,
+										durationHours: +e.target.value,
+									});
+									setHasUnsavedChanges(true);
 								}
 							}}
 							type='number'
@@ -408,16 +416,16 @@ const CourseDetailsEditBox = ({
 						required={false}
 						sx={{ marginTop: '0.5rem' }}
 						value={
-							singleCourse && singleCourse.startingDate
-								? formatDate(new Date(singleCourse.startingDate)) // Format the starting date
+							singleCourseBeforeSave && singleCourseBeforeSave.startingDate
+								? formatDate(new Date(singleCourseBeforeSave.startingDate)) // Format the starting date
 								: ''
 						}
 						onChange={(e) => {
-							const selectedDate = parseDate(e.target.value); // Parse the input date
-							if (singleCourse && singleCourse.startingDate !== undefined) {
-								setSingleCourse({
-									...singleCourse,
-									startingDate: selectedDate, // Assign parsed date object here
+							const selectedDate = parseDate(e.target.value);
+							if (singleCourseBeforeSave) {
+								setSingleCourseBeforeSave({
+									...singleCourseBeforeSave,
+									startingDate: selectedDate,
 								});
 								setHasUnsavedChanges(true);
 							}
