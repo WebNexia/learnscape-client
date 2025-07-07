@@ -402,29 +402,29 @@ const Loading = () => {
 								}}>
 								{user?.role === Roles.ADMIN && (
 									<>
-										<SidebarBtn btnText='Dashboard' IconName={DashboardIcon} selectedPage={selectedPage} />
-										<SidebarBtn btnText='Users' IconName={PeopleAltOutlined} selectedPage={selectedPage} />
-										<SidebarBtn btnText='Courses' IconName={LibraryBooks} selectedPage={selectedPage} />
-										<SidebarBtn btnText='Lessons' IconName={AssignmentIndRounded} selectedPage={selectedPage} />
-										<SidebarBtn btnText='Questions' IconName={QuizOutlined} selectedPage={selectedPage} />
-										<SidebarBtn btnText='Documents' IconName={FilePresent} selectedPage={selectedPage} />
-										<SidebarBtn btnText='Submissions' IconName={LibraryAddCheck} selectedPage={selectedPage} />
-										<SidebarBtn btnText='Payments' IconName={CreditCard} selectedPage={selectedPage} />
-										<SidebarBtn btnText='Calendar' IconName={CalendarMonth} selectedPage={selectedPage} />
-										<SidebarBtn btnText='Messages' IconName={Email} selectedPage={selectedPage} />
-										<SidebarBtn btnText='Community' IconName={Groups} selectedPage={selectedPage} />
-										<SidebarBtn btnText='Settings' IconName={Settings} selectedPage={selectedPage} />
+										<SidebarBtn btnText='Dashboard' IconName={DashboardIcon} />
+										<SidebarBtn btnText='Users' IconName={PeopleAltOutlined} />
+										<SidebarBtn btnText='Courses' IconName={LibraryBooks} />
+										<SidebarBtn btnText='Lessons' IconName={AssignmentIndRounded} />
+										<SidebarBtn btnText='Questions' IconName={QuizOutlined} />
+										<SidebarBtn btnText='Documents' IconName={FilePresent} />
+										<SidebarBtn btnText='Submissions' IconName={LibraryAddCheck} />
+										<SidebarBtn btnText='Payments' IconName={CreditCard} />
+										<SidebarBtn btnText='Calendar' IconName={CalendarMonth} />
+										<SidebarBtn btnText='Messages' IconName={Email} />
+										<SidebarBtn btnText='Community' IconName={Groups} />
+										<SidebarBtn btnText='Settings' IconName={Settings} />
 									</>
 								)}
 								{user?.role === Roles.USER && (
 									<>
-										<SidebarBtn btnText='Dashboard' IconName={DashboardIcon} selectedPage={selectedPage} />
-										<SidebarBtn btnText='Courses' IconName={LibraryBooks} selectedPage={selectedPage} />
-										<SidebarBtn btnText='Submissions' IconName={LibraryAddCheck} selectedPage={selectedPage} />
-										<SidebarBtn btnText='Calendar' IconName={CalendarMonth} selectedPage={selectedPage} />
-										<SidebarBtn btnText='Messages' IconName={Email} selectedPage={selectedPage} />
-										<SidebarBtn btnText='Community' IconName={Groups} selectedPage={selectedPage} />
-										<SidebarBtn btnText='Settings' IconName={Settings} selectedPage={selectedPage} />
+										<SidebarBtn btnText='Dashboard' IconName={DashboardIcon} />
+										<SidebarBtn btnText='Courses' IconName={LibraryBooks} />
+										<SidebarBtn btnText='Submissions' IconName={LibraryAddCheck} />
+										<SidebarBtn btnText='Calendar' IconName={CalendarMonth} />
+										<SidebarBtn btnText='Messages' IconName={Email} />
+										<SidebarBtn btnText='Community' IconName={Groups} />
+										<SidebarBtn btnText='Settings' IconName={Settings} />
 									</>
 								)}
 							</Box>

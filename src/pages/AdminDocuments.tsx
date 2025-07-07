@@ -21,7 +21,7 @@ import DocumentInfoModal from '../components/documents/DocumentInfoModal';
 import CreateNewDocumentDialog from '../components/documents/CreateNewDocumentDialog';
 import EditDocumentDialog from '../components/documents/EditDocumentDialog';
 import theme from '../themes';
-import { UserAuthContext } from 'contexts/UserAuthContextProvider';
+import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 
 const AdminDocuments = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;

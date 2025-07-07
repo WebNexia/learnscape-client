@@ -616,7 +616,6 @@ const AdminCourseEditPage = () => {
 		<DashboardPagesLayout pageName='Edit Course' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
 			<Box sx={{ width: '80%', position: 'fixed', top: '4rem', zIndex: 1000, backgroundColor: theme.bgColor?.secondary }}>
 				<CoursePaper
-					userId={user?._id}
 					singleCourse={singleCourse}
 					singleCourseBeforeSave={singleCourseBeforeSave}
 					chapterLessonData={chapterLessonData}

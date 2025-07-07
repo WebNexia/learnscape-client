@@ -75,7 +75,6 @@ const Courses = () => {
 										key={course._id}
 										course={course}
 										isEnrolled={isEnrolled}
-										userId={id}
 										displayMyCourses={checked}
 										userCourseId={userCourseId}
 										isCourseCompleted={isCourseCompleted}
