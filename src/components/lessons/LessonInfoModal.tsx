@@ -3,7 +3,7 @@ import { Lesson } from '../../interfaces/lessons';
 import { dateTimeFormatter } from '../../utils/dateFormatter';
 import CustomCancelButton from '../forms/customButtons/CustomCancelButton';
 import { useResourceUsage } from '../../hooks/useResourceUsage';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 interface LessonInfoModalProps {
 	lesson: Lesson;
@@ -12,11 +12,11 @@ interface LessonInfoModalProps {
 
 const LessonInfoModal = ({ lesson, onClose }: LessonInfoModalProps) => {
 	const { usageInfo } = useResourceUsage(lesson);
-	const { userId } = useParams();
+
 	const navigate = useNavigate();
 
 	const handleCourseSelect = (courseId: string) => {
-		window.open(`/admin/course-edit/user/${userId}/course/${courseId}`, '_blank');
+		window.open(`/admin/course-edit/course/${courseId}`, '_blank');
 	};
 
 	return (
@@ -52,11 +52,11 @@ const LessonInfoModal = ({ lesson, onClose }: LessonInfoModalProps) => {
 								<Typography
 									variant='body2'
 									onClick={() => {
+										navigate(`/admin/lesson-edit/lesson/${lesson.clonedFromId}`);
 										onClose();
-										navigate(`/admin/lesson-edit/user/${userId}/lesson/${lesson.clonedFromId}`);
 									}}
 									sx={{
-										cursor: 'pointer',
+										'cursor': 'pointer',
 										':hover': {
 											textDecoration: 'underline',
 										},
@@ -89,17 +89,9 @@ const LessonInfoModal = ({ lesson, onClose }: LessonInfoModalProps) => {
 						<Grid item xs={9}>
 							{usageInfo.courses.length > 0 ? (
 								<FormControl fullWidth size='small' sx={{ width: '90%' }}>
-									<Select
-										value=''
-										displayEmpty
-										renderValue={() => `${usageInfo.courses.length} course(s)`}
-										sx={{ fontSize: '0.85rem' }}>
+									<Select value='' displayEmpty renderValue={() => `${usageInfo.courses.length} course(s)`} sx={{ fontSize: '0.85rem' }}>
 										{usageInfo.courses.map((course) => (
-											<MenuItem 
-												key={course.id} 
-												value={course.id} 
-												sx={{ fontSize: '0.8rem' }}
-												onClick={() => handleCourseSelect(course.id)}>
+											<MenuItem key={course.id} value={course.id} sx={{ fontSize: '0.8rem' }} onClick={() => handleCourseSelect(course.id)}>
 												{course.title}
 											</MenuItem>
 										))}
@@ -127,4 +119,4 @@ const LessonInfoModal = ({ lesson, onClose }: LessonInfoModalProps) => {
 	);
 };
 
-export default LessonInfoModal; 
+export default LessonInfoModal;

@@ -46,7 +46,7 @@ export const renderMessageWithMentions = (text: string, processedTopics: TopicSu
 				// Determine base path based on user role
 				const basePath = user?.role === Roles.ADMIN ? '/admin' : '';
 				return (
-					<Link key={index} to={`${basePath}/community/user/${user._id}/topic/${topic.topicId}`} style={{ textDecoration: 'none', color: 'blue' }}>
+					<Link key={index} to={`${basePath}/community/topic/${topic.topicId}`} style={{ textDecoration: 'none', color: 'blue' }}>
 						{part}
 					</Link>
 				);

@@ -14,15 +14,15 @@ import CustomTextField from '../components/forms/customFields/CustomTextField';
 import { truncateText } from '../utils/utilText';
 import { UserCoursesIdsWithCourseIds } from '../contexts/UserCourseLessonDataContextProvider';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
+import { useAuth } from '../hooks/useAuth';
 
 const Submissions = () => {
 	const { sortedUserQuizSubmissionsData, sortUserQuizSubmissionsData, fetchQuizSubmissionsByUserId } = useContext(QuizSubmissionsContext);
-
 	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
-	const { userId } = useParams();
+	const { user } = useAuth();
 
 	const userCourseData: string[] = JSON.parse(localStorage.getItem('userCourseData') || '[]').map(
 		(data: UserCoursesIdsWithCourseIds) => data.courseTitle
@@ -69,9 +69,9 @@ const Submissions = () => {
 
 	useEffect(() => {
 		const fetchData = async () => {
-			if (!dataLoaded && sortedUserQuizSubmissionsData.length === 0) {
+			if (!dataLoaded && sortedUserQuizSubmissionsData.length === 0 && user?._id) {
 				try {
-					fetchQuizSubmissionsByUserId(userId!);
+					fetchQuizSubmissionsByUserId(user?._id);
 					setDataLoaded(true);
 				} catch (error) {
 					console.error('Error fetching quiz submissions:', error);
@@ -80,7 +80,7 @@ const Submissions = () => {
 		};
 
 		fetchData();
-	}, [submissionsPageNumber, userId, dataLoaded, sortedUserQuizSubmissionsData]);
+	}, [submissionsPageNumber, user?._id, dataLoaded, sortedUserQuizSubmissionsData]);
 
 	return (
 		<DashboardPagesLayout pageName='Quiz Submissions' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
@@ -250,10 +250,9 @@ const Submissions = () => {
 											title='See Details'
 											onClick={() => {
 												window.open(
-													`/submission-feedback/user/${userId}/submission/${submission._id}/lesson/${submission.lessonId}/userlesson/${submission.userLessonId}?isChecked=${submission.isChecked}`,
+													`/submission-feedback/submission/${submission._id}/lesson/${submission.lessonId}/userlesson/${submission.userLessonId}?isChecked=${submission.isChecked}`,
 													'_blank'
 												);
-												window.scrollTo({ top: 0, behavior: 'smooth' });
 											}}
 											icon={<PendingOutlined fontSize={isMobileSize ? 'small' : 'medium'} />}
 										/>

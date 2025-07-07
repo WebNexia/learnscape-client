@@ -12,7 +12,7 @@ import visaIcon from '../../../assets/visa.png';
 import masterCardIcon from '../../../assets/mastercard.png';
 import defaultCardIcon from '../../../assets/credit-card.png';
 import { SingleCourse } from '../../../interfaces/course';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
 import CustomErrorMessage from '../../forms/customFields/CustomErrorMessage';
 import theme from '../../../themes';
@@ -51,7 +51,6 @@ const PaymentDialog = ({
 	setDisplayEnrollmentMsg,
 	setIsEnrolledStatus,
 }: PaymentDialogProps) => {
-	const { userId } = useParams();
 	const { orgId } = useContext(OrganisationContext);
 	const { user, setUser } = useContext(UserAuthContext);
 
@@ -136,7 +135,7 @@ const PaymentDialog = ({
 		}
 	};
 
-	let resolvedUserId = userId || '';
+	let resolvedUserId = user?._id || '';
 	let resolvedOrgId = orgId;
 
 	let resolvedFirstName = user?.firstName || '';
@@ -450,7 +449,7 @@ const PaymentDialog = ({
 					setDisplayEnrollmentMsg(true); // ✅ success message after capture + reg
 
 					if (!fromHomePage) {
-						navigate(`/course/${course?._id}/user/${resolvedUserId}/userCourseId/${userCourseId}?isEnrolled=true`);
+						navigate(`/course/${course?._id}/userCourseId/${userCourseId}?isEnrolled=true`);
 					}
 				} catch (regErr) {
 					resetForm(true);
@@ -665,7 +664,7 @@ const PaymentDialog = ({
 									if (!course) return;
 									const amount = +getPriceForCountry(course, resolvedCountryCode).amount;
 									setDiscountedAmount(isNaN(amount) ? 0 : amount);
-									setUsersUsedPromoCode((prevData) => prevData.filter((id) => id !== userId));
+									setUsersUsedPromoCode((prevData) => prevData.filter((id) => id !== resolvedUserId));
 									setErrorMessage('');
 									setIsUserAccountExist(true);
 								}}
@@ -735,7 +734,7 @@ const PaymentDialog = ({
 								if (!course) return;
 								const amount = +getPriceForCountry(course, resolvedCountryCode).amount;
 								setDiscountedAmount(isNaN(amount) ? 0 : amount);
-								setUsersUsedPromoCode((prevData) => prevData.filter((id) => id !== userId));
+								setUsersUsedPromoCode((prevData) => prevData.filter((id) => id !== resolvedUserId));
 							}}
 							InputProps={{
 								inputProps: {

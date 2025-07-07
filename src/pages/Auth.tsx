@@ -185,9 +185,9 @@ const Auth = ({ setUserRole }: AuthProps) => {
 				if (!updatedUser.isActive) {
 					navigate(`/`);
 				} else if (updatedUser.role === Roles.USER) {
-					navigate(`/dashboard/user/${updatedUser._id}`);
+					navigate(`/dashboard`);
 				} else if (updatedUser.role === Roles.ADMIN) {
-					navigate(`/admin/dashboard/user/${updatedUser._id}`);
+					navigate(`/admin/dashboard`);
 				}
 
 				// Clear inputs and handle success state

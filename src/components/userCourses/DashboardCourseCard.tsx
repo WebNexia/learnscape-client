@@ -13,22 +13,13 @@ import { setCurrencySymbol } from '@utils/setCurrencySymbol';
 interface DashboardCourseCardProps {
 	course: SingleCourse;
 	isEnrolled?: boolean;
-	userId?: string | undefined;
 	displayMyCourses?: boolean;
 	userCourseId?: string;
 	isCourseCompleted?: boolean;
 	fromHomePage?: boolean;
 }
 
-const DashboardCourseCard = ({
-	course,
-	isEnrolled,
-	userId,
-	displayMyCourses,
-	userCourseId,
-	isCourseCompleted,
-	fromHomePage,
-}: DashboardCourseCardProps) => {
+const DashboardCourseCard = ({ course, isEnrolled, displayMyCourses, userCourseId, isCourseCompleted, fromHomePage }: DashboardCourseCardProps) => {
 	const navigate = useNavigate();
 	const { user } = useContext(UserAuthContext);
 
@@ -62,9 +53,7 @@ const DashboardCourseCard = ({
 			}}
 			onClick={() => {
 				if (!fromHomePage) {
-					navigate(
-						`/course/${course._id}/user/${userId}/userCourseId/${userCourseId === undefined ? 'none' : userCourseId}?isEnrolled=${isEnrolled}`
-					);
+					navigate(`/course/${course._id}/userCourseId/${userCourseId === undefined ? 'none' : userCourseId}?isEnrolled=${isEnrolled}`);
 				} else {
 					navigate(`/course/${encodeURIComponent(course?.title)}/${course?._id}`);
 				}

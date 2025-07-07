@@ -4,12 +4,15 @@ import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import { useLocalStorageData } from './useLocalStorageData';
 import axios from '@utils/axiosInstance';
 import { UserLessonDataStorage } from '../contexts/UserCourseLessonDataContextProvider';
+import { useAuth } from './useAuth';
 
 export const useUserCourseLessonData = () => {
-	const { userId, lessonId, courseId, userCourseId } = useParams<{ userId: string; lessonId: string; courseId: string; userCourseId: string }>();
+	const { lessonId, courseId, userCourseId } = useParams<{ lessonId: string; courseId: string; userCourseId: string }>();
+
 	const { orgId } = useContext(OrganisationContext);
 	const navigate = useNavigate();
 	const location = useLocation();
+	const { user } = useAuth();
 	const searchParams = new URLSearchParams(location.search);
 	const nextLessonId = searchParams.get('next');
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -81,7 +84,7 @@ export const useUserCourseLessonData = () => {
 					// Make sure the responseUserLesson API call is completed and returns valid data
 					const responseUserLesson = await axios.post(`${base_url}/userlessons`, {
 						lessonId: nextLessonId,
-						userId,
+						userId: user?._id,
 						courseId,
 						userCourseId,
 						currentQuestion: 1,
@@ -137,7 +140,7 @@ export const useUserCourseLessonData = () => {
 	}, [
 		userLessonId,
 		nextLessonId,
-		userId,
+		user?._id,
 		courseId,
 		userCourseId,
 		orgId,

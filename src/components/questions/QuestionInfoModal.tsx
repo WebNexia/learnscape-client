@@ -3,7 +3,6 @@ import { QuestionInterface } from '../../interfaces/question';
 import { dateTimeFormatter } from '../../utils/dateFormatter';
 import CustomCancelButton from '../forms/customButtons/CustomCancelButton';
 import { useResourceUsage } from '../../hooks/useResourceUsage';
-import { useParams } from 'react-router-dom';
 
 interface QuestionInfoModalProps {
 	question: QuestionInterface;
@@ -12,10 +11,9 @@ interface QuestionInfoModalProps {
 
 const QuestionInfoModal = ({ question, onClose }: QuestionInfoModalProps) => {
 	const { usageInfo } = useResourceUsage(question);
-	const { userId } = useParams();
 
 	const handleLessonSelect = (lessonId: string) => {
-		window.open(`/admin/lesson-edit/user/${userId}/lesson/${lessonId}`, '_blank');
+		window.open(`/admin/lesson-edit/lesson/${lessonId}`, '_blank');
 	};
 
 	return (
@@ -49,17 +47,9 @@ const QuestionInfoModal = ({ question, onClose }: QuestionInfoModalProps) => {
 						<Grid item xs={9}>
 							{usageInfo.lessons.length > 0 ? (
 								<FormControl fullWidth size='small' sx={{ width: '90%' }}>
-									<Select
-										value=''
-										displayEmpty
-										renderValue={() => `${usageInfo.lessons.length} lesson(s)`}
-										sx={{ fontSize: '0.85rem' }}>
+									<Select value='' displayEmpty renderValue={() => `${usageInfo.lessons.length} lesson(s)`} sx={{ fontSize: '0.85rem' }}>
 										{usageInfo.lessons.map((lesson) => (
-											<MenuItem 
-												key={lesson.id} 
-												value={lesson.id} 
-												sx={{ fontSize: '0.8rem' }}
-												onClick={() => handleLessonSelect(lesson.id)}>
+											<MenuItem key={lesson.id} value={lesson.id} sx={{ fontSize: '0.8rem' }} onClick={() => handleLessonSelect(lesson.id)}>
 												{lesson.title}
 											</MenuItem>
 										))}
@@ -87,4 +77,4 @@ const QuestionInfoModal = ({ question, onClose }: QuestionInfoModalProps) => {
 	);
 };
 
-export default QuestionInfoModal; 
+export default QuestionInfoModal;

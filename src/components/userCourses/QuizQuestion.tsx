@@ -739,7 +739,7 @@ const QuizQuestion = ({
 							if (isLastQuestion && !isLessonCompleted) {
 								setIsSubmitQuizModalOpen(true);
 							} else if (isLastQuestion && isLessonCompleted) {
-								navigate(`/course/${courseId}/user/${userId}/userCourseId/${userCourseId}?isEnrolled=true`);
+								navigate(`/course/${courseId}/userCourseId/${userCourseId}?isEnrolled=true`);
 							}
 							if (!(displayedQuestionNumber + 1 > numberOfQuestions)) {
 								setDisplayedQuestionNumber((prev) => prev + 1);
@@ -784,7 +784,7 @@ const QuizQuestion = ({
 					openModal={isMsgModalAfterSubmitOpen}
 					closeModal={() => {
 						setIsMsgModalAfterSubmitOpen(false);
-						navigate(`/course/${courseId}/user/${userId}/userCourseId/${userCourseId}?isEnrolled=true`);
+						navigate(`/course/${courseId}/userCourseId/${userCourseId}?isEnrolled=true`);
 					}}
 					maxWidth='sm'>
 					<Box sx={{ display: 'flex', flexDirection: 'column', width: '90%', margin: '0 auto' }}>
@@ -809,7 +809,7 @@ const QuizQuestion = ({
 							type='button'
 							onClick={() => {
 								setIsMsgModalAfterSubmitOpen(false);
-								navigate(`/course/${courseId}/user/${userId}/userCourseId/${userCourseId}?isEnrolled=true`);
+								navigate(`/course/${courseId}/userCourseId/${userCourseId}?isEnrolled=true`);
 							}}
 							sx={{ width: '2rem', padding: '0.5rem 2rem', margin: '1rem  0rem 2rem 0', height: isMobileSize ? '1.75rem' : '2rem' }}>
 							Close

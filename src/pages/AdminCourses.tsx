@@ -22,7 +22,7 @@ import React, { useContext, useEffect, useRef, useState } from 'react';
 import { CoursesContext } from '../contexts/CoursesContextProvider';
 import { Price, SingleCourse } from '../interfaces/course';
 import { Delete, Edit, FileCopy, Search, Visibility } from '@mui/icons-material';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 import CustomTextField from '../components/forms/customFields/CustomTextField';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
@@ -43,7 +43,6 @@ import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 
 const AdminCourses = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
-	const { userId } = useParams();
 	const navigate = useNavigate();
 	const { sortedCoursesData, sortCoursesData, addNewCourse, removeCourse, fetchCourses } = useContext(CoursesContext);
 	const { orgId } = useContext(OrganisationContext);
@@ -614,7 +613,7 @@ const AdminCourses = () => {
 												<CustomActionBtn
 													title='Edit'
 													onClick={() => {
-														navigate(`/admin/course-edit/user/${userId}/course/${course._id}`);
+														navigate(`/admin/course-edit/course/${course._id}`);
 													}}
 													icon={<Edit fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 												/>
@@ -622,7 +621,7 @@ const AdminCourses = () => {
 												<CustomActionBtn
 													title='View'
 													onClick={() => {
-														navigate(`/admin/course-edit/user/${userId}/course/${course._id}`);
+														navigate(`/admin/course-edit/course/${course._id}`);
 													}}
 													icon={<Visibility fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 												/>

@@ -1,7 +1,7 @@
 import { Box, Drawer, Typography } from '@mui/material';
 import theme from '../../../themes';
 import SidebarBtn from './SidebarBtn';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useContext, useState } from 'react';
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
@@ -28,7 +28,6 @@ interface CustomDrawerProps {
 
 const CustomDrawer = ({ isDrawerOpen, setIsDrawerOpen }: CustomDrawerProps) => {
 	const navigate = useNavigate();
-	const { id, userId } = useParams();
 	const { user } = useContext(UserAuthContext);
 	const { organisation } = useContext(OrganisationContext);
 
@@ -111,74 +110,74 @@ const CustomDrawer = ({ isDrawerOpen, setIsDrawerOpen }: CustomDrawerProps) => {
 									<SidebarBtn
 										btnText='Dashboard'
 										IconName={DashboardIcon}
-										onClick={() => navigateWithPage(PageName.ADMIN_DASHBOARD, `/admin/dashboard/user/${id || userId}`)}
-										selectedPage={selectedPage}
+										onClick={() => navigateWithPage(PageName.ADMIN_DASHBOARD, `/admin/dashboard`)}
+										active={selectedPage === PageName.ADMIN_DASHBOARD}
 									/>
 									<SidebarBtn
 										btnText='Users'
 										IconName={PeopleAltOutlined}
-										onClick={() => navigateWithPage(PageName.ADMIN_USERS, `/admin/users/user/${id || userId}`)}
-										selectedPage={selectedPage}
+										onClick={() => navigateWithPage(PageName.ADMIN_USERS, `/admin/users`)}
+										active={selectedPage === PageName.ADMIN_USERS}
 									/>
 									<SidebarBtn
 										btnText='Courses'
 										IconName={LibraryBooks}
-										onClick={() => navigateWithPage(PageName.ADMIN_COURSES, `/admin/courses/user/${id || userId}`)}
-										selectedPage={selectedPage}
+										onClick={() => navigateWithPage(PageName.ADMIN_COURSES, `/admin/courses`)}
+										active={selectedPage === PageName.ADMIN_COURSES}
 									/>
 									<SidebarBtn
 										btnText='Lessons'
 										IconName={AssignmentIndRounded}
-										onClick={() => navigateWithPage(PageName.ADMIN_LESSONS, `/admin/lessons/user/${id || userId}`)}
-										selectedPage={selectedPage}
+										onClick={() => navigateWithPage(PageName.ADMIN_LESSONS, `/admin/lessons`)}
+										active={selectedPage === PageName.ADMIN_LESSONS}
 									/>
 									<SidebarBtn
 										btnText='Questions'
 										IconName={QuizOutlined}
-										onClick={() => navigateWithPage(PageName.ADMIN_QUESTIONS, `/admin/questions/user/${id || userId}`)}
-										selectedPage={selectedPage}
+										onClick={() => navigateWithPage(PageName.ADMIN_QUESTIONS, `/admin/questions`)}
+										active={selectedPage === PageName.ADMIN_QUESTIONS}
 									/>
 									<SidebarBtn
 										btnText='Documents'
 										IconName={FilePresent}
-										onClick={() => navigateWithPage(PageName.ADMIN_DOCUMENTS, `/admin/documents/user/${id || userId}`)}
-										selectedPage={selectedPage}
+										onClick={() => navigateWithPage(PageName.ADMIN_DOCUMENTS, `/admin/documents`)}
+										active={selectedPage === PageName.ADMIN_DOCUMENTS}
 									/>
 									<SidebarBtn
 										btnText='Submissions'
 										IconName={LibraryAddCheck}
-										onClick={() => navigateWithPage(PageName.ADMIN_QUIZ_SUBMISSIONS, `/admin/submissions/user/${id || userId}`)}
-										selectedPage={selectedPage}
+										onClick={() => navigateWithPage(PageName.ADMIN_QUIZ_SUBMISSIONS, `/admin/submissions`)}
+										active={selectedPage === PageName.ADMIN_QUIZ_SUBMISSIONS}
 									/>
 									<SidebarBtn
 										btnText='Payments'
 										IconName={CreditCard}
-										onClick={() => navigateWithPage(PageName.ADMIN_PAYMENTS, `/admin/payments/user/${id || userId}`)}
-										selectedPage={selectedPage}
+										onClick={() => navigateWithPage(PageName.ADMIN_PAYMENTS, `/admin/payments`)}
+										active={selectedPage === PageName.ADMIN_PAYMENTS}
 									/>
 									<SidebarBtn
 										btnText='Calendar'
 										IconName={CalendarMonth}
-										onClick={() => navigateWithPage(PageName.CALENDAR, `/admin/calendar/user/${id || userId}`)}
-										selectedPage={selectedPage}
+										onClick={() => navigateWithPage(PageName.CALENDAR, `/admin/calendar`)}
+										active={selectedPage === PageName.CALENDAR}
 									/>
 									<SidebarBtn
 										btnText='Messages'
 										IconName={Email}
-										onClick={() => navigateWithPage(PageName.ADMIN_MESSAGES, `/admin/messages/user/${id || userId}`)}
-										selectedPage={selectedPage}
+										onClick={() => navigateWithPage(PageName.ADMIN_MESSAGES, `/admin/messages`)}
+										active={selectedPage === PageName.ADMIN_MESSAGES}
 									/>
 									<SidebarBtn
 										btnText='Community'
 										IconName={Groups}
-										onClick={() => navigateWithPage(PageName.ADMIN_COMMUNITY, `/admin/community/user/${id || userId}`)}
-										selectedPage={selectedPage}
+										onClick={() => navigateWithPage(PageName.ADMIN_COMMUNITY, `/admin/community`)}
+										active={selectedPage === PageName.ADMIN_COMMUNITY}
 									/>
 									<SidebarBtn
 										btnText='Settings'
 										IconName={Settings}
-										onClick={() => navigateWithPage(PageName.ADMIN_SETTINGS, `/admin/settings/user/${id || userId}`)}
-										selectedPage={selectedPage}
+										onClick={() => navigateWithPage(PageName.ADMIN_SETTINGS, `/admin/settings`)}
+										active={selectedPage === PageName.ADMIN_SETTINGS}
 									/>
 								</>
 							)}
@@ -187,46 +186,46 @@ const CustomDrawer = ({ isDrawerOpen, setIsDrawerOpen }: CustomDrawerProps) => {
 									<SidebarBtn
 										btnText='Dashboard'
 										IconName={DashboardIcon}
-										onClick={() => navigateWithPage(PageName.DASHBOARD, `/dashboard/user/${id || userId}`)}
-										selectedPage={selectedPage}
+										onClick={() => navigateWithPage(PageName.DASHBOARD, `/dashboard`)}
+										active={selectedPage === PageName.DASHBOARD}
 									/>
 									<SidebarBtn
 										btnText='Courses'
 										IconName={LibraryBooks}
-										onClick={() => navigateWithPage(PageName.COURSES, `/courses/user/${id || userId}`)}
-										selectedPage={selectedPage}
+										onClick={() => navigateWithPage(PageName.COURSES, `/courses`)}
+										active={selectedPage === PageName.COURSES}
 									/>
 
 									<SidebarBtn
 										btnText='Submissions'
 										IconName={LibraryAddCheck}
-										onClick={() => navigateWithPage(PageName.SUBMISSIONS, `/submissions/user/${id || userId}`)}
-										selectedPage={selectedPage}
+										onClick={() => navigateWithPage(PageName.SUBMISSIONS, `/submissions`)}
+										active={selectedPage === PageName.SUBMISSIONS}
 									/>
 
 									<SidebarBtn
 										btnText='Calendar'
 										IconName={CalendarMonth}
-										onClick={() => navigateWithPage(PageName.CALENDAR, `/calendar/user/${id || userId}`)}
-										selectedPage={selectedPage}
+										onClick={() => navigateWithPage(PageName.CALENDAR, `/calendar`)}
+										active={selectedPage === PageName.CALENDAR}
 									/>
 									<SidebarBtn
 										btnText='Messages'
 										IconName={Email}
-										onClick={() => navigateWithPage(PageName.MESSAGES, `/messages/user/${id || userId}`)}
-										selectedPage={selectedPage}
+										onClick={() => navigateWithPage(PageName.MESSAGES, `/messages`)}
+										active={selectedPage === PageName.MESSAGES}
 									/>
 									<SidebarBtn
 										btnText='Community'
 										IconName={Groups}
-										onClick={() => navigateWithPage(PageName.COMMUNITY, `/community/user/${id || userId}`)}
-										selectedPage={selectedPage}
+										onClick={() => navigateWithPage(PageName.COMMUNITY, `/community`)}
+										active={selectedPage === PageName.COMMUNITY}
 									/>
 									<SidebarBtn
 										btnText='Settings'
 										IconName={Settings}
-										onClick={() => navigateWithPage(PageName.SETTINGS, `/settings/user/${id || userId}`)}
-										selectedPage={selectedPage}
+										onClick={() => navigateWithPage(PageName.SETTINGS, `/settings`)}
+										active={selectedPage === PageName.SETTINGS}
 									/>
 								</>
 							)}

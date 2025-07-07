@@ -14,7 +14,6 @@ import { DocumentsContext } from '../contexts/DocumentsContextProvider';
 import { Document, Price } from '../interfaces/document';
 import { truncateText } from '../utils/utilText';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
-import { useParams } from 'react-router-dom';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import { dateFormatter } from '../utils/dateFormatter';
@@ -22,12 +21,13 @@ import DocumentInfoModal from '../components/documents/DocumentInfoModal';
 import CreateNewDocumentDialog from '../components/documents/CreateNewDocumentDialog';
 import EditDocumentDialog from '../components/documents/EditDocumentDialog';
 import theme from '../themes';
+import { UserAuthContext } from 'contexts/UserAuthContextProvider';
 
 const AdminDocuments = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
 	const { orgId } = useContext(OrganisationContext);
-	const { userId } = useParams();
+	const { user } = useContext(UserAuthContext);
 
 	const { addNewDocument, sortDocumentsData, sortedDocumentsData, removeDocument, fetchDocuments, updateDocuments } = useContext(DocumentsContext);
 
@@ -151,7 +151,7 @@ const AdminDocuments = () => {
 			const documentResponse = await axios.post(`${base_url}/documents`, {
 				name: singleDocument?.name.trim(),
 				documentUrl: singleDocument?.documentUrl,
-				userId,
+				userId: user?._id,
 				orgId,
 				imageUrl: singleDocument?.imageUrl,
 				samplePageImageUrl: singleDocument?.samplePageImageUrl,
@@ -167,7 +167,7 @@ const AdminDocuments = () => {
 				_id: documentResponseData._id,
 				name: singleDocument?.name.trim(),
 				documentUrl: singleDocument?.documentUrl,
-				userId,
+				userId: user?._id,
 				orgId,
 				imageUrl: singleDocument?.imageUrl,
 				samplePageImageUrl: singleDocument?.samplePageImageUrl,
@@ -437,7 +437,7 @@ const AdminDocuments = () => {
 								_id: '',
 								name: '',
 								orgId,
-								userId: userId || '',
+								userId: user?._id || '',
 								documentUrl: '',
 								imageUrl: '',
 								prices: [

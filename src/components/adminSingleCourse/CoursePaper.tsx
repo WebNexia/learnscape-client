@@ -15,7 +15,6 @@ import { CoursesContext } from '../../contexts/CoursesContextProvider';
 import { dateTimeFormatter } from '@utils/dateFormatter';
 
 interface CoursePaperProps {
-	userId?: string;
 	singleCourse?: SingleCourse;
 	singleCourseBeforeSave: SingleCourse | undefined;
 	chapterLessonData: ChapterLessonData[];
@@ -38,7 +37,6 @@ interface CoursePaperProps {
 }
 
 const CoursePaper = ({
-	userId,
 	singleCourse,
 	singleCourseBeforeSave,
 	chapterLessonData,
@@ -138,7 +136,7 @@ const CoursePaper = ({
 								},
 							}}
 							onClick={() => {
-								navigate(`/admin/courses/user/${userId}`);
+								navigate(`/admin/courses`);
 								window.scrollTo({ top: 0, behavior: 'smooth' });
 							}}>
 							Back to courses
@@ -356,7 +354,7 @@ const CoursePaper = ({
 														variant='body2'
 														onClick={() => {
 															setIsCourseInfoDialogOpen(false);
-															navigate(`/admin/course-edit/user/${userId}/course/${singleCourse?.clonedFromId}`);
+															navigate(`/admin/course-edit/course/${singleCourse?.clonedFromId}`);
 														}}
 														sx={{
 															'cursor': 'pointer',

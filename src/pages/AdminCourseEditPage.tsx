@@ -28,6 +28,7 @@ import { DocumentsContext } from '../contexts/DocumentsContextProvider';
 import DocumentsListEditBox from '../components/adminDocuments/DocumentsListEditBox';
 import NoContentBoxAdmin from '../components/layouts/noContentBox/NoContentBoxAdmin';
 import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/CustomInfoMessageAlignedLeft';
+import { useAuth } from '../hooks/useAuth';
 
 export interface ChapterUpdateTrack {
 	chapterId: string;
@@ -65,9 +66,11 @@ export class ChapterLessonDataImpl implements ChapterLessonData {
 }
 
 const AdminCourseEditPage = () => {
-	const { userId, courseId } = useParams();
+	const { courseId } = useParams();
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const navigate = useNavigate();
+
+	const { user } = useAuth();
 
 	const { orgId } = useContext(OrganisationContext);
 	const { addNewLesson, updateLessons } = useContext(LessonsContext);
@@ -396,7 +399,7 @@ const AdminCourseEditPage = () => {
 								const response = await axios.post(`${base_url}/documents`, {
 									name: document.name.trim(),
 									orgId,
-									userId,
+									userId: user?._id,
 									documentUrl: document.documentUrl.trim(),
 									usedInCourses: courseId ? [courseId] : [],
 								});
@@ -613,7 +616,7 @@ const AdminCourseEditPage = () => {
 		<DashboardPagesLayout pageName='Edit Course' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
 			<Box sx={{ width: '80%', position: 'fixed', top: '4rem', zIndex: 1000, backgroundColor: theme.bgColor?.secondary }}>
 				<CoursePaper
-					userId={userId}
+					userId={user?._id}
 					singleCourse={singleCourse}
 					singleCourseBeforeSave={singleCourseBeforeSave}
 					chapterLessonData={chapterLessonData}
@@ -772,7 +775,7 @@ const AdminCourseEditPage = () => {
 										label='Course Materials'
 										onDocUploadLogic={(url, docName) => {
 											setSingleCourseBeforeSave((prevData) => {
-												if (prevData && userId && courseId) {
+												if (prevData && user?._id && courseId) {
 													const maxNumber = prevData?.documents
 														.filter((doc) => doc !== null)
 														.reduce((max, doc) => {
@@ -786,7 +789,7 @@ const AdminCourseEditPage = () => {
 														name: newName,
 														documentUrl: url,
 														orgId,
-														userId,
+														userId: user?._id,
 														imageUrl: '',
 														prices: [
 															{ currency: 'gbp', amount: '0' },

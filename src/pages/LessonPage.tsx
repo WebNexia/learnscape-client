@@ -231,7 +231,7 @@ const LessonPage = () => {
 	};
 
 	const handleLessonNavigation = () => {
-		navigate(`/course/${courseId}/user/${userId}/userCourseId/${userCourseId}?isEnrolled=true`);
+		navigate(`/course/${courseId}/userCourseId/${userCourseId}?isEnrolled=true`);
 		window.scrollTo({ top: 0, behavior: 'smooth' });
 		if (isNotesUpdated) {
 			updateUserLessonNotes();
@@ -593,7 +593,7 @@ const LessonPage = () => {
 							onCancel={() => setIsLessonCourseCompletedModalOpen(false)}
 							onSubmit={async () => {
 								await handleNextLesson();
-								navigate(`/course/${courseId}/user/${userId}/userCourseId/${userCourseId}?isEnrolled=true`);
+								navigate(`/course/${courseId}/userCourseId/${userCourseId}?isEnrolled=true`);
 								window.scrollTo({ top: 0, behavior: 'smooth' });
 							}}
 							submitBtnText='OK'

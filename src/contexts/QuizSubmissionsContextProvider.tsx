@@ -5,7 +5,7 @@ import Loading from '../components/layouts/loading/Loading';
 import LoadingError from '../components/layouts/loading/LoadingError';
 import { OrganisationContext } from './OrganisationContextProvider';
 import { QuizSubmission } from '../interfaces/quizSubmission';
-import { useParams, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 
 interface QuizSubmissionsContextTypes {
@@ -57,8 +57,8 @@ export const QuizSubmissionsContext = createContext<QuizSubmissionsContextTypes>
 const QuizSubmissionsContextProvider = (props: QuizSubmissionsContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
-	const { isAuthenticated, isAdmin, isLearner } = useAuth();
-	const { userId } = useParams<{ userId: string }>();
+	const { isAuthenticated, user } = useAuth();
+
 	const location = useLocation();
 	const isLandingPageRoute =
 		location.pathname === '/' ||
@@ -95,11 +95,11 @@ const QuizSubmissionsContextProvider = (props: QuizSubmissionsContextProviderPro
 		}
 	};
 
-	const fetchQuizSubmissionsByUserId = async (userId: string): Promise<void> => {
+	const fetchQuizSubmissionsByUserId = async (): Promise<void> => {
 		if (!orgId) return;
 
 		try {
-			const response = await axios.get(`${base_url}/quizsubmissions/user/${userId}`);
+			const response = await axios.get(`${base_url}/quizsubmissions/user/${user?._id}`);
 
 			const sortedQuizSubmissionsDataCopy = [...response.data.data].sort((a: QuizSubmission, b: QuizSubmission) =>
 				b.updatedAt.localeCompare(a.updatedAt)
@@ -129,9 +129,9 @@ const QuizSubmissionsContextProvider = (props: QuizSubmissionsContextProviderPro
 		isError: isUserError,
 	} = useQuery(
 		['userQuizSubmissions', orgId],
-		() => fetchQuizSubmissionsByUserId(userId!), // Pass userId here
+		() => fetchQuizSubmissionsByUserId(), // Pass userId here
 		{
-			enabled: !!orgId && !!userId && !isUserLoaded, // Ensure userId exists
+			enabled: !!orgId && !!user?._id && !isUserLoaded, // Ensure userId exists
 		}
 	);
 

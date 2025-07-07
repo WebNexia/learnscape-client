@@ -4,7 +4,6 @@ import UpcomingEvents from '../components/layouts/dashboard/UpcomingEvents';
 import { useNavigate } from 'react-router-dom';
 import UnreadMessages from '../components/layouts/dashboard/UnreadMessages';
 import { useContext, useEffect, useState } from 'react';
-import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 import { EventsContext } from '../contexts/EventsContextProvider';
 import DashboardQuizSubmissions from '../components/layouts/dashboard/DashboardQuizSubmissions';
 import DashboardCommunityTopics from '../components/layouts/dashboard/DashboardCommunityTopics';
@@ -20,7 +19,6 @@ interface DashboardProps {}
 
 const Dashboard = ({}: DashboardProps) => {
 	const navigate = useNavigate();
-	const { user } = useContext(UserAuthContext);
 	const { sortedEventsData } = useContext(EventsContext);
 
 	const [totalEnrolledCourses, setTotalEnrolledCourses] = useState<number>(0);
@@ -125,7 +123,7 @@ const Dashboard = ({}: DashboardProps) => {
 						<CompletedLessonsBarGraph barChartData={barChartData} numberOfCompletedLessons={numberOfCompletedLessons} />
 					</Grid>
 
-					<Grid item sm={3} xs={6} onClick={() => navigate(`/calendar/user/${user?._id}`)}>
+					<Grid item sm={3} xs={6} onClick={() => navigate(`/calendar`)}>
 						<UpcomingEvents sortedEventsData={sortedEventsData} />
 					</Grid>
 					<Grid
@@ -133,7 +131,7 @@ const Dashboard = ({}: DashboardProps) => {
 						sm={3}
 						xs={6}
 						onClick={() => {
-							navigate(`/messages/user/${user?._id}`);
+							navigate(`/messages`);
 						}}>
 						<UnreadMessages />
 					</Grid>
@@ -142,7 +140,7 @@ const Dashboard = ({}: DashboardProps) => {
 						sm={3}
 						xs={6}
 						onClick={() => {
-							navigate(`/submissions/user/${user?._id}`);
+							navigate(`/submissions`);
 						}}>
 						<DashboardQuizSubmissions />
 					</Grid>
@@ -151,7 +149,7 @@ const Dashboard = ({}: DashboardProps) => {
 						sm={3}
 						xs={6}
 						onClick={() => {
-							navigate(`/community/user/${user?._id}`);
+							navigate(`/community`);
 						}}>
 						<DashboardCommunityTopics />
 					</Grid>

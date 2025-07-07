@@ -67,9 +67,9 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refre
 
 			setTimeout(() => {
 				if (isAdmin) {
-					navigate(`/admin/community/user/${user?._id}`);
+					navigate(`/admin/community`);
 				} else {
-					navigate(`/community/user/${user?._id}`);
+					navigate(`/community`);
 				}
 			}, 1500);
 		} catch (error) {
@@ -175,22 +175,22 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refre
 							variant='text'
 							startIcon={<KeyboardBackspaceOutlined />}
 							sx={{
-								color: theme.textColor?.common.main,
-								textTransform: 'inherit',
-								fontFamily: theme.fontFamily?.main,
+								'color': theme.textColor?.common.main,
+								'textTransform': 'inherit',
+								'fontFamily': theme.fontFamily?.main,
 								':hover': {
 									backgroundColor: 'transparent',
 									textDecoration: 'underline',
 								},
-								fontSize: isMobileSize ? '0.65rem' : undefined,
+								'fontSize': isMobileSize ? '0.65rem' : undefined,
 							}}
 							onClick={() => {
 								if (refreshTopics) fetchTopics(1);
 
 								if (isAdmin) {
-									navigate(`/admin/community/user/${user?._id}`);
+									navigate(`/admin/community`);
 								} else {
-									navigate(`/community/user/${user?._id}`);
+									navigate(`/community`);
 								}
 
 								window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -227,7 +227,7 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refre
 													':hover': {
 														backgroundColor: 'transparent',
 													},
-													mr: '-0.25rem',
+													'mr': '-0.25rem',
 												}}
 												onClick={() => setEditTopicModalOpen(true)}>
 												<Edit color='secondary' fontSize='small' sx={{ fontSize: isMobileSize ? '0.85rem' : undefined }} />
@@ -243,7 +243,7 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refre
 														':hover': {
 															backgroundColor: 'transparent',
 														},
-														mr: '-0.25rem',
+														'mr': '-0.25rem',
 													}}
 													onClick={() => setDeleteTopicModalOpen(true)}>
 													<Delete color='secondary' fontSize='small' sx={{ fontSize: isMobileSize ? '0.85rem' : undefined }} />
@@ -336,7 +336,6 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refre
 					maxWidth='sm'>
 					<CustomDialogActions onSubmit={resolveReport} onCancel={() => setResolveReportModalOpen(false)} submitBtnText='Resolve' />
 				</CustomDialog>
-				
 
 				<CustomDialog
 					openModal={closeTopicModalOpen}

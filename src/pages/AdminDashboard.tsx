@@ -14,7 +14,6 @@ import UpcomingEvents from '../components/layouts/dashboard/UpcomingEvents';
 import UnreadMessages from '../components/layouts/dashboard/UnreadMessages';
 import AdminPayment from '../components/layouts/dashboard/AdminPayment';
 import { useNavigate } from 'react-router-dom';
-import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 import DashboardQuizSubmissions from '../components/layouts/dashboard/DashboardQuizSubmissions';
 import DashboardCommunityTopics from '../components/layouts/dashboard/DashboardCommunityTopics';
 import AdminContactRequests from '../components/layouts/dashboard/AdminContactRequests';
@@ -27,7 +26,6 @@ const AdminDashboard = () => {
 	const { sortedEventsData } = useContext(EventsContext);
 
 	const navigate = useNavigate();
-	const { user } = useContext(UserAuthContext);
 
 	const [totalUsers, setTotalUsers] = useState<number>(1);
 	const [chartData, setChartData] = useState<any>({
@@ -110,7 +108,7 @@ const AdminDashboard = () => {
 						sm={12}
 						xs={12}
 						onClick={() => {
-							navigate(`/admin/users/user/${user?._id}`);
+							navigate(`/admin/users`);
 						}}
 						sx={{ cursor: 'pointer' }}>
 						<AdminLearnersLineGraph chartData={chartData} totalUsers={totalUsers} totalNumberOfEnrolledLearners={totalNumberOfEnrolledLearners} />
@@ -121,7 +119,7 @@ const AdminDashboard = () => {
 						sm={12}
 						xs={12}
 						onClick={() => {
-							navigate(`/admin/courses/user/${user?._id}`);
+							navigate(`/admin/courses`);
 						}}
 						sx={{ cursor: 'pointer' }}>
 						<AdminCoursesBarGraph barChartData={barChartData} totalCourses={totalCourses} />
@@ -132,12 +130,12 @@ const AdminDashboard = () => {
 						sm={12}
 						xs={12}
 						onClick={() => {
-							navigate(`/admin/payments/user/${user?._id}`);
+							navigate(`/admin/payments`);
 						}}
 						sx={{ cursor: 'pointer' }}>
 						<AdminPayment />
 					</Grid>
-					<Grid item sm={2.4} xs={6} onClick={() => navigate(`/admin/calendar/user/${user?._id}`)}>
+					<Grid item sm={2.4} xs={6} onClick={() => navigate(`/admin/calendar`)}>
 						<UpcomingEvents sortedEventsData={sortedEventsData} />
 					</Grid>
 					<Grid
@@ -145,7 +143,7 @@ const AdminDashboard = () => {
 						sm={2.4}
 						xs={6}
 						onClick={() => {
-							navigate(`/admin/messages/user/${user?._id}`);
+							navigate(`/admin/messages`);
 						}}>
 						<UnreadMessages />
 					</Grid>
@@ -154,7 +152,7 @@ const AdminDashboard = () => {
 						sm={2.4}
 						xs={6}
 						onClick={() => {
-							navigate(`/admin/submissions/user/${user?._id}`);
+							navigate(`/admin/submissions`);
 						}}>
 						<DashboardQuizSubmissions />
 					</Grid>
@@ -163,7 +161,7 @@ const AdminDashboard = () => {
 						sm={2.4}
 						xs={6}
 						onClick={() => {
-							navigate(`/admin/community/user/${user?._id}`);
+							navigate(`/admin/community`);
 						}}>
 						<DashboardCommunityTopics />
 					</Grid>
@@ -172,7 +170,7 @@ const AdminDashboard = () => {
 						sm={2.4}
 						xs={6}
 						onClick={() => {
-							navigate(`/admin/contact-requests/user/${user?._id}`);
+							navigate(`/admin/contact-requests`);
 						}}>
 						<AdminContactRequests />
 					</Grid>
