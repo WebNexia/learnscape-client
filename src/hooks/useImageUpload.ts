@@ -12,8 +12,8 @@ const useImageUpload = () => {
 	const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		if (e.target.files && e.target.files.length > 0) {
 			const file = e.target.files[0];
-			if (file.size > 1024 * 1024) {
-				// Image size validation (1MB limit)
+			if (file.size > 3 * 1024 * 1024) {
+				// Image size validation (3MB limit)
 				setIsImageSizeLarge(true);
 			} else {
 				setImageUpload(file);

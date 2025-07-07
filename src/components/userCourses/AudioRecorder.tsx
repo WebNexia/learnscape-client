@@ -8,6 +8,8 @@ import CustomDialog from '../layouts/dialog/CustomDialog';
 import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
 import LoadingButton from '@mui/lab/LoadingButton';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
+import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
+import { Roles } from '../../interfaces/enums';
 
 interface AudioRecorderProps {
 	uploadAudio: (blob: Blob) => Promise<void>;
@@ -23,11 +25,30 @@ const AudioRecorder = ({
 	isAudioUploading,
 	recorderTitle = 'Audio Recorder',
 	teacherFeedback,
-	maxRecordTime = 120000,
+	maxRecordTime,
 	fromCreateCommunityTopic,
 }: AudioRecorderProps) => {
+	const { user } = useContext(UserAuthContext);
 	const mimeType = 'audio/webm; codecs=opus';
 	const QUALITY = 64000; // Medium quality (64 kbps)
+	const MAX_AUDIO_SIZE = 60 * 1024 * 1024; // 60MB limit
+
+	// Role-based time limits
+	const getDefaultMaxRecordTime = () => {
+		if (maxRecordTime) return maxRecordTime; // Use prop if provided
+		if (user?.role === Roles.ADMIN) {
+			return 60000; // 60 seconds for teachers/admins (120s would exceed 60MB limit)
+		}
+		return 60000; // 60 seconds for learners
+	};
+
+	const defaultMaxRecordTime = getDefaultMaxRecordTime();
+
+	// Get display time limit for error messages
+	const getDisplayTimeLimit = () => {
+		const timeInSeconds = defaultMaxRecordTime / 1000;
+		return `${timeInSeconds} seconds`;
+	};
 
 	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -41,7 +62,8 @@ const AudioRecorder = ({
 	const [audio, setAudio] = useState<string | null>(null);
 	const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
 	const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
-	const [remainingTime, setRemainingTime] = useState<number>(maxRecordTime / 1000); // in seconds
+	const [remainingTime, setRemainingTime] = useState<number>(defaultMaxRecordTime / 1000); // in seconds
+	const [isAudioTooLarge, setIsAudioTooLarge] = useState<boolean>(false);
 	const recordingTimeout = useRef<NodeJS.Timeout | null>(null);
 	const countdownInterval = useRef<NodeJS.Timeout | null>(null);
 
@@ -67,60 +89,76 @@ const AudioRecorder = ({
 	const startRecording = async () => {
 		if (!stream) return;
 
-		setIsRecording(true);
-		setRemainingTime(maxRecordTime / 1000);
-		const media = new MediaRecorder(stream, {
-			mimeType,
-			audioBitsPerSecond: QUALITY,
+		const mediaRecorderInstance = new MediaRecorder(stream, {
+			mimeType: mimeType,
 		});
 
-		mediaRecorder.current = media;
+		mediaRecorderInstance.ondataavailable = handleDataAvailable;
+		mediaRecorderInstance.onstop = handleRecordingStop;
 
+		mediaRecorder.current = mediaRecorderInstance;
 		mediaRecorder.current.start();
+		setIsRecording(true);
+		setHasRecorded(false);
+		setIsAudioTooLarge(false);
 
-		let localAudioChunks: Blob[] = [];
-
-		mediaRecorder.current.ondataavailable = (event: BlobEvent) => {
-			if (event.data.size > 0) {
-				localAudioChunks.push(event.data);
-			}
-		};
-
-		setAudioChunks(localAudioChunks);
-
+		// Set up timeout to stop recording
 		recordingTimeout.current = setTimeout(() => {
 			stopRecording();
-		}, maxRecordTime);
+		}, defaultMaxRecordTime);
 
+		// Set up countdown
+		setRemainingTime(defaultMaxRecordTime / 1000);
 		countdownInterval.current = setInterval(() => {
-			setRemainingTime((prevTime) => {
-				if (prevTime <= 1) {
+			setRemainingTime((prev) => {
+				if (prev <= 1) {
 					clearInterval(countdownInterval.current!);
 					return 0;
 				}
-				return prevTime - 1;
+				return prev - 1;
 			});
 		}, 1000);
 	};
 
 	const stopRecording = () => {
-		if (!mediaRecorder.current) return;
-		setIsRecording(false);
-		mediaRecorder.current.stop();
-		setHasRecorded(true);
-		if (recordingTimeout.current) {
-			clearTimeout(recordingTimeout.current);
+		if (mediaRecorder.current && isRecording) {
+			mediaRecorder.current.stop();
+			setIsRecording(false);
+			setHasRecorded(true);
+
+			// Clear the timeout and interval
+			if (recordingTimeout.current) {
+				clearTimeout(recordingTimeout.current);
+			}
+			if (countdownInterval.current) {
+				clearInterval(countdownInterval.current);
+			}
+
+			// Stop all tracks in the stream
+			if (stream) {
+				stream.getTracks().forEach((track) => track.stop());
+			}
 		}
-		if (countdownInterval.current) {
-			clearInterval(countdownInterval.current);
+	};
+
+	const handleDataAvailable = (event: BlobEvent) => {
+		if (event.data.size > 0) {
+			setAudioChunks((prevChunks) => [...prevChunks, event.data]);
 		}
-		mediaRecorder.current.onstop = async () => {
-			const audioBlob = new Blob(audioChunks, { type: mimeType });
-			const audioUrl = URL.createObjectURL(audioBlob);
-			setAudio(audioUrl);
-			setAudioBlob(audioBlob);
-			setAudioChunks([]);
-		};
+	};
+
+	const handleRecordingStop = () => {
+		const audioBlobData = new Blob(audioChunks, { type: mimeType });
+		setAudioBlob(audioBlobData);
+		setAudio(URL.createObjectURL(audioBlobData));
+		setAudioChunks([]);
+
+		// Check file size
+		if (audioBlobData.size > MAX_AUDIO_SIZE) {
+			setIsAudioTooLarge(true);
+		} else {
+			setIsAudioTooLarge(false);
+		}
 	};
 
 	useEffect(() => {
@@ -186,7 +224,7 @@ const AudioRecorder = ({
 					</>
 				)}
 			</Box>
-			{audio && !isRecording ? (
+			{audio && !isRecording && !isAudioTooLarge ? (
 				<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
 					<audio
 						src={audio}
@@ -201,7 +239,28 @@ const AudioRecorder = ({
 				</Box>
 			) : null}
 
-			{audio && !isRecording && (
+			{isAudioTooLarge && (
+				<Typography variant='body2' color='error' sx={{ mt: 1, textAlign: 'center' }}>
+					Audio file size exceeds the limit of 60 MB (max {getDisplayTimeLimit()})
+				</Typography>
+			)}
+
+			{isAudioTooLarge && (
+				<CustomSubmitButton
+					sx={{ marginTop: '1rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}
+					type='button'
+					size='small'
+					onClick={() => {
+						setAudio(null);
+						setAudioBlob(null);
+						setIsAudioTooLarge(false);
+						setHasRecorded(false);
+					}}>
+					Record Again
+				</CustomSubmitButton>
+			)}
+
+			{audio && !isRecording && !isAudioTooLarge && (
 				<CustomSubmitButton
 					sx={{ marginTop: '2rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}
 					type='button'
