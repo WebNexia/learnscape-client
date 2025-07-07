@@ -56,7 +56,7 @@ export const UserCourseLessonDataContext = createContext<UserCourseLessonDataCon
 
 const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
-	const { userId } = useContext(UserAuthContext);
+	const { userId, user } = useContext(UserAuthContext);
 	const { orgId } = useContext(OrganisationContext);
 	const { isAuthenticated, isLearner, isAdmin } = useAuth();
 
@@ -72,7 +72,7 @@ const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProvide
 		location.pathname === '/auth' ||
 		location.pathname.startsWith('/course/');
 
-	const role = localStorage.getItem('role');
+	const role = user?.role;
 
 	const [isLoaded, setIsLoaded] = useState<boolean>(false);
 

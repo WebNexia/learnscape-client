@@ -68,6 +68,7 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 			} else {
 				setUser(undefined);
 				setUserId('');
+				setFirebaseUserId('');
 			}
 		});
 
@@ -77,7 +78,6 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 	const fetchUserData = async (firebaseUserId: string) => {
 		try {
 			const responseUserData = await axios.get(`${base_url}/users/${firebaseUserId}`);
-			localStorage.setItem('role', responseUserData.data.data[0].role);
 			setUser(responseUserData.data.data[0]);
 			setUserId(responseUserData.data.data[0]._id);
 			queryClient.setQueryData('userData', responseUserData.data.data[0]);
@@ -90,16 +90,15 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 	const signOutUser = async () => {
 		await signOut(auth);
 		localStorage.removeItem('sessionTimestamp');
-		localStorage.removeItem('orgId');
 		localStorage.removeItem('userCourseData');
 		localStorage.removeItem('userLessonData');
-		localStorage.removeItem('role');
 		localStorage.removeItem('activeChatId');
 		localStorage.removeItem('chatList');
 		localStorage.removeItem('participantCache');
 		localStorage.removeItem('totalUnreadMessages');
 		setUser(undefined);
 		setUserId('');
+		setFirebaseUserId('');
 		queryClient.clear();
 	};
 

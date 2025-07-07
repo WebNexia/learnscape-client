@@ -1,6 +1,8 @@
 import { createBrowserRouter, RouteObject } from 'react-router-dom';
 import App from './App';
 import React from 'react';
+import AdminRouteGuard from './components/guards/AdminRouteGuard';
+import LearnerRouteGuard from './components/guards/LearnerRouteGuard';
 
 // Lazy load pages
 const Auth = React.lazy(() => import('./pages/Auth'));
@@ -38,11 +40,11 @@ const PasswordResetPage = React.lazy(() => import('./pages/ResetPasswordPage'));
 const VerifyEmailPage = React.lazy(() => import('./pages/VerifyEmailPage'));
 const HandleAuthResetPassword = React.lazy(() => import('./pages/HandleAuthResetPassword'));
 const RateLimitError = React.lazy(() => import('./pages/RateLimitError'));
+const NotFound = React.lazy(() => import('./pages/NotFound'));
 
 // Wrapper to provide setUserRole to Auth
 const AuthWrapper = () => {
-	const [userRole, setUserRole] = React.useState<string | null>(localStorage.getItem('role'));
-	return <Auth setUserRole={setUserRole} />;
+	return <Auth setUserRole={() => {}} />;
 };
 
 export const router = createBrowserRouter([
@@ -61,41 +63,243 @@ export const router = createBrowserRouter([
 			{ path: 'handle-auth-reset', element: <HandleAuthResetPassword /> },
 			{ path: 'about-us', element: <AboutUs /> },
 			{ path: 'contact-us', element: <ContactUs /> },
-			{ path: 'admin/dashboard', element: <AdminDashboard /> },
-			{ path: 'admin/users', element: <AdminUsers /> },
-			{ path: 'admin/courses', element: <AdminCourses /> },
-			{ path: 'admin/course-edit/course/:courseId', element: <AdminCourseEditPage /> },
-			{ path: 'admin/lessons', element: <AdminLessons /> },
-			{ path: 'admin/lesson-edit/lesson/:lessonId', element: <AdminLessonEditPage /> },
-			{ path: 'admin/questions', element: <AdminQuestions /> },
-			{ path: 'admin/documents', element: <AdminDocuments /> },
-			{ path: 'admin/submissions', element: <AdminQuizSubmissions /> },
+			{
+				path: 'admin/dashboard',
+				element: (
+					<AdminRouteGuard>
+						<AdminDashboard />
+					</AdminRouteGuard>
+				),
+			},
+			{
+				path: 'admin/users',
+				element: (
+					<AdminRouteGuard>
+						<AdminUsers />
+					</AdminRouteGuard>
+				),
+			},
+			{
+				path: 'admin/courses',
+				element: (
+					<AdminRouteGuard>
+						<AdminCourses />
+					</AdminRouteGuard>
+				),
+			},
+			{
+				path: 'admin/course-edit/course/:courseId',
+				element: (
+					<AdminRouteGuard>
+						<AdminCourseEditPage />
+					</AdminRouteGuard>
+				),
+			},
+			{
+				path: 'admin/lessons',
+				element: (
+					<AdminRouteGuard>
+						<AdminLessons />
+					</AdminRouteGuard>
+				),
+			},
+			{
+				path: 'admin/lesson-edit/lesson/:lessonId',
+				element: (
+					<AdminRouteGuard>
+						<AdminLessonEditPage />
+					</AdminRouteGuard>
+				),
+			},
+			{
+				path: 'admin/questions',
+				element: (
+					<AdminRouteGuard>
+						<AdminQuestions />
+					</AdminRouteGuard>
+				),
+			},
+			{
+				path: 'admin/documents',
+				element: (
+					<AdminRouteGuard>
+						<AdminDocuments />
+					</AdminRouteGuard>
+				),
+			},
+			{
+				path: 'admin/submissions',
+				element: (
+					<AdminRouteGuard>
+						<AdminQuizSubmissions />
+					</AdminRouteGuard>
+				),
+			},
 			{
 				path: 'admin/check-submission/submission/:submissionId/lesson/:lessonId/userlesson/:userLessonId',
-				element: <AdminQuizSubmissionCheck />,
+				element: (
+					<AdminRouteGuard>
+						<AdminQuizSubmissionCheck />
+					</AdminRouteGuard>
+				),
 			},
-			{ path: 'admin/payments', element: <AdminPayments /> },
-			{ path: 'admin/calendar', element: <Calendar /> },
-			{ path: 'admin/messages', element: <Messages /> },
-			{ path: 'admin/community', element: <Community /> },
-			{ path: 'admin/community/topic/:topicId', element: <CommunityTopicPage /> },
-			{ path: 'admin/settings', element: <Settings /> },
-			{ path: 'admin/contact-requests', element: <AdminContactRequests /> },
-			{ path: 'admin/calendar/public-events', element: <AdminPublicEvents /> },
-			{ path: 'dashboard', element: <Dashboard /> },
-			{ path: 'courses', element: <Courses /> },
-			{ path: 'submissions', element: <Submissions /> },
+			{
+				path: 'admin/payments',
+				element: (
+					<AdminRouteGuard>
+						<AdminPayments />
+					</AdminRouteGuard>
+				),
+			},
+			{
+				path: 'admin/calendar',
+				element: (
+					<AdminRouteGuard>
+						<Calendar />
+					</AdminRouteGuard>
+				),
+			},
+			{
+				path: 'admin/messages',
+				element: (
+					<AdminRouteGuard>
+						<Messages />
+					</AdminRouteGuard>
+				),
+			},
+			{
+				path: 'admin/community',
+				element: (
+					<AdminRouteGuard>
+						<Community />
+					</AdminRouteGuard>
+				),
+			},
+			{
+				path: 'admin/community/topic/:topicId',
+				element: (
+					<AdminRouteGuard>
+						<CommunityTopicPage />
+					</AdminRouteGuard>
+				),
+			},
+			{
+				path: 'admin/settings',
+				element: (
+					<AdminRouteGuard>
+						<Settings />
+					</AdminRouteGuard>
+				),
+			},
+			{
+				path: 'admin/contact-requests',
+				element: (
+					<AdminRouteGuard>
+						<AdminContactRequests />
+					</AdminRouteGuard>
+				),
+			},
+			{
+				path: 'admin/calendar/public-events',
+				element: (
+					<AdminRouteGuard>
+						<AdminPublicEvents />
+					</AdminRouteGuard>
+				),
+			},
+			{
+				path: 'dashboard',
+				element: (
+					<LearnerRouteGuard>
+						<Dashboard />
+					</LearnerRouteGuard>
+				),
+			},
+			{
+				path: 'courses',
+				element: (
+					<LearnerRouteGuard>
+						<Courses />
+					</LearnerRouteGuard>
+				),
+			},
+			{
+				path: 'submissions',
+				element: (
+					<LearnerRouteGuard>
+						<Submissions />
+					</LearnerRouteGuard>
+				),
+			},
 			{
 				path: 'submission-feedback/submission/:submissionId/lesson/:lessonId/userlesson/:userLessonId',
-				element: <SubmissionFeedbackDetails />,
+				element: (
+					<LearnerRouteGuard>
+						<SubmissionFeedbackDetails />
+					</LearnerRouteGuard>
+				),
 			},
-			{ path: 'course/:courseId/userCourseId/:userCourseId', element: <CoursePage /> },
-			{ path: 'course/:courseId/userCourseId/:userCourseId/lesson/:lessonId/', element: <LessonPage /> },
-			{ path: 'calendar', element: <Calendar /> },
-			{ path: 'messages', element: <Messages /> },
-			{ path: 'community', element: <Community /> },
-			{ path: 'community/topic/:topicId', element: <CommunityTopicPage /> },
-			{ path: 'settings', element: <Settings /> },
+			{
+				path: 'course/:courseId/userCourseId/:userCourseId',
+				element: (
+					<LearnerRouteGuard>
+						<CoursePage />
+					</LearnerRouteGuard>
+				),
+			},
+			{
+				path: 'course/:courseId/userCourseId/:userCourseId/lesson/:lessonId/',
+				element: (
+					<LearnerRouteGuard>
+						<LessonPage />
+					</LearnerRouteGuard>
+				),
+			},
+			{
+				path: 'calendar',
+				element: (
+					<LearnerRouteGuard>
+						<Calendar />
+					</LearnerRouteGuard>
+				),
+			},
+			{
+				path: 'messages',
+				element: (
+					<LearnerRouteGuard>
+						<Messages />
+					</LearnerRouteGuard>
+				),
+			},
+			{
+				path: 'community',
+				element: (
+					<LearnerRouteGuard>
+						<Community />
+					</LearnerRouteGuard>
+				),
+			},
+			{
+				path: 'community/topic/:topicId',
+				element: (
+					<LearnerRouteGuard>
+						<CommunityTopicPage />
+					</LearnerRouteGuard>
+				),
+			},
+			{
+				path: 'settings',
+				element: (
+					<LearnerRouteGuard>
+						<Settings />
+					</LearnerRouteGuard>
+				),
+			},
+			// Catch-all route for 404 errors - must be last
+			{
+				path: '*',
+				element: <NotFound />,
+			},
 		],
 	},
 ]);

@@ -175,8 +175,6 @@ const Auth = ({ setUserRole }: AuthProps) => {
 
 			if (updatedUser) {
 				await fetchOrganisationData(orgId);
-				localStorage.setItem('role', updatedUser.role);
-				localStorage.setItem('orgId', '61b23' + orgId + '078a9');
 
 				setUserId(updatedUser._id);
 				setOrgId(orgId);

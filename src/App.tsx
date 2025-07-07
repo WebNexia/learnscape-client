@@ -1,10 +1,9 @@
 import './App.css';
 import { Outlet } from 'react-router-dom';
-import React, { Suspense, useState } from 'react';
+import React, { Suspense } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { ThemeProvider } from '@mui/material/styles';
 import theme from './themes';
-import { Roles } from './interfaces/enums';
 import Loading from './components/layouts/loading/Loading';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
@@ -70,18 +69,6 @@ const RateLimitError = React.lazy(() => import('./pages/RateLimitError'));
 const queryClient = new QueryClient();
 
 function App() {
-	const [userRole, setUserRole] = useState<string | null>(
-		localStorage.getItem('role') // Retrieve user role from localStorage
-	);
-
-	const hasRole = (role: string) => {
-		return userRole && userRole === role;
-	};
-
-	const renderRoute = (path: string, element: JSX.Element, requiredRole: string) => {
-		return hasRole(requiredRole) ? element : <Outlet />;
-	};
-
 	return (
 		<QueryClientProvider client={queryClient}>
 			<ThemeProvider theme={theme}>
