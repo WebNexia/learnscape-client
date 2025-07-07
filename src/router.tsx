@@ -1,6 +1,8 @@
 import { createBrowserRouter, RouteObject } from 'react-router-dom';
 import App from './App';
 import React from 'react';
+import AdminRouteGuard from './components/guards/AdminRouteGuard';
+import LearnerRouteGuard from './components/guards/LearnerRouteGuard';
 
 // Lazy load pages
 const Auth = React.lazy(() => import('./pages/Auth'));
@@ -38,11 +40,11 @@ const PasswordResetPage = React.lazy(() => import('./pages/ResetPasswordPage'));
 const VerifyEmailPage = React.lazy(() => import('./pages/VerifyEmailPage'));
 const HandleAuthResetPassword = React.lazy(() => import('./pages/HandleAuthResetPassword'));
 const RateLimitError = React.lazy(() => import('./pages/RateLimitError'));
+const NotFound = React.lazy(() => import('./pages/NotFound'));
 
 // Wrapper to provide setUserRole to Auth
 const AuthWrapper = () => {
-	const [userRole, setUserRole] = React.useState<string | null>(localStorage.getItem('role'));
-	return <Auth setUserRole={setUserRole} />;
+	return <Auth setUserRole={() => {}} />;
 };
 
 export const router = createBrowserRouter([
@@ -61,41 +63,243 @@ export const router = createBrowserRouter([
 			{ path: 'handle-auth-reset', element: <HandleAuthResetPassword /> },
 			{ path: 'about-us', element: <AboutUs /> },
 			{ path: 'contact-us', element: <ContactUs /> },
-			{ path: 'admin/dashboard/user/:userId', element: <AdminDashboard /> },
-			{ path: 'admin/users/user/:userId', element: <AdminUsers /> },
-			{ path: 'admin/courses/user/:userId', element: <AdminCourses /> },
-			{ path: 'admin/course-edit/user/:userId/course/:courseId', element: <AdminCourseEditPage /> },
-			{ path: 'admin/lessons/user/:userId', element: <AdminLessons /> },
-			{ path: 'admin/lesson-edit/user/:userId/lesson/:lessonId', element: <AdminLessonEditPage /> },
-			{ path: 'admin/questions/user/:userId', element: <AdminQuestions /> },
-			{ path: 'admin/documents/user/:userId', element: <AdminDocuments /> },
-			{ path: 'admin/submissions/user/:userId', element: <AdminQuizSubmissions /> },
 			{
-				path: 'admin/check-submission/user/:userId/submission/:submissionId/lesson/:lessonId/userlesson/:userLessonId',
-				element: <AdminQuizSubmissionCheck />,
+				path: 'admin/dashboard',
+				element: (
+					<AdminRouteGuard>
+						<AdminDashboard />
+					</AdminRouteGuard>
+				),
 			},
-			{ path: 'admin/payments/user/:userId', element: <AdminPayments /> },
-			{ path: 'admin/calendar/user/:userId', element: <Calendar /> },
-			{ path: 'admin/messages/user/:userId', element: <Messages /> },
-			{ path: 'admin/community/user/:userId', element: <Community /> },
-			{ path: 'admin/community/user/:userId/topic/:topicId', element: <CommunityTopicPage /> },
-			{ path: 'admin/settings/user/:userId', element: <Settings /> },
-			{ path: 'admin/contact-requests/user/:userId', element: <AdminContactRequests /> },
-			{ path: 'admin/calendar/public-events/user/:userId', element: <AdminPublicEvents /> },
-			{ path: 'dashboard/user/:id', element: <Dashboard /> },
-			{ path: 'courses/user/:id', element: <Courses /> },
-			{ path: 'submissions/user/:userId', element: <Submissions /> },
 			{
-				path: 'submission-feedback/user/:userId/submission/:submissionId/lesson/:lessonId/userlesson/:userLessonId',
-				element: <SubmissionFeedbackDetails />,
+				path: 'admin/users',
+				element: (
+					<AdminRouteGuard>
+						<AdminUsers />
+					</AdminRouteGuard>
+				),
 			},
-			{ path: 'course/:courseId/user/:userId/userCourseId/:userCourseId', element: <CoursePage /> },
-			{ path: 'user/:userId/course/:courseId/userCourseId/:userCourseId/lesson/:lessonId/', element: <LessonPage /> },
-			{ path: 'calendar/user/:id', element: <Calendar /> },
-			{ path: 'messages/user/:userId', element: <Messages /> },
-			{ path: 'community/user/:id', element: <Community /> },
-			{ path: 'community/user/:id/topic/:topicId', element: <CommunityTopicPage /> },
-			{ path: 'settings/user/:id', element: <Settings /> },
+			{
+				path: 'admin/courses',
+				element: (
+					<AdminRouteGuard>
+						<AdminCourses />
+					</AdminRouteGuard>
+				),
+			},
+			{
+				path: 'admin/course-edit/course/:courseId',
+				element: (
+					<AdminRouteGuard>
+						<AdminCourseEditPage />
+					</AdminRouteGuard>
+				),
+			},
+			{
+				path: 'admin/lessons',
+				element: (
+					<AdminRouteGuard>
+						<AdminLessons />
+					</AdminRouteGuard>
+				),
+			},
+			{
+				path: 'admin/lesson-edit/lesson/:lessonId',
+				element: (
+					<AdminRouteGuard>
+						<AdminLessonEditPage />
+					</AdminRouteGuard>
+				),
+			},
+			{
+				path: 'admin/questions',
+				element: (
+					<AdminRouteGuard>
+						<AdminQuestions />
+					</AdminRouteGuard>
+				),
+			},
+			{
+				path: 'admin/documents',
+				element: (
+					<AdminRouteGuard>
+						<AdminDocuments />
+					</AdminRouteGuard>
+				),
+			},
+			{
+				path: 'admin/submissions',
+				element: (
+					<AdminRouteGuard>
+						<AdminQuizSubmissions />
+					</AdminRouteGuard>
+				),
+			},
+			{
+				path: 'admin/check-submission/submission/:submissionId/lesson/:lessonId/userlesson/:userLessonId',
+				element: (
+					<AdminRouteGuard>
+						<AdminQuizSubmissionCheck />
+					</AdminRouteGuard>
+				),
+			},
+			{
+				path: 'admin/payments',
+				element: (
+					<AdminRouteGuard>
+						<AdminPayments />
+					</AdminRouteGuard>
+				),
+			},
+			{
+				path: 'admin/calendar',
+				element: (
+					<AdminRouteGuard>
+						<Calendar />
+					</AdminRouteGuard>
+				),
+			},
+			{
+				path: 'admin/messages',
+				element: (
+					<AdminRouteGuard>
+						<Messages />
+					</AdminRouteGuard>
+				),
+			},
+			{
+				path: 'admin/community',
+				element: (
+					<AdminRouteGuard>
+						<Community />
+					</AdminRouteGuard>
+				),
+			},
+			{
+				path: 'admin/community/topic/:topicId',
+				element: (
+					<AdminRouteGuard>
+						<CommunityTopicPage />
+					</AdminRouteGuard>
+				),
+			},
+			{
+				path: 'admin/settings',
+				element: (
+					<AdminRouteGuard>
+						<Settings />
+					</AdminRouteGuard>
+				),
+			},
+			{
+				path: 'admin/contact-requests',
+				element: (
+					<AdminRouteGuard>
+						<AdminContactRequests />
+					</AdminRouteGuard>
+				),
+			},
+			{
+				path: 'admin/calendar/public-events',
+				element: (
+					<AdminRouteGuard>
+						<AdminPublicEvents />
+					</AdminRouteGuard>
+				),
+			},
+			{
+				path: 'dashboard',
+				element: (
+					<LearnerRouteGuard>
+						<Dashboard />
+					</LearnerRouteGuard>
+				),
+			},
+			{
+				path: 'courses',
+				element: (
+					<LearnerRouteGuard>
+						<Courses />
+					</LearnerRouteGuard>
+				),
+			},
+			{
+				path: 'submissions',
+				element: (
+					<LearnerRouteGuard>
+						<Submissions />
+					</LearnerRouteGuard>
+				),
+			},
+			{
+				path: 'submission-feedback/submission/:submissionId/lesson/:lessonId/userlesson/:userLessonId',
+				element: (
+					<LearnerRouteGuard>
+						<SubmissionFeedbackDetails />
+					</LearnerRouteGuard>
+				),
+			},
+			{
+				path: 'course/:courseId/userCourseId/:userCourseId',
+				element: (
+					<LearnerRouteGuard>
+						<CoursePage />
+					</LearnerRouteGuard>
+				),
+			},
+			{
+				path: 'course/:courseId/userCourseId/:userCourseId/lesson/:lessonId/',
+				element: (
+					<LearnerRouteGuard>
+						<LessonPage />
+					</LearnerRouteGuard>
+				),
+			},
+			{
+				path: 'calendar',
+				element: (
+					<LearnerRouteGuard>
+						<Calendar />
+					</LearnerRouteGuard>
+				),
+			},
+			{
+				path: 'messages',
+				element: (
+					<LearnerRouteGuard>
+						<Messages />
+					</LearnerRouteGuard>
+				),
+			},
+			{
+				path: 'community',
+				element: (
+					<LearnerRouteGuard>
+						<Community />
+					</LearnerRouteGuard>
+				),
+			},
+			{
+				path: 'community/topic/:topicId',
+				element: (
+					<LearnerRouteGuard>
+						<CommunityTopicPage />
+					</LearnerRouteGuard>
+				),
+			},
+			{
+				path: 'settings',
+				element: (
+					<LearnerRouteGuard>
+						<Settings />
+					</LearnerRouteGuard>
+				),
+			},
+			// Catch-all route for 404 errors - must be last
+			{
+				path: '*',
+				element: <NotFound />,
+			},
 		],
 	},
 ]);

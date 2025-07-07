@@ -175,8 +175,6 @@ const Auth = ({ setUserRole }: AuthProps) => {
 
 			if (updatedUser) {
 				await fetchOrganisationData(orgId);
-				localStorage.setItem('role', updatedUser.role);
-				localStorage.setItem('orgId', '61b23' + orgId + '078a9');
 
 				setUserId(updatedUser._id);
 				setOrgId(orgId);
@@ -185,9 +183,9 @@ const Auth = ({ setUserRole }: AuthProps) => {
 				if (!updatedUser.isActive) {
 					navigate(`/`);
 				} else if (updatedUser.role === Roles.USER) {
-					navigate(`/dashboard/user/${updatedUser._id}`);
+					navigate(`/dashboard`);
 				} else if (updatedUser.role === Roles.ADMIN) {
-					navigate(`/admin/dashboard/user/${updatedUser._id}`);
+					navigate(`/admin/dashboard`);
 				}
 
 				// Clear inputs and handle success state

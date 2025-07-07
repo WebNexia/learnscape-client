@@ -48,7 +48,7 @@ const Topic = ({ topic }: TopicProps) => {
 							variant='body2'
 							onClick={() => {
 								if (user?.hasRegisteredCourse || user?.role === Roles.ADMIN) {
-									navigate(`/${user?.role !== Roles.ADMIN ? 'community' : 'admin/community'}/user/${user?._id}/topic/${topic._id}`);
+									navigate(`/${user?.role !== Roles.ADMIN ? 'community' : 'admin/community'}/topic/${topic._id}`);
 								} else {
 									setMessageNonRegisteredModalOpen(true);
 								}

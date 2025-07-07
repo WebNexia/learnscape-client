@@ -104,7 +104,7 @@ const HandleImageUploadURL = ({
 				</Box>
 			)}
 			{isImgSizeLarge && (
-				<CustomErrorMessage sx={{ margin: isMobileSize ? '-0.5rem 0 1rem 0' : undefined }}>File size exceeds the limit of 1 MB </CustomErrorMessage>
+				<CustomErrorMessage sx={{ margin: isMobileSize ? '-0.5rem 0 1rem 0' : undefined }}>File size exceeds the limit of 3 MB </CustomErrorMessage>
 			)}
 
 			{enterImageUrl && user?.role === 'admin' && (

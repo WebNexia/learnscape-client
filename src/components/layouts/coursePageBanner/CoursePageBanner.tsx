@@ -37,7 +37,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 	const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState<boolean>(false);
 	const [isProcessing, setIsProcessing] = useState<boolean>(false);
 
-	const { courseId, userId } = useParams();
+	const { courseId } = useParams();
 	const { user } = useContext(UserAuthContext);
 
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -143,7 +143,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 		if (isCourseFree && !fromHomePage) {
 			setIsProcessing(true);
 			try {
-				await courseRegistration(userId!, course?.orgId!);
+				await courseRegistration(user?._id!, course?.orgId!);
 				setDisplayEnrollmentMsg(true);
 				if (setIsEnrolledStatus) setIsEnrolledStatus(true);
 			} catch (error) {
@@ -225,7 +225,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 									'fontSize': isSmallScreen ? '0.75rem' : null,
 								}}
 								onClick={() => {
-									navigate(`/courses/user/${userId}`);
+									navigate(`/courses`);
 									window.scrollTo({ top: 0, behavior: 'smooth' });
 								}}>
 								{fromHomePage ? 'Kurslara Dön' : 'Back to courses'}

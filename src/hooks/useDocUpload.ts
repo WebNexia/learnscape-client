@@ -9,7 +9,8 @@ const useDocUpload = () => {
 
 	const handleDocChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		if (e.target.files && e.target.files.length > 0) {
-			if (e.target.files[0].size > 1024 * 1024) {
+			if (e.target.files[0].size > 10 * 1024 * 1024) {
+				// 10MB limit for documents (admin only)
 				setIsDocSizeLarge(true);
 			} else {
 				setDocUpload(e.target.files[0]);

@@ -2,7 +2,6 @@ import { Box, FormControl, InputAdornment, MenuItem, Select, Table, TableBody, T
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { useContext, useEffect, useState } from 'react';
 import { QuizSubmissionsContext } from '../contexts/QuizSubmissionsContextProvider';
-import { useParams } from 'react-router-dom';
 import { QuizSubmission } from '../interfaces/quizSubmission';
 import CustomTableHead from '../components/layouts/table/CustomTableHead';
 import CustomTableCell from '../components/layouts/table/CustomTableCell';
@@ -20,7 +19,6 @@ import { truncateText } from '../utils/utilText';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 
 const AdminQuizSubmissions = () => {
-	const { userId } = useParams();
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
 
@@ -247,7 +245,7 @@ const AdminQuizSubmissions = () => {
 								}
 							}}
 							sx={{
-								backgroundColor: '#fff',
+								'backgroundColor': '#fff',
 								'& .MuiInputBase-input::placeholder': {
 									fontSize: '0.75rem', // Change this to your desired font size
 								},
@@ -332,7 +330,7 @@ const AdminQuizSubmissions = () => {
 												title='Check Quiz'
 												onClick={() => {
 													window.open(
-														`/admin/check-submission/user/${userId}/submission/${submission._id}/lesson/${submission.lessonId}/userlesson/${submission.userLessonId}?isChecked=${submission.isChecked}`,
+														`/admin/check-submission/submission/${submission._id}/lesson/${submission.lessonId}/userlesson/${submission.userLessonId}?isChecked=${submission.isChecked}`,
 														'_blank'
 													);
 													window.scrollTo({ top: 0, behavior: 'smooth' });

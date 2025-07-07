@@ -11,7 +11,6 @@ import CustomDialog from '../layouts/dialog/CustomDialog';
 import LessonInfoModal from '../lessons/LessonInfoModal';
 
 interface LessonPaperProps {
-	userId?: string;
 	singleLesson: Lesson;
 	isActive: boolean;
 	singleLessonBeforeSave: Lesson;
@@ -38,7 +37,6 @@ interface LessonPaperProps {
 }
 
 const LessonPaper = ({
-	userId,
 	singleLesson,
 	isActive,
 	singleLessonBeforeSave,
@@ -106,7 +104,7 @@ const LessonPaper = ({
 								},
 							}}
 							onClick={() => {
-								navigate(`/admin/lessons/user/${userId}`);
+								navigate(`/admin/lessons`);
 								window.scrollTo({ top: 0, behavior: 'smooth' });
 							}}>
 							Back to lessons

@@ -13,11 +13,11 @@ const DocumentInfoModal = ({ document, onClose }: DocumentInfoModalProps) => {
 	const { usageInfo } = useResourceUsage(document);
 
 	const handleCourseSelect = (courseId: string) => {
-		window.open(`/admin/course-edit/user/${document.userId}/course/${courseId}`, '_blank');
+		window.open(`/admin/course-edit/course/${courseId}`, '_blank');
 	};
 
 	const handleLessonSelect = (lessonId: string) => {
-		window.open(`/admin/lesson-edit/user/${document.userId}/lesson/${lessonId}`, '_blank');
+		window.open(`/admin/lesson-edit/lesson/${lessonId}`, '_blank');
 	};
 
 	return (
@@ -51,17 +51,9 @@ const DocumentInfoModal = ({ document, onClose }: DocumentInfoModalProps) => {
 						<Grid item xs={9}>
 							{usageInfo.courses.length > 0 ? (
 								<FormControl fullWidth size='small' sx={{ width: '90%' }}>
-									<Select
-										value=''
-										displayEmpty
-										renderValue={() => `${usageInfo.courses.length} course(s)`}
-										sx={{ fontSize: '0.85rem' }}>
+									<Select value='' displayEmpty renderValue={() => `${usageInfo.courses.length} course(s)`} sx={{ fontSize: '0.85rem' }}>
 										{usageInfo.courses.map((course) => (
-											<MenuItem 
-												key={course.id} 
-												value={course.id} 
-												sx={{ fontSize: '0.8rem' }}
-												onClick={() => handleCourseSelect(course.id)}>
+											<MenuItem key={course.id} value={course.id} sx={{ fontSize: '0.8rem' }} onClick={() => handleCourseSelect(course.id)}>
 												{course.title}
 											</MenuItem>
 										))}
@@ -80,17 +72,9 @@ const DocumentInfoModal = ({ document, onClose }: DocumentInfoModalProps) => {
 						<Grid item xs={9}>
 							{usageInfo.lessons.length > 0 ? (
 								<FormControl fullWidth size='small' sx={{ width: '90%' }}>
-									<Select
-										value=''
-										displayEmpty
-										renderValue={() => `${usageInfo.lessons.length} lesson(s)`}
-										sx={{ fontSize: '0.85rem' }}>
+									<Select value='' displayEmpty renderValue={() => `${usageInfo.lessons.length} lesson(s)`} sx={{ fontSize: '0.85rem' }}>
 										{usageInfo.lessons.map((lesson) => (
-											<MenuItem 
-												key={lesson.id} 
-												value={lesson.id} 
-												sx={{ fontSize: '0.8rem' }}
-												onClick={() => handleLessonSelect(lesson.id)}>
+											<MenuItem key={lesson.id} value={lesson.id} sx={{ fontSize: '0.8rem' }} onClick={() => handleLessonSelect(lesson.id)}>
 												{lesson.title}
 											</MenuItem>
 										))}
@@ -118,4 +102,4 @@ const DocumentInfoModal = ({ document, onClose }: DocumentInfoModalProps) => {
 	);
 };
 
-export default DocumentInfoModal; 
+export default DocumentInfoModal;

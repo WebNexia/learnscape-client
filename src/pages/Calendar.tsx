@@ -187,13 +187,13 @@ const EventCalendar = () => {
 	return (
 		<DashboardPagesLayout pageName='Calendar' showCopyRight={true}>
 			<Box sx={{ display: 'flex', flexDirection: 'column', padding: isMobileSize ? '1rem' : '1rem 2rem 2rem 2rem' }}>
-				<Box sx={{ display: 'flex', width: '100%', justifyContent: 'flex-end' }}>
-					<CustomSubmitButton
-						sx={{ width: 'fit-content', marginBottom: '1rem' }}
-						onClick={() => navigate(`/admin/calendar/public-events/user/${user?._id}`)}>
-						Public Events
-					</CustomSubmitButton>
-				</Box>
+				{user?.role === Roles.ADMIN && (
+					<Box sx={{ display: 'flex', width: '100%', justifyContent: 'flex-end' }}>
+						<CustomSubmitButton sx={{ width: 'fit-content', marginBottom: '1rem' }} onClick={() => navigate(`/admin/calendar/public-events`)}>
+							Public Events
+						</CustomSubmitButton>
+					</Box>
+				)}
 				<style>
 					{`
 						.rbc-toolbar button {

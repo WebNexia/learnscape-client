@@ -221,7 +221,7 @@ const HandleDocUploadURL = ({
 								</LoadingButton>
 							)}
 						</Box>
-						{isDocSizeLarge && <CustomErrorMessage>Document size exceeds the limit of 1 MB </CustomErrorMessage>}
+						{isDocSizeLarge && <CustomErrorMessage>Document size exceeds the limit of 10 MB </CustomErrorMessage>}
 					</Box>
 				)}
 

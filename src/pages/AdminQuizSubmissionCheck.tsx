@@ -36,7 +36,7 @@ export interface QuestionFeedbackData {
 
 const AdminQuizSubmissionCheck = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
-	const { userId, userLessonId, submissionId, lessonId } = useParams();
+	const { userLessonId, submissionId, lessonId } = useParams();
 	const { fetchQuestionTypeName } = useContext(QuestionsContext);
 	const { user } = useContext(UserAuthContext);
 	const navigate = useNavigate();
@@ -78,7 +78,7 @@ const AdminQuizSubmissionCheck = () => {
 				setQuizName(userCourseQuizData[0].lessonId.title);
 				setCourseName(userCourseQuizData[0].courseId.title);
 				setUserResponseToFeedback(userCourseQuizData[0]);
-				setQuizFeedback(lessonResponse.data.data[0].teacherFeedback);
+				setQuizFeedback(lessonResponse.data.data[0]?.teacherFeedback || '');
 
 				setUserQuestionsFeedbacks(() =>
 					userCourseQuizData.map((data: any) => ({
@@ -231,7 +231,7 @@ const AdminQuizSubmissionCheck = () => {
 
 			setUserQuestionsFeedbacks((prev) => prev.map((feedback) => ({ ...feedback, isUpdated: false })));
 
-			navigate(`/admin/check-submission/user/${userId}/submission/${submissionId}/lesson/${lessonId}/userlesson/${userLessonId}?isChecked=true`);
+			navigate(`/admin/check-submission/submission/${submissionId}/lesson/${lessonId}/userlesson/${userLessonId}?isChecked=true`);
 		} catch (error) {
 			console.error(error);
 		} finally {

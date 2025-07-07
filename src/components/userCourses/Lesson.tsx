@@ -10,6 +10,7 @@ import { LessonType } from '../../interfaces/enums';
 import { QuizSubmissionsContext } from '../../contexts/QuizSubmissionsContextProvider';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import logo from '../../assets/logo.png';
+import { useAuth } from '../../hooks/useAuth';
 
 interface LessonProps {
 	lesson: LessonById;
@@ -20,8 +21,9 @@ interface LessonProps {
 }
 
 const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLessonId, lessonOrder }: LessonProps) => {
-	const { userId, courseId, userCourseId } = useParams();
+	const { courseId, userCourseId } = useParams();
 	const navigate = useNavigate();
+	const { user } = useAuth();
 
 	const { isSmallScreen, isVerySmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isRotatedMedium || isSmallScreen;
@@ -64,7 +66,7 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 		const fetchData = async () => {
 			if (!isUserLoaded && sortedUserQuizSubmissionsData.length === 0) {
 				try {
-					await fetchQuizSubmissionsByUserId(userId!);
+					await fetchQuizSubmissionsByUserId(user?._id!);
 				} catch (error) {
 					console.error('Error fetching quiz submissions:', error);
 				}
@@ -72,7 +74,7 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 		};
 
 		fetchData();
-	}, [isUserLoaded, sortedUserQuizSubmissionsData.length, fetchQuizSubmissionsByUserId, userId]);
+	}, [isUserLoaded, sortedUserQuizSubmissionsData.length, fetchQuizSubmissionsByUserId, user?._id]);
 
 	useEffect(() => {
 		if (sortedUserQuizSubmissionsData.length > 0) {
@@ -84,7 +86,7 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 
 	const handleLessonClick = () => {
 		const navigateToLesson = (lessonId: string, nextId?: string) => {
-			const url = `/user/${userId}/course/${courseId}/userCourseId/${userCourseId}/lesson/${lessonId}`;
+			const url = `/course/${courseId}/userCourseId/${userCourseId}/lesson/${lessonId}`;
 			const queryParams = `?isCompleted=${isLessonCompleted}`;
 			if (nextId) {
 				const nextQuery = `&next=${nextId}`;

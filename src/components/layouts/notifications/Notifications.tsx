@@ -100,13 +100,13 @@ const NotificationsBox = ({ showUnreadOnly }: NotificationsBoxProps) => {
 			if (note.type === NotificationType.QUIZ_SUBMISSION) {
 				const path =
 					user?.role === Roles.ADMIN
-						? `/admin/check-submission/user/${user?._id}/submission/${note.submissionId}/lesson/${note.lessonId}/userlesson/${note.userLessonId}`
-						: `/submission-feedback/user/${user?._id}/submission/${note.submissionId}/lesson/${note.lessonId}/userlesson/${note.userLessonId}`;
+						? `/admin/check-submission/submission/${note.submissionId}/lesson/${note.lessonId}/userlesson/${note.userLessonId}`
+						: `/submission-feedback/submission/${note.submissionId}/lesson/${note.lessonId}/userlesson/${note.userLessonId}`;
 				navigate(path);
 			} else if (note.type === NotificationType.MESSAGE_RECEIVED) {
-				navigate(`${user?.role !== Roles.ADMIN ? '' : '/admin'}/messages/user/${user?._id}`);
+				navigate(`${user?.role !== Roles.ADMIN ? '' : '/admin'}/messages`);
 			} else if (note.type === NotificationType.REPORT_TOPIC && user?.role === Roles.ADMIN) {
-				navigate(`/admin/community/user/${user?._id}/topic/${note.communityTopicId}`);
+				navigate(`/admin/community/topic/${note.communityTopicId}`);
 			} else if (
 				note.type === NotificationType.REPLY_TO_COMMUNITY_MESSAGE ||
 				note.type === NotificationType.REPLY_TO_COMMUNITY_TOPIC ||
@@ -117,11 +117,11 @@ const NotificationsBox = ({ showUnreadOnly }: NotificationsBoxProps) => {
 				const response = await axios.get(`${base_url}/communityMessages/message/${note.communityMessageId}?limit=30`);
 				const { page } = response.data;
 				const basePath = user?.role === Roles.ADMIN ? '/admin' : '';
-				navigate(`${basePath}/community/user/${user?._id}/topic/${note.communityTopicId}?page=${page}&messageId=${note.communityMessageId}`);
+				navigate(`${basePath}/community/topic/${note.communityTopicId}?page=${page}&messageId=${note.communityMessageId}`);
 			} else if (note.type === NotificationType.NEW_COMMUNITY_TOPIC) {
-				navigate(`${user?.role !== Roles.ADMIN ? '' : '/admin'}/community/user/${user?._id}/topic/${note.communityTopicId}`);
+				navigate(`${user?.role !== Roles.ADMIN ? '' : '/admin'}/community/topic/${note.communityTopicId}`);
 			} else if (note.type === NotificationType.ADD_TO_EVENT) {
-				navigate(`/calendar/user/${user._id}`);
+				navigate(`/calendar`);
 				fetchEvents(1);
 			}
 
@@ -161,11 +161,11 @@ const NotificationsBox = ({ showUnreadOnly }: NotificationsBoxProps) => {
 													handleNotificationClick(note);
 												}}
 												sx={{
-													cursor: 'pointer',
+													'cursor': 'pointer',
 													':hover': {
 														textDecoration: 'underline',
 													},
-													fontSize: '0.75rem',
+													'fontSize': '0.75rem',
 												}}>
 												{note.message}
 											</Typography>
@@ -186,9 +186,9 @@ const NotificationsBox = ({ showUnreadOnly }: NotificationsBoxProps) => {
 								onClick={() => setShowAll(!showAll)}
 								variant='body2'
 								sx={{
-									margin: '1rem 0',
-									textTransform: 'capitalize',
-									cursor: 'pointer',
+									'margin': '1rem 0',
+									'textTransform': 'capitalize',
+									'cursor': 'pointer',
 									':hover': {
 										backgroundColor: 'transparent',
 										textDecoration: 'underline',

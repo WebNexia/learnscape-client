@@ -28,7 +28,6 @@ export const OrganisationContext = createContext<OrganisationContextTypes>({
 
 const OrganisationContextProvider = (props: UserAuthContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
-	const token = localStorage.getItem('orgId')?.slice(5, -5);
 
 	const DEFAULT_ORG_ID = import.meta.env.VITE_ORG_ID;
 
@@ -36,9 +35,7 @@ const OrganisationContextProvider = (props: UserAuthContextProviderProps) => {
 
 	const [organisation, setOrganisation] = useState<Organisation>();
 	const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
-	const [orgId, setOrgId] = useState<string>(() => {
-		return token || DEFAULT_ORG_ID;
-	});
+	const [orgId, setOrgId] = useState<string>(DEFAULT_ORG_ID);
 	const queryClient = useQueryClient();
 
 	const fetchOrganisationData = async (orgId: string) => {

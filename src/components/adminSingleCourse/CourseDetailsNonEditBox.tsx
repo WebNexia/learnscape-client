@@ -4,7 +4,6 @@ import { SingleCourse } from '../../interfaces/course';
 
 import { ChapterLessonData } from '../../pages/AdminCourseEditPage';
 import { EditTwoTone } from '@mui/icons-material';
-import { useParams } from 'react-router-dom';
 import { dateFormatter } from '../../utils/dateFormatter';
 import NoContentBoxAdmin from '../layouts/noContentBox/NoContentBoxAdmin';
 import { setCurrencySymbol } from '../../utils/setCurrencySymbol';
@@ -23,8 +22,6 @@ interface CourseDetailsNonEditBoxProps {
 }
 
 const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: CourseDetailsNonEditBoxProps) => {
-	const { userId } = useParams();
-
 	const [isEditInstructorDialogOpen, setIsEditInstructorDialogOpen] = useState<boolean>(false);
 
 	return (
@@ -245,7 +242,7 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 																			<Tooltip title='Edit Lesson' placement='top'>
 																				<IconButton
 																					onClick={() => {
-																						window.open(`/admin/lesson-edit/user/${userId}/lesson/${lesson._id}`, '_blank');
+																						window.open(`/admin/lesson-edit/lesson/${lesson._id}`, '_blank');
 																						window.scrollTo({ top: 0, behavior: 'smooth' });
 																					}}>
 																					<EditTwoTone fontSize='small' />

@@ -5,7 +5,7 @@ import axios from '@utils/axiosInstance';
 import { LessonsContext } from '../contexts/LessonsContextProvider';
 import { Lesson } from '../interfaces/lessons';
 import { Delete, Edit, Info, Search } from '@mui/icons-material';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import CreateLessonDialog from '../components/forms/newLesson/CreateLessonDialog';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
@@ -24,7 +24,6 @@ import LessonInfoModal from '../components/lessons/LessonInfoModal';
 
 const AdminLessons = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
-	const { userId } = useParams();
 	const navigate = useNavigate();
 
 	const { sortLessonsData, sortedLessonsData, removeLesson, fetchLessons } = useContext(LessonsContext);
@@ -319,7 +318,7 @@ const AdminLessons = () => {
 											<CustomActionBtn
 												title='Edit'
 												onClick={() => {
-													navigate(`/admin/lesson-edit/user/${userId}/lesson/${lesson._id}`);
+													navigate(`/admin/lesson-edit/lesson/${lesson._id}`);
 												}}
 												icon={<Edit fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 											/>

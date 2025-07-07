@@ -10,8 +10,9 @@ import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 
 const mimeType = 'video/webm; codecs="opus,vp8"';
-const MAX_RECORDING_TIME = 45000; // 45 seconds
+const MAX_RECORDING_TIME = 30000; // 30 seconds
 const QUALITY = 500000; // Medium quality (500 kbps)
+const MAX_VIDEO_SIZE = 60 * 1024 * 1024; // 60MB limit
 
 interface VideoRecorderProps {
 	uploadVideo: (blob: Blob) => Promise<void>;
@@ -33,6 +34,7 @@ const VideoRecorder = ({ uploadVideo, isVideoUploading }: VideoRecorderProps) =>
 	const [videoBlob, setVideoBlob] = useState<Blob | null>(null);
 	const [videoChunks, setVideoChunks] = useState<Blob[]>([]);
 	const [remainingTime, setRemainingTime] = useState<number>(MAX_RECORDING_TIME / 1000); // in seconds
+	const [isVideoTooLarge, setIsVideoTooLarge] = useState<boolean>(false);
 	const recordingTimeout = useRef<NodeJS.Timeout | null>(null);
 	const countdownInterval = useRef<NodeJS.Timeout | null>(null);
 
@@ -115,6 +117,13 @@ const VideoRecorder = ({ uploadVideo, isVideoUploading }: VideoRecorderProps) =>
 			setRecordedVideo(videoUrl);
 			setVideoBlob(videoBlob);
 			setVideoChunks([]);
+
+			// Check file size
+			if (videoBlob.size > MAX_VIDEO_SIZE) {
+				setIsVideoTooLarge(true);
+			} else {
+				setIsVideoTooLarge(false);
+			}
 		};
 	};
 
@@ -207,6 +216,27 @@ const VideoRecorder = ({ uploadVideo, isVideoUploading }: VideoRecorderProps) =>
 							style={{ boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)', borderRadius: '0.25rem' }}></video>
 					</Box>
 				)}
+
+				{isVideoTooLarge && (
+					<Typography variant='body2' color='error' sx={{ mt: 1, textAlign: 'center' }}>
+						Video file size exceeds the limit of 60 MB (max 30 seconds)
+					</Typography>
+				)}
+
+				{isVideoTooLarge && (
+					<CustomSubmitButton
+						sx={{ marginTop: '1rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}
+						type='button'
+						size='small'
+						onClick={() => {
+							setRecordedVideo(null);
+							setVideoBlob(null);
+							setIsVideoTooLarge(false);
+							setHasRecorded(false);
+						}}>
+						Record Again
+					</CustomSubmitButton>
+				)}
 			</Box>
 
 			{recordedVideo && (
@@ -214,6 +244,7 @@ const VideoRecorder = ({ uploadVideo, isVideoUploading }: VideoRecorderProps) =>
 					sx={{ marginTop: '2rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}
 					type='button'
 					size='small'
+					disabled={isVideoTooLarge}
 					onClick={() => setIsUploadModalOpen(true)}>
 					Upload Video
 				</CustomSubmitButton>
