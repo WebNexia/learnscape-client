@@ -192,7 +192,7 @@ const CommunityTopicPage = () => {
 				parentMessageId: replyToMessage?._id,
 			});
 
-			if (replyToMessage && replyToMessage.userId?._id !== user?._id) {
+			if (replyToMessage && replyToMessage.userId?._id !== user?._id && replyToMessage.userId?.firebaseUserId) {
 				// Create the notification data
 				const replyToMsgNotificationData = {
 					title: 'Community Message Replied',
@@ -212,7 +212,7 @@ const CommunityTopicPage = () => {
 				await addDoc(notificationRef, replyToMsgNotificationData);
 			}
 
-			if (topic.userId?._id !== user?._id) {
+			if (topic.userId?._id !== user?._id && topic.userId?.firebaseUserId) {
 				const notificationToTopicOwnerData = {
 					title: 'Community Topic Replied',
 					message: `${user?.username} replied to your topic ${truncateText(topic.title, 25)} in community topics: "${truncateText(
@@ -235,7 +235,7 @@ const CommunityTopicPage = () => {
 
 			if (mentionedUsernames.includes('everyone') && user?.role === Roles.ADMIN) {
 				sortedUsersData.forEach((notifiedUser) => {
-					if (notifiedUser?.firebaseUserId !== user?.firebaseUserId) {
+					if (notifiedUser?.firebaseUserId !== user?.firebaseUserId && notifiedUser?.firebaseUserId) {
 						const notificationData = {
 							title: 'Community Notification',
 							message: `${user?.username} mentioned @everyone in a message.`,
@@ -256,7 +256,7 @@ const CommunityTopicPage = () => {
 			if (mentionedUsernames.length > 0) {
 				mentionedUsernames.forEach((username) => {
 					const mentionedUser = sortedUsersData.find((user) => user.username === username);
-					if (mentionedUser && mentionedUser?.firebaseUserId !== user?.firebaseUserId) {
+					if (mentionedUser && mentionedUser?.firebaseUserId !== user?.firebaseUserId && mentionedUser?.firebaseUserId) {
 						// Create the notification data
 						const notificationData = {
 							title: 'You were mentioned in a message',
@@ -286,11 +286,11 @@ const CommunityTopicPage = () => {
 			setAudioUrl('');
 			setReplyToMessage(null);
 			setUserSuggestions([]);
-			setTopicSuggestions;
+			setTopicSuggestions([]);
 			setShowUserSuggestions(false);
 			setShowTopicSuggestions(false);
 		} catch (error) {
-			console.log(error);
+			console.log('sendMessage error:', error);
 		} finally {
 			setIsSending(false);
 		}

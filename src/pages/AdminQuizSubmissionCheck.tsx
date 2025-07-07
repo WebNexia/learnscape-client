@@ -78,7 +78,7 @@ const AdminQuizSubmissionCheck = () => {
 				setQuizName(userCourseQuizData[0].lessonId.title);
 				setCourseName(userCourseQuizData[0].courseId.title);
 				setUserResponseToFeedback(userCourseQuizData[0]);
-				setQuizFeedback(lessonResponse.data.data[0].teacherFeedback);
+				setQuizFeedback(lessonResponse.data.data[0]?.teacherFeedback || '');
 
 				setUserQuestionsFeedbacks(() =>
 					userCourseQuizData.map((data: any) => ({

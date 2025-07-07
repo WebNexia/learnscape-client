@@ -5,6 +5,11 @@ import { User } from '../interfaces/user';
 import { Roles } from '../interfaces/enums';
 
 export const renderMessageWithMentions = (text: string, processedTopics: TopicSuggestion[], user: User) => {
+	// Add defensive programming to handle undefined or null text
+	if (!text || typeof text !== 'string') {
+		return [];
+	}
+
 	const mentionPattern = /(@[a-zA-Z0-9._]+|#[a-zA-Z0-9._]+)/g;
 	const parts = text.split(mentionPattern);
 

@@ -17,7 +17,6 @@ import { db } from '../../../../firebase';
 import { MediaQueryContext } from '../../../../contexts/MediaQueryContextProvider';
 import axios from '@utils/axiosInstance';
 
-
 interface MessageProps {
 	message: CommunityMessage;
 	isFirst?: boolean;
@@ -421,7 +420,7 @@ const Message = ({
 													':hover': {
 														backgroundColor: 'transparent',
 													},
-													mr: '-0.5rem',
+													'mr': '-0.5rem',
 												}}>
 												<Edit fontSize='small' sx={{ fontSize: isMobileSize ? '0.85rem' : undefined }} />
 											</IconButton>

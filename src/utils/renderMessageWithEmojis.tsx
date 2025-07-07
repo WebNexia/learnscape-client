@@ -1,6 +1,11 @@
 import emojiRegex from 'emoji-regex';
 
 export const renderMessageWithEmojis = (messageContent: string | any[], fontSize: string, isMobileSize: boolean) => {
+	// Add defensive programming to handle undefined or null messageContent
+	if (!messageContent) {
+		return [];
+	}
+
 	const regex = emojiRegex();
 
 	// Helper function to split and render text with emojis
