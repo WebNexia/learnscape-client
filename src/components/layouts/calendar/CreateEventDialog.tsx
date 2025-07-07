@@ -9,6 +9,7 @@ import {
 	MenuItem,
 	Select,
 	SelectChangeEvent,
+	Tooltip,
 	Typography,
 } from '@mui/material';
 import CustomDialog from '../dialog/CustomDialog';
@@ -19,8 +20,9 @@ import { Cancel, Search } from '@mui/icons-material';
 import CustomDialogActions from '../dialog/CustomDialogActions';
 import { AttendeeInfo, Event } from '../../../interfaces/event';
 import dayjs, { Dayjs } from 'dayjs';
+import 'dayjs/locale/en-gb';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { useContext, useState } from 'react';
+import { useContext, useState, useEffect } from 'react';
 import { CoursesContext } from '../../../contexts/CoursesContextProvider';
 import { User } from '../../../interfaces/user';
 import theme from '../../../themes';
@@ -51,6 +53,21 @@ interface CreateEventDialogProps {
 	filterCourses: (searchQuery: string, action: string) => void;
 }
 
+const getDateTimeFormat = (locale: string) => {
+	switch (locale.toLowerCase()) {
+		case 'en-gb':
+			return 'DD/MM/YYYY HH:mm';
+		case 'tr':
+		case 'tr-tr':
+			return 'DD.MM.YYYY HH:mm';
+		case 'de':
+		case 'de-de':
+			return 'DD.MM.YYYY HH:mm';
+		default:
+			return 'MM/DD/YYYY hh:mm A'; // fallback to US
+	}
+};
+
 const CreateEventDialog = ({
 	newEvent,
 	newEventModalOpen,
@@ -77,6 +94,18 @@ const CreateEventDialog = ({
 	const [searchLearnerValue, setSearchLearnerValue] = useState<string>('');
 	const [searchCourseValue, setSearchCourseValue] = useState<string>('');
 	const [enterCoverImageUrl, setEnterCoverImageUrl] = useState<boolean>(true);
+
+	useEffect(() => {
+		let locale = navigator.language;
+		// Map known browser locales to Dayjs locales
+		if (locale.toLowerCase() === 'en-gb') {
+			locale = 'en-gb';
+		} else if (locale.toLowerCase() === 'tr' || locale.toLowerCase() === 'tr-tr') {
+			locale = 'tr';
+		} // Add more mappings as needed
+		dayjs.locale(locale);
+	}, []);
+
 	const handleAddEvent = async () => {
 		const allFirebaseUserIds: string[] = sortedUsersData
 			?.filter((filteredUser) => filteredUser._id !== user?._id)
@@ -151,25 +180,22 @@ const CreateEventDialog = ({
 
 			addNewEvent({ ...event, _id: res.data.data._id });
 
-			const startDate = newEvent?.start?.toLocaleDateString(undefined, {
+			const startDate = newEvent?.start?.toLocaleDateString(navigator.language || undefined, {
 				weekday: 'long',
 				year: 'numeric',
 				month: 'long',
 				day: 'numeric',
 				timeZoneName: 'short',
 			});
-			const startTime = newEvent?.start?.toLocaleTimeString(undefined, {
+			const startTime = newEvent?.start?.toLocaleTimeString(navigator.language || undefined, {
 				hour: '2-digit',
 				minute: '2-digit',
 				timeZoneName: 'short',
 			});
-
+			const adminName = user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : user?.username || 'Admin';
 			const notificationData = {
-				title: 'Etkinliğe Eklendiniz',
-				message: `${user?.username} sizi yeni bir etkinliğe ekledi: "${truncateText(
-					newEvent.title,
-					20
-				)}". Etkinlik ${startDate} tarihinde, saat ${startTime} başlayacak.`,
+				title: 'Added to Event',
+				message: `${adminName} has added you to a new event: "${truncateText(newEvent.title, 20)}". The event will start on ${startDate} at ${startTime}.`,
 				isRead: false,
 				timestamp: serverTimestamp(),
 				type: 'AddToEvent',
@@ -177,7 +203,7 @@ const CreateEventDialog = ({
 				eventId: res.data.data._id,
 			};
 
-			if (newEvent.isAllLearnersSelected || newEvent.isPublic) {
+			if (newEvent.isAllLearnersSelected) {
 				for (const id of allFirebaseUserIds) {
 					const notificationRef = collection(db, 'notifications', id, 'userNotifications');
 					await addDoc(notificationRef, notificationData);
@@ -186,6 +212,28 @@ const CreateEventDialog = ({
 				for (const participant of allCoursesParticipantsInfo) {
 					const notificationRef = collection(db, 'notifications', participant.firebaseUserId, 'userNotifications');
 					await addDoc(notificationRef, notificationData);
+				}
+			}
+
+			if (newEvent.isPublic) {
+				const allFirebaseUserIds: string[] = sortedUsersData
+					?.filter((filteredUser) => filteredUser._id !== user?._id)
+					?.map((mappedUser) => mappedUser.firebaseUserId);
+
+				const adminName = user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : user?.username || 'Admin';
+				const publicEventNotification = {
+					title: 'New Public Event',
+					message: `${adminName} has added a public event: "${newEvent.title}". It will take place on ${startDate} at ${startTime}.`,
+					isRead: false,
+					timestamp: serverTimestamp(),
+					type: 'PublicEvent',
+					userImageUrl: user?.imageUrl,
+					eventId: res.data.data._id,
+				};
+
+				for (const id of allFirebaseUserIds) {
+					const notificationRef = collection(db, 'notifications', id, 'userNotifications');
+					await addDoc(notificationRef, publicEventNotification);
 				}
 			}
 		} catch (error) {
@@ -245,13 +293,15 @@ const CreateEventDialog = ({
 				}}>
 				<DialogContent sx={{ mt: '-0.5rem' }}>
 					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-						<CustomTextField
-							label='Title'
-							value={newEvent.title}
-							onChange={(e) => setNewEvent((prevData) => ({ ...prevData, title: e.target.value }))}
-							InputProps={{ inputProps: { maxLength: 40 } }}
-							sx={{ flex: 3 }}
-						/>
+						<Tooltip title='Max 40 characters' placement='top' arrow>
+							<CustomTextField
+								label='Title'
+								value={newEvent.title}
+								onChange={(e) => setNewEvent((prevData) => ({ ...prevData, title: e.target.value }))}
+								InputProps={{ inputProps: { maxLength: 40 } }}
+								sx={{ flex: 3 }}
+							/>
+						</Tooltip>
 
 						<FormControlLabel
 							labelPlacement='start'
@@ -301,6 +351,7 @@ const CreateEventDialog = ({
 							onChange={(e) => setNewEvent((prevData) => ({ ...prevData, description: e.target.value }))}
 							InputProps={{ inputProps: { maxLength: 75 } }}
 							sx={{ flex: 3, mr: newEvent.isPublic ? '1rem' : '0rem' }}
+							placeholder='Enter a description for the event (max 75 characters)'
 						/>
 						{newEvent.isPublic && (
 							<FormControl sx={{ flex: 1, mb: '0.5rem' }}>
@@ -409,6 +460,7 @@ const CreateEventDialog = ({
 									}}
 									sx={{ backgroundColor: '#fff', mr: '0.5rem' }}
 									disabled={newEvent.isAllDay}
+									format={getDateTimeFormat(navigator.language)}
 								/>
 							</LocalizationProvider>
 
@@ -433,6 +485,7 @@ const CreateEventDialog = ({
 									}}
 									sx={{ backgroundColor: '#fff' }}
 									disabled={newEvent.isAllDay}
+									format={getDateTimeFormat(navigator.language)}
 								/>
 							</LocalizationProvider>
 						</Box>
@@ -842,9 +895,14 @@ const CreateEventDialog = ({
 						value={newEvent.location}
 						onChange={(e) => setNewEvent((prevData) => ({ ...prevData, location: e.target.value }))}
 						required={false}
+						InputProps={{ inputProps: { maxLength: 150 } }}
+						placeholder='Enter a location for the event (max 150 characters)'
+						multiline
+						rows={3}
 					/>
 				</DialogContent>
 				<CustomDialogActions
+					actionSx={{ margin: '-1rem 0.5rem 0.5rem 0' }}
 					onCancel={() => {
 						setNewEventModalOpen(false);
 						resetNewEventForm();

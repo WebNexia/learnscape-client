@@ -516,7 +516,7 @@ const PaymentDialog = ({
 				orgId,
 				email,
 			});
-			const { discountAmount, discountType, usersUsed, _id } = response.data;
+			const { discountAmount, usersUsed, _id } = response.data;
 
 			setPromoCodeId(_id);
 
@@ -526,11 +526,7 @@ const PaymentDialog = ({
 				newTotal = 0;
 			}
 
-			if (discountType === 'percentage') {
-				newTotal -= (newTotal * discountAmount) / 100;
-			} else if (discountType === 'fixed') {
-				newTotal -= discountAmount;
-			}
+			newTotal -= (newTotal * discountAmount) / 100;
 
 			setDiscountedAmount(Math.max(newTotal, 0)); // Ensure amount doesn't go negative
 			setErrorMessage(''); // Clear any previous error messages
@@ -692,6 +688,11 @@ const PaymentDialog = ({
 										fontSize: INPUT_FONTSIZE,
 									},
 								}}
+								InputProps={{
+									inputProps: {
+										maxLength: 254,
+									},
+								}}
 							/>
 						</Box>
 					)}
@@ -735,6 +736,11 @@ const PaymentDialog = ({
 								const amount = +getPriceForCountry(course, resolvedCountryCode).amount;
 								setDiscountedAmount(isNaN(amount) ? 0 : amount);
 								setUsersUsedPromoCode((prevData) => prevData.filter((id) => id !== userId));
+							}}
+							InputProps={{
+								inputProps: {
+									maxLength: 25,
+								},
 							}}
 						/>
 						<CustomSubmitButton

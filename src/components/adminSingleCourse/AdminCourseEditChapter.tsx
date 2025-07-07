@@ -212,7 +212,7 @@ const AdminCourseEditChapter = ({
 													width: '3rem',
 												}}>
 												<img
-													src={lesson?.imageUrl || 'https://directmobilityonline.co.uk/assets/img/noimage.png'}
+													src={lesson?.imageUrl || 'https://placehold.co/500x400/e2e8f0/64748b?text=No+Img'}
 													alt='lesson_img'
 													height='100%'
 													width='100%'

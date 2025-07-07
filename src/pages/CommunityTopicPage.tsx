@@ -91,7 +91,7 @@ const CommunityTopicPage = () => {
 	const [uploadAudioDialogOpen, setUploadAudioDialogOpen] = useState<boolean>(false);
 	const [audioUrl, setAudioUrl] = useState<string>('');
 
-	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(true);
+	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(user?.role === 'admin' ? true : false);
 	const [isAudioUploading, setIsAudioUploading] = useState<boolean>(false);
 
 	const [numberOfPages, setNumberOfPages] = useState<number>(1);
@@ -773,7 +773,11 @@ const CommunityTopicPage = () => {
 								<Box
 									key={index}
 									onClick={() => handleSuggestionClick(suggestion)}
-									sx={{ padding: isMobileSize ? '0.35rem 0.75rem' : '0.5rem 1rem', cursor: 'pointer', '&:hover': { backgroundColor: '#f0f0f0' } }}>
+									sx={{
+										'padding': isMobileSize ? '0.35rem 0.75rem' : '0.5rem 1rem',
+										'cursor': 'pointer',
+										'&:hover': { backgroundColor: '#f0f0f0' },
+									}}>
 									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.85rem' }}>
 										{truncateText(suggestion.title, 35)}
 									</Typography>
@@ -802,10 +806,10 @@ const CommunityTopicPage = () => {
 									key={index}
 									onClick={() => handleSuggestionClick(suggestion)}
 									sx={{
-										display: 'flex',
-										alignItems: 'center',
-										padding: isMobileSize ? '0.25rem 0.75rem' : '0.5rem 1rem',
-										cursor: 'pointer',
+										'display': 'flex',
+										'alignItems': 'center',
+										'padding': isMobileSize ? '0.25rem 0.75rem' : '0.5rem 1rem',
+										'cursor': 'pointer',
 										'&:hover': { backgroundColor: '#f0f0f0' },
 									}}>
 									<Box>
@@ -851,7 +855,7 @@ const CommunityTopicPage = () => {
 									disabled={isTopicLocked}
 									edge='end'
 									sx={{
-										mr: isMobileSize ? '-0.5rem' : '-0.25rem',
+										'mr': isMobileSize ? '-0.5rem' : '-0.25rem',
 										':hover': {
 											backgroundColor: 'transparent',
 										},
@@ -1008,6 +1012,9 @@ const CommunityTopicPage = () => {
 								</IconButton>
 							</InputAdornment>
 						),
+						inputProps: {
+							maxLength: 3000,
+						},
 					}}
 				/>
 
@@ -1021,12 +1028,12 @@ const CommunityTopicPage = () => {
 							transform: isVerySmallScreen
 								? 'scale(0.55)'
 								: isRotated
-								? 'scale(0.5)'
-								: isRotatedMedium
-								? 'scale(0.55)'
-								: isSmallScreen
-								? 'scale(0.8)'
-								: 'scale(1)',
+									? 'scale(0.5)'
+									: isRotatedMedium
+										? 'scale(0.55)'
+										: isSmallScreen
+											? 'scale(0.8)'
+											: 'scale(1)',
 						}}>
 						<Picker data={data} onEmojiSelect={handleEmojiSelect} theme='dark' />
 					</Box>

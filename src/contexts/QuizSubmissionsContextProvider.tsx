@@ -5,7 +5,7 @@ import Loading from '../components/layouts/loading/Loading';
 import LoadingError from '../components/layouts/loading/LoadingError';
 import { OrganisationContext } from './OrganisationContextProvider';
 import { QuizSubmission } from '../interfaces/quizSubmission';
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 
 interface QuizSubmissionsContextTypes {
@@ -59,6 +59,15 @@ const QuizSubmissionsContextProvider = (props: QuizSubmissionsContextProviderPro
 	const { orgId } = useContext(OrganisationContext);
 	const { isAuthenticated, isAdmin, isLearner } = useAuth();
 	const { userId } = useParams<{ userId: string }>();
+	const location = useLocation();
+	const isLandingPageRoute =
+		location.pathname === '/' ||
+		location.pathname === '/landing-page-courses' ||
+		location.pathname === '/resources' ||
+		location.pathname === '/contact-us' ||
+		location.pathname === '/about-us' ||
+		location.pathname === '/auth' ||
+		location.pathname.startsWith('/course/');
 
 	const [sortedQuizSubmissionsData, setSortedQuizSubmissionsData] = useState<QuizSubmission[]>([]);
 	const [sortedUserQuizSubmissionsData, setSortedUserQuizSubmissionsData] = useState<QuizSubmission[]>([]);
@@ -109,7 +118,7 @@ const QuizSubmissionsContextProvider = (props: QuizSubmissionsContextProviderPro
 		['allQuizSubmissions', orgId, quizSubmissionsPageNumber],
 		() => fetchQuizSubmissions(quizSubmissionsPageNumber),
 		{
-			enabled: !!orgId && isAuthenticated && (isAdmin || isLearner) && !isLoaded,
+			enabled: !!orgId && isAuthenticated && !isLoaded && !isLandingPageRoute,
 		}
 	);
 

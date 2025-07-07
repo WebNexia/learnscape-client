@@ -18,6 +18,7 @@ interface TinyMceEditorProps {
 	editorId?: string;
 	editorRef?: React.MutableRefObject<any>;
 	isFITB?: boolean;
+	maxLength?: number;
 }
 
 const TinyMceEditor = ({
@@ -30,6 +31,7 @@ const TinyMceEditor = ({
 	editorId,
 	editorRef,
 	isFITB = false,
+	maxLength = 10000,
 }: TinyMceEditorProps) => {
 	const apiKey = import.meta.env.VITE_TINY_MCE_API_KEY;
 	const [internalBlankValuePairs, setInternalBlankValuePairs] = useState<BlankValuePair[]>(blankValuePairs || []);
@@ -172,13 +174,50 @@ const TinyMceEditor = ({
 						if (isFITB) {
 							handleWordClick(editor);
 						}
+
+						const MAX_LENGTH = maxLength; // Change as needed
+
+						editor.on('beforeinput', (e) => {
+							if (e.inputType === 'insertText' || e.inputType === 'insertFromPaste') {
+								const content = editor.getContent({ format: 'text' }) || '';
+								let insertText = '';
+
+								if (e.inputType === 'insertText') {
+									insertText = e.data || '';
+								} else if (e.inputType === 'insertFromPaste') {
+									const clipboardData = (e as any).clipboardData;
+									insertText = clipboardData?.getData('text') || '';
+								}
+
+								if (content.length + insertText.length > MAX_LENGTH) {
+									e.preventDefault();
+									const allowedText = insertText.slice(0, MAX_LENGTH - content.length);
+									if (allowedText && e.inputType === 'insertFromPaste') {
+										editor.insertContent(allowedText);
+									}
+								}
+							}
+						});
+
+						// Fallback: always trim after input
+						editor.on('input', () => {
+							const content = editor.getContent({ format: 'text' });
+							if (content.length > MAX_LENGTH) {
+								editor.setContent(content.slice(0, MAX_LENGTH));
+							}
+						});
 					},
 				}}
-				onEditorChange={(content) => {
-					if (isFITB) {
-						handleEditorChangeInternal(content);
+				onEditorChange={(content, editor) => {
+					const MAX_LENGTH = maxLength;
+					const textContent = editor.getContent({ format: 'text' }) || '';
+					const handleChange = isFITB ? handleEditorChangeInternal : handleEditorChange;
+					if (textContent.length > MAX_LENGTH) {
+						const trimmed = textContent.slice(0, MAX_LENGTH);
+						editor.setContent(trimmed);
+						handleChange(trimmed);
 					} else {
-						handleEditorChange(content);
+						handleChange(content);
 					}
 				}}
 			/>

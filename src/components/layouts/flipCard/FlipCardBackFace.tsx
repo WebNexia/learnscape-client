@@ -33,6 +33,7 @@ const FlipCardBackFace = ({
 					}
 					setIsCorrectAnswerMissing(false);
 				}}
+				maxLength={255}
 				style={{
 					backgroundColor: 'coral',
 					width: '50vh',

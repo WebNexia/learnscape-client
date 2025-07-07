@@ -22,7 +22,7 @@ const LessonImageCourseDisplay = ({ singleLesson }: LessonImageCourseDisplayProp
 			<Box sx={{ display: 'flex', alignItems: 'center', textAlign: 'center' }}>
 				<Box sx={{ height: '8rem', width: '12rem', mr: '2rem' }}>
 					<img
-						src={singleLesson.imageUrl ? singleLesson.imageUrl : 'https://directmobilityonline.co.uk/assets/img/noimage.png'}
+						src={singleLesson.imageUrl ? singleLesson.imageUrl : 'https://placehold.co/600x400/e2e8f0/64748b?text=No+Image'}
 						alt='lesson_img'
 						height='100%'
 						width='100%'
@@ -86,7 +86,7 @@ const LessonImageCourseDisplay = ({ singleLesson }: LessonImageCourseDisplayProp
 								height: '100%',
 							}}>
 							<img
-								src={'https://www.47pitches.com/contents/images/no-video.jpg'}
+								src={'https://placehold.co/600x400/e2e8f0/64748b?text=No+Video'}
 								alt='video_thumbnail'
 								height='100%'
 								width='100%'

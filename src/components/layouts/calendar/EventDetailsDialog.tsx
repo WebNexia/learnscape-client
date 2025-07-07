@@ -33,6 +33,24 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 
 	const handleRegisterForEvent = async () => {
 		if (!selectedEvent?._id) return;
+
+		// Check if event is in the past
+		const now = new Date();
+		let eventEnd: Date | null = null;
+		if (selectedEvent.end && typeof selectedEvent.end === 'string') {
+			eventEnd = new Date(selectedEvent.end);
+		} else if (selectedEvent.start && typeof selectedEvent.start === 'string') {
+			eventEnd = new Date(selectedEvent.start);
+		} else if (selectedEvent.end && selectedEvent.end instanceof Date) {
+			eventEnd = selectedEvent.end;
+		} else if (selectedEvent.start && selectedEvent.start instanceof Date) {
+			eventEnd = selectedEvent.start;
+		}
+		if (eventEnd && eventEnd < now) {
+			setRegisterErrorMsg('You cannot register because this event has already ended.');
+			return;
+		}
+
 		try {
 			setIsRegisterForEventSending(true);
 			setRegisterErrorMsg(null);
@@ -128,7 +146,7 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 						<Typography variant='h6' sx={{ fontSize: isMobileSizeSmall ? '0.85rem' : isMobileSize ? '0.9rem' : undefined }}>
 							Link:
 						</Typography>
-						<Link href={selectedEvent.eventLinkUrl} sx={{ ml: '0.5rem' }} rel='noopener' target='_blank'>
+						<Link href={selectedEvent.eventLinkUrl} sx={{ ml: '0.5rem' }} rel='noopener noreferrer' target='_blank'>
 							<Typography variant='body1' sx={{ fontSize: isMobileSizeSmall ? '0.75rem' : isMobileSize ? '0.85rem' : '0.95rem' }}>
 								{selectedEvent.eventLinkUrl}
 							</Typography>
@@ -190,7 +208,6 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 						variant='filled'
 						sx={{
 							width: '100%',
-							fontFamily: 'Varela Round',
 							fontSize: { xs: '0.8rem', sm: '0.9rem', md: '1rem', lg: '1rem' },
 							letterSpacing: 0,
 							color: theme.palette.common.white,

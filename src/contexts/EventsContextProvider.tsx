@@ -1,6 +1,7 @@
 import axios from '@utils/axiosInstance';
 import { ReactNode, createContext, useContext, useState } from 'react';
 import { useQuery } from 'react-query';
+import { useLocation } from 'react-router-dom';
 
 import Loading from '../components/layouts/loading/Loading';
 import LoadingError from '../components/layouts/loading/LoadingError';
@@ -46,7 +47,15 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
 	const { isAuthenticated, isAdmin, isLearner } = useAuth();
-
+	const location = useLocation();
+	const isLandingPageRoute =
+		location.pathname === '/' ||
+		location.pathname === '/landing-page-courses' ||
+		location.pathname === '/resources' ||
+		location.pathname === '/contact-us' ||
+		location.pathname === '/about-us' ||
+		location.pathname === '/auth' ||
+		location.pathname.startsWith('/course/');
 	const [sortedEventsData, setSortedEventsData] = useState<Event[]>([]);
 	const [sortedPublicEventsData, setSortedPublicEventsData] = useState<Event[]>([]);
 	const [eventsNumberOfPages, setNumberOfPages] = useState<number>(1);
@@ -72,7 +81,7 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 	};
 
 	const { isLoading, isError, refetch } = useQuery(['allEvents', orgId, eventsPageNumber], () => fetchEvents(eventsPageNumber), {
-		enabled: !!orgId && isAuthenticated && (isAdmin || isLearner),
+		enabled: !!orgId && isAuthenticated && (isAdmin || isLearner) && !isLandingPageRoute && !isLoaded,
 	});
 
 	// Function to handle sorting
@@ -139,7 +148,7 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 	};
 
 	const { isLoading: isPublicEventsLoading, isError: isPublicEventsError } = useQuery(['allPublicEvents', orgId], () => fetchPublicEvents(), {
-		enabled: !!orgId && !isLoaded,
+		enabled: isLandingPageRoute,
 	});
 
 	if (isLoading || isPublicEventsLoading) {

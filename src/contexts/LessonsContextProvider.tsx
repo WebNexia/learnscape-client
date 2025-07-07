@@ -6,6 +6,7 @@ import Loading from '../components/layouts/loading/Loading';
 import LoadingError from '../components/layouts/loading/LoadingError';
 import { OrganisationContext } from './OrganisationContextProvider';
 import { useAuth } from '../hooks/useAuth';
+import { useLocation } from 'react-router-dom';
 
 interface LessonsContextTypes {
 	sortedLessonsData: Lesson[];
@@ -43,6 +44,15 @@ const LessonsContextProvider = (props: LessonsContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
 	const { isAuthenticated, isAdmin, isLearner } = useAuth();
+	const location = useLocation();
+	const isLandingPageRoute =
+		location.pathname === '/' ||
+		location.pathname === '/landing-page-courses' ||
+		location.pathname === '/resources' ||
+		location.pathname === '/contact-us' ||
+		location.pathname === '/about-us' ||
+		location.pathname === '/auth' ||
+		location.pathname.startsWith('/course/');
 
 	const [sortedLessonsData, setSortedLessonsData] = useState<Lesson[]>([]);
 	// const [numberOfPages, setNumberOfPages] = useState<number>(1);
@@ -70,7 +80,7 @@ const LessonsContextProvider = (props: LessonsContextProviderProps) => {
 	};
 
 	const { isLoading, isError } = useQuery(['allLessons', orgId], () => fetchLessons(), {
-		enabled: !!orgId && isAuthenticated && (isAdmin || isLearner) && !isLoaded,
+		enabled: !!orgId && isAuthenticated && (isAdmin || isLearner) && !isLoaded && !isLandingPageRoute,
 	});
 
 	// Function to handle sorting

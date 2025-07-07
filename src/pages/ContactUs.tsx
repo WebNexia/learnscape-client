@@ -134,6 +134,11 @@ const ContactUs = () => {
 									sx={{ fontFamily: 'Varela Round' }}
 									InputLabelProps={{ sx: { fontFamily: 'Varela Round' } }}
 									placeholder='İsminizi girin'
+									InputProps={{
+										inputProps: {
+											maxLength: 50,
+										},
+									}}
 								/>
 							</Grid>
 							<Grid item xs={12}>
@@ -146,6 +151,11 @@ const ContactUs = () => {
 									sx={{ fontFamily: 'Varela Round' }}
 									InputLabelProps={{ sx: { fontFamily: 'Varela Round' } }}
 									placeholder='Soy isminizi girin'
+									InputProps={{
+										inputProps: {
+											maxLength: 50,
+										},
+									}}
 								/>
 							</Grid>
 							<Grid item xs={12}>
@@ -159,6 +169,11 @@ const ContactUs = () => {
 									InputLabelProps={{ sx: { fontFamily: 'Varela Round' } }}
 									placeholder='E-posta adresinizi girin'
 									type='email'
+									InputProps={{
+										inputProps: {
+											maxLength: 254,
+										},
+									}}
 								/>
 							</Grid>
 							<Grid item xs={12}>
@@ -176,6 +191,7 @@ const ContactUs = () => {
 									}}
 									inputProps={{
 										required: true,
+										maxLength: 20,
 										style: {
 											width: '100%',
 											height: '2.25rem',
@@ -227,6 +243,11 @@ const ContactUs = () => {
 									sx={{ fontFamily: 'Varela Round' }}
 									InputLabelProps={{ sx: { fontFamily: 'Varela Round' } }}
 									placeholder='Mesajınızı yazın'
+									InputProps={{
+										inputProps: {
+											maxLength: 1000,
+										},
+									}}
 								/>
 							</Grid>
 							<Grid item xs={12} sx={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>

@@ -25,7 +25,6 @@ const CreateCodeDialog = ({ isNewCodeModalOpen, setIsNewCodeModalOpen }: CreateC
 	const [newPromoCode, setNewPromoCode] = useState<PromoCode>({
 		_id: '',
 		code: '',
-		discountType: '',
 		discountAmount: undefined,
 		expirationDate: null,
 		usageLimit: undefined,
@@ -42,7 +41,6 @@ const CreateCodeDialog = ({ isNewCodeModalOpen, setIsNewCodeModalOpen }: CreateC
 		setNewPromoCode({
 			_id: '',
 			code: '',
-			discountType: '',
 			discountAmount: undefined,
 			expirationDate: null,
 			usageLimit: undefined,
@@ -72,7 +70,6 @@ const CreateCodeDialog = ({ isNewCodeModalOpen, setIsNewCodeModalOpen }: CreateC
 
 		const newCode = {
 			code: newPromoCode.code,
-			discountType: newPromoCode.discountType,
 			discountAmount: newPromoCode.discountAmount || 0,
 			expirationDate: newPromoCode.expirationDate,
 			usageLimit: newPromoCode.usageLimit || 0,
@@ -120,60 +117,43 @@ const CreateCodeDialog = ({ isNewCodeModalOpen, setIsNewCodeModalOpen }: CreateC
 					createPromoCode();
 				}}>
 				<DialogContent sx={{ mt: '-0.5rem' }}>
-					<Box>
-						<Typography variant='h6' sx={{ fontSize: '0.9rem', mb: '0.25rem' }}>
-							Code
-						</Typography>
-						<Tooltip title='Max 15 Characters' placement='top'>
-							<CustomTextField
-								value={newPromoCode.code}
-								onChange={(e) => setNewPromoCode((prevData) => ({ ...prevData, code: e.target.value.trim() }))}
-								InputProps={{
-									inputProps: {
-										maxLength: 15,
-									},
-								}}
-							/>
-						</Tooltip>
+					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+						<Box sx={{ width: '100%', mr: '1rem' }}>
+							<Typography variant='h6' sx={{ fontSize: '0.9rem', mb: '0.25rem' }}>
+								Code
+							</Typography>
+							<Tooltip title='Max 15 Characters' placement='top'>
+								<CustomTextField
+									value={newPromoCode.code}
+									onChange={(e) => setNewPromoCode((prevData) => ({ ...prevData, code: e.target.value.trim() }))}
+									InputProps={{
+										inputProps: {
+											maxLength: 15,
+										},
+									}}
+								/>
+							</Tooltip>
+						</Box>
+						<Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', width: '100%' }}>
+							<Box sx={{ width: '100%' }}>
+								<Typography variant='h6' sx={{ fontSize: '0.9rem', mb: '0.25rem' }}>
+									Discount Percentage
+								</Typography>
+								<CustomTextField
+									value={newPromoCode.discountAmount}
+									onChange={(e) => setNewPromoCode((prevData) => ({ ...prevData, discountAmount: +e.target.value }))}
+									type='number'
+									InputLabelProps={{
+										sx: { fontSize: '0.8rem' },
+									}}
+								/>
+							</Box>
+						</Box>
 					</Box>
 
 					<SelectApplicableCoursesCreate newPromoCode={newPromoCode} setNewPromoCode={setNewPromoCode} />
 
-					<Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-						<Box sx={{ flex: 1, margin: '1rem 0rem 1.85rem 0rem' }}>
-							<Typography variant='h6' sx={{ fontSize: '0.9rem', mb: '0.25rem' }}>
-								Discount Type
-							</Typography>
-							<FormControl>
-								<Select
-									size='small'
-									value={newPromoCode.discountType}
-									onChange={(e) => setNewPromoCode((prevData) => ({ ...prevData, discountType: e.target.value }))}
-									required
-									sx={{ backgroundColor: theme.bgColor?.common, width: '11.25rem', mr: '0.75rem', fontSize: '0.85rem' }}>
-									{['Percentage', 'Fixed'].map((type) => (
-										<MenuItem value={type.toLowerCase()} key={type} sx={{ fontSize: '0.85rem' }}>
-											{type}
-										</MenuItem>
-									))}
-								</Select>
-							</FormControl>
-						</Box>
-						<Box sx={{ margin: '1rem 0rem', flex: 2 }}>
-							<Typography variant='h6' sx={{ fontSize: '0.9rem', mb: '0.25rem' }}>
-								Discount Amount
-							</Typography>
-							<CustomTextField
-								value={newPromoCode.discountAmount}
-								onChange={(e) => setNewPromoCode((prevData) => ({ ...prevData, discountAmount: +e.target.value }))}
-								type='number'
-								InputLabelProps={{
-									sx: { fontSize: '0.8rem' },
-								}}
-							/>
-						</Box>
-					</Box>
-					<Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+					<Box sx={{ display: 'flex', alignItems: 'center', width: '100%', mt: '1rem' }}>
 						<Box sx={{ flex: 1 }}>
 							<Typography variant='h6' sx={{ fontSize: '0.9rem', mb: '0.25rem' }}>
 								Expiration Date
@@ -209,7 +189,7 @@ const CreateCodeDialog = ({ isNewCodeModalOpen, setIsNewCodeModalOpen }: CreateC
 							/>
 						</Box>
 					</Box>
-					<Box sx={{ display: 'flex', justifyContent: 'flex-start', mb: '0.85rem' }}>
+					<Box sx={{ display: 'flex', justifyContent: 'flex-start' }}>
 						<FormControlLabel
 							labelPlacement='end'
 							control={
@@ -236,6 +216,7 @@ const CreateCodeDialog = ({ isNewCodeModalOpen, setIsNewCodeModalOpen }: CreateC
 					{errorMsg && <CustomErrorMessage sx={{ width: '100%' }}>{errorMsg}</CustomErrorMessage>}
 				</DialogContent>
 				<CustomDialogActions
+					actionSx={{ mt: '-1.5rem', mr: '0.5rem' }}
 					onCancel={() => {
 						resetForm();
 					}}

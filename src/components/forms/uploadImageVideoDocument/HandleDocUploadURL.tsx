@@ -26,8 +26,8 @@ interface HandleDocUploadURLProps {
 	setSingleLessonBeforeSave?: React.Dispatch<React.SetStateAction<Lesson>>;
 	singleLessonBeforeSave?: Lesson;
 	setIsLessonUpdated?: React.Dispatch<React.SetStateAction<boolean>>;
-	singleCourse?: SingleCourse | undefined;
-	setSingleCourse?: React.Dispatch<React.SetStateAction<SingleCourse | undefined>>;
+	singleCourseBeforeSave?: SingleCourse | undefined;
+	setSingleCourseBeforeSave?: React.Dispatch<React.SetStateAction<SingleCourse | undefined>>;
 	fromAdminCourses?: boolean | undefined;
 	initialDocumentUrl?: string;
 	initialDocumentName?: string;
@@ -48,8 +48,8 @@ const HandleDocUploadURL = ({
 	setSingleLessonBeforeSave,
 	singleLessonBeforeSave,
 	setIsLessonUpdated,
-	singleCourse,
-	setSingleCourse,
+	singleCourseBeforeSave,
+	setSingleCourseBeforeSave,
 	fromAdminCourses,
 	initialDocumentUrl,
 	initialDocumentName,
@@ -162,8 +162,8 @@ const HandleDocUploadURL = ({
 						setSingleLessonBeforeSave={setSingleLessonBeforeSave}
 						singleLessonBeforeSave={singleLessonBeforeSave}
 						setIsLessonUpdated={setIsLessonUpdated}
-						singleCourse={singleCourse}
-						setSingleCourse={setSingleCourse}
+						singleCourse={singleCourseBeforeSave}
+						setSingleCourse={setSingleCourseBeforeSave}
 						fromAdminCourses={fromAdminCourses}
 					/>
 				</Box>

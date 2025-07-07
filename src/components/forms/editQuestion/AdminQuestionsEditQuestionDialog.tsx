@@ -259,7 +259,7 @@ const AdminQuestionsEditQuestionDialog = ({
 		if (field === 'videoUrl') setVideoUrlAdminQuestions(value);
 	};
 
-	const imagePlaceHolderUrl = 'https://directmobilityonline.co.uk/assets/img/noimage.png';
+	const imagePlaceHolderUrl = 'https://placehold.co/500x400/e2e8f0/64748b?text=No+Image';
 
 	const handleResetQuestion = () => {
 		setQuestionAdminQuestions(questionBeforeSave.question);
@@ -337,7 +337,7 @@ const AdminQuestionsEditQuestionDialog = ({
 								<VideoThumbnail
 									videoPlayCondition={videoUrlAdminQuestions !== ''}
 									videoUrl={videoUrlAdminQuestions}
-									videoPlaceholderUrl='https://www.47pitches.com/contents/images/no-video.jpg'
+									videoPlaceholderUrl='https://placehold.co/600x400/e2e8f0/64748b?text=No+Video'
 									removeVideo={() => setVideoUrlAdminQuestions('')}
 								/>
 							</Box>
@@ -357,7 +357,14 @@ const AdminQuestionsEditQuestionDialog = ({
 					) : (
 						<Box sx={{ width: '100%', margin: '1rem 0' }}>
 							<Typography variant='h6' sx={{ mb: '0.5rem' }}>
-								Question
+								Question{' '}
+								<span style={{ fontSize: '0.8rem', color: 'gray' }}>
+									{isOpenEndedQuestion
+										? '(Students can enter max 5000 characters while answering)'
+										: isFITBTyping
+											? '(Students can enter max 50 characters for each blank)'
+											: ''}
+								</span>
 							</Typography>
 							<TinyMceEditor
 								handleEditorChange={(content) => {
@@ -370,6 +377,7 @@ const AdminQuestionsEditQuestionDialog = ({
 								editorId={editorId}
 								editorRef={editorRef}
 								isFITB={isFITBDragDrop || isFITBTyping}
+								maxLength={5000}
 							/>
 						</Box>
 					)}

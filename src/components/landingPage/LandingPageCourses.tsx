@@ -23,7 +23,7 @@ const LandingPageCourses = forwardRef<HTMLDivElement>((_, ref) => {
 		.slice(0, 3);
 
 	return (
-		<Box ref={ref} sx={{ bgcolor: '#fff', position: 'relative', padding: '3rem 0' }}>
+		<Box ref={ref} sx={{ bgcolor: '#f7f9fa', position: 'relative', padding: '3rem 0' }}>
 			<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', textAlign: 'center', mb: { xs: 2, sm: 3 } }}>
 				<Typography
 					variant='h2'

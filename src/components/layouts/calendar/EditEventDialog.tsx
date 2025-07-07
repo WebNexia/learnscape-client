@@ -9,6 +9,7 @@ import {
 	MenuItem,
 	Select,
 	SelectChangeEvent,
+	Tooltip,
 	Typography,
 } from '@mui/material';
 import { AttendeeInfo, Event } from '../../../interfaces/event';
@@ -18,9 +19,10 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider/L
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import dayjs, { Dayjs } from 'dayjs';
+import 'dayjs/locale/en-gb';
 import { Cancel, Search } from '@mui/icons-material';
 import { User } from '../../../interfaces/user';
-import { useContext, useState } from 'react';
+import { useContext, useState, useRef, useEffect } from 'react';
 import { UsersContext } from '../../../contexts/UsersContextProvider';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 import { CoursesContext } from '../../../contexts/CoursesContextProvider';
@@ -52,6 +54,22 @@ interface EditEventDialogProps {
 	filterUsers: (searchQuery: string, action: string) => void;
 	filterCourses: (searchQuery: string, action: string) => void;
 }
+
+const getDateTimeFormat = (locale: string) => {
+	switch (locale.toLowerCase()) {
+		case 'en-gb':
+			return 'DD/MM/YYYY HH:mm';
+		case 'tr':
+		case 'tr-tr':
+			return 'DD.MM.YYYY HH:mm';
+		case 'de':
+		case 'de-de':
+			return 'DD.MM.YYYY HH:mm';
+		default:
+			return 'MM/DD/YYYY hh:mm A'; // fallback to US
+	}
+};
+
 const EditEventDialog = ({
 	setIsEventDeleted,
 	editEventModalOpen,
@@ -83,7 +101,30 @@ const EditEventDialog = ({
 	const [isEventUpdated, setIsEventUpdated] = useState<boolean>(false);
 	const [enterCoverImageUrl, setEnterCoverImageUrl] = useState<boolean>(true);
 
+	const originalIsPublic = useRef<boolean>(false);
+
+	// Store the original isPublic value when the dialog was opened
+	useEffect(() => {
+		if (editEventModalOpen && selectedEvent) {
+			originalIsPublic.current = selectedEvent.isPublic;
+		}
+	}, [editEventModalOpen]);
+
+	useEffect(() => {
+		let locale = navigator.language;
+		// Map known browser locales to Dayjs locales
+		if (locale.toLowerCase() === 'en-gb') {
+			locale = 'en-gb';
+		} else if (locale.toLowerCase() === 'tr' || locale.toLowerCase() === 'tr-tr') {
+			locale = 'tr';
+		} // Add more mappings as needed
+		dayjs.locale(locale);
+	}, []);
+
 	const editEvent = async () => {
+		// Use the original isPublic value from when the dialog was opened
+		const wasPublic = originalIsPublic.current;
+		const previousAttendeeIds = selectedEvent?.allAttendeesIds || [];
 		const participants = [...(selectedEvent?.attendees || [])]; // Start with selected attendees
 		let allParticipantsIds: string[] = [];
 		let allCoursesParticipantsInfo: AttendeeInfo[] = [];
@@ -180,51 +221,59 @@ const EditEventDialog = ({
 				return;
 			}
 
-			const startDate = selectedEvent?.start?.toLocaleDateString('en-US', {
+			const startDate = selectedEvent?.start?.toLocaleDateString(navigator.language || undefined, {
 				weekday: 'long',
 				year: 'numeric',
 				month: 'long',
 				day: 'numeric',
+				timeZoneName: 'short',
 			});
-			const startTime = selectedEvent?.start?.toLocaleTimeString('en-US', {
+			const startTime = selectedEvent?.start?.toLocaleTimeString(navigator.language || undefined, {
 				hour: '2-digit',
 				minute: '2-digit',
+				timeZoneName: 'short',
 			});
 
-			const notificationData = {
-				title: 'Added to Event',
-				message: `${user?.username} added a new event to your calendar: "${truncateText(
-					selectedEvent?.title!,
-					20
-				)}". It is scheduled for ${startDate} at ${startTime} `,
-				isRead: false,
-				timestamp: serverTimestamp(),
-				type: 'AddToEvent',
-				userImageUrl: user?.imageUrl,
-				eventId: selectedEvent?._id,
-			};
+			// Notify all users only if event is being made public now
+			if (!wasPublic && selectedEvent?.isPublic) {
+				const allFirebaseUserIds: string[] = sortedUsersData
+					?.filter((filteredUser) => filteredUser._id !== user?._id)
+					?.map((mappedUser) => mappedUser.firebaseUserId);
 
-			if (isEventUpdated) {
-				// Step 1: Collect all firebaseUserId of participants who might need a notification
-				const participantIds = allCoursesParticipantsInfo.map((participant) => participant.firebaseUserId);
+				const adminName = user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : user?.username || 'Admin';
+				const publicEventNotification = {
+					title: 'New Public Event',
+					message: `${adminName} has added a public event: "${selectedEvent.title}". It will take place on ${startDate} at ${startTime}.`,
+					isRead: false,
+					timestamp: serverTimestamp(),
+					type: 'PublicEvent',
+					userImageUrl: user?.imageUrl,
+					eventId: selectedEvent._id,
+				};
 
-				// Step 2: Fetch all existing notifications for the event in a single batch
-				const notificationSnapshots = await Promise.all(
-					participantIds.map((firebaseUserId) =>
-						getDocs(query(collection(db, 'notifications', firebaseUserId, 'userNotifications'), where('eventId', '==', selectedEvent?._id)))
-					)
-				);
+				for (const id of allFirebaseUserIds) {
+					const notificationRef = collection(db, 'notifications', id, 'userNotifications');
+					await addDoc(notificationRef, publicEventNotification);
+				}
+			}
 
-				// Step 3: Identify participants who have not yet received the notification
-				const unNotifiedParticipants = allCoursesParticipantsInfo.filter((_, index) => notificationSnapshots[index].empty);
-
-				// Step 4: Send notifications only to unnotified participants
-				await Promise.all(
-					unNotifiedParticipants.map((participant) => {
-						const notificationRef = collection(db, 'notifications', participant.firebaseUserId, 'userNotifications');
-						return addDoc(notificationRef, notificationData);
-					})
-				);
+			// Notify newly added participants
+			const newAttendeeIds = allParticipantsIds;
+			const newlyAddedIds = newAttendeeIds.filter((id) => !previousAttendeeIds.includes(id));
+			const adminName = user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : user?.username || 'Admin';
+			for (const participant of allCoursesParticipantsInfo) {
+				if (newlyAddedIds.includes(participant._id)) {
+					const notificationRef = collection(db, 'notifications', participant.firebaseUserId, 'userNotifications');
+					await addDoc(notificationRef, {
+						title: 'Added to Event',
+						message: `${adminName} has added you to the event: "${truncateText(selectedEvent?.title || '', 20)}". The event will start on ${startDate} at ${startTime}.`,
+						isRead: false,
+						timestamp: serverTimestamp(),
+						type: 'AddToEvent',
+						userImageUrl: user?.imageUrl,
+						eventId: selectedEvent?._id,
+					});
+				}
 			}
 
 			setEditEventModalOpen(false);
@@ -265,21 +314,23 @@ const EditEventDialog = ({
 				}}>
 				<DialogContent sx={{ mt: '-1rem' }}>
 					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-						<CustomTextField
-							label='Title'
-							value={selectedEvent?.title}
-							onChange={(e) => {
-								setSelectedEvent((prevData) => {
-									if (prevData) {
-										return { ...prevData, title: e.target.value };
-									}
-									return prevData;
-								});
-								setIsEventUpdated(true);
-							}}
-							InputProps={{ inputProps: { maxLength: 40 } }}
-							sx={{ flex: 3 }}
-						/>
+						<Tooltip title='Max 40 characters' placement='top' arrow>
+							<CustomTextField
+								label='Title'
+								value={selectedEvent?.title}
+								onChange={(e) => {
+									setSelectedEvent((prevData) => {
+										if (prevData) {
+											return { ...prevData, title: e.target.value };
+										}
+										return prevData;
+									});
+									setIsEventUpdated(true);
+								}}
+								InputProps={{ inputProps: { maxLength: 40 } }}
+								sx={{ flex: 3 }}
+							/>
+						</Tooltip>
 						<FormControlLabel
 							labelPlacement='start'
 							control={
@@ -345,6 +396,7 @@ const EditEventDialog = ({
 							}}
 							InputProps={{ inputProps: { maxLength: 75 } }}
 							sx={{ flex: 3, mr: selectedEvent?.isPublic ? '1rem' : '0rem' }}
+							placeholder='Enter a description for the event (max 75 characters)'
 						/>
 						{selectedEvent?.isPublic && (
 							<FormControl sx={{ flex: 1, mb: '0.5rem' }}>
@@ -464,6 +516,7 @@ const EditEventDialog = ({
 									}}
 									sx={{ backgroundColor: '#fff', mr: '0.5rem' }}
 									disabled={selectedEvent?.isAllDay}
+									format={getDateTimeFormat(navigator.language)}
 								/>
 							</LocalizationProvider>
 
@@ -491,6 +544,7 @@ const EditEventDialog = ({
 									}}
 									sx={{ backgroundColor: '#fff' }}
 									disabled={selectedEvent?.isAllDay}
+									format={getDateTimeFormat(navigator.language)}
 								/>
 							</LocalizationProvider>
 						</Box>
@@ -956,6 +1010,7 @@ const EditEventDialog = ({
 					<CustomTextField
 						label='Location'
 						value={selectedEvent?.location}
+						sx={{ marginBottom: '-0.5rem' }}
 						onChange={(e) => {
 							setIsEventUpdated(true);
 							setSelectedEvent((prevData) => {
@@ -966,6 +1021,10 @@ const EditEventDialog = ({
 							});
 						}}
 						required={false}
+						InputProps={{ inputProps: { maxLength: 150 } }}
+						placeholder='Enter a location for the event (max 150 characters)'
+						multiline
+						rows={3}
 					/>
 				</DialogContent>
 				<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0 0.75rem' }}>
@@ -991,7 +1050,7 @@ const EditEventDialog = ({
 					closeModal={() => setDeleteEventModalOpen(false)}
 					title='Delete Event'
 					content='Are you sure you want to delete the event?'
-					maxWidth='sm'>
+					maxWidth='xs'>
 					<CustomDialogActions deleteBtn onCancel={() => setDeleteEventModalOpen(false)} onDelete={deleteEvent} />
 				</CustomDialog>
 			</form>

@@ -7,10 +7,10 @@ interface SidebarBtnProps {
 	btnText?: string;
 	onClick?: () => void;
 	IconName: React.ElementType;
-	selectedPage?: string;
+	active?: boolean;
 }
 
-const SidebarBtn = ({ btnText, onClick, IconName, selectedPage }: SidebarBtnProps) => {
+const SidebarBtn = ({ btnText, onClick, IconName, active }: SidebarBtnProps) => {
 	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
 
 	const isMobileSize: boolean = isSmallScreen || isRotatedMedium;
@@ -22,32 +22,14 @@ const SidebarBtn = ({ btnText, onClick, IconName, selectedPage }: SidebarBtnProp
 		btnTextChars.pop();
 		subPageText = btnTextChars.join('');
 	}
-	const isEditPage: boolean = selectedPage === `${subPageText}-edit`;
-	const isCheckSubmissionPage: boolean = selectedPage === `Check-${subPageText.toLowerCase()}`;
-	const isInstructorFeedbackPage: boolean = selectedPage === `${subPageText}-feedback`;
-	const isContactRequestsPage: boolean = selectedPage === `Contact-requests`;
 
 	return (
 		<Button
 			variant='outlined'
 			startIcon={<IconName />}
 			sx={{
-				'color':
-					selectedPage === btnText ||
-					isEditPage ||
-					isCheckSubmissionPage ||
-					isInstructorFeedbackPage ||
-					(isContactRequestsPage && btnText === 'Dashboard')
-						? theme.textColor?.primary.main
-						: theme.textColor?.common.main,
-				'backgroundColor':
-					selectedPage === btnText ||
-					isEditPage ||
-					isCheckSubmissionPage ||
-					isInstructorFeedbackPage ||
-					(isContactRequestsPage && btnText === 'Dashboard')
-						? theme.palette.secondary.main
-						: 'transparent',
+				'color': active ? theme.textColor?.primary.main : theme.textColor?.common.main,
+				'backgroundColor': active ? theme.palette.secondary.main : 'transparent',
 				'textTransform': 'capitalize',
 				'marginBottom': '0.15rem',
 				'fontFamily': theme.fontFamily?.main,
@@ -61,22 +43,8 @@ const SidebarBtn = ({ btnText, onClick, IconName, selectedPage }: SidebarBtnProp
 				'border': 'none',
 				'cursor': 'pointer',
 				'&:hover': {
-					color:
-						selectedPage !== btnText &&
-						!isEditPage &&
-						!isCheckSubmissionPage &&
-						!isInstructorFeedbackPage &&
-						!(isContactRequestsPage && btnText === 'Dashboard')
-							? theme.submitBtn?.backgroundColor
-							: theme.textColor?.primary.main,
-					backgroundColor:
-						selectedPage === btnText ||
-						isEditPage ||
-						isCheckSubmissionPage ||
-						isInstructorFeedbackPage ||
-						(isContactRequestsPage && btnText === 'Dashboard')
-							? theme.palette.secondary.main
-							: 'transparent',
+					color: active ? theme.textColor?.primary.main : theme.submitBtn?.backgroundColor,
+					backgroundColor: active ? theme.palette.secondary.main : 'transparent',
 					border: 'none',
 				},
 			}}

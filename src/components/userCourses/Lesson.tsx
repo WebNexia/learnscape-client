@@ -9,6 +9,7 @@ import ProgressIcon from '../../assets/ProgressIcon.png';
 import { LessonType } from '../../interfaces/enums';
 import { QuizSubmissionsContext } from '../../contexts/QuizSubmissionsContextProvider';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
+import logo from '../../assets/logo.png';
 
 interface LessonProps {
 	lesson: LessonById;
@@ -144,14 +145,14 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 									: '5rem',
 				}}>
 				<img
-					src={lesson.imageUrl || 'https://directmobilityonline.co.uk/assets/img/noimage.png'}
+					src={lesson.imageUrl || logo}
 					alt='lesson_pic'
 					width='100%'
 					height='100%'
 					style={{
 						borderBottom: `0.1rem solid ${theme.border.lightMain}`,
 						borderTopLeftRadius: lessonOrder === 1 ? '0.3rem' : 0,
-						objectFit: 'cover',
+						objectFit: lesson.imageUrl ? 'cover' : 'contain',
 					}}
 				/>
 			</Box>

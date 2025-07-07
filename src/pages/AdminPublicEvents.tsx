@@ -331,7 +331,7 @@ const AdminPublicEvents = () => {
 							<Typography variant='body2' sx={{ mb: '0.75rem' }}>
 								<b>Event Link:</b>{' '}
 								{selectedEvent.eventLinkUrl ? (
-									<Link href={selectedEvent.eventLinkUrl} target='_blank' sx={{ textDecoration: 'underline' }}>
+									<Link href={selectedEvent.eventLinkUrl} target='_blank' rel='noopener noreferrer' sx={{ textDecoration: 'underline' }}>
 										{selectedEvent.eventLinkUrl}
 									</Link>
 								) : (

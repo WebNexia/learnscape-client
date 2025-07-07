@@ -56,7 +56,7 @@ const TestimonialsSection = () => {
 	};
 
 	return (
-		<Box sx={{ position: 'relative', backgroundColor: '#fff' }}>
+		<Box sx={{ position: 'relative', backgroundColor: '#fff', borderTop: '1px solid #e0e0e0' }}>
 			<Box sx={{ width: '100%', height: '24px', boxShadow: '0 -8px 24px -8px rgba(44, 62, 80, 0.1)', background: 'transparent' }} />
 
 			<Box sx={{ py: responsiveStyles.spacing.section, backgroundColor: '#fff', position: 'relative' }}>

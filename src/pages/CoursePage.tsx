@@ -9,7 +9,7 @@ import { Document } from '../interfaces/document';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 
 const CoursePage = () => {
-	const { singleCourseUser, fetchSingleCourseDataAdmin, fetchSingleCourseDataUser } = useContext(UserCourseLessonDataContext);
+	const { singleCourseUser, fetchSingleCourseDataUser } = useContext(UserCourseLessonDataContext);
 	const { courseId, userCourseId } = useParams();
 
 	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
@@ -27,7 +27,6 @@ const CoursePage = () => {
 			setIsEnrolledStatus(userCourseData.some((data) => data.courseId === courseId));
 		}
 		if (courseId) {
-			fetchSingleCourseDataAdmin(courseId);
 			fetchSingleCourseDataUser(courseId);
 		}
 	}, [userCourseId, courseId]);

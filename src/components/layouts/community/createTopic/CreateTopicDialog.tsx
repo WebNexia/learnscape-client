@@ -39,7 +39,7 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 	const { isSmallScreen, isRotatedMedium, isVerySmallScreen, isRotated } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
-	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(true);
+	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(user?.role === 'admin' ? true : false);
 	const [isAudioUploading, setIsAudioUploading] = useState<boolean>(false);
 
 	const [showAudioRecorder, setShowAudioRecorder] = useState<boolean>(false);
@@ -187,6 +187,9 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 									</IconButton>
 								</InputAdornment>
 							),
+							inputProps: {
+								maxLength: 1000,
+							},
 						}}
 					/>
 
@@ -200,10 +203,10 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 								transform: isVerySmallScreen
 									? 'scale(0.5)'
 									: isRotated
-									? 'scale(0.55)'
-									: isRotatedMedium || isSmallScreen
-									? 'scale(0.65)'
-									: 'scale(0.8)',
+										? 'scale(0.55)'
+										: isRotatedMedium || isSmallScreen
+											? 'scale(0.65)'
+											: 'scale(0.8)',
 							}}>
 							<Picker data={data} onEmojiSelect={handleEmojiSelect} theme='dark' />
 						</Box>

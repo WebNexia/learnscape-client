@@ -34,7 +34,7 @@ const ImageThumbnail = ({ imgSource, boxStyle, imgStyle, removeImage }: ImageThu
 			/>
 			<Box>
 				{imgSource !== 'https://savethefrogs.com/wp-content/uploads/placeholder-wire-image-white.jpg' &&
-					imgSource !== 'https://directmobilityonline.co.uk/assets/img/noimage.png' && (
+					!imgSource.includes('https://placehold.co/') && (
 						<Typography
 							variant='body2'
 							sx={{ fontSize: '0.75rem', textDecoration: 'underline', cursor: 'pointer', marginTop: '0.5rem' }}

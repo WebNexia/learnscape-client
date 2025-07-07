@@ -17,47 +17,47 @@ import { dateTimeFormatter } from '@utils/dateFormatter';
 interface CoursePaperProps {
 	userId?: string;
 	singleCourse?: SingleCourse;
+	singleCourseBeforeSave: SingleCourse | undefined;
 	chapterLessonData: ChapterLessonData[];
 	chapterLessonDataBeforeSave: ChapterLessonData[];
 	isEditMode: boolean;
 	isMissingFieldMsgOpen: boolean;
 	isNoChapterMsgOpen: boolean;
-	resetChanges: boolean;
 	isFree: boolean;
 	setIsEditMode: React.Dispatch<React.SetStateAction<boolean>>;
 	setIsMissingFieldMsgOpen: React.Dispatch<React.SetStateAction<boolean>>;
 	setIsMissingField: React.Dispatch<React.SetStateAction<boolean>>;
 	handlePublishing: () => void;
-	setResetChanges: React.Dispatch<React.SetStateAction<boolean>>;
 	handleCourseUpdate: (event: React.FormEvent<Element>) => void;
 	setIsNoChapterMsgOpen: React.Dispatch<React.SetStateAction<boolean>>;
 	setChapterLessonDataBeforeSave: React.Dispatch<React.SetStateAction<ChapterLessonData[]>>;
 	setDeletedChapterIds: React.Dispatch<React.SetStateAction<string[]>>;
 	hasUnsavedChanges: boolean;
 	setHasUnsavedChanges: React.Dispatch<React.SetStateAction<boolean>>;
+	setSingleCourseBeforeSave: React.Dispatch<React.SetStateAction<SingleCourse | undefined>>;
 }
 
 const CoursePaper = ({
 	userId,
 	singleCourse,
+	singleCourseBeforeSave,
 	chapterLessonData,
 	chapterLessonDataBeforeSave,
 	isEditMode,
 	isMissingFieldMsgOpen,
 	isNoChapterMsgOpen,
-	resetChanges,
 	isFree,
 	setChapterLessonDataBeforeSave,
 	setIsEditMode,
 	setIsMissingFieldMsgOpen,
 	setIsMissingField,
 	handlePublishing,
-	setResetChanges,
 	handleCourseUpdate,
 	setIsNoChapterMsgOpen,
 	setDeletedChapterIds,
 	hasUnsavedChanges,
 	setHasUnsavedChanges,
+	setSingleCourseBeforeSave,
 }: CoursePaperProps) => {
 	const navigate = useNavigate();
 	const vertical = 'top';
@@ -73,10 +73,11 @@ const CoursePaper = ({
 	const handleCancel = async (): Promise<void> => {
 		setIsEditMode(false);
 		setChapterLessonDataBeforeSave(chapterLessonData);
-		setResetChanges(!resetChanges);
 		setDeletedChapterIds([]);
 		resetImageUpload();
 		setHasUnsavedChanges(false);
+		setSingleCourseBeforeSave(singleCourse);
+		window.scrollTo({ top: 0, behavior: 'smooth' });
 	};
 
 	const [isCloning, setIsCloning] = useState<boolean>(false);
@@ -145,8 +146,8 @@ const CoursePaper = ({
 					</Box>
 					<Box sx={{ paddingLeft: '0.5rem' }}>
 						<Typography variant='body2' sx={{ color: theme.textColor?.common.main }}>
-							{singleCourse?.isActive ? 'Published' : 'Unpublished'} - {singleCourse?.isExpired ? 'Closed' : 'Open'} -{' '}
-							{singleCourse?.courseManagement?.isExternal ? 'External' : 'Platform'}
+							{singleCourseBeforeSave?.isActive ? 'Published' : 'Unpublished'} - {singleCourseBeforeSave?.isExpired ? 'Closed' : 'Open'} -{' '}
+							{singleCourseBeforeSave?.courseManagement?.isExternal ? 'External' : 'Platform'}
 						</Typography>
 					</Box>
 				</Box>
@@ -162,7 +163,7 @@ const CoursePaper = ({
 						<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
 							<Box>
 								<Typography variant='h5' sx={{ color: theme.textColor?.common.main, mr: '0.5rem' }}>
-									{singleCourse?.title}
+									{singleCourseBeforeSave?.title}
 								</Typography>
 							</Box>
 						</Box>
@@ -213,9 +214,9 @@ const CoursePaper = ({
 											sx={{ padding: '0 0.75rem' }}
 											onClick={(e) => {
 												if (
-													singleCourse?.title.trim() !== '' &&
-													singleCourse?.description.trim() !== '' &&
-													(isFree || !singleCourse?.prices.some((price) => price.amount === '')) &&
+													singleCourseBeforeSave?.title.trim() !== '' &&
+													singleCourseBeforeSave?.description.trim() !== '' &&
+													(isFree || !singleCourseBeforeSave?.prices.some((price) => price.amount === '')) &&
 													!chapterLessonDataBeforeSave.some((chapter) => chapter.title === '')
 												) {
 													setIsEditMode(false);
@@ -243,9 +244,9 @@ const CoursePaper = ({
 												padding: '0 0.75rem',
 											}}
 											onClick={handlePublishing}>
-											{singleCourse?.isActive ? 'Unpublish' : 'Publish'}
+											{singleCourseBeforeSave?.isActive ? 'Unpublish' : 'Publish'}
 										</CustomSubmitButton>
-										{!singleCourse?.isExpired ? (
+										{!singleCourseBeforeSave?.isExpired ? (
 											<Tooltip title='Edit Course' placement='top'>
 												<IconButton
 													sx={{ padding: '0 0.75rem' }}
