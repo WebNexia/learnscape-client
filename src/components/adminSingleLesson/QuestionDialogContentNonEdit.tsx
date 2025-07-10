@@ -11,6 +11,7 @@ import MatchingPreview from '../layouts/matching/MatchingPreview';
 import FillInTheBlanksDragDrop from '../layouts/FITBDragDrop/FillInTheBlanksDragDrop';
 import FillInTheBlanksTyping from '../layouts/FITBTyping/FillInTheBlanksTyping';
 import { Lesson } from '../../interfaces/lessons';
+import { decode } from 'html-entities';
 
 interface QuestionDialogContentNonEditProps {
 	question: QuestionInterface | null;
@@ -83,7 +84,7 @@ const QuestionDialogContentNonEdit = ({ question, singleLessonBeforeSave }: Ques
 				fetchQuestionTypeName(question) !== QuestionType.FITB_TYPING && (
 					<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', paddingBottom: '0.5rem' }}>
 						<Box className='rich-text-content' component='div' sx={{ padding: '0.5rem 1rem', textAlign: 'justify' }}>
-							<Typography variant='body1' component='div' dangerouslySetInnerHTML={{ __html: sanitizeHtml(question.question) }} />
+							<Typography variant='body1' component='div' dangerouslySetInnerHTML={{ __html: sanitizeHtml(decode(question.question)) }} />
 						</Box>
 
 						<Box sx={{ alignSelf: 'center', width: '80%' }}>

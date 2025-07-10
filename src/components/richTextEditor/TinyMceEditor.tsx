@@ -11,7 +11,7 @@ import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
 interface TinyMceEditorProps {
 	handleEditorChange: (content: string) => void;
 	initialValue?: string;
-	// value?: string;
+	value?: string;
 	height?: string | number | undefined;
 	blankValuePairs?: BlankValuePair[];
 	setBlankValuePairs?: React.Dispatch<React.SetStateAction<BlankValuePair[]>>;
@@ -24,7 +24,7 @@ interface TinyMceEditorProps {
 const TinyMceEditor = ({
 	handleEditorChange,
 	initialValue,
-	// value,
+	value,
 	height = 300,
 	blankValuePairs,
 	setBlankValuePairs,
@@ -125,7 +125,7 @@ const TinyMceEditor = ({
 				id={editorId}
 				apiKey={apiKey}
 				initialValue={initialValue}
-				// {...(value !== undefined ? { value } : {})}
+				{...(value !== undefined ? { value } : {})}
 				init={{
 					height: height,
 					width: '100%',

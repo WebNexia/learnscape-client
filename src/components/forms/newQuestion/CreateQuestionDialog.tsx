@@ -127,6 +127,7 @@ const CreateQuestionDialog = ({
 		isActive: true,
 		audio: false,
 		video: false,
+		isAiGenerated: false,
 		matchingPairs: [],
 		blankValuePairs,
 		createdAt: '',
@@ -186,6 +187,7 @@ const CreateQuestionDialog = ({
 			isActive: true,
 			audio: false,
 			video: false,
+			isAiGenerated: false,
 			matchingPairs: [],
 			blankValuePairs: [],
 			createdAt: '',
@@ -233,6 +235,7 @@ const CreateQuestionDialog = ({
 				blankValuePairs,
 				orgId,
 				isActive: true,
+				isAiGenerated: false,
 			});
 
 			const questionResponseData = response.data;
@@ -251,6 +254,7 @@ const CreateQuestionDialog = ({
 				blankValuePairs,
 				orgId,
 				isActive: true,
+				isAiGenerated: false,
 				createdAt: questionResponseData.createdAt,
 				updatedAt: questionResponseData.updatedAt,
 				createdByName: questionResponseData.createdByName,
@@ -282,6 +286,7 @@ const CreateQuestionDialog = ({
 				matchingPairs: newQuestion.matchingPairs,
 				blankValuePairs,
 				isActive: true,
+				isAiGenerated: false,
 				createdAt: '',
 				updatedAt: '',
 				clonedFromId: '',

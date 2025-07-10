@@ -27,6 +27,7 @@ import { QuestionInterface } from '../interfaces/question';
 import { UserBlankValuePairAnswers, UserMatchingPairAnswers } from '../interfaces/userQuestion';
 import { useNavigate } from 'react-router-dom';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
+import { decode } from 'html-entities';
 
 export interface QuizQuestionAnswer {
 	questionId: string;
@@ -41,7 +42,7 @@ export interface QuizQuestionAnswer {
 
 const LessonPage = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
-	const { lessonId, userId, courseId, userCourseId } = useParams();
+	const { lessonId, courseId, userCourseId } = useParams();
 	const { organisation } = useContext(OrganisationContext);
 	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -464,7 +465,7 @@ const LessonPage = () => {
 							<Box className='rich-text-content'>
 								<Typography
 									component='div'
-									dangerouslySetInnerHTML={{ __html: sanitizeHtml(lesson.text) }}
+									dangerouslySetInnerHTML={{ __html: sanitizeHtml(decode(lesson.text)) }}
 									sx={{ lineHeight: 1.9, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}
 								/>
 							</Box>

@@ -13,6 +13,7 @@ import { LessonType } from '../../../interfaces/enums';
 import CustomInfoMessageAlignedLeft from '../infoMessage/CustomInfoMessageAlignedLeft';
 import theme from '../../../themes';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
+import { decode } from 'html-entities';
 
 const Container = styled(Box)`
 	display: flex;
@@ -234,7 +235,7 @@ const FillInTheBlanksTyping = ({
 
 	useEffect(() => {
 		// Sanitize and split the text
-		let sanitizedText = sanitizeHtml(textWithBlanks)
+		let sanitizedText = sanitizeHtml(decode(textWithBlanks))
 			.replace(/[()]/g, '')
 			.replace(/<\/?[^>]+(>|$)/g, '');
 

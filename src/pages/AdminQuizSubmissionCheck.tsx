@@ -25,6 +25,7 @@ import QuestionResponseCard from '../components/layouts/quizSubmissions/Question
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import QuestionMedia from '../components/userCourses/QuestionMedia';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
+import { decode } from 'html-entities';
 
 export interface QuestionFeedbackData {
 	userQuestionId: string;
@@ -358,7 +359,7 @@ const AdminQuizSubmissionCheck = () => {
 								variant='body2'
 								component='div'
 								sx={{ lineHeight: 1.8, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}
-								dangerouslySetInnerHTML={{ __html: sanitizeHtml(userResponseToFeedback?.questionId.question) }}
+								dangerouslySetInnerHTML={{ __html: sanitizeHtml(decode(userResponseToFeedback?.questionId.question)) }}
 							/>
 						)}
 				</Box>

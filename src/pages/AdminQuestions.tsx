@@ -2,7 +2,7 @@ import { Box, FormControl, InputAdornment, MenuItem, Select, Table, TableBody, T
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { useContext, useEffect, useRef, useState } from 'react';
 import axios from '@utils/axiosInstance';
-import { Delete, Edit, Info, Search } from '@mui/icons-material';
+import { AutoAwesome, Delete, Edit, Info, Search } from '@mui/icons-material';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
@@ -44,8 +44,6 @@ const AdminQuestions = () => {
 		setNumberOfPages,
 		fetchQuestions,
 		questionTypes,
-		addNewQuestion,
-		fetchQuestionTypeName,
 	} = useContext(QuestionsContext);
 
 	const [filteredQuestions, setFilteredQuestions] = useState<QuestionInterface[]>(sortedQuestionsData);
@@ -67,7 +65,6 @@ const AdminQuestions = () => {
 
 	const [questionType, setQuestionType] = useState<string>('');
 
-	const [isQuestionCloneModalOpen, setIsQuestionCloneModalOpen] = useState<boolean[]>([]);
 	const [isQuestionDeleteModalOpen, setIsQuestionDeleteModalOpen] = useState<boolean[]>([]);
 	const [editQuestionModalOpen, setEditQuestionModalOpen] = useState<boolean[]>([]);
 	const [isQuestionCreateModalOpen, setIsQuestionCreateModalOpen] = useState<boolean>(false);
@@ -176,38 +173,29 @@ const AdminQuestions = () => {
 		}
 
 		try {
-			const response = await axios.post(`${base_url}/questions/filter`, {
-				orgId,
-				page,
-				limit: 75,
-				questionTypeName: filterValue,
-			});
-			setFilteredQuestions(response.data.data);
-			setNumberOfPages(response.data.pages);
+			// Check if it's an AI filter
+			if (filterValue === 'aiGenerated' || filterValue === 'nonAiGenerated') {
+				const response = await axios.post(`${base_url}/questions/filter/ai`, {
+					orgId,
+					page,
+					limit: 75,
+					aiStatus: filterValue,
+				});
+				setFilteredQuestions(response.data.data);
+				setNumberOfPages(response.data.pages);
+			} else {
+				// Regular question type filter
+				const response = await axios.post(`${base_url}/questions/filter`, {
+					orgId,
+					page,
+					limit: 75,
+					questionTypeName: filterValue,
+				});
+				setFilteredQuestions(response.data.data);
+				setNumberOfPages(response.data.pages);
+			}
 		} catch (error) {
 			console.error(error);
-		}
-	};
-
-	const openCloneQuestionModal = (index: number) => {
-		const updatedState = [...isQuestionCloneModalOpen];
-		updatedState[index] = true;
-		setIsQuestionCloneModalOpen(updatedState);
-	};
-	const closeCloneQuestionModal = (index: number) => {
-		const updatedState = [...isQuestionCloneModalOpen];
-		updatedState[index] = false;
-		setIsQuestionCloneModalOpen(updatedState);
-	};
-
-	const handleCloneQuestion = async (question: QuestionInterface) => {
-		const questionTypeId = questionTypes.filter((type) => type.name === question.questionType)[0]._id;
-
-		try {
-			const res = await axios.post(`${base_url}/questions`, { ...question, questionType: questionTypeId });
-			addNewQuestion({ ...res.data, questionType: fetchQuestionTypeName(res.data) });
-		} catch (error) {
-			console.log(error);
 		}
 	};
 
@@ -236,7 +224,7 @@ const AdminQuestions = () => {
 				}}>
 				{isVerySmallScreen && <CustomInfoMessageAlignedLeft message='Rotate your device for search & filter' />}
 				{!isVerySmallScreen && (
-					<Box sx={{ display: 'flex', justifyContent: 'flex-start', width: '100%',  }}>
+					<Box sx={{ display: 'flex', justifyContent: 'flex-start', width: '100%' }}>
 						<Box sx={{ mr: '1rem' }}>
 							<FormControl>
 								<Select
@@ -283,6 +271,28 @@ const AdminQuestions = () => {
 										All Questions
 									</MenuItem>
 									<MenuItem
+										value='aiGenerated'
+										selected
+										sx={{
+											fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+											textTransform: 'capitalize',
+											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+											minHeight: '2rem',
+										}}>
+										AI Generated
+									</MenuItem>
+									<MenuItem
+										value='nonAiGenerated'
+										selected
+										sx={{
+											fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+											textTransform: 'capitalize',
+											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+											minHeight: '2rem',
+										}}>
+										Non-AI Generated
+									</MenuItem>
+									<MenuItem
 										disabled
 										value='types'
 										selected
@@ -321,6 +331,7 @@ const AdminQuestions = () => {
 									if (e.target.value === '') {
 										setFilterValue('');
 									}
+									setFilteredQuestions(originalQuestions);
 								}}
 								sx={{ backgroundColor: '#fff' }}
 								required={false}
@@ -364,7 +375,7 @@ const AdminQuestions = () => {
 					sx={{
 						display: 'flex',
 						justifyContent: 'flex-end',
-						mb:'1.25rem',
+						mb: '1.25rem',
 						width: isVerySmallScreen ? '5%' : isMobileSize ? '20%' : '25%',
 						height: isVerySmallScreen ? '1.5rem' : '2rem',
 					}}>
@@ -431,7 +442,7 @@ const AdminQuestions = () => {
 						{filteredQuestions &&
 							filteredQuestions?.map((question: QuestionInterface, index) => {
 								return (
-									<TableRow key={question._id}>
+									<TableRow key={question._id} sx={{ bgcolor: question.isAiGenerated ? '#E3F2FD' : undefined }}>
 										<TableCell sx={{ textAlign: 'center', width: '0px' }}>
 											{question.clonedFromId && (
 												<Box
@@ -445,14 +456,26 @@ const AdminQuestions = () => {
 														alignItems: 'center',
 														justifyContent: 'center',
 														fontSize: '0.65rem',
-														margin: '0 auto'
+														margin: '0 auto',
 													}}>
-														C
+													C
 												</Box>
 											)}
 										</TableCell>
-										<CustomTableCell value={question.questionType} />
-										<CustomTableCell value={isVerySmallScreen ? truncateText(stripHtml(question.question), 25) : truncateText(stripHtml(question.question), 45)} />
+										<CustomTableCell value={question.questionType}>
+											{question.isAiGenerated && (
+												<AutoAwesome
+													sx={{
+														fontSize: '1rem',
+														color: '#2196F3',
+														marginLeft: '0.5rem',
+													}}
+												/>
+											)}
+										</CustomTableCell>
+										<CustomTableCell
+											value={isVerySmallScreen ? truncateText(stripHtml(question.question), 25) : truncateText(stripHtml(question.question), 45)}
+										/>
 										<CustomTableCell value={dateFormatter(question.createdAt)} />
 										<CustomTableCell value={dateFormatter(question.updatedAt)} />
 
@@ -460,28 +483,6 @@ const AdminQuestions = () => {
 											sx={{
 												textAlign: 'center',
 											}}>
-											{/* <CustomActionBtn
-												title='Clone'
-												onClick={() => openCloneQuestionModal(index)}
-												icon={<FileCopy fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
-											/> */}
-
-											<CustomDialog
-												openModal={isQuestionCloneModalOpen[index]}
-												closeModal={() => closeCloneQuestionModal(index)}
-												title='Clone Question'
-												content='Are you sure you want to clone this question?'
-												maxWidth='sm'>
-												<CustomDialogActions
-													onCancel={() => closeCloneQuestionModal(index)}
-													onSubmit={() => {
-														handleCloneQuestion(question);
-														closeCloneQuestionModal(index);
-													}}
-													submitBtnText='Clone'
-												/>
-											</CustomDialog>
-
 											<CustomActionBtn
 												title='Edit'
 												onClick={() => {
@@ -570,18 +571,14 @@ const AdminQuestions = () => {
 				/>
 			</Box>
 
-			{isQuestionInfoModalOpen.map((isOpen, index) => (
-				isOpen && (
-					<CustomDialog
-						key={index}
-						openModal={isOpen}
-						closeModal={() => closeQuestionInfoModal(index)}
-						title='Question Information'
-						maxWidth='sm'>
-						<QuestionInfoModal question={filteredQuestions[index]} onClose={() => closeQuestionInfoModal(index)} />
-					</CustomDialog>
-				)
-			))}
+			{isQuestionInfoModalOpen.map(
+				(isOpen, index) =>
+					isOpen && (
+						<CustomDialog key={index} openModal={isOpen} closeModal={() => closeQuestionInfoModal(index)} title='Question Information' maxWidth='sm'>
+							<QuestionInfoModal question={filteredQuestions[index]} onClose={() => closeQuestionInfoModal(index)} />
+						</CustomDialog>
+					)
+			)}
 		</DashboardPagesLayout>
 	);
 };

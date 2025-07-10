@@ -16,13 +16,11 @@ interface LessonPaperProps {
 	singleLessonBeforeSave: Lesson;
 	isEditMode: boolean;
 	isMissingFieldMsgOpen: boolean;
-	resetChanges: boolean;
 	editorContent: string;
 	setSingleLessonBeforeSave: React.Dispatch<React.SetStateAction<Lesson>>;
 	setIsEditMode: React.Dispatch<React.SetStateAction<boolean>>;
 	setIsMissingFieldMsgOpen: React.Dispatch<React.SetStateAction<boolean>>;
 	handlePublishing: () => void;
-	setResetChanges: React.Dispatch<React.SetStateAction<boolean>>;
 	handleLessonUpdate: (event: React.FormEvent<Element>) => void;
 	setIsLessonUpdated: React.Dispatch<React.SetStateAction<boolean>>;
 	setIsQuestionUpdated: React.Dispatch<React.SetStateAction<QuestionUpdateTrack[]>>;
@@ -42,12 +40,10 @@ const LessonPaper = ({
 	singleLessonBeforeSave,
 	isEditMode,
 	isMissingFieldMsgOpen,
-	resetChanges,
 	setSingleLessonBeforeSave,
 	setIsEditMode,
 	setIsMissingFieldMsgOpen,
 	handlePublishing,
-	setResetChanges,
 	handleLessonUpdate,
 	setIsLessonUpdated,
 	setIsQuestionUpdated,
@@ -199,7 +195,6 @@ const LessonPaper = ({
 											onClick={() => {
 												setIsEditMode(false);
 												setIsLessonUpdated(false);
-												setResetChanges(!resetChanges);
 												setSingleLessonBeforeSave(singleLesson);
 												setIsQuestionUpdated((prevData: QuestionUpdateTrack[]) => {
 													prevData = prevData?.map((data) => {

@@ -17,6 +17,7 @@ import QuestionResponseCard from '../components/layouts/quizSubmissions/Question
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import QuestionMedia from '../components/userCourses/QuestionMedia';
 import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
+import { decode } from 'html-entities';
 
 const SubmissionFeedbackDetails = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -82,7 +83,7 @@ const SubmissionFeedbackDetails = () => {
 							variant={isMobileSize ? 'body2' : 'body1'}
 							component='div'
 							sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.8 }}
-							dangerouslySetInnerHTML={{ __html: sanitizeHtml(userSingleResponseWithFeedback?.questionId.question) }}
+							dangerouslySetInnerHTML={{ __html: sanitizeHtml(decode(userSingleResponseWithFeedback?.questionId.question)) }}
 						/>
 					)}
 			</Box>
@@ -323,17 +324,17 @@ const SubmissionFeedbackDetails = () => {
 						onClick={() => handleResponseNavigation('prev')}
 						disabled={currentResponseIndex === 0}
 						sx={{
-							position: 'fixed',
-							left: isMobileSize ? '2%' : '10%',
-							top: '50%',
-							transform: 'translateY(-50%)',
-							backgroundColor: theme.bgColor?.greenPrimary,
-							color: 'white',
-							border: 'none',
-							borderRadius: '50%',
-							padding: isMobileSize ? '0.5rem' : '0.75rem',
-							cursor: currentResponseIndex === 0 ? 'not-allowed' : 'pointer',
-							zIndex: 13000,
+							'position': 'fixed',
+							'left': isMobileSize ? '2%' : '10%',
+							'top': '50%',
+							'transform': 'translateY(-50%)',
+							'backgroundColor': theme.bgColor?.greenPrimary,
+							'color': 'white',
+							'border': 'none',
+							'borderRadius': '50%',
+							'padding': isMobileSize ? '0.5rem' : '0.75rem',
+							'cursor': currentResponseIndex === 0 ? 'not-allowed' : 'pointer',
+							'zIndex': 13000,
 							':hover': { backgroundColor: theme.bgColor?.adminHeader },
 						}}>
 						<ArrowBackIosNewOutlined fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
@@ -342,17 +343,17 @@ const SubmissionFeedbackDetails = () => {
 						onClick={() => handleResponseNavigation('next')}
 						disabled={currentResponseIndex === userResponseData.length - 1}
 						sx={{
-							position: 'fixed',
-							right: isMobileSize ? '2%' : '10%',
-							top: '50%',
-							transform: 'translateY(-50%)',
-							backgroundColor: theme.bgColor?.greenPrimary,
-							color: 'white',
-							border: 'none',
-							borderRadius: '50%',
-							padding: isMobileSize ? '0.5rem' : '0.75rem',
-							cursor: currentResponseIndex === userResponseData.length - 1 ? 'not-allowed' : 'pointer',
-							zIndex: 13000,
+							'position': 'fixed',
+							'right': isMobileSize ? '2%' : '10%',
+							'top': '50%',
+							'transform': 'translateY(-50%)',
+							'backgroundColor': theme.bgColor?.greenPrimary,
+							'color': 'white',
+							'border': 'none',
+							'borderRadius': '50%',
+							'padding': isMobileSize ? '0.5rem' : '0.75rem',
+							'cursor': currentResponseIndex === userResponseData.length - 1 ? 'not-allowed' : 'pointer',
+							'zIndex': 13000,
 							':hover': { backgroundColor: theme.bgColor?.adminHeader },
 						}}>
 						<ArrowForwardIosOutlined fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />

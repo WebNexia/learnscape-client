@@ -1,6 +1,6 @@
 import { Box, DialogContent, Typography } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
-import { FormEvent, useContext, useEffect, useState, useCallback } from 'react';
+import { FormEvent, useContext, useEffect, useState } from 'react';
 import { useParams, useBlocker, useNavigate } from 'react-router-dom';
 import axios from '@utils/axiosInstance';
 import { CoursesContext } from '../contexts/CoursesContextProvider';
@@ -295,6 +295,14 @@ const AdminCourseEditPage = () => {
 
 				const responseUpdatedData = response.data.data;
 
+				setSingleCourseBeforeSave({
+					...updatedCourse,
+					updatedAt: responseUpdatedData.updatedAt,
+					updatedByName: responseUpdatedData.updatedByName,
+					updatedByImageUrl: responseUpdatedData.updatedByImageUrl,
+					updatedByRole: responseUpdatedData.updatedByRole,
+				});
+
 				setSingleCourse({
 					...updatedCourse,
 					updatedAt: responseUpdatedData.updatedAt,
@@ -377,6 +385,7 @@ const AdminCourseEditPage = () => {
 								title: chapter.title.trim(),
 								lessonIds: chapter.lessonIds,
 								orgId,
+								courseId,
 							});
 							chapter.chapterId = response.data._id;
 						} catch (error) {
@@ -484,6 +493,14 @@ const AdminCourseEditPage = () => {
 
 					const responseUpdatedData = response.data.data;
 
+					setSingleCourseBeforeSave({
+						...updatedCourse,
+						updatedAt: responseUpdatedData.updatedAt,
+						updatedByName: responseUpdatedData.updatedByName,
+						updatedByImageUrl: responseUpdatedData.updatedByImageUrl,
+						updatedByRole: responseUpdatedData.updatedByRole,
+					});
+
 					updateCourse({
 						...updatedCourse,
 						updatedAt: responseUpdatedData.updatedAt,
@@ -559,7 +576,7 @@ const AdminCourseEditPage = () => {
 
 		const hasPublishedLesson = chapterLessonDataBeforeSave.some((chapter) => chapter.lessons?.some((lesson) => lesson?.isActive));
 
-		if (isTryingToPublish && !hasPublishedLesson) {
+		if (isTryingToPublish && !hasPublishedLesson && !singleCourseBeforeSave?.courseManagement.isExternal) {
 			setIsNoChapterMsgOpen(true);
 			return;
 		} else if (courseId !== undefined) {
@@ -571,6 +588,16 @@ const AdminCourseEditPage = () => {
 					publishedAt: isTryingToPublish ? undefined : null,
 				});
 				setSingleCourse((prevData) => {
+					if (prevData) {
+						return {
+							...prevData,
+							isActive: !singleCourseBeforeSave?.isActive,
+							publishedAt: isTryingToPublish ? new Date().toISOString() : null,
+						};
+					}
+					return prevData;
+				});
+				setSingleCourseBeforeSave((prevData) => {
 					if (prevData) {
 						return {
 							...prevData,
@@ -700,6 +727,7 @@ const AdminCourseEditPage = () => {
 													top: document.body.scrollHeight,
 													behavior: 'smooth',
 												});
+												setHasUnsavedChanges(true);
 											}}
 											style={{ display: 'flex', flexDirection: 'column' }}>
 											<CustomTextField
