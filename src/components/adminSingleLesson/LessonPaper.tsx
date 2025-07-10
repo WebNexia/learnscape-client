@@ -32,6 +32,7 @@ interface LessonPaperProps {
 	setQuestionError: React.Dispatch<React.SetStateAction<boolean>>;
 	hasUnsavedChanges: boolean;
 	setHasUnsavedChanges: React.Dispatch<React.SetStateAction<boolean>>;
+	setErrorMessage: React.Dispatch<React.SetStateAction<string>>;
 }
 
 const LessonPaper = ({
@@ -55,6 +56,7 @@ const LessonPaper = ({
 	setQuestionError,
 	hasUnsavedChanges,
 	setHasUnsavedChanges,
+	setErrorMessage,
 }: LessonPaperProps) => {
 	const navigate = useNavigate();
 	const vertical = 'top';
@@ -173,7 +175,6 @@ const LessonPaper = ({
 											sx={{ padding: '0 0.75rem', backgroundColor: theme.bgColor?.greenPrimary }}
 											onClick={(e) => {
 												if (singleLessonBeforeSave?.title.trim() !== '' && singleLessonBeforeSave?.title !== '') {
-													setIsEditMode(false);
 													handleLessonUpdate(e as FormEvent<Element>);
 													resetImageUpload();
 													resetVideoUpload();
@@ -209,6 +210,7 @@ const LessonPaper = ({
 												setQuestionError(false);
 												setTitleError(false);
 												setHasUnsavedChanges(false);
+												setErrorMessage('');
 											}}
 											sx={{ color: theme.textColor?.common.main, borderColor: theme.textColor?.common.main, padding: '0 0.75rem' }}>
 											Cancel

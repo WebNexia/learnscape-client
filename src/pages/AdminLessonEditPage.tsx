@@ -61,6 +61,8 @@ import { useBlocker, useNavigate } from 'react-router-dom';
 import AiIcon from '@mui/icons-material/AutoAwesome';
 import CreateLessonWithAIDialog from '../components/adminSingleLesson/CreateLessonWithAIDialog';
 import CreateQuestionWithAIDialog from '../components/adminSingleLesson/CreateQuestionWithAIDialog';
+import { validateImageUrl, validateVideoUrl, validateDocumentUrl } from '../utils/urlValidation';
+import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 
 const colorChange = keyframes`
     0% {
@@ -94,8 +96,9 @@ export interface DocumentUpdateTrack {
 
 const AdminLessonEditPage = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
-	const { userId, lessonId } = useParams();
+	const { lessonId } = useParams();
 	const { orgId } = useContext(OrganisationContext);
+	const { user } = useContext(UserAuthContext);
 	const { updateLessonPublishing, updateLessons, lessonTypes } = useContext(LessonsContext);
 
 	const { questionTypes, fetchQuestionTypeName, addNewQuestion, updateQuestion } = useContext(QuestionsContext);
@@ -185,6 +188,8 @@ const AdminLessonEditPage = () => {
 	const [titleError, setTitleError] = useState<boolean>(false);
 	const [instructionError, setInstructionError] = useState<boolean>(false);
 	const [questionError, setQuestionError] = useState<boolean>(false);
+	const [errorMessage, setErrorMessage] = useState<string>('');
+	const [isErrorMessageOpen, setIsErrorMessageOpen] = useState<boolean>(false);
 
 	const resetEnterImageVideoUrl = () => {
 		setEnterVideoUrl(true);
@@ -199,6 +204,7 @@ const AdminLessonEditPage = () => {
 	const [originalDocumentNames, setOriginalDocumentNames] = useState<Record<string, string>>({});
 	const [isAiInstructionModalOpen, setIsAiInstructionModalOpen] = useState<boolean>(false);
 	const [isAiQuestionModalOpen, setIsAiQuestionModalOpen] = useState<boolean>(false);
+	const [isUrlErrorOpen, setIsUrlErrorOpen] = useState<boolean>(false);
 
 	const toggleDocRenameModal = (index: number, document: Document) => {
 		const newRenameModalOpen = [...isDocRenameModalOpen];
@@ -426,8 +432,89 @@ const AdminLessonEditPage = () => {
 		}
 	};
 
+	const validateUrls = async (): Promise<boolean> => {
+		let hasErrors = false;
+		let errorMessages: string[] = [];
+
+		// Validate image URL if provided
+		if (singleLessonBeforeSave.imageUrl?.trim()) {
+			const imageValidation = await validateImageUrl(singleLessonBeforeSave.imageUrl.trim());
+			if (!imageValidation.isValid) {
+				errorMessages.push(imageValidation.error || 'Invalid image URL');
+				hasErrors = true;
+			}
+		}
+
+		// Validate video URL if provided
+		if (singleLessonBeforeSave.videoUrl?.trim()) {
+			const videoValidation = await validateVideoUrl(singleLessonBeforeSave.videoUrl.trim());
+			if (!videoValidation.isValid) {
+				errorMessages.push(videoValidation.error || 'Invalid video URL');
+				hasErrors = true;
+			}
+		}
+
+		// Validate document URLs if provided
+		if (singleLessonBeforeSave.documents && singleLessonBeforeSave.documents.length > 0) {
+			for (const document of singleLessonBeforeSave.documents) {
+				if (document && document.documentUrl?.trim()) {
+					const documentValidation = await validateDocumentUrl(document.documentUrl.trim());
+					if (!documentValidation.isValid) {
+						errorMessages.push(`Document "${document.name}": ${documentValidation.error || 'Invalid document URL'}`);
+						hasErrors = true;
+					}
+				}
+			}
+		}
+
+		// Show error Snackbar if there are validation errors
+		if (hasErrors) {
+			setErrorMessage(errorMessages.join('\n'));
+			setIsUrlErrorOpen(true);
+		}
+
+		return !hasErrors;
+	};
+
+	// Optional: Real-time URL validation (can be called when user changes URLs)
+	const validateUrlOnChange = async (url: string, type: 'image' | 'video' | 'document'): Promise<void> => {
+		if (!url.trim()) return; // Don't validate empty URLs
+
+		try {
+			let validation;
+			if (type === 'image') {
+				validation = await validateImageUrl(url.trim());
+			} else if (type === 'video') {
+				validation = await validateVideoUrl(url.trim());
+			} else {
+				validation = await validateDocumentUrl(url.trim());
+			}
+
+			if (!validation.isValid) {
+				const typeLabel = type === 'image' ? 'Image' : type === 'video' ? 'Video' : 'Document';
+				setErrorMessage(`${typeLabel} URL: ${validation.error}`);
+				setIsUrlErrorOpen(true);
+			}
+		} catch (error) {
+			console.error('URL validation error:', error);
+		}
+	};
+
 	const handleLessonUpdate = async (e: FormEvent): Promise<void> => {
 		e.preventDefault();
+
+		// Validate URLs before proceeding with any backend operations
+		const urlsValid = await validateUrls();
+		if (!urlsValid) {
+			// Keep all frontend changes but don't proceed with backend update
+			// Update the lesson state with current editor content to preserve it
+			// This ensures the editor content is not lost when URL validation fails
+			setSingleLessonBeforeSave((prevData) => ({
+				...prevData,
+				text: editorContent?.trim() || '',
+			}));
+			return;
+		}
 
 		let updatedQuestions: QuestionInterface[] = [];
 		let updatedDocuments: Document[] = [];
@@ -442,7 +529,7 @@ const AdminLessonEditPage = () => {
 								const response = await axios.post(`${base_url}/documents`, {
 									name: document.name.trim(),
 									orgId,
-									userId,
+									userId: user?._id,
 									documentUrl: document.documentUrl,
 								});
 
@@ -452,7 +539,7 @@ const AdminLessonEditPage = () => {
 									_id: documentResponseData._id,
 									name: document.name.trim(),
 									orgId,
-									userId,
+									userId: user?._id,
 									documentUrl: document.documentUrl,
 									usedInLessons: lessonId ? [lessonId] : [],
 									usedInCourses: document.usedInCourses,
@@ -593,8 +680,12 @@ const AdminLessonEditPage = () => {
 									createdAt: response.data.createdAt,
 									updatedAt: response.data.updatedAt,
 								} as QuestionInterface;
-							} catch (error) {
+							} catch (error: any) {
 								console.error('Error creating question:', error);
+								setErrorMessage('Error creating question: ' + error.response.data.message);
+								setIsErrorMessageOpen(true);
+								setIsEditMode(true);
+
 								return null;
 							}
 						}
@@ -637,7 +728,7 @@ const AdminLessonEditPage = () => {
 						isActive: singleLessonBeforeSave.isActive,
 						imageUrl: singleLessonBeforeSave.imageUrl,
 						videoUrl: singleLessonBeforeSave.videoUrl,
-						text: editorContent.trim() || '',
+						text: editorContent?.trim() || '',
 						documentIds: updatedDocumentIds,
 						questionIds: updatedQuestionIds,
 						usedInCourses: singleLessonBeforeSave.usedInCourses,
@@ -650,7 +741,7 @@ const AdminLessonEditPage = () => {
 						...singleLessonBeforeSave,
 						questions: updatedQuestions,
 						questionIds: updatedQuestionIds,
-						text: editorContent.trim() || '',
+						text: editorContent?.trim() || '',
 						documentIds: updatedDocumentIds,
 						documents: updatedDocuments,
 						updatedAt: responseUpdatedData.updatedAt,
@@ -663,7 +754,7 @@ const AdminLessonEditPage = () => {
 						...singleLessonBeforeSave,
 						questions: updatedQuestions,
 						questionIds: updatedQuestionIds,
-						text: editorContent.trim() || '',
+						text: editorContent?.trim() || '',
 						documentIds: updatedDocumentIds,
 						documents: updatedDocuments,
 						updatedAt: responseUpdatedData.updatedAt,
@@ -677,13 +768,16 @@ const AdminLessonEditPage = () => {
 							...prevData,
 							questions: updatedQuestions,
 							questionIds: updatedQuestionIds,
-							text: singleLessonBeforeSave.type === 'Quiz' ? '' : editorContent.trim() || '',
+							text: singleLessonBeforeSave.type === 'Quiz' ? '' : editorContent?.trim() || '',
 							documentIds: updatedDocumentIds,
 							documents: updatedDocuments,
 						};
 					});
-				} catch (error) {
+				} catch (error: any) {
 					console.error('Error updating lesson:', error);
+					setErrorMessage(error.response.data.message);
+					setIsErrorMessageOpen(true);
+					setIsEditMode(true);
 				}
 			}
 
@@ -702,8 +796,12 @@ const AdminLessonEditPage = () => {
 			setIsDocumentUpdated(documentUpdateData);
 			setIsLessonUpdated(false);
 			setHasUnsavedChanges(false);
-		} catch (error) {
+			setIsEditMode(false);
+		} catch (error: any) {
 			console.error('Error during lesson update process:', error);
+			setErrorMessage(error.response.data.message);
+			setIsErrorMessageOpen(true);
+			setIsEditMode(true);
 		}
 	};
 
@@ -797,6 +895,7 @@ const AdminLessonEditPage = () => {
 					setQuestionError={setQuestionError}
 					hasUnsavedChanges={hasUnsavedChanges}
 					setHasUnsavedChanges={setHasUnsavedChanges}
+					setErrorMessage={setErrorMessage}
 				/>
 			</Box>
 
@@ -812,13 +911,39 @@ const AdminLessonEditPage = () => {
 			</Snackbar>
 
 			<Snackbar
-				open={isAiContentGeneratedMsgOpen}
+				open={isErrorMessageOpen}
 				autoHideDuration={3000}
+				anchorOrigin={{ vertical, horizontal }}
+				sx={{ mt: '5rem' }}
+				onClose={() => setIsErrorMessageOpen(false)}>
+				<Alert severity='error' variant='filled' sx={{ width: '100%' }}>
+					{errorMessage}
+				</Alert>
+			</Snackbar>
+
+			<Snackbar
+				open={isAiContentGeneratedMsgOpen}
+				autoHideDuration={3500}
 				anchorOrigin={{ vertical, horizontal }}
 				sx={{ mt: '5rem' }}
 				onClose={() => setIsAiContentGeneratedMsgOpen(false)}>
 				<Alert severity='success' variant='filled' sx={{ width: '100%', color: '#fff' }}>
 					AI content generated successfully! You can now review and edit the content.
+				</Alert>
+			</Snackbar>
+
+			{/* URL validation error Snackbar */}
+			<Snackbar
+				open={isUrlErrorOpen}
+				autoHideDuration={3500}
+				anchorOrigin={{ vertical, horizontal }}
+				sx={{ mt: '5rem' }}
+				onClose={() => {
+					setIsUrlErrorOpen(false);
+					setIsEditMode(true);
+				}}>
+				<Alert severity='error' variant='filled' sx={{ width: '100%' }}>
+					{errorMessage}
 				</Alert>
 			</Snackbar>
 
@@ -1003,6 +1128,9 @@ const AdminLessonEditPage = () => {
 											setSingleLessonBeforeSave(() => {
 												return { ...singleLessonBeforeSave, imageUrl: url };
 											});
+
+											// Validate URL immediately after upload
+											validateUrlOnChange(url, 'image');
 										}}
 										onChangeImgUrl={(e) => {
 											setSingleLessonBeforeSave((prevCourse) => ({
@@ -1011,6 +1139,9 @@ const AdminLessonEditPage = () => {
 											}));
 											setIsLessonUpdated(true);
 											setHasUnsavedChanges(true);
+
+											// Validate URL on change (debounced)
+											validateUrlOnChange(e.target.value, 'image');
 										}}
 										imageUrlValue={singleLessonBeforeSave?.imageUrl}
 										imageFolderName='LessonImages'
@@ -1045,6 +1176,9 @@ const AdminLessonEditPage = () => {
 											setSingleLessonBeforeSave(() => {
 												return { ...singleLessonBeforeSave, videoUrl: url };
 											});
+
+											// Validate URL immediately after upload
+											validateUrlOnChange(url, 'video');
 										}}
 										onChangeVideoUrl={(e) => {
 											setSingleLessonBeforeSave((prevData) => ({
@@ -1053,6 +1187,9 @@ const AdminLessonEditPage = () => {
 											}));
 											setIsLessonUpdated(true);
 											setHasUnsavedChanges(true);
+
+											// Validate URL on change (debounced)
+											validateUrlOnChange(e.target.value, 'video');
 										}}
 										videoUrlValue={singleLessonBeforeSave?.videoUrl}
 										videoFolderName='LessonVideos'
@@ -1473,8 +1610,11 @@ const AdminLessonEditPage = () => {
 										setIsLessonUpdated(true);
 										setHasUnsavedChanges(true);
 
+										// Validate document URL immediately after upload
+										validateUrlOnChange(url, 'document');
+
 										setSingleLessonBeforeSave((prevData) => {
-											if (prevData && userId) {
+											if (prevData && user?._id) {
 												const maxNumber = prevData?.documents
 													.filter((doc) => doc !== null)
 													.reduce((max, doc) => {
@@ -1489,7 +1629,7 @@ const AdminLessonEditPage = () => {
 													name: newName.trim(),
 													documentUrl: url,
 													orgId,
-													userId,
+													userId: user?._id,
 													createdAt: '',
 													updatedAt: new Date().toISOString(),
 													clonedFromId: '',

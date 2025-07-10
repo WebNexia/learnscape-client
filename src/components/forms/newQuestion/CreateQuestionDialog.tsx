@@ -1,5 +1,6 @@
 import { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import {
+	Alert,
 	Box,
 	Checkbox,
 	DialogContent,
@@ -10,6 +11,7 @@ import {
 	Radio,
 	Select,
 	SelectChangeEvent,
+	Snackbar,
 	Tooltip,
 	Typography,
 } from '@mui/material';
@@ -41,6 +43,7 @@ import FillInTheBlanksTyping from '../../layouts/FITBTyping/FillInTheBlanksTypin
 import FillInTheBlanksDragDrop from '../../layouts/FITBDragDrop/FillInTheBlanksDragDrop';
 import CustomInfoMessageAlignedRight from '../../layouts/infoMessage/CustomInfoMessageAlignedRight';
 import axios from '@utils/axiosInstance';
+import { validateImageUrl, validateVideoUrl } from '../../../utils/urlValidation';
 
 declare global {
 	interface Window {
@@ -151,6 +154,9 @@ const CreateQuestionDialog = ({
 	const [isMinimumTwoMatchingPairs, setIsMinimumTwoMatchingPairs] = useState<boolean>(false);
 	const [isMissingPair, setIsMissingPair] = useState<boolean>(false);
 	const [isMinimumOneBlank, setIsMinimumOneBlank] = useState<boolean>(false);
+	const [isValidatingUrl, setIsValidatingUrl] = useState<boolean>(false);
+	const [isUrlErrorOpen, setIsUrlErrorOpen] = useState<boolean>(false);
+	const [urlErrorMessage, setUrlErrorMessage] = useState<string>('');
 
 	useEffect(() => {
 		resetVideoUpload();
@@ -217,6 +223,7 @@ const CreateQuestionDialog = ({
 		setIsMinimumTwoMatchingPairs(false);
 		setBlankValuePairs([]);
 		setIsMinimumOneBlank(false);
+		// URL errors are now handled by Snackbar
 	};
 
 	const createQuestion = async () => {
@@ -315,7 +322,62 @@ const CreateQuestionDialog = ({
 		}
 	};
 
-	const handleSubmit = () => {
+	const validateUrls = async (): Promise<boolean> => {
+		setIsValidatingUrl(true);
+		let hasErrors = false;
+		let errorMessages: string[] = [];
+
+		// Validate image URL if provided
+		if (newQuestion.imageUrl.trim()) {
+			const imageValidation = await validateImageUrl(newQuestion.imageUrl.trim());
+			if (!imageValidation.isValid) {
+				errorMessages.push(imageValidation.error || 'Invalid image URL');
+				hasErrors = true;
+			}
+		}
+
+		// Validate video URL if provided
+		if (newQuestion.videoUrl.trim()) {
+			const videoValidation = await validateVideoUrl(newQuestion.videoUrl.trim());
+			if (!videoValidation.isValid) {
+				errorMessages.push(videoValidation.error || 'Invalid video URL');
+				hasErrors = true;
+			}
+		}
+
+		setIsValidatingUrl(false);
+
+		// Show error Snackbar if there are validation errors
+		if (hasErrors) {
+			setUrlErrorMessage(errorMessages.join('\n'));
+			setIsUrlErrorOpen(true);
+		}
+
+		return !hasErrors;
+	};
+
+	// Real-time URL validation (called when user changes URLs)
+	const validateUrlOnChange = async (url: string, type: 'image' | 'video'): Promise<void> => {
+		if (!url.trim()) return; // Don't validate empty URLs
+
+		try {
+			let validation;
+			if (type === 'image') {
+				validation = await validateImageUrl(url.trim());
+			} else {
+				validation = await validateVideoUrl(url.trim());
+			}
+
+			if (!validation.isValid) {
+				setUrlErrorMessage(`${type === 'image' ? 'Image' : 'Video'} URL: ${validation.error}`);
+				setIsUrlErrorOpen(true);
+			}
+		} catch (error) {
+			console.error('URL validation error:', error);
+		}
+	};
+
+	const handleSubmit = async () => {
 		if (!editorContent && !newQuestion.question) {
 			if (isFlipCard) {
 				if (!newQuestion.imageUrl && !newQuestion.question) {
@@ -378,6 +440,13 @@ const CreateQuestionDialog = ({
 			return;
 		}
 
+		// Validate URLs before proceeding with any backend operations
+		const urlsValid = await validateUrls();
+		if (!urlsValid) {
+			// Keep all frontend changes but don't proceed with backend operations
+			return;
+		}
+
 		if (createNewQuestion) createQuestion();
 		else createQuestionTemplate();
 
@@ -400,388 +469,420 @@ const CreateQuestionDialog = ({
 	};
 
 	return (
-		<CustomDialog
-			openModal={isQuestionCreateModalOpen}
-			closeModal={() => {
-				setIsQuestionCreateModalOpen(false);
-				resetValues();
-			}}
-			title='Create Question'
-			maxWidth='lg'>
-			<form onSubmit={(e) => e.preventDefault()} style={{ display: 'flex', flexDirection: 'column' }}>
-				<DialogContent sx={{ mt: '-4rem' }}>
-					<Box sx={{ display: 'flex', flexDirection: 'column', width: '100%', alignItems: 'flex-end', mb: '0.75rem' }}>
-						<Typography variant='body2' sx={{ mb: '0.5rem', fontSize: '0.95rem' }}>
-							Type
-						</Typography>
-						<FormControl sx={{ mb: '1rem', width: '15rem', backgroundColor: theme.bgColor?.common }}>
-							<Select
-								value={questionType}
-								onChange={(event: SelectChangeEvent) => {
-									setQuestionType(event.target.value);
-									setCorrectAnswer('');
-									setOptions(['']);
-								}}
-								size='small'
-								required
-								displayEmpty
-								sx={{ color: questionType == '' ? 'lightgray' : 'inherit', fontSize: '0.8rem' }}>
-								<MenuItem disabled value='' sx={{ fontSize: '0.85rem' }}>
-									Select Type
-								</MenuItem>
-								{questionTypes
-									?.filter((type) => {
-										const questionTypeName = type.name as QuestionType;
-										if (singleLessonBeforeSave?.type === LessonType.QUIZ) {
-											return [
-												QuestionType.MULTIPLE_CHOICE,
-												QuestionType.TRUE_FALSE,
-												QuestionType.OPEN_ENDED,
-												QuestionType.AUDIO_VIDEO,
-												QuestionType.MATCHING,
-												QuestionType.FITB_TYPING,
-												QuestionType.FITB_DRAG_DROP,
-											].includes(questionTypeName);
-										} else if (singleLessonBeforeSave?.type === LessonType.PRACTICE_LESSON) {
-											return [
-												QuestionType.MULTIPLE_CHOICE,
-												QuestionType.TRUE_FALSE,
-												QuestionType.OPEN_ENDED,
-												QuestionType.MATCHING,
-												QuestionType.FITB_TYPING,
-												QuestionType.FITB_DRAG_DROP,
-												QuestionType.FLIP_CARD,
-											].includes(questionTypeName);
-										}
-										return true;
-									})
-									.map((type) => (
-										<MenuItem value={type.name} key={type._id} sx={{ fontSize: '0.85rem' }}>
-											{type.name}
-										</MenuItem>
-									))}
-							</Select>
-						</FormControl>
-					</Box>
-					<Box sx={{ display: 'flex', flexDirection: 'column' }}>
-						<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: '2rem', width: '100%' }}>
-							<Box sx={{ flex: 1, mr: '2rem' }}>
-								<HandleImageUploadURL
-									label='Question Image'
-									onImageUploadLogic={(url) => {
-										setNewQuestion((prevQuestion) => ({ ...prevQuestion, imageUrl: url }));
-										if (isFlipCard) setIsQuestionMissing(false);
+		<>
+			{/* URL validation error Snackbar */}
+			<Snackbar
+				open={isUrlErrorOpen}
+				autoHideDuration={5000}
+				anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+				onClose={() => setIsUrlErrorOpen(false)}>
+				<Alert severity='error' variant='filled' sx={{ width: '100%' }}>
+					{urlErrorMessage}
+				</Alert>
+			</Snackbar>
+
+			<CustomDialog
+				openModal={isQuestionCreateModalOpen}
+				closeModal={() => {
+					setIsQuestionCreateModalOpen(false);
+					resetValues();
+				}}
+				title='Create Question'
+				maxWidth='lg'>
+				<form onSubmit={(e) => e.preventDefault()} style={{ display: 'flex', flexDirection: 'column' }}>
+					<DialogContent sx={{ mt: '-4rem' }}>
+						<Box sx={{ display: 'flex', flexDirection: 'column', width: '100%', alignItems: 'flex-end', mb: '0.75rem' }}>
+							<Typography variant='body2' sx={{ mb: '0.5rem', fontSize: '0.95rem' }}>
+								Type
+							</Typography>
+							<FormControl sx={{ mb: '1rem', width: '15rem', backgroundColor: theme.bgColor?.common }}>
+								<Select
+									value={questionType}
+									onChange={(event: SelectChangeEvent) => {
+										setQuestionType(event.target.value);
+										setCorrectAnswer('');
+										setOptions(['']);
 									}}
-									onChangeImgUrl={(e) => {
-										setNewQuestion((prevQuestion) => ({ ...prevQuestion, imageUrl: e.target.value }));
-										if (isFlipCard) setIsQuestionMissing(false);
-										setIsLessonUpdated?.(true);
-									}}
-									imageUrlValue={newQuestion.imageUrl}
-									enterImageUrl={enterImageUrl}
-									setEnterImageUrl={setEnterImageUrl}
-									imageFolderName='QuestionImages'
-								/>
-								{!isFlipCard && (
-									<ImageThumbnail
-										imgSource={newQuestion.imageUrl || 'https://placehold.co/600x400/e2e8f0/64748b?text=No+Image'}
-										removeImage={() => {
-											setNewQuestion((prevQuestion) => ({ ...prevQuestion, imageUrl: '' }));
-											setIsLessonUpdated?.(true);
-											resetImageUpload();
+									size='small'
+									required
+									displayEmpty
+									sx={{ color: questionType == '' ? 'gray' : 'inherit', fontSize: '0.8rem' }}>
+									<MenuItem disabled value='' sx={{ fontSize: '0.85rem' }}>
+										Select Type
+									</MenuItem>
+									{questionTypes
+										?.filter((type) => {
+											const questionTypeName = type.name as QuestionType;
+											if (singleLessonBeforeSave?.type === LessonType.QUIZ) {
+												return [
+													QuestionType.MULTIPLE_CHOICE,
+													QuestionType.TRUE_FALSE,
+													QuestionType.OPEN_ENDED,
+													QuestionType.AUDIO_VIDEO,
+													QuestionType.MATCHING,
+													QuestionType.FITB_TYPING,
+													QuestionType.FITB_DRAG_DROP,
+												].includes(questionTypeName);
+											} else if (singleLessonBeforeSave?.type === LessonType.PRACTICE_LESSON) {
+												return [
+													QuestionType.MULTIPLE_CHOICE,
+													QuestionType.TRUE_FALSE,
+													QuestionType.OPEN_ENDED,
+													QuestionType.MATCHING,
+													QuestionType.FITB_TYPING,
+													QuestionType.FITB_DRAG_DROP,
+													QuestionType.FLIP_CARD,
+												].includes(questionTypeName);
+											}
+											return true;
+										})
+										.map((type) => (
+											<MenuItem value={type.name} key={type._id} sx={{ fontSize: '0.85rem' }}>
+												{type.name}
+											</MenuItem>
+										))}
+								</Select>
+							</FormControl>
+						</Box>
+						<Box sx={{ display: 'flex', flexDirection: 'column' }}>
+							<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: '2rem', width: '100%' }}>
+								<Box sx={{ flex: 1, mr: '2rem' }}>
+									<HandleImageUploadURL
+										label='Question Image'
+										onImageUploadLogic={(url) => {
+											setNewQuestion((prevQuestion) => ({ ...prevQuestion, imageUrl: url }));
+											if (isFlipCard) setIsQuestionMissing(false);
+
+											// Validate URL immediately after upload
+											validateUrlOnChange(url, 'image');
 										}}
+										onChangeImgUrl={(e) => {
+											setNewQuestion((prevQuestion) => ({ ...prevQuestion, imageUrl: e.target.value }));
+											if (isFlipCard) setIsQuestionMissing(false);
+											setIsLessonUpdated?.(true);
+
+											// Validate URL on change (debounced)
+											validateUrlOnChange(e.target.value, 'image');
+										}}
+										imageUrlValue={newQuestion.imageUrl}
+										enterImageUrl={enterImageUrl}
+										setEnterImageUrl={setEnterImageUrl}
+										imageFolderName='QuestionImages'
 									/>
+									{!isFlipCard && (
+										<ImageThumbnail
+											imgSource={newQuestion.imageUrl || 'https://placehold.co/600x400/e2e8f0/64748b?text=No+Image'}
+											removeImage={() => {
+												setNewQuestion((prevQuestion) => ({ ...prevQuestion, imageUrl: '' }));
+												setIsLessonUpdated?.(true);
+												resetImageUpload();
+											}}
+										/>
+									)}
+								</Box>
+								{!isFlipCard && (
+									<Box sx={{ flex: 1 }}>
+										<HandleVideoUploadURL
+											label='Question Video'
+											onVideoUploadLogic={(url) => {
+												setNewQuestion((prevQuestion) => ({ ...prevQuestion, videoUrl: url }));
+
+												// Validate URL immediately after upload
+												validateUrlOnChange(url, 'video');
+											}}
+											onChangeVideoUrl={(e) => {
+												setNewQuestion((prevQuestion) => ({ ...prevQuestion, videoUrl: e.target.value }));
+												setIsLessonUpdated?.(true);
+
+												// Validate URL on change (debounced)
+												validateUrlOnChange(e.target.value, 'video');
+											}}
+											videoUrlValue={newQuestion.videoUrl}
+											enterVideoUrl={enterVideoUrl}
+											setEnterVideoUrl={setEnterVideoUrl}
+											videoFolderName='QuestionVideos'
+										/>
+										<VideoThumbnail
+											videoPlayCondition={newQuestion.videoUrl}
+											videoUrl={newQuestion.videoUrl}
+											videoPlaceholderUrl='https://placehold.co/600x400/e2e8f0/64748b?text=No+Video'
+											removeVideo={() => {
+												setNewQuestion((prevQuestion) => ({ ...prevQuestion, videoUrl: '' }));
+												setIsLessonUpdated?.(true);
+												resetVideoUpload();
+											}}
+										/>
+									</Box>
 								)}
 							</Box>
 							{!isFlipCard && (
-								<Box sx={{ flex: 1 }}>
-									<HandleVideoUploadURL
-										label='Question Video'
-										onVideoUploadLogic={(url) => setNewQuestion((prevQuestion) => ({ ...prevQuestion, videoUrl: url }))}
-										onChangeVideoUrl={(e) => {
-											setNewQuestion((prevQuestion) => ({ ...prevQuestion, videoUrl: e.target.value }));
-											setIsLessonUpdated?.(true);
+								<Box sx={{ width: '100%', margin: '1rem 0' }}>
+									<Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+										<Typography variant='h6' sx={{ mb: '0.5rem' }}>
+											Question{' '}
+											<span style={{ fontSize: '0.8rem', color: 'gray' }}>
+												{isOpenEndedQuestion
+													? '(Students can enter max 5000 characters while answering)'
+													: isFITBTyping
+														? '(Students can enter max 50 characters for each blank)'
+														: ''}
+											</span>
+										</Typography>
+										{(isFITBDragDrop || isFITBTyping) && (
+											<CustomInfoMessageAlignedRight message='Double-click a word to turn it into a blank' sx={{ marginBottom: '0.5rem' }} />
+										)}
+									</Box>
+									<TinyMceEditor
+										handleEditorChange={(content) => {
+											setEditorContent(content);
+											setIsQuestionMissing(false);
 										}}
-										videoUrlValue={newQuestion.videoUrl}
-										enterVideoUrl={enterVideoUrl}
-										setEnterVideoUrl={setEnterVideoUrl}
-										videoFolderName='QuestionVideos'
-									/>
-									<VideoThumbnail
-										videoPlayCondition={newQuestion.videoUrl}
-										videoUrl={newQuestion.videoUrl}
-										videoPlaceholderUrl='https://placehold.co/600x400/e2e8f0/64748b?text=No+Video'
-										removeVideo={() => {
-											setNewQuestion((prevQuestion) => ({ ...prevQuestion, videoUrl: '' }));
-											setIsLessonUpdated?.(true);
-											resetVideoUpload();
-										}}
+										initialValue=''
+										blankValuePairs={blankValuePairs}
+										setBlankValuePairs={setBlankValuePairs}
+										editorId={editorId}
+										editorRef={editorRef}
+										isFITB={questionType === QuestionType.FITB_DRAG_DROP || questionType === QuestionType.FITB_TYPING}
+										maxLength={5000}
 									/>
 								</Box>
 							)}
-						</Box>
-						{!isFlipCard && (
-							<Box sx={{ width: '100%', margin: '1rem 0' }}>
-								<Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-									<Typography variant='h6' sx={{ mb: '0.5rem' }}>
-										Question{' '}
-										<span style={{ fontSize: '0.8rem', color: 'gray' }}>
-											{isOpenEndedQuestion
-												? '(Students can enter max 5000 characters while answering)'
-												: isFITBTyping
-													? '(Students can enter max 50 characters for each blank)'
-													: ''}
-										</span>
-									</Typography>
-									{(isFITBDragDrop || isFITBTyping) && (
-										<CustomInfoMessageAlignedRight message='Double-click a word to turn it into a blank' sx={{ marginBottom: '0.5rem' }} />
-									)}
-								</Box>
-								<TinyMceEditor
-									handleEditorChange={(content) => {
-										setEditorContent(content);
-										setIsQuestionMissing(false);
-									}}
-									initialValue=''
-									blankValuePairs={blankValuePairs}
-									setBlankValuePairs={setBlankValuePairs}
-									editorId={editorId}
-									editorRef={editorRef}
-									isFITB={questionType === QuestionType.FITB_DRAG_DROP || questionType === QuestionType.FITB_TYPING}
-									maxLength={5000}
-								/>
-							</Box>
-						)}
 
-						{(isFITBDragDrop || isFITBTyping) && (
-							<Box>
-								<Box sx={{ marginTop: '1rem', width: '90%', margin: '0 auto' }}>
-									<Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-										<Typography variant='h6'>Blank Values</Typography>
-										{(isFITBDragDrop || isFITBTyping) && <CustomInfoMessageAlignedRight message='Click a word below to remove it from the blanks' />}
-									</Box>
-									<Box
-										sx={{
-											display: 'flex',
-											flexWrap: 'wrap',
-											width: '100%',
-											margin: '1rem 0',
-											boxShadow: '0 0 0.4rem 0.2rem rgba(0,0,0,0.2)',
-											minHeight: '5rem',
-											borderRadius: '0.35rem',
-											padding: '0.5rem',
-										}}>
-										{sortedBlankValuePairs?.map((pair: BlankValuePair) => {
-											return (
-												<Box
-													key={pair.id}
-													sx={{
-														border: `solid 0.1rem ${theme.border.main}`,
-														width: 'fit-content',
-														height: 'fit-content',
-														padding: '0.5rem',
-														borderRadius: '0.35rem',
-														margin: '0.25rem',
-														cursor: 'pointer',
-													}}
-													onClick={() => returnBlankValues(pair)}>
-													<Typography>
-														{pair.blank}-{pair.value}
-													</Typography>
-												</Box>
-											);
-										})}
-									</Box>
-								</Box>
-								<Box
-									sx={{
-										display: 'flex',
-										flexDirection: 'column',
-										alignItems: 'center',
-										width: '100%',
-										minHeight: '4rem',
-										margin: '3rem auto 0 auto',
-									}}>
-									<Box sx={{ display: 'flex', width: '90%', margin: '1rem 0rem 0rem 0rem' }}>
-										<Box sx={{ flex: 1 }}>
-											<Typography variant='h5'>Student View</Typography>
+							{(isFITBDragDrop || isFITBTyping) && (
+								<Box>
+									<Box sx={{ marginTop: '1rem', width: '90%', margin: '0 auto' }}>
+										<Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+											<Typography variant='h6'>Blank Values</Typography>
+											{(isFITBDragDrop || isFITBTyping) && (
+												<CustomInfoMessageAlignedRight message='Click a word below to remove it from the blanks' />
+											)}
 										</Box>
-										<CustomInfoMessageAlignedRight message='View as in a practice lesson' />
-									</Box>
-									{isFITBDragDrop && (
-										<Box sx={{ padding: '1rem 0', width: '90%' }}>
-											<FillInTheBlanksDragDrop textWithBlanks={editorContent} blankValuePairs={sortedBlankValuePairs} />
-										</Box>
-									)}
-									{isFITBTyping && (
-										<Box sx={{ padding: '1rem 0', width: '90%' }}>
-											<FillInTheBlanksTyping
-												textWithBlanks={editorContent}
-												blankValuePairs={sortedBlankValuePairs}
-												fromAdminQuestions={createNewQuestion}
-											/>
-										</Box>
-									)}
-								</Box>
-							</Box>
-						)}
-
-						{isAudioVideoQuestion && (
-							<Box sx={{ display: 'flex', justifyContent: 'center' }}>
-								<FormControlLabel
-									control={
-										<Checkbox
-											checked={newQuestion.audio}
-											onChange={(e) => {
-												setNewQuestion((prevData) => ({ ...prevData, audio: e.target.checked }));
-												setIsAudioVideoSelectionMissing(false);
-											}}
-										/>
-									}
-									label='Ask Audio Recording'
-									sx={{ margin: '2rem 0 2rem 3rem' }}
-								/>
-								<FormControlLabel
-									control={
-										<Checkbox
-											checked={newQuestion.video}
-											onChange={(e) => {
-												setNewQuestion((prevData) => ({ ...prevData, video: e.target.checked }));
-												setIsAudioVideoSelectionMissing(false);
-											}}
-										/>
-									}
-									label='Ask Video Recording'
-									sx={{ margin: '2rem 0 2rem 3rem' }}
-								/>
-							</Box>
-						)}
-						{isMultipleChoiceQuestion && (
-							<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', width: '100%' }}>
-								{options?.map((option, index) => (
-									<Box
-										key={index}
-										sx={{
-											display: 'flex',
-											justifyContent: 'flex-end',
-											alignItems: 'center',
-											width: '90%',
-											marginLeft: '3rem',
-										}}>
-										<Tooltip title='Correct Answer' placement='left'>
-											<FormControlLabel
-												control={
-													<Radio
-														checked={index === correctAnswerIndex}
-														onChange={() => {
-															setIsCorrectAnswerMissing(false);
-															handleCorrectAnswerChange(index);
+										<Box
+											sx={{
+												display: 'flex',
+												flexWrap: 'wrap',
+												width: '100%',
+												margin: '1rem 0',
+												boxShadow: '0 0 0.4rem 0.2rem rgba(0,0,0,0.2)',
+												minHeight: '5rem',
+												borderRadius: '0.35rem',
+												padding: '0.5rem',
+											}}>
+											{sortedBlankValuePairs?.map((pair: BlankValuePair) => {
+												return (
+													<Box
+														key={pair.id}
+														sx={{
+															border: `solid 0.1rem ${theme.border.main}`,
+															width: 'fit-content',
+															height: 'fit-content',
+															padding: '0.5rem',
+															borderRadius: '0.35rem',
+															margin: '0.25rem',
+															cursor: 'pointer',
 														}}
-														color='primary'
-													/>
-												}
-												label=''
-											/>
-										</Tooltip>
-										{index === options.length - 1 && (
-											<Tooltip title='Add Option' placement='top'>
-												<IconButton onClick={addOption}>
-													<AddCircle />
-												</IconButton>
-											</Tooltip>
+														onClick={() => returnBlankValues(pair)}>
+														<Typography>
+															{pair.blank}-{pair.value}
+														</Typography>
+													</Box>
+												);
+											})}
+										</Box>
+									</Box>
+									<Box
+										sx={{
+											display: 'flex',
+											flexDirection: 'column',
+											alignItems: 'center',
+											width: '100%',
+											minHeight: '4rem',
+											margin: '3rem auto 0 auto',
+										}}>
+										<Box sx={{ display: 'flex', width: '90%', margin: '1rem 0rem 0rem 0rem' }}>
+											<Box sx={{ flex: 1 }}>
+												<Typography variant='h5'>Student View</Typography>
+											</Box>
+											<CustomInfoMessageAlignedRight message='View as in a practice lesson' />
+										</Box>
+										{isFITBDragDrop && (
+											<Box sx={{ padding: '1rem 0', width: '90%' }}>
+												<FillInTheBlanksDragDrop textWithBlanks={editorContent} blankValuePairs={sortedBlankValuePairs} />
+											</Box>
 										)}
-										<CustomTextField
-											required
-											label={`Option ${index + 1}`}
-											value={option}
-											onChange={(e) => handleOptionChange?.(index, e.target.value)}
-											sx={{ marginTop: '0.75rem', marginRight: index === 0 ? '2.5rem' : 0 }}
-											InputProps={{
-												inputProps: {
-													maxLength: 255,
-												},
-											}}
-										/>
-										{index > 0 && (
-											<Tooltip title='Remove Option' placement='top'>
-												<IconButton onClick={() => removeOption(index)}>
-													<RemoveCircle />
-												</IconButton>
-											</Tooltip>
+										{isFITBTyping && (
+											<Box sx={{ padding: '1rem 0', width: '90%' }}>
+												<FillInTheBlanksTyping
+													textWithBlanks={editorContent}
+													blankValuePairs={sortedBlankValuePairs}
+													fromAdminQuestions={createNewQuestion}
+												/>
+											</Box>
 										)}
 									</Box>
-								))}
-							</Box>
-						)}
-						{isTrueFalseQuestion && (
-							<TrueFalseOptions
-								correctAnswer={correctAnswer}
-								setCorrectAnswer={setCorrectAnswer}
-								setIsCorrectAnswerMissing={setIsCorrectAnswerMissing}
-							/>
-						)}
-						{isFlipCard && (
-							<FlipCard
-								newQuestion={newQuestion}
-								setCorrectAnswer={setCorrectAnswer}
-								setNewQuestion={setNewQuestion}
-								setIsQuestionMissing={setIsQuestionMissing}
-								setIsCorrectAnswerMissing={setIsCorrectAnswerMissing}
-							/>
-						)}
-						{isMatching && (
-							<Matching
-								setNewQuestion={setNewQuestion}
-								setIsMinimumTwoMatchingPairs={setIsMinimumTwoMatchingPairs}
-								setIsMissingPair={setIsMissingPair}
-								lessonType={singleLessonBeforeSave?.type}
-							/>
-						)}
-					</Box>
-					<Box sx={{ mt: '2rem' }}>
-						{isQuestionMissing && (
-							<CustomErrorMessage>
-								{isFlipCard && !newQuestion.imageUrl ? '- Enter front face text and/or image' : '- Enter question'}
-							</CustomErrorMessage>
-						)}
-						{isCorrectAnswerMissing && !isAudioVideoQuestion && !isMatching && (
-							<CustomErrorMessage>{isFlipCard ? '- Enter back face text' : '- Select correct answer'}</CustomErrorMessage>
-						)}
-						{isAudioVideoQuestion && isAudioVideoSelectionMissing && (
-							<CustomErrorMessage>- Select at least one of the recording options</CustomErrorMessage>
-						)}
+								</Box>
+							)}
 
-						{isMatching && (
-							<>
-								{isMinimumTwoMatchingPairs && <CustomErrorMessage>- Enter at least 2 completed pairs</CustomErrorMessage>}
-								{isMissingPair && <CustomErrorMessage>- There is at least one incomplete pair</CustomErrorMessage>}
-							</>
-						)}
-						{(isFITBDragDrop || isFITBTyping) && isMinimumOneBlank && <CustomErrorMessage>- Enter at least 1 blank in the text</CustomErrorMessage>}
+							{isAudioVideoQuestion && (
+								<Box sx={{ display: 'flex', justifyContent: 'center' }}>
+									<FormControlLabel
+										control={
+											<Checkbox
+												checked={newQuestion.audio}
+												onChange={(e) => {
+													setNewQuestion((prevData) => ({ ...prevData, audio: e.target.checked }));
+													setIsAudioVideoSelectionMissing(false);
+												}}
+											/>
+										}
+										label='Ask Audio Recording'
+										sx={{ margin: '2rem 0 2rem 3rem' }}
+									/>
+									<FormControlLabel
+										control={
+											<Checkbox
+												checked={newQuestion.video}
+												onChange={(e) => {
+													setNewQuestion((prevData) => ({ ...prevData, video: e.target.checked }));
+													setIsAudioVideoSelectionMissing(false);
+												}}
+											/>
+										}
+										label='Ask Video Recording'
+										sx={{ margin: '2rem 0 2rem 3rem' }}
+									/>
+								</Box>
+							)}
+							{isMultipleChoiceQuestion && (
+								<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', width: '100%' }}>
+									{options?.map((option, index) => (
+										<Box
+											key={index}
+											sx={{
+												display: 'flex',
+												justifyContent: 'flex-end',
+												alignItems: 'center',
+												width: '90%',
+												marginLeft: '3rem',
+											}}>
+											<Tooltip title='Correct Answer' placement='left'>
+												<FormControlLabel
+													control={
+														<Radio
+															checked={index === correctAnswerIndex}
+															onChange={() => {
+																setIsCorrectAnswerMissing(false);
+																handleCorrectAnswerChange(index);
+															}}
+															color='primary'
+														/>
+													}
+													label=''
+												/>
+											</Tooltip>
+											{index === options.length - 1 && (
+												<Tooltip title='Add Option' placement='top'>
+													<IconButton onClick={addOption}>
+														<AddCircle />
+													</IconButton>
+												</Tooltip>
+											)}
+											<CustomTextField
+												required
+												label={`Option ${index + 1}`}
+												value={option}
+												onChange={(e) => handleOptionChange?.(index, e.target.value)}
+												sx={{ marginTop: '0.75rem', marginRight: index === 0 ? '2.5rem' : 0 }}
+												InputProps={{
+													inputProps: {
+														maxLength: 255,
+													},
+												}}
+											/>
+											{index > 0 && (
+												<Tooltip title='Remove Option' placement='top'>
+													<IconButton onClick={() => removeOption(index)}>
+														<RemoveCircle />
+													</IconButton>
+												</Tooltip>
+											)}
+										</Box>
+									))}
+								</Box>
+							)}
+							{isTrueFalseQuestion && (
+								<TrueFalseOptions
+									correctAnswer={correctAnswer}
+									setCorrectAnswer={setCorrectAnswer}
+									setIsCorrectAnswerMissing={setIsCorrectAnswerMissing}
+								/>
+							)}
+							{isFlipCard && (
+								<FlipCard
+									newQuestion={newQuestion}
+									setCorrectAnswer={setCorrectAnswer}
+									setNewQuestion={setNewQuestion}
+									setIsQuestionMissing={setIsQuestionMissing}
+									setIsCorrectAnswerMissing={setIsCorrectAnswerMissing}
+								/>
+							)}
+							{isMatching && (
+								<Matching
+									setNewQuestion={setNewQuestion}
+									setIsMinimumTwoMatchingPairs={setIsMinimumTwoMatchingPairs}
+									setIsMissingPair={setIsMissingPair}
+									lessonType={singleLessonBeforeSave?.type}
+								/>
+							)}
+						</Box>
+						<Box sx={{ mt: '2rem' }}>
+							{isQuestionMissing && (
+								<CustomErrorMessage>
+									{isFlipCard && !newQuestion.imageUrl ? '- Enter front face text and/or image' : '- Enter question'}
+								</CustomErrorMessage>
+							)}
+							{isCorrectAnswerMissing && !isAudioVideoQuestion && !isMatching && (
+								<CustomErrorMessage>{isFlipCard ? '- Enter back face text' : '- Select correct answer'}</CustomErrorMessage>
+							)}
+							{isAudioVideoQuestion && isAudioVideoSelectionMissing && (
+								<CustomErrorMessage>- Select at least one of the recording options</CustomErrorMessage>
+							)}
 
-						{isMultipleChoiceQuestion && (
-							<Box sx={{ mt: '2rem' }}>
-								{isDuplicateOption && <CustomErrorMessage>- Options should be unique</CustomErrorMessage>}
-								{!isMinimumOptions && <CustomErrorMessage>- At least two options are required</CustomErrorMessage>}
-							</Box>
-						)}
-					</Box>
-				</DialogContent>
-				<CustomDialogActions
-					onCancel={() => {
-						setIsQuestionCreateModalOpen(false);
-						resetValues();
-						resetImageUpload();
-						resetVideoUpload();
-					}}
-					disableBtn={questionType == ''}
-					onSubmit={handleSubmit}
-					cancelBtnSx={{ margin: '0 0.5rem 1rem 0' }}
-					submitBtnSx={{ margin: '0 1rem 1rem 0' }}
-					submitBtnType='button'
-				/>
-			</form>
-		</CustomDialog>
+							{isMatching && (
+								<>
+									{isMinimumTwoMatchingPairs && <CustomErrorMessage>- Enter at least 2 completed pairs</CustomErrorMessage>}
+									{isMissingPair && <CustomErrorMessage>- There is at least one incomplete pair</CustomErrorMessage>}
+								</>
+							)}
+							{(isFITBDragDrop || isFITBTyping) && isMinimumOneBlank && <CustomErrorMessage>- Enter at least 1 blank in the text</CustomErrorMessage>}
+
+							{isMultipleChoiceQuestion && (
+								<Box sx={{ mt: '2rem' }}>
+									{isDuplicateOption && <CustomErrorMessage>- Options should be unique</CustomErrorMessage>}
+									{!isMinimumOptions && <CustomErrorMessage>- At least two options are required</CustomErrorMessage>}
+								</Box>
+							)}
+
+							{/* URL validation errors - now handled by Snackbar */}
+						</Box>
+					</DialogContent>
+					<CustomDialogActions
+						onCancel={() => {
+							setIsQuestionCreateModalOpen(false);
+							resetValues();
+							resetImageUpload();
+							resetVideoUpload();
+						}}
+						disableBtn={questionType == '' || isValidatingUrl}
+						onSubmit={handleSubmit}
+						cancelBtnSx={{ margin: '0 0.5rem 1rem 0' }}
+						submitBtnSx={{ margin: '0 1rem 1rem 0' }}
+						submitBtnType='button'
+						submitBtnText={isValidatingUrl ? 'Validating...' : 'Create'}
+					/>
+				</form>
+			</CustomDialog>
+		</>
 	);
 };
 
