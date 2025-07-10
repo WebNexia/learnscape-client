@@ -179,7 +179,7 @@ const TinyMceEditor = ({
 
 						editor.on('beforeinput', (e) => {
 							if (e.inputType === 'insertText' || e.inputType === 'insertFromPaste') {
-								const content = editor.getContent({ format: 'text' }) || '';
+								const textContent = editor.getContent({ format: 'text' }) || '';
 								let insertText = '';
 
 								if (e.inputType === 'insertText') {
@@ -189,23 +189,16 @@ const TinyMceEditor = ({
 									insertText = clipboardData?.getData('text') || '';
 								}
 
-								if (content.length + insertText.length > MAX_LENGTH) {
+								if (textContent.length + insertText.length > MAX_LENGTH) {
 									e.preventDefault();
-									const allowedText = insertText.slice(0, MAX_LENGTH - content.length);
+									const allowedText = insertText.slice(0, MAX_LENGTH - textContent.length);
 									if (allowedText && e.inputType === 'insertFromPaste') {
 										editor.insertContent(allowedText);
 									}
 								}
 							}
 						});
-
-						// Fallback: always trim after input
-						editor.on('input', () => {
-							const content = editor.getContent({ format: 'text' });
-							if (content.length > MAX_LENGTH) {
-								editor.setContent(content.slice(0, MAX_LENGTH));
-							}
-						});
+						// Remove the fallback 'input' event that sets content as plain text
 					},
 				}}
 				onEditorChange={(content, editor) => {
@@ -213,11 +206,10 @@ const TinyMceEditor = ({
 					const textContent = editor.getContent({ format: 'text' }) || '';
 					const handleChange = isFITB ? handleEditorChangeInternal : handleEditorChange;
 					if (textContent.length > MAX_LENGTH) {
-						const trimmed = textContent.slice(0, MAX_LENGTH);
-						editor.setContent(trimmed);
-						handleChange(trimmed);
+						// Do not set content as plain text; just ignore extra input
+						return;
 					} else {
-						handleChange(content);
+						handleChange(content); // content is HTML
 					}
 				}}
 			/>

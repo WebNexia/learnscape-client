@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Box, Checkbox, DialogContent, FormControlLabel, IconButton, Radio, Tooltip, Typography } from '@mui/material';
+import { Box, Checkbox, DialogContent, FormControlLabel, IconButton, Radio, Tooltip, Typography, Snackbar, Alert } from '@mui/material';
 import CustomDialog from '../../layouts/dialog/CustomDialog';
 import CustomTextField from '../customFields/CustomTextField';
 import { AddCircle, RemoveCircle } from '@mui/icons-material';
@@ -26,6 +26,8 @@ import theme from '../../../themes';
 import FillInTheBlanksDragDropProps from '../../layouts/FITBDragDrop/FillInTheBlanksDragDrop';
 import FillInTheBlanksTyping from '../../layouts/FITBTyping/FillInTheBlanksTyping';
 import CustomInfoMessageAlignedRight from '../../layouts/infoMessage/CustomInfoMessageAlignedRight';
+import { validateImageUrl, validateVideoUrl } from '../../../utils/urlValidation';
+import { decode } from 'html-entities';
 
 interface AdminLessonEditPageEditQuestionDialogProps {
 	index: number;
@@ -104,12 +106,36 @@ const AdminLessonEditPageEditQuestionDialog = ({
 	const [enterVideoUrl, setEnterVideoUrl] = useState<boolean>(true);
 	const [editorContent, setEditorContent] = useState(question.question);
 	const [questionBeforeSave, setQuestionBeforeSave] = useState<QuestionInterface>(question);
+	const [isUrlErrorOpen, setIsUrlErrorOpen] = useState<boolean>(false);
+	const [urlErrorMessage, setUrlErrorMessage] = useState<string>('');
 
 	const [blankValuePairs, setBlankValuePairs] = useState<BlankValuePair[]>(question.blankValuePairs);
 
 	const resetEnterImageVideoUrl = () => {
 		setEnterVideoUrl(true);
 		setEnterImageUrl(true);
+	};
+
+	// URL validation functions
+	const validateUrlOnChange = async (url: string, type: 'image' | 'video'): Promise<void> => {
+		if (!url.trim()) return; // Don't validate empty URLs
+
+		try {
+			let validation;
+			if (type === 'image') {
+				validation = await validateImageUrl(url.trim());
+			} else {
+				validation = await validateVideoUrl(url.trim());
+			}
+
+			if (!validation.isValid) {
+				const typeLabel = type === 'image' ? 'Image' : 'Video';
+				setUrlErrorMessage(`${typeLabel} URL: ${validation.error}`);
+				setIsUrlErrorOpen(true);
+			}
+		} catch (error) {
+			console.error('URL validation error:', error);
+		}
 	};
 
 	useEffect(() => {
@@ -132,6 +158,35 @@ const AdminLessonEditPageEditQuestionDialog = ({
 
 	const handleSubmit = async () => {
 		if (!isFlipCard) await handleInputChange('question', editorContent);
+
+		// Validate URLs before proceeding
+		let hasUrlErrors = false;
+		let errorMessages: string[] = [];
+
+		// Validate image URL if provided
+		if (question.imageUrl?.trim()) {
+			const imageValidation = await validateImageUrl(question.imageUrl.trim());
+			if (!imageValidation.isValid) {
+				errorMessages.push(imageValidation.error || 'Invalid image URL');
+				hasUrlErrors = true;
+			}
+		}
+
+		// Validate video URL if provided
+		if (question.videoUrl?.trim()) {
+			const videoValidation = await validateVideoUrl(question.videoUrl.trim());
+			if (!videoValidation.isValid) {
+				errorMessages.push(videoValidation.error || 'Invalid video URL');
+				hasUrlErrors = true;
+			}
+		}
+
+		// Show error SnackBar if there are validation errors
+		if (hasUrlErrors) {
+			setUrlErrorMessage(errorMessages.join('\n'));
+			setIsUrlErrorOpen(true);
+			return;
+		}
 
 		if (isFlipCard && !correctAnswer) {
 			setIsCorrectAnswerMissing(true);
@@ -278,6 +333,7 @@ const AdminLessonEditPageEditQuestionDialog = ({
 				setCorrectAnswerIndex(-1);
 				handleResetQuestion();
 				setIsMinimumOneBlank(false);
+				setIsUrlErrorOpen(false);
 			}}
 			title={`Edit Question (${questionType})`}
 			maxWidth='lg'>
@@ -293,8 +349,16 @@ const AdminLessonEditPageEditQuestionDialog = ({
 					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: '2rem', width: '100%' }}>
 						<Box sx={{ flex: 1, mr: '2rem' }}>
 							<HandleImageUploadURL
-								onImageUploadLogic={(url) => handleInputChange('imageUrl', url)}
-								onChangeImgUrl={(e) => handleInputChange('imageUrl', e.target.value)}
+								onImageUploadLogic={(url) => {
+									handleInputChange('imageUrl', url);
+									// Validate URL immediately after upload
+									validateUrlOnChange(url, 'image');
+								}}
+								onChangeImgUrl={(e) => {
+									handleInputChange('imageUrl', e.target.value);
+									// Validate URL on change (debounced)
+									validateUrlOnChange(e.target.value, 'image');
+								}}
 								imageUrlValue={question.imageUrl}
 								imageFolderName='QuestionImages'
 								enterImageUrl={enterImageUrl}
@@ -307,8 +371,16 @@ const AdminLessonEditPageEditQuestionDialog = ({
 						{!isFlipCard && (
 							<Box sx={{ flex: 1 }}>
 								<HandleVideoUploadURL
-									onVideoUploadLogic={(url) => handleInputChange('videoUrl', url)}
-									onChangeVideoUrl={(e) => handleInputChange('videoUrl', e.target.value)}
+									onVideoUploadLogic={(url) => {
+										handleInputChange('videoUrl', url);
+										// Validate URL immediately after upload
+										validateUrlOnChange(url, 'video');
+									}}
+									onChangeVideoUrl={(e) => {
+										handleInputChange('videoUrl', e.target.value);
+										// Validate URL on change (debounced)
+										validateUrlOnChange(e.target.value, 'video');
+									}}
 									videoUrlValue={question.videoUrl}
 									videoFolderName='QuestionVideos'
 									enterVideoUrl={enterVideoUrl}
@@ -350,7 +422,7 @@ const AdminLessonEditPageEditQuestionDialog = ({
 									setIsQuestionMissing(false);
 									questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
 								}}
-								initialValue={question.question}
+								initialValue={decode(question.question)}
 								blankValuePairs={blankValuePairs}
 								setBlankValuePairs={setBlankValuePairs}
 								editorId={editorId}
@@ -582,6 +654,7 @@ const AdminLessonEditPageEditQuestionDialog = ({
 						resetEnterImageVideoUrl();
 						handleResetQuestion();
 						setIsMinimumOneBlank(false);
+						setIsUrlErrorOpen(false);
 					}}
 					cancelBtnText='Cancel'
 					onSubmit={handleSubmit}
@@ -589,6 +662,17 @@ const AdminLessonEditPageEditQuestionDialog = ({
 					submitBtnType='button'
 				/>
 			</form>
+
+			{/* URL validation error SnackBar */}
+			<Snackbar
+				open={isUrlErrorOpen}
+				autoHideDuration={3500}
+				anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+				onClose={() => setIsUrlErrorOpen(false)}>
+				<Alert severity='error' variant='filled' sx={{ width: '100%' }}>
+					{urlErrorMessage}
+				</Alert>
+			</Snackbar>
 		</CustomDialog>
 	);
 };
