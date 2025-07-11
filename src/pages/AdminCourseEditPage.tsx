@@ -709,7 +709,6 @@ const AdminCourseEditPage = () => {
 						}}>
 						<form>
 							<CourseDetailsEditBox
-								singleCourse={singleCourse}
 								singleCourseBeforeSave={singleCourseBeforeSave}
 								isFree={isFree}
 								isMissingField={isMissingField}
