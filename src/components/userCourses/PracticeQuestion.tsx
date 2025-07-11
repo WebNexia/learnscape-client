@@ -149,6 +149,8 @@ const PracticeQuestion = ({
 	const [allPairsMatchedFITBDragDrop, setAllPairsMatchedFITBDragDrop] = useState<boolean>(false);
 
 	const [isCardFlipped, setIsCardFlipped] = useState<boolean>(false);
+	const [hasRequestedAiFeedback, setHasRequestedAiFeedback] = useState<boolean>(false);
+	const [isAiFeedbackLoading, setIsAiFeedbackLoading] = useState<boolean>(false);
 
 	const isLastQuestion: boolean = displayedQuestionNumber === numberOfQuestions;
 	const isCompletingCourse: boolean = isLastQuestion && nextLessonId === null && isLessonCompleted;
@@ -192,7 +194,10 @@ const PracticeQuestion = ({
 
 		setIsOpenEndedAnswerSubmitted(false);
 		setIsAnswerCorrect(false);
-	}, [displayedQuestionNumber]);
+
+		// Reset AI feedback state when question changes
+		setHasRequestedAiFeedback(false);
+	}, [displayedQuestionNumber, question._id]);
 
 	const createUserQuestion = async () => {
 		const existingUserAnswer = userAnswers.find((data) => data.questionId === question._id);
@@ -724,13 +729,27 @@ const PracticeQuestion = ({
 					zIndex: 9,
 				}}>
 				{displayedQuestionNumber === questionNumber && !isFlipCard && !isMatching && !isFITBDragDrop && !isFITBTyping ? (
-					isAiActive || isLessonCompleted ? (
-						<Tooltip title={`Receive ${!aiDrawerOpen ? '' : 'another'} feedback from AI`} placement='left'>
+					!hasRequestedAiFeedback && (isAiActive || isLessonCompleted) ? (
+						<Tooltip title='Receive feedback from AI' placement='left'>
 							<IconButton
 								onClick={async () => {
+									if (isAiFeedbackLoading) return; // Prevent multiple calls
+
+									setIsAiFeedbackLoading(true);
+									setHasRequestedAiFeedback(true);
 									openAiResponseDrawer(index);
-									await handleInitialSubmit(questionPrompt);
-								}}>
+
+									try {
+										await handleInitialSubmit(questionPrompt);
+									} catch (error) {
+										console.error('AI feedback error:', error);
+										// Reset state if there's an error so user can try again
+										setHasRequestedAiFeedback(false);
+									} finally {
+										setIsAiFeedbackLoading(false);
+									}
+								}}
+								disabled={isAiFeedbackLoading}>
 								<AiIcon
 									sx={{
 										fontSize: '2rem',
@@ -738,10 +757,23 @@ const PracticeQuestion = ({
 										height: isMobileSize ? '1.25rem' : '1.5rem',
 										border: 'none',
 										ml: 0.8,
-										color: '#4D7B8B',
-										animation: `${colorChange} 1s infinite, ${spin} 3s linear infinite`,
+										color: isAiFeedbackLoading ? 'gray' : '#4D7B8B',
+										animation: isAiFeedbackLoading ? 'none' : `${colorChange} 1s infinite, ${spin} 3s linear infinite`,
 									}}
 								/>
+							</IconButton>
+						</Tooltip>
+					) : hasRequestedAiFeedback ? (
+						<Tooltip title='AI feedback already requested for this question' placement='left'>
+							<IconButton
+								sx={{
+									':hover': {
+										backgroundColor: 'transparent',
+									},
+									'color': 'gray',
+								}}
+								disabled>
+								<AutoAwesome fontSize={isMobileSize ? 'small' : 'medium'} />
 							</IconButton>
 						</Tooltip>
 					) : (
