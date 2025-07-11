@@ -4,6 +4,7 @@ import {
 	DialogContent,
 	FormControl,
 	IconButton,
+	keyframes,
 	Link,
 	MenuItem,
 	Select,
@@ -14,10 +15,10 @@ import {
 } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import theme from '../themes';
-import { Delete, Edit, FileCopy } from '@mui/icons-material';
+import { AutoAwesome, Delete, Edit, FileCopy } from '@mui/icons-material';
 import { useParams } from 'react-router-dom';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
-import { FormEvent, useContext, useEffect, useState, useCallback } from 'react';
+import { FormEvent, useContext, useEffect, useState } from 'react';
 import { Lesson } from '../interfaces/lessons';
 import axios from '@utils/axiosInstance';
 import { QuestionInterface } from '../interfaces/question';
@@ -57,6 +58,31 @@ import AdminLessonEditPageEditQuestionDialog from '../components/forms/editQuest
 import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/CustomInfoMessageAlignedLeft';
 import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
 import { useBlocker, useNavigate } from 'react-router-dom';
+import AiIcon from '@mui/icons-material/AutoAwesome';
+import CreateLessonWithAIDialog from '../components/adminSingleLesson/CreateLessonWithAIDialog';
+import CreateQuestionWithAIDialog from '../components/adminSingleLesson/CreateQuestionWithAIDialog';
+import { validateImageUrl, validateVideoUrl, validateDocumentUrl } from '../utils/urlValidation';
+import { UserAuthContext } from '../contexts/UserAuthContextProvider';
+
+const colorChange = keyframes`
+    0% {
+        color: #009694;
+    }
+    50% {
+        color:#2C3E50;
+    }
+    100% {
+        color: #009694;
+    }
+`;
+const spin = keyframes`
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+`;
 
 export interface QuestionUpdateTrack {
 	questionId: string;
@@ -70,8 +96,9 @@ export interface DocumentUpdateTrack {
 
 const AdminLessonEditPage = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
-	const { userId, lessonId } = useParams();
+	const { lessonId } = useParams();
 	const { orgId } = useContext(OrganisationContext);
+	const { user } = useContext(UserAuthContext);
 	const { updateLessonPublishing, updateLessons, lessonTypes } = useContext(LessonsContext);
 
 	const { questionTypes, fetchQuestionTypeName, addNewQuestion, updateQuestion } = useContext(QuestionsContext);
@@ -133,7 +160,6 @@ const AdminLessonEditPage = () => {
 	};
 
 	const [isEditMode, setIsEditMode] = useState<boolean>(false);
-	const [resetChanges, setResetChanges] = useState<boolean>(false);
 	const [singleLesson, setSingleLesson] = useState<Lesson>(defaultLesson);
 	const [singleLessonBeforeSave, setSingleLessonBeforeSave] = useState<Lesson>(defaultLesson);
 
@@ -151,6 +177,7 @@ const AdminLessonEditPage = () => {
 	const [addNewDocumentModalOpen, setAddNewDocumentModalOpen] = useState<boolean>(false);
 
 	const [isPublishAllowedMsgOpen, setIsPublishAllowedMsgOpen] = useState<boolean>(false);
+	const [isAiContentGeneratedMsgOpen, setIsAiContentGeneratedMsgOpen] = useState<boolean>(false);
 
 	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(true);
 	const [enterVideoUrl, setEnterVideoUrl] = useState<boolean>(true);
@@ -161,6 +188,8 @@ const AdminLessonEditPage = () => {
 	const [titleError, setTitleError] = useState<boolean>(false);
 	const [instructionError, setInstructionError] = useState<boolean>(false);
 	const [questionError, setQuestionError] = useState<boolean>(false);
+	const [errorMessage, setErrorMessage] = useState<string>('');
+	const [isErrorMessageOpen, setIsErrorMessageOpen] = useState<boolean>(false);
 
 	const resetEnterImageVideoUrl = () => {
 		setEnterVideoUrl(true);
@@ -173,6 +202,9 @@ const AdminLessonEditPage = () => {
 	const [isQuestionCreateModalOpen, setIsQuestionCreateModalOpen] = useState<boolean>(false);
 	const [isDocRenameModalOpen, setIsDocRenameModalOpen] = useState<Array<boolean>>([]);
 	const [originalDocumentNames, setOriginalDocumentNames] = useState<Record<string, string>>({});
+	const [isAiInstructionModalOpen, setIsAiInstructionModalOpen] = useState<boolean>(false);
+	const [isAiQuestionModalOpen, setIsAiQuestionModalOpen] = useState<boolean>(false);
+	const [isUrlErrorOpen, setIsUrlErrorOpen] = useState<boolean>(false);
 
 	const toggleDocRenameModal = (index: number, document: Document) => {
 		const newRenameModalOpen = [...isDocRenameModalOpen];
@@ -335,7 +367,7 @@ const AdminLessonEditPage = () => {
 		resetVideoUpload();
 		resetImageUpload();
 		resetEnterImageVideoUrl();
-	}, [lessonId, isActive, resetChanges]);
+	}, [lessonId]);
 
 	useEffect(() => {
 		setEditorContent(prevEditorContent);
@@ -351,16 +383,12 @@ const AdminLessonEditPage = () => {
 				await axios.patch(`${base_url}/lessons/${lessonId}`, {
 					isActive: false,
 					publishedAt: null, // Clear publishedAt when unpublishing
-					questionIds: singleLesson.questionIds,
-					documentIds: singleLesson.documentIds,
-					text: singleLesson.text,
-					title: singleLesson.title,
-					type: singleLesson.type,
-					orgId: singleLesson.orgId,
-					imageUrl: singleLesson.imageUrl,
-					videoUrl: singleLesson.videoUrl,
 				});
+
 				setIsActive(false);
+				setSingleLesson((prevData) => ({ ...prevData, isActive: false }));
+				setSingleLessonBeforeSave((prevData) => ({ ...prevData, isActive: false }));
+				updateLessons({ ...singleLesson, isActive: false });
 				if (lessonId) updateLessonPublishing(lessonId);
 			} catch (error) {
 				console.log(error);
@@ -392,6 +420,9 @@ const AdminLessonEditPage = () => {
 					videoUrl: singleLesson.videoUrl,
 				});
 				setIsActive(true);
+				setSingleLesson((prevData) => ({ ...prevData, isActive: true }));
+				setSingleLessonBeforeSave((prevData) => ({ ...prevData, isActive: true }));
+				updateLessons({ ...singleLesson, isActive: true });
 				if (lessonId) updateLessonPublishing(lessonId);
 			} catch (error) {
 				console.log(error);
@@ -401,8 +432,89 @@ const AdminLessonEditPage = () => {
 		}
 	};
 
+	const validateUrls = async (): Promise<boolean> => {
+		let hasErrors = false;
+		let errorMessages: string[] = [];
+
+		// Validate image URL if provided
+		if (singleLessonBeforeSave.imageUrl?.trim()) {
+			const imageValidation = await validateImageUrl(singleLessonBeforeSave.imageUrl.trim());
+			if (!imageValidation.isValid) {
+				errorMessages.push(imageValidation.error || 'Invalid image URL');
+				hasErrors = true;
+			}
+		}
+
+		// Validate video URL if provided
+		if (singleLessonBeforeSave.videoUrl?.trim()) {
+			const videoValidation = await validateVideoUrl(singleLessonBeforeSave.videoUrl.trim());
+			if (!videoValidation.isValid) {
+				errorMessages.push(videoValidation.error || 'Invalid video URL');
+				hasErrors = true;
+			}
+		}
+
+		// Validate document URLs if provided
+		if (singleLessonBeforeSave.documents && singleLessonBeforeSave.documents.length > 0) {
+			for (const document of singleLessonBeforeSave.documents) {
+				if (document && document.documentUrl?.trim()) {
+					const documentValidation = await validateDocumentUrl(document.documentUrl.trim());
+					if (!documentValidation.isValid) {
+						errorMessages.push(`Document "${document.name}": ${documentValidation.error || 'Invalid document URL'}`);
+						hasErrors = true;
+					}
+				}
+			}
+		}
+
+		// Show error Snackbar if there are validation errors
+		if (hasErrors) {
+			setErrorMessage(errorMessages.join('\n'));
+			setIsUrlErrorOpen(true);
+		}
+
+		return !hasErrors;
+	};
+
+	// Optional: Real-time URL validation (can be called when user changes URLs)
+	const validateUrlOnChange = async (url: string, type: 'image' | 'video' | 'document'): Promise<void> => {
+		if (!url.trim()) return; // Don't validate empty URLs
+
+		try {
+			let validation;
+			if (type === 'image') {
+				validation = await validateImageUrl(url.trim());
+			} else if (type === 'video') {
+				validation = await validateVideoUrl(url.trim());
+			} else {
+				validation = await validateDocumentUrl(url.trim());
+			}
+
+			if (!validation.isValid) {
+				const typeLabel = type === 'image' ? 'Image' : type === 'video' ? 'Video' : 'Document';
+				setErrorMessage(`${typeLabel} URL: ${validation.error}`);
+				setIsUrlErrorOpen(true);
+			}
+		} catch (error) {
+			console.error('URL validation error:', error);
+		}
+	};
+
 	const handleLessonUpdate = async (e: FormEvent): Promise<void> => {
 		e.preventDefault();
+
+		// Validate URLs before proceeding with any backend operations
+		const urlsValid = await validateUrls();
+		if (!urlsValid) {
+			// Keep all frontend changes but don't proceed with backend update
+			// Update the lesson state with current editor content to preserve it
+			// This ensures the editor content is not lost when URL validation fails
+			setSingleLessonBeforeSave((prevData) => ({
+				...prevData,
+				text: editorContent?.trim() || '',
+			}));
+			return;
+		}
 
 		let updatedQuestions: QuestionInterface[] = [];
 		let updatedDocuments: Document[] = [];
@@ -417,7 +529,7 @@ const AdminLessonEditPage = () => {
 								const response = await axios.post(`${base_url}/documents`, {
 									name: document.name.trim(),
 									orgId,
-									userId,
+									userId: user?._id,
 									documentUrl: document.documentUrl,
 								});
 
@@ -427,7 +539,7 @@ const AdminLessonEditPage = () => {
 									_id: documentResponseData._id,
 									name: document.name.trim(),
 									orgId,
-									userId,
+									userId: user?._id,
 									documentUrl: document.documentUrl,
 									usedInLessons: lessonId ? [lessonId] : [],
 									usedInCourses: document.usedInCourses,
@@ -545,12 +657,13 @@ const AdminLessonEditPage = () => {
 									orgId,
 									question: question.question.trim(),
 									options: question.options,
-									correctAnswer: question.correctAnswer.trim(),
-									videoUrl: question.videoUrl.trim(),
-									imageUrl: question.imageUrl.trim(),
+									correctAnswer: question.correctAnswer,
+									videoUrl: question.videoUrl,
+									imageUrl: question.imageUrl,
 									questionType: questionTypeId,
 									audio: question.audio,
 									video: question.video,
+									isAiGenerated: question.isAiGenerated,
 									matchingPairs: question.matchingPairs,
 									blankValuePairs: question.blankValuePairs,
 									isActive: true,
@@ -567,8 +680,12 @@ const AdminLessonEditPage = () => {
 									createdAt: response.data.createdAt,
 									updatedAt: response.data.updatedAt,
 								} as QuestionInterface;
-							} catch (error) {
+							} catch (error: any) {
 								console.error('Error creating question:', error);
+								setErrorMessage('Error creating question: ' + error.response.data.message);
+								setIsErrorMessageOpen(true);
+								setIsEditMode(true);
+
 								return null;
 							}
 						}
@@ -611,7 +728,7 @@ const AdminLessonEditPage = () => {
 						isActive: singleLessonBeforeSave.isActive,
 						imageUrl: singleLessonBeforeSave.imageUrl,
 						videoUrl: singleLessonBeforeSave.videoUrl,
-						text: editorContent.trim() || '',
+						text: editorContent?.trim() || '',
 						documentIds: updatedDocumentIds,
 						questionIds: updatedQuestionIds,
 						usedInCourses: singleLessonBeforeSave.usedInCourses,
@@ -624,7 +741,7 @@ const AdminLessonEditPage = () => {
 						...singleLessonBeforeSave,
 						questions: updatedQuestions,
 						questionIds: updatedQuestionIds,
-						text: editorContent.trim() || '',
+						text: editorContent?.trim() || '',
 						documentIds: updatedDocumentIds,
 						documents: updatedDocuments,
 						updatedAt: responseUpdatedData.updatedAt,
@@ -637,7 +754,7 @@ const AdminLessonEditPage = () => {
 						...singleLessonBeforeSave,
 						questions: updatedQuestions,
 						questionIds: updatedQuestionIds,
-						text: editorContent.trim() || '',
+						text: editorContent?.trim() || '',
 						documentIds: updatedDocumentIds,
 						documents: updatedDocuments,
 						updatedAt: responseUpdatedData.updatedAt,
@@ -651,13 +768,16 @@ const AdminLessonEditPage = () => {
 							...prevData,
 							questions: updatedQuestions,
 							questionIds: updatedQuestionIds,
-							text: singleLessonBeforeSave.type === 'Quiz' ? '' : editorContent.trim() || '',
+							text: singleLessonBeforeSave.type === 'Quiz' ? '' : editorContent?.trim() || '',
 							documentIds: updatedDocumentIds,
 							documents: updatedDocuments,
 						};
 					});
-				} catch (error) {
+				} catch (error: any) {
 					console.error('Error updating lesson:', error);
+					setErrorMessage(error.response.data.message);
+					setIsErrorMessageOpen(true);
+					setIsEditMode(true);
 				}
 			}
 
@@ -676,8 +796,12 @@ const AdminLessonEditPage = () => {
 			setIsDocumentUpdated(documentUpdateData);
 			setIsLessonUpdated(false);
 			setHasUnsavedChanges(false);
-		} catch (error) {
+			setIsEditMode(false);
+		} catch (error: any) {
 			console.error('Error during lesson update process:', error);
+			setErrorMessage(error.response.data.message);
+			setIsErrorMessageOpen(true);
+			setIsEditMode(true);
 		}
 	};
 
@@ -756,12 +880,10 @@ const AdminLessonEditPage = () => {
 					setSingleLessonBeforeSave={setSingleLessonBeforeSave}
 					isEditMode={isEditMode}
 					isMissingFieldMsgOpen={isMissingFieldMsgOpen}
-					resetChanges={resetChanges}
 					editorContent={editorContent}
 					setIsEditMode={setIsEditMode}
 					setIsMissingFieldMsgOpen={setIsMissingFieldMsgOpen}
 					handlePublishing={handlePublishing}
-					setResetChanges={setResetChanges}
 					handleLessonUpdate={handleLessonUpdate}
 					setIsLessonUpdated={setIsLessonUpdated}
 					setIsQuestionUpdated={setIsQuestionUpdated}
@@ -773,6 +895,7 @@ const AdminLessonEditPage = () => {
 					setQuestionError={setQuestionError}
 					hasUnsavedChanges={hasUnsavedChanges}
 					setHasUnsavedChanges={setHasUnsavedChanges}
+					setErrorMessage={setErrorMessage}
 				/>
 			</Box>
 
@@ -784,6 +907,43 @@ const AdminLessonEditPage = () => {
 				onClose={() => setIsPublishAllowedMsgOpen(false)}>
 				<Alert severity='error' variant='filled' sx={{ width: '100%' }}>
 					Add instruction and/or question(s) to publish the lesson
+				</Alert>
+			</Snackbar>
+
+			<Snackbar
+				open={isErrorMessageOpen}
+				autoHideDuration={3000}
+				anchorOrigin={{ vertical, horizontal }}
+				sx={{ mt: '5rem' }}
+				onClose={() => setIsErrorMessageOpen(false)}>
+				<Alert severity='error' variant='filled' sx={{ width: '100%' }}>
+					{errorMessage}
+				</Alert>
+			</Snackbar>
+
+			<Snackbar
+				open={isAiContentGeneratedMsgOpen}
+				autoHideDuration={3500}
+				anchorOrigin={{ vertical, horizontal }}
+				sx={{ mt: '5rem' }}
+				onClose={() => setIsAiContentGeneratedMsgOpen(false)}>
+				<Alert severity='success' variant='filled' sx={{ width: '100%', color: '#fff' }}>
+					AI content generated successfully! You can now review and edit the content.
+				</Alert>
+			</Snackbar>
+
+			{/* URL validation error Snackbar */}
+			<Snackbar
+				open={isUrlErrorOpen}
+				autoHideDuration={3500}
+				anchorOrigin={{ vertical, horizontal }}
+				sx={{ mt: '5rem' }}
+				onClose={() => {
+					setIsUrlErrorOpen(false);
+					setIsEditMode(true);
+				}}>
+				<Alert severity='error' variant='filled' sx={{ width: '100%' }}>
+					{errorMessage}
 				</Alert>
 			</Snackbar>
 
@@ -968,6 +1128,9 @@ const AdminLessonEditPage = () => {
 											setSingleLessonBeforeSave(() => {
 												return { ...singleLessonBeforeSave, imageUrl: url };
 											});
+
+											// Validate URL immediately after upload
+											validateUrlOnChange(url, 'image');
 										}}
 										onChangeImgUrl={(e) => {
 											setSingleLessonBeforeSave((prevCourse) => ({
@@ -976,6 +1139,9 @@ const AdminLessonEditPage = () => {
 											}));
 											setIsLessonUpdated(true);
 											setHasUnsavedChanges(true);
+
+											// Validate URL on change (debounced)
+											validateUrlOnChange(e.target.value, 'image');
 										}}
 										imageUrlValue={singleLessonBeforeSave?.imageUrl}
 										imageFolderName='LessonImages'
@@ -1010,6 +1176,9 @@ const AdminLessonEditPage = () => {
 											setSingleLessonBeforeSave(() => {
 												return { ...singleLessonBeforeSave, videoUrl: url };
 											});
+
+											// Validate URL immediately after upload
+											validateUrlOnChange(url, 'video');
 										}}
 										onChangeVideoUrl={(e) => {
 											setSingleLessonBeforeSave((prevData) => ({
@@ -1018,6 +1187,9 @@ const AdminLessonEditPage = () => {
 											}));
 											setIsLessonUpdated(true);
 											setHasUnsavedChanges(true);
+
+											// Validate URL on change (debounced)
+											validateUrlOnChange(e.target.value, 'video');
 										}}
 										videoUrlValue={singleLessonBeforeSave?.videoUrl}
 										videoFolderName='LessonVideos'
@@ -1045,9 +1217,40 @@ const AdminLessonEditPage = () => {
 							</Box>
 
 							<Box sx={{ mt: '4.5rem', mb: '1rem' }}>
-								<Typography variant='h6' sx={{ mb: '1rem' }}>
-									{singleLessonBeforeSave.type === LessonType.INSTRUCTIONAL_LESSON ? 'Lesson Instructions' : 'Instructions'}
-								</Typography>
+								<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+									<Typography variant='h6' sx={{ mb: '1rem' }}>
+										{singleLessonBeforeSave.type === LessonType.INSTRUCTIONAL_LESSON ? 'Lesson Instructions' : 'Instructions'}
+									</Typography>
+									<Tooltip title='Create instruction with AI' placement='top' arrow>
+										<IconButton
+											sx={{ 'mb': '1rem', '&:hover': { backgroundColor: 'transparent' } }}
+											onClick={() => setIsAiInstructionModalOpen(true)}>
+											<AiIcon
+												sx={{
+													fontSize: '2rem',
+													width: '1.5rem',
+													height: '1.5rem',
+													border: 'none',
+													ml: 0.8,
+													color: '#4D7B8B',
+													animation: `${colorChange} 1s infinite, ${spin} 3s linear infinite`,
+												}}
+											/>
+										</IconButton>
+									</Tooltip>
+								</Box>
+								<CreateLessonWithAIDialog
+									isAiInstructionModalOpen={isAiInstructionModalOpen}
+									setIsAiInstructionModalOpen={setIsAiInstructionModalOpen}
+									onContentGenerated={(content) => {
+										setEditorContent(content);
+										setPrevEditorContent(content);
+										setIsLessonUpdated(true);
+										setHasUnsavedChanges(true);
+										setInstructionError(false);
+										setIsAiContentGeneratedMsgOpen(true);
+									}}
+								/>
 								<TinyMceEditor
 									height={400}
 									handleEditorChange={(content) => {
@@ -1058,6 +1261,7 @@ const AdminLessonEditPage = () => {
 										setInstructionError(false);
 									}}
 									initialValue={singleLesson.text}
+									value={editorContent}
 									maxLength={15000}
 								/>
 								<Box sx={{ margin: '1rem 0' }}>{instructionError && <CustomErrorMessage>Enter lesson instructions</CustomErrorMessage>}</Box>
@@ -1071,7 +1275,7 @@ const AdminLessonEditPage = () => {
 											justifyContent: 'space-between',
 											alignItems: 'center',
 											width: '100%',
-											margin: '4rem 0 1.5rem 0',
+											margin: '4rem 0 1rem 0',
 										}}>
 										<Box sx={{ flex: 1 }}>
 											<Typography variant='h5'>Questions</Typography>
@@ -1117,6 +1321,105 @@ const AdminLessonEditPage = () => {
 												}}>
 												Create Question
 											</CustomSubmitButton>
+											<Tooltip title='Create questions with AI' placement='top' arrow>
+												<IconButton
+													sx={{ 'mb': '1rem', '&:hover': { backgroundColor: 'transparent' } }}
+													onClick={() => setIsAiQuestionModalOpen(true)}>
+													<AiIcon
+														sx={{
+															fontSize: '2rem',
+															width: '1.5rem',
+															height: '1.5rem',
+															border: 'none',
+															ml: 0.8,
+															color: '#4D7B8B',
+															animation: `${colorChange} 1s infinite, ${spin} 3s linear infinite`,
+														}}
+													/>
+												</IconButton>
+											</Tooltip>
+											<CreateQuestionWithAIDialog
+												isAiQuestionModalOpen={isAiQuestionModalOpen}
+												setIsAiQuestionModalOpen={setIsAiQuestionModalOpen}
+												lessonType={singleLessonBeforeSave.type}
+												onQuestionsGenerated={(questions, questionType) => {
+													try {
+														// Validate that we have a valid question type
+														if (!questionType || !questionTypes?.find((type) => type.name === questionType)) {
+															throw new Error('Invalid question type selected');
+														}
+
+														// Parse the JSON string back to an array of questions
+														const parsedQuestions = JSON.parse(questions);
+
+														// Convert AI-generated questions to the format expected by the lesson
+														const convertedQuestions: QuestionInterface[] = parsedQuestions.map((aiQuestion: any) => {
+															// Use the actual question type that was selected in the AI dialog
+															const questionTypeName = questionType;
+
+															let options = aiQuestion.options || [];
+															let correctAnswer = aiQuestion.correctAnswer;
+
+															if (questionTypeName === 'True-False') {
+																options = ['True', 'False'];
+																// Normalize correctAnswer to 'True' or 'False' (capitalize first letter)
+																if (typeof correctAnswer === 'string') {
+																	const normalized = correctAnswer.trim().toLowerCase();
+																	correctAnswer = normalized === 'true' ? 'True' : 'False';
+																} else {
+																	correctAnswer = 'True'; // fallback
+																}
+															}
+
+															return {
+																_id: generateUniqueId('temp_question_id_'),
+																questionType: questionTypeName,
+																question: aiQuestion.question,
+																options,
+																correctAnswer,
+																imageUrl: aiQuestion.imageUrl || '',
+																videoUrl: aiQuestion.videoUrl || '',
+																audio: aiQuestion.audio || false,
+																video: aiQuestion.video || false,
+																isAiGenerated: true,
+																matchingPairs: aiQuestion.matchingPairs || [],
+																blankValuePairs: aiQuestion.blankValuePairs || [],
+																orgId,
+																isActive: true,
+																createdAt: '',
+																updatedAt: '',
+																clonedFromId: '',
+																clonedFromQuestion: '',
+																usedInLessons: singleLessonBeforeSave?._id ? [singleLessonBeforeSave?._id] : [],
+																createdBy: '',
+																updatedBy: '',
+																createdByName: '',
+																updatedByName: '',
+																createdByImageUrl: '',
+																updatedByImageUrl: '',
+																createdByRole: '',
+																updatedByRole: '',
+															};
+														});
+
+														// Add the generated questions to the lesson
+														setSingleLessonBeforeSave((prevLesson) => ({
+															...prevLesson,
+															questions: [...prevLesson.questions, ...convertedQuestions],
+															questionIds: [...prevLesson.questionIds, ...convertedQuestions.map((q: QuestionInterface) => q._id)],
+														}));
+
+														setIsLessonUpdated(true);
+														setHasUnsavedChanges(true);
+														setIsAiContentGeneratedMsgOpen(true);
+
+														console.log('Generated questions added to lesson:', convertedQuestions);
+													} catch (error) {
+														console.error('Error parsing generated questions:', error);
+														// You might want to show an error message to the user here
+													}
+												}}
+											/>
 										</Box>
 									</Box>
 
@@ -1154,11 +1457,11 @@ const AdminLessonEditPage = () => {
 																			alignItems: 'center',
 																			height: '3rem',
 																			width: '100%',
-																			backgroundColor: theme.bgColor?.common,
 																			margin: '1rem 0',
 																			borderRadius: '0.25rem',
 																			boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
 																			cursor: 'pointer',
+																			bgcolor: question.isAiGenerated ? '#E3F2FD' : theme.bgColor?.common,
 																		}}>
 																		<Box
 																			sx={{
@@ -1187,8 +1490,18 @@ const AdminLessonEditPage = () => {
 																				<Typography variant='body2'>{truncateText(stripHtml(question.question), 45)}</Typography>
 																			</Box>
 
-																			<Box>
+																			<Box sx={{ display: 'flex', alignItems: 'center' }}>
 																				<Typography variant='body2'>{fetchQuestionTypeName(question)}</Typography>
+																				{question.isAiGenerated && (
+																					<AutoAwesome
+																						sx={{
+																							fontSize: '1rem',
+																							marginLeft: '0.5rem',
+																							color: '#2196F3',
+																							zIndex: 1,
+																						}}
+																					/>
+																				)}
 																			</Box>
 
 																			<Box sx={{ display: 'flex' }}>
@@ -1311,8 +1624,11 @@ const AdminLessonEditPage = () => {
 										setIsLessonUpdated(true);
 										setHasUnsavedChanges(true);
 
+										// Validate document URL immediately after upload
+										validateUrlOnChange(url, 'document');
+
 										setSingleLessonBeforeSave((prevData) => {
-											if (prevData && userId) {
+											if (prevData && user?._id) {
 												const maxNumber = prevData?.documents
 													.filter((doc) => doc !== null)
 													.reduce((max, doc) => {
@@ -1327,7 +1643,7 @@ const AdminLessonEditPage = () => {
 													name: newName.trim(),
 													documentUrl: url,
 													orgId,
-													userId,
+													userId: user?._id,
 													createdAt: '',
 													updatedAt: new Date().toISOString(),
 													clonedFromId: '',

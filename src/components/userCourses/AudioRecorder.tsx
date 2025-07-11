@@ -91,6 +91,7 @@ const AudioRecorder = ({
 
 		const mediaRecorderInstance = new MediaRecorder(stream, {
 			mimeType: mimeType,
+			audioBitsPerSecond: QUALITY,
 		});
 
 		mediaRecorderInstance.ondataavailable = handleDataAvailable;

@@ -10,7 +10,7 @@ import AudioRecorder from '../../../userCourses/AudioRecorder';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../../../../firebase';
 import { UserAuthContext } from '../../../../contexts/UserAuthContextProvider';
-import { Box, IconButton, InputAdornment, Tooltip, Typography } from '@mui/material';
+import { Box, IconButton, InputAdornment, Tooltip, Typography, Snackbar, Alert } from '@mui/material';
 import CustomSubmitButton from '../../../forms/customButtons/CustomSubmitButton';
 import { CommunityContext } from '../../../../contexts/CommunityContextProvider';
 import Picker from '@emoji-mart/react';
@@ -21,6 +21,7 @@ import { truncateText } from '../../../../utils/utilText';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { UsersContext } from '../../../../contexts/UsersContextProvider';
 import { MediaQueryContext } from '../../../../contexts/MediaQueryContextProvider';
+import { validateImageUrl } from '../../../../utils/urlValidation';
 
 interface CreateTopicDialogProps {
 	createTopicModalOpen: boolean;
@@ -47,7 +48,40 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 
 	const [showPicker, setShowPicker] = useState<boolean>(false);
 
+	// URL validation error handling
+	const [isUrlErrorOpen, setIsUrlErrorOpen] = useState<boolean>(false);
+	const [urlErrorMessage, setUrlErrorMessage] = useState<string>('');
+
+	// URL validation function
+	const validateUrls = async (): Promise<boolean> => {
+		let hasErrors = false;
+		let errorMessages: string[] = [];
+
+		// Validate image URL if provided
+		if (topic.imageUrl?.trim()) {
+			const imageValidation = await validateImageUrl(topic.imageUrl.trim());
+			if (!imageValidation.isValid) {
+				errorMessages.push(`Image URL: ${imageValidation.error}`);
+				hasErrors = true;
+			}
+		}
+
+		// Show error Snackbar if there are validation errors
+		if (hasErrors) {
+			setUrlErrorMessage(errorMessages.join('\n'));
+			setIsUrlErrorOpen(true);
+		}
+
+		return !hasErrors;
+	};
+
 	const createTopic = async () => {
+		// Validate URLs before proceeding
+		const urlsValid = await validateUrls();
+		if (!urlsValid) {
+			return; // Don't proceed if URL validation fails
+		}
+
 		try {
 			const response = await axios.post(`${base_url}/communityTopics`, {
 				userId: user?._id,
@@ -90,8 +124,15 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 					await addDoc(notificationRef, notificationToUsersData);
 				}
 			}
-		} catch (error) {
+		} catch (error: any) {
 			console.log(error);
+			// Show error message to user
+			if (error?.response?.data?.message) {
+				setUrlErrorMessage(error.response.data.message);
+			} else {
+				setUrlErrorMessage('Failed to create topic. Please try again.');
+			}
+			setIsUrlErrorOpen(true);
 		}
 	};
 
@@ -336,6 +377,15 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 					cancelBtnSx={{ padding: isMobileSize ? '0.1rem 0.25rem' : undefined }}
 				/>
 			</form>
+			<Snackbar
+				open={isUrlErrorOpen}
+				autoHideDuration={3500}
+				anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+				onClose={() => setIsUrlErrorOpen(false)}>
+				<Alert severity='error' variant='filled' sx={{ width: '100%' }}>
+					{urlErrorMessage}
+				</Alert>
+			</Snackbar>
 		</CustomDialog>
 	);
 };

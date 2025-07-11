@@ -1,9 +1,12 @@
 export function stripHtml(html: string): string {
-	const doc = new DOMParser().parseFromString(html, 'text/html');
-	let text = doc?.body.textContent || '';
+	// Decode HTML entities first
+	const txt = document.createElement('textarea');
+	txt.innerHTML = html;
+	const decoded = txt.value;
 
-	// Replace line breaks to make sure they are preserved when rendering
-	text = text.replace(/\n/g, '\n');
+	// Now strip HTML tags
+	const doc = new DOMParser().parseFromString(decoded, 'text/html');
+	let text = doc?.body.textContent || '';
 
 	return text;
 }

@@ -12,11 +12,6 @@ const LearnerRouteGuard: React.FC<LearnerRouteGuardProps> = ({ children }) => {
 	const { user, firebaseUserId } = useContext(UserAuthContext);
 	const [isLoading, setIsLoading] = useState(true);
 
-	console.log('firebaseUserId', user?.firebaseUserId);
-
-	console.log('LearnerRouteGuard - firebaseUserId:', firebaseUserId);
-	console.log('LearnerRouteGuard - user:', user);
-
 	useEffect(() => {
 		// If we have a Firebase user but no user data yet, wait for it
 		if (firebaseUserId && !user) {

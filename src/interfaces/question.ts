@@ -22,6 +22,7 @@ export interface QuestionInterface {
 	isActive: boolean;
 	audio: boolean;
 	video: boolean;
+	isAiGenerated: boolean;
 	matchingPairs: MatchingPair[];
 	blankValuePairs: BlankValuePair[];
 	createdAt: string;
@@ -31,7 +32,7 @@ export interface QuestionInterface {
 	usedInLessons: string[];
 	createdBy: string;
 	updatedBy: string;
-	createdByName: string,
+	createdByName: string;
 	updatedByName: string;
 	createdByImageUrl: string;
 	updatedByImageUrl: string;

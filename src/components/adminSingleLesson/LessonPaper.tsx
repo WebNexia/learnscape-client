@@ -16,13 +16,11 @@ interface LessonPaperProps {
 	singleLessonBeforeSave: Lesson;
 	isEditMode: boolean;
 	isMissingFieldMsgOpen: boolean;
-	resetChanges: boolean;
 	editorContent: string;
 	setSingleLessonBeforeSave: React.Dispatch<React.SetStateAction<Lesson>>;
 	setIsEditMode: React.Dispatch<React.SetStateAction<boolean>>;
 	setIsMissingFieldMsgOpen: React.Dispatch<React.SetStateAction<boolean>>;
 	handlePublishing: () => void;
-	setResetChanges: React.Dispatch<React.SetStateAction<boolean>>;
 	handleLessonUpdate: (event: React.FormEvent<Element>) => void;
 	setIsLessonUpdated: React.Dispatch<React.SetStateAction<boolean>>;
 	setIsQuestionUpdated: React.Dispatch<React.SetStateAction<QuestionUpdateTrack[]>>;
@@ -34,6 +32,7 @@ interface LessonPaperProps {
 	setQuestionError: React.Dispatch<React.SetStateAction<boolean>>;
 	hasUnsavedChanges: boolean;
 	setHasUnsavedChanges: React.Dispatch<React.SetStateAction<boolean>>;
+	setErrorMessage: React.Dispatch<React.SetStateAction<string>>;
 }
 
 const LessonPaper = ({
@@ -42,12 +41,10 @@ const LessonPaper = ({
 	singleLessonBeforeSave,
 	isEditMode,
 	isMissingFieldMsgOpen,
-	resetChanges,
 	setSingleLessonBeforeSave,
 	setIsEditMode,
 	setIsMissingFieldMsgOpen,
 	handlePublishing,
-	setResetChanges,
 	handleLessonUpdate,
 	setIsLessonUpdated,
 	setIsQuestionUpdated,
@@ -59,6 +56,7 @@ const LessonPaper = ({
 	setQuestionError,
 	hasUnsavedChanges,
 	setHasUnsavedChanges,
+	setErrorMessage,
 }: LessonPaperProps) => {
 	const navigate = useNavigate();
 	const vertical = 'top';
@@ -177,7 +175,6 @@ const LessonPaper = ({
 											sx={{ padding: '0 0.75rem', backgroundColor: theme.bgColor?.greenPrimary }}
 											onClick={(e) => {
 												if (singleLessonBeforeSave?.title.trim() !== '' && singleLessonBeforeSave?.title !== '') {
-													setIsEditMode(false);
 													handleLessonUpdate(e as FormEvent<Element>);
 													resetImageUpload();
 													resetVideoUpload();
@@ -199,7 +196,6 @@ const LessonPaper = ({
 											onClick={() => {
 												setIsEditMode(false);
 												setIsLessonUpdated(false);
-												setResetChanges(!resetChanges);
 												setSingleLessonBeforeSave(singleLesson);
 												setIsQuestionUpdated((prevData: QuestionUpdateTrack[]) => {
 													prevData = prevData?.map((data) => {
@@ -214,6 +210,7 @@ const LessonPaper = ({
 												setQuestionError(false);
 												setTitleError(false);
 												setHasUnsavedChanges(false);
+												setErrorMessage('');
 											}}
 											sx={{ color: theme.textColor?.common.main, borderColor: theme.textColor?.common.main, padding: '0 0.75rem' }}>
 											Cancel

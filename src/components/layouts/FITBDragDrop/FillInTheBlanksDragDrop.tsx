@@ -13,6 +13,7 @@ import { LessonType } from '../../../interfaces/enums';
 import CustomInfoMessageAlignedLeft from '../infoMessage/CustomInfoMessageAlignedLeft';
 import theme from '../../../themes';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
+import { decode } from 'html-entities';
 
 const Container = styled(Box)`
 	display: flex;
@@ -51,12 +52,12 @@ const DropArea = styled(Box)<{ $isCorrect: boolean | null; $fromQuizQuestionUser
 				? theme.palette.success.main
 				: '#ef5350'
 			: ($fromQuizQuestionUser || $lessonType === LessonType.QUIZ) && !$isLessonCompleted
-			? '#f0f0f0'
-			: $isCorrect === null
-			? '#f0f0f0'
-			: $isCorrect
-			? theme.palette.success.main
-			: '#ef5350'};
+				? '#f0f0f0'
+				: $isCorrect === null
+					? '#f0f0f0'
+					: $isCorrect
+						? theme.palette.success.main
+						: '#ef5350'};
 	border: 0.1rem solid
 		${({ $isCorrect, $fromQuizQuestionUser, $isLessonCompleted, $lessonType }) =>
 			$isLessonCompleted
@@ -64,12 +65,12 @@ const DropArea = styled(Box)<{ $isCorrect: boolean | null; $fromQuizQuestionUser
 					? '#c3e6cb'
 					: '#f5c6cb'
 				: ($fromQuizQuestionUser || $lessonType === LessonType.QUIZ) && !$isLessonCompleted
-				? '#cccccc'
-				: $isCorrect === null
-				? '#cccccc'
-				: $isCorrect
-				? '#c3e6cb'
-				: '#f5c6cb'};
+					? '#cccccc'
+					: $isCorrect === null
+						? '#cccccc'
+						: $isCorrect
+							? '#c3e6cb'
+							: '#f5c6cb'};
 	border-radius: 0.25rem;
 	padding: 0 0.25rem;
 	margin: 0.1rem 0.35rem;
@@ -169,7 +170,7 @@ const FillInTheBlanksDragDrop = ({
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
 	useEffect(() => {
-		const sanitizedHtml = sanitizeHtml(textWithBlanks)
+		const sanitizedHtml = sanitizeHtml(decode(textWithBlanks))
 			.replace(/[()]/g, '')
 			.replace(/<\/?[^>]+(>|$)/g, '') // Remove HTML tags
 			.replace(/&nbsp;/g, ' ') // Replace &nbsp; with a regular space

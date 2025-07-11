@@ -1,4 +1,4 @@
-import { TableCell, Typography } from '@mui/material';
+import { Box, TableCell, Typography } from '@mui/material';
 import { ReactNode, useContext } from 'react';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
@@ -13,10 +13,12 @@ const CustomTableCell = ({ children, value }: CustomTableCellProps) => {
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 	return (
 		<TableCell sx={{ textAlign: 'center', padding: '0.75rem 0' }}>
-			<Typography variant='body2' sx={{ fontSize: isMobileSizeSmall ? '0.65rem' : isMobileSize ? '0.75rem' : '0.85rem' }}>
-				{value}
-			</Typography>
-			{children}
+			<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+				<Typography variant='body2' sx={{ fontSize: isMobileSizeSmall ? '0.65rem' : isMobileSize ? '0.75rem' : '0.85rem' }}>
+					{value}
+				</Typography>
+				{children}
+			</Box>
 		</TableCell>
 	);
 };

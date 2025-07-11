@@ -9,6 +9,7 @@ import { QuestionsContext } from '../../contexts/QuestionsContextProvider';
 import { LessonType } from '../../interfaces/enums';
 import NoContentBoxAdmin from '../layouts/noContentBox/NoContentBoxAdmin';
 import CustomInfoMessageAlignedRight from '../layouts/infoMessage/CustomInfoMessageAlignedRight';
+import { AutoAwesome } from '@mui/icons-material';
 
 interface QuestionsBoxNonEditProps {
 	singleLesson?: Lesson;
@@ -55,11 +56,27 @@ const QuestionsBoxNonEdit = ({ singleLesson, setIsDisplayNonEditQuestion, setDis
 												borderRadius: '0.25rem',
 												boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
 												cursor: 'pointer',
+												bgcolor: question.isAiGenerated ? '#E3F2FD' : theme.bgColor?.common,
+												position: 'relative',
 											}}
 											onClick={() => {
 												setDisplayedQuestionNonEdit(question);
 												setIsDisplayNonEditQuestion(true);
 											}}>
+											{/* AI Icon positioned absolutely in top-right corner */}
+											{question.isAiGenerated && (
+												<AutoAwesome
+													sx={{
+														position: 'absolute',
+														top: '0.25rem',
+														right: '0.25rem',
+														fontSize: '1rem',
+														color: '#2196F3',
+														zIndex: 1,
+													}}
+												/>
+											)}
+
 											<Box
 												sx={{
 													height: '3rem',
@@ -80,7 +97,9 @@ const QuestionsBoxNonEdit = ({ singleLesson, setIsDisplayNonEditQuestion, setDis
 													<Typography variant='body2'>{truncateText(stripHtml(question.question), 60)}</Typography>
 												</Box>
 												<Box>
-													<Typography variant='body2'>{fetchQuestionTypeName(question)}</Typography>
+													<Typography variant='body2' sx={{ mr: question.isAiGenerated ? '0.5rem' : '0' }}>
+														{fetchQuestionTypeName(question)}
+													</Typography>
 												</Box>
 											</Box>
 										</Box>

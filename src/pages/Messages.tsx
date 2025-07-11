@@ -147,7 +147,8 @@ const Messages = () => {
 		return isUserCurrentlyBlocked(participant.firebaseUserId, activeChat?.blockedUsers);
 	});
 
-	const { imageUpload, imagePreview, handleImageChange, handleImageUpload, resetImageUpload, isUploading, isImgSizeLarge } = useImageUpload();
+	const { imageUpload, imagePreview, handleImageChange, handleImageUpload, resetImageUpload, isUploading, isImgSizeLarge, maxSizeInMB } =
+		useImageUpload({ maxSizeInMB: 1 });
 
 	const handleEmojiSelect = (emoji: any) => {
 		setCurrentMessage((prevMessage) => prevMessage + emoji.native);
@@ -1352,7 +1353,7 @@ const Messages = () => {
 										severity='error'
 										variant='filled'
 										sx={{ width: isMobileSize ? '90%' : '100%', fontSize: isMobileSize ? '0.8rem' : undefined, textAlign: 'center' }}>
-										Image size exceeds the limit of 1 MB
+										Image size exceeds the limit of {maxSizeInMB} MB
 									</Alert>
 								</Snackbar>
 

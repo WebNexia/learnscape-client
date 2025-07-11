@@ -147,6 +147,8 @@ const AdminCourseEditChapter = ({
 										return prevData;
 									});
 
+									setHasUnsavedChanges(true);
+
 									setDeletedChapterIds((prevIds) => {
 										if (!chapter.chapterId.includes('temp_chapter_id')) {
 											return [...prevIds, chapter.chapterId];

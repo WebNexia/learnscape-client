@@ -2,7 +2,12 @@ import { useState, useContext } from 'react';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import uploadImage from '../utils/imageUpload';
 
-const useImageUpload = () => {
+interface UseImageUploadOptions {
+	maxSizeInMB?: number;
+}
+
+const useImageUpload = (options: UseImageUploadOptions = {}) => {
+	const { maxSizeInMB = 3 } = options; // Default to 3MB for backward compatibility
 	const { organisation } = useContext(OrganisationContext); // Assuming you have org context
 	const [imageUpload, setImageUpload] = useState<File | null>(null);
 	const [imagePreview, setImagePreview] = useState<string | null>(null); // State for preview URL
@@ -12,8 +17,8 @@ const useImageUpload = () => {
 	const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		if (e.target.files && e.target.files.length > 0) {
 			const file = e.target.files[0];
-			if (file.size > 3 * 1024 * 1024) {
-				// Image size validation (3MB limit)
+			if (file.size > maxSizeInMB * 1024 * 1024) {
+				// Image size validation (configurable limit)
 				setIsImageSizeLarge(true);
 			} else {
 				setImageUpload(file);
@@ -57,6 +62,7 @@ const useImageUpload = () => {
 		handleImageUpload,
 		isUploading, // Return uploading state
 		resetImageUpload,
+		maxSizeInMB, // Return the size limit for error messages
 	};
 };
 

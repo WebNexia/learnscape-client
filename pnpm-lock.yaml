@@ -68,6 +68,9 @@ dependencies:
   framer-motion:
     specifier: ^11.0.24
     version: 11.18.2(react-dom@18.3.1)(react@18.3.1)
+  html-entities:
+    specifier: ^2.6.0
+    version: 2.6.0
   html2canvas:
     specifier: ^1.4.1
     version: 1.4.1
@@ -3857,7 +3860,6 @@ packages:
     resolution: {integrity: sha512-kig+rMn/QOVRvr7c86gQ8lWXq+Hkv6CbAH1hLu+RG338StTpE8Z0b44SDVaqVu7HGKf27frdmUYEs9hTUX/cLQ==}
     requiresBuild: true
     dev: false
-    optional: true
 
   /html2canvas@1.4.1:
     resolution: {integrity: sha512-fPU6BHNpsyIhr8yyMpTLLxAbkaK8ArIBcmZIRiBLiDhjeqvXolaEmDGmELFuX9I4xDcaKKcJl+TKZLqruBbmWA==}

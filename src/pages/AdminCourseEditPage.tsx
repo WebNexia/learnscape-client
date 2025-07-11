@@ -1,6 +1,6 @@
 import { Box, DialogContent, Typography } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
-import { FormEvent, useContext, useEffect, useState, useCallback } from 'react';
+import { FormEvent, useContext, useEffect, useState } from 'react';
 import { useParams, useBlocker, useNavigate } from 'react-router-dom';
 import axios from '@utils/axiosInstance';
 import { CoursesContext } from '../contexts/CoursesContextProvider';
@@ -29,6 +29,8 @@ import DocumentsListEditBox from '../components/adminDocuments/DocumentsListEdit
 import NoContentBoxAdmin from '../components/layouts/noContentBox/NoContentBoxAdmin';
 import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/CustomInfoMessageAlignedLeft';
 import { useAuth } from '../hooks/useAuth';
+import { validateImageUrl, validateDocumentUrl } from '../utils/urlValidation';
+import { Snackbar, Alert } from '@mui/material';
 
 export interface ChapterUpdateTrack {
 	chapterId: string;
@@ -107,6 +109,8 @@ const AdminCourseEditPage = () => {
 	const [nextLocation, setNextLocation] = useState<string | null>(null);
 
 	const [isPopStateNavigation, setIsPopStateNavigation] = useState(false);
+	const [isUrlErrorOpen, setIsUrlErrorOpen] = useState<boolean>(false);
+	const [urlErrorMessage, setUrlErrorMessage] = useState<string>('');
 
 	useEffect(() => {
 		const handlePopState = () => {
@@ -295,6 +299,14 @@ const AdminCourseEditPage = () => {
 
 				const responseUpdatedData = response.data.data;
 
+				setSingleCourseBeforeSave({
+					...updatedCourse,
+					updatedAt: responseUpdatedData.updatedAt,
+					updatedByName: responseUpdatedData.updatedByName,
+					updatedByImageUrl: responseUpdatedData.updatedByImageUrl,
+					updatedByRole: responseUpdatedData.updatedByRole,
+				});
+
 				setSingleCourse({
 					...updatedCourse,
 					updatedAt: responseUpdatedData.updatedAt,
@@ -377,6 +389,7 @@ const AdminCourseEditPage = () => {
 								title: chapter.title.trim(),
 								lessonIds: chapter.lessonIds,
 								orgId,
+								courseId,
 							});
 							chapter.chapterId = response.data._id;
 						} catch (error) {
@@ -484,6 +497,14 @@ const AdminCourseEditPage = () => {
 
 					const responseUpdatedData = response.data.data;
 
+					setSingleCourseBeforeSave({
+						...updatedCourse,
+						updatedAt: responseUpdatedData.updatedAt,
+						updatedByName: responseUpdatedData.updatedByName,
+						updatedByImageUrl: responseUpdatedData.updatedByImageUrl,
+						updatedByRole: responseUpdatedData.updatedByRole,
+					});
+
 					updateCourse({
 						...updatedCourse,
 						updatedAt: responseUpdatedData.updatedAt,
@@ -549,6 +570,7 @@ const AdminCourseEditPage = () => {
 
 			setIsChapterUpdated(chapterUpdateData);
 			setDeletedChapterIds([]);
+			setIsEditMode(false);
 		} catch (error) {
 			console.error('Error updating course:', error);
 		}
@@ -559,7 +581,7 @@ const AdminCourseEditPage = () => {
 
 		const hasPublishedLesson = chapterLessonDataBeforeSave.some((chapter) => chapter.lessons?.some((lesson) => lesson?.isActive));
 
-		if (isTryingToPublish && !hasPublishedLesson) {
+		if (isTryingToPublish && !hasPublishedLesson && !singleCourseBeforeSave?.courseManagement.isExternal) {
 			setIsNoChapterMsgOpen(true);
 			return;
 		} else if (courseId !== undefined) {
@@ -580,6 +602,16 @@ const AdminCourseEditPage = () => {
 					}
 					return prevData;
 				});
+				setSingleCourseBeforeSave((prevData) => {
+					if (prevData) {
+						return {
+							...prevData,
+							isActive: !singleCourseBeforeSave?.isActive,
+							publishedAt: isTryingToPublish ? new Date().toISOString() : null,
+						};
+					}
+					return prevData;
+				});
 				updateCoursePublishing(courseId);
 			} catch (error) {
 				console.log(error);
@@ -589,6 +621,30 @@ const AdminCourseEditPage = () => {
 
 	const handleCourseUpdate = async (e: FormEvent): Promise<void> => {
 		e.preventDefault();
+
+		// Validate image URL before proceeding
+		if (singleCourseBeforeSave?.imageUrl?.trim()) {
+			const imageValidation = await validateImageUrl(singleCourseBeforeSave.imageUrl.trim());
+			if (!imageValidation.isValid) {
+				setUrlErrorMessage('Invalid image URL format');
+				setIsUrlErrorOpen(true);
+				return;
+			}
+		}
+
+		// Validate document URLs before proceeding
+		if (singleCourseBeforeSave?.documents) {
+			for (const document of singleCourseBeforeSave.documents) {
+				if (document && document.documentUrl?.trim()) {
+					const docValidation = await validateDocumentUrl(document.documentUrl.trim());
+					if (!docValidation.isValid) {
+						setUrlErrorMessage('Invalid document URL format');
+						setIsUrlErrorOpen(true);
+						return;
+					}
+				}
+			}
+		}
 
 		let validUntil: Date | null = null;
 		const startingDate = new Date(singleCourseBeforeSave?.startingDate || '');
@@ -653,7 +709,6 @@ const AdminCourseEditPage = () => {
 						}}>
 						<form>
 							<CourseDetailsEditBox
-								singleCourse={singleCourse}
 								singleCourseBeforeSave={singleCourseBeforeSave}
 								isFree={isFree}
 								isMissingField={isMissingField}
@@ -700,6 +755,7 @@ const AdminCourseEditPage = () => {
 													top: document.body.scrollHeight,
 													behavior: 'smooth',
 												});
+												setHasUnsavedChanges(true);
 											}}
 											style={{ display: 'flex', flexDirection: 'column' }}>
 											<CustomTextField
@@ -943,6 +999,17 @@ const AdminCourseEditPage = () => {
 					cancelBtnText='Stay'
 				/>
 			</CustomDialog>
+
+			{/* URL validation error SnackBar */}
+			<Snackbar
+				open={isUrlErrorOpen}
+				autoHideDuration={3500}
+				anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+				onClose={() => setIsUrlErrorOpen(false)}>
+				<Alert severity='error' variant='filled' sx={{ width: '100%' }}>
+					{urlErrorMessage}
+				</Alert>
+			</Snackbar>
 		</DashboardPagesLayout>
 	);
 };
