@@ -11,6 +11,8 @@ import {
 	SelectChangeEvent,
 	Tooltip,
 	Typography,
+	Snackbar,
+	Alert,
 } from '@mui/material';
 import CustomDialog from '../dialog/CustomDialog';
 import CustomTextField from '../../forms/customFields/CustomTextField';
@@ -39,6 +41,7 @@ import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 import axios from '@utils/axiosInstance';
 import HandleImageUploadURL from '../../forms/uploadImageVideoDocument/HandleImageUploadURL';
 import ImageThumbnail from '../../forms/uploadImageVideoDocument/ImageThumbnail';
+import { validateImageUrl } from '../../../utils/urlValidation';
 
 interface CreateEventDialogProps {
 	newEvent: Event;
@@ -95,6 +98,10 @@ const CreateEventDialog = ({
 	const [searchCourseValue, setSearchCourseValue] = useState<string>('');
 	const [enterCoverImageUrl, setEnterCoverImageUrl] = useState<boolean>(true);
 
+	// URL validation error handling
+	const [isUrlErrorOpen, setIsUrlErrorOpen] = useState<boolean>(false);
+	const [urlErrorMessage, setUrlErrorMessage] = useState<string>('');
+
 	useEffect(() => {
 		let locale = navigator.language;
 		// Map known browser locales to Dayjs locales
@@ -106,7 +113,50 @@ const CreateEventDialog = ({
 		dayjs.locale(locale);
 	}, []);
 
+	// URL validation function
+	const validateUrls = async (): Promise<boolean> => {
+		let hasErrors = false;
+		let errorMessages: string[] = [];
+
+		// Validate event link URL if provided
+		if (newEvent.eventLinkUrl?.trim()) {
+			try {
+				const url = new URL(newEvent.eventLinkUrl.trim());
+				if (!url.protocol.startsWith('http')) {
+					errorMessages.push('Event Link URL: Invalid URL format. Must start with http:// or https://');
+					hasErrors = true;
+				}
+			} catch (error) {
+				errorMessages.push('Event Link URL: Invalid URL format');
+				hasErrors = true;
+			}
+		}
+
+		// Validate cover image URL if provided (for public events)
+		if (newEvent.isPublic && newEvent.coverImageUrl?.trim()) {
+			const imageValidation = await validateImageUrl(newEvent.coverImageUrl.trim());
+			if (!imageValidation.isValid) {
+				errorMessages.push(`Cover Image URL: ${imageValidation.error}`);
+				hasErrors = true;
+			}
+		}
+
+		// Show error Snackbar if there are validation errors
+		if (hasErrors) {
+			setUrlErrorMessage(errorMessages.join('\n'));
+			setIsUrlErrorOpen(true);
+		}
+
+		return !hasErrors;
+	};
+
 	const handleAddEvent = async () => {
+		// Validate URLs before proceeding
+		const urlsValid = await validateUrls();
+		if (!urlsValid) {
+			return; // Don't proceed if URL validation fails
+		}
+
 		const allFirebaseUserIds: string[] = sortedUsersData
 			?.filter((filteredUser) => filteredUser._id !== user?._id)
 			?.map((mappedUser) => mappedUser.firebaseUserId);
@@ -236,11 +286,20 @@ const CreateEventDialog = ({
 					await addDoc(notificationRef, publicEventNotification);
 				}
 			}
-		} catch (error) {
+		} catch (error: any) {
 			console.log(error);
+			// Show error message to user
+			if (error?.response?.data?.message) {
+				setUrlErrorMessage(error.response.data.message);
+			} else {
+				setUrlErrorMessage('Failed to create event. Please try again.');
+			}
+			setIsUrlErrorOpen(true);
 		}
 
+		// Only reset form and close modal on success
 		resetNewEventForm();
+		setNewEventModalOpen(false);
 	};
 
 	const resetNewEventForm = () => {
@@ -288,8 +347,6 @@ const CreateEventDialog = ({
 				onSubmit={(e) => {
 					e.preventDefault();
 					handleAddEvent();
-					setNewEventModalOpen(false);
-					resetNewEventForm();
 				}}>
 				<DialogContent sx={{ mt: '-0.5rem' }}>
 					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -909,6 +966,15 @@ const CreateEventDialog = ({
 					}}
 				/>
 			</form>
+			<Snackbar
+				open={isUrlErrorOpen}
+				autoHideDuration={3500}
+				anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+				onClose={() => setIsUrlErrorOpen(false)}>
+				<Alert severity='error' variant='filled' sx={{ width: '100%' }}>
+					{urlErrorMessage}
+				</Alert>
+			</Snackbar>
 		</CustomDialog>
 	);
 };

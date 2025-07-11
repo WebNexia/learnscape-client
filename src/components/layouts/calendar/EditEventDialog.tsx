@@ -11,6 +11,8 @@ import {
 	SelectChangeEvent,
 	Tooltip,
 	Typography,
+	Snackbar,
+	Alert,
 } from '@mui/material';
 import { AttendeeInfo, Event } from '../../../interfaces/event';
 import CustomDialog from '../dialog/CustomDialog';
@@ -34,12 +36,13 @@ import theme from '../../../themes';
 import { truncateText } from '../../../utils/utilText';
 import { SingleCourse } from '../../../interfaces/course';
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
-import { addDoc, collection, getDocs, query, serverTimestamp, where } from 'firebase/firestore';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../../firebase';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 import axios from '@utils/axiosInstance';
 import HandleImageUploadURL from '../../forms/uploadImageVideoDocument/HandleImageUploadURL';
 import ImageThumbnail from '../../forms/uploadImageVideoDocument/ImageThumbnail';
+import { validateImageUrl } from '../../../utils/urlValidation';
 
 interface EditEventDialogProps {
 	setIsEventDeleted: React.Dispatch<React.SetStateAction<boolean>>;
@@ -101,6 +104,10 @@ const EditEventDialog = ({
 	const [isEventUpdated, setIsEventUpdated] = useState<boolean>(false);
 	const [enterCoverImageUrl, setEnterCoverImageUrl] = useState<boolean>(true);
 
+	// URL validation error handling
+	const [isUrlErrorOpen, setIsUrlErrorOpen] = useState<boolean>(false);
+	const [urlErrorMessage, setUrlErrorMessage] = useState<string>('');
+
 	const originalIsPublic = useRef<boolean>(false);
 
 	// Store the original isPublic value when the dialog was opened
@@ -121,7 +128,50 @@ const EditEventDialog = ({
 		dayjs.locale(locale);
 	}, []);
 
+	// URL validation function
+	const validateUrls = async (): Promise<boolean> => {
+		let hasErrors = false;
+		let errorMessages: string[] = [];
+
+		// Validate event link URL if provided
+		if (selectedEvent?.eventLinkUrl?.trim()) {
+			try {
+				const url = new URL(selectedEvent.eventLinkUrl.trim());
+				if (!url.protocol.startsWith('http')) {
+					errorMessages.push('Event Link URL: Invalid URL format. Must start with http:// or https://');
+					hasErrors = true;
+				}
+			} catch (error) {
+				errorMessages.push('Event Link URL: Invalid URL format');
+				hasErrors = true;
+			}
+		}
+
+		// Validate cover image URL if provided (for public events)
+		if (selectedEvent?.isPublic && selectedEvent?.coverImageUrl?.trim()) {
+			const imageValidation = await validateImageUrl(selectedEvent.coverImageUrl.trim());
+			if (!imageValidation.isValid) {
+				errorMessages.push(`Cover Image URL: ${imageValidation.error}`);
+				hasErrors = true;
+			}
+		}
+
+		// Show error Snackbar if there are validation errors
+		if (hasErrors) {
+			setUrlErrorMessage(errorMessages.join('\n'));
+			setIsUrlErrorOpen(true);
+		}
+
+		return !hasErrors;
+	};
+
 	const editEvent = async () => {
+		// Validate URLs before proceeding
+		const urlsValid = await validateUrls();
+		if (!urlsValid) {
+			return; // Don't proceed if URL validation fails
+		}
+
 		// Use the original isPublic value from when the dialog was opened
 		const wasPublic = originalIsPublic.current;
 		const previousAttendeeIds = selectedEvent?.allAttendeesIds || [];
@@ -277,8 +327,15 @@ const EditEventDialog = ({
 			}
 
 			setEditEventModalOpen(false);
-		} catch (error) {
+		} catch (error: any) {
 			console.log(error);
+			// Show error message to user
+			if (error?.response?.data?.message) {
+				setUrlErrorMessage(error.response.data.message);
+			} else {
+				setUrlErrorMessage('Failed to update event. Please try again.');
+			}
+			setIsUrlErrorOpen(true);
 		}
 	};
 
@@ -1053,6 +1110,15 @@ const EditEventDialog = ({
 					maxWidth='xs'>
 					<CustomDialogActions deleteBtn onCancel={() => setDeleteEventModalOpen(false)} onDelete={deleteEvent} />
 				</CustomDialog>
+				<Snackbar
+					open={isUrlErrorOpen}
+					autoHideDuration={3500}
+					anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+					onClose={() => setIsUrlErrorOpen(false)}>
+					<Alert severity='error' variant='filled' sx={{ width: '100%' }}>
+						{urlErrorMessage}
+					</Alert>
+				</Snackbar>
 			</form>
 		</CustomDialog>
 	);

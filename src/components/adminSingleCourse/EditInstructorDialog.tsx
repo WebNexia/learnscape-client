@@ -3,7 +3,7 @@ import CustomTextField from '../../components/forms/customFields/CustomTextField
 import CustomDialog from '../../components/layouts/dialog/CustomDialog';
 import { SingleCourse } from '../../interfaces/course';
 import { useContext, useState, useEffect } from 'react';
-import { Box, TextField } from '@mui/material';
+import { Box, TextField, Snackbar, Alert } from '@mui/material';
 import UserSearchSelect from '../../components/UserSearchSelect';
 import { UsersContext } from '../../contexts/UsersContextProvider';
 import axios from '@utils/axiosInstance';
@@ -13,6 +13,7 @@ import Chip from '@mui/material/Chip';
 import theme from '../../themes';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import HandleImageUploadURL from '../../components/forms/uploadImageVideoDocument/HandleImageUploadURL';
+import { validateImageUrl } from '../../utils/urlValidation';
 
 interface EditInstructorDialogProps {
 	isEditInstructorDialogOpen: boolean;
@@ -39,6 +40,8 @@ const EditInstructorDialog = ({
 
 	const [isUserSelected, setIsUserSelected] = useState<boolean>(false);
 	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(true);
+	const [isUrlErrorOpen, setIsUrlErrorOpen] = useState<boolean>(false);
+	const [urlErrorMessage, setUrlErrorMessage] = useState<string>('');
 
 	useEffect(() => {
 		if (isEditInstructorDialogOpen) {
@@ -46,7 +49,32 @@ const EditInstructorDialog = ({
 		}
 	}, [isEditInstructorDialogOpen]);
 
+	// URL validation function
+	const validateImageUrlOnChange = async (url: string): Promise<void> => {
+		if (!url.trim()) return; // Don't validate empty URLs
+
+		try {
+			const validation = await validateImageUrl(url.trim());
+			if (!validation.isValid) {
+				setUrlErrorMessage(`Image URL: ${validation.error}`);
+				setIsUrlErrorOpen(true);
+			}
+		} catch (error) {
+			console.error('URL validation error:', error);
+		}
+	};
+
 	const handleInstructorUpdate = async () => {
+		// Validate image URL before proceeding
+		if (singleCourseCopy?.instructor?.imageUrl?.trim()) {
+			const imageValidation = await validateImageUrl(singleCourseCopy.instructor.imageUrl.trim());
+			if (!imageValidation.isValid) {
+				setUrlErrorMessage(`Image URL: ${imageValidation.error}`);
+				setIsUrlErrorOpen(true);
+				return; // Don't close dialog, just return
+			}
+		}
+
 		try {
 			const response = await axios.patch(`${base_url}/courses/${singleCourseCopy?._id}`, {
 				instructor: singleCourseCopy?.instructor,
@@ -56,6 +84,7 @@ const EditInstructorDialog = ({
 
 			updateCourse(responseUpdatedData as SingleCourse);
 			setSingleCourse(singleCourseCopy);
+			setIsEditInstructorDialogOpen(false); // Only close dialog on successful save
 		} catch (error) {
 			console.log(error);
 		}
@@ -67,6 +96,7 @@ const EditInstructorDialog = ({
 			closeModal={() => {
 				setIsEditInstructorDialogOpen(false);
 				setSingleCourseCopy(singleCourse);
+				setIsUrlErrorOpen(false);
 			}}
 			title='Edit Instructor'
 			maxWidth='sm'>
@@ -75,7 +105,6 @@ const EditInstructorDialog = ({
 					e.preventDefault();
 					if (!(document.activeElement?.getAttribute('aria-autocomplete') === 'list')) {
 						handleInstructorUpdate();
-						setIsEditInstructorDialogOpen(false);
 					}
 				}}
 				style={{ display: 'flex', flexDirection: 'column' }}>
@@ -156,6 +185,8 @@ const EditInstructorDialog = ({
 											},
 										});
 									}
+									// Validate URL immediately after upload
+									validateImageUrlOnChange(url);
 								}}
 								onChangeImgUrl={(e) => {
 									if (singleCourseCopy) {
@@ -167,6 +198,8 @@ const EditInstructorDialog = ({
 											},
 										});
 									}
+									// Validate URL on change (debounced)
+									validateImageUrlOnChange(e.target.value);
 								}}
 								imageUrlValue={singleCourseCopy?.instructor?.imageUrl || ''}
 								imageFolderName='InstructorImages'
@@ -423,11 +456,23 @@ const EditInstructorDialog = ({
 					onCancel={() => {
 						setIsEditInstructorDialogOpen(false);
 						setSingleCourseCopy(singleCourse);
+						setIsUrlErrorOpen(false);
 					}}
 					submitBtnText='Save'
 					actionSx={{ width: '95%', margin: '0.75rem auto' }}
 				/>
 			</form>
+
+			{/* URL validation error SnackBar */}
+			<Snackbar
+				open={isUrlErrorOpen}
+				autoHideDuration={3500}
+				anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+				onClose={() => setIsUrlErrorOpen(false)}>
+				<Alert severity='error' variant='filled' sx={{ width: '100%' }}>
+					{urlErrorMessage}
+				</Alert>
+			</Snackbar>
 		</CustomDialog>
 	);
 };

@@ -25,13 +25,14 @@ import CustomCancelButton from '../components/forms/customButtons/CustomCancelBu
 import CustomTablePagination from '../components/layouts/table/CustomTablePagination';
 import { formatMessageTime } from '../utils/formatTime';
 import { CommunityContext } from '../contexts/CommunityContextProvider';
+import { UsersContext } from '../contexts/UsersContextProvider';
+import { Roles } from '../interfaces/enums';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { truncateText } from '../utils/utilText';
-import { UsersContext } from '../contexts/UsersContextProvider';
+import { validateImageUrl } from '../utils/urlValidation';
 import { renderMessageWithMentions } from '../utils/renderMessageWithMentions';
 import { debounce } from 'lodash';
 import { processTitle } from '../utils/processTitle';
-import { Roles } from '../interfaces/enums';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 
 export interface UserSuggestion {
@@ -90,6 +91,10 @@ const CommunityTopicPage = () => {
 
 	const [uploadAudioDialogOpen, setUploadAudioDialogOpen] = useState<boolean>(false);
 	const [audioUrl, setAudioUrl] = useState<string>('');
+
+	// URL validation error handling
+	const [isUrlErrorOpen, setIsUrlErrorOpen] = useState<boolean>(false);
+	const [urlErrorMessage, setUrlErrorMessage] = useState<string>('');
 
 	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(user?.role === 'admin' ? true : false);
 	const [isAudioUploading, setIsAudioUploading] = useState<boolean>(false);
@@ -178,8 +183,38 @@ const CommunityTopicPage = () => {
 		setShowPicker(false);
 	};
 
+	// URL validation function
+	const validateUrls = async (): Promise<boolean> => {
+		let hasErrors = false;
+		let errorMessages: string[] = [];
+
+		// Validate image URL if provided
+		if (imgUrl?.trim()) {
+			const imageValidation = await validateImageUrl(imgUrl.trim());
+			if (!imageValidation.isValid) {
+				errorMessages.push(`Image URL: ${imageValidation.error}`);
+				hasErrors = true;
+			}
+		}
+
+		// Show error Snackbar if there are validation errors
+		if (hasErrors) {
+			setUrlErrorMessage(errorMessages.join('\n'));
+			setIsUrlErrorOpen(true);
+		}
+
+		return !hasErrors;
+	};
+
 	const sendMessage = async () => {
 		if (isSending) return;
+
+		// Validate URLs before proceeding
+		const urlsValid = await validateUrls();
+		if (!urlsValid) {
+			return; // Don't proceed if URL validation fails
+		}
+
 		setIsSending(true);
 		try {
 			const response = await axios.post(`${base_url}/communityMessages`, {
@@ -289,8 +324,15 @@ const CommunityTopicPage = () => {
 			setTopicSuggestions([]);
 			setShowUserSuggestions(false);
 			setShowTopicSuggestions(false);
-		} catch (error) {
+		} catch (error: any) {
 			console.log('sendMessage error:', error);
+			// Show error message to user
+			if (error?.response?.data?.message) {
+				setUrlErrorMessage(error.response.data.message);
+			} else {
+				setUrlErrorMessage('Failed to send message. Please try again.');
+			}
+			setIsUrlErrorOpen(true);
 		} finally {
 			setIsSending(false);
 		}
@@ -1039,6 +1081,15 @@ const CommunityTopicPage = () => {
 					</Box>
 				)}
 			</Box>
+			<Snackbar
+				open={isUrlErrorOpen}
+				autoHideDuration={3500}
+				anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+				onClose={() => setIsUrlErrorOpen(false)}>
+				<Alert severity='error' variant='filled' sx={{ width: '100%' }}>
+					{urlErrorMessage}
+				</Alert>
+			</Snackbar>
 		</DashboardPagesLayout>
 	);
 };

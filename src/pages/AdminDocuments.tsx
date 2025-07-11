@@ -1,4 +1,4 @@
-import { Box, FormControl, InputAdornment, Link, MenuItem, Select, Table, TableBody, TableCell, TableRow } from '@mui/material';
+import { Box, FormControl, InputAdornment, Link, MenuItem, Select, Table, TableBody, TableCell, TableRow, Snackbar, Alert } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { useContext, useEffect, useRef, useState } from 'react';
 import axios from '@utils/axiosInstance';
@@ -22,6 +22,7 @@ import CreateNewDocumentDialog from '../components/documents/CreateNewDocumentDi
 import EditDocumentDialog from '../components/documents/EditDocumentDialog';
 import theme from '../themes';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
+import { validateDocumentUrl, validateImageUrl } from '../utils/urlValidation';
 
 const AdminDocuments = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -105,6 +106,10 @@ const AdminDocuments = () => {
 	const [EUR, setEUR] = useState<Price>({ currency: 'eur', amount: '0' });
 	const [TRY, setTRY] = useState<Price>({ currency: 'try', amount: '0' });
 
+	// URL validation error handling
+	const [isUrlErrorOpen, setIsUrlErrorOpen] = useState<boolean>(false);
+	const [urlErrorMessage, setUrlErrorMessage] = useState<string>('');
+
 	useEffect(() => {
 		setDocumentsPageNumber(1);
 	}, []);
@@ -139,8 +144,46 @@ const AdminDocuments = () => {
 		setFileUploaded(false);
 	};
 
-	const createDocument = async (): Promise<void> => {
+	const createDocument = async (): Promise<boolean> => {
 		try {
+			// Validate URLs before proceeding
+			let hasUrlErrors = false;
+			let errorMessages: string[] = [];
+
+			// Validate document URL if provided
+			if (singleDocument?.documentUrl?.trim()) {
+				const docValidation = await validateDocumentUrl(singleDocument.documentUrl.trim());
+				if (!docValidation.isValid) {
+					errorMessages.push(`Document URL: ${docValidation.error}`);
+					hasUrlErrors = true;
+				}
+			}
+
+			// Validate image URL if provided
+			if (singleDocument?.imageUrl?.trim()) {
+				const imageValidation = await validateImageUrl(singleDocument.imageUrl.trim());
+				if (!imageValidation.isValid) {
+					errorMessages.push(`Cover Image URL: ${imageValidation.error}`);
+					hasUrlErrors = true;
+				}
+			}
+
+			// Validate sample page image URL if provided
+			if (singleDocument?.samplePageImageUrl?.trim()) {
+				const sampleImageValidation = await validateImageUrl(singleDocument.samplePageImageUrl.trim());
+				if (!sampleImageValidation.isValid) {
+					errorMessages.push(`Sample Page Image URL: ${sampleImageValidation.error}`);
+					hasUrlErrors = true;
+				}
+			}
+
+			// Show error SnackBar if there are validation errors
+			if (hasUrlErrors) {
+				setUrlErrorMessage(errorMessages.join('\n'));
+				setIsUrlErrorOpen(true);
+				return false;
+			}
+
 			const prices: Price[] = [
 				{ currency: 'gbp', amount: isFree ? 'Free' : GBP.amount },
 				{ currency: 'usd', amount: isFree ? 'Free' : USD.amount },
@@ -184,14 +227,55 @@ const AdminDocuments = () => {
 				updatedByName: documentResponseData.updatedByName,
 				updatedByRole: documentResponseData.updatedByRole,
 			});
+
+			return true;
 		} catch (error) {
 			console.log(error);
+			return false;
 		}
 	};
 
-	const handleDocUpdate = async (): Promise<void> => {
+	const handleDocUpdate = async (): Promise<boolean> => {
 		if (singleDocument) {
 			try {
+				// Validate URLs before proceeding
+				let hasUrlErrors = false;
+				let errorMessages: string[] = [];
+
+				// Validate document URL if provided
+				if (singleDocument.documentUrl?.trim()) {
+					const docValidation = await validateDocumentUrl(singleDocument.documentUrl.trim());
+					if (!docValidation.isValid) {
+						errorMessages.push(`Document URL: ${docValidation.error}`);
+						hasUrlErrors = true;
+					}
+				}
+
+				// Validate image URL if provided
+				if (singleDocument.imageUrl?.trim()) {
+					const imageValidation = await validateImageUrl(singleDocument.imageUrl.trim());
+					if (!imageValidation.isValid) {
+						errorMessages.push(`Cover Image URL: ${imageValidation.error}`);
+						hasUrlErrors = true;
+					}
+				}
+
+				// Validate sample page image URL if provided
+				if (singleDocument.samplePageImageUrl?.trim()) {
+					const sampleImageValidation = await validateImageUrl(singleDocument.samplePageImageUrl.trim());
+					if (!sampleImageValidation.isValid) {
+						errorMessages.push(`Sample Page Image URL: ${sampleImageValidation.error}`);
+						hasUrlErrors = true;
+					}
+				}
+
+				// Show error SnackBar if there are validation errors
+				if (hasUrlErrors) {
+					setUrlErrorMessage(errorMessages.join('\n'));
+					setIsUrlErrorOpen(true);
+					return false;
+				}
+
 				const prices: Price[] = [
 					{ currency: 'gbp', amount: isFree ? 'Free' : GBP.amount },
 					{ currency: 'usd', amount: isFree ? 'Free' : USD.amount },
@@ -202,7 +286,7 @@ const AdminDocuments = () => {
 				// Ensure we have all required fields
 				if (!singleDocument.name || !singleDocument.documentUrl) {
 					console.error('Missing required fields');
-					return;
+					return false;
 				}
 
 				const updateData = {
@@ -234,6 +318,8 @@ const AdminDocuments = () => {
 					updatedByName: responseData.updatedByName,
 					updatedByRole: responseData.updatedByRole,
 				});
+
+				return true;
 			} catch (error: any) {
 				console.error('Error updating document:', error);
 				if (error.response) {
@@ -254,8 +340,10 @@ const AdminDocuments = () => {
 					// Something happened in setting up the request that triggered an Error
 					console.error('Error message:', error.message);
 				}
+				return false;
 			}
 		}
+		return false;
 	};
 
 	const deleteDocument = async (documentId: string): Promise<void> => {
@@ -478,8 +566,10 @@ const AdminDocuments = () => {
 				onClose={resetForm}
 				onSubmit={async (e: React.FormEvent<HTMLFormElement>) => {
 					e.preventDefault();
-					createDocument();
-					resetForm();
+					const success = await createDocument();
+					if (success) {
+						resetForm();
+					}
 				}}
 				singleDocument={singleDocument}
 				setSingleDocument={setSingleDocument}
@@ -585,10 +675,12 @@ const AdminDocuments = () => {
 													const fullIndex = sortedDocumentsData.findIndex((d) => d._id === document._id);
 
 													if (singleDocument?.name && singleDocument.name.trim()) {
-														handleDocUpdate();
-														closeDocumentEditModal(fullIndex);
+														const success = await handleDocUpdate();
+														if (success) {
+															closeDocumentEditModal(fullIndex);
+															resetForm();
+														}
 													}
-													resetForm();
 												}}
 												document={singleDocument}
 												setDocument={setSingleDocument}
@@ -664,6 +756,17 @@ const AdminDocuments = () => {
 						</CustomDialog>
 					)
 			)}
+
+			{/* URL validation error SnackBar */}
+			<Snackbar
+				open={isUrlErrorOpen}
+				autoHideDuration={3500}
+				anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+				onClose={() => setIsUrlErrorOpen(false)}>
+				<Alert severity='error' variant='filled' sx={{ width: '100%' }}>
+					{urlErrorMessage}
+				</Alert>
+			</Snackbar>
 		</DashboardPagesLayout>
 	);
 };

@@ -9,7 +9,7 @@ import AudioRecorder from '../../../userCourses/AudioRecorder';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '../../../../firebase';
 import { UserAuthContext } from '../../../../contexts/UserAuthContextProvider';
-import { Box, IconButton, InputAdornment, Tooltip, Typography } from '@mui/material';
+import { Box, IconButton, InputAdornment, Tooltip, Typography, Snackbar, Alert } from '@mui/material';
 import CustomSubmitButton from '../../../forms/customButtons/CustomSubmitButton';
 import { CommunityContext } from '../../../../contexts/CommunityContextProvider';
 import Picker from '@emoji-mart/react';
@@ -18,6 +18,7 @@ import { HideImage, Image, InsertEmoticon, Mic, MicOff } from '@mui/icons-materi
 import { TopicInfo } from '../../../../interfaces/communityMessage';
 import ImageThumbnail from '../../../forms/uploadImageVideoDocument/ImageThumbnail';
 import { MediaQueryContext } from '../../../../contexts/MediaQueryContextProvider';
+import { validateImageUrl } from '../../../../utils/urlValidation';
 
 interface EditTopicDialogProps {
 	editTopicModalOpen: boolean;
@@ -40,6 +41,10 @@ const EditTopicDialog = ({ editTopicModalOpen, topic, setEditTopicModalOpen, set
 	const [showAudioRecorder, setShowAudioRecorder] = useState(!!topic.audioUrl);
 	const [showImageUploader, setShowImageUploader] = useState(!!topic.imageUrl);
 	const [showPicker, setShowPicker] = useState(false);
+
+	// URL validation error handling
+	const [isUrlErrorOpen, setIsUrlErrorOpen] = useState<boolean>(false);
+	const [urlErrorMessage, setUrlErrorMessage] = useState<string>('');
 
 	useEffect(() => {
 		setShowAudioRecorder(!!topic.audioUrl);
@@ -70,7 +75,36 @@ const EditTopicDialog = ({ editTopicModalOpen, topic, setEditTopicModalOpen, set
 		}
 	};
 
+	// URL validation function
+	const validateUrls = async (): Promise<boolean> => {
+		let hasErrors = false;
+		let errorMessages: string[] = [];
+
+		// Validate image URL if provided
+		if (topic.imageUrl?.trim()) {
+			const imageValidation = await validateImageUrl(topic.imageUrl.trim());
+			if (!imageValidation.isValid) {
+				errorMessages.push(`Image URL: ${imageValidation.error}`);
+				hasErrors = true;
+			}
+		}
+
+		// Show error Snackbar if there are validation errors
+		if (hasErrors) {
+			setUrlErrorMessage(errorMessages.join('\n'));
+			setIsUrlErrorOpen(true);
+		}
+
+		return !hasErrors;
+	};
+
 	const editTopic = async () => {
+		// Validate URLs before proceeding
+		const urlsValid = await validateUrls();
+		if (!urlsValid) {
+			return; // Don't proceed if URL validation fails
+		}
+
 		try {
 			const response = await axios.patch(`${base_url}/communityTopics/${topic._id}`, {
 				title: topic.title.trim(),
@@ -91,8 +125,15 @@ const EditTopicDialog = ({ editTopicModalOpen, topic, setEditTopicModalOpen, set
 			});
 
 			reset();
-		} catch (error) {
+		} catch (error: any) {
 			console.log(error);
+			// Show error message to user
+			if (error?.response?.data?.message) {
+				setUrlErrorMessage(error.response.data.message);
+			} else {
+				setUrlErrorMessage('Failed to update topic. Please try again.');
+			}
+			setIsUrlErrorOpen(true);
 		}
 	};
 
@@ -150,10 +191,10 @@ const EditTopicDialog = ({ editTopicModalOpen, topic, setEditTopicModalOpen, set
 								transform: isVerySmallScreen
 									? 'scale(0.5)'
 									: isRotated
-									? 'scale(0.55)'
-									: isRotatedMedium || isSmallScreen
-									? 'scale(0.65)'
-									: 'scale(0.8)',
+										? 'scale(0.55)'
+										: isRotatedMedium || isSmallScreen
+											? 'scale(0.65)'
+											: 'scale(0.8)',
 							}}>
 							<Picker data={data} onEmojiSelect={handleEmojiSelect} theme='dark' />
 						</Box>
@@ -236,6 +277,15 @@ const EditTopicDialog = ({ editTopicModalOpen, topic, setEditTopicModalOpen, set
 					actionSx={{ margin: isMobileSize ? '0.75rem -0.75rem 0 0' : '1.5rem -1rem 0 0' }}
 				/>
 			</form>
+			<Snackbar
+				open={isUrlErrorOpen}
+				autoHideDuration={3500}
+				anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+				onClose={() => setIsUrlErrorOpen(false)}>
+				<Alert severity='error' variant='filled' sx={{ width: '100%' }}>
+					{urlErrorMessage}
+				</Alert>
+			</Snackbar>
 		</CustomDialog>
 	);
 };

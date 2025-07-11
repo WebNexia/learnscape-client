@@ -365,8 +365,12 @@ const Settings = () => {
 						<Box sx={{ width: '90%' }}>
 							<HandleImageUploadURL
 								label='Profile Picture'
-								onImageUploadLogic={(url) => setImageUrl(url)}
+								onImageUploadLogic={(url) => {
+									setImageUrl(url);
+									setIsProfileUpdated(true);
+								}}
 								onChangeImgUrl={(e) => {
+									console.log('e.target.value', e.target.value);
 									setImageUrl(e.target.value);
 									setIsProfileUpdated(true);
 								}}

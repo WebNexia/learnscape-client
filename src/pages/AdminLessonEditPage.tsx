@@ -1357,12 +1357,26 @@ const AdminLessonEditPage = () => {
 															// Use the actual question type that was selected in the AI dialog
 															const questionTypeName = questionType;
 
+															let options = aiQuestion.options || [];
+															let correctAnswer = aiQuestion.correctAnswer;
+
+															if (questionTypeName === 'True-False') {
+																options = ['True', 'False'];
+																// Normalize correctAnswer to 'True' or 'False' (capitalize first letter)
+																if (typeof correctAnswer === 'string') {
+																	const normalized = correctAnswer.trim().toLowerCase();
+																	correctAnswer = normalized === 'true' ? 'True' : 'False';
+																} else {
+																	correctAnswer = 'True'; // fallback
+																}
+															}
+
 															return {
 																_id: generateUniqueId('temp_question_id_'),
 																questionType: questionTypeName,
 																question: aiQuestion.question,
-																options: aiQuestion.options || [],
-																correctAnswer: aiQuestion.correctAnswer,
+																options,
+																correctAnswer,
 																imageUrl: aiQuestion.imageUrl || '',
 																videoUrl: aiQuestion.videoUrl || '',
 																audio: aiQuestion.audio || false,

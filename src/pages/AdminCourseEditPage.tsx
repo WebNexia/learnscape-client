@@ -29,6 +29,8 @@ import DocumentsListEditBox from '../components/adminDocuments/DocumentsListEdit
 import NoContentBoxAdmin from '../components/layouts/noContentBox/NoContentBoxAdmin';
 import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/CustomInfoMessageAlignedLeft';
 import { useAuth } from '../hooks/useAuth';
+import { validateImageUrl, validateDocumentUrl } from '../utils/urlValidation';
+import { Snackbar, Alert } from '@mui/material';
 
 export interface ChapterUpdateTrack {
 	chapterId: string;
@@ -107,6 +109,8 @@ const AdminCourseEditPage = () => {
 	const [nextLocation, setNextLocation] = useState<string | null>(null);
 
 	const [isPopStateNavigation, setIsPopStateNavigation] = useState(false);
+	const [isUrlErrorOpen, setIsUrlErrorOpen] = useState<boolean>(false);
+	const [urlErrorMessage, setUrlErrorMessage] = useState<string>('');
 
 	useEffect(() => {
 		const handlePopState = () => {
@@ -566,6 +570,7 @@ const AdminCourseEditPage = () => {
 
 			setIsChapterUpdated(chapterUpdateData);
 			setDeletedChapterIds([]);
+			setIsEditMode(false);
 		} catch (error) {
 			console.error('Error updating course:', error);
 		}
@@ -616,6 +621,30 @@ const AdminCourseEditPage = () => {
 
 	const handleCourseUpdate = async (e: FormEvent): Promise<void> => {
 		e.preventDefault();
+
+		// Validate image URL before proceeding
+		if (singleCourseBeforeSave?.imageUrl?.trim()) {
+			const imageValidation = await validateImageUrl(singleCourseBeforeSave.imageUrl.trim());
+			if (!imageValidation.isValid) {
+				setUrlErrorMessage('Invalid image URL format');
+				setIsUrlErrorOpen(true);
+				return;
+			}
+		}
+
+		// Validate document URLs before proceeding
+		if (singleCourseBeforeSave?.documents) {
+			for (const document of singleCourseBeforeSave.documents) {
+				if (document && document.documentUrl?.trim()) {
+					const docValidation = await validateDocumentUrl(document.documentUrl.trim());
+					if (!docValidation.isValid) {
+						setUrlErrorMessage('Invalid document URL format');
+						setIsUrlErrorOpen(true);
+						return;
+					}
+				}
+			}
+		}
 
 		let validUntil: Date | null = null;
 		const startingDate = new Date(singleCourseBeforeSave?.startingDate || '');
@@ -971,6 +1000,17 @@ const AdminCourseEditPage = () => {
 					cancelBtnText='Stay'
 				/>
 			</CustomDialog>
+
+			{/* URL validation error SnackBar */}
+			<Snackbar
+				open={isUrlErrorOpen}
+				autoHideDuration={3500}
+				anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+				onClose={() => setIsUrlErrorOpen(false)}>
+				<Alert severity='error' variant='filled' sx={{ width: '100%' }}>
+					{urlErrorMessage}
+				</Alert>
+			</Snackbar>
 		</DashboardPagesLayout>
 	);
 };

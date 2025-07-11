@@ -133,6 +133,30 @@ export const validateImageUrl = async (url: string): Promise<{ isValid: boolean;
 		return { isValid: false, error: 'Invalid image URL format' };
 	}
 
+	const urlLower = url.toLowerCase();
+
+	// For known image hosting services, be more lenient with validation
+	const trustedImageServices = [
+		'unsplash.com',
+		'images.unsplash.com',
+		'picsum.photos',
+		'placehold.co',
+		'imgur.com',
+		'i.imgur.com',
+		'cloudinary.com',
+		'res.cloudinary.com',
+		'firebasestorage.googleapis.com',
+		'storage.googleapis.com',
+	];
+
+	const isTrustedService = trustedImageServices.some((service) => urlLower.includes(service));
+
+	// If it's a trusted service, accept it without making a HEAD request
+	// This avoids CORS issues and HEAD request failures that are common with these services
+	if (isTrustedService) {
+		return { isValid: true };
+	}
+
 	try {
 		const response = await fetch(url, { method: 'HEAD' });
 		if (!response.ok) {
@@ -140,26 +164,6 @@ export const validateImageUrl = async (url: string): Promise<{ isValid: boolean;
 		}
 
 		const contentType = response.headers.get('content-type');
-		const urlLower = url.toLowerCase();
-
-		// For known image hosting services, be more lenient with content-type checking
-		const trustedImageServices = [
-			'unsplash.com',
-			'images.unsplash.com',
-			'picsum.photos',
-			'placehold.co',
-			'imgur.com',
-			'i.imgur.com',
-			'cloudinary.com',
-			'res.cloudinary.com',
-		];
-
-		const isTrustedService = trustedImageServices.some((service) => urlLower.includes(service));
-
-		// If it's a trusted service, accept it even if content-type is not explicitly image/*
-		if (isTrustedService) {
-			return { isValid: true };
-		}
 
 		// For other URLs, check content-type
 		if (contentType && !contentType.startsWith('image/')) {
@@ -168,6 +172,16 @@ export const validateImageUrl = async (url: string): Promise<{ isValid: boolean;
 
 		return { isValid: true };
 	} catch (error) {
+		// If HEAD request fails, try a GET request for URLs with clear image extensions
+		const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp'];
+		const hasValidExtension = imageExtensions.some((ext) => urlLower.includes(ext));
+
+		if (hasValidExtension) {
+			// For URLs with clear image extensions, accept them even if HEAD request fails
+			// This handles cases where servers don't support HEAD requests or have CORS restrictions
+			return { isValid: true };
+		}
+
 		return { isValid: false, error: 'Failed to validate image URL' };
 	}
 };

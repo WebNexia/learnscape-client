@@ -217,7 +217,6 @@ const CoursePaper = ({
 													(isFree || !singleCourseBeforeSave?.prices.some((price) => price.amount === '')) &&
 													!chapterLessonDataBeforeSave.some((chapter) => chapter.title === '')
 												) {
-													setIsEditMode(false);
 													handleCourseUpdate(e as FormEvent<Element>);
 													setHasUnsavedChanges(false);
 												} else {

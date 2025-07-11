@@ -1,23 +1,22 @@
 import { useContext, useState } from 'react';
 import { CommunityMessage } from '../../../../interfaces/communityMessage';
 import CustomDialog from '../../dialog/CustomDialog';
-import { UserAuthContext } from '../../../../contexts/UserAuthContextProvider';
-import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
-import { storage } from '../../../../firebase';
-import { Box, IconButton, InputAdornment, Tooltip, Typography } from '@mui/material';
+import axios from '@utils/axiosInstance';
+import CustomDialogActions from '../../dialog/CustomDialogActions';
 import CustomTextField from '../../../forms/customFields/CustomTextField';
-import { HideImage, Image, InsertEmoticon, Mic, MicOff } from '@mui/icons-material';
+import HandleImageUploadURL from '../../../forms/uploadImageVideoDocument/HandleImageUploadURL';
+import AudioRecorder from '../../../userCourses/AudioRecorder';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { storage } from '../../../../firebase';
+import { UserAuthContext } from '../../../../contexts/UserAuthContextProvider';
+import { Box, IconButton, InputAdornment, Tooltip, Typography, Snackbar, Alert } from '@mui/material';
+import CustomSubmitButton from '../../../forms/customButtons/CustomSubmitButton';
 import Picker from '@emoji-mart/react';
 import data from '@emoji-mart/data';
-import AudioRecorder from '../../../userCourses/AudioRecorder';
-import CustomSubmitButton from '../../../forms/customButtons/CustomSubmitButton';
-import HandleImageUploadURL from '../../../forms/uploadImageVideoDocument/HandleImageUploadURL';
-import CustomDialogActions from '../../dialog/CustomDialogActions';
-
+import { HideImage, Image, InsertEmoticon, Mic, MicOff } from '@mui/icons-material';
 import ImageThumbnail from '../../../forms/uploadImageVideoDocument/ImageThumbnail';
 import { MediaQueryContext } from '../../../../contexts/MediaQueryContextProvider';
-import axios from '@utils/axiosInstance';
-
+import { validateImageUrl } from '../../../../utils/urlValidation';
 
 interface EditMessageDialogProps {
 	message: CommunityMessage;
@@ -42,6 +41,10 @@ const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, set
 	const [showPicker, setShowPicker] = useState(false);
 	const [isMsgUpdated, setIsMsgUpdated] = useState(false);
 
+	// URL validation error handling
+	const [isUrlErrorOpen, setIsUrlErrorOpen] = useState<boolean>(false);
+	const [urlErrorMessage, setUrlErrorMessage] = useState<string>('');
+
 	const updateMessages = (callback: any) => setMessages((prev) => prev?.map((msg) => (msg._id === message._id ? callback(msg) : msg)));
 
 	const uploadAudio = async (blob: Blob) => {
@@ -57,8 +60,43 @@ const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, set
 		}
 	};
 
+	// URL validation function
+	const validateUrls = async (): Promise<boolean> => {
+		let hasErrors = false;
+		let errorMessages: string[] = [];
+
+		// Validate image URL if provided
+		if (message.imageUrl?.trim()) {
+			const imageValidation = await validateImageUrl(message.imageUrl.trim());
+			if (!imageValidation.isValid) {
+				errorMessages.push(`Image URL: ${imageValidation.error}`);
+				hasErrors = true;
+			}
+		}
+
+		// Show error Snackbar if there are validation errors
+		if (hasErrors) {
+			setUrlErrorMessage(errorMessages.join('\n'));
+			setIsUrlErrorOpen(true);
+		}
+
+		return !hasErrors;
+	};
+
 	const editMessage = async () => {
-		if (isMsgUpdated) {
+		// Check if there are any changes to save
+		if (!isMsgUpdated) {
+			setEditMsgModalOpen(false);
+			return;
+		}
+
+		// Validate URLs before proceeding
+		const urlsValid = await validateUrls();
+		if (!urlsValid) {
+			return; // Don't proceed if URL validation fails
+		}
+
+		try {
 			const { data } = await axios.patch(`${base_url}/communityMessages/${message._id}`, {
 				text: message.text.trim(),
 				audioUrl: message.audioUrl.trim(),
@@ -72,10 +110,20 @@ const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, set
 				imageUrl: message.imageUrl.trim(),
 				updatedAt: data.data.updatedAt,
 			}));
+			setEditMsgModalOpen(false);
+			setIsMsgEdited(true);
+		} catch (error: any) {
+			console.log(error);
+			// Show error message to user
+			if (error?.response?.data?.message) {
+				setUrlErrorMessage(error.response.data.message);
+			} else {
+				setUrlErrorMessage('Failed to update message. Please try again.');
+			}
+			setIsUrlErrorOpen(true);
+		} finally {
+			setIsMsgUpdated(false);
 		}
-		setEditMsgModalOpen(false);
-		setIsMsgEdited(true);
-		setIsMsgUpdated(false);
 	};
 
 	const handleEmojiSelect = (emoji: any) => {
@@ -139,10 +187,10 @@ const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, set
 								transform: isVerySmallScreen
 									? 'scale(0.5)'
 									: isRotated
-									? 'scale(0.55)'
-									: isRotatedMedium || isSmallScreen
-									? 'scale(0.65)'
-									: 'scale(0.7)',
+										? 'scale(0.55)'
+										: isRotatedMedium || isSmallScreen
+											? 'scale(0.65)'
+											: 'scale(0.7)',
 							}}>
 							<Picker data={data} onEmojiSelect={handleEmojiSelect} theme='dark' />
 						</Box>
@@ -236,9 +284,19 @@ const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, set
 					onCancel={handleCancel}
 					submitBtnType='submit'
 					submitBtnText='Save'
+					disableBtn={!isMsgUpdated}
 					actionSx={{ margin: isMobileSize ? '0.75rem -0.75rem 0 0' : '1.5rem -1rem 0 0' }}
 				/>
 			</form>
+			<Snackbar
+				open={isUrlErrorOpen}
+				autoHideDuration={3500}
+				anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+				onClose={() => setIsUrlErrorOpen(false)}>
+				<Alert severity='error' variant='filled' sx={{ width: '100%' }}>
+					{urlErrorMessage}
+				</Alert>
+			</Snackbar>
 		</CustomDialog>
 	);
 };

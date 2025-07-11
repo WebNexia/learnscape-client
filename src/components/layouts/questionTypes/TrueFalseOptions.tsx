@@ -52,24 +52,26 @@ const TrueFalseOptions = ({
 	setQuestionPrompt,
 }: TrueFalseOptionsProps) => {
 	const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-		if (setCorrectAnswer) setCorrectAnswer((event.target as HTMLInputElement).value);
+		const value = (event.target as HTMLInputElement).value;
+
+		if (setCorrectAnswer) setCorrectAnswer(value);
 		if (isLessonCompleted && setIsLessonUpdating) setIsLessonUpdating(true);
 		if (setIsCorrectAnswerMissing) setIsCorrectAnswerMissing(false);
 		if (!fromLessonEditPage && setCorrectAnswerAdminQuestions) {
-			setCorrectAnswerAdminQuestions((event.target as HTMLInputElement).value);
+			setCorrectAnswerAdminQuestions(value);
 		}
 		if (setQuestionPrompt)
 			setQuestionPrompt((prevData) => {
-				return { ...prevData, userInput: (event.target as HTMLInputElement).value };
+				return { ...prevData, userInput: value };
 			});
 		if (setHelperText) setHelperText(' ');
-		if (setUserAnswer) setUserAnswer((event.target as HTMLInputElement).value);
+		if (setUserAnswer) setUserAnswer(value);
 		if (setUserQuizAnswers && lessonType === LessonType.QUIZ) {
 			setUserQuizAnswers((prevData) => {
 				if (prevData) {
 					const updatedAnswers = prevData?.map((answer) => {
 						if (answer.questionId === question?._id) {
-							return { ...answer, userAnswer: (event.target as HTMLInputElement).value };
+							return { ...answer, userAnswer: value };
 						}
 						return answer;
 					});
@@ -90,8 +92,8 @@ const TrueFalseOptions = ({
 		isLessonCompleted && displayedQuestionNumber < getLastQuestion() && isLessonUpdating
 			? question?.correctAnswer
 			: isLessonCompleted && lessonType === LessonType.QUIZ
-			? userQuizAnswerAfterSubmission
-			: correctAnswer;
+				? userQuizAnswerAfterSubmission
+				: correctAnswer;
 
 	const showCheckmark = (optionValue: string) => {
 		return isLessonCompleted && optionValue === question?.correctAnswer;
@@ -101,38 +103,38 @@ const TrueFalseOptions = ({
 		<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', mt: isMobileSize ? '0rem' : '2rem' }}>
 			<RadioGroup row value={fromLearner ? learnerSetting : adminSetting} onChange={handleChange}>
 				<Box sx={{ display: 'flex', alignItems: 'center' }}>
-					{showCheckmark('true') && lessonType !== LessonType.PRACTICE_LESSON && (
+					{showCheckmark('True') && lessonType !== LessonType.PRACTICE_LESSON && (
 						<CheckCircleIcon sx={{ color: theme.palette.success.main, marginRight: 1 }} />
 					)}
 					<Box
 						sx={{
-							width: isMobileSize ? '5rem' : '7rem',
-							padding: isMobileSize ? '1.15rem 1.75rem' : '1.5rem 2rem',
-							boxShadow: '0 0 0.4rem 0.2rem rgba(0, 0, 0, 0.2)',
-							transition: '0.3s',
-							backgroundColor: theme.bgColor?.greenPrimary,
-							textAlign: 'center',
-							borderRadius: '0.3rem',
-							position: 'relative',
+							'width': isMobileSize ? '5rem' : '6rem',
+							'padding': isMobileSize ? '1.15rem 1.75rem' : '1.5rem 2rem',
+							'boxShadow': '0 0 0.4rem 0.2rem rgba(0, 0, 0, 0.2)',
+							'transition': '0.3s',
+							'backgroundColor': theme.bgColor?.greenPrimary,
+							'textAlign': 'center',
+							'borderRadius': '0.3rem',
+							'position': 'relative',
 							':hover': {
 								boxShadow: '0 0 0.4rem 0.3rem rgba(0,0,0,0.3)',
 							},
 						}}>
 						<FormControlLabel
-							value='true'
+							value='True'
 							control={
 								<Radio
 									sx={{
-										color: theme.textColor?.common.main,
+										'color': theme.textColor?.common.main,
 										'& .MuiSvgIcon-root': {
-											fontSize: isMobileSize ? '0.9rem' : '1.15rem', // Resize radio button
+											fontSize: isMobileSize ? '0.9rem' : '1rem', // Resize radio button
 										},
 									}}
 									color='secondary'
 								/>
 							}
 							label={
-								<Typography variant={isMobileSize ? 'body2' : 'body1'} sx={{ color: theme.textColor?.common.main }}>
+								<Typography variant={'body2'} sx={{ color: theme.textColor?.common.main }}>
 									True
 								</Typography>
 							}
@@ -147,34 +149,34 @@ const TrueFalseOptions = ({
 
 					<Box
 						sx={{
-							width: isMobileSize ? '5rem' : '7rem',
-							padding: isMobileSize ? '1.15rem 1.75rem' : '1.5rem 2rem',
-							boxShadow: '0 0 0.4rem 0.2rem rgba(0, 0, 0, 0.2)',
-							transition: '0.3s',
-							marginLeft: '1.5rem',
-							backgroundColor: 'error.main',
-							textAlign: 'center',
-							borderRadius: '0.3rem',
-							position: 'relative',
+							'width': isMobileSize ? '5rem' : '6rem',
+							'padding': isMobileSize ? '1.15rem 1.75rem' : '1.5rem 2rem',
+							'boxShadow': '0 0 0.4rem 0.2rem rgba(0, 0, 0, 0.2)',
+							'transition': '0.3s',
+							'marginLeft': '1.5rem',
+							'backgroundColor': 'error.main',
+							'textAlign': 'center',
+							'borderRadius': '0.3rem',
+							'position': 'relative',
 							':hover': {
 								boxShadow: '0 0 0.4rem 0.3rem rgba(0,0,0,0.3)',
 							},
 						}}>
 						<FormControlLabel
-							value='false'
+							value='False'
 							control={
 								<Radio
 									sx={{
-										color: theme.textColor?.common.main,
+										'color': theme.textColor?.common.main,
 										'& .MuiSvgIcon-root': {
-											fontSize: isMobileSize ? '0.9rem' : '1.15rem', // Resize radio button
+											fontSize: isMobileSize ? '0.9rem' : '1rem', // Resize radio button
 										},
 									}}
 									color='secondary'
 								/>
 							}
 							label={
-								<Typography variant={isMobileSize ? 'body2' : 'body1'} sx={{ color: theme.textColor?.common.main }}>
+								<Typography variant={'body2'} sx={{ color: theme.textColor?.common.main }}>
 									False
 								</Typography>
 							}
@@ -186,7 +188,7 @@ const TrueFalseOptions = ({
 							}}
 						/>
 					</Box>
-					{showCheckmark('false') && lessonType !== LessonType.PRACTICE_LESSON && (
+					{showCheckmark('False') && lessonType !== LessonType.PRACTICE_LESSON && (
 						<CheckCircleIcon sx={{ color: theme.palette.success.main, marginLeft: 1 }} />
 					)}
 				</Box>

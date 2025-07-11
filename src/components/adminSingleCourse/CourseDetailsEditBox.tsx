@@ -8,7 +8,6 @@ import HandleImageUploadURL from '../forms/uploadImageVideoDocument/HandleImageU
 import useImageUpload from '../../hooks/useImageUpload';
 
 interface CourseDetailsEditBoxProps {
-	singleCourse?: SingleCourse;
 	singleCourseBeforeSave?: SingleCourse;
 	isFree: boolean;
 	isMissingField: boolean;
@@ -19,7 +18,6 @@ interface CourseDetailsEditBoxProps {
 }
 
 const CourseDetailsEditBox = ({
-	singleCourse,
 	singleCourseBeforeSave,
 	isFree,
 	isMissingField,
