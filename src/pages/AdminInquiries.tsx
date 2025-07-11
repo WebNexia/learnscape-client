@@ -8,8 +8,8 @@ import { useContext, useState, useEffect } from 'react';
 import CustomTableHead from '../components/layouts/table/CustomTableHead';
 import CustomTableCell from '../components/layouts/table/CustomTableCell';
 import CustomTablePagination from '../components/layouts/table/CustomTablePagination';
-import { ContactRequestsContext } from '../contexts/ContactRequestsContextProvider';
-import { ContactRequest } from '../interfaces/contactRequest';
+import { InquiriesContext } from '../contexts/InquiriesContextProvider';
+import { Inquiry } from '../interfaces/inquiry';
 import CustomActionBtn from '../components/layouts/table/CustomActionBtn';
 import { dateFormatter, dateTimeFormatter } from '@utils/dateFormatter';
 import { Delete, Search, Visibility } from '@mui/icons-material';
@@ -35,117 +35,117 @@ const columns = [
 	{ key: 'actions', label: 'Actions' },
 ];
 
-const AdminContactRequests = () => {
+const AdminInquiries = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
-	const { contactRequests, loading, error, removeRequest, fetchContactRequests } = useContext(ContactRequestsContext);
+	const { inquiries, loading, error, removeInquiry, fetchInquiries } = useContext(InquiriesContext);
 
-	const [requestsPageNumber, setRequestsPageNumber] = useState<number>(1);
+	const [inquiriesPageNumber, setInquiriesPageNumber] = useState<number>(1);
 	const [searchValue, setSearchValue] = useState<string>('');
 	const [filterValue, setFilterValue] = useState<string>('');
 
 	const pageSize = 50;
 
-	const filteredRequests = contactRequests.filter((req: ContactRequest) => {
+	const filteredInquiries = inquiries.filter((inquiry: Inquiry) => {
 		if (searchValue) {
 			const lowerSearch = searchValue.toLowerCase();
 			return (
-				req.firstName.toLowerCase().includes(lowerSearch) ||
-				req.lastName.toLowerCase().includes(lowerSearch) ||
-				req.email.toLowerCase().includes(lowerSearch) ||
-				req.message?.toLowerCase().includes(lowerSearch)
+				inquiry.firstName.toLowerCase().includes(lowerSearch) ||
+				inquiry.lastName.toLowerCase().includes(lowerSearch) ||
+				inquiry.email.toLowerCase().includes(lowerSearch) ||
+				inquiry.message?.toLowerCase().includes(lowerSearch)
 			);
 		}
 
 		if (filterValue) {
-			if (filterValue === 'from home page') return req.category === 'HeroSection';
-			if (filterValue === 'from contact us') return req.category === 'ContactUs';
-			if (filterValue === 'from about us') return req.category === 'AboutUs';
+			if (filterValue === 'from home page') return inquiry.category === 'HeroSection';
+			if (filterValue === 'from contact us') return inquiry.category === 'ContactUs';
+			if (filterValue === 'from about us') return inquiry.category === 'AboutUs';
 		}
 
 		return !searchValue && !filterValue;
 	});
 
-	const requestsNumberOfPages = Math.ceil(filteredRequests.length / pageSize);
+	const inquiriesNumberOfPages = Math.ceil(filteredInquiries.length / pageSize);
 
-	const paginatedRequests = filteredRequests.slice((requestsPageNumber - 1) * pageSize, requestsPageNumber * pageSize);
+	const paginatedInquiries = filteredInquiries.slice((inquiriesPageNumber - 1) * pageSize, inquiriesPageNumber * pageSize);
 
-	const [orderBy, setOrderBy] = useState<keyof ContactRequest>('createdAt');
+	const [orderBy, setOrderBy] = useState<keyof Inquiry>('createdAt');
 	const [order, setOrder] = useState<'asc' | 'desc'>('desc');
 
 	// Modal states
 	const [viewModalOpen, setViewModalOpen] = useState<{ [key: number]: boolean }>({});
 	const [deleteModalOpen, setDeleteModalOpen] = useState<{ [key: number]: boolean }>({});
-	const [selectedRequest, setSelectedRequest] = useState<ContactRequest | null>(null);
+	const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null);
 	const [emailDialogOpen, setEmailDialogOpen] = useState(false);
 
 	useEffect(() => {
-		fetchContactRequests(requestsPageNumber);
-	}, [requestsPageNumber]);
+		fetchInquiries(inquiriesPageNumber);
+	}, [inquiriesPageNumber]);
 
 	const handlePageChange = (newPage: number) => {
-		setRequestsPageNumber(newPage);
+		setInquiriesPageNumber(newPage);
 	};
 
-	const handleSort = (property: keyof ContactRequest) => {
+	const handleSort = (property: keyof Inquiry) => {
 		const isAsc = orderBy === property && order === 'asc';
 		setOrder(isAsc ? 'desc' : 'asc');
 		setOrderBy(property);
 	};
 
-	const handleViewRequest = (index: number, request: ContactRequest) => {
-		setSelectedRequest(request);
+	const handleViewInquiry = (index: number, inquiry: Inquiry) => {
+		setSelectedInquiry(inquiry);
 		setViewModalOpen((prev) => ({ ...prev, [index]: true }));
 	};
 
 	const handleCloseViewModal = (index: number) => {
 		setViewModalOpen((prev) => ({ ...prev, [index]: false }));
-		setSelectedRequest(null);
+		setSelectedInquiry(null);
 	};
 
-	const handleDeleteRequest = (index: number, request: ContactRequest) => {
-		setSelectedRequest(request);
+	const handleDeleteInquiry = (index: number, inquiry: Inquiry) => {
+		setSelectedInquiry(inquiry);
 		setDeleteModalOpen((prev) => ({ ...prev, [index]: true }));
 	};
 
 	const handleCloseDeleteModal = (index: number) => {
 		setDeleteModalOpen((prev) => ({ ...prev, [index]: false }));
-		setSelectedRequest(null);
+		setSelectedInquiry(null);
 	};
 
 	const handleConfirmDelete = async () => {
-		if (!selectedRequest) return;
+		if (!selectedInquiry) return;
 
 		try {
-			await axios.delete(`${base_url}/contact-requests/${selectedRequest._id}`);
-			removeRequest(selectedRequest._id);
+			await axios.delete(`${base_url}/inquiries/${selectedInquiry._id}`);
+			removeInquiry(selectedInquiry._id);
 			// Close all modals
 			setDeleteModalOpen({});
 			setViewModalOpen({});
-			setSelectedRequest(null);
+			setSelectedInquiry(null);
 		} catch (error) {
-			console.error('Error deleting request:', error);
+			console.error('Error deleting inquiry:', error);
 		}
 	};
 
 	const handleDownload = () => {
-		const excelData = contactRequests.map((request: ContactRequest) => ({
-			'First Name': request.firstName,
-			'Last Name': request.lastName,
-			'Email': request.email,
-			'Phone': request.phone,
-			'Country': request.countryCode,
-			'Message': request.message || '',
-			'Submitted At': format(new Date(request.createdAt), 'yyyy-MM-dd HH:mm:ss'),
+		const excelData = inquiries.map((inquiry: Inquiry) => ({
+			'First Name': inquiry.firstName,
+			'Last Name': inquiry.lastName,
+			'Email': inquiry.email,
+			'Phone': inquiry.phone,
+			'Country': inquiry.countryCode,
+			'Message': inquiry.message || '',
+			'Submitted At': format(new Date(inquiry.createdAt), 'yyyy-MM-dd HH:mm:ss'),
 		}));
 
 		const ws = XLSX.utils.json_to_sheet(excelData);
 		const wb = XLSX.utils.book_new();
-		XLSX.utils.book_append_sheet(wb, ws, 'Contact Requests');
-		XLSX.writeFile(wb, `contact-requests-${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+		XLSX.utils.book_append_sheet(wb, ws, 'Inquiries');
+		XLSX.writeFile(wb, `Inquiries-${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
 	};
 
 	if (loading) return <Typography>Loading...</Typography>;
@@ -192,7 +192,7 @@ const AdminContactRequests = () => {
 												padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
 												minHeight: '2rem',
 											}}>
-											Filter Requests
+											Filter Inquiries
 										</MenuItem>
 										<MenuItem
 											value=''
@@ -255,7 +255,7 @@ const AdminContactRequests = () => {
 							sx={{
 								fontSize: isMobileSize ? '0.7rem' : undefined,
 							}}
-							disabled={contactRequests.length === 0}>
+							disabled={inquiries.length === 0}>
 							Download Inquiries
 						</CustomSubmitButton>
 						<CustomSubmitButton
@@ -278,25 +278,25 @@ const AdminContactRequests = () => {
 						width: '100%',
 					}}>
 					<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>
-						<CustomTableHead<ContactRequest> orderBy={orderBy} order={order} handleSort={handleSort} columns={columns} />
+						<CustomTableHead<Inquiry> orderBy={orderBy} order={order} handleSort={handleSort} columns={columns} />
 						<TableBody>
-							{paginatedRequests &&
-								paginatedRequests?.map((req: ContactRequest, index) => {
+							{paginatedInquiries &&
+								paginatedInquiries?.map((inquiry: Inquiry, index) => {
 									return (
-										<TableRow key={req._id}>
-											<CustomTableCell value={req.firstName + ' ' + req.lastName} />
-											<CustomTableCell value={req.email} />
-											<CustomTableCell value={req.phone} />
-											<CustomTableCell value={req.countryCode} />
-											<CustomTableCell value={truncateText(req.message || '', 25)} />
-											<CustomTableCell value={dateFormatter(req.createdAt)} />
+										<TableRow key={inquiry._id}>
+											<CustomTableCell value={inquiry.firstName + ' ' + inquiry.lastName} />
+											<CustomTableCell value={inquiry.email} />
+											<CustomTableCell value={inquiry.phone} />
+											<CustomTableCell value={inquiry.countryCode} />
+											<CustomTableCell value={truncateText(inquiry.message || '', 25)} />
+											<CustomTableCell value={dateFormatter(inquiry.createdAt)} />
 											<TableCell
 												sx={{
 													textAlign: 'center',
 												}}>
 												<CustomActionBtn
 													title='View'
-													onClick={() => handleViewRequest(index, req)}
+													onClick={() => handleViewInquiry(index, inquiry)}
 													icon={<Visibility fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 												/>
 
@@ -304,38 +304,38 @@ const AdminContactRequests = () => {
 													openModal={viewModalOpen[index]}
 													closeModal={() => handleCloseViewModal(index)}
 													maxWidth='sm'
-													title='Request Details'>
-													{selectedRequest && (
+													title='Inquiry Details'>
+													{selectedInquiry && (
 														<DialogContent>
 															<Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 2 }}>
 																<Box>
 																	<Typography variant='body2' sx={{ mb: '0.75rem' }}>
-																		<strong>Name:</strong> {selectedRequest.firstName} {selectedRequest.lastName}
+																		<strong>Name:</strong> {selectedInquiry.firstName} {selectedInquiry.lastName}
 																	</Typography>
 																	<Typography variant='body2' sx={{ mb: '0.75rem' }}>
-																		<strong>Phone:</strong> {selectedRequest.phone}
+																		<strong>Phone:</strong> {selectedInquiry.phone}
 																	</Typography>
 																</Box>
 																<Box>
 																	<Typography variant='body2' sx={{ mb: '0.75rem' }}>
-																		<strong>Email:</strong> {selectedRequest.email}
+																		<strong>Email:</strong> {selectedInquiry.email}
 																	</Typography>
 																	<Typography variant='body2' sx={{ mb: '0.75rem' }}>
-																		<strong>Country:</strong> {selectedRequest.countryCode}
+																		<strong>Country:</strong> {selectedInquiry.countryCode}
 																	</Typography>
 																</Box>
 															</Box>
 															<Typography variant='body2' sx={{ mb: '0.75rem' }}>
-																<strong>Message:</strong> {selectedRequest.message || '-'}
+																<strong>Message:</strong> {selectedInquiry.message || '-'}
 															</Typography>
 															<Typography variant='body2' sx={{ mb: '0.75rem' }}>
-																<strong>Submitted:</strong> {dateTimeFormatter(selectedRequest.createdAt)}
+																<strong>Submitted:</strong> {dateTimeFormatter(selectedInquiry.createdAt)}
 															</Typography>
 															<Typography variant='body2'>
 																<strong>From:</strong>{' '}
-																{selectedRequest.category === 'HeroSection'
+																{selectedInquiry.category === 'HeroSection'
 																	? 'Home Page'
-																	: selectedRequest.category === 'ContactUs'
+																	: selectedInquiry.category === 'ContactUs'
 																		? 'Contact Us'
 																		: 'About Us'}
 															</Typography>
@@ -354,15 +354,15 @@ const AdminContactRequests = () => {
 
 												<CustomActionBtn
 													title='Delete'
-													onClick={() => handleDeleteRequest(index, req)}
+													onClick={() => handleDeleteInquiry(index, inquiry)}
 													icon={<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 												/>
 
 												<CustomDialog
 													openModal={deleteModalOpen[index]}
 													closeModal={() => handleCloseDeleteModal(index)}
-													title='Delete Request'
-													content='Are you sure you want to delete this request?'
+													title='Delete Inquiry'
+													content='Are you sure you want to delete this inquiry?'
 													maxWidth='sm'>
 													<CustomDialogActions onCancel={() => handleCloseDeleteModal(index)} deleteBtn={true} onDelete={handleConfirmDelete} />
 												</CustomDialog>
@@ -372,7 +372,7 @@ const AdminContactRequests = () => {
 								})}
 						</TableBody>
 					</Table>
-					<CustomTablePagination count={requestsNumberOfPages} page={requestsPageNumber} onChange={handlePageChange} />
+					<CustomTablePagination count={inquiriesNumberOfPages} page={inquiriesPageNumber} onChange={handlePageChange} />
 				</Box>
 			</Box>
 			<CustomDialog openModal={emailDialogOpen} closeModal={() => setEmailDialogOpen(false)} maxWidth='md' title='Send Bulk Email'>
@@ -384,4 +384,4 @@ const AdminContactRequests = () => {
 	);
 };
 
-export default AdminContactRequests;
+export default AdminInquiries;

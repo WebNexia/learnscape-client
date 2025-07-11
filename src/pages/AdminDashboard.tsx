@@ -16,7 +16,7 @@ import AdminPayment from '../components/layouts/dashboard/AdminPayment';
 import { useNavigate } from 'react-router-dom';
 import DashboardQuizSubmissions from '../components/layouts/dashboard/DashboardQuizSubmissions';
 import DashboardCommunityTopics from '../components/layouts/dashboard/DashboardCommunityTopics';
-import AdminContactRequests from '../components/layouts/dashboard/AdminContactRequests';
+import AdminInquiries from '../components/layouts/dashboard/AdminInquiries';
 
 Chart.register(...registerables);
 
@@ -170,9 +170,9 @@ const AdminDashboard = () => {
 						sm={2.4}
 						xs={6}
 						onClick={() => {
-							navigate(`/admin/contact-requests`);
+							navigate(`/admin/inquiries`);
 						}}>
-						<AdminContactRequests />
+						<AdminInquiries />
 					</Grid>
 				</Grid>
 			</Box>

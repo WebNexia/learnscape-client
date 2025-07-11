@@ -23,7 +23,7 @@ interface ContactFormDialogProps {
 	message: string;
 	setMessage: (value: string) => void;
 	location: { countryCode: string };
-	handleMoreInfoRequest: (e: React.FormEvent<HTMLFormElement>) => void;
+	handleInquiry: (e: React.FormEvent<HTMLFormElement>) => void;
 	sending: boolean;
 	title: string;
 	description: string;
@@ -49,7 +49,7 @@ const ContactFormDialog = ({
 	message,
 	setMessage,
 	location,
-	handleMoreInfoRequest,
+	handleInquiry,
 	sending,
 	title,
 	description,
@@ -105,7 +105,7 @@ const ContactFormDialog = ({
 				}}>
 				{description}
 			</DialogTitle>
-			<form onSubmit={handleMoreInfoRequest}>
+			<form onSubmit={handleInquiry}>
 				<Box
 					sx={{
 						'margin': { xs: '0 0.75rem', sm: '0 1rem', md: '0 2rem', lg: '0 2rem' },

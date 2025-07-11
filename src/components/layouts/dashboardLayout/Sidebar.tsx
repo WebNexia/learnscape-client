@@ -93,7 +93,7 @@ const Sidebar = () => {
 								btnText='Dashboard'
 								IconName={DashboardIcon}
 								onClick={() => navigateWithPage(`/admin/dashboard`)}
-								active={currentPath.includes('/admin/dashboard') || currentPath.includes('/admin/contact-requests')}
+								active={currentPath.includes('/admin/dashboard') || currentPath.includes('/admin/inquiries')}
 							/>
 							<SidebarBtn
 								btnText='Users'

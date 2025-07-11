@@ -1,4 +1,4 @@
-export interface ContactRequest {
+export interface Inquiry {
 	_id: string;
 	firstName: string;
 	lastName: string;

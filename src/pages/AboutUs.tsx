@@ -58,7 +58,7 @@ const AboutUs = () => {
 		resetRecaptcha();
 	};
 
-	const handleMoreInfoRequest = async (e: React.FormEvent<HTMLFormElement>) => {
+	const handleInquiry = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 		if (!isValidPhone(phone)) {
 			setErrorDialogMsg('Lütfen geçerli bir telefon numarası girin.');
@@ -72,7 +72,7 @@ const AboutUs = () => {
 		}
 		setSending(true);
 		try {
-			await axios.post(`${base_url}/contact-requests`, {
+			await axios.post(`${base_url}/inquiries`, {
 				firstName,
 				lastName,
 				email,
@@ -221,7 +221,7 @@ const AboutUs = () => {
 				message={message}
 				setMessage={setMessage}
 				location={location || { countryCode: 'TR' }}
-				handleMoreInfoRequest={handleMoreInfoRequest}
+				handleInquiry={handleInquiry}
 				sending={sending}
 				title='BİZE ULAŞIN'
 				description='Sorularınız, önerileriniz veya işbirliği talepleriniz için bize ulaşmaktan çekinmeyin.'
