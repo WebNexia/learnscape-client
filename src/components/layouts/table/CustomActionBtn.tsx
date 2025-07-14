@@ -27,7 +27,7 @@ const CustomActionBtn = ({ title, onClick, icon, placement = 'top' }: CustomActi
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	return (
-		<Tooltip title={title} placement={placement}>
+		<Tooltip title={title} placement={placement} arrow>
 			<IconButton sx={{ color: theme.textColor?.secondary.main, padding: isMobileSize ? '0.1rem' : undefined }} onClick={onClick}>
 				{icon}
 			</IconButton>

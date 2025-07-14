@@ -188,7 +188,7 @@ const HandleDocUploadURL = ({
 							<>
 								<Typography sx={{ margin: '0 0.5rem' }}> | </Typography>
 								<Box>
-									<Tooltip title='Add from List' placement='top'>
+									<Tooltip title='Add from List' placement='top' arrow>
 										<IconButton
 											onClick={() => {
 												if (setAddNewDocumentModalOpen) setAddNewDocumentModalOpen(true);
@@ -272,7 +272,7 @@ const HandleDocUploadURL = ({
 					{enterDocUrl && (
 						<Box sx={{ display: 'flex', flexDirection: 'column', width: fromAdminDocs ? '60%' : '55%' }}>
 							<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-								<Tooltip title='Click the upload button to enter/update the document URL' placement='top'>
+								<Tooltip title='Click the upload button to enter/update the document URL' placement='top' arrow>
 									<CustomTextField
 										placeholder='Doc URL'
 										required={enterDocUrl ? true : false}

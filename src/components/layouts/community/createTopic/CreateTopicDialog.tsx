@@ -185,7 +185,7 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 					createTopic();
 				}}>
 				<Box sx={{ marginBottom: '0.5rem' }}>
-					<Tooltip title='Max 80 Characters' placement='top'>
+					<Tooltip title='Max 80 Characters' placement='top' arrow>
 						<CustomTextField
 							label='Title'
 							value={topic?.title}
@@ -255,7 +255,7 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 
 					<Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
 						<Box>
-							<Tooltip title={!showAudioRecorder ? 'Upload Audio' : 'Hide Recorder'} placement='top'>
+							<Tooltip title={!showAudioRecorder ? 'Upload Audio' : 'Hide Recorder'} placement='top' arrow>
 								<IconButton
 									sx={{
 										':hover': {
@@ -272,7 +272,7 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 							</Tooltip>
 						</Box>
 						<Box>
-							<Tooltip title={!showImageUploader ? 'Upload Image' : 'Hide Uploader'} placement='top'>
+							<Tooltip title={!showImageUploader ? 'Upload Image' : 'Hide Uploader'} placement='top' arrow>
 								<IconButton
 									sx={{
 										':hover': {

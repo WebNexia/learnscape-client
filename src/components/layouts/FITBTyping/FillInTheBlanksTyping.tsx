@@ -385,7 +385,7 @@ const FillInTheBlanksTyping = ({
 								})}
 							</Box>
 							<Box>
-								<Tooltip title={showHiddenBlankValues ? 'Hide Possible Answers' : 'See Possible Answers'} placement='top'>
+								<Tooltip title={showHiddenBlankValues ? 'Hide Possible Answers' : 'See Possible Answers'} placement='top' arrow>
 									<IconButton onClick={() => setShowHiddenBlankValues(!showHiddenBlankValues)}>
 										{showHiddenBlankValues ? (
 											<VisibilityOff fontSize={isMobileSizeSmall ? 'small' : 'medium'} />

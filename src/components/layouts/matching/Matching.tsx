@@ -111,7 +111,7 @@ const Matching = ({
 							},
 						}}
 					/>
-					<Tooltip title='Remove Pair' placement='right'>
+					<Tooltip title='Remove Pair' placement='right' arrow>
 						<IconButton
 							onClick={() => removePair(index)}
 							sx={{
@@ -124,7 +124,7 @@ const Matching = ({
 				</Box>
 			))}
 			<Box sx={{ width: '90%' }}>
-				<Tooltip title='Add Pair' placement='right'>
+				<Tooltip title='Add Pair' placement='right' arrow>
 					<IconButton onClick={addPair} sx={{ 'mb': '0.85rem', ':hover': { backgroundColor: 'transparent' } }}>
 						<AddCircle />
 					</IconButton>

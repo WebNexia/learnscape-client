@@ -63,7 +63,7 @@ export default function UpcomingEvents() {
 		try {
 			setIsRegisterForEventSending(true);
 			setRegisterErrorMsg(null);
-			await axios.post(`${base_url}/event-registrations`, {
+			await axios.post(`${base_url}/eventRegistrations`, {
 				eventId: selectedEventId,
 				firstName,
 				lastName,

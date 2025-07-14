@@ -100,7 +100,7 @@ const AdminPublicEvents = () => {
 
 	const handleDownloadParticipants = async (eventId: string, eventTitle: string) => {
 		try {
-			const response = await axios.get(`${base_url}/event-registrations/event/${eventId}/excel`, { responseType: 'blob' });
+			const response = await axios.get(`${base_url}/eventRegistrations/event/${eventId}/excel`, { responseType: 'blob' });
 
 			// Get filename from Content-Disposition header if available
 			let filename = `${eventTitle}_participants.xlsx`;

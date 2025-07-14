@@ -653,7 +653,7 @@ const PracticeQuestion = ({
 							<KeyboardArrowRight fontSize={isMobileSize ? 'medium' : 'large'} />
 						</IconButton>
 					) : (
-						<Tooltip title={isCompletingCourse ? 'Complete Course' : isCompletingLesson ? 'Complete Lesson' : 'Next Lesson'} placement='top'>
+						<Tooltip title={isCompletingCourse ? 'Complete Course' : isCompletingLesson ? 'Complete Lesson' : 'Next Lesson'} placement='top' arrow>
 							<IconButton
 								onClick={() => {
 									if (isLessonCompleted) {
@@ -730,7 +730,7 @@ const PracticeQuestion = ({
 				}}>
 				{displayedQuestionNumber === questionNumber && !isFlipCard && !isMatching && !isFITBDragDrop && !isFITBTyping ? (
 					!hasRequestedAiFeedback && (isAiActive || isLessonCompleted) ? (
-						<Tooltip title='Receive feedback from AI' placement='left'>
+						<Tooltip title='Receive feedback from AI' placement='left' arrow>
 							<IconButton
 								onClick={async () => {
 									if (isAiFeedbackLoading) return; // Prevent multiple calls
@@ -764,7 +764,7 @@ const PracticeQuestion = ({
 							</IconButton>
 						</Tooltip>
 					) : hasRequestedAiFeedback ? (
-						<Tooltip title='AI feedback already requested for this question' placement='left'>
+						<Tooltip title='AI feedback already requested for this question' placement='left' arrow>
 							<IconButton
 								sx={{
 									':hover': {
@@ -777,7 +777,7 @@ const PracticeQuestion = ({
 							</IconButton>
 						</Tooltip>
 					) : (
-						<Tooltip title='Submit answer to receive feedback from AI' placement='left'>
+						<Tooltip title='Submit answer to receive feedback from AI' placement='left' arrow>
 							<IconButton
 								sx={{
 									':hover': {

@@ -151,7 +151,7 @@ const EditTopicDialog = ({ editTopicModalOpen, topic, setEditTopicModalOpen, set
 					editTopic();
 				}}>
 				<Box sx={{ marginBottom: '0.5rem' }}>
-					<Tooltip title='Max 85 Characters' placement='top'>
+					<Tooltip title='Max 85 Characters' placement='top' arrow>
 						<CustomTextField
 							label='Title'
 							value={topic?.title}
@@ -201,7 +201,7 @@ const EditTopicDialog = ({ editTopicModalOpen, topic, setEditTopicModalOpen, set
 					)}
 
 					<Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-						<Tooltip title={!showAudioRecorder ? 'Upload Audio' : 'Hide Recorder'} placement='top'>
+						<Tooltip title={!showAudioRecorder ? 'Upload Audio' : 'Hide Recorder'} placement='top' arrow>
 							<IconButton onClick={() => toggleFeature('audio')}>
 								{!showAudioRecorder ? (
 									<Mic fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
@@ -211,7 +211,7 @@ const EditTopicDialog = ({ editTopicModalOpen, topic, setEditTopicModalOpen, set
 							</IconButton>
 						</Tooltip>
 
-						<Tooltip title={!showImageUploader ? 'Upload Image' : 'Hide Uploader'} placement='top'>
+						<Tooltip title={!showImageUploader ? 'Upload Image' : 'Hide Uploader'} placement='top' arrow>
 							<IconButton onClick={() => toggleFeature('image')}>
 								{!showImageUploader ? (
 									<Image fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />

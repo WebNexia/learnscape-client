@@ -11,6 +11,7 @@ import StatisticsSection from '../components/landingPage/StatisticsSection';
 import ScrollToTopButton from '../components/landingPage/ScrollToTopButton';
 import UpcomingEvents from '../components/landingPage/UpcomingEvents';
 import LandingPageFAQ from '../components/landingPage/LandingPageFAQ';
+import ReportBugButton from '../components/landingPage/ReportBugButton';
 
 const LandingPage = () => {
 	const coursesRef = useRef<HTMLDivElement>(null);
@@ -57,6 +58,7 @@ const LandingPage = () => {
 				<CTASection coursesRef={coursesRef} />
 			</LandingPageLayout>
 			<ScrollToTopButton />
+			<ReportBugButton />
 		</Box>
 	);
 };

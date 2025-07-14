@@ -445,7 +445,7 @@ const Settings = () => {
 								/>
 							</Box>
 							<Box sx={{ display: 'flex', width: '10%', justifyContent: 'flex-end', mt: '-1rem' }}>
-								<Tooltip title='Username Rules' placement='top'>
+								<Tooltip title='Username Rules' placement='top' arrow>
 									<IconButton
 										onClick={() => setIsUserNameImageInfoModalOpen(true)}
 										sx={{

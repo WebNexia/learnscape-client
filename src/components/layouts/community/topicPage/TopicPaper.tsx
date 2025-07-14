@@ -201,7 +201,7 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refre
 					<Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
 						<Box sx={{ display: 'flex', width: '100%', justifyContent: 'flex-start', alignItems: 'center' }}>
 							{!isTopicWriter && !isAdmin ? (
-								<Tooltip title='Report Topic' placement='right'>
+								<Tooltip title='Report Topic' placement='right' arrow>
 									<IconButton
 										sx={{
 											':hover': {
@@ -221,7 +221,7 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refre
 							) : (
 								<>
 									{isTopicWriter && (
-										<Tooltip title='Edit Topic' placement='top'>
+										<Tooltip title='Edit Topic' placement='top' arrow>
 											<IconButton
 												sx={{
 													':hover': {
@@ -237,7 +237,7 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refre
 
 									{(isTopicWriter || isAdmin) && (
 										<>
-											<Tooltip title='Delete Topic' placement='top'>
+											<Tooltip title='Delete Topic' placement='top' arrow>
 												<IconButton
 													sx={{
 														':hover': {
@@ -250,7 +250,7 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refre
 												</IconButton>
 											</Tooltip>
 											{!isTopicLocked ? (
-												<Tooltip title='Lock Topic' placement='top'>
+												<Tooltip title='Lock Topic' placement='top' arrow>
 													<IconButton
 														sx={{
 															':hover': {
@@ -262,7 +262,7 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refre
 													</IconButton>
 												</Tooltip>
 											) : (
-												<Tooltip title='Unlock Topic' placement='top'>
+												<Tooltip title='Unlock Topic' placement='top' arrow>
 													<IconButton
 														sx={{
 															':hover': {
@@ -278,7 +278,7 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refre
 									)}
 									{topic.isReported && isAdmin && (
 										<Box sx={{ display: 'flex', alignItems: 'center' }}>
-											<Tooltip title='Resolve Report' placement='top'>
+											<Tooltip title='Resolve Report' placement='top' arrow>
 												<IconButton
 													onClick={() => setResolveReportModalOpen(true)}
 													sx={{

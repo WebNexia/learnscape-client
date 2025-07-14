@@ -733,7 +733,8 @@ const QuizQuestion = ({
 					title={
 						isCompletingCourse ? 'Complete Course' : isLessonCompleted && isLastQuestion ? 'Next Lesson' : isCompletingLesson ? 'Submit Quiz' : ''
 					}
-					placement='top'>
+					placement='top'
+					arrow>
 					<IconButton
 						onClick={() => {
 							if (isLastQuestion && !isLessonCompleted) {

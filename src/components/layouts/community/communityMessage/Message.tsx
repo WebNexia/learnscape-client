@@ -329,7 +329,7 @@ const Message = ({
 								)}
 							</Box>
 							<Box>
-								<Tooltip title='Reply to Message' placement='right'>
+								<Tooltip title='Reply to Message' placement='right' arrow>
 									<IconButton
 										onClick={() => {
 											setReplyToMessage(message);
@@ -366,7 +366,7 @@ const Message = ({
 								</Box>
 
 								{!isMessageWriter && !isAdmin && (
-									<Tooltip title='Report Message' placement='top'>
+									<Tooltip title='Report Message' placement='top' arrow>
 										<IconButton
 											onClick={() => setReportMsgModalOpen(true)}
 											disabled={message.isReported}
@@ -397,7 +397,7 @@ const Message = ({
 								</CustomDialog>
 
 								{!isMessageWriter && isAdmin && (
-									<Tooltip title='Delete Message' placement='right'>
+									<Tooltip title='Delete Message' placement='right' arrow>
 										<IconButton
 											onClick={() => setDeleteMessageModalOpen(true)}
 											sx={{
@@ -412,7 +412,7 @@ const Message = ({
 
 								{isMessageWriter && (
 									<Box>
-										<Tooltip title='Edit Message' placement='top'>
+										<Tooltip title='Edit Message' placement='top' arrow>
 											<IconButton
 												onClick={() => setEditMsgModalOpen(true)}
 												disabled={isTopicLocked}
@@ -425,7 +425,7 @@ const Message = ({
 												<Edit fontSize='small' sx={{ fontSize: isMobileSize ? '0.85rem' : undefined }} />
 											</IconButton>
 										</Tooltip>
-										<Tooltip title='Delete Message' placement='top'>
+										<Tooltip title='Delete Message' placement='top' arrow>
 											<IconButton
 												onClick={() => setDeleteMessageModalOpen(true)}
 												sx={{
@@ -449,7 +449,7 @@ const Message = ({
 
 								{message.isReported && isAdmin && (
 									<Box sx={{ display: 'flex', alignItems: 'center' }}>
-										<Tooltip title='Resolve Report' placement='top'>
+										<Tooltip title='Resolve Report' placement='top' arrow>
 											<IconButton
 												onClick={() => setResolveReportModalOpen(true)}
 												sx={{

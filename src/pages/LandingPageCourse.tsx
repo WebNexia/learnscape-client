@@ -9,6 +9,7 @@ import ChatWhatsApp from '../components/landingPage/ChatWhatsApp';
 import { LinkedIn, Language } from '@mui/icons-material';
 import theme from '../themes';
 import ScrollToTopButton from '../components/landingPage/ScrollToTopButton';
+import ReportBugButton from '../components/landingPage/ReportBugButton';
 
 const InstructorCard = ({ instructor }: { instructor: SingleCourse['instructor'] }) => {
 	// Ensure URLs have proper protocol
@@ -152,6 +153,7 @@ const LandingPageCourse = () => {
 			</Box>
 			<Box sx={{ margin: '1rem 0 3rem 0' }}>
 				<ChatWhatsApp />
+				<ReportBugButton />
 				<ScrollToTopButton />
 			</Box>
 		</LandingPageLayout>
