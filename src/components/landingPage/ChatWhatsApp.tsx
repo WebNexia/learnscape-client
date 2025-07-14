@@ -13,6 +13,7 @@ const ChatWhatsApp = () => {
 			<Tooltip
 				title="WhatsApp'tan Bize Ulaşın"
 				placement='left'
+				arrow
 				componentsProps={{
 					tooltip: {
 						sx: {

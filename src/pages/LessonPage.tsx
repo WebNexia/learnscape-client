@@ -327,7 +327,7 @@ const LessonPage = () => {
 					width: '80%',
 					zIndex: 3,
 				}}>
-				<Tooltip title='Take Notes' placement='right'>
+				<Tooltip title='Take Notes' placement='right' arrow>
 					<IconButton onClick={() => setIsNotesDrawerOpen(!isNotesDrawerOpen)}>
 						<Article fontSize={isMobileSize ? 'small' : 'medium'} />
 					</IconButton>
@@ -373,7 +373,7 @@ const LessonPage = () => {
 									/>
 								</Box>
 								<Box sx={{ display: 'flex', mt: '1rem', justifyContent: 'space-between' }}>
-									<Tooltip title='Download as PDF' placement='right'>
+									<Tooltip title='Download as PDF' placement='right' arrow>
 										<IconButton onClick={handleDownloadPDF} sx={{ padding: isMobileSize ? '0.5rem' : undefined }}>
 											<GetApp sx={{ fontSize: isMobileSize ? '1.15rem' : '1.25rem' }} />
 										</IconButton>
@@ -536,7 +536,7 @@ const LessonPage = () => {
 			{isQuiz && isQuestionsVisible && !isLessonCompleted && (
 				<>
 					<Box sx={{ position: 'fixed', top: '90vh', right: isMobileSize ? '0.5rem' : '2rem', transform: 'translateY(-50%)', zIndex: 10 }}>
-						<Tooltip title='Questions Map' placement='left'>
+						<Tooltip title='Questions Map' placement='left' arrow>
 							<IconButton onClick={() => setIsQuestionsMapOpen(!isQuestionsMapOpen)}>
 								<NotListedLocation fontSize={isMobileSize ? 'medium' : 'large'} sx={{ color: '#00BFFF' }} />
 							</IconButton>

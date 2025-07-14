@@ -46,7 +46,7 @@ const ContactUs = () => {
 
 	const isValidPhone = (phone: string) => /^\+\d{8,}$/.test(phone);
 
-	const handleMoreInfoRequest = async (e: React.FormEvent<HTMLFormElement>) => {
+	const handleInquiry = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 		if (!isValidPhone(phone)) {
 			setErrorDialogMsg('Lütfen geçerli bir telefon numarası girin.');
@@ -61,7 +61,7 @@ const ContactUs = () => {
 
 		setSending(true);
 		try {
-			await axios.post(`${base_url}/contact-requests`, {
+			await axios.post(`${base_url}/inquiries`, {
 				firstName,
 				lastName,
 				email,
@@ -122,7 +122,7 @@ const ContactUs = () => {
 			{/* Contact Form Section */}
 			<Container maxWidth='sm' sx={{ my: { xs: 4, md: 8 } }}>
 				<Paper elevation={3} sx={{ p: { xs: 3, md: 5 }, borderRadius: 3 }}>
-					<form onSubmit={handleMoreInfoRequest}>
+					<form onSubmit={handleInquiry}>
 						<Grid container spacing={1}>
 							<Grid item xs={12}>
 								<CustomTextField

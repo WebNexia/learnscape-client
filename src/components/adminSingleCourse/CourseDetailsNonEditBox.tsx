@@ -239,7 +239,7 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 																			<Typography variant='body2'>{lesson?.type}</Typography>
 																		</Box>
 																		<Box>
-																			<Tooltip title='Edit Lesson' placement='top'>
+																			<Tooltip title='Edit Lesson' placement='top' arrow>
 																				<IconButton
 																					onClick={() => {
 																						window.open(`/admin/lesson-edit/lesson/${lesson._id}`, '_blank');

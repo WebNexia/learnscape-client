@@ -895,7 +895,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 														}}
 													/>
 													<Box sx={{ display: 'flex', width: '10%', justifyContent: 'flex-end', mt: '-0.5rem' }}>
-														<Tooltip title='Kullanıcı Adı Kuralları' placement='right'>
+														<Tooltip title='Kullanıcı Adı Kuralları' placement='right' arrow>
 															<IconButton
 																onClick={() => setIsUserNameImageInfoModalOpen(true)}
 																sx={{
@@ -1037,7 +1037,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 														}}
 													/>
 													<Box sx={{ display: 'flex', width: '10%', justifyContent: 'flex-end', mt: '-1rem' }}>
-														<Tooltip title='Şifre Kuralları' placement='right'>
+														<Tooltip title='Şifre Kuralları' placement='right' arrow>
 															<IconButton
 																onClick={() => setIsPasswordInfoModalOpen(true)}
 																sx={{

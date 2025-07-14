@@ -63,7 +63,7 @@ const AdminCourseEditChapter = ({
 					alignItems: 'center',
 				}}>
 				<Box sx={{ width: '40%' }}>
-					<Tooltip title='Max 50 Characters' placement='top'>
+					<Tooltip title='Max 50 Characters' placement='top' arrow>
 						<CustomTextField
 							sx={{ marginTop: '0.85rem', width: '100%' }}
 							InputProps={{ inputProps: { maxLength: 50 } }}
@@ -94,7 +94,7 @@ const AdminCourseEditChapter = ({
 				</Box>
 				<Box sx={{ display: 'flex' }}>
 					<Box sx={{ marginRight: '0.25rem' }}>
-						<Tooltip title='Add Lesson' placement='top'>
+						<Tooltip title='Add Lesson' placement='top' arrow>
 							<IconButton
 								onClick={() => {
 									setAddNewLessonModalOpen(true);
@@ -112,7 +112,7 @@ const AdminCourseEditChapter = ({
 							setHasUnsavedChanges={setHasUnsavedChanges}
 						/>
 
-						<Tooltip title='Create Lesson' placement='top'>
+						<Tooltip title='Create Lesson' placement='top' arrow>
 							<IconButton
 								onClick={() => {
 									setIsNewLessonModalOpen(true);
@@ -137,7 +137,7 @@ const AdminCourseEditChapter = ({
 								<FileCopy fontSize='small' />
 							</IconButton>
 						</Tooltip> */}
-						<Tooltip title='Delete Chapter' placement='top'>
+						<Tooltip title='Delete Chapter' placement='top' arrow>
 							<IconButton
 								onClick={() => {
 									setChapterLessonDataBeforeSave((prevData) => {
@@ -241,7 +241,7 @@ const AdminCourseEditChapter = ({
 													<Box sx={{ mr: '1rem' }}>
 														<Typography variant='body2'>({lesson.type})</Typography>
 													</Box>
-													<Tooltip title='Remove Lesson' placement='right'>
+													<Tooltip title='Remove Lesson' placement='right' arrow>
 														<IconButton
 															onClick={() => {
 																setChapterLessonDataBeforeSave((prevData) => {

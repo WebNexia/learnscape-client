@@ -1,4 +1,4 @@
-import { createBrowserRouter, RouteObject } from 'react-router-dom';
+import { createBrowserRouter } from 'react-router-dom';
 import App from './App';
 import React from 'react';
 import AdminRouteGuard from './components/guards/AdminRouteGuard';
@@ -34,7 +34,7 @@ const AdminDocuments = React.lazy(() => import('./pages/AdminDocuments'));
 const AdminQuizSubmissions = React.lazy(() => import('./pages/AdminQuizSubmissions'));
 const AdminQuizSubmissionCheck = React.lazy(() => import('./pages/AdminQuizSubmissionCheck'));
 const AdminPayments = React.lazy(() => import('./pages/AdminPayments'));
-const AdminContactRequests = React.lazy(() => import('./pages/AdminContactRequests'));
+const AdminInquiries = React.lazy(() => import('./pages/AdminInquiries'));
 const AdminPublicEvents = React.lazy(() => import('./pages/AdminPublicEvents'));
 const PasswordResetPage = React.lazy(() => import('./pages/ResetPasswordPage'));
 const VerifyEmailPage = React.lazy(() => import('./pages/VerifyEmailPage'));
@@ -192,10 +192,10 @@ export const router = createBrowserRouter([
 				),
 			},
 			{
-				path: 'admin/contact-requests',
+				path: 'admin/inquiries',
 				element: (
 					<AdminRouteGuard>
-						<AdminContactRequests />
+						<AdminInquiries />
 					</AdminRouteGuard>
 				),
 			},

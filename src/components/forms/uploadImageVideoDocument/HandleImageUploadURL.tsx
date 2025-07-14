@@ -142,7 +142,7 @@ const HandleImageUploadURL = ({
 								fontSize: isMobileSize ? '0.75rem' : '0.9rem',
 							}}
 						/>
-						<Tooltip title='Upload' placement='top'>
+						<Tooltip title='Upload' placement='top' arrow>
 							<IconButton
 								onClick={handleImageUploadReusable}
 								sx={{ height: '2rem', width: '12.5%', border: '0.02rem solid gray', borderRadius: '0.35rem' }}

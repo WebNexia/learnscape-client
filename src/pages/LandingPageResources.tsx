@@ -126,6 +126,7 @@ const LandingPageResources = () => {
 							</Grid>
 						)}
 					</Box>
+
 					<ChatWhatsApp />
 					<ScrollToTopButton />
 				</Box>

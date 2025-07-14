@@ -322,6 +322,10 @@ const AdminCourseEditPage = () => {
 					updatedByImageUrl: responseUpdatedData.updatedByImageUrl,
 					updatedByRole: responseUpdatedData.updatedByRole,
 				});
+
+				setHasUnsavedChanges(false);
+				setIsEditMode(false);
+				window.scrollTo({ top: 0, behavior: 'smooth' });
 			} catch (error) {
 				console.error('Error updating external course:', error);
 			}

@@ -803,7 +803,7 @@ const Messages = () => {
 								/>
 							</Box>
 							<Box sx={{ flex: 1 }}>
-								<Tooltip title='Find User' placement='top'>
+								<Tooltip title='Find User' placement='top' arrow>
 									<IconButton
 										disabled={!user?.hasRegisteredCourse && user?.role !== 'admin'}
 										sx={{ ':hover': { backgroundColor: 'transparent' } }}
@@ -922,7 +922,7 @@ const Messages = () => {
 												flex: 1,
 												mr: isMobileSize ? '0rem' : '0.2rem',
 											}}>
-											<Tooltip title='Delete Chat' placement='top'>
+											<Tooltip title='Delete Chat' placement='top' arrow>
 												<IconButton
 													onClick={() => handleDeleteChat(chat.chatId)}
 													sx={{
@@ -1001,11 +1001,11 @@ const Messages = () => {
 														onClick={() => handleBlockUnblockUser(otherParticipant.firebaseUserId)}
 														sx={{ ':hover': { backgroundColor: 'transparent' } }}>
 														{blockedUsers.includes(otherParticipant.firebaseUserId) ? (
-															<Tooltip title='Unblock User' placement='top'>
+															<Tooltip title='Unblock User' placement='top' arrow>
 																<PersonOff color='error' fontSize={isMobileSize ? 'small' : 'medium'} />
 															</Tooltip>
 														) : (
-															<Tooltip title='Block User' placement='top'>
+															<Tooltip title='Block User' placement='top' arrow>
 																<Person color='success' fontSize={isMobileSize ? 'small' : 'medium'} />
 															</Tooltip>
 														)}
@@ -1145,7 +1145,7 @@ const Messages = () => {
 												</Box>
 
 												<Box>
-													<Tooltip title='Reply' placement='top'>
+													<Tooltip title='Reply' placement='top' arrow>
 														<IconButton
 															size='small'
 															onClick={() => handleReplyMessage(msg)}
@@ -1163,7 +1163,7 @@ const Messages = () => {
 														marginRight: isMobileSize ? '-0.35rem' : 0,
 													}}>
 													{msg.senderId === user?.firebaseUserId && (
-														<Tooltip title='Delete' placement='top'>
+														<Tooltip title='Delete' placement='top' arrow>
 															<IconButton
 																size='small'
 																onClick={() => {
@@ -1371,7 +1371,7 @@ const Messages = () => {
 											alt='Preview'
 											style={{ maxHeight: isRotatedMedium ? '2rem' : isSmallScreen ? '3.25rem' : '3.75rem', objectFit: 'contain' }}
 										/>
-										<Tooltip title='Remove Preview' placement='right'>
+										<Tooltip title='Remove Preview' placement='right' arrow>
 											<IconButton size='small' onClick={resetImageUpload} sx={{ ':hover': { backgroundColor: 'transparent' } }}>
 												<Cancel fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />
 											</IconButton>

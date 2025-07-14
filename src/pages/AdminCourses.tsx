@@ -273,7 +273,7 @@ const AdminCourses = () => {
 						closeNewCourseModal();
 					}}
 					style={{ display: 'flex', flexDirection: 'column', marginTop: '-1rem' }}>
-					<Tooltip title='Max 50 Characters' placement='top'>
+					<Tooltip title='Max 50 Characters' placement='top' arrow>
 						<CustomTextField
 							fullWidth={false}
 							label='Title'
@@ -287,7 +287,7 @@ const AdminCourses = () => {
 						/>
 					</Tooltip>
 
-					<Tooltip title='Max 500 characters' placement='top'>
+					<Tooltip title='Max 500 characters' placement='top' arrow>
 						<CustomTextField
 							fullWidth={false}
 							label='Description'
@@ -310,7 +310,7 @@ const AdminCourses = () => {
 								<Typography variant='h6' sx={{ fontSize: '0.9rem', mb: '0.25rem' }}>
 									Prices
 								</Typography>
-								<Tooltip title='Check to make this course free in all currencies.' placement='top'>
+								<Tooltip title='Check to make this course free in all currencies.' placement='top' arrow>
 									<FormControlLabel
 										control={
 											<Checkbox
@@ -387,7 +387,7 @@ const AdminCourses = () => {
 						</Box>
 					</Box>
 					<Box sx={{ margin: '0 2rem', display: 'flex', alignItems: 'center' }}>
-						<Tooltip title='This course will be managed outside the platform.' placement='top'>
+						<Tooltip title='This course will be managed outside the platform.' placement='top' arrow>
 							<FormControlLabel
 								control={
 									<Checkbox

@@ -1506,7 +1506,7 @@ const AdminLessonEditPage = () => {
 
 																			<Box sx={{ display: 'flex' }}>
 																				<Box>
-																					<Tooltip title='Clone' placement='top'>
+																					<Tooltip title='Clone' placement='top' arrow>
 																						<IconButton
 																							onClick={() => {
 																								openCloneQuestionModal(index);
@@ -1533,7 +1533,7 @@ const AdminLessonEditPage = () => {
 																				</CustomDialog>
 
 																				<Box>
-																					<Tooltip title='Edit' placement='top'>
+																					<Tooltip title='Edit' placement='top' arrow>
 																						<IconButton
 																							onClick={() => {
 																								setOptions(question.options);
@@ -1572,7 +1572,7 @@ const AdminLessonEditPage = () => {
 																						setHasUnsavedChanges={setHasUnsavedChanges}
 																					/>
 																				</Box>
-																				<Tooltip title='Remove' placement='top'>
+																				<Tooltip title='Remove' placement='top' arrow>
 																					<IconButton onClick={() => removeQuestion(question)}>
 																						<Delete fontSize='small' />
 																					</IconButton>

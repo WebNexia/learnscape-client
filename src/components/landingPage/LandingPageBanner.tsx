@@ -57,7 +57,7 @@ const LandingPageBanner = () => {
 						<Button
 							variant='outlined'
 							endIcon={<PlayCircle />}
-							sx={{ mr: '2rem', borderRadius: '5rem', padding: '0.75rem 1.75rem', ':hover': { backgroundColor: ' #4D7B8B', color: '#ffff' } }}
+							sx={{ 'mr': '2rem', 'borderRadius': '5rem', 'padding': '0.75rem 1.75rem', ':hover': { backgroundColor: ' #4D7B8B', color: '#ffff' } }}
 							onClick={() => setIsIntroVideoModalOpen(true)}>
 							{/* Watch */}
 							İzle
@@ -65,7 +65,7 @@ const LandingPageBanner = () => {
 						<Button
 							variant='outlined'
 							endIcon={<ContactPage />}
-							sx={{ borderRadius: '5rem', padding: '0.75rem 1.75rem', ':hover': { backgroundColor: ' #4D7B8B', color: '#ffff' } }}
+							sx={{ 'borderRadius': '5rem', 'padding': '0.75rem 1.75rem', ':hover': { backgroundColor: ' #4D7B8B', color: '#ffff' } }}
 							onClick={() => setIsGetMoreDetailsModalOpen(true)}>
 							{/* More Info */}
 							Daha Fazla Bilgi

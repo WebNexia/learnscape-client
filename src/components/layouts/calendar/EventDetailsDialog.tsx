@@ -54,7 +54,7 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 		try {
 			setIsRegisterForEventSending(true);
 			setRegisterErrorMsg(null);
-			await axios.post(`${base_url}/event-registrations`, {
+			await axios.post(`${base_url}/eventRegistrations`, {
 				eventId: selectedEvent?._id,
 				userId: user?._id,
 				firstName: user?.firstName,

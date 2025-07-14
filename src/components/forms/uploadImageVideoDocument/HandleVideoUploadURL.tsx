@@ -84,7 +84,7 @@ const HandleVideoUploadURL = ({
 							}}
 						/>
 						{!isVideoLoading ? (
-							<Tooltip title='Upload' placement='top'>
+							<Tooltip title='Upload' placement='top' arrow>
 								<IconButton
 									onClick={handleVideoUploadReusable}
 									sx={{ height: '2rem', width: '12.5%', border: '0.02rem solid gray', borderRadius: '0.35rem' }}

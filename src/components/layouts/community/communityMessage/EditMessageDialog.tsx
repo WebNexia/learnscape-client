@@ -196,7 +196,7 @@ const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, set
 						</Box>
 					)}
 					<Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-						<Tooltip title={!showAudioRecorder ? 'Upload Audio' : 'Hide Recorder'} placement='top'>
+						<Tooltip title={!showAudioRecorder ? 'Upload Audio' : 'Hide Recorder'} placement='top' arrow>
 							<IconButton onClick={() => toggleShow('audio')}>
 								{!showAudioRecorder ? (
 									<Mic fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
@@ -205,7 +205,7 @@ const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, set
 								)}
 							</IconButton>
 						</Tooltip>
-						<Tooltip title={!showImageUploader ? 'Upload Image' : 'Hide Uploader'} placement='top'>
+						<Tooltip title={!showImageUploader ? 'Upload Image' : 'Hide Uploader'} placement='top' arrow>
 							<IconButton onClick={() => toggleShow('image')}>
 								{!showImageUploader ? (
 									<Image fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />

@@ -122,7 +122,7 @@ const CreateCodeDialog = ({ isNewCodeModalOpen, setIsNewCodeModalOpen }: CreateC
 							<Typography variant='h6' sx={{ fontSize: '0.9rem', mb: '0.25rem' }}>
 								Code
 							</Typography>
-							<Tooltip title='Max 15 Characters' placement='top'>
+							<Tooltip title='Max 15 Characters' placement='top' arrow>
 								<CustomTextField
 									value={newPromoCode.code}
 									onChange={(e) => setNewPromoCode((prevData) => ({ ...prevData, code: e.target.value.trim() }))}

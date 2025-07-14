@@ -4,50 +4,50 @@ import { OrganisationContext } from './OrganisationContextProvider';
 import { useQuery } from 'react-query';
 import Loading from '../components/layouts/loading/Loading';
 import LoadingError from '../components/layouts/loading/LoadingError';
-import { ContactRequest } from '../interfaces/contactRequest';
+import { Inquiry } from '../interfaces/inquiry';
 import { useAuth } from '../hooks/useAuth';
 import { useLocation } from 'react-router-dom';
 
-interface ContactRequestsContextTypes {
-	contactRequests: ContactRequest[];
+interface InquiriesContextTypes {
+	inquiries: Inquiry[];
 	loading: boolean;
 	error: string | null;
-	fetchContactRequests: (page: number) => Promise<void>;
+	fetchInquiries: (page: number) => Promise<void>;
 	refreshData: () => void;
-	sortContactRequests: (property: keyof ContactRequest, order: 'asc' | 'desc') => void;
-	removeRequest: (requestId: string) => void;
+	sortInquiries: (property: keyof Inquiry, order: 'asc' | 'desc') => void;
+	removeInquiry: (inquiryId: string) => void;
 	numberOfPages: number;
-	requestsPageNumber: number;
-	setRequestsPageNumber: React.Dispatch<React.SetStateAction<number>>;
+	inquiriesPageNumber: number;
+	setInquiriesPageNumber: React.Dispatch<React.SetStateAction<number>>;
 	setNumberOfPages: React.Dispatch<React.SetStateAction<number>>;
 }
 
-interface ContactRequestsContextProviderProps {
+interface InquiriesContextProviderProps {
 	children: ReactNode;
 }
 
-export const ContactRequestsContext = createContext<ContactRequestsContextTypes>({
-	contactRequests: [],
+export const InquiriesContext = createContext<InquiriesContextTypes>({
+	inquiries: [],
 	loading: false,
 	error: null,
-	fetchContactRequests: async () => {},
+	fetchInquiries: async () => {},
 	refreshData: () => {},
-	sortContactRequests: () => {},
-	removeRequest: () => {},
+	sortInquiries: () => {},
+	removeInquiry: () => {},
 	numberOfPages: 1,
-	requestsPageNumber: 1,
-	setRequestsPageNumber: () => {},
+	inquiriesPageNumber: 1,
+	setInquiriesPageNumber: () => {},
 	setNumberOfPages: () => {},
 });
 
-const ContactRequestsContextProvider = (props: ContactRequestsContextProviderProps) => {
+const InquiriesContextProvider = (props: InquiriesContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
 	const { isAuthenticated, isAdmin } = useAuth();
-	const [contactRequests, setContactRequests] = useState<ContactRequest[]>([]);
+	const [inquiries, setInquiries] = useState<Inquiry[]>([]);
 	const [isLoaded, setIsLoaded] = useState<boolean>(false);
 	const [numberOfPages, setNumberOfPages] = useState<number>(1);
-	const [requestsPageNumber, setRequestsPageNumber] = useState<number>(1);
+	const [inquiriesPageNumber, setInquiriesPageNumber] = useState<number>(1);
 	const location = useLocation();
 	const isLandingPageRoute =
 		location.pathname === '/' ||
@@ -58,13 +58,13 @@ const ContactRequestsContextProvider = (props: ContactRequestsContextProviderPro
 		location.pathname === '/auth' ||
 		location.pathname.startsWith('/course/');
 
-	const fetchContactRequests = async (page: number) => {
+	const fetchInquiries = async (page: number) => {
 		if (!orgId) return;
 		try {
-			const response = await axios.get(`${base_url}/contact-requests/organisation/${orgId}?page=${page}&limit=100`);
+			const response = await axios.get(`${base_url}/inquiries/organisation/${orgId}?page=${page}&limit=100`);
 			// Initial sorting when fetching data
-			const sortedDataCopy = [...response.data.data].sort((a: ContactRequest, b: ContactRequest) => b.createdAt.localeCompare(a.createdAt));
-			setContactRequests(sortedDataCopy);
+			const sortedDataCopy = [...response.data.data].sort((a: Inquiry, b: Inquiry) => b.createdAt.localeCompare(a.createdAt));
+			setInquiries(sortedDataCopy);
 			// Update to use the pagination data from the response
 			setNumberOfPages(response.data.pagination.totalPages);
 			setIsLoaded(true);
@@ -75,13 +75,13 @@ const ContactRequestsContextProvider = (props: ContactRequestsContextProviderPro
 		}
 	};
 
-	const { isLoading, isError } = useQuery(['contactRequests', orgId, requestsPageNumber], () => fetchContactRequests(requestsPageNumber), {
+	const { isLoading, isError } = useQuery(['inquiries', orgId, inquiriesPageNumber], () => fetchInquiries(inquiriesPageNumber), {
 		enabled: !!orgId && isAuthenticated && isAdmin && !isLoaded && !isLandingPageRoute,
 		// keepPreviousData: true,
 	});
 
-	const sortContactRequests = (property: keyof ContactRequest, order: 'asc' | 'desc') => {
-		const sortedDataCopy = [...contactRequests].sort((a: ContactRequest, b: ContactRequest) => {
+	const sortInquiries = (property: keyof Inquiry, order: 'asc' | 'desc') => {
+		const sortedDataCopy = [...inquiries].sort((a: Inquiry, b: Inquiry) => {
 			const aValue = a[property];
 			const bValue = b[property];
 
@@ -93,15 +93,15 @@ const ContactRequestsContextProvider = (props: ContactRequestsContextProviderPro
 				return aValue < bValue ? 1 : -1;
 			}
 		});
-		setContactRequests(sortedDataCopy);
+		setInquiries(sortedDataCopy);
 	};
 
 	const refreshData = () => {
 		setIsLoaded(false);
 	};
 
-	const removeRequest = (requestId: string) => {
-		setContactRequests((prev) => prev.filter((request) => request._id !== requestId));
+	const removeInquiry = (inquiryId: string) => {
+		setInquiries((prev) => prev.filter((inquiry) => inquiry._id !== inquiryId));
 	};
 
 	if (isLoading) {
@@ -113,23 +113,23 @@ const ContactRequestsContextProvider = (props: ContactRequestsContextProviderPro
 	}
 
 	return (
-		<ContactRequestsContext.Provider
+		<InquiriesContext.Provider
 			value={{
-				contactRequests,
+				inquiries,
 				loading: isLoading,
-				error: isError ? 'Failed to fetch info requests' : null,
-				fetchContactRequests,
+				error: isError ? 'Failed to fetch inquiries' : null,
+				fetchInquiries,
 				refreshData,
-				sortContactRequests,
-				removeRequest,
+				sortInquiries,
+				removeInquiry,
 				numberOfPages,
-				requestsPageNumber,
-				setRequestsPageNumber,
+				inquiriesPageNumber,
+				setInquiriesPageNumber,
 				setNumberOfPages,
 			}}>
 			{props.children}
-		</ContactRequestsContext.Provider>
+		</InquiriesContext.Provider>
 	);
 };
 
-export default ContactRequestsContextProvider;
+export default InquiriesContextProvider;

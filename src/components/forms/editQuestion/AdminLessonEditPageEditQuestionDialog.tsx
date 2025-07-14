@@ -445,7 +445,7 @@ const AdminLessonEditPageEditQuestionDialog = ({
 										width: '100%',
 										marginLeft: '3rem',
 									}}>
-									<Tooltip title='Correct Answer' placement='left'>
+									<Tooltip title='Correct Answer' placement='left' arrow>
 										<FormControlLabel
 											control={
 												<Radio
@@ -462,7 +462,7 @@ const AdminLessonEditPageEditQuestionDialog = ({
 										/>
 									</Tooltip>
 									{i === options.length - 1 && (
-										<Tooltip title='Add Option' placement='top'>
+										<Tooltip title='Add Option' placement='top' arrow>
 											<IconButton onClick={addOption}>
 												<AddCircle />
 											</IconButton>
@@ -483,7 +483,7 @@ const AdminLessonEditPageEditQuestionDialog = ({
 										}}
 									/>
 									{i > 0 && (
-										<Tooltip title='Remove Option' placement='top'>
+										<Tooltip title='Remove Option' placement='top' arrow>
 											<IconButton onClick={() => removeOption(i)}>
 												<RemoveCircle />
 											</IconButton>

@@ -158,7 +158,7 @@ const CourseDetailsEditBox = ({
 			<Box sx={{ display: 'flex', justifyContent: 'space-between', mt: '-1.75rem' }}>
 				<Box sx={{ flex: 1 }}>
 					<Typography variant='h6'>Title*</Typography>
-					<Tooltip title='Max 50 Characters' placement='top'>
+					<Tooltip title='Max 50 Characters' placement='top' arrow>
 						<CustomTextField
 							sx={{
 								marginTop: '0.5rem',
@@ -184,7 +184,7 @@ const CourseDetailsEditBox = ({
 				</Box>
 				<Box sx={{ flex: 1.5, marginLeft: '2rem' }}>
 					<Typography variant='h6'>Description*</Typography>
-					<Tooltip title='Max 500 characters' placement='top'>
+					<Tooltip title='Max 500 characters' placement='top' arrow>
 						<CustomTextField
 							sx={{ marginTop: '0.5rem' }}
 							value={singleCourseBeforeSave?.description}
@@ -207,7 +207,7 @@ const CourseDetailsEditBox = ({
 					{isMissingField && singleCourseBeforeSave?.description === '' && <CustomErrorMessage>Enter a description</CustomErrorMessage>}
 				</Box>
 				<Box sx={{ display: 'flex', alignItems: 'center', ml: '2rem' }}>
-					<Tooltip title='External courses will be managed outside the platform.' placement='top'>
+					<Tooltip title='External courses will be managed outside the platform.' placement='top' arrow>
 						<FormControlLabel
 							control={
 								<Checkbox

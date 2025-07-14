@@ -23,7 +23,7 @@ interface ContactFormDialogProps {
 	message: string;
 	setMessage: (value: string) => void;
 	location: { countryCode: string };
-	handleMoreInfoRequest: (e: React.FormEvent<HTMLFormElement>) => void;
+	handleInquiry: (e: React.FormEvent<HTMLFormElement>) => void;
 	sending: boolean;
 	title: string;
 	description: string;
@@ -49,7 +49,7 @@ const ContactFormDialog = ({
 	message,
 	setMessage,
 	location,
-	handleMoreInfoRequest,
+	handleInquiry,
 	sending,
 	title,
 	description,
@@ -76,9 +76,8 @@ const ContactFormDialog = ({
 				fontWeight: 600,
 				fontFamily: 'Varela Round',
 				color: '#2C3E50',
-				ml: '0.5rem',
 				textAlign: 'center',
-				mb: 1,
+				mb: -2,
 			}}
 			PaperProps={{
 				sx: {
@@ -96,16 +95,15 @@ const ContactFormDialog = ({
 				sx={{
 					color: '#2C3E50',
 					fontFamily: 'Varela Round',
-					ml: '0.5rem',
 					textAlign: 'center',
 					fontSize: { xs: '0.85rem', sm: '1rem' },
 					opacity: 0.9,
 					lineHeight: 1.6,
-					mb: 2,
+					mb: 1,
 				}}>
 				{description}
 			</DialogTitle>
-			<form onSubmit={handleMoreInfoRequest}>
+			<form onSubmit={handleInquiry}>
 				<Box
 					sx={{
 						'margin': { xs: '0 0.75rem', sm: '0 1rem', md: '0 2rem', lg: '0 2rem' },
@@ -302,13 +300,15 @@ const ContactFormDialog = ({
 							},
 						}}
 					/>
-					<ReCAPTCHA
-						sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
-						onChange={handleRecaptchaChange}
-						onExpired={() => resetRecaptcha()}
-						ref={recaptchaRef}
-						key={isGetMoreDetailsModalOpen ? 'active' : 'inactive'}
-					/>
+					<Box sx={{ display: 'flex', justifyContent: 'center' }}>
+						<ReCAPTCHA
+							sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
+							onChange={handleRecaptchaChange}
+							onExpired={() => resetRecaptcha()}
+							ref={recaptchaRef}
+							key={isGetMoreDetailsModalOpen ? 'active' : 'inactive'}
+						/>
+					</Box>
 				</Box>
 				<CustomDialogActions
 					submitBtnText={sending ? 'Gönderiliyor...' : 'Gönder'}

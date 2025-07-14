@@ -765,7 +765,7 @@ const CreateQuestionDialog = ({
 												width: '90%',
 												marginLeft: '3rem',
 											}}>
-											<Tooltip title='Correct Answer' placement='left'>
+											<Tooltip title='Correct Answer' placement='left' arrow>
 												<FormControlLabel
 													control={
 														<Radio
@@ -781,7 +781,7 @@ const CreateQuestionDialog = ({
 												/>
 											</Tooltip>
 											{index === options.length - 1 && (
-												<Tooltip title='Add Option' placement='top'>
+												<Tooltip title='Add Option' placement='top' arrow>
 													<IconButton onClick={addOption}>
 														<AddCircle />
 													</IconButton>
@@ -800,7 +800,7 @@ const CreateQuestionDialog = ({
 												}}
 											/>
 											{index > 0 && (
-												<Tooltip title='Remove Option' placement='top'>
+												<Tooltip title='Remove Option' placement='top' arrow>
 													<IconButton onClick={() => removeOption(index)}>
 														<RemoveCircle />
 													</IconButton>

@@ -3,7 +3,7 @@ import theme from '../../../themes';
 import { useNavigate } from 'react-router-dom';
 import { useContext, useEffect, useRef, useState } from 'react';
 import { Mode, Roles } from '../../../interfaces/enums';
-import { Cancel, DarkMode, DoneAll, LightMode, Menu, Notifications } from '@mui/icons-material';
+import { Cancel, DarkMode, DoneAll, LightMode, Menu, Notifications, BugReport } from '@mui/icons-material';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 import { useUserCourseLessonData } from '../../../hooks/useUserCourseLessonData';
 import NotificationsBox from '../notifications/Notifications';
@@ -11,6 +11,7 @@ import { collection, doc, getDocs, onSnapshot, query, where, writeBatch } from '
 import { db } from '../../../firebase';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 import CustomDrawer from './CustomDrawer';
+import ReportBugDialog from '../dashboard/ReportBugDialog';
 
 interface DashboardHeaderProps {
 	pageName: string;
@@ -31,6 +32,7 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 	const [numberOfUnreadNotifications, setNumberOfUnreadNotifications] = useState<number>(0);
 
 	const [showUnreadOnly, setShowUnreadOnly] = useState<boolean>(false);
+	const [bugReportDialogOpen, setBugReportDialogOpen] = useState<boolean>(false);
 
 	const notificationsRef = useRef<HTMLDivElement>(null); // Create a ref for the notifications box
 
@@ -139,7 +141,26 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 
 				<CustomDrawer isDrawerOpen={isDrawerOpen} setIsDrawerOpen={setIsDrawerOpen}></CustomDrawer>
 
-				<Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+				<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+					<Tooltip title='Report a Bug' placement='top' arrow>
+						<IconButton
+							onClick={() => setBugReportDialogOpen(true)}
+							sx={{
+								':hover': {
+									backgroundColor: 'transparent',
+								},
+								'mr': 1,
+							}}>
+							<BugReport
+								color='secondary'
+								fontSize={isMobileSize ? 'small' : 'medium'}
+								sx={{
+									fontSize: isMobileSize ? '1rem' : undefined,
+								}}
+							/>
+						</IconButton>
+					</Tooltip>
+
 					<Badge
 						badgeContent={numberOfUnreadNotifications}
 						color='error'
@@ -204,7 +225,7 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 									/>
 								</Box>
 								<Box sx={{ zIndex: 10001 }}>
-									<Tooltip title='Mark All as Read' placement='top'>
+									<Tooltip title='Mark All as Read' placement='top' arrow>
 										<IconButton
 											onClick={() => {
 												if (user && user.firebaseUserId) {
@@ -237,7 +258,7 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 					{
 						{
 							[Mode.DARK_MODE]: (
-								<Tooltip title='Light Mode' placement='top'>
+								<Tooltip title='Light Mode' placement='top' arrow>
 									<IconButton
 										sx={{
 											'color': theme.textColor?.common.main,
@@ -255,7 +276,7 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 								</Tooltip>
 							),
 							[Mode.LIGHT_MODE]: (
-								<Tooltip title='Dark Mode' placement='top'>
+								<Tooltip title='Dark Mode' placement='top' arrow>
 									<IconButton
 										sx={{
 											'color': theme.textColor?.common.main,
@@ -291,6 +312,8 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 					</Button>
 				</Box>
 			</Toolbar>
+
+			<ReportBugDialog open={bugReportDialogOpen} onClose={() => setBugReportDialogOpen(false)} />
 		</AppBar>
 	);
 };

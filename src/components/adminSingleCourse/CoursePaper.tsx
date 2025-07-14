@@ -244,7 +244,7 @@ const CoursePaper = ({
 											{singleCourseBeforeSave?.isActive ? 'Unpublish' : 'Publish'}
 										</CustomSubmitButton>
 										{!singleCourseBeforeSave?.isExpired ? (
-											<Tooltip title='Edit Course' placement='top'>
+											<Tooltip title='Edit Course' placement='top' arrow>
 												<IconButton
 													sx={{ padding: '0 0.75rem' }}
 													onClick={() => {
@@ -254,7 +254,7 @@ const CoursePaper = ({
 												</IconButton>
 											</Tooltip>
 										) : (
-											<Tooltip title='Clone Course' placement='top'>
+											<Tooltip title='Clone Course' placement='top' arrow>
 												<IconButton
 													sx={{ padding: '0 0.75rem' }}
 													onClick={() => {
@@ -264,7 +264,7 @@ const CoursePaper = ({
 												</IconButton>
 											</Tooltip>
 										)}
-										<Tooltip title='More Info' placement='top'>
+										<Tooltip title='More Info' placement='top' arrow>
 											<IconButton
 												sx={{ padding: '0 0.75rem', ml: '-0.75rem' }}
 												onClick={() => {

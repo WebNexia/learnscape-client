@@ -46,13 +46,13 @@ const QuestionResponseCard = ({ response, index, fromAdminSubmissions, fetchQues
 					{isVerySmallScreen
 						? truncateText(stripHtml(response.questionId.question), 25)
 						: isMobileSize
-						? truncateText(stripHtml(response.questionId.question), 40)
-						: truncateText(stripHtml(response.questionId.question), 60)}
+							? truncateText(stripHtml(response.questionId.question), 40)
+							: truncateText(stripHtml(response.questionId.question), 60)}
 				</Typography>
 
 				<Box sx={{ flex: isMobileSize ? 1 : 1.5 }}>
 					{(response.teacherFeedback && response.teacherFeedback.trim() !== '') || response.teacherAudioFeedbackUrl ? (
-						<Tooltip title={`${fromAdminSubmissions ? 'Feedback' : "Instructor's Feedback"}`} placement='left'>
+						<Tooltip title={`${fromAdminSubmissions ? 'Feedback' : "Instructor's Feedback"}`} placement='left' arrow>
 							<RateReviewOutlined color='success' fontSize='small' sx={{ fontSize: isMobileSize ? '1rem' : undefined }} />
 						</Tooltip>
 					) : null}

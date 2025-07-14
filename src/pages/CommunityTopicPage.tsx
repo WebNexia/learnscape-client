@@ -770,7 +770,7 @@ const CommunityTopicPage = () => {
 									height: '1.25rem',
 								}}
 							/>
-							<Tooltip title='Remove Recording' placement='top'>
+							<Tooltip title='Remove Recording' placement='top' arrow>
 								<IconButton size='small' onClick={() => setAudioUrl('')} sx={{ ':hover': { backgroundColor: 'transparent' } }}>
 									<Cancel sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem' }} />
 								</IconButton>
@@ -788,7 +788,7 @@ const CommunityTopicPage = () => {
 								maxHeight: '4rem',
 							}}>
 							<img src={imgUrl} alt='Preview' style={{ maxHeight: isMobileSize ? '3rem' : '4rem', objectFit: 'contain', borderRadius: '0.25rem' }} />
-							<Tooltip title='Remove Image' placement='top'>
+							<Tooltip title='Remove Image' placement='top' arrow>
 								<IconButton size='small' onClick={() => setImgUrl('')} sx={{ ':hover': { backgroundColor: 'transparent' } }}>
 									<Cancel sx={{ fontSize: '1rem' }} />
 								</IconButton>
@@ -909,7 +909,7 @@ const CommunityTopicPage = () => {
 									/>
 								</IconButton>
 
-								<Tooltip title={audioUrl ? 'Update Audio' : 'Upload Audio'} placement='top'>
+								<Tooltip title={audioUrl ? 'Update Audio' : 'Upload Audio'} placement='top' arrow>
 									<IconButton
 										onClick={() => setUploadAudioDialogOpen(true)}
 										disabled={isTopicLocked}
@@ -988,7 +988,7 @@ const CommunityTopicPage = () => {
 									</CustomCancelButton>
 								</CustomDialog>
 
-								<Tooltip title={imgUrl ? 'Update Image' : 'Upload Image'} placement='top'>
+								<Tooltip title={imgUrl ? 'Update Image' : 'Upload Image'} placement='top' arrow>
 									<IconButton
 										onClick={() => setUploadImgDialogOpen(true)}
 										disabled={isTopicLocked}

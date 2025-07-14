@@ -122,11 +122,11 @@ const LessonPaper = ({
 						</Box>
 						<Box sx={{ paddingLeft: '0.5rem', color: theme.textColor?.common.main }}>
 							{isActive ? (
-								<Tooltip title='Published' placement='right'>
+								<Tooltip title='Published' placement='right' arrow>
 									<PublishedWithChanges fontSize='small' />
 								</Tooltip>
 							) : (
-								<Tooltip title='Unpublished' placement='right'>
+								<Tooltip title='Unpublished' placement='right' arrow>
 									<Unpublished fontSize='small' />
 								</Tooltip>
 							)}
@@ -226,7 +226,7 @@ const LessonPaper = ({
 											onClick={handlePublishing}>
 											{isActive ? 'Unpublish' : 'Publish'}
 										</CustomSubmitButton>
-										<Tooltip title='Edit Lesson' placement='top'>
+										<Tooltip title='Edit Lesson' placement='top' arrow>
 											<IconButton
 												sx={{ padding: '0 0.75rem' }}
 												onClick={() => {
@@ -238,7 +238,7 @@ const LessonPaper = ({
 												<Edit sx={{ color: 'white' }} fontSize='small' />
 											</IconButton>
 										</Tooltip>
-										<Tooltip title='More Info' placement='top'>
+										<Tooltip title='More Info' placement='top' arrow>
 											<IconButton
 												sx={{ padding: '0 0.75rem', ml: '-0.75rem' }}
 												onClick={() => {
