@@ -9,7 +9,6 @@ import ScrollToTopButton from '../components/landingPage/ScrollToTopButton';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
 import { useRef } from 'react';
-import ReportBugButton from '../components/landingPage/ReportBugButton';
 
 const team = [
 	{ name: 'John Doe', role: 'Founder & CEO', img: 'https://randomuser.me/api/portraits/men/32.jpg' },
@@ -232,7 +231,6 @@ const AboutUs = () => {
 				recaptchaToken={recaptchaToken}
 			/>
 			<ChatWhatsApp />
-			<ReportBugButton />
 			<ScrollToTopButton />
 		</LandingPageLayout>
 	);

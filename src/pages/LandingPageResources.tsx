@@ -8,7 +8,6 @@ import DocumentCard from '../components/landingPage/DocumentCard';
 import { Document } from '../interfaces/document';
 import ChatWhatsApp from '../components/landingPage/ChatWhatsApp';
 import ScrollToTopButton from '../components/landingPage/ScrollToTopButton';
-import ReportBugButton from '../components/landingPage/ReportBugButton';
 
 interface Price {
 	currency: string;
@@ -127,7 +126,7 @@ const LandingPageResources = () => {
 							</Grid>
 						)}
 					</Box>
-					<ReportBugButton />
+
 					<ChatWhatsApp />
 					<ScrollToTopButton />
 				</Box>

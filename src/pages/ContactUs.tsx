@@ -12,7 +12,6 @@ import ReCAPTCHA from 'react-google-recaptcha';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
-import ReportBugButton from '../components/landingPage/ReportBugButton';
 
 const ContactUs = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -299,7 +298,6 @@ const ContactUs = () => {
 				</Paper>
 			</Container>
 			<ChatWhatsApp />
-			<ReportBugButton />
 			<ScrollToTopButton />
 			{/* Error Dialog */}
 			<CustomDialog openModal={errorDialogOpen} closeModal={() => setErrorDialogOpen(false)} title='' maxWidth='xs'>

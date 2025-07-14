@@ -10,7 +10,6 @@ import LandingPageCoursesInfoDialog from '../components/landingPage/LandingPageC
 import ChatWhatsApp from '../components/landingPage/ChatWhatsApp';
 import ScrollToTopButton from '../components/landingPage/ScrollToTopButton';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
-import ReportBugButton from '../components/landingPage/ReportBugButton';
 
 const LandingPageCourses = () => {
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
@@ -78,7 +77,6 @@ const LandingPageCourses = () => {
 			</Box>
 			<LandingPageCoursesInfoDialog isInfoDialogOpen={isInfoDialogOpen} setIsInfoDialogOpen={setIsInfoDialogOpen} />
 			<ChatWhatsApp />
-			<ReportBugButton />
 			<ScrollToTopButton />
 		</LandingPageLayout>
 	);

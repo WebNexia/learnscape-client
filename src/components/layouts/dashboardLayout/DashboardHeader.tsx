@@ -151,7 +151,13 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 								},
 								'mr': 1,
 							}}>
-							<BugReport color='secondary' fontSize={isMobileSize ? 'small' : 'medium'} sx={{ fontSize: isMobileSize ? '1rem' : undefined }} />
+							<BugReport
+								color='secondary'
+								fontSize={isMobileSize ? 'small' : 'medium'}
+								sx={{
+									fontSize: isMobileSize ? '1rem' : undefined,
+								}}
+							/>
 						</IconButton>
 					</Tooltip>
 
