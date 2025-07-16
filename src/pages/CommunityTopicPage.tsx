@@ -943,7 +943,7 @@ const CommunityTopicPage = () => {
 											<AudioRecorder
 												uploadAudio={uploadAudio}
 												isAudioUploading={isAudioUploading}
-												maxRecordTime={45000}
+												maxRecordTime={60000}
 												fromCreateCommunityTopic={true}
 											/>
 										) : (

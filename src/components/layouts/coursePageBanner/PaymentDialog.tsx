@@ -250,6 +250,8 @@ const PaymentDialog = ({
 								setErrorMessage(
 									fromHomePage ? 'reCAPTCHA doğrulaması başarısız. Lütfen tekrar deneyin.' : 'reCAPTCHA verification failed. Please try again.'
 								);
+								// Don't retry on reCAPTCHA errors
+								return;
 							} else {
 								setErrorMessage(backendMsg);
 							}

@@ -228,7 +228,7 @@ const EditTopicDialog = ({ editTopicModalOpen, topic, setEditTopicModalOpen, set
 						<Typography variant='h6'>Audio Recording</Typography>
 
 						{!topic.audioUrl ? (
-							<AudioRecorder uploadAudio={uploadAudio} isAudioUploading={isAudioUploading} maxRecordTime={45000} fromCreateCommunityTopic={true} />
+							<AudioRecorder uploadAudio={uploadAudio} isAudioUploading={isAudioUploading} maxRecordTime={60000} fromCreateCommunityTopic={true} />
 						) : (
 							<Box sx={{ display: 'flex', alignItems: 'center', mb: '2rem' }}>
 								<Box sx={{ flex: 9 }}>
