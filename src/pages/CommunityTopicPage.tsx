@@ -34,6 +34,7 @@ import { renderMessageWithMentions } from '../utils/renderMessageWithMentions';
 import { debounce } from 'lodash';
 import { processTitle } from '../utils/processTitle';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
+import useUploadLimit from '../hooks/useUploadLimit';
 
 export interface UserSuggestion {
 	username: string;
@@ -95,6 +96,11 @@ const CommunityTopicPage = () => {
 	// URL validation error handling
 	const [isUrlErrorOpen, setIsUrlErrorOpen] = useState<boolean>(false);
 	const [urlErrorMessage, setUrlErrorMessage] = useState<string>('');
+
+	// Session attempt limits
+	const [audioUploadAttempts, setAudioUploadAttempts] = useState<number>(0);
+	const [imageUploadAttempts, setImageUploadAttempts] = useState<number>(0);
+	const MAX_SESSION_ATTEMPTS = 5;
 
 	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(user?.role === 'admin' ? true : false);
 	const [isAudioUploading, setIsAudioUploading] = useState<boolean>(false);
@@ -493,6 +499,9 @@ const CommunityTopicPage = () => {
 		return renderMessageWithEmojis(withMentions, isMobileSize ? '1rem' : '1.5rem', isMobileSize);
 	};
 	const renderedTopicContent = useMemo(() => renderMessageContent(topic?.text || ''), [topic?.text]);
+
+	// Upload limit management
+	const { getRemainingAudioUploads, getRemainingImageUploads } = useUploadLimit();
 
 	return (
 		<DashboardPagesLayout pageName='Community' customSettings={{ justifyContent: 'flex-start' }}>
@@ -939,37 +948,52 @@ const CommunityTopicPage = () => {
 											}}>
 											You can add a single audio recording per message and it will be displayed at the bottom of the message
 										</Typography>
-										{!audioUrl ? (
+
+										{!audioUrl && getRemainingAudioUploads() > 0 ? (
 											<AudioRecorder
 												uploadAudio={uploadAudio}
 												isAudioUploading={isAudioUploading}
 												maxRecordTime={60000}
 												fromCreateCommunityTopic={true}
+												audioUploadAttempts={audioUploadAttempts}
+												maxSessionAttempts={MAX_SESSION_ATTEMPTS}
+												onAudioUploadAttempt={() => setAudioUploadAttempts((prev) => prev + 1)}
+												recorderTitleDescription={
+													getRemainingAudioUploads() <= 0 && user?.role !== 'admin'
+														? '(Daily limit reached. Resets everyday)'
+														: getRemainingAudioUploads() <= 5 && user?.role !== 'admin'
+															? '(' + getRemainingAudioUploads() + ' of 10 audio uploads remaining today)'
+															: ''
+												}
 											/>
 										) : (
 											<Box sx={{ display: 'flex', alignItems: 'center', mb: isMobileSize ? '1rem' : '2rem' }}>
-												<Box sx={{ flex: 9 }}>
-													<audio
-														src={audioUrl}
-														controls
-														style={{
-															marginTop: '1rem',
-															boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
-															borderRadius: '0.35rem',
-															width: '100%',
-															height: isMobileSize ? '1.75rem' : '2rem',
-														}}
-													/>
-												</Box>
-												<Box sx={{ flex: 1, margin: isMobileSize ? '0.75rem -0.5rem 0 1.5rem' : '0.75rem 0 0 1.5rem' }}>
-													<CustomSubmitButton
-														sx={{ borderRadius: '0.35rem', padding: isMobileSize ? '0.1rem' : undefined }}
-														onClick={() => {
-															setAudioUrl('');
-														}}>
-														Remove
-													</CustomSubmitButton>
-												</Box>
+												{getRemainingAudioUploads() > 0 && (
+													<>
+														<Box sx={{ flex: 9 }}>
+															<audio
+																src={audioUrl}
+																controls
+																style={{
+																	marginTop: '1rem',
+																	boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
+																	borderRadius: '0.35rem',
+																	width: '100%',
+																	height: isMobileSize ? '1.75rem' : '2rem',
+																}}
+															/>
+														</Box>
+														<Box sx={{ flex: 1, margin: isMobileSize ? '0.75rem -0.5rem 0 1.5rem' : '0.75rem 0 0 1.5rem' }}>
+															<CustomSubmitButton
+																sx={{ borderRadius: '0.35rem', padding: isMobileSize ? '0.1rem' : undefined }}
+																onClick={() => {
+																	setAudioUrl('');
+																}}>
+																Remove
+															</CustomSubmitButton>
+														</Box>
+													</>
+												)}
 											</Box>
 										)}
 									</DialogContent>
@@ -1017,6 +1041,7 @@ const CommunityTopicPage = () => {
 											}}>
 											You can add a single image per message and it will be displayed at the bottom of the message
 										</Typography>
+
 										<HandleImageUploadURL
 											onImageUploadLogic={(url) => setImgUrl(url)}
 											onChangeImgUrl={(e) => setImgUrl(e.target.value)}
@@ -1024,6 +1049,17 @@ const CommunityTopicPage = () => {
 											imageFolderName='TopicMessageImages'
 											enterImageUrl={enterImageUrl}
 											setEnterImageUrl={setEnterImageUrl}
+											isImageUploadLimitReached={getRemainingImageUploads() <= 0 && user?.role !== 'admin'}
+											imageUploadAttempts={imageUploadAttempts}
+											maxSessionAttempts={MAX_SESSION_ATTEMPTS}
+											onImageUploadAttempt={() => setImageUploadAttempts((prev) => prev + 1)}
+											labelDescription={
+												getRemainingImageUploads() <= 0 && user?.role !== 'admin'
+													? '(Daily limit reached. Resets everyday)'
+													: getRemainingImageUploads() <= 5 && user?.role !== 'admin'
+														? '(' + getRemainingImageUploads() + ' of 50 image uploads remaining today)'
+														: ''
+											}
 										/>
 										{imgUrl && <ImageThumbnail imgSource={imgUrl} removeImage={() => setImgUrl('')} />}
 									</DialogContent>

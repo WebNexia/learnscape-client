@@ -13,18 +13,28 @@ interface AudioRecorderProps {
 	uploadAudio: (blob: Blob) => Promise<void>;
 	isAudioUploading: boolean;
 	recorderTitle?: string;
+	recorderTitleDescription?: string;
 	teacherFeedback?: boolean;
 	maxRecordTime?: number;
 	fromCreateCommunityTopic?: boolean;
+	isUploadLimitReached?: boolean;
+	audioUploadAttempts?: number;
+	maxSessionAttempts?: number;
+	onAudioUploadAttempt?: () => void;
 }
 
 const AudioRecorder = ({
 	uploadAudio,
 	isAudioUploading,
 	recorderTitle = 'Audio Recorder',
+	recorderTitleDescription,
 	teacherFeedback,
 	maxRecordTime = 120000, // 2 minutes default
 	fromCreateCommunityTopic,
+	isUploadLimitReached,
+	audioUploadAttempts = 0,
+	maxSessionAttempts = 5,
+	onAudioUploadAttempt,
 }: AudioRecorderProps) => {
 	const mimeType = 'audio/webm; codecs=opus';
 	const QUALITY = 64000; // Medium quality (64 kbps)
@@ -68,6 +78,11 @@ const AudioRecorder = ({
 
 	const startRecording = async () => {
 		if (!stream) return;
+
+		// Check session attempt limit before starting recording
+		if (audioUploadAttempts >= maxSessionAttempts) {
+			return; // Don't start recording if session limit reached
+		}
 
 		setIsRecording(true);
 		setRemainingTime(maxRecordTime / 1000);
@@ -147,57 +162,69 @@ const AudioRecorder = ({
 
 	return (
 		<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: isMobileSize ? '1.5rem' : '2rem' }}>
-			<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '1rem' }}>
-				{recorderTitle}
+			<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '0.9rem' }}>
+				{recorderTitle}{' '}
 			</Typography>
+			{recorderTitleDescription && (
+				<Typography sx={{ color: 'gray', fontSize: '0.75rem', marginLeft: '0.25rem', mb: '0.5rem' }}>{recorderTitleDescription}</Typography>
+			)}
+			{!isUploadLimitReached && audioUploadAttempts < maxSessionAttempts && (
+				<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+					{!permission ? (
+						<CustomSubmitButton
+							onClick={getMicrophonePermission}
+							type='button'
+							sx={{ margin: '1rem 0', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}
+							endIcon={<Mic />}
+							size='small'>
+							Allow Microphone
+						</CustomSubmitButton>
+					) : null}
+					{permission && !isRecording ? (
+						<CustomSubmitButton
+							onClick={startRecording}
+							type='button'
+							sx={{ margin: '1rem 0', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}
+							size='small'>
+							{hasRecorded ? 'Record Another' : 'Start Recording'}
+						</CustomSubmitButton>
+					) : null}
 
-			<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-				{!permission ? (
-					<CustomSubmitButton
-						onClick={getMicrophonePermission}
-						type='button'
-						sx={{ margin: '1rem 0', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}
-						endIcon={<Mic />}
-						size='small'>
-						Allow Microphone
-					</CustomSubmitButton>
-				) : null}
-				{permission && !isRecording ? (
-					<CustomSubmitButton
-						onClick={startRecording}
-						type='button'
-						sx={{ margin: '1rem 0', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}
-						size='small'>
-						{hasRecorded ? 'Record Another' : 'Start Recording'}
-					</CustomSubmitButton>
-				) : null}
-
-				{isRecording && (
-					<>
-						<Box
-							sx={{
-								textAlign: 'center',
-								boxShadow: '0 0 0.4rem 0.2rem rgba(0,0,0,0.2)',
-								padding: '0rem 4rem',
-								borderRadius: '0.35rem',
-								margin: '1rem 0',
-							}}>
-							<Typography variant='body2' sx={{ margin: '1rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-								Remaining Time: {remainingTime}s
-							</Typography>
-							<Box sx={bouncingDotsContainerStyle}>
-								<Box sx={{ ...bouncingDotStyle, animationDelay: '0s' }} />
-								<Box sx={{ ...bouncingDotStyle, animationDelay: '0.2s' }} />
-								<Box sx={{ ...bouncingDotStyle, animationDelay: '0.4s' }} />
+					{isRecording && (
+						<>
+							<Box
+								sx={{
+									textAlign: 'center',
+									boxShadow: '0 0 0.4rem 0.2rem rgba(0,0,0,0.2)',
+									padding: '0rem 4rem',
+									borderRadius: '0.35rem',
+									margin: '1rem 0',
+								}}>
+								<Typography variant='body2' sx={{ margin: '1rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+									Remaining Time: {remainingTime}s
+								</Typography>
+								<Box sx={bouncingDotsContainerStyle}>
+									<Box sx={{ ...bouncingDotStyle, animationDelay: '0s' }} />
+									<Box sx={{ ...bouncingDotStyle, animationDelay: '0.2s' }} />
+									<Box sx={{ ...bouncingDotStyle, animationDelay: '0.4s' }} />
+								</Box>
 							</Box>
-						</Box>
-						<CustomDeleteButton onClick={stopRecording} type='button' sx={{ margin: '1rem 0' }} size='small'>
-							Stop Recording
-						</CustomDeleteButton>
-					</>
-				)}
-			</Box>
-			{audio && !isRecording && !isAudioTooLarge ? (
+							<CustomDeleteButton onClick={stopRecording} type='button' sx={{ margin: '1rem 0' }} size='small'>
+								Stop Recording
+							</CustomDeleteButton>
+						</>
+					)}
+				</Box>
+			)}
+
+			{/* Show message when session attempts reached */}
+			{audioUploadAttempts >= maxSessionAttempts && !isUploadLimitReached && (
+				<Typography variant='body2' color='error' sx={{ mt: 1, textAlign: 'center' }}>
+					Maximum upload attempts reached for this session. Please refresh the page to try again.
+				</Typography>
+			)}
+
+			{audio && !isRecording && !isAudioTooLarge && !isUploadLimitReached && audioUploadAttempts < maxSessionAttempts ? (
 				<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '30vw' }}>
 					<audio
 						src={audio}
@@ -225,7 +252,11 @@ const AudioRecorder = ({
 					sx={{ marginTop: '2rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}
 					type='button'
 					size='small'
-					onClick={() => setIsUploadModalOpen(true)}>
+					onClick={() => {
+						// Increment attempt counter when user clicks upload
+
+						setIsUploadModalOpen(true);
+					}}>
 					Upload Audio
 				</CustomSubmitButton>
 			)}
@@ -233,7 +264,9 @@ const AudioRecorder = ({
 			<CustomDialog
 				maxWidth={teacherFeedback || fromCreateCommunityTopic ? 'xs' : 'sm'}
 				openModal={isUploadModalOpen}
-				closeModal={() => setIsUploadModalOpen(false)}
+				closeModal={() => {
+					setIsUploadModalOpen(false);
+				}}
 				content={`Are you sure you want to upload the audio recording?
 				${!teacherFeedback && !fromCreateCommunityTopic ? `You will not have another chance.` : ''}`}>
 				{isAudioUploading ? (
@@ -242,9 +275,14 @@ const AudioRecorder = ({
 					</DialogActions>
 				) : (
 					<CustomDialogActions
-						onCancel={() => setIsUploadModalOpen(false)}
+						onCancel={() => {
+							setIsUploadModalOpen(false);
+						}}
 						onSubmit={() => {
 							audioBlob && uploadAudio(audioBlob);
+							if (onAudioUploadAttempt) {
+								onAudioUploadAttempt();
+							}
 						}}
 						submitBtnText='Upload'
 					/>

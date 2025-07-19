@@ -17,6 +17,7 @@ import { HideImage, Image, InsertEmoticon, Mic, MicOff } from '@mui/icons-materi
 import ImageThumbnail from '../../../forms/uploadImageVideoDocument/ImageThumbnail';
 import { MediaQueryContext } from '../../../../contexts/MediaQueryContextProvider';
 import { validateImageUrl } from '../../../../utils/urlValidation';
+import useUploadLimit from '../../../../hooks/useUploadLimit';
 
 interface EditMessageDialogProps {
 	message: CommunityMessage;
@@ -33,6 +34,9 @@ const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, set
 	const { isSmallScreen, isRotatedMedium, isVerySmallScreen, isRotated } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
+	// Upload limit management
+	const { getRemainingAudioUploads, getRemainingImageUploads } = useUploadLimit();
+
 	const [enterImageUrl, setEnterImageUrl] = useState(true);
 	const [isAudioUploading, setIsAudioUploading] = useState(false);
 	const [messageBeforeSave, setMessageBeforeSave] = useState(message);
@@ -44,6 +48,11 @@ const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, set
 	// URL validation error handling
 	const [isUrlErrorOpen, setIsUrlErrorOpen] = useState<boolean>(false);
 	const [urlErrorMessage, setUrlErrorMessage] = useState<string>('');
+
+	// Session attempt limits
+	const [audioUploadAttempts, setAudioUploadAttempts] = useState<number>(0);
+	const [imageUploadAttempts, setImageUploadAttempts] = useState<number>(0);
+	const MAX_SESSION_ATTEMPTS = 5;
 
 	const updateMessages = (callback: any) => setMessages((prev) => prev?.map((msg) => (msg._id === message._id ? callback(msg) : msg)));
 
@@ -139,6 +148,9 @@ const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, set
 		setShowImageUploader(!!messageBeforeSave.imageUrl);
 		setShowAudioRecorder(!!messageBeforeSave.audioUrl);
 		setShowPicker(false);
+		// Reset session attempt counters
+		setAudioUploadAttempts(0);
+		setImageUploadAttempts(0);
 	};
 
 	const toggleShow = (type: string) => {
@@ -219,34 +231,54 @@ const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, set
 
 				{showAudioRecorder && (
 					<Box sx={{ marginBottom: '1rem' }}>
-						<Typography variant='h6'>Audio Recording</Typography>
-						{!message.audioUrl ? (
-							<AudioRecorder uploadAudio={uploadAudio} isAudioUploading={isAudioUploading} maxRecordTime={60000} fromCreateCommunityTopic={true} />
+						<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '0.9rem' }}>
+							Audio Recording{' '}
+							<span style={{ color: 'gray', fontSize: '0.75rem', marginLeft: '0.25rem' }}>
+								{getRemainingAudioUploads() <= 5 && user?.role !== 'admin'
+									? '(' + getRemainingAudioUploads() + ' of 10 audio uploads remaining today)'
+									: ''}
+							</span>
+						</Typography>
+
+						{!message.audioUrl && getRemainingAudioUploads() > 0 ? (
+							<AudioRecorder
+								uploadAudio={uploadAudio}
+								isAudioUploading={isAudioUploading}
+								maxRecordTime={60000}
+								fromCreateCommunityTopic={true}
+								audioUploadAttempts={audioUploadAttempts}
+								maxSessionAttempts={MAX_SESSION_ATTEMPTS}
+								onAudioUploadAttempt={() => setAudioUploadAttempts((prev) => prev + 1)}
+							/>
 						) : (
 							<Box sx={{ display: 'flex', alignItems: 'center', mb: '2rem' }}>
-								<Box sx={{ flex: 9 }}>
-									<audio
-										src={message.audioUrl}
-										controls
-										style={{
-											marginTop: '1rem',
-											boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
-											borderRadius: '0.35rem',
-											width: '100%',
-											height: '2.25rem',
-										}}
-									/>
-								</Box>
-								<Box sx={{ flex: 1, margin: '0.75rem 0 0 1.5rem' }}>
-									<CustomSubmitButton
-										sx={{ borderRadius: '0.35rem' }}
-										onClick={() => {
-											updateMessages((msg: CommunityMessage) => ({ ...msg, audioUrl: '' }));
-											setIsMsgUpdated(true);
-										}}>
-										Remove
-									</CustomSubmitButton>
-								</Box>
+								{getRemainingAudioUploads() > 0 && (
+									<>
+										<Box sx={{ flex: 9 }}>
+											<audio
+												src={message.audioUrl}
+												controls
+												style={{
+													marginTop: '1rem',
+													boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
+													borderRadius: '0.35rem',
+													width: '100%',
+													height: '2rem',
+												}}
+											/>
+										</Box>
+										<Box sx={{ flex: 1, margin: '0.75rem 0 0 1.5rem' }}>
+											<CustomSubmitButton
+												sx={{ borderRadius: '0.35rem', fontSize: isMobileSize ? '0.75rem' : undefined }}
+												onClick={() => {
+													updateMessages((msg: CommunityMessage) => ({ ...msg, audioUrl: '' }));
+													setIsMsgUpdated(true);
+												}}>
+												Remove
+											</CustomSubmitButton>
+										</Box>
+									</>
+								)}
 							</Box>
 						)}
 					</Box>
@@ -255,6 +287,13 @@ const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, set
 				{showImageUploader && (
 					<>
 						<HandleImageUploadURL
+							labelDescription={
+								getRemainingImageUploads() <= 0 && user?.role !== 'admin'
+									? '(Daily limit reached. Resets everyday)'
+									: getRemainingImageUploads() <= 5 && user?.role !== 'admin'
+										? '(' + getRemainingImageUploads() + ' of 50 image uploads remaining today)'
+										: ''
+							}
 							onImageUploadLogic={(url) => {
 								updateMessages((msg: CommunityMessage) => ({ ...msg, imageUrl: url }));
 								setIsMsgUpdated(true);
@@ -264,9 +303,13 @@ const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, set
 								setIsMsgUpdated(true);
 							}}
 							imageUrlValue={message?.imageUrl}
-							imageFolderName='TopicImages'
+							imageFolderName='TopicMessageImages'
 							enterImageUrl={enterImageUrl}
 							setEnterImageUrl={setEnterImageUrl}
+							isImageUploadLimitReached={getRemainingImageUploads() <= 0 && user?.role !== 'admin'}
+							imageUploadAttempts={imageUploadAttempts}
+							maxSessionAttempts={MAX_SESSION_ATTEMPTS}
+							onImageUploadAttempt={() => setImageUploadAttempts((prev) => prev + 1)}
 						/>
 						{message.imageUrl && (
 							<ImageThumbnail
@@ -284,8 +327,9 @@ const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, set
 					onCancel={handleCancel}
 					submitBtnType='submit'
 					submitBtnText='Save'
-					disableBtn={!isMsgUpdated}
-					actionSx={{ margin: isMobileSize ? '0.75rem -0.75rem 0 0' : '1.5rem -1rem 0 0' }}
+					actionSx={{ margin: isMobileSize ? '0.5rem 0rem 0 0' : '1.5rem -1rem 0 0' }}
+					submitBtnSx={{ padding: isMobileSize ? '0.1rem 0.25rem' : undefined, marginRight: isMobileSize ? '-0.5rem' : undefined }}
+					cancelBtnSx={{ padding: isMobileSize ? '0.1rem 0.25rem' : undefined }}
 				/>
 			</form>
 			<Snackbar
