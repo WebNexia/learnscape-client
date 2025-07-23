@@ -1,7 +1,8 @@
 import { InputLabelProps, InputProps, SxProps, TextField, TextFieldProps } from '@mui/material';
-import { ChangeEvent, forwardRef, useContext } from 'react';
+import { ChangeEvent, forwardRef, useContext, useCallback } from 'react';
 import theme from '../../../themes';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
+import { sanitizeTextInput, sanitizeEmailInput, validateInputLength } from '../../../utils/sanitizeHtml';
 
 interface CustomTextFieldProps {
 	label?: string;
@@ -23,14 +24,18 @@ interface CustomTextFieldProps {
 	helperText?: string;
 	placeholder?: string;
 	resizable?: boolean;
+	disableSanitization?: boolean; // Allow disabling sanitization for specific cases
 }
+
+// Valid input types that should be sanitized
+const SANITIZED_INPUT_TYPES = ['text', 'email', 'search', 'url', 'tel', 'password'];
 
 const CustomTextField = forwardRef<HTMLDivElement, CustomTextFieldProps>(
 	(
 		{
 			variant = 'outlined',
 			label,
-			type,
+			type = 'text',
 			value,
 			onChange,
 			fullWidth = true,
@@ -47,6 +52,7 @@ const CustomTextField = forwardRef<HTMLDivElement, CustomTextFieldProps>(
 			helperText,
 			placeholder,
 			resizable = false,
+			disableSanitization = false,
 			...rest
 		},
 		ref
@@ -54,13 +60,80 @@ const CustomTextField = forwardRef<HTMLDivElement, CustomTextFieldProps>(
 		const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
 
 		const isMobileSize: boolean = isSmallScreen || isRotatedMedium;
+
+		// Validate input type
+		const validatedType = typeof type === 'string' ? type.toLowerCase() : 'text';
+
+		// Determine if input should be sanitized
+		const shouldSanitize = !disableSanitization && SANITIZED_INPUT_TYPES.includes(validatedType);
+
+		// Sanitize input on change with enhanced security
+		const handleChange = useCallback(
+			(e: ChangeEvent<HTMLInputElement>) => {
+				if (!onChange) return;
+
+				// Validate event object
+				if (!e || !e.target || typeof e.target.value !== 'string') {
+					console.warn('Invalid input event detected');
+					return;
+				}
+
+				if (shouldSanitize) {
+					let sanitizedValue: string;
+
+					// Apply type-specific sanitization
+					switch (validatedType) {
+						case 'email':
+							sanitizedValue = sanitizeEmailInput(e.target.value);
+							break;
+						case 'password':
+							// For passwords, only remove HTML tags but preserve special characters
+							sanitizedValue = sanitizeTextInput(e.target.value);
+							break;
+						default:
+							sanitizedValue = sanitizeTextInput(e.target.value);
+							break;
+					}
+
+					// Apply length validation if maxLength is specified
+					const maxLength = InputProps?.inputProps?.maxLength;
+					if (maxLength && typeof maxLength === 'number') {
+						sanitizedValue = validateInputLength(sanitizedValue, maxLength);
+					}
+
+					// Create sanitized event
+					const sanitizedEvent = {
+						...e,
+						target: {
+							...e.target,
+							value: sanitizedValue,
+						},
+					} as ChangeEvent<HTMLInputElement>;
+
+					onChange(sanitizedEvent);
+				} else {
+					// For non-sanitized inputs (like number, tel), still validate the event
+					if (validatedType === 'number') {
+						const numValue = e.target.value;
+						// Allow empty string or valid numbers
+						if (numValue === '' || !isNaN(Number(numValue))) {
+							onChange(e);
+						}
+					} else {
+						onChange(e);
+					}
+				}
+			},
+			[onChange, shouldSanitize, validatedType, InputProps?.inputProps?.maxLength]
+		);
+
 		return (
 			<TextField
 				variant={variant}
 				label={label}
-				type={type}
+				type={validatedType}
 				value={value}
-				onChange={onChange}
+				onChange={handleChange}
 				size={size}
 				sx={{
 					'marginBottom': '0.85rem',
