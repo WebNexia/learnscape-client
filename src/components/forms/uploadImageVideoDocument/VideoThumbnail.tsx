@@ -1,5 +1,5 @@
 import { Box, Typography } from '@mui/material';
-import ReactPlayer from 'react-player';
+import UniversalVideoPlayer from '../../video/UniversalVideoPlayer';
 
 interface VideoThumbnailProps {
 	videoPlayCondition: boolean | string;
@@ -35,17 +35,20 @@ const VideoThumbnail = ({
 				...boxStyle,
 			}}>
 			{videoPlayCondition ? (
-				<ReactPlayer
+				<UniversalVideoPlayer
 					url={videoUrl}
-					height='100%'
 					width='60%'
+					height='100%'
+					controls={controls}
 					style={{
 						borderRadius: '0.2rem',
 						boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
 						maxHeight: '145rem',
 						...playerStyle,
 					}}
-					controls={controls}
+					onError={(error) => {
+						console.error('Video player error:', error);
+					}}
 				/>
 			) : (
 				<img

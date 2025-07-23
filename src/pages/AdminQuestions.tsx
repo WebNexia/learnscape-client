@@ -25,6 +25,7 @@ import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/CustomInfoMessageAlignedLeft';
 import { dateFormatter } from '../utils/dateFormatter';
 import QuestionInfoModal from '../components/questions/QuestionInfoModal';
+import { decode } from 'html-entities';
 
 const AdminQuestions = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -474,7 +475,11 @@ const AdminQuestions = () => {
 											)}
 										</CustomTableCell>
 										<CustomTableCell
-											value={isVerySmallScreen ? truncateText(stripHtml(question.question), 25) : truncateText(stripHtml(question.question), 45)}
+											value={
+												isVerySmallScreen
+													? truncateText(stripHtml(decode(question.question)), 25)
+													: truncateText(stripHtml(decode(question.question)), 45)
+											}
 										/>
 										<CustomTableCell value={dateFormatter(question.createdAt)} />
 										<CustomTableCell value={dateFormatter(question.updatedAt)} />

@@ -29,9 +29,8 @@ This document outlines the security measures implemented in the LearnScape appli
 
 - Removes ALL HTML tags and attributes
 - Type validation for input parameters
-- Basic email format validation with regex: `/^[^\s@]+@[^\s@]+\.[^\s@]+$/`
-- Converts to lowercase for consistency
-- Returns empty string for invalid email formats
+- Preserves email characters during typing (format validation should be done on form submission)
+- Returns sanitized input without blocking partial email addresses
 
 **Input Length Validation (`validateInputLength` function):**
 
@@ -57,7 +56,6 @@ This document outlines the security measures implemented in the LearnScape appli
 - `email` - Email addresses with format validation
 - `search` - Search queries
 - `url` - URL inputs
-- `tel` - Telephone numbers
 - `password` - Password fields (preserves special characters)
 
 **Non-Sanitized Input Types:**
@@ -101,11 +99,14 @@ This document outlines the security measures implemented in the LearnScape appli
    ```
 
 4. **Number Input Security**:
+
    ```tsx
-   // New feature: Number validation
+   // Enhanced number validation with regex
    if (validatedType === 'number') {
    	const numValue = e.target.value;
-   	if (numValue === '' || !isNaN(Number(numValue))) {
+   	// Allow empty string, valid numbers, decimal points, negative signs, and scientific notation
+   	const numberRegex = /^[+-]?(\d*\.?\d*)([eE][+-]?\d*)?$/;
+   	if (numValue === '' || numberRegex.test(numValue)) {
    		onChange(e);
    	}
    }
@@ -148,6 +149,7 @@ This document outlines the security measures implemented in the LearnScape appli
 - ✅ **Inconsistent sanitization logic** - Standardized sanitization approach
 - ✅ **Missing number input validation** - Added numeric validation
 - ✅ **Performance issues** - Added useCallback optimization
+- ✅ **Dailymotion video playback** - Added comprehensive Dailymotion support across all video components
 
 #### 2. Remaining Considerations
 
@@ -156,6 +158,8 @@ This document outlines the security measures implemented in the LearnScape appli
 - ⚠️ Rate limiting for rapid input changes not implemented
 - ⚠️ Character set validation could be enhanced
 - ⚠️ Consider adding Content Security Policy (CSP) headers
+- ⚠️ HTML entity decoding should be applied consistently across all components
+- ⚠️ Video URL validation and formatting should be standardized across all video components
 
 ### Usage Examples
 
@@ -283,6 +287,33 @@ This document outlines the security measures implemented in the LearnScape appli
 - Log sanitization bypass attempts
 - Track input validation failures
 - Monitor for new attack vectors
+
+### Video URL Handling
+
+#### Platform Support
+
+- **YouTube**: Full support via ReactPlayer with proper configuration
+- **Vimeo**: Full support via ReactPlayer with proper configuration
+- **Dailymotion**: Full support via dedicated iframe player (ReactPlayer doesn't support Dailymotion)
+- **Twitch**: Full support via ReactPlayer with proper configuration
+- **Direct Video Files**: Support for .mp4, .webm, .ogg, .mov, .avi, .mkv files
+
+#### Security Measures
+
+- **URL Validation**: Comprehensive validation for video URLs including hosting services
+- **Universal Video Player**: Created UniversalVideoPlayer component for consistent cross-platform support
+- **Dailymotion Support**: Dedicated DailymotionPlayer component using iframe for proper playback
+- **ReactPlayer Integration**: Proper configuration for YouTube, Vimeo, and other supported platforms
+- **Error Handling**: Graceful fallbacks for invalid or inaccessible URLs
+- **Component Updates**: Updated all video components (QuestionMedia, LessonPage, LessonImageCourseDisplay, etc.) to support Dailymotion
+
+#### Components Updated
+
+- ✅ **VideoThumbnail**: Upload form video preview
+- ✅ **QuestionMedia**: Question video display
+- ✅ **LessonPage**: Lesson video playback
+- ✅ **LessonImageCourseDisplay**: Lesson video thumbnails and dialogs
+- ✅ **QuestionDialogContentNonEdit**: Question preview dialogs
 
 ### Emergency Contacts
 

@@ -1,8 +1,8 @@
 import { Box } from '@mui/material';
-import ReactPlayer from 'react-player';
 import { QuestionInterface } from '../../interfaces/question';
 import { useContext } from 'react';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
+import UniversalVideoPlayer from '../video/UniversalVideoPlayer';
 
 interface QuestionMediaProps {
 	question: QuestionInterface;
@@ -25,36 +25,36 @@ const QuestionMedia = ({ question, isStudentFeedbackPage }: QuestionMediaProps) 
 					question?.imageUrl && question?.videoUrl && isVerySmallScreen
 						? '10rem'
 						: question?.imageUrl && question?.videoUrl && isRotatedMedium
-						? '12rem'
-						: (question?.imageUrl || question?.videoUrl) && isVerySmallScreen
-						? '10rem'
-						: question?.imageUrl || question?.videoUrl
-						? '18rem'
-						: '0',
+							? '12rem'
+							: (question?.imageUrl || question?.videoUrl) && isVerySmallScreen
+								? '10rem'
+								: question?.imageUrl || question?.videoUrl
+									? '18rem'
+									: '0',
 				margin:
 					isStudentFeedbackPage && question?.imageUrl && question?.videoUrl && isVerySmallScreen
 						? '6.5rem 0'
 						: isStudentFeedbackPage && (question?.imageUrl || question?.videoUrl)
-						? '1.5rem 0'
-						: question?.imageUrl && question?.videoUrl && isVerySmallScreen
-						? '14.5rem 0 3rem 0'
-						: question?.imageUrl && question?.videoUrl && isRotatedMedium
-						? '9.5rem 0 -1rem 0'
-						: question?.videoUrl && isVerySmallScreen
-						? '9rem 0 -2rem 0'
-						: question?.imageUrl && isVerySmallScreen
-						? '9.5rem 0 -2rem 0'
-						: question?.videoUrl && isRotatedMedium
-						? '9.5rem 0 0 0'
-						: question?.imageUrl && isRotatedMedium
-						? '9.5rem 0 0 0'
-						: isMobileSize && !question.imageUrl && !question.videoUrl
-						? '0rem'
-						: isSmallScreen
-						? '9.5rem 0 0 0'
-						: !question.imageUrl && !question.videoUrl
-						? '0rem'
-						: '11rem 0 0 0',
+							? '1.5rem 0'
+							: question?.imageUrl && question?.videoUrl && isVerySmallScreen
+								? '14.5rem 0 3rem 0'
+								: question?.imageUrl && question?.videoUrl && isRotatedMedium
+									? '9.5rem 0 -1rem 0'
+									: question?.videoUrl && isVerySmallScreen
+										? '9rem 0 -2rem 0'
+										: question?.imageUrl && isVerySmallScreen
+											? '9.5rem 0 -2rem 0'
+											: question?.videoUrl && isRotatedMedium
+												? '9.5rem 0 0 0'
+												: question?.imageUrl && isRotatedMedium
+													? '9.5rem 0 0 0'
+													: isMobileSize && !question.imageUrl && !question.videoUrl
+														? '0rem'
+														: isSmallScreen
+															? '9.5rem 0 0 0'
+															: !question.imageUrl && !question.videoUrl
+																? '0rem'
+																: '11rem 0 0 0',
 			}}>
 			{question?.imageUrl && (
 				<Box
@@ -89,7 +89,7 @@ const QuestionMedia = ({ question, isStudentFeedbackPage }: QuestionMediaProps) 
 						justifyContent: 'center',
 						alignItems: 'center',
 					}}>
-					<ReactPlayer
+					<UniversalVideoPlayer
 						url={question.videoUrl}
 						width={question?.imageUrl || (!question.imageUrl && isMobileSize) ? '90%' : '50%'}
 						height='100%'
