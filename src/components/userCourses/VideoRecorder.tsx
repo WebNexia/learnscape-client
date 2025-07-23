@@ -10,9 +10,9 @@ import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 
 const mimeType = 'video/webm; codecs="opus,vp8"';
-const MAX_RECORDING_TIME = 30000; // 30 seconds
-const QUALITY = 500000; // Medium quality (500 kbps)
-const MAX_VIDEO_SIZE = 60 * 1024 * 1024; // 60MB limit
+const MAX_RECORDING_TIME = 60000; // 1 minute
+const QUALITY = 300000; // Medium quality (300 kbps)
+const MAX_VIDEO_SIZE = 5 * 1024 * 1024; // 5MB limit
 
 interface VideoRecorderProps {
 	uploadVideo: (blob: Blob) => Promise<void>;
@@ -219,7 +219,7 @@ const VideoRecorder = ({ uploadVideo, isVideoUploading }: VideoRecorderProps) =>
 
 				{isVideoTooLarge && (
 					<Typography variant='body2' color='error' sx={{ mt: 1, textAlign: 'center' }}>
-						Video file size exceeds the limit of 60 MB (max 30 seconds)
+						Video file size exceeds the limit of 5 MB (max 60 seconds)
 					</Typography>
 				)}
 

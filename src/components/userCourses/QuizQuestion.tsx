@@ -78,7 +78,7 @@ const QuizQuestion = ({
 	const navigate = useNavigate();
 	const { userLessonId, handleNextLesson, nextLessonId } = useUserCourseLessonData();
 
-	const { userId, lessonId, courseId, userCourseId } = useParams();
+	const { lessonId, courseId, userCourseId } = useParams();
 	const { orgId, adminUsers } = useContext(OrganisationContext);
 	const { fetchQuestionTypeName } = useContext(QuestionsContext);
 	const { user } = useContext(UserAuthContext);
@@ -118,7 +118,7 @@ const QuizQuestion = ({
 	const isFITBTyping: boolean = fetchQuestionTypeName(question) === QuestionType.FITB_TYPING;
 	const isFITBDragDrop: boolean = fetchQuestionTypeName(question) === QuestionType.FITB_DRAG_DROP;
 
-	const [helperText, setHelperText] = useState<string>(!isMatching && !isFITBDragDrop && !isFITBTyping ? 'Choose wisely' : '');
+	const [helperText, setHelperText] = useState<string>(isMultipleChoiceQuestion || isTrueFalseQuestion ? 'Choose wisely' : '');
 	const [courseTitle, setCourseTitle] = useState<string>('');
 
 	const [recordOption, setRecordOption] = useState<string>('');
@@ -249,7 +249,7 @@ const QuizQuestion = ({
 					await axios.post(`${base_url}/userQuestions`, {
 						userLessonId,
 						questionId: answer.questionId,
-						userId,
+						userId: user?._id,
 						lessonId,
 						courseId,
 						isCompleted: true,
@@ -272,7 +272,7 @@ const QuizQuestion = ({
 		try {
 			// Submit quiz
 			const submissionResponse = await axios.post(`${base_url}/quizSubmissions`, {
-				userId,
+				userId: user?._id,
 				lessonId,
 				courseId,
 				userLessonId,
@@ -788,7 +788,7 @@ const QuizQuestion = ({
 						navigate(`/course/${courseId}/userCourseId/${userCourseId}?isEnrolled=true`);
 					}}
 					maxWidth='sm'>
-					<Box sx={{ display: 'flex', flexDirection: 'column', width: '90%', margin: '0 auto' }}>
+					<Box sx={{ display: 'flex', flexDirection: 'column', width: '90%', margin: '2rem auto 0 auto' }}>
 						<Box>
 							<Typography variant='body1' sx={{ mb: '0.75rem', lineHeight: '1.9', fontSize: isMobileSize ? '0.85rem' : '0.95rem' }}>
 								You will receive feedback on the quiz from your instructor soon. You can review the answers for the following question types by

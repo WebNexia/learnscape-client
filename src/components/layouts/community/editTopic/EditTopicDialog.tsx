@@ -19,6 +19,7 @@ import { TopicInfo } from '../../../../interfaces/communityMessage';
 import ImageThumbnail from '../../../forms/uploadImageVideoDocument/ImageThumbnail';
 import { MediaQueryContext } from '../../../../contexts/MediaQueryContextProvider';
 import { validateImageUrl } from '../../../../utils/urlValidation';
+import useUploadLimit from '../../../../hooks/useUploadLimit';
 
 interface EditTopicDialogProps {
 	editTopicModalOpen: boolean;
@@ -36,6 +37,9 @@ const EditTopicDialog = ({ editTopicModalOpen, topic, setEditTopicModalOpen, set
 	const { isSmallScreen, isRotatedMedium, isVerySmallScreen, isRotated } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
+	// Upload limit management
+	const { getRemainingAudioUploads, getRemainingImageUploads } = useUploadLimit();
+
 	const [enterImageUrl, setEnterImageUrl] = useState(true);
 	const [isAudioUploading, setIsAudioUploading] = useState(false);
 	const [showAudioRecorder, setShowAudioRecorder] = useState(!!topic.audioUrl);
@@ -46,6 +50,11 @@ const EditTopicDialog = ({ editTopicModalOpen, topic, setEditTopicModalOpen, set
 	const [isUrlErrorOpen, setIsUrlErrorOpen] = useState<boolean>(false);
 	const [urlErrorMessage, setUrlErrorMessage] = useState<string>('');
 
+	// Session attempt limits
+	const [audioUploadAttempts, setAudioUploadAttempts] = useState<number>(0);
+	const [imageUploadAttempts, setImageUploadAttempts] = useState<number>(0);
+	const MAX_SESSION_ATTEMPTS = 5;
+
 	useEffect(() => {
 		setShowAudioRecorder(!!topic.audioUrl);
 		setShowImageUploader(!!topic.imageUrl);
@@ -54,6 +63,9 @@ const EditTopicDialog = ({ editTopicModalOpen, topic, setEditTopicModalOpen, set
 	const reset = () => {
 		setEditTopicModalOpen(false);
 		setEnterImageUrl(true);
+		// Reset session attempt counters
+		setAudioUploadAttempts(0);
+		setImageUploadAttempts(0);
 	};
 
 	const handleEmojiSelect = (emoji: any) => {
@@ -201,54 +213,94 @@ const EditTopicDialog = ({ editTopicModalOpen, topic, setEditTopicModalOpen, set
 					)}
 
 					<Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-						<Tooltip title={!showAudioRecorder ? 'Upload Audio' : 'Hide Recorder'} placement='top' arrow>
-							<IconButton onClick={() => toggleFeature('audio')}>
-								{!showAudioRecorder ? (
-									<Mic fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
-								) : (
-									<MicOff fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
-								)}
-							</IconButton>
-						</Tooltip>
-
-						<Tooltip title={!showImageUploader ? 'Upload Image' : 'Hide Uploader'} placement='top' arrow>
-							<IconButton onClick={() => toggleFeature('image')}>
-								{!showImageUploader ? (
-									<Image fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
-								) : (
-									<HideImage fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
-								)}
-							</IconButton>
-						</Tooltip>
+						<Box>
+							<Tooltip title={!showAudioRecorder ? 'Upload Audio' : 'Hide Recorder'} placement='top' arrow>
+								<IconButton
+									sx={{
+										':hover': {
+											backgroundColor: 'transparent',
+										},
+									}}
+									onClick={() => toggleFeature('audio')}>
+									{!showAudioRecorder ? (
+										<Mic fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
+									) : (
+										<MicOff fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
+									)}
+								</IconButton>
+							</Tooltip>
+						</Box>
+						<Box>
+							<Tooltip title={!showImageUploader ? 'Upload Image' : 'Hide Uploader'} placement='top' arrow>
+								<IconButton
+									sx={{
+										':hover': {
+											backgroundColor: 'transparent',
+										},
+									}}
+									onClick={() => toggleFeature('image')}>
+									{!showImageUploader ? (
+										<Image fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
+									) : (
+										<HideImage fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
+									)}
+								</IconButton>
+							</Tooltip>
+						</Box>
 					</Box>
 				</Box>
 
 				{showAudioRecorder && (
 					<Box sx={{ marginBottom: '1rem' }}>
-						<Typography variant='h6'>Audio Recording</Typography>
+						<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '0.9rem' }}>
+							Audio Recording{' '}
+							<span style={{ color: 'gray', fontSize: '0.75rem', marginLeft: '0.25rem' }}>
+								{getRemainingAudioUploads() <= 0 && user?.role !== 'admin'
+									? '(Daily limit reached. Resets everyday)'
+									: getRemainingAudioUploads() <= 5 && user?.role !== 'admin'
+										? '(' + getRemainingAudioUploads() + ' of 10 audio uploads remaining today)'
+										: ''}
+							</span>
+						</Typography>
 
-						{!topic.audioUrl ? (
-							<AudioRecorder uploadAudio={uploadAudio} isAudioUploading={isAudioUploading} maxRecordTime={45000} fromCreateCommunityTopic={true} />
+						{!topic.audioUrl && getRemainingAudioUploads() > 0 ? (
+							<AudioRecorder
+								uploadAudio={uploadAudio}
+								isAudioUploading={isAudioUploading}
+								maxRecordTime={60000}
+								fromCreateCommunityTopic={true}
+								audioUploadAttempts={audioUploadAttempts}
+								maxSessionAttempts={MAX_SESSION_ATTEMPTS}
+								onAudioUploadAttempt={() => setAudioUploadAttempts((prev) => prev + 1)}
+							/>
 						) : (
 							<Box sx={{ display: 'flex', alignItems: 'center', mb: '2rem' }}>
-								<Box sx={{ flex: 9 }}>
-									<audio
-										src={topic.audioUrl}
-										controls
-										style={{
-											marginTop: '1rem',
-											boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
-											borderRadius: '0.35rem',
-											width: '100%',
-											height: '2.25rem',
-										}}
-									/>
-								</Box>
-								<Box sx={{ flex: 1, margin: '0.75rem 0 0 1.5rem' }}>
-									<CustomSubmitButton sx={{ borderRadius: '0.35rem' }} onClick={() => setTopic((prevData) => ({ ...prevData, audioUrl: '' }))}>
-										Remove
-									</CustomSubmitButton>
-								</Box>
+								{getRemainingAudioUploads() > 0 && (
+									<>
+										<Box sx={{ flex: 9 }}>
+											<audio
+												src={topic.audioUrl}
+												controls
+												style={{
+													marginTop: '1rem',
+													boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
+													borderRadius: '0.35rem',
+													width: '100%',
+													height: '2rem',
+												}}
+											/>
+										</Box>
+										<Box sx={{ flex: 1, margin: '0.75rem 0 0 1.5rem' }}>
+											<CustomSubmitButton
+												sx={{ borderRadius: '0.35rem', fontSize: isMobileSize ? '0.75rem' : undefined }}
+												onClick={() => {
+													setTopic((prevData) => ({ ...prevData, audioUrl: '' }));
+												}}>
+												Remove
+											</CustomSubmitButton>
+										</Box>
+									</>
+								)}
 							</Box>
 						)}
 					</Box>
@@ -263,6 +315,17 @@ const EditTopicDialog = ({ editTopicModalOpen, topic, setEditTopicModalOpen, set
 							imageFolderName='TopicImages'
 							enterImageUrl={enterImageUrl}
 							setEnterImageUrl={setEnterImageUrl}
+							isImageUploadLimitReached={getRemainingImageUploads() <= 0 && user?.role !== 'admin'}
+							imageUploadAttempts={imageUploadAttempts}
+							maxSessionAttempts={MAX_SESSION_ATTEMPTS}
+							onImageUploadAttempt={() => setImageUploadAttempts((prev) => prev + 1)}
+							labelDescription={
+								getRemainingImageUploads() <= 0 && user?.role !== 'admin'
+									? '(Daily limit reached. Resets everyday)'
+									: getRemainingImageUploads() <= 5 && user?.role !== 'admin'
+										? '(' + getRemainingImageUploads() + ' of 50 image uploads remaining today)'
+										: ''
+							}
 						/>
 						{topic.imageUrl && (
 							<ImageThumbnail imgSource={topic.imageUrl} removeImage={() => setTopic((prevData) => ({ ...prevData, imageUrl: '' }))} />
@@ -274,7 +337,9 @@ const EditTopicDialog = ({ editTopicModalOpen, topic, setEditTopicModalOpen, set
 					onCancel={reset}
 					submitBtnType='submit'
 					submitBtnText='Save'
-					actionSx={{ margin: isMobileSize ? '0.75rem -0.75rem 0 0' : '1.5rem -1rem 0 0' }}
+					actionSx={{ margin: isMobileSize ? '0.5rem 0rem 0 0' : '1.5rem -1rem 0 0' }}
+					submitBtnSx={{ padding: isMobileSize ? '0.1rem 0.25rem' : undefined, marginRight: isMobileSize ? '-0.5rem' : undefined }}
+					cancelBtnSx={{ padding: isMobileSize ? '0.1rem 0.25rem' : undefined }}
 				/>
 			</form>
 			<Snackbar

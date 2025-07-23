@@ -56,7 +56,8 @@ const InquiriesContextProvider = (props: InquiriesContextProviderProps) => {
 		location.pathname === '/contact-us' ||
 		location.pathname === '/about-us' ||
 		location.pathname === '/auth' ||
-		location.pathname.startsWith('/course/');
+		// Only consider course preview pages as landing pages, not enrolled course pages
+		(location.pathname.startsWith('/course/') && !location.pathname.includes('/userCourseId/'));
 
 	const fetchInquiries = async (page: number) => {
 		if (!orgId) return;

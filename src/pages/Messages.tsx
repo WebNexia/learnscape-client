@@ -13,6 +13,7 @@ import {
 	Search,
 	Send,
 	TurnLeftOutlined,
+	Info,
 } from '@mui/icons-material';
 
 import { useContext, useEffect, useRef, useState } from 'react';
@@ -41,6 +42,7 @@ import { db } from '../firebase';
 import Picker from '@emoji-mart/react';
 import data from '@emoji-mart/data';
 import useImageUpload from '../hooks/useImageUpload'; // Import the custom hook
+import useUploadLimit from '../hooks/useUploadLimit'; // Import the upload limit hook
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import { User } from '../interfaces/user';
 import axios from '@utils/axiosInstance';
@@ -149,6 +151,9 @@ const Messages = () => {
 
 	const { imageUpload, imagePreview, handleImageChange, handleImageUpload, resetImageUpload, isUploading, isImgSizeLarge, maxSizeInMB } =
 		useImageUpload({ maxSizeInMB: 1 });
+
+	// Upload limit management
+	const { uploadInfo, checkCanUploadImage, getRemainingImageUploads, getFormattedResetTime } = useUploadLimit();
 
 	const handleEmojiSelect = (emoji: any) => {
 		setCurrentMessage((prevMessage) => prevMessage + emoji.native);
@@ -1271,6 +1276,32 @@ const Messages = () => {
 								flexShrink: 0,
 								position: 'relative',
 							}}>
+							{/* Upload limit info - only show for non-admin users */}
+							{uploadInfo && user?.role !== 'admin' && getRemainingImageUploads() <= 5 && (
+								<Box
+									sx={{
+										display: 'flex',
+										alignItems: 'center',
+										gap: 1,
+										mb: 1,
+										p: 1,
+										borderRadius: 1,
+										backgroundColor: getRemainingImageUploads() <= 5 ? 'success.light' : 'error.light',
+										color: getRemainingImageUploads() <= 5 ? 'success.dark' : 'error.dark',
+										position: 'absolute',
+										top: '-3rem',
+										left: '50%',
+										transform: 'translateX(-50%)',
+										zIndex: 10,
+									}}>
+									<Info fontSize='small' />
+									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : undefined }}>
+										{getRemainingImageUploads() <= 0 ? `Daily limit reached` : `${getRemainingImageUploads()} of 50 image uploads remaining today`}
+										{getRemainingImageUploads() > 0 && ` • Resets ${getFormattedResetTime()}`}
+									</Typography>
+								</Box>
+							)}
+
 							<input
 								type='file'
 								accept='image/*'
@@ -1280,12 +1311,12 @@ const Messages = () => {
 								}}
 								style={{ display: 'none' }}
 								id='image-upload'
-								disabled={isUploading || isBlockedUser || isBlockingUser || !activeChat}
+								disabled={isUploading || isBlockedUser || isBlockingUser || !activeChat || (user?.role !== 'admin' && !checkCanUploadImage())}
 							/>
 							<label htmlFor='image-upload'>
 								<IconButton
 									component='span'
-									disabled={isUploading || isBlockedUser || isBlockingUser || !activeChat}
+									disabled={isUploading || isBlockedUser || isBlockingUser || !activeChat || (user?.role !== 'admin' && !checkCanUploadImage())}
 									sx={{
 										':hover': {
 											backgroundColor: 'transparent',

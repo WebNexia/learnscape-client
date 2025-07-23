@@ -8,6 +8,7 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import logo from '../../../assets/logo.png';
 import {
 	AssignmentIndRounded,
+	BugReport,
 	CalendarMonth,
 	CreditCard,
 	DarkMode,
@@ -199,6 +200,22 @@ const Loading = () => {
 								<Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
 									<IconButton
 										sx={{
+											':hover': {
+												backgroundColor: 'transparent',
+											},
+											'mr': 1,
+										}}>
+										<BugReport
+											color='secondary'
+											fontSize={isMobileSize ? 'small' : 'medium'}
+											sx={{
+												fontSize: isMobileSize ? '1rem' : undefined,
+											}}
+										/>
+									</IconButton>
+
+									<IconButton
+										sx={{
 											'mr': '0.75rem',
 											':hover': {
 												backgroundColor: 'transparent',
@@ -296,6 +313,21 @@ const Loading = () => {
 									padding: '0 1rem 0 3rem',
 								}}>
 								<Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+									<IconButton
+										sx={{
+											':hover': {
+												backgroundColor: 'transparent',
+											},
+											'mr': 1,
+										}}>
+										<BugReport
+											color='secondary'
+											fontSize={isMobileSize ? 'small' : 'medium'}
+											sx={{
+												fontSize: isMobileSize ? '1rem' : undefined,
+											}}
+										/>
+									</IconButton>
 									<IconButton
 										sx={{
 											'mr': '0.75rem',

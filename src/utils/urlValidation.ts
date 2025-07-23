@@ -129,6 +129,11 @@ export const validateUrlAccessibility = async (url: string): Promise<boolean> =>
 
 // Validate image accessibility
 export const validateImageUrl = async (url: string): Promise<{ isValid: boolean; error?: string }> => {
+	// Handle empty strings
+	if (!url || !url.trim()) {
+		return { isValid: true }; // Empty strings are valid (no image)
+	}
+
 	if (!isValidImageUrl(url)) {
 		return { isValid: false, error: 'Invalid image URL format' };
 	}
@@ -188,8 +193,35 @@ export const validateImageUrl = async (url: string): Promise<{ isValid: boolean;
 
 // Validate video accessibility
 export const validateVideoUrl = async (url: string): Promise<{ isValid: boolean; error?: string }> => {
+	// Handle empty strings
+	if (!url || !url.trim()) {
+		return { isValid: true }; // Empty strings are valid (no video)
+	}
+
 	if (!isValidVideoUrl(url)) {
 		return { isValid: false, error: 'Invalid video URL format' };
+	}
+
+	const urlLower = url.toLowerCase();
+
+	// For known video hosting services, accept them without validation
+	const trustedVideoServices = [
+		'youtube.com',
+		'youtu.be',
+		'vimeo.com',
+		'dailymotion.com',
+		'twitch.tv',
+		'firebasestorage.googleapis.com',
+		'storage.googleapis.com',
+		'amazonaws.com',
+		's3.amazonaws.com',
+	];
+
+	const isTrustedService = trustedVideoServices.some((service) => urlLower.includes(service));
+
+	// If it's a trusted service, accept it without making a HEAD request
+	if (isTrustedService) {
+		return { isValid: true };
 	}
 
 	try {
@@ -205,6 +237,15 @@ export const validateVideoUrl = async (url: string): Promise<{ isValid: boolean;
 
 		return { isValid: true };
 	} catch (error) {
+		// If HEAD request fails, try a GET request for URLs with clear video extensions
+		const videoExtensions = ['.mp4', '.webm', '.ogg', '.mov', '.avi', '.mkv'];
+		const hasValidExtension = videoExtensions.some((ext) => urlLower.includes(ext));
+
+		if (hasValidExtension) {
+			// For URLs with clear video extensions, accept them even if HEAD request fails
+			return { isValid: true };
+		}
+
 		return { isValid: false, error: 'Failed to validate video URL' };
 	}
 };
@@ -247,6 +288,11 @@ export const isValidDocumentUrl = (url: string): boolean => {
 
 // Validate document accessibility
 export const validateDocumentUrl = async (url: string): Promise<{ isValid: boolean; error?: string }> => {
+	// Handle empty strings
+	if (!url || !url.trim()) {
+		return { isValid: true }; // Empty strings are valid (no document)
+	}
+
 	if (!isValidDocumentUrl(url)) {
 		return { isValid: false, error: 'Invalid document URL format' };
 	}
@@ -294,20 +340,20 @@ export const validateDocumentUrl = async (url: string): Promise<{ isValid: boole
 				'application/octet-stream',
 			];
 
-			if (!validDocumentTypes.some((type) => contentType.includes(type))) {
+			const isValidType = validDocumentTypes.some((type) => contentType.startsWith(type));
+			if (!isValidType) {
 				return { isValid: false, error: 'URL does not point to a valid document' };
 			}
 		}
 
 		return { isValid: true };
 	} catch (error) {
-		// If HEAD request fails, try a GET request for trusted services or URLs with clear document extensions
+		// If HEAD request fails, try a GET request for URLs with clear document extensions
 		const documentExtensions = ['.pdf', '.doc', '.docx', '.txt', '.rtf', '.odt', '.pages'];
 		const hasValidExtension = documentExtensions.some((ext) => urlLower.includes(ext));
 
 		if (hasValidExtension) {
 			// For URLs with clear document extensions, accept them even if HEAD request fails
-			// This handles cases where servers don't support HEAD requests or have CORS restrictions
 			return { isValid: true };
 		}
 

@@ -22,6 +22,7 @@ import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { UsersContext } from '../../../../contexts/UsersContextProvider';
 import { MediaQueryContext } from '../../../../contexts/MediaQueryContextProvider';
 import { validateImageUrl } from '../../../../utils/urlValidation';
+import useUploadLimit from '../../../../hooks/useUploadLimit';
 
 interface CreateTopicDialogProps {
 	createTopicModalOpen: boolean;
@@ -40,6 +41,9 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 	const { isSmallScreen, isRotatedMedium, isVerySmallScreen, isRotated } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
+	// Upload limit management
+	const { getRemainingAudioUploads, getRemainingImageUploads } = useUploadLimit();
+
 	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(user?.role === 'admin' ? true : false);
 	const [isAudioUploading, setIsAudioUploading] = useState<boolean>(false);
 
@@ -51,6 +55,11 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 	// URL validation error handling
 	const [isUrlErrorOpen, setIsUrlErrorOpen] = useState<boolean>(false);
 	const [urlErrorMessage, setUrlErrorMessage] = useState<string>('');
+
+	// Session attempt limits
+	const [audioUploadAttempts, setAudioUploadAttempts] = useState<number>(0);
+	const [imageUploadAttempts, setImageUploadAttempts] = useState<number>(0);
+	const MAX_SESSION_ATTEMPTS = 5;
 
 	// URL validation function
 	const validateUrls = async (): Promise<boolean> => {
@@ -148,6 +157,9 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 		setShowPicker(false);
 		setShowAudioRecorder(false);
 		setShowImageUploader(false);
+		// Reset session attempt counters
+		setAudioUploadAttempts(0);
+		setImageUploadAttempts(0);
 	};
 
 	const handleEmojiSelect = (emoji: any) => {
@@ -176,6 +188,7 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 			setIsAudioUploading(false);
 		}
 	};
+
 	return (
 		<CustomDialog openModal={createTopicModalOpen} closeModal={reset} title='Create New Topic' maxWidth='sm'>
 			<form
@@ -293,44 +306,58 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 
 				{showAudioRecorder && (
 					<Box sx={{ marginBottom: '1rem' }}>
-						<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.9rem' : undefined }}>
-							Audio Recording
+						<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '0.9rem' }}>
+							Audio Recording{' '}
+							<span style={{ color: 'gray', fontSize: '0.75rem', marginLeft: '0.25rem' }}>
+								{getRemainingAudioUploads() <= 0 && user?.role !== 'admin'
+									? '(Daily limit reached. Resets everyday)'
+									: getRemainingAudioUploads() <= 5 && user?.role !== 'admin'
+										? '(' + getRemainingAudioUploads() + ' of 10 audio uploads remaining today)'
+										: ''}
+							</span>
 						</Typography>
 
-						{!topic.audioUrl ? (
+						{!topic.audioUrl && getRemainingAudioUploads() > 0 ? (
 							<AudioRecorder
 								uploadAudio={uploadAudio}
 								isAudioUploading={isAudioUploading}
-								maxRecordTime={45000}
+								maxRecordTime={60000}
 								fromCreateCommunityTopic={true}
 								recorderTitle=''
+								audioUploadAttempts={audioUploadAttempts}
+								maxSessionAttempts={MAX_SESSION_ATTEMPTS}
+								onAudioUploadAttempt={() => setAudioUploadAttempts((prev) => prev + 1)}
 							/>
 						) : (
 							<Box sx={{ display: 'flex', alignItems: 'center', mb: '2rem' }}>
-								<Box sx={{ flex: 9 }}>
-									<audio
-										src={topic.audioUrl}
-										controls
-										style={{
-											marginTop: '1rem',
-											boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
-											borderRadius: '0.35rem',
-											width: '100%',
-											height: '2rem',
-										}}
-									/>
-								</Box>
-								<Box sx={{ flex: 1, margin: '0.75rem 0 0 1.5rem' }}>
-									<CustomSubmitButton
-										sx={{ borderRadius: '0.35rem', fontSize: isMobileSize ? '0.75rem' : undefined }}
-										onClick={() => {
-											setTopic((prevData) => {
-												return { ...prevData, audioUrl: '' };
-											});
-										}}>
-										Remove
-									</CustomSubmitButton>
-								</Box>
+								{getRemainingAudioUploads() > 0 && (
+									<>
+										<Box sx={{ flex: 9 }}>
+											<audio
+												src={topic.audioUrl}
+												controls
+												style={{
+													marginTop: '1rem',
+													boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
+													borderRadius: '0.35rem',
+													width: '100%',
+													height: '2rem',
+												}}
+											/>
+										</Box>
+										<Box sx={{ flex: 1, margin: '0.75rem 0 0 1.5rem' }}>
+											<CustomSubmitButton
+												sx={{ borderRadius: '0.35rem', fontSize: isMobileSize ? '0.75rem' : undefined }}
+												onClick={() => {
+													setTopic((prevData) => {
+														return { ...prevData, audioUrl: '' };
+													});
+												}}>
+												Remove
+											</CustomSubmitButton>
+										</Box>
+									</>
+								)}
 							</Box>
 						)}
 					</Box>
@@ -356,6 +383,17 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 							imageFolderName='TopicImages'
 							enterImageUrl={enterImageUrl}
 							setEnterImageUrl={setEnterImageUrl}
+							isImageUploadLimitReached={getRemainingImageUploads() <= 0 && user?.role !== 'admin'}
+							imageUploadAttempts={imageUploadAttempts}
+							maxSessionAttempts={MAX_SESSION_ATTEMPTS}
+							onImageUploadAttempt={() => setImageUploadAttempts((prev) => prev + 1)}
+							labelDescription={
+								getRemainingImageUploads() <= 0 && user?.role !== 'admin'
+									? '(Daily limit reached. Resets everyday)'
+									: getRemainingImageUploads() <= 5 && user?.role !== 'admin'
+										? '(' + getRemainingImageUploads() + ' of 50 image uploads remaining today)'
+										: ''
+							}
 						/>
 						{topic.imageUrl && (
 							<ImageThumbnail

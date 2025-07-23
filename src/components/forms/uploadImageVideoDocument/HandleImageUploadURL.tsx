@@ -17,7 +17,12 @@ interface HandleImageUploadURLProps {
 	imageFolderName: string;
 	enterImageUrl: boolean;
 	label?: string;
+	labelDescription?: string;
 	disabled?: boolean;
+	isImageUploadLimitReached?: boolean;
+	imageUploadAttempts?: number;
+	maxSessionAttempts?: number;
+	onImageUploadAttempt?: () => void;
 }
 
 const HandleImageUploadURL = ({
@@ -28,7 +33,12 @@ const HandleImageUploadURL = ({
 	imageFolderName,
 	enterImageUrl,
 	label = 'Image',
+	labelDescription = '',
 	disabled = false,
+	isImageUploadLimitReached = false,
+	imageUploadAttempts = 0,
+	maxSessionAttempts = 5,
+	onImageUploadAttempt,
 }: HandleImageUploadURLProps) => {
 	const { imageUpload, isImgSizeLarge, handleImageChange, resetImageUpload, handleImageUpload, maxSizeInMB } = useImageUpload();
 
@@ -77,6 +87,11 @@ const HandleImageUploadURL = ({
 	};
 
 	const handleImageUploadReusable = () => {
+		// Check session attempt limit
+		if (imageUploadAttempts >= maxSessionAttempts) {
+			return; // Don't proceed if session limit reached
+		}
+
 		handleImageUpload(imageFolderName, (url: string) => {
 			onImageUploadLogic(url);
 			// For Firebase URLs, add a small delay to ensure they're accessible
@@ -86,6 +101,11 @@ const HandleImageUploadURL = ({
 			setTimeout(() => {
 				validateImageUrlOnChange(url);
 			}, delay);
+
+			// Increment attempt counter AFTER upload completes
+			if (onImageUploadAttempt) {
+				onImageUploadAttempt();
+			}
 		});
 	};
 
@@ -93,8 +113,9 @@ const HandleImageUploadURL = ({
 		<>
 			<FormControl sx={{ display: 'flex' }}>
 				<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-					<Typography variant={isMobileSize ? 'body2' : 'h6'} sx={{ fontSize: !isMobileSize ? '0.9rem' : 'inherit' }}>
+					<Typography variant={isMobileSize ? 'body2' : 'h6'} sx={{ fontSize: !isMobileSize ? '0.9rem' : '0.85rem' }}>
 						{label}
+						{labelDescription && <span style={{ color: 'gray', fontSize: '0.75rem', marginLeft: '0.25rem' }}>{labelDescription}</span>}
 					</Typography>
 					<Box sx={{ display: 'flex', alignItems: 'center' }}>
 						{user?.role === 'admin' && (
@@ -125,32 +146,41 @@ const HandleImageUploadURL = ({
 						)}
 					</Box>
 				</Box>
-				{!enterImageUrl && (
-					<Box sx={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center' }}>
-						<Input
-							type='file'
-							onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-								handleImageChange(e);
-							}}
-							disabled={disabled}
-							inputProps={{ accept: '.jpg, .jpeg, .png' }} // Specify accepted file types
-							sx={{
-								width: '82.5%',
-								backgroundColor: theme.bgColor?.common,
-								margin: '0.5rem 0 0.85rem 0',
-								padding: '0.25rem',
-								fontSize: isMobileSize ? '0.75rem' : '0.9rem',
-							}}
-						/>
-						<Tooltip title='Upload' placement='top' arrow>
-							<IconButton
-								onClick={handleImageUploadReusable}
-								sx={{ height: '2rem', width: '12.5%', border: '0.02rem solid gray', borderRadius: '0.35rem' }}
-								disabled={!imageUpload || isImgSizeLarge}>
-								<CloudUpload fontSize='small' />
-							</IconButton>
-						</Tooltip>
-					</Box>
+				{((!enterImageUrl && user?.role === 'admin') || user?.role !== 'admin') &&
+					!isImageUploadLimitReached &&
+					imageUploadAttempts < maxSessionAttempts && (
+						<Box sx={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center' }}>
+							<Input
+								type='file'
+								onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+									handleImageChange(e);
+								}}
+								disabled={disabled}
+								inputProps={{ accept: '.jpg, .jpeg, .png' }} // Specify accepted file types
+								sx={{
+									width: '82.5%',
+									backgroundColor: theme.bgColor?.common,
+									margin: '0.5rem 0 0.85rem 0',
+									padding: '0.25rem',
+									fontSize: isMobileSize ? '0.75rem' : '0.9rem',
+								}}
+							/>
+							<Tooltip title='Upload' placement='top' arrow>
+								<IconButton
+									onClick={handleImageUploadReusable}
+									sx={{ height: '2rem', width: '12.5%', border: '0.02rem solid gray', borderRadius: '0.35rem' }}
+									disabled={!imageUpload || isImgSizeLarge}>
+									<CloudUpload fontSize='small' />
+								</IconButton>
+							</Tooltip>
+						</Box>
+					)}
+
+				{/* Show message when session attempts reached */}
+				{imageUploadAttempts >= maxSessionAttempts && !isImageUploadLimitReached && !imageUrlValue && (
+					<Typography variant='body2' color='error' sx={{ mt: 1, textAlign: 'center' }}>
+						Maximum upload attempts reached for this session. Please refresh the page to try again.
+					</Typography>
 				)}
 				{isImgSizeLarge && (
 					<CustomErrorMessage sx={{ margin: isMobileSize ? '-0.5rem 0 1rem 0' : undefined }}>
