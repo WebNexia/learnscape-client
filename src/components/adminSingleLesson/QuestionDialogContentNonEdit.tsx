@@ -1,5 +1,4 @@
 import { Box, Checkbox, DialogContent, FormControlLabel, Typography } from '@mui/material';
-import ReactPlayer from 'react-player';
 import { QuestionInterface } from '../../interfaces/question';
 import theme from '../../themes';
 import { sanitizeHtml } from '../../utils/sanitizeHtml';
@@ -12,6 +11,7 @@ import FillInTheBlanksDragDrop from '../layouts/FITBDragDrop/FillInTheBlanksDrag
 import FillInTheBlanksTyping from '../layouts/FITBTyping/FillInTheBlanksTyping';
 import { Lesson } from '../../interfaces/lessons';
 import { decode } from 'html-entities';
+import UniversalVideoPlayer from '../video/UniversalVideoPlayer';
 
 interface QuestionDialogContentNonEditProps {
 	question: QuestionInterface | null;
@@ -66,7 +66,7 @@ const QuestionDialogContentNonEdit = ({ question, singleLessonBeforeSave }: Ques
 							justifyContent: 'center',
 							alignItems: 'center',
 						}}>
-						<ReactPlayer
+						<UniversalVideoPlayer
 							url={question.videoUrl}
 							width={question?.imageUrl ? '90%' : '50%'}
 							height='100%'

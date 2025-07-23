@@ -54,16 +54,9 @@ export function sanitizeEmailInput(email: string): string {
 		FORBID_ATTR: ['*'],
 	});
 
-	// Additional email-specific validation
-	const sanitizedEmail = clean.trim().toLowerCase();
-
-	// Basic email format validation (can be enhanced with more sophisticated regex)
-	const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-	if (sanitizedEmail && !emailRegex.test(sanitizedEmail)) {
-		return ''; // Return empty if invalid email format
-	}
-
-	return sanitizedEmail;
+	// Return sanitized email without format validation during typing
+	// Format validation should be done on form submission, not during input
+	return clean.trim();
 }
 
 /**

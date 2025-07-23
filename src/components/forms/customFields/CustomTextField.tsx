@@ -115,8 +115,10 @@ const CustomTextField = forwardRef<HTMLDivElement, CustomTextFieldProps>(
 					// For non-sanitized inputs (like number, tel), still validate the event
 					if (validatedType === 'number') {
 						const numValue = e.target.value;
-						// Allow empty string or valid numbers
-						if (numValue === '' || !isNaN(Number(numValue))) {
+						// Allow empty string, valid numbers, decimal points, negative signs, and scientific notation
+						// This regex allows: 123, 123.45, -123, +123, 123e10, 123E10, 123.45e-10, etc.
+						const numberRegex = /^[+-]?(\d*\.?\d*)([eE][+-]?\d*)?$/;
+						if (numValue === '' || numberRegex.test(numValue)) {
 							onChange(e);
 						}
 					} else {

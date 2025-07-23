@@ -1,8 +1,8 @@
 import { Box, Typography } from '@mui/material';
-import ReactPlayer from 'react-player';
 import { Lesson } from '../../interfaces/lessons';
 import CustomDialog from '../layouts/dialog/CustomDialog';
 import { useState } from 'react';
+import UniversalVideoPlayer from '../video/UniversalVideoPlayer';
 
 interface LessonImageCourseDisplayProps {
 	singleLesson: Lesson;
@@ -49,7 +49,7 @@ const LessonImageCourseDisplay = ({ singleLesson }: LessonImageCourseDisplayProp
 									setIsVideoPlayerOpen(true);
 								}
 							}}>
-							<ReactPlayer
+							<UniversalVideoPlayer
 								url={singleLesson?.videoUrl}
 								height='100%'
 								width='100%'
@@ -107,7 +107,7 @@ const LessonImageCourseDisplay = ({ singleLesson }: LessonImageCourseDisplayProp
 						setIsVideoPlayerOpen(false);
 					}}
 					dialogPaperSx={{ display: 'flex', justifyContent: 'center', padding: '3rem' }}>
-					<ReactPlayer url={singleLesson?.videoUrl} height='30rem' width='55rem' style={{ margin: '0.5rem' }} controls={true} />
+					<UniversalVideoPlayer url={singleLesson?.videoUrl} height='30rem' width='55rem' style={{ margin: '0.5rem' }} controls={true} />
 				</CustomDialog>
 			</Box>
 		</Box>

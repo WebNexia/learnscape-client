@@ -2,7 +2,6 @@ import { useContext, useEffect, useState } from 'react';
 import { Box, Button, IconButton, Link, Slide, Tooltip, Typography } from '@mui/material';
 import { useParams } from 'react-router-dom';
 import axios from '@utils/axiosInstance';
-import ReactPlayer from 'react-player';
 import { Article, Close, DoneAll, GetApp, Home, KeyboardBackspaceOutlined, KeyboardDoubleArrowRight, NotListedLocation } from '@mui/icons-material';
 import theme from '../themes';
 import DashboardHeader from '../components/layouts/dashboardLayout/DashboardHeader';
@@ -28,6 +27,7 @@ import { UserBlankValuePairAnswers, UserMatchingPairAnswers } from '../interface
 import { useNavigate } from 'react-router-dom';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import { decode } from 'html-entities';
+import UniversalVideoPlayer from '../components/video/UniversalVideoPlayer';
 
 export interface QuizQuestionAnswer {
 	questionId: string;
@@ -416,7 +416,7 @@ const LessonPage = () => {
 								alignItems: 'flex-start',
 								ml: isSmallScreen ? '1rem' : '0rem',
 							}}>
-							<ReactPlayer
+							<UniversalVideoPlayer
 								url={lesson.videoUrl}
 								width={isSmallScreen ? '80%' : isRotatedMedium ? '75%' : '55%'}
 								height='100%'
