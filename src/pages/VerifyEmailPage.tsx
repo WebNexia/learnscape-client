@@ -20,6 +20,30 @@ const VerifyEmailPage = () => {
 	const { organisation } = useContext(OrganisationContext);
 	const { user, setUser } = useContext(UserAuthContext);
 	const verificationSuccessRef = useRef(false);
+	const hasRunRef = useRef(false);
+
+	// Retry function for verification status check
+	const checkVerificationWithRetry = async (auth: any, maxRetries = 3): Promise<boolean> => {
+		for (let attempt = 1; attempt <= maxRetries; attempt++) {
+			try {
+				await auth.currentUser?.reload();
+				if (auth.currentUser?.emailVerified) {
+					return true;
+				}
+
+				// Wait before next attempt (exponential backoff)
+				if (attempt < maxRetries) {
+					await new Promise((resolve) => setTimeout(resolve, 2000 * attempt));
+				}
+			} catch (error) {
+				console.warn(`Verification check attempt ${attempt} failed:`, error);
+				if (attempt === maxRetries) {
+					throw error;
+				}
+			}
+		}
+		return false;
+	};
 
 	useEffect(() => {
 		const queryParams = new URLSearchParams(window.location.search);
@@ -31,61 +55,96 @@ const VerifyEmailPage = () => {
 			return;
 		}
 
-		let didRun = false;
+		// Prevent multiple executions
+		if (hasRunRef.current) return;
+		hasRunRef.current = true;
 
 		const runVerification = async () => {
-			if (didRun) return;
-			didRun = true;
 			setIsUpdating(true);
 			setErrorType(null);
 
 			try {
+				// Step 1: Verify the action code
 				await checkActionCode(auth, code);
+
+				// Step 2: Apply the action code
 				await applyActionCode(auth, code);
+
+				// Step 3: Set success state immediately
 				setIsVerified(true);
 				setVerificationMessage('Your email has been successfully verified.');
 				verificationSuccessRef.current = true;
 
-				// Update backend with new email if logged in as the new email
-				if (auth.currentUser && user?._id) {
-					await auth.currentUser.reload(); // Force refresh
-					const newEmail = auth.currentUser.email;
-					if (!newEmail) return;
-					if (user.email !== newEmail) {
-						await axios.patch(`${base_url}/users/${user._id}`, { email: newEmail });
-						setUser((prev) => (prev ? { ...prev, email: newEmail } : prev));
-					}
-				}
-				setTimeout(() => navigate('/auth'), 5000);
-			} catch (error: any) {
-				if (verificationSuccessRef.current) return; // Prevent error overwrite
-				// If the code is expired/invalid, but Firebase user email is already updated, update backend anyway
-				if (
-					auth.currentUser &&
-					user?._id &&
-					auth.currentUser.email !== user.email // email is already updated in Firebase
-				) {
-					setIsVerified(true);
-					setVerificationMessage('Your email was already verified. Syncing your profile...');
-					try {
-						await auth.currentUser.reload(); // Force refresh
+				// Step 4: Wait and retry verification status check
+				try {
+					const isVerified = await checkVerificationWithRetry(auth, 3);
+
+					if (isVerified && auth.currentUser && user?._id) {
+						// Update backend with new email if needed
 						const newEmail = auth.currentUser.email;
-						if (!newEmail) return;
-						if (user.email !== newEmail) {
-							await axios.patch(`${base_url}/users/${user._id}`, { email: newEmail });
-							setUser((prev) => (prev ? { ...prev, email: newEmail } : prev));
+						if (newEmail && user.email !== newEmail) {
+							try {
+								await axios.patch(`${base_url}/users/${user._id}`, { email: newEmail });
+								setUser((prev) => (prev ? { ...prev, email: newEmail } : prev));
+							} catch (backendError) {
+								console.warn('Failed to sync email with backend:', backendError);
+								// Don't overwrite success message for backend sync failure
+							}
 						}
-					} catch (err) {
-						setVerificationMessage('Email verified, but failed to sync profile. Please try again.');
 					}
-					setTimeout(() => navigate('/auth'), 5000);
-				} else if (auth.currentUser && user?._id && auth.currentUser.email !== user.email) {
-					// User is not logged in as the new email
-					setIsVerified(false);
-					setVerificationMessage('Please log in with your new email to complete the update.');
-				} else {
+				} catch (retryError) {
+					console.warn('Verification status check failed after retries:', retryError);
+					// Keep success message even if status check fails
+				}
+
+				// Step 5: Redirect after successful verification
+				setTimeout(() => navigate('/auth'), 11000);
+			} catch (error: any) {
+				// Only handle errors if we haven't already succeeded
+				if (verificationSuccessRef.current) {
+					return;
+				}
+
+				console.error('Verification error:', error);
+
+				// Check if user is already verified despite the error
+				try {
+					await auth.currentUser?.reload();
+					if (auth.currentUser?.emailVerified) {
+						setIsVerified(true);
+						setVerificationMessage('Your email was already verified. Syncing your profile...');
+						verificationSuccessRef.current = true;
+
+						// Update backend if needed
+						if (auth.currentUser && user?._id) {
+							const newEmail = auth.currentUser.email;
+							if (newEmail && user.email !== newEmail) {
+								try {
+									await axios.patch(`${base_url}/users/${user._id}`, { email: newEmail });
+									setUser((prev) => (prev ? { ...prev, email: newEmail } : prev));
+								} catch (backendError) {
+									console.warn('Failed to sync email with backend:', backendError);
+								}
+							}
+						}
+
+						setTimeout(() => navigate('/auth'), 11000);
+						return;
+					}
+				} catch (reloadError) {
+					console.warn('Failed to reload user:', reloadError);
+				}
+
+				// Handle different error scenarios
+				if (error.code === 'auth/invalid-action-code') {
 					setIsVerified(false);
 					setVerificationMessage('The verification link is invalid or has expired.');
+				} else if (error.code === 'auth/expired-action-code') {
+					setIsVerified(false);
+					setVerificationMessage('The verification link has expired. Please request a new one.');
+				} else {
+					setIsVerified(false);
+					setVerificationMessage('An error occurred during verification. Please try again.');
 				}
 			} finally {
 				setIsUpdating(false);
@@ -93,8 +152,7 @@ const VerifyEmailPage = () => {
 		};
 
 		runVerification();
-		// eslint-disable-next-line
-	}, [navigate, user, setUser]);
+	}, [navigate, user, setUser, base_url]);
 
 	return (
 		<Box
