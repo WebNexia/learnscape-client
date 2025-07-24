@@ -45,7 +45,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 
 	const location = useGeoLocation();
 
-	const { setUserId, fetchUserData, setUser } = useContext(UserAuthContext);
+	const { setUserId, fetchUserData, setUser, setSkipFetchDuringSignup } = useContext(UserAuthContext);
 	const { fetchOrganisationData, setOrgId } = useContext(OrganisationContext);
 	const { isVerySmallScreen, isSmallScreen, isRotated, isRotatedMedium } = useContext(MediaQueryContext);
 
@@ -74,11 +74,12 @@ const Auth = ({ setUserRole }: AuthProps) => {
 
 	const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
 	const [resetRecaptchaToken, setResetRecaptchaToken] = useState<string | null>(null);
-
-	const [signingUp, setSigningUp] = useState(false);
-
 	const recaptchaRef = useRef<any>(null);
 	const resetRecaptchaRef = useRef<any>(null);
+	const signupFinallyExecutedRef = useRef(false);
+
+	const [signingUp, setSigningUp] = useState(false);
+	const [isSignupInProgress, setIsSignupInProgress] = useState(false);
 
 	const togglePasswordVisibility = () => {
 		setShowPassword((prevShowPassword) => !prevShowPassword);
@@ -240,7 +241,6 @@ const Auth = ({ setUserRole }: AuthProps) => {
 			} else if (firebaseError.code === 'auth/visibility-check-was-unavailable') {
 				setErrorMsg(AuthFormErrorMessages.VISIBILITY_CHECK_ERROR);
 			} else {
-				console.log(firebaseError, 'Failed to sign in');
 				setErrorMsg(AuthFormErrorMessages.UNKNOWN_ERROR_OCCURRED);
 			}
 		}
@@ -307,6 +307,14 @@ const Auth = ({ setUserRole }: AuthProps) => {
 	const signUp = async (e: FormEvent) => {
 		e.preventDefault();
 
+		// Prevent multiple signup attempts
+		if (signingUp) {
+			return;
+		}
+
+		// Reset the finally executed flag
+		signupFinallyExecutedRef.current = false;
+
 		// Phone number validation
 		if (!phone || phone.length <= 3 || !/^\+\d{10,15}$/.test(phone)) {
 			setErrorMsg(AuthFormErrorMessages.INVALID_PHONE_NUMBER);
@@ -337,7 +345,11 @@ const Auth = ({ setUserRole }: AuthProps) => {
 			return;
 		}
 
+		// Prevent fetchUserData from running during signup - MUST be before Firebase user creation
+
+		setSkipFetchDuringSignup(true);
 		setSigningUp(true);
+		setIsSignupInProgress(true);
 		let userCreated = false;
 		try {
 			// Step 1: Create user with Firebase Authentication
@@ -403,6 +415,8 @@ const Auth = ({ setUserRole }: AuthProps) => {
 					setErrorMsg(AuthFormErrorMessages.USERNAME_EXISTS);
 				} else if (error.response.status === 400 && error.response.data?.message === 'phone') {
 					setErrorMsg(AuthFormErrorMessages.PHONE_NUMBER_EXISTS);
+				} else if (error.response.status === 400 && error.response.data?.message === 'Invalid phone number') {
+					setErrorMsg(AuthFormErrorMessages.INVALID_PHONE_NUMBER);
 				} else if (
 					msg === 'reCAPTCHA doğrulama tokeni eksik.' ||
 					msg === 'reCAPTCHA doğrulaması başarısız.' ||
@@ -422,7 +436,15 @@ const Auth = ({ setUserRole }: AuthProps) => {
 			}
 			setRecaptchaToken(null);
 		} finally {
+			// Prevent multiple executions of the finally block
+			if (signupFinallyExecutedRef.current) {
+				return;
+			}
+			signupFinallyExecutedRef.current = true;
+
 			setSigningUp(false);
+			setIsSignupInProgress(false);
+			setSkipFetchDuringSignup(false);
 		}
 	};
 
@@ -811,7 +833,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 														label='İsim'
 														type={TextFieldTypes.TEXT}
 														onChange={(e) => {
-															setFirstName(e.target.value.trim());
+															setFirstName(e.target.value);
 															setErrorMsg(undefined);
 														}}
 														value={firstName}
@@ -841,7 +863,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 														label='Soyisim'
 														type={TextFieldTypes.TEXT}
 														onChange={(e) => {
-															setLastName(e.target.value.trim());
+															setLastName(e.target.value);
 															setErrorMsg(undefined);
 														}}
 														value={lastName}
@@ -1233,7 +1255,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 				</Box>
 
 				{/* Success Messages */}
-				<Snackbar open={signUpMessage} autoHideDuration={15000} onClose={() => setSignUpMessage(false)} anchorOrigin={{ vertical, horizontal }}>
+				<Snackbar open={signUpMessage} autoHideDuration={7500} onClose={() => setSignUpMessage(false)} anchorOrigin={{ vertical, horizontal }}>
 					<Alert
 						onClose={() => setSignUpMessage(false)}
 						severity='success'
@@ -1247,11 +1269,11 @@ const Auth = ({ setUserRole }: AuthProps) => {
 								color: '#1EC28B',
 							},
 						}}>
-						Kayıt işlemi başarılı! Lütfen e-posta adresinizi doğrulayın.
+						Kayıt işlemi başarılı! Lütfen e-posta adresinizi doğrulayın. Spam klasörünü kontrol edin.
 					</Alert>
 				</Snackbar>
 
-				<Snackbar open={resetPasswordMsg} autoHideDuration={15000} onClose={() => setResetPasswordMsg(false)} anchorOrigin={{ vertical, horizontal }}>
+				<Snackbar open={resetPasswordMsg} autoHideDuration={7500} onClose={() => setResetPasswordMsg(false)} anchorOrigin={{ vertical, horizontal }}>
 					<Alert
 						onClose={() => setResetPasswordMsg(false)}
 						severity='success'

@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useEffect, useState } from 'react';
+import { createContext, ReactNode, useEffect, useState, useRef } from 'react';
 import { useQueryClient } from 'react-query';
 import axios from '@utils/axiosInstance';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
@@ -11,8 +11,9 @@ interface UserAuthContextTypes {
 	firebaseUserId: string;
 	setUser: React.Dispatch<React.SetStateAction<User | undefined>>;
 	setUserId: React.Dispatch<React.SetStateAction<string>>;
-	fetchUserData: (userId: string) => Promise<void>;
+	fetchUserData: (userId: string, skipIfSignup?: boolean) => Promise<void>;
 	signOut: () => Promise<void>;
+	setSkipFetchDuringSignup: (skip: boolean) => void;
 }
 
 export interface UserAuthContextProviderProps {
@@ -27,6 +28,7 @@ export const UserAuthContext = createContext<UserAuthContextTypes>({
 	setUserId: () => {},
 	fetchUserData: async () => {},
 	signOut: async () => {},
+	setSkipFetchDuringSignup: () => {},
 });
 
 const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
@@ -35,7 +37,15 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 	const [user, setUser] = useState<User>();
 	const [userId, setUserId] = useState<string>('');
 	const [firebaseUserId, setFirebaseUserId] = useState<string>('');
+	const [skipFetchDuringSignup, setSkipFetchDuringSignup] = useState<boolean>(false);
+	const skipFetchDuringSignupRef = useRef<boolean>(false);
 	const queryClient = useQueryClient();
+
+	// Custom function to update both state and ref
+	const setSkipFetchDuringSignupWithRef = (skip: boolean) => {
+		setSkipFetchDuringSignup(skip);
+		skipFetchDuringSignupRef.current = skip;
+	};
 
 	useEffect(() => {
 		const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -61,7 +71,7 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 
 				setFirebaseUserId(currentUser.uid);
 				try {
-					await fetchUserData(currentUser.uid);
+					await fetchUserData(currentUser.uid, skipFetchDuringSignupRef.current);
 				} catch (error) {
 					console.error('Failed to fetch user data:', error);
 				}
@@ -73,9 +83,14 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 		});
 
 		return () => unsubscribe();
-	}, []);
+	}, []); // Remove skipFetchDuringSignup from dependencies since we're using ref
 
-	const fetchUserData = async (firebaseUserId: string) => {
+	const fetchUserData = async (firebaseUserId: string, skipIfSignup?: boolean) => {
+		// Skip fetching if signup is in progress
+		if (skipIfSignup || skipFetchDuringSignupRef.current) {
+			return;
+		}
+
 		try {
 			const responseUserData = await axios.get(`${base_url}/users/${firebaseUserId}`);
 			setUser(responseUserData.data.data[0]);
@@ -103,7 +118,17 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 	};
 
 	return (
-		<UserAuthContext.Provider value={{ user, userId, firebaseUserId, setUser, setUserId, fetchUserData, signOut: signOutUser }}>
+		<UserAuthContext.Provider
+			value={{
+				user,
+				userId,
+				firebaseUserId,
+				setUser,
+				setUserId,
+				fetchUserData,
+				signOut: signOutUser,
+				setSkipFetchDuringSignup: setSkipFetchDuringSignupWithRef,
+			}}>
 			{props.children}
 		</UserAuthContext.Provider>
 	);
