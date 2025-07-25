@@ -258,6 +258,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 			});
 			setResetPasswordMsg(true);
 			setEmail('');
+			setPassword('');
 			setActiveForm(AuthForms.SIGN_IN);
 			setIsResetPassword(false);
 			resetResetRecaptcha();
@@ -934,6 +935,11 @@ const Auth = ({ setUserRole }: AuthProps) => {
 												</Box>
 
 												<Box sx={{ width: '100%', mb: '1.75rem' }}>
+													<Typography
+														variant='body2'
+														sx={{ marginBottom: '0.25rem', fontFamily: 'Varela Round', color: theme.textColor?.secondary.main }}>
+														Telefon Numarası *
+													</Typography>
 													<PhoneInput
 														country={location?.countryCode?.toLowerCase() || 'tr'}
 														enableSearch={true}
@@ -1166,6 +1172,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 												setActiveForm(AuthForms.SIGN_IN);
 												setIsResetPassword(false);
 												setEmail('');
+												setPassword('');
 											}}>
 											Giriş Yap'a Dön
 										</Typography>
@@ -1287,7 +1294,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 								color: '#1EC28B',
 							},
 						}}>
-						Şifre sıfırlama e-postası gönderildi! Gelen kutunuzu kontrol edin. Spam klasörünü kontrol edin.
+						Şifre sıfırlama e-postası gönderildi! Gelen kutunuzu ve spam klasörünü kontrol edin.
 					</Alert>
 				</Snackbar>
 
@@ -1300,6 +1307,18 @@ const Auth = ({ setUserRole }: AuthProps) => {
 					titleSx={{ fontFamily: 'Varela Round' }}>
 					<DialogContent>
 						<Box sx={{ display: 'flex', flexDirection: 'column', margin: '0.5rem 0 0.75rem 1.5rem' }}>
+							<Typography
+								variant='body2'
+								sx={{
+									fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+									fontFamily: 'Varela Round',
+									mb: '0.75rem',
+									lineHeight: '1.75',
+									textDecoration: 'underline',
+								}}>
+								Kullanıcı adı platforma giriş yaptığınızda diğer kullanıcılar tarafından topluluk sayfalarında ve mesajlaşmalarda görülecektir. Bu
+								nedenle kullanıcı adınızın anlamlı olması önemlidir.
+							</Typography>
 							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontFamily: 'Varela Round' }}>
 								Kullanıcı adı şunları içerebilir:
 							</Typography>
