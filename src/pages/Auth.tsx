@@ -1255,7 +1255,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 				</Box>
 
 				{/* Success Messages */}
-				<Snackbar open={signUpMessage} autoHideDuration={7500} onClose={() => setSignUpMessage(false)} anchorOrigin={{ vertical, horizontal }}>
+				<Snackbar open={signUpMessage} autoHideDuration={8500} onClose={() => setSignUpMessage(false)} anchorOrigin={{ vertical, horizontal }}>
 					<Alert
 						onClose={() => setSignUpMessage(false)}
 						severity='success'
@@ -1273,7 +1273,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 					</Alert>
 				</Snackbar>
 
-				<Snackbar open={resetPasswordMsg} autoHideDuration={7500} onClose={() => setResetPasswordMsg(false)} anchorOrigin={{ vertical, horizontal }}>
+				<Snackbar open={resetPasswordMsg} autoHideDuration={8500} onClose={() => setResetPasswordMsg(false)} anchorOrigin={{ vertical, horizontal }}>
 					<Alert
 						onClose={() => setResetPasswordMsg(false)}
 						severity='success'
@@ -1287,7 +1287,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 								color: '#1EC28B',
 							},
 						}}>
-						Şifre sıfırlama e-postası gönderildi! Gelen kutunuzu kontrol edin.
+						Şifre sıfırlama e-postası gönderildi! Gelen kutunuzu kontrol edin. Spam klasörünü kontrol edin.
 					</Alert>
 				</Snackbar>
 
