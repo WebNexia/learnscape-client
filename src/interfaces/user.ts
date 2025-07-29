@@ -4,6 +4,7 @@ export interface User {
 	lastName: string;
 	username: string;
 	email: string;
+	phone: string;
 	firebaseUserId: string;
 	role: string;
 	orgId: string;

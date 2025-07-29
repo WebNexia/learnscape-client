@@ -17,12 +17,17 @@ import CustomErrorMessage from '../components/forms/customFields/CustomErrorMess
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import { useNavigate } from 'react-router-dom';
 import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
+import { useGeoLocation } from '../hooks/useGeoLocation';
+import { PhoneInput } from 'react-international-phone';
+import 'react-international-phone/style.css';
 
 const Settings = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { user, setUser } = useContext(UserAuthContext);
 	const navigate = useNavigate();
 	const auth = getAuth();
+
+	const location = useGeoLocation();
 
 	const { isSmallScreen, isRotatedMedium, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -32,6 +37,8 @@ const Settings = () => {
 	const [imageUrl, setImageUrl] = useState<string>(user?.imageUrl || '');
 	const [firstName, setFirstName] = useState<string>(user?.firstName || '');
 	const [lastName, setLastName] = useState<string>(user?.lastName || '');
+	const [phone, setPhone] = useState<string>(user?.phone || '');
+
 	const [email, setEmail] = useState<string>(user?.email || '');
 
 	const [currentPassword, setCurrentPassword] = useState<string>('');
@@ -131,6 +138,7 @@ const Settings = () => {
 						username,
 						firstName,
 						lastName,
+						phone,
 						...(email === user?.email ? { email } : {}), // Only include email if it hasn't changed
 					});
 
@@ -142,6 +150,7 @@ const Settings = () => {
 								imageUrl,
 								firstName,
 								lastName,
+								phone,
 								...(email === user?.email ? { email } : {}), // Only update email if it hasn't changed
 							};
 						}
@@ -380,7 +389,7 @@ const Settings = () => {
 								setEnterImageUrl={setEnterImageUrl}
 							/>
 						</Box>
-						<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '90%' }}>
+						<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
 							<Box sx={{ flex: 1 }}>
 								<CustomTextField
 									label='First Name'
@@ -398,7 +407,7 @@ const Settings = () => {
 									}}
 								/>
 							</Box>
-							<Box sx={{ flex: 1, ml: '1.5rem' }}>
+							<Box sx={{ flex: 1, ml: '1rem' }}>
 								<CustomTextField
 									label='Last Name'
 									required={true}
@@ -415,26 +424,7 @@ const Settings = () => {
 									}}
 								/>
 							</Box>
-						</Box>
-						<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-							<Box sx={{ flex: 1 }}>
-								<CustomTextField
-									label='Email Address'
-									type={TextFieldTypes.EMAIL}
-									required={true}
-									value={email}
-									onChange={(e) => {
-										setEmail(e.target.value);
-									}}
-									sx={{ width: '100%' }}
-									InputProps={{
-										inputProps: {
-											maxLength: 254,
-										},
-									}}
-								/>
-							</Box>
-							<Box sx={{ display: 'flex', flex: 1, ml: '1.5rem' }}>
+							<Box sx={{ display: 'flex', flex: 1, ml: '1rem' }}>
 								<CustomTextField
 									label='Username'
 									required={true}
@@ -458,6 +448,40 @@ const Settings = () => {
 								</Tooltip>
 							</Box>
 						</Box>
+						<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '90%' }}>
+							<Box sx={{ flex: 1 }}>
+								<CustomTextField
+									label='Email Address'
+									type={TextFieldTypes.EMAIL}
+									required={true}
+									value={email}
+									onChange={(e) => {
+										setEmail(e.target.value);
+									}}
+									sx={{ width: '100%' }}
+									InputProps={{
+										inputProps: {
+											maxLength: 254,
+										},
+									}}
+								/>
+							</Box>
+
+							<Box sx={{ display: 'flex', flex: 1, ml: '1rem' }}>
+								<PhoneInput
+									defaultCountry={location?.countryCode?.toUpperCase() || 'TR'}
+									value={phone}
+									onChange={(phoneNumber) => {
+										setPhone(phoneNumber);
+										setErrorMsg(undefined);
+										setIsProfileUpdated(true);
+									}}
+									inputClassName='custom-phone-input'
+									className='custom-phone-container'
+									style={{ width: '100%', marginBottom: '0.5rem' }}
+								/>
+							</Box>
+						</Box>
 
 						<CustomDialog
 							title='Username Rules'
@@ -470,7 +494,7 @@ const Settings = () => {
 										- Username can include:
 									</Typography>
 									<Box sx={{ margin: '0.85rem 0 0 3rem' }}>
-										{['max 15 characters', 'underscore (_) and period (.)'].map((rule, index) => (
+										{['min 5 characters', 'max 15 characters', 'underscore (_) and period (.)'].map((rule, index) => (
 											<ul key={index}>
 												<li style={{ color: theme.textColor?.secondary.main }}>
 													<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.35rem' }}>{rule}</Typography>

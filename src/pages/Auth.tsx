@@ -9,7 +9,7 @@ import { AuthFormErrorMessages, AuthForms, Roles, TextFieldTypes } from '../inte
 import CustomTextField from '../components/forms/customFields/CustomTextField';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
-import { AuthError, createUserWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, signInWithEmailAndPassword } from 'firebase/auth';
+import { AuthError, createUserWithEmailAndPassword, sendEmailVerification, signInWithEmailAndPassword } from 'firebase/auth';
 import { auth, db } from '../firebase';
 import { useQueryClient } from 'react-query';
 import { User } from '../interfaces/user';
@@ -78,8 +78,8 @@ const Auth = ({ setUserRole }: AuthProps) => {
 	const resetRecaptchaRef = useRef<any>(null);
 	const signupFinallyExecutedRef = useRef(false);
 
-	const [signingUp, setSigningUp] = useState(false);
-	const [isSignupInProgress, setIsSignupInProgress] = useState(false);
+	const [signingUp, setSigningUp] = useState<boolean>(false);
+	const [isSignupInProgress, setIsSignupInProgress] = useState<boolean>(false);
 
 	const togglePasswordVisibility = () => {
 		setShowPassword((prevShowPassword) => !prevShowPassword);
