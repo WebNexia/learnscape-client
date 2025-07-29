@@ -539,14 +539,14 @@ const AdminCourses = () => {
 						columns={
 							isVerySmallScreen
 								? [
-										{ key: 'clone', label: '' },
+										{ key: 'clone', label: 'Cloned' },
 										{ key: 'title', label: 'Title' },
 										{ key: 'isActive', label: 'Status' },
 										{ key: 'startingDate', label: 'Starting Date' },
 										{ key: 'actions', label: 'Actions' },
 									]
 								: [
-										{ key: 'clone', label: '' },
+										{ key: 'clone', label: 'Cloned' },
 										{ key: 'title', label: 'Title' },
 										{ key: 'isActive', label: 'Status' },
 										{ key: 'startingDate', label: 'Starting Date' },

@@ -431,7 +431,8 @@ const AdminQuestions = () => {
 						order={order}
 						handleSort={handleSort}
 						columns={[
-							{ key: 'clone', label: '' },
+							{ key: 'clone', label: 'Cloned' },
+							{ key: 'isAiGenerated', label: 'AI Generated' },
 							{ key: 'questionType', label: 'Question Type' },
 							{ key: 'question', label: 'Question' },
 							{ key: 'createdAt', label: 'Created At' },
@@ -463,6 +464,7 @@ const AdminQuestions = () => {
 												</Box>
 											)}
 										</TableCell>
+										<CustomTableCell value={question.isAiGenerated ? 'Yes' : 'No'} />
 										<CustomTableCell value={question.questionType}>
 											{question.isAiGenerated && (
 												<AutoAwesome
