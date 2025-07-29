@@ -607,7 +607,7 @@ const AdminDocuments = () => {
 						order={order}
 						handleSort={handleSort}
 						columns={[
-							{ key: 'clone', label: '' },
+							{ key: 'clone', label: 'Cloned' },
 							{ key: 'name', label: 'Document Name' },
 							{ key: 'documentId', label: 'Document URL' },
 							{ key: 'createdAt', label: 'Created At' },

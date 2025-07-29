@@ -272,7 +272,7 @@ const AdminLessons = () => {
 						order={order}
 						handleSort={handleSort}
 						columns={[
-							{ key: 'clone', label: '' },
+							{ key: 'clone', label: 'Cloned' },
 							{ key: 'title', label: 'Title' },
 							{ key: 'type', label: 'Type' },
 							{ key: 'isActive', label: 'Status' },
