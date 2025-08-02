@@ -1461,7 +1461,6 @@ const AdminLessonEditPage = () => {
 																			borderRadius: '0.25rem',
 																			boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
 																			cursor: 'pointer',
-																			bgcolor: question.isAiGenerated ? '#E3F2FD' : theme.bgColor?.common,
 																		}}>
 																		<Box
 																			sx={{
@@ -1493,14 +1492,16 @@ const AdminLessonEditPage = () => {
 																			<Box sx={{ display: 'flex', alignItems: 'center' }}>
 																				<Typography variant='body2'>{fetchQuestionTypeName(question)}</Typography>
 																				{question.isAiGenerated && (
-																					<AutoAwesome
-																						sx={{
-																							fontSize: '1rem',
-																							marginLeft: '0.5rem',
-																							color: '#2196F3',
-																							zIndex: 1,
-																						}}
-																					/>
+																					<Tooltip title='AI Generated' placement='top' arrow>
+																						<AutoAwesome
+																							sx={{
+																								fontSize: '1rem',
+																								marginLeft: '0.5rem',
+																								color: '#2196F3',
+																								zIndex: 1,
+																							}}
+																						/>
+																					</Tooltip>
 																				)}
 																			</Box>
 

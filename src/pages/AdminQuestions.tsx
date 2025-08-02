@@ -1,4 +1,4 @@
-import { Box, FormControl, InputAdornment, MenuItem, Select, Table, TableBody, TableCell, TableRow } from '@mui/material';
+import { Box, FormControl, InputAdornment, MenuItem, Select, Table, TableBody, TableCell, TableRow, Tooltip } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { useContext, useEffect, useRef, useState } from 'react';
 import axios from '@utils/axiosInstance';
@@ -432,7 +432,6 @@ const AdminQuestions = () => {
 						handleSort={handleSort}
 						columns={[
 							{ key: 'clone', label: 'Cloned' },
-							{ key: 'isAiGenerated', label: 'AI Generated' },
 							{ key: 'questionType', label: 'Question Type' },
 							{ key: 'question', label: 'Question' },
 							{ key: 'createdAt', label: 'Created At' },
@@ -444,7 +443,7 @@ const AdminQuestions = () => {
 						{filteredQuestions &&
 							filteredQuestions?.map((question: QuestionInterface, index) => {
 								return (
-									<TableRow key={question._id} sx={{ bgcolor: question.isAiGenerated ? '#E3F2FD' : undefined }}>
+									<TableRow key={question._id}>
 										<TableCell sx={{ textAlign: 'center', width: '0px' }}>
 											{question.clonedFromId && (
 												<Box
@@ -464,16 +463,17 @@ const AdminQuestions = () => {
 												</Box>
 											)}
 										</TableCell>
-										<CustomTableCell value={question.isAiGenerated ? 'Yes' : 'No'} />
 										<CustomTableCell value={question.questionType}>
 											{question.isAiGenerated && (
-												<AutoAwesome
-													sx={{
-														fontSize: '1rem',
-														color: '#2196F3',
-														marginLeft: '0.5rem',
-													}}
-												/>
+												<Tooltip title='AI Generated' placement='top' arrow>
+													<AutoAwesome
+														sx={{
+															fontSize: '1rem',
+															color: '#2196F3',
+															marginLeft: '0.5rem',
+														}}
+													/>
+												</Tooltip>
 											)}
 										</CustomTableCell>
 										<CustomTableCell
