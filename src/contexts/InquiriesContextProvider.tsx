@@ -13,6 +13,7 @@ interface InquiriesContextTypes {
 	loading: boolean;
 	error: string | null;
 	fetchInquiries: (page: number) => Promise<void>;
+	fetchMoreInquiries: (startPage: number, endPage: number) => Promise<void>;
 	refreshData: () => void;
 	sortInquiries: (property: keyof Inquiry, order: 'asc' | 'desc') => void;
 	removeInquiry: (inquiryId: string) => void;
@@ -20,6 +21,8 @@ interface InquiriesContextTypes {
 	inquiriesPageNumber: number;
 	setInquiriesPageNumber: React.Dispatch<React.SetStateAction<number>>;
 	setNumberOfPages: React.Dispatch<React.SetStateAction<number>>;
+	totalItems: number;
+	loadedPages: number[];
 }
 
 interface InquiriesContextProviderProps {
@@ -31,6 +34,7 @@ export const InquiriesContext = createContext<InquiriesContextTypes>({
 	loading: false,
 	error: null,
 	fetchInquiries: async () => {},
+	fetchMoreInquiries: async () => {},
 	refreshData: () => {},
 	sortInquiries: () => {},
 	removeInquiry: () => {},
@@ -38,6 +42,8 @@ export const InquiriesContext = createContext<InquiriesContextTypes>({
 	inquiriesPageNumber: 1,
 	setInquiriesPageNumber: () => {},
 	setNumberOfPages: () => {},
+	totalItems: 0,
+	loadedPages: [],
 });
 
 const InquiriesContextProvider = (props: InquiriesContextProviderProps) => {
@@ -48,6 +54,8 @@ const InquiriesContextProvider = (props: InquiriesContextProviderProps) => {
 	const [isLoaded, setIsLoaded] = useState<boolean>(false);
 	const [numberOfPages, setNumberOfPages] = useState<number>(1);
 	const [inquiriesPageNumber, setInquiriesPageNumber] = useState<number>(1);
+	const [totalItems, setTotalItems] = useState<number>(0);
+	const [loadedPages, setLoadedPages] = useState<number[]>([]);
 	const location = useLocation();
 	const isLandingPageRoute =
 		location.pathname === '/' ||
@@ -62,17 +70,56 @@ const InquiriesContextProvider = (props: InquiriesContextProviderProps) => {
 	const fetchInquiries = async (page: number) => {
 		if (!orgId) return;
 		try {
-			const response = await axios.get(`${base_url}/inquiries/organisation/${orgId}?page=${page}&limit=100`);
-			// Initial sorting when fetching data
+			// Fetch initial 2 records
+			const url = `${base_url}/inquiries/organisation/${orgId}?page=1&limit=1000`;
+			console.log('Fetching initial data:', url);
+			const response = await axios.get(url);
+			console.log('Response:', response.data);
 			const sortedDataCopy = [...response.data.data].sort((a: Inquiry, b: Inquiry) => b.createdAt.localeCompare(a.createdAt));
 			setInquiries(sortedDataCopy);
-			// Update to use the pagination data from the response
-			setNumberOfPages(response.data.pagination.totalPages);
+			setTotalItems(response.data.pagination.totalItems);
+			setNumberOfPages(Math.ceil(response.data.pagination.totalItems / 100)); // 100 per page display
+			setLoadedPages([1]);
 			setIsLoaded(true);
 			return response.data.data;
 		} catch (error) {
 			setIsLoaded(true);
 			throw error;
+		}
+	};
+
+	const fetchMoreInquiries = async (startPage: number, endPage: number) => {
+		if (!orgId) return;
+		try {
+			// Calculate which pages we need to fetch
+			const pagesToFetch = [];
+			for (let page = startPage; page <= endPage; page++) {
+				if (!loadedPages.includes(page)) {
+					pagesToFetch.push(page);
+				}
+			}
+
+			if (pagesToFetch.length === 0) return; // Already loaded
+
+			// Fetch missing pages
+			let newInquiries: Inquiry[] = [];
+			for (const page of pagesToFetch) {
+				const url = `${base_url}/inquiries/organisation/${orgId}?page=${page}&limit=1000`;
+				console.log('Fetching more data:', url);
+				const response = await axios.get(url);
+				newInquiries = [...newInquiries, ...response.data.data];
+			}
+
+			// Combine with existing data, remove duplicates, and sort
+			const combinedData = [...inquiries, ...newInquiries];
+			const uniqueData = combinedData.filter((inquiry, index, self) => index === self.findIndex((i) => i._id === inquiry._id));
+			const sortedData = uniqueData.sort((a: Inquiry, b: Inquiry) => b.createdAt.localeCompare(a.createdAt));
+			setInquiries(sortedData);
+			setLoadedPages([...loadedPages, ...pagesToFetch]);
+
+			console.log(`Loaded ${newInquiries.length} new inquiries. Total: ${sortedData.length}`);
+		} catch (error) {
+			console.error('Error fetching more inquiries:', error);
 		}
 	};
 
@@ -120,6 +167,7 @@ const InquiriesContextProvider = (props: InquiriesContextProviderProps) => {
 				loading: isLoading,
 				error: isError ? 'Failed to fetch inquiries' : null,
 				fetchInquiries,
+				fetchMoreInquiries,
 				refreshData,
 				sortInquiries,
 				removeInquiry,
@@ -127,6 +175,8 @@ const InquiriesContextProvider = (props: InquiriesContextProviderProps) => {
 				inquiriesPageNumber,
 				setInquiriesPageNumber,
 				setNumberOfPages,
+				totalItems,
+				loadedPages,
 			}}>
 			{props.children}
 		</InquiriesContext.Provider>

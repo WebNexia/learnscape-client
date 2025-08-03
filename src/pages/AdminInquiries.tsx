@@ -9,6 +9,7 @@ import CustomTableHead from '../components/layouts/table/CustomTableHead';
 import CustomTableCell from '../components/layouts/table/CustomTableCell';
 import CustomTablePagination from '../components/layouts/table/CustomTablePagination';
 import { InquiriesContext } from '../contexts/InquiriesContextProvider';
+import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import { Inquiry } from '../interfaces/inquiry';
 import CustomActionBtn from '../components/layouts/table/CustomActionBtn';
 import { dateFormatter, dateTimeFormatter } from '@utils/dateFormatter';
@@ -24,6 +25,7 @@ import CustomTextField from '../components/forms/customFields/CustomTextField';
 import theme from '../themes';
 import EmailSender from '../components/EmailSender';
 import EmailIcon from '@mui/icons-material/Email';
+import CustomDeleteButton from '../components/forms/customButtons/CustomDeleteButton';
 
 const columns = [
 	{ key: 'name', label: 'Name' },
@@ -41,37 +43,33 @@ const AdminInquiries = () => {
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
-	const { inquiries, loading, error, removeInquiry, fetchInquiries } = useContext(InquiriesContext);
-
-	const [inquiriesPageNumber, setInquiriesPageNumber] = useState<number>(1);
+	const {
+		inquiries,
+		loading,
+		error,
+		removeInquiry,
+		fetchInquiries,
+		fetchMoreInquiries,
+		totalItems,
+		loadedPages,
+		inquiriesPageNumber,
+		setInquiriesPageNumber,
+	} = useContext(InquiriesContext);
+	const { orgId } = useContext(OrganisationContext);
 	const [searchValue, setSearchValue] = useState<string>('');
 	const [filterValue, setFilterValue] = useState<string>('');
+	const [searchResults, setSearchResults] = useState<Inquiry[]>([]);
+	const [isSearchActive, setIsSearchActive] = useState<boolean>(false);
 
-	const pageSize = 50;
+	const pageSize = 100;
 
-	const filteredInquiries = inquiries.filter((inquiry: Inquiry) => {
-		if (searchValue) {
-			const lowerSearch = searchValue.toLowerCase();
-			return (
-				inquiry.firstName.toLowerCase().includes(lowerSearch) ||
-				inquiry.lastName.toLowerCase().includes(lowerSearch) ||
-				inquiry.email.toLowerCase().includes(lowerSearch) ||
-				inquiry.message?.toLowerCase().includes(lowerSearch)
-			);
-		}
+	// Use search results if active, otherwise use context data
+	const displayInquiries = isSearchActive ? searchResults : inquiries;
 
-		if (filterValue) {
-			if (filterValue === 'from home page') return inquiry.category === 'HeroSection';
-			if (filterValue === 'from contact us') return inquiry.category === 'ContactUs';
-			if (filterValue === 'from about us') return inquiry.category === 'AboutUs';
-		}
+	// For pagination, use total items from server when not searching
+	const inquiriesNumberOfPages = isSearchActive ? Math.ceil(displayInquiries.length / pageSize) : Math.ceil(totalItems / pageSize);
 
-		return !searchValue && !filterValue;
-	});
-
-	const inquiriesNumberOfPages = Math.ceil(filteredInquiries.length / pageSize);
-
-	const paginatedInquiries = filteredInquiries.slice((inquiriesPageNumber - 1) * pageSize, inquiriesPageNumber * pageSize);
+	const paginatedInquiries = displayInquiries.slice((inquiriesPageNumber - 1) * pageSize, inquiriesPageNumber * pageSize);
 
 	const [orderBy, setOrderBy] = useState<keyof Inquiry>('createdAt');
 	const [order, setOrder] = useState<'asc' | 'desc'>('desc');
@@ -83,11 +81,31 @@ const AdminInquiries = () => {
 	const [emailDialogOpen, setEmailDialogOpen] = useState(false);
 
 	useEffect(() => {
-		fetchInquiries(inquiriesPageNumber);
-	}, [inquiriesPageNumber]);
+		fetchInquiries(1); // Always fetch initial data
+	}, []); // Only on mount
 
-	const handlePageChange = (newPage: number) => {
+	const handlePageChange = async (newPage: number) => {
 		setInquiriesPageNumber(newPage);
+
+		// Check if we need to fetch more data
+		const requiredRecords = newPage * pageSize;
+		if (inquiries.length < requiredRecords && newPage <= inquiriesNumberOfPages) {
+			// Calculate which batch of 1000 records we need (context fetches 1000 at a time)
+			const startBatch = Math.floor(((newPage - 1) * pageSize) / 1000) + 1;
+			const endBatch = Math.ceil((newPage * pageSize) / 1000);
+
+			// Check if we already have the required batches loaded
+			const batchesNeeded = [];
+			for (let batch = startBatch; batch <= endBatch; batch++) {
+				if (!loadedPages.includes(batch)) {
+					batchesNeeded.push(batch);
+				}
+			}
+
+			if (batchesNeeded.length > 0) {
+				await fetchMoreInquiries(startBatch, endBatch);
+			}
+		}
 	};
 
 	const handleSort = (property: keyof Inquiry) => {
@@ -131,21 +149,88 @@ const AdminInquiries = () => {
 		}
 	};
 
-	const handleDownload = () => {
-		const excelData = inquiries.map((inquiry: Inquiry) => ({
-			'First Name': inquiry.firstName,
-			'Last Name': inquiry.lastName,
-			'Email': inquiry.email,
-			'Phone': inquiry.phone,
-			'Country': inquiry.countryCode,
-			'Message': inquiry.message || '',
-			'Submitted At': format(new Date(inquiry.createdAt), 'yyyy-MM-dd HH:mm:ss'),
-		}));
+	const handleDownload = async () => {
+		try {
+			let dataToExport: Inquiry[];
 
-		const ws = XLSX.utils.json_to_sheet(excelData);
-		const wb = XLSX.utils.book_new();
-		XLSX.utils.book_append_sheet(wb, ws, 'Inquiries');
-		XLSX.writeFile(wb, `Inquiries-${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+			if (isSearchActive) {
+				// If search is active, use the search results (already filtered)
+				dataToExport = searchResults;
+			} else {
+				// First, get the total count to know how many pages we need
+				const countResponse = await axios.get(`${base_url}/inquiries/organisation/${orgId}?page=1&limit=1`);
+				const totalItems = countResponse.data.pagination.totalItems;
+
+				// Calculate how many pages we need to fetch all data
+				const itemsPerPage = 1000; // Fetch 1000 per page
+				const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+				// Fetch all pages
+				let allInquiries: Inquiry[] = [];
+				for (let page = 1; page <= totalPages; page++) {
+					const response = await axios.get(`${base_url}/inquiries/organisation/${orgId}?page=${page}&limit=${itemsPerPage}`);
+					allInquiries = [...allInquiries, ...response.data.data];
+				}
+
+				dataToExport = allInquiries;
+			}
+
+			const excelData = dataToExport.map((inquiry: Inquiry) => ({
+				'First Name': inquiry.firstName,
+				'Last Name': inquiry.lastName,
+				'Email': inquiry.email,
+				'Phone': inquiry.phone,
+				'Country': inquiry.countryCode,
+				'Message': inquiry.message || '',
+				'Submitted At': format(new Date(inquiry.createdAt), 'yyyy-MM-dd HH:mm:ss'),
+			}));
+
+			const ws = XLSX.utils.json_to_sheet(excelData);
+			const wb = XLSX.utils.book_new();
+			XLSX.utils.book_append_sheet(wb, ws, 'Inquiries');
+			XLSX.writeFile(wb, `Inquiries-${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+		} catch (error) {
+			console.error('Download error:', error);
+		}
+	};
+
+	const handleSearch = async () => {
+		try {
+			// Reset to first page when searching
+			setInquiriesPageNumber(1);
+
+			// Make API call to search entire database
+			if (searchValue || filterValue) {
+				// Build query parameters
+				const params = new URLSearchParams({
+					page: '1',
+					limit: '1500',
+				});
+
+				if (searchValue && searchValue.trim()) {
+					params.append('search', searchValue.trim());
+				}
+				if (filterValue && filterValue.trim()) {
+					params.append('filter', filterValue.trim());
+				}
+				if (orderBy) {
+					params.append('sortBy', orderBy);
+				}
+				if (order) {
+					params.append('sortOrder', order);
+				}
+
+				const response = await axios.get(`${base_url}/inquiries/organisation/${orgId}?${params.toString()}`);
+				setSearchResults(response.data.data);
+				setIsSearchActive(true);
+			} else {
+				// If no search/filter, clear search results
+				setSearchResults([]);
+				setIsSearchActive(false);
+			}
+		} catch (error) {
+			console.error('Search error:', error);
+		}
 	};
 
 	if (loading) return <Typography>Loading...</Typography>;
@@ -164,20 +249,19 @@ const AdminInquiries = () => {
 						mb: '1.25rem',
 					}}>
 					<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', flex: 4 }}>
-						<Box sx={{ display: 'flex', alignSelf: 'flex-start', width: isVerySmallScreen ? '12.5rem' : '30rem' }}>
+						<Box sx={{ display: 'flex', alignSelf: 'flex-start', width: isVerySmallScreen ? '12.5rem' : 'fit-content' }}>
 							<Box sx={{ mr: '1rem' }}>
 								<FormControl>
 									<Select
 										size='small'
 										value={filterValue}
 										onChange={(e) => {
-											setSearchValue('');
 											setFilterValue(e.target.value);
 										}}
 										displayEmpty
 										sx={{
 											backgroundColor: theme.bgColor?.common,
-											width: isMobileSizeSmall ? '8rem' : '12rem',
+											width: isMobileSizeSmall ? '7rem' : '10rem',
 											fontSize: isMobileSize ? '0.7rem' : '0.85rem',
 											textTransform: 'capitalize',
 										}}>
@@ -226,12 +310,8 @@ const AdminInquiries = () => {
 								placeholder={'Search in name, email, message'}
 								onChange={(e) => {
 									setSearchValue(e.target.value);
-									setFilterValue('filter');
-									if (e.target.value === '') {
-										setFilterValue('');
-									}
 								}}
-								sx={{ backgroundColor: '#fff' }}
+								sx={{ backgroundColor: '#fff', minWidth: isVerySmallScreen ? '10rem' : '17.5rem' }}
 								required={false}
 								InputProps={{
 									endAdornment: (
@@ -246,17 +326,41 @@ const AdminInquiries = () => {
 									),
 								}}
 							/>
+							<CustomSubmitButton onClick={handleSearch} sx={{ marginLeft: '1rem' }} disabled={!searchValue && !filterValue}>
+								Search
+							</CustomSubmitButton>
+							<CustomDeleteButton
+								onClick={() => {
+									setSearchValue('');
+									setFilterValue('');
+									setSearchResults([]);
+									setIsSearchActive(false);
+									setInquiriesPageNumber(1);
+								}}>
+								Reset
+							</CustomDeleteButton>
 						</Box>
 					</Box>
-					<Box sx={{ display: 'flex', gap: 1, mb: '0.85rem' }}>
+					<Box sx={{ display: 'flex', gap: 1, mb: '0.85rem', alignItems: 'center' }}>
+						{isSearchActive && (
+							<Typography
+								variant='body2'
+								sx={{
+									color: 'text.secondary',
+									fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+									mr: 1,
+								}}>
+								{searchResults.length} results
+							</Typography>
+						)}
 						<CustomSubmitButton
 							startIcon={<DownloadIcon />}
 							onClick={handleDownload}
 							sx={{
 								fontSize: isMobileSize ? '0.7rem' : undefined,
 							}}
-							disabled={inquiries.length === 0}>
-							Download Inquiries
+							disabled={displayInquiries.length === 0}>
+							Download {isSearchActive ? 'Filtered' : 'All'} Inquiries
 						</CustomSubmitButton>
 						<CustomSubmitButton
 							startIcon={<EmailIcon />}

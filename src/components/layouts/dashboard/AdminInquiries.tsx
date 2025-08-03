@@ -9,7 +9,7 @@ const AdminInquiries = () => {
 	const { isRotated, isSmallScreen } = useContext(MediaQueryContext);
 
 	const isMobileSize: boolean = isSmallScreen || isRotated;
-	const { inquiries } = useContext(InquiriesContext);
+	const { totalItems } = useContext(InquiriesContext);
 
 	return (
 		<Box
@@ -28,7 +28,7 @@ const AdminInquiries = () => {
 				},
 			}}>
 			<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-				<Typography variant='h6'>Inquiries ({inquiries.length})</Typography>
+				<Typography variant='h6'>Inquiries ({totalItems})</Typography>
 				<Typography>&</Typography>
 				<Typography variant='h6'>Bulk Email</Typography>
 				{/* <InfoOutlined sx={{ ml: '0.5rem', color: theme.textColor?.greenPrimary.main }} fontSize={isMobileSize ? 'small' : 'medium'} /> */}
