@@ -38,13 +38,27 @@ import theme from '../themes';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/CustomInfoMessageAlignedLeft';
 import axios from '@utils/axiosInstance';
-import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
+import CustomDeleteButton from '../components/forms/customButtons/CustomDeleteButton';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
+import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
 
 const AdminCourses = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const navigate = useNavigate();
-	const { sortedCoursesData, sortCoursesData, addNewCourse, removeCourse, fetchCourses } = useContext(CoursesContext);
+	const {
+		courses,
+		loading,
+		error,
+		fetchCourses,
+		fetchMoreCourses,
+		addNewCourse,
+		removeCourse,
+		sortCoursesData,
+		totalItems,
+		loadedPages,
+		coursesPageNumber,
+		setCoursesPageNumber,
+	} = useContext(CoursesContext);
 	const { orgId } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
 
@@ -55,9 +69,10 @@ const AdminCourses = () => {
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
-	const [coursesPageNumber, setCoursesPageNumber] = useState<number>(1);
 	const [searchValue, setSearchValue] = useState<string>('');
 	const [filterValue, setFilterValue] = useState<string>('');
+	const [searchResults, setSearchResults] = useState<SingleCourse[]>([]);
+	const [isSearchActive, setIsSearchActive] = useState<boolean>(false);
 
 	const [title, setTitle] = useState<string>('');
 	const [description, setDescription] = useState<string>('');
@@ -69,30 +84,23 @@ const AdminCourses = () => {
 	const [checked, setChecked] = useState<boolean>(false);
 	const [isExternal, setIsExternal] = useState<boolean>(false);
 
-	const pageSize = 50;
+	const pageSize = 25;
 
-	const filteredCourses = sortedCoursesData.filter((course) => {
-		if (searchValue) {
-			const lowerSearch = searchValue.toLowerCase();
-			return course?.title?.toLowerCase().includes(lowerSearch);
-		}
-		if (filterValue) {
-			if (filterValue === 'published courses' && course.isActive) return true;
-			if (filterValue === 'unpublished courses' && !course.isActive) return true;
-			if (filterValue === 'paid courses' && course.prices.find((price) => !(price.amount == '' || price.amount == 'Free' || price.amount == '0')))
-				return true;
-			if (filterValue === 'free courses' && course.prices.find((price) => price.amount == '' || price.amount == 'Free' || price.amount == '0'))
-				return true;
-			if (filterValue === 'open courses' && !course.isExpired) return true;
-			if (filterValue === 'closed courses' && course.isExpired) return true;
-		}
-		return !searchValue && !filterValue;
-	});
+	// Use search results if active, otherwise use context data
+	const displayCourses = isSearchActive ? searchResults : courses;
 
-	const coursesNumberOfPages = Math.ceil(filteredCourses.length / pageSize);
+	// For pagination, use total items from server when not searching
+	const coursesNumberOfPages = isSearchActive ? Math.ceil(displayCourses.length / pageSize) : Math.ceil(totalItems / pageSize);
 
-	const paginatedCourses = filteredCourses.slice((coursesPageNumber - 1) * pageSize, coursesPageNumber * pageSize);
+	const paginatedCourses = displayCourses.slice((coursesPageNumber - 1) * pageSize, coursesPageNumber * pageSize);
 
+	const [orderBy, setOrderBy] = useState<keyof SingleCourse>('title');
+	const [order, setOrder] = useState<'asc' | 'desc'>('asc');
+
+	if (loading) return <Typography>Loading...</Typography>;
+	if (error) return <Typography color='error'>{error}</Typography>;
+
+	// Modal states
 	const [isCourseCreateModalOpen, setIsCourseCreateModalOpen] = useState<boolean>(false);
 
 	const openNewCourseModal = () => {
@@ -123,17 +131,81 @@ const AdminCourses = () => {
 			setIsCourseDeleteModalOpen(Array(paginatedCourses.length).fill(false));
 			setIsCourseCloneModalOpen(Array(paginatedCourses.length).fill(false));
 		}
-	}, [sortedCoursesData, coursesPageNumber]);
-
-	const isInitialMount = useRef(true);
+	}, [displayCourses, coursesPageNumber]);
 
 	useEffect(() => {
-		if (isInitialMount.current) {
-			isInitialMount.current = false;
-		} else {
-			fetchCourses();
+		fetchCourses(1); // Always fetch initial data
+	}, []); // Only on mount
+
+	const handlePageChange = async (newPage: number) => {
+		setCoursesPageNumber(newPage);
+
+		// Check if we need to fetch more data
+		const requiredRecords = newPage * pageSize;
+		if (courses.length < requiredRecords && newPage <= coursesNumberOfPages) {
+			// Calculate which batch of 300 records we need (context fetches 300 at a time)
+			const startBatch = Math.floor(((newPage - 1) * pageSize) / 150) + 1;
+			const endBatch = Math.ceil((newPage * pageSize) / 150);
+
+			// Check if we already have the required batches loaded
+			const batchesNeeded = [];
+			for (let batch = startBatch; batch <= endBatch; batch++) {
+				if (!loadedPages.includes(batch)) {
+					batchesNeeded.push(batch);
+				}
+			}
+
+			if (batchesNeeded.length > 0) {
+				await fetchMoreCourses(startBatch, endBatch);
+			}
 		}
-	}, []);
+	};
+
+	const handleSort = (property: keyof SingleCourse) => {
+		const isAsc = orderBy === property && order === 'asc';
+		setOrder(isAsc ? 'desc' : 'asc');
+		setOrderBy(property);
+		sortCoursesData(property, isAsc ? 'desc' : 'asc');
+	};
+
+	const handleSearch = async () => {
+		try {
+			// Reset to first page when searching
+			setCoursesPageNumber(1);
+
+			// Make API call to search entire database
+			if (searchValue || filterValue) {
+				// Build query parameters
+				const params = new URLSearchParams({
+					limit: '250',
+				});
+
+				if (searchValue && searchValue.trim()) {
+					params.append('search', searchValue.trim());
+				}
+				if (filterValue && filterValue.trim()) {
+					params.append('filter', filterValue.trim());
+				}
+				if (orderBy) {
+					params.append('sortBy', orderBy);
+				}
+				if (order) {
+					params.append('sortOrder', order);
+				}
+
+				const response = await axios.get(`${base_url}/courses/organisation/${orgId}?${params.toString()}`);
+
+				setSearchResults(response.data.data);
+				setIsSearchActive(true);
+			} else {
+				// If no search/filter, clear search results
+				setSearchResults([]);
+				setIsSearchActive(false);
+			}
+		} catch (error) {
+			console.error('Search error:', error);
+		}
+	};
 
 	const openCloneCourseModal = (index: number) => {
 		const updatedState = [...isCourseCloneModalOpen];
@@ -251,16 +323,6 @@ const AdminCourses = () => {
 		} catch (error) {
 			console.log(error);
 		}
-	};
-
-	const [orderBy, setOrderBy] = useState<keyof SingleCourse>('title');
-	const [order, setOrder] = useState<'asc' | 'desc'>('asc');
-
-	const handleSort = (property: keyof SingleCourse) => {
-		const isAsc = orderBy === property && order === 'asc';
-		setOrder(isAsc ? 'desc' : 'asc');
-		setOrderBy(property);
-		sortCoursesData(property, isAsc ? 'desc' : 'asc');
 	};
 
 	return (
@@ -423,14 +485,13 @@ const AdminCourses = () => {
 					padding: isMobileSizeSmall ? '1rem 1rem 0.5rem 1rem' : '2rem 2rem 1rem 2rem',
 					width: '100%',
 				}}>
-				<Box sx={{ display: 'flex', justifyContent: 'flex-start', alignContent: 'center', width: isMobileSize ? '70%' : '100%' }}>
+				<Box sx={{ display: 'flex', alignSelf: 'flex-start', width: isVerySmallScreen ? '12.5rem' : 'fit-content' }}>
 					<Box>
 						<FormControl>
 							<Select
 								size='small'
 								value={filterValue}
 								onChange={(e) => {
-									setSearchValue('');
 									setFilterValue(e.target.value);
 								}}
 								displayEmpty
@@ -465,7 +526,16 @@ const AdminCourses = () => {
 									}}>
 									All Courses
 								</MenuItem>
-								{['Published Courses', 'Unpublished Courses', 'Paid Courses', 'Free Courses', 'Open Courses', 'Closed Courses'].map((type) => (
+								{[
+									'Published Courses',
+									'Unpublished Courses',
+									'Paid Courses',
+									'Free Courses',
+									'Open Courses',
+									'Closed Courses',
+									'External Courses',
+									'Platform Courses',
+								].map((type) => (
 									<MenuItem
 										value={type.toLowerCase()}
 										key={type}
@@ -481,42 +551,54 @@ const AdminCourses = () => {
 							</Select>
 						</FormControl>
 					</Box>
-					<Box sx={{ alignSelf: 'flex-start', width: isVerySmallScreen ? '7rem' : isMobileSize ? '15rem' : '17.5rem' }}>
-						<CustomTextField
-							value={searchValue}
-							placeholder={isVerySmallScreen ? 'Search in Title' : 'Search Course in Title'}
-							onChange={(e) => {
-								setSearchValue(e.target.value);
-								setFilterValue('filter');
-								if (e.target.value === '') {
-									setFilterValue('');
-								}
-							}}
-							sx={{ backgroundColor: '#fff' }}
-							required={false}
-							InputProps={{
-								endAdornment: (
-									<InputAdornment position='end'>
-										<Search
-											sx={{
-												mr: '-0.5rem',
-											}}
-											fontSize={isMobileSize ? 'small' : 'medium'}
-										/>
-									</InputAdornment>
-								),
-							}}
-						/>
-					</Box>
+
+					<CustomTextField
+						value={searchValue}
+						placeholder={'Search in Title and Description'}
+						onChange={(e) => {
+							setSearchValue(e.target.value);
+						}}
+						sx={{ backgroundColor: '#fff', minWidth: isVerySmallScreen ? '10rem' : '17.5rem' }}
+						required={false}
+						InputProps={{
+							endAdornment: (
+								<InputAdornment position='end'>
+									<Search
+										sx={{
+											mr: '-0.5rem',
+										}}
+										fontSize={isMobileSize ? 'small' : 'medium'}
+									/>
+								</InputAdornment>
+							),
+						}}
+					/>
+					<CustomSubmitButton onClick={handleSearch} sx={{ marginLeft: '1rem' }} disabled={!searchValue && !filterValue}>
+						Search
+					</CustomSubmitButton>
+					<CustomDeleteButton
+						onClick={() => {
+							setSearchValue('');
+							setFilterValue('');
+							setSearchResults([]);
+							setIsSearchActive(false);
+							setCoursesPageNumber(1);
+						}}>
+						Reset
+					</CustomDeleteButton>
 				</Box>
-				<Box
-					sx={{
-						display: 'flex',
-						justifyContent: 'flex-end',
-						width: isVerySmallScreen ? '5%' : isMobileSize ? '20%' : '25%',
-						height: isVerySmallScreen ? '1.75rem' : '2rem',
-						fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-					}}>
+				<Box sx={{ display: 'flex', gap: 1, mb: '0.85rem', alignItems: 'center' }}>
+					{isSearchActive && (
+						<Typography
+							variant='body2'
+							sx={{
+								color: 'text.secondary',
+								fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+								mr: 1,
+							}}>
+							{searchResults.length} results
+						</Typography>
+					)}
 					<CustomSubmitButton onClick={openNewCourseModal} sx={{ fontSize: isMobileSize ? '0.7rem' : undefined }}>
 						{isVerySmallScreen ? 'New' : 'New Course'}
 					</CustomSubmitButton>
@@ -728,7 +810,7 @@ const AdminCourses = () => {
 					</TableBody>
 				</Table>
 				{isVerySmallScreen && <CustomInfoMessageAlignedLeft message='Rotate your device for more info' />}
-				<CustomTablePagination count={coursesNumberOfPages} page={coursesPageNumber} onChange={setCoursesPageNumber} />
+				<CustomTablePagination count={coursesNumberOfPages} page={coursesPageNumber} onChange={handlePageChange} />
 			</Box>
 		</DashboardPagesLayout>
 	);

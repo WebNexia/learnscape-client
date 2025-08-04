@@ -40,8 +40,19 @@ const AdminUsers = () => {
 
 	const { userId } = useContext(UserAuthContext);
 
-	const { users, loading, error, fetchUsers, fetchMoreUsers, updateUser, totalItems, loadedPages, usersPageNumber, setUsersPageNumber } =
-		useContext(UsersContext);
+	const {
+		users,
+		loading,
+		error,
+		fetchUsers,
+		fetchMoreUsers,
+		updateUser,
+		sortUsersData,
+		totalItems,
+		loadedPages,
+		usersPageNumber,
+		setUsersPageNumber,
+	} = useContext(UsersContext);
 
 	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -107,6 +118,7 @@ const AdminUsers = () => {
 		const isAsc = orderBy === property && order === 'asc';
 		setOrder(isAsc ? 'desc' : 'asc');
 		setOrderBy(property);
+		sortUsersData(property, isAsc ? 'desc' : 'asc');
 	};
 
 	const handleSearch = async () => {

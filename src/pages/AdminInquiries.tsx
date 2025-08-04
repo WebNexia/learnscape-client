@@ -50,6 +50,7 @@ const AdminInquiries = () => {
 		removeInquiry,
 		fetchInquiries,
 		fetchMoreInquiries,
+		sortInquiries,
 		totalItems,
 		loadedPages,
 		inquiriesPageNumber,
@@ -112,6 +113,7 @@ const AdminInquiries = () => {
 		const isAsc = orderBy === property && order === 'asc';
 		setOrder(isAsc ? 'desc' : 'asc');
 		setOrderBy(property);
+		sortInquiries(property, isAsc ? 'desc' : 'asc');
 	};
 
 	const handleViewInquiry = (index: number, inquiry: Inquiry) => {
