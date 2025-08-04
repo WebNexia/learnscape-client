@@ -70,11 +70,9 @@ const InquiriesContextProvider = (props: InquiriesContextProviderProps) => {
 	const fetchInquiries = async (page: number) => {
 		if (!orgId) return;
 		try {
-			// Fetch initial 2 records
-			const url = `${base_url}/inquiries/organisation/${orgId}?page=1&limit=1000`;
-			console.log('Fetching initial data:', url);
+			// Fetch initial 1000 records
+			const url = `${base_url}/inquiries/organisation/${orgId}?page=${page}&limit=1000`;
 			const response = await axios.get(url);
-			console.log('Response:', response.data);
 			const sortedDataCopy = [...response.data.data].sort((a: Inquiry, b: Inquiry) => b.createdAt.localeCompare(a.createdAt));
 			setInquiries(sortedDataCopy);
 			setTotalItems(response.data.pagination.totalItems);
@@ -105,7 +103,7 @@ const InquiriesContextProvider = (props: InquiriesContextProviderProps) => {
 			let newInquiries: Inquiry[] = [];
 			for (const page of pagesToFetch) {
 				const url = `${base_url}/inquiries/organisation/${orgId}?page=${page}&limit=1000`;
-				console.log('Fetching more data:', url);
+
 				const response = await axios.get(url);
 				newInquiries = [...newInquiries, ...response.data.data];
 			}
@@ -116,8 +114,6 @@ const InquiriesContextProvider = (props: InquiriesContextProviderProps) => {
 			const sortedData = uniqueData.sort((a: Inquiry, b: Inquiry) => b.createdAt.localeCompare(a.createdAt));
 			setInquiries(sortedData);
 			setLoadedPages([...loadedPages, ...pagesToFetch]);
-
-			console.log(`Loaded ${newInquiries.length} new inquiries. Total: ${sortedData.length}`);
 		} catch (error) {
 			console.error('Error fetching more inquiries:', error);
 		}

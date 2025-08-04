@@ -203,8 +203,7 @@ const AdminInquiries = () => {
 			if (searchValue || filterValue) {
 				// Build query parameters
 				const params = new URLSearchParams({
-					page: '1',
-					limit: '1500',
+					limit: '1000',
 				});
 
 				if (searchValue && searchValue.trim()) {
