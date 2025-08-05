@@ -1,8 +1,9 @@
-import { Box, DialogActions, FormControl, InputAdornment, MenuItem, Select, Table, TableBody, TableCell, TableRow } from '@mui/material';
+import { Box, DialogActions, FormControl, InputAdornment, MenuItem, Select, Table, TableBody, TableCell, TableRow, Typography } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
-import { useContext, useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import axios from '@utils/axiosInstance';
 import { LessonsContext } from '../contexts/LessonsContextProvider';
+import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import { Lesson } from '../interfaces/lessons';
 import { Delete, Edit, Info, Search } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
@@ -16,51 +17,79 @@ import CustomTablePagination from '../components/layouts/table/CustomTablePagina
 import CustomActionBtn from '../components/layouts/table/CustomActionBtn';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
 import theme from '../themes';
-import { LessonType } from '../interfaces/enums';
+
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import { dateFormatter } from '../utils/dateFormatter';
 import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
 import LessonInfoModal from '../components/lessons/LessonInfoModal';
+import CustomDeleteButton from '../components/forms/customButtons/CustomDeleteButton';
 
 const AdminLessons = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const navigate = useNavigate();
 
-	const { sortLessonsData, sortedLessonsData, removeLesson, fetchLessons } = useContext(LessonsContext);
+	const {
+		lessons,
+		loading,
+		error,
+		fetchLessons,
+		fetchMoreLessons,
+		removeLesson,
+		totalItems,
+		loadedPages,
+		lessonsPageNumber,
+		setLessonsPageNumber,
+		sortLessonsData,
+	} = useContext(LessonsContext);
+	const { orgId } = useContext(OrganisationContext);
 
 	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
-	const [lessonsPageNumber, setLessonsPageNumber] = useState<number>(1);
 	const [searchValue, setSearchValue] = useState<string>('');
 	const [filterValue, setFilterValue] = useState<string>('');
+	const [searchResults, setSearchResults] = useState<Lesson[]>([]);
+	const [isSearchActive, setIsSearchActive] = useState<boolean>(false);
 
 	const pageSize = 50;
 
-	const filteredLessons = sortedLessonsData.filter((lesson) => {
-		if (searchValue) {
-			const lowerSearch = searchValue.toLowerCase();
-			return lesson?.title?.toLowerCase().includes(lowerSearch);
-		}
-		if (filterValue) {
-			if (filterValue === 'published lessons' && lesson.isActive) return true;
-			if (filterValue === 'unpublished lessons' && !lesson.isActive) return true;
-			if (filterValue === 'instructional lessons' && lesson.type === LessonType.INSTRUCTIONAL_LESSON) return true;
-			if (filterValue === 'practice lessons' && lesson.type === LessonType.PRACTICE_LESSON) return true;
-			if (filterValue === 'quizzes' && lesson.type === LessonType.QUIZ) return true;
-		}
-		return !searchValue && !filterValue;
-	});
+	// Use search results if active, otherwise use context data
+	const displayLessons = isSearchActive ? searchResults : lessons;
 
-	const lessonsNumberOfPages = Math.ceil(filteredLessons.length / pageSize);
+	// For pagination, use total items from server when not searching
+	const lessonsNumberOfPages = isSearchActive ? Math.ceil(displayLessons.length / pageSize) : Math.ceil(totalItems / pageSize);
 
-	const paginatedLessons = filteredLessons.slice((lessonsPageNumber - 1) * pageSize, lessonsPageNumber * pageSize);
+	const paginatedLessons = displayLessons.slice((lessonsPageNumber - 1) * pageSize, lessonsPageNumber * pageSize);
 
 	const [isNewLessonModalOpen, setIsNewLessonModalOpen] = useState<boolean>(false);
 
 	const [orderBy, setOrderBy] = useState<keyof Lesson>('title');
 	const [order, setOrder] = useState<'asc' | 'desc'>('asc');
+
+	const handlePageChange = async (newPage: number) => {
+		setLessonsPageNumber(newPage);
+
+		// Check if we need to fetch more data
+		const requiredRecords = newPage * pageSize;
+		if (lessons.length < requiredRecords && newPage <= lessonsNumberOfPages) {
+			// Calculate which batch of 200 records we need (context fetches 200 at a time)
+			const startBatch = Math.floor(((newPage - 1) * pageSize) / 200) + 1;
+			const endBatch = Math.ceil((newPage * pageSize) / 200);
+
+			// Check if we already have the required batches loaded
+			const batchesNeeded = [];
+			for (let batch = startBatch; batch <= endBatch; batch++) {
+				if (!loadedPages.includes(batch)) {
+					batchesNeeded.push(batch);
+				}
+			}
+
+			if (batchesNeeded.length > 0) {
+				await fetchMoreLessons(startBatch, endBatch);
+			}
+		}
+	};
 
 	const handleSort = (property: keyof Lesson) => {
 		const isAsc = orderBy === property && order === 'asc';
@@ -69,26 +98,59 @@ const AdminLessons = () => {
 		sortLessonsData(property, isAsc ? 'desc' : 'asc');
 	};
 
+	const handleSearch = async () => {
+		try {
+			// Reset to first page when searching
+			setLessonsPageNumber(1);
+
+			// Make API call to search entire database
+			if (searchValue || filterValue) {
+				// Build query parameters
+				const params = new URLSearchParams({
+					limit: '250',
+				});
+
+				if (searchValue && searchValue.trim()) {
+					params.append('search', searchValue.trim());
+				}
+				if (filterValue && filterValue.trim()) {
+					params.append('filter', filterValue.trim());
+				}
+				if (orderBy) {
+					params.append('sortBy', orderBy);
+				}
+				if (order) {
+					params.append('sortOrder', order);
+				}
+
+				const response = await axios.get(`${base_url}/lessons/organisation/${orgId}?${params.toString()}`);
+
+				setSearchResults(response.data.data);
+				setIsSearchActive(true);
+			} else {
+				// If no search/filter, clear search results
+				setSearchResults([]);
+				setIsSearchActive(false);
+			}
+		} catch (error) {
+			console.error('Search error:', error);
+		}
+	};
+
 	const [isLessonDeleteModalOpen, setIsLessonDeleteModalOpen] = useState<boolean[]>([]);
 	const [isLessonInfoModalOpen, setIsLessonInfoModalOpen] = useState<boolean[]>([]);
 
 	useEffect(() => {
 		setIsLessonDeleteModalOpen(Array(paginatedLessons.length).fill(false));
 		setIsLessonInfoModalOpen(Array(paginatedLessons.length).fill(false));
-	}, [sortedLessonsData, lessonsPageNumber]);
+	}, [displayLessons, lessonsPageNumber]);
 
-	const isInitialMount = useRef(true);
-
-	useEffect(() => {
-		if (isInitialMount.current) {
-			isInitialMount.current = false;
-			fetchLessons();
-		}
-	}, []);
+	if (loading) return <Typography>Loading...</Typography>;
+	if (error) return <Typography color='error'>{error}</Typography>;
 
 	useEffect(() => {
-		setLessonsPageNumber(1);
-	}, []);
+		fetchLessons(1); // Always fetch initial data
+	}, []); // Only on mount
 
 	const openDeleteLessonModal = (index: number) => {
 		const updatedState = [...isLessonDeleteModalOpen];
@@ -105,7 +167,7 @@ const AdminLessons = () => {
 		try {
 			removeLesson(lessonId);
 			await axios.delete(`${base_url}/lessons/${lessonId}`);
-			fetchLessons();
+			fetchLessons(1);
 		} catch (error) {
 			console.log(error);
 		}
@@ -133,7 +195,7 @@ const AdminLessons = () => {
 					padding: isMobileSizeSmall ? '1rem 1rem 0.5rem 1rem' : '2rem 2rem 1rem 2rem',
 					width: '100%',
 				}}>
-				<Box sx={{ display: 'flex', justifyContent: 'flex-start', width: '100%' }}>
+				<Box sx={{ display: 'flex', alignSelf: 'flex-start', width: isVerySmallScreen ? '12.5rem' : 'fit-content' }}>
 					<Box sx={{ mr: '1rem' }}>
 						<FormControl>
 							<Select
@@ -216,41 +278,54 @@ const AdminLessons = () => {
 							</Select>
 						</FormControl>
 					</Box>
-					<Box sx={{ alignSelf: 'flex-start', width: isVerySmallScreen ? '7rem' : isMobileSize ? '15rem' : '17.5rem' }}>
-						<CustomTextField
-							value={searchValue}
-							placeholder={isVerySmallScreen ? 'Search in Title' : 'Search Lesson in Title'}
-							onChange={(e) => {
-								setSearchValue(e.target.value);
-								setFilterValue('filter');
-								if (e.target.value === '') {
-									setFilterValue('');
-								}
-							}}
-							sx={{ backgroundColor: '#fff' }}
-							required={false}
-							InputProps={{
-								endAdornment: (
-									<InputAdornment position='end'>
-										<Search
-											sx={{
-												mr: '-0.5rem',
-											}}
-											fontSize={isMobileSize ? 'small' : 'medium'}
-										/>
-									</InputAdornment>
-								),
-							}}
-						/>
-					</Box>
+
+					<CustomTextField
+						value={searchValue}
+						placeholder={'Search in Title and Description'}
+						onChange={(e) => {
+							setSearchValue(e.target.value);
+						}}
+						sx={{ backgroundColor: '#fff', minWidth: isVerySmallScreen ? '10rem' : '17.5rem' }}
+						required={false}
+						InputProps={{
+							endAdornment: (
+								<InputAdornment position='end'>
+									<Search
+										sx={{
+											mr: '-0.5rem',
+										}}
+										fontSize={isMobileSize ? 'small' : 'medium'}
+									/>
+								</InputAdornment>
+							),
+						}}
+					/>
+					<CustomSubmitButton onClick={handleSearch} sx={{ marginLeft: '1rem' }} disabled={!searchValue && !filterValue}>
+						Search
+					</CustomSubmitButton>
+					<CustomDeleteButton
+						onClick={() => {
+							setSearchValue('');
+							setFilterValue('');
+							setSearchResults([]);
+							setIsSearchActive(false);
+							setLessonsPageNumber(1);
+						}}>
+						Reset
+					</CustomDeleteButton>
 				</Box>
-				<Box
-					sx={{
-						display: 'flex',
-						justifyContent: 'flex-end',
-						width: isVerySmallScreen ? '5%' : isMobileSize ? '20%' : '25%',
-						height: isVerySmallScreen ? '1.75rem' : '2rem',
-					}}>
+				<Box sx={{ display: 'flex', gap: 1, mb: '0.85rem', alignItems: 'center' }}>
+					{isSearchActive && (
+						<Typography
+							variant='body2'
+							sx={{
+								color: 'text.secondary',
+								fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+								mr: 1,
+							}}>
+							{searchResults.length} results
+						</Typography>
+					)}
 					<CustomSubmitButton onClick={() => setIsNewLessonModalOpen(true)} sx={{ fontSize: isMobileSize ? '0.7rem' : undefined }}>
 						{isVerySmallScreen ? 'New' : 'New Lesson'}
 					</CustomSubmitButton>
@@ -378,7 +453,7 @@ const AdminLessons = () => {
 							})}
 					</TableBody>
 				</Table>
-				<CustomTablePagination count={lessonsNumberOfPages} page={lessonsPageNumber} onChange={setLessonsPageNumber} />
+				<CustomTablePagination count={lessonsNumberOfPages} page={lessonsPageNumber} onChange={handlePageChange} />
 			</Box>
 
 			{isLessonInfoModalOpen.map(

@@ -9,16 +9,23 @@ import { useAuth } from '../hooks/useAuth';
 import { useLocation } from 'react-router-dom';
 
 interface LessonsContextTypes {
-	sortedLessonsData: Lesson[];
+	lessons: Lesson[];
+	loading: boolean;
+	error: string | null;
+	fetchLessons: (page: number) => Promise<void>;
+	fetchMoreLessons: (startPage: number, endPage: number) => Promise<void>;
+	refreshData: () => void;
 	sortLessonsData: (property: keyof Lesson, order: 'asc' | 'desc') => void;
 	addNewLesson: (newLesson: any) => void;
 	updateLessonPublishing: (id: string) => void;
 	removeLesson: (id: string) => void;
 	updateLessons: (singleLesson: Lesson) => void;
-	// numberOfPages: number;
-	// lessonsPageNumber: number;
-	// setLessonsPageNumber: React.Dispatch<React.SetStateAction<number>>;
-	fetchLessons: () => void;
+	numberOfPages: number;
+	lessonsPageNumber: number;
+	setLessonsPageNumber: React.Dispatch<React.SetStateAction<number>>;
+	setNumberOfPages: React.Dispatch<React.SetStateAction<number>>;
+	totalItems: number;
+	loadedPages: number[];
 	lessonTypes: string[];
 }
 
@@ -27,16 +34,23 @@ interface LessonsContextProviderProps {
 }
 
 export const LessonsContext = createContext<LessonsContextTypes>({
-	sortedLessonsData: [],
+	lessons: [],
+	loading: false,
+	error: null,
+	fetchLessons: async () => {},
+	fetchMoreLessons: async () => {},
+	refreshData: () => {},
 	sortLessonsData: () => {},
 	addNewLesson: () => {},
 	updateLessonPublishing: () => {},
 	removeLesson: () => {},
 	updateLessons: () => {},
-	// numberOfPages: 1,
-	// lessonsPageNumber: 1,
-	// setLessonsPageNumber: () => {},
-	fetchLessons: () => {},
+	numberOfPages: 1,
+	lessonsPageNumber: 1,
+	setLessonsPageNumber: () => {},
+	setNumberOfPages: () => {},
+	totalItems: 0,
+	loadedPages: [],
 	lessonTypes: [],
 });
 
@@ -55,107 +69,141 @@ const LessonsContextProvider = (props: LessonsContextProviderProps) => {
 		// Only consider course preview pages as landing pages, not enrolled course pages
 		(location.pathname.startsWith('/course/') && !location.pathname.includes('/userCourseId/'));
 
-	const [sortedLessonsData, setSortedLessonsData] = useState<Lesson[]>([]);
-	// const [numberOfPages, setNumberOfPages] = useState<number>(1);
-	// const [lessonsPageNumber, setLessonsPageNumber] = useState<number>(1);
-
+	const [lessons, setLessons] = useState<Lesson[]>([]);
 	const [isLoaded, setIsLoaded] = useState<boolean>(false);
+	const [numberOfPages, setNumberOfPages] = useState<number>(1);
+	const [lessonsPageNumber, setLessonsPageNumber] = useState<number>(1);
+	const [totalItems, setTotalItems] = useState<number>(0);
+	const [loadedPages, setLoadedPages] = useState<number[]>([]);
 
 	const lessonTypes: string[] = ['Instructional Lesson', 'Practice Lesson', 'Quiz'];
 
-	const fetchLessons = async () => {
+	const fetchLessons = async (page: number = 1) => {
 		if (!orgId) return;
-
 		try {
-			const response = await axios.get(`${base_url}/lessons/organisation/${orgId}`);
+			const response = await axios.get(`${base_url}/lessons/organisation/${orgId}?page=${page}&limit=200`);
 
-			// Initial sorting when fetching data
-			const sortedLessonsDataCopy = [...response.data.data].sort((a: Lesson, b: Lesson) => b.createdAt.localeCompare(a.createdAt));
-			setSortedLessonsData(sortedLessonsDataCopy);
+			const lessonsData = response.data.data;
+			setLessons(lessonsData);
+			setTotalItems(response.data.pagination.totalItems);
+			setNumberOfPages(response.data.pagination.totalPages);
+			setLoadedPages([page]);
 			setIsLoaded(true);
-			return response.data.data;
 		} catch (error) {
-			setIsLoaded(true); // Set isLoading to false in case of an error
-			throw error; // Rethrow the error to be handled by React Query
+			setIsLoaded(true);
+			throw error;
 		}
 	};
 
-	const { isLoading, isError } = useQuery(['allLessons', orgId], () => fetchLessons(), {
-		enabled: !!orgId && isAuthenticated && (isAdmin || isLearner) && !isLoaded && !isLandingPageRoute,
+	const fetchMoreLessons = async (startPage: number, endPage: number) => {
+		if (!orgId) return;
+		try {
+			// Find which pages we need to fetch
+			const pagesToFetch = [];
+			for (let page = startPage; page <= endPage; page++) {
+				if (!loadedPages.includes(page)) {
+					pagesToFetch.push(page);
+				}
+			}
+
+			if (pagesToFetch.length === 0) return; // Already loaded
+
+			// Fetch missing pages
+			let newLessons: Lesson[] = [];
+			for (const page of pagesToFetch) {
+				const response = await axios.get(`${base_url}/lessons/organisation/${orgId}?page=${page}&limit=200`);
+				newLessons = [...newLessons, ...response.data.data];
+			}
+
+			// Combine with existing data, remove duplicates, and sort
+			const combinedData = [...lessons, ...newLessons];
+			const uniqueData = combinedData.filter((lesson, index, self) => index === self.findIndex((l) => l._id === lesson._id));
+			const sortedData = uniqueData.sort((a: Lesson, b: Lesson) => b.updatedAt.localeCompare(a.updatedAt));
+			setLessons(sortedData);
+			setLoadedPages([...loadedPages, ...pagesToFetch]);
+		} catch (error) {
+			console.error('Error fetching more lessons:', error);
+		}
+	};
+
+	const { isLoading, isError } = useQuery(['allLessons', orgId, lessonsPageNumber], () => fetchLessons(lessonsPageNumber), {
+		enabled: !!orgId && !isLoaded && isAuthenticated && (isAdmin || isLearner) && !isLandingPageRoute,
 	});
 
 	// Function to handle sorting
 	const sortLessonsData = (property: keyof Lesson, order: 'asc' | 'desc') => {
-		const sortedLessonsDataCopy = [...sortedLessonsData].sort((a: Lesson, b: Lesson) => {
+		const sortedDataCopy = [...lessons].sort((a: Lesson, b: Lesson) => {
+			const aValue = a[property] ?? '';
+			const bValue = b[property] ?? '';
 			if (order === 'asc') {
-				return a[property] > b[property] ? 1 : -1;
+				return aValue > bValue ? 1 : -1;
 			} else {
-				return a[property] < b[property] ? 1 : -1;
+				return aValue < bValue ? 1 : -1;
 			}
 		});
-		setSortedLessonsData(sortedLessonsDataCopy);
+		setLessons(sortedDataCopy);
 	};
-	// Function to update sortedLessonsData with new lesson data
+	// Function to update lessons with new lesson data
 	const addNewLesson = (newLesson: any) => {
-		setSortedLessonsData((prevSortedData) => {
-			// Check if lesson already exists
-			const exists = prevSortedData.some((lesson) => lesson._id === newLesson._id);
-			if (exists) {
-				// If exists, update it
-				const updatedData = prevSortedData.map((lesson) => (lesson._id === newLesson._id ? newLesson : lesson));
-				return updatedData;
-			}
-			// If doesn't exist, add it to the beginning
-			const newData = [newLesson, ...prevSortedData];
-			return newData;
-		});
+		setLessons((prevLessons) => [newLesson, ...prevLessons]);
 	};
 
 	const updateLessonPublishing = (id: string) => {
-		const updatedLessonList = sortedLessonsData?.map((lesson) => {
+		const updatedLessonList = lessons?.map((lesson) => {
 			if (lesson._id === id) {
 				return { ...lesson, isActive: !lesson.isActive };
 			}
 			return lesson;
 		});
-		setSortedLessonsData(updatedLessonList);
+		setLessons(updatedLessonList);
 	};
 
 	const updateLessons = (singleLesson: Lesson) => {
-		const updatedLessonList = sortedLessonsData?.map((lesson) => {
+		const updatedLessonList = lessons?.map((lesson) => {
 			if (singleLesson._id === lesson._id) {
 				return singleLesson;
 			}
 			return lesson;
 		});
-		setSortedLessonsData(updatedLessonList);
+		setLessons(updatedLessonList);
 	};
 
 	const removeLesson = (id: string) => {
-		setSortedLessonsData((prevSortedData) => prevSortedData?.filter((data) => data._id !== id));
+		setLessons((prevLessons) => prevLessons?.filter((data) => data._id !== id));
 	};
 
-	if (isLoading) {
+	const refreshData = () => {
+		setIsLoaded(false);
+	};
+
+	if (isLoading && isAuthenticated) {
 		return <Loading />;
 	}
 
-	if (isError) {
+	if (isError && isAuthenticated) {
 		return <LoadingError />;
 	}
 
 	return (
 		<LessonsContext.Provider
 			value={{
-				sortedLessonsData,
+				lessons,
+				loading: isLoading,
+				error: isError ? 'Failed to fetch lessons' : null,
+				fetchLessons,
+				fetchMoreLessons,
+				refreshData,
 				sortLessonsData,
 				addNewLesson,
 				removeLesson,
 				updateLessonPublishing,
 				updateLessons,
-				// numberOfPages,
-				// lessonsPageNumber,
-				// setLessonsPageNumber,
-				fetchLessons,
+				numberOfPages,
+				lessonsPageNumber,
+				setLessonsPageNumber,
+				setNumberOfPages,
+				totalItems,
+				loadedPages,
 				lessonTypes,
 			}}>
 			{props.children}

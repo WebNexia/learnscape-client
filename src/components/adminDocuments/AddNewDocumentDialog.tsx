@@ -35,13 +35,13 @@ const AddNewDocumentDialog = ({
 	singleCourse,
 	setSingleCourse,
 }: AddNewDocumentDialogProps) => {
-	const { sortDocumentsData, sortedDocumentsData, updateDocuments } = useContext(DocumentsContext);
+	const { documents, updateDocuments, sortDocumentsData } = useContext(DocumentsContext);
 	const [documentsPageNumber, setDocumentsPageNumber] = useState<number>(1);
 	const [searchValue, setSearchValue] = useState<string>('');
 
 	const pageSize = 50;
 
-	const filteredDocuments = sortedDocumentsData.filter((doc) => {
+	const filteredDocuments = documents.filter((doc: Document) => {
 		if (searchValue) {
 			const lowerSearch = searchValue.toLowerCase();
 			return doc?.name?.toLowerCase().includes(lowerSearch);
@@ -94,7 +94,7 @@ const AddNewDocumentDialog = ({
 				setSingleLessonBeforeSave((prevData) => {
 					if (prevData) {
 						// Update selected documents with usedInLessons and temp update info
-						const updatedSelectedDocuments = selectedDocuments.map(doc => {
+						const updatedSelectedDocuments = selectedDocuments.map((doc) => {
 							const updatedDoc = {
 								...doc,
 								usedInLessons: doc.usedInLessons ? [...doc.usedInLessons, prevData._id] : [prevData._id],
@@ -123,7 +123,7 @@ const AddNewDocumentDialog = ({
 				setSingleCourse((prevData) => {
 					if (prevData) {
 						// Update selected documents with usedInCourses and temp update info
-						const updatedSelectedDocuments = selectedDocuments.map(doc => {
+						const updatedSelectedDocuments = selectedDocuments.map((doc) => {
 							const updatedDoc = {
 								...doc,
 								usedInCourses: doc.usedInCourses ? [...doc.usedInCourses, prevData._id] : [prevData._id],

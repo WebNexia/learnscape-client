@@ -49,8 +49,8 @@ const LandingPageResources = () => {
 
 	useEffect(() => {
 		if (sortedLandingPageDocumentsData) {
-			const free = sortedLandingPageDocumentsData.filter((doc) => isDocumentFree(doc));
-			const paid = sortedLandingPageDocumentsData.filter((doc) => !isDocumentFree(doc));
+			const free = sortedLandingPageDocumentsData.filter((doc: Document) => isDocumentFree(doc));
+			const paid = sortedLandingPageDocumentsData.filter((doc: Document) => !isDocumentFree(doc));
 			setFreeDocuments(free);
 			setPaidDocuments(paid);
 		}

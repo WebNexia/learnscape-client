@@ -1,4 +1,18 @@
-import { Box, FormControl, InputAdornment, Link, MenuItem, Select, Table, TableBody, TableCell, TableRow, Snackbar, Alert } from '@mui/material';
+import {
+	Box,
+	FormControl,
+	InputAdornment,
+	Link,
+	MenuItem,
+	Select,
+	Table,
+	TableBody,
+	TableCell,
+	TableRow,
+	Snackbar,
+	Alert,
+	Typography,
+} from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { useContext, useEffect, useRef, useState } from 'react';
 import axios from '@utils/axiosInstance';
@@ -23,6 +37,7 @@ import EditDocumentDialog from '../components/documents/EditDocumentDialog';
 import theme from '../themes';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 import { validateDocumentUrl, validateImageUrl } from '../utils/urlValidation';
+import CustomDeleteButton from '../components/forms/customButtons/CustomDeleteButton';
 
 const AdminDocuments = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -30,64 +45,45 @@ const AdminDocuments = () => {
 	const { orgId } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
 
-	const { addNewDocument, sortDocumentsData, sortedDocumentsData, removeDocument, fetchDocuments, updateDocuments } = useContext(DocumentsContext);
+	const {
+		documents,
+		loading,
+		error,
+		fetchDocuments,
+		fetchMoreDocuments,
+		addNewDocument,
+		removeDocument,
+		updateDocuments,
+		sortDocumentsData,
+		totalItems,
+		loadedPages,
+		documentsPageNumber,
+		setDocumentsPageNumber,
+	} = useContext(DocumentsContext);
 
 	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
-	const [documentsPageNumber, setDocumentsPageNumber] = useState<number>(1);
 	const [searchValue, setSearchValue] = useState<string>('');
 	const [filterValue, setFilterValue] = useState<string>('');
+	const [searchResults, setSearchResults] = useState<Document[]>([]);
+	const [isSearchActive, setIsSearchActive] = useState<boolean>(false);
 
 	const pageSize = 50;
 
-	const filteredDocuments = sortedDocumentsData.filter((doc) => {
-		if (searchValue) {
-			const lowerSearch = searchValue.toLowerCase();
-			return doc?.name?.toLowerCase().includes(lowerSearch);
-		}
+	// Use search results if active, otherwise use context data
+	const displayDocuments = isSearchActive ? searchResults : documents;
 
-		if (filterValue) {
-			if (
-				filterValue === 'paid documents' &&
-				doc.prices.some((p) => {
-					const amt = p.amount?.toString().trim().toLowerCase();
-					return amt !== '0' && amt !== 'free' && amt !== '';
-				})
-			)
-				return true;
+	// For pagination, use total items from server when not searching
+	const documentsNumberOfPages = isSearchActive ? Math.ceil(displayDocuments.length / pageSize) : Math.ceil(totalItems / pageSize);
 
-			if (
-				filterValue === 'free documents' &&
-				doc.prices.every((p) => {
-					const amt = p.amount?.toString().trim().toLowerCase();
-					return amt === '0' || amt === 'free' || amt === '';
-				})
-			)
-				return true;
-
-			if (filterValue === 'on landing page' && doc.isOnLandingPage) return true;
-			if (filterValue === 'on platform only' && !doc.isOnLandingPage) return true;
-		}
-
-		return !searchValue && !filterValue;
-	});
-
-	const documentsNumberOfPages = Math.ceil(filteredDocuments.length / pageSize);
-
-	const paginatedDocuments = filteredDocuments.slice((documentsPageNumber - 1) * pageSize, documentsPageNumber * pageSize);
+	const paginatedDocuments = displayDocuments.slice((documentsPageNumber - 1) * pageSize, documentsPageNumber * pageSize);
 
 	const [orderBy, setOrderBy] = useState<keyof Document>('name');
 	const [order, setOrder] = useState<'asc' | 'desc'>('asc');
 
-	const handleSort = (property: keyof Document) => {
-		const isAsc = orderBy === property && order === 'asc';
-		setOrder(isAsc ? 'desc' : 'asc');
-		setOrderBy(property);
-		sortDocumentsData(property, isAsc ? 'desc' : 'asc');
-	};
-
+	// Modal states
 	const [isDocumentDeleteModalOpen, setIsDocumentDeleteModalOpen] = useState<boolean[]>([]);
 	const [editDocumentModalOpen, setEditDocumentModalOpen] = useState<boolean[]>([]);
 	const [isDocumentInfoModalOpen, setIsDocumentInfoModalOpen] = useState<boolean[]>([]);
@@ -111,24 +107,93 @@ const AdminDocuments = () => {
 	const [urlErrorMessage, setUrlErrorMessage] = useState<string>('');
 
 	useEffect(() => {
-		setDocumentsPageNumber(1);
-	}, []);
+		fetchDocuments(1); // Always fetch initial data
+	}, []); // Only on mount
 
-	useEffect(() => {
-		setIsDocumentDeleteModalOpen(Array(sortedDocumentsData.length).fill(false));
-		setEditDocumentModalOpen(Array(sortedDocumentsData.length).fill(false));
-		setIsDocumentInfoModalOpen(Array(sortedDocumentsData.length).fill(false));
-	}, [sortedDocumentsData, documentsPageNumber]);
+	const handlePageChange = async (newPage: number) => {
+		setDocumentsPageNumber(newPage);
 
-	const isInitialMount = useRef(true);
+		// Check if we need to fetch more data
+		const requiredRecords = newPage * pageSize;
+		if (documents.length < requiredRecords && newPage <= documentsNumberOfPages) {
+			// Calculate which batch of 50 records we need (context fetches 50 at a time)
+			const startBatch = Math.floor(((newPage - 1) * pageSize) / 50) + 1;
+			const endBatch = Math.ceil((newPage * pageSize) / 50);
 
-	useEffect(() => {
-		if (isInitialMount.current) {
-			isInitialMount.current = false;
-		} else {
-			fetchDocuments();
+			// Check if we already have the required batches loaded
+			const batchesNeeded = [];
+			for (let batch = startBatch; batch <= endBatch; batch++) {
+				if (!loadedPages.includes(batch)) {
+					batchesNeeded.push(batch);
+				}
+			}
+
+			if (batchesNeeded.length > 0) {
+				await fetchMoreDocuments(startBatch, endBatch);
+			}
 		}
-	}, []);
+	};
+
+	const handleSort = (property: keyof Document) => {
+		const isAsc = orderBy === property && order === 'asc';
+		setOrder(isAsc ? 'desc' : 'asc');
+		setOrderBy(property);
+		sortDocumentsData(property, isAsc ? 'desc' : 'asc');
+	};
+
+	const handleSearch = async () => {
+		try {
+			// Reset to first page when searching
+			setDocumentsPageNumber(1);
+
+			// Make API call to search entire database
+			if (searchValue || filterValue) {
+				// Build query parameters
+				const params = new URLSearchParams({
+					limit: '250',
+				});
+
+				if (searchValue && searchValue.trim()) {
+					params.append('search', searchValue.trim());
+				}
+				if (filterValue && filterValue.trim()) {
+					params.append('filter', filterValue.trim());
+				}
+				if (orderBy) {
+					params.append('sortBy', orderBy);
+				}
+				if (order) {
+					params.append('sortOrder', order);
+				}
+
+				const response = await axios.get(`${base_url}/documents/organisation/${orgId}?${params.toString()}`);
+
+				setSearchResults(response.data.data);
+				setIsSearchActive(true);
+			} else {
+				// If no search/filter, clear search results
+				setSearchResults([]);
+				setIsSearchActive(false);
+			}
+		} catch (error) {
+			console.error('Search error:', error);
+		}
+	};
+
+	// Keep track of previous length to avoid unnecessary resets
+	const prevLengthRef = useRef<number>(0);
+
+	useEffect(() => {
+		if (paginatedDocuments && paginatedDocuments.length !== prevLengthRef.current) {
+			prevLengthRef.current = paginatedDocuments.length;
+			setIsDocumentDeleteModalOpen(Array(paginatedDocuments.length).fill(false));
+			setEditDocumentModalOpen(Array(paginatedDocuments.length).fill(false));
+			setIsDocumentInfoModalOpen(Array(paginatedDocuments.length).fill(false));
+		}
+	}, [displayDocuments, documentsPageNumber]);
+
+	if (loading) return <Typography>Loading...</Typography>;
+	if (error) return <Typography color='error'>{error}</Typography>;
 
 	const resetForm = () => {
 		setIsDocumentCreateModalOpen(false);
@@ -367,10 +432,10 @@ const AdminDocuments = () => {
 	};
 
 	const openEditDocumentModal = (docId: string) => {
-		const documentIndex = sortedDocumentsData.findIndex((d) => d._id === docId);
+		const documentIndex = displayDocuments.findIndex((d) => d._id === docId);
 		if (documentIndex === -1) return;
 
-		const documentToEdit = sortedDocumentsData[documentIndex];
+		const documentToEdit = displayDocuments[documentIndex];
 		setSingleDocument(documentToEdit);
 
 		const updatedState = [...editDocumentModalOpen];
@@ -417,356 +482,373 @@ const AdminDocuments = () => {
 
 	return (
 		<DashboardPagesLayout pageName='Documents' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
-			<Box
-				sx={{
-					display: 'flex',
-					flexDirection: 'row',
-					justifyContent: 'flex-end',
-					padding: isMobileSizeSmall ? '1rem 1rem 0.5rem 1rem' : '2rem 2rem 1rem 2rem',
-					width: '100%',
-				}}>
-				<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-					<Box sx={{ display: 'flex', alignSelf: 'flex-start', width: isVerySmallScreen ? '12.5rem' : '30rem' }}>
-						<Box sx={{ mr: '1rem' }}>
-							<FormControl>
-								<Select
-									size='small'
-									value={filterValue}
-									onChange={(e) => {
-										setSearchValue('');
-										setFilterValue(e.target.value);
-									}}
-									displayEmpty
-									sx={{
-										backgroundColor: theme.bgColor?.common,
-										width: isMobileSizeSmall ? '8rem' : '12rem',
-										fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-										textTransform: 'capitalize',
-									}}>
-									<MenuItem
-										disabled
-										value='filter'
-										selected
+			<Box sx={{ width: '100%', height: '100%' }}>
+				<Box
+					sx={{
+						display: 'flex',
+						justifyContent: 'space-between',
+						alignItems: 'center',
+						padding: isMobileSizeSmall ? '1rem 1rem 0.5rem 1rem' : '2rem 2rem 1rem 2rem',
+						width: '100%',
+						mb: '1.25rem',
+					}}>
+					<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', flex: 4 }}>
+						<Box sx={{ display: 'flex', alignSelf: 'flex-start', width: isVerySmallScreen ? '12.5rem' : 'fit-content' }}>
+							<Box sx={{ mr: '1rem' }}>
+								<FormControl>
+									<Select
+										size='small'
+										value={filterValue}
+										onChange={(e) => {
+											setFilterValue(e.target.value);
+										}}
+										displayEmpty
 										sx={{
-											fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-											fontStyle: 'italic',
+											backgroundColor: theme.bgColor?.common,
+											width: isMobileSizeSmall ? '7rem' : '10rem',
+											fontSize: isMobileSize ? '0.7rem' : '0.85rem',
 											textTransform: 'capitalize',
-											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-											minHeight: '2rem',
 										}}>
-										Filter Documents
-									</MenuItem>
-									<MenuItem
-										value=''
-										selected
-										sx={{
-											fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-											textTransform: 'capitalize',
-											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-											minHeight: '2rem',
-										}}>
-										All Documents
-									</MenuItem>
-									{['Paid Documents', 'Free Documents', 'On Landing Page', 'On Platform Only'].map((type) => (
 										<MenuItem
-											value={type.toLowerCase()}
-											key={type}
+											disabled
+											value='filter'
+											selected
+											sx={{
+												fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+												fontStyle: 'italic',
+												textTransform: 'capitalize',
+												padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+												minHeight: '2rem',
+											}}>
+											Filter Documents
+										</MenuItem>
+										<MenuItem
+											value=''
+											selected
 											sx={{
 												fontSize: isMobileSize ? '0.65rem' : '0.85rem',
 												textTransform: 'capitalize',
 												padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
 												minHeight: '2rem',
 											}}>
-											{type}
+											All Documents
 										</MenuItem>
-									))}
-								</Select>
-							</FormControl>
-						</Box>
-						<CustomTextField
-							value={searchValue}
-							placeholder={'Search Document'}
-							onChange={(e) => {
-								setSearchValue(e.target.value);
-								setFilterValue('filter');
-								if (e.target.value === '') {
+										{['Paid Documents', 'Free Documents', 'On Landing Page', 'On Platform Only'].map((type) => (
+											<MenuItem
+												value={type.toLowerCase()}
+												key={type}
+												sx={{
+													fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+													textTransform: 'capitalize',
+													padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+													minHeight: '2rem',
+												}}>
+												{type}
+											</MenuItem>
+										))}
+									</Select>
+								</FormControl>
+							</Box>
+							<CustomTextField
+								value={searchValue}
+								placeholder={'Search in name, description'}
+								onChange={(e) => {
+									setSearchValue(e.target.value);
+								}}
+								sx={{ backgroundColor: '#fff', minWidth: isVerySmallScreen ? '10rem' : '17.5rem' }}
+								required={false}
+								InputProps={{
+									endAdornment: (
+										<InputAdornment position='end'>
+											<Search
+												sx={{
+													mr: '-0.5rem',
+												}}
+												fontSize={isMobileSize ? 'small' : 'medium'}
+											/>
+										</InputAdornment>
+									),
+								}}
+							/>
+							<CustomSubmitButton onClick={handleSearch} sx={{ marginLeft: '1rem' }} disabled={!searchValue && !filterValue}>
+								Search
+							</CustomSubmitButton>
+							<CustomDeleteButton
+								onClick={() => {
+									setSearchValue('');
 									setFilterValue('');
-								}
+									setSearchResults([]);
+									setIsSearchActive(false);
+									setDocumentsPageNumber(1);
+								}}>
+								Reset
+							</CustomDeleteButton>
+						</Box>
+					</Box>
+					<Box sx={{ display: 'flex', gap: 1, mb: '0.85rem', alignItems: 'center' }}>
+						{isSearchActive && (
+							<Typography
+								variant='body2'
+								sx={{
+									color: 'text.secondary',
+									fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+									mr: 1,
+								}}>
+								{searchResults.length} results
+							</Typography>
+						)}
+						<CustomSubmitButton
+							onClick={() => {
+								setIsDocumentCreateModalOpen(true);
+								setEnterDocUrl(true);
+								setFileUploaded(false);
+								setSingleDocument({
+									_id: '',
+									name: '',
+									orgId,
+									userId: user?._id || '',
+									documentUrl: '',
+									imageUrl: '',
+									prices: [
+										{ currency: 'gbp', amount: '0' },
+										{ currency: 'usd', amount: '0' },
+										{ currency: 'eur', amount: '0' },
+										{ currency: 'try', amount: '0' },
+									],
+									description: '',
+									pageCount: 0,
+									createdAt: '',
+									updatedAt: '',
+									clonedFromId: '',
+									clonedFromTitle: '',
+									usedInLessons: [],
+									usedInCourses: [],
+									samplePageImageUrl: '',
+									isOnLandingPage: false,
+									createdBy: '',
+									updatedBy: '',
+									createdByName: '',
+									updatedByName: '',
+									createdByImageUrl: '',
+									updatedByImageUrl: '',
+									createdByRole: '',
+									updatedByRole: '',
+								});
 							}}
-							sx={{ backgroundColor: '#fff' }}
-							required={false}
-							InputProps={{
-								endAdornment: (
-									<InputAdornment position='end'>
-										<Search
-											sx={{
-												mr: '-0.5rem',
-											}}
-											fontSize={isMobileSize ? 'small' : 'medium'}
-										/>
-									</InputAdornment>
-								),
-							}}
-						/>
+							sx={{ height: isVerySmallScreen ? '1.75rem' : '2.1rem', fontSize: isMobileSize ? '0.7rem' : undefined }}
+							type='button'>
+							{isVerySmallScreen ? 'New' : 'New Document'}
+						</CustomSubmitButton>
 					</Box>
 				</Box>
+
+				<CreateNewDocumentDialog
+					isOpen={isDocumentCreateModalOpen}
+					onClose={resetForm}
+					onSubmit={async (e: React.FormEvent<HTMLFormElement>) => {
+						e.preventDefault();
+						const success = await createDocument();
+						if (success) {
+							resetForm();
+						}
+					}}
+					singleDocument={singleDocument}
+					setSingleDocument={setSingleDocument}
+					enterDocUrl={enterDocUrl}
+					setEnterDocUrl={setEnterDocUrl}
+					enterDocImageUrl={enterDocImageUrl}
+					setEnterDocImageUrl={setEnterDocImageUrl}
+					enterSamplePageImageUrl={enterSamplePageImageUrl}
+					setEnterSamplePageImageUrl={setEnterSamplePageImageUrl}
+					fileUploaded={fileUploaded}
+					setFileUploaded={setFileUploaded}
+					isFree={isFree}
+					setIsFree={setIsFree}
+					GBP={GBP}
+					setGBP={setGBP}
+					USD={USD}
+					setUSD={setUSD}
+					EUR={EUR}
+					setEUR={setEUR}
+					TRY={TRY}
+					setTRY={setTRY}
+				/>
+
 				<Box
 					sx={{
 						display: 'flex',
-						justifyContent: 'flex-end',
+						flexDirection: 'column',
+						alignItems: 'center',
+						padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : '0rem 2rem 2rem 2rem',
 						width: '100%',
 					}}>
-					<CustomSubmitButton
-						onClick={() => {
-							setIsDocumentCreateModalOpen(true);
-							setEnterDocUrl(true);
-							setFileUploaded(false);
-							setSingleDocument({
-								_id: '',
-								name: '',
-								orgId,
-								userId: user?._id || '',
-								documentUrl: '',
-								imageUrl: '',
-								prices: [
-									{ currency: 'gbp', amount: '0' },
-									{ currency: 'usd', amount: '0' },
-									{ currency: 'eur', amount: '0' },
-									{ currency: 'try', amount: '0' },
-								],
-								description: '',
-								pageCount: 0,
-								createdAt: '',
-								updatedAt: '',
-								clonedFromId: '',
-								clonedFromTitle: '',
-								usedInLessons: [],
-								usedInCourses: [],
-								samplePageImageUrl: '',
-								isOnLandingPage: false,
-								createdBy: '',
-								updatedBy: '',
-								createdByName: '',
-								updatedByName: '',
-								createdByImageUrl: '',
-								updatedByImageUrl: '',
-								createdByRole: '',
-								updatedByRole: '',
-							});
-						}}
-						sx={{ height: isVerySmallScreen ? '1.75rem' : '2.1rem', fontSize: isMobileSize ? '0.7rem' : undefined }}
-						type='button'>
-						{isVerySmallScreen ? 'New' : 'New Document'}
-					</CustomSubmitButton>
-				</Box>
-			</Box>
+					<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>
+						<CustomTableHead<Document>
+							orderBy={orderBy}
+							order={order}
+							handleSort={handleSort}
+							columns={[
+								{ key: 'clone', label: 'Cloned' },
+								{ key: 'name', label: 'Document Name' },
+								{ key: 'documentId', label: 'Document URL' },
+								{ key: 'createdAt', label: 'Created At' },
+								{ key: 'updatedAt', label: 'Updated At' },
+								{ key: 'actions', label: 'Actions' },
+							]}
+						/>
+						<TableBody>
+							{paginatedDocuments &&
+								paginatedDocuments?.map((document: Document, index) => {
+									return (
+										<TableRow key={document._id}>
+											{' '}
+											<TableCell sx={{ textAlign: 'center', width: '0px' }}>
+												{document.clonedFromId && (
+													<Box
+														sx={{
+															backgroundColor: theme.palette.info.main,
+															color: 'white',
+															borderRadius: '50%',
+															width: '15px',
+															height: '15px',
+															display: 'flex',
+															alignItems: 'center',
+															justifyContent: 'center',
+															fontSize: '0.65rem',
+															margin: '0 auto',
+														}}>
+														C
+													</Box>
+												)}
+											</TableCell>
+											<CustomTableCell value={document.name} />
+											<TableCell sx={{ textAlign: 'center' }}>
+												<Link
+													href={document.documentUrl}
+													target='_blank'
+													rel='noopener noreferrer'
+													sx={{ fontSize: isMobileSize ? '0.6rem' : undefined }}>
+													{isVerySmallScreen ? truncateText(document.documentUrl, 25) : truncateText(document.documentUrl, 40)}
+												</Link>
+											</TableCell>
+											<CustomTableCell value={dateFormatter(document.createdAt)} />
+											<CustomTableCell value={dateFormatter(document.updatedAt)} />
+											<TableCell
+												sx={{
+													textAlign: 'center',
+												}}>
+												<CustomActionBtn
+													title='Edit'
+													onClick={() => {
+														openEditDocumentModal(document._id);
+													}}
+													icon={<Edit fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
+												/>
 
-			<CreateNewDocumentDialog
-				isOpen={isDocumentCreateModalOpen}
-				onClose={resetForm}
-				onSubmit={async (e: React.FormEvent<HTMLFormElement>) => {
-					e.preventDefault();
-					const success = await createDocument();
-					if (success) {
-						resetForm();
-					}
-				}}
-				singleDocument={singleDocument}
-				setSingleDocument={setSingleDocument}
-				enterDocUrl={enterDocUrl}
-				setEnterDocUrl={setEnterDocUrl}
-				enterDocImageUrl={enterDocImageUrl}
-				setEnterDocImageUrl={setEnterDocImageUrl}
-				enterSamplePageImageUrl={enterSamplePageImageUrl}
-				setEnterSamplePageImageUrl={setEnterSamplePageImageUrl}
-				fileUploaded={fileUploaded}
-				setFileUploaded={setFileUploaded}
-				isFree={isFree}
-				setIsFree={setIsFree}
-				GBP={GBP}
-				setGBP={setGBP}
-				USD={USD}
-				setUSD={setUSD}
-				EUR={EUR}
-				setEUR={setEUR}
-				TRY={TRY}
-				setTRY={setTRY}
-			/>
+												<EditDocumentDialog
+													isOpen={editDocumentModalOpen[displayDocuments.findIndex((d) => d._id === document._id)]}
+													onClose={() => {
+														closeDocumentEditModal(displayDocuments.findIndex((d) => d._id === document._id));
+														resetForm();
+													}}
+													onSubmit={async (e: React.FormEvent<HTMLFormElement>) => {
+														e.preventDefault();
+														const fullIndex = displayDocuments.findIndex((d) => d._id === document._id);
 
-			<Box
-				sx={{
-					display: 'flex',
-					flexDirection: 'column',
-					alignItems: 'center',
-					padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : '0rem 2rem 2rem 2rem',
-					width: '100%',
-				}}>
-				<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>
-					<CustomTableHead<Document>
-						orderBy={orderBy}
-						order={order}
-						handleSort={handleSort}
-						columns={[
-							{ key: 'clone', label: 'Cloned' },
-							{ key: 'name', label: 'Document Name' },
-							{ key: 'documentId', label: 'Document URL' },
-							{ key: 'createdAt', label: 'Created At' },
-							{ key: 'updatedAt', label: 'Updated At' },
-							{ key: 'actions', label: 'Actions' },
-						]}
-					/>
-					<TableBody>
-						{paginatedDocuments &&
-							paginatedDocuments?.map((document: Document, index) => {
-								return (
-									<TableRow key={document._id}>
-										{' '}
-										<TableCell sx={{ textAlign: 'center', width: '0px' }}>
-											{document.clonedFromId && (
-												<Box
-													sx={{
-														backgroundColor: theme.palette.info.main,
-														color: 'white',
-														borderRadius: '50%',
-														width: '15px',
-														height: '15px',
-														display: 'flex',
-														alignItems: 'center',
-														justifyContent: 'center',
-														fontSize: '0.65rem',
-														margin: '0 auto',
-													}}>
-													C
-												</Box>
-											)}
-										</TableCell>
-										<CustomTableCell value={document.name} />
-										<TableCell sx={{ textAlign: 'center' }}>
-											<Link
-												href={document.documentUrl}
-												target='_blank'
-												rel='noopener noreferrer'
-												sx={{ fontSize: isMobileSize ? '0.6rem' : undefined }}>
-												{isVerySmallScreen ? truncateText(document.documentUrl, 25) : truncateText(document.documentUrl, 40)}
-											</Link>
-										</TableCell>
-										<CustomTableCell value={dateFormatter(document.createdAt)} />
-										<CustomTableCell value={dateFormatter(document.updatedAt)} />
-										<TableCell
-											sx={{
-												textAlign: 'center',
-											}}>
-											<CustomActionBtn
-												title='Edit'
-												onClick={() => {
-													openEditDocumentModal(document._id);
-												}}
-												icon={<Edit fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
-											/>
-
-											<EditDocumentDialog
-												isOpen={editDocumentModalOpen[sortedDocumentsData.findIndex((d) => d._id === document._id)]}
-												onClose={() => {
-													closeDocumentEditModal(sortedDocumentsData.findIndex((d) => d._id === document._id));
-													resetForm();
-												}}
-												onSubmit={async (e: React.FormEvent<HTMLFormElement>) => {
-													e.preventDefault();
-													const fullIndex = sortedDocumentsData.findIndex((d) => d._id === document._id);
-
-													if (singleDocument?.name && singleDocument.name.trim()) {
-														const success = await handleDocUpdate();
-														if (success) {
-															closeDocumentEditModal(fullIndex);
-															resetForm();
+														if (singleDocument?.name && singleDocument.name.trim()) {
+															const success = await handleDocUpdate();
+															if (success) {
+																closeDocumentEditModal(fullIndex);
+																resetForm();
+															}
 														}
-													}
-												}}
-												document={singleDocument}
-												setDocument={setSingleDocument}
-												enterDocUrl={enterDocUrl}
-												setEnterDocUrl={setEnterDocUrl}
-												enterDocImageUrl={enterDocImageUrl}
-												setEnterDocImageUrl={setEnterDocImageUrl}
-												enterSamplePageImageUrl={enterSamplePageImageUrl}
-												setEnterSamplePageImageUrl={setEnterSamplePageImageUrl}
-												setFileUploaded={setFileUploaded}
-												isFree={isFree}
-												setIsFree={setIsFree}
-												GBP={GBP}
-												setGBP={setGBP}
-												USD={USD}
-												setUSD={setUSD}
-												EUR={EUR}
-												setEUR={setEUR}
-												TRY={TRY}
-												setTRY={setTRY}
-											/>
+													}}
+													document={singleDocument}
+													setDocument={setSingleDocument}
+													enterDocUrl={enterDocUrl}
+													setEnterDocUrl={setEnterDocUrl}
+													enterDocImageUrl={enterDocImageUrl}
+													setEnterDocImageUrl={setEnterDocImageUrl}
+													enterSamplePageImageUrl={enterSamplePageImageUrl}
+													setEnterSamplePageImageUrl={setEnterSamplePageImageUrl}
+													setFileUploaded={setFileUploaded}
+													isFree={isFree}
+													setIsFree={setIsFree}
+													GBP={GBP}
+													setGBP={setGBP}
+													USD={USD}
+													setUSD={setUSD}
+													EUR={EUR}
+													setEUR={setEUR}
+													TRY={TRY}
+													setTRY={setTRY}
+												/>
 
-											<CustomActionBtn
-												title='Delete'
-												onClick={() => {
-													openDeleteDocumentModal(index);
-												}}
-												icon={<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
-											/>
+												<CustomActionBtn
+													title='Delete'
+													onClick={() => {
+														openDeleteDocumentModal(index);
+													}}
+													icon={<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
+												/>
 
-											{isDocumentDeleteModalOpen[index] !== undefined && (
-												<CustomDialog
-													openModal={isDocumentDeleteModalOpen[index]}
-													closeModal={() => closeDeleteDocumentModal(index)}
-													title='Delete Document'
-													content='Are you sure you want to delete this document?'
-													maxWidth='sm'>
-													<CustomDialogActions
-														onCancel={() => {
-															closeDeleteDocumentModal(index);
-															setEnterDocUrl(true);
-														}}
-														deleteBtn={true}
-														onDelete={() => {
-															deleteDocument(document._id);
-															closeDeleteDocumentModal(index);
-														}}
-													/>
-												</CustomDialog>
-											)}
+												{isDocumentDeleteModalOpen[index] !== undefined && (
+													<CustomDialog
+														openModal={isDocumentDeleteModalOpen[index]}
+														closeModal={() => closeDeleteDocumentModal(index)}
+														title='Delete Document'
+														content='Are you sure you want to delete this document?'
+														maxWidth='xs'>
+														<CustomDialogActions
+															onCancel={() => {
+																closeDeleteDocumentModal(index);
+																setEnterDocUrl(true);
+															}}
+															deleteBtn={true}
+															onDelete={() => {
+																deleteDocument(document._id);
+																closeDeleteDocumentModal(index);
+															}}
+														/>
+													</CustomDialog>
+												)}
 
-											<CustomActionBtn
-												title='More Info'
-												onClick={() => {
-													openDocumentInfoModal(index);
-												}}
-												icon={<Info fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
-											/>
-										</TableCell>
-									</TableRow>
-								);
-							})}
-					</TableBody>
-				</Table>
-				<CustomTablePagination count={documentsNumberOfPages} page={documentsPageNumber} onChange={setDocumentsPageNumber} />
+												<CustomActionBtn
+													title='More Info'
+													onClick={() => {
+														openDocumentInfoModal(index);
+													}}
+													icon={<Info fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
+												/>
+											</TableCell>
+										</TableRow>
+									);
+								})}
+						</TableBody>
+					</Table>
+					<CustomTablePagination count={documentsNumberOfPages} page={documentsPageNumber} onChange={handlePageChange} />
+				</Box>
+
+				{isDocumentInfoModalOpen.map(
+					(isOpen, index) =>
+						isOpen && (
+							<CustomDialog openModal={isOpen} closeModal={() => closeDocumentInfoModal(index)} title={displayDocuments[index].name} maxWidth='sm'>
+								<DocumentInfoModal document={displayDocuments[index]} onClose={() => closeDocumentInfoModal(index)} />
+							</CustomDialog>
+						)
+				)}
+
+				{/* URL validation error SnackBar */}
+				<Snackbar
+					open={isUrlErrorOpen}
+					autoHideDuration={3500}
+					anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+					onClose={() => setIsUrlErrorOpen(false)}>
+					<Alert severity='error' variant='filled' sx={{ width: '100%' }}>
+						{urlErrorMessage}
+					</Alert>
+				</Snackbar>
 			</Box>
-
-			{isDocumentInfoModalOpen.map(
-				(isOpen, index) =>
-					isOpen && (
-						<CustomDialog openModal={isOpen} closeModal={() => closeDocumentInfoModal(index)} title={sortedDocumentsData[index].name} maxWidth='sm'>
-							<DocumentInfoModal document={sortedDocumentsData[index]} onClose={() => closeDocumentInfoModal(index)} />
-						</CustomDialog>
-					)
-			)}
-
-			{/* URL validation error SnackBar */}
-			<Snackbar
-				open={isUrlErrorOpen}
-				autoHideDuration={3500}
-				anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-				onClose={() => setIsUrlErrorOpen(false)}>
-				<Alert severity='error' variant='filled' sx={{ width: '100%' }}>
-					{urlErrorMessage}
-				</Alert>
-			</Snackbar>
 		</DashboardPagesLayout>
 	);
 };
