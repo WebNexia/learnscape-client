@@ -78,7 +78,7 @@ const DocumentsContextProvider = (props: DocumentsContextProviderProps) => {
 		setError(null);
 
 		try {
-			const response = await axios.get(`${base_url}/documents/organisation/${orgId}?page=${page}&limit=50`);
+			const response = await axios.get(`${base_url}/documents/organisation/${orgId}?page=${page}&limit=100`);
 
 			if (page === 1) {
 				// First page - replace all data
@@ -108,7 +108,7 @@ const DocumentsContextProvider = (props: DocumentsContextProviderProps) => {
 		try {
 			const promises = [];
 			for (let batch = startBatch; batch <= endBatch; batch++) {
-				promises.push(axios.get(`${base_url}/documents/organisation/${orgId}?page=${batch}&limit=50`));
+				promises.push(axios.get(`${base_url}/documents/organisation/${orgId}?page=${batch}&limit=100`));
 			}
 
 			const responses = await Promise.all(promises);

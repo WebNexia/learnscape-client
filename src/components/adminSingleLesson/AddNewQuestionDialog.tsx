@@ -17,6 +17,7 @@ import {
 	TableBody,
 	TableCell,
 	TableRow,
+	Typography,
 } from '@mui/material';
 import CustomTableHead from '../layouts/table/CustomTableHead';
 import CustomTablePagination from '../layouts/table/CustomTablePagination';
@@ -61,28 +62,75 @@ const AddNewQuestionDialog = ({
 
 	const {
 		sortQuestionsData,
-		sortedQuestionsData,
-		numberOfPages,
+		questions,
+		fetchMoreQuestions,
+		totalItems,
+		loadedPages,
 		questionsPageNumber,
 		setQuestionsPageNumber,
-		setNumberOfPages,
 		fetchQuestions,
 		questionTypes,
 		updateQuestion,
 	} = useContext(QuestionsContext);
-	const closeAddNewQuestionModal = () => setAddNewQuestionModalOpen(false);
-
-	const [filteredQuestions, setFilteredQuestions] = useState<QuestionInterface[]>(sortedQuestionsData);
-	const [originalQuestions, setOriginalQuestions] = useState<QuestionInterface[]>(sortedQuestionsData);
-	const [numberOfPagesOfAllQuestions, setNumberOfPagesOfAllQuestions] = useState<number>(numberOfPages);
+	const closeAddNewQuestionModal = () => {
+		setAddNewQuestionModalOpen(false);
+		setSearchValue('');
+		setFilterValue('');
+		setSearchResults([]);
+		setIsSearchActive(false);
+		setQuestionsPageNumber(1);
+	};
 
 	const [searchValue, setSearchValue] = useState<string>('');
 	const [filterValue, setFilterValue] = useState<string>('');
+	const [searchResults, setSearchResults] = useState<QuestionInterface[]>([]);
+	const [isSearchActive, setIsSearchActive] = useState<boolean>(false);
+
+	const pageSize = 25;
+
+	// Use search results if active, otherwise use context data (filtered to exclude already added questions)
+	const displayQuestions = isSearchActive
+		? searchResults
+		: questions.filter((question: QuestionInterface) => !singleLessonBeforeSave.questionIds?.includes(question._id));
+
+	// Calculate total pages based on filtered results when searching, otherwise use total items from server
+	const questionsNumberOfPages = isSearchActive ? Math.ceil(displayQuestions.length / pageSize) : Math.ceil(totalItems / pageSize);
+
+	const paginatedQuestions = displayQuestions.slice((questionsPageNumber - 1) * pageSize, questionsPageNumber * pageSize);
 
 	const [selectedQuestions, setSelectedQuestions] = useState<QuestionInterface[]>([]);
 	const [selectedQuestionIds, setSelectedQuestionIds] = useState<string[]>([]);
 	const [orderBy, setOrderBy] = useState<keyof QuestionInterface>('questionType');
 	const [order, setOrder] = useState<'asc' | 'desc'>('asc');
+
+	// Helper function to filter questions by lesson type compatibility
+	const filterQuestionsByLessonType = (questions: QuestionInterface[]) => {
+		return questions.filter((question: QuestionInterface) => {
+			const questionTypeName = question.questionType as QuestionType;
+			if (singleLessonBeforeSave.type === LessonType.QUIZ) {
+				return [
+					QuestionType.MULTIPLE_CHOICE,
+					QuestionType.TRUE_FALSE,
+					QuestionType.OPEN_ENDED,
+					QuestionType.AUDIO_VIDEO,
+					QuestionType.MATCHING,
+					QuestionType.FITB_TYPING,
+					QuestionType.FITB_DRAG_DROP,
+				].includes(questionTypeName);
+			} else if (singleLessonBeforeSave.type === LessonType.PRACTICE_LESSON) {
+				return [
+					QuestionType.MULTIPLE_CHOICE,
+					QuestionType.TRUE_FALSE,
+					QuestionType.OPEN_ENDED,
+					QuestionType.MATCHING,
+					QuestionType.FITB_TYPING,
+					QuestionType.FITB_DRAG_DROP,
+					QuestionType.FLIP_CARD,
+				].includes(questionTypeName);
+			}
+			return true;
+		});
+	};
 
 	useEffect(() => {
 		if (addNewQuestionModalOpen) {
@@ -172,101 +220,118 @@ const AddNewQuestionDialog = ({
 		setSelectedQuestionIds([]);
 	};
 
-	const handleSearchQuestions = async (page: number) => {
-		if (!searchValue) {
-			setNumberOfPages(numberOfPagesOfAllQuestions);
-			setFilteredQuestions(originalQuestions);
+	const handlePageChange = async (newPage: number) => {
+		setQuestionsPageNumber(newPage);
 
-			return;
-		}
+		// Only fetch more data if not searching
+		if (!isSearchActive) {
+			// Check if we need to fetch more data
+			const requiredRecords = newPage * pageSize;
+			if (questions.length < requiredRecords && newPage <= questionsNumberOfPages) {
+				// Calculate which batch of 200 records we need (context fetches 200 at a time)
+				const startBatch = Math.floor(((newPage - 1) * pageSize) / 200) + 1;
+				const endBatch = Math.ceil((newPage * pageSize) / 200);
 
-		try {
-			const response = await axios.post(`${base_url}/questions/search`, {
-				orgId,
-				page,
-				limit: 75,
-				search: searchValue,
-			});
-			setFilteredQuestions(response.data.data);
-			setNumberOfPages(response.data.pages);
-		} catch (error) {
-			console.error(error);
+				// Check if we already have the required batches loaded
+				const batchesNeeded = [];
+				for (let batch = startBatch; batch <= endBatch; batch++) {
+					if (!loadedPages.includes(batch)) {
+						batchesNeeded.push(batch);
+					}
+				}
+
+				if (batchesNeeded.length > 0) {
+					await fetchMoreQuestions(startBatch, endBatch);
+				}
+			}
 		}
 	};
 
-	const handleFilterQuestions = async (page: number, filterValue: string) => {
-		if (!filterValue) {
-			setNumberOfPages(numberOfPagesOfAllQuestions);
-			setFilteredQuestions(originalQuestions);
+	const handleSearch = async () => {
+		if (!searchValue && !filterValue) {
+			setIsSearchActive(false);
+			setSearchResults([]);
+			setQuestionsPageNumber(1);
 			return;
 		}
 
+		setIsSearchActive(true);
+		setQuestionsPageNumber(1);
+
 		try {
-			const response = await axios.post(`${base_url}/questions/filter`, {
-				orgId,
-				page,
-				limit: 75,
-				questionTypeName: filterValue,
+			const params = new URLSearchParams({
+				limit: '200',
 			});
-			setFilteredQuestions(response.data.data);
-			setNumberOfPages(response.data.pages);
+
+			if (searchValue) {
+				params.append('search', searchValue);
+			}
+
+			if (filterValue) {
+				params.append('filter', filterValue);
+			}
+
+			if (orderBy && order) {
+				params.append('sortBy', orderBy.toString());
+				params.append('sortOrder', order);
+			}
+
+			console.log('Search params:', { searchValue, filterValue, params: params.toString() });
+			const response = await axios.get(`${base_url}/questions/organisation/${orgId}?${params}`);
+			console.log('Search response:', response.data.data.length, 'results');
+
+			// Filter out already added questions from search results
+			const filteredResults = response.data.data.filter((question: QuestionInterface) => !singleLessonBeforeSave.questionIds?.includes(question._id));
+
+			setSearchResults(filteredResults);
 		} catch (error) {
-			console.error(error);
+			console.error('Search error:', error);
 		}
 	};
 
 	return (
 		<CustomDialog openModal={addNewQuestionModalOpen} closeModal={closeAddNewQuestionModal} title='Add New Question'>
 			<DialogContent>
-				<Box sx={{ display: 'flex', justifyContent: 'flex-start', width: '100%', padding: '1rem 2rem' }}>
-					<Box sx={{ mr: '1rem' }}>
-						<FormControl>
-							<Select
-								size='small'
-								value={filterValue}
-								onChange={async (e) => {
-									setSearchValue('');
-									setFilterValue(e.target.value);
-									if (e.target.value !== '') {
-										await handleFilterQuestions(1, e.target.value);
-									} else {
-										setFilteredQuestions(originalQuestions);
-									}
-								}}
-								displayEmpty
-								sx={{
-									backgroundColor: theme.bgColor?.common,
-									width: '12rem',
-									fontSize: '0.85rem',
-									textTransform: 'capitalize',
-								}}>
-								<MenuItem disabled value='filter' selected sx={{ fontSize: '0.85rem', fontStyle: 'italic', textTransform: 'capitalize' }}>
-									Filter Questions
-								</MenuItem>
-								<MenuItem value='' selected sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
-									All Questions
-								</MenuItem>
-								<MenuItem disabled value='types' selected sx={{ fontSize: '0.7rem', textTransform: 'inherit', fontWeight: 'lighter' }}>
-									------ Filter by Type ------
-								</MenuItem>
-								{questionTypes.map((type) => (
-									<MenuItem value={type.name.toLowerCase()} key={type._id} sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
-										{type.name}
+				<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', padding: '1rem 2rem 0 2rem' }}>
+					<Box sx={{ display: 'flex', width: '85%' }}>
+						<Box sx={{ mr: '1rem' }}>
+							<FormControl>
+								<Select
+									size='small'
+									value={filterValue}
+									onChange={(e) => {
+										setFilterValue(e.target.value);
+									}}
+									displayEmpty
+									sx={{
+										backgroundColor: theme.bgColor?.common,
+										width: '12rem',
+										fontSize: '0.85rem',
+										textTransform: 'capitalize',
+									}}>
+									<MenuItem disabled value='filter' selected sx={{ fontSize: '0.85rem', fontStyle: 'italic', textTransform: 'capitalize' }}>
+										Filter Questions
 									</MenuItem>
-								))}
-							</Select>
-						</FormControl>
-					</Box>
-					<Box sx={{ display: 'flex', alignSelf: 'flex-start', width: '25rem' }}>
+									<MenuItem value='' selected sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
+										All Questions
+									</MenuItem>
+									<MenuItem disabled value='types' selected sx={{ fontSize: '0.7rem', textTransform: 'inherit', fontWeight: 'lighter' }}>
+										------ Filter by Type ------
+									</MenuItem>
+									{questionTypes.map((type) => (
+										<MenuItem value={type.name.toLowerCase()} key={type._id} sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
+											{type.name}
+										</MenuItem>
+									))}
+								</Select>
+							</FormControl>
+						</Box>
+
 						<CustomTextField
 							value={searchValue}
-							placeholder='Search Question'
+							placeholder='Search in question text'
 							onChange={(e) => {
 								setSearchValue(e.target.value);
-								setFilterValue('filter');
-								if (e.target.value === '') {
-									setFilterValue('');
-								}
 							}}
 							sx={{ backgroundColor: '#fff' }}
 							required={false}
@@ -282,26 +347,32 @@ const AddNewQuestionDialog = ({
 								),
 							}}
 						/>
-						<CustomSubmitButton
-							sx={{ height: '2.1rem', marginLeft: '0.5rem' }}
-							type='button'
-							onClick={async () => {
-								await handleSearchQuestions(1);
-							}}>
+						<CustomSubmitButton onClick={handleSearch} sx={{ marginLeft: '1rem' }} disabled={!searchValue && !filterValue}>
 							Search
 						</CustomSubmitButton>
 						<CustomDeleteButton
-							sx={{ height: '2.1rem', marginLeft: '0.5rem' }}
-							type='button'
-							onClick={async () => {
-								setFilterValue('');
+							onClick={() => {
 								setSearchValue('');
-								setFilteredQuestions(originalQuestions);
+								setFilterValue('');
+								setSearchResults([]);
+								setIsSearchActive(false);
 								setQuestionsPageNumber(1);
-								setNumberOfPages(numberOfPagesOfAllQuestions);
 							}}>
 							Reset
 						</CustomDeleteButton>
+					</Box>
+					<Box sx={{ display: 'flex', gap: 1, mb: '0.8rem', alignItems: 'center' }}>
+						{isSearchActive && (
+							<Typography
+								variant='body2'
+								sx={{
+									color: 'text.secondary',
+									fontSize: '0.85rem',
+									ml: 1,
+								}}>
+								{filterQuestionsByLessonType(paginatedQuestions).length} results
+							</Typography>
+						)}
 					</Box>
 				</Box>
 				<Box
@@ -325,72 +396,50 @@ const AddNewQuestionDialog = ({
 							]}
 						/>
 						<TableBody>
-							{filteredQuestions &&
-								filteredQuestions
-									?.filter((question) => {
-										const questionTypeName = question.questionType as QuestionType;
-										if (singleLessonBeforeSave.type === LessonType.QUIZ) {
-											return [
-												QuestionType.MULTIPLE_CHOICE,
-												QuestionType.TRUE_FALSE,
-												QuestionType.OPEN_ENDED,
-												QuestionType.AUDIO_VIDEO,
-												QuestionType.MATCHING,
-												QuestionType.FITB_TYPING,
-												QuestionType.FITB_DRAG_DROP,
-											].includes(questionTypeName);
-										} else if (singleLessonBeforeSave.type === LessonType.PRACTICE_LESSON) {
-											return [
-												QuestionType.MULTIPLE_CHOICE,
-												QuestionType.TRUE_FALSE,
-												QuestionType.OPEN_ENDED,
-												QuestionType.MATCHING,
-												QuestionType.FITB_TYPING,
-												QuestionType.FITB_DRAG_DROP,
-												QuestionType.FLIP_CARD,
-											].includes(questionTypeName);
-										}
-										return true;
-									})
-									?.filter((question) => !singleLessonBeforeSave.questionIds?.includes(question._id))
-									?.map((question: QuestionInterface) => {
-										const isSelected = selectedQuestionIds.indexOf(question._id) !== -1;
-										return (
-											<TableRow key={question._id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-												<CustomTableCell value={question.questionType} />
-												<CustomTableCell value={truncateText(stripHtml(question.question), 35)} />
+							{paginatedQuestions &&
+								filterQuestionsByLessonType(paginatedQuestions)?.map((question: QuestionInterface) => {
+									const isSelected = selectedQuestionIds.indexOf(question._id) !== -1;
+									return (
+										<TableRow key={question._id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+											<CustomTableCell value={question.questionType} />
+											<CustomTableCell value={truncateText(stripHtml(question.question), 35)} />
 
-												<TableCell
-													sx={{
-														textAlign: 'center',
-													}}>
-													<FormControlLabel
-														control={
-															<Checkbox
-																checked={isSelected}
-																onChange={() => handleCheckboxChange(question)}
-																sx={{
-																	'& .MuiSvgIcon-root': {
-																		fontSize: '1.25rem',
-																	},
-																}}
-															/>
-														}
-														label=''
-													/>
-												</TableCell>
-											</TableRow>
-										);
-									})}
+											<TableCell
+												sx={{
+													textAlign: 'center',
+												}}>
+												<FormControlLabel
+													control={
+														<Checkbox
+															checked={isSelected}
+															onChange={() => handleCheckboxChange(question)}
+															sx={{
+																'& .MuiSvgIcon-root': {
+																	fontSize: '1.25rem',
+																},
+															}}
+														/>
+													}
+													label=''
+												/>
+											</TableCell>
+										</TableRow>
+									);
+								})}
 						</TableBody>
 					</Table>
-					<CustomTablePagination count={numberOfPages} page={questionsPageNumber} onChange={setQuestionsPageNumber} />
+					<CustomTablePagination count={questionsNumberOfPages} page={questionsPageNumber} onChange={handlePageChange} />
 				</Box>
 			</DialogContent>
 			<CustomDialogActions
 				onCancel={() => {
 					setAddNewQuestionModalOpen(false);
 					handleResetCheckboxes();
+					setSearchValue('');
+					setFilterValue('');
+					setSearchResults([]);
+					setIsSearchActive(false);
+					setQuestionsPageNumber(1);
 				}}
 				onSubmit={handleAddQuestions}
 				submitBtnText='Add'

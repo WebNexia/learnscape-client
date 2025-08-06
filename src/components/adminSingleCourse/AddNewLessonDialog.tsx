@@ -66,8 +66,8 @@ const AddNewLessonDialog = ({
 
 	const pageSize = 25;
 
-	// Use search results if active, otherwise use context data
-	const displayLessons = isSearchActive ? searchResults : lessons;
+	// Use search results if active, otherwise use context data (filtered to exclude already added lessons)
+	const displayLessons = isSearchActive ? searchResults : lessons.filter((lesson: Lesson) => !chapter.lessonIds?.includes(lesson._id));
 
 	// Only filter out chapter lessons (client-side filtering for chapter exclusion)
 	const filteredLessons = displayLessons?.filter((lesson) => !chapter.lessonIds?.includes(lesson._id));
@@ -153,7 +153,10 @@ const AddNewLessonDialog = ({
 
 			const response = await axios.get(`${base_url}/lessons/organisation/${orgId}?${params}`);
 
-			setSearchResults(response.data.data);
+			// Filter out already added lessons from search results
+			const filteredResults = response.data.data.filter((lesson: Lesson) => !chapter.lessonIds?.includes(lesson._id));
+
+			setSearchResults(filteredResults);
 		} catch (error) {
 			console.error('Search error:', error);
 		}
@@ -231,7 +234,14 @@ const AddNewLessonDialog = ({
 		setSelectedLessonIds([]);
 	};
 
-	const closeAddNewLessonModalOpen = () => setAddNewLessonModalOpen(false);
+	const closeAddNewLessonModalOpen = () => {
+		setAddNewLessonModalOpen(false);
+		setSearchValue('');
+		setFilterValue('');
+		setSearchResults([]);
+		setIsSearchActive(false);
+		setLessonsPageNumber(1);
+	};
 	return (
 		<CustomDialog openModal={addNewLessonModalOpen} closeModal={closeAddNewLessonModalOpen} title='Add New Lesson'>
 			<DialogContent>
@@ -373,6 +383,11 @@ const AddNewLessonDialog = ({
 				onCancel={() => {
 					setAddNewLessonModalOpen(false);
 					handleResetCheckboxes();
+					setSearchValue('');
+					setFilterValue('');
+					setSearchResults([]);
+					setIsSearchActive(false);
+					setLessonsPageNumber(1);
 				}}
 				onSubmit={handleAddLessons}
 				submitBtnText='Add'

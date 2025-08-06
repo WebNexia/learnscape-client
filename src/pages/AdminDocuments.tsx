@@ -115,9 +115,9 @@ const AdminDocuments = () => {
 		// Check if we need to fetch more data
 		const requiredRecords = newPage * pageSize;
 		if (documents.length < requiredRecords && newPage <= documentsNumberOfPages) {
-			// Calculate which batch of 50 records we need (context fetches 50 at a time)
-			const startBatch = Math.floor(((newPage - 1) * pageSize) / 50) + 1;
-			const endBatch = Math.ceil((newPage * pageSize) / 50);
+			// Calculate which batch of 100 records we need (context fetches 100 at a time)
+			const startBatch = Math.floor(((newPage - 1) * pageSize) / 100) + 1;
+			const endBatch = Math.ceil((newPage * pageSize) / 100);
 
 			// Check if we already have the required batches loaded
 			const batchesNeeded = [];
@@ -149,7 +149,7 @@ const AdminDocuments = () => {
 			if (searchValue || filterValue) {
 				// Build query parameters
 				const params = new URLSearchParams({
-					limit: '250',
+					limit: '200',
 				});
 
 				if (searchValue && searchValue.trim()) {
