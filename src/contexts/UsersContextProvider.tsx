@@ -81,7 +81,7 @@ const UsersContextProvider = (props: UserContextProviderProps) => {
 			const response = await axios.get(url);
 			const sortedDataCopy = [...response.data.data].sort((a: User, b: User) => b.updatedAt.localeCompare(a.updatedAt));
 			setUsers(sortedDataCopy);
-			setTotalItems(response.data.pagination.totalItems);
+			setTotalItems(response.data.totalItems);
 			setNumberOfPages(Math.ceil(response.data.pagination.totalItems / 100)); // 100 per page display
 			setLoadedPages([1]);
 			setIsLoaded(true);

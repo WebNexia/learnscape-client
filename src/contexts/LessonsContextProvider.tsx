@@ -85,7 +85,7 @@ const LessonsContextProvider = (props: LessonsContextProviderProps) => {
 
 			const lessonsData = response.data.data;
 			setLessons(lessonsData);
-			setTotalItems(response.data.pagination.totalItems);
+			setTotalItems(response.data.totalItems);
 			setNumberOfPages(response.data.pagination.totalPages);
 			setLoadedPages([page]);
 			setIsLoaded(true);

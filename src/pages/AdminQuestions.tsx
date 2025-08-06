@@ -1,4 +1,4 @@
-import { Box, FormControl, InputAdornment, MenuItem, Select, Table, TableBody, TableCell, TableRow, Tooltip } from '@mui/material';
+import { Box, FormControl, InputAdornment, MenuItem, Select, Table, TableBody, TableCell, TableRow, Tooltip, Typography } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { useContext, useEffect, useRef, useState } from 'react';
 import axios from '@utils/axiosInstance';
@@ -36,23 +36,33 @@ const AdminQuestions = () => {
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
 	const {
-		sortQuestionsData,
-		sortedQuestionsData,
+		questions,
+		error,
+		fetchQuestions,
+		fetchMoreQuestions,
 		removeQuestion,
-		numberOfPages,
+		totalItems,
+		loadedPages,
 		questionsPageNumber,
 		setQuestionsPageNumber,
-		setNumberOfPages,
-		fetchQuestions,
+		sortQuestionsData,
 		questionTypes,
 	} = useContext(QuestionsContext);
 
-	const [filteredQuestions, setFilteredQuestions] = useState<QuestionInterface[]>(sortedQuestionsData);
-	const [originalQuestions, setOriginalQuestions] = useState<QuestionInterface[]>(sortedQuestionsData);
-	const [numberOfPagesOfAllQuestions, setNumberOfPagesOfAllQuestions] = useState<number>(numberOfPages);
-
 	const [searchValue, setSearchValue] = useState<string>('');
 	const [filterValue, setFilterValue] = useState<string>('');
+	const [searchResults, setSearchResults] = useState<QuestionInterface[]>([]);
+	const [isSearchActive, setIsSearchActive] = useState<boolean>(false);
+
+	const pageSize = 50;
+
+	// Use search results if active, otherwise use context data
+	const displayQuestions = isSearchActive ? searchResults : questions;
+
+	// For pagination, use total items from server when not searching
+	const questionsNumberOfPages = isSearchActive ? Math.ceil(displayQuestions.length / pageSize) : Math.ceil(totalItems / pageSize);
+
+	const paginatedQuestions = displayQuestions.slice((questionsPageNumber - 1) * pageSize, questionsPageNumber * pageSize);
 
 	const [orderBy, setOrderBy] = useState<keyof QuestionInterface>('questionType');
 	const [order, setOrder] = useState<'asc' | 'desc'>('asc');
@@ -89,27 +99,46 @@ const AdminQuestions = () => {
 	} = useNewQuestion();
 
 	useEffect(() => {
-		setQuestionsPageNumber(1);
-	}, []);
+		fetchQuestions(1); // Always fetch initial data
+	}, []); // Only on mount
 
-	useEffect(() => {
-		setIsQuestionDeleteModalOpen(Array(filteredQuestions.length).fill(false));
-		setEditQuestionModalOpen(Array(filteredQuestions.length).fill(false));
-		setIsQuestionInfoModalOpen(Array(filteredQuestions.length).fill(false));
-		setFilteredQuestions(sortedQuestionsData);
-	}, [sortedQuestionsData, questionsPageNumber]);
+	const handlePageChange = async (newPage: number) => {
+		setQuestionsPageNumber(newPage);
 
-	const isInitialMount = useRef(true);
+		// Check if we need to fetch more data
+		const requiredRecords = newPage * pageSize;
+		if (questions.length < requiredRecords && newPage <= questionsNumberOfPages) {
+			// Calculate which batch of 50 records we need (context fetches 50 at a time)
+			const startBatch = Math.floor(((newPage - 1) * pageSize) / 200) + 1;
+			const endBatch = Math.ceil((newPage * pageSize) / 200);
 
-	useEffect(() => {
-		if (isInitialMount.current) {
-			isInitialMount.current = false;
-		} else {
-			if (!searchValue && !filterValue) {
-				fetchQuestions(questionsPageNumber);
+			// Check if we already have the required batches loaded
+			const batchesNeeded = [];
+			for (let batch = startBatch; batch <= endBatch; batch++) {
+				if (!loadedPages.includes(batch)) {
+					batchesNeeded.push(batch);
+				}
+			}
+
+			if (batchesNeeded.length > 0) {
+				await fetchMoreQuestions(startBatch, endBatch);
 			}
 		}
-	}, [questionsPageNumber]);
+	};
+
+	// Keep track of previous length to avoid unnecessary resets
+	const prevLengthRef = useRef<number>(0);
+
+	useEffect(() => {
+		if (paginatedQuestions && paginatedQuestions.length !== prevLengthRef.current) {
+			prevLengthRef.current = paginatedQuestions.length;
+			setIsQuestionDeleteModalOpen(Array(paginatedQuestions.length).fill(false));
+			setEditQuestionModalOpen(Array(paginatedQuestions.length).fill(false));
+			setIsQuestionInfoModalOpen(Array(paginatedQuestions.length).fill(false));
+		}
+	}, [displayQuestions, questionsPageNumber]);
+
+	if (error) return <Typography color='error'>{error}</Typography>;
 
 	const openDeleteQuestionModal = (index: number) => {
 		const updatedState = [...isQuestionDeleteModalOpen];
@@ -144,59 +173,39 @@ const AdminQuestions = () => {
 		setEditQuestionModalOpen(newEditModalOpen);
 	};
 
-	const handleSearchQuestions = async (page: number) => {
-		if (!searchValue) {
-			setNumberOfPages(numberOfPagesOfAllQuestions);
-			setFilteredQuestions(originalQuestions);
-
+	const handleSearch = async () => {
+		if (!searchValue && !filterValue) {
+			setIsSearchActive(false);
+			setSearchResults([]);
+			setQuestionsPageNumber(1);
 			return;
 		}
 
+		setIsSearchActive(true);
+		setQuestionsPageNumber(1);
+
 		try {
-			const response = await axios.post(`${base_url}/questions/search`, {
-				orgId,
-				page,
-				limit: 75,
-				search: searchValue,
+			const params = new URLSearchParams({
+				limit: '300',
 			});
-			setFilteredQuestions(response.data.data);
-			setNumberOfPages(response.data.pages);
-		} catch (error) {
-			console.error(error);
-		}
-	};
 
-	const handleFilterQuestions = async (page: number, filterValue: string) => {
-		if (!filterValue) {
-			setNumberOfPages(numberOfPagesOfAllQuestions);
-			setFilteredQuestions(originalQuestions);
-			return;
-		}
-
-		try {
-			// Check if it's an AI filter
-			if (filterValue === 'aiGenerated' || filterValue === 'nonAiGenerated') {
-				const response = await axios.post(`${base_url}/questions/filter/ai`, {
-					orgId,
-					page,
-					limit: 75,
-					aiStatus: filterValue,
-				});
-				setFilteredQuestions(response.data.data);
-				setNumberOfPages(response.data.pages);
-			} else {
-				// Regular question type filter
-				const response = await axios.post(`${base_url}/questions/filter`, {
-					orgId,
-					page,
-					limit: 75,
-					questionTypeName: filterValue,
-				});
-				setFilteredQuestions(response.data.data);
-				setNumberOfPages(response.data.pages);
+			if (searchValue) {
+				params.append('search', searchValue);
 			}
+
+			if (filterValue) {
+				params.append('filter', filterValue);
+			}
+
+			if (orderBy && order) {
+				params.append('sortBy', orderBy.toString());
+				params.append('sortOrder', order);
+			}
+
+			const response = await axios.get(`${base_url}/questions/organisation/${orgId}?${params}`);
+			setSearchResults(response.data.data);
 		} catch (error) {
-			console.error(error);
+			console.error('Search error:', error);
 		}
 	};
 
@@ -214,127 +223,138 @@ const AdminQuestions = () => {
 
 	return (
 		<DashboardPagesLayout pageName='Questions' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
-			<Box
-				sx={{
-					display: 'flex',
-					flexDirection: 'row',
-					justifyContent: isVerySmallScreen ? 'space-between' : 'flex-end',
-					alignItems: 'center',
-					padding: isMobileSizeSmall ? '1rem 1rem 0.5rem 1rem' : '2rem 2rem 1rem 2rem',
-					width: '100%',
-				}}>
-				{isVerySmallScreen && <CustomInfoMessageAlignedLeft message='Rotate your device for search & filter' />}
-				{!isVerySmallScreen && (
-					<Box sx={{ display: 'flex', justifyContent: 'flex-start', width: '100%' }}>
-						<Box sx={{ mr: '1rem' }}>
-							<FormControl>
-								<Select
-									size='small'
-									value={filterValue}
-									onChange={async (e) => {
-										setFilterValue(e.target.value);
-										setSearchValue('');
-										if (e.target.value !== '') {
-											await handleFilterQuestions(1, e.target.value);
-										} else {
-											setFilteredQuestions(originalQuestions);
-										}
-									}}
-									displayEmpty
-									sx={{
-										backgroundColor: theme.bgColor?.common,
-										width: isMobileSizeSmall ? '8rem' : '12rem',
-										fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-										textTransform: 'capitalize',
-									}}>
-									<MenuItem
-										disabled
-										value='filter'
-										selected
+			<Box sx={{ width: '100%', height: '100%' }}>
+				<Box
+					sx={{
+						display: 'flex',
+						justifyContent: 'space-between',
+						alignItems: 'center',
+						padding: isMobileSizeSmall ? '1rem 1rem 0.5rem 1rem' : '2rem 2rem 1rem 2rem',
+						width: '100%',
+						mb: '1.25rem',
+					}}>
+					{isVerySmallScreen && <CustomInfoMessageAlignedLeft message='Rotate your device for search & filter' />}
+					<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', flex: 4 }}>
+						<Box sx={{ display: 'flex', alignSelf: 'flex-start', width: isVerySmallScreen ? '12.5rem' : 'fit-content' }}>
+							<Box sx={{ mr: '1rem' }}>
+								<FormControl>
+									<Select
+										size='small'
+										value={filterValue}
+										onChange={(e) => {
+											setFilterValue(e.target.value);
+										}}
+										displayEmpty
 										sx={{
-											fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-											fontStyle: 'italic',
+											backgroundColor: theme.bgColor?.common,
+											width: isMobileSizeSmall ? '7rem' : '12rem',
+											fontSize: isMobileSize ? '0.7rem' : '0.85rem',
 											textTransform: 'capitalize',
-											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-											minHeight: '2rem',
 										}}>
-										Filter Questions
-									</MenuItem>
-									<MenuItem
-										value=''
-										selected
-										sx={{
-											fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-											textTransform: 'capitalize',
-											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-											minHeight: '2rem',
-										}}>
-										All Questions
-									</MenuItem>
-									<MenuItem
-										value='aiGenerated'
-										selected
-										sx={{
-											fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-											textTransform: 'capitalize',
-											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-											minHeight: '2rem',
-										}}>
-										AI Generated
-									</MenuItem>
-									<MenuItem
-										value='nonAiGenerated'
-										selected
-										sx={{
-											fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-											textTransform: 'capitalize',
-											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-											minHeight: '2rem',
-										}}>
-										Non-AI Generated
-									</MenuItem>
-									<MenuItem
-										disabled
-										value='types'
-										selected
-										sx={{
-											fontSize: isMobileSize ? '0.6rem' : '0.7rem',
-											textTransform: 'inherit',
-											fontWeight: 'lighter',
-											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-											minHeight: '2rem',
-										}}>
-										------ Filter by Type ------
-									</MenuItem>
-									{questionTypes.map((type) => (
 										<MenuItem
-											value={type.name.toLowerCase()}
-											key={type._id}
+											disabled
+											value='filter'
+											selected
+											sx={{
+												fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+												fontStyle: 'italic',
+												textTransform: 'capitalize',
+												padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+												minHeight: '2rem',
+											}}>
+											Filter Questions
+										</MenuItem>
+										<MenuItem
+											value=''
+											selected
 											sx={{
 												fontSize: isMobileSize ? '0.65rem' : '0.85rem',
 												textTransform: 'capitalize',
 												padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
 												minHeight: '2rem',
 											}}>
-											{type.name}
+											All Questions
 										</MenuItem>
-									))}
-								</Select>
-							</FormControl>
-						</Box>
-						<Box sx={{ display: 'flex', alignSelf: 'flex-start', width: isVerySmallScreen ? '7rem' : isMobileSize ? '20rem' : '30rem' }}>
+										<MenuItem
+											value='ai generated'
+											selected
+											sx={{
+												fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+												textTransform: 'capitalize',
+												padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+												minHeight: '2rem',
+											}}>
+											AI Generated
+										</MenuItem>
+										<MenuItem
+											value='non ai generated'
+											selected
+											sx={{
+												fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+												textTransform: 'capitalize',
+												padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+												minHeight: '2rem',
+											}}>
+											Non-AI Generated
+										</MenuItem>
+										<MenuItem
+											value='cloned'
+											selected
+											sx={{
+												fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+												textTransform: 'capitalize',
+												padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+												minHeight: '2rem',
+											}}>
+											Cloned
+										</MenuItem>
+										<MenuItem
+											value='original'
+											selected
+											sx={{
+												fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+												textTransform: 'capitalize',
+												padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+												minHeight: '2rem',
+											}}>
+											Original
+										</MenuItem>
+										<MenuItem
+											disabled
+											value='types'
+											selected
+											sx={{
+												fontSize: isMobileSize ? '0.6rem' : '0.7rem',
+												textTransform: 'inherit',
+												fontWeight: 'lighter',
+												padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+												minHeight: '2rem',
+											}}>
+											------ Filter by Type ------
+										</MenuItem>
+										{questionTypes.map((type) => (
+											<MenuItem
+												value={type.name.toLowerCase()}
+												key={type._id}
+												sx={{
+													fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+													textTransform: 'capitalize',
+													padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+													minHeight: '2rem',
+												}}>
+												{type.name}
+											</MenuItem>
+										))}
+									</Select>
+								</FormControl>
+							</Box>
 							<CustomTextField
 								value={searchValue}
-								placeholder='Search Question'
+								placeholder={'Search in question, type'}
 								onChange={(e) => {
 									setSearchValue(e.target.value);
-									setFilterValue('filter');
-									if (e.target.value === '') {
-										setFilterValue('');
-									}
-									setFilteredQuestions(originalQuestions);
 								}}
-								sx={{ backgroundColor: '#fff' }}
+								sx={{ backgroundColor: '#fff', minWidth: isVerySmallScreen ? '10rem' : '17.5rem' }}
 								required={false}
 								InputProps={{
 									endAdornment: (
@@ -349,243 +369,234 @@ const AdminQuestions = () => {
 									),
 								}}
 							/>
-							<CustomSubmitButton
-								sx={{ height: '2rem', marginLeft: '0.5rem' }}
-								type='button'
-								onClick={async () => {
-									await handleSearchQuestions(1);
-								}}>
+							<CustomSubmitButton onClick={handleSearch} sx={{ marginLeft: '1rem' }} disabled={!searchValue && !filterValue}>
 								Search
 							</CustomSubmitButton>
 							<CustomDeleteButton
-								sx={{ height: '2rem' }}
-								type='button'
-								onClick={async () => {
-									setFilterValue('');
+								onClick={() => {
 									setSearchValue('');
-									setFilteredQuestions(originalQuestions);
+									setFilterValue('');
+									setSearchResults([]);
+									setIsSearchActive(false);
 									setQuestionsPageNumber(1);
-									setNumberOfPages(numberOfPagesOfAllQuestions);
 								}}>
 								Reset
 							</CustomDeleteButton>
 						</Box>
 					</Box>
-				)}
+					<Box sx={{ display: 'flex', gap: 1, mb: '0.85rem', alignItems: 'center' }}>
+						{isSearchActive && (
+							<Typography
+								variant='body2'
+								sx={{
+									color: 'text.secondary',
+									fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+									mr: 1,
+								}}>
+								{searchResults.length} results
+							</Typography>
+						)}
+						<CustomSubmitButton
+							onClick={() => {
+								setIsQuestionCreateModalOpen(true);
+								setQuestionType('');
+								setOptions(['']);
+								setCorrectAnswer('');
+								setIsDuplicateOption(false);
+								setCorrectAnswerIndex(-1);
+							}}
+							sx={{ height: isVerySmallScreen ? '1.75rem' : '2.1rem', fontSize: isMobileSize ? '0.7rem' : undefined }}
+							type='button'>
+							{isVerySmallScreen ? 'New' : 'New Question'}
+						</CustomSubmitButton>
+					</Box>
+				</Box>
+
+				<CreateQuestionDialog
+					createNewQuestion={true}
+					isQuestionCreateModalOpen={isQuestionCreateModalOpen}
+					questionType={questionType}
+					options={options}
+					correctAnswer={correctAnswer}
+					correctAnswerIndex={correctAnswerIndex}
+					setQuestionType={setQuestionType}
+					setOptions={setOptions}
+					setCorrectAnswer={setCorrectAnswer}
+					setCorrectAnswerIndex={setCorrectAnswerIndex}
+					setIsQuestionCreateModalOpen={setIsQuestionCreateModalOpen}
+					addOption={addOption}
+					removeOption={removeOption}
+					handleCorrectAnswerChange={handleCorrectAnswerChange}
+					handleOptionChange={handleOptionChange}
+					setIsMinimumOptions={setIsMinimumOptions}
+					isMinimumOptions={isMinimumOptions}
+					isDuplicateOption={isDuplicateOption}
+				/>
+
 				<Box
 					sx={{
 						display: 'flex',
-						justifyContent: 'flex-end',
-						mb: '1.25rem',
-						width: isVerySmallScreen ? '5%' : isMobileSize ? '20%' : '25%',
-						height: isVerySmallScreen ? '1.5rem' : '2rem',
+						flexDirection: 'column',
+						alignItems: 'center',
+						padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : '0rem 2rem 2rem 2rem',
+						width: '100%',
 					}}>
-					<CustomSubmitButton
-						onClick={() => {
-							setIsQuestionCreateModalOpen(true);
-							setQuestionType('');
-							setOptions(['']);
-							setCorrectAnswer('');
-							setIsDuplicateOption(false);
-							setCorrectAnswerIndex(-1);
-						}}
-						type='button'
-						sx={{ fontSize: isMobileSize ? '0.7rem' : undefined }}>
-						{isVerySmallScreen ? 'New' : 'New Question'}
-					</CustomSubmitButton>
-				</Box>
-			</Box>
-
-			<CreateQuestionDialog
-				createNewQuestion={true}
-				isQuestionCreateModalOpen={isQuestionCreateModalOpen}
-				questionType={questionType}
-				options={options}
-				correctAnswer={correctAnswer}
-				correctAnswerIndex={correctAnswerIndex}
-				setQuestionType={setQuestionType}
-				setOptions={setOptions}
-				setCorrectAnswer={setCorrectAnswer}
-				setCorrectAnswerIndex={setCorrectAnswerIndex}
-				setIsQuestionCreateModalOpen={setIsQuestionCreateModalOpen}
-				addOption={addOption}
-				removeOption={removeOption}
-				handleCorrectAnswerChange={handleCorrectAnswerChange}
-				handleOptionChange={handleOptionChange}
-				setIsMinimumOptions={setIsMinimumOptions}
-				isMinimumOptions={isMinimumOptions}
-				isDuplicateOption={isDuplicateOption}
-			/>
-
-			<Box
-				sx={{
-					display: 'flex',
-					flexDirection: 'column',
-					alignItems: 'center',
-					padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : '0rem 2rem 2rem 2rem',
-					width: '100%',
-				}}>
-				<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>
-					<CustomTableHead<QuestionInterface>
-						orderBy={orderBy}
-						order={order}
-						handleSort={handleSort}
-						columns={[
-							{ key: 'clone', label: 'Cloned' },
-							{ key: 'questionType', label: 'Question Type' },
-							{ key: 'question', label: 'Question' },
-							{ key: 'createdAt', label: 'Created At' },
-							{ key: 'updatedAt', label: 'Updated At' },
-							{ key: 'actions', label: 'Actions' },
-						]}
-					/>
-					<TableBody>
-						{filteredQuestions &&
-							filteredQuestions?.map((question: QuestionInterface, index) => {
-								return (
-									<TableRow key={question._id}>
-										<TableCell sx={{ textAlign: 'center', width: '0px' }}>
-											{question.clonedFromId && (
-												<Box
-													sx={{
-														backgroundColor: theme.palette.info.main,
-														color: 'white',
-														borderRadius: '50%',
-														width: '15px',
-														height: '15px',
-														display: 'flex',
-														alignItems: 'center',
-														justifyContent: 'center',
-														fontSize: '0.65rem',
-														margin: '0 auto',
-													}}>
-													C
-												</Box>
-											)}
-										</TableCell>
-										<CustomTableCell value={question.questionType}>
-											{question.isAiGenerated && (
-												<Tooltip title='AI Generated' placement='top' arrow>
-													<AutoAwesome
+					<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>
+						<CustomTableHead<QuestionInterface>
+							orderBy={orderBy}
+							order={order}
+							handleSort={handleSort}
+							columns={[
+								{ key: 'clone', label: 'Cloned' },
+								{ key: 'questionType', label: 'Question Type' },
+								{ key: 'question', label: 'Question' },
+								{ key: 'createdAt', label: 'Created At' },
+								{ key: 'updatedAt', label: 'Updated At' },
+								{ key: 'actions', label: 'Actions' },
+							]}
+						/>
+						<TableBody>
+							{paginatedQuestions &&
+								paginatedQuestions?.map((question: QuestionInterface, index) => {
+									return (
+										<TableRow key={question._id}>
+											<TableCell sx={{ textAlign: 'center', width: '0px' }}>
+												{question.clonedFromId && (
+													<Box
 														sx={{
-															fontSize: '1rem',
-															color: '#2196F3',
-															marginLeft: '0.5rem',
-														}}
-													/>
-												</Tooltip>
-											)}
-										</CustomTableCell>
-										<CustomTableCell
-											value={
-												isVerySmallScreen
-													? truncateText(stripHtml(decode(question.question)), 25)
-													: truncateText(stripHtml(decode(question.question)), 45)
-											}
-										/>
-										<CustomTableCell value={dateFormatter(question.createdAt)} />
-										<CustomTableCell value={dateFormatter(question.updatedAt)} />
-
-										<TableCell
-											sx={{
-												textAlign: 'center',
-											}}>
-											<CustomActionBtn
-												title='Edit'
-												onClick={() => {
-													setOptions(question.options);
-													setCorrectAnswer(question.correctAnswer);
-													const correctAnswerIndex = question.options.indexOf(question.correctAnswer);
-													setCorrectAnswerIndex(correctAnswerIndex);
-													toggleQuestionEditModal(index);
-													setIsDuplicateOption(false);
-													setIsMinimumOptions(true);
-												}}
-												icon={<Edit fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
+															backgroundColor: theme.palette.info.main,
+															color: 'white',
+															borderRadius: '50%',
+															width: '15px',
+															height: '15px',
+															display: 'flex',
+															alignItems: 'center',
+															justifyContent: 'center',
+															fontSize: '0.65rem',
+															margin: '0 auto',
+														}}>
+														C
+													</Box>
+												)}
+											</TableCell>
+											<CustomTableCell value={question.questionType}>
+												{question.isAiGenerated && (
+													<Tooltip title='AI Generated' placement='top' arrow>
+														<AutoAwesome
+															sx={{
+																fontSize: '1rem',
+																color: '#2196F3',
+																marginLeft: '0.5rem',
+															}}
+														/>
+													</Tooltip>
+												)}
+											</CustomTableCell>
+											<CustomTableCell
+												value={
+													isVerySmallScreen
+														? truncateText(stripHtml(decode(question.question)), 25)
+														: truncateText(stripHtml(decode(question.question)), 45)
+												}
 											/>
+											<CustomTableCell value={dateFormatter(question.createdAt)} />
+											<CustomTableCell value={dateFormatter(question.updatedAt)} />
 
-											<AdminQuestionsEditQuestionDialog
-												question={question}
-												correctAnswerIndex={correctAnswerIndex}
-												index={index}
-												options={options}
-												correctAnswer={question.correctAnswer}
-												questionType={question.questionType}
-												isMinimumOptions={isMinimumOptions}
-												isDuplicateOption={isDuplicateOption}
-												handleCorrectAnswerChange={handleCorrectAnswerChange}
-												setCorrectAnswerIndex={setCorrectAnswerIndex}
-												handleOptionChange={handleOptionChange}
-												closeQuestionEditModal={closeQuestionEditModal}
-												editQuestionModalOpen={editQuestionModalOpen}
-												addOption={addOption}
-												removeOption={removeOption}
-												setCorrectAnswer={setCorrectAnswer}
-												setIsDuplicateOption={setIsDuplicateOption}
-												setIsMinimumOptions={setIsMinimumOptions}
-											/>
+											<TableCell
+												sx={{
+													textAlign: 'center',
+												}}>
+												<CustomActionBtn
+													title='Edit'
+													onClick={() => {
+														setOptions(question.options);
+														setCorrectAnswer(question.correctAnswer);
+														const correctAnswerIndex = question.options.indexOf(question.correctAnswer);
+														setCorrectAnswerIndex(correctAnswerIndex);
+														toggleQuestionEditModal(index);
+														setIsDuplicateOption(false);
+														setIsMinimumOptions(true);
+													}}
+													icon={<Edit fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
+												/>
 
-											<CustomActionBtn
-												title='Delete'
-												onClick={() => {
-													openDeleteQuestionModal(index);
-												}}
-												icon={<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
-											/>
+												<AdminQuestionsEditQuestionDialog
+													question={question}
+													correctAnswerIndex={correctAnswerIndex}
+													index={index}
+													options={options}
+													correctAnswer={question.correctAnswer}
+													questionType={question.questionType}
+													isMinimumOptions={isMinimumOptions}
+													isDuplicateOption={isDuplicateOption}
+													handleCorrectAnswerChange={handleCorrectAnswerChange}
+													setCorrectAnswerIndex={setCorrectAnswerIndex}
+													handleOptionChange={handleOptionChange}
+													closeQuestionEditModal={closeQuestionEditModal}
+													editQuestionModalOpen={editQuestionModalOpen}
+													addOption={addOption}
+													removeOption={removeOption}
+													setCorrectAnswer={setCorrectAnswer}
+													setIsDuplicateOption={setIsDuplicateOption}
+													setIsMinimumOptions={setIsMinimumOptions}
+												/>
 
-											<CustomActionBtn
-												title='More Info'
-												onClick={() => {
-													openQuestionInfoModal(index);
-												}}
-												icon={<Info fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
-											/>
+												<CustomActionBtn
+													title='Delete'
+													onClick={() => {
+														openDeleteQuestionModal(index);
+													}}
+													icon={<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
+												/>
 
-											{isQuestionDeleteModalOpen[index] !== undefined && (
-												<CustomDialog
-													openModal={isQuestionDeleteModalOpen[index]}
-													closeModal={() => closeDeleteQuestionModal(index)}
-													title='Delete Question'
-													content='Are you sure you want to delete this question?'
-													maxWidth='sm'>
-													<CustomDialogActions
-														onCancel={() => closeDeleteQuestionModal(index)}
-														deleteBtn={true}
-														onDelete={() => {
-															deleteQuestion(question._id);
-															closeDeleteQuestionModal(index);
-														}}
-													/>
-												</CustomDialog>
-											)}
-										</TableCell>
-									</TableRow>
-								);
-							})}
-					</TableBody>
-				</Table>
-				<CustomTablePagination
-					count={numberOfPages}
-					page={questionsPageNumber}
-					onChange={(newPage) => {
-						setQuestionsPageNumber(newPage);
-						if (searchValue) {
-							handleSearchQuestions(newPage); // Search with pagination
-						} else if (filterValue) {
-							handleFilterQuestions(newPage, filterValue); // Filter with pagination
-						}
-					}}
-				/>
+												<CustomActionBtn
+													title='More Info'
+													onClick={() => {
+														openQuestionInfoModal(index);
+													}}
+													icon={<Info fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
+												/>
+
+												{isQuestionDeleteModalOpen[index] !== undefined && (
+													<CustomDialog
+														openModal={isQuestionDeleteModalOpen[index]}
+														closeModal={() => closeDeleteQuestionModal(index)}
+														title='Delete Question'
+														content='Are you sure you want to delete this question?'
+														maxWidth='xs'>
+														<CustomDialogActions
+															onCancel={() => closeDeleteQuestionModal(index)}
+															deleteBtn={true}
+															onDelete={() => {
+																deleteQuestion(question._id);
+																closeDeleteQuestionModal(index);
+															}}
+														/>
+													</CustomDialog>
+												)}
+											</TableCell>
+										</TableRow>
+									);
+								})}
+						</TableBody>
+					</Table>
+					<CustomTablePagination count={questionsNumberOfPages} page={questionsPageNumber} onChange={handlePageChange} />
+				</Box>
+
+				{isQuestionInfoModalOpen.map(
+					(isOpen, index) =>
+						isOpen && (
+							<CustomDialog
+								key={index}
+								openModal={isOpen}
+								closeModal={() => closeQuestionInfoModal(index)}
+								title='Question Information'
+								maxWidth='sm'>
+								<QuestionInfoModal question={paginatedQuestions[index]} onClose={() => closeQuestionInfoModal(index)} />
+							</CustomDialog>
+						)
+				)}
 			</Box>
-
-			{isQuestionInfoModalOpen.map(
-				(isOpen, index) =>
-					isOpen && (
-						<CustomDialog key={index} openModal={isOpen} closeModal={() => closeQuestionInfoModal(index)} title='Question Information' maxWidth='sm'>
-							<QuestionInfoModal question={filteredQuestions[index]} onClose={() => closeQuestionInfoModal(index)} />
-						</CustomDialog>
-					)
-			)}
 		</DashboardPagesLayout>
 	);
 };

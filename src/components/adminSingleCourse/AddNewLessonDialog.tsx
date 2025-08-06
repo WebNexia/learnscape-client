@@ -11,11 +11,16 @@ import {
 	TableBody,
 	TableCell,
 	TableRow,
+	Typography,
 } from '@mui/material';
+
 import CustomCancelButton from '../forms/customButtons/CustomCancelButton';
+import CustomSubmitButton from '../forms/customButtons/CustomSubmitButton';
+import CustomDeleteButton from '../forms/customButtons/CustomDeleteButton';
 import { Lesson } from '../../interfaces/lessons';
 import { useContext, useEffect, useState } from 'react';
 import { LessonsContext } from '../../contexts/LessonsContextProvider';
+import { OrganisationContext } from '../../contexts/OrganisationContextProvider';
 import { ChapterLessonData, ChapterUpdateTrack } from '../../pages/AdminCourseEditPage';
 import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
 import CustomDialog from '../layouts/dialog/CustomDialog';
@@ -23,12 +28,12 @@ import CustomTableHead from '../layouts/table/CustomTableHead';
 import CustomTableCell from '../layouts/table/CustomTableCell';
 import CustomTablePagination from '../layouts/table/CustomTablePagination';
 import { chapterUpdateTrack } from '../../utils/chapterUpdateTrack';
-import { LessonType } from '../../interfaces/enums';
 import CustomTextField from '../forms/customFields/CustomTextField';
 import { Search } from '@mui/icons-material';
 import theme from '../../themes';
 import { useParams } from 'react-router-dom';
 import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
+import axios from '@utils/axiosInstance';
 
 interface AddNewLessonDialogProps {
 	addNewLessonModalOpen: boolean;
@@ -47,34 +52,28 @@ const AddNewLessonDialog = ({
 	setChapterLessonDataBeforeSave,
 	setHasUnsavedChanges,
 }: AddNewLessonDialogProps) => {
-	const { sortLessonsData, sortedLessonsData } = useContext(LessonsContext);
+	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
+	const { orgId } = useContext(OrganisationContext);
+	const { sortLessonsData, lessons, fetchMoreLessons, totalItems, loadedPages } = useContext(LessonsContext);
 	const { courseId } = useParams();
 	const { user } = useContext(UserAuthContext);
 
 	const [lessonsPageNumber, setLessonsPageNumber] = useState<number>(1);
 	const [searchValue, setSearchValue] = useState<string>('');
 	const [filterValue, setFilterValue] = useState<string>('');
+	const [searchResults, setSearchResults] = useState<Lesson[]>([]);
+	const [isSearchActive, setIsSearchActive] = useState<boolean>(false);
 
-	const pageSize = 50;
+	const pageSize = 25;
 
-	const filteredLessons = sortedLessonsData
-		?.filter((lesson) => !chapter.lessonIds?.includes(lesson._id))
-		.filter((lesson) => {
-			if (searchValue) {
-				const lowerSearch = searchValue.toLowerCase();
-				return lesson?.title?.toLowerCase().includes(lowerSearch);
-			}
-			if (filterValue) {
-				if (filterValue === 'instructional lessons' && lesson.type === LessonType.INSTRUCTIONAL_LESSON) return true;
-				if (filterValue === 'practice lessons' && lesson.type === LessonType.PRACTICE_LESSON) return true;
-				if (filterValue === 'quizzes' && lesson.type === LessonType.QUIZ) return true;
-				if (filterValue === 'published lessons' && lesson.isActive) return true;
-				if (filterValue === 'unpublished lessons' && !lesson.isActive) return true;
-			}
-			return !searchValue && !filterValue;
-		});
+	// Use search results if active, otherwise use context data
+	const displayLessons = isSearchActive ? searchResults : lessons;
 
-	const lessonsNumberOfPages = Math.ceil(filteredLessons.length / pageSize);
+	// Only filter out chapter lessons (client-side filtering for chapter exclusion)
+	const filteredLessons = displayLessons?.filter((lesson) => !chapter.lessonIds?.includes(lesson._id));
+
+	// Calculate total pages based on filtered results when searching, otherwise use total items from server
+	const lessonsNumberOfPages = isSearchActive ? Math.ceil(filteredLessons.length / pageSize) : Math.ceil(totalItems / pageSize);
 
 	const paginatedLessons = filteredLessons.slice((lessonsPageNumber - 1) * pageSize, lessonsPageNumber * pageSize);
 
@@ -94,6 +93,70 @@ const AddNewLessonDialog = ({
 		setOrder(isAsc ? 'desc' : 'asc');
 		setOrderBy(property);
 		sortLessonsData(property, isAsc ? 'desc' : 'asc');
+	};
+
+	const handlePageChange = async (newPage: number) => {
+		setLessonsPageNumber(newPage);
+
+		// Only fetch more data if not searching
+		if (!isSearchActive) {
+			// Check if we need to fetch more data
+			const requiredRecords = newPage * pageSize;
+			if (lessons.length < requiredRecords && newPage <= lessonsNumberOfPages) {
+				// Calculate which batch of 200 records we need (context fetches 200 at a time)
+				const startBatch = Math.floor(((newPage - 1) * pageSize) / 200) + 1;
+				const endBatch = Math.ceil((newPage * pageSize) / 200);
+
+				// Check if we already have the required batches loaded
+				const batchesNeeded = [];
+				for (let batch = startBatch; batch <= endBatch; batch++) {
+					if (!loadedPages.includes(batch)) {
+						batchesNeeded.push(batch);
+					}
+				}
+
+				if (batchesNeeded.length > 0) {
+					await fetchMoreLessons(startBatch, endBatch);
+				}
+			}
+		}
+	};
+
+	const handleSearch = async () => {
+		if (!searchValue && !filterValue) {
+			setIsSearchActive(false);
+			setSearchResults([]);
+			setLessonsPageNumber(1);
+			return;
+		}
+
+		setIsSearchActive(true);
+		setLessonsPageNumber(1);
+
+		try {
+			const params = new URLSearchParams({
+				limit: '300',
+			});
+
+			if (searchValue) {
+				params.append('search', searchValue);
+			}
+
+			if (filterValue) {
+				params.append('filter', filterValue);
+			}
+
+			if (orderBy && order) {
+				params.append('sortBy', orderBy.toString());
+				params.append('sortOrder', order);
+			}
+
+			const response = await axios.get(`${base_url}/lessons/organisation/${orgId}?${params}`);
+
+			setSearchResults(response.data.data);
+		} catch (error) {
+			console.error('Search error:', error);
+		}
 	};
 
 	const handleCheckboxChange = (lesson: Lesson) => {
@@ -172,55 +235,51 @@ const AddNewLessonDialog = ({
 	return (
 		<CustomDialog openModal={addNewLessonModalOpen} closeModal={closeAddNewLessonModalOpen} title='Add New Lesson'>
 			<DialogContent>
-				<Box sx={{ display: 'flex', justifyContent: 'flex-start', width: '100%', padding: '1rem 2rem 0 2rem' }}>
-					<Box sx={{ mr: '1rem' }}>
-						<FormControl>
-							<Select
-								size='small'
-								value={filterValue}
-								onChange={(e) => {
-									setSearchValue('');
-									setFilterValue(e.target.value);
-								}}
-								displayEmpty
-								sx={{
-									backgroundColor: theme.bgColor?.common,
-									width: '12rem',
-									fontSize: '0.85rem',
-									textTransform: 'capitalize',
-								}}>
-								<MenuItem disabled value='filter' selected sx={{ fontSize: '0.85rem', fontStyle: 'italic', textTransform: 'capitalize' }}>
-									Filter Lessons
-								</MenuItem>
-								<MenuItem value='' selected sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
-									All Lessons
-								</MenuItem>
-								{['Published Lessons', 'Unpublished Lessons'].map((type) => (
-									<MenuItem value={type.toLowerCase()} key={type} sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
-										{type}
+				<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', padding: '1rem 2rem 0 2rem' }}>
+					<Box sx={{ display: 'flex', width: '85%' }}>
+						<Box sx={{ mr: '1rem' }}>
+							<FormControl>
+								<Select
+									size='small'
+									value={filterValue}
+									onChange={(e) => {
+										setFilterValue(e.target.value);
+									}}
+									displayEmpty
+									sx={{
+										backgroundColor: theme.bgColor?.common,
+										width: '12rem',
+										fontSize: '0.85rem',
+										textTransform: 'capitalize',
+									}}>
+									<MenuItem disabled value='filter' selected sx={{ fontSize: '0.85rem', fontStyle: 'italic', textTransform: 'capitalize' }}>
+										Filter Lessons
 									</MenuItem>
-								))}
-								<MenuItem disabled value='types' selected sx={{ fontSize: '0.7rem', textTransform: 'inherit', fontWeight: 'lighter' }}>
-									----- Filter by Type -----
-								</MenuItem>
-								{['Instructional Lessons', 'Practice Lessons', 'Quizzes'].map((type) => (
-									<MenuItem value={type.toLowerCase()} key={type} sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
-										{type}
+									<MenuItem value='' selected sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
+										All Lessons
 									</MenuItem>
-								))}
-							</Select>
-						</FormControl>
-					</Box>
-					<Box sx={{ alignSelf: 'flex-start', width: '35%' }}>
+									{['Published Lessons', 'Unpublished Lessons'].map((type) => (
+										<MenuItem value={type.toLowerCase()} key={type} sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
+											{type}
+										</MenuItem>
+									))}
+									<MenuItem disabled value='types' selected sx={{ fontSize: '0.7rem', textTransform: 'inherit', fontWeight: 'lighter' }}>
+										----- Filter by Type -----
+									</MenuItem>
+									{['Instructional Lessons', 'Practice Lessons', 'Quizzes'].map((type) => (
+										<MenuItem value={type.toLowerCase()} key={type} sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
+											{type}
+										</MenuItem>
+									))}
+								</Select>
+							</FormControl>
+						</Box>
+
 						<CustomTextField
 							value={searchValue}
 							placeholder={'Search Lesson in Title'}
 							onChange={(e) => {
 								setSearchValue(e.target.value);
-								setFilterValue('filter');
-								if (e.target.value === '') {
-									setFilterValue('');
-								}
 							}}
 							sx={{ backgroundColor: '#fff' }}
 							required={false}
@@ -236,8 +295,35 @@ const AddNewLessonDialog = ({
 								),
 							}}
 						/>
+						<CustomSubmitButton onClick={handleSearch} sx={{ marginLeft: '1rem' }} disabled={!searchValue && !filterValue}>
+							Search
+						</CustomSubmitButton>
+						<CustomDeleteButton
+							onClick={() => {
+								setSearchValue('');
+								setFilterValue('');
+								setSearchResults([]);
+								setIsSearchActive(false);
+								setLessonsPageNumber(1);
+							}}>
+							Reset
+						</CustomDeleteButton>
+					</Box>
+					<Box sx={{ display: 'flex', gap: 1, mb: '0.8rem', alignItems: 'center' }}>
+						{isSearchActive && (
+							<Typography
+								variant='body2'
+								sx={{
+									color: 'text.secondary',
+									fontSize: '0.85rem',
+									ml: 1,
+								}}>
+								{searchResults.length} results
+							</Typography>
+						)}
 					</Box>
 				</Box>
+
 				<Box
 					sx={{
 						display: 'flex',
@@ -280,7 +366,7 @@ const AddNewLessonDialog = ({
 								})}
 						</TableBody>
 					</Table>
-					<CustomTablePagination count={lessonsNumberOfPages} page={lessonsPageNumber} onChange={setLessonsPageNumber} />
+					<CustomTablePagination count={lessonsNumberOfPages} page={lessonsPageNumber} onChange={handlePageChange} />
 				</Box>
 			</DialogContent>
 			<CustomDialogActions

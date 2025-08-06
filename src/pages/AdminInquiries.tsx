@@ -45,7 +45,6 @@ const AdminInquiries = () => {
 
 	const {
 		inquiries,
-		loading,
 		error,
 		removeInquiry,
 		fetchInquiries,
@@ -62,7 +61,7 @@ const AdminInquiries = () => {
 	const [searchResults, setSearchResults] = useState<Inquiry[]>([]);
 	const [isSearchActive, setIsSearchActive] = useState<boolean>(false);
 
-	const pageSize = 100;
+	const pageSize = 50;
 
 	// Use search results if active, otherwise use context data
 	const displayInquiries = isSearchActive ? searchResults : inquiries;
@@ -91,9 +90,9 @@ const AdminInquiries = () => {
 		// Check if we need to fetch more data
 		const requiredRecords = newPage * pageSize;
 		if (inquiries.length < requiredRecords && newPage <= inquiriesNumberOfPages) {
-			// Calculate which batch of 1000 records we need (context fetches 1000 at a time)
-			const startBatch = Math.floor(((newPage - 1) * pageSize) / 1000) + 1;
-			const endBatch = Math.ceil((newPage * pageSize) / 1000);
+			// Calculate which batch of 500 records we need (context fetches 500 at a time)
+			const startBatch = Math.floor(((newPage - 1) * pageSize) / 500) + 1;
+			const endBatch = Math.ceil((newPage * pageSize) / 500);
 
 			// Check if we already have the required batches loaded
 			const batchesNeeded = [];
@@ -205,7 +204,7 @@ const AdminInquiries = () => {
 			if (searchValue || filterValue) {
 				// Build query parameters
 				const params = new URLSearchParams({
-					limit: '1000',
+					limit: '500',
 				});
 
 				if (searchValue && searchValue.trim()) {
@@ -234,7 +233,6 @@ const AdminInquiries = () => {
 		}
 	};
 
-	if (loading) return <Typography>Loading...</Typography>;
 	if (error) return <Typography color='error'>{error}</Typography>;
 
 	return (
@@ -468,7 +466,7 @@ const AdminInquiries = () => {
 													closeModal={() => handleCloseDeleteModal(index)}
 													title='Delete Inquiry'
 													content='Are you sure you want to delete this inquiry?'
-													maxWidth='sm'>
+													maxWidth='xs'>
 													<CustomDialogActions onCancel={() => handleCloseDeleteModal(index)} deleteBtn={true} onDelete={handleConfirmDelete} />
 												</CustomDialog>
 											</TableCell>

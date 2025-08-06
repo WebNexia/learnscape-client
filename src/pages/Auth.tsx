@@ -183,6 +183,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 
 				if (!updatedUser.isActive) {
 					setErrorMsg(AuthFormErrorMessages.USER_INACTIVE);
+					return;
 				} else if (updatedUser.role === Roles.USER) {
 					navigate(`/dashboard`);
 				} else if (updatedUser.role === Roles.ADMIN) {

@@ -30,7 +30,6 @@ const AdminLessons = () => {
 
 	const {
 		lessons,
-		loading,
 		error,
 		fetchLessons,
 		fetchMoreLessons,
@@ -145,7 +144,6 @@ const AdminLessons = () => {
 		setIsLessonInfoModalOpen(Array(paginatedLessons.length).fill(false));
 	}, [displayLessons, lessonsPageNumber]);
 
-	if (loading) return <Typography>Loading...</Typography>;
 	if (error) return <Typography color='error'>{error}</Typography>;
 
 	useEffect(() => {
@@ -417,7 +415,7 @@ const AdminLessons = () => {
 													closeModal={() => closeDeleteLessonModal(index)}
 													title='Delete Lesson'
 													content='Are you sure you want to delete this lesson?'
-													maxWidth='sm'>
+													maxWidth='xs'>
 													<CustomDialogActions
 														onCancel={() => closeDeleteLessonModal(index)}
 														deleteBtn={true}

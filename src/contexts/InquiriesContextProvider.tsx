@@ -70,13 +70,13 @@ const InquiriesContextProvider = (props: InquiriesContextProviderProps) => {
 	const fetchInquiries = async (page: number) => {
 		if (!orgId) return;
 		try {
-			// Fetch initial 1000 records
-			const url = `${base_url}/inquiries/organisation/${orgId}?page=${page}&limit=1000`;
+			// Fetch initial 500 records
+			const url = `${base_url}/inquiries/organisation/${orgId}?page=${page}&limit=500`;
 			const response = await axios.get(url);
 			const sortedDataCopy = [...response.data.data].sort((a: Inquiry, b: Inquiry) => b.createdAt.localeCompare(a.createdAt));
 			setInquiries(sortedDataCopy);
-			setTotalItems(response.data.pagination.totalItems);
-			setNumberOfPages(Math.ceil(response.data.pagination.totalItems / 100)); // 100 per page display
+			setTotalItems(response.data.totalItems);
+			setNumberOfPages(response.data.pagination.totalPages);
 			setLoadedPages([1]);
 			setIsLoaded(true);
 			return response.data.data;
@@ -102,7 +102,7 @@ const InquiriesContextProvider = (props: InquiriesContextProviderProps) => {
 			// Fetch missing pages
 			let newInquiries: Inquiry[] = [];
 			for (const page of pagesToFetch) {
-				const url = `${base_url}/inquiries/organisation/${orgId}?page=${page}&limit=1000`;
+				const url = `${base_url}/inquiries/organisation/${orgId}?page=${page}&limit=500`;
 
 				const response = await axios.get(url);
 				newInquiries = [...newInquiries, ...response.data.data];

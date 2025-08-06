@@ -47,7 +47,6 @@ const AdminCourses = () => {
 	const navigate = useNavigate();
 	const {
 		courses,
-		loading,
 		error,
 		fetchCourses,
 		fetchMoreCourses,
@@ -97,7 +96,6 @@ const AdminCourses = () => {
 	const [orderBy, setOrderBy] = useState<keyof SingleCourse>('title');
 	const [order, setOrder] = useState<'asc' | 'desc'>('asc');
 
-	if (loading) return <Typography>Loading...</Typography>;
 	if (error) return <Typography color='error'>{error}</Typography>;
 
 	// Modal states
@@ -143,9 +141,9 @@ const AdminCourses = () => {
 		// Check if we need to fetch more data
 		const requiredRecords = newPage * pageSize;
 		if (courses.length < requiredRecords && newPage <= coursesNumberOfPages) {
-			// Calculate which batch of 300 records we need (context fetches 300 at a time)
-			const startBatch = Math.floor(((newPage - 1) * pageSize) / 150) + 1;
-			const endBatch = Math.ceil((newPage * pageSize) / 150);
+			// Calculate which batch of 100 records we need (context fetches 100 at a time)
+			const startBatch = Math.floor(((newPage - 1) * pageSize) / 100) + 1;
+			const endBatch = Math.ceil((newPage * pageSize) / 100);
 
 			// Check if we already have the required batches loaded
 			const batchesNeeded = [];
@@ -177,7 +175,7 @@ const AdminCourses = () => {
 			if (searchValue || filterValue) {
 				// Build query parameters
 				const params = new URLSearchParams({
-					limit: '250',
+					limit: '150',
 				});
 
 				if (searchValue && searchValue.trim()) {
@@ -721,7 +719,7 @@ const AdminCourses = () => {
 													closeModal={() => closeDeleteCourseModal(index)}
 													title='Delete'
 													content='Are you sure you want to delete this course?'
-													maxWidth='sm'>
+													maxWidth='xs'>
 													<CustomDialogActions
 														onCancel={() => closeDeleteCourseModal(index)}
 														deleteBtn={true}

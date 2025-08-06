@@ -47,7 +47,6 @@ const AdminDocuments = () => {
 
 	const {
 		documents,
-		loading,
 		error,
 		fetchDocuments,
 		fetchMoreDocuments,
@@ -192,7 +191,6 @@ const AdminDocuments = () => {
 		}
 	}, [displayDocuments, documentsPageNumber]);
 
-	if (loading) return <Typography>Loading...</Typography>;
 	if (error) return <Typography color='error'>{error}</Typography>;
 
 	const resetForm = () => {
