@@ -1,4 +1,4 @@
-import { Box, FormControl, InputAdornment, MenuItem, Select, Table, TableBody, TableCell, TableRow } from '@mui/material';
+import { Box, FormControl, InputAdornment, MenuItem, Select, Table, TableBody, TableCell, TableRow, Typography } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { useContext, useEffect, useState } from 'react';
 import { QuizSubmissionsContext } from '../contexts/QuizSubmissionsContextProvider';
@@ -22,32 +22,38 @@ const AdminQuizSubmissions = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
 
-	const { sortedCoursesData } = useContext(CoursesContext);
+	const { courses } = useContext(CoursesContext);
 
-	const courses = sortedCoursesData.map((course) => ({ courseId: course._id, courseTitle: course.title }));
+	const mappedCourses = courses.map((course) => ({ courseId: course._id, courseTitle: course.title }));
 
 	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
 	const {
-		sortedQuizSubmissionsData,
+		quizSubmissions,
 		sortQuizSubmissionsData,
-		numberOfPages,
-		setNumberOfPages,
+		totalItems,
+		loadedPages,
 		quizSubmissionsPageNumber,
 		setQuizSubmissionsPageNumber,
-		fetchQuizSubmissions,
+		fetchMoreQuizSubmissions,
 	} = useContext(QuizSubmissionsContext);
-
-	const [filteredSubmissions, setFilteredSubmissions] = useState<QuizSubmission[]>(sortedQuizSubmissionsData);
-	const [originalSubmissions, setOriginalSubmissions] = useState<QuizSubmission[]>(sortedQuizSubmissionsData);
-	const [numberOfPagesOfAllSubmissions, setNumberOfPagesOfAllSubmissions] = useState<number>(numberOfPages);
 
 	const [searchValue, setSearchValue] = useState<string>('');
 	const [filterValue, setFilterValue] = useState<string>('');
+	const [searchResults, setSearchResults] = useState<QuizSubmission[]>([]);
+	const [isSearchActive, setIsSearchActive] = useState<boolean>(false);
 
-	const [dataLoaded, setDataLoaded] = useState(false);
+	const pageSize = 50;
+
+	// Use search results if active, otherwise use context data
+	const displaySubmissions = isSearchActive ? searchResults : quizSubmissions;
+
+	// Calculate total pages based on filtered results when searching, otherwise use total items from server
+	const submissionsNumberOfPages = isSearchActive ? Math.ceil(displaySubmissions.length / pageSize) : Math.ceil(totalItems / pageSize);
+
+	const paginatedSubmissions = displaySubmissions.slice((quizSubmissionsPageNumber - 1) * pageSize, quizSubmissionsPageNumber * pageSize);
 
 	const [orderBy, setOrderBy] = useState<keyof QuizSubmission>('userName');
 	const [order, setOrder] = useState<'asc' | 'desc'>('asc');
@@ -63,232 +69,238 @@ const AdminQuizSubmissions = () => {
 		setQuizSubmissionsPageNumber(1);
 	}, []);
 
-	useEffect(() => {
-		if (!dataLoaded) {
-			try {
-				fetchQuizSubmissions(quizSubmissionsPageNumber);
-				setDataLoaded(true);
-			} catch (error) {
-				console.log(error);
+	const handlePageChange = async (newPage: number) => {
+		setQuizSubmissionsPageNumber(newPage);
+
+		// Only fetch more data if not searching
+		if (!isSearchActive) {
+			// Check if we need to fetch more data
+			const requiredRecords = newPage * pageSize;
+			if (quizSubmissions.length < requiredRecords && newPage <= submissionsNumberOfPages) {
+				// Calculate which batch of 150 records we need (context fetches 150 at a time)
+				const startBatch = Math.floor(((newPage - 1) * pageSize) / 150) + 1;
+				const endBatch = Math.ceil((newPage * pageSize) / 150);
+
+				// Check if we already have the required batches loaded
+				const batchesNeeded = [];
+				for (let batch = startBatch; batch <= endBatch; batch++) {
+					if (!loadedPages.includes(batch)) {
+						batchesNeeded.push(batch);
+					}
+				}
+
+				if (batchesNeeded.length > 0) {
+					await fetchMoreQuizSubmissions(startBatch, endBatch);
+				}
 			}
 		}
-	}, [quizSubmissionsPageNumber, dataLoaded]);
+	};
 
-	const handleSearchQuestions = async (page: number) => {
-		if (!searchValue) {
-			setNumberOfPages(numberOfPagesOfAllSubmissions);
-			setFilteredSubmissions(originalSubmissions);
-
+	const handleSearch = async () => {
+		if (!searchValue && !filterValue) {
+			setIsSearchActive(false);
+			setSearchResults([]);
+			setQuizSubmissionsPageNumber(1);
 			return;
 		}
 
+		setIsSearchActive(true);
+		setQuizSubmissionsPageNumber(1);
+
 		try {
-			const response = await axios.post(`${base_url}/quizSubmissions/search`, {
-				orgId,
-				page,
-				limit: 75,
-				search: searchValue,
+			const params = new URLSearchParams({
+				limit: '150',
 			});
-			setFilteredSubmissions(response.data.data);
-			setNumberOfPages(response.data.pages);
+
+			if (searchValue) {
+				params.append('search', searchValue);
+			}
+
+			if (filterValue) {
+				params.append('filter', filterValue);
+			}
+
+			if (orderBy && order) {
+				params.append('sortBy', orderBy.toString());
+				params.append('sortOrder', order);
+			}
+
+			console.log('Search params:', { searchValue, filterValue, params: params.toString() });
+			const response = await axios.get(`${base_url}/quizsubmissions/organisation/${orgId}?${params}`);
+			console.log('Search response:', response.data.data.length, 'results');
+			setSearchResults(response.data.data);
 		} catch (error) {
-			console.error(error);
+			console.error('Search error:', error);
+			// Reset search state on error
+			setIsSearchActive(false);
+			setSearchResults([]);
 		}
 	};
 
-	const handleFilterQuestions = async (page: number, filterValue: string) => {
-		let isChecked;
-		let courseId;
-
-		if (!filterValue) {
-			setNumberOfPages(numberOfPagesOfAllSubmissions);
-			setFilteredSubmissions(originalSubmissions);
-			return;
-		}
-
-		if (filterValue === 'checked') {
-			isChecked = true;
-		} else if (filterValue === 'unchecked') {
-			isChecked = false;
-		} else {
-			courseId = filterValue;
-		}
-
-		try {
-			const response = await axios.post(`${base_url}/quizSubmissions/filter`, {
-				orgId,
-				page,
-				limit: 75,
-				isChecked,
-				courseId,
-			});
-			setFilteredSubmissions(response.data.data);
-			setNumberOfPages(response.data.pages);
-		} catch (error) {
-			console.error(error);
-		}
-	};
+	// Check if search button should be disabled
+	const isSearchDisabled = !searchValue && !filterValue;
 
 	return (
 		<DashboardPagesLayout pageName='Quiz Submissions' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
 			<Box
 				sx={{
 					display: 'flex',
-					justifyContent: isMobileSize ? 'center' : 'flex-start',
+					justifyContent: isMobileSize ? 'center' : 'space-between',
 					width: '100%',
 					padding: isMobileSizeSmall ? '1rem 1rem 0.5rem 1rem' : '2rem 2rem 1rem 2rem',
 				}}>
-				<Box sx={{ mr: '1rem' }}>
-					<FormControl>
-						<Select
-							size='small'
-							value={filterValue}
-							onChange={async (e) => {
-								setSearchValue('');
-								setFilterValue(e.target.value);
-								if (e.target.value !== '') {
-									await handleFilterQuestions(1, e.target.value);
-								} else {
-									setFilteredSubmissions(originalSubmissions);
-								}
-							}}
-							displayEmpty
-							sx={{
-								backgroundColor: theme.bgColor?.common,
-								width: isMobileSizeSmall ? '8rem' : '12rem',
-								fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-								textTransform: 'capitalize',
-							}}>
-							<MenuItem
-								disabled
-								value='filter'
-								selected
+				<Box sx={{ display: 'flex', width: '60%' }}>
+					<Box sx={{ mr: '1rem' }}>
+						<FormControl>
+							<Select
+								size='small'
+								value={filterValue}
+								onChange={(e) => {
+									setFilterValue(e.target.value);
+								}}
+								displayEmpty
 								sx={{
-									fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-									fontStyle: 'italic',
+									backgroundColor: theme.bgColor?.common,
+									width: isMobileSizeSmall ? '8rem' : '12rem',
+									fontSize: isMobileSize ? '0.7rem' : '0.85rem',
 									textTransform: 'capitalize',
-									padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-									minHeight: '2rem',
 								}}>
-								Filter Submissions
-							</MenuItem>
-							<MenuItem
-								value=''
-								selected
-								sx={{
-									fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-									textTransform: 'capitalize',
-									padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-									minHeight: '2rem',
-								}}>
-								All Submissions
-							</MenuItem>
-							<MenuItem
-								value='checked'
-								sx={{
-									fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-									textTransform: 'capitalize',
-									padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-									minHeight: '2rem',
-								}}>
-								Checked
-							</MenuItem>
-							<MenuItem
-								value='unchecked'
-								sx={{
-									fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-									textTransform: 'capitalize',
-									padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-									minHeight: '2rem',
-								}}>
-								Unchecked
-							</MenuItem>
-							<MenuItem
-								disabled
-								value='types'
-								selected
-								sx={{
-									fontSize: isMobileSize ? '0.6rem' : '0.7rem',
-									textTransform: 'inherit',
-									fontWeight: 'lighter',
-									padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-									minHeight: '2rem',
-								}}>
-								------ Filter by Course ------
-							</MenuItem>
-							{courses.map((course) => (
 								<MenuItem
-									value={course.courseId}
-									key={course.courseId}
+									disabled
+									value='filter'
+									selected
+									sx={{
+										fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+										fontStyle: 'italic',
+										textTransform: 'capitalize',
+										padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+										minHeight: '2rem',
+									}}>
+									Filter Submissions
+								</MenuItem>
+								<MenuItem
+									value=''
+									selected
 									sx={{
 										fontSize: isMobileSize ? '0.65rem' : '0.85rem',
 										textTransform: 'capitalize',
 										padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
 										minHeight: '2rem',
 									}}>
-									{truncateText(course.courseTitle, 25)}
+									All Submissions
 								</MenuItem>
-							))}
-						</Select>
-					</FormControl>
-				</Box>
-				<Box sx={{ display: 'flex', flexDirection: 'column', alignSelf: 'flex-start', width: isRotatedMedium ? '25rem' : '30rem' }}>
-					<Box sx={{ display: 'flex' }}>
-						<CustomTextField
-							value={searchValue}
-							placeholder='Search in Student Username and Quiz Name'
-							onChange={(e) => {
-								setSearchValue(e.target.value);
-								setFilterValue('filter');
-								if (e.target.value === '') {
-									setFilterValue('');
-								}
-							}}
-							sx={{
-								'backgroundColor': '#fff',
-								'& .MuiInputBase-input::placeholder': {
-									fontSize: '0.75rem', // Change this to your desired font size
-								},
-							}}
-							required={false}
-							InputProps={{
-								endAdornment: (
-									<InputAdornment position='end'>
-										<Search
-											sx={{
-												mr: '-0.5rem',
-											}}
-											fontSize={isMobileSize ? 'small' : 'medium'}
-										/>
-									</InputAdornment>
-								),
-							}}
-						/>
-						<CustomSubmitButton
-							sx={{
-								height: isVerySmallScreen ? '1.75rem' : '2rem',
-								marginLeft: '0.5rem',
-								fontSize: isMobileSize ? '0.7rem' : undefined,
-							}}
-							type='button'
-							onClick={async () => {
-								await handleSearchQuestions(1);
-							}}>
-							Search
-						</CustomSubmitButton>
-						<CustomDeleteButton
-							sx={{ height: isVerySmallScreen ? '1.75rem' : '2rem', marginLeft: '0.5rem', fontSize: isMobileSize ? '0.7rem' : undefined }}
-							type='button'
-							onClick={async () => {
-								setFilterValue('');
-								setSearchValue('');
-								setFilteredSubmissions(originalSubmissions);
-								setQuizSubmissionsPageNumber(1);
-								setNumberOfPages(numberOfPagesOfAllSubmissions);
-							}}>
-							Reset
-						</CustomDeleteButton>
+								<MenuItem
+									value='checked'
+									sx={{
+										fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+										textTransform: 'capitalize',
+										padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+										minHeight: '2rem',
+									}}>
+									Checked
+								</MenuItem>
+								<MenuItem
+									value='unchecked'
+									sx={{
+										fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+										textTransform: 'capitalize',
+										padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+										minHeight: '2rem',
+									}}>
+									Unchecked
+								</MenuItem>
+								<MenuItem
+									disabled
+									value='types'
+									selected
+									sx={{
+										fontSize: isMobileSize ? '0.6rem' : '0.7rem',
+										textTransform: 'inherit',
+										fontWeight: 'lighter',
+										padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+										minHeight: '2rem',
+									}}>
+									------ Filter by Course ------
+								</MenuItem>
+								{mappedCourses.map((course) => (
+									<MenuItem
+										value={course.courseId}
+										key={course.courseId}
+										sx={{
+											fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+											textTransform: 'capitalize',
+											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+											minHeight: '2rem',
+										}}>
+										{truncateText(course.courseTitle, 25)}
+									</MenuItem>
+								))}
+							</Select>
+						</FormControl>
 					</Box>
+
+					<CustomTextField
+						value={searchValue}
+						placeholder='Search in Student Username and Quiz Name'
+						onChange={(e) => {
+							setSearchValue(e.target.value);
+						}}
+						sx={{
+							'backgroundColor': '#fff',
+							'& .MuiInputBase-input::placeholder': {
+								fontSize: '0.75rem', // Change this to your desired font size
+							},
+						}}
+						required={false}
+						InputProps={{
+							endAdornment: (
+								<InputAdornment position='end'>
+									<Search
+										sx={{
+											mr: '-0.5rem',
+										}}
+										fontSize={isMobileSize ? 'small' : 'medium'}
+									/>
+								</InputAdornment>
+							),
+						}}
+					/>
+					<CustomSubmitButton
+						sx={{
+							height: isVerySmallScreen ? '1.75rem' : '2rem',
+							marginLeft: '0.5rem',
+							fontSize: isMobileSize ? '0.7rem' : undefined,
+						}}
+						type='button'
+						disabled={isSearchDisabled}
+						onClick={handleSearch}>
+						Search
+					</CustomSubmitButton>
+					<CustomDeleteButton
+						sx={{ height: isVerySmallScreen ? '1.75rem' : '2rem', marginLeft: '0.5rem', fontSize: isMobileSize ? '0.7rem' : undefined }}
+						type='button'
+						onClick={() => {
+							setSearchValue('');
+							setFilterValue('');
+							setSearchResults([]);
+							setIsSearchActive(false);
+							setQuizSubmissionsPageNumber(1);
+						}}>
+						Reset
+					</CustomDeleteButton>
+				</Box>
+				<Box sx={{ display: 'flex', gap: 1, mb: '0.85rem', alignItems: 'center' }}>
+					{isSearchActive && (
+						<Typography
+							variant='body2'
+							sx={{
+								color: 'text.secondary',
+								fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+								mr: 1,
+							}}>
+							{searchResults.length} results
+						</Typography>
+					)}
 				</Box>
 			</Box>
 			<Box
@@ -313,8 +325,8 @@ const AdminQuizSubmissions = () => {
 						]}
 					/>
 					<TableBody>
-						{filteredSubmissions &&
-							filteredSubmissions?.map((submission: QuizSubmission) => {
+						{paginatedSubmissions &&
+							paginatedSubmissions?.map((submission: QuizSubmission) => {
 								return (
 									<TableRow key={submission._id}>
 										<CustomTableCell value={submission.userName} />
@@ -343,7 +355,7 @@ const AdminQuizSubmissions = () => {
 							})}
 					</TableBody>
 				</Table>
-				<CustomTablePagination count={numberOfPages} page={quizSubmissionsPageNumber} onChange={setQuizSubmissionsPageNumber} />
+				<CustomTablePagination count={submissionsNumberOfPages} page={quizSubmissionsPageNumber} onChange={handlePageChange} />
 			</Box>
 		</DashboardPagesLayout>
 	);

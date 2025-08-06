@@ -21,7 +21,7 @@ import AdminInquiries from '../components/layouts/dashboard/AdminInquiries';
 Chart.register(...registerables);
 
 const AdminDashboard = () => {
-	const { sortedUsersData } = useContext(UsersContext);
+	const { users } = useContext(UsersContext);
 	const { coursesSummary, totalCourses, totalNumberOfEnrolledLearners } = useContext(CoursesContext);
 	const { sortedEventsData } = useContext(EventsContext);
 
@@ -38,13 +38,13 @@ const AdminDashboard = () => {
 	});
 
 	useEffect(() => {
-		const totalNumberOfUsers: number = sortedUsersData?.filter((user) => user?.role !== Roles.ADMIN).length;
+		const totalNumberOfUsers: number = users?.filter((user) => user?.role !== Roles.ADMIN).length;
 		setTotalUsers(totalNumberOfUsers);
 
 		// Process user data to create chart data
 		const processUserData = () => {
 			const dataMap: { [date: string]: number } = {};
-			sortedUsersData
+			users
 				?.sort((a: User, b: User) => a.createdAt.localeCompare(b.createdAt))
 				.forEach((user) => {
 					if (user?.role !== Roles.ADMIN) {
@@ -96,7 +96,7 @@ const AdminDashboard = () => {
 
 		processUserData();
 		processBarChartData();
-	}, [sortedUsersData, coursesSummary]);
+	}, [users, coursesSummary]);
 
 	return (
 		<DashboardPagesLayout pageName='Dashboard' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
