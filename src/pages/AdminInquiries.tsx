@@ -456,8 +456,6 @@ const AdminInquiries = () => {
 								placeholder={'Search in Name, Email, Message'}
 								onChange={(e) => {
 									setSearchValue(e.target.value);
-									// Search button becomes disabled automatically when search field is cleared
-									// Filter results remain if filter is selected
 								}}
 								sx={{ backgroundColor: '#fff', minWidth: isVerySmallScreen ? '10rem' : '18rem' }}
 								required={false}
@@ -489,24 +487,36 @@ const AdminInquiries = () => {
 									setSearchButtonClicked(false);
 									setInquiriesPageNumber(1);
 									setSearchResultsPage(1);
-									// Reset to context data
 								}}>
 								Reset
 							</CustomDeleteButton>
+							<Box sx={{ height: '2rem', ml: '1rem', display: 'flex', alignItems: 'center' }}>
+								{isSearchActive ? (
+									<Typography
+										variant='body2'
+										sx={{
+											color: 'text.secondary',
+											fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+
+											whiteSpace: 'nowrap',
+										}}>
+										{searchResultsTotalItems} {searchResultsTotalItems === 1 ? 'result' : 'results'}
+									</Typography>
+								) : (
+									<Typography
+										variant='body2'
+										sx={{
+											color: 'text.secondary',
+											fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+											whiteSpace: 'nowrap',
+										}}>
+										{totalItems} {totalItems === 1 ? 'item' : 'items'}
+									</Typography>
+								)}
+							</Box>
 						</Box>
 					</Box>
 					<Box sx={{ display: 'flex', gap: 1, mb: '0.85rem', alignItems: 'center' }}>
-						{isSearchActive && (
-							<Typography
-								variant='body2'
-								sx={{
-									color: 'text.secondary',
-									fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-									mr: 1,
-								}}>
-								{searchResultsTotalItems} results
-							</Typography>
-						)}
 						<CustomSubmitButton
 							startIcon={<DownloadIcon />}
 							onClick={handleDownload}

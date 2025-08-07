@@ -76,7 +76,7 @@ const InquiriesContextProvider = (props: InquiriesContextProviderProps) => {
 			const sortedDataCopy = [...response.data.data].sort((a: Inquiry, b: Inquiry) => b.createdAt.localeCompare(a.createdAt));
 			setInquiries(sortedDataCopy);
 			setTotalItems(response.data.totalItems);
-			setNumberOfPages(response.data.pagination.totalPages);
+			setNumberOfPages(Math.ceil(response.data.totalItems / 50)); // 50 per page display
 			setLoadedPages([1]);
 			setIsLoaded(true);
 			return response.data.data;

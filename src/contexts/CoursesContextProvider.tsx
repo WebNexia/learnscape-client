@@ -99,12 +99,12 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 	const fetchCourses = async (page: number = 1) => {
 		if (!orgId) return;
 		try {
-			const response = await axios.get(`${base_url}/courses/organisation/${orgId}?page=${page}&limit=100`);
+			const response = await axios.get(`${base_url}/courses/organisation/${orgId}?page=${page}&limit=200`);
 
 			const coursesData = response.data.data;
 			setCourses(coursesData);
 			setTotalItems(response.data.totalItems);
-			setNumberOfPages(response.data.pagination.totalPages);
+			setNumberOfPages(Math.ceil(response.data.totalItems / 50)); // 50 per page display
 			setLoadedPages([page]);
 			setIsLoaded(true);
 		} catch (error) {
@@ -129,7 +129,7 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 			// Fetch missing pages
 			let newCourses: SingleCourse[] = [];
 			for (const page of pagesToFetch) {
-				const response = await axios.get(`${base_url}/courses/organisation/${orgId}?page=${page}&limit=100`);
+				const response = await axios.get(`${base_url}/courses/organisation/${orgId}?page=${page}&limit=200`);
 				newCourses = [...newCourses, ...response.data.data];
 			}
 
