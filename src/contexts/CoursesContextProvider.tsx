@@ -201,6 +201,7 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 	// Function to update courses with new course data
 	const addNewCourse = (newCourse: any) => {
 		setCourses((prevCourses) => [newCourse, ...prevCourses]);
+		setTotalItems((prev) => prev + 1);
 	};
 
 	const updateCoursePublishing = (id: string) => {
@@ -225,6 +226,7 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 
 	const removeCourse = (id: string) => {
 		setCourses((prevCourses) => prevCourses?.filter((data) => data._id !== id));
+		setTotalItems((prev) => Math.max(0, prev - 1));
 	};
 
 	const refreshData = () => {

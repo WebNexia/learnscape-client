@@ -401,6 +401,13 @@ const AdminCourses = () => {
 	const deleteCourse = async (courseId: string): Promise<void> => {
 		try {
 			removeCourse(courseId);
+
+			// If search is active, also remove from search results
+			if (isSearchActive) {
+				setSearchResults((prev) => prev.filter((course) => course._id !== courseId));
+				setSearchResultsTotalItems((prev) => Math.max(0, prev - 1));
+			}
+
 			await axios.delete(`${base_url}/courses/${courseId}`);
 		} catch (error) {
 			console.log(error);

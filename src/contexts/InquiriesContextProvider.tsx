@@ -146,6 +146,7 @@ const InquiriesContextProvider = (props: InquiriesContextProviderProps) => {
 
 	const removeInquiry = (inquiryId: string) => {
 		setInquiries((prev) => prev.filter((inquiry) => inquiry._id !== inquiryId));
+		setTotalItems((prev) => Math.max(0, prev - 1));
 	};
 
 	if (isLoading) {

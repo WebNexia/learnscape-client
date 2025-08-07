@@ -153,6 +153,7 @@ const UsersContextProvider = (props: UserContextProviderProps) => {
 	// Function to update users with new user data
 	const addNewUser = (newUser: any) => {
 		setUsers((prevUsers) => [newUser, ...prevUsers]);
+		setTotalItems((prev) => prev + 1);
 	};
 
 	const activateUser = (id: string) => {
@@ -177,6 +178,7 @@ const UsersContextProvider = (props: UserContextProviderProps) => {
 
 	const removeUser = (id: string) => {
 		setUsers((prevUsers) => prevUsers?.filter((data) => data._id !== id));
+		setTotalItems((prev) => Math.max(0, prev - 1));
 	};
 
 	if (isLoading) {

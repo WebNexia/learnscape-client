@@ -81,12 +81,12 @@ const LessonsContextProvider = (props: LessonsContextProviderProps) => {
 	const fetchLessons = async (page: number = 1) => {
 		if (!orgId) return;
 		try {
-			const response = await axios.get(`${base_url}/lessons/organisation/${orgId}?page=${page}&limit=200`);
+			const response = await axios.get(`${base_url}/lessons/organisation/${orgId}?page=${page}&limit=300`);
 
 			const lessonsData = response.data.data;
 			setLessons(lessonsData);
 			setTotalItems(response.data.totalItems);
-			setNumberOfPages(response.data.pagination.totalPages);
+			setNumberOfPages(Math.ceil(response.data.totalItems / 50)); // 50 per page display
 			setLoadedPages([page]);
 			setIsLoaded(true);
 		} catch (error) {
@@ -111,7 +111,7 @@ const LessonsContextProvider = (props: LessonsContextProviderProps) => {
 			// Fetch missing pages
 			let newLessons: Lesson[] = [];
 			for (const page of pagesToFetch) {
-				const response = await axios.get(`${base_url}/lessons/organisation/${orgId}?page=${page}&limit=200`);
+				const response = await axios.get(`${base_url}/lessons/organisation/${orgId}?page=${page}&limit=300`);
 				newLessons = [...newLessons, ...response.data.data];
 			}
 
@@ -146,6 +146,7 @@ const LessonsContextProvider = (props: LessonsContextProviderProps) => {
 	// Function to update lessons with new lesson data
 	const addNewLesson = (newLesson: any) => {
 		setLessons((prevLessons) => [newLesson, ...prevLessons]);
+		setTotalItems((prev) => prev + 1);
 	};
 
 	const updateLessonPublishing = (id: string) => {
@@ -170,6 +171,7 @@ const LessonsContextProvider = (props: LessonsContextProviderProps) => {
 
 	const removeLesson = (id: string) => {
 		setLessons((prevLessons) => prevLessons?.filter((data) => data._id !== id));
+		setTotalItems((prev) => Math.max(0, prev - 1));
 	};
 
 	const refreshData = () => {

@@ -78,7 +78,7 @@ const DocumentsContextProvider = (props: DocumentsContextProviderProps) => {
 		setError(null);
 
 		try {
-			const response = await axios.get(`${base_url}/documents/organisation/${orgId}?page=${page}&limit=100`);
+			const response = await axios.get(`${base_url}/documents/organisation/${orgId}?page=${page}&limit=200`);
 
 			if (page === 1) {
 				// First page - replace all data
@@ -108,7 +108,7 @@ const DocumentsContextProvider = (props: DocumentsContextProviderProps) => {
 		try {
 			const promises = [];
 			for (let batch = startBatch; batch <= endBatch; batch++) {
-				promises.push(axios.get(`${base_url}/documents/organisation/${orgId}?page=${batch}&limit=100`));
+				promises.push(axios.get(`${base_url}/documents/organisation/${orgId}?page=${batch}&limit=200`));
 			}
 
 			const responses = await Promise.all(promises);
@@ -178,6 +178,7 @@ const DocumentsContextProvider = (props: DocumentsContextProviderProps) => {
 
 	const addNewDocument = (newDocument: any) => {
 		setDocuments((prev) => [newDocument, ...prev]);
+		setTotalItems((prev) => prev + 1);
 	};
 
 	const updateDocuments = (singleDocument: Document) => {
@@ -186,6 +187,7 @@ const DocumentsContextProvider = (props: DocumentsContextProviderProps) => {
 
 	const removeDocument = (id: string) => {
 		setDocuments((prev) => prev.filter((doc) => doc._id !== id));
+		setTotalItems((prev) => Math.max(0, prev - 1));
 	};
 
 	const contextValue: DocumentsContextTypes = {

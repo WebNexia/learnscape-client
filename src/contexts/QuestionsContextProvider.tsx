@@ -80,7 +80,7 @@ const QuestionsContextProvider = (props: QuestionsContextProviderProps) => {
 		setError(null);
 
 		try {
-			const response = await axios.get(`${base_url}/questions/organisation/${orgId}?page=${page}&limit=200`);
+			const response = await axios.get(`${base_url}/questions/organisation/${orgId}?page=${page}&limit=500`);
 
 			setQuestions(response.data.data);
 			setTotalItems(response.data.totalItems);
@@ -104,7 +104,7 @@ const QuestionsContextProvider = (props: QuestionsContextProviderProps) => {
 			// Fetch all batches from startBatch to endBatch
 			const promises = [];
 			for (let batch = startBatch; batch <= endBatch; batch++) {
-				promises.push(axios.get(`${base_url}/questions/organisation/${orgId}?page=${batch}&limit=200`));
+				promises.push(axios.get(`${base_url}/questions/organisation/${orgId}?page=${batch}&limit=500`));
 			}
 
 			const responses = await Promise.all(promises);
@@ -181,6 +181,7 @@ const QuestionsContextProvider = (props: QuestionsContextProviderProps) => {
 	// Function to update sortedQuestionsData with new course data
 	const addNewQuestion = (newQuestion: any) => {
 		setQuestions((prevQuestions) => [newQuestion, ...prevQuestions]);
+		setTotalItems((prev) => prev + 1);
 	};
 
 	const updateQuestion = (updatedQuestion: QuestionInterface) => {
@@ -195,6 +196,7 @@ const QuestionsContextProvider = (props: QuestionsContextProviderProps) => {
 
 	const removeQuestion = (id: string) => {
 		setQuestions((prevQuestions) => prevQuestions?.filter((data) => data._id !== id));
+		setTotalItems((prev) => Math.max(0, prev - 1));
 	};
 
 	if (isLoading || allQuestionTypesLoading) {

@@ -183,6 +183,13 @@ const AdminInquiries = () => {
 		try {
 			await axios.delete(`${base_url}/inquiries/${selectedInquiry._id}`);
 			removeInquiry(selectedInquiry._id);
+
+			// If search is active, also remove from search results
+			if (isSearchActive) {
+				setSearchResults((prev) => prev.filter((inquiry) => inquiry._id !== selectedInquiry._id));
+				setSearchResultsTotalItems((prev) => Math.max(0, prev - 1));
+			}
+
 			// Close all modals
 			setDeleteModalOpen({});
 			setViewModalOpen({});
