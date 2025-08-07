@@ -160,7 +160,7 @@ const AdminInquiries = () => {
 			} else {
 				// First, get the total count to know how many pages we need
 				const countResponse = await axios.get(`${base_url}/inquiries/organisation/${orgId}?page=1&limit=1`);
-				const totalItems = countResponse.data.pagination.totalItems;
+				const totalItems = countResponse.data.totalItems;
 
 				// Calculate how many pages we need to fetch all data
 				const itemsPerPage = 1000; // Fetch 1000 per page
@@ -306,11 +306,11 @@ const AdminInquiries = () => {
 							</Box>
 							<CustomTextField
 								value={searchValue}
-								placeholder={'Search in name, email, message'}
+								placeholder={'Search in Name, Email, Message'}
 								onChange={(e) => {
 									setSearchValue(e.target.value);
 								}}
-								sx={{ backgroundColor: '#fff', minWidth: isVerySmallScreen ? '10rem' : '17.5rem' }}
+								sx={{ backgroundColor: '#fff', minWidth: isVerySmallScreen ? '10rem' : '18rem' }}
 								required={false}
 								InputProps={{
 									endAdornment: (

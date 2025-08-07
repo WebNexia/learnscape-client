@@ -187,7 +187,7 @@ const AdminUsers = () => {
 			} else {
 				// First, get the total count to know how many pages we need
 				const countResponse = await axios.get(`${base_url}/users/organisation/${orgId}?page=1&limit=1`);
-				const totalItems = countResponse.data.pagination.totalItems;
+				const totalItems = countResponse.data.totalItems;
 
 				// Calculate how many pages we need to fetch all data
 				const itemsPerPage = 1000; // Fetch 1000 per page

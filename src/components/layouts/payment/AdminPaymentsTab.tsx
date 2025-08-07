@@ -1,5 +1,5 @@
-import { Box, FormControl, InputAdornment, MenuItem, Select, Table, TableBody, TableCell, TableRow } from '@mui/material';
-import { useContext, useEffect, useRef, useState } from 'react';
+import { Box, FormControl, InputAdornment, MenuItem, Select, Table, TableBody, TableCell, TableRow, Typography } from '@mui/material';
+import { useContext, useEffect, useState } from 'react';
 import { PaymentsContext } from '../../../contexts/PaymentsContextProvider';
 import { Payment } from '../../../interfaces/payment';
 import CustomTableHead from '../table/CustomTableHead';
@@ -15,6 +15,7 @@ import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 import CustomActionBtn from '../table/CustomActionBtn';
 import PaymentDetailsDialog from './PaymentDetailsDialog';
 import CustomSubmitButton from '../../forms/customButtons/CustomSubmitButton';
+import CustomDeleteButton from '../../forms/customButtons/CustomDeleteButton';
 import DownloadIcon from '@mui/icons-material/Download';
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
 import axios from '@utils/axiosInstance';
@@ -24,41 +25,32 @@ const AdminPaymentsTab = () => {
 
 	const { orgId, organisation } = useContext(OrganisationContext);
 
-	const { sortedPaymentsData, sortPaymentsData, fetchPayments } = useContext(PaymentsContext);
-	const { sortedCoursesData } = useContext(CoursesContext);
+	const { payments, sortPaymentsData, totalItems, loadedPages, paymentsPageNumber, setPaymentsPageNumber, fetchMorePayments } =
+		useContext(PaymentsContext);
+	const { courses } = useContext(CoursesContext);
 
 	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
-	const courses: string[] = sortedCoursesData?.map((course) => course.title);
+	const mappedCourses: string[] = courses?.map((course) => course.title);
 
-	const [paymentsPageNumber, setPaymentsPageNumber] = useState<number>(1);
 	const [searchValue, setSearchValue] = useState<string>('');
 	const [filterValue, setFilterValue] = useState<string>('');
+	const [searchResults, setSearchResults] = useState<Payment[]>([]);
+	const [isSearchActive, setIsSearchActive] = useState<boolean>(false);
 	const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
 
 	const pageSize = 50;
 
-	const filteredPayments = sortedPaymentsData.filter((payment) => {
-		if (searchValue) {
-			const lowerSearch = searchValue.toLowerCase();
-			return (
-				payment?.firstName?.toLowerCase().includes(lowerSearch) ||
-				payment?.lastName?.toLowerCase().includes(lowerSearch) ||
-				payment?.username?.toLowerCase().includes(lowerSearch)
-			);
-		}
-		if (filterValue) {
-			if (filterValue === payment?.courseTitle?.toLowerCase()) return true;
-		}
-		return !searchValue && !filterValue;
-	});
+	// Use search results if active, otherwise use context data
+	const displayPayments = isSearchActive ? searchResults : payments;
 
-	const paymentsNumberOfPages = Math.ceil(filteredPayments.length / pageSize);
+	// Calculate total pages based on filtered results when searching, otherwise use total items from server
+	const paymentsNumberOfPages = isSearchActive ? Math.ceil(displayPayments.length / pageSize) : Math.ceil(totalItems / pageSize);
 
-	const paginatedPayments = filteredPayments.slice((paymentsPageNumber - 1) * pageSize, paymentsPageNumber * pageSize);
+	const paginatedPayments = displayPayments.slice((paymentsPageNumber - 1) * pageSize, paymentsPageNumber * pageSize);
 
 	const [orderBy, setOrderBy] = useState<keyof Payment>('createdAt');
 	const [order, setOrder] = useState<'asc' | 'desc'>('asc');
@@ -67,7 +59,14 @@ const AdminPaymentsTab = () => {
 		const isAsc = orderBy === property && order === 'asc';
 		setOrder(isAsc ? 'desc' : 'asc');
 		setOrderBy(property);
-		sortPaymentsData(property, isAsc ? 'desc' : 'asc');
+
+		// If in search mode, trigger new search with sort parameters
+		if (isSearchActive) {
+			handleSearch();
+		} else {
+			// Otherwise use client-side sorting
+			sortPaymentsData(property, isAsc ? 'desc' : 'asc');
+		}
 	};
 
 	const handleViewPayment = (payment: Payment) => {
@@ -79,19 +78,89 @@ const AdminPaymentsTab = () => {
 		setPaymentsPageNumber(1);
 	}, []);
 
-	const isInitialMount = useRef(true);
+	const handlePageChange = async (newPage: number) => {
+		setPaymentsPageNumber(newPage);
 
-	useEffect(() => {
-		if (isInitialMount.current) {
-			isInitialMount.current = false;
-		} else {
-			fetchPayments();
+		// Only fetch more data if not searching
+		if (!isSearchActive) {
+			// Check if we need to fetch more data
+			const requiredRecords = newPage * pageSize;
+			if (payments.length < requiredRecords && newPage <= paymentsNumberOfPages) {
+				// Calculate which batch of 200 records we need (context fetches 200 at a time)
+				const startBatch = Math.floor(((newPage - 1) * pageSize) / 200) + 1;
+				const endBatch = Math.ceil((newPage * pageSize) / 200);
+
+				// Check if we already have the required batches loaded
+				const batchesNeeded = [];
+				for (let batch = startBatch; batch <= endBatch; batch++) {
+					if (!loadedPages.includes(batch)) {
+						batchesNeeded.push(batch);
+					}
+				}
+
+				if (batchesNeeded.length > 0) {
+					await fetchMorePayments(startBatch, endBatch);
+				}
+			}
 		}
-	}, []);
+	};
+
+	const handleSearch = async () => {
+		if (!searchValue && !filterValue) {
+			setIsSearchActive(false);
+			setSearchResults([]);
+			setPaymentsPageNumber(1);
+			return;
+		}
+
+		setIsSearchActive(true);
+		setPaymentsPageNumber(1);
+
+		try {
+			const params = new URLSearchParams({
+				limit: '150',
+			});
+
+			if (searchValue) {
+				params.append('search', searchValue);
+			}
+
+			if (filterValue) {
+				params.append('filter', filterValue);
+			}
+
+			if (orderBy && order) {
+				params.append('sortBy', orderBy.toString());
+				params.append('sortOrder', order);
+			}
+
+			console.log('Search params:', { searchValue, filterValue, params: params.toString() });
+			const response = await axios.get(`${base_url}/payments/organisation/${orgId}?${params}`);
+			console.log('Search response:', response.data.data.length, 'results');
+			setSearchResults(response.data.data);
+		} catch (error) {
+			console.error('Search error:', error);
+			// Reset search state on error
+			setIsSearchActive(false);
+			setSearchResults([]);
+		}
+	};
+
+	// Check if search button should be disabled
+	const isSearchDisabled = !searchValue && !filterValue;
 
 	const handleDownloadPayments = async () => {
 		try {
-			const response = await axios.get(`${base_url}/payments/export-excel/${orgId}`, { responseType: 'blob' });
+			// Build query parameters for download
+			const params = new URLSearchParams();
+			if (searchValue && isSearchActive) {
+				params.append('search', searchValue);
+			}
+			if (filterValue && isSearchActive) {
+				params.append('filter', filterValue);
+			}
+
+			const response = await axios.get(`${base_url}/payments/export-excel/${orgId}?${params}`, { responseType: 'blob' });
 
 			// Get filename from Content-Disposition header if available
 			let filename = `${organisation?.orgName}_Payments.xlsx`;
@@ -129,14 +198,13 @@ const AdminPaymentsTab = () => {
 					padding: isMobileSizeSmall ? '1rem 1rem 0.5rem 1rem' : '2rem 2rem 1rem 2rem',
 					width: '100%',
 				}}>
-				<Box sx={{ display: 'flex' }}>
+				<Box sx={{ display: 'flex', width: '100%' }}>
 					<Box sx={{ mr: '1rem' }}>
 						<FormControl>
 							<Select
 								size='small'
 								value={filterValue}
 								onChange={(e) => {
-									setSearchValue('');
 									setFilterValue(e.target.value);
 								}}
 								displayEmpty
@@ -183,7 +251,7 @@ const AdminPaymentsTab = () => {
 									}}>
 									------ Filter by Course ------
 								</MenuItem>
-								{courses?.map((course) => (
+								{mappedCourses?.map((course) => (
 									<MenuItem
 										value={course?.toLowerCase()}
 										key={course}
@@ -199,16 +267,13 @@ const AdminPaymentsTab = () => {
 							</Select>
 						</FormControl>
 					</Box>
-					<Box sx={{ alignSelf: 'flex-start', width: '22rem' }}>
+
+					<Box sx={{ display: 'flex', width: '50%' }}>
 						<CustomTextField
 							value={searchValue}
 							placeholder={isVerySmallScreen ? 'Search in Username' : 'Search in First Name, Last Name, and Username'}
 							onChange={(e) => {
 								setSearchValue(e.target.value);
-								setFilterValue('filter');
-								if (e.target.value === '') {
-									setFilterValue('');
-								}
 							}}
 							sx={{
 								'backgroundColor': '#fff',
@@ -230,18 +295,57 @@ const AdminPaymentsTab = () => {
 								),
 							}}
 						/>
+						<CustomSubmitButton
+							sx={{
+								height: isVerySmallScreen ? '1.75rem' : '2rem',
+								marginLeft: '0.5rem',
+								fontSize: isMobileSize ? '0.7rem' : undefined,
+							}}
+							type='button'
+							disabled={isSearchDisabled}
+							onClick={handleSearch}>
+							Search
+						</CustomSubmitButton>
+						<CustomDeleteButton
+							sx={{ height: isVerySmallScreen ? '1.75rem' : '2rem', marginLeft: '0.5rem', fontSize: isMobileSize ? '0.7rem' : undefined }}
+							type='button'
+							onClick={() => {
+								setSearchValue('');
+								setFilterValue('');
+								setSearchResults([]);
+								setIsSearchActive(false);
+								setPaymentsPageNumber(1);
+							}}>
+							Reset
+						</CustomDeleteButton>
 					</Box>
 				</Box>
+
 				<Box
 					sx={{
 						display: 'flex',
 						justifyContent: 'flex-end',
-						width: isVerySmallScreen ? '5%' : isMobileSize ? '20%' : '25%',
+						width: isVerySmallScreen ? '5%' : isMobileSize ? '20%' : '35%',
 						height: isVerySmallScreen ? '1.75rem' : '2rem',
 						fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+						alignItems: 'center',
 					}}>
-					<CustomSubmitButton startIcon={<DownloadIcon />} sx={{ fontSize: isMobileSize ? '0.7rem' : undefined }} onClick={handleDownloadPayments}>
-						Download Payments
+					{isSearchActive && (
+						<Typography
+							variant='body2'
+							sx={{
+								color: 'text.secondary',
+								fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+								mr: 2,
+							}}>
+							{searchResults.length} results
+						</Typography>
+					)}
+					<CustomSubmitButton
+						startIcon={<DownloadIcon />}
+						sx={{ fontSize: isMobileSize ? '0.7rem' : undefined, width: 'fit-content' }}
+						onClick={handleDownloadPayments}>
+						{isSearchActive ? 'Download Filtered Payments' : 'Download All Payments'}
 					</CustomSubmitButton>
 				</Box>
 			</Box>
@@ -311,7 +415,7 @@ const AdminPaymentsTab = () => {
 							})}
 					</TableBody>
 				</Table>
-				<CustomTablePagination count={paymentsNumberOfPages} page={paymentsPageNumber} onChange={setPaymentsPageNumber} />
+				<CustomTablePagination count={paymentsNumberOfPages} page={paymentsPageNumber} onChange={handlePageChange} />
 			</Box>
 
 			<PaymentDetailsDialog
