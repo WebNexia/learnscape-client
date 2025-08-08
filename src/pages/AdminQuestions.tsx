@@ -136,7 +136,7 @@ const AdminQuestions = () => {
 			if (searchResults.length < requiredRecords) {
 				// Build search parameters
 				const params = new URLSearchParams({
-					limit: '500',
+					limit: '200',
 				});
 
 				if (searchValue && searchValue.trim()) {
@@ -154,7 +154,7 @@ const AdminQuestions = () => {
 
 				// Calculate which pages we need to fetch
 				const currentLoadedPages = searchResultsLoadedPages.length > 0 ? Math.max(...searchResultsLoadedPages) : 0;
-				const targetPage = Math.ceil((newPage * pageSize) / 500);
+				const targetPage = Math.ceil((newPage * pageSize) / 200);
 
 				// Fetch all missing pages in sequence
 				for (let page = currentLoadedPages + 1; page <= targetPage; page++) {
@@ -169,7 +169,7 @@ const AdminQuestions = () => {
 			if (questions.length < requiredRecords && newPage <= questionsNumberOfPages) {
 				// Calculate which pages we need to fetch
 				const currentLoadedPages = loadedPages.length > 0 ? Math.max(...loadedPages) : 0;
-				const targetPage = Math.ceil((newPage * pageSize) / 500);
+				const targetPage = Math.ceil((newPage * pageSize) / 200);
 
 				// Fetch all missing pages in sequence
 				if (currentLoadedPages < targetPage) {
@@ -245,7 +245,7 @@ const AdminQuestions = () => {
 				setSearchedValue(searchValue.trim());
 				// Build query parameters
 				const params = new URLSearchParams({
-					limit: '500',
+					limit: '200',
 					search: searchValue.trim(),
 				});
 
@@ -346,7 +346,7 @@ const AdminQuestions = () => {
 											if (newFilterValue) {
 												// Build query parameters
 												const params = new URLSearchParams({
-													limit: '500',
+													limit: '200',
 													filter: newFilterValue,
 												});
 
@@ -649,7 +649,7 @@ const AdminQuestions = () => {
 										if (filterValue) {
 											// Re-trigger filter search without search value
 											const params = new URLSearchParams({
-												limit: '500',
+												limit: '200',
 												filter: filterValue,
 											});
 											if (orderBy) {

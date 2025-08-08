@@ -77,7 +77,7 @@ const UsersContextProvider = (props: UserContextProviderProps) => {
 		if (!orgId) return;
 		try {
 			// Fetch initial 500 records
-			const url = `${base_url}/users/organisation/${orgId}?page=${page}&limit=500`;
+			const url = `${base_url}/users/organisation/${orgId}?page=${page}&limit=300`;
 			const response = await axios.get(url);
 			const sortedDataCopy = [...response.data.data].sort((a: User, b: User) => b.updatedAt.localeCompare(a.updatedAt));
 			setUsers(sortedDataCopy);
@@ -108,7 +108,7 @@ const UsersContextProvider = (props: UserContextProviderProps) => {
 			// Fetch missing pages
 			let newUsers: User[] = [];
 			for (const page of pagesToFetch) {
-				const url = `${base_url}/users/organisation/${orgId}?page=${page}&limit=500`;
+				const url = `${base_url}/users/organisation/${orgId}?page=${page}&limit=300`;
 
 				const response = await axios.get(url);
 				newUsers = [...newUsers, ...response.data.data];

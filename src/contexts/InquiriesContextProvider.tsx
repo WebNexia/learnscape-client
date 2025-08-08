@@ -71,7 +71,7 @@ const InquiriesContextProvider = (props: InquiriesContextProviderProps) => {
 		if (!orgId) return;
 		try {
 			// Fetch initial 500 records
-			const url = `${base_url}/inquiries/organisation/${orgId}?page=${page}&limit=500`;
+			const url = `${base_url}/inquiries/organisation/${orgId}?page=${page}&limit=300`;
 			const response = await axios.get(url);
 			const sortedDataCopy = [...response.data.data].sort((a: Inquiry, b: Inquiry) => b.createdAt.localeCompare(a.createdAt));
 			setInquiries(sortedDataCopy);
@@ -102,7 +102,7 @@ const InquiriesContextProvider = (props: InquiriesContextProviderProps) => {
 			// Fetch missing pages
 			let newInquiries: Inquiry[] = [];
 			for (const page of pagesToFetch) {
-				const url = `${base_url}/inquiries/organisation/${orgId}?page=${page}&limit=500`;
+				const url = `${base_url}/inquiries/organisation/${orgId}?page=${page}&limit=300`;
 
 				const response = await axios.get(url);
 				newInquiries = [...newInquiries, ...response.data.data];

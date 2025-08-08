@@ -132,7 +132,7 @@ const AddNewDocumentDialog = ({
 			if (searchResults.length < requiredRecords) {
 				// Build search parameters
 				const params = new URLSearchParams({
-					limit: '500',
+					limit: '200',
 				});
 
 				if (searchValue && searchValue.trim()) {
@@ -150,7 +150,7 @@ const AddNewDocumentDialog = ({
 
 				// Calculate which pages we need to fetch
 				const currentLoadedPages = searchResultsLoadedPages.length > 0 ? Math.max(...searchResultsLoadedPages) : 0;
-				const targetPage = Math.ceil((newPage * pageSize) / 500);
+				const targetPage = Math.ceil((newPage * pageSize) / 200);
 
 				// Fetch all missing pages in sequence
 				for (let page = currentLoadedPages + 1; page <= targetPage; page++) {
@@ -165,7 +165,7 @@ const AddNewDocumentDialog = ({
 			if (documents.length < requiredRecords && newPage <= documentsNumberOfPages) {
 				// Calculate which pages we need to fetch
 				const currentLoadedPages = loadedPages.length > 0 ? Math.max(...loadedPages) : 0;
-				const targetPage = Math.ceil((newPage * pageSize) / 500);
+				const targetPage = Math.ceil((newPage * pageSize) / 200);
 
 				// Fetch all missing pages in sequence
 				if (currentLoadedPages < targetPage) {
@@ -229,7 +229,7 @@ const AddNewDocumentDialog = ({
 				setSearchedValue(searchValue.trim());
 				// Build query parameters
 				const params = new URLSearchParams({
-					limit: '500',
+					limit: '200',
 					search: searchValue.trim(),
 				});
 
@@ -398,7 +398,7 @@ const AddNewDocumentDialog = ({
 
 											try {
 												const params = new URLSearchParams({
-													limit: '500',
+													limit: '200',
 													filter: newFilterValue.trim(),
 												});
 
@@ -441,7 +441,7 @@ const AddNewDocumentDialog = ({
 
 												try {
 													const params = new URLSearchParams({
-														limit: '500',
+														limit: '200',
 														search: searchValue.trim(),
 													});
 
@@ -629,7 +629,7 @@ const AddNewDocumentDialog = ({
 										if (filterValue) {
 											// Re-trigger filter search without search value
 											const params = new URLSearchParams({
-												limit: '500',
+												limit: '200',
 												filter: filterValue,
 											});
 											if (orderBy) {

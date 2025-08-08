@@ -19,6 +19,9 @@ interface CommunityContextTypes {
 	topicsPageNumber: number;
 	setTopicsPageNumber: React.Dispatch<React.SetStateAction<number>>;
 	fetchTopics: (page: number) => void;
+	fetchMoreTopics: (startPage: number, endPage: number) => void;
+	totalItems: number;
+	loadedPages: number[];
 }
 
 interface CommunityContextProviderProps {
@@ -35,6 +38,9 @@ export const CommunityContext = createContext<CommunityContextTypes>({
 	topicsPageNumber: 1,
 	setTopicsPageNumber: () => {},
 	fetchTopics: () => {},
+	fetchMoreTopics: () => {},
+	totalItems: 0,
+	loadedPages: [],
 });
 
 const CommunityContextProvider = (props: CommunityContextProviderProps) => {
@@ -55,6 +61,8 @@ const CommunityContextProvider = (props: CommunityContextProviderProps) => {
 	const [sortedTopicsData, setSortedTopicsData] = useState<CommunityTopic[]>([]);
 	const [numberOfPages, setNumberOfPages] = useState<number>(1);
 	const [topicsPageNumber, setTopicsPageNumber] = useState<number>(1);
+	const [totalItems, setTotalItems] = useState<number>(0);
+	const [loadedPages, setLoadedPages] = useState<number[]>([]);
 
 	const [isLoaded, setIsLoaded] = useState<boolean>(false);
 
@@ -62,17 +70,51 @@ const CommunityContextProvider = (props: CommunityContextProviderProps) => {
 		if (!orgId) return;
 
 		try {
-			const response = await axios.get(`${base_url}/communityTopics/organisation/${orgId}?page=${page}&limit=15`);
+			const response = await axios.get(`${base_url}/communityTopics/organisation/${orgId}?page=${page}&limit=60`);
 
 			// Initial sorting when fetching data
 			const sortedTopicsDataCopy = [...response.data.data].sort((a: CommunityTopic, b: CommunityTopic) => b.updatedAt.localeCompare(a.updatedAt));
 			setSortedTopicsData(sortedTopicsDataCopy);
-			setNumberOfPages(response.data.pages);
+			setNumberOfPages(response.data.pagination.totalPages);
+			setTotalItems(response.data.totalItems);
+			setLoadedPages([1]);
 			setIsLoaded(true);
 			return response.data.data;
-		} catch (error) {
+		} catch (error: any) {
 			setIsLoaded(true);
 			throw error;
+		}
+	};
+
+	const fetchMoreTopics = async (startPage: number, endPage: number) => {
+		if (!orgId) return;
+		try {
+			// Calculate which pages we need to fetch
+			const pagesToFetch = [];
+			for (let page = startPage; page <= endPage; page++) {
+				if (!loadedPages.includes(page)) {
+					pagesToFetch.push(page);
+				}
+			}
+
+			if (pagesToFetch.length === 0) return; // Already loaded
+
+			// Fetch missing pages
+			let newTopics: CommunityTopic[] = [];
+			for (const page of pagesToFetch) {
+				const url = `${base_url}/communityTopics/organisation/${orgId}?page=${page}&limit=60`;
+				const response = await axios.get(url);
+				newTopics = [...newTopics, ...response.data.data];
+			}
+
+			// Combine with existing data, remove duplicates, and sort
+			const combinedData = [...sortedTopicsData, ...newTopics];
+			const uniqueData = combinedData.filter((topic, index, self) => index === self.findIndex((t) => t._id === topic._id));
+			const sortedData = uniqueData.sort((a: CommunityTopic, b: CommunityTopic) => b.updatedAt.localeCompare(a.updatedAt));
+			setSortedTopicsData(sortedData);
+			setLoadedPages([...loadedPages, ...pagesToFetch]);
+		} catch (error) {
+			console.error('Error fetching more topics:', error);
 		}
 	};
 
@@ -94,6 +136,7 @@ const CommunityContextProvider = (props: CommunityContextProviderProps) => {
 	// Function to update sortedTopicsData with new topic data
 	const addNewTopic = (newTopic: any) => {
 		setSortedTopicsData((prevSortedData) => [newTopic, ...prevSortedData]);
+		setTotalItems((prevTotal) => prevTotal + 1);
 	};
 
 	const updateTopics = (singleTopic: Partial<CommunityTopic>) => {
@@ -108,6 +151,7 @@ const CommunityContextProvider = (props: CommunityContextProviderProps) => {
 
 	const removeTopic = (id: string) => {
 		setSortedTopicsData((prevSortedData) => prevSortedData?.filter((data) => data._id !== id));
+		setTotalItems((prevTotal) => Math.max(0, prevTotal - 1));
 	};
 
 	if (isLoading) {
@@ -130,6 +174,9 @@ const CommunityContextProvider = (props: CommunityContextProviderProps) => {
 				topicsPageNumber,
 				setTopicsPageNumber,
 				fetchTopics,
+				fetchMoreTopics,
+				totalItems,
+				loadedPages,
 			}}>
 			{props.children}
 		</CommunityContext.Provider>

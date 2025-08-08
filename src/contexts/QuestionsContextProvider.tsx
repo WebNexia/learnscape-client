@@ -81,7 +81,7 @@ const QuestionsContextProvider = (props: QuestionsContextProviderProps) => {
 		setError(null);
 
 		try {
-			const response = await axios.get(`${base_url}/questions/organisation/${orgId}?page=${page}&limit=500`);
+			const response = await axios.get(`${base_url}/questions/organisation/${orgId}?page=${page}&limit=200`);
 
 			setQuestions(response.data.data);
 			setTotalItems(response.data.totalItems);
@@ -107,7 +107,7 @@ const QuestionsContextProvider = (props: QuestionsContextProviderProps) => {
 			// Fetch all batches from startBatch to endBatch
 			const promises = [];
 			for (let batch = startBatch; batch <= endBatch; batch++) {
-				promises.push(axios.get(`${base_url}/questions/organisation/${orgId}?page=${batch}&limit=500`));
+				promises.push(axios.get(`${base_url}/questions/organisation/${orgId}?page=${batch}&limit=200`));
 			}
 
 			const responses = await Promise.all(promises);

@@ -96,7 +96,7 @@ const AdminInquiries = () => {
 			if (searchResults.length < requiredRecords) {
 				// Build search parameters
 				const params = new URLSearchParams({
-					limit: '500',
+					limit: '300',
 				});
 
 				if (searchValue && searchValue.trim()) {
@@ -114,7 +114,7 @@ const AdminInquiries = () => {
 
 				// Calculate which pages we need to fetch
 				const currentLoadedPages = searchResultsLoadedPages.length > 0 ? Math.max(...searchResultsLoadedPages) : 0;
-				const targetPage = Math.ceil((newPage * pageSize) / 500);
+				const targetPage = Math.ceil((newPage * pageSize) / 300);
 
 				// Fetch all missing pages in sequence
 				for (let page = currentLoadedPages + 1; page <= targetPage; page++) {
@@ -129,7 +129,7 @@ const AdminInquiries = () => {
 			if (inquiries.length < requiredRecords && newPage <= inquiriesNumberOfPages) {
 				// Calculate which pages we need to fetch
 				const currentLoadedPages = loadedPages.length > 0 ? Math.max(...loadedPages) : 0;
-				const targetPage = Math.ceil((newPage * pageSize) / 500);
+				const targetPage = Math.ceil((newPage * pageSize) / 300);
 
 				// Fetch all missing pages in sequence
 				if (currentLoadedPages < targetPage) {
@@ -245,7 +245,7 @@ const AdminInquiries = () => {
 				setSearchedValue(searchValue.trim());
 				// Build query parameters
 				const params = new URLSearchParams({
-					limit: '500',
+					limit: '300',
 					search: searchValue.trim(),
 				});
 
@@ -340,7 +340,7 @@ const AdminInquiries = () => {
 
 												try {
 													const params = new URLSearchParams({
-														limit: '500',
+														limit: '300',
 														filter: newFilterValue.trim(),
 													});
 
@@ -373,7 +373,7 @@ const AdminInquiries = () => {
 
 													try {
 														const params = new URLSearchParams({
-															limit: '500',
+															limit: '300',
 															search: searchValue.trim(),
 														});
 
@@ -563,7 +563,7 @@ const AdminInquiries = () => {
 										if (searchValue && searchValue.trim()) {
 											// Trigger search without filter value
 											const params = new URLSearchParams({
-												limit: '500',
+												limit: '300',
 												search: searchValue.trim(),
 											});
 											if (orderBy) params.append('sortBy', orderBy);
@@ -605,7 +605,7 @@ const AdminInquiries = () => {
 										if (filterValue && filterValue.trim()) {
 											// Trigger filter search without search value
 											const params = new URLSearchParams({
-												limit: '500',
+												limit: '300',
 												filter: filterValue.trim(),
 											});
 											if (orderBy) params.append('sortBy', orderBy);
