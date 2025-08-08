@@ -37,8 +37,8 @@ const EventCalendar = () => {
 	const { sortedEventsData } = useContext(EventsContext);
 	const { orgId } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
-	const { sortedUsersData } = useContext(UsersContext);
-	const { sortedCoursesData } = useContext(CoursesContext);
+	const { users } = useContext(UsersContext);
+	const { courses } = useContext(CoursesContext);
 
 	const navigate = useNavigate();
 
@@ -160,7 +160,7 @@ const EventCalendar = () => {
 		}
 
 		const attendees = action === 'create' ? newEvent.attendees : selectedEvent?.attendees || [];
-		const searchResults = sortedUsersData.filter(
+		const searchResults = users.filter(
 			(mappedUser) =>
 				(mappedUser.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
 					mappedUser.email.toLowerCase().includes(searchQuery.toLowerCase())) &&
@@ -177,7 +177,7 @@ const EventCalendar = () => {
 		}
 
 		const coursesIds = action === 'create' ? newEvent.coursesIds : selectedEvent?.coursesIds || [];
-		const searchResults = sortedCoursesData.filter(
+		const searchResults = courses.filter(
 			(course) => course.title.toLowerCase().includes(searchQuery.toLowerCase()) && !coursesIds.includes(course._id)
 		);
 

@@ -29,7 +29,7 @@ const EditInstructorDialog = ({
 	setSingleCourse,
 }: EditInstructorDialogProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
-	const { sortedUsersData } = useContext(UsersContext);
+	const { users } = useContext(UsersContext);
 	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize: boolean = isSmallScreen || isRotatedMedium;
 
@@ -217,7 +217,7 @@ const EditInstructorDialog = ({
 				</Box>
 
 				<UserSearchSelect
-					users={sortedUsersData}
+					users={users}
 					value={searchValue}
 					onChange={setSearchValue}
 					onSelect={(selectedUser) => {

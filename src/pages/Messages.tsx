@@ -97,7 +97,7 @@ export interface Chat {
 const Messages = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { user } = useContext(UserAuthContext);
-	const { sortedUsersData } = useContext(UsersContext);
+	const { users } = useContext(UsersContext);
 
 	const { isSmallScreen, isRotatedMedium, isVerySmallScreen, isRotated } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -1450,7 +1450,7 @@ const Messages = () => {
 				maxWidth='sm'>
 				<Box sx={{ display: 'flex', justifyContent: 'center', width: '100%', mb: filteredUsers.length === 0 ? '1.5rem' : '-1rem' }}>
 					<UserSearchSelect
-						users={user?.role === 'admin' ? sortedUsersData : sortedUsersData.filter((user) => user.hasRegisteredCourse || user.role === 'admin')}
+						users={user?.role === 'admin' ? users : users.filter((user) => user.hasRegisteredCourse || user.role === 'admin')}
 						value={searchValue}
 						onChange={setSearchValue}
 						onSelect={handleUserSelection}

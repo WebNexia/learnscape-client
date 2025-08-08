@@ -87,8 +87,8 @@ const CreateEventDialog = ({
 
 	const { user } = useContext(UserAuthContext);
 	const { orgId } = useContext(OrganisationContext);
-	const { sortedUsersData } = useContext(UsersContext);
-	const { sortedCoursesData } = useContext(CoursesContext);
+	const { users } = useContext(UsersContext);
+	const { courses } = useContext(CoursesContext);
 	const { addNewEvent } = useContext(EventsContext);
 
 	const { isSmallScreen, isRotatedMedium, isVerySmallScreen } = useContext(MediaQueryContext);
@@ -157,7 +157,7 @@ const CreateEventDialog = ({
 			return; // Don't proceed if URL validation fails
 		}
 
-		const allFirebaseUserIds: string[] = sortedUsersData
+		const allFirebaseUserIds: string[] = users
 			?.filter((filteredUser) => filteredUser._id !== user?._id)
 			?.map((mappedUser) => mappedUser.firebaseUserId);
 
@@ -266,7 +266,7 @@ const CreateEventDialog = ({
 			}
 
 			if (newEvent.isPublic) {
-				const allFirebaseUserIds: string[] = sortedUsersData
+				const allFirebaseUserIds: string[] = users
 					?.filter((filteredUser) => filteredUser._id !== user?._id)
 					?.map((mappedUser) => mappedUser.firebaseUserId);
 
@@ -773,7 +773,7 @@ const CreateEventDialog = ({
 					{newEvent.coursesIds.length > 0 && (
 						<Box sx={{ display: 'flex', margin: '0.75rem 0 0.75rem 0', flexWrap: 'wrap' }}>
 							{newEvent.coursesIds?.map((id) => {
-								const course = sortedCoursesData.find((course) => course._id === id);
+								const course = courses.find((course) => course._id === id);
 								return (
 									<Box
 										key={course?._id}
