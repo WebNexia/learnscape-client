@@ -49,7 +49,7 @@ export const DocumentsContext = createContext<DocumentsContextTypes>({
 const DocumentsContextProvider = (props: DocumentsContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
-	const { isAuthenticated } = useAuth();
+	const { isAuthenticated, isAdmin, isLearner } = useAuth();
 	const location = useLocation();
 	const isLandingPageRoute =
 		location.pathname === '/' ||
@@ -131,7 +131,7 @@ const DocumentsContextProvider = (props: DocumentsContextProviderProps) => {
 	};
 
 	const { data, isLoading, isError } = useQuery(['allDocuments', orgId], () => fetchDocuments(1), {
-		enabled: !!orgId && isAuthenticated && !isLoaded && !isLandingPageRoute,
+		enabled: !!orgId && isAuthenticated && (isAdmin || isLearner) && !isLoaded && !isLandingPageRoute,
 	});
 
 	const fetchLandingPageDocuments = async () => {
