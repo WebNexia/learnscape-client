@@ -49,7 +49,6 @@ const AdminCourses = () => {
 	const {
 		courses,
 		error,
-		fetchCourses,
 		fetchMoreCourses,
 		addNewCourse,
 		removeCourse,
@@ -140,9 +139,8 @@ const AdminCourses = () => {
 	}, [displayCourses, coursesPageNumber]);
 
 	useEffect(() => {
-		fetchCourses(1); // Always fetch initial data
 		setCoursesPageNumber(1);
-	}, []); // Only on mount
+	}, []);
 
 	const handlePageChange = async (newPage: number) => {
 		// Set appropriate page number based on search state
@@ -371,7 +369,7 @@ const AdminCourses = () => {
 				},
 			});
 		} catch (error) {
-			console.log(error);
+			console.error('Create course error:', error);
 		}
 	};
 
@@ -392,7 +390,7 @@ const AdminCourses = () => {
 
 			setIsCourseCloned(true);
 		} catch (error) {
-			console.log(error);
+			console.error('Clone course error:', error);
 		} finally {
 			setIsCloning(false);
 		}
@@ -410,7 +408,7 @@ const AdminCourses = () => {
 
 			await axios.delete(`${base_url}/courses/${courseId}`);
 		} catch (error) {
-			console.log(error);
+			console.error('Delete course error:', error);
 		}
 	};
 

@@ -1412,8 +1412,6 @@ const AdminLessonEditPage = () => {
 														setIsLessonUpdated(true);
 														setHasUnsavedChanges(true);
 														setIsAiContentGeneratedMsgOpen(true);
-
-														console.log('Generated questions added to lesson:', convertedQuestions);
 													} catch (error) {
 														console.error('Error parsing generated questions:', error);
 														// You might want to show an error message to the user here

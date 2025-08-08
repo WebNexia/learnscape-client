@@ -32,7 +32,6 @@ const AdminPromoCodesTab = () => {
 		setPromoCodesPageNumber,
 		fetchMorePromoCodes,
 		removePromoCode,
-		fetchPromoCodes,
 	} = useContext(PromoCodesContext);
 
 	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
@@ -232,9 +231,7 @@ const AdminPromoCodesTab = () => {
 	}, [promoCodes, promoCodesPageNumber]);
 
 	useEffect(() => {
-		if (promoCodes.length === 0) {
-			fetchPromoCodes(1);
-		}
+		setPromoCodesPageNumber(1);
 	}, []);
 
 	const openDeleteCodeModal = (index: number) => {
@@ -257,9 +254,8 @@ const AdminPromoCodesTab = () => {
 				setSearchResultsTotalItems((prev) => Math.max(0, prev - 1));
 			}
 			await axios.delete(`${base_url}/promocodes/${codeId}`);
-			fetchPromoCodes(1);
 		} catch (error) {
-			console.log(error);
+			console.error('Delete promo code error:', error);
 		}
 	};
 

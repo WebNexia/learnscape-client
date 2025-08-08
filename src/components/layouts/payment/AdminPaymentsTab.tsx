@@ -47,7 +47,7 @@ const AdminPaymentsTab = () => {
 	const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-	const pageSize = 50; // Changed from 50 to 2 for testing
+	const pageSize = 50;
 
 	// Use search results if active, otherwise use context data
 	const displayPayments = isSearchActive ? searchResults : payments;
@@ -71,21 +71,14 @@ const AdminPaymentsTab = () => {
 
 			// Check if we need to fetch more search results
 			const requiredRecords = newPage * pageSize;
-			console.log('requiredRecords:', requiredRecords);
-			console.log('searchResults.length < requiredRecords:', searchResults.length < requiredRecords);
-
 			if (searchResults.length < requiredRecords) {
 				// Calculate which pages we need to fetch
 				const currentLoadedPages = searchResultsLoadedPages.length > 0 ? Math.max(...searchResultsLoadedPages) : 0;
-				const targetPage = Math.ceil((newPage * pageSize) / 2); // 2 is the backend limit for testing
-
-				console.log('currentLoadedPages:', currentLoadedPages);
-				console.log('targetPage:', targetPage);
+				const targetPage = Math.ceil((newPage * pageSize) / 200);
 
 				// Fetch all missing pages in sequence
 				for (let page = currentLoadedPages + 1; page <= targetPage; page++) {
 					if (!searchResultsLoadedPages.includes(page)) {
-						console.log('Fetching page:', page);
 						await fetchMoreSearchResults(page);
 					}
 				}
@@ -98,7 +91,7 @@ const AdminPaymentsTab = () => {
 			if (payments.length < requiredRecords && newPage <= paymentsNumberOfPages) {
 				// Calculate which pages we need to fetch
 				const currentLoadedPages = loadedPages.length > 0 ? Math.max(...loadedPages) : 0;
-				const targetPage = Math.ceil((newPage * pageSize) / 2); // 2 is the backend limit for testing
+				const targetPage = Math.ceil((newPage * pageSize) / 200);
 
 				// Fetch all missing pages in sequence
 				if (currentLoadedPages < targetPage) {
@@ -237,7 +230,7 @@ const AdminPaymentsTab = () => {
 			link.remove();
 			window.URL.revokeObjectURL(url);
 		} catch (error) {
-			console.log(error);
+			console.error('Download error:', error);
 		}
 	};
 

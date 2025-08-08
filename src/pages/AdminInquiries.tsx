@@ -43,18 +43,8 @@ const AdminInquiries = () => {
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
-	const {
-		inquiries,
-		error,
-		removeInquiry,
-		fetchInquiries,
-		fetchMoreInquiries,
-		sortInquiries,
-		totalItems,
-		loadedPages,
-		inquiriesPageNumber,
-		setInquiriesPageNumber,
-	} = useContext(InquiriesContext);
+	const { inquiries, error, removeInquiry, fetchMoreInquiries, sortInquiries, totalItems, loadedPages, inquiriesPageNumber, setInquiriesPageNumber } =
+		useContext(InquiriesContext);
 	const { orgId } = useContext(OrganisationContext);
 	const [searchValue, setSearchValue] = useState<string>('');
 	const [filterValue, setFilterValue] = useState<string>('');
@@ -88,9 +78,8 @@ const AdminInquiries = () => {
 	const [emailDialogOpen, setEmailDialogOpen] = useState(false);
 
 	useEffect(() => {
-		fetchInquiries(1);
-		setInquiriesPageNumber(1); // Always fetch initial data
-	}, []); // Only on mount
+		setInquiriesPageNumber(1);
+	}, []);
 
 	const handlePageChange = async (newPage: number) => {
 		// Set appropriate page number based on search state

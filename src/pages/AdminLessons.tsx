@@ -41,18 +41,8 @@ const AdminLessons = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const navigate = useNavigate();
 
-	const {
-		lessons,
-		error,
-		fetchLessons,
-		fetchMoreLessons,
-		removeLesson,
-		totalItems,
-		loadedPages,
-		lessonsPageNumber,
-		setLessonsPageNumber,
-		sortLessonsData,
-	} = useContext(LessonsContext);
+	const { lessons, error, fetchMoreLessons, removeLesson, totalItems, loadedPages, lessonsPageNumber, setLessonsPageNumber, sortLessonsData } =
+		useContext(LessonsContext);
 	const { orgId } = useContext(OrganisationContext);
 
 	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
@@ -242,8 +232,8 @@ const AdminLessons = () => {
 	if (error) return <Typography color='error'>{error}</Typography>;
 
 	useEffect(() => {
-		fetchLessons(1); // Always fetch initial data
-	}, []); // Only on mount
+		setLessonsPageNumber(1);
+	}, []);
 
 	const openDeleteLessonModal = (index: number) => {
 		const updatedState = [...isLessonDeleteModalOpen];
@@ -267,9 +257,8 @@ const AdminLessons = () => {
 			}
 
 			await axios.delete(`${base_url}/lessons/${lessonId}`);
-			fetchLessons(1);
 		} catch (error) {
-			console.log(error);
+			console.error('Delete lesson error:', error);
 		}
 	};
 

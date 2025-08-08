@@ -118,9 +118,8 @@ const AdminQuestions = () => {
 	} = useNewQuestion();
 
 	useEffect(() => {
-		fetchQuestions(1); // Always fetch initial data
 		setQuestionsPageNumber(1);
-	}, []); // Only on mount
+	}, []);
 
 	const handlePageChange = async (newPage: number) => {
 		// Set appropriate page number based on search state
@@ -218,7 +217,7 @@ const AdminQuestions = () => {
 			await axios.delete(`${base_url}/questions/${questionId}`);
 			fetchQuestions(questionsPageNumber);
 		} catch (error) {
-			console.log(error);
+			console.error('Delete question error:', error);
 		}
 	};
 

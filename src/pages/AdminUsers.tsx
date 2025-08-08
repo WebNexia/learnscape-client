@@ -40,19 +40,8 @@ const AdminUsers = () => {
 
 	const { userId } = useContext(UserAuthContext);
 
-	const {
-		users,
-		loading,
-		error,
-		fetchUsers,
-		fetchMoreUsers,
-		updateUser,
-		sortUsersData,
-		totalItems,
-		loadedPages,
-		usersPageNumber,
-		setUsersPageNumber,
-	} = useContext(UsersContext);
+	const { users, loading, error, fetchMoreUsers, updateUser, sortUsersData, totalItems, loadedPages, usersPageNumber, setUsersPageNumber } =
+		useContext(UsersContext);
 
 	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -89,7 +78,6 @@ const AdminUsers = () => {
 	const [singleUser, setSingleUser] = useState<User | null>(null);
 
 	useEffect(() => {
-		fetchUsers(1); // Always fetch initial data
 		setUsersPageNumber(1);
 	}, []); // Only on mount
 
@@ -315,7 +303,7 @@ const AdminUsers = () => {
 			});
 			updateUser({ ...singleUser!, isActive: !singleUser?.isActive });
 		} catch (error) {
-			console.log(error);
+			console.error('Toggle user status error:', error);
 		}
 	};
 
@@ -345,7 +333,7 @@ const AdminUsers = () => {
 			updateUser(singleUser!);
 			closeUserEditModal(index);
 		} catch (error) {
-			console.log(error);
+			console.error('Update user role error:', error);
 		}
 	};
 

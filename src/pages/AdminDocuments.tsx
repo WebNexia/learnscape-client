@@ -49,7 +49,6 @@ const AdminDocuments = () => {
 	const {
 		documents,
 		error,
-		fetchDocuments,
 		fetchMoreDocuments,
 		addNewDocument,
 		removeDocument,
@@ -116,9 +115,8 @@ const AdminDocuments = () => {
 	const [urlErrorMessage, setUrlErrorMessage] = useState<string>('');
 
 	useEffect(() => {
-		fetchDocuments(1); // Always fetch initial data
 		setDocumentsPageNumber(1);
-	}, []); // Only on mount
+	}, []);
 
 	const handlePageChange = async (newPage: number) => {
 		// Set appropriate page number based on search state
@@ -379,7 +377,7 @@ const AdminDocuments = () => {
 
 			return true;
 		} catch (error) {
-			console.log(error);
+			console.error('Create document error:', error);
 			return false;
 		}
 	};
@@ -506,7 +504,7 @@ const AdminDocuments = () => {
 				setSearchResultsTotalItems((prev) => Math.max(0, prev - 1));
 			}
 		} catch (error) {
-			console.log(error);
+			console.error('Delete document error:', error);
 		}
 	};
 

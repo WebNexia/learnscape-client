@@ -72,6 +72,7 @@ const QuestionsContextProvider = (props: QuestionsContextProviderProps) => {
 	const [loadedPages, setLoadedPages] = useState<number[]>([]);
 	const [questionsPageNumber, setQuestionsPageNumber] = useState<number>(1);
 	const [questionTypes, setQuestionTypes] = useState<QuestionType[]>([]);
+	const [isLoaded, setIsLoaded] = useState<boolean>(false);
 
 	const fetchQuestions = async (page: number = 1) => {
 		if (!orgId) return;
@@ -85,9 +86,11 @@ const QuestionsContextProvider = (props: QuestionsContextProviderProps) => {
 			setQuestions(response.data.data);
 			setTotalItems(response.data.totalItems);
 			setLoadedPages((prev) => [...prev, page]);
+			setIsLoaded(true);
 			return response.data.data;
 		} catch (error) {
 			setError('Failed to fetch questions');
+			setIsLoaded(true);
 			throw error;
 		} finally {
 			setLoading(false);
@@ -131,7 +134,7 @@ const QuestionsContextProvider = (props: QuestionsContextProviderProps) => {
 	};
 
 	const { isLoading, isError } = useQuery(['allQuestions', orgId], () => fetchQuestions(1), {
-		enabled: !!orgId && isAuthenticated && (isAdmin || isLearner) && !isLandingPageRoute,
+		enabled: !!orgId && isAuthenticated && (isAdmin || isLearner) && !isLandingPageRoute && !isLoaded,
 	});
 
 	const fetchQuestionTypes = async () => {
@@ -163,7 +166,7 @@ const QuestionsContextProvider = (props: QuestionsContextProviderProps) => {
 		isLoading: allQuestionTypesLoading,
 		isError: allQuestionTypesError,
 	} = useQuery('allQuestionTypes', () => fetchQuestionTypes(), {
-		enabled: !!orgId && isAuthenticated && (isAdmin || isLearner) && !isLandingPageRoute,
+		enabled: !!orgId && isAuthenticated && (isAdmin || isLearner) && !isLandingPageRoute && !isLoaded,
 	});
 
 	// Function to handle sorting
