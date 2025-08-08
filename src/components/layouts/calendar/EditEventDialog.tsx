@@ -87,10 +87,10 @@ const EditEventDialog = ({
 	filterCourses,
 }: EditEventDialogProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
-	const { sortedUsersData } = useContext(UsersContext);
+	const { users } = useContext(UsersContext);
 	const { user } = useContext(UserAuthContext);
 	const { orgId } = useContext(OrganisationContext);
-	const { sortedCoursesData } = useContext(CoursesContext);
+	const { courses } = useContext(CoursesContext);
 	const { updateEvent, removeEvent } = useContext(EventsContext);
 
 	const { isSmallScreen, isRotatedMedium, isVerySmallScreen } = useContext(MediaQueryContext);
@@ -187,7 +187,7 @@ const EditEventDialog = ({
 				return prevData;
 			});
 
-			allCoursesParticipantsInfo = sortedUsersData
+			allCoursesParticipantsInfo = users
 				?.filter((filteredUser) => filteredUser._id !== user?._id)
 				.map((mappedUser) => ({ _id: mappedUser._id, username: mappedUser.username, firebaseUserId: mappedUser.firebaseUserId }));
 		} else if (selectedEvent?.isAllCoursesSelected) {
@@ -286,7 +286,7 @@ const EditEventDialog = ({
 
 			// Notify all users only if event is being made public now
 			if (!wasPublic && selectedEvent?.isPublic) {
-				const allFirebaseUserIds: string[] = sortedUsersData
+				const allFirebaseUserIds: string[] = users
 					?.filter((filteredUser) => filteredUser._id !== user?._id)
 					?.map((mappedUser) => mappedUser.firebaseUserId);
 
@@ -852,7 +852,7 @@ const EditEventDialog = ({
 					{selectedEvent?.coursesIds && selectedEvent.coursesIds.length > 0 && (
 						<Box sx={{ display: 'flex', margin: '0.75rem 0 0.75rem 0', flexWrap: 'wrap' }}>
 							{selectedEvent.coursesIds?.map((id) => {
-								const course = sortedCoursesData.find((course) => course._id === id);
+								const course = courses.find((course) => course._id === id);
 								return (
 									<Box
 										key={course?._id}

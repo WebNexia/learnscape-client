@@ -9,16 +9,20 @@ import { useAuth } from '../hooks/useAuth';
 import { useLocation } from 'react-router-dom';
 
 interface DocumentsContextTypes {
+	documents: Document[];
 	sortedLandingPageDocumentsData: Document[];
-	sortedDocumentsData: Document[];
-	sortDocumentsData: (property: keyof Document, order: 'asc' | 'desc') => void;
+	loading: boolean;
+	error: string | null;
+	fetchDocuments: (page?: number) => void;
+	fetchMoreDocuments: (startBatch: number, endBatch: number) => void;
 	addNewDocument: (newDocument: any) => void;
 	removeDocument: (id: string) => void;
 	updateDocuments: (singleDocument: Document) => void;
-	// numberOfPages: number;
-	// documentsPageNumber: number;
-	// setDocumentsPageNumber: React.Dispatch<React.SetStateAction<number>>;
-	fetchDocuments: () => void;
+	sortDocumentsData: (property: keyof Document, order: 'asc' | 'desc') => void;
+	totalItems: number;
+	loadedPages: number[];
+	documentsPageNumber: number;
+	setDocumentsPageNumber: React.Dispatch<React.SetStateAction<number>>;
 }
 
 interface DocumentsContextProviderProps {
@@ -26,22 +30,26 @@ interface DocumentsContextProviderProps {
 }
 
 export const DocumentsContext = createContext<DocumentsContextTypes>({
+	documents: [],
 	sortedLandingPageDocumentsData: [],
-	sortedDocumentsData: [],
-	sortDocumentsData: () => {},
+	loading: false,
+	error: null,
+	fetchDocuments: () => {},
+	fetchMoreDocuments: () => {},
 	addNewDocument: () => {},
 	removeDocument: () => {},
 	updateDocuments: () => {},
-	// numberOfPages: 1,
-	// documentsPageNumber: 1,
-	// setDocumentsPageNumber: () => {},
-	fetchDocuments: () => {},
+	sortDocumentsData: () => {},
+	totalItems: 0,
+	loadedPages: [],
+	documentsPageNumber: 1,
+	setDocumentsPageNumber: () => {},
 });
 
 const DocumentsContextProvider = (props: DocumentsContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
-	const { isAuthenticated, isAdmin, isLearner } = useAuth();
+	const { isAuthenticated } = useAuth();
 	const location = useLocation();
 	const isLandingPageRoute =
 		location.pathname === '/' ||
@@ -53,32 +61,76 @@ const DocumentsContextProvider = (props: DocumentsContextProviderProps) => {
 		// Only consider course preview pages as landing pages, not enrolled course pages
 		(location.pathname.startsWith('/course/') && !location.pathname.includes('/userCourseId/'));
 
-	const [sortedDocumentsData, setSortedDocumentsData] = useState<Document[]>([]);
+	const [documents, setDocuments] = useState<Document[]>([]);
 	const [sortedLandingPageDocumentsData, setSortedLandingPageDocumentsData] = useState<Document[]>([]);
-	// const [numberOfPages, setNumberOfPages] = useState<number>(1);
-	// const [documentsPageNumber, setDocumentsPageNumber] = useState<number>(1);
+	const [loading, setLoading] = useState<boolean>(false);
+	const [error, setError] = useState<string | null>(null);
+	const [totalItems, setTotalItems] = useState<number>(0);
+	const [loadedPages, setLoadedPages] = useState<number[]>([]);
+	const [documentsPageNumber, setDocumentsPageNumber] = useState<number>(1);
 
 	const [isLoaded, setIsLoaded] = useState<boolean>(false);
 
-	const fetchDocuments = async () => {
+	const fetchDocuments = async (page: number = 1) => {
 		if (!orgId) return;
 
-		try {
-			const response = await axios.get(`${base_url}/documents/organisation/${orgId}`);
+		setLoading(true);
+		setError(null);
 
-			// Initial sorting when fetching data
-			const sortedDocumentsDataCopy = [...response.data.data].sort((a: Document, b: Document) => b.createdAt.localeCompare(a.createdAt));
-			setSortedDocumentsData(sortedDocumentsDataCopy);
-			// setNumberOfPages(response.data.pages);
+		try {
+			const response = await axios.get(`${base_url}/documents/organisation/${orgId}?page=${page}&limit=200`);
+
+			if (page === 1) {
+				// First page - replace all data
+				setDocuments(response.data.data);
+				setLoadedPages([1]);
+			} else {
+				// Subsequent pages - append data
+				setDocuments((prev) => [...prev, ...response.data.data]);
+				setLoadedPages((prev) => [...prev, page]);
+			}
+
+			setTotalItems(response.data.totalItems || response.data.data.length);
 			setIsLoaded(true);
 			return response.data.data;
-		} catch (error) {
-			setIsLoaded(true); // Set isLoading to false in case of an error
-			throw error; // Rethrow the error to be handled by React Query
+		} catch (error: any) {
+			setError(error.message || 'Failed to fetch documents');
+			setIsLoaded(true);
+			throw error;
+		} finally {
+			setLoading(false);
 		}
 	};
 
-	const { data, isLoading, isError } = useQuery(['allDocuments', orgId], () => fetchDocuments(), {
+	const fetchMoreDocuments = async (startBatch: number, endBatch: number) => {
+		if (!orgId) return;
+
+		try {
+			const promises = [];
+			for (let batch = startBatch; batch <= endBatch; batch++) {
+				promises.push(axios.get(`${base_url}/documents/organisation/${orgId}?page=${batch}&limit=200`));
+			}
+
+			const responses = await Promise.all(promises);
+			const newDocuments: Document[] = [];
+			let totalItemsCount = 0;
+
+			responses.forEach((response, index) => {
+				newDocuments.push(...response.data.data);
+				if (index === 0) {
+					totalItemsCount = response.data.totalItems || response.data.data.length;
+				}
+			});
+
+			setDocuments((prev) => [...prev, ...newDocuments]);
+			setLoadedPages((prev) => [...prev, ...Array.from({ length: endBatch - startBatch + 1 }, (_, i) => startBatch + i)]);
+			setTotalItems(totalItemsCount);
+		} catch (error: any) {
+			setError(error.message || 'Failed to fetch more documents');
+		}
+	};
+
+	const { data, isLoading, isError } = useQuery(['allDocuments', orgId], () => fetchDocuments(1), {
 		enabled: !!orgId && isAuthenticated && !isLoaded && !isLandingPageRoute,
 	});
 
@@ -91,78 +143,73 @@ const DocumentsContextProvider = (props: DocumentsContextProviderProps) => {
 			// Initial sorting when fetching data
 			const sortedLandingPageDocumentsDataCopy = [...response.data.data].sort((a: Document, b: Document) => b.createdAt.localeCompare(a.createdAt));
 			setSortedLandingPageDocumentsData(sortedLandingPageDocumentsDataCopy);
-			// setNumberOfPages(response.data.pages);
 			setIsLoaded(true);
 			return response.data.data;
 		} catch (error) {
-			setIsLoaded(true); // Set isLoading to false in case of an error
-			throw error; // Rethrow the error to be handled by React Query
+			setIsLoaded(true);
+			throw error;
 		}
 	};
 
 	const {
-		data: landingPageDocuments,
-		isLoading: landingPageDocumentsLoading,
-		isError: landingPageDocumentsError,
+		data: landingPageData,
+		isLoading: isLandingPageLoading,
+		isError: isLandingPageError,
 	} = useQuery(['landingPageDocuments', orgId], () => fetchLandingPageDocuments(), {
-		enabled: isLandingPageRoute,
+		enabled: !!orgId && isAuthenticated && !isLoaded && isLandingPageRoute,
 	});
 
-	// Function to handle sorting
 	const sortDocumentsData = (property: keyof Document, order: 'asc' | 'desc') => {
-		const sortedDocumentsDataCopy = [...sortedDocumentsData].sort((a: Document, b: Document) => {
-			if (order === 'asc') {
-				return a[property] > b[property] ? 1 : -1;
-			} else {
-				return a[property] < b[property] ? 1 : -1;
+		const sortedData = [...documents].sort((a, b) => {
+			const aValue = a[property];
+			const bValue = b[property];
+
+			if (typeof aValue === 'string' && typeof bValue === 'string') {
+				return order === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
 			}
+
+			if (aValue < bValue) return order === 'asc' ? -1 : 1;
+			if (aValue > bValue) return order === 'asc' ? 1 : -1;
+			return 0;
 		});
-		setSortedDocumentsData(sortedDocumentsDataCopy);
+
+		setDocuments(sortedData);
 	};
-	// Function to update sortedDocumentsData with new document data
+
 	const addNewDocument = (newDocument: any) => {
-		setSortedDocumentsData((prevSortedData) => {
-			return [newDocument, ...prevSortedData];
-		});
+		setDocuments((prev) => [newDocument, ...prev]);
+		setTotalItems((prev) => prev + 1);
 	};
 
 	const updateDocuments = (singleDocument: Document) => {
-		const updatedDocumentList = sortedDocumentsData?.map((document) => {
-			if (singleDocument._id === document._id) {
-				return singleDocument;
-			}
-			return document;
-		});
-		setSortedDocumentsData(updatedDocumentList);
+		setDocuments((prev) => prev.map((doc) => (doc._id === singleDocument._id ? singleDocument : doc)));
 	};
 
 	const removeDocument = (id: string) => {
-		setSortedDocumentsData((prevSortedData) => prevSortedData?.filter((data) => data._id !== id));
+		setDocuments((prev) => prev.filter((doc) => doc._id !== id));
+		setTotalItems((prev) => Math.max(0, prev - 1));
 	};
 
-	if (isLoading || landingPageDocumentsLoading) {
-		return <Loading />;
-	}
-
-	if (isError || landingPageDocumentsError) {
-		return <LoadingError />;
-	}
+	const contextValue: DocumentsContextTypes = {
+		documents,
+		sortedLandingPageDocumentsData,
+		loading: isLoading || loading,
+		error: isError ? 'Failed to fetch documents' : error,
+		fetchDocuments,
+		fetchMoreDocuments,
+		addNewDocument,
+		removeDocument,
+		updateDocuments,
+		sortDocumentsData,
+		totalItems,
+		loadedPages,
+		documentsPageNumber,
+		setDocumentsPageNumber,
+	};
 
 	return (
-		<DocumentsContext.Provider
-			value={{
-				sortedDocumentsData,
-				sortedLandingPageDocumentsData,
-				sortDocumentsData,
-				addNewDocument,
-				removeDocument,
-				updateDocuments,
-				// numberOfPages,
-				// documentsPageNumber,
-				// setDocumentsPageNumber,
-				fetchDocuments,
-			}}>
-			{props.children}
+		<DocumentsContext.Provider value={contextValue}>
+			{isLoading || isLandingPageLoading ? <Loading /> : isError || isLandingPageError ? <LoadingError /> : props.children}
 		</DocumentsContext.Provider>
 	);
 };

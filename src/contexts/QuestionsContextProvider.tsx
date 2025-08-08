@@ -10,17 +10,20 @@ import { useAuth } from '../hooks/useAuth';
 import { useLocation } from 'react-router-dom';
 
 interface QuestionsContextTypes {
-	sortedQuestionsData: QuestionInterface[];
-	sortQuestionsData: (property: keyof QuestionInterface, order: 'asc' | 'desc') => void;
+	questions: QuestionInterface[];
+	loading: boolean;
+	error: string | null;
+	fetchQuestions: (page?: number) => void;
+	fetchMoreQuestions: (startBatch: number, endBatch: number) => void;
 	addNewQuestion: (newQuestion: any) => void;
 	removeQuestion: (id: string) => void;
 	updateQuestion: (question: QuestionInterface) => void;
-	numberOfPages: number;
+	sortQuestionsData: (property: keyof QuestionInterface, order: 'asc' | 'desc') => void;
+	totalItems: number;
+	loadedPages: number[];
 	questionsPageNumber: number;
 	setQuestionsPageNumber: React.Dispatch<React.SetStateAction<number>>;
-	setNumberOfPages: React.Dispatch<React.SetStateAction<number>>;
 	questionTypes: QuestionType[];
-	fetchQuestions: (page: number) => void;
 	fetchQuestionTypeName: (question: QuestionInterface) => string;
 }
 
@@ -29,17 +32,20 @@ interface QuestionsContextProviderProps {
 }
 
 export const QuestionsContext = createContext<QuestionsContextTypes>({
-	sortedQuestionsData: [],
-	sortQuestionsData: () => {},
+	questions: [],
+	loading: false,
+	error: null,
+	fetchQuestions: () => {},
+	fetchMoreQuestions: () => {},
 	addNewQuestion: () => {},
 	removeQuestion: () => {},
 	updateQuestion: () => {},
-	numberOfPages: 1,
+	sortQuestionsData: () => {},
+	totalItems: 0,
+	loadedPages: [],
 	questionsPageNumber: 1,
 	setQuestionsPageNumber: () => {},
-	setNumberOfPages: () => {},
 	questionTypes: [],
-	fetchQuestions: () => {},
 	fetchQuestionTypeName: () => '',
 });
 
@@ -59,33 +65,76 @@ const QuestionsContextProvider = (props: QuestionsContextProviderProps) => {
 		// Only consider course preview pages as landing pages, not enrolled course pages
 		(location.pathname.startsWith('/course/') && !location.pathname.includes('/userCourseId/'));
 
-	const [sortedQuestionsData, setSortedQuestionsData] = useState<QuestionInterface[]>([]);
-	const [numberOfPages, setNumberOfPages] = useState<number>(1);
+	const [questions, setQuestions] = useState<QuestionInterface[]>([]);
+	const [loading, setLoading] = useState<boolean>(true);
+	const [error, setError] = useState<string | null>(null);
+	const [totalItems, setTotalItems] = useState<number>(0);
+	const [loadedPages, setLoadedPages] = useState<number[]>([]);
 	const [questionsPageNumber, setQuestionsPageNumber] = useState<number>(1);
 	const [questionTypes, setQuestionTypes] = useState<QuestionType[]>([]);
-
 	const [isLoaded, setIsLoaded] = useState<boolean>(false);
 
-	const fetchQuestions = async (page: number) => {
+	const fetchQuestions = async (page: number = 1) => {
 		if (!orgId) return;
 
-		try {
-			const response = await axios.get(`${base_url}/questions/organisation/${orgId}?page=${page}&limit=75`);
+		setLoading(true);
+		setError(null);
 
-			// Initial sorting when fetching data
-			const sortedDataCopy = [...response.data.data].sort((a: QuestionInterface, b: QuestionInterface) => b.createdAt.localeCompare(a.createdAt));
-			setSortedQuestionsData(sortedDataCopy);
-			setNumberOfPages(response.data.pages);
+		try {
+			const response = await axios.get(`${base_url}/questions/organisation/${orgId}?page=${page}&limit=200`);
+
+			setQuestions(response.data.data);
+			setTotalItems(response.data.totalItems);
+			setLoadedPages((prev) => [...prev, page]);
 			setIsLoaded(true);
 			return response.data.data;
 		} catch (error) {
+			setError('Failed to fetch questions');
 			setIsLoaded(true);
 			throw error;
+		} finally {
+			setLoading(false);
 		}
 	};
 
-	const { isLoading, isError } = useQuery(['allQuestions', orgId, questionsPageNumber], () => fetchQuestions(questionsPageNumber), {
-		enabled: !!orgId && !isLoaded && isAuthenticated && (isAdmin || isLearner) && !isLandingPageRoute,
+	const fetchMoreQuestions = async (startBatch: number, endBatch: number) => {
+		if (!orgId) return;
+
+		setLoading(true);
+		setError(null);
+
+		try {
+			// Fetch all batches from startBatch to endBatch
+			const promises = [];
+			for (let batch = startBatch; batch <= endBatch; batch++) {
+				promises.push(axios.get(`${base_url}/questions/organisation/${orgId}?page=${batch}&limit=200`));
+			}
+
+			const responses = await Promise.all(promises);
+			let allQuestions: QuestionInterface[] = [];
+			let totalItemsCount = 0;
+
+			responses.forEach((response, index) => {
+				allQuestions.push(...response.data.data);
+				if (index === 0) {
+					totalItemsCount = response.data.totalItems || response.data.data.length;
+				}
+			});
+
+			setQuestions((prevQuestions) => [...prevQuestions, ...allQuestions]);
+			setTotalItems(totalItemsCount);
+			setLoadedPages((prev) => [...prev, ...Array.from({ length: endBatch - startBatch + 1 }, (_, i) => startBatch + i)]);
+			return allQuestions;
+		} catch (error) {
+			setError('Failed to fetch more questions');
+			throw error;
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const { isLoading, isError } = useQuery(['allQuestions', orgId], () => fetchQuestions(1), {
+		enabled: !!orgId && isAuthenticated && (isAdmin || isLearner) && !isLandingPageRoute && !isLoaded,
 	});
 
 	const fetchQuestionTypes = async () => {
@@ -117,38 +166,40 @@ const QuestionsContextProvider = (props: QuestionsContextProviderProps) => {
 		isLoading: allQuestionTypesLoading,
 		isError: allQuestionTypesError,
 	} = useQuery('allQuestionTypes', () => fetchQuestionTypes(), {
-		enabled: !!orgId && !isLoaded && isAuthenticated && (isAdmin || isLearner) && !isLandingPageRoute,
+		enabled: !!orgId && isAuthenticated && (isAdmin || isLearner) && !isLandingPageRoute && !isLoaded,
 	});
 
 	// Function to handle sorting
 	const sortQuestionsData = (property: keyof QuestionInterface, order: 'asc' | 'desc') => {
-		const sortedDataCopy = [...sortedQuestionsData].sort((a: QuestionInterface, b: QuestionInterface) => {
+		const sortedDataCopy = [...questions].sort((a: QuestionInterface, b: QuestionInterface) => {
 			if (order === 'asc') {
 				return a[property] > b[property] ? 1 : -1;
 			} else {
 				return a[property] < b[property] ? 1 : -1;
 			}
 		});
-		setSortedQuestionsData(sortedDataCopy);
+		setQuestions(sortedDataCopy);
 	};
 
 	// Function to update sortedQuestionsData with new course data
 	const addNewQuestion = (newQuestion: any) => {
-		setSortedQuestionsData((prevSortedData) => [newQuestion, ...prevSortedData]);
+		setQuestions((prevQuestions) => [newQuestion, ...prevQuestions]);
+		setTotalItems((prev) => prev + 1);
 	};
 
 	const updateQuestion = (updatedQuestion: QuestionInterface) => {
-		const updatedUserList = sortedQuestionsData?.map((question) => {
+		const updatedUserList = questions?.map((question) => {
 			if (updatedQuestion._id === question._id) {
 				return updatedQuestion;
 			}
 			return question;
 		});
-		setSortedQuestionsData(updatedUserList);
+		setQuestions(updatedUserList);
 	};
 
 	const removeQuestion = (id: string) => {
-		setSortedQuestionsData((prevSortedData) => prevSortedData?.filter((data) => data._id !== id));
+		setQuestions((prevQuestions) => prevQuestions?.filter((data) => data._id !== id));
+		setTotalItems((prev) => Math.max(0, prev - 1));
 	};
 
 	if (isLoading || allQuestionTypesLoading) {
@@ -162,17 +213,20 @@ const QuestionsContextProvider = (props: QuestionsContextProviderProps) => {
 	return (
 		<QuestionsContext.Provider
 			value={{
-				sortedQuestionsData,
-				sortQuestionsData,
+				questions,
+				loading,
+				error,
+				fetchQuestions,
+				fetchMoreQuestions,
 				addNewQuestion,
 				removeQuestion,
 				updateQuestion,
-				numberOfPages,
+				sortQuestionsData,
+				totalItems,
+				loadedPages,
 				questionsPageNumber,
 				setQuestionsPageNumber,
-				setNumberOfPages,
 				questionTypes,
-				fetchQuestions,
 				fetchQuestionTypeName,
 			}}>
 			{props.children}

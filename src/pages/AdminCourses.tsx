@@ -16,6 +16,7 @@ import {
 	Snackbar,
 	Alert,
 	DialogActions,
+	Chip,
 } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import React, { useContext, useEffect, useRef, useState } from 'react';
@@ -38,13 +39,25 @@ import theme from '../themes';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/CustomInfoMessageAlignedLeft';
 import axios from '@utils/axiosInstance';
-import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
+import CustomDeleteButton from '../components/forms/customButtons/CustomDeleteButton';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
+import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
 
 const AdminCourses = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const navigate = useNavigate();
-	const { sortedCoursesData, sortCoursesData, addNewCourse, removeCourse, fetchCourses } = useContext(CoursesContext);
+	const {
+		courses,
+		error,
+		fetchMoreCourses,
+		addNewCourse,
+		removeCourse,
+		sortCoursesData,
+		totalItems,
+		loadedPages,
+		coursesPageNumber,
+		setCoursesPageNumber,
+	} = useContext(CoursesContext);
 	const { orgId } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
 
@@ -55,9 +68,15 @@ const AdminCourses = () => {
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
-	const [coursesPageNumber, setCoursesPageNumber] = useState<number>(1);
 	const [searchValue, setSearchValue] = useState<string>('');
 	const [filterValue, setFilterValue] = useState<string>('');
+	const [searchResults, setSearchResults] = useState<SingleCourse[]>([]);
+	const [isSearchActive, setIsSearchActive] = useState<boolean>(false);
+	const [searchResultsPage, setSearchResultsPage] = useState<number>(1);
+	const [searchResultsLoadedPages, setSearchResultsLoadedPages] = useState<number[]>([]);
+	const [searchResultsTotalItems, setSearchResultsTotalItems] = useState<number>(0);
+	const [searchButtonClicked, setSearchButtonClicked] = useState<boolean>(false);
+	const [searchedValue, setSearchedValue] = useState<string>('');
 
 	const [title, setTitle] = useState<string>('');
 	const [description, setDescription] = useState<string>('');
@@ -71,28 +90,22 @@ const AdminCourses = () => {
 
 	const pageSize = 50;
 
-	const filteredCourses = sortedCoursesData.filter((course) => {
-		if (searchValue) {
-			const lowerSearch = searchValue.toLowerCase();
-			return course?.title?.toLowerCase().includes(lowerSearch);
-		}
-		if (filterValue) {
-			if (filterValue === 'published courses' && course.isActive) return true;
-			if (filterValue === 'unpublished courses' && !course.isActive) return true;
-			if (filterValue === 'paid courses' && course.prices.find((price) => !(price.amount == '' || price.amount == 'Free' || price.amount == '0')))
-				return true;
-			if (filterValue === 'free courses' && course.prices.find((price) => price.amount == '' || price.amount == 'Free' || price.amount == '0'))
-				return true;
-			if (filterValue === 'open courses' && !course.isExpired) return true;
-			if (filterValue === 'closed courses' && course.isExpired) return true;
-		}
-		return !searchValue && !filterValue;
-	});
+	// Use search results if active, otherwise use context data
+	const displayCourses = isSearchActive ? searchResults : courses;
 
-	const coursesNumberOfPages = Math.ceil(filteredCourses.length / pageSize);
+	// For pagination, use total items from server when not searching
+	const coursesNumberOfPages = isSearchActive ? Math.ceil(searchResultsTotalItems / pageSize) : Math.ceil(totalItems / pageSize);
 
-	const paginatedCourses = filteredCourses.slice((coursesPageNumber - 1) * pageSize, coursesPageNumber * pageSize);
+	// Use appropriate page number for pagination
+	const currentPage = isSearchActive ? searchResultsPage : coursesPageNumber;
+	const paginatedCourses = displayCourses.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
+	const [orderBy, setOrderBy] = useState<keyof SingleCourse>('title');
+	const [order, setOrder] = useState<'asc' | 'desc'>('asc');
+
+	if (error) return <Typography color='error'>{error}</Typography>;
+
+	// Modal states
 	const [isCourseCreateModalOpen, setIsCourseCreateModalOpen] = useState<boolean>(false);
 
 	const openNewCourseModal = () => {
@@ -123,17 +136,156 @@ const AdminCourses = () => {
 			setIsCourseDeleteModalOpen(Array(paginatedCourses.length).fill(false));
 			setIsCourseCloneModalOpen(Array(paginatedCourses.length).fill(false));
 		}
-	}, [sortedCoursesData, coursesPageNumber]);
-
-	const isInitialMount = useRef(true);
+	}, [displayCourses, coursesPageNumber]);
 
 	useEffect(() => {
-		if (isInitialMount.current) {
-			isInitialMount.current = false;
-		} else {
-			fetchCourses();
-		}
+		setCoursesPageNumber(1);
 	}, []);
+
+	const handlePageChange = async (newPage: number) => {
+		// Set appropriate page number based on search state
+		if (isSearchActive) {
+			setSearchResultsPage(newPage);
+		} else {
+			setCoursesPageNumber(newPage);
+		}
+
+		// If in search mode, handle search results pagination
+		if (isSearchActive) {
+			// Check if we need to fetch more search results
+			const requiredRecords = newPage * pageSize;
+			if (searchResults.length < requiredRecords) {
+				// Build search parameters
+				const params = new URLSearchParams({
+					limit: '200',
+				});
+
+				if (searchValue && searchValue.trim()) {
+					params.append('search', searchValue.trim());
+				}
+				if (filterValue && filterValue.trim()) {
+					params.append('filter', filterValue.trim());
+				}
+				if (orderBy) {
+					params.append('sortBy', orderBy);
+				}
+				if (order) {
+					params.append('sortOrder', order);
+				}
+
+				// Calculate which pages we need to fetch
+				const currentLoadedPages = searchResultsLoadedPages.length > 0 ? Math.max(...searchResultsLoadedPages) : 0;
+				const targetPage = Math.ceil((newPage * pageSize) / 200);
+
+				// Fetch all missing pages in sequence
+				for (let page = currentLoadedPages + 1; page <= targetPage; page++) {
+					if (!searchResultsLoadedPages.includes(page)) {
+						await fetchMoreSearchResults(page, params);
+					}
+				}
+			}
+		} else {
+			// Check if we need to fetch more data for context
+			const requiredRecords = newPage * pageSize;
+			if (courses.length < requiredRecords && newPage <= coursesNumberOfPages) {
+				// Calculate which pages we need to fetch
+				const currentLoadedPages = loadedPages.length > 0 ? Math.max(...loadedPages) : 0;
+				const targetPage = Math.ceil((newPage * pageSize) / 200);
+
+				// Fetch all missing pages in sequence
+				if (currentLoadedPages < targetPage) {
+					await fetchMoreCourses(currentLoadedPages + 1, targetPage);
+				}
+			}
+		}
+	};
+
+	const handleSort = (property: keyof SingleCourse) => {
+		const isAsc = orderBy === property && order === 'asc';
+		setOrder(isAsc ? 'desc' : 'asc');
+		setOrderBy(property);
+
+		// If search is active, trigger server-side sort
+		if (isSearchActive) {
+			handleSearch();
+		} else {
+			// Client-side sort for context data
+			sortCoursesData(property, isAsc ? 'desc' : 'asc');
+		}
+	};
+
+	const handleSearch = async () => {
+		try {
+			// Reset to first page when searching
+			setCoursesPageNumber(1);
+			setSearchResultsPage(1);
+
+			// Search button only works when search value exists
+			if (searchValue && searchValue.trim()) {
+				// Store the searched value
+				setSearchedValue(searchValue.trim());
+				// Build query parameters
+				const params = new URLSearchParams({
+					limit: '200',
+					search: searchValue.trim(),
+				});
+
+				// Add filter if it exists
+				if (filterValue && filterValue.trim()) {
+					params.append('filter', filterValue.trim());
+				}
+				if (orderBy) {
+					params.append('sortBy', orderBy);
+				}
+				if (order) {
+					params.append('sortOrder', order);
+				}
+
+				const response = await axios.get(`${base_url}/courses/organisation/${orgId}?${params.toString()}`);
+				setSearchResults(response.data.data);
+				setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
+				setSearchResultsLoadedPages([1]);
+				setIsSearchActive(true);
+				setSearchButtonClicked(true);
+			} else {
+				// If no search value, clear search results
+				setSearchResults([]);
+				setSearchResultsLoadedPages([]);
+				setSearchResultsTotalItems(0);
+				setIsSearchActive(false);
+				setSearchButtonClicked(false);
+			}
+		} catch (error) {
+			console.error('Search error:', error);
+		}
+	};
+
+	const fetchMoreSearchResults = async (page: number, searchParams: URLSearchParams) => {
+		try {
+			// Add page parameter
+			searchParams.set('page', page.toString());
+
+			const response = await axios.get(`${base_url}/courses/organisation/${orgId}?${searchParams.toString()}`);
+
+			if (page === 1) {
+				// First page - replace all data
+				setSearchResults(response.data.data);
+				setSearchResultsLoadedPages([1]);
+			} else {
+				// Subsequent pages - append data
+				setSearchResults((prev) => {
+					const newData = [...prev, ...response.data.data];
+
+					return newData;
+				});
+				setSearchResultsLoadedPages((prev) => [...prev, page]);
+			}
+
+			setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
+		} catch (error) {
+			console.error('Fetch more search results error:', error);
+		}
+	};
 
 	const openCloneCourseModal = (index: number) => {
 		const updatedState = [...isCourseCloneModalOpen];
@@ -190,7 +342,7 @@ const AdminCourses = () => {
 				},
 			});
 
-			// Notify context provider to update sortedCoursesData with the new course
+			// Notify context provider to update courses with the new course
 			addNewCourse({
 				_id: response.data._id,
 				title: title.trim(),
@@ -217,7 +369,7 @@ const AdminCourses = () => {
 				},
 			});
 		} catch (error) {
-			console.log(error);
+			console.error('Create course error:', error);
 		}
 	};
 
@@ -238,7 +390,7 @@ const AdminCourses = () => {
 
 			setIsCourseCloned(true);
 		} catch (error) {
-			console.log(error);
+			console.error('Clone course error:', error);
 		} finally {
 			setIsCloning(false);
 		}
@@ -247,20 +399,17 @@ const AdminCourses = () => {
 	const deleteCourse = async (courseId: string): Promise<void> => {
 		try {
 			removeCourse(courseId);
+
+			// If search is active, also remove from search results
+			if (isSearchActive) {
+				setSearchResults((prev) => prev.filter((course) => course._id !== courseId));
+				setSearchResultsTotalItems((prev) => Math.max(0, prev - 1));
+			}
+
 			await axios.delete(`${base_url}/courses/${courseId}`);
 		} catch (error) {
-			console.log(error);
+			console.error('Delete course error:', error);
 		}
-	};
-
-	const [orderBy, setOrderBy] = useState<keyof SingleCourse>('title');
-	const [order, setOrder] = useState<'asc' | 'desc'>('asc');
-
-	const handleSort = (property: keyof SingleCourse) => {
-		const isAsc = orderBy === property && order === 'asc';
-		setOrder(isAsc ? 'desc' : 'asc');
-		setOrderBy(property);
-		sortCoursesData(property, isAsc ? 'desc' : 'asc');
 	};
 
 	return (
@@ -423,15 +572,84 @@ const AdminCourses = () => {
 					padding: isMobileSizeSmall ? '1rem 1rem 0.5rem 1rem' : '2rem 2rem 1rem 2rem',
 					width: '100%',
 				}}>
-				<Box sx={{ display: 'flex', justifyContent: 'flex-start', alignContent: 'center', width: isMobileSize ? '70%' : '100%' }}>
+				<Box sx={{ display: 'flex', alignSelf: 'flex-start', width: isVerySmallScreen ? '12.5rem' : 'fit-content' }}>
 					<Box>
 						<FormControl>
 							<Select
 								size='small'
 								value={filterValue}
-								onChange={(e) => {
-									setSearchValue('');
-									setFilterValue(e.target.value);
+								onChange={async (e) => {
+									const newFilterValue = e.target.value;
+									setFilterValue(newFilterValue);
+
+									// Auto-search when filter is selected
+									if (newFilterValue && newFilterValue.trim()) {
+										setCoursesPageNumber(1);
+										setSearchResultsPage(1);
+										setIsSearchActive(true);
+										setSearchResultsLoadedPages([]);
+
+										try {
+											const params = new URLSearchParams({
+												limit: '200',
+												filter: newFilterValue.trim(),
+											});
+
+											// Include existing search value if it exists
+											if (searchValue && searchValue.trim()) {
+												params.append('search', searchValue.trim());
+											}
+
+											if (orderBy) {
+												params.append('sortBy', orderBy);
+											}
+											if (order) {
+												params.append('sortOrder', order);
+											}
+
+											const response = await axios.get(`${base_url}/courses/organisation/${orgId}?${params.toString()}`);
+											setSearchResults(response.data.data);
+											setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
+											setSearchResultsLoadedPages([1]);
+										} catch (error) {
+											console.error('Filter search error:', error);
+										}
+									} else {
+										// If filter is cleared but search value exists, auto-search with search value
+										if (searchValue && searchValue.trim()) {
+											setCoursesPageNumber(1);
+											setSearchResultsPage(1);
+											setIsSearchActive(true);
+											setSearchResultsLoadedPages([]);
+
+											try {
+												const params = new URLSearchParams({
+													limit: '200',
+													search: searchValue.trim(),
+												});
+
+												if (orderBy) {
+													params.append('sortBy', orderBy);
+												}
+												if (order) {
+													params.append('sortOrder', order);
+												}
+
+												const response = await axios.get(`${base_url}/courses/organisation/${orgId}?${params.toString()}`);
+												setSearchResults(response.data.data);
+												setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
+												setSearchResultsLoadedPages([1]);
+											} catch (error) {
+												console.error('Auto-search error:', error);
+											}
+										} else {
+											// If no search value, reset to context data
+											setIsSearchActive(false);
+											setSearchResults([]);
+											setSearchResultsLoadedPages([]);
+											setSearchResultsTotalItems(0);
+										}
+									}
 								}}
 								displayEmpty
 								sx={{
@@ -465,7 +683,16 @@ const AdminCourses = () => {
 									}}>
 									All Courses
 								</MenuItem>
-								{['Published Courses', 'Unpublished Courses', 'Paid Courses', 'Free Courses', 'Open Courses', 'Closed Courses'].map((type) => (
+								{[
+									'Published Courses',
+									'Unpublished Courses',
+									'Paid Courses',
+									'Free Courses',
+									'Open Courses',
+									'Closed Courses',
+									'External Courses',
+									'Platform Courses',
+								].map((type) => (
 									<MenuItem
 										value={type.toLowerCase()}
 										key={type}
@@ -481,42 +708,71 @@ const AdminCourses = () => {
 							</Select>
 						</FormControl>
 					</Box>
-					<Box sx={{ alignSelf: 'flex-start', width: isVerySmallScreen ? '7rem' : isMobileSize ? '15rem' : '17.5rem' }}>
-						<CustomTextField
-							value={searchValue}
-							placeholder={isVerySmallScreen ? 'Search in Title' : 'Search Course in Title'}
-							onChange={(e) => {
-								setSearchValue(e.target.value);
-								setFilterValue('filter');
-								if (e.target.value === '') {
-									setFilterValue('');
-								}
-							}}
-							sx={{ backgroundColor: '#fff' }}
-							required={false}
-							InputProps={{
-								endAdornment: (
-									<InputAdornment position='end'>
-										<Search
-											sx={{
-												mr: '-0.5rem',
-											}}
-											fontSize={isMobileSize ? 'small' : 'medium'}
-										/>
-									</InputAdornment>
-								),
-							}}
-						/>
+
+					<CustomTextField
+						value={searchValue}
+						placeholder={'Search in Title and Description'}
+						onChange={(e) => {
+							setSearchValue(e.target.value);
+						}}
+						sx={{ backgroundColor: '#fff', minWidth: isVerySmallScreen ? '10rem' : '17.5rem' }}
+						required={false}
+						InputProps={{
+							endAdornment: (
+								<InputAdornment position='end'>
+									<Search
+										sx={{
+											mr: '-0.5rem',
+										}}
+										fontSize={isMobileSize ? 'small' : 'medium'}
+									/>
+								</InputAdornment>
+							),
+						}}
+					/>
+					<CustomSubmitButton onClick={handleSearch} sx={{ marginLeft: '1rem' }} disabled={!searchValue}>
+						Search
+					</CustomSubmitButton>
+					<CustomDeleteButton
+						onClick={() => {
+							setSearchValue('');
+							setFilterValue('');
+							setSearchedValue('');
+							setSearchButtonClicked(false);
+							setSearchResults([]);
+							setSearchResultsLoadedPages([]);
+							setSearchResultsTotalItems(0);
+							setIsSearchActive(false);
+							setCoursesPageNumber(1);
+							setSearchResultsPage(1);
+						}}>
+						Reset
+					</CustomDeleteButton>
+					<Box sx={{ ml: '1rem', display: 'flex', alignItems: 'center', height: '2rem' }}>
+						{isSearchActive ? (
+							<Typography
+								variant='body2'
+								sx={{
+									color: 'text.secondary',
+									fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+									whiteSpace: 'nowrap',
+								}}>
+								{searchResultsTotalItems} results
+							</Typography>
+						) : (
+							<Typography
+								variant='body2'
+								sx={{
+									color: 'text.secondary',
+									fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+									whiteSpace: 'nowrap',
+								}}>
+								{totalItems} items
+							</Typography>
+						)}
 					</Box>
 				</Box>
-				<Box
-					sx={{
-						display: 'flex',
-						justifyContent: 'flex-end',
-						width: isVerySmallScreen ? '5%' : isMobileSize ? '20%' : '25%',
-						height: isVerySmallScreen ? '1.75rem' : '2rem',
-						fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-					}}>
+				<Box sx={{ display: 'flex', gap: 1, mb: '0.85rem', alignItems: 'center' }}>
 					<CustomSubmitButton onClick={openNewCourseModal} sx={{ fontSize: isMobileSize ? '0.7rem' : undefined }}>
 						{isVerySmallScreen ? 'New' : 'New Course'}
 					</CustomSubmitButton>
@@ -531,6 +787,102 @@ const AdminCourses = () => {
 					padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : '0rem 2rem 2rem 2rem',
 					width: '100%',
 				}}>
+				{((isSearchActive && searchedValue && searchButtonClicked) || (isSearchActive && filterValue && filterValue.trim())) && (
+					<Box
+						sx={{
+							mb: '1rem',
+							display: 'flex',
+							gap: 1,
+							flexWrap: 'wrap',
+							justifyContent: 'center',
+							borderRadius: '4px',
+							alignSelf: 'flex-start',
+							marginBottom: '1rem',
+						}}>
+						{isSearchActive && filterValue && filterValue.trim() && (
+							<Chip
+								label={`Filter: "${filterValue}"`}
+								onDelete={() => {
+									setFilterValue('');
+									// If search exists, keep search results
+									if (searchValue && searchValue.trim()) {
+										// Trigger search without filter value
+										const params = new URLSearchParams({
+											limit: '200',
+											search: searchValue.trim(),
+										});
+										if (orderBy) params.append('sortBy', orderBy);
+										if (order) params.append('sortOrder', order);
+
+										axios
+											.get(`${base_url}/courses/organisation/${orgId}?${params.toString()}`)
+											.then((response) => {
+												setSearchResults(response.data.data);
+												setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
+												setSearchResultsLoadedPages([1]);
+												setIsSearchActive(true);
+												setCoursesPageNumber(1);
+												setSearchResultsPage(1);
+											})
+											.catch((error) => console.error('Search error:', error));
+									} else {
+										// No search, reset to context data
+										setIsSearchActive(false);
+										setSearchResults([]);
+										setSearchResultsLoadedPages([]);
+										setSearchResultsTotalItems(0);
+									}
+								}}
+								variant='outlined'
+								color='secondary'
+								size='small'
+								sx={{ backgroundColor: '#1976d2', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
+							/>
+						)}
+						{isSearchActive && searchedValue && searchButtonClicked && (
+							<Chip
+								label={`Search: "${searchedValue}"`}
+								onDelete={() => {
+									setSearchValue('');
+									setSearchedValue('');
+									setSearchButtonClicked(false);
+									// If filter exists, keep filter results
+									if (filterValue && filterValue.trim()) {
+										// Trigger filter search without search value
+										const params = new URLSearchParams({
+											limit: '200',
+											filter: filterValue.trim(),
+										});
+										if (orderBy) params.append('sortBy', orderBy);
+										if (order) params.append('sortOrder', order);
+
+										axios
+											.get(`${base_url}/courses/organisation/${orgId}?${params.toString()}`)
+											.then((response) => {
+												setSearchResults(response.data.data);
+												setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
+												setSearchResultsLoadedPages([1]);
+												setIsSearchActive(true);
+												setCoursesPageNumber(1);
+												setSearchResultsPage(1);
+											})
+											.catch((error) => console.error('Filter search error:', error));
+									} else {
+										// No filter, reset to context data
+										setIsSearchActive(false);
+										setSearchResults([]);
+										setSearchResultsLoadedPages([]);
+										setSearchResultsTotalItems(0);
+									}
+								}}
+								color='primary'
+								variant='filled'
+								size='small'
+								sx={{ backgroundColor: '#1EC28B', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
+							/>
+						)}
+					</Box>
+				)}
 				<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>
 					<CustomTableHead<SingleCourse>
 						orderBy={orderBy}
@@ -639,7 +991,7 @@ const AdminCourses = () => {
 													closeModal={() => closeDeleteCourseModal(index)}
 													title='Delete'
 													content='Are you sure you want to delete this course?'
-													maxWidth='sm'>
+													maxWidth='xs'>
 													<CustomDialogActions
 														onCancel={() => closeDeleteCourseModal(index)}
 														deleteBtn={true}
@@ -728,7 +1080,7 @@ const AdminCourses = () => {
 					</TableBody>
 				</Table>
 				{isVerySmallScreen && <CustomInfoMessageAlignedLeft message='Rotate your device for more info' />}
-				<CustomTablePagination count={coursesNumberOfPages} page={coursesPageNumber} onChange={setCoursesPageNumber} />
+				<CustomTablePagination count={coursesNumberOfPages} page={currentPage} onChange={handlePageChange} />
 			</Box>
 		</DashboardPagesLayout>
 	);

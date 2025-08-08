@@ -298,9 +298,8 @@ const Settings = () => {
 		const credential = EmailAuthProvider.credential(firebaseUser.email!, dialogPassword);
 		try {
 			await reauthenticateWithCredential(firebaseUser, credential);
-			console.log('About to call verifyBeforeUpdateEmail with', emailToUpdate);
+
 			await verifyBeforeUpdateEmail(firebaseUser, emailToUpdate);
-			console.log('verifyBeforeUpdateEmail succeeded');
 			setShowVerifyEmailMsg(true);
 			setShowPasswordDialog(false);
 			setDialogPassword('');
@@ -379,7 +378,6 @@ const Settings = () => {
 									setIsProfileUpdated(true);
 								}}
 								onChangeImgUrl={(e) => {
-									console.log('e.target.value', e.target.value);
 									setImageUrl(e.target.value);
 									setIsProfileUpdated(true);
 								}}

@@ -1,4 +1,4 @@
-import { Box, Typography } from '@mui/material';
+import { Box, Tooltip, Typography } from '@mui/material';
 import theme from '../../themes';
 import { Lesson } from '../../interfaces/lessons';
 import { QuestionInterface } from '../../interfaces/question';
@@ -56,25 +56,26 @@ const QuestionsBoxNonEdit = ({ singleLesson, setIsDisplayNonEditQuestion, setDis
 												borderRadius: '0.25rem',
 												boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
 												cursor: 'pointer',
-												bgcolor: question.isAiGenerated ? '#E3F2FD' : theme.bgColor?.common,
+												bgcolor: theme.bgColor?.common,
 												position: 'relative',
 											}}
 											onClick={() => {
 												setDisplayedQuestionNonEdit(question);
 												setIsDisplayNonEditQuestion(true);
 											}}>
-											{/* AI Icon positioned absolutely in top-right corner */}
 											{question.isAiGenerated && (
-												<AutoAwesome
-													sx={{
-														position: 'absolute',
-														top: '0.25rem',
-														right: '0.25rem',
-														fontSize: '1rem',
-														color: '#2196F3',
-														zIndex: 1,
-													}}
-												/>
+												<Tooltip title='AI Generated' placement='top' arrow>
+													<AutoAwesome
+														sx={{
+															position: 'absolute',
+															top: '0.25rem',
+															right: '0.25rem',
+															fontSize: '1rem',
+															color: '#2196F3',
+															zIndex: 1,
+														}}
+													/>
+												</Tooltip>
 											)}
 
 											<Box

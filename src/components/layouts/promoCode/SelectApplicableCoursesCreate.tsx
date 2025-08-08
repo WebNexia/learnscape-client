@@ -14,7 +14,7 @@ interface SelectApplicableCoursesProps {
 }
 
 const SelectApplicableCoursesCreate = ({ newPromoCode, setNewPromoCode }: SelectApplicableCoursesProps) => {
-	const { sortedCoursesData } = useContext(CoursesContext);
+	const { courses } = useContext(CoursesContext);
 
 	const [filteredCourses, setFilteredCourses] = useState<SingleCourse[]>([]);
 	const [searchCourseValue, setSearchCourseValue] = useState<string>('');
@@ -26,7 +26,7 @@ const SelectApplicableCoursesCreate = ({ newPromoCode, setNewPromoCode }: Select
 		}
 
 		const coursesIds = newPromoCode?.coursesApplicable || [];
-		const searchResults = sortedCoursesData.filter(
+		const searchResults = courses.filter(
 			(course) => course.title.toLowerCase().includes(searchQuery.toLowerCase()) && !coursesIds.includes(course._id)
 		);
 
@@ -38,7 +38,7 @@ const SelectApplicableCoursesCreate = ({ newPromoCode, setNewPromoCode }: Select
 			{newPromoCode.coursesApplicable.length > 0 && (
 				<Box sx={{ display: 'flex', margin: '0.75rem 0 0.75rem 0', flexWrap: 'wrap' }}>
 					{newPromoCode.coursesApplicable?.map((id) => {
-						const course = sortedCoursesData.find((course) => course._id === id);
+						const course = courses.find((course) => course._id === id);
 						return (
 							<Box
 								key={course?._id}

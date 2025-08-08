@@ -35,7 +35,7 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
-	const { sortedUsersData } = useContext(UsersContext);
+	const { users } = useContext(UsersContext);
 	const { addNewTopic } = useContext(CommunityContext);
 
 	const { isSmallScreen, isRotatedMedium, isVerySmallScreen, isRotated } = useContext(MediaQueryContext);
@@ -101,7 +101,7 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 				audioUrl: topic.audioUrl,
 			});
 
-			const allIds: string[] = sortedUsersData?.map((user) => user.firebaseUserId);
+			const allIds: string[] = users?.map((user) => user.firebaseUserId);
 
 			addNewTopic({
 				_id: response.data._id,

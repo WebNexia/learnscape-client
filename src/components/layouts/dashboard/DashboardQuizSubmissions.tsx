@@ -9,7 +9,7 @@ import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 const DashboardQuizSubmissions = () => {
 	const { user } = useContext(UserAuthContext);
-	const { sortedQuizSubmissionsData } = useContext(QuizSubmissionsContext);
+	const { quizSubmissions } = useContext(QuizSubmissionsContext);
 	const { isRotated, isSmallScreen } = useContext(MediaQueryContext);
 
 	const isMobileSize: boolean = isSmallScreen || isRotated;
@@ -21,24 +21,24 @@ const DashboardQuizSubmissions = () => {
 	twoWeeksEarlierFromNow.setDate(currentDate.getDate() - 14);
 
 	useEffect(() => {
-		const totalUnchecked = sortedQuizSubmissionsData.filter((submission) => !submission.isChecked).length;
-		const totalRecentlyChecked = sortedQuizSubmissionsData.filter(
+		const totalUnchecked = quizSubmissions.filter((submission) => !submission.isChecked).length;
+		const totalRecentlyChecked = quizSubmissions.filter(
 			(submission) => submission.isChecked && new Date(submission.updatedAt) > twoWeeksEarlierFromNow
 		).length;
 		setNumberOfUncheckedQuizzes(totalUnchecked);
 		setNumberOfRecentlyCheckedQuizzes(totalRecentlyChecked);
-	}, [sortedQuizSubmissionsData, twoWeeksEarlierFromNow]);
+	}, [quizSubmissions, twoWeeksEarlierFromNow]);
 	return (
 		<Box
 			sx={{
-				display: 'flex',
-				flexDirection: 'column',
-				boxShadow: '0.1rem 0.3rem 0.3rem 0.3rem rgba(0,0,0,0.2)',
-				padding: '1rem',
-				height: '12rem',
-				borderRadius: '0.35rem',
-				cursor: 'pointer',
-				transition: '0.3s',
+				'display': 'flex',
+				'flexDirection': 'column',
+				'boxShadow': '0.1rem 0.3rem 0.3rem 0.3rem rgba(0,0,0,0.2)',
+				'padding': '1rem',
+				'height': '12rem',
+				'borderRadius': '0.35rem',
+				'cursor': 'pointer',
+				'transition': '0.3s',
 				':hover': {
 					boxShadow: '0rem 0.1rem 0.2rem 0.1rem rgba(0,0,0,0.3)',
 				},

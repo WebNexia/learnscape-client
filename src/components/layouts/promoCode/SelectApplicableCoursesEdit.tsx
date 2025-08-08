@@ -14,7 +14,7 @@ interface SelectApplicableCoursesProps {
 }
 
 const SelectApplicableCoursesEdit = ({ singleCode, setSingleCode }: SelectApplicableCoursesProps) => {
-	const { sortedCoursesData } = useContext(CoursesContext);
+	const { courses } = useContext(CoursesContext);
 
 	const [filteredCourses, setFilteredCourses] = useState<SingleCourse[]>([]);
 	const [searchCourseValue, setSearchCourseValue] = useState<string>('');
@@ -26,7 +26,7 @@ const SelectApplicableCoursesEdit = ({ singleCode, setSingleCode }: SelectApplic
 		}
 
 		const coursesIds = singleCode?.coursesApplicable || [];
-		const searchResults = sortedCoursesData.filter(
+		const searchResults = courses.filter(
 			(course) => course.title.toLowerCase().includes(searchQuery.toLowerCase()) && !coursesIds.includes(course._id)
 		);
 
@@ -38,7 +38,7 @@ const SelectApplicableCoursesEdit = ({ singleCode, setSingleCode }: SelectApplic
 			{singleCode?.coursesApplicable.length! > 0 && (
 				<Box sx={{ display: 'flex', margin: '0.75rem 0 0.75rem 0', flexWrap: 'wrap' }}>
 					{singleCode?.coursesApplicable?.map((id) => {
-						const course = sortedCoursesData.find((course) => course._id === id);
+						const course = courses.find((course) => course._id === id);
 						return (
 							<Box
 								key={course?._id}
@@ -145,17 +145,17 @@ const SelectApplicableCoursesEdit = ({ singleCode, setSingleCode }: SelectApplic
 							<Box
 								key={course._id}
 								sx={{
-									display: 'flex',
-									justifyContent: 'flex-start',
-									alignItems: 'center',
-									width: '100%',
-									padding: '0.5rem',
-									transition: '0.5s',
-									borderRadius: '0.25rem',
+									'display': 'flex',
+									'justifyContent': 'flex-start',
+									'alignItems': 'center',
+									'width': '100%',
+									'padding': '0.5rem',
+									'transition': '0.5s',
+									'borderRadius': '0.25rem',
 									':hover': {
-										backgroundColor: theme.bgColor?.primary,
-										color: '#fff',
-										cursor: 'pointer',
+										'backgroundColor': theme.bgColor?.primary,
+										'color': '#fff',
+										'cursor': 'pointer',
 										'& .username': {
 											color: '#fff',
 										},

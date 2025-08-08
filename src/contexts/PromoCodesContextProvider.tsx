@@ -10,15 +10,17 @@ import { PromoCode } from '../interfaces/promoCode';
 import { useAuth } from '../hooks/useAuth';
 
 interface PromoCodesContextTypes {
-	sortedPromoCodesData: PromoCode[];
+	promoCodes: PromoCode[];
 	sortPromoCodesData: (property: keyof PromoCode, order: 'asc' | 'desc') => void;
 	addNewPromoCode: (newPromoCode: any) => void;
 	removePromoCode: (id: string) => void;
 	updatePromoCode: (singlePromoCode: PromoCode) => void;
-	// promoCodesNumberOfPages: number;
-	// promoCodesPageNumber: number;
-	// setPromoCodesPageNumber: React.Dispatch<React.SetStateAction<number>>;
-	fetchPromoCodes: () => void;
+	totalItems: number;
+	loadedPages: number[];
+	promoCodesPageNumber: number;
+	setPromoCodesPageNumber: React.Dispatch<React.SetStateAction<number>>;
+	fetchPromoCodes: (page: number) => void;
+	fetchMorePromoCodes: (startBatch: number, endBatch: number) => void;
 }
 
 interface PromoCodesContextProviderProps {
@@ -26,15 +28,17 @@ interface PromoCodesContextProviderProps {
 }
 
 export const PromoCodesContext = createContext<PromoCodesContextTypes>({
-	sortedPromoCodesData: [],
+	promoCodes: [],
 	sortPromoCodesData: () => {},
 	addNewPromoCode: () => {},
 	removePromoCode: () => {},
 	updatePromoCode: () => {},
-	// promoCodesNumberOfPages: 1,
-	// promoCodesPageNumber: 1,
-	// setPromoCodesPageNumber: () => {},
+	totalItems: 0,
+	loadedPages: [],
+	promoCodesPageNumber: 1,
+	setPromoCodesPageNumber: () => {},
 	fetchPromoCodes: () => {},
+	fetchMorePromoCodes: () => {},
 });
 
 const PromoCodesContextProvider = (props: PromoCodesContextProviderProps) => {
@@ -52,22 +56,32 @@ const PromoCodesContextProvider = (props: PromoCodesContextProviderProps) => {
 		// Only consider course preview pages as landing pages, not enrolled course pages
 		(location.pathname.startsWith('/course/') && !location.pathname.includes('/userCourseId/'));
 
-	const [sortedPromoCodesData, setSortedPromoCodesData] = useState<PromoCode[]>([]);
-	// const [promoCodesNumberOfPages, setNumberOfPages] = useState<number>(1);
-	// const [promoCodesPageNumber, setPromoCodesPageNumber] = useState<number>(1);
+	const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
+	const [totalItems, setTotalItems] = useState<number>(0);
+	const [loadedPages, setLoadedPages] = useState<number[]>([]);
+	const [promoCodesPageNumber, setPromoCodesPageNumber] = useState<number>(1);
 
 	const [isLoaded, setIsLoaded] = useState<boolean>(false);
 
-	const fetchPromoCodes = async () => {
+	const fetchPromoCodes = async (page: number = 1) => {
 		if (!orgId) return;
 
-		try {
-			const response = await axios.get(`${base_url}/promoCodes/organisation/${orgId}`);
+		setIsLoaded(false);
 
-			// Initial sorting when fetching data
-			const sortedDataCopy = [...response.data.data].sort((a: PromoCode, b: PromoCode) => b.updatedAt.localeCompare(a.updatedAt));
-			setSortedPromoCodesData(sortedDataCopy);
-			// setNumberOfPages(response.data.pages);
+		try {
+			const response = await axios.get(`${base_url}/promoCodes/organisation/${orgId}?page=${page}&limit=200`);
+
+			if (page === 1) {
+				// First page - replace all data
+				setPromoCodes(response.data.data);
+				setLoadedPages([1]);
+			} else {
+				// Subsequent pages - append data
+				setPromoCodes((prev) => [...prev, ...response.data.data]);
+				setLoadedPages((prev) => [...prev, page]);
+			}
+
+			setTotalItems(response.data.totalItems || response.data.data.length);
 			setIsLoaded(true);
 			return response.data.data;
 		} catch (error) {
@@ -76,38 +90,54 @@ const PromoCodesContextProvider = (props: PromoCodesContextProviderProps) => {
 		}
 	};
 
-	const { isLoading, isError } = useQuery(['allPromoCodes', orgId], () => fetchPromoCodes(), {
+	const fetchMorePromoCodes = async (startBatch: number, endBatch: number) => {
+		if (!orgId) return;
+
+		try {
+			const promises = [];
+			for (let page = startBatch; page <= endBatch; page++) {
+				promises.push(axios.get(`${base_url}/promoCodes/organisation/${orgId}?page=${page}&limit=200`));
+			}
+
+			const responses = await Promise.all(promises);
+			const allData = responses.flatMap((response) => response.data.data);
+
+			setPromoCodes((prev) => [...prev, ...allData]);
+			setLoadedPages((prev) => [...prev, ...Array.from({ length: endBatch - startBatch + 1 }, (_, i) => startBatch + i)]);
+		} catch (error) {
+			console.error('Error fetching more promoCodes:', error);
+			throw error;
+		}
+	};
+
+	const { isLoading, isError } = useQuery(['allPromoCodes', orgId, promoCodesPageNumber], () => fetchPromoCodes(promoCodesPageNumber), {
 		enabled: !!orgId && isAuthenticated && isAdmin && !isLoaded && !isLandingPageRoute,
 	});
 
 	// Function to handle sorting
 	const sortPromoCodesData = (property: keyof PromoCode, order: 'asc' | 'desc') => {
-		const sortedDataCopy = [...sortedPromoCodesData].sort((a: PromoCode, b: PromoCode) => {
+		const sortedDataCopy = [...promoCodes].sort((a: PromoCode, b: PromoCode) => {
 			if (order === 'asc') {
 				return a[property]! > b[property]! ? 1 : -1;
 			} else {
 				return a[property]! < b[property]! ? 1 : -1;
 			}
 		});
-		setSortedPromoCodesData(sortedDataCopy);
+		setPromoCodes(sortedDataCopy);
 	};
-	// Function to update sortedPromoCodesData with new promoCode data
+	// Function to update promoCodes with new promoCode data
 	const addNewPromoCode = (newPromoCode: any) => {
-		setSortedPromoCodesData((prevSortedData) => [newPromoCode, ...prevSortedData]);
+		setPromoCodes((prev) => [newPromoCode, ...prev]);
+		setTotalItems((prev) => prev + 1);
 	};
 
 	const updatePromoCode = (singlePromoCode: PromoCode) => {
-		const updatedPromoCodeList = sortedPromoCodesData?.map((promoCode) => {
-			if (singlePromoCode._id === promoCode._id) {
-				return singlePromoCode;
-			}
-			return promoCode;
-		});
-		setSortedPromoCodesData(updatedPromoCodeList);
+		setPromoCodes((prev) => prev.map((code) => (code._id === singlePromoCode._id ? singlePromoCode : code)));
 	};
 
 	const removePromoCode = (id: string) => {
-		setSortedPromoCodesData((prevSortedData) => prevSortedData?.filter((data) => data._id !== id));
+		setPromoCodes((prev) => prev.filter((code) => code._id !== id));
+		setTotalItems((prev) => Math.max(0, prev - 1));
 	};
 
 	if (isLoading) {
@@ -121,15 +151,17 @@ const PromoCodesContextProvider = (props: PromoCodesContextProviderProps) => {
 	return (
 		<PromoCodesContext.Provider
 			value={{
-				sortedPromoCodesData,
+				promoCodes,
 				sortPromoCodesData,
 				addNewPromoCode,
 				removePromoCode,
 				updatePromoCode,
-				// promoCodesNumberOfPages,
-				// promoCodesPageNumber,
-				// setPromoCodesPageNumber,
+				totalItems,
+				loadedPages,
+				promoCodesPageNumber,
+				setPromoCodesPageNumber,
 				fetchPromoCodes,
+				fetchMorePromoCodes,
 			}}>
 			{props.children}
 		</PromoCodesContext.Provider>

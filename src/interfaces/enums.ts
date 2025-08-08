@@ -32,6 +32,7 @@ export const enum AuthFormErrorMessages {
 	VERIFICATION_EMAIL_ERROR = 'Doğrulama e-postası gönderilirken bir hata oluştu. Lütfen tekrar deneyin.',
 	RECAPTCHA_ERROR = 'Lütfen reCAPTCHA doğrulamasını tamamlayın.',
 	RECAPTCHA_ERROR_OCCURRED = 'reCAPTCHA doğrulaması sırasında hata oluştu.',
+	USER_INACTIVE = 'Şu anda hesabınıza ulaşamazsınız. Lütfen yönetici ile iletişime geçin.',
 }
 
 export const enum PasswordUpdateErrorMessages {

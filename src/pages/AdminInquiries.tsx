@@ -1,4 +1,4 @@
-import { Box, DialogActions, DialogContent, FormControl, InputAdornment, MenuItem, Select, TableCell } from '@mui/material';
+import { Box, DialogActions, DialogContent, FormControl, InputAdornment, MenuItem, Select, TableCell, Chip } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { format } from 'date-fns';
 import * as XLSX from 'xlsx';
@@ -9,6 +9,7 @@ import CustomTableHead from '../components/layouts/table/CustomTableHead';
 import CustomTableCell from '../components/layouts/table/CustomTableCell';
 import CustomTablePagination from '../components/layouts/table/CustomTablePagination';
 import { InquiriesContext } from '../contexts/InquiriesContextProvider';
+import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import { Inquiry } from '../interfaces/inquiry';
 import CustomActionBtn from '../components/layouts/table/CustomActionBtn';
 import { dateFormatter, dateTimeFormatter } from '@utils/dateFormatter';
@@ -24,6 +25,7 @@ import CustomTextField from '../components/forms/customFields/CustomTextField';
 import theme from '../themes';
 import EmailSender from '../components/EmailSender';
 import EmailIcon from '@mui/icons-material/Email';
+import CustomDeleteButton from '../components/forms/customButtons/CustomDeleteButton';
 
 const columns = [
 	{ key: 'name', label: 'Name' },
@@ -41,37 +43,30 @@ const AdminInquiries = () => {
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
-	const { inquiries, loading, error, removeInquiry, fetchInquiries } = useContext(InquiriesContext);
-
-	const [inquiriesPageNumber, setInquiriesPageNumber] = useState<number>(1);
+	const { inquiries, error, removeInquiry, fetchMoreInquiries, sortInquiries, totalItems, loadedPages, inquiriesPageNumber, setInquiriesPageNumber } =
+		useContext(InquiriesContext);
+	const { orgId } = useContext(OrganisationContext);
 	const [searchValue, setSearchValue] = useState<string>('');
 	const [filterValue, setFilterValue] = useState<string>('');
+	const [searchResults, setSearchResults] = useState<Inquiry[]>([]);
+	const [isSearchActive, setIsSearchActive] = useState<boolean>(false);
+	const [searchResultsPage, setSearchResultsPage] = useState<number>(1);
+	const [searchResultsLoadedPages, setSearchResultsLoadedPages] = useState<number[]>([]);
+	const [searchResultsTotalItems, setSearchResultsTotalItems] = useState<number>(0);
+	const [searchButtonClicked, setSearchButtonClicked] = useState<boolean>(false);
+	const [searchedValue, setSearchedValue] = useState<string>('');
 
 	const pageSize = 50;
 
-	const filteredInquiries = inquiries.filter((inquiry: Inquiry) => {
-		if (searchValue) {
-			const lowerSearch = searchValue.toLowerCase();
-			return (
-				inquiry.firstName.toLowerCase().includes(lowerSearch) ||
-				inquiry.lastName.toLowerCase().includes(lowerSearch) ||
-				inquiry.email.toLowerCase().includes(lowerSearch) ||
-				inquiry.message?.toLowerCase().includes(lowerSearch)
-			);
-		}
+	// Use search results if active, otherwise use context data
+	const displayInquiries = isSearchActive ? searchResults : inquiries;
 
-		if (filterValue) {
-			if (filterValue === 'from home page') return inquiry.category === 'HeroSection';
-			if (filterValue === 'from contact us') return inquiry.category === 'ContactUs';
-			if (filterValue === 'from about us') return inquiry.category === 'AboutUs';
-		}
+	// For pagination, use total items from server when not searching
+	const inquiriesNumberOfPages = isSearchActive ? Math.ceil(searchResultsTotalItems / pageSize) : Math.ceil(totalItems / pageSize);
 
-		return !searchValue && !filterValue;
-	});
-
-	const inquiriesNumberOfPages = Math.ceil(filteredInquiries.length / pageSize);
-
-	const paginatedInquiries = filteredInquiries.slice((inquiriesPageNumber - 1) * pageSize, inquiriesPageNumber * pageSize);
+	// Use appropriate page number for pagination
+	const currentPage = isSearchActive ? searchResultsPage : inquiriesPageNumber;
+	const paginatedInquiries = displayInquiries.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
 	const [orderBy, setOrderBy] = useState<keyof Inquiry>('createdAt');
 	const [order, setOrder] = useState<'asc' | 'desc'>('desc');
@@ -83,17 +78,72 @@ const AdminInquiries = () => {
 	const [emailDialogOpen, setEmailDialogOpen] = useState(false);
 
 	useEffect(() => {
-		fetchInquiries(inquiriesPageNumber);
-	}, [inquiriesPageNumber]);
+		setInquiriesPageNumber(1);
+	}, []);
 
-	const handlePageChange = (newPage: number) => {
-		setInquiriesPageNumber(newPage);
+	const handlePageChange = async (newPage: number) => {
+		// Set appropriate page number based on search state
+		if (isSearchActive) {
+			setSearchResultsPage(newPage);
+		} else {
+			setInquiriesPageNumber(newPage);
+		}
+
+		// If in search mode, handle search results pagination
+		if (isSearchActive) {
+			// Check if we need to fetch more search results
+			const requiredRecords = newPage * pageSize;
+			if (searchResults.length < requiredRecords) {
+				// Build search parameters
+				const params = new URLSearchParams({
+					limit: '300',
+				});
+
+				if (searchValue && searchValue.trim()) {
+					params.append('search', searchValue.trim());
+				}
+				if (filterValue && filterValue.trim()) {
+					params.append('filter', filterValue.trim());
+				}
+				if (orderBy) {
+					params.append('sortBy', orderBy);
+				}
+				if (order) {
+					params.append('sortOrder', order);
+				}
+
+				// Calculate which pages we need to fetch
+				const currentLoadedPages = searchResultsLoadedPages.length > 0 ? Math.max(...searchResultsLoadedPages) : 0;
+				const targetPage = Math.ceil((newPage * pageSize) / 300);
+
+				// Fetch all missing pages in sequence
+				for (let page = currentLoadedPages + 1; page <= targetPage; page++) {
+					if (!searchResultsLoadedPages.includes(page)) {
+						await fetchMoreSearchResults(page, params);
+					}
+				}
+			}
+		} else {
+			// Check if we need to fetch more data for context
+			const requiredRecords = newPage * pageSize;
+			if (inquiries.length < requiredRecords && newPage <= inquiriesNumberOfPages) {
+				// Calculate which pages we need to fetch
+				const currentLoadedPages = loadedPages.length > 0 ? Math.max(...loadedPages) : 0;
+				const targetPage = Math.ceil((newPage * pageSize) / 300);
+
+				// Fetch all missing pages in sequence
+				if (currentLoadedPages < targetPage) {
+					await fetchMoreInquiries(currentLoadedPages + 1, targetPage);
+				}
+			}
+		}
 	};
 
 	const handleSort = (property: keyof Inquiry) => {
 		const isAsc = orderBy === property && order === 'asc';
 		setOrder(isAsc ? 'desc' : 'asc');
 		setOrderBy(property);
+		sortInquiries(property, isAsc ? 'desc' : 'asc');
 	};
 
 	const handleViewInquiry = (index: number, inquiry: Inquiry) => {
@@ -122,6 +172,13 @@ const AdminInquiries = () => {
 		try {
 			await axios.delete(`${base_url}/inquiries/${selectedInquiry._id}`);
 			removeInquiry(selectedInquiry._id);
+
+			// If search is active, also remove from search results
+			if (isSearchActive) {
+				setSearchResults((prev) => prev.filter((inquiry) => inquiry._id !== selectedInquiry._id));
+				setSearchResultsTotalItems((prev) => Math.max(0, prev - 1));
+			}
+
 			// Close all modals
 			setDeleteModalOpen({});
 			setViewModalOpen({});
@@ -131,24 +188,124 @@ const AdminInquiries = () => {
 		}
 	};
 
-	const handleDownload = () => {
-		const excelData = inquiries.map((inquiry: Inquiry) => ({
-			'First Name': inquiry.firstName,
-			'Last Name': inquiry.lastName,
-			'Email': inquiry.email,
-			'Phone': inquiry.phone,
-			'Country': inquiry.countryCode,
-			'Message': inquiry.message || '',
-			'Submitted At': format(new Date(inquiry.createdAt), 'yyyy-MM-dd HH:mm:ss'),
-		}));
+	const handleDownload = async () => {
+		try {
+			let dataToExport: Inquiry[];
 
-		const ws = XLSX.utils.json_to_sheet(excelData);
-		const wb = XLSX.utils.book_new();
-		XLSX.utils.book_append_sheet(wb, ws, 'Inquiries');
-		XLSX.writeFile(wb, `Inquiries-${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+			if (isSearchActive) {
+				// If search is active, use the search results (already filtered)
+				dataToExport = searchResults;
+			} else {
+				// First, get the total count to know how many pages we need
+				const countResponse = await axios.get(`${base_url}/inquiries/organisation/${orgId}?page=1&limit=1`);
+				const totalItems = countResponse.data.totalItems;
+
+				// Calculate how many pages we need to fetch all data
+				const itemsPerPage = 1000; // Fetch 1000 per page
+				const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+				// Fetch all pages
+				let allInquiries: Inquiry[] = [];
+				for (let page = 1; page <= totalPages; page++) {
+					const response = await axios.get(`${base_url}/inquiries/organisation/${orgId}?page=${page}&limit=${itemsPerPage}`);
+					allInquiries = [...allInquiries, ...response.data.data];
+				}
+
+				dataToExport = allInquiries;
+			}
+
+			const excelData = dataToExport.map((inquiry: Inquiry) => ({
+				'First Name': inquiry.firstName,
+				'Last Name': inquiry.lastName,
+				'Email': inquiry.email,
+				'Phone': inquiry.phone,
+				'Country': inquiry.countryCode,
+				'Message': inquiry.message || '',
+				'Submitted At': format(new Date(inquiry.createdAt), 'yyyy-MM-dd HH:mm:ss'),
+			}));
+
+			const ws = XLSX.utils.json_to_sheet(excelData);
+			const wb = XLSX.utils.book_new();
+			XLSX.utils.book_append_sheet(wb, ws, 'Inquiries');
+			XLSX.writeFile(wb, `Inquiries-${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+		} catch (error) {
+			console.error('Download error:', error);
+		}
 	};
 
-	if (loading) return <Typography>Loading...</Typography>;
+	const handleSearch = async () => {
+		try {
+			// Reset to first page when searching
+			setInquiriesPageNumber(1);
+			setSearchResultsPage(1);
+
+			// Search button only works when search value exists
+			if (searchValue && searchValue.trim()) {
+				// Store the searched value
+				setSearchedValue(searchValue.trim());
+				// Build query parameters
+				const params = new URLSearchParams({
+					limit: '300',
+					search: searchValue.trim(),
+				});
+
+				// Add filter if it exists
+				if (filterValue && filterValue.trim()) {
+					params.append('filter', filterValue.trim());
+				}
+				if (orderBy) {
+					params.append('sortBy', orderBy);
+				}
+				if (order) {
+					params.append('sortOrder', order);
+				}
+
+				const response = await axios.get(`${base_url}/inquiries/organisation/${orgId}?${params.toString()}`);
+				setSearchResults(response.data.data);
+				setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
+				setSearchResultsLoadedPages([1]);
+				setIsSearchActive(true);
+				setSearchButtonClicked(true);
+			} else {
+				// If no search value, clear search results
+				setSearchResults([]);
+				setSearchResultsLoadedPages([]);
+				setSearchResultsTotalItems(0);
+				setIsSearchActive(false);
+				setSearchButtonClicked(false);
+			}
+		} catch (error) {
+			console.error('Search error:', error);
+		}
+	};
+
+	const fetchMoreSearchResults = async (page: number, searchParams: URLSearchParams) => {
+		try {
+			// Add page parameter
+			searchParams.set('page', page.toString());
+
+			const response = await axios.get(`${base_url}/inquiries/organisation/${orgId}?${searchParams.toString()}`);
+
+			if (page === 1) {
+				// First page - replace all data
+				setSearchResults(response.data.data);
+				setSearchResultsLoadedPages([1]);
+			} else {
+				// Subsequent pages - append data
+				setSearchResults((prev) => {
+					const newData = [...prev, ...response.data.data];
+
+					return newData;
+				});
+				setSearchResultsLoadedPages((prev) => [...prev, page]);
+			}
+
+			setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
+		} catch (error) {
+			console.error('Fetch more search results error:', error);
+		}
+	};
+
 	if (error) return <Typography color='error'>{error}</Typography>;
 
 	return (
@@ -164,20 +321,89 @@ const AdminInquiries = () => {
 						mb: '1.25rem',
 					}}>
 					<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', flex: 4 }}>
-						<Box sx={{ display: 'flex', alignSelf: 'flex-start', width: isVerySmallScreen ? '12.5rem' : '30rem' }}>
+						<Box sx={{ display: 'flex', alignSelf: 'flex-start', width: isVerySmallScreen ? '12.5rem' : 'fit-content' }}>
 							<Box sx={{ mr: '1rem' }}>
 								<FormControl>
 									<Select
 										size='small'
 										value={filterValue}
-										onChange={(e) => {
-											setSearchValue('');
-											setFilterValue(e.target.value);
+										onChange={async (e) => {
+											const newFilterValue = e.target.value;
+											setFilterValue(newFilterValue);
+
+											// Auto-search when filter is selected
+											if (newFilterValue && newFilterValue.trim()) {
+												setInquiriesPageNumber(1);
+												setSearchResultsPage(1);
+												setIsSearchActive(true);
+												setSearchResultsLoadedPages([]);
+
+												try {
+													const params = new URLSearchParams({
+														limit: '300',
+														filter: newFilterValue.trim(),
+													});
+
+													// Include existing search value if it exists
+													if (searchValue && searchValue.trim()) {
+														params.append('search', searchValue.trim());
+													}
+
+													if (orderBy) {
+														params.append('sortBy', orderBy);
+													}
+													if (order) {
+														params.append('sortOrder', order);
+													}
+
+													const response = await axios.get(`${base_url}/inquiries/organisation/${orgId}?${params.toString()}`);
+													setSearchResults(response.data.data);
+													setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
+													setSearchResultsLoadedPages([1]);
+												} catch (error) {
+													console.error('Filter search error:', error);
+												}
+											} else {
+												// If filter is cleared but search value exists, auto-search with search value
+												if (searchValue && searchValue.trim()) {
+													setInquiriesPageNumber(1);
+													setSearchResultsPage(1);
+													setIsSearchActive(true);
+													setSearchResultsLoadedPages([]);
+
+													try {
+														const params = new URLSearchParams({
+															limit: '300',
+															search: searchValue.trim(),
+														});
+
+														if (orderBy) {
+															params.append('sortBy', orderBy);
+														}
+														if (order) {
+															params.append('sortOrder', order);
+														}
+
+														const response = await axios.get(`${base_url}/inquiries/organisation/${orgId}?${params.toString()}`);
+														setSearchResults(response.data.data);
+														setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
+														setSearchResultsLoadedPages([1]);
+													} catch (error) {
+														console.error('Auto-search error:', error);
+													}
+												} else {
+													// If no search value, reset to context data
+													setIsSearchActive(false);
+													setSearchResults([]);
+													setSearchResultsLoadedPages([]);
+													setSearchResultsTotalItems(0);
+												}
+											}
 										}}
 										displayEmpty
 										sx={{
 											backgroundColor: theme.bgColor?.common,
-											width: isMobileSizeSmall ? '8rem' : '12rem',
+											width: isMobileSizeSmall ? '7rem' : '10rem',
 											fontSize: isMobileSize ? '0.7rem' : '0.85rem',
 											textTransform: 'capitalize',
 										}}>
@@ -223,15 +449,11 @@ const AdminInquiries = () => {
 							</Box>
 							<CustomTextField
 								value={searchValue}
-								placeholder={'Search in name, email, message'}
+								placeholder={'Search in Name, Email, Message'}
 								onChange={(e) => {
 									setSearchValue(e.target.value);
-									setFilterValue('filter');
-									if (e.target.value === '') {
-										setFilterValue('');
-									}
 								}}
-								sx={{ backgroundColor: '#fff' }}
+								sx={{ backgroundColor: '#fff', minWidth: isVerySmallScreen ? '10rem' : '18rem' }}
 								required={false}
 								InputProps={{
 									endAdornment: (
@@ -246,17 +468,59 @@ const AdminInquiries = () => {
 									),
 								}}
 							/>
+							<CustomSubmitButton onClick={handleSearch} sx={{ marginLeft: '1rem' }} disabled={!searchValue}>
+								Search
+							</CustomSubmitButton>
+							<CustomDeleteButton
+								onClick={() => {
+									setSearchValue('');
+									setSearchedValue('');
+									setFilterValue('');
+									setSearchResults([]);
+									setSearchResultsLoadedPages([]);
+									setSearchResultsTotalItems(0);
+									setIsSearchActive(false);
+									setSearchButtonClicked(false);
+									setInquiriesPageNumber(1);
+									setSearchResultsPage(1);
+								}}>
+								Reset
+							</CustomDeleteButton>
+							<Box sx={{ height: '2rem', ml: '1rem', display: 'flex', alignItems: 'center' }}>
+								{isSearchActive ? (
+									<Typography
+										variant='body2'
+										sx={{
+											color: 'text.secondary',
+											fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+
+											whiteSpace: 'nowrap',
+										}}>
+										{searchResultsTotalItems} {searchResultsTotalItems === 1 ? 'result' : 'results'}
+									</Typography>
+								) : (
+									<Typography
+										variant='body2'
+										sx={{
+											color: 'text.secondary',
+											fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+											whiteSpace: 'nowrap',
+										}}>
+										{totalItems} {totalItems === 1 ? 'item' : 'items'}
+									</Typography>
+								)}
+							</Box>
 						</Box>
 					</Box>
-					<Box sx={{ display: 'flex', gap: 1, mb: '0.85rem' }}>
+					<Box sx={{ display: 'flex', gap: 1, mb: '0.85rem', alignItems: 'center' }}>
 						<CustomSubmitButton
 							startIcon={<DownloadIcon />}
 							onClick={handleDownload}
 							sx={{
 								fontSize: isMobileSize ? '0.7rem' : undefined,
 							}}
-							disabled={inquiries.length === 0}>
-							Download Inquiries
+							disabled={displayInquiries.length === 0}>
+							Download {isSearchActive ? 'Filtered' : 'All'} Inquiries
 						</CustomSubmitButton>
 						<CustomSubmitButton
 							startIcon={<EmailIcon />}
@@ -277,6 +541,103 @@ const AdminInquiries = () => {
 						padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : '0rem 2rem 2rem 2rem',
 						width: '100%',
 					}}>
+					{((isSearchActive && searchedValue && searchButtonClicked) || (isSearchActive && filterValue && filterValue.trim())) && (
+						<Box
+							sx={{
+								mb: '1rem',
+								display: 'flex',
+								gap: 1,
+								flexWrap: 'wrap',
+								justifyContent: 'center',
+								borderRadius: '4px',
+								alignSelf: 'flex-start',
+								marginBottom: '1rem',
+								marginTop: '-1rem',
+							}}>
+							{isSearchActive && filterValue && filterValue.trim() && (
+								<Chip
+									label={`Filter: "${filterValue}"`}
+									onDelete={() => {
+										setFilterValue('');
+										// If search exists, keep search results
+										if (searchValue && searchValue.trim()) {
+											// Trigger search without filter value
+											const params = new URLSearchParams({
+												limit: '300',
+												search: searchValue.trim(),
+											});
+											if (orderBy) params.append('sortBy', orderBy);
+											if (order) params.append('sortOrder', order);
+
+											axios
+												.get(`${base_url}/inquiries/organisation/${orgId}?${params.toString()}`)
+												.then((response) => {
+													setSearchResults(response.data.data);
+													setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
+													setSearchResultsLoadedPages([1]);
+													setIsSearchActive(true);
+													setInquiriesPageNumber(1);
+													setSearchResultsPage(1);
+												})
+												.catch((error) => console.error('Search error:', error));
+										} else {
+											// No search, reset to context data
+											setIsSearchActive(false);
+											setSearchResults([]);
+											setSearchResultsLoadedPages([]);
+											setSearchResultsTotalItems(0);
+										}
+									}}
+									variant='outlined'
+									color='secondary'
+									size='small'
+									sx={{ backgroundColor: '#1976d2', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
+								/>
+							)}
+							{isSearchActive && searchedValue && searchButtonClicked && (
+								<Chip
+									label={`Search: "${searchedValue}"`}
+									onDelete={() => {
+										setSearchValue('');
+										setSearchedValue('');
+										setSearchButtonClicked(false);
+										// If filter exists, keep filter results
+										if (filterValue && filterValue.trim()) {
+											// Trigger filter search without search value
+											const params = new URLSearchParams({
+												limit: '300',
+												filter: filterValue.trim(),
+											});
+											if (orderBy) params.append('sortBy', orderBy);
+											if (order) params.append('sortOrder', order);
+
+											axios
+												.get(`${base_url}/inquiries/organisation/${orgId}?${params.toString()}`)
+												.then((response) => {
+													setSearchResults(response.data.data);
+													setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
+													setSearchResultsLoadedPages([1]);
+													setIsSearchActive(true);
+													setInquiriesPageNumber(1);
+													setSearchResultsPage(1);
+												})
+												.catch((error) => console.error('Filter search error:', error));
+										} else {
+											// No filter, reset to context data
+											setIsSearchActive(false);
+											setSearchResults([]);
+											setSearchResultsLoadedPages([]);
+											setSearchResultsTotalItems(0);
+										}
+									}}
+									color='primary'
+									variant='filled'
+									size='small'
+									sx={{ backgroundColor: '#1EC28B', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
+								/>
+							)}
+						</Box>
+					)}
 					<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>
 						<CustomTableHead<Inquiry> orderBy={orderBy} order={order} handleSort={handleSort} columns={columns} />
 						<TableBody>
@@ -363,7 +724,7 @@ const AdminInquiries = () => {
 													closeModal={() => handleCloseDeleteModal(index)}
 													title='Delete Inquiry'
 													content='Are you sure you want to delete this inquiry?'
-													maxWidth='sm'>
+													maxWidth='xs'>
 													<CustomDialogActions onCancel={() => handleCloseDeleteModal(index)} deleteBtn={true} onDelete={handleConfirmDelete} />
 												</CustomDialog>
 											</TableCell>
@@ -372,7 +733,7 @@ const AdminInquiries = () => {
 								})}
 						</TableBody>
 					</Table>
-					<CustomTablePagination count={inquiriesNumberOfPages} page={inquiriesPageNumber} onChange={handlePageChange} />
+					<CustomTablePagination count={inquiriesNumberOfPages} page={currentPage} onChange={handlePageChange} />
 				</Box>
 			</Box>
 			<CustomDialog openModal={emailDialogOpen} closeModal={() => setEmailDialogOpen(false)} maxWidth='md' title='Send Bulk Email'>

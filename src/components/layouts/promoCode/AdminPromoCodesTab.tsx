@@ -1,7 +1,8 @@
-import { Box, FormControl, InputAdornment, MenuItem, Select, Table, TableBody, TableCell, TableRow } from '@mui/material';
+import { Box, FormControl, InputAdornment, MenuItem, Select, Table, TableBody, TableCell, TableRow, Typography, Chip } from '@mui/material';
 import { PromoCode } from '../../../interfaces/promoCode';
-import { useContext, useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { PromoCodesContext } from '../../../contexts/PromoCodesContextProvider';
+import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
 import CustomSubmitButton from '../../forms/customButtons/CustomSubmitButton';
 import CreateCodeDialog from './CreateCodeDialog';
 import EditCodeDialog from './EditCodeDialog';
@@ -17,46 +18,53 @@ import CustomTextField from '../../forms/customFields/CustomTextField';
 import theme from '../../../themes';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 import CustomInfoMessageAlignedLeft from '../infoMessage/CustomInfoMessageAlignedLeft';
+import CustomDeleteButton from '../../forms/customButtons/CustomDeleteButton';
 
 const AdminPromoCodesTab = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
-	const { sortedPromoCodesData, sortPromoCodesData, fetchPromoCodes, removePromoCode } = useContext(PromoCodesContext);
+	const {
+		promoCodes,
+		sortPromoCodesData,
+		totalItems,
+		loadedPages,
+		promoCodesPageNumber,
+		setPromoCodesPageNumber,
+		fetchMorePromoCodes,
+		removePromoCode,
+	} = useContext(PromoCodesContext);
 
 	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
-	const [promoCodesPageNumber, setPromoCodesPageNumber] = useState<number>(1);
+	const { orgId } = useContext(OrganisationContext);
 	const [searchValue, setSearchValue] = useState<string>('');
 	const [filterValue, setFilterValue] = useState<string>('');
-
-	const currentDate = new Date().toISOString().split('T')[0];
+	const [searchResults, setSearchResults] = useState<PromoCode[]>([]);
+	const [isSearchActive, setIsSearchActive] = useState<boolean>(false);
+	const [searchResultsPage, setSearchResultsPage] = useState<number>(1);
+	const [searchResultsLoadedPages, setSearchResultsLoadedPages] = useState<number[]>([]);
+	const [searchResultsTotalItems, setSearchResultsTotalItems] = useState<number>(0);
+	const [searchButtonClicked, setSearchButtonClicked] = useState<boolean>(false);
+	const [searchedValue, setSearchedValue] = useState<string>('');
 
 	const pageSize = 50;
 
-	const filteredPromoCodes = sortedPromoCodesData.filter((promoCode) => {
-		if (searchValue) {
-			const lowerSearch = searchValue.toLowerCase();
-			return promoCode?.code?.toLowerCase().includes(lowerSearch);
-		}
+	// Use search results if active, otherwise use context data
+	const displayPromoCodes = isSearchActive ? searchResults : promoCodes;
 
-		const expireDate = new Date(promoCode.expirationDate!).toISOString().split('T')[0];
+	// Calculate total pages based on filtered results when searching, otherwise use total items from server
+	const promoCodesNumberOfPages = isSearchActive ? Math.ceil(searchResultsTotalItems / pageSize) : Math.ceil(totalItems / pageSize);
 
-		if (filterValue) {
-			if (filterValue === 'active' && promoCode.isActive) return true;
-			if (filterValue === 'inactive' && !promoCode.isActive) return true;
-			if (filterValue === 'unlimited usage' && promoCode.usageLimit === 0) return true;
-			if (filterValue === 'limited usage' && promoCode.usageLimit !== 0) return true;
-			if (filterValue === 'expired' && expireDate < currentDate) return true;
-			if (filterValue === 'unexpired' && expireDate >= currentDate) return true;
-		}
-		return !searchValue && !filterValue;
-	});
+	// Use appropriate page number for pagination
+	const currentPage = isSearchActive ? searchResultsPage : promoCodesPageNumber;
 
-	const promoCodesNumberOfPages = Math.ceil(filteredPromoCodes.length / pageSize);
-
-	const paginatedPromoCodes = filteredPromoCodes.slice((promoCodesPageNumber - 1) * pageSize, promoCodesPageNumber * pageSize);
+	// For search results, slice the accumulated data based on current page
+	// For context data, use client-side pagination
+	const paginatedPromoCodes = isSearchActive
+		? searchResults.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+		: displayPromoCodes.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
 	const [orderBy, setOrderBy] = useState<keyof PromoCode>('updatedAt');
 	const [order, setOrder] = useState<'asc' | 'desc'>('asc');
@@ -71,26 +79,159 @@ const AdminPromoCodesTab = () => {
 		const isAsc = orderBy === property && order === 'asc';
 		setOrder(isAsc ? 'desc' : 'asc');
 		setOrderBy(property);
-		sortPromoCodesData(property, isAsc ? 'desc' : 'asc');
+
+		// If search is active, trigger server-side sort
+		if (isSearchActive) {
+			handleSearch();
+		} else {
+			// Client-side sort for context data
+			sortPromoCodesData(property, isAsc ? 'desc' : 'asc');
+		}
 	};
 
 	useEffect(() => {
 		setPromoCodesPageNumber(1);
+		// Trigger initial fetch for context data
+		if (promoCodes.length === 0) {
+			// This will trigger the context to fetch data
+		}
 	}, []);
 
-	useEffect(() => {
-		setIsDeleteCodeModalOpen(Array(sortedPromoCodesData.length).fill(false));
-		setIsEditCodeModalOpen(Array(sortedPromoCodesData.length).fill(false));
-	}, [sortedPromoCodesData, promoCodesPageNumber]);
+	const handlePageChange = async (newPage: number) => {
+		if (isSearchActive) {
+			setSearchResultsPage(newPage);
 
-	const isInitialMount = useRef(true);
+			// Check if we need to fetch more search results
+			const requiredRecords = newPage * pageSize;
+			if (searchResults.length < requiredRecords) {
+				// Calculate which pages we need to fetch
+				const currentLoadedPages = searchResultsLoadedPages.length > 0 ? Math.max(...searchResultsLoadedPages) : 0;
+				const targetPage = Math.ceil((newPage * pageSize) / 200);
 
-	useEffect(() => {
-		if (isInitialMount.current) {
-			isInitialMount.current = false;
+				// Fetch all missing pages in sequence
+				for (let page = currentLoadedPages + 1; page <= targetPage; page++) {
+					if (!searchResultsLoadedPages.includes(page)) {
+						await fetchMoreSearchResults(page);
+					}
+				}
+			}
 		} else {
-			fetchPromoCodes();
+			setPromoCodesPageNumber(newPage);
+
+			// Check if we need to fetch more data for context
+			const requiredRecords = newPage * pageSize;
+			if (promoCodes.length < requiredRecords && newPage <= promoCodesNumberOfPages) {
+				// Calculate which pages we need to fetch
+				const currentLoadedPages = loadedPages.length > 0 ? Math.max(...loadedPages) : 0;
+				const targetPage = Math.ceil((newPage * pageSize) / 200);
+
+				// Fetch all missing pages in sequence
+				if (currentLoadedPages < targetPage) {
+					await fetchMorePromoCodes(currentLoadedPages + 1, targetPage);
+				}
+			}
 		}
+	};
+
+	const handleSearch = async () => {
+		try {
+			// Reset to first page when searching
+			setPromoCodesPageNumber(1);
+			setSearchResultsPage(1);
+
+			// Search button only works when search value exists
+			if (searchValue && searchValue.trim()) {
+				// Store the searched value
+				setSearchedValue(searchValue.trim());
+				// Build query parameters
+				const params = new URLSearchParams({
+					limit: '200',
+					search: searchValue.trim(),
+				});
+
+				// Add filter if it exists
+				if (filterValue && filterValue.trim()) {
+					params.append('filter', filterValue.trim());
+				}
+				if (orderBy) {
+					params.append('sortBy', orderBy);
+				}
+				if (order) {
+					params.append('sortOrder', order);
+				}
+
+				const response = await axios.get(`${base_url}/promoCodes/organisation/${orgId}?${params.toString()}`);
+				setSearchResults(response.data.data);
+				setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
+				setSearchResultsLoadedPages([1]);
+				setIsSearchActive(true);
+				setSearchButtonClicked(true);
+			} else {
+				// If no search value, clear search results
+				setSearchResults([]);
+				setSearchResultsLoadedPages([]);
+				setSearchResultsTotalItems(0);
+				setIsSearchActive(false);
+				setSearchButtonClicked(false);
+				setSearchedValue('');
+			}
+		} catch (error) {
+			console.error('Search error:', error);
+		}
+	};
+
+	const fetchMoreSearchResults = async (page: number) => {
+		try {
+			// Build query parameters
+			const params = new URLSearchParams({
+				limit: '200',
+				page: page.toString(),
+			});
+
+			if (searchedValue) {
+				params.append('search', searchedValue);
+			}
+			if (filterValue && filterValue.trim()) {
+				params.append('filter', filterValue.trim());
+			}
+			if (orderBy) {
+				params.append('sortBy', orderBy);
+			}
+			if (order) {
+				params.append('sortOrder', order);
+			}
+
+			const response = await axios.get(`${base_url}/promoCodes/organisation/${orgId}?${params.toString()}`);
+
+			if (page === 1) {
+				// First page - replace all data
+				setSearchResults(response.data.data);
+				setSearchResultsLoadedPages([1]);
+			} else {
+				// Subsequent pages - append data
+				setSearchResults((prev) => {
+					const newData = [...prev, ...response.data.data];
+					return newData;
+				});
+				setSearchResultsLoadedPages((prev) => [...prev, page]);
+			}
+
+			setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
+		} catch (error) {
+			console.error('Fetch more search results error:', error);
+		}
+	};
+
+	// Check if search button should be disabled
+	const isSearchDisabled = !searchValue;
+
+	useEffect(() => {
+		setIsDeleteCodeModalOpen(Array(promoCodes.length).fill(false));
+		setIsEditCodeModalOpen(Array(promoCodes.length).fill(false));
+	}, [promoCodes, promoCodesPageNumber]);
+
+	useEffect(() => {
+		setPromoCodesPageNumber(1);
 	}, []);
 
 	const openDeleteCodeModal = (index: number) => {
@@ -107,10 +248,14 @@ const AdminPromoCodesTab = () => {
 	const deleteCode = async (codeId: string): Promise<void> => {
 		try {
 			removePromoCode(codeId);
+			// Also remove from search results if search is active
+			if (isSearchActive) {
+				setSearchResults((prev) => prev.filter((code) => code._id !== codeId));
+				setSearchResultsTotalItems((prev) => Math.max(0, prev - 1));
+			}
 			await axios.delete(`${base_url}/promocodes/${codeId}`);
-			fetchPromoCodes();
 		} catch (error) {
-			console.log(error);
+			console.error('Delete promo code error:', error);
 		}
 	};
 
@@ -132,19 +277,90 @@ const AdminPromoCodesTab = () => {
 				sx={{
 					display: 'flex',
 					flexDirection: 'row',
-					justifyContent: 'flex-end',
+					justifyContent: 'space-between',
 					padding: isMobileSizeSmall ? '1rem 1rem 0.5rem 1rem' : '2rem 2rem 1rem 2rem',
 					width: '100%',
 				}}>
-				<Box sx={{ display: 'flex', justifyContent: 'flex-start', width: '100%' }}>
+				<Box sx={{ display: 'flex', justifyContent: 'flex-start', width: 'fit-content' }}>
 					<Box sx={{ mr: '1rem' }}>
 						<FormControl>
 							<Select
 								size='small'
 								value={filterValue}
-								onChange={(e) => {
-									setSearchValue('');
-									setFilterValue(e.target.value);
+								onChange={async (e) => {
+									const newFilterValue = e.target.value;
+									setFilterValue(newFilterValue);
+
+									// Auto-search when filter is selected
+									if (newFilterValue && newFilterValue.trim()) {
+										setPromoCodesPageNumber(1);
+										setSearchResultsPage(1);
+										setIsSearchActive(true);
+										setSearchResultsLoadedPages([]);
+
+										try {
+											const params = new URLSearchParams({
+												limit: '200',
+												filter: newFilterValue.trim(),
+											});
+
+											// Include existing search value if it exists
+											if (searchValue && searchValue.trim()) {
+												params.append('search', searchValue.trim());
+											}
+
+											if (orderBy) {
+												params.append('sortBy', orderBy);
+											}
+											if (order) {
+												params.append('sortOrder', order);
+											}
+
+											const response = await axios.get(`${base_url}/promoCodes/organisation/${orgId}?${params.toString()}`);
+											setSearchResults(response.data.data);
+											setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
+											setSearchResultsLoadedPages([1]);
+										} catch (error) {
+											console.error('Filter search error:', error);
+										}
+									} else {
+										// If filter is cleared but search value exists, auto-search with search value
+										if (searchValue && searchValue.trim()) {
+											setPromoCodesPageNumber(1);
+											setSearchResultsPage(1);
+											setIsSearchActive(true);
+											setSearchResultsLoadedPages([]);
+
+											try {
+												const params = new URLSearchParams({
+													limit: '200',
+													search: searchValue.trim(),
+												});
+
+												if (orderBy) {
+													params.append('sortBy', orderBy);
+												}
+												if (order) {
+													params.append('sortOrder', order);
+												}
+
+												const response = await axios.get(`${base_url}/promoCodes/organisation/${orgId}?${params.toString()}`);
+												setSearchResults(response.data.data);
+												setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
+												setSearchResultsLoadedPages([1]);
+											} catch (error) {
+												console.error('Search error:', error);
+											}
+										} else {
+											// If no filter and no search, clear search results
+											setSearchResults([]);
+											setSearchResultsLoadedPages([]);
+											setSearchResultsTotalItems(0);
+											setIsSearchActive(false);
+											setSearchButtonClicked(false);
+											setSearchedValue('');
+										}
+									}
 								}}
 								displayEmpty
 								sx={{
@@ -168,7 +384,6 @@ const AdminPromoCodesTab = () => {
 								</MenuItem>
 								<MenuItem
 									value=''
-									selected
 									sx={{
 										fontSize: isMobileSize ? '0.65rem' : '0.85rem',
 										textTransform: 'capitalize',
@@ -193,35 +408,91 @@ const AdminPromoCodesTab = () => {
 							</Select>
 						</FormControl>
 					</Box>
-					<Box sx={{ alignSelf: 'flex-start', width: isVerySmallScreen ? '7rem' : isMobileSize ? '15rem' : '17.5rem' }}>
-						<CustomTextField
-							value={searchValue}
-							placeholder={isVerySmallScreen ? 'Search Code' : 'Search Promo Code'}
-							onChange={(e) => {
-								setSearchValue(e.target.value);
-								setFilterValue('filter');
-								if (e.target.value === '') {
-									setFilterValue('');
-								}
-							}}
-							sx={{ backgroundColor: '#fff' }}
-							required={false}
-							InputProps={{
-								endAdornment: (
-									<InputAdornment position='end'>
-										<Search
-											sx={{
-												mr: '-0.5rem',
-											}}
-											fontSize={isMobileSize ? 'small' : 'medium'}
-										/>
-									</InputAdornment>
-								),
-							}}
-						/>
+					<CustomTextField
+						value={searchValue}
+						placeholder={isVerySmallScreen ? 'Search Code' : 'Search Promo Code'}
+						onChange={(e) => {
+							setSearchValue(e.target.value);
+						}}
+						sx={{ backgroundColor: '#fff' }}
+						required={false}
+						InputProps={{
+							endAdornment: (
+								<InputAdornment position='end'>
+									<Search
+										sx={{
+											mr: '-0.5rem',
+										}}
+										fontSize={isMobileSize ? 'small' : 'medium'}
+									/>
+								</InputAdornment>
+							),
+						}}
+					/>
+					<CustomSubmitButton
+						sx={{
+							height: isVerySmallScreen ? '1.75rem' : '2rem',
+							marginLeft: '0.5rem',
+							fontSize: isMobileSize ? '0.7rem' : undefined,
+						}}
+						type='button'
+						disabled={isSearchDisabled}
+						onClick={handleSearch}>
+						Search
+					</CustomSubmitButton>
+					<CustomDeleteButton
+						sx={{
+							height: isVerySmallScreen ? '1.75rem' : '2rem',
+							marginLeft: '0.5rem',
+							fontSize: isMobileSize ? '0.7rem' : undefined,
+						}}
+						type='button'
+						onClick={() => {
+							setSearchValue('');
+							setFilterValue('');
+							setSearchResults([]);
+							setSearchResultsLoadedPages([]);
+							setSearchResultsTotalItems(0);
+							setIsSearchActive(false);
+							setSearchButtonClicked(false);
+							setSearchedValue('');
+							setPromoCodesPageNumber(1);
+							setSearchResultsPage(1);
+						}}>
+						Reset
+					</CustomDeleteButton>
+					<Box sx={{ display: 'flex', gap: 1, mb: '0.85rem', alignItems: 'center', ml: '1rem' }}>
+						{isSearchActive ? (
+							<Typography
+								variant='body2'
+								sx={{
+									color: 'text.secondary',
+									fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+									whiteSpace: 'nowrap',
+								}}>
+								{searchResultsTotalItems} {searchResultsTotalItems === 1 ? 'result' : 'results'}
+							</Typography>
+						) : (
+							<Typography
+								variant='body2'
+								sx={{
+									color: 'text.secondary',
+									fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+									whiteSpace: 'nowrap',
+								}}>
+								{totalItems} {totalItems === 1 ? 'item' : 'items'}
+							</Typography>
+						)}
 					</Box>
 				</Box>
-				<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '15%', height: isVerySmallScreen ? '1.75rem' : '2rem' }}>
+				<Box
+					sx={{
+						display: 'flex',
+						justifyContent: 'flex-end',
+						width: '20%',
+						height: isVerySmallScreen ? '1.75rem' : '2rem',
+						alignItems: 'center',
+					}}>
 					<CustomSubmitButton
 						onClick={() => {
 							setIsNewCodeModalOpen(true);
@@ -244,6 +515,93 @@ const AdminPromoCodesTab = () => {
 					width: '100%',
 					mt: '1rem',
 				}}>
+				{/* Chips for active search and filter */}
+				{((isSearchActive && searchedValue && searchButtonClicked) || (isSearchActive && filterValue && filterValue.trim())) && (
+					<Box
+						sx={{
+							mb: '1rem',
+							display: 'flex',
+							gap: 1,
+							flexWrap: 'wrap',
+							justifyContent: 'center',
+							borderRadius: '4px',
+							alignSelf: 'flex-start',
+							marginBottom: '1rem',
+							marginTop: '-1rem',
+						}}>
+						{isSearchActive && filterValue && filterValue.trim() && (
+							<Chip
+								label={`Filter: "${filterValue}"`}
+								onDelete={() => {
+									setFilterValue('');
+									// If search value exists, auto-search with search value
+									if (searchValue && searchValue.trim()) {
+										handleSearch();
+									} else {
+										// Clear search results
+										setSearchResults([]);
+										setSearchResultsLoadedPages([]);
+										setSearchResultsTotalItems(0);
+										setIsSearchActive(false);
+										setSearchButtonClicked(false);
+										setSearchedValue('');
+									}
+								}}
+								variant='outlined'
+								color='secondary'
+								size='small'
+								sx={{ backgroundColor: '#1976d2', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
+							/>
+						)}
+						{isSearchActive && searchedValue && searchButtonClicked && (
+							<Chip
+								label={`Search: "${searchedValue}"`}
+								onDelete={() => {
+									setSearchValue('');
+									setSearchedValue('');
+									setSearchButtonClicked(false);
+									// If filter is still active, keep filter results
+									if (filterValue) {
+										// Re-trigger filter search without search value
+										const params = new URLSearchParams({
+											limit: '200',
+											filter: filterValue,
+										});
+										if (orderBy) {
+											params.append('sortBy', orderBy);
+										}
+										if (order) {
+											params.append('sortOrder', order);
+										}
+										axios
+											.get(`${base_url}/promoCodes/organisation/${orgId}?${params.toString()}`)
+											.then((response) => {
+												setSearchResults(response.data.data);
+												setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
+												setSearchResultsLoadedPages([1]);
+												setIsSearchActive(true);
+												setSearchResultsPage(1);
+											})
+											.catch((error) => {
+												console.error('Filter error:', error);
+											});
+									} else {
+										// Clear everything and go back to context data
+										setSearchResults([]);
+										setSearchResultsLoadedPages([]);
+										setSearchResultsTotalItems(0);
+										setIsSearchActive(false);
+										setSearchResultsPage(1);
+									}
+								}}
+								color='primary'
+								variant='filled'
+								size='small'
+								sx={{ backgroundColor: '#1EC28B', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
+							/>
+						)}
+					</Box>
+				)}
 				<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>
 					<CustomTableHead<PromoCode>
 						orderBy={orderBy}
@@ -334,7 +692,7 @@ const AdminPromoCodesTab = () => {
 					</TableBody>
 				</Table>
 				{isVerySmallScreen && <CustomInfoMessageAlignedLeft message='Rotate your device for more info' />}
-				<CustomTablePagination count={promoCodesNumberOfPages} page={promoCodesPageNumber} onChange={setPromoCodesPageNumber} />
+				<CustomTablePagination count={promoCodesNumberOfPages} page={currentPage} onChange={handlePageChange} />
 			</Box>
 		</Box>
 	);

@@ -50,7 +50,7 @@ const CommunityTopicPage = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { topicId } = useParams();
 	const { user } = useContext(UserAuthContext);
-	const { sortedUsersData } = useContext(UsersContext);
+	const { users } = useContext(UsersContext);
 	const { orgId } = useContext(OrganisationContext);
 	const { fetchTopics, sortedTopicsData } = useContext(CommunityContext);
 
@@ -275,7 +275,7 @@ const CommunityTopicPage = () => {
 			const mentionedUsernames = extractMentions(currentMessage);
 
 			if (mentionedUsernames.includes('everyone') && user?.role === Roles.ADMIN) {
-				sortedUsersData.forEach((notifiedUser) => {
+				users.forEach((notifiedUser) => {
 					if (notifiedUser?.firebaseUserId !== user?.firebaseUserId && notifiedUser?.firebaseUserId) {
 						const notificationData = {
 							title: 'Community Notification',
@@ -296,7 +296,7 @@ const CommunityTopicPage = () => {
 
 			if (mentionedUsernames.length > 0) {
 				mentionedUsernames.forEach((username) => {
-					const mentionedUser = sortedUsersData.find((user) => user.username === username);
+					const mentionedUser = users.find((user) => user.username === username);
 					if (mentionedUser && mentionedUser?.firebaseUserId !== user?.firebaseUserId && mentionedUser?.firebaseUserId) {
 						// Create the notification data
 						const notificationData = {
@@ -387,7 +387,7 @@ const CommunityTopicPage = () => {
 			setShowTopicSuggestions(false);
 
 			const searchQuery = lastWord.slice(1).toLowerCase();
-			const filteredUserSuggestions = sortedUsersData
+			const filteredUserSuggestions = users
 				?.filter((user) => user.username.toLowerCase().startsWith(searchQuery))
 				?.map((user) => ({ username: user.username, imageUrl: user.imageUrl }));
 
@@ -423,7 +423,7 @@ const CommunityTopicPage = () => {
 		const currentWord = input.split(/\s+/).pop()?.slice(1); // Extract the text after `@` or `#`
 
 		if (suggestionType === '@') {
-			const filteredUserSuggestions = sortedUsersData
+			const filteredUserSuggestions = users
 				?.filter((user) => user?.username.toLowerCase().startsWith(currentWord?.toLowerCase() || ''))
 				?.map((user) => ({ username: user.username, imageUrl: user.imageUrl }));
 			setUserSuggestions(filteredUserSuggestions);

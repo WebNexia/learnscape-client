@@ -182,7 +182,8 @@ const Auth = ({ setUserRole }: AuthProps) => {
 				setUserRole(updatedUser.role);
 
 				if (!updatedUser.isActive) {
-					navigate(`/`);
+					setErrorMsg(AuthFormErrorMessages.USER_INACTIVE);
+					return;
 				} else if (updatedUser.role === Roles.USER) {
 					navigate(`/dashboard`);
 				} else if (updatedUser.role === Roles.ADMIN) {
@@ -1257,6 +1258,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 								[AuthFormErrorMessages.VERIFICATION_EMAIL_ERROR]: errorMessageTypography,
 								[AuthFormErrorMessages.RECAPTCHA_ERROR]: errorMessageTypography,
 								[AuthFormErrorMessages.RECAPTCHA_ERROR_OCCURRED]: errorMessageTypography,
+								[AuthFormErrorMessages.USER_INACTIVE]: errorMessageTypography,
 							}[errorMsg]}
 					</Box>
 				</Box>

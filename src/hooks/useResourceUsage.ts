@@ -19,8 +19,8 @@ type ResourceWithLessons = {
 };
 
 export const useResourceUsage = (resource: Document | Lesson | QuestionInterface) => {
-	const { sortedCoursesData } = useContext(CoursesContext);
-	const { sortedLessonsData } = useContext(LessonsContext);
+	const { courses } = useContext(CoursesContext);
+	const { lessons } = useContext(LessonsContext);
 
 	const getUsageInfo = (): UsageInfo => {
 		const coursesSet = new Set<string>();
@@ -37,7 +37,7 @@ export const useResourceUsage = (resource: Document | Lesson | QuestionInterface
 			docResource.usedInCourses?.forEach((courseId: string) => {
 				if (!coursesSet.has(courseId)) {
 					coursesSet.add(courseId);
-					const course = sortedCoursesData.find((c) => c._id === courseId);
+					const course = courses.find((c) => c._id === courseId);
 					if (course) {
 						usageInfo.courses.push({ id: course._id, title: course.title });
 					}
@@ -48,7 +48,7 @@ export const useResourceUsage = (resource: Document | Lesson | QuestionInterface
 			docResource.usedInLessons?.forEach((lessonId: string) => {
 				if (!lessonsSet.has(lessonId)) {
 					lessonsSet.add(lessonId);
-					const lesson = sortedLessonsData.find((l) => l._id === lessonId);
+					const lesson = lessons.find((l) => l._id === lessonId);
 					if (lesson) {
 						usageInfo.lessons.push({ id: lesson._id, title: lesson.title });
 					}
@@ -62,7 +62,7 @@ export const useResourceUsage = (resource: Document | Lesson | QuestionInterface
 			lessonResource.usedInCourses?.forEach((courseId: string) => {
 				if (!coursesSet.has(courseId)) {
 					coursesSet.add(courseId);
-					const course = sortedCoursesData.find((c) => c._id === courseId);
+					const course = courses.find((c) => c._id === courseId);
 					if (course) {
 						usageInfo.courses.push({ id: course._id, title: course.title });
 					}
@@ -76,7 +76,7 @@ export const useResourceUsage = (resource: Document | Lesson | QuestionInterface
 			questionResource.usedInLessons?.forEach((lessonId: string) => {
 				if (!lessonsSet.has(lessonId)) {
 					lessonsSet.add(lessonId);
-					const lesson = sortedLessonsData.find((l) => l._id === lessonId);
+					const lesson = lessons.find((l) => l._id === lessonId);
 					if (lesson) {
 						usageInfo.lessons.push({ id: lesson._id, title: lesson.title });
 					}
@@ -90,4 +90,4 @@ export const useResourceUsage = (resource: Document | Lesson | QuestionInterface
 	return {
 		usageInfo: getUsageInfo(),
 	};
-}; 
+};

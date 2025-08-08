@@ -299,7 +299,6 @@ const AdminQuestionsEditQuestionDialog = ({
 			resetImageUpload();
 			resetVideoUpload();
 			resetEnterImageVideoUrl();
-			fetchLessons();
 			fetchQuestions(questionsPageNumber);
 		} catch (error) {
 			console.error('Failed to update the question:', error);
