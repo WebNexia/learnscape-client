@@ -69,7 +69,7 @@ const PromoCodesContextProvider = (props: PromoCodesContextProviderProps) => {
 		setIsLoaded(false);
 
 		try {
-			const response = await axios.get(`${base_url}/promoCodes/organisation/${orgId}?page=${page}&limit=150`);
+			const response = await axios.get(`${base_url}/promoCodes/organisation/${orgId}?page=${page}&limit=200`);
 
 			if (page === 1) {
 				// First page - replace all data
@@ -96,7 +96,7 @@ const PromoCodesContextProvider = (props: PromoCodesContextProviderProps) => {
 		try {
 			const promises = [];
 			for (let page = startBatch; page <= endBatch; page++) {
-				promises.push(axios.get(`${base_url}/promoCodes/organisation/${orgId}?page=${page}&limit=150`));
+				promises.push(axios.get(`${base_url}/promoCodes/organisation/${orgId}?page=${page}&limit=200`));
 			}
 
 			const responses = await Promise.all(promises);
@@ -127,21 +127,17 @@ const PromoCodesContextProvider = (props: PromoCodesContextProviderProps) => {
 	};
 	// Function to update promoCodes with new promoCode data
 	const addNewPromoCode = (newPromoCode: any) => {
-		setPromoCodes((prevPromoCodes) => [newPromoCode, ...prevPromoCodes]);
+		setPromoCodes((prev) => [newPromoCode, ...prev]);
+		setTotalItems((prev) => prev + 1);
 	};
 
 	const updatePromoCode = (singlePromoCode: PromoCode) => {
-		const updatedPromoCodeList = promoCodes?.map((promoCode) => {
-			if (singlePromoCode._id === promoCode._id) {
-				return singlePromoCode;
-			}
-			return promoCode;
-		});
-		setPromoCodes(updatedPromoCodeList);
+		setPromoCodes((prev) => prev.map((code) => (code._id === singlePromoCode._id ? singlePromoCode : code)));
 	};
 
 	const removePromoCode = (id: string) => {
-		setPromoCodes((prevPromoCodes) => prevPromoCodes?.filter((data) => data._id !== id));
+		setPromoCodes((prev) => prev.filter((code) => code._id !== id));
+		setTotalItems((prev) => Math.max(0, prev - 1));
 	};
 
 	if (isLoading) {

@@ -504,53 +504,6 @@ const AdminPaymentsTab = () => {
 							marginBottom: '1rem',
 							marginTop: '-1rem',
 						}}>
-						{searchButtonClicked && searchedValue && (
-							<Chip
-								label={`Search: "${searchedValue}"`}
-								onDelete={() => {
-									setSearchValue('');
-									setSearchedValue('');
-									setSearchButtonClicked(false);
-									// If filter is still active, keep filter results
-									if (filterValue) {
-										// Re-trigger filter search without search value
-										const params = new URLSearchParams({
-											limit: '200',
-											filter: filterValue,
-										});
-										if (orderBy) {
-											params.append('sortBy', orderBy);
-										}
-										if (order) {
-											params.append('sortOrder', order);
-										}
-										axios
-											.get(`${base_url}/payments/organisation/${orgId}?${params.toString()}`)
-											.then((response) => {
-												setSearchResults(response.data.data);
-												setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-												setSearchResultsLoadedPages([1]);
-												setIsSearchActive(true);
-												setSearchResultsPage(1);
-											})
-											.catch((error) => {
-												console.error('Filter error:', error);
-											});
-									} else {
-										// Clear everything and go back to context data
-										setSearchResults([]);
-										setSearchResultsLoadedPages([]);
-										setSearchResultsTotalItems(0);
-										setIsSearchActive(false);
-										setSearchResultsPage(1);
-									}
-								}}
-								color='primary'
-								variant='filled'
-								size='small'
-								sx={{ backgroundColor: '#1976d2', color: 'white' }}
-							/>
-						)}
 						{filterValue && (
 							<Chip
 								label={`Filter: "${filterValue}"`}
@@ -595,7 +548,54 @@ const AdminPaymentsTab = () => {
 								color='secondary'
 								variant='outlined'
 								size='small'
-								sx={{ backgroundColor: 'coral', color: 'white' }}
+								sx={{ backgroundColor: '#1976d2', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
+							/>
+						)}
+						{searchButtonClicked && searchedValue && (
+							<Chip
+								label={`Search: "${searchedValue}"`}
+								onDelete={() => {
+									setSearchValue('');
+									setSearchedValue('');
+									setSearchButtonClicked(false);
+									// If filter is still active, keep filter results
+									if (filterValue) {
+										// Re-trigger filter search without search value
+										const params = new URLSearchParams({
+											limit: '200',
+											filter: filterValue,
+										});
+										if (orderBy) {
+											params.append('sortBy', orderBy);
+										}
+										if (order) {
+											params.append('sortOrder', order);
+										}
+										axios
+											.get(`${base_url}/payments/organisation/${orgId}?${params.toString()}`)
+											.then((response) => {
+												setSearchResults(response.data.data);
+												setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
+												setSearchResultsLoadedPages([1]);
+												setIsSearchActive(true);
+												setSearchResultsPage(1);
+											})
+											.catch((error) => {
+												console.error('Filter error:', error);
+											});
+									} else {
+										// Clear everything and go back to context data
+										setSearchResults([]);
+										setSearchResultsLoadedPages([]);
+										setSearchResultsTotalItems(0);
+										setIsSearchActive(false);
+										setSearchResultsPage(1);
+									}
+								}}
+								color='primary'
+								variant='filled'
+								size='small'
+								sx={{ backgroundColor: '#1EC28B', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
 							/>
 						)}
 					</Box>

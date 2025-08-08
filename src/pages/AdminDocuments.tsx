@@ -859,7 +859,7 @@ const AdminDocuments = () => {
 									variant='outlined'
 									color='secondary'
 									size='small'
-									sx={{ backgroundColor: 'coral', color: 'white' }}
+									sx={{ backgroundColor: '#1976d2', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
 								/>
 							)}
 							{isSearchActive && searchedValue && searchButtonClicked && (
@@ -906,7 +906,7 @@ const AdminDocuments = () => {
 									color='primary'
 									variant='filled'
 									size='small'
-									sx={{ backgroundColor: '#1976d2', color: 'white' }}
+									sx={{ backgroundColor: '#1EC28B', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
 								/>
 							)}
 						</Box>
