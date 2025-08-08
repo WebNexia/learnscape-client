@@ -1,4 +1,4 @@
-import { Box, FormControl, InputAdornment, MenuItem, Select, Table, TableBody, TableCell, TableRow, Typography } from '@mui/material';
+import { Box, FormControl, InputAdornment, MenuItem, Select, Table, TableBody, TableCell, TableRow, Typography, Chip } from '@mui/material';
 import { useContext, useEffect, useState } from 'react';
 import { PaymentsContext } from '../../../contexts/PaymentsContextProvider';
 import { Payment } from '../../../interfaces/payment';
@@ -39,21 +39,151 @@ const AdminPaymentsTab = () => {
 	const [filterValue, setFilterValue] = useState<string>('');
 	const [searchResults, setSearchResults] = useState<Payment[]>([]);
 	const [isSearchActive, setIsSearchActive] = useState<boolean>(false);
+	const [searchResultsPage, setSearchResultsPage] = useState<number>(1);
+	const [searchResultsLoadedPages, setSearchResultsLoadedPages] = useState<number[]>([]);
+	const [searchResultsTotalItems, setSearchResultsTotalItems] = useState<number>(0);
+	const [searchButtonClicked, setSearchButtonClicked] = useState<boolean>(false);
+	const [searchedValue, setSearchedValue] = useState<string>('');
 	const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-	const pageSize = 50;
+	const pageSize = 50; // Changed from 50 to 2 for testing
 
 	// Use search results if active, otherwise use context data
 	const displayPayments = isSearchActive ? searchResults : payments;
 
 	// Calculate total pages based on filtered results when searching, otherwise use total items from server
-	const paymentsNumberOfPages = isSearchActive ? Math.ceil(displayPayments.length / pageSize) : Math.ceil(totalItems / pageSize);
+	const paymentsNumberOfPages = isSearchActive ? Math.ceil(searchResultsTotalItems / pageSize) : Math.ceil(totalItems / pageSize);
 
-	const paginatedPayments = displayPayments.slice((paymentsPageNumber - 1) * pageSize, paymentsPageNumber * pageSize);
+	const currentPage = isSearchActive ? searchResultsPage : paymentsPageNumber;
+	const paginatedPayments = displayPayments.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
 	const [orderBy, setOrderBy] = useState<keyof Payment>('createdAt');
 	const [order, setOrder] = useState<'asc' | 'desc'>('asc');
+
+	useEffect(() => {
+		setPaymentsPageNumber(1);
+	}, []);
+
+	const handlePageChange = async (newPage: number) => {
+		if (isSearchActive) {
+			setSearchResultsPage(newPage);
+
+			// Check if we need to fetch more search results
+			const requiredRecords = newPage * pageSize;
+			console.log('requiredRecords:', requiredRecords);
+			console.log('searchResults.length < requiredRecords:', searchResults.length < requiredRecords);
+
+			if (searchResults.length < requiredRecords) {
+				// Calculate which pages we need to fetch
+				const currentLoadedPages = searchResultsLoadedPages.length > 0 ? Math.max(...searchResultsLoadedPages) : 0;
+				const targetPage = Math.ceil((newPage * pageSize) / 2); // 2 is the backend limit for testing
+
+				console.log('currentLoadedPages:', currentLoadedPages);
+				console.log('targetPage:', targetPage);
+
+				// Fetch all missing pages in sequence
+				for (let page = currentLoadedPages + 1; page <= targetPage; page++) {
+					if (!searchResultsLoadedPages.includes(page)) {
+						console.log('Fetching page:', page);
+						await fetchMoreSearchResults(page);
+					}
+				}
+			}
+		} else {
+			setPaymentsPageNumber(newPage);
+
+			// Check if we need to fetch more data for context
+			const requiredRecords = newPage * pageSize;
+			if (payments.length < requiredRecords && newPage <= paymentsNumberOfPages) {
+				// Calculate which pages we need to fetch
+				const currentLoadedPages = loadedPages.length > 0 ? Math.max(...loadedPages) : 0;
+				const targetPage = Math.ceil((newPage * pageSize) / 2); // 2 is the backend limit for testing
+
+				// Fetch all missing pages in sequence
+				if (currentLoadedPages < targetPage) {
+					await fetchMorePayments(currentLoadedPages + 1, targetPage);
+				}
+			}
+		}
+	};
+
+	const handleSearch = async () => {
+		try {
+			// Reset to first page when searching
+			setPaymentsPageNumber(1);
+			setSearchResultsPage(1);
+
+			// Search button only works when search value exists
+			if (searchValue && searchValue.trim()) {
+				// Store the searched value
+				setSearchedValue(searchValue.trim());
+				// Build query parameters
+				const params = new URLSearchParams({
+					limit: '200',
+					search: searchValue.trim(),
+				});
+
+				// Add filter if it exists
+				if (filterValue && filterValue.trim()) {
+					params.append('filter', filterValue.trim());
+				}
+				if (orderBy) {
+					params.append('sortBy', orderBy);
+				}
+				if (order) {
+					params.append('sortOrder', order);
+				}
+
+				const response = await axios.get(`${base_url}/payments/organisation/${orgId}?${params.toString()}`);
+				setSearchResults(response.data.data);
+				setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
+				setSearchResultsLoadedPages([1]);
+				setIsSearchActive(true);
+				setSearchButtonClicked(true);
+			} else {
+				// If no search value, clear search results
+				setSearchResults([]);
+				setSearchResultsLoadedPages([]);
+				setSearchResultsTotalItems(0);
+				setIsSearchActive(false);
+				setSearchButtonClicked(false);
+				setSearchedValue('');
+			}
+		} catch (error) {
+			console.error('Search error:', error);
+		}
+	};
+
+	const fetchMoreSearchResults = async (page: number) => {
+		try {
+			// Build query parameters
+			const params = new URLSearchParams({
+				limit: '200',
+			});
+
+			if (searchedValue && searchedValue.trim()) {
+				params.append('search', searchedValue.trim());
+			}
+			if (filterValue && filterValue.trim()) {
+				params.append('filter', filterValue.trim());
+			}
+			if (orderBy) {
+				params.append('sortBy', orderBy);
+			}
+			if (order) {
+				params.append('sortOrder', order);
+			}
+
+			const response = await axios.get(`${base_url}/payments/organisation/${orgId}?${params.toString()}`);
+
+			// Append new data to existing search results
+			setSearchResults((prev) => [...prev, ...response.data.data]);
+			setSearchResultsLoadedPages((prev) => [...prev, page]);
+		} catch (error) {
+			console.error('Fetch more search results error:', error);
+		}
+	};
 
 	const handleSort = (property: keyof Payment) => {
 		const isAsc = orderBy === property && order === 'asc';
@@ -74,80 +204,8 @@ const AdminPaymentsTab = () => {
 		setIsDialogOpen(true);
 	};
 
-	useEffect(() => {
-		setPaymentsPageNumber(1);
-	}, []);
-
-	const handlePageChange = async (newPage: number) => {
-		setPaymentsPageNumber(newPage);
-
-		// Only fetch more data if not searching
-		if (!isSearchActive) {
-			// Check if we need to fetch more data
-			const requiredRecords = newPage * pageSize;
-			if (payments.length < requiredRecords && newPage <= paymentsNumberOfPages) {
-				// Calculate which batch of 200 records we need (context fetches 200 at a time)
-				const startBatch = Math.floor(((newPage - 1) * pageSize) / 200) + 1;
-				const endBatch = Math.ceil((newPage * pageSize) / 200);
-
-				// Check if we already have the required batches loaded
-				const batchesNeeded = [];
-				for (let batch = startBatch; batch <= endBatch; batch++) {
-					if (!loadedPages.includes(batch)) {
-						batchesNeeded.push(batch);
-					}
-				}
-
-				if (batchesNeeded.length > 0) {
-					await fetchMorePayments(startBatch, endBatch);
-				}
-			}
-		}
-	};
-
-	const handleSearch = async () => {
-		if (!searchValue && !filterValue) {
-			setIsSearchActive(false);
-			setSearchResults([]);
-			setPaymentsPageNumber(1);
-			return;
-		}
-
-		setIsSearchActive(true);
-		setPaymentsPageNumber(1);
-
-		try {
-			const params = new URLSearchParams({
-				limit: '150',
-			});
-
-			if (searchValue) {
-				params.append('search', searchValue);
-			}
-
-			if (filterValue) {
-				params.append('filter', filterValue);
-			}
-
-			if (orderBy && order) {
-				params.append('sortBy', orderBy.toString());
-				params.append('sortOrder', order);
-			}
-
-			console.log('Search params:', { searchValue, filterValue, params: params.toString() });
-			const response = await axios.get(`${base_url}/payments/organisation/${orgId}?${params}`);
-			console.log('Search response:', response.data.data.length, 'results');
-			setSearchResults(response.data.data);
-		} catch (error) {
-			console.error('Search error:', error);
-			// Reset search state on error
-			setIsSearchActive(false);
-			setSearchResults([]);
-		}
-	};
-
 	// Check if search button should be disabled
-	const isSearchDisabled = !searchValue && !filterValue;
+	const isSearchDisabled = !searchValue;
 
 	const handleDownloadPayments = async () => {
 		try {
@@ -205,7 +263,75 @@ const AdminPaymentsTab = () => {
 								size='small'
 								value={filterValue}
 								onChange={(e) => {
-									setFilterValue(e.target.value);
+									const newFilterValue = e.target.value;
+									setFilterValue(newFilterValue);
+
+									// Auto-search when filter changes
+									if (newFilterValue) {
+										// Build query parameters
+										const params = new URLSearchParams({
+											limit: '200',
+											filter: newFilterValue,
+										});
+
+										// Include existing search value if it exists
+										if (searchValue && searchValue.trim()) {
+											params.append('search', searchValue.trim());
+										}
+										if (orderBy) {
+											params.append('sortBy', orderBy);
+										}
+										if (order) {
+											params.append('sortOrder', order);
+										}
+
+										axios
+											.get(`${base_url}/payments/organisation/${orgId}?${params.toString()}`)
+											.then((response) => {
+												setSearchResults(response.data.data);
+												setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
+												setSearchResultsLoadedPages([1]);
+												setIsSearchActive(true);
+												setSearchResultsPage(1);
+											})
+											.catch((error) => {
+												console.error('Filter error:', error);
+											});
+									} else {
+										// If filter is cleared but search value exists, auto-search with remaining search value
+										if (searchValue && searchValue.trim()) {
+											const params = new URLSearchParams({
+												limit: '200',
+												search: searchValue.trim(),
+											});
+											if (orderBy) {
+												params.append('sortBy', orderBy);
+											}
+											if (order) {
+												params.append('sortOrder', order);
+											}
+
+											axios
+												.get(`${base_url}/payments/organisation/${orgId}?${params.toString()}`)
+												.then((response) => {
+													setSearchResults(response.data.data);
+													setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
+													setSearchResultsLoadedPages([1]);
+													setIsSearchActive(true);
+													setSearchResultsPage(1);
+												})
+												.catch((error) => {
+													console.error('Search error:', error);
+												});
+										} else {
+											// Clear everything and go back to context data
+											setSearchResults([]);
+											setSearchResultsLoadedPages([]);
+											setSearchResultsTotalItems(0);
+											setIsSearchActive(false);
+											setSearchResultsPage(1);
+										}
+									}
 								}}
 								displayEmpty
 								sx={{
@@ -268,10 +394,10 @@ const AdminPaymentsTab = () => {
 						</FormControl>
 					</Box>
 
-					<Box sx={{ display: 'flex', width: '50%' }}>
+					<Box sx={{ display: 'flex', width: '65%' }}>
 						<CustomTextField
 							value={searchValue}
-							placeholder={isVerySmallScreen ? 'Search in Username' : 'Search in First Name, Last Name, and Username'}
+							placeholder={isVerySmallScreen ? 'Search in Username' : 'Search in First & Last Name, and Username'}
 							onChange={(e) => {
 								setSearchValue(e.target.value);
 							}}
@@ -313,11 +439,28 @@ const AdminPaymentsTab = () => {
 								setSearchValue('');
 								setFilterValue('');
 								setSearchResults([]);
+								setSearchResultsLoadedPages([]);
+								setSearchResultsTotalItems(0);
 								setIsSearchActive(false);
+								setSearchResultsPage(1);
+								setSearchedValue('');
+								setSearchButtonClicked(false);
 								setPaymentsPageNumber(1);
 							}}>
 							Reset
 						</CustomDeleteButton>
+						<Box sx={{ height: '2rem', ml: '1rem', display: 'flex', alignItems: 'center' }}>
+							<Typography
+								variant='body2'
+								sx={{
+									color: 'text.secondary',
+									fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+									whiteSpace: 'nowrap',
+								}}>
+								{isSearchActive ? searchResultsTotalItems : totalItems}{' '}
+								{isSearchActive ? (searchResultsTotalItems === 1 ? 'result' : 'results') : totalItems === 1 ? 'item' : 'items'}
+							</Typography>
+						</Box>
 					</Box>
 				</Box>
 
@@ -330,17 +473,6 @@ const AdminPaymentsTab = () => {
 						fontSize: isMobileSize ? '0.65rem' : '0.85rem',
 						alignItems: 'center',
 					}}>
-					{isSearchActive && (
-						<Typography
-							variant='body2'
-							sx={{
-								color: 'text.secondary',
-								fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-								mr: 2,
-							}}>
-							{searchResults.length} results
-						</Typography>
-					)}
 					<CustomSubmitButton
 						startIcon={<DownloadIcon />}
 						sx={{ fontSize: isMobileSize ? '0.7rem' : undefined, width: 'fit-content' }}
@@ -359,6 +491,115 @@ const AdminPaymentsTab = () => {
 					width: '100%',
 					mt: '1rem',
 				}}>
+				{/* Chips for active search and filter */}
+				{(searchButtonClicked || filterValue) && (
+					<Box
+						sx={{
+							display: 'flex',
+							gap: 1,
+							flexWrap: 'wrap',
+							justifyContent: 'center',
+							borderRadius: '4px',
+							alignSelf: 'flex-start',
+							marginBottom: '1rem',
+							marginTop: '-1rem',
+						}}>
+						{searchButtonClicked && searchedValue && (
+							<Chip
+								label={`Search: "${searchedValue}"`}
+								onDelete={() => {
+									setSearchValue('');
+									setSearchedValue('');
+									setSearchButtonClicked(false);
+									// If filter is still active, keep filter results
+									if (filterValue) {
+										// Re-trigger filter search without search value
+										const params = new URLSearchParams({
+											limit: '200',
+											filter: filterValue,
+										});
+										if (orderBy) {
+											params.append('sortBy', orderBy);
+										}
+										if (order) {
+											params.append('sortOrder', order);
+										}
+										axios
+											.get(`${base_url}/payments/organisation/${orgId}?${params.toString()}`)
+											.then((response) => {
+												setSearchResults(response.data.data);
+												setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
+												setSearchResultsLoadedPages([1]);
+												setIsSearchActive(true);
+												setSearchResultsPage(1);
+											})
+											.catch((error) => {
+												console.error('Filter error:', error);
+											});
+									} else {
+										// Clear everything and go back to context data
+										setSearchResults([]);
+										setSearchResultsLoadedPages([]);
+										setSearchResultsTotalItems(0);
+										setIsSearchActive(false);
+										setSearchResultsPage(1);
+									}
+								}}
+								color='primary'
+								variant='filled'
+								size='small'
+								sx={{ backgroundColor: '#1976d2', color: 'white' }}
+							/>
+						)}
+						{filterValue && (
+							<Chip
+								label={`Filter: "${filterValue}"`}
+								onDelete={() => {
+									setFilterValue('');
+									// If search value exists, auto-search with remaining search value
+									if (searchValue && searchValue.trim()) {
+										const params = new URLSearchParams({
+											limit: '200',
+											search: searchValue.trim(),
+										});
+										if (orderBy) {
+											params.append('sortBy', orderBy);
+										}
+										if (order) {
+											params.append('sortOrder', order);
+										}
+
+										axios
+											.get(`${base_url}/payments/organisation/${orgId}?${params.toString()}`)
+											.then((response) => {
+												setSearchResults(response.data.data);
+												setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
+												setSearchResultsLoadedPages([1]);
+												setIsSearchActive(true);
+												setSearchResultsPage(1);
+											})
+											.catch((error) => {
+												console.error('Search error:', error);
+											});
+									} else {
+										// Clear everything and go back to context data
+										setSearchResults([]);
+										setSearchResultsLoadedPages([]);
+										setSearchResultsTotalItems(0);
+										setIsSearchActive(false);
+										setSearchResultsPage(1);
+										setSearchedValue('');
+										setSearchButtonClicked(false);
+									}
+								}}
+								color='secondary'
+								variant='outlined'
+								size='small'
+								sx={{ backgroundColor: 'coral', color: 'white' }}
+							/>
+						)}
+					</Box>
+				)}
 				<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>
 					<CustomTableHead<Payment>
 						orderBy={orderBy}
@@ -415,7 +656,7 @@ const AdminPaymentsTab = () => {
 							})}
 					</TableBody>
 				</Table>
-				<CustomTablePagination count={paymentsNumberOfPages} page={paymentsPageNumber} onChange={handlePageChange} />
+				<CustomTablePagination count={paymentsNumberOfPages} page={currentPage} onChange={handlePageChange} />
 			</Box>
 
 			<PaymentDetailsDialog

@@ -93,7 +93,7 @@ const QuizSubmissionsContextProvider = (props: QuizSubmissionsContextProviderPro
 				setLoadedPages((prev) => [...prev, page]);
 			}
 
-			setTotalItems(response.data.totalItems || response.data.data.length);
+			setTotalItems(response.data.totalItems);
 			setIsLoaded(true);
 			return response.data.data;
 		} catch (error) {
@@ -186,6 +186,7 @@ const QuizSubmissionsContextProvider = (props: QuizSubmissionsContextProviderPro
 
 	const addNewQuizSubmission = (newQuizSubmission: any) => {
 		setQuizSubmissions((prevSortedData) => [newQuizSubmission, ...prevSortedData]);
+		setTotalItems((prev) => prev + 1);
 	};
 
 	const updateQuizSubmissionPublishing = (id: string) => {
@@ -210,6 +211,7 @@ const QuizSubmissionsContextProvider = (props: QuizSubmissionsContextProviderPro
 
 	const removeQuizSubmission = (id: string) => {
 		setQuizSubmissions((prevSortedData) => prevSortedData?.filter((data) => data._id !== id));
+		setTotalItems((prev) => Math.max(0, prev - 1));
 	};
 
 	if (isLoading || isUserLoading) {

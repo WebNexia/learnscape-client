@@ -1,4 +1,4 @@
-import { Box, FormControl, InputAdornment, MenuItem, Select, Table, TableBody, TableCell, TableRow, Typography } from '@mui/material';
+import { Box, FormControl, InputAdornment, MenuItem, Select, Table, TableBody, TableCell, TableRow, Typography, Chip } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { useContext, useEffect, useState } from 'react';
 import { QuizSubmissionsContext } from '../contexts/QuizSubmissionsContextProvider';
@@ -26,6 +26,12 @@ const AdminQuizSubmissions = () => {
 
 	const mappedCourses = courses.map((course) => ({ courseId: course._id, courseTitle: course.title }));
 
+	// Function to get course name from course ID
+	const getCourseNameById = (courseId: string) => {
+		const course = mappedCourses.find((c) => c.courseId === courseId);
+		return course ? course.courseTitle : courseId;
+	};
+
 	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
@@ -44,16 +50,28 @@ const AdminQuizSubmissions = () => {
 	const [filterValue, setFilterValue] = useState<string>('');
 	const [searchResults, setSearchResults] = useState<QuizSubmission[]>([]);
 	const [isSearchActive, setIsSearchActive] = useState<boolean>(false);
+	const [searchResultsPage, setSearchResultsPage] = useState<number>(1);
+	const [searchResultsLoadedPages, setSearchResultsLoadedPages] = useState<number[]>([]);
+	const [searchResultsTotalItems, setSearchResultsTotalItems] = useState<number>(0);
+	const [searchButtonClicked, setSearchButtonClicked] = useState<boolean>(false);
+	const [searchedValue, setSearchedValue] = useState<string>('');
 
 	const pageSize = 50;
 
 	// Use search results if active, otherwise use context data
 	const displaySubmissions = isSearchActive ? searchResults : quizSubmissions;
 
-	// Calculate total pages based on filtered results when searching, otherwise use total items from server
-	const submissionsNumberOfPages = isSearchActive ? Math.ceil(displaySubmissions.length / pageSize) : Math.ceil(totalItems / pageSize);
+	// For pagination, use total items from server when not searching
+	const submissionsNumberOfPages = isSearchActive ? Math.ceil(searchResultsTotalItems / pageSize) : Math.ceil(totalItems / pageSize);
 
-	const paginatedSubmissions = displaySubmissions.slice((quizSubmissionsPageNumber - 1) * pageSize, quizSubmissionsPageNumber * pageSize);
+	// Use appropriate page number for pagination
+	const currentPage = isSearchActive ? searchResultsPage : quizSubmissionsPageNumber;
+
+	// For search results, slice the accumulated data based on current page
+	// For context data, use client-side pagination
+	const paginatedSubmissions = isSearchActive
+		? searchResults.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+		: displaySubmissions.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
 	const [orderBy, setOrderBy] = useState<keyof QuizSubmission>('userName');
 	const [order, setOrder] = useState<'asc' | 'desc'>('asc');
@@ -62,83 +80,151 @@ const AdminQuizSubmissions = () => {
 		const isAsc = orderBy === property && order === 'asc';
 		setOrder(isAsc ? 'desc' : 'asc');
 		setOrderBy(property);
-		sortQuizSubmissionsData(property, isAsc ? 'desc' : 'asc');
+
+		// If search is active, trigger server-side sort
+		if (isSearchActive) {
+			handleSearch();
+		} else {
+			// Client-side sort for context data
+			sortQuizSubmissionsData(property, isAsc ? 'desc' : 'asc');
+		}
 	};
 
 	useEffect(() => {
 		setQuizSubmissionsPageNumber(1);
+		// Trigger initial fetch for context data
+		if (quizSubmissions.length === 0) {
+			// This will trigger the context to fetch data
+		}
 	}, []);
 
 	const handlePageChange = async (newPage: number) => {
-		setQuizSubmissionsPageNumber(newPage);
+		if (isSearchActive) {
+			setSearchResultsPage(newPage);
 
-		// Only fetch more data if not searching
-		if (!isSearchActive) {
-			// Check if we need to fetch more data
+			// Check if we need to fetch more search results
 			const requiredRecords = newPage * pageSize;
-			if (quizSubmissions.length < requiredRecords && newPage <= submissionsNumberOfPages) {
-				// Calculate which batch of 150 records we need (context fetches 150 at a time)
-				const startBatch = Math.floor(((newPage - 1) * pageSize) / 150) + 1;
-				const endBatch = Math.ceil((newPage * pageSize) / 150);
+			if (searchResults.length < requiredRecords) {
+				// Calculate which pages we need to fetch
+				const currentLoadedPages = searchResultsLoadedPages.length > 0 ? Math.max(...searchResultsLoadedPages) : 0;
+				const targetPage = Math.ceil((newPage * pageSize) / 150);
 
-				// Check if we already have the required batches loaded
-				const batchesNeeded = [];
-				for (let batch = startBatch; batch <= endBatch; batch++) {
-					if (!loadedPages.includes(batch)) {
-						batchesNeeded.push(batch);
+				// Fetch all missing pages in sequence
+				for (let page = currentLoadedPages + 1; page <= targetPage; page++) {
+					if (!searchResultsLoadedPages.includes(page)) {
+						await fetchMoreSearchResults(page);
 					}
 				}
+			}
+		} else {
+			setQuizSubmissionsPageNumber(newPage);
 
-				if (batchesNeeded.length > 0) {
-					await fetchMoreQuizSubmissions(startBatch, endBatch);
+			// Check if we need to fetch more data for context
+			const requiredRecords = newPage * pageSize;
+			if (quizSubmissions.length < requiredRecords && newPage <= submissionsNumberOfPages) {
+				// Calculate which pages we need to fetch
+				const currentLoadedPages = loadedPages.length > 0 ? Math.max(...loadedPages) : 0;
+				const targetPage = Math.ceil((newPage * pageSize) / 150);
+
+				// Fetch all missing pages in sequence
+				if (currentLoadedPages < targetPage) {
+					await fetchMoreQuizSubmissions(currentLoadedPages + 1, targetPage);
 				}
 			}
 		}
 	};
 
 	const handleSearch = async () => {
-		if (!searchValue && !filterValue) {
-			setIsSearchActive(false);
-			setSearchResults([]);
-			setQuizSubmissionsPageNumber(1);
-			return;
-		}
-
-		setIsSearchActive(true);
-		setQuizSubmissionsPageNumber(1);
-
 		try {
+			// Reset to first page when searching
+			setQuizSubmissionsPageNumber(1);
+			setSearchResultsPage(1);
+
+			// Search button only works when search value exists
+			if (searchValue && searchValue.trim()) {
+				// Store the searched value
+				setSearchedValue(searchValue.trim());
+				// Build query parameters
+				const params = new URLSearchParams({
+					limit: '150',
+					search: searchValue.trim(),
+				});
+
+				// Add filter if it exists
+				if (filterValue && filterValue.trim()) {
+					params.append('filter', filterValue.trim());
+				}
+				if (orderBy) {
+					params.append('sortBy', orderBy);
+				}
+				if (order) {
+					params.append('sortOrder', order);
+				}
+
+				const response = await axios.get(`${base_url}/quizsubmissions/organisation/${orgId}?${params.toString()}`);
+				setSearchResults(response.data.data);
+				setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
+				setSearchResultsLoadedPages([1]);
+				setIsSearchActive(true);
+				setSearchButtonClicked(true);
+			} else {
+				// If no search value, clear search results
+				setSearchResults([]);
+				setSearchResultsLoadedPages([]);
+				setSearchResultsTotalItems(0);
+				setIsSearchActive(false);
+				setSearchButtonClicked(false);
+				setSearchedValue('');
+			}
+		} catch (error) {
+			console.error('Search error:', error);
+		}
+	};
+
+	const fetchMoreSearchResults = async (page: number) => {
+		try {
+			// Build query parameters
 			const params = new URLSearchParams({
 				limit: '150',
+				page: page.toString(),
 			});
 
-			if (searchValue) {
-				params.append('search', searchValue);
+			if (searchedValue) {
+				params.append('search', searchedValue);
 			}
-
-			if (filterValue) {
-				params.append('filter', filterValue);
+			if (filterValue && filterValue.trim()) {
+				params.append('filter', filterValue.trim());
 			}
-
-			if (orderBy && order) {
-				params.append('sortBy', orderBy.toString());
+			if (orderBy) {
+				params.append('sortBy', orderBy);
+			}
+			if (order) {
 				params.append('sortOrder', order);
 			}
 
-			console.log('Search params:', { searchValue, filterValue, params: params.toString() });
-			const response = await axios.get(`${base_url}/quizsubmissions/organisation/${orgId}?${params}`);
-			console.log('Search response:', response.data.data.length, 'results');
-			setSearchResults(response.data.data);
+			const response = await axios.get(`${base_url}/quizsubmissions/organisation/${orgId}?${params.toString()}`);
+
+			if (page === 1) {
+				// First page - replace all data
+				setSearchResults(response.data.data);
+				setSearchResultsLoadedPages([1]);
+			} else {
+				// Subsequent pages - append data
+				setSearchResults((prev) => {
+					const newData = [...prev, ...response.data.data];
+					return newData;
+				});
+				setSearchResultsLoadedPages((prev) => [...prev, page]);
+			}
+
+			setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
 		} catch (error) {
-			console.error('Search error:', error);
-			// Reset search state on error
-			setIsSearchActive(false);
-			setSearchResults([]);
+			console.error('Fetch more search results error:', error);
 		}
 	};
 
 	// Check if search button should be disabled
-	const isSearchDisabled = !searchValue && !filterValue;
+	const isSearchDisabled = !searchValue;
 
 	return (
 		<DashboardPagesLayout pageName='Quiz Submissions' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
@@ -149,14 +235,86 @@ const AdminQuizSubmissions = () => {
 					width: '100%',
 					padding: isMobileSizeSmall ? '1rem 1rem 0.5rem 1rem' : '2rem 2rem 1rem 2rem',
 				}}>
-				<Box sx={{ display: 'flex', width: '60%' }}>
+				<Box sx={{ display: 'flex', width: '65%' }}>
 					<Box sx={{ mr: '1rem' }}>
 						<FormControl>
 							<Select
 								size='small'
 								value={filterValue}
-								onChange={(e) => {
-									setFilterValue(e.target.value);
+								onChange={async (e) => {
+									const newFilterValue = e.target.value;
+									setFilterValue(newFilterValue);
+
+									// Auto-search when filter is selected
+									if (newFilterValue && newFilterValue.trim()) {
+										setQuizSubmissionsPageNumber(1);
+										setSearchResultsPage(1);
+										setIsSearchActive(true);
+										setSearchResultsLoadedPages([]);
+
+										try {
+											const params = new URLSearchParams({
+												limit: '150',
+												filter: newFilterValue.trim(),
+											});
+
+											// Include existing search value if it exists
+											if (searchValue && searchValue.trim()) {
+												params.append('search', searchValue.trim());
+											}
+
+											if (orderBy) {
+												params.append('sortBy', orderBy);
+											}
+											if (order) {
+												params.append('sortOrder', order);
+											}
+
+											const response = await axios.get(`${base_url}/quizsubmissions/organisation/${orgId}?${params.toString()}`);
+											setSearchResults(response.data.data);
+											setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
+											setSearchResultsLoadedPages([1]);
+										} catch (error) {
+											console.error('Filter search error:', error);
+										}
+									} else {
+										// If filter is cleared but search value exists, auto-search with search value
+										if (searchValue && searchValue.trim()) {
+											setQuizSubmissionsPageNumber(1);
+											setSearchResultsPage(1);
+											setIsSearchActive(true);
+											setSearchResultsLoadedPages([]);
+
+											try {
+												const params = new URLSearchParams({
+													limit: '150',
+													search: searchValue.trim(),
+												});
+
+												if (orderBy) {
+													params.append('sortBy', orderBy);
+												}
+												if (order) {
+													params.append('sortOrder', order);
+												}
+
+												const response = await axios.get(`${base_url}/quizsubmissions/organisation/${orgId}?${params.toString()}`);
+												setSearchResults(response.data.data);
+												setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
+												setSearchResultsLoadedPages([1]);
+											} catch (error) {
+												console.error('Search error:', error);
+											}
+										} else {
+											// If no filter and no search, clear search results
+											setSearchResults([]);
+											setSearchResultsLoadedPages([]);
+											setSearchResultsTotalItems(0);
+											setIsSearchActive(false);
+											setSearchButtonClicked(false);
+											setSearchedValue('');
+										}
+									}
 								}}
 								displayEmpty
 								sx={{
@@ -180,7 +338,6 @@ const AdminQuizSubmissions = () => {
 								</MenuItem>
 								<MenuItem
 									value=''
-									selected
 									sx={{
 										fontSize: isMobileSize ? '0.65rem' : '0.85rem',
 										textTransform: 'capitalize',
@@ -224,15 +381,15 @@ const AdminQuizSubmissions = () => {
 								</MenuItem>
 								{mappedCourses.map((course) => (
 									<MenuItem
-										value={course.courseId}
 										key={course.courseId}
+										value={course.courseId}
 										sx={{
 											fontSize: isMobileSize ? '0.65rem' : '0.85rem',
 											textTransform: 'capitalize',
 											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
 											minHeight: '2rem',
 										}}>
-										{truncateText(course.courseTitle, 25)}
+										{truncateText(course.courseTitle, 20)}
 									</MenuItem>
 								))}
 							</Select>
@@ -283,35 +440,129 @@ const AdminQuizSubmissions = () => {
 							setSearchValue('');
 							setFilterValue('');
 							setSearchResults([]);
+							setSearchResultsLoadedPages([]);
+							setSearchResultsTotalItems(0);
 							setIsSearchActive(false);
+							setSearchButtonClicked(false);
+							setSearchedValue('');
 							setQuizSubmissionsPageNumber(1);
+							setSearchResultsPage(1);
 						}}>
 						Reset
 					</CustomDeleteButton>
-				</Box>
-				<Box sx={{ display: 'flex', gap: 1, mb: '0.85rem', alignItems: 'center' }}>
-					{isSearchActive && (
-						<Typography
-							variant='body2'
-							sx={{
-								color: 'text.secondary',
-								fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-								mr: 1,
-							}}>
-							{searchResults.length} results
-						</Typography>
-					)}
+					<Box sx={{ display: 'flex', gap: 1, mb: '0.85rem', alignItems: 'center', ml: '1rem' }}>
+						{isSearchActive ? (
+							<Typography
+								variant='body2'
+								sx={{
+									color: 'text.secondary',
+									fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+									whiteSpace: 'nowrap',
+								}}>
+								{searchResultsTotalItems} {searchResultsTotalItems === 1 ? 'result' : 'results'}
+							</Typography>
+						) : (
+							<Typography
+								variant='body2'
+								sx={{
+									color: 'text.secondary',
+									fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+									whiteSpace: 'nowrap',
+								}}>
+								{totalItems} {totalItems === 1 ? 'item' : 'items'}
+							</Typography>
+						)}
+					</Box>
 				</Box>
 			</Box>
-			<Box
-				sx={{
-					display: 'flex',
-					flexDirection: 'column',
-					alignItems: 'center',
-					padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : '0rem 2rem 2rem 2rem',
-					width: '100%',
-				}}>
-				<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>
+
+			<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', padding: isMobileSizeSmall ? '0 1rem' : '0 2rem' }}>
+				{/* Chips for active search and filter */}
+				{((isSearchActive && searchedValue && searchButtonClicked) || (isSearchActive && filterValue && filterValue.trim())) && (
+					<Box
+						sx={{
+							display: 'flex',
+							gap: 1,
+							flexWrap: 'wrap',
+							justifyContent: 'flex-start',
+							borderRadius: '4px',
+							alignSelf: 'flex-start',
+							marginBottom: '1rem',
+						}}>
+						{isSearchActive && filterValue && filterValue.trim() && (
+							<Chip
+								label={`Filter: "${getCourseNameById(filterValue)}"`}
+								onDelete={() => {
+									setFilterValue('');
+									// If search value exists, auto-search with search value
+									if (searchValue && searchValue.trim()) {
+										handleSearch();
+									} else {
+										// Clear search results
+										setSearchResults([]);
+										setSearchResultsLoadedPages([]);
+										setSearchResultsTotalItems(0);
+										setIsSearchActive(false);
+										setSearchButtonClicked(false);
+										setSearchedValue('');
+									}
+								}}
+								variant='outlined'
+								color='secondary'
+								size='small'
+								sx={{ backgroundColor: 'coral', color: 'white' }}
+							/>
+						)}
+						{isSearchActive && searchedValue && searchButtonClicked && (
+							<Chip
+								label={`Search: "${searchedValue}"`}
+								onDelete={() => {
+									setSearchValue('');
+									setSearchedValue('');
+									setSearchButtonClicked(false);
+									// If filter is still active, keep filter results
+									if (filterValue) {
+										// Re-trigger filter search without search value
+										const params = new URLSearchParams({
+											limit: '150',
+											filter: filterValue,
+										});
+										if (orderBy) {
+											params.append('sortBy', orderBy);
+										}
+										if (order) {
+											params.append('sortOrder', order);
+										}
+										axios
+											.get(`${base_url}/quizsubmissions/organisation/${orgId}?${params.toString()}`)
+											.then((response) => {
+												setSearchResults(response.data.data);
+												setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
+												setSearchResultsLoadedPages([1]);
+												setIsSearchActive(true);
+												setSearchResultsPage(1);
+											})
+											.catch((error) => {
+												console.error('Filter error:', error);
+											});
+									} else {
+										// Clear everything and go back to context data
+										setSearchResults([]);
+										setSearchResultsLoadedPages([]);
+										setSearchResultsTotalItems(0);
+										setIsSearchActive(false);
+										setSearchResultsPage(1);
+									}
+								}}
+								color='primary'
+								variant='filled'
+								size='small'
+								sx={{ backgroundColor: '#1976d2', color: 'white' }}
+							/>
+						)}
+					</Box>
+				)}
+				<Table>
 					<CustomTableHead<QuizSubmission>
 						orderBy={orderBy}
 						order={order}
@@ -355,7 +606,8 @@ const AdminQuizSubmissions = () => {
 							})}
 					</TableBody>
 				</Table>
-				<CustomTablePagination count={submissionsNumberOfPages} page={quizSubmissionsPageNumber} onChange={handlePageChange} />
+
+				<CustomTablePagination count={submissionsNumberOfPages} page={currentPage} onChange={handlePageChange} />
 			</Box>
 		</DashboardPagesLayout>
 	);

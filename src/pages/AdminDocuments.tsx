@@ -117,6 +117,7 @@ const AdminDocuments = () => {
 
 	useEffect(() => {
 		fetchDocuments(1); // Always fetch initial data
+		setDocumentsPageNumber(1);
 	}, []); // Only on mount
 
 	const handlePageChange = async (newPage: number) => {
