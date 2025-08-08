@@ -342,7 +342,7 @@ const AdminCourses = () => {
 				},
 			});
 
-			// Notify context provider to update sortedCoursesData with the new course
+			// Notify context provider to update courses with the new course
 			addNewCourse({
 				_id: response.data._id,
 				title: title.trim(),

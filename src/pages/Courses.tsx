@@ -11,7 +11,7 @@ import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 const Courses = () => {
 	const [checked, setChecked] = useState<boolean>(false);
 
-	const { sortedCoursesData } = useContext(CoursesContext);
+	const { courses } = useContext(CoursesContext);
 
 	const { isRotated, isSmallScreen } = useContext(MediaQueryContext);
 
@@ -51,8 +51,8 @@ const Courses = () => {
 						alignItems: 'center',
 						margin: '0 2rem 2rem 2rem',
 					}}>
-					{sortedCoursesData &&
-						sortedCoursesData
+					{courses &&
+						courses
 							?.filter((course: SingleCourse) => course.isActive === true && course.courseManagement.isExternal === false)
 							?.map((course: SingleCourse) => {
 								let userCourseData: UserCoursesIdsWithCourseIds[] = [];
