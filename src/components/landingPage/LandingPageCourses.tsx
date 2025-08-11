@@ -58,7 +58,7 @@ const LandingPageCourses = forwardRef<HTMLDivElement>((_, ref) => {
 							fontSize: '1.25rem',
 							color: 'text.secondary',
 							fontFamily: DIALOG_FONT,
-							mt: 5,
+							mt: '3rem',
 						}}>
 						Henüz yayınlanmış kurs bulunmamaktadır.
 					</Typography>
