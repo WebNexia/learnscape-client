@@ -439,7 +439,7 @@ export default function UpcomingEvents() {
 				<Typography
 					variant='body1'
 					color='text.secondary'
-					sx={{ fontFamily: 'Varela Round', fontSize: { xs: '1rem', md: '1.2rem' }, marginTop: '1rem' }}>
+					sx={{ fontFamily: 'Varela Round', fontSize: { xs: '1rem', md: '1.2rem' }, marginTop: '5rem' }}>
 					Henüz yaklaşan etkinlik bulunmamaktadır.
 				</Typography>
 			)}
