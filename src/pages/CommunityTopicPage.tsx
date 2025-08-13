@@ -53,7 +53,7 @@ const CommunityTopicPage = () => {
 	const { user } = useContext(UserAuthContext);
 	const { users } = useContext(UsersContext);
 	const { orgId } = useContext(OrganisationContext);
-	const { fetchTopics, sortedTopicsData } = useContext(CommunityContext);
+	const { sortedTopicsData } = useContext(CommunityContext);
 	const { messages, numberOfPages, pageNumber, setPageNumber, fetchMessages, fetchMoreMessages, loadedPages, addNewMessage, currentTopicId } =
 		useContext(CommunityMessagesContext);
 
