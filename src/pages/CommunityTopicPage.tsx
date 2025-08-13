@@ -180,8 +180,8 @@ const CommunityTopicPage = () => {
 	});
 
 	// Debug slicing
-	const startIndex = (pageNumber - 1) * 10;
-	const endIndex = pageNumber * 10;
+	const startIndex = (pageNumber - 1) * 25;
+	const endIndex = pageNumber * 25;
 	const slicedMessages = messages?.slice(startIndex, endIndex);
 	console.log('Slicing debug:', {
 		startIndex,
@@ -355,7 +355,7 @@ const CommunityTopicPage = () => {
 			// Refresh topics to update reply count
 			fetchTopics(1);
 			// Go to the last page to show the new message
-			setPageNumber(Math.ceil((totalItems + 1) / 10)); // Calculate the correct page for the new message
+			setPageNumber(Math.ceil((totalItems + 1) / 25)); // Calculate the correct page for the new message
 			setCurrentMessage('');
 			setImgUrl('');
 			setAudioUrl('');
@@ -538,22 +538,22 @@ const CommunityTopicPage = () => {
 	const { getRemainingAudioUploads, getRemainingImageUploads } = useUploadLimit();
 
 	// Progressive pagination handler
-	const handlePageChange = (newPage: number) => {
-		const pageSize = 10; // 1 message per page for testing
+	const handlePageChange = async (newPage: number) => {
+		const pageSize = 25; // 25 messages per page
 		const requiredRecords = newPage * pageSize;
 
 		console.log('handlePageChange called:', { newPage, pageSize, requiredRecords, messagesLength: messages.length, loadedPages });
 
 		// Check if we need to fetch more data
 		if (messages.length < requiredRecords) {
-			const currentLoadedPages = Math.max(...loadedPages, 0); // Get the highest loaded page
-			const targetBackendPage = Math.ceil(requiredRecords / 20); // Calculate which backend page we need
+			const currentLoadedPages = loadedPages.length > 0 ? Math.max(...loadedPages) : 0; // Get the highest loaded page
+			const targetBackendPage = Math.ceil(requiredRecords / 200); // Calculate which backend page we need (200 messages per backend page)
 
 			console.log('Need to fetch more data:', { currentLoadedPages, targetBackendPage });
 
 			// Fetch missing backend pages using batch approach (like other admin pages)
 			if (currentLoadedPages < targetBackendPage) {
-				console.log('Fetching backend batches:', currentLoadedPages + 1, 'to', targetBackendPage);
+				console.log('Fetching backend pages:', currentLoadedPages + 1, 'to', targetBackendPage);
 				fetchMoreMessages(currentTopicId, currentLoadedPages + 1, targetBackendPage);
 			}
 		}
@@ -696,12 +696,12 @@ const CommunityTopicPage = () => {
 					margin: '1.5rem 0 5rem 0',
 					paddingBottom: '5rem',
 				}}>
-				{messages?.slice((pageNumber - 1) * 10, pageNumber * 10).map((message: CommunityMessage, index) => (
+				{messages?.slice((pageNumber - 1) * 25, pageNumber * 25).map((message: CommunityMessage, index) => (
 					<Message
 						key={message?._id}
 						message={message}
 						isFirst={index === 0}
-						isLast={index === 0} // Since we're showing only 1 message per page for testing
+						isLast={index === messages?.slice((pageNumber - 1) * 25, pageNumber * 25).length - 1}
 						setReplyToMessage={setReplyToMessage}
 						messageRefs={messageRefs}
 						setPageNumber={setPageNumber}

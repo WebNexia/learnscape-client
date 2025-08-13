@@ -55,20 +55,20 @@ const CommunityMessagesContextProvider = (props: CommunityMessagesContextProvide
 		if (!orgId || !topicId) return;
 
 		try {
-			// Fetch first batch of messages with cursor-based pagination
-			const response = await axios.get(`${base_url}/communityMessages/topic/${topicId}?limit=2`);
+			// Fetch first batch of messages with traditional pagination
+			const response = await axios.get(`${base_url}/communityMessages/topic/${topicId}?page=1&limit=200`);
 			console.log('Backend response:', {
 				messagesCount: response.data.messages.length,
 				totalMessages: response.data.totalMessages,
-				nextCursor: response.data.nextCursor,
+				pagination: response.data.pagination,
 				messageIds: response.data.messages.map((m: CommunityMessage) => m._id),
 			});
 
 			// Store messages in state
 			setMessages(response.data.messages);
 			
-			// Calculate frontend pages based on total messages and frontend pageSize (1)
-			const frontendPageSize = 1;
+			// Calculate frontend pages based on total messages and frontend pageSize (25)
+			const frontendPageSize = 25;
 			setNumberOfPages(Math.ceil(response.data.totalMessages / frontendPageSize));
 			setTotalItems(response.data.totalMessages);
 			setLoadedPages([1]); // First batch loaded
@@ -81,52 +81,53 @@ const CommunityMessagesContextProvider = (props: CommunityMessagesContextProvide
 		}
 	};
 
-	const fetchMoreMessages = async (topicId: string, startBatch: number, endBatch: number) => {
-		console.log('fetchMoreMessages called:', { topicId, startBatch, endBatch, currentTopicId, orgId });
+	const fetchMoreMessages = async (topicId: string, startPage: number, endPage: number) => {
+		console.log('fetchMoreMessages called:', { topicId, startPage, endPage, currentTopicId, orgId });
 		if (!orgId || !topicId || topicId !== currentTopicId) {
 			console.log('fetchMoreMessages blocked:', { orgId: !!orgId, topicId: !!topicId, topicIdMatch: topicId === currentTopicId });
 			return;
 		}
 
 		try {
-			// For cursor-based pagination, we need to fetch sequentially
-			let currentCursor = null;
-			let allMessages: CommunityMessage[] = [];
-			
-			// Fetch the required number of batches
-			for (let batch = 1; batch <= endBatch; batch++) {
-				if (batch < startBatch) {
-					// Skip batches we don't need
-					continue;
+			// Calculate which pages we need to fetch
+			const pagesToFetch = [];
+			for (let page = startPage; page <= endPage; page++) {
+				if (!loadedPages.includes(page)) {
+					pagesToFetch.push(page);
 				}
-				
-				const url: string = currentCursor 
-					? `${base_url}/communityMessages/topic/${topicId}?limit=2&afterCreatedAt=${currentCursor.afterCreatedAt}&afterId=${currentCursor.afterId}`
-					: `${base_url}/communityMessages/topic/${topicId}?limit=2`;
-				
-				const response: any = await axios.get(url);
-				console.log(`Backend response for batch ${batch}:`, {
-					messagesCount: response.data.messages.length,
-					messageIds: response.data.messages.map((m: CommunityMessage) => m._id),
-					nextCursor: response.data.nextCursor,
-				});
-				
-				allMessages.push(...response.data.messages);
-				currentCursor = response.data.nextCursor;
-				
-				// If no more data, break
-				if (!currentCursor) break;
 			}
 
-			setMessages((prevMessages) => [...prevMessages, ...allMessages]);
-			setLoadedPages((prev) => [...prev, ...Array.from({length: endBatch - startBatch + 1}, (_, i) => startBatch + i)]);
+			if (pagesToFetch.length === 0) return; // Already loaded
+
+			// Fetch missing pages
+			let newMessages: CommunityMessage[] = [];
+			for (const page of pagesToFetch) {
+				const url = `${base_url}/communityMessages/topic/${topicId}?page=${page}&limit=200`;
+				const response: any = await axios.get(url);
+				console.log(`Backend response for page ${page}:`, {
+					messagesCount: response.data.messages.length,
+					messageIds: response.data.messages.map((m: CommunityMessage) => m._id),
+					pagination: response.data.pagination,
+				});
+				
+				newMessages = [...newMessages, ...response.data.messages];
+			}
+
+			// Combine with existing data, remove duplicates, and sort
+			const combinedData = [...messages, ...newMessages];
+			const uniqueData = combinedData.filter((message, index, self) => index === self.findIndex((m) => m._id === message._id));
+			const sortedData = uniqueData.sort((a: CommunityMessage, b: CommunityMessage) => a.createdAt.localeCompare(b.createdAt));
+			
+			setMessages(sortedData);
+			setLoadedPages([...loadedPages, ...pagesToFetch]);
+			
 			console.log('fetchMoreMessages result:', {
 				originalMessages: messages.length,
-				newMessages: allMessages.length,
-				totalAfterAppend: messages.length + allMessages.length,
-				batchesFetched: endBatch - startBatch + 1,
+				newMessages: newMessages.length,
+				totalAfterAppend: sortedData.length,
+				pagesFetched: pagesToFetch,
 				originalMessageIds: messages.map((m) => m._id),
-				newMessageIds: allMessages.map((m) => m._id),
+				newMessageIds: newMessages.map((m) => m._id),
 			});
 		} catch (error) {
 			console.error('Error fetching more messages:', error);
