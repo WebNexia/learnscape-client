@@ -51,12 +51,12 @@ const CommunityMessagesContextProvider = (props: CommunityMessagesContextProvide
 	const [isLoaded, setIsLoaded] = useState<boolean>(false);
 	const [currentTopicId, setCurrentTopicId] = useState<string>('');
 
-		const fetchMessages = async (topicId: string, page: number) => {
+	const fetchMessages = async (topicId: string, page: number) => {
 		if (!orgId || !topicId) return;
 
 		try {
 			// Fetch first batch of messages with traditional pagination
-			const response = await axios.get(`${base_url}/communityMessages/topic/${topicId}?page=1&limit=200`);
+			const response = await axios.get(`${base_url}/communityMessages/topic/${topicId}?page=1&limit=4`);
 			console.log('Backend response:', {
 				messagesCount: response.data.messages.length,
 				totalMessages: response.data.totalMessages,
@@ -66,9 +66,9 @@ const CommunityMessagesContextProvider = (props: CommunityMessagesContextProvide
 
 			// Store messages in state
 			setMessages(response.data.messages);
-			
-			// Calculate frontend pages based on total messages and frontend pageSize (25)
-			const frontendPageSize = 25;
+
+			// Calculate frontend pages based on total messages and frontend pageSize (2)
+			const frontendPageSize = 2;
 			setNumberOfPages(Math.ceil(response.data.totalMessages / frontendPageSize));
 			setTotalItems(response.data.totalMessages);
 			setLoadedPages([1]); // First batch loaded
@@ -102,14 +102,14 @@ const CommunityMessagesContextProvider = (props: CommunityMessagesContextProvide
 			// Fetch missing pages
 			let newMessages: CommunityMessage[] = [];
 			for (const page of pagesToFetch) {
-				const url = `${base_url}/communityMessages/topic/${topicId}?page=${page}&limit=200`;
+				const url = `${base_url}/communityMessages/topic/${topicId}?page=${page}&limit=4`;
 				const response: any = await axios.get(url);
 				console.log(`Backend response for page ${page}:`, {
 					messagesCount: response.data.messages.length,
 					messageIds: response.data.messages.map((m: CommunityMessage) => m._id),
 					pagination: response.data.pagination,
 				});
-				
+
 				newMessages = [...newMessages, ...response.data.messages];
 			}
 
@@ -117,10 +117,10 @@ const CommunityMessagesContextProvider = (props: CommunityMessagesContextProvide
 			const combinedData = [...messages, ...newMessages];
 			const uniqueData = combinedData.filter((message, index, self) => index === self.findIndex((m) => m._id === message._id));
 			const sortedData = uniqueData.sort((a: CommunityMessage, b: CommunityMessage) => a.createdAt.localeCompare(b.createdAt));
-			
+
 			setMessages(sortedData);
 			setLoadedPages([...loadedPages, ...pagesToFetch]);
-			
+
 			console.log('fetchMoreMessages result:', {
 				originalMessages: messages.length,
 				newMessages: newMessages.length,

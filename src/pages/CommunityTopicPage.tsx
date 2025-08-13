@@ -180,8 +180,8 @@ const CommunityTopicPage = () => {
 	});
 
 	// Debug slicing
-	const startIndex = (pageNumber - 1) * 25;
-	const endIndex = pageNumber * 25;
+	const startIndex = (pageNumber - 1) * 2;
+	const endIndex = pageNumber * 2;
 	const slicedMessages = messages?.slice(startIndex, endIndex);
 	console.log('Slicing debug:', {
 		startIndex,
@@ -355,7 +355,7 @@ const CommunityTopicPage = () => {
 			// Refresh topics to update reply count
 			fetchTopics(1);
 			// Go to the last page to show the new message
-			setPageNumber(Math.ceil((totalItems + 1) / 25)); // Calculate the correct page for the new message
+			setPageNumber(Math.ceil((totalItems + 1) / 2)); // Calculate the correct page for the new message
 			setCurrentMessage('');
 			setImgUrl('');
 			setAudioUrl('');
@@ -539,7 +539,7 @@ const CommunityTopicPage = () => {
 
 	// Progressive pagination handler
 	const handlePageChange = async (newPage: number) => {
-		const pageSize = 25; // 25 messages per page
+		const pageSize = 2; // 2 messages per page for testing
 		const requiredRecords = newPage * pageSize;
 
 		console.log('handlePageChange called:', { newPage, pageSize, requiredRecords, messagesLength: messages.length, loadedPages });
@@ -547,7 +547,7 @@ const CommunityTopicPage = () => {
 		// Check if we need to fetch more data
 		if (messages.length < requiredRecords) {
 			const currentLoadedPages = loadedPages.length > 0 ? Math.max(...loadedPages) : 0; // Get the highest loaded page
-			const targetBackendPage = Math.ceil(requiredRecords / 200); // Calculate which backend page we need (200 messages per backend page)
+			const targetBackendPage = Math.ceil(requiredRecords / 4); // Calculate which backend page we need (4 messages per backend page)
 
 			console.log('Need to fetch more data:', { currentLoadedPages, targetBackendPage });
 
@@ -696,12 +696,12 @@ const CommunityTopicPage = () => {
 					margin: '1.5rem 0 5rem 0',
 					paddingBottom: '5rem',
 				}}>
-				{messages?.slice((pageNumber - 1) * 25, pageNumber * 25).map((message: CommunityMessage, index) => (
+				{messages?.slice((pageNumber - 1) * 2, pageNumber * 2).map((message: CommunityMessage, index) => (
 					<Message
 						key={message?._id}
 						message={message}
 						isFirst={index === 0}
-						isLast={index === messages?.slice((pageNumber - 1) * 25, pageNumber * 25).length - 1}
+						isLast={index === messages?.slice((pageNumber - 1) * 2, pageNumber * 2).length - 1}
 						setReplyToMessage={setReplyToMessage}
 						messageRefs={messageRefs}
 						setPageNumber={setPageNumber}
