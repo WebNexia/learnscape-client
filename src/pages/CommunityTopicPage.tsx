@@ -54,18 +54,8 @@ const CommunityTopicPage = () => {
 	const { users } = useContext(UsersContext);
 	const { orgId } = useContext(OrganisationContext);
 	const { fetchTopics, sortedTopicsData } = useContext(CommunityContext);
-	const {
-		messages,
-		numberOfPages,
-		pageNumber,
-		setPageNumber,
-		fetchMessages,
-		fetchMoreMessages,
-		loadedPages,
-		addNewMessage,
-		currentTopicId,
-		totalItems,
-	} = useContext(CommunityMessagesContext);
+	const { messages, numberOfPages, pageNumber, setPageNumber, fetchMessages, fetchMoreMessages, loadedPages, addNewMessage, currentTopicId } =
+		useContext(CommunityMessagesContext);
 
 	const { isRotated, isVerySmallScreen, isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -151,44 +141,24 @@ const CommunityTopicPage = () => {
 
 	useEffect(() => {
 		if (topicId) {
-			const fetchTopicMessages = async () => {
+			const fetchTopicInfo = async () => {
 				try {
-					const messagesResponse = await axios.get(`${base_url}/communityMessages/topic/${topicId}?page=1&limit=20`);
+					// Only fetch topic info, not messages
+					const topicResponse = await axios.get(`${base_url}/communityTopics/${topicId}`);
 
-					setTopic(messagesResponse.data.topic);
-					setIsTopicLocked(!messagesResponse.data.topic.isActive);
+					setTopic(topicResponse.data.data);
+					setIsTopicLocked(!topicResponse.data.data.isActive);
 
 					// Initialize messages in context
-					fetchMessages(topicId, 1);
+					fetchMessages(topicId);
 				} catch (error) {
 					console.log(error);
 				}
 			};
 
-			fetchTopicMessages();
+			fetchTopicInfo();
 		}
-	}, [topicId]);
-
-	console.log('Messages state:', {
-		messages,
-		messagesLength: messages.length,
-		pageNumber,
-		numberOfPages,
-		loadedPages,
-		currentTopicId,
-		totalItems,
-	});
-
-	// Debug slicing
-	const startIndex = (pageNumber - 1) * 2;
-	const endIndex = pageNumber * 2;
-	const slicedMessages = messages?.slice(startIndex, endIndex);
-	console.log('Slicing debug:', {
-		startIndex,
-		endIndex,
-		slicedMessagesLength: slicedMessages?.length,
-		allMessages: messages.map((m) => ({ id: m._id, text: m.text.substring(0, 20) })),
-	});
+	}, [topicId, fetchMessages]);
 
 	useEffect(() => {
 		if (highlightedMessageId && messages.length > 0) {
@@ -214,7 +184,6 @@ const CommunityTopicPage = () => {
 
 	useEffect(() => {
 		scrollToBottom();
-		fetchTopics(1);
 	}, [messages]);
 
 	const handleEmojiSelect = (emoji: any) => {
@@ -352,10 +321,7 @@ const CommunityTopicPage = () => {
 			setRefreshTopics(true);
 
 			addNewMessage(response.data);
-			// Refresh topics to update reply count
-			fetchTopics(1);
-			// Go to the last page to show the new message
-			setPageNumber(Math.ceil((totalItems + 1) / 2)); // Calculate the correct page for the new message
+			// Reset form
 			setCurrentMessage('');
 			setImgUrl('');
 			setAudioUrl('');
@@ -542,19 +508,14 @@ const CommunityTopicPage = () => {
 		const pageSize = 2; // 2 messages per page for testing
 		const requiredRecords = newPage * pageSize;
 
-		console.log('handlePageChange called:', { newPage, pageSize, requiredRecords, messagesLength: messages.length, loadedPages });
-
 		// Check if we need to fetch more data
 		if (messages.length < requiredRecords) {
 			const currentLoadedPages = loadedPages.length > 0 ? Math.max(...loadedPages) : 0; // Get the highest loaded page
 			const targetBackendPage = Math.ceil(requiredRecords / 4); // Calculate which backend page we need (4 messages per backend page)
 
-			console.log('Need to fetch more data:', { currentLoadedPages, targetBackendPage });
-
 			// Fetch missing backend pages using batch approach (like other admin pages)
 			if (currentLoadedPages < targetBackendPage) {
-				console.log('Fetching backend pages:', currentLoadedPages + 1, 'to', targetBackendPage);
-				fetchMoreMessages(currentTopicId, currentLoadedPages + 1, targetBackendPage);
+				await fetchMoreMessages(currentTopicId, currentLoadedPages + 1, targetBackendPage);
 			}
 		}
 

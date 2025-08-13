@@ -28,7 +28,7 @@ interface TopicPaperProps {
 	setTopic: React.Dispatch<React.SetStateAction<TopicInfo>>;
 }
 
-const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refreshTopics, isTopicLocked, setIsTopicLocked }: TopicPaperProps) => {
+const TopicPaper = ({ topic, setDisplayDeleteTopicMsg, setTopic, refreshTopics, isTopicLocked, setIsTopicLocked }: TopicPaperProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { user } = useContext(UserAuthContext);
 	const { adminUsers } = useContext(OrganisationContext);
@@ -52,15 +52,6 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refre
 		try {
 			await axios.delete(`${base_url}/communityTopics/${topic?._id}`);
 
-			await Promise.all(
-				messages?.map(async (message) => {
-					try {
-						await axios.delete(`${base_url}/communityMessages/${message._id}`);
-					} catch (error) {
-						console.log(error);
-					}
-				})
-			);
 			removeTopic(topic?._id);
 			setDeleteTopicModalOpen(false);
 			setDisplayDeleteTopicMsg(true);
