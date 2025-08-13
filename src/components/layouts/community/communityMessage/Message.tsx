@@ -467,7 +467,7 @@ const Message = ({
 				closeModal={() => setDeleteMessageModalOpen(false)}
 				title='Delete Message'
 				content='Are you sure you want to delete the message?'
-				maxWidth='sm'>
+				maxWidth='xs'>
 				<CustomDialogActions deleteBtn onDelete={deleteMessage} onCancel={() => setDeleteMessageModalOpen(false)} />
 			</CustomDialog>
 		</Box>

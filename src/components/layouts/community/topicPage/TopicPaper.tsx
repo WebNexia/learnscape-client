@@ -319,7 +319,7 @@ const TopicPaper = ({ topic, setDisplayDeleteTopicMsg, setTopic, refreshTopics, 
 					closeModal={() => setReportTopicModalOpen(false)}
 					title='Report Topic'
 					content='Are you sure you want to report the topic?'
-					maxWidth='sm'>
+					maxWidth='xs'>
 					<CustomDialogActions deleteBtn onDelete={reportTopic} onCancel={() => setReportTopicModalOpen(false)} deleteBtnText='Report' />
 				</CustomDialog>
 
@@ -328,7 +328,7 @@ const TopicPaper = ({ topic, setDisplayDeleteTopicMsg, setTopic, refreshTopics, 
 					closeModal={() => setResolveReportModalOpen(false)}
 					title='Resolve Report'
 					content='Are you sure you want to resolve the report?'
-					maxWidth='sm'>
+					maxWidth='xs'>
 					<CustomDialogActions onSubmit={resolveReport} onCancel={() => setResolveReportModalOpen(false)} submitBtnText='Resolve' />
 				</CustomDialog>
 
@@ -337,7 +337,7 @@ const TopicPaper = ({ topic, setDisplayDeleteTopicMsg, setTopic, refreshTopics, 
 					closeModal={() => setLockTopicModalOpen(false)}
 					title='Lock Topic'
 					content='Are you sure you want to lock the topic?'
-					maxWidth='sm'>
+					maxWidth='xs'>
 					<CustomDialogActions
 						onDelete={() => lockUnlockTopic('lock')}
 						onCancel={() => setLockTopicModalOpen(false)}
@@ -351,7 +351,7 @@ const TopicPaper = ({ topic, setDisplayDeleteTopicMsg, setTopic, refreshTopics, 
 					closeModal={() => setRestartTopicModalOpen(false)}
 					title='Unlock Topic'
 					content='Are you sure you want to unlock the topic?'
-					maxWidth='sm'>
+					maxWidth='xs'>
 					<CustomDialogActions onSubmit={() => lockUnlockTopic('unlock')} onCancel={() => setRestartTopicModalOpen(false)} submitBtnText='Unlock' />
 				</CustomDialog>
 

@@ -505,13 +505,13 @@ const CommunityTopicPage = () => {
 
 	// Progressive pagination handler
 	const handlePageChange = async (newPage: number) => {
-		const pageSize = 2; // 2 messages per page for testing
+		const pageSize = 25; // 25 messages per page
 		const requiredRecords = newPage * pageSize;
 
 		// Check if we need to fetch more data
 		if (messages.length < requiredRecords) {
 			const currentLoadedPages = loadedPages.length > 0 ? Math.max(...loadedPages) : 0; // Get the highest loaded page
-			const targetBackendPage = Math.ceil(requiredRecords / 4); // Calculate which backend page we need (4 messages per backend page)
+			const targetBackendPage = Math.ceil(requiredRecords / 250); // Calculate which backend page we need (250 messages per backend page)
 
 			// Fetch missing backend pages using batch approach (like other admin pages)
 			if (currentLoadedPages < targetBackendPage) {
@@ -657,12 +657,12 @@ const CommunityTopicPage = () => {
 					margin: '1.5rem 0 5rem 0',
 					paddingBottom: '5rem',
 				}}>
-				{messages?.slice((pageNumber - 1) * 2, pageNumber * 2).map((message: CommunityMessage, index) => (
+				{messages?.slice((pageNumber - 1) * 25, pageNumber * 25).map((message: CommunityMessage, index) => (
 					<Message
 						key={message?._id}
 						message={message}
 						isFirst={index === 0}
-						isLast={index === messages?.slice((pageNumber - 1) * 2, pageNumber * 2).length - 1}
+						isLast={index === messages?.slice((pageNumber - 1) * 25, pageNumber * 25).length - 1}
 						setReplyToMessage={setReplyToMessage}
 						messageRefs={messageRefs}
 						setPageNumber={setPageNumber}
@@ -910,7 +910,7 @@ const CommunityTopicPage = () => {
 					required={false}
 					disabled={isTopicLocked}
 					onChange={handleInputChange}
-					placeholder={isTopicLocked ? 'You cannot send a message since topic is locked' : ''}
+					placeholder={isTopicLocked ? 'You cannot send a message since topic is locked' : 'You can use @ to mention users and # to mention topics'}
 					sx={{
 						width: isVerySmallScreen ? '95%' : isMobileSize ? '90%' : '78%',
 						border: replyToMessage ? 'none' : 'inherit',

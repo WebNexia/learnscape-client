@@ -56,7 +56,6 @@ const CommunityMessagesContextProvider = (props: CommunityMessagesContextProvide
 	const [pageNumber, setPageNumber] = useState<number>(1);
 	const [totalItems, setTotalItems] = useState<number>(0);
 	const [loadedPages, setLoadedPages] = useState<number[]>([]);
-	const [isLoaded, setIsLoaded] = useState<boolean>(false);
 	const [currentTopicId, setCurrentTopicId] = useState<string>('');
 	const [loading, setLoading] = useState<boolean>(false);
 	const [error, setError] = useState<string | null>(null);
@@ -70,24 +69,22 @@ const CommunityMessagesContextProvider = (props: CommunityMessagesContextProvide
 
 			try {
 				// Fetch first batch of messages with traditional pagination
-				const response = await axios.get(`${base_url}/communityMessages/topic/${topicId}?page=1&limit=4`);
+				const response = await axios.get(`${base_url}/communityMessages/topic/${topicId}?page=1&limit=250`);
 
 				// Store only the first batch of messages in state
 				setMessages(response.data.messages);
 
-				// Calculate frontend pages based on total messages from backend and frontend pageSize (2)
-				const frontendPageSize = 2;
+				// Calculate frontend pages based on total messages from backend and frontend pageSize (25)
+				const frontendPageSize = 25;
 				const totalPages = Math.ceil(response.data.totalMessages / frontendPageSize);
 				setNumberOfPages(totalPages);
 				setTotalItems(response.data.totalMessages);
 				setLoadedPages([1]); // First batch loaded
 				setCurrentTopicId(topicId);
-				setIsLoaded(true);
 				return response.data.messages;
 			} catch (error: any) {
 				const errorMessage = error.response?.data?.message || 'Failed to fetch messages';
 				setError(errorMessage);
-				setIsLoaded(true);
 				throw error;
 			} finally {
 				setLoading(false);
@@ -117,7 +114,7 @@ const CommunityMessagesContextProvider = (props: CommunityMessagesContextProvide
 			// Fetch missing pages
 			let newMessages: CommunityMessage[] = [];
 			for (const page of pagesToFetch) {
-				const url = `${base_url}/communityMessages/topic/${topicId}?page=${page}&limit=4`;
+				const url = `${base_url}/communityMessages/topic/${topicId}?page=${page}&limit=250`;
 
 				const response: any = await axios.get(url);
 
@@ -141,7 +138,6 @@ const CommunityMessagesContextProvider = (props: CommunityMessagesContextProvide
 
 	// Function to refresh data
 	const refreshData = () => {
-		setIsLoaded(false);
 		setError(null);
 		setMessages([]);
 		setLoadedPages([]);
@@ -173,7 +169,7 @@ const CommunityMessagesContextProvider = (props: CommunityMessagesContextProvide
 		setTotalItems((prevTotalItems) => {
 			const newTotalItems = prevTotalItems + 1;
 			// Update number of pages based on new total
-			const frontendPageSize = 2;
+			const frontendPageSize = 25;
 			const newTotalPages = Math.ceil(newTotalItems / frontendPageSize);
 			setNumberOfPages(newTotalPages);
 			// Navigate to the last page to show the new message
@@ -197,7 +193,7 @@ const CommunityMessagesContextProvider = (props: CommunityMessagesContextProvide
 		setTotalItems((prevTotalItems) => {
 			const newTotalItems = Math.max(0, prevTotalItems - 1);
 			// Update number of pages based on new total
-			const frontendPageSize = 2;
+			const frontendPageSize = 25;
 			setNumberOfPages(Math.ceil(newTotalItems / frontendPageSize));
 
 			// Update the topic's message count in the community context
