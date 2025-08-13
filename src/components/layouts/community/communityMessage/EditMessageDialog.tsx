@@ -16,6 +16,7 @@ import data from '@emoji-mart/data';
 import { HideImage, Image, InsertEmoticon, Mic, MicOff } from '@mui/icons-material';
 import ImageThumbnail from '../../../forms/uploadImageVideoDocument/ImageThumbnail';
 import { MediaQueryContext } from '../../../../contexts/MediaQueryContextProvider';
+import { CommunityMessagesContext } from '../../../../contexts/CommunityMessagesContextProvider';
 import { validateImageUrl } from '../../../../utils/urlValidation';
 import useUploadLimit from '../../../../hooks/useUploadLimit';
 
@@ -23,15 +24,15 @@ interface EditMessageDialogProps {
 	message: CommunityMessage;
 	editMsgModalOpen: boolean;
 	setEditMsgModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
-	setMessages: React.Dispatch<React.SetStateAction<CommunityMessage[]>>;
 	setIsMsgEdited: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, setMessages, setIsMsgEdited }: EditMessageDialogProps) => {
+const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, setIsMsgEdited }: EditMessageDialogProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { user } = useContext(UserAuthContext);
 
 	const { isSmallScreen, isRotatedMedium, isVerySmallScreen, isRotated } = useContext(MediaQueryContext);
+	const { updateMessage } = useContext(CommunityMessagesContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
 	// Upload limit management
@@ -54,7 +55,10 @@ const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, set
 	const [imageUploadAttempts, setImageUploadAttempts] = useState<number>(0);
 	const MAX_SESSION_ATTEMPTS = 5;
 
-	const updateMessages = (callback: any) => setMessages((prev) => prev?.map((msg) => (msg._id === message._id ? callback(msg) : msg)));
+	const updateMessages = (callback: any) => {
+		const updatedMessage = callback(message);
+		updateMessage(message._id, updatedMessage);
+	};
 
 	const uploadAudio = async (blob: Blob) => {
 		setIsAudioUploading(true);

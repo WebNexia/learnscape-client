@@ -209,9 +209,13 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refre
 											},
 										}}
 										onClick={() => setReportTopicModalOpen(true)}
-										disabled={topic.isReported}>
-										<Flag color={topic.isReported ? 'error' : 'secondary'} fontSize='small' sx={{ fontSize: isMobileSize ? '0.85rem' : undefined }} />
-										{topic.isReported && (
+										disabled={topic?.isReported}>
+										<Flag
+											color={topic?.isReported ? 'error' : 'secondary'}
+											fontSize='small'
+											sx={{ fontSize: isMobileSize ? '0.85rem' : undefined }}
+										/>
+										{topic?.isReported && (
 											<Typography variant='body2' sx={{ color: 'red', ml: '0.5rem', fontSize: isMobileSize ? '0.75rem' : undefined }}>
 												Reported (Under Review)
 											</Typography>
@@ -276,7 +280,7 @@ const TopicPaper = ({ topic, messages, setDisplayDeleteTopicMsg, setTopic, refre
 											)}
 										</>
 									)}
-									{topic.isReported && isAdmin && (
+									{topic?.isReported && isAdmin && (
 										<Box sx={{ display: 'flex', alignItems: 'center' }}>
 											<Tooltip title='Resolve Report' placement='top' arrow>
 												<IconButton

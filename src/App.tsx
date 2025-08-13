@@ -1,6 +1,6 @@
 import './App.css';
 import { Outlet } from 'react-router-dom';
-import React, { Suspense } from 'react';
+import { Suspense } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { ThemeProvider } from '@mui/material/styles';
 import theme from './themes';
@@ -22,6 +22,7 @@ import UsersContextProvider from './contexts/UsersContextProvider';
 import DocumentsContextProvider from './contexts/DocumentsContextProvider';
 import QuizSubmissionsContextProvider from './contexts/QuizSubmissionsContextProvider';
 import CommunityContextProvider from './contexts/CommunityContextProvider';
+import CommunityMessagesContextProvider from './contexts/CommunityMessagesContextProvider';
 import EventsContextProvider from './contexts/EventsContextProvider';
 import PaymentsContextProvider from './contexts/PaymentsContextProvider';
 import PromoCodesContextProvider from './contexts/PromoCodesContextProvider';
@@ -44,19 +45,21 @@ function App() {
 												<DocumentsContextProvider>
 													<QuizSubmissionsContextProvider>
 														<CommunityContextProvider>
-															<EventsContextProvider>
-																<PaymentsContextProvider>
-																	<PromoCodesContextProvider>
-																		<InquiriesProvider>
-																			<Suspense fallback={<Loading />}>
-																				<Elements stripe={stripePromise}>
-																					<Outlet />
-																				</Elements>
-																			</Suspense>
-																		</InquiriesProvider>
-																	</PromoCodesContextProvider>
-																</PaymentsContextProvider>
-															</EventsContextProvider>
+															<CommunityMessagesContextProvider>
+																<EventsContextProvider>
+																	<PaymentsContextProvider>
+																		<PromoCodesContextProvider>
+																			<InquiriesProvider>
+																				<Suspense fallback={<Loading />}>
+																					<Elements stripe={stripePromise}>
+																						<Outlet />
+																					</Elements>
+																				</Suspense>
+																			</InquiriesProvider>
+																		</PromoCodesContextProvider>
+																	</PaymentsContextProvider>
+																</EventsContextProvider>
+															</CommunityMessagesContextProvider>
 														</CommunityContextProvider>
 													</QuizSubmissionsContextProvider>
 												</DocumentsContextProvider>
