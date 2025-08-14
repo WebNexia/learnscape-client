@@ -5,7 +5,7 @@ import theme from '../themes';
 import logo from '../assets/logo.png';
 
 interface RateLimitInfo {
-	type: 'api' | 'signup' | 'email';
+	type: 'api' | 'signup' | 'email' | 'ip_blocked';
 	retryAfter: number;
 	timestamp: number;
 }
@@ -104,7 +104,23 @@ const RateLimitError = () => {
 		);
 	}
 
-	const minutes = Math.ceil(remainingTime / 60);
+	const getTimeDisplay = () => {
+		if (rateLimitInfo.type === 'ip_blocked') {
+			// For IP blocking, show hours and minutes
+			const hours = Math.floor(remainingTime / 3600);
+			const minutes = Math.ceil((remainingTime % 3600) / 60);
+
+			if (hours > 0) {
+				return `${hours} saat ${minutes} dakika`;
+			} else {
+				return `${minutes} dakika`;
+			}
+		} else {
+			// For other types, show minutes
+			const minutes = Math.ceil(remainingTime / 60);
+			return `${minutes} dakika`;
+		}
+	};
 
 	const getMessage = () => {
 		switch (rateLimitInfo.type) {
@@ -112,6 +128,8 @@ const RateLimitError = () => {
 				return 'Çok fazla kayıt denemesi yaptınız. Lütfen';
 			case 'email':
 				return 'Çok fazla e-posta kontrolü yaptınız. Lütfen';
+			case 'ip_blocked':
+				return 'IP adresiniz geçici olarak engellenmiştir. Lütfen';
 			case 'api':
 			default:
 				return 'Çok fazla istek gönderdiniz. Lütfen';
@@ -150,7 +168,7 @@ const RateLimitError = () => {
 					textAlign: 'center',
 					fontFamily: 'Poppins',
 				}}>
-				{minutes} dakika sonra tekrar deneyin
+				{getTimeDisplay()} sonra tekrar deneyin
 			</Typography>
 
 			<Typography
@@ -164,8 +182,9 @@ const RateLimitError = () => {
 					maxWidth: '500px',
 					marginX: 'auto',
 				}}>
-				Sayfayı yenilerseniz veya pencereyi kapatıp tekrar açarsanız, bekleme süresi sunucu tarafından tekrar başlatılabilir. Lütfen sayaç bitene
-				kadar bekleyin ve ardından tekrar deneyin.
+				{rateLimitInfo.type === 'ip_blocked'
+					? 'IP adresiniz 24 saat boyunca engellenmiştir. Bu süre boyunca farklı bir ağ kullanabilir veya VPN kullanabilirsiniz.'
+					: 'Sayfayı yenilerseniz veya pencereyi kapatıp tekrar açarsanız, bekleme süresi sunucu tarafından tekrar başlatılabilir. Lütfen sayaç bitene kadar bekleyin ve ardından tekrar deneyin.'}
 			</Typography>
 
 			<Button

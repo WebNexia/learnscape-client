@@ -25,6 +25,7 @@ import CustomCancelButton from '../components/forms/customButtons/CustomCancelBu
 import CustomTablePagination from '../components/layouts/table/CustomTablePagination';
 import { formatMessageTime } from '../utils/formatTime';
 import { CommunityContext } from '../contexts/CommunityContextProvider';
+import { CommunityMessagesContext } from '../contexts/CommunityMessagesContextProvider';
 import { UsersContext } from '../contexts/UsersContextProvider';
 import { Roles } from '../interfaces/enums';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
@@ -52,7 +53,9 @@ const CommunityTopicPage = () => {
 	const { user } = useContext(UserAuthContext);
 	const { users } = useContext(UsersContext);
 	const { orgId } = useContext(OrganisationContext);
-	const { fetchTopics, sortedTopicsData } = useContext(CommunityContext);
+	const { sortedTopicsData } = useContext(CommunityContext);
+	const { messages, numberOfPages, pageNumber, setPageNumber, fetchMessages, fetchMoreMessages, loadedPages, addNewMessage, currentTopicId } =
+		useContext(CommunityMessagesContext);
 
 	const { isRotated, isVerySmallScreen, isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -62,7 +65,7 @@ const CommunityTopicPage = () => {
 	const initialPageNumber = parseInt(queryParams.get('page') || '1', 10);
 	const messageIdFromNotification = queryParams.get('messageId') || '';
 
-	const [messages, setMessages] = useState<CommunityMessage[]>([]);
+	// Messages state now comes from CommunityMessagesContext
 
 	const [currentMessage, setCurrentMessage] = useState<string>('');
 	const [replyToMessage, setReplyToMessage] = useState<CommunityMessage | null>(null);
@@ -105,8 +108,7 @@ const CommunityTopicPage = () => {
 	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(user?.role === 'admin' ? true : false);
 	const [isAudioUploading, setIsAudioUploading] = useState<boolean>(false);
 
-	const [numberOfPages, setNumberOfPages] = useState<number>(1);
-	const [pageNumber, setPageNumber] = useState<number>(initialPageNumber);
+	// numberOfPages and pageNumber now come from CommunityMessagesContext
 
 	const [refreshTopics, setRefreshTopics] = useState<boolean>(false);
 
@@ -126,9 +128,9 @@ const CommunityTopicPage = () => {
 
 	const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-	const scrollToBottom = () => {
-		messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-	};
+	// const scrollToBottom = () => {
+	// 	messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+	// };
 
 	const messageRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
@@ -139,23 +141,24 @@ const CommunityTopicPage = () => {
 
 	useEffect(() => {
 		if (topicId) {
-			const fetchTopicMessages = async () => {
+			const fetchTopicInfo = async () => {
 				try {
-					const messagesResponse = await axios.get(`${base_url}/communityMessages/topic/${topicId}?page=${pageNumber}&limit=30`);
+					// Only fetch topic info, not messages
+					const topicResponse = await axios.get(`${base_url}/communityTopics/${topicId}`);
 
-					setMessages(messagesResponse.data.messages);
+					setTopic(topicResponse.data.data);
+					setIsTopicLocked(!topicResponse.data.data.isActive);
 
-					setTopic(messagesResponse.data.topic);
-					setIsTopicLocked(!messagesResponse.data.topic.isActive);
-					setNumberOfPages(messagesResponse.data.totalPages);
+					// Initialize messages in context
+					fetchMessages(topicId);
 				} catch (error) {
 					console.log(error);
 				}
 			};
 
-			fetchTopicMessages();
+			fetchTopicInfo();
 		}
-	}, [pageNumber, topicId]);
+	}, [topicId, fetchMessages]);
 
 	useEffect(() => {
 		if (highlightedMessageId && messages.length > 0) {
@@ -180,8 +183,7 @@ const CommunityTopicPage = () => {
 	}, [highlightedMessageId, messages]);
 
 	useEffect(() => {
-		scrollToBottom();
-		fetchTopics(1);
+		// scrollToBottom();
 	}, [messages]);
 
 	const handleEmojiSelect = (emoji: any) => {
@@ -318,10 +320,8 @@ const CommunityTopicPage = () => {
 
 			setRefreshTopics(true);
 
-			setMessages((prevData) => {
-				return [...prevData, response.data];
-			});
-			setPageNumber(numberOfPages);
+			addNewMessage(response.data);
+			// Reset form
 			setCurrentMessage('');
 			setImgUrl('');
 			setAudioUrl('');
@@ -503,6 +503,25 @@ const CommunityTopicPage = () => {
 	// Upload limit management
 	const { getRemainingAudioUploads, getRemainingImageUploads } = useUploadLimit();
 
+	// Progressive pagination handler
+	const handlePageChange = async (newPage: number) => {
+		const pageSize = 25; // 25 messages per page
+		const requiredRecords = newPage * pageSize;
+
+		// Check if we need to fetch more data
+		if (messages.length < requiredRecords) {
+			const currentLoadedPages = loadedPages.length > 0 ? Math.max(...loadedPages) : 0; // Get the highest loaded page
+			const targetBackendPage = Math.ceil(requiredRecords / 250); // Calculate which backend page we need (250 messages per backend page)
+
+			// Fetch missing backend pages using batch approach (like other admin pages)
+			if (currentLoadedPages < targetBackendPage) {
+				await fetchMoreMessages(currentTopicId, currentLoadedPages + 1, targetBackendPage);
+			}
+		}
+
+		setPageNumber(newPage);
+	};
+
 	return (
 		<DashboardPagesLayout pageName='Community' customSettings={{ justifyContent: 'flex-start' }}>
 			<Box
@@ -515,7 +534,6 @@ const CommunityTopicPage = () => {
 				}}>
 				<TopicPaper
 					topic={topic}
-					messages={messages}
 					setDisplayDeleteTopicMsg={setDisplayDeleteTopicMsg}
 					setTopic={setTopic}
 					refreshTopics={refreshTopics}
@@ -633,18 +651,17 @@ const CommunityTopicPage = () => {
 				sx={{
 					display: 'flex',
 					flexDirection: 'column',
-					alignItems: 'flex-end',
+					alignItems: 'center',
 					width: '87%',
 					margin: '1.5rem 0 5rem 0',
 					paddingBottom: '5rem',
 				}}>
-				{messages?.map((message: CommunityMessage, index) => (
+				{messages?.slice((pageNumber - 1) * 25, pageNumber * 25).map((message: CommunityMessage, index) => (
 					<Message
 						key={message?._id}
 						message={message}
 						isFirst={index === 0}
-						isLast={index === messages.length - 1}
-						setMessages={setMessages}
+						isLast={index === messages?.slice((pageNumber - 1) * 25, pageNumber * 25).length - 1}
 						setReplyToMessage={setReplyToMessage}
 						messageRefs={messageRefs}
 						setPageNumber={setPageNumber}
@@ -656,7 +673,7 @@ const CommunityTopicPage = () => {
 				))}
 				<div ref={messagesEndRef} />
 				<Box sx={{ display: 'flex', justifyContent: 'center', mt: '1.5rem', width: '95%' }}>
-					<CustomTablePagination count={numberOfPages} page={pageNumber} onChange={setPageNumber} />
+					<CustomTablePagination count={numberOfPages} page={pageNumber} onChange={handlePageChange} />
 				</Box>
 			</Box>
 
@@ -892,7 +909,7 @@ const CommunityTopicPage = () => {
 					required={false}
 					disabled={isTopicLocked}
 					onChange={handleInputChange}
-					placeholder={isTopicLocked ? 'You cannot send a message since topic is locked' : ''}
+					placeholder={isTopicLocked ? 'You cannot send a message since topic is locked' : 'You can use @ to mention users and # to mention topics'}
 					sx={{
 						width: isVerySmallScreen ? '95%' : isMobileSize ? '90%' : '78%',
 						border: replyToMessage ? 'none' : 'inherit',

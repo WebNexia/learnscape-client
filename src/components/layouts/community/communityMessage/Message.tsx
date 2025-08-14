@@ -11,6 +11,7 @@ import CustomDialogActions from '../../dialog/CustomDialogActions';
 import EditMessageDialog from './EditMessageDialog';
 import { renderMessageWithEmojis } from '../../../../utils/renderMessageWithEmojis';
 import { OrganisationContext } from '../../../../contexts/OrganisationContextProvider';
+import { CommunityMessagesContext } from '../../../../contexts/CommunityMessagesContextProvider';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { truncateText } from '../../../../utils/utilText';
 import { db } from '../../../../firebase';
@@ -23,7 +24,6 @@ interface MessageProps {
 	isLast?: boolean;
 	isTopicLocked: boolean;
 	topicTitle: string;
-	setMessages: React.Dispatch<React.SetStateAction<CommunityMessage[]>>;
 	setReplyToMessage: React.Dispatch<React.SetStateAction<CommunityMessage | null>>;
 	messageRefs: React.MutableRefObject<{ [key: string]: HTMLDivElement | null }>;
 	setPageNumber: React.Dispatch<React.SetStateAction<number>>;
@@ -37,7 +37,6 @@ const Message = ({
 	isLast,
 	isTopicLocked,
 	topicTitle,
-	setMessages,
 	setReplyToMessage,
 	messageRefs,
 	setPageNumber,
@@ -47,6 +46,7 @@ const Message = ({
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { user } = useContext(UserAuthContext);
 	const { adminUsers } = useContext(OrganisationContext);
+	const { removeMessage, updateMessage } = useContext(CommunityMessagesContext);
 	const isAdmin: boolean = user?.role === Roles.ADMIN;
 	const isMessageWriter: boolean = user?._id === message?.userId?._id;
 
@@ -72,7 +72,7 @@ const Message = ({
 		try {
 			await axios.delete(`${base_url}/communityMessages/${message._id}`);
 
-			setMessages((prevData) => prevData?.filter((data) => data._id !== message._id));
+			removeMessage(message._id);
 		} catch (error) {
 			console.log(error);
 		}
@@ -114,14 +114,7 @@ const Message = ({
 
 			setReportMsgModalOpen(false);
 
-			setMessages((prevData) => {
-				return prevData?.map((data) => {
-					if (data._id === message._id) {
-						return { ...data, isReported: true };
-					}
-					return data;
-				});
-			});
+			updateMessage(message._id, { isReported: true });
 
 			// Create the notification data
 			const notificationData = {
@@ -152,14 +145,7 @@ const Message = ({
 			});
 
 			setResolveReportModalOpen(false);
-			setMessages((prevData) => {
-				return prevData?.map((data) => {
-					if (data._id === message._id) {
-						return { ...data, isReported: false };
-					}
-					return data;
-				});
-			});
+			updateMessage(message._id, { isReported: false });
 		} catch (error) {
 			console.log(error);
 		}
@@ -443,7 +429,6 @@ const Message = ({
 									editMsgModalOpen={editMsgModalOpen}
 									setEditMsgModalOpen={setEditMsgModalOpen}
 									message={message}
-									setMessages={setMessages}
 									setIsMsgEdited={setIsMsgEdited}
 								/>
 
@@ -482,7 +467,7 @@ const Message = ({
 				closeModal={() => setDeleteMessageModalOpen(false)}
 				title='Delete Message'
 				content='Are you sure you want to delete the message?'
-				maxWidth='sm'>
+				maxWidth='xs'>
 				<CustomDialogActions deleteBtn onDelete={deleteMessage} onCancel={() => setDeleteMessageModalOpen(false)} />
 			</CustomDialog>
 		</Box>

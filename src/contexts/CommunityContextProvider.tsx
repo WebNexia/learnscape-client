@@ -14,7 +14,7 @@ interface CommunityContextTypes {
 	sortTopicsData: (property: keyof CommunityTopic, order: 'asc' | 'desc') => void;
 	addNewTopic: (newTopic: any) => void;
 	removeTopic: (id: string) => void;
-	updateTopics: (singleTopic: CommunityTopic) => void;
+	updateTopics: (singleTopic: Partial<CommunityTopic>) => void;
 	numberOfPages: number;
 	topicsPageNumber: number;
 	setTopicsPageNumber: React.Dispatch<React.SetStateAction<number>>;

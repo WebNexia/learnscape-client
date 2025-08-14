@@ -70,20 +70,26 @@ axiosInstance.interceptors.response.use(
 	async (error) => {
 		const config = error.config as CustomAxiosRequestConfig;
 
-		// Handle rate limit errors
-		if (error.response?.status === 429) {
+		// Handle rate limit errors (429) and IP blocking (403)
+		if (error.response?.status === 429 || error.response?.status === 403) {
 			if (window.location.pathname === '/rate-limit-error') {
 				// Already on the error page, do not redirect or update localStorage
 				return Promise.reject(error);
 			}
 			const retryAfterHeader = error.response.headers['retry-after'];
 			const retryAfter = parseInt(retryAfterHeader, 10);
-			const finalRetryAfter = Number.isFinite(retryAfter) ? retryAfter : 900;
+			let finalRetryAfter = Number.isFinite(retryAfter) ? retryAfter : 900;
 
 			let type = 'api';
-			const url = error.config.url || '';
-			if (url.includes('/users/signup')) type = 'signup';
-			else if (url.includes('/users/check-email-firebase')) type = 'email';
+			if (error.response?.status === 403) {
+				type = 'ip_blocked';
+				// For IP blocking, use 24 hours as retry time
+				finalRetryAfter = 24 * 60 * 60; // 24 hours in seconds
+			} else {
+				const url = error.config.url || '';
+				if (url.includes('/users/signup')) type = 'signup';
+				else if (url.includes('/users/check-email-firebase')) type = 'email';
+			}
 
 			const existing = localStorage.getItem('rateLimitInfo');
 			let shouldSet = true;

@@ -5,10 +5,12 @@ import { useNavigate } from 'react-router-dom';
 import { Lesson } from '../../interfaces/lessons';
 import { QuestionUpdateTrack } from '../../pages/AdminLessonEditPage';
 import CustomSubmitButton from '../forms/customButtons/CustomSubmitButton';
-import { FormEvent, useState } from 'react';
+import { FormEvent, useContext, useState } from 'react';
 import CustomCancelButton from '../forms/customButtons/CustomCancelButton';
 import CustomDialog from '../layouts/dialog/CustomDialog';
 import LessonInfoModal from '../lessons/LessonInfoModal';
+import { useStickyPaper } from '../../hooks/useStickyPaper';
+import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 
 interface LessonPaperProps {
 	singleLesson: Lesson;
@@ -62,15 +64,29 @@ const LessonPaper = ({
 	const vertical = 'top';
 	const horizontal = 'center';
 
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+
+	const isMobileSize = isSmallScreen || isRotatedMedium;
+
 	const [isLessonInfoDialogOpen, setIsLessonInfoDialogOpen] = useState<boolean>(false);
+
+	const { isSticky, paperRef } = useStickyPaper();
 	return (
 		<Paper
+			ref={paperRef}
 			elevation={10}
 			sx={{
-				width: '100%',
-				height: '6rem',
-				mt: '1.25rem',
+				width: isSticky ? (isMobileSize ? '100%' : 'calc(100% - 10rem)') : '100%',
+				height: isSticky ? '3rem' : '6rem',
+				mt: isSticky ? 0 : '1.25rem',
 				backgroundColor: theme.bgColor?.adminPaper,
+				position: isSticky ? 'fixed' : 'relative',
+				top: isSticky ? (isMobileSize ? '3.5rem' : '4rem') : 'auto',
+				left: isSticky ? (isMobileSize ? '0' : '10rem') : 'auto', // Align with main content area
+				right: isSticky ? 0 : 'auto', // Align with main content area
+				zIndex: isSticky ? 1000 : 'auto',
+				transition: 'all 0.5s ease',
+				borderRadius: isSticky ? 0 : undefined,
 			}}>
 			<Box
 				sx={{
@@ -82,11 +98,11 @@ const LessonPaper = ({
 				<Box
 					sx={{
 						display: 'flex',
-						flexDirection: 'column',
-						justifyContent: 'space-between',
-						alignItems: 'flex-start',
-						flex: 2,
-						padding: '0.5rem',
+						flexDirection: isSticky ? 'row' : 'column',
+						justifyContent: isSticky ? 'space-between' : 'space-between',
+						alignItems: isSticky ? 'center' : 'flex-start',
+						flex: { md: 2, lg: 3 },
+						padding: isSticky ? '0.5rem 1rem' : '0.5rem',
 					}}>
 					<Box>
 						<Button
@@ -105,7 +121,7 @@ const LessonPaper = ({
 								navigate(`/admin/lessons`);
 								window.scrollTo({ top: 0, behavior: 'smooth' });
 							}}>
-							Back to lessons
+							{isSticky ? 'Lessons' : 'Back to lessons'}
 						</Button>
 					</Box>
 					<Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
@@ -115,7 +131,8 @@ const LessonPaper = ({
 								sx={{
 									textTransform: 'capitalize',
 									color: theme.textColor?.common.main,
-									padding: '0 0 0.5rem 0.5rem',
+									padding: isSticky ? '0 0 0 0.5rem' : '0 0 0.5rem 0.5rem',
+									fontSize: isSticky ? '0.75rem' : undefined,
 								}}>
 								{singleLessonBeforeSave?.type}
 							</Typography>
@@ -137,17 +154,38 @@ const LessonPaper = ({
 					sx={{
 						display: 'flex',
 						justifyContent: 'flex-end',
-						alignItems: 'flex-start',
-						flex: 1,
-						padding: '1rem',
+						alignItems: isSticky ? 'center' : 'flex-start',
+						flex: 2,
+						padding: isSticky ? '0.5rem 1rem' : '1rem',
 					}}>
-					<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', height: '100%' }}>
-						<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
-							<Box>
-								<Typography variant='h5' sx={{ color: theme.textColor?.common.main }}>
-									{singleLessonBeforeSave?.title}
-								</Typography>
-							</Box>
+					<Box
+						sx={{
+							display: 'flex',
+							flexDirection: isSticky ? 'row' : 'column',
+							alignItems: 'center',
+							justifyContent: isSticky ? 'space-between' : 'space-between',
+							height: '100%',
+							width: '100%',
+							gap: isSticky ? 2 : 0,
+						}}>
+						<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', width: '100%', flex: 3 }}>
+							<Typography
+								variant={singleLessonBeforeSave?.title.length > 50 ? 'body2' : 'h6'}
+								sx={{
+									color: theme.textColor?.common.main,
+									mr: '0.5rem',
+									fontSize: isSticky
+										? singleLessonBeforeSave?.title.length > 50
+											? isMobileSize
+												? '0.5rem'
+												: '0.65rem'
+											: isMobileSize
+												? '0.7rem'
+												: '0.8rem'
+										: undefined,
+								}}>
+								{singleLessonBeforeSave?.title}
+							</Typography>
 						</Box>
 
 						<Box
@@ -156,6 +194,7 @@ const LessonPaper = ({
 								justifyContent: 'flex-end',
 								alignItems: 'center',
 								width: '100%',
+								flex: 2,
 							}}>
 							<Box sx={{ display: 'flex' }}>
 								<Snackbar
@@ -172,7 +211,7 @@ const LessonPaper = ({
 									<Box>
 										<CustomSubmitButton
 											unsaved={hasUnsavedChanges}
-											sx={{ padding: '0 0.75rem', backgroundColor: theme.bgColor?.greenPrimary }}
+											sx={{ backgroundColor: theme.bgColor?.greenPrimary, fontSize: isSticky ? (isMobileSize ? '0.6rem' : '0.75rem') : undefined }}
 											onClick={(e) => {
 												if (singleLessonBeforeSave?.title.trim() !== '' && singleLessonBeforeSave?.title !== '') {
 													handleLessonUpdate(e as FormEvent<Element>);
@@ -212,7 +251,11 @@ const LessonPaper = ({
 												setHasUnsavedChanges(false);
 												setErrorMessage('');
 											}}
-											sx={{ color: theme.textColor?.common.main, borderColor: theme.textColor?.common.main, padding: '0 0.75rem' }}>
+											sx={{
+												color: theme.textColor?.common.main,
+												borderColor: theme.textColor?.common.main,
+												fontSize: isSticky ? (isMobileSize ? '0.6rem' : '0.75rem') : undefined,
+											}}>
 											Cancel
 										</CustomCancelButton>
 									</Box>
@@ -221,30 +264,30 @@ const LessonPaper = ({
 										<CustomSubmitButton
 											sx={{
 												visibility: isEditMode ? 'hidden' : 'visible',
-												padding: '0 0.75rem',
+												fontSize: isSticky ? (isMobileSize ? '0.6rem' : '0.75rem') : undefined,
 											}}
 											onClick={handlePublishing}>
 											{isActive ? 'Unpublish' : 'Publish'}
 										</CustomSubmitButton>
 										<Tooltip title='Edit Lesson' placement='top' arrow>
 											<IconButton
-												sx={{ padding: '0 0.75rem' }}
+												sx={{ ml: '0.5rem' }}
 												onClick={() => {
 													setIsEditMode(true);
 													resetImageUpload();
 													resetVideoUpload();
 													resetEnterImageVideoUrl();
 												}}>
-												<Edit sx={{ color: 'white' }} fontSize='small' />
+												<Edit sx={{ color: 'white', fontSize: isSticky ? (isMobileSize ? '0.9rem' : '1rem') : undefined }} fontSize='small' />
 											</IconButton>
 										</Tooltip>
 										<Tooltip title='More Info' placement='top' arrow>
 											<IconButton
-												sx={{ padding: '0 0.75rem', ml: '-0.75rem' }}
+												sx={{ ml: '-0.5rem' }}
 												onClick={() => {
 													setIsLessonInfoDialogOpen(true);
 												}}>
-												<Info sx={{ color: 'white' }} fontSize='small' />
+												<Info sx={{ color: 'white', fontSize: isSticky ? (isMobileSize ? '0.9rem' : '1rem') : undefined }} fontSize='small' />
 											</IconButton>
 										</Tooltip>
 										<CustomDialog
