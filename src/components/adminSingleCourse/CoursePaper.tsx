@@ -13,6 +13,8 @@ import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
 import axios from '@utils/axiosInstance';
 import { CoursesContext } from '../../contexts/CoursesContextProvider';
 import { dateTimeFormatter } from '@utils/dateFormatter';
+import { useStickyPaper } from '../../hooks/useStickyPaper';
+import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 
 interface CoursePaperProps {
 	singleCourse?: SingleCourse;
@@ -63,10 +65,16 @@ const CoursePaper = ({
 
 	const { addNewCourse } = useContext(CoursesContext);
 
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+
+	const isMobileSize = isSmallScreen || isRotatedMedium;
+
 	const { courseId } = useParams();
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
 	const { resetImageUpload } = useImageUpload();
+
+	const { isSticky, paperRef } = useStickyPaper();
 
 	const handleCancel = async (): Promise<void> => {
 		setIsEditMode(false);
@@ -107,12 +115,20 @@ const CoursePaper = ({
 
 	return (
 		<Paper
+			ref={paperRef}
 			elevation={10}
 			sx={{
-				width: '100%',
-				height: '6rem',
-				marginTop: '1.25rem',
+				width: isSticky ? (isMobileSize ? '100%' : 'calc(100% - 10rem)') : '100%',
+				height: isSticky ? '3rem' : '6rem',
+				marginTop: isSticky ? 0 : '1.25rem',
 				backgroundColor: theme.bgColor?.adminPaper,
+				position: isSticky ? 'fixed' : 'relative',
+				top: isSticky ? (isMobileSize ? '3.5rem' : '4rem') : 'auto', // Assuming DashboardHeader height is 64px
+				left: isSticky ? (isMobileSize ? '0' : '10rem') : 'auto', // Align with main content area
+				right: isSticky ? 0 : 'auto', // Align with main content area
+				zIndex: isSticky ? 1000 : 'auto',
+				transition: 'all 0.5s ease',
+				borderRadius: isSticky ? 0 : undefined,
 			}}>
 			<Box
 				sx={{
@@ -121,7 +137,15 @@ const CoursePaper = ({
 					height: '100%',
 					width: '100%',
 				}}>
-				<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flex: 2, padding: '0.5rem' }}>
+				<Box
+					sx={{
+						display: 'flex',
+						flexDirection: isSticky ? 'row' : 'column',
+						justifyContent: isSticky ? 'flex-start' : 'space-between',
+						alignItems: isSticky ? 'center' : 'flex-start',
+						flex: { md: 2, lg: 3 },
+						padding: isSticky ? '0.5rem 1rem' : '0.5rem',
+					}}>
 					<Box>
 						<Button
 							variant='text'
@@ -134,18 +158,26 @@ const CoursePaper = ({
 									backgroundColor: 'transparent',
 									textDecoration: 'underline',
 								},
+								'fontSize': isSticky ? { xs: '0.7rem', sm: '0.8rem' } : undefined,
 							}}
 							onClick={() => {
 								navigate(`/admin/courses`);
 								window.scrollTo({ top: 0, behavior: 'smooth' });
 							}}>
-							Back to courses
+							{isSticky ? 'Courses' : 'Back to courses'}
 						</Button>
 					</Box>
-					<Box sx={{ paddingLeft: '0.5rem' }}>
-						<Typography variant='body2' sx={{ color: theme.textColor?.common.main }}>
+					<Box sx={{ paddingLeft: isSticky ? '0' : '0.5rem' }}>
+						<Typography
+							variant='body2'
+							sx={{
+								color: theme.textColor?.common.main,
+								fontSize: isSticky ? (isMobileSize ? '0.6rem' : '0.75rem') : undefined,
+							}}>
+							{isSticky ? '(' : ''}
 							{singleCourseBeforeSave?.isActive ? 'Published' : 'Unpublished'} - {singleCourseBeforeSave?.isExpired ? 'Closed' : 'Open'} -{' '}
 							{singleCourseBeforeSave?.courseManagement?.isExternal ? 'External' : 'Platform'}
+							{isSticky ? ')' : ''}
 						</Typography>
 					</Box>
 				</Box>
@@ -153,14 +185,29 @@ const CoursePaper = ({
 					sx={{
 						display: 'flex',
 						justifyContent: 'flex-end',
-						alignItems: 'flex-start',
-						flex: 1,
-						padding: '1rem',
+						alignItems: isSticky ? 'center' : 'flex-start',
+						flex: 2,
+						padding: isSticky ? '0.5rem 1rem' : '1rem',
 					}}>
-					<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', height: '100%' }}>
-						<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+					<Box
+						sx={{
+							display: 'flex',
+							flexDirection: isSticky ? 'row' : 'column',
+							alignItems: 'center',
+							justifyContent: isSticky ? 'flex-start' : 'space-between',
+							height: '100%',
+							width: '100%',
+							gap: isSticky ? 1 : 0,
+						}}>
+						<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', width: '100%' }}>
 							<Box>
-								<Typography variant='h5' sx={{ color: theme.textColor?.common.main, mr: '0.5rem' }}>
+								<Typography
+									variant='h6'
+									sx={{
+										color: theme.textColor?.common.main,
+										mr: isSticky ? '0.25rem' : '0.5rem',
+										fontSize: isSticky ? { xs: '0.7rem', sm: '0.8rem' } : undefined,
+									}}>
 									{singleCourseBeforeSave?.title}
 								</Typography>
 							</Box>
@@ -209,7 +256,7 @@ const CoursePaper = ({
 									<Box>
 										<CustomSubmitButton
 											unsaved={hasUnsavedChanges}
-											sx={{ padding: '0 0.75rem' }}
+											sx={{ fontSize: isSticky ? (isMobileSize ? '0.6rem' : '0.75rem') : undefined }}
 											onClick={(e) => {
 												if (
 													singleCourseBeforeSave?.title.trim() !== '' &&
@@ -229,7 +276,11 @@ const CoursePaper = ({
 										</CustomSubmitButton>
 										<CustomCancelButton
 											onClick={handleCancel}
-											sx={{ color: theme.textColor?.common.main, borderColor: theme.textColor?.common.main, padding: '0 0.75rem' }}>
+											sx={{
+												color: theme.textColor?.common.main,
+												borderColor: theme.textColor?.common.main,
+												fontSize: isSticky ? (isMobileSize ? '0.6rem' : '0.75rem') : undefined,
+											}}>
 											Cancel
 										</CustomCancelButton>
 									</Box>
@@ -239,6 +290,7 @@ const CoursePaper = ({
 											sx={{
 												visibility: isEditMode ? 'hidden' : 'visible',
 												padding: '0 0.75rem',
+												fontSize: isSticky ? (isMobileSize ? '0.6rem' : '0.75rem') : undefined,
 											}}
 											onClick={handlePublishing}>
 											{singleCourseBeforeSave?.isActive ? 'Unpublish' : 'Publish'}
@@ -250,7 +302,7 @@ const CoursePaper = ({
 													onClick={() => {
 														setIsEditMode(true);
 													}}>
-													<Edit sx={{ color: 'white' }} fontSize='small' />
+													<Edit sx={{ color: 'white', fontSize: isSticky ? (isMobileSize ? '0.9rem' : '1rem') : undefined }} fontSize='small' />
 												</IconButton>
 											</Tooltip>
 										) : (
@@ -260,7 +312,7 @@ const CoursePaper = ({
 													onClick={() => {
 														setIsCloneCourseDialogOpen(true);
 													}}>
-													<FileCopy sx={{ color: 'white' }} fontSize='small' />
+													<FileCopy sx={{ color: 'white', fontSize: isSticky ? (isMobileSize ? '0.9rem' : '1rem') : undefined }} fontSize='small' />
 												</IconButton>
 											</Tooltip>
 										)}
@@ -270,7 +322,7 @@ const CoursePaper = ({
 												onClick={() => {
 													setIsCourseInfoDialogOpen(true);
 												}}>
-												<Info sx={{ color: 'white' }} fontSize='small' />
+												<Info sx={{ color: 'white', fontSize: isSticky ? (isMobileSize ? '0.9rem' : '1rem') : undefined }} fontSize='small' />
 											</IconButton>
 										</Tooltip>
 									</Box>

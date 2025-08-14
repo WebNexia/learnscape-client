@@ -128,9 +128,9 @@ const CommunityTopicPage = () => {
 
 	const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-	const scrollToBottom = () => {
-		messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-	};
+	// const scrollToBottom = () => {
+	// 	messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+	// };
 
 	const messageRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
@@ -183,7 +183,7 @@ const CommunityTopicPage = () => {
 	}, [highlightedMessageId, messages]);
 
 	useEffect(() => {
-		scrollToBottom();
+		// scrollToBottom();
 	}, [messages]);
 
 	const handleEmojiSelect = (emoji: any) => {
@@ -534,7 +534,6 @@ const CommunityTopicPage = () => {
 				}}>
 				<TopicPaper
 					topic={topic}
-					messages={messages}
 					setDisplayDeleteTopicMsg={setDisplayDeleteTopicMsg}
 					setTopic={setTopic}
 					refreshTopics={refreshTopics}
@@ -652,7 +651,7 @@ const CommunityTopicPage = () => {
 				sx={{
 					display: 'flex',
 					flexDirection: 'column',
-					alignItems: 'flex-end',
+					alignItems: 'center',
 					width: '87%',
 					margin: '1.5rem 0 5rem 0',
 					paddingBottom: '5rem',

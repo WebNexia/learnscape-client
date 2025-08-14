@@ -5,7 +5,7 @@ import { UserAuthContext } from '../../../../contexts/UserAuthContextProvider';
 import { Roles } from '../../../../interfaces/enums';
 import { Delete, Edit, Flag, KeyboardBackspaceOutlined, Lock, LockOpenOutlined, Verified } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import { CommunityMessage, TopicInfo } from '../../../../interfaces/communityMessage';
+import { TopicInfo } from '../../../../interfaces/communityMessage';
 import { formatMessageTime } from '../../../../utils/formatTime';
 import axios from '@utils/axiosInstance';
 import CustomDialog from '../../dialog/CustomDialog';
@@ -17,11 +17,11 @@ import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../../../firebase';
 import { truncateText } from '../../../../utils/utilText';
 import { MediaQueryContext } from '../../../../contexts/MediaQueryContextProvider';
+import { useStickyPaper } from '../../../../hooks/useStickyPaper';
 
 interface TopicPaperProps {
 	refreshTopics: boolean;
 	topic: TopicInfo;
-	messages: CommunityMessage[];
 	isTopicLocked: boolean;
 	setIsTopicLocked: React.Dispatch<React.SetStateAction<boolean>>;
 	setDisplayDeleteTopicMsg: React.Dispatch<React.SetStateAction<boolean>>;
@@ -40,6 +40,8 @@ const TopicPaper = ({ topic, setDisplayDeleteTopicMsg, setTopic, refreshTopics, 
 	const navigate = useNavigate();
 	const isAdmin: boolean = user?.role === Roles.ADMIN;
 	const isTopicWriter: boolean = user?._id === topic?.userId?._id;
+
+	const { isSticky, paperRef } = useStickyPaper();
 
 	const [deleteTopicModalOpen, setDeleteTopicModalOpen] = useState<boolean>(false);
 	const [editTopicModalOpen, setEditTopicModalOpen] = useState<boolean>(false);
@@ -138,12 +140,20 @@ const TopicPaper = ({ topic, setDisplayDeleteTopicMsg, setTopic, refreshTopics, 
 
 	return (
 		<Paper
+			ref={paperRef}
 			elevation={10}
 			sx={{
-				width: '100%',
-				height: isMobileSize ? '4rem' : '6rem',
-				marginTop: '1.5rem',
+				width: isSticky ? (isMobileSize ? '100%' : 'calc(100% - 10rem)') : '100%',
+				height: isSticky ? (isMobileSize ? '2.5rem' : '3rem') : isMobileSize ? '4rem' : '6rem',
+				marginTop: isSticky ? 0 : '1.5rem',
 				backgroundColor: !isAdmin ? theme.bgColor?.primary : theme.bgColor?.adminPaper,
+				position: isSticky ? 'fixed' : 'relative',
+				top: isSticky ? (isMobileSize ? '3.5rem' : '4rem') : 'auto', // Assuming DashboardHeader height is 64px
+				left: isSticky ? (isMobileSize ? '0' : '10rem') : 'auto', // Align with main content area
+				right: isSticky ? 0 : 'auto', // Align with main content area
+				zIndex: isSticky ? 1000 : 'auto',
+				transition: 'all 0.5s ease',
+				borderRadius: isSticky ? 0 : undefined,
 			}}>
 			<Box
 				sx={{
@@ -155,11 +165,11 @@ const TopicPaper = ({ topic, setDisplayDeleteTopicMsg, setTopic, refreshTopics, 
 				<Box
 					sx={{
 						display: 'flex',
-						flexDirection: 'column',
-						justifyContent: 'space-between',
-						alignItems: 'flex-start',
+						flexDirection: isSticky ? 'row' : 'column',
+						justifyContent: isSticky ? 'space-between' : 'space-between',
+						alignItems: isSticky ? 'center' : 'flex-start',
 						flex: 2,
-						padding: isMobileSize ? '0.1rem' : '0.5rem',
+						padding: isSticky ? (isMobileSize ? '0.25rem 0.5rem' : '0.5rem 1rem') : isMobileSize ? '0.1rem' : '0.5rem',
 					}}>
 					<Box>
 						<Button
@@ -173,7 +183,7 @@ const TopicPaper = ({ topic, setDisplayDeleteTopicMsg, setTopic, refreshTopics, 
 									backgroundColor: 'transparent',
 									textDecoration: 'underline',
 								},
-								'fontSize': isMobileSize ? '0.65rem' : undefined,
+								'fontSize': isMobileSize ? '0.65rem' : isSticky ? '0.8rem' : undefined,
 							}}
 							onClick={() => {
 								if (refreshTopics) fetchTopics(1);
@@ -186,7 +196,7 @@ const TopicPaper = ({ topic, setDisplayDeleteTopicMsg, setTopic, refreshTopics, 
 
 								window.scrollTo({ top: 0, behavior: 'smooth' });
 							}}>
-							{isMobileSize ? 'Topics' : 'Back to topics'}
+							{isMobileSize || isSticky ? 'Topics' : 'Back to topics'}
 						</Button>
 					</Box>
 					<Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
@@ -359,15 +369,28 @@ const TopicPaper = ({ topic, setDisplayDeleteTopicMsg, setTopic, refreshTopics, 
 					sx={{
 						display: 'flex',
 						justifyContent: 'flex-end',
-						alignItems: 'flex-start',
+						alignItems: isSticky ? 'center' : 'flex-start',
 						flex: 5,
-						padding: isMobileSize ? '0.5rem' : '1rem',
+						padding: isSticky ? (isMobileSize ? '0.25rem 0.5rem' : '0.5rem 1rem') : isMobileSize ? '0.5rem' : '1rem',
 					}}>
-					<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'space-between', height: '100%' }}>
+					<Box
+						sx={{
+							display: 'flex',
+							flexDirection: isSticky ? 'row' : 'column',
+							alignItems: isSticky ? 'center' : 'flex-end',
+							justifyContent: isSticky ? 'flex-end' : 'space-between',
+							height: '100%',
+							width: '100%',
+							gap: isSticky ? 4 : 0,
+						}}>
 						<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
 							<Typography
 								variant='h5'
-								sx={{ color: theme.textColor?.common.main, textAlign: 'right', fontSize: isMobileSize ? '0.8rem' : undefined }}>
+								sx={{
+									color: theme.textColor?.common.main,
+									textAlign: 'right',
+									fontSize: isSticky ? (isMobileSize ? '0.7rem' : '0.9rem') : isMobileSize ? '0.8rem' : undefined,
+								}}>
 								{topic?.title}
 							</Typography>
 						</Box>
@@ -377,15 +400,25 @@ const TopicPaper = ({ topic, setDisplayDeleteTopicMsg, setTopic, refreshTopics, 
 								display: 'flex',
 								justifyContent: 'flex-end',
 								alignItems: 'center',
-								width: '100%',
+								width: isSticky ? 'auto' : '100%',
 							}}>
 							<Box sx={{ display: 'flex', alignItems: 'center' }}>
-								<Typography variant='body2' sx={{ color: theme.textColor?.common.main, fontSize: isMobileSize ? '0.7rem' : '0.85rem' }}>
-									{topic?.userId?.username || 'Deactivated User'}
+								<Typography
+									variant='body2'
+									sx={{
+										color: theme.textColor?.common.main,
+										fontSize: isSticky ? (isMobileSize ? '0.6rem' : '0.7rem') : isMobileSize ? '0.7rem' : '0.85rem',
+									}}>
+									{isSticky ? '(' + topic?.userId?.username || '(Deactivated User' : (topic?.userId?.username ?? 'Deactivated User')}
 								</Typography>
 								<Typography sx={{ mx: 1, color: '#fff' }}>-</Typography>
-								<Typography variant='caption' sx={{ color: theme.textColor?.common.main, fontSize: isMobileSize ? '0.6rem' : undefined }}>
-									{formatMessageTime(topic?.createdAt)}
+								<Typography
+									variant='caption'
+									sx={{
+										color: theme.textColor?.common.main,
+										fontSize: isSticky ? (isMobileSize ? '0.5rem' : '0.7rem') : isMobileSize ? '0.6rem' : undefined,
+									}}>
+									{isSticky ? formatMessageTime(topic?.createdAt) + ')' : formatMessageTime(topic?.createdAt)}
 								</Typography>
 							</Box>
 						</Box>
