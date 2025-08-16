@@ -1,4 +1,4 @@
-import { Alert, Box, Dialog, DialogContent, IconButton, InputAdornment, Snackbar, Tooltip, Typography } from '@mui/material';
+import { Alert, Box, Dialog, DialogActions, DialogContent, IconButton, InputAdornment, Snackbar, Tooltip, Typography } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import TopicPaper from '../components/layouts/community/topicPage/TopicPaper';
 import { useContext, useEffect, useMemo, useRef, useState } from 'react';
@@ -11,7 +11,7 @@ import { renderMessageWithEmojis } from '../utils/renderMessageWithEmojis';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
 import Picker from '@emoji-mart/react';
 import data from '@emoji-mart/data';
-import { Cancel, Image, InsertEmoticon, Mic, Send } from '@mui/icons-material';
+import { Cancel, Image, InsertEmoticon, Mic, Send, ZoomOutMap } from '@mui/icons-material';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import HandleImageUploadURL from '../components/forms/uploadImageVideoDocument/HandleImageUploadURL';
 import ImageThumbnail from '../components/forms/uploadImageVideoDocument/ImageThumbnail';
@@ -35,7 +35,7 @@ import { renderMessageWithMentions } from '../utils/renderMessageWithMentions';
 import { debounce } from 'lodash';
 import { processTitle } from '../utils/processTitle';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
-import useUploadLimit from '../hooks/useUploadLimit';
+import { useUploadLimit } from '../contexts/UploadLimitContextProvider';
 
 export interface UserSuggestion {
 	username: string;
@@ -98,6 +98,10 @@ const CommunityTopicPage = () => {
 
 	// URL validation error handling
 	const [isUrlErrorOpen, setIsUrlErrorOpen] = useState<boolean>(false);
+
+	// State to track if topic content is scrollable
+	const [isTopicScrollable, setIsTopicScrollable] = useState<boolean>(false);
+	const topicContentRef = useRef<HTMLDivElement>(null);
 	const [urlErrorMessage, setUrlErrorMessage] = useState<string>('');
 
 	// Session attempt limits
@@ -125,6 +129,8 @@ const CommunityTopicPage = () => {
 	const [topicSuggestions, setTopicSuggestions] = useState<TopicSuggestion[]>([]);
 
 	const [suggestionType, setSuggestionType] = useState<string | null>(null);
+
+	const [isTopicZoomed, setIsTopicZoomed] = useState<boolean>(false);
 
 	const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
@@ -189,6 +195,16 @@ const CommunityTopicPage = () => {
 	const handleEmojiSelect = (emoji: any) => {
 		setCurrentMessage((prevMessage) => prevMessage + emoji.native);
 		setShowPicker(false);
+	};
+
+	// Function to check if topic content is scrollable
+	const checkTopicScrollable = () => {
+		if (topicContentRef.current) {
+			const element = topicContentRef.current;
+			// Check if content is actually scrollable
+			const isScrollable = element.scrollHeight > element.clientHeight || element.scrollWidth > element.clientWidth;
+			setIsTopicScrollable(isScrollable);
+		}
 	};
 
 	// URL validation function
@@ -321,6 +337,13 @@ const CommunityTopicPage = () => {
 			setRefreshTopics(true);
 
 			addNewMessage(response.data);
+
+			// Refresh upload limits after successful message send (non-blocking)
+			refreshUploadStats().catch((error) => {
+				console.warn('Failed to refresh upload stats:', error);
+				// Don't block UI, just log the error
+			});
+
 			// Reset form
 			setCurrentMessage('');
 			setImgUrl('');
@@ -500,8 +523,39 @@ const CommunityTopicPage = () => {
 	};
 	const renderedTopicContent = useMemo(() => renderMessageContent(topic?.text || ''), [topic?.text]);
 
+	// Check if topic content is scrollable when topic or rendered content changes
+	useEffect(() => {
+		// Use a longer delay to ensure images and content are fully loaded
+		const timer = setTimeout(() => {
+			checkTopicScrollable();
+		}, 300);
+
+		return () => clearTimeout(timer);
+	}, [topic, renderedTopicContent]);
+
+	// Also check when images load
+	useEffect(() => {
+		if (topic?.imageUrl) {
+			// Check scrollability after a delay to allow images to load
+			const timer = setTimeout(() => {
+				checkTopicScrollable();
+			}, 500);
+			return () => clearTimeout(timer);
+		}
+	}, [topic?.imageUrl]);
+
+	// Add resize observer to handle window resize events
+	useEffect(() => {
+		const handleResize = () => {
+			checkTopicScrollable();
+		};
+
+		window.addEventListener('resize', handleResize);
+		return () => window.removeEventListener('resize', handleResize);
+	}, []);
+
 	// Upload limit management
-	const { getRemainingAudioUploads, getRemainingImageUploads } = useUploadLimit();
+	const { getRemainingAudioUploads, getRemainingImageUploads, refreshUploadStats } = useUploadLimit();
 
 	// Progressive pagination handler
 	const handlePageChange = async (newPage: number) => {
@@ -576,7 +630,69 @@ const CommunityTopicPage = () => {
 					marginTop: isMobileSize ? '5.5rem' : '9rem',
 					borderRadius: '0.35rem',
 					boxShadow: isMobileSize ? '0rem 0.1rem 0.3rem 0.1rem rgba(0,0,0,0.2)' : '0rem 0.2rem 0.5rem 0.1rem rgba(0,0,0,0.2)',
+					bgcolor: 'pink',
+					position: 'relative',
 				}}>
+				{isTopicScrollable && (
+					<Tooltip title='Zoom out' placement='top' arrow>
+						<IconButton
+							sx={{ 'position': 'absolute', 'top': '0rem', 'right': '0.75rem', 'zIndex': 1000, ':hover': { backgroundColor: 'transparent' } }}
+							onClick={() => setIsTopicZoomed(true)}>
+							<ZoomOutMap />
+						</IconButton>
+					</Tooltip>
+				)}
+				<CustomDialog openModal={isTopicZoomed} closeModal={() => setIsTopicZoomed(false)} maxWidth='sm'>
+					<DialogContent>
+						<Typography
+							variant='body2'
+							sx={{
+								lineHeight: 1.7,
+								mb: '0.75rem',
+								whiteSpace: 'pre-wrap',
+								wordBreak: 'break-word',
+								fontSize: isMobileSize ? '0.65rem' : undefined,
+							}}>
+							{renderedTopicContent}
+						</Typography>
+						{topic?.imageUrl && (
+							<Box onClick={() => setZoomedImage(topic?.imageUrl)} sx={{ cursor: 'pointer' }}>
+								<img
+									src={topic.imageUrl}
+									alt='img'
+									style={{ maxHeight: isMobileSize ? '11rem' : '15rem', objectFit: 'contain', borderRadius: '0.15rem' }}
+								/>
+							</Box>
+						)}
+						{zoomedImage && (
+							<Dialog open={!!zoomedImage} onClose={() => setZoomedImage('')} maxWidth='sm'>
+								<img src={zoomedImage} alt='Zoomed' style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '0.25rem' }} />
+							</Dialog>
+						)}
+
+						{topic?.audioUrl && (
+							<Box>
+								<audio
+									src={topic.audioUrl}
+									controls
+									style={{
+										margin: '1rem 0',
+										boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
+										borderRadius: '0.35rem',
+										width: isVerySmallScreen ? '95%' : isMobileSize ? '80%' : '50%',
+										height: isMobileSize ? '1.5rem' : '2rem',
+									}}
+								/>
+							</Box>
+						)}
+					</DialogContent>
+					<DialogActions>
+						<CustomCancelButton onClick={() => setIsTopicZoomed(false)} sx={{ margin: '0 1rem 0.5rem 0' }}>
+							{' '}
+							Close{' '}
+						</CustomCancelButton>
+					</DialogActions>
+				</CustomDialog>
 				<Box
 					sx={{
 						display: 'flex',
@@ -600,7 +716,7 @@ const CommunityTopicPage = () => {
 						</Typography>
 					</Box>
 				</Box>
-				<Box sx={{ flex: 8, padding: isMobileSize ? '0.25rem' : '1rem', overflow: 'auto' }}>
+				<Box ref={topicContentRef} sx={{ flex: 8, padding: isMobileSize ? '0.25rem' : '1rem', overflow: 'auto' }}>
 					<Box>
 						<Typography
 							variant='body2'

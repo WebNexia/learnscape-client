@@ -27,6 +27,7 @@ import EventsContextProvider from './contexts/EventsContextProvider';
 import PaymentsContextProvider from './contexts/PaymentsContextProvider';
 import PromoCodesContextProvider from './contexts/PromoCodesContextProvider';
 import InquiriesProvider from './contexts/InquiriesContextProvider';
+import { UploadLimitProvider } from './contexts/UploadLimitContextProvider';
 
 const queryClient = new QueryClient();
 
@@ -50,11 +51,13 @@ function App() {
 																	<PaymentsContextProvider>
 																		<PromoCodesContextProvider>
 																			<InquiriesProvider>
-																				<Suspense fallback={<Loading />}>
-																					<Elements stripe={stripePromise}>
-																						<Outlet />
-																					</Elements>
-																				</Suspense>
+																				<UploadLimitProvider>
+																					<Suspense fallback={<Loading />}>
+																						<Elements stripe={stripePromise}>
+																							<Outlet />
+																						</Elements>
+																					</Suspense>
+																				</UploadLimitProvider>
 																			</InquiriesProvider>
 																		</PromoCodesContextProvider>
 																	</PaymentsContextProvider>

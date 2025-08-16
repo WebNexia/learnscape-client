@@ -18,7 +18,7 @@ import ImageThumbnail from '../../../forms/uploadImageVideoDocument/ImageThumbna
 import { MediaQueryContext } from '../../../../contexts/MediaQueryContextProvider';
 import { CommunityMessagesContext } from '../../../../contexts/CommunityMessagesContextProvider';
 import { validateImageUrl } from '../../../../utils/urlValidation';
-import useUploadLimit from '../../../../hooks/useUploadLimit';
+import { useUploadLimit } from '../../../../contexts/UploadLimitContextProvider';
 
 interface EditMessageDialogProps {
 	message: CommunityMessage;

@@ -1,6 +1,6 @@
-import { useState, useEffect, useContext } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import axios from '@utils/axiosInstance';
-import { UserAuthContext } from '../contexts/UserAuthContextProvider';
+import { UserAuthContext } from './UserAuthContextProvider';
 
 interface UploadInfo {
 	audioUploads: {
@@ -15,7 +15,7 @@ interface UploadInfo {
 	};
 }
 
-interface UseUploadLimitReturn {
+interface UploadLimitContextType {
 	uploadInfo: UploadInfo | null;
 	loading: boolean;
 	error: string | null;
@@ -31,32 +31,54 @@ interface UseUploadLimitReturn {
 	getFormattedResetTime: () => string;
 }
 
-const useUploadLimit = (): UseUploadLimitReturn => {
+const UploadLimitContext = createContext<UploadLimitContextType | undefined>(undefined);
+
+interface UploadLimitProviderProps {
+	children: ReactNode;
+}
+
+export const UploadLimitProvider: React.FC<UploadLimitProviderProps> = ({ children }) => {
 	const { user, userId } = useContext(UserAuthContext);
 	const [uploadInfo, setUploadInfo] = useState<UploadInfo | null>(null);
 	const [loading, setLoading] = useState<boolean>(false);
 	const [error, setError] = useState<string | null>(null);
+	const [lastFetchTime, setLastFetchTime] = useState<number>(0);
+	const [isFetching, setIsFetching] = useState<boolean>(false);
 
-	const fetchUploadStats = async () => {
+	const fetchUploadStats = async (forceRefresh = false) => {
 		if (!userId) {
 			return;
 		}
 
+		// Prevent multiple simultaneous requests
+		if (isFetching) {
+			return;
+		}
+
+		// Cache for 30 seconds to prevent excessive API calls
+		const now = Date.now();
+		if (!forceRefresh && uploadInfo && now - lastFetchTime < 30000) {
+			return;
+		}
+
+		setIsFetching(true);
 		setLoading(true);
 		setError(null);
 
 		try {
 			const response = await axios.get('/users/upload-counts');
 			setUploadInfo(response.data.uploadInfo);
+			setLastFetchTime(now);
 		} catch (err: any) {
 			setError(err.response?.data?.message || 'Failed to fetch upload statistics');
 		} finally {
 			setLoading(false);
+			setIsFetching(false);
 		}
 	};
 
 	const refreshUploadStats = async () => {
-		await fetchUploadStats();
+		await fetchUploadStats(true);
 	};
 
 	// Check if user can upload audio
@@ -133,7 +155,57 @@ const useUploadLimit = (): UseUploadLimitReturn => {
 		}
 	}, [userId]);
 
-	return {
+	// Periodic refresh every 5 minutes to handle stale data
+	useEffect(() => {
+		if (!userId) return;
+
+		let interval: NodeJS.Timeout;
+
+		// Only refresh when page is visible and user is active
+		const handleVisibilityChange = () => {
+			if (document.hidden) {
+				// Page is hidden, clear interval
+				if (interval) clearInterval(interval);
+			} else {
+				// Page is visible, start interval
+				interval = setInterval(
+					async () => {
+						try {
+							await fetchUploadStats(true); // Force refresh
+						} catch (error) {
+							console.warn('Failed to refresh upload stats:', error);
+							// Don't throw error, just log it
+						}
+					},
+					5 * 60 * 1000
+				); // 5 minutes
+			}
+		};
+
+		// Start interval if page is visible
+		if (!document.hidden) {
+			interval = setInterval(
+				async () => {
+					try {
+						await fetchUploadStats(true); // Force refresh
+					} catch (error) {
+						console.warn('Failed to refresh upload stats:', error);
+					}
+				},
+				5 * 60 * 1000
+			); // 5 minutes
+		}
+
+		// Listen for visibility changes
+		document.addEventListener('visibilitychange', handleVisibilityChange);
+
+		return () => {
+			if (interval) clearInterval(interval);
+			document.removeEventListener('visibilitychange', handleVisibilityChange);
+		};
+	}, [userId]);
+
+	const value: UploadLimitContextType = {
 		uploadInfo,
 		loading,
 		error,
@@ -148,6 +220,16 @@ const useUploadLimit = (): UseUploadLimitReturn => {
 		getImageLimit,
 		getFormattedResetTime,
 	};
+
+	return <UploadLimitContext.Provider value={value}>{children}</UploadLimitContext.Provider>;
+};
+
+export const useUploadLimit = (): UploadLimitContextType => {
+	const context = useContext(UploadLimitContext);
+	if (context === undefined) {
+		throw new Error('useUploadLimit must be used within an UploadLimitProvider');
+	}
+	return context;
 };
 
 export default useUploadLimit;
