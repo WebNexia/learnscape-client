@@ -151,7 +151,7 @@ const TopicPaper = ({ topic, setDisplayDeleteTopicMsg, setTopic, refreshTopics, 
 				top: isSticky ? (isMobileSize ? '3.5rem' : '4rem') : 'auto', // Assuming DashboardHeader height is 64px
 				left: isSticky ? (isMobileSize ? '0' : '10rem') : 'auto', // Align with main content area
 				right: isSticky ? 0 : 'auto', // Align with main content area
-				zIndex: isSticky ? 1000 : 'auto',
+				zIndex: 10000,
 				transition: 'all 0.5s ease',
 				borderRadius: isSticky ? 0 : undefined,
 			}}>

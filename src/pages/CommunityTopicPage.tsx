@@ -11,7 +11,7 @@ import { renderMessageWithEmojis } from '../utils/renderMessageWithEmojis';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
 import Picker from '@emoji-mart/react';
 import data from '@emoji-mart/data';
-import { Cancel, Image, InsertEmoticon, Mic, Send, ZoomOutMap } from '@mui/icons-material';
+import { Cancel, Image, InsertEmoticon, Mic, OpenInFullOutlined, Send } from '@mui/icons-material';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import HandleImageUploadURL from '../components/forms/uploadImageVideoDocument/HandleImageUploadURL';
 import ImageThumbnail from '../components/forms/uploadImageVideoDocument/ImageThumbnail';
@@ -631,20 +631,31 @@ const CommunityTopicPage = () => {
 					marginTop: isMobileSize ? '5.5rem' : '9rem',
 					borderRadius: '0.35rem',
 					boxShadow: isMobileSize ? '0rem 0.1rem 0.3rem 0.1rem rgba(0,0,0,0.2)' : '0rem 0.2rem 0.5rem 0.1rem rgba(0,0,0,0.2)',
-					bgcolor: 'pink',
 					position: 'relative',
 				}}>
 				{isTopicScrollable && (
-					<Tooltip title='Zoom out' placement='top' arrow>
+					<Tooltip title='Full View' placement='top' arrow>
 						<IconButton
-							sx={{ 'position': 'absolute', 'top': '0rem', 'right': '0.75rem', 'zIndex': 1000, ':hover': { backgroundColor: 'transparent' } }}
+							sx={{ 'position': 'absolute', 'top': '0rem', 'right': '0.85rem', 'zIndex': 10, ':hover': { backgroundColor: 'transparent' } }}
 							onClick={() => setIsTopicZoomed(true)}>
-							<ZoomOutMap />
+							<OpenInFullOutlined fontSize='small' />
 						</IconButton>
 					</Tooltip>
 				)}
 				<CustomDialog openModal={isTopicZoomed} closeModal={() => setIsTopicZoomed(false)} maxWidth='sm'>
 					<DialogContent>
+						<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+							<Box>
+								<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.65rem' : undefined, mb: '0.75rem' }}>
+									Topic: {topic?.title}
+								</Typography>
+							</Box>
+							<Box sx={{ display: 'flex' }}>
+								<Typography variant='caption' sx={{ fontSize: isMobileSize ? '0.65rem' : undefined, mb: '0.75rem', color: 'gray' }}>
+									{topic?.userId?.username} - {formatMessageTime(topic?.createdAt)}
+								</Typography>
+							</Box>
+						</Box>
 						<Typography
 							variant='body2'
 							sx={{
@@ -657,11 +668,12 @@ const CommunityTopicPage = () => {
 							{renderedTopicContent}
 						</Typography>
 						{topic?.imageUrl && (
-							<Box onClick={() => setZoomedImage(topic?.imageUrl)} sx={{ cursor: 'pointer' }}>
+							<Box>
 								<img
 									src={topic.imageUrl}
 									alt='img'
-									style={{ maxHeight: isMobileSize ? '11rem' : '15rem', objectFit: 'contain', borderRadius: '0.15rem' }}
+									style={{ maxHeight: isMobileSize ? '11rem' : '15rem', objectFit: 'contain', borderRadius: '0.15rem', cursor: 'pointer' }}
+									onClick={() => setZoomedImage(topic?.imageUrl)}
 								/>
 							</Box>
 						)}
@@ -689,8 +701,7 @@ const CommunityTopicPage = () => {
 					</DialogContent>
 					<DialogActions>
 						<CustomCancelButton onClick={() => setIsTopicZoomed(false)} sx={{ margin: '0 1rem 0.5rem 0' }}>
-							{' '}
-							Close{' '}
+							Close
 						</CustomCancelButton>
 					</DialogActions>
 				</CustomDialog>
