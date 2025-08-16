@@ -130,7 +130,7 @@ const DocumentsContextProvider = (props: DocumentsContextProviderProps) => {
 		}
 	};
 
-	const { data, isLoading, isError } = useQuery(['allDocuments', orgId], () => fetchDocuments(1), {
+	const { data, isLoading, isError } = useQuery(['allDocuments', orgId, documentsPageNumber], () => fetchDocuments(documentsPageNumber), {
 		enabled: !!orgId && isAuthenticated && (isAdmin || isLearner) && !isLoaded && !isLandingPageRoute,
 	});
 

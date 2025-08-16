@@ -42,7 +42,7 @@ import { db } from '../firebase';
 import Picker from '@emoji-mart/react';
 import data from '@emoji-mart/data';
 import useImageUpload from '../hooks/useImageUpload'; // Import the custom hook
-import useUploadLimit from '../hooks/useUploadLimit'; // Import the upload limit hook
+import { useUploadLimit } from '../contexts/UploadLimitContextProvider'; // Import the upload limit hook
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import { User } from '../interfaces/user';
 import axios from '@utils/axiosInstance';
@@ -153,7 +153,8 @@ const Messages = () => {
 		useImageUpload({ maxSizeInMB: 1 });
 
 	// Upload limit management
-	const { uploadInfo, checkCanUploadImage, getRemainingImageUploads, getFormattedResetTime } = useUploadLimit();
+	const { uploadInfo, checkCanUploadImage, checkCanUploadAudio, getRemainingImageUploads, getFormattedResetTime, refreshUploadStats } =
+		useUploadLimit();
 
 	const handleEmojiSelect = (emoji: any) => {
 		setCurrentMessage((prevMessage) => prevMessage + emoji.native);
@@ -621,6 +622,14 @@ const Messages = () => {
 			setReplyToMessage(null);
 			setCurrentMessage('');
 			resetImageUpload();
+
+			// Refresh upload limits after successful message send (if image was uploaded)
+			if (imageUpload) {
+				refreshUploadStats().catch((error) => {
+					console.warn('Failed to refresh upload stats:', error);
+					// Don't block UI, just log the error
+				});
+			}
 		} catch (error) {
 			console.error('Error sending message: ', error);
 		}
@@ -1311,12 +1320,24 @@ const Messages = () => {
 								}}
 								style={{ display: 'none' }}
 								id='image-upload'
-								disabled={isUploading || isBlockedUser || isBlockingUser || !activeChat || (user?.role !== 'admin' && !checkCanUploadImage())}
+								disabled={
+									isUploading ||
+									isBlockedUser ||
+									isBlockingUser ||
+									!activeChat ||
+									(user?.role !== 'admin' && (!checkCanUploadImage() || !checkCanUploadAudio()))
+								}
 							/>
 							<label htmlFor='image-upload'>
 								<IconButton
 									component='span'
-									disabled={isUploading || isBlockedUser || isBlockingUser || !activeChat || (user?.role !== 'admin' && !checkCanUploadImage())}
+									disabled={
+										isUploading ||
+										isBlockedUser ||
+										isBlockingUser ||
+										!activeChat ||
+										(user?.role !== 'admin' && (!checkCanUploadImage() || !checkCanUploadAudio()))
+									}
 									sx={{
 										':hover': {
 											backgroundColor: 'transparent',

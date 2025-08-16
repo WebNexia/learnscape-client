@@ -22,7 +22,7 @@ import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { UsersContext } from '../../../../contexts/UsersContextProvider';
 import { MediaQueryContext } from '../../../../contexts/MediaQueryContextProvider';
 import { validateImageUrl } from '../../../../utils/urlValidation';
-import useUploadLimit from '../../../../hooks/useUploadLimit';
+import { useUploadLimit } from '../../../../contexts/UploadLimitContextProvider';
 
 interface CreateTopicDialogProps {
 	createTopicModalOpen: boolean;

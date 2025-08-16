@@ -19,7 +19,7 @@ import { TopicInfo } from '../../../../interfaces/communityMessage';
 import ImageThumbnail from '../../../forms/uploadImageVideoDocument/ImageThumbnail';
 import { MediaQueryContext } from '../../../../contexts/MediaQueryContextProvider';
 import { validateImageUrl } from '../../../../utils/urlValidation';
-import useUploadLimit from '../../../../hooks/useUploadLimit';
+import { useUploadLimit } from '../../../../contexts/UploadLimitContextProvider';
 
 interface EditTopicDialogProps {
 	editTopicModalOpen: boolean;

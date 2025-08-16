@@ -1,6 +1,6 @@
-import { Box, Dialog, IconButton, Tooltip, Typography } from '@mui/material';
+import { Box, Dialog, DialogActions, DialogContent, IconButton, Tooltip, Typography } from '@mui/material';
 import { CommunityMessage } from '../../../../interfaces/communityMessage';
-import { Delete, Edit, Flag, TurnLeftOutlined, Verified } from '@mui/icons-material';
+import { Delete, Edit, Flag, OpenInFullOutlined, TurnLeftOutlined, Verified } from '@mui/icons-material';
 import { formatMessageTime } from '../../../../utils/formatTime';
 import { useContext, useEffect, useState } from 'react';
 import { UserAuthContext } from '../../../../contexts/UserAuthContextProvider';
@@ -17,6 +17,7 @@ import { truncateText } from '../../../../utils/utilText';
 import { db } from '../../../../firebase';
 import { MediaQueryContext } from '../../../../contexts/MediaQueryContextProvider';
 import axios from '@utils/axiosInstance';
+import CustomCancelButton from '../../../../components/forms/customButtons/CustomCancelButton';
 
 interface MessageProps {
 	message: CommunityMessage;
@@ -59,6 +60,8 @@ const Message = ({
 	const [editMsgModalOpen, setEditMsgModalOpen] = useState<boolean>(false);
 
 	const [zoomedImage, setZoomedImage] = useState<string | undefined>('');
+	const [isMessageScrollable, setIsMessageScrollable] = useState<boolean>(false);
+	const [isFullViewOpen, setIsFullViewOpen] = useState<boolean>(false);
 
 	const [isMsgEdited, setIsMsgEdited] = useState<boolean>(message.updatedAt > message.createdAt);
 
@@ -67,6 +70,38 @@ const Message = ({
 			messageRefs.current[message._id] = messageRefs.current[message._id] || null;
 		}
 	}, [message._id, messageRefs]);
+
+	// Function to check if message content is scrollable
+	const checkMessageScrollable = () => {
+		const messageElement = messageRefs.current[message._id];
+		if (messageElement) {
+			const element = messageElement;
+
+			// Check if content is actually scrollable (overflow detected)
+			const isScrollable = element.scrollHeight > element.clientHeight || element.scrollWidth > element.clientWidth;
+			setIsMessageScrollable(isScrollable);
+		}
+	};
+
+	// Check scrollability when message changes
+	useEffect(() => {
+		// Use a delay to ensure content is fully rendered
+		const timer = setTimeout(() => {
+			checkMessageScrollable();
+		}, 300);
+
+		return () => clearTimeout(timer);
+	}, [message.text, message.imageUrl]);
+
+	// Check scrollability on window resize
+	useEffect(() => {
+		const handleResize = () => {
+			checkMessageScrollable();
+		};
+
+		window.addEventListener('resize', handleResize);
+		return () => window.removeEventListener('resize', handleResize);
+	}, []);
 
 	const deleteMessage = async () => {
 		try {
@@ -153,7 +188,6 @@ const Message = ({
 
 	return (
 		<Box
-			ref={(el) => (messageRefs.current[message._id] = el as HTMLDivElement | null)}
 			sx={{
 				display: 'flex',
 				justifyContent: 'flex-end',
@@ -259,6 +293,7 @@ const Message = ({
 					)}
 
 					<Box
+						ref={(el: HTMLDivElement | null) => (messageRefs.current[message._id] = el)}
 						sx={{
 							display: 'flex',
 							flexDirection: 'column',
@@ -283,11 +318,12 @@ const Message = ({
 									</Typography>
 								</Box>
 								{message.imageUrl && (
-									<Box sx={{ padding: '0.15rem 0.5rem', cursor: 'pointer' }} onClick={() => setZoomedImage(message.imageUrl)}>
+									<Box sx={{ padding: '0.15rem 0.5rem' }}>
 										<img
 											src={message.imageUrl}
 											alt='img'
-											style={{ maxHeight: isMobileSize ? '8rem' : '12rem', objectFit: 'contain', borderRadius: '0.15rem' }}
+											style={{ maxHeight: isMobileSize ? '8rem' : '12rem', objectFit: 'contain', borderRadius: '0.15rem', cursor: 'pointer' }}
+											onClick={() => setZoomedImage(message.imageUrl)}
 										/>
 									</Box>
 								)}
@@ -314,8 +350,23 @@ const Message = ({
 									</Box>
 								)}
 							</Box>
+							{isMessageScrollable && (
+								<Box>
+									<Tooltip title='Full View' placement='top' arrow>
+										<IconButton
+											onClick={() => setIsFullViewOpen(true)}
+											sx={{
+												':hover': {
+													backgroundColor: 'transparent',
+												},
+											}}>
+											<OpenInFullOutlined fontSize='small' sx={{ fontSize: isMobileSize ? '0.85rem' : undefined }} />
+										</IconButton>
+									</Tooltip>
+								</Box>
+							)}
 							<Box>
-								<Tooltip title='Reply to Message' placement='right' arrow>
+								<Tooltip title='Reply to Message' placement='top' arrow>
 									<IconButton
 										onClick={() => {
 											setReplyToMessage(message);
@@ -383,7 +434,7 @@ const Message = ({
 								</CustomDialog>
 
 								{!isMessageWriter && isAdmin && (
-									<Tooltip title='Delete Message' placement='right' arrow>
+									<Tooltip title='Delete Message' placement='top' arrow>
 										<IconButton
 											onClick={() => setDeleteMessageModalOpen(true)}
 											sx={{
@@ -462,6 +513,82 @@ const Message = ({
 					</Box>
 				</Box>
 			</Box>
+			{/* Full View Message Modal */}
+			<CustomDialog openModal={isFullViewOpen} closeModal={() => setIsFullViewOpen(false)} maxWidth='sm'>
+				<DialogContent>
+					<Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+						<Typography variant='caption' sx={{ fontSize: isMobileSize ? '0.65rem' : undefined, mb: '0.75rem', color: 'gray' }}>
+							{message?.userId?.username} - {formatMessageTime(message?.createdAt)}
+						</Typography>
+					</Box>
+					<Box sx={{ padding: '1rem' }}>
+						{message.parentMessageId && (
+							<Box
+								sx={{
+									backgroundColor: '#f1f1f1',
+									borderLeft: '0.25rem solid #aaa',
+									padding: '0.5rem',
+									marginBottom: '0.5rem',
+									borderRadius: '0.25rem',
+								}}>
+								<Typography sx={{ color: 'gray', fontSize: isMobileSize ? '0.6rem' : '0.75rem' }}>
+									Replying to: {typeof message.parentMessageId === 'object' ? message.parentMessageId.text : 'Original message'}
+								</Typography>
+							</Box>
+						)}
+
+						{message.imageUrl ? (
+							<img
+								src={message.imageUrl}
+								alt='uploaded'
+								style={{
+									height: isMobileSize ? '8rem' : '12rem',
+									maxHeight: isMobileSize ? '12rem' : '16rem',
+									objectFit: 'contain',
+									maxWidth: '100%',
+									borderRadius: '0.35rem',
+									cursor: 'pointer',
+								}}
+								onClick={() => setZoomedImage(message.imageUrl)}
+							/>
+						) : (
+							<Box sx={{ alignSelf: 'flex-start' }}>
+								<Typography sx={{ fontSize: isMobileSize ? '1rem' : '1.25rem', wordWrap: 'break-word', whiteSpace: 'pre-wrap', lineHeight: 1.7 }}>
+									{renderMessageWithEmojis(message.text, isMobileSize ? '1.5rem' : '2rem', isMobileSize)}
+								</Typography>
+							</Box>
+						)}
+
+						{message.audioUrl && (
+							<Box sx={{ padding: '0.15rem 0.5rem', mt: 2 }}>
+								<audio
+									src={message.audioUrl}
+									controls
+									style={{
+										margin: '1rem 0',
+										boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
+										borderRadius: '0.35rem',
+										width: isMobileSize ? '85%' : '50%',
+										height: isMobileSize ? '1.5rem' : '2rem',
+									}}
+								/>
+							</Box>
+						)}
+					</Box>
+				</DialogContent>
+				<DialogActions>
+					<CustomCancelButton onClick={() => setIsFullViewOpen(false)} sx={{ margin: '0 1rem 0.5rem 0' }}>
+						Close
+					</CustomCancelButton>
+				</DialogActions>
+			</CustomDialog>
+
+			{zoomedImage && (
+				<Dialog open={!!zoomedImage} onClose={() => setZoomedImage('')} maxWidth='sm'>
+					<img src={zoomedImage} alt='Zoomed' style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '0.25rem' }} />
+				</Dialog>
+			)}
+
 			<CustomDialog
 				openModal={deleteMessageModalOpen}
 				closeModal={() => setDeleteMessageModalOpen(false)}
