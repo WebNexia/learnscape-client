@@ -134,9 +134,9 @@ const CommunityTopicPage = () => {
 
 	const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-	// const scrollToBottom = () => {
-	// 	messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-	// };
+	const scrollToBottom = () => {
+		messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+	};
 
 	const messageRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
@@ -353,6 +353,7 @@ const CommunityTopicPage = () => {
 			setTopicSuggestions([]);
 			setShowUserSuggestions(false);
 			setShowTopicSuggestions(false);
+			scrollToBottom();
 		} catch (error: any) {
 			console.log('sendMessage error:', error);
 			// Show error message to user
