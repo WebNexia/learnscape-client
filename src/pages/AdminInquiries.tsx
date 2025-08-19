@@ -644,7 +644,7 @@ const AdminInquiries = () => {
 							{paginatedInquiries &&
 								paginatedInquiries?.map((inquiry: Inquiry, index) => {
 									return (
-										<TableRow key={inquiry._id}>
+										<TableRow key={inquiry._id} hover>
 											<CustomTableCell value={inquiry.firstName + ' ' + inquiry.lastName} />
 											<CustomTableCell value={inquiry.email} />
 											<CustomTableCell value={inquiry.phone} />

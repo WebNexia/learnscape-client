@@ -77,3 +77,9 @@ export interface CourseManagement {
 	externalUrl: string;
 	externalNotes: string;
 }
+
+export interface ArchivedCourse extends SingleCourse {
+	archivedAt: string;
+	archivedBy: string;
+	archivedByName: string;
+}

@@ -637,7 +637,7 @@ const AddNewLessonDialog = ({
 								paginatedLessons?.map((lesson: Lesson) => {
 									const isSelected = selectedLessonIds.indexOf(lesson._id) !== -1;
 									return (
-										<TableRow key={lesson._id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+										<TableRow key={lesson._id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }} hover>
 											<CustomTableCell value={lesson.title} />
 											<CustomTableCell value={lesson.type.charAt(0).toUpperCase() + lesson.type.slice(1)} />
 											<CustomTableCell value={lesson.isActive ? 'Published' : 'Unpublished'} />

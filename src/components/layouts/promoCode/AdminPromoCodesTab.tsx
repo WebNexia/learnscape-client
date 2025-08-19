@@ -629,7 +629,7 @@ const AdminPromoCodesTab = () => {
 						{paginatedPromoCodes &&
 							paginatedPromoCodes?.map((promoCode: PromoCode, index) => {
 								return (
-									<TableRow key={promoCode._id}>
+									<TableRow key={promoCode._id} hover>
 										<CustomTableCell value={promoCode.code} />
 										<CustomTableCell value={promoCode.discountAmount} />
 										{!isVerySmallScreen && (

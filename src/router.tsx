@@ -35,6 +35,7 @@ const AdminQuizSubmissions = React.lazy(() => import('./pages/AdminQuizSubmissio
 const AdminQuizSubmissionCheck = React.lazy(() => import('./pages/AdminQuizSubmissionCheck'));
 const AdminPayments = React.lazy(() => import('./pages/AdminPayments'));
 const AdminInquiries = React.lazy(() => import('./pages/AdminInquiries'));
+const AdminRecycleBin = React.lazy(() => import('./pages/AdminRecycleBin'));
 const AdminPublicEvents = React.lazy(() => import('./pages/AdminPublicEvents'));
 const PasswordResetPage = React.lazy(() => import('./pages/ResetPasswordPage'));
 const VerifyEmailPage = React.lazy(() => import('./pages/VerifyEmailPage'));
@@ -196,6 +197,14 @@ export const router = createBrowserRouter([
 				element: (
 					<AdminRouteGuard>
 						<AdminInquiries />
+					</AdminRouteGuard>
+				),
+			},
+			{
+				path: 'admin/recycle-bin',
+				element: (
+					<AdminRouteGuard>
+						<AdminRecycleBin />
 					</AdminRouteGuard>
 				),
 			},

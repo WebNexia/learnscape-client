@@ -679,7 +679,7 @@ const AdminUsers = () => {
 							{paginatedUsers &&
 								paginatedUsers?.map((user: User, index) => {
 									return (
-										<TableRow key={user._id}>
+										<TableRow key={user._id} hover>
 											{!isVerySmallScreen && <CustomTableCell value={user.firstName} />}
 											{!isVerySmallScreen && <CustomTableCell value={user.lastName} />}
 											<CustomTableCell value={user.username} />

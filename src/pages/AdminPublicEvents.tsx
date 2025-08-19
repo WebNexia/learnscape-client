@@ -273,7 +273,7 @@ const AdminPublicEvents = () => {
 						{paginatedPublicEvents &&
 							paginatedPublicEvents?.map((event: Event) => {
 								return (
-									<TableRow key={event._id}>
+									<TableRow key={event._id} hover>
 										<CustomTableCell value={event.title} />
 										<CustomTableCell value={event.type} />
 										<CustomTableCell value={dateTimeFormatter(event.start)} />

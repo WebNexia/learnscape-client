@@ -579,7 +579,7 @@ const AdminQuizSubmissions = () => {
 						{paginatedSubmissions &&
 							paginatedSubmissions?.map((submission: QuizSubmission) => {
 								return (
-									<TableRow key={submission._id}>
+									<TableRow key={submission._id} hover>
 										<CustomTableCell value={submission.userName} />
 										<CustomTableCell value={submission.lessonName} />
 										<CustomTableCell value={submission.courseName} />

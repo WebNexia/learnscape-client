@@ -927,7 +927,7 @@ const AdminDocuments = () => {
 							{paginatedDocuments &&
 								paginatedDocuments?.map((document: Document, index) => {
 									return (
-										<TableRow key={document._id}>
+										<TableRow key={document._id} hover>
 											{' '}
 											<TableCell sx={{ textAlign: 'center', width: '0px' }}>
 												{document.clonedFromId && (

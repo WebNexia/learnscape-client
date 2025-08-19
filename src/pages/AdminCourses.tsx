@@ -398,15 +398,14 @@ const AdminCourses = () => {
 
 	const deleteCourse = async (courseId: string): Promise<void> => {
 		try {
-			removeCourse(courseId);
+			await axios.delete(`${base_url}/courses/${courseId}`);
 
 			// If search is active, also remove from search results
 			if (isSearchActive) {
 				setSearchResults((prev) => prev.filter((course) => course._id !== courseId));
 				setSearchResultsTotalItems((prev) => Math.max(0, prev - 1));
 			}
-
-			await axios.delete(`${base_url}/courses/${courseId}`);
+			removeCourse(courseId);
 		} catch (error) {
 			console.error('Delete course error:', error);
 		}
@@ -913,7 +912,7 @@ const AdminCourses = () => {
 						{paginatedCourses &&
 							paginatedCourses?.map((course: SingleCourse, index) => {
 								return (
-									<TableRow key={course._id}>
+									<TableRow key={course._id} hover>
 										<TableCell sx={{ textAlign: 'center', width: '0px' }}>
 											{course.clonedFromId && (
 												<Box

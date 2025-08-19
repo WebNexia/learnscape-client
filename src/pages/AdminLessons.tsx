@@ -630,7 +630,7 @@ const AdminLessons = () => {
 						{paginatedLessons &&
 							paginatedLessons?.map((lesson: Lesson, index) => {
 								return (
-									<TableRow key={lesson._id}>
+									<TableRow key={lesson._id} hover>
 										<TableCell sx={{ textAlign: 'center', width: '0px' }}>
 											{lesson.clonedFromId && (
 												<Box

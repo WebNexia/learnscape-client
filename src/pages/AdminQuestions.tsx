@@ -705,7 +705,7 @@ const AdminQuestions = () => {
 							{paginatedQuestions &&
 								paginatedQuestions?.map((question: QuestionInterface, index) => {
 									return (
-										<TableRow key={question._id}>
+										<TableRow key={question._id} hover>
 											<TableCell sx={{ textAlign: 'center', width: '0px' }}>
 												{question.clonedFromId && (
 													<Box
