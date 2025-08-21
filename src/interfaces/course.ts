@@ -8,6 +8,7 @@ export interface BaseCourse {
 	prices: Price[];
 	imageUrl: string;
 	isActive: boolean;
+	isArchived: boolean;
 	createdAt: string;
 	updatedAt: string;
 	isExpired: boolean;

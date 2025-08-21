@@ -11,6 +11,8 @@ import {
 	TableRow,
 	Typography,
 	Chip,
+	Snackbar,
+	Alert,
 } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { useContext, useEffect, useState } from 'react';
@@ -72,6 +74,11 @@ const AdminLessons = () => {
 	const paginatedLessons = displayLessons.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
 	const [isNewLessonModalOpen, setIsNewLessonModalOpen] = useState<boolean>(false);
+
+	// Snackbar states for delete operation
+	const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
+	const [snackbarMessage, setSnackbarMessage] = useState<string>('');
+	const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
 
 	const [orderBy, setOrderBy] = useState<keyof Lesson>('title');
 	const [order, setOrder] = useState<'asc' | 'desc'>('asc');
@@ -248,17 +255,34 @@ const AdminLessons = () => {
 
 	const deleteLesson = async (lessonId: string): Promise<void> => {
 		try {
-			removeLesson(lessonId);
+			const response = await axios.delete(`${base_url}/lessons/${lessonId}`);
 
-			// If search is active, also remove from search results
-			if (isSearchActive) {
-				setSearchResults((prev) => prev.filter((lesson) => lesson._id !== lessonId));
-				setSearchResultsTotalItems((prev) => Math.max(0, prev - 1));
+			// Only remove from frontend state if the backend request was successful
+			if (response.data.status === 200) {
+				removeLesson(lessonId);
+
+				// If search is active, also remove from search results
+				if (isSearchActive) {
+					setSearchResults((prev) => prev.filter((lesson) => lesson._id !== lessonId));
+					setSearchResultsTotalItems((prev) => Math.max(0, prev - 1));
+				}
+
+				// Show success message
+				setSnackbarMessage('Lesson deleted successfully');
+				setSnackbarSeverity('success');
+				setSnackbarOpen(true);
+			} else {
+				console.error('Delete lesson failed:', response.data.message);
+				setSnackbarMessage(response.data.message || 'Failed to delete lesson');
+				setSnackbarSeverity('error');
+				setSnackbarOpen(true);
 			}
-
-			await axios.delete(`${base_url}/lessons/${lessonId}`);
-		} catch (error) {
+		} catch (error: any) {
 			console.error('Delete lesson error:', error);
+			// Don't remove from frontend state if the request failed
+			setSnackbarMessage(error.response?.data?.message || 'Failed to delete lesson');
+			setSnackbarSeverity('error');
+			setSnackbarOpen(true);
 		}
 	};
 
@@ -439,7 +463,7 @@ const AdminLessons = () => {
 
 					<CustomTextField
 						value={searchValue}
-						placeholder={'Search in Title and Description'}
+						placeholder={'Search in Title and Instructions'}
 						onChange={(e) => {
 							setSearchValue(e.target.value);
 						}}
@@ -739,6 +763,18 @@ const AdminLessons = () => {
 						</CustomDialog>
 					)
 			)}
+
+			{/* Delete operation snackbar */}
+			<Snackbar
+				open={snackbarOpen}
+				autoHideDuration={6000}
+				anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+				sx={{ mt: '5rem' }}
+				onClose={() => setSnackbarOpen(false)}>
+				<Alert onClose={() => setSnackbarOpen(false)} severity={snackbarSeverity} sx={{ width: '100%' }}>
+					{snackbarMessage}
+				</Alert>
+			</Snackbar>
 		</DashboardPagesLayout>
 	);
 };

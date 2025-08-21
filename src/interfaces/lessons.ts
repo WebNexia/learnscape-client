@@ -36,3 +36,9 @@ export interface Lesson extends BaseLesson {
 export interface LessonById extends BaseLesson {
 	questions?: QuestionInterface[];
 }
+
+export interface ArchivedLesson extends Lesson {
+	archivedAt: string;
+	archivedBy: string;
+	archivedByName: string;
+}
