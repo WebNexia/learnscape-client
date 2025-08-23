@@ -593,6 +593,7 @@ const AdminCourses = () => {
 					justifyContent: 'space-between',
 					padding: isMobileSizeSmall ? '1rem 1rem 0.5rem 1rem' : '2rem 2rem 1rem 2rem',
 					width: '100%',
+					mb: '1.25rem',
 				}}>
 				<Box sx={{ display: 'flex', alignSelf: 'flex-start', width: isVerySmallScreen ? '12.5rem' : 'fit-content' }}>
 					<Box>
@@ -779,7 +780,7 @@ const AdminCourses = () => {
 									fontSize: isMobileSize ? '0.7rem' : '0.85rem',
 									whiteSpace: 'nowrap',
 								}}>
-								{searchResultsTotalItems} results
+								{searchResultsTotalItems} {searchResultsTotalItems === 1 ? 'result' : 'results'}
 							</Typography>
 						) : (
 							<Typography
@@ -789,7 +790,7 @@ const AdminCourses = () => {
 									fontSize: isMobileSize ? '0.7rem' : '0.85rem',
 									whiteSpace: 'nowrap',
 								}}>
-								{totalItems} items
+								{totalItems} {totalItems === 1 ? 'item' : 'items'}
 							</Typography>
 						)}
 					</Box>
@@ -820,6 +821,7 @@ const AdminCourses = () => {
 							borderRadius: '4px',
 							alignSelf: 'flex-start',
 							marginBottom: '1rem',
+							marginTop: '-1rem',
 						}}>
 						{isSearchActive && filterValue && filterValue.trim() && (
 							<Chip
@@ -925,8 +927,8 @@ const AdminCourses = () => {
 										{ key: 'isActive', label: 'Status' },
 										{ key: 'startingDate', label: 'Starting Date' },
 										{ key: 'durationWeeks', label: 'Weeks #' },
-										{ key: 'createdAt', label: 'Created At' },
-										{ key: 'updatedAt', label: 'Updated At' },
+										{ key: 'createdAt', label: 'Created On' },
+										{ key: 'updatedAt', label: 'Updated On' },
 										{ key: 'actions', label: 'Actions' },
 									]
 						}
@@ -1011,8 +1013,8 @@ const AdminCourses = () => {
 												<CustomDialog
 													openModal={isCourseDeleteModalOpen[index]}
 													closeModal={() => closeDeleteCourseModal(index)}
-													title='Delete'
-													content='Are you sure you want to delete this course?'
+													title='Delete Course'
+													content={`Are you sure you want to delete "${course.title}"?`}
 													maxWidth='xs'>
 													<CustomDialogActions
 														onCancel={() => closeDeleteCourseModal(index)}
@@ -1021,6 +1023,7 @@ const AdminCourses = () => {
 															deleteCourse(course._id);
 															closeDeleteCourseModal(index);
 														}}
+														actionSx={{ mb: '0.5rem' }}
 													/>
 												</CustomDialog>
 											)}
@@ -1099,11 +1102,21 @@ const AdminCourses = () => {
 											{/* Delete operation snackbar */}
 											<Snackbar
 												open={snackbarOpen}
-												autoHideDuration={6000}
+												autoHideDuration={5000}
 												anchorOrigin={{ vertical, horizontal }}
-												sx={{ mt: '5rem' }}
+												sx={{ mt: '4rem' }}
 												onClose={() => setSnackbarOpen(false)}>
-												<Alert onClose={() => setSnackbarOpen(false)} severity={snackbarSeverity} sx={{ width: '100%' }}>
+												<Alert
+													onClose={() => setSnackbarOpen(false)}
+													severity={snackbarSeverity}
+													sx={{
+														'width': '100%',
+														'backgroundColor': theme.bgColor?.greenSecondary,
+														'color': theme.textColor?.common.main,
+														'& .MuiAlert-icon': {
+															color: 'white',
+														},
+													}}>
 													{snackbarMessage}
 												</Alert>
 											</Snackbar>

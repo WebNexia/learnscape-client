@@ -355,7 +355,6 @@ const CommunityTopicPage = () => {
 			setShowTopicSuggestions(false);
 			scrollToBottom();
 		} catch (error: any) {
-			console.log('sendMessage error:', error);
 			// Show error message to user
 			if (error?.response?.data?.message) {
 				setUrlErrorMessage(error.response.data.message);

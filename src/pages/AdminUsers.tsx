@@ -566,7 +566,6 @@ const AdminUsers = () => {
 					{((isSearchActive && searchedValue && searchButtonClicked) || (isSearchActive && filterValue && filterValue.trim())) && (
 						<Box
 							sx={{
-								mb: '1rem',
 								display: 'flex',
 								gap: 1,
 								flexWrap: 'wrap',
@@ -775,7 +774,7 @@ const AdminUsers = () => {
 														openModal={isUserStatusUpdateModalOpen[index]}
 														closeModal={() => closeStatusUpdateUserModal(index)}
 														title={user?.isActive ? 'Deactivate User' : 'Activate User'}
-														content={`Are you sure you want to ${user?.isActive ? 'deactivate' : 'activate'} this user?`}
+														content={`Are you sure you want to ${user?.isActive ? 'deactivate' : 'activate'} ${user?.firstName} ${user?.lastName} (${user?.username})?`}
 														maxWidth='xs'>
 														<CustomDialogActions
 															onCancel={() => closeStatusUpdateUserModal(index)}
@@ -790,6 +789,7 @@ const AdminUsers = () => {
 																closeStatusUpdateUserModal(index);
 															}}
 															submitBtnText='Activate'
+															actionSx={{ mb: '0.5rem' }}
 														/>
 													</CustomDialog>
 												)}

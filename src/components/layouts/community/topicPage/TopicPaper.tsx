@@ -317,9 +317,9 @@ const TopicPaper = ({ topic, setDisplayDeleteTopicMsg, setTopic, refreshTopics, 
 					openModal={deleteTopicModalOpen}
 					closeModal={() => setDeleteTopicModalOpen(false)}
 					title='Delete Topic'
-					content='Are you sure you want to delete the topic?'
-					maxWidth='sm'>
-					<CustomDialogActions deleteBtn onDelete={deleteTopic} onCancel={() => setDeleteTopicModalOpen(false)} />
+					content={`Are you sure you want to delete "${topic.title}"?`}
+					maxWidth='xs'>
+					<CustomDialogActions deleteBtn onDelete={deleteTopic} onCancel={() => setDeleteTopicModalOpen(false)} actionSx={{ mb: '0.5rem' }} />
 				</CustomDialog>
 
 				<EditTopicDialog topic={topic} setTopic={setTopic} editTopicModalOpen={editTopicModalOpen} setEditTopicModalOpen={setEditTopicModalOpen} />

@@ -34,7 +34,7 @@ const localizer = dateFnsLocalizer({
 });
 
 const EventCalendar = () => {
-	const { sortedEventsData } = useContext(EventsContext);
+	const { sortedEventsData, fetchMonthEvents, loadedMonths } = useContext(EventsContext);
 	const { orgId } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
 	const { users } = useContext(UsersContext);
@@ -153,6 +153,20 @@ const EventCalendar = () => {
 		setSelectedEvent(event);
 	};
 
+	// Handle calendar navigation to fetch additional months
+	const handleNavigate = (newDate: Date, view: string) => {
+		if (view === 'month') {
+			const year = newDate.getFullYear();
+			const month = newDate.getMonth() + 1;
+
+			// Check if we need to fetch this month
+			const monthKey = `${year}-${month.toString().padStart(2, '0')}`;
+			if (!loadedMonths.includes(monthKey)) {
+				fetchMonthEvents(year, month);
+			}
+		}
+	};
+
 	const filterUsers = (searchQuery: string, action: string) => {
 		if (!searchQuery.trim()) {
 			setFilteredUsers([]);
@@ -236,6 +250,7 @@ const EventCalendar = () => {
 					eventPropGetter={eventStyleGetter}
 					onSelectSlot={handleSelectSlot}
 					onSelectEvent={handleEventSelect}
+					onNavigate={handleNavigate}
 				/>
 			</Box>
 

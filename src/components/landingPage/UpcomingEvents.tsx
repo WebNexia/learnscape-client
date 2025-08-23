@@ -19,7 +19,7 @@ import KeyboardArrowLeft from '@mui/icons-material/KeyboardArrowLeft';
 import KeyboardArrowRight from '@mui/icons-material/KeyboardArrowRight';
 import SwipeableViews from 'react-swipeable-views';
 import { responsiveStyles } from '../../styles/responsiveStyles';
-import { EventsContext } from '../../contexts/EventsContextProvider';
+import { PublicEventsContext } from '../../contexts/PublicEventsContextProvider';
 import { dateTimeFormatter } from '@utils/dateFormatter';
 import axios from 'axios';
 import CustomDialog from '../../components/layouts/dialog/CustomDialog';
@@ -32,7 +32,7 @@ import logo from '../../assets/logo.png';
 export default function UpcomingEvents() {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const defaultOrgId = import.meta.env.VITE_ORG_ID;
-	const { sortedPublicEventsData } = useContext(EventsContext);
+	const { publicEvents } = useContext(PublicEventsContext);
 	const [isRegisterForEventModalOpen, setIsRegisterForEventModalOpen] = useState<boolean>(false);
 	const [isRegisterForEventSuccess, setIsRegisterForEventSuccess] = useState<boolean>(false);
 	const [isRegisterForEventSending, setIsRegisterForEventSending] = useState<boolean>(false);
@@ -100,7 +100,7 @@ export default function UpcomingEvents() {
 	};
 
 	function TimelineDesktop() {
-		const { sortedPublicEventsData } = useContext(EventsContext);
+		const { publicEvents } = useContext(PublicEventsContext);
 		const scrollRef = useRef<HTMLDivElement>(null);
 		const CARD_HEIGHT = 360;
 		const IMAGE_HEIGHT = 120;
@@ -194,9 +194,9 @@ export default function UpcomingEvents() {
 					sx={{
 						'display': 'flex',
 						'flexDirection': 'row',
-						'justifyContent': sortedPublicEventsData.length <= 3 ? 'center' : 'flex-start',
+						'justifyContent': publicEvents.length <= 3 ? 'center' : 'flex-start',
 						'gap': `${GAP}px`,
-						'overflowX': sortedPublicEventsData.length > 3 ? 'auto' : 'visible',
+						'overflowX': publicEvents.length > 3 ? 'auto' : 'visible',
 						'scrollBehavior': 'smooth',
 						'py': 2,
 						'px': 0,
@@ -211,7 +211,7 @@ export default function UpcomingEvents() {
 					}}
 					onTouchStart={handleTouchStart}
 					onTouchMove={handleTouchMove}>
-					{sortedPublicEventsData.map((event, idx) => (
+					{publicEvents.map((event, idx) => (
 						<Box
 							key={event._id}
 							sx={{
@@ -289,7 +289,7 @@ export default function UpcomingEvents() {
 								}}
 							/>
 							{/* Timeline line segment (except after last card) */}
-							{idx < sortedPublicEventsData.length - 1 && (
+							{idx < publicEvents.length - 1 && (
 								<Box
 									sx={{
 										position: 'absolute',
@@ -329,16 +329,16 @@ export default function UpcomingEvents() {
 	}
 
 	function CarouselMobile() {
-		const { sortedPublicEventsData } = useContext(EventsContext);
+		const { publicEvents } = useContext(PublicEventsContext);
 		const [activeStep, setActiveStep] = useState(0);
-		const maxSteps = sortedPublicEventsData.length;
+		const maxSteps = publicEvents.length;
 
 		const handleStepChange = (step: number) => setActiveStep(step);
 
 		return (
 			<Box sx={{ maxWidth: 360, position: 'relative' }}>
 				<SwipeableViews index={activeStep} onChangeIndex={handleStepChange} enableMouseEvents resistance>
-					{sortedPublicEventsData.map((event, _) => (
+					{publicEvents.map((event, _) => (
 						<div key={event._id}>
 							<Card
 								sx={{
@@ -434,8 +434,8 @@ export default function UpcomingEvents() {
 				}}>
 				Yaklaşan Etkinlikler
 			</Typography>
-			{sortedPublicEventsData.length > 0 && (isDesktop ? <TimelineDesktop /> : <CarouselMobile />)}
-			{sortedPublicEventsData.length === 0 && (
+			{publicEvents.length > 0 && (isDesktop ? <TimelineDesktop /> : <CarouselMobile />)}
+			{publicEvents.length === 0 && (
 				<Typography
 					variant='body1'
 					color='text.secondary'

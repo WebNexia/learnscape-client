@@ -86,54 +86,51 @@ export const RecycleBinLessonsProvider: React.FC<RecycleBinLessonsProviderProps>
 	const [snackbarMessage, setSnackbarMessage] = useState<string>('');
 	const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
 
-	const fetchArchivedLessons = useCallback(
-		async (page: number, search?: string, filter?: string) => {
-			try {
-				setError(null);
+	const fetchArchivedLessons = async (page: number, search?: string, filter?: string) => {
+		try {
+			setError(null);
 
-				// Check if orgId is available
-				if (!orgId) {
-					setError('Organization ID not found');
+			// Check if orgId is available
+			if (!orgId) {
+				setError('Organization ID not found');
 
-					return;
-				}
-
-				const params = new URLSearchParams({
-					page: page.toString(),
-					limit: '200',
-				});
-
-				if (search && search.trim()) {
-					params.append('search', search.trim());
-				}
-
-				if (filter && filter.trim()) {
-					params.append('filter', filter.trim());
-				}
-
-				const response = await axios.get(`${base_url}/lessons/organisation/${orgId}/archived?${params.toString()}`);
-
-				if (response.data.status === 200) {
-					const { data, totalItems: total } = response.data;
-
-					if (page === 1) {
-						// First page - replace data
-						setArchivedLessons(data);
-						setTotalItems(total);
-						setLoadedPages([1]);
-					} else {
-						// Subsequent pages - append data
-						setArchivedLessons((prev) => [...prev, ...data]);
-						setLoadedPages((prev) => [...prev, page]);
-					}
-				}
-			} catch (error) {
-				console.error('Error fetching archived lessons:', error);
-				setError('Failed to fetch archived lessons');
+				return;
 			}
-		},
-		[base_url, orgId]
-	);
+
+			const params = new URLSearchParams({
+				page: page.toString(),
+				limit: '200',
+			});
+
+			if (search && search.trim()) {
+				params.append('search', search.trim());
+			}
+
+			if (filter && filter.trim()) {
+				params.append('filter', filter.trim());
+			}
+
+			const response = await axios.get(`${base_url}/lessons/organisation/${orgId}/archived?${params.toString()}`);
+
+			if (response.data.status === 200) {
+				const { data, totalItems: total } = response.data;
+
+				if (page === 1) {
+					// First page - replace data
+					setArchivedLessons(data);
+					setTotalItems(total);
+					setLoadedPages([1]);
+				} else {
+					// Subsequent pages - append data
+					setArchivedLessons((prev) => [...prev, ...data]);
+					setLoadedPages((prev) => [...prev, page]);
+				}
+			}
+		} catch (error) {
+			console.error('Error fetching archived lessons:', error);
+			setError('Failed to fetch archived lessons');
+		}
+	};
 
 	const clearSearchData = useCallback(() => {
 		setSearchResults([]);

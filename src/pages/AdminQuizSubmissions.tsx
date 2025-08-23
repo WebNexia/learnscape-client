@@ -234,6 +234,7 @@ const AdminQuizSubmissions = () => {
 					justifyContent: isMobileSize ? 'center' : 'space-between',
 					width: '100%',
 					padding: isMobileSizeSmall ? '1rem 1rem 0.5rem 1rem' : '2rem 2rem 1rem 2rem',
+					mb: '1.25rem',
 				}}>
 				<Box sx={{ display: 'flex', width: '65%' }}>
 					<Box sx={{ mr: '1rem' }}>
@@ -488,6 +489,7 @@ const AdminQuizSubmissions = () => {
 							borderRadius: '4px',
 							alignSelf: 'flex-start',
 							marginBottom: '1rem',
+							marginTop: '-1rem',
 						}}>
 						{isSearchActive && filterValue && filterValue.trim() && (
 							<Chip
@@ -562,7 +564,7 @@ const AdminQuizSubmissions = () => {
 						)}
 					</Box>
 				)}
-				<Table>
+				<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>
 					<CustomTableHead<QuizSubmission>
 						orderBy={orderBy}
 						order={order}

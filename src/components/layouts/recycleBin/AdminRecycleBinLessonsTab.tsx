@@ -63,6 +63,8 @@ const AdminRecycleBinLessonsTab = () => {
 		setIsSearchActive,
 		setArchivedLessons,
 		setTotalItems,
+		loadedPages,
+		setLoadedPages,
 		snackbarOpen,
 		snackbarMessage,
 		snackbarSeverity,
@@ -86,7 +88,6 @@ const AdminRecycleBinLessonsTab = () => {
 	// Add missing state variables for progressive pagination
 	const [searchResultsPage, setSearchResultsPage] = useState<number>(1);
 	const [searchResultsLoadedPages, setSearchResultsLoadedPages] = useState<number[]>([]);
-	const [loadedPages, setLoadedPages] = useState<number[]>([]);
 
 	// For pagination, use total items from server when not searching
 	const lessonsNumberOfPages = isSearchActive ? Math.ceil(searchResultsTotalItems / pageSize) : Math.ceil(totalItems / pageSize);
@@ -110,11 +111,9 @@ const AdminRecycleBinLessonsTab = () => {
 
 	// Load initial data when component mounts
 	useEffect(() => {
-		if (orgId && archivedLessons.length === 0) {
-			fetchArchivedLessons(1);
-			setLoadedPages([1]);
-		}
-	}, [orgId, archivedLessons.length, fetchArchivedLessons]);
+		fetchArchivedLessons(1);
+		setLoadedPages([1]);
+	}, []);
 
 	// Info dialog state
 	const [isInfoDialogOpen, setIsInfoDialogOpen] = useState<boolean>(false);
@@ -222,16 +221,29 @@ const AdminRecycleBinLessonsTab = () => {
 
 	const handleSelectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
 		const checked = event.target.checked;
-		setSelectAll(checked);
 		if (checked) {
 			setSelectedItems(displayLessons.map((lesson) => lesson._id));
+			setSelectAll(true);
 		} else {
 			setSelectedItems([]);
+			setSelectAll(false);
 		}
 	};
 
 	const handleSelectItem = (lessonId: string) => {
-		setSelectedItems((prev) => (prev.includes(lessonId) ? prev.filter((id) => id !== lessonId) : [...prev, lessonId]));
+		setSelectedItems((prev) => {
+			if (prev.includes(lessonId)) {
+				const updatedItems = prev.filter((id) => id !== lessonId);
+				setSelectAll(false);
+				return updatedItems;
+			} else {
+				const updatedItems = [...prev, lessonId];
+				if (updatedItems.length === paginatedLessons.length) {
+					setSelectAll(true);
+				}
+				return updatedItems;
+			}
+		});
 	};
 
 	const openRestoreModal = (index: number) => {
@@ -330,6 +342,8 @@ const AdminRecycleBinLessonsTab = () => {
 				setSnackbarMessage('Lesson restored successfully');
 				setSnackbarSeverity('success');
 				setSnackbarOpen(true);
+				setSelectedItems([]);
+				setSelectAll(false);
 			}
 		} catch (error) {
 			console.error('Restore error:', error);
@@ -357,6 +371,8 @@ const AdminRecycleBinLessonsTab = () => {
 				setSnackbarMessage('Lesson permanently deleted');
 				setSnackbarSeverity('success');
 				setSnackbarOpen(true);
+				setSelectedItems([]);
+				setSelectAll(false);
 			}
 		} catch (error) {
 			console.error('Delete error:', error);
@@ -500,7 +516,6 @@ const AdminRecycleBinLessonsTab = () => {
 										setSearchResults([]);
 										setSearchResultsTotalItems(0);
 										setSearchResultsLoadedPages([]);
-										setLoadedPages([1]);
 										await fetchArchivedLessons(1);
 									}
 								}}
@@ -534,9 +549,9 @@ const AdminRecycleBinLessonsTab = () => {
 										padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
 										minHeight: '2rem',
 									}}>
-									All deleted
+									All deleted lessons
 								</MenuItem>
-								{['Recently deleted', 'Expired Lessons', 'Instructional Lessons', 'Practice Lessons', 'Quiz Lessons'].map((type) => (
+								{['Recently deleted', 'Instructional Lessons', 'Practice Lessons', 'Quiz Lessons'].map((type) => (
 									<MenuItem
 										value={type.toLowerCase()}
 										key={type}
@@ -594,7 +609,6 @@ const AdminRecycleBinLessonsTab = () => {
 							setSearchResultsPage(1);
 							setSearchResultsLoadedPages([]);
 							setCurrentPage(1);
-							setLoadedPages([1]);
 						}}>
 						Reset
 					</CustomDeleteButton>
@@ -608,7 +622,7 @@ const AdminRecycleBinLessonsTab = () => {
 									fontSize: isMobileSize ? '0.7rem' : '0.85rem',
 									whiteSpace: 'nowrap',
 								}}>
-								{searchResultsTotalItems} results
+								{searchResultsTotalItems} {searchResultsTotalItems === 1 ? 'result' : 'results'}
 							</Typography>
 						) : (
 							<Typography
@@ -618,7 +632,7 @@ const AdminRecycleBinLessonsTab = () => {
 									fontSize: isMobileSize ? '0.7rem' : '0.85rem',
 									whiteSpace: 'nowrap',
 								}}>
-								{totalItems} items
+								{totalItems} {totalItems === 1 ? 'item' : 'items'}
 							</Typography>
 						)}
 					</Box>
@@ -808,8 +822,8 @@ const AdminRecycleBinLessonsTab = () => {
 										{!isVerySmallScreen && <CustomTableCell value={lesson.archivedByName || 'N/A'} />}
 										{!isVerySmallScreen && <CustomTableCell value={deletionDateStatus.label} />}
 										<TableCell sx={{ textAlign: 'center' }}>
-											<CustomActionBtn title='Restore Lesson' onClick={() => openRestoreModal(index)} icon={<Restore />} />
-											<CustomActionBtn title='Delete Permanently' onClick={() => openDeleteModal(index)} icon={<DeleteForever />} />
+											<CustomActionBtn title='Restore Lesson' onClick={() => openRestoreModal(index)} icon={<Restore fontSize='small' />} />
+											<CustomActionBtn title='Delete Permanently' onClick={() => openDeleteModal(index)} icon={<DeleteForever fontSize='small' />} />
 										</TableCell>
 									</TableRow>
 								);
@@ -846,6 +860,7 @@ const AdminRecycleBinLessonsTab = () => {
 							closeRestoreModal(index);
 						}}
 						submitBtnText='Restore'
+						actionSx={{ marginBottom: '0.5rem' }}
 					/>
 				</CustomDialog>
 			))}
@@ -871,6 +886,7 @@ const AdminRecycleBinLessonsTab = () => {
 						}}
 						deleteBtn={true}
 						deleteBtnText='Delete Permanently'
+						actionSx={{ marginBottom: '0.5rem' }}
 					/>
 				</CustomDialog>
 			))}
@@ -886,7 +902,12 @@ const AdminRecycleBinLessonsTab = () => {
 						Are you sure you want to restore {selectedItems.length} selected lesson(s)? This will make them available again.
 					</Typography>
 				</DialogContent>
-				<CustomDialogActions onCancel={() => setIsBulkRestoreModalOpen(false)} onSubmit={handleBulkRestore} submitBtnText='Restore All' />
+				<CustomDialogActions
+					onCancel={() => setIsBulkRestoreModalOpen(false)}
+					onSubmit={handleBulkRestore}
+					submitBtnText='Restore All'
+					actionSx={{ marginBottom: '0.5rem' }}
+				/>
 			</CustomDialog>
 
 			{/* Bulk Delete Modal */}
@@ -905,6 +926,7 @@ const AdminRecycleBinLessonsTab = () => {
 					onDelete={handleBulkDelete}
 					deleteBtn={true}
 					deleteBtnText='Delete All Permanently'
+					actionSx={{ marginBottom: '0.5rem' }}
 				/>
 			</CustomDialog>
 
@@ -918,12 +940,28 @@ const AdminRecycleBinLessonsTab = () => {
 						You can restore lessons before this date or manually delete them immediately using the "Delete Permanently" button.
 					</Typography>
 				</DialogContent>
-				<CustomDialogActions onCancel={() => setIsInfoDialogOpen(false)} onSubmit={() => setIsInfoDialogOpen(false)} submitBtnText='Got it' />
+				<CustomDialogActions
+					onCancel={() => setIsInfoDialogOpen(false)}
+					onSubmit={() => setIsInfoDialogOpen(false)}
+					submitBtnText='Got it'
+					actionSx={{ marginBottom: '0.5rem' }}
+				/>
 			</CustomDialog>
 
 			{/* Snackbar */}
-			<Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={() => setSnackbarOpen(false)} anchorOrigin={{ vertical, horizontal }}>
-				<Alert onClose={() => setSnackbarOpen(false)} severity={snackbarSeverity} sx={{ width: '100%' }}>
+			<Snackbar open={snackbarOpen} autoHideDuration={5000} onClose={() => setSnackbarOpen(false)} anchorOrigin={{ vertical, horizontal }}>
+				<Alert
+					onClose={() => setSnackbarOpen(false)}
+					severity={snackbarSeverity}
+					sx={{
+						'mt': '8.5rem',
+						'width': '100%',
+						'backgroundColor': theme.bgColor?.greenSecondary,
+						'color': theme.textColor?.common.main,
+						'& .MuiAlert-icon': {
+							color: 'white',
+						},
+					}}>
 					{snackbarMessage}
 				</Alert>
 			</Snackbar>

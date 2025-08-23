@@ -1,54 +1,61 @@
+import { useState, useEffect, useContext } from 'react';
 import {
 	Box,
 	Table,
 	TableBody,
-	TableRow,
 	TableCell,
+	TableRow,
 	Typography,
+	IconButton,
+	InputAdornment,
+	MenuItem,
 	FormControl,
 	Select,
-	MenuItem,
-	InputAdornment,
+	Chip,
 	DialogContent,
 	Snackbar,
 	Alert,
-	Chip,
-	IconButton,
 } from '@mui/material';
-import React, { useContext, useEffect, useState } from 'react';
-import { Restore, DeleteForever, Search, Info } from '@mui/icons-material';
-
-import CustomTextField from '../../forms/customFields/CustomTextField';
-import CustomSubmitButton from '../../forms/customButtons/CustomSubmitButton';
-import CustomDialog from '../dialog/CustomDialog';
-import CustomDialogActions from '../dialog/CustomDialogActions';
-import CustomTableHead from '../table/CustomTableHead';
-import CustomTableCell from '../table/CustomTableCell';
-import CustomTablePagination from '../table/CustomTablePagination';
-import CustomActionBtn from '../table/CustomActionBtn';
-import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
-import { dateFormatter } from '../../../utils/dateFormatter';
+import { Search, Restore, DeleteForever, Info } from '@mui/icons-material';
+import axios from '@utils/axiosInstance';
 import theme from '../../../themes';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
-import CustomInfoMessageAlignedLeft from '../infoMessage/CustomInfoMessageAlignedLeft';
-import axios from '@utils/axiosInstance';
+import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
+import { DocumentsContext } from '../../../contexts/DocumentsContextProvider';
+import { useRecycleBinDocuments } from '../../../contexts/RecycleBinDocumentsContextProvider';
+import { Document } from '../../../interfaces/document';
+import { dateFormatter } from '../../../utils/dateFormatter';
+import CustomTextField from '../../forms/customFields/CustomTextField';
+import CustomSubmitButton from '../../forms/customButtons/CustomSubmitButton';
 import CustomDeleteButton from '../../forms/customButtons/CustomDeleteButton';
-import { ArchivedCourse } from '../../../interfaces/course';
-import { CoursesContext } from '../../../contexts/CoursesContextProvider';
-import { useRecycleBinCourses } from '../../../contexts/RecycleBinCoursesContextProvider';
+import CustomTableHead from '../table/CustomTableHead';
+import CustomTableCell from '../table/CustomTableCell';
+import CustomActionBtn from '../table/CustomActionBtn';
+import CustomTablePagination from '../table/CustomTablePagination';
+import CustomDialog from '../dialog/CustomDialog';
+import CustomDialogActions from '../dialog/CustomDialogActions';
+import CustomInfoMessageAlignedLeft from '../infoMessage/CustomInfoMessageAlignedLeft';
+import { truncateText } from '@utils/utilText';
 
-const AdminRecycleBinCoursesTab = () => {
+interface ArchivedDocument extends Document {
+	archivedAt?: string;
+	archivedBy?: string;
+	archivedByName?: string;
+}
+
+const AdminRecycleBinDocumentsTab = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
 	const { orgId } = useContext(OrganisationContext);
-	const { addNewCourse } = useContext(CoursesContext);
+	const { addNewDocument } = useContext(DocumentsContext);
 	const {
-		archivedCourses,
+		archivedDocuments,
 		totalItems,
 		currentPage,
+		loadedPages,
+		setLoadedPages,
 		searchResults,
 		searchResultsTotalItems,
-		searchResultsPage,
 		isSearchActive,
 		searchValue,
 		setSearchValue,
@@ -56,18 +63,22 @@ const AdminRecycleBinCoursesTab = () => {
 		setFilterValue,
 		searchedValue,
 		setSearchedValue,
-		error,
-		fetchArchivedCourses,
+		searchButtonClicked,
+		setSearchButtonClicked,
+		fetchArchivedDocuments,
 		setCurrentPage,
-		setSearchResultsPage,
-		setIsSearchActive,
-		setArchivedCourses,
 		setSearchResults,
 		setSearchResultsTotalItems,
+		setIsSearchActive,
+		setArchivedDocuments,
 		setTotalItems,
-		loadedPages,
-		setLoadedPages,
-	} = useRecycleBinCourses();
+		snackbarOpen,
+		snackbarMessage,
+		snackbarSeverity,
+		setSnackbarOpen,
+		setSnackbarMessage,
+		setSnackbarSeverity,
+	} = useRecycleBinDocuments();
 
 	const vertical = 'top';
 	const horizontal = 'center';
@@ -76,23 +87,28 @@ const AdminRecycleBinCoursesTab = () => {
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
-	const [searchResultsLoadedPages, setSearchResultsLoadedPages] = useState<number[]>([]);
-	const [searchButtonClicked, setSearchButtonClicked] = useState<boolean>(false);
-
 	const pageSize = 50;
 
-	// Use search results if active, otherwise use archived courses
-	const displayCourses = isSearchActive ? searchResults : archivedCourses;
-	const coursesNumberOfPages = isSearchActive ? Math.ceil(searchResultsTotalItems / pageSize) : Math.ceil(totalItems / pageSize);
-	const currentPageNumber = isSearchActive ? searchResultsPage : currentPage;
-	const paginatedCourses = displayCourses.slice((currentPageNumber - 1) * pageSize, currentPageNumber * pageSize);
+	// Use search results if active, otherwise use context data
+	const displayDocuments = isSearchActive ? searchResults : archivedDocuments;
 
-	const [orderBy, setOrderBy] = useState<keyof ArchivedCourse>('archivedAt');
+	// Add missing state variables for progressive pagination
+	const [searchResultsPage, setSearchResultsPage] = useState<number>(1);
+	const [searchResultsLoadedPages, setSearchResultsLoadedPages] = useState<number[]>([]);
+
+	// For pagination, use total items from server when not searching
+	const documentsNumberOfPages = isSearchActive ? Math.ceil(searchResultsTotalItems / pageSize) : Math.ceil(totalItems / pageSize);
+
+	// Use appropriate page number for pagination
+	const currentPageNumber = isSearchActive ? searchResultsPage : currentPage;
+	const paginatedDocuments = displayDocuments.slice((currentPageNumber - 1) * pageSize, currentPageNumber * pageSize);
+
+	const [orderBy, setOrderBy] = useState<keyof ArchivedDocument>('archivedAt');
 	const [order, setOrder] = useState<'asc' | 'desc'>('desc');
 
 	// Modal states
-	const [isCourseRestoreModalOpen, setIsCourseRestoreModalOpen] = useState<boolean[]>([]);
-	const [isCourseDeleteModalOpen, setIsCourseDeleteModalOpen] = useState<boolean[]>([]);
+	const [restoreModalOpen, setRestoreModalOpen] = useState<boolean[]>([]);
+	const [deleteModalOpen, setDeleteModalOpen] = useState<boolean[]>([]);
 	const [isBulkRestoreModalOpen, setIsBulkRestoreModalOpen] = useState<boolean>(false);
 	const [isBulkDeleteModalOpen, setIsBulkDeleteModalOpen] = useState<boolean>(false);
 
@@ -100,27 +116,22 @@ const AdminRecycleBinCoursesTab = () => {
 	const [selectedItems, setSelectedItems] = useState<string[]>([]);
 	const [selectAll, setSelectAll] = useState<boolean>(false);
 
-	// Snackbar states
-	const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
-	const [snackbarMessage, setSnackbarMessage] = useState<string>('');
-	const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
+	// Load initial data when component mounts
+	useEffect(() => {
+		fetchArchivedDocuments(1);
+		setLoadedPages([1]);
+	}, []);
 
 	// Info dialog state
 	const [isInfoDialogOpen, setIsInfoDialogOpen] = useState<boolean>(false);
 
-	// Load initial data when component mounts
-	useEffect(() => {
-		fetchArchivedCourses(1);
-		setLoadedPages([1]);
-	}, []);
-
 	// Keep track of previous length to avoid unnecessary resets
 	useEffect(() => {
-		if (paginatedCourses && paginatedCourses.length !== 0) {
-			setIsCourseRestoreModalOpen(Array(paginatedCourses.length).fill(false));
-			setIsCourseDeleteModalOpen(Array(paginatedCourses.length).fill(false));
+		if (displayDocuments && displayDocuments.length !== 0) {
+			setRestoreModalOpen(Array(displayDocuments.length).fill(false));
+			setDeleteModalOpen(Array(displayDocuments.length).fill(false));
 		}
-	}, [displayCourses, currentPageNumber]);
+	}, [displayDocuments]);
 
 	useEffect(() => {
 		setCurrentPage(1);
@@ -163,9 +174,9 @@ const AdminRecycleBinCoursesTab = () => {
 				}
 			}
 		} else {
-			// Check if we need to fetch more data for regular archived courses
+			// Check if we need to fetch more data for regular archived documents
 			const requiredRecords = newPage * pageSize;
-			if (archivedCourses.length < requiredRecords && newPage <= coursesNumberOfPages) {
+			if (archivedDocuments.length < requiredRecords && newPage <= documentsNumberOfPages) {
 				// Calculate which pages we need to fetch
 				const currentLoadedPages = loadedPages.length > 0 ? Math.max(...loadedPages) : 0;
 				const targetPage = Math.ceil((newPage * pageSize) / 200);
@@ -174,7 +185,7 @@ const AdminRecycleBinCoursesTab = () => {
 				if (currentLoadedPages < targetPage) {
 					for (let page = currentLoadedPages + 1; page <= targetPage; page++) {
 						if (!loadedPages.includes(page)) {
-							await fetchArchivedCourses(page);
+							fetchArchivedDocuments(page);
 							setLoadedPages((prev) => [...prev, page]);
 						}
 					}
@@ -191,67 +202,84 @@ const AdminRecycleBinCoursesTab = () => {
 			// Add page parameter
 			searchParams.set('page', page.toString());
 
-			const response = await axios.get(`${base_url}/courses/organisation/${orgId}/archived?${searchParams.toString()}`);
+			const response = await axios.get(`${base_url}/documents/organisation/${orgId}/archived?${searchParams.toString()}`);
 
-			if (page === 1) {
-				// First page - replace all data
-				setSearchResults(response.data.data);
-				setSearchResultsLoadedPages([1]);
-			} else {
-				// Additional pages - append data
-				setSearchResults((prev) => [...prev, ...response.data.data]);
-				setSearchResultsLoadedPages((prev) => [...prev, page]);
+			if (response.data.status === 200) {
+				const { data, totalItems: total } = response.data;
+
+				if (page === 1) {
+					// First page - replace all data
+					setSearchResults(data);
+					setSearchResultsLoadedPages([1]);
+				} else {
+					// Additional pages - append data
+					setSearchResults((prev) => [...prev, ...data]);
+					setSearchResultsLoadedPages((prev) => [...prev, page]);
+				}
+
+				setSearchResultsTotalItems(total || data.length);
 			}
-
-			setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
 		} catch (error) {
 			console.error('Error fetching more search results:', error);
 		}
 	};
 
-	const handleSort = (property: keyof ArchivedCourse) => {
+	const handleSort = (property: keyof ArchivedDocument) => {
 		const isAsc = orderBy === property && order === 'asc';
 		setOrder(isAsc ? 'desc' : 'asc');
 		setOrderBy(property);
+	};
 
-		// Client-side sort for displayed items (both search results and regular courses)
-		const sortedCourses = [...displayCourses].sort((a, b) => {
-			let aValue: any = a[property];
-			let bValue: any = b[property];
-
-			// Handle nested properties
-			if (property === 'instructor') {
-				aValue = a.instructor?.name || '';
-				bValue = b.instructor?.name || '';
-			}
-
-			// Handle date properties
-			if (property === 'archivedAt') {
-				aValue = new Date(aValue || 0);
-				bValue = new Date(bValue || 0);
-			}
-
-			// Handle string comparison
-			if (typeof aValue === 'string' && typeof bValue === 'string') {
-				aValue = aValue.toLowerCase();
-				bValue = bValue.toLowerCase();
-			}
-
-			if (aValue < bValue) {
-				return order === 'asc' ? -1 : 1;
-			}
-			if (aValue > bValue) {
-				return order === 'asc' ? 1 : -1;
-			}
-			return 0;
-		});
-
-		// Update the appropriate state based on what's currently displayed
-		if (isSearchActive) {
-			setSearchResults(sortedCourses);
+	const handleSelectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
+		const checked = event.target.checked;
+		setSelectAll(checked);
+		if (checked) {
+			setSelectedItems(paginatedDocuments.map((document) => document._id));
+			setSelectAll(true);
 		} else {
-			setArchivedCourses(sortedCourses);
+			setSelectedItems([]);
+			setSelectAll(false);
 		}
+	};
+
+	const handleSelectItem = (documentId: string) => {
+		setSelectedItems((prev) => {
+			if (prev.includes(documentId)) {
+				const updatedItems = prev.filter((id) => id !== documentId);
+				setSelectAll(false);
+				return updatedItems;
+			} else {
+				const updatedItems = [...prev, documentId];
+				if (updatedItems.length === paginatedDocuments.length) {
+					setSelectAll(true);
+				}
+				return updatedItems;
+			}
+		});
+	};
+
+	const openRestoreModal = (index: number) => {
+		const newModalState = [...restoreModalOpen];
+		newModalState[index] = true;
+		setRestoreModalOpen(newModalState);
+	};
+
+	const closeRestoreModal = (index: number) => {
+		const newModalState = [...restoreModalOpen];
+		newModalState[index] = false;
+		setRestoreModalOpen(newModalState);
+	};
+
+	const openDeleteModal = (index: number) => {
+		const newModalState = [...deleteModalOpen];
+		newModalState[index] = true;
+		setDeleteModalOpen(newModalState);
+	};
+
+	const closeDeleteModal = (index: number) => {
+		const newModalState = [...deleteModalOpen];
+		newModalState[index] = false;
+		setDeleteModalOpen(newModalState);
 	};
 
 	const handleSearch = async () => {
@@ -281,9 +309,11 @@ const AdminRecycleBinCoursesTab = () => {
 					params.append('sortOrder', order);
 				}
 
-				const response = await axios.get(`${base_url}/courses/organisation/${orgId}/archived?${params.toString()}`);
-				setSearchResults(response.data.data);
-				setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
+				const response = await axios.get(`${base_url}/documents/organisation/${orgId}/archived?${params.toString()}`);
+				if (response.data.status === 200) {
+					setSearchResults(response.data.data);
+					setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
+				}
 				setSearchResultsLoadedPages([1]);
 				setIsSearchActive(true);
 				setSearchButtonClicked(true);
@@ -297,132 +327,94 @@ const AdminRecycleBinCoursesTab = () => {
 			}
 		} catch (error) {
 			console.error('Search error:', error);
-		}
-	};
-
-	const openRestoreCourseModal = (index: number) => {
-		const updatedState = [...isCourseRestoreModalOpen];
-		updatedState[index] = true;
-		setIsCourseRestoreModalOpen(updatedState);
-	};
-
-	const closeRestoreCourseModal = (index: number) => {
-		const updatedState = [...isCourseRestoreModalOpen];
-		updatedState[index] = false;
-		setIsCourseRestoreModalOpen(updatedState);
-	};
-
-	const openDeleteCourseModal = (index: number) => {
-		const updatedState = [...isCourseDeleteModalOpen];
-		updatedState[index] = true;
-		setIsCourseDeleteModalOpen(updatedState);
-	};
-
-	const closeDeleteCourseModal = (index: number) => {
-		const updatedState = [...isCourseDeleteModalOpen];
-		updatedState[index] = false;
-		setIsCourseDeleteModalOpen(updatedState);
-	};
-
-	const restoreCourse = async (courseId: string): Promise<void> => {
-		try {
-			const response = await axios.patch(`${base_url}/courses/${courseId}/restore`);
-			addNewCourse(response.data.data);
-			setSelectedItems([]);
-			setSelectAll(false);
-
-			// Remove the course from the list
-			setArchivedCourses((prev) => prev.filter((course) => course._id !== courseId));
-			setTotalItems((prev) => prev - 1);
-
-			// If search is active, also remove from search results
-			if (isSearchActive) {
-				setSearchResults((prev) => prev.filter((course) => course._id !== courseId));
-				setSearchResultsTotalItems((prev) => Math.max(0, prev - 1));
-			}
-
-			setSnackbarMessage('Course restored successfully');
-			setSnackbarSeverity('success');
-			setSnackbarOpen(true);
-		} catch (error) {
-			console.error('Restore course error:', error);
-			setSnackbarMessage('Failed to restore course');
+			setSnackbarMessage('Search failed');
 			setSnackbarSeverity('error');
 			setSnackbarOpen(true);
 		}
 	};
 
-	const hardDeleteCourse = async (courseId: string): Promise<void> => {
+	const restoreDocument = async (documentId: string) => {
 		try {
-			await axios.delete(`${base_url}/courses/${courseId}/hard`);
+			const response = await axios.patch(`${base_url}/documents/${documentId}/restore`);
 
-			// Remove the course from the list
-			setArchivedCourses((prev) => prev.filter((course) => course._id !== courseId));
-			setTotalItems((prev) => prev - 1);
+			if (response.data.status === 200) {
+				// Remove from archived documents
+				setArchivedDocuments((prev) => prev.filter((document) => document._id !== documentId));
+				setTotalItems((prev) => prev - 1);
 
-			// If search is active, also remove from search results
-			if (isSearchActive) {
-				setSearchResults((prev) => prev.filter((course) => course._id !== courseId));
-				setSearchResultsTotalItems((prev) => Math.max(0, prev - 1));
-			}
-
-			setSnackbarMessage('Course permanently deleted');
-			setSnackbarSeverity('success');
-			setSnackbarOpen(true);
-			setSelectedItems([]);
-			setSelectAll(false);
-		} catch (error) {
-			console.error('Hard delete course error:', error);
-			setSnackbarMessage('Failed to delete course');
-			setSnackbarSeverity('error');
-			setSnackbarOpen(true);
-		}
-	};
-
-	// Handle bulk selection
-	const handleSelectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
-		if (event.target.checked) {
-			setSelectedItems(paginatedCourses.map((course) => course._id));
-			setSelectAll(true);
-		} else {
-			setSelectedItems([]);
-			setSelectAll(false);
-		}
-	};
-
-	const handleSelectItem = (courseId: string) => {
-		setSelectedItems((prev) => {
-			if (prev.includes(courseId)) {
-				const updatedItems = prev.filter((id) => id !== courseId);
-				setSelectAll(false);
-				return updatedItems;
-			} else {
-				const updatedItems = [...prev, courseId];
-				if (updatedItems.length === paginatedCourses.length) {
-					setSelectAll(true);
+				// If search is active, also remove from search results
+				if (isSearchActive) {
+					setSearchResults((prev) => prev.filter((document) => document._id !== documentId));
+					setSearchResultsTotalItems((prev) => Math.max(0, prev - 1));
 				}
-				return updatedItems;
+
+				// Add to documents context
+				if (response.data.data) {
+					addNewDocument(response.data.data);
+					setSelectedItems([]);
+					setSelectAll(false);
+				}
+
+				setSnackbarMessage('Document restored successfully');
+				setSnackbarSeverity('success');
+				setSnackbarOpen(true);
 			}
-		});
+		} catch (error) {
+			console.error('Restore error:', error);
+			setSnackbarMessage('Failed to restore document');
+			setSnackbarSeverity('error');
+			setSnackbarOpen(true);
+		}
+	};
+
+	const hardDeleteDocument = async (documentId: string) => {
+		try {
+			const response = await axios.delete(`${base_url}/documents/${documentId}/hard`);
+
+			if (response.data.status === 200) {
+				// Remove from archived documents
+				setArchivedDocuments((prev) => prev.filter((document) => document._id !== documentId));
+				setTotalItems((prev) => prev - 1);
+
+				// If search is active, also remove from search results
+				if (isSearchActive) {
+					setSearchResults((prev) => prev.filter((document) => document._id !== documentId));
+					setSearchResultsTotalItems((prev) => Math.max(0, prev - 1));
+				}
+
+				setSnackbarMessage('Document permanently deleted');
+				setSnackbarSeverity('success');
+				setSnackbarOpen(true);
+				setSelectedItems([]);
+				setSelectAll(false);
+			}
+		} catch (error) {
+			console.error('Delete error:', error);
+			setSnackbarMessage('Failed to delete document');
+			setSnackbarSeverity('error');
+			setSnackbarOpen(true);
+		}
 	};
 
 	// Handle bulk operations
 	const handleBulkRestore = async () => {
 		try {
 			await Promise.all(
-				selectedItems.map(async (courseId) => {
-					const response = await axios.patch(`${base_url}/courses/${courseId}/restore`);
-					addNewCourse(response.data.data);
+				selectedItems.map(async (documentId) => {
+					const response = await axios.patch(`${base_url}/documents/${documentId}/restore`);
+					if (response.data.data) {
+						addNewDocument(response.data.data);
+					}
 				})
 			);
 
-			// Remove the courses from the list
-			setArchivedCourses((prev) => prev.filter((course) => !selectedItems.includes(course._id)));
+			// Remove the documents from the list
+			setArchivedDocuments((prev) => prev.filter((document) => !selectedItems.includes(document._id)));
 			setTotalItems((prev) => prev - selectedItems.length);
 
 			// If search is active, also remove from search results
 			if (isSearchActive) {
-				setSearchResults((prev) => prev.filter((course) => !selectedItems.includes(course._id)));
+				setSearchResults((prev) => prev.filter((document) => !selectedItems.includes(document._id)));
 				setSearchResultsTotalItems((prev) => Math.max(0, prev - selectedItems.length));
 			}
 
@@ -430,12 +422,12 @@ const AdminRecycleBinCoursesTab = () => {
 			setSelectAll(false);
 			setIsBulkRestoreModalOpen(false);
 
-			setSnackbarMessage(`${selectedItems.length} course(s) restored successfully`);
+			setSnackbarMessage(`${selectedItems.length} document(s) restored successfully`);
 			setSnackbarSeverity('success');
 			setSnackbarOpen(true);
 		} catch (error) {
 			console.error('Bulk restore error:', error);
-			setSnackbarMessage('Failed to restore courses');
+			setSnackbarMessage('Failed to restore documents');
 			setSnackbarSeverity('error');
 			setSnackbarOpen(true);
 		}
@@ -443,15 +435,15 @@ const AdminRecycleBinCoursesTab = () => {
 
 	const handleBulkDelete = async () => {
 		try {
-			await Promise.all(selectedItems.map((courseId) => axios.delete(`${base_url}/courses/${courseId}/hard`)));
+			await Promise.all(selectedItems.map((documentId) => axios.delete(`${base_url}/documents/${documentId}/hard`)));
 
-			// Remove the courses from the list
-			setArchivedCourses((prev) => prev.filter((course) => !selectedItems.includes(course._id)));
+			// Remove the documents from the list
+			setArchivedDocuments((prev) => prev.filter((document) => !selectedItems.includes(document._id)));
 			setTotalItems((prev) => prev - selectedItems.length);
 
 			// If search is active, also remove from search results
 			if (isSearchActive) {
-				setSearchResults((prev) => prev.filter((course) => !selectedItems.includes(course._id)));
+				setSearchResults((prev) => prev.filter((document) => !selectedItems.includes(document._id)));
 				setSearchResultsTotalItems((prev) => Math.max(0, prev - selectedItems.length));
 			}
 
@@ -459,18 +451,17 @@ const AdminRecycleBinCoursesTab = () => {
 			setSelectAll(false);
 			setIsBulkDeleteModalOpen(false);
 
-			setSnackbarMessage(`${selectedItems.length} course(s) permanently deleted`);
+			setSnackbarMessage(`${selectedItems.length} document(s) permanently deleted`);
 			setSnackbarSeverity('success');
 			setSnackbarOpen(true);
 		} catch (error) {
 			console.error('Bulk delete error:', error);
-			setSnackbarMessage('Failed to delete courses');
+			setSnackbarMessage('Failed to delete documents');
 			setSnackbarSeverity('error');
 			setSnackbarOpen(true);
 		}
 	};
 
-	// Get deletion date status
 	const getDeletionDateStatus = (archivedAt: string) => {
 		const archivedDate = new Date(archivedAt);
 		const deletionDate = new Date(archivedDate.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days
@@ -487,8 +478,6 @@ const AdminRecycleBinCoursesTab = () => {
 			return { label: `${dateFormatter(deletionDate)}`, color: 'default' as const };
 		}
 	};
-
-	if (error) return <Typography color='error'>{error}</Typography>;
 
 	return (
 		<>
@@ -512,6 +501,11 @@ const AdminRecycleBinCoursesTab = () => {
 
 									// Automatically trigger filter
 									if (newFilterValue && newFilterValue.trim()) {
+										// Reset pagination state
+										setCurrentPage(1);
+										setSearchResultsPage(1);
+										setSearchResultsLoadedPages([]);
+
 										setIsSearchActive(true);
 										// Use search results for filtered data
 										const params = new URLSearchParams({
@@ -524,27 +518,25 @@ const AdminRecycleBinCoursesTab = () => {
 										if (orderBy) params.append('sortBy', orderBy);
 										if (order) params.append('sortOrder', order);
 
-										const response = await axios.get(`${base_url}/courses/organisation/${orgId}/archived?${params.toString()}`);
+										const response = await axios.get(`${base_url}/documents/organisation/${orgId}/archived?${params.toString()}`);
 										if (response.data.status === 200) {
 											setSearchResults(response.data.data);
 											setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
 											setSearchResultsLoadedPages([1]);
-											setCurrentPage(1);
-											setSearchResultsPage(1);
 										}
 									} else {
 										// If no filter, reset to normal view
 										setIsSearchActive(false);
 										setSearchResults([]);
-										setSearchResultsLoadedPages([]);
 										setSearchResultsTotalItems(0);
-										await fetchArchivedCourses(1, searchValue);
+										setSearchResultsLoadedPages([]);
+										await fetchArchivedDocuments(1);
 									}
 								}}
 								displayEmpty
 								sx={{
 									backgroundColor: theme.bgColor?.common,
-									width: isMobileSizeSmall ? '8rem' : '12rem',
+									width: isMobileSizeSmall ? '8rem' : '13rem',
 									fontSize: isMobileSize ? '0.7rem' : '0.85rem',
 									textTransform: 'capitalize',
 									mr: '1rem',
@@ -560,7 +552,7 @@ const AdminRecycleBinCoursesTab = () => {
 										padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
 										minHeight: '2rem',
 									}}>
-									Filter Courses
+									Filter Documents
 								</MenuItem>
 								<MenuItem
 									value=''
@@ -571,18 +563,9 @@ const AdminRecycleBinCoursesTab = () => {
 										padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
 										minHeight: '2rem',
 									}}>
-									All deleted courses
+									All deleted documents
 								</MenuItem>
-								{[
-									'Recently deleted',
-									'Expired Courses',
-									'Paid Courses',
-									'Free Courses',
-									'Open Courses',
-									'Closed Courses',
-									'External Courses',
-									'Platform Courses',
-								].map((type) => (
+								{['Recently deleted', 'Paid Documents', 'Free Documents', 'On Landing Page', 'On Platform Only'].map((type) => (
 									<MenuItem
 										value={type.toLowerCase()}
 										key={type}
@@ -601,7 +584,7 @@ const AdminRecycleBinCoursesTab = () => {
 
 					<CustomTextField
 						value={searchValue}
-						placeholder={'Search in Title and Description'}
+						placeholder={'Search in Document Name'}
 						onChange={(e) => {
 							setSearchValue(e.target.value);
 						}}
@@ -618,6 +601,11 @@ const AdminRecycleBinCoursesTab = () => {
 									/>
 								</InputAdornment>
 							),
+							onKeyPress: (e) => {
+								if (e.key === 'Enter') {
+									handleSearch();
+								}
+							},
 						}}
 					/>
 					<CustomSubmitButton onClick={handleSearch} sx={{ marginLeft: '1rem' }} disabled={!searchValue || !searchValue.trim()}>
@@ -630,11 +618,11 @@ const AdminRecycleBinCoursesTab = () => {
 							setSearchedValue('');
 							setSearchButtonClicked(false);
 							setSearchResults([]);
-							setSearchResultsLoadedPages([]);
 							setSearchResultsTotalItems(0);
 							setIsSearchActive(false);
-							setCurrentPage(1);
 							setSearchResultsPage(1);
+							setSearchResultsLoadedPages([]);
+							setCurrentPage(1);
 						}}>
 						Reset
 					</CustomDeleteButton>
@@ -704,6 +692,11 @@ const AdminRecycleBinCoursesTab = () => {
 									setFilterValue('');
 									// If search value exists, keep search results
 									if (searchValue && searchValue.trim()) {
+										// Reset pagination state
+										setCurrentPage(1);
+										setSearchResultsPage(1);
+										setSearchResultsLoadedPages([]);
+
 										// Trigger search without filter value
 										const params = new URLSearchParams({
 											limit: '200',
@@ -713,21 +706,20 @@ const AdminRecycleBinCoursesTab = () => {
 										if (order) params.append('sortOrder', order);
 
 										axios
-											.get(`${base_url}/courses/organisation/${orgId}/archived?${params.toString()}`)
+											.get(`${base_url}/documents/organisation/${orgId}/archived?${params.toString()}`)
 											.then((response) => {
-												setSearchResults(response.data.data);
-												setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-												setSearchResultsLoadedPages([1]);
-												setIsSearchActive(true);
-												setCurrentPage(1);
-												setSearchResultsPage(1);
+												if (response.data.status === 200) {
+													setSearchResults(response.data.data);
+													setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
+													setSearchResultsLoadedPages([1]);
+													setIsSearchActive(true);
+												}
 											})
 											.catch((error) => console.error('Search error:', error));
 									} else {
-										// No search value, reset to archived courses
+										// No search value, reset to archived documents
 										setIsSearchActive(false);
 										setSearchResults([]);
-										setSearchResultsLoadedPages([]);
 										setSearchResultsTotalItems(0);
 									}
 								}}
@@ -746,6 +738,11 @@ const AdminRecycleBinCoursesTab = () => {
 									setSearchButtonClicked(false);
 									// If filter exists, keep filter results
 									if (filterValue && filterValue.trim()) {
+										// Reset pagination state
+										setCurrentPage(1);
+										setSearchResultsPage(1);
+										setSearchResultsLoadedPages([]);
+
 										// Trigger filter search without search value
 										const params = new URLSearchParams({
 											limit: '200',
@@ -755,21 +752,20 @@ const AdminRecycleBinCoursesTab = () => {
 										if (order) params.append('sortOrder', order);
 
 										axios
-											.get(`${base_url}/courses/organisation/${orgId}/archived?${params.toString()}`)
+											.get(`${base_url}/documents/organisation/${orgId}/archived?${params.toString()}`)
 											.then((response) => {
-												setSearchResults(response.data.data);
-												setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-												setSearchResultsLoadedPages([1]);
-												setIsSearchActive(true);
-												setCurrentPage(1);
-												setSearchResultsPage(1);
+												if (response.data.status === 200) {
+													setSearchResults(response.data.data);
+													setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
+													setSearchResultsLoadedPages([1]);
+													setIsSearchActive(true);
+												}
 											})
 											.catch((error) => console.error('Filter search error:', error));
 									} else {
-										// No filter, reset to archived courses
+										// No filter, reset to archived documents
 										setIsSearchActive(false);
 										setSearchResults([]);
-										setSearchResultsLoadedPages([]);
 										setSearchResultsTotalItems(0);
 									}
 								}}
@@ -783,7 +779,7 @@ const AdminRecycleBinCoursesTab = () => {
 				)}
 
 				<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>
-					<CustomTableHead<ArchivedCourse>
+					<CustomTableHead<ArchivedDocument>
 						orderBy={orderBy}
 						order={order}
 						handleSort={handleSort}
@@ -793,14 +789,14 @@ const AdminRecycleBinCoursesTab = () => {
 							isVerySmallScreen
 								? [
 										{ key: 'checkbox', label: '' },
-										{ key: 'title', label: 'Title' },
+										{ key: 'name', label: 'Document' },
 										{ key: 'archivedAt', label: 'Deleted On' },
 										{ key: 'actions', label: 'Actions' },
 									]
 								: [
 										{ key: 'checkbox', label: '' },
-										{ key: 'title', label: 'Title' },
-										{ key: 'instructor', label: 'Instructor' },
+										{ key: 'name', label: 'Document' },
+										{ key: 'pageCount', label: 'Pages(#)' },
 										{ key: 'archivedAt', label: 'Deleted On' },
 										{ key: 'archivedByName', label: 'Deleted By' },
 										{
@@ -828,62 +824,58 @@ const AdminRecycleBinCoursesTab = () => {
 						}
 					/>
 					<TableBody>
-						{paginatedCourses &&
-							paginatedCourses?.map((course: ArchivedCourse, index) => {
-								const deletionDateStatus = getDeletionDateStatus(course.archivedAt || '');
-								const isSelected = selectedItems.includes(course._id);
+						{paginatedDocuments &&
+							paginatedDocuments?.map((document: ArchivedDocument, index) => {
+								const deletionDateStatus = getDeletionDateStatus(document.archivedAt || '');
+								const isSelected = selectedItems.includes(document._id);
 
 								return (
-									<TableRow key={course._id} hover selected={isSelected}>
+									<TableRow key={document._id} hover selected={isSelected}>
 										<TableCell padding='checkbox'>
-											<input type='checkbox' checked={isSelected} onChange={() => handleSelectItem(course._id)} />
+											<input type='checkbox' checked={isSelected} onChange={() => handleSelectItem(document._id)} />
 										</TableCell>
-										<CustomTableCell value={course.title} />
-										{!isVerySmallScreen && <CustomTableCell value={course.instructor?.name || 'N/A'} />}
-										<CustomTableCell value={course.archivedAt ? dateFormatter(course.archivedAt) : 'N/A'} />
-										{!isVerySmallScreen && <CustomTableCell value={course.archivedByName || 'N/A'} />}
+										<CustomTableCell value={truncateText(document.name, isVerySmallScreen ? 25 : 45)} />
+										{!isVerySmallScreen && <CustomTableCell value={document.pageCount?.toString() || 'N/A'} />}
+										<CustomTableCell value={document.archivedAt ? dateFormatter(document.archivedAt) : 'N/A'} />
+										{!isVerySmallScreen && <CustomTableCell value={document.archivedByName || 'N/A'} />}
 										{!isVerySmallScreen && <CustomTableCell value={deletionDateStatus.label} />}
 										<TableCell sx={{ textAlign: 'center' }}>
-											<CustomActionBtn title='Restore Course' onClick={() => openRestoreCourseModal(index)} icon={<Restore fontSize='small' />} />
-											<CustomActionBtn
-												title='Delete Permanently'
-												onClick={() => openDeleteCourseModal(index)}
-												icon={<DeleteForever fontSize='small' />}
-											/>
+											<CustomActionBtn title='Restore Document' onClick={() => openRestoreModal(index)} icon={<Restore fontSize='small' />} />
+											<CustomActionBtn title='Delete Permanently' onClick={() => openDeleteModal(index)} icon={<DeleteForever fontSize='small' />} />
 										</TableCell>
 									</TableRow>
 								);
 							})}
 					</TableBody>
 				</Table>
-				{paginatedCourses.length === 0 && (
+				{paginatedDocuments.length === 0 && (
 					<CustomInfoMessageAlignedLeft
-						message={isSearchActive ? 'No deleted courses found matching your search criteria.' : 'No deleted courses found.'}
+						message={isSearchActive ? 'No deleted documents found matching your search criteria.' : 'No deleted documents found.'}
 						sx={{ marginTop: '5rem' }}
 					/>
 				)}
 
-				<CustomTablePagination count={coursesNumberOfPages} page={currentPageNumber} onChange={handlePageChange} />
+				<CustomTablePagination count={documentsNumberOfPages} page={currentPageNumber} onChange={handlePageChange} />
 			</Box>
 
-			{/* Restore Course Modal */}
-			{paginatedCourses.map((course, index) => (
+			{/* Restore Modal */}
+			{paginatedDocuments.map((document, index) => (
 				<CustomDialog
-					key={`restore-${course._id}`}
-					openModal={isCourseRestoreModalOpen[index]}
-					closeModal={() => closeRestoreCourseModal(index)}
-					title='Restore Course'
+					key={`restore-${document._id}`}
+					openModal={restoreModalOpen[index] || false}
+					closeModal={() => closeRestoreModal(index)}
+					title='Restore Document'
 					maxWidth='xs'>
 					<DialogContent>
 						<Typography variant='body2' sx={{ lineHeight: 1.7 }}>
-							Are you sure you want to restore "{course.title}"? This will make the course available again.
+							Are you sure you want to restore "{truncateText(document.name, 25)}"? This will make the document available again.
 						</Typography>
 					</DialogContent>
 					<CustomDialogActions
-						onCancel={() => closeRestoreCourseModal(index)}
+						onCancel={() => closeRestoreModal(index)}
 						onSubmit={() => {
-							restoreCourse(course._id);
-							closeRestoreCourseModal(index);
+							restoreDocument(document._id);
+							closeRestoreModal(index);
 						}}
 						submitBtnText='Restore'
 						actionSx={{ marginBottom: '0.5rem' }}
@@ -891,24 +883,24 @@ const AdminRecycleBinCoursesTab = () => {
 				</CustomDialog>
 			))}
 
-			{/* Delete Course Modal */}
-			{paginatedCourses.map((course, index) => (
+			{/* Delete Modal */}
+			{paginatedDocuments.map((document, index) => (
 				<CustomDialog
-					key={`delete-${course._id}`}
-					openModal={isCourseDeleteModalOpen[index]}
-					closeModal={() => closeDeleteCourseModal(index)}
-					title='Delete Course Permanently'
+					key={`delete-${document._id}`}
+					openModal={deleteModalOpen[index] || false}
+					closeModal={() => closeDeleteModal(index)}
+					title='Delete Document Permanently'
 					maxWidth='xs'>
 					<DialogContent>
 						<Typography variant='body2' sx={{ lineHeight: 1.7 }}>
-							Are you sure you want to permanently delete "{course.title}"? This action cannot be undone.
+							Are you sure you want to permanently delete "{truncateText(document.name, 25)}"? This action cannot be undone.
 						</Typography>
 					</DialogContent>
 					<CustomDialogActions
-						onCancel={() => closeDeleteCourseModal(index)}
+						onCancel={() => closeDeleteModal(index)}
 						onDelete={() => {
-							hardDeleteCourse(course._id);
-							closeDeleteCourseModal(index);
+							hardDeleteDocument(document._id);
+							closeDeleteModal(index);
 						}}
 						deleteBtn={true}
 						deleteBtnText='Delete Permanently'
@@ -921,11 +913,11 @@ const AdminRecycleBinCoursesTab = () => {
 			<CustomDialog
 				openModal={isBulkRestoreModalOpen}
 				closeModal={() => setIsBulkRestoreModalOpen(false)}
-				title='Restore Multiple Courses'
+				title='Restore Multiple Documents'
 				maxWidth='xs'>
 				<DialogContent>
 					<Typography variant='body2' sx={{ lineHeight: 1.7 }}>
-						Are you sure you want to restore {selectedItems.length} selected course(s)? This will make them available again.
+						Are you sure you want to restore {selectedItems.length} selected document(s)? This will make them available again.
 					</Typography>
 				</DialogContent>
 				<CustomDialogActions
@@ -940,11 +932,11 @@ const AdminRecycleBinCoursesTab = () => {
 			<CustomDialog
 				openModal={isBulkDeleteModalOpen}
 				closeModal={() => setIsBulkDeleteModalOpen(false)}
-				title='Delete Multiple Courses Permanently'
+				title='Delete Multiple Documents Permanently'
 				maxWidth='xs'>
 				<DialogContent>
 					<Typography variant='body2' sx={{ lineHeight: 1.7 }}>
-						Are you sure you want to permanently delete {selectedItems.length} selected course(s)? This action cannot be undone.
+						Are you sure you want to permanently delete {selectedItems.length} selected document(s)? This action cannot be undone.
 					</Typography>
 				</DialogContent>
 				<CustomDialogActions
@@ -960,10 +952,10 @@ const AdminRecycleBinCoursesTab = () => {
 			<CustomDialog openModal={isInfoDialogOpen} closeModal={() => setIsInfoDialogOpen(false)} title='Auto-Removal Information' maxWidth='sm'>
 				<DialogContent>
 					<Typography variant='body2' sx={{ lineHeight: 1.7 }}>
-						Courses in the recycle bin are automatically permanently deleted after 7 days. This action cannot be undone.
+						Documents in the recycle bin are automatically permanently deleted after 7 days. This action cannot be undone.
 					</Typography>
 					<Typography variant='body2' sx={{ lineHeight: 1.7, mt: 2 }}>
-						You can restore courses before this date or manually delete them immediately using the "Delete Permanently" button.
+						You can restore documents before this date or manually delete them immediately using the "Delete Permanently" button.
 					</Typography>
 				</DialogContent>
 				<CustomDialogActions
@@ -995,4 +987,4 @@ const AdminRecycleBinCoursesTab = () => {
 	);
 };
 
-export default AdminRecycleBinCoursesTab;
+export default AdminRecycleBinDocumentsTab;

@@ -544,7 +544,6 @@ const AdminInquiries = () => {
 					{((isSearchActive && searchedValue && searchButtonClicked) || (isSearchActive && filterValue && filterValue.trim())) && (
 						<Box
 							sx={{
-								mb: '1rem',
 								display: 'flex',
 								gap: 1,
 								flexWrap: 'wrap',
@@ -723,9 +722,14 @@ const AdminInquiries = () => {
 													openModal={deleteModalOpen[index]}
 													closeModal={() => handleCloseDeleteModal(index)}
 													title='Delete Inquiry'
-													content='Are you sure you want to delete this inquiry?'
+													content={`Are you sure you want to delete "${truncateText(selectedInquiry?.message || '', 25)}"? This action cannot be undone.`}
 													maxWidth='xs'>
-													<CustomDialogActions onCancel={() => handleCloseDeleteModal(index)} deleteBtn={true} onDelete={handleConfirmDelete} />
+													<CustomDialogActions
+														onCancel={() => handleCloseDeleteModal(index)}
+														deleteBtn={true}
+														onDelete={handleConfirmDelete}
+														actionSx={{ mb: '0.5rem' }}
+													/>
 												</CustomDialog>
 											</TableCell>
 										</TableRow>

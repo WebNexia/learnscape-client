@@ -78,57 +78,54 @@ export const RecycleBinCoursesProvider: React.FC<RecycleBinCoursesProviderProps>
 	const [loading, setLoading] = useState<boolean>(false);
 	const [error, setError] = useState<string | null>(null);
 
-	const fetchArchivedCourses = useCallback(
-		async (page: number, search?: string, filter?: string) => {
-			try {
-				setLoading(true);
-				setError(null);
+	const fetchArchivedCourses = async (page: number, search?: string, filter?: string) => {
+		try {
+			setLoading(true);
+			setError(null);
 
-				// Check if orgId is available
-				if (!orgId) {
-					setError('Organization ID not found');
-					setLoading(false);
-					return;
-				}
-
-				const params = new URLSearchParams({
-					page: page.toString(),
-					limit: '200',
-				});
-
-				if (search && search.trim()) {
-					params.append('search', search.trim());
-				}
-
-				if (filter && filter.trim()) {
-					params.append('filter', filter.trim());
-				}
-
-				const response = await axios.get(`${base_url}/courses/organisation/${orgId}/archived?${params.toString()}`);
-
-				if (response.data.status === 200) {
-					const { data, totalItems: total } = response.data;
-
-					if (page === 1) {
-						// First page - replace data
-						setArchivedCourses(data);
-						setTotalItems(total);
-						setLoadedPages([1]);
-					} else {
-						// Subsequent pages - append data
-						setArchivedCourses((prev) => [...prev, ...data]);
-						setLoadedPages((prev) => [...prev, page]);
-					}
-				}
-			} catch (error) {
-				console.error('Error fetching archived courses:', error);
-				setError('Failed to fetch archived courses');
-			} finally {
+			// Check if orgId is available
+			if (!orgId) {
+				setError('Organization ID not found');
 				setLoading(false);
+				return;
 			}
-		},
-		[base_url, orgId]
-	);
+
+			const params = new URLSearchParams({
+				page: page.toString(),
+				limit: '200',
+			});
+
+			if (search && search.trim()) {
+				params.append('search', search.trim());
+			}
+
+			if (filter && filter.trim()) {
+				params.append('filter', filter.trim());
+			}
+
+			const response = await axios.get(`${base_url}/courses/organisation/${orgId}/archived?${params.toString()}`);
+
+			if (response.data.status === 200) {
+				const { data, totalItems: total } = response.data;
+
+				if (page === 1) {
+					// First page - replace data
+					setArchivedCourses(data);
+					setTotalItems(total);
+					setLoadedPages([1]);
+				} else {
+					// Subsequent pages - append data
+					setArchivedCourses((prev) => [...prev, ...data]);
+					setLoadedPages((prev) => [...prev, page]);
+				}
+			}
+		} catch (error) {
+			console.error('Error fetching archived courses:', error);
+			setError('Failed to fetch archived courses');
+		} finally {
+			setLoading(false);
+		}
+	};
 
 	const clearSearchData = useCallback(() => {
 		setSearchResults([]);

@@ -1,4 +1,19 @@
-import { Box, FormControl, InputAdornment, MenuItem, Select, Table, TableBody, TableCell, TableRow, Tooltip, Typography, Chip } from '@mui/material';
+import {
+	Box,
+	FormControl,
+	InputAdornment,
+	MenuItem,
+	Select,
+	Table,
+	TableBody,
+	TableCell,
+	TableRow,
+	Tooltip,
+	Typography,
+	Chip,
+	Snackbar,
+	Alert,
+} from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { useContext, useEffect, useRef, useState } from 'react';
 import axios from '@utils/axiosInstance';
@@ -38,7 +53,6 @@ const AdminQuestions = () => {
 	const {
 		questions,
 		error,
-		fetchQuestions,
 		fetchMoreQuestions,
 		removeQuestion,
 		totalItems,
@@ -99,6 +113,11 @@ const AdminQuestions = () => {
 	const [editQuestionModalOpen, setEditQuestionModalOpen] = useState<boolean[]>([]);
 	const [isQuestionCreateModalOpen, setIsQuestionCreateModalOpen] = useState<boolean>(false);
 	const [isQuestionInfoModalOpen, setIsQuestionInfoModalOpen] = useState<boolean[]>([]);
+
+	// Snackbar states for delete operation
+	const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
+	const [snackbarMessage, setSnackbarMessage] = useState<string>('');
+	const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
 
 	const {
 		options,
@@ -206,18 +225,33 @@ const AdminQuestions = () => {
 
 	const deleteQuestion = async (questionId: string): Promise<void> => {
 		try {
-			removeQuestion(questionId);
+			const response = await axios.delete(`${base_url}/questions/${questionId}`);
 
-			// If search is active, also remove from search results
-			if (isSearchActive) {
-				setSearchResults((prev) => prev.filter((question) => question._id !== questionId));
-				setSearchResultsTotalItems((prev) => Math.max(0, prev - 1));
+			// Only remove from frontend state if the backend request was successful
+			if (response.data.status === 200) {
+				// If search is active, also remove from search results
+				if (isSearchActive) {
+					setSearchResults((prev) => prev.filter((question) => question._id !== questionId));
+					setSearchResultsTotalItems((prev) => Math.max(0, prev - 1));
+				}
+
+				removeQuestion(questionId);
+
+				// Show success message
+				setSnackbarMessage('Question deleted successfully');
+				setSnackbarSeverity('success');
+				setSnackbarOpen(true);
+			} else {
+				console.error('Delete question failed:', response.data.message);
+				setSnackbarMessage(response.data.message || 'Failed to delete question');
+				setSnackbarSeverity('error');
+				setSnackbarOpen(true);
 			}
-
-			await axios.delete(`${base_url}/questions/${questionId}`);
-			fetchQuestions(questionsPageNumber);
-		} catch (error) {
+		} catch (error: any) {
 			console.error('Delete question error:', error);
+			setSnackbarMessage(error.response?.data?.message || 'Failed to delete question');
+			setSnackbarSeverity('error');
+			setSnackbarOpen(true);
 		}
 	};
 
@@ -696,8 +730,8 @@ const AdminQuestions = () => {
 								{ key: 'clone', label: 'Cloned' },
 								{ key: 'questionType', label: 'Question Type' },
 								{ key: 'question', label: 'Question' },
-								{ key: 'createdAt', label: 'Created At' },
-								{ key: 'updatedAt', label: 'Updated At' },
+								{ key: 'createdAt', label: 'Created On' },
+								{ key: 'updatedAt', label: 'Updated On' },
 								{ key: 'actions', label: 'Actions' },
 							]}
 						/>
@@ -808,7 +842,7 @@ const AdminQuestions = () => {
 														openModal={isQuestionDeleteModalOpen[index]}
 														closeModal={() => closeDeleteQuestionModal(index)}
 														title='Delete Question'
-														content='Are you sure you want to delete this question?'
+														content={`Are you sure you want to delete "${truncateText(stripHtml(decode(question.question)), 25)}"?`}
 														maxWidth='xs'>
 														<CustomDialogActions
 															onCancel={() => closeDeleteQuestionModal(index)}
@@ -817,6 +851,7 @@ const AdminQuestions = () => {
 																deleteQuestion(question._id);
 																closeDeleteQuestionModal(index);
 															}}
+															actionSx={{ mb: '0.5rem' }}
 														/>
 													</CustomDialog>
 												)}
@@ -843,6 +878,27 @@ const AdminQuestions = () => {
 						)
 				)}
 			</Box>
+
+			<Snackbar
+				open={snackbarOpen}
+				autoHideDuration={5000}
+				anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+				sx={{ mt: '4rem' }}
+				onClose={() => setSnackbarOpen(false)}>
+				<Alert
+					onClose={() => setSnackbarOpen(false)}
+					severity={snackbarSeverity}
+					sx={{
+						'width': '100%',
+						'backgroundColor': theme.bgColor?.greenSecondary,
+						'color': theme.textColor?.common.main,
+						'& .MuiAlert-icon': {
+							color: 'white',
+						},
+					}}>
+					{snackbarMessage}
+				</Alert>
+			</Snackbar>
 		</DashboardPagesLayout>
 	);
 };
