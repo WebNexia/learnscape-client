@@ -1,6 +1,6 @@
 import { AppBar, Box, Button, IconButton, Toolbar, Typography, keyframes, useTheme, useMediaQuery } from '@mui/material';
 import theme from '../../../themes';
-import { useContext, useState, useMemo, memo } from 'react';
+import { useContext, useMemo, memo } from 'react';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 import SidebarBtn from '../dashboardLayout/SidebarBtn';
 import { Mode, Roles } from '../../../interfaces/enums';
@@ -12,6 +12,7 @@ import {
 	CalendarMonth,
 	CreditCard,
 	DarkMode,
+	Delete,
 	Email,
 	FilePresent,
 	Groups,
@@ -45,22 +46,22 @@ const float = keyframes`
   }
 `;
 
-const dotsAnimation = keyframes`
-  0% { content: ''; }
-  25% { content: '.'; }
-  50% { content: '..'; }
-  75% { content: '...'; }
-  100% { content: ''; }
-`;
+// const dotsAnimation = keyframes`
+//   0% { content: ''; }
+//   25% { content: '.'; }
+//   50% { content: '..'; }
+//   75% { content: '...'; }
+//   100% { content: ''; }
+// `;
 
-const blink = keyframes`
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0;
-  }
-`;
+// const blink = keyframes`
+//   0%, 100% {
+//     opacity: 1;
+//   }
+//   50% {
+//     opacity: 0;
+//   }
+// `;
 
 // Memoize the logo component to prevent unnecessary re-renders
 const Logo = memo(({ small }: { small?: boolean }) => (
@@ -154,14 +155,14 @@ const Loading = () => {
 	const mode = useMemo(() => (localStorage.getItem('mode') as Mode) || Mode.LIGHT_MODE, []);
 
 	// Use useMemo for currentPage to prevent unnecessary re-renders
-	const currentPage = useMemo(() => {
-		const path = window.location.pathname;
-		return path.includes('admin')
-			? path.split('/')[2].charAt(0).toUpperCase() + path.split('/')[2].slice(1)
-			: path.split('/')[1].charAt(0).toUpperCase() + path.split('/')[1].slice(1);
-	}, []);
+	// const currentPage = useMemo(() => {
+	// 	const path = window.location.pathname;
+	// 	return path.includes('admin')
+	// 		? path.split('/')[2].charAt(0).toUpperCase() + path.split('/')[2].slice(1)
+	// 		: path.split('/')[1].charAt(0).toUpperCase() + path.split('/')[1].slice(1);
+	// }, []);
 
-	const [selectedPage, setSelectedPage] = useState<string>(currentPage);
+	// const [selectedPage, setSelectedPage] = useState<string>(currentPage);
 
 	// If user is not logged in, show the base loading screen
 	if (!user) {
@@ -221,10 +222,10 @@ const Loading = () => {
 												backgroundColor: 'transparent',
 											},
 										}}>
-										<Notifications color='secondary' sx={{ fontSize: '1rem' }} />
+										<Notifications color='secondary' sx={{ fontSize: '1rem', mr: '1rem' }} />
 									</IconButton>
 
-									{
+									{/* {
 										{
 											[Mode.DARK_MODE]: (
 												<IconButton
@@ -251,7 +252,7 @@ const Loading = () => {
 												</IconButton>
 											),
 										}[mode]
-									}
+									} */}
 									<Button
 										sx={{
 											textTransform: 'capitalize',
@@ -328,16 +329,33 @@ const Loading = () => {
 											}}
 										/>
 									</IconButton>
+
 									<IconButton
 										sx={{
-											'mr': '0.75rem',
+											':hover': {
+												backgroundColor: 'transparent',
+											},
+											'mr': 1,
+										}}>
+										<Delete
+											color='secondary'
+											fontSize={isMobileSize ? 'small' : 'medium'}
+											sx={{
+												fontSize: isMobileSize ? '1rem' : undefined,
+											}}
+										/>
+									</IconButton>
+
+									<IconButton
+										sx={{
+											'mr': '1rem',
 											':hover': {
 												backgroundColor: 'transparent',
 											},
 										}}>
 										<Notifications color='secondary' />
 									</IconButton>
-
+									{/* 
 									{
 										{
 											[Mode.DARK_MODE]: (
@@ -365,7 +383,7 @@ const Loading = () => {
 												</IconButton>
 											),
 										}[mode]
-									}
+									} */}
 									<Button
 										sx={{
 											textTransform: 'capitalize',

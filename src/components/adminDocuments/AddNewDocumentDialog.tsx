@@ -44,6 +44,7 @@ interface AddNewDocumentDialogProps {
 	fromAdminCourses?: boolean;
 	singleCourse: SingleCourse | undefined;
 	setSingleCourse: React.Dispatch<React.SetStateAction<SingleCourse | undefined>> | undefined;
+	setHasUnsavedChanges?: React.Dispatch<React.SetStateAction<boolean>> | undefined;
 }
 
 const AddNewDocumentDialog = ({
@@ -55,6 +56,7 @@ const AddNewDocumentDialog = ({
 	fromAdminCourses,
 	singleCourse,
 	setSingleCourse,
+	setHasUnsavedChanges,
 }: AddNewDocumentDialogProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
@@ -256,7 +258,7 @@ const AddNewDocumentDialog = ({
 				});
 
 				setSearchResults(filteredResults);
-				setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
+				setSearchResultsTotalItems(filteredResults.length);
 				setSearchResultsLoadedPages([1]);
 				setIsSearchActive(true);
 				setSearchButtonClicked(true);
@@ -351,6 +353,7 @@ const AddNewDocumentDialog = ({
 
 		// Close the dialog
 		if (setAddNewDocumentModalOpen) setAddNewDocumentModalOpen(false);
+		if (setHasUnsavedChanges) setHasUnsavedChanges(true);
 		setSelectedDocuments([]);
 		setSelectedDocumentIds([]);
 	};
@@ -426,7 +429,7 @@ const AddNewDocumentDialog = ({
 												});
 
 												setSearchResults(filteredResults);
-												setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
+												setSearchResultsTotalItems(filteredResults.length);
 												setSearchResultsLoadedPages([1]);
 											} catch (error) {
 												console.error('Filter search error:', error);
@@ -464,7 +467,7 @@ const AddNewDocumentDialog = ({
 													});
 
 													setSearchResults(filteredResults);
-													setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
+													setSearchResultsTotalItems(filteredResults.length);
 													setSearchResultsLoadedPages([1]);
 												} catch (error) {
 													console.error('Auto-search error:', error);
@@ -557,7 +560,7 @@ const AddNewDocumentDialog = ({
 									ml: 1,
 									whiteSpace: 'nowrap',
 								}}>
-								{searchResultsTotalItems} results
+								{searchResultsTotalItems} {searchResultsTotalItems === 1 ? 'result' : 'results'}
 							</Typography>
 						) : (
 							<Typography
@@ -568,7 +571,7 @@ const AddNewDocumentDialog = ({
 									ml: 1,
 									whiteSpace: 'nowrap',
 								}}>
-								{displayDocuments.length} items
+								{displayDocuments.length} {displayDocuments.length === 1 ? 'item' : 'items'}
 							</Typography>
 						)}
 					</Box>
@@ -650,7 +653,7 @@ const AddNewDocumentDialog = ({
 														}
 													});
 													setSearchResults(filteredResults);
-													setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
+													setSearchResultsTotalItems(filteredResults.length);
 													setSearchResultsLoadedPages([1]);
 													setIsSearchActive(true);
 													setSearchResultsPage(1);
@@ -697,7 +700,7 @@ const AddNewDocumentDialog = ({
 									?.map((document: Document) => {
 										const isSelected = selectedDocumentIds.indexOf(document._id) !== -1;
 										return (
-											<TableRow key={document._id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+											<TableRow key={document._id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }} hover>
 												<CustomTableCell value={document.name} />
 
 												<CustomTableCell>

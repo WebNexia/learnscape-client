@@ -114,6 +114,11 @@ const AdminDocuments = () => {
 	const [isUrlErrorOpen, setIsUrlErrorOpen] = useState<boolean>(false);
 	const [urlErrorMessage, setUrlErrorMessage] = useState<string>('');
 
+	// Snackbar states for delete operation
+	const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
+	const [snackbarMessage, setSnackbarMessage] = useState<string>('');
+	const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
+
 	useEffect(() => {
 		setDocumentsPageNumber(1);
 	}, []);
@@ -496,15 +501,30 @@ const AdminDocuments = () => {
 	const deleteDocument = async (documentId: string): Promise<void> => {
 		try {
 			const response = await axios.delete(`${base_url}/documents/${documentId}`);
-			removeDocument(response.data.data._id);
 
-			// If search is active, also remove from search results
-			if (isSearchActive) {
-				setSearchResults((prev) => prev.filter((document) => document._id !== documentId));
-				setSearchResultsTotalItems((prev) => Math.max(0, prev - 1));
+			// Only remove from frontend state if the backend request was successful
+			if (response.data.status === 200) {
+				// If search is active, also remove from search results
+				if (isSearchActive) {
+					setSearchResults((prev) => prev.filter((document) => document._id !== documentId));
+					setSearchResultsTotalItems((prev) => Math.max(0, prev - 1));
+				}
+				removeDocument(documentId);
+				// Show success message
+				setSnackbarMessage('Document deleted successfully');
+				setSnackbarSeverity('success');
+				setSnackbarOpen(true);
+			} else {
+				console.error('Delete document failed:', response.data.message);
+				setSnackbarMessage(response.data.message || 'Failed to delete document');
+				setSnackbarSeverity('error');
+				setSnackbarOpen(true);
 			}
-		} catch (error) {
+		} catch (error: any) {
 			console.error('Delete document error:', error);
+			setSnackbarMessage(error.response?.data?.message || 'Failed to delete document');
+			setSnackbarSeverity('error');
+			setSnackbarOpen(true);
 		}
 	};
 
@@ -767,6 +787,7 @@ const AdminDocuments = () => {
 									usedInCourses: [],
 									samplePageImageUrl: '',
 									isOnLandingPage: false,
+									isArchived: false,
 									createdBy: '',
 									updatedBy: '',
 									createdByName: '',
@@ -918,8 +939,8 @@ const AdminDocuments = () => {
 								{ key: 'clone', label: 'Cloned' },
 								{ key: 'name', label: 'Document Name' },
 								{ key: 'documentId', label: 'Document URL' },
-								{ key: 'createdAt', label: 'Created At' },
-								{ key: 'updatedAt', label: 'Updated At' },
+								{ key: 'createdAt', label: 'Created On' },
+								{ key: 'updatedAt', label: 'Updated On' },
 								{ key: 'actions', label: 'Actions' },
 							]}
 						/>
@@ -927,7 +948,7 @@ const AdminDocuments = () => {
 							{paginatedDocuments &&
 								paginatedDocuments?.map((document: Document, index) => {
 									return (
-										<TableRow key={document._id}>
+										<TableRow key={document._id} hover>
 											{' '}
 											<TableCell sx={{ textAlign: 'center', width: '0px' }}>
 												{document.clonedFromId && (
@@ -1024,7 +1045,7 @@ const AdminDocuments = () => {
 														openModal={isDocumentDeleteModalOpen[index]}
 														closeModal={() => closeDeleteDocumentModal(index)}
 														title='Delete Document'
-														content='Are you sure you want to delete this document?'
+														content={`Are you sure you want to delete "${document.name}"?`}
 														maxWidth='xs'>
 														<CustomDialogActions
 															onCancel={() => {
@@ -1036,6 +1057,7 @@ const AdminDocuments = () => {
 																deleteDocument(document._id);
 																closeDeleteDocumentModal(index);
 															}}
+															actionSx={{ mb: '0.5rem' }}
 														/>
 													</CustomDialog>
 												)}
@@ -1073,6 +1095,27 @@ const AdminDocuments = () => {
 					onClose={() => setIsUrlErrorOpen(false)}>
 					<Alert severity='error' variant='filled' sx={{ width: '100%' }}>
 						{urlErrorMessage}
+					</Alert>
+				</Snackbar>
+				{/* Delete operation snackbar */}
+				<Snackbar
+					open={snackbarOpen}
+					autoHideDuration={5000}
+					anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+					sx={{ mt: '4rem' }}
+					onClose={() => setSnackbarOpen(false)}>
+					<Alert
+						onClose={() => setSnackbarOpen(false)}
+						severity={snackbarSeverity}
+						sx={{
+							'width': '100%',
+							'backgroundColor': theme.bgColor?.greenSecondary,
+							'color': theme.textColor?.common.main,
+							'& .MuiAlert-icon': {
+								color: 'white',
+							},
+						}}>
+						{snackbarMessage}
 					</Alert>
 				</Snackbar>
 			</Box>

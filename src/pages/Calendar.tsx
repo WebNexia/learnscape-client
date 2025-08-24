@@ -34,7 +34,7 @@ const localizer = dateFnsLocalizer({
 });
 
 const EventCalendar = () => {
-	const { sortedEventsData } = useContext(EventsContext);
+	const { sortedEventsData, fetchMonthEvents, loadedMonths } = useContext(EventsContext);
 	const { orgId } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
 	const { users } = useContext(UsersContext);
@@ -85,24 +85,22 @@ const EventCalendar = () => {
 
 	useEffect(() => {
 		if (sortedEventsData) {
-			const transformedEvents = sortedEventsData
-				?.filter((event) => event.isAllLearnersSelected || event.allAttendeesIds.includes(user?._id!) || user?.role === Roles.ADMIN || event.isPublic)
-				?.map((event) => {
-					const startDate = new Date(event.start!);
-					let endDate = new Date(event.end!);
-					const isAllDayEvent = event.isAllDay || false;
+			const transformedEvents = sortedEventsData?.map((event) => {
+				const startDate = new Date(event.start!);
+				let endDate = new Date(event.end!);
+				const isAllDayEvent = event.isAllDay || false;
 
-					if (isAllDayEvent) {
-						endDate.setHours(23, 59, 59);
-					}
+				if (isAllDayEvent) {
+					endDate.setHours(23, 59, 59);
+				}
 
-					return {
-						...event,
-						start: startDate,
-						end: endDate,
-						isAllDay: isAllDayEvent,
-					};
-				});
+				return {
+					...event,
+					start: startDate,
+					end: endDate,
+					isAllDay: isAllDayEvent,
+				};
+			});
 
 			setEventsData(transformedEvents);
 		}
@@ -151,6 +149,20 @@ const EventCalendar = () => {
 		}
 
 		setSelectedEvent(event);
+	};
+
+	// Handle calendar navigation to fetch additional months
+	const handleNavigate = (newDate: Date, view: string) => {
+		if (view === 'month') {
+			const year = newDate.getFullYear();
+			const month = newDate.getMonth() + 1;
+
+			// Check if we need to fetch this month
+			const monthKey = `${year}-${month.toString().padStart(2, '0')}`;
+			if (!loadedMonths.includes(monthKey)) {
+				fetchMonthEvents(year, month);
+			}
+		}
 	};
 
 	const filterUsers = (searchQuery: string, action: string) => {
@@ -236,6 +248,7 @@ const EventCalendar = () => {
 					eventPropGetter={eventStyleGetter}
 					onSelectSlot={handleSelectSlot}
 					onSelectEvent={handleEventSelect}
+					onNavigate={handleNavigate}
 				/>
 			</Box>
 

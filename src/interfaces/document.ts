@@ -20,6 +20,7 @@ export interface Document {
 	usedInCourses: string[];
 	samplePageImageUrl: string;
 	isOnLandingPage: boolean;
+	isArchived: boolean;
 	createdBy: string;
 	updatedBy: string;
 	createdByName: string;

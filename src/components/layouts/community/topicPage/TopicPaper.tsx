@@ -317,9 +317,9 @@ const TopicPaper = ({ topic, setDisplayDeleteTopicMsg, setTopic, refreshTopics, 
 					openModal={deleteTopicModalOpen}
 					closeModal={() => setDeleteTopicModalOpen(false)}
 					title='Delete Topic'
-					content='Are you sure you want to delete the topic?'
-					maxWidth='sm'>
-					<CustomDialogActions deleteBtn onDelete={deleteTopic} onCancel={() => setDeleteTopicModalOpen(false)} />
+					content={`Are you sure you want to delete "${topic.title}"?`}
+					maxWidth='xs'>
+					<CustomDialogActions deleteBtn onDelete={deleteTopic} onCancel={() => setDeleteTopicModalOpen(false)} actionSx={{ mb: '0.5rem' }} />
 				</CustomDialog>
 
 				<EditTopicDialog topic={topic} setTopic={setTopic} editTopicModalOpen={editTopicModalOpen} setEditTopicModalOpen={setEditTopicModalOpen} />
@@ -330,7 +330,13 @@ const TopicPaper = ({ topic, setDisplayDeleteTopicMsg, setTopic, refreshTopics, 
 					title='Report Topic'
 					content='Are you sure you want to report the topic?'
 					maxWidth='xs'>
-					<CustomDialogActions deleteBtn onDelete={reportTopic} onCancel={() => setReportTopicModalOpen(false)} deleteBtnText='Report' />
+					<CustomDialogActions
+						deleteBtn
+						onDelete={reportTopic}
+						onCancel={() => setReportTopicModalOpen(false)}
+						deleteBtnText='Report'
+						actionSx={{ mb: '0.5rem' }}
+					/>
 				</CustomDialog>
 
 				<CustomDialog
@@ -339,7 +345,12 @@ const TopicPaper = ({ topic, setDisplayDeleteTopicMsg, setTopic, refreshTopics, 
 					title='Resolve Report'
 					content='Are you sure you want to resolve the report?'
 					maxWidth='xs'>
-					<CustomDialogActions onSubmit={resolveReport} onCancel={() => setResolveReportModalOpen(false)} submitBtnText='Resolve' />
+					<CustomDialogActions
+						onSubmit={resolveReport}
+						onCancel={() => setResolveReportModalOpen(false)}
+						submitBtnText='Resolve'
+						actionSx={{ mb: '0.5rem' }}
+					/>
 				</CustomDialog>
 
 				<CustomDialog
@@ -353,6 +364,7 @@ const TopicPaper = ({ topic, setDisplayDeleteTopicMsg, setTopic, refreshTopics, 
 						onCancel={() => setLockTopicModalOpen(false)}
 						deleteBtn
 						deleteBtnText='Lock'
+						actionSx={{ mb: '0.5rem' }}
 					/>
 				</CustomDialog>
 
@@ -362,7 +374,12 @@ const TopicPaper = ({ topic, setDisplayDeleteTopicMsg, setTopic, refreshTopics, 
 					title='Unlock Topic'
 					content='Are you sure you want to unlock the topic?'
 					maxWidth='xs'>
-					<CustomDialogActions onSubmit={() => lockUnlockTopic('unlock')} onCancel={() => setRestartTopicModalOpen(false)} submitBtnText='Unlock' />
+					<CustomDialogActions
+						onSubmit={() => lockUnlockTopic('unlock')}
+						onCancel={() => setRestartTopicModalOpen(false)}
+						submitBtnText='Unlock'
+						actionSx={{ mb: '0.5rem' }}
+					/>
 				</CustomDialog>
 
 				<Box

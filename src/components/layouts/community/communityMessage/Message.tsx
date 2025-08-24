@@ -18,6 +18,8 @@ import { db } from '../../../../firebase';
 import { MediaQueryContext } from '../../../../contexts/MediaQueryContextProvider';
 import axios from '@utils/axiosInstance';
 import CustomCancelButton from '../../../../components/forms/customButtons/CustomCancelButton';
+import { stripHtml } from '@utils/stripHtml';
+import { decode } from 'html-entities';
 
 interface MessageProps {
 	message: CommunityMessage;
@@ -505,8 +507,13 @@ const Message = ({
 									closeModal={() => setResolveReportModalOpen(false)}
 									title='Resolve Report'
 									content='Are you sure you want to resolve the report?'
-									maxWidth='sm'>
-									<CustomDialogActions onSubmit={resolveReport} onCancel={() => setResolveReportModalOpen(false)} submitBtnText='Resolve' />
+									maxWidth='xs'>
+									<CustomDialogActions
+										onSubmit={resolveReport}
+										onCancel={() => setResolveReportModalOpen(false)}
+										submitBtnText='Resolve'
+										actionSx={{ mb: '0.5rem' }}
+									/>
 								</CustomDialog>
 							</Box>
 						</Box>
@@ -593,9 +600,9 @@ const Message = ({
 				openModal={deleteMessageModalOpen}
 				closeModal={() => setDeleteMessageModalOpen(false)}
 				title='Delete Message'
-				content='Are you sure you want to delete the message?'
+				content={`Are you sure you want to delete "${truncateText(stripHtml(decode(message.text)), 25)}"?`}
 				maxWidth='xs'>
-				<CustomDialogActions deleteBtn onDelete={deleteMessage} onCancel={() => setDeleteMessageModalOpen(false)} />
+				<CustomDialogActions deleteBtn onDelete={deleteMessage} onCancel={() => setDeleteMessageModalOpen(false)} actionSx={{ mb: '0.5rem' }} />
 			</CustomDialog>
 		</Box>
 	);

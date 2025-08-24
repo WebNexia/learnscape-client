@@ -24,6 +24,7 @@ import QuizSubmissionsContextProvider from './contexts/QuizSubmissionsContextPro
 import CommunityContextProvider from './contexts/CommunityContextProvider';
 import CommunityMessagesContextProvider from './contexts/CommunityMessagesContextProvider';
 import EventsContextProvider from './contexts/EventsContextProvider';
+import PublicEventsContextProvider from './contexts/PublicEventsContextProvider';
 import PaymentsContextProvider from './contexts/PaymentsContextProvider';
 import PromoCodesContextProvider from './contexts/PromoCodesContextProvider';
 import InquiriesProvider from './contexts/InquiriesContextProvider';
@@ -48,19 +49,21 @@ function App() {
 														<CommunityContextProvider>
 															<CommunityMessagesContextProvider>
 																<EventsContextProvider>
-																	<PaymentsContextProvider>
-																		<PromoCodesContextProvider>
-																			<InquiriesProvider>
-																				<UploadLimitProvider>
-																					<Suspense fallback={<Loading />}>
-																						<Elements stripe={stripePromise}>
-																							<Outlet />
-																						</Elements>
-																					</Suspense>
-																				</UploadLimitProvider>
-																			</InquiriesProvider>
-																		</PromoCodesContextProvider>
-																	</PaymentsContextProvider>
+																	<PublicEventsContextProvider>
+																		<PaymentsContextProvider>
+																			<PromoCodesContextProvider>
+																				<InquiriesProvider>
+																					<UploadLimitProvider>
+																						<Suspense fallback={<Loading />}>
+																							<Elements stripe={stripePromise}>
+																								<Outlet />
+																							</Elements>
+																						</Suspense>
+																					</UploadLimitProvider>
+																				</InquiriesProvider>
+																			</PromoCodesContextProvider>
+																		</PaymentsContextProvider>
+																	</PublicEventsContextProvider>
 																</EventsContextProvider>
 															</CommunityMessagesContextProvider>
 														</CommunityContextProvider>

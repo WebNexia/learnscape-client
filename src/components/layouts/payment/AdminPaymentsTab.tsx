@@ -623,7 +623,7 @@ const AdminPaymentsTab = () => {
 						{paginatedPayments &&
 							paginatedPayments?.map((payment: Payment) => {
 								return (
-									<TableRow key={payment._id}>
+									<TableRow key={payment._id} hover>
 										{!isVerySmallScreen && <CustomTableCell value={payment.firstName} />}
 										{!isVerySmallScreen && <CustomTableCell value={payment.lastName} />}
 										<CustomTableCell value={payment.courseTitle} />

@@ -571,7 +571,7 @@ const AddNewQuestionDialog = ({
 									ml: 1,
 									whiteSpace: 'nowrap',
 								}}>
-								{searchResultsTotalItems} results
+								{searchResultsTotalItems} {searchResultsTotalItems === 1 ? 'result' : 'results'}
 							</Typography>
 						) : (
 							<Typography
@@ -582,7 +582,7 @@ const AddNewQuestionDialog = ({
 									ml: 1,
 									whiteSpace: 'nowrap',
 								}}>
-								{compatibleQuestions.length} items
+								{compatibleQuestions.length} {compatibleQuestions.length === 1 ? 'item' : 'items'}
 							</Typography>
 						)}
 					</Box>
@@ -703,7 +703,7 @@ const AddNewQuestionDialog = ({
 								paginatedQuestions?.map((question: QuestionInterface) => {
 									const isSelected = selectedQuestionIds.indexOf(question._id) !== -1;
 									return (
-										<TableRow key={question._id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+										<TableRow key={question._id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }} hover>
 											<CustomTableCell value={question.questionType} />
 											<CustomTableCell value={truncateText(stripHtml(question.question), 35)} />
 

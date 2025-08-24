@@ -235,7 +235,7 @@ const AddNewLessonDialog = ({
 				const filteredResults = response.data.data.filter((lesson: Lesson) => !chapter.lessonIds?.includes(lesson._id));
 
 				setSearchResults(filteredResults);
-				setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
+				setSearchResultsTotalItems(filteredResults.length);
 				setSearchResultsLoadedPages([1]);
 				setIsSearchActive(true);
 				setSearchButtonClicked(true);
@@ -382,7 +382,7 @@ const AddNewLessonDialog = ({
 												const filteredResults = response.data.data.filter((lesson: Lesson) => !chapter.lessonIds?.includes(lesson._id));
 
 												setSearchResults(filteredResults);
-												setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
+												setSearchResultsTotalItems(filteredResults.length);
 												setSearchResultsLoadedPages([1]);
 											} catch (error) {
 												console.error('Filter search error:', error);
@@ -414,7 +414,7 @@ const AddNewLessonDialog = ({
 													const filteredResults = response.data.data.filter((lesson: Lesson) => !chapter.lessonIds?.includes(lesson._id));
 
 													setSearchResults(filteredResults);
-													setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
+													setSearchResultsTotalItems(filteredResults.length);
 													setSearchResultsLoadedPages([1]);
 												} catch (error) {
 													console.error('Auto-search error:', error);
@@ -507,7 +507,7 @@ const AddNewLessonDialog = ({
 									ml: 1,
 									whiteSpace: 'nowrap',
 								}}>
-								{searchResultsTotalItems} results
+								{searchResultsTotalItems} {searchResultsTotalItems === 1 ? 'result' : 'results'}
 							</Typography>
 						) : (
 							<Typography
@@ -518,7 +518,7 @@ const AddNewLessonDialog = ({
 									ml: 1,
 									whiteSpace: 'nowrap',
 								}}>
-								{displayLessons.length} items
+								{displayLessons.length} {displayLessons.length === 1 ? 'item' : 'items'}
 							</Typography>
 						)}
 					</Box>
@@ -595,7 +595,7 @@ const AddNewLessonDialog = ({
 													// Filter out already added lessons from search results
 													const filteredResults = response.data.data.filter((lesson: Lesson) => !chapter.lessonIds?.includes(lesson._id));
 													setSearchResults(filteredResults);
-													setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
+													setSearchResultsTotalItems(filteredResults.length);
 													setSearchResultsLoadedPages([1]);
 													setIsSearchActive(true);
 													setSearchResultsPage(1);
@@ -637,7 +637,7 @@ const AddNewLessonDialog = ({
 								paginatedLessons?.map((lesson: Lesson) => {
 									const isSelected = selectedLessonIds.indexOf(lesson._id) !== -1;
 									return (
-										<TableRow key={lesson._id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+										<TableRow key={lesson._id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }} hover>
 											<CustomTableCell value={lesson.title} />
 											<CustomTableCell value={lesson.type.charAt(0).toUpperCase() + lesson.type.slice(1)} />
 											<CustomTableCell value={lesson.isActive ? 'Published' : 'Unpublished'} />

@@ -48,7 +48,7 @@ const UpcomingEvents = ({ sortedEventsData }: UpcomingEventsProps) => {
 						event.start &&
 						new Date(event.start) >= currentDate &&
 						new Date(event.start) <= sevenDaysFromNow &&
-						(event.isPublic || event.allAttendeesIds.includes(user?._id!))
+						(event.isPublic || event.allAttendeesIds.includes(user?._id!) || event.isAllLearnersSelected)
 					);
 				})
 				.sort((a: Event, b: Event) => new Date(a.start!).getTime() - new Date(b.start!).getTime()).length > 0 ? (
@@ -69,7 +69,7 @@ const UpcomingEvents = ({ sortedEventsData }: UpcomingEventsProps) => {
 								event.start &&
 								new Date(event.start) >= currentDate &&
 								new Date(event.start) <= sevenDaysFromNow &&
-								(event.isPublic || event.allAttendeesIds.includes(user?._id!))
+								(event.isPublic || event.allAttendeesIds.includes(user?._id!) || event.isAllLearnersSelected)
 							);
 						})
 						.sort((a: Event, b: Event) => new Date(a.start!).getTime() - new Date(b.start!).getTime())

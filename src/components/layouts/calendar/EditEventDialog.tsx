@@ -1108,7 +1108,12 @@ const EditEventDialog = ({
 					title='Delete Event'
 					content='Are you sure you want to delete the event?'
 					maxWidth='xs'>
-					<CustomDialogActions deleteBtn onCancel={() => setDeleteEventModalOpen(false)} onDelete={deleteEvent} />
+					<CustomDialogActions
+						deleteBtn
+						onCancel={() => setDeleteEventModalOpen(false)}
+						onDelete={deleteEvent}
+						actionSx={{ marginBottom: '0.5rem' }}
+					/>
 				</CustomDialog>
 				<Snackbar
 					open={isUrlErrorOpen}

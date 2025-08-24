@@ -28,7 +28,13 @@ const CustomActionBtn = ({ title, onClick, icon, placement = 'top' }: CustomActi
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	return (
 		<Tooltip title={title} placement={placement} arrow>
-			<IconButton sx={{ color: theme.textColor?.secondary.main, padding: isMobileSize ? '0.1rem' : undefined }} onClick={onClick}>
+			<IconButton
+				sx={{
+					'color': theme.textColor?.secondary.main,
+					'padding': isMobileSize ? '0.1rem' : undefined,
+					'&:hover': { backgroundColor: 'transparent' },
+				}}
+				onClick={onClick}>
 				{icon}
 			</IconButton>
 		</Tooltip>

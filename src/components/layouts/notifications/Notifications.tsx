@@ -1,6 +1,7 @@
 import { collection, query, onSnapshot, orderBy, doc, updateDoc, where, Timestamp, limit } from 'firebase/firestore';
 import { useContext, useEffect, useState } from 'react';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
+import { EventsContext } from '../../../contexts/EventsContextProvider';
 import { db } from '../../../firebase';
 import { Box, Typography } from '@mui/material';
 import { formatMessageTime } from '../../../utils/formatTime';
@@ -8,7 +9,7 @@ import { Circle } from '@mui/icons-material';
 import { NotificationType, Roles } from '../../../interfaces/enums';
 import { useNavigate } from 'react-router-dom';
 import axios from '@utils/axiosInstance';
-import { EventsContext } from '../../../contexts/EventsContextProvider';
+
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 interface Notification {
@@ -33,7 +34,7 @@ interface NotificationsBoxProps {
 const NotificationsBox = ({ showUnreadOnly }: NotificationsBoxProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { user } = useContext(UserAuthContext);
-	const { fetchEvents } = useContext(EventsContext);
+	const { fetchMonthEvents } = useContext(EventsContext);
 	const [notifications, setNotifications] = useState<Notification[]>([]);
 	const [showAll, setShowAll] = useState<boolean>(false);
 	const [hasOlderNotifications, setHasOlderNotifications] = useState<boolean>(false);
@@ -121,8 +122,10 @@ const NotificationsBox = ({ showUnreadOnly }: NotificationsBoxProps) => {
 			} else if (note.type === NotificationType.NEW_COMMUNITY_TOPIC) {
 				navigate(`${user?.role !== Roles.ADMIN ? '' : '/admin'}/community/topic/${note.communityTopicId}`);
 			} else if (note.type === NotificationType.ADD_TO_EVENT) {
+				// Fetch current month events to show the new event
+				const currentDate = new Date();
+				await fetchMonthEvents(currentDate.getFullYear(), currentDate.getMonth() + 1);
 				navigate(`/calendar`);
-				fetchEvents(1);
 			}
 
 			setNotifications((prev) => prev.map((n) => (n.id === note.id ? { ...n, isRead: true } : n)));

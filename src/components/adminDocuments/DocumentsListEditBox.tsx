@@ -76,7 +76,7 @@ const DocumentsListEditBox = ({
 								</Typography>
 								<CustomDialog openModal={isDocRenameModalOpen[index]} closeModal={() => closeDocRenameModal(index, document)} maxWidth='sm'>
 									<form
-										style={{ display: 'flex', flexDirection: 'column' }}
+										style={{ display: 'flex', flexDirection: 'column', paddingTop: '1.5rem' }}
 										onSubmit={(e: React.FormEvent<HTMLFormElement>) => {
 											e.preventDefault();
 										}}>
@@ -88,11 +88,12 @@ const DocumentsListEditBox = ({
 											sx={{ margin: '1rem' }}
 											onChange={(e) => renameDocOnChange(e, document)}
 										/>
+
 										<CustomDialogActions
 											onCancel={() => closeDocRenameModal(index, document)}
 											submitBtnText='Save'
 											submitBtnType='button'
-											actionSx={{ mt: '1rem' }}
+											actionSx={{ mt: '0.5rem', mb: '0.5rem' }}
 											onSubmit={() => {
 												saveDocRename(index);
 												setIsDocumentUpdated((prevData) => {

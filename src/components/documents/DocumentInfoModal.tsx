@@ -93,7 +93,7 @@ const DocumentInfoModal = ({ document, onClose }: DocumentInfoModalProps) => {
 				<CustomCancelButton
 					onClick={onClose}
 					sx={{
-						margin: '0 0.5rem 0.5rem 0',
+						margin: '0 1.5rem 0.75rem 0',
 					}}>
 					Cancel
 				</CustomCancelButton>

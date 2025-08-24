@@ -113,6 +113,7 @@ const AdminCourses = () => {
 		setTitle('');
 		setDescription('');
 		setChecked(false);
+		setIsExternal(false);
 
 		setGBP({ amount: '', currency: 'gbp' });
 		setUSD({ amount: '', currency: 'usd' });
@@ -126,6 +127,11 @@ const AdminCourses = () => {
 	const [isCourseCloneModalOpen, setIsCourseCloneModalOpen] = useState<boolean[]>([]);
 
 	const [isCourseCloned, setIsCourseCloned] = useState<boolean>(false);
+
+	// Snackbar states for delete operation
+	const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
+	const [snackbarMessage, setSnackbarMessage] = useState<string>('');
+	const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
 
 	// Keep track of previous length to avoid unnecessary resets
 	const prevLengthRef = useRef<number>(0);
@@ -398,17 +404,33 @@ const AdminCourses = () => {
 
 	const deleteCourse = async (courseId: string): Promise<void> => {
 		try {
-			removeCourse(courseId);
+			const response = await axios.delete(`${base_url}/courses/${courseId}`);
 
-			// If search is active, also remove from search results
-			if (isSearchActive) {
-				setSearchResults((prev) => prev.filter((course) => course._id !== courseId));
-				setSearchResultsTotalItems((prev) => Math.max(0, prev - 1));
+			// Only remove from frontend state if the backend request was successful
+			if (response.data.status === 200) {
+				// If search is active, also remove from search results
+				if (isSearchActive) {
+					setSearchResults((prev) => prev.filter((course) => course._id !== courseId));
+					setSearchResultsTotalItems((prev) => Math.max(0, prev - 1));
+				}
+				removeCourse(courseId);
+
+				// Show success message
+				setSnackbarMessage('Course deleted successfully');
+				setSnackbarSeverity('success');
+				setSnackbarOpen(true);
+			} else {
+				console.error('Delete course failed:', response.data.message);
+				setSnackbarMessage(response.data.message || 'Failed to delete course');
+				setSnackbarSeverity('error');
+				setSnackbarOpen(true);
 			}
-
-			await axios.delete(`${base_url}/courses/${courseId}`);
-		} catch (error) {
+		} catch (error: any) {
 			console.error('Delete course error:', error);
+			// Don't remove from frontend state if the request failed
+			setSnackbarMessage(error.response?.data?.message || 'Failed to delete course');
+			setSnackbarSeverity('error');
+			setSnackbarOpen(true);
 		}
 	};
 
@@ -571,6 +593,7 @@ const AdminCourses = () => {
 					justifyContent: 'space-between',
 					padding: isMobileSizeSmall ? '1rem 1rem 0.5rem 1rem' : '2rem 2rem 1rem 2rem',
 					width: '100%',
+					mb: '1.25rem',
 				}}>
 				<Box sx={{ display: 'flex', alignSelf: 'flex-start', width: isVerySmallScreen ? '12.5rem' : 'fit-content' }}>
 					<Box>
@@ -757,7 +780,7 @@ const AdminCourses = () => {
 									fontSize: isMobileSize ? '0.7rem' : '0.85rem',
 									whiteSpace: 'nowrap',
 								}}>
-								{searchResultsTotalItems} results
+								{searchResultsTotalItems} {searchResultsTotalItems === 1 ? 'result' : 'results'}
 							</Typography>
 						) : (
 							<Typography
@@ -767,7 +790,7 @@ const AdminCourses = () => {
 									fontSize: isMobileSize ? '0.7rem' : '0.85rem',
 									whiteSpace: 'nowrap',
 								}}>
-								{totalItems} items
+								{totalItems} {totalItems === 1 ? 'item' : 'items'}
 							</Typography>
 						)}
 					</Box>
@@ -787,7 +810,7 @@ const AdminCourses = () => {
 					padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : '0rem 2rem 2rem 2rem',
 					width: '100%',
 				}}>
-				{((isSearchActive && searchedValue && searchButtonClicked) || (isSearchActive && filterValue && filterValue.trim())) && (
+				{((isSearchActive && searchedValue && searchButtonClicked) || (filterValue && filterValue.trim())) && (
 					<Box
 						sx={{
 							mb: '1rem',
@@ -798,6 +821,7 @@ const AdminCourses = () => {
 							borderRadius: '4px',
 							alignSelf: 'flex-start',
 							marginBottom: '1rem',
+							marginTop: '-1rem',
 						}}>
 						{isSearchActive && filterValue && filterValue.trim() && (
 							<Chip
@@ -903,8 +927,8 @@ const AdminCourses = () => {
 										{ key: 'isActive', label: 'Status' },
 										{ key: 'startingDate', label: 'Starting Date' },
 										{ key: 'durationWeeks', label: 'Weeks #' },
-										{ key: 'createdAt', label: 'Created At' },
-										{ key: 'updatedAt', label: 'Updated At' },
+										{ key: 'createdAt', label: 'Created On' },
+										{ key: 'updatedAt', label: 'Updated On' },
 										{ key: 'actions', label: 'Actions' },
 									]
 						}
@@ -913,7 +937,7 @@ const AdminCourses = () => {
 						{paginatedCourses &&
 							paginatedCourses?.map((course: SingleCourse, index) => {
 								return (
-									<TableRow key={course._id}>
+									<TableRow key={course._id} hover>
 										<TableCell sx={{ textAlign: 'center', width: '0px' }}>
 											{course.clonedFromId && (
 												<Box
@@ -989,8 +1013,8 @@ const AdminCourses = () => {
 												<CustomDialog
 													openModal={isCourseDeleteModalOpen[index]}
 													closeModal={() => closeDeleteCourseModal(index)}
-													title='Delete'
-													content='Are you sure you want to delete this course?'
+													title='Delete Course'
+													content={`Are you sure you want to delete "${course.title}"?`}
 													maxWidth='xs'>
 													<CustomDialogActions
 														onCancel={() => closeDeleteCourseModal(index)}
@@ -999,6 +1023,7 @@ const AdminCourses = () => {
 															deleteCourse(course._id);
 															closeDeleteCourseModal(index);
 														}}
+														actionSx={{ mb: '0.5rem' }}
 													/>
 												</CustomDialog>
 											)}
@@ -1071,6 +1096,28 @@ const AdminCourses = () => {
 												onClose={() => setIsCourseCloned(false)}>
 												<Alert severity='success' variant='filled' sx={{ width: '100%', color: theme.textColor?.common.main }}>
 													Course is cloned successfully!
+												</Alert>
+											</Snackbar>
+
+											{/* Delete operation snackbar */}
+											<Snackbar
+												open={snackbarOpen}
+												autoHideDuration={5000}
+												anchorOrigin={{ vertical, horizontal }}
+												sx={{ mt: '4rem' }}
+												onClose={() => setSnackbarOpen(false)}>
+												<Alert
+													onClose={() => setSnackbarOpen(false)}
+													severity={snackbarSeverity}
+													sx={{
+														'width': '100%',
+														'backgroundColor': theme.bgColor?.greenSecondary,
+														'color': theme.textColor?.common.main,
+														'& .MuiAlert-icon': {
+															color: 'white',
+														},
+													}}>
+													{snackbarMessage}
 												</Alert>
 											</Snackbar>
 										</TableCell>

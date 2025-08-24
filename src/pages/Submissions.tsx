@@ -236,7 +236,7 @@ const Submissions = () => {
 					<TableBody>
 						{paginatedSubmissions &&
 							paginatedSubmissions.map((submission: QuizSubmission) => (
-								<TableRow key={submission._id}>
+								<TableRow key={submission._id} hover>
 									<CustomTableCell value={submission.lessonName} />
 									<CustomTableCell value={submission.courseName} />
 									<CustomTableCell value={submission.isChecked ? 'Checked' : 'Unchecked'} />

@@ -418,7 +418,6 @@ const AdminCourseEditPage = () => {
 									orgId,
 									userId: user?._id,
 									documentUrl: document.documentUrl.trim(),
-									usedInCourses: courseId ? [courseId] : [],
 								});
 
 								const newDocumentResponseData = response.data;
@@ -517,12 +516,21 @@ const AdminCourseEditPage = () => {
 						updatedByRole: responseUpdatedData.updatedByRole,
 					});
 
+					// Update lesson contexts with current usedInCourses data
 					updatedChapters?.forEach((chapter) => {
 						chapter.lessons?.forEach((lesson) => {
 							updateLessons({
 								...lesson,
 								usedInCourses: lesson.usedInCourses || [],
 							});
+						});
+					});
+
+					// Update document contexts with current usedInCourses data
+					updatedDocuments?.forEach((document) => {
+						updateDocuments({
+							...document,
+							usedInCourses: document.usedInCourses || [],
 						});
 					});
 
@@ -865,6 +873,7 @@ const AdminCourseEditPage = () => {
 														usedInCourses: courseId ? [courseId] : [],
 														samplePageImageUrl: '',
 														isOnLandingPage: false,
+														isArchived: false,
 														pageCount: 0,
 														createdBy: '',
 														updatedBy: '',
@@ -893,6 +902,7 @@ const AdminCourseEditPage = () => {
 										singleCourseBeforeSave={singleCourseBeforeSave}
 										setSingleCourseBeforeSave={setSingleCourseBeforeSave}
 										fromAdminCourses={true}
+										setHasUnsavedChanges={setHasUnsavedChanges}
 									/>
 								</Box>
 							)}
@@ -926,6 +936,7 @@ const AdminCourseEditPage = () => {
 													updatedAt: new Date().toISOString(),
 												};
 												updateDocuments(updatedDocument);
+												setHasUnsavedChanges(true);
 												return {
 													...prevData,
 													documents: filteredDocuments,

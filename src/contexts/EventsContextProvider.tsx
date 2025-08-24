@@ -11,17 +11,17 @@ import { useAuth } from '../hooks/useAuth';
 
 interface EventsContextTypes {
 	sortedEventsData: Event[];
-	sortedPublicEventsData: Event[];
+
 	sortEventsData: (property: keyof Event, order: 'asc' | 'desc') => void;
-	sortPublicEventsData: (property: keyof Event, order: 'asc' | 'desc') => void;
+
 	addNewEvent: (newEvent: any) => void;
 	removeEvent: (id: string) => void;
 	updateEvent: (singleEvent: Event) => void;
-	eventsNumberOfPages: number;
-	eventsPageNumber: number;
-	setEventsPageNumber: React.Dispatch<React.SetStateAction<number>>;
-	fetchEvents: (page: number) => void;
-	fetchPublicEvents: () => void;
+
+	// Month-based calendar functionality
+	fetchMonthEvents: (year: number, month: number) => Promise<void>;
+	loadedMonths: string[];
+	refreshCalendarData: () => void;
 }
 
 interface EventsContextProviderProps {
@@ -30,17 +30,14 @@ interface EventsContextProviderProps {
 
 export const EventsContext = createContext<EventsContextTypes>({
 	sortedEventsData: [],
-	sortedPublicEventsData: [],
 	sortEventsData: () => {},
-	sortPublicEventsData: () => {},
 	addNewEvent: () => {},
 	removeEvent: () => {},
 	updateEvent: () => {},
-	eventsNumberOfPages: 1,
-	eventsPageNumber: 1,
-	setEventsPageNumber: () => {},
-	fetchEvents: () => {},
-	fetchPublicEvents: () => {},
+	// Month-based calendar functionality
+	fetchMonthEvents: async () => {},
+	loadedMonths: [],
+	refreshCalendarData: () => {},
 });
 
 const EventsContextProvider = (props: EventsContextProviderProps) => {
@@ -48,42 +45,13 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 	const { orgId } = useContext(OrganisationContext);
 	const { isAuthenticated, isAdmin, isLearner } = useAuth();
 	const location = useLocation();
-	const isLandingPageRoute =
-		location.pathname === '/' ||
-		location.pathname === '/landing-page-courses' ||
-		location.pathname === '/resources' ||
-		location.pathname === '/contact-us' ||
-		location.pathname === '/about-us' ||
-		location.pathname === '/auth' ||
-		// Only consider course preview pages as landing pages, not enrolled course pages
-		(location.pathname.startsWith('/course/') && !location.pathname.includes('/userCourseId/'));
+
+	const isCalendarRoute = location.pathname.includes('/calendar');
 	const [sortedEventsData, setSortedEventsData] = useState<Event[]>([]);
-	const [sortedPublicEventsData, setSortedPublicEventsData] = useState<Event[]>([]);
-	const [eventsNumberOfPages, setNumberOfPages] = useState<number>(1);
-	const [eventsPageNumber, setEventsPageNumber] = useState<number>(1);
 
-	const [isLoaded, setIsLoaded] = useState<boolean>(false);
-
-	const fetchEvents = async (page: number) => {
-		if (!orgId) return;
-		try {
-			const response = await axios.get(`${base_url}/events/organisation/${orgId}?page=${page}&limit=10000`);
-
-			// Initial sorting when fetching data
-			const sortedDataCopy = [...response.data.data].sort((a: Event, b: Event) => b.updatedAt.localeCompare(a.updatedAt));
-			setSortedEventsData(sortedDataCopy);
-			setNumberOfPages(response.data.pages);
-			setIsLoaded(true);
-			return response.data.data;
-		} catch (error) {
-			setIsLoaded(true);
-			throw error;
-		}
-	};
-
-	const { isLoading, isError, refetch } = useQuery(['allEvents', orgId, eventsPageNumber], () => fetchEvents(eventsPageNumber), {
-		enabled: !!orgId && isAuthenticated && (isAdmin || isLearner) && !isLandingPageRoute && !isLoaded,
-	});
+	// Month-based calendar state
+	const [loadedMonths, setLoadedMonths] = useState<string[]>([]);
+	const [isCalendarLoaded, setIsCalendarLoaded] = useState<boolean>(false);
 
 	// Function to handle sorting
 	const sortEventsData = (property: keyof Event, order: 'asc' | 'desc') => {
@@ -99,7 +67,6 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 	// Function to update sortedEventsData with new event data
 	const addNewEvent = async (newEvent: any) => {
 		setSortedEventsData((prevSortedData) => [newEvent, ...prevSortedData]);
-		await refetch();
 	};
 
 	const updateEvent = async (singleEvent: Event) => {
@@ -110,53 +77,107 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 			return event;
 		});
 		setSortedEventsData(updatedEventList);
-		await refetch();
 	};
 
 	const removeEvent = async (id: string) => {
 		setSortedEventsData((prevSortedData) => prevSortedData?.filter((data) => data._id !== id));
-		await refetch();
 	};
 
-	const fetchPublicEvents = async () => {
+	// Month-based calendar functions
+	const fetchMonthEvents = async (year: number, month: number) => {
 		if (!orgId) return;
-		try {
-			const response = await axios.get(`${base_url}/events/public/${orgId}`);
 
-			// Initial sorting when fetching data
-			const sortedDataCopy = [...response.data.data].sort((a: Event, b: Event) =>
-				(a.start ? new Date(a.start).toISOString() : '').localeCompare(b.start ? new Date(b.start).toISOString() : '')
-			);
-			setSortedPublicEventsData(sortedDataCopy);
-			setIsLoaded(true);
-			return response.data.data;
+		const monthKey = `${year}-${month.toString().padStart(2, '0')}`;
+
+		// Skip if already loaded
+		if (loadedMonths.includes(monthKey)) return;
+
+		try {
+			const response = await axios.get(`${base_url}/events/organisation/${orgId}?year=${year}&month=${month}&limit=1000`);
+
+			const eventsData = response.data.data;
+
+			// Add new events to existing calendar events, remove duplicates
+			setSortedEventsData((prev) => {
+				const combined = [...prev, ...eventsData];
+				const unique = combined.filter((event, index, self) => index === self.findIndex((e) => e._id === event._id));
+				return unique;
+			});
+
+			// Mark month as loaded
+			setLoadedMonths((prev) => [...prev, monthKey]);
+			setIsCalendarLoaded(true);
 		} catch (error) {
-			setIsLoaded(true);
+			setIsCalendarLoaded(true);
 			throw error;
 		}
 	};
 
-	// Function to handle sorting
-	const sortPublicEventsData = (property: keyof Event, order: 'asc' | 'desc') => {
-		const sortedDataCopy = [...sortedPublicEventsData].sort((a: Event, b: Event) => {
-			if (order === 'asc') {
-				return a[property]! > b[property]! ? 1 : -1;
-			} else {
-				return a[property]! < b[property]! ? 1 : -1;
-			}
-		});
-		setSortedPublicEventsData(sortedDataCopy);
+	const fetchInitialMonths = async () => {
+		if (!orgId) return;
+
+		const currentDate = new Date();
+		const currentYear = currentDate.getFullYear();
+		const currentMonth = currentDate.getMonth() + 1;
+
+		// Fetch previous, current, and next month
+		const monthsToFetch = [
+			{ year: currentYear, month: currentMonth - 1 },
+			{ year: currentYear, month: currentMonth },
+			{ year: currentYear, month: currentMonth + 1 },
+		];
+
+		// Handle year boundary
+		if (currentMonth === 1) {
+			monthsToFetch[0] = { year: currentYear - 1, month: 12 };
+		}
+		if (currentMonth === 12) {
+			monthsToFetch[2] = { year: currentYear + 1, month: 1 };
+		}
+
+		try {
+			// Fetch all three months in parallel
+			const promises = monthsToFetch.map(({ year, month }) =>
+				axios.get(`${base_url}/events/organisation/${orgId}?year=${year}&month=${month}&limit=1000`)
+			);
+
+			const responses = await Promise.all(promises);
+
+			// Combine all events
+			const allEvents = responses.flatMap((response) => response.data.data);
+
+			// Remove duplicates
+			const uniqueEvents = allEvents.filter((event, index, self) => index === self.findIndex((e) => e._id === event._id));
+
+			setSortedEventsData(uniqueEvents);
+
+			// Mark months as loaded
+			const monthKeys = monthsToFetch.map(({ year, month }) => `${year}-${month.toString().padStart(2, '0')}`);
+			setLoadedMonths(monthKeys);
+			setIsCalendarLoaded(true);
+		} catch (error) {
+			setIsCalendarLoaded(true);
+			throw error;
+		}
 	};
 
-	const { isLoading: isPublicEventsLoading, isError: isPublicEventsError } = useQuery(['allPublicEvents', orgId], () => fetchPublicEvents(), {
-		enabled: isLandingPageRoute,
+	const refreshCalendarData = () => {
+		setIsCalendarLoaded(false);
+		setLoadedMonths([]);
+		setSortedEventsData([]);
+		fetchInitialMonths();
+	};
+
+	// Use month-based fetching for calendar routes
+	const { isLoading: isCalendarLoading, isError: isCalendarError } = useQuery(['calendarEvents', orgId], fetchInitialMonths, {
+		enabled: !!orgId && isAuthenticated && (isAdmin || isLearner) && isCalendarRoute && !isCalendarLoaded,
 	});
 
-	if (isLoading || isPublicEventsLoading) {
+	if (isCalendarLoading) {
 		return <Loading />;
 	}
 
-	if (isError || isPublicEventsError) {
+	if (isCalendarError) {
 		return <LoadingError />;
 	}
 
@@ -164,17 +185,13 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 		<EventsContext.Provider
 			value={{
 				sortedEventsData,
-				sortedPublicEventsData,
 				sortEventsData,
-				sortPublicEventsData,
 				addNewEvent,
 				removeEvent,
 				updateEvent,
-				eventsNumberOfPages,
-				eventsPageNumber,
-				setEventsPageNumber,
-				fetchEvents,
-				fetchPublicEvents,
+				fetchMonthEvents,
+				loadedMonths,
+				refreshCalendarData,
 			}}>
 			{props.children}
 		</EventsContext.Provider>

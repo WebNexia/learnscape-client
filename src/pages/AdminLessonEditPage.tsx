@@ -668,7 +668,6 @@ const AdminLessonEditPage = () => {
 									blankValuePairs: question.blankValuePairs,
 									isActive: true,
 									...(question.clonedFromId ? { clonedFromId: question.clonedFromId } : {}),
-									usedInLessons: [lessonId],
 								});
 
 								const newQuestionResponseData = response.data;
@@ -748,6 +747,22 @@ const AdminLessonEditPage = () => {
 						updatedByName: responseUpdatedData.updatedByName,
 						updatedByImageUrl: responseUpdatedData.updatedByImageUrl,
 						updatedByRole: responseUpdatedData.updatedByRole,
+					});
+
+					// Update question contexts with current usedInLessons data
+					updatedQuestions?.forEach((question) => {
+						updateQuestion({
+							...question,
+							usedInLessons: question.usedInLessons || [],
+						});
+					});
+
+					// Update document contexts with current usedInLessons data
+					updatedDocuments?.forEach((document) => {
+						updateDocuments({
+							...document,
+							usedInLessons: document.usedInLessons || [],
+						});
 					});
 
 					setSingleLesson({
@@ -1659,6 +1674,7 @@ const AdminLessonEditPage = () => {
 													description: '',
 													samplePageImageUrl: '',
 													isOnLandingPage: false,
+													isArchived: false,
 													pageCount: 0,
 													createdBy: '',
 													updatedBy: '',
@@ -1686,6 +1702,7 @@ const AdminLessonEditPage = () => {
 									setSingleLessonBeforeSave={setSingleLessonBeforeSave}
 									singleLessonBeforeSave={singleLessonBeforeSave}
 									setIsLessonUpdated={setIsLessonUpdated}
+									setHasUnsavedChanges={setHasUnsavedChanges}
 								/>
 							</Box>
 

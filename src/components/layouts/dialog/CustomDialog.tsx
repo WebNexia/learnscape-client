@@ -58,8 +58,8 @@ const CustomDialog = ({
 				</DialogTitle>
 			)}
 			{content && (
-				<DialogContent sx={{ mt: '1.25rem' }}>
-					<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+				<DialogContent sx={{ mt: '0.5rem' }}>
+					<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.7 }}>
 						{content}
 					</Typography>
 				</DialogContent>

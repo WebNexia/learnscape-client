@@ -8,6 +8,7 @@ export interface BaseCourse {
 	prices: Price[];
 	imageUrl: string;
 	isActive: boolean;
+	isArchived: boolean;
 	createdAt: string;
 	updatedAt: string;
 	isExpired: boolean;
@@ -76,4 +77,10 @@ export interface CourseManagement {
 	externalProvider: string;
 	externalUrl: string;
 	externalNotes: string;
+}
+
+export interface ArchivedCourse extends SingleCourse {
+	archivedAt: string;
+	archivedBy: string;
+	archivedByName: string;
 }
