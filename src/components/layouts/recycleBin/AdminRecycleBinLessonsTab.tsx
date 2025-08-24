@@ -850,7 +850,10 @@ const AdminRecycleBinLessonsTab = () => {
 					maxWidth='xs'>
 					<DialogContent>
 						<Typography variant='body2' sx={{ lineHeight: 1.7 }}>
-							Are you sure you want to restore "{lesson.title}"? This will make the lesson available again.
+							Are you sure you want to restore "{lesson.title}"?
+						</Typography>
+						<Typography variant='body2' sx={{ lineHeight: 1.7, mt: 2 }}>
+							This lesson will become available again on all courses where it was previously used, and will be restored as unpublished.
 						</Typography>
 					</DialogContent>
 					<CustomDialogActions
@@ -899,7 +902,10 @@ const AdminRecycleBinLessonsTab = () => {
 				maxWidth='xs'>
 				<DialogContent>
 					<Typography variant='body2' sx={{ lineHeight: 1.7 }}>
-						Are you sure you want to restore {selectedItems.length} selected lesson(s)? This will make them available again.
+						Are you sure you want to restore {selectedItems.length} selected lesson(s)?
+					</Typography>
+					<Typography variant='body2' sx={{ lineHeight: 1.7, mt: 2 }}>
+						These lessons will become available again on all courses where they were previously used, and will be restored as unpublished.
 					</Typography>
 				</DialogContent>
 				<CustomDialogActions
