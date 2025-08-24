@@ -20,7 +20,7 @@ interface DashboardHeaderProps {
 const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 	const { signOut, user } = useContext(UserAuthContext);
 	const { isRotated, isVerySmallScreen, isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
-	const [mode, setMode] = useState<Mode>((localStorage.getItem('mode') as Mode) || Mode.LIGHT_MODE);
+	// const [mode, setMode] = useState<Mode>((localStorage.getItem('mode') as Mode) || Mode.LIGHT_MODE);
 	const navigate = useNavigate();
 	const { updateInProgressLessons } = useUserCourseLessonData();
 
@@ -193,7 +193,7 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 								fontSize: isMobileSize ? '0.5rem' : '0.65rem',
 								height: isMobileSize ? '0.75rem' : '0.9rem',
 								minWidth: isMobileSize ? '0.75rem' : '1rem',
-								right: 8,
+								right: 24,
 								top: 8,
 							},
 						}}>
@@ -204,7 +204,11 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 									backgroundColor: 'transparent',
 								},
 							}}>
-							<Notifications color='secondary' fontSize={isMobileSize ? 'small' : 'medium'} sx={{ fontSize: isMobileSize ? '1rem' : undefined }} />
+							<Notifications
+								color='secondary'
+								fontSize={isMobileSize ? 'small' : 'medium'}
+								sx={{ fontSize: isMobileSize ? '1rem' : undefined, mr: '1rem' }}
+							/>
 						</IconButton>
 					</Badge>
 
@@ -274,7 +278,7 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 							<NotificationsBox showUnreadOnly={showUnreadOnly} />
 						</Box>
 					)}
-					{
+					{/* {
 						{
 							[Mode.DARK_MODE]: (
 								<Tooltip title='Light Mode' placement='top' arrow>
@@ -313,7 +317,7 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 								</Tooltip>
 							),
 						}[mode]
-					}
+					} */}
 					<Button
 						sx={{
 							textTransform: 'capitalize',

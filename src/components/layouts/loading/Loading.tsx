@@ -222,10 +222,10 @@ const Loading = () => {
 												backgroundColor: 'transparent',
 											},
 										}}>
-										<Notifications color='secondary' sx={{ fontSize: '1rem' }} />
+										<Notifications color='secondary' sx={{ fontSize: '1rem', mr: '1rem' }} />
 									</IconButton>
 
-									{
+									{/* {
 										{
 											[Mode.DARK_MODE]: (
 												<IconButton
@@ -252,7 +252,7 @@ const Loading = () => {
 												</IconButton>
 											),
 										}[mode]
-									}
+									} */}
 									<Button
 										sx={{
 											textTransform: 'capitalize',
@@ -348,14 +348,14 @@ const Loading = () => {
 
 									<IconButton
 										sx={{
-											'mr': '0.75rem',
+											'mr': '1rem',
 											':hover': {
 												backgroundColor: 'transparent',
 											},
 										}}>
 										<Notifications color='secondary' />
 									</IconButton>
-
+									{/* 
 									{
 										{
 											[Mode.DARK_MODE]: (
@@ -383,7 +383,7 @@ const Loading = () => {
 												</IconButton>
 											),
 										}[mode]
-									}
+									} */}
 									<Button
 										sx={{
 											textTransform: 'capitalize',
