@@ -571,7 +571,7 @@ const AddNewQuestionDialog = ({
 									ml: 1,
 									whiteSpace: 'nowrap',
 								}}>
-								{searchResultsTotalItems} results
+								{searchResultsTotalItems} {searchResultsTotalItems === 1 ? 'result' : 'results'}
 							</Typography>
 						) : (
 							<Typography
@@ -582,7 +582,7 @@ const AddNewQuestionDialog = ({
 									ml: 1,
 									whiteSpace: 'nowrap',
 								}}>
-								{compatibleQuestions.length} items
+								{compatibleQuestions.length} {compatibleQuestions.length === 1 ? 'item' : 'items'}
 							</Typography>
 						)}
 					</Box>

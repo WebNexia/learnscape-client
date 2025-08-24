@@ -1230,7 +1230,7 @@ const Messages = () => {
 								setIsDeleteMessageOpen(false);
 								setMessageIdToDelete('');
 							}}
-							maxWidth='sm'
+							maxWidth='xs'
 							title='Delete Message'
 							content='Are you sure you want to delete this message?'>
 							<CustomDialogActions
@@ -1245,6 +1245,7 @@ const Messages = () => {
 									setIsDeleteMessageOpen(false);
 									setMessageIdToDelete('');
 								}}
+								actionSx={{ mb: '0.5rem' }}
 							/>
 						</CustomDialog>
 

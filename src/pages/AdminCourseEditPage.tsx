@@ -902,6 +902,7 @@ const AdminCourseEditPage = () => {
 										singleCourseBeforeSave={singleCourseBeforeSave}
 										setSingleCourseBeforeSave={setSingleCourseBeforeSave}
 										fromAdminCourses={true}
+										setHasUnsavedChanges={setHasUnsavedChanges}
 									/>
 								</Box>
 							)}
@@ -935,6 +936,7 @@ const AdminCourseEditPage = () => {
 													updatedAt: new Date().toISOString(),
 												};
 												updateDocuments(updatedDocument);
+												setHasUnsavedChanges(true);
 												return {
 													...prevData,
 													documents: filteredDocuments,

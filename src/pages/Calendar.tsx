@@ -85,24 +85,22 @@ const EventCalendar = () => {
 
 	useEffect(() => {
 		if (sortedEventsData) {
-			const transformedEvents = sortedEventsData
-				?.filter((event) => event.isAllLearnersSelected || event.allAttendeesIds.includes(user?._id!) || user?.role === Roles.ADMIN || event.isPublic)
-				?.map((event) => {
-					const startDate = new Date(event.start!);
-					let endDate = new Date(event.end!);
-					const isAllDayEvent = event.isAllDay || false;
+			const transformedEvents = sortedEventsData?.map((event) => {
+				const startDate = new Date(event.start!);
+				let endDate = new Date(event.end!);
+				const isAllDayEvent = event.isAllDay || false;
 
-					if (isAllDayEvent) {
-						endDate.setHours(23, 59, 59);
-					}
+				if (isAllDayEvent) {
+					endDate.setHours(23, 59, 59);
+				}
 
-					return {
-						...event,
-						start: startDate,
-						end: endDate,
-						isAllDay: isAllDayEvent,
-					};
-				});
+				return {
+					...event,
+					start: startDate,
+					end: endDate,
+					isAllDay: isAllDayEvent,
+				};
+			});
 
 			setEventsData(transformedEvents);
 		}

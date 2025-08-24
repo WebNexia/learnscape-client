@@ -1702,6 +1702,7 @@ const AdminLessonEditPage = () => {
 									setSingleLessonBeforeSave={setSingleLessonBeforeSave}
 									singleLessonBeforeSave={singleLessonBeforeSave}
 									setIsLessonUpdated={setIsLessonUpdated}
+									setHasUnsavedChanges={setHasUnsavedChanges}
 								/>
 							</Box>
 

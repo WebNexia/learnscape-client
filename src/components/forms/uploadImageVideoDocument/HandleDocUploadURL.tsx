@@ -32,6 +32,7 @@ interface HandleDocUploadURLProps {
 	fromAdminCourses?: boolean | undefined;
 	initialDocumentUrl?: string;
 	initialDocumentName?: string;
+	setHasUnsavedChanges?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const HandleDocUploadURL = ({
@@ -54,6 +55,7 @@ const HandleDocUploadURL = ({
 	fromAdminCourses,
 	initialDocumentUrl,
 	initialDocumentName,
+	setHasUnsavedChanges,
 }: HandleDocUploadURLProps) => {
 	const { docUpload, isDocSizeLarge, handleDocChange, resetDocUpload, handleDocUpload, isDocLoading } = useDocUpload();
 
@@ -209,6 +211,7 @@ const HandleDocUploadURL = ({
 							singleCourse={singleCourseBeforeSave}
 							setSingleCourse={setSingleCourseBeforeSave}
 							fromAdminCourses={fromAdminCourses}
+							setHasUnsavedChanges={setHasUnsavedChanges}
 						/>
 					</Box>
 				</Box>

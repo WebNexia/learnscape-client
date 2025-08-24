@@ -507,8 +507,13 @@ const Message = ({
 									closeModal={() => setResolveReportModalOpen(false)}
 									title='Resolve Report'
 									content='Are you sure you want to resolve the report?'
-									maxWidth='sm'>
-									<CustomDialogActions onSubmit={resolveReport} onCancel={() => setResolveReportModalOpen(false)} submitBtnText='Resolve' />
+									maxWidth='xs'>
+									<CustomDialogActions
+										onSubmit={resolveReport}
+										onCancel={() => setResolveReportModalOpen(false)}
+										submitBtnText='Resolve'
+										actionSx={{ mb: '0.5rem' }}
+									/>
 								</CustomDialog>
 							</Box>
 						</Box>
