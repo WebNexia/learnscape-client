@@ -868,7 +868,10 @@ const AdminRecycleBinDocumentsTab = () => {
 					maxWidth='xs'>
 					<DialogContent>
 						<Typography variant='body2' sx={{ lineHeight: 1.7 }}>
-							Are you sure you want to restore "{truncateText(document.name, 25)}"? This will make the document available again.
+							Are you sure you want to restore "{truncateText(document.name, 25)}"?
+						</Typography>
+						<Typography variant='body2' sx={{ lineHeight: 1.7, mt: 2 }}>
+							This document will become available again on all courses and lessons where it was previously used.
 						</Typography>
 					</DialogContent>
 					<CustomDialogActions
@@ -917,7 +920,10 @@ const AdminRecycleBinDocumentsTab = () => {
 				maxWidth='xs'>
 				<DialogContent>
 					<Typography variant='body2' sx={{ lineHeight: 1.7 }}>
-						Are you sure you want to restore {selectedItems.length} selected document(s)? This will make them available again.
+						Are you sure you want to restore {selectedItems.length} selected document(s)?
+					</Typography>
+					<Typography variant='body2' sx={{ lineHeight: 1.7, mt: 2 }}>
+						These documents will become available again on all courses and lessons where they were previously used.
 					</Typography>
 				</DialogContent>
 				<CustomDialogActions

@@ -903,8 +903,10 @@ const AdminRecycleBinQuestionsTab = () => {
 					maxWidth='xs'>
 					<DialogContent>
 						<Typography variant='body2' sx={{ lineHeight: 1.7 }}>
-							Are you sure you want to restore "{truncateText(stripHtml(decode(question.question)), 25)}"? This will make the question available
-							again.
+							Are you sure you want to restore "{truncateText(stripHtml(decode(question.question)), 25)}"?
+						</Typography>
+						<Typography variant='body2' sx={{ lineHeight: 1.7, mt: 2 }}>
+							This question will become available again on all lessons where it was previously used.
 						</Typography>
 					</DialogContent>
 					<CustomDialogActions
@@ -953,7 +955,10 @@ const AdminRecycleBinQuestionsTab = () => {
 				maxWidth='xs'>
 				<DialogContent>
 					<Typography variant='body2' sx={{ lineHeight: 1.7 }}>
-						Are you sure you want to restore {selectedItems.length} selected question(s)? This will make them available again.
+						Are you sure you want to restore {selectedItems.length} selected question(s)?
+					</Typography>
+					<Typography variant='body2' sx={{ lineHeight: 1.7, mt: 2 }}>
+						These questions will become available again on all lessons where they were previously used.
 					</Typography>
 				</DialogContent>
 				<CustomDialogActions
