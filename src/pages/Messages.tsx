@@ -1,22 +1,12 @@
-import { Alert, Badge, Box, Dialog, IconButton, InputAdornment, Snackbar, Tooltip, Typography } from '@mui/material';
-import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
-import CustomTextField from '../components/forms/customFields/CustomTextField';
-import {
-	AddBox,
-	Cancel,
-	Chat,
-	Image,
-	InsertEmoticon,
-	KeyboardArrowRight,
-	Person,
-	PersonOff,
-	Search,
-	Send,
-	TurnLeftOutlined,
-	Info,
-} from '@mui/icons-material';
+import { Box, IconButton, Typography, Dialog, DialogContent } from '@mui/material';
+import { Cancel, Chat } from '@mui/icons-material';
 
-import { useContext, useEffect, useRef, useState } from 'react';
+import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
+
+import CustomDialog from '../components/layouts/dialog/CustomDialog';
+import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
+import UserSearchSelect from '../components/UserSearchSelect';
+import { useContext, useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { generateUniqueId } from '../utils/uniqueIdGenerator';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 import {
@@ -39,22 +29,22 @@ import {
 	getDocs,
 } from 'firebase/firestore';
 import { db } from '../firebase';
-import Picker from '@emoji-mart/react';
-import data from '@emoji-mart/data';
-import useImageUpload from '../hooks/useImageUpload'; // Import the custom hook
-import { useUploadLimit } from '../contexts/UploadLimitContextProvider'; // Import the upload limit hook
-import CustomDialog from '../components/layouts/dialog/CustomDialog';
+import useImageUpload from '../hooks/useImageUpload';
+import { useUploadLimit } from '../contexts/UploadLimitContextProvider';
 import { User } from '../interfaces/user';
 import axios from '@utils/axiosInstance';
-import theme from '../themes';
 import { debounce } from 'lodash';
-import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
-import { formatMessageTime } from '../utils/formatTime';
-import { renderMessageWithEmojis } from '../utils/renderMessageWithEmojis';
 import { useLocation } from 'react-router-dom';
-import { UsersContext } from '../contexts/UsersContextProvider';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
-import UserSearchSelect from '../components/UserSearchSelect';
+import { SearchUser } from '../interfaces/search';
+import ChatList from '../components/messages/ChatList';
+import ChatHeader from '../components/messages/ChatHeader';
+import MessageList from '../components/messages/MessageList';
+import MessageInput from '../components/messages/MessageInput';
+import GroupChatModal from '../components/messages/GroupChatModal';
+import GroupChatEditModal from '../components/messages/GroupChatEditModal';
+import GroupMembersModal from '../components/messages/GroupMembersModal';
+import CustomErrorMessage from '../components/forms/customFields/CustomErrorMessage';
 
 export interface Message {
 	id: string;
@@ -67,12 +57,15 @@ export interface Message {
 	videoUrl?: string;
 	replyTo: string; // This stores the ID of the message being replied to
 	quotedText: string; // Optional: Store a snippet of the original message being replied to
+	isSystemMessage?: boolean; // For system messages like "User left"
+	systemMessageType?: 'user_left' | 'user_joined' | 'group_created'; // Type of system message
 }
 
 export interface ParticipantData {
 	firebaseUserId: string;
 	username: string;
 	imageUrl: string;
+	role: string;
 }
 
 export interface Chat {
@@ -82,7 +75,8 @@ export interface Chat {
 		text: string;
 		timestamp: Date | null;
 	};
-	isDeletedBy?: string[];
+	isDeletedBy?: string[]; // For hiding chats
+	removedParticipants?: string[]; // For permanently removed participants
 	blockedUsers?: {
 		[blockedUserId: string]: {
 			blockedSince: Date | null; // The timestamp when the user was blocked
@@ -92,12 +86,20 @@ export interface Chat {
 	hasUnreadMessages?: boolean;
 	unreadMessagesCount?: number;
 	unreadBy?: string[];
+	// Group chat fields
+	chatType?: '1-1' | 'group';
+	groupName?: string;
+	groupImageUrl?: string;
+	createdBy?: string;
+	groupSettings?: {
+		onlyAdminsCanAddUsers?: boolean;
+		onlyAdminsCanSendMessages?: boolean;
+	};
 }
 
 const Messages = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { user } = useContext(UserAuthContext);
-	const { users } = useContext(UsersContext);
 
 	const { isSmallScreen, isRotatedMedium, isVerySmallScreen, isRotated } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -110,6 +112,11 @@ const Messages = () => {
 	const [isLargeImgMessageOpen, setIsLargeImgMessageOpen] = useState<boolean>(false);
 	const [isDeleteMessageOpen, setIsDeleteMessageOpen] = useState<boolean>(false);
 	const [messageIdToDelete, setMessageIdToDelete] = useState<string>('');
+	const [isDeleteChatDialogOpen, setIsDeleteChatDialogOpen] = useState<boolean>(false);
+	const [isDeleteGroupDialogOpen, setIsDeleteGroupDialogOpen] = useState<boolean>(false);
+	const [chatIdToDelete, setChatIdToDelete] = useState<string>('');
+
+	const [errorMsg, setErrorMsg] = useState<string>('');
 
 	const [isChatsListVisible, setIsChatsListVisible] = useState<boolean>(false);
 
@@ -124,13 +131,54 @@ const Messages = () => {
 	const [activeChat, setActiveChat] = useState<Chat | null>(null); // Active chat
 	const [activeChatId, setActiveChatId] = useState<string>('');
 	const [addUserModalOpen, setAddUserModalOpen] = useState<boolean>(false);
+	const [createGroupModalOpen, setCreateGroupModalOpen] = useState<boolean>(false);
+	const [editGroupModalOpen, setEditGroupModalOpen] = useState<boolean>(false);
+	const [membersModalOpen, setMembersModalOpen] = useState<boolean>(false);
 
 	const [blockedUsers, setBlockedUsers] = useState<string[]>([]);
+	const [globalBlockedUsers, setGlobalBlockedUsers] = useState<string[]>([]);
 
 	const [zoomedImage, setZoomedImage] = useState<string | undefined>('');
 
-	const vertical = 'top';
-	const horizontal = 'center';
+	// Function to fetch all blocked users for the current user
+	const fetchAllBlockedUsers = useCallback(async () => {
+		if (!user?.firebaseUserId) return;
+
+		try {
+			// Get all chats where the current user is a participant
+			const chatsRef = collection(db, 'chats');
+			const q = query(chatsRef, where('participants', 'array-contains', user.firebaseUserId));
+			const querySnapshot = await getDocs(q);
+
+			const allBlockedUsers: string[] = [];
+
+			querySnapshot.forEach((doc) => {
+				const chatData = doc.data();
+				const blockedUsers = chatData.blockedUsers || {};
+
+				// Get all blocked user IDs from this chat
+				Object.keys(blockedUsers).forEach((blockedUserId) => {
+					// Only include users that the current user has blocked
+					// The blockedUsers object contains users blocked by the current user
+					if (!allBlockedUsers.includes(blockedUserId)) {
+						allBlockedUsers.push(blockedUserId);
+					}
+				});
+			});
+
+			setGlobalBlockedUsers(allBlockedUsers);
+		} catch (error) {
+			console.error('Error fetching blocked users:', error);
+		}
+	}, [user?.firebaseUserId]);
+
+	// Group chat creation state
+	const [groupName, setGroupName] = useState<string>('');
+	const [selectedGroupUsers, setSelectedGroupUsers] = useState<User[]>([]);
+	const [groupSearchValue, setGroupSearchValue] = useState<string>('');
+	const [groupImageUrl, setGroupImageUrl] = useState<string>('');
+	const [enterGroupImageUrl, setEnterGroupImageUrl] = useState<boolean>(true);
+	const [removedMembers, setRemovedMembers] = useState<string[]>([]);
 
 	const isUserCurrentlyBlocked = (userId: string, chatBlockedUsers: any): boolean => {
 		const blockedUser = chatBlockedUsers?.[userId];
@@ -140,17 +188,110 @@ const Messages = () => {
 		return blockedSince && (!blockedUntil || new Date(blockedUntil) > new Date());
 	};
 
+	const hasLeftParticipants = (chat: Chat | null): boolean => {
+		// For group chats, don't prevent sending messages if some users have left
+		// Only prevent if the current user has left
+		if (chat?.chatType === 'group') {
+			return !!(chat?.removedParticipants && user?.firebaseUserId && chat.removedParticipants?.includes(user.firebaseUserId));
+		}
+		// For 1-1 chats, prevent if any participant has left
+		return !!(chat?.removedParticipants && chat.removedParticipants?.length > 0);
+	};
+
+	// Helper function to check if two chats have the same participants (only for 1-1 chats)
+	const hasSameParticipants = (chat1: Chat, chat2: Chat): boolean => {
+		// Only check for 1-1 chats, not group chats
+		if (chat1.chatType === 'group' || chat2.chatType === 'group') {
+			return false;
+		}
+
+		const participants1 = chat1.participants.map((p) => p.firebaseUserId).sort();
+		const participants2 = chat2.participants.map((p) => p.firebaseUserId).sort();
+		return participants1.length === participants2.length && participants1.every((id, index) => id === participants2[index]);
+	};
+
+	// Helper function to find existing chat with same participants
+	const findExistingChatWithParticipants = (participantIds: string[]): Chat | null => {
+		const sortedParticipantIds = participantIds.sort();
+		return (
+			chatList.find((chat) => {
+				if (chat.chatType === 'group') return false;
+				const chatParticipantIds = chat.participants.map((p) => p.firebaseUserId).sort();
+				return (
+					chatParticipantIds.length === sortedParticipantIds.length && chatParticipantIds.every((id, index) => id === sortedParticipantIds[index])
+				);
+			}) || null
+		);
+	};
+
+	const addSystemMessage = async (chatId: string, messageType: 'user_left' | 'user_joined' | 'group_created', username?: string) => {
+		const messageRef = collection(db, 'chats', chatId, 'messages');
+
+		let systemText = '';
+		switch (messageType) {
+			case 'user_left':
+				systemText = `${username || 'User'} left the chat`;
+				break;
+			case 'user_joined':
+				systemText = `${username || 'User'} joined the chat`;
+				break;
+			case 'group_created':
+				systemText = 'Group chat created';
+				break;
+		}
+
+		const systemMessage: Message = {
+			id: generateUniqueId(''),
+			senderId: 'system',
+			text: systemText,
+			timestamp: new Date(),
+			isRead: false,
+			imageUrl: '',
+			videoUrl: '',
+			replyTo: '',
+			quotedText: '',
+			isSystemMessage: true,
+			systemMessageType: messageType,
+		};
+
+		try {
+			await addDoc(messageRef, {
+				...systemMessage,
+				timestamp: serverTimestamp(),
+			});
+		} catch (error) {
+			console.error('Error adding system message:', error);
+		}
+	};
+
 	// Check if the current user is blocked by another user
-	const isBlockedUser: boolean = isUserCurrentlyBlocked(user?.firebaseUserId!, activeChat?.blockedUsers);
+	const isBlockedUser: boolean = useMemo(
+		() => isUserCurrentlyBlocked(user?.firebaseUserId!, activeChat?.blockedUsers),
+		[user?.firebaseUserId, activeChat?.blockedUsers]
+	);
 
 	// Check if the current user has blocked someone else
-	const isBlockingUser: boolean | undefined = activeChat?.participants?.some((participant) => {
-		if (participant.firebaseUserId === user?.firebaseUserId) return false; // Skip the current user
-		return isUserCurrentlyBlocked(participant.firebaseUserId, activeChat?.blockedUsers);
-	});
+	const isBlockingUser: boolean = useMemo(
+		() =>
+			activeChat?.participants?.some((participant) => {
+				if (participant.firebaseUserId === user?.firebaseUserId) return false; // Skip the current user
+				return isUserCurrentlyBlocked(participant.firebaseUserId, activeChat?.blockedUsers);
+			}) || false,
+		[activeChat?.participants, user?.firebaseUserId, activeChat?.blockedUsers]
+	);
 
-	const { imageUpload, imagePreview, handleImageChange, handleImageUpload, resetImageUpload, isUploading, isImgSizeLarge, maxSizeInMB } =
-		useImageUpload({ maxSizeInMB: 1 });
+	// Update blockedUsers state whenever activeChat.blockedUsers changes
+	useEffect(() => {
+		if (activeChat?.blockedUsers) {
+			setBlockedUsers(Object.keys(activeChat.blockedUsers));
+		} else {
+			setBlockedUsers([]);
+		}
+	}, [activeChat?.blockedUsers]);
+
+	const { imageUpload, imagePreview, handleImageChange, handleImageUpload, resetImageUpload, isUploading, isImgSizeLarge } = useImageUpload({
+		maxSizeInMB: 1,
+	});
 
 	// Upload limit management
 	const { uploadInfo, checkCanUploadImage, checkCanUploadAudio, getRemainingImageUploads, getFormattedResetTime, refreshUploadStats } =
@@ -207,40 +348,47 @@ const Messages = () => {
 	}, [isImgSizeLarge]);
 
 	// Cache only ParticipantData (minimal details)
-	const participantCache = JSON.parse(localStorage.getItem('participantCache') || '{}');
+	const participantCache = useMemo(() => JSON.parse(localStorage.getItem('participantCache') || '{}'), []);
 
 	// Function to fetch and cache only ParticipantData
-	const fetchParticipantData = async (firebaseUserId: string): Promise<ParticipantData | null> => {
-		// Check if the participant data is already cached
-		if (participantCache[firebaseUserId]) {
-			return participantCache[firebaseUserId];
-		}
+	const fetchParticipantData = useCallback(
+		async (firebaseUserId: string): Promise<ParticipantData | null> => {
+			// Check if the participant data is already cached
+			if (participantCache[firebaseUserId]) {
+				return participantCache[firebaseUserId];
+			}
 
-		try {
-			// Fetch user details from your MongoDB API
-			const response = await axios.get(`${base_url}/users/${firebaseUserId}`);
-			const userData = response.data.data[0]; // Assume API returns data in this format
+			try {
+				// Fetch user details from your MongoDB API
+				const response = await axios.get(`${base_url}/users/${firebaseUserId}`);
+				const userData = response.data.data[0]; // Assume API returns data in this format
 
-			// Extract and cache only ParticipantData (minimal info)
-			const participantData: ParticipantData = {
-				firebaseUserId: userData.firebaseUserId || '',
-				username: userData.username || '',
-				imageUrl: userData.imageUrl || '',
-			};
+				// Extract and cache only ParticipantData (minimal info)
+				const participantData: ParticipantData = {
+					firebaseUserId: userData.firebaseUserId || '',
+					username: userData.username || '',
+					imageUrl: userData.imageUrl || '',
+					role: userData.role || '',
+				};
 
-			// Cache participant data in localStorage
-			participantCache[firebaseUserId] = participantData;
-			localStorage.setItem('participantCache', JSON.stringify(participantCache));
+				// Cache participant data in localStorage
+				participantCache[firebaseUserId] = participantData;
+				localStorage.setItem('participantCache', JSON.stringify(participantCache));
 
-			return participantData;
-		} catch (error) {
-			console.error('Error fetching participant data:', error);
-			return null;
-		}
-	};
+				return participantData;
+			} catch (error) {
+				console.error('Error fetching participant data:', error);
+				return null;
+			}
+		},
+		[participantCache, base_url]
+	);
 
 	useEffect(() => {
 		if (!user?.firebaseUserId) return;
+
+		// Fetch all blocked users when user changes
+		fetchAllBlockedUsers();
 
 		const chatsRef = collection(db, 'chats');
 		const q = query(chatsRef, where('participants', 'array-contains', user?.firebaseUserId), orderBy('lastMessage.timestamp', 'desc'));
@@ -258,13 +406,32 @@ const Messages = () => {
 					continue; // Skip deleted chats
 				}
 
-				// Fetch unread messages for the current user only (receiver)
+				// Check if the current user has permanently left the chat
+				if (data.removedParticipants?.includes(user.firebaseUserId)) {
+					continue; // Skip chats where user has permanently left
+				}
+
+				// Fetch unread messages for the current user
 				const messagesRef = collection(db, 'chats', doc.id, 'messages');
-				const unreadMessagesQuery = query(
-					messagesRef,
-					where('receiverId', '==', user?.firebaseUserId), // Only messages sent to the current user
-					where('isRead', '==', false) // Unread messages
-				);
+				let unreadMessagesQuery;
+
+				// Check if this is a group chat
+				const isGroup = data.chatType === 'group' || data.participants?.length > 2;
+
+				if (isGroup) {
+					// For group chats, count all unread messages
+					unreadMessagesQuery = query(
+						messagesRef,
+						where('isRead', '==', false) // All unread messages
+					);
+				} else {
+					// For 1-1 chats, only count messages sent to the current user
+					unreadMessagesQuery = query(
+						messagesRef,
+						where('receiverId', '==', user?.firebaseUserId), // Only messages sent to the current user
+						where('isRead', '==', false) // Unread messages
+					);
+				}
 
 				const unreadMessagesSnapshot = await getDocs(unreadMessagesQuery);
 				const unreadMessagesCount = unreadMessagesSnapshot.size; // Calculate the unread count
@@ -288,12 +455,20 @@ const Messages = () => {
 							firebaseUserId: p.firebaseUserId,
 							username: p.username,
 							imageUrl: p.imageUrl,
+							role: p.role,
 						})),
 					lastMessage,
 					isDeletedBy: data.isDeletedBy,
+					removedParticipants: data.removedParticipants,
 					blockedUsers: data.blockedUsers,
 					hasUnreadMessages: unreadMessagesCount > 0, // Flag chats with unread messages
 					unreadMessagesCount, // Store unread message count for the current user
+					// Group chat fields
+					chatType: data.chatType || '1-1',
+					groupName: data.groupName,
+					groupImageUrl: data.groupImageUrl,
+					createdBy: data.createdBy,
+					groupSettings: data.groupSettings,
 				});
 			}
 
@@ -305,7 +480,7 @@ const Messages = () => {
 		});
 
 		return () => unsubscribe();
-	}, [user?.firebaseUserId]);
+	}, [user?.firebaseUserId, fetchAllBlockedUsers, fetchParticipantData]);
 
 	const filterBlockedMessages = (messagesArray: Message[], activeChat: Chat) => {
 		return messagesArray.filter((msg) => {
@@ -356,7 +531,10 @@ const Messages = () => {
 				});
 
 				// If the message is for the current user and is not read, mark it as read
-				if (data.receiverId === user.firebaseUserId && !data.isRead) {
+				// For group chats, mark all messages as read for the current user
+				// For 1-1 chats, only mark messages sent to the current user
+				const isGroup = isGroupChat(activeChat);
+				if ((isGroup || data.receiverId === user.firebaseUserId) && !data.isRead) {
 					const messageDocRef = doc.ref;
 					batch.update(messageDocRef, { isRead: true }); // Mark the message as read
 				}
@@ -412,18 +590,180 @@ const Messages = () => {
 
 	const userCache: { [firebaseUserId: string]: User | null } = {}; // A cache for user details
 
-	const startChatIfNotExists = async (selectedUser: User) => {
+	// Helper function to check if a user is blocked by another user
+	const checkIfUserIsBlocked = async (blockedUserId: string, blockerUserId: string): Promise<boolean> => {
+		try {
+			// Check if there's an existing chat between these users
+			const chatId = [blockedUserId, blockerUserId].sort().join('&');
+			const chatRef = doc(db, 'chats', chatId);
+			const chatDoc = await getDoc(chatRef);
+
+			if (chatDoc.exists()) {
+				const chatData = chatDoc.data();
+				const blockedUsers = chatData.blockedUsers || {};
+
+				// Check if the blocked user is in the blocker's blockedUsers list
+				const blockInfo = blockedUsers[blockedUserId];
+				if (blockInfo && blockInfo.blockedSince) {
+					const blockedSince = new Date(blockInfo.blockedSince);
+					const blockedUntil = blockInfo.blockedUntil ? new Date(blockInfo.blockedUntil) : null;
+
+					// Check if the block is currently active
+					return blockedSince && (!blockedUntil || new Date(blockedUntil) > new Date());
+				}
+			}
+
+			return false; // No block found
+		} catch (error) {
+			console.error('Error checking if user is blocked:', error);
+			return false;
+		}
+	};
+
+	const startChatIfNotExists = async (selectedUser: User): Promise<'success' | 'blocked'> => {
 		const chatId = [user?.firebaseUserId, selectedUser.firebaseUserId].sort().join('&');
 		const chatRef = doc(db, 'chats', chatId);
 
 		const chatDoc = await getDoc(chatRef);
 
+		// If chat exists, restore it regardless of blocking status
 		if (chatDoc.exists()) {
 			const chatData = chatDoc.data();
 
-			// Check if the chat is marked as deleted by the current user
+			// Check if the chat is hidden and restore it
 			if (chatData.isDeletedBy?.includes(user?.firebaseUserId)) {
 				// Restore the chat by removing the current user from `isDeletedBy`
+				await updateDoc(chatRef, {
+					isDeletedBy: arrayRemove(user?.firebaseUserId),
+				});
+
+				// For hidden chats, skip blocking check and restore the chat
+				// This allows users to restore hidden chats even if they're blocked
+				// Continue to the restoration logic below
+			} else {
+				// Only check blocking for existing chats that are not hidden
+				// Check if the current user is blocked by the selected user
+				const currentUserBlocked = await checkIfUserIsBlocked(user?.firebaseUserId!, selectedUser.firebaseUserId);
+				if (currentUserBlocked) {
+					setErrorMsg('Cannot start chat: You are blocked by this user');
+					return 'blocked';
+				}
+
+				// Check if the selected user is blocked by the current user
+				const selectedUserBlocked = await checkIfUserIsBlocked(selectedUser.firebaseUserId, user?.firebaseUserId!);
+				if (selectedUserBlocked) {
+					setErrorMsg('Cannot start chat: This user is blocked');
+					return 'blocked';
+				}
+			}
+		} else {
+			// For completely new chats, check blocking
+			// But first, check if there might be a hidden chat that we can restore
+			const existingChatInList = findExistingChatWithParticipants([user?.firebaseUserId!, selectedUser.firebaseUserId]);
+
+			if (existingChatInList) {
+				// If we found an existing chat in the list, activate it instead of creating a new one
+				// This handles the case where a chat exists but is hidden/deleted
+				setActiveChat(existingChatInList);
+				setActiveChatId(existingChatInList.chatId);
+				localStorage.setItem('activeChatId', existingChatInList.chatId);
+				return 'success';
+			}
+
+			// Also check if there's a hidden chat in the database that we can restore
+			// This handles cases where the chat exists but is not in the current chat list
+			const hiddenChatRef = doc(db, 'chats', chatId);
+			const hiddenChatDoc = await getDoc(hiddenChatRef);
+
+			if (hiddenChatDoc.exists()) {
+				const hiddenChatData = hiddenChatDoc.data();
+				// If the chat exists but is hidden, restore it
+				if (hiddenChatData.isDeletedBy?.includes(user?.firebaseUserId)) {
+					await updateDoc(hiddenChatRef, {
+						isDeletedBy: arrayRemove(user?.firebaseUserId),
+					});
+					// The chat will be restored in the next chat list update
+					return 'success';
+				}
+			}
+
+			// For new chats, don't check blocking - let the chat be created
+			// The blocking will be handled in the chat interface itself
+		}
+
+		if (chatDoc.exists()) {
+			const chatData = chatDoc.data();
+
+			// Check if any participant has permanently left this chat
+			const hasLeftParticipants = !!(chatData.removedParticipants && chatData.removedParticipants?.length > 0);
+			const currentUserLeft = chatData.removedParticipants?.includes(user?.firebaseUserId);
+			const selectedUserLeft = chatData.removedParticipants?.includes(selectedUser.firebaseUserId);
+
+			// Only create a new chat if the current user has also left the chat permanently
+			// If only the other user has left but the current user hasn't, restore the existing chat
+			if (hasLeftParticipants && currentUserLeft) {
+				// If the current user has also left this chat, create a completely new chat with a unique ID
+				const timestamp = Date.now();
+				const newChatId = `${chatId}_${timestamp}`;
+				const newChatRef = doc(db, 'chats', newChatId);
+
+				// Create the new chat document in Firestore
+				await setDoc(newChatRef, {
+					participants: [user?.firebaseUserId, selectedUser.firebaseUserId],
+					lastMessage: { text: 'No messages yet', timestamp: new Date() },
+					isDeletedBy: [],
+					removedParticipants: [],
+					blockedUsers: {},
+					hasUnreadMessages: false,
+					chatType: '1-1',
+					createdAt: new Date(),
+				});
+
+				const newChat: Chat = {
+					chatId: newChatId,
+					participants: [
+						{ firebaseUserId: user?.firebaseUserId!, imageUrl: user?.imageUrl!, username: user?.username!, role: user?.role! },
+						{
+							firebaseUserId: selectedUser.firebaseUserId,
+							imageUrl: selectedUser.imageUrl,
+							username: selectedUser.username,
+							role: selectedUser.role,
+						},
+					],
+					lastMessage: { text: 'No messages yet', timestamp: new Date() },
+					isDeletedBy: [],
+					removedParticipants: [],
+					blockedUsers: {},
+					hasUnreadMessages: false,
+					chatType: '1-1',
+				};
+
+				// Add the new chat to the UI lists, replacing any existing chats with the same participants
+				setChatList((prev) => {
+					// Remove any existing chats with the same participants (to avoid duplicates)
+					const filteredList = prev.filter((chat) => !hasSameParticipants(chat, newChat));
+
+					// Sort the list to maintain proper order (newest first)
+					const updatedChatList = [newChat, ...filteredList].sort((a, b) => {
+						const timeA = a.lastMessage.timestamp ? new Date(a.lastMessage.timestamp).getTime() : Date.now();
+						const timeB = b.lastMessage.timestamp ? new Date(b.lastMessage.timestamp).getTime() : Date.now();
+						return timeB - timeA; // Descending order (newest first)
+					});
+
+					setFilteredChatList(updatedChatList);
+					return updatedChatList;
+				});
+
+				// Set this as the active chat in the UI
+				setActiveChat(newChat);
+				setActiveChatId(newChatId);
+				localStorage.setItem('activeChatId', newChatId);
+				return 'success';
+			}
+
+			// If only the other user has left but the current user hasn't, restore the existing chat
+			if (hasLeftParticipants && selectedUserLeft && !currentUserLeft) {
+				// Remove the current user from isDeletedBy to restore the chat
 				await updateDoc(chatRef, {
 					isDeletedBy: arrayRemove(user?.firebaseUserId),
 				});
@@ -438,41 +778,119 @@ const Messages = () => {
 			const restoredChat: Chat = {
 				chatId: chatId,
 				participants: [
-					{ firebaseUserId: user?.firebaseUserId!, imageUrl: user?.imageUrl!, username: user?.username! },
-					{ firebaseUserId: selectedUser.firebaseUserId, imageUrl: selectedUser.imageUrl, username: selectedUser.username },
+					{ firebaseUserId: user?.firebaseUserId!, imageUrl: user?.imageUrl!, username: user?.username!, role: user?.role! },
+					{
+						firebaseUserId: selectedUser.firebaseUserId,
+						imageUrl: selectedUser.imageUrl,
+						username: selectedUser.username,
+						role: selectedUser.role,
+					},
 				],
 				lastMessage: chatData.lastMessage || { text: 'No messages yet', timestamp: null },
 				blockedUsers: chatData.blockedUsers || [],
 				isDeletedBy: chatData.isDeletedBy || [],
+				removedParticipants: chatData.removedParticipants || [],
 				hasUnreadMessages: chatData.hasUnreadMessages,
+				chatType: chatData.chatType || '1-1',
+				groupName: chatData.groupName,
+				groupImageUrl: chatData.groupImageUrl,
+				createdBy: chatData.createdBy,
+				groupSettings: chatData.groupSettings,
 			};
 
 			setChatList((prev) => {
-				const updatedChatList = prev.find((chat) => chat.chatId === chatId) ? prev : [restoredChat, ...prev];
-				setFilteredChatList(updatedChatList);
-				return updatedChatList;
+				// Check if this exact chat already exists in the list
+				const existingChatIndex = prev.findIndex((chat) => chat.chatId === chatId);
+
+				if (existingChatIndex !== -1) {
+					// Update the existing chat with the restored data
+					const updatedChatList = [...prev];
+					updatedChatList[existingChatIndex] = restoredChat;
+
+					// Sort the list to maintain proper order (newest first)
+					const sortedList = updatedChatList.sort((a, b) => {
+						const timeA = a.lastMessage.timestamp ? new Date(a.lastMessage.timestamp).getTime() : 0;
+						const timeB = b.lastMessage.timestamp ? new Date(b.lastMessage.timestamp).getTime() : 0;
+						return timeB - timeA; // Descending order (newest first)
+					});
+
+					setFilteredChatList(sortedList);
+					return sortedList;
+				} else {
+					// Remove any existing chats with the same participants (to avoid duplicates)
+					const filteredList = prev.filter((chat) => !hasSameParticipants(chat, restoredChat));
+
+					// Add the restored chat to the list and sort
+					const updatedChatList = [restoredChat, ...filteredList].sort((a, b) => {
+						const timeA = a.lastMessage.timestamp ? new Date(a.lastMessage.timestamp).getTime() : 0;
+						const timeB = b.lastMessage.timestamp ? new Date(b.lastMessage.timestamp).getTime() : 0;
+						return timeB - timeA; // Descending order (newest first)
+					});
+
+					setFilteredChatList(updatedChatList);
+					return updatedChatList;
+				}
 			});
+
+			// Force a refresh of the chat list to ensure the restored chat appears
+			setTimeout(() => {
+				setChatList((prev) => [...prev]);
+			}, 100);
+
+			// Also update localStorage to reflect the restored chat
+			setTimeout(() => {
+				const updatedChatList = chatList.map((chat) => (chat.chatId === chatId ? restoredChat : chat));
+				localStorage.setItem('chatList', JSON.stringify(updatedChatList));
+			}, 200);
 
 			setActiveChat(restoredChat);
 			setActiveChatId(chatId);
 			localStorage.setItem('activeChatId', chatId);
+			return 'success';
 		} else {
+			// Before creating a new chat, check if there's an existing chat with the same participants
+			// that might be deleted or in a different state
+			const existingChatInList = findExistingChatWithParticipants([user?.firebaseUserId!, selectedUser.firebaseUserId]);
+
+			if (existingChatInList) {
+				setActiveChat(existingChatInList);
+				setActiveChatId(existingChatInList.chatId);
+				localStorage.setItem('activeChatId', existingChatInList.chatId);
+				return 'success';
+			}
+
 			// If the chat does not exist, add it to the chatList/UI but don't create it in Firestore yet
 			const newChat: Chat = {
 				chatId: chatId,
 				participants: [
-					{ firebaseUserId: user?.firebaseUserId!, imageUrl: user?.imageUrl!, username: user?.username! },
-					{ firebaseUserId: selectedUser.firebaseUserId, imageUrl: selectedUser.imageUrl, username: selectedUser.username },
+					{ firebaseUserId: user?.firebaseUserId!, imageUrl: user?.imageUrl!, username: user?.username!, role: user?.role! },
+					{
+						firebaseUserId: selectedUser.firebaseUserId,
+						imageUrl: selectedUser.imageUrl,
+						username: selectedUser.username,
+						role: selectedUser.role,
+					},
 				],
-				lastMessage: { text: 'No messages yet', timestamp: null }, // No message yet
+				lastMessage: { text: 'No messages yet', timestamp: new Date() }, // No message yet
 				isDeletedBy: [],
+				removedParticipants: [],
 				blockedUsers: {},
 				hasUnreadMessages: false,
+				chatType: '1-1',
 			};
 
-			// Add the new chat to the UI lists
+			// Add the new chat to the UI lists, replacing any existing chats with the same participants
 			setChatList((prev) => {
-				const updatedChatList = prev.find((chat) => chat.chatId === chatId) ? prev : [newChat, ...prev];
+				// Remove any existing chats with the same participants (to avoid duplicates)
+				const filteredList = prev.filter((chat) => !hasSameParticipants(chat, newChat));
+
+				// Sort the list to maintain proper order (newest first)
+				const updatedChatList = [newChat, ...filteredList].sort((a, b) => {
+					const timeA = a.lastMessage.timestamp ? new Date(a.lastMessage.timestamp).getTime() : 0;
+					const timeB = b.lastMessage.timestamp ? new Date(b.lastMessage.timestamp).getTime() : 0;
+					return timeB - timeA; // Descending order (newest first)
+				});
+
 				setFilteredChatList(updatedChatList);
 				return updatedChatList;
 			});
@@ -481,6 +899,7 @@ const Messages = () => {
 			setActiveChat(newChat);
 			setActiveChatId(chatId);
 			localStorage.setItem('activeChatId', chatId);
+			return 'success';
 		}
 	};
 
@@ -488,6 +907,11 @@ const Messages = () => {
 		setActiveChat(chat);
 		localStorage.setItem('activeChatId', chat.chatId);
 		setActiveChatId(chat.chatId);
+
+		// Hide chat list on small screens when a chat is selected
+		if (isVerySmallScreen) {
+			setIsChatsListVisible(false);
+		}
 
 		const chatBlockedUsers = chat.blockedUsers || {};
 		const blockedUsersArray = Object.keys(chatBlockedUsers);
@@ -500,15 +924,28 @@ const Messages = () => {
 
 		// Mark unread messages as read when user opens chat
 		const messagesRef = collection(db, 'chats', chat.chatId, 'messages');
-		const unreadMessagesQuery = query(messagesRef, where('receiverId', '==', user?.firebaseUserId), where('isRead', '==', false));
 
-		const unreadMessagesSnapshot = await getDocs(unreadMessagesQuery);
+		if (isGroupChat(chat)) {
+			// For group chats, mark all messages as read for the current user
+			const unreadMessagesQuery = query(messagesRef, where('isRead', '==', false));
+			const unreadMessagesSnapshot = await getDocs(unreadMessagesQuery);
 
-		unreadMessagesSnapshot.forEach(async (doc) => {
-			await updateDoc(doc.ref, {
-				isRead: true, // Mark each message as read
+			unreadMessagesSnapshot.forEach(async (doc) => {
+				await updateDoc(doc.ref, {
+					isRead: true, // Mark each message as read
+				});
 			});
-		});
+		} else {
+			// For 1-1 chats, mark messages sent to current user as read
+			const unreadMessagesQuery = query(messagesRef, where('receiverId', '==', user?.firebaseUserId), where('isRead', '==', false));
+			const unreadMessagesSnapshot = await getDocs(unreadMessagesQuery);
+
+			unreadMessagesSnapshot.forEach(async (doc) => {
+				await updateDoc(doc.ref, {
+					isRead: true, // Mark each message as read
+				});
+			});
+		}
 
 		// Update Firestore to reflect no unread messages for this chat
 		const chatDocRef = doc(db, 'chats', chat.chatId);
@@ -524,6 +961,12 @@ const Messages = () => {
 
 	const handleSendMessage = async () => {
 		if ((!currentMessage.trim() && !imageUpload) || !activeChat) return;
+
+		// Check if any participants have left the chat permanently
+		if (hasLeftParticipants(activeChat)) {
+			console.error('Cannot send message: Some participants have left the chat');
+			return;
+		}
 
 		const chatId = activeChat.chatId;
 		const chatRef = doc(db, 'chats', chatId);
@@ -557,12 +1000,16 @@ const Messages = () => {
 				});
 			}
 
-			const receiverId = activeChat.participants.find((p) => p.firebaseUserId !== user?.firebaseUserId)?.firebaseUserId;
+			// For group chats, we'll handle multiple receivers differently
+			const isGroup = isGroupChat(activeChat);
+			const receiverIds = isGroup
+				? activeChat.participants.filter((p) => p.firebaseUserId !== user?.firebaseUserId).map((p) => p.firebaseUserId)
+				: [activeChat.participants.find((p) => p.firebaseUserId !== user?.firebaseUserId)?.firebaseUserId].filter(Boolean);
 
 			const newMessage: Message = {
 				id: generateUniqueId(''),
 				senderId: user?.firebaseUserId!,
-				receiverId: receiverId || '',
+				receiverId: isGroup ? '' : receiverIds[0] || '', // For group chats, receiverId is empty
 				text: currentMessage.trim() || '',
 				imageUrl: imageUrl.trim() || '',
 				timestamp: new Date(),
@@ -577,45 +1024,84 @@ const Messages = () => {
 				timestamp: serverTimestamp(),
 			});
 
-			if (receiverId) {
-				const recipientRef = doc(db, 'users', receiverId);
-				const recipientDoc = await getDoc(recipientRef);
-				const recipientData = recipientDoc.data();
+			// Handle notifications for group chats and 1-1 chats
+			if (isGroup) {
+				// For group chats, send notifications to all participants except sender
+				for (const receiverId of receiverIds) {
+					if (receiverId) {
+						const recipientRef = doc(db, 'users', receiverId);
+						const recipientDoc = await getDoc(recipientRef);
+						const recipientData = recipientDoc.data();
 
-				const isRecipientChatting = recipientData?.activeChatId === activeChat.chatId;
+						const isRecipientChatting = recipientData?.activeChatId === activeChat.chatId;
 
-				// Check if the receiver has unread messages in the active chat
-				const unreadMessagesQuery = query(
-					collection(db, 'chats', activeChat.chatId, 'messages'),
-					where('receiverId', '==', receiverId),
-					where('isRead', '==', false)
-				);
-				const unreadMessagesSnapshot = await getDocs(unreadMessagesQuery);
+						// Check if the receiver has unread messages in the active chat
+						const unreadMessagesQuery = query(
+							collection(db, 'chats', activeChat.chatId, 'messages'),
+							where('receiverId', '==', receiverId),
+							where('isRead', '==', false)
+						);
+						const unreadMessagesSnapshot = await getDocs(unreadMessagesQuery);
 
-				// Send a notification only if there are no unread messages and the recipient is not currently viewing the chat
-				if (unreadMessagesSnapshot.size === 1 && !isRecipientChatting) {
-					const notificationData = {
-						title: 'New Message',
-						message: `${user?.username} sent you a message.`,
-						isRead: false,
-						timestamp: serverTimestamp(),
-						type: 'MessageReceived',
-						userImageUrl: user?.imageUrl,
-					};
+						// Send a notification only if there are no unread messages and the recipient is not currently viewing the chat
+						if (unreadMessagesSnapshot.size === 1 && !isRecipientChatting) {
+							const notificationData = {
+								title: 'New Group Message',
+								message: `${user?.username} sent a message to ${activeChat.groupName || 'the group'}.`,
+								isRead: false,
+								timestamp: serverTimestamp(),
+								type: 'MessageReceived',
+								userImageUrl: user?.imageUrl,
+							};
 
-					const notificationRef = collection(db, 'notifications', receiverId, 'userNotifications');
-					await addDoc(notificationRef, notificationData);
+							const notificationRef = collection(db, 'notifications', receiverId, 'userNotifications');
+							await addDoc(notificationRef, notificationData);
+						}
+					}
+				}
+			} else {
+				// For 1-1 chats, use the first receiver
+				const receiverId = receiverIds[0];
+				if (receiverId) {
+					const recipientRef = doc(db, 'users', receiverId);
+					const recipientDoc = await getDoc(recipientRef);
+					const recipientData = recipientDoc.data();
+
+					const isRecipientChatting = recipientData?.activeChatId === activeChat.chatId;
+
+					// Check if the receiver has unread messages in the active chat
+					const unreadMessagesQuery = query(
+						collection(db, 'chats', activeChat.chatId, 'messages'),
+						where('receiverId', '==', receiverId),
+						where('isRead', '==', false)
+					);
+					const unreadMessagesSnapshot = await getDocs(unreadMessagesQuery);
+
+					// Send a notification only if there are no unread messages and the recipient is not currently viewing the chat
+					if (unreadMessagesSnapshot.size === 1 && !isRecipientChatting) {
+						const notificationData = {
+							title: 'New Message',
+							message: `${user?.username} sent you a message.`,
+							isRead: false,
+							timestamp: serverTimestamp(),
+							type: 'MessageReceived',
+							userImageUrl: user?.imageUrl,
+						};
+
+						const notificationRef = collection(db, 'notifications', receiverId, 'userNotifications');
+						await addDoc(notificationRef, notificationData);
+					}
 				}
 			}
 
-			// Update the lastMessage field and set hasUnreadMessages to true for the receiver
+			// Update the lastMessage field and set hasUnreadMessages to true for the receivers
 			await updateDoc(chatRef, {
 				lastMessage: {
 					text: newMessage.text.trim() || 'Image sent',
 					timestamp: serverTimestamp(),
 				},
 				hasUnreadMessages: true,
-				unreadBy: arrayUnion(receiverId),
+				unreadBy: arrayUnion(...receiverIds),
 			});
 
 			// Clear the reply context and reset state after sending the message
@@ -635,34 +1121,329 @@ const Messages = () => {
 		}
 	};
 
-	const handleUserSelection = async (selectedUser: User) => {
-		await startChatIfNotExists(selectedUser); // Ensure the chat is started or exists
-		setAddUserModalOpen(false); // Close modal
+	const handleSearchUserSelection = async (selectedUser: SearchUser) => {
+		// Convert SearchUser to User format for startChatIfNotExists
+		const userForChat: User = {
+			_id: selectedUser.firebaseUserId, // Use firebaseUserId as _id
+			firebaseUserId: selectedUser.firebaseUserId,
+			username: selectedUser.username,
+			email: selectedUser.email || '',
+			imageUrl: selectedUser.imageUrl,
+			role: selectedUser.role,
+			firstName: selectedUser.username.split(' ')[0] || '',
+			lastName: selectedUser.username.split(' ').slice(1).join(' ') || '',
+			phone: '',
+			hasRegisteredCourse: false,
+			isActive: true,
+			createdAt: new Date().toISOString(),
+			updatedAt: new Date().toISOString(),
+			orgId: '',
+			countryCode: '',
+			isEmailVerified: false,
+		};
+
+		// Clear any previous error messages
+		setErrorMsg('');
+
+		// Try to start the chat and get the result
+		const result = await startChatIfNotExists(userForChat);
+
+		// Only close the modal if the chat was successfully created
+		if (result !== 'blocked') {
+			setAddUserModalOpen(false);
+			setSearchValue('');
+		}
 	};
 
-	const handleDeleteChat = async (chatId: string) => {
+	// Group chat helper functions
+	const isGroupChat = (chat: Chat): boolean => {
+		return chat?.chatType === 'group' || chat?.participants?.length > 2;
+	};
+
+	const getChatDisplayName = (chat: Chat): string => {
+		if (isGroupChat(chat) && chat.groupName) {
+			return chat.groupName;
+		}
+		const otherParticipant = chat.participants.find((p) => p.firebaseUserId !== user?.firebaseUserId);
+		return otherParticipant?.username || 'Unknown User';
+	};
+
+	const getChatDisplayImage = (chat: Chat): string => {
+		if (isGroupChat(chat)) {
+			// For group chats, return group image if available, otherwise use placeholder
+			if (chat.groupImageUrl) {
+				return chat.groupImageUrl;
+			}
+			// Use placeholder image for group chats without custom image
+			return 'https://t4.ftcdn.net/jpg/02/53/91/57/360_F_253915708_G8elkrM3HdQPi3txjwTirLDXVfPuqnww.jpg';
+		}
+		const otherParticipant = chat.participants.find((p) => p.firebaseUserId !== user?.firebaseUserId);
+		return otherParticipant?.imageUrl || '';
+	};
+
+	const handleGroupUserSelection = (selectedUser: User) => {
+		// Check if user is already selected in new members
+		const isAlreadySelected = selectedGroupUsers.some((u) => u.firebaseUserId === selectedUser.firebaseUserId);
+
+		// Check if user is already in current members (not removed) - only for group editing
+		const isCurrentMember =
+			activeChat?.participants?.some((p) => p.firebaseUserId === selectedUser.firebaseUserId && !removedMembers.includes(p.firebaseUserId)) || false;
+
+		// Only add if not already selected and not a current member
+		if (!isAlreadySelected && !isCurrentMember) {
+			setSelectedGroupUsers((prev) => [...prev, selectedUser]);
+		}
+		// Don't clear search value for group chat - keep it for continued searching
+	};
+
+	const removeGroupUser = (userId: string) => {
+		setSelectedGroupUsers((prev) => prev.filter((u) => u.firebaseUserId !== userId));
+	};
+
+	const removeExistingGroupMember = (userId: string) => {
+		if (!activeChat) return;
+
+		// Add to removed members list (pending removal)
+		setRemovedMembers((prev) => [...prev, userId]);
+	};
+
+	const restoreExistingGroupMember = (userId: string) => {
+		if (!activeChat) return;
+
+		// Remove from removed members list (cancel removal)
+		setRemovedMembers((prev) => prev.filter((id) => id !== userId));
+	};
+
+	const createGroupChat = async () => {
+		if (!groupName.trim() || selectedGroupUsers.length === 0) return;
+
 		try {
-			// Try updating Firestore directly
+			// Create unique group chat ID
+			const groupChatId = `group_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+			// Prepare participants including the current user
+			const allParticipants = [
+				{ firebaseUserId: user?.firebaseUserId!, username: user?.username!, imageUrl: user?.imageUrl!, role: user?.role! },
+				...selectedGroupUsers.map((u) => ({
+					firebaseUserId: u.firebaseUserId,
+					username: u.username,
+					imageUrl: u.imageUrl,
+					role: u.role,
+				})),
+			];
+
+			// Create chat document
+			const chatRef = doc(db, 'chats', groupChatId);
+			await setDoc(chatRef, {
+				participants: allParticipants.map((p) => p.firebaseUserId),
+				chatType: 'group',
+				groupName: groupName.trim(),
+				groupImageUrl: groupImageUrl.trim() || '',
+				createdBy: user?.firebaseUserId,
+				groupSettings: {
+					onlyAdminsCanAddUsers: false,
+					onlyAdminsCanSendMessages: false,
+				},
+				lastMessage: {
+					text: 'Group chat created',
+					timestamp: serverTimestamp(),
+				},
+				isDeletedBy: [],
+				blockedUsers: {},
+				hasUnreadMessages: false,
+			});
+
+			// Create the new chat object
+			const newGroupChat: Chat = {
+				chatId: groupChatId,
+				participants: allParticipants,
+				chatType: 'group',
+				groupName: groupName.trim(),
+				groupImageUrl: groupImageUrl.trim() || '',
+				createdBy: user?.firebaseUserId,
+				groupSettings: {
+					onlyAdminsCanAddUsers: false,
+					onlyAdminsCanSendMessages: false,
+				},
+				lastMessage: {
+					text: 'Group chat created',
+					timestamp: new Date(),
+				},
+				isDeletedBy: [],
+				blockedUsers: {},
+				hasUnreadMessages: false,
+			};
+
+			// Add to chat list and set as active
+			setChatList((prev) => [newGroupChat, ...prev]);
+			setFilteredChatList((prev) => [newGroupChat, ...prev]);
+			setActiveChat(newGroupChat);
+			setActiveChatId(groupChatId);
+			localStorage.setItem('activeChatId', groupChatId);
+
+			// Reset form
+			setGroupName('');
+			setSelectedGroupUsers([]);
+			setGroupSearchValue('');
+			setGroupImageUrl('');
+			setEnterGroupImageUrl(false);
+			setCreateGroupModalOpen(false);
+		} catch (error) {
+			console.error('Error creating group chat:', error);
+		}
+	};
+
+	const updateGroupChat = async () => {
+		if (!groupName.trim() || !activeChat || !isGroupChat(activeChat)) return;
+
+		try {
+			// Get current participants (excluding removed members)
+			const currentParticipants = activeChat.participants.filter((p) => !removedMembers.includes(p.firebaseUserId)).map((p) => p.firebaseUserId);
+
+			// Add new participants
+			const newParticipants = selectedGroupUsers.map((u) => u.firebaseUserId);
+			const allParticipants = [...currentParticipants, ...newParticipants];
+
+			// Remove duplicates from participants array
+			const uniqueParticipantIds = [...new Set(allParticipants)];
+
+			// Get current removed participants from the chat
+			const chatRef = doc(db, 'chats', activeChat.chatId);
+			const chatDoc = await getDoc(chatRef);
+			const currentRemovedParticipants = chatDoc.data()?.removedParticipants || [];
+
+			// Remove newly added users from removedParticipants array
+			const updatedRemovedParticipants = currentRemovedParticipants.filter((removedUserId: string) => !newParticipants.includes(removedUserId));
+
+			// Update chat document
+			await updateDoc(chatRef, {
+				participants: uniqueParticipantIds,
+				removedParticipants: updatedRemovedParticipants,
+				groupName: groupName.trim(),
+				groupImageUrl: groupImageUrl.trim() || '',
+			});
+
+			// Update local state - eliminate duplicates by using Set
+			const finalParticipants = [
+				...activeChat.participants.filter((p) => !removedMembers.includes(p.firebaseUserId)),
+				...selectedGroupUsers.map((u) => ({
+					firebaseUserId: u.firebaseUserId,
+					username: u.username,
+					imageUrl: u.imageUrl,
+					role: u.role,
+				})),
+			];
+
+			// Remove duplicates based on firebaseUserId
+			const uniqueParticipantObjects = finalParticipants.filter(
+				(participant, index, self) => index === self.findIndex((p) => p.firebaseUserId === participant.firebaseUserId)
+			);
+
+			// Add system messages for newly added users (including those being added back)
+			for (const newUser of selectedGroupUsers) {
+				await addSystemMessage(activeChat.chatId, 'user_joined', newUser.username);
+			}
+
+			const updatedChat: Chat = {
+				...activeChat,
+				groupName: groupName.trim(),
+				groupImageUrl: groupImageUrl.trim() || '',
+				participants: uniqueParticipantObjects,
+				removedParticipants: updatedRemovedParticipants,
+			};
+
+			setActiveChat(updatedChat);
+			setChatList((prev) => prev.map((chat) => (chat.chatId === activeChat.chatId ? updatedChat : chat)));
+			setFilteredChatList((prev) => prev.map((chat) => (chat.chatId === activeChat.chatId ? updatedChat : chat)));
+
+			// Reset form
+			setGroupName('');
+			setSelectedGroupUsers([]);
+			setGroupSearchValue('');
+			setGroupImageUrl('');
+			setEnterGroupImageUrl(false);
+			setRemovedMembers([]);
+			setEditGroupModalOpen(false);
+		} catch (error) {
+			console.error('Error updating group chat:', error);
+		}
+	};
+
+	const deleteGroupChat = () => {
+		if (!activeChat || user?.role !== 'admin') return;
+		setIsDeleteGroupDialogOpen(true);
+	};
+
+	const confirmDeleteGroupChat = async () => {
+		if (!activeChat || user?.role !== 'admin') return;
+
+		try {
+			// Delete the chat document and all its subcollections
+			const chatRef = doc(db, 'chats', activeChat.chatId);
+
+			// Delete all messages in the chat
+			const messagesRef = collection(db, 'chats', activeChat.chatId, 'messages');
+			const messagesSnapshot = await getDocs(messagesRef);
+			const deletePromises = messagesSnapshot.docs.map((doc) => deleteDoc(doc.ref));
+			await Promise.all(deletePromises);
+
+			// Delete the chat document itself
+			await deleteDoc(chatRef);
+
+			// Remove from local state
+			setChatList((prev) => prev.filter((chat) => chat.chatId !== activeChat.chatId));
+			setFilteredChatList((prev) => prev.filter((chat) => chat.chatId !== activeChat.chatId));
+
+			// Clear active chat if it was the deleted one
+			if (activeChatId === activeChat.chatId) {
+				setActiveChat(null);
+				setActiveChatId('');
+				localStorage.removeItem('activeChatId');
+			}
+
+			// Close modal and reset state
+			setEditGroupModalOpen(false);
+			setGroupName('');
+			setSelectedGroupUsers([]);
+			setGroupSearchValue('');
+			setGroupImageUrl('');
+			setEnterGroupImageUrl(false);
+			setRemovedMembers([]);
+		} catch (error) {
+			console.error('Error deleting group chat:', error);
+		}
+
+		// Close the confirmation dialog
+		setIsDeleteGroupDialogOpen(false);
+	};
+
+	const handleDeleteChat = (chatId: string) => {
+		setChatIdToDelete(chatId);
+		setIsDeleteChatDialogOpen(true);
+	};
+
+	const handleHideChat = async (chatId: string) => {
+		try {
+			// Hide chat by adding user to isDeletedBy array (current implementation)
 			const chatRef = doc(db, 'chats', chatId);
 			await updateDoc(chatRef, {
 				isDeletedBy: arrayUnion(user?.firebaseUserId),
 			});
 		} catch (error) {
-			// Log Firestore error (e.g., if the chat doesn't exist in Firestore)
-			console.error('Error updating Firestore:', error);
+			console.error('Error hiding chat:', error);
 		}
 
-		// Update the local state, regardless of Firestore operation success or failure
+		// Update local state
 		setFilteredChatList((prevChatList) => {
-			const filteredChatListAfterDelete = prevChatList?.filter((chat) => chat.chatId !== chatId);
-			localStorage.setItem('chatList', JSON.stringify(filteredChatListAfterDelete));
-			return filteredChatListAfterDelete;
+			const filteredChatListAfterHide = prevChatList?.filter((chat) => chat.chatId !== chatId);
+			localStorage.setItem('chatList', JSON.stringify(filteredChatListAfterHide));
+			return filteredChatListAfterHide;
 		});
 
 		setChatList((prevChatList) => {
-			const filteredChatListAfterDelete = prevChatList?.filter((chat) => chat.chatId !== chatId);
-			localStorage.setItem('chatList', JSON.stringify(filteredChatListAfterDelete));
-			return filteredChatListAfterDelete;
+			const filteredChatListAfterHide = prevChatList?.filter((chat) => chat.chatId !== chatId);
+			localStorage.setItem('chatList', JSON.stringify(filteredChatListAfterHide));
+			return filteredChatListAfterHide;
 		});
 
 		// Reset messages and active chat if necessary
@@ -674,6 +1455,86 @@ const Messages = () => {
 			setActiveChatId('');
 			localStorage.setItem('activeChatId', '');
 		}
+
+		// Close dialog
+		setIsDeleteChatDialogOpen(false);
+		setChatIdToDelete('');
+	};
+
+	const handleLeaveChat = async (chatId: string) => {
+		try {
+			// Get chat data to check if it's a group chat
+			const chatRef = doc(db, 'chats', chatId);
+			const chatDoc = await getDoc(chatRef);
+
+			if (!chatDoc.exists()) {
+				console.error('Chat not found');
+				return;
+			}
+
+			const chatData = chatDoc.data();
+			const isGroupChat = chatData.chatType === 'group' || chatData.participants?.length > 2;
+
+			if (isGroupChat) {
+				// For group chats, remove user from participants
+				await updateDoc(chatRef, {
+					participants: arrayRemove(user?.firebaseUserId),
+					removedParticipants: arrayUnion(user?.firebaseUserId),
+				});
+
+				// Add system message that user left
+				await addSystemMessage(chatId, 'user_left', user?.username);
+			} else {
+				// For 1-1 chats, remove user from participants and delete their messages
+				await updateDoc(chatRef, {
+					participants: arrayRemove(user?.firebaseUserId),
+					removedParticipants: arrayUnion(user?.firebaseUserId),
+				});
+
+				// Delete user's messages
+				const messagesRef = collection(db, 'chats', chatId, 'messages');
+				const userMessagesQuery = query(messagesRef, where('senderId', '==', user?.firebaseUserId));
+				const userMessagesSnapshot = await getDocs(userMessagesQuery);
+
+				const batch = writeBatch(db);
+				userMessagesSnapshot.docs.forEach((doc) => {
+					batch.delete(doc.ref);
+				});
+				await batch.commit();
+
+				// Add system message that user left (for 1-1 chats, this will be visible to the other user)
+				await addSystemMessage(chatId, 'user_left', user?.username);
+			}
+
+			// Update local state
+			setFilteredChatList((prevChatList) => {
+				const filteredChatListAfterLeave = prevChatList?.filter((chat) => chat.chatId !== chatId);
+				localStorage.setItem('chatList', JSON.stringify(filteredChatListAfterLeave));
+				return filteredChatListAfterLeave;
+			});
+
+			setChatList((prevChatList) => {
+				const filteredChatListAfterLeave = prevChatList?.filter((chat) => chat.chatId !== chatId);
+				localStorage.setItem('chatList', JSON.stringify(filteredChatListAfterLeave));
+				return filteredChatListAfterLeave;
+			});
+
+			// Reset messages and active chat if necessary
+			setMessages([]);
+			setReplyToMessage(null);
+
+			if (activeChatId === chatId) {
+				setActiveChat(null);
+				setActiveChatId('');
+				localStorage.setItem('activeChatId', '');
+			}
+		} catch (error) {
+			console.error('Error leaving chat:', error);
+		}
+
+		// Close dialog
+		setIsDeleteChatDialogOpen(false);
+		setChatIdToDelete('');
 	};
 
 	const handleDeleteMessage = async (messageId: string) => {
@@ -752,7 +1613,10 @@ const Messages = () => {
 		if (searchValue) {
 			const filteredList = chatList?.filter((chat: Chat) =>
 				chat.participants.some(
-					(participant: ParticipantData) => participant.username.includes(searchValue) && participant.firebaseUserId !== user?.firebaseUserId
+					(participant: ParticipantData) =>
+						(participant.username.toLowerCase().includes(searchValue.toLowerCase()) ||
+							chat.groupName?.toLowerCase().includes(searchValue.toLowerCase())) &&
+						participant.firebaseUserId !== user?.firebaseUserId
 				)
 			);
 			setFilteredChatList(filteredList);
@@ -770,272 +1634,75 @@ const Messages = () => {
 	return (
 		<DashboardPagesLayout pageName='Messages' customSettings={{ justifyContent: 'flex-start' }}>
 			<Box sx={{ display: 'flex', width: '100%', height: 'calc(100vh - 4rem)' }}>
-				{!isChatsListVisible && isVerySmallScreen && (
-					<Box
-						sx={{
-							display: 'flex',
-							justifyContent: 'center',
-							height: 'calc(100vh - 4rem)',
-							width: '1.35rem',
-							borderRight: 'solid 0.01rem lightgray',
-						}}
-						onClick={() => {
-							setIsChatsListVisible(true);
-							window.scrollTo({ top: 0, behavior: 'smooth' });
-						}}>
-						<IconButton>
-							<KeyboardArrowRight fontSize='medium' />
-						</IconButton>
-					</Box>
-				)}
-				{(isChatsListVisible || !isVerySmallScreen) && (
-					<Box
-						sx={{
-							display: 'flex',
-							flexDirection: 'column',
-							flex: 3,
-							borderRight: '0.04rem solid lightgray',
-							padding: isMobileSize ? '0 0rem 0 0.5rem' : '0 0rem 0 1rem',
-						}}>
-						<Box sx={{ display: 'flex', margin: '0.5rem auto 0 auto', width: '100%', height: '3rem', paddingTop: '0.5rem' }}>
-							<Box sx={{ flex: 9 }}>
-								<CustomTextField
-									InputProps={{
-										endAdornment: (
-											<InputAdornment position='end'>
-												<Search
-													sx={{ mr: '-0.5rem', color: !user?.hasRegisteredCourse && user?.role !== 'admin' ? 'lightgray' : 'inherit' }}
-													fontSize={isMobileSize ? 'small' : 'medium'}
-												/>
-											</InputAdornment>
-										),
-									}}
-									placeholder='Search Chat by Username'
-									value={searchChatValue}
-									onChange={handleFilterChats}
-									disabled={!user?.hasRegisteredCourse && user?.role !== 'admin'}
-								/>
-							</Box>
-							<Box sx={{ flex: 1 }}>
-								<Tooltip title='Find User' placement='top' arrow>
-									<IconButton
-										disabled={!user?.hasRegisteredCourse && user?.role !== 'admin'}
-										sx={{ ':hover': { backgroundColor: 'transparent' } }}
-										onClick={() => {
-											setAddUserModalOpen(true);
-											setFilteredUsers([]);
-											setSearchValue('');
-										}}>
-										<AddBox fontSize={isMobileSize ? 'small' : 'medium'} />
-									</IconButton>
-								</Tooltip>
-							</Box>
-						</Box>
-
-						<Box sx={{ display: 'flex', flexDirection: 'column', marginTop: '0.5rem', overflow: 'auto', width: '100%' }}>
-							{filteredChatList?.map((chat) => {
-								const otherParticipant = chat.participants.find((participant) => participant.firebaseUserId !== user?.firebaseUserId);
-
-								if (!otherParticipant) return null;
-
-								return (
-									<Box
-										key={`${chat.chatId}-${chat.participants[0].firebaseUserId}`}
-										sx={{
-											'display': 'flex',
-											'border': '0.04rem solid lightgray',
-											'borderRight': 'none',
-											'borderBottom': 'none',
-											'&:last-of-type': {
-												borderBottom: '0.04rem solid lightgray',
-												borderBottomLeftRadius: '0.35rem',
-											},
-
-											'&:first-of-type': {
-												borderTopLeftRadius: '0.35rem',
-											},
-											'backgroundImage': chat.chatId === activeChatId ? `url(/msg-bg.png)` : null,
-											'backgroundRepeat': 'no-repeat',
-											'backgroundSize': 'cover',
-											'backgroundPosition': 'center',
-										}}>
-										<Box
-											sx={{
-												display: 'flex',
-												flexDirection: 'column',
-												alignItems: 'start',
-												padding: isMobileSize ? '0.35rem' : '0.5rem',
-												cursor: 'pointer',
-												flex: 6,
-											}}
-											onClick={() => {
-												handleSetActiveChat(chat);
-												if (isVerySmallScreen) {
-													setIsChatsListVisible(false);
-												}
-											}}>
-											<Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-												<Box sx={{ borderRadius: '100%', marginRight: isMobileSize ? '0.35rem' : '1rem' }}>
-													<Badge
-														color='error'
-														badgeContent={chat.unreadMessagesCount}
-														max={9}
-														sx={{
-															'margin': '0.5rem 0.5rem 0 0',
-															'& .MuiBadge-badge': {
-																fontSize: '0.6rem',
-																height: '1rem',
-																minWidth: '1rem',
-																right: 5,
-																top: 1,
-															},
-														}}>
-														<img
-															src={otherParticipant.imageUrl}
-															alt='profile_img'
-															style={{
-																height: isMobileSize ? '1.75rem' : '2.5rem',
-																width: isMobileSize ? '1.75rem' : '2.5rem',
-																borderRadius: '100%',
-																border: 'solid lightgray 0.1rem',
-															}}
-														/>
-													</Badge>
-												</Box>
-												<Box>
-													<Typography
-														variant='body2'
-														sx={{
-															color: chat.chatId === activeChatId ? theme.textColor?.common.main : null,
-															fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-														}}>
-														{otherParticipant.username}
-													</Typography>
-												</Box>
-											</Box>
-											<Box
-												sx={{
-													marginTop: '0.2rem',
-												}}>
-												<Typography
-													variant='caption'
-													sx={{
-														color: chat.chatId === activeChatId ? theme.textColor?.common.main : 'gray',
-														fontSize: isMobileSize ? '0.6rem' : undefined,
-													}}>
-													{chat.lastMessage.text.length > 20 ? `${chat.lastMessage.text.substring(0, 20)}...` : chat.lastMessage.text}
-												</Typography>
-											</Box>
-										</Box>
-										<Box
-											sx={{
-												display: 'flex',
-												flexDirection: 'column',
-												justifyContent: 'center',
-												alignItems: 'center',
-												flex: 1,
-												mr: isMobileSize ? '0rem' : '0.2rem',
-											}}>
-											<Tooltip title='Delete Chat' placement='top' arrow>
-												<IconButton
-													onClick={() => handleDeleteChat(chat.chatId)}
-													sx={{
-														':hover': {
-															backgroundColor: 'transparent',
-														},
-													}}>
-													<Cancel
-														fontSize='small'
-														sx={{
-															color: chat.chatId === activeChatId ? theme.textColor?.common.main : theme.palette.primary.main,
-															fontSize: isMobileSize ? '0.8rem' : undefined,
-														}}
-													/>
-												</IconButton>
-											</Tooltip>
-											<Typography
-												variant='caption'
-												sx={{
-													color: chat.chatId !== activeChatId ? 'gray' : '#fff',
-													fontSize: isMobileSize ? '0.55rem' : '0.65rem',
-													mt: '0.25rem',
-												}}>
-												{chat.lastMessage.timestamp ? formatMessageTime(chat.lastMessage.timestamp) : null}
-											</Typography>
-										</Box>
-									</Box>
-								);
-							})}
-						</Box>
-					</Box>
-				)}
+				<ChatList
+					filteredChatList={filteredChatList}
+					activeChatId={activeChatId}
+					searchChatValue={searchChatValue}
+					isChatsListVisible={isChatsListVisible}
+					isVerySmallScreen={isVerySmallScreen}
+					isMobileSize={isMobileSize}
+					user={user}
+					onFilterChats={handleFilterChats}
+					onSetActiveChat={handleSetActiveChat}
+					onDeleteChat={handleDeleteChat}
+					onAddUserClick={() => {
+						setAddUserModalOpen(true);
+						setFilteredUsers([]);
+						setSearchValue('');
+					}}
+					onCreateGroupClick={async () => {
+						// Ensure blocked users are fetched before opening modal
+						await fetchAllBlockedUsers();
+						// Clear active chat when creating a new group to avoid conflicts
+						setActiveChat(null);
+						setActiveChatId('');
+						setCreateGroupModalOpen(true);
+						setGroupName('');
+						setSelectedGroupUsers([]);
+						setGroupSearchValue('');
+						setGroupImageUrl('');
+						setEnterGroupImageUrl(false);
+					}}
+					onChatsListToggle={() => {
+						setIsChatsListVisible(true);
+						window.scrollTo({ top: 0, behavior: 'smooth' });
+					}}
+					getChatDisplayName={getChatDisplayName}
+					getChatDisplayImage={getChatDisplayImage}
+					isGroupChat={isGroupChat}
+				/>
 
 				{/* Message Display */}
 				{(!isChatsListVisible || !isVerySmallScreen) && (
 					<Box sx={{ display: 'flex', flexDirection: 'column', flex: 10, height: 'calc(100vh - 4rem)', marginLeft: '-0.04rem' }}>
-						<Box
-							sx={{
-								display: 'flex',
-								alignItems: 'center',
-								borderBottom: '0.04rem solid lightgray',
-								width: '100%',
-								height: '4rem',
-								flexShrink: 0,
-							}}>
-							{activeChat && (
-								<Box sx={{ display: 'flex', alignItems: 'center', margin: isMobileSize ? '0 0.5rem' : '0 1.5rem', width: '100%' }}>
-									{activeChat.participants
-										?.filter((participant) => participant.firebaseUserId !== user?.firebaseUserId)
-										?.map((otherParticipant) => (
-											<Box
-												key={otherParticipant.firebaseUserId}
-												sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-												<Box sx={{ display: 'flex', alignItems: 'center' }}>
-													<Box sx={{ borderRadius: '100%', marginRight: '1rem' }}>
-														<img
-															src={otherParticipant.imageUrl}
-															alt='profile_img'
-															style={{
-																height: isMobileSize ? '2.25rem' : '3rem',
-																width: isMobileSize ? '2.25rem' : '3rem',
-																borderRadius: '100%',
-																border: 'solid lightgray 0.1rem',
-															}}
-														/>
-													</Box>
-													<Box>
-														<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-															{otherParticipant.username}
-														</Typography>
-													</Box>
-												</Box>
-												<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-													<IconButton
-														size='small'
-														onClick={() => handleBlockUnblockUser(otherParticipant.firebaseUserId)}
-														sx={{ ':hover': { backgroundColor: 'transparent' } }}>
-														{blockedUsers.includes(otherParticipant.firebaseUserId) ? (
-															<Tooltip title='Unblock User' placement='top' arrow>
-																<PersonOff color='error' fontSize={isMobileSize ? 'small' : 'medium'} />
-															</Tooltip>
-														) : (
-															<Tooltip title='Block User' placement='top' arrow>
-																<Person color='success' fontSize={isMobileSize ? 'small' : 'medium'} />
-															</Tooltip>
-														)}
-													</IconButton>
-
-													{isBlockingUser && (
-														<Typography sx={{ fontSize: isMobileSize ? '0.6rem' : '0.75rem' }}>
-															{isVerySmallScreen ? 'Blocked' : 'You have blocked this user'}
-														</Typography>
-													)}
-												</Box>
-											</Box>
-										))}
-								</Box>
-							)}
-						</Box>
+						<ChatHeader
+							activeChat={activeChat}
+							user={user}
+							isMobileSize={isMobileSize}
+							isVerySmallScreen={isVerySmallScreen}
+							isBlockingUser={isBlockingUser || false}
+							blockedUsers={blockedUsers}
+							getChatDisplayName={getChatDisplayName}
+							getChatDisplayImage={getChatDisplayImage}
+							isGroupChat={isGroupChat}
+							onBlockUnblockUser={handleBlockUnblockUser}
+							onEditGroupChat={() => {
+								if (activeChat && isGroupChat(activeChat)) {
+									setGroupName(activeChat.groupName || '');
+									setGroupImageUrl(activeChat.groupImageUrl || '');
+									setSelectedGroupUsers([]);
+									setGroupSearchValue('');
+									setEnterGroupImageUrl(false);
+									setRemovedMembers([]); // Reset removed members when opening edit modal
+									setEditGroupModalOpen(true);
+								}
+							}}
+							onViewGroupMembers={() => {
+								if (activeChat && isGroupChat(activeChat)) {
+									setMembersModalOpen(true);
+								}
+							}}
+						/>
 
 						<Box
 							sx={{
@@ -1052,175 +1719,21 @@ const Messages = () => {
 								position: 'relative',
 								borderLeft: 'none',
 							}}>
-							{activeChat ? (
-								messages
-									?.filter((msg) => {
-										const blockInfo = activeChat?.blockedUsers?.[msg.senderId]; // Get block info for the sender
-										const messageTimestamp = new Date(msg.timestamp);
-
-										// If the current user is the sender, show their own messages
-										if (msg.senderId === user?.firebaseUserId) {
-											return true;
-										}
-
-										// If the sender is blocked and the message was sent during the blocked period, hide it
-										if (blockInfo && blockInfo.blockedSince) {
-											const blockedSince = new Date(blockInfo.blockedSince);
-											const blockedUntil = blockInfo.blockedUntil ? new Date(blockInfo.blockedUntil) : null;
-
-											// Check if the message was sent after the block started and during the blocked period
-											if (messageTimestamp >= blockedSince && (!blockedUntil || messageTimestamp <= blockedUntil)) {
-												return false; // Filter out the message
-											}
-										}
-
-										// Show messages sent before block or after unblock
-										return true;
-									})
-									?.map((msg) => (
-										<Box
-											key={msg.id}
-											sx={{
-												display: 'flex',
-												flexDirection: 'column',
-												justifyContent: 'flex-end',
-												alignItems: 'center',
-												width: '100%',
-											}}>
-											<Box
-												ref={(el) => {
-													messageRefs.current[msg.id] = el as HTMLDivElement | null;
-												}}
-												sx={{
-													display: 'flex',
-													flexDirection: msg.senderId === user?.firebaseUserId ? 'row-reverse' : 'row',
-													justifyContent: 'flex-start',
-													alignItems: 'center',
-													width: '100%',
-													borderRadius: '0.35rem',
-												}}>
-												<Box
-													sx={{
-														display: 'flex',
-														flexDirection: 'column',
-														padding: '0.5rem 1rem',
-														borderRadius: '0.75rem',
-														margin: '0.5rem 0',
-														transition: 'background-color 0.5s ease',
-														backgroundColor: msg.senderId === user?.firebaseUserId ? '#DCF8C6' : '#FFF',
-														alignSelf: msg.senderId === user?.firebaseUserId ? 'flex-end' : 'flex-start',
-														maxWidth: '60%',
-														minWidth: '15%',
-														wordWrap: 'break-word',
-														wordBreak: 'break-all',
-													}}>
-													{msg.replyTo && (
-														<Box
-															sx={{
-																backgroundColor: '#f1f1f1',
-																borderLeft: '0.25rem solid #aaa',
-																padding: '0.5rem',
-																marginBottom: '0.5rem',
-																borderRadius: '0.25rem',
-																cursor: 'pointer',
-															}}
-															onClick={() => scrollToOriginalMessage(msg.replyTo)}>
-															<Typography sx={{ color: 'gray', fontSize: isMobileSize ? '0.6rem' : '0.75rem' }}>{msg.quotedText}</Typography>
-														</Box>
-													)}
-
-													{msg.imageUrl ? (
-														<img
-															src={msg.imageUrl}
-															alt='uploaded'
-															style={{
-																height: isMobileSize ? '4rem' : '6rem',
-																maxHeight: isMobileSize ? '6rem' : '8rem',
-																objectFit: 'contain',
-																maxWidth: '100%',
-																borderRadius: '0.35rem',
-																cursor: 'pointer',
-															}}
-															onClick={() => setZoomedImage(msg.imageUrl)}
-														/>
-													) : (
-														<Box sx={{ alignSelf: 'flex-start' }}>
-															<Typography sx={{ fontSize: '0.85rem', wordWrap: 'break-word', whiteSpace: 'pre-wrap' }}>
-																{renderMessageWithEmojis(msg.text, isMobileSize ? '1.15rem' : '1.75rem', isMobileSize)}
-															</Typography>
-														</Box>
-													)}
-
-													<Box sx={{ alignSelf: 'flex-end' }}>
-														<Typography variant='caption' sx={{ fontSize: isMobileSize ? '0.5rem' : '0.65rem', color: 'gray' }}>
-															{formatMessageTime(msg.timestamp)}
-														</Typography>
-													</Box>
-												</Box>
-
-												<Box>
-													<Tooltip title='Reply' placement='top' arrow>
-														<IconButton
-															size='small'
-															onClick={() => handleReplyMessage(msg)}
-															sx={{
-																':hover': {
-																	backgroundColor: 'transparent',
-																},
-															}}>
-															<TurnLeftOutlined sx={{ fontSize: isMobileSize ? '0.95rem' : '1.25rem' }} />
-														</IconButton>
-													</Tooltip>
-												</Box>
-												<Box
-													sx={{
-														marginRight: isMobileSize ? '-0.35rem' : 0,
-													}}>
-													{msg.senderId === user?.firebaseUserId && (
-														<Tooltip title='Delete' placement='top' arrow>
-															<IconButton
-																size='small'
-																onClick={() => {
-																	setIsDeleteMessageOpen(true);
-																	setMessageIdToDelete(msg.id);
-																}}
-																sx={{
-																	':hover': {
-																		backgroundColor: 'transparent',
-																	},
-																}}>
-																<Cancel sx={{ fontSize: isMobileSize ? '0.9rem' : '1.15rem' }} />
-															</IconButton>
-														</Tooltip>
-													)}
-												</Box>
-											</Box>
-										</Box>
-									))
-							) : (
-								<Box
-									sx={{
-										display: 'flex',
-										flexDirection: 'column',
-										justifyContent: 'center',
-										alignItems: 'center',
-										textAlign: 'center',
-										height: '100%',
-										width: '100%',
-									}}>
-									<Box>
-										<Chat sx={{ color: theme.textColor?.common.main, fontSize: isMobileSize ? '3rem' : '6rem', mb: '1rem' }} />
-									</Box>
-									<Box>
-										<Typography variant={isMobileSize ? 'body2' : 'body1'} sx={{ color: theme.textColor?.common.main }}>
-											{user?.hasRegisteredCourse || user?.role === 'admin'
-												? 'Select an existing chat or start a new chat by adding a user'
-												: 'To use messages, you must first register for a paid platform course'}
-										</Typography>
-									</Box>
-								</Box>
-							)}
-
+							<MessageList
+								messages={messages}
+								activeChat={activeChat}
+								user={user}
+								isMobileSize={isMobileSize}
+								messageRefs={messageRefs}
+								onReplyMessage={handleReplyMessage}
+								onDeleteMessage={(messageId) => {
+									setIsDeleteMessageOpen(true);
+									setMessageIdToDelete(messageId);
+								}}
+								onZoomImage={setZoomedImage}
+								onScrollToOriginalMessage={scrollToOriginalMessage}
+								isGroupChat={isGroupChat}
+							/>
 							<div ref={messagesEndRef} />
 						</Box>
 
@@ -1232,7 +1745,7 @@ const Messages = () => {
 							}}
 							maxWidth='xs'
 							title='Delete Message'
-							content='Are you sure you want to delete this message?'>
+							content={`Are you sure you want to delete this message?`}>
 							<CustomDialogActions
 								deleteBtn
 								deleteBtnText='Delete'
@@ -1286,176 +1799,48 @@ const Messages = () => {
 								flexShrink: 0,
 								position: 'relative',
 							}}>
-							{/* Upload limit info - only show for non-admin users */}
-							{uploadInfo && user?.role !== 'admin' && getRemainingImageUploads() <= 5 && (
-								<Box
-									sx={{
-										display: 'flex',
-										alignItems: 'center',
-										gap: 1,
-										mb: 1,
-										p: 1,
-										borderRadius: 1,
-										backgroundColor: getRemainingImageUploads() <= 5 ? 'success.light' : 'error.light',
-										color: getRemainingImageUploads() <= 5 ? 'success.dark' : 'error.dark',
-										position: 'absolute',
-										top: '-3rem',
-										left: '50%',
-										transform: 'translateX(-50%)',
-										zIndex: 10,
-									}}>
-									<Info fontSize='small' />
-									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : undefined }}>
-										{getRemainingImageUploads() <= 0 ? `Daily limit reached` : `${getRemainingImageUploads()} of 50 image uploads remaining today`}
-										{getRemainingImageUploads() > 0 && ` • Resets ${getFormattedResetTime()}`}
-									</Typography>
-								</Box>
-							)}
-
-							<input
-								type='file'
-								accept='image/*'
-								onChange={(e) => {
+							<MessageInput
+								currentMessage={currentMessage}
+								imageUpload={imageUpload}
+								imagePreview={imagePreview || ''}
+								showPicker={showPicker}
+								isUploading={isUploading}
+								isBlockedUser={isBlockedUser}
+								isBlockingUser={isBlockingUser || false}
+								activeChat={activeChat}
+								user={user}
+								isMobileSize={isMobileSize}
+								isRotatedMedium={isRotatedMedium}
+								isVerySmallScreen={isVerySmallScreen}
+								isRotated={isRotated}
+								isLargeImgMessageOpen={isLargeImgMessageOpen || false}
+								uploadInfo={uploadInfo}
+								getRemainingImageUploads={getRemainingImageUploads}
+								getFormattedResetTime={getFormattedResetTime}
+								hasLeftParticipants={hasLeftParticipants}
+								onMessageChange={(e) => {
+									if (imageUpload) {
+										setCurrentMessage('');
+									} else {
+										setCurrentMessage(e.target.value);
+									}
+									resetImageUpload();
+								}}
+								onImageChange={(e) => {
 									handleImageChange(e);
 									setCurrentMessage('');
 								}}
-								style={{ display: 'none' }}
-								id='image-upload'
-								disabled={
-									isUploading ||
-									isBlockedUser ||
-									isBlockingUser ||
-									!activeChat ||
-									(user?.role !== 'admin' && (!checkCanUploadImage() || !checkCanUploadAudio()))
-								}
+								onEmojiSelect={handleEmojiSelect}
+								onSendMessage={handleSendMessage}
+								onTogglePicker={() => setShowPicker(!showPicker)}
+								onResetImageUpload={resetImageUpload}
+								onCloseLargeImageAlert={() => {
+									setIsLargeImgMessageOpen(false);
+									resetImageUpload();
+								}}
+								checkCanUploadImage={checkCanUploadImage}
+								checkCanUploadAudio={checkCanUploadAudio}
 							/>
-							<label htmlFor='image-upload'>
-								<IconButton
-									component='span'
-									disabled={
-										isUploading ||
-										isBlockedUser ||
-										isBlockingUser ||
-										!activeChat ||
-										(user?.role !== 'admin' && (!checkCanUploadImage() || !checkCanUploadAudio()))
-									}
-									sx={{
-										':hover': {
-											backgroundColor: 'transparent',
-										},
-									}}>
-									<Image fontSize={isMobileSize ? 'small' : 'medium'} />
-								</IconButton>
-							</label>
-
-							<Box sx={{ width: '100%', mt: '0.5rem', position: 'relative' }}>
-								<CustomTextField
-									fullWidth
-									placeholder={
-										imageUpload
-											? ''
-											: isBlockedUser
-												? 'Can not send message since you are blocked'
-												: isBlockingUser
-													? 'Can not send message to a blocked contact'
-													: 'Type a message...'
-									}
-									multiline
-									rows={isRotatedMedium ? 1 : 2}
-									value={currentMessage}
-									onChange={(e) => {
-										if (imageUpload) {
-											setCurrentMessage('');
-										} else {
-											setCurrentMessage(e.target.value);
-										}
-										resetImageUpload();
-									}}
-									InputProps={{
-										sx: {
-											padding: '0.5rem 1rem',
-										},
-										endAdornment: (
-											<InputAdornment position='end'>
-												<IconButton
-													onClick={() => setShowPicker(!showPicker)}
-													edge='end'
-													disabled={isUploading || isBlockedUser || isBlockingUser || !activeChat}>
-													<InsertEmoticon color={showPicker ? 'success' : 'disabled'} sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
-												</IconButton>
-											</InputAdornment>
-										),
-										inputProps: {
-											maxLength: 1000,
-										},
-									}}
-									sx={{ overflowY: 'auto' }}
-									disabled={!!imageUpload || isBlockedUser || isBlockingUser || !activeChat}
-								/>
-
-								<Snackbar
-									open={isLargeImgMessageOpen}
-									autoHideDuration={3000}
-									anchorOrigin={{ vertical, horizontal }}
-									sx={{ mt: isMobileSize ? '3rem' : '5rem' }}
-									onClose={() => {
-										setIsLargeImgMessageOpen(false);
-										resetImageUpload();
-									}}>
-									<Alert
-										severity='error'
-										variant='filled'
-										sx={{ width: isMobileSize ? '90%' : '100%', fontSize: isMobileSize ? '0.8rem' : undefined, textAlign: 'center' }}>
-										Image size exceeds the limit of {maxSizeInMB} MB
-									</Alert>
-								</Snackbar>
-
-								{imagePreview && (
-									<Box
-										sx={{
-											display: 'flex',
-											position: 'absolute',
-											bottom: '1rem',
-											left: isRotatedMedium ? '0.5rem' : '1rem',
-											maxHeight: isRotatedMedium ? '2rem' : isSmallScreen ? '3.25rem' : '3.75rem',
-										}}>
-										<img
-											src={imagePreview}
-											alt='Preview'
-											style={{ maxHeight: isRotatedMedium ? '2rem' : isSmallScreen ? '3.25rem' : '3.75rem', objectFit: 'contain' }}
-										/>
-										<Tooltip title='Remove Preview' placement='right' arrow>
-											<IconButton size='small' onClick={resetImageUpload} sx={{ ':hover': { backgroundColor: 'transparent' } }}>
-												<Cancel fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />
-											</IconButton>
-										</Tooltip>
-									</Box>
-								)}
-							</Box>
-
-							{showPicker && !(isUploading || isBlockedUser || isBlockingUser || !activeChat) && (
-								<Box
-									sx={{
-										position: 'absolute',
-										bottom: isVerySmallScreen ? '2.75rem' : isRotated ? '-2.75rem' : isRotatedMedium ? '-1rem' : '6rem',
-										right: isVerySmallScreen ? '1rem' : isRotated ? '-0.5rem' : isRotatedMedium ? '1rem' : '6rem',
-										zIndex: 10,
-										transform: isVerySmallScreen ? 'scale(0.8)' : isRotated ? 'scale(0.55)' : isRotatedMedium ? 'scale(0.65)' : 'scale(1)',
-									}}>
-									<Picker data={data} onEmojiSelect={handleEmojiSelect} theme='dark' />
-								</Box>
-							)}
-
-							<IconButton
-								onClick={handleSendMessage}
-								disabled={isUploading || isBlockedUser || isBlockingUser || !activeChat}
-								sx={{
-									':hover': {
-										backgroundColor: 'transparent',
-									},
-								}}>
-								<Send fontSize='small' />
-							</IconButton>
 						</Box>
 					</Box>
 				)}
@@ -1467,24 +1852,222 @@ const Messages = () => {
 				closeModal={() => {
 					setAddUserModalOpen(false);
 					setSearchValue('');
+					setErrorMsg('');
 				}}
 				title='Find User'
 				maxWidth='sm'>
-				<Box sx={{ display: 'flex', justifyContent: 'center', width: '100%', mb: filteredUsers.length === 0 ? '1.5rem' : '-1rem' }}>
+				<Box
+					sx={{
+						display: 'flex',
+						flexDirection: 'column',
+						justifyContent: 'center',
+						alignItems: 'center',
+						width: '100%',
+						mb: filteredUsers.length === 0 ? '1.5rem' : '-1rem',
+					}}>
 					<UserSearchSelect
-						users={user?.role === 'admin' ? users : users.filter((user) => user.hasRegisteredCourse || user.role === 'admin')}
+						key={`search-${errorMsg ? 'error' : 'normal'}`}
+						context='messages'
+						userRole={user?.role as 'admin' | 'student'}
 						value={searchValue}
-						onChange={setSearchValue}
-						onSelect={handleUserSelection}
+						onChange={(value) => {
+							setSearchValue(value);
+							// Clear error message when user starts typing
+							if (errorMsg) {
+								setErrorMsg('');
+							}
+						}}
+						onSelect={handleSearchUserSelection}
 						currentUserId={user?.firebaseUserId}
-						placeholder='Search users by username or email address'
+						blockedUsers={globalBlockedUsers}
+						placeholder={user?.role === 'admin' ? 'Search by username, name, or email' : 'Search users by username or name'}
 						sx={{ width: '80%' }}
 						listSx={{
-							width: isMobileSize ? '75%' : '65%',
-							paddingTop: isMobileSize ? '0.5rem' : filteredUsers.length < 6 ? '0rem' : '2.5rem',
+							margin: '-0.85rem auto 0 0.5rem',
+							width: isMobileSize ? '90%' : '70%',
+							paddingTop: isMobileSize ? '0' : filteredUsers.length < 6 ? '0rem' : '2.5rem',
 						}}
 					/>
+					{errorMsg && (
+						<Box sx={{ mt: '-1rem', width: '90%' }}>
+							<CustomErrorMessage sx={{ fontSize: '0.75rem' }}>{errorMsg}</CustomErrorMessage>
+						</Box>
+					)}
 				</Box>
+			</CustomDialog>
+
+			<GroupChatModal
+				createGroupModalOpen={createGroupModalOpen}
+				groupName={groupName}
+				groupImageUrl={groupImageUrl}
+				enterGroupImageUrl={enterGroupImageUrl}
+				selectedGroupUsers={selectedGroupUsers}
+				groupSearchValue={groupSearchValue}
+				user={user}
+				blockedUsers={globalBlockedUsers}
+				onCloseModal={() => {
+					setCreateGroupModalOpen(false);
+					setGroupName('');
+					setSelectedGroupUsers([]);
+					setGroupSearchValue('');
+					setGroupImageUrl('');
+					setEnterGroupImageUrl(false);
+				}}
+				onGroupNameChange={(e) => setGroupName(e.target.value)}
+				onGroupImageUpload={(url) => setGroupImageUrl(url)}
+				onGroupImageUrlChange={(e) => setGroupImageUrl(e.target.value)}
+				onEnterGroupImageUrlChange={setEnterGroupImageUrl}
+				onGroupUserSelection={handleGroupUserSelection}
+				onRemoveGroupUser={removeGroupUser}
+				onGroupSearchChange={setGroupSearchValue}
+				onCreateGroupChat={createGroupChat}
+			/>
+
+			<GroupChatEditModal
+				editGroupModalOpen={editGroupModalOpen}
+				activeChat={activeChat}
+				groupName={groupName}
+				groupImageUrl={groupImageUrl}
+				selectedGroupUsers={selectedGroupUsers}
+				groupSearchValue={groupSearchValue}
+				removedMembers={removedMembers}
+				user={user}
+				blockedUsers={globalBlockedUsers}
+				onCloseModal={() => {
+					setEditGroupModalOpen(false);
+					setGroupName('');
+					setSelectedGroupUsers([]);
+					setGroupSearchValue('');
+					setGroupImageUrl('');
+					setEnterGroupImageUrl(false);
+					setRemovedMembers([]); // Reset removed members on cancel/close
+				}}
+				onGroupNameChange={(e) => setGroupName(e.target.value)}
+				onGroupImageUpload={(url) => setGroupImageUrl(url)}
+				onGroupImageUrlChange={(e) => setGroupImageUrl(e.target.value)}
+				onGroupUserSelection={handleGroupUserSelection}
+				onRemoveGroupUser={removeGroupUser}
+				onRemoveExistingMember={removeExistingGroupMember}
+				onRestoreExistingMember={restoreExistingGroupMember}
+				onGroupSearchChange={setGroupSearchValue}
+				onUpdateGroupChat={updateGroupChat}
+				onDeleteGroupChat={deleteGroupChat}
+			/>
+
+			<GroupMembersModal membersModalOpen={membersModalOpen} activeChat={activeChat} onCloseModal={() => setMembersModalOpen(false)} />
+
+			{/* Delete Chat Dialog */}
+			<CustomDialog
+				openModal={isDeleteChatDialogOpen}
+				closeModal={() => {
+					setIsDeleteChatDialogOpen(false);
+					setChatIdToDelete('');
+				}}
+				title='Remove Chat'
+				maxWidth='sm'>
+				<Box sx={{ p: 2, mt: '-1rem' }}>
+					<Typography variant='body2' sx={{ mb: 2, textAlign: 'center', fontSize: isMobileSize ? '0.75rem' : undefined }}>
+						Choose how to remove this chat:
+					</Typography>
+
+					<Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+						{/* Hide Chat Option - Available for all users */}
+						<Box
+							sx={{
+								'p': 2,
+								'border': '1px solid #e0e0e0',
+								'borderRadius': 1,
+								'cursor': 'pointer',
+								'transition': 'background-color 0.3s ease',
+								'&:hover': {
+									backgroundColor: 'lightblue',
+								},
+							}}
+							onClick={() => handleHideChat(chatIdToDelete)}>
+							<Typography variant='h6' sx={{ mb: 1, color: 'primary.main', fontSize: isMobileSize ? '0.8rem' : undefined }}>
+								Hide Chat
+							</Typography>
+							<Typography variant='body2' sx={{ color: 'text.secondary', lineHeight: '1.7', fontSize: isMobileSize ? '0.7rem' : undefined }}>
+								Chat will be hidden from your list but can be restored later. You can still receive messages from this chat.
+							</Typography>
+							{activeChat?.chatType !== 'group' && (
+								<Typography
+									variant='body2'
+									sx={{ color: 'text.secondary', lineHeight: '1.7', mt: '0.5rem', fontSize: isMobileSize ? '0.7rem' : undefined }}>
+									You can also resume chatting after using "Find User" dialog.
+								</Typography>
+							)}
+						</Box>
+
+						{/* Leave Chat Option - Available for learners, not for admins in group chats */}
+						{(() => {
+							const chatToDelete = chatList.find((chat) => chat.chatId === chatIdToDelete);
+							const isGroupChat = chatToDelete?.chatType === 'group';
+							const isAdmin = user?.role === 'admin';
+
+							// Show leave option for learners, or for admins in 1-1 chats
+							if (!isAdmin || !isGroupChat) {
+								return (
+									<Box
+										sx={{
+											'p': 2,
+											'border': '1px solid #ff6b6b',
+											'borderRadius': 1,
+											'cursor': 'pointer',
+											'transition': 'background-color 0.3s ease',
+											'&:hover': {
+												backgroundColor: '#FFB6C1',
+											},
+										}}
+										onClick={() => handleLeaveChat(chatIdToDelete)}>
+										<Typography variant='h6' sx={{ mb: 1, color: 'error.main', fontSize: isMobileSize ? '0.8rem' : undefined }}>
+											Leave Chat Permanently
+										</Typography>
+										<Typography variant='body2' sx={{ color: 'text.secondary', lineHeight: '1.7', fontSize: isMobileSize ? '0.7rem' : undefined }}>
+											You will be removed from this conversation. Your messages will be deleted and you won't receive future messages from this chat.
+										</Typography>
+										{!isGroupChat && (
+											<Typography
+												variant='caption'
+												sx={{
+													mt: 2,
+													color: 'text.secondary',
+													textAlign: 'center',
+													display: 'block',
+													lineHeight: '1.7',
+													fontSize: isMobileSize ? '0.65rem' : undefined,
+												}}>
+												Note: You can start a new conversation with this person later if neither of you has blocked the other.
+											</Typography>
+										)}
+									</Box>
+								);
+							}
+							return null;
+						})()}
+					</Box>
+				</Box>
+			</CustomDialog>
+
+			{/* Delete Group Chat Confirmation Dialog */}
+			<CustomDialog openModal={isDeleteGroupDialogOpen} closeModal={() => setIsDeleteGroupDialogOpen(false)} title='Delete Group Chat' maxWidth='xs'>
+				<DialogContent>
+					<Box sx={{ mt: '-0rem', p: 1 }}>
+						<Typography variant='body2' sx={{ mb: 2 }}>
+							Are you sure you want to delete the group "{activeChat?.groupName}"?
+						</Typography>
+						<Typography variant='body2' sx={{ textAlign: 'center', color: 'error.main', fontSize: '0.75rem' }}>
+							This action cannot be undone and will permanently delete all messages and data for all participants.
+						</Typography>
+					</Box>
+				</DialogContent>
+				<CustomDialogActions
+					deleteBtn
+					deleteBtnText='Delete Group'
+					onCancel={() => setIsDeleteGroupDialogOpen(false)}
+					onDelete={confirmDeleteGroupChat}
+					actionSx={{ mb: '0.5rem' }}
+				/>
 			</CustomDialog>
 		</DashboardPagesLayout>
 	);
