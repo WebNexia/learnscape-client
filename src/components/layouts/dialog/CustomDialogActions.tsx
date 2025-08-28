@@ -20,6 +20,7 @@ interface CustomDialogActionsProps {
 	submitBtnType?: 'submit' | 'button' | 'reset' | undefined;
 	disableBtn?: boolean;
 	disableCancelBtn?: boolean;
+	showCancelBtn?: boolean;
 }
 
 const CustomDialogActions = ({
@@ -37,6 +38,7 @@ const CustomDialogActions = ({
 	submitBtnType,
 	disableBtn = false,
 	disableCancelBtn = false,
+	showCancelBtn = true,
 }: CustomDialogActionsProps) => {
 	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
 
@@ -48,18 +50,20 @@ const CustomDialogActions = ({
 				...actionSx,
 			}}>
 			{children}
-			<CustomCancelButton
-				onClick={onCancel}
-				sx={{
-					margin: '0 0.5rem 0.5rem 0',
-					height: isMobileSize ? '1.5rem' : '2.15rem',
-					fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-					cursor: disableCancelBtn ? 'not-allowed' : 'pointer',
-					pointerEvents: disableCancelBtn ? 'none' : 'auto',
-					...cancelBtnSx,
-				}}>
-				{cancelBtnText}
-			</CustomCancelButton>
+			{showCancelBtn && (
+				<CustomCancelButton
+					onClick={onCancel}
+					sx={{
+						margin: '0 0.5rem 0.5rem 0',
+						height: isMobileSize ? '1.5rem' : '2.15rem',
+						fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+						cursor: disableCancelBtn ? 'not-allowed' : 'pointer',
+						pointerEvents: disableCancelBtn ? 'none' : 'auto',
+						...cancelBtnSx,
+					}}>
+					{cancelBtnText}
+				</CustomCancelButton>
+			)}
 			{!deleteBtn ? (
 				<CustomSubmitButton
 					type={submitBtnType}

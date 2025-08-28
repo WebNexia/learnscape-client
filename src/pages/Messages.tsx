@@ -1631,6 +1631,185 @@ const Messages = () => {
 		debouncedFilterChats(newSearchValue.toLowerCase()); // Call the debounced function with the new value
 	};
 
+	const downloadChatHistory = async () => {
+		if (!activeChat || !messages.length) {
+			console.error('No active chat or messages to download');
+			return;
+		}
+
+		try {
+			// Prepare chat information
+			const chatInfo = {
+				chatId: activeChat.chatId,
+				chatType: activeChat.chatType || '1-1',
+				groupName: activeChat.groupName || '',
+				participants: activeChat.participants.map((p) => ({
+					username: p.username,
+					role: p.role,
+					imageUrl: p.imageUrl,
+				})),
+				exportDate: new Date().toISOString(),
+				exportedBy: user?.username || 'Unknown',
+			};
+
+			// Prepare messages data
+			const formattedMessages = messages.map((msg) => ({
+				sender: activeChat.participants.find((p) => p.firebaseUserId === msg.senderId)?.username || msg.senderId,
+				text: msg.text,
+				timestamp: msg.timestamp.toISOString(),
+				type: msg.imageUrl ? 'image' : msg.videoUrl ? 'video' : 'text',
+				imageUrl: msg.imageUrl || '',
+				videoUrl: msg.videoUrl || '',
+				isSystemMessage: msg.isSystemMessage || false,
+				replyTo: msg.replyTo || '',
+				quotedText: msg.quotedText || '',
+			}));
+
+			// Create export data structure
+			const exportData = {
+				chatInfo,
+				messages: formattedMessages,
+				metadata: {
+					totalMessages: messages.length,
+					dateRange: {
+						firstMessage: messages[0]?.timestamp.toISOString(),
+						lastMessage: messages[messages.length - 1]?.timestamp.toISOString(),
+					},
+					exportFormat: 'JSON',
+					version: '1.0',
+				},
+			};
+
+			// Create and download file
+			const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+				type: 'application/json',
+			});
+
+			const url = URL.createObjectURL(blob);
+			const a = document.createElement('a');
+			a.href = url;
+
+			// Generate filename
+			const chatName = activeChat.groupName || activeChat.participants.find((p) => p.firebaseUserId !== user?.firebaseUserId)?.username || 'chat';
+			const timestamp = new Date().toISOString().split('T')[0];
+			a.download = `chat-history-${chatName}-${timestamp}.json`;
+
+			document.body.appendChild(a);
+			a.click();
+			document.body.removeChild(a);
+			URL.revokeObjectURL(url);
+
+			console.log('Chat history downloaded successfully');
+		} catch (error) {
+			console.error('Error downloading chat history:', error);
+		}
+	};
+
+	const downloadChatHistoryAsPDF = async () => {
+		if (!activeChat || !messages.length) {
+			console.error('No active chat or messages to download');
+			return;
+		}
+
+		try {
+			// Create PDF content
+			const chatName = activeChat.groupName || activeChat.participants.find((p) => p.firebaseUserId !== user?.firebaseUserId)?.username || 'chat';
+
+			let pdfContent = `CHAT HISTORY EXPORT\n`;
+			pdfContent += `==================\n\n`;
+			pdfContent += `Chat: ${chatName}\n`;
+			pdfContent += `Type: ${activeChat.chatType || '1-1'}\n`;
+			pdfContent += `Participants: ${activeChat.participants.map((p) => p.username).join(', ')}\n`;
+			pdfContent += `Export Date: ${new Date().toLocaleString()}\n`;
+			pdfContent += `Total Messages: ${messages.length}\n\n`;
+			pdfContent += `MESSAGES\n`;
+			pdfContent += `========\n\n`;
+
+			// Add messages
+			messages.forEach((msg, index) => {
+				const sender = activeChat.participants.find((p) => p.firebaseUserId === msg.senderId)?.username || msg.senderId;
+				const timestamp = msg.timestamp.toLocaleString();
+				const messageType = msg.imageUrl ? '[IMAGE]' : msg.videoUrl ? '[VIDEO]' : '';
+
+				pdfContent += `${index + 1}. ${sender} (${timestamp})\n`;
+				if (msg.isSystemMessage) {
+					pdfContent += `   [SYSTEM] ${msg.text}\n`;
+				} else {
+					pdfContent += `   ${msg.text} ${messageType}\n`;
+				}
+				if (msg.replyTo) {
+					pdfContent += `   [Reply to message: ${msg.quotedText}]\n`;
+				}
+				pdfContent += `\n`;
+			});
+
+			// Create PDF using browser print functionality
+			const printWindow = window.open('', '_blank');
+			if (printWindow) {
+				printWindow.document.write(`
+					<!DOCTYPE html>
+					<html>
+					<head>
+						<title>Chat History - ${chatName}</title>
+						<style>
+							body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+							.header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 10px; }
+							.message { margin-bottom: 15px; padding: 10px; border-left: 3px solid #007bff; background-color: #f8f9fa; }
+							.sender { font-weight: bold; color: #007bff; }
+							.timestamp { color: #666; font-size: 0.9em; }
+							.system { border-left-color: #dc3545; background-color: #f8d7da; }
+							.reply { font-style: italic; color: #666; margin-top: 5px; }
+							@media print { body { margin: 0; } }
+						</style>
+					</head>
+					<body>
+						<div class="header">
+							<h1>Chat History Export</h1>
+							<p><strong>Chat:</strong> ${chatName}</p>
+							<p><strong>Type:</strong> ${activeChat.chatType || '1-1'}</p>
+							<p><strong>Participants:</strong> ${activeChat.participants.map((p) => p.username).join(', ')}</p>
+							<p><strong>Export Date:</strong> ${new Date().toLocaleString()}</p>
+							<p><strong>Total Messages:</strong> ${messages.length}</p>
+						</div>
+						
+						<div class="messages">
+							${messages
+								.map((msg, _) => {
+									const sender = activeChat.participants.find((p) => p.firebaseUserId === msg.senderId)?.username || msg.senderId;
+									const timestamp = msg.timestamp.toLocaleString();
+									const messageType = msg.imageUrl ? '[IMAGE]' : msg.videoUrl ? '[VIDEO]' : '';
+									const isSystem = msg.isSystemMessage;
+									const replyText = msg.replyTo ? msg.quotedText : '';
+
+									return `
+									<div class="message ${isSystem ? 'system' : ''}">
+										<div class="sender">${sender}</div>
+										<div class="timestamp">${timestamp}</div>
+										<div class="text">${isSystem ? '[SYSTEM] ' : ''}${msg.text} ${messageType}</div>
+										${replyText ? `<div class="reply">[Reply to: ${replyText}]</div>` : ''}
+									</div>
+								`;
+								})
+								.join('')}
+						</div>
+					</body>
+					</html>
+				`);
+				printWindow.document.close();
+
+				// Wait for content to load then print
+				setTimeout(() => {
+					printWindow.print();
+					printWindow.close();
+				}, 500);
+			}
+
+			console.log('PDF download initiated');
+		} catch (error) {
+			console.error('Error downloading PDF:', error);
+		}
+	};
+
 	return (
 		<DashboardPagesLayout pageName='Messages' customSettings={{ justifyContent: 'flex-start' }}>
 			<Box sx={{ display: 'flex', width: '100%', height: 'calc(100vh - 4rem)' }}>
@@ -1686,6 +1865,8 @@ const Messages = () => {
 							getChatDisplayImage={getChatDisplayImage}
 							isGroupChat={isGroupChat}
 							onBlockUnblockUser={handleBlockUnblockUser}
+							onDownloadChatHistory={downloadChatHistory}
+							onDownloadChatHistoryAsPDF={downloadChatHistoryAsPDF}
 							onEditGroupChat={() => {
 								if (activeChat && isGroupChat(activeChat)) {
 									setGroupName(activeChat.groupName || '');
