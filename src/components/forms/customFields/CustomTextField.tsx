@@ -160,7 +160,12 @@ const CustomTextField = forwardRef<HTMLDivElement, CustomTextFieldProps>(
 				}}
 				InputProps={{
 					...InputProps,
-					sx: { '& input': { fontSize: isMobileSize ? '0.7rem' : '0.8rem' } },
+					sx: {
+						'& input': {
+							fontSize: isMobileSize ? '0.7rem' : '0.8rem',
+						},
+						...(InputProps?.sx || {}),
+					},
 					inputProps: {
 						...InputProps?.inputProps,
 						maxLength: InputProps?.inputProps?.maxLength,

@@ -1,45 +1,115 @@
-// Import required modules from Firebase Functions and Admin SDK
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 
-// Initialize Firebase Admin SDK
 admin.initializeApp();
 const db = admin.firestore();
 
-// Scheduled Cloud Function to delete notifications older than 30 days
-exports.deleteOldNotifications = functions.pubsub.schedule('every 48 hours').onRun(async (context) => {
+/**
+ * Firestore trigger to add expireAt field on message creation
+ * Used for TTL auto-delete in Firestore
+ */
+exports.setExpireAtForMessages = functions.firestore.document('chats/{chatId}/messages/{messageId}').onCreate(async (snap) => {
 	try {
-		// Calculate the cutoff date for 30 days ago
-		const cutoff = new Date();
-		cutoff.setDate(cutoff.getDate() - 30);
-		const cutoffTimestamp = admin.firestore.Timestamp.fromDate(cutoff);
+		const data = snap.data() || {};
 
-		// Query notifications older than the cutoff date
-		const notificationsRef = db.collection('notifications');
-		const oldNotifications = await notificationsRef.where('createdAt', '<=', cutoffTimestamp).get();
+		const created = data.timestamp instanceof admin.firestore.Timestamp ? data.timestamp : admin.firestore.Timestamp.now();
 
-		// Batch delete notifications
-		const batch = db.batch();
-		oldNotifications.forEach((doc) => {
-			batch.delete(doc.ref);
-		});
+		const expireAt = admin.firestore.Timestamp.fromMillis(
+			created.toMillis() + 21 * 24 * 60 * 60 * 1000 // 21 days
+		);
 
-		// Commit batch deletion
-		await batch.commit();
-		console.log(`Deleted ${oldNotifications.size} old notifications.`);
-
-		return null;
+		await snap.ref.update({ expireAt });
 	} catch (error) {
-		console.error('Error deleting old notifications:', error);
-		throw new functions.https.HttpsError('internal', 'Unable to delete old notifications');
+		console.error('Error in setExpireAtForMessages:', error);
+		throw error;
 	}
 });
 
-// Example HTTPS Function (Optional)
-// You can uncomment this function to create an HTTP-triggered function as a placeholder
-// exports.helloWorld = functions.https.onRequest((request, response) => {
-//     functions.logger.info("Hello logs!", {structuredData: true});
-//     response.send("Hello from Firebase!");
-// });
+/**
+ * Firestore trigger to add expireAt field on notification creation
+ * Used for TTL auto-delete in Firestore
+ */
+exports.setExpireAtForNotifications = functions.firestore.document('notifications/{userId}/userNotifications/{notifId}').onCreate(async (snap) => {
+	try {
+		const data = snap.data() || {};
 
-//firebase deploy --only functions (run this in terminal but the plan must be upgraded to pay-as-you-go)
+		// Handle different timestamp formats
+		let created;
+		if (data.timestamp instanceof admin.firestore.Timestamp) {
+			created = data.timestamp;
+		} else if (data.timestamp && typeof data.timestamp.toDate === 'function') {
+			// Handle Firestore Timestamp from client SDK
+			created = admin.firestore.Timestamp.fromDate(data.timestamp.toDate());
+		} else {
+			// Use current time if no timestamp
+			created = admin.firestore.Timestamp.now();
+		}
+
+		const expireAt = admin.firestore.Timestamp.fromMillis(
+			created.toMillis() + 30 * 24 * 60 * 60 * 1000 // 30 days
+		);
+
+		await snap.ref.update({ expireAt });
+	} catch (error) {
+		console.error('Error in setExpireAtForNotifications:', error);
+		throw error;
+	}
+});
+
+/**
+ * Weekly cleanup job (safety net for TTL)
+ * Deletes expired messages and notifications if TTL hasn't yet
+ */
+exports.purgeExpiredDocs = functions.pubsub
+	.schedule('every monday 01:00') // once a week, 1 AM Monday
+	.timeZone('Europe/London')
+	.onRun(async () => {
+		try {
+			const now = admin.firestore.Timestamp.now();
+
+			// 🔹 1. Cleanup messages
+			const msgGroup = db.collectionGroup('messages');
+			let deletedMsgs = 0;
+
+			while (true) {
+				const snap = await msgGroup.where('expireAt', '<=', now).orderBy('expireAt').limit(500).get();
+
+				if (snap.empty) break;
+
+				const batch = db.batch();
+				snap.docs.forEach((d) => batch.delete(d.ref));
+				await batch.commit();
+
+				deletedMsgs += snap.size;
+			}
+
+			// 🔹 2. Cleanup notifications
+			const notifGroup = db.collectionGroup('userNotifications');
+			let deletedNotifs = 0;
+
+			while (true) {
+				const snap = await notifGroup.where('expireAt', '<=', now).orderBy('expireAt').limit(500).get();
+
+				if (snap.empty) break;
+
+				const batch = db.batch();
+				snap.docs.forEach((d) => batch.delete(d.ref));
+				await batch.commit();
+
+				deletedNotifs += snap.size;
+			}
+
+			return null;
+		} catch (error) {
+			console.error('Error purging expired docs:', error);
+			return null;
+		}
+	});
+
+/**
+ * Example HTTPS Function (Optional)
+ */
+// exports.helloWorld = functions.https.onRequest((request, response) => {
+//   functions.logger.info("Hello logs!", { structuredData: true });
+//   response.send("Hello from Firebase!");
+// });

@@ -9,14 +9,12 @@ import { EventsContext } from '../contexts/EventsContextProvider';
 import { Event } from '../interfaces/event';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
-import { User } from '../interfaces/user';
+
 import { Roles } from '../interfaces/enums';
 import CreateEventDialog from '../components/layouts/calendar/CreateEventDialog';
 import EventDetailsDialog from '../components/layouts/calendar/EventDetailsDialog';
 import EditEventDialog from '../components/layouts/calendar/EditEventDialog';
-import { UsersContext } from '../contexts/UsersContextProvider';
-import { CoursesContext } from '../contexts/CoursesContextProvider';
-import { SingleCourse } from '../interfaces/course';
+
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import { useNavigate } from 'react-router-dom';
@@ -37,8 +35,6 @@ const EventCalendar = () => {
 	const { sortedEventsData, fetchMonthEvents, loadedMonths } = useContext(EventsContext);
 	const { orgId } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
-	const { users } = useContext(UsersContext);
-	const { courses } = useContext(CoursesContext);
 
 	const navigate = useNavigate();
 
@@ -50,9 +46,6 @@ const EventCalendar = () => {
 	const [newEventModalOpen, setNewEventModalOpen] = useState<boolean>(false);
 	const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 	const [eventDetailsModalOpen, setEventDetailsModalOpen] = useState<boolean>(false);
-
-	const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
-	const [filteredCourses, setFilteredCourses] = useState<SingleCourse[]>([]);
 
 	const [editEventModalOpen, setEditEventModalOpen] = useState<boolean>(false);
 
@@ -165,37 +158,6 @@ const EventCalendar = () => {
 		}
 	};
 
-	const filterUsers = (searchQuery: string, action: string) => {
-		if (!searchQuery.trim()) {
-			setFilteredUsers([]);
-			return;
-		}
-
-		const attendees = action === 'create' ? newEvent.attendees : selectedEvent?.attendees || [];
-		const searchResults = users.filter(
-			(mappedUser) =>
-				(mappedUser.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-					mappedUser.email.toLowerCase().includes(searchQuery.toLowerCase())) &&
-				!attendees.some((attendee) => attendee._id === mappedUser._id)
-		);
-
-		setFilteredUsers(searchResults);
-	};
-
-	const filterCourses = (searchQuery: string, action: string) => {
-		if (!searchQuery.trim()) {
-			setFilteredCourses([]);
-			return;
-		}
-
-		const coursesIds = action === 'create' ? newEvent.coursesIds : selectedEvent?.coursesIds || [];
-		const searchResults = courses.filter(
-			(course) => course.title.toLowerCase().includes(searchQuery.toLowerCase()) && !coursesIds.includes(course._id)
-		);
-
-		setFilteredCourses(searchResults);
-	};
-
 	return (
 		<DashboardPagesLayout pageName='Calendar' showCopyRight={true}>
 			<Box sx={{ display: 'flex', flexDirection: 'column', padding: isMobileSize ? '1rem' : '1rem 2rem 2rem 2rem' }}>
@@ -255,14 +217,8 @@ const EventCalendar = () => {
 			<CreateEventDialog
 				newEvent={newEvent}
 				newEventModalOpen={newEventModalOpen}
-				filteredUsers={filteredUsers}
-				filteredCourses={filteredCourses}
-				setFilteredUsers={setFilteredUsers}
-				setFilteredCourses={setFilteredCourses}
 				setNewEvent={setNewEvent}
 				setNewEventModalOpen={setNewEventModalOpen}
-				filterUsers={filterUsers}
-				filterCourses={filterCourses}
 			/>
 
 			<EventDetailsDialog
@@ -276,14 +232,8 @@ const EventCalendar = () => {
 				setIsEventDeleted={setIsEventDeleted}
 				editEventModalOpen={editEventModalOpen}
 				selectedEvent={selectedEvent}
-				filteredUsers={filteredUsers}
-				filteredCourses={filteredCourses}
-				setFilteredUsers={setFilteredUsers}
-				setFilteredCourses={setFilteredCourses}
 				setEditEventModalOpen={setEditEventModalOpen}
 				setSelectedEvent={setSelectedEvent}
-				filterUsers={filterUsers}
-				filterCourses={filterCourses}
 			/>
 		</DashboardPagesLayout>
 	);

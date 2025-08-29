@@ -3,7 +3,7 @@ import theme from '../../../themes';
 import { useNavigate } from 'react-router-dom';
 import { useContext, useEffect, useRef, useState } from 'react';
 import { Mode, Roles } from '../../../interfaces/enums';
-import { Cancel, DarkMode, DoneAll, LightMode, Menu, Notifications, BugReport, Delete } from '@mui/icons-material';
+import { Cancel, DoneAll, Menu, Notifications, BugReport, Delete } from '@mui/icons-material';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 import { useUserCourseLessonData } from '../../../hooks/useUserCourseLessonData';
 import NotificationsBox from '../notifications/Notifications';
@@ -161,24 +161,26 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 						</IconButton>
 					</Tooltip>
 
-					<Tooltip title='Recycle Bin' placement='top' arrow>
-						<IconButton
-							onClick={() => navigate('/admin/recycle-bin')}
-							sx={{
-								':hover': {
-									backgroundColor: 'transparent',
-								},
-								'mr': 1,
-							}}>
-							<Delete
-								color='secondary'
-								fontSize={isMobileSize ? 'small' : 'medium'}
+					{user?.role === Roles.ADMIN && (
+						<Tooltip title='Recycle Bin' placement='top' arrow>
+							<IconButton
+								onClick={() => navigate('/admin/recycle-bin')}
 								sx={{
-									fontSize: isMobileSize ? '1rem' : undefined,
-								}}
-							/>
-						</IconButton>
-					</Tooltip>
+									':hover': {
+										backgroundColor: 'transparent',
+									},
+									'mr': 1,
+								}}>
+								<Delete
+									color='secondary'
+									fontSize={isMobileSize ? 'small' : 'medium'}
+									sx={{
+										fontSize: isMobileSize ? '1rem' : undefined,
+									}}
+								/>
+							</IconButton>
+						</Tooltip>
+					)}
 
 					<Badge
 						badgeContent={numberOfUnreadNotifications}

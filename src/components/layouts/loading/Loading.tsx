@@ -1,9 +1,9 @@
 import { AppBar, Box, Button, IconButton, Toolbar, Typography, keyframes, useTheme, useMediaQuery } from '@mui/material';
 import theme from '../../../themes';
-import { useContext, useMemo, memo } from 'react';
+import { useContext, memo } from 'react';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 import SidebarBtn from '../dashboardLayout/SidebarBtn';
-import { Mode, Roles } from '../../../interfaces/enums';
+import { Roles } from '../../../interfaces/enums';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import logo from '../../../assets/logo.png';
 import {
@@ -11,14 +11,12 @@ import {
 	BugReport,
 	CalendarMonth,
 	CreditCard,
-	DarkMode,
 	Delete,
 	Email,
 	FilePresent,
 	Groups,
 	LibraryAddCheck,
 	LibraryBooks,
-	LightMode,
 	Menu,
 	Notifications,
 	PeopleAltOutlined,
@@ -152,7 +150,7 @@ const Loading = () => {
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
 	// Use useMemo for mode to prevent unnecessary re-renders
-	const mode = useMemo(() => (localStorage.getItem('mode') as Mode) || Mode.LIGHT_MODE, []);
+	// const mode = useMemo(() => (localStorage.getItem('mode') as Mode) || Mode.LIGHT_MODE, []);
 
 	// Use useMemo for currentPage to prevent unnecessary re-renders
 	// const currentPage = useMemo(() => {
@@ -287,7 +285,7 @@ const Loading = () => {
 							}}>
 							Loading...
 						</Typography>
-						<Logo />
+						<Logo small={isVerySmallScreen} />
 					</Box>
 				</>
 			) : (
@@ -330,21 +328,23 @@ const Loading = () => {
 										/>
 									</IconButton>
 
-									<IconButton
-										sx={{
-											':hover': {
-												backgroundColor: 'transparent',
-											},
-											'mr': 1,
-										}}>
-										<Delete
-											color='secondary'
-											fontSize={isMobileSize ? 'small' : 'medium'}
+									{user?.role === Roles.ADMIN && (
+										<IconButton
 											sx={{
-												fontSize: isMobileSize ? '1rem' : undefined,
-											}}
-										/>
-									</IconButton>
+												':hover': {
+													backgroundColor: 'transparent',
+												},
+												'mr': 1,
+											}}>
+											<Delete
+												color='secondary'
+												fontSize={isMobileSize ? 'small' : 'medium'}
+												sx={{
+													fontSize: isMobileSize ? '1rem' : undefined,
+												}}
+											/>
+										</IconButton>
+									)}
 
 									<IconButton
 										sx={{

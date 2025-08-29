@@ -5,7 +5,6 @@ import {
 	FormControl,
 	FormControlLabel,
 	IconButton,
-	InputAdornment,
 	MenuItem,
 	Select,
 	SelectChangeEvent,
@@ -18,7 +17,7 @@ import CustomDialog from '../dialog/CustomDialog';
 import CustomTextField from '../../forms/customFields/CustomTextField';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider/LocalizationProvider';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
-import { Cancel, Search } from '@mui/icons-material';
+import { Cancel } from '@mui/icons-material';
 import CustomDialogActions from '../dialog/CustomDialogActions';
 import { AttendeeInfo, Event } from '../../../interfaces/event';
 import dayjs, { Dayjs } from 'dayjs';
@@ -31,11 +30,15 @@ import theme from '../../../themes';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 import { UsersContext } from '../../../contexts/UsersContextProvider';
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
+import EventUserSearchSelect from '../../EventUserSearchSelect';
+import EventCourseSearchSelect from '../../EventCourseSearchSelect';
+import { SearchUser } from '../../../interfaces/search';
+import { SearchCourse } from '../../../interfaces/search';
 
 import { EventsContext } from '../../../contexts/EventsContextProvider';
 import { truncateText } from '../../../utils/utilText';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { SingleCourse } from '../../../interfaces/course';
+
 import { db } from '../../../firebase';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 import axios from '@utils/axiosInstance';
@@ -46,14 +49,8 @@ import { validateImageUrl } from '../../../utils/urlValidation';
 interface CreateEventDialogProps {
 	newEvent: Event;
 	newEventModalOpen: boolean;
-	filteredUsers: User[];
-	filteredCourses: SingleCourse[];
 	setNewEvent: React.Dispatch<React.SetStateAction<Event>>;
 	setNewEventModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
-	setFilteredUsers: React.Dispatch<React.SetStateAction<User[]>>;
-	setFilteredCourses: React.Dispatch<React.SetStateAction<SingleCourse[]>>;
-	filterUsers: (searchQuery: string, action: string) => void;
-	filterCourses: (searchQuery: string, action: string) => void;
 }
 
 const getDateTimeFormat = (locale: string) => {
@@ -71,18 +68,7 @@ const getDateTimeFormat = (locale: string) => {
 	}
 };
 
-const CreateEventDialog = ({
-	newEvent,
-	newEventModalOpen,
-	filteredUsers,
-	filteredCourses,
-	setNewEvent,
-	setNewEventModalOpen,
-	setFilteredUsers,
-	setFilteredCourses,
-	filterUsers,
-	filterCourses,
-}: CreateEventDialogProps) => {
+const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEventModalOpen }: CreateEventDialogProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
 	const { user } = useContext(UserAuthContext);
@@ -97,6 +83,53 @@ const CreateEventDialog = ({
 	const [searchLearnerValue, setSearchLearnerValue] = useState<string>('');
 	const [searchCourseValue, setSearchCourseValue] = useState<string>('');
 	const [enterCoverImageUrl, setEnterCoverImageUrl] = useState<boolean>(true);
+
+	// Handlers for new search components
+	const handleUserSelect = (selectedUser: SearchUser) => {
+		// Convert SearchUser to User format for compatibility
+		const user: User = {
+			_id: selectedUser.firebaseUserId, // Use firebaseUserId as _id for compatibility
+			firebaseUserId: selectedUser.firebaseUserId,
+			username: selectedUser.username,
+			email: selectedUser.email,
+			imageUrl: selectedUser.imageUrl,
+			role: selectedUser.role,
+			// Add other required fields with defaults
+			firstName: '',
+			lastName: '',
+			phone: '',
+			orgId: orgId,
+			isActive: true,
+			hasRegisteredCourse: false,
+			countryCode: '',
+			isEmailVerified: false,
+			createdAt: new Date().toISOString(),
+			updatedAt: new Date().toISOString(),
+		};
+
+		// Check if user is already selected
+		const isAlreadySelected = newEvent.attendees.some((attendee) => attendee._id === user._id);
+		if (!isAlreadySelected) {
+			setNewEvent((prevData) => ({
+				...prevData,
+				attendees: [...prevData.attendees, user],
+			}));
+		}
+		setSearchLearnerValue('');
+	};
+
+	const handleCourseSelect = (selectedCourse: SearchCourse) => {
+		// For event creation, we only need the course ID
+		// Check if course is already selected
+		const isAlreadySelected = newEvent.coursesIds.includes(selectedCourse._id);
+		if (!isAlreadySelected) {
+			setNewEvent((prevData) => ({
+				...prevData,
+				coursesIds: [...prevData.coursesIds, selectedCourse._id],
+			}));
+		}
+		setSearchCourseValue('');
+	};
 
 	// URL validation error handling
 	const [isUrlErrorOpen, setIsUrlErrorOpen] = useState<boolean>(false);
@@ -330,8 +363,6 @@ const CreateEventDialog = ({
 
 		setSearchLearnerValue('');
 		setSearchCourseValue('');
-		setFilteredUsers([]);
-		setFilteredCourses([]);
 	};
 
 	return (
@@ -621,37 +652,20 @@ const CreateEventDialog = ({
 
 					{!newEvent.isPublic && (
 						<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
-							<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-								<CustomTextField
-									label=''
-									value={searchLearnerValue}
-									disabled={newEvent.isAllLearnersSelected || newEvent.isPublic}
-									placeholder={newEvent.isAllLearnersSelected || newEvent.isPublic ? '' : 'Search Learner'}
-									onChange={(e) => {
-										setSearchLearnerValue(e.target.value);
-										setSearchCourseValue('');
-										setFilteredCourses([]);
-										filterUsers(e.target.value, 'create');
-									}}
-									sx={{
-										backgroundColor: newEvent.isAllLearnersSelected || newEvent.isPublic ? 'transparent' : '#fff',
-										flex: 3,
-									}}
-									required={false}
-									InputProps={{
-										endAdornment: (
-											<InputAdornment position='end'>
-												<Search
-													sx={{
-														mr: '-0.5rem',
-														color: newEvent.isAllLearnersSelected || newEvent.isPublic ? 'lightgray' : null,
-													}}
-													fontSize={isMobileSize ? 'small' : 'medium'}
-												/>
-											</InputAdornment>
-										),
-									}}
-								/>
+							<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+								<Box sx={{ flex: 3 }}>
+									<EventUserSearchSelect
+										value={searchLearnerValue}
+										onChange={setSearchLearnerValue}
+										onSelect={handleUserSelect}
+										currentUserId={user?.firebaseUserId}
+										placeholder={newEvent.isAllLearnersSelected || newEvent.isPublic ? '' : 'Search Learner'}
+										disabled={newEvent.isAllLearnersSelected || newEvent.isPublic}
+										sx={{
+											backgroundColor: newEvent.isAllLearnersSelected || newEvent.isPublic ? 'transparent' : '#fff',
+										}}
+									/>
+								</Box>
 								<Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: '0.85rem' }}>
 									<FormControlLabel
 										labelPlacement='start'
@@ -690,83 +704,6 @@ const CreateEventDialog = ({
 									/>
 								</Box>
 							</Box>
-
-							{filteredUsers.length !== 0 && (
-								<Box
-									sx={{
-										display: 'flex',
-										flexDirection: 'column',
-										justifyContent: 'flex-start',
-										alignItems: 'flex-start',
-										width: '60%',
-										maxHeight: '15rem',
-										overflowY: 'auto',
-										overflowX: 'hidden',
-										margin: '-1rem auto 1.5rem auto',
-										border: 'solid 0.05rem lightgray',
-										position: 'absolute',
-										top: '3.25rem',
-										left: 0,
-										zIndex: 3,
-										backgroundColor: theme.bgColor?.common,
-										boxShadow: '0.15rem 0.2rem 0.3rem 0rem rgba(0,0,0,0.1)',
-									}}>
-									{filteredUsers
-										?.filter((filteredUser) => filteredUser.firebaseUserId !== user?.firebaseUserId)
-										?.map((mappedUser) => (
-											<Box
-												key={mappedUser.firebaseUserId}
-												sx={{
-													'display': 'flex',
-													'justifyContent': 'flex-start',
-													'alignItems': 'center',
-													'width': '100%',
-													'padding': '0.5rem',
-													'transition': '0.5s',
-													'borderRadius': '0.25rem',
-													':hover': {
-														'backgroundColor': theme.bgColor?.primary,
-														'color': '#fff',
-														'cursor': 'pointer',
-														'& .username': {
-															color: '#fff',
-														},
-													},
-												}}
-												onClick={() => {
-													setNewEvent((prevData) => {
-														const updatedAttendees = [...prevData.attendees];
-														updatedAttendees.push({
-															_id: mappedUser._id,
-															firebaseUserId: mappedUser.firebaseUserId,
-															username: mappedUser.username,
-														});
-														return { ...prevData, attendees: updatedAttendees };
-													});
-													setSearchLearnerValue('');
-													setFilteredUsers([]);
-												}}>
-												<Box sx={{ borderRadius: '100%', marginRight: isMobileSize ? '0.75rem' : '1rem' }}>
-													<img
-														src={mappedUser.imageUrl}
-														alt='profile_img'
-														style={{
-															height: isMobileSize ? '1.25rem' : '2rem',
-															width: isMobileSize ? '1.25rem' : '2rem',
-															borderRadius: '100%',
-															border: 'solid lightgray 0.1rem',
-														}}
-													/>
-												</Box>
-												<Box>
-													<Typography className='username' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-														{mappedUser.username}
-													</Typography>
-												</Box>
-											</Box>
-										))}
-								</Box>
-							)}
 						</Box>
 					)}
 
@@ -803,37 +740,19 @@ const CreateEventDialog = ({
 
 					{!newEvent.isPublic && (
 						<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
-							<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-								<CustomTextField
-									label=''
-									value={searchCourseValue}
-									disabled={newEvent.isAllLearnersSelected || newEvent.isAllCoursesSelected || newEvent.isPublic}
-									placeholder={newEvent.isAllLearnersSelected || newEvent.isAllCoursesSelected || newEvent.isPublic ? '' : 'Search Course'}
-									onChange={(e) => {
-										setSearchCourseValue(e.target.value);
-										setSearchLearnerValue('');
-										filterCourses(e.target.value, 'create');
-										setFilteredUsers([]);
-									}}
-									sx={{
-										backgroundColor: newEvent.isAllLearnersSelected || newEvent.isAllCoursesSelected || newEvent.isPublic ? 'transparent' : '#fff',
-										flex: 3,
-									}}
-									required={false}
-									InputProps={{
-										endAdornment: (
-											<InputAdornment position='end'>
-												<Search
-													sx={{
-														mr: '-0.5rem',
-														color: newEvent.isAllLearnersSelected || newEvent.isAllCoursesSelected || newEvent.isPublic ? 'lightgray' : null,
-													}}
-													fontSize={isMobileSize ? 'small' : 'medium'}
-												/>
-											</InputAdornment>
-										),
-									}}
-								/>
+							<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+								<Box sx={{ flex: 3 }}>
+									<EventCourseSearchSelect
+										value={searchCourseValue}
+										onChange={setSearchCourseValue}
+										onSelect={handleCourseSelect}
+										placeholder={newEvent.isAllLearnersSelected || newEvent.isAllCoursesSelected || newEvent.isPublic ? '' : 'Search Course'}
+										disabled={newEvent.isAllLearnersSelected || newEvent.isAllCoursesSelected || newEvent.isPublic}
+										sx={{
+											backgroundColor: newEvent.isAllLearnersSelected || newEvent.isAllCoursesSelected || newEvent.isPublic ? 'transparent' : '#fff',
+										}}
+									/>
+								</Box>
 								<Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: '0.85rem' }}>
 									<FormControlLabel
 										disabled={newEvent.isAllLearnersSelected || newEvent.isPublic}
@@ -864,79 +783,6 @@ const CreateEventDialog = ({
 									/>
 								</Box>
 							</Box>
-
-							{filteredCourses.length !== 0 && (
-								<Box
-									sx={{
-										display: 'flex',
-										flexDirection: 'column',
-										justifyContent: 'flex-start',
-										alignItems: 'flex-start',
-										width: '60%',
-										maxHeight: '10rem',
-										overflowY: 'auto',
-										overflowX: 'hidden',
-										margin: '-1rem auto 1.5rem auto',
-										border: 'solid 0.05rem lightgray',
-										position: 'absolute',
-										top: '3.25rem',
-										left: 0,
-										zIndex: 3,
-										backgroundColor: theme.bgColor?.common,
-										boxShadow: '0.15rem 0.2rem 0.3rem 0rem rgba(0,0,0,0.1)',
-									}}>
-									{filteredCourses?.map((course) => (
-										<Box
-											key={course._id}
-											sx={{
-												'display': 'flex',
-												'justifyContent': 'flex-start',
-												'alignItems': 'center',
-												'width': '100%',
-												'padding': '0.5rem',
-												'transition': '0.5s',
-												'borderRadius': '0.25rem',
-												':hover': {
-													'backgroundColor': theme.bgColor?.primary,
-													'color': '#fff',
-													'cursor': 'pointer',
-													'& .username': {
-														color: '#fff',
-													},
-												},
-											}}
-											onClick={() => {
-												setNewEvent((prevData) => {
-													const updatedCoursesIds = [...prevData.coursesIds];
-													updatedCoursesIds.push(course._id);
-													return { ...prevData, coursesIds: updatedCoursesIds };
-												});
-												setSearchCourseValue('');
-												setFilteredCourses([]);
-											}}>
-											{course.imageUrl && (
-												<Box sx={{ borderRadius: '100%', marginRight: isMobileSize ? '0.75rem' : '1rem' }}>
-													<img
-														src={course.imageUrl}
-														alt='img'
-														style={{
-															height: isMobileSize ? '1.25rem' : '2rem',
-															width: isMobileSize ? '1.25rem' : '2rem',
-															borderRadius: '100%',
-															border: 'solid lightgray 0.1rem',
-														}}
-													/>
-												</Box>
-											)}
-											<Box>
-												<Typography className='username' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-													{truncateText(course.title, 30)}
-												</Typography>
-											</Box>
-										</Box>
-									))}
-								</Box>
-							)}
 						</Box>
 					)}
 

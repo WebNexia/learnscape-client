@@ -113,7 +113,7 @@ const HandleImageUploadURL = ({
 		<>
 			<FormControl sx={{ display: 'flex' }}>
 				<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-					<Typography variant={isMobileSize ? 'body2' : 'h6'} sx={{ fontSize: !isMobileSize ? '0.9rem' : '0.85rem' }}>
+					<Typography variant={isMobileSize ? 'body2' : 'h6'} sx={{ fontSize: !isMobileSize ? '0.9rem' : '0.75rem' }}>
 						{label}
 						{labelDescription && <span style={{ color: 'gray', fontSize: '0.75rem', marginLeft: '0.25rem' }}>{labelDescription}</span>}
 					</Typography>
@@ -203,7 +203,10 @@ const HandleImageUploadURL = ({
 							validateImageUrlOnChange(e.target.value);
 						}}
 						InputProps={{
-							sx: { '& input::placeholder': { fontSize: '0.875rem' }, '& input': { fontSize: '0.85rem' } }, // Adjust this value as needed
+							sx: {
+								'& input::placeholder': { fontSize: isMobileSize ? '0.7rem' : '0.8rem' },
+								'& input': { fontSize: isMobileSize ? '0.75rem' : '0.85rem' },
+							}, // Adjust this value as needed
 						}}
 					/>
 				)}
