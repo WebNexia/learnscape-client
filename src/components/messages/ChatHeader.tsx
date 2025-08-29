@@ -18,6 +18,8 @@ interface ChatHeaderProps {
 	onBlockUnblockUser: (firebaseUserId: string) => void;
 	onDownloadChatHistory?: () => void;
 	onDownloadChatHistoryAsPDF?: () => void;
+	onDownloadChatHistoryAsHTML?: () => void;
+	onDownloadChatHistoryAsTXT?: () => void;
 	onEditGroupChat?: () => void;
 	onViewGroupMembers?: () => void;
 }
@@ -35,6 +37,8 @@ const ChatHeader = ({
 	onBlockUnblockUser,
 	onDownloadChatHistory,
 	onDownloadChatHistoryAsPDF,
+	onDownloadChatHistoryAsHTML,
+	onDownloadChatHistoryAsTXT,
 	onEditGroupChat,
 	onViewGroupMembers,
 }: ChatHeaderProps) => {
@@ -59,6 +63,16 @@ const ChatHeader = ({
 
 	const handleDownloadPDF = () => {
 		onDownloadChatHistoryAsPDF?.();
+		handleDownloadMenuClose();
+	};
+
+	const handleDownloadHTML = () => {
+		onDownloadChatHistoryAsHTML?.();
+		handleDownloadMenuClose();
+	};
+
+	const handleDownloadTXT = () => {
+		onDownloadChatHistoryAsTXT?.();
 		handleDownloadMenuClose();
 	};
 
@@ -161,7 +175,7 @@ const ChatHeader = ({
 										}
 									})}
 								{/* Download Menu for 1-1 Chats - positioned after block button */}
-								{(onDownloadChatHistory || onDownloadChatHistoryAsPDF) && (
+								{(onDownloadChatHistory || onDownloadChatHistoryAsPDF || onDownloadChatHistoryAsHTML || onDownloadChatHistoryAsTXT) && (
 									<Tooltip title='Download Chat History' placement='top' arrow>
 										<IconButton
 											size='small'
@@ -185,7 +199,7 @@ const ChatHeader = ({
 						{isGroupChat(activeChat) && (
 							<Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
 								{/* Download Menu for Group Chats */}
-								{(onDownloadChatHistory || onDownloadChatHistoryAsPDF) && (
+								{(onDownloadChatHistory || onDownloadChatHistoryAsPDF || onDownloadChatHistoryAsHTML || onDownloadChatHistoryAsTXT) && (
 									<Tooltip title='Download Chat History' placement='top' arrow>
 										<IconButton size='small' onClick={handleDownloadMenuOpen} sx={{ ':hover': { backgroundColor: 'transparent' } }}>
 											<FileDownload fontSize='small' />
@@ -236,6 +250,18 @@ const ChatHeader = ({
 						<Typography variant='body2'>Download as PDF</Typography>
 					</MenuItem>
 				)}
+				{onDownloadChatHistoryAsHTML && (
+					<MenuItem onClick={handleDownloadHTML}>
+						<FileDownload sx={{ mr: 1 }} fontSize='small' />
+						<Typography variant='body2'>Download as HTML</Typography>
+					</MenuItem>
+				)}
+				{onDownloadChatHistoryAsTXT && (
+					<MenuItem onClick={handleDownloadTXT}>
+						<FileDownload sx={{ mr: 1 }} fontSize='small' />
+						<Typography variant='body2'>Download as TXT</Typography>
+					</MenuItem>
+				)}
 			</Menu>
 
 			{/* Block/Unblock Confirmation Dialog */}
@@ -265,14 +291,14 @@ const ChatHeader = ({
 								<Typography component='li' variant='body2' sx={{ mb: '0.5rem', fontSize: '0.8rem' }}>
 									You cannot send them messages
 								</Typography>
-								<Typography component='li' variant='body2' sx={{ mb: '0.5rem', fontSize: '0.8rem' }}>
-									You can unblock them later to resume communication
-								</Typography>
 								{user?.role === 'admin' && (
 									<Typography component='li' variant='body2' sx={{ mb: '0.5rem', fontSize: '0.8rem' }}>
 										You cannot add them to a group chat
 									</Typography>
 								)}
+								<Typography component='li' variant='body2' sx={{ mb: '0.5rem', fontSize: '0.8rem' }}>
+									You can unblock them later to resume communication
+								</Typography>
 							</>
 						) : (
 							<>
