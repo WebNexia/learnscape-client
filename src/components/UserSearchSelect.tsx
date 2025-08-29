@@ -192,8 +192,7 @@ const UserSearchSelect: React.FC<UserSearchSelectProps> = ({
 							padding: isMobileSize ? '0 0.25rem' : '0 0.5rem',
 							marginBottom: '1.1rem',
 							fontSize: isMobileSize ? '0.7rem' : '0.8rem',
-						}}
-						disabled={!value.trim()}>
+						}}>
 						Reset
 					</CustomDeleteButton>
 				</Box>
