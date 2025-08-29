@@ -224,7 +224,7 @@ const Messages = () => {
 		);
 	};
 
-	const addSystemMessage = async (chatId: string, messageType: 'user_left' | 'user_joined' | 'group_created', username?: string) => {
+	const addSystemMessage = useCallback(async (chatId: string, messageType: 'user_left' | 'user_joined' | 'group_created', username?: string) => {
 		const messageRef = collection(db, 'chats', chatId, 'messages');
 
 		let systemText = '';
@@ -262,7 +262,7 @@ const Messages = () => {
 		} catch (error) {
 			console.error('Error adding system message:', error);
 		}
-	};
+	}, []);
 
 	// Check if the current user is blocked by another user
 	const isBlockedUser: boolean = useMemo(
@@ -297,20 +297,20 @@ const Messages = () => {
 	const { uploadInfo, checkCanUploadImage, checkCanUploadAudio, getRemainingImageUploads, getFormattedResetTime, refreshUploadStats } =
 		useUploadLimit();
 
-	const handleEmojiSelect = (emoji: any) => {
+	const handleEmojiSelect = useCallback((emoji: any) => {
 		setCurrentMessage((prevMessage) => prevMessage + emoji.native);
 		setShowPicker(false);
-	};
+	}, []);
 
 	const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-	const scrollToBottom = () => {
+	const scrollToBottom = useCallback(() => {
 		messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-	};
+	}, []);
 
 	const messageRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
-	const scrollToOriginalMessage = (messageId: string) => {
+	const scrollToOriginalMessage = useCallback((messageId: string) => {
 		const originalMessageElement = messageRefs.current[messageId]; // Get the ref for the original message
 
 		if (originalMessageElement) {
@@ -322,7 +322,7 @@ const Messages = () => {
 				originalMessageElement.classList.remove('highlighted-message');
 			}, 2500);
 		}
-	};
+	}, []);
 
 	useEffect(() => {
 		const handleRouteChange = async () => {
@@ -482,7 +482,7 @@ const Messages = () => {
 		return () => unsubscribe();
 	}, [user?.firebaseUserId, fetchAllBlockedUsers, fetchParticipantData]);
 
-	const filterBlockedMessages = (messagesArray: Message[], activeChat: Chat) => {
+	const filterBlockedMessages = useCallback((messagesArray: Message[], activeChat: Chat) => {
 		return messagesArray.filter((msg) => {
 			const blockInfo = activeChat?.blockedUsers?.[msg.senderId];
 			const messageTimestamp = new Date(msg.timestamp);
@@ -499,7 +499,7 @@ const Messages = () => {
 			}
 			return true;
 		});
-	};
+	}, []);
 
 	// Use the function in the onSnapshot listener
 	useEffect(() => {
@@ -591,7 +591,7 @@ const Messages = () => {
 	const userCache: { [firebaseUserId: string]: User | null } = {}; // A cache for user details
 
 	// Helper function to check if a user is blocked by another user
-	const checkIfUserIsBlocked = async (blockedUserId: string, blockerUserId: string): Promise<boolean> => {
+	const checkIfUserIsBlocked = useCallback(async (blockedUserId: string, blockerUserId: string): Promise<boolean> => {
 		try {
 			// Check if there's an existing chat between these users
 			const chatId = [blockedUserId, blockerUserId].sort().join('&');
@@ -618,109 +618,166 @@ const Messages = () => {
 			console.error('Error checking if user is blocked:', error);
 			return false;
 		}
-	};
+	}, []);
 
-	const startChatIfNotExists = async (selectedUser: User): Promise<'success' | 'blocked'> => {
-		const chatId = [user?.firebaseUserId, selectedUser.firebaseUserId].sort().join('&');
-		const chatRef = doc(db, 'chats', chatId);
+	const startChatIfNotExists = useCallback(
+		async (selectedUser: User): Promise<'success' | 'blocked'> => {
+			const chatId = [user?.firebaseUserId, selectedUser.firebaseUserId].sort().join('&');
+			const chatRef = doc(db, 'chats', chatId);
 
-		const chatDoc = await getDoc(chatRef);
+			const chatDoc = await getDoc(chatRef);
 
-		// If chat exists, restore it regardless of blocking status
-		if (chatDoc.exists()) {
-			const chatData = chatDoc.data();
+			// If chat exists, restore it regardless of blocking status
+			if (chatDoc.exists()) {
+				const chatData = chatDoc.data();
 
-			// Check if the chat is hidden and restore it
-			if (chatData.isDeletedBy?.includes(user?.firebaseUserId)) {
-				// Restore the chat by removing the current user from `isDeletedBy`
-				await updateDoc(chatRef, {
-					isDeletedBy: arrayRemove(user?.firebaseUserId),
-				});
-
-				// For hidden chats, skip blocking check and restore the chat
-				// This allows users to restore hidden chats even if they're blocked
-				// Continue to the restoration logic below
-			} else {
-				// Only check blocking for existing chats that are not hidden
-				// Check if the current user is blocked by the selected user
-				const currentUserBlocked = await checkIfUserIsBlocked(user?.firebaseUserId!, selectedUser.firebaseUserId);
-				if (currentUserBlocked) {
-					setErrorMsg('Cannot start chat: You are blocked by this user');
-					return 'blocked';
-				}
-
-				// Check if the selected user is blocked by the current user
-				const selectedUserBlocked = await checkIfUserIsBlocked(selectedUser.firebaseUserId, user?.firebaseUserId!);
-				if (selectedUserBlocked) {
-					setErrorMsg('Cannot start chat: This user is blocked');
-					return 'blocked';
-				}
-			}
-		} else {
-			// For completely new chats, check blocking
-			// But first, check if there might be a hidden chat that we can restore
-			const existingChatInList = findExistingChatWithParticipants([user?.firebaseUserId!, selectedUser.firebaseUserId]);
-
-			if (existingChatInList) {
-				// If we found an existing chat in the list, activate it instead of creating a new one
-				// This handles the case where a chat exists but is hidden/deleted
-				setActiveChat(existingChatInList);
-				setActiveChatId(existingChatInList.chatId);
-				localStorage.setItem('activeChatId', existingChatInList.chatId);
-				return 'success';
-			}
-
-			// Also check if there's a hidden chat in the database that we can restore
-			// This handles cases where the chat exists but is not in the current chat list
-			const hiddenChatRef = doc(db, 'chats', chatId);
-			const hiddenChatDoc = await getDoc(hiddenChatRef);
-
-			if (hiddenChatDoc.exists()) {
-				const hiddenChatData = hiddenChatDoc.data();
-				// If the chat exists but is hidden, restore it
-				if (hiddenChatData.isDeletedBy?.includes(user?.firebaseUserId)) {
-					await updateDoc(hiddenChatRef, {
+				// Check if the chat is hidden and restore it
+				if (chatData.isDeletedBy?.includes(user?.firebaseUserId)) {
+					// Restore the chat by removing the current user from `isDeletedBy`
+					await updateDoc(chatRef, {
 						isDeletedBy: arrayRemove(user?.firebaseUserId),
 					});
-					// The chat will be restored in the next chat list update
+
+					// For hidden chats, skip blocking check and restore the chat
+					// This allows users to restore hidden chats even if they're blocked
+					// Continue to the restoration logic below
+				} else {
+					// Only check blocking for existing chats that are not hidden
+					// Check if the current user is blocked by the selected user
+					const currentUserBlocked = await checkIfUserIsBlocked(user?.firebaseUserId!, selectedUser.firebaseUserId);
+					if (currentUserBlocked) {
+						setErrorMsg('Cannot start chat: You are blocked by this user');
+						return 'blocked';
+					}
+
+					// Check if the selected user is blocked by the current user
+					const selectedUserBlocked = await checkIfUserIsBlocked(selectedUser.firebaseUserId, user?.firebaseUserId!);
+					if (selectedUserBlocked) {
+						setErrorMsg('Cannot start chat: This user is blocked');
+						return 'blocked';
+					}
+				}
+			} else {
+				// For completely new chats, check blocking
+				// But first, check if there might be a hidden chat that we can restore
+				const existingChatInList = findExistingChatWithParticipants([user?.firebaseUserId!, selectedUser.firebaseUserId]);
+
+				if (existingChatInList) {
+					// If we found an existing chat in the list, activate it instead of creating a new one
+					// This handles the case where a chat exists but is hidden/deleted
+					setActiveChat(existingChatInList);
+					setActiveChatId(existingChatInList.chatId);
+					localStorage.setItem('activeChatId', existingChatInList.chatId);
 					return 'success';
 				}
+
+				// Also check if there's a hidden chat in the database that we can restore
+				// This handles cases where the chat exists but is not in the current chat list
+				const hiddenChatRef = doc(db, 'chats', chatId);
+				const hiddenChatDoc = await getDoc(hiddenChatRef);
+
+				if (hiddenChatDoc.exists()) {
+					const hiddenChatData = hiddenChatDoc.data();
+					// If the chat exists but is hidden, restore it
+					if (hiddenChatData.isDeletedBy?.includes(user?.firebaseUserId)) {
+						await updateDoc(hiddenChatRef, {
+							isDeletedBy: arrayRemove(user?.firebaseUserId),
+						});
+						// The chat will be restored in the next chat list update
+						return 'success';
+					}
+				}
+
+				// For new chats, don't check blocking - let the chat be created
+				// The blocking will be handled in the chat interface itself
 			}
 
-			// For new chats, don't check blocking - let the chat be created
-			// The blocking will be handled in the chat interface itself
-		}
+			if (chatDoc.exists()) {
+				const chatData = chatDoc.data();
 
-		if (chatDoc.exists()) {
-			const chatData = chatDoc.data();
+				// Check if any participant has permanently left this chat
+				const hasLeftParticipants = !!(chatData.removedParticipants && chatData.removedParticipants?.length > 0);
+				const currentUserLeft = chatData.removedParticipants?.includes(user?.firebaseUserId);
+				const selectedUserLeft = chatData.removedParticipants?.includes(selectedUser.firebaseUserId);
 
-			// Check if any participant has permanently left this chat
-			const hasLeftParticipants = !!(chatData.removedParticipants && chatData.removedParticipants?.length > 0);
-			const currentUserLeft = chatData.removedParticipants?.includes(user?.firebaseUserId);
-			const selectedUserLeft = chatData.removedParticipants?.includes(selectedUser.firebaseUserId);
+				// Only create a new chat if the current user has also left the chat permanently
+				// If only the other user has left but the current user hasn't, restore the existing chat
+				if (hasLeftParticipants && currentUserLeft) {
+					// If the current user has also left this chat, create a completely new chat with a unique ID
+					const timestamp = Date.now();
+					const newChatId = `${chatId}_${timestamp}`;
+					const newChatRef = doc(db, 'chats', newChatId);
 
-			// Only create a new chat if the current user has also left the chat permanently
-			// If only the other user has left but the current user hasn't, restore the existing chat
-			if (hasLeftParticipants && currentUserLeft) {
-				// If the current user has also left this chat, create a completely new chat with a unique ID
-				const timestamp = Date.now();
-				const newChatId = `${chatId}_${timestamp}`;
-				const newChatRef = doc(db, 'chats', newChatId);
+					// Create the new chat document in Firestore
+					await setDoc(newChatRef, {
+						participants: [user?.firebaseUserId, selectedUser.firebaseUserId],
+						lastMessage: { text: 'No messages yet', timestamp: new Date() },
+						isDeletedBy: [],
+						removedParticipants: [],
+						blockedUsers: {},
+						hasUnreadMessages: false,
+						chatType: '1-1',
+						createdAt: new Date(),
+					});
 
-				// Create the new chat document in Firestore
-				await setDoc(newChatRef, {
-					participants: [user?.firebaseUserId, selectedUser.firebaseUserId],
-					lastMessage: { text: 'No messages yet', timestamp: new Date() },
-					isDeletedBy: [],
-					removedParticipants: [],
-					blockedUsers: {},
-					hasUnreadMessages: false,
-					chatType: '1-1',
-					createdAt: new Date(),
-				});
+					const newChat: Chat = {
+						chatId: newChatId,
+						participants: [
+							{ firebaseUserId: user?.firebaseUserId!, imageUrl: user?.imageUrl!, username: user?.username!, role: user?.role! },
+							{
+								firebaseUserId: selectedUser.firebaseUserId,
+								imageUrl: selectedUser.imageUrl,
+								username: selectedUser.username,
+								role: selectedUser.role,
+							},
+						],
+						lastMessage: { text: 'No messages yet', timestamp: new Date() },
+						isDeletedBy: [],
+						removedParticipants: [],
+						blockedUsers: {},
+						hasUnreadMessages: false,
+						chatType: '1-1',
+					};
 
-				const newChat: Chat = {
-					chatId: newChatId,
+					// Add the new chat to the UI lists, replacing any existing chats with the same participants
+					setChatList((prev) => {
+						// Remove any existing chats with the same participants (to avoid duplicates)
+						const filteredList = prev.filter((chat) => !hasSameParticipants(chat, newChat));
+
+						// Sort the list to maintain proper order (newest first)
+						const updatedChatList = [newChat, ...filteredList].sort((a, b) => {
+							const timeA = a.lastMessage.timestamp ? new Date(a.lastMessage.timestamp).getTime() : Date.now();
+							const timeB = b.lastMessage.timestamp ? new Date(b.lastMessage.timestamp).getTime() : Date.now();
+							return timeB - timeA; // Descending order (newest first)
+						});
+
+						setFilteredChatList(updatedChatList);
+						return updatedChatList;
+					});
+
+					// Set this as the active chat in the UI
+					setActiveChat(newChat);
+					setActiveChatId(newChatId);
+					localStorage.setItem('activeChatId', newChatId);
+					return 'success';
+				}
+
+				// If only the other user has left but the current user hasn't, restore the existing chat
+				if (hasLeftParticipants && selectedUserLeft && !currentUserLeft) {
+					// Remove the current user from isDeletedBy to restore the chat
+					await updateDoc(chatRef, {
+						isDeletedBy: arrayRemove(user?.firebaseUserId),
+					});
+				}
+
+				// If the user is cached, use the cached version instead of refetching
+				if (!userCache[selectedUser.firebaseUserId]) {
+					userCache[selectedUser.firebaseUserId] = selectedUser;
+				}
+
+				// Update the chat list and set the chat as active
+				const restoredChat: Chat = {
+					chatId: chatId,
 					participants: [
 						{ firebaseUserId: user?.firebaseUserId!, imageUrl: user?.imageUrl!, username: user?.username!, role: user?.role! },
 						{
@@ -730,7 +787,92 @@ const Messages = () => {
 							role: selectedUser.role,
 						},
 					],
-					lastMessage: { text: 'No messages yet', timestamp: new Date() },
+					lastMessage: chatData.lastMessage || { text: 'No messages yet', timestamp: null },
+					blockedUsers: chatData.blockedUsers || [],
+					isDeletedBy: chatData.isDeletedBy || [],
+					removedParticipants: chatData.removedParticipants || [],
+					hasUnreadMessages: chatData.hasUnreadMessages,
+					chatType: chatData.chatType || '1-1',
+					groupName: chatData.groupName,
+					groupImageUrl: chatData.groupImageUrl,
+					createdBy: chatData.createdBy,
+					groupSettings: chatData.groupSettings,
+				};
+
+				setChatList((prev) => {
+					// Check if this exact chat already exists in the list
+					const existingChatIndex = prev.findIndex((chat) => chat.chatId === chatId);
+
+					if (existingChatIndex !== -1) {
+						// Update the existing chat with the restored data
+						const updatedChatList = [...prev];
+						updatedChatList[existingChatIndex] = restoredChat;
+
+						// Sort the list to maintain proper order (newest first)
+						const sortedList = updatedChatList.sort((a, b) => {
+							const timeA = a.lastMessage.timestamp ? new Date(a.lastMessage.timestamp).getTime() : 0;
+							const timeB = b.lastMessage.timestamp ? new Date(b.lastMessage.timestamp).getTime() : 0;
+							return timeB - timeA; // Descending order (newest first)
+						});
+
+						setFilteredChatList(sortedList);
+						return sortedList;
+					} else {
+						// Remove any existing chats with the same participants (to avoid duplicates)
+						const filteredList = prev.filter((chat) => !hasSameParticipants(chat, restoredChat));
+
+						// Add the restored chat to the list and sort
+						const updatedChatList = [restoredChat, ...filteredList].sort((a, b) => {
+							const timeA = a.lastMessage.timestamp ? new Date(a.lastMessage.timestamp).getTime() : 0;
+							const timeB = b.lastMessage.timestamp ? new Date(b.lastMessage.timestamp).getTime() : 0;
+							return timeB - timeA; // Descending order (newest first)
+						});
+
+						setFilteredChatList(updatedChatList);
+						return updatedChatList;
+					}
+				});
+
+				// Force a refresh of the chat list to ensure the restored chat appears
+				setTimeout(() => {
+					setChatList((prev) => [...prev]);
+				}, 100);
+
+				// Also update localStorage to reflect the restored chat
+				setTimeout(() => {
+					const updatedChatList = chatList.map((chat) => (chat.chatId === chatId ? restoredChat : chat));
+					localStorage.setItem('chatList', JSON.stringify(updatedChatList));
+				}, 200);
+
+				setActiveChat(restoredChat);
+				setActiveChatId(chatId);
+				localStorage.setItem('activeChatId', chatId);
+				return 'success';
+			} else {
+				// Before creating a new chat, check if there's an existing chat with the same participants
+				// that might be deleted or in a different state
+				const existingChatInList = findExistingChatWithParticipants([user?.firebaseUserId!, selectedUser.firebaseUserId]);
+
+				if (existingChatInList) {
+					setActiveChat(existingChatInList);
+					setActiveChatId(existingChatInList.chatId);
+					localStorage.setItem('activeChatId', existingChatInList.chatId);
+					return 'success';
+				}
+
+				// If the chat does not exist, add it to the chatList/UI but don't create it in Firestore yet
+				const newChat: Chat = {
+					chatId: chatId,
+					participants: [
+						{ firebaseUserId: user?.firebaseUserId!, imageUrl: user?.imageUrl!, username: user?.username!, role: user?.role! },
+						{
+							firebaseUserId: selectedUser.firebaseUserId,
+							imageUrl: selectedUser.imageUrl,
+							username: selectedUser.username,
+							role: selectedUser.role,
+						},
+					],
+					lastMessage: { text: 'No messages yet', timestamp: new Date() }, // No message yet
 					isDeletedBy: [],
 					removedParticipants: [],
 					blockedUsers: {},
@@ -745,8 +887,8 @@ const Messages = () => {
 
 					// Sort the list to maintain proper order (newest first)
 					const updatedChatList = [newChat, ...filteredList].sort((a, b) => {
-						const timeA = a.lastMessage.timestamp ? new Date(a.lastMessage.timestamp).getTime() : Date.now();
-						const timeB = b.lastMessage.timestamp ? new Date(b.lastMessage.timestamp).getTime() : Date.now();
+						const timeA = a.lastMessage.timestamp ? new Date(a.lastMessage.timestamp).getTime() : 0;
+						const timeB = b.lastMessage.timestamp ? new Date(b.lastMessage.timestamp).getTime() : 0;
 						return timeB - timeA; // Descending order (newest first)
 					});
 
@@ -756,208 +898,72 @@ const Messages = () => {
 
 				// Set this as the active chat in the UI
 				setActiveChat(newChat);
-				setActiveChatId(newChatId);
-				localStorage.setItem('activeChatId', newChatId);
+				setActiveChatId(chatId);
+				localStorage.setItem('activeChatId', chatId);
 				return 'success';
 			}
+		},
+		[user?.firebaseUserId, chatList, findExistingChatWithParticipants, checkIfUserIsBlocked]
+	);
 
-			// If only the other user has left but the current user hasn't, restore the existing chat
-			if (hasLeftParticipants && selectedUserLeft && !currentUserLeft) {
-				// Remove the current user from isDeletedBy to restore the chat
-				await updateDoc(chatRef, {
-					isDeletedBy: arrayRemove(user?.firebaseUserId),
-				});
+	const handleSetActiveChat = useCallback(
+		async (chat: Chat) => {
+			setActiveChat(chat);
+			localStorage.setItem('activeChatId', chat.chatId);
+			setActiveChatId(chat.chatId);
+
+			// Hide chat list on small screens when a chat is selected
+			if (isVerySmallScreen) {
+				setIsChatsListVisible(false);
 			}
 
-			// If the user is cached, use the cached version instead of refetching
-			if (!userCache[selectedUser.firebaseUserId]) {
-				userCache[selectedUser.firebaseUserId] = selectedUser;
-			}
+			const chatBlockedUsers = chat.blockedUsers || {};
+			const blockedUsersArray = Object.keys(chatBlockedUsers);
+			setBlockedUsers(blockedUsersArray);
 
-			// Update the chat list and set the chat as active
-			const restoredChat: Chat = {
-				chatId: chatId,
-				participants: [
-					{ firebaseUserId: user?.firebaseUserId!, imageUrl: user?.imageUrl!, username: user?.username!, role: user?.role! },
-					{
-						firebaseUserId: selectedUser.firebaseUserId,
-						imageUrl: selectedUser.imageUrl,
-						username: selectedUser.username,
-						role: selectedUser.role,
-					},
-				],
-				lastMessage: chatData.lastMessage || { text: 'No messages yet', timestamp: null },
-				blockedUsers: chatData.blockedUsers || [],
-				isDeletedBy: chatData.isDeletedBy || [],
-				removedParticipants: chatData.removedParticipants || [],
-				hasUnreadMessages: chatData.hasUnreadMessages,
-				chatType: chatData.chatType || '1-1',
-				groupName: chatData.groupName,
-				groupImageUrl: chatData.groupImageUrl,
-				createdBy: chatData.createdBy,
-				groupSettings: chatData.groupSettings,
-			};
+			const userRef = doc(db, 'users', user?.firebaseUserId!);
+			await updateDoc(userRef, {
+				activeChatId: chat.chatId, // Set the active chat ID in Firestore
+			});
 
-			setChatList((prev) => {
-				// Check if this exact chat already exists in the list
-				const existingChatIndex = prev.findIndex((chat) => chat.chatId === chatId);
+			// Mark unread messages as read when user opens chat
+			const messagesRef = collection(db, 'chats', chat.chatId, 'messages');
 
-				if (existingChatIndex !== -1) {
-					// Update the existing chat with the restored data
-					const updatedChatList = [...prev];
-					updatedChatList[existingChatIndex] = restoredChat;
+			if (isGroupChat(chat)) {
+				// For group chats, mark all messages as read for the current user
+				const unreadMessagesQuery = query(messagesRef, where('isRead', '==', false));
+				const unreadMessagesSnapshot = await getDocs(unreadMessagesQuery);
 
-					// Sort the list to maintain proper order (newest first)
-					const sortedList = updatedChatList.sort((a, b) => {
-						const timeA = a.lastMessage.timestamp ? new Date(a.lastMessage.timestamp).getTime() : 0;
-						const timeB = b.lastMessage.timestamp ? new Date(b.lastMessage.timestamp).getTime() : 0;
-						return timeB - timeA; // Descending order (newest first)
+				unreadMessagesSnapshot.forEach(async (doc) => {
+					await updateDoc(doc.ref, {
+						isRead: true, // Mark each message as read
 					});
+				});
+			} else {
+				// For 1-1 chats, mark messages sent to current user as read
+				const unreadMessagesQuery = query(messagesRef, where('receiverId', '==', user?.firebaseUserId), where('isRead', '==', false));
+				const unreadMessagesSnapshot = await getDocs(unreadMessagesQuery);
 
-					setFilteredChatList(sortedList);
-					return sortedList;
-				} else {
-					// Remove any existing chats with the same participants (to avoid duplicates)
-					const filteredList = prev.filter((chat) => !hasSameParticipants(chat, restoredChat));
-
-					// Add the restored chat to the list and sort
-					const updatedChatList = [restoredChat, ...filteredList].sort((a, b) => {
-						const timeA = a.lastMessage.timestamp ? new Date(a.lastMessage.timestamp).getTime() : 0;
-						const timeB = b.lastMessage.timestamp ? new Date(b.lastMessage.timestamp).getTime() : 0;
-						return timeB - timeA; // Descending order (newest first)
+				unreadMessagesSnapshot.forEach(async (doc) => {
+					await updateDoc(doc.ref, {
+						isRead: true, // Mark each message as read
 					});
-
-					setFilteredChatList(updatedChatList);
-					return updatedChatList;
-				}
-			});
-
-			// Force a refresh of the chat list to ensure the restored chat appears
-			setTimeout(() => {
-				setChatList((prev) => [...prev]);
-			}, 100);
-
-			// Also update localStorage to reflect the restored chat
-			setTimeout(() => {
-				const updatedChatList = chatList.map((chat) => (chat.chatId === chatId ? restoredChat : chat));
-				localStorage.setItem('chatList', JSON.stringify(updatedChatList));
-			}, 200);
-
-			setActiveChat(restoredChat);
-			setActiveChatId(chatId);
-			localStorage.setItem('activeChatId', chatId);
-			return 'success';
-		} else {
-			// Before creating a new chat, check if there's an existing chat with the same participants
-			// that might be deleted or in a different state
-			const existingChatInList = findExistingChatWithParticipants([user?.firebaseUserId!, selectedUser.firebaseUserId]);
-
-			if (existingChatInList) {
-				setActiveChat(existingChatInList);
-				setActiveChatId(existingChatInList.chatId);
-				localStorage.setItem('activeChatId', existingChatInList.chatId);
-				return 'success';
+				});
 			}
 
-			// If the chat does not exist, add it to the chatList/UI but don't create it in Firestore yet
-			const newChat: Chat = {
-				chatId: chatId,
-				participants: [
-					{ firebaseUserId: user?.firebaseUserId!, imageUrl: user?.imageUrl!, username: user?.username!, role: user?.role! },
-					{
-						firebaseUserId: selectedUser.firebaseUserId,
-						imageUrl: selectedUser.imageUrl,
-						username: selectedUser.username,
-						role: selectedUser.role,
-					},
-				],
-				lastMessage: { text: 'No messages yet', timestamp: new Date() }, // No message yet
-				isDeletedBy: [],
-				removedParticipants: [],
-				blockedUsers: {},
-				hasUnreadMessages: false,
-				chatType: '1-1',
-			};
-
-			// Add the new chat to the UI lists, replacing any existing chats with the same participants
-			setChatList((prev) => {
-				// Remove any existing chats with the same participants (to avoid duplicates)
-				const filteredList = prev.filter((chat) => !hasSameParticipants(chat, newChat));
-
-				// Sort the list to maintain proper order (newest first)
-				const updatedChatList = [newChat, ...filteredList].sort((a, b) => {
-					const timeA = a.lastMessage.timestamp ? new Date(a.lastMessage.timestamp).getTime() : 0;
-					const timeB = b.lastMessage.timestamp ? new Date(b.lastMessage.timestamp).getTime() : 0;
-					return timeB - timeA; // Descending order (newest first)
-				});
-
-				setFilteredChatList(updatedChatList);
-				return updatedChatList;
+			// Update Firestore to reflect no unread messages for this chat
+			const chatDocRef = doc(db, 'chats', chat.chatId);
+			await updateDoc(chatDocRef, {
+				hasUnreadMessages: false, // Set unread to false after the chat is opened
+				unreadBy: arrayRemove(user?.firebaseUserId),
 			});
+		},
+		[user?.firebaseUserId, isVerySmallScreen]
+	);
 
-			// Set this as the active chat in the UI
-			setActiveChat(newChat);
-			setActiveChatId(chatId);
-			localStorage.setItem('activeChatId', chatId);
-			return 'success';
-		}
-	};
-
-	const handleSetActiveChat = async (chat: Chat) => {
-		setActiveChat(chat);
-		localStorage.setItem('activeChatId', chat.chatId);
-		setActiveChatId(chat.chatId);
-
-		// Hide chat list on small screens when a chat is selected
-		if (isVerySmallScreen) {
-			setIsChatsListVisible(false);
-		}
-
-		const chatBlockedUsers = chat.blockedUsers || {};
-		const blockedUsersArray = Object.keys(chatBlockedUsers);
-		setBlockedUsers(blockedUsersArray);
-
-		const userRef = doc(db, 'users', user?.firebaseUserId!);
-		await updateDoc(userRef, {
-			activeChatId: chat.chatId, // Set the active chat ID in Firestore
-		});
-
-		// Mark unread messages as read when user opens chat
-		const messagesRef = collection(db, 'chats', chat.chatId, 'messages');
-
-		if (isGroupChat(chat)) {
-			// For group chats, mark all messages as read for the current user
-			const unreadMessagesQuery = query(messagesRef, where('isRead', '==', false));
-			const unreadMessagesSnapshot = await getDocs(unreadMessagesQuery);
-
-			unreadMessagesSnapshot.forEach(async (doc) => {
-				await updateDoc(doc.ref, {
-					isRead: true, // Mark each message as read
-				});
-			});
-		} else {
-			// For 1-1 chats, mark messages sent to current user as read
-			const unreadMessagesQuery = query(messagesRef, where('receiverId', '==', user?.firebaseUserId), where('isRead', '==', false));
-			const unreadMessagesSnapshot = await getDocs(unreadMessagesQuery);
-
-			unreadMessagesSnapshot.forEach(async (doc) => {
-				await updateDoc(doc.ref, {
-					isRead: true, // Mark each message as read
-				});
-			});
-		}
-
-		// Update Firestore to reflect no unread messages for this chat
-		const chatDocRef = doc(db, 'chats', chat.chatId);
-		await updateDoc(chatDocRef, {
-			hasUnreadMessages: false, // Set unread to false after the chat is opened
-			unreadBy: arrayRemove(user?.firebaseUserId),
-		});
-	};
-
-	const handleReplyMessage = (message: Message) => {
+	const handleReplyMessage = useCallback((message: Message) => {
 		setReplyToMessage(message);
-	};
+	}, []);
 
 	const handleSendMessage = async () => {
 		if ((!currentMessage.trim() && !imageUpload) || !activeChat) return;
@@ -1152,63 +1158,88 @@ const Messages = () => {
 	};
 
 	// Group chat helper functions
-	const isGroupChat = (chat: Chat): boolean => {
+	const isGroupChat = useCallback((chat: Chat): boolean => {
 		return chat?.chatType === 'group' || chat?.participants?.length > 2;
-	};
+	}, []);
 
-	const getChatDisplayName = (chat: Chat): string => {
-		if (isGroupChat(chat) && chat.groupName) {
-			return chat.groupName;
-		}
-		const otherParticipant = chat.participants.find((p) => p.firebaseUserId !== user?.firebaseUserId);
-		return otherParticipant?.username || 'Unknown User';
-	};
+	const getChatDisplayName = useMemo(
+		() =>
+			(chat: Chat): string => {
+				if (isGroupChat(chat) && chat.groupName) {
+					return chat.groupName;
+				}
+				const otherParticipant = chat.participants.find((p) => p.firebaseUserId !== user?.firebaseUserId);
+				return otherParticipant?.username || 'Unknown User';
+			},
+		[isGroupChat, user?.firebaseUserId]
+	);
 
-	const getChatDisplayImage = (chat: Chat): string => {
-		if (isGroupChat(chat)) {
-			// For group chats, return group image if available, otherwise use placeholder
-			if (chat.groupImageUrl) {
-				return chat.groupImageUrl;
+	const getChatDisplayImage = useMemo(
+		() =>
+			(chat: Chat): string => {
+				if (isGroupChat(chat)) {
+					// For group chats, return group image if available, otherwise use placeholder
+					if (chat.groupImageUrl) {
+						return chat.groupImageUrl;
+					}
+					// Use placeholder image for group chats without custom image
+					return 'https://t4.ftcdn.net/jpg/02/53/91/57/360_F_253915708_G8elkrM3HdQPi3txjwTirLDXVfPuqnww.jpg';
+				}
+				const otherParticipant = chat.participants.find((p) => p.firebaseUserId !== user?.firebaseUserId);
+				return otherParticipant?.imageUrl || '';
+			},
+		[isGroupChat, user?.firebaseUserId]
+	);
+
+	const handleGroupUserSelection = useCallback(
+		(selectedUser: User) => {
+			// Check if user is blocked by current user
+			const isBlocked = globalBlockedUsers.includes(selectedUser.firebaseUserId);
+			if (isBlocked) {
+				// Don't add blocked users to group
+				return;
 			}
-			// Use placeholder image for group chats without custom image
-			return 'https://t4.ftcdn.net/jpg/02/53/91/57/360_F_253915708_G8elkrM3HdQPi3txjwTirLDXVfPuqnww.jpg';
-		}
-		const otherParticipant = chat.participants.find((p) => p.firebaseUserId !== user?.firebaseUserId);
-		return otherParticipant?.imageUrl || '';
-	};
 
-	const handleGroupUserSelection = (selectedUser: User) => {
-		// Check if user is already selected in new members
-		const isAlreadySelected = selectedGroupUsers.some((u) => u.firebaseUserId === selectedUser.firebaseUserId);
+			// Check if user is already selected in new members
+			const isAlreadySelected = selectedGroupUsers.some((u) => u.firebaseUserId === selectedUser.firebaseUserId);
 
-		// Check if user is already in current members (not removed) - only for group editing
-		const isCurrentMember =
-			activeChat?.participants?.some((p) => p.firebaseUserId === selectedUser.firebaseUserId && !removedMembers.includes(p.firebaseUserId)) || false;
+			// Check if user is already in current members (not removed) - only for group editing
+			const isCurrentMember =
+				activeChat?.participants?.some((p) => p.firebaseUserId === selectedUser.firebaseUserId && !removedMembers.includes(p.firebaseUserId)) ||
+				false;
 
-		// Only add if not already selected and not a current member
-		if (!isAlreadySelected && !isCurrentMember) {
-			setSelectedGroupUsers((prev) => [...prev, selectedUser]);
-		}
-		// Don't clear search value for group chat - keep it for continued searching
-	};
+			// Only add if not already selected and not a current member
+			if (!isAlreadySelected && !isCurrentMember) {
+				setSelectedGroupUsers((prev) => [...prev, selectedUser]);
+			}
+			// Don't clear search value for group chat - keep it for continued searching
+		},
+		[selectedGroupUsers, activeChat?.participants, removedMembers, globalBlockedUsers]
+	);
 
-	const removeGroupUser = (userId: string) => {
+	const removeGroupUser = useCallback((userId: string) => {
 		setSelectedGroupUsers((prev) => prev.filter((u) => u.firebaseUserId !== userId));
-	};
+	}, []);
 
-	const removeExistingGroupMember = (userId: string) => {
-		if (!activeChat) return;
+	const removeExistingGroupMember = useCallback(
+		(userId: string) => {
+			if (!activeChat) return;
 
-		// Add to removed members list (pending removal)
-		setRemovedMembers((prev) => [...prev, userId]);
-	};
+			// Add to removed members list (pending removal)
+			setRemovedMembers((prev) => [...prev, userId]);
+		},
+		[activeChat]
+	);
 
-	const restoreExistingGroupMember = (userId: string) => {
-		if (!activeChat) return;
+	const restoreExistingGroupMember = useCallback(
+		(userId: string) => {
+			if (!activeChat) return;
 
-		// Remove from removed members list (cancel removal)
-		setRemovedMembers((prev) => prev.filter((id) => id !== userId));
-	};
+			// Remove from removed members list (cancel removal)
+			setRemovedMembers((prev) => prev.filter((id) => id !== userId));
+		},
+		[activeChat]
+	);
 
 	const createGroupChat = async () => {
 		if (!groupName.trim() || selectedGroupUsers.length === 0) return;
@@ -1605,27 +1636,34 @@ const Messages = () => {
 		}
 	};
 
-	const debouncedFilterChats = debounce((searchValue: string) => {
-		if (searchValue) {
-			const filteredList = chatList?.filter((chat: Chat) =>
-				chat.participants.some(
-					(participant: ParticipantData) =>
-						(participant.username.toLowerCase().includes(searchValue.toLowerCase()) ||
-							chat.groupName?.toLowerCase().includes(searchValue.toLowerCase())) &&
-						participant.firebaseUserId !== user?.firebaseUserId
-				)
-			);
-			setFilteredChatList(filteredList);
-		} else {
-			setFilteredChatList(chatList);
-		}
-	}, 250);
+	const debouncedFilterChats = useMemo(
+		() =>
+			debounce((searchValue: string) => {
+				if (searchValue) {
+					const filteredList = chatList?.filter((chat: Chat) =>
+						chat.participants.some(
+							(participant: ParticipantData) =>
+								(participant.username.toLowerCase().includes(searchValue.toLowerCase()) ||
+									chat.groupName?.toLowerCase().includes(searchValue.toLowerCase())) &&
+								participant.firebaseUserId !== user?.firebaseUserId
+						)
+					);
+					setFilteredChatList(filteredList);
+				} else {
+					setFilteredChatList(chatList);
+				}
+			}, 250),
+		[chatList, user?.firebaseUserId]
+	);
 
-	const handleFilterChats = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const newSearchValue = e.target.value.trim(); // Capture and trim the new search value
-		setSearchChatValue(newSearchValue); // Update the search state
-		debouncedFilterChats(newSearchValue.toLowerCase()); // Call the debounced function with the new value
-	};
+	const handleFilterChats = useCallback(
+		(e: React.ChangeEvent<HTMLInputElement>) => {
+			const newSearchValue = e.target.value.trim(); // Capture and trim the new search value
+			setSearchChatValue(newSearchValue); // Update the search state
+			debouncedFilterChats(newSearchValue.toLowerCase()); // Call the debounced function with the new value
+		},
+		[debouncedFilterChats]
+	);
 
 	const downloadChatHistory = async () => {
 		if (!activeChat || !messages.length) {

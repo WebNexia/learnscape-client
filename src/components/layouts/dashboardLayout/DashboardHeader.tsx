@@ -161,24 +161,26 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 						</IconButton>
 					</Tooltip>
 
-					<Tooltip title='Recycle Bin' placement='top' arrow>
-						<IconButton
-							onClick={() => navigate('/admin/recycle-bin')}
-							sx={{
-								':hover': {
-									backgroundColor: 'transparent',
-								},
-								'mr': 1,
-							}}>
-							<Delete
-								color='secondary'
-								fontSize={isMobileSize ? 'small' : 'medium'}
+					{user?.role === Roles.ADMIN && (
+						<Tooltip title='Recycle Bin' placement='top' arrow>
+							<IconButton
+								onClick={() => navigate('/admin/recycle-bin')}
 								sx={{
-									fontSize: isMobileSize ? '1rem' : undefined,
-								}}
-							/>
-						</IconButton>
-					</Tooltip>
+									':hover': {
+										backgroundColor: 'transparent',
+									},
+									'mr': 1,
+								}}>
+								<Delete
+									color='secondary'
+									fontSize={isMobileSize ? 'small' : 'medium'}
+									sx={{
+										fontSize: isMobileSize ? '1rem' : undefined,
+									}}
+								/>
+							</IconButton>
+						</Tooltip>
+					)}
 
 					<Badge
 						badgeContent={numberOfUnreadNotifications}

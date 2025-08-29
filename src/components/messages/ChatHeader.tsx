@@ -257,6 +257,9 @@ const ChatHeader = ({
 						{isBlocking ? (
 							<>
 								<Typography component='li' variant='body2' sx={{ mb: '0.5rem', fontSize: '0.8rem' }}>
+									They will know that you have blocked them
+								</Typography>
+								<Typography component='li' variant='body2' sx={{ mb: '0.5rem', fontSize: '0.8rem' }}>
 									They cannot send you messages
 								</Typography>
 								<Typography component='li' variant='body2' sx={{ mb: '0.5rem', fontSize: '0.8rem' }}>
@@ -265,6 +268,11 @@ const ChatHeader = ({
 								<Typography component='li' variant='body2' sx={{ mb: '0.5rem', fontSize: '0.8rem' }}>
 									You can unblock them later to resume communication
 								</Typography>
+								{user?.role === 'admin' && (
+									<Typography component='li' variant='body2' sx={{ mb: '0.5rem', fontSize: '0.8rem' }}>
+										You cannot add them to a group chat
+									</Typography>
+								)}
 							</>
 						) : (
 							<>
@@ -277,6 +285,11 @@ const ChatHeader = ({
 								<Typography component='li' variant='body2' sx={{ mb: '0.5rem', fontSize: '0.8rem' }}>
 									Previous messages will be available to view
 								</Typography>
+								{user?.role === 'admin' && (
+									<Typography component='li' variant='body2' sx={{ mb: '0.5rem', fontSize: '0.8rem' }}>
+										You can add them to a group chat
+									</Typography>
+								)}
 							</>
 						)}
 					</Box>
