@@ -33,21 +33,14 @@ import { truncateText } from '../utils/utilText';
 import { validateImageUrl } from '../utils/urlValidation';
 import { renderMessageWithMentions } from '../utils/renderMessageWithMentions';
 
-import { processTitle } from '../utils/processTitle';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import { useUploadLimit } from '../contexts/UploadLimitContextProvider';
 import CommunityUserSearchSelect from '../components/CommunityUserSearchSelect';
-import TopicSearchSelect from '../components/TopicSearchSelect';
-import { SearchUser, SearchTopic } from '../interfaces/search';
+import { SearchUser } from '../interfaces/search';
 
 export interface UserSuggestion {
 	username: string;
 	imageUrl: string;
-}
-
-export interface TopicSuggestion {
-	title: string;
-	topicId: string;
 }
 
 const CommunityTopicPage = () => {
@@ -125,10 +118,7 @@ const CommunityTopicPage = () => {
 	const [isTopicLocked, setIsTopicLocked] = useState<boolean>(false);
 
 	const [showUserSearch, setShowUserSearch] = useState<boolean>(false);
-	const [showTopicSearch, setShowTopicSearch] = useState<boolean>(false);
 	const [userSearchValue, setUserSearchValue] = useState<string>('');
-	const [topicSearchValue, setTopicSearchValue] = useState<string>('');
-	const [suggestionType, setSuggestionType] = useState<string | null>(null);
 
 	const [isTopicZoomed, setIsTopicZoomed] = useState<boolean>(false);
 
@@ -167,24 +157,45 @@ const CommunityTopicPage = () => {
 	}, [topicId, fetchMessages]);
 
 	useEffect(() => {
-		if (highlightedMessageId && messages.length > 0) {
-			const messageElement = messageRefs.current[highlightedMessageId];
+		if (highlightedMessageId && messages && messages.length > 0) {
+			// Add a small delay to ensure messages are fully rendered
+			const timer = setTimeout(() => {
+				const messageElement = messageRefs.current[highlightedMessageId];
 
-			if (messageElement) {
-				messageElement.scrollIntoView({
-					behavior: 'smooth',
-					block: 'center',
-				});
+				if (messageElement) {
+					messageElement.scrollIntoView({
+						behavior: 'smooth',
+						block: 'center',
+					});
 
-				// Add the highlight class
-				messageElement.classList.add('highlight-community-message');
-				setTimeout(() => {
-					messageElement.classList.remove('highlight-community-message');
-				}, 2500);
+					// Add the highlight class
+					messageElement.classList.add('highlight-community-message');
+					setTimeout(() => {
+						messageElement.classList.remove('highlight-community-message');
+					}, 2500);
 
-				// Clear the highlighted message after it's been highlighted
-				setHighlightedMessageId(''); // Clear highlightedMessageId after the scroll
-			}
+					// Clear the highlighted message after it's been highlighted
+					setHighlightedMessageId(''); // Clear highlightedMessageId after the scroll
+				} else {
+					// If element not found, try again after a longer delay
+					setTimeout(() => {
+						const retryElement = messageRefs.current[highlightedMessageId];
+						if (retryElement) {
+							retryElement.scrollIntoView({
+								behavior: 'smooth',
+								block: 'center',
+							});
+							retryElement.classList.add('highlight-community-message');
+							setTimeout(() => {
+								retryElement.classList.remove('highlight-community-message');
+							}, 2500);
+						}
+						setHighlightedMessageId('');
+					}, 1000);
+				}
+			}, 100);
+
+			return () => clearTimeout(timer);
 		}
 	}, [highlightedMessageId, messages]);
 
@@ -290,10 +301,92 @@ const CommunityTopicPage = () => {
 				await addDoc(notificationRef, notificationToTopicOwnerData);
 			}
 
-			// TODO: Update mentions logic to work with new search API
-			// For now, mentions are handled by the search components
-			// const mentionedUsernames = extractMentions(currentMessage);
-			// User mention notifications will be handled differently with the new search approach
+			// Send notifications for mentioned users
+			const mentionedUsernames = extractMentions(currentMessage);
+			if (mentionedUsernames.length > 0) {
+				try {
+					// Create a set of users who are already receiving notifications (to avoid duplicates)
+					const usersAlreadyNotified = new Set();
+
+					// Add topic creator if they're getting a topic reply notification
+					if (topic.userId?._id !== user?._id && topic.userId?.firebaseUserId) {
+						usersAlreadyNotified.add(topic.userId.firebaseUserId);
+					}
+
+					// Add reply message author if they're getting a reply notification
+					if (replyToMessage && replyToMessage.userId?._id !== user?._id && replyToMessage.userId?.firebaseUserId) {
+						usersAlreadyNotified.add(replyToMessage.userId.firebaseUserId);
+					}
+
+					// Check if @everyone is mentioned
+					const hasEveryoneMention = mentionedUsernames.includes('everyone');
+
+					if (hasEveryoneMention) {
+						// Get all users who have participated in this topic
+						const topicParticipantsResponse = await axios.get(`${base_url}/communityMessages/topic-participants/${topic._id}`);
+						const topicParticipants = topicParticipantsResponse.data.data || [];
+
+						// Send @everyone notifications to all topic participants
+						for (const participant of topicParticipants) {
+							if (
+								participant.firebaseUserId &&
+								participant.firebaseUserId !== user?.firebaseUserId &&
+								!usersAlreadyNotified.has(participant.firebaseUserId)
+							) {
+								const everyoneNotificationData = {
+									title: 'Community Announcement',
+									message: `${user?.username} made an announcement in the topic "${truncateText(topic.title, 30)}": "${truncateText(currentMessage, 50)}"`,
+									isRead: false,
+									timestamp: serverTimestamp(),
+									type: 'MentionUser',
+									userImageUrl: user?.imageUrl,
+									communityTopicId: topic._id,
+									communityMessageId: response.data._id,
+								};
+
+								const notificationRef = collection(db, 'notifications', participant.firebaseUserId, 'userNotifications');
+								await addDoc(notificationRef, everyoneNotificationData);
+							}
+						}
+					} else {
+						// Handle regular user mentions
+						const regularMentions = mentionedUsernames.filter((username) => username !== 'everyone');
+						if (regularMentions.length > 0) {
+							// Get user data for mentioned usernames
+							const mentionedUsersResponse = await axios.get(
+								`${base_url}/users/search-by-usernames?usernames=${regularMentions.join(',')}&orgId=${orgId}`
+							);
+							const mentionedUsers = mentionedUsersResponse.data.data || [];
+
+							// Send notifications to each mentioned user (excluding the current user and users already notified)
+							for (const mentionedUser of mentionedUsers) {
+								if (
+									mentionedUser.firebaseUserId &&
+									mentionedUser.firebaseUserId !== user?.firebaseUserId &&
+									!usersAlreadyNotified.has(mentionedUser.firebaseUserId)
+								) {
+									const mentionNotificationData = {
+										title: 'You were mentioned',
+										message: `${user?.username} mentioned you in a community message: "${truncateText(currentMessage, 50)}"`,
+										isRead: false,
+										timestamp: serverTimestamp(),
+										type: 'MentionUser',
+										userImageUrl: user?.imageUrl,
+										communityTopicId: topic._id,
+										communityMessageId: response.data._id,
+									};
+
+									const notificationRef = collection(db, 'notifications', mentionedUser.firebaseUserId, 'userNotifications');
+									await addDoc(notificationRef, mentionNotificationData);
+								}
+							}
+						}
+					}
+				} catch (error) {
+					console.error('Failed to send mention notifications:', error);
+					// Don't block the message send if notification fails
+				}
+			}
 
 			setRefreshTopics(true);
 
@@ -311,9 +404,7 @@ const CommunityTopicPage = () => {
 			setAudioUrl('');
 			setReplyToMessage(null);
 			setShowUserSearch(false);
-			setShowTopicSearch(false);
 			setUserSearchValue('');
-			setTopicSearchValue('');
 			scrollToBottom();
 		} catch (error: any) {
 			// Show error message to user
@@ -358,21 +449,20 @@ const CommunityTopicPage = () => {
 		const words = input.split(/\s+/);
 		const lastWord = words[words.length - 1];
 
-		// Determine if the last word starts with '@' or '#'
+		// Check if admin is typing @everyone - close search box
+		if (lastWord === '@everyone' && user?.role === Roles.ADMIN) {
+			setShowUserSearch(false);
+			setUserSearchValue('');
+			return;
+		}
+
+		// Determine if the last word starts with '@'
 		if (lastWord.startsWith('@')) {
-			setSuggestionType('@');
 			setShowUserSearch(true);
-			setShowTopicSearch(false);
 			setUserSearchValue(lastWord.slice(1));
-		} else if (lastWord.startsWith('#')) {
-			setSuggestionType('#');
+		} else if (!input.includes('@')) {
+			// Hide search if there are no `@` triggers anywhere in the input
 			setShowUserSearch(false);
-			setShowTopicSearch(true);
-			setTopicSearchValue(lastWord.slice(1));
-		} else if (!input.includes('@') && !input.includes('#')) {
-			// Only hide search if there are no `@` or `#` triggers anywhere in the input
-			setShowUserSearch(false);
-			setShowTopicSearch(false);
 		}
 	};
 
@@ -389,21 +479,6 @@ const CommunityTopicPage = () => {
 		setCurrentMessage(updatedMessage);
 		setShowUserSearch(false);
 		setUserSearchValue('');
-	};
-
-	const handleTopicSelection = (selectedTopic: SearchTopic) => {
-		const updatedSuggestion = selectedTopic.title
-			.replace(/[^a-zA-Z0-9]/g, '_')
-			.split(' ')
-			.join('_');
-
-		const triggerSymbol = '#';
-		const currentMessageArray = currentMessage.split(/[#]\w*$/);
-		const updatedMessage = `${currentMessageArray[0]}${triggerSymbol}${updatedSuggestion} `;
-
-		setCurrentMessage(updatedMessage);
-		setShowTopicSearch(false);
-		setTopicSearchValue('');
 	};
 
 	const extractMentions = (message: string): string[] => {
@@ -431,15 +506,9 @@ const CommunityTopicPage = () => {
 		return mentions.filter((mention) => mention !== currentSearchTerm);
 	}, [currentMessage, userSearchValue]);
 
-	// Apply the conversion to all topics in sortedTopics
-	const processedTopics = sortedTopicsData?.map((topic) => ({
-		title: processTitle(topic.title), // Apply the same transformation
-		topicId: topic._id,
-	}));
-
 	const renderMessageContent = (text: string) => {
 		// Step 1: Wrap mentions in links
-		const withMentions = renderMessageWithMentions(text, processedTopics, user!);
+		const withMentions = renderMessageWithMentions(text, [], user!);
 
 		// Step 2: Pass the result to emoji rendering, handling both strings and arrays
 		return renderMessageWithEmojis(withMentions, isMobileSize ? '1rem' : '1.5rem', isMobileSize);
@@ -486,7 +555,7 @@ const CommunityTopicPage = () => {
 		const requiredRecords = newPage * pageSize;
 
 		// Check if we need to fetch more data
-		if (messages.length < requiredRecords) {
+		if (messages && messages.length < requiredRecords) {
 			const currentLoadedPages = loadedPages.length > 0 ? Math.max(...loadedPages) : 0; // Get the highest loaded page
 			const targetBackendPage = Math.ceil(requiredRecords / 250); // Calculate which backend page we need (250 messages per backend page)
 
@@ -916,35 +985,6 @@ const CommunityTopicPage = () => {
 					</Box>
 				)}
 
-				{showTopicSearch && (
-					<Box
-						sx={{
-							position: 'absolute',
-							bottom: isMobileSize ? '4rem' : '6rem',
-							left: isVerySmallScreen ? '2.5%' : isMobileSize ? '5%' : '11%',
-							backgroundColor: '#fff',
-							borderRadius: '0.25rem',
-							boxShadow: '0 0.1rem 0.4rem rgba(0,0,0,0.3)',
-							maxHeight: '20rem',
-							overflowY: 'auto',
-							zIndex: 10,
-							width: isVerySmallScreen ? '95%' : isMobileSize ? '90%' : '78%',
-						}}>
-						<TopicSearchSelect
-							context='community'
-							value={topicSearchValue}
-							onChange={setTopicSearchValue}
-							onSelect={handleTopicSelection}
-							placeholder='Search topics to mention...'
-							sx={{ width: '100%' }}
-							listSx={{
-								margin: '0',
-								width: '100%',
-							}}
-						/>
-					</Box>
-				)}
-
 				<CustomTextField
 					multiline
 					rows={isMobileSize ? 2 : 3}
@@ -952,7 +992,13 @@ const CommunityTopicPage = () => {
 					required={false}
 					disabled={isTopicLocked}
 					onChange={handleInputChange}
-					placeholder={isTopicLocked ? 'You cannot send a message since topic is locked' : 'You can use @ to mention users and # to mention topics'}
+					placeholder={
+						isTopicLocked
+							? 'You cannot send a message since topic is locked'
+							: user?.role === Roles.ADMIN
+								? 'You can use @everyone to mention all users, @ to mention specific users'
+								: 'You can use @ to mention specific users'
+					}
 					sx={{
 						width: isVerySmallScreen ? '95%' : isMobileSize ? '90%' : '78%',
 						border: replyToMessage ? 'none' : 'inherit',

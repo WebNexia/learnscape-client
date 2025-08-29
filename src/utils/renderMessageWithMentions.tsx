@@ -1,16 +1,14 @@
 import { Link } from 'react-router-dom';
-import { TopicSuggestion } from '../pages/CommunityTopicPage';
-import { processTitle } from './processTitle';
 import { User } from '../interfaces/user';
 import { Roles } from '../interfaces/enums';
 
-export const renderMessageWithMentions = (text: string, processedTopics: TopicSuggestion[], user: User) => {
+export const renderMessageWithMentions = (text: string, processedTopics: any[], user: User) => {
 	// Add defensive programming to handle undefined or null text
 	if (!text || typeof text !== 'string') {
 		return [];
 	}
 
-	const mentionPattern = /(@[a-zA-Z0-9._]+|#[a-zA-Z0-9._]+)/g;
+	const mentionPattern = /(@[a-zA-Z0-9._]+)/g;
 	const parts = text.split(mentionPattern);
 
 	return parts?.map((part, index) => {
@@ -40,29 +38,6 @@ export const renderMessageWithMentions = (text: string, processedTopics: TopicSu
 					{part}
 				</Link>
 			);
-		} else if (part.startsWith('#')) {
-			// Process the topic title to match with processed topics
-			const typedTitle = processTitle(part.substring(1));
-
-			// Find the corresponding topic based on the processed title
-			const topic = processedTopics.find((t) => t.title === typedTitle);
-
-			if (topic) {
-				// Determine base path based on user role
-				const basePath = user?.role === Roles.ADMIN ? '/admin' : '';
-				return (
-					<Link key={index} to={`${basePath}/community/topic/${topic.topicId}`} style={{ textDecoration: 'none', color: 'blue' }}>
-						{part}
-					</Link>
-				);
-			} else {
-				// Render unmatched topics as gray text
-				return (
-					<span key={index} style={{ color: 'gray' }}>
-						{part}
-					</span>
-				);
-			}
 		} else {
 			// Render regular text parts as-is
 			return part;

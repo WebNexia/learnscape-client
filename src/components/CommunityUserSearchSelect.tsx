@@ -208,7 +208,7 @@ const CommunityUserSearchSelect: React.FC<CommunityUserSearchSelectProps> = ({
 									'backgroundColor': theme.bgColor?.primary,
 									'color': '#fff',
 									'cursor': 'pointer',
-									'& .username': {
+									'& .username, & .email': {
 										color: '#fff',
 									},
 								},
@@ -230,7 +230,7 @@ const CommunityUserSearchSelect: React.FC<CommunityUserSearchSelectProps> = ({
 								<Typography className='username' variant='body2' sx={{ fontSize: '0.8rem' }}>
 									{user.username}
 								</Typography>
-								<Typography variant='caption' sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>
+								<Typography className='email' variant='caption' sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>
 									{user.email}
 								</Typography>
 							</Box>
