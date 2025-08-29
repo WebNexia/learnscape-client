@@ -1069,16 +1069,8 @@ const Messages = () => {
 
 					const isRecipientChatting = recipientData?.activeChatId === activeChat.chatId;
 
-					// Check if the receiver has unread messages in the active chat
-					const unreadMessagesQuery = query(
-						collection(db, 'chats', activeChat.chatId, 'messages'),
-						where('receiverId', '==', receiverId),
-						where('isRead', '==', false)
-					);
-					const unreadMessagesSnapshot = await getDocs(unreadMessagesQuery);
-
-					// Send a notification only if there are no unread messages and the recipient is not currently viewing the chat
-					if (unreadMessagesSnapshot.size === 1 && !isRecipientChatting) {
+					// Send a notification only if the recipient is not currently viewing the chat
+					if (!isRecipientChatting) {
 						const notificationData = {
 							title: 'New Message',
 							message: `${user?.username} sent you a message.`,
@@ -1118,6 +1110,10 @@ const Messages = () => {
 			}
 		} catch (error) {
 			console.error('Error sending message: ', error);
+			// Clear the message field even if there's an error
+			setCurrentMessage('');
+			setReplyToMessage(null);
+			resetImageUpload();
 		}
 	};
 

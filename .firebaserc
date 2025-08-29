@@ -1,5 +1,7 @@
 {
-	"projects": {
-		"default": "learnscape-msg"
-	}
+  "projects": {
+    "default": "learnscape-msg"
+  },
+  "targets": {},
+  "etags": {}
 }

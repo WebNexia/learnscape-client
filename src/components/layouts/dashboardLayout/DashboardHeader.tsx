@@ -3,7 +3,7 @@ import theme from '../../../themes';
 import { useNavigate } from 'react-router-dom';
 import { useContext, useEffect, useRef, useState } from 'react';
 import { Mode, Roles } from '../../../interfaces/enums';
-import { Cancel, DarkMode, DoneAll, LightMode, Menu, Notifications, BugReport, Delete } from '@mui/icons-material';
+import { Cancel, DoneAll, Menu, Notifications, BugReport, Delete } from '@mui/icons-material';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 import { useUserCourseLessonData } from '../../../hooks/useUserCourseLessonData';
 import NotificationsBox from '../notifications/Notifications';
