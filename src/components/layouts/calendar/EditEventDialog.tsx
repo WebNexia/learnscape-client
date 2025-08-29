@@ -96,7 +96,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 			_id: selectedUser.firebaseUserId, // Use firebaseUserId as _id for compatibility
 			firebaseUserId: selectedUser.firebaseUserId,
 			username: selectedUser.username,
-			email: selectedUser.email,
+			email: selectedUser.email || '',
 			imageUrl: selectedUser.imageUrl,
 			role: selectedUser.role,
 			// Add other required fields with defaults
