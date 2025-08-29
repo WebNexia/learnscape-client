@@ -22,6 +22,8 @@ interface ChatListProps {
 	getChatDisplayName: (chat: ChatType) => string;
 	getChatDisplayImage: (chat: ChatType) => string;
 	isGroupChat: (chat: ChatType) => boolean;
+	globalBlockedUsers?: string[];
+	blockedByUsers?: string[];
 }
 
 const ChatList = ({
@@ -41,6 +43,8 @@ const ChatList = ({
 	getChatDisplayName,
 	getChatDisplayImage,
 	isGroupChat,
+	globalBlockedUsers,
+	blockedByUsers,
 }: ChatListProps) => {
 	return (
 		<>
@@ -188,9 +192,25 @@ const ChatList = ({
 														fontSize: isMobileSize ? '0.65rem' : '0.8rem',
 													}}>
 													{chatDisplayName}
-													{Object.keys(chat.blockedUsers || {}).length > 0 && !isGroup && (
-														<DoNotDisturbAlt fontSize='small' sx={{ color: 'gray', marginLeft: '0.5rem' }} />
-													)}
+													{(() => {
+														if (isGroup) return null;
+
+														// Check if current user has blocked any participant in this chat
+														const hasBlockedParticipant = chat.participants?.some(
+															(participant) =>
+																participant.firebaseUserId !== user?.firebaseUserId && globalBlockedUsers?.includes(participant.firebaseUserId)
+														);
+
+														// Check if current user is blocked by any participant in this chat
+														const isBlockedByParticipant = chat.participants?.some(
+															(participant) =>
+																participant.firebaseUserId !== user?.firebaseUserId && blockedByUsers?.includes(participant.firebaseUserId)
+														);
+
+														return hasBlockedParticipant || isBlockedByParticipant ? (
+															<DoNotDisturbAlt fontSize='small' sx={{ color: 'gray', marginLeft: '0.5rem' }} />
+														) : null;
+													})()}
 													{isGroup && (
 														<Typography
 															variant='caption'

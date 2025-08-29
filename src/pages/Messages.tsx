@@ -137,6 +137,7 @@ const Messages = () => {
 
 	const [blockedUsers, setBlockedUsers] = useState<string[]>([]);
 	const [globalBlockedUsers, setGlobalBlockedUsers] = useState<string[]>([]);
+	const [blockedByUsers, setBlockedByUsers] = useState<string[]>([]); // Track who has blocked the current user
 
 	const [zoomedImage, setZoomedImage] = useState<string | undefined>('');
 
@@ -145,31 +146,72 @@ const Messages = () => {
 		if (!user?.firebaseUserId) return;
 
 		try {
-			// Get all chats where the current user is a participant
-			const chatsRef = collection(db, 'chats');
-			const q = query(chatsRef, where('participants', 'array-contains', user.firebaseUserId));
-			const querySnapshot = await getDocs(q);
+			// Get blocked users from userBlocks collection (who current user has blocked)
+			const userBlocksRef = doc(db, 'userBlocks', user.firebaseUserId);
+			const userBlocksDoc = await getDoc(userBlocksRef);
 
-			const allBlockedUsers: string[] = [];
+			if (userBlocksDoc.exists()) {
+				const userBlocksData = userBlocksDoc.data();
+				const blockedUsers = userBlocksData.blockedUsers || {};
+				setGlobalBlockedUsers(Object.keys(blockedUsers));
+			} else {
+				setGlobalBlockedUsers([]);
+			}
 
-			querySnapshot.forEach((doc) => {
-				const chatData = doc.data();
-				const blockedUsers = chatData.blockedUsers || {};
+			// Check who has blocked the current user by querying userBlocks collection
+			const blockedByUsers: string[] = [];
+			const userBlocksQuery = query(collection(db, 'userBlocks'), where(`blockedUsers.${user.firebaseUserId}`, '!=', null));
+			const userBlocksSnapshot = await getDocs(userBlocksQuery);
 
-				// Get all blocked user IDs from this chat
-				Object.keys(blockedUsers).forEach((blockedUserId) => {
-					// Only include users that the current user has blocked
-					// The blockedUsers object contains users blocked by the current user
-					if (!allBlockedUsers.includes(blockedUserId)) {
-						allBlockedUsers.push(blockedUserId);
-					}
-				});
+			userBlocksSnapshot.forEach((doc) => {
+				const userBlocksData = doc.data();
+				const blockedUsers = userBlocksData.blockedUsers || {};
+				if (blockedUsers[user.firebaseUserId]) {
+					// This user has blocked the current user
+					blockedByUsers.push(doc.id);
+				}
 			});
 
-			setGlobalBlockedUsers(allBlockedUsers);
+			setBlockedByUsers([...new Set(blockedByUsers)]); // Remove duplicates
 		} catch (error) {
 			console.error('Error fetching blocked users:', error);
 		}
+	}, [user?.firebaseUserId]);
+
+	// Real-time listener for userBlocks collection to automatically update blocking status
+	useEffect(() => {
+		if (!user?.firebaseUserId) return;
+
+		// Listen to changes in the current user's userBlocks document
+		const userBlocksRef = doc(db, 'userBlocks', user.firebaseUserId);
+		const unsubscribeUserBlocks = onSnapshot(userBlocksRef, (doc) => {
+			if (doc.exists()) {
+				const userBlocksData = doc.data();
+				const blockedUsers = userBlocksData.blockedUsers || {};
+				setGlobalBlockedUsers(Object.keys(blockedUsers));
+			} else {
+				setGlobalBlockedUsers([]);
+			}
+		});
+
+		// Listen to changes in userBlocks collection where current user is blocked
+		const userBlocksQuery = query(collection(db, 'userBlocks'), where(`blockedUsers.${user.firebaseUserId}`, '!=', null));
+		const unsubscribeBlockedBy = onSnapshot(userBlocksQuery, (querySnapshot) => {
+			const blockedByUsers: string[] = [];
+			querySnapshot.forEach((doc) => {
+				const userBlocksData = doc.data();
+				const blockedUsers = userBlocksData.blockedUsers || {};
+				if (blockedUsers[user.firebaseUserId]) {
+					blockedByUsers.push(doc.id);
+				}
+			});
+			setBlockedByUsers([...new Set(blockedByUsers)]);
+		});
+
+		return () => {
+			unsubscribeUserBlocks();
+			unsubscribeBlockedBy();
+		};
 	}, [user?.firebaseUserId]);
 
 	// Group chat creation state
@@ -265,29 +307,35 @@ const Messages = () => {
 	}, []);
 
 	// Check if the current user is blocked by another user
-	const isBlockedUser: boolean = useMemo(
-		() => isUserCurrentlyBlocked(user?.firebaseUserId!, activeChat?.blockedUsers),
-		[user?.firebaseUserId, activeChat?.blockedUsers]
-	);
+	const isBlockedUser: boolean = useMemo(() => {
+		if (!activeChat || !user?.firebaseUserId) return false;
+
+		// Check if any participant has blocked the current user using blockedByUsers from userBlocks collection
+		return (
+			activeChat.participants?.some((participant) => {
+				if (participant.firebaseUserId === user.firebaseUserId) return false;
+				return blockedByUsers.includes(participant.firebaseUserId);
+			}) || false
+		);
+	}, [user?.firebaseUserId, activeChat, blockedByUsers]);
 
 	// Check if the current user has blocked someone else
-	const isBlockingUser: boolean = useMemo(
-		() =>
-			activeChat?.participants?.some((participant) => {
-				if (participant.firebaseUserId === user?.firebaseUserId) return false; // Skip the current user
-				return isUserCurrentlyBlocked(participant.firebaseUserId, activeChat?.blockedUsers);
-			}) || false,
-		[activeChat?.participants, user?.firebaseUserId, activeChat?.blockedUsers]
-	);
+	const isBlockingUser: boolean = useMemo(() => {
+		if (!activeChat || !user?.firebaseUserId) return false;
 
-	// Update blockedUsers state whenever activeChat.blockedUsers changes
+		// Check if current user has blocked any participant
+		return (
+			activeChat.participants?.some((participant) => {
+				if (participant.firebaseUserId === user.firebaseUserId) return false;
+				return globalBlockedUsers.includes(participant.firebaseUserId);
+			}) || false
+		);
+	}, [activeChat?.participants, user?.firebaseUserId, globalBlockedUsers]);
+
+	// Update blockedUsers state whenever globalBlockedUsers changes
 	useEffect(() => {
-		if (activeChat?.blockedUsers) {
-			setBlockedUsers(Object.keys(activeChat.blockedUsers));
-		} else {
-			setBlockedUsers([]);
-		}
-	}, [activeChat?.blockedUsers]);
+		setBlockedUsers(globalBlockedUsers);
+	}, [globalBlockedUsers]);
 
 	const { imageUpload, imagePreview, handleImageChange, handleImageUpload, resetImageUpload, isUploading, isImgSizeLarge } = useImageUpload({
 		maxSizeInMB: 1,
@@ -387,8 +435,7 @@ const Messages = () => {
 	useEffect(() => {
 		if (!user?.firebaseUserId) return;
 
-		// Fetch all blocked users when user changes
-		fetchAllBlockedUsers();
+		// Real-time listeners will handle blocking status automatically
 
 		const chatsRef = collection(db, 'chats');
 		const q = query(chatsRef, where('participants', 'array-contains', user?.firebaseUserId), orderBy('lastMessage.timestamp', 'desc'));
@@ -482,24 +529,18 @@ const Messages = () => {
 		return () => unsubscribe();
 	}, [user?.firebaseUserId, fetchAllBlockedUsers, fetchParticipantData]);
 
-	const filterBlockedMessages = useCallback((messagesArray: Message[], activeChat: Chat) => {
-		return messagesArray.filter((msg) => {
-			const blockInfo = activeChat?.blockedUsers?.[msg.senderId];
-			const messageTimestamp = new Date(msg.timestamp);
-
-			// If the message sender is blocked and the message was sent during the blocked period, filter it out permanently.
-			if (blockInfo && blockInfo.blockedSince) {
-				const blockedSince = new Date(blockInfo.blockedSince);
-				const blockedUntil = blockInfo.blockedUntil ? new Date(blockInfo.blockedUntil) : null;
-
-				// Message is permanently hidden if it was sent during the blocked period.
-				if (messageTimestamp >= blockedSince && (!blockedUntil || messageTimestamp <= blockedUntil)) {
-					return false; // Do not show the message
+	const filterBlockedMessages = useCallback(
+		(messagesArray: Message[], activeChat: Chat) => {
+			return messagesArray.filter((msg) => {
+				// Check if the message sender is in the current user's blocked list
+				if (globalBlockedUsers.includes(msg.senderId)) {
+					return false; // Don't show messages from blocked users
 				}
-			}
-			return true;
-		});
-	}, []);
+				return true;
+			});
+		},
+		[globalBlockedUsers]
+	);
 
 	// Use the function in the onSnapshot listener
 	useEffect(() => {
@@ -593,17 +634,15 @@ const Messages = () => {
 	// Helper function to check if a user is blocked by another user
 	const checkIfUserIsBlocked = useCallback(async (blockedUserId: string, blockerUserId: string): Promise<boolean> => {
 		try {
-			// Check if there's an existing chat between these users
-			const chatId = [blockedUserId, blockerUserId].sort().join('&');
-			const chatRef = doc(db, 'chats', chatId);
-			const chatDoc = await getDoc(chatRef);
+			// Check userBlocks collection for blocking status
+			const userBlocksRef = doc(db, 'userBlocks', blockerUserId);
+			const userBlocksDoc = await getDoc(userBlocksRef);
 
-			if (chatDoc.exists()) {
-				const chatData = chatDoc.data();
-				const blockedUsers = chatData.blockedUsers || {};
-
-				// Check if the blocked user is in the blocker's blockedUsers list
+			if (userBlocksDoc.exists()) {
+				const userBlocksData = userBlocksDoc.data();
+				const blockedUsers = userBlocksData.blockedUsers || {};
 				const blockInfo = blockedUsers[blockedUserId];
+
 				if (blockInfo && blockInfo.blockedSince) {
 					const blockedSince = new Date(blockInfo.blockedSince);
 					const blockedUntil = blockInfo.blockedUntil ? new Date(blockInfo.blockedUntil) : null;
@@ -714,7 +753,7 @@ const Messages = () => {
 						lastMessage: { text: 'No messages yet', timestamp: new Date() },
 						isDeletedBy: [],
 						removedParticipants: [],
-						blockedUsers: {},
+						blockedUsers: {}, // No longer used - blocking is handled by userBlocks collection
 						hasUnreadMessages: false,
 						chatType: '1-1',
 						createdAt: new Date(),
@@ -734,7 +773,7 @@ const Messages = () => {
 						lastMessage: { text: 'No messages yet', timestamp: new Date() },
 						isDeletedBy: [],
 						removedParticipants: [],
-						blockedUsers: {},
+						blockedUsers: {}, // No longer used - blocking is handled by userBlocks collection
 						hasUnreadMessages: false,
 						chatType: '1-1',
 					};
@@ -788,7 +827,7 @@ const Messages = () => {
 						},
 					],
 					lastMessage: chatData.lastMessage || { text: 'No messages yet', timestamp: null },
-					blockedUsers: chatData.blockedUsers || [],
+					blockedUsers: {}, // No longer used - blocking is handled by userBlocks collection
 					isDeletedBy: chatData.isDeletedBy || [],
 					removedParticipants: chatData.removedParticipants || [],
 					hasUnreadMessages: chatData.hasUnreadMessages,
@@ -875,7 +914,7 @@ const Messages = () => {
 					lastMessage: { text: 'No messages yet', timestamp: new Date() }, // No message yet
 					isDeletedBy: [],
 					removedParticipants: [],
-					blockedUsers: {},
+					blockedUsers: {}, // No longer used - blocking is handled by userBlocks collection
 					hasUnreadMessages: false,
 					chatType: '1-1',
 				};
@@ -917,9 +956,7 @@ const Messages = () => {
 				setIsChatsListVisible(false);
 			}
 
-			const chatBlockedUsers = chat.blockedUsers || {};
-			const blockedUsersArray = Object.keys(chatBlockedUsers);
-			setBlockedUsers(blockedUsersArray);
+			// Real-time listeners will automatically update blocking status
 
 			const userRef = doc(db, 'users', user?.firebaseUserId!);
 			await updateDoc(userRef, {
@@ -989,7 +1026,7 @@ const Messages = () => {
 						timestamp: serverTimestamp(),
 					},
 					isDeletedBy: [],
-					blockedUsers: {},
+					blockedUsers: {}, // No longer used - blocking is handled by userBlocks collection
 					hasUnreadMessages: false,
 				});
 			} else {
@@ -1488,6 +1525,28 @@ const Messages = () => {
 		setChatIdToDelete('');
 	};
 
+	// Function to completely delete a chat and all its messages
+	const deleteChatCompletely = async (chatId: string) => {
+		try {
+			// Delete all messages in the chat
+			const messagesRef = collection(db, 'chats', chatId, 'messages');
+			const messagesSnapshot = await getDocs(messagesRef);
+			const batch = writeBatch(db);
+
+			messagesSnapshot.docs.forEach((doc) => {
+				batch.delete(doc.ref);
+			});
+
+			// Delete the chat document itself
+			batch.delete(doc(db, 'chats', chatId));
+
+			await batch.commit();
+			console.log('Chat completely deleted:', chatId);
+		} catch (error) {
+			console.error('Error deleting chat completely:', error);
+		}
+	};
+
 	const handleLeaveChat = async (chatId: string) => {
 		try {
 			// Get chat data to check if it's a group chat
@@ -1518,19 +1577,28 @@ const Messages = () => {
 					removedParticipants: arrayUnion(user?.firebaseUserId),
 				});
 
-				// Delete user's messages
-				const messagesRef = collection(db, 'chats', chatId, 'messages');
-				const userMessagesQuery = query(messagesRef, where('senderId', '==', user?.firebaseUserId));
-				const userMessagesSnapshot = await getDocs(userMessagesQuery);
+				// Check if both parties have left the chat
+				const updatedChatDoc = await getDoc(chatRef);
+				const updatedChatData = updatedChatDoc.data();
 
-				const batch = writeBatch(db);
-				userMessagesSnapshot.docs.forEach((doc) => {
-					batch.delete(doc.ref);
-				});
-				await batch.commit();
+				if (updatedChatData && updatedChatData.participants?.length === 0) {
+					// Both parties have left, delete the entire chat completely
+					await deleteChatCompletely(chatId);
+				} else {
+					// Only one party has left, delete user's messages and add system message
+					const messagesRef = collection(db, 'chats', chatId, 'messages');
+					const userMessagesQuery = query(messagesRef, where('senderId', '==', user?.firebaseUserId));
+					const userMessagesSnapshot = await getDocs(userMessagesQuery);
 
-				// Add system message that user left (for 1-1 chats, this will be visible to the other user)
-				await addSystemMessage(chatId, 'user_left', user?.username);
+					const batch = writeBatch(db);
+					userMessagesSnapshot.docs.forEach((doc) => {
+						batch.delete(doc.ref);
+					});
+					await batch.commit();
+
+					// Add system message that user left (for 1-1 chats, this will be visible to the other user)
+					await addSystemMessage(chatId, 'user_left', user?.username);
+				}
 			}
 
 			// Update local state
@@ -1602,37 +1670,58 @@ const Messages = () => {
 	};
 
 	const handleBlockUnblockUser = async (firebaseUserId: string) => {
-		const chatId = activeChat?.chatId;
-		if (!chatId) return;
+		if (!user?.firebaseUserId) return;
 
-		const chatRef = doc(db, 'chats', chatId);
-		const chatDoc = await getDoc(chatRef);
+		try {
+			// Get or create userBlocks document
+			const userBlocksRef = doc(db, 'userBlocks', user.firebaseUserId);
+			const userBlocksDoc = await getDoc(userBlocksRef);
 
-		if (chatDoc.exists()) {
-			const chatData = chatDoc.data();
-			const isBlocked = chatData.blockedUsers?.[firebaseUserId];
+			let isBlocked = false;
+			if (userBlocksDoc.exists()) {
+				const userBlocksData = userBlocksDoc.data();
+				isBlocked = !!userBlocksData.blockedUsers?.[firebaseUserId];
+			}
 
-			try {
-				if (isBlocked) {
-					// Unblock user by completely removing the block entry
-					setBlockedUsers((prevList) => prevList?.filter((userId) => userId !== firebaseUserId));
-					await updateDoc(chatRef, {
-						[`blockedUsers.${firebaseUserId}`]: deleteField(),
-					});
-				} else {
-					// Block user by creating a new block entry
-					setBlockedUsers((prevList) => [...prevList, firebaseUserId]);
-					setCurrentMessage('');
-					await updateDoc(chatRef, {
-						[`blockedUsers.${firebaseUserId}`]: {
-							blockedSince: new Date(),
-							blockedUntil: null,
+			if (isBlocked) {
+				// Unblock user
+				setBlockedUsers((prevList) => prevList?.filter((userId) => userId !== firebaseUserId));
+				setGlobalBlockedUsers((prevList) => prevList?.filter((userId) => userId !== firebaseUserId));
+
+				// Remove from userBlocks collection
+				await updateDoc(userBlocksRef, {
+					[`blockedUsers.${firebaseUserId}`]: deleteField(),
+				});
+
+				// Real-time listeners will automatically update the UI
+			} else {
+				// Block user
+				setBlockedUsers((prevList) => [...prevList, firebaseUserId]);
+				setGlobalBlockedUsers((prevList) => [...prevList, firebaseUserId]);
+				setCurrentMessage('');
+
+				const blockData = {
+					blockedSince: new Date(),
+					blockedUntil: null,
+				};
+
+				// Add to userBlocks collection
+				if (!userBlocksDoc.exists()) {
+					await setDoc(userBlocksRef, {
+						blockedUsers: {
+							[firebaseUserId]: blockData,
 						},
 					});
+				} else {
+					await updateDoc(userBlocksRef, {
+						[`blockedUsers.${firebaseUserId}`]: blockData,
+					});
 				}
-			} catch (error) {
-				console.error('Error updating block status: ', error);
+
+				// Real-time listeners will automatically update the UI
 			}
+		} catch (error) {
+			console.error('Error updating block status: ', error);
 		}
 	};
 
@@ -1883,6 +1972,8 @@ const Messages = () => {
 					getChatDisplayName={getChatDisplayName}
 					getChatDisplayImage={getChatDisplayImage}
 					isGroupChat={isGroupChat}
+					globalBlockedUsers={globalBlockedUsers}
+					blockedByUsers={blockedByUsers}
 				/>
 
 				{/* Message Display */}
@@ -1948,6 +2039,7 @@ const Messages = () => {
 								onZoomImage={setZoomedImage}
 								onScrollToOriginalMessage={scrollToOriginalMessage}
 								isGroupChat={isGroupChat}
+								globalBlockedUsers={globalBlockedUsers}
 							/>
 							<div ref={messagesEndRef} />
 						</Box>

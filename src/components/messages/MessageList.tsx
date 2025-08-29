@@ -16,6 +16,7 @@ interface MessageListProps {
 	onZoomImage: (imageUrl: string) => void;
 	onScrollToOriginalMessage: (messageId: string) => void;
 	isGroupChat: (chat: ChatType) => boolean;
+	globalBlockedUsers?: string[];
 }
 
 const MessageList = ({
@@ -29,6 +30,7 @@ const MessageList = ({
 	onZoomImage,
 	onScrollToOriginalMessage,
 	isGroupChat,
+	globalBlockedUsers,
 }: MessageListProps) => {
 	if (!activeChat) {
 		return (
@@ -60,8 +62,6 @@ const MessageList = ({
 	const filteredMessages = useMemo(() => {
 		if (!messages || !activeChat || !user) return [];
 
-		// Pre-compute block info once
-		const blockedUsers = activeChat.blockedUsers || {};
 		const currentUserId = user.firebaseUserId;
 
 		return messages.filter((msg: Message) => {
@@ -70,29 +70,20 @@ const MessageList = ({
 				return true;
 			}
 
-			const blockInfo = blockedUsers[msg.senderId];
-			const messageTimestamp = new Date(msg.timestamp);
-
 			// If the current user is the sender, show their own messages
 			if (msg.senderId === currentUserId) {
 				return true;
 			}
 
-			// If the sender is blocked and the message was sent during the blocked period, hide it
-			if (blockInfo && blockInfo.blockedSince) {
-				const blockedSince = new Date(blockInfo.blockedSince);
-				const blockedUntil = blockInfo.blockedUntil ? new Date(blockInfo.blockedUntil) : null;
-
-				// Check if the message was sent after the block started and during the blocked period
-				if (messageTimestamp >= blockedSince && (!blockedUntil || messageTimestamp <= blockedUntil)) {
-					return false; // Filter out the message
-				}
+			// If the sender is in the global blocked users list, hide their messages
+			if (globalBlockedUsers?.includes(msg.senderId)) {
+				return false; // Filter out messages from blocked users
 			}
 
-			// Show messages sent before block or after unblock
+			// Show all other messages
 			return true;
 		});
-	}, [messages, activeChat?.blockedUsers, user?.firebaseUserId]);
+	}, [messages, globalBlockedUsers, user?.firebaseUserId]);
 
 	return (
 		<>
