@@ -217,7 +217,6 @@ const EditInstructorDialog = ({
 				</Box>
 
 				<UserSearchSelect
-					users={users}
 					value={searchValue}
 					onChange={setSearchValue}
 					onSelect={(selectedUser) => {
@@ -228,14 +227,14 @@ const EditInstructorDialog = ({
 								instructor: {
 									...prevData.instructor,
 									name:
-										selectedUser.firstName.charAt(0).toUpperCase() +
-										selectedUser.firstName.slice(1) +
+										(selectedUser?.firstName?.charAt(0).toUpperCase() || '') +
+										(selectedUser?.firstName?.slice(1) || '') +
 										' ' +
-										selectedUser.lastName.charAt(0).toUpperCase() +
-										selectedUser.lastName.slice(1),
-									userId: selectedUser._id,
-									email: selectedUser.email,
-									imageUrl: selectedUser.imageUrl,
+										(selectedUser?.lastName?.charAt(0).toUpperCase() || '') +
+										(selectedUser?.lastName?.slice(1) || ''),
+									userId: selectedUser?.firebaseUserId,
+									email: selectedUser?.email || '',
+									imageUrl: selectedUser?.imageUrl,
 								},
 							};
 						});
