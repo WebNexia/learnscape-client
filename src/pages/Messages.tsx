@@ -222,14 +222,6 @@ const Messages = () => {
 	const [enterGroupImageUrl, setEnterGroupImageUrl] = useState<boolean>(true);
 	const [removedMembers, setRemovedMembers] = useState<string[]>([]);
 
-	const isUserCurrentlyBlocked = (userId: string, chatBlockedUsers: any): boolean => {
-		const blockedUser = chatBlockedUsers?.[userId];
-		if (!blockedUser) return false;
-
-		const { blockedSince, blockedUntil } = blockedUser;
-		return blockedSince && (!blockedUntil || new Date(blockedUntil) > new Date());
-	};
-
 	const hasLeftParticipants = (chat: Chat | null): boolean => {
 		// For group chats, don't prevent sending messages if some users have left
 		// Only prevent if the current user has left
@@ -530,7 +522,7 @@ const Messages = () => {
 	}, [user?.firebaseUserId, fetchAllBlockedUsers, fetchParticipantData]);
 
 	const filterBlockedMessages = useCallback(
-		(messagesArray: Message[], activeChat: Chat) => {
+		(messagesArray: Message[]) => {
 			return messagesArray.filter((msg) => {
 				// Check if the message sender is in the current user's blocked list
 				if (globalBlockedUsers.includes(msg.senderId)) {
@@ -585,7 +577,7 @@ const Messages = () => {
 			await batch.commit();
 
 			// Apply the filter to block messages from blocked users
-			const filteredMessages = filterBlockedMessages(messagesArray, activeChat);
+			const filteredMessages = filterBlockedMessages(messagesArray);
 
 			// Restore chat if the user had deleted it and a new message is received
 			if (activeChat.isDeletedBy?.includes(user.firebaseUserId)) {
