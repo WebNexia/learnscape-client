@@ -1,7 +1,7 @@
 import { Alert, Box, Dialog, DialogActions, DialogContent, IconButton, InputAdornment, Snackbar, Tooltip, Typography } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import TopicPaper from '../components/layouts/community/topicPage/TopicPaper';
-import { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import axios from '@utils/axiosInstance';
 import { CommunityMessage, TopicInfo } from '../interfaces/communityMessage';
@@ -422,6 +422,14 @@ const CommunityTopicPage = () => {
 
 		return mentions;
 	};
+
+	// Get list of already mentioned usernames (excluding the current search term)
+	const getAlreadyMentionedUsernames = useCallback(() => {
+		const mentions = extractMentions(currentMessage);
+		// Filter out the current search term to allow editing the current mention
+		const currentSearchTerm = userSearchValue.trim();
+		return mentions.filter((mention) => mention !== currentSearchTerm);
+	}, [currentMessage, userSearchValue]);
 
 	// Apply the conversion to all topics in sortedTopics
 	const processedTopics = sortedTopicsData?.map((topic) => ({
@@ -868,22 +876,36 @@ const CommunityTopicPage = () => {
 					<Box
 						sx={{
 							position: 'absolute',
-							bottom: isMobileSize ? '4rem' : '6rem',
+							bottom: isMobileSize ? '4rem' : '5.75rem',
 							left: isVerySmallScreen ? '2.5%' : isMobileSize ? '5%' : '11%',
 							backgroundColor: '#fff',
 							borderRadius: '0.25rem',
 							boxShadow: '0 0.1rem 0.4rem rgba(0,0,0,0.3)',
-							maxHeight: '20rem',
+							maxHeight: '15rem',
+							minHeight: '10rem',
 							overflowY: 'auto',
 							zIndex: 10,
-							width: isVerySmallScreen ? '95%' : isMobileSize ? '90%' : '78%',
+							width: isVerySmallScreen ? '95%' : isMobileSize ? '90%' : '40%',
 						}}>
 						<CommunityUserSearchSelect
 							topicId={topicId || ''}
 							value={userSearchValue}
 							onChange={setUserSearchValue}
 							onSelect={handleUserSelection}
+							onReset={() => {
+								setUserSearchValue('');
+								// Remove the text after @ symbol from currentMessage
+								const currentMessageArray = currentMessage.split(/[@]\w*$/);
+								setCurrentMessage(currentMessageArray[0]);
+								setShowUserSearch(false);
+							}}
+							onSearchChange={(searchValue) => {
+								// Update the text after @ symbol in currentMessage
+								const currentMessageArray = currentMessage.split(/[@]\w*$/);
+								setCurrentMessage(`${currentMessageArray[0]}@${searchValue}`);
+							}}
 							currentUserId={user?.firebaseUserId}
+							excludeUsernames={getAlreadyMentionedUsernames()}
 							placeholder='Search users to mention...'
 							sx={{ width: '100%' }}
 							listSx={{
