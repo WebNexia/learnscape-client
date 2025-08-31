@@ -21,6 +21,7 @@ interface UserSearchSelectProps {
 	context?: 'messages' | 'community' | 'events';
 	userRole?: 'admin' | 'student';
 	fromGroupChatSettings?: boolean;
+	fromEditInstructorDialog?: boolean;
 	excludeUserIds?: string[];
 	blockedUsers?: string[];
 }
@@ -37,6 +38,7 @@ const UserSearchSelect: React.FC<UserSearchSelectProps> = ({
 	context = 'messages',
 	userRole = 'admin',
 	fromGroupChatSettings = false,
+	fromEditInstructorDialog = false,
 	excludeUserIds = [],
 	blockedUsers = [],
 }) => {
@@ -108,9 +110,20 @@ const UserSearchSelect: React.FC<UserSearchSelectProps> = ({
 			// Allow selection of all users, including blocked ones
 			// Blocking will be handled in the chat interface itself
 			onSelect(user);
-			if (!fromGroupChatSettings) onChange(''); // Clear search input after selection
+			if (!fromGroupChatSettings) {
+				onChange(''); // Clear search input after selection
+				reset(); // Reset search results
+				setNoUserFound(false);
+				setHasSearched(false);
+			}
+			if (fromEditInstructorDialog) {
+				onChange(''); // Clear search input after selection
+				reset(); // Reset search results
+				setNoUserFound(false);
+				setHasSearched(false);
+			}
 		},
-		[onSelect, onChange]
+		[onSelect, onChange, fromGroupChatSettings, fromEditInstructorDialog, reset]
 	);
 
 	const filteredUsers = useMemo(() => {
@@ -181,7 +194,11 @@ const UserSearchSelect: React.FC<UserSearchSelectProps> = ({
 						{loading ? 'Searching...' : 'Search'}
 					</CustomSubmitButton>
 					<CustomDeleteButton
-						onClick={() => {
+						onClick={(e) => {
+							if (e) {
+								e.preventDefault();
+								e.stopPropagation();
+							}
 							onChange('');
 							reset();
 							setNoUserFound(false);

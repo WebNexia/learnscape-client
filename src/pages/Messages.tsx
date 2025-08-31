@@ -401,12 +401,27 @@ const Messages = () => {
 			try {
 				// Fetch user details from your MongoDB API
 				const response = await axios.get(`${base_url}/users/${firebaseUserId}`);
-				const userData = response.data.data[0]; // Assume API returns data in this format
+				const userData = response.data.data?.[0]; // Use optional chaining
+
+				// Check if userData exists
+				if (!userData) {
+					console.log(`No user data found for firebaseUserId: ${firebaseUserId}`);
+					// Return a fallback participant data
+					const fallbackData: ParticipantData = {
+						firebaseUserId: firebaseUserId,
+						username: 'Unknown User',
+						imageUrl: '',
+						role: '',
+					};
+					participantCache[firebaseUserId] = fallbackData;
+					localStorage.setItem('participantCache', JSON.stringify(participantCache));
+					return fallbackData;
+				}
 
 				// Extract and cache only ParticipantData (minimal info)
 				const participantData: ParticipantData = {
-					firebaseUserId: userData.firebaseUserId || '',
-					username: userData.username || '',
+					firebaseUserId: userData.firebaseUserId || firebaseUserId, // Use the original firebaseUserId as fallback
+					username: userData.username || 'Unknown User',
 					imageUrl: userData.imageUrl || '',
 					role: userData.role || '',
 				};
@@ -1064,25 +1079,62 @@ const Messages = () => {
 				// For group chats, send notifications to all participants except sender
 				for (const receiverId of receiverIds) {
 					if (receiverId) {
+						try {
+							const recipientRef = doc(db, 'users', receiverId);
+							const recipientDoc = await getDoc(recipientRef);
+							const recipientData = recipientDoc.data();
+
+							const isRecipientChatting = recipientData?.activeChatId === activeChat.chatId;
+
+							console.log(`Notification check for ${receiverId}:`, {
+								recipientActiveChatId: recipientData?.activeChatId,
+								currentChatId: activeChat.chatId,
+								isRecipientChatting: isRecipientChatting,
+								willSendNotification: !isRecipientChatting,
+							});
+
+							// Send a notification only if the recipient is not currently viewing the chat
+							if (!isRecipientChatting) {
+								const notificationData = {
+									title: 'New Group Message',
+									message: `${user?.username} sent a message to ${activeChat.groupName || 'the group'}.`,
+									isRead: false,
+									timestamp: serverTimestamp(),
+									type: 'MessageReceived',
+									userImageUrl: user?.imageUrl,
+								};
+
+								const notificationRef = collection(db, 'notifications', receiverId, 'userNotifications');
+								await addDoc(notificationRef, notificationData);
+							}
+						} catch (error) {
+							console.error('Error sending notification to user:', receiverId, error);
+						}
+					}
+				}
+			} else {
+				// For 1-1 chats, use the first receiver
+				const receiverId = receiverIds[0];
+				if (receiverId) {
+					try {
 						const recipientRef = doc(db, 'users', receiverId);
 						const recipientDoc = await getDoc(recipientRef);
 						const recipientData = recipientDoc.data();
 
 						const isRecipientChatting = recipientData?.activeChatId === activeChat.chatId;
 
-						// Check if the receiver has unread messages in the active chat
-						const unreadMessagesQuery = query(
-							collection(db, 'chats', activeChat.chatId, 'messages'),
-							where('receiverId', '==', receiverId),
-							where('isRead', '==', false)
-						);
-						const unreadMessagesSnapshot = await getDocs(unreadMessagesQuery);
+						console.log(`Notification check for ${receiverId}:`, {
+							recipientActiveChatId: recipientData?.activeChatId,
+							currentChatId: activeChat.chatId,
+							isRecipientChatting: isRecipientChatting,
+							willSendNotification: !isRecipientChatting,
+						});
 
-						// Send a notification only if there are no unread messages and the recipient is not currently viewing the chat
-						if (unreadMessagesSnapshot.size === 1 && !isRecipientChatting) {
+						// Send a notification only if the recipient is not currently viewing the chat
+						if (!isRecipientChatting) {
 							const notificationData = {
-								title: 'New Group Message',
-								message: `${user?.username} sent a message to ${activeChat.groupName || 'the group'}.`,
+								title: 'New Message',
+								message: `${user?.username} sent you a message.`,
 								isRead: false,
 								timestamp: serverTimestamp(),
 								type: 'MessageReceived',
@@ -1092,31 +1144,8 @@ const Messages = () => {
 							const notificationRef = collection(db, 'notifications', receiverId, 'userNotifications');
 							await addDoc(notificationRef, notificationData);
 						}
-					}
-				}
-			} else {
-				// For 1-1 chats, use the first receiver
-				const receiverId = receiverIds[0];
-				if (receiverId) {
-					const recipientRef = doc(db, 'users', receiverId);
-					const recipientDoc = await getDoc(recipientRef);
-					const recipientData = recipientDoc.data();
-
-					const isRecipientChatting = recipientData?.activeChatId === activeChat.chatId;
-
-					// Send a notification only if the recipient is not currently viewing the chat
-					if (!isRecipientChatting) {
-						const notificationData = {
-							title: 'New Message',
-							message: `${user?.username} sent you a message.`,
-							isRead: false,
-							timestamp: serverTimestamp(),
-							type: 'MessageReceived',
-							userImageUrl: user?.imageUrl,
-						};
-
-						const notificationRef = collection(db, 'notifications', receiverId, 'userNotifications');
-						await addDoc(notificationRef, notificationData);
+					} catch (error) {
+						console.error('Error sending notification to user:', receiverId, error);
 					}
 				}
 			}

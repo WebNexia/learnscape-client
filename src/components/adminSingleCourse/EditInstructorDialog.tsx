@@ -5,7 +5,6 @@ import { SingleCourse } from '../../interfaces/course';
 import { useContext, useState, useEffect } from 'react';
 import { Box, TextField, Snackbar, Alert } from '@mui/material';
 import UserSearchSelect from '../../components/UserSearchSelect';
-import { UsersContext } from '../../contexts/UsersContextProvider';
 import axios from '@utils/axiosInstance';
 import { CoursesContext } from '../../contexts/CoursesContextProvider';
 import Autocomplete from '@mui/material/Autocomplete';
@@ -29,7 +28,6 @@ const EditInstructorDialog = ({
 	setSingleCourse,
 }: EditInstructorDialogProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
-	const { users } = useContext(UsersContext);
 	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize: boolean = isSmallScreen || isRotatedMedium;
 
@@ -219,6 +217,7 @@ const EditInstructorDialog = ({
 				<UserSearchSelect
 					value={searchValue}
 					onChange={setSearchValue}
+					fromEditInstructorDialog={true}
 					onSelect={(selectedUser) => {
 						setSingleCourseCopy((prevData) => {
 							if (!prevData) return prevData;

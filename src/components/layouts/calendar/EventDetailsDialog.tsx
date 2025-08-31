@@ -85,12 +85,12 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 			}}
 			title='Event Details'
 			maxWidth='sm'>
-			<DialogContent sx={{ margin: isMobileSizeSmall ? '0rem' : '0.5rem 1rem 1rem 1rem' }}>
+			<DialogContent sx={{ margin: isMobileSizeSmall ? '0rem' : '0.5rem 1rem 1rem 0.25rem' }}>
 				<Box sx={{ display: 'flex', alignItems: 'center', mb: '0.75rem' }}>
 					<Typography variant='h6' sx={{ fontSize: isMobileSizeSmall ? '0.85rem' : isMobileSize ? '0.9rem' : undefined }}>
 						Title:
 					</Typography>
-					<Typography variant='body1' sx={{ ml: '0.5rem', fontSize: isMobileSizeSmall ? '0.75rem' : isMobileSize ? '0.85rem' : '0.95rem' }}>
+					<Typography variant='body2' sx={{ ml: '0.5rem', fontSize: isMobileSizeSmall ? '0.75rem' : isMobileSize ? '0.85rem' : undefined }}>
 						{selectedEvent?.title}
 					</Typography>
 				</Box>
@@ -99,7 +99,7 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 						<Typography variant='h6' sx={{ fontSize: isMobileSizeSmall ? '0.85rem' : isMobileSize ? '0.9rem' : undefined }}>
 							Description:
 						</Typography>
-						<Typography variant='body1' sx={{ ml: '0.5rem', fontSize: isMobileSizeSmall ? '0.75rem' : isMobileSize ? '0.85rem' : '0.95rem' }}>
+						<Typography variant='body2' sx={{ ml: '0.5rem', fontSize: isMobileSizeSmall ? '0.75rem' : isMobileSize ? '0.85rem' : undefined }}>
 							{selectedEvent?.description}
 						</Typography>
 					</Box>
@@ -110,7 +110,7 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 						<Typography variant='h6' sx={{ fontSize: isMobileSizeSmall ? '0.85rem' : isMobileSize ? '0.9rem' : undefined }}>
 							Starts:
 						</Typography>
-						<Typography variant='body1' sx={{ ml: '0.5rem', fontSize: isMobileSizeSmall ? '0.75rem' : isMobileSize ? '0.85rem' : '0.95rem' }}>
+						<Typography variant='body2' sx={{ ml: '0.5rem', fontSize: isMobileSizeSmall ? '0.75rem' : isMobileSize ? '0.85rem' : undefined }}>
 							{selectedEvent.start.toLocaleString(undefined, {
 								weekday: 'long',
 								year: 'numeric',
@@ -128,7 +128,7 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 						<Typography variant='h6' sx={{ fontSize: isMobileSizeSmall ? '0.85rem' : isMobileSize ? '0.9rem' : undefined }}>
 							Ends:
 						</Typography>
-						<Typography variant='body1' sx={{ ml: '0.5rem', fontSize: isMobileSizeSmall ? '0.75rem' : isMobileSize ? '0.85rem' : '0.95rem' }}>
+						<Typography variant='body2' sx={{ ml: '0.5rem', fontSize: isMobileSizeSmall ? '0.75rem' : isMobileSize ? '0.85rem' : undefined }}>
 							{selectedEvent.end.toLocaleString(undefined, {
 								weekday: 'long',
 								year: 'numeric',
@@ -147,7 +147,7 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 							Link:
 						</Typography>
 						<Link href={selectedEvent.eventLinkUrl} sx={{ ml: '0.5rem' }} rel='noopener noreferrer' target='_blank'>
-							<Typography variant='body1' sx={{ fontSize: isMobileSizeSmall ? '0.75rem' : isMobileSize ? '0.85rem' : '0.95rem' }}>
+							<Typography variant='body2' sx={{ fontSize: isMobileSizeSmall ? '0.75rem' : isMobileSize ? '0.85rem' : undefined }}>
 								{selectedEvent.eventLinkUrl}
 							</Typography>
 						</Link>
@@ -159,7 +159,7 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 						<Typography variant='h6' sx={{ fontSize: isMobileSizeSmall ? '0.85rem' : isMobileSize ? '0.9rem' : undefined }}>
 							Location:
 						</Typography>
-						<Typography sx={{ ml: '0.5rem', fontSize: isMobileSizeSmall ? '0.75rem' : isMobileSize ? '0.85rem' : '0.95rem' }}>
+						<Typography variant='body2' sx={{ ml: '0.5rem', fontSize: isMobileSizeSmall ? '0.75rem' : isMobileSize ? '0.85rem' : undefined }}>
 							{selectedEvent.location}
 						</Typography>
 					</Box>
@@ -170,7 +170,7 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 						<Typography variant='h6' sx={{ fontSize: isMobileSizeSmall ? '0.85rem' : isMobileSize ? '0.9rem' : undefined }}>
 							Type:
 						</Typography>
-						<Typography sx={{ ml: '0.5rem', fontSize: isMobileSizeSmall ? '0.75rem' : isMobileSize ? '0.85rem' : '0.95rem' }}>
+						<Typography variant='body2' sx={{ ml: '0.5rem', fontSize: isMobileSizeSmall ? '0.75rem' : isMobileSize ? '0.85rem' : undefined }}>
 							{selectedEvent.type}
 						</Typography>
 					</Box>

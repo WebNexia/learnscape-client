@@ -107,4 +107,5 @@ export const enum NotificationType {
 	MENTION_USER = 'MentionUser',
 	COMMUNITY_NOTIFICATION = 'CommunityNotification',
 	ADD_TO_EVENT = 'AddToEvent',
+	PUBLIC_EVENT = 'PublicEvent',
 }

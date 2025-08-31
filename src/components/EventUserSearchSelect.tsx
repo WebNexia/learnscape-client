@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import { useCallback, useContext, useMemo, forwardRef, useImperativeHandle, useState } from 'react';
 import CustomTextField from './forms/customFields/CustomTextField';
 import { SearchUser } from '../interfaces/search';
 import { Box, InputAdornment, Typography, CircularProgress } from '@mui/material';
@@ -6,6 +6,9 @@ import theme from '../themes';
 import { Search } from '@mui/icons-material';
 import { useSearch } from '../hooks/useSearch';
 import CustomSubmitButton from './forms/customButtons/CustomSubmitButton';
+import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
+import CustomDeleteButton from './forms/customButtons/CustomDeleteButton';
+import CustomErrorMessage from './forms/customFields/CustomErrorMessage';
 
 interface EventUserSearchSelectProps {
 	value: string;
@@ -16,156 +19,221 @@ interface EventUserSearchSelectProps {
 	sx?: object;
 	listSx?: object;
 	disabled?: boolean;
+	selectedUserIds?: string[]; // Array of selected user IDs to exclude from search results
 }
 
-const EventUserSearchSelect: React.FC<EventUserSearchSelectProps> = ({
-	value,
-	onChange,
-	onSelect,
-	currentUserId,
-	placeholder = 'Search users...',
-	sx = {},
-	listSx = {},
-	disabled = false,
-}) => {
-	const {
-		data: filtered,
-		loading,
-		error,
-		search,
-		loadMore,
-		pagination,
-	} = useSearch<SearchUser>('users', 'events', {
-		userRole: 'admin', // Only admins can create events
-	});
+const EventUserSearchSelect = forwardRef<any, EventUserSearchSelectProps>(
+	(
+		{ value, onChange, onSelect, currentUserId, placeholder = 'Search users...', sx = {}, listSx = {}, disabled = false, selectedUserIds = [] },
+		ref
+	) => {
+		const {
+			data: filtered,
+			loading,
+			error,
+			search,
+			loadMore,
+			reset,
+			pagination,
+		} = useSearch<SearchUser>('users', 'events', {
+			userRole: 'admin', // Only admins can create events
+		});
 
-	const handleSearch = useCallback(async () => {
-		if (value.trim()) {
-			await search(value);
-		}
-	}, [value, search]);
+		const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+		const isMobileSize = isSmallScreen || isRotatedMedium;
 
-	const handleUserSelect = useCallback(
-		(user: SearchUser) => {
-			onSelect(user);
-			onChange(''); // Clear search input after selection
-		},
-		[onSelect, onChange]
-	);
+		// Track if a search has been performed
+		const [hasSearched, setHasSearched] = useState(false);
 
-	const filteredUsers = useMemo(() => {
-		return filtered.filter((user) => user.firebaseUserId !== currentUserId);
-	}, [filtered, currentUserId]);
+		const handleSearch = useCallback(async () => {
+			if (value.trim()) {
+				setHasSearched(true);
+				await search(value);
+			}
+		}, [value, search]);
 
-	const hasResults = filteredUsers.length > 0;
-	const showLoadMore = pagination?.hasNextPage && hasResults;
+		const handleUserSelect = useCallback(
+			(user: SearchUser) => {
+				onSelect(user);
+				// Don't clear search input or reset results - keep them open
+			},
+			[onSelect]
+		);
 
-	return (
-		<Box
-			sx={{
-				width: '100%',
-				display: 'flex',
-				flexDirection: 'column',
-				alignItems: 'center',
-				mb: hasResults ? '-1rem' : '1.5rem',
-				margin: `0 auto ${hasResults ? '-1rem' : '1.5rem'} auto`,
-			}}>
-			<Box sx={{ display: 'flex', gap: 1, width: '100%', alignItems: 'center' }}>
-				<CustomTextField
-					sx={{ ...sx, flex: 1 }}
-					value={value}
-					onChange={(e) => onChange(e.target.value)}
-					placeholder={placeholder}
-					disabled={disabled || loading}
-					InputProps={{
-						endAdornment: (
-							<InputAdornment position='end'>
-								{loading ? <CircularProgress size={20} sx={{ mr: '-0.5rem' }} /> : <Search sx={{ mr: '-0.5rem' }} fontSize='small' />}
-							</InputAdornment>
-						),
-						required: false,
-					}}
-				/>
-				<CustomSubmitButton onClick={handleSearch} disabled={loading || !value.trim() || disabled} sx={{ minWidth: 'auto', padding: '0 1rem' }}>
-					{loading ? 'Searching...' : 'Search'}
-				</CustomSubmitButton>
-			</Box>
+		const filteredUsers = useMemo(() => {
+			return filtered.filter((user) => user.firebaseUserId !== currentUserId && !selectedUserIds.includes(user.firebaseUserId));
+		}, [filtered, currentUserId, selectedUserIds]);
 
-			{error && (
-				<Typography variant='body2' sx={{ color: 'error.main', mt: 1, textAlign: 'center' }}>
-					{error}
-				</Typography>
-			)}
+		const hasResults = filteredUsers.length > 0;
+		const showLoadMore = pagination?.hasNextPage && hasResults;
 
-			{hasResults && (
-				<Box
-					sx={{
-						display: 'flex',
-						flexDirection: 'column',
-						justifyContent: 'flex-start',
-						alignItems: 'flex-start',
-						width: '100%',
-						maxHeight: '16rem',
-						overflow: 'auto',
-						margin: '-0.8rem 0 1.5rem -5.5rem',
-						border: 'solid 0.05rem lightgray',
-						...listSx,
-					}}>
-					{filteredUsers.map((user) => (
-						<Box
-							key={user.firebaseUserId}
-							sx={{
-								'display': 'flex',
-								'justifyContent': 'flex-start',
-								'alignItems': 'center',
-								'width': '100%',
-								'padding': '0.5rem',
-								'transition': '0.5s',
-								'borderRadius': '0.25rem',
-								':hover': {
-									'backgroundColor': theme.bgColor?.primary,
-									'color': '#fff',
-									'cursor': 'pointer',
-									'& .username': {
-										color: '#fff',
-									},
-								},
-							}}
-							onClick={() => handleUserSelect(user)}>
-							<Box sx={{ borderRadius: '100%', marginRight: '1rem' }}>
-								<img
-									src={user.imageUrl}
-									alt='profile_img'
-									style={{
-										height: '2rem',
-										width: '2rem',
-										borderRadius: '100%',
-										border: 'solid lightgray 0.1rem',
-									}}
-								/>
-							</Box>
-							<Box>
-								<Typography className='username' variant='body2' sx={{ fontSize: '0.8rem' }}>
-									{user.username}
-								</Typography>
-								<Typography variant='caption' sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>
-									{user.email}
-								</Typography>
-							</Box>
-						</Box>
-					))}
-				</Box>
-			)}
+		// Expose reset function to parent component
+		useImperativeHandle(ref, () => ({
+			reset: () => {
+				reset();
+				setHasSearched(false);
+			},
+		}));
 
-			{showLoadMore && (
-				<Box sx={{ textAlign: 'center', mt: 1 }}>
-					<CustomSubmitButton onClick={loadMore} disabled={loading} sx={{ fontSize: '0.8rem' }}>
-						{loading ? 'Loading...' : 'Load More'}
+		return (
+			<Box
+				sx={{
+					width: '100%',
+					display: 'flex',
+					flexDirection: 'column',
+					alignItems: 'center',
+					mb: hasResults ? '-1rem' : '1.5rem',
+					margin: `0 auto ${hasResults ? '-1rem' : '1.5rem'} auto`,
+				}}>
+				<Box sx={{ display: 'flex', gap: 1, width: '100%', alignItems: 'center', mt: '0.5rem' }}>
+					<CustomTextField
+						sx={{ ...sx, flex: 1 }}
+						value={value}
+						onChange={(e) => {
+							onChange(e.target.value);
+							// Reset hasSearched when user clears the input
+							if (!e.target.value.trim()) {
+								setHasSearched(false);
+							}
+						}}
+						placeholder={placeholder}
+						disabled={disabled || loading}
+						InputProps={{
+							endAdornment: (
+								<InputAdornment position='end'>
+									{loading ? <CircularProgress size={20} sx={{ mr: '-0.5rem' }} /> : <Search sx={{ mr: '-0.5rem' }} fontSize='small' />}
+								</InputAdornment>
+							),
+							required: false,
+						}}
+					/>
+					<CustomSubmitButton
+						onClick={handleSearch}
+						disabled={loading || !value.trim() || disabled}
+						sx={{
+							minWidth: 'auto',
+							padding: '0 0.5rem',
+							marginBottom: '1.1rem',
+							marginLeft: '0.25rem',
+							marginRight: '-0.5rem',
+							fontSize: isMobileSize ? '0.7rem' : '0.8rem',
+						}}>
+						{loading ? 'Searching...' : 'Search'}
 					</CustomSubmitButton>
+					<CustomDeleteButton
+						onClick={(e) => {
+							if (e) {
+								e.preventDefault();
+								e.stopPropagation();
+							}
+							onChange('');
+							reset();
+							setHasSearched(false);
+						}}
+						sx={{ minWidth: 'auto', padding: '0 0.5rem', marginBottom: '1.1rem', fontSize: isMobileSize ? '0.7rem' : '0.8rem' }}>
+						Reset
+					</CustomDeleteButton>
 				</Box>
-			)}
-		</Box>
-	);
-};
+
+				{error && (
+					<Typography variant='body2' sx={{ color: 'error.main', mt: 1, textAlign: 'center' }}>
+						{error}
+					</Typography>
+				)}
+
+				{hasResults ? (
+					<Box
+						sx={{
+							display: 'flex',
+							flexDirection: 'column',
+							justifyContent: 'flex-start',
+							alignItems: 'flex-start',
+							width: isMobileSize ? '60%' : '70%',
+							maxHeight: '15rem',
+							overflow: 'auto',
+							margin: '-0.8rem 0 1.5rem -8rem',
+							border: 'solid 0.05rem lightgray',
+							mb: showLoadMore ? '1rem' : '3rem',
+							...listSx,
+						}}>
+						{filteredUsers.map((user) => (
+							<Box
+								key={user.firebaseUserId}
+								sx={{
+									'display': 'flex',
+									'justifyContent': 'flex-start',
+									'alignItems': 'center',
+									'width': '100%',
+									'padding': '0.5rem',
+									'transition': '0.5s',
+									'borderRadius': '0.25rem',
+									':hover': {
+										'backgroundColor': theme.bgColor?.primary,
+										'color': '#fff',
+										'cursor': 'pointer',
+										'& .username, & .email': {
+											color: '#fff',
+										},
+									},
+								}}
+								onClick={() => handleUserSelect(user)}>
+								<Box sx={{ borderRadius: '100%', marginRight: '1rem' }}>
+									<img
+										src={user.imageUrl}
+										alt='profile_img'
+										style={{
+											height: '2rem',
+											width: '2rem',
+											borderRadius: '100%',
+											border: 'solid lightgray 0.1rem',
+										}}
+									/>
+								</Box>
+								<Box>
+									<Typography className='username' variant='body2' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.8rem' }}>
+										{user.username}{' '}
+										<span style={{ fontSize: isMobileSize ? '0.65rem' : '0.75rem', color: 'text.secondary' }}>
+											{user.firstName && user.lastName && `(${user.firstName} ${user.lastName})`}
+										</span>
+									</Typography>
+									<Typography className='email' variant='caption' sx={{ fontSize: isMobileSize ? '0.6rem' : '0.7rem', color: 'text.secondary' }}>
+										{user.email}
+									</Typography>
+								</Box>
+							</Box>
+						))}
+					</Box>
+				) : (
+					// Show "No users found" message when there are no results
+					hasSearched &&
+					value.trim() &&
+					!loading && (
+						<Box
+							sx={{
+								display: 'flex',
+								justifyContent: 'center',
+								alignItems: 'center',
+								width: '70%',
+								paddingTop: '0.5rem',
+								margin: '-0.8rem 0 1.5rem -8rem',
+								border: 'none',
+								backgroundColor: 'transparent',
+							}}>
+							<CustomErrorMessage sx={{ fontSize: isMobileSize ? '0.65rem' : '0.75rem' }}>No users found matching your search.</CustomErrorMessage>
+						</Box>
+					)
+				)}
+
+				{showLoadMore && (
+					<Box sx={{ textAlign: 'center', mt: 1 }}>
+						<CustomSubmitButton onClick={loadMore} disabled={loading} sx={{ fontSize: '0.8rem' }}>
+							{loading ? 'Loading...' : 'Load More'}
+						</CustomSubmitButton>
+					</Box>
+				)}
+			</Box>
+		);
+	}
+);
 
 export default EventUserSearchSelect;

@@ -89,6 +89,10 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 	const [isEventUpdated, setIsEventUpdated] = useState<boolean>(false);
 	const [enterCoverImageUrl, setEnterCoverImageUrl] = useState<boolean>(true);
 
+	// Refs for search components to access their reset functions
+	const userSearchRef = useRef<any>(null);
+	const courseSearchRef = useRef<any>(null);
+
 	// Handlers for new search components
 	const handleUserSelect = (selectedUser: SearchUser) => {
 		// Convert SearchUser to User format for compatibility
@@ -459,7 +463,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 									}}
 									sx={{
 										'& .MuiSvgIcon-root': {
-											fontSize: isMobileSize ? '0.9rem' : '1.25rem',
+											fontSize: isMobileSize ? '0.9rem' : '1rem',
 										},
 									}}
 								/>
@@ -677,7 +681,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 									}}
 									sx={{
 										'& .MuiSvgIcon-root': {
-											fontSize: isVerySmallScreen ? '0.9rem' : '1.25rem', // Adjust the checkbox icon size
+											fontSize: isVerySmallScreen ? '0.9rem' : '1rem', // Adjust the checkbox icon size
 										},
 									}}
 								/>
@@ -730,9 +734,10 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 
 					{!selectedEvent?.isPublic && (
 						<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
-							<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+							<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'flex-start' }}>
 								<Box sx={{ flex: 3 }}>
 									<EventUserSearchSelect
+										ref={userSearchRef}
 										value={searchLearnerValue}
 										onChange={(value) => {
 											setSearchLearnerValue(value);
@@ -742,12 +747,13 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 										currentUserId={user?.firebaseUserId}
 										placeholder={selectedEvent?.isAllLearnersSelected || selectedEvent?.isPublic ? '' : 'Search Learner'}
 										disabled={selectedEvent?.isAllLearnersSelected || selectedEvent?.isPublic}
+										selectedUserIds={selectedEvent?.attendees.map((attendee) => attendee._id) || []}
 										sx={{
 											backgroundColor: selectedEvent?.isAllLearnersSelected || selectedEvent?.isPublic ? 'transparent' : '#fff',
 										}}
 									/>
 								</Box>
-								<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '21%', mb: '0.85rem' }}>
+								<Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: '0.55rem' }}>
 									<FormControlLabel
 										labelPlacement='start'
 										disabled={selectedEvent?.isPublic}
@@ -765,7 +771,17 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 														return prevData;
 													});
 
+													// Reset search results when "All Learners" is checked
 													if (e.target.checked) {
+														// Reset user search results
+														if (userSearchRef.current?.reset) {
+															userSearchRef.current.reset();
+														}
+														// Reset course search results
+														if (courseSearchRef.current?.reset) {
+															courseSearchRef.current.reset();
+														}
+
 														setSelectedEvent((prevData) => {
 															if (prevData) {
 																return { ...prevData, attendees: [], coursesIds: [], allAttendeesIds: [], isAllCoursesSelected: false };
@@ -776,7 +792,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 												}}
 												sx={{
 													'& .MuiSvgIcon-root': {
-														fontSize: isVerySmallScreen ? '0.9rem' : '1.25rem',
+														fontSize: isVerySmallScreen ? '0.9rem' : '1rem',
 													},
 												}}
 											/>
@@ -795,7 +811,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 					)}
 
 					{selectedEvent?.coursesIds && selectedEvent.coursesIds.length > 0 && (
-						<Box sx={{ display: 'flex', margin: '0.75rem 0 0.75rem 0', flexWrap: 'wrap' }}>
+						<Box sx={{ display: 'flex', margin: '-0.5rem 0 0.75rem 0', flexWrap: 'wrap' }}>
 							{selectedEvent.coursesIds?.map((id) => {
 								const course = courses.find((course) => course._id === id);
 								return (
@@ -832,10 +848,18 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 					)}
 
 					{!selectedEvent?.isPublic && (
-						<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
-							<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+						<Box
+							sx={{
+								display: 'flex',
+								flexDirection: 'column',
+								alignItems: 'center',
+								position: 'relative',
+								mt: selectedEvent?.coursesIds && selectedEvent.coursesIds.length > 0 ? '0.5rem' : '-1.25rem',
+							}}>
+							<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'flex-start' }}>
 								<Box sx={{ flex: 3 }}>
 									<EventCourseSearchSelect
+										ref={courseSearchRef}
 										value={searchCourseValue}
 										onChange={(value) => {
 											setSearchCourseValue(value);
@@ -846,6 +870,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 											selectedEvent?.isAllLearnersSelected || selectedEvent?.isAllCoursesSelected || selectedEvent?.isPublic ? '' : 'Search Course'
 										}
 										disabled={selectedEvent?.isAllLearnersSelected || selectedEvent?.isAllCoursesSelected || selectedEvent?.isPublic}
+										selectedCourseIds={selectedEvent?.coursesIds || []}
 										sx={{
 											backgroundColor:
 												selectedEvent?.isAllLearnersSelected || selectedEvent?.isAllCoursesSelected || selectedEvent?.isPublic
@@ -854,7 +879,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 										}}
 									/>
 								</Box>
-								<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '21%', mb: '0.85rem' }}>
+								<Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
 									<FormControlLabel
 										disabled={selectedEvent?.isAllLearnersSelected || selectedEvent?.isPublic}
 										labelPlacement='start'
@@ -871,7 +896,13 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 														return prevData;
 													});
 
+													// Reset search results when "All Courses" is checked
 													if (e.target.checked) {
+														// Reset course search results
+														if (courseSearchRef.current?.reset) {
+															courseSearchRef.current.reset();
+														}
+
 														setSelectedEvent((prevData) => {
 															if (prevData) {
 																return { ...prevData, coursesIds: [] };
@@ -882,7 +913,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 												}}
 												sx={{
 													'& .MuiSvgIcon-root': {
-														fontSize: isVerySmallScreen ? '0.9rem' : '1.25rem',
+														fontSize: isVerySmallScreen ? '0.9rem' : '1rem',
 													},
 												}}
 											/>

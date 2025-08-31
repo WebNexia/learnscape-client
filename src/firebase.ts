@@ -1,4 +1,4 @@
-import { initializeApp } from 'firebase/app';
+import { initializeApp, getApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
@@ -12,7 +12,14 @@ const firebaseConfig = {
 	appId: import.meta.env.VITE_FIREBASE_APP_ID_MSG,
 };
 
-const app = initializeApp(firebaseConfig);
+// Check if app is already initialized
+let app;
+try {
+	app = initializeApp(firebaseConfig);
+} catch (error) {
+	// If app already exists, get the existing app
+	app = getApp();
+}
 
 // Initialize Firestore for this specific app
 export const db = getFirestore(app);

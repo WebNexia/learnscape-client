@@ -18,7 +18,7 @@ const Chapters = ({ course, isEnrolledStatus }: ChaptersProps) => {
 				course?.chapters &&
 				course?.chapterIds.length !== 0 &&
 				course?.chapters?.map((chapter, index) => {
-					if (chapter !== null) {
+					if (chapter !== null && chapter.lessonIds.length > 0) {
 						let nextChapterFirstLessonId: string = '';
 						if (index + 1 < course?.chapters?.length) {
 							nextChapterFirstLessonId = course?.chapters[index + 1].lessonIds[0];

@@ -8,7 +8,6 @@ import {
 	MenuItem,
 	Select,
 	SelectChangeEvent,
-	Tooltip,
 	Typography,
 	Snackbar,
 	Alert,
@@ -23,7 +22,7 @@ import { AttendeeInfo, Event } from '../../../interfaces/event';
 import dayjs, { Dayjs } from 'dayjs';
 import 'dayjs/locale/en-gb';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { useContext, useState, useEffect } from 'react';
+import { useContext, useState, useEffect, useRef } from 'react';
 import { CoursesContext } from '../../../contexts/CoursesContextProvider';
 import { User } from '../../../interfaces/user';
 import theme from '../../../themes';
@@ -84,19 +83,23 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 	const [searchCourseValue, setSearchCourseValue] = useState<string>('');
 	const [enterCoverImageUrl, setEnterCoverImageUrl] = useState<boolean>(true);
 
+	// Refs for search components to access their reset functions
+	const userSearchRef = useRef<any>(null);
+	const courseSearchRef = useRef<any>(null);
+
 	// Handlers for new search components
 	const handleUserSelect = (selectedUser: SearchUser) => {
 		// Convert SearchUser to User format for compatibility
 		const user: User = {
-			_id: selectedUser.firebaseUserId, // Use firebaseUserId as _id for compatibility
+			_id: selectedUser._id, // Use MongoDB ObjectId
 			firebaseUserId: selectedUser.firebaseUserId,
 			username: selectedUser.username,
 			email: selectedUser.email || '',
 			imageUrl: selectedUser.imageUrl,
 			role: selectedUser.role,
 			// Add other required fields with defaults
-			firstName: '',
-			lastName: '',
+			firstName: selectedUser.firstName || '',
+			lastName: selectedUser.lastName || '',
 			phone: '',
 			orgId: orgId,
 			isActive: true,
@@ -247,7 +250,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 			isAllDay: newEvent.isAllDay,
 			isActive: true,
 			orgId,
-			attendees: newEvent.attendees,
+			attendees: newEvent.attendees.map((attendee) => attendee._id), // Send only ObjectIds
 			allAttendeesIds: allParticipantsIds,
 			isAllLearnersSelected: newEvent.isAllLearnersSelected,
 			isAllCoursesSelected: newEvent.isAllCoursesSelected,
@@ -381,15 +384,14 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 				}}>
 				<DialogContent sx={{ mt: '-0.5rem' }}>
 					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-						<Tooltip title='Max 40 characters' placement='top' arrow>
-							<CustomTextField
-								label='Title'
-								value={newEvent.title}
-								onChange={(e) => setNewEvent((prevData) => ({ ...prevData, title: e.target.value }))}
-								InputProps={{ inputProps: { maxLength: 40 } }}
-								sx={{ flex: 3 }}
-							/>
-						</Tooltip>
+						<CustomTextField
+							label='Title'
+							value={newEvent.title}
+							placeholder='Enter a title (max 40 characters)'
+							onChange={(e) => setNewEvent((prevData) => ({ ...prevData, title: e.target.value }))}
+							InputProps={{ inputProps: { maxLength: 40 } }}
+							sx={{ flex: 3 }}
+						/>
 
 						<FormControlLabel
 							labelPlacement='start'
@@ -412,7 +414,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 									}}
 									sx={{
 										'& .MuiSvgIcon-root': {
-											fontSize: isMobileSize ? '0.9rem' : '1.25rem',
+											fontSize: isMobileSize ? '0.9rem' : '1rem',
 										},
 									}}
 								/>
@@ -439,7 +441,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 							onChange={(e) => setNewEvent((prevData) => ({ ...prevData, description: e.target.value }))}
 							InputProps={{ inputProps: { maxLength: 75 } }}
 							sx={{ flex: 3, mr: newEvent.isPublic ? '1rem' : '0rem' }}
-							placeholder='Enter a description for the event (max 75 characters)'
+							placeholder='Enter a description (max 75 characters)'
 						/>
 						{newEvent.isPublic && (
 							<FormControl sx={{ flex: 1, mb: '0.5rem' }}>
@@ -605,7 +607,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 									}}
 									sx={{
 										'& .MuiSvgIcon-root': {
-											fontSize: isVerySmallScreen ? '0.9rem' : '1.25rem', // Adjust the checkbox icon size
+											fontSize: isVerySmallScreen ? '0.9rem' : '1rem', // Adjust the checkbox icon size
 										},
 									}}
 								/>
@@ -635,14 +637,14 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 											borderRadius: '0.25rem',
 											margin: '0.35rem 0.35rem 0 0',
 										}}>
-										<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>{attendee.username}</Typography>
+										<Typography sx={{ fontSize: isMobileSize ? '0.7rem' : '0.75rem' }}>{attendee.username}</Typography>
 										<IconButton
 											onClick={() => {
 												const updatedAttendees = newEvent.attendees.filter((filteredAttendee) => attendee._id !== filteredAttendee._id);
 
 												setNewEvent((prevData) => ({ ...prevData, attendees: updatedAttendees }));
 											}}>
-											<Cancel sx={{ fontSize: isMobileSize ? '0.85rem' : '0.95rem' }} />
+											<Cancel sx={{ fontSize: isMobileSize ? '0.8rem' : '0.9rem' }} />
 										</IconButton>
 									</Box>
 								);
@@ -651,22 +653,24 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 					)}
 
 					{!newEvent.isPublic && (
-						<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
-							<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+						<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', mt: '0.5rem' }}>
+							<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'flex-start' }}>
 								<Box sx={{ flex: 3 }}>
 									<EventUserSearchSelect
+										ref={userSearchRef}
 										value={searchLearnerValue}
 										onChange={setSearchLearnerValue}
 										onSelect={handleUserSelect}
 										currentUserId={user?.firebaseUserId}
 										placeholder={newEvent.isAllLearnersSelected || newEvent.isPublic ? '' : 'Search Learner'}
 										disabled={newEvent.isAllLearnersSelected || newEvent.isPublic}
+										selectedUserIds={newEvent.attendees.map((attendee) => attendee._id)}
 										sx={{
 											backgroundColor: newEvent.isAllLearnersSelected || newEvent.isPublic ? 'transparent' : '#fff',
 										}}
 									/>
 								</Box>
-								<Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: '0.85rem' }}>
+								<Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: '0.55rem' }}>
 									<FormControlLabel
 										labelPlacement='start'
 										disabled={newEvent.isPublic}
@@ -678,7 +682,17 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 													setSearchLearnerValue('');
 													setNewEvent((prevData) => ({ ...prevData, isAllLearnersSelected: e.target.checked }));
 
+													// Reset search results when "All Learners" is checked
 													if (e.target.checked) {
+														// Reset user search results
+														if (userSearchRef.current?.reset) {
+															userSearchRef.current.reset();
+														}
+														// Reset course search results
+														if (courseSearchRef.current?.reset) {
+															courseSearchRef.current.reset();
+														}
+
 														setNewEvent((prevData) => ({
 															...prevData,
 															attendees: [],
@@ -690,7 +704,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 												}}
 												sx={{
 													'& .MuiSvgIcon-root': {
-														fontSize: isMobileSize ? '0.9rem' : '1.25rem',
+														fontSize: isMobileSize ? '0.9rem' : '1rem',
 													},
 												}}
 											/>
@@ -708,7 +722,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 					)}
 
 					{newEvent.coursesIds.length > 0 && (
-						<Box sx={{ display: 'flex', margin: '0.75rem 0 0.75rem 0', flexWrap: 'wrap' }}>
+						<Box sx={{ display: 'flex', margin: '-0.5rem 0 0.75rem 0', flexWrap: 'wrap' }}>
 							{newEvent.coursesIds?.map((id) => {
 								const course = courses.find((course) => course._id === id);
 								return (
@@ -723,14 +737,14 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 											borderRadius: '0.25rem',
 											margin: '0.35rem 0.35rem 0 0',
 										}}>
-										<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>{truncateText(course?.title!, 20)}</Typography>
+										<Typography sx={{ fontSize: isMobileSize ? '0.7rem' : '0.75rem' }}>{truncateText(course?.title!, 20)}</Typography>
 										<IconButton
 											onClick={() => {
 												const updatedCourses = newEvent.coursesIds.filter((filteredCourseId) => course?._id !== filteredCourseId);
 
 												setNewEvent((prevData) => ({ ...prevData, coursesIds: updatedCourses }));
 											}}>
-											<Cancel sx={{ fontSize: isMobileSize ? '0.85rem' : '0.95rem' }} />
+											<Cancel sx={{ fontSize: isMobileSize ? '0.8rem' : '0.9rem' }} />
 										</IconButton>
 									</Box>
 								);
@@ -739,21 +753,30 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 					)}
 
 					{!newEvent.isPublic && (
-						<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
-							<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+						<Box
+							sx={{
+								display: 'flex',
+								flexDirection: 'column',
+								alignItems: 'center',
+								position: 'relative',
+								mt: newEvent.coursesIds.length > 0 ? '0.5rem' : '-1.25rem',
+							}}>
+							<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'flex-start' }}>
 								<Box sx={{ flex: 3 }}>
 									<EventCourseSearchSelect
+										ref={courseSearchRef}
 										value={searchCourseValue}
 										onChange={setSearchCourseValue}
 										onSelect={handleCourseSelect}
 										placeholder={newEvent.isAllLearnersSelected || newEvent.isAllCoursesSelected || newEvent.isPublic ? '' : 'Search Course'}
 										disabled={newEvent.isAllLearnersSelected || newEvent.isAllCoursesSelected || newEvent.isPublic}
+										selectedCourseIds={newEvent.coursesIds}
 										sx={{
 											backgroundColor: newEvent.isAllLearnersSelected || newEvent.isAllCoursesSelected || newEvent.isPublic ? 'transparent' : '#fff',
 										}}
 									/>
 								</Box>
-								<Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: '0.85rem' }}>
+								<Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: '2.15rem' }}>
 									<FormControlLabel
 										disabled={newEvent.isAllLearnersSelected || newEvent.isPublic}
 										labelPlacement='start'
@@ -763,13 +786,20 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 												onChange={(e) => {
 													setSearchCourseValue('');
 													setNewEvent((prevData) => ({ ...prevData, isAllCoursesSelected: e.target.checked }));
+
+													// Reset search results when "All Courses" is checked
 													if (e.target.checked) {
+														// Reset course search results
+														if (courseSearchRef.current?.reset) {
+															courseSearchRef.current.reset();
+														}
+
 														setNewEvent((prevData) => ({ ...prevData, coursesIds: [] }));
 													}
 												}}
 												sx={{
 													'& .MuiSvgIcon-root': {
-														fontSize: isMobileSize ? '0.9rem' : '1.25rem', // Adjust the checkbox icon size
+														fontSize: isMobileSize ? '0.9rem' : '1rem', // Adjust the checkbox icon size
 													},
 												}}
 											/>
@@ -799,7 +829,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 						onChange={(e) => setNewEvent((prevData) => ({ ...prevData, location: e.target.value }))}
 						required={false}
 						InputProps={{ inputProps: { maxLength: 150 } }}
-						placeholder='Enter a location for the event (max 150 characters)'
+						placeholder='Enter a location (max 150 characters)'
 						multiline
 						rows={3}
 					/>

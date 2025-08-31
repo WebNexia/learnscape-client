@@ -34,7 +34,7 @@ interface NotificationsBoxProps {
 const NotificationsBox = ({ showUnreadOnly }: NotificationsBoxProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { user } = useContext(UserAuthContext);
-	const { fetchMonthEvents } = useContext(EventsContext);
+	const { refreshCalendarData } = useContext(EventsContext);
 	const [notifications, setNotifications] = useState<Notification[]>([]);
 	const [showAll, setShowAll] = useState<boolean>(false);
 	const [hasOlderNotifications, setHasOlderNotifications] = useState<boolean>(false);
@@ -96,7 +96,10 @@ const NotificationsBox = ({ showUnreadOnly }: NotificationsBoxProps) => {
 
 		const notificationRef = doc(db, 'notifications', user?.firebaseUserId, 'userNotifications', note.id);
 		try {
-			await updateDoc(notificationRef, { isRead: true });
+			// Only mark as read if it's not already read
+			if (!note.isRead) {
+				await updateDoc(notificationRef, { isRead: true });
+			}
 
 			if (note.type === NotificationType.QUIZ_SUBMISSION) {
 				const path =
@@ -122,13 +125,25 @@ const NotificationsBox = ({ showUnreadOnly }: NotificationsBoxProps) => {
 			} else if (note.type === NotificationType.NEW_COMMUNITY_TOPIC) {
 				navigate(`${user?.role !== Roles.ADMIN ? '' : '/admin'}/community/topic/${note.communityTopicId}`);
 			} else if (note.type === NotificationType.ADD_TO_EVENT) {
-				// Fetch current month events to show the new event
-				const currentDate = new Date();
-				await fetchMonthEvents(currentDate.getFullYear(), currentDate.getMonth() + 1);
+				// Only refresh calendar data if notification is unread
+				if (!note.isRead) {
+					await refreshCalendarData();
+				}
+				// Navigate to calendar
+				navigate(`/calendar`);
+			} else if (note.type === NotificationType.PUBLIC_EVENT) {
+				// Only refresh calendar data if notification is unread
+				if (!note.isRead) {
+					await refreshCalendarData();
+				}
+				// Navigate to calendar
 				navigate(`/calendar`);
 			}
 
-			setNotifications((prev) => prev.map((n) => (n.id === note.id ? { ...n, isRead: true } : n)));
+			// Update local state only if notification was unread
+			if (!note.isRead) {
+				setNotifications((prev) => prev.map((n) => (n.id === note.id ? { ...n, isRead: true } : n)));
+			}
 		} catch (error) {
 			console.error('Error marking notification as read:', error);
 		}
