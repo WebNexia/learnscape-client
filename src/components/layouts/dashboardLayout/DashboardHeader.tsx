@@ -3,7 +3,7 @@ import theme from '../../../themes';
 import { useNavigate } from 'react-router-dom';
 import { useContext, useEffect, useRef, useState } from 'react';
 import { Mode, Roles } from '../../../interfaces/enums';
-import { Cancel, DoneAll, Menu, Notifications, BugReport, Delete } from '@mui/icons-material';
+import { Cancel, DoneAll, Menu, Notifications, BugReport, Delete, ClearAll } from '@mui/icons-material';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 import { useUserCourseLessonData } from '../../../hooks/useUserCourseLessonData';
 import NotificationsBox from '../notifications/Notifications';
@@ -35,11 +35,16 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 	const [bugReportDialogOpen, setBugReportDialogOpen] = useState<boolean>(false);
 
 	const notificationsRef = useRef<HTMLDivElement>(null); // Create a ref for the notifications box
+	const notificationsButtonRef = useRef<HTMLButtonElement>(null); // Create a ref for the notifications button
 
 	useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
-			// Close notifications if click is outside the notifications box
-			if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) {
+			// Close notifications if click is outside both the notifications box and the notifications button
+			const target = event.target as Node;
+			const isOutsideNotificationsBox = !notificationsRef.current?.contains(target);
+			const isOutsideNotificationsButton = !notificationsButtonRef.current?.contains(target);
+
+			if (isOutsideNotificationsBox && isOutsideNotificationsButton) {
 				setNotificationsOpen(false);
 			}
 		};
@@ -47,7 +52,7 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 		// Attach the event listener to detect outside clicks
 		document.addEventListener('mousedown', handleClickOutside);
 		return () => document.removeEventListener('mousedown', handleClickOutside); // Cleanup on unmount
-	}, [notificationsRef]);
+	}, []);
 
 	const clearAllQuizData = () => {
 		Object.keys(localStorage).forEach((key) => {
@@ -109,6 +114,35 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 			await batch.commit();
 		} catch (error) {
 			console.error('Error marking notifications as read:', error);
+		}
+	};
+
+	const deleteAllNotifications = async (userFirebaseId: string) => {
+		if (!userFirebaseId) return;
+
+		try {
+			// Create a reference to the notifications collection for the user
+			const notificationsRef = collection(db, 'notifications', userFirebaseId, 'userNotifications');
+
+			// Query to fetch all notifications (both read and unread)
+			const querySnapshot = await getDocs(notificationsRef);
+
+			if (querySnapshot.empty) {
+				return;
+			}
+
+			// Use a batch to delete multiple documents at once
+			const batch = writeBatch(db);
+
+			querySnapshot.forEach((docSnapshot) => {
+				const notificationDocRef = doc(db, 'notifications', userFirebaseId, 'userNotifications', docSnapshot.id);
+				batch.delete(notificationDocRef);
+			});
+
+			// Commit the batch
+			await batch.commit();
+		} catch (error) {
+			console.error('Error deleting all notifications:', error);
 		}
 	};
 
@@ -200,6 +234,7 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 							},
 						}}>
 						<IconButton
+							ref={notificationsButtonRef}
 							onClick={() => setNotificationsOpen(!notificationsOpen)}
 							sx={{
 								':hover': {
@@ -250,6 +285,21 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 									/>
 								</Box>
 								<Box sx={{ zIndex: 10001 }}>
+									<Tooltip title='Delete All Notifications' placement='top' arrow>
+										<IconButton
+											onClick={() => {
+												if (user && user.firebaseUserId) {
+													deleteAllNotifications(user.firebaseUserId);
+												}
+											}}
+											sx={{
+												':hover': {
+													backgroundColor: 'transparent',
+												},
+											}}>
+											<ClearAll fontSize={isMobileSize ? 'small' : 'medium'} />
+										</IconButton>
+									</Tooltip>
 									<Tooltip title='Mark All as Read' placement='top' arrow>
 										<IconButton
 											onClick={() => {
@@ -265,15 +315,17 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 											<DoneAll fontSize={isMobileSize ? 'small' : 'medium'} />
 										</IconButton>
 									</Tooltip>
-									<IconButton
-										onClick={() => setNotificationsOpen(false)}
-										sx={{
-											':hover': {
-												backgroundColor: 'transparent',
-											},
-										}}>
-										<Cancel fontSize={isMobileSize ? 'small' : 'medium'} />
-									</IconButton>
+									<Tooltip title='Close' placement='top' arrow>
+										<IconButton
+											onClick={() => setNotificationsOpen(false)}
+											sx={{
+												':hover': {
+													backgroundColor: 'transparent',
+												},
+											}}>
+											<Cancel fontSize={isMobileSize ? 'small' : 'medium'} />
+										</IconButton>
+									</Tooltip>
 								</Box>
 							</Box>
 

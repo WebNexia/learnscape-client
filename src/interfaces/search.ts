@@ -33,6 +33,7 @@ export interface SearchResponse<T> {
 }
 
 export interface SearchUser {
+	_id: string; // MongoDB ObjectId
 	firebaseUserId: string;
 	username: string;
 	firstName?: string;
