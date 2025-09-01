@@ -156,7 +156,7 @@ const DocumentsContextProvider = (props: DocumentsContextProviderProps) => {
 		isLoading: isLandingPageLoading,
 		isError: isLandingPageError,
 	} = useQuery(['landingPageDocuments', orgId], () => fetchLandingPageDocuments(), {
-		enabled: !!orgId && isAuthenticated && !isLoaded && isLandingPageRoute,
+		enabled: !!orgId && !isLoaded && isLandingPageRoute,
 	});
 
 	const sortDocumentsData = (property: keyof Document, order: 'asc' | 'desc') => {
