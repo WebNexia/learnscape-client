@@ -1,11 +1,28 @@
 import DOMPurify from 'dompurify';
 
+// Function to validate image URLs
+function validateImageUrl(url: string): boolean {
+	try {
+		const urlObj = new URL(url);
+		// Only allow HTTPS URLs
+		if (urlObj.protocol !== 'https:') {
+			return false;
+		}
+		// Optional: Add trusted domain whitelist
+		// const trustedDomains = ['your-domain.com', 'cdn.your-domain.com', 'trusted-cdn.com'];
+		// return trustedDomains.some(domain => urlObj.hostname.endsWith(domain));
+		return true;
+	} catch {
+		return false;
+	}
+}
+
 export function sanitizeHtml(html: string): string {
 	const sanitizedHtml = DOMPurify.sanitize(html, {
-		ALLOWED_TAGS: ['b', 'strong', 'i', 'em', 'u', 'a', 'p', 'br', 'div', 'span', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
-		ALLOWED_ATTR: ['href', 'title', 'class'],
+		ALLOWED_TAGS: ['b', 'strong', 'i', 'em', 'u', 'a', 'p', 'br', 'div', 'span', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'img'],
+		ALLOWED_ATTR: ['href', 'title', 'class', 'src', 'alt', 'width', 'height', 'style'],
 		FORBID_TAGS: ['script', 'iframe', 'object', 'embed', 'form', 'input', 'textarea', 'select', 'button'],
-		FORBID_ATTR: ['onerror', 'onclick', 'onload', 'onmouseover', 'onmouseout', 'onfocus', 'onblur', 'onchange', 'onsubmit', 'style'],
+		FORBID_ATTR: ['onerror', 'onclick', 'onload', 'onmouseover', 'onmouseout', 'onfocus', 'onblur', 'onchange', 'onsubmit'],
 		KEEP_CONTENT: true,
 		RETURN_DOM: false,
 		RETURN_DOM_FRAGMENT: false,
@@ -13,7 +30,19 @@ export function sanitizeHtml(html: string): string {
 	});
 
 	// Enhanced regex to remove any empty <p> tags, including those with attributes
-	return sanitizedHtml.replace(/<p[^>]*>(\s|&nbsp;)*<\/p>/g, '<br>');
+	let result = sanitizedHtml.replace(/<p[^>]*>(\s|&nbsp;)*<\/p>/g, '<br>');
+
+	// Validate image URLs after sanitization
+	result = result.replace(/<img[^>]*src="([^"]*)"[^>]*>/gi, (match, src) => {
+		if (validateImageUrl(src)) {
+			return match;
+		} else {
+			// Remove invalid src and add data attribute for debugging
+			return match.replace(`src="${src}"`, `data-invalid-src="${src}"`);
+		}
+	});
+
+	return result;
 }
 
 /**

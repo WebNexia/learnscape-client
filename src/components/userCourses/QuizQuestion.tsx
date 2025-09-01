@@ -771,7 +771,7 @@ const QuizQuestion = ({
 					openModal={isSubmitQuizModalOpen}
 					closeModal={() => setIsSubmitQuizModalOpen(false)}
 					content='Are you sure you want to submit the quiz?'
-					maxWidth='sm'>
+					maxWidth='xs'>
 					{userQuizAnswersUploading ? (
 						<DialogActions sx={{ marginBottom: '1.5rem' }}>
 							<LoadingButton loading variant='outlined' sx={{ textTransform: 'capitalize', height: '2.5rem', margin: '0 0.5rem 0.5rem 0' }} />
