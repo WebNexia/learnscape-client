@@ -124,6 +124,15 @@ const PaymentDialog = ({
 		}
 	};
 
+	// Add function to validate reCAPTCHA token
+	const validateRecaptchaToken = () => {
+		if (!recaptchaToken) {
+			setErrorMessage(fromHomePage ? 'Lütfen reCAPTCHA doğrulamasını tamamlayın.' : 'Please complete the reCAPTCHA verification.');
+			return false;
+		}
+		return true;
+	};
+
 	const getCardIcon = (brand: string) => {
 		switch (brand) {
 			case 'visa':
@@ -157,9 +166,9 @@ const PaymentDialog = ({
 		setIsProcessing(true);
 		setIsSubmitted(true);
 
-		if (!recaptchaToken) {
-			setErrorMessage(fromHomePage ? 'Lütfen reCAPTCHA doğrulamasını tamamlayın.' : 'Please complete the reCAPTCHA verification.');
+		if (!validateRecaptchaToken()) {
 			setIsProcessing(false);
+			setIsSubmitted(false);
 			return;
 		}
 

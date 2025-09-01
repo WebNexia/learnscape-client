@@ -616,7 +616,7 @@ const DocumentPaymentDialog = ({ document, isPaymentDialogOpen, setIsPaymentDial
 						cursorEvents: isProcessing ? 'none' : 'auto',
 						pointerEvents: isProcessing ? 'none' : 'auto',
 					}}
-					disableBtn={isProcessing || !recaptchaToken}
+					disableBtn={isProcessing || !recaptchaToken || !firstName.trim() || !lastName.trim() || !email.trim()}
 					disableCancelBtn={isProcessing}
 				/>
 			</form>
