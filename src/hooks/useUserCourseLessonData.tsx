@@ -57,6 +57,47 @@ export const useUserCourseLessonData = () => {
 		return currentUserLessonData ? currentUserLessonData.currentQuestion : 1;
 	}, [userLessonId, parsedUserLessonData]);
 
+	// Fallback function to handle next lesson creation failures
+	const handleNextLessonFallback = useCallback(async () => {
+		if (!nextLessonId || !user?._id || !courseId || !userCourseId || !orgId) return;
+
+		try {
+			// Check if the lesson already exists on the server using checkEnrollment endpoint
+			const existingLessonResponse = await axios.post(`${base_url}/userlessons/search`, {
+				userId: user._id,
+				lessonId: nextLessonId,
+				courseId: courseId,
+			});
+
+			if (existingLessonResponse.data && existingLessonResponse.data.length > 0) {
+				const existingLesson = existingLessonResponse.data[0];
+				const newUserLessonData: UserLessonDataStorage = {
+					lessonId: nextLessonId,
+					userLessonId: existingLesson._id,
+					courseId: courseId,
+					currentQuestion: existingLesson.currentQuestion || 1,
+					isCompleted: existingLesson.isCompleted || false,
+					isInProgress: existingLesson.isInProgress || true,
+					teacherFeedback: existingLesson.teacherFeedback || '',
+					isFeedbackGiven: existingLesson.isFeedbackGiven || false,
+					updatedAt: existingLesson.updatedAt,
+				};
+
+				const updatedUserLessonData = [...parsedUserLessonData, newUserLessonData];
+				localStorage.setItem('userLessonData', JSON.stringify(updatedUserLessonData));
+				setLocalStorageData((prev) => ({ ...prev, userLessonData: updatedUserLessonData }));
+
+				// Force a refresh of the lesson data to ensure UI updates
+				setTimeout(() => {
+					const refreshedData = JSON.parse(localStorage.getItem('userLessonData') || '[]');
+					setLocalStorageData((prev) => ({ ...prev, userLessonData: refreshedData }));
+				}, 100);
+			}
+		} catch (fallbackError) {
+			console.error('Fallback also failed:', fallbackError);
+		}
+	}, [nextLessonId, user?._id, courseId, userCourseId, orgId, parsedUserLessonData, base_url, setLocalStorageData]);
+
 	// Function to handle moving to the next lesson
 	const handleNextLesson = useCallback(async () => {
 		try {
@@ -81,39 +122,53 @@ export const useUserCourseLessonData = () => {
 				const existingNextLesson = parsedUserLessonData.find((data) => data.lessonId === nextLessonId && data.courseId === courseId);
 
 				if (!existingNextLesson) {
-					// Make sure the responseUserLesson API call is completed and returns valid data
-					const responseUserLesson = await axios.post(`${base_url}/userlessons`, {
-						lessonId: nextLessonId,
-						userId: user?._id,
-						courseId,
-						userCourseId,
-						currentQuestion: 1,
-						isCompleted: false,
-						isInProgress: true,
-						orgId,
-						notes: '',
-						teacherFeedback: '',
-						isFeedbackGiven: false,
-					});
-
-					if (responseUserLesson && responseUserLesson.data && responseUserLesson.data._id) {
-						const newUserLessonData: UserLessonDataStorage = {
+					try {
+						// Make sure the responseUserLesson API call is completed and returns valid data
+						const responseUserLesson = await axios.post(`${base_url}/userlessons`, {
 							lessonId: nextLessonId,
-							userLessonId: responseUserLesson.data._id,
-							courseId: courseId || '',
+							userId: user?._id,
+							courseId,
+							userCourseId,
 							currentQuestion: 1,
 							isCompleted: false,
 							isInProgress: true,
+							orgId,
+							notes: '',
 							teacherFeedback: '',
 							isFeedbackGiven: false,
-							updatedAt: responseUserLesson.data.updatedAt,
-						};
+						});
 
-						const updatedUserLessonData = [...parsedUserLessonData, newUserLessonData];
-						localStorage.setItem('userLessonData', JSON.stringify(updatedUserLessonData));
-						setLocalStorageData((prev) => ({ ...prev, userLessonData: updatedUserLessonData }));
-					} else {
-						console.error('Failed to get userLessonId from the response:', responseUserLesson);
+						if (responseUserLesson && responseUserLesson.data && responseUserLesson.data._id) {
+							const newUserLessonData: UserLessonDataStorage = {
+								lessonId: nextLessonId,
+								userLessonId: responseUserLesson.data._id,
+								courseId: courseId || '',
+								currentQuestion: 1,
+								isCompleted: false,
+								isInProgress: true,
+								teacherFeedback: '',
+								isFeedbackGiven: false,
+								updatedAt: responseUserLesson.data.updatedAt,
+							};
+
+							const updatedUserLessonData = [...parsedUserLessonData, newUserLessonData];
+							localStorage.setItem('userLessonData', JSON.stringify(updatedUserLessonData));
+							setLocalStorageData((prev) => ({ ...prev, userLessonData: updatedUserLessonData }));
+
+							// Force a refresh of the lesson data to ensure UI updates
+							setTimeout(() => {
+								const refreshedData = JSON.parse(localStorage.getItem('userLessonData') || '[]');
+								setLocalStorageData((prev) => ({ ...prev, userLessonData: refreshedData }));
+							}, 100);
+						} else {
+							console.error('Failed to get userLessonId from the response:', responseUserLesson);
+							// Fallback: try to fetch existing lesson data from server
+							await handleNextLessonFallback();
+						}
+					} catch (apiError) {
+						console.error('Failed to create next lesson:', apiError);
+						// Fallback: try to fetch existing lesson data from server
+						await handleNextLessonFallback();
 					}
 				}
 			} else {
@@ -135,7 +190,7 @@ export const useUserCourseLessonData = () => {
 				window.scrollTo({ top: 0, behavior: 'smooth' });
 			}
 		} catch (error) {
-			console.error(error);
+			console.error('Error in handleNextLesson:', error);
 		}
 	}, [
 		userLessonId,
