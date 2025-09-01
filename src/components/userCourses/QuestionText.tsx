@@ -38,7 +38,17 @@ const QuestionText = ({ question, questionNumber, isMatching }: QuestionTextProp
 						variant='h6'
 						component='div'
 						dangerouslySetInnerHTML={{ __html: sanitizeHtml(decode(question.question)) }}
-						sx={{ margin: '0.5rem 0.5rem 0 0', fontSize: isMobileSize ? '0.8rem' : undefined }}
+						sx={{
+							'margin': '0.5rem 0.5rem 0 0',
+							'fontSize': isMobileSize ? '0.8rem' : undefined,
+							'& img': {
+								maxWidth: '100%',
+								height: 'auto',
+								borderRadius: '0.25rem',
+								margin: '0.5rem 0',
+								boxShadow: '0 0.1rem 0.2rem 0.1rem rgba(0,0,0,0.15)',
+							},
+						}}
 					/>
 				</Box>
 			</Box>

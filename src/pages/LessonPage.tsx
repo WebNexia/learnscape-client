@@ -466,7 +466,17 @@ const LessonPage = () => {
 								<Typography
 									component='div'
 									dangerouslySetInnerHTML={{ __html: sanitizeHtml(decode(lesson.text)) }}
-									sx={{ lineHeight: 1.9, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}
+									sx={{
+										'lineHeight': 1.9,
+										'fontSize': isMobileSize ? '0.75rem' : '0.85rem',
+										'& img': {
+											maxWidth: '100%',
+											height: 'auto',
+											borderRadius: '0.35rem',
+											margin: '1rem 0',
+											boxShadow: '0 0.1rem 0.3rem 0.1rem rgba(0,0,0,0.2)',
+										},
+									}}
 								/>
 							</Box>
 						</Box>
@@ -589,7 +599,7 @@ const LessonPage = () => {
 						openModal={isLessonCourseCompletedModalOpen}
 						closeModal={() => setIsLessonCourseCompletedModalOpen(false)}
 						content={`You have completed this ${nextLessonId ? 'lesson' : 'course'}. Proceed to the next ${nextLessonId ? 'lesson' : 'course'}.`}
-						maxWidth='sm'>
+						maxWidth='xs'>
 						<CustomDialogActions
 							onCancel={() => setIsLessonCourseCompletedModalOpen(false)}
 							onSubmit={async () => {

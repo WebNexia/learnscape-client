@@ -84,7 +84,20 @@ const QuestionDialogContentNonEdit = ({ question, singleLessonBeforeSave }: Ques
 				fetchQuestionTypeName(question) !== QuestionType.FITB_TYPING && (
 					<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', paddingBottom: '0.5rem' }}>
 						<Box className='rich-text-content' component='div' sx={{ padding: '0.5rem 1rem', textAlign: 'justify' }}>
-							<Typography variant='body1' component='div' dangerouslySetInnerHTML={{ __html: sanitizeHtml(decode(question.question)) }} />
+							<Typography
+								variant='body1'
+								component='div'
+								dangerouslySetInnerHTML={{ __html: sanitizeHtml(decode(question.question)) }}
+								sx={{
+									'& img': {
+										maxWidth: '100%',
+										height: 'auto',
+										borderRadius: '0.25rem',
+										margin: '0.5rem 0',
+										boxShadow: '0 0.1rem 0.2rem 0.1rem rgba(0,0,0,0.15)',
+									},
+								}}
+							/>
 						</Box>
 
 						<Box sx={{ alignSelf: 'center', width: '80%' }}>

@@ -732,7 +732,7 @@ const AdminLessons = () => {
 													closeModal={() => closeDeleteLessonModal(index)}
 													title='Unpublish Lesson'
 													content='You cannot delete published lesson. Please unpublish it first.'
-													maxWidth='sm'>
+													maxWidth='xs'>
 													<DialogActions>
 														<CustomCancelButton
 															onClick={() => closeDeleteLessonModal(index)}

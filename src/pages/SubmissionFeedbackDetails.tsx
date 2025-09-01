@@ -82,7 +82,17 @@ const SubmissionFeedbackDetails = () => {
 						<Typography
 							variant={isMobileSize ? 'body2' : 'body1'}
 							component='div'
-							sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.8 }}
+							sx={{
+								'fontSize': isMobileSize ? '0.75rem' : '0.85rem',
+								'lineHeight': 1.8,
+								'& img': {
+									maxWidth: '100%',
+									height: 'auto',
+									borderRadius: '0.25rem',
+									margin: '0.5rem 0',
+									boxShadow: '0 0.1rem 0.2rem 0.1rem rgba(0,0,0,0.15)',
+								},
+							}}
 							dangerouslySetInnerHTML={{ __html: sanitizeHtml(decode(userSingleResponseWithFeedback?.questionId.question)) }}
 						/>
 					)}

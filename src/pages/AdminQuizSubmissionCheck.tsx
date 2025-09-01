@@ -358,7 +358,17 @@ const AdminQuizSubmissionCheck = () => {
 							<Typography
 								variant='body2'
 								component='div'
-								sx={{ lineHeight: 1.8, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}
+								sx={{
+									'lineHeight': 1.8,
+									'fontSize': isMobileSize ? '0.75rem' : '0.85rem',
+									'& img': {
+										maxWidth: '100%',
+										height: 'auto',
+										borderRadius: '0.25rem',
+										margin: '0.5rem 0',
+										boxShadow: '0 0.1rem 0.2rem 0.1rem rgba(0,0,0,0.15)',
+									},
+								}}
 								dangerouslySetInnerHTML={{ __html: sanitizeHtml(decode(userResponseToFeedback?.questionId.question)) }}
 							/>
 						)}

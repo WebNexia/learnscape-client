@@ -1015,6 +1015,13 @@ const AdminLessonEditPage = () => {
 										'& strong, & b': {
 											fontWeight: 'bolder',
 										},
+										'& img': {
+											maxWidth: '100%',
+											height: 'auto',
+											borderRadius: '0.35rem',
+											margin: '1rem 0',
+											boxShadow: '0 0.1rem 0.3rem 0.1rem rgba(0,0,0,0.2)',
+										},
 									}}
 								/>
 							) : (
