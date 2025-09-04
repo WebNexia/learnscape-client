@@ -146,7 +146,9 @@ export const router = createBrowserRouter([
 				path: 'admin/course-edit/course/:courseId',
 				element: (
 					<AdminRouteGuard>
-						<AdminCourseEditPage />
+						<CoursesContextProvider>
+							<AdminCourseEditPage />
+						</CoursesContextProvider>
 					</AdminRouteGuard>
 				),
 			},

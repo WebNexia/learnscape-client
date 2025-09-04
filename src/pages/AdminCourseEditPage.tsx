@@ -31,6 +31,7 @@ import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/Cust
 import { useAuth } from '../hooks/useAuth';
 import { validateImageUrl, validateDocumentUrl } from '../utils/urlValidation';
 import { Snackbar, Alert } from '@mui/material';
+import { useQueryClient } from 'react-query';
 
 export interface ChapterUpdateTrack {
 	chapterId: string;
@@ -111,6 +112,8 @@ const AdminCourseEditPage = () => {
 	const [isPopStateNavigation, setIsPopStateNavigation] = useState(false);
 	const [isUrlErrorOpen, setIsUrlErrorOpen] = useState<boolean>(false);
 	const [urlErrorMessage, setUrlErrorMessage] = useState<string>('');
+
+	const queryClient = useQueryClient();
 
 	useEffect(() => {
 		const handlePopState = () => {
@@ -322,6 +325,7 @@ const AdminCourseEditPage = () => {
 					updatedByImageUrl: responseUpdatedData.updatedByImageUrl,
 					updatedByRole: responseUpdatedData.updatedByRole,
 				});
+				queryClient.invalidateQueries(['allCourses', orgId]);
 
 				setHasUnsavedChanges(false);
 				setIsEditMode(false);

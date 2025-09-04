@@ -7,13 +7,14 @@ import LoadingError from '../components/layouts/loading/LoadingError';
 import { OrganisationContext } from './OrganisationContextProvider';
 import { useAuth } from '../hooks/useAuth';
 import { useLocation } from 'react-router-dom';
+import { UserAuthContext } from './UserAuthContextProvider';
+import { Roles } from '../interfaces/enums';
 
 interface CoursesContextTypes {
 	courses: SingleCourse[];
-	sortedPublicCoursesData: SingleCourse[];
 	loading: boolean;
 	error: string | null;
-	fetchCourses: (page: number) => Promise<SingleCourse[]>;
+	fetchCourses: (page?: number) => Promise<SingleCourse[]>;
 	fetchMoreCourses: (startPage: number, endPage: number) => Promise<void>;
 
 	sortCoursesData: (property: keyof SingleCourse, order: 'asc' | 'desc') => void;
@@ -27,25 +28,14 @@ interface CoursesContextTypes {
 	setNumberOfPages: React.Dispatch<React.SetStateAction<number>>;
 	totalItems: number;
 	loadedPages: number[];
-	fetchPublicCourses: () => void;
-
-	totalNumberOfEnrolledLearners: number;
-	totalCourses: number;
-	coursesSummary: CourseSummary[];
 }
 
 interface CoursesContextProviderProps {
 	children: ReactNode;
 }
 
-export interface CourseSummary {
-	title: string;
-	enrolledUsersCount: number;
-}
-
 export const CoursesContext = createContext<CoursesContextTypes>({
 	courses: [],
-	sortedPublicCoursesData: [],
 	loading: false,
 	error: null,
 	fetchCourses: async () => [],
@@ -62,16 +52,13 @@ export const CoursesContext = createContext<CoursesContextTypes>({
 	setNumberOfPages: () => {},
 	totalItems: 0,
 	loadedPages: [],
-	fetchPublicCourses: () => {},
-	totalNumberOfEnrolledLearners: 1,
-	totalCourses: 1,
-	coursesSummary: [],
 });
 
 const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
 	const { isAuthenticated, isAdmin, isLearner } = useAuth();
+	const { user } = useContext(UserAuthContext);
 	const location = useLocation();
 	const queryClient = useQueryClient();
 	const isLandingPageRoute =
@@ -84,13 +71,6 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 		// Only consider course preview pages as landing pages, not enrolled course pages
 		(location.pathname.startsWith('/course/') && !location.pathname.includes('/userCourseId/'));
 
-	const [sortedPublicCoursesData, setSortedPublicCoursesData] = useState<SingleCourse[]>([]);
-
-	const [totalNumberOfEnrolledLearners, setTotalNumberOfEnrolledLearners] = useState<number>(1);
-	const [totalCourses, setTotalCourses] = useState<number>(1);
-	const [coursesSummary, setCoursesSummary] = useState<CourseSummary[]>([]);
-
-	const [isLoaded, setIsLoaded] = useState<boolean>(false);
 	const [numberOfPages, setNumberOfPages] = useState<number>(1);
 	const [coursesPageNumber, setCoursesPageNumber] = useState<number>(1);
 	const [totalItems, setTotalItems] = useState<number>(0);
@@ -98,6 +78,7 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 
 	const fetchCourses = async (page: number = 1) => {
 		if (!orgId) return [];
+
 		try {
 			const response = await axios.get(`${base_url}/courses/organisation/${orgId}?page=${page}&limit=200`);
 
@@ -109,11 +90,9 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 			setTotalItems(response.data.totalItems);
 			setNumberOfPages(Math.ceil(response.data.totalItems / 50)); // 50 per page display
 			setLoadedPages([page]);
-			setIsLoaded(true);
 
 			return coursesData;
 		} catch (error) {
-			setIsLoaded(true);
 			throw error;
 		}
 	};
@@ -155,47 +134,10 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 		isError,
 	} = useQuery(['allCourses', orgId, coursesPageNumber], () => fetchCourses(coursesPageNumber), {
 		enabled: !!orgId && isAuthenticated && (isAdmin || isLearner) && !isLandingPageRoute,
-		staleTime: 5 * 60 * 1000, // 5 minutes - data stays fresh
+		staleTime: user?.role !== Roles.USER ? 0 : 5 * 60 * 1000, // 5 minutes - data stays fresh
 		cacheTime: 30 * 60 * 1000, // 30 minutes - data stays in cache
 		refetchOnWindowFocus: false, // No refetch on window focus
-		refetchOnMount: false, // No refetch on component remount
-	});
-
-	const fetchPublicCourses = async () => {
-		try {
-			const response = await axios.get(`${base_url}/courses/public`);
-			const sortedDataCopy = [...response.data.data].sort((a: SingleCourse, b: SingleCourse) => b.updatedAt.localeCompare(a.updatedAt));
-			setSortedPublicCoursesData(sortedDataCopy);
-			return response.data.data;
-		} catch (error) {
-			throw error;
-		}
-	};
-
-	useQuery(['allPublicCourses'], fetchPublicCourses, {
-		enabled: isLandingPageRoute,
-	});
-
-	const fetchCoursesDashboardSummary = async () => {
-		if (!orgId) return;
-		try {
-			const response = await axios.get(`${base_url}/courses/organisation/${orgId}/summary`);
-			const summary = response.data;
-
-			setTotalCourses(summary.totalCourses);
-			setTotalNumberOfEnrolledLearners(summary.totalUniqueUsers);
-			setCoursesSummary(summary.courses);
-		} catch (error) {
-			console.error('Error fetching dashboard summary:', error);
-		}
-	};
-
-	const {
-		// data: summaryData,
-		isLoading: summaryDataLoading,
-		isError: summaryDataError,
-	} = useQuery(['coursesSummary', orgId], () => fetchCoursesDashboardSummary(), {
-		enabled: !!orgId && !isLoaded && isAuthenticated && (isAdmin || isLearner) && !isLandingPageRoute,
+		refetchOnMount: user?.role !== Roles.USER ? true : false, // Refetch on component remount to get fresh data
 	});
 
 	// Function to handle sorting
@@ -215,41 +157,96 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 	};
 
 	// Function to update courses with new course data
-	const addNewCourse = (newCourse: any) => {
+	const addNewCourse = (newCourse: SingleCourse) => {
 		// React Query cache'i güncelle
-		queryClient.setQueryData(['allCourses', orgId, coursesPageNumber], (oldData: any) => {
+		queryClient.setQueryData(['allCourses', orgId, coursesPageNumber], (oldData: SingleCourse[] | undefined) => {
 			return oldData ? [newCourse, ...oldData] : [newCourse];
 		});
 	};
 
 	const updateCoursePublishing = (id: string) => {
-		// React Query cache'i güncelle
-		queryClient.setQueryData(['allCourses', orgId, coursesPageNumber], (oldData: any) => {
-			return oldData?.map((course: SingleCourse) => {
-				if (course._id === id) {
-					return { ...course, isActive: !course.isActive };
-				}
-				return course;
-			});
+		// Update cache for current page
+		queryClient.setQueryData(['allCourses', orgId, coursesPageNumber], (oldData: SingleCourse[] | undefined) => {
+			return (
+				oldData?.map((course: SingleCourse) => {
+					if (course._id === id) {
+						return { ...course, isActive: !course.isActive };
+					}
+					return course;
+				}) || []
+			);
 		});
+
+		// Update cache for all other loaded pages
+		loadedPages.forEach((page) => {
+			if (page !== coursesPageNumber) {
+				queryClient.setQueryData(['allCourses', orgId, page], (oldData: SingleCourse[] | undefined) => {
+					return (
+						oldData?.map((course: SingleCourse) => {
+							if (course._id === id) {
+								return { ...course, isActive: !course.isActive };
+							}
+							return course;
+						}) || []
+					);
+				});
+			}
+		});
+
+		// Invalidate all course queries for this organization
+		queryClient.invalidateQueries(['allCourses', orgId]);
+
+		// Force a complete refresh of all course data
+		setTimeout(() => {
+			queryClient.invalidateQueries(['allCourses', orgId]);
+		}, 100);
+
+		// Also refresh the current page data immediately
+		queryClient.refetchQueries(['allCourses', orgId, coursesPageNumber]);
 	};
 
 	const updateCourse = (singleCourse: SingleCourse) => {
-		// React Query cache'i güncelle
-		queryClient.setQueryData(['allCourses', orgId, coursesPageNumber], (oldData: any) => {
-			return oldData?.map((course: SingleCourse) => {
-				if (singleCourse._id === course._id) {
-					return singleCourse;
-				}
-				return course;
-			});
+		// OPTIMISTIC UPDATE: Update UI immediately for instant feedback
+
+		// Update current page cache immediately
+		queryClient.setQueryData(['allCourses', orgId, coursesPageNumber], (oldData: SingleCourse[] | undefined) => {
+			return (
+				oldData?.map((course: SingleCourse) => {
+					if (course._id === singleCourse._id) {
+						return singleCourse; // Show updated course immediately
+					}
+					return course;
+				}) || []
+			);
 		});
+
+		// Update all other loaded pages cache immediately
+		loadedPages.forEach((page) => {
+			if (page !== coursesPageNumber) {
+				queryClient.setQueryData(['allCourses', orgId, page], (oldData: SingleCourse[] | undefined) => {
+					return (
+						oldData?.map((course: SingleCourse) => {
+							if (course._id === singleCourse._id) {
+								return singleCourse; // Show updated course immediately
+							}
+							return course;
+						}) || []
+					);
+				});
+			}
+		});
+
+		// Background sync: Invalidate queries to ensure server data is fresh
+		// This happens in the background without blocking the UI
+		setTimeout(() => {
+			queryClient.invalidateQueries(['allCourses', orgId]);
+		}, 100);
 	};
 
 	const removeCourse = (id: string) => {
 		// React Query cache'i güncelle
-		queryClient.setQueryData(['allCourses', orgId, coursesPageNumber], (oldData: any) => {
-			return oldData?.filter((data: SingleCourse) => data._id !== id);
+		queryClient.setQueryData(['allCourses', orgId, coursesPageNumber], (oldData: SingleCourse[] | undefined) => {
+			return oldData?.filter((data: SingleCourse) => data._id !== id) || [];
 		});
 	};
 
@@ -263,11 +260,11 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 		}
 	}, [coursesData]);
 
-	if ((isLoading || summaryDataLoading) && isAuthenticated) {
+	if (isLoading && isAuthenticated) {
 		return <Loading />;
 	}
 
-	if ((isError || summaryDataError) && isAuthenticated) {
+	if (isError && isAuthenticated) {
 		return <LoadingError />;
 	}
 
@@ -275,7 +272,6 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 		<CoursesContext.Provider
 			value={{
 				courses: coursesData || [], // React Query data kullan
-				sortedPublicCoursesData,
 				loading: isLoading,
 				error: isError ? 'Failed to fetch courses' : null,
 				fetchCourses,
@@ -292,10 +288,6 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 				setNumberOfPages,
 				totalItems,
 				loadedPages,
-				fetchPublicCourses,
-				totalNumberOfEnrolledLearners,
-				totalCourses,
-				coursesSummary,
 			}}>
 			{props.children}
 		</CoursesContext.Provider>
