@@ -42,7 +42,12 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
 	// Upload limit management
-	const { getRemainingAudioUploads, getRemainingImageUploads } = useUploadLimit();
+	// Upload limit management - only for learners
+	const uploadLimitHook = user?.role === 'learner' ? useUploadLimit() : null;
+	const { getRemainingAudioUploads, getRemainingImageUploads } = uploadLimitHook || {
+		getRemainingAudioUploads: () => 999,
+		getRemainingImageUploads: () => 999,
+	};
 
 	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(user?.role === 'admin' ? true : false);
 	const [isAudioUploading, setIsAudioUploading] = useState<boolean>(false);
@@ -105,13 +110,14 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 
 			addNewTopic({
 				_id: response.data._id,
-				userId: { _id: user?._id, username: user?.username, imageUrl: user?.imageUrl },
+				userId: { _id: user?._id || '', username: user?.username || '', imageUrl: user?.imageUrl || '' },
 				orgId,
 				title: topic.title.trim(),
 				text: topic.text.trim(),
 				imageUrl: topic.imageUrl,
 				audioUrl: topic.audioUrl,
 				createdAt: response.data.createdAt,
+				updatedAt: response.data.updatedAt || response.data.createdAt,
 				messageCount: 0,
 			});
 
