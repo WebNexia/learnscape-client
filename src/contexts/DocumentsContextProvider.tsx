@@ -10,7 +10,6 @@ import { useLocation } from 'react-router-dom';
 
 interface DocumentsContextTypes {
 	documents: Document[];
-	sortedLandingPageDocumentsData: Document[];
 	loading: boolean;
 	error: string | null;
 	fetchDocuments: (page?: number) => Promise<Document[]>;
@@ -31,7 +30,6 @@ interface DocumentsContextProviderProps {
 
 export const DocumentsContext = createContext<DocumentsContextTypes>({
 	documents: [],
-	sortedLandingPageDocumentsData: [],
 	loading: false,
 	error: null,
 	fetchDocuments: async () => [],
@@ -62,7 +60,6 @@ const DocumentsContextProvider = (props: DocumentsContextProviderProps) => {
 		// Only consider course preview pages as landing pages, not enrolled course pages
 		(location.pathname.startsWith('/course/') && !location.pathname.includes('/userCourseId/'));
 
-	const [sortedLandingPageDocumentsData, setSortedLandingPageDocumentsData] = useState<Document[]>([]);
 	const [totalItems, setTotalItems] = useState<number>(0);
 	const [loadedPages, setLoadedPages] = useState<number[]>([]);
 	const [documentsPageNumber, setDocumentsPageNumber] = useState<number>(1);
@@ -124,28 +121,6 @@ const DocumentsContextProvider = (props: DocumentsContextProviderProps) => {
 		refetchOnMount: false, // No refetch on component remount
 	});
 
-	const fetchLandingPageDocuments = async () => {
-		if (!orgId) return [];
-		try {
-			const response = await axios.get(`${base_url}/documents/landing/${orgId}`);
-
-			// Initial sorting when fetching data
-			const sortedLandingPageDocumentsDataCopy = [...response.data.data].sort((a: Document, b: Document) => b.createdAt.localeCompare(a.createdAt));
-			setSortedLandingPageDocumentsData(sortedLandingPageDocumentsDataCopy);
-			return response.data.data;
-		} catch (error) {
-			throw error;
-		}
-	};
-
-	const { isLoading: isLandingPageLoading, isError: isLandingPageError } = useQuery(
-		['landingPageDocuments', orgId],
-		() => fetchLandingPageDocuments(),
-		{
-			enabled: !!orgId && isLandingPageRoute,
-		}
-	);
-
 	const sortDocumentsData = (property: keyof Document, order: 'asc' | 'desc') => {
 		// React Query data'yı sort et, local state'e set etme
 		const sortedDataCopy = [...(documentsData || [])].sort((a, b) => {
@@ -195,11 +170,11 @@ const DocumentsContextProvider = (props: DocumentsContextProviderProps) => {
 		}
 	}, [documentsData]);
 
-	if (isLoading || isLandingPageLoading) {
+	if (isLoading) {
 		return <Loading />;
 	}
 
-	if (isError || isLandingPageError) {
+	if (isError) {
 		return <LoadingError />;
 	}
 
@@ -207,7 +182,6 @@ const DocumentsContextProvider = (props: DocumentsContextProviderProps) => {
 		<DocumentsContext.Provider
 			value={{
 				documents: documentsData || [], // React Query data kullan
-				sortedLandingPageDocumentsData,
 				loading: isLoading,
 				error: isError ? 'Failed to fetch documents' : null,
 				fetchDocuments,

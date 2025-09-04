@@ -3,7 +3,7 @@ import { Document } from '../../interfaces/document';
 import { motion } from 'framer-motion';
 import CloseIcon from '@mui/icons-material/Close';
 import { useState } from 'react';
-import DocumentPaymentDialog from './DocumentPaymentDialog';
+import DocumentPaymentDialogWrapper from './DocumentPaymentDialogWrapper';
 import { Download, ShoppingCart } from '@mui/icons-material';
 
 interface DocumentCardProps {
@@ -305,7 +305,7 @@ const DocumentCard = ({ document, userCurrency, fromHomePage }: DocumentCardProp
 				</DialogContent>
 			</Dialog>
 
-			<DocumentPaymentDialog
+			<DocumentPaymentDialogWrapper
 				document={document}
 				isPaymentDialogOpen={isPaymentDialogOpen}
 				setIsPaymentDialogOpen={setIsPaymentDialogOpen}

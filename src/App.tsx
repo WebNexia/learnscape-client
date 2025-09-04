@@ -5,31 +5,43 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 import { ThemeProvider } from '@mui/material/styles';
 import theme from './themes';
 import Loading from './components/layouts/loading/Loading';
-import { Elements } from '@stripe/react-stripe-js';
-import { stripePromise } from './config/stripe';
 
 // Import only essential context providers for initial dashboard load
 import UserAuthContextProvider from './contexts/UserAuthContextProvider';
 import OrganisationContextProvider from './contexts/OrganisationContextProvider';
 import { UploadLimitProvider } from './contexts/UploadLimitContextProvider';
 
+import { UserAuthContext } from './contexts/UserAuthContextProvider';
+import { useContext } from 'react';
+
 const queryClient = new QueryClient();
+
+// Conditional wrapper that only renders UploadLimitProvider for learners
+const ConditionalUploadLimitProvider = ({ children }: { children: React.ReactNode }) => {
+	const { user } = useContext(UserAuthContext);
+
+	// Only render UploadLimitProvider for learners
+	if (user?.role === 'learner') {
+		return <UploadLimitProvider>{children}</UploadLimitProvider>;
+	}
+
+	// For non-learners (admin, etc.), render children directly without UploadLimitProvider
+	return <>{children}</>;
+};
 
 function App() {
 	return (
 		<QueryClientProvider client={queryClient}>
 			<ThemeProvider theme={theme}>
-				<Elements stripe={stripePromise}>
-					<UserAuthContextProvider>
-						<OrganisationContextProvider>
-							<UploadLimitProvider>
-								<Suspense fallback={<Loading />}>
-									<Outlet />
-								</Suspense>
-							</UploadLimitProvider>
-						</OrganisationContextProvider>
-					</UserAuthContextProvider>
-				</Elements>
+				<UserAuthContextProvider>
+					<OrganisationContextProvider>
+						<ConditionalUploadLimitProvider>
+							<Suspense fallback={<Loading />}>
+								<Outlet />
+							</Suspense>
+						</ConditionalUploadLimitProvider>
+					</OrganisationContextProvider>
+				</UserAuthContextProvider>
 			</ThemeProvider>
 		</QueryClientProvider>
 	);

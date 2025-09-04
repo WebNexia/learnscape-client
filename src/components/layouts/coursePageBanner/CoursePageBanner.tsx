@@ -9,7 +9,7 @@ import { useContext, useState } from 'react';
 import { UserCoursesIdsWithCourseIds, UserLessonDataStorage } from '../../../contexts/UserCourseLessonDataContextProvider';
 import CustomSubmitButton from '../../forms/customButtons/CustomSubmitButton';
 import { dateFormatter } from '../../../utils/dateFormatter';
-import PaymentDialog from './PaymentDialog';
+import PaymentDialogWrapper from './PaymentDialogWrapper';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 import { getPriceForCountry } from '../../../utils/getPriceForCountry';
 import { setCurrencySymbol } from '../../../utils/setCurrencySymbol';
@@ -337,7 +337,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 					</Box>
 				</Box>
 
-				<PaymentDialog
+				<PaymentDialogWrapper
 					course={course}
 					isPaymentDialogOpen={isPaymentDialogOpen}
 					setIsPaymentDialogOpen={setIsPaymentDialogOpen}

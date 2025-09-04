@@ -132,20 +132,6 @@ const QuestionsContextProvider = (props: QuestionsContextProviderProps) => {
 		cacheTime: 30 * 60 * 1000, // 30 minutes - data stays in cache
 		refetchOnWindowFocus: false, // No refetch on window focus
 		refetchOnMount: false, // No refetch on component remount
-		onSuccess: (data) => {
-			console.log('✅ Questions useQuery onSuccess:', data);
-			// Cache'den data geldiğinde local state'i güncelle
-			if (data && data.length > 0) {
-				// Don't override totalItems from server - only set loadedPages
-				// setTotalItems(data.length); // ❌ This breaks pagination
-
-				// Eğer loadedPages boşsa ilk page'i ekle, değilse mevcut olanları koru
-				setLoadedPages((prev) => (prev.length === 0 ? [1] : prev));
-			}
-		},
-		onError: (error) => {
-			console.error('❌ Questions useQuery onError:', error);
-		},
 	});
 
 	// Progressive pagination için aradaki boşlukları doldur

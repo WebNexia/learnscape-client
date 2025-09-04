@@ -19,6 +19,9 @@ import AdminPublicEventsContextProvider from './contexts/AdminPublicEventsContex
 import CommunityContextProvider from './contexts/CommunityContextProvider';
 import CommunityMessagesContextProvider from './contexts/CommunityMessagesContextProvider';
 import LandingPageUpcomingPublicEventsContextProvider from './contexts/LandingPageUpcomingPublicEventsContextProvider';
+import LandingPageLatestCoursesContextProvider from './contexts/LandingPageLatestCoursesContextProvider';
+import AllPublicCoursesContextProvider from './contexts/AllPublicCoursesContextProvider';
+import LandingPageResourcesContextProvider from './contexts/LandingPageResourcesContextProvider';
 // Context wrapper'lar kaldırıldı - artık gerekli değil
 
 // Lazy load pages
@@ -71,10 +74,40 @@ export const router = createBrowserRouter([
 		element: <App />, // App is the layout
 		children: [
 			{ path: 'rate-limit-error', element: <RateLimitError /> },
-			{ path: '', element: <LandingPage /> },
-			{ path: 'resources', element: <LandingPageResources /> },
-			{ path: 'course/:title/:courseId', element: <LandingPageCourse /> },
-			{ path: 'landing-page-courses', element: <LandingPageCourses /> },
+			{
+				path: '',
+				element: (
+					<LandingPageUpcomingPublicEventsContextProvider>
+						<LandingPageLatestCoursesContextProvider>
+							<LandingPage />
+						</LandingPageLatestCoursesContextProvider>
+					</LandingPageUpcomingPublicEventsContextProvider>
+				),
+			},
+			{
+				path: 'resources',
+				element: (
+					<LandingPageResourcesContextProvider>
+						<LandingPageResources />
+					</LandingPageResourcesContextProvider>
+				),
+			},
+			{
+				path: 'course/:title/:courseId',
+				element: (
+					<AllPublicCoursesContextProvider>
+						<LandingPageCourse />
+					</AllPublicCoursesContextProvider>
+				),
+			},
+			{
+				path: 'landing-page-courses',
+				element: (
+					<AllPublicCoursesContextProvider>
+						<LandingPageCourses />
+					</AllPublicCoursesContextProvider>
+				),
+			},
 			{ path: 'auth', element: <AuthWrapper /> },
 			{ path: 'reset-password', element: <PasswordResetPage /> },
 			{ path: 'verify-email', element: <VerifyEmailPage /> },
@@ -213,7 +246,9 @@ export const router = createBrowserRouter([
 				path: 'admin/community',
 				element: (
 					<AdminRouteGuard>
-						<Community />
+						<CommunityContextProvider>
+							<Community />
+						</CommunityContextProvider>
 					</AdminRouteGuard>
 				),
 			},
@@ -221,7 +256,11 @@ export const router = createBrowserRouter([
 				path: 'admin/community/topic/:topicId',
 				element: (
 					<AdminRouteGuard>
-						<CommunityTopicPage />
+						<CommunityContextProvider>
+							<CommunityMessagesContextProvider>
+								<CommunityTopicPage />
+							</CommunityMessagesContextProvider>
+						</CommunityContextProvider>
 					</AdminRouteGuard>
 				),
 			},
@@ -351,9 +390,9 @@ export const router = createBrowserRouter([
 				path: 'community',
 				element: (
 					<LearnerRouteGuard>
-						<CommunityContextWrapper>
+						<CommunityContextProvider>
 							<Community />
-						</CommunityContextWrapper>
+						</CommunityContextProvider>
 					</LearnerRouteGuard>
 				),
 			},
@@ -361,7 +400,11 @@ export const router = createBrowserRouter([
 				path: 'community/topic/:topicId',
 				element: (
 					<LearnerRouteGuard>
-						<CommunityTopicPage />
+						<CommunityContextProvider>
+							<CommunityMessagesContextProvider>
+								<CommunityTopicPage />
+							</CommunityMessagesContextProvider>
+						</CommunityContextProvider>
 					</LearnerRouteGuard>
 				),
 			},

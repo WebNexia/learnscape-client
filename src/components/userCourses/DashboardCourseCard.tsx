@@ -81,7 +81,7 @@ const DashboardCourseCard = ({ course, isEnrolled, displayMyCourses, userCourseI
 				</Box>
 			)}
 
-			{fromHomePage && (
+			{fromHomePage && course.courseManagement && (
 				<Chip
 					label={course.courseManagement.isExternal ? <span>Partner</span> : <span>Platform</span>}
 					color={course.courseManagement.isExternal ? 'info' : 'success'}

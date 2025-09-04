@@ -1,7 +1,7 @@
 import { useParams } from 'react-router-dom';
 import LandingPageLayout from '../components/landingPage/LandingPageLayout';
 import { useContext, useEffect, useState } from 'react';
-import { CoursesContext } from '../contexts/CoursesContextProvider';
+import { AllPublicCoursesContext } from '../contexts/AllPublicCoursesContextProvider';
 import { SingleCourse } from '../interfaces/course';
 import { Box, Card, CardContent, Typography, Avatar, Chip, Stack, IconButton } from '@mui/material';
 import CoursePageBanner from '../components/layouts/coursePageBanner/CoursePageBanner';
@@ -119,37 +119,43 @@ const InstructorCard = ({ instructor }: { instructor: SingleCourse['instructor']
 
 const LandingPageCourse = () => {
 	const { courseId } = useParams();
-	const { sortedPublicCoursesData } = useContext(CoursesContext);
+	const { courses, loading, error } = useContext(AllPublicCoursesContext);
 
 	const [course, setCourse] = useState<SingleCourse>();
 
 	useEffect(() => {
-		if (courseId) {
-			const selectedCourse = sortedPublicCoursesData.filter((course) => course._id === courseId)[0];
+		if (courseId && courses) {
+			const selectedCourse = courses.find((course: SingleCourse) => course._id === courseId);
 			setCourse(selectedCourse);
 		}
-	}, [courseId, sortedPublicCoursesData]);
+	}, [courseId, courses]);
 
 	return (
 		<LandingPageLayout>
-			<Box
-				sx={{
-					display: 'flex',
-					flexDirection: { xs: 'column', sm: 'column', md: 'row' },
-					justifyContent: 'center',
-					alignItems: 'center',
-					width: '100%',
-					paddingTop: '13vh',
-					gap: '2rem',
-					flexWrap: { xs: 'wrap', md: 'nowrap' },
-				}}>
-				{course && (
-					<>
-						<CoursePageBanner course={course} fromHomePage={true} />
-						<InstructorCard instructor={course.instructor} />
-					</>
-				)}
-			</Box>
+			{!loading && !error && course && (
+				<Box
+					sx={{
+						display: 'flex',
+						flexDirection: { xs: 'column', sm: 'column', md: 'row' },
+						justifyContent: 'center',
+						alignItems: 'center',
+						width: '100%',
+						paddingTop: '13vh',
+						gap: '2rem',
+						flexWrap: { xs: 'wrap', md: 'nowrap' },
+					}}>
+					<CoursePageBanner course={course} fromHomePage={true} />
+					<InstructorCard instructor={course.instructor} />
+				</Box>
+			)}
+
+			{!loading && !error && !course && (
+				<Box sx={{ paddingTop: '16vh', textAlign: 'center' }}>
+					<Typography variant='h6' sx={{ fontFamily: 'Varela Round' }}>
+						Kurs bulunamadı
+					</Typography>
+				</Box>
+			)}
 			<Box sx={{ margin: '1rem 0 3rem 0' }}>
 				<ChatWhatsApp />
 				<ScrollToTopButton />
