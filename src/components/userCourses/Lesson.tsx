@@ -7,10 +7,9 @@ import { LessonById } from '../../interfaces/lessons';
 import { useContext, useEffect, useState } from 'react';
 import ProgressIcon from '../../assets/ProgressIcon.png';
 import { LessonType } from '../../interfaces/enums';
-import { QuizSubmissionsContext } from '../../contexts/QuizSubmissionsContextProvider';
+import { LearnerQuizSubmissionsContext } from '../../contexts/LearnerQuizSubmissionsContextProvider';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import logo from '../../assets/logo.png';
-import { useAuth } from '../../hooks/useAuth';
 
 interface LessonProps {
 	lesson: LessonById;
@@ -23,12 +22,11 @@ interface LessonProps {
 const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLessonId, lessonOrder }: LessonProps) => {
 	const { courseId, userCourseId } = useParams();
 	const navigate = useNavigate();
-	const { user } = useAuth();
 
 	const { isSmallScreen, isVerySmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isRotatedMedium || isSmallScreen;
 
-	const { sortedUserQuizSubmissionsData, isUserLoaded, fetchQuizSubmissionsByUserId } = useContext(QuizSubmissionsContext);
+	const { sortedUserQuizSubmissionsData } = useContext(LearnerQuizSubmissionsContext);
 
 	const currentUserLessonData: string | null = localStorage.getItem('userLessonData');
 
@@ -63,18 +61,9 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 	}, [currentUserLessonData]);
 
 	useEffect(() => {
-		const fetchData = async () => {
-			if (!isUserLoaded && sortedUserQuizSubmissionsData.length === 0) {
-				try {
-					await fetchQuizSubmissionsByUserId(user?._id!);
-				} catch (error) {
-					console.error('Error fetching quiz submissions:', error);
-				}
-			}
-		};
-
-		fetchData();
-	}, [isUserLoaded, sortedUserQuizSubmissionsData.length, fetchQuizSubmissionsByUserId, user?._id]);
+		// React Query handles the initial fetch automatically
+		// No need to manually call fetchUserQuizSubmissions
+	}, []);
 
 	useEffect(() => {
 		if (sortedUserQuizSubmissionsData.length > 0) {

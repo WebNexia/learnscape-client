@@ -1,7 +1,7 @@
-import { createContext, ReactNode, useContext, useState } from 'react';
+import { createContext, ReactNode, useContext, useState, useEffect } from 'react';
 import axios from '@utils/axiosInstance';
 import { OrganisationContext } from './OrganisationContextProvider';
-import { useQuery } from 'react-query';
+import { useQuery, useQueryClient } from 'react-query';
 import Loading from '../components/layouts/loading/Loading';
 import LoadingError from '../components/layouts/loading/LoadingError';
 import { Inquiry } from '../interfaces/inquiry';
@@ -14,7 +14,7 @@ interface InquiriesContextTypes {
 	error: string | null;
 	fetchInquiries: (page: number) => Promise<void>;
 	fetchMoreInquiries: (startPage: number, endPage: number) => Promise<void>;
-	refreshData: () => void;
+
 	sortInquiries: (property: keyof Inquiry, order: 'asc' | 'desc') => void;
 	removeInquiry: (inquiryId: string) => void;
 	numberOfPages: number;
@@ -35,7 +35,7 @@ export const InquiriesContext = createContext<InquiriesContextTypes>({
 	error: null,
 	fetchInquiries: async () => {},
 	fetchMoreInquiries: async () => {},
-	refreshData: () => {},
+
 	sortInquiries: () => {},
 	removeInquiry: () => {},
 	numberOfPages: 1,
@@ -50,13 +50,12 @@ const InquiriesContextProvider = (props: InquiriesContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
 	const { isAuthenticated, isAdmin } = useAuth();
-	const [inquiries, setInquiries] = useState<Inquiry[]>([]);
-	const [isLoaded, setIsLoaded] = useState<boolean>(false);
 	const [numberOfPages, setNumberOfPages] = useState<number>(1);
 	const [inquiriesPageNumber, setInquiriesPageNumber] = useState<number>(1);
 	const [totalItems, setTotalItems] = useState<number>(0);
 	const [loadedPages, setLoadedPages] = useState<number[]>([]);
 	const location = useLocation();
+	const queryClient = useQueryClient();
 	const isLandingPageRoute =
 		location.pathname === '/' ||
 		location.pathname === '/landing-page-courses' ||
@@ -74,14 +73,17 @@ const InquiriesContextProvider = (props: InquiriesContextProviderProps) => {
 			const url = `${base_url}/inquiries/organisation/${orgId}?page=${page}&limit=300`;
 			const response = await axios.get(url);
 			const sortedDataCopy = [...response.data.data].sort((a: Inquiry, b: Inquiry) => b.createdAt.localeCompare(a.createdAt));
-			setInquiries(sortedDataCopy);
+
+			// React Query cache'i güncelle
+			queryClient.setQueryData(['inquiries', orgId, inquiriesPageNumber], sortedDataCopy);
+
+			// Local state'i güncelle (pagination için)
 			setTotalItems(response.data.totalItems);
 			setNumberOfPages(Math.ceil(response.data.totalItems / 50)); // 50 per page display
 			setLoadedPages([1]);
-			setIsLoaded(true);
+
 			return response.data.data;
 		} catch (error) {
-			setIsLoaded(true);
 			throw error;
 		}
 	};
@@ -109,23 +111,43 @@ const InquiriesContextProvider = (props: InquiriesContextProviderProps) => {
 			}
 
 			// Combine with existing data, remove duplicates, and sort
-			const combinedData = [...inquiries, ...newInquiries];
+			const combinedData = [...(inquiriesData || []), ...newInquiries];
 			const uniqueData = combinedData.filter((inquiry, index, self) => index === self.findIndex((i) => i._id === inquiry._id));
 			const sortedData = uniqueData.sort((a: Inquiry, b: Inquiry) => b.createdAt.localeCompare(a.createdAt));
-			setInquiries(sortedData);
+
+			// React Query cache'i güncelle
+			queryClient.setQueryData(['inquiries', orgId, inquiriesPageNumber], sortedData);
+
 			setLoadedPages([...loadedPages, ...pagesToFetch]);
 		} catch (error) {
 			console.error('Error fetching more inquiries:', error);
 		}
 	};
 
-	const { isLoading, isError } = useQuery(['inquiries', orgId, inquiriesPageNumber], () => fetchInquiries(inquiriesPageNumber), {
-		enabled: !!orgId && isAuthenticated && isAdmin && !isLoaded && !isLandingPageRoute,
-		// keepPreviousData: true,
+	const {
+		data: inquiriesData,
+		isLoading,
+		isError,
+	} = useQuery(['inquiries', orgId, inquiriesPageNumber], () => fetchInquiries(inquiriesPageNumber), {
+		enabled: !!orgId && isAuthenticated && isAdmin && !isLandingPageRoute,
+		staleTime: 5 * 60 * 1000, // 5 minutes - data stays fresh
+		cacheTime: 30 * 60 * 1000, // 30 minutes - data stays in cache
+		refetchOnWindowFocus: false, // No refetch on window focus
+		refetchOnMount: false, // No refetch on component remount
 	});
 
+	// useEffect ile inquiriesData değiştiğinde local state'i güncelle
+	useEffect(() => {
+		if (inquiriesData) {
+			// Don't override totalItems from server - only set loadedPages
+			// setTotalItems(inquiriesData.length); // ❌ This breaks pagination
+
+			setLoadedPages((prev) => (prev.length === 0 ? [1] : prev));
+		}
+	}, [inquiriesData]);
+
 	const sortInquiries = (property: keyof Inquiry, order: 'asc' | 'desc') => {
-		const sortedDataCopy = [...inquiries].sort((a: Inquiry, b: Inquiry) => {
+		const sortedDataCopy = [...(inquiriesData || [])].sort((a: Inquiry, b: Inquiry) => {
 			const aValue = a[property];
 			const bValue = b[property];
 
@@ -137,15 +159,17 @@ const InquiriesContextProvider = (props: InquiriesContextProviderProps) => {
 				return aValue < bValue ? 1 : -1;
 			}
 		});
-		setInquiries(sortedDataCopy);
-	};
 
-	const refreshData = () => {
-		setIsLoaded(false);
+		// React Query cache'i güncelle
+		queryClient.setQueryData(['inquiries', orgId, inquiriesPageNumber], sortedDataCopy);
 	};
 
 	const removeInquiry = (inquiryId: string) => {
-		setInquiries((prev) => prev.filter((inquiry) => inquiry._id !== inquiryId));
+		// React Query cache'i güncelle
+		queryClient.setQueryData(['inquiries', orgId, inquiriesPageNumber], (oldData: any) => {
+			return oldData?.filter((inquiry: Inquiry) => inquiry._id !== inquiryId);
+		});
+
 		setTotalItems((prev) => Math.max(0, prev - 1));
 	};
 
@@ -160,12 +184,12 @@ const InquiriesContextProvider = (props: InquiriesContextProviderProps) => {
 	return (
 		<InquiriesContext.Provider
 			value={{
-				inquiries,
+				inquiries: inquiriesData || [], // React Query data kullan
 				loading: isLoading,
 				error: isError ? 'Failed to fetch inquiries' : null,
 				fetchInquiries,
 				fetchMoreInquiries,
-				refreshData,
+
 				sortInquiries,
 				removeInquiry,
 				numberOfPages,

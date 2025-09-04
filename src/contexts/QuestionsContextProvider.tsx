@@ -1,6 +1,6 @@
 import axios from '@utils/axiosInstance';
-import { ReactNode, createContext, useContext, useState } from 'react';
-import { useQuery } from 'react-query';
+import { ReactNode, createContext, useContext, useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from 'react-query';
 import Loading from '../components/layouts/loading/Loading';
 import LoadingError from '../components/layouts/loading/LoadingError';
 import { QuestionInterface } from '../interfaces/question';
@@ -54,6 +54,7 @@ const QuestionsContextProvider = (props: QuestionsContextProviderProps) => {
 	const { orgId } = useContext(OrganisationContext);
 	const { isAuthenticated, isAdmin, isLearner } = useAuth();
 	const location = useLocation();
+	const queryClient = useQueryClient();
 
 	const isLandingPageRoute =
 		location.pathname === '/' ||
@@ -65,43 +66,29 @@ const QuestionsContextProvider = (props: QuestionsContextProviderProps) => {
 		// Only consider course preview pages as landing pages, not enrolled course pages
 		(location.pathname.startsWith('/course/') && !location.pathname.includes('/userCourseId/'));
 
-	const [questions, setQuestions] = useState<QuestionInterface[]>([]);
-	const [loading, setLoading] = useState<boolean>(true);
-	const [error, setError] = useState<string | null>(null);
 	const [totalItems, setTotalItems] = useState<number>(0);
 	const [loadedPages, setLoadedPages] = useState<number[]>([]);
 	const [questionsPageNumber, setQuestionsPageNumber] = useState<number>(1);
-	const [questionTypes, setQuestionTypes] = useState<QuestionType[]>([]);
-	const [isLoaded, setIsLoaded] = useState<boolean>(false);
 
 	const fetchQuestions = async (page: number = 1) => {
 		if (!orgId) return;
 
-		setLoading(true);
-		setError(null);
-
 		try {
 			const response = await axios.get(`${base_url}/questions/organisation/${orgId}?page=${page}&limit=200`);
 
-			setQuestions(response.data.data);
-			setTotalItems(response.data.totalItems);
-			setLoadedPages((prev) => [...prev, page]);
-			setIsLoaded(true);
+			// React Query cache'i güncelle
+			queryClient.setQueryData(['allQuestions', orgId], response.data.data);
+
+			setTotalItems(response.data.totalItems || response.data.data.length);
+			setLoadedPages((prev) => [...prev, page]); // Mevcut page'leri koru, yenisini ekle
 			return response.data.data;
 		} catch (error) {
-			setError('Failed to fetch questions');
-			setIsLoaded(true);
 			throw error;
-		} finally {
-			setLoading(false);
 		}
 	};
 
 	const fetchMoreQuestions = async (startBatch: number, endBatch: number) => {
 		if (!orgId) return;
-
-		setLoading(true);
-		setError(null);
 
 		try {
 			// Fetch all batches from startBatch to endBatch
@@ -121,85 +108,158 @@ const QuestionsContextProvider = (props: QuestionsContextProviderProps) => {
 				}
 			});
 
-			setQuestions((prevQuestions) => [...prevQuestions, ...allQuestions]);
-			setTotalItems(totalItemsCount);
+			// React Query cache'i güncelle - yeni data'yı ekle
+			queryClient.setQueryData(['allQuestions', orgId], (oldData: any) => {
+				return oldData ? [...oldData, ...allQuestions] : allQuestions;
+			});
+
+			// Local state'i güncelle (pagination için)
 			setLoadedPages((prev) => [...prev, ...Array.from({ length: endBatch - startBatch + 1 }, (_, i) => startBatch + i)]);
+			setTotalItems(totalItemsCount);
 			return allQuestions;
 		} catch (error) {
-			setError('Failed to fetch more questions');
 			throw error;
-		} finally {
-			setLoading(false);
 		}
 	};
 
-	const { isLoading, isError } = useQuery(['allQuestions', orgId], () => fetchQuestions(1), {
-		enabled: !!orgId && isAuthenticated && (isAdmin || isLearner) && !isLandingPageRoute && !isLoaded,
+	const {
+		data: questionsData,
+		isLoading,
+		isError,
+	} = useQuery(['allQuestions', orgId], () => fetchQuestions(1), {
+		enabled: !!orgId && isAuthenticated && (isAdmin || isLearner) && !isLandingPageRoute,
+		staleTime: 5 * 60 * 1000, // 5 minutes - data stays fresh
+		cacheTime: 30 * 60 * 1000, // 30 minutes - data stays in cache
+		refetchOnWindowFocus: false, // No refetch on window focus
+		refetchOnMount: false, // No refetch on component remount
+		onSuccess: (data) => {
+			console.log('✅ Questions useQuery onSuccess:', data);
+			// Cache'den data geldiğinde local state'i güncelle
+			if (data && data.length > 0) {
+				// Don't override totalItems from server - only set loadedPages
+				// setTotalItems(data.length); // ❌ This breaks pagination
+
+				// Eğer loadedPages boşsa ilk page'i ekle, değilse mevcut olanları koru
+				setLoadedPages((prev) => (prev.length === 0 ? [1] : prev));
+			}
+		},
+		onError: (error) => {
+			console.error('❌ Questions useQuery onError:', error);
+		},
 	});
+
+	// Progressive pagination için aradaki boşlukları doldur
+	useEffect(() => {
+		if (loadedPages.length > 0 && orgId) {
+			const sortedPages = [...loadedPages].sort((a, b) => a - b);
+			const maxPage = Math.max(...sortedPages);
+
+			// Aradaki boşlukları bul ve yükle
+			for (let page = 1; page <= maxPage; page++) {
+				if (!loadedPages.includes(page)) {
+					console.log(`🔄 Loading missing page ${page} for progressive pagination`);
+					fetchQuestions(page);
+				}
+			}
+		}
+	}, [loadedPages, orgId]);
+
+	// React Query data değiştiğinde local state'i güncelle
+	useEffect(() => {
+		if (questionsData && questionsData.length > 0) {
+			// Don't override totalItems from server - only set loadedPages
+			// setTotalItems(questionsData.length); // ❌ This breaks pagination
+
+			// Eğer loadedPages boşsa ilk page'i ekle
+			setLoadedPages((prev) => (prev.length === 0 ? [1] : prev));
+		}
+	}, [questionsData]);
 
 	const fetchQuestionTypes = async () => {
 		if (!orgId) return;
 		try {
 			const questionTypeResponse = await axios.get(`${base_url}/questiontypes/organisation/${orgId}`);
-
-			setQuestionTypes(questionTypeResponse.data.data);
+			return questionTypeResponse.data.data; // Return the data
 		} catch (error) {
 			throw error;
 		}
 	};
 
 	const fetchQuestionTypeName = (question: QuestionInterface): string => {
-		const filteredQuestionType = questionTypes?.filter((type) => {
+		const filteredQuestionType = questionTypesData?.filter((type: any) => {
 			if (question !== null) {
 				return type._id === question?.questionType || type.name === question?.questionType;
 			}
 		});
 		let questionTypeName: string = '';
-		if (filteredQuestionType.length !== 0) {
+		if (filteredQuestionType && filteredQuestionType.length !== 0) {
 			questionTypeName = filteredQuestionType[0].name;
 		}
 		return questionTypeName;
 	};
 
 	const {
-		data: allQuestionTypesData,
+		data: questionTypesData,
 		isLoading: allQuestionTypesLoading,
 		isError: allQuestionTypesError,
 	} = useQuery('allQuestionTypes', () => fetchQuestionTypes(), {
-		enabled: !!orgId && isAuthenticated && (isAdmin || isLearner) && !isLandingPageRoute && !isLoaded,
+		enabled: !!orgId && isAuthenticated && (isAdmin || isLearner) && !isLandingPageRoute,
+		staleTime: 5 * 60 * 1000, // 5 minutes - data stays fresh
+		cacheTime: 30 * 60 * 1000, // 30 minutes - data stays in cache
+		refetchOnWindowFocus: false, // No refetch on window focus
+		refetchOnMount: false, // No refetch on component remount
 	});
 
 	// Function to handle sorting
 	const sortQuestionsData = (property: keyof QuestionInterface, order: 'asc' | 'desc') => {
-		const sortedDataCopy = [...questions].sort((a: QuestionInterface, b: QuestionInterface) => {
+		// React Query data'yı sort et, local state'e set etme
+		const sortedDataCopy = [...(questionsData || [])].sort((a: QuestionInterface, b: QuestionInterface) => {
 			if (order === 'asc') {
 				return a[property] > b[property] ? 1 : -1;
 			} else {
 				return a[property] < b[property] ? 1 : -1;
 			}
 		});
-		setQuestions(sortedDataCopy);
+		// Local state'e set etme, sadece sort edilmiş data'yı return et
+		return sortedDataCopy;
 	};
 
 	// Function to update sortedQuestionsData with new course data
 	const addNewQuestion = (newQuestion: any) => {
-		setQuestions((prevQuestions) => [newQuestion, ...prevQuestions]);
-		setTotalItems((prev) => prev + 1);
+		// React Query cache'i güncelle
+		queryClient.setQueryData(['allQuestions', orgId], (oldData: any) => {
+			const newData = oldData ? [newQuestion, ...oldData] : [newQuestion];
+
+			return newData;
+		});
+
+		// Local state'i de güncelle (pagination için)
+		setTotalItems((prev) => {
+			return prev + 1;
+		});
+		// Eğer loadedPages boşsa ilk page'i ekle
+		setLoadedPages((prev) => {
+			return prev.length === 0 ? [1] : prev;
+		});
 	};
 
 	const updateQuestion = (updatedQuestion: QuestionInterface) => {
-		const updatedUserList = questions?.map((question) => {
-			if (updatedQuestion._id === question._id) {
-				return updatedQuestion;
-			}
-			return question;
+		// React Query cache'i güncelle
+		queryClient.setQueryData(['allQuestions', orgId], (oldData: any) => {
+			return oldData?.map((question: QuestionInterface) => {
+				if (updatedQuestion._id === question._id) {
+					return updatedQuestion;
+				}
+				return question;
+			});
 		});
-		setQuestions(updatedUserList);
 	};
 
 	const removeQuestion = (id: string) => {
-		setQuestions((prevQuestions) => prevQuestions?.filter((data) => data._id !== id));
-		setTotalItems((prev) => Math.max(0, prev - 1));
+		// React Query cache'i güncelle
+		queryClient.setQueryData(['allQuestions', orgId], (oldData: any) => {
+			return oldData?.filter((data: QuestionInterface) => data._id !== id);
+		});
 	};
 
 	if (isLoading || allQuestionTypesLoading) {
@@ -213,20 +273,20 @@ const QuestionsContextProvider = (props: QuestionsContextProviderProps) => {
 	return (
 		<QuestionsContext.Provider
 			value={{
-				questions,
-				loading,
-				error,
+				questions: questionsData || [], // React Query data kullan
+				loading: isLoading,
+				error: isError ? 'Error loading questions' : null,
 				fetchQuestions,
 				fetchMoreQuestions,
 				addNewQuestion,
 				removeQuestion,
 				updateQuestion,
 				sortQuestionsData,
-				totalItems,
-				loadedPages,
+				totalItems, // Backend'den gelen gerçek total
+				loadedPages, // Progressive pagination için
 				questionsPageNumber,
 				setQuestionsPageNumber,
-				questionTypes,
+				questionTypes: questionTypesData || [], // React Query data kullan
 				fetchQuestionTypeName,
 			}}>
 			{props.children}

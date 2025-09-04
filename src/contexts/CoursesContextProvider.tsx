@@ -1,6 +1,6 @@
 import axios from '@utils/axiosInstance';
-import { ReactNode, createContext, useContext, useState } from 'react';
-import { useQuery } from 'react-query';
+import { ReactNode, createContext, useContext, useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from 'react-query';
 import { SingleCourse } from '../interfaces/course';
 import Loading from '../components/layouts/loading/Loading';
 import LoadingError from '../components/layouts/loading/LoadingError';
@@ -13,9 +13,9 @@ interface CoursesContextTypes {
 	sortedPublicCoursesData: SingleCourse[];
 	loading: boolean;
 	error: string | null;
-	fetchCourses: (page: number) => Promise<void>;
+	fetchCourses: (page: number) => Promise<SingleCourse[]>;
 	fetchMoreCourses: (startPage: number, endPage: number) => Promise<void>;
-	refreshData: () => void;
+
 	sortCoursesData: (property: keyof SingleCourse, order: 'asc' | 'desc') => void;
 	addNewCourse: (newCourse: any) => void;
 	updateCoursePublishing: (id: string) => void;
@@ -48,9 +48,9 @@ export const CoursesContext = createContext<CoursesContextTypes>({
 	sortedPublicCoursesData: [],
 	loading: false,
 	error: null,
-	fetchCourses: async () => {},
+	fetchCourses: async () => [],
 	fetchMoreCourses: async () => {},
-	refreshData: () => {},
+
 	sortCoursesData: () => {},
 	addNewCourse: () => {},
 	updateCoursePublishing: () => {},
@@ -73,6 +73,7 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 	const { orgId } = useContext(OrganisationContext);
 	const { isAuthenticated, isAdmin, isLearner } = useAuth();
 	const location = useLocation();
+	const queryClient = useQueryClient();
 	const isLandingPageRoute =
 		location.pathname === '/' ||
 		location.pathname === '/landing-page-courses' ||
@@ -83,7 +84,6 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 		// Only consider course preview pages as landing pages, not enrolled course pages
 		(location.pathname.startsWith('/course/') && !location.pathname.includes('/userCourseId/'));
 
-	const [courses, setCourses] = useState<SingleCourse[]>([]);
 	const [sortedPublicCoursesData, setSortedPublicCoursesData] = useState<SingleCourse[]>([]);
 
 	const [totalNumberOfEnrolledLearners, setTotalNumberOfEnrolledLearners] = useState<number>(1);
@@ -97,16 +97,21 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 	const [loadedPages, setLoadedPages] = useState<number[]>([]);
 
 	const fetchCourses = async (page: number = 1) => {
-		if (!orgId) return;
+		if (!orgId) return [];
 		try {
 			const response = await axios.get(`${base_url}/courses/organisation/${orgId}?page=${page}&limit=200`);
 
 			const coursesData = response.data.data;
-			setCourses(coursesData);
+
+			// React Query cache'i güncelle
+			queryClient.setQueryData(['allCourses', orgId, coursesPageNumber], coursesData);
+
 			setTotalItems(response.data.totalItems);
 			setNumberOfPages(Math.ceil(response.data.totalItems / 50)); // 50 per page display
 			setLoadedPages([page]);
 			setIsLoaded(true);
+
+			return coursesData;
 		} catch (error) {
 			setIsLoaded(true);
 			throw error;
@@ -134,18 +139,26 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 			}
 
 			// Combine with existing data, remove duplicates, and sort
-			const combinedData = [...courses, ...newCourses];
+			const combinedData = [...(coursesData || []), ...newCourses];
 			const uniqueData = combinedData.filter((course, index, self) => index === self.findIndex((c) => c._id === course._id));
 			const sortedData = uniqueData.sort((a: SingleCourse, b: SingleCourse) => b.updatedAt.localeCompare(a.updatedAt));
-			setCourses(sortedData);
+			queryClient.setQueryData(['allCourses', orgId, coursesPageNumber], sortedData);
 			setLoadedPages([...loadedPages, ...pagesToFetch]);
 		} catch (error) {
 			console.error('Error fetching more courses:', error);
 		}
 	};
 
-	const { isLoading, isError } = useQuery(['allCourses', orgId, coursesPageNumber], () => fetchCourses(coursesPageNumber), {
-		enabled: !!orgId && isAuthenticated && (isAdmin || isLearner) && !isLoaded && !isLandingPageRoute,
+	const {
+		data: coursesData,
+		isLoading,
+		isError,
+	} = useQuery(['allCourses', orgId, coursesPageNumber], () => fetchCourses(coursesPageNumber), {
+		enabled: !!orgId && isAuthenticated && (isAdmin || isLearner) && !isLandingPageRoute,
+		staleTime: 5 * 60 * 1000, // 5 minutes - data stays fresh
+		cacheTime: 30 * 60 * 1000, // 30 minutes - data stays in cache
+		refetchOnWindowFocus: false, // No refetch on window focus
+		refetchOnMount: false, // No refetch on component remount
 	});
 
 	const fetchPublicCourses = async () => {
@@ -159,7 +172,7 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 		}
 	};
 
-	const { data: publicCourses } = useQuery(['allPublicCourses'], fetchPublicCourses, {
+	useQuery(['allPublicCourses'], fetchPublicCourses, {
 		enabled: isLandingPageRoute,
 	});
 
@@ -178,7 +191,7 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 	};
 
 	const {
-		data: summaryData,
+		// data: summaryData,
 		isLoading: summaryDataLoading,
 		isError: summaryDataError,
 	} = useQuery(['coursesSummary', orgId], () => fetchCoursesDashboardSummary(), {
@@ -187,7 +200,8 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 
 	// Function to handle sorting
 	const sortCoursesData = (property: keyof SingleCourse, order: 'asc' | 'desc') => {
-		const sortedDataCopy = [...courses].sort((a: SingleCourse, b: SingleCourse) => {
+		// React Query data'yı sort et, local state'e set etme
+		const sortedDataCopy = [...(coursesData || [])].sort((a: SingleCourse, b: SingleCourse) => {
 			const aValue = a[property] ?? '';
 			const bValue = b[property] ?? '';
 			if (order === 'asc') {
@@ -196,42 +210,58 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 				return aValue < bValue ? 1 : -1;
 			}
 		});
-		setCourses(sortedDataCopy);
+		// Local state'e set etme, sadece sort edilmiş data'yı return et
+		return sortedDataCopy;
 	};
+
 	// Function to update courses with new course data
 	const addNewCourse = (newCourse: any) => {
-		setCourses((prevCourses) => [newCourse, ...prevCourses]);
-		setTotalItems((prev) => prev + 1);
+		// React Query cache'i güncelle
+		queryClient.setQueryData(['allCourses', orgId, coursesPageNumber], (oldData: any) => {
+			return oldData ? [newCourse, ...oldData] : [newCourse];
+		});
 	};
 
 	const updateCoursePublishing = (id: string) => {
-		const updatedCourseList = courses?.map((course) => {
-			if (course._id === id) {
-				return { ...course, isActive: !course.isActive };
-			}
-			return course;
+		// React Query cache'i güncelle
+		queryClient.setQueryData(['allCourses', orgId, coursesPageNumber], (oldData: any) => {
+			return oldData?.map((course: SingleCourse) => {
+				if (course._id === id) {
+					return { ...course, isActive: !course.isActive };
+				}
+				return course;
+			});
 		});
-		setCourses(updatedCourseList);
 	};
 
 	const updateCourse = (singleCourse: SingleCourse) => {
-		const updatedCourseList = courses?.map((course) => {
-			if (singleCourse._id === course._id) {
-				return singleCourse;
-			}
-			return course;
+		// React Query cache'i güncelle
+		queryClient.setQueryData(['allCourses', orgId, coursesPageNumber], (oldData: any) => {
+			return oldData?.map((course: SingleCourse) => {
+				if (singleCourse._id === course._id) {
+					return singleCourse;
+				}
+				return course;
+			});
 		});
-		setCourses(updatedCourseList);
 	};
 
 	const removeCourse = (id: string) => {
-		setCourses((prevCourses) => prevCourses?.filter((data) => data._id !== id));
-		setTotalItems((prev) => Math.max(0, prev - 1));
+		// React Query cache'i güncelle
+		queryClient.setQueryData(['allCourses', orgId, coursesPageNumber], (oldData: any) => {
+			return oldData?.filter((data: SingleCourse) => data._id !== id);
+		});
 	};
 
-	const refreshData = () => {
-		setIsLoaded(false);
-	};
+	// useEffect ile coursesData değiştiğinde local state'i güncelle
+	useEffect(() => {
+		if (coursesData) {
+			// Don't override totalItems from server - only set loadedPages
+			// setTotalItems(coursesData.length); // ❌ This breaks pagination
+
+			setLoadedPages((prev) => (prev.length === 0 ? [1] : prev));
+		}
+	}, [coursesData]);
 
 	if ((isLoading || summaryDataLoading) && isAuthenticated) {
 		return <Loading />;
@@ -244,13 +274,13 @@ const CoursesContextProvider = (props: CoursesContextProviderProps) => {
 	return (
 		<CoursesContext.Provider
 			value={{
-				courses,
+				courses: coursesData || [], // React Query data kullan
 				sortedPublicCoursesData,
 				loading: isLoading,
 				error: isError ? 'Failed to fetch courses' : null,
 				fetchCourses,
 				fetchMoreCourses,
-				refreshData,
+
 				sortCoursesData,
 				addNewCourse,
 				removeCourse,

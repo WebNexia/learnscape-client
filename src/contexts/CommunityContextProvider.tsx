@@ -1,25 +1,24 @@
 import axios from '@utils/axiosInstance';
-import { ReactNode, createContext, useContext, useState } from 'react';
-import { useQuery } from 'react-query';
+import { ReactNode, createContext, useContext, useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from 'react-query';
 import Loading from '../components/layouts/loading/Loading';
 import LoadingError from '../components/layouts/loading/LoadingError';
 import { OrganisationContext } from './OrganisationContextProvider';
 import { CommunityTopic } from '../interfaces/communityTopics';
 import { useAuth } from '../hooks/useAuth';
-
 import { useLocation } from 'react-router-dom';
 
 interface CommunityContextTypes {
 	sortedTopicsData: CommunityTopic[];
-	sortTopicsData: (property: keyof CommunityTopic, order: 'asc' | 'desc') => void;
-	addNewTopic: (newTopic: any) => void;
+	sortTopicsData: (property: keyof CommunityTopic, order: 'asc' | 'desc') => CommunityTopic[];
+	addNewTopic: (newTopic: CommunityTopic) => void;
 	removeTopic: (id: string) => void;
 	updateTopics: (singleTopic: Partial<CommunityTopic>) => void;
 	numberOfPages: number;
 	topicsPageNumber: number;
 	setTopicsPageNumber: React.Dispatch<React.SetStateAction<number>>;
-	fetchTopics: (page: number) => void;
-	fetchMoreTopics: (startPage: number, endPage: number) => void;
+	fetchTopics: (page: number) => Promise<CommunityTopic[]>;
+	fetchMoreTopics: (startPage: number, endPage: number) => Promise<void>;
 	totalItems: number;
 	loadedPages: number[];
 }
@@ -30,15 +29,15 @@ interface CommunityContextProviderProps {
 
 export const CommunityContext = createContext<CommunityContextTypes>({
 	sortedTopicsData: [],
-	sortTopicsData: () => {},
+	sortTopicsData: () => [],
 	addNewTopic: () => {},
 	removeTopic: () => {},
 	updateTopics: () => {},
 	numberOfPages: 1,
 	topicsPageNumber: 1,
 	setTopicsPageNumber: () => {},
-	fetchTopics: () => {},
-	fetchMoreTopics: () => {},
+	fetchTopics: async () => [],
+	fetchMoreTopics: async () => {},
 	totalItems: 0,
 	loadedPages: [],
 });
@@ -48,6 +47,7 @@ const CommunityContextProvider = (props: CommunityContextProviderProps) => {
 	const { orgId } = useContext(OrganisationContext);
 	const { isAuthenticated, isAdmin, isLearner } = useAuth();
 	const location = useLocation();
+	const queryClient = useQueryClient();
 	const isLandingPageRoute =
 		location.pathname === '/' ||
 		location.pathname === '/landing-page-courses' ||
@@ -58,101 +58,143 @@ const CommunityContextProvider = (props: CommunityContextProviderProps) => {
 		// Only consider course preview pages as landing pages, not enrolled course pages
 		(location.pathname.startsWith('/course/') && !location.pathname.includes('/userCourseId/'));
 
-	const [sortedTopicsData, setSortedTopicsData] = useState<CommunityTopic[]>([]);
-	const [numberOfPages, setNumberOfPages] = useState<number>(1);
 	const [topicsPageNumber, setTopicsPageNumber] = useState<number>(1);
 	const [totalItems, setTotalItems] = useState<number>(0);
 	const [loadedPages, setLoadedPages] = useState<number[]>([]);
 
-	const [isLoaded, setIsLoaded] = useState<boolean>(false);
-
 	const fetchTopics = async (page: number) => {
-		if (!orgId) return;
+		if (!orgId) return [];
 
 		try {
 			const response = await axios.get(`${base_url}/communityTopics/organisation/${orgId}?page=${page}&limit=60`);
 
-			// Initial sorting when fetching data
-			const sortedTopicsDataCopy = [...response.data.data].sort((a: CommunityTopic, b: CommunityTopic) => b.updatedAt.localeCompare(a.updatedAt));
-			setSortedTopicsData(sortedTopicsDataCopy);
-			setNumberOfPages(response.data.pagination.totalPages);
-			setTotalItems(response.data.totalItems);
-			setLoadedPages([1]);
-			setIsLoaded(true);
+			// Update totalItems from server response
+			setTotalItems(response.data.totalItems || response.data.data.length);
+
+			// Update loadedPages to track which pages we've fetched
+			if (!loadedPages.includes(page)) {
+				setLoadedPages((prev) => [...prev, page]);
+			}
+
 			return response.data.data;
 		} catch (error: any) {
-			setIsLoaded(true);
 			throw error;
 		}
 	};
 
 	const fetchMoreTopics = async (startPage: number, endPage: number) => {
 		if (!orgId) return;
+
 		try {
-			// Calculate which pages we need to fetch
-			const pagesToFetch = [];
+			// Fetch all batches from startPage to endPage
+			const promises = [];
 			for (let page = startPage; page <= endPage; page++) {
-				if (!loadedPages.includes(page)) {
-					pagesToFetch.push(page);
-				}
+				promises.push(axios.get(`${base_url}/communityTopics/organisation/${orgId}?page=${page}&limit=60`));
 			}
 
-			if (pagesToFetch.length === 0) return; // Already loaded
+			const responses = await Promise.all(promises);
+			const allData = responses.flatMap((response) => response.data.data);
 
-			// Fetch missing pages
-			let newTopics: CommunityTopic[] = [];
-			for (const page of pagesToFetch) {
-				const url = `${base_url}/communityTopics/organisation/${orgId}?page=${page}&limit=60`;
-				const response = await axios.get(url);
-				newTopics = [...newTopics, ...response.data.data];
-			}
+			// Update React Query cache with new data
+			const currentData = (queryClient.getQueryData(['allTopics', orgId]) as CommunityTopic[]) || [];
+			queryClient.setQueryData(['allTopics', orgId], [...currentData, ...allData]);
 
-			// Combine with existing data, remove duplicates, and sort
-			const combinedData = [...sortedTopicsData, ...newTopics];
-			const uniqueData = combinedData.filter((topic, index, self) => index === self.findIndex((t) => t._id === topic._id));
-			const sortedData = uniqueData.sort((a: CommunityTopic, b: CommunityTopic) => b.updatedAt.localeCompare(a.updatedAt));
-			setSortedTopicsData(sortedData);
-			setLoadedPages([...loadedPages, ...pagesToFetch]);
+			// Update loadedPages to track which pages we've fetched
+			const newLoadedPages = Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i);
+			setLoadedPages((prev) => [...prev, ...newLoadedPages]);
 		} catch (error) {
 			console.error('Error fetching more topics:', error);
+			throw error;
 		}
 	};
 
-	const { data, isLoading, isError } = useQuery(['allTopics', orgId, topicsPageNumber], () => fetchTopics(topicsPageNumber), {
-		enabled: !!orgId && isAuthenticated && (isAdmin || isLearner) && !isLoaded && !isLandingPageRoute,
+	const {
+		data: topicsData,
+		isLoading,
+		isError,
+	} = useQuery(['allTopics', orgId], () => fetchTopics(1), {
+		enabled: !!orgId && isAuthenticated && (isAdmin || isLearner) && !isLandingPageRoute,
+		staleTime: 5 * 60 * 1000, // 5 minutes - data stays fresh
+		cacheTime: 30 * 60 * 1000, // 30 minutes - data stays in cache
+		refetchOnWindowFocus: false, // No refetch on window focus
+		refetchOnMount: false, // No refetch on component remount
 	});
+
+	// Progressive pagination için aradaki boşlukları doldur
+	useEffect(() => {
+		if (loadedPages.length > 0 && orgId) {
+			const sortedPages = [...loadedPages].sort((a, b) => a - b);
+			const maxPage = Math.max(...sortedPages);
+
+			// Aradaki boşlukları bul ve yükle
+			for (let page = 1; page <= maxPage; page++) {
+				if (!loadedPages.includes(page)) {
+					console.log(`🔄 Loading missing page ${page} for progressive pagination`);
+					fetchTopics(page);
+				}
+			}
+		}
+	}, [loadedPages, orgId]);
+
+	// React Query data değiştiğinde local state'i güncelle
+	useEffect(() => {
+		if (topicsData && topicsData.length > 0) {
+			// Eğer loadedPages boşsa ilk page'i ekle
+			setLoadedPages((prev) => (prev.length === 0 ? [1] : prev));
+		}
+	}, [topicsData]);
 
 	// Function to handle sorting
 	const sortTopicsData = (property: keyof CommunityTopic, order: 'asc' | 'desc') => {
-		const sortedTopicsDataCopy = [...sortedTopicsData].sort((a: CommunityTopic, b: CommunityTopic) => {
+		// React Query data'yı sort et, local state'e set etme
+		const sortedDataCopy = [...(topicsData || [])].sort((a: CommunityTopic, b: CommunityTopic) => {
+			const aValue = a[property] ?? '';
+			const bValue = b[property] ?? '';
 			if (order === 'asc') {
-				return a[property]! > b[property]! ? 1 : -1;
+				return aValue > bValue ? 1 : -1;
 			} else {
-				return a[property]! < b[property]! ? 1 : -1;
+				return aValue < bValue ? 1 : -1;
 			}
 		});
-		setSortedTopicsData(sortedTopicsDataCopy);
+		// Local state'e set etme, sadece sort edilmiş data'yı return et
+		return sortedDataCopy;
 	};
+
 	// Function to update sortedTopicsData with new topic data
-	const addNewTopic = (newTopic: any) => {
-		setSortedTopicsData((prevSortedData) => [newTopic, ...prevSortedData]);
-		setTotalItems((prevTotal) => prevTotal + 1);
+	const addNewTopic = (newTopic: CommunityTopic) => {
+		queryClient.setQueryData(['allTopics', orgId], (oldData: CommunityTopic[] | undefined) => {
+			return oldData ? [newTopic, ...oldData] : [newTopic];
+		});
+		// Also update totalItems
+		setTotalItems((prev) => prev + 1);
 	};
 
 	const updateTopics = (singleTopic: Partial<CommunityTopic>) => {
-		const updatedTopicList = sortedTopicsData?.map((topic) => {
-			if (singleTopic._id === topic._id) {
-				return { ...topic, ...singleTopic };
-			}
-			return topic;
+		queryClient.setQueryData(['allTopics', orgId], (oldData: CommunityTopic[] | undefined) => {
+			return (
+				oldData?.map((topic) => {
+					if (singleTopic._id === topic._id) {
+						return { ...topic, ...singleTopic };
+					}
+					return topic;
+				}) || []
+			);
 		});
-		setSortedTopicsData(updatedTopicList);
 	};
 
 	const removeTopic = (id: string) => {
-		setSortedTopicsData((prevSortedData) => prevSortedData?.filter((data) => data._id !== id));
-		setTotalItems((prevTotal) => Math.max(0, prevTotal - 1));
+		queryClient.setQueryData(['allTopics', orgId], (oldData: CommunityTopic[] | undefined) => {
+			return oldData?.filter((data) => data._id !== id) || [];
+		});
+		// Also update totalItems
+		setTotalItems((prev) => Math.max(0, prev - 1));
 	};
+
+	// Calculate numberOfPages based on totalItems
+	const numberOfPages = Math.ceil(totalItems / 60);
+
+	// Get sorted topics data from React Query
+	const sortedTopicsData = topicsData || [];
 
 	if (isLoading) {
 		return <Loading />;

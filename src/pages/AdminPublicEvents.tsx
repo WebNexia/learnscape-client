@@ -34,7 +34,7 @@ import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import axios from '@utils/axiosInstance';
 import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
-import { PublicEventsContext } from '../contexts/PublicEventsContextProvider';
+import { AdminPublicEventsContext } from '../contexts/AdminPublicEventsContextProvider';
 
 const AdminPublicEvents = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -49,7 +49,7 @@ const AdminPublicEvents = () => {
 		loadedPages,
 		publicEventsPageNumber,
 		setPublicEventsPageNumber,
-	} = useContext(PublicEventsContext);
+	} = useContext(AdminPublicEventsContext);
 
 	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -627,7 +627,7 @@ const AdminPublicEvents = () => {
 										<CustomTableCell value={event.type} />
 										<CustomTableCell value={dateTimeFormatter(event.start)} />
 										<CustomTableCell value={dateTimeFormatter(event.end)} />
-										<CustomTableCell value={event.participantCount} />
+										<CustomTableCell value={event.participantCount ?? 0} />
 										<TableCell
 											sx={{
 												textAlign: 'center',

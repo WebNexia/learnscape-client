@@ -1,7 +1,7 @@
 import { Box, FormControl, InputAdornment, MenuItem, Select, Table, TableBody, TableCell, TableRow, Typography, Chip } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { useContext, useEffect, useState } from 'react';
-import { QuizSubmissionsContext } from '../contexts/QuizSubmissionsContextProvider';
+import { AdminQuizSubmissionsContext } from '../contexts/AdminQuizSubmissionsContextProvider';
 import { QuizSubmission } from '../interfaces/quizSubmission';
 import CustomTableHead from '../components/layouts/table/CustomTableHead';
 import CustomTableCell from '../components/layouts/table/CustomTableCell';
@@ -44,7 +44,7 @@ const AdminQuizSubmissions = () => {
 		quizSubmissionsPageNumber,
 		setQuizSubmissionsPageNumber,
 		fetchMoreQuizSubmissions,
-	} = useContext(QuizSubmissionsContext);
+	} = useContext(AdminQuizSubmissionsContext);
 
 	const [searchValue, setSearchValue] = useState<string>('');
 	const [filterValue, setFilterValue] = useState<string>('');

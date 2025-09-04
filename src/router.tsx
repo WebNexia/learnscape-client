@@ -3,6 +3,23 @@ import App from './App';
 import React from 'react';
 import AdminRouteGuard from './components/guards/AdminRouteGuard';
 import LearnerRouteGuard from './components/guards/LearnerRouteGuard';
+import QuestionsContextProvider from './contexts/QuestionsContextProvider';
+import InquiriesContextProvider from './contexts/InquiriesContextProvider';
+import UsersContextProvider from './contexts/UsersContextProvider';
+import CoursesContextProvider from './contexts/CoursesContextProvider';
+import LessonsContextProvider from './contexts/LessonsContextProvider';
+import DocumentsContextProvider from './contexts/DocumentsContextProvider';
+import AdminQuizSubmissionsContextProvider from './contexts/AdminQuizSubmissionsContextProvider';
+import LearnerQuizSubmissionsContextProvider from './contexts/LearnerQuizSubmissionsContextProvider';
+import UserCourseLessonDataContextProvider from './contexts/UserCourseLessonDataContextProvider';
+import PaymentsContextProvider from './contexts/PaymentsContextProvider';
+import PromoCodesContextProvider from './contexts/PromoCodesContextProvider';
+import EventsContextProvider from './contexts/EventsContextProvider';
+import AdminPublicEventsContextProvider from './contexts/AdminPublicEventsContextProvider';
+import CommunityContextProvider from './contexts/CommunityContextProvider';
+import CommunityMessagesContextProvider from './contexts/CommunityMessagesContextProvider';
+import LandingPageUpcomingPublicEventsContextProvider from './contexts/LandingPageUpcomingPublicEventsContextProvider';
+// Context wrapper'lar kaldırıldı - artık gerekli değil
 
 // Lazy load pages
 const Auth = React.lazy(() => import('./pages/Auth'));
@@ -76,7 +93,9 @@ export const router = createBrowserRouter([
 				path: 'admin/users',
 				element: (
 					<AdminRouteGuard>
-						<AdminUsers />
+						<UsersContextProvider>
+							<AdminUsers />
+						</UsersContextProvider>
 					</AdminRouteGuard>
 				),
 			},
@@ -84,7 +103,9 @@ export const router = createBrowserRouter([
 				path: 'admin/courses',
 				element: (
 					<AdminRouteGuard>
-						<AdminCourses />
+						<CoursesContextProvider>
+							<AdminCourses />
+						</CoursesContextProvider>
 					</AdminRouteGuard>
 				),
 			},
@@ -100,7 +121,9 @@ export const router = createBrowserRouter([
 				path: 'admin/lessons',
 				element: (
 					<AdminRouteGuard>
-						<AdminLessons />
+						<LessonsContextProvider>
+							<AdminLessons />
+						</LessonsContextProvider>
 					</AdminRouteGuard>
 				),
 			},
@@ -108,7 +131,11 @@ export const router = createBrowserRouter([
 				path: 'admin/lesson-edit/lesson/:lessonId',
 				element: (
 					<AdminRouteGuard>
-						<AdminLessonEditPage />
+						<LessonsContextProvider>
+							<QuestionsContextProvider>
+								<AdminLessonEditPage />
+							</QuestionsContextProvider>
+						</LessonsContextProvider>
 					</AdminRouteGuard>
 				),
 			},
@@ -116,7 +143,9 @@ export const router = createBrowserRouter([
 				path: 'admin/questions',
 				element: (
 					<AdminRouteGuard>
-						<AdminQuestions />
+						<QuestionsContextProvider>
+							<AdminQuestions />
+						</QuestionsContextProvider>
 					</AdminRouteGuard>
 				),
 			},
@@ -124,7 +153,9 @@ export const router = createBrowserRouter([
 				path: 'admin/documents',
 				element: (
 					<AdminRouteGuard>
-						<AdminDocuments />
+						<DocumentsContextProvider>
+							<AdminDocuments />
+						</DocumentsContextProvider>
 					</AdminRouteGuard>
 				),
 			},
@@ -132,7 +163,9 @@ export const router = createBrowserRouter([
 				path: 'admin/submissions',
 				element: (
 					<AdminRouteGuard>
-						<AdminQuizSubmissions />
+						<AdminQuizSubmissionsContextProvider>
+							<AdminQuizSubmissions />
+						</AdminQuizSubmissionsContextProvider>
 					</AdminRouteGuard>
 				),
 			},
@@ -140,7 +173,9 @@ export const router = createBrowserRouter([
 				path: 'admin/check-submission/submission/:submissionId/lesson/:lessonId/userlesson/:userLessonId',
 				element: (
 					<AdminRouteGuard>
-						<AdminQuizSubmissionCheck />
+						<AdminQuizSubmissionsContextProvider>
+							<AdminQuizSubmissionCheck />
+						</AdminQuizSubmissionsContextProvider>
 					</AdminRouteGuard>
 				),
 			},
@@ -148,7 +183,11 @@ export const router = createBrowserRouter([
 				path: 'admin/payments',
 				element: (
 					<AdminRouteGuard>
-						<AdminPayments />
+						<PaymentsContextProvider>
+							<PromoCodesContextProvider>
+								<AdminPayments />
+							</PromoCodesContextProvider>
+						</PaymentsContextProvider>
 					</AdminRouteGuard>
 				),
 			},
@@ -156,7 +195,9 @@ export const router = createBrowserRouter([
 				path: 'admin/calendar',
 				element: (
 					<AdminRouteGuard>
-						<Calendar />
+						<EventsContextProvider>
+							<Calendar />
+						</EventsContextProvider>
 					</AdminRouteGuard>
 				),
 			},
@@ -196,7 +237,9 @@ export const router = createBrowserRouter([
 				path: 'admin/inquiries',
 				element: (
 					<AdminRouteGuard>
-						<AdminInquiries />
+						<InquiriesContextProvider>
+							<AdminInquiries />
+						</InquiriesContextProvider>
 					</AdminRouteGuard>
 				),
 			},
@@ -204,7 +247,15 @@ export const router = createBrowserRouter([
 				path: 'admin/recycle-bin',
 				element: (
 					<AdminRouteGuard>
-						<AdminRecycleBin />
+						<QuestionsContextProvider>
+							<LessonsContextProvider>
+								<CoursesContextProvider>
+									<DocumentsContextProvider>
+										<AdminRecycleBin />
+									</DocumentsContextProvider>
+								</CoursesContextProvider>
+							</LessonsContextProvider>
+						</QuestionsContextProvider>
 					</AdminRouteGuard>
 				),
 			},
@@ -212,7 +263,9 @@ export const router = createBrowserRouter([
 				path: 'admin/calendar/public-events',
 				element: (
 					<AdminRouteGuard>
-						<AdminPublicEvents />
+						<AdminPublicEventsContextProvider>
+							<AdminPublicEvents />
+						</AdminPublicEventsContextProvider>
 					</AdminRouteGuard>
 				),
 			},
@@ -228,7 +281,9 @@ export const router = createBrowserRouter([
 				path: 'courses',
 				element: (
 					<LearnerRouteGuard>
-						<Courses />
+						<CoursesContextProvider>
+							<Courses />
+						</CoursesContextProvider>
 					</LearnerRouteGuard>
 				),
 			},
@@ -236,7 +291,9 @@ export const router = createBrowserRouter([
 				path: 'submissions',
 				element: (
 					<LearnerRouteGuard>
-						<Submissions />
+						<LearnerQuizSubmissionsContextProvider>
+							<Submissions />
+						</LearnerQuizSubmissionsContextProvider>
 					</LearnerRouteGuard>
 				),
 			},
@@ -244,7 +301,9 @@ export const router = createBrowserRouter([
 				path: 'submission-feedback/submission/:submissionId/lesson/:lessonId/userlesson/:userLessonId',
 				element: (
 					<LearnerRouteGuard>
-						<SubmissionFeedbackDetails />
+						<LearnerQuizSubmissionsContextProvider>
+							<SubmissionFeedbackDetails />
+						</LearnerQuizSubmissionsContextProvider>
 					</LearnerRouteGuard>
 				),
 			},
@@ -252,7 +311,11 @@ export const router = createBrowserRouter([
 				path: 'course/:courseId/userCourseId/:userCourseId',
 				element: (
 					<LearnerRouteGuard>
-						<CoursePage />
+						<CoursesContextProvider>
+							<UserCourseLessonDataContextProvider>
+								<CoursePage />
+							</UserCourseLessonDataContextProvider>
+						</CoursesContextProvider>
 					</LearnerRouteGuard>
 				),
 			},
@@ -260,7 +323,9 @@ export const router = createBrowserRouter([
 				path: 'course/:courseId/userCourseId/:userCourseId/lesson/:lessonId/',
 				element: (
 					<LearnerRouteGuard>
-						<LessonPage />
+						<UserCourseLessonDataContextProvider>
+							<LessonPage />
+						</UserCourseLessonDataContextProvider>
 					</LearnerRouteGuard>
 				),
 			},
@@ -268,7 +333,9 @@ export const router = createBrowserRouter([
 				path: 'calendar',
 				element: (
 					<LearnerRouteGuard>
-						<Calendar />
+						<EventsContextProvider>
+							<Calendar />
+						</EventsContextProvider>
 					</LearnerRouteGuard>
 				),
 			},
@@ -284,7 +351,9 @@ export const router = createBrowserRouter([
 				path: 'community',
 				element: (
 					<LearnerRouteGuard>
-						<Community />
+						<CommunityContextWrapper>
+							<Community />
+						</CommunityContextWrapper>
 					</LearnerRouteGuard>
 				),
 			},

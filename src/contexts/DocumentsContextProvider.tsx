@@ -1,6 +1,6 @@
 import axios from '@utils/axiosInstance';
-import { ReactNode, createContext, useContext, useState } from 'react';
-import { useQuery } from 'react-query';
+import { ReactNode, createContext, useContext, useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from 'react-query';
 import Loading from '../components/layouts/loading/Loading';
 import LoadingError from '../components/layouts/loading/LoadingError';
 import { OrganisationContext } from './OrganisationContextProvider';
@@ -13,8 +13,8 @@ interface DocumentsContextTypes {
 	sortedLandingPageDocumentsData: Document[];
 	loading: boolean;
 	error: string | null;
-	fetchDocuments: (page?: number) => void;
-	fetchMoreDocuments: (startBatch: number, endBatch: number) => void;
+	fetchDocuments: (page?: number) => Promise<Document[]>;
+	fetchMoreDocuments: (startBatch: number, endBatch: number) => Promise<void>;
 	addNewDocument: (newDocument: any) => void;
 	removeDocument: (id: string) => void;
 	updateDocuments: (singleDocument: Document) => void;
@@ -34,8 +34,8 @@ export const DocumentsContext = createContext<DocumentsContextTypes>({
 	sortedLandingPageDocumentsData: [],
 	loading: false,
 	error: null,
-	fetchDocuments: () => {},
-	fetchMoreDocuments: () => {},
+	fetchDocuments: async () => [],
+	fetchMoreDocuments: async () => {},
 	addNewDocument: () => {},
 	removeDocument: () => {},
 	updateDocuments: () => {},
@@ -51,6 +51,7 @@ const DocumentsContextProvider = (props: DocumentsContextProviderProps) => {
 	const { orgId } = useContext(OrganisationContext);
 	const { isAuthenticated, isAdmin, isLearner } = useAuth();
 	const location = useLocation();
+	const queryClient = useQueryClient();
 	const isLandingPageRoute =
 		location.pathname === '/' ||
 		location.pathname === '/landing-page-courses' ||
@@ -61,50 +62,32 @@ const DocumentsContextProvider = (props: DocumentsContextProviderProps) => {
 		// Only consider course preview pages as landing pages, not enrolled course pages
 		(location.pathname.startsWith('/course/') && !location.pathname.includes('/userCourseId/'));
 
-	const [documents, setDocuments] = useState<Document[]>([]);
 	const [sortedLandingPageDocumentsData, setSortedLandingPageDocumentsData] = useState<Document[]>([]);
-	const [loading, setLoading] = useState<boolean>(false);
-	const [error, setError] = useState<string | null>(null);
 	const [totalItems, setTotalItems] = useState<number>(0);
 	const [loadedPages, setLoadedPages] = useState<number[]>([]);
 	const [documentsPageNumber, setDocumentsPageNumber] = useState<number>(1);
 
-	const [isLoaded, setIsLoaded] = useState<boolean>(false);
-
 	const fetchDocuments = async (page: number = 1) => {
-		if (!orgId) return;
-
-		setLoading(true);
-		setError(null);
-
+		if (!orgId) return [];
 		try {
 			const response = await axios.get(`${base_url}/documents/organisation/${orgId}?page=${page}&limit=200`);
 
-			if (page === 1) {
-				// First page - replace all data
-				setDocuments(response.data.data);
-				setLoadedPages([1]);
-			} else {
-				// Subsequent pages - append data
-				setDocuments((prev) => [...prev, ...response.data.data]);
-				setLoadedPages((prev) => [...prev, page]);
-			}
+			const documentsData = response.data.data;
+
+			// React Query cache'i güncelle
+			queryClient.setQueryData(['allDocuments', orgId], documentsData);
 
 			setTotalItems(response.data.totalItems || response.data.data.length);
-			setIsLoaded(true);
-			return response.data.data;
+			setLoadedPages([page]);
+
+			return documentsData;
 		} catch (error: any) {
-			setError(error.message || 'Failed to fetch documents');
-			setIsLoaded(true);
 			throw error;
-		} finally {
-			setLoading(false);
 		}
 	};
 
 	const fetchMoreDocuments = async (startBatch: number, endBatch: number) => {
 		if (!orgId) return;
-
 		try {
 			const promises = [];
 			for (let batch = startBatch; batch <= endBatch; batch++) {
@@ -113,54 +96,59 @@ const DocumentsContextProvider = (props: DocumentsContextProviderProps) => {
 
 			const responses = await Promise.all(promises);
 			const newDocuments: Document[] = [];
-			let totalItemsCount = 0;
 
-			responses.forEach((response, index) => {
+			responses.forEach((response, _) => {
 				newDocuments.push(...response.data.data);
-				if (index === 0) {
-					totalItemsCount = response.data.totalItems || response.data.data.length;
-				}
 			});
 
-			setDocuments((prev) => [...prev, ...newDocuments]);
-			setLoadedPages((prev) => [...prev, ...Array.from({ length: endBatch - startBatch + 1 }, (_, i) => startBatch + i)]);
-			setTotalItems(totalItemsCount);
+			// Combine with existing data, remove duplicates, and sort
+			const combinedData = [...(documentsData || []), ...newDocuments];
+			const uniqueData = combinedData.filter((doc, index, self) => index === self.findIndex((d) => d._id === doc._id));
+			const sortedData = uniqueData.sort((a: Document, b: Document) => b.updatedAt.localeCompare(a.updatedAt));
+			queryClient.setQueryData(['allDocuments', orgId], sortedData);
+			setLoadedPages([...loadedPages, ...Array.from({ length: endBatch - startBatch + 1 }, (_, i) => startBatch + i)]);
 		} catch (error: any) {
-			setError(error.message || 'Failed to fetch more documents');
+			console.error('Error fetching more documents:', error);
 		}
 	};
 
-	const { data, isLoading, isError } = useQuery(['allDocuments', orgId, documentsPageNumber], () => fetchDocuments(documentsPageNumber), {
-		enabled: !!orgId && isAuthenticated && (isAdmin || isLearner) && !isLoaded && !isLandingPageRoute,
+	const {
+		data: documentsData,
+		isLoading,
+		isError,
+	} = useQuery(['allDocuments', orgId], () => fetchDocuments(documentsPageNumber), {
+		enabled: !!orgId && isAuthenticated && (isAdmin || isLearner) && !isLandingPageRoute,
+		staleTime: 5 * 60 * 1000, // 5 minutes - data stays fresh
+		cacheTime: 30 * 60 * 1000, // 30 minutes - data stays in cache
+		refetchOnWindowFocus: false, // No refetch on window focus
+		refetchOnMount: false, // No refetch on component remount
 	});
 
 	const fetchLandingPageDocuments = async () => {
-		if (!orgId) return;
-
+		if (!orgId) return [];
 		try {
 			const response = await axios.get(`${base_url}/documents/landing/${orgId}`);
 
 			// Initial sorting when fetching data
 			const sortedLandingPageDocumentsDataCopy = [...response.data.data].sort((a: Document, b: Document) => b.createdAt.localeCompare(a.createdAt));
 			setSortedLandingPageDocumentsData(sortedLandingPageDocumentsDataCopy);
-			setIsLoaded(true);
 			return response.data.data;
 		} catch (error) {
-			setIsLoaded(true);
 			throw error;
 		}
 	};
 
-	const {
-		data: landingPageData,
-		isLoading: isLandingPageLoading,
-		isError: isLandingPageError,
-	} = useQuery(['landingPageDocuments', orgId], () => fetchLandingPageDocuments(), {
-		enabled: !!orgId && !isLoaded && isLandingPageRoute,
-	});
+	const { isLoading: isLandingPageLoading, isError: isLandingPageError } = useQuery(
+		['landingPageDocuments', orgId],
+		() => fetchLandingPageDocuments(),
+		{
+			enabled: !!orgId && isLandingPageRoute,
+		}
+	);
 
 	const sortDocumentsData = (property: keyof Document, order: 'asc' | 'desc') => {
-		const sortedData = [...documents].sort((a, b) => {
+		// React Query data'yı sort et, local state'e set etme
+		const sortedDataCopy = [...(documentsData || [])].sort((a, b) => {
 			const aValue = a[property];
 			const bValue = b[property];
 
@@ -172,44 +160,68 @@ const DocumentsContextProvider = (props: DocumentsContextProviderProps) => {
 			if (aValue > bValue) return order === 'asc' ? 1 : -1;
 			return 0;
 		});
-
-		setDocuments(sortedData);
+		// Local state'e set etme, sadece sort edilmiş data'yı return et
+		return sortedDataCopy;
 	};
 
 	const addNewDocument = (newDocument: any) => {
-		setDocuments((prev) => [newDocument, ...prev]);
-		setTotalItems((prev) => prev + 1);
+		// React Query cache'i güncelle
+		queryClient.setQueryData(['allDocuments', orgId], (oldData: any) => {
+			return oldData ? [newDocument, ...oldData] : [newDocument];
+		});
 	};
 
 	const updateDocuments = (singleDocument: Document) => {
-		setDocuments((prev) => prev.map((doc) => (doc._id === singleDocument._id ? singleDocument : doc)));
+		// React Query cache'i güncelle
+		queryClient.setQueryData(['allDocuments', orgId], (oldData: any) => {
+			return oldData?.map((doc: Document) => (doc._id === singleDocument._id ? singleDocument : doc));
+		});
 	};
 
 	const removeDocument = (id: string) => {
-		setDocuments((prev) => prev.filter((doc) => doc._id !== id));
-		setTotalItems((prev) => Math.max(0, prev - 1));
+		// React Query cache'i güncelle
+		queryClient.setQueryData(['allDocuments', orgId], (oldData: any) => {
+			return oldData?.filter((doc: Document) => doc._id !== id);
+		});
 	};
 
-	const contextValue: DocumentsContextTypes = {
-		documents,
-		sortedLandingPageDocumentsData,
-		loading: isLoading || loading,
-		error: isError ? 'Failed to fetch documents' : error,
-		fetchDocuments,
-		fetchMoreDocuments,
-		addNewDocument,
-		removeDocument,
-		updateDocuments,
-		sortDocumentsData,
-		totalItems,
-		loadedPages,
-		documentsPageNumber,
-		setDocumentsPageNumber,
-	};
+	// useEffect ile documentsData değiştiğinde local state'i güncelle
+	useEffect(() => {
+		if (documentsData) {
+			// Don't override totalItems from server - only set loadedPages
+			// setTotalItems(documentsData.length); // ❌ This breaks pagination
+
+			setLoadedPages((prev) => (prev.length === 0 ? [1] : prev));
+		}
+	}, [documentsData]);
+
+	if (isLoading || isLandingPageLoading) {
+		return <Loading />;
+	}
+
+	if (isError || isLandingPageError) {
+		return <LoadingError />;
+	}
 
 	return (
-		<DocumentsContext.Provider value={contextValue}>
-			{isLoading || isLandingPageLoading ? <Loading /> : isError || isLandingPageError ? <LoadingError /> : props.children}
+		<DocumentsContext.Provider
+			value={{
+				documents: documentsData || [], // React Query data kullan
+				sortedLandingPageDocumentsData,
+				loading: isLoading,
+				error: isError ? 'Failed to fetch documents' : null,
+				fetchDocuments,
+				fetchMoreDocuments,
+				addNewDocument,
+				removeDocument,
+				updateDocuments,
+				sortDocumentsData,
+				totalItems,
+				loadedPages,
+				documentsPageNumber,
+				setDocumentsPageNumber,
+			}}>
+			{props.children}
 		</DocumentsContext.Provider>
 	);
 };

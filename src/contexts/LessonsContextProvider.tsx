@@ -1,6 +1,6 @@
 import axios from '@utils/axiosInstance';
-import { ReactNode, createContext, useContext, useState } from 'react';
-import { useQuery } from 'react-query';
+import { ReactNode, createContext, useContext, useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from 'react-query';
 import { Lesson } from '../interfaces/lessons';
 import Loading from '../components/layouts/loading/Loading';
 import LoadingError from '../components/layouts/loading/LoadingError';
@@ -12,9 +12,8 @@ interface LessonsContextTypes {
 	lessons: Lesson[];
 	loading: boolean;
 	error: string | null;
-	fetchLessons: (page: number) => Promise<void>;
+	fetchLessons: (page: number) => Promise<Lesson[]>;
 	fetchMoreLessons: (startPage: number, endPage: number) => Promise<void>;
-	refreshData: () => void;
 	sortLessonsData: (property: keyof Lesson, order: 'asc' | 'desc') => void;
 	addNewLesson: (newLesson: any) => void;
 	updateLessonPublishing: (id: string) => void;
@@ -37,9 +36,8 @@ export const LessonsContext = createContext<LessonsContextTypes>({
 	lessons: [],
 	loading: false,
 	error: null,
-	fetchLessons: async () => {},
+	fetchLessons: async () => [],
 	fetchMoreLessons: async () => {},
-	refreshData: () => {},
 	sortLessonsData: () => {},
 	addNewLesson: () => {},
 	updateLessonPublishing: () => {},
@@ -59,6 +57,7 @@ const LessonsContextProvider = (props: LessonsContextProviderProps) => {
 	const { orgId } = useContext(OrganisationContext);
 	const { isAuthenticated, isAdmin, isLearner } = useAuth();
 	const location = useLocation();
+	const queryClient = useQueryClient();
 	const isLandingPageRoute =
 		location.pathname === '/' ||
 		location.pathname === '/landing-page-courses' ||
@@ -69,8 +68,6 @@ const LessonsContextProvider = (props: LessonsContextProviderProps) => {
 		// Only consider course preview pages as landing pages, not enrolled course pages
 		(location.pathname.startsWith('/course/') && !location.pathname.includes('/userCourseId/'));
 
-	const [lessons, setLessons] = useState<Lesson[]>([]);
-	const [isLoaded, setIsLoaded] = useState<boolean>(false);
 	const [numberOfPages, setNumberOfPages] = useState<number>(1);
 	const [lessonsPageNumber, setLessonsPageNumber] = useState<number>(1);
 	const [totalItems, setTotalItems] = useState<number>(0);
@@ -79,18 +76,21 @@ const LessonsContextProvider = (props: LessonsContextProviderProps) => {
 	const lessonTypes: string[] = ['Instructional Lesson', 'Practice Lesson', 'Quiz'];
 
 	const fetchLessons = async (page: number = 1) => {
-		if (!orgId) return;
+		if (!orgId) return [];
 		try {
 			const response = await axios.get(`${base_url}/lessons/organisation/${orgId}?page=${page}&limit=300`);
 
 			const lessonsData = response.data.data;
-			setLessons(lessonsData);
+
+			// React Query cache'i güncelle
+			queryClient.setQueryData(['allLessons', orgId], lessonsData);
+
 			setTotalItems(response.data.totalItems);
 			setNumberOfPages(Math.ceil(response.data.totalItems / 50)); // 50 per page display
 			setLoadedPages([page]);
-			setIsLoaded(true);
+
+			return lessonsData;
 		} catch (error) {
-			setIsLoaded(true);
 			throw error;
 		}
 	};
@@ -116,23 +116,32 @@ const LessonsContextProvider = (props: LessonsContextProviderProps) => {
 			}
 
 			// Combine with existing data, remove duplicates, and sort
-			const combinedData = [...lessons, ...newLessons];
+			const combinedData = [...(lessonsData || []), ...newLessons];
 			const uniqueData = combinedData.filter((lesson, index, self) => index === self.findIndex((l) => l._id === lesson._id));
 			const sortedData = uniqueData.sort((a: Lesson, b: Lesson) => b.updatedAt.localeCompare(a.updatedAt));
-			setLessons(sortedData);
+			queryClient.setQueryData(['allLessons', orgId], sortedData);
 			setLoadedPages([...loadedPages, ...pagesToFetch]);
 		} catch (error) {
 			console.error('Error fetching more lessons:', error);
 		}
 	};
 
-	const { isLoading, isError } = useQuery(['allLessons', orgId, lessonsPageNumber], () => fetchLessons(lessonsPageNumber), {
-		enabled: !!orgId && !isLoaded && isAuthenticated && (isAdmin || isLearner) && !isLandingPageRoute,
+	const {
+		data: lessonsData,
+		isLoading,
+		isError,
+	} = useQuery(['allLessons', orgId], () => fetchLessons(lessonsPageNumber), {
+		enabled: !!orgId && isAuthenticated && (isAdmin || isLearner) && !isLandingPageRoute,
+		staleTime: 5 * 60 * 1000, // 5 minutes - data stays fresh
+		cacheTime: 30 * 60 * 1000, // 30 minutes - data stays in cache
+		refetchOnWindowFocus: false, // No refetch on window focus
+		refetchOnMount: false, // No refetch on component remount
 	});
 
 	// Function to handle sorting
 	const sortLessonsData = (property: keyof Lesson, order: 'asc' | 'desc') => {
-		const sortedDataCopy = [...lessons].sort((a: Lesson, b: Lesson) => {
+		// React Query data'yı sort et, local state'e set etme
+		const sortedDataCopy = [...(lessonsData || [])].sort((a: Lesson, b: Lesson) => {
 			const aValue = a[property] ?? '';
 			const bValue = b[property] ?? '';
 			if (order === 'asc') {
@@ -141,42 +150,63 @@ const LessonsContextProvider = (props: LessonsContextProviderProps) => {
 				return aValue < bValue ? 1 : -1;
 			}
 		});
-		setLessons(sortedDataCopy);
+		// Local state'e set etme, sadece sort edilmiş data'yı return et
+		return sortedDataCopy;
 	};
+
 	// Function to update lessons with new lesson data
 	const addNewLesson = (newLesson: any) => {
-		setLessons((prevLessons) => [newLesson, ...prevLessons]);
+		// React Query cache'i güncelle - tüm sayfalar için
+		queryClient.setQueryData(['allLessons', orgId], (oldData: any) => {
+			const newData = oldData ? [newLesson, ...oldData] : [newLesson];
+
+			return newData;
+		});
+
+		// Ayrıca totalItems'ı güncelle
 		setTotalItems((prev) => prev + 1);
 	};
 
 	const updateLessonPublishing = (id: string) => {
-		const updatedLessonList = lessons?.map((lesson) => {
-			if (lesson._id === id) {
-				return { ...lesson, isActive: !lesson.isActive };
-			}
-			return lesson;
+		// React Query cache'i güncelle
+		queryClient.setQueryData(['allLessons', orgId], (oldData: any) => {
+			return oldData?.map((lesson: Lesson) => {
+				if (lesson._id === id) {
+					return { ...lesson, isActive: !lesson.isActive };
+				}
+				return lesson;
+			});
 		});
-		setLessons(updatedLessonList);
 	};
 
 	const updateLessons = (singleLesson: Lesson) => {
-		const updatedLessonList = lessons?.map((lesson) => {
-			if (singleLesson._id === lesson._id) {
-				return singleLesson;
-			}
-			return lesson;
+		// React Query cache'i güncelle
+		queryClient.setQueryData(['allLessons', orgId], (oldData: any) => {
+			return oldData?.map((lesson: Lesson) => {
+				if (singleLesson._id === lesson._id) {
+					return singleLesson;
+				}
+				return lesson;
+			});
 		});
-		setLessons(updatedLessonList);
 	};
 
 	const removeLesson = (id: string) => {
-		setLessons((prevLessons) => prevLessons?.filter((data) => data._id !== id));
-		setTotalItems((prev) => Math.max(0, prev - 1));
+		// React Query cache'i güncelle
+		queryClient.setQueryData(['allLessons', orgId], (oldData: any) => {
+			return oldData?.filter((data: Lesson) => data._id !== id);
+		});
 	};
 
-	const refreshData = () => {
-		setIsLoaded(false);
-	};
+	// useEffect ile lessonsData değiştiğinde local state'i güncelle
+	useEffect(() => {
+		if (lessonsData) {
+			// Don't override totalItems from server - only set loadedPages
+			// setTotalItems(lessonsData.length); // ❌ This breaks pagination
+
+			setLoadedPages((prev) => (prev.length === 0 ? [1] : prev));
+		}
+	}, [lessonsData]);
 
 	if (isLoading && isAuthenticated) {
 		return <Loading />;
@@ -189,12 +219,11 @@ const LessonsContextProvider = (props: LessonsContextProviderProps) => {
 	return (
 		<LessonsContext.Provider
 			value={{
-				lessons,
+				lessons: lessonsData || [], // React Query data kullan
 				loading: isLoading,
 				error: isError ? 'Failed to fetch lessons' : null,
 				fetchLessons,
 				fetchMoreLessons,
-				refreshData,
 				sortLessonsData,
 				addNewLesson,
 				removeLesson,

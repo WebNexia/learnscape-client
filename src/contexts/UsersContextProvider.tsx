@@ -1,6 +1,6 @@
 import axios from '@utils/axiosInstance';
-import { ReactNode, createContext, useContext, useState } from 'react';
-import { useQuery } from 'react-query';
+import { ReactNode, createContext, useContext, useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from 'react-query';
 import Loading from '../components/layouts/loading/Loading';
 import LoadingError from '../components/layouts/loading/LoadingError';
 import { User } from '../interfaces/user';
@@ -12,9 +12,9 @@ interface UserContextTypes {
 	users: User[];
 	loading: boolean;
 	error: string | null;
-	fetchUsers: (page: number) => Promise<void>;
+	fetchUsers: (page: number) => Promise<User[]>;
 	fetchMoreUsers: (startPage: number, endPage: number) => Promise<void>;
-	refreshData: () => void;
+
 	sortUsersData: (property: keyof User, order: 'asc' | 'desc') => void;
 	addNewUser: (newCourse: any) => void;
 	activateUser: (id: string) => void;
@@ -36,9 +36,9 @@ export const UsersContext = createContext<UserContextTypes>({
 	users: [],
 	loading: false,
 	error: null,
-	fetchUsers: async () => {},
+	fetchUsers: async () => [],
 	fetchMoreUsers: async () => {},
-	refreshData: () => {},
+
 	sortUsersData: () => {},
 	addNewUser: () => {},
 	activateUser: () => {},
@@ -56,8 +56,8 @@ const UsersContextProvider = (props: UserContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
 	const { isAuthenticated, isAdmin } = useAuth();
-	const [users, setUsers] = useState<User[]>([]);
-	const [isLoaded, setIsLoaded] = useState<boolean>(false);
+	const queryClient = useQueryClient();
+
 	const [numberOfPages, setNumberOfPages] = useState<number>(1);
 	const [usersPageNumber, setUsersPageNumber] = useState<number>(1);
 	const [totalItems, setTotalItems] = useState<number>(0);
@@ -74,20 +74,22 @@ const UsersContextProvider = (props: UserContextProviderProps) => {
 		(location.pathname.startsWith('/course/') && !location.pathname.includes('/userCourseId/'));
 
 	const fetchUsers = async (page: number) => {
-		if (!orgId) return;
+		if (!orgId) return [];
 		try {
 			// Fetch initial 500 records
 			const url = `${base_url}/users/organisation/${orgId}?page=${page}&limit=300`;
 			const response = await axios.get(url);
-			const sortedDataCopy = [...response.data.data].sort((a: User, b: User) => b.updatedAt.localeCompare(a.updatedAt));
-			setUsers(sortedDataCopy);
+			const sortedData = [...response.data.data].sort((a: User, b: User) => b.updatedAt.localeCompare(a.updatedAt));
+
+			// React Query cache'i güncelle
+			queryClient.setQueryData(['users', orgId, usersPageNumber], sortedData);
+
 			setTotalItems(response.data.totalItems);
 			setNumberOfPages(Math.ceil(response.data.totalItems / 50)); // 50 per page display
 			setLoadedPages([1]);
-			setIsLoaded(true);
-			return response.data.data;
+
+			return sortedData;
 		} catch (error) {
-			setIsLoaded(true);
 			throw error;
 		}
 	};
@@ -115,23 +117,41 @@ const UsersContextProvider = (props: UserContextProviderProps) => {
 			}
 
 			// Combine with existing data, remove duplicates, and sort
-			const combinedData = [...users, ...newUsers];
+			const combinedData = [...(usersData || []), ...newUsers];
 			const uniqueData = combinedData.filter((user, index, self) => index === self.findIndex((u) => u._id === user._id));
 			const sortedData = uniqueData.sort((a: User, b: User) => b.updatedAt.localeCompare(a.updatedAt));
-			setUsers(sortedData);
+			queryClient.setQueryData(['users', orgId, usersPageNumber], sortedData);
 			setLoadedPages([...loadedPages, ...pagesToFetch]);
 		} catch (error) {
 			console.error('Error fetching more users:', error);
 		}
 	};
 
-	const { isLoading, isError } = useQuery(['users', orgId, usersPageNumber], () => fetchUsers(usersPageNumber), {
-		enabled: !!orgId && isAuthenticated && isAdmin && !isLoaded && !isLandingPageRoute,
+	const {
+		data: usersData,
+		isLoading,
+		isError,
+	} = useQuery(['users', orgId, usersPageNumber], () => fetchUsers(usersPageNumber), {
+		enabled: !!orgId && isAuthenticated && isAdmin && !isLandingPageRoute,
+		staleTime: 5 * 60 * 1000, // 5 minutes - data stays fresh
+		cacheTime: 30 * 60 * 1000, // 30 minutes - data stays in cache
+		refetchOnWindowFocus: false, // No refetch on window focus
+		refetchOnMount: false, // No refetch on component remount
 	});
+
+	// useEffect ile usersData değiştiğinde local state'i güncelle
+	useEffect(() => {
+		if (usersData) {
+			// Don't override totalItems from server - only set loadedPages
+			// setTotalItems(usersData.length); // ❌ This breaks pagination
+
+			setLoadedPages((prev) => (prev.length === 0 ? [1] : prev));
+		}
+	}, [usersData]);
 
 	// Function to handle sorting
 	const sortUsersData = (property: keyof User, order: 'asc' | 'desc') => {
-		const sortedDataCopy = [...users].sort((a: User, b: User) => {
+		const sortedDataCopy = [...(usersData || [])].sort((a: User, b: User) => {
 			const aValue = a[property];
 			const bValue = b[property];
 
@@ -143,41 +163,43 @@ const UsersContextProvider = (props: UserContextProviderProps) => {
 				return aValue < bValue ? 1 : -1;
 			}
 		});
-		setUsers(sortedDataCopy);
-	};
-
-	const refreshData = () => {
-		setIsLoaded(false);
+		queryClient.setQueryData(['users', orgId, usersPageNumber], sortedDataCopy);
 	};
 
 	// Function to update users with new user data
 	const addNewUser = (newUser: any) => {
-		setUsers((prevUsers) => [newUser, ...prevUsers]);
+		queryClient.setQueryData(['users', orgId, usersPageNumber], (oldData: any) => {
+			return [newUser, ...(oldData || [])];
+		});
 		setTotalItems((prev) => prev + 1);
 	};
 
 	const activateUser = (id: string) => {
-		const updatedUserList = users?.map((user) => {
-			if (user._id === id) {
-				return { ...user, isActive: !user.isActive };
-			}
-			return user;
+		queryClient.setQueryData(['users', orgId, usersPageNumber], (oldData: any) => {
+			return oldData?.map((user: User) => {
+				if (user._id === id) {
+					return { ...user, isActive: !user.isActive };
+				}
+				return user;
+			});
 		});
-		setUsers(updatedUserList);
 	};
 
 	const updateUser = (updatedUser: User) => {
-		const updatedUserList = users?.map((user) => {
-			if (updatedUser._id === user._id) {
-				return updatedUser;
-			}
-			return user;
+		queryClient.setQueryData(['users', orgId, usersPageNumber], (oldData: any) => {
+			return oldData?.map((user: User) => {
+				if (updatedUser._id === user._id) {
+					return updatedUser;
+				}
+				return user;
+			});
 		});
-		setUsers(updatedUserList);
 	};
 
 	const removeUser = (id: string) => {
-		setUsers((prevUsers) => prevUsers?.filter((data) => data._id !== id));
+		queryClient.setQueryData(['users', orgId, usersPageNumber], (oldData: any) => {
+			return oldData?.filter((data: User) => data._id !== id);
+		});
 		setTotalItems((prev) => Math.max(0, prev - 1));
 	};
 
@@ -192,12 +214,12 @@ const UsersContextProvider = (props: UserContextProviderProps) => {
 	return (
 		<UsersContext.Provider
 			value={{
-				users,
+				users: usersData || [],
 				loading: isLoading,
 				error: isError ? 'Failed to fetch users' : null,
 				fetchUsers,
 				fetchMoreUsers,
-				refreshData,
+
 				sortUsersData,
 				addNewUser,
 				removeUser,

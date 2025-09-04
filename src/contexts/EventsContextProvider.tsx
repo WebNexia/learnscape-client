@@ -1,6 +1,6 @@
 import axios from '@utils/axiosInstance';
 import { ReactNode, createContext, useContext, useState } from 'react';
-import { useQuery } from 'react-query';
+import { useQuery, useQueryClient } from 'react-query';
 import { useLocation } from 'react-router-dom';
 
 import Loading from '../components/layouts/loading/Loading';
@@ -45,42 +45,74 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 	const { orgId } = useContext(OrganisationContext);
 	const { isAuthenticated, isAdmin, isLearner } = useAuth();
 	const location = useLocation();
+	const queryClient = useQueryClient();
 
 	const isCalendarRoute = location.pathname.includes('/calendar');
-	const [sortedEventsData, setSortedEventsData] = useState<Event[]>([]);
-
 	// Month-based calendar state
 	const [loadedMonths, setLoadedMonths] = useState<string[]>([]);
-	const [isCalendarLoaded, setIsCalendarLoaded] = useState<boolean>(false);
 
 	// Function to handle sorting
 	const sortEventsData = (property: keyof Event, order: 'asc' | 'desc') => {
-		const sortedDataCopy = [...sortedEventsData].sort((a: Event, b: Event) => {
+		const currentData = (queryClient.getQueryData(['calendarEvents', orgId]) as Event[]) || [];
+		const sortedDataCopy = [...currentData].sort((a: Event, b: Event) => {
 			if (order === 'asc') {
 				return a[property]! > b[property]! ? 1 : -1;
 			} else {
 				return a[property]! < b[property]! ? 1 : -1;
 			}
 		});
-		setSortedEventsData(sortedDataCopy);
+		return sortedDataCopy;
 	};
-	// Function to update sortedEventsData with new event data
+
+	// Function to update events with new event data
 	const addNewEvent = async (newEvent: any) => {
-		setSortedEventsData((prevSortedData) => [newEvent, ...prevSortedData]);
+		// Update calendar events cache
+		queryClient.setQueryData(['calendarEvents', orgId], (oldData: Event[] | undefined) => {
+			return oldData ? [newEvent, ...oldData] : [newEvent];
+		});
+
+		// Also update AdminPublicEvents cache to keep them in sync
+		queryClient.setQueryData(['allPublicEvents', orgId], (oldData: Event[] | undefined) => {
+			return oldData ? [newEvent, ...oldData] : [newEvent];
+		});
 	};
 
 	const updateEvent = async (singleEvent: Event) => {
-		const updatedEventList = sortedEventsData?.map((event) => {
-			if (singleEvent._id === event._id) {
-				return singleEvent;
-			}
-			return event;
+		// Update calendar events cache
+		queryClient.setQueryData(['calendarEvents', orgId], (oldData: Event[] | undefined) => {
+			return (
+				oldData?.map((event) => {
+					if (singleEvent._id === event._id) {
+						return singleEvent;
+					}
+					return event;
+				}) || []
+			);
 		});
-		setSortedEventsData(updatedEventList);
+
+		// Also update AdminPublicEvents cache to keep them in sync
+		queryClient.setQueryData(['allPublicEvents', orgId], (oldData: Event[] | undefined) => {
+			return (
+				oldData?.map((event) => {
+					if (singleEvent._id === event._id) {
+						return singleEvent;
+					}
+					return event;
+				}) || []
+			);
+		});
 	};
 
 	const removeEvent = async (id: string) => {
-		setSortedEventsData((prevSortedData) => prevSortedData?.filter((data) => data._id !== id));
+		// Update calendar events cache
+		queryClient.setQueryData(['calendarEvents', orgId], (oldData: Event[] | undefined) => {
+			return oldData?.filter((data) => data._id !== id) || [];
+		});
+
+		// Also update AdminPublicEvents cache to keep them in sync
+		queryClient.setQueryData(['allPublicEvents', orgId], (oldData: Event[] | undefined) => {
+			return oldData?.filter((data) => data._id !== id) || [];
+		});
 	};
 
 	// Month-based calendar functions
@@ -98,17 +130,16 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 			const eventsData = response.data.data;
 
 			// Add new events to existing calendar events, remove duplicates
-			setSortedEventsData((prev) => {
-				const combined = [...prev, ...eventsData];
-				const unique = combined.filter((event, index, self) => index === self.findIndex((e) => e._id === event._id));
-				return unique;
-			});
+			const currentData = (queryClient.getQueryData(['calendarEvents', orgId]) as Event[]) || [];
+			const combined = [...currentData, ...eventsData];
+			const unique = combined.filter((event, index, self) => index === self.findIndex((e) => e._id === event._id));
+
+			queryClient.setQueryData(['calendarEvents', orgId], unique);
 
 			// Mark month as loaded
 			setLoadedMonths((prev) => [...prev, monthKey]);
-			setIsCalendarLoaded(true);
 		} catch (error) {
-			setIsCalendarLoaded(true);
+			console.error('Error fetching month events:', error);
 			throw error;
 		}
 	};
@@ -136,7 +167,9 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 		}
 
 		try {
-			// Fetch all three months in parallel
+			console.log('🔍 Fetching initial months:', monthsToFetch);
+
+			// Fetch all three months in parallel with proper error handling
 			const promises = monthsToFetch.map(({ year, month }) =>
 				axios.get(`${base_url}/events/organisation/${orgId}?year=${year}&month=${month}&limit=1000`)
 			);
@@ -145,32 +178,43 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 
 			// Combine all events
 			const allEvents = responses.flatMap((response) => response.data.data);
+			console.log('📅 Total events fetched:', allEvents.length);
 
 			// Remove duplicates
 			const uniqueEvents = allEvents.filter((event, index, self) => index === self.findIndex((e) => e._id === event._id));
+			console.log('✨ Unique events after deduplication:', uniqueEvents.length);
 
-			setSortedEventsData(uniqueEvents);
+			// Update React Query cache
+			queryClient.setQueryData(['calendarEvents', orgId], uniqueEvents);
 
 			// Mark months as loaded
 			const monthKeys = monthsToFetch.map(({ year, month }) => `${year}-${month.toString().padStart(2, '0')}`);
 			setLoadedMonths(monthKeys);
-			setIsCalendarLoaded(true);
+
+			return uniqueEvents; // Return the events for React Query
 		} catch (error) {
-			setIsCalendarLoaded(true);
+			console.error('❌ Error fetching initial months:', error);
 			throw error;
 		}
 	};
 
 	const refreshCalendarData = () => {
-		setIsCalendarLoaded(false);
 		setLoadedMonths([]);
-		setSortedEventsData([]);
+		queryClient.removeQueries(['calendarEvents', orgId]);
 		fetchInitialMonths();
 	};
 
 	// Use month-based fetching for calendar routes
-	const { isLoading: isCalendarLoading, isError: isCalendarError } = useQuery(['calendarEvents', orgId], fetchInitialMonths, {
-		enabled: !!orgId && isAuthenticated && (isAdmin || isLearner) && isCalendarRoute && !isCalendarLoaded,
+	const {
+		data: eventsData,
+		isLoading: isCalendarLoading,
+		isError: isCalendarError,
+	} = useQuery(['calendarEvents', orgId], fetchInitialMonths, {
+		enabled: !!orgId && isAuthenticated && (isAdmin || isLearner) && isCalendarRoute,
+		staleTime: 5 * 60 * 1000, // 5 minutes - data stays fresh
+		cacheTime: 30 * 60 * 1000, // 30 minutes - data stays in cache
+		refetchOnWindowFocus: false, // No refetch on window focus
+		refetchOnMount: false, // No refetch on component remount
 	});
 
 	if (isCalendarLoading) {
@@ -180,6 +224,9 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 	if (isCalendarError) {
 		return <LoadingError />;
 	}
+
+	// Get events data from React Query data
+	const sortedEventsData = eventsData || [];
 
 	return (
 		<EventsContext.Provider

@@ -1,20 +1,21 @@
 import axios from '@utils/axiosInstance';
-import { ReactNode, createContext, useContext, useState, useCallback } from 'react';
+import { ReactNode, createContext, useContext, useState } from 'react';
+import { useQueryClient } from 'react-query';
 import { OrganisationContext } from './OrganisationContextProvider';
 import { CommunityMessage } from '../interfaces/communityMessage';
 import { CommunityContext } from './CommunityContextProvider';
 
 interface CommunityMessagesContextTypes {
 	messages: CommunityMessage[];
-	sortMessages: (property: keyof CommunityMessage, order: 'asc' | 'desc') => void;
+	sortMessages: (property: keyof CommunityMessage, order: 'asc' | 'desc') => CommunityMessage[];
 	addNewMessage: (newMessage: CommunityMessage) => void;
 	removeMessage: (id: string) => void;
 	updateMessage: (messageId: string, updates: Partial<CommunityMessage>) => void;
 	numberOfPages: number;
 	pageNumber: number;
 	setPageNumber: React.Dispatch<React.SetStateAction<number>>;
-	fetchMessages: (topicId: string) => void;
-	fetchMoreMessages: (topicId: string, startPage: number, endPage: number) => void;
+	fetchMessages: (topicId: string) => Promise<CommunityMessage[]>;
+	fetchMoreMessages: (topicId: string, startPage: number, endPage: number) => Promise<void>;
 	totalItems: number;
 	loadedPages: number[];
 	currentTopicId: string;
@@ -29,15 +30,15 @@ interface CommunityMessagesContextProviderProps {
 
 export const CommunityMessagesContext = createContext<CommunityMessagesContextTypes>({
 	messages: [],
-	sortMessages: () => {},
+	sortMessages: () => [],
 	addNewMessage: () => {},
 	removeMessage: () => {},
 	updateMessage: () => {},
 	numberOfPages: 1,
 	pageNumber: 1,
 	setPageNumber: () => {},
-	fetchMessages: () => {},
-	fetchMoreMessages: () => {},
+	fetchMessages: async () => [],
+	fetchMoreMessages: async () => {},
 	totalItems: 0,
 	loadedPages: [],
 	currentTopicId: '',
@@ -50,9 +51,8 @@ const CommunityMessagesContextProvider = (props: CommunityMessagesContextProvide
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
 	const { updateTopics } = useContext(CommunityContext);
+	const queryClient = useQueryClient();
 
-	const [messages, setMessages] = useState<CommunityMessage[]>([]);
-	const [numberOfPages, setNumberOfPages] = useState<number>(1);
 	const [pageNumber, setPageNumber] = useState<number>(1);
 	const [totalItems, setTotalItems] = useState<number>(0);
 	const [loadedPages, setLoadedPages] = useState<number[]>([]);
@@ -60,38 +60,35 @@ const CommunityMessagesContextProvider = (props: CommunityMessagesContextProvide
 	const [loading, setLoading] = useState<boolean>(false);
 	const [error, setError] = useState<string | null>(null);
 
-	const fetchMessages = useCallback(
-		async (topicId: string) => {
-			if (!orgId || !topicId) return;
+	const fetchMessages = async (topicId: string) => {
+		if (!orgId || !topicId) return [];
 
-			setLoading(true);
-			setError(null);
+		setLoading(true);
+		setError(null);
 
-			try {
-				// Fetch first batch of messages with traditional pagination
-				const response = await axios.get(`${base_url}/communityMessages/topic/${topicId}?page=1&limit=250`);
+		try {
+			// Fetch first batch of messages with traditional pagination
+			const response = await axios.get(`${base_url}/communityMessages/topic/${topicId}?page=1&limit=250`);
 
-				// Store only the first batch of messages in state
-				setMessages(response.data.messages);
+			// Update totalItems from server response
+			setTotalItems(response.data.totalMessages || response.data.messages.length);
 
-				// Calculate frontend pages based on total messages from backend and frontend pageSize (25)
-				const frontendPageSize = 25;
-				const totalPages = Math.ceil(response.data.totalMessages / frontendPageSize);
-				setNumberOfPages(totalPages);
-				setTotalItems(response.data.totalMessages);
-				setLoadedPages([1]); // First batch loaded
-				setCurrentTopicId(topicId);
-				return response.data.messages;
-			} catch (error: any) {
-				const errorMessage = error.response?.data?.message || 'Failed to fetch messages';
-				setError(errorMessage);
-				throw error;
-			} finally {
-				setLoading(false);
-			}
-		},
-		[orgId, base_url]
-	);
+			// Update loadedPages to track which pages we've fetched
+			setLoadedPages([1]);
+			setCurrentTopicId(topicId);
+
+			// Store messages in React Query cache for this topic
+			queryClient.setQueryData(['communityMessages', topicId], response.data.messages);
+
+			return response.data.messages;
+		} catch (error: any) {
+			const errorMessage = error.response?.data?.message || 'Failed to fetch messages';
+			setError(errorMessage);
+			throw error;
+		} finally {
+			setLoading(false);
+		}
+	};
 
 	const fetchMoreMessages = async (topicId: string, startPage: number, endPage: number) => {
 		if (!orgId || !topicId || topicId !== currentTopicId) {
@@ -99,37 +96,28 @@ const CommunityMessagesContextProvider = (props: CommunityMessagesContextProvide
 		}
 
 		try {
-			// Calculate which pages we need to fetch
-			const pagesToFetch: number[] = [];
+			// Fetch all batches from startPage to endPage
+			const promises = [];
 			for (let page = startPage; page <= endPage; page++) {
 				if (!loadedPages.includes(page)) {
-					pagesToFetch.push(page);
+					promises.push(axios.get(`${base_url}/communityMessages/topic/${topicId}?page=${page}&limit=250`));
 				}
 			}
 
-			if (pagesToFetch.length === 0) {
+			if (promises.length === 0) {
 				return; // Already loaded
 			}
 
-			// Fetch missing pages
-			let newMessages: CommunityMessage[] = [];
-			for (const page of pagesToFetch) {
-				const url = `${base_url}/communityMessages/topic/${topicId}?page=${page}&limit=250`;
+			const responses = await Promise.all(promises);
+			const allData = responses.flatMap((response) => response.data.messages);
 
-				const response: any = await axios.get(url);
+			// Update React Query cache with new data
+			const currentData = (queryClient.getQueryData(['communityMessages', topicId]) as CommunityMessage[]) || [];
+			queryClient.setQueryData(['communityMessages', topicId], [...currentData, ...allData]);
 
-				newMessages = [...newMessages, ...response.data.messages];
-			}
-
-			// Use functional state update to avoid stale closure
-			setMessages((prevMessages) => {
-				const combinedData = [...prevMessages, ...newMessages];
-				const uniqueData = combinedData.filter((message, index, self) => index === self.findIndex((m) => m._id === message._id));
-				const sortedData = uniqueData.sort((a: CommunityMessage, b: CommunityMessage) => a.createdAt.localeCompare(b.createdAt));
-
-				return sortedData;
-			});
-			setLoadedPages([...loadedPages, ...pagesToFetch]);
+			// Update loadedPages to track which pages we've fetched
+			const newLoadedPages = Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i);
+			setLoadedPages((prev) => [...prev, ...newLoadedPages]);
 		} catch (error: any) {
 			console.error('❌ Error fetching more messages:', error);
 			setError('Failed to fetch more messages');
@@ -139,7 +127,6 @@ const CommunityMessagesContextProvider = (props: CommunityMessagesContextProvide
 	// Function to refresh data
 	const refreshData = () => {
 		setError(null);
-		setMessages([]);
 		setLoadedPages([]);
 		if (currentTopicId) {
 			fetchMessages(currentTopicId);
@@ -148,7 +135,8 @@ const CommunityMessagesContextProvider = (props: CommunityMessagesContextProvide
 
 	// Function to handle sorting
 	const sortMessages = (property: keyof CommunityMessage, order: 'asc' | 'desc') => {
-		const sortedMessagesCopy = [...messages].sort((a: CommunityMessage, b: CommunityMessage) => {
+		// React Query data'yı sort et, local state'e set etme
+		const sortedMessagesCopy = [...(messages || [])].sort((a: CommunityMessage, b: CommunityMessage) => {
 			const aValue = a[property];
 			const bValue = b[property];
 
@@ -160,20 +148,18 @@ const CommunityMessagesContextProvider = (props: CommunityMessagesContextProvide
 				return (aValue ?? '') < (bValue ?? '') ? 1 : -1;
 			}
 		});
-		setMessages(sortedMessagesCopy);
+		// Local state'e set etme, sadece sort edilmiş data'yı return et
+		return sortedMessagesCopy;
 	};
 
 	// Function to add new message
 	const addNewMessage = (newMessage: CommunityMessage) => {
-		setMessages((prevMessages) => [...prevMessages, newMessage]); // Add to end (newest)
+		queryClient.setQueryData(['communityMessages', currentTopicId], (oldData: CommunityMessage[] | undefined) => {
+			return oldData ? [...oldData, newMessage] : [newMessage];
+		});
+
 		setTotalItems((prevTotalItems) => {
 			const newTotalItems = prevTotalItems + 1;
-			// Update number of pages based on new total
-			const frontendPageSize = 25;
-			const newTotalPages = Math.ceil(newTotalItems / frontendPageSize);
-			setNumberOfPages(newTotalPages);
-			// Navigate to the last page to show the new message
-			setPageNumber(newTotalPages);
 
 			// Update the topic's message count in the community context
 			if (currentTopicId) {
@@ -189,12 +175,12 @@ const CommunityMessagesContextProvider = (props: CommunityMessagesContextProvide
 
 	// Function to remove message
 	const removeMessage = (id: string) => {
-		setMessages((prevMessages) => prevMessages.filter((message) => message._id !== id));
+		queryClient.setQueryData(['communityMessages', currentTopicId], (oldData: CommunityMessage[] | undefined) => {
+			return oldData?.filter((message) => message._id !== id) || [];
+		});
+
 		setTotalItems((prevTotalItems) => {
 			const newTotalItems = Math.max(0, prevTotalItems - 1);
-			// Update number of pages based on new total
-			const frontendPageSize = 25;
-			setNumberOfPages(Math.ceil(newTotalItems / frontendPageSize));
 
 			// Update the topic's message count in the community context
 			if (currentTopicId) {
@@ -210,8 +196,16 @@ const CommunityMessagesContextProvider = (props: CommunityMessagesContextProvide
 
 	// Function to update message
 	const updateMessage = (messageId: string, updates: Partial<CommunityMessage>) => {
-		setMessages((prevMessages) => prevMessages.map((message) => (message._id === messageId ? { ...message, ...updates } : message)));
+		queryClient.setQueryData(['communityMessages', currentTopicId], (oldData: CommunityMessage[] | undefined) => {
+			return oldData?.map((message) => (message._id === messageId ? { ...message, ...updates } : message)) || [];
+		});
 	};
+
+	// Calculate numberOfPages based on totalItems
+	const numberOfPages = Math.ceil(totalItems / 25);
+
+	// Get messages data from React Query cache
+	const messages = (queryClient.getQueryData(['communityMessages', currentTopicId]) as CommunityMessage[]) || [];
 
 	return (
 		<CommunityMessagesContext.Provider

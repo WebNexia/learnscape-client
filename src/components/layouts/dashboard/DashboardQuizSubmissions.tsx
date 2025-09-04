@@ -1,6 +1,7 @@
 import { Box, Typography } from '@mui/material';
 import { useContext, useEffect, useState } from 'react';
-import { QuizSubmissionsContext } from '../../../contexts/QuizSubmissionsContextProvider';
+import { LearnerQuizSubmissionsContext } from '../../../contexts/LearnerQuizSubmissionsContextProvider';
+import { AdminQuizSubmissionsContext } from '../../../contexts/AdminQuizSubmissionsContextProvider';
 import { CheckBoxOutlined } from '@mui/icons-material';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 import { Roles } from '../../../interfaces/enums';
@@ -9,8 +10,13 @@ import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 const DashboardQuizSubmissions = () => {
 	const { user } = useContext(UserAuthContext);
-	const { quizSubmissions } = useContext(QuizSubmissionsContext);
+	const { userQuizSubmissions } = useContext(LearnerQuizSubmissionsContext);
+	const { quizSubmissions: adminQuizSubmissions } = useContext(AdminQuizSubmissionsContext);
 	const { isRotated, isSmallScreen } = useContext(MediaQueryContext);
+
+	// Smart context selection based on user role
+	const isAdmin = user?.role === Roles.ADMIN;
+	const submissions = isAdmin ? adminQuizSubmissions : userQuizSubmissions;
 
 	const isMobileSize: boolean = isSmallScreen || isRotated;
 	const [numberOfUncheckedQuizzes, setNumberOfUncheckedQuizzes] = useState<number>(0);
@@ -21,13 +27,13 @@ const DashboardQuizSubmissions = () => {
 	twoWeeksEarlierFromNow.setDate(currentDate.getDate() - 14);
 
 	useEffect(() => {
-		const totalUnchecked = quizSubmissions.filter((submission) => !submission.isChecked).length;
-		const totalRecentlyChecked = quizSubmissions.filter(
+		const totalUnchecked = submissions.filter((submission) => !submission.isChecked).length;
+		const totalRecentlyChecked = submissions.filter(
 			(submission) => submission.isChecked && new Date(submission.updatedAt) > twoWeeksEarlierFromNow
 		).length;
 		setNumberOfUncheckedQuizzes(totalUnchecked);
 		setNumberOfRecentlyCheckedQuizzes(totalRecentlyChecked);
-	}, [quizSubmissions, twoWeeksEarlierFromNow]);
+	}, [submissions, twoWeeksEarlierFromNow]);
 	return (
 		<Box
 			sx={{
@@ -45,15 +51,15 @@ const DashboardQuizSubmissions = () => {
 			}}>
 			<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
 				<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : null }}>
-					{user?.role === Roles.ADMIN ? 'Unchecked' : 'Checked'} Quizzes
+					{isAdmin ? 'Unchecked' : 'Checked'} Quizzes
 				</Typography>
 				<CheckBoxOutlined sx={{ ml: '0.5rem', color: theme.textColor?.greenPrimary.main }} fontSize={isMobileSize ? 'small' : 'medium'} />
 			</Box>
 			<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '7rem' }}>
-				{user?.role === Roles.ADMIN ? (
+				{isAdmin ? (
 					<Typography
 						sx={{ fontSize: isMobileSize ? '0.65rem' : '0.85rem', color: numberOfUncheckedQuizzes > 0 ? '#ef5350' : 'gray', textAlign: 'center' }}>
-						{numberOfUncheckedQuizzes > 0 ? `You have ${numberOfUncheckedQuizzes} unchecked quizzes` : 'You have no unchecked quizzes'}
+						{numberOfUncheckedQuizzes > 0 ? `Total ${numberOfUncheckedQuizzes} unchecked quizzes` : 'No unchecked quizzes'}
 					</Typography>
 				) : (
 					<Typography

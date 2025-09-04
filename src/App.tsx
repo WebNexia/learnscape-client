@@ -5,29 +5,12 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 import { ThemeProvider } from '@mui/material/styles';
 import theme from './themes';
 import Loading from './components/layouts/loading/Loading';
-import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
+import { stripePromise } from './config/stripe';
 
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
-
-// Import context providers directly
-import MediaQueryContextProvider from './contexts/MediaQueryContextProvider';
-import UserCourseLessonDataContextProvider from './contexts/UserCourseLessonDataContextProvider';
-import CoursesContextProvider from './contexts/CoursesContextProvider';
-import LessonsContextProvider from './contexts/LessonsContextProvider';
-import QuestionsContextProvider from './contexts/QuestionsContextProvider';
+// Import only essential context providers for initial dashboard load
 import UserAuthContextProvider from './contexts/UserAuthContextProvider';
 import OrganisationContextProvider from './contexts/OrganisationContextProvider';
-import UsersContextProvider from './contexts/UsersContextProvider';
-import DocumentsContextProvider from './contexts/DocumentsContextProvider';
-import QuizSubmissionsContextProvider from './contexts/QuizSubmissionsContextProvider';
-import CommunityContextProvider from './contexts/CommunityContextProvider';
-import CommunityMessagesContextProvider from './contexts/CommunityMessagesContextProvider';
-import EventsContextProvider from './contexts/EventsContextProvider';
-import PublicEventsContextProvider from './contexts/PublicEventsContextProvider';
-import PaymentsContextProvider from './contexts/PaymentsContextProvider';
-import PromoCodesContextProvider from './contexts/PromoCodesContextProvider';
-import InquiriesProvider from './contexts/InquiriesContextProvider';
 import { UploadLimitProvider } from './contexts/UploadLimitContextProvider';
 
 const queryClient = new QueryClient();
@@ -36,47 +19,17 @@ function App() {
 	return (
 		<QueryClientProvider client={queryClient}>
 			<ThemeProvider theme={theme}>
-				<MediaQueryContextProvider>
+				<Elements stripe={stripePromise}>
 					<UserAuthContextProvider>
 						<OrganisationContextProvider>
-							<UsersContextProvider>
-								<CoursesContextProvider>
-									<UserCourseLessonDataContextProvider>
-										<LessonsContextProvider>
-											<QuestionsContextProvider>
-												<DocumentsContextProvider>
-													<QuizSubmissionsContextProvider>
-														<CommunityContextProvider>
-															<CommunityMessagesContextProvider>
-																<EventsContextProvider>
-																	<PublicEventsContextProvider>
-																		<PaymentsContextProvider>
-																			<PromoCodesContextProvider>
-																				<InquiriesProvider>
-																					<UploadLimitProvider>
-																						<Suspense fallback={<Loading />}>
-																							<Elements stripe={stripePromise}>
-																								<Outlet />
-																							</Elements>
-																						</Suspense>
-																					</UploadLimitProvider>
-																				</InquiriesProvider>
-																			</PromoCodesContextProvider>
-																		</PaymentsContextProvider>
-																	</PublicEventsContextProvider>
-																</EventsContextProvider>
-															</CommunityMessagesContextProvider>
-														</CommunityContextProvider>
-													</QuizSubmissionsContextProvider>
-												</DocumentsContextProvider>
-											</QuestionsContextProvider>
-										</LessonsContextProvider>
-									</UserCourseLessonDataContextProvider>
-								</CoursesContextProvider>
-							</UsersContextProvider>
+							<UploadLimitProvider>
+								<Suspense fallback={<Loading />}>
+									<Outlet />
+								</Suspense>
+							</UploadLimitProvider>
 						</OrganisationContextProvider>
 					</UserAuthContextProvider>
-				</MediaQueryContextProvider>
+				</Elements>
 			</ThemeProvider>
 		</QueryClientProvider>
 	);
