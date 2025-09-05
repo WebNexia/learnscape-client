@@ -4,7 +4,6 @@ import { useContext, useState } from 'react';
 import DashboardCourseCard from '../components/userCourses/DashboardCourseCard';
 import { SingleCourse } from '../interfaces/course';
 import { CoursesContext } from '../contexts/CoursesContextProvider';
-import { useParams } from 'react-router-dom';
 import { UserCoursesIdsWithCourseIds } from '../contexts/UserCourseLessonDataContextProvider';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 
@@ -16,8 +15,6 @@ const Courses = () => {
 	const { isRotated, isSmallScreen } = useContext(MediaQueryContext);
 
 	const isMobileSize: boolean = isSmallScreen || isRotated;
-
-	const { id } = useParams();
 
 	return (
 		<DashboardPagesLayout pageName='Courses' customSettings={{ flexDirection: 'row', alignItems: 'flex-start' }} showCopyRight={true}>
