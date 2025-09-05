@@ -8,6 +8,8 @@ import LoadingError from '../components/layouts/loading/LoadingError';
 import { OrganisationContext } from './OrganisationContextProvider';
 import { Event } from '../interfaces/event';
 import { useAuth } from '../hooks/useAuth';
+import { Roles } from '../interfaces/enums';
+import { UserAuthContext } from './UserAuthContextProvider';
 
 interface EventsContextTypes {
 	sortedEventsData: Event[];
@@ -43,6 +45,7 @@ export const EventsContext = createContext<EventsContextTypes>({
 const EventsContextProvider = (props: EventsContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
+	const { user } = useContext(UserAuthContext);
 	const { isAuthenticated, isAdmin, isLearner } = useAuth();
 	const location = useLocation();
 	const queryClient = useQueryClient();
@@ -167,8 +170,6 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 		}
 
 		try {
-			console.log('🔍 Fetching initial months:', monthsToFetch);
-
 			// Fetch all three months in parallel with proper error handling
 			const promises = monthsToFetch.map(({ year, month }) =>
 				axios.get(`${base_url}/events/organisation/${orgId}?year=${year}&month=${month}&limit=1000`)
@@ -178,11 +179,9 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 
 			// Combine all events
 			const allEvents = responses.flatMap((response) => response.data.data);
-			console.log('📅 Total events fetched:', allEvents.length);
 
 			// Remove duplicates
 			const uniqueEvents = allEvents.filter((event, index, self) => index === self.findIndex((e) => e._id === event._id));
-			console.log('✨ Unique events after deduplication:', uniqueEvents.length);
 
 			// Update React Query cache
 			queryClient.setQueryData(['calendarEvents', orgId], uniqueEvents);
@@ -198,10 +197,12 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 		}
 	};
 
-	const refreshCalendarData = () => {
+	const refreshCalendarData = async () => {
 		setLoadedMonths([]);
-		queryClient.removeQueries(['calendarEvents', orgId]);
-		fetchInitialMonths();
+		await queryClient.invalidateQueries(['calendarEvents', orgId], {
+			refetchActive: true,
+			refetchInactive: true,
+		});
 	};
 
 	// Use month-based fetching for calendar routes
@@ -211,10 +212,10 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 		isError: isCalendarError,
 	} = useQuery(['calendarEvents', orgId], fetchInitialMonths, {
 		enabled: !!orgId && isAuthenticated && (isAdmin || isLearner) && isCalendarRoute,
-		staleTime: 5 * 60 * 1000, // 5 minutes - data stays fresh
+		staleTime: user?.role !== Roles.USER ? 0 : 5 * 60 * 1000, // 5 minutes - data stays fresh
 		cacheTime: 30 * 60 * 1000, // 30 minutes - data stays in cache
-		refetchOnWindowFocus: false, // No refetch on window focus
-		refetchOnMount: false, // No refetch on component remount
+		refetchOnWindowFocus: user?.role === Roles.ADMIN,
+		refetchOnMount: user?.role !== Roles.USER,
 	});
 
 	if (isCalendarLoading) {

@@ -63,7 +63,7 @@ const EditTopicDialog = ({ editTopicModalOpen, topic, setEditTopicModalOpen, set
 	useEffect(() => {
 		setShowAudioRecorder(!!topic.audioUrl);
 		setShowImageUploader(!!topic.imageUrl);
-	}, [topic]);
+	}, [topic.audioUrl, topic.imageUrl]);
 
 	const reset = () => {
 		setEditTopicModalOpen(false);
@@ -129,8 +129,6 @@ const EditTopicDialog = ({ editTopicModalOpen, topic, setEditTopicModalOpen, set
 				imageUrl: topic.imageUrl,
 				audioUrl: topic.audioUrl,
 			});
-
-			fetchTopics(1);
 
 			updateTopics({
 				...topic,

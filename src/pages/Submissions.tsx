@@ -20,15 +20,8 @@ import axios from '@utils/axiosInstance';
 
 const Submissions = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
-	const {
-		userQuizSubmissions,
-		sortUserQuizSubmissionsData,
-		fetchMoreUserQuizSubmissions,
-		loadedPages,
-		totalItems,
-		userSubmissionsPageNumber,
-		setUserSubmissionsPageNumber,
-	} = useContext(LearnerQuizSubmissionsContext);
+	const { userQuizSubmissions, fetchMoreUserQuizSubmissions, loadedPages, totalItems, userSubmissionsPageNumber, setUserSubmissionsPageNumber } =
+		useContext(LearnerQuizSubmissionsContext);
 	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
@@ -52,6 +45,9 @@ const Submissions = () => {
 	const [searchButtonClicked, setSearchButtonClicked] = useState<boolean>(false);
 	const [searchedValue, setSearchedValue] = useState<string>('');
 
+	const [orderBy, setOrderBy] = useState<keyof QuizSubmission>('updatedAt');
+	const [order, setOrder] = useState<'asc' | 'desc'>('desc');
+
 	const pageSize = 50;
 	const contextLimit = 150; // Match the context provider limit
 
@@ -64,32 +60,30 @@ const Submissions = () => {
 	// Use appropriate page number for pagination
 	const currentPage = isSearchActive ? searchResultsPage : userSubmissionsPageNumber;
 
+	const sortedSubmissions = [...displaySubmissions].sort((a, b) => {
+		const aValue = a[orderBy] ?? '';
+		const bValue = b[orderBy] ?? '';
+
+		if (order === 'asc') {
+			return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+		} else {
+			return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
+		}
+	});
+
 	// For search results, slice the accumulated data based on current page
 	// For context data, use client-side pagination
-	const paginatedSubmissions = isSearchActive
-		? searchResults.slice((currentPage - 1) * pageSize, currentPage * pageSize)
-		: displaySubmissions.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+	const paginatedSubmissions = sortedSubmissions.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
 	// React Query handles data loading automatically
 
 	// Keep track of previous length to avoid unnecessary resets
 	const prevLengthRef = useRef<number>(0);
 
-	const [orderBy, setOrderBy] = useState<keyof QuizSubmission>('userName');
-	const [order, setOrder] = useState<'asc' | 'desc'>('asc');
-
 	const handleSort = (property: keyof QuizSubmission) => {
 		const isAsc = orderBy === property && order === 'asc';
 		setOrder(isAsc ? 'desc' : 'asc');
 		setOrderBy(property);
-
-		// If search is active, trigger server-side sort
-		if (isSearchActive) {
-			handleSearch();
-		} else {
-			// Client-side sort for context data
-			sortUserQuizSubmissionsData(property, isAsc ? 'desc' : 'asc');
-		}
 	};
 
 	useEffect(() => {

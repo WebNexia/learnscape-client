@@ -1,5 +1,5 @@
 import axios from '@utils/axiosInstance';
-import { ReactNode, createContext, useContext, useState } from 'react';
+import { ReactNode, createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { OrganisationContext } from './OrganisationContextProvider';
 import { CommunityMessage } from '../interfaces/communityMessage';
@@ -60,35 +60,38 @@ const CommunityMessagesContextProvider = (props: CommunityMessagesContextProvide
 	const [loading, setLoading] = useState<boolean>(false);
 	const [error, setError] = useState<string | null>(null);
 
-	const fetchMessages = async (topicId: string) => {
-		if (!orgId || !topicId) return [];
+	const fetchMessages = useCallback(
+		async (topicId: string) => {
+			if (!orgId || !topicId) return [];
 
-		setLoading(true);
-		setError(null);
+			setLoading(true);
+			setError(null);
 
-		try {
-			// Fetch first batch of messages with traditional pagination
-			const response = await axios.get(`${base_url}/communityMessages/topic/${topicId}?page=1&limit=250`);
+			try {
+				// Fetch first batch of messages with traditional pagination
+				const response = await axios.get(`${base_url}/communityMessages/topic/${topicId}?page=1&limit=250`);
 
-			// Update totalItems from server response
-			setTotalItems(response.data.totalMessages || response.data.messages.length);
+				// Update totalItems from server response
+				setTotalItems(response.data.totalMessages || response.data.messages.length);
 
-			// Update loadedPages to track which pages we've fetched
-			setLoadedPages([1]);
-			setCurrentTopicId(topicId);
+				// Update loadedPages to track which pages we've fetched
+				setLoadedPages([1]);
+				setCurrentTopicId(topicId);
 
-			// Store messages in React Query cache for this topic
-			queryClient.setQueryData(['communityMessages', topicId], response.data.messages);
+				// Store messages in React Query cache for this topic
+				queryClient.setQueryData(['communityMessages', topicId], response.data.messages);
 
-			return response.data.messages;
-		} catch (error: any) {
-			const errorMessage = error.response?.data?.message || 'Failed to fetch messages';
-			setError(errorMessage);
-			throw error;
-		} finally {
-			setLoading(false);
-		}
-	};
+				return response.data.messages;
+			} catch (error: any) {
+				const errorMessage = error.response?.data?.message || 'Failed to fetch messages';
+				setError(errorMessage);
+				throw error;
+			} finally {
+				setLoading(false);
+			}
+		},
+		[orgId, base_url, queryClient] // ✅ dependencies → now stable
+	);
 
 	const fetchMoreMessages = async (topicId: string, startPage: number, endPage: number) => {
 		if (!orgId || !topicId || topicId !== currentTopicId) {
@@ -123,6 +126,33 @@ const CommunityMessagesContextProvider = (props: CommunityMessagesContextProvide
 			setError('Failed to fetch more messages');
 		}
 	};
+
+	// Progressive pagination gap-filling (batched)
+	useEffect(() => {
+		if (loadedPages.length > 0 && currentTopicId) {
+			const sortedPages = [...loadedPages].sort((a, b) => a - b);
+			const maxPage = Math.max(...sortedPages);
+
+			let missingStart: number | null = null;
+
+			for (let page = 1; page <= maxPage; page++) {
+				if (!loadedPages.includes(page)) {
+					if (missingStart === null) {
+						missingStart = page; // start of a gap
+					}
+				} else if (missingStart !== null) {
+					// end of a gap -> fetch missing range
+					fetchMoreMessages(currentTopicId, missingStart, page - 1);
+					missingStart = null;
+				}
+			}
+
+			// If gap continues till the end
+			if (missingStart !== null) {
+				fetchMoreMessages(currentTopicId, missingStart, maxPage);
+			}
+		}
+	}, [loadedPages, currentTopicId]);
 
 	// Function to refresh data
 	const refreshData = () => {

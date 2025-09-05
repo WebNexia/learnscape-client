@@ -40,7 +40,7 @@ const AdminPublicEvents = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
 
-	const { publicEvents, fetchMorePublicEvents, sortPublicEventsData, totalItems, loadedPages, publicEventsPageNumber, setPublicEventsPageNumber } =
+	const { publicEvents, fetchMorePublicEvents, totalItems, loadedPages, publicEventsPageNumber, setPublicEventsPageNumber } =
 		useContext(AdminPublicEventsContext);
 
 	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
@@ -59,6 +59,9 @@ const AdminPublicEvents = () => {
 
 	const [eventDetailsModalOpen, setEventDetailsModalOpen] = useState<boolean>(false);
 
+	const [orderBy, setOrderBy] = useState<keyof Event>('updatedAt');
+	const [order, setOrder] = useState<'asc' | 'desc'>('desc');
+
 	const pageSize = 50;
 
 	const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
@@ -71,25 +74,26 @@ const AdminPublicEvents = () => {
 
 	// Use appropriate page number for pagination
 	const currentPage = isSearchActive ? searchResultsPage : publicEventsPageNumber;
-	const paginatedPublicEvents = displayEvents.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+	const sortedPublicEvents = [...displayEvents].sort((a, b) => {
+		const aValue = a[orderBy] ?? '';
+		const bValue = b[orderBy] ?? '';
+
+		if (order === 'asc') {
+			return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+		} else {
+			return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
+		}
+	});
+
+	const paginatedPublicEvents = sortedPublicEvents.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
 	const [isNewLessonModalOpen, setIsNewLessonModalOpen] = useState<boolean>(false);
-
-	const [orderBy, setOrderBy] = useState<keyof Event>('title');
-	const [order, setOrder] = useState<'asc' | 'desc'>('asc');
 
 	const handleSort = (property: keyof Event) => {
 		const isAsc = orderBy === property && order === 'asc';
 		setOrder(isAsc ? 'desc' : 'asc');
 		setOrderBy(property);
-
-		// If search is active, trigger server-side sort
-		if (isSearchActive) {
-			handleSearch();
-		} else {
-			// Client-side sort for context data
-			sortPublicEventsData(property, isAsc ? 'desc' : 'asc');
-		}
 	};
 
 	const handleSearch = async () => {

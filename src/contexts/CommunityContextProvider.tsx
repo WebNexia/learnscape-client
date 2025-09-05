@@ -118,18 +118,29 @@ const CommunityContextProvider = (props: CommunityContextProviderProps) => {
 		refetchOnMount: false, // No refetch on component remount
 	});
 
-	// Progressive pagination için aradaki boşlukları doldur
+	// Progressive pagination gap-filling (batched)
 	useEffect(() => {
 		if (loadedPages.length > 0 && orgId) {
 			const sortedPages = [...loadedPages].sort((a, b) => a - b);
 			const maxPage = Math.max(...sortedPages);
 
-			// Aradaki boşlukları bul ve yükle
+			let missingStart: number | null = null;
+
 			for (let page = 1; page <= maxPage; page++) {
 				if (!loadedPages.includes(page)) {
-					console.log(`🔄 Loading missing page ${page} for progressive pagination`);
-					fetchTopics(page);
+					if (missingStart === null) {
+						missingStart = page; // start of a gap
+					}
+				} else if (missingStart !== null) {
+					// end of gap -> fetch missing range
+					fetchMoreTopics(missingStart, page - 1);
+					missingStart = null;
 				}
+			}
+
+			// if gap continues till the end
+			if (missingStart !== null) {
+				fetchMoreTopics(missingStart, maxPage);
 			}
 		}
 	}, [loadedPages, orgId]);

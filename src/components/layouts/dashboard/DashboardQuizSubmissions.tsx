@@ -27,8 +27,8 @@ const DashboardQuizSubmissions = () => {
 	twoWeeksEarlierFromNow.setDate(currentDate.getDate() - 14);
 
 	useEffect(() => {
-		const totalUnchecked = submissions.filter((submission) => !submission.isChecked).length;
-		const totalRecentlyChecked = submissions.filter(
+		const totalUnchecked = submissions?.filter((submission) => !submission.isChecked).length;
+		const totalRecentlyChecked = submissions?.filter(
 			(submission) => submission.isChecked && new Date(submission.updatedAt) > twoWeeksEarlierFromNow
 		).length;
 		setNumberOfUncheckedQuizzes(totalUnchecked);

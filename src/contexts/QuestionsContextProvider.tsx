@@ -97,9 +97,17 @@ const QuestionsContextProvider = ({ children }: QuestionsContextProviderProps) =
 		refetchOnMount: false,
 	});
 
-	const fetchQuestionTypeName = (question: QuestionInterface | null | undefined): string => {
-		if (!question) return '';
-		return question.questionType || '';
+	const fetchQuestionTypeName = (question: QuestionInterface): string => {
+		const filteredQuestionType = questionTypesData?.filter((type: any) => {
+			if (question !== null) {
+				return type._id === question?.questionType || type.name === question?.questionType;
+			}
+		});
+		let questionTypeName: string = '';
+		if (filteredQuestionType && filteredQuestionType.length !== 0) {
+			questionTypeName = filteredQuestionType[0].name;
+		}
+		return questionTypeName;
 	};
 
 	if ((isLoading || allQuestionTypesLoading) && isAuthenticated) return <Loading />;

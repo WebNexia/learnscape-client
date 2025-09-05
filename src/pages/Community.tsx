@@ -65,7 +65,9 @@ const Community = () => {
 	const pageSize = 20;
 
 	// Use search results if active, otherwise use context data
-	const displayTopics = isSearchActive ? searchResults : sortedTopicsData;
+	const displayTopics = (isSearchActive ? searchResults : sortedTopicsData).sort(
+		(a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+	);
 
 	// For pagination, use total items from server when not searching
 	const topicsNumberOfPages = isSearchActive ? Math.ceil(searchResultsTotalItems / pageSize) : Math.ceil(totalItems / pageSize);

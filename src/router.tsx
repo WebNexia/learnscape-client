@@ -339,7 +339,9 @@ export const router = createBrowserRouter([
 				element: (
 					<LearnerRouteGuard>
 						<LearnerQuizSubmissionsContextProvider>
-							<Submissions />
+							<QuestionsContextProvider>
+								<Submissions />
+							</QuestionsContextProvider>
 						</LearnerQuizSubmissionsContextProvider>
 					</LearnerRouteGuard>
 				),
@@ -349,7 +351,9 @@ export const router = createBrowserRouter([
 				element: (
 					<LearnerRouteGuard>
 						<LearnerQuizSubmissionsContextProvider>
-							<SubmissionFeedbackDetails />
+							<QuestionsContextProvider>
+								<SubmissionFeedbackDetails />
+							</QuestionsContextProvider>
 						</LearnerQuizSubmissionsContextProvider>
 					</LearnerRouteGuard>
 				),
