@@ -4,7 +4,7 @@ import { PaymentsContext } from '../../../contexts/PaymentsContextProvider';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 const AdminPayment = () => {
-	const { totalPaymentAmountGBP, totalNumberOfPayments } = useContext(PaymentsContext);
+	// const { totalPaymentAmountGBP, totalNumberOfPayments } = useContext(PaymentsContext);
 	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
 
 	const isMobileSize: boolean = isSmallScreen || isRotatedMedium;
@@ -28,12 +28,12 @@ const AdminPayment = () => {
 			</Box>
 			<Box sx={{ display: 'flex', alignItems: 'center', flex: 8 }}>
 				<Typography variant='h2' sx={{ fontSize: isMobileSize ? '3rem' : '4rem' }}>
-					£{totalPaymentAmountGBP.toFixed(1)}
+					{/* £{totalPaymentAmountGBP.toFixed(1)} */}
 				</Typography>
 			</Box>
 			<Box sx={{ display: 'flex', justifyContent: 'flex-start', width: '100%' }}>
 				<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.8rem' : '0.9rem', margin: '1rem 0 0 1rem' }}>
-					Total Number of Payments: {totalNumberOfPayments}
+					{/* Total Number of Payments: {totalNumberOfPayments} */}
 				</Typography>
 			</Box>
 		</Box>

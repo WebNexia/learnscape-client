@@ -81,7 +81,7 @@ const CreateCodeDialog = ({ isNewCodeModalOpen, setIsNewCodeModalOpen }: CreateC
 
 		try {
 			const res = await axios.post(`${base_url}/promocodes`, newCode);
-			addNewPromoCode({ ...newCode, createdAt: res.data.createdAt, _id: res.data._id });
+			addNewPromoCode({ ...newCode, createdAt: res.data.createdAt, _id: res.data._id } as PromoCode);
 
 			resetForm();
 		} catch (error) {

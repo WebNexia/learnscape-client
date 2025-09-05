@@ -28,12 +28,12 @@ import EmailIcon from '@mui/icons-material/Email';
 import CustomDeleteButton from '../components/forms/customButtons/CustomDeleteButton';
 
 const columns = [
-	{ key: 'name', label: 'Name' },
+	{ key: 'firstName', label: 'Name' },
 	{ key: 'email', label: 'Email' },
 	{ key: 'phone', label: 'Phone' },
-	{ key: 'country', label: 'Country' },
+	{ key: 'countryCode', label: 'Country' },
 	{ key: 'message', label: 'Message' },
-	{ key: 'date', label: 'Date' },
+	{ key: 'createdAt', label: 'Date' },
 	{ key: 'actions', label: 'Actions' },
 ];
 
@@ -56,6 +56,9 @@ const AdminInquiries = () => {
 	const [searchButtonClicked, setSearchButtonClicked] = useState<boolean>(false);
 	const [searchedValue, setSearchedValue] = useState<string>('');
 
+	const [orderBy, setOrderBy] = useState<keyof Inquiry>('createdAt');
+	const [order, setOrder] = useState<'asc' | 'desc'>('desc');
+
 	const pageSize = 50;
 
 	// Use search results if active, otherwise use context data
@@ -66,10 +69,18 @@ const AdminInquiries = () => {
 
 	// Use appropriate page number for pagination
 	const currentPage = isSearchActive ? searchResultsPage : inquiriesPageNumber;
-	const paginatedInquiries = displayInquiries.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+	const sortedInquiries = [...displayInquiries].sort((a, b) => {
+		const aValue = a[orderBy] ?? '';
+		const bValue = b[orderBy] ?? '';
 
-	const [orderBy, setOrderBy] = useState<keyof Inquiry>('createdAt');
-	const [order, setOrder] = useState<'asc' | 'desc'>('desc');
+		if (order === 'asc') {
+			return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+		} else {
+			return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
+		}
+	});
+
+	const paginatedInquiries = sortedInquiries.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
 	// Modal states
 	const [viewModalOpen, setViewModalOpen] = useState<{ [key: number]: boolean }>({});

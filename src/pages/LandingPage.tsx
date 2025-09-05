@@ -3,7 +3,7 @@ import { useRef } from 'react';
 import { Box } from '@mui/material';
 import LandingPageLayout from '../components/landingPage/LandingPageLayout';
 import FeaturesSection from '../components/landingPage/FeaturesSection';
-import LandingPageCourses from '../components/landingPage/LandingPageCourses';
+import LandingPageLatestCourses from '../components/landingPage/LandingPageLatestCourses';
 import TestimonialsSection from '../components/landingPage/TestimonialsSection';
 import CTASection from '../components/landingPage/CTASection';
 import HeroSection from '../components/landingPage/HeroSection';
@@ -51,7 +51,7 @@ const LandingPage = () => {
 				<FeaturesSection />
 				<StatisticsSection />
 				<TestimonialsSection />
-				<LandingPageCourses ref={coursesRef} />
+				<LandingPageLatestCourses ref={coursesRef} />
 				<UpcomingEvents />
 				<LandingPageFAQ />
 				<CTASection coursesRef={coursesRef} />

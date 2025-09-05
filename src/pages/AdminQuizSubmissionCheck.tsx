@@ -292,7 +292,7 @@ const AdminQuizSubmissionCheck = () => {
 						response={response}
 						index={index}
 						fromAdminSubmissions={true}
-						fetchQuestionTypeName={fetchQuestionTypeName}
+						fetchQuestionTypeName={(q) => fetchQuestionTypeName(q)}
 						onCardClick={(response, index) => {
 							setOpenQuestionFeedbackModal(true);
 							setUserResponseToFeedback(response);
@@ -348,13 +348,13 @@ const AdminQuizSubmissionCheck = () => {
 			<CustomDialog openModal={openQuestionFeedbackModal} closeModal={() => setOpenQuestionFeedbackModal(false)} titleSx={{ paddingTop: '0.5rem' }}>
 				<Box sx={{ width: '90%', margin: '1rem auto' }}>
 					<Typography variant='h5' sx={{ mb: '0.5rem', fontSize: isMobileSize ? '0.95rem' : undefined }}>
-						Question ({fetchQuestionTypeName(userResponseToFeedback?.questionId)})
+						Question ({fetchQuestionTypeName?.(userResponseToFeedback?.questionId) || ''})
 					</Typography>
 
 					<QuestionMedia question={userResponseToFeedback?.questionId} isStudentFeedbackPage={true} />
 
-					{fetchQuestionTypeName(userResponseToFeedback?.questionId) !== QuestionType.FITB_TYPING &&
-						fetchQuestionTypeName(userResponseToFeedback?.questionId) !== QuestionType.FITB_DRAG_DROP && (
+					{fetchQuestionTypeName?.(userResponseToFeedback?.questionId) !== QuestionType.FITB_TYPING &&
+						fetchQuestionTypeName?.(userResponseToFeedback?.questionId) !== QuestionType.FITB_DRAG_DROP && (
 							<Typography
 								variant='body2'
 								component='div'
@@ -374,7 +374,7 @@ const AdminQuizSubmissionCheck = () => {
 						)}
 				</Box>
 
-				{fetchQuestionTypeName(userResponseToFeedback?.questionId) === QuestionType.MULTIPLE_CHOICE && (
+				{fetchQuestionTypeName?.(userResponseToFeedback?.questionId) === QuestionType.MULTIPLE_CHOICE && (
 					<Box sx={{ width: '90%', margin: '0 auto' }}>
 						{userResponseToFeedback?.questionId?.options?.map((option: string, index: number) => (
 							<Typography
@@ -412,7 +412,7 @@ const AdminQuizSubmissionCheck = () => {
 					</Box>
 				)}
 
-				{fetchQuestionTypeName(userResponseToFeedback?.questionId) === QuestionType.OPEN_ENDED && (
+				{fetchQuestionTypeName?.(userResponseToFeedback?.questionId) === QuestionType.OPEN_ENDED && (
 					<Box sx={{ width: '90%', margin: '1rem auto' }}>
 						<Typography variant='h6' sx={{ mb: '0.5rem' }}>
 							Student's Answer
@@ -421,7 +421,7 @@ const AdminQuizSubmissionCheck = () => {
 					</Box>
 				)}
 
-				{fetchQuestionTypeName(userResponseToFeedback?.questionId) === QuestionType.TRUE_FALSE && (
+				{fetchQuestionTypeName?.(userResponseToFeedback?.questionId) === QuestionType.TRUE_FALSE && (
 					<Box sx={{ width: '90%', margin: '1rem auto' }}>
 						<Box sx={{ marginBottom: '2rem' }}>
 							<Typography variant='h6' sx={{ mb: '0.5rem' }}>
@@ -438,7 +438,7 @@ const AdminQuizSubmissionCheck = () => {
 					</Box>
 				)}
 
-				{fetchQuestionTypeName(userResponseToFeedback?.questionId) === QuestionType.MATCHING && (
+				{fetchQuestionTypeName?.(userResponseToFeedback?.questionId) === QuestionType.MATCHING && (
 					<Box sx={{ width: '90%', margin: '0rem auto' }}>
 						<MatchingPreview
 							initialPairs={userResponseToFeedback?.questionId.matchingPairs}
@@ -450,7 +450,7 @@ const AdminQuizSubmissionCheck = () => {
 					</Box>
 				)}
 
-				{fetchQuestionTypeName(userResponseToFeedback?.questionId) === QuestionType.FITB_DRAG_DROP && (
+				{fetchQuestionTypeName?.(userResponseToFeedback?.questionId) === QuestionType.FITB_DRAG_DROP && (
 					<Box sx={{ width: '90%', margin: '0rem auto' }}>
 						<FillInTheBlanksDragDrop
 							textWithBlanks={userResponseToFeedback?.questionId.question}
@@ -463,7 +463,7 @@ const AdminQuizSubmissionCheck = () => {
 					</Box>
 				)}
 
-				{fetchQuestionTypeName(userResponseToFeedback?.questionId) === QuestionType.FITB_TYPING && (
+				{fetchQuestionTypeName?.(userResponseToFeedback?.questionId) === QuestionType.FITB_TYPING && (
 					<Box sx={{ width: '90%', margin: '0rem auto' }}>
 						<FillInTheBlanksTyping
 							textWithBlanks={userResponseToFeedback?.questionId.question}
@@ -476,7 +476,7 @@ const AdminQuizSubmissionCheck = () => {
 					</Box>
 				)}
 
-				{fetchQuestionTypeName(userResponseToFeedback?.questionId) === QuestionType.AUDIO_VIDEO && (
+				{fetchQuestionTypeName?.(userResponseToFeedback?.questionId) === QuestionType.AUDIO_VIDEO && (
 					<Box sx={{ width: '90%', margin: '1rem auto' }}>
 						<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem' }}>
 							Student's Recording

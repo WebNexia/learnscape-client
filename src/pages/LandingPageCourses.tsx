@@ -1,8 +1,8 @@
-import { Box, IconButton, Typography } from '@mui/material';
+import { Box, IconButton, Typography, Button } from '@mui/material';
 import LandingPageLayout from '../components/landingPage/LandingPageLayout';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import { useContext, useState } from 'react';
-import { CoursesContext } from '../contexts/CoursesContextProvider';
+import { AllPublicCoursesContext } from '../contexts/AllPublicCoursesContextProvider';
 import { SingleCourse } from '../interfaces/course';
 import DashboardCourseCard from '../components/userCourses/DashboardCourseCard';
 import { InfoOutlined } from '@mui/icons-material';
@@ -17,13 +17,12 @@ const LandingPageCourses = () => {
 
 	const { orgId } = useContext(OrganisationContext);
 
-	const { sortedPublicCoursesData } = useContext(CoursesContext);
+	const { courses, loading, error, hasMore, loadMore } = useContext(AllPublicCoursesContext);
 
 	const [isInfoDialogOpen, setIsInfoDialogOpen] = useState<boolean>(false);
 
-	const publishedCourses = sortedPublicCoursesData
-		.filter((course: SingleCourse) => course.isActive && course.publishedAt && course.orgId === orgId)
-		.sort((a, b) => new Date(b.publishedAt!).getTime() - new Date(a.publishedAt!).getTime());
+	// Filter courses by organization
+	const publishedCourses = courses.filter((course: SingleCourse) => course.orgId === orgId);
 
 	return (
 		<LandingPageLayout>
@@ -55,12 +54,51 @@ const LandingPageCourses = () => {
 					</IconButton>
 				</Box>
 				<Box sx={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '1rem', mt: '3rem', width: '85%' }}>
-					{publishedCourses.length > 0 ? (
-						publishedCourses.map((course: SingleCourse) => (
-							<Box key={course._id} sx={{}}>
-								<DashboardCourseCard course={course} fromHomePage />
-							</Box>
-						))
+					{error ? (
+						<Typography
+							sx={{
+								textAlign: 'center',
+								fontSize: '1.25rem',
+								color: 'error.main',
+								fontFamily: 'Varela Round',
+								mt: 5,
+							}}>
+							{error}
+						</Typography>
+					) : publishedCourses.length > 0 ? (
+						<>
+							{publishedCourses.map((course: SingleCourse) => (
+								<Box key={course._id} sx={{}}>
+									<DashboardCourseCard course={course} fromHomePage />
+								</Box>
+							))}
+
+							{/* Load More Button */}
+							{hasMore && (
+								<Box sx={{ width: '100%', textAlign: 'center', mt: '2rem' }}>
+									<Button
+										onClick={loadMore}
+										disabled={loading}
+										variant='contained'
+										sx={{
+											'backgroundColor': '#2C3E50',
+											'color': 'white',
+											'fontFamily': 'Varela Round',
+											'fontSize': '1rem',
+											'fontWeight': 500,
+											'padding': '0.75rem 2rem',
+											'&:hover': {
+												backgroundColor: '#34495E',
+											},
+											'&:disabled': {
+												backgroundColor: '#ccc',
+											},
+										}}>
+										{loading ? 'Yükleniyor...' : 'Daha Fazla Yükle'}
+									</Button>
+								</Box>
+							)}
+						</>
 					) : (
 						<Typography
 							sx={{

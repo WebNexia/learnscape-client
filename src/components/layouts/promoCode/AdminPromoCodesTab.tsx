@@ -23,16 +23,8 @@ import CustomDeleteButton from '../../forms/customButtons/CustomDeleteButton';
 const AdminPromoCodesTab = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
-	const {
-		promoCodes,
-		sortPromoCodesData,
-		totalItems,
-		loadedPages,
-		promoCodesPageNumber,
-		setPromoCodesPageNumber,
-		fetchMorePromoCodes,
-		removePromoCode,
-	} = useContext(PromoCodesContext);
+	const { promoCodes, totalItems, loadedPages, promoCodesPageNumber, setPromoCodesPageNumber, fetchMorePromoCodes, removePromoCode } =
+		useContext(PromoCodesContext);
 
 	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -49,6 +41,9 @@ const AdminPromoCodesTab = () => {
 	const [searchButtonClicked, setSearchButtonClicked] = useState<boolean>(false);
 	const [searchedValue, setSearchedValue] = useState<string>('');
 
+	const [orderBy, setOrderBy] = useState<keyof PromoCode>('updatedAt');
+	const [order, setOrder] = useState<'asc' | 'desc'>('desc');
+
 	const pageSize = 50;
 
 	// Use search results if active, otherwise use context data
@@ -60,14 +55,20 @@ const AdminPromoCodesTab = () => {
 	// Use appropriate page number for pagination
 	const currentPage = isSearchActive ? searchResultsPage : promoCodesPageNumber;
 
+	const sortedPromoCodes = [...displayPromoCodes].sort((a, b) => {
+		const aValue = a[orderBy] ?? '';
+		const bValue = b[orderBy] ?? '';
+
+		if (order === 'asc') {
+			return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+		} else {
+			return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
+		}
+	});
+
 	// For search results, slice the accumulated data based on current page
 	// For context data, use client-side pagination
-	const paginatedPromoCodes = isSearchActive
-		? searchResults.slice((currentPage - 1) * pageSize, currentPage * pageSize)
-		: displayPromoCodes.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-
-	const [orderBy, setOrderBy] = useState<keyof PromoCode>('updatedAt');
-	const [order, setOrder] = useState<'asc' | 'desc'>('asc');
+	const paginatedPromoCodes = sortedPromoCodes.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
 	const [isNewCodeModalOpen, setIsNewCodeModalOpen] = useState<boolean>(false);
 	const [isEditCodeModalOpen, setIsEditCodeModalOpen] = useState<boolean[]>([]);
@@ -79,14 +80,6 @@ const AdminPromoCodesTab = () => {
 		const isAsc = orderBy === property && order === 'asc';
 		setOrder(isAsc ? 'desc' : 'asc');
 		setOrderBy(property);
-
-		// If search is active, trigger server-side sort
-		if (isSearchActive) {
-			handleSearch();
-		} else {
-			// Client-side sort for context data
-			sortPromoCodesData(property, isAsc ? 'desc' : 'asc');
-		}
 	};
 
 	useEffect(() => {
@@ -245,15 +238,18 @@ const AdminPromoCodesTab = () => {
 		setIsDeleteCodeModalOpen(updatedState);
 	};
 
-	const deleteCode = async (codeId: string): Promise<void> => {
+	const deleteCode = async (code: string): Promise<void> => {
 		try {
-			removePromoCode(codeId);
-			// Also remove from search results if search is active
+			// Find the promo code to get its ID
+			const promoCodeToDelete = promoCodes.find((pc) => pc.code === code);
+			if (!promoCodeToDelete) return;
+
 			if (isSearchActive) {
-				setSearchResults((prev) => prev.filter((code) => code._id !== codeId));
+				setSearchResults((prev) => prev.filter((pc) => pc.code !== code));
 				setSearchResultsTotalItems((prev) => Math.max(0, prev - 1));
 			}
-			await axios.delete(`${base_url}/promocodes/${codeId}`);
+			await axios.delete(`${base_url}/promocodes/${code}`);
+			removePromoCode(promoCodeToDelete._id);
 		} catch (error) {
 			console.error('Delete promo code error:', error);
 		}

@@ -1,8 +1,8 @@
-import { Box, Tab, Tabs, Typography, Grid } from '@mui/material';
+import { Box, Tab, Tabs, Typography, Grid, Button } from '@mui/material';
 import LandingPageLayout from '../components/landingPage/LandingPageLayout';
 import theme from '../themes';
 import { useContext, useEffect, useState } from 'react';
-import { DocumentsContext } from '../contexts/DocumentsContextProvider';
+import { LandingPageResourcesContext } from '../contexts/LandingPageResourcesContextProvider';
 import { useLocation } from 'react-router-dom';
 import DocumentCard from '../components/landingPage/DocumentCard';
 import { Document } from '../interfaces/document';
@@ -16,7 +16,7 @@ interface Price {
 
 const LandingPageResources = () => {
 	const [value, setValue] = useState<string>('free');
-	const { sortedLandingPageDocumentsData } = useContext(DocumentsContext);
+	const { resources, loading, hasMore, loadMore } = useContext(LandingPageResourcesContext);
 	const [freeDocuments, setFreeDocuments] = useState<Document[]>([]);
 	const [paidDocuments, setPaidDocuments] = useState<Document[]>([]);
 	const location = useLocation();
@@ -48,13 +48,13 @@ const LandingPageResources = () => {
 	};
 
 	useEffect(() => {
-		if (sortedLandingPageDocumentsData) {
-			const free = sortedLandingPageDocumentsData.filter((doc: Document) => isDocumentFree(doc));
-			const paid = sortedLandingPageDocumentsData.filter((doc: Document) => !isDocumentFree(doc));
+		if (resources) {
+			const free = resources.filter((doc: Document) => isDocumentFree(doc));
+			const paid = resources.filter((doc: Document) => !isDocumentFree(doc));
 			setFreeDocuments(free);
 			setPaidDocuments(paid);
 		}
-	}, [sortedLandingPageDocumentsData, location.search]);
+	}, [resources, location.search]);
 
 	const userCurrency = getUserCurrency();
 
@@ -126,6 +126,37 @@ const LandingPageResources = () => {
 							</Grid>
 						)}
 					</Box>
+
+					{/* Load More Button and Total Count */}
+					{resources.length > 0 && (
+						<>
+							{/* Load More Button */}
+							{hasMore && (
+								<Box sx={{ width: '100%', textAlign: 'center', mt: '2rem' }}>
+									<Button
+										onClick={loadMore}
+										disabled={loading}
+										variant='contained'
+										sx={{
+											'backgroundColor': '#2C3E50',
+											'color': 'white',
+											'fontFamily': 'Varela Round',
+											'fontSize': '1rem',
+											'fontWeight': 500,
+											'padding': '0.75rem 2rem',
+											'&:hover': {
+												backgroundColor: '#34495E',
+											},
+											'&:disabled': {
+												backgroundColor: '#ccc',
+											},
+										}}>
+										{loading ? 'Yükleniyor...' : 'Daha Fazla Yükle'}
+									</Button>
+								</Box>
+							)}
+						</>
+					)}
 
 					<ChatWhatsApp />
 					<ScrollToTopButton />

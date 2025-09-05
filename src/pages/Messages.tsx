@@ -333,9 +333,17 @@ const Messages = () => {
 		maxSizeInMB: 1,
 	});
 
-	// Upload limit management
+	// Upload limit management - only for learners
+	const uploadLimitHook = user?.role === 'learner' ? useUploadLimit() : null;
 	const { uploadInfo, checkCanUploadImage, checkCanUploadAudio, getRemainingImageUploads, getFormattedResetTime, refreshUploadStats } =
-		useUploadLimit();
+		uploadLimitHook || {
+			uploadInfo: { imageUploadsRemaining: 999, audioUploadsRemaining: 999, imageUploadsUsed: 0, audioUploadsUsed: 0 },
+			checkCanUploadImage: () => true,
+			checkCanUploadAudio: () => true,
+			getRemainingImageUploads: () => 999,
+			getFormattedResetTime: () => '',
+			refreshUploadStats: () => Promise.resolve(),
+		};
 
 	const handleEmojiSelect = useCallback((emoji: any) => {
 		setCurrentMessage((prevMessage) => prevMessage + emoji.native);
@@ -387,15 +395,15 @@ const Messages = () => {
 		if (isImgSizeLarge) setIsLargeImgMessageOpen(true);
 	}, [isImgSizeLarge]);
 
-	// Cache only ParticipantData (minimal details)
-	const participantCache = useMemo(() => JSON.parse(localStorage.getItem('participantCache') || '{}'), []);
+	// Cache only ParticipantData (minimal details) - use ref to avoid recreating function
+	const participantCacheRef = useRef(JSON.parse(localStorage.getItem('participantCache') || '{}'));
 
 	// Function to fetch and cache only ParticipantData
 	const fetchParticipantData = useCallback(
 		async (firebaseUserId: string): Promise<ParticipantData | null> => {
 			// Check if the participant data is already cached
-			if (participantCache[firebaseUserId]) {
-				return participantCache[firebaseUserId];
+			if (participantCacheRef.current[firebaseUserId]) {
+				return participantCacheRef.current[firebaseUserId];
 			}
 
 			try {
@@ -413,8 +421,8 @@ const Messages = () => {
 						imageUrl: '',
 						role: '',
 					};
-					participantCache[firebaseUserId] = fallbackData;
-					localStorage.setItem('participantCache', JSON.stringify(participantCache));
+					participantCacheRef.current[firebaseUserId] = fallbackData;
+					localStorage.setItem('participantCache', JSON.stringify(participantCacheRef.current));
 					return fallbackData;
 				}
 
@@ -427,8 +435,8 @@ const Messages = () => {
 				};
 
 				// Cache participant data in localStorage
-				participantCache[firebaseUserId] = participantData;
-				localStorage.setItem('participantCache', JSON.stringify(participantCache));
+				participantCacheRef.current[firebaseUserId] = participantData;
+				localStorage.setItem('participantCache', JSON.stringify(participantCacheRef.current));
 
 				return participantData;
 			} catch (error) {
@@ -436,7 +444,7 @@ const Messages = () => {
 				return null;
 			}
 		},
-		[participantCache, base_url]
+		[base_url] // Only depend on base_url, not participantCache
 	);
 
 	useEffect(() => {

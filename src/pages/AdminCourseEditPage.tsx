@@ -31,6 +31,7 @@ import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/Cust
 import { useAuth } from '../hooks/useAuth';
 import { validateImageUrl, validateDocumentUrl } from '../utils/urlValidation';
 import { Snackbar, Alert } from '@mui/material';
+import { useQueryClient } from 'react-query';
 
 export interface ChapterUpdateTrack {
 	chapterId: string;
@@ -75,8 +76,8 @@ const AdminCourseEditPage = () => {
 	const { user } = useAuth();
 
 	const { orgId } = useContext(OrganisationContext);
-	const { addNewLesson, updateLessons } = useContext(LessonsContext);
-	const { addNewDocument, updateDocuments } = useContext(DocumentsContext);
+	const { addNewLesson, updateLesson } = useContext(LessonsContext);
+	const { addNewDocument, updateDocument } = useContext(DocumentsContext);
 	const { updateCoursePublishing, updateCourse } = useContext(CoursesContext);
 
 	const [isEditMode, setIsEditMode] = useState<boolean>(false);
@@ -111,6 +112,8 @@ const AdminCourseEditPage = () => {
 	const [isPopStateNavigation, setIsPopStateNavigation] = useState(false);
 	const [isUrlErrorOpen, setIsUrlErrorOpen] = useState<boolean>(false);
 	const [urlErrorMessage, setUrlErrorMessage] = useState<string>('');
+
+	const queryClient = useQueryClient();
 
 	useEffect(() => {
 		const handlePopState = () => {
@@ -322,6 +325,8 @@ const AdminCourseEditPage = () => {
 					updatedByImageUrl: responseUpdatedData.updatedByImageUrl,
 					updatedByRole: responseUpdatedData.updatedByRole,
 				});
+				queryClient.invalidateQueries(['allCourses', orgId]);
+				queryClient.invalidateQueries(['allLessons', orgId]);
 
 				setHasUnsavedChanges(false);
 				setIsEditMode(false);
@@ -473,7 +478,7 @@ const AdminCourseEditPage = () => {
 								createdByImageUrl: updatedDocumentResponseData.createdByImageUrl,
 								createdByRole: updatedDocumentResponseData.createdByRole,
 							};
-							updateDocuments(updatedDocument);
+							updateDocument(updatedDocument);
 						} catch (error) {
 							console.error('Error updating question:', error);
 						}
@@ -515,11 +520,13 @@ const AdminCourseEditPage = () => {
 						updatedByImageUrl: responseUpdatedData.updatedByImageUrl,
 						updatedByRole: responseUpdatedData.updatedByRole,
 					});
+					queryClient.invalidateQueries(['allCourses', orgId]);
+					queryClient.invalidateQueries(['allLessons', orgId]);
 
 					// Update lesson contexts with current usedInCourses data
 					updatedChapters?.forEach((chapter) => {
 						chapter.lessons?.forEach((lesson) => {
-							updateLessons({
+							updateLesson({
 								...lesson,
 								usedInCourses: lesson.usedInCourses || [],
 							});
@@ -528,7 +535,7 @@ const AdminCourseEditPage = () => {
 
 					// Update document contexts with current usedInCourses data
 					updatedDocuments?.forEach((document) => {
-						updateDocuments({
+						updateDocument({
 							...document,
 							usedInCourses: document.usedInCourses || [],
 						});
@@ -935,7 +942,7 @@ const AdminCourseEditPage = () => {
 													createdAt: document.createdAt,
 													updatedAt: new Date().toISOString(),
 												};
-												updateDocuments(updatedDocument);
+												updateDocument(updatedDocument);
 												setHasUnsavedChanges(true);
 												return {
 													...prevData,

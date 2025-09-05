@@ -36,7 +36,12 @@ const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, set
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
 	// Upload limit management
-	const { getRemainingAudioUploads, getRemainingImageUploads } = useUploadLimit();
+	// Upload limit management - only for learners
+	const uploadLimitHook = user?.role === 'learner' ? useUploadLimit() : null;
+	const { getRemainingAudioUploads, getRemainingImageUploads } = uploadLimitHook || {
+		getRemainingAudioUploads: () => 999,
+		getRemainingImageUploads: () => 999,
+	};
 
 	const [enterImageUrl, setEnterImageUrl] = useState(true);
 	const [isAudioUploading, setIsAudioUploading] = useState(false);

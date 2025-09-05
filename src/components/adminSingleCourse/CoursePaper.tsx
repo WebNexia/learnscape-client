@@ -103,7 +103,7 @@ const CoursePaper = ({
 				clonedFromId: response.data.clonedCourse.clonedFromId,
 				createdAt: response.data.clonedCourse.createdAt,
 				updatedAt: response.data.clonedCourse.updatedAt,
-			});
+			} as SingleCourse);
 
 			setIsCourseCloned(true);
 		} catch (error) {

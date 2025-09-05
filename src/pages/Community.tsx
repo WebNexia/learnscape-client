@@ -29,8 +29,7 @@ export interface NewTopic {
 }
 
 const Community = () => {
-	const { sortedTopicsData, setTopicsPageNumber, topicsPageNumber, fetchMoreTopics, numberOfPages, totalItems, loadedPages } =
-		useContext(CommunityContext);
+	const { sortedTopicsData, setTopicsPageNumber, topicsPageNumber, fetchMoreTopics, totalItems, loadedPages } = useContext(CommunityContext);
 	const { orgId } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
 
@@ -66,10 +65,12 @@ const Community = () => {
 	const pageSize = 20;
 
 	// Use search results if active, otherwise use context data
-	const displayTopics = isSearchActive ? searchResults : sortedTopicsData;
+	const displayTopics = (isSearchActive ? searchResults : sortedTopicsData).sort(
+		(a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+	);
 
 	// For pagination, use total items from server when not searching
-	const topicsNumberOfPages = isSearchActive ? Math.ceil(searchResultsTotalItems / pageSize) : numberOfPages;
+	const topicsNumberOfPages = isSearchActive ? Math.ceil(searchResultsTotalItems / pageSize) : Math.ceil(totalItems / pageSize);
 
 	// Use appropriate page number for pagination
 	const currentPage = isSearchActive ? searchResultsPage : topicsPageNumber;

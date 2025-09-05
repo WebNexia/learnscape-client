@@ -38,7 +38,12 @@ const EditTopicDialog = ({ editTopicModalOpen, topic, setEditTopicModalOpen, set
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
 	// Upload limit management
-	const { getRemainingAudioUploads, getRemainingImageUploads } = useUploadLimit();
+	// Upload limit management - only for learners
+	const uploadLimitHook = user?.role === 'learner' ? useUploadLimit() : null;
+	const { getRemainingAudioUploads, getRemainingImageUploads } = uploadLimitHook || {
+		getRemainingAudioUploads: () => 999,
+		getRemainingImageUploads: () => 999,
+	};
 
 	const [enterImageUrl, setEnterImageUrl] = useState(true);
 	const [isAudioUploading, setIsAudioUploading] = useState(false);
@@ -58,7 +63,7 @@ const EditTopicDialog = ({ editTopicModalOpen, topic, setEditTopicModalOpen, set
 	useEffect(() => {
 		setShowAudioRecorder(!!topic.audioUrl);
 		setShowImageUploader(!!topic.imageUrl);
-	}, [topic]);
+	}, [topic.audioUrl, topic.imageUrl]);
 
 	const reset = () => {
 		setEditTopicModalOpen(false);
@@ -124,8 +129,6 @@ const EditTopicDialog = ({ editTopicModalOpen, topic, setEditTopicModalOpen, set
 				imageUrl: topic.imageUrl,
 				audioUrl: topic.audioUrl,
 			});
-
-			fetchTopics(1);
 
 			updateTopics({
 				...topic,

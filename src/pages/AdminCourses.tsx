@@ -21,7 +21,7 @@ import {
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { CoursesContext } from '../contexts/CoursesContextProvider';
-import { Price, SingleCourse } from '../interfaces/course';
+import { Instructor, Price, SingleCourse } from '../interfaces/course';
 import { Delete, Edit, FileCopy, Search, Visibility } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 
@@ -46,18 +46,8 @@ import CustomCancelButton from '../components/forms/customButtons/CustomCancelBu
 const AdminCourses = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const navigate = useNavigate();
-	const {
-		courses,
-		error,
-		fetchMoreCourses,
-		addNewCourse,
-		removeCourse,
-		sortCoursesData,
-		totalItems,
-		loadedPages,
-		coursesPageNumber,
-		setCoursesPageNumber,
-	} = useContext(CoursesContext);
+	const { courses, error, fetchMoreCourses, addNewCourse, removeCourse, totalItems, loadedPages, coursesPageNumber, setCoursesPageNumber } =
+		useContext(CoursesContext);
 	const { orgId } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
 
@@ -88,6 +78,9 @@ const AdminCourses = () => {
 	const [checked, setChecked] = useState<boolean>(false);
 	const [isExternal, setIsExternal] = useState<boolean>(false);
 
+	const [orderBy, setOrderBy] = useState<keyof SingleCourse>('updatedAt');
+	const [order, setOrder] = useState<'asc' | 'desc'>('desc');
+
 	const pageSize = 50;
 
 	// Use search results if active, otherwise use context data
@@ -98,10 +91,17 @@ const AdminCourses = () => {
 
 	// Use appropriate page number for pagination
 	const currentPage = isSearchActive ? searchResultsPage : coursesPageNumber;
-	const paginatedCourses = displayCourses.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+	const sortedCourses = [...displayCourses].sort((a, b) => {
+		const aValue = a[orderBy] ?? '';
+		const bValue = b[orderBy] ?? '';
 
-	const [orderBy, setOrderBy] = useState<keyof SingleCourse>('title');
-	const [order, setOrder] = useState<'asc' | 'desc'>('asc');
+		if (order === 'asc') {
+			return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+		} else {
+			return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
+		}
+	});
+	const paginatedCourses = sortedCourses.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
 	if (error) return <Typography color='error'>{error}</Typography>;
 
@@ -210,14 +210,6 @@ const AdminCourses = () => {
 		const isAsc = orderBy === property && order === 'asc';
 		setOrder(isAsc ? 'desc' : 'asc');
 		setOrderBy(property);
-
-		// If search is active, trigger server-side sort
-		if (isSearchActive) {
-			handleSearch();
-		} else {
-			// Client-side sort for context data
-			sortCoursesData(property, isAsc ? 'desc' : 'asc');
-		}
 	};
 
 	const handleSearch = async () => {
@@ -369,11 +361,11 @@ const AdminCourses = () => {
 				},
 				instructor: {
 					name: user?.firstName.toUpperCase() + ' ' + user?.lastName.toUpperCase(),
-					userId: user?._id,
-					imageUrl: user?.imageUrl,
-					email: user?.email,
-				},
-			});
+					userId: user?._id!,
+					imageUrl: user?.imageUrl!,
+					email: user?.email!,
+				} as Instructor,
+			} as SingleCourse);
 		} catch (error) {
 			console.error('Create course error:', error);
 		}
@@ -392,11 +384,34 @@ const AdminCourses = () => {
 				clonedFromTitle: response.data.clonedCourse.clonedFromTitle,
 				createdAt: response.data.clonedCourse.createdAt,
 				updatedAt: response.data.clonedCourse.updatedAt,
-			});
+			} as SingleCourse);
 
 			setIsCourseCloned(true);
-		} catch (error) {
+		} catch (error: any) {
 			console.error('Clone course error:', error);
+
+			// Show user-friendly error message
+			let errorMessage = 'Failed to clone course. Please try again.';
+
+			if (error.response?.status === 500) {
+				const serverError = error.response.data?.error;
+				if (serverError?.includes('title') && serverError?.includes('longer than')) {
+					errorMessage = 'Course title is too long for cloning. Please contact support.';
+				} else if (serverError?.includes('validation failed')) {
+					errorMessage = 'Course data validation failed. Please check the course details.';
+				}
+			} else if (error.response?.status === 429) {
+				errorMessage = 'Cloning is already in progress for this course. Please wait.';
+			} else if (error.response?.status === 404) {
+				errorMessage = 'Course not found. It may have been deleted.';
+			} else if (error.response?.status === 403) {
+				errorMessage = 'You do not have permission to clone courses.';
+			}
+
+			// Show error snackbar
+			setSnackbarMessage(errorMessage);
+			setSnackbarSeverity('error');
+			setSnackbarOpen(true);
 		} finally {
 			setIsCloning(false);
 		}
@@ -970,8 +985,8 @@ const AdminCourses = () => {
 											}
 										/>
 
-										<CustomTableCell value={dateFormatter(course.startingDate)} />
-										{!isVerySmallScreen && <CustomTableCell value={course.durationWeeks} />}
+										<CustomTableCell value={dateFormatter(course.startingDate) || 'N/A'} />
+										{!isVerySmallScreen && <CustomTableCell value={course.durationWeeks || 'N/A'} />}
 										{!isVerySmallScreen && <CustomTableCell value={dateFormatter(course.createdAt)} />}
 										{!isVerySmallScreen && <CustomTableCell value={dateFormatter(course.updatedAt)} />}
 
@@ -1073,11 +1088,16 @@ const AdminCourses = () => {
 																</Typography>
 															</li>
 															<li>
+																<Typography variant='body2' sx={{ mb: '0.25rem' }}>
+																	Keep the original pricing for all currencies
+																</Typography>
+															</li>
+															<li>
 																<Typography variant='body2'>Mark the cloned course as unpublished by default</Typography>
 															</li>
 														</ul>
 														<Typography variant='body2' sx={{ marginTop: '1rem' }}>
-															You can customize the cloned course before publishing it.
+															You can customize the cloned course (including pricing) before publishing it.
 														</Typography>
 													</DialogContent>
 

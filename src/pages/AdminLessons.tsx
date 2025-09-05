@@ -43,7 +43,7 @@ const AdminLessons = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const navigate = useNavigate();
 
-	const { lessons, error, fetchMoreLessons, removeLesson, totalItems, loadedPages, lessonsPageNumber, setLessonsPageNumber, sortLessonsData } =
+	const { lessons, error, fetchMoreLessons, removeLesson, totalItems, loadedPages, lessonsPageNumber, setLessonsPageNumber } =
 		useContext(LessonsContext);
 	const { orgId } = useContext(OrganisationContext);
 
@@ -61,6 +61,9 @@ const AdminLessons = () => {
 	const [searchButtonClicked, setSearchButtonClicked] = useState<boolean>(false);
 	const [searchedValue, setSearchedValue] = useState<string>('');
 
+	const [orderBy, setOrderBy] = useState<keyof Lesson>('updatedAt');
+	const [order, setOrder] = useState<'asc' | 'desc'>('desc');
+
 	const pageSize = 50;
 
 	// Use search results if active, otherwise use context data
@@ -71,7 +74,17 @@ const AdminLessons = () => {
 
 	// Use appropriate page number for pagination
 	const currentPage = isSearchActive ? searchResultsPage : lessonsPageNumber;
-	const paginatedLessons = displayLessons.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+	const sortedLessons = [...displayLessons].sort((a, b) => {
+		const aValue = a[orderBy] ?? '';
+		const bValue = b[orderBy] ?? '';
+
+		if (order === 'asc') {
+			return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+		} else {
+			return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
+		}
+	});
+	const paginatedLessons = sortedLessons.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
 	const [isNewLessonModalOpen, setIsNewLessonModalOpen] = useState<boolean>(false);
 
@@ -79,9 +92,6 @@ const AdminLessons = () => {
 	const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
 	const [snackbarMessage, setSnackbarMessage] = useState<string>('');
 	const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
-
-	const [orderBy, setOrderBy] = useState<keyof Lesson>('title');
-	const [order, setOrder] = useState<'asc' | 'desc'>('asc');
 
 	const handlePageChange = async (newPage: number) => {
 		// Set appropriate page number based on search state
@@ -145,14 +155,6 @@ const AdminLessons = () => {
 		const isAsc = orderBy === property && order === 'asc';
 		setOrder(isAsc ? 'desc' : 'asc');
 		setOrderBy(property);
-
-		// If search is active, trigger server-side sort
-		if (isSearchActive) {
-			handleSearch();
-		} else {
-			// Client-side sort for context data
-			sortLessonsData(property, isAsc ? 'desc' : 'asc');
-		}
 	};
 
 	const handleSearch = async () => {

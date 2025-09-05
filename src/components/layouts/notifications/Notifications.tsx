@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from '@utils/axiosInstance';
 
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
+import EventsContextProvider from '../../../contexts/EventsContextProvider';
 
 interface Notification {
 	id: string;
@@ -226,4 +227,13 @@ const NotificationsBox = ({ showUnreadOnly }: NotificationsBoxProps) => {
 	);
 };
 
-export default NotificationsBox;
+// Wrapper component to provide EventsContext
+const NotificationsBoxWithContext = (props: NotificationsBoxProps) => {
+	return (
+		<EventsContextProvider>
+			<NotificationsBox {...props} />
+		</EventsContextProvider>
+	);
+};
+
+export default NotificationsBoxWithContext;

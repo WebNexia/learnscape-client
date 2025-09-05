@@ -547,7 +547,13 @@ const CommunityTopicPage = () => {
 	}, []);
 
 	// Upload limit management
-	const { getRemainingAudioUploads, getRemainingImageUploads, refreshUploadStats } = useUploadLimit();
+	// Upload limit management - only for learners
+	const uploadLimitHook = user?.role === 'learner' ? useUploadLimit() : null;
+	const { getRemainingAudioUploads, getRemainingImageUploads, refreshUploadStats } = uploadLimitHook || {
+		getRemainingAudioUploads: () => 999,
+		getRemainingImageUploads: () => 999,
+		refreshUploadStats: () => Promise.resolve(),
+	};
 
 	// Progressive pagination handler
 	const handlePageChange = async (newPage: number) => {

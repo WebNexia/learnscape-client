@@ -7,7 +7,7 @@ import CustomActionBtn from '../components/layouts/table/CustomActionBtn';
 import { PendingOutlined, Search } from '@mui/icons-material';
 import CustomTablePagination from '../components/layouts/table/CustomTablePagination';
 import { QuizSubmission } from '../interfaces/quizSubmission';
-import { QuizSubmissionsContext } from '../contexts/QuizSubmissionsContextProvider';
+import { LearnerQuizSubmissionsContext } from '../contexts/LearnerQuizSubmissionsContextProvider';
 import theme from '../themes';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
 import { truncateText } from '../utils/utilText';
@@ -20,8 +20,8 @@ import axios from '@utils/axiosInstance';
 
 const Submissions = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
-	const { sortedUserQuizSubmissionsData, sortUserQuizSubmissionsData, fetchQuizSubmissionsByUserId, fetchMoreQuizSubmissions, loadedPages } =
-		useContext(QuizSubmissionsContext);
+	const { userQuizSubmissions, fetchMoreUserQuizSubmissions, loadedPages, totalItems, userSubmissionsPageNumber, setUserSubmissionsPageNumber } =
+		useContext(LearnerQuizSubmissionsContext);
 	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
@@ -32,7 +32,7 @@ const Submissions = () => {
 		(data: UserCoursesIdsWithCourseIds) => data.courseTitle
 	);
 
-	const [submissionsPageNumber, setSubmissionsPageNumber] = useState<number>(1);
+	// Use context pagination state instead of local state
 	const [searchValue, setSearchValue] = useState<string>('');
 	const [filterValue, setFilterValue] = useState<string>('');
 
@@ -45,57 +45,57 @@ const Submissions = () => {
 	const [searchButtonClicked, setSearchButtonClicked] = useState<boolean>(false);
 	const [searchedValue, setSearchedValue] = useState<string>('');
 
+	const [orderBy, setOrderBy] = useState<keyof QuizSubmission>('updatedAt');
+	const [order, setOrder] = useState<'asc' | 'desc'>('desc');
+
 	const pageSize = 50;
+	const contextLimit = 150; // Match the context provider limit
 
 	// Use search results if active, otherwise use context data
-	const displaySubmissions = isSearchActive ? searchResults : sortedUserQuizSubmissionsData;
+	const displaySubmissions = isSearchActive ? searchResults : userQuizSubmissions;
 
 	// For pagination, use total items from server when not searching
-	const submissionsNumberOfPages = isSearchActive
-		? Math.ceil(searchResultsTotalItems / pageSize)
-		: Math.ceil(sortedUserQuizSubmissionsData.length / pageSize);
+	const submissionsNumberOfPages = isSearchActive ? Math.ceil(searchResultsTotalItems / pageSize) : Math.ceil(totalItems / pageSize);
 
 	// Use appropriate page number for pagination
-	const currentPage = isSearchActive ? searchResultsPage : submissionsPageNumber;
+	const currentPage = isSearchActive ? searchResultsPage : userSubmissionsPageNumber;
+
+	const sortedSubmissions = [...displaySubmissions].sort((a, b) => {
+		const aValue = a[orderBy] ?? '';
+		const bValue = b[orderBy] ?? '';
+
+		if (order === 'asc') {
+			return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+		} else {
+			return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
+		}
+	});
 
 	// For search results, slice the accumulated data based on current page
 	// For context data, use client-side pagination
-	const paginatedSubmissions = isSearchActive
-		? searchResults.slice((currentPage - 1) * pageSize, currentPage * pageSize)
-		: displaySubmissions.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+	const paginatedSubmissions = sortedSubmissions.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
-	const [dataLoaded, setDataLoaded] = useState(false);
+	// React Query handles data loading automatically
 
 	// Keep track of previous length to avoid unnecessary resets
 	const prevLengthRef = useRef<number>(0);
-
-	const [orderBy, setOrderBy] = useState<keyof QuizSubmission>('userName');
-	const [order, setOrder] = useState<'asc' | 'desc'>('asc');
 
 	const handleSort = (property: keyof QuizSubmission) => {
 		const isAsc = orderBy === property && order === 'asc';
 		setOrder(isAsc ? 'desc' : 'asc');
 		setOrderBy(property);
-
-		// If search is active, trigger server-side sort
-		if (isSearchActive) {
-			handleSearch();
-		} else {
-			// Client-side sort for context data
-			sortUserQuizSubmissionsData(property, isAsc ? 'desc' : 'asc');
-		}
 	};
 
 	useEffect(() => {
-		setSubmissionsPageNumber(1);
-	}, []);
+		setUserSubmissionsPageNumber(1);
+	}, [setUserSubmissionsPageNumber]);
 
 	const handlePageChange = async (newPage: number) => {
 		// Set appropriate page number based on search state
 		if (isSearchActive) {
 			setSearchResultsPage(newPage);
 		} else {
-			setSubmissionsPageNumber(newPage);
+			setUserSubmissionsPageNumber(newPage);
 		}
 
 		// If in search mode, handle search results pagination
@@ -105,7 +105,7 @@ const Submissions = () => {
 			if (searchResults.length < requiredRecords) {
 				// Build search parameters
 				const params = new URLSearchParams({
-					limit: '200',
+					limit: contextLimit.toString(),
 				});
 
 				if (searchValue && searchValue.trim()) {
@@ -123,7 +123,7 @@ const Submissions = () => {
 
 				// Calculate which pages we need to fetch
 				const currentLoadedPages = searchResultsLoadedPages.length > 0 ? Math.max(...searchResultsLoadedPages) : 0;
-				const targetPage = Math.ceil((newPage * pageSize) / 200);
+				const targetPage = Math.ceil((newPage * pageSize) / contextLimit);
 
 				// Fetch all missing pages in sequence
 				for (let page = currentLoadedPages + 1; page <= targetPage; page++) {
@@ -135,14 +135,14 @@ const Submissions = () => {
 		} else {
 			// Check if we need to fetch more data for context
 			const requiredRecords = newPage * pageSize;
-			if (sortedUserQuizSubmissionsData.length < requiredRecords && newPage <= submissionsNumberOfPages) {
+			if (userQuizSubmissions.length < requiredRecords && newPage <= submissionsNumberOfPages) {
 				// Calculate which pages we need to fetch
 				const currentLoadedPages = loadedPages.length > 0 ? Math.max(...loadedPages) : 0;
-				const targetPage = Math.ceil((newPage * pageSize) / 200);
+				const targetPage = Math.ceil((newPage * pageSize) / contextLimit);
 
 				// Fetch all missing pages in sequence
 				if (currentLoadedPages < targetPage) {
-					await fetchMoreQuizSubmissions(currentLoadedPages + 1, targetPage);
+					await fetchMoreUserQuizSubmissions(currentLoadedPages + 1, targetPage);
 				}
 			}
 		}
@@ -151,7 +151,7 @@ const Submissions = () => {
 	const handleSearch = async () => {
 		try {
 			// Reset to first page when searching
-			setSubmissionsPageNumber(1);
+			setUserSubmissionsPageNumber(1);
 			setSearchResultsPage(1);
 
 			// Search button only works when search value exists
@@ -161,7 +161,7 @@ const Submissions = () => {
 				setSearchedValue(searchValue.trim());
 				// Build query parameters
 				const params = new URLSearchParams({
-					limit: '200',
+					limit: contextLimit.toString(),
 					search: searchValue.trim(),
 				});
 
@@ -228,22 +228,12 @@ const Submissions = () => {
 		if (paginatedSubmissions && paginatedSubmissions.length !== prevLengthRef.current) {
 			prevLengthRef.current = paginatedSubmissions.length;
 		}
-	}, [displaySubmissions, submissionsPageNumber]);
+	}, [displaySubmissions, userSubmissionsPageNumber]);
 
 	useEffect(() => {
-		const fetchData = async () => {
-			if (!dataLoaded && sortedUserQuizSubmissionsData.length === 0 && user?._id) {
-				try {
-					fetchQuizSubmissionsByUserId(user?._id);
-					setDataLoaded(true);
-				} catch (error) {
-					console.error('Error fetching quiz submissions:', error);
-				}
-			}
-		};
-
-		fetchData();
-	}, [submissionsPageNumber, user?._id, dataLoaded, sortedUserQuizSubmissionsData]);
+		// React Query handles the initial fetch automatically
+		// No need to manually call fetchUserQuizSubmissions
+	}, []);
 
 	return (
 		<DashboardPagesLayout pageName='Quiz Submissions' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
@@ -277,7 +267,7 @@ const Submissions = () => {
 											console.log('Filter value being sent:', newFilterValue);
 											// Build query parameters
 											const params = new URLSearchParams({
-												limit: '200',
+												limit: contextLimit.toString(),
 												filter: newFilterValue,
 											});
 
@@ -302,7 +292,7 @@ const Submissions = () => {
 													setSearchResultsLoadedPages([1]);
 													setIsSearchActive(true);
 													setSearchResultsPage(1);
-													setSubmissionsPageNumber(1);
+													setUserSubmissionsPageNumber(1);
 												})
 												.catch((error) => {
 													console.error('Filter search error:', error);
@@ -314,7 +304,7 @@ const Submissions = () => {
 											setSearchResultsTotalItems(0);
 											setIsSearchActive(false);
 											setSearchResultsPage(1);
-											setSubmissionsPageNumber(1);
+											setUserSubmissionsPageNumber(1);
 										}
 									}}
 									displayEmpty
@@ -432,7 +422,7 @@ const Submissions = () => {
 								setFilterValue('');
 								setSearchResults([]);
 								setIsSearchActive(false);
-								setSubmissionsPageNumber(1);
+								setUserSubmissionsPageNumber(1);
 								setSearchResultsPage(1);
 								setSearchResultsLoadedPages([]);
 								setSearchResultsTotalItems(0);
@@ -460,7 +450,7 @@ const Submissions = () => {
 										fontSize: isMobileSize ? '0.7rem' : '0.85rem',
 										whiteSpace: 'nowrap',
 									}}>
-									{sortedUserQuizSubmissionsData.length} {sortedUserQuizSubmissionsData.length === 1 ? 'item' : 'items'}
+									{userQuizSubmissions.length} {userQuizSubmissions.length === 1 ? 'item' : 'items'}
 								</Typography>
 							)}
 						</Box>
@@ -488,7 +478,7 @@ const Submissions = () => {
 									// If search value exists, auto-search with remaining search value
 									if (searchValue && searchValue.trim()) {
 										const params = new URLSearchParams({
-											limit: '200',
+											limit: contextLimit.toString(),
 											search: searchValue.trim(),
 										});
 										if (orderBy) {
@@ -506,7 +496,7 @@ const Submissions = () => {
 												setSearchResultsLoadedPages([1]);
 												setIsSearchActive(true);
 												setSearchResultsPage(1);
-												setSubmissionsPageNumber(1);
+												setUserSubmissionsPageNumber(1);
 											})
 											.catch((error) => {
 												console.error('Search error:', error);
@@ -518,7 +508,7 @@ const Submissions = () => {
 										setSearchResultsTotalItems(0);
 										setIsSearchActive(false);
 										setSearchResultsPage(1);
-										setSubmissionsPageNumber(1);
+										setUserSubmissionsPageNumber(1);
 										setSearchedValue('');
 										setSearchButtonClicked(false);
 									}
@@ -539,7 +529,7 @@ const Submissions = () => {
 									// If filter exists, keep filter results
 									if (filterValue && filterValue.trim()) {
 										const params = new URLSearchParams({
-											limit: '200',
+											limit: contextLimit.toString(),
 											filter: filterValue.trim(),
 										});
 										if (orderBy) {
@@ -557,7 +547,7 @@ const Submissions = () => {
 												setSearchResultsLoadedPages([1]);
 												setIsSearchActive(true);
 												setSearchResultsPage(1);
-												setSubmissionsPageNumber(1);
+												setUserSubmissionsPageNumber(1);
 											})
 											.catch((error) => {
 												console.error('Filter error:', error);
@@ -569,7 +559,7 @@ const Submissions = () => {
 										setSearchResultsTotalItems(0);
 										setIsSearchActive(false);
 										setSearchResultsPage(1);
-										setSubmissionsPageNumber(1);
+										setUserSubmissionsPageNumber(1);
 									}
 								}}
 								color='primary'

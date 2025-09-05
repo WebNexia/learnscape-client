@@ -34,22 +34,14 @@ import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import axios from '@utils/axiosInstance';
 import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
-import { PublicEventsContext } from '../contexts/PublicEventsContextProvider';
+import { AdminPublicEventsContext } from '../contexts/AdminPublicEventsContextProvider';
 
 const AdminPublicEvents = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
 
-	const {
-		publicEvents,
-		error,
-		fetchMorePublicEvents,
-		sortPublicEventsData,
-		totalItems,
-		loadedPages,
-		publicEventsPageNumber,
-		setPublicEventsPageNumber,
-	} = useContext(PublicEventsContext);
+	const { publicEvents, fetchMorePublicEvents, totalItems, loadedPages, publicEventsPageNumber, setPublicEventsPageNumber } =
+		useContext(AdminPublicEventsContext);
 
 	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -67,6 +59,9 @@ const AdminPublicEvents = () => {
 
 	const [eventDetailsModalOpen, setEventDetailsModalOpen] = useState<boolean>(false);
 
+	const [orderBy, setOrderBy] = useState<keyof Event>('updatedAt');
+	const [order, setOrder] = useState<'asc' | 'desc'>('desc');
+
 	const pageSize = 50;
 
 	const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
@@ -79,27 +74,26 @@ const AdminPublicEvents = () => {
 
 	// Use appropriate page number for pagination
 	const currentPage = isSearchActive ? searchResultsPage : publicEventsPageNumber;
-	const paginatedPublicEvents = displayEvents.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+	const sortedPublicEvents = [...displayEvents].sort((a, b) => {
+		const aValue = a[orderBy] ?? '';
+		const bValue = b[orderBy] ?? '';
+
+		if (order === 'asc') {
+			return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+		} else {
+			return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
+		}
+	});
+
+	const paginatedPublicEvents = sortedPublicEvents.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
 	const [isNewLessonModalOpen, setIsNewLessonModalOpen] = useState<boolean>(false);
-
-	const [orderBy, setOrderBy] = useState<keyof Event>('title');
-	const [order, setOrder] = useState<'asc' | 'desc'>('asc');
-
-	if (error) return <Typography color='error'>{error}</Typography>;
 
 	const handleSort = (property: keyof Event) => {
 		const isAsc = orderBy === property && order === 'asc';
 		setOrder(isAsc ? 'desc' : 'asc');
 		setOrderBy(property);
-
-		// If search is active, trigger server-side sort
-		if (isSearchActive) {
-			handleSearch();
-		} else {
-			// Client-side sort for context data
-			sortPublicEventsData(property, isAsc ? 'desc' : 'asc');
-		}
 	};
 
 	const handleSearch = async () => {
@@ -627,7 +621,7 @@ const AdminPublicEvents = () => {
 										<CustomTableCell value={event.type} />
 										<CustomTableCell value={dateTimeFormatter(event.start)} />
 										<CustomTableCell value={dateTimeFormatter(event.end)} />
-										<CustomTableCell value={event.participantCount} />
+										<CustomTableCell value={event.participantCount ?? 0} />
 										<TableCell
 											sx={{
 												textAlign: 'center',

@@ -63,7 +63,7 @@ const CreateLessonDialog = ({
 				updatedByImageUrl: responseNewLessonData.updatedByImageUrl,
 				createdByRole: responseNewLessonData.createdByRole,
 				updatedByRole: responseNewLessonData.updatedByRole,
-			});
+			} as Lesson);
 		} catch (error) {
 			console.log(error);
 		}
