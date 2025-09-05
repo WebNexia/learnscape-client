@@ -324,7 +324,11 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 							}}
 							fromHomePage={fromHomePage}
 						/>
-						<CoursePageBannerDataCard title={fromHomePage ? 'Hafta(#)' : 'Weeks(#)'} content={course.durationWeeks} fromHomePage={fromHomePage} />
+						<CoursePageBannerDataCard
+							title={fromHomePage ? 'Hafta(#)' : 'Weeks(#)'}
+							content={course.durationWeeks ?? ''}
+							fromHomePage={fromHomePage}
+						/>
 					</Box>
 					<Box>
 						<CoursePageBannerDataCard
@@ -333,7 +337,11 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 							fromHomePage={fromHomePage}
 						/>
 
-						<CoursePageBannerDataCard title={fromHomePage ? 'Saat(#)' : 'Hours(#)'} content={course.durationHours} fromHomePage={fromHomePage} />
+						<CoursePageBannerDataCard
+							title={fromHomePage ? 'Saat(#)' : 'Hours(#)'}
+							content={course.durationHours ?? ''}
+							fromHomePage={fromHomePage}
+						/>
 					</Box>
 				</Box>
 

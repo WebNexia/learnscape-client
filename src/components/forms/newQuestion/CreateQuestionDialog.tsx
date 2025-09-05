@@ -270,7 +270,7 @@ const CreateQuestionDialog = ({
 				updatedByImageUrl: questionResponseData.updatedByImageUrl,
 				createdByRole: questionResponseData.createdByRole,
 				updatedByRole: questionResponseData.updatedByRole,
-			});
+			} as QuestionInterface);
 			resetValues();
 		} catch (error) {
 			console.log(error);

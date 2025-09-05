@@ -22,7 +22,7 @@ Chart.register(...registerables);
 
 const AdminDashboard = () => {
 	const { users } = useContext(UsersContext);
-	const { coursesSummary, totalCourses, totalNumberOfEnrolledLearners } = useContext(CoursesContext);
+	const { courses } = useContext(CoursesContext);
 	const { sortedEventsData } = useContext(EventsContext);
 
 	const navigate = useNavigate();
@@ -76,8 +76,8 @@ const AdminDashboard = () => {
 		};
 
 		const processBarChartData = () => {
-			const labels = coursesSummary?.map((course) => course.title); // Course titles
-			const data = coursesSummary?.map((course) => course.enrolledUsersCount); // Enrolled users count per course
+			const labels = courses?.map((course: any) => course.title); // Course titles
+			const data = courses?.map((course: any) => course.enrolledUsersCount); // Enrolled users count per course
 
 			setBarChartData({
 				labels, // x-axis values (course titles)
@@ -96,7 +96,7 @@ const AdminDashboard = () => {
 
 		processUserData();
 		processBarChartData();
-	}, [users, coursesSummary]);
+	}, [users]);
 
 	return (
 		<DashboardPagesLayout pageName='Dashboard' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
@@ -111,7 +111,7 @@ const AdminDashboard = () => {
 							navigate(`/admin/users`);
 						}}
 						sx={{ cursor: 'pointer' }}>
-						<AdminLearnersLineGraph chartData={chartData} totalUsers={totalUsers} totalNumberOfEnrolledLearners={totalNumberOfEnrolledLearners} />
+						<AdminLearnersLineGraph chartData={chartData} totalUsers={totalUsers} totalNumberOfEnrolledLearners={courses?.length} />
 					</Grid>
 					<Grid
 						item
@@ -122,7 +122,7 @@ const AdminDashboard = () => {
 							navigate(`/admin/courses`);
 						}}
 						sx={{ cursor: 'pointer' }}>
-						<AdminCoursesBarGraph barChartData={barChartData} totalCourses={totalCourses} />
+						<AdminCoursesBarGraph barChartData={barChartData} totalCourses={courses?.length} />
 					</Grid>
 					<Grid
 						item

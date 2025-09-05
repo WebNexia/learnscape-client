@@ -39,7 +39,7 @@ const AdminCourseEditChapter = ({
 
 	const y = useMotionValue(0);
 	const boxShadow = useRaisedShadow(y);
-	const { updateLessons } = useContext(LessonsContext);
+	const { updateLesson } = useContext(LessonsContext);
 	const { user } = useContext(UserAuthContext);
 	const { courseId } = useParams();
 
@@ -262,7 +262,7 @@ const AdminCourseEditChapter = ({
 																	return prevData;
 																});
 
-																updateLessons({
+																updateLesson({
 																	...lesson,
 																	usedInCourses: lesson.usedInCourses?.filter((id) => id !== courseId) || [],
 																	updatedAt: new Date().toISOString(),

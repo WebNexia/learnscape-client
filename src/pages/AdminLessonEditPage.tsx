@@ -104,7 +104,7 @@ const AdminLessonEditPage = () => {
 	const queryClient = useQueryClient();
 
 	const { questionTypes, fetchQuestionTypeName, addNewQuestion, updateQuestion } = useContext(QuestionsContext);
-	const { addNewDocument, updateDocuments } = useContext(DocumentsContext);
+	const { addNewDocument, updateDocument } = useContext(DocumentsContext);
 
 	const vertical = 'top';
 	const horizontal = 'center';
@@ -541,7 +541,7 @@ const AdminLessonEditPage = () => {
 									_id: documentResponseData._id,
 									name: document.name.trim(),
 									orgId,
-									userId: user?._id,
+									userId: user?._id || '',
 									documentUrl: document.documentUrl,
 									usedInLessons: lessonId ? [lessonId] : [],
 									usedInCourses: document.usedInCourses,
@@ -553,7 +553,7 @@ const AdminLessonEditPage = () => {
 									updatedByImageUrl: documentResponseData.updatedByImageUrl,
 									createdByRole: documentResponseData.createdByRole,
 									updatedByRole: documentResponseData.updatedByRole,
-								});
+								} as Document);
 								return {
 									...document,
 									_id: response.data._id,
@@ -583,7 +583,7 @@ const AdminLessonEditPage = () => {
 
 							const documentUpdateData = response.data.data;
 
-							updateDocuments({
+							updateDocument({
 								...doc,
 								name: doc.name.trim(),
 								createdAt: documentUpdateData.createdAt,
@@ -763,7 +763,7 @@ const AdminLessonEditPage = () => {
 
 					// Update document contexts with current usedInLessons data
 					updatedDocuments?.forEach((document) => {
-						updateDocuments({
+						updateDocument({
 							...document,
 							usedInLessons: document.usedInLessons || [],
 						});
@@ -1746,7 +1746,7 @@ const AdminLessonEditPage = () => {
 												updatedByImageUrl: document.updatedByImageUrl,
 												updatedByRole: document.updatedByRole,
 											};
-											updateDocuments(updatedDocument);
+											updateDocument(updatedDocument);
 
 											return {
 												...prevData,

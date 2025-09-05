@@ -60,7 +60,7 @@ const AddNewDocumentDialog = ({
 }: AddNewDocumentDialogProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
-	const { sortDocumentsData, documents, fetchMoreDocuments, loadedPages, updateDocuments } = useContext(DocumentsContext);
+	const { sortDocumentsData, documents, fetchMoreDocuments, loadedPages, updateDocument } = useContext(DocumentsContext);
 
 	const [documentsPageNumber, setDocumentsPageNumber] = useState<number>(1);
 	const [searchValue, setSearchValue] = useState<string>('');
@@ -307,7 +307,7 @@ const AddNewDocumentDialog = ({
 								updatedByRole: doc.updatedByRole,
 							};
 							// Update document in DocumentsContext
-							updateDocuments(updatedDoc);
+							updateDocument(updatedDoc);
 							return updatedDoc;
 						});
 
@@ -336,7 +336,7 @@ const AddNewDocumentDialog = ({
 								updatedByRole: doc.updatedByRole,
 							};
 							// Update document in DocumentsContext
-							updateDocuments(updatedDoc);
+							updateDocument(updatedDoc);
 							return updatedDoc;
 						});
 

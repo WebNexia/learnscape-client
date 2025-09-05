@@ -76,8 +76,8 @@ const AdminCourseEditPage = () => {
 	const { user } = useAuth();
 
 	const { orgId } = useContext(OrganisationContext);
-	const { addNewLesson, updateLessons } = useContext(LessonsContext);
-	const { addNewDocument, updateDocuments } = useContext(DocumentsContext);
+	const { addNewLesson, updateLesson } = useContext(LessonsContext);
+	const { addNewDocument, updateDocument } = useContext(DocumentsContext);
 	const { updateCoursePublishing, updateCourse } = useContext(CoursesContext);
 
 	const [isEditMode, setIsEditMode] = useState<boolean>(false);
@@ -478,7 +478,7 @@ const AdminCourseEditPage = () => {
 								createdByImageUrl: updatedDocumentResponseData.createdByImageUrl,
 								createdByRole: updatedDocumentResponseData.createdByRole,
 							};
-							updateDocuments(updatedDocument);
+							updateDocument(updatedDocument);
 						} catch (error) {
 							console.error('Error updating question:', error);
 						}
@@ -526,7 +526,7 @@ const AdminCourseEditPage = () => {
 					// Update lesson contexts with current usedInCourses data
 					updatedChapters?.forEach((chapter) => {
 						chapter.lessons?.forEach((lesson) => {
-							updateLessons({
+							updateLesson({
 								...lesson,
 								usedInCourses: lesson.usedInCourses || [],
 							});
@@ -535,7 +535,7 @@ const AdminCourseEditPage = () => {
 
 					// Update document contexts with current usedInCourses data
 					updatedDocuments?.forEach((document) => {
-						updateDocuments({
+						updateDocument({
 							...document,
 							usedInCourses: document.usedInCourses || [],
 						});
@@ -942,7 +942,7 @@ const AdminCourseEditPage = () => {
 													createdAt: document.createdAt,
 													updatedAt: new Date().toISOString(),
 												};
-												updateDocuments(updatedDocument);
+												updateDocument(updatedDocument);
 												setHasUnsavedChanges(true);
 												return {
 													...prevData,
