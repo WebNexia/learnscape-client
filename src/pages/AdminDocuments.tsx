@@ -52,8 +52,7 @@ const AdminDocuments = () => {
 		fetchMoreDocuments,
 		addNewDocument,
 		removeDocument,
-		updateDocuments,
-		sortDocumentsData,
+		updateDocument,
 		totalItems,
 		loadedPages,
 		documentsPageNumber,
@@ -74,6 +73,9 @@ const AdminDocuments = () => {
 	const [searchButtonClicked, setSearchButtonClicked] = useState<boolean>(false);
 	const [searchedValue, setSearchedValue] = useState<string>('');
 
+	const [orderBy, setOrderBy] = useState<keyof Document>('updatedAt');
+	const [order, setOrder] = useState<'asc' | 'desc'>('desc');
+
 	const pageSize = 50;
 
 	// Use search results if active, otherwise use context data
@@ -84,12 +86,17 @@ const AdminDocuments = () => {
 
 	// Use appropriate page number for pagination
 	const currentPage = isSearchActive ? searchResultsPage : documentsPageNumber;
-	const paginatedDocuments = isSearchActive
-		? searchResults.slice((currentPage - 1) * pageSize, currentPage * pageSize)
-		: displayDocuments.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+	const sortedDocuments = [...displayDocuments].sort((a, b) => {
+		const aValue = a[orderBy] ?? '';
+		const bValue = b[orderBy] ?? '';
 
-	const [orderBy, setOrderBy] = useState<keyof Document>('name');
-	const [order, setOrder] = useState<'asc' | 'desc'>('asc');
+		if (order === 'asc') {
+			return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+		} else {
+			return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
+		}
+	});
+	const paginatedDocuments = sortedDocuments.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
 	// Modal states
 	const [isDocumentDeleteModalOpen, setIsDocumentDeleteModalOpen] = useState<boolean[]>([]);
@@ -181,18 +188,11 @@ const AdminDocuments = () => {
 		}
 	};
 
-	const handleSort = (property: keyof Document) => {
+	const handleSort = async (property: keyof Document) => {
 		const isAsc = orderBy === property && order === 'asc';
-		setOrder(isAsc ? 'desc' : 'asc');
+		const newOrder = isAsc ? 'desc' : 'asc';
+		setOrder(newOrder);
 		setOrderBy(property);
-
-		// If search is active, trigger server-side sort
-		if (isSearchActive) {
-			handleSearch();
-		} else {
-			// Client-side sort for context data
-			sortDocumentsData(property, isAsc ? 'desc' : 'asc');
-		}
 	};
 
 	const handleSearch = async () => {
@@ -378,7 +378,7 @@ const AdminDocuments = () => {
 				updatedByImageUrl: documentResponseData.updatedByImageUrl,
 				updatedByName: documentResponseData.updatedByName,
 				updatedByRole: documentResponseData.updatedByRole,
-			});
+			} as Document);
 
 			return true;
 		} catch (error) {
@@ -461,7 +461,7 @@ const AdminDocuments = () => {
 				const responseData = response.data.data;
 
 				setSingleDocument(null);
-				updateDocuments({
+				updateDocument({
 					...singleDocument,
 					...updateData,
 					_id: responseData._id,

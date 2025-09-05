@@ -97,9 +97,9 @@ const QuestionsContextProvider = ({ children }: QuestionsContextProviderProps) =
 		refetchOnMount: false,
 	});
 
-	const fetchQuestionTypeName = (question: QuestionInterface): string => {
-		const match = questionTypesData?.find((type) => type._id === question.questionType || type.name === question.questionType);
-		return match ? match.name : '';
+	const fetchQuestionTypeName = (question: QuestionInterface | null | undefined): string => {
+		if (!question) return '';
+		return question.questionType || '';
 	};
 
 	if ((isLoading || allQuestionTypesLoading) && isAuthenticated) return <Loading />;

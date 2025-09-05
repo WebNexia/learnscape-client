@@ -99,9 +99,7 @@ const AdminQuestions = () => {
 
 	// For search results, slice the accumulated data based on current page
 	// For context data, use client-side pagination
-	const paginatedQuestions = isSearchActive
-		? searchResults.slice((currentPage - 1) * pageSize, currentPage * pageSize)
-		: sortedQuestions.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+	const paginatedQuestions = sortedQuestions.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
 	const handleSort = (property: keyof QuestionInterface) => {
 		const isAsc = orderBy === property && order === 'asc';

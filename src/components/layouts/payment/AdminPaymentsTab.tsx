@@ -25,8 +25,7 @@ const AdminPaymentsTab = () => {
 
 	const { orgId, organisation } = useContext(OrganisationContext);
 
-	const { payments, sortPaymentsData, totalItems, loadedPages, paymentsPageNumber, setPaymentsPageNumber, fetchMorePayments } =
-		useContext(PaymentsContext);
+	const { payments, totalItems, loadedPages, paymentsPageNumber, setPaymentsPageNumber, fetchMorePayments } = useContext(PaymentsContext);
 	const { courses } = useContext(CoursesContext);
 
 	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
@@ -47,6 +46,9 @@ const AdminPaymentsTab = () => {
 	const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
 
+	const [orderBy, setOrderBy] = useState<keyof Payment>('createdAt');
+	const [order, setOrder] = useState<'asc' | 'desc'>('desc');
+
 	const pageSize = 50;
 
 	// Use search results if active, otherwise use context data
@@ -56,10 +58,19 @@ const AdminPaymentsTab = () => {
 	const paymentsNumberOfPages = isSearchActive ? Math.ceil(searchResultsTotalItems / pageSize) : Math.ceil(totalItems / pageSize);
 
 	const currentPage = isSearchActive ? searchResultsPage : paymentsPageNumber;
-	const paginatedPayments = displayPayments.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
-	const [orderBy, setOrderBy] = useState<keyof Payment>('createdAt');
-	const [order, setOrder] = useState<'asc' | 'desc'>('asc');
+	const sortedPayments = [...displayPayments].sort((a, b) => {
+		const aValue = a[orderBy] ?? '';
+		const bValue = b[orderBy] ?? '';
+
+		if (order === 'asc') {
+			return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+		} else {
+			return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
+		}
+	});
+
+	const paginatedPayments = sortedPayments.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
 	useEffect(() => {
 		setPaymentsPageNumber(1);
@@ -182,14 +193,6 @@ const AdminPaymentsTab = () => {
 		const isAsc = orderBy === property && order === 'asc';
 		setOrder(isAsc ? 'desc' : 'asc');
 		setOrderBy(property);
-
-		// If in search mode, trigger new search with sort parameters
-		if (isSearchActive) {
-			handleSearch();
-		} else {
-			// Otherwise use client-side sorting
-			sortPaymentsData(property, isAsc ? 'desc' : 'asc');
-		}
 	};
 
 	const handleViewPayment = (payment: Payment) => {
@@ -602,7 +605,7 @@ const AdminPaymentsTab = () => {
 							isVerySmallScreen
 								? [
 										{ key: 'username', label: 'Username' },
-										{ key: 'courseName', label: 'Course' },
+										{ key: 'courseTitle', label: 'Course' },
 										{ key: 'amount', label: 'Price' },
 										{ key: 'amountReceivedInGbp', label: 'Received' },
 										{ key: 'createdAt', label: 'Date' },
@@ -610,7 +613,7 @@ const AdminPaymentsTab = () => {
 								: [
 										{ key: 'firstName', label: 'First Name' },
 										{ key: 'lastName', label: 'Last Name' },
-										{ key: 'courseName', label: 'Course' },
+										{ key: 'courseTitle', label: 'Course' },
 										{ key: 'documentName', label: 'Document' },
 										{ key: 'amount', label: 'Price' },
 										{ key: 'amountReceivedInGbp', label: 'Received' },

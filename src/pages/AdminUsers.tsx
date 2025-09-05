@@ -40,7 +40,7 @@ const AdminUsers = () => {
 
 	const { userId } = useContext(UserAuthContext);
 
-	const { users, loading, error, fetchMoreUsers, updateUser, sortUsersData, totalItems, loadedPages, usersPageNumber, setUsersPageNumber } =
+	const { users, loading, error, fetchMoreUsers, updateUser, totalItems, loadedPages, usersPageNumber, setUsersPageNumber } =
 		useContext(UsersContext);
 
 	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
@@ -59,6 +59,9 @@ const AdminUsers = () => {
 	const [searchButtonClicked, setSearchButtonClicked] = useState<boolean>(false);
 	const [searchedValue, setSearchedValue] = useState<string>('');
 
+	const [orderBy, setOrderBy] = useState<keyof User>('username');
+	const [order, setOrder] = useState<'asc' | 'desc'>('asc');
+
 	// Use search results if active, otherwise use context data
 	const displayUsers = isSearchActive ? searchResults : users;
 
@@ -67,10 +70,17 @@ const AdminUsers = () => {
 
 	// Use appropriate page number for pagination
 	const currentPage = isSearchActive ? searchResultsPage : usersPageNumber;
-	const paginatedUsers = displayUsers.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+	const sortedUsers = [...displayUsers].sort((a, b) => {
+		const aValue = a[orderBy] ?? '';
+		const bValue = b[orderBy] ?? '';
 
-	const [orderBy, setOrderBy] = useState<keyof User>('username');
-	const [order, setOrder] = useState<'asc' | 'desc'>('asc');
+		if (order === 'asc') {
+			return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+		} else {
+			return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
+		}
+	});
+	const paginatedUsers = sortedUsers.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
 	// Modal states
 	const [isUserStatusUpdateModalOpen, setIsUserStatusUpdateModalOpen] = useState<boolean[]>([]);
@@ -148,14 +158,6 @@ const AdminUsers = () => {
 		const isAsc = orderBy === property && order === 'asc';
 		setOrder(isAsc ? 'desc' : 'asc');
 		setOrderBy(property);
-
-		// If search is active, trigger server-side sort
-		if (isSearchActive) {
-			handleSearch();
-		} else {
-			// Client-side sort for context data
-			sortUsersData(property, isAsc ? 'desc' : 'asc');
-		}
 	};
 
 	const handleSearch = async () => {

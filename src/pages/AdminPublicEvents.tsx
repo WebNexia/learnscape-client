@@ -40,16 +40,8 @@ const AdminPublicEvents = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
 
-	const {
-		publicEvents,
-		error,
-		fetchMorePublicEvents,
-		sortPublicEventsData,
-		totalItems,
-		loadedPages,
-		publicEventsPageNumber,
-		setPublicEventsPageNumber,
-	} = useContext(AdminPublicEventsContext);
+	const { publicEvents, fetchMorePublicEvents, sortPublicEventsData, totalItems, loadedPages, publicEventsPageNumber, setPublicEventsPageNumber } =
+		useContext(AdminPublicEventsContext);
 
 	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -85,8 +77,6 @@ const AdminPublicEvents = () => {
 
 	const [orderBy, setOrderBy] = useState<keyof Event>('title');
 	const [order, setOrder] = useState<'asc' | 'desc'>('asc');
-
-	if (error) return <Typography color='error'>{error}</Typography>;
 
 	const handleSort = (property: keyof Event) => {
 		const isAsc = orderBy === property && order === 'asc';

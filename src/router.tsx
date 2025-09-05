@@ -199,7 +199,9 @@ export const router = createBrowserRouter([
 				element: (
 					<AdminRouteGuard>
 						<AdminQuizSubmissionsContextProvider>
-							<AdminQuizSubmissions />
+							<QuestionsContextProvider>
+								<AdminQuizSubmissions />
+							</QuestionsContextProvider>
 						</AdminQuizSubmissionsContextProvider>
 					</AdminRouteGuard>
 				),
@@ -209,7 +211,9 @@ export const router = createBrowserRouter([
 				element: (
 					<AdminRouteGuard>
 						<AdminQuizSubmissionsContextProvider>
-							<AdminQuizSubmissionCheck />
+							<QuestionsContextProvider>
+								<AdminQuizSubmissionCheck />
+							</QuestionsContextProvider>
 						</AdminQuizSubmissionsContextProvider>
 					</AdminRouteGuard>
 				),
@@ -220,7 +224,9 @@ export const router = createBrowserRouter([
 					<AdminRouteGuard>
 						<PaymentsContextProvider>
 							<PromoCodesContextProvider>
-								<AdminPayments />
+								<CoursesContextProvider>
+									<AdminPayments />
+								</CoursesContextProvider>
 							</PromoCodesContextProvider>
 						</PaymentsContextProvider>
 					</AdminRouteGuard>
