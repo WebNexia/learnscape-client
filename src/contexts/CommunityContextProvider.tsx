@@ -14,7 +14,6 @@ interface CommunityContextTypes {
 	addNewTopic: (newTopic: CommunityTopic) => void;
 	removeTopic: (id: string) => void;
 	updateTopics: (singleTopic: Partial<CommunityTopic>) => void;
-	numberOfPages: number;
 	topicsPageNumber: number;
 	setTopicsPageNumber: React.Dispatch<React.SetStateAction<number>>;
 	fetchTopics: (page: number) => Promise<CommunityTopic[]>;
@@ -33,7 +32,6 @@ export const CommunityContext = createContext<CommunityContextTypes>({
 	addNewTopic: () => {},
 	removeTopic: () => {},
 	updateTopics: () => {},
-	numberOfPages: 1,
 	topicsPageNumber: 1,
 	setTopicsPageNumber: () => {},
 	fetchTopics: async () => [],
@@ -190,9 +188,6 @@ const CommunityContextProvider = (props: CommunityContextProviderProps) => {
 		setTotalItems((prev) => Math.max(0, prev - 1));
 	};
 
-	// Calculate numberOfPages based on totalItems
-	const numberOfPages = Math.ceil(totalItems / 60);
-
 	// Get sorted topics data from React Query
 	const sortedTopicsData = topicsData || [];
 
@@ -212,7 +207,6 @@ const CommunityContextProvider = (props: CommunityContextProviderProps) => {
 				addNewTopic,
 				removeTopic,
 				updateTopics,
-				numberOfPages,
 				topicsPageNumber,
 				setTopicsPageNumber,
 				fetchTopics,

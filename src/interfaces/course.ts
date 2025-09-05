@@ -45,8 +45,8 @@ export interface UserCourseByUserId extends BaseCourse {
 export interface SingleCourse extends BaseCourse {
 	startingDate: Date | null;
 	format: string;
-	durationWeeks: number;
-	durationHours: number;
+	durationWeeks: number | null;
+	durationHours: number | null;
 	chapterIds: string[];
 	chapters: ChapterLessonData[];
 	orgId: string;

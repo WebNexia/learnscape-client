@@ -63,6 +63,7 @@ import CreateLessonWithAIDialog from '../components/adminSingleLesson/CreateLess
 import CreateQuestionWithAIDialog from '../components/adminSingleLesson/CreateQuestionWithAIDialog';
 import { validateImageUrl, validateVideoUrl, validateDocumentUrl } from '../utils/urlValidation';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
+import { useQueryClient } from 'react-query';
 
 const colorChange = keyframes`
     0% {
@@ -99,7 +100,8 @@ const AdminLessonEditPage = () => {
 	const { lessonId } = useParams();
 	const { orgId } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
-	const { updateLessonPublishing, updateLessons, lessonTypes } = useContext(LessonsContext);
+	const { updateLessonPublishing, updateLesson, lessonTypes } = useContext(LessonsContext);
+	const queryClient = useQueryClient();
 
 	const { questionTypes, fetchQuestionTypeName, addNewQuestion, updateQuestion } = useContext(QuestionsContext);
 	const { addNewDocument, updateDocuments } = useContext(DocumentsContext);
@@ -388,7 +390,7 @@ const AdminLessonEditPage = () => {
 				setIsActive(false);
 				setSingleLesson((prevData) => ({ ...prevData, isActive: false }));
 				setSingleLessonBeforeSave((prevData) => ({ ...prevData, isActive: false }));
-				updateLessons({ ...singleLesson, isActive: false });
+				updateLesson({ ...singleLesson, isActive: false });
 				if (lessonId) updateLessonPublishing(lessonId);
 			} catch (error) {
 				console.log(error);
@@ -422,7 +424,7 @@ const AdminLessonEditPage = () => {
 				setIsActive(true);
 				setSingleLesson((prevData) => ({ ...prevData, isActive: true }));
 				setSingleLessonBeforeSave((prevData) => ({ ...prevData, isActive: true }));
-				updateLessons({ ...singleLesson, isActive: true });
+				updateLesson({ ...singleLesson, isActive: true });
 				if (lessonId) updateLessonPublishing(lessonId);
 			} catch (error) {
 				console.log(error);
@@ -735,8 +737,7 @@ const AdminLessonEditPage = () => {
 
 					const responseUpdatedData = response.data.data;
 
-					// fetchLessons();
-					updateLessons({
+					updateLesson({
 						...singleLessonBeforeSave,
 						questions: updatedQuestions,
 						questionIds: updatedQuestionIds,
@@ -748,6 +749,9 @@ const AdminLessonEditPage = () => {
 						updatedByImageUrl: responseUpdatedData.updatedByImageUrl,
 						updatedByRole: responseUpdatedData.updatedByRole,
 					});
+					queryClient.invalidateQueries(['allCourses', orgId]);
+					queryClient.invalidateQueries(['allLessons', orgId]);
+					queryClient.invalidateQueries(['allQuestions', orgId]);
 
 					// Update question contexts with current usedInLessons data
 					updatedQuestions?.forEach((question) => {

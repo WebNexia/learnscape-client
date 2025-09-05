@@ -17,10 +17,8 @@ interface InquiriesContextTypes {
 
 	sortInquiries: (property: keyof Inquiry, order: 'asc' | 'desc') => void;
 	removeInquiry: (inquiryId: string) => void;
-	numberOfPages: number;
 	inquiriesPageNumber: number;
 	setInquiriesPageNumber: React.Dispatch<React.SetStateAction<number>>;
-	setNumberOfPages: React.Dispatch<React.SetStateAction<number>>;
 	totalItems: number;
 	loadedPages: number[];
 }
@@ -38,10 +36,8 @@ export const InquiriesContext = createContext<InquiriesContextTypes>({
 
 	sortInquiries: () => {},
 	removeInquiry: () => {},
-	numberOfPages: 1,
 	inquiriesPageNumber: 1,
 	setInquiriesPageNumber: () => {},
-	setNumberOfPages: () => {},
 	totalItems: 0,
 	loadedPages: [],
 });
@@ -50,7 +46,6 @@ const InquiriesContextProvider = (props: InquiriesContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
 	const { isAuthenticated, isAdmin } = useAuth();
-	const [numberOfPages, setNumberOfPages] = useState<number>(1);
 	const [inquiriesPageNumber, setInquiriesPageNumber] = useState<number>(1);
 	const [totalItems, setTotalItems] = useState<number>(0);
 	const [loadedPages, setLoadedPages] = useState<number[]>([]);
@@ -79,7 +74,6 @@ const InquiriesContextProvider = (props: InquiriesContextProviderProps) => {
 
 			// Local state'i güncelle (pagination için)
 			setTotalItems(response.data.totalItems);
-			setNumberOfPages(Math.ceil(response.data.totalItems / 50)); // 50 per page display
 			setLoadedPages([1]);
 
 			return response.data.data;
@@ -92,7 +86,7 @@ const InquiriesContextProvider = (props: InquiriesContextProviderProps) => {
 		if (!orgId) return;
 		try {
 			// Calculate which pages we need to fetch
-			const pagesToFetch = [];
+			const pagesToFetch: number[] = [];
 			for (let page = startPage; page <= endPage; page++) {
 				if (!loadedPages.includes(page)) {
 					pagesToFetch.push(page);
@@ -118,7 +112,7 @@ const InquiriesContextProvider = (props: InquiriesContextProviderProps) => {
 			// React Query cache'i güncelle
 			queryClient.setQueryData(['inquiries', orgId, inquiriesPageNumber], sortedData);
 
-			setLoadedPages([...loadedPages, ...pagesToFetch]);
+			setLoadedPages((prev) => Array.from(new Set([...prev, ...pagesToFetch])));
 		} catch (error) {
 			console.error('Error fetching more inquiries:', error);
 		}
@@ -192,10 +186,8 @@ const InquiriesContextProvider = (props: InquiriesContextProviderProps) => {
 
 				sortInquiries,
 				removeInquiry,
-				numberOfPages,
 				inquiriesPageNumber,
 				setInquiriesPageNumber,
-				setNumberOfPages,
 				totalItems,
 				loadedPages,
 			}}>

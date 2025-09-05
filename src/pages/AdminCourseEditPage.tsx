@@ -326,6 +326,7 @@ const AdminCourseEditPage = () => {
 					updatedByRole: responseUpdatedData.updatedByRole,
 				});
 				queryClient.invalidateQueries(['allCourses', orgId]);
+				queryClient.invalidateQueries(['allLessons', orgId]);
 
 				setHasUnsavedChanges(false);
 				setIsEditMode(false);
@@ -519,6 +520,8 @@ const AdminCourseEditPage = () => {
 						updatedByImageUrl: responseUpdatedData.updatedByImageUrl,
 						updatedByRole: responseUpdatedData.updatedByRole,
 					});
+					queryClient.invalidateQueries(['allCourses', orgId]);
+					queryClient.invalidateQueries(['allLessons', orgId]);
 
 					// Update lesson contexts with current usedInCourses data
 					updatedChapters?.forEach((chapter) => {

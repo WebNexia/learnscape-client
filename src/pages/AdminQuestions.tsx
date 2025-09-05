@@ -59,7 +59,6 @@ const AdminQuestions = () => {
 		loadedPages,
 		questionsPageNumber,
 		setQuestionsPageNumber,
-		sortQuestionsData,
 		questionTypes,
 	} = useContext(QuestionsContext);
 
@@ -73,6 +72,9 @@ const AdminQuestions = () => {
 	const [searchButtonClicked, setSearchButtonClicked] = useState<boolean>(false);
 	const [searchedValue, setSearchedValue] = useState<string>('');
 
+	const [orderBy, setOrderBy] = useState<keyof QuestionInterface>('updatedAt');
+	const [order, setOrder] = useState<'asc' | 'desc'>('desc');
+
 	const pageSize = 50;
 
 	// Use search results if active, otherwise use context data
@@ -84,27 +86,27 @@ const AdminQuestions = () => {
 	// Use appropriate page number for pagination
 	const currentPage = isSearchActive ? searchResultsPage : questionsPageNumber;
 
+	const sortedQuestions = [...displayQuestions].sort((a, b) => {
+		const aValue = a[orderBy] ?? '';
+		const bValue = b[orderBy] ?? '';
+
+		if (order === 'asc') {
+			return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+		} else {
+			return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
+		}
+	});
+
 	// For search results, slice the accumulated data based on current page
 	// For context data, use client-side pagination
 	const paginatedQuestions = isSearchActive
 		? searchResults.slice((currentPage - 1) * pageSize, currentPage * pageSize)
-		: displayQuestions.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-
-	const [orderBy, setOrderBy] = useState<keyof QuestionInterface>('questionType');
-	const [order, setOrder] = useState<'asc' | 'desc'>('asc');
+		: sortedQuestions.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
 	const handleSort = (property: keyof QuestionInterface) => {
 		const isAsc = orderBy === property && order === 'asc';
 		setOrder(isAsc ? 'desc' : 'asc');
 		setOrderBy(property);
-
-		// If search is active, trigger server-side sort
-		if (isSearchActive) {
-			handleSearch();
-		} else {
-			// Client-side sort for context data
-			sortQuestionsData(property, isAsc ? 'desc' : 'asc');
-		}
 	};
 
 	const [questionType, setQuestionType] = useState<string>('');

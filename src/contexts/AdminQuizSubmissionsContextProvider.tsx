@@ -61,29 +61,15 @@ const AdminQuizSubmissionsContextProvider = (props: AdminQuizSubmissionsContextP
 
 		try {
 			const response = await axios.get(`${base_url}/quizsubmissions/organisation/${orgId}?page=${page}&limit=150`);
+			const quizSubmissionsData = response.data.data;
 
-			// Update React Query cache
-			queryClient.setQueryData(['adminQuizSubmissions', orgId], (oldData: any) => {
-				if (page === 1) {
-					// First page - replace all data
-					return response.data.data;
-				} else {
-					// Subsequent pages - append data
-					return oldData ? [...oldData, ...response.data.data] : response.data.data;
-				}
-			});
+			// React Query cache'i güncelle - page-based caching
+			queryClient.setQueryData(['adminQuizSubmissions', orgId, quizSubmissionsPageNumber], quizSubmissionsData);
 
-			// Set totalItems from server response
 			setTotalItems(response.data.totalItems);
+			setLoadedPages((prev) => [...prev, page]);
 
-			// Update loadedPages
-			if (page === 1) {
-				setLoadedPages([1]);
-			} else {
-				setLoadedPages((prev) => [...prev, page]);
-			}
-
-			return response.data.data;
+			return quizSubmissionsData;
 		} catch (error) {
 			throw error;
 		}
