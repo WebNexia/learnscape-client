@@ -22,7 +22,7 @@ const LandingPageCourses = () => {
 	const [isInfoDialogOpen, setIsInfoDialogOpen] = useState<boolean>(false);
 
 	// Filter courses by organization
-	const publishedCourses = courses.filter((course: SingleCourse) => course.orgId === orgId);
+	const publishedCourses = courses?.filter((course: SingleCourse) => course.orgId === orgId) || [];
 
 	return (
 		<LandingPageLayout>
@@ -67,7 +67,7 @@ const LandingPageCourses = () => {
 						</Typography>
 					) : publishedCourses.length > 0 ? (
 						<>
-							{publishedCourses.map((course: SingleCourse) => (
+							{publishedCourses?.map((course: SingleCourse) => (
 								<Box key={course._id} sx={{}}>
 									<DashboardCourseCard course={course} fromHomePage />
 								</Box>

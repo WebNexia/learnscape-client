@@ -38,10 +38,10 @@ const CourseDetailsEditBox = ({
 	useEffect(() => {
 		// Initialize price states from `singleCourse.prices`
 		if (singleCourseBeforeSave) {
-			setGBP(singleCourseBeforeSave.prices.find((price) => price.currency === 'gbp')?.amount || '');
-			setUSD(singleCourseBeforeSave.prices.find((price) => price.currency === 'usd')?.amount || '');
-			setEUR(singleCourseBeforeSave.prices.find((price) => price.currency === 'eur')?.amount || '');
-			setTRY(singleCourseBeforeSave.prices.find((price) => price.currency === 'try')?.amount || '');
+			setGBP(singleCourseBeforeSave.prices?.find((price) => price.currency === 'gbp')?.amount || '');
+			setUSD(singleCourseBeforeSave.prices?.find((price) => price.currency === 'usd')?.amount || '');
+			setEUR(singleCourseBeforeSave.prices?.find((price) => price.currency === 'eur')?.amount || '');
+			setTRY(singleCourseBeforeSave.prices?.find((price) => price.currency === 'try')?.amount || '');
 		}
 	}, [singleCourseBeforeSave]);
 
@@ -364,7 +364,7 @@ const CourseDetailsEditBox = ({
 							}}
 						/>
 					</Box>
-					{isMissingField && singleCourseBeforeSave?.prices.some((price) => price.amount === '') && (
+					{isMissingField && singleCourseBeforeSave?.prices?.some((price) => price.amount === '') && (
 						<CustomErrorMessage>Enter price amount</CustomErrorMessage>
 					)}
 				</Box>

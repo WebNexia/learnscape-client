@@ -196,16 +196,18 @@ const ChatList = ({
 														if (isGroup) return null;
 
 														// Check if current user has blocked any participant in this chat
-														const hasBlockedParticipant = chat.participants?.some(
-															(participant) =>
-																participant.firebaseUserId !== user?.firebaseUserId && globalBlockedUsers?.includes(participant.firebaseUserId)
-														);
+														const hasBlockedParticipant =
+															chat.participants?.some(
+																(participant) =>
+																	participant.firebaseUserId !== user?.firebaseUserId && globalBlockedUsers?.includes(participant.firebaseUserId)
+															) || false;
 
 														// Check if current user is blocked by any participant in this chat
-														const isBlockedByParticipant = chat.participants?.some(
-															(participant) =>
-																participant.firebaseUserId !== user?.firebaseUserId && blockedByUsers?.includes(participant.firebaseUserId)
-														);
+														const isBlockedByParticipant =
+															chat.participants?.some(
+																(participant) =>
+																	participant.firebaseUserId !== user?.firebaseUserId && blockedByUsers?.includes(participant.firebaseUserId)
+															) || false;
 
 														return hasBlockedParticipant || isBlockedByParticipant ? (
 															<DoNotDisturbAlt fontSize='small' sx={{ color: 'gray', marginLeft: '0.5rem' }} />

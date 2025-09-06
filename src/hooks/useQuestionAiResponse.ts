@@ -352,12 +352,12 @@ const useQuestionAiResponse = () => {
 
 			// Provide specific error messages
 			if (error instanceof Error) {
-				if (error.message.includes('Please wait 1 second')) {
+				if (error.message?.includes('Please wait 1 second')) {
 					// This is our local rate limiting
 					throw error;
-				} else if (error.message.includes('Rate limit') || error.message.includes('429')) {
+				} else if (error.message?.includes('Rate limit') || error.message?.includes('429')) {
 					throw new Error('OpenAI rate limit exceeded. Please wait 1-2 minutes before trying again.');
-				} else if (error.message.includes('API key')) {
+				} else if (error.message?.includes('API key')) {
 					throw new Error('API key error. Please check your configuration.');
 				} else {
 					throw new Error(`Failed to generate questions: ${error.message}`);

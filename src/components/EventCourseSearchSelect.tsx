@@ -58,7 +58,7 @@ const EventCourseSearchSelect = forwardRef<any, EventCourseSearchSelectProps>(
 		);
 
 		const filteredCourses = useMemo(() => {
-			return filtered.filter((course) => !selectedCourseIds.includes(course._id));
+			return filtered?.filter((course) => !selectedCourseIds?.includes(course._id)) || [];
 		}, [filtered, selectedCourseIds]);
 
 		const hasResults = filteredCourses.length > 0;
@@ -153,7 +153,7 @@ const EventCourseSearchSelect = forwardRef<any, EventCourseSearchSelectProps>(
 							mb: showLoadMore ? '1rem' : '3rem',
 							...listSx,
 						}}>
-						{filteredCourses.map((course) => (
+						{filteredCourses?.map((course) => (
 							<Box
 								key={course._id}
 								sx={{

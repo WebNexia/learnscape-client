@@ -230,8 +230,8 @@ const AdminQuestionsEditQuestionDialog = ({
 		}
 
 		if (isMatching) {
-			const nonBlankPairs = matchingPairsAdminQuestions?.filter((pair) => pair.question.trim() !== '' && pair.answer.trim() !== '');
-			const missingPairExists = matchingPairsAdminQuestions.some((pair) => pair.question.trim() === '' || pair.answer.trim() === '');
+			const nonBlankPairs = matchingPairsAdminQuestions?.filter((pair) => pair.question.trim() !== '' && pair.answer.trim() !== '') || [];
+			const missingPairExists = matchingPairsAdminQuestions?.some((pair) => pair.question.trim() === '' || pair.answer.trim() === '') || false;
 
 			if (nonBlankPairs.length < 2) {
 				setIsMinimumTwoMatchingPairs(true);

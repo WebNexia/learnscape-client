@@ -104,8 +104,8 @@ const Header = () => {
 					{!(isVerySmallScreen || isRotatedMedium) && (
 						<Box sx={{ display: 'flex', justifyContent: 'center', flex: 1 }}>
 							{navItems
-								.filter((item) => item.label !== 'Ana Sayfa')
-								.map((item, index) => (
+								?.filter((item) => item.label !== 'Ana Sayfa')
+								?.map((item, index) => (
 									<Box key={index} onClick={item.action} sx={{ ml: index === 0 ? 0 : isSmallScreen ? '0.5rem' : '1rem' }}>
 										<Typography
 											sx={{

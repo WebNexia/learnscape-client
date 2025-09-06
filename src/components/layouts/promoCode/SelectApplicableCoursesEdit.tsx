@@ -26,9 +26,8 @@ const SelectApplicableCoursesEdit = ({ singleCode, setSingleCode }: SelectApplic
 		}
 
 		const coursesIds = singleCode?.coursesApplicable || [];
-		const searchResults = courses.filter(
-			(course) => course.title.toLowerCase().includes(searchQuery.toLowerCase()) && !coursesIds.includes(course._id)
-		);
+		const searchResults =
+			courses?.filter((course) => course.title.toLowerCase()?.includes(searchQuery.toLowerCase()) && !coursesIds?.includes(course._id)) || [];
 
 		setFilteredCourses(searchResults);
 	};
@@ -38,7 +37,7 @@ const SelectApplicableCoursesEdit = ({ singleCode, setSingleCode }: SelectApplic
 			{singleCode?.coursesApplicable.length! > 0 && (
 				<Box sx={{ display: 'flex', margin: '0.75rem 0 0.75rem 0', flexWrap: 'wrap' }}>
 					{singleCode?.coursesApplicable?.map((id) => {
-						const course = courses.find((course) => course._id === id);
+						const course = courses?.find((course) => course._id === id);
 						return (
 							<Box
 								key={course?._id}
@@ -54,7 +53,7 @@ const SelectApplicableCoursesEdit = ({ singleCode, setSingleCode }: SelectApplic
 								<Typography sx={{ fontSize: '0.85rem' }}>{truncateText(course?.title!, 20)}</Typography>
 								<IconButton
 									onClick={() => {
-										const updatedCourses = singleCode.coursesApplicable.filter((filteredCourseId) => course?._id !== filteredCourseId);
+										const updatedCourses = singleCode.coursesApplicable?.filter((filteredCourseId) => course?._id !== filteredCourseId) || [];
 
 										setSingleCode((prevData) => ({ ...prevData!, coursesApplicable: updatedCourses }));
 									}}>

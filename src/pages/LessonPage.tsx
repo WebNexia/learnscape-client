@@ -113,7 +113,7 @@ const LessonPage = () => {
 
 					setLesson({
 						...lessonData,
-						questions: lessonData.questions?.filter((q: QuestionInterface) => q !== null),
+						questions: lessonData.questions?.filter((q: QuestionInterface) => q !== null) || [],
 					});
 					setLessonType(lessonData.type);
 

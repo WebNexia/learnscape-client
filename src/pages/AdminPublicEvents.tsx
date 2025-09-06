@@ -75,18 +75,19 @@ const AdminPublicEvents = () => {
 	// Use appropriate page number for pagination
 	const currentPage = isSearchActive ? searchResultsPage : publicEventsPageNumber;
 
-	const sortedPublicEvents = [...displayEvents].sort((a, b) => {
-		const aValue = a[orderBy] ?? '';
-		const bValue = b[orderBy] ?? '';
+	const sortedPublicEvents =
+		[...(displayEvents || [])]?.sort((a, b) => {
+			const aValue = a[orderBy] ?? '';
+			const bValue = b[orderBy] ?? '';
 
-		if (order === 'asc') {
-			return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
-		} else {
-			return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
-		}
-	});
+			if (order === 'asc') {
+				return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+			} else {
+				return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
+			}
+		}) || [];
 
-	const paginatedPublicEvents = sortedPublicEvents.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+	const paginatedPublicEvents = sortedPublicEvents?.slice((currentPage - 1) * pageSize, currentPage * pageSize) || [];
 
 	const [isNewLessonModalOpen, setIsNewLessonModalOpen] = useState<boolean>(false);
 
@@ -212,7 +213,7 @@ const AdminPublicEvents = () => {
 
 				// Fetch all missing pages in sequence
 				for (let page = currentLoadedPages + 1; page <= targetPage; page++) {
-					if (!searchResultsLoadedPages.includes(page)) {
+					if (!searchResultsLoadedPages?.includes(page)) {
 						await fetchMoreSearchResults(page, params);
 					}
 				}
@@ -244,7 +245,7 @@ const AdminPublicEvents = () => {
 			// Get filename from Content-Disposition header if available
 			let filename = `${eventTitle}_participants.xlsx`;
 			const disposition = response.headers['content-disposition'];
-			if (disposition && disposition.indexOf('filename=') !== -1) {
+			if (disposition && disposition?.indexOf('filename=') !== -1) {
 				filename = disposition.split('filename=')[1].replace(/['"]/g, '').trim();
 			}
 
@@ -383,7 +384,7 @@ const AdminPublicEvents = () => {
 									}}>
 									All Events
 								</MenuItem>
-								{['Webinar', 'Guest Talk', 'Workshop', 'Training', 'Meeting', 'Other'].map((type) => (
+								{['Webinar', 'Guest Talk', 'Workshop', 'Training', 'Meeting', 'Other']?.map((type) => (
 									<MenuItem
 										value={type.toLowerCase()}
 										key={type}
@@ -409,7 +410,7 @@ const AdminPublicEvents = () => {
 									}}>
 									----- Filter by Time -----
 								</MenuItem>
-								{['Upcoming Events', 'Past Events'].map((type) => (
+								{['Upcoming Events', 'Past Events']?.map((type) => (
 									<MenuItem
 										value={type.toLowerCase()}
 										key={type}

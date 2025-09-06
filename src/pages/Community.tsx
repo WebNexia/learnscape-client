@@ -65,9 +65,9 @@ const Community = () => {
 	const pageSize = 20;
 
 	// Use search results if active, otherwise use context data
-	const displayTopics = (isSearchActive ? searchResults : sortedTopicsData).sort(
-		(a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-	);
+	const displayTopics =
+		(isSearchActive ? searchResults : sortedTopicsData || [])?.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()) ||
+		[];
 
 	// For pagination, use total items from server when not searching
 	const topicsNumberOfPages = isSearchActive ? Math.ceil(searchResultsTotalItems / pageSize) : Math.ceil(totalItems / pageSize);
@@ -76,7 +76,7 @@ const Community = () => {
 	const currentPage = isSearchActive ? searchResultsPage : topicsPageNumber;
 
 	// Paginate the data for display
-	const paginatedTopics = displayTopics.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+	const paginatedTopics = displayTopics?.slice((currentPage - 1) * pageSize, currentPage * pageSize) || [];
 
 	useEffect(() => {
 		setTopicsPageNumber(1);
@@ -238,7 +238,7 @@ const Community = () => {
 
 				// Fetch all missing pages in sequence
 				for (let page = currentLoadedPages + 1; page <= targetPage; page++) {
-					if (!searchResultsLoadedPages.includes(page)) {
+					if (!searchResultsLoadedPages?.includes(page)) {
 						await fetchMoreSearchResults(page, params);
 					}
 				}
@@ -275,7 +275,7 @@ const Community = () => {
 
 		// Add admin-only options
 		if (user?.role === Roles.ADMIN) {
-			baseOptions.splice(2, 0, 'Inactive Topics', 'Reported Topics', 'Non-reported Topics');
+			baseOptions?.splice(2, 0, 'Inactive Topics', 'Reported Topics', 'Non-reported Topics');
 		}
 
 		return baseOptions;
@@ -361,7 +361,7 @@ const Community = () => {
 												}}>
 												All Topics
 											</MenuItem>
-											{getFilterOptions().map((option) => (
+											{getFilterOptions()?.map((option) => (
 												<MenuItem
 													value={option.toLowerCase()}
 													key={option}

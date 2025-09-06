@@ -16,7 +16,7 @@ const DashboardCommunityTopics = () => {
 	const [recentTopics, setRecentTopics] = useState<CommunityTopic[]>([]);
 
 	useEffect(() => {
-		const displayedTopics: CommunityTopic[] = sortedTopicsData?.sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 3);
+		const displayedTopics: CommunityTopic[] = sortedTopicsData?.sort((a, b) => b.createdAt.localeCompare(a.createdAt))?.slice(0, 3) || [];
 		setRecentTopics(displayedTopics);
 	}, [sortedTopicsData]);
 

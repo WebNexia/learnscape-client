@@ -24,7 +24,7 @@ const CoursePage = () => {
 		const currentUserCourseData: string | null = localStorage.getItem('userCourseData');
 		if (currentUserCourseData !== null) {
 			userCourseData = JSON.parse(currentUserCourseData);
-			setIsEnrolledStatus(userCourseData.some((data) => data.courseId === courseId));
+			setIsEnrolledStatus(userCourseData?.some((data) => data.courseId === courseId) || false);
 		}
 		if (courseId) {
 			fetchSingleCourseDataUser(courseId);

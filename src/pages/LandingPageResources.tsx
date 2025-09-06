@@ -43,14 +43,14 @@ const LandingPageResources = () => {
 
 	const isDocumentFree = (document: Document) => {
 		const userCurrency = getUserCurrency();
-		const price = document.prices.find((p: Price) => p.currency === userCurrency);
+		const price = document.prices?.find((p: Price) => p.currency === userCurrency);
 		return !price || price.amount === '0' || price.amount === 'Free';
 	};
 
 	useEffect(() => {
 		if (resources) {
-			const free = resources.filter((doc: Document) => isDocumentFree(doc));
-			const paid = resources.filter((doc: Document) => !isDocumentFree(doc));
+			const free = resources?.filter((doc: Document) => isDocumentFree(doc)) || [];
+			const paid = resources?.filter((doc: Document) => !isDocumentFree(doc)) || [];
 			setFreeDocuments(free);
 			setPaidDocuments(paid);
 		}
@@ -95,7 +95,7 @@ const LandingPageResources = () => {
 						}}>
 						{value === 'free' && (
 							<Grid container spacing={3} justifyContent='center' alignItems='stretch' sx={{ margin: '0 auto', width: '100%' }}>
-								{freeDocuments.map((doc) => (
+								{freeDocuments?.map((doc) => (
 									<Grid item xs={12} sm={6} md={4} lg={4} display='flex' justifyContent='center' key={doc._id}>
 										<DocumentCard document={doc} userCurrency={userCurrency} />
 									</Grid>
@@ -111,7 +111,7 @@ const LandingPageResources = () => {
 						)}
 						{value === 'paid' && (
 							<Grid container spacing={3} justifyContent='center' alignItems='stretch' sx={{ maxWidth: '80rem', margin: '0 auto', width: '100%' }}>
-								{paidDocuments.map((doc) => (
+								{paidDocuments?.map((doc) => (
 									<Grid item xs={12} sm={6} md={4} lg={4} display='flex' justifyContent='center' key={doc._id}>
 										<DocumentCard document={doc} userCurrency={userCurrency} fromHomePage={true} />
 									</Grid>

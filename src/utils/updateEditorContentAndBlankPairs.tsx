@@ -23,7 +23,7 @@ export const updateEditorContentAndBlankPairs = (
 		});
 
 	// Update the content placeholders after adjusting the blank numbers
-	updatedBlankValuePairs.forEach((p) => {
+	updatedBlankValuePairs?.forEach((p) => {
 		const oldPlaceholderRegex = new RegExp(`\\(___${p.blank + 1}___\\)`, 'g');
 		content = content.replace(oldPlaceholderRegex, `(___${p.blank}___)`);
 	});

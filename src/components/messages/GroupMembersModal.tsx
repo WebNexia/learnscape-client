@@ -51,7 +51,7 @@ const GroupMembersModal = ({ membersModalOpen, activeChat, onCloseModal }: Group
 						Members:
 					</Typography>
 					<Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-						{activeChat.participants.map((participant) => (
+						{activeChat.participants?.map((participant) => (
 							<Box
 								key={participant.firebaseUserId}
 								sx={{

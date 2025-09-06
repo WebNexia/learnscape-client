@@ -78,7 +78,7 @@ const AddNewDocumentDialog = ({
 	// Use search results if active, otherwise use context data (filtered to exclude already added documents)
 	const displayDocuments = isSearchActive
 		? searchResults
-		: documents.filter((doc: Document) => {
+		: (documents || [])?.filter((doc: Document) => {
 				if (fromAdminCourses) {
 					return !singleCourse?.documentIds?.includes(doc._id);
 				} else {
@@ -91,7 +91,7 @@ const AddNewDocumentDialog = ({
 
 	// Use appropriate page number for pagination
 	const currentPage = isSearchActive ? searchResultsPage : documentsPageNumber;
-	const paginatedDocuments = displayDocuments.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+	const paginatedDocuments = displayDocuments?.slice((currentPage - 1) * pageSize, currentPage * pageSize) || [];
 
 	const [selectedDocuments, setSelectedDocuments] = useState<Document[]>([]);
 	const [selectedDocumentIds, setSelectedDocumentIds] = useState<string[]>([]);
@@ -156,7 +156,7 @@ const AddNewDocumentDialog = ({
 
 				// Fetch all missing pages in sequence
 				for (let page = currentLoadedPages + 1; page <= targetPage; page++) {
-					if (!searchResultsLoadedPages.includes(page)) {
+					if (!searchResultsLoadedPages?.includes(page)) {
 						await fetchMoreSearchResults(page, params);
 					}
 				}
@@ -185,7 +185,7 @@ const AddNewDocumentDialog = ({
 			const response = await axios.get(`${base_url}/documents/organisation/${orgId}?${searchParams.toString()}`);
 
 			// Filter out already added documents from search results
-			const filteredResults = response.data.data.filter((doc: Document) => {
+			const filteredResults = response.data.data?.filter((doc: Document) => {
 				if (fromAdminCourses) {
 					return !singleCourse?.documentIds?.includes(doc._id);
 				} else {
@@ -249,7 +249,7 @@ const AddNewDocumentDialog = ({
 				const response = await axios.get(`${base_url}/documents/organisation/${orgId}?${params.toString()}`);
 
 				// Filter out already added documents from search results
-				const filteredResults = response.data.data.filter((doc: Document) => {
+				const filteredResults = response.data.data?.filter((doc: Document) => {
 					if (fromAdminCourses) {
 						return !singleCourse?.documentIds?.includes(doc._id);
 					} else {
@@ -276,7 +276,7 @@ const AddNewDocumentDialog = ({
 	};
 
 	const handleCheckboxChange = (document: Document) => {
-		const selectedIndex = selectedDocumentIds.indexOf(document._id);
+		const selectedIndex = selectedDocumentIds?.indexOf(document._id) || -1;
 		let newSelectedDocumentIds: string[] = [];
 		let newSelectedDocuments: Document[] = [];
 
@@ -284,8 +284,8 @@ const AddNewDocumentDialog = ({
 			newSelectedDocumentIds = [...selectedDocumentIds, document._id];
 			newSelectedDocuments = [...selectedDocuments, document];
 		} else {
-			newSelectedDocumentIds = selectedDocumentIds?.filter((id) => id !== document._id);
-			newSelectedDocuments = selectedDocuments?.filter((selectedDocument) => selectedDocument._id !== document._id);
+			newSelectedDocumentIds = selectedDocumentIds?.filter((id) => id !== document._id) || [];
+			newSelectedDocuments = selectedDocuments?.filter((selectedDocument) => selectedDocument._id !== document._id) || [];
 		}
 
 		setSelectedDocumentIds(newSelectedDocumentIds);
@@ -297,7 +297,7 @@ const AddNewDocumentDialog = ({
 				setSingleLessonBeforeSave((prevData) => {
 					if (prevData) {
 						// Update selected documents with usedInLessons and temp update info
-						const updatedSelectedDocuments = selectedDocuments.map((doc) => {
+						const updatedSelectedDocuments = selectedDocuments?.map((doc) => {
 							const updatedDoc = {
 								...doc,
 								usedInLessons: doc.usedInLessons ? [...doc.usedInLessons, prevData._id] : [prevData._id],
@@ -326,7 +326,7 @@ const AddNewDocumentDialog = ({
 				setSingleCourse((prevData) => {
 					if (prevData) {
 						// Update selected documents with usedInCourses and temp update info
-						const updatedSelectedDocuments = selectedDocuments.map((doc) => {
+						const updatedSelectedDocuments = selectedDocuments?.map((doc) => {
 							const updatedDoc = {
 								...doc,
 								usedInCourses: doc.usedInCourses ? [...doc.usedInCourses, prevData._id] : [prevData._id],
@@ -420,7 +420,7 @@ const AddNewDocumentDialog = ({
 												const response = await axios.get(`${base_url}/documents/organisation/${orgId}?${params.toString()}`);
 
 												// Filter out already added documents from search results
-												const filteredResults = response.data.data.filter((doc: Document) => {
+												const filteredResults = response.data.data?.filter((doc: Document) => {
 													if (fromAdminCourses) {
 														return !singleCourse?.documentIds?.includes(doc._id);
 													} else {
@@ -458,7 +458,7 @@ const AddNewDocumentDialog = ({
 													const response = await axios.get(`${base_url}/documents/organisation/${orgId}?${params.toString()}`);
 
 													// Filter out already added documents from search results
-													const filteredResults = response.data.data.filter((doc: Document) => {
+													const filteredResults = response.data.data?.filter((doc: Document) => {
 														if (fromAdminCourses) {
 															return !singleCourse?.documentIds?.includes(doc._id);
 														} else {
@@ -494,7 +494,7 @@ const AddNewDocumentDialog = ({
 									<MenuItem value='' selected sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
 										All Documents
 									</MenuItem>
-									{['Paid Documents', 'Free Documents'].map((type) => (
+									{['Paid Documents', 'Free Documents']?.map((type) => (
 										<MenuItem value={type.toLowerCase()} key={type} sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
 											{type}
 										</MenuItem>
@@ -502,7 +502,7 @@ const AddNewDocumentDialog = ({
 									<MenuItem disabled value='visibility' selected sx={{ fontSize: '0.7rem', textTransform: 'inherit', fontWeight: 'lighter' }}>
 										----- Filter by Visibility -----
 									</MenuItem>
-									{['On Landing Page', 'On Platform Only'].map((type) => (
+									{['On Landing Page', 'On Platform Only']?.map((type) => (
 										<MenuItem value={type.toLowerCase()} key={type} sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
 											{type}
 										</MenuItem>
@@ -645,7 +645,7 @@ const AddNewDocumentDialog = ({
 												.get(`${base_url}/documents/organisation/${orgId}?${params.toString()}`)
 												.then((response) => {
 													// Filter out already added documents from search results
-													const filteredResults = response.data.data.filter((doc: Document) => {
+													const filteredResults = response.data.data?.filter((doc: Document) => {
 														if (fromAdminCourses) {
 															return !singleCourse?.documentIds?.includes(doc._id);
 														} else {
@@ -698,7 +698,7 @@ const AddNewDocumentDialog = ({
 											: !singleCourse?.documentIds?.includes(document._id)
 									)
 									?.map((document: Document) => {
-										const isSelected = selectedDocumentIds.indexOf(document._id) !== -1;
+										const isSelected = selectedDocumentIds?.indexOf(document._id) !== -1;
 										return (
 											<TableRow key={document._id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }} hover>
 												<CustomTableCell value={document.name} />

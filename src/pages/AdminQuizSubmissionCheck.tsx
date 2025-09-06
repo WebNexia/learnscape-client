@@ -81,14 +81,15 @@ const AdminQuizSubmissionCheck = () => {
 				setUserResponseToFeedback(userCourseQuizData[0]);
 				setQuizFeedback(lessonResponse.data.data[0]?.teacherFeedback || '');
 
-				setUserQuestionsFeedbacks(() =>
-					userCourseQuizData.map((data: any) => ({
-						userQuestionId: data._id,
-						feedback: data.teacherFeedback,
-						isUpdated: false,
-						teacherAudioFeedbackUrl: data.teacherAudioFeedbackUrl,
-						isFeedbackGiven: !!data.teacherFeedback,
-					}))
+				setUserQuestionsFeedbacks(
+					() =>
+						userCourseQuizData?.map((data: any) => ({
+							userQuestionId: data._id,
+							feedback: data.teacherFeedback,
+							isUpdated: false,
+							teacherAudioFeedbackUrl: data.teacherAudioFeedbackUrl,
+							isFeedbackGiven: !!data.teacherFeedback,
+						})) || []
 				);
 			} catch (error) {
 				console.error(error);
@@ -118,34 +119,38 @@ const AdminQuizSubmissionCheck = () => {
 
 	const handleFeedbackChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const updatedFeedback = e.target.value;
-		const updatedFeedbacks = userQuestionsFeedbacks.map((feedback) =>
-			feedback.userQuestionId === userResponseToFeedback._id
-				? { ...feedback, feedback: updatedFeedback, isUpdated: true, isFeedbackGiven: !!updatedFeedback }
-				: feedback
-		);
+		const updatedFeedbacks =
+			userQuestionsFeedbacks?.map((feedback) =>
+				feedback.userQuestionId === userResponseToFeedback._id
+					? { ...feedback, feedback: updatedFeedback, isUpdated: true, isFeedbackGiven: !!updatedFeedback }
+					: feedback
+			) || [];
 
 		setUserQuestionsFeedbacks(updatedFeedbacks);
 		setIsQuizFeedbackUpdated(true);
 
-		setUserResponseData((prevResponses: any) =>
-			prevResponses.map((response: any) =>
-				response._id === userResponseToFeedback._id ? { ...response, teacherFeedback: updatedFeedback } : response
-			)
+		setUserResponseData(
+			(prevResponses: any) =>
+				prevResponses?.map((response: any) =>
+					response._id === userResponseToFeedback._id ? { ...response, teacherFeedback: updatedFeedback } : response
+				) || []
 		);
 
 		setUserResponseToFeedback((prev: any) => ({ ...prev, teacherFeedback: updatedFeedback }));
 	};
 
 	const resetFeedback = () => {
-		const resetFeedbacks = userQuestionsFeedbacks.map((feedback) =>
-			feedback.userQuestionId === userResponseToFeedback._id ? { ...feedback, feedback: '', isUpdated: true, isFeedbackGiven: false } : feedback
-		);
+		const resetFeedbacks =
+			userQuestionsFeedbacks?.map((feedback) =>
+				feedback.userQuestionId === userResponseToFeedback._id ? { ...feedback, feedback: '', isUpdated: true, isFeedbackGiven: false } : feedback
+			) || [];
 
 		setUserQuestionsFeedbacks(resetFeedbacks);
 		setUserResponseToFeedback((prev: any) => ({ ...prev, teacherFeedback: '' }));
 
-		setUserResponseData((prevResponses: any) =>
-			prevResponses.map((response: any) => (response._id === userResponseToFeedback._id ? { ...response, teacherFeedback: '' } : response))
+		setUserResponseData(
+			(prevResponses: any) =>
+				prevResponses?.map((response: any) => (response._id === userResponseToFeedback._id ? { ...response, teacherFeedback: '' } : response)) || []
 		);
 	};
 
@@ -156,18 +161,20 @@ const AdminQuizSubmissionCheck = () => {
 			await uploadBytes(audioRef, blob);
 			const downloadURL = await getDownloadURL(audioRef);
 
-			const updatedFeedbacks = userQuestionsFeedbacks.map((feedback) =>
-				feedback.userQuestionId === userResponseToFeedback._id
-					? { ...feedback, isUpdated: true, teacherAudioFeedbackUrl: downloadURL.trim(), isFeedbackGiven: true }
-					: feedback
-			);
+			const updatedFeedbacks =
+				userQuestionsFeedbacks?.map((feedback) =>
+					feedback.userQuestionId === userResponseToFeedback._id
+						? { ...feedback, isUpdated: true, teacherAudioFeedbackUrl: downloadURL.trim(), isFeedbackGiven: true }
+						: feedback
+				) || [];
 
 			setUserQuestionsFeedbacks(updatedFeedbacks);
 
-			setUserResponseData((prevResponses: any) =>
-				prevResponses.map((response: any) =>
-					response._id === userResponseToFeedback._id ? { ...response, teacherAudioFeedbackUrl: downloadURL.trim() } : response
-				)
+			setUserResponseData(
+				(prevResponses: any) =>
+					prevResponses?.map((response: any) =>
+						response._id === userResponseToFeedback._id ? { ...response, teacherAudioFeedbackUrl: downloadURL.trim() } : response
+					) || []
 			);
 
 			setUserResponseToFeedback((prev: any) => ({ ...prev, teacherAudioFeedbackUrl: downloadURL.trim() }));
@@ -205,20 +212,26 @@ const AdminQuizSubmissionCheck = () => {
 			await addDoc(notificationRef, notificationData);
 
 			await Promise.all(
-				userQuestionsFeedbacks.map(async (feedback) => {
+				userQuestionsFeedbacks?.map((feedback) => {
 					if (feedback.feedback && feedback.isUpdated) {
-						await axios.patch(`${base_url}/userquestions/${feedback.userQuestionId}`, {
-							teacherFeedback: feedback.feedback.trim(),
-							teacherAudioFeedbackUrl: feedback.teacherAudioFeedbackUrl.trim(),
-						});
-
-						setUserQuestionsFeedbacks((prevFeedbacks) =>
-							prevFeedbacks.map((prevFeedback) =>
-								prevFeedback.userQuestionId === feedback.userQuestionId ? { ...prevFeedback, isFeedbackGiven: true, isUpdated: false } : prevFeedback
-							)
-						);
+						return axios
+							.patch(`${base_url}/userquestions/${feedback.userQuestionId}`, {
+								teacherFeedback: feedback.feedback.trim(),
+								teacherAudioFeedbackUrl: feedback.teacherAudioFeedbackUrl.trim(),
+							})
+							.then(() => {
+								setUserQuestionsFeedbacks(
+									(prevFeedbacks) =>
+										prevFeedbacks?.map((prevFeedback) =>
+											prevFeedback.userQuestionId === feedback.userQuestionId
+												? { ...prevFeedback, isFeedbackGiven: true, isUpdated: false }
+												: prevFeedback
+										) || []
+								);
+							});
 					}
-				})
+					return Promise.resolve();
+				}) || []
 			);
 
 			if (isChecked === 'false') {
@@ -230,7 +243,7 @@ const AdminQuizSubmissionCheck = () => {
 			setDisplaySubmissionMsg(true);
 			setIsQuizFeedbackUpdated(false);
 
-			setUserQuestionsFeedbacks((prev) => prev.map((feedback) => ({ ...feedback, isUpdated: false })));
+			setUserQuestionsFeedbacks((prev) => prev?.map((feedback) => ({ ...feedback, isUpdated: false })) || []);
 
 			navigate(`/admin/check-submission/submission/${submissionId}/lesson/${lessonId}/userlesson/${userLessonId}?isChecked=true`);
 		} catch (error) {
@@ -255,7 +268,7 @@ const AdminQuizSubmissionCheck = () => {
 					{ label: 'Quiz Name', value: quizName },
 					{ label: 'Course Name', value: courseName },
 					{ label: 'Status', value: isChecked === 'true' ? 'Checked' : 'Unchecked' },
-				].map(({ label, value }, index) => (
+				]?.map(({ label, value }, index) => (
 					<Box key={index} sx={{ textAlign: 'center' }}>
 						<Typography variant='h6' sx={{ mb: '0.35rem', fontSize: isMobileSizeSmall ? '0.85rem' : undefined }}>
 							{label}
@@ -530,14 +543,15 @@ const AdminQuizSubmissionCheck = () => {
 								Audio Feedback for Question
 							</Typography>
 							<Box sx={{ width: '100%', marginTop: '1rem' }}>
-								{!userQuestionsFeedbacks.find((feedback) => feedback.userQuestionId === userResponseToFeedback?._id)?.teacherAudioFeedbackUrl ? (
+								{!userQuestionsFeedbacks?.find((feedback) => feedback.userQuestionId === userResponseToFeedback?._id)?.teacherAudioFeedbackUrl ? (
 									<AudioRecorder uploadAudio={uploadAudio} isAudioUploading={isAudioUploading} recorderTitle='' teacherFeedback={true} />
 								) : (
 									<Box sx={{ display: 'flex', alignItems: 'center' }}>
 										<Box sx={{ flex: 9 }}>
 											<audio
 												src={
-													userQuestionsFeedbacks.find((feedback) => feedback.userQuestionId === userResponseToFeedback?._id)?.teacherAudioFeedbackUrl
+													userQuestionsFeedbacks?.find((feedback) => feedback.userQuestionId === userResponseToFeedback?._id)
+														?.teacherAudioFeedbackUrl
 												}
 												controls
 												style={{
@@ -553,12 +567,13 @@ const AdminQuizSubmissionCheck = () => {
 											<CustomSubmitButton
 												sx={{ borderRadius: '0.35rem' }}
 												onClick={() => {
-													setUserQuestionsFeedbacks((prevFeedbacks) =>
-														prevFeedbacks.map((feedback) =>
-															feedback.userQuestionId === userResponseToFeedback._id
-																? { ...feedback, isUpdated: true, teacherAudioFeedbackUrl: '', isFeedbackGiven: !!feedback.feedback }
-																: feedback
-														)
+													setUserQuestionsFeedbacks(
+														(prevFeedbacks) =>
+															prevFeedbacks?.map((feedback) =>
+																feedback.userQuestionId === userResponseToFeedback._id
+																	? { ...feedback, isUpdated: true, teacherAudioFeedbackUrl: '', isFeedbackGiven: !!feedback.feedback }
+																	: feedback
+															) || []
 													);
 												}}>
 												Remove
@@ -578,7 +593,7 @@ const AdminQuizSubmissionCheck = () => {
 					<CustomTextField
 						multiline
 						resizable
-						value={userQuestionsFeedbacks.find((feedback) => feedback.userQuestionId === userResponseToFeedback?._id)?.feedback || ''}
+						value={userQuestionsFeedbacks?.find((feedback) => feedback.userQuestionId === userResponseToFeedback?._id)?.feedback || ''}
 						onChange={handleFeedbackChange}
 						placeholder='Enter feedback for the question (max 1000 characters)'
 						InputProps={{

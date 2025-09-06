@@ -199,7 +199,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 				// Load user-specific course and lesson data if the user is not an admin
 				if (updatedUser.role !== Roles.ADMIN) {
 					const userCourseResponse = await axiosInstance.get(`${base_url}/usercourses/user/${updatedUser._id}`);
-					const userCourseData: UserCoursesIdsWithCourseIds[] = userCourseResponse.data.response.reduce(
+					const userCourseData: UserCoursesIdsWithCourseIds[] = userCourseResponse.data.response?.reduce(
 						(acc: UserCoursesIdsWithCourseIds[], value: UserCoursesByUserId) => {
 							if (value.courseId && value.courseId._id) {
 								acc.push({
@@ -1325,7 +1325,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 								Kullanıcı adı şunları içerebilir:
 							</Typography>
 							<Box sx={{ margin: '0.85rem 0 0 3rem' }}>
-								{['en fazla 15 karakter', 'en az 5 karakter', 'alt çizgi (_) ve nokta (.)'].map((rule, index) => (
+								{['en fazla 15 karakter', 'en az 5 karakter', 'alt çizgi (_) ve nokta (.)']?.map((rule, index) => (
 									<ul key={index}>
 										<li style={{ color: theme.textColor?.secondary.main }}>
 											<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.35rem', fontFamily: 'Varela Round' }}>
@@ -1365,7 +1365,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 								Şifreniz şunları içermelidir:
 							</Typography>
 							<Box sx={{ margin: '0.85rem 0 0 3rem' }}>
-								{['en az 6, en fazla 50 karakter uzunluğunda olmalı', 'en az bir harf içermeli', 'en az bir rakam içermeli'].map((rule, index) => (
+								{['en az 6, en fazla 50 karakter uzunluğunda olmalı', 'en az bir harf içermeli', 'en az bir rakam içermeli']?.map((rule, index) => (
 									<ul key={index}>
 										<li style={{ color: theme.textColor?.secondary.main }}>
 											<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.35rem', fontFamily: 'Varela Round' }}>

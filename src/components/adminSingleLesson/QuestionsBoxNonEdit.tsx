@@ -35,7 +35,7 @@ const QuestionsBoxNonEdit = ({ singleLesson, setIsDisplayNonEditQuestion, setDis
 					</Box>
 					<CustomInfoMessageAlignedRight message='Click the questions to preview as a student' />
 				</Box>
-				{singleLesson?.questionIds?.length === 0 || singleLesson?.questions?.filter((question) => question !== null).length === 0 ? (
+				{singleLesson?.questionIds?.length === 0 || singleLesson?.questions?.filter((question) => question !== null)?.length === 0 ? (
 					<NoContentBoxAdmin content='No question for this lesson' />
 				) : (
 					<>

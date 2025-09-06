@@ -16,7 +16,7 @@ const DocumentCard = ({ document, userCurrency, fromHomePage }: DocumentCardProp
 	const theme = useTheme();
 	const [openSample, setOpenSample] = useState(false);
 	const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
-	const price = document.prices.find((p) => p.currency === userCurrency);
+	const price = document.prices?.find((p) => p.currency === userCurrency);
 	const isFree = !price || price.amount === '0' || price.amount === 'Free';
 
 	const handleOpenSample = () => {

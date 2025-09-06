@@ -229,7 +229,7 @@ const EditInstructorDialog = ({
 										(selectedUser?.firstName?.charAt(0).toUpperCase() || '') +
 										(selectedUser?.firstName?.slice(1) || '') +
 										' ' +
-										(selectedUser?.lastName?.charAt(0).toUpperCase() || '') +
+										(selectedUser?.lastName?.charAt?.(0)?.toUpperCase?.() || '') +
 										(selectedUser?.lastName?.slice(1) || ''),
 									userId: selectedUser?.firebaseUserId,
 									email: selectedUser?.email || '',
@@ -312,7 +312,7 @@ const EditInstructorDialog = ({
 							return false;
 						}}
 						onChange={(_, newValue) => {
-							const limitedValue = newValue.slice(0, 5);
+							const limitedValue = newValue?.slice(0, 5) || [];
 							setSingleCourseCopy((prevData) => {
 								if (!prevData) return prevData;
 								return {
@@ -325,7 +325,7 @@ const EditInstructorDialog = ({
 							});
 						}}
 						renderTags={(value, getTagProps) =>
-							value.map((option, index) => {
+							value?.map((option, index) => {
 								const { key, ...chipProps } = getTagProps({ index });
 								return (
 									<Chip

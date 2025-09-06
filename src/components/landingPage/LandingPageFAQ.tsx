@@ -29,7 +29,7 @@ const faqData = [
 
 const splitFaqData = (data: typeof faqData) => {
 	const mid = Math.ceil(data.length / 2);
-	return [data.slice(0, mid), data.slice(mid)];
+	return [data?.slice(0, mid) || [], data?.slice(mid) || []];
 };
 
 const LandingPageFAQ = () => {
@@ -79,9 +79,9 @@ const LandingPageFAQ = () => {
 					gap: 3,
 					alignItems: 'stretch',
 				}}>
-				{[leftColumn, rightColumn].map((column, colIdx) => (
+				{[leftColumn, rightColumn]?.map((column, colIdx) => (
 					<Box key={colIdx} sx={{ display: 'flex', flexDirection: 'column', gap: 2, height: '100%' }}>
-						{column.map((faq, idx) => {
+						{column?.map((faq, idx) => {
 							// Calculate the global index for expanded state
 							const globalIdx = colIdx === 0 ? idx : leftColumn.length + idx;
 							return (

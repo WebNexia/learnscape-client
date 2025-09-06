@@ -91,7 +91,7 @@ const AdminCourses = () => {
 
 	// Use appropriate page number for pagination
 	const currentPage = isSearchActive ? searchResultsPage : coursesPageNumber;
-	const sortedCourses = [...displayCourses].sort((a, b) => {
+	const sortedCourses = [...(displayCourses || [])]?.sort((a, b) => {
 		const aValue = a[orderBy] ?? '';
 		const bValue = b[orderBy] ?? '';
 
@@ -101,7 +101,7 @@ const AdminCourses = () => {
 			return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
 		}
 	});
-	const paginatedCourses = sortedCourses.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+	const paginatedCourses = sortedCourses?.slice((currentPage - 1) * pageSize, currentPage * pageSize) || [];
 
 	if (error) return <Typography color='error'>{error}</Typography>;
 
@@ -185,7 +185,7 @@ const AdminCourses = () => {
 
 				// Fetch all missing pages in sequence
 				for (let page = currentLoadedPages + 1; page <= targetPage; page++) {
-					if (!searchResultsLoadedPages.includes(page)) {
+					if (!searchResultsLoadedPages?.includes(page)) {
 						await fetchMoreSearchResults(page, params);
 					}
 				}
@@ -425,7 +425,7 @@ const AdminCourses = () => {
 			if (response.data.status === 200) {
 				// If search is active, also remove from search results
 				if (isSearchActive) {
-					setSearchResults((prev) => prev.filter((course) => course._id !== courseId));
+					setSearchResults((prev) => prev?.filter((course) => course._id !== courseId) || []);
 					setSearchResultsTotalItems((prev) => Math.max(0, prev - 1));
 				}
 				removeCourse(courseId);
@@ -730,7 +730,7 @@ const AdminCourses = () => {
 									'Closed Courses',
 									'External Courses',
 									'Platform Courses',
-								].map((type) => (
+								]?.map((type) => (
 									<MenuItem
 										value={type.toLowerCase()}
 										key={type}

@@ -86,17 +86,18 @@ const AdminDocuments = () => {
 
 	// Use appropriate page number for pagination
 	const currentPage = isSearchActive ? searchResultsPage : documentsPageNumber;
-	const sortedDocuments = [...displayDocuments].sort((a, b) => {
-		const aValue = a[orderBy] ?? '';
-		const bValue = b[orderBy] ?? '';
+	const sortedDocuments =
+		[...(displayDocuments || [])]?.sort((a, b) => {
+			const aValue = a[orderBy] ?? '';
+			const bValue = b[orderBy] ?? '';
 
-		if (order === 'asc') {
-			return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
-		} else {
-			return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
-		}
-	});
-	const paginatedDocuments = sortedDocuments.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+			if (order === 'asc') {
+				return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+			} else {
+				return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
+			}
+		}) || [];
+	const paginatedDocuments = sortedDocuments?.slice((currentPage - 1) * pageSize, currentPage * pageSize) || [];
 
 	// Modal states
 	const [isDocumentDeleteModalOpen, setIsDocumentDeleteModalOpen] = useState<boolean[]>([]);
@@ -167,7 +168,7 @@ const AdminDocuments = () => {
 
 				// Fetch all missing pages in sequence
 				for (let page = currentLoadedPages + 1; page <= targetPage; page++) {
-					if (!searchResultsLoadedPages.includes(page)) {
+					if (!searchResultsLoadedPages?.includes(page)) {
 						await fetchMoreSearchResults(page, params);
 					}
 				}
@@ -506,7 +507,7 @@ const AdminDocuments = () => {
 			if (response.data.status === 200) {
 				// If search is active, also remove from search results
 				if (isSearchActive) {
-					setSearchResults((prev) => prev.filter((document) => document._id !== documentId));
+					setSearchResults((prev) => prev?.filter((document) => document._id !== documentId) || []);
 					setSearchResultsTotalItems((prev) => Math.max(0, prev - 1));
 				}
 				removeDocument(documentId);
@@ -551,17 +552,17 @@ const AdminDocuments = () => {
 		setEditDocumentModalOpen(updatedState);
 
 		// Set initial price states
-		const gbpPrice = documentToEdit.prices.find((p) => p.currency === 'gbp');
-		const usdPrice = documentToEdit.prices.find((p) => p.currency === 'usd');
-		const eurPrice = documentToEdit.prices.find((p) => p.currency === 'eur');
-		const tryPrice = documentToEdit.prices.find((p) => p.currency === 'try');
+		const gbpPrice = documentToEdit.prices?.find((p) => p.currency === 'gbp');
+		const usdPrice = documentToEdit.prices?.find((p) => p.currency === 'usd');
+		const eurPrice = documentToEdit.prices?.find((p) => p.currency === 'eur');
+		const tryPrice = documentToEdit.prices?.find((p) => p.currency === 'try');
 
 		setGBP(gbpPrice || { currency: 'gbp', amount: '0' });
 		setUSD(usdPrice || { currency: 'usd', amount: '0' });
 		setEUR(eurPrice || { currency: 'eur', amount: '0' });
 		setTRY(tryPrice || { currency: 'try', amount: '0' });
 
-		setIsFree(documentToEdit.prices.every((p) => p.amount === '0' || p.amount === 'Free'));
+		setIsFree(documentToEdit.prices?.every((p) => p.amount === '0' || p.amount === 'Free') || false);
 		setFileUploaded(true);
 
 		// Set initial URL states
@@ -688,7 +689,7 @@ const AdminDocuments = () => {
 											}}>
 											All Documents
 										</MenuItem>
-										{['Paid Documents', 'Free Documents', 'On Landing Page', 'On Platform Only'].map((type) => (
+										{['Paid Documents', 'Free Documents', 'On Landing Page', 'On Platform Only']?.map((type) => (
 											<MenuItem
 												value={type.toLowerCase()}
 												key={type}
@@ -1078,7 +1079,7 @@ const AdminDocuments = () => {
 					<CustomTablePagination count={documentsNumberOfPages} page={currentPage} onChange={handlePageChange} />
 				</Box>
 
-				{isDocumentInfoModalOpen.map(
+				{isDocumentInfoModalOpen?.map(
 					(isOpen, index) =>
 						isOpen && (
 							<CustomDialog openModal={isOpen} closeModal={() => closeDocumentInfoModal(index)} title={displayDocuments[index].name} maxWidth='sm'>

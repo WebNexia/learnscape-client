@@ -162,7 +162,8 @@ const QuizQuestion = ({
 
 		setUserBlankValuePairsAfterSubmission(() => {
 			if (isLessonCompleted) {
-				const pairs: UserBlankValuePairAnswers[] = userQuizAnswers?.find((data) => data.questionId == question._id)?.userBlankValuePairAnswers || [];
+				const pairs: UserBlankValuePairAnswers[] =
+					userQuizAnswers?.find((data) => data.questionId == question._id)?.userBlankValuePairAnswers || [];
 				return pairs;
 			}
 			return [];
@@ -202,7 +203,7 @@ const QuizQuestion = ({
 		}
 
 		setCourseTitle(() => {
-			return userCourseData.find((data) => data.courseId === courseId)?.courseTitle || '';
+			return userCourseData?.find((data) => data.courseId === courseId)?.courseTitle || '';
 		});
 	}, []);
 
@@ -244,29 +245,31 @@ const QuizQuestion = ({
 
 		// Upload user answers
 		await Promise.all(
-			userQuizAnswers.map(async (answer) => {
-				try {
-					await axios.post(`${base_url}/userQuestions`, {
-						userLessonId,
-						questionId: answer.questionId,
-						userId: user?._id,
-						lessonId,
-						courseId,
-						isCompleted: true,
-						isInProgress: false,
-						orgId,
-						userAnswer: answer.userAnswer.trim(),
-						userBlankValuePairAnswers: answer.userBlankValuePairAnswers,
-						userMatchingPairAnswers: answer.userMatchingPairAnswers,
-						videoRecordUrl: answer.videoRecordUrl.trim(),
-						audioRecordUrl: answer.audioRecordUrl.trim(),
-						teacherFeedback: '',
-						teacherAudioFeedbackUrl: '',
-					});
-				} catch (error) {
-					console.log(error);
-				}
-			})
+			userQuizAnswers?.map((answer) => {
+				return (async () => {
+					try {
+						await axios.post(`${base_url}/userQuestions`, {
+							userLessonId,
+							questionId: answer.questionId,
+							userId: user?._id,
+							lessonId,
+							courseId,
+							isCompleted: true,
+							isInProgress: false,
+							orgId,
+							userAnswer: answer.userAnswer.trim(),
+							userBlankValuePairAnswers: answer.userBlankValuePairAnswers,
+							userMatchingPairAnswers: answer.userMatchingPairAnswers,
+							videoRecordUrl: answer.videoRecordUrl.trim(),
+							audioRecordUrl: answer.audioRecordUrl.trim(),
+							teacherFeedback: '',
+							teacherAudioFeedbackUrl: '',
+						});
+					} catch (error) {
+						console.log(error);
+					}
+				})();
+			}) || []
 		);
 
 		try {
@@ -565,7 +568,7 @@ const QuizQuestion = ({
 							sx={{ alignSelf: 'center' }}>
 							{question &&
 								question.options &&
-								question.options.map((option, index) => {
+								question.options?.map((option, index) => {
 									let textColor = null;
 
 									if (isLessonCompleted) {
@@ -797,7 +800,7 @@ const QuizQuestion = ({
 						</Box>
 
 						<Box sx={{ ml: '3rem' }}>
-							{[QuestionType.MULTIPLE_CHOICE, QuestionType.TRUE_FALSE, QuestionType.MATCHING, 'Fill in the Blanks'].map((type, index) => (
+							{[QuestionType.MULTIPLE_CHOICE, QuestionType.TRUE_FALSE, QuestionType.MATCHING, 'Fill in the Blanks']?.map((type, index) => (
 								<Typography key={index} variant='body2' sx={{ lineHeight: '1.9', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 									- {type}
 								</Typography>

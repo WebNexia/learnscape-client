@@ -37,11 +37,11 @@ const Dashboard = ({}: DashboardProps) => {
 
 	useEffect(() => {
 		const userCourses = JSON.parse(localStorage.getItem('userCourseData')!);
-		const userLessons = JSON.parse(localStorage.getItem('userLessonData')!)?.filter((lesson: UserLessonDataStorage) => lesson.isCompleted);
+		const userLessons = JSON.parse(localStorage.getItem('userLessonData')!)?.filter((lesson: UserLessonDataStorage) => lesson.isCompleted) || [];
 
 		setTotalEnrolledCourses(userCourses?.length);
 		setNumberOfCompletedLessons(userLessons?.length);
-		setTotalCompletedCourses(userCourses?.filter((userCourse: UserCoursesIdsWithCourseIds) => userCourse.isCourseCompleted).length);
+		setTotalCompletedCourses(userCourses?.filter((userCourse: UserCoursesIdsWithCourseIds) => userCourse.isCourseCompleted)?.length || 0);
 		// Process user data to create chart data
 		const processUserData = () => {
 			const dataMap: { [date: string]: number } = {};
@@ -52,10 +52,11 @@ const Dashboard = ({}: DashboardProps) => {
 					dataMap[date] = (dataMap[date] || 0) + 1;
 				});
 
-			const labels = Object.keys(dataMap)
-				?.map((date) => new Date(date)) // Convert to Date objects
-				?.sort((a: any, b: any) => a - b) // Sort in ascending order
-				?.map((date) => format(date, 'yyyy-MM-dd')); // Convert back to formatted string
+			const labels =
+				Object.keys(dataMap)
+					?.map((date) => new Date(date)) // Convert to Date objects
+					?.sort((a: any, b: any) => a - b) // Sort in ascending order
+					?.map((date) => format(date, 'yyyy-MM-dd')) || []; // Convert back to formatted string
 
 			const data = Object.values(dataMap);
 			setChartData({
@@ -83,10 +84,11 @@ const Dashboard = ({}: DashboardProps) => {
 			});
 
 			// Create labels (sorted dates) and data (lesson counts)
-			const labels = Object.keys(lessonsDataMap)
-				?.map((date) => new Date(date))
-				?.sort((a: any, b: any) => a - b) // Sort in ascending order
-				?.map((date) => format(date, 'dd MMM yyyy')); // Format dates for display
+			const labels =
+				Object.keys(lessonsDataMap)
+					?.map((date) => new Date(date))
+					?.sort((a: any, b: any) => a - b) // Sort in ascending order
+					?.map((date) => format(date, 'dd MMM yyyy')) || []; // Format dates for display
 
 			const data = Object.values(lessonsDataMap); // The number of lessons created on each date
 

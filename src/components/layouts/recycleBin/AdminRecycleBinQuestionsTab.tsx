@@ -104,7 +104,7 @@ const AdminRecycleBinQuestionsTab = () => {
 
 	// Use appropriate page number for pagination
 	const currentPageNumber = isSearchActive ? searchResultsPage : currentPage;
-	const paginatedQuestions = displayQuestions.slice((currentPageNumber - 1) * pageSize, currentPageNumber * pageSize);
+	const paginatedQuestions = displayQuestions?.slice((currentPageNumber - 1) * pageSize, currentPageNumber * pageSize) || [];
 
 	const [orderBy, setOrderBy] = useState<keyof ArchivedQuestion>('archivedAt');
 	const [order, setOrder] = useState<'asc' | 'desc'>('desc');
@@ -171,7 +171,7 @@ const AdminRecycleBinQuestionsTab = () => {
 
 				// Fetch all missing pages in sequence
 				for (let page = currentLoadedPages + 1; page <= targetPage; page++) {
-					if (!searchResultsLoadedPages.includes(page)) {
+					if (!searchResultsLoadedPages?.includes(page)) {
 						await fetchMoreSearchResults(page, params);
 					}
 				}
@@ -187,7 +187,7 @@ const AdminRecycleBinQuestionsTab = () => {
 				// Fetch all missing pages in sequence
 				if (currentLoadedPages < targetPage) {
 					for (let page = currentLoadedPages + 1; page <= targetPage; page++) {
-						if (!loadedPages.includes(page)) {
+						if (!loadedPages?.includes(page)) {
 							fetchArchivedQuestions(page);
 							setLoadedPages((prev) => [...prev, page]);
 						}
@@ -237,7 +237,7 @@ const AdminRecycleBinQuestionsTab = () => {
 		const checked = event.target.checked;
 		setSelectAll(checked);
 		if (checked) {
-			setSelectedItems(paginatedQuestions.map((question) => question._id));
+			setSelectedItems(paginatedQuestions?.map((question) => question._id) || []);
 			setSelectAll(true);
 		} else {
 			setSelectedItems([]);
@@ -247,8 +247,8 @@ const AdminRecycleBinQuestionsTab = () => {
 
 	const handleSelectItem = (questionId: string) => {
 		setSelectedItems((prev) => {
-			if (prev.includes(questionId)) {
-				const updatedItems = prev.filter((id) => id !== questionId);
+			if (prev?.includes(questionId)) {
+				const updatedItems = prev?.filter((id) => id !== questionId) || [];
 				setSelectAll(false);
 				return updatedItems;
 			} else {
@@ -342,12 +342,12 @@ const AdminRecycleBinQuestionsTab = () => {
 
 			if (response.data.status === 200) {
 				// Remove from archived questions
-				setArchivedQuestions((prev) => prev.filter((question) => question._id !== questionId));
+				setArchivedQuestions((prev) => prev?.filter((question) => question._id !== questionId) || []);
 				setTotalItems((prev) => prev - 1);
 
 				// If search is active, also remove from search results
 				if (isSearchActive) {
-					setSearchResults((prev) => prev.filter((question) => question._id !== questionId));
+					setSearchResults((prev) => prev?.filter((question) => question._id !== questionId) || []);
 					setSearchResultsTotalItems((prev) => Math.max(0, prev - 1));
 				}
 
@@ -376,12 +376,12 @@ const AdminRecycleBinQuestionsTab = () => {
 
 			if (response.data.status === 200) {
 				// Remove from archived questions
-				setArchivedQuestions((prev) => prev.filter((question) => question._id !== questionId));
+				setArchivedQuestions((prev) => prev?.filter((question) => question._id !== questionId) || []);
 				setTotalItems((prev) => prev - 1);
 
 				// If search is active, also remove from search results
 				if (isSearchActive) {
-					setSearchResults((prev) => prev.filter((question) => question._id !== questionId));
+					setSearchResults((prev) => prev?.filter((question) => question._id !== questionId) || []);
 					setSearchResultsTotalItems((prev) => Math.max(0, prev - 1));
 				}
 
@@ -403,21 +403,23 @@ const AdminRecycleBinQuestionsTab = () => {
 	const handleBulkRestore = async () => {
 		try {
 			await Promise.all(
-				selectedItems.map(async (questionId) => {
-					const response = await axios.patch(`${base_url}/questions/${questionId}/restore`);
-					if (response.data.data) {
-						addNewQuestion({ ...response.data.data, questionType: fetchQuestionTypeName(response.data.data) });
-					}
-				})
+				selectedItems?.map((questionId) => {
+					return (async () => {
+						const response = await axios.patch(`${base_url}/questions/${questionId}/restore`);
+						if (response.data.data) {
+							addNewQuestion({ ...response.data.data, questionType: fetchQuestionTypeName(response.data.data) });
+						}
+					})();
+				}) || []
 			);
 
 			// Remove the questions from the list
-			setArchivedQuestions((prev) => prev.filter((question) => !selectedItems.includes(question._id)));
+			setArchivedQuestions((prev) => prev?.filter((question) => !selectedItems?.includes(question._id)) || []);
 			setTotalItems((prev) => prev - selectedItems.length);
 
 			// If search is active, also remove from search results
 			if (isSearchActive) {
-				setSearchResults((prev) => prev.filter((question) => !selectedItems.includes(question._id)));
+				setSearchResults((prev) => prev?.filter((question) => !selectedItems?.includes(question._id)) || []);
 				setSearchResultsTotalItems((prev) => Math.max(0, prev - selectedItems.length));
 			}
 
@@ -438,15 +440,15 @@ const AdminRecycleBinQuestionsTab = () => {
 
 	const handleBulkDelete = async () => {
 		try {
-			await Promise.all(selectedItems.map((questionId) => axios.delete(`${base_url}/questions/${questionId}/hard`)));
+			await Promise.all(selectedItems?.map((questionId) => axios.delete(`${base_url}/questions/${questionId}/hard`)) || []);
 
 			// Remove the questions from the list
-			setArchivedQuestions((prev) => prev.filter((question) => !selectedItems.includes(question._id)));
+			setArchivedQuestions((prev) => prev?.filter((question) => !selectedItems?.includes(question._id)) || []);
 			setTotalItems((prev) => prev - selectedItems.length);
 
 			// If search is active, also remove from search results
 			if (isSearchActive) {
-				setSearchResults((prev) => prev.filter((question) => !selectedItems.includes(question._id)));
+				setSearchResults((prev) => prev?.filter((question) => !selectedItems?.includes(question._id)) || []);
 				setSearchResultsTotalItems((prev) => Math.max(0, prev - selectedItems.length));
 			}
 
@@ -568,7 +570,7 @@ const AdminRecycleBinQuestionsTab = () => {
 									}}>
 									All deleted questions
 								</MenuItem>
-								{['Recently deleted', 'AI Generated', 'Non AI Generated'].map((type) => (
+								{['Recently deleted', 'AI Generated', 'Non AI Generated']?.map((type) => (
 									<MenuItem
 										value={type.toLowerCase()}
 										key={type}
@@ -856,7 +858,7 @@ const AdminRecycleBinQuestionsTab = () => {
 						{paginatedQuestions &&
 							paginatedQuestions?.map((question: ArchivedQuestion, index) => {
 								const deletionDateStatus = getDeletionDateStatus(question.archivedAt || '');
-								const isSelected = selectedItems.includes(question._id);
+								const isSelected = selectedItems?.includes(question._id);
 
 								return (
 									<TableRow key={question._id} hover selected={isSelected}>
@@ -894,7 +896,7 @@ const AdminRecycleBinQuestionsTab = () => {
 			</Box>
 
 			{/* Restore Modal */}
-			{paginatedQuestions.map((question, index) => (
+			{paginatedQuestions?.map((question, index) => (
 				<CustomDialog
 					key={`restore-${question._id}`}
 					openModal={restoreModalOpen[index] || false}
@@ -922,7 +924,7 @@ const AdminRecycleBinQuestionsTab = () => {
 			))}
 
 			{/* Delete Modal */}
-			{paginatedQuestions.map((question, index) => (
+			{paginatedQuestions?.map((question, index) => (
 				<CustomDialog
 					key={`delete-${question._id}`}
 					openModal={deleteModalOpen[index] || false}

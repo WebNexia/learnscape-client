@@ -74,17 +74,18 @@ const AdminLessons = () => {
 
 	// Use appropriate page number for pagination
 	const currentPage = isSearchActive ? searchResultsPage : lessonsPageNumber;
-	const sortedLessons = [...displayLessons].sort((a, b) => {
-		const aValue = a[orderBy] ?? '';
-		const bValue = b[orderBy] ?? '';
+	const sortedLessons =
+		[...(displayLessons || [])]?.sort((a, b) => {
+			const aValue = a[orderBy] ?? '';
+			const bValue = b[orderBy] ?? '';
 
-		if (order === 'asc') {
-			return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
-		} else {
-			return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
-		}
-	});
-	const paginatedLessons = sortedLessons.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+			if (order === 'asc') {
+				return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+			} else {
+				return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
+			}
+		}) || [];
+	const paginatedLessons = sortedLessons?.slice((currentPage - 1) * pageSize, currentPage * pageSize) || [];
 
 	const [isNewLessonModalOpen, setIsNewLessonModalOpen] = useState<boolean>(false);
 
@@ -130,7 +131,7 @@ const AdminLessons = () => {
 
 				// Fetch all missing pages in sequence
 				for (let page = currentLoadedPages + 1; page <= targetPage; page++) {
-					if (!searchResultsLoadedPages.includes(page)) {
+					if (!searchResultsLoadedPages?.includes(page)) {
 						await fetchMoreSearchResults(page, params);
 					}
 				}
@@ -265,7 +266,7 @@ const AdminLessons = () => {
 
 				// If search is active, also remove from search results
 				if (isSearchActive) {
-					setSearchResults((prev) => prev.filter((lesson) => lesson._id !== lessonId));
+					setSearchResults((prev) => prev?.filter((lesson) => lesson._id !== lessonId) || []);
 					setSearchResultsTotalItems((prev) => Math.max(0, prev - 1));
 				}
 
@@ -421,7 +422,7 @@ const AdminLessons = () => {
 									}}>
 									All Lessons
 								</MenuItem>
-								{['Published Lessons', 'Unpublished Lessons'].map((type) => (
+								{['Published Lessons', 'Unpublished Lessons']?.map((type) => (
 									<MenuItem
 										value={type.toLowerCase()}
 										key={type}
@@ -447,7 +448,7 @@ const AdminLessons = () => {
 									}}>
 									----- Filter by Type -----
 								</MenuItem>
-								{['Instructional Lessons', 'Practice Lessons', 'Quizzes'].map((type) => (
+								{['Instructional Lessons', 'Practice Lessons', 'Quizzes']?.map((type) => (
 									<MenuItem
 										value={type.toLowerCase()}
 										key={type}
@@ -755,7 +756,7 @@ const AdminLessons = () => {
 				<CustomTablePagination count={lessonsNumberOfPages} page={currentPage} onChange={handlePageChange} />
 			</Box>
 
-			{isLessonInfoModalOpen.map(
+			{isLessonInfoModalOpen?.map(
 				(isOpen, index) =>
 					isOpen && (
 						<CustomDialog

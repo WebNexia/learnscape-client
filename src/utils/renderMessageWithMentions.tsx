@@ -11,36 +11,38 @@ export const renderMessageWithMentions = (text: string, processedTopics: any[], 
 	const mentionPattern = /(@[a-zA-Z0-9._]+)/g;
 	const parts = text.split(mentionPattern);
 
-	return parts?.map((part, index) => {
-		if (part.startsWith('@')) {
-			// Special handling for @everyone, only for admin users
-			if (part === '@everyone') {
-				if (user.role === Roles.ADMIN) {
-					// Render @everyone as a special mention for admins
-					return (
-						<span key={index} style={{ color: 'green', fontWeight: 'bold' }}>
-							{part}
-						</span>
-					);
-				} else {
-					// Render as plain text if user is not an admin
-					return (
-						<span key={index} style={{ color: 'gray' }}>
-							{part}
-						</span>
-					);
+	return (
+		parts?.map((part, index) => {
+			if (part.startsWith('@')) {
+				// Special handling for @everyone, only for admin users
+				if (part === '@everyone') {
+					if (user.role === Roles.ADMIN) {
+						// Render @everyone as a special mention for admins
+						return (
+							<span key={index} style={{ color: 'green', fontWeight: 'bold' }}>
+								{part}
+							</span>
+						);
+					} else {
+						// Render as plain text if user is not an admin
+						return (
+							<span key={index} style={{ color: 'gray' }}>
+								{part}
+							</span>
+						);
+					}
 				}
-			}
 
-			// Regular @mentions (links to user profile placeholder)
-			return (
-				<Link key={index} to={`#`} style={{ textDecoration: 'none', color: 'blue' }}>
-					{part}
-				</Link>
-			);
-		} else {
-			// Render regular text parts as-is
-			return part;
-		}
-	});
+				// Regular @mentions (links to user profile placeholder)
+				return (
+					<Link key={index} to={`#`} style={{ textDecoration: 'none', color: 'blue' }}>
+						{part}
+					</Link>
+				);
+			} else {
+				// Render regular text parts as-is
+				return part;
+			}
+		}) || []
+	);
 };

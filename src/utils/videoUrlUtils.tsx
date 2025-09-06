@@ -11,7 +11,7 @@ export const formatVideoUrl = (url: string): string => {
 	if (!url) return url;
 
 	// Handle Dailymotion URLs
-	if (url.includes('dailymotion.com')) {
+	if (url?.includes('dailymotion.com')) {
 		// Extract video ID from various Dailymotion URL formats
 		const patterns = [
 			/\/video\/([a-zA-Z0-9]+)/, // Standard format
@@ -28,13 +28,13 @@ export const formatVideoUrl = (url: string): string => {
 	}
 
 	// Handle YouTube URLs
-	if (url.includes('youtube.com') || url.includes('youtu.be')) {
+	if (url?.includes('youtube.com') || url?.includes('youtu.be')) {
 		// ReactPlayer handles YouTube URLs automatically
 		return url;
 	}
 
 	// Handle Vimeo URLs
-	if (url.includes('vimeo.com')) {
+	if (url?.includes('vimeo.com')) {
 		// ReactPlayer handles Vimeo URLs automatically
 		return url;
 	}
@@ -53,7 +53,7 @@ export const getVideoPlayerConfig = (url: string, controls: boolean = true) => {
 	const config: any = {};
 
 	// Configure Dailymotion
-	if (url.includes('dailymotion.com')) {
+	if (url?.includes('dailymotion.com')) {
 		config.dailymotion = {
 			params: {
 				autoplay: false,
@@ -64,7 +64,7 @@ export const getVideoPlayerConfig = (url: string, controls: boolean = true) => {
 	}
 
 	// Configure YouTube
-	if (url.includes('youtube.com') || url.includes('youtu.be')) {
+	if (url?.includes('youtube.com') || url?.includes('youtu.be')) {
 		config.youtube = {
 			playerVars: {
 				autoplay: 0,
@@ -76,7 +76,7 @@ export const getVideoPlayerConfig = (url: string, controls: boolean = true) => {
 	}
 
 	// Configure Vimeo
-	if (url.includes('vimeo.com')) {
+	if (url?.includes('vimeo.com')) {
 		config.vimeo = {
 			playerOptions: {
 				autoplay: false,
@@ -99,7 +99,7 @@ export const isSupportedVideoPlatform = (url: string): boolean => {
 
 	const supportedPlatforms = ['youtube.com', 'youtu.be', 'vimeo.com', 'dailymotion.com', 'twitch.tv'];
 
-	return supportedPlatforms.some((platform) => url.includes(platform));
+	return supportedPlatforms?.some((platform) => url?.includes(platform)) || false;
 };
 
 /**
@@ -109,7 +109,7 @@ export const isSupportedVideoPlatform = (url: string): boolean => {
  */
 export const isDailymotionUrl = (url: string): boolean => {
 	if (!url) return false;
-	return url.includes('dailymotion.com');
+	return url?.includes('dailymotion.com');
 };
 
 /**
@@ -121,13 +121,13 @@ export const extractVideoId = (url: string): string | null => {
 	if (!url) return null;
 
 	// Dailymotion
-	if (url.includes('dailymotion.com')) {
+	if (url?.includes('dailymotion.com')) {
 		const match = url.match(/\/video\/([a-zA-Z0-9]+)/);
 		return match ? match[1] : null;
 	}
 
 	// YouTube
-	if (url.includes('youtube.com') || url.includes('youtu.be')) {
+	if (url?.includes('youtube.com') || url?.includes('youtu.be')) {
 		const patterns = [/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/, /youtube\.com\/embed\/([a-zA-Z0-9_-]+)/];
 
 		for (const pattern of patterns) {
@@ -137,7 +137,7 @@ export const extractVideoId = (url: string): string | null => {
 	}
 
 	// Vimeo
-	if (url.includes('vimeo.com')) {
+	if (url?.includes('vimeo.com')) {
 		const match = url.match(/vimeo\.com\/(\d+)/);
 		return match ? match[1] : null;
 	}

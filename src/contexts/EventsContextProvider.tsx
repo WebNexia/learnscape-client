@@ -50,14 +50,14 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 	const location = useLocation();
 	const queryClient = useQueryClient();
 
-	const isCalendarRoute = location.pathname.includes('/calendar');
+	const isCalendarRoute = location.pathname?.includes('/calendar');
 	// Month-based calendar state
 	const [loadedMonths, setLoadedMonths] = useState<string[]>([]);
 
 	// Function to handle sorting
 	const sortEventsData = (property: keyof Event, order: 'asc' | 'desc') => {
 		const currentData = (queryClient.getQueryData(['calendarEvents', orgId]) as Event[]) || [];
-		const sortedDataCopy = [...currentData].sort((a: Event, b: Event) => {
+		const sortedDataCopy = [...(currentData || [])]?.sort((a: Event, b: Event) => {
 			if (order === 'asc') {
 				return a[property]! > b[property]! ? 1 : -1;
 			} else {
@@ -125,7 +125,7 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 		const monthKey = `${year}-${month.toString().padStart(2, '0')}`;
 
 		// Skip if already loaded
-		if (loadedMonths.includes(monthKey)) return;
+		if (loadedMonths?.includes(monthKey)) return;
 
 		try {
 			const response = await axios.get(`${base_url}/events/organisation/${orgId}?year=${year}&month=${month}&limit=1000`);
@@ -135,7 +135,7 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 			// Add new events to existing calendar events, remove duplicates
 			const currentData = (queryClient.getQueryData(['calendarEvents', orgId]) as Event[]) || [];
 			const combined = [...currentData, ...eventsData];
-			const unique = combined.filter((event, index, self) => index === self.findIndex((e) => e._id === event._id));
+			const unique = combined?.filter((event, index, self) => index === self?.findIndex?.((e) => e._id === event._id)) || [];
 
 			queryClient.setQueryData(['calendarEvents', orgId], unique);
 
@@ -171,7 +171,7 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 
 		try {
 			// Fetch all three months in parallel with proper error handling
-			const promises = monthsToFetch.map(({ year, month }) =>
+			const promises = monthsToFetch?.map(({ year, month }) =>
 				axios.get(`${base_url}/events/organisation/${orgId}?year=${year}&month=${month}&limit=1000`)
 			);
 
@@ -181,13 +181,13 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 			const allEvents = responses.flatMap((response) => response.data.data);
 
 			// Remove duplicates
-			const uniqueEvents = allEvents.filter((event, index, self) => index === self.findIndex((e) => e._id === event._id));
+			const uniqueEvents = allEvents?.filter((event, index, self) => index === self?.findIndex?.((e) => e._id === event._id)) || [];
 
 			// Update React Query cache
 			queryClient.setQueryData(['calendarEvents', orgId], uniqueEvents);
 
 			// Mark months as loaded
-			const monthKeys = monthsToFetch.map(({ year, month }) => `${year}-${month.toString().padStart(2, '0')}`);
+			const monthKeys = monthsToFetch?.map(({ year, month }) => `${year}-${month.toString().padStart(2, '0')}`) || [];
 			setLoadedMonths(monthKeys);
 
 			return uniqueEvents; // Return the events for React Query

@@ -186,8 +186,8 @@ const FillInTheBlanksDragDrop = ({
 		}));
 
 		const populateBlanks = (source: BlankValuePair[] | UserBlankValuePairAnswers[]) => {
-			source.forEach((pair) => {
-				const blank = initializedBlanks.find((b) => b.id === pair.id);
+			source?.forEach((pair) => {
+				const blank = initializedBlanks?.find((b) => b.id === pair.id);
 				if (blank) blank.value = pair.value;
 			});
 		};
@@ -202,23 +202,23 @@ const FillInTheBlanksDragDrop = ({
 		) {
 			populateBlanks(blankValuePairs);
 
-			const remainingResponses = blankValuePairs?.filter((pair) => !initializedBlanks.some((blank) => blank.value === pair.value));
-			const randomWords = shuffle(words).slice(0, 5);
-			setResponses(shuffle([...remainingResponses, ...randomWords?.map((word) => ({ id: `random-${word}`, value: word, blank: -1 }))]));
+			const remainingResponses = blankValuePairs?.filter((pair) => !initializedBlanks?.some((blank) => blank.value === pair.value)) || [];
+			const randomWords = shuffle(words)?.slice(0, 5) || [];
+			setResponses(shuffle([...remainingResponses, ...(randomWords?.map((word) => ({ id: `random-${word}`, value: word, blank: -1 })) || [])]));
 		}
 
 		setBlanks(initializedBlanks);
 
 		if (!isLessonCompleted) {
 			const wordCount = fromQuizQuestionUser || lessonType === LessonType.QUIZ ? 15 : 5;
-			const randomWords = shuffle(words).slice(0, wordCount);
-			setResponses(shuffle([...blankValuePairs, ...randomWords?.map((word) => ({ id: `random-${word}`, value: word, blank: -1 }))]));
+			const randomWords = shuffle(words)?.slice(0, wordCount) || [];
+			setResponses(shuffle([...blankValuePairs, ...(randomWords?.map((word) => ({ id: `random-${word}`, value: word, blank: -1 })) || [])]));
 		}
 	}, [textWithBlanks, blankValuePairs, isLessonCompleted, userBlankValuePairsAfterSubmission, displayedQuestionNumber, getLastQuestion]);
 
 	useEffect(() => {
 		if (hasInteracted && fromPracticeQuestionUser) {
-			const allCorrect = blanks.every((blank) => blank.value === blankValuePairs.find((p) => p.blank === blank.blank)?.value);
+			const allCorrect = blanks?.every((blank) => blank.value === blankValuePairs?.find((p) => p.blank === blank.blank)?.value) || false;
 
 			if (setAllPairsMatchedFITBDragDrop) setAllPairsMatchedFITBDragDrop(allCorrect);
 
@@ -348,7 +348,7 @@ const FillInTheBlanksDragDrop = ({
 												{...provided.droppableProps}
 												$isCorrect={
 													blanks[blankIndex].value
-														? blanks[blankIndex].value === blankValuePairs.find((p) => p.blank === blanks[blankIndex].blank)?.value
+														? blanks[blankIndex].value === blankValuePairs?.find((p) => p.blank === blanks[blankIndex].blank)?.value
 														: null
 												}
 												$fromQuizQuestionUser={fromQuizQuestionUser}
@@ -364,7 +364,7 @@ const FillInTheBlanksDragDrop = ({
 																ref={provided.innerRef}
 																{...provided.draggableProps}
 																{...provided.dragHandleProps}
-																$isCorrect={blanks[blankIndex].value === blankValuePairs.find((p) => p.blank === blanks[blankIndex].blank)?.value}
+																$isCorrect={blanks[blankIndex].value === blankValuePairs?.find((p) => p.blank === blanks[blankIndex].blank)?.value}
 																$fromQuizQuestionUser={fromQuizQuestionUser}
 																$lessonType={lessonType}
 																style={{
@@ -465,7 +465,7 @@ const FillInTheBlanksDragDrop = ({
 								padding: '1rem',
 							}}>
 							<TextContainer>
-								{textWithBlanks.split(/(___\d+___)/g)?.map((segment, index) => {
+								{textWithBlanks?.split?.(/(___\d+___)/g)?.map((segment, index) => {
 									const match = segment.match(/___(\d+)___/);
 									if (match) {
 										const blankIndex = parseInt(match[1], 10) - 1;

@@ -282,7 +282,7 @@ const SubmissionFeedbackDetails = () => {
 					{ label: 'Quiz Name', value: quizName },
 					{ label: 'Course Name', value: courseName },
 					{ label: 'Status', value: isChecked === 'true' ? 'Checked' : 'Unchecked' },
-				].map(({ label, value }, index) => (
+				]?.map(({ label, value }, index) => (
 					<Box key={index} sx={{ textAlign: 'center' }}>
 						<Typography variant='h6' sx={{ mb: '0.35rem', fontSize: isMobileSizeSmall ? '0.85rem' : undefined }}>
 							{label}

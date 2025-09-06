@@ -26,9 +26,8 @@ const SelectApplicableCoursesCreate = ({ newPromoCode, setNewPromoCode }: Select
 		}
 
 		const coursesIds = newPromoCode?.coursesApplicable || [];
-		const searchResults = courses.filter(
-			(course) => course.title.toLowerCase().includes(searchQuery.toLowerCase()) && !coursesIds.includes(course._id)
-		);
+		const searchResults =
+			courses?.filter((course) => course.title.toLowerCase()?.includes(searchQuery.toLowerCase()) && !coursesIds?.includes(course._id)) || [];
 
 		setFilteredCourses(searchResults);
 	};
@@ -38,7 +37,7 @@ const SelectApplicableCoursesCreate = ({ newPromoCode, setNewPromoCode }: Select
 			{newPromoCode.coursesApplicable.length > 0 && (
 				<Box sx={{ display: 'flex', margin: '0.75rem 0 0.75rem 0', flexWrap: 'wrap' }}>
 					{newPromoCode.coursesApplicable?.map((id) => {
-						const course = courses.find((course) => course._id === id);
+						const course = courses?.find((course) => course._id === id);
 						return (
 							<Box
 								key={course?._id}
@@ -54,7 +53,7 @@ const SelectApplicableCoursesCreate = ({ newPromoCode, setNewPromoCode }: Select
 								<Typography sx={{ fontSize: '0.85rem' }}>{truncateText(course?.title!, 20)}</Typography>
 								<IconButton
 									onClick={() => {
-										const updatedCourses = newPromoCode.coursesApplicable.filter((filteredCourseId) => course?._id !== filteredCourseId);
+										const updatedCourses = newPromoCode.coursesApplicable?.filter((filteredCourseId) => course?._id !== filteredCourseId) || [];
 
 										setNewPromoCode((prevData) => ({ ...prevData, coursesApplicable: updatedCourses }));
 									}}>

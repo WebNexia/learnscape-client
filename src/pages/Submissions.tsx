@@ -28,9 +28,8 @@ const Submissions = () => {
 
 	const { user } = useAuth();
 
-	const userCourseData: string[] = JSON.parse(localStorage.getItem('userCourseData') || '[]').map(
-		(data: UserCoursesIdsWithCourseIds) => data.courseTitle
-	);
+	const userCourseData: string[] =
+		JSON.parse(localStorage.getItem('userCourseData') || '[]')?.map((data: UserCoursesIdsWithCourseIds) => data.courseTitle) || [];
 
 	// Use context pagination state instead of local state
 	const [searchValue, setSearchValue] = useState<string>('');
@@ -60,20 +59,21 @@ const Submissions = () => {
 	// Use appropriate page number for pagination
 	const currentPage = isSearchActive ? searchResultsPage : userSubmissionsPageNumber;
 
-	const sortedSubmissions = [...displaySubmissions].sort((a, b) => {
-		const aValue = a[orderBy] ?? '';
-		const bValue = b[orderBy] ?? '';
+	const sortedSubmissions =
+		[...(displaySubmissions || [])]?.sort((a, b) => {
+			const aValue = a[orderBy] ?? '';
+			const bValue = b[orderBy] ?? '';
 
-		if (order === 'asc') {
-			return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
-		} else {
-			return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
-		}
-	});
+			if (order === 'asc') {
+				return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+			} else {
+				return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
+			}
+		}) || [];
 
 	// For search results, slice the accumulated data based on current page
 	// For context data, use client-side pagination
-	const paginatedSubmissions = sortedSubmissions.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+	const paginatedSubmissions = sortedSubmissions?.slice((currentPage - 1) * pageSize, currentPage * pageSize) || [];
 
 	// React Query handles data loading automatically
 
@@ -127,7 +127,7 @@ const Submissions = () => {
 
 				// Fetch all missing pages in sequence
 				for (let page = currentLoadedPages + 1; page <= targetPage; page++) {
-					if (!searchResultsLoadedPages.includes(page)) {
+					if (!searchResultsLoadedPages?.includes(page)) {
 						await fetchMoreSearchResults(page, params);
 					}
 				}
@@ -374,7 +374,7 @@ const Submissions = () => {
 											------ Filter by Course ------
 										</MenuItem>
 									)}
-									{userCourseData.map((course) => (
+									{userCourseData?.map((course) => (
 										<MenuItem
 											value={course.toLowerCase()}
 											key={course}
@@ -585,7 +585,7 @@ const Submissions = () => {
 					/>
 					<TableBody>
 						{paginatedSubmissions &&
-							paginatedSubmissions.map((submission: QuizSubmission) => (
+							paginatedSubmissions?.map((submission: QuizSubmission) => (
 								<TableRow key={submission._id} hover>
 									<CustomTableCell value={submission.lessonName} />
 									<CustomTableCell value={submission.courseName} />

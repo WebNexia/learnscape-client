@@ -65,7 +65,7 @@ const PaymentDetailsDialog = ({ open, onClose, payment }: PaymentDetailsDialogPr
 	return (
 		<CustomDialog openModal={open} closeModal={onClose} maxWidth='md'>
 			<Box sx={{ padding: '1.5rem' }}>
-				{sections.map((section, sectionIndex) => (
+				{sections?.map((section, sectionIndex) => (
 					<Box key={sectionIndex} sx={{ mb: sectionIndex < sections.length - 1 ? '3rem' : 0 }}>
 						<Typography
 							variant='h6'
@@ -82,7 +82,7 @@ const PaymentDetailsDialog = ({ open, onClose, payment }: PaymentDetailsDialogPr
 								gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
 								gap: '1.5rem',
 							}}>
-							{section.details.map((detail, index) => (
+							{section.details?.map((detail, index) => (
 								<Box
 									key={index}
 									sx={{

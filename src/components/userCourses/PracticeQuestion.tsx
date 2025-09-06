@@ -200,7 +200,7 @@ const PracticeQuestion = ({
 	}, [displayedQuestionNumber, question._id]);
 
 	const createUserQuestion = async () => {
-		const existingUserAnswer = userAnswers.find((data) => data.questionId === question._id);
+		const existingUserAnswer = userAnswers?.find((data) => data.questionId === question._id);
 
 		if (!existingUserAnswer || existingUserAnswer.userAnswer !== userAnswer) {
 			try {
@@ -224,7 +224,7 @@ const PracticeQuestion = ({
 						await axios.patch(`${base_url}/userQuestions/${userQuestionId}`, { userAnswer });
 						setUserAnswers((prevData) => {
 							if (!prevData) return [];
-							return prevData?.map((data) => (data.questionId === question._id ? { ...data, userAnswer } : data));
+							return prevData?.map((data) => (data.questionId === question._id ? { ...data, userAnswer } : data)) || [];
 						});
 					} else {
 						setUserAnswers((prevData) => {

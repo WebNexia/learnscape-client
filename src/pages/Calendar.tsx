@@ -152,7 +152,7 @@ const EventCalendar = () => {
 
 			// Check if we need to fetch this month
 			const monthKey = `${year}-${month.toString().padStart(2, '0')}`;
-			if (!loadedMonths.includes(monthKey)) {
+			if (!loadedMonths?.includes(monthKey)) {
 				fetchMonthEvents(year, month);
 			}
 		}

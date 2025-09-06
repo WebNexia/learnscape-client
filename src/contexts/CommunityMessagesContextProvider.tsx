@@ -102,7 +102,7 @@ const CommunityMessagesContextProvider = (props: CommunityMessagesContextProvide
 			// Fetch all batches from startPage to endPage
 			const promises = [];
 			for (let page = startPage; page <= endPage; page++) {
-				if (!loadedPages.includes(page)) {
+				if (!loadedPages?.includes(page)) {
 					promises.push(axios.get(`${base_url}/communityMessages/topic/${topicId}?page=${page}&limit=250`));
 				}
 			}
@@ -130,13 +130,13 @@ const CommunityMessagesContextProvider = (props: CommunityMessagesContextProvide
 	// Progressive pagination gap-filling (batched)
 	useEffect(() => {
 		if (loadedPages.length > 0 && currentTopicId) {
-			const sortedPages = [...loadedPages].sort((a, b) => a - b);
+			const sortedPages = [...(loadedPages || [])]?.sort((a, b) => a - b) || [];
 			const maxPage = Math.max(...sortedPages);
 
 			let missingStart: number | null = null;
 
 			for (let page = 1; page <= maxPage; page++) {
-				if (!loadedPages.includes(page)) {
+				if (!loadedPages?.includes(page)) {
 					if (missingStart === null) {
 						missingStart = page; // start of a gap
 					}
@@ -166,7 +166,7 @@ const CommunityMessagesContextProvider = (props: CommunityMessagesContextProvide
 	// Function to handle sorting
 	const sortMessages = (property: keyof CommunityMessage, order: 'asc' | 'desc') => {
 		// React Query data'yı sort et, local state'e set etme
-		const sortedMessagesCopy = [...(messages || [])].sort((a: CommunityMessage, b: CommunityMessage) => {
+		const sortedMessagesCopy = [...(messages || [])]?.sort((a: CommunityMessage, b: CommunityMessage) => {
 			const aValue = a[property];
 			const bValue = b[property];
 

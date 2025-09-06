@@ -192,7 +192,7 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 												chapter?.lessons?.length !== 0 &&
 												chapter?.lessons
 													?.filter((lesson) => lesson !== null)
-													.map((lesson) => {
+													?.map((lesson) => {
 														return (
 															<Box
 																key={lesson._id}
@@ -266,7 +266,7 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 					<Box sx={{ mb: '1.25rem' }}>
 						<Typography variant='h5'>Course Materials</Typography>
 					</Box>
-					{singleCourse?.documents?.filter((doc) => doc !== null).length !== 0 ? (
+					{singleCourse?.documents?.filter((doc) => doc !== null)?.length !== 0 ? (
 						<Box>
 							{singleCourse?.documents
 								?.filter((doc) => doc !== null)

@@ -64,30 +64,32 @@ const MessageList = ({
 
 		const currentUserId = user.firebaseUserId;
 
-		return messages.filter((msg: Message) => {
-			// Always show system messages
-			if (msg.isSystemMessage) {
+		return (
+			messages?.filter((msg: Message) => {
+				// Always show system messages
+				if (msg.isSystemMessage) {
+					return true;
+				}
+
+				// If the current user is the sender, show their own messages
+				if (msg.senderId === currentUserId) {
+					return true;
+				}
+
+				// If the sender is in the global blocked users list, hide their messages
+				if (globalBlockedUsers?.includes(msg.senderId)) {
+					return false; // Filter out messages from blocked users
+				}
+
+				// Show all other messages
 				return true;
-			}
-
-			// If the current user is the sender, show their own messages
-			if (msg.senderId === currentUserId) {
-				return true;
-			}
-
-			// If the sender is in the global blocked users list, hide their messages
-			if (globalBlockedUsers?.includes(msg.senderId)) {
-				return false; // Filter out messages from blocked users
-			}
-
-			// Show all other messages
-			return true;
-		});
+			}) || []
+		);
 	}, [messages, globalBlockedUsers, user?.firebaseUserId]);
 
 	return (
 		<>
-			{filteredMessages.map((msg) => {
+			{filteredMessages?.map((msg) => {
 				// Render system messages
 				if (msg.isSystemMessage) {
 					return (
@@ -168,7 +170,7 @@ const MessageList = ({
 												fontSize: isMobileSize ? '0.6rem' : '0.7rem',
 												color: '#666',
 											}}>
-											{activeChat.participants.find((p) => p.firebaseUserId === msg.senderId)?.username || 'Unknown User'}
+											{activeChat.participants?.find((p) => p.firebaseUserId === msg.senderId)?.username || 'Unknown User'}
 										</Typography>
 									</Box>
 								)}

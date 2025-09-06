@@ -61,7 +61,7 @@ const GroupChatModal = ({
 			imageUrl: selectedUser.imageUrl,
 			role: selectedUser.role,
 			firstName: selectedUser.username.split(' ')[0] || '',
-			lastName: selectedUser.username.split(' ').slice(1).join(' ') || '',
+			lastName: selectedUser.username?.split?.(' ')?.slice(1)?.join(' ') || '',
 			phone: '',
 			hasRegisteredCourse: false,
 			isActive: true,
@@ -139,7 +139,7 @@ const GroupChatModal = ({
 							Selected Users ({selectedGroupUsers.length})
 						</Typography>
 						<Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-							{selectedGroupUsers.map((selectedUser) => (
+							{selectedGroupUsers?.map((selectedUser) => (
 								<Box
 									key={selectedUser.firebaseUserId}
 									sx={{
@@ -200,7 +200,7 @@ const GroupChatModal = ({
 							width: '100%',
 						}}
 						fromGroupChatSettings={true}
-						excludeUserIds={selectedGroupUsers.map((user) => user.firebaseUserId)}
+						excludeUserIds={selectedGroupUsers?.map((user) => user.firebaseUserId) || []}
 					/>
 				</Box>
 			</Box>

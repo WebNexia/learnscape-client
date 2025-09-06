@@ -492,7 +492,7 @@ const Settings = () => {
 										- Username can include:
 									</Typography>
 									<Box sx={{ margin: '0.85rem 0 0 3rem' }}>
-										{['min 5 characters', 'max 15 characters', 'underscore (_) and period (.)'].map((rule, index) => (
+										{['min 5 characters', 'max 15 characters', 'underscore (_) and period (.)']?.map((rule, index) => (
 											<ul key={index}>
 												<li style={{ color: theme.textColor?.secondary.main }}>
 													<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.35rem' }}>{rule}</Typography>
@@ -693,7 +693,7 @@ const Settings = () => {
 								<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem' }}>- Password cannot include space</Typography>
 								<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>- Password must include at least:</Typography>
 								<Box sx={{ margin: '0.75rem 0 0 3rem' }}>
-									{['6 characters', '1 letter', '1 number'].map((rule, index) => (
+									{['6 characters', '1 letter', '1 number']?.map((rule, index) => (
 										<ul key={index}>
 											<li style={{ color: theme.textColor?.secondary.main }}>
 												<Typography sx={{ fontSize: isMobileSize ? '0.65rem' : '0.75rem', mb: '0.35rem' }}>{rule}</Typography>

@@ -223,8 +223,8 @@ const AdminLessonEditPageEditQuestionDialog = ({
 		}
 
 		if (isMatching) {
-			const nonBlankPairs = question.matchingPairs?.filter((pair) => pair.question.trim() !== '' && pair.answer.trim() !== '');
-			const missingPairExists = question.matchingPairs.some((pair) => pair.question.trim() === '' || pair.answer.trim() === '');
+			const nonBlankPairs = question.matchingPairs?.filter((pair) => pair.question.trim() !== '' && pair.answer.trim() !== '') || [];
+			const missingPairExists = question.matchingPairs?.some((pair) => pair.question.trim() === '' || pair.answer.trim() === '') || false;
 
 			if (nonBlankPairs.length < 2) {
 				setIsMinimumTwoMatchingPairs(true);
@@ -253,8 +253,8 @@ const AdminLessonEditPageEditQuestionDialog = ({
 
 				const updatedQuestions = prevData.questions?.map((prevQuestion) => {
 					if (prevQuestion && prevQuestion._id === question._id) {
-						setQuestionBeforeSave({ ...prevQuestion, options: options?.filter((option) => option !== ''), correctAnswer, blankValuePairs });
-						return { ...prevQuestion, options: options?.filter((option) => option !== ''), correctAnswer, blankValuePairs };
+						setQuestionBeforeSave({ ...prevQuestion, options: options?.filter((option) => option !== '') || [], correctAnswer, blankValuePairs });
+						return { ...prevQuestion, options: options?.filter((option) => option !== '') || [], correctAnswer, blankValuePairs };
 					}
 					return prevQuestion;
 				});

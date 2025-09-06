@@ -29,9 +29,9 @@ const UnreadMessages = () => {
 			let hasUnread = false;
 
 			// Loop through chats to see if any hasUnreadMessages is true
-			querySnapshot.forEach((doc) => {
+			querySnapshot?.forEach((doc) => {
 				const data = doc.data();
-				if (data.unreadBy && data.unreadBy.includes(user.firebaseUserId)) {
+				if (data.unreadBy && data.unreadBy?.includes(user.firebaseUserId)) {
 					hasUnread = true; // As soon as we find unread messages for this user, set the flag
 				}
 			});
@@ -53,15 +53,15 @@ const UnreadMessages = () => {
 	return (
 		<Box
 			sx={{
-				display: 'flex',
-				flexDirection: 'column',
-				alignItems: 'center',
-				boxShadow: '0.1rem 0.3rem 0.3rem 0.3rem rgba(0,0,0,0.2)',
-				padding: '1rem',
-				borderRadius: '0.35rem',
-				height: '12rem',
-				cursor: 'pointer',
-				transition: '0.3s',
+				'display': 'flex',
+				'flexDirection': 'column',
+				'alignItems': 'center',
+				'boxShadow': '0.1rem 0.3rem 0.3rem 0.3rem rgba(0,0,0,0.2)',
+				'padding': '1rem',
+				'borderRadius': '0.35rem',
+				'height': '12rem',
+				'cursor': 'pointer',
+				'transition': '0.3s',
 				':hover': {
 					boxShadow: '0rem 0.1rem 0.2rem 0.1rem rgba(0,0,0,0.3)',
 				},

@@ -319,7 +319,7 @@ const CommunityTopicPage = () => {
 					}
 
 					// Check if @everyone is mentioned
-					const hasEveryoneMention = mentionedUsernames.includes('everyone');
+					const hasEveryoneMention = mentionedUsernames?.includes('everyone');
 
 					if (hasEveryoneMention) {
 						// Get all users who have participated in this topic
@@ -350,7 +350,7 @@ const CommunityTopicPage = () => {
 						}
 					} else {
 						// Handle regular user mentions
-						const regularMentions = mentionedUsernames.filter((username) => username !== 'everyone');
+						const regularMentions = mentionedUsernames?.filter((username) => username !== 'everyone') || [];
 						if (regularMentions.length > 0) {
 							// Get user data for mentioned usernames
 							const mentionedUsersResponse = await axios.get(
@@ -437,7 +437,7 @@ const CommunityTopicPage = () => {
 	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const input = e.target.value;
 		// Check if non-admin user is trying to mention @everyone
-		if (input.includes('@everyone') && user?.role !== Roles.ADMIN) {
+		if (input?.includes('@everyone') && user?.role !== Roles.ADMIN) {
 			setEveryoneMsg(true);
 			const sanitizedInput = input.replace('@everyone', '');
 			setCurrentMessage(sanitizedInput);
@@ -459,8 +459,8 @@ const CommunityTopicPage = () => {
 		// Determine if the last word starts with '@'
 		if (lastWord.startsWith('@')) {
 			setShowUserSearch(true);
-			setUserSearchValue(lastWord.slice(1));
-		} else if (!input.includes('@')) {
+			setUserSearchValue(lastWord?.slice(1) || '');
+		} else if (!input?.includes('@')) {
 			// Hide search if there are no `@` triggers anywhere in the input
 			setShowUserSearch(false);
 		}
@@ -503,7 +503,7 @@ const CommunityTopicPage = () => {
 		const mentions = extractMentions(currentMessage);
 		// Filter out the current search term to allow editing the current mention
 		const currentSearchTerm = userSearchValue.trim();
-		return mentions.filter((mention) => mention !== currentSearchTerm);
+		return mentions?.filter((mention) => mention !== currentSearchTerm) || [];
 	}, [currentMessage, userSearchValue]);
 
 	const renderMessageContent = (text: string) => {
@@ -781,12 +781,12 @@ const CommunityTopicPage = () => {
 					margin: '1.5rem 0 5rem 0',
 					paddingBottom: '5rem',
 				}}>
-				{messages?.slice((pageNumber - 1) * 25, pageNumber * 25).map((message: CommunityMessage, index) => (
+				{messages?.slice((pageNumber - 1) * 25, pageNumber * 25)?.map((message: CommunityMessage, index) => (
 					<Message
 						key={message?._id}
 						message={message}
 						isFirst={index === 0}
-						isLast={index === messages?.slice((pageNumber - 1) * 25, pageNumber * 25).length - 1}
+						isLast={index === messages?.slice((pageNumber - 1) * 25, pageNumber * 25)?.length - 1}
 						setReplyToMessage={setReplyToMessage}
 						messageRefs={messageRefs}
 						setPageNumber={setPageNumber}

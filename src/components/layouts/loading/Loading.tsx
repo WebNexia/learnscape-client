@@ -155,9 +155,9 @@ const Loading = () => {
 	// Use useMemo for currentPage to prevent unnecessary re-renders
 	// const currentPage = useMemo(() => {
 	// 	const path = window.location.pathname;
-	// 	return path.includes('admin')
-	// 		? path.split('/')[2].charAt(0).toUpperCase() + path.split('/')[2].slice(1)
-	// 		: path.split('/')[1].charAt(0).toUpperCase() + path.split('/')[1].slice(1);
+	// 	return path?.includes('admin')
+	// 		? path?.split?.('/')?.[2]?.charAt?.(0)?.toUpperCase?.() + path?.split?.('/')?.[2]?.slice(1)
+	// 		: path?.split?.('/')?.[1]?.charAt?.(0)?.toUpperCase?.() + path?.split?.('/')?.[1]?.slice(1);
 	// }, []);
 
 	// const [selectedPage, setSelectedPage] = useState<string>(currentPage);

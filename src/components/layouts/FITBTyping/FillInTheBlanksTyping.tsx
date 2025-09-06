@@ -148,9 +148,9 @@ const FillInTheBlanksTyping = ({
 			const submittedAnswers: Record<string, string> = {};
 			const status: Record<string, boolean | null> = {};
 
-			userBlankValuePairsAfterSubmission.forEach((pair) => {
+			userBlankValuePairsAfterSubmission?.forEach((pair) => {
 				submittedAnswers[pair.id] = pair.value;
-				status[pair.id] = blankValuePairs.find((bvp) => bvp.id === pair.id)?.value === pair.value;
+				status[pair.id] = blankValuePairs?.find((bvp) => bvp.id === pair.id)?.value === pair.value;
 			});
 
 			setUserAnswers(submittedAnswers);
@@ -161,7 +161,7 @@ const FillInTheBlanksTyping = ({
 
 			userQuizAnswers
 				?.find((answer) => answer.questionId === questionId)
-				?.userBlankValuePairAnswers.forEach((pair) => {
+				?.userBlankValuePairAnswers?.forEach((pair) => {
 					initialAnswers[pair.id] = pair.value;
 					initialStatus[pair.id] = true;
 				});
@@ -169,8 +169,8 @@ const FillInTheBlanksTyping = ({
 			setUserAnswers(initialAnswers);
 			setInputStatus(initialStatus);
 
-			const randomWords = shuffle(words).slice(0, 15);
-			const values = blankValuePairs?.map((pair) => pair.value);
+			const randomWords = shuffle(words)?.slice(0, 15) || [];
+			const values = blankValuePairs?.map((pair) => pair.value) || [];
 			const hintWords = shuffle([...values, ...randomWords]);
 
 			setHints(hintWords);
@@ -181,7 +181,7 @@ const FillInTheBlanksTyping = ({
 			const initialAnswers: Record<string, string> = {};
 			const initialStatus: Record<string, boolean | null> = {};
 
-			blankValuePairs.forEach((pair) => {
+			blankValuePairs?.forEach((pair) => {
 				initialAnswers[pair.id] = pair.value;
 				initialStatus[pair.id] = true;
 			});
@@ -189,8 +189,8 @@ const FillInTheBlanksTyping = ({
 			setUserAnswers(initialAnswers);
 			setInputStatus(initialStatus);
 
-			const randomWords = shuffle(words).slice(0, 5);
-			const values = blankValuePairs?.map((pair) => pair.value);
+			const randomWords = shuffle(words)?.slice(0, 5) || [];
+			const values = blankValuePairs?.map((pair) => pair.value) || [];
 			const hintWords = shuffle([...values, ...randomWords]);
 
 			setHints(hintWords);
@@ -198,7 +198,7 @@ const FillInTheBlanksTyping = ({
 			const initialAnswers: Record<string, string> = {};
 			const initialStatus: Record<string, boolean | null> = {};
 
-			blankValuePairs.forEach((pair) => {
+			blankValuePairs?.forEach((pair) => {
 				initialAnswers[pair.id] = '';
 				initialStatus[pair.id] = null;
 			});
@@ -206,8 +206,9 @@ const FillInTheBlanksTyping = ({
 			setUserAnswers(initialAnswers);
 			setInputStatus(initialStatus);
 
-			const randomWords = lessonType === LessonType.QUIZ && !fromAdminQuestions ? shuffle(words).slice(0, 15) : shuffle(words).slice(0, 5);
-			const values = blankValuePairs?.map((pair) => pair.value);
+			const randomWords =
+				lessonType === LessonType.QUIZ && !fromAdminQuestions ? shuffle(words)?.slice(0, 15) || [] : shuffle(words)?.slice(0, 5) || [];
+			const values = blankValuePairs?.map((pair) => pair.value) || [];
 			const hintWords = shuffle([...values, ...randomWords]);
 			setHints(hintWords);
 		}
@@ -246,7 +247,7 @@ const FillInTheBlanksTyping = ({
 
 	useEffect(() => {
 		if (hasInteracted && fromPracticeQuestionUser) {
-			const allCorrect = blankValuePairs.every((pair) => pair.value === userAnswers[pair.id]);
+			const allCorrect = blankValuePairs?.every((pair) => pair.value === userAnswers[pair.id]) || false;
 			if (onComplete) onComplete(allCorrect);
 
 			if (setAllPairsMatchedFITBTyping) {
@@ -280,7 +281,7 @@ const FillInTheBlanksTyping = ({
 
 		if (inputValue === '') {
 			newStatus[id] = null;
-		} else if (blankValuePairs.find((pair) => pair.id === id)?.value === inputValue.trim()) {
+		} else if (blankValuePairs?.find((pair) => pair.id === id)?.value === inputValue.trim()) {
 			newStatus[id] = true;
 		} else {
 			newStatus[id] = false;

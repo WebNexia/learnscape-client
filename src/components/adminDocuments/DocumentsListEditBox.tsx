@@ -98,7 +98,7 @@ const DocumentsListEditBox = ({
 												saveDocRename(index);
 												setIsDocumentUpdated((prevData) => {
 													if (prevData) {
-														return prevData.map((data) => {
+														return prevData?.map((data) => {
 															if (data.documentId === document._id) {
 																return { ...data, isUpdated: true };
 															}

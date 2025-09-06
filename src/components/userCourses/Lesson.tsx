@@ -46,7 +46,7 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 			setUserLessonData(parsedUserLessonData);
 
 			setUserLessonData((prevData) => {
-				prevData.forEach((data: UserLessonDataStorage) => {
+				prevData?.forEach((data: UserLessonDataStorage) => {
 					if (data.lessonId === lesson._id && data.courseId === courseId) {
 						setIsLessonInProgress(data.isInProgress);
 						setIsLessonCompleted(data.isCompleted);
@@ -67,7 +67,7 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 
 	useEffect(() => {
 		if (sortedUserQuizSubmissionsData.length > 0) {
-			const isFeedbackGiven = sortedUserQuizSubmissionsData.find((data) => data.lessonId === lesson._id)?.isChecked;
+			const isFeedbackGiven = sortedUserQuizSubmissionsData?.find((data) => data.lessonId === lesson._id)?.isChecked;
 
 			setIsFeedbackGiven(isFeedbackGiven || false);
 		}
@@ -88,7 +88,7 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 		};
 
 		if (isEnrolledStatus && isLessonRegisteredInThisCourse) {
-			if (userLessonData.some((data: UserLessonDataStorage) => data.lessonId === lesson._id && data.courseId === courseId) && nextLessonId) {
+			if (userLessonData?.some((data: UserLessonDataStorage) => data.lessonId === lesson._id && data.courseId === courseId) && nextLessonId) {
 				navigateToLesson(lesson._id, nextLessonId);
 			} else if (!nextLessonId && nextChapterFirstLessonId) {
 				navigateToLesson(lesson._id, nextChapterFirstLessonId);

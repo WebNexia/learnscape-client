@@ -48,10 +48,10 @@ const UpcomingEvents = ({ sortedEventsData }: UpcomingEventsProps) => {
 						event.start &&
 						new Date(event.start) >= currentDate &&
 						new Date(event.start) <= sevenDaysFromNow &&
-						(event.isPublic || event.allAttendeesIds.includes(user?._id!) || event.isAllLearnersSelected)
+						(event.isPublic || event.allAttendeesIds?.includes(user?._id!) || event.isAllLearnersSelected)
 					);
 				})
-				.sort((a: Event, b: Event) => new Date(a.start!).getTime() - new Date(b.start!).getTime()).length > 0 ? (
+				?.sort((a: Event, b: Event) => new Date(a.start!).getTime() - new Date(b.start!).getTime())?.length > 0 ? (
 				<Box
 					sx={{
 						display: 'flex',
@@ -69,11 +69,11 @@ const UpcomingEvents = ({ sortedEventsData }: UpcomingEventsProps) => {
 								event.start &&
 								new Date(event.start) >= currentDate &&
 								new Date(event.start) <= sevenDaysFromNow &&
-								(event.isPublic || event.allAttendeesIds.includes(user?._id!) || event.isAllLearnersSelected)
+								(event.isPublic || event.allAttendeesIds?.includes(user?._id!) || event.isAllLearnersSelected)
 							);
 						})
-						.sort((a: Event, b: Event) => new Date(a.start!).getTime() - new Date(b.start!).getTime())
-						.map((event) => (
+						?.sort((a: Event, b: Event) => new Date(a.start!).getTime() - new Date(b.start!).getTime())
+						?.map((event) => (
 							<Box key={event._id} sx={{ marginBottom: '0.5rem', width: '100%' }}>
 								<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
 									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.65rem' : '0.85rem' }}>

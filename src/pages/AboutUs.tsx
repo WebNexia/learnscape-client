@@ -153,7 +153,7 @@ const AboutUs = () => {
 						Ekibimiz
 					</Typography>
 					<Grid container spacing={4} justifyContent='center'>
-						{team.map((member) => (
+						{team?.map((member) => (
 							<Grid item xs={12} sm={6} md={3} key={member.name} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
 								<Avatar src={member.img} alt={member.name} sx={{ width: 90, height: 90, mb: 2, boxShadow: 2 }} />
 								<Typography variant='subtitle1' sx={{ fontWeight: 600, fontFamily: 'Varela Round' }}>

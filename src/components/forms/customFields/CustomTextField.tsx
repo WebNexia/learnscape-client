@@ -65,7 +65,7 @@ const CustomTextField = forwardRef<HTMLDivElement, CustomTextFieldProps>(
 		const validatedType = typeof type === 'string' ? type.toLowerCase() : 'text';
 
 		// Determine if input should be sanitized
-		const shouldSanitize = !disableSanitization && SANITIZED_INPUT_TYPES.includes(validatedType);
+		const shouldSanitize = !disableSanitization && SANITIZED_INPUT_TYPES?.includes(validatedType);
 
 		// Sanitize input on change with enhanced security
 		const handleChange = useCallback(

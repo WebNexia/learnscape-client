@@ -261,8 +261,8 @@ const CoursePaper = ({
 												if (
 													singleCourseBeforeSave?.title.trim() !== '' &&
 													singleCourseBeforeSave?.description.trim() !== '' &&
-													(isFree || !singleCourseBeforeSave?.prices.some((price) => price.amount === '')) &&
-													!chapterLessonDataBeforeSave.some((chapter) => chapter.title === '')
+													(isFree || !singleCourseBeforeSave?.prices?.some((price) => price.amount === '')) &&
+													!chapterLessonDataBeforeSave?.some((chapter) => chapter.title === '')
 												) {
 													handleCourseUpdate(e as FormEvent<Element>);
 													setHasUnsavedChanges(false);

@@ -66,7 +66,7 @@ const NotificationsBox = ({ showUnreadOnly }: NotificationsBoxProps) => {
 		}
 
 		const unsubscribe = onSnapshot(q, (snapshot) => {
-			const fetchedNotifications = snapshot.docs.map((doc) => {
+			const fetchedNotifications = snapshot.docs?.map((doc) => {
 				const data = doc.data();
 
 				return {
@@ -143,7 +143,7 @@ const NotificationsBox = ({ showUnreadOnly }: NotificationsBoxProps) => {
 
 			// Update local state only if notification was unread
 			if (!note.isRead) {
-				setNotifications((prev) => prev.map((n) => (n.id === note.id ? { ...n, isRead: true } : n)));
+				setNotifications((prev) => prev?.map((n) => (n.id === note.id ? { ...n, isRead: true } : n)) || []);
 			}
 		} catch (error) {
 			console.error('Error marking notification as read:', error);
@@ -154,7 +154,7 @@ const NotificationsBox = ({ showUnreadOnly }: NotificationsBoxProps) => {
 		<Box>
 			{notifications.length > 0 ? (
 				<Box>
-					{notifications.map((note) => {
+					{notifications?.map((note) => {
 						return (
 							<Box
 								key={note.id}

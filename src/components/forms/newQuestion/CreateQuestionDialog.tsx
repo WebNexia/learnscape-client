@@ -115,7 +115,7 @@ const CreateQuestionDialog = ({
 	const [blankValuePairs, setBlankValuePairs] = useState<BlankValuePair[]>([]);
 
 	const sortedBlankValuePairs = useMemo(() => {
-		return [...blankValuePairs].sort((a, b) => a.blank - b.blank);
+		return [...(blankValuePairs || [])]?.sort((a, b) => a.blank - b.blank) || [];
 	}, [blankValuePairs]);
 
 	const [newQuestion, setNewQuestion] = useState<QuestionInterface>({
@@ -408,8 +408,8 @@ const CreateQuestionDialog = ({
 		}
 
 		if (isMatching) {
-			const nonBlankPairs = newQuestion.matchingPairs?.filter((pair) => pair.question.trim() && pair.answer.trim());
-			const missingPairExists = newQuestion.matchingPairs.some((pair) => !pair.question.trim() || !pair.answer.trim());
+			const nonBlankPairs = newQuestion.matchingPairs?.filter((pair) => pair.question.trim() && pair.answer.trim()) || [];
+			const missingPairExists = newQuestion.matchingPairs?.some((pair) => !pair.question.trim() || !pair.answer.trim()) || false;
 
 			if (nonBlankPairs.length < 2) {
 				setIsMinimumTwoMatchingPairs(true);
@@ -522,7 +522,7 @@ const CreateQuestionDialog = ({
 													QuestionType.MATCHING,
 													QuestionType.FITB_TYPING,
 													QuestionType.FITB_DRAG_DROP,
-												].includes(questionTypeName);
+												]?.includes(questionTypeName);
 											} else if (singleLessonBeforeSave?.type === LessonType.PRACTICE_LESSON) {
 												return [
 													QuestionType.MULTIPLE_CHOICE,
@@ -532,11 +532,11 @@ const CreateQuestionDialog = ({
 													QuestionType.FITB_TYPING,
 													QuestionType.FITB_DRAG_DROP,
 													QuestionType.FLIP_CARD,
-												].includes(questionTypeName);
+												]?.includes(questionTypeName);
 											}
 											return true;
 										})
-										.map((type) => (
+										?.map((type) => (
 											<MenuItem value={type.name} key={type._id} sx={{ fontSize: '0.85rem' }}>
 												{type.name}
 											</MenuItem>

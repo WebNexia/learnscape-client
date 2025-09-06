@@ -163,7 +163,7 @@ const Messages = () => {
 			const userBlocksQuery = query(collection(db, 'userBlocks'), where(`blockedUsers.${user.firebaseUserId}`, '!=', null));
 			const userBlocksSnapshot = await getDocs(userBlocksQuery);
 
-			userBlocksSnapshot.forEach((doc) => {
+			userBlocksSnapshot?.forEach((doc) => {
 				const userBlocksData = doc.data();
 				const blockedUsers = userBlocksData.blockedUsers || {};
 				if (blockedUsers[user.firebaseUserId]) {
@@ -198,7 +198,7 @@ const Messages = () => {
 		const userBlocksQuery = query(collection(db, 'userBlocks'), where(`blockedUsers.${user.firebaseUserId}`, '!=', null));
 		const unsubscribeBlockedBy = onSnapshot(userBlocksQuery, (querySnapshot) => {
 			const blockedByUsers: string[] = [];
-			querySnapshot.forEach((doc) => {
+			querySnapshot?.forEach((doc) => {
 				const userBlocksData = doc.data();
 				const blockedUsers = userBlocksData.blockedUsers || {};
 				if (blockedUsers[user.firebaseUserId]) {
@@ -239,20 +239,22 @@ const Messages = () => {
 			return false;
 		}
 
-		const participants1 = chat1.participants.map((p) => p.firebaseUserId).sort();
-		const participants2 = chat2.participants.map((p) => p.firebaseUserId).sort();
-		return participants1.length === participants2.length && participants1.every((id, index) => id === participants2[index]);
+		const participants1 = chat1.participants?.map((p) => p.firebaseUserId)?.sort() || [];
+		const participants2 = chat2.participants?.map((p) => p.firebaseUserId)?.sort() || [];
+		return (participants1.length === participants2.length && participants1?.every((id, index) => id === participants2[index])) || false;
 	};
 
 	// Helper function to find existing chat with same participants
 	const findExistingChatWithParticipants = (participantIds: string[]): Chat | null => {
-		const sortedParticipantIds = participantIds.sort();
+		const sortedParticipantIds = participantIds?.sort() || [];
 		return (
-			chatList.find((chat) => {
+			chatList?.find((chat) => {
 				if (chat.chatType === 'group') return false;
-				const chatParticipantIds = chat.participants.map((p) => p.firebaseUserId).sort();
+				const chatParticipantIds = chat.participants?.map((p) => p.firebaseUserId)?.sort() || [];
 				return (
-					chatParticipantIds.length === sortedParticipantIds.length && chatParticipantIds.every((id, index) => id === sortedParticipantIds[index])
+					(chatParticipantIds.length === sortedParticipantIds.length &&
+						chatParticipantIds?.every((id, index) => id === sortedParticipantIds[index])) ||
+					false
 				);
 			}) || null
 		);
@@ -306,7 +308,7 @@ const Messages = () => {
 		return (
 			activeChat.participants?.some((participant) => {
 				if (participant.firebaseUserId === user.firebaseUserId) return false;
-				return blockedByUsers.includes(participant.firebaseUserId);
+				return blockedByUsers?.includes(participant.firebaseUserId);
 			}) || false
 		);
 	}, [user?.firebaseUserId, activeChat, blockedByUsers]);
@@ -319,7 +321,7 @@ const Messages = () => {
 		return (
 			activeChat.participants?.some((participant) => {
 				if (participant.firebaseUserId === user.firebaseUserId) return false;
-				return globalBlockedUsers.includes(participant.firebaseUserId);
+				return globalBlockedUsers?.includes(participant.firebaseUserId);
 			}) || false
 		);
 	}, [activeChat?.participants, user?.firebaseUserId, globalBlockedUsers]);
@@ -502,23 +504,23 @@ const Messages = () => {
 
 				// Fetch participant details
 				const participantsDetails: User[] = await Promise.all(
-					data.participants?.map(async (participantId: string) => {
-						const user = await fetchParticipantData(participantId);
-						return { ...user, participantId };
-					})
+					data.participants?.map((participantId: string) => {
+						return fetchParticipantData(participantId).then((user) => ({ ...user, participantId }));
+					}) || []
 				);
 
 				// Collect chat data along with unread message count and participant info
 				chatsArray.push({
 					chatId: doc.id,
-					participants: participantsDetails
-						?.filter((p): p is User => p !== null)
-						?.map((p) => ({
-							firebaseUserId: p.firebaseUserId,
-							username: p.username,
-							imageUrl: p.imageUrl,
-							role: p.role,
-						})),
+					participants:
+						participantsDetails
+							?.filter((p): p is User => p !== null)
+							?.map((p) => ({
+								firebaseUserId: p.firebaseUserId,
+								username: p.username,
+								imageUrl: p.imageUrl,
+								role: p.role,
+							})) || [],
 					lastMessage,
 					isDeletedBy: data.isDeletedBy,
 					removedParticipants: data.removedParticipants,
@@ -546,9 +548,9 @@ const Messages = () => {
 
 	const filterBlockedMessages = useCallback(
 		(messagesArray: Message[]) => {
-			return messagesArray.filter((msg) => {
+			return messagesArray?.filter((msg) => {
 				// Check if the message sender is in the current user's blocked list
-				if (globalBlockedUsers.includes(msg.senderId)) {
+				if (globalBlockedUsers?.includes(msg.senderId)) {
 					return false; // Don't show messages from blocked users
 				}
 				return true;
@@ -568,7 +570,7 @@ const Messages = () => {
 			const messagesArray: Message[] = [];
 			const batch = writeBatch(db); // To batch update messages
 
-			querySnapshot.forEach((doc) => {
+			querySnapshot?.forEach((doc) => {
 				const data = doc.data();
 				const messageTimestamp = data.timestamp?.toDate() || new Date();
 
@@ -620,7 +622,7 @@ const Messages = () => {
 		const savedActiveChatId = localStorage.getItem('activeChatId');
 
 		if (savedActiveChatId && chatList.length > 0) {
-			const chat = chatList.find((chat) => chat.chatId === savedActiveChatId);
+			const chat = chatList?.find((chat) => chat.chatId === savedActiveChatId);
 			if (chat) {
 				setActiveChat(chat);
 			}
@@ -676,7 +678,7 @@ const Messages = () => {
 
 	const startChatIfNotExists = useCallback(
 		async (selectedUser: User): Promise<'success' | 'blocked'> => {
-			const chatId = [user?.firebaseUserId, selectedUser.firebaseUserId].sort().join('&');
+			const chatId = [user?.firebaseUserId, selectedUser.firebaseUserId]?.sort()?.join('&') || '';
 			const chatRef = doc(db, 'chats', chatId);
 
 			const chatDoc = await getDoc(chatRef);
@@ -796,10 +798,10 @@ const Messages = () => {
 					// Add the new chat to the UI lists, replacing any existing chats with the same participants
 					setChatList((prev) => {
 						// Remove any existing chats with the same participants (to avoid duplicates)
-						const filteredList = prev.filter((chat) => !hasSameParticipants(chat, newChat));
+						const filteredList = prev?.filter((chat) => !hasSameParticipants(chat, newChat)) || [];
 
 						// Sort the list to maintain proper order (newest first)
-						const updatedChatList = [newChat, ...filteredList].sort((a, b) => {
+						const updatedChatList = [newChat, ...filteredList]?.sort((a, b) => {
 							const timeA = a.lastMessage.timestamp ? new Date(a.lastMessage.timestamp).getTime() : Date.now();
 							const timeB = b.lastMessage.timestamp ? new Date(b.lastMessage.timestamp).getTime() : Date.now();
 							return timeB - timeA; // Descending order (newest first)
@@ -863,7 +865,7 @@ const Messages = () => {
 						updatedChatList[existingChatIndex] = restoredChat;
 
 						// Sort the list to maintain proper order (newest first)
-						const sortedList = updatedChatList.sort((a, b) => {
+						const sortedList = updatedChatList?.sort((a, b) => {
 							const timeA = a.lastMessage.timestamp ? new Date(a.lastMessage.timestamp).getTime() : 0;
 							const timeB = b.lastMessage.timestamp ? new Date(b.lastMessage.timestamp).getTime() : 0;
 							return timeB - timeA; // Descending order (newest first)
@@ -873,10 +875,10 @@ const Messages = () => {
 						return sortedList;
 					} else {
 						// Remove any existing chats with the same participants (to avoid duplicates)
-						const filteredList = prev.filter((chat) => !hasSameParticipants(chat, restoredChat));
+						const filteredList = prev?.filter((chat) => !hasSameParticipants(chat, restoredChat)) || [];
 
 						// Add the restored chat to the list and sort
-						const updatedChatList = [restoredChat, ...filteredList].sort((a, b) => {
+						const updatedChatList = [restoredChat, ...filteredList]?.sort((a, b) => {
 							const timeA = a.lastMessage.timestamp ? new Date(a.lastMessage.timestamp).getTime() : 0;
 							const timeB = b.lastMessage.timestamp ? new Date(b.lastMessage.timestamp).getTime() : 0;
 							return timeB - timeA; // Descending order (newest first)
@@ -894,7 +896,7 @@ const Messages = () => {
 
 				// Also update localStorage to reflect the restored chat
 				setTimeout(() => {
-					const updatedChatList = chatList.map((chat) => (chat.chatId === chatId ? restoredChat : chat));
+					const updatedChatList = chatList?.map((chat) => (chat.chatId === chatId ? restoredChat : chat)) || [];
 					localStorage.setItem('chatList', JSON.stringify(updatedChatList));
 				}, 200);
 
@@ -937,10 +939,10 @@ const Messages = () => {
 				// Add the new chat to the UI lists, replacing any existing chats with the same participants
 				setChatList((prev) => {
 					// Remove any existing chats with the same participants (to avoid duplicates)
-					const filteredList = prev.filter((chat) => !hasSameParticipants(chat, newChat));
+					const filteredList = prev?.filter((chat) => !hasSameParticipants(chat, newChat)) || [];
 
 					// Sort the list to maintain proper order (newest first)
-					const updatedChatList = [newChat, ...filteredList].sort((a, b) => {
+					const updatedChatList = [newChat, ...filteredList]?.sort((a, b) => {
 						const timeA = a.lastMessage.timestamp ? new Date(a.lastMessage.timestamp).getTime() : 0;
 						const timeB = b.lastMessage.timestamp ? new Date(b.lastMessage.timestamp).getTime() : 0;
 						return timeB - timeA; // Descending order (newest first)
@@ -986,7 +988,7 @@ const Messages = () => {
 				const unreadMessagesQuery = query(messagesRef, where('isRead', '==', false));
 				const unreadMessagesSnapshot = await getDocs(unreadMessagesQuery);
 
-				unreadMessagesSnapshot.forEach(async (doc) => {
+				unreadMessagesSnapshot?.forEach(async (doc) => {
 					await updateDoc(doc.ref, {
 						isRead: true, // Mark each message as read
 					});
@@ -996,7 +998,7 @@ const Messages = () => {
 				const unreadMessagesQuery = query(messagesRef, where('receiverId', '==', user?.firebaseUserId), where('isRead', '==', false));
 				const unreadMessagesSnapshot = await getDocs(unreadMessagesQuery);
 
-				unreadMessagesSnapshot.forEach(async (doc) => {
+				unreadMessagesSnapshot?.forEach(async (doc) => {
 					await updateDoc(doc.ref, {
 						isRead: true, // Mark each message as read
 					});
@@ -1035,7 +1037,7 @@ const Messages = () => {
 			const chatDoc = await getDoc(chatRef);
 			if (!chatDoc.exists()) {
 				await setDoc(chatRef, {
-					participants: activeChat.participants?.map((p) => p.firebaseUserId),
+					participants: activeChat.participants?.map((p) => p.firebaseUserId) || [],
 					lastMessage: {
 						text: currentMessage.trim() || 'Image sent',
 						timestamp: serverTimestamp(),
@@ -1046,7 +1048,7 @@ const Messages = () => {
 				});
 			} else {
 				await updateDoc(chatRef, {
-					isDeletedBy: arrayRemove(...activeChat.participants?.map((p) => p.firebaseUserId)),
+					isDeletedBy: arrayRemove(...(activeChat.participants?.map((p) => p.firebaseUserId) || [])),
 				});
 			}
 
@@ -1061,8 +1063,8 @@ const Messages = () => {
 			// For group chats, we'll handle multiple receivers differently
 			const isGroup = isGroupChat(activeChat);
 			const receiverIds = isGroup
-				? activeChat.participants.filter((p) => p.firebaseUserId !== user?.firebaseUserId).map((p) => p.firebaseUserId)
-				: [activeChat.participants.find((p) => p.firebaseUserId !== user?.firebaseUserId)?.firebaseUserId].filter(Boolean);
+				? activeChat.participants?.filter((p) => p.firebaseUserId !== user?.firebaseUserId)?.map((p) => p.firebaseUserId) || []
+				: [activeChat.participants?.find((p) => p.firebaseUserId !== user?.firebaseUserId)?.firebaseUserId]?.filter(Boolean) || [];
 
 			const newMessage: Message = {
 				id: generateUniqueId(''),
@@ -1234,7 +1236,7 @@ const Messages = () => {
 				if (isGroupChat(chat) && chat.groupName) {
 					return chat.groupName;
 				}
-				const otherParticipant = chat.participants.find((p) => p.firebaseUserId !== user?.firebaseUserId);
+				const otherParticipant = chat.participants?.find((p) => p.firebaseUserId !== user?.firebaseUserId);
 				return otherParticipant?.username || 'Unknown User';
 			},
 		[isGroupChat, user?.firebaseUserId]
@@ -1251,7 +1253,7 @@ const Messages = () => {
 					// Use placeholder image for group chats without custom image
 					return 'https://t4.ftcdn.net/jpg/02/53/91/57/360_F_253915708_G8elkrM3HdQPi3txjwTirLDXVfPuqnww.jpg';
 				}
-				const otherParticipant = chat.participants.find((p) => p.firebaseUserId !== user?.firebaseUserId);
+				const otherParticipant = chat.participants?.find((p) => p.firebaseUserId !== user?.firebaseUserId);
 				return otherParticipant?.imageUrl || '';
 			},
 		[isGroupChat, user?.firebaseUserId]
@@ -1260,18 +1262,18 @@ const Messages = () => {
 	const handleGroupUserSelection = useCallback(
 		(selectedUser: User) => {
 			// Check if user is blocked by current user
-			const isBlocked = globalBlockedUsers.includes(selectedUser.firebaseUserId);
+			const isBlocked = globalBlockedUsers?.includes(selectedUser.firebaseUserId);
 			if (isBlocked) {
 				// Don't add blocked users to group
 				return;
 			}
 
 			// Check if user is already selected in new members
-			const isAlreadySelected = selectedGroupUsers.some((u) => u.firebaseUserId === selectedUser.firebaseUserId);
+			const isAlreadySelected = selectedGroupUsers?.some((u) => u.firebaseUserId === selectedUser.firebaseUserId);
 
 			// Check if user is already in current members (not removed) - only for group editing
 			const isCurrentMember =
-				activeChat?.participants?.some((p) => p.firebaseUserId === selectedUser.firebaseUserId && !removedMembers.includes(p.firebaseUserId)) ||
+				activeChat?.participants?.some((p) => p.firebaseUserId === selectedUser.firebaseUserId && !removedMembers?.includes(p.firebaseUserId)) ||
 				false;
 
 			// Only add if not already selected and not a current member
@@ -1284,7 +1286,7 @@ const Messages = () => {
 	);
 
 	const removeGroupUser = useCallback((userId: string) => {
-		setSelectedGroupUsers((prev) => prev.filter((u) => u.firebaseUserId !== userId));
+		setSelectedGroupUsers((prev) => prev?.filter((u) => u.firebaseUserId !== userId));
 	}, []);
 
 	const removeExistingGroupMember = useCallback(
@@ -1302,7 +1304,7 @@ const Messages = () => {
 			if (!activeChat) return;
 
 			// Remove from removed members list (cancel removal)
-			setRemovedMembers((prev) => prev.filter((id) => id !== userId));
+			setRemovedMembers((prev) => prev?.filter((id) => id !== userId));
 		},
 		[activeChat]
 	);
@@ -1317,7 +1319,7 @@ const Messages = () => {
 			// Prepare participants including the current user
 			const allParticipants = [
 				{ firebaseUserId: user?.firebaseUserId!, username: user?.username!, imageUrl: user?.imageUrl!, role: user?.role! },
-				...selectedGroupUsers.map((u) => ({
+				...selectedGroupUsers?.map((u) => ({
 					firebaseUserId: u.firebaseUserId,
 					username: u.username,
 					imageUrl: u.imageUrl,
@@ -1328,7 +1330,7 @@ const Messages = () => {
 			// Create chat document
 			const chatRef = doc(db, 'chats', groupChatId);
 			await setDoc(chatRef, {
-				participants: allParticipants.map((p) => p.firebaseUserId),
+				participants: allParticipants?.map((p) => p.firebaseUserId),
 				chatType: 'group',
 				groupName: groupName.trim(),
 				groupImageUrl: groupImageUrl.trim() || '',
@@ -1391,10 +1393,10 @@ const Messages = () => {
 
 		try {
 			// Get current participants (excluding removed members)
-			const currentParticipants = activeChat.participants.filter((p) => !removedMembers.includes(p.firebaseUserId)).map((p) => p.firebaseUserId);
+			const currentParticipants = activeChat.participants?.filter((p) => !removedMembers?.includes(p.firebaseUserId))?.map((p) => p.firebaseUserId);
 
 			// Add new participants
-			const newParticipants = selectedGroupUsers.map((u) => u.firebaseUserId);
+			const newParticipants = selectedGroupUsers?.map((u) => u.firebaseUserId);
 			const allParticipants = [...currentParticipants, ...newParticipants];
 
 			// Remove duplicates from participants array
@@ -1406,7 +1408,7 @@ const Messages = () => {
 			const currentRemovedParticipants = chatDoc.data()?.removedParticipants || [];
 
 			// Remove newly added users from removedParticipants array
-			const updatedRemovedParticipants = currentRemovedParticipants.filter((removedUserId: string) => !newParticipants.includes(removedUserId));
+			const updatedRemovedParticipants = currentRemovedParticipants?.filter((removedUserId: string) => !newParticipants?.includes(removedUserId));
 
 			// Update chat document
 			await updateDoc(chatRef, {
@@ -1418,8 +1420,8 @@ const Messages = () => {
 
 			// Update local state - eliminate duplicates by using Set
 			const finalParticipants = [
-				...activeChat.participants.filter((p) => !removedMembers.includes(p.firebaseUserId)),
-				...selectedGroupUsers.map((u) => ({
+				...activeChat.participants?.filter((p) => !removedMembers?.includes(p.firebaseUserId)),
+				...selectedGroupUsers?.map((u) => ({
 					firebaseUserId: u.firebaseUserId,
 					username: u.username,
 					imageUrl: u.imageUrl,
@@ -1428,8 +1430,8 @@ const Messages = () => {
 			];
 
 			// Remove duplicates based on firebaseUserId
-			const uniqueParticipantObjects = finalParticipants.filter(
-				(participant, index, self) => index === self.findIndex((p) => p.firebaseUserId === participant.firebaseUserId)
+			const uniqueParticipantObjects = finalParticipants?.filter(
+				(participant, index, self) => index === self?.findIndex((p) => p.firebaseUserId === participant.firebaseUserId)
 			);
 
 			// Add system messages for newly added users (including those being added back)
@@ -1446,8 +1448,8 @@ const Messages = () => {
 			};
 
 			setActiveChat(updatedChat);
-			setChatList((prev) => prev.map((chat) => (chat.chatId === activeChat.chatId ? updatedChat : chat)));
-			setFilteredChatList((prev) => prev.map((chat) => (chat.chatId === activeChat.chatId ? updatedChat : chat)));
+			setChatList((prev) => prev?.map((chat) => (chat.chatId === activeChat.chatId ? updatedChat : chat)));
+			setFilteredChatList((prev) => prev?.map((chat) => (chat.chatId === activeChat.chatId ? updatedChat : chat)));
 
 			// Reset form
 			setGroupName('');
@@ -1477,15 +1479,15 @@ const Messages = () => {
 			// Delete all messages in the chat
 			const messagesRef = collection(db, 'chats', activeChat.chatId, 'messages');
 			const messagesSnapshot = await getDocs(messagesRef);
-			const deletePromises = messagesSnapshot.docs.map((doc) => deleteDoc(doc.ref));
+			const deletePromises = messagesSnapshot.docs?.map((doc) => deleteDoc(doc.ref));
 			await Promise.all(deletePromises);
 
 			// Delete the chat document itself
 			await deleteDoc(chatRef);
 
 			// Remove from local state
-			setChatList((prev) => prev.filter((chat) => chat.chatId !== activeChat.chatId));
-			setFilteredChatList((prev) => prev.filter((chat) => chat.chatId !== activeChat.chatId));
+			setChatList((prev) => prev?.filter((chat) => chat.chatId !== activeChat.chatId));
+			setFilteredChatList((prev) => prev?.filter((chat) => chat.chatId !== activeChat.chatId));
 
 			// Clear active chat if it was the deleted one
 			if (activeChatId === activeChat.chatId) {
@@ -1562,7 +1564,7 @@ const Messages = () => {
 			const messagesSnapshot = await getDocs(messagesRef);
 			const batch = writeBatch(db);
 
-			messagesSnapshot.docs.forEach((doc) => {
+			messagesSnapshot.docs?.forEach((doc) => {
 				batch.delete(doc.ref);
 			});
 
@@ -1620,7 +1622,7 @@ const Messages = () => {
 					const userMessagesSnapshot = await getDocs(userMessagesQuery);
 
 					const batch = writeBatch(db);
-					userMessagesSnapshot.docs.forEach((doc) => {
+					userMessagesSnapshot.docs?.forEach((doc) => {
 						batch.delete(doc.ref);
 					});
 					await batch.commit();
@@ -1675,7 +1677,7 @@ const Messages = () => {
 
 			// Optionally, you can also update the `lastMessage` field in the chat document if the deleted message was the last message.
 			const chatRef = doc(db, 'chats', activeChat.chatId);
-			const lastMessage = messages?.filter((msg) => msg.id !== messageId).slice(-1)[0];
+			const lastMessage = messages?.filter((msg) => msg.id !== messageId)?.slice(-1)[0];
 
 			if (lastMessage) {
 				await updateDoc(chatRef, {
@@ -1759,9 +1761,9 @@ const Messages = () => {
 			debounce((searchValue: string) => {
 				if (searchValue) {
 					const filteredList = chatList?.filter((chat: Chat) =>
-						chat.participants.some(
+						chat.participants?.some(
 							(participant: ParticipantData) =>
-								(participant.username.toLowerCase().includes(searchValue.toLowerCase()) ||
+								(participant.username?.toLowerCase().includes(searchValue.toLowerCase()) ||
 									chat.groupName?.toLowerCase().includes(searchValue.toLowerCase())) &&
 								participant.firebaseUserId !== user?.firebaseUserId
 						)
@@ -1795,7 +1797,7 @@ const Messages = () => {
 				chatId: activeChat.chatId,
 				chatType: activeChat.chatType || '1-1',
 				groupName: activeChat.groupName || '',
-				participants: activeChat.participants.map((p) => ({
+				participants: activeChat.participants?.map((p) => ({
 					username: p.username,
 				})),
 				exportDate: new Date().toISOString(),
@@ -1803,8 +1805,8 @@ const Messages = () => {
 			};
 
 			// Prepare messages data
-			const formattedMessages = messages.map((msg) => ({
-				sender: activeChat.participants.find((p) => p.firebaseUserId === msg.senderId)?.username || msg.senderId,
+			const formattedMessages = messages?.map((msg) => ({
+				sender: activeChat.participants?.find((p) => p.firebaseUserId === msg.senderId)?.username || msg.senderId,
 				text: msg.text,
 				timestamp: msg.timestamp.toISOString(),
 				type: msg.imageUrl ? 'image' : msg.videoUrl ? 'video' : 'text',
@@ -1840,7 +1842,7 @@ const Messages = () => {
 			a.href = url;
 
 			// Generate filename
-			const chatName = activeChat.groupName || activeChat.participants.find((p) => p.firebaseUserId !== user?.firebaseUserId)?.username || 'chat';
+			const chatName = activeChat.groupName || activeChat.participants?.find((p) => p.firebaseUserId !== user?.firebaseUserId)?.username || 'chat';
 			const timestamp = new Date().toISOString().split('T')[0];
 			a.download = `chat-history-${chatName}-${timestamp}.json`;
 
@@ -1863,21 +1865,21 @@ const Messages = () => {
 
 		try {
 			// Create PDF content
-			const chatName = activeChat.groupName || activeChat.participants.find((p) => p.firebaseUserId !== user?.firebaseUserId)?.username || 'chat';
+			const chatName = activeChat.groupName || activeChat.participants?.find((p) => p.firebaseUserId !== user?.firebaseUserId)?.username || 'chat';
 
 			let pdfContent = `CHAT HISTORY EXPORT\n`;
 			pdfContent += `==================\n\n`;
 			pdfContent += `Chat: ${chatName}\n`;
 			pdfContent += `Type: ${activeChat.chatType || '1-1'}\n`;
-			pdfContent += `Participants: ${activeChat.participants.map((p) => p.username).join(', ')}\n`;
+			pdfContent += `Participants: ${activeChat.participants?.map((p) => p.username)?.join(', ')}\n`;
 			pdfContent += `Export Date: ${new Date().toLocaleString()}\n`;
 			pdfContent += `Total Messages: ${messages.length}\n\n`;
 			pdfContent += `MESSAGES\n`;
 			pdfContent += `========\n\n`;
 
 			// Add messages
-			messages.forEach((msg, index) => {
-				const sender = activeChat.participants.find((p) => p.firebaseUserId === msg.senderId)?.username || msg.senderId;
+			messages?.forEach((msg, index) => {
+				const sender = activeChat.participants?.find((p) => p.firebaseUserId === msg.senderId)?.username || msg.senderId;
 				const timestamp = msg.timestamp.toLocaleString();
 				const messageType = msg.imageUrl ? '[IMAGE]' : msg.videoUrl ? '[VIDEO]' : '';
 
@@ -1930,15 +1932,15 @@ const Messages = () => {
 							<h1>Chat History Export</h1>
 							<p><strong>Chat:</strong> ${chatName}</p>
 							<p><strong>Type:</strong> ${activeChat.chatType || '1-1'}</p>
-							<p><strong>Participants:</strong> ${activeChat.participants.map((p) => p.username).join(', ')}</p>
+							<p><strong>Participants:</strong> ${activeChat.participants?.map((p) => p.username)?.join(', ')}</p>
 							<p><strong>Export Date:</strong> ${new Date().toLocaleString()}</p>
 							<p><strong>Total Messages:</strong> ${messages.length}</p>
 						</div>
 						
 						<div class="messages">
 							${messages
-								.map((msg, _) => {
-									const sender = activeChat.participants.find((p) => p.firebaseUserId === msg.senderId)?.username || msg.senderId;
+								?.map((msg, _) => {
+									const sender = activeChat.participants?.find((p) => p.firebaseUserId === msg.senderId)?.username || msg.senderId;
 									const timestamp = msg.timestamp.toLocaleString();
 									const messageType = msg.imageUrl ? '[IMAGE]' : msg.videoUrl ? '[VIDEO]' : '';
 									const isSystem = msg.isSystemMessage;
@@ -1971,7 +1973,7 @@ const Messages = () => {
 									</div>
 								`;
 								})
-								.join('')}
+								?.join('')}
 						</div>
 					</body>
 					</html>
@@ -1999,7 +2001,7 @@ const Messages = () => {
 
 		try {
 			// Create HTML content
-			const chatName = activeChat.groupName || activeChat.participants.find((p) => p.firebaseUserId !== user?.firebaseUserId)?.username || 'chat';
+			const chatName = activeChat.groupName || activeChat.participants?.find((p) => p.firebaseUserId !== user?.firebaseUserId)?.username || 'chat';
 
 			const htmlContent = `<!DOCTYPE html>
 <html lang="en">
@@ -2120,15 +2122,15 @@ const Messages = () => {
 			<h1>Chat History Export</h1>
 			<p><strong>Chat:</strong> ${chatName}</p>
 			<p><strong>Type:</strong> ${activeChat.chatType || '1-1'}</p>
-			<p><strong>Participants:</strong> ${activeChat.participants.map((p) => p.username).join(', ')}</p>
+			<p><strong>Participants:</strong> ${activeChat.participants?.map((p) => p.username)?.join(', ')}</p>
 			<p><strong>Export Date:</strong> ${new Date().toLocaleString()}</p>
 			<p><strong>Total Messages:</strong> ${messages.length}</p>
 		</div>
 		
 		<div class="messages-container">
 			${messages
-				.map((msg, _) => {
-					const sender = activeChat.participants.find((p) => p.firebaseUserId === msg.senderId)?.username || msg.senderId;
+				?.map((msg, _) => {
+					const sender = activeChat.participants?.find((p) => p.firebaseUserId === msg.senderId)?.username || msg.senderId;
 					const timestamp = msg.timestamp.toLocaleString();
 					const messageType = msg.imageUrl ? 'IMAGE' : msg.videoUrl ? 'VIDEO' : '';
 					const isSystem = msg.isSystemMessage;
@@ -2162,7 +2164,7 @@ const Messages = () => {
 						${replyText ? `<div class="reply">[Reply to: ${replyText}]</div>` : ''}
 					</div>`;
 				})
-				.join('')}
+				?.join('')}
 		</div>
 	</div>
 </body>
@@ -2200,21 +2202,21 @@ const Messages = () => {
 
 		try {
 			// Create TXT content
-			const chatName = activeChat.groupName || activeChat.participants.find((p) => p.firebaseUserId !== user?.firebaseUserId)?.username || 'chat';
+			const chatName = activeChat.groupName || activeChat.participants?.find((p) => p.firebaseUserId !== user?.firebaseUserId)?.username || 'chat';
 
 			let txtContent = `CHAT HISTORY EXPORT\n`;
 			txtContent += `==================\n\n`;
 			txtContent += `Chat: ${chatName}\n`;
 			txtContent += `Type: ${activeChat.chatType || '1-1'}\n`;
-			txtContent += `Participants: ${activeChat.participants.map((p) => p.username).join(', ')}\n`;
+			txtContent += `Participants: ${activeChat.participants?.map((p) => p.username)?.join(', ')}\n`;
 			txtContent += `Export Date: ${new Date().toLocaleString()}\n`;
 			txtContent += `Total Messages: ${messages.length}\n\n`;
 			txtContent += `MESSAGES\n`;
 			txtContent += `========\n\n`;
 
 			// Add messages
-			messages.forEach((msg, index) => {
-				const sender = activeChat.participants.find((p) => p.firebaseUserId === msg.senderId)?.username || msg.senderId;
+			messages?.forEach((msg, index) => {
+				const sender = activeChat.participants?.find((p) => p.firebaseUserId === msg.senderId)?.username || msg.senderId;
 				const timestamp = msg.timestamp.toLocaleString();
 				const messageType = msg.imageUrl ? '[IMAGE]' : msg.videoUrl ? '[VIDEO]' : '';
 
@@ -2640,7 +2642,7 @@ const Messages = () => {
 
 						{/* Leave Chat Option - Available for learners, not for admins in group chats */}
 						{(() => {
-							const chatToDelete = chatList.find((chat) => chat.chatId === chatIdToDelete);
+							const chatToDelete = chatList?.find((chat) => chat.chatId === chatIdToDelete);
 							const isGroupChat = chatToDelete?.chatType === 'group';
 							const isAdmin = user?.role === 'admin';
 
