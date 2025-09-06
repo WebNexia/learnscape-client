@@ -73,7 +73,7 @@ const AdminCourseEditChapter = ({
 								setHasUnsavedChanges(true);
 
 								setChapterLessonDataBeforeSave((prevData) => {
-									const updatedChapters = prevData?.map((currentChapter) => {
+									const updatedChapters = prevData?.map?.((currentChapter) => {
 										if (chapter.chapterId === currentChapter.chapterId) {
 											return {
 												...currentChapter,
@@ -142,7 +142,7 @@ const AdminCourseEditChapter = ({
 								onClick={() => {
 									setChapterLessonDataBeforeSave((prevData) => {
 										if (prevData !== undefined) {
-											return prevData?.filter((currentChapter) => chapter.chapterId !== currentChapter.chapterId);
+											return prevData?.filter?.((currentChapter) => chapter.chapterId !== currentChapter.chapterId) || [];
 										}
 										return prevData;
 									});
@@ -150,7 +150,7 @@ const AdminCourseEditChapter = ({
 									setHasUnsavedChanges(true);
 
 									setDeletedChapterIds((prevIds) => {
-										if (!chapter.chapterId.includes('temp_chapter_id')) {
+										if (!chapter.chapterId?.includes?.('temp_chapter_id')) {
 											return [...prevIds, chapter.chapterId];
 										}
 										return prevIds;
@@ -169,12 +169,12 @@ const AdminCourseEditChapter = ({
 					onReorder={(newLessons: Lesson[]): void => {
 						setChapterLessonDataBeforeSave((prevData) => {
 							if (prevData) {
-								return prevData.map((currentChapter) => {
+								return prevData?.map?.((currentChapter) => {
 									if (currentChapter.chapterId === chapter?.chapterId) {
 										return {
 											...currentChapter,
 											lessons: newLessons,
-											lessonIds: newLessons?.map((lesson: Lesson) => lesson._id),
+											lessonIds: newLessons?.map?.((lesson: Lesson) => lesson._id) || [],
 										};
 									}
 									return currentChapter; // Return unchanged chapter if not the one being updated
@@ -187,8 +187,8 @@ const AdminCourseEditChapter = ({
 					}}>
 					{chapter?.lessons &&
 						chapter?.lessons
-							?.filter((lesson) => lesson !== null)
-							.map((lesson) => {
+							?.filter?.((lesson) => lesson !== null)
+							?.map?.((lesson) => {
 								return (
 									<Reorder.Item key={lesson._id} value={lesson} style={{ boxShadow, listStyle: 'none' }}>
 										<Box
@@ -246,10 +246,11 @@ const AdminCourseEditChapter = ({
 															onClick={() => {
 																setChapterLessonDataBeforeSave((prevData) => {
 																	if (prevData) {
-																		return prevData.map((currentChapter) => {
+																		return prevData?.map?.((currentChapter) => {
 																			if (currentChapter.chapterId === chapter?.chapterId) {
-																				const updatedLessons = currentChapter.lessons?.filter((currentLesson) => currentLesson._id !== lesson._id);
-																				const updatedLessonIds = updatedLessons?.map((lesson) => lesson._id);
+																				const updatedLessons =
+																					currentChapter.lessons?.filter?.((currentLesson) => currentLesson._id !== lesson._id) || [];
+																				const updatedLessonIds = updatedLessons?.map?.((lesson) => lesson._id) || [];
 																				return {
 																					...currentChapter,
 																					lessons: updatedLessons,
@@ -264,7 +265,7 @@ const AdminCourseEditChapter = ({
 
 																updateLesson({
 																	...lesson,
-																	usedInCourses: lesson.usedInCourses?.filter((id) => id !== courseId) || [],
+																	usedInCourses: lesson.usedInCourses?.filter?.((id) => id !== courseId) || [],
 																	updatedAt: new Date().toISOString(),
 																	updatedByName: user ? `${user.firstName} ${user.lastName}` : '',
 																	updatedByImageUrl: user?.imageUrl || '',

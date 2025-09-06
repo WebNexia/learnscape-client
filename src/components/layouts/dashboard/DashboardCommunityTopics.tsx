@@ -16,7 +16,7 @@ const DashboardCommunityTopics = () => {
 	const [recentTopics, setRecentTopics] = useState<CommunityTopic[]>([]);
 
 	useEffect(() => {
-		const displayedTopics: CommunityTopic[] = sortedTopicsData?.sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 3);
+		const displayedTopics: CommunityTopic[] = sortedTopicsData?.sort?.((a, b) => b.createdAt.localeCompare(a.createdAt))?.slice?.(0, 3) || [];
 		setRecentTopics(displayedTopics);
 	}, [sortedTopicsData]);
 
@@ -43,7 +43,7 @@ const DashboardCommunityTopics = () => {
 			</Box>
 			<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', margin: '0.65rem 0 0 0.75rem', height: '7rem' }}>
 				<ul>
-					{recentTopics?.map((topic) => {
+					{recentTopics?.map?.((topic) => {
 						return (
 							<Typography key={topic._id} sx={{ fontSize: isMobileSize ? '0.65rem' : '0.85rem', mb: '0.35rem' }}>
 								<li>{truncateText(topic.title, 35)}</li>

@@ -47,7 +47,7 @@ export function usePaginatedEntity<T extends { _id: string; updatedAt: string; i
 
 		const pagesToFetch: number[] = [];
 		for (let page = startPage; page <= endPage; page++) {
-			if (!loadedPages.includes(page)) pagesToFetch.push(page);
+			if (!loadedPages?.includes(page)) pagesToFetch.push(page);
 		}
 		if (pagesToFetch.length === 0) return;
 
@@ -59,8 +59,8 @@ export function usePaginatedEntity<T extends { _id: string; updatedAt: string; i
 
 		const existingData = queryClient.getQueryData<T[]>([entityKey, orgId, pageNumber]) || [];
 		const combined = [...existingData, ...newEntities];
-		const unique = combined.filter((item, index, self) => index === self.findIndex((i) => i._id === item._id));
-		const sorted = unique.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+		const unique = combined?.filter((item, index, self) => index === self?.findIndex((i) => i._id === item._id)) || [];
+		const sorted = unique?.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)) || [];
 
 		queryClient.setQueryData([entityKey, orgId, pageNumber], sorted);
 		setLoadedPages((prev) => Array.from(new Set([...prev, ...pagesToFetch])));
@@ -75,51 +75,73 @@ export function usePaginatedEntity<T extends { _id: string; updatedAt: string; i
 	});
 
 	// Progressive pagination fill
+
 	useEffect(() => {
-		if (loadedPages.length > 0 && orgId) {
-			const maxPage = Math.max(...loadedPages);
+		if (loadedPages?.length > 0 && orgId) {
+			const sortedPages = [...(loadedPages || [])]?.sort((a, b) => a - b) || [];
+			const maxPage = Math.max(...sortedPages);
+
+			let missingStart: number | null = null;
+
 			for (let page = 1; page <= maxPage; page++) {
-				if (!loadedPages.includes(page)) fetchEntities(page);
+				if (!loadedPages?.includes(page)) {
+					if (missingStart === null) {
+						missingStart = page; // start of a gap
+					}
+				} else if (missingStart !== null) {
+					// end of a gap -> fetch missing range
+					fetchMoreEntities(missingStart, page - 1);
+					missingStart = null;
+				}
+			}
+
+			// If gap continues till the end
+			if (missingStart !== null) {
+				fetchMoreEntities(missingStart, maxPage);
 			}
 		}
 	}, [loadedPages, orgId]);
 
 	// CRUD Helpers
 	const addEntity = (newEntity: T) => {
-		queryClient.setQueryData<T[]>([entityKey, orgId, pageNumber], (old = []) => [newEntity, ...old]);
+		queryClient.setQueryData<T[]>([entityKey, orgId, pageNumber], (old = []) => [newEntity, ...(old || [])]);
 		setTotalItems((prev) => prev + 1);
 		setLoadedPages((prev) => (prev.length === 0 ? [1] : prev));
 	};
 
 	const updateEntity = (updatedEntity: T) => {
-		loadedPages.forEach((page) => {
-			queryClient.setQueryData<T[]>([entityKey, orgId, page], (old = []) =>
-				old.map((item) => (item._id === updatedEntity._id ? updatedEntity : item))
+		loadedPages?.forEach((page) => {
+			queryClient.setQueryData<T[]>(
+				[entityKey, orgId, page],
+				(old = []) => (old || [])?.map((item) => (item._id === updatedEntity._id ? updatedEntity : item)) || []
 			);
 		});
 		queryClient.invalidateQueries([entityKey, orgId]);
 	};
 
 	const toggleEntityActive = (id: string) => {
-		loadedPages.forEach((page) => {
-			queryClient.setQueryData<T[]>([entityKey, orgId, page], (old = []) =>
-				old.map((item) => (item._id === id ? { ...item, isActive: !item.isActive } : item))
+		loadedPages?.forEach((page) => {
+			queryClient.setQueryData<T[]>(
+				[entityKey, orgId, page],
+				(old = []) => (old || [])?.map((item) => (item._id === id ? { ...item, isActive: !item.isActive } : item)) || []
 			);
 		});
 		queryClient.invalidateQueries([entityKey, orgId]);
 	};
 
 	const removeEntity = (id: string) => {
-		queryClient.setQueryData<T[]>([entityKey, orgId, pageNumber], (old = []) => old.filter((item) => item._id !== id));
+		queryClient.setQueryData<T[]>([entityKey, orgId, pageNumber], (old = []) => (old || [])?.filter((item) => item._id !== id) || []);
 		setTotalItems((prev) => Math.max(0, prev - 1));
 	};
 
 	const sortEntities = (property: keyof T, order: 'asc' | 'desc') => {
-		return [...(data || [])].sort((a, b) => {
-			const aValue = a[property] ?? '';
-			const bValue = b[property] ?? '';
-			return order === 'asc' ? (aValue > bValue ? 1 : -1) : aValue < bValue ? 1 : -1;
-		});
+		return (
+			[...(data || [])]?.sort((a, b) => {
+				const aValue = a[property] ?? '';
+				const bValue = b[property] ?? '';
+				return order === 'asc' ? (aValue > bValue ? 1 : -1) : aValue < bValue ? 1 : -1;
+			}) || []
+		);
 	};
 
 	return {

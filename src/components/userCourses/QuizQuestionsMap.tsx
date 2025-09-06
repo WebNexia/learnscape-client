@@ -85,16 +85,17 @@ const QuizQuestionsMap = ({ questions, userQuizAnswers, isOpen, setIsOpen }: Qui
 						overflow: 'auto',
 						alignContent: 'flex-start',
 					}}>
-					{questions?.map((question, index) => {
-						const isAnswered = userQuizAnswers.some(
-							(answer) =>
-								answer.questionId === question._id &&
-								(answer.userAnswer !== '' ||
-									answer.audioRecordUrl ||
-									answer.videoRecordUrl ||
-									(answer.userBlankValuePairAnswers.length !== 0 && answer.userBlankValuePairAnswers.some((pair) => pair.value !== '')) ||
-									(answer.userMatchingPairAnswers.length !== 0 && answer.userMatchingPairAnswers.some((pair) => pair.answer !== '')))
-						);
+					{questions?.map?.((question, index) => {
+						const isAnswered =
+							userQuizAnswers?.some?.(
+								(answer) =>
+									answer.questionId === question._id &&
+									(answer.userAnswer !== '' ||
+										answer.audioRecordUrl ||
+										answer.videoRecordUrl ||
+										(answer.userBlankValuePairAnswers?.length !== 0 && answer.userBlankValuePairAnswers?.some?.((pair) => pair.value !== '')) ||
+										(answer.userMatchingPairAnswers?.length !== 0 && answer.userMatchingPairAnswers?.some?.((pair) => pair.answer !== '')))
+							) || false;
 
 						return (
 							<Box

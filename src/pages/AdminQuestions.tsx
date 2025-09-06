@@ -86,20 +86,21 @@ const AdminQuestions = () => {
 	// Use appropriate page number for pagination
 	const currentPage = isSearchActive ? searchResultsPage : questionsPageNumber;
 
-	const sortedQuestions = [...displayQuestions].sort((a, b) => {
-		const aValue = a[orderBy] ?? '';
-		const bValue = b[orderBy] ?? '';
+	const sortedQuestions =
+		[...(displayQuestions || [])]?.sort((a, b) => {
+			const aValue = a[orderBy] ?? '';
+			const bValue = b[orderBy] ?? '';
 
-		if (order === 'asc') {
-			return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
-		} else {
-			return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
-		}
-	});
+			if (order === 'asc') {
+				return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+			} else {
+				return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
+			}
+		}) || [];
 
 	// For search results, slice the accumulated data based on current page
 	// For context data, use client-side pagination
-	const paginatedQuestions = sortedQuestions.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+	const paginatedQuestions = sortedQuestions?.slice((currentPage - 1) * pageSize, currentPage * pageSize) || [];
 
 	const handleSort = (property: keyof QuestionInterface) => {
 		const isAsc = orderBy === property && order === 'asc';
@@ -177,7 +178,7 @@ const AdminQuestions = () => {
 
 				// Fetch all missing pages in sequence
 				for (let page = currentLoadedPages + 1; page <= targetPage; page++) {
-					if (!searchResultsLoadedPages.includes(page)) {
+					if (!searchResultsLoadedPages?.includes(page)) {
 						await fetchMoreSearchResults(page, params);
 					}
 				}
@@ -231,7 +232,7 @@ const AdminQuestions = () => {
 			if (response.data.status === 200) {
 				// If search is active, also remove from search results
 				if (isSearchActive) {
-					setSearchResults((prev) => prev.filter((question) => question._id !== questionId));
+					setSearchResults((prev) => prev?.filter?.((question) => question._id !== questionId) || []);
 					setSearchResultsTotalItems((prev) => Math.max(0, prev - 1));
 				}
 
@@ -510,7 +511,7 @@ const AdminQuestions = () => {
 											}}>
 											------ Filter by Type ------
 										</MenuItem>
-										{questionTypes.map((type) => (
+										{questionTypes?.map?.((type) => (
 											<MenuItem
 												value={type.name.toLowerCase()}
 												key={type._id}
@@ -737,7 +738,7 @@ const AdminQuestions = () => {
 						/>
 						<TableBody>
 							{paginatedQuestions &&
-								paginatedQuestions?.map((question: QuestionInterface, index) => {
+								paginatedQuestions?.map?.((question: QuestionInterface, index) => {
 									return (
 										<TableRow key={question._id} hover>
 											<TableCell sx={{ textAlign: 'center', width: '0px' }}>
@@ -791,7 +792,7 @@ const AdminQuestions = () => {
 													onClick={() => {
 														setOptions(question.options);
 														setCorrectAnswer(question.correctAnswer);
-														const correctAnswerIndex = question.options.indexOf(question.correctAnswer);
+														const correctAnswerIndex = question.options?.indexOf?.(question.correctAnswer) || -1;
 														setCorrectAnswerIndex(correctAnswerIndex);
 														toggleQuestionEditModal(index);
 														setIsDuplicateOption(false);
@@ -864,7 +865,7 @@ const AdminQuestions = () => {
 					<CustomTablePagination count={questionsNumberOfPages} page={currentPage} onChange={handlePageChange} />
 				</Box>
 
-				{isQuestionInfoModalOpen.map(
+				{isQuestionInfoModalOpen?.map?.(
 					(isOpen, index) =>
 						isOpen && (
 							<CustomDialog

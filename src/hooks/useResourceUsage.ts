@@ -34,10 +34,10 @@ export const useResourceUsage = (resource: Document | Lesson | QuestionInterface
 		if ('usedInLessons' in resource && 'usedInCourses' in resource) {
 			const docResource = resource as ResourceWithCourses & ResourceWithLessons;
 			// Find courses that use this document
-			docResource.usedInCourses?.forEach((courseId: string) => {
+			docResource.usedInCourses?.forEach?.((courseId: string) => {
 				if (!coursesSet.has(courseId)) {
 					coursesSet.add(courseId);
-					const course = courses?.find((c) => c._id === courseId);
+					const course = courses?.find?.((c) => c._id === courseId);
 					if (course) {
 						usageInfo.courses.push({ id: course._id, title: course.title });
 					}
@@ -45,10 +45,10 @@ export const useResourceUsage = (resource: Document | Lesson | QuestionInterface
 			});
 
 			// Find lessons that use this document
-			docResource.usedInLessons?.forEach((lessonId: string) => {
+			docResource.usedInLessons?.forEach?.((lessonId: string) => {
 				if (!lessonsSet.has(lessonId)) {
 					lessonsSet.add(lessonId);
-					const lesson = lessons?.find((l) => l._id === lessonId);
+					const lesson = lessons?.find?.((l) => l._id === lessonId);
 					if (lesson) {
 						usageInfo.lessons.push({ id: lesson._id, title: lesson.title });
 					}
@@ -59,10 +59,10 @@ export const useResourceUsage = (resource: Document | Lesson | QuestionInterface
 		// Handle Lesson usage
 		if ('usedInCourses' in resource) {
 			const lessonResource = resource as ResourceWithCourses;
-			lessonResource.usedInCourses?.forEach((courseId: string) => {
+			lessonResource.usedInCourses?.forEach?.((courseId: string) => {
 				if (!coursesSet.has(courseId)) {
 					coursesSet.add(courseId);
-					const course = courses?.find((c) => c._id === courseId);
+					const course = courses?.find?.((c) => c._id === courseId);
 					if (course) {
 						usageInfo.courses.push({ id: course._id, title: course.title });
 					}
@@ -73,10 +73,10 @@ export const useResourceUsage = (resource: Document | Lesson | QuestionInterface
 		// Handle Question usage
 		if ('usedInLessons' in resource) {
 			const questionResource = resource as ResourceWithLessons;
-			questionResource.usedInLessons?.forEach((lessonId: string) => {
+			questionResource.usedInLessons?.forEach?.((lessonId: string) => {
 				if (!lessonsSet.has(lessonId)) {
 					lessonsSet.add(lessonId);
-					const lesson = lessons?.find((l) => l._id === lessonId);
+					const lesson = lessons?.find?.((l) => l._id === lessonId);
 					if (lesson) {
 						usageInfo.lessons.push({ id: lesson._id, title: lesson.title });
 					}

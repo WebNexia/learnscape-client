@@ -26,13 +26,13 @@ export const useUserCourseLessonData = () => {
 
 	// State for current userLessonId
 	const [userLessonId, setUserLessonId] = useState<string | undefined>(() => {
-		const currentUserLessonData = parsedUserLessonData.find((data) => data.lessonId === lessonId && data.courseId === courseId);
+		const currentUserLessonData = parsedUserLessonData?.find?.((data) => data.lessonId === lessonId && data.courseId === courseId);
 		return currentUserLessonData?.userLessonId;
 	});
 
 	// State for course completion status
 	const [isCourseCompleted, setIsCourseCompleted] = useState<boolean>(() => {
-		const currentUserCourseData = parsedUserCourseData.find((data) => data.userCourseId === userCourseId);
+		const currentUserCourseData = parsedUserCourseData?.find?.((data) => data.userCourseId === userCourseId);
 		return currentUserCourseData ? currentUserCourseData.isCourseCompleted || false : false;
 	});
 
@@ -53,7 +53,7 @@ export const useUserCourseLessonData = () => {
 
 	// Function to get last question index
 	const getLastQuestion = useCallback((): number => {
-		const currentUserLessonData = parsedUserLessonData.find((data) => data.userLessonId === userLessonId);
+		const currentUserLessonData = parsedUserLessonData?.find?.((data) => data.userLessonId === userLessonId);
 		return currentUserLessonData ? currentUserLessonData.currentQuestion : 1;
 	}, [userLessonId, parsedUserLessonData]);
 
@@ -119,7 +119,7 @@ export const useUserCourseLessonData = () => {
 			}
 
 			if (nextLessonId) {
-				const existingNextLesson = parsedUserLessonData.find((data) => data.lessonId === nextLessonId && data.courseId === courseId);
+				const existingNextLesson = parsedUserLessonData?.find?.((data) => data.lessonId === nextLessonId && data.courseId === courseId);
 
 				if (!existingNextLesson) {
 					try {
@@ -209,10 +209,10 @@ export const useUserCourseLessonData = () => {
 	// Function to update in-progress lessons
 	const updateInProgressLessons = useCallback(async () => {
 		const updatedParsedUserLessonData = JSON.parse(localStorage.getItem('userLessonData') || '[]');
-		const inProgressLessons = updatedParsedUserLessonData?.filter((lesson: UserLessonDataStorage) => lesson.isInProgress);
+		const inProgressLessons = updatedParsedUserLessonData?.filter?.((lesson: UserLessonDataStorage) => lesson.isInProgress) || [];
 		try {
 			for (const lesson of inProgressLessons) {
-				const localStorageLesson = updatedParsedUserLessonData.find((data: UserLessonDataStorage) => data.userLessonId === lesson.userLessonId);
+				const localStorageLesson = updatedParsedUserLessonData?.find?.((data: UserLessonDataStorage) => data.userLessonId === lesson.userLessonId);
 				if (localStorageLesson) {
 					const currentQuestion = localStorageLesson.currentQuestion;
 					await axios.patch(`${base_url}/userlessons/${lesson.userLessonId}`, {

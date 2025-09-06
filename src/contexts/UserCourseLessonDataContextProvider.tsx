@@ -71,7 +71,7 @@ const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProvide
 		location.pathname === '/about-us' ||
 		location.pathname === '/auth' ||
 		// Only consider course preview pages as landing pages, not enrolled course pages
-		(location.pathname.startsWith('/course/') && !location.pathname.includes('/userCourseId/'));
+		(location.pathname.startsWith('/course/') && !location.pathname?.includes?.('/userCourseId/'));
 
 	const role = user?.role;
 

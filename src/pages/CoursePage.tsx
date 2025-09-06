@@ -24,7 +24,7 @@ const CoursePage = () => {
 		const currentUserCourseData: string | null = localStorage.getItem('userCourseData');
 		if (currentUserCourseData !== null) {
 			userCourseData = JSON.parse(currentUserCourseData);
-			setIsEnrolledStatus(userCourseData.some((data) => data.courseId === courseId));
+			setIsEnrolledStatus(userCourseData?.some?.((data) => data.courseId === courseId) || false);
 		}
 		if (courseId) {
 			fetchSingleCourseDataUser(courseId);
@@ -56,8 +56,8 @@ const CoursePage = () => {
 					</Box>
 					<Box sx={{ display: 'flex', alignSelf: 'flex-start', flexDirection: 'column' }}>
 						{singleCourseUser?.documents
-							?.filter((doc: Document) => doc !== null)
-							?.map((doc: Document) => (
+							?.filter?.((doc: Document) => doc !== null)
+							?.map?.((doc: Document) => (
 								<Box sx={{ marginBottom: '0.5rem' }} key={doc._id}>
 									<Link
 										href={doc?.documentUrl}

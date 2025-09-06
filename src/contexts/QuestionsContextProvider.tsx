@@ -51,7 +51,7 @@ const QuestionsContextProvider = ({ children }: QuestionsContextProviderProps) =
 		location.pathname === '/contact-us' ||
 		location.pathname === '/about-us' ||
 		location.pathname === '/auth' ||
-		(location.pathname.startsWith('/course/') && !location.pathname.includes('/userCourseId/'));
+		(location.pathname.startsWith('/course/') && !location.pathname?.includes?.('/userCourseId/'));
 
 	// ✅ hook for paginated questions
 	const {
@@ -98,7 +98,7 @@ const QuestionsContextProvider = ({ children }: QuestionsContextProviderProps) =
 	});
 
 	const fetchQuestionTypeName = (question: QuestionInterface): string => {
-		const filteredQuestionType = questionTypesData?.filter((type: any) => {
+		const filteredQuestionType = questionTypesData?.filter?.((type: any) => {
 			if (question !== null) {
 				return type._id === question?.questionType || type.name === question?.questionType;
 			}
@@ -208,7 +208,7 @@ export default QuestionsContextProvider;
 // 		location.pathname === '/about-us' ||
 // 		location.pathname === '/auth' ||
 // 		// Only consider course preview pages as landing pages, not enrolled course pages
-// 		(location.pathname.startsWith('/course/') && !location.pathname.includes('/userCourseId/'));
+// 		(location.pathname.startsWith('/course/') && !location.pathname?.includes?.('/userCourseId/'));
 
 // 	const [totalItems, setTotalItems] = useState<number>(0);
 // 	const [loadedPages, setLoadedPages] = useState<number[]>([]);
@@ -318,7 +318,7 @@ export default QuestionsContextProvider;
 // 	};
 
 // 	const fetchQuestionTypeName = (question: QuestionInterface): string => {
-// 		const filteredQuestionType = questionTypesData?.filter((type: any) => {
+// 		const filteredQuestionType = questionTypesData?.filter?.((type: any) => {
 // 			if (question !== null) {
 // 				return type._id === question?.questionType || type.name === question?.questionType;
 // 			}

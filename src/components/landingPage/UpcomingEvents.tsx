@@ -211,7 +211,7 @@ export default function UpcomingEvents() {
 					}}
 					onTouchStart={handleTouchStart}
 					onTouchMove={handleTouchMove}>
-					{upcomingEvents.map((event, idx) => (
+					{upcomingEvents?.map?.((event, idx) => (
 						<Box
 							key={event._id}
 							sx={{
@@ -338,7 +338,7 @@ export default function UpcomingEvents() {
 		return (
 			<Box sx={{ maxWidth: 360, position: 'relative' }}>
 				<SwipeableViews index={activeStep} onChangeIndex={handleStepChange} enableMouseEvents resistance>
-					{upcomingEvents.map((event, _) => (
+					{upcomingEvents?.map?.((event, _) => (
 						<div key={event._id}>
 							<Card
 								sx={{

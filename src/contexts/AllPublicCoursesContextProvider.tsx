@@ -35,7 +35,7 @@ const AllPublicCoursesContextProvider = (props: AllPublicCoursesContextProviderP
 	// Check if we're on any landing page route (courses page or individual course page)
 	// Exclude logged-in user course routes that contain '/userCourseId/'
 	const isLandingPageRoute =
-		location.pathname === '/landing-page-courses' || (location.pathname.startsWith('/course/') && !location.pathname.includes('/userCourseId/'));
+		location.pathname === '/landing-page-courses' || (location.pathname.startsWith('/course/') && !location.pathname?.includes?.('/userCourseId/'));
 
 	// State for pagination
 	const [currentPage, setCurrentPage] = useState(1);

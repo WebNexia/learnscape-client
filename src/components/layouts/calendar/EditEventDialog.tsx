@@ -117,7 +117,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 		};
 
 		// Check if user is already selected
-		const isAlreadySelected = selectedEvent?.attendees.some((attendee) => attendee._id === user._id);
+		const isAlreadySelected = selectedEvent?.attendees?.some?.((attendee) => attendee._id === user._id);
 		if (!isAlreadySelected && selectedEvent) {
 			setSelectedEvent((prevData) => {
 				if (prevData) {
@@ -135,7 +135,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 	const handleCourseSelect = (selectedCourse: SearchCourse) => {
 		// For event editing, we only need the course ID
 		// Check if course is already selected
-		const isAlreadySelected = selectedEvent?.coursesIds.includes(selectedCourse._id);
+		const isAlreadySelected = selectedEvent?.coursesIds?.includes?.(selectedCourse._id);
 		if (!isAlreadySelected && selectedEvent) {
 			setSelectedEvent((prevData) => {
 				if (prevData) {
@@ -233,16 +233,18 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 				return prevData;
 			});
 
-			allCoursesParticipantsInfo = users
-				?.filter((filteredUser) => filteredUser._id !== user?._id)
-				.map((mappedUser) => ({ _id: mappedUser._id, username: mappedUser.username, firebaseUserId: mappedUser.firebaseUserId }));
+			allCoursesParticipantsInfo =
+				users
+					?.filter?.((filteredUser) => filteredUser._id !== user?._id)
+					?.map?.((mappedUser) => ({ _id: mappedUser._id, username: mappedUser.username, firebaseUserId: mappedUser.firebaseUserId })) || [];
 		} else if (selectedEvent?.isAllCoursesSelected) {
 			// Handle All Courses selection
 			try {
 				const res = await axios.get(`${base_url}/usercourses/participants/organisation/${orgId}`);
 
-				allCoursesParticipantsInfo = Array.from(new Map([...res.data.participants, ...participants].map((user) => [user._id, user])).values());
-				allParticipantsIds = [...res.data.participants, ...participants]?.map((participant: AttendeeInfo) => participant._id);
+				allCoursesParticipantsInfo =
+					Array.from(new Map([...res.data.participants, ...participants]?.map?.((user) => [user._id, user])).values()) || [];
+				allParticipantsIds = [...res.data.participants, ...participants]?.map?.((participant: AttendeeInfo) => participant._id) || [];
 
 				setSelectedEvent((prevData) => {
 					if (prevData) {
@@ -258,21 +260,23 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 			const courseParticipants: AttendeeInfo[] = [];
 
 			await Promise.all(
-				selectedEvent?.coursesIds?.map(async (courseId) => {
-					try {
-						const res = await axios.get(`${base_url}/userCourses/course/${courseId}`);
-						courseParticipants.push(...res.data.users); // Collect participants directly
-					} catch (error) {
-						console.log(error);
-					}
-				})
+				selectedEvent?.coursesIds?.map?.((courseId) => {
+					return (async () => {
+						try {
+							const res = await axios.get(`${base_url}/userCourses/course/${courseId}`);
+							courseParticipants.push(...res.data.users); // Collect participants directly
+						} catch (error) {
+							console.log(error);
+						}
+					})();
+				}) || []
 			);
 
 			// Combine and deduplicate all participants locally
-			const combinedParticipants = Array.from(new Map([...courseParticipants, ...participants].map((user) => [user._id, user])).values());
+			const combinedParticipants = Array.from(new Map([...courseParticipants, ...participants]?.map?.((user) => [user._id, user])).values()) || [];
 
 			allCoursesParticipantsInfo = combinedParticipants; // Update state once with final list
-			allParticipantsIds = combinedParticipants.map((participant) => participant._id);
+			allParticipantsIds = combinedParticipants?.map?.((participant) => participant._id) || [];
 
 			setSelectedEvent((prevData) => {
 				if (prevData) {
@@ -282,11 +286,11 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 			});
 		} else {
 			// If no special selection, update with direct attendees
-			const uniqueParticipants = Array.from(new Map([...participants].map((user) => [user._id, user])).values());
+			const uniqueParticipants = Array.from(new Map([...participants]?.map?.((user) => [user._id, user])).values()) || [];
 
 			allCoursesParticipantsInfo = uniqueParticipants;
 
-			allParticipantsIds = uniqueParticipants.map((participant) => participant._id);
+			allParticipantsIds = uniqueParticipants?.map?.((participant) => participant._id) || [];
 
 			setSelectedEvent((prevData) => {
 				if (prevData) {
@@ -332,9 +336,8 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 
 			// Notify all users only if event is being made public now
 			if (!wasPublic && selectedEvent?.isPublic) {
-				const allFirebaseUserIds: string[] = users
-					?.filter((filteredUser) => filteredUser._id !== user?._id)
-					?.map((mappedUser) => mappedUser.firebaseUserId);
+				const allFirebaseUserIds: string[] =
+					users?.filter?.((filteredUser) => filteredUser._id !== user?._id)?.map?.((mappedUser) => mappedUser.firebaseUserId) || [];
 
 				const adminName = user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : user?.username || 'Admin';
 				const publicEventNotification = {
@@ -355,10 +358,10 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 
 			// Notify newly added participants
 			const newAttendeeIds = allParticipantsIds;
-			const newlyAddedIds = newAttendeeIds.filter((id) => !previousAttendeeIds.includes(id));
+			const newlyAddedIds = newAttendeeIds?.filter?.((id) => !previousAttendeeIds?.includes?.(id)) || [];
 			const adminName = user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : user?.username || 'Admin';
 			for (const participant of allCoursesParticipantsInfo) {
-				if (newlyAddedIds.includes(participant._id)) {
+				if (newlyAddedIds?.includes?.(participant._id)) {
 					const notificationRef = collection(db, 'notifications', participant.firebaseUserId, 'userNotifications');
 					await addDoc(notificationRef, {
 						title: 'Added to Event',
@@ -527,7 +530,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 										}}>
 										Select Type
 									</MenuItem>
-									{['Webinar', 'Guest Talk', 'Workshop', 'Training', 'Meeting', 'Other']?.map((type) => (
+									{['Webinar', 'Guest Talk', 'Workshop', 'Training', 'Meeting', 'Other']?.map?.((type) => (
 										<MenuItem value={type} key={type} sx={{ fontSize: '0.8rem' }}>
 											{type}
 										</MenuItem>
@@ -698,7 +701,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 
 					{selectedEvent?.attendees && selectedEvent?.attendees.length > 0 && (
 						<Box sx={{ display: 'flex', margin: '1.5rem 0 0.75rem 0', flexWrap: 'wrap' }}>
-							{selectedEvent.attendees?.map((attendee) => {
+							{selectedEvent.attendees?.map?.((attendee) => {
 								return (
 									<Box
 										key={attendee._id}
@@ -715,7 +718,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 										<IconButton
 											onClick={() => {
 												setIsEventUpdated(true);
-												const updatedAttendees = selectedEvent.attendees.filter((filteredAttendee) => attendee._id !== filteredAttendee._id);
+												const updatedAttendees = selectedEvent.attendees?.filter?.((filteredAttendee) => attendee._id !== filteredAttendee._id) || [];
 
 												setSelectedEvent((prevData) => {
 													if (prevData) {
@@ -747,7 +750,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 										currentUserId={user?.firebaseUserId}
 										placeholder={selectedEvent?.isAllLearnersSelected || selectedEvent?.isPublic ? '' : 'Search Learner'}
 										disabled={selectedEvent?.isAllLearnersSelected || selectedEvent?.isPublic}
-										selectedUserIds={selectedEvent?.attendees.map((attendee) => attendee._id) || []}
+										selectedUserIds={selectedEvent?.attendees?.map?.((attendee) => attendee._id) || []}
 										sx={{
 											backgroundColor: selectedEvent?.isAllLearnersSelected || selectedEvent?.isPublic ? 'transparent' : '#fff',
 										}}
@@ -812,8 +815,8 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 
 					{selectedEvent?.coursesIds && selectedEvent.coursesIds.length > 0 && (
 						<Box sx={{ display: 'flex', margin: '-0.5rem 0 0.75rem 0', flexWrap: 'wrap' }}>
-							{selectedEvent.coursesIds?.map((id) => {
-								const course = courses.find((course) => course._id === id);
+							{selectedEvent.coursesIds?.map?.((id) => {
+								const course = courses?.find?.((course) => course._id === id);
 								return (
 									<Box
 										key={course?._id}
@@ -830,7 +833,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 										<IconButton
 											onClick={() => {
 												setIsEventUpdated(true);
-												const updatedCoursesIds = selectedEvent.coursesIds.filter((filteredCourseId) => course?._id !== filteredCourseId);
+												const updatedCoursesIds = selectedEvent.coursesIds?.filter?.((filteredCourseId) => course?._id !== filteredCourseId) || [];
 
 												setSelectedEvent((prevData) => {
 													if (prevData) {

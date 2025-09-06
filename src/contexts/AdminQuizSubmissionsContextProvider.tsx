@@ -67,7 +67,7 @@ const AdminQuizSubmissionsContextProvider = ({ children }: AdminQuizSubmissionsC
 	});
 
 	const updateQuizSubmissionPublishing = (id: string) => {
-		const submission = quizSubmissions?.find((s: QuizSubmission) => s._id === id);
+		const submission = quizSubmissions?.find?.((s: QuizSubmission) => s._id === id);
 		if (submission) {
 			updateQuizSubmissions({
 				...submission,

@@ -115,7 +115,7 @@ const CreateQuestionDialog = ({
 	const [blankValuePairs, setBlankValuePairs] = useState<BlankValuePair[]>([]);
 
 	const sortedBlankValuePairs = useMemo(() => {
-		return [...blankValuePairs].sort((a, b) => a.blank - b.blank);
+		return [...(blankValuePairs || [])]?.sort?.((a, b) => a.blank - b.blank) || [];
 	}, [blankValuePairs]);
 
 	const [newQuestion, setNewQuestion] = useState<QuestionInterface>({
@@ -228,7 +228,7 @@ const CreateQuestionDialog = ({
 
 	const createQuestion = async () => {
 		try {
-			const questionTypeId = questionTypes?.find((type) => type.name === questionType)?._id || '';
+			const questionTypeId = questionTypes?.find?.((type) => type.name === questionType)?._id || '';
 			const response = await axios.post(`${base_url}/questions`, {
 				questionType: questionTypeId,
 				question: isFlipCard ? newQuestion.question.trim() : editorContent.trim(),
@@ -408,8 +408,8 @@ const CreateQuestionDialog = ({
 		}
 
 		if (isMatching) {
-			const nonBlankPairs = newQuestion.matchingPairs?.filter((pair) => pair.question.trim() && pair.answer.trim());
-			const missingPairExists = newQuestion.matchingPairs.some((pair) => !pair.question.trim() || !pair.answer.trim());
+			const nonBlankPairs = newQuestion.matchingPairs?.filter?.((pair) => pair.question.trim() && pair.answer.trim()) || [];
+			const missingPairExists = newQuestion.matchingPairs?.some?.((pair) => !pair.question.trim() || !pair.answer.trim()) || false;
 
 			if (nonBlankPairs.length < 2) {
 				setIsMinimumTwoMatchingPairs(true);
@@ -511,7 +511,7 @@ const CreateQuestionDialog = ({
 										Select Type
 									</MenuItem>
 									{questionTypes
-										?.filter((type) => {
+										?.filter?.((type) => {
 											const questionTypeName = type.name as QuestionType;
 											if (singleLessonBeforeSave?.type === LessonType.QUIZ) {
 												return [
@@ -522,7 +522,7 @@ const CreateQuestionDialog = ({
 													QuestionType.MATCHING,
 													QuestionType.FITB_TYPING,
 													QuestionType.FITB_DRAG_DROP,
-												].includes(questionTypeName);
+												]?.includes?.(questionTypeName);
 											} else if (singleLessonBeforeSave?.type === LessonType.PRACTICE_LESSON) {
 												return [
 													QuestionType.MULTIPLE_CHOICE,
@@ -532,11 +532,11 @@ const CreateQuestionDialog = ({
 													QuestionType.FITB_TYPING,
 													QuestionType.FITB_DRAG_DROP,
 													QuestionType.FLIP_CARD,
-												].includes(questionTypeName);
+												]?.includes?.(questionTypeName);
 											}
 											return true;
 										})
-										.map((type) => (
+										?.map?.((type) => (
 											<MenuItem value={type.name} key={type._id} sx={{ fontSize: '0.85rem' }}>
 												{type.name}
 											</MenuItem>
@@ -670,7 +670,7 @@ const CreateQuestionDialog = ({
 												borderRadius: '0.35rem',
 												padding: '0.5rem',
 											}}>
-											{sortedBlankValuePairs?.map((pair: BlankValuePair) => {
+											{sortedBlankValuePairs?.map?.((pair: BlankValuePair) => {
 												return (
 													<Box
 														key={pair.id}
@@ -757,7 +757,7 @@ const CreateQuestionDialog = ({
 							)}
 							{isMultipleChoiceQuestion && (
 								<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', width: '100%' }}>
-									{options?.map((option, index) => (
+									{options?.map?.((option, index) => (
 										<Box
 											key={index}
 											sx={{

@@ -22,7 +22,7 @@ export const useFetchUserQuestion = () => {
 			try {
 				const res = await axios.get(`${base_url}/userquestions/lesson/${lessonId}`);
 				return (
-					res.data.response?.map((data: UserQuestion) => ({
+					res.data.response?.map?.((data: UserQuestion) => ({
 						userQuestionId: data._id,
 						questionId: data.questionId,
 						userAnswer: data.userAnswer,

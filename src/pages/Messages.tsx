@@ -163,7 +163,7 @@ const Messages = () => {
 			const userBlocksQuery = query(collection(db, 'userBlocks'), where(`blockedUsers.${user.firebaseUserId}`, '!=', null));
 			const userBlocksSnapshot = await getDocs(userBlocksQuery);
 
-			userBlocksSnapshot.forEach((doc) => {
+			userBlocksSnapshot?.forEach?.((doc) => {
 				const userBlocksData = doc.data();
 				const blockedUsers = userBlocksData.blockedUsers || {};
 				if (blockedUsers[user.firebaseUserId]) {
@@ -198,7 +198,7 @@ const Messages = () => {
 		const userBlocksQuery = query(collection(db, 'userBlocks'), where(`blockedUsers.${user.firebaseUserId}`, '!=', null));
 		const unsubscribeBlockedBy = onSnapshot(userBlocksQuery, (querySnapshot) => {
 			const blockedByUsers: string[] = [];
-			querySnapshot.forEach((doc) => {
+			querySnapshot?.forEach?.((doc) => {
 				const userBlocksData = doc.data();
 				const blockedUsers = userBlocksData.blockedUsers || {};
 				if (blockedUsers[user.firebaseUserId]) {
@@ -226,7 +226,7 @@ const Messages = () => {
 		// For group chats, don't prevent sending messages if some users have left
 		// Only prevent if the current user has left
 		if (chat?.chatType === 'group') {
-			return !!(chat?.removedParticipants && user?.firebaseUserId && chat.removedParticipants?.includes(user.firebaseUserId));
+			return !!(chat?.removedParticipants && user?.firebaseUserId && chat.removedParticipants?.includes?.(user.firebaseUserId));
 		}
 		// For 1-1 chats, prevent if any participant has left
 		return !!(chat?.removedParticipants && chat.removedParticipants?.length > 0);
@@ -239,20 +239,22 @@ const Messages = () => {
 			return false;
 		}
 
-		const participants1 = chat1.participants.map((p) => p.firebaseUserId).sort();
-		const participants2 = chat2.participants.map((p) => p.firebaseUserId).sort();
-		return participants1.length === participants2.length && participants1.every((id, index) => id === participants2[index]);
+		const participants1 = chat1.participants?.map?.((p) => p.firebaseUserId)?.sort?.() || [];
+		const participants2 = chat2.participants?.map?.((p) => p.firebaseUserId)?.sort?.() || [];
+		return (participants1.length === participants2.length && participants1?.every?.((id, index) => id === participants2[index])) || false;
 	};
 
 	// Helper function to find existing chat with same participants
 	const findExistingChatWithParticipants = (participantIds: string[]): Chat | null => {
-		const sortedParticipantIds = participantIds.sort();
+		const sortedParticipantIds = participantIds?.sort?.() || [];
 		return (
-			chatList.find((chat) => {
+			chatList?.find?.((chat) => {
 				if (chat.chatType === 'group') return false;
-				const chatParticipantIds = chat.participants.map((p) => p.firebaseUserId).sort();
+				const chatParticipantIds = chat.participants?.map?.((p) => p.firebaseUserId)?.sort?.() || [];
 				return (
-					chatParticipantIds.length === sortedParticipantIds.length && chatParticipantIds.every((id, index) => id === sortedParticipantIds[index])
+					(chatParticipantIds.length === sortedParticipantIds.length &&
+						chatParticipantIds?.every?.((id, index) => id === sortedParticipantIds[index])) ||
+					false
 				);
 			}) || null
 		);
@@ -304,9 +306,9 @@ const Messages = () => {
 
 		// Check if any participant has blocked the current user using blockedByUsers from userBlocks collection
 		return (
-			activeChat.participants?.some((participant) => {
+			activeChat.participants?.some?.((participant) => {
 				if (participant.firebaseUserId === user.firebaseUserId) return false;
-				return blockedByUsers.includes(participant.firebaseUserId);
+				return blockedByUsers?.includes?.(participant.firebaseUserId);
 			}) || false
 		);
 	}, [user?.firebaseUserId, activeChat, blockedByUsers]);
@@ -317,9 +319,9 @@ const Messages = () => {
 
 		// Check if current user has blocked any participant
 		return (
-			activeChat.participants?.some((participant) => {
+			activeChat.participants?.some?.((participant) => {
 				if (participant.firebaseUserId === user.firebaseUserId) return false;
-				return globalBlockedUsers.includes(participant.firebaseUserId);
+				return globalBlockedUsers?.includes?.(participant.firebaseUserId);
 			}) || false
 		);
 	}, [activeChat?.participants, user?.firebaseUserId, globalBlockedUsers]);
@@ -464,12 +466,12 @@ const Messages = () => {
 				const lastMessage = data.lastMessage || { text: 'No messages yet', timestamp: null };
 
 				// Check if the chat is deleted by the current user
-				if (data.isDeletedBy?.includes(user.firebaseUserId)) {
+				if (data.isDeletedBy?.includes?.(user.firebaseUserId)) {
 					continue; // Skip deleted chats
 				}
 
 				// Check if the current user has permanently left the chat
-				if (data.removedParticipants?.includes(user.firebaseUserId)) {
+				if (data.removedParticipants?.includes?.(user.firebaseUserId)) {
 					continue; // Skip chats where user has permanently left
 				}
 
@@ -502,23 +504,23 @@ const Messages = () => {
 
 				// Fetch participant details
 				const participantsDetails: User[] = await Promise.all(
-					data.participants?.map(async (participantId: string) => {
-						const user = await fetchParticipantData(participantId);
-						return { ...user, participantId };
-					})
+					data.participants?.map?.((participantId: string) => {
+						return fetchParticipantData(participantId).then((user) => ({ ...user, participantId }));
+					}) || []
 				);
 
 				// Collect chat data along with unread message count and participant info
 				chatsArray.push({
 					chatId: doc.id,
-					participants: participantsDetails
-						?.filter((p): p is User => p !== null)
-						?.map((p) => ({
-							firebaseUserId: p.firebaseUserId,
-							username: p.username,
-							imageUrl: p.imageUrl,
-							role: p.role,
-						})),
+					participants:
+						participantsDetails
+							?.filter?.((p): p is User => p !== null)
+							?.map?.((p) => ({
+								firebaseUserId: p.firebaseUserId,
+								username: p.username,
+								imageUrl: p.imageUrl,
+								role: p.role,
+							})) || [],
 					lastMessage,
 					isDeletedBy: data.isDeletedBy,
 					removedParticipants: data.removedParticipants,
@@ -546,9 +548,9 @@ const Messages = () => {
 
 	const filterBlockedMessages = useCallback(
 		(messagesArray: Message[]) => {
-			return messagesArray.filter((msg) => {
+			return messagesArray?.filter?.((msg) => {
 				// Check if the message sender is in the current user's blocked list
-				if (globalBlockedUsers.includes(msg.senderId)) {
+				if (globalBlockedUsers?.includes?.(msg.senderId)) {
 					return false; // Don't show messages from blocked users
 				}
 				return true;
@@ -568,7 +570,7 @@ const Messages = () => {
 			const messagesArray: Message[] = [];
 			const batch = writeBatch(db); // To batch update messages
 
-			querySnapshot.forEach((doc) => {
+			querySnapshot?.forEach?.((doc) => {
 				const data = doc.data();
 				const messageTimestamp = data.timestamp?.toDate() || new Date();
 
@@ -603,7 +605,7 @@ const Messages = () => {
 			const filteredMessages = filterBlockedMessages(messagesArray);
 
 			// Restore chat if the user had deleted it and a new message is received
-			if (activeChat.isDeletedBy?.includes(user.firebaseUserId)) {
+			if (activeChat.isDeletedBy?.includes?.(user.firebaseUserId)) {
 				const chatRef = doc(db, 'chats', activeChat.chatId);
 				await updateDoc(chatRef, {
 					isDeletedBy: arrayRemove(user.firebaseUserId),
@@ -620,7 +622,7 @@ const Messages = () => {
 		const savedActiveChatId = localStorage.getItem('activeChatId');
 
 		if (savedActiveChatId && chatList.length > 0) {
-			const chat = chatList.find((chat) => chat.chatId === savedActiveChatId);
+			const chat = chatList?.find?.((chat) => chat.chatId === savedActiveChatId);
 			if (chat) {
 				setActiveChat(chat);
 			}
@@ -676,7 +678,7 @@ const Messages = () => {
 
 	const startChatIfNotExists = useCallback(
 		async (selectedUser: User): Promise<'success' | 'blocked'> => {
-			const chatId = [user?.firebaseUserId, selectedUser.firebaseUserId].sort().join('&');
+			const chatId = [user?.firebaseUserId, selectedUser.firebaseUserId]?.sort?.()?.join?.('&') || '';
 			const chatRef = doc(db, 'chats', chatId);
 
 			const chatDoc = await getDoc(chatRef);
@@ -686,7 +688,7 @@ const Messages = () => {
 				const chatData = chatDoc.data();
 
 				// Check if the chat is hidden and restore it
-				if (chatData.isDeletedBy?.includes(user?.firebaseUserId)) {
+				if (chatData.isDeletedBy?.includes?.(user?.firebaseUserId)) {
 					// Restore the chat by removing the current user from `isDeletedBy`
 					await updateDoc(chatRef, {
 						isDeletedBy: arrayRemove(user?.firebaseUserId),
@@ -733,7 +735,7 @@ const Messages = () => {
 				if (hiddenChatDoc.exists()) {
 					const hiddenChatData = hiddenChatDoc.data();
 					// If the chat exists but is hidden, restore it
-					if (hiddenChatData.isDeletedBy?.includes(user?.firebaseUserId)) {
+					if (hiddenChatData.isDeletedBy?.includes?.(user?.firebaseUserId)) {
 						await updateDoc(hiddenChatRef, {
 							isDeletedBy: arrayRemove(user?.firebaseUserId),
 						});
@@ -751,8 +753,8 @@ const Messages = () => {
 
 				// Check if any participant has permanently left this chat
 				const hasLeftParticipants = !!(chatData.removedParticipants && chatData.removedParticipants?.length > 0);
-				const currentUserLeft = chatData.removedParticipants?.includes(user?.firebaseUserId);
-				const selectedUserLeft = chatData.removedParticipants?.includes(selectedUser.firebaseUserId);
+				const currentUserLeft = chatData.removedParticipants?.includes?.(user?.firebaseUserId);
+				const selectedUserLeft = chatData.removedParticipants?.includes?.(selectedUser.firebaseUserId);
 
 				// Only create a new chat if the current user has also left the chat permanently
 				// If only the other user has left but the current user hasn't, restore the existing chat
@@ -796,7 +798,7 @@ const Messages = () => {
 					// Add the new chat to the UI lists, replacing any existing chats with the same participants
 					setChatList((prev) => {
 						// Remove any existing chats with the same participants (to avoid duplicates)
-						const filteredList = prev.filter((chat) => !hasSameParticipants(chat, newChat));
+						const filteredList = prev?.filter?.((chat) => !hasSameParticipants(chat, newChat)) || [];
 
 						// Sort the list to maintain proper order (newest first)
 						const updatedChatList = [newChat, ...filteredList].sort((a, b) => {

@@ -58,11 +58,11 @@ const Courses = () => {
 								if (storedUserCourseData !== null) {
 									userCourseData = JSON.parse(storedUserCourseData);
 								}
-								const isEnrolled: boolean = userCourseData?.map((data) => data.courseId).includes(course._id);
+								const isEnrolled: boolean = userCourseData?.map((data) => data.courseId)?.includes(course._id) || false;
 
-								const userCourseId: string = userCourseData?.filter((data) => data?.courseId === course._id)[0]?.userCourseId;
+								const userCourseId: string = userCourseData?.filter((data) => data?.courseId === course._id)?.[0]?.userCourseId || '';
 
-								const singleUserCourseData: UserCoursesIdsWithCourseIds | undefined = userCourseData.find(
+								const singleUserCourseData: UserCoursesIdsWithCourseIds | undefined = userCourseData?.find(
 									(data: UserCoursesIdsWithCourseIds) => data.userCourseId === userCourseId
 								);
 								const isCourseCompleted: boolean = singleUserCourseData?.isCourseCompleted || false;
