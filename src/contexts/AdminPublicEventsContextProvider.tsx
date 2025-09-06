@@ -1,6 +1,6 @@
 // AdminPublicEventsContextProvider.tsx
 import { createContext, ReactNode, useContext } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useIsLandingPageRoute } from '../hooks/useIsLandingPageRoute';
 
 import Loading from '../components/layouts/loading/Loading';
 import LoadingError from '../components/layouts/loading/LoadingError';
@@ -37,16 +37,7 @@ const AdminPublicEventsContextProvider = ({ children }: AdminPublicEventsContext
 	const { orgId } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
 	const { isAuthenticated, isAdmin } = useAuth();
-	const location = useLocation();
-
-	const isLandingPageRoute =
-		location.pathname === '/' ||
-		location.pathname === '/landing-page-courses' ||
-		location.pathname === '/resources' ||
-		location.pathname === '/contact-us' ||
-		location.pathname === '/about-us' ||
-		location.pathname === '/auth' ||
-		(location.pathname.startsWith('/course/') && !location.pathname?.includes('/userCourseId/'));
+	const isLandingPageRoute = useIsLandingPageRoute();
 
 	const {
 		data: publicEvents,

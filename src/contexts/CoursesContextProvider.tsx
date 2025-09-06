@@ -1,5 +1,5 @@
 import { ReactNode, createContext, useContext } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useIsLandingPageRoute } from '../hooks/useIsLandingPageRoute';
 import Loading from '../components/layouts/loading/Loading';
 import LoadingError from '../components/layouts/loading/LoadingError';
 import { OrganisationContext } from './OrganisationContextProvider';
@@ -52,18 +52,7 @@ const CoursesContextProvider = ({ children }: CoursesContextProviderProps) => {
 	const { orgId } = useContext(OrganisationContext);
 	const { isAuthenticated, isAdmin, isLearner } = useAuth();
 	const { user } = useContext(UserAuthContext);
-	const location = useLocation();
-
-	const isLandingPageRoute =
-		location.pathname === '/' ||
-		location.pathname === '/landing-page-courses' ||
-		location.pathname === '/resources' ||
-		location.pathname === '/contact-us' ||
-		location.pathname === '/about-us' ||
-		location.pathname === '/auth' ||
-		// Only consider course preview pages as landing pages, not enrolled course pages
-		(location.pathname.startsWith('/course/') && !location.pathname?.includes('/userCourseId/'));
-
+	const isLandingPageRoute = useIsLandingPageRoute();
 	const {
 		data: courses,
 		isLoading,
@@ -125,7 +114,7 @@ export default CoursesContextProvider;
 // import LoadingError from '../components/layouts/loading/LoadingError';
 // import { OrganisationContext } from './OrganisationContextProvider';
 // import { useAuth } from '../hooks/useAuth';
-// import { useLocation } from 'react-router-dom';
+// import { useIsLandingPageRoute } from '../hooks/useIsLandingPageRoute';
 // import { UserAuthContext } from './UserAuthContextProvider';
 // import { Roles } from '../interfaces/enums';
 
@@ -176,16 +165,6 @@ export default CoursesContextProvider;
 // 	const { user } = useContext(UserAuthContext);
 // 	const location = useLocation();
 // 	const queryClient = useQueryClient();
-// 	const isLandingPageRoute =
-// 		location.pathname === '/' ||
-// 		location.pathname === '/landing-page-courses' ||
-// 		location.pathname === '/resources' ||
-// 		location.pathname === '/contact-us' ||
-// 		location.pathname === '/about-us' ||
-// 		location.pathname === '/auth' ||
-// 		// Only consider course preview pages as landing pages, not enrolled course pages
-// 		(location.pathname.startsWith('/course/') && !location.pathname?.includes('/userCourseId/'));
-
 // 	const [coursesPageNumber, setCoursesPageNumber] = useState<number>(1);
 // 	const [totalItems, setTotalItems] = useState<number>(0);
 // 	const [loadedPages, setLoadedPages] = useState<number[]>([]);

@@ -8,6 +8,7 @@ import Loading from '../components/layouts/loading/Loading';
 import LoadingError from '../components/layouts/loading/LoadingError';
 import { useParams, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { useIsLandingPageRoute } from '../hooks/useIsLandingPageRoute';
 
 interface UserCourseLessonDataContextTypes {
 	fetchSingleCourseDataAdmin: (courseId: string) => void;
@@ -62,17 +63,7 @@ const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProvide
 
 	const { courseId } = useParams();
 
-	const location = useLocation();
-	const isLandingPageRoute =
-		location.pathname === '/' ||
-		location.pathname === '/landing-page-courses' ||
-		location.pathname === '/resources' ||
-		location.pathname === '/contact-us' ||
-		location.pathname === '/about-us' ||
-		location.pathname === '/auth' ||
-		// Only consider course preview pages as landing pages, not enrolled course pages
-		(location.pathname.startsWith('/course/') && !location.pathname?.includes('/userCourseId/'));
-
+	const isLandingPageRoute = useIsLandingPageRoute();
 	const role = user?.role;
 
 	const [isLoaded, setIsLoaded] = useState<boolean>(false);

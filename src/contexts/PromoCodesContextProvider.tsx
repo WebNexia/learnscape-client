@@ -1,6 +1,6 @@
 // PromoCodesContextProvider.tsx
 import { ReactNode, createContext, useContext } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useIsLandingPageRoute } from '../hooks/useIsLandingPageRoute';
 import { useAuth } from '../hooks/useAuth';
 import { OrganisationContext } from './OrganisationContextProvider';
 import { UserAuthContext } from './UserAuthContextProvider';
@@ -38,17 +38,8 @@ const PromoCodesContextProvider = ({ children }: PromoCodesContextProviderProps)
 	const { orgId } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
 	const { isAuthenticated, isAdmin } = useAuth();
-	const location = useLocation();
 
-	const isLandingPageRoute =
-		location.pathname === '/' ||
-		location.pathname === '/landing-page-courses' ||
-		location.pathname === '/resources' ||
-		location.pathname === '/contact-us' ||
-		location.pathname === '/about-us' ||
-		location.pathname === '/auth' ||
-		(location.pathname.startsWith('/course/') && !location.pathname?.includes('/userCourseId/'));
-
+	const isLandingPageRoute = useIsLandingPageRoute();
 	const {
 		data: promoCodes,
 		isLoading,
@@ -104,7 +95,7 @@ export default PromoCodesContextProvider;
 // import axios from '@utils/axiosInstance';
 // import { ReactNode, createContext, useContext, useState, useEffect } from 'react';
 // import { useQuery, useQueryClient } from 'react-query';
-// import { useLocation } from 'react-router-dom';
+// import { useIsLandingPageRoute } from '../hooks/useIsLandingPageRoute';
 
 // import Loading from '../components/layouts/loading/Loading';
 // import LoadingError from '../components/layouts/loading/LoadingError';
@@ -150,16 +141,6 @@ export default PromoCodesContextProvider;
 // 	const { isAuthenticated, isAdmin } = useAuth();
 // 	const location = useLocation();
 // 	const queryClient = useQueryClient();
-// 	const isLandingPageRoute =
-// 		location.pathname === '/' ||
-// 		location.pathname === '/landing-page-courses' ||
-// 		location.pathname === '/resources' ||
-// 		location.pathname === '/contact-us' ||
-// 		location.pathname === '/about-us' ||
-// 		location.pathname === '/auth' ||
-// 		// Only consider course preview pages as landing pages, not enrolled course pages
-// 		(location.pathname.startsWith('/course/') && !location.pathname?.includes('/userCourseId/'));
-
 // 	const [loadedPages, setLoadedPages] = useState<number[]>([]);
 // 	const [totalItems, setTotalItems] = useState<number>(0);
 // 	const [promoCodesPageNumber, setPromoCodesPageNumber] = useState<number>(1);
