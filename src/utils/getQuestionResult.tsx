@@ -13,9 +13,13 @@ export const getQuestionResult = (response: any, fetchQuestionTypeName: (questio
 			return false;
 		}
 
-		const isAllCorrect = response.userBlankValuePairAnswers.every((userAnswer: any) =>
-			response.questionId.blankValuePairs.some((correctPair: any) => correctPair.id === userAnswer.id && correctPair.value === userAnswer.value)
-		);
+		const isAllCorrect =
+			response.userBlankValuePairAnswers?.every?.(
+				(userAnswer: any) =>
+					response.questionId.blankValuePairs?.some?.(
+						(correctPair: any) => correctPair.id === userAnswer.id && correctPair.value === userAnswer.value
+					) || false
+			) || false;
 		return isAllCorrect ? true : false;
 	}
 
@@ -24,9 +28,13 @@ export const getQuestionResult = (response: any, fetchQuestionTypeName: (questio
 			return false;
 		}
 
-		const isAllCorrect = response.userBlankValuePairAnswers.every((userAnswer: any) =>
-			response.questionId.blankValuePairs.some((correctPair: any) => correctPair.id === userAnswer.id && correctPair.value === userAnswer.value)
-		);
+		const isAllCorrect =
+			response.userBlankValuePairAnswers?.every?.(
+				(userAnswer: any) =>
+					response.questionId.blankValuePairs?.some?.(
+						(correctPair: any) => correctPair.id === userAnswer.id && correctPair.value === userAnswer.value
+					) || false
+			) || false;
 		return isAllCorrect ? true : false;
 	}
 
@@ -35,9 +43,13 @@ export const getQuestionResult = (response: any, fetchQuestionTypeName: (questio
 			return false;
 		}
 
-		const isAllCorrect = response.userMatchingPairAnswers.every((userAnswer: any) =>
-			response.questionId.matchingPairs.some((correctPair: any) => correctPair.id === userAnswer.id && correctPair.answer === userAnswer.answer)
-		);
+		const isAllCorrect =
+			response.userMatchingPairAnswers?.every?.(
+				(userAnswer: any) =>
+					response.questionId.matchingPairs?.some?.(
+						(correctPair: any) => correctPair.id === userAnswer.id && correctPair.answer === userAnswer.answer
+					) || false
+			) || false;
 		return isAllCorrect ? true : false;
 	}
 

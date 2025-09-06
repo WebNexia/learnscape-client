@@ -52,7 +52,7 @@ const DocumentInfoModal = ({ document, onClose }: DocumentInfoModalProps) => {
 							{usageInfo.courses.length > 0 ? (
 								<FormControl fullWidth size='small' sx={{ width: '90%' }}>
 									<Select value='' displayEmpty renderValue={() => `${usageInfo.courses.length} course(s)`} sx={{ fontSize: '0.85rem' }}>
-										{usageInfo.courses.map((course) => (
+										{usageInfo.courses?.map?.((course) => (
 											<MenuItem key={course.id} value={course.id} sx={{ fontSize: '0.8rem' }} onClick={() => handleCourseSelect(course.id)}>
 												{course.title}
 											</MenuItem>
@@ -73,7 +73,7 @@ const DocumentInfoModal = ({ document, onClose }: DocumentInfoModalProps) => {
 							{usageInfo.lessons.length > 0 ? (
 								<FormControl fullWidth size='small' sx={{ width: '90%' }}>
 									<Select value='' displayEmpty renderValue={() => `${usageInfo.lessons.length} lesson(s)`} sx={{ fontSize: '0.85rem' }}>
-										{usageInfo.lessons.map((lesson) => (
+										{usageInfo.lessons?.map?.((lesson) => (
 											<MenuItem key={lesson.id} value={lesson.id} sx={{ fontSize: '0.8rem' }} onClick={() => handleLessonSelect(lesson.id)}>
 												{lesson.title}
 											</MenuItem>

@@ -87,7 +87,7 @@ const AdminDocuments = () => {
 	// Use appropriate page number for pagination
 	const currentPage = isSearchActive ? searchResultsPage : documentsPageNumber;
 	const sortedDocuments =
-		[...(displayDocuments || [])]?.sort((a, b) => {
+		[...(displayDocuments || [])]?.sort?.((a, b) => {
 			const aValue = a[orderBy] ?? '';
 			const bValue = b[orderBy] ?? '';
 
@@ -97,7 +97,7 @@ const AdminDocuments = () => {
 				return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
 			}
 		}) || [];
-	const paginatedDocuments = sortedDocuments?.slice((currentPage - 1) * pageSize, currentPage * pageSize) || [];
+	const paginatedDocuments = sortedDocuments?.slice?.((currentPage - 1) * pageSize, currentPage * pageSize) || [];
 
 	// Modal states
 	const [isDocumentDeleteModalOpen, setIsDocumentDeleteModalOpen] = useState<boolean[]>([]);
@@ -168,7 +168,7 @@ const AdminDocuments = () => {
 
 				// Fetch all missing pages in sequence
 				for (let page = currentLoadedPages + 1; page <= targetPage; page++) {
-					if (!searchResultsLoadedPages?.includes(page)) {
+					if (!searchResultsLoadedPages?.includes?.(page)) {
 						await fetchMoreSearchResults(page, params);
 					}
 				}

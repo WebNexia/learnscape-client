@@ -130,7 +130,7 @@ const VideoRecorder = ({ uploadVideo, isVideoUploading }: VideoRecorderProps) =>
 	useEffect(() => {
 		return () => {
 			if (stream) {
-				stream.getTracks().forEach((track) => track.stop());
+				stream.getTracks()?.forEach?.((track) => track.stop());
 			}
 			if (countdownInterval.current) {
 				clearInterval(countdownInterval.current);

@@ -50,19 +50,19 @@ const Courses = () => {
 					}}>
 					{courses &&
 						courses
-							?.filter((course: SingleCourse) => course.isActive === true && course.courseManagement.isExternal === false)
-							?.map((course: SingleCourse) => {
+							?.filter?.((course: SingleCourse) => course.isActive === true && course.courseManagement.isExternal === false)
+							?.map?.((course: SingleCourse) => {
 								let userCourseData: UserCoursesIdsWithCourseIds[] = [];
 
 								const storedUserCourseData: string | null = localStorage.getItem('userCourseData');
 								if (storedUserCourseData !== null) {
 									userCourseData = JSON.parse(storedUserCourseData);
 								}
-								const isEnrolled: boolean = userCourseData?.map((data) => data.courseId)?.includes(course._id) || false;
+								const isEnrolled: boolean = userCourseData?.map?.((data) => data.courseId)?.includes?.(course._id) || false;
 
-								const userCourseId: string = userCourseData?.filter((data) => data?.courseId === course._id)?.[0]?.userCourseId || '';
+								const userCourseId: string = userCourseData?.filter?.((data) => data?.courseId === course._id)?.[0]?.userCourseId || '';
 
-								const singleUserCourseData: UserCoursesIdsWithCourseIds | undefined = userCourseData?.find(
+								const singleUserCourseData: UserCoursesIdsWithCourseIds | undefined = userCourseData?.find?.(
 									(data: UserCoursesIdsWithCourseIds) => data.userCourseId === userCourseId
 								);
 								const isCourseCompleted: boolean = singleUserCourseData?.isCourseCompleted || false;

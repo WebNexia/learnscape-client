@@ -227,10 +227,10 @@ const EditInstructorDialog = ({
 									...prevData.instructor,
 									name:
 										(selectedUser?.firstName?.charAt(0).toUpperCase() || '') +
-										(selectedUser?.firstName?.slice(1) || '') +
+										(selectedUser?.firstName?.slice?.(1) || '') +
 										' ' +
-										(selectedUser?.lastName?.charAt(0).toUpperCase() || '') +
-										(selectedUser?.lastName?.slice(1) || ''),
+										(selectedUser?.lastName?.charAt?.(0)?.toUpperCase?.() || '') +
+										(selectedUser?.lastName?.slice?.(1) || ''),
 									userId: selectedUser?.firebaseUserId,
 									email: selectedUser?.email || '',
 									imageUrl: selectedUser?.imageUrl,
@@ -304,7 +304,7 @@ const EditInstructorDialog = ({
 						multiple
 						freeSolo
 						options={[]}
-						value={singleCourseCopy?.instructor?.expertise?.slice(0, 5) || []}
+						value={singleCourseCopy?.instructor?.expertise?.slice?.(0, 5) || []}
 						isOptionEqualToValue={(option, value) => {
 							if (typeof option === 'string' && typeof value === 'string') {
 								return option === value;
@@ -312,7 +312,7 @@ const EditInstructorDialog = ({
 							return false;
 						}}
 						onChange={(_, newValue) => {
-							const limitedValue = newValue.slice(0, 5);
+							const limitedValue = newValue?.slice?.(0, 5) || [];
 							setSingleCourseCopy((prevData) => {
 								if (!prevData) return prevData;
 								return {
@@ -325,7 +325,7 @@ const EditInstructorDialog = ({
 							});
 						}}
 						renderTags={(value, getTagProps) =>
-							value.map((option, index) => {
+							value?.map?.((option, index) => {
 								const { key, ...chipProps } = getTagProps({ index });
 								return (
 									<Chip

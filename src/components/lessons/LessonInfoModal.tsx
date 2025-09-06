@@ -90,7 +90,7 @@ const LessonInfoModal = ({ lesson, onClose }: LessonInfoModalProps) => {
 							{usageInfo.courses.length > 0 ? (
 								<FormControl fullWidth size='small' sx={{ width: '90%' }}>
 									<Select value='' displayEmpty renderValue={() => `${usageInfo.courses.length} course(s)`} sx={{ fontSize: '0.85rem' }}>
-										{usageInfo.courses.map((course) => (
+										{usageInfo.courses?.map?.((course) => (
 											<MenuItem key={course.id} value={course.id} sx={{ fontSize: '0.8rem' }} onClick={() => handleCourseSelect(course.id)}>
 												{course.title}
 											</MenuItem>

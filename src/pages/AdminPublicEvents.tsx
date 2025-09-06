@@ -76,7 +76,7 @@ const AdminPublicEvents = () => {
 	const currentPage = isSearchActive ? searchResultsPage : publicEventsPageNumber;
 
 	const sortedPublicEvents =
-		[...(displayEvents || [])]?.sort((a, b) => {
+		[...(displayEvents || [])]?.sort?.((a, b) => {
 			const aValue = a[orderBy] ?? '';
 			const bValue = b[orderBy] ?? '';
 
@@ -87,7 +87,7 @@ const AdminPublicEvents = () => {
 			}
 		}) || [];
 
-	const paginatedPublicEvents = sortedPublicEvents?.slice((currentPage - 1) * pageSize, currentPage * pageSize) || [];
+	const paginatedPublicEvents = sortedPublicEvents?.slice?.((currentPage - 1) * pageSize, currentPage * pageSize) || [];
 
 	const [isNewLessonModalOpen, setIsNewLessonModalOpen] = useState<boolean>(false);
 
@@ -213,7 +213,7 @@ const AdminPublicEvents = () => {
 
 				// Fetch all missing pages in sequence
 				for (let page = currentLoadedPages + 1; page <= targetPage; page++) {
-					if (!searchResultsLoadedPages?.includes(page)) {
+					if (!searchResultsLoadedPages?.includes?.(page)) {
 						await fetchMoreSearchResults(page, params);
 					}
 				}

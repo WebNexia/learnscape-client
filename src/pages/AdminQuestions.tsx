@@ -87,7 +87,7 @@ const AdminQuestions = () => {
 	const currentPage = isSearchActive ? searchResultsPage : questionsPageNumber;
 
 	const sortedQuestions =
-		[...(displayQuestions || [])]?.sort((a, b) => {
+		[...(displayQuestions || [])]?.sort?.((a, b) => {
 			const aValue = a[orderBy] ?? '';
 			const bValue = b[orderBy] ?? '';
 
@@ -100,7 +100,7 @@ const AdminQuestions = () => {
 
 	// For search results, slice the accumulated data based on current page
 	// For context data, use client-side pagination
-	const paginatedQuestions = sortedQuestions?.slice((currentPage - 1) * pageSize, currentPage * pageSize) || [];
+	const paginatedQuestions = sortedQuestions?.slice?.((currentPage - 1) * pageSize, currentPage * pageSize) || [];
 
 	const handleSort = (property: keyof QuestionInterface) => {
 		const isAsc = orderBy === property && order === 'asc';
@@ -178,7 +178,7 @@ const AdminQuestions = () => {
 
 				// Fetch all missing pages in sequence
 				for (let page = currentLoadedPages + 1; page <= targetPage; page++) {
-					if (!searchResultsLoadedPages?.includes(page)) {
+					if (!searchResultsLoadedPages?.includes?.(page)) {
 						await fetchMoreSearchResults(page, params);
 					}
 				}

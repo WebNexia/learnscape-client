@@ -64,7 +64,7 @@ const AdminQuizSubmissions = () => {
 	const currentPage = isSearchActive ? searchResultsPage : quizSubmissionsPageNumber;
 
 	const sortedSubmissions =
-		[...(displaySubmissions || [])]?.sort((a, b) => {
+		[...(displaySubmissions || [])]?.sort?.((a, b) => {
 			const aValue = a[orderBy] ?? '';
 			const bValue = b[orderBy] ?? '';
 
@@ -77,7 +77,7 @@ const AdminQuizSubmissions = () => {
 
 	// For search results, slice the accumulated data based on current page
 	// For context data, use client-side pagination
-	const paginatedSubmissions = sortedSubmissions?.slice((currentPage - 1) * pageSize, currentPage * pageSize) || [];
+	const paginatedSubmissions = sortedSubmissions?.slice?.((currentPage - 1) * pageSize, currentPage * pageSize) || [];
 
 	const handleSort = (property: keyof QuizSubmission) => {
 		const isAsc = orderBy === property && order === 'asc';
@@ -106,7 +106,7 @@ const AdminQuizSubmissions = () => {
 
 				// Fetch all missing pages in sequence
 				for (let page = currentLoadedPages + 1; page <= targetPage; page++) {
-					if (!searchResultsLoadedPages?.includes(page)) {
+					if (!searchResultsLoadedPages?.includes?.(page)) {
 						await fetchMoreSearchResults(page);
 					}
 				}

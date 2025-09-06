@@ -223,8 +223,8 @@ const AdminLessonEditPageEditQuestionDialog = ({
 		}
 
 		if (isMatching) {
-			const nonBlankPairs = question.matchingPairs?.filter((pair) => pair.question.trim() !== '' && pair.answer.trim() !== '');
-			const missingPairExists = question.matchingPairs.some((pair) => pair.question.trim() === '' || pair.answer.trim() === '');
+			const nonBlankPairs = question.matchingPairs?.filter?.((pair) => pair.question.trim() !== '' && pair.answer.trim() !== '') || [];
+			const missingPairExists = question.matchingPairs?.some?.((pair) => pair.question.trim() === '' || pair.answer.trim() === '') || false;
 
 			if (nonBlankPairs.length < 2) {
 				setIsMinimumTwoMatchingPairs(true);
@@ -251,10 +251,10 @@ const AdminLessonEditPageEditQuestionDialog = ({
 			setSingleLessonBeforeSave((prevData) => {
 				if (!prevData.questions) return prevData;
 
-				const updatedQuestions = prevData.questions?.map((prevQuestion) => {
+				const updatedQuestions = prevData.questions?.map?.((prevQuestion) => {
 					if (prevQuestion && prevQuestion._id === question._id) {
-						setQuestionBeforeSave({ ...prevQuestion, options: options?.filter((option) => option !== ''), correctAnswer, blankValuePairs });
-						return { ...prevQuestion, options: options?.filter((option) => option !== ''), correctAnswer, blankValuePairs };
+						setQuestionBeforeSave({ ...prevQuestion, options: options?.filter?.((option) => option !== '') || [], correctAnswer, blankValuePairs });
+						return { ...prevQuestion, options: options?.filter?.((option) => option !== '') || [], correctAnswer, blankValuePairs };
 					}
 					return prevQuestion;
 				});
@@ -276,7 +276,7 @@ const AdminLessonEditPageEditQuestionDialog = ({
 			setSingleLessonBeforeSave((prevData) => {
 				if (!prevData.questions) return prevData;
 
-				const updatedQuestions = prevData.questions?.map((prevQuestion) => {
+				const updatedQuestions = prevData.questions?.map?.((prevQuestion) => {
 					if (prevQuestion && prevQuestion._id === question._id) {
 						return { ...prevQuestion, [field]: value };
 					}
@@ -297,7 +297,7 @@ const AdminLessonEditPageEditQuestionDialog = ({
 			setSingleLessonBeforeSave((prevData) => {
 				if (!prevData.questions) return prevData;
 
-				const updatedQuestions = prevData.questions?.map((prevQuestion) => {
+				const updatedQuestions = prevData.questions?.map?.((prevQuestion) => {
 					if (prevQuestion && prevQuestion._id === question._id) {
 						return questionBeforeSave;
 					}
@@ -435,7 +435,7 @@ const AdminLessonEditPageEditQuestionDialog = ({
 
 					<Box sx={{ width: '90%' }}>
 						{isMultipleChoiceQuestion &&
-							options?.map((option, i) => (
+							options?.map?.((option, i) => (
 								<Box
 									key={i}
 									sx={{
@@ -517,8 +517,8 @@ const AdminLessonEditPageEditQuestionDialog = ({
 											padding: '0.5rem',
 										}}>
 										{blankValuePairs
-											?.sort((a, b) => a.blank - b.blank)
-											?.map((pair: BlankValuePair) => {
+											?.sort?.((a, b) => a.blank - b.blank)
+											?.map?.((pair: BlankValuePair) => {
 												return (
 													<Box
 														key={pair.id}

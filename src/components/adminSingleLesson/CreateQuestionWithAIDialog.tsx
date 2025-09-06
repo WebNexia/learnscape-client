@@ -121,7 +121,7 @@ const CreateQuestionWithAIDialog = ({
 							<MenuItem value='' disabled sx={{ fontSize: '0.8rem' }}>
 								Number of Questions
 							</MenuItem>
-							{['1', '2', '3', '4', '5'].map((num) => (
+							{['1', '2', '3', '4', '5']?.map?.((num) => (
 								<MenuItem value={num} key={num} sx={{ fontSize: '0.85rem' }}>
 									{num}
 								</MenuItem>
@@ -144,20 +144,20 @@ const CreateQuestionWithAIDialog = ({
 								Question Type
 							</MenuItem>
 							{questionTypes
-								?.filter((type) => {
+								?.filter?.((type) => {
 									// Use the actual type.name instead of casting to enum
 									if (lessonType === LessonType.QUIZ) {
-										return ['Multiple Choice', 'True-False', 'Open-ended', 'Audio/Video', 'Matching', 'FITB-Typing', 'FITB-Drag/Drop'].includes(
+										return ['Multiple Choice', 'True-False', 'Open-ended', 'Audio/Video', 'Matching', 'FITB-Typing', 'FITB-Drag/Drop']?.includes?.(
 											type.name
 										);
 									} else if (lessonType === LessonType.PRACTICE_LESSON) {
-										return ['Multiple Choice', 'True-False', 'Open-ended', 'Matching', 'FITB-Typing', 'FITB-Drag/Drop', 'Flip Card'].includes(
+										return ['Multiple Choice', 'True-False', 'Open-ended', 'Matching', 'FITB-Typing', 'FITB-Drag/Drop', 'Flip Card']?.includes?.(
 											type.name
 										);
 									}
 									return true;
 								})
-								.map((type) => (
+								?.map?.((type) => (
 									<MenuItem value={type.name} key={type._id} sx={{ fontSize: '0.85rem' }}>
 										{type.name}
 									</MenuItem>

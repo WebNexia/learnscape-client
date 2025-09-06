@@ -229,8 +229,8 @@ const AdminLessonEditPage = () => {
 		setSingleLessonBeforeSave((prevData) => {
 			if (prevData) {
 				const updatedDocuments = prevData?.documents
-					?.filter((document) => document !== null)
-					?.map((thisDoc) => {
+					?.filter?.((document) => document !== null)
+					?.map?.((thisDoc) => {
 						if (thisDoc._id === document._id) {
 							return { ...thisDoc, name: originalDocumentNames[document._id] || thisDoc.name }; // Revert to original name
 						} else {
@@ -345,7 +345,7 @@ const AdminLessonEditPage = () => {
 
 					setIsDocRenameModalOpen(new Array(lessonsResponse?.documents?.length || 0).fill(false));
 
-					const questionUpdateData: QuestionUpdateTrack[] = lessonsResponse?.questions?.reduce(
+					const questionUpdateData: QuestionUpdateTrack[] = lessonsResponse?.questions?.reduce?.(
 						(acc: QuestionUpdateTrack[], value: QuestionInterface) => {
 							acc.push({ questionId: value?._id, isUpdated: false });
 							return acc;
@@ -354,7 +354,7 @@ const AdminLessonEditPage = () => {
 					);
 					setIsQuestionUpdated(questionUpdateData);
 
-					const documentUpdateData: DocumentUpdateTrack[] = lessonsResponse?.documents?.reduce((acc: DocumentUpdateTrack[], value: Document) => {
+					const documentUpdateData: DocumentUpdateTrack[] = lessonsResponse?.documents?.reduce?.((acc: DocumentUpdateTrack[], value: Document) => {
 						acc.push({ documentId: value?._id, isUpdated: false });
 						return acc;
 					}, []);
@@ -524,8 +524,8 @@ const AdminLessonEditPage = () => {
 		try {
 			if (singleLessonBeforeSave?.documents) {
 				const updatedDocumentsPromises = (singleLessonBeforeSave?.documents as (Document | null)[])
-					?.filter((doc): doc is Document => doc !== null)
-					?.map(async (document) => {
+					?.filter?.((doc): doc is Document => doc !== null)
+					?.map?.(async (document) => {
 						if (document._id.includes('temp_doc_id')) {
 							try {
 								const response = await axios.post(`${base_url}/documents`, {
@@ -569,11 +569,11 @@ const AdminLessonEditPage = () => {
 					});
 
 				const updatedDocumentsWithNulls = await Promise.all(updatedDocumentsPromises);
-				updatedDocuments = updatedDocumentsWithNulls?.filter((doc): doc is Document => doc !== null);
+				updatedDocuments = updatedDocumentsWithNulls?.filter?.((doc): doc is Document => doc !== null) || [];
 			}
 
 			await Promise.all(
-				updatedDocuments?.map(async (doc) => {
+				updatedDocuments?.map?.(async (doc) => {
 					const trackData = isDocumentUpdated.find((data) => data.documentId === doc._id);
 					if (trackData?.isUpdated) {
 						try {
@@ -602,7 +602,7 @@ const AdminLessonEditPage = () => {
 				})
 			);
 
-			const updatedDocumentIds = updatedDocuments?.map((doc) => doc._id);
+			const updatedDocumentIds = updatedDocuments?.map?.((doc) => doc._id) || [];
 
 			const allowedQuestionTypes = (lessonType: LessonType): QuestionType[] => {
 				if (lessonType === LessonType.QUIZ) {

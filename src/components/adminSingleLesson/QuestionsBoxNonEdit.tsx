@@ -35,13 +35,13 @@ const QuestionsBoxNonEdit = ({ singleLesson, setIsDisplayNonEditQuestion, setDis
 					</Box>
 					<CustomInfoMessageAlignedRight message='Click the questions to preview as a student' />
 				</Box>
-				{singleLesson?.questionIds?.length === 0 || singleLesson?.questions?.filter((question) => question !== null).length === 0 ? (
+				{singleLesson?.questionIds?.length === 0 || singleLesson?.questions?.filter?.((question) => question !== null)?.length === 0 ? (
 					<NoContentBoxAdmin content='No question for this lesson' />
 				) : (
 					<>
 						{singleLesson &&
 							singleLesson.questions &&
-							singleLesson.questions?.map((question) => {
+							singleLesson.questions?.map?.((question) => {
 								if (question !== null) {
 									return (
 										<Box

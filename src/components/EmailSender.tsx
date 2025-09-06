@@ -95,7 +95,7 @@ const EmailSender = ({ setEmailDialogOpen }: EmailSenderProps) => {
 						<MenuItem disabled value='' sx={{ fontSize: '0.8rem' }}>
 							Select Recipient
 						</MenuItem>
-						{recipientOptions.map((opt) => (
+						{recipientOptions?.map?.((opt) => (
 							<MenuItem key={opt.value} value={opt.value} sx={{ fontSize: '0.8rem' }}>
 								{opt.label}
 							</MenuItem>

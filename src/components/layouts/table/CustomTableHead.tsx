@@ -25,7 +25,7 @@ const CustomTableHead = <T,>({ orderBy, order, handleSort, columns, selectAll, o
 	return (
 		<TableHead>
 			<TableRow hover>
-				{columns?.map((column, index) => (
+				{columns?.map?.((column, index) => (
 					<TableCell key={index} sx={{ textAlign: 'center', padding: isMobileSizeSmall ? '0.05rem' : 'inherit' }}>
 						{column.key === 'checkbox' ? (
 							<Checkbox checked={selectAll} onChange={onSelectAll} color='primary' />

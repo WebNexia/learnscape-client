@@ -747,7 +747,7 @@ const PaymentDialog = ({
 								if (!course) return;
 								const amount = +getPriceForCountry(course, resolvedCountryCode).amount;
 								setDiscountedAmount(isNaN(amount) ? 0 : amount);
-								setUsersUsedPromoCode((prevData) => prevData.filter((id) => id !== resolvedUserId));
+								setUsersUsedPromoCode((prevData) => prevData?.filter?.((id) => id !== resolvedUserId) || []);
 							}}
 							InputProps={{
 								inputProps: {

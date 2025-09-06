@@ -180,14 +180,14 @@ const FillInTheBlanksDragDrop = ({
 		const segments = sanitizedHtml.split(/(___\d+___)/g);
 		setTextSegments(segments);
 
-		const initializedBlanks = blankValuePairs?.map((pair) => ({
+		const initializedBlanks = blankValuePairs?.map?.((pair) => ({
 			...pair,
 			value: '',
 		}));
 
 		const populateBlanks = (source: BlankValuePair[] | UserBlankValuePairAnswers[]) => {
-			source.forEach((pair) => {
-				const blank = initializedBlanks.find((b) => b.id === pair.id);
+			source?.forEach?.((pair) => {
+				const blank = initializedBlanks?.find?.((b) => b.id === pair.id);
 				if (blank) blank.value = pair.value;
 			});
 		};
@@ -195,30 +195,30 @@ const FillInTheBlanksDragDrop = ({
 		if (isLessonCompleted && userBlankValuePairsAfterSubmission) {
 			populateBlanks(userBlankValuePairsAfterSubmission);
 		} else if (!isLessonCompleted && fromQuizQuestionUser) {
-			populateBlanks(userQuizAnswers?.find((quizAnswer) => quizAnswer.questionId === questionId)?.userBlankValuePairAnswers || []);
+			populateBlanks(userQuizAnswers?.find?.((quizAnswer) => quizAnswer.questionId === questionId)?.userBlankValuePairAnswers || []);
 		} else if (
 			(isLessonCompleted && fromPracticeQuestionUser) ||
 			(!isLessonCompleted && fromPracticeQuestionUser && displayedQuestionNumber! < getLastQuestion())
 		) {
 			populateBlanks(blankValuePairs);
 
-			const remainingResponses = blankValuePairs?.filter((pair) => !initializedBlanks.some((blank) => blank.value === pair.value));
-			const randomWords = shuffle(words).slice(0, 5);
-			setResponses(shuffle([...remainingResponses, ...randomWords?.map((word) => ({ id: `random-${word}`, value: word, blank: -1 }))]));
+			const remainingResponses = blankValuePairs?.filter?.((pair) => !initializedBlanks?.some?.((blank) => blank.value === pair.value)) || [];
+			const randomWords = shuffle(words)?.slice?.(0, 5) || [];
+			setResponses(shuffle([...remainingResponses, ...(randomWords?.map?.((word) => ({ id: `random-${word}`, value: word, blank: -1 })) || [])]));
 		}
 
 		setBlanks(initializedBlanks);
 
 		if (!isLessonCompleted) {
 			const wordCount = fromQuizQuestionUser || lessonType === LessonType.QUIZ ? 15 : 5;
-			const randomWords = shuffle(words).slice(0, wordCount);
-			setResponses(shuffle([...blankValuePairs, ...randomWords?.map((word) => ({ id: `random-${word}`, value: word, blank: -1 }))]));
+			const randomWords = shuffle(words)?.slice?.(0, wordCount) || [];
+			setResponses(shuffle([...blankValuePairs, ...(randomWords?.map?.((word) => ({ id: `random-${word}`, value: word, blank: -1 })) || [])]));
 		}
 	}, [textWithBlanks, blankValuePairs, isLessonCompleted, userBlankValuePairsAfterSubmission, displayedQuestionNumber, getLastQuestion]);
 
 	useEffect(() => {
 		if (hasInteracted && fromPracticeQuestionUser) {
-			const allCorrect = blanks.every((blank) => blank.value === blankValuePairs.find((p) => p.blank === blank.blank)?.value);
+			const allCorrect = blanks?.every?.((blank) => blank.value === blankValuePairs?.find?.((p) => p.blank === blank.blank)?.value) || false;
 
 			if (setAllPairsMatchedFITBDragDrop) setAllPairsMatchedFITBDragDrop(allCorrect);
 
@@ -240,13 +240,13 @@ const FillInTheBlanksDragDrop = ({
 
 	useEffect(() => {
 		setUserQuizAnswers?.((prevData) => {
-			const blankValuePairsWithIds: UserBlankValuePairAnswers[] = blankValuePairs?.map((pair) => ({
+			const blankValuePairsWithIds: UserBlankValuePairAnswers[] = blankValuePairs?.map?.((pair) => ({
 				id: pair.id,
 				value: '',
 			}));
 
 			if (prevData) {
-				return prevData?.map((data) => {
+				return prevData?.map?.((data) => {
 					if (data.questionId === questionId) {
 						return { ...data, userBlankValuePairAnswers: blankValuePairsWithIds };
 					}
@@ -311,13 +311,13 @@ const FillInTheBlanksDragDrop = ({
 
 		if (fromQuizQuestionUser && !isLessonCompleted) {
 			setUserQuizAnswers?.((prevData) => {
-				const updatedAnswers = newBlanks?.map((blank) => ({
+				const updatedAnswers = newBlanks?.map?.((blank) => ({
 					id: blank.id,
 					value: blank.value,
 				}));
 
 				if (prevData) {
-					return prevData?.map((data) => {
+					return prevData?.map?.((data) => {
 						if (data.questionId === questionId) {
 							return { ...data, userBlankValuePairAnswers: updatedAnswers };
 						}
@@ -335,7 +335,7 @@ const FillInTheBlanksDragDrop = ({
 			<Container>
 				<Column sx={{ marginBottom: '1.5rem' }}>
 					<TextContainer>
-						{textSegments?.map((segment, index) => {
+						{textSegments?.map?.((segment, index) => {
 							const match = segment.match(/___(\d+)___/);
 							if (match) {
 								const blankIndex = parseInt(match[1], 10) - 1;
@@ -348,7 +348,7 @@ const FillInTheBlanksDragDrop = ({
 												{...provided.droppableProps}
 												$isCorrect={
 													blanks[blankIndex].value
-														? blanks[blankIndex].value === blankValuePairs.find((p) => p.blank === blanks[blankIndex].blank)?.value
+														? blanks[blankIndex].value === blankValuePairs?.find?.((p) => p.blank === blanks[blankIndex].blank)?.value
 														: null
 												}
 												$fromQuizQuestionUser={fromQuizQuestionUser}
@@ -364,7 +364,7 @@ const FillInTheBlanksDragDrop = ({
 																ref={provided.innerRef}
 																{...provided.draggableProps}
 																{...provided.dragHandleProps}
-																$isCorrect={blanks[blankIndex].value === blankValuePairs.find((p) => p.blank === blanks[blankIndex].blank)?.value}
+																$isCorrect={blanks[blankIndex].value === blankValuePairs?.find?.((p) => p.blank === blanks[blankIndex].blank)?.value}
 																$fromQuizQuestionUser={fromQuizQuestionUser}
 																$lessonType={lessonType}
 																style={{
@@ -428,7 +428,7 @@ const FillInTheBlanksDragDrop = ({
 											width: '100%',
 											minHeight: '4rem',
 										}}>
-										{responses?.map((response, index) => (
+										{responses?.map?.((response, index) => (
 											<Draggable
 												key={`draggable-response-${response.id}-${index}`}
 												draggableId={`draggable-response-${response.id}-${index}`}
@@ -465,7 +465,7 @@ const FillInTheBlanksDragDrop = ({
 								padding: '1rem',
 							}}>
 							<TextContainer>
-								{textWithBlanks.split(/(___\d+___)/g)?.map((segment, index) => {
+								{textWithBlanks?.split?.(/(___\d+___)/g)?.map?.((segment, index) => {
 									const match = segment.match(/___(\d+)___/);
 									if (match) {
 										const blankIndex = parseInt(match[1], 10) - 1;

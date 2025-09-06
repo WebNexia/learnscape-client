@@ -230,8 +230,8 @@ const AdminQuestionsEditQuestionDialog = ({
 		}
 
 		if (isMatching) {
-			const nonBlankPairs = matchingPairsAdminQuestions?.filter((pair) => pair.question.trim() !== '' && pair.answer.trim() !== '');
-			const missingPairExists = matchingPairsAdminQuestions.some((pair) => pair.question.trim() === '' || pair.answer.trim() === '');
+			const nonBlankPairs = matchingPairsAdminQuestions?.filter?.((pair) => pair.question.trim() !== '' && pair.answer.trim() !== '') || [];
+			const missingPairExists = matchingPairsAdminQuestions?.some?.((pair) => pair.question.trim() === '' || pair.answer.trim() === '') || false;
 
 			if (nonBlankPairs.length < 2) {
 				setIsMinimumTwoMatchingPairs(true);
@@ -455,7 +455,7 @@ const AdminQuestionsEditQuestionDialog = ({
 
 					<Box sx={{ width: '90%' }}>
 						{isMultipleChoiceQuestion &&
-							options?.map((option, i) => (
+							options?.map?.((option, i) => (
 								<Box
 									key={i}
 									sx={{
@@ -535,8 +535,8 @@ const AdminQuestionsEditQuestionDialog = ({
 											padding: '0.5rem',
 										}}>
 										{blankValuePairsAdminQuestions
-											?.sort((a, b) => a.blank - b.blank)
-											?.map((pair: BlankValuePair) => {
+											?.sort?.((a, b) => a.blank - b.blank)
+											?.map?.((pair: BlankValuePair) => {
 												return (
 													<Box
 														key={pair.id}

@@ -77,7 +77,7 @@ const GroupChatEditModal = ({
 			imageUrl: selectedUser.imageUrl,
 			role: selectedUser.role,
 			firstName: selectedUser.username.split(' ')[0] || '',
-			lastName: selectedUser.username.split(' ').slice(1).join(' ') || '',
+			lastName: selectedUser.username?.split?.(' ')?.slice?.(1)?.join?.(' ') || '',
 			phone: '',
 			hasRegisteredCourse: false,
 			isActive: true,
@@ -152,12 +152,12 @@ const GroupChatEditModal = ({
 				{/* Current Members Display */}
 				<Box sx={{ mt: 2 }}>
 					<Typography variant='body2' sx={{ mb: 1, fontSize: isMobileSize ? '0.75rem' : undefined }}>
-						Current Members ({activeChat.participants.filter((p) => !removedMembers.includes(p.firebaseUserId)).length})
+						Current Members ({activeChat.participants?.filter?.((p) => !removedMembers?.includes?.(p.firebaseUserId))?.length || 0})
 					</Typography>
 					<Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
 						{activeChat.participants
-							.filter((participant) => !removedMembers.includes(participant.firebaseUserId))
-							.map((participant) => (
+							?.filter?.((participant) => !removedMembers?.includes?.(participant.firebaseUserId))
+							?.map?.((participant) => (
 								<Box
 									key={participant.firebaseUserId}
 									sx={{
@@ -212,8 +212,8 @@ const GroupChatEditModal = ({
 						</Typography>
 						<Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
 							{activeChat.participants
-								.filter((participant) => removedMembers.includes(participant.firebaseUserId))
-								.map((participant) => (
+								?.filter?.((participant) => removedMembers?.includes?.(participant.firebaseUserId))
+								?.map?.((participant) => (
 									<Box
 										key={participant.firebaseUserId}
 										sx={{
@@ -266,7 +266,7 @@ const GroupChatEditModal = ({
 							New Members to Add ({selectedGroupUsers.length})
 						</Typography>
 						<Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-							{selectedGroupUsers.map((selectedUser) => (
+							{selectedGroupUsers?.map?.((selectedUser) => (
 								<Box
 									key={selectedUser.firebaseUserId}
 									sx={{
@@ -329,9 +329,9 @@ const GroupChatEditModal = ({
 						fromGroupChatSettings={true}
 						excludeUserIds={[
 							// Exclude current members (not removed)
-							...activeChat.participants.filter((p) => !removedMembers.includes(p.firebaseUserId)).map((p) => p.firebaseUserId),
+							...(activeChat.participants?.filter?.((p) => !removedMembers?.includes?.(p.firebaseUserId))?.map?.((p) => p.firebaseUserId) || []),
 							// Exclude already selected new members
-							...selectedGroupUsers.map((user) => user.firebaseUserId),
+							...(selectedGroupUsers?.map?.((user) => user.firebaseUserId) || []),
 						]}
 					/>
 				</Box>

@@ -55,7 +55,7 @@ export class ChapterLessonDataImpl implements ChapterLessonData {
 		this.chapterId = chapterId;
 		this.title = title;
 		this.lessons = lessons;
-		this._lessonIds = lessons?.map((lesson) => lesson._id);
+		this._lessonIds = lessons?.map?.((lesson) => lesson._id) || [];
 	}
 
 	// Implement the getter and setter for lessonIds
@@ -183,8 +183,8 @@ const AdminCourseEditPage = () => {
 		setSingleCourseBeforeSave((prevData) => {
 			if (prevData) {
 				const updatedDocuments = prevData?.documents
-					?.filter((document) => document !== null)
-					?.map((thisDoc) => {
+					?.filter?.((document) => document !== null)
+					?.map?.((thisDoc) => {
 						if (thisDoc._id === document._id) {
 							return { ...thisDoc, name: originalDocumentNames[document._id] || thisDoc.name }; // Revert to original name
 						} else {
@@ -234,33 +234,33 @@ const AdminCourseEditPage = () => {
 					const courseResponse = response?.data?.data;
 					setSingleCourse(courseResponse);
 					setSingleCourseBeforeSave(courseResponse);
-					if (courseResponse?.prices.some((price: Price) => price.amount === 'Free' || price.amount === '' || price.amount === '0')) {
+					if (courseResponse?.prices?.some?.((price: Price) => price.amount === 'Free' || price.amount === '' || price.amount === '0')) {
 						setIsFree(true);
 					}
 
 					if (courseResponse?.chapters[0]?.title) {
 						// Initialize chapter lesson data
 						const initialChapterLessonData: ChapterLessonData[] = courseResponse?.chapters
-							?.filter((chapter: BaseChapter) => chapter !== null)
-							.map((chapter: BaseChapter) => {
+							?.filter?.((chapter: BaseChapter) => chapter !== null)
+							?.map?.((chapter: BaseChapter) => {
 								return {
 									chapterId: chapter._id,
 									title: chapter.title,
 									lessons: chapter?.lessons,
-									lessonIds: chapter.lessons?.filter((lesson) => lesson !== null).map((lesson: Lesson) => lesson?._id),
+									lessonIds: chapter.lessons?.filter?.((lesson) => lesson !== null)?.map?.((lesson: Lesson) => lesson?._id) || [],
 								};
 							});
 						setChapterLessonData(initialChapterLessonData);
 						setChapterLessonDataBeforeSave(initialChapterLessonData);
 					}
 
-					const chapterUpdateData = courseResponse?.chapters?.map((chapter: BaseChapter) => ({
+					const chapterUpdateData = courseResponse?.chapters?.map?.((chapter: BaseChapter) => ({
 						chapterId: chapter._id,
 						isUpdated: false,
 					}));
 					setIsChapterUpdated(chapterUpdateData);
 
-					const documentUpdateData = courseResponse?.documents?.map((document: Document) => ({
+					const documentUpdateData = courseResponse?.documents?.map?.((document: Document) => ({
 						documentId: document._id,
 						isUpdated: false,
 					}));
@@ -349,11 +349,11 @@ const AdminCourseEditPage = () => {
 				return;
 			}
 			updatedChapters = await Promise.all(
-				chapterLessonDataBeforeSave?.map(async (chapter) => {
+				chapterLessonDataBeforeSave?.map?.(async (chapter) => {
 					chapter.lessons = await Promise.all(
 						chapter?.lessons
-							?.filter((lesson) => lesson !== null)
-							.map(async (lesson: Lesson) => {
+							?.filter?.((lesson) => lesson !== null)
+							?.map?.(async (lesson: Lesson) => {
 								if (lesson._id.includes('temp_lesson_id')) {
 									try {
 										const lessonResponse = await axios.post(`${base_url}/lessons`, {

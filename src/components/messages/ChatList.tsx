@@ -116,7 +116,7 @@ const ChatList = ({
 					</Box>
 
 					<Box sx={{ display: 'flex', flexDirection: 'column', marginTop: '0.5rem', overflow: 'auto', width: '100%' }}>
-						{filteredChatList?.map((chat) => {
+						{filteredChatList?.map?.((chat) => {
 							const isGroup = isGroupChat(chat);
 							const chatDisplayName = getChatDisplayName(chat);
 							const chatDisplayImage = getChatDisplayImage(chat);
@@ -196,16 +196,18 @@ const ChatList = ({
 														if (isGroup) return null;
 
 														// Check if current user has blocked any participant in this chat
-														const hasBlockedParticipant = chat.participants?.some(
-															(participant) =>
-																participant.firebaseUserId !== user?.firebaseUserId && globalBlockedUsers?.includes(participant.firebaseUserId)
-														);
+														const hasBlockedParticipant =
+															chat.participants?.some?.(
+																(participant) =>
+																	participant.firebaseUserId !== user?.firebaseUserId && globalBlockedUsers?.includes?.(participant.firebaseUserId)
+															) || false;
 
 														// Check if current user is blocked by any participant in this chat
-														const isBlockedByParticipant = chat.participants?.some(
-															(participant) =>
-																participant.firebaseUserId !== user?.firebaseUserId && blockedByUsers?.includes(participant.firebaseUserId)
-														);
+														const isBlockedByParticipant =
+															chat.participants?.some?.(
+																(participant) =>
+																	participant.firebaseUserId !== user?.firebaseUserId && blockedByUsers?.includes?.(participant.firebaseUserId)
+															) || false;
 
 														return hasBlockedParticipant || isBlockedByParticipant ? (
 															<DoNotDisturbAlt fontSize='small' sx={{ color: 'gray', marginLeft: '0.5rem' }} />

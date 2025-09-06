@@ -87,8 +87,8 @@ axiosInstance.interceptors.response.use(
 				finalRetryAfter = 24 * 60 * 60; // 24 hours in seconds
 			} else {
 				const url = error.config.url || '';
-				if (url.includes('/users/signup')) type = 'signup';
-				else if (url.includes('/users/check-email-firebase')) type = 'email';
+				if (url?.includes?.('/users/signup')) type = 'signup';
+				else if (url?.includes?.('/users/check-email-firebase')) type = 'email';
 			}
 
 			const existing = localStorage.getItem('rateLimitInfo');

@@ -50,8 +50,8 @@ const Questions: React.FC<QuestionsProps> = ({
 					return userQuizAnswers;
 				} else if (!localStorage.getItem(`UserQuizAnswers-${lessonId}`) || userQuizAnswers.length === 0) {
 					return questions
-						?.filter((question) => question !== null)
-						?.map(
+						?.filter?.((question) => question !== null)
+						?.map?.(
 							(question): QuizQuestionAnswer => ({
 								userAnswer: '',
 								questionId: question._id,
@@ -91,8 +91,8 @@ const Questions: React.FC<QuestionsProps> = ({
 	return (
 		<Box>
 			{questions
-				?.filter((question) => question !== null)
-				?.map((question, index) => {
+				?.filter?.((question) => question !== null)
+				?.map?.((question, index) => {
 					return isPracticeLesson ? (
 						<PracticeQuestion
 							key={question._id}

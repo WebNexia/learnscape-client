@@ -121,7 +121,7 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 					<Typography variant='h6'>Prices</Typography>
 
 					<Box sx={{ display: 'flex', mt: '0.5rem' }}>
-						{singleCourse?.prices?.map((price) => {
+						{singleCourse?.prices?.map?.((price) => {
 							return (
 								<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mr: '2rem' }} key={price.currency}>
 									<Typography variant='body2'>
@@ -179,7 +179,7 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 						<>
 							{singleCourse &&
 								singleCourse?.chapters &&
-								chapters?.map((chapter) => {
+								chapters?.map?.((chapter) => {
 									return (
 										<Box key={chapter.chapterId} sx={{ margin: '1rem 0 3rem 0' }}>
 											<Box display='flex'>
@@ -191,8 +191,8 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 												chapter?.lessons &&
 												chapter?.lessons?.length !== 0 &&
 												chapter?.lessons
-													?.filter((lesson) => lesson !== null)
-													.map((lesson) => {
+													?.filter?.((lesson) => lesson !== null)
+													?.map?.((lesson) => {
 														return (
 															<Box
 																key={lesson._id}
@@ -266,11 +266,11 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 					<Box sx={{ mb: '1.25rem' }}>
 						<Typography variant='h5'>Course Materials</Typography>
 					</Box>
-					{singleCourse?.documents?.filter((doc) => doc !== null).length !== 0 ? (
+					{singleCourse?.documents?.filter?.((doc) => doc !== null)?.length !== 0 ? (
 						<Box>
 							{singleCourse?.documents
-								?.filter((doc) => doc !== null)
-								?.map((doc) => (
+								?.filter?.((doc) => doc !== null)
+								?.map?.((doc) => (
 									<Box sx={{ mb: '0.5rem' }} key={doc._id}>
 										<Link href={doc?.documentUrl} target='_blank' rel='noopener noreferrer' variant='body2'>
 											{doc?.name}

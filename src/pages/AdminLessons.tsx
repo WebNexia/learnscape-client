@@ -75,7 +75,7 @@ const AdminLessons = () => {
 	// Use appropriate page number for pagination
 	const currentPage = isSearchActive ? searchResultsPage : lessonsPageNumber;
 	const sortedLessons =
-		[...(displayLessons || [])]?.sort((a, b) => {
+		[...(displayLessons || [])]?.sort?.((a, b) => {
 			const aValue = a[orderBy] ?? '';
 			const bValue = b[orderBy] ?? '';
 
@@ -85,7 +85,7 @@ const AdminLessons = () => {
 				return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
 			}
 		}) || [];
-	const paginatedLessons = sortedLessons?.slice((currentPage - 1) * pageSize, currentPage * pageSize) || [];
+	const paginatedLessons = sortedLessons?.slice?.((currentPage - 1) * pageSize, currentPage * pageSize) || [];
 
 	const [isNewLessonModalOpen, setIsNewLessonModalOpen] = useState<boolean>(false);
 
@@ -131,7 +131,7 @@ const AdminLessons = () => {
 
 				// Fetch all missing pages in sequence
 				for (let page = currentLoadedPages + 1; page <= targetPage; page++) {
-					if (!searchResultsLoadedPages?.includes(page)) {
+					if (!searchResultsLoadedPages?.includes?.(page)) {
 						await fetchMoreSearchResults(page, params);
 					}
 				}

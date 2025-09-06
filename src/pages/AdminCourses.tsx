@@ -91,7 +91,7 @@ const AdminCourses = () => {
 
 	// Use appropriate page number for pagination
 	const currentPage = isSearchActive ? searchResultsPage : coursesPageNumber;
-	const sortedCourses = [...(displayCourses || [])].sort((a, b) => {
+	const sortedCourses = [...(displayCourses || [])]?.sort?.((a, b) => {
 		const aValue = a[orderBy] ?? '';
 		const bValue = b[orderBy] ?? '';
 
@@ -101,7 +101,7 @@ const AdminCourses = () => {
 			return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
 		}
 	});
-	const paginatedCourses = sortedCourses?.slice((currentPage - 1) * pageSize, currentPage * pageSize) || [];
+	const paginatedCourses = sortedCourses?.slice?.((currentPage - 1) * pageSize, currentPage * pageSize) || [];
 
 	if (error) return <Typography color='error'>{error}</Typography>;
 

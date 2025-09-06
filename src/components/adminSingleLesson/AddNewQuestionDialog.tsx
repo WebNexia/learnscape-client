@@ -87,7 +87,7 @@ const AddNewQuestionDialog = ({
 
 	// Helper function to filter questions by lesson type compatibility
 	const filterQuestionsByLessonType = (questions: QuestionInterface[]) => {
-		return questions.filter((question: QuestionInterface) => {
+		return questions?.filter?.((question: QuestionInterface) => {
 			const questionTypeName = question.questionType as QuestionType;
 			if (singleLessonBeforeSave.type === LessonType.QUIZ) {
 				return [
@@ -98,7 +98,7 @@ const AddNewQuestionDialog = ({
 					QuestionType.MATCHING,
 					QuestionType.FITB_TYPING,
 					QuestionType.FITB_DRAG_DROP,
-				].includes(questionTypeName);
+				]?.includes?.(questionTypeName);
 			} else if (singleLessonBeforeSave.type === LessonType.PRACTICE_LESSON) {
 				return [
 					QuestionType.MULTIPLE_CHOICE,
@@ -108,7 +108,7 @@ const AddNewQuestionDialog = ({
 					QuestionType.FITB_TYPING,
 					QuestionType.FITB_DRAG_DROP,
 					QuestionType.FLIP_CARD,
-				].includes(questionTypeName);
+				]?.includes?.(questionTypeName);
 			}
 			return true;
 		});
@@ -117,7 +117,7 @@ const AddNewQuestionDialog = ({
 	// Use search results if active, otherwise use context data (filtered to exclude already added questions)
 	const displayQuestions = isSearchActive
 		? searchResults
-		: questions.filter((question: QuestionInterface) => !singleLessonBeforeSave.questionIds?.includes(question._id));
+		: questions?.filter?.((question: QuestionInterface) => !singleLessonBeforeSave.questionIds?.includes?.(question._id)) || [];
 
 	// Filter questions by lesson type compatibility
 	const compatibleQuestions = filterQuestionsByLessonType(displayQuestions);
@@ -127,7 +127,7 @@ const AddNewQuestionDialog = ({
 
 	// Use appropriate page number for pagination
 	const currentPage = isSearchActive ? searchResultsPage : questionsPageNumber;
-	const paginatedQuestions = compatibleQuestions.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+	const paginatedQuestions = compatibleQuestions?.slice?.((currentPage - 1) * pageSize, currentPage * pageSize) || [];
 
 	const [selectedQuestions, setSelectedQuestions] = useState<QuestionInterface[]>([]);
 	const [selectedQuestionIds, setSelectedQuestionIds] = useState<string[]>([]);
@@ -202,7 +202,7 @@ const AddNewQuestionDialog = ({
 
 				// Fetch all missing pages in sequence
 				for (let page = currentLoadedPages + 1; page <= targetPage; page++) {
-					if (!searchResultsLoadedPages.includes(page)) {
+					if (!searchResultsLoadedPages?.includes?.(page)) {
 						await fetchMoreSearchResults(page, params);
 					}
 				}
@@ -231,7 +231,8 @@ const AddNewQuestionDialog = ({
 			const response = await axios.get(`${base_url}/questions/organisation/${orgId}?${searchParams.toString()}`);
 
 			// Filter out already added questions from search results
-			const filteredResults = response.data.data.filter((question: QuestionInterface) => !singleLessonBeforeSave.questionIds?.includes(question._id));
+			const filteredResults =
+				response.data.data?.filter?.((question: QuestionInterface) => !singleLessonBeforeSave.questionIds?.includes?.(question._id)) || [];
 
 			// Filter by lesson type compatibility
 			const compatibleResults = filterQuestionsByLessonType(filteredResults);
@@ -292,9 +293,8 @@ const AddNewQuestionDialog = ({
 				const response = await axios.get(`${base_url}/questions/organisation/${orgId}?${params.toString()}`);
 
 				// Filter out already added questions from search results
-				const filteredResults = response.data.data.filter(
-					(question: QuestionInterface) => !singleLessonBeforeSave.questionIds?.includes(question._id)
-				);
+				const filteredResults =
+					response.data.data?.filter?.((question: QuestionInterface) => !singleLessonBeforeSave.questionIds?.includes?.(question._id)) || [];
 
 				// Filter by lesson type compatibility
 				const compatibleResults = filterQuestionsByLessonType(filteredResults);
@@ -318,7 +318,7 @@ const AddNewQuestionDialog = ({
 	};
 
 	const handleCheckboxChange = (question: QuestionInterface) => {
-		const selectedIndex = selectedQuestionIds.indexOf(question._id);
+		const selectedIndex = selectedQuestionIds?.indexOf?.(question._id) || -1;
 		let newSelectedQuestionIds: string[] = [];
 		let newSelectedQuestions: QuestionInterface[] = [];
 
@@ -326,8 +326,8 @@ const AddNewQuestionDialog = ({
 			newSelectedQuestionIds = [...selectedQuestionIds, question._id];
 			newSelectedQuestions = [...selectedQuestions, question];
 		} else {
-			newSelectedQuestionIds = selectedQuestionIds?.filter((id) => id !== question._id);
-			newSelectedQuestions = selectedQuestions?.filter((selectedQuestion) => selectedQuestion._id !== question._id);
+			newSelectedQuestionIds = selectedQuestionIds?.filter?.((id) => id !== question._id) || [];
+			newSelectedQuestions = selectedQuestions?.filter?.((selectedQuestion) => selectedQuestion._id !== question._id) || [];
 		}
 
 		setSelectedQuestionIds(newSelectedQuestionIds);
@@ -338,7 +338,7 @@ const AddNewQuestionDialog = ({
 	};
 
 	const handleAddQuestions = () => {
-		const updatedSelectedQuestions = selectedQuestions.map((question) => ({
+		const updatedSelectedQuestions = selectedQuestions?.map?.((question) => ({
 			...question,
 			usedInLessons: question.usedInLessons ? [...question.usedInLessons, lessonId] : [lessonId],
 			updatedAt: new Date().toISOString(),
@@ -356,11 +356,11 @@ const AddNewQuestionDialog = ({
 		});
 
 		// Update questions in the context
-		updatedSelectedQuestions.forEach((question) => {
+		updatedSelectedQuestions?.forEach?.((question) => {
 			updateQuestion(question);
 		});
 
-		const addedQuestionsUpdateData: QuestionUpdateTrack[] = selectedQuestions?.reduce((acc: QuestionUpdateTrack[], value: QuestionInterface) => {
+		const addedQuestionsUpdateData: QuestionUpdateTrack[] = selectedQuestions?.reduce?.((acc: QuestionUpdateTrack[], value: QuestionInterface) => {
 			acc.push({ questionId: value?._id, isUpdated: false });
 			return acc;
 		}, []);
@@ -438,9 +438,10 @@ const AddNewQuestionDialog = ({
 												const response = await axios.get(`${base_url}/questions/organisation/${orgId}?${params.toString()}`);
 
 												// Filter out already added questions from search results
-												const filteredResults = response.data.data.filter(
-													(question: QuestionInterface) => !singleLessonBeforeSave.questionIds?.includes(question._id)
-												);
+												const filteredResults =
+													response.data.data?.filter?.(
+														(question: QuestionInterface) => !singleLessonBeforeSave.questionIds?.includes?.(question._id)
+													) || [];
 
 												// Filter by lesson type compatibility
 												const compatibleResults = filterQuestionsByLessonType(filteredResults);
@@ -475,9 +476,10 @@ const AddNewQuestionDialog = ({
 													const response = await axios.get(`${base_url}/questions/organisation/${orgId}?${params.toString()}`);
 
 													// Filter out already added questions from search results
-													const filteredResults = response.data.data.filter(
-														(question: QuestionInterface) => !singleLessonBeforeSave.questionIds?.includes(question._id)
-													);
+													const filteredResults =
+														response.data.data?.filter?.(
+															(question: QuestionInterface) => !singleLessonBeforeSave.questionIds?.includes?.(question._id)
+														) || [];
 
 													// Filter by lesson type compatibility
 													const compatibleResults = filterQuestionsByLessonType(filteredResults);
@@ -513,7 +515,7 @@ const AddNewQuestionDialog = ({
 									<MenuItem disabled value='types' selected sx={{ fontSize: '0.7rem', textTransform: 'inherit', fontWeight: 'lighter' }}>
 										------ Filter by Type ------
 									</MenuItem>
-									{questionTypes.map((type) => (
+									{questionTypes?.map?.((type) => (
 										<MenuItem value={type.name.toLowerCase()} key={type._id} sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
 											{type.name}
 										</MenuItem>
@@ -656,9 +658,10 @@ const AddNewQuestionDialog = ({
 												.get(`${base_url}/questions/organisation/${orgId}?${params.toString()}`)
 												.then((response) => {
 													// Filter out already added questions from search results
-													const filteredResults = response.data.data.filter(
-														(question: QuestionInterface) => !singleLessonBeforeSave.questionIds?.includes(question._id)
-													);
+													const filteredResults =
+														response.data.data?.filter?.(
+															(question: QuestionInterface) => !singleLessonBeforeSave.questionIds?.includes?.(question._id)
+														) || [];
 													// Filter by lesson type compatibility
 													const compatibleResults = filterQuestionsByLessonType(filteredResults);
 													setSearchResults(compatibleResults);
@@ -700,8 +703,8 @@ const AddNewQuestionDialog = ({
 						/>
 						<TableBody>
 							{paginatedQuestions &&
-								paginatedQuestions?.map((question: QuestionInterface) => {
-									const isSelected = selectedQuestionIds.indexOf(question._id) !== -1;
+								paginatedQuestions?.map?.((question: QuestionInterface) => {
+									const isSelected = selectedQuestionIds?.indexOf?.(question._id) !== -1;
 									return (
 										<TableRow key={question._id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }} hover>
 											<CustomTableCell value={question.questionType} />

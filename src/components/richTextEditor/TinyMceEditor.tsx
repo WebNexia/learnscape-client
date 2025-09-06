@@ -94,7 +94,7 @@ const TinyMceEditor = ({
 
 			let currentIndex = 1;
 			const newContent = content.replace(/\(___(\d+)___\)/g, (_, oldBlankNumber) => {
-				const pair = prevData.find((p) => p.blank === parseInt(oldBlankNumber, 10));
+				const pair = prevData?.find?.((p) => p.blank === parseInt(oldBlankNumber, 10));
 				if (pair) {
 					const newPlaceholder = `(___${currentIndex}___)`;
 					updatedBlankValuePairs.push({ ...pair, blank: currentIndex });
@@ -191,7 +191,7 @@ const TinyMceEditor = ({
 
 								if (textContent.length + insertText.length > MAX_LENGTH) {
 									e.preventDefault();
-									const allowedText = insertText.slice(0, MAX_LENGTH - textContent.length);
+									const allowedText = insertText?.slice?.(0, MAX_LENGTH - textContent.length);
 									if (allowedText && e.inputType === 'insertFromPaste') {
 										editor.insertContent(allowedText);
 									}

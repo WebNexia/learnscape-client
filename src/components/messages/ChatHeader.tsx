@@ -77,7 +77,7 @@ const ChatHeader = ({
 	};
 
 	const handleBlockUnblockClick = (firebaseUserId: string) => {
-		const isCurrentlyBlocked = blockedUsers.includes(firebaseUserId);
+		const isCurrentlyBlocked = blockedUsers?.includes?.(firebaseUserId) || false;
 		setUserToBlock(firebaseUserId);
 		setIsBlocking(!isCurrentlyBlocked);
 		setBlockConfirmOpen(true);
@@ -150,10 +150,10 @@ const ChatHeader = ({
 									</Typography>
 								)}
 								{activeChat.participants
-									?.filter((participant) => participant.firebaseUserId !== user?.firebaseUserId)
-									?.map((otherParticipant) => {
+									?.filter?.((participant) => participant.firebaseUserId !== user?.firebaseUserId)
+									?.map?.((otherParticipant) => {
 										if (otherParticipant.role !== 'admin') {
-											const isBlocked = blockedUsers.includes(otherParticipant.firebaseUserId);
+											const isBlocked = blockedUsers?.includes?.(otherParticipant.firebaseUserId) || false;
 
 											return (
 												<IconButton

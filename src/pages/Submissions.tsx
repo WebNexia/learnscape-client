@@ -60,7 +60,7 @@ const Submissions = () => {
 	const currentPage = isSearchActive ? searchResultsPage : userSubmissionsPageNumber;
 
 	const sortedSubmissions =
-		[...(displaySubmissions || [])]?.sort((a, b) => {
+		[...(displaySubmissions || [])]?.sort?.((a, b) => {
 			const aValue = a[orderBy] ?? '';
 			const bValue = b[orderBy] ?? '';
 
@@ -73,7 +73,7 @@ const Submissions = () => {
 
 	// For search results, slice the accumulated data based on current page
 	// For context data, use client-side pagination
-	const paginatedSubmissions = sortedSubmissions?.slice((currentPage - 1) * pageSize, currentPage * pageSize) || [];
+	const paginatedSubmissions = sortedSubmissions?.slice?.((currentPage - 1) * pageSize, currentPage * pageSize) || [];
 
 	// React Query handles data loading automatically
 

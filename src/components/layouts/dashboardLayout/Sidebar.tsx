@@ -93,73 +93,73 @@ const Sidebar = () => {
 								btnText='Dashboard'
 								IconName={DashboardIcon}
 								onClick={() => navigateWithPage(`/admin/dashboard`)}
-								active={currentPath.includes('/admin/dashboard') || currentPath.includes('/admin/inquiries')}
+								active={currentPath?.includes?.('/admin/dashboard') || currentPath?.includes?.('/admin/inquiries')}
 							/>
 							<SidebarBtn
 								btnText='Users'
 								IconName={PeopleAltOutlined}
 								onClick={() => navigateWithPage(`/admin/users`)}
-								active={currentPath.includes('/admin/users')}
+								active={currentPath?.includes?.('/admin/users')}
 							/>
 							<SidebarBtn
 								btnText='Courses'
 								IconName={LibraryBooks}
 								onClick={() => navigateWithPage(`/admin/courses`)}
-								active={currentPath.includes('/admin/courses') || currentPath.includes('/admin/course-edit')}
+								active={currentPath?.includes?.('/admin/courses') || currentPath?.includes?.('/admin/course-edit')}
 							/>
 							<SidebarBtn
 								btnText='Lessons'
 								IconName={AssignmentIndRounded}
 								onClick={() => navigateWithPage(`/admin/lessons`)}
-								active={currentPath.includes('/admin/lessons') || currentPath.includes('/admin/lesson-edit')}
+								active={currentPath?.includes?.('/admin/lessons') || currentPath?.includes?.('/admin/lesson-edit')}
 							/>
 							<SidebarBtn
 								btnText='Questions'
 								IconName={QuizOutlined}
 								onClick={() => navigateWithPage(`/admin/questions`)}
-								active={currentPath.includes('/admin/questions')}
+								active={currentPath?.includes?.('/admin/questions')}
 							/>
 							<SidebarBtn
 								btnText='Documents'
 								IconName={FilePresent}
 								onClick={() => navigateWithPage(`/admin/documents`)}
-								active={currentPath.includes('/admin/documents')}
+								active={currentPath?.includes?.('/admin/documents')}
 							/>
 							<SidebarBtn
 								btnText='Submissions'
 								IconName={LibraryAddCheck}
 								onClick={() => navigateWithPage(`/admin/submissions`)}
-								active={currentPath.includes('/admin/submissions')}
+								active={currentPath?.includes?.('/admin/submissions')}
 							/>
 							<SidebarBtn
 								btnText='Payments'
 								IconName={CreditCard}
 								onClick={() => navigateWithPage(`/admin/payments`)}
-								active={currentPath.includes('/admin/payments')}
+								active={currentPath?.includes?.('/admin/payments')}
 							/>
 							<SidebarBtn
 								btnText='Calendar'
 								IconName={CalendarMonth}
 								onClick={() => navigateWithPage(`/admin/calendar`)}
-								active={currentPath.includes('/admin/calendar')}
+								active={currentPath?.includes?.('/admin/calendar')}
 							/>
 							<SidebarBtn
 								btnText='Messages'
 								IconName={Email}
 								onClick={() => navigateWithPage(`/admin/messages`)}
-								active={currentPath.includes('/admin/messages')}
+								active={currentPath?.includes?.('/admin/messages')}
 							/>
 							<SidebarBtn
 								btnText='Community'
 								IconName={Groups}
 								onClick={() => navigateWithPage(`/admin/community`)}
-								active={currentPath.includes('/admin/community')}
+								active={currentPath?.includes?.('/admin/community')}
 							/>
 							<SidebarBtn
 								btnText='Settings'
 								IconName={Settings}
 								onClick={() => navigateWithPage(`/admin/settings`)}
-								active={currentPath.includes('/admin/settings')}
+								active={currentPath?.includes?.('/admin/settings')}
 							/>
 						</>
 					)}
@@ -169,43 +169,43 @@ const Sidebar = () => {
 								btnText='Dashboard'
 								IconName={DashboardIcon}
 								onClick={() => navigateWithPage(`/dashboard`)}
-								active={currentPath.includes('/dashboard')}
+								active={currentPath?.includes?.('/dashboard')}
 							/>
 							<SidebarBtn
 								btnText='Courses'
 								IconName={LibraryBooks}
 								onClick={() => navigateWithPage(`/courses`)}
-								active={currentPath.includes('/courses')}
+								active={currentPath?.includes?.('/courses')}
 							/>
 							<SidebarBtn
 								btnText='Submissions'
 								IconName={LibraryAddCheck}
 								onClick={() => navigateWithPage(`/submissions`)}
-								active={currentPath.includes('/submissions')}
+								active={currentPath?.includes?.('/submissions')}
 							/>
 							<SidebarBtn
 								btnText='Calendar'
 								IconName={CalendarMonth}
 								onClick={() => navigateWithPage(`/calendar`)}
-								active={currentPath.includes('/calendar')}
+								active={currentPath?.includes?.('/calendar')}
 							/>
 							<SidebarBtn
 								btnText='Messages'
 								IconName={Email}
 								onClick={() => navigateWithPage(`/messages`)}
-								active={currentPath.includes('/messages')}
+								active={currentPath?.includes?.('/messages')}
 							/>
 							<SidebarBtn
 								btnText='Community'
 								IconName={Groups}
 								onClick={() => navigateWithPage(`/community`)}
-								active={currentPath.includes('/community')}
+								active={currentPath?.includes?.('/community')}
 							/>
 							<SidebarBtn
 								btnText='Settings'
 								IconName={Settings}
 								onClick={() => navigateWithPage(`/settings`)}
-								active={currentPath.includes('/settings')}
+								active={currentPath?.includes?.('/settings')}
 							/>
 						</>
 					)}

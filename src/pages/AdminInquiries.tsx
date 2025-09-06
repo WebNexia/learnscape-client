@@ -70,7 +70,7 @@ const AdminInquiries = () => {
 	// Use appropriate page number for pagination
 	const currentPage = isSearchActive ? searchResultsPage : inquiriesPageNumber;
 	const sortedInquiries =
-		[...(displayInquiries || [])]?.sort((a, b) => {
+		[...(displayInquiries || [])]?.sort?.((a, b) => {
 			const aValue = a[orderBy] ?? '';
 			const bValue = b[orderBy] ?? '';
 
@@ -81,7 +81,7 @@ const AdminInquiries = () => {
 			}
 		}) || [];
 
-	const paginatedInquiries = sortedInquiries?.slice((currentPage - 1) * pageSize, currentPage * pageSize) || [];
+	const paginatedInquiries = sortedInquiries?.slice?.((currentPage - 1) * pageSize, currentPage * pageSize) || [];
 
 	// Modal states
 	const [viewModalOpen, setViewModalOpen] = useState<{ [key: number]: boolean }>({});
@@ -130,7 +130,7 @@ const AdminInquiries = () => {
 
 				// Fetch all missing pages in sequence
 				for (let page = currentLoadedPages + 1; page <= targetPage; page++) {
-					if (!searchResultsLoadedPages?.includes(page)) {
+					if (!searchResultsLoadedPages?.includes?.(page)) {
 						await fetchMoreSearchResults(page, params);
 					}
 				}

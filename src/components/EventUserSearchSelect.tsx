@@ -61,7 +61,7 @@ const EventUserSearchSelect = forwardRef<any, EventUserSearchSelectProps>(
 		);
 
 		const filteredUsers = useMemo(() => {
-			return filtered.filter((user) => user.firebaseUserId !== currentUserId && !selectedUserIds.includes(user.firebaseUserId));
+			return filtered?.filter?.((user) => user.firebaseUserId !== currentUserId && !selectedUserIds?.includes?.(user.firebaseUserId)) || [];
 		}, [filtered, currentUserId, selectedUserIds]);
 
 		const hasResults = filteredUsers.length > 0;
@@ -156,7 +156,7 @@ const EventUserSearchSelect = forwardRef<any, EventUserSearchSelectProps>(
 							mb: showLoadMore ? '1rem' : '3rem',
 							...listSx,
 						}}>
-						{filteredUsers.map((user) => (
+						{filteredUsers?.map?.((user) => (
 							<Box
 								key={user.firebaseUserId}
 								sx={{

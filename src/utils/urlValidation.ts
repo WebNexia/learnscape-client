@@ -19,7 +19,7 @@ export const isValidUrl = (url: string): boolean => {
 		// Check if it has a valid protocol (http, https, data, blob)
 		const validProtocols = ['http:', 'https:', 'data:', 'blob:'];
 
-		if (!validProtocols.includes(urlObj.protocol)) {
+		if (!validProtocols?.includes?.(urlObj.protocol)) {
 			return false;
 		}
 
@@ -62,15 +62,15 @@ export const isValidImageUrl = (url: string): boolean => {
 	];
 
 	// Must have either a file extension, be a data/blob URL, or be from a known hosting service
-	const hasValidExtension = imageExtensions.some((ext) => urlLower.includes(ext));
-	const isDataOrBlob = urlLower.includes('data:image/') || urlLower.includes('blob:');
-	const isFromHostingService = imageHostingServices.some((service) => urlLower.includes(service));
+	const hasValidExtension = imageExtensions?.some?.((ext) => urlLower?.includes?.(ext)) || false;
+	const isDataOrBlob = urlLower?.includes?.('data:image/') || urlLower?.includes?.('blob:');
+	const isFromHostingService = imageHostingServices?.some?.((service) => urlLower?.includes?.(service)) || false;
 
 	// Additional check: ensure the URL has some structure that looks like an image URL
 	const hasImageUrlStructure = hasValidExtension || isDataOrBlob || isFromHostingService;
 
 	// For URLs without extensions, ensure they have a path that looks like an image path
-	if (!hasImageUrlStructure && (urlLower.includes('http://') || urlLower.includes('https://'))) {
+	if (!hasImageUrlStructure && (urlLower?.includes?.('http://') || urlLower?.includes?.('https://'))) {
 		// Check if the URL has a path that might indicate it's an image
 		const urlObj = new URL(url);
 		const path = urlObj.pathname.toLowerCase();
@@ -81,7 +81,7 @@ export const isValidImageUrl = (url: string): boolean => {
 		}
 
 		// Reject if the path looks like random text (no slashes, dots, or common image patterns)
-		if (!path.includes('/') && !path.includes('.') && !path.includes('image') && !path.includes('photo')) {
+		if (!path?.includes?.('/') && !path?.includes?.('.') && !path?.includes?.('image') && !path?.includes?.('photo')) {
 			return false;
 		}
 	}
@@ -110,9 +110,9 @@ export const isValidVideoUrl = (url: string): boolean => {
 	];
 
 	// Must have either a file extension, be a data/blob URL, or be from a known hosting service
-	const hasValidExtension = videoExtensions.some((ext) => urlLower.includes(ext));
-	const isDataOrBlob = urlLower.includes('data:video/') || urlLower.includes('blob:');
-	const isFromHostingService = videoHostingServices.some((service) => urlLower.includes(service));
+	const hasValidExtension = videoExtensions?.some?.((ext) => urlLower?.includes?.(ext)) || false;
+	const isDataOrBlob = urlLower?.includes?.('data:video/') || urlLower?.includes?.('blob:');
+	const isFromHostingService = videoHostingServices?.some?.((service) => urlLower?.includes?.(service)) || false;
 
 	return hasValidExtension || isDataOrBlob || isFromHostingService;
 };
@@ -154,7 +154,7 @@ export const validateImageUrl = async (url: string): Promise<{ isValid: boolean;
 		'storage.googleapis.com',
 	];
 
-	const isTrustedService = trustedImageServices.some((service) => urlLower.includes(service));
+	const isTrustedService = trustedImageServices?.some?.((service) => urlLower?.includes?.(service)) || false;
 
 	// If it's a trusted service, accept it without making a HEAD request
 	// This avoids CORS issues and HEAD request failures that are common with these services
@@ -179,7 +179,7 @@ export const validateImageUrl = async (url: string): Promise<{ isValid: boolean;
 	} catch (error) {
 		// If HEAD request fails, try a GET request for URLs with clear image extensions
 		const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp'];
-		const hasValidExtension = imageExtensions.some((ext) => urlLower.includes(ext));
+		const hasValidExtension = imageExtensions?.some?.((ext) => urlLower?.includes?.(ext)) || false;
 
 		if (hasValidExtension) {
 			// For URLs with clear image extensions, accept them even if HEAD request fails
@@ -217,7 +217,7 @@ export const validateVideoUrl = async (url: string): Promise<{ isValid: boolean;
 		's3.amazonaws.com',
 	];
 
-	const isTrustedService = trustedVideoServices.some((service) => urlLower.includes(service));
+	const isTrustedService = trustedVideoServices?.some?.((service) => urlLower?.includes?.(service)) || false;
 
 	// If it's a trusted service, accept it without making a HEAD request
 	if (isTrustedService) {
@@ -231,7 +231,7 @@ export const validateVideoUrl = async (url: string): Promise<{ isValid: boolean;
 		}
 
 		const contentType = response.headers.get('content-type');
-		if (contentType && !contentType.startsWith('video/') && !contentType.includes('application/octet-stream')) {
+		if (contentType && !contentType?.startsWith?.('video/') && !contentType?.includes?.('application/octet-stream')) {
 			return { isValid: false, error: 'URL does not point to a video' };
 		}
 
@@ -239,7 +239,7 @@ export const validateVideoUrl = async (url: string): Promise<{ isValid: boolean;
 	} catch (error) {
 		// If HEAD request fails, try a GET request for URLs with clear video extensions
 		const videoExtensions = ['.mp4', '.webm', '.ogg', '.mov', '.avi', '.mkv'];
-		const hasValidExtension = videoExtensions.some((ext) => urlLower.includes(ext));
+		const hasValidExtension = videoExtensions?.some?.((ext) => urlLower?.includes?.(ext)) || false;
 
 		if (hasValidExtension) {
 			// For URLs with clear video extensions, accept them even if HEAD request fails
@@ -279,9 +279,9 @@ export const isValidDocumentUrl = (url: string): boolean => {
 	];
 
 	// Must have either a file extension, be a data/blob URL, or be from a known hosting service
-	const hasValidExtension = documentExtensions.some((ext) => urlLower.includes(ext));
-	const isDataOrBlob = urlLower.includes('data:application/') || urlLower.includes('blob:');
-	const isFromHostingService = documentHostingServices.some((service) => urlLower.includes(service));
+	const hasValidExtension = documentExtensions?.some?.((ext) => urlLower?.includes?.(ext)) || false;
+	const isDataOrBlob = urlLower?.includes?.('data:application/') || urlLower?.includes?.('blob:');
+	const isFromHostingService = documentHostingServices?.some?.((service) => urlLower?.includes?.(service)) || false;
 
 	return hasValidExtension || isDataOrBlob || isFromHostingService;
 };
@@ -312,7 +312,7 @@ export const validateDocumentUrl = async (url: string): Promise<{ isValid: boole
 		'resources.docs.salesforce.com',
 	];
 
-	const isTrustedService = trustedDocumentServices.some((service) => urlLower.includes(service));
+	const isTrustedService = trustedDocumentServices?.some?.((service) => urlLower?.includes?.(service)) || false;
 
 	// If it's a trusted service, accept it without making a HEAD request
 	// This avoids CORS issues and HEAD request failures that are common with these services
@@ -340,7 +340,7 @@ export const validateDocumentUrl = async (url: string): Promise<{ isValid: boole
 				'application/octet-stream',
 			];
 
-			const isValidType = validDocumentTypes.some((type) => contentType.startsWith(type));
+			const isValidType = validDocumentTypes?.some?.((type) => contentType?.startsWith?.(type)) || false;
 			if (!isValidType) {
 				return { isValid: false, error: 'URL does not point to a valid document' };
 			}
@@ -350,7 +350,7 @@ export const validateDocumentUrl = async (url: string): Promise<{ isValid: boole
 	} catch (error) {
 		// If HEAD request fails, try a GET request for URLs with clear document extensions
 		const documentExtensions = ['.pdf', '.doc', '.docx', '.txt', '.rtf', '.odt', '.pages'];
-		const hasValidExtension = documentExtensions.some((ext) => urlLower.includes(ext));
+		const hasValidExtension = documentExtensions?.some?.((ext) => urlLower?.includes?.(ext)) || false;
 
 		if (hasValidExtension) {
 			// For URLs with clear document extensions, accept them even if HEAD request fails
