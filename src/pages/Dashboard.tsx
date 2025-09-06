@@ -37,26 +37,26 @@ const Dashboard = ({}: DashboardProps) => {
 
 	useEffect(() => {
 		const userCourses = JSON.parse(localStorage.getItem('userCourseData')!);
-		const userLessons = JSON.parse(localStorage.getItem('userLessonData')!)?.filter?.((lesson: UserLessonDataStorage) => lesson.isCompleted) || [];
+		const userLessons = JSON.parse(localStorage.getItem('userLessonData')!)?.filter((lesson: UserLessonDataStorage) => lesson.isCompleted) || [];
 
 		setTotalEnrolledCourses(userCourses?.length);
 		setNumberOfCompletedLessons(userLessons?.length);
-		setTotalCompletedCourses(userCourses?.filter?.((userCourse: UserCoursesIdsWithCourseIds) => userCourse.isCourseCompleted)?.length || 0);
+		setTotalCompletedCourses(userCourses?.filter((userCourse: UserCoursesIdsWithCourseIds) => userCourse.isCourseCompleted)?.length || 0);
 		// Process user data to create chart data
 		const processUserData = () => {
 			const dataMap: { [date: string]: number } = {};
 			userCourses
-				?.sort?.((a: UserCoursesIdsWithCourseIds, b: UserCoursesIdsWithCourseIds) => a.createdAt.localeCompare(b.createdAt))
-				?.forEach?.((userCourse: UserCoursesIdsWithCourseIds) => {
+				?.sort((a: UserCoursesIdsWithCourseIds, b: UserCoursesIdsWithCourseIds) => a.createdAt.localeCompare(b.createdAt))
+				?.forEach((userCourse: UserCoursesIdsWithCourseIds) => {
 					const date = new Date(userCourse.createdAt).toISOString().split('T')[0];
 					dataMap[date] = (dataMap[date] || 0) + 1;
 				});
 
 			const labels =
 				Object.keys(dataMap)
-					?.map?.((date) => new Date(date)) // Convert to Date objects
-					?.sort?.((a: any, b: any) => a - b) // Sort in ascending order
-					?.map?.((date) => format(date, 'yyyy-MM-dd')) || []; // Convert back to formatted string
+					?.map((date) => new Date(date)) // Convert to Date objects
+					?.sort((a: any, b: any) => a - b) // Sort in ascending order
+					?.map((date) => format(date, 'yyyy-MM-dd')) || []; // Convert back to formatted string
 
 			const data = Object.values(dataMap);
 			setChartData({
@@ -78,7 +78,7 @@ const Dashboard = ({}: DashboardProps) => {
 		const processUserLessonsBarChart = () => {
 			const lessonsDataMap: { [date: string]: number } = {};
 
-			userLessons?.forEach?.((lesson: UserLessonDataStorage) => {
+			userLessons?.forEach((lesson: UserLessonDataStorage) => {
 				const date = new Date(lesson.updatedAt).toISOString().split('T')[0]; // Format createdAt as yyyy-MM-dd
 				lessonsDataMap[date] = (lessonsDataMap[date] || 0) + 1; // Count lessons created on the same date
 			});
@@ -86,9 +86,9 @@ const Dashboard = ({}: DashboardProps) => {
 			// Create labels (sorted dates) and data (lesson counts)
 			const labels =
 				Object.keys(lessonsDataMap)
-					?.map?.((date) => new Date(date))
-					?.sort?.((a: any, b: any) => a - b) // Sort in ascending order
-					?.map?.((date) => format(date, 'dd MMM yyyy')) || []; // Format dates for display
+					?.map((date) => new Date(date))
+					?.sort((a: any, b: any) => a - b) // Sort in ascending order
+					?.map((date) => format(date, 'dd MMM yyyy')) || []; // Format dates for display
 
 			const data = Object.values(lessonsDataMap); // The number of lessons created on each date
 

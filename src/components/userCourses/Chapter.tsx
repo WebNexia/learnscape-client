@@ -30,8 +30,8 @@ const Chapter = ({ chapter, isEnrolledStatus, nextChapterFirstLessonId }: Chapte
 				{chapter &&
 					chapter?.lessons &&
 					chapter?.lessons
-						?.filter?.((lesson) => lesson !== null)
-						?.map?.((lesson: LessonById, index) => {
+						?.filter((lesson) => lesson !== null)
+						?.map((lesson: LessonById, index) => {
 							let nextLessonId: string = '';
 							if (index !== chapter.lessons?.length - 1) {
 								nextLessonId = chapter.lessons[index + 1]._id;

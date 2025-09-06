@@ -12,7 +12,7 @@ export const renderMessageWithMentions = (text: string, processedTopics: any[], 
 	const parts = text.split(mentionPattern);
 
 	return (
-		parts?.map?.((part, index) => {
+		parts?.map((part, index) => {
 			if (part.startsWith('@')) {
 				// Special handling for @everyone, only for admin users
 				if (part === '@everyone') {

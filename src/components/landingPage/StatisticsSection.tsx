@@ -51,7 +51,7 @@ const StatisticsSection = () => {
 
 				<Container>
 					<Grid container spacing={4} justifyContent='center'>
-						{stats?.map?.((stat, index) => (
+						{stats?.map((stat, index) => (
 							<Grid item xs={6} sm={3} key={index}>
 								<motion.div
 									initial={{ opacity: 0, y: 20 }}

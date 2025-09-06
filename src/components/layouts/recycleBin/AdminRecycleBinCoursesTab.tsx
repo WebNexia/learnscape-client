@@ -85,7 +85,7 @@ const AdminRecycleBinCoursesTab = () => {
 	const displayCourses = isSearchActive ? searchResults : archivedCourses;
 	const coursesNumberOfPages = isSearchActive ? Math.ceil(searchResultsTotalItems / pageSize) : Math.ceil(totalItems / pageSize);
 	const currentPageNumber = isSearchActive ? searchResultsPage : currentPage;
-	const paginatedCourses = displayCourses?.slice?.((currentPageNumber - 1) * pageSize, currentPageNumber * pageSize) || [];
+	const paginatedCourses = displayCourses?.slice((currentPageNumber - 1) * pageSize, currentPageNumber * pageSize) || [];
 
 	const [orderBy, setOrderBy] = useState<keyof ArchivedCourse>('archivedAt');
 	const [order, setOrder] = useState<'asc' | 'desc'>('desc');
@@ -157,7 +157,7 @@ const AdminRecycleBinCoursesTab = () => {
 
 				// Fetch all missing pages in sequence
 				for (let page = currentLoadedPages + 1; page <= targetPage; page++) {
-					if (!searchResultsLoadedPages?.includes?.(page)) {
+					if (!searchResultsLoadedPages?.includes(page)) {
 						await fetchMoreSearchResults(page, params);
 					}
 				}
@@ -173,7 +173,7 @@ const AdminRecycleBinCoursesTab = () => {
 				// Fetch all missing pages in sequence
 				if (currentLoadedPages < targetPage) {
 					for (let page = currentLoadedPages + 1; page <= targetPage; page++) {
-						if (!loadedPages?.includes?.(page)) {
+						if (!loadedPages?.includes(page)) {
 							await fetchArchivedCourses(page);
 							setLoadedPages((prev) => [...prev, page]);
 						}
@@ -215,7 +215,7 @@ const AdminRecycleBinCoursesTab = () => {
 		setOrderBy(property);
 
 		// Client-side sort for displayed items (both search results and regular courses)
-		const sortedCourses = [...(displayCourses || [])]?.sort?.((a, b) => {
+		const sortedCourses = [...(displayCourses || [])]?.sort((a, b) => {
 			let aValue: any = a[property];
 			let bValue: any = b[property];
 
@@ -332,12 +332,12 @@ const AdminRecycleBinCoursesTab = () => {
 			setSelectAll(false);
 
 			// Remove the course from the list
-			setArchivedCourses((prev) => prev?.filter?.((course) => course._id !== courseId) || []);
+			setArchivedCourses((prev) => prev?.filter((course) => course._id !== courseId) || []);
 			setTotalItems((prev) => prev - 1);
 
 			// If search is active, also remove from search results
 			if (isSearchActive) {
-				setSearchResults((prev) => prev?.filter?.((course) => course._id !== courseId) || []);
+				setSearchResults((prev) => prev?.filter((course) => course._id !== courseId) || []);
 				setSearchResultsTotalItems((prev) => Math.max(0, prev - 1));
 			}
 
@@ -357,12 +357,12 @@ const AdminRecycleBinCoursesTab = () => {
 			await axios.delete(`${base_url}/courses/${courseId}/hard`);
 
 			// Remove the course from the list
-			setArchivedCourses((prev) => prev?.filter?.((course) => course._id !== courseId) || []);
+			setArchivedCourses((prev) => prev?.filter((course) => course._id !== courseId) || []);
 			setTotalItems((prev) => prev - 1);
 
 			// If search is active, also remove from search results
 			if (isSearchActive) {
-				setSearchResults((prev) => prev?.filter?.((course) => course._id !== courseId) || []);
+				setSearchResults((prev) => prev?.filter((course) => course._id !== courseId) || []);
 				setSearchResultsTotalItems((prev) => Math.max(0, prev - 1));
 			}
 
@@ -382,7 +382,7 @@ const AdminRecycleBinCoursesTab = () => {
 	// Handle bulk selection
 	const handleSelectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
 		if (event.target.checked) {
-			setSelectedItems(paginatedCourses?.map?.((course) => course._id) || []);
+			setSelectedItems(paginatedCourses?.map((course) => course._id) || []);
 			setSelectAll(true);
 		} else {
 			setSelectedItems([]);
@@ -392,8 +392,8 @@ const AdminRecycleBinCoursesTab = () => {
 
 	const handleSelectItem = (courseId: string) => {
 		setSelectedItems((prev) => {
-			if (prev?.includes?.(courseId)) {
-				const updatedItems = prev?.filter?.((id) => id !== courseId) || [];
+			if (prev?.includes(courseId)) {
+				const updatedItems = prev?.filter((id) => id !== courseId) || [];
 				setSelectAll(false);
 				return updatedItems;
 			} else {
@@ -410,7 +410,7 @@ const AdminRecycleBinCoursesTab = () => {
 	const handleBulkRestore = async () => {
 		try {
 			await Promise.all(
-				selectedItems?.map?.((courseId) => {
+				selectedItems?.map((courseId) => {
 					return (async () => {
 						const response = await axios.patch(`${base_url}/courses/${courseId}/restore`);
 						addNewCourse(response.data.data);
@@ -419,12 +419,12 @@ const AdminRecycleBinCoursesTab = () => {
 			);
 
 			// Remove the courses from the list
-			setArchivedCourses((prev) => prev?.filter?.((course) => !selectedItems?.includes?.(course._id)) || []);
+			setArchivedCourses((prev) => prev?.filter((course) => !selectedItems?.includes(course._id)) || []);
 			setTotalItems((prev) => prev - selectedItems.length);
 
 			// If search is active, also remove from search results
 			if (isSearchActive) {
-				setSearchResults((prev) => prev?.filter?.((course) => !selectedItems?.includes?.(course._id)) || []);
+				setSearchResults((prev) => prev?.filter((course) => !selectedItems?.includes(course._id)) || []);
 				setSearchResultsTotalItems((prev) => Math.max(0, prev - selectedItems.length));
 			}
 
@@ -445,15 +445,15 @@ const AdminRecycleBinCoursesTab = () => {
 
 	const handleBulkDelete = async () => {
 		try {
-			await Promise.all(selectedItems?.map?.((courseId) => axios.delete(`${base_url}/courses/${courseId}/hard`)) || []);
+			await Promise.all(selectedItems?.map((courseId) => axios.delete(`${base_url}/courses/${courseId}/hard`)) || []);
 
 			// Remove the courses from the list
-			setArchivedCourses((prev) => prev?.filter?.((course) => !selectedItems?.includes?.(course._id)) || []);
+			setArchivedCourses((prev) => prev?.filter((course) => !selectedItems?.includes(course._id)) || []);
 			setTotalItems((prev) => prev - selectedItems.length);
 
 			// If search is active, also remove from search results
 			if (isSearchActive) {
-				setSearchResults((prev) => prev?.filter?.((course) => !selectedItems?.includes?.(course._id)) || []);
+				setSearchResults((prev) => prev?.filter((course) => !selectedItems?.includes(course._id)) || []);
 				setSearchResultsTotalItems((prev) => Math.max(0, prev - selectedItems.length));
 			}
 
@@ -584,7 +584,7 @@ const AdminRecycleBinCoursesTab = () => {
 									'Closed Courses',
 									'External Courses',
 									'Platform Courses',
-								]?.map?.((type) => (
+								]?.map((type) => (
 									<MenuItem
 										value={type.toLowerCase()}
 										key={type}
@@ -831,9 +831,9 @@ const AdminRecycleBinCoursesTab = () => {
 					/>
 					<TableBody>
 						{paginatedCourses &&
-							paginatedCourses?.map?.((course: ArchivedCourse, index) => {
+							paginatedCourses?.map((course: ArchivedCourse, index) => {
 								const deletionDateStatus = getDeletionDateStatus(course.archivedAt || '');
-								const isSelected = selectedItems?.includes?.(course._id);
+								const isSelected = selectedItems?.includes(course._id);
 
 								return (
 									<TableRow key={course._id} hover selected={isSelected}>
@@ -869,7 +869,7 @@ const AdminRecycleBinCoursesTab = () => {
 			</Box>
 
 			{/* Restore Course Modal */}
-			{paginatedCourses?.map?.((course, index) => (
+			{paginatedCourses?.map((course, index) => (
 				<CustomDialog
 					key={`restore-${course._id}`}
 					openModal={isCourseRestoreModalOpen[index]}
@@ -894,7 +894,7 @@ const AdminRecycleBinCoursesTab = () => {
 			))}
 
 			{/* Delete Course Modal */}
-			{paginatedCourses?.map?.((course, index) => (
+			{paginatedCourses?.map((course, index) => (
 				<CustomDialog
 					key={`delete-${course._id}`}
 					openModal={isCourseDeleteModalOpen[index]}

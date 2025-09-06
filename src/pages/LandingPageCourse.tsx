@@ -63,7 +63,7 @@ const InstructorCard = ({ instructor }: { instructor: SingleCourse['instructor']
 				</Typography>
 
 				<Stack direction='row' spacing={1} sx={{ mb: 2, flexWrap: 'wrap', gap: 0.5 }}>
-					{instructor.expertise?.map?.((skill, index) => (
+					{instructor.expertise?.map((skill, index) => (
 						<Chip
 							key={index}
 							label={skill}
@@ -125,7 +125,7 @@ const LandingPageCourse = () => {
 
 	useEffect(() => {
 		if (courseId && courses) {
-			const selectedCourse = courses?.find?.((course: SingleCourse) => course._id === courseId);
+			const selectedCourse = courses?.find((course: SingleCourse) => course._id === courseId);
 			setCourse(selectedCourse);
 		}
 	}, [courseId, courses]);

@@ -10,7 +10,7 @@ function validateImageUrl(url: string): boolean {
 		}
 		// Optional: Add trusted domain whitelist
 		// const trustedDomains = ['your-domain.com', 'cdn.your-domain.com', 'trusted-cdn.com'];
-		// return trustedDomains?.some?.(domain => urlObj.hostname.endsWith(domain));
+		// return trustedDomains?.some(domain => urlObj.hostname.endsWith(domain));
 		return true;
 	} catch {
 		return false;

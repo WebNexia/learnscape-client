@@ -70,7 +70,7 @@ const AdminInquiries = () => {
 	// Use appropriate page number for pagination
 	const currentPage = isSearchActive ? searchResultsPage : inquiriesPageNumber;
 	const sortedInquiries =
-		[...(displayInquiries || [])]?.sort?.((a, b) => {
+		[...(displayInquiries || [])]?.sort((a, b) => {
 			const aValue = a[orderBy] ?? '';
 			const bValue = b[orderBy] ?? '';
 
@@ -81,7 +81,7 @@ const AdminInquiries = () => {
 			}
 		}) || [];
 
-	const paginatedInquiries = sortedInquiries?.slice?.((currentPage - 1) * pageSize, currentPage * pageSize) || [];
+	const paginatedInquiries = sortedInquiries?.slice((currentPage - 1) * pageSize, currentPage * pageSize) || [];
 
 	// Modal states
 	const [viewModalOpen, setViewModalOpen] = useState<{ [key: number]: boolean }>({});
@@ -130,7 +130,7 @@ const AdminInquiries = () => {
 
 				// Fetch all missing pages in sequence
 				for (let page = currentLoadedPages + 1; page <= targetPage; page++) {
-					if (!searchResultsLoadedPages?.includes?.(page)) {
+					if (!searchResultsLoadedPages?.includes(page)) {
 						await fetchMoreSearchResults(page, params);
 					}
 				}
@@ -187,7 +187,7 @@ const AdminInquiries = () => {
 
 			// If search is active, also remove from search results
 			if (isSearchActive) {
-				setSearchResults((prev) => prev?.filter?.((inquiry) => inquiry._id !== selectedInquiry._id) || []);
+				setSearchResults((prev) => prev?.filter((inquiry) => inquiry._id !== selectedInquiry._id) || []);
 				setSearchResultsTotalItems((prev) => Math.max(0, prev - 1));
 			}
 
@@ -226,7 +226,7 @@ const AdminInquiries = () => {
 				dataToExport = allInquiries;
 			}
 
-			const excelData = dataToExport?.map?.((inquiry: Inquiry) => ({
+			const excelData = dataToExport?.map((inquiry: Inquiry) => ({
 				'First Name': inquiry.firstName,
 				'Last Name': inquiry.lastName,
 				'Email': inquiry.email,
@@ -443,7 +443,7 @@ const AdminInquiries = () => {
 											}}>
 											All Inquiries
 										</MenuItem>
-										{['From Home Page', 'From Contact Us', 'From About Us']?.map?.((type) => (
+										{['From Home Page', 'From Contact Us', 'From About Us']?.map((type) => (
 											<MenuItem
 												value={type.toLowerCase()}
 												key={type}
@@ -653,7 +653,7 @@ const AdminInquiries = () => {
 						<CustomTableHead<Inquiry> orderBy={orderBy} order={order} handleSort={handleSort} columns={columns} />
 						<TableBody>
 							{paginatedInquiries &&
-								paginatedInquiries?.map?.((inquiry: Inquiry, index) => {
+								paginatedInquiries?.map((inquiry: Inquiry, index) => {
 									return (
 										<TableRow key={inquiry._id} hover>
 											<CustomTableCell value={inquiry.firstName + ' ' + inquiry.lastName} />

@@ -55,7 +55,7 @@ const AdminPromoCodesTab = () => {
 	// Use appropriate page number for pagination
 	const currentPage = isSearchActive ? searchResultsPage : promoCodesPageNumber;
 
-	const sortedPromoCodes = [...(displayPromoCodes || [])]?.sort?.((a, b) => {
+	const sortedPromoCodes = [...(displayPromoCodes || [])]?.sort((a, b) => {
 		const aValue = a[orderBy] ?? '';
 		const bValue = b[orderBy] ?? '';
 
@@ -68,7 +68,7 @@ const AdminPromoCodesTab = () => {
 
 	// For search results, slice the accumulated data based on current page
 	// For context data, use client-side pagination
-	const paginatedPromoCodes = sortedPromoCodes?.slice?.((currentPage - 1) * pageSize, currentPage * pageSize) || [];
+	const paginatedPromoCodes = sortedPromoCodes?.slice((currentPage - 1) * pageSize, currentPage * pageSize) || [];
 
 	const [isNewCodeModalOpen, setIsNewCodeModalOpen] = useState<boolean>(false);
 	const [isEditCodeModalOpen, setIsEditCodeModalOpen] = useState<boolean[]>([]);
@@ -103,7 +103,7 @@ const AdminPromoCodesTab = () => {
 
 				// Fetch all missing pages in sequence
 				for (let page = currentLoadedPages + 1; page <= targetPage; page++) {
-					if (!searchResultsLoadedPages?.includes?.(page)) {
+					if (!searchResultsLoadedPages?.includes(page)) {
 						await fetchMoreSearchResults(page);
 					}
 				}
@@ -241,11 +241,11 @@ const AdminPromoCodesTab = () => {
 	const deleteCode = async (code: string): Promise<void> => {
 		try {
 			// Find the promo code to get its ID
-			const promoCodeToDelete = promoCodes?.find?.((pc) => pc.code === code);
+			const promoCodeToDelete = promoCodes?.find((pc) => pc.code === code);
 			if (!promoCodeToDelete) return;
 
 			if (isSearchActive) {
-				setSearchResults((prev) => prev?.filter?.((pc) => pc.code !== code) || []);
+				setSearchResults((prev) => prev?.filter((pc) => pc.code !== code) || []);
 				setSearchResultsTotalItems((prev) => Math.max(0, prev - 1));
 			}
 			await axios.delete(`${base_url}/promocodes/${code}`);
@@ -388,7 +388,7 @@ const AdminPromoCodesTab = () => {
 									}}>
 									All Codes
 								</MenuItem>
-								{['Active', 'Inactive', 'Unlimited Usage', 'Limited Usage', 'Expired', 'Unexpired']?.map?.((type) => (
+								{['Active', 'Inactive', 'Unlimited Usage', 'Limited Usage', 'Expired', 'Unexpired']?.map((type) => (
 									<MenuItem
 										value={type.toLowerCase()}
 										key={type}
@@ -623,7 +623,7 @@ const AdminPromoCodesTab = () => {
 					/>
 					<TableBody>
 						{paginatedPromoCodes &&
-							paginatedPromoCodes?.map?.((promoCode: PromoCode, index) => {
+							paginatedPromoCodes?.map((promoCode: PromoCode, index) => {
 								return (
 									<TableRow key={promoCode._id} hover>
 										<CustomTableCell value={promoCode.code} />

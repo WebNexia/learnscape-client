@@ -91,7 +91,7 @@ const AdminCourses = () => {
 
 	// Use appropriate page number for pagination
 	const currentPage = isSearchActive ? searchResultsPage : coursesPageNumber;
-	const sortedCourses = [...(displayCourses || [])]?.sort?.((a, b) => {
+	const sortedCourses = [...(displayCourses || [])]?.sort((a, b) => {
 		const aValue = a[orderBy] ?? '';
 		const bValue = b[orderBy] ?? '';
 
@@ -101,7 +101,7 @@ const AdminCourses = () => {
 			return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
 		}
 	});
-	const paginatedCourses = sortedCourses?.slice?.((currentPage - 1) * pageSize, currentPage * pageSize) || [];
+	const paginatedCourses = sortedCourses?.slice((currentPage - 1) * pageSize, currentPage * pageSize) || [];
 
 	if (error) return <Typography color='error'>{error}</Typography>;
 
@@ -395,9 +395,9 @@ const AdminCourses = () => {
 
 			if (error.response?.status === 500) {
 				const serverError = error.response.data?.error;
-				if (serverError?.includes?.('title') && serverError?.includes?.('longer than')) {
+				if (serverError?.includes('title') && serverError?.includes('longer than')) {
 					errorMessage = 'Course title is too long for cloning. Please contact support.';
-				} else if (serverError?.includes?.('validation failed')) {
+				} else if (serverError?.includes('validation failed')) {
 					errorMessage = 'Course data validation failed. Please check the course details.';
 				}
 			} else if (error.response?.status === 429) {

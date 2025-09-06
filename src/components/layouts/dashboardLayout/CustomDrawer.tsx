@@ -31,9 +31,9 @@ const CustomDrawer = ({ isDrawerOpen, setIsDrawerOpen }: CustomDrawerProps) => {
 	const { user } = useContext(UserAuthContext);
 	const { organisation } = useContext(OrganisationContext);
 
-	const currentPage = window.location.pathname?.includes?.('admin')
-		? window.location.pathname?.split?.('/')?.[2]?.charAt?.(0)?.toUpperCase?.() + window.location.pathname?.split?.('/')?.[2]?.slice?.(1)
-		: window.location.pathname?.split?.('/')?.[1]?.charAt?.(0)?.toUpperCase?.() + window.location.pathname?.split?.('/')?.[1]?.slice?.(1);
+	const currentPage = window.location.pathname?.includes('admin')
+		? window.location.pathname?.split('/')?.[2]?.charAt(0)?.toUpperCase() + window.location.pathname?.split('/')?.[2]?.slice(1)
+		: window.location.pathname?.split?.('/')?.[1]?.charAt?.(0)?.toUpperCase?.() + window.location.pathname?.split?.('/')?.[1]?.slice(1);
 
 	const [selectedPage, setSelectedPage] = useState<string>(currentPage);
 

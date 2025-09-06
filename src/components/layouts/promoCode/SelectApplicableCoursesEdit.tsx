@@ -27,7 +27,7 @@ const SelectApplicableCoursesEdit = ({ singleCode, setSingleCode }: SelectApplic
 
 		const coursesIds = singleCode?.coursesApplicable || [];
 		const searchResults =
-			courses?.filter?.((course) => course.title.toLowerCase()?.includes?.(searchQuery.toLowerCase()) && !coursesIds?.includes?.(course._id)) || [];
+			courses?.filter((course) => course.title.toLowerCase()?.includes(searchQuery.toLowerCase()) && !coursesIds?.includes(course._id)) || [];
 
 		setFilteredCourses(searchResults);
 	};
@@ -36,8 +36,8 @@ const SelectApplicableCoursesEdit = ({ singleCode, setSingleCode }: SelectApplic
 		<Box sx={{ mt: singleCode?.coursesApplicable.length! > 0 ? '0rem' : '1.25rem' }}>
 			{singleCode?.coursesApplicable.length! > 0 && (
 				<Box sx={{ display: 'flex', margin: '0.75rem 0 0.75rem 0', flexWrap: 'wrap' }}>
-					{singleCode?.coursesApplicable?.map?.((id) => {
-						const course = courses?.find?.((course) => course._id === id);
+					{singleCode?.coursesApplicable?.map((id) => {
+						const course = courses?.find((course) => course._id === id);
 						return (
 							<Box
 								key={course?._id}
@@ -53,7 +53,7 @@ const SelectApplicableCoursesEdit = ({ singleCode, setSingleCode }: SelectApplic
 								<Typography sx={{ fontSize: '0.85rem' }}>{truncateText(course?.title!, 20)}</Typography>
 								<IconButton
 									onClick={() => {
-										const updatedCourses = singleCode.coursesApplicable?.filter?.((filteredCourseId) => course?._id !== filteredCourseId) || [];
+										const updatedCourses = singleCode.coursesApplicable?.filter((filteredCourseId) => course?._id !== filteredCourseId) || [];
 
 										setSingleCode((prevData) => ({ ...prevData!, coursesApplicable: updatedCourses }));
 									}}>
@@ -140,7 +140,7 @@ const SelectApplicableCoursesEdit = ({ singleCode, setSingleCode }: SelectApplic
 							backgroundColor: theme.bgColor?.common,
 							boxShadow: '0.15rem 0.2rem 0.3rem 0rem rgba(0,0,0,0.1)',
 						}}>
-						{filteredCourses?.map?.((course) => (
+						{filteredCourses?.map((course) => (
 							<Box
 								key={course._id}
 								sx={{

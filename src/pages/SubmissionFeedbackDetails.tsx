@@ -100,7 +100,7 @@ const SubmissionFeedbackDetails = () => {
 
 			{fetchQuestionTypeName(userSingleResponseWithFeedback?.questionId) === QuestionType.MULTIPLE_CHOICE && (
 				<Box sx={{ width: '90%', margin: '0 auto' }}>
-					{userSingleResponseWithFeedback?.questionId?.options?.map?.((option: string, index: number) => (
+					{userSingleResponseWithFeedback?.questionId?.options?.map((option: string, index: number) => (
 						<Typography
 							variant={isMobileSize ? 'body2' : 'body1'}
 							key={index}
@@ -282,7 +282,7 @@ const SubmissionFeedbackDetails = () => {
 					{ label: 'Quiz Name', value: quizName },
 					{ label: 'Course Name', value: courseName },
 					{ label: 'Status', value: isChecked === 'true' ? 'Checked' : 'Unchecked' },
-				]?.map?.(({ label, value }, index) => (
+				]?.map(({ label, value }, index) => (
 					<Box key={index} sx={{ textAlign: 'center' }}>
 						<Typography variant='h6' sx={{ mb: '0.35rem', fontSize: isMobileSizeSmall ? '0.85rem' : undefined }}>
 							{label}
@@ -313,7 +313,7 @@ const SubmissionFeedbackDetails = () => {
 						sx={{ marginRight: isMobileSize ? '0.85rem' : '2.5rem' }}
 					/>
 				</Box>
-				{userResponseData?.map?.((response: any, index: number) => (
+				{userResponseData?.map((response: any, index: number) => (
 					<QuestionResponseCard
 						key={response._id}
 						response={response}

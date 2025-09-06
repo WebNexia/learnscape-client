@@ -94,7 +94,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 				const currentUserLessonData: string | null = localStorage.getItem('userLessonData');
 				if (currentUserLessonData !== null) {
 					const updatedUserLessonData: UserLessonDataStorage[] = JSON.parse(currentUserLessonData);
-					if (!updatedUserLessonData?.some?.((data) => data.lessonId === firstLessonId && data.courseId === courseId)) {
+					if (!updatedUserLessonData?.some((data) => data.lessonId === firstLessonId && data.courseId === courseId)) {
 						const newUserLessonData: UserLessonDataStorage = {
 							lessonId: firstLessonId,
 							userLessonId: responseUserLesson.data._id,

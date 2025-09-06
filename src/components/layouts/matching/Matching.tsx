@@ -53,7 +53,7 @@ const Matching = ({
 		if (setSingleLessonBeforeSave) {
 			setSingleLessonBeforeSave((prevData) => {
 				if (!prevData.questions) return prevData;
-				const updatedQuestions = prevData.questions?.map?.((prevQuestion) =>
+				const updatedQuestions = prevData.questions?.map((prevQuestion) =>
 					prevQuestion?._id === question?._id ? { ...prevQuestion, matchingPairs: newPairs } : prevQuestion
 				);
 				return { ...prevData, questions: updatedQuestions };
@@ -61,15 +61,15 @@ const Matching = ({
 			if (question) questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
 		}
 
-		const nonBlankPairs = newPairs?.filter?.((pair) => pair.question.trim() && pair.answer.trim()) || [];
-		const missingPairExists = newPairs?.some?.((pair) => !pair.question.trim() || !pair.answer.trim()) || false;
+		const nonBlankPairs = newPairs?.filter((pair) => pair.question.trim() && pair.answer.trim()) || [];
+		const missingPairExists = newPairs?.some((pair) => !pair.question.trim() || !pair.answer.trim()) || false;
 
 		setIsMinimumTwoMatchingPairs?.(nonBlankPairs.length < 2);
 		setIsMissingPair?.(missingPairExists);
 	};
 
 	const handlePairChange = (index: number, field: 'question' | 'answer', value: string) => {
-		const newPairs = pairs?.map?.((pair, i) => (i === index ? { ...pair, [field]: value } : pair)) || [];
+		const newPairs = pairs?.map((pair, i) => (i === index ? { ...pair, [field]: value } : pair)) || [];
 		updatePairs(newPairs);
 	};
 
@@ -79,13 +79,13 @@ const Matching = ({
 	};
 
 	const removePair = (index: number) => {
-		const newPairs = pairs?.filter?.((_, i) => i !== index) || [];
+		const newPairs = pairs?.filter((_, i) => i !== index) || [];
 		updatePairs(newPairs);
 	};
 
 	return (
 		<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: '2rem', width: '100%' }}>
-			{pairs?.map?.((pair, index) => (
+			{pairs?.map((pair, index) => (
 				<Box key={pair.id} sx={{ display: 'flex', mb: '0.5rem', width: '90%', alignItems: 'center' }}>
 					<CustomTextField
 						placeholder='Pair Key'

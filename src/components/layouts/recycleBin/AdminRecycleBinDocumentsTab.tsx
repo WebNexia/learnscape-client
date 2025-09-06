@@ -101,7 +101,7 @@ const AdminRecycleBinDocumentsTab = () => {
 
 	// Use appropriate page number for pagination
 	const currentPageNumber = isSearchActive ? searchResultsPage : currentPage;
-	const paginatedDocuments = displayDocuments?.slice?.((currentPageNumber - 1) * pageSize, currentPageNumber * pageSize) || [];
+	const paginatedDocuments = displayDocuments?.slice((currentPageNumber - 1) * pageSize, currentPageNumber * pageSize) || [];
 
 	const [orderBy, setOrderBy] = useState<keyof ArchivedDocument>('archivedAt');
 	const [order, setOrder] = useState<'asc' | 'desc'>('desc');
@@ -168,7 +168,7 @@ const AdminRecycleBinDocumentsTab = () => {
 
 				// Fetch all missing pages in sequence
 				for (let page = currentLoadedPages + 1; page <= targetPage; page++) {
-					if (!searchResultsLoadedPages?.includes?.(page)) {
+					if (!searchResultsLoadedPages?.includes(page)) {
 						await fetchMoreSearchResults(page, params);
 					}
 				}
@@ -184,7 +184,7 @@ const AdminRecycleBinDocumentsTab = () => {
 				// Fetch all missing pages in sequence
 				if (currentLoadedPages < targetPage) {
 					for (let page = currentLoadedPages + 1; page <= targetPage; page++) {
-						if (!loadedPages?.includes?.(page)) {
+						if (!loadedPages?.includes(page)) {
 							fetchArchivedDocuments(page);
 							setLoadedPages((prev) => [...prev, page]);
 						}
@@ -234,7 +234,7 @@ const AdminRecycleBinDocumentsTab = () => {
 		const checked = event.target.checked;
 		setSelectAll(checked);
 		if (checked) {
-			setSelectedItems(paginatedDocuments?.map?.((document) => document._id) || []);
+			setSelectedItems(paginatedDocuments?.map((document) => document._id) || []);
 			setSelectAll(true);
 		} else {
 			setSelectedItems([]);
@@ -244,8 +244,8 @@ const AdminRecycleBinDocumentsTab = () => {
 
 	const handleSelectItem = (documentId: string) => {
 		setSelectedItems((prev) => {
-			if (prev?.includes?.(documentId)) {
-				const updatedItems = prev?.filter?.((id) => id !== documentId) || [];
+			if (prev?.includes(documentId)) {
+				const updatedItems = prev?.filter((id) => id !== documentId) || [];
 				setSelectAll(false);
 				return updatedItems;
 			} else {
@@ -339,12 +339,12 @@ const AdminRecycleBinDocumentsTab = () => {
 
 			if (response.data.status === 200) {
 				// Remove from archived documents
-				setArchivedDocuments((prev) => prev?.filter?.((document) => document._id !== documentId) || []);
+				setArchivedDocuments((prev) => prev?.filter((document) => document._id !== documentId) || []);
 				setTotalItems((prev) => prev - 1);
 
 				// If search is active, also remove from search results
 				if (isSearchActive) {
-					setSearchResults((prev) => prev?.filter?.((document) => document._id !== documentId) || []);
+					setSearchResults((prev) => prev?.filter((document) => document._id !== documentId) || []);
 					setSearchResultsTotalItems((prev) => Math.max(0, prev - 1));
 				}
 
@@ -373,12 +373,12 @@ const AdminRecycleBinDocumentsTab = () => {
 
 			if (response.data.status === 200) {
 				// Remove from archived documents
-				setArchivedDocuments((prev) => prev?.filter?.((document) => document._id !== documentId) || []);
+				setArchivedDocuments((prev) => prev?.filter((document) => document._id !== documentId) || []);
 				setTotalItems((prev) => prev - 1);
 
 				// If search is active, also remove from search results
 				if (isSearchActive) {
-					setSearchResults((prev) => prev?.filter?.((document) => document._id !== documentId) || []);
+					setSearchResults((prev) => prev?.filter((document) => document._id !== documentId) || []);
 					setSearchResultsTotalItems((prev) => Math.max(0, prev - 1));
 				}
 
@@ -400,7 +400,7 @@ const AdminRecycleBinDocumentsTab = () => {
 	const handleBulkRestore = async () => {
 		try {
 			await Promise.all(
-				selectedItems?.map?.((documentId) => {
+				selectedItems?.map((documentId) => {
 					return (async () => {
 						const response = await axios.patch(`${base_url}/documents/${documentId}/restore`);
 						if (response.data.data) {
@@ -411,12 +411,12 @@ const AdminRecycleBinDocumentsTab = () => {
 			);
 
 			// Remove the documents from the list
-			setArchivedDocuments((prev) => prev?.filter?.((document) => !selectedItems?.includes?.(document._id)) || []);
+			setArchivedDocuments((prev) => prev?.filter((document) => !selectedItems?.includes(document._id)) || []);
 			setTotalItems((prev) => prev - selectedItems.length);
 
 			// If search is active, also remove from search results
 			if (isSearchActive) {
-				setSearchResults((prev) => prev?.filter?.((document) => !selectedItems?.includes?.(document._id)) || []);
+				setSearchResults((prev) => prev?.filter((document) => !selectedItems?.includes(document._id)) || []);
 				setSearchResultsTotalItems((prev) => Math.max(0, prev - selectedItems.length));
 			}
 
@@ -437,15 +437,15 @@ const AdminRecycleBinDocumentsTab = () => {
 
 	const handleBulkDelete = async () => {
 		try {
-			await Promise.all(selectedItems?.map?.((documentId) => axios.delete(`${base_url}/documents/${documentId}/hard`)) || []);
+			await Promise.all(selectedItems?.map((documentId) => axios.delete(`${base_url}/documents/${documentId}/hard`)) || []);
 
 			// Remove the documents from the list
-			setArchivedDocuments((prev) => prev?.filter?.((document) => !selectedItems?.includes?.(document._id)) || []);
+			setArchivedDocuments((prev) => prev?.filter((document) => !selectedItems?.includes(document._id)) || []);
 			setTotalItems((prev) => prev - selectedItems.length);
 
 			// If search is active, also remove from search results
 			if (isSearchActive) {
-				setSearchResults((prev) => prev?.filter?.((document) => !selectedItems?.includes?.(document._id)) || []);
+				setSearchResults((prev) => prev?.filter((document) => !selectedItems?.includes(document._id)) || []);
 				setSearchResultsTotalItems((prev) => Math.max(0, prev - selectedItems.length));
 			}
 
@@ -567,7 +567,7 @@ const AdminRecycleBinDocumentsTab = () => {
 									}}>
 									All deleted documents
 								</MenuItem>
-								{['Recently deleted', 'Paid Documents', 'Free Documents', 'On Landing Page', 'On Platform Only']?.map?.((type) => (
+								{['Recently deleted', 'Paid Documents', 'Free Documents', 'On Landing Page', 'On Platform Only']?.map((type) => (
 									<MenuItem
 										value={type.toLowerCase()}
 										key={type}
@@ -827,9 +827,9 @@ const AdminRecycleBinDocumentsTab = () => {
 					/>
 					<TableBody>
 						{paginatedDocuments &&
-							paginatedDocuments?.map?.((document: ArchivedDocument, index) => {
+							paginatedDocuments?.map((document: ArchivedDocument, index) => {
 								const deletionDateStatus = getDeletionDateStatus(document.archivedAt || '');
-								const isSelected = selectedItems?.includes?.(document._id);
+								const isSelected = selectedItems?.includes(document._id);
 
 								return (
 									<TableRow key={document._id} hover selected={isSelected}>
@@ -861,7 +861,7 @@ const AdminRecycleBinDocumentsTab = () => {
 			</Box>
 
 			{/* Restore Modal */}
-			{paginatedDocuments?.map?.((document, index) => (
+			{paginatedDocuments?.map((document, index) => (
 				<CustomDialog
 					key={`restore-${document._id}`}
 					openModal={restoreModalOpen[index] || false}
@@ -889,7 +889,7 @@ const AdminRecycleBinDocumentsTab = () => {
 			))}
 
 			{/* Delete Modal */}
-			{paginatedDocuments?.map?.((document, index) => (
+			{paginatedDocuments?.map((document, index) => (
 				<CustomDialog
 					key={`delete-${document._id}`}
 					openModal={deleteModalOpen[index] || false}

@@ -73,14 +73,14 @@ const AddNewLessonDialog = ({
 	const pageSize = 25;
 
 	// Use search results if active, otherwise use context data (filtered to exclude already added lessons)
-	const displayLessons = isSearchActive ? searchResults : lessons?.filter?.((lesson: Lesson) => !chapter.lessonIds?.includes?.(lesson._id)) || [];
+	const displayLessons = isSearchActive ? searchResults : lessons?.filter((lesson: Lesson) => !chapter.lessonIds?.includes(lesson._id)) || [];
 
 	// Calculate total pages based on filtered results when searching, otherwise use available lessons count
 	const lessonsNumberOfPages = isSearchActive ? Math.ceil(searchResultsTotalItems / pageSize) : Math.ceil(displayLessons.length / pageSize);
 
 	// Use appropriate page number for pagination
 	const currentPage = isSearchActive ? searchResultsPage : lessonsPageNumber;
-	const paginatedLessons = displayLessons?.slice?.((currentPage - 1) * pageSize, currentPage * pageSize) || [];
+	const paginatedLessons = displayLessons?.slice((currentPage - 1) * pageSize, currentPage * pageSize) || [];
 
 	const [selectedLessons, setSelectedLessons] = useState<Lesson[]>([]);
 	const [selectedLessonIds, setSelectedLessonIds] = useState<string[]>([]);
@@ -145,7 +145,7 @@ const AddNewLessonDialog = ({
 
 				// Fetch all missing pages in sequence
 				for (let page = currentLoadedPages + 1; page <= targetPage; page++) {
-					if (!searchResultsLoadedPages?.includes?.(page)) {
+					if (!searchResultsLoadedPages?.includes(page)) {
 						await fetchMoreSearchResults(page, params);
 					}
 				}
@@ -174,7 +174,7 @@ const AddNewLessonDialog = ({
 			const response = await axios.get(`${base_url}/lessons/organisation/${orgId}?${searchParams.toString()}`);
 
 			// Filter out already added lessons from search results
-			const filteredResults = response.data.data?.filter?.((lesson: Lesson) => !chapter.lessonIds?.includes?.(lesson._id)) || [];
+			const filteredResults = response.data.data?.filter((lesson: Lesson) => !chapter.lessonIds?.includes(lesson._id)) || [];
 
 			if (page === 1) {
 				// First page - replace all data
@@ -232,7 +232,7 @@ const AddNewLessonDialog = ({
 				const response = await axios.get(`${base_url}/lessons/organisation/${orgId}?${params.toString()}`);
 
 				// Filter out already added lessons from search results
-				const filteredResults = response.data.data?.filter?.((lesson: Lesson) => !chapter.lessonIds?.includes?.(lesson._id)) || [];
+				const filteredResults = response.data.data?.filter((lesson: Lesson) => !chapter.lessonIds?.includes(lesson._id)) || [];
 
 				setSearchResults(filteredResults);
 				setSearchResultsTotalItems(filteredResults.length);
@@ -253,7 +253,7 @@ const AddNewLessonDialog = ({
 	};
 
 	const handleCheckboxChange = (lesson: Lesson) => {
-		const selectedIndex = selectedLessonIds?.indexOf?.(lesson._id) || -1;
+		const selectedIndex = selectedLessonIds?.indexOf(lesson._id) || -1;
 		let newSelectedLessonIds: string[] = [];
 		let newSelectedLessons: Lesson[] = [];
 
@@ -261,8 +261,8 @@ const AddNewLessonDialog = ({
 			newSelectedLessonIds = [...selectedLessonIds, lesson._id];
 			newSelectedLessons = [...selectedLessons, lesson];
 		} else {
-			newSelectedLessonIds = selectedLessonIds?.filter?.((id) => id !== lesson._id) || [];
-			newSelectedLessons = selectedLessons?.filter?.((selectedLesson) => selectedLesson._id !== lesson._id) || [];
+			newSelectedLessonIds = selectedLessonIds?.filter((id) => id !== lesson._id) || [];
+			newSelectedLessons = selectedLessons?.filter((selectedLesson) => selectedLesson._id !== lesson._id) || [];
 		}
 
 		setSelectedLessonIds(newSelectedLessonIds);
@@ -276,7 +276,7 @@ const AddNewLessonDialog = ({
 
 		setChapterLessonDataBeforeSave((prevData) => {
 			if (prevData) {
-				const updatedSelectedLessons = selectedLessons?.map?.((lesson) => ({
+				const updatedSelectedLessons = selectedLessons?.map((lesson) => ({
 					...lesson,
 					usedInCourses: lesson.usedInCourses ? [...lesson.usedInCourses, courseId] : [courseId],
 					updatedAt: new Date().toISOString(),
@@ -285,7 +285,7 @@ const AddNewLessonDialog = ({
 					updatedByRole: user.role,
 				}));
 
-				return prevData?.map?.((currentChapter) => {
+				return prevData?.map((currentChapter) => {
 					if (currentChapter.chapterId === chapter?.chapterId) {
 						return {
 							...currentChapter,
@@ -300,7 +300,7 @@ const AddNewLessonDialog = ({
 				{
 					chapterId: chapter?.chapterId,
 					title: chapter?.title,
-					lessons: selectedLessons?.map?.((lesson) => ({
+					lessons: selectedLessons?.map((lesson) => ({
 						...lesson,
 						usedInCourses: lesson.usedInCourses ? [...lesson.usedInCourses, courseId] : [courseId],
 						updatedAt: new Date().toISOString(),
@@ -379,7 +379,7 @@ const AddNewLessonDialog = ({
 												const response = await axios.get(`${base_url}/lessons/organisation/${orgId}?${params.toString()}`);
 
 												// Filter out already added lessons from search results
-												const filteredResults = response.data.data?.filter?.((lesson: Lesson) => !chapter.lessonIds?.includes?.(lesson._id)) || [];
+												const filteredResults = response.data.data?.filter((lesson: Lesson) => !chapter.lessonIds?.includes(lesson._id)) || [];
 
 												setSearchResults(filteredResults);
 												setSearchResultsTotalItems(filteredResults.length);
@@ -411,7 +411,7 @@ const AddNewLessonDialog = ({
 													const response = await axios.get(`${base_url}/lessons/organisation/${orgId}?${params.toString()}`);
 
 													// Filter out already added lessons from search results
-													const filteredResults = response.data.data?.filter?.((lesson: Lesson) => !chapter.lessonIds?.includes?.(lesson._id)) || [];
+													const filteredResults = response.data.data?.filter((lesson: Lesson) => !chapter.lessonIds?.includes(lesson._id)) || [];
 
 													setSearchResults(filteredResults);
 													setSearchResultsTotalItems(filteredResults.length);
@@ -441,7 +441,7 @@ const AddNewLessonDialog = ({
 									<MenuItem value='' selected sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
 										All Lessons
 									</MenuItem>
-									{['Published Lessons', 'Unpublished Lessons']?.map?.((type) => (
+									{['Published Lessons', 'Unpublished Lessons']?.map((type) => (
 										<MenuItem value={type.toLowerCase()} key={type} sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
 											{type}
 										</MenuItem>
@@ -449,7 +449,7 @@ const AddNewLessonDialog = ({
 									<MenuItem disabled value='types' selected sx={{ fontSize: '0.7rem', textTransform: 'inherit', fontWeight: 'lighter' }}>
 										----- Filter by Type -----
 									</MenuItem>
-									{['Instructional Lessons', 'Practice Lessons', 'Quizzes']?.map?.((type) => (
+									{['Instructional Lessons', 'Practice Lessons', 'Quizzes']?.map((type) => (
 										<MenuItem value={type.toLowerCase()} key={type} sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
 											{type}
 										</MenuItem>
@@ -593,7 +593,7 @@ const AddNewLessonDialog = ({
 												.get(`${base_url}/lessons/organisation/${orgId}?${params.toString()}`)
 												.then((response) => {
 													// Filter out already added lessons from search results
-													const filteredResults = response.data.data?.filter?.((lesson: Lesson) => !chapter.lessonIds?.includes?.(lesson._id)) || [];
+													const filteredResults = response.data.data?.filter((lesson: Lesson) => !chapter.lessonIds?.includes(lesson._id)) || [];
 													setSearchResults(filteredResults);
 													setSearchResultsTotalItems(filteredResults.length);
 													setSearchResultsLoadedPages([1]);
@@ -634,12 +634,12 @@ const AddNewLessonDialog = ({
 						/>
 						<TableBody>
 							{paginatedLessons &&
-								paginatedLessons?.map?.((lesson: Lesson) => {
-									const isSelected = selectedLessonIds?.indexOf?.(lesson._id) !== -1;
+								paginatedLessons?.map((lesson: Lesson) => {
+									const isSelected = selectedLessonIds?.indexOf(lesson._id) !== -1;
 									return (
 										<TableRow key={lesson._id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }} hover>
 											<CustomTableCell value={lesson.title} />
-											<CustomTableCell value={lesson.type?.charAt?.(0)?.toUpperCase?.() + lesson.type?.slice?.(1)} />
+											<CustomTableCell value={lesson.type?.charAt?.(0)?.toUpperCase?.() + lesson.type?.slice(1)} />
 											<CustomTableCell value={lesson.isActive ? 'Published' : 'Unpublished'} />
 
 											<TableCell

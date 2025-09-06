@@ -44,7 +44,7 @@ const InquiriesContextProvider = ({ children }: InquiriesContextProviderProps) =
 		location.pathname === '/contact-us' ||
 		location.pathname === '/about-us' ||
 		location.pathname === '/auth' ||
-		(location.pathname.startsWith('/course/') && !location.pathname?.includes?.('/userCourseId/'));
+		(location.pathname.startsWith('/course/') && !location.pathname?.includes('/userCourseId/'));
 
 	const {
 		data: inquiries,
@@ -154,7 +154,7 @@ export default InquiriesContextProvider;
 // 		location.pathname === '/about-us' ||
 // 		location.pathname === '/auth' ||
 // 		// Only consider course preview pages as landing pages, not enrolled course pages
-// 		(location.pathname.startsWith('/course/') && !location.pathname?.includes?.('/userCourseId/'));
+// 		(location.pathname.startsWith('/course/') && !location.pathname?.includes('/userCourseId/'));
 
 // 	const fetchInquiries = async (page: number) => {
 // 		if (!orgId) return;

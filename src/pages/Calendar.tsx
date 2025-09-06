@@ -78,7 +78,7 @@ const EventCalendar = () => {
 
 	useEffect(() => {
 		if (sortedEventsData) {
-			const transformedEvents = sortedEventsData?.map?.((event) => {
+			const transformedEvents = sortedEventsData?.map((event) => {
 				const startDate = new Date(event.start!);
 				let endDate = new Date(event.end!);
 				const isAllDayEvent = event.isAllDay || false;
@@ -152,7 +152,7 @@ const EventCalendar = () => {
 
 			// Check if we need to fetch this month
 			const monthKey = `${year}-${month.toString().padStart(2, '0')}`;
-			if (!loadedMonths?.includes?.(monthKey)) {
+			if (!loadedMonths?.includes(monthKey)) {
 				fetchMonthEvents(year, month);
 			}
 		}

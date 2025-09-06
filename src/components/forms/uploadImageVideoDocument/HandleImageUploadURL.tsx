@@ -95,7 +95,7 @@ const HandleImageUploadURL = ({
 		handleImageUpload(imageFolderName, (url: string) => {
 			onImageUploadLogic(url);
 			// For Firebase URLs, add a small delay to ensure they're accessible
-			const isFirebaseUrl = url?.includes?.('firebasestorage.googleapis.com') || url?.includes?.('storage.googleapis.com');
+			const isFirebaseUrl = url?.includes('firebasestorage.googleapis.com') || url?.includes('storage.googleapis.com');
 			const delay = isFirebaseUrl ? 1000 : 0; // 1 second delay for Firebase URLs
 
 			setTimeout(() => {

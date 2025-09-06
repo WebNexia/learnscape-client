@@ -119,7 +119,7 @@ const DocumentPaymentDialog = ({ document, isPaymentDialogOpen, setIsPaymentDial
 		try {
 			// Step 1: Create PaymentIntent
 			const response = await axios.post(`${base_url}/payments`, {
-				amount: document.prices?.find?.((p) => p.currency === userCurrency)?.amount,
+				amount: document.prices?.find((p) => p.currency === userCurrency)?.amount,
 				currency: userCurrency,
 				documentId: document._id,
 				orgId: document.orgId,
@@ -509,7 +509,7 @@ const DocumentPaymentDialog = ({ document, isPaymentDialogOpen, setIsPaymentDial
 								color: '#223354',
 							}}>
 							Toplam Tutar: {setCurrencySymbol(userCurrency)}
-							{document.prices?.find?.((p) => p.currency === userCurrency)?.amount}
+							{document.prices?.find((p) => p.currency === userCurrency)?.amount}
 						</Typography>
 					</Box>
 

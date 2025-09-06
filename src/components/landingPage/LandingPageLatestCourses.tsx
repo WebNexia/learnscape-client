@@ -18,7 +18,7 @@ const LandingPageLatestCourses = forwardRef<HTMLDivElement>((_, ref) => {
 	const [isInfoDialogOpen, setIsInfoDialogOpen] = useState<boolean>(false);
 
 	// Filter courses by organization
-	const publishedCourses = latestCourses?.filter?.((course: SingleCourse) => course.orgId === orgId) || [];
+	const publishedCourses = latestCourses?.filter((course: SingleCourse) => course.orgId === orgId) || [];
 
 	return (
 		<Box ref={ref} sx={{ bgcolor: '#f7f9fa', position: 'relative', padding: '3rem 0' }}>
@@ -44,7 +44,7 @@ const LandingPageLatestCourses = forwardRef<HTMLDivElement>((_, ref) => {
 
 			<Box sx={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '1rem', mt: '3rem' }}>
 				{publishedCourses.length > 0 ? (
-					publishedCourses?.map?.((course: SingleCourse) => (
+					publishedCourses?.map((course: SingleCourse) => (
 						<Box key={course._id} sx={{}}>
 							<DashboardCourseCard course={course} fromHomePage />
 						</Box>

@@ -129,7 +129,7 @@ const PracticeQuestion = ({
 		if ((isLessonCompleted && question.correctAnswer) || (!isLessonCompleted && displayedQuestionNumber < getLastQuestion())) {
 			return question.correctAnswer;
 		} else if (isOpenEndedQuestion) {
-			const answer: string = userAnswers?.find?.((data) => data.questionId == question._id)?.userAnswer || '';
+			const answer: string = userAnswers?.find((data) => data.questionId == question._id)?.userAnswer || '';
 			return answer;
 		} else {
 			return userAnswer;
@@ -169,7 +169,7 @@ const PracticeQuestion = ({
 			setValue(question.correctAnswer);
 		} else if (isOpenEndedQuestion) {
 			setValue(() => {
-				const answer = userAnswers?.find?.((data) => data.questionId === question._id)?.userAnswer || '';
+				const answer = userAnswers?.find((data) => data.questionId === question._id)?.userAnswer || '';
 				return answer;
 			});
 		} else if (!isLessonCompleted && displayedQuestionNumber === getLastQuestion()) {
@@ -183,7 +183,7 @@ const PracticeQuestion = ({
 		if (isLessonCompleted) {
 			setShowQuestionSelector(true);
 			setQuestionPrompt((prevData) => {
-				const answer: string = userAnswers?.find?.((data) => data.questionId == question._id)?.userAnswer || '';
+				const answer: string = userAnswers?.find((data) => data.questionId == question._id)?.userAnswer || '';
 				return { ...prevData, userInput: answer };
 			});
 		}
@@ -200,7 +200,7 @@ const PracticeQuestion = ({
 	}, [displayedQuestionNumber, question._id]);
 
 	const createUserQuestion = async () => {
-		const existingUserAnswer = userAnswers?.find?.((data) => data.questionId === question._id);
+		const existingUserAnswer = userAnswers?.find((data) => data.questionId === question._id);
 
 		if (!existingUserAnswer || existingUserAnswer.userAnswer !== userAnswer) {
 			try {
@@ -224,7 +224,7 @@ const PracticeQuestion = ({
 						await axios.patch(`${base_url}/userQuestions/${userQuestionId}`, { userAnswer });
 						setUserAnswers((prevData) => {
 							if (!prevData) return [];
-							return prevData?.map?.((data) => (data.questionId === question._id ? { ...data, userAnswer } : data)) || [];
+							return prevData?.map((data) => (data.questionId === question._id ? { ...data, userAnswer } : data)) || [];
 						});
 					} else {
 						setUserAnswers((prevData) => {
@@ -458,7 +458,7 @@ const PracticeQuestion = ({
 									sx={{ alignSelf: 'center' }}>
 									{question &&
 										question.options &&
-										question.options?.map?.((option, index) => {
+										question.options?.map((option, index) => {
 											return (
 												<FormControlLabel
 													value={option}

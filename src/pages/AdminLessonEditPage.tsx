@@ -229,8 +229,8 @@ const AdminLessonEditPage = () => {
 		setSingleLessonBeforeSave((prevData) => {
 			if (prevData) {
 				const updatedDocuments = prevData?.documents
-					?.filter?.((document) => document !== null)
-					?.map?.((thisDoc) => {
+					?.filter((document) => document !== null)
+					?.map((thisDoc) => {
 						if (thisDoc._id === document._id) {
 							return { ...thisDoc, name: originalDocumentNames[document._id] || thisDoc.name }; // Revert to original name
 						} else {
@@ -345,7 +345,7 @@ const AdminLessonEditPage = () => {
 
 					setIsDocRenameModalOpen(new Array(lessonsResponse?.documents?.length || 0).fill(false));
 
-					const questionUpdateData: QuestionUpdateTrack[] = lessonsResponse?.questions?.reduce?.(
+					const questionUpdateData: QuestionUpdateTrack[] = lessonsResponse?.questions?.reduce(
 						(acc: QuestionUpdateTrack[], value: QuestionInterface) => {
 							acc.push({ questionId: value?._id, isUpdated: false });
 							return acc;
@@ -354,7 +354,7 @@ const AdminLessonEditPage = () => {
 					);
 					setIsQuestionUpdated(questionUpdateData);
 
-					const documentUpdateData: DocumentUpdateTrack[] = lessonsResponse?.documents?.reduce?.((acc: DocumentUpdateTrack[], value: Document) => {
+					const documentUpdateData: DocumentUpdateTrack[] = lessonsResponse?.documents?.reduce((acc: DocumentUpdateTrack[], value: Document) => {
 						acc.push({ documentId: value?._id, isUpdated: false });
 						return acc;
 					}, []);
@@ -524,8 +524,8 @@ const AdminLessonEditPage = () => {
 		try {
 			if (singleLessonBeforeSave?.documents) {
 				const updatedDocumentsPromises = (singleLessonBeforeSave?.documents as (Document | null)[])
-					?.filter?.((doc): doc is Document => doc !== null)
-					?.map?.(async (document) => {
+					?.filter((doc): doc is Document => doc !== null)
+					?.map(async (document) => {
 						if (document._id.includes('temp_doc_id')) {
 							try {
 								const response = await axios.post(`${base_url}/documents`, {
@@ -569,12 +569,12 @@ const AdminLessonEditPage = () => {
 					});
 
 				const updatedDocumentsWithNulls = await Promise.all(updatedDocumentsPromises);
-				updatedDocuments = updatedDocumentsWithNulls?.filter?.((doc): doc is Document => doc !== null) || [];
+				updatedDocuments = updatedDocumentsWithNulls?.filter((doc): doc is Document => doc !== null) || [];
 			}
 
 			await Promise.all(
-				updatedDocuments?.map?.(async (doc) => {
-					const trackData = isDocumentUpdated.find((data) => data.documentId === doc._id);
+				updatedDocuments?.map(async (doc) => {
+					const trackData = isDocumentUpdated?.find((data) => data.documentId === doc._id);
 					if (trackData?.isUpdated) {
 						try {
 							const response = await axios.patch(`${base_url}/documents/${doc._id}`, {
@@ -602,7 +602,7 @@ const AdminLessonEditPage = () => {
 				})
 			);
 
-			const updatedDocumentIds = updatedDocuments?.map?.((doc) => doc._id) || [];
+			const updatedDocumentIds = updatedDocuments?.map((doc) => doc._id) || [];
 
 			const allowedQuestionTypes = (lessonType: LessonType): QuestionType[] => {
 				if (lessonType === LessonType.QUIZ) {
@@ -635,7 +635,7 @@ const AdminLessonEditPage = () => {
 
 			const filteredQuestions = singleLessonBeforeSave?.questions?.filter((question) => {
 				if (question !== null && question !== undefined) {
-					return allowedQuestionTypes(lessonType).includes(fetchQuestionTypeName(question) as QuestionType);
+					return allowedQuestionTypes(lessonType)?.includes(fetchQuestionTypeName(question) as QuestionType);
 				}
 				return false;
 			});
@@ -649,9 +649,9 @@ const AdminLessonEditPage = () => {
 
 				updatedQuestions = [];
 			} else if (filteredQuestions) {
-				const updatedQuestionsPromises = filteredQuestions.map(async (question) => {
+				const updatedQuestionsPromises = filteredQuestions?.map(async (question) => {
 					if (question._id.includes('temp_question_id')) {
-						const questionTypeId = questionTypes.find((type) => type.name === question.questionType || type._id === question.questionType)?._id;
+						const questionTypeId = questionTypes?.find((type) => type.name === question.questionType || type._id === question.questionType)?._id;
 
 						if (questionTypeId) {
 							try {
@@ -700,7 +700,7 @@ const AdminLessonEditPage = () => {
 
 				await Promise.all(
 					updatedQuestions?.map(async (question) => {
-						const trackData = isQuestionUpdated.find((data) => data.questionId === question._id);
+						const trackData = isQuestionUpdated?.find((data) => data.questionId === question._id);
 						if (trackData?.isUpdated) {
 							try {
 								const { questionType, ...questionWithoutType } = question;
@@ -719,7 +719,7 @@ const AdminLessonEditPage = () => {
 
 			const updatedQuestionIds = updatedQuestions?.map((question) => question._id);
 
-			if (isLessonUpdated || isQuestionUpdated.some((data) => data.isUpdated === true)) {
+			if (isLessonUpdated || isQuestionUpdated?.some((data) => data.isUpdated === true)) {
 				try {
 					const response = await axios.patch(`${base_url}/lessons/${lessonId}`, {
 						...singleLessonBeforeSave,
@@ -1379,7 +1379,7 @@ const AdminLessonEditPage = () => {
 														const parsedQuestions = JSON.parse(questions);
 
 														// Convert AI-generated questions to the format expected by the lesson
-														const convertedQuestions: QuestionInterface[] = parsedQuestions.map((aiQuestion: any) => {
+														const convertedQuestions: QuestionInterface[] = parsedQuestions?.map((aiQuestion: any) => {
 															// Use the actual question type that was selected in the AI dialog
 															const questionTypeName = questionType;
 
@@ -1432,7 +1432,7 @@ const AdminLessonEditPage = () => {
 														setSingleLessonBeforeSave((prevLesson) => ({
 															...prevLesson,
 															questions: [...prevLesson.questions, ...convertedQuestions],
-															questionIds: [...prevLesson.questionIds, ...convertedQuestions.map((q: QuestionInterface) => q._id)],
+															questionIds: [...prevLesson.questionIds, ...convertedQuestions?.map((q: QuestionInterface) => q._id)],
 														}));
 
 														setIsLessonUpdated(true);
@@ -1563,7 +1563,7 @@ const AdminLessonEditPage = () => {
 																							onClick={() => {
 																								setOptions(question.options);
 																								setCorrectAnswer(question.correctAnswer);
-																								const correctAnswerIndex = question.options.indexOf(question.correctAnswer);
+																								const correctAnswerIndex = question.options?.indexOf(question.correctAnswer);
 																								setCorrectAnswerIndex(correctAnswerIndex);
 																								toggleQuestionEditModal(index);
 																							}}>
@@ -1655,8 +1655,8 @@ const AdminLessonEditPage = () => {
 										setSingleLessonBeforeSave((prevData) => {
 											if (prevData && user?._id) {
 												const maxNumber = prevData?.documents
-													.filter((doc) => doc !== null)
-													.reduce((max, doc) => {
+													?.filter((doc) => doc !== null)
+													?.reduce((max, doc) => {
 														const match = doc.name.match(/Untitled Document (\d+)/);
 														const num = match ? parseInt(match[1], 10) : 0;
 														return num > max ? num : max;
@@ -1736,7 +1736,7 @@ const AdminLessonEditPage = () => {
 											// Update document's usedInLessons in the documents context
 											const updatedDocument = {
 												...document,
-												usedInLessons: document.usedInLessons.filter((id) => id !== lessonId),
+												usedInLessons: document.usedInLessons?.filter((id) => id !== lessonId),
 												createdAt: document.createdAt,
 												createdByName: document.createdByName,
 												createdByImageUrl: document.createdByImageUrl,

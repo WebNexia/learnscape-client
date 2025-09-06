@@ -43,7 +43,7 @@ const PaymentsContextProvider = ({ children }: PaymentsContextProviderProps) => 
 		location.pathname === '/contact-us' ||
 		location.pathname === '/about-us' ||
 		location.pathname === '/auth' ||
-		(location.pathname.startsWith('/course/') && !location.pathname?.includes?.('/userCourseId/'));
+		(location.pathname.startsWith('/course/') && !location.pathname?.includes('/userCourseId/'));
 
 	// ✅ main hook for payments
 	const {
@@ -146,7 +146,7 @@ export default PaymentsContextProvider;
 // 		location.pathname === '/about-us' ||
 // 		location.pathname === '/auth' ||
 // 		// Only consider course preview pages as landing pages, not enrolled course pages
-// 		(location.pathname.startsWith('/course/') && !location.pathname?.includes?.('/userCourseId/'));
+// 		(location.pathname.startsWith('/course/') && !location.pathname?.includes('/userCourseId/'));
 
 // 	const [paymentsPageNumber, setPaymentsPageNumber] = useState<number>(1);
 // 	const [loadedPages, setLoadedPages] = useState<number[]>([]);

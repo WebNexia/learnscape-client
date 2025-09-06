@@ -13,6 +13,6 @@ export function getPriceForCountry(course: SingleCourse, countryCode: string): P
 	const preferredCurrency = countryCurrencyMap[countryCode] || 'USD';
 
 	// Retrieve the appropriate price from the course prices
-	const price = course.prices?.find?.((p) => p.currency === preferredCurrency);
-	return price || course.prices?.find?.((p) => p.currency === 'usd')!;
+	const price = course.prices?.find((p) => p.currency === preferredCurrency);
+	return price || course.prices?.find((p) => p.currency === 'usd')!;
 }

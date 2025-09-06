@@ -69,7 +69,7 @@ const FeaturesSection = () => {
 					</Typography>
 				</Box>
 				<Grid container spacing={responsiveStyles.spacing.item} sx={{ px: responsiveStyles.spacing.item }}>
-					{features?.map?.((feature, index) => (
+					{features?.map((feature, index) => (
 						<Grid item xs={12} sm={6} md={3} key={index} sx={{ mb: { xs: 2 } }}>
 							<Box
 								sx={{

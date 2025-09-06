@@ -63,7 +63,7 @@ const LandingPageDrawer = ({ isDrawerOpen, setIsDrawerOpen, navItems }: LandingP
 					Menü
 				</Typography>
 				<List>
-					{navItems?.map?.((item, index) => (
+					{navItems?.map((item, index) => (
 						<ListItem key={index} disablePadding>
 							<ListItemButton
 								onClick={() => handleNavItemClick(item.action)}

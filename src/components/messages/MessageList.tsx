@@ -65,7 +65,7 @@ const MessageList = ({
 		const currentUserId = user.firebaseUserId;
 
 		return (
-			messages?.filter?.((msg: Message) => {
+			messages?.filter((msg: Message) => {
 				// Always show system messages
 				if (msg.isSystemMessage) {
 					return true;
@@ -77,7 +77,7 @@ const MessageList = ({
 				}
 
 				// If the sender is in the global blocked users list, hide their messages
-				if (globalBlockedUsers?.includes?.(msg.senderId)) {
+				if (globalBlockedUsers?.includes(msg.senderId)) {
 					return false; // Filter out messages from blocked users
 				}
 
@@ -89,7 +89,7 @@ const MessageList = ({
 
 	return (
 		<>
-			{filteredMessages?.map?.((msg) => {
+			{filteredMessages?.map((msg) => {
 				// Render system messages
 				if (msg.isSystemMessage) {
 					return (
@@ -170,7 +170,7 @@ const MessageList = ({
 												fontSize: isMobileSize ? '0.6rem' : '0.7rem',
 												color: '#666',
 											}}>
-											{activeChat.participants?.find?.((p) => p.firebaseUserId === msg.senderId)?.username || 'Unknown User'}
+											{activeChat.participants?.find((p) => p.firebaseUserId === msg.senderId)?.username || 'Unknown User'}
 										</Typography>
 									</Box>
 								)}

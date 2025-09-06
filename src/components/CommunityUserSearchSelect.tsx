@@ -74,7 +74,7 @@ const CommunityUserSearchSelect: React.FC<CommunityUserSearchSelectProps> = ({
 	const [hasSearched, setHasSearched] = useState<boolean>(false);
 
 	const filteredUsers = useMemo(() => {
-		return filtered?.filter?.((user) => user.firebaseUserId !== currentUserId && !excludeUsernames?.includes?.(user.username)) || [];
+		return filtered?.filter((user) => user.firebaseUserId !== currentUserId && !excludeUsernames?.includes(user.username)) || [];
 	}, [filtered, currentUserId, excludeUsernames]);
 
 	const hasResults = filteredUsers.length > 0;
@@ -95,7 +95,7 @@ const CommunityUserSearchSelect: React.FC<CommunityUserSearchSelectProps> = ({
 				setNoUserFound(true);
 			} else if (filtered.length > 0) {
 				// Check if all results are filtered out
-				const visibleResults = filtered?.filter?.((user) => user.firebaseUserId !== currentUserId) || [];
+				const visibleResults = filtered?.filter((user) => user.firebaseUserId !== currentUserId) || [];
 				setNoUserFound(visibleResults.length === 0);
 			} else {
 				setNoUserFound(false);
@@ -193,7 +193,7 @@ const CommunityUserSearchSelect: React.FC<CommunityUserSearchSelectProps> = ({
 						border: 'solid 0.05rem lightgray',
 						...listSx,
 					}}>
-					{filteredUsers?.map?.((user) => (
+					{filteredUsers?.map((user) => (
 						<Box
 							key={user.firebaseUserId}
 							sx={{

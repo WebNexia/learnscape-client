@@ -148,9 +148,9 @@ const FillInTheBlanksTyping = ({
 			const submittedAnswers: Record<string, string> = {};
 			const status: Record<string, boolean | null> = {};
 
-			userBlankValuePairsAfterSubmission?.forEach?.((pair) => {
+			userBlankValuePairsAfterSubmission?.forEach((pair) => {
 				submittedAnswers[pair.id] = pair.value;
-				status[pair.id] = blankValuePairs?.find?.((bvp) => bvp.id === pair.id)?.value === pair.value;
+				status[pair.id] = blankValuePairs?.find((bvp) => bvp.id === pair.id)?.value === pair.value;
 			});
 
 			setUserAnswers(submittedAnswers);
@@ -160,8 +160,8 @@ const FillInTheBlanksTyping = ({
 			const initialStatus: Record<string, boolean | null> = {};
 
 			userQuizAnswers
-				?.find?.((answer) => answer.questionId === questionId)
-				?.userBlankValuePairAnswers?.forEach?.((pair) => {
+				?.find((answer) => answer.questionId === questionId)
+				?.userBlankValuePairAnswers?.forEach((pair) => {
 					initialAnswers[pair.id] = pair.value;
 					initialStatus[pair.id] = true;
 				});
@@ -169,8 +169,8 @@ const FillInTheBlanksTyping = ({
 			setUserAnswers(initialAnswers);
 			setInputStatus(initialStatus);
 
-			const randomWords = shuffle(words)?.slice?.(0, 15) || [];
-			const values = blankValuePairs?.map?.((pair) => pair.value) || [];
+			const randomWords = shuffle(words)?.slice(0, 15) || [];
+			const values = blankValuePairs?.map((pair) => pair.value) || [];
 			const hintWords = shuffle([...values, ...randomWords]);
 
 			setHints(hintWords);
@@ -181,7 +181,7 @@ const FillInTheBlanksTyping = ({
 			const initialAnswers: Record<string, string> = {};
 			const initialStatus: Record<string, boolean | null> = {};
 
-			blankValuePairs?.forEach?.((pair) => {
+			blankValuePairs?.forEach((pair) => {
 				initialAnswers[pair.id] = pair.value;
 				initialStatus[pair.id] = true;
 			});
@@ -189,8 +189,8 @@ const FillInTheBlanksTyping = ({
 			setUserAnswers(initialAnswers);
 			setInputStatus(initialStatus);
 
-			const randomWords = shuffle(words)?.slice?.(0, 5) || [];
-			const values = blankValuePairs?.map?.((pair) => pair.value) || [];
+			const randomWords = shuffle(words)?.slice(0, 5) || [];
+			const values = blankValuePairs?.map((pair) => pair.value) || [];
 			const hintWords = shuffle([...values, ...randomWords]);
 
 			setHints(hintWords);
@@ -198,7 +198,7 @@ const FillInTheBlanksTyping = ({
 			const initialAnswers: Record<string, string> = {};
 			const initialStatus: Record<string, boolean | null> = {};
 
-			blankValuePairs?.forEach?.((pair) => {
+			blankValuePairs?.forEach((pair) => {
 				initialAnswers[pair.id] = '';
 				initialStatus[pair.id] = null;
 			});
@@ -207,8 +207,8 @@ const FillInTheBlanksTyping = ({
 			setInputStatus(initialStatus);
 
 			const randomWords =
-				lessonType === LessonType.QUIZ && !fromAdminQuestions ? shuffle(words)?.slice?.(0, 15) || [] : shuffle(words)?.slice?.(0, 5) || [];
-			const values = blankValuePairs?.map?.((pair) => pair.value) || [];
+				lessonType === LessonType.QUIZ && !fromAdminQuestions ? shuffle(words)?.slice(0, 15) || [] : shuffle(words)?.slice(0, 5) || [];
+			const values = blankValuePairs?.map((pair) => pair.value) || [];
 			const hintWords = shuffle([...values, ...randomWords]);
 			setHints(hintWords);
 		}
@@ -216,13 +216,13 @@ const FillInTheBlanksTyping = ({
 
 	useEffect(() => {
 		setUserQuizAnswers?.((prevData) => {
-			const blankValuePairsWithIds: UserBlankValuePairAnswers[] = blankValuePairs?.map?.((pair) => ({
+			const blankValuePairsWithIds: UserBlankValuePairAnswers[] = blankValuePairs?.map((pair) => ({
 				id: pair.id,
 				value: '',
 			}));
 
 			if (prevData) {
-				return prevData?.map?.((data) => {
+				return prevData?.map((data) => {
 					if (data.questionId === questionId) {
 						return { ...data, userBlankValuePairAnswers: blankValuePairsWithIds };
 					}
@@ -247,7 +247,7 @@ const FillInTheBlanksTyping = ({
 
 	useEffect(() => {
 		if (hasInteracted && fromPracticeQuestionUser) {
-			const allCorrect = blankValuePairs?.every?.((pair) => pair.value === userAnswers[pair.id]) || false;
+			const allCorrect = blankValuePairs?.every((pair) => pair.value === userAnswers[pair.id]) || false;
 			if (onComplete) onComplete(allCorrect);
 
 			if (setAllPairsMatchedFITBTyping) {
@@ -281,7 +281,7 @@ const FillInTheBlanksTyping = ({
 
 		if (inputValue === '') {
 			newStatus[id] = null;
-		} else if (blankValuePairs?.find?.((pair) => pair.id === id)?.value === inputValue.trim()) {
+		} else if (blankValuePairs?.find((pair) => pair.id === id)?.value === inputValue.trim()) {
 			newStatus[id] = true;
 		} else {
 			newStatus[id] = false;
@@ -292,13 +292,13 @@ const FillInTheBlanksTyping = ({
 
 		if (!isLessonCompleted && fromQuizQuestionUser) {
 			setUserQuizAnswers?.((prevData) => {
-				const updatedAnswers = blankValuePairs?.map?.((pair) => ({
+				const updatedAnswers = blankValuePairs?.map((pair) => ({
 					id: pair.id,
 					value: newAnswers[pair.id] || '',
 				}));
 
 				if (prevData) {
-					return prevData?.map?.((data) => {
+					return prevData?.map((data) => {
 						if (data.questionId === questionId) {
 							return { ...data, userBlankValuePairAnswers: updatedAnswers };
 						}
@@ -315,7 +315,7 @@ const FillInTheBlanksTyping = ({
 		<Container>
 			<Column>
 				<TextContainer isMobileSizeSmall={isMobileSizeSmall}>
-					{textSegments?.map?.((segment, index) => {
+					{textSegments?.map((segment, index) => {
 						const match = segment.match(/___(\d+)___/);
 						if (match) {
 							const blankIndex = parseInt(match[1], 10) - 1;
@@ -364,7 +364,7 @@ const FillInTheBlanksTyping = ({
 								padding: '1rem',
 							}}>
 							<Box sx={{ display: 'flex', flexWrap: 'wrap' }}>
-								{hints?.map?.((hint, index) => {
+								{hints?.map((hint, index) => {
 									return (
 										<Box
 											key={index}
@@ -415,7 +415,7 @@ const FillInTheBlanksTyping = ({
 								padding: '1rem',
 							}}>
 							<TextContainer isMobileSizeSmall={isMobileSizeSmall}>
-								{textSegments?.map?.((segment, index) => {
+								{textSegments?.map((segment, index) => {
 									const match = segment.match(/___(\d+)___/);
 									if (match) {
 										const blankIndex = parseInt(match[1], 10) - 1;

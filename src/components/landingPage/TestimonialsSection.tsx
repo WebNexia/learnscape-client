@@ -85,7 +85,7 @@ const TestimonialsSection = () => {
 							'scrollbarWidth': 'none',
 							'&::-webkit-scrollbar': { display: 'none' },
 						}}>
-						{testimonials?.map?.((testimonial, index) => (
+						{testimonials?.map((testimonial, index) => (
 							<Box
 								key={index}
 								sx={{
@@ -201,7 +201,7 @@ const TestimonialsSection = () => {
 
 					{/* Navigation dots */}
 					<Box sx={{ display: 'flex', justifyContent: 'center', mt: '-3rem', gap: 1 }}>
-						{testimonials?.map?.((_, index) => (
+						{testimonials?.map((_, index) => (
 							<Button
 								key={index}
 								onClick={() => scrollToIndex(index)}

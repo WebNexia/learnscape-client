@@ -80,7 +80,7 @@ const UserSearchSelect: React.FC<UserSearchSelectProps> = ({
 		if (value.trim() && filtered.length > 0 && !loading) {
 			// If we have search results but they're all filtered out, try to load more
 			const visibleResults =
-				filtered?.filter?.((user) => user.firebaseUserId !== currentUserId && !excludeUserIds?.includes?.(user.firebaseUserId)) || [];
+				filtered?.filter((user) => user.firebaseUserId !== currentUserId && !excludeUserIds?.includes(user.firebaseUserId)) || [];
 			if (visibleResults.length === 0 && pagination?.hasNextPage) {
 				// All current results are filtered out, load more to get new results
 				loadMore();
@@ -97,7 +97,7 @@ const UserSearchSelect: React.FC<UserSearchSelectProps> = ({
 			} else if (filtered.length > 0) {
 				// Check if all results are filtered out
 				const visibleResults =
-					filtered?.filter?.((user) => user.firebaseUserId !== currentUserId && !excludeUserIds?.includes?.(user.firebaseUserId)) || [];
+					filtered?.filter((user) => user.firebaseUserId !== currentUserId && !excludeUserIds?.includes(user.firebaseUserId)) || [];
 				setNoUserFound(visibleResults.length === 0);
 			} else {
 				setNoUserFound(false);
@@ -129,7 +129,7 @@ const UserSearchSelect: React.FC<UserSearchSelectProps> = ({
 	);
 
 	const filteredUsers = useMemo(() => {
-		return filtered?.filter?.((user) => user.firebaseUserId !== currentUserId && !excludeUserIds?.includes?.(user.firebaseUserId)) || [];
+		return filtered?.filter((user) => user.firebaseUserId !== currentUserId && !excludeUserIds?.includes(user.firebaseUserId)) || [];
 	}, [filtered, currentUserId, excludeUserIds]);
 
 	const hasResults = filteredUsers.length > 0;
@@ -271,7 +271,7 @@ const UserSearchSelect: React.FC<UserSearchSelectProps> = ({
 
 						...listSx,
 					}}>
-					{filteredUsers?.map?.((user) => (
+					{filteredUsers?.map((user) => (
 						<Box
 							key={user.firebaseUserId}
 							sx={{
@@ -282,9 +282,9 @@ const UserSearchSelect: React.FC<UserSearchSelectProps> = ({
 								'padding': isMobileSize ? '0.25rem' : '0.5rem',
 								'transition': '0.5s',
 								'borderRadius': '0.25rem',
-								'cursor': blockedUsers?.includes?.(user.firebaseUserId) ? 'not-allowed' : 'pointer',
-								'opacity': blockedUsers?.includes?.(user.firebaseUserId) ? 0.6 : 1,
-								':hover': blockedUsers?.includes?.(user.firebaseUserId)
+								'cursor': blockedUsers?.includes(user.firebaseUserId) ? 'not-allowed' : 'pointer',
+								'opacity': blockedUsers?.includes(user.firebaseUserId) ? 0.6 : 1,
+								':hover': blockedUsers?.includes(user.firebaseUserId)
 									? {}
 									: {
 											'backgroundColor': theme.bgColor?.primary,
@@ -326,7 +326,7 @@ const UserSearchSelect: React.FC<UserSearchSelectProps> = ({
 										</Typography>
 									)}
 								</Box>
-								{blockedUsers?.includes?.(user.firebaseUserId) && (
+								{blockedUsers?.includes(user.firebaseUserId) && (
 									<Tooltip title='This user is blocked' placement='top' arrow>
 										<DoNotDisturbAlt
 											sx={{

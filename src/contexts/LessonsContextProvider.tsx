@@ -48,7 +48,7 @@ const LessonsContextProvider = ({ children }: LessonsContextProviderProps) => {
 		location.pathname === '/contact-us' ||
 		location.pathname === '/about-us' ||
 		location.pathname === '/auth' ||
-		(location.pathname.startsWith('/course/') && !location.pathname?.includes?.('/userCourseId/'));
+		(location.pathname.startsWith('/course/') && !location.pathname?.includes('/userCourseId/'));
 
 	const {
 		data: lessons,
@@ -173,7 +173,7 @@ export default LessonsContextProvider;
 // 		location.pathname === '/about-us' ||
 // 		location.pathname === '/auth' ||
 // 		// Only consider course preview pages as landing pages, not enrolled course pages
-// 		(location.pathname.startsWith('/course/') && !location.pathname?.includes?.('/userCourseId/'));
+// 		(location.pathname.startsWith('/course/') && !location.pathname?.includes('/userCourseId/'));
 
 // 	const [lessonsPageNumber, setLessonsPageNumber] = useState<number>(1);
 // 	const [totalItems, setTotalItems] = useState<number>(0);

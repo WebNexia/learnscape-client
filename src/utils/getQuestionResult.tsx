@@ -14,9 +14,9 @@ export const getQuestionResult = (response: any, fetchQuestionTypeName: (questio
 		}
 
 		const isAllCorrect =
-			response.userBlankValuePairAnswers?.every?.(
+			response.userBlankValuePairAnswers?.every(
 				(userAnswer: any) =>
-					response.questionId.blankValuePairs?.some?.(
+					response.questionId.blankValuePairs?.some(
 						(correctPair: any) => correctPair.id === userAnswer.id && correctPair.value === userAnswer.value
 					) || false
 			) || false;
@@ -29,9 +29,9 @@ export const getQuestionResult = (response: any, fetchQuestionTypeName: (questio
 		}
 
 		const isAllCorrect =
-			response.userBlankValuePairAnswers?.every?.(
+			response.userBlankValuePairAnswers?.every(
 				(userAnswer: any) =>
-					response.questionId.blankValuePairs?.some?.(
+					response.questionId.blankValuePairs?.some(
 						(correctPair: any) => correctPair.id === userAnswer.id && correctPair.value === userAnswer.value
 					) || false
 			) || false;
@@ -44,9 +44,9 @@ export const getQuestionResult = (response: any, fetchQuestionTypeName: (questio
 		}
 
 		const isAllCorrect =
-			response.userMatchingPairAnswers?.every?.(
+			response.userMatchingPairAnswers?.every(
 				(userAnswer: any) =>
-					response.questionId.matchingPairs?.some?.(
+					response.questionId.matchingPairs?.some(
 						(correctPair: any) => correctPair.id === userAnswer.id && correctPair.answer === userAnswer.answer
 					) || false
 			) || false;

@@ -66,7 +66,7 @@ const Community = () => {
 
 	// Use search results if active, otherwise use context data
 	const displayTopics =
-		(isSearchActive ? searchResults : sortedTopicsData || [])?.sort?.((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()) ||
+		(isSearchActive ? searchResults : sortedTopicsData || [])?.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()) ||
 		[];
 
 	// For pagination, use total items from server when not searching
@@ -76,7 +76,7 @@ const Community = () => {
 	const currentPage = isSearchActive ? searchResultsPage : topicsPageNumber;
 
 	// Paginate the data for display
-	const paginatedTopics = displayTopics?.slice?.((currentPage - 1) * pageSize, currentPage * pageSize) || [];
+	const paginatedTopics = displayTopics?.slice((currentPage - 1) * pageSize, currentPage * pageSize) || [];
 
 	useEffect(() => {
 		setTopicsPageNumber(1);
@@ -238,7 +238,7 @@ const Community = () => {
 
 				// Fetch all missing pages in sequence
 				for (let page = currentLoadedPages + 1; page <= targetPage; page++) {
-					if (!searchResultsLoadedPages?.includes?.(page)) {
+					if (!searchResultsLoadedPages?.includes(page)) {
 						await fetchMoreSearchResults(page, params);
 					}
 				}
@@ -361,7 +361,7 @@ const Community = () => {
 												}}>
 												All Topics
 											</MenuItem>
-											{getFilterOptions()?.map?.((option) => (
+											{getFilterOptions()?.map((option) => (
 												<MenuItem
 													value={option.toLowerCase()}
 													key={option}
@@ -587,7 +587,7 @@ const Community = () => {
 							</Box>
 						</Box>
 						<Box>
-							{paginatedTopics?.map?.((topic: CommunityTopic) => (
+							{paginatedTopics?.map((topic: CommunityTopic) => (
 								<Topic key={topic._id} topic={topic} />
 							))}
 						</Box>
@@ -607,7 +607,7 @@ const Community = () => {
 						</Typography>
 					</Box>
 					<Box sx={{ mt: isMobileSize ? '1.5rem' : '2rem' }}>
-						{communityRules?.map?.((rule, index) => (
+						{communityRules?.map((rule, index) => (
 							<Box key={index} sx={{ mb: '2rem' }}>
 								<Box sx={{ mb: '0.5rem' }}>
 									<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '0.95rem' }}>
@@ -634,7 +634,7 @@ const Community = () => {
 							</Typography>
 						</Box>
 						<Box>
-							{consequences.consequences?.map?.((data, index) => (
+							{consequences.consequences?.map((data, index) => (
 								<ul key={index}>
 									<li style={{ margin: '0 0 0.35rem 2rem' }}>
 										<Typography variant='body2' sx={{ lineHeight: 1.7, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>

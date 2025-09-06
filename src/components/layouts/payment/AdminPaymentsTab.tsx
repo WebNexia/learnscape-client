@@ -32,7 +32,7 @@ const AdminPaymentsTab = () => {
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
-	const mappedCourses: string[] = courses?.map?.((course) => course.title) || [];
+	const mappedCourses: string[] = courses?.map((course) => course.title) || [];
 
 	const [searchValue, setSearchValue] = useState<string>('');
 	const [filterValue, setFilterValue] = useState<string>('');
@@ -59,7 +59,7 @@ const AdminPaymentsTab = () => {
 
 	const currentPage = isSearchActive ? searchResultsPage : paymentsPageNumber;
 
-	const sortedPayments = [...(displayPayments || [])]?.sort?.((a, b) => {
+	const sortedPayments = [...(displayPayments || [])]?.sort((a, b) => {
 		const aValue = a[orderBy] ?? '';
 		const bValue = b[orderBy] ?? '';
 
@@ -70,7 +70,7 @@ const AdminPaymentsTab = () => {
 		}
 	});
 
-	const paginatedPayments = sortedPayments?.slice?.((currentPage - 1) * pageSize, currentPage * pageSize) || [];
+	const paginatedPayments = sortedPayments?.slice((currentPage - 1) * pageSize, currentPage * pageSize) || [];
 
 	useEffect(() => {
 		setPaymentsPageNumber(1);
@@ -89,7 +89,7 @@ const AdminPaymentsTab = () => {
 
 				// Fetch all missing pages in sequence
 				for (let page = currentLoadedPages + 1; page <= targetPage; page++) {
-					if (!searchResultsLoadedPages?.includes?.(page)) {
+					if (!searchResultsLoadedPages?.includes(page)) {
 						await fetchMoreSearchResults(page);
 					}
 				}
@@ -219,7 +219,7 @@ const AdminPaymentsTab = () => {
 			// Get filename from Content-Disposition header if available
 			let filename = `${organisation?.orgName}_Payments.xlsx`;
 			const disposition = response.headers['content-disposition'];
-			if (disposition && disposition?.indexOf?.('filename=') !== -1) {
+			if (disposition && disposition?.indexOf('filename=') !== -1) {
 				filename = disposition.split('filename=')[1].replace(/['"]/g, '').trim();
 			}
 
@@ -373,7 +373,7 @@ const AdminPaymentsTab = () => {
 									}}>
 									------ Filter by Course ------
 								</MenuItem>
-								{mappedCourses?.map?.((course) => (
+								{mappedCourses?.map((course) => (
 									<MenuItem
 										value={course?.toLowerCase()}
 										key={course}
@@ -624,7 +624,7 @@ const AdminPaymentsTab = () => {
 					/>
 					<TableBody>
 						{paginatedPayments &&
-							paginatedPayments?.map?.((payment: Payment) => {
+							paginatedPayments?.map((payment: Payment) => {
 								return (
 									<TableRow key={payment._id} hover>
 										{!isVerySmallScreen && <CustomTableCell value={payment.firstName} />}

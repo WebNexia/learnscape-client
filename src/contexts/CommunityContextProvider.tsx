@@ -54,7 +54,7 @@ const CommunityContextProvider = (props: CommunityContextProviderProps) => {
 		location.pathname === '/about-us' ||
 		location.pathname === '/auth' ||
 		// Only consider course preview pages as landing pages, not enrolled course pages
-		(location.pathname.startsWith('/course/') && !location.pathname?.includes?.('/userCourseId/'));
+		(location.pathname.startsWith('/course/') && !location.pathname?.includes('/userCourseId/'));
 
 	const [topicsPageNumber, setTopicsPageNumber] = useState<number>(1);
 	const [totalItems, setTotalItems] = useState<number>(0);
@@ -70,7 +70,7 @@ const CommunityContextProvider = (props: CommunityContextProviderProps) => {
 			setTotalItems(response.data.totalItems || response.data.data.length);
 
 			// Update loadedPages to track which pages we've fetched
-			if (!loadedPages?.includes?.(page)) {
+			if (!loadedPages?.includes(page)) {
 				setLoadedPages((prev) => [...prev, page]);
 			}
 
@@ -121,13 +121,13 @@ const CommunityContextProvider = (props: CommunityContextProviderProps) => {
 	// Progressive pagination gap-filling (batched)
 	useEffect(() => {
 		if (loadedPages.length > 0 && orgId) {
-			const sortedPages = [...(loadedPages || [])]?.sort?.((a, b) => a - b) || [];
+			const sortedPages = [...(loadedPages || [])]?.sort((a, b) => a - b) || [];
 			const maxPage = Math.max(...sortedPages);
 
 			let missingStart: number | null = null;
 
 			for (let page = 1; page <= maxPage; page++) {
-				if (!loadedPages?.includes?.(page)) {
+				if (!loadedPages?.includes(page)) {
 					if (missingStart === null) {
 						missingStart = page; // start of a gap
 					}
@@ -156,7 +156,7 @@ const CommunityContextProvider = (props: CommunityContextProviderProps) => {
 	// Function to handle sorting
 	const sortTopicsData = (property: keyof CommunityTopic, order: 'asc' | 'desc') => {
 		// React Query data'yı sort et, local state'e set etme
-		const sortedDataCopy = [...(topicsData || [])]?.sort?.((a: CommunityTopic, b: CommunityTopic) => {
+		const sortedDataCopy = [...(topicsData || [])]?.sort((a: CommunityTopic, b: CommunityTopic) => {
 			const aValue = a[property] ?? '';
 			const bValue = b[property] ?? '';
 			if (order === 'asc') {
@@ -181,7 +181,7 @@ const CommunityContextProvider = (props: CommunityContextProviderProps) => {
 	const updateTopics = (singleTopic: Partial<CommunityTopic>) => {
 		queryClient.setQueryData(['allTopics', orgId], (oldData: CommunityTopic[] | undefined) => {
 			return (
-				oldData?.map?.((topic) => {
+				oldData?.map((topic) => {
 					if (singleTopic._id === topic._id) {
 						return { ...topic, ...singleTopic };
 					}
@@ -193,7 +193,7 @@ const CommunityContextProvider = (props: CommunityContextProviderProps) => {
 
 	const removeTopic = (id: string) => {
 		queryClient.setQueryData(['allTopics', orgId], (oldData: CommunityTopic[] | undefined) => {
-			return oldData?.filter?.((data) => data._id !== id) || [];
+			return oldData?.filter((data) => data._id !== id) || [];
 		});
 		// Also update totalItems
 		setTotalItems((prev) => Math.max(0, prev - 1));

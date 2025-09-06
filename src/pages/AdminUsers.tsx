@@ -71,7 +71,7 @@ const AdminUsers = () => {
 	// Use appropriate page number for pagination
 	const currentPage = isSearchActive ? searchResultsPage : usersPageNumber;
 	const sortedUsers =
-		[...(displayUsers || [])]?.sort?.((a, b) => {
+		[...(displayUsers || [])]?.sort((a, b) => {
 			const aValue = a[orderBy] ?? '';
 			const bValue = b[orderBy] ?? '';
 
@@ -81,7 +81,7 @@ const AdminUsers = () => {
 				return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
 			}
 		}) || [];
-	const paginatedUsers = sortedUsers?.slice?.((currentPage - 1) * pageSize, currentPage * pageSize) || [];
+	const paginatedUsers = sortedUsers?.slice((currentPage - 1) * pageSize, currentPage * pageSize) || [];
 
 	// Modal states
 	const [isUserStatusUpdateModalOpen, setIsUserStatusUpdateModalOpen] = useState<boolean[]>([]);
@@ -134,7 +134,7 @@ const AdminUsers = () => {
 
 				// Fetch all missing pages in sequence
 				for (let page = currentLoadedPages + 1; page <= targetPage; page++) {
-					if (!searchResultsLoadedPages?.includes?.(page)) {
+					if (!searchResultsLoadedPages?.includes(page)) {
 						await fetchMoreSearchResults(page, params);
 					}
 				}
@@ -278,7 +278,7 @@ const AdminUsers = () => {
 			}
 
 			// Create Excel data
-			const excelData = dataToExport?.map?.((user: User) => ({
+			const excelData = dataToExport?.map((user: User) => ({
 				'First Name': user.firstName,
 				'Last Name': user.lastName,
 				'Username': user.username,
@@ -466,7 +466,7 @@ const AdminUsers = () => {
 											}}>
 											All Users
 										</MenuItem>
-										{['Admin Users', 'Learners', 'Active Users', 'Inactive Users']?.map?.((type) => (
+										{['Admin Users', 'Learners', 'Active Users', 'Inactive Users']?.map((type) => (
 											<MenuItem
 												value={type.toLowerCase()}
 												key={type}
@@ -679,7 +679,7 @@ const AdminUsers = () => {
 						/>
 						<TableBody>
 							{paginatedUsers &&
-								paginatedUsers?.map?.((user: User, index) => {
+								paginatedUsers?.map((user: User, index) => {
 									return (
 										<TableRow key={user._id} hover>
 											{!isVerySmallScreen && <CustomTableCell value={user.firstName} />}
@@ -687,7 +687,7 @@ const AdminUsers = () => {
 											<CustomTableCell value={user.username} />
 											<CustomTableCell value={user.email} />
 											{!isVerySmallScreen && <CustomTableCell value={user.isActive ? 'Active' : 'Deactivated'} />}
-											{!isVerySmallScreen && <CustomTableCell value={user.role?.charAt?.(0)?.toUpperCase?.() + user.role?.slice?.(1)} />}
+											{!isVerySmallScreen && <CustomTableCell value={user.role?.charAt?.(0)?.toUpperCase?.() + user.role?.slice(1)} />}
 
 											<TableCell
 												sx={{
@@ -732,7 +732,7 @@ const AdminUsers = () => {
 																	fontSize: isMobileSize ? '0.65rem' : '0.85rem',
 																	textTransform: 'capitalize',
 																}}>
-																{[Roles.ADMIN, Roles.USER]?.map?.((type) => (
+																{[Roles.ADMIN, Roles.USER]?.map((type) => (
 																	<MenuItem
 																		value={type}
 																		key={type}

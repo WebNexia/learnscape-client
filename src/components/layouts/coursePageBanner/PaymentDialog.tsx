@@ -255,7 +255,7 @@ const PaymentDialog = ({
 							resetRecaptcha();
 						} else if (error.response?.data?.message) {
 							const backendMsg = error.response.data.message;
-							if (backendMsg.toLowerCase()?.includes?.('recaptcha')) {
+							if (backendMsg.toLowerCase()?.includes('recaptcha')) {
 								setErrorMessage(
 									fromHomePage ? 'reCAPTCHA doğrulaması başarısız. Lütfen tekrar deneyin.' : 'reCAPTCHA verification failed. Please try again.'
 								);
@@ -407,7 +407,7 @@ const PaymentDialog = ({
 
 							if (isPromoCodeApplied && promoCodeId) {
 								try {
-									const rolledBackUsers = usersUsedPromoCode?.filter?.((id) => id !== resolvedUserId) || [];
+									const rolledBackUsers = usersUsedPromoCode?.filter((id) => id !== resolvedUserId) || [];
 									await axiosInstance.patch(`${base_url}/promocodes/${promoCodeId}`, {
 										usersUsed: rolledBackUsers,
 									});
@@ -419,11 +419,11 @@ const PaymentDialog = ({
 
 							// 🧹 LocalStorage cleanup
 							const updatedCourses =
-								JSON.parse(localStorage.getItem('userCourseData') || '[]')?.filter?.((item: any) => item.courseId !== course?._id) || [];
+								JSON.parse(localStorage.getItem('userCourseData') || '[]')?.filter((item: any) => item.courseId !== course?._id) || [];
 							localStorage.setItem('userCourseData', JSON.stringify(updatedCourses));
 
 							const updatedLessons =
-								JSON.parse(localStorage.getItem('userLessonData') || '[]')?.filter?.((item: any) => item.courseId !== course?._id) || [];
+								JSON.parse(localStorage.getItem('userLessonData') || '[]')?.filter((item: any) => item.courseId !== course?._id) || [];
 							localStorage.setItem('userLessonData', JSON.stringify(updatedLessons));
 						} catch (cleanupErr) {
 							resetForm(true);
@@ -677,7 +677,7 @@ const PaymentDialog = ({
 									if (!course) return;
 									const amount = +getPriceForCountry(course, resolvedCountryCode).amount;
 									setDiscountedAmount(isNaN(amount) ? 0 : amount);
-									setUsersUsedPromoCode((prevData) => prevData?.filter?.((id) => id !== resolvedUserId) || []);
+									setUsersUsedPromoCode((prevData) => prevData?.filter((id) => id !== resolvedUserId) || []);
 									setErrorMessage('');
 									setIsUserAccountExist(true);
 								}}
@@ -747,7 +747,7 @@ const PaymentDialog = ({
 								if (!course) return;
 								const amount = +getPriceForCountry(course, resolvedCountryCode).amount;
 								setDiscountedAmount(isNaN(amount) ? 0 : amount);
-								setUsersUsedPromoCode((prevData) => prevData?.filter?.((id) => id !== resolvedUserId) || []);
+								setUsersUsedPromoCode((prevData) => prevData?.filter((id) => id !== resolvedUserId) || []);
 							}}
 							InputProps={{
 								inputProps: {
@@ -1130,7 +1130,7 @@ const PaymentDialog = ({
 									{fromHomePage ? 'Buraya tıklayın' : 'Click here'}
 								</span>
 							)}
-							{errorMessage?.includes?.('e-posta adresinizi doğrulayın') && !verificationSent && (
+							{errorMessage?.includes('e-posta adresinizi doğrulayın') && !verificationSent && (
 								<Box sx={{ mt: 1 }}>
 									<Button
 										onClick={handleResendVerification}

@@ -55,7 +55,7 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 	}, []);
 
 	const clearAllQuizData = () => {
-		Object.keys(localStorage)?.forEach?.((key) => {
+		Object.keys(localStorage)?.forEach((key) => {
 			if (key.startsWith('UserQuizAnswers-')) {
 				localStorage.removeItem(key);
 			}
@@ -105,7 +105,7 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 			// Use a batch to update multiple documents at once
 			const batch = writeBatch(db);
 
-			querySnapshot?.forEach?.((docSnapshot) => {
+			querySnapshot?.forEach((docSnapshot) => {
 				const notificationDocRef = doc(db, 'notifications', userFirebaseId, 'userNotifications', docSnapshot.id);
 				batch.update(notificationDocRef, { isRead: true });
 			});
@@ -134,7 +134,7 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 			// Use a batch to delete multiple documents at once
 			const batch = writeBatch(db);
 
-			querySnapshot?.forEach?.((docSnapshot) => {
+			querySnapshot?.forEach((docSnapshot) => {
 				const notificationDocRef = doc(db, 'notifications', userFirebaseId, 'userNotifications', docSnapshot.id);
 				batch.delete(notificationDocRef);
 			});

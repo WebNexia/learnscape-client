@@ -47,7 +47,7 @@ const PromoCodesContextProvider = ({ children }: PromoCodesContextProviderProps)
 		location.pathname === '/contact-us' ||
 		location.pathname === '/about-us' ||
 		location.pathname === '/auth' ||
-		(location.pathname.startsWith('/course/') && !location.pathname?.includes?.('/userCourseId/'));
+		(location.pathname.startsWith('/course/') && !location.pathname?.includes('/userCourseId/'));
 
 	const {
 		data: promoCodes,
@@ -158,7 +158,7 @@ export default PromoCodesContextProvider;
 // 		location.pathname === '/about-us' ||
 // 		location.pathname === '/auth' ||
 // 		// Only consider course preview pages as landing pages, not enrolled course pages
-// 		(location.pathname.startsWith('/course/') && !location.pathname?.includes?.('/userCourseId/'));
+// 		(location.pathname.startsWith('/course/') && !location.pathname?.includes('/userCourseId/'));
 
 // 	const [loadedPages, setLoadedPages] = useState<number[]>([]);
 // 	const [totalItems, setTotalItems] = useState<number>(0);

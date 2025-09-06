@@ -97,7 +97,7 @@ const QuizQuestion = ({
 	const [isMsgModalAfterSubmitOpen, setIsMsgModalAfterSubmitOpen] = useState<boolean>(false);
 	const [userQuizAnswersUploading, setUserQuizAnswersUploading] = useState<boolean>(false);
 	const [isAudioVideoUploaded, setIsAudioVideoUploaded] = useState<boolean>(() => {
-		const userUpload = userQuizAnswers?.find?.((data) => data.questionId === question._id);
+		const userUpload = userQuizAnswers?.find((data) => data.questionId === question._id);
 		if (userUpload?.audioRecordUrl || userUpload?.videoRecordUrl) {
 			return true;
 		}
@@ -130,7 +130,7 @@ const QuizQuestion = ({
 
 	const [value, setValue] = useState<string>(() => {
 		if (!isLessonCompleted && !isAudioVideoQuestion) {
-			const value: string = userQuizAnswers?.find?.((data) => data.questionId == question._id)?.userAnswer || '';
+			const value: string = userQuizAnswers?.find((data) => data.questionId == question._id)?.userAnswer || '';
 			return value;
 		}
 
@@ -146,7 +146,7 @@ const QuizQuestion = ({
 	useEffect(() => {
 		setUserQuizAnswerAfterSubmission(() => {
 			if (isLessonCompleted) {
-				const answer: string = userQuizAnswers?.find?.((data) => data.questionId == question._id)?.userAnswer || '';
+				const answer: string = userQuizAnswers?.find((data) => data.questionId == question._id)?.userAnswer || '';
 				return answer;
 			}
 			return '';
@@ -154,7 +154,7 @@ const QuizQuestion = ({
 
 		setUserMatchingPairsAfterSubmission(() => {
 			if (isLessonCompleted) {
-				const pairs: UserMatchingPairAnswers[] = userQuizAnswers?.find?.((data) => data.questionId == question._id)?.userMatchingPairAnswers || [];
+				const pairs: UserMatchingPairAnswers[] = userQuizAnswers?.find((data) => data.questionId == question._id)?.userMatchingPairAnswers || [];
 				return pairs;
 			}
 			return [];
@@ -163,7 +163,7 @@ const QuizQuestion = ({
 		setUserBlankValuePairsAfterSubmission(() => {
 			if (isLessonCompleted) {
 				const pairs: UserBlankValuePairAnswers[] =
-					userQuizAnswers?.find?.((data) => data.questionId == question._id)?.userBlankValuePairAnswers || [];
+					userQuizAnswers?.find((data) => data.questionId == question._id)?.userBlankValuePairAnswers || [];
 				return pairs;
 			}
 			return [];
@@ -171,7 +171,7 @@ const QuizQuestion = ({
 
 		setTeacherQuestionFeedback(() => {
 			if (isLessonCompleted) {
-				const feedback: string = userQuizAnswers?.find?.((data) => data.questionId == question._id)?.teacherFeedback || '';
+				const feedback: string = userQuizAnswers?.find((data) => data.questionId == question._id)?.teacherFeedback || '';
 				return feedback;
 			}
 			return '';
@@ -179,7 +179,7 @@ const QuizQuestion = ({
 
 		setTeacherQuestionAudioFeedback(() => {
 			if (isLessonCompleted) {
-				const feedback: string = userQuizAnswers?.find?.((data) => data.questionId == question._id)?.teacherAudioFeedbackUrl || '';
+				const feedback: string = userQuizAnswers?.find((data) => data.questionId == question._id)?.teacherAudioFeedbackUrl || '';
 				return feedback;
 			}
 			return '';
@@ -187,7 +187,7 @@ const QuizQuestion = ({
 
 		setUploadUrlForCompletedLesson(() => {
 			if (isLessonCompleted) {
-				const answer = userQuizAnswers?.find?.((data) => data.questionId == question._id);
+				const answer = userQuizAnswers?.find((data) => data.questionId == question._id);
 				if (answer?.audioRecordUrl) {
 					return answer?.audioRecordUrl;
 				} else if (answer?.videoRecordUrl) {
@@ -203,7 +203,7 @@ const QuizQuestion = ({
 		}
 
 		setCourseTitle(() => {
-			return userCourseData?.find?.((data) => data.courseId === courseId)?.courseTitle || '';
+			return userCourseData?.find((data) => data.courseId === courseId)?.courseTitle || '';
 		});
 	}, []);
 
@@ -218,7 +218,7 @@ const QuizQuestion = ({
 	const handleRadioChange = (event: React.ChangeEvent<HTMLInputElement>) => {
 		setUserQuizAnswers((prevData) => {
 			if (prevData) {
-				const updatedAnswers = prevData?.map?.((answer) => {
+				const updatedAnswers = prevData?.map((answer) => {
 					if (answer.questionId === question._id) {
 						return { ...answer, userAnswer: (event.target as HTMLInputElement).value };
 					}
@@ -245,7 +245,7 @@ const QuizQuestion = ({
 
 		// Upload user answers
 		await Promise.all(
-			userQuizAnswers?.map?.((answer) => {
+			userQuizAnswers?.map((answer) => {
 				return (async () => {
 					try {
 						await axios.post(`${base_url}/userQuestions`, {
@@ -323,7 +323,7 @@ const QuizQuestion = ({
 
 			setUserQuizAnswers((prevData) => {
 				if (prevData) {
-					const updatedAnswers = prevData?.map?.((answer) => {
+					const updatedAnswers = prevData?.map((answer) => {
 						if (answer.questionId === question._id) {
 							return { ...answer, audioRecordUrl: downloadURL };
 						}
@@ -352,7 +352,7 @@ const QuizQuestion = ({
 
 			setUserQuizAnswers((prevData) => {
 				if (prevData) {
-					const updatedAnswers = prevData?.map?.((answer) => {
+					const updatedAnswers = prevData?.map((answer) => {
 						if (answer.questionId === question._id) {
 							return { ...answer, videoRecordUrl: downloadURL };
 						}
@@ -396,7 +396,7 @@ const QuizQuestion = ({
 									setValue(e.target.value);
 									setUserQuizAnswers((prevData) => {
 										if (prevData) {
-											const updatedAnswers = prevData?.map?.((answer) => {
+											const updatedAnswers = prevData?.map((answer) => {
 												if (answer.questionId === question._id) {
 													return { ...answer, userAnswer: e.target.value };
 												}
@@ -448,7 +448,7 @@ const QuizQuestion = ({
 
 							{isAudioVideoUploaded && (
 								<Box>
-									{userQuizAnswers?.map?.((answer) => {
+									{userQuizAnswers?.map((answer) => {
 										if (answer.questionId === question._id) {
 											if (answer.audioRecordUrl) {
 												return (
@@ -568,7 +568,7 @@ const QuizQuestion = ({
 							sx={{ alignSelf: 'center' }}>
 							{question &&
 								question.options &&
-								question.options?.map?.((option, index) => {
+								question.options?.map((option, index) => {
 									let textColor = null;
 
 									if (isLessonCompleted) {
@@ -800,7 +800,7 @@ const QuizQuestion = ({
 						</Box>
 
 						<Box sx={{ ml: '3rem' }}>
-							{[QuestionType.MULTIPLE_CHOICE, QuestionType.TRUE_FALSE, QuestionType.MATCHING, 'Fill in the Blanks']?.map?.((type, index) => (
+							{[QuestionType.MULTIPLE_CHOICE, QuestionType.TRUE_FALSE, QuestionType.MATCHING, 'Fill in the Blanks']?.map((type, index) => (
 								<Typography key={index} variant='body2' sx={{ lineHeight: '1.9', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 									- {type}
 								</Typography>

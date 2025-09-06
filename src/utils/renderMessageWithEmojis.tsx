@@ -14,7 +14,7 @@ export const renderMessageWithEmojis = (messageContent: string | any[], fontSize
 		const emojis = [...text.matchAll(regex)];
 
 		return (
-			parts?.reduce?.((acc: any[], part: string, index: number) => {
+			parts?.reduce((acc: any[], part: string, index: number) => {
 				if (part) {
 					acc.push(
 						<span key={`text-${index}`} style={{ fontSize: isMobileSize ? '0.7rem' : '0.8rem', verticalAlign: 'middle' }}>
@@ -41,7 +41,7 @@ export const renderMessageWithEmojis = (messageContent: string | any[], fontSize
 
 	// If content is an array of React elements, iterate and apply emoji rendering on text elements only
 	return (
-		messageContent?.map?.((item, _) => {
+		messageContent?.map((item, _) => {
 			if (typeof item === 'string') {
 				return renderTextWithEmojis(item);
 			} else {

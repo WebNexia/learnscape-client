@@ -38,15 +38,15 @@ const AdminDashboard = () => {
 	});
 
 	useEffect(() => {
-		const totalNumberOfUsers: number = users?.filter?.((user) => user?.role !== Roles.ADMIN)?.length || 0;
+		const totalNumberOfUsers: number = users?.filter((user) => user?.role !== Roles.ADMIN)?.length || 0;
 		setTotalUsers(totalNumberOfUsers);
 
 		// Process user data to create chart data
 		const processUserData = () => {
 			const dataMap: { [date: string]: number } = {};
 			users
-				?.sort?.((a: User, b: User) => a.createdAt.localeCompare(b.createdAt))
-				?.forEach?.((user) => {
+				?.sort((a: User, b: User) => a.createdAt.localeCompare(b.createdAt))
+				?.forEach((user) => {
 					if (user?.role !== Roles.ADMIN) {
 						const date = new Date(user.createdAt).toISOString().split('T')[0];
 						dataMap[date] = (dataMap[date] || 0) + 1;
@@ -55,9 +55,9 @@ const AdminDashboard = () => {
 
 			const labels =
 				Object.keys(dataMap)
-					?.map?.((date) => new Date(date)) // Convert to Date objects
-					?.sort?.((a: any, b: any) => a - b) // Sort in ascending order
-					?.map?.((date) => format(date, 'yyyy-MM-dd')) || []; // Convert back to formatted string
+					?.map((date) => new Date(date)) // Convert to Date objects
+					?.sort((a: any, b: any) => a - b) // Sort in ascending order
+					?.map((date) => format(date, 'yyyy-MM-dd')) || []; // Convert back to formatted string
 
 			const data = Object.values(dataMap);
 			setChartData({
@@ -77,8 +77,8 @@ const AdminDashboard = () => {
 		};
 
 		const processBarChartData = () => {
-			const labels = courses?.map?.((course: any) => course.title) || []; // Course titles
-			const data = courses?.map?.((course: any) => course.enrolledUsersCount) || []; // Enrolled users count per course
+			const labels = courses?.map((course: any) => course.title) || []; // Course titles
+			const data = courses?.map((course: any) => course.enrolledUsersCount) || []; // Enrolled users count per course
 
 			setBarChartData({
 				labels, // x-axis values (course titles)

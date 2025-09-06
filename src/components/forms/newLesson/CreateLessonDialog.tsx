@@ -109,7 +109,7 @@ const CreateLessonDialog = ({
 		if (setChapterLessonDataBeforeSave) {
 			setChapterLessonDataBeforeSave((prevData) => {
 				if (prevData) {
-					return prevData?.map?.((currentChapter) => {
+					return prevData?.map((currentChapter) => {
 						if (currentChapter.chapterId === chapter?.chapterId) {
 							const updatedLessons = [...currentChapter.lessons, newLessonBeforeSave];
 							if (setIsChapterUpdated) {
@@ -118,7 +118,7 @@ const CreateLessonDialog = ({
 							return {
 								...currentChapter,
 								lessons: updatedLessons,
-								lessonIds: updatedLessons?.map?.((lesson: Lesson) => lesson._id) || [],
+								lessonIds: updatedLessons?.map((lesson: Lesson) => lesson._id) || [],
 							};
 						}
 						return currentChapter; // Return unchanged chapter if not the one being updated
@@ -182,7 +182,7 @@ const CreateLessonDialog = ({
 							Select Type
 						</MenuItem>
 						{lessonTypes &&
-							lessonTypes?.map?.((type) => (
+							lessonTypes?.map((type) => (
 								<MenuItem value={type} key={type} sx={{ fontSize: '0.85rem' }}>
 									{type}
 								</MenuItem>

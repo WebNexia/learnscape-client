@@ -94,7 +94,7 @@ const AdminRecycleBinLessonsTab = () => {
 
 	// Use appropriate page number for pagination
 	const currentPageNumber = isSearchActive ? searchResultsPage : currentPage;
-	const paginatedLessons = displayLessons?.slice?.((currentPageNumber - 1) * pageSize, currentPageNumber * pageSize) || [];
+	const paginatedLessons = displayLessons?.slice((currentPageNumber - 1) * pageSize, currentPageNumber * pageSize) || [];
 
 	const [orderBy, setOrderBy] = useState<keyof ArchivedLesson>('archivedAt');
 	const [order, setOrder] = useState<'asc' | 'desc'>('desc');
@@ -161,7 +161,7 @@ const AdminRecycleBinLessonsTab = () => {
 
 				// Fetch all missing pages in sequence
 				for (let page = currentLoadedPages + 1; page <= targetPage; page++) {
-					if (!searchResultsLoadedPages?.includes?.(page)) {
+					if (!searchResultsLoadedPages?.includes(page)) {
 						await fetchMoreSearchResults(page, params);
 					}
 				}
@@ -177,7 +177,7 @@ const AdminRecycleBinLessonsTab = () => {
 				// Fetch all missing pages in sequence
 				if (currentLoadedPages < targetPage) {
 					for (let page = currentLoadedPages + 1; page <= targetPage; page++) {
-						if (!loadedPages?.includes?.(page)) {
+						if (!loadedPages?.includes(page)) {
 							await fetchArchivedLessons(page);
 							setLoadedPages((prev) => [...prev, page]);
 						}
@@ -222,7 +222,7 @@ const AdminRecycleBinLessonsTab = () => {
 	const handleSelectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
 		const checked = event.target.checked;
 		if (checked) {
-			setSelectedItems(displayLessons?.map?.((lesson) => lesson._id) || []);
+			setSelectedItems(displayLessons?.map((lesson) => lesson._id) || []);
 			setSelectAll(true);
 		} else {
 			setSelectedItems([]);
@@ -232,8 +232,8 @@ const AdminRecycleBinLessonsTab = () => {
 
 	const handleSelectItem = (lessonId: string) => {
 		setSelectedItems((prev) => {
-			if (prev?.includes?.(lessonId)) {
-				const updatedItems = prev?.filter?.((id) => id !== lessonId) || [];
+			if (prev?.includes(lessonId)) {
+				const updatedItems = prev?.filter((id) => id !== lessonId) || [];
 				setSelectAll(false);
 				return updatedItems;
 			} else {
@@ -325,12 +325,12 @@ const AdminRecycleBinLessonsTab = () => {
 
 			if (response.data.status === 200) {
 				// Remove from archived lessons
-				setArchivedLessons((prev) => prev?.filter?.((lesson) => lesson._id !== lessonId) || []);
+				setArchivedLessons((prev) => prev?.filter((lesson) => lesson._id !== lessonId) || []);
 				setTotalItems((prev) => prev - 1);
 
 				// If search is active, also remove from search results
 				if (isSearchActive) {
-					setSearchResults((prev) => prev?.filter?.((lesson) => lesson._id !== lessonId) || []);
+					setSearchResults((prev) => prev?.filter((lesson) => lesson._id !== lessonId) || []);
 					setSearchResultsTotalItems((prev) => Math.max(0, prev - 1));
 				}
 
@@ -359,12 +359,12 @@ const AdminRecycleBinLessonsTab = () => {
 
 			if (response.data.status === 200) {
 				// Remove from archived lessons
-				setArchivedLessons((prev) => prev?.filter?.((lesson) => lesson._id !== lessonId) || []);
+				setArchivedLessons((prev) => prev?.filter((lesson) => lesson._id !== lessonId) || []);
 				setTotalItems((prev) => prev - 1);
 
 				// If search is active, also remove from search results
 				if (isSearchActive) {
-					setSearchResults((prev) => prev?.filter?.((lesson) => lesson._id !== lessonId) || []);
+					setSearchResults((prev) => prev?.filter((lesson) => lesson._id !== lessonId) || []);
 					setSearchResultsTotalItems((prev) => Math.max(0, prev - 1));
 				}
 
@@ -386,7 +386,7 @@ const AdminRecycleBinLessonsTab = () => {
 	const handleBulkRestore = async () => {
 		try {
 			await Promise.all(
-				selectedItems?.map?.((lessonId) => {
+				selectedItems?.map((lessonId) => {
 					return (async () => {
 						const response = await axios.patch(`${base_url}/lessons/${lessonId}/restore`);
 						if (response.data.data) {
@@ -397,12 +397,12 @@ const AdminRecycleBinLessonsTab = () => {
 			);
 
 			// Remove the lessons from the list
-			setArchivedLessons((prev) => prev?.filter?.((lesson) => !selectedItems?.includes?.(lesson._id)) || []);
+			setArchivedLessons((prev) => prev?.filter((lesson) => !selectedItems?.includes(lesson._id)) || []);
 			setTotalItems((prev) => prev - selectedItems.length);
 
 			// If search is active, also remove from search results
 			if (isSearchActive) {
-				setSearchResults((prev) => prev?.filter?.((lesson) => !selectedItems?.includes?.(lesson._id)) || []);
+				setSearchResults((prev) => prev?.filter((lesson) => !selectedItems?.includes(lesson._id)) || []);
 				setSearchResultsTotalItems((prev) => Math.max(0, prev - selectedItems.length));
 			}
 
@@ -423,15 +423,15 @@ const AdminRecycleBinLessonsTab = () => {
 
 	const handleBulkDelete = async () => {
 		try {
-			await Promise.all(selectedItems?.map?.((lessonId) => axios.delete(`${base_url}/lessons/${lessonId}/hard`)) || []);
+			await Promise.all(selectedItems?.map((lessonId) => axios.delete(`${base_url}/lessons/${lessonId}/hard`)) || []);
 
 			// Remove the lessons from the list
-			setArchivedLessons((prev) => prev?.filter?.((lesson) => !selectedItems?.includes?.(lesson._id)) || []);
+			setArchivedLessons((prev) => prev?.filter((lesson) => !selectedItems?.includes(lesson._id)) || []);
 			setTotalItems((prev) => prev - selectedItems.length);
 
 			// If search is active, also remove from search results
 			if (isSearchActive) {
-				setSearchResults((prev) => prev?.filter?.((lesson) => !selectedItems?.includes?.(lesson._id)) || []);
+				setSearchResults((prev) => prev?.filter((lesson) => !selectedItems?.includes(lesson._id)) || []);
 				setSearchResultsTotalItems((prev) => Math.max(0, prev - selectedItems.length));
 			}
 
@@ -553,7 +553,7 @@ const AdminRecycleBinLessonsTab = () => {
 									}}>
 									All deleted lessons
 								</MenuItem>
-								{['Recently deleted', 'Instructional Lessons', 'Practice Lessons', 'Quiz Lessons']?.map?.((type) => (
+								{['Recently deleted', 'Instructional Lessons', 'Practice Lessons', 'Quiz Lessons']?.map((type) => (
 									<MenuItem
 										value={type.toLowerCase()}
 										key={type}
@@ -809,9 +809,9 @@ const AdminRecycleBinLessonsTab = () => {
 					/>
 					<TableBody>
 						{paginatedLessons &&
-							paginatedLessons?.map?.((lesson: ArchivedLesson, index) => {
+							paginatedLessons?.map((lesson: ArchivedLesson, index) => {
 								const deletionDateStatus = getDeletionDateStatus(lesson.archivedAt || '');
-								const isSelected = selectedItems?.includes?.(lesson._id);
+								const isSelected = selectedItems?.includes(lesson._id);
 
 								return (
 									<TableRow key={lesson._id} hover selected={isSelected}>
@@ -843,7 +843,7 @@ const AdminRecycleBinLessonsTab = () => {
 			</Box>
 
 			{/* Restore Modal */}
-			{paginatedLessons?.map?.((lesson, index) => (
+			{paginatedLessons?.map((lesson, index) => (
 				<CustomDialog
 					key={`restore-${lesson._id}`}
 					openModal={restoreModalOpen[index] || false}
@@ -871,7 +871,7 @@ const AdminRecycleBinLessonsTab = () => {
 			))}
 
 			{/* Delete Modal */}
-			{paginatedLessons?.map?.((lesson, index) => (
+			{paginatedLessons?.map((lesson, index) => (
 				<CustomDialog
 					key={`delete-${lesson._id}`}
 					openModal={deleteModalOpen[index] || false}

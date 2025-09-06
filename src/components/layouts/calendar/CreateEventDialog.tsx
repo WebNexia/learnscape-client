@@ -111,7 +111,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 		};
 
 		// Check if user is already selected
-		const isAlreadySelected = newEvent.attendees?.some?.((attendee) => attendee._id === user._id);
+		const isAlreadySelected = newEvent.attendees?.some((attendee) => attendee._id === user._id);
 		if (!isAlreadySelected) {
 			setNewEvent((prevData) => ({
 				...prevData,
@@ -124,7 +124,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 	const handleCourseSelect = (selectedCourse: SearchCourse) => {
 		// For event creation, we only need the course ID
 		// Check if course is already selected
-		const isAlreadySelected = newEvent.coursesIds?.includes?.(selectedCourse._id);
+		const isAlreadySelected = newEvent.coursesIds?.includes(selectedCourse._id);
 		if (!isAlreadySelected) {
 			setNewEvent((prevData) => ({
 				...prevData,
@@ -194,7 +194,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 		}
 
 		const allFirebaseUserIds: string[] =
-			users?.filter?.((filteredUser) => filteredUser._id !== user?._id)?.map?.((mappedUser) => mappedUser.firebaseUserId) || [];
+			users?.filter((filteredUser) => filteredUser._id !== user?._id)?.map((mappedUser) => mappedUser.firebaseUserId) || [];
 
 		const participants = [...newEvent.attendees]; // Start with selected attendees
 		let allParticipantsIds: string[] = [];
@@ -208,7 +208,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 				const res = await axios.get(`${base_url}/usercourses/participants/organisation/${orgId}`);
 
 				allCoursesParticipantsInfo = [...res.data.participants, ...participants];
-				allParticipantsIds = [...res.data.participants, ...participants]?.map?.((participant: AttendeeInfo) => participant._id) || [];
+				allParticipantsIds = [...res.data.participants, ...participants]?.map((participant: AttendeeInfo) => participant._id) || [];
 			} catch (error) {
 				console.log(error);
 			}
@@ -216,7 +216,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 			const courseParticipants: AttendeeInfo[] = [];
 
 			await Promise.all(
-				newEvent.coursesIds?.map?.((courseId) => {
+				newEvent.coursesIds?.map((courseId) => {
 					return (async () => {
 						try {
 							const res = await axios.get(`${base_url}/userCourses/course/${courseId}`);
@@ -228,16 +228,16 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 				}) || []
 			);
 
-			const combinedParticipants = Array.from(new Map([...courseParticipants, ...participants]?.map?.((user) => [user._id, user])).values()) || [];
+			const combinedParticipants = Array.from(new Map([...courseParticipants, ...participants]?.map((user) => [user._id, user])).values()) || [];
 
 			allCoursesParticipantsInfo = combinedParticipants; // Update state once with final list
-			allParticipantsIds = combinedParticipants?.map?.((participant) => participant._id) || [];
+			allParticipantsIds = combinedParticipants?.map((participant) => participant._id) || [];
 		} else {
 			// If no special selection, update with direct attendees
-			const uniqueParticipants = Array.from(new Map([...participants]?.map?.((user) => [user._id, user])).values()) || [];
+			const uniqueParticipants = Array.from(new Map([...participants]?.map((user) => [user._id, user])).values()) || [];
 
 			allCoursesParticipantsInfo = uniqueParticipants;
-			allParticipantsIds = uniqueParticipants?.map?.((participant) => participant._id) || [];
+			allParticipantsIds = uniqueParticipants?.map((participant) => participant._id) || [];
 			setNewEvent((prevData) => ({ ...prevData, allAttendeesIds: allParticipantsIds }));
 		}
 
@@ -251,7 +251,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 			isAllDay: newEvent.isAllDay,
 			isActive: true,
 			orgId,
-			attendees: newEvent.attendees?.map?.((attendee) => attendee._id) || [], // Send only ObjectIds
+			attendees: newEvent.attendees?.map((attendee) => attendee._id) || [], // Send only ObjectIds
 			allAttendeesIds: allParticipantsIds,
 			isAllLearnersSelected: newEvent.isAllLearnersSelected,
 			isAllCoursesSelected: newEvent.isAllCoursesSelected,
@@ -304,7 +304,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 
 			if (newEvent.isPublic) {
 				const allFirebaseUserIds: string[] =
-					users?.filter?.((filteredUser) => filteredUser._id !== user?._id)?.map?.((mappedUser) => mappedUser.firebaseUserId) || [];
+					users?.filter((filteredUser) => filteredUser._id !== user?._id)?.map((mappedUser) => mappedUser.firebaseUserId) || [];
 
 				const adminName = user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : user?.username || 'Admin';
 				const publicEventNotification = {
@@ -467,7 +467,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 										}}>
 										Select Type
 									</MenuItem>
-									{['Webinar', 'Guest Talk', 'Workshop', 'Training', 'Meeting', 'Other']?.map?.((type) => (
+									{['Webinar', 'Guest Talk', 'Workshop', 'Training', 'Meeting', 'Other']?.map((type) => (
 										<MenuItem value={type} key={type} sx={{ fontSize: '0.8rem' }}>
 											{type}
 										</MenuItem>
@@ -624,7 +624,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 
 					{newEvent.attendees.length > 0 && (
 						<Box sx={{ display: 'flex', margin: '1.5rem 0 0.75rem 0', flexWrap: 'wrap' }}>
-							{newEvent.attendees?.map?.((attendee) => {
+							{newEvent.attendees?.map((attendee) => {
 								return (
 									<Box
 										key={attendee._id}
@@ -640,7 +640,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 										<Typography sx={{ fontSize: isMobileSize ? '0.7rem' : '0.75rem' }}>{attendee.username}</Typography>
 										<IconButton
 											onClick={() => {
-												const updatedAttendees = newEvent.attendees?.filter?.((filteredAttendee) => attendee._id !== filteredAttendee._id) || [];
+												const updatedAttendees = newEvent.attendees?.filter((filteredAttendee) => attendee._id !== filteredAttendee._id) || [];
 
 												setNewEvent((prevData) => ({ ...prevData, attendees: updatedAttendees }));
 											}}>
@@ -664,7 +664,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 										currentUserId={user?.firebaseUserId}
 										placeholder={newEvent.isAllLearnersSelected || newEvent.isPublic ? '' : 'Search Learner'}
 										disabled={newEvent.isAllLearnersSelected || newEvent.isPublic}
-										selectedUserIds={newEvent.attendees?.map?.((attendee) => attendee._id) || []}
+										selectedUserIds={newEvent.attendees?.map((attendee) => attendee._id) || []}
 										sx={{
 											backgroundColor: newEvent.isAllLearnersSelected || newEvent.isPublic ? 'transparent' : '#fff',
 										}}
@@ -723,8 +723,8 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 
 					{newEvent.coursesIds.length > 0 && (
 						<Box sx={{ display: 'flex', margin: '-0.5rem 0 0.75rem 0', flexWrap: 'wrap' }}>
-							{newEvent.coursesIds?.map?.((id) => {
-								const course = courses?.find?.((course) => course._id === id);
+							{newEvent.coursesIds?.map((id) => {
+								const course = courses?.find((course) => course._id === id);
 								return (
 									<Box
 										key={course?._id}
@@ -740,7 +740,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 										<Typography sx={{ fontSize: isMobileSize ? '0.7rem' : '0.75rem' }}>{truncateText(course?.title!, 20)}</Typography>
 										<IconButton
 											onClick={() => {
-												const updatedCourses = newEvent.coursesIds?.filter?.((filteredCourseId) => course?._id !== filteredCourseId) || [];
+												const updatedCourses = newEvent.coursesIds?.filter((filteredCourseId) => course?._id !== filteredCourseId) || [];
 
 												setNewEvent((prevData) => ({ ...prevData, coursesIds: updatedCourses }));
 											}}>
