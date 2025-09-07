@@ -45,7 +45,7 @@ const AllPublicCoursesContextProvider = (props: AllPublicCoursesContextProviderP
 		if (!orgId) return { data: [], total: 0 };
 
 		try {
-			const response = await axios.get(`${base_url}/courses/public/${orgId}?page=${currentPage}&limit=20`);
+			const response = await axios.get(`${base_url}/courses/public/${orgId}?page=${currentPage}&limit=25`);
 			return response.data;
 		} catch (error: any) {
 			console.error('Error fetching courses:', error);

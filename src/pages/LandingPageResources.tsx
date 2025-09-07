@@ -132,26 +132,21 @@ const LandingPageResources = () => {
 						<>
 							{/* Load More Button */}
 							{hasMore && (
-								<Box sx={{ width: '100%', textAlign: 'center', mt: '2rem' }}>
+								<Box sx={{ width: '100%', textAlign: 'center', mt: '2rem', mb: '2rem' }}>
 									<Button
 										onClick={loadMore}
 										disabled={loading}
 										variant='contained'
 										sx={{
-											'backgroundColor': '#2C3E50',
-											'color': 'white',
-											'fontFamily': 'Varela Round',
-											'fontSize': '1rem',
-											'fontWeight': 500,
-											'padding': '0.75rem 2rem',
-											'&:hover': {
-												backgroundColor: '#34495E',
-											},
-											'&:disabled': {
-												backgroundColor: '#ccc',
-											},
+											color: 'white',
+											fontFamily: 'Varela Round',
+											fontSize: '1rem',
+											fontWeight: 500,
+											padding: '0.5rem 1rem',
+											textTransform: 'capitalize',
+											borderRadius: '0.5rem',
 										}}>
-										{loading ? 'Yükleniyor...' : 'Daha Fazla Yükle'}
+										{loading ? 'Yükleniyor...' : 'Daha Fazla Kaynak Yükle'}
 									</Button>
 								</Box>
 							)}

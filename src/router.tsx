@@ -147,7 +147,11 @@ export const router = createBrowserRouter([
 				element: (
 					<AdminRouteGuard>
 						<CoursesContextProvider>
-							<AdminCourseEditPage />
+							<LessonsContextProvider>
+								<DocumentsContextProvider>
+									<AdminCourseEditPage />
+								</DocumentsContextProvider>
+							</LessonsContextProvider>
 						</CoursesContextProvider>
 					</AdminRouteGuard>
 				),
@@ -168,7 +172,9 @@ export const router = createBrowserRouter([
 					<AdminRouteGuard>
 						<LessonsContextProvider>
 							<QuestionsContextProvider>
-								<AdminLessonEditPage />
+								<DocumentsContextProvider>
+									<AdminLessonEditPage />
+								</DocumentsContextProvider>
 							</QuestionsContextProvider>
 						</LessonsContextProvider>
 					</AdminRouteGuard>

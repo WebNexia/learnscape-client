@@ -21,9 +21,6 @@ const LandingPageCourses = () => {
 
 	const [isInfoDialogOpen, setIsInfoDialogOpen] = useState<boolean>(false);
 
-	// Filter courses by organization
-	const publishedCourses = courses?.filter((course: SingleCourse) => course.orgId === orgId) || [];
-
 	return (
 		<LandingPageLayout>
 			<Box
@@ -65,31 +62,29 @@ const LandingPageCourses = () => {
 							}}>
 							{error}
 						</Typography>
-					) : publishedCourses && publishedCourses.length > 0 ? (
+					) : courses && courses.length > 0 ? (
 						<>
-							{publishedCourses?.map((course: SingleCourse) => (
-								<Box key={course._id} sx={{}}>
+							{courses?.map((course: SingleCourse) => (
+								<Box key={course._id}>
 									<DashboardCourseCard course={course} fromHomePage />
 								</Box>
 							))}
 
 							{/* Load More Button */}
 							{hasMore && (
-								<Box sx={{ width: '100%', textAlign: 'center', mt: '2rem' }}>
+								<Box sx={{ width: '100%', textAlign: 'center', mt: '2rem', mb: '2rem' }}>
 									<Button
 										onClick={loadMore}
 										disabled={loading}
 										variant='contained'
 										sx={{
-											'backgroundColor': '#2C3E50',
 											'color': 'white',
 											'fontFamily': 'Varela Round',
 											'fontSize': '1rem',
 											'fontWeight': 500,
-											'padding': '0.75rem 2rem',
-											'&:hover': {
-												backgroundColor: '#34495E',
-											},
+											'padding': '0.5rem 1rem',
+											'textTransform': 'capitalize',
+											'borderRadius': '0.5rem',
 											'&:disabled': {
 												backgroundColor: '#ccc',
 											},

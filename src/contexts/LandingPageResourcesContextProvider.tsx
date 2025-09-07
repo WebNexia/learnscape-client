@@ -44,7 +44,7 @@ const LandingPageResourcesContextProvider = (props: LandingPageResourcesContextP
 
 		try {
 			// Fetch documents for landing page resources with pagination
-			const response = await axios.get(`${base_url}/documents/landing/${orgId}?page=${currentPage}&limit=20`);
+			const response = await axios.get(`${base_url}/documents/landing/${orgId}?page=${currentPage}&limit=50`);
 			return response.data;
 		} catch (error: any) {
 			console.error('Error fetching resources:', error);
@@ -84,8 +84,16 @@ const LandingPageResourcesContextProvider = (props: LandingPageResourcesContextP
 	};
 
 	// Calculate if there are more resources to load
-	const hasMore = resourcesData ? allResources && allResources.length < resourcesData.total : false;
+	const hasMore = resourcesData ? allResources.length < resourcesData.total : false;
 	const total = resourcesData?.total || 0;
+
+	// Debug logging
+	console.log('Resources hasMore calculation:', {
+		allResourcesLength: allResources.length,
+		totalFromAPI: resourcesData?.total,
+		hasMore,
+		currentPage,
+	});
 
 	// Get resources data
 	const resources = allResources;
