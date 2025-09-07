@@ -79,13 +79,13 @@ const AllPublicCoursesContextProvider = (props: AllPublicCoursesContextProviderP
 	}, [coursesData, currentPage]);
 
 	const loadMore = () => {
-		if (coursesData && allCourses.length < coursesData.total) {
+		if (coursesData && allCourses && allCourses.length < coursesData.total) {
 			setCurrentPage((prev) => prev + 1);
 		}
 	};
 
 	// Calculate if there are more courses to load
-	const hasMore = coursesData ? allCourses.length < coursesData.total : false;
+	const hasMore = coursesData ? allCourses && allCourses.length < coursesData.total : false;
 	const total = coursesData?.total || 0;
 
 	return (

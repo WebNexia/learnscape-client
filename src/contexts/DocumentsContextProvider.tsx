@@ -248,7 +248,7 @@ export default DocumentsContextProvider;
 // 			// Don't override totalItems from server - only set loadedPages
 // 			// setTotalItems(documentsData.length); // ❌ This breaks pagination
 
-// 			setLoadedPages((prev) => (prev.length === 0 ? [1] : prev));
+// 			setLoadedPages((prev) => (prev && prev.length === 0 ? [1] : prev));
 // 		}
 // 	}, [documentsData]);
 

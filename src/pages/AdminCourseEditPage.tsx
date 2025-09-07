@@ -566,7 +566,7 @@ const AdminCourseEditPage = () => {
 				}
 			}
 
-			if (deletedChapterIds.length > 0) {
+			if (deletedChapterIds && deletedChapterIds.length > 0) {
 				try {
 					await Promise.all(
 						deletedChapterIds?.map(async (chapterId) => {
@@ -797,7 +797,7 @@ const AdminCourseEditPage = () => {
 										</form>
 									</CustomDialog>
 
-									{chapterLessonDataBeforeSave.length === 0 ? (
+									{chapterLessonDataBeforeSave && chapterLessonDataBeforeSave.length === 0 ? (
 										<NoContentBoxAdmin content='No chapter for this course' />
 									) : (
 										<Reorder.Group
@@ -807,7 +807,7 @@ const AdminCourseEditPage = () => {
 												setChapterLessonDataBeforeSave(newChapters);
 											}}>
 											{chapterLessonDataBeforeSave &&
-												chapterLessonDataBeforeSave.length !== 0 &&
+												chapterLessonDataBeforeSave && chapterLessonDataBeforeSave.length !== 0 &&
 												chapterLessonDataBeforeSave?.map((chapter) => {
 													return (
 														<Reorder.Item key={chapter.chapterId} value={chapter} style={{ listStyle: 'none', boxShadow }}>

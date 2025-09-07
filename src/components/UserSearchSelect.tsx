@@ -77,11 +77,11 @@ const UserSearchSelect: React.FC<UserSearchSelectProps> = ({
 
 	// Refresh search results when excludeUserIds changes (for group chat scenarios)
 	useEffect(() => {
-		if (value.trim() && filtered.length > 0 && !loading) {
+		if (value.trim() && filtered && filtered.length > 0 && !loading) {
 			// If we have search results but they're all filtered out, try to load more
 			const visibleResults =
 				filtered?.filter((user) => user.firebaseUserId !== currentUserId && !excludeUserIds?.includes(user.firebaseUserId)) || [];
-			if (visibleResults.length === 0 && pagination?.hasNextPage) {
+			if (visibleResults && visibleResults.length === 0 && pagination?.hasNextPage) {
 				// All current results are filtered out, load more to get new results
 				loadMore();
 			}
@@ -92,13 +92,13 @@ const UserSearchSelect: React.FC<UserSearchSelectProps> = ({
 	useEffect(() => {
 		if (value.trim() && !loading && hasSearched) {
 			// Check if we have any search results
-			if (filtered.length === 0 && !error) {
+			if (filtered && filtered.length === 0 && !error) {
 				setNoUserFound(true);
-			} else if (filtered.length > 0) {
+			} else if (filtered && filtered.length > 0) {
 				// Check if all results are filtered out
 				const visibleResults =
 					filtered?.filter((user) => user.firebaseUserId !== currentUserId && !excludeUserIds?.includes(user.firebaseUserId)) || [];
-				setNoUserFound(visibleResults.length === 0);
+				setNoUserFound(visibleResults && visibleResults.length === 0);
 			} else {
 				setNoUserFound(false);
 			}
@@ -132,12 +132,12 @@ const UserSearchSelect: React.FC<UserSearchSelectProps> = ({
 		return filtered?.filter((user) => user.firebaseUserId !== currentUserId && !excludeUserIds?.includes(user.firebaseUserId)) || [];
 	}, [filtered, currentUserId, excludeUserIds]);
 
-	const hasResults = filteredUsers.length > 0;
+	const hasResults = filteredUsers && filteredUsers.length > 0;
 	// Show Load More if there are more pages available, regardless of current filtered results
 	const showLoadMore = pagination?.hasNextPage && value.trim();
 
 	// Add a "Refresh Search" button when all results are filtered out
-	const allResultsFiltered = value.trim() && filtered.length > 0 && !hasResults && pagination?.hasNextPage;
+	const allResultsFiltered = value.trim() && filtered && filtered.length > 0 && !hasResults && pagination?.hasNextPage;
 
 	return (
 		<Box
@@ -255,7 +255,7 @@ const UserSearchSelect: React.FC<UserSearchSelectProps> = ({
 				</Box>
 			)}
 
-			{hasResults && value.trim() && filteredUsers.length > 0 && (
+			{hasResults && value.trim() && filteredUsers && filteredUsers.length > 0 && (
 				<Box
 					sx={{
 						display: 'flex',

@@ -61,7 +61,7 @@ const EventCourseSearchSelect = forwardRef<any, EventCourseSearchSelectProps>(
 			return filtered?.filter((course) => !selectedCourseIds?.includes(course._id)) || [];
 		}, [filtered, selectedCourseIds]);
 
-		const hasResults = filteredCourses.length > 0;
+		const hasResults = filteredCourses && filteredCourses.length > 0;
 		const showLoadMore = pagination?.hasNextPage && hasResults;
 
 		// Expose reset function to parent component

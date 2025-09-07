@@ -133,7 +133,7 @@ const GroupChatModal = ({
 				)}
 
 				{/* Selected Users Display */}
-				{selectedGroupUsers.length > 0 && (
+				{selectedGroupUsers && selectedGroupUsers.length > 0 && (
 					<Box sx={{ mt: 2 }}>
 						<Typography variant='body2' sx={{ mb: 1 }}>
 							Selected Users ({selectedGroupUsers.length})
@@ -208,7 +208,7 @@ const GroupChatModal = ({
 				submitBtnText='Create Group Chat'
 				onSubmit={onCreateGroupChat}
 				onCancel={onCloseModal}
-				disableBtn={!groupName.trim() || selectedGroupUsers.length === 0}
+				disableBtn={!groupName.trim() || selectedGroupUsers && selectedGroupUsers.length === 0}
 				actionSx={{ mb: '0.75rem', mt: '-1rem' }}
 			/>
 		</CustomDialog>

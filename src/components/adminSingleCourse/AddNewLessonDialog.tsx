@@ -140,7 +140,7 @@ const AddNewLessonDialog = ({
 				}
 
 				// Calculate which pages we need to fetch
-				const currentLoadedPages = searchResultsLoadedPages.length > 0 ? Math.max(...searchResultsLoadedPages) : 0;
+				const currentLoadedPages = searchResultsLoadedPages && searchResultsLoadedPages.length > 0 ? Math.max(...searchResultsLoadedPages) : 0;
 				const targetPage = Math.ceil((newPage * pageSize) / 300);
 
 				// Fetch all missing pages in sequence
@@ -155,7 +155,7 @@ const AddNewLessonDialog = ({
 			const requiredRecords = newPage * pageSize;
 			if (lessons.length < requiredRecords && newPage <= lessonsNumberOfPages) {
 				// Calculate which pages we need to fetch
-				const currentLoadedPages = loadedPages.length > 0 ? Math.max(...loadedPages) : 0;
+				const currentLoadedPages = loadedPages && loadedPages.length > 0 ? Math.max(...loadedPages) : 0;
 				const targetPage = Math.ceil((newPage * pageSize) / 300);
 
 				// Fetch all missing pages in sequence

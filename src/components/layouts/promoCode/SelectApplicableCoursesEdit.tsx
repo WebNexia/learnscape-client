@@ -120,7 +120,7 @@ const SelectApplicableCoursesEdit = ({ singleCode, setSingleCode }: SelectApplic
 					</Box>
 				</Box>
 
-				{filteredCourses.length !== 0 && (
+				{filteredCourses && filteredCourses.length !== 0 && (
 					<Box
 						sx={{
 							display: 'flex',

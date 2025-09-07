@@ -107,7 +107,7 @@ const CommunityMessagesContextProvider = (props: CommunityMessagesContextProvide
 				}
 			}
 
-			if (promises.length === 0) {
+			if (promises && promises.length === 0) {
 				return; // Already loaded
 			}
 
@@ -129,7 +129,7 @@ const CommunityMessagesContextProvider = (props: CommunityMessagesContextProvide
 
 	// Progressive pagination gap-filling (batched)
 	useEffect(() => {
-		if (loadedPages.length > 0 && currentTopicId) {
+		if (loadedPages && loadedPages.length > 0 && currentTopicId) {
 			const sortedPages = [...(loadedPages || [])]?.sort((a, b) => a - b) || [];
 			const maxPage = Math.max(...sortedPages);
 

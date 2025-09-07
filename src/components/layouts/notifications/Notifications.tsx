@@ -152,7 +152,7 @@ const NotificationsBox = ({ showUnreadOnly }: NotificationsBoxProps) => {
 
 	return (
 		<Box>
-			{notifications.length > 0 ? (
+			{notifications && notifications.length > 0 ? (
 				<Box>
 					{notifications?.map((note) => {
 						return (

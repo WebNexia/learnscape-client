@@ -193,7 +193,7 @@ export default LessonsContextProvider;
 // 				}
 // 			}
 
-// 			if (pagesToFetch.length === 0) return; // Already loaded
+// 			if (pagesToFetch && pagesToFetch.length === 0) return; // Already loaded
 
 // 			// Fetch missing pages
 // 			let newLessons: Lesson[] = [];
@@ -229,7 +229,7 @@ export default LessonsContextProvider;
 
 // 	// Progressive pagination için aradaki boşlukları doldur
 // 	useEffect(() => {
-// 		if (loadedPages.length > 0 && orgId) {
+// 		if (loadedPages && loadedPages.length > 0 && orgId) {
 // 			const sortedPages = [...loadedPages].sort((a, b) => a - b);
 // 			const maxPage = Math.max(...sortedPages);
 
@@ -358,7 +358,7 @@ export default LessonsContextProvider;
 // 			// Don't override totalItems from server - only set loadedPages
 // 			// setTotalItems(lessonsData.length); // ❌ This breaks pagination
 
-// 			setLoadedPages((prev) => (prev.length === 0 ? [1] : prev));
+// 			setLoadedPages((prev) => (prev && prev.length === 0 ? [1] : prev));
 // 		}
 // 	}, [lessonsData]);
 

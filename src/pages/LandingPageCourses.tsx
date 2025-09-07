@@ -65,7 +65,7 @@ const LandingPageCourses = () => {
 							}}>
 							{error}
 						</Typography>
-					) : publishedCourses.length > 0 ? (
+					) : publishedCourses && publishedCourses.length > 0 ? (
 						<>
 							{publishedCourses?.map((course: SingleCourse) => (
 								<Box key={course._id} sx={{}}>

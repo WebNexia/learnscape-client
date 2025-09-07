@@ -95,7 +95,7 @@ const QuestionsContextProvider = ({ children }: QuestionsContextProviderProps) =
 			}
 		});
 		let questionTypeName: string = '';
-		if (filteredQuestionType && filteredQuestionType.length !== 0) {
+		if (filteredQuestionType && filteredQuestionType && filteredQuestionType.length !== 0) {
 			questionTypeName = filteredQuestionType[0].name;
 		}
 		return questionTypeName;
@@ -263,7 +263,7 @@ export default QuestionsContextProvider;
 
 // 	// Progressive pagination için aradaki boşlukları doldur
 // 	useEffect(() => {
-// 		if (loadedPages.length > 0 && orgId) {
+// 		if (loadedPages && loadedPages.length > 0 && orgId) {
 // 			const sortedPages = [...loadedPages].sort((a, b) => a - b);
 // 			const maxPage = Math.max(...sortedPages);
 
@@ -278,12 +278,12 @@ export default QuestionsContextProvider;
 
 // 	// React Query data değiştiğinde local state'i güncelle
 // 	useEffect(() => {
-// 		if (questionsData && questionsData.length > 0) {
+// 		if (questionsData && questionsData && questionsData.length > 0) {
 // 			// Don't override totalItems from server - only set loadedPages
 // 			// setTotalItems(questionsData.length); // ❌ This breaks pagination
 
 // 			// Eğer loadedPages boşsa ilk page'i ekle
-// 			setLoadedPages((prev) => (prev.length === 0 ? [1] : prev));
+// 			setLoadedPages((prev) => (prev && prev.length === 0 ? [1] : prev));
 // 		}
 // 	}, [questionsData]);
 
@@ -304,7 +304,7 @@ export default QuestionsContextProvider;
 // 			}
 // 		});
 // 		let questionTypeName: string = '';
-// 		if (filteredQuestionType && filteredQuestionType.length !== 0) {
+// 		if (filteredQuestionType && filteredQuestionType && filteredQuestionType.length !== 0) {
 // 			questionTypeName = filteredQuestionType[0].name;
 // 		}
 // 		return questionTypeName;
@@ -351,7 +351,7 @@ export default QuestionsContextProvider;
 // 		});
 // 		// Eğer loadedPages boşsa ilk page'i ekle
 // 		setLoadedPages((prev) => {
-// 			return prev.length === 0 ? [1] : prev;
+// 			return prev && prev.length === 0 ? [1] : prev;
 // 		});
 // 	};
 

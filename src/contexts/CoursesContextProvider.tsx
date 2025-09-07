@@ -200,7 +200,7 @@ export default CoursesContextProvider;
 // 				}
 // 			}
 
-// 			if (pagesToFetch.length === 0) return; // Already loaded
+// 			if (pagesToFetch && pagesToFetch.length === 0) return; // Already loaded
 
 // 			// Fetch missing pages
 // 			let newCourses: SingleCourse[] = [];
@@ -236,7 +236,7 @@ export default CoursesContextProvider;
 
 // 	// Progressive pagination için aradaki boşlukları doldur
 // 	useEffect(() => {
-// 		if (loadedPages.length > 0 && orgId) {
+// 		if (loadedPages && loadedPages.length > 0 && orgId) {
 // 			const sortedPages = [...loadedPages].sort((a, b) => a - b);
 // 			const maxPage = Math.max(...sortedPages);
 
@@ -365,7 +365,7 @@ export default CoursesContextProvider;
 // 			// Don't override totalItems from server - only set loadedPages
 // 			// setTotalItems(coursesData.length); // ❌ This breaks pagination
 
-// 			setLoadedPages((prev) => (prev.length === 0 ? [1] : prev));
+// 			setLoadedPages((prev) => (prev && prev.length === 0 ? [1] : prev));
 // 		}
 // 	}, [coursesData]);
 

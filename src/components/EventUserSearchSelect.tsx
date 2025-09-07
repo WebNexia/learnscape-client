@@ -64,7 +64,7 @@ const EventUserSearchSelect = forwardRef<any, EventUserSearchSelectProps>(
 			return filtered?.filter((user) => user.firebaseUserId !== currentUserId && !selectedUserIds?.includes(user.firebaseUserId)) || [];
 		}, [filtered, currentUserId, selectedUserIds]);
 
-		const hasResults = filteredUsers.length > 0;
+		const hasResults = filteredUsers && filteredUsers.length > 0;
 		const showLoadMore = pagination?.hasNextPage && hasResults;
 
 		// Expose reset function to parent component

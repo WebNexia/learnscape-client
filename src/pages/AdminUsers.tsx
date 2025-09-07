@@ -129,7 +129,7 @@ const AdminUsers = () => {
 				}
 
 				// Calculate which pages we need to fetch
-				const currentLoadedPages = searchResultsLoadedPages.length > 0 ? Math.max(...searchResultsLoadedPages) : 0;
+				const currentLoadedPages = searchResultsLoadedPages && searchResultsLoadedPages.length > 0 ? Math.max(...searchResultsLoadedPages) : 0;
 				const targetPage = Math.ceil((newPage * pageSize) / 300);
 
 				// Fetch all missing pages in sequence
@@ -144,7 +144,7 @@ const AdminUsers = () => {
 			const requiredRecords = newPage * pageSize;
 			if (users.length < requiredRecords && newPage <= usersNumberOfPages) {
 				// Calculate which pages we need to fetch
-				const currentLoadedPages = loadedPages.length > 0 ? Math.max(...loadedPages) : 0;
+				const currentLoadedPages = loadedPages && loadedPages.length > 0 ? Math.max(...loadedPages) : 0;
 				const targetPage = Math.ceil((newPage * pageSize) / 300);
 
 				// Fetch all missing pages in sequence
@@ -553,7 +553,7 @@ const AdminUsers = () => {
 							sx={{
 								fontSize: isMobileSize ? '0.7rem' : undefined,
 							}}
-							disabled={displayUsers.length === 0}>
+							disabled={displayUsers && displayUsers.length === 0}>
 							Download {isSearchActive ? 'Filtered' : 'All'} Users
 						</CustomSubmitButton>
 					</Box>

@@ -122,7 +122,7 @@ const Submissions = () => {
 				}
 
 				// Calculate which pages we need to fetch
-				const currentLoadedPages = searchResultsLoadedPages.length > 0 ? Math.max(...searchResultsLoadedPages) : 0;
+				const currentLoadedPages = searchResultsLoadedPages && searchResultsLoadedPages.length > 0 ? Math.max(...searchResultsLoadedPages) : 0;
 				const targetPage = Math.ceil((newPage * pageSize) / contextLimit);
 
 				// Fetch all missing pages in sequence
@@ -137,7 +137,7 @@ const Submissions = () => {
 			const requiredRecords = newPage * pageSize;
 			if (userQuizSubmissions.length < requiredRecords && newPage <= submissionsNumberOfPages) {
 				// Calculate which pages we need to fetch
-				const currentLoadedPages = loadedPages.length > 0 ? Math.max(...loadedPages) : 0;
+				const currentLoadedPages = loadedPages && loadedPages.length > 0 ? Math.max(...loadedPages) : 0;
 				const targetPage = Math.ceil((newPage * pageSize) / contextLimit);
 
 				// Fetch all missing pages in sequence
@@ -359,7 +359,7 @@ const Submissions = () => {
 										}}>
 										Unchecked
 									</MenuItem>
-									{userCourseData.length > 0 && (
+									{userCourseData && userCourseData.length > 0 && (
 										<MenuItem
 											disabled
 											value='types'

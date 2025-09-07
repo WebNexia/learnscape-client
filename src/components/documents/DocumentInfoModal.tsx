@@ -49,7 +49,7 @@ const DocumentInfoModal = ({ document, onClose }: DocumentInfoModalProps) => {
 							<Typography variant='body2'>Used in Courses:</Typography>
 						</Grid>
 						<Grid item xs={9}>
-							{usageInfo.courses.length > 0 ? (
+							{usageInfo.courses && usageInfo.courses.length > 0 ? (
 								<FormControl fullWidth size='small' sx={{ width: '90%' }}>
 									<Select value='' displayEmpty renderValue={() => `${usageInfo.courses.length} course(s)`} sx={{ fontSize: '0.85rem' }}>
 										{usageInfo.courses?.map((course) => (
@@ -70,7 +70,7 @@ const DocumentInfoModal = ({ document, onClose }: DocumentInfoModalProps) => {
 							<Typography variant='body2'>Used in Lessons:</Typography>
 						</Grid>
 						<Grid item xs={9}>
-							{usageInfo.lessons.length > 0 ? (
+							{usageInfo.lessons && usageInfo.lessons.length > 0 ? (
 								<FormControl fullWidth size='small' sx={{ width: '90%' }}>
 									<Select value='' displayEmpty renderValue={() => `${usageInfo.lessons.length} lesson(s)`} sx={{ fontSize: '0.85rem' }}>
 										{usageInfo.lessons?.map((lesson) => (

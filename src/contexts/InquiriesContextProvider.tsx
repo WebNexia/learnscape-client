@@ -170,7 +170,7 @@ export default InquiriesContextProvider;
 // 				}
 // 			}
 
-// 			if (pagesToFetch.length === 0) return; // Already loaded
+// 			if (pagesToFetch && pagesToFetch.length === 0) return; // Already loaded
 
 // 			// Fetch missing pages
 // 			let newInquiries: Inquiry[] = [];
@@ -213,7 +213,7 @@ export default InquiriesContextProvider;
 // 			// Don't override totalItems from server - only set loadedPages
 // 			// setTotalItems(inquiriesData.length); // ❌ This breaks pagination
 
-// 			setLoadedPages((prev) => (prev.length === 0 ? [1] : prev));
+// 			setLoadedPages((prev) => (prev && prev.length === 0 ? [1] : prev));
 // 		}
 // 	}, [inquiriesData]);
 

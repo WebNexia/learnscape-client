@@ -166,7 +166,7 @@ const CreateQuestionDialog = ({
 	}, []);
 
 	useEffect(() => {
-		if (blankValuePairs.length > 0) {
+		if (blankValuePairs && blankValuePairs.length > 0) {
 			setIsMinimumOneBlank(false);
 		}
 	}, [blankValuePairs]);

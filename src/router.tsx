@@ -93,7 +93,7 @@ export const router = createBrowserRouter([
 				),
 			},
 			{
-				path: 'course/:title/:courseId',
+				path: 'landing-page-course/:title/:courseId',
 				element: (
 					<AllPublicCoursesContextProvider>
 						<LandingPageCourse />

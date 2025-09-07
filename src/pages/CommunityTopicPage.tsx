@@ -303,7 +303,7 @@ const CommunityTopicPage = () => {
 
 			// Send notifications for mentioned users
 			const mentionedUsernames = extractMentions(currentMessage);
-			if (mentionedUsernames.length > 0) {
+			if (mentionedUsernames && mentionedUsernames.length > 0) {
 				try {
 					// Create a set of users who are already receiving notifications (to avoid duplicates)
 					const usersAlreadyNotified = new Set();
@@ -351,7 +351,7 @@ const CommunityTopicPage = () => {
 					} else {
 						// Handle regular user mentions
 						const regularMentions = mentionedUsernames?.filter((username) => username !== 'everyone') || [];
-						if (regularMentions.length > 0) {
+						if (regularMentions && regularMentions.length > 0) {
 							// Get user data for mentioned usernames
 							const mentionedUsersResponse = await axios.get(
 								`${base_url}/users/search-by-usernames?usernames=${regularMentions.join(',')}&orgId=${orgId}`
@@ -447,7 +447,7 @@ const CommunityTopicPage = () => {
 
 		// Split by spaces to isolate the word being typed
 		const words = input.split(/\s+/);
-		const lastWord = words[words.length - 1];
+		const lastWord = words && words.length > 0 ? (words && words.length > 0 ? words[words.length - 1] : undefined) : '';
 
 		// Check if admin is typing @everyone - close search box
 		if (lastWord === '@everyone' && user?.role === Roles.ADMIN) {
@@ -457,7 +457,7 @@ const CommunityTopicPage = () => {
 		}
 
 		// Determine if the last word starts with '@'
-		if (lastWord.startsWith('@')) {
+		if (lastWord?.startsWith('@')) {
 			setShowUserSearch(true);
 			setUserSearchValue(lastWord?.slice(1) || '');
 		} else if (!input?.includes('@')) {
@@ -562,7 +562,7 @@ const CommunityTopicPage = () => {
 
 		// Check if we need to fetch more data
 		if (messages && messages.length < requiredRecords) {
-			const currentLoadedPages = loadedPages.length > 0 ? Math.max(...loadedPages) : 0; // Get the highest loaded page
+			const currentLoadedPages = loadedPages && loadedPages.length > 0 ? Math.max(...loadedPages) : 0; // Get the highest loaded page
 			const targetBackendPage = Math.ceil(requiredRecords / 250); // Calculate which backend page we need (250 messages per backend page)
 
 			// Fetch missing backend pages using batch approach (like other admin pages)

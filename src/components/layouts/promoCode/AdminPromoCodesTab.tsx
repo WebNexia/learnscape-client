@@ -85,7 +85,7 @@ const AdminPromoCodesTab = () => {
 	useEffect(() => {
 		setPromoCodesPageNumber(1);
 		// Trigger initial fetch for context data
-		if (promoCodes.length === 0) {
+		if (promoCodes && promoCodes.length === 0) {
 			// This will trigger the context to fetch data
 		}
 	}, []);
@@ -98,7 +98,7 @@ const AdminPromoCodesTab = () => {
 			const requiredRecords = newPage * pageSize;
 			if (searchResults.length < requiredRecords) {
 				// Calculate which pages we need to fetch
-				const currentLoadedPages = searchResultsLoadedPages.length > 0 ? Math.max(...searchResultsLoadedPages) : 0;
+				const currentLoadedPages = searchResultsLoadedPages && searchResultsLoadedPages.length > 0 ? Math.max(...searchResultsLoadedPages) : 0;
 				const targetPage = Math.ceil((newPage * pageSize) / 200);
 
 				// Fetch all missing pages in sequence
@@ -115,7 +115,7 @@ const AdminPromoCodesTab = () => {
 			const requiredRecords = newPage * pageSize;
 			if (promoCodes.length < requiredRecords && newPage <= promoCodesNumberOfPages) {
 				// Calculate which pages we need to fetch
-				const currentLoadedPages = loadedPages.length > 0 ? Math.max(...loadedPages) : 0;
+				const currentLoadedPages = loadedPages && loadedPages.length > 0 ? Math.max(...loadedPages) : 0;
 				const targetPage = Math.ceil((newPage * pageSize) / 200);
 
 				// Fetch all missing pages in sequence

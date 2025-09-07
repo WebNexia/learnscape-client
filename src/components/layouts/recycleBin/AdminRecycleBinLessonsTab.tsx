@@ -120,7 +120,7 @@ const AdminRecycleBinLessonsTab = () => {
 
 	// Keep track of previous length to avoid unnecessary resets
 	useEffect(() => {
-		if (displayLessons && displayLessons.length !== 0) {
+		if (displayLessons && displayLessons && displayLessons.length !== 0) {
 			setRestoreModalOpen(Array(displayLessons.length).fill(false));
 			setDeleteModalOpen(Array(displayLessons.length).fill(false));
 		}
@@ -156,7 +156,7 @@ const AdminRecycleBinLessonsTab = () => {
 				}
 
 				// Calculate which pages we need to fetch
-				const currentLoadedPages = searchResultsLoadedPages.length > 0 ? Math.max(...searchResultsLoadedPages) : 0;
+				const currentLoadedPages = searchResultsLoadedPages && searchResultsLoadedPages.length > 0 ? Math.max(...searchResultsLoadedPages) : 0;
 				const targetPage = Math.ceil((newPage * pageSize) / 200);
 
 				// Fetch all missing pages in sequence
@@ -171,7 +171,7 @@ const AdminRecycleBinLessonsTab = () => {
 			const requiredRecords = newPage * pageSize;
 			if (archivedLessons.length < requiredRecords && newPage <= lessonsNumberOfPages) {
 				// Calculate which pages we need to fetch
-				const currentLoadedPages = loadedPages.length > 0 ? Math.max(...loadedPages) : 0;
+				const currentLoadedPages = loadedPages && loadedPages.length > 0 ? Math.max(...loadedPages) : 0;
 				const targetPage = Math.ceil((newPage * pageSize) / 200);
 
 				// Fetch all missing pages in sequence
@@ -640,7 +640,7 @@ const AdminRecycleBinLessonsTab = () => {
 					</Box>
 				</Box>
 				<Box sx={{ display: 'flex', gap: 1, mb: '0.85rem', alignItems: 'center' }}>
-					{selectedItems.length > 0 && (
+					{selectedItems && selectedItems.length > 0 && (
 						<>
 							<CustomSubmitButton onClick={() => setIsBulkRestoreModalOpen(true)} sx={{ fontSize: isMobileSize ? '0.7rem' : undefined }}>
 								Restore ({selectedItems.length})
@@ -832,7 +832,7 @@ const AdminRecycleBinLessonsTab = () => {
 							})}
 					</TableBody>
 				</Table>
-				{paginatedLessons.length === 0 && (
+				{paginatedLessons && paginatedLessons.length === 0 && (
 					<CustomInfoMessageAlignedLeft
 						message={isSearchActive ? 'No deleted lessons found matching your search criteria.' : 'No deleted lessons found.'}
 						sx={{ marginTop: '5rem' }}

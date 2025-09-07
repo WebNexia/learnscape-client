@@ -284,7 +284,7 @@ export default AdminQuizSubmissionsContextProvider;
 // 			// Don't override totalItems from server - only set loadedPages
 // 			// setTotalItems(quizSubmissionsData.length); // ❌ This breaks pagination
 
-// 			setLoadedPages((prev) => (prev.length === 0 ? [1] : prev));
+// 			setLoadedPages((prev) => (prev && prev.length === 0 ? [1] : prev));
 // 		}
 // 	}, [quizSubmissionsData]);
 

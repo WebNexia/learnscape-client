@@ -200,7 +200,7 @@ export default UsersContextProvider;
 // 				}
 // 			}
 
-// 			if (pagesToFetch.length === 0) return; // Already loaded
+// 			if (pagesToFetch && pagesToFetch.length === 0) return; // Already loaded
 
 // 			// Fetch missing pages
 // 			let newUsers: User[] = [];
@@ -240,7 +240,7 @@ export default UsersContextProvider;
 // 			// Don't override totalItems from server - only set loadedPages
 // 			// setTotalItems(usersData.length); // ❌ This breaks pagination
 
-// 			setLoadedPages((prev) => (prev.length === 0 ? [1] : prev));
+// 			setLoadedPages((prev) => (prev && prev.length === 0 ? [1] : prev));
 // 		}
 // 	}, [usersData]);
 

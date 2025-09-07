@@ -120,7 +120,7 @@ const CommunityContextProvider = (props: CommunityContextProviderProps) => {
 
 	// Progressive pagination gap-filling (batched)
 	useEffect(() => {
-		if (loadedPages.length > 0 && orgId) {
+		if (loadedPages && loadedPages.length > 0 && orgId) {
 			const sortedPages = [...(loadedPages || [])]?.sort((a, b) => a - b) || [];
 			const maxPage = Math.max(...sortedPages);
 
@@ -149,7 +149,7 @@ const CommunityContextProvider = (props: CommunityContextProviderProps) => {
 	useEffect(() => {
 		if (topicsData && topicsData.length > 0) {
 			// Eğer loadedPages boşsa ilk page'i ekle
-			setLoadedPages((prev) => (prev.length === 0 ? [1] : prev));
+			setLoadedPages((prev) => (prev && prev.length === 0 ? [1] : prev));
 		}
 	}, [topicsData]);
 
