@@ -155,7 +155,7 @@ const LessonPage = () => {
 			}
 		}
 
-		if (isQuiz && !isLessonCompleted && userQuizAnswers.length !== 0) {
+		if (isQuiz && !isLessonCompleted && userQuizAnswers && userQuizAnswers.length !== 0) {
 			setIsQuizInProgress(true);
 		}
 	}, [lessonId]);
@@ -592,7 +592,7 @@ const LessonPage = () => {
 						endIcon={!nextLessonId ? <DoneAll /> : <KeyboardDoubleArrowRight />}
 						onClick={() => setIsLessonCourseCompletedModalOpen(true)}
 						type='button'
-						sx={{ marginTop: lesson?.documents.length === 0 ? '1rem' : '0rem', fontSize: isMobileSize ? '0.7rem' : '0.85rem' }}>
+						sx={{ marginTop: lesson?.documents && lesson?.documents.length === 0 ? '1rem' : '0rem', fontSize: isMobileSize ? '0.7rem' : '0.85rem' }}>
 						{nextLessonId ? 'Next Lesson' : 'Complete Course'}
 					</CustomSubmitButton>
 					<CustomDialog

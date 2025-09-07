@@ -53,9 +53,9 @@ const DashboardCourseCard = ({ course, isEnrolled, displayMyCourses, userCourseI
 			}}
 			onClick={() => {
 				if (!fromHomePage) {
-					navigate(`/course/${course._id}/userCourseId/${userCourseId === undefined ? 'none' : userCourseId}?isEnrolled=${isEnrolled}`);
+					navigate(`/course/${course._id}/userCourseId/${!userCourseId ? 'none' : userCourseId}?isEnrolled=${isEnrolled}`);
 				} else {
-					navigate(`/course/${encodeURIComponent(course?.title)}/${course?._id}`);
+					navigate(`/landing-page-course/${encodeURIComponent(course?.title)}/${course?._id}`);
 				}
 				window.scrollTo({ top: 0, behavior: 'smooth' });
 			}}>

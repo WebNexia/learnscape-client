@@ -88,7 +88,7 @@ const AdminQuizSubmissions = () => {
 	useEffect(() => {
 		setQuizSubmissionsPageNumber(1);
 		// Trigger initial fetch for context data
-		if (quizSubmissions.length === 0) {
+		if (quizSubmissions && quizSubmissions.length === 0) {
 			// This will trigger the context to fetch data
 		}
 	}, []);
@@ -101,7 +101,7 @@ const AdminQuizSubmissions = () => {
 			const requiredRecords = newPage * pageSize;
 			if (searchResults.length < requiredRecords) {
 				// Calculate which pages we need to fetch
-				const currentLoadedPages = searchResultsLoadedPages.length > 0 ? Math.max(...searchResultsLoadedPages) : 0;
+				const currentLoadedPages = searchResultsLoadedPages && searchResultsLoadedPages.length > 0 ? Math.max(...searchResultsLoadedPages) : 0;
 				const targetPage = Math.ceil((newPage * pageSize) / 150);
 
 				// Fetch all missing pages in sequence
@@ -118,7 +118,7 @@ const AdminQuizSubmissions = () => {
 			const requiredRecords = newPage * pageSize;
 			if (quizSubmissions.length < requiredRecords && newPage <= submissionsNumberOfPages) {
 				// Calculate which pages we need to fetch
-				const currentLoadedPages = loadedPages.length > 0 ? Math.max(...loadedPages) : 0;
+				const currentLoadedPages = loadedPages && loadedPages.length > 0 ? Math.max(...loadedPages) : 0;
 				const targetPage = Math.ceil((newPage * pageSize) / 150);
 
 				// Fetch all missing pages in sequence

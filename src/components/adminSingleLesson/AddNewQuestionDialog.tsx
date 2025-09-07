@@ -197,7 +197,7 @@ const AddNewQuestionDialog = ({
 				}
 
 				// Calculate which pages we need to fetch
-				const currentLoadedPages = searchResultsLoadedPages.length > 0 ? Math.max(...searchResultsLoadedPages) : 0;
+				const currentLoadedPages = searchResultsLoadedPages && searchResultsLoadedPages.length > 0 ? Math.max(...searchResultsLoadedPages) : 0;
 				const targetPage = Math.ceil((newPage * pageSize) / 200);
 
 				// Fetch all missing pages in sequence
@@ -212,7 +212,7 @@ const AddNewQuestionDialog = ({
 			const requiredRecords = newPage * pageSize;
 			if (questions.length < requiredRecords && newPage <= questionsNumberOfPages) {
 				// Calculate which pages we need to fetch
-				const currentLoadedPages = loadedPages.length > 0 ? Math.max(...loadedPages) : 0;
+				const currentLoadedPages = loadedPages && loadedPages.length > 0 ? Math.max(...loadedPages) : 0;
 				const targetPage = Math.ceil((newPage * pageSize) / 200);
 
 				// Fetch all missing pages in sequence

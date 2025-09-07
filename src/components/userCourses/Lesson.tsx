@@ -66,7 +66,7 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 	}, []);
 
 	useEffect(() => {
-		if (sortedUserQuizSubmissionsData.length > 0) {
+		if (sortedUserQuizSubmissionsData && sortedUserQuizSubmissionsData && sortedUserQuizSubmissionsData.length > 0) {
 			const isFeedbackGiven = sortedUserQuizSubmissionsData?.find((data) => data.lessonId === lesson._id)?.isChecked;
 
 			setIsFeedbackGiven(isFeedbackGiven || false);

@@ -1,6 +1,6 @@
 // PaymentsContextProvider.tsx
 import { createContext, ReactNode, useContext } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useIsLandingPageRoute } from '../hooks/useIsLandingPageRoute';
 import Loading from '../components/layouts/loading/Loading';
 import LoadingError from '../components/layouts/loading/LoadingError';
 import { OrganisationContext } from './OrganisationContextProvider';
@@ -34,17 +34,8 @@ const PaymentsContextProvider = ({ children }: PaymentsContextProviderProps) => 
 	const { orgId } = useContext(OrganisationContext);
 	const { isAuthenticated, isAdmin } = useAuth();
 	const { user } = useContext(UserAuthContext);
-	const location = useLocation();
 
-	const isLandingPageRoute =
-		location.pathname === '/' ||
-		location.pathname === '/landing-page-courses' ||
-		location.pathname === '/resources' ||
-		location.pathname === '/contact-us' ||
-		location.pathname === '/about-us' ||
-		location.pathname === '/auth' ||
-		(location.pathname.startsWith('/course/') && !location.pathname?.includes('/userCourseId/'));
-
+	const isLandingPageRoute = useIsLandingPageRoute();
 	// ✅ main hook for payments
 	const {
 		data: payments,
@@ -100,7 +91,7 @@ export default PaymentsContextProvider;
 // import { OrganisationContext } from './OrganisationContextProvider';
 // import { Payment } from '../interfaces/payment';
 // import { useAuth } from '../hooks/useAuth';
-// import { useLocation } from 'react-router-dom';
+// import { useIsLandingPageRoute } from '../hooks/useIsLandingPageRoute';
 
 // interface PaymentsContextTypes {
 // 	payments: Payment[];
@@ -138,16 +129,6 @@ export default PaymentsContextProvider;
 // 	const { isAuthenticated, isAdmin } = useAuth();
 // 	const location = useLocation();
 // 	const queryClient = useQueryClient();
-// 	const isLandingPageRoute =
-// 		location.pathname === '/' ||
-// 		location.pathname === '/landing-page-courses' ||
-// 		location.pathname === '/resources' ||
-// 		location.pathname === '/contact-us' ||
-// 		location.pathname === '/about-us' ||
-// 		location.pathname === '/auth' ||
-// 		// Only consider course preview pages as landing pages, not enrolled course pages
-// 		(location.pathname.startsWith('/course/') && !location.pathname?.includes('/userCourseId/'));
-
 // 	const [paymentsPageNumber, setPaymentsPageNumber] = useState<number>(1);
 // 	const [loadedPages, setLoadedPages] = useState<number[]>([]);
 // 	const [totalItems, setTotalItems] = useState<number>(0);

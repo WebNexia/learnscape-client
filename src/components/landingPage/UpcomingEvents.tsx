@@ -434,8 +434,8 @@ export default function UpcomingEvents() {
 				}}>
 				Yaklaşan Etkinlikler
 			</Typography>
-			{upcomingEvents.length > 0 && (isDesktop ? <TimelineDesktop /> : <CarouselMobile />)}
-			{upcomingEvents.length === 0 && (
+			{upcomingEvents && upcomingEvents.length > 0 && (isDesktop ? <TimelineDesktop /> : <CarouselMobile />)}
+			{upcomingEvents && upcomingEvents.length === 0 && (
 				<Typography
 					variant='body1'
 					color='text.secondary'

@@ -212,7 +212,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 			} catch (error) {
 				console.log(error);
 			}
-		} else if (newEvent.coursesIds.length > 0) {
+		} else if (newEvent.coursesIds && newEvent.coursesIds.length > 0) {
 			const courseParticipants: AttendeeInfo[] = [];
 
 			await Promise.all(
@@ -622,7 +622,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 						/>
 					</Box>
 
-					{newEvent.attendees.length > 0 && (
+					{newEvent.attendees && newEvent.attendees.length > 0 && (
 						<Box sx={{ display: 'flex', margin: '1.5rem 0 0.75rem 0', flexWrap: 'wrap' }}>
 							{newEvent.attendees?.map((attendee) => {
 								return (
@@ -721,7 +721,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 						</Box>
 					)}
 
-					{newEvent.coursesIds.length > 0 && (
+					{newEvent.coursesIds && newEvent.coursesIds.length > 0 && (
 						<Box sx={{ display: 'flex', margin: '-0.5rem 0 0.75rem 0', flexWrap: 'wrap' }}>
 							{newEvent.coursesIds?.map((id) => {
 								const course = courses?.find((course) => course._id === id);
@@ -759,7 +759,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 								flexDirection: 'column',
 								alignItems: 'center',
 								position: 'relative',
-								mt: newEvent.coursesIds.length > 0 ? '0.5rem' : '-1.25rem',
+								mt: newEvent.coursesIds && newEvent.coursesIds.length > 0 ? '0.5rem' : '-1.25rem',
 							}}>
 							<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'flex-start' }}>
 								<Box sx={{ flex: 3 }}>

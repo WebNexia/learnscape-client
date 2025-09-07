@@ -242,8 +242,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 			try {
 				const res = await axios.get(`${base_url}/usercourses/participants/organisation/${orgId}`);
 
-				allCoursesParticipantsInfo =
-					Array.from(new Map([...res.data.participants, ...participants]?.map((user) => [user._id, user])).values()) || [];
+				allCoursesParticipantsInfo = Array.from(new Map([...res.data.participants, ...participants]?.map((user) => [user._id, user])).values()) || [];
 				allParticipantsIds = [...res.data.participants, ...participants]?.map((participant: AttendeeInfo) => participant._id) || [];
 
 				setSelectedEvent((prevData) => {
@@ -255,7 +254,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 			} catch (error) {
 				console.log(error);
 			}
-		} else if (selectedEvent?.coursesIds && selectedEvent?.coursesIds.length > 0) {
+		} else if (selectedEvent?.coursesIds && selectedEvent?.coursesIds && selectedEvent?.coursesIds.length > 0) {
 			// Use local array to accumulate course participants
 			const courseParticipants: AttendeeInfo[] = [];
 
@@ -699,7 +698,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 						/>
 					</Box>
 
-					{selectedEvent?.attendees && selectedEvent?.attendees.length > 0 && (
+					{selectedEvent?.attendees && selectedEvent?.attendees && selectedEvent?.attendees.length > 0 && (
 						<Box sx={{ display: 'flex', margin: '1.5rem 0 0.75rem 0', flexWrap: 'wrap' }}>
 							{selectedEvent.attendees?.map((attendee) => {
 								return (
@@ -813,7 +812,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 						</Box>
 					)}
 
-					{selectedEvent?.coursesIds && selectedEvent.coursesIds.length > 0 && (
+					{selectedEvent?.coursesIds && selectedEvent.coursesIds && selectedEvent.coursesIds.length > 0 && (
 						<Box sx={{ display: 'flex', margin: '-0.5rem 0 0.75rem 0', flexWrap: 'wrap' }}>
 							{selectedEvent.coursesIds?.map((id) => {
 								const course = courses?.find((course) => course._id === id);
@@ -857,7 +856,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 								flexDirection: 'column',
 								alignItems: 'center',
 								position: 'relative',
-								mt: selectedEvent?.coursesIds && selectedEvent.coursesIds.length > 0 ? '0.5rem' : '-1.25rem',
+								mt: selectedEvent?.coursesIds && selectedEvent.coursesIds && selectedEvent.coursesIds.length > 0 ? '0.5rem' : '-1.25rem',
 							}}>
 							<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'flex-start' }}>
 								<Box sx={{ flex: 3 }}>

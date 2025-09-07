@@ -18,7 +18,7 @@ const SidebarBtn = ({ btnText, onClick, IconName, active }: SidebarBtnProps) => 
 	const btnTextChars: string[] | undefined = btnText?.split('');
 	let subPageText = '';
 
-	if (btnTextChars && btnTextChars[btnTextChars.length - 1] === 's') {
+	if (btnTextChars && btnTextChars && btnTextChars.length > 0 && btnTextChars && btnTextChars.length > 0 ? btnTextChars[btnTextChars.length - 1] : undefined === 's') {
 		btnTextChars?.pop();
 		subPageText = btnTextChars?.join('') || '';
 	}

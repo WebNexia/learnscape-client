@@ -621,7 +621,7 @@ const Messages = () => {
 	useEffect(() => {
 		const savedActiveChatId = localStorage.getItem('activeChatId');
 
-		if (savedActiveChatId && chatList.length > 0) {
+		if (savedActiveChatId && chatList && chatList.length > 0) {
 			const chat = chatList?.find((chat) => chat.chatId === savedActiveChatId);
 			if (chat) {
 				setActiveChat(chat);
@@ -1310,7 +1310,7 @@ const Messages = () => {
 	);
 
 	const createGroupChat = async () => {
-		if (!groupName.trim() || selectedGroupUsers.length === 0) return;
+		if (!groupName.trim() || (selectedGroupUsers && selectedGroupUsers.length === 0)) return;
 
 		try {
 			// Create unique group chat ID
@@ -1825,7 +1825,7 @@ const Messages = () => {
 					totalMessages: messages.length,
 					dateRange: {
 						firstMessage: messages[0]?.timestamp.toISOString(),
-						lastMessage: messages[messages.length - 1]?.timestamp.toISOString(),
+						lastMessage: messages[messages?.length - 1]?.timestamp.toISOString(),
 					},
 					exportFormat: 'JSON',
 					version: '1.0',
@@ -2504,7 +2504,7 @@ const Messages = () => {
 						justifyContent: 'center',
 						alignItems: 'center',
 						width: '100%',
-						mb: filteredUsers.length === 0 ? '1.5rem' : '-1rem',
+						mb: filteredUsers && filteredUsers.length === 0 ? '1.5rem' : '-1rem',
 					}}>
 					<UserSearchSelect
 						key={`search-${errorMsg ? 'error' : 'normal'}`}

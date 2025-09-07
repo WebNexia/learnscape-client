@@ -75,6 +75,7 @@ const Courses = () => {
 										displayMyCourses={checked}
 										userCourseId={userCourseId}
 										isCourseCompleted={isCourseCompleted}
+										fromHomePage={false}
 									/>
 								);
 							})}

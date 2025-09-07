@@ -78,13 +78,13 @@ const LandingPageResourcesContextProvider = (props: LandingPageResourcesContextP
 	}, [resourcesData, currentPage]);
 
 	const loadMore = () => {
-		if (resourcesData && allResources.length < resourcesData.total) {
+		if (resourcesData && allResources && allResources.length < resourcesData.total) {
 			setCurrentPage((prev) => prev + 1);
 		}
 	};
 
 	// Calculate if there are more resources to load
-	const hasMore = resourcesData ? allResources.length < resourcesData.total : false;
+	const hasMore = resourcesData ? allResources && allResources.length < resourcesData.total : false;
 	const total = resourcesData?.total || 0;
 
 	// Get resources data

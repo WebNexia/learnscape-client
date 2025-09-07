@@ -1,6 +1,6 @@
 // UsersContextProvider.tsx
 import { createContext, ReactNode, useContext } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useIsLandingPageRoute } from '../hooks/useIsLandingPageRoute';
 import Loading from '../components/layouts/loading/Loading';
 import LoadingError from '../components/layouts/loading/LoadingError';
 import { OrganisationContext } from './OrganisationContextProvider';
@@ -38,16 +38,7 @@ const UsersContextProvider = ({ children }: UsersContextProviderProps) => {
 	const { orgId } = useContext(OrganisationContext);
 	const { isAuthenticated, isAdmin } = useAuth();
 	const { user } = useContext(UserAuthContext);
-	const location = useLocation();
-
-	const isLandingPageRoute =
-		location.pathname === '/' ||
-		location.pathname === '/landing-page-courses' ||
-		location.pathname === '/resources' ||
-		location.pathname === '/contact-us' ||
-		location.pathname === '/about-us' ||
-		location.pathname === '/auth' ||
-		(location.pathname.startsWith('/course/') && !location.pathname?.includes('/userCourseId/'));
+	const isLandingPageRoute = useIsLandingPageRoute();
 
 	const {
 		data: users,
@@ -209,7 +200,7 @@ export default UsersContextProvider;
 // 				}
 // 			}
 
-// 			if (pagesToFetch.length === 0) return; // Already loaded
+// 			if (pagesToFetch && pagesToFetch.length === 0) return; // Already loaded
 
 // 			// Fetch missing pages
 // 			let newUsers: User[] = [];
@@ -249,7 +240,7 @@ export default UsersContextProvider;
 // 			// Don't override totalItems from server - only set loadedPages
 // 			// setTotalItems(usersData.length); // ❌ This breaks pagination
 
-// 			setLoadedPages((prev) => (prev.length === 0 ? [1] : prev));
+// 			setLoadedPages((prev) => (prev && prev.length === 0 ? [1] : prev));
 // 		}
 // 	}, [usersData]);
 

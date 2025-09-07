@@ -49,7 +49,7 @@ export function usePaginatedEntity<T extends { _id: string; updatedAt: string; i
 		for (let page = startPage; page <= endPage; page++) {
 			if (!loadedPages?.includes(page)) pagesToFetch.push(page);
 		}
-		if (pagesToFetch.length === 0) return;
+		if (pagesToFetch && pagesToFetch.length === 0) return;
 
 		let newEntities: T[] = [];
 		for (const page of pagesToFetch) {
@@ -106,7 +106,7 @@ export function usePaginatedEntity<T extends { _id: string; updatedAt: string; i
 	const addEntity = (newEntity: T) => {
 		queryClient.setQueryData<T[]>([entityKey, orgId, pageNumber], (old = []) => [newEntity, ...(old || [])]);
 		setTotalItems((prev) => prev + 1);
-		setLoadedPages((prev) => (prev.length === 0 ? [1] : prev));
+		setLoadedPages((prev) => (prev && prev.length === 0 ? [1] : prev));
 	};
 
 	const updateEntity = (updatedEntity: T) => {

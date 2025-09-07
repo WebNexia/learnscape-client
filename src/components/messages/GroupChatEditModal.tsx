@@ -205,7 +205,7 @@ const GroupChatEditModal = ({
 				</Box>
 
 				{/* Pending Removals Display */}
-				{removedMembers.length > 0 && (
+				{removedMembers && removedMembers.length > 0 && (
 					<Box sx={{ mt: '1rem' }}>
 						<Typography variant='body2' sx={{ mb: 1, color: 'error.main', fontSize: isMobileSize ? '0.75rem' : undefined }}>
 							Members to Remove ({removedMembers.length})
@@ -260,7 +260,7 @@ const GroupChatEditModal = ({
 				)}
 
 				{/* Selected New Users Display */}
-				{selectedGroupUsers.length > 0 && (
+				{selectedGroupUsers && selectedGroupUsers.length > 0 && (
 					<Box sx={{ mt: '1rem' }}>
 						<Typography variant='body2' sx={{ mb: 1, fontSize: isMobileSize ? '0.75rem' : undefined }}>
 							New Members to Add ({selectedGroupUsers.length})

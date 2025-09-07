@@ -16,9 +16,10 @@ const Chapters = ({ course, isEnrolledStatus }: ChaptersProps) => {
 		<Box sx={{ width: isMobileSize ? '90%' : '85%', marginBottom: isEnrolledStatus ? '0rem' : '2rem' }}>
 			{course &&
 				course?.chapters &&
+				course?.chapterIds &&
 				course?.chapterIds.length !== 0 &&
 				course?.chapters?.map((chapter, index) => {
-					if (chapter !== null && chapter.lessonIds.length > 0) {
+					if (chapter !== null && chapter.lessonIds && chapter.lessonIds.length > 0) {
 						let nextChapterFirstLessonId: string = '';
 						if (index + 1 < course?.chapters?.length) {
 							nextChapterFirstLessonId = course?.chapters[index + 1].lessonIds[0];

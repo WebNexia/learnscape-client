@@ -130,7 +130,7 @@ const AdminRecycleBinQuestionsTab = () => {
 
 	// Keep track of previous length to avoid unnecessary resets
 	useEffect(() => {
-		if (displayQuestions && displayQuestions.length !== 0) {
+		if (displayQuestions && displayQuestions && displayQuestions.length !== 0) {
 			setRestoreModalOpen(Array(displayQuestions.length).fill(false));
 			setDeleteModalOpen(Array(displayQuestions.length).fill(false));
 		}
@@ -166,7 +166,7 @@ const AdminRecycleBinQuestionsTab = () => {
 				}
 
 				// Calculate which pages we need to fetch
-				const currentLoadedPages = searchResultsLoadedPages.length > 0 ? Math.max(...searchResultsLoadedPages) : 0;
+				const currentLoadedPages = searchResultsLoadedPages && searchResultsLoadedPages.length > 0 ? Math.max(...searchResultsLoadedPages) : 0;
 				const targetPage = Math.ceil((newPage * pageSize) / 200);
 
 				// Fetch all missing pages in sequence
@@ -181,7 +181,7 @@ const AdminRecycleBinQuestionsTab = () => {
 			const requiredRecords = newPage * pageSize;
 			if (archivedQuestions.length < requiredRecords && newPage <= questionsNumberOfPages) {
 				// Calculate which pages we need to fetch
-				const currentLoadedPages = loadedPages.length > 0 ? Math.max(...loadedPages) : 0;
+				const currentLoadedPages = loadedPages && loadedPages.length > 0 ? Math.max(...loadedPages) : 0;
 				const targetPage = Math.ceil((newPage * pageSize) / 200);
 
 				// Fetch all missing pages in sequence
@@ -683,7 +683,7 @@ const AdminRecycleBinQuestionsTab = () => {
 					</Box>
 				</Box>
 				<Box sx={{ display: 'flex', gap: 1, mb: '0.85rem', alignItems: 'center' }}>
-					{selectedItems.length > 0 && (
+					{selectedItems && selectedItems.length > 0 && (
 						<>
 							<CustomSubmitButton onClick={() => setIsBulkRestoreModalOpen(true)} sx={{ fontSize: isMobileSize ? '0.7rem' : undefined }}>
 								Restore ({selectedItems.length})
@@ -885,7 +885,7 @@ const AdminRecycleBinQuestionsTab = () => {
 							})}
 					</TableBody>
 				</Table>
-				{paginatedQuestions.length === 0 && (
+				{paginatedQuestions && paginatedQuestions.length === 0 && (
 					<CustomInfoMessageAlignedLeft
 						message={isSearchActive ? 'No deleted questions found matching your search criteria.' : 'No deleted questions found.'}
 						sx={{ marginTop: '5rem' }}

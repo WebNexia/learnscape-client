@@ -1,6 +1,6 @@
 // InquiriesContextProvider.tsx
 import { createContext, ReactNode, useContext } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useIsLandingPageRoute } from '../hooks/useIsLandingPageRoute';
 import Loading from '../components/layouts/loading/Loading';
 import LoadingError from '../components/layouts/loading/LoadingError';
 import { OrganisationContext } from './OrganisationContextProvider';
@@ -34,18 +34,10 @@ const InquiriesContextProvider = ({ children }: InquiriesContextProviderProps) =
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
 	const { isAuthenticated, isAdmin } = useAuth();
-	const location = useLocation();
+
 	const { user } = useContext(UserAuthContext);
 
-	const isLandingPageRoute =
-		location.pathname === '/' ||
-		location.pathname === '/landing-page-courses' ||
-		location.pathname === '/resources' ||
-		location.pathname === '/contact-us' ||
-		location.pathname === '/about-us' ||
-		location.pathname === '/auth' ||
-		(location.pathname.startsWith('/course/') && !location.pathname?.includes('/userCourseId/'));
-
+	const isLandingPageRoute = useIsLandingPageRoute();
 	const {
 		data: inquiries,
 		isLoading,
@@ -101,7 +93,7 @@ export default InquiriesContextProvider;
 // import LoadingError from '../components/layouts/loading/LoadingError';
 // import { Inquiry } from '../interfaces/inquiry';
 // import { useAuth } from '../hooks/useAuth';
-// import { useLocation } from 'react-router-dom';
+// import { useIsLandingPageRoute } from '../hooks/useIsLandingPageRoute';
 
 // interface InquiriesContextTypes {
 // 	inquiries: Inquiry[];
@@ -146,16 +138,6 @@ export default InquiriesContextProvider;
 // 	const [loadedPages, setLoadedPages] = useState<number[]>([]);
 // 	const location = useLocation();
 // 	const queryClient = useQueryClient();
-// 	const isLandingPageRoute =
-// 		location.pathname === '/' ||
-// 		location.pathname === '/landing-page-courses' ||
-// 		location.pathname === '/resources' ||
-// 		location.pathname === '/contact-us' ||
-// 		location.pathname === '/about-us' ||
-// 		location.pathname === '/auth' ||
-// 		// Only consider course preview pages as landing pages, not enrolled course pages
-// 		(location.pathname.startsWith('/course/') && !location.pathname?.includes('/userCourseId/'));
-
 // 	const fetchInquiries = async (page: number) => {
 // 		if (!orgId) return;
 // 		try {
@@ -188,7 +170,7 @@ export default InquiriesContextProvider;
 // 				}
 // 			}
 
-// 			if (pagesToFetch.length === 0) return; // Already loaded
+// 			if (pagesToFetch && pagesToFetch.length === 0) return; // Already loaded
 
 // 			// Fetch missing pages
 // 			let newInquiries: Inquiry[] = [];
@@ -231,7 +213,7 @@ export default InquiriesContextProvider;
 // 			// Don't override totalItems from server - only set loadedPages
 // 			// setTotalItems(inquiriesData.length); // ❌ This breaks pagination
 
-// 			setLoadedPages((prev) => (prev.length === 0 ? [1] : prev));
+// 			setLoadedPages((prev) => (prev && prev.length === 0 ? [1] : prev));
 // 		}
 // 	}, [inquiriesData]);
 

@@ -1,6 +1,6 @@
 // LessonsContextProvider.tsx
 import { ReactNode, createContext, useContext } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useIsLandingPageRoute } from '../hooks/useIsLandingPageRoute';
 import Loading from '../components/layouts/loading/Loading';
 import LoadingError from '../components/layouts/loading/LoadingError';
 import { OrganisationContext } from './OrganisationContextProvider';
@@ -39,17 +39,8 @@ const LessonsContextProvider = ({ children }: LessonsContextProviderProps) => {
 	const { orgId } = useContext(OrganisationContext);
 	const { isAuthenticated, isAdmin, isLearner } = useAuth();
 	const { user } = useContext(UserAuthContext);
-	const location = useLocation();
 
-	const isLandingPageRoute =
-		location.pathname === '/' ||
-		location.pathname === '/landing-page-courses' ||
-		location.pathname === '/resources' ||
-		location.pathname === '/contact-us' ||
-		location.pathname === '/about-us' ||
-		location.pathname === '/auth' ||
-		(location.pathname.startsWith('/course/') && !location.pathname?.includes('/userCourseId/'));
-
+	const isLandingPageRoute = useIsLandingPageRoute();
 	const {
 		data: lessons,
 		isLoading,
@@ -114,7 +105,7 @@ export default LessonsContextProvider;
 // import LoadingError from '../components/layouts/loading/LoadingError';
 // import { OrganisationContext } from './OrganisationContextProvider';
 // import { useAuth } from '../hooks/useAuth';
-// import { useLocation } from 'react-router-dom';
+// import { useIsLandingPageRoute } from '../hooks/useIsLandingPageRoute';
 // import { UserAuthContext } from './UserAuthContextProvider';
 // import { Roles } from '../interfaces/enums';
 
@@ -165,16 +156,6 @@ export default LessonsContextProvider;
 // 	const { user } = useContext(UserAuthContext);
 // 	const location = useLocation();
 // 	const queryClient = useQueryClient();
-// 	const isLandingPageRoute =
-// 		location.pathname === '/' ||
-// 		location.pathname === '/landing-page-courses' ||
-// 		location.pathname === '/resources' ||
-// 		location.pathname === '/contact-us' ||
-// 		location.pathname === '/about-us' ||
-// 		location.pathname === '/auth' ||
-// 		// Only consider course preview pages as landing pages, not enrolled course pages
-// 		(location.pathname.startsWith('/course/') && !location.pathname?.includes('/userCourseId/'));
-
 // 	const [lessonsPageNumber, setLessonsPageNumber] = useState<number>(1);
 // 	const [totalItems, setTotalItems] = useState<number>(0);
 // 	const [loadedPages, setLoadedPages] = useState<number[]>([]);
@@ -212,7 +193,7 @@ export default LessonsContextProvider;
 // 				}
 // 			}
 
-// 			if (pagesToFetch.length === 0) return; // Already loaded
+// 			if (pagesToFetch && pagesToFetch.length === 0) return; // Already loaded
 
 // 			// Fetch missing pages
 // 			let newLessons: Lesson[] = [];
@@ -248,7 +229,7 @@ export default LessonsContextProvider;
 
 // 	// Progressive pagination için aradaki boşlukları doldur
 // 	useEffect(() => {
-// 		if (loadedPages.length > 0 && orgId) {
+// 		if (loadedPages && loadedPages.length > 0 && orgId) {
 // 			const sortedPages = [...loadedPages].sort((a, b) => a - b);
 // 			const maxPage = Math.max(...sortedPages);
 
@@ -377,7 +358,7 @@ export default LessonsContextProvider;
 // 			// Don't override totalItems from server - only set loadedPages
 // 			// setTotalItems(lessonsData.length); // ❌ This breaks pagination
 
-// 			setLoadedPages((prev) => (prev.length === 0 ? [1] : prev));
+// 			setLoadedPages((prev) => (prev && prev.length === 0 ? [1] : prev));
 // 		}
 // 	}, [lessonsData]);
 

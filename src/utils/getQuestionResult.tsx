@@ -9,7 +9,7 @@ export const getQuestionResult = (response: any, fetchQuestionTypeName: (questio
 	}
 
 	if (questionType === QuestionType.FITB_DRAG_DROP) {
-		if (!response.userBlankValuePairAnswers || response.userBlankValuePairAnswers.length === 0) {
+		if (!response.userBlankValuePairAnswers || response.userBlankValuePairAnswers?.length === 0) {
 			return false;
 		}
 
@@ -24,7 +24,7 @@ export const getQuestionResult = (response: any, fetchQuestionTypeName: (questio
 	}
 
 	if (questionType === QuestionType.FITB_TYPING) {
-		if (!response.userBlankValuePairAnswers || response.userBlankValuePairAnswers.length === 0) {
+		if (!response.userBlankValuePairAnswers || response.userBlankValuePairAnswers?.length === 0) {
 			return false;
 		}
 
@@ -39,7 +39,7 @@ export const getQuestionResult = (response: any, fetchQuestionTypeName: (questio
 	}
 
 	if (questionType === QuestionType.MATCHING) {
-		if (!response.userMatchingPairAnswers || response.userMatchingPairAnswers.length === 0) {
+		if (!response.userMatchingPairAnswers || response.userMatchingPairAnswers?.length === 0) {
 			return false;
 		}
 

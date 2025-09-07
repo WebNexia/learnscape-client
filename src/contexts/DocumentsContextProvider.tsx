@@ -1,6 +1,6 @@
 // DocumentsContextProvider.tsx
 import { ReactNode, createContext, useContext } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useIsLandingPageRoute } from '../hooks/useIsLandingPageRoute';
 import Loading from '../components/layouts/loading/Loading';
 import LoadingError from '../components/layouts/loading/LoadingError';
 import { OrganisationContext } from './OrganisationContextProvider';
@@ -37,17 +37,8 @@ const DocumentsContextProvider = ({ children }: DocumentsContextProviderProps) =
 	const { orgId } = useContext(OrganisationContext);
 	const { isAuthenticated, isAdmin, isLearner } = useAuth();
 	const { user } = useContext(UserAuthContext);
-	const location = useLocation();
 
-	const isLandingPageRoute =
-		location.pathname === '/' ||
-		location.pathname === '/landing-page-courses' ||
-		location.pathname === '/resources' ||
-		location.pathname === '/contact-us' ||
-		location.pathname === '/about-us' ||
-		location.pathname === '/auth' ||
-		(location.pathname.startsWith('/course/') && !location.pathname?.includes('/userCourseId/'));
-
+	const isLandingPageRoute = useIsLandingPageRoute();
 	const {
 		data: documents,
 		isLoading,
@@ -107,7 +98,7 @@ export default DocumentsContextProvider;
 // import { OrganisationContext } from './OrganisationContextProvider';
 // import { Document } from '../interfaces/document';
 // import { useAuth } from '../hooks/useAuth';
-// import { useLocation } from 'react-router-dom';
+// import { useIsLandingPageRoute } from '../hooks/useIsLandingPageRoute';
 
 // interface DocumentsContextTypes {
 // 	documents: Document[];
@@ -151,16 +142,6 @@ export default DocumentsContextProvider;
 // 	const { isAuthenticated, isAdmin, isLearner } = useAuth();
 // 	const location = useLocation();
 // 	const queryClient = useQueryClient();
-// 	const isLandingPageRoute =
-// 		location.pathname === '/' ||
-// 		location.pathname === '/landing-page-courses' ||
-// 		location.pathname === '/resources' ||
-// 		location.pathname === '/contact-us' ||
-// 		location.pathname === '/about-us' ||
-// 		location.pathname === '/auth' ||
-// 		// Only consider course preview pages as landing pages, not enrolled course pages
-// 		(location.pathname.startsWith('/course/') && !location.pathname?.includes('/userCourseId/'));
-
 // 	const [totalItems, setTotalItems] = useState<number>(0);
 // 	const [loadedPages, setLoadedPages] = useState<number[]>([]);
 // 	const [documentsPageNumber, setDocumentsPageNumber] = useState<number>(1);
@@ -267,7 +248,7 @@ export default DocumentsContextProvider;
 // 			// Don't override totalItems from server - only set loadedPages
 // 			// setTotalItems(documentsData.length); // ❌ This breaks pagination
 
-// 			setLoadedPages((prev) => (prev.length === 0 ? [1] : prev));
+// 			setLoadedPages((prev) => (prev && prev.length === 0 ? [1] : prev));
 // 		}
 // 	}, [documentsData]);
 

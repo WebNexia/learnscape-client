@@ -1,6 +1,6 @@
 // AdminPublicEventsContextProvider.tsx
 import { createContext, ReactNode, useContext } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useIsLandingPageRoute } from '../hooks/useIsLandingPageRoute';
 
 import Loading from '../components/layouts/loading/Loading';
 import LoadingError from '../components/layouts/loading/LoadingError';
@@ -37,16 +37,7 @@ const AdminPublicEventsContextProvider = ({ children }: AdminPublicEventsContext
 	const { orgId } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
 	const { isAuthenticated, isAdmin } = useAuth();
-	const location = useLocation();
-
-	const isLandingPageRoute =
-		location.pathname === '/' ||
-		location.pathname === '/landing-page-courses' ||
-		location.pathname === '/resources' ||
-		location.pathname === '/contact-us' ||
-		location.pathname === '/about-us' ||
-		location.pathname === '/auth' ||
-		(location.pathname.startsWith('/course/') && !location.pathname?.includes('/userCourseId/'));
+	const isLandingPageRoute = useIsLandingPageRoute();
 
 	const {
 		data: publicEvents,
@@ -219,7 +210,7 @@ export default AdminPublicEventsContextProvider;
 
 // 	// Progressive pagination için aradaki boşlukları doldur
 // 	useEffect(() => {
-// 		if (loadedPages.length > 0 && orgId) {
+// 		if (loadedPages && loadedPages.length > 0 && orgId) {
 // 			const sortedPages = [...loadedPages].sort((a, b) => a - b);
 // 			const maxPage = Math.max(...sortedPages);
 
@@ -235,12 +226,12 @@ export default AdminPublicEventsContextProvider;
 
 // 	// React Query data değiştiğinde local state'i güncelle
 // 	useEffect(() => {
-// 		if (publicEventsData && publicEventsData.length > 0) {
+// 		if (publicEventsData && publicEventsData && publicEventsData.length > 0) {
 // 			// Don't override totalItems from server - only set loadedPages
 // 			// setTotalItems(publicEventsData.length); // ❌ This breaks pagination
 
 // 			// Eğer loadedPages boşsa ilk page'i ekle
-// 			setLoadedPages((prev) => (prev.length === 0 ? [1] : prev));
+// 			setLoadedPages((prev) => (prev && prev.length === 0 ? [1] : prev));
 // 		}
 // 	}, [publicEventsData]);
 

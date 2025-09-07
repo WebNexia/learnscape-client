@@ -43,7 +43,7 @@ const LandingPageLatestCourses = forwardRef<HTMLDivElement>((_, ref) => {
 			</Box>
 
 			<Box sx={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '1rem', mt: '3rem' }}>
-				{publishedCourses.length > 0 ? (
+				{publishedCourses && publishedCourses.length > 0 ? (
 					publishedCourses?.map((course: SingleCourse) => (
 						<Box key={course._id} sx={{}}>
 							<DashboardCourseCard course={course} fromHomePage />

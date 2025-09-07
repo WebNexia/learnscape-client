@@ -33,8 +33,8 @@ const SelectApplicableCoursesCreate = ({ newPromoCode, setNewPromoCode }: Select
 	};
 
 	return (
-		<Box sx={{ mt: newPromoCode.coursesApplicable.length > 0 ? '0rem' : '1.25rem' }}>
-			{newPromoCode.coursesApplicable.length > 0 && (
+		<Box sx={{ mt: newPromoCode.coursesApplicable && newPromoCode.coursesApplicable.length > 0 ? '0rem' : '1.25rem' }}>
+			{newPromoCode.coursesApplicable && newPromoCode.coursesApplicable.length > 0 && (
 				<Box sx={{ display: 'flex', margin: '0.75rem 0 0.75rem 0', flexWrap: 'wrap' }}>
 					{newPromoCode.coursesApplicable?.map((id) => {
 						const course = courses?.find((course) => course._id === id);
@@ -120,7 +120,7 @@ const SelectApplicableCoursesCreate = ({ newPromoCode, setNewPromoCode }: Select
 					</Box>
 				</Box>
 
-				{filteredCourses.length !== 0 && (
+				{filteredCourses && filteredCourses.length !== 0 && (
 					<Box
 						sx={{
 							display: 'flex',

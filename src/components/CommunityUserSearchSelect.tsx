@@ -77,7 +77,7 @@ const CommunityUserSearchSelect: React.FC<CommunityUserSearchSelectProps> = ({
 		return filtered?.filter((user) => user.firebaseUserId !== currentUserId && !excludeUsernames?.includes(user.username)) || [];
 	}, [filtered, currentUserId, excludeUsernames]);
 
-	const hasResults = filteredUsers.length > 0;
+	const hasResults = filteredUsers && filteredUsers.length > 0;
 	const showLoadMore = pagination?.hasNextPage && hasResults;
 
 	// Reset hasSearched when search is reset
@@ -91,12 +91,12 @@ const CommunityUserSearchSelect: React.FC<CommunityUserSearchSelectProps> = ({
 	React.useEffect(() => {
 		if (value.trim() && !loading && hasSearched) {
 			// Check if we have any search results
-			if (filtered.length === 0 && !error) {
+			if (filtered && filtered.length === 0 && !error) {
 				setNoUserFound(true);
-			} else if (filtered.length > 0) {
+			} else if (filtered && filtered.length > 0) {
 				// Check if all results are filtered out
 				const visibleResults = filtered?.filter((user) => user.firebaseUserId !== currentUserId) || [];
-				setNoUserFound(visibleResults.length === 0);
+				setNoUserFound(visibleResults && visibleResults.length === 0);
 			} else {
 				setNoUserFound(false);
 			}

@@ -100,7 +100,7 @@ const LandingPageResources = () => {
 										<DocumentCard document={doc} userCurrency={userCurrency} />
 									</Grid>
 								))}
-								{freeDocuments.length === 0 && (
+								{freeDocuments && freeDocuments.length === 0 && (
 									<Grid item xs={12} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '30vh' }}>
 										<Typography variant='h6' align='center' color='text.secondary'>
 											Şu anda ücretsiz kaynak bulunmamaktadır.
@@ -116,7 +116,7 @@ const LandingPageResources = () => {
 										<DocumentCard document={doc} userCurrency={userCurrency} fromHomePage={true} />
 									</Grid>
 								))}
-								{paidDocuments.length === 0 && (
+								{paidDocuments && paidDocuments.length === 0 && (
 									<Grid item xs={12} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '30vh' }}>
 										<Typography variant='h6' align='center' color='text.secondary'>
 											Şu anda ücretli kaynak bulunmamaktadır.
@@ -128,7 +128,7 @@ const LandingPageResources = () => {
 					</Box>
 
 					{/* Load More Button and Total Count */}
-					{resources.length > 0 && (
+					{resources && resources.length > 0 && (
 						<>
 							{/* Load More Button */}
 							{hasMore && (
