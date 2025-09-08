@@ -29,8 +29,8 @@ const ChatWhatsApp = () => {
 					sx={{
 						'backgroundColor': '#25D366',
 						'color': '#fff',
-						'width': { xs: '3rem', sm: '3.5rem', md: '4rem' },
-						'height': { xs: '3rem', sm: '3.5rem', md: '4rem' },
+						'width': { xs: '3rem', sm: '3rem', md: '3.5rem' },
+						'height': { xs: '3rem', sm: '3rem', md: '3.5rem' },
 						'boxShadow': '0 4px 20px rgba(0,0,0,0.2)',
 						'&:hover': {
 							backgroundColor: '#128C7E',

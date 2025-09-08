@@ -10,6 +10,7 @@ interface LandingPageDrawerProps {
 	navItems: Array<{
 		label: string;
 		action: () => void;
+		isActive?: boolean;
 	}>;
 }
 
@@ -80,6 +81,7 @@ const LandingPageDrawer = ({ isDrawerOpen, setIsDrawerOpen, navItems }: LandingP
 											fontFamily: 'Varela Round',
 											fontSize: !isRotatedMedium ? responsiveStyles.typography.h5 : '0.85rem',
 											color: theme.textColor?.primary.main,
+											textDecoration: item.isActive ? 'underline' : 'none',
 										},
 									}}
 								/>

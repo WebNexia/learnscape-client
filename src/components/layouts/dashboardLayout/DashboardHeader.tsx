@@ -332,46 +332,6 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 							<NotificationsBox showUnreadOnly={showUnreadOnly} />
 						</Box>
 					)}
-					{/* {
-						{
-							[Mode.DARK_MODE]: (
-								<Tooltip title='Light Mode' placement='top' arrow>
-									<IconButton
-										sx={{
-											'color': theme.textColor?.common.main,
-											'margin': '0 0.75rem',
-											':hover': {
-												backgroundColor: 'transparent',
-											},
-										}}
-										onClick={() => {
-											setMode(Mode.LIGHT_MODE);
-											localStorage.setItem('mode', Mode.LIGHT_MODE);
-										}}>
-										<DarkMode fontSize={isMobileSize ? 'small' : 'medium'} sx={{ fontSize: isMobileSize ? '1rem' : undefined }} />
-									</IconButton>
-								</Tooltip>
-							),
-							[Mode.LIGHT_MODE]: (
-								<Tooltip title='Dark Mode' placement='top' arrow>
-									<IconButton
-										sx={{
-											'color': theme.textColor?.common.main,
-											'margin': '0 0.75rem',
-											':hover': {
-												backgroundColor: 'transparent',
-											},
-										}}
-										onClick={() => {
-											setMode(Mode.DARK_MODE);
-											localStorage.setItem('mode', Mode.DARK_MODE);
-										}}>
-										<LightMode fontSize={isMobileSize ? 'small' : 'medium'} sx={{ fontSize: isMobileSize ? '1rem' : undefined }} />
-									</IconButton>
-								</Tooltip>
-							),
-						}[mode]
-					} */}
 					<Button
 						sx={{
 							textTransform: 'capitalize',

@@ -109,7 +109,12 @@ const DashboardCourseCard = ({ course, isEnrolled, displayMyCourses, userCourseI
 			<CardContent sx={{ padding: '1rem 1.5rem' }}>
 				<Typography
 					sx={{
-						fontSize: isMobileSize ? '0.9rem' : '1rem',
+						fontSize: {
+							xs: '0.8rem',
+							sm: '0.8rem',
+							md: course?.title?.length > 35 ? '0.8rem' : '0.9rem',
+							lg: course?.title?.length > 35 ? '0.9rem' : '1rem',
+						},
 						textAlign: 'center',
 						color: theme.palette.primary.main,
 						fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
