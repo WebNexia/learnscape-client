@@ -92,11 +92,9 @@ export const useDashboardSummary = () => {
 				} catch (error) {
 					lastError = error;
 					const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-					console.log(`❌ Dashboard API attempt ${attempt} failed:`, errorMessage);
 
 					if ((attempt < 3 && (error as any)?.code === 'ERR_CONNECTION_REFUSED') || (error as any)?.code === 'ECONNREFUSED') {
 						const delay = Math.pow(2, attempt) * 1000; // 2s, 4s delays
-						console.log(`⏳ Retrying in ${delay}ms...`);
 						await new Promise((resolve) => setTimeout(resolve, delay));
 					} else {
 						break;

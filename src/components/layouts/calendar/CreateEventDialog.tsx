@@ -329,7 +329,6 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 						try {
 							const notificationRef = collection(db, 'notifications', id, 'userNotifications');
 							await addDoc(notificationRef, publicEventNotification);
-							console.log('✅ Notification sent to user:', id);
 						} catch (error) {
 							console.error('❌ Failed to send notification to user:', id, error);
 						}

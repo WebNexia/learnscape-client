@@ -415,7 +415,6 @@ const Messages = () => {
 
 				// Check if userData exists
 				if (!userData) {
-					console.log(`No user data found for firebaseUserId: ${firebaseUserId}`);
 					// Return a fallback participant data
 					const fallbackData: ParticipantData = {
 						firebaseUserId: firebaseUserId,
@@ -1096,13 +1095,6 @@ const Messages = () => {
 
 							const isRecipientChatting = recipientData?.activeChatId === activeChat.chatId;
 
-							console.log(`Notification check for ${receiverId}:`, {
-								recipientActiveChatId: recipientData?.activeChatId,
-								currentChatId: activeChat.chatId,
-								isRecipientChatting: isRecipientChatting,
-								willSendNotification: !isRecipientChatting,
-							});
-
 							// Send a notification only if the recipient is not currently viewing the chat
 							if (!isRecipientChatting) {
 								const notificationData = {
@@ -1132,13 +1124,6 @@ const Messages = () => {
 						const recipientData = recipientDoc.data();
 
 						const isRecipientChatting = recipientData?.activeChatId === activeChat.chatId;
-
-						console.log(`Notification check for ${receiverId}:`, {
-							recipientActiveChatId: recipientData?.activeChatId,
-							currentChatId: activeChat.chatId,
-							isRecipientChatting: isRecipientChatting,
-							willSendNotification: !isRecipientChatting,
-						});
 
 						// Send a notification only if the recipient is not currently viewing the chat
 						if (!isRecipientChatting) {
@@ -1179,7 +1164,7 @@ const Messages = () => {
 			if (imageUpload) {
 				refreshUploadStats().catch((error) => {
 					console.warn('Failed to refresh upload stats:', error);
-					// Don't block UI, just log the error
+					// Don't block UI, just log the error.
 				});
 			}
 		} catch (error) {
@@ -1572,7 +1557,6 @@ const Messages = () => {
 			batch.delete(doc(db, 'chats', chatId));
 
 			await batch.commit();
-			console.log('Chat completely deleted:', chatId);
 		} catch (error) {
 			console.error('Error deleting chat completely:', error);
 		}
@@ -1850,8 +1834,6 @@ const Messages = () => {
 			a.click();
 			document.body.removeChild(a);
 			URL.revokeObjectURL(url);
-
-			console.log('Chat history downloaded successfully');
 		} catch (error) {
 			console.error('Error downloading chat history:', error);
 		}
@@ -1986,8 +1968,6 @@ const Messages = () => {
 					printWindow.close();
 				}, 500);
 			}
-
-			console.log('PDF download initiated');
 		} catch (error) {
 			console.error('Error downloading PDF:', error);
 		}
@@ -2187,8 +2167,6 @@ const Messages = () => {
 			a.click();
 			document.body.removeChild(a);
 			URL.revokeObjectURL(url);
-
-			console.log('HTML chat history downloaded successfully');
 		} catch (error) {
 			console.error('Error downloading HTML chat history:', error);
 		}
@@ -2258,8 +2236,6 @@ const Messages = () => {
 			a.click();
 			document.body.removeChild(a);
 			URL.revokeObjectURL(url);
-
-			console.log('TXT chat history downloaded successfully');
 		} catch (error) {
 			console.error('Error downloading TXT chat history:', error);
 		}

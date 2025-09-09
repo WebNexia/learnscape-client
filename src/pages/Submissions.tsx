@@ -156,7 +156,6 @@ const Submissions = () => {
 
 			// Search button only works when search value exists
 			if (searchValue && searchValue.trim()) {
-				console.log('Search value being sent:', searchValue.trim());
 				// Store the searched value
 				setSearchedValue(searchValue.trim());
 				// Build query parameters
@@ -176,9 +175,7 @@ const Submissions = () => {
 					params.append('sortOrder', order);
 				}
 
-				console.log('Search URL params:', params.toString());
 				const response = await axios.get(`${base_url}/quizSubmissions/user/${user?._id}?${params.toString()}`);
-				console.log('Search response:', response.data);
 				setSearchResults(response.data.data);
 				setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
 				setSearchResultsLoadedPages([1]);
@@ -264,7 +261,6 @@ const Submissions = () => {
 
 										// Auto-search when filter changes
 										if (newFilterValue) {
-											console.log('Filter value being sent:', newFilterValue);
 											// Build query parameters
 											const params = new URLSearchParams({
 												limit: contextLimit.toString(),
@@ -286,7 +282,6 @@ const Submissions = () => {
 											axios
 												.get(`${base_url}/quizSubmissions/user/${user?._id}?${params.toString()}`)
 												.then((response) => {
-													console.log('Filter response:', response.data);
 													setSearchResults(response.data.data);
 													setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
 													setSearchResultsLoadedPages([1]);

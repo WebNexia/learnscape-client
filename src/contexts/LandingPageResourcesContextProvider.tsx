@@ -181,14 +181,6 @@ const LandingPageResourcesContextProvider = (props: LandingPageResourcesContextP
 	const hasMore = resourcesData ? allResources.length < resourcesData.total : false;
 	const total = resourcesData?.total || 0;
 
-	// Debug logging
-	console.log('Resources hasMore calculation:', {
-		allResourcesLength: allResources.length,
-		totalFromAPI: resourcesData?.total,
-		hasMore,
-		currentPage,
-	});
-
 	// Get resources data
 	const resources = allResources;
 	const loading = isLoading;

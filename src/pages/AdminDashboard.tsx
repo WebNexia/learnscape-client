@@ -64,8 +64,6 @@ const AdminDashboard = () => {
 						],
 					});
 					return;
-				} else {
-					console.log('⚠️ User timeline data is empty or invalid:', userTimeline);
 				}
 			}
 
