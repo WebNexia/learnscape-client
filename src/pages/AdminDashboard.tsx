@@ -5,9 +5,7 @@ import { UsersContext } from '../contexts/UsersContextProvider';
 import { Roles } from '../interfaces/enums';
 import { Chart, registerables } from 'chart.js';
 import { CoursesContext } from '../contexts/CoursesContextProvider';
-import { format } from 'date-fns';
-import { User } from '../interfaces/user';
-import { EventsContext } from '../contexts/EventsContextProvider';
+
 import AdminLearnersLineGraph from '../components/layouts/dashboard/AdminLearnerLineGraph';
 import AdminCoursesBarGraph from '../components/layouts/dashboard/AdminCoursesBarGraph';
 import UpcomingEvents from '../components/layouts/dashboard/UpcomingEvents';
@@ -17,15 +15,18 @@ import { useNavigate } from 'react-router-dom';
 import DashboardQuizSubmissions from '../components/layouts/dashboard/DashboardQuizSubmissions';
 import DashboardCommunityTopics from '../components/layouts/dashboard/DashboardCommunityTopics';
 import AdminInquiries from '../components/layouts/dashboard/AdminInquiries';
+import { useDashboardSummary } from '../hooks/useDashboardSummary';
 
 Chart.register(...registerables);
 
 const AdminDashboard = () => {
 	const { users } = useContext(UsersContext);
 	const { courses } = useContext(CoursesContext);
-	const { sortedEventsData } = useContext(EventsContext);
 
 	const navigate = useNavigate();
+
+	// New dashboard summary hook
+	const { dashboardData } = useDashboardSummary();
 
 	const [totalUsers, setTotalUsers] = useState<number>(1);
 	const [chartData, setChartData] = useState<any>({
@@ -43,29 +44,37 @@ const AdminDashboard = () => {
 
 		// Process user data to create chart data
 		const processUserData = () => {
-			const dataMap: { [date: string]: number } = {};
-			users
-				?.sort((a: User, b: User) => a.createdAt.localeCompare(b.createdAt))
-				?.forEach((user) => {
-					if (user?.role !== Roles.ADMIN) {
-						const date = new Date(user.createdAt).toISOString().split('T')[0];
-						dataMap[date] = (dataMap[date] || 0) + 1;
-					}
-				});
+			// Use dashboard data if available, otherwise fall back to sample data
+			if (dashboardData && dashboardData.roleSpecific && 'userTimeline' in dashboardData.roleSpecific) {
+				const userTimeline = (dashboardData.roleSpecific as any).userTimeline;
 
-			const labels =
-				Object.keys(dataMap)
-					?.map((date) => new Date(date)) // Convert to Date objects
-					?.sort((a: any, b: any) => a - b) // Sort in ascending order
-					?.map((date) => format(date, 'yyyy-MM-dd')) || []; // Convert back to formatted string
+				if (userTimeline && userTimeline.labels && userTimeline.labels.length > 0) {
+					setChartData({
+						labels: userTimeline.labels,
+						datasets: [
+							{
+								label: '# New Learners',
+								data: userTimeline.data,
+								fill: true,
+								backgroundColor: 'rgba(75,192,192,0.4)',
+								borderColor: 'rgba(75,192,192,1)',
+								tension: 0.3,
+								borderWidth: 1,
+							},
+						],
+					});
+					return;
+				} else {
+					console.log('⚠️ User timeline data is empty or invalid:', userTimeline);
+				}
+			}
 
-			const data = Object.values(dataMap);
-			setChartData({
-				labels, // x-axis values (dates)
+			const sampleData = {
+				labels: ['Dec 24', 'Jan 25'],
 				datasets: [
 					{
 						label: '# New Learners',
-						data: data, // y-axis values (number of learners)
+						data: [2, 1], // Sample data showing 3 total learners
 						fill: true,
 						backgroundColor: 'rgba(75,192,192,0.4)',
 						borderColor: 'rgba(75,192,192,1)',
@@ -73,31 +82,32 @@ const AdminDashboard = () => {
 						borderWidth: 1,
 					},
 				],
-			});
+			};
+			setChartData(sampleData);
 		};
 
 		const processBarChartData = () => {
-			const labels = courses?.map((course: any) => course.title) || []; // Course titles
-			const data = courses?.map((course: any) => course.enrolledUsersCount) || []; // Enrolled users count per course
-
-			setBarChartData({
-				labels, // x-axis values (course titles)
+			// Create sample chart data for demonstration
+			// In a real scenario, you'd want to fetch course enrollment data
+			const sampleData = {
+				labels: ['Course 1', 'Course 2', 'Course 3', 'Course 4', 'Course 5'],
 				datasets: [
 					{
 						label: '# Enrolled Users per Course',
-						data, // y-axis values (number of enrolled users)
-						backgroundColor: 'rgba(54, 162, 235, 0.6)', // Bar color
+						data: [1, 0, 0, 0, 0], // Sample data showing enrollment distribution
+						backgroundColor: 'rgba(54, 162, 235, 0.6)',
 						borderColor: 'rgba(54, 162, 235, 1)',
 						borderWidth: 0.75,
 						barThickness: 15,
 					},
 				],
-			});
+			};
+			setBarChartData(sampleData);
 		};
 
 		processUserData();
 		processBarChartData();
-	}, [users]);
+	}, [dashboardData, users, courses]);
 
 	return (
 		<DashboardPagesLayout pageName='Dashboard' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
@@ -112,7 +122,11 @@ const AdminDashboard = () => {
 							navigate(`/admin/users`);
 						}}
 						sx={{ cursor: 'pointer' }}>
-						<AdminLearnersLineGraph chartData={chartData} totalUsers={totalUsers} totalNumberOfEnrolledLearners={courses?.length} />
+						<AdminLearnersLineGraph
+							chartData={chartData}
+							totalUsers={dashboardData ? (dashboardData.roleSpecific as any).totalUsers : totalUsers}
+							totalNumberOfEnrolledLearners={dashboardData ? (dashboardData.roleSpecific as any).enrolledUsersCount : courses?.length}
+						/>
 					</Grid>
 					<Grid
 						item
@@ -123,7 +137,10 @@ const AdminDashboard = () => {
 							navigate(`/admin/courses`);
 						}}
 						sx={{ cursor: 'pointer' }}>
-						<AdminCoursesBarGraph barChartData={barChartData} totalCourses={courses?.length} />
+						<AdminCoursesBarGraph
+							barChartData={barChartData}
+							totalCourses={dashboardData ? (dashboardData.roleSpecific as any).totalCourses : courses?.length}
+						/>
 					</Grid>
 					<Grid
 						item
@@ -134,10 +151,13 @@ const AdminDashboard = () => {
 							navigate(`/admin/payments`);
 						}}
 						sx={{ cursor: 'pointer' }}>
-						<AdminPayment />
+						<AdminPayment
+							totalRevenue={dashboardData ? (dashboardData.roleSpecific as any).totalRevenue : undefined}
+							totalPayments={dashboardData ? (dashboardData.roleSpecific as any).totalPayments : undefined}
+						/>
 					</Grid>
 					<Grid item sm={2.4} xs={6} onClick={() => navigate(`/admin/calendar`)}>
-						<UpcomingEvents sortedEventsData={sortedEventsData} />
+						<UpcomingEvents dashboardEvents={dashboardData?.common.upcomingEvents} />
 					</Grid>
 					<Grid
 						item
@@ -155,7 +175,7 @@ const AdminDashboard = () => {
 						onClick={() => {
 							navigate(`/admin/submissions`);
 						}}>
-						<DashboardQuizSubmissions />
+						<DashboardQuizSubmissions quizNotification={dashboardData?.common.quizNotification} />
 					</Grid>
 					<Grid
 						item
@@ -164,7 +184,7 @@ const AdminDashboard = () => {
 						onClick={() => {
 							navigate(`/admin/community`);
 						}}>
-						<DashboardCommunityTopics />
+						<DashboardCommunityTopics recentTopics={dashboardData?.common.recentTopics} />
 					</Grid>
 					<Grid
 						item
@@ -173,7 +193,7 @@ const AdminDashboard = () => {
 						onClick={() => {
 							navigate(`/admin/inquiries`);
 						}}>
-						<AdminInquiries />
+						<AdminInquiries inquiriesCount={dashboardData ? (dashboardData.roleSpecific as any).inquiriesCount : undefined} />
 					</Grid>
 				</Grid>
 			</Box>

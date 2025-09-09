@@ -1,25 +1,23 @@
 import { Box, Typography } from '@mui/material';
 import { format } from 'date-fns';
-import { Event } from '../../../interfaces/event';
 import { truncateText } from '../../../utils/utilText';
 import { EventNote } from '@mui/icons-material';
 import theme from '../../../themes';
 import { useContext } from 'react';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
-import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
+import { UpcomingEvent } from '../../../hooks/useDashboardSummary';
 
 interface UpcomingEventsProps {
-	sortedEventsData: Event[];
+	dashboardEvents?: UpcomingEvent[];
 }
 
-const UpcomingEvents = ({ sortedEventsData }: UpcomingEventsProps) => {
+const UpcomingEvents = ({ dashboardEvents }: UpcomingEventsProps) => {
 	const { isRotated, isSmallScreen } = useContext(MediaQueryContext);
-	const { user } = useContext(UserAuthContext);
 	const isMobileSize: boolean = isSmallScreen || isRotated;
 
-	const currentDate = new Date(); // Current date
-	const sevenDaysFromNow = new Date();
-	sevenDaysFromNow.setDate(currentDate.getDate() + 7);
+	// Use dashboard events (backend already filters and sorts them)
+	const eventsToShow = dashboardEvents || [];
+
 	return (
 		<Box
 			sx={{
@@ -42,16 +40,7 @@ const UpcomingEvents = ({ sortedEventsData }: UpcomingEventsProps) => {
 				<EventNote sx={{ ml: '0.5rem', color: theme.textColor?.greenPrimary.main }} fontSize={isMobileSize ? 'small' : 'medium'} />
 			</Box>
 
-			{sortedEventsData
-				?.filter((event) => {
-					return (
-						event.start &&
-						new Date(event.start) >= currentDate &&
-						new Date(event.start) <= sevenDaysFromNow &&
-						(event.isPublic || event.allAttendeesIds?.includes(user?._id!) || event.isAllLearnersSelected)
-					);
-				})
-				?.sort((a: Event, b: Event) => new Date(a.start!).getTime() - new Date(b.start!).getTime())?.length > 0 ? (
+			{eventsToShow.length > 0 ? (
 				<Box
 					sx={{
 						display: 'flex',
@@ -63,28 +52,18 @@ const UpcomingEvents = ({ sortedEventsData }: UpcomingEventsProps) => {
 						overflow: 'auto',
 						height: '7rem',
 					}}>
-					{sortedEventsData
-						?.filter((event) => {
-							return (
-								event.start &&
-								new Date(event.start) >= currentDate &&
-								new Date(event.start) <= sevenDaysFromNow &&
-								(event.isPublic || event.allAttendeesIds?.includes(user?._id!) || event.isAllLearnersSelected)
-							);
-						})
-						?.sort((a: Event, b: Event) => new Date(a.start!).getTime() - new Date(b.start!).getTime())
-						?.map((event) => (
-							<Box key={event._id} sx={{ marginBottom: '0.5rem', width: '100%' }}>
-								<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.65rem' : '0.85rem' }}>
-										{truncateText(event.title, 12)}
-									</Typography>
-									<Typography sx={{ fontSize: isMobileSize ? '0.65rem' : '0.85rem', ml: '0.75rem' }}>
-										{event.start ? format(new Date(event.start), 'dd MMM yy, HH:mm') : 'No start date'}
-									</Typography>
-								</Box>
+					{eventsToShow.map((event) => (
+						<Box key={event.id} sx={{ marginBottom: '0.5rem', width: '100%' }}>
+							<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.65rem' : '0.75rem' }}>
+									{truncateText(event.title, 10)}
+								</Typography>
+								<Typography sx={{ fontSize: isMobileSize ? '0.65rem' : '0.75rem', ml: '0.75rem' }}>
+									{format(new Date(event.startDate), 'dd MMM yy, HH:mm')}
+								</Typography>
 							</Box>
-						))}
+						</Box>
+					))}
 				</Box>
 			) : (
 				<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '7rem' }}>

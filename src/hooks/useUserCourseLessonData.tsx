@@ -5,6 +5,7 @@ import { useLocalStorageData } from './useLocalStorageData';
 import axios from '@utils/axiosInstance';
 import { UserLessonDataStorage } from '../contexts/UserCourseLessonDataContextProvider';
 import { useAuth } from './useAuth';
+import { useDashboardSync, dashboardSyncHelpers } from '../utils/dashboardSync';
 
 export const useUserCourseLessonData = () => {
 	const { lessonId, courseId, userCourseId } = useParams<{ lessonId: string; courseId: string; userCourseId: string }>();
@@ -18,6 +19,9 @@ export const useUserCourseLessonData = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
 	const { setLocalStorageData, parsedUserCourseData, parsedUserLessonData } = useLocalStorageData();
+	
+	// Dashboard sync for real-time updates
+	const { refreshDashboard } = useDashboardSync();
 
 	const [isLessonCompleted, setIsLessonCompleted] = useState<boolean>(() => {
 		const isCompleted = searchParams.get('isCompleted');
@@ -116,6 +120,9 @@ export const useUserCourseLessonData = () => {
 					isInProgress: false,
 					currentQuestion: 1,
 				});
+				
+				// Trigger dashboard sync when lesson is completed
+				dashboardSyncHelpers.onLessonCompleted(refreshDashboard);
 			}
 
 			if (nextLessonId) {

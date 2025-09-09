@@ -1,58 +1,101 @@
-import { Box, IconButton, Typography, Button } from '@mui/material';
+import { Box, Typography, Button } from '@mui/material';
 import LandingPageLayout from '../components/landingPage/LandingPageLayout';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
-import { useContext, useState } from 'react';
+import { useContext } from 'react';
 import { AllPublicCoursesContext } from '../contexts/AllPublicCoursesContextProvider';
 import { SingleCourse } from '../interfaces/course';
 import DashboardCourseCard from '../components/userCourses/DashboardCourseCard';
-import { InfoOutlined } from '@mui/icons-material';
-import LandingPageCoursesInfoDialog from '../components/landingPage/LandingPageCoursesInfoDialog';
 import ChatWhatsApp from '../components/landingPage/ChatWhatsApp';
 import ScrollToTopButton from '../components/landingPage/ScrollToTopButton';
-import { OrganisationContext } from '../contexts/OrganisationContextProvider';
+import SearchFilter from '../components/landingPage/SearchFilter';
 
 const LandingPageCourses = () => {
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
-	const { orgId } = useContext(OrganisationContext);
+	const {
+		courses,
+		loading,
+		error,
+		total,
+		hasMore,
+		loadMore,
+		searchValue,
+		setSearchValue,
+		activeFilter,
+		setActiveFilter,
+		searchedValue,
+		onSearch,
+		onReset,
+		onRemoveSearch,
+		isSearching,
+	} = useContext(AllPublicCoursesContext);
 
-	const { courses, loading, error, hasMore, loadMore } = useContext(AllPublicCoursesContext);
-
-	const [isInfoDialogOpen, setIsInfoDialogOpen] = useState<boolean>(false);
-
-	// Filter courses by organization
-	const publishedCourses = courses?.filter((course: SingleCourse) => course.orgId === orgId) || [];
+	// Filter options for courses
+	const courseFilterOptions = [
+		{ value: 'partner', label: 'Partner' },
+		{ value: 'platform', label: 'Platform' },
+		{ value: 'free', label: 'Ücretsiz' },
+		{ value: 'paid', label: 'Ücretli' },
+	];
 
 	return (
 		<LandingPageLayout>
+			<Box
+				sx={{
+					position: 'sticky',
+					top: 0,
+					zIndex: 1000,
+					paddingTop: isMobileSize ? '10vh' : '13vh',
+					width: '100%',
+					backgroundColor: '#FDF7F0',
+					backgroundImage: `
+						linear-gradient(135deg, rgba(44, 62, 80, 0.05), rgba(52, 152, 219, 0.05)),
+						radial-gradient(circle, rgba(44,62,80,0.08) 1px, transparent 1px)
+					`,
+					backgroundSize: 'auto, 30px 30px',
+					backgroundRepeat: 'repeat, repeat',
+				}}>
+				<Box
+					sx={{
+						display: 'flex',
+						flexDirection: 'column',
+						alignItems: 'center',
+						justifyContent: 'center',
+						width: '100%',
+					}}>
+					{/* Search and Filter Component */}
+					<Box sx={{ width: '85%', mt: '0.5rem' }}>
+						<SearchFilter
+							searchValue={searchValue}
+							onSearchChange={setSearchValue}
+							onSearch={onSearch}
+							onReset={onReset}
+							activeFilter={activeFilter}
+							onFilterChange={setActiveFilter}
+							filterOptions={courseFilterOptions}
+							loading={isSearching}
+							placeholder='Kurs ismi, açıklama veya eğitmen isminde arayın...'
+							searchLabel='Kurs Ara'
+							searchedValue={searchedValue}
+							onRemoveSearch={onRemoveSearch}
+							totalCount={total}
+							isCoursesPage={true}
+							hasActiveSearchOrFilter={!!(searchedValue || activeFilter)}
+						/>
+					</Box>
+				</Box>
+			</Box>
+
+			{/* Scrollable Content Section */}
 			<Box
 				sx={{
 					display: 'flex',
 					flexDirection: 'column',
 					alignItems: 'center',
 					justifyContent: 'center',
-					paddingTop: isMobileSize ? '10vh' : '13vh',
 					width: '100%',
 				}}>
-				<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mt: '1rem' }}>
-					<Typography
-						variant='h2'
-						sx={{
-							fontSize: isMobileSize ? '1.35rem' : '2rem',
-							fontWeight: 600,
-							fontFamily: 'Varela Round',
-							color: '#2C3E50',
-						}}>
-						Tüm Kurslar
-					</Typography>
-					<IconButton
-						size='small'
-						sx={{ 'ml': { xs: '0.5rem', sm: '0.75rem' }, '& svg': { fontSize: { xs: '1.1rem', sm: '1.25rem' } } }}
-						onClick={() => setIsInfoDialogOpen(true)}>
-						<InfoOutlined />
-					</IconButton>
-				</Box>
 				<Box sx={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '1rem', mt: '3rem', width: '85%' }}>
 					{error ? (
 						<Typography
@@ -65,31 +108,39 @@ const LandingPageCourses = () => {
 							}}>
 							{error}
 						</Typography>
-					) : publishedCourses && publishedCourses.length > 0 ? (
-						<>
-							{publishedCourses?.map((course: SingleCourse) => (
-								<Box key={course._id} sx={{}}>
+					) : courses && courses.length > 0 ? (
+						<Box
+							sx={{
+								display: 'flex',
+								alignItems: 'center',
+								justifyContent: 'center',
+								width: '100%',
+								flexWrap: 'wrap',
+								gap: '1rem',
+								mb: '2rem',
+								mt: '-2rem',
+							}}>
+							{courses?.map((course: SingleCourse) => (
+								<Box key={course._id}>
 									<DashboardCourseCard course={course} fromHomePage />
 								</Box>
 							))}
 
 							{/* Load More Button */}
 							{hasMore && (
-								<Box sx={{ width: '100%', textAlign: 'center', mt: '2rem' }}>
+								<Box sx={{ width: '100%', textAlign: 'center', mt: '2rem', mb: '2rem' }}>
 									<Button
 										onClick={loadMore}
 										disabled={loading}
 										variant='contained'
 										sx={{
-											'backgroundColor': '#2C3E50',
 											'color': 'white',
 											'fontFamily': 'Varela Round',
 											'fontSize': '1rem',
 											'fontWeight': 500,
-											'padding': '0.75rem 2rem',
-											'&:hover': {
-												backgroundColor: '#34495E',
-											},
+											'padding': '0.5rem 1rem',
+											'textTransform': 'capitalize',
+											'borderRadius': '0.5rem',
 											'&:disabled': {
 												backgroundColor: '#ccc',
 											},
@@ -98,22 +149,23 @@ const LandingPageCourses = () => {
 									</Button>
 								</Box>
 							)}
-						</>
+						</Box>
 					) : (
 						<Typography
 							sx={{
 								textAlign: 'center',
-								fontSize: '1.25rem',
+								fontSize: { xs: '1rem', sm: '1.25rem' },
 								color: 'text.secondary',
 								fontFamily: 'Varela Round',
-								mt: 5,
+								mt: '3rem',
+								marginBottom: '3rem',
 							}}>
-							Henüz yayınlanmış kurs bulunmamaktadır.
+							{searchedValue || activeFilter ? 'Arama kriterlerinize uygun kurs bulunamadı.' : 'Henüz yayınlanmış kurs bulunmamaktadır.'}
 						</Typography>
 					)}
 				</Box>
 			</Box>
-			<LandingPageCoursesInfoDialog isInfoDialogOpen={isInfoDialogOpen} setIsInfoDialogOpen={setIsInfoDialogOpen} />
+
 			<ChatWhatsApp />
 			<ScrollToTopButton />
 		</LandingPageLayout>

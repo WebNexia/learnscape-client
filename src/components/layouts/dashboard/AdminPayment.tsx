@@ -1,9 +1,14 @@
 import { Box, Typography } from '@mui/material';
 import { useContext } from 'react';
-import { PaymentsContext } from '../../../contexts/PaymentsContextProvider';
+
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
-const AdminPayment = () => {
+interface AdminPaymentProps {
+	totalRevenue?: number;
+	totalPayments?: number;
+}
+
+const AdminPayment = ({ totalRevenue, totalPayments }: AdminPaymentProps) => {
 	// const { totalPaymentAmountGBP, totalNumberOfPayments } = useContext(PaymentsContext);
 	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
 
@@ -28,12 +33,13 @@ const AdminPayment = () => {
 			</Box>
 			<Box sx={{ display: 'flex', alignItems: 'center', flex: 8 }}>
 				<Typography variant='h2' sx={{ fontSize: isMobileSize ? '3rem' : '4rem' }}>
-					{/* £{totalPaymentAmountGBP.toFixed(1)} */}
+					{totalRevenue ? `£${totalRevenue}` : 'N/A'}
 				</Typography>
 			</Box>
-			<Box sx={{ display: 'flex', justifyContent: 'flex-start', width: '100%' }}>
-				<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.8rem' : '0.9rem', margin: '1rem 0 0 1rem' }}>
-					{/* Total Number of Payments: {totalNumberOfPayments} */}
+
+			<Box sx={{ display: 'flex', justifyContent: 'flex-start', width: '100%', flex: 1 }}>
+				<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.8rem' : '0.9rem', margin: '0.5rem 0 0 1rem' }}>
+					Total Number of Payments: {totalPayments || 'N/A'}
 				</Typography>
 			</Box>
 		</Box>

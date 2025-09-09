@@ -3,13 +3,16 @@ import { Box, Typography } from '@mui/material';
 import { useContext } from 'react';
 
 import { InquiriesContext } from '../../../contexts/InquiriesContextProvider';
-import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
-const AdminInquiries = () => {
-	const { isRotated, isSmallScreen } = useContext(MediaQueryContext);
+interface AdminInquiriesProps {
+	inquiriesCount?: number;
+}
 
-	const isMobileSize: boolean = isSmallScreen || isRotated;
+const AdminInquiries = ({ inquiriesCount }: AdminInquiriesProps) => {
 	const { totalItems } = useContext(InquiriesContext);
+
+	// Use new dashboard data if available, otherwise fall back to context
+	const displayCount = inquiriesCount !== undefined ? inquiriesCount : totalItems;
 
 	return (
 		<Box
@@ -28,10 +31,9 @@ const AdminInquiries = () => {
 				},
 			}}>
 			<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-				<Typography variant='h6'>Inquiries ({totalItems})</Typography>
+				<Typography variant='h6'>Inquiries ({displayCount})</Typography>
 				<Typography>&</Typography>
 				<Typography variant='h6'>Bulk Email</Typography>
-				{/* <InfoOutlined sx={{ ml: '0.5rem', color: theme.textColor?.greenPrimary.main }} fontSize={isMobileSize ? 'small' : 'medium'} /> */}
 			</Box>
 		</Box>
 	);

@@ -1,6 +1,6 @@
 import { AppBar, Box, Button, IconButton, Toolbar, Typography } from '@mui/material';
 import theme from '../../themes';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useContext, useState } from 'react';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import logo from '../../assets/logo.png';
@@ -13,6 +13,7 @@ const Header = () => {
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 	const navigate = useNavigate();
 	const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
+	const location = useLocation();
 
 	const navItems = [
 		{
@@ -28,6 +29,7 @@ const Header = () => {
 				navigate('/landing-page-courses');
 				window.scrollTo({ top: 0, behavior: 'smooth' });
 			},
+			isActive: location.pathname === '/landing-page-courses',
 		},
 		{
 			label: 'Kaynaklar',
@@ -35,6 +37,7 @@ const Header = () => {
 				navigate('/resources');
 				window.scrollTo({ top: 0, behavior: 'smooth' });
 			},
+			isActive: location.pathname === '/resources',
 		},
 		{
 			label: 'İletişim',
@@ -111,6 +114,7 @@ const Header = () => {
 											sx={{
 												'fontFamily': 'Varela Round',
 												'color': theme.textColor?.primary.main,
+												'textDecoration': item.isActive ? 'underline' : 'none',
 												'&:hover': {
 													color: '#3498DB',
 													textDecoration: 'underline',

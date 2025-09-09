@@ -147,7 +147,11 @@ export const router = createBrowserRouter([
 				element: (
 					<AdminRouteGuard>
 						<CoursesContextProvider>
-							<AdminCourseEditPage />
+							<LessonsContextProvider>
+								<DocumentsContextProvider>
+									<AdminCourseEditPage />
+								</DocumentsContextProvider>
+							</LessonsContextProvider>
 						</CoursesContextProvider>
 					</AdminRouteGuard>
 				),
@@ -168,7 +172,9 @@ export const router = createBrowserRouter([
 					<AdminRouteGuard>
 						<LessonsContextProvider>
 							<QuestionsContextProvider>
-								<AdminLessonEditPage />
+								<DocumentsContextProvider>
+									<AdminLessonEditPage />
+								</DocumentsContextProvider>
 							</QuestionsContextProvider>
 						</LessonsContextProvider>
 					</AdminRouteGuard>
@@ -236,9 +242,11 @@ export const router = createBrowserRouter([
 				path: 'admin/calendar',
 				element: (
 					<AdminRouteGuard>
-						<EventsContextProvider>
-							<Calendar />
-						</EventsContextProvider>
+						<UsersContextProvider>
+							<EventsContextProvider>
+								<Calendar />
+							</EventsContextProvider>
+						</UsersContextProvider>
 					</AdminRouteGuard>
 				),
 			},
@@ -384,9 +392,11 @@ export const router = createBrowserRouter([
 				path: 'calendar',
 				element: (
 					<LearnerRouteGuard>
-						<EventsContextProvider>
-							<Calendar />
-						</EventsContextProvider>
+						<UsersContextProvider>
+							<EventsContextProvider>
+								<Calendar />
+							</EventsContextProvider>
+						</UsersContextProvider>
 					</LearnerRouteGuard>
 				),
 			},

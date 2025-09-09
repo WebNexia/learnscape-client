@@ -1,38 +1,22 @@
 import { Box, Typography } from '@mui/material';
-import { useContext, useEffect, useState } from 'react';
-import { LearnerQuizSubmissionsContext } from '../../../contexts/LearnerQuizSubmissionsContextProvider';
-import { AdminQuizSubmissionsContext } from '../../../contexts/AdminQuizSubmissionsContextProvider';
+import { useContext } from 'react';
 import { CheckBoxOutlined } from '@mui/icons-material';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 import { Roles } from '../../../interfaces/enums';
 import theme from '../../../themes';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
+import { QuizNotification } from '../../../hooks/useDashboardSummary';
 
-const DashboardQuizSubmissions = () => {
+interface DashboardQuizSubmissionsProps {
+	quizNotification?: QuizNotification;
+}
+
+const DashboardQuizSubmissions = ({ quizNotification }: DashboardQuizSubmissionsProps) => {
 	const { user } = useContext(UserAuthContext);
-	const { userQuizSubmissions } = useContext(LearnerQuizSubmissionsContext);
-	const { quizSubmissions: adminQuizSubmissions } = useContext(AdminQuizSubmissionsContext);
 	const { isRotated, isSmallScreen } = useContext(MediaQueryContext);
 
-	// Smart context selection based on user role
 	const isAdmin = user?.role === Roles.ADMIN;
-	const submissions = isAdmin ? adminQuizSubmissions : userQuizSubmissions;
-
 	const isMobileSize: boolean = isSmallScreen || isRotated;
-	const [numberOfUncheckedQuizzes, setNumberOfUncheckedQuizzes] = useState<number>(0);
-	const [numberOfRecentlyCheckedQuizzes, setNumberOfRecentlyCheckedQuizzes] = useState<number>(0);
-
-	const currentDate = new Date(); // Current date
-	const twoWeeksEarlierFromNow = new Date();
-	twoWeeksEarlierFromNow.setDate(currentDate.getDate() - 14);
-
-	useEffect(() => {
-		const totalUnchecked = submissions?.filter((submission) => !submission.isChecked)?.length || 0;
-		const totalRecentlyChecked =
-			submissions?.filter((submission) => submission.isChecked && new Date(submission.updatedAt) > twoWeeksEarlierFromNow)?.length || 0;
-		setNumberOfUncheckedQuizzes(totalUnchecked);
-		setNumberOfRecentlyCheckedQuizzes(totalRecentlyChecked);
-	}, [submissions, twoWeeksEarlierFromNow]);
 	return (
 		<Box
 			sx={{
@@ -55,23 +39,14 @@ const DashboardQuizSubmissions = () => {
 				<CheckBoxOutlined sx={{ ml: '0.5rem', color: theme.textColor?.greenPrimary.main }} fontSize={isMobileSize ? 'small' : 'medium'} />
 			</Box>
 			<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '7rem' }}>
-				{isAdmin ? (
-					<Typography
-						sx={{ fontSize: isMobileSize ? '0.65rem' : '0.85rem', color: numberOfUncheckedQuizzes > 0 ? '#ef5350' : 'gray', textAlign: 'center' }}>
-						{numberOfUncheckedQuizzes > 0 ? `Total ${numberOfUncheckedQuizzes} unchecked quizzes` : 'No unchecked quizzes'}
-					</Typography>
-				) : (
-					<Typography
-						sx={{
-							fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-							color: numberOfRecentlyCheckedQuizzes > 0 ? theme.textColor?.greenPrimary.main : 'gray',
-							textAlign: 'center',
-						}}>
-						{numberOfRecentlyCheckedQuizzes > 0
-							? `You have ${numberOfRecentlyCheckedQuizzes} recently checked quiz(zes)`
-							: 'You have no recently checked quizzes'}
-					</Typography>
-				)}
+				<Typography
+					sx={{
+						fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+						color: quizNotification?.hasNotification ? (isAdmin ? '#ef5350' : theme.textColor?.greenPrimary.main) : 'gray',
+						textAlign: 'center',
+					}}>
+					{quizNotification?.message || 'No quiz notifications'}
+				</Typography>
 			</Box>
 		</Box>
 	);

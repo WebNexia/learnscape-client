@@ -26,6 +26,7 @@ import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import QuestionMedia from '../components/userCourses/QuestionMedia';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import { decode } from 'html-entities';
+import { useDashboardSync, dashboardSyncHelpers } from '../utils/dashboardSync';
 
 export interface QuestionFeedbackData {
 	userQuestionId: string;
@@ -41,6 +42,9 @@ const AdminQuizSubmissionCheck = () => {
 	const { fetchQuestionTypeName } = useContext(QuestionsContext);
 	const { user } = useContext(UserAuthContext);
 	const navigate = useNavigate();
+
+	// Dashboard sync for real-time updates
+	const { refreshDashboard } = useDashboardSync();
 
 	const { search } = useLocation();
 	const isChecked = new URLSearchParams(search).get('isChecked');
@@ -238,6 +242,9 @@ const AdminQuizSubmissionCheck = () => {
 				await axios.patch(`${base_url}/quizsubmissions/${submissionId}`, {
 					isChecked: true,
 				});
+
+				// Trigger dashboard sync when quiz is checked
+				dashboardSyncHelpers.onQuizSubmitted(refreshDashboard);
 			}
 
 			setDisplaySubmissionMsg(true);
@@ -550,8 +557,7 @@ const AdminQuizSubmissionCheck = () => {
 										<Box sx={{ flex: 9 }}>
 											<audio
 												src={
-													userQuestionsFeedbacks?.find((feedback) => feedback.userQuestionId === userResponseToFeedback?._id)
-														?.teacherAudioFeedbackUrl
+													userQuestionsFeedbacks?.find((feedback) => feedback.userQuestionId === userResponseToFeedback?._id)?.teacherAudioFeedbackUrl
 												}
 												controls
 												style={{

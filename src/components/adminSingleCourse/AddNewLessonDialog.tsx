@@ -646,7 +646,15 @@ const AddNewLessonDialog = ({
 												sx={{
 													textAlign: 'center',
 												}}>
-												<FormControlLabel control={<Checkbox checked={isSelected} onChange={() => handleCheckboxChange(lesson)} />} label='' />
+												<FormControlLabel
+													control={<Checkbox checked={isSelected} onChange={() => handleCheckboxChange(lesson)} />}
+													label=''
+													sx={{
+														'& .MuiSvgIcon-root': {
+															fontSize: '1.25rem',
+														},
+													}}
+												/>
 											</TableCell>
 										</TableRow>
 									);

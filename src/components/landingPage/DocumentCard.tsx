@@ -75,7 +75,7 @@ const DocumentCard = ({ document, userCurrency, fromHomePage }: DocumentCardProp
 									alignItems: 'center',
 									gap: 1,
 									color: theme.palette.grey[500],
-									height: { xs: '8rem', sm: '8rem', md: '9rem', lg: '9rem' },
+									height: { xs: '7rem', sm: '7rem', md: '8rem', lg: '8rem' },
 									padding: '1.5rem',
 								}}>
 								<svg width='3rem' height='5rem' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>
@@ -129,14 +129,21 @@ const DocumentCard = ({ document, userCurrency, fromHomePage }: DocumentCardProp
 								fontWeight: 'bold',
 								marginBottom: { xs: '0.5rem', sm: '0.5rem', md: '0.75rem', lg: '0.75rem' },
 								color: theme.palette.text.primary,
-								fontSize: { xs: '0.9rem', sm: '0.9rem', md: '1rem', lg: '1rem' },
+								fontSize: {
+									xs: document?.name?.length > 35 ? '0.7rem' : '0.8rem',
+									sm: document?.name?.length > 35 ? '0.725rem' : '0.8rem',
+									md: document?.name?.length > 35 ? '0.775rem' : '0.9rem',
+									lg: document?.name?.length > 35 ? '0.775rem' : '0.9rem',
+								},
 							}}>
 							{document.name}
 						</Typography>
 
 						<Box
 							sx={{
-								'height': '4.5em', // 3 lines * 1.4 line height
+								'height': 'auto',
+								'minHeight': '2.5rem',
+								'maxHeight': '4rem',
 								'overflow': 'auto',
 								'marginBottom': '20px',
 								'&::-webkit-scrollbar': {
@@ -163,7 +170,12 @@ const DocumentCard = ({ document, userCurrency, fromHomePage }: DocumentCardProp
 									paddingRight: '0.1rem',
 									whiteSpace: 'pre-wrap',
 									wordBreak: 'break-word',
-									fontSize: { xs: '0.75rem', sm: '0.8rem', md: '0.85rem', lg: '0.85rem' },
+									fontSize: {
+										xs: document?.description?.length > 60 ? '0.65rem' : '0.75rem',
+										sm: document?.description?.length > 60 ? '0.7rem' : '0.8rem',
+										md: document?.description?.length > 60 ? '0.7rem' : '0.85rem',
+										lg: document?.description?.length > 60 ? '0.7rem' : '0.85rem',
+									},
 									overflow: 'hidden',
 								}}>
 								{document.description || 'No description available'}
@@ -176,7 +188,7 @@ const DocumentCard = ({ document, userCurrency, fromHomePage }: DocumentCardProp
 								color: theme.palette.text.secondary,
 								fontFamily: "'Varela Round', sans-serif",
 								fontSize: { xs: '0.8rem', sm: '0.8rem', md: '0.85rem', lg: '0.85rem' },
-								mb: 2,
+								mb: 1,
 							}}>
 							{document.pageCount} sayfa
 						</Typography>
