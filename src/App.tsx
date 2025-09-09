@@ -9,6 +9,7 @@ import Loading from './components/layouts/loading/Loading';
 // Import only essential context providers for initial dashboard load
 import UserAuthContextProvider from './contexts/UserAuthContextProvider';
 import OrganisationContextProvider from './contexts/OrganisationContextProvider';
+import MediaQueryContextProvider from './contexts/MediaQueryContextProvider';
 import { UploadLimitProvider } from './contexts/UploadLimitContextProvider';
 
 import { UserAuthContext } from './contexts/UserAuthContextProvider';
@@ -33,15 +34,17 @@ function App() {
 	return (
 		<QueryClientProvider client={queryClient}>
 			<ThemeProvider theme={theme}>
-				<UserAuthContextProvider>
-					<OrganisationContextProvider>
-						<ConditionalUploadLimitProvider>
-							<Suspense fallback={<Loading />}>
-								<Outlet />
-							</Suspense>
-						</ConditionalUploadLimitProvider>
-					</OrganisationContextProvider>
-				</UserAuthContextProvider>
+				<MediaQueryContextProvider>
+					<UserAuthContextProvider>
+						<OrganisationContextProvider>
+							<ConditionalUploadLimitProvider>
+								<Suspense fallback={<Loading />}>
+									<Outlet />
+								</Suspense>
+							</ConditionalUploadLimitProvider>
+						</OrganisationContextProvider>
+					</UserAuthContextProvider>
+				</MediaQueryContextProvider>
 			</ThemeProvider>
 		</QueryClientProvider>
 	);
