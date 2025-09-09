@@ -44,6 +44,7 @@ import axios from '@utils/axiosInstance';
 import HandleImageUploadURL from '../../forms/uploadImageVideoDocument/HandleImageUploadURL';
 import ImageThumbnail from '../../forms/uploadImageVideoDocument/ImageThumbnail';
 import { validateImageUrl } from '../../../utils/urlValidation';
+import { useDashboardSync, dashboardSyncHelpers } from '../../../utils/dashboardSync';
 
 interface CreateEventDialogProps {
 	newEvent: Event;
@@ -75,6 +76,9 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 	const { users } = useContext(UsersContext);
 	const { courses } = useContext(CoursesContext);
 	const { addNewEvent } = useContext(EventsContext);
+
+	// Dashboard sync for real-time updates
+	const { refreshDashboard } = useDashboardSync();
 
 	const { isSmallScreen, isRotatedMedium, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -267,6 +271,9 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 
 			addNewEvent({ ...event, _id: res.data.data._id });
 
+			// Trigger dashboard sync when event is created
+			dashboardSyncHelpers.onEventCreated(refreshDashboard);
+
 			const startDate = newEvent?.start?.toLocaleDateString(navigator.language || undefined, {
 				weekday: 'long',
 				year: 'numeric',
@@ -302,25 +309,36 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 				}
 			}
 
-			if (newEvent.isPublic) {
+			if (newEvent.isPublic && users && users.length > 0) {
 				const allFirebaseUserIds: string[] =
 					users?.filter((filteredUser) => filteredUser._id !== user?._id)?.map((mappedUser) => mappedUser.firebaseUserId) || [];
 
-				const adminName = user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : user?.username || 'Admin';
-				const publicEventNotification = {
-					title: 'New Public Event',
-					message: `${adminName} has added a public event: "${newEvent.title}". It will take place on ${startDate} at ${startTime}.`,
-					isRead: false,
-					timestamp: serverTimestamp(),
-					type: 'PublicEvent',
-					userImageUrl: user?.imageUrl,
-					eventId: res.data.data._id,
-				};
+				if (allFirebaseUserIds.length > 0) {
+					const adminName = user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : user?.username || 'Admin';
+					const publicEventNotification = {
+						title: 'New Public Event',
+						message: `${adminName} has added a public event: "${newEvent.title}". It will take place on ${startDate} at ${startTime}.`,
+						isRead: false,
+						timestamp: serverTimestamp(),
+						type: 'PublicEvent',
+						userImageUrl: user?.imageUrl,
+						eventId: res.data.data._id,
+					};
 
-				for (const id of allFirebaseUserIds) {
-					const notificationRef = collection(db, 'notifications', id, 'userNotifications');
-					await addDoc(notificationRef, publicEventNotification);
+					for (const id of allFirebaseUserIds) {
+						try {
+							const notificationRef = collection(db, 'notifications', id, 'userNotifications');
+							await addDoc(notificationRef, publicEventNotification);
+							console.log('✅ Notification sent to user:', id);
+						} catch (error) {
+							console.error('❌ Failed to send notification to user:', id, error);
+						}
+					}
+				} else {
+					console.warn('⚠️ No users found to send public event notifications to');
 				}
+			} else if (newEvent.isPublic) {
+				console.warn('⚠️ Public event created but users context not available - notifications not sent');
 			}
 		} catch (error: any) {
 			console.log(error);

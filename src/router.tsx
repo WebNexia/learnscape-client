@@ -242,9 +242,11 @@ export const router = createBrowserRouter([
 				path: 'admin/calendar',
 				element: (
 					<AdminRouteGuard>
-						<EventsContextProvider>
-							<Calendar />
-						</EventsContextProvider>
+						<UsersContextProvider>
+							<EventsContextProvider>
+								<Calendar />
+							</EventsContextProvider>
+						</UsersContextProvider>
 					</AdminRouteGuard>
 				),
 			},
@@ -390,9 +392,11 @@ export const router = createBrowserRouter([
 				path: 'calendar',
 				element: (
 					<LearnerRouteGuard>
-						<EventsContextProvider>
-							<Calendar />
-						</EventsContextProvider>
+						<UsersContextProvider>
+							<EventsContextProvider>
+								<Calendar />
+							</EventsContextProvider>
+						</UsersContextProvider>
 					</LearnerRouteGuard>
 				),
 			},

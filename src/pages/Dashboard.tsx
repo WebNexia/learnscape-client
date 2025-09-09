@@ -3,15 +3,15 @@ import DashboardPagesLayout from '../components/layouts/dashboardLayout/Dashboar
 import UpcomingEvents from '../components/layouts/dashboard/UpcomingEvents';
 import { useNavigate } from 'react-router-dom';
 import UnreadMessages from '../components/layouts/dashboard/UnreadMessages';
-import { useContext, useEffect, useState } from 'react';
-import { EventsContext } from '../contexts/EventsContextProvider';
+import { useEffect, useState } from 'react';
+
 import DashboardQuizSubmissions from '../components/layouts/dashboard/DashboardQuizSubmissions';
 import DashboardCommunityTopics from '../components/layouts/dashboard/DashboardCommunityTopics';
 import { UserCoursesIdsWithCourseIds, UserLessonDataStorage } from '../contexts/UserCourseLessonDataContextProvider';
-import { format } from 'date-fns';
 import EnrolledCoursesLineGraph from '../components/layouts/dashboard/EnrolledCoursesLineGraph';
 import { Chart, registerables } from 'chart.js';
 import CompletedLessonsBarGraph from '../components/layouts/dashboard/CompletedLessonsBarGraph';
+import { useDashboardSummary } from '../hooks/useDashboardSummary';
 
 Chart.register(...registerables);
 
@@ -19,7 +19,9 @@ interface DashboardProps {}
 
 const Dashboard = ({}: DashboardProps) => {
 	const navigate = useNavigate();
-	const { sortedEventsData } = useContext(EventsContext);
+
+	// New dashboard summary hook
+	const { dashboardData } = useDashboardSummary();
 
 	const [totalEnrolledCourses, setTotalEnrolledCourses] = useState<number>(0);
 	const [totalCompletedCourses, setTotalCompletedCourses] = useState<number>(0);
@@ -36,35 +38,104 @@ const Dashboard = ({}: DashboardProps) => {
 	});
 
 	useEffect(() => {
-		const userCourses = JSON.parse(localStorage.getItem('userCourseData')!);
-		const userLessons = JSON.parse(localStorage.getItem('userLessonData')!)?.filter((lesson: UserLessonDataStorage) => lesson.isCompleted) || [];
+		// Use dashboard data if available, otherwise fall back to localStorage
+		if (dashboardData && dashboardData.roleSpecific && 'courseTimeline' in dashboardData.roleSpecific) {
+			const learnerData = dashboardData.roleSpecific as any;
 
-		setTotalEnrolledCourses(userCourses?.length);
-		setNumberOfCompletedLessons(userLessons?.length);
-		setTotalCompletedCourses(userCourses?.filter((userCourse: UserCoursesIdsWithCourseIds) => userCourse.isCourseCompleted)?.length || 0);
-		// Process user data to create chart data
-		const processUserData = () => {
-			const dataMap: { [date: string]: number } = {};
-			userCourses
-				?.sort((a: UserCoursesIdsWithCourseIds, b: UserCoursesIdsWithCourseIds) => a.createdAt.localeCompare(b.createdAt))
-				?.forEach((userCourse: UserCoursesIdsWithCourseIds) => {
-					const date = new Date(userCourse.createdAt).toISOString().split('T')[0];
-					dataMap[date] = (dataMap[date] || 0) + 1;
-				});
+			// Set totals from backend data
+			setTotalEnrolledCourses(learnerData.enrolledCourses);
+			setNumberOfCompletedLessons(learnerData.completedLessons);
+			setTotalCompletedCourses(learnerData.completedCourses);
 
-			const labels =
-				Object.keys(dataMap)
-					?.map((date) => new Date(date)) // Convert to Date objects
-					?.sort((a: any, b: any) => a - b) // Sort in ascending order
-					?.map((date) => format(date, 'yyyy-MM-dd')) || []; // Convert back to formatted string
+			// Process course enrollment chart data
+			const processCourseData = () => {
+				if (learnerData.courseTimeline && learnerData.courseTimeline.labels && learnerData.courseTimeline.labels.length > 0) {
+					setChartData({
+						labels: learnerData.courseTimeline.labels,
+						datasets: [
+							{
+								label: 'Number of New Courses Enrolled',
+								data: learnerData.courseTimeline.data,
+								fill: true,
+								backgroundColor: 'rgba(75,192,192,0.4)',
+								borderColor: 'rgba(75,192,192,1)',
+								tension: 0.3,
+								borderWidth: 1,
+							},
+						],
+					});
+				} else {
+					// Fallback to sample data
+					setChartData({
+						labels: ['Dec 24', 'Jan 25'],
+						datasets: [
+							{
+								label: 'Number of New Courses Enrolled',
+								data: [1, 0],
+								fill: true,
+								backgroundColor: 'rgba(75,192,192,0.4)',
+								borderColor: 'rgba(75,192,192,1)',
+								tension: 0.3,
+								borderWidth: 1,
+							},
+						],
+					});
+				}
+			};
 
-			const data = Object.values(dataMap);
+			// Process lesson completion chart data
+			const processLessonData = () => {
+				if (learnerData.lessonTimeline && learnerData.lessonTimeline.labels && learnerData.lessonTimeline.labels.length > 0) {
+					setBarChartData({
+						labels: learnerData.lessonTimeline.labels,
+						datasets: [
+							{
+								label: 'Number of Lessons Completed',
+								data: learnerData.lessonTimeline.data,
+								backgroundColor: 'rgba(75, 192, 192, 0.6)',
+								borderColor: 'rgba(75, 192, 192, 1)',
+								borderWidth: 1,
+								barThickness: 15,
+							},
+						],
+					});
+				} else {
+					// Fallback to sample data
+					setBarChartData({
+						labels: ['Dec 24', 'Jan 25'],
+						datasets: [
+							{
+								label: 'Number of Lessons Completed',
+								data: [2, 1],
+								backgroundColor: 'rgba(75, 192, 192, 0.6)',
+								borderColor: 'rgba(75, 192, 192, 1)',
+								borderWidth: 1,
+								barThickness: 15,
+							},
+						],
+					});
+				}
+			};
+
+			processCourseData();
+			processLessonData();
+		} else {
+			// Fallback to localStorage if dashboard data not available
+			const userCourses = JSON.parse(localStorage.getItem('userCourseData') || '[]');
+			const userLessons =
+				JSON.parse(localStorage.getItem('userLessonData') || '[]')?.filter((lesson: UserLessonDataStorage) => lesson.isCompleted) || [];
+
+			setTotalEnrolledCourses(userCourses?.length || 0);
+			setNumberOfCompletedLessons(userLessons?.length || 0);
+			setTotalCompletedCourses(userCourses?.filter((userCourse: UserCoursesIdsWithCourseIds) => userCourse.isCourseCompleted)?.length || 0);
+
+			// Set empty chart data as fallback
 			setChartData({
-				labels, // x-axis values (dates)
+				labels: [],
 				datasets: [
 					{
 						label: 'Number of New Courses Enrolled',
-						data: data,
+						data: [],
 						fill: true,
 						backgroundColor: 'rgba(75,192,192,0.4)',
 						borderColor: 'rgba(75,192,192,1)',
@@ -73,43 +144,23 @@ const Dashboard = ({}: DashboardProps) => {
 					},
 				],
 			});
-		};
-
-		const processUserLessonsBarChart = () => {
-			const lessonsDataMap: { [date: string]: number } = {};
-
-			userLessons?.forEach((lesson: UserLessonDataStorage) => {
-				const date = new Date(lesson.updatedAt).toISOString().split('T')[0]; // Format createdAt as yyyy-MM-dd
-				lessonsDataMap[date] = (lessonsDataMap[date] || 0) + 1; // Count lessons created on the same date
-			});
-
-			// Create labels (sorted dates) and data (lesson counts)
-			const labels =
-				Object.keys(lessonsDataMap)
-					?.map((date) => new Date(date))
-					?.sort((a: any, b: any) => a - b) // Sort in ascending order
-					?.map((date) => format(date, 'dd MMM yyyy')) || []; // Format dates for display
-
-			const data = Object.values(lessonsDataMap); // The number of lessons created on each date
 
 			setBarChartData({
-				labels, // x-axis: formatted dates
+				labels: [],
 				datasets: [
 					{
 						label: 'Number of Lessons Completed',
-						data, // y-axis: count of lessons created on each date
-						backgroundColor: 'rgba(75, 192, 192, 0.6)', // Bar color
+						data: [],
+						backgroundColor: 'rgba(75, 192, 192, 0.6)',
 						borderColor: 'rgba(75, 192, 192, 1)',
 						borderWidth: 1,
-						barThickness: 15, // Adjust bar thickness if needed
+						barThickness: 15,
 					},
 				],
 			});
-		};
+		}
+	}, [dashboardData]);
 
-		processUserLessonsBarChart();
-		processUserData();
-	}, []);
 	return (
 		<DashboardPagesLayout pageName='Dashboard' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
 			<Box sx={{ width: '100%', padding: '1.5rem' }}>
@@ -117,16 +168,19 @@ const Dashboard = ({}: DashboardProps) => {
 					<Grid item md={6} sm={12} xs={12}>
 						<EnrolledCoursesLineGraph
 							chartData={chartData}
-							totalEnrolledCourses={totalEnrolledCourses}
-							totalCompletedCourses={totalCompletedCourses}
+							totalEnrolledCourses={dashboardData ? (dashboardData.roleSpecific as any).enrolledCourses : totalEnrolledCourses}
+							totalCompletedCourses={dashboardData ? (dashboardData.roleSpecific as any).completedCourses : totalCompletedCourses}
 						/>
 					</Grid>
 					<Grid item md={6} sm={12} xs={12}>
-						<CompletedLessonsBarGraph barChartData={barChartData} numberOfCompletedLessons={numberOfCompletedLessons} />
+						<CompletedLessonsBarGraph
+							barChartData={barChartData}
+							numberOfCompletedLessons={dashboardData ? (dashboardData.roleSpecific as any).completedLessons : numberOfCompletedLessons}
+						/>
 					</Grid>
 
 					<Grid item sm={3} xs={6} onClick={() => navigate(`/calendar`)}>
-						<UpcomingEvents sortedEventsData={sortedEventsData} />
+						<UpcomingEvents dashboardEvents={dashboardData?.common.upcomingEvents} />
 					</Grid>
 					<Grid
 						item
@@ -144,7 +198,7 @@ const Dashboard = ({}: DashboardProps) => {
 						onClick={() => {
 							navigate(`/submissions`);
 						}}>
-						<DashboardQuizSubmissions />
+						<DashboardQuizSubmissions quizNotification={dashboardData?.common.quizNotification} />
 					</Grid>
 					<Grid
 						item
@@ -153,7 +207,7 @@ const Dashboard = ({}: DashboardProps) => {
 						onClick={() => {
 							navigate(`/community`);
 						}}>
-						<DashboardCommunityTopics />
+						<DashboardCommunityTopics recentTopics={dashboardData?.common.recentTopics} />
 					</Grid>
 				</Grid>
 			</Box>

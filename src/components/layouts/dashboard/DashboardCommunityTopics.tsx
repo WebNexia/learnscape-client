@@ -1,24 +1,27 @@
 import { Box, Typography } from '@mui/material';
-import { useContext, useEffect, useState } from 'react';
+import { useContext } from 'react';
 import { CommunityContext } from '../../../contexts/CommunityContextProvider';
-import { CommunityTopic } from '../../../interfaces/communityTopics';
 import { truncateText } from '../../../utils/utilText';
 import { LightbulbOutlined } from '@mui/icons-material';
 import theme from '../../../themes';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
+import { RecentTopic } from '../../../hooks/useDashboardSummary';
 
-const DashboardCommunityTopics = () => {
+interface DashboardCommunityTopicsProps {
+	recentTopics?: RecentTopic[];
+}
+
+const DashboardCommunityTopics = ({ recentTopics: dashboardRecentTopics }: DashboardCommunityTopicsProps) => {
 	const { sortedTopicsData } = useContext(CommunityContext);
 	const { isRotated, isSmallScreen } = useContext(MediaQueryContext);
 
 	const isMobileSize: boolean = isSmallScreen || isRotated;
 
-	const [recentTopics, setRecentTopics] = useState<CommunityTopic[]>([]);
-
-	useEffect(() => {
-		const displayedTopics: CommunityTopic[] = sortedTopicsData?.sort((a, b) => b.createdAt.localeCompare(a.createdAt))?.slice(0, 3) || [];
-		setRecentTopics(displayedTopics);
-	}, [sortedTopicsData]);
+	// Use dashboard data if available, otherwise fall back to context data
+	const topicsToShow =
+		dashboardRecentTopics && dashboardRecentTopics.length > 0
+			? dashboardRecentTopics
+			: sortedTopicsData?.sort((a, b) => b.createdAt.localeCompare(a.createdAt))?.slice(0, 3) || [];
 
 	return (
 		<Box
@@ -43,10 +46,12 @@ const DashboardCommunityTopics = () => {
 			</Box>
 			<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', margin: '0.65rem 0 0 0.75rem', height: '7rem' }}>
 				<ul>
-					{recentTopics?.map((topic) => {
+					{topicsToShow?.map((topic) => {
+						const topicId = 'id' in topic ? topic.id : topic._id;
+						const topicTitle = topic.title;
 						return (
-							<Typography key={topic._id} sx={{ fontSize: isMobileSize ? '0.65rem' : '0.85rem', mb: '0.35rem' }}>
-								<li>{truncateText(topic.title, 35)}</li>
+							<Typography key={topicId} sx={{ fontSize: isMobileSize ? '0.65rem' : '0.85rem', mb: '0.35rem' }}>
+								<li>{truncateText(topicTitle, 35)}</li>
 							</Typography>
 						);
 					})}

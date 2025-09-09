@@ -42,6 +42,7 @@ import axios from '@utils/axiosInstance';
 import HandleImageUploadURL from '../../forms/uploadImageVideoDocument/HandleImageUploadURL';
 import ImageThumbnail from '../../forms/uploadImageVideoDocument/ImageThumbnail';
 import { validateImageUrl } from '../../../utils/urlValidation';
+import { useDashboardSync, dashboardSyncHelpers } from '../../../utils/dashboardSync';
 import EventUserSearchSelect from '../../EventUserSearchSelect';
 import EventCourseSearchSelect from '../../EventCourseSearchSelect';
 import { SearchUser } from '../../../interfaces/search';
@@ -77,6 +78,9 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 	const { orgId } = useContext(OrganisationContext);
 	const { courses } = useContext(CoursesContext);
 	const { updateEvent, removeEvent } = useContext(EventsContext);
+
+	// Dashboard sync for real-time updates
+	const { refreshDashboard } = useDashboardSync();
 
 	const { isSmallScreen, isRotatedMedium, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -314,6 +318,9 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 						type: !selectedEvent?.isPublic ? '' : selectedEvent?.type,
 						coverImageUrl: !selectedEvent?.isPublic ? '' : selectedEvent?.coverImageUrl,
 					});
+
+				// Trigger dashboard sync when event is updated
+				dashboardSyncHelpers.onEventCreated(refreshDashboard);
 			} else {
 				setIsEventUpdated(false);
 				setEditEventModalOpen(false);
@@ -391,6 +398,10 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 		try {
 			await axios.delete(`${base_url}/events/${selectedEvent?._id}`);
 			if (selectedEvent?._id) removeEvent(selectedEvent?._id);
+
+			// Trigger dashboard sync when event is deleted
+			dashboardSyncHelpers.onEventCreated(refreshDashboard);
+
 			setIsEventDeleted(true);
 			setEditEventModalOpen(false);
 			setDeleteEventModalOpen(false);

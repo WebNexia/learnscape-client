@@ -39,6 +39,7 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 	const [firebaseUserId, setFirebaseUserId] = useState<string>('');
 	const [skipFetchDuringSignup, setSkipFetchDuringSignup] = useState<boolean>(false);
 	const skipFetchDuringSignupRef = useRef<boolean>(false);
+	const isFetchingUserDataRef = useRef<boolean>(false);
 	const queryClient = useQueryClient();
 
 	// Custom function to update both state and ref
@@ -91,6 +92,19 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 			return;
 		}
 
+		// Skip fetching if we're already fetching user data
+		if (isFetchingUserDataRef.current) {
+			return;
+		}
+
+		// Skip fetching if we already have the user data for this Firebase ID
+		if (user && user.firebaseUserId === firebaseUserId) {
+			return;
+		}
+
+		// Set fetching flag to prevent duplicate calls
+		isFetchingUserDataRef.current = true;
+
 		try {
 			const responseUserData = await axios.get(`${base_url}/users/${firebaseUserId}`);
 			setUser(responseUserData.data.data[0]);
@@ -99,6 +113,9 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 		} catch (error) {
 			console.error('Failed to fetch user data:', error);
 			throw new Error('Failed to fetch user data');
+		} finally {
+			// Reset fetching flag
+			isFetchingUserDataRef.current = false;
 		}
 	};
 
