@@ -1,10 +1,9 @@
-import { Box, Checkbox, DialogContent, FormControl, FormControlLabel, MenuItem, Select, Tooltip, Typography } from '@mui/material';
+import { Box, Checkbox, DialogContent, FormControlLabel, Tooltip, Typography } from '@mui/material';
 import { PromoCode } from '../../../interfaces/promoCode';
 import CustomDialog from '../dialog/CustomDialog';
 import CustomDialogActions from '../dialog/CustomDialogActions';
 import CustomTextField from '../../forms/customFields/CustomTextField';
 import SelectApplicableCoursesEdit from './SelectApplicableCoursesEdit';
-import theme from '../../../themes';
 import axios from '@utils/axiosInstance';
 import { useContext, useState } from 'react';
 import { PromoCodesContext } from '../../../contexts/PromoCodesContextProvider';
@@ -177,7 +176,7 @@ const EditCodeDialog = ({ singleCode, isEditCodeModalOpen, closeCodeEditModal, i
 									}}
 									sx={{
 										'& .MuiSvgIcon-root': {
-											fontSize: '1.25rem', // Adjust the checkbox icon size
+											fontSize: '1rem', // Adjust the checkbox icon size
 										},
 									}}
 								/>
@@ -185,7 +184,7 @@ const EditCodeDialog = ({ singleCode, isEditCodeModalOpen, closeCodeEditModal, i
 							label='Active'
 							sx={{
 								'& .MuiFormControlLabel-label': {
-									fontSize: '0.7rem', // Adjust the label font size
+									fontSize: '0.85rem', // Adjust the label font size
 								},
 							}}
 						/>
