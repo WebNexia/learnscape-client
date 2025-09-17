@@ -230,9 +230,11 @@ export const router = createBrowserRouter([
 					<AdminRouteGuard>
 						<PaymentsContextProvider>
 							<PromoCodesContextProvider>
-								<CoursesContextProvider>
-									<AdminPayments />
-								</CoursesContextProvider>
+								<SubscriptionsContextProvider>
+									<CoursesContextProvider>
+										<AdminPayments />
+									</CoursesContextProvider>
+								</SubscriptionsContextProvider>
 							</PromoCodesContextProvider>
 						</PaymentsContextProvider>
 					</AdminRouteGuard>

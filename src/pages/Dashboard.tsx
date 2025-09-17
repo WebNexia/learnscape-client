@@ -65,13 +65,13 @@ const Dashboard = ({}: DashboardProps) => {
 						],
 					});
 				} else {
-					// Fallback to sample data
+					// No data available - show empty chart
 					setChartData({
-						labels: ['Dec 24', 'Jan 25'],
+						labels: [],
 						datasets: [
 							{
 								label: 'Number of New Courses Enrolled',
-								data: [1, 0],
+								data: [],
 								fill: true,
 								backgroundColor: 'rgba(75,192,192,0.4)',
 								borderColor: 'rgba(75,192,192,1)',
@@ -100,13 +100,13 @@ const Dashboard = ({}: DashboardProps) => {
 						],
 					});
 				} else {
-					// Fallback to sample data
+					// No data available - show empty chart
 					setBarChartData({
-						labels: ['Dec 24', 'Jan 25'],
+						labels: [],
 						datasets: [
 							{
 								label: 'Number of Lessons Completed',
-								data: [2, 1],
+								data: [],
 								backgroundColor: 'rgba(75, 192, 192, 0.6)',
 								borderColor: 'rgba(75, 192, 192, 1)',
 								borderWidth: 1,

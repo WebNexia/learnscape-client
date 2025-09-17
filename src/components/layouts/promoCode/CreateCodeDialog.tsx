@@ -32,6 +32,7 @@ const CreateCodeDialog = ({ isNewCodeModalOpen, setIsNewCodeModalOpen }: CreateC
 		isActive: true,
 		usersUsed: [],
 		orgId: '',
+		applicableForSubscriptions: false,
 		createdAt: '',
 		updatedAt: '',
 	});
@@ -48,6 +49,7 @@ const CreateCodeDialog = ({ isNewCodeModalOpen, setIsNewCodeModalOpen }: CreateC
 			isActive: true,
 			usersUsed: [],
 			orgId: '',
+			applicableForSubscriptions: false,
 			createdAt: '',
 			updatedAt: '',
 		});
@@ -75,6 +77,7 @@ const CreateCodeDialog = ({ isNewCodeModalOpen, setIsNewCodeModalOpen }: CreateC
 			coursesApplicable: newPromoCode.isAllCoursesSelected ? [] : newPromoCode.coursesApplicable,
 			isAllCoursesSelected: newPromoCode.isAllCoursesSelected,
 			isActive: newPromoCode.isActive,
+			applicableForSubscriptions: newPromoCode.applicableForSubscriptions,
 			orgId,
 		};
 
@@ -171,7 +174,7 @@ const CreateCodeDialog = ({ isNewCodeModalOpen, setIsNewCodeModalOpen }: CreateC
 								type='date'
 							/>
 						</Box>
-						<Box sx={{ flex: 2, ml: '0.75rem' }}>
+						<Box sx={{ flex: 1, ml: '0.75rem' }}>
 							<Typography variant='h6' sx={{ fontSize: '0.9rem', mb: '0.25rem' }}>
 								Usage Limit
 							</Typography>
@@ -188,9 +191,31 @@ const CreateCodeDialog = ({ isNewCodeModalOpen, setIsNewCodeModalOpen }: CreateC
 							/>
 						</Box>
 					</Box>
-					<Box sx={{ display: 'flex', justifyContent: 'flex-start' }}>
+					<Box sx={{ display: 'flex', justifyContent: 'space-between', mb: '1rem' }}>
 						<FormControlLabel
 							labelPlacement='end'
+							control={
+								<Checkbox
+									checked={newPromoCode.applicableForSubscriptions}
+									onChange={(e) => {
+										setNewPromoCode((prevData) => ({ ...prevData, applicableForSubscriptions: e.target.checked }));
+									}}
+									sx={{
+										'& .MuiSvgIcon-root': {
+											fontSize: '1rem', // Adjust the checkbox icon size
+										},
+									}}
+								/>
+							}
+							label='Applicable for Subscriptions'
+							sx={{
+								'& .MuiFormControlLabel-label': {
+									fontSize: '0.85rem', // Adjust the label font size
+								},
+							}}
+						/>
+						<FormControlLabel
+							labelPlacement='start'
 							control={
 								<Checkbox
 									checked={newPromoCode.isActive}

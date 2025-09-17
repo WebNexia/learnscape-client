@@ -3,7 +3,7 @@ import theme from '../../../themes';
 import { useNavigate } from 'react-router-dom';
 import { useContext, useEffect, useRef, useState } from 'react';
 import { Mode, Roles } from '../../../interfaces/enums';
-import { Cancel, DoneAll, Menu, Notifications, BugReport, Delete, ClearAll } from '@mui/icons-material';
+import { Cancel, DoneAll, Menu, Notifications, BugReport, Delete, ClearAll, Star } from '@mui/icons-material';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 import { useUserCourseLessonData } from '../../../hooks/useUserCourseLessonData';
 import NotificationsBox from '../notifications/Notifications';
@@ -12,14 +12,21 @@ import { db } from '../../../firebase';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 import CustomDrawer from './CustomDrawer';
 import ReportBugDialog from '../dashboard/ReportBugDialog';
+import SubscriptionDialog from '../../subscription/SubscriptionDialog';
+import UnsubscribeDialog from '../../subscription/UnsubscribeDialog';
+import ConditionalStripeProvider from '../../common/ConditionalStripeProvider';
 
 interface DashboardHeaderProps {
 	pageName: string;
 }
 
 const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
-	const { signOut, user } = useContext(UserAuthContext);
+	const { signOut, user, setUser } = useContext(UserAuthContext);
 	const { isRotated, isVerySmallScreen, isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	// Check subscription status directly from user data
+	const hasActiveSubscription = (user: any): boolean => {
+		return user?.isSubscribed === true && user?.subscriptionStatus === 'active';
+	};
 	// const [mode, setMode] = useState<Mode>((localStorage.getItem('mode') as Mode) || Mode.LIGHT_MODE);
 	const navigate = useNavigate();
 	const { updateInProgressLessons } = useUserCourseLessonData();
@@ -33,6 +40,8 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 
 	const [showUnreadOnly, setShowUnreadOnly] = useState<boolean>(false);
 	const [bugReportDialogOpen, setBugReportDialogOpen] = useState<boolean>(false);
+	const [subscriptionDialogOpen, setSubscriptionDialogOpen] = useState<boolean>(false);
+	const [unsubscribeDialogOpen, setUnsubscribeDialogOpen] = useState<boolean>(false);
 
 	const notificationsRef = useRef<HTMLDivElement>(null); // Create a ref for the notifications box
 	const notificationsButtonRef = useRef<HTMLButtonElement>(null); // Create a ref for the notifications button
@@ -176,6 +185,55 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 				<CustomDrawer isDrawerOpen={isDrawerOpen} setIsDrawerOpen={setIsDrawerOpen}></CustomDrawer>
 
 				<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+					{/* Subscribe/Unsubscribe Button */}
+					{user?.role !== Roles.ADMIN && !user?.hasRegisteredCourse && (
+						<>
+							{!hasActiveSubscription(user) ? (
+								<Button
+									variant='contained'
+									startIcon={<Star />}
+									onClick={() => setSubscriptionDialogOpen(true)}
+									sx={{
+										'backgroundColor': theme.textColor?.greenPrimary.main,
+										'color': '#fff',
+										'fontSize': isMobileSize ? '0.7rem' : '0.8rem',
+										'fontFamily': theme.fontFamily?.main,
+										'textTransform': 'capitalize',
+										'mr': 1,
+										'px': isMobileSize ? 1 : 2,
+										'py': 0.5,
+										'&:hover': {
+											backgroundColor: theme.textColor?.greenPrimary.main,
+											opacity: 0.8,
+										},
+									}}>
+									Subscribe
+								</Button>
+							) : (
+								<Button
+									variant='outlined'
+									startIcon={<Star />}
+									onClick={() => setUnsubscribeDialogOpen(true)}
+									sx={{
+										'borderColor': theme.textColor?.error.main,
+										'color': '#fff',
+										'fontSize': isMobileSize ? '0.7rem' : '0.8rem',
+										'fontFamily': theme.fontFamily?.main,
+										'textTransform': 'capitalize',
+										'mr': 1,
+										'px': isMobileSize ? 1 : 2,
+										'py': 0.5,
+										'&:hover': {
+											borderColor: theme.textColor?.error.main,
+											backgroundColor: theme.textColor?.error.main,
+										},
+									}}>
+									Unsubscribe
+								</Button>
+							)}
+						</>
+					)}
+
 					<Tooltip title='Report a Bug' placement='top' arrow>
 						<IconButton
 							onClick={() => setBugReportDialogOpen(true)}
@@ -351,6 +409,40 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 			</Toolbar>
 
 			<ReportBugDialog open={bugReportDialogOpen} onClose={() => setBugReportDialogOpen(false)} />
+
+			{/* Subscription Dialog */}
+			<ConditionalStripeProvider>
+				<SubscriptionDialog
+					open={subscriptionDialogOpen}
+					onClose={() => setSubscriptionDialogOpen(false)}
+					onSuccess={async () => {
+						if (user) {
+							setUser((prevUser) => {
+								if (prevUser) {
+									// Calculate expiry date based on subscription type
+									// For now, we'll use a default 30 days, but this should ideally come from the subscription response
+									const expiryDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
+									return {
+										...prevUser,
+										isSubscribed: true,
+										subscriptionStatus: 'active',
+										accessLevel: 'subscription',
+										subscriptionType: 'monthly', // This should ideally come from the subscription data
+										subscriptionValidUntil: expiryDate,
+										subscriptionExpiry: expiryDate,
+									};
+								}
+								return prevUser;
+							});
+						}
+						// Close the subscription dialog
+						setSubscriptionDialogOpen(false);
+					}}
+				/>
+			</ConditionalStripeProvider>
+
+			<UnsubscribeDialog open={unsubscribeDialogOpen} onClose={() => setUnsubscribeDialogOpen(false)} />
 		</AppBar>
 	);
 };

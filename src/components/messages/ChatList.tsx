@@ -91,13 +91,13 @@ const ChatList = ({
 								placeholder='Username or Group Name'
 								value={searchChatValue}
 								onChange={onFilterChats}
-								disabled={!user?.hasRegisteredCourse && user?.role !== 'admin'}
+								disabled={!user?.hasRegisteredCourse && user?.role !== 'admin' && !user?.isSubscribed}
 							/>
 						</Box>
 						<Box sx={{ flex: 1 }}>
 							<Tooltip title='Find User' placement='top' arrow>
 								<IconButton
-									disabled={!user?.hasRegisteredCourse && user?.role !== 'admin'}
+									disabled={!user?.hasRegisteredCourse && user?.role !== 'admin' && !user?.isSubscribed}
 									sx={{ ':hover': { backgroundColor: 'transparent' } }}
 									onClick={onAddUserClick}>
 									<AddBox fontSize={isMobileSize ? 'small' : 'medium'} />

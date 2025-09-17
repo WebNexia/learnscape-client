@@ -3,6 +3,7 @@ import DashboardPagesLayout from '../components/layouts/dashboardLayout/Dashboar
 import { useContext, useState } from 'react';
 import AdminPaymentsTab from '../components/layouts/payment/AdminPaymentsTab';
 import AdminPromoCodesTab from '../components/layouts/promoCode/AdminPromoCodesTab';
+import AdminSubscriptionsTab from '../components/layouts/subscription/AdminSubscriptionsTab';
 import theme from '../themes';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 
@@ -41,6 +42,17 @@ const AdminPayments = () => {
 						}}
 					/>
 					<Tab
+						value='Subscriptions'
+						label='Subscriptions'
+						sx={{
+							'&.Mui-selected': { color: theme.bgColor?.adminHeader },
+							'textTransform': 'capitalize',
+							'fontFamily': 'Poppins',
+							'fontSize': isMobileSize ? '0.75rem' : undefined,
+							'&.MuiTab-root': { textTransform: 'capitalize' }, // Ensure capitalization
+						}}
+					/>
+					<Tab
 						value='PromoCodes'
 						label='Promo Codes'
 						sx={{
@@ -54,6 +66,7 @@ const AdminPayments = () => {
 				</Tabs>
 			</Box>
 			{value === 'Payments' && <AdminPaymentsTab />}
+			{value === 'Subscriptions' && <AdminSubscriptionsTab />}
 			{value === 'PromoCodes' && <AdminPromoCodesTab />}
 		</DashboardPagesLayout>
 	);

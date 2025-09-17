@@ -45,13 +45,13 @@ const MessageList = ({
 					width: '100%',
 				}}>
 				<Box>
-					{user?.hasRegisteredCourse || user?.role === 'admin' ? (
+					{user?.hasRegisteredCourse || user?.isSubscribed || user?.role === 'admin' ? (
 						<>
 							<Chat sx={{ fontSize: '5rem', color: '#fff' }} />
 							<Typography sx={{ color: '#fff' }}>Select an existing chat or start a new chat by adding a user</Typography>
 						</>
 					) : (
-						<Typography sx={{ color: '#fff' }}>To use messages, you must first register for a paid platform course</Typography>
+						<Typography sx={{ color: '#fff' }}>To use messages, you must first enroll in a paid course or subscribe</Typography>
 					)}
 				</Box>
 			</Box>

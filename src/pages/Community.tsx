@@ -505,7 +505,7 @@ const Community = () => {
 								<CustomSubmitButton
 									size='small'
 									onClick={() => {
-										if (user?.hasRegisteredCourse || user?.role === 'admin') {
+										if (user?.hasRegisteredCourse || user?.isSubscribed || user?.role === 'admin') {
 											setCreateTopicModalOpen(true);
 										} else {
 											setMessageNonRegisteredModalOpen(true);
@@ -521,18 +521,18 @@ const Community = () => {
 								topic={newTopic}
 								setTopic={setNewTopic}
 							/>
-							<CustomDialog openModal={messageNonRegisteredModalOpen} closeModal={() => setMessageNonRegisteredModalOpen(false)} maxWidth='sm'>
+							<CustomDialog openModal={messageNonRegisteredModalOpen} closeModal={() => setMessageNonRegisteredModalOpen(false)} maxWidth='xs'>
 								<DialogContent>
 									<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
 										<Typography
 											variant='body2'
 											sx={{ fontSize: isMobileSize ? '0.85rem' : undefined, color: theme.textColor?.error.main, mt: '1rem' }}>
-											You need to register for a paid platform course to create a topic.
+											You need to enroll in a paid course or subscribe to create a topic.
 										</Typography>
 									</Box>
 								</DialogContent>
 								<CustomCancelButton
-									sx={{ alignSelf: 'end', width: isMobileSize ? '20%' : '10%', margin: isMobileSize ? '0 1rem 1rem 0' : '0 2rem 1rem 0', padding: 0 }}
+									sx={{ alignSelf: 'end', width: isMobileSize ? '20%' : '10%', margin: isMobileSize ? '0 1rem 1rem 0' : '0 1rem 1rem 0', padding: 0 }}
 									onClick={() => setMessageNonRegisteredModalOpen(false)}>
 									Close
 								</CustomCancelButton>
