@@ -14,6 +14,7 @@ import LearnerQuizSubmissionsContextProvider from './contexts/LearnerQuizSubmiss
 import UserCourseLessonDataContextProvider from './contexts/UserCourseLessonDataContextProvider';
 import PaymentsContextProvider from './contexts/PaymentsContextProvider';
 import PromoCodesContextProvider from './contexts/PromoCodesContextProvider';
+import SubscriptionsContextProvider from './contexts/SubscriptionsContextProvider';
 import EventsContextProvider from './contexts/EventsContextProvider';
 import AdminPublicEventsContextProvider from './contexts/AdminPublicEventsContextProvider';
 import CommunityContextProvider from './contexts/CommunityContextProvider';

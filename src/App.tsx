@@ -35,15 +35,15 @@ function App() {
 		<QueryClientProvider client={queryClient}>
 			<ThemeProvider theme={theme}>
 				<MediaQueryContextProvider>
-					<UserAuthContextProvider>
-						<OrganisationContextProvider>
+					<OrganisationContextProvider>
+						<UserAuthContextProvider>
 							<ConditionalUploadLimitProvider>
 								<Suspense fallback={<Loading />}>
 									<Outlet />
 								</Suspense>
 							</ConditionalUploadLimitProvider>
-						</OrganisationContextProvider>
-					</UserAuthContextProvider>
+						</UserAuthContextProvider>
+					</OrganisationContextProvider>
 				</MediaQueryContextProvider>
 			</ThemeProvider>
 		</QueryClientProvider>

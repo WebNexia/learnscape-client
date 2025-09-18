@@ -257,14 +257,17 @@ const PaymentDialog = ({
 							const backendMsg = error.response.data.message;
 							if (backendMsg.toLowerCase()?.includes('recaptcha')) {
 								setErrorMessage(
-									fromHomePage ? 'reCAPTCHA doğrulaması başarısız. Lütfen tekrar deneyin.' : 'reCAPTCHA verification failed. Please try again.'
+									fromHomePage
+										? "reCAPTCHA doğrulaması başarısız. Lütfen reCAPTCHA'yı tekrar tamamlayın ve deneyin."
+										: 'reCAPTCHA verification failed. Please complete the reCAPTCHA again and try.'
 								);
-								// Don't retry on reCAPTCHA errors
+								// Don't reset reCAPTCHA on reCAPTCHA errors - let user retry
+								setIsProcessing(false);
 								return;
 							} else {
 								setErrorMessage(backendMsg);
+								resetRecaptcha();
 							}
-							resetRecaptcha();
 						} else {
 							setErrorMessage(fromHomePage ? 'Bir hata oluştu. Lütfen tekrar deneyin.' : 'An error occurred. Please try again.');
 							resetRecaptcha();

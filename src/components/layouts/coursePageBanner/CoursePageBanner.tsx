@@ -1,7 +1,7 @@
 import { Alert, Box, Button, Paper, Snackbar, Typography } from '@mui/material';
 import theme from '../../../themes';
 import { SingleCourse } from '../../../interfaces/course';
-import { KeyboardBackspaceOutlined } from '@mui/icons-material';
+import { Info, KeyboardBackspaceOutlined } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import CoursePageBannerDataCard from './CoursePageBannerDataCard';
 import axios from '@utils/axiosInstance';
@@ -301,17 +301,20 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 						) : (
 							<Typography variant='body2'>Subscribe to platform or register for a paid course to enroll in free courses</Typography>
 						)}
-						{fromHomePage && (
-							<Typography
-								variant='body2'
-								sx={{
-									color: 'lightgray',
-									fontSize: isMobileSize ? '0.75rem' : '0.9rem',
-									fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
-									mt: '-2rem',
-								}}>
-								- Ücretsiz kurslara kayıt olmak için platforma abone olun veya ücretli bir kursa kayıt olun!
-							</Typography>
+						{fromHomePage && isCourseFree && (
+							<Box sx={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+								<Info fontSize='small' sx={{ color: 'lightgray', mt: '-2rem' }} />
+								<Typography
+									variant='body2'
+									sx={{
+										color: 'lightgray',
+										fontSize: isMobileSize ? '0.7rem' : '0.8rem',
+										fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
+										mt: '-2rem',
+									}}>
+									Ücretsiz kurslara kayıt olmak için platformda hesap açtıktan sonra platforma abone olun veya ücretli bir kursa kayıt olun!
+								</Typography>
+							</Box>
 						)}
 					</Box>
 				</Box>

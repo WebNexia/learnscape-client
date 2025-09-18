@@ -1,23 +1,16 @@
 import { Alert, Box, Button, DialogContent, IconButton, InputAdornment, Snackbar, Tooltip, Typography } from '@mui/material';
 import * as styles from '../styles/styleAuth';
 import { FormEvent, useContext, useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 import axiosInstance from '@utils/axiosInstance';
 import axios from 'axios';
 import theme from '../themes';
-import { AuthFormErrorMessages, AuthForms, Roles, TextFieldTypes } from '../interfaces/enums';
+import { AuthFormErrorMessages, AuthForms, TextFieldTypes } from '../interfaces/enums';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
-import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import { AuthError, createUserWithEmailAndPassword, sendEmailVerification, signInWithEmailAndPassword } from 'firebase/auth';
 import { auth, db } from '../firebase';
-import { useQueryClient } from 'react-query';
-import { User } from '../interfaces/user';
 import { FirebaseError } from 'firebase/app';
 import { Info, Visibility, VisibilityOff } from '@mui/icons-material';
-import { UserCoursesIdsWithCourseIds, UserLessonDataStorage } from '../contexts/UserCourseLessonDataContextProvider';
-import { UserCoursesByUserId } from '../interfaces/userCourses';
-import { UserLessonsByUserId } from '../interfaces/userLesson';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
@@ -27,26 +20,20 @@ import { useGeoLocation } from '../hooks/useGeoLocation';
 import 'react-phone-input-2/lib/style.css';
 import logo from '../assets/logo.png';
 import ReCAPTCHA from 'react-google-recaptcha';
+import { useNavigate } from 'react-router-dom';
 
-interface AuthProps {
-	setUserRole: React.Dispatch<React.SetStateAction<string | null>>;
-}
-
-const Auth = ({ setUserRole }: AuthProps) => {
-	const navigate = useNavigate();
-	const queryClient = useQueryClient();
-
+const Auth = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const organisationCode = import.meta.env.VITE_ORG_CODE;
-	const orgId = import.meta.env.VITE_ORG_ID;
 
 	const vertical = 'top';
 	const horizontal = 'center';
 
 	const location = useGeoLocation();
 
-	const { setUserId, fetchUserData, setUser, setSkipFetchDuringSignup } = useContext(UserAuthContext);
-	const { fetchOrganisationData, setOrgId } = useContext(OrganisationContext);
+	const navigate = useNavigate();
+
+	const { setSkipFetchDuringSignup } = useContext(UserAuthContext);
 	const { isVerySmallScreen, isSmallScreen, isRotated, isRotatedMedium } = useContext(MediaQueryContext);
 
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -79,7 +66,7 @@ const Auth = ({ setUserRole }: AuthProps) => {
 	const signupFinallyExecutedRef = useRef(false);
 
 	const [signingUp, setSigningUp] = useState<boolean>(false);
-	const [isSignupInProgress, setIsSignupInProgress] = useState<boolean>(false);
+	// Removed isSignupInProgress - no longer needed
 
 	const togglePasswordVisibility = () => {
 		setShowPassword((prevShowPassword) => !prevShowPassword);
@@ -124,117 +111,15 @@ const Auth = ({ setUserRole }: AuthProps) => {
 				});
 			}
 
-			// Check session validity
-			const sessionTimestamp = localStorage.getItem('sessionTimestamp');
+			// Set session timestamp explicitly after successful signIn
 			const currentTime = Date.now();
-			const SESSION_DURATION = 24 * 60 * 60 * 1000;
+			localStorage.setItem('sessionTimestamp', currentTime.toString());
 
-			if (!sessionTimestamp || currentTime - parseInt(sessionTimestamp) > SESSION_DURATION) {
-				localStorage.setItem('sessionTimestamp', currentTime.toString());
-			} else {
-				// Update timestamp on successful login
-				localStorage.setItem('sessionTimestamp', currentTime.toString());
-			}
-
-			// Fetch and handle user data from your backend API
-			await fetchUserData(firebaseUser.uid);
-			const updatedUser = queryClient.getQueryData<User>('userData');
-
-			// Update email verification status in MongoDB if needed
-			if (updatedUser && !updatedUser.isEmailVerified) {
-				await axiosInstance.patch(`${base_url}/users/${updatedUser._id}`, {
-					isEmailVerified: true,
-					email: firebaseUser.email,
-					activeChatId: userDoc.data()?.activeChatId || null,
-				});
-				setUser((prev) =>
-					prev
-						? {
-								...prev,
-								isEmailVerified: true,
-								email: firebaseUser.email!,
-								activeChatId: userDoc.data()?.activeChatId || null,
-							}
-						: prev
-				);
-			} else if (firebaseUser.email && updatedUser?.email !== firebaseUser.email) {
-				// Sync email and activeChatId to MongoDB if different
-				await axiosInstance.patch(`${base_url}/users/${updatedUser?._id}`, {
-					email: firebaseUser.email,
-					activeChatId: userDoc.data()?.activeChatId || null,
-				});
-				setUser((prev) =>
-					prev
-						? {
-								...prev,
-								email: firebaseUser.email!,
-								activeChatId: userDoc.data()?.activeChatId || null,
-							}
-						: prev
-				);
-			}
-
-			if (updatedUser) {
-				await fetchOrganisationData(orgId);
-
-				setUserId(updatedUser._id);
-				setOrgId(orgId);
-				setUserRole(updatedUser.role);
-
-				if (!updatedUser.isActive) {
-					setErrorMsg(AuthFormErrorMessages.USER_INACTIVE);
-					return;
-				} else if (updatedUser.role === Roles.USER) {
-					navigate(`/dashboard`);
-				} else if (updatedUser.role === Roles.ADMIN) {
-					navigate(`/admin/dashboard`);
-				}
-
-				// Clear inputs and handle success state
-				setEmail('');
-				setUsername('');
-				setPassword('');
-				setErrorMsg(undefined);
-
-				// Load user-specific course and lesson data if the user is not an admin
-				if (updatedUser.role !== Roles.ADMIN) {
-					const userCourseResponse = await axiosInstance.get(`${base_url}/usercourses/user/${updatedUser._id}`);
-					const userCourseData: UserCoursesIdsWithCourseIds[] = userCourseResponse.data.response?.reduce(
-						(acc: UserCoursesIdsWithCourseIds[], value: UserCoursesByUserId) => {
-							if (value.courseId && value.courseId._id) {
-								acc.push({
-									courseId: value.courseId._id,
-									userCourseId: value._id,
-									isCourseCompleted: value.isCompleted,
-									isCourseInProgress: value.isInProgress,
-									courseTitle: value.courseId.title,
-									createdAt: value.createdAt,
-									isActive: value.isActive,
-									validUntil: value.validUntil,
-								});
-							}
-							return acc;
-						},
-						[]
-					);
-					localStorage.setItem('userCourseData', JSON.stringify(userCourseData));
-
-					// Load user lesson data and store in local storage
-					const userLessonResponse = await axiosInstance.get(`${base_url}/userlessons/user/${updatedUser._id}`);
-					const userLessonData: UserLessonDataStorage[] = userLessonResponse?.data.response?.map((userLesson: UserLessonsByUserId) => ({
-						lessonId: userLesson?.lessonId?._id,
-						userLessonId: userLesson?._id,
-						courseId: userLesson?.courseId,
-						isCompleted: userLesson?.isCompleted,
-						isInProgress: userLesson?.isInProgress,
-						currentQuestion: userLesson?.currentQuestion,
-						teacherFeedback: userLesson?.teacherFeedback,
-						isFeedbackGiven: userLesson?.isFeedbackGiven,
-						updatedAt: userLesson?.updatedAt,
-					}));
-					localStorage.setItem('userLessonData', JSON.stringify(userLessonData));
-				}
-			}
+			// Clear inputs and handle success state
+			setEmail('');
+			setUsername('');
+			setPassword('');
+			setErrorMsg(undefined);
 		} catch (error) {
 			const firebaseError = error as AuthError;
 			if (firebaseError.code === 'auth/invalid-credential') {
@@ -351,7 +236,6 @@ const Auth = ({ setUserRole }: AuthProps) => {
 
 		setSkipFetchDuringSignup(true);
 		setSigningUp(true);
-		setIsSignupInProgress(true);
 		let userCreated = false;
 		try {
 			// Step 1: Create user with Firebase Authentication
@@ -445,7 +329,6 @@ const Auth = ({ setUserRole }: AuthProps) => {
 			signupFinallyExecutedRef.current = true;
 
 			setSigningUp(false);
-			setIsSignupInProgress(false);
 			setSkipFetchDuringSignup(false);
 		}
 	};

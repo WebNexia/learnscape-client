@@ -15,7 +15,11 @@ const AdminRouteGuard: React.FC<AdminRouteGuardProps> = ({ children }) => {
 	useEffect(() => {
 		// If we have a Firebase user but no user data yet, wait for it
 		if (firebaseUserId && !user) {
-			return;
+			// Set a timeout to prevent infinite loading
+			const timer = setTimeout(() => {
+				setIsLoading(false);
+			}, 3000); // Wait up to 3 seconds for user data
+			return () => clearTimeout(timer);
 		} else if (!firebaseUserId) {
 			const timer = setTimeout(() => {
 				setIsLoading(false);
@@ -33,8 +37,10 @@ const AdminRouteGuard: React.FC<AdminRouteGuardProps> = ({ children }) => {
 
 	// Redirect to auth if no user (not logged in)
 	if (!user) {
-		// Check if we're still in the initial loading state
-		// If user is null after a reasonable time, redirect to auth
+		if (firebaseUserId) {
+			return <Loading />;
+		}
+
 		return <Navigate to='/auth' replace />;
 	}
 
