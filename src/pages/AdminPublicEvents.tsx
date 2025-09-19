@@ -19,6 +19,7 @@ import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleto
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
 import { useContext, useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Download, Search, Visibility } from '@mui/icons-material';
 import CreateLessonDialog from '../components/forms/newLesson/CreateLessonDialog';
 import CustomTableHead from '../components/layouts/table/CustomTableHead';
@@ -41,6 +42,7 @@ import { AdminPublicEventsContext } from '../contexts/AdminPublicEventsContextPr
 const AdminPublicEvents = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
+	const location = useLocation();
 
 	const {
 		publicEvents,
@@ -248,6 +250,32 @@ const AdminPublicEvents = () => {
 		setPublicEventsPageNumber(1);
 		enableAdminPublicEventsFetch(); // 👈 Enable admin public events fetching when component mounts
 	}, [enableAdminPublicEventsFetch]);
+
+	// Cleanup search state function
+	const cleanupSearchState = () => {
+		setSearchResults([]);
+		setSearchResultsLoadedPages([]);
+		setSearchResultsTotalItems(0);
+		setIsSearchActive(false);
+		setSearchValue('');
+		setFilterValue('');
+		setSearchedValue('');
+		setSearchButtonClicked(false);
+	};
+
+	// Cleanup on component unmount
+	useEffect(() => {
+		return () => {
+			cleanupSearchState();
+		};
+	}, []);
+
+	// Cleanup when navigating away from page
+	useEffect(() => {
+		return () => {
+			cleanupSearchState();
+		};
+	}, [location.pathname]);
 
 	const handleDownloadParticipants = async (eventId: string, eventTitle: string) => {
 		try {

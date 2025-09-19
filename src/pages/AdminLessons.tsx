@@ -23,7 +23,7 @@ import { LessonsContext } from '../contexts/LessonsContextProvider';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import { Lesson } from '../interfaces/lessons';
 import { Delete, Edit, Info, Search } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import CreateLessonDialog from '../components/forms/newLesson/CreateLessonDialog';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
@@ -44,6 +44,7 @@ import CustomDeleteButton from '../components/forms/customButtons/CustomDeleteBu
 const AdminLessons = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const navigate = useNavigate();
+	const location = useLocation();
 
 	const {
 		lessons,
@@ -119,6 +120,32 @@ const AdminLessons = () => {
 		setLessonsPageNumber(1);
 		enableLessonsFetch(); // 👈 Enable lessons fetching when component mounts
 	}, []);
+
+	// Cleanup search state function
+	const cleanupSearchState = () => {
+		setSearchResults([]);
+		setSearchResultsLoadedPages([]);
+		setSearchResultsTotalItems(0);
+		setIsSearchActive(false);
+		setSearchValue('');
+		setFilterValue('');
+		setSearchedValue('');
+		setSearchButtonClicked(false);
+	};
+
+	// Cleanup on component unmount
+	useEffect(() => {
+		return () => {
+			cleanupSearchState();
+		};
+	}, []);
+
+	// Cleanup when navigating away from page
+	useEffect(() => {
+		return () => {
+			cleanupSearchState();
+		};
+	}, [location.pathname]);
 
 	const handlePageChange = async (newPage: number) => {
 		// Set appropriate page number based on search state

@@ -18,6 +18,7 @@ import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleto
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
 import { useContext, useEffect, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import axios from '@utils/axiosInstance';
 import { Delete, Edit, Info, Search } from '@mui/icons-material';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
@@ -47,6 +48,7 @@ const AdminDocuments = () => {
 
 	const { orgId } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
+	const location = useLocation();
 
 	const {
 		documents,
@@ -135,6 +137,32 @@ const AdminDocuments = () => {
 		setDocumentsPageNumber(1);
 		enableDocumentsFetch(); // 👈 Enable documents fetching when component mounts
 	}, []);
+
+	// Cleanup search state function
+	const cleanupSearchState = () => {
+		setSearchResults([]);
+		setSearchResultsLoadedPages([]);
+		setSearchResultsTotalItems(0);
+		setIsSearchActive(false);
+		setSearchValue('');
+		setFilterValue('');
+		setSearchedValue('');
+		setSearchButtonClicked(false);
+	};
+
+	// Cleanup on component unmount
+	useEffect(() => {
+		return () => {
+			cleanupSearchState();
+		};
+	}, []);
+
+	// Cleanup when navigating away from page
+	useEffect(() => {
+		return () => {
+			cleanupSearchState();
+		};
+	}, [location.pathname]);
 
 	const handlePageChange = async (newPage: number) => {
 		// Set appropriate page number based on search state

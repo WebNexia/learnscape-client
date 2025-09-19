@@ -3,6 +3,7 @@ import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleto
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
 import { useContext, useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import axios from '@utils/axiosInstance';
 import { Edit, Person, PersonOff, Search } from '@mui/icons-material';
 import DownloadIcon from '@mui/icons-material/Download';
@@ -39,6 +40,7 @@ const AdminUsers = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
 	const { orgId, organisation } = useContext(OrganisationContext);
+	const location = useLocation();
 
 	const { userId } = useContext(UserAuthContext);
 
@@ -94,6 +96,32 @@ const AdminUsers = () => {
 		setUsersPageNumber(1);
 		enableUsersFetch(); // 👈 Enable users fetching when component mounts
 	}, []); // Only on mount
+
+	// Cleanup search state function
+	const cleanupSearchState = () => {
+		setSearchResults([]);
+		setSearchResultsLoadedPages([]);
+		setSearchResultsTotalItems(0);
+		setIsSearchActive(false);
+		setSearchValue('');
+		setFilterValue('');
+		setSearchedValue('');
+		setSearchButtonClicked(false);
+	};
+
+	// Cleanup on component unmount
+	useEffect(() => {
+		return () => {
+			cleanupSearchState();
+		};
+	}, []);
+
+	// Cleanup when navigating away from page
+	useEffect(() => {
+		return () => {
+			cleanupSearchState();
+		};
+	}, [location.pathname]);
 
 	useEffect(() => {
 		setIsUserStatusUpdateModalOpen(Array(paginatedUsers.length).fill(false));

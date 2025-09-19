@@ -6,6 +6,7 @@ import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitBu
 import CustomDeleteButton from '../components/forms/customButtons/CustomDeleteButton';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
 import { useContext, useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { CommunityContext } from '../contexts/CommunityContextProvider';
 import { CommunityTopic } from '../interfaces/communityTopics';
 import Topic from '../components/layouts/community/communityTopic/Topic';
@@ -35,6 +36,7 @@ const Community = () => {
 		useContext(CommunityContext);
 	const { orgId } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
+	const location = useLocation();
 
 	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -85,6 +87,32 @@ const Community = () => {
 		setTopicsPageNumber(1);
 		enableCommunityFetch(); // 👈 Enable community fetching when component mounts
 	}, [enableCommunityFetch]);
+
+	// Cleanup search state function
+	const cleanupSearchState = () => {
+		setSearchResults([]);
+		setSearchResultsLoadedPages([]);
+		setSearchResultsTotalItems(0);
+		setIsSearchActive(false);
+		setSearchValue('');
+		setFilterValue('');
+		setSearchedValue('');
+		setSearchButtonClicked(false);
+	};
+
+	// Cleanup on component unmount
+	useEffect(() => {
+		return () => {
+			cleanupSearchState();
+		};
+	}, []);
+
+	// Cleanup when navigating away from page
+	useEffect(() => {
+		return () => {
+			cleanupSearchState();
+		};
+	}, [location.pathname]);
 
 	// Handle search functionality
 	const handleSearch = async () => {

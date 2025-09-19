@@ -2,6 +2,7 @@ import { Box, FormControl, InputAdornment, MenuItem, Select, Table, TableBody, T
 import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { useContext, useEffect, useState, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import CustomTableHead from '../components/layouts/table/CustomTableHead';
 import CustomTableCell from '../components/layouts/table/CustomTableCell';
 import CustomActionBtn from '../components/layouts/table/CustomActionBtn';
@@ -35,6 +36,7 @@ const Submissions = () => {
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
 	const { user } = useAuth();
+	const location = useLocation();
 
 	const userCourseData: string[] =
 		JSON.parse(localStorage.getItem('userCourseData') || '[]')?.map((data: UserCoursesIdsWithCourseIds) => data.courseTitle) || [];
@@ -239,6 +241,32 @@ const Submissions = () => {
 		// React Query handles the initial fetch automatically
 		// No need to manually call fetchUserQuizSubmissions
 	}, []);
+
+	// Cleanup search state function
+	const cleanupSearchState = () => {
+		setSearchResults([]);
+		setSearchResultsLoadedPages([]);
+		setSearchResultsTotalItems(0);
+		setIsSearchActive(false);
+		setSearchValue('');
+		setFilterValue('');
+		setSearchedValue('');
+		setSearchButtonClicked(false);
+	};
+
+	// Cleanup on component unmount
+	useEffect(() => {
+		return () => {
+			cleanupSearchState();
+		};
+	}, []);
+
+	// Cleanup when navigating away from page
+	useEffect(() => {
+		return () => {
+			cleanupSearchState();
+		};
+	}, [location.pathname]);
 
 	// Show loading state while quiz submissions are being fetched or when data is empty and not loading yet
 	if (loading || !userQuizSubmissions || userQuizSubmissions.length === 0) {

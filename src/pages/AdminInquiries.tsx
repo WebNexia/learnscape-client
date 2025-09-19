@@ -7,6 +7,7 @@ import * as XLSX from 'xlsx';
 import DownloadIcon from '@mui/icons-material/Download';
 import { Typography, Table, TableBody, TableRow } from '@mui/material';
 import { useContext, useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import CustomTableHead from '../components/layouts/table/CustomTableHead';
 import CustomTableCell from '../components/layouts/table/CustomTableCell';
 import CustomTablePagination from '../components/layouts/table/CustomTablePagination';
@@ -60,6 +61,7 @@ const AdminInquiries = () => {
 		enableInquiriesFetch,
 	} = useContext(InquiriesContext);
 	const { orgId } = useContext(OrganisationContext);
+	const location = useLocation();
 	const { refreshDashboard } = useDashboardSync();
 	const [searchValue, setSearchValue] = useState<string>('');
 	const [filterValue, setFilterValue] = useState<string>('');
@@ -108,6 +110,32 @@ const AdminInquiries = () => {
 		setInquiriesPageNumber(1);
 		enableInquiriesFetch(); // 👈 Enable inquiries fetching when component mounts
 	}, []);
+
+	// Cleanup search state function
+	const cleanupSearchState = () => {
+		setSearchResults([]);
+		setSearchResultsLoadedPages([]);
+		setSearchResultsTotalItems(0);
+		setIsSearchActive(false);
+		setSearchValue('');
+		setFilterValue('');
+		setSearchedValue('');
+		setSearchButtonClicked(false);
+	};
+
+	// Cleanup on component unmount
+	useEffect(() => {
+		return () => {
+			cleanupSearchState();
+		};
+	}, []);
+
+	// Cleanup when navigating away from page
+	useEffect(() => {
+		return () => {
+			cleanupSearchState();
+		};
+	}, [location.pathname]);
 
 	const handlePageChange = async (newPage: number) => {
 		// Set appropriate page number based on search state

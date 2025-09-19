@@ -25,7 +25,7 @@ import React, { useContext, useEffect, useRef, useState } from 'react';
 import { CoursesContext } from '../contexts/CoursesContextProvider';
 import { Instructor, Price, SingleCourse } from '../interfaces/course';
 import { Delete, Edit, FileCopy, Search, Visibility } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 import CustomTextField from '../components/forms/customFields/CustomTextField';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
@@ -48,6 +48,7 @@ import CustomCancelButton from '../components/forms/customButtons/CustomCancelBu
 const AdminCourses = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const navigate = useNavigate();
+	const location = useLocation();
 	const {
 		courses,
 		loading,
@@ -144,6 +145,32 @@ const AdminCourses = () => {
 		setCoursesPageNumber(1);
 		enableCoursesFetch(); // 👈 Enable courses fetching when component mounts
 	}, []);
+
+	// Cleanup search state function
+	const cleanupSearchState = () => {
+		setSearchResults([]);
+		setSearchResultsLoadedPages([]);
+		setSearchResultsTotalItems(0);
+		setIsSearchActive(false);
+		setSearchValue('');
+		setFilterValue('');
+		setSearchedValue('');
+		setSearchButtonClicked(false);
+	};
+
+	// Cleanup on component unmount
+	useEffect(() => {
+		return () => {
+			cleanupSearchState();
+		};
+	}, []);
+
+	// Cleanup when navigating away from page
+	useEffect(() => {
+		return () => {
+			cleanupSearchState();
+		};
+	}, [location.pathname]);
 
 	// Early returns AFTER all hooks
 	if (error) return <Typography color='error'>{error}</Typography>;

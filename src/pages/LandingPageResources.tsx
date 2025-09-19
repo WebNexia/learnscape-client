@@ -1,6 +1,6 @@
 import { Box, Typography, Grid, Button } from '@mui/material';
 import LandingPageLayout from '../components/landingPage/LandingPageLayout';
-import { useContext } from 'react';
+import { useContext, useEffect } from 'react';
 import { LandingPageResourcesContext } from '../contexts/LandingPageResourcesContextProvider';
 import { useLocation } from 'react-router-dom';
 import DocumentCard from '../components/landingPage/DocumentCard';
@@ -30,6 +30,25 @@ const LandingPageResources = () => {
 
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
+
+	// Cleanup search state function
+	const cleanupSearchState = () => {
+		onReset(); // This will clear search state in the context
+	};
+
+	// Cleanup on component unmount
+	useEffect(() => {
+		return () => {
+			cleanupSearchState();
+		};
+	}, []);
+
+	// Cleanup when navigating away from page
+	useEffect(() => {
+		return () => {
+			cleanupSearchState();
+		};
+	}, [location.pathname]);
 
 	// Filter options for resources
 	const resourceFilterOptions = [
