@@ -1,5 +1,6 @@
 import { createContext, ReactNode, useContext, useState } from 'react';
 import { useIsLandingPageRoute } from '../hooks/useIsLandingPageRoute';
+import DataFetchErrorBoundary from '../components/error/DataFetchErrorBoundary';
 
 import { OrganisationContext } from './OrganisationContextProvider';
 import { UserAuthContext } from './UserAuthContextProvider';
@@ -79,7 +80,7 @@ const AdminPublicEventsContextProvider = ({ children }: AdminPublicEventsContext
 				enableAdminPublicEventsFetch,
 				disableAdminPublicEventsFetch,
 			}}>
-			{children}
+			<DataFetchErrorBoundary context='AdminPublicEvents'>{children}</DataFetchErrorBoundary>
 		</AdminPublicEventsContext.Provider>
 	);
 };

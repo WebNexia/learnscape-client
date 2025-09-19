@@ -1,5 +1,6 @@
 import { ReactNode, createContext, useContext, useState } from 'react';
 import { useIsLandingPageRoute } from '../hooks/useIsLandingPageRoute';
+import DataFetchErrorBoundary from '../components/error/DataFetchErrorBoundary';
 import { useAuth } from '../hooks/useAuth';
 import { OrganisationContext } from './OrganisationContextProvider';
 import { UserAuthContext } from './UserAuthContextProvider';
@@ -86,7 +87,7 @@ const PromoCodesContextProvider = ({ children }: PromoCodesContextProviderProps)
 				enablePromoCodesFetch,
 				disablePromoCodesFetch,
 			}}>
-			{children}
+			<DataFetchErrorBoundary context='PromoCodes'>{children}</DataFetchErrorBoundary>
 		</PromoCodesContext.Provider>
 	);
 };

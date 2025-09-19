@@ -1,6 +1,7 @@
 import axios from '@utils/axiosInstance';
 import { ReactNode, createContext, useContext, useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
+import DataFetchErrorBoundary from '../components/error/DataFetchErrorBoundary';
 
 import { OrganisationContext } from './OrganisationContextProvider';
 import { CommunityTopic } from '../interfaces/communityTopics';
@@ -225,7 +226,7 @@ const CommunityContextProvider = (props: CommunityContextProviderProps) => {
 				enableCommunityFetch,
 				disableCommunityFetch,
 			}}>
-			{props.children}
+			<DataFetchErrorBoundary context='Community'>{props.children}</DataFetchErrorBoundary>
 		</CommunityContext.Provider>
 	);
 };

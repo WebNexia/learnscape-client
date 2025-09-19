@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 import { ThemeProvider } from '@mui/material/styles';
 import theme from './themes';
 import Loading from './components/layouts/loading/Loading';
+import ErrorBoundary from './components/error/ErrorBoundary';
 
 // Import only essential context providers for initial dashboard load
 import UserAuthContextProvider from './contexts/UserAuthContextProvider';
@@ -65,9 +66,11 @@ function App() {
 																		<CommunityMessagesContextProvider>
 																			<EventsContextProvider>
 																				<AdminPublicEventsContextProvider>
-																					<Suspense fallback={<Loading />}>
-																						<Outlet />
-																					</Suspense>
+																					<ErrorBoundary context='Application'>
+																						<Suspense fallback={<Loading />}>
+																							<Outlet />
+																						</Suspense>
+																					</ErrorBoundary>
 																				</AdminPublicEventsContextProvider>
 																			</EventsContextProvider>
 																		</CommunityMessagesContextProvider>

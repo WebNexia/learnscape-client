@@ -1,6 +1,7 @@
 import axios from '@utils/axiosInstance';
 import { ReactNode, createContext, useContext, useState } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
+import DataFetchErrorBoundary from '../components/error/DataFetchErrorBoundary';
 import { useLocation } from 'react-router-dom';
 
 import { OrganisationContext } from './OrganisationContextProvider';
@@ -240,7 +241,7 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 				enableEventsFetch,
 				disableEventsFetch,
 			}}>
-			{props.children}
+			<DataFetchErrorBoundary context='Events'>{props.children}</DataFetchErrorBoundary>
 		</EventsContext.Provider>
 	);
 };

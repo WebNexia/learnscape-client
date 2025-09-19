@@ -1,5 +1,6 @@
 import { createContext, ReactNode, useContext, useState } from 'react';
 import { useIsLandingPageRoute } from '../hooks/useIsLandingPageRoute';
+import DataFetchErrorBoundary from '../components/error/DataFetchErrorBoundary';
 
 import { OrganisationContext } from './OrganisationContextProvider';
 import { UserSubscription } from '../interfaces/subscription';
@@ -85,7 +86,7 @@ const SubscriptionsContextProvider = ({ children }: SubscriptionsContextProvider
 				enableSubscriptionsFetch,
 				disableSubscriptionsFetch,
 			}}>
-			{children}
+			<DataFetchErrorBoundary context='Subscriptions'>{children}</DataFetchErrorBoundary>
 		</SubscriptionsContext.Provider>
 	);
 };

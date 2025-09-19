@@ -1,5 +1,6 @@
 import { ReactNode, createContext, useContext, useState } from 'react';
 import { useIsLandingPageRoute } from '../hooks/useIsLandingPageRoute';
+import DataFetchErrorBoundary from '../components/error/DataFetchErrorBoundary';
 
 import { OrganisationContext } from './OrganisationContextProvider';
 import { UserAuthContext } from './UserAuthContextProvider';
@@ -122,7 +123,7 @@ const QuestionsContextProvider = ({ children }: QuestionsContextProviderProps) =
 				enableQuestionsFetch,
 				disableQuestionsFetch,
 			}}>
-			{children}
+			<DataFetchErrorBoundary context='Questions'>{children}</DataFetchErrorBoundary>
 		</QuestionsContext.Provider>
 	);
 };

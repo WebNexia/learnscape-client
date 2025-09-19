@@ -1,6 +1,7 @@
 import { Box, FormControl, InputAdornment, MenuItem, Select, Table, TableBody, TableCell, TableRow, Typography, Chip } from '@mui/material';
 import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
+import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
 import { useContext, useEffect, useState } from 'react';
 import { AdminQuizSubmissionsContext } from '../contexts/AdminQuizSubmissionsContextProvider';
 import { QuizSubmission } from '../interfaces/quizSubmission';
@@ -237,60 +238,28 @@ const AdminQuizSubmissions = () => {
 	}
 
 	return (
-		<DashboardPagesLayout pageName='Quiz Submissions' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
-			<Box
-				sx={{
-					display: 'flex',
-					justifyContent: isMobileSize ? 'center' : 'space-between',
-					width: '100%',
-					padding: isMobileSizeSmall ? '1rem 1rem 0.5rem 1rem' : '2rem 2rem 1rem 2rem',
-					mb: '1.25rem',
-				}}>
-				<Box sx={{ display: 'flex', width: '65%' }}>
-					<Box sx={{ mr: '1rem' }}>
-						<FormControl>
-							<Select
-								size='small'
-								value={filterValue}
-								onChange={async (e) => {
-									const newFilterValue = e.target.value;
-									setFilterValue(newFilterValue);
+		<AdminPageErrorBoundary pageName='Quiz Submissions'>
+			<DashboardPagesLayout pageName='Quiz Submissions' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
+				<Box
+					sx={{
+						display: 'flex',
+						justifyContent: isMobileSize ? 'center' : 'space-between',
+						width: '100%',
+						padding: isMobileSizeSmall ? '1rem 1rem 0.5rem 1rem' : '2rem 2rem 1rem 2rem',
+						mb: '1.25rem',
+					}}>
+					<Box sx={{ display: 'flex', width: '65%' }}>
+						<Box sx={{ mr: '1rem' }}>
+							<FormControl>
+								<Select
+									size='small'
+									value={filterValue}
+									onChange={async (e) => {
+										const newFilterValue = e.target.value;
+										setFilterValue(newFilterValue);
 
-									// Auto-search when filter is selected
-									if (newFilterValue && newFilterValue.trim()) {
-										setQuizSubmissionsPageNumber(1);
-										setSearchResultsPage(1);
-										setIsSearchActive(true);
-										setSearchResultsLoadedPages([]);
-
-										try {
-											const params = new URLSearchParams({
-												limit: '150',
-												filter: newFilterValue.trim(),
-											});
-
-											// Include existing search value if it exists
-											if (searchValue && searchValue.trim()) {
-												params.append('search', searchValue.trim());
-											}
-
-											if (orderBy) {
-												params.append('sortBy', orderBy);
-											}
-											if (order) {
-												params.append('sortOrder', order);
-											}
-
-											const response = await axios.get(`${base_url}/quizsubmissions/organisation/${orgId}?${params.toString()}`);
-											setSearchResults(response.data.data);
-											setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-											setSearchResultsLoadedPages([1]);
-										} catch (error) {
-											console.error('Filter search error:', error);
-										}
-									} else {
-										// If filter is cleared but search value exists, auto-search with search value
-										if (searchValue && searchValue.trim()) {
+										// Auto-search when filter is selected
+										if (newFilterValue && newFilterValue.trim()) {
 											setQuizSubmissionsPageNumber(1);
 											setSearchResultsPage(1);
 											setIsSearchActive(true);
@@ -299,8 +268,13 @@ const AdminQuizSubmissions = () => {
 											try {
 												const params = new URLSearchParams({
 													limit: '150',
-													search: searchValue.trim(),
+													filter: newFilterValue.trim(),
 												});
+
+												// Include existing search value if it exists
+												if (searchValue && searchValue.trim()) {
+													params.append('search', searchValue.trim());
+												}
 
 												if (orderBy) {
 													params.append('sortBy', orderBy);
@@ -314,10 +288,231 @@ const AdminQuizSubmissions = () => {
 												setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
 												setSearchResultsLoadedPages([1]);
 											} catch (error) {
-												console.error('Search error:', error);
+												console.error('Filter search error:', error);
 											}
 										} else {
-											// If no filter and no search, clear search results
+											// If filter is cleared but search value exists, auto-search with search value
+											if (searchValue && searchValue.trim()) {
+												setQuizSubmissionsPageNumber(1);
+												setSearchResultsPage(1);
+												setIsSearchActive(true);
+												setSearchResultsLoadedPages([]);
+
+												try {
+													const params = new URLSearchParams({
+														limit: '150',
+														search: searchValue.trim(),
+													});
+
+													if (orderBy) {
+														params.append('sortBy', orderBy);
+													}
+													if (order) {
+														params.append('sortOrder', order);
+													}
+
+													const response = await axios.get(`${base_url}/quizsubmissions/organisation/${orgId}?${params.toString()}`);
+													setSearchResults(response.data.data);
+													setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
+													setSearchResultsLoadedPages([1]);
+												} catch (error) {
+													console.error('Search error:', error);
+												}
+											} else {
+												// If no filter and no search, clear search results
+												setSearchResults([]);
+												setSearchResultsLoadedPages([]);
+												setSearchResultsTotalItems(0);
+												setIsSearchActive(false);
+												setSearchButtonClicked(false);
+												setSearchedValue('');
+											}
+										}
+									}}
+									displayEmpty
+									sx={{
+										backgroundColor: theme.bgColor?.common,
+										width: isMobileSizeSmall ? '8rem' : '12rem',
+										fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+										textTransform: 'capitalize',
+									}}>
+									<MenuItem
+										disabled
+										value='filter'
+										selected
+										sx={{
+											fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+											fontStyle: 'italic',
+											textTransform: 'capitalize',
+											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+											minHeight: '2rem',
+										}}>
+										Filter Submissions
+									</MenuItem>
+									<MenuItem
+										value=''
+										sx={{
+											fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+											textTransform: 'capitalize',
+											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+											minHeight: '2rem',
+										}}>
+										All Submissions
+									</MenuItem>
+									<MenuItem
+										value='checked'
+										sx={{
+											fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+											textTransform: 'capitalize',
+											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+											minHeight: '2rem',
+										}}>
+										Checked
+									</MenuItem>
+									<MenuItem
+										value='unchecked'
+										sx={{
+											fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+											textTransform: 'capitalize',
+											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+											minHeight: '2rem',
+										}}>
+										Unchecked
+									</MenuItem>
+									<MenuItem
+										disabled
+										value='types'
+										selected
+										sx={{
+											fontSize: isMobileSize ? '0.6rem' : '0.7rem',
+											textTransform: 'inherit',
+											fontWeight: 'lighter',
+											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+											minHeight: '2rem',
+										}}>
+										------ Filter by Course ------
+									</MenuItem>
+									{mappedCourses?.map((course) => (
+										<MenuItem
+											key={course.courseId}
+											value={course.courseId}
+											sx={{
+												fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+												textTransform: 'capitalize',
+												padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+												minHeight: '2rem',
+											}}>
+											{truncateText(course.courseTitle, 20)}
+										</MenuItem>
+									))}
+								</Select>
+							</FormControl>
+						</Box>
+
+						<CustomTextField
+							value={searchValue}
+							placeholder='Search in Student Username and Quiz Name'
+							onChange={(e) => {
+								setSearchValue(e.target.value);
+							}}
+							sx={{
+								'backgroundColor': '#fff',
+								'& .MuiInputBase-input::placeholder': {
+									fontSize: '0.75rem', // Change this to your desired font size
+								},
+							}}
+							required={false}
+							InputProps={{
+								endAdornment: (
+									<InputAdornment position='end'>
+										<Search
+											sx={{
+												mr: '-0.5rem',
+											}}
+											fontSize={isMobileSize ? 'small' : 'medium'}
+										/>
+									</InputAdornment>
+								),
+							}}
+						/>
+						<CustomSubmitButton
+							sx={{
+								height: isVerySmallScreen ? '1.75rem' : '2rem',
+								marginLeft: '0.5rem',
+								fontSize: isMobileSize ? '0.7rem' : undefined,
+							}}
+							type='button'
+							disabled={isSearchDisabled}
+							onClick={handleSearch}>
+							Search
+						</CustomSubmitButton>
+						<CustomDeleteButton
+							sx={{ height: isVerySmallScreen ? '1.75rem' : '2rem', marginLeft: '0.5rem', fontSize: isMobileSize ? '0.7rem' : undefined }}
+							type='button'
+							onClick={() => {
+								setSearchValue('');
+								setFilterValue('');
+								setSearchResults([]);
+								setSearchResultsLoadedPages([]);
+								setSearchResultsTotalItems(0);
+								setIsSearchActive(false);
+								setSearchButtonClicked(false);
+								setSearchedValue('');
+								setQuizSubmissionsPageNumber(1);
+								setSearchResultsPage(1);
+							}}>
+							Reset
+						</CustomDeleteButton>
+						<Box sx={{ display: 'flex', gap: 1, mb: '0.85rem', alignItems: 'center', ml: '1rem' }}>
+							{isSearchActive ? (
+								<Typography
+									variant='body2'
+									sx={{
+										color: 'text.secondary',
+										fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+										whiteSpace: 'nowrap',
+									}}>
+									{searchResultsTotalItems} {searchResultsTotalItems === 1 ? 'result' : 'results'}
+								</Typography>
+							) : (
+								<Typography
+									variant='body2'
+									sx={{
+										color: 'text.secondary',
+										fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+										whiteSpace: 'nowrap',
+									}}>
+									{totalItems} {totalItems === 1 ? 'item' : 'items'}
+								</Typography>
+							)}
+						</Box>
+					</Box>
+				</Box>
+
+				<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', padding: isMobileSizeSmall ? '0 1rem' : '0 2rem' }}>
+					{/* Chips for active search and filter */}
+					{((isSearchActive && searchedValue && searchButtonClicked) || (isSearchActive && filterValue && filterValue.trim())) && (
+						<Box
+							sx={{
+								display: 'flex',
+								gap: 1,
+								flexWrap: 'wrap',
+								justifyContent: 'flex-start',
+								borderRadius: '4px',
+								alignSelf: 'flex-start',
+								marginBottom: '1rem',
+								marginTop: '-1rem',
+							}}>
+							{isSearchActive && filterValue && filterValue.trim() && (
+								<Chip
+									label={`Filter: "${getCourseNameById(filterValue)}"`}
+									onDelete={() => {
+										setFilterValue('');
+										// If search value exists, auto-search with search value
+										if (searchValue && searchValue.trim()) {
+											handleSearch();
+										} else {
+											// Clear search results
 											setSearchResults([]);
 											setSearchResultsLoadedPages([]);
 											setSearchResultsTotalItems(0);
@@ -325,303 +520,111 @@ const AdminQuizSubmissions = () => {
 											setSearchButtonClicked(false);
 											setSearchedValue('');
 										}
-									}
-								}}
-								displayEmpty
-								sx={{
-									backgroundColor: theme.bgColor?.common,
-									width: isMobileSizeSmall ? '8rem' : '12rem',
-									fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-									textTransform: 'capitalize',
-								}}>
-								<MenuItem
-									disabled
-									value='filter'
-									selected
-									sx={{
-										fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-										fontStyle: 'italic',
-										textTransform: 'capitalize',
-										padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-										minHeight: '2rem',
-									}}>
-									Filter Submissions
-								</MenuItem>
-								<MenuItem
-									value=''
-									sx={{
-										fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-										textTransform: 'capitalize',
-										padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-										minHeight: '2rem',
-									}}>
-									All Submissions
-								</MenuItem>
-								<MenuItem
-									value='checked'
-									sx={{
-										fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-										textTransform: 'capitalize',
-										padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-										minHeight: '2rem',
-									}}>
-									Checked
-								</MenuItem>
-								<MenuItem
-									value='unchecked'
-									sx={{
-										fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-										textTransform: 'capitalize',
-										padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-										minHeight: '2rem',
-									}}>
-									Unchecked
-								</MenuItem>
-								<MenuItem
-									disabled
-									value='types'
-									selected
-									sx={{
-										fontSize: isMobileSize ? '0.6rem' : '0.7rem',
-										textTransform: 'inherit',
-										fontWeight: 'lighter',
-										padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-										minHeight: '2rem',
-									}}>
-									------ Filter by Course ------
-								</MenuItem>
-								{mappedCourses?.map((course) => (
-									<MenuItem
-										key={course.courseId}
-										value={course.courseId}
-										sx={{
-											fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-											textTransform: 'capitalize',
-											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-											minHeight: '2rem',
-										}}>
-										{truncateText(course.courseTitle, 20)}
-									</MenuItem>
-								))}
-							</Select>
-						</FormControl>
-					</Box>
-
-					<CustomTextField
-						value={searchValue}
-						placeholder='Search in Student Username and Quiz Name'
-						onChange={(e) => {
-							setSearchValue(e.target.value);
-						}}
-						sx={{
-							'backgroundColor': '#fff',
-							'& .MuiInputBase-input::placeholder': {
-								fontSize: '0.75rem', // Change this to your desired font size
-							},
-						}}
-						required={false}
-						InputProps={{
-							endAdornment: (
-								<InputAdornment position='end'>
-									<Search
-										sx={{
-											mr: '-0.5rem',
-										}}
-										fontSize={isMobileSize ? 'small' : 'medium'}
-									/>
-								</InputAdornment>
-							),
-						}}
-					/>
-					<CustomSubmitButton
-						sx={{
-							height: isVerySmallScreen ? '1.75rem' : '2rem',
-							marginLeft: '0.5rem',
-							fontSize: isMobileSize ? '0.7rem' : undefined,
-						}}
-						type='button'
-						disabled={isSearchDisabled}
-						onClick={handleSearch}>
-						Search
-					</CustomSubmitButton>
-					<CustomDeleteButton
-						sx={{ height: isVerySmallScreen ? '1.75rem' : '2rem', marginLeft: '0.5rem', fontSize: isMobileSize ? '0.7rem' : undefined }}
-						type='button'
-						onClick={() => {
-							setSearchValue('');
-							setFilterValue('');
-							setSearchResults([]);
-							setSearchResultsLoadedPages([]);
-							setSearchResultsTotalItems(0);
-							setIsSearchActive(false);
-							setSearchButtonClicked(false);
-							setSearchedValue('');
-							setQuizSubmissionsPageNumber(1);
-							setSearchResultsPage(1);
-						}}>
-						Reset
-					</CustomDeleteButton>
-					<Box sx={{ display: 'flex', gap: 1, mb: '0.85rem', alignItems: 'center', ml: '1rem' }}>
-						{isSearchActive ? (
-							<Typography
-								variant='body2'
-								sx={{
-									color: 'text.secondary',
-									fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-									whiteSpace: 'nowrap',
-								}}>
-								{searchResultsTotalItems} {searchResultsTotalItems === 1 ? 'result' : 'results'}
-							</Typography>
-						) : (
-							<Typography
-								variant='body2'
-								sx={{
-									color: 'text.secondary',
-									fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-									whiteSpace: 'nowrap',
-								}}>
-								{totalItems} {totalItems === 1 ? 'item' : 'items'}
-							</Typography>
-						)}
-					</Box>
-				</Box>
-			</Box>
-
-			<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', padding: isMobileSizeSmall ? '0 1rem' : '0 2rem' }}>
-				{/* Chips for active search and filter */}
-				{((isSearchActive && searchedValue && searchButtonClicked) || (isSearchActive && filterValue && filterValue.trim())) && (
-					<Box
-						sx={{
-							display: 'flex',
-							gap: 1,
-							flexWrap: 'wrap',
-							justifyContent: 'flex-start',
-							borderRadius: '4px',
-							alignSelf: 'flex-start',
-							marginBottom: '1rem',
-							marginTop: '-1rem',
-						}}>
-						{isSearchActive && filterValue && filterValue.trim() && (
-							<Chip
-								label={`Filter: "${getCourseNameById(filterValue)}"`}
-								onDelete={() => {
-									setFilterValue('');
-									// If search value exists, auto-search with search value
-									if (searchValue && searchValue.trim()) {
-										handleSearch();
-									} else {
-										// Clear search results
-										setSearchResults([]);
-										setSearchResultsLoadedPages([]);
-										setSearchResultsTotalItems(0);
-										setIsSearchActive(false);
-										setSearchButtonClicked(false);
+									}}
+									variant='outlined'
+									color='secondary'
+									size='small'
+									sx={{ backgroundColor: '#1976d2', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
+								/>
+							)}
+							{isSearchActive && searchedValue && searchButtonClicked && (
+								<Chip
+									label={`Search: "${searchedValue}"`}
+									onDelete={() => {
+										setSearchValue('');
 										setSearchedValue('');
-									}
-								}}
-								variant='outlined'
-								color='secondary'
-								size='small'
-								sx={{ backgroundColor: '#1976d2', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
-							/>
-						)}
-						{isSearchActive && searchedValue && searchButtonClicked && (
-							<Chip
-								label={`Search: "${searchedValue}"`}
-								onDelete={() => {
-									setSearchValue('');
-									setSearchedValue('');
-									setSearchButtonClicked(false);
-									// If filter is still active, keep filter results
-									if (filterValue) {
-										// Re-trigger filter search without search value
-										const params = new URLSearchParams({
-											limit: '150',
-											filter: filterValue,
-										});
-										if (orderBy) {
-											params.append('sortBy', orderBy);
-										}
-										if (order) {
-											params.append('sortOrder', order);
-										}
-										axios
-											.get(`${base_url}/quizsubmissions/organisation/${orgId}?${params.toString()}`)
-											.then((response) => {
-												setSearchResults(response.data.data);
-												setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-												setSearchResultsLoadedPages([1]);
-												setIsSearchActive(true);
-												setSearchResultsPage(1);
-											})
-											.catch((error) => {
-												console.error('Filter error:', error);
+										setSearchButtonClicked(false);
+										// If filter is still active, keep filter results
+										if (filterValue) {
+											// Re-trigger filter search without search value
+											const params = new URLSearchParams({
+												limit: '150',
+												filter: filterValue,
 											});
-									} else {
-										// Clear everything and go back to context data
-										setSearchResults([]);
-										setSearchResultsLoadedPages([]);
-										setSearchResultsTotalItems(0);
-										setIsSearchActive(false);
-										setSearchResultsPage(1);
-									}
-								}}
-								color='primary'
-								variant='filled'
-								size='small'
-								sx={{ backgroundColor: '#1EC28B', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
-							/>
-						)}
-					</Box>
-				)}
-				<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>
-					<CustomTableHead<QuizSubmission>
-						orderBy={orderBy}
-						order={order}
-						handleSort={handleSort}
-						columns={[
-							{ key: 'userName', label: isVerySmallScreen ? 'Username' : 'Student Username' },
-							{ key: 'lessonName', label: isVerySmallScreen ? 'Quiz' : 'Quiz Name' },
-							{ key: 'courseName', label: isVerySmallScreen ? 'Course' : 'Course Name' },
-							{ key: 'isChecked', label: 'Status' },
-							{ key: 'actions', label: 'Actions' },
-						]}
-					/>
-					<TableBody>
-						{paginatedSubmissions &&
-							paginatedSubmissions?.map((submission: QuizSubmission) => {
-								return (
-									<TableRow key={submission._id} hover>
-										<CustomTableCell value={submission.userName} />
-										<CustomTableCell value={submission.lessonName} />
-										<CustomTableCell value={submission.courseName} />
-										<CustomTableCell value={submission.isChecked ? 'Checked' : 'Unchecked'} />
+											if (orderBy) {
+												params.append('sortBy', orderBy);
+											}
+											if (order) {
+												params.append('sortOrder', order);
+											}
+											axios
+												.get(`${base_url}/quizsubmissions/organisation/${orgId}?${params.toString()}`)
+												.then((response) => {
+													setSearchResults(response.data.data);
+													setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
+													setSearchResultsLoadedPages([1]);
+													setIsSearchActive(true);
+													setSearchResultsPage(1);
+												})
+												.catch((error) => {
+													console.error('Filter error:', error);
+												});
+										} else {
+											// Clear everything and go back to context data
+											setSearchResults([]);
+											setSearchResultsLoadedPages([]);
+											setSearchResultsTotalItems(0);
+											setIsSearchActive(false);
+											setSearchResultsPage(1);
+										}
+									}}
+									color='primary'
+									variant='filled'
+									size='small'
+									sx={{ backgroundColor: '#1EC28B', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
+								/>
+							)}
+						</Box>
+					)}
+					<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>
+						<CustomTableHead<QuizSubmission>
+							orderBy={orderBy}
+							order={order}
+							handleSort={handleSort}
+							columns={[
+								{ key: 'userName', label: isVerySmallScreen ? 'Username' : 'Student Username' },
+								{ key: 'lessonName', label: isVerySmallScreen ? 'Quiz' : 'Quiz Name' },
+								{ key: 'courseName', label: isVerySmallScreen ? 'Course' : 'Course Name' },
+								{ key: 'isChecked', label: 'Status' },
+								{ key: 'actions', label: 'Actions' },
+							]}
+						/>
+						<TableBody>
+							{paginatedSubmissions &&
+								paginatedSubmissions?.map((submission: QuizSubmission) => {
+									return (
+										<TableRow key={submission._id} hover>
+											<CustomTableCell value={submission.userName} />
+											<CustomTableCell value={submission.lessonName} />
+											<CustomTableCell value={submission.courseName} />
+											<CustomTableCell value={submission.isChecked ? 'Checked' : 'Unchecked'} />
 
-										<TableCell
-											sx={{
-												textAlign: 'center',
-											}}>
-											<CustomActionBtn
-												title='Check Quiz'
-												onClick={() => {
-													window.open(
-														`/admin/check-submission/submission/${submission._id}/lesson/${submission.lessonId}/userlesson/${submission.userLessonId}?isChecked=${submission.isChecked}`,
-														'_blank'
-													);
-													window.scrollTo({ top: 0, behavior: 'smooth' });
-												}}
-												icon={<Edit fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
-											/>
-										</TableCell>
-									</TableRow>
-								);
-							})}
-					</TableBody>
-				</Table>
+											<TableCell
+												sx={{
+													textAlign: 'center',
+												}}>
+												<CustomActionBtn
+													title='Check Quiz'
+													onClick={() => {
+														window.open(
+															`/admin/check-submission/submission/${submission._id}/lesson/${submission.lessonId}/userlesson/${submission.userLessonId}?isChecked=${submission.isChecked}`,
+															'_blank'
+														);
+														window.scrollTo({ top: 0, behavior: 'smooth' });
+													}}
+													icon={<Edit fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
+												/>
+											</TableCell>
+										</TableRow>
+									);
+								})}
+						</TableBody>
+					</Table>
 
-				<CustomTablePagination count={submissionsNumberOfPages} page={currentPage} onChange={handlePageChange} />
-			</Box>
-		</DashboardPagesLayout>
+					<CustomTablePagination count={submissionsNumberOfPages} page={currentPage} onChange={handlePageChange} />
+				</Box>
+			</DashboardPagesLayout>
+		</AdminPageErrorBoundary>
 	);
 };
 

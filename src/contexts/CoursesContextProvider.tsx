@@ -1,5 +1,6 @@
 import { ReactNode, createContext, useContext, useState } from 'react';
 import { useIsLandingPageRoute } from '../hooks/useIsLandingPageRoute';
+import DataFetchErrorBoundary from '../components/error/DataFetchErrorBoundary';
 
 import { OrganisationContext } from './OrganisationContextProvider';
 import { useAuth } from '../hooks/useAuth';
@@ -105,7 +106,7 @@ const CoursesContextProvider = ({ children }: CoursesContextProviderProps) => {
 				enableCoursesFetch,
 				disableCoursesFetch,
 			}}>
-			{children}
+			<DataFetchErrorBoundary context='Courses'>{children}</DataFetchErrorBoundary>
 		</CoursesContext.Provider>
 	);
 };

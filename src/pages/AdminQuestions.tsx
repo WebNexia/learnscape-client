@@ -16,6 +16,7 @@ import {
 } from '@mui/material';
 import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
+import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
 import { useContext, useEffect, useRef, useState } from 'react';
 import axios from '@utils/axiosInstance';
 import { AutoAwesome, Delete, Edit, Info, Search } from '@mui/icons-material';
@@ -367,49 +368,346 @@ const AdminQuestions = () => {
 	};
 
 	return (
-		<DashboardPagesLayout pageName='Questions' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
-			<Box sx={{ width: '100%', height: '100%' }}>
-				<Box
-					sx={{
-						display: 'flex',
-						justifyContent: 'space-between',
-						alignItems: 'center',
-						padding: isMobileSizeSmall ? '1rem 1rem 0.5rem 1rem' : '2rem 2rem 1rem 2rem',
-						width: '100%',
-						mb: '1.25rem',
-					}}>
-					{isVerySmallScreen && <CustomInfoMessageAlignedLeft message='Rotate your device for search & filter' />}
-					<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', flex: 4 }}>
-						<Box sx={{ display: 'flex', alignSelf: 'flex-start', width: isVerySmallScreen ? '12.5rem' : 'fit-content' }}>
-							<Box sx={{ mr: '1rem' }}>
-								<FormControl>
-									<Select
-										size='small'
-										value={filterValue}
-										onChange={(e) => {
-											const newFilterValue = e.target.value;
-											setFilterValue(newFilterValue);
+		<AdminPageErrorBoundary pageName='Questions'>
+			<DashboardPagesLayout pageName='Questions' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
+				<Box sx={{ width: '100%', height: '100%' }}>
+					<Box
+						sx={{
+							display: 'flex',
+							justifyContent: 'space-between',
+							alignItems: 'center',
+							padding: isMobileSizeSmall ? '1rem 1rem 0.5rem 1rem' : '2rem 2rem 1rem 2rem',
+							width: '100%',
+							mb: '1.25rem',
+						}}>
+						{isVerySmallScreen && <CustomInfoMessageAlignedLeft message='Rotate your device for search & filter' />}
+						<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', flex: 4 }}>
+							<Box sx={{ display: 'flex', alignSelf: 'flex-start', width: isVerySmallScreen ? '12.5rem' : 'fit-content' }}>
+								<Box sx={{ mr: '1rem' }}>
+									<FormControl>
+										<Select
+											size='small'
+											value={filterValue}
+											onChange={(e) => {
+												const newFilterValue = e.target.value;
+												setFilterValue(newFilterValue);
 
-											// Auto-search when filter changes
-											if (newFilterValue) {
-												// Build query parameters
+												// Auto-search when filter changes
+												if (newFilterValue) {
+													// Build query parameters
+													const params = new URLSearchParams({
+														limit: '200',
+														filter: newFilterValue,
+													});
+
+													// Include existing search value if it exists
+													if (searchValue && searchValue.trim()) {
+														params.append('search', searchValue.trim());
+													}
+													if (orderBy) {
+														params.append('sortBy', orderBy);
+													}
+													if (order) {
+														params.append('sortOrder', order);
+													}
+
+													// Trigger search immediately
+													axios
+														.get(`${base_url}/questions/organisation/${orgId}?${params.toString()}`)
+														.then((response) => {
+															setSearchResults(response.data.data);
+															setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
+															setSearchResultsLoadedPages([1]);
+															setIsSearchActive(true);
+															setSearchResultsPage(1);
+														})
+														.catch((error) => {
+															console.error('Filter error:', error);
+														});
+												} else {
+													// If filter is cleared but search value exists, auto-search with search value
+													if (searchValue && searchValue.trim()) {
+														handleSearch();
+													} else {
+														// Clear search results and go back to context data
+														setSearchResults([]);
+														setSearchResultsLoadedPages([]);
+														setSearchResultsTotalItems(0);
+														setIsSearchActive(false);
+														setSearchResultsPage(1);
+													}
+												}
+											}}
+											displayEmpty
+											sx={{
+												backgroundColor: theme.bgColor?.common,
+												width: isMobileSizeSmall ? '7rem' : '12rem',
+												fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+												textTransform: 'capitalize',
+											}}>
+											<MenuItem
+												disabled
+												value='filter'
+												selected
+												sx={{
+													fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+													fontStyle: 'italic',
+													textTransform: 'capitalize',
+													padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+													minHeight: '2rem',
+												}}>
+												Filter Questions
+											</MenuItem>
+											<MenuItem
+												value=''
+												selected
+												sx={{
+													fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+													textTransform: 'capitalize',
+													padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+													minHeight: '2rem',
+												}}>
+												All Questions
+											</MenuItem>
+											<MenuItem
+												value='ai generated'
+												selected
+												sx={{
+													fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+													textTransform: 'capitalize',
+													padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+													minHeight: '2rem',
+												}}>
+												AI Generated
+											</MenuItem>
+											<MenuItem
+												value='non ai generated'
+												selected
+												sx={{
+													fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+													textTransform: 'capitalize',
+													padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+													minHeight: '2rem',
+												}}>
+												Non-AI Generated
+											</MenuItem>
+											<MenuItem
+												value='cloned'
+												selected
+												sx={{
+													fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+													textTransform: 'capitalize',
+													padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+													minHeight: '2rem',
+												}}>
+												Cloned
+											</MenuItem>
+											<MenuItem
+												value='original'
+												selected
+												sx={{
+													fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+													textTransform: 'capitalize',
+													padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+													minHeight: '2rem',
+												}}>
+												Original
+											</MenuItem>
+											<MenuItem
+												disabled
+												value='types'
+												selected
+												sx={{
+													fontSize: isMobileSize ? '0.6rem' : '0.7rem',
+													textTransform: 'inherit',
+													fontWeight: 'lighter',
+													padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+													minHeight: '2rem',
+												}}>
+												------ Filter by Type ------
+											</MenuItem>
+											{questionTypes?.map((type) => (
+												<MenuItem
+													value={type.name.toLowerCase()}
+													key={type._id}
+													sx={{
+														fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+														textTransform: 'capitalize',
+														padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+														minHeight: '2rem',
+													}}>
+													{type.name}
+												</MenuItem>
+											))}
+										</Select>
+									</FormControl>
+								</Box>
+								<CustomTextField
+									value={searchValue}
+									placeholder={'Search in question, type'}
+									onChange={(e) => {
+										setSearchValue(e.target.value);
+									}}
+									sx={{ backgroundColor: '#fff', minWidth: isVerySmallScreen ? '10rem' : '17.5rem' }}
+									required={false}
+									InputProps={{
+										endAdornment: (
+											<InputAdornment position='end'>
+												<Search
+													sx={{
+														mr: '-0.5rem',
+													}}
+													fontSize={isMobileSize ? 'small' : 'medium'}
+												/>
+											</InputAdornment>
+										),
+									}}
+								/>
+								<CustomSubmitButton onClick={handleSearch} sx={{ marginLeft: '1rem' }} disabled={!searchValue}>
+									Search
+								</CustomSubmitButton>
+								<CustomDeleteButton
+									onClick={() => {
+										setSearchValue('');
+										setFilterValue('');
+										setSearchResults([]);
+										setIsSearchActive(false);
+										setQuestionsPageNumber(1);
+										setSearchResultsPage(1);
+										setSearchResultsLoadedPages([]);
+										setSearchResultsTotalItems(0);
+										setSearchButtonClicked(false);
+										setSearchedValue('');
+									}}>
+									Reset
+								</CustomDeleteButton>
+								<Box sx={{ ml: '1rem', display: 'flex', alignItems: 'center', height: '2rem' }}>
+									{isSearchActive ? (
+										<Typography
+											variant='body2'
+											sx={{
+												color: 'text.secondary',
+												fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+												whiteSpace: 'nowrap',
+											}}>
+											{searchResultsTotalItems} {searchResultsTotalItems === 1 ? 'result' : 'results'}
+										</Typography>
+									) : (
+										<Typography
+											variant='body2'
+											sx={{
+												color: 'text.secondary',
+												fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+												whiteSpace: 'nowrap',
+											}}>
+											{totalItems} {totalItems === 1 ? 'item' : 'items'}
+										</Typography>
+									)}
+								</Box>
+							</Box>
+						</Box>
+						<Box sx={{ display: 'flex', gap: 1, mb: '0.85rem', alignItems: 'center' }}>
+							<CustomSubmitButton
+								onClick={() => {
+									setIsQuestionCreateModalOpen(true);
+									setQuestionType('');
+									setOptions(['']);
+									setCorrectAnswer('');
+									setIsDuplicateOption(false);
+									setCorrectAnswerIndex(-1);
+								}}
+								sx={{ height: isVerySmallScreen ? '1.75rem' : '2.1rem', fontSize: isMobileSize ? '0.7rem' : undefined }}
+								type='button'>
+								{isVerySmallScreen ? 'New' : 'New Question'}
+							</CustomSubmitButton>
+						</Box>
+					</Box>
+
+					<CreateQuestionDialog
+						createNewQuestion={true}
+						isQuestionCreateModalOpen={isQuestionCreateModalOpen}
+						questionType={questionType}
+						options={options}
+						correctAnswer={correctAnswer}
+						correctAnswerIndex={correctAnswerIndex}
+						setQuestionType={setQuestionType}
+						setOptions={setOptions}
+						setCorrectAnswer={setCorrectAnswer}
+						setCorrectAnswerIndex={setCorrectAnswerIndex}
+						setIsQuestionCreateModalOpen={setIsQuestionCreateModalOpen}
+						addOption={addOption}
+						removeOption={removeOption}
+						handleCorrectAnswerChange={handleCorrectAnswerChange}
+						handleOptionChange={handleOptionChange}
+						setIsMinimumOptions={setIsMinimumOptions}
+						isMinimumOptions={isMinimumOptions}
+						isDuplicateOption={isDuplicateOption}
+					/>
+
+					<Box
+						sx={{
+							display: 'flex',
+							flexDirection: 'column',
+							alignItems: 'center',
+							padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : '0rem 2rem 2rem 2rem',
+							width: '100%',
+						}}>
+						{/* Chips for active search and filter */}
+						{((isSearchActive && searchedValue && searchButtonClicked) || (isSearchActive && filterValue && filterValue.trim())) && (
+							<Box
+								sx={{
+									display: 'flex',
+									gap: 1,
+									flexWrap: 'wrap',
+									justifyContent: 'flex-start',
+									borderRadius: '4px',
+									alignSelf: 'flex-start',
+									marginBottom: '1rem',
+									marginTop: '-1rem',
+								}}>
+								{isSearchActive && filterValue && filterValue.trim() && (
+									<Chip
+										label={`Filter: "${filterValue}"`}
+										onDelete={() => {
+											setFilterValue('');
+											// If search value exists, keep search results
+											if (searchValue && searchValue.trim()) {
+												handleSearch();
+											} else {
+												// Clear everything and go back to context data
+												setSearchResults([]);
+												setSearchResultsLoadedPages([]);
+												setSearchResultsTotalItems(0);
+												setIsSearchActive(false);
+												setSearchResultsPage(1);
+											}
+										}}
+										variant='outlined'
+										color='secondary'
+										size='small'
+										sx={{ backgroundColor: '#1976d2', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
+									/>
+								)}
+								{isSearchActive && searchedValue && searchButtonClicked && (
+									<Chip
+										label={`Search: "${searchedValue}"`}
+										onDelete={() => {
+											setSearchValue('');
+											setSearchedValue('');
+											setSearchButtonClicked(false);
+											// If filter is still active, keep filter results
+											if (filterValue) {
+												// Re-trigger filter search without search value
 												const params = new URLSearchParams({
 													limit: '200',
-													filter: newFilterValue,
+													filter: filterValue,
 												});
-
-												// Include existing search value if it exists
-												if (searchValue && searchValue.trim()) {
-													params.append('search', searchValue.trim());
-												}
 												if (orderBy) {
 													params.append('sortBy', orderBy);
 												}
 												if (order) {
 													params.append('sortOrder', order);
 												}
-
-												// Trigger search immediately
 												axios
 													.get(`${base_url}/questions/organisation/${orgId}?${params.toString()}`)
 													.then((response) => {
@@ -423,497 +721,202 @@ const AdminQuestions = () => {
 														console.error('Filter error:', error);
 													});
 											} else {
-												// If filter is cleared but search value exists, auto-search with search value
-												if (searchValue && searchValue.trim()) {
-													handleSearch();
-												} else {
-													// Clear search results and go back to context data
-													setSearchResults([]);
-													setSearchResultsLoadedPages([]);
-													setSearchResultsTotalItems(0);
-													setIsSearchActive(false);
-													setSearchResultsPage(1);
-												}
+												// Clear everything and go back to context data
+												setSearchResults([]);
+												setSearchResultsLoadedPages([]);
+												setSearchResultsTotalItems(0);
+												setIsSearchActive(false);
+												setSearchResultsPage(1);
 											}
 										}}
-										displayEmpty
-										sx={{
-											backgroundColor: theme.bgColor?.common,
-											width: isMobileSizeSmall ? '7rem' : '12rem',
-											fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-											textTransform: 'capitalize',
-										}}>
-										<MenuItem
-											disabled
-											value='filter'
-											selected
-											sx={{
-												fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-												fontStyle: 'italic',
-												textTransform: 'capitalize',
-												padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-												minHeight: '2rem',
-											}}>
-											Filter Questions
-										</MenuItem>
-										<MenuItem
-											value=''
-											selected
-											sx={{
-												fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-												textTransform: 'capitalize',
-												padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-												minHeight: '2rem',
-											}}>
-											All Questions
-										</MenuItem>
-										<MenuItem
-											value='ai generated'
-											selected
-											sx={{
-												fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-												textTransform: 'capitalize',
-												padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-												minHeight: '2rem',
-											}}>
-											AI Generated
-										</MenuItem>
-										<MenuItem
-											value='non ai generated'
-											selected
-											sx={{
-												fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-												textTransform: 'capitalize',
-												padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-												minHeight: '2rem',
-											}}>
-											Non-AI Generated
-										</MenuItem>
-										<MenuItem
-											value='cloned'
-											selected
-											sx={{
-												fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-												textTransform: 'capitalize',
-												padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-												minHeight: '2rem',
-											}}>
-											Cloned
-										</MenuItem>
-										<MenuItem
-											value='original'
-											selected
-											sx={{
-												fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-												textTransform: 'capitalize',
-												padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-												minHeight: '2rem',
-											}}>
-											Original
-										</MenuItem>
-										<MenuItem
-											disabled
-											value='types'
-											selected
-											sx={{
-												fontSize: isMobileSize ? '0.6rem' : '0.7rem',
-												textTransform: 'inherit',
-												fontWeight: 'lighter',
-												padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-												minHeight: '2rem',
-											}}>
-											------ Filter by Type ------
-										</MenuItem>
-										{questionTypes?.map((type) => (
-											<MenuItem
-												value={type.name.toLowerCase()}
-												key={type._id}
-												sx={{
-													fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-													textTransform: 'capitalize',
-													padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-													minHeight: '2rem',
-												}}>
-												{type.name}
-											</MenuItem>
-										))}
-									</Select>
-								</FormControl>
-							</Box>
-							<CustomTextField
-								value={searchValue}
-								placeholder={'Search in question, type'}
-								onChange={(e) => {
-									setSearchValue(e.target.value);
-								}}
-								sx={{ backgroundColor: '#fff', minWidth: isVerySmallScreen ? '10rem' : '17.5rem' }}
-								required={false}
-								InputProps={{
-									endAdornment: (
-										<InputAdornment position='end'>
-											<Search
-												sx={{
-													mr: '-0.5rem',
-												}}
-												fontSize={isMobileSize ? 'small' : 'medium'}
-											/>
-										</InputAdornment>
-									),
-								}}
-							/>
-							<CustomSubmitButton onClick={handleSearch} sx={{ marginLeft: '1rem' }} disabled={!searchValue}>
-								Search
-							</CustomSubmitButton>
-							<CustomDeleteButton
-								onClick={() => {
-									setSearchValue('');
-									setFilterValue('');
-									setSearchResults([]);
-									setIsSearchActive(false);
-									setQuestionsPageNumber(1);
-									setSearchResultsPage(1);
-									setSearchResultsLoadedPages([]);
-									setSearchResultsTotalItems(0);
-									setSearchButtonClicked(false);
-									setSearchedValue('');
-								}}>
-								Reset
-							</CustomDeleteButton>
-							<Box sx={{ ml: '1rem', display: 'flex', alignItems: 'center', height: '2rem' }}>
-								{isSearchActive ? (
-									<Typography
-										variant='body2'
-										sx={{
-											color: 'text.secondary',
-											fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-											whiteSpace: 'nowrap',
-										}}>
-										{searchResultsTotalItems} {searchResultsTotalItems === 1 ? 'result' : 'results'}
-									</Typography>
-								) : (
-									<Typography
-										variant='body2'
-										sx={{
-											color: 'text.secondary',
-											fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-											whiteSpace: 'nowrap',
-										}}>
-										{totalItems} {totalItems === 1 ? 'item' : 'items'}
-									</Typography>
+										color='primary'
+										variant='filled'
+										size='small'
+										sx={{ backgroundColor: '#1EC28B', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
+									/>
 								)}
 							</Box>
-						</Box>
-					</Box>
-					<Box sx={{ display: 'flex', gap: 1, mb: '0.85rem', alignItems: 'center' }}>
-						<CustomSubmitButton
-							onClick={() => {
-								setIsQuestionCreateModalOpen(true);
-								setQuestionType('');
-								setOptions(['']);
-								setCorrectAnswer('');
-								setIsDuplicateOption(false);
-								setCorrectAnswerIndex(-1);
-							}}
-							sx={{ height: isVerySmallScreen ? '1.75rem' : '2.1rem', fontSize: isMobileSize ? '0.7rem' : undefined }}
-							type='button'>
-							{isVerySmallScreen ? 'New' : 'New Question'}
-						</CustomSubmitButton>
-					</Box>
-				</Box>
-
-				<CreateQuestionDialog
-					createNewQuestion={true}
-					isQuestionCreateModalOpen={isQuestionCreateModalOpen}
-					questionType={questionType}
-					options={options}
-					correctAnswer={correctAnswer}
-					correctAnswerIndex={correctAnswerIndex}
-					setQuestionType={setQuestionType}
-					setOptions={setOptions}
-					setCorrectAnswer={setCorrectAnswer}
-					setCorrectAnswerIndex={setCorrectAnswerIndex}
-					setIsQuestionCreateModalOpen={setIsQuestionCreateModalOpen}
-					addOption={addOption}
-					removeOption={removeOption}
-					handleCorrectAnswerChange={handleCorrectAnswerChange}
-					handleOptionChange={handleOptionChange}
-					setIsMinimumOptions={setIsMinimumOptions}
-					isMinimumOptions={isMinimumOptions}
-					isDuplicateOption={isDuplicateOption}
-				/>
-
-				<Box
-					sx={{
-						display: 'flex',
-						flexDirection: 'column',
-						alignItems: 'center',
-						padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : '0rem 2rem 2rem 2rem',
-						width: '100%',
-					}}>
-					{/* Chips for active search and filter */}
-					{((isSearchActive && searchedValue && searchButtonClicked) || (isSearchActive && filterValue && filterValue.trim())) && (
-						<Box
-							sx={{
-								display: 'flex',
-								gap: 1,
-								flexWrap: 'wrap',
-								justifyContent: 'flex-start',
-								borderRadius: '4px',
-								alignSelf: 'flex-start',
-								marginBottom: '1rem',
-								marginTop: '-1rem',
-							}}>
-							{isSearchActive && filterValue && filterValue.trim() && (
-								<Chip
-									label={`Filter: "${filterValue}"`}
-									onDelete={() => {
-										setFilterValue('');
-										// If search value exists, keep search results
-										if (searchValue && searchValue.trim()) {
-											handleSearch();
-										} else {
-											// Clear everything and go back to context data
-											setSearchResults([]);
-											setSearchResultsLoadedPages([]);
-											setSearchResultsTotalItems(0);
-											setIsSearchActive(false);
-											setSearchResultsPage(1);
-										}
-									}}
-									variant='outlined'
-									color='secondary'
-									size='small'
-									sx={{ backgroundColor: '#1976d2', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
-								/>
-							)}
-							{isSearchActive && searchedValue && searchButtonClicked && (
-								<Chip
-									label={`Search: "${searchedValue}"`}
-									onDelete={() => {
-										setSearchValue('');
-										setSearchedValue('');
-										setSearchButtonClicked(false);
-										// If filter is still active, keep filter results
-										if (filterValue) {
-											// Re-trigger filter search without search value
-											const params = new URLSearchParams({
-												limit: '200',
-												filter: filterValue,
-											});
-											if (orderBy) {
-												params.append('sortBy', orderBy);
-											}
-											if (order) {
-												params.append('sortOrder', order);
-											}
-											axios
-												.get(`${base_url}/questions/organisation/${orgId}?${params.toString()}`)
-												.then((response) => {
-													setSearchResults(response.data.data);
-													setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-													setSearchResultsLoadedPages([1]);
-													setIsSearchActive(true);
-													setSearchResultsPage(1);
-												})
-												.catch((error) => {
-													console.error('Filter error:', error);
-												});
-										} else {
-											// Clear everything and go back to context data
-											setSearchResults([]);
-											setSearchResultsLoadedPages([]);
-											setSearchResultsTotalItems(0);
-											setIsSearchActive(false);
-											setSearchResultsPage(1);
-										}
-									}}
-									color='primary'
-									variant='filled'
-									size='small'
-									sx={{ backgroundColor: '#1EC28B', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
-								/>
-							)}
-						</Box>
-					)}
-					<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>
-						<CustomTableHead<QuestionInterface>
-							orderBy={orderBy}
-							order={order}
-							handleSort={handleSort}
-							columns={[
-								{ key: 'clone', label: 'Cloned' },
-								{ key: 'questionType', label: 'Question Type' },
-								{ key: 'question', label: 'Question' },
-								{ key: 'createdAt', label: 'Created On' },
-								{ key: 'updatedAt', label: 'Updated On' },
-								{ key: 'actions', label: 'Actions' },
-							]}
-						/>
-						<TableBody>
-							{paginatedQuestions &&
-								paginatedQuestions?.map((question: QuestionInterface, index) => {
-									return (
-										<TableRow key={question._id} hover>
-											<TableCell sx={{ textAlign: 'center', width: '0px' }}>
-												{question.clonedFromId && (
-													<Box
-														sx={{
-															backgroundColor: theme.palette.info.main,
-															color: 'white',
-															borderRadius: '50%',
-															width: '15px',
-															height: '15px',
-															display: 'flex',
-															alignItems: 'center',
-															justifyContent: 'center',
-															fontSize: '0.65rem',
-															margin: '0 auto',
-														}}>
-														C
-													</Box>
-												)}
-											</TableCell>
-											<CustomTableCell value={question.questionType}>
-												{question.isAiGenerated && (
-													<Tooltip title='AI Generated' placement='top' arrow>
-														<AutoAwesome
+						)}
+						<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>
+							<CustomTableHead<QuestionInterface>
+								orderBy={orderBy}
+								order={order}
+								handleSort={handleSort}
+								columns={[
+									{ key: 'clone', label: 'Cloned' },
+									{ key: 'questionType', label: 'Question Type' },
+									{ key: 'question', label: 'Question' },
+									{ key: 'createdAt', label: 'Created On' },
+									{ key: 'updatedAt', label: 'Updated On' },
+									{ key: 'actions', label: 'Actions' },
+								]}
+							/>
+							<TableBody>
+								{paginatedQuestions &&
+									paginatedQuestions?.map((question: QuestionInterface, index) => {
+										return (
+											<TableRow key={question._id} hover>
+												<TableCell sx={{ textAlign: 'center', width: '0px' }}>
+													{question.clonedFromId && (
+														<Box
 															sx={{
-																fontSize: '1rem',
-																color: '#2196F3',
-																marginLeft: '0.5rem',
-															}}
-														/>
-													</Tooltip>
-												)}
-											</CustomTableCell>
-											<CustomTableCell
-												value={
-													isVerySmallScreen
-														? truncateText(stripHtml(decode(question.question)), 25)
-														: truncateText(stripHtml(decode(question.question)), 45)
-												}
-											/>
-											<CustomTableCell value={dateFormatter(question.createdAt)} />
-											<CustomTableCell value={dateFormatter(question.updatedAt)} />
-
-											<TableCell
-												sx={{
-													textAlign: 'center',
-												}}>
-												<CustomActionBtn
-													title='Edit'
-													onClick={() => {
-														setOptions(question.options);
-														setCorrectAnswer(question.correctAnswer);
-														const correctAnswerIndex = question.options?.indexOf(question.correctAnswer) || -1;
-														setCorrectAnswerIndex(correctAnswerIndex);
-														toggleQuestionEditModal(index);
-														setIsDuplicateOption(false);
-														setIsMinimumOptions(true);
-													}}
-													icon={<Edit fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
+																backgroundColor: theme.palette.info.main,
+																color: 'white',
+																borderRadius: '50%',
+																width: '15px',
+																height: '15px',
+																display: 'flex',
+																alignItems: 'center',
+																justifyContent: 'center',
+																fontSize: '0.65rem',
+																margin: '0 auto',
+															}}>
+															C
+														</Box>
+													)}
+												</TableCell>
+												<CustomTableCell value={question.questionType}>
+													{question.isAiGenerated && (
+														<Tooltip title='AI Generated' placement='top' arrow>
+															<AutoAwesome
+																sx={{
+																	fontSize: '1rem',
+																	color: '#2196F3',
+																	marginLeft: '0.5rem',
+																}}
+															/>
+														</Tooltip>
+													)}
+												</CustomTableCell>
+												<CustomTableCell
+													value={
+														isVerySmallScreen
+															? truncateText(stripHtml(decode(question.question)), 25)
+															: truncateText(stripHtml(decode(question.question)), 45)
+													}
 												/>
+												<CustomTableCell value={dateFormatter(question.createdAt)} />
+												<CustomTableCell value={dateFormatter(question.updatedAt)} />
 
-												<AdminQuestionsEditQuestionDialog
-													question={question}
-													correctAnswerIndex={correctAnswerIndex}
-													index={index}
-													options={options}
-													correctAnswer={question.correctAnswer}
-													questionType={question.questionType}
-													isMinimumOptions={isMinimumOptions}
-													isDuplicateOption={isDuplicateOption}
-													handleCorrectAnswerChange={handleCorrectAnswerChange}
-													setCorrectAnswerIndex={setCorrectAnswerIndex}
-													handleOptionChange={handleOptionChange}
-													closeQuestionEditModal={closeQuestionEditModal}
-													editQuestionModalOpen={editQuestionModalOpen}
-													addOption={addOption}
-													removeOption={removeOption}
-													setCorrectAnswer={setCorrectAnswer}
-													setIsDuplicateOption={setIsDuplicateOption}
-													setIsMinimumOptions={setIsMinimumOptions}
-												/>
+												<TableCell
+													sx={{
+														textAlign: 'center',
+													}}>
+													<CustomActionBtn
+														title='Edit'
+														onClick={() => {
+															setOptions(question.options);
+															setCorrectAnswer(question.correctAnswer);
+															const correctAnswerIndex = question.options?.indexOf(question.correctAnswer) || -1;
+															setCorrectAnswerIndex(correctAnswerIndex);
+															toggleQuestionEditModal(index);
+															setIsDuplicateOption(false);
+															setIsMinimumOptions(true);
+														}}
+														icon={<Edit fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
+													/>
 
-												<CustomActionBtn
-													title='Delete'
-													onClick={() => {
-														openDeleteQuestionModal(index);
-													}}
-													icon={<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
-												/>
+													<AdminQuestionsEditQuestionDialog
+														question={question}
+														correctAnswerIndex={correctAnswerIndex}
+														index={index}
+														options={options}
+														correctAnswer={question.correctAnswer}
+														questionType={question.questionType}
+														isMinimumOptions={isMinimumOptions}
+														isDuplicateOption={isDuplicateOption}
+														handleCorrectAnswerChange={handleCorrectAnswerChange}
+														setCorrectAnswerIndex={setCorrectAnswerIndex}
+														handleOptionChange={handleOptionChange}
+														closeQuestionEditModal={closeQuestionEditModal}
+														editQuestionModalOpen={editQuestionModalOpen}
+														addOption={addOption}
+														removeOption={removeOption}
+														setCorrectAnswer={setCorrectAnswer}
+														setIsDuplicateOption={setIsDuplicateOption}
+														setIsMinimumOptions={setIsMinimumOptions}
+													/>
 
-												<CustomActionBtn
-													title='More Info'
-													onClick={() => {
-														openQuestionInfoModal(index);
-													}}
-													icon={<Info fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
-												/>
+													<CustomActionBtn
+														title='Delete'
+														onClick={() => {
+															openDeleteQuestionModal(index);
+														}}
+														icon={<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
+													/>
 
-												{isQuestionDeleteModalOpen[index] !== undefined && (
-													<CustomDialog
-														openModal={isQuestionDeleteModalOpen[index]}
-														closeModal={() => closeDeleteQuestionModal(index)}
-														title='Delete Question'
-														content={`Are you sure you want to delete "${truncateText(stripHtml(decode(question.question)), 25)}"?`}
-														maxWidth='xs'>
-														<CustomDialogActions
-															onCancel={() => closeDeleteQuestionModal(index)}
-															deleteBtn={true}
-															onDelete={() => {
-																deleteQuestion(question._id);
-																closeDeleteQuestionModal(index);
-															}}
-															actionSx={{ mb: '0.5rem' }}
-														/>
-													</CustomDialog>
-												)}
-											</TableCell>
-										</TableRow>
-									);
-								})}
-						</TableBody>
-					</Table>
-					<CustomTablePagination count={questionsNumberOfPages} page={currentPage} onChange={handlePageChange} />
+													<CustomActionBtn
+														title='More Info'
+														onClick={() => {
+															openQuestionInfoModal(index);
+														}}
+														icon={<Info fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
+													/>
+
+													{isQuestionDeleteModalOpen[index] !== undefined && (
+														<CustomDialog
+															openModal={isQuestionDeleteModalOpen[index]}
+															closeModal={() => closeDeleteQuestionModal(index)}
+															title='Delete Question'
+															content={`Are you sure you want to delete "${truncateText(stripHtml(decode(question.question)), 25)}"?`}
+															maxWidth='xs'>
+															<CustomDialogActions
+																onCancel={() => closeDeleteQuestionModal(index)}
+																deleteBtn={true}
+																onDelete={() => {
+																	deleteQuestion(question._id);
+																	closeDeleteQuestionModal(index);
+																}}
+																actionSx={{ mb: '0.5rem' }}
+															/>
+														</CustomDialog>
+													)}
+												</TableCell>
+											</TableRow>
+										);
+									})}
+							</TableBody>
+						</Table>
+						<CustomTablePagination count={questionsNumberOfPages} page={currentPage} onChange={handlePageChange} />
+					</Box>
+
+					{isQuestionInfoModalOpen?.map(
+						(isOpen, index) =>
+							isOpen && (
+								<CustomDialog
+									key={index}
+									openModal={isOpen}
+									closeModal={() => closeQuestionInfoModal(index)}
+									title='Question Information'
+									maxWidth='sm'>
+									<QuestionInfoModal question={paginatedQuestions[index]} onClose={() => closeQuestionInfoModal(index)} />
+								</CustomDialog>
+							)
+					)}
 				</Box>
 
-				{isQuestionInfoModalOpen?.map(
-					(isOpen, index) =>
-						isOpen && (
-							<CustomDialog
-								key={index}
-								openModal={isOpen}
-								closeModal={() => closeQuestionInfoModal(index)}
-								title='Question Information'
-								maxWidth='sm'>
-								<QuestionInfoModal question={paginatedQuestions[index]} onClose={() => closeQuestionInfoModal(index)} />
-							</CustomDialog>
-						)
-				)}
-			</Box>
-
-			<Snackbar
-				open={snackbarOpen}
-				autoHideDuration={5000}
-				anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-				sx={{ mt: '4rem' }}
-				onClose={() => setSnackbarOpen(false)}>
-				<Alert
-					onClose={() => setSnackbarOpen(false)}
-					severity={snackbarSeverity}
-					sx={{
-						'width': '100%',
-						'backgroundColor': theme.bgColor?.greenSecondary,
-						'color': theme.textColor?.common.main,
-						'& .MuiAlert-icon': {
-							color: 'white',
-						},
-					}}>
-					{snackbarMessage}
-				</Alert>
-			</Snackbar>
-		</DashboardPagesLayout>
+				<Snackbar
+					open={snackbarOpen}
+					autoHideDuration={5000}
+					anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+					sx={{ mt: '4rem' }}
+					onClose={() => setSnackbarOpen(false)}>
+					<Alert
+						onClose={() => setSnackbarOpen(false)}
+						severity={snackbarSeverity}
+						sx={{
+							'width': '100%',
+							'backgroundColor': theme.bgColor?.greenSecondary,
+							'color': theme.textColor?.common.main,
+							'& .MuiAlert-icon': {
+								color: 'white',
+							},
+						}}>
+						{snackbarMessage}
+					</Alert>
+				</Snackbar>
+			</DashboardPagesLayout>
+		</AdminPageErrorBoundary>
 	);
 };
 

@@ -1,5 +1,6 @@
 import { createContext, ReactNode, useContext, useState } from 'react';
 import { useIsLandingPageRoute } from '../hooks/useIsLandingPageRoute';
+import DataFetchErrorBoundary from '../components/error/DataFetchErrorBoundary';
 
 import { OrganisationContext } from './OrganisationContextProvider';
 import { Payment } from '../interfaces/payment';
@@ -79,7 +80,7 @@ const PaymentsContextProvider = ({ children }: PaymentsContextProviderProps) => 
 				enablePaymentsFetch,
 				disablePaymentsFetch,
 			}}>
-			{children}
+			<DataFetchErrorBoundary context='Payments'>{children}</DataFetchErrorBoundary>
 		</PaymentsContext.Provider>
 	);
 };

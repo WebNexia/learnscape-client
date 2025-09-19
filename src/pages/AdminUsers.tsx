@@ -1,6 +1,7 @@
 import { Box, FormControl, InputAdornment, MenuItem, Select, Table, TableBody, TableCell, TableRow, Typography, Chip } from '@mui/material';
 import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
+import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
 import { useContext, useEffect, useState } from 'react';
 import axios from '@utils/axiosInstance';
 import { Edit, Person, PersonOff, Search } from '@mui/icons-material';
@@ -353,63 +354,31 @@ const AdminUsers = () => {
 	if (error) return <Typography color='error'>{error}</Typography>;
 
 	return (
-		<DashboardPagesLayout pageName='Users' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
-			<Box sx={{ width: '100%', height: '100%' }}>
-				<Box
-					sx={{
-						display: 'flex',
-						justifyContent: 'space-between',
-						alignItems: 'center',
-						padding: isMobileSizeSmall ? '1rem 1rem 0.5rem 1rem' : '2rem 2rem 1rem 2rem',
-						width: '100%',
-						mb: '1.25rem',
-					}}>
-					<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', flex: 4 }}>
-						<Box sx={{ display: 'flex', alignSelf: 'flex-start', width: isVerySmallScreen ? '12.5rem' : 'fit-content' }}>
-							<Box sx={{ mr: '1rem' }}>
-								<FormControl>
-									<Select
-										size='small'
-										value={filterValue}
-										onChange={async (e) => {
-											const newFilterValue = e.target.value;
-											setFilterValue(newFilterValue);
+		<AdminPageErrorBoundary pageName='Users'>
+			<DashboardPagesLayout pageName='Users' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
+				<Box sx={{ width: '100%', height: '100%' }}>
+					<Box
+						sx={{
+							display: 'flex',
+							justifyContent: 'space-between',
+							alignItems: 'center',
+							padding: isMobileSizeSmall ? '1rem 1rem 0.5rem 1rem' : '2rem 2rem 1rem 2rem',
+							width: '100%',
+							mb: '1.25rem',
+						}}>
+						<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', flex: 4 }}>
+							<Box sx={{ display: 'flex', alignSelf: 'flex-start', width: isVerySmallScreen ? '12.5rem' : 'fit-content' }}>
+								<Box sx={{ mr: '1rem' }}>
+									<FormControl>
+										<Select
+											size='small'
+											value={filterValue}
+											onChange={async (e) => {
+												const newFilterValue = e.target.value;
+												setFilterValue(newFilterValue);
 
-											// Auto-search when filter is selected
-											if (newFilterValue && newFilterValue.trim()) {
-												setUsersPageNumber(1);
-												setSearchResultsPage(1);
-												setIsSearchActive(true);
-												setSearchResultsLoadedPages([]);
-
-												try {
-													const params = new URLSearchParams({
-														limit: '300',
-														filter: newFilterValue.trim(),
-													});
-
-													// Include existing search value if it exists
-													if (searchValue && searchValue.trim()) {
-														params.append('search', searchValue.trim());
-													}
-
-													if (orderBy) {
-														params.append('sortBy', orderBy);
-													}
-													if (order) {
-														params.append('sortOrder', order);
-													}
-
-													const response = await axios.get(`${base_url}/users/organisation/${orgId}?${params.toString()}`);
-													setSearchResults(response.data.data);
-													setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-													setSearchResultsLoadedPages([1]);
-												} catch (error) {
-													console.error('Filter search error:', error);
-												}
-											} else {
-												// If filter is cleared but search value exists, auto-search with search value
-												if (searchValue && searchValue.trim()) {
+												// Auto-search when filter is selected
+												if (newFilterValue && newFilterValue.trim()) {
 													setUsersPageNumber(1);
 													setSearchResultsPage(1);
 													setIsSearchActive(true);
@@ -418,8 +387,13 @@ const AdminUsers = () => {
 													try {
 														const params = new URLSearchParams({
 															limit: '300',
-															search: searchValue.trim(),
+															filter: newFilterValue.trim(),
 														});
+
+														// Include existing search value if it exists
+														if (searchValue && searchValue.trim()) {
+															params.append('search', searchValue.trim());
+														}
 
 														if (orderBy) {
 															params.append('sortBy', orderBy);
@@ -433,389 +407,418 @@ const AdminUsers = () => {
 														setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
 														setSearchResultsLoadedPages([1]);
 													} catch (error) {
-														console.error('Auto-search error:', error);
+														console.error('Filter search error:', error);
 													}
 												} else {
-													// If no search value, reset to context data
-													setIsSearchActive(false);
-													setSearchResults([]);
-													setSearchResultsLoadedPages([]);
-													setSearchResultsTotalItems(0);
+													// If filter is cleared but search value exists, auto-search with search value
+													if (searchValue && searchValue.trim()) {
+														setUsersPageNumber(1);
+														setSearchResultsPage(1);
+														setIsSearchActive(true);
+														setSearchResultsLoadedPages([]);
+
+														try {
+															const params = new URLSearchParams({
+																limit: '300',
+																search: searchValue.trim(),
+															});
+
+															if (orderBy) {
+																params.append('sortBy', orderBy);
+															}
+															if (order) {
+																params.append('sortOrder', order);
+															}
+
+															const response = await axios.get(`${base_url}/users/organisation/${orgId}?${params.toString()}`);
+															setSearchResults(response.data.data);
+															setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
+															setSearchResultsLoadedPages([1]);
+														} catch (error) {
+															console.error('Auto-search error:', error);
+														}
+													} else {
+														// If no search value, reset to context data
+														setIsSearchActive(false);
+														setSearchResults([]);
+														setSearchResultsLoadedPages([]);
+														setSearchResultsTotalItems(0);
+													}
 												}
-											}
-										}}
-										displayEmpty
-										sx={{
-											backgroundColor: theme.bgColor?.common,
-											width: isMobileSizeSmall ? '7rem' : '10rem',
-											fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-											textTransform: 'capitalize',
-										}}>
-										<MenuItem
-											disabled
-											value='filter'
-											selected
+											}}
+											displayEmpty
 											sx={{
-												fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-												fontStyle: 'italic',
+												backgroundColor: theme.bgColor?.common,
+												width: isMobileSizeSmall ? '7rem' : '10rem',
+												fontSize: isMobileSize ? '0.7rem' : '0.85rem',
 												textTransform: 'capitalize',
-												padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-												minHeight: '2rem',
 											}}>
-											Filter Users
-										</MenuItem>
-										<MenuItem
-											value=''
-											selected
-											sx={{
-												fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-												textTransform: 'capitalize',
-												padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-												minHeight: '2rem',
-											}}>
-											All Users
-										</MenuItem>
-										{['Admin Users', 'Learners', 'Active Users', 'Inactive Users']?.map((type) => (
 											<MenuItem
-												value={type.toLowerCase()}
-												key={type}
+												disabled
+												value='filter'
+												selected
+												sx={{
+													fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+													fontStyle: 'italic',
+													textTransform: 'capitalize',
+													padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+													minHeight: '2rem',
+												}}>
+												Filter Users
+											</MenuItem>
+											<MenuItem
+												value=''
+												selected
 												sx={{
 													fontSize: isMobileSize ? '0.65rem' : '0.85rem',
 													textTransform: 'capitalize',
 													padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
 													minHeight: '2rem',
 												}}>
-												{type}
+												All Users
 											</MenuItem>
-										))}
-									</Select>
-								</FormControl>
-							</Box>
-							<CustomTextField
-								value={searchValue}
-								placeholder={'Search in First & Last Name, Username and Email'}
-								onChange={(e) => {
-									setSearchValue(e.target.value);
-								}}
-								sx={{ backgroundColor: '#fff', minWidth: isVerySmallScreen ? '10rem' : '17.5rem' }}
-								required={false}
-								InputProps={{
-									endAdornment: (
-										<InputAdornment position='end'>
-											<Search
-												sx={{
-													mr: '-0.5rem',
-												}}
-												fontSize={isMobileSize ? 'small' : 'medium'}
-											/>
-										</InputAdornment>
-									),
-								}}
-							/>
-							<CustomSubmitButton onClick={handleSearch} sx={{ marginLeft: '1rem' }} disabled={!searchValue}>
-								Search
-							</CustomSubmitButton>
-							<CustomDeleteButton
-								onClick={() => {
-									setSearchValue('');
-									setFilterValue('');
-									setSearchedValue('');
-									setSearchButtonClicked(false);
-									setSearchResults([]);
-									setSearchResultsLoadedPages([]);
-									setSearchResultsTotalItems(0);
-									setIsSearchActive(false);
-									setUsersPageNumber(1);
-									setSearchResultsPage(1);
-								}}>
-								Reset
-							</CustomDeleteButton>
-							<Box sx={{ height: '2rem', ml: '1rem', display: 'flex', alignItems: 'center' }}>
-								{isSearchActive ? (
-									<Typography
-										variant='body2'
-										sx={{
-											color: 'text.secondary',
-											fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-											whiteSpace: 'nowrap',
-										}}>
-										{searchResultsTotalItems} results
-									</Typography>
-								) : (
-									<Typography
-										variant='body2'
-										sx={{
-											color: 'text.secondary',
-											fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-											whiteSpace: 'nowrap',
-										}}>
-										{totalItems} items
-									</Typography>
-								)}
-							</Box>
-						</Box>
-					</Box>
-					<Box sx={{ display: 'flex', gap: 1, mb: '0.85rem', alignItems: 'center' }}>
-						<CustomSubmitButton
-							startIcon={<DownloadIcon />}
-							onClick={handleDownloadUsers}
-							sx={{
-								fontSize: isMobileSize ? '0.7rem' : undefined,
-							}}
-							disabled={displayUsers && displayUsers.length === 0}>
-							Download {isSearchActive ? 'Filtered' : 'All'} Users
-						</CustomSubmitButton>
-					</Box>
-				</Box>
-				<Box
-					sx={{
-						display: 'flex',
-						flexDirection: 'column',
-						alignItems: 'center',
-						padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : '0rem 2rem 2rem 2rem',
-						width: '100%',
-					}}>
-					{((isSearchActive && searchedValue && searchButtonClicked) || (isSearchActive && filterValue && filterValue.trim())) && (
-						<Box
-							sx={{
-								display: 'flex',
-								gap: 1,
-								flexWrap: 'wrap',
-								justifyContent: 'center',
-								borderRadius: '4px',
-								alignSelf: 'flex-start',
-								marginBottom: '1rem',
-								marginTop: '-1rem',
-							}}>
-							{isSearchActive && filterValue && filterValue.trim() && (
-								<Chip
-									label={`Filter: "${filterValue}"`}
-									onDelete={() => {
-										setFilterValue('');
-										// If search exists, keep search results
-										if (searchValue && searchValue.trim()) {
-											// Trigger search without filter value
-											const params = new URLSearchParams({
-												limit: '300',
-												search: searchValue.trim(),
-											});
-											if (orderBy) params.append('sortBy', orderBy);
-											if (order) params.append('sortOrder', order);
-
-											axios
-												.get(`${base_url}/users/organisation/${orgId}?${params.toString()}`)
-												.then((response) => {
-													setSearchResults(response.data.data);
-													setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-													setSearchResultsLoadedPages([1]);
-													setIsSearchActive(true);
-													setUsersPageNumber(1);
-													setSearchResultsPage(1);
-												})
-												.catch((error) => console.error('Search error:', error));
-										} else {
-											// No search, reset to context data
-											setIsSearchActive(false);
-											setSearchResults([]);
-											setSearchResultsLoadedPages([]);
-											setSearchResultsTotalItems(0);
-										}
+											{['Admin Users', 'Learners', 'Active Users', 'Inactive Users']?.map((type) => (
+												<MenuItem
+													value={type.toLowerCase()}
+													key={type}
+													sx={{
+														fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+														textTransform: 'capitalize',
+														padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+														minHeight: '2rem',
+													}}>
+													{type}
+												</MenuItem>
+											))}
+										</Select>
+									</FormControl>
+								</Box>
+								<CustomTextField
+									value={searchValue}
+									placeholder={'Search in First & Last Name, Username and Email'}
+									onChange={(e) => {
+										setSearchValue(e.target.value);
 									}}
-									variant='outlined'
-									color='secondary'
-									size='small'
-									sx={{ backgroundColor: '#1976d2', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
+									sx={{ backgroundColor: '#fff', minWidth: isVerySmallScreen ? '10rem' : '17.5rem' }}
+									required={false}
+									InputProps={{
+										endAdornment: (
+											<InputAdornment position='end'>
+												<Search
+													sx={{
+														mr: '-0.5rem',
+													}}
+													fontSize={isMobileSize ? 'small' : 'medium'}
+												/>
+											</InputAdornment>
+										),
+									}}
 								/>
-							)}
-							{isSearchActive && searchedValue && searchButtonClicked && (
-								<Chip
-									label={`Search: "${searchedValue}"`}
-									onDelete={() => {
+								<CustomSubmitButton onClick={handleSearch} sx={{ marginLeft: '1rem' }} disabled={!searchValue}>
+									Search
+								</CustomSubmitButton>
+								<CustomDeleteButton
+									onClick={() => {
 										setSearchValue('');
+										setFilterValue('');
 										setSearchedValue('');
 										setSearchButtonClicked(false);
-										// If filter exists, keep filter results
-										if (filterValue && filterValue.trim()) {
-											// Trigger filter search without search value
-											const params = new URLSearchParams({
-												limit: '300',
-												filter: filterValue.trim(),
-											});
-											if (orderBy) params.append('sortBy', orderBy);
-											if (order) params.append('sortOrder', order);
-
-											axios
-												.get(`${base_url}/users/organisation/${orgId}?${params.toString()}`)
-												.then((response) => {
-													setSearchResults(response.data.data);
-													setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-													setSearchResultsLoadedPages([1]);
-													setIsSearchActive(true);
-													setUsersPageNumber(1);
-													setSearchResultsPage(1);
-												})
-												.catch((error) => console.error('Filter search error:', error));
-										} else {
-											// No filter, reset to context data
-											setIsSearchActive(false);
-											setSearchResults([]);
-											setSearchResultsLoadedPages([]);
-											setSearchResultsTotalItems(0);
-										}
-									}}
-									color='primary'
-									variant='filled'
-									size='small'
-									sx={{ backgroundColor: '#1EC28B', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
-								/>
-							)}
+										setSearchResults([]);
+										setSearchResultsLoadedPages([]);
+										setSearchResultsTotalItems(0);
+										setIsSearchActive(false);
+										setUsersPageNumber(1);
+										setSearchResultsPage(1);
+									}}>
+									Reset
+								</CustomDeleteButton>
+								<Box sx={{ height: '2rem', ml: '1rem', display: 'flex', alignItems: 'center' }}>
+									{isSearchActive ? (
+										<Typography
+											variant='body2'
+											sx={{
+												color: 'text.secondary',
+												fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+												whiteSpace: 'nowrap',
+											}}>
+											{searchResultsTotalItems} results
+										</Typography>
+									) : (
+										<Typography
+											variant='body2'
+											sx={{
+												color: 'text.secondary',
+												fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+												whiteSpace: 'nowrap',
+											}}>
+											{totalItems} items
+										</Typography>
+									)}
+								</Box>
+							</Box>
 						</Box>
-					)}
-					<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>
-						<CustomTableHead<User>
-							orderBy={orderBy}
-							order={order}
-							handleSort={handleSort}
-							columns={
-								isVerySmallScreen
-									? [
-											{ key: 'username', label: 'Username' },
-											{ key: 'email', label: 'Email Address' },
-											{ key: 'actions', label: 'Actions' },
-										]
-									: columns
-							}
-						/>
-						<TableBody>
-							{paginatedUsers &&
-								paginatedUsers?.map((user: User, index) => {
-									return (
-										<TableRow key={user._id} hover>
-											{!isVerySmallScreen && <CustomTableCell value={user.firstName} />}
-											{!isVerySmallScreen && <CustomTableCell value={user.lastName} />}
-											<CustomTableCell value={user.username} />
-											<CustomTableCell value={user.email} />
-											{!isVerySmallScreen && <CustomTableCell value={user.isActive ? 'Active' : 'Deactivated'} />}
-											{!isVerySmallScreen && <CustomTableCell value={user.role?.charAt?.(0)?.toUpperCase?.() + user.role?.slice(1)} />}
+						<Box sx={{ display: 'flex', gap: 1, mb: '0.85rem', alignItems: 'center' }}>
+							<CustomSubmitButton
+								startIcon={<DownloadIcon />}
+								onClick={handleDownloadUsers}
+								sx={{
+									fontSize: isMobileSize ? '0.7rem' : undefined,
+								}}
+								disabled={displayUsers && displayUsers.length === 0}>
+								Download {isSearchActive ? 'Filtered' : 'All'} Users
+							</CustomSubmitButton>
+						</Box>
+					</Box>
+					<Box
+						sx={{
+							display: 'flex',
+							flexDirection: 'column',
+							alignItems: 'center',
+							padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : '0rem 2rem 2rem 2rem',
+							width: '100%',
+						}}>
+						{((isSearchActive && searchedValue && searchButtonClicked) || (isSearchActive && filterValue && filterValue.trim())) && (
+							<Box
+								sx={{
+									display: 'flex',
+									gap: 1,
+									flexWrap: 'wrap',
+									justifyContent: 'center',
+									borderRadius: '4px',
+									alignSelf: 'flex-start',
+									marginBottom: '1rem',
+									marginTop: '-1rem',
+								}}>
+								{isSearchActive && filterValue && filterValue.trim() && (
+									<Chip
+										label={`Filter: "${filterValue}"`}
+										onDelete={() => {
+											setFilterValue('');
+											// If search exists, keep search results
+											if (searchValue && searchValue.trim()) {
+												// Trigger search without filter value
+												const params = new URLSearchParams({
+													limit: '300',
+													search: searchValue.trim(),
+												});
+												if (orderBy) params.append('sortBy', orderBy);
+												if (order) params.append('sortOrder', order);
 
-											<TableCell
-												sx={{
-													textAlign: 'center',
-													padding: isMobileSizeSmall ? '0' : undefined,
-												}}>
-												{user._id !== userId && (
-													<CustomActionBtn
-														title='Edit'
-														onClick={() => {
-															toggleUserEditModal(index);
-															openEditUserModal(index);
-														}}
-														icon={<Edit fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
-													/>
-												)}
+												axios
+													.get(`${base_url}/users/organisation/${orgId}?${params.toString()}`)
+													.then((response) => {
+														setSearchResults(response.data.data);
+														setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
+														setSearchResultsLoadedPages([1]);
+														setIsSearchActive(true);
+														setUsersPageNumber(1);
+														setSearchResultsPage(1);
+													})
+													.catch((error) => console.error('Search error:', error));
+											} else {
+												// No search, reset to context data
+												setIsSearchActive(false);
+												setSearchResults([]);
+												setSearchResultsLoadedPages([]);
+												setSearchResultsTotalItems(0);
+											}
+										}}
+										variant='outlined'
+										color='secondary'
+										size='small'
+										sx={{ backgroundColor: '#1976d2', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
+									/>
+								)}
+								{isSearchActive && searchedValue && searchButtonClicked && (
+									<Chip
+										label={`Search: "${searchedValue}"`}
+										onDelete={() => {
+											setSearchValue('');
+											setSearchedValue('');
+											setSearchButtonClicked(false);
+											// If filter exists, keep filter results
+											if (filterValue && filterValue.trim()) {
+												// Trigger filter search without search value
+												const params = new URLSearchParams({
+													limit: '300',
+													filter: filterValue.trim(),
+												});
+												if (orderBy) params.append('sortBy', orderBy);
+												if (order) params.append('sortOrder', order);
 
-												<CustomDialog
-													openModal={isUserEditModalOpen[index]}
-													closeModal={() => {
-														closeUserEditModal(index);
-													}}
-													maxWidth='xs'
-													title='Edit User Role'>
-													<form
-														style={{ display: 'flex', flexDirection: 'column' }}
-														onSubmit={async (e: React.FormEvent<HTMLFormElement>) => {
-															e.preventDefault();
-															handleUpdateUserRole(index);
-														}}>
-														<FormControl>
-															<Select
-																size='small'
-																value={singleUser?.role}
-																onChange={(e) => setSingleUser((prevData) => ({ ...prevData!, role: e.target.value as Roles }))}
-																required
-																sx={{
-																	backgroundColor: theme.bgColor?.common,
-																	width: '13.25rem',
-																	mr: '0.75rem',
-																	ml: '1.5rem',
-																	fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-																	textTransform: 'capitalize',
-																}}>
-																{[Roles.ADMIN, Roles.USER]?.map((type) => (
-																	<MenuItem
-																		value={type}
-																		key={type}
-																		sx={{
-																			fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-																			textTransform: 'capitalize',
-																			padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-																			minHeight: '2rem',
-																		}}>
-																		{type}
-																	</MenuItem>
-																))}
-															</Select>
-														</FormControl>
-														<CustomDialogActions
-															onCancel={() => {
-																closeUserEditModal(index);
+												axios
+													.get(`${base_url}/users/organisation/${orgId}?${params.toString()}`)
+													.then((response) => {
+														setSearchResults(response.data.data);
+														setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
+														setSearchResultsLoadedPages([1]);
+														setIsSearchActive(true);
+														setUsersPageNumber(1);
+														setSearchResultsPage(1);
+													})
+													.catch((error) => console.error('Filter search error:', error));
+											} else {
+												// No filter, reset to context data
+												setIsSearchActive(false);
+												setSearchResults([]);
+												setSearchResultsLoadedPages([]);
+												setSearchResultsTotalItems(0);
+											}
+										}}
+										color='primary'
+										variant='filled'
+										size='small'
+										sx={{ backgroundColor: '#1EC28B', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
+									/>
+								)}
+							</Box>
+						)}
+						<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>
+							<CustomTableHead<User>
+								orderBy={orderBy}
+								order={order}
+								handleSort={handleSort}
+								columns={
+									isVerySmallScreen
+										? [
+												{ key: 'username', label: 'Username' },
+												{ key: 'email', label: 'Email Address' },
+												{ key: 'actions', label: 'Actions' },
+											]
+										: columns
+								}
+							/>
+							<TableBody>
+								{paginatedUsers &&
+									paginatedUsers?.map((user: User, index) => {
+										return (
+											<TableRow key={user._id} hover>
+												{!isVerySmallScreen && <CustomTableCell value={user.firstName} />}
+												{!isVerySmallScreen && <CustomTableCell value={user.lastName} />}
+												<CustomTableCell value={user.username} />
+												<CustomTableCell value={user.email} />
+												{!isVerySmallScreen && <CustomTableCell value={user.isActive ? 'Active' : 'Deactivated'} />}
+												{!isVerySmallScreen && <CustomTableCell value={user.role?.charAt?.(0)?.toUpperCase?.() + user.role?.slice(1)} />}
+
+												<TableCell
+													sx={{
+														textAlign: 'center',
+														padding: isMobileSizeSmall ? '0' : undefined,
+													}}>
+													{user._id !== userId && (
+														<CustomActionBtn
+															title='Edit'
+															onClick={() => {
+																toggleUserEditModal(index);
+																openEditUserModal(index);
 															}}
-															submitBtnText='Save'
-															actionSx={{ mt: '1rem' }}
-															submitBtnType='submit'
+															icon={<Edit fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 														/>
-													</form>
-												</CustomDialog>
-												{user._id !== userId && (
-													<CustomActionBtn
-														title={user?.isActive ? 'Deactivate' : 'Activate'}
-														onClick={() => {
-															openStatusUpdateUserModal(index);
-														}}
-														icon={
-															user?.isActive ? (
-																<Person fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />
-															) : (
-																<PersonOff fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />
-															)
-														}
-													/>
-												)}
-												{isUserStatusUpdateModalOpen[index] !== undefined && (
+													)}
+
 													<CustomDialog
-														openModal={isUserStatusUpdateModalOpen[index]}
-														closeModal={() => closeStatusUpdateUserModal(index)}
-														title={user?.isActive ? 'Deactivate User' : 'Activate User'}
-														content={`Are you sure you want to ${user?.isActive ? 'deactivate' : 'activate'} ${user?.firstName} ${user?.lastName} (${user?.username})?`}
-														maxWidth='xs'>
-														<CustomDialogActions
-															onCancel={() => closeStatusUpdateUserModal(index)}
-															deleteBtn={user?.isActive}
-															deleteBtnText='Deactivate'
-															onDelete={() => {
-																handleUserStatus();
-																closeStatusUpdateUserModal(index);
-															}}
-															onSubmit={() => {
-																handleUserStatus();
-																closeStatusUpdateUserModal(index);
-															}}
-															submitBtnText='Activate'
-															actionSx={{ mb: '0.5rem' }}
-														/>
+														openModal={isUserEditModalOpen[index]}
+														closeModal={() => {
+															closeUserEditModal(index);
+														}}
+														maxWidth='xs'
+														title='Edit User Role'>
+														<form
+															style={{ display: 'flex', flexDirection: 'column' }}
+															onSubmit={async (e: React.FormEvent<HTMLFormElement>) => {
+																e.preventDefault();
+																handleUpdateUserRole(index);
+															}}>
+															<FormControl>
+																<Select
+																	size='small'
+																	value={singleUser?.role}
+																	onChange={(e) => setSingleUser((prevData) => ({ ...prevData!, role: e.target.value as Roles }))}
+																	required
+																	sx={{
+																		backgroundColor: theme.bgColor?.common,
+																		width: '13.25rem',
+																		mr: '0.75rem',
+																		ml: '1.5rem',
+																		fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+																		textTransform: 'capitalize',
+																	}}>
+																	{[Roles.ADMIN, Roles.USER]?.map((type) => (
+																		<MenuItem
+																			value={type}
+																			key={type}
+																			sx={{
+																				fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+																				textTransform: 'capitalize',
+																				padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+																				minHeight: '2rem',
+																			}}>
+																			{type}
+																		</MenuItem>
+																	))}
+																</Select>
+															</FormControl>
+															<CustomDialogActions
+																onCancel={() => {
+																	closeUserEditModal(index);
+																}}
+																submitBtnText='Save'
+																actionSx={{ mt: '1rem' }}
+																submitBtnType='submit'
+															/>
+														</form>
 													</CustomDialog>
-												)}
-											</TableCell>
-										</TableRow>
-									);
-								})}
-						</TableBody>
-					</Table>
-					{isVerySmallScreen && <CustomInfoMessageAlignedLeft message='Rotate your device for more info' />}
-					<CustomTablePagination count={usersNumberOfPages} page={currentPage} onChange={handlePageChange} />
+													{user._id !== userId && (
+														<CustomActionBtn
+															title={user?.isActive ? 'Deactivate' : 'Activate'}
+															onClick={() => {
+																openStatusUpdateUserModal(index);
+															}}
+															icon={
+																user?.isActive ? (
+																	<Person fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />
+																) : (
+																	<PersonOff fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />
+																)
+															}
+														/>
+													)}
+													{isUserStatusUpdateModalOpen[index] !== undefined && (
+														<CustomDialog
+															openModal={isUserStatusUpdateModalOpen[index]}
+															closeModal={() => closeStatusUpdateUserModal(index)}
+															title={user?.isActive ? 'Deactivate User' : 'Activate User'}
+															content={`Are you sure you want to ${user?.isActive ? 'deactivate' : 'activate'} ${user?.firstName} ${user?.lastName} (${user?.username})?`}
+															maxWidth='xs'>
+															<CustomDialogActions
+																onCancel={() => closeStatusUpdateUserModal(index)}
+																deleteBtn={user?.isActive}
+																deleteBtnText='Deactivate'
+																onDelete={() => {
+																	handleUserStatus();
+																	closeStatusUpdateUserModal(index);
+																}}
+																onSubmit={() => {
+																	handleUserStatus();
+																	closeStatusUpdateUserModal(index);
+																}}
+																submitBtnText='Activate'
+																actionSx={{ mb: '0.5rem' }}
+															/>
+														</CustomDialog>
+													)}
+												</TableCell>
+											</TableRow>
+										);
+									})}
+							</TableBody>
+						</Table>
+						{isVerySmallScreen && <CustomInfoMessageAlignedLeft message='Rotate your device for more info' />}
+						<CustomTablePagination count={usersNumberOfPages} page={currentPage} onChange={handlePageChange} />
+					</Box>
 				</Box>
-			</Box>
-		</DashboardPagesLayout>
+			</DashboardPagesLayout>
+		</AdminPageErrorBoundary>
 	);
 };
 
