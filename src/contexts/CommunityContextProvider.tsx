@@ -1,8 +1,7 @@
 import axios from '@utils/axiosInstance';
 import { ReactNode, createContext, useContext, useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
-import Loading from '../components/layouts/loading/Loading';
-import LoadingError from '../components/layouts/loading/LoadingError';
+
 import { OrganisationContext } from './OrganisationContextProvider';
 import { CommunityTopic } from '../interfaces/communityTopics';
 import { useAuth } from '../hooks/useAuth';
@@ -10,6 +9,7 @@ import { useLocation } from 'react-router-dom';
 
 interface CommunityContextTypes {
 	sortedTopicsData: CommunityTopic[];
+	isLoading: boolean;
 	sortTopicsData: (property: keyof CommunityTopic, order: 'asc' | 'desc') => CommunityTopic[];
 	addNewTopic: (newTopic: CommunityTopic) => void;
 	removeTopic: (id: string) => void;
@@ -20,6 +20,8 @@ interface CommunityContextTypes {
 	fetchMoreTopics: (startPage: number, endPage: number) => Promise<void>;
 	totalItems: number;
 	loadedPages: number[];
+	enableCommunityFetch: () => void;
+	disableCommunityFetch: () => void;
 }
 
 interface CommunityContextProviderProps {
@@ -28,6 +30,7 @@ interface CommunityContextProviderProps {
 
 export const CommunityContext = createContext<CommunityContextTypes>({
 	sortedTopicsData: [],
+	isLoading: false,
 	sortTopicsData: () => [],
 	addNewTopic: () => {},
 	removeTopic: () => {},
@@ -38,6 +41,8 @@ export const CommunityContext = createContext<CommunityContextTypes>({
 	fetchMoreTopics: async () => {},
 	totalItems: 0,
 	loadedPages: [],
+	enableCommunityFetch: () => {},
+	disableCommunityFetch: () => {},
 });
 
 const CommunityContextProvider = (props: CommunityContextProviderProps) => {
@@ -59,6 +64,7 @@ const CommunityContextProvider = (props: CommunityContextProviderProps) => {
 	const [topicsPageNumber, setTopicsPageNumber] = useState<number>(1);
 	const [totalItems, setTotalItems] = useState<number>(0);
 	const [loadedPages, setLoadedPages] = useState<number[]>([]);
+	const [isEnabled, setIsEnabled] = useState<boolean>(false);
 
 	const fetchTopics = async (page: number) => {
 		if (!orgId) return [];
@@ -106,12 +112,8 @@ const CommunityContextProvider = (props: CommunityContextProviderProps) => {
 		}
 	};
 
-	const {
-		data: topicsData,
-		isLoading,
-		isError,
-	} = useQuery(['allTopics', orgId], () => fetchTopics(1), {
-		enabled: !!orgId && isAuthenticated && (isAdmin || isLearner) && !isLandingPageRoute,
+	const { data: topicsData, isLoading } = useQuery(['allTopics', orgId], () => fetchTopics(1), {
+		enabled: isEnabled && !!orgId && isAuthenticated && (isAdmin || isLearner) && !isLandingPageRoute,
 		staleTime: 5 * 60 * 1000, // 5 minutes - data stays fresh
 		cacheTime: 30 * 60 * 1000, // 30 minutes - data stays in cache
 		refetchOnWindowFocus: false, // No refetch on window focus
@@ -202,18 +204,14 @@ const CommunityContextProvider = (props: CommunityContextProviderProps) => {
 	// Get sorted topics data from React Query
 	const sortedTopicsData = topicsData || [];
 
-	if (isLoading) {
-		return <Loading />;
-	}
-
-	if (isError) {
-		return <LoadingError />;
-	}
+	const enableCommunityFetch = () => setIsEnabled(true);
+	const disableCommunityFetch = () => setIsEnabled(false);
 
 	return (
 		<CommunityContext.Provider
 			value={{
 				sortedTopicsData,
+				isLoading,
 				sortTopicsData,
 				addNewTopic,
 				removeTopic,
@@ -224,6 +222,8 @@ const CommunityContextProvider = (props: CommunityContextProviderProps) => {
 				fetchMoreTopics,
 				totalItems,
 				loadedPages,
+				enableCommunityFetch,
+				disableCommunityFetch,
 			}}>
 			{props.children}
 		</CommunityContext.Provider>

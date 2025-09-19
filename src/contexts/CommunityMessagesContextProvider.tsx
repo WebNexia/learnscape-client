@@ -22,6 +22,8 @@ interface CommunityMessagesContextTypes {
 	loading: boolean;
 	error: string | null;
 	refreshData: () => void;
+	enableCommunityMessagesFetch: () => void;
+	disableCommunityMessagesFetch: () => void;
 }
 
 interface CommunityMessagesContextProviderProps {
@@ -45,6 +47,8 @@ export const CommunityMessagesContext = createContext<CommunityMessagesContextTy
 	loading: false,
 	error: null,
 	refreshData: () => {},
+	enableCommunityMessagesFetch: () => {},
+	disableCommunityMessagesFetch: () => {},
 });
 
 const CommunityMessagesContextProvider = (props: CommunityMessagesContextProviderProps) => {
@@ -59,10 +63,11 @@ const CommunityMessagesContextProvider = (props: CommunityMessagesContextProvide
 	const [currentTopicId, setCurrentTopicId] = useState<string>('');
 	const [loading, setLoading] = useState<boolean>(false);
 	const [error, setError] = useState<string | null>(null);
+	const [isEnabled, setIsEnabled] = useState<boolean>(false);
 
 	const fetchMessages = useCallback(
 		async (topicId: string) => {
-			if (!orgId || !topicId) return [];
+			if (!isEnabled || !orgId || !topicId) return [];
 
 			setLoading(true);
 			setError(null);
@@ -90,7 +95,7 @@ const CommunityMessagesContextProvider = (props: CommunityMessagesContextProvide
 				setLoading(false);
 			}
 		},
-		[orgId, base_url, queryClient] // ✅ dependencies → now stable
+		[isEnabled, orgId, base_url, queryClient] // ✅ dependencies → now stable
 	);
 
 	const fetchMoreMessages = async (topicId: string, startPage: number, endPage: number) => {
@@ -237,6 +242,9 @@ const CommunityMessagesContextProvider = (props: CommunityMessagesContextProvide
 	// Get messages data from React Query cache
 	const messages = (queryClient.getQueryData(['communityMessages', currentTopicId]) as CommunityMessage[]) || [];
 
+	const enableCommunityMessagesFetch = () => setIsEnabled(true);
+	const disableCommunityMessagesFetch = () => setIsEnabled(false);
+
 	return (
 		<CommunityMessagesContext.Provider
 			value={{
@@ -256,6 +264,8 @@ const CommunityMessagesContextProvider = (props: CommunityMessagesContextProvide
 				loading,
 				error,
 				refreshData,
+				enableCommunityMessagesFetch,
+				disableCommunityMessagesFetch,
 			}}>
 			{props.children}
 		</CommunityMessagesContext.Provider>

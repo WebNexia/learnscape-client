@@ -1,8 +1,6 @@
-// SubscriptionsContextProvider.tsx
-import { createContext, ReactNode, useContext } from 'react';
+import { createContext, ReactNode, useContext, useState } from 'react';
 import { useIsLandingPageRoute } from '../hooks/useIsLandingPageRoute';
-import Loading from '../components/layouts/loading/Loading';
-import LoadingError from '../components/layouts/loading/LoadingError';
+
 import { OrganisationContext } from './OrganisationContextProvider';
 import { UserSubscription } from '../interfaces/subscription';
 import { useAuth } from '../hooks/useAuth';
@@ -23,6 +21,8 @@ interface SubscriptionsContextTypes {
 	fetchMoreSubscriptions: (startPage: number, endPage: number) => Promise<void>;
 	removeSubscription: (id: string) => void;
 	updateSubscription: (updatedSubscription: UserSubscription) => void;
+	enableSubscriptionsFetch: () => void;
+	disableSubscriptionsFetch: () => void;
 }
 
 interface SubscriptionsContextProviderProps {
@@ -38,6 +38,7 @@ const SubscriptionsContextProvider = ({ children }: SubscriptionsContextProvider
 	const { user } = useContext(UserAuthContext);
 
 	const isLandingPageRoute = useIsLandingPageRoute();
+	const [isEnabled, setIsEnabled] = useState<boolean>(false);
 	// ✅ main hook for subscriptions
 	const {
 		data: subscriptions,
@@ -56,15 +57,15 @@ const SubscriptionsContextProvider = ({ children }: SubscriptionsContextProvider
 		orgId,
 		baseUrl: `${base_url}/subscriptions/organisation/${orgId}`,
 		entityKey: 'allSubscriptions',
-		enabled: isAuthenticated && isAdmin && !isLandingPageRoute,
+		enabled: isEnabled && isAuthenticated && isAdmin && !isLandingPageRoute,
 		role: user?.role as Roles,
 		staleTime: user?.role !== Roles.USER ? 0 : 5 * 60 * 1000,
 		cacheTime: 30 * 60 * 1000,
 		limit: 200,
 	});
 
-	if (isLoading && isAuthenticated) return <Loading />;
-	if (isError && isAuthenticated) return <LoadingError />;
+	const enableSubscriptionsFetch = () => setIsEnabled(true);
+	const disableSubscriptionsFetch = () => setIsEnabled(false);
 
 	return (
 		<SubscriptionsContext.Provider
@@ -81,6 +82,8 @@ const SubscriptionsContextProvider = ({ children }: SubscriptionsContextProvider
 				fetchMoreSubscriptions,
 				removeSubscription,
 				updateSubscription,
+				enableSubscriptionsFetch,
+				disableSubscriptionsFetch,
 			}}>
 			{children}
 		</SubscriptionsContext.Provider>

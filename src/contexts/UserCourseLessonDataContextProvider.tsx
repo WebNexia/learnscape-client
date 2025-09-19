@@ -4,9 +4,8 @@ import { SingleCourse } from '../interfaces/course';
 import { UserAuthContext } from './UserAuthContextProvider';
 import { OrganisationContext } from './OrganisationContextProvider';
 import { useQuery } from 'react-query';
-import Loading from '../components/layouts/loading/Loading';
-import LoadingError from '../components/layouts/loading/LoadingError';
-import { useParams, useLocation } from 'react-router-dom';
+
+import { useParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useIsLandingPageRoute } from '../hooks/useIsLandingPageRoute';
 
@@ -92,17 +91,17 @@ const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProvide
 	};
 
 	const {
-		data: singleCourseDataAdmin,
-		isLoading: singleCourseDataAdminLoading,
-		error: singleCourseDataAdminError,
+		// data: singleCourseDataAdmin,
+		// isLoading: singleCourseDataAdminLoading,
+		// error: singleCourseDataAdminError,
 	} = useQuery(['singleCourseDataAdmin', orgId], () => fetchSingleCourseDataAdmin(courseId), {
 		enabled: !!userId && !!orgId && isAuthenticated && isAdmin && !isLoaded && !isLandingPageRoute,
 	});
 
 	const {
-		data: singleCourseDataUser,
-		isLoading: singleCourseDataUserLoading,
-		error: singleCourseDataUserError,
+		// data: singleCourseDataUser,
+		// isLoading: singleCourseDataUserLoading,
+		// error: singleCourseDataUserError,
 	} = useQuery(['singleCourseDataUser', orgId], () => fetchSingleCourseDataUser(courseId), {
 		enabled: !!userId && !!orgId && isAuthenticated && isLearner && !isLoaded && !isLandingPageRoute,
 	});
@@ -164,14 +163,6 @@ const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProvide
 			setIsLoaded(true);
 		}
 	}, [userCoursesData, userLessonData]);
-
-	if (isLoading || userLessonsLoading || singleCourseDataAdminLoading || singleCourseDataUserLoading) {
-		return <Loading />;
-	}
-
-	if (error || userLessonsError || singleCourseDataAdminError || singleCourseDataUserError) {
-		return <LoadingError />;
-	}
 
 	return (
 		<UserCourseLessonDataContext.Provider

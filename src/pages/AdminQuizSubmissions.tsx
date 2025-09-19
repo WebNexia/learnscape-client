@@ -1,4 +1,5 @@
 import { Box, FormControl, InputAdornment, MenuItem, Select, Table, TableBody, TableCell, TableRow, Typography, Chip } from '@mui/material';
+import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { useContext, useEffect, useState } from 'react';
 import { AdminQuizSubmissionsContext } from '../contexts/AdminQuizSubmissionsContextProvider';
@@ -36,8 +37,16 @@ const AdminQuizSubmissions = () => {
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
-	const { quizSubmissions, totalItems, loadedPages, quizSubmissionsPageNumber, setQuizSubmissionsPageNumber, fetchMoreQuizSubmissions } =
-		useContext(AdminQuizSubmissionsContext);
+	const {
+		quizSubmissions,
+		totalItems,
+		loadedPages,
+		quizSubmissionsPageNumber,
+		setQuizSubmissionsPageNumber,
+		fetchMoreQuizSubmissions,
+		loading,
+		enableAdminQuizSubmissionsFetch,
+	} = useContext(AdminQuizSubmissionsContext);
 
 	const [searchValue, setSearchValue] = useState<string>('');
 	const [filterValue, setFilterValue] = useState<string>('');
@@ -87,11 +96,8 @@ const AdminQuizSubmissions = () => {
 
 	useEffect(() => {
 		setQuizSubmissionsPageNumber(1);
-		// Trigger initial fetch for context data
-		if (quizSubmissions && quizSubmissions.length === 0) {
-			// This will trigger the context to fetch data
-		}
-	}, []);
+		enableAdminQuizSubmissionsFetch(); // 👈 Enable admin quiz submissions fetching when component mounts
+	}, [enableAdminQuizSubmissionsFetch]);
 
 	const handlePageChange = async (newPage: number) => {
 		if (isSearchActive) {
@@ -220,6 +226,15 @@ const AdminQuizSubmissions = () => {
 
 	// Check if search button should be disabled
 	const isSearchDisabled = !searchValue;
+
+	// Show loading state while quiz submissions are being fetched
+	if (loading) {
+		return (
+			<DashboardPagesLayout pageName='Quiz Submissions' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
+				<AdminTableSkeleton rows={8} columns={6} />
+			</DashboardPagesLayout>
+		);
+	}
 
 	return (
 		<DashboardPagesLayout pageName='Quiz Submissions' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>

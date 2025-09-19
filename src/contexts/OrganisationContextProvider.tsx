@@ -2,8 +2,7 @@ import { createContext, ReactNode, useState } from 'react';
 import { Organisation } from '../interfaces/organisation';
 import axios from '@utils/axiosInstance';
 import { useQuery, useQueryClient } from 'react-query';
-import Loading from '../components/layouts/loading/Loading';
-import LoadingError from '../components/layouts/loading/LoadingError';
+
 import { AdminUser } from '../interfaces/user';
 
 interface OrganisationContextTypes {
@@ -70,21 +69,13 @@ const OrganisationContextProvider = (props: UserAuthContextProviderProps) => {
 		},
 	});
 
-	if (organisationQuery.isLoading) {
-		return <Loading />;
-	}
-
-	if (organisationQuery.isError) {
-		// Don't show error for rate limit - let the axios interceptor handle it
-		const error: any = organisationQuery.error;
-		if (error.response?.status === 429) {
-			return <Loading />;
-		}
-		return <LoadingError />;
-	}
+	// Use data from query if available, otherwise use state
+	const currentOrganisation = organisationQuery.data || organisation;
+	const currentAdminUsers = (organisationQuery.data as any)?.admins || adminUsers;
 
 	return (
-		<OrganisationContext.Provider value={{ organisation, fetchOrganisationData, setOrgId, orgId, adminUsers }}>
+		<OrganisationContext.Provider
+			value={{ organisation: currentOrganisation, fetchOrganisationData, setOrgId, orgId, adminUsers: currentAdminUsers }}>
 			{props.children}
 		</OrganisationContext.Provider>
 	);

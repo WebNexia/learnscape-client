@@ -1,4 +1,5 @@
 import { Box, DialogActions, DialogContent, FormControl, InputAdornment, MenuItem, Select, TableCell, Chip } from '@mui/material';
+import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { format } from 'date-fns';
 import * as XLSX from 'xlsx';
@@ -18,6 +19,7 @@ import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import axios from '@utils/axiosInstance';
+import { useDashboardSync } from '../utils/dashboardSync';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import { truncateText } from '@utils/utilText';
 import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
@@ -43,9 +45,21 @@ const AdminInquiries = () => {
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
-	const { inquiries, error, removeInquiry, fetchMoreInquiries, sortInquiries, totalItems, loadedPages, inquiriesPageNumber, setInquiriesPageNumber } =
-		useContext(InquiriesContext);
+	const {
+		inquiries,
+		loading,
+		error,
+		removeInquiry,
+		fetchMoreInquiries,
+		sortInquiries,
+		totalItems,
+		loadedPages,
+		inquiriesPageNumber,
+		setInquiriesPageNumber,
+		enableInquiriesFetch,
+	} = useContext(InquiriesContext);
 	const { orgId } = useContext(OrganisationContext);
+	const { refreshDashboard } = useDashboardSync();
 	const [searchValue, setSearchValue] = useState<string>('');
 	const [filterValue, setFilterValue] = useState<string>('');
 	const [searchResults, setSearchResults] = useState<Inquiry[]>([]);
@@ -91,6 +105,7 @@ const AdminInquiries = () => {
 
 	useEffect(() => {
 		setInquiriesPageNumber(1);
+		enableInquiriesFetch(); // 👈 Enable inquiries fetching when component mounts
 	}, []);
 
 	const handlePageChange = async (newPage: number) => {
@@ -190,6 +205,9 @@ const AdminInquiries = () => {
 				setSearchResults((prev) => prev?.filter((inquiry) => inquiry._id !== selectedInquiry._id) || []);
 				setSearchResultsTotalItems((prev) => Math.max(0, prev - 1));
 			}
+
+			// Refresh dashboard to update inquiry count
+			refreshDashboard();
 
 			// Close all modals
 			setDeleteModalOpen({});
@@ -319,6 +337,15 @@ const AdminInquiries = () => {
 	};
 
 	if (error) return <Typography color='error'>{error}</Typography>;
+
+	// Show loading state while inquiries are being fetched or when data is empty and not loading yet
+	if (loading || !inquiries || inquiries.length === 0) {
+		return (
+			<DashboardPagesLayout pageName='Inquiries' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
+				<AdminTableSkeleton rows={8} columns={5} />
+			</DashboardPagesLayout>
+		);
+	}
 
 	return (
 		<DashboardPagesLayout pageName='Inquiries' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>

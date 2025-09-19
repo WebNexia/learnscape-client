@@ -48,7 +48,7 @@ const ConditionalStripeProvider: React.FC<ConditionalStripeProviderProps> = ({ c
 
 	// Don't render Elements until Stripe is fully loaded and stable
 	if (isLoading || !stripePromise) {
-		return <div>Loading payment system...</div>;
+		return <div style={{ display: 'none' }}></div>;
 	}
 
 	// Use a stable key to prevent re-renders

@@ -14,6 +14,7 @@ import {
 	Typography,
 	Chip,
 } from '@mui/material';
+import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { useContext, useEffect, useRef, useState } from 'react';
 import axios from '@utils/axiosInstance';
@@ -48,6 +49,7 @@ const AdminDocuments = () => {
 
 	const {
 		documents,
+		loading,
 		error,
 		fetchMoreDocuments,
 		addNewDocument,
@@ -57,6 +59,7 @@ const AdminDocuments = () => {
 		loadedPages,
 		documentsPageNumber,
 		setDocumentsPageNumber,
+		enableDocumentsFetch,
 	} = useContext(DocumentsContext);
 
 	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
@@ -129,6 +132,7 @@ const AdminDocuments = () => {
 
 	useEffect(() => {
 		setDocumentsPageNumber(1);
+		enableDocumentsFetch(); // 👈 Enable documents fetching when component mounts
 	}, []);
 
 	const handlePageChange = async (newPage: number) => {
@@ -282,6 +286,15 @@ const AdminDocuments = () => {
 	}, [displayDocuments, documentsPageNumber]);
 
 	if (error) return <Typography color='error'>{error}</Typography>;
+
+	// Show loading state while documents are being fetched or when data is empty and not loading yet
+	if (loading || !documents || documents.length === 0) {
+		return (
+			<DashboardPagesLayout pageName='Documents' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
+				<AdminTableSkeleton rows={8} columns={5} />
+			</DashboardPagesLayout>
+		);
+	}
 
 	const resetForm = () => {
 		setIsDocumentCreateModalOpen(false);

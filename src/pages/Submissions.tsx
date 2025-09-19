@@ -1,4 +1,5 @@
 import { Box, FormControl, InputAdornment, MenuItem, Select, Table, TableBody, TableCell, TableRow, Typography, Chip } from '@mui/material';
+import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { useContext, useEffect, useState, useRef } from 'react';
 import CustomTableHead from '../components/layouts/table/CustomTableHead';
@@ -20,8 +21,15 @@ import axios from '@utils/axiosInstance';
 
 const Submissions = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
-	const { userQuizSubmissions, fetchMoreUserQuizSubmissions, loadedPages, totalItems, userSubmissionsPageNumber, setUserSubmissionsPageNumber } =
-		useContext(LearnerQuizSubmissionsContext);
+	const {
+		userQuizSubmissions,
+		fetchMoreUserQuizSubmissions,
+		loadedPages,
+		totalItems,
+		userSubmissionsPageNumber,
+		setUserSubmissionsPageNumber,
+		loading,
+	} = useContext(LearnerQuizSubmissionsContext);
 	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
@@ -231,6 +239,15 @@ const Submissions = () => {
 		// React Query handles the initial fetch automatically
 		// No need to manually call fetchUserQuizSubmissions
 	}, []);
+
+	// Show loading state while quiz submissions are being fetched or when data is empty and not loading yet
+	if (loading || !userQuizSubmissions || userQuizSubmissions.length === 0) {
+		return (
+			<DashboardPagesLayout pageName='Quiz Submissions' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
+				<AdminTableSkeleton rows={8} columns={4} />
+			</DashboardPagesLayout>
+		);
+	}
 
 	return (
 		<DashboardPagesLayout pageName='Quiz Submissions' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>

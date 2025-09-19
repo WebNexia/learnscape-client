@@ -18,6 +18,7 @@ import {
 	DialogActions,
 	Chip,
 } from '@mui/material';
+import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { CoursesContext } from '../contexts/CoursesContextProvider';
@@ -46,8 +47,19 @@ import CustomCancelButton from '../components/forms/customButtons/CustomCancelBu
 const AdminCourses = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const navigate = useNavigate();
-	const { courses, error, fetchMoreCourses, addNewCourse, removeCourse, totalItems, loadedPages, coursesPageNumber, setCoursesPageNumber } =
-		useContext(CoursesContext);
+	const {
+		courses,
+		loading,
+		error,
+		fetchMoreCourses,
+		addNewCourse,
+		removeCourse,
+		totalItems,
+		loadedPages,
+		coursesPageNumber,
+		setCoursesPageNumber,
+		enableCoursesFetch,
+	} = useContext(CoursesContext);
 	const { orgId } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
 
@@ -103,10 +115,46 @@ const AdminCourses = () => {
 	});
 	const paginatedCourses = sortedCourses?.slice((currentPage - 1) * pageSize, currentPage * pageSize) || [];
 
+	// Modal states - moved to top to avoid hooks after early returns
+	const [isCourseCreateModalOpen, setIsCourseCreateModalOpen] = useState<boolean>(false);
+	const [isCloning, setIsCloning] = useState<boolean>(false);
+	const [isCourseDeleteModalOpen, setIsCourseDeleteModalOpen] = useState<boolean[]>([]);
+	const [isCourseCloneModalOpen, setIsCourseCloneModalOpen] = useState<boolean[]>([]);
+	const [isCourseCloned, setIsCourseCloned] = useState<boolean>(false);
+
+	// Snackbar states for delete operation
+	const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
+	const [snackbarMessage, setSnackbarMessage] = useState<string>('');
+	const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
+
+	// Keep track of previous length to avoid unnecessary resets
+	const prevLengthRef = useRef<number>(0);
+
+	// useEffect hooks - moved to top to avoid hooks after early returns
+	useEffect(() => {
+		if (paginatedCourses && paginatedCourses.length !== prevLengthRef.current) {
+			prevLengthRef.current = paginatedCourses.length;
+			setIsCourseDeleteModalOpen(Array(paginatedCourses.length).fill(false));
+			setIsCourseCloneModalOpen(Array(paginatedCourses.length).fill(false));
+		}
+	}, [displayCourses, coursesPageNumber]);
+
+	useEffect(() => {
+		setCoursesPageNumber(1);
+		enableCoursesFetch(); // 👈 Enable courses fetching when component mounts
+	}, []);
+
+	// Early returns AFTER all hooks
 	if (error) return <Typography color='error'>{error}</Typography>;
 
-	// Modal states
-	const [isCourseCreateModalOpen, setIsCourseCreateModalOpen] = useState<boolean>(false);
+	// Show loading state while courses are being fetched or when data is empty and not loading yet
+	if (loading || !courses || courses.length === 0) {
+		return (
+			<DashboardPagesLayout pageName='Courses' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
+				<AdminTableSkeleton rows={8} columns={6} />
+			</DashboardPagesLayout>
+		);
+	}
 
 	const openNewCourseModal = () => {
 		setIsCourseCreateModalOpen(true);
@@ -121,32 +169,6 @@ const AdminCourses = () => {
 		setTRY({ amount: '', currency: 'try' });
 	};
 	const closeNewCourseModal = () => setIsCourseCreateModalOpen(false);
-
-	const [isCloning, setIsCloning] = useState<boolean>(false);
-	const [isCourseDeleteModalOpen, setIsCourseDeleteModalOpen] = useState<boolean[]>([]);
-	const [isCourseCloneModalOpen, setIsCourseCloneModalOpen] = useState<boolean[]>([]);
-
-	const [isCourseCloned, setIsCourseCloned] = useState<boolean>(false);
-
-	// Snackbar states for delete operation
-	const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
-	const [snackbarMessage, setSnackbarMessage] = useState<string>('');
-	const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
-
-	// Keep track of previous length to avoid unnecessary resets
-	const prevLengthRef = useRef<number>(0);
-
-	useEffect(() => {
-		if (paginatedCourses && paginatedCourses.length !== prevLengthRef.current) {
-			prevLengthRef.current = paginatedCourses.length;
-			setIsCourseDeleteModalOpen(Array(paginatedCourses.length).fill(false));
-			setIsCourseCloneModalOpen(Array(paginatedCourses.length).fill(false));
-		}
-	}, [displayCourses, coursesPageNumber]);
-
-	useEffect(() => {
-		setCoursesPageNumber(1);
-	}, []);
 
 	const handlePageChange = async (newPage: number) => {
 		// Set appropriate page number based on search state

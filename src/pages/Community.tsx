@@ -1,4 +1,5 @@
 import { Box, DialogContent, Typography, FormControl, Select, MenuItem, Chip, InputAdornment, IconButton, Tooltip } from '@mui/material';
+import CommunitySkeleton from '../components/layouts/skeleton/CommunitySkeleton';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import CustomDeleteButton from '../components/forms/customButtons/CustomDeleteButton';
@@ -29,7 +30,8 @@ export interface NewTopic {
 }
 
 const Community = () => {
-	const { sortedTopicsData, setTopicsPageNumber, topicsPageNumber, fetchMoreTopics, totalItems, loadedPages } = useContext(CommunityContext);
+	const { sortedTopicsData, setTopicsPageNumber, topicsPageNumber, fetchMoreTopics, totalItems, loadedPages, enableCommunityFetch, isLoading } =
+		useContext(CommunityContext);
 	const { orgId } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
 
@@ -80,7 +82,8 @@ const Community = () => {
 
 	useEffect(() => {
 		setTopicsPageNumber(1);
-	}, []);
+		enableCommunityFetch(); // 👈 Enable community fetching when component mounts
+	}, [enableCommunityFetch]);
 
 	// Handle search functionality
 	const handleSearch = async () => {
@@ -280,6 +283,15 @@ const Community = () => {
 
 		return baseOptions;
 	};
+
+	// Show loading state while community topics are being fetched or when data is empty and not loading yet
+	if (isLoading || !sortedTopicsData || sortedTopicsData.length === 0) {
+		return (
+			<DashboardPagesLayout pageName='Community' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
+				<CommunitySkeleton />
+			</DashboardPagesLayout>
+		);
+	}
 
 	return (
 		<DashboardPagesLayout pageName='Community' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>

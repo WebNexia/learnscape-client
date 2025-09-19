@@ -5,6 +5,7 @@ import { enUS } from 'date-fns/locale/en-US';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { Box } from '@mui/material';
+import CalendarSkeleton from '../components/layouts/skeleton/CalendarSkeleton';
 import { EventsContext } from '../contexts/EventsContextProvider';
 import { Event } from '../interfaces/event';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
@@ -32,7 +33,7 @@ const localizer = dateFnsLocalizer({
 });
 
 const EventCalendar = () => {
-	const { sortedEventsData, fetchMonthEvents, loadedMonths } = useContext(EventsContext);
+	const { sortedEventsData, fetchMonthEvents, loadedMonths, enableEventsFetch, isLoading } = useContext(EventsContext);
 	const { orgId } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
 
@@ -109,6 +110,10 @@ const EventCalendar = () => {
 		}
 	}, [selectedEvent, user?.role]);
 
+	useEffect(() => {
+		enableEventsFetch(); // 👈 Enable events fetching when component mounts
+	}, [enableEventsFetch]);
+
 	const eventStyleGetter = (event: Event) => {
 		const backgroundColor = event.isAllDay ? 'lightblue' : '#ffb7b2';
 		return {
@@ -157,6 +162,15 @@ const EventCalendar = () => {
 			}
 		}
 	};
+
+	// Show loading state while events are being fetched or when data is empty and not loading yet
+	if (isLoading || !sortedEventsData || sortedEventsData.length === 0) {
+		return (
+			<DashboardPagesLayout pageName='Calendar' showCopyRight={true}>
+				<CalendarSkeleton />
+			</DashboardPagesLayout>
+		);
+	}
 
 	return (
 		<DashboardPagesLayout pageName='Calendar' showCopyRight={true}>

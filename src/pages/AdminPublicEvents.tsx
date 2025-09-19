@@ -15,6 +15,7 @@ import {
 	DialogActions,
 	Chip,
 } from '@mui/material';
+import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { useContext, useEffect, useState } from 'react';
 import { Download, Search, Visibility } from '@mui/icons-material';
@@ -40,8 +41,16 @@ const AdminPublicEvents = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
 
-	const { publicEvents, fetchMorePublicEvents, totalItems, loadedPages, publicEventsPageNumber, setPublicEventsPageNumber } =
-		useContext(AdminPublicEventsContext);
+	const {
+		publicEvents,
+		fetchMorePublicEvents,
+		totalItems,
+		loadedPages,
+		publicEventsPageNumber,
+		setPublicEventsPageNumber,
+		enableAdminPublicEventsFetch,
+		loading,
+	} = useContext(AdminPublicEventsContext);
 
 	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -236,7 +245,8 @@ const AdminPublicEvents = () => {
 
 	useEffect(() => {
 		setPublicEventsPageNumber(1);
-	}, []);
+		enableAdminPublicEventsFetch(); // 👈 Enable admin public events fetching when component mounts
+	}, [enableAdminPublicEventsFetch]);
 
 	const handleDownloadParticipants = async (eventId: string, eventTitle: string) => {
 		try {
@@ -262,6 +272,15 @@ const AdminPublicEvents = () => {
 			console.log(error);
 		}
 	};
+
+	// Show loading state while public events are being fetched or when data is empty and not loading yet
+	if (loading || !publicEvents || publicEvents.length === 0) {
+		return (
+			<DashboardPagesLayout pageName='Public Events' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
+				<AdminTableSkeleton rows={8} columns={6} />
+			</DashboardPagesLayout>
+		);
+	}
 
 	return (
 		<DashboardPagesLayout pageName='Public Events' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>

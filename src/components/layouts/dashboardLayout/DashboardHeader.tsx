@@ -164,7 +164,12 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 					alignItems: 'center',
 					height: '3.5rem',
 					width: '100%',
-					backgroundColor: user?.role === Roles.ADMIN ? theme.bgColor?.adminHeader : theme.bgColor?.lessonInProgress,
+					backgroundColor:
+						user?.role === Roles.ADMIN
+							? theme.bgColor?.adminHeader
+							: user?.role === Roles.USER
+								? theme.bgColor?.lessonInProgress
+								: theme.bgColor?.adminHeader,
 					padding: isVerySmallScreen || isRotated ? '0 0.5rem 0 0.25rem' : '0 0rem',
 					position: 'relative',
 				}}>

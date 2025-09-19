@@ -14,6 +14,7 @@ import {
 	Snackbar,
 	Alert,
 } from '@mui/material';
+import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { useContext, useEffect, useRef, useState } from 'react';
 import axios from '@utils/axiosInstance';
@@ -52,6 +53,7 @@ const AdminQuestions = () => {
 
 	const {
 		questions,
+		loading,
 		error,
 		fetchMoreQuestions,
 		removeQuestion,
@@ -60,6 +62,7 @@ const AdminQuestions = () => {
 		questionsPageNumber,
 		setQuestionsPageNumber,
 		questionTypes,
+		enableQuestionsFetch,
 	} = useContext(QuestionsContext);
 
 	const [searchValue, setSearchValue] = useState<string>('');
@@ -139,6 +142,7 @@ const AdminQuestions = () => {
 
 	useEffect(() => {
 		setQuestionsPageNumber(1);
+		enableQuestionsFetch(); // 👈 Enable questions fetching when component mounts
 	}, []);
 
 	const handlePageChange = async (newPage: number) => {
@@ -212,6 +216,15 @@ const AdminQuestions = () => {
 	}, [displayQuestions, questionsPageNumber]);
 
 	if (error) return <Typography color='error'>{error}</Typography>;
+
+	// Show loading state while questions are being fetched or when data is empty and not loading yet
+	if (loading || !questions || questions.length === 0) {
+		return (
+			<DashboardPagesLayout pageName='Questions' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
+				<AdminTableSkeleton rows={8} columns={5} />
+			</DashboardPagesLayout>
+		);
+	}
 
 	const openDeleteQuestionModal = (index: number) => {
 		const updatedState = [...isQuestionDeleteModalOpen];

@@ -14,6 +14,7 @@ import {
 	Snackbar,
 	Alert,
 } from '@mui/material';
+import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { useContext, useEffect, useState } from 'react';
 import axios from '@utils/axiosInstance';
@@ -43,8 +44,18 @@ const AdminLessons = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const navigate = useNavigate();
 
-	const { lessons, error, fetchMoreLessons, removeLesson, totalItems, loadedPages, lessonsPageNumber, setLessonsPageNumber } =
-		useContext(LessonsContext);
+	const {
+		lessons,
+		loading,
+		error,
+		fetchMoreLessons,
+		removeLesson,
+		totalItems,
+		loadedPages,
+		lessonsPageNumber,
+		setLessonsPageNumber,
+		enableLessonsFetch,
+	} = useContext(LessonsContext);
 	const { orgId } = useContext(OrganisationContext);
 
 	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
@@ -87,12 +98,26 @@ const AdminLessons = () => {
 		}) || [];
 	const paginatedLessons = sortedLessons?.slice((currentPage - 1) * pageSize, currentPage * pageSize) || [];
 
+	// Modal states - moved to top to avoid hooks after early returns
 	const [isNewLessonModalOpen, setIsNewLessonModalOpen] = useState<boolean>(false);
+	const [isLessonDeleteModalOpen, setIsLessonDeleteModalOpen] = useState<boolean[]>([]);
+	const [isLessonInfoModalOpen, setIsLessonInfoModalOpen] = useState<boolean[]>([]);
 
 	// Snackbar states for delete operation
 	const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
 	const [snackbarMessage, setSnackbarMessage] = useState<string>('');
 	const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
+
+	// useEffect hooks - moved to top to avoid hooks after early returns
+	useEffect(() => {
+		setIsLessonDeleteModalOpen(Array(paginatedLessons.length).fill(false));
+		setIsLessonInfoModalOpen(Array(paginatedLessons.length).fill(false));
+	}, [displayLessons, lessonsPageNumber]);
+
+	useEffect(() => {
+		setLessonsPageNumber(1);
+		enableLessonsFetch(); // 👈 Enable lessons fetching when component mounts
+	}, []);
 
 	const handlePageChange = async (newPage: number) => {
 		// Set appropriate page number based on search state
@@ -231,19 +256,17 @@ const AdminLessons = () => {
 		}
 	};
 
-	const [isLessonDeleteModalOpen, setIsLessonDeleteModalOpen] = useState<boolean[]>([]);
-	const [isLessonInfoModalOpen, setIsLessonInfoModalOpen] = useState<boolean[]>([]);
-
-	useEffect(() => {
-		setIsLessonDeleteModalOpen(Array(paginatedLessons.length).fill(false));
-		setIsLessonInfoModalOpen(Array(paginatedLessons.length).fill(false));
-	}, [displayLessons, lessonsPageNumber]);
-
+	// Early returns AFTER all hooks
 	if (error) return <Typography color='error'>{error}</Typography>;
 
-	useEffect(() => {
-		setLessonsPageNumber(1);
-	}, []);
+	// Show loading state while lessons are being fetched or when data is empty and not loading yet
+	if (loading || !lessons || lessons.length === 0) {
+		return (
+			<DashboardPagesLayout pageName='Lessons' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
+				<AdminTableSkeleton rows={8} columns={5} />
+			</DashboardPagesLayout>
+		);
+	}
 
 	const openDeleteLessonModal = (index: number) => {
 		const updatedState = [...isLessonDeleteModalOpen];

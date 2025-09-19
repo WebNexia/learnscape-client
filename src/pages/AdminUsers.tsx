@@ -1,4 +1,5 @@
 import { Box, FormControl, InputAdornment, MenuItem, Select, Table, TableBody, TableCell, TableRow, Typography, Chip } from '@mui/material';
+import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { useContext, useEffect, useState } from 'react';
 import axios from '@utils/axiosInstance';
@@ -40,7 +41,7 @@ const AdminUsers = () => {
 
 	const { userId } = useContext(UserAuthContext);
 
-	const { users, loading, error, fetchMoreUsers, updateUser, totalItems, loadedPages, usersPageNumber, setUsersPageNumber } =
+	const { users, loading, error, fetchMoreUsers, updateUser, totalItems, loadedPages, usersPageNumber, setUsersPageNumber, enableUsersFetch } =
 		useContext(UsersContext);
 
 	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
@@ -90,6 +91,7 @@ const AdminUsers = () => {
 
 	useEffect(() => {
 		setUsersPageNumber(1);
+		enableUsersFetch(); // 👈 Enable users fetching when component mounts
 	}, []); // Only on mount
 
 	useEffect(() => {
@@ -340,7 +342,14 @@ const AdminUsers = () => {
 		}
 	};
 
-	if (loading) return <Typography>Loading...</Typography>;
+	// Show loading state while users are being fetched or when data is empty and not loading yet
+	if (loading || !users || users.length === 0) {
+		return (
+			<DashboardPagesLayout pageName='Users' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
+				<AdminTableSkeleton rows={8} columns={5} />
+			</DashboardPagesLayout>
+		);
+	}
 	if (error) return <Typography color='error'>{error}</Typography>;
 
 	return (

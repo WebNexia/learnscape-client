@@ -749,9 +749,10 @@ const AdminLessonEditPage = () => {
 						updatedByImageUrl: responseUpdatedData.updatedByImageUrl,
 						updatedByRole: responseUpdatedData.updatedByRole,
 					});
-					queryClient.invalidateQueries(['allCourses', orgId]);
-					queryClient.invalidateQueries(['allLessons', orgId]);
-					queryClient.invalidateQueries(['allQuestions', orgId]);
+					// 👈 Removed cache invalidation to prevent multiple API calls
+					// queryClient.invalidateQueries(['allCourses', orgId]);
+					// queryClient.invalidateQueries(['allLessons', orgId]);
+					// queryClient.invalidateQueries(['allQuestions', orgId]);
 
 					// Update question contexts with current usedInLessons data
 					updatedQuestions?.forEach((question) => {
