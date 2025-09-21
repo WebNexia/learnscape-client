@@ -372,7 +372,7 @@ const AdminUsers = () => {
 	};
 
 	// Show loading state while users are being fetched or when data is empty and not loading yet
-	if (loading || !users || users.length === 0) {
+	if (loading) {
 		return (
 			<DashboardPagesLayout pageName='Users' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
 				<AdminTableSkeleton rows={8} columns={5} />

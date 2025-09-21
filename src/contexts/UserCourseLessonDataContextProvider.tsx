@@ -5,7 +5,7 @@ import { UserAuthContext } from './UserAuthContextProvider';
 import { OrganisationContext } from './OrganisationContextProvider';
 import { useQuery } from 'react-query';
 
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useIsLandingPageRoute } from '../hooks/useIsLandingPageRoute';
 
@@ -16,6 +16,8 @@ interface UserCourseLessonDataContextTypes {
 	setSingleCourse: React.Dispatch<React.SetStateAction<SingleCourse | null>>;
 	singleCourseUser: SingleCourse | null;
 	setSingleCourseUser: React.Dispatch<React.SetStateAction<SingleCourse | null>>;
+	enableUserCourseLessonDataFetch: () => void;
+	disableUserCourseLessonDataFetch: () => void;
 }
 
 interface UserCoursesIdsContextProviderProps {
@@ -52,6 +54,8 @@ export const UserCourseLessonDataContext = createContext<UserCourseLessonDataCon
 	singleCourseUser: null,
 	setSingleCourseUser: () => {},
 	fetchSingleCourseDataUser: () => {},
+	enableUserCourseLessonDataFetch: () => {},
+	disableUserCourseLessonDataFetch: () => {},
 });
 
 const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProviderProps) => {
@@ -61,11 +65,13 @@ const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProvide
 	const { isAuthenticated, isLearner, isAdmin } = useAuth();
 
 	const { courseId } = useParams();
+	const location = useLocation();
 
 	const isLandingPageRoute = useIsLandingPageRoute();
 	const role = user?.role;
 
 	const [isLoaded, setIsLoaded] = useState<boolean>(false);
+	const [isEnabled, setIsEnabled] = useState<boolean>(false);
 
 	const [singleCourse, setSingleCourse] = useState<SingleCourse | null>(null);
 
@@ -95,7 +101,7 @@ const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProvide
 		// isLoading: singleCourseDataAdminLoading,
 		// error: singleCourseDataAdminError,
 	} = useQuery(['singleCourseDataAdmin', orgId], () => fetchSingleCourseDataAdmin(courseId), {
-		enabled: !!userId && !!orgId && isAuthenticated && isAdmin && !isLoaded && !isLandingPageRoute,
+		enabled: isEnabled && !!userId && !!orgId && isAuthenticated && isAdmin && !isLoaded && !isLandingPageRoute && !!courseId,
 	});
 
 	const {
@@ -103,8 +109,11 @@ const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProvide
 		// isLoading: singleCourseDataUserLoading,
 		// error: singleCourseDataUserError,
 	} = useQuery(['singleCourseDataUser', orgId], () => fetchSingleCourseDataUser(courseId), {
-		enabled: !!userId && !!orgId && isAuthenticated && isLearner && !isLoaded && !isLandingPageRoute,
+		enabled: isEnabled && !!userId && !!orgId && isAuthenticated && isLearner && !isLoaded && !isLandingPageRoute && !!courseId,
 	});
+
+	// Check if we're on a learner course page or courses page
+	const isLearnerCoursePage = location.pathname?.includes('/courses') || location.pathname?.includes('/userCourseId/');
 
 	const {
 		isLoading,
@@ -117,7 +126,7 @@ const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProvide
 			return userCourseData;
 		},
 		{
-			enabled: !!userId && !!orgId && isAuthenticated && isLearner && !isLoaded && !isLandingPageRoute,
+			enabled: isEnabled && !!userId && !!orgId && isAuthenticated && isLearner && !isLoaded && !isLandingPageRoute && isLearnerCoursePage,
 		}
 	);
 
@@ -132,7 +141,7 @@ const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProvide
 			return userLessonData;
 		},
 		{
-			enabled: !!userId && !!orgId && isAuthenticated && isLearner && !isLoaded && !isLandingPageRoute,
+			enabled: isEnabled && !!userId && !!orgId && isAuthenticated && isLearner && !isLoaded && !isLandingPageRoute && isLearnerCoursePage,
 		}
 	);
 
@@ -158,6 +167,9 @@ const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProvide
 	// 	enabled: !!orgId && isAuthenticated && isLearner && !isLoaded,
 	// });
 
+	const enableUserCourseLessonDataFetch = () => setIsEnabled(true);
+	const disableUserCourseLessonDataFetch = () => setIsEnabled(false);
+
 	useEffect(() => {
 		if (userCoursesData && userLessonData) {
 			setIsLoaded(true);
@@ -173,6 +185,8 @@ const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProvide
 				setSingleCourse,
 				singleCourseUser,
 				setSingleCourseUser,
+				enableUserCourseLessonDataFetch,
+				disableUserCourseLessonDataFetch,
 			}}>
 			{props.children}
 		</UserCourseLessonDataContext.Provider>

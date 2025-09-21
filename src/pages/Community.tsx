@@ -83,10 +83,14 @@ const Community = () => {
 	// Paginate the data for display
 	const paginatedTopics = displayTopics?.slice((currentPage - 1) * pageSize, currentPage * pageSize) || [];
 
+	// Enable community fetching only once when component mounts
+	useEffect(() => {
+		enableCommunityFetch();
+	}, []); // Empty dependency array - only run once
+
 	useEffect(() => {
 		setTopicsPageNumber(1);
-		enableCommunityFetch(); // 👈 Enable community fetching when component mounts
-	}, [enableCommunityFetch]);
+	}, []); // Reset page number only once on mount
 
 	// Cleanup search state function
 	const cleanupSearchState = () => {
@@ -314,7 +318,7 @@ const Community = () => {
 	};
 
 	// Show loading state while community topics are being fetched or when data is empty and not loading yet
-	if (isLoading || !sortedTopicsData || sortedTopicsData.length === 0) {
+	if (isLoading) {
 		return (
 			<DashboardPagesLayout pageName='Community' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
 				<CommunitySkeleton />

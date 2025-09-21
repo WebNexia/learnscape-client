@@ -40,7 +40,7 @@ const DocumentsContextProvider = ({ children }: DocumentsContextProviderProps) =
 	const { user } = useContext(UserAuthContext);
 
 	const isLandingPageRoute = useIsLandingPageRoute();
-	const [isEnabled, setIsEnabled] = useState<boolean>(false);
+	const [isEnabled, setIsEnabled] = useState<boolean>(true); // Start enabled to prevent flash
 	const {
 		data: documents,
 		isLoading,
@@ -72,7 +72,7 @@ const DocumentsContextProvider = ({ children }: DocumentsContextProviderProps) =
 		<DocumentsContext.Provider
 			value={{
 				documents,
-				loading: isLoading,
+				loading: isLoading || (isEnabled && !documents),
 				error: isError ? 'Failed to fetch documents' : null,
 				fetchDocuments,
 				fetchMoreDocuments,

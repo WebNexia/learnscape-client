@@ -269,7 +269,7 @@ const Submissions = () => {
 	}, [location.pathname]);
 
 	// Show loading state while quiz submissions are being fetched or when data is empty and not loading yet
-	if (loading || !userQuizSubmissions || userQuizSubmissions.length === 0) {
+	if (loading) {
 		return (
 			<DashboardPagesLayout pageName='Quiz Submissions' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
 				<AdminTableSkeleton rows={8} columns={4} />

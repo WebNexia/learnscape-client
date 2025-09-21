@@ -49,6 +49,7 @@ const AdminCourses = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const navigate = useNavigate();
 	const location = useLocation();
+
 	const {
 		courses,
 		loading,
@@ -143,7 +144,7 @@ const AdminCourses = () => {
 
 	useEffect(() => {
 		setCoursesPageNumber(1);
-		enableCoursesFetch(); // 👈 Enable courses fetching when component mounts
+		enableCoursesFetch();
 	}, []);
 
 	// Cleanup search state function
@@ -175,8 +176,8 @@ const AdminCourses = () => {
 	// Early returns AFTER all hooks
 	if (error) return <Typography color='error'>{error}</Typography>;
 
-	// Show loading state while courses are being fetched or when data is empty and not loading yet
-	if (loading || !courses || courses.length === 0) {
+	// Show loading state while courses are being fetched
+	if (loading) {
 		return (
 			<DashboardPagesLayout pageName='Courses' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
 				<AdminTableSkeleton rows={8} columns={6} />

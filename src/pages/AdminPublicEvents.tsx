@@ -246,10 +246,14 @@ const AdminPublicEvents = () => {
 		}
 	};
 
+	// Enable admin public events fetching only once when component mounts
+	useEffect(() => {
+		enableAdminPublicEventsFetch();
+	}, []); // Empty dependency array - only run once
+
 	useEffect(() => {
 		setPublicEventsPageNumber(1);
-		enableAdminPublicEventsFetch(); // 👈 Enable admin public events fetching when component mounts
-	}, [enableAdminPublicEventsFetch]);
+	}, []); // Reset page number only once on mount
 
 	// Cleanup search state function
 	const cleanupSearchState = () => {
@@ -303,7 +307,7 @@ const AdminPublicEvents = () => {
 	};
 
 	// Show loading state while public events are being fetched or when data is empty and not loading yet
-	if (loading || !publicEvents || publicEvents.length === 0) {
+	if (loading) {
 		return (
 			<DashboardPagesLayout pageName='Public Events' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
 				<AdminTableSkeleton rows={8} columns={6} />

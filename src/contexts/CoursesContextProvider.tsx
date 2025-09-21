@@ -26,6 +26,8 @@ interface CoursesContextTypes {
 	loadedPages: number[];
 	enableCoursesFetch: () => void;
 	disableCoursesFetch: () => void;
+	hasMore: boolean;
+	loadMore: () => Promise<void>;
 }
 
 interface CoursesContextProviderProps {
@@ -34,7 +36,7 @@ interface CoursesContextProviderProps {
 
 export const CoursesContext = createContext<CoursesContextTypes>({
 	courses: [],
-	loading: false,
+	loading: true,
 	error: null,
 	fetchCourses: async () => [],
 	fetchMoreCourses: async () => {},
@@ -49,6 +51,8 @@ export const CoursesContext = createContext<CoursesContextTypes>({
 	loadedPages: [],
 	enableCoursesFetch: () => {},
 	disableCoursesFetch: () => {},
+	hasMore: false,
+	loadMore: async () => {},
 });
 
 const CoursesContextProvider = ({ children }: CoursesContextProviderProps) => {
@@ -57,7 +61,7 @@ const CoursesContextProvider = ({ children }: CoursesContextProviderProps) => {
 	const { isAuthenticated, isAdmin, isLearner } = useAuth();
 	const { user } = useContext(UserAuthContext);
 	const isLandingPageRoute = useIsLandingPageRoute();
-	const [isEnabled, setIsEnabled] = useState<boolean>(false);
+	const [isEnabled, setIsEnabled] = useState<boolean>(true); // Start enabled to prevent flash
 	const {
 		data: courses,
 		isLoading,
@@ -86,11 +90,24 @@ const CoursesContextProvider = ({ children }: CoursesContextProviderProps) => {
 	const enableCoursesFetch = () => setIsEnabled(true);
 	const disableCoursesFetch = () => setIsEnabled(false);
 
+	// Calculate if there are more courses to load
+	const hasMore = courses && totalItems > courses.length;
+
+	// Load more courses function
+	const loadMore = async () => {
+		if (!hasMore || isLoading) return;
+
+		const currentLoadedPages = loadedPages && loadedPages.length > 0 ? Math.max(...loadedPages) : 0;
+		const nextPage = currentLoadedPages + 1;
+
+		await fetchMoreCourses(nextPage, nextPage);
+	};
+
 	return (
 		<CoursesContext.Provider
 			value={{
 				courses,
-				loading: isLoading,
+				loading: isLoading || (isEnabled && !courses),
 				error: isError ? 'Failed to fetch courses' : null,
 				fetchCourses,
 				fetchMoreCourses,
@@ -105,6 +122,8 @@ const CoursesContextProvider = ({ children }: CoursesContextProviderProps) => {
 				loadedPages,
 				enableCoursesFetch,
 				disableCoursesFetch,
+				hasMore,
+				loadMore,
 			}}>
 			<DataFetchErrorBoundary context='Courses'>{children}</DataFetchErrorBoundary>
 		</CoursesContext.Provider>

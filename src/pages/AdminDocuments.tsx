@@ -317,7 +317,7 @@ const AdminDocuments = () => {
 	if (error) return <Typography color='error'>{error}</Typography>;
 
 	// Show loading state while documents are being fetched or when data is empty and not loading yet
-	if (loading || !documents || documents.length === 0) {
+	if (loading) {
 		return (
 			<DashboardPagesLayout pageName='Documents' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
 				<AdminTableSkeleton rows={8} columns={5} />

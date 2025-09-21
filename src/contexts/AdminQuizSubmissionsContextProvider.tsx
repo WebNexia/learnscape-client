@@ -43,7 +43,7 @@ const AdminQuizSubmissionsContextProvider = ({ children }: AdminQuizSubmissionsC
 	const isAdminRoute = location.pathname.startsWith('/admin');
 
 	// Lazy loading state
-	const [isEnabled, setIsEnabled] = useState<boolean>(false);
+	const [isEnabled, setIsEnabled] = useState<boolean>(true); // Start enabled to prevent flash
 
 	const {
 		data: quizSubmissions,
@@ -87,7 +87,7 @@ const AdminQuizSubmissionsContextProvider = ({ children }: AdminQuizSubmissionsC
 		<AdminQuizSubmissionsContext.Provider
 			value={{
 				quizSubmissions,
-				loading: isLoading,
+				loading: isLoading || (isEnabled && !quizSubmissions),
 				error: isError ? 'Failed to fetch quiz submissions' : null,
 				sortQuizSubmissions,
 				addNewQuizSubmission,

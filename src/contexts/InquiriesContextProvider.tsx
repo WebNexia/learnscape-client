@@ -39,7 +39,7 @@ const InquiriesContextProvider = ({ children }: InquiriesContextProviderProps) =
 	const { user } = useContext(UserAuthContext);
 
 	const isLandingPageRoute = useIsLandingPageRoute();
-	const [isEnabled, setIsEnabled] = useState<boolean>(false);
+	const [isEnabled, setIsEnabled] = useState<boolean>(true);
 	const {
 		data: inquiries,
 		isLoading,
@@ -69,7 +69,7 @@ const InquiriesContextProvider = ({ children }: InquiriesContextProviderProps) =
 		<InquiriesContext.Provider
 			value={{
 				inquiries,
-				loading: isLoading,
+				loading: isLoading || (isEnabled && !inquiries),
 				error: isError ? 'Failed to fetch inquiries' : null,
 				fetchInquiries,
 				fetchMoreInquiries,

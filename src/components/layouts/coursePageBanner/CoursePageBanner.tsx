@@ -185,7 +185,11 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 					{fromHomePage && (
 						<>
 							<br />
-							{fromHomePage ? 'Kurs detaylarını görmek için giriş yapın.' : 'To view course details, please log in.'}
+							{fromHomePage
+								? course.courseManagement.isExternal
+									? ' Detaylar email adresinize gönderildi.'
+									: 'Kurs detaylarını görmek için platforma giriş yapın.'
+								: 'To view course details, please log in.'}
 						</>
 					)}
 				</Alert>

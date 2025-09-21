@@ -368,7 +368,7 @@ const AdminInquiries = () => {
 	if (error) return <Typography color='error'>{error}</Typography>;
 
 	// Show loading state while inquiries are being fetched or when data is empty and not loading yet
-	if (loading || !inquiries || inquiries.length === 0) {
+	if (loading) {
 		return (
 			<DashboardPagesLayout pageName='Inquiries' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
 				<AdminTableSkeleton rows={8} columns={5} />

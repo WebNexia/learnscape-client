@@ -139,11 +139,15 @@ const CommunityTopicPage = () => {
 
 	const messageRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
+	// Enable community messages fetching only once when component mounts
+	useEffect(() => {
+		enableCommunityMessagesFetch();
+	}, []); // Empty dependency array - only run once
+
 	useEffect(() => {
 		setPageNumber(initialPageNumber);
 		setHighlightedMessageId(messageIdFromNotification);
-		enableCommunityMessagesFetch(); // 👈 Enable community messages fetching when component mounts
-	}, [initialPageNumber, messageIdFromNotification, enableCommunityMessagesFetch]);
+	}, [initialPageNumber, messageIdFromNotification]);
 
 	useEffect(() => {
 		if (topicId) {

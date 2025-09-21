@@ -40,7 +40,7 @@ const UsersContextProvider = ({ children }: UsersContextProviderProps) => {
 	const { isAuthenticated, isAdmin } = useAuth();
 	const { user } = useContext(UserAuthContext);
 	const isLandingPageRoute = useIsLandingPageRoute();
-	const [isEnabled, setIsEnabled] = useState<boolean>(false);
+	const [isEnabled, setIsEnabled] = useState<boolean>(true);
 
 	const {
 		data: users,
@@ -74,7 +74,7 @@ const UsersContextProvider = ({ children }: UsersContextProviderProps) => {
 		<UsersContext.Provider
 			value={{
 				users,
-				loading: isLoading,
+				loading: isLoading || (isEnabled && !users),
 				error: isError ? 'Failed to fetch users' : null,
 				fetchUsers,
 				fetchMoreUsers,

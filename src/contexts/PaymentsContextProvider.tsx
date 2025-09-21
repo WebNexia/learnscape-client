@@ -37,7 +37,7 @@ const PaymentsContextProvider = ({ children }: PaymentsContextProviderProps) => 
 	const { user } = useContext(UserAuthContext);
 
 	const isLandingPageRoute = useIsLandingPageRoute();
-	const [isEnabled, setIsEnabled] = useState<boolean>(false);
+	const [isEnabled, setIsEnabled] = useState<boolean>(true);
 	// ✅ main hook for payments
 	const {
 		data: payments,
@@ -68,7 +68,7 @@ const PaymentsContextProvider = ({ children }: PaymentsContextProviderProps) => 
 		<PaymentsContext.Provider
 			value={{
 				payments,
-				loading: isLoading,
+				loading: isLoading || (isEnabled && !payments),
 				error: isError ? 'Failed to fetch payments' : null,
 				sortPayments,
 				totalItems,

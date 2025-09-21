@@ -150,7 +150,7 @@ const LandingPageCourse = () => {
 			)}
 
 			{!loading && !error && !course && (
-				<Box sx={{ paddingTop: '16vh', textAlign: 'center' }}>
+				<Box sx={{ paddingTop: '25vh', textAlign: 'center' }}>
 					<Typography variant='h6' sx={{ fontFamily: 'Varela Round' }}>
 						Kurs bulunamadı
 					</Typography>

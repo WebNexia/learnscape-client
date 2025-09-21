@@ -42,7 +42,7 @@ const LessonsContextProvider = ({ children }: LessonsContextProviderProps) => {
 	const { user } = useContext(UserAuthContext);
 
 	const isLandingPageRoute = useIsLandingPageRoute();
-	const [isEnabled, setIsEnabled] = useState<boolean>(false); // 👈 State to control fetching
+	const [isEnabled, setIsEnabled] = useState<boolean>(true);
 	const {
 		data: lessons,
 		isLoading,
@@ -78,7 +78,7 @@ const LessonsContextProvider = ({ children }: LessonsContextProviderProps) => {
 		<LessonsContext.Provider
 			value={{
 				lessons,
-				loading: isLoading,
+				loading: isLoading || (isEnabled && !lessons),
 				error: isError ? 'Failed to fetch lessons' : null,
 				fetchLessons,
 				fetchMoreLessons,

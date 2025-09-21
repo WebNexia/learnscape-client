@@ -45,7 +45,7 @@ const QuestionsContextProvider = ({ children }: QuestionsContextProviderProps) =
 	const { isAuthenticated, isAdmin, isLearner } = useAuth();
 
 	const isLandingPageRoute = useIsLandingPageRoute();
-	const [isEnabled, setIsEnabled] = useState<boolean>(false);
+	const [isEnabled, setIsEnabled] = useState<boolean>(true);
 	// ✅ hook for paginated questions
 	const {
 		data: questions,
@@ -106,7 +106,7 @@ const QuestionsContextProvider = ({ children }: QuestionsContextProviderProps) =
 		<QuestionsContext.Provider
 			value={{
 				questions,
-				loading: isLoading,
+				loading: isLoading || (isEnabled && !questions),
 				error: isError ? 'Failed to fetch questions' : null,
 				fetchQuestions,
 				fetchMoreQuestions,

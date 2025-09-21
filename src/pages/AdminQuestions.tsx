@@ -247,7 +247,7 @@ const AdminQuestions = () => {
 	if (error) return <Typography color='error'>{error}</Typography>;
 
 	// Show loading state while questions are being fetched or when data is empty and not loading yet
-	if (loading || !questions || questions.length === 0) {
+	if (loading) {
 		return (
 			<DashboardPagesLayout pageName='Questions' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
 				<AdminTableSkeleton rows={8} columns={5} />

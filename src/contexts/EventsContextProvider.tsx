@@ -58,7 +58,7 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 	const isCalendarRoute = location.pathname?.includes('/calendar');
 	// Month-based calendar state
 	const [loadedMonths, setLoadedMonths] = useState<string[]>([]);
-	const [isEnabled, setIsEnabled] = useState<boolean>(false);
+	const [isEnabled, setIsEnabled] = useState<boolean>(true); // Start enabled to prevent flash
 
 	// Function to handle sorting
 	const sortEventsData = (property: keyof Event, order: 'asc' | 'desc') => {
@@ -230,7 +230,7 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 		<EventsContext.Provider
 			value={{
 				sortedEventsData,
-				isLoading: isCalendarLoading,
+				isLoading: isCalendarLoading || (isEnabled && !sortedEventsData),
 				sortEventsData,
 				addNewEvent,
 				removeEvent,

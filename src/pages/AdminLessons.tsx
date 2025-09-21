@@ -288,7 +288,7 @@ const AdminLessons = () => {
 	if (error) return <Typography color='error'>{error}</Typography>;
 
 	// Show loading state while lessons are being fetched or when data is empty and not loading yet
-	if (loading || !lessons || lessons.length === 0) {
+	if (loading) {
 		return (
 			<DashboardPagesLayout pageName='Lessons' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
 				<AdminTableSkeleton rows={8} columns={5} />

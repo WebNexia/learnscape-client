@@ -39,7 +39,7 @@ const SubscriptionsContextProvider = ({ children }: SubscriptionsContextProvider
 	const { user } = useContext(UserAuthContext);
 
 	const isLandingPageRoute = useIsLandingPageRoute();
-	const [isEnabled, setIsEnabled] = useState<boolean>(false);
+	const [isEnabled, setIsEnabled] = useState<boolean>(true);
 	// ✅ main hook for subscriptions
 	const {
 		data: subscriptions,
@@ -72,7 +72,7 @@ const SubscriptionsContextProvider = ({ children }: SubscriptionsContextProvider
 		<SubscriptionsContext.Provider
 			value={{
 				subscriptions,
-				loading: isLoading,
+				loading: isLoading || (isEnabled && !subscriptions),
 				error: isError ? 'Failed to fetch subscriptions' : null,
 				sortSubscriptions,
 				totalItems,

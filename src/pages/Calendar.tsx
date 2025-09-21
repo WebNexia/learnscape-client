@@ -111,9 +111,10 @@ const EventCalendar = () => {
 		}
 	}, [selectedEvent, user?.role]);
 
+	// Enable events fetching only once when component mounts
 	useEffect(() => {
-		enableEventsFetch(); // 👈 Enable events fetching when component mounts
-	}, [enableEventsFetch]);
+		enableEventsFetch();
+	}, []); // Empty dependency array - only run once
 
 	const eventStyleGetter = (event: Event) => {
 		const backgroundColor = event.isAllDay ? 'lightblue' : '#ffb7b2';
@@ -165,7 +166,7 @@ const EventCalendar = () => {
 	};
 
 	// Show loading state while events are being fetched or when data is empty and not loading yet
-	if (isLoading || !sortedEventsData || sortedEventsData.length === 0) {
+	if (isLoading) {
 		return (
 			<DashboardPagesLayout pageName='Calendar' showCopyRight={true}>
 				<CalendarSkeleton />

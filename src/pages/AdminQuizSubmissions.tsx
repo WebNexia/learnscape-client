@@ -97,10 +97,14 @@ const AdminQuizSubmissions = () => {
 		setOrderBy(property);
 	};
 
+	// Enable admin quiz submissions fetching only once when component mounts
+	useEffect(() => {
+		enableAdminQuizSubmissionsFetch();
+	}, []); // Empty dependency array - only run once
+
 	useEffect(() => {
 		setQuizSubmissionsPageNumber(1);
-		enableAdminQuizSubmissionsFetch(); // 👈 Enable admin quiz submissions fetching when component mounts
-	}, [enableAdminQuizSubmissionsFetch]);
+	}, []); // Reset page number only once on mount
 
 	// Cleanup search state function
 	const cleanupSearchState = () => {

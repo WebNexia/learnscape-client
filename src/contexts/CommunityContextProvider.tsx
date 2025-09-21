@@ -65,7 +65,7 @@ const CommunityContextProvider = (props: CommunityContextProviderProps) => {
 	const [topicsPageNumber, setTopicsPageNumber] = useState<number>(1);
 	const [totalItems, setTotalItems] = useState<number>(0);
 	const [loadedPages, setLoadedPages] = useState<number[]>([]);
-	const [isEnabled, setIsEnabled] = useState<boolean>(false);
+	const [isEnabled, setIsEnabled] = useState<boolean>(true); // Start enabled to prevent flash
 
 	const fetchTopics = async (page: number) => {
 		if (!orgId) return [];
@@ -212,7 +212,7 @@ const CommunityContextProvider = (props: CommunityContextProviderProps) => {
 		<CommunityContext.Provider
 			value={{
 				sortedTopicsData,
-				isLoading,
+				isLoading: isLoading || (isEnabled && !sortedTopicsData),
 				sortTopicsData,
 				addNewTopic,
 				removeTopic,

@@ -39,7 +39,7 @@ const PromoCodesContextProvider = ({ children }: PromoCodesContextProviderProps)
 	const { isAuthenticated, isAdmin } = useAuth();
 
 	const isLandingPageRoute = useIsLandingPageRoute();
-	const [isEnabled, setIsEnabled] = useState<boolean>(false);
+	const [isEnabled, setIsEnabled] = useState<boolean>(true);
 	const {
 		data: promoCodes,
 		isLoading,
@@ -72,7 +72,7 @@ const PromoCodesContextProvider = ({ children }: PromoCodesContextProviderProps)
 		<PromoCodesContext.Provider
 			value={{
 				promoCodes,
-				loading: isLoading,
+				loading: isLoading || (isEnabled && !promoCodes),
 				error: isError ? 'Failed to fetch promo codes' : null,
 				sortPromoCodesData,
 				addNewPromoCode,

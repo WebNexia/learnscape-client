@@ -37,7 +37,7 @@ const AdminPublicEventsContextProvider = ({ children }: AdminPublicEventsContext
 	const { user } = useContext(UserAuthContext);
 	const { isAuthenticated, isAdmin } = useAuth();
 	const isLandingPageRoute = useIsLandingPageRoute();
-	const [isEnabled, setIsEnabled] = useState<boolean>(false);
+	const [isEnabled, setIsEnabled] = useState<boolean>(true); // Start enabled to prevent flash
 
 	const {
 		data: publicEvents,
@@ -68,7 +68,7 @@ const AdminPublicEventsContextProvider = ({ children }: AdminPublicEventsContext
 		<AdminPublicEventsContext.Provider
 			value={{
 				publicEvents,
-				loading: isLoading,
+				loading: isLoading || (isEnabled && !publicEvents),
 				error: isError ? 'Error loading public events' : null,
 				fetchPublicEvents,
 				fetchMorePublicEvents,
