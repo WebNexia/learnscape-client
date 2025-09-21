@@ -86,6 +86,12 @@ const GroupChatEditModal = ({
 			orgId: '',
 			countryCode: '',
 			isEmailVerified: false,
+			isSubscribed: false,
+			subscriptionType: null,
+			subscriptionExpiry: '',
+			subscriptionStatus: 'none',
+			subscriptionValidUntil: '',
+			accessLevel: 'limited',
 		};
 		onGroupUserSelection(userForGroup);
 	};

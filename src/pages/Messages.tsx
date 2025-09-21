@@ -1195,6 +1195,12 @@ const Messages = () => {
 			orgId: '',
 			countryCode: '',
 			isEmailVerified: false,
+			isSubscribed: false,
+			subscriptionType: null,
+			subscriptionExpiry: '',
+			subscriptionStatus: 'none',
+			subscriptionValidUntil: '',
+			accessLevel: 'limited',
 		};
 
 		// Clear any previous error messages

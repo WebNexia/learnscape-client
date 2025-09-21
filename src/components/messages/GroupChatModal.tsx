@@ -70,6 +70,12 @@ const GroupChatModal = ({
 			orgId: '',
 			countryCode: '',
 			isEmailVerified: false,
+			isSubscribed: false,
+			subscriptionType: null,
+			subscriptionExpiry: '',
+			subscriptionStatus: 'none',
+			subscriptionValidUntil: '',
+			accessLevel: 'limited',
 		};
 		onGroupUserSelection(userForGroup);
 	};
@@ -208,7 +214,7 @@ const GroupChatModal = ({
 				submitBtnText='Create Group Chat'
 				onSubmit={onCreateGroupChat}
 				onCancel={onCloseModal}
-				disableBtn={!groupName.trim() || selectedGroupUsers && selectedGroupUsers.length === 0}
+				disableBtn={!groupName.trim() || (selectedGroupUsers && selectedGroupUsers.length === 0)}
 				actionSx={{ mb: '0.75rem', mt: '-1rem' }}
 			/>
 		</CustomDialog>

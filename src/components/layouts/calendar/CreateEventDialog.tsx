@@ -112,6 +112,13 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 			isEmailVerified: false,
 			createdAt: new Date().toISOString(),
 			updatedAt: new Date().toISOString(),
+			// Add missing subscription properties
+			isSubscribed: false,
+			subscriptionType: null,
+			subscriptionExpiry: '',
+			subscriptionStatus: 'none',
+			subscriptionValidUntil: '',
+			accessLevel: 'limited',
 		};
 
 		// Check if user is already selected
