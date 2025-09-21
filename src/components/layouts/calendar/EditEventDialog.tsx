@@ -118,6 +118,12 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 			isEmailVerified: false,
 			createdAt: new Date().toISOString(),
 			updatedAt: new Date().toISOString(),
+			isSubscribed: false,
+			subscriptionType: null,
+			subscriptionExpiry: '',
+			subscriptionStatus: 'none',
+			subscriptionValidUntil: '',
+			accessLevel: 'limited',
 		};
 
 		// Check if user is already selected
