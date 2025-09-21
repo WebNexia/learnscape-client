@@ -1,10 +1,9 @@
 import axios from '@utils/axiosInstance';
 import { ReactNode, createContext, useContext, useState } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
+import DataFetchErrorBoundary from '../components/error/DataFetchErrorBoundary';
 import { useLocation } from 'react-router-dom';
 
-import Loading from '../components/layouts/loading/Loading';
-import LoadingError from '../components/layouts/loading/LoadingError';
 import { OrganisationContext } from './OrganisationContextProvider';
 import { Event } from '../interfaces/event';
 import { useAuth } from '../hooks/useAuth';
@@ -13,6 +12,7 @@ import { UserAuthContext } from './UserAuthContextProvider';
 
 interface EventsContextTypes {
 	sortedEventsData: Event[];
+	isLoading: boolean;
 
 	sortEventsData: (property: keyof Event, order: 'asc' | 'desc') => void;
 
@@ -24,6 +24,8 @@ interface EventsContextTypes {
 	fetchMonthEvents: (year: number, month: number) => Promise<void>;
 	loadedMonths: string[];
 	refreshCalendarData: () => void;
+	enableEventsFetch: () => void;
+	disableEventsFetch: () => void;
 }
 
 interface EventsContextProviderProps {
@@ -32,6 +34,7 @@ interface EventsContextProviderProps {
 
 export const EventsContext = createContext<EventsContextTypes>({
 	sortedEventsData: [],
+	isLoading: false,
 	sortEventsData: () => {},
 	addNewEvent: () => {},
 	removeEvent: () => {},
@@ -40,6 +43,8 @@ export const EventsContext = createContext<EventsContextTypes>({
 	fetchMonthEvents: async () => {},
 	loadedMonths: [],
 	refreshCalendarData: () => {},
+	enableEventsFetch: () => {},
+	disableEventsFetch: () => {},
 });
 
 const EventsContextProvider = (props: EventsContextProviderProps) => {
@@ -53,6 +58,7 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 	const isCalendarRoute = location.pathname?.includes('/calendar');
 	// Month-based calendar state
 	const [loadedMonths, setLoadedMonths] = useState<string[]>([]);
+	const [isEnabled, setIsEnabled] = useState<boolean>(true); // Start enabled to prevent flash
 
 	// Function to handle sorting
 	const sortEventsData = (property: keyof Event, order: 'asc' | 'desc') => {
@@ -206,33 +212,25 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 	};
 
 	// Use month-based fetching for calendar routes
-	const {
-		data: eventsData,
-		isLoading: isCalendarLoading,
-		isError: isCalendarError,
-	} = useQuery(['calendarEvents', orgId], fetchInitialMonths, {
-		enabled: !!orgId && isAuthenticated && (isAdmin || isLearner) && isCalendarRoute,
+	const { data: eventsData, isLoading: isCalendarLoading } = useQuery(['calendarEvents', orgId], fetchInitialMonths, {
+		enabled: isEnabled && !!orgId && isAuthenticated && (isAdmin || isLearner) && isCalendarRoute,
 		staleTime: user?.role !== Roles.USER ? 0 : 5 * 60 * 1000, // 5 minutes - data stays fresh
 		cacheTime: 30 * 60 * 1000, // 30 minutes - data stays in cache
 		refetchOnWindowFocus: user?.role === Roles.ADMIN,
 		refetchOnMount: user?.role !== Roles.USER,
 	});
 
-	if (isCalendarLoading) {
-		return <Loading />;
-	}
-
-	if (isCalendarError) {
-		return <LoadingError />;
-	}
-
 	// Get events data from React Query data
 	const sortedEventsData = eventsData || [];
+
+	const enableEventsFetch = () => setIsEnabled(true);
+	const disableEventsFetch = () => setIsEnabled(false);
 
 	return (
 		<EventsContext.Provider
 			value={{
 				sortedEventsData,
+				isLoading: isCalendarLoading || (isEnabled && !sortedEventsData),
 				sortEventsData,
 				addNewEvent,
 				removeEvent,
@@ -240,8 +238,10 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 				fetchMonthEvents,
 				loadedMonths,
 				refreshCalendarData,
+				enableEventsFetch,
+				disableEventsFetch,
 			}}>
-			{props.children}
+			<DataFetchErrorBoundary context='Events'>{props.children}</DataFetchErrorBoundary>
 		</EventsContext.Provider>
 	);
 };

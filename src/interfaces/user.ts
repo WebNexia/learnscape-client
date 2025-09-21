@@ -15,6 +15,13 @@ export interface User {
 	updatedAt: string;
 	countryCode: string;
 	isEmailVerified: boolean;
+	// Subscription fields
+	isSubscribed: boolean;
+	subscriptionType: 'monthly' | 'yearly' | null;
+	subscriptionExpiry: string | null;
+	subscriptionStatus: 'none' | 'active' | 'past_due' | 'canceled' | 'trialing';
+	subscriptionValidUntil: string | null;
+	accessLevel: 'limited' | 'subscription' | 'full';
 }
 
 export interface AdminUser {

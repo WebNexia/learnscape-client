@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
 import axios from '@utils/axiosInstance';
 import { Roles } from '../interfaces/enums';
@@ -42,63 +42,70 @@ export function usePaginatedEntity<T extends { _id: string; updatedAt: string; i
 		return entities;
 	};
 
-	const fetchMoreEntities = async (startPage: number, endPage: number) => {
-		if (!orgId) return;
+	const fetchMoreEntities = useCallback(
+		async (startPage: number, endPage: number) => {
+			if (!orgId) return;
 
-		const pagesToFetch: number[] = [];
-		for (let page = startPage; page <= endPage; page++) {
-			if (!loadedPages?.includes(page)) pagesToFetch.push(page);
-		}
-		if (pagesToFetch && pagesToFetch.length === 0) return;
+			const pagesToFetch: number[] = [];
+			for (let page = startPage; page <= endPage; page++) {
+				if (!loadedPages?.includes(page)) pagesToFetch.push(page);
+			}
+			if (pagesToFetch && pagesToFetch.length === 0) return;
 
-		let newEntities: T[] = [];
-		for (const page of pagesToFetch) {
-			const response = await axios.get(`${baseUrl}?page=${page}&limit=${limit}`);
-			newEntities = [...newEntities, ...response.data.data];
-		}
+			let newEntities: T[] = [];
+			for (const page of pagesToFetch) {
+				const response = await axios.get(`${baseUrl}?page=${page}&limit=${limit}`);
+				newEntities = [...newEntities, ...response.data.data];
+			}
 
-		const existingData = queryClient.getQueryData<T[]>([entityKey, orgId, pageNumber]) || [];
-		const combined = [...existingData, ...newEntities];
-		const unique = combined?.filter((item, index, self) => index === self?.findIndex?.((i) => i._id === item._id)) || [];
-		const sorted = unique?.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)) || [];
+			const existingData = queryClient.getQueryData<T[]>([entityKey, orgId, pageNumber]) || [];
+			const combined = [...existingData, ...newEntities];
+			const unique = combined?.filter((item, index, self) => index === self?.findIndex?.((i) => i._id === item._id)) || [];
+			const sorted = unique?.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)) || [];
 
-		queryClient.setQueryData([entityKey, orgId, pageNumber], sorted);
-		setLoadedPages((prev) => Array.from(new Set([...prev, ...pagesToFetch])));
-	};
+			queryClient.setQueryData([entityKey, orgId, pageNumber], sorted);
+			setLoadedPages((prev) => Array.from(new Set([...prev, ...pagesToFetch])));
+		},
+		[orgId, baseUrl, limit, loadedPages, queryClient, entityKey, pageNumber]
+	);
 
 	const { data, isLoading, isError } = useQuery([entityKey, orgId, pageNumber], () => fetchEntities(pageNumber), {
 		enabled: !!orgId && enabled,
 		staleTime,
 		cacheTime,
-		refetchOnWindowFocus: role !== Roles.USER,
-		refetchOnMount: role !== Roles.USER,
+		refetchOnWindowFocus: false, // 👈 Disabled to prevent multiple API calls
+		refetchOnMount: false, // 👈 Disabled to prevent multiple API calls
 	});
 
-	// Progressive pagination fill
-
+	// Progressive pagination fill - with debouncing to prevent multiple rapid calls
 	useEffect(() => {
 		if (loadedPages?.length > 0 && orgId) {
-			const sortedPages = [...(loadedPages || [])]?.sort((a, b) => a - b) || [];
-			const maxPage = Math.max(...sortedPages);
+			// Debounce to prevent rapid calls during updates
+			const timeoutId = setTimeout(() => {
+				const sortedPages = [...(loadedPages || [])]?.sort((a, b) => a - b) || [];
+				const maxPage = Math.max(...sortedPages);
 
-			let missingStart: number | null = null;
+				let missingStart: number | null = null;
 
-			for (let page = 1; page <= maxPage; page++) {
-				if (!loadedPages?.includes(page)) {
-					if (missingStart === null) {
-						missingStart = page; // start of a gap
+				for (let page = 1; page <= maxPage; page++) {
+					if (!loadedPages?.includes(page)) {
+						if (missingStart === null) {
+							missingStart = page; // start of a gap
+						}
+					} else if (missingStart !== null) {
+						// end of a gap -> fetch missing range
+						fetchMoreEntities(missingStart, page - 1);
+						missingStart = null;
 					}
-				} else if (missingStart !== null) {
-					// end of a gap -> fetch missing range
-					fetchMoreEntities(missingStart, page - 1);
-					missingStart = null;
 				}
-			}
 
-			// If gap continues till the end
-			if (missingStart !== null) {
-				fetchMoreEntities(missingStart, maxPage);
-			}
+				// If gap continues till the end
+				if (missingStart !== null) {
+					fetchMoreEntities(missingStart, maxPage);
+				}
+			}, 500); // 500ms debounce
+
+			return () => clearTimeout(timeoutId);
 		}
 	}, [loadedPages, orgId]);
 
@@ -116,7 +123,8 @@ export function usePaginatedEntity<T extends { _id: string; updatedAt: string; i
 				(old = []) => (old || [])?.map((item) => (item._id === updatedEntity._id ? updatedEntity : item)) || []
 			);
 		});
-		queryClient.invalidateQueries([entityKey, orgId]);
+		// 👈 Removed cache invalidation to prevent multiple API calls
+		// queryClient.invalidateQueries([entityKey, orgId]);
 	};
 
 	const toggleEntityActive = (id: string) => {
@@ -126,7 +134,8 @@ export function usePaginatedEntity<T extends { _id: string; updatedAt: string; i
 				(old = []) => (old || [])?.map((item) => (item._id === id ? { ...item, isActive: !item.isActive } : item)) || []
 			);
 		});
-		queryClient.invalidateQueries([entityKey, orgId]);
+		// 👈 Removed cache invalidation to prevent multiple API calls
+		// queryClient.invalidateQueries([entityKey, orgId]);
 	};
 
 	const removeEntity = (id: string) => {

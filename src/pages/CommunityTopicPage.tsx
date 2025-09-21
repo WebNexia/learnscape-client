@@ -24,7 +24,6 @@ import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
 import CustomTablePagination from '../components/layouts/table/CustomTablePagination';
 import { formatMessageTime } from '../utils/formatTime';
-import { CommunityContext } from '../contexts/CommunityContextProvider';
 import { CommunityMessagesContext } from '../contexts/CommunityMessagesContextProvider';
 
 import { Roles } from '../interfaces/enums';
@@ -48,9 +47,19 @@ const CommunityTopicPage = () => {
 	const { topicId } = useParams();
 	const { user } = useContext(UserAuthContext);
 	const { orgId } = useContext(OrganisationContext);
-	const { sortedTopicsData } = useContext(CommunityContext);
-	const { messages, numberOfPages, pageNumber, setPageNumber, fetchMessages, fetchMoreMessages, loadedPages, addNewMessage, currentTopicId } =
-		useContext(CommunityMessagesContext);
+
+	const {
+		messages,
+		numberOfPages,
+		pageNumber,
+		setPageNumber,
+		fetchMessages,
+		fetchMoreMessages,
+		loadedPages,
+		addNewMessage,
+		currentTopicId,
+		enableCommunityMessagesFetch,
+	} = useContext(CommunityMessagesContext);
 
 	const { isRotated, isVerySmallScreen, isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -129,6 +138,11 @@ const CommunityTopicPage = () => {
 	};
 
 	const messageRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+
+	// Enable community messages fetching only once when component mounts
+	useEffect(() => {
+		enableCommunityMessagesFetch();
+	}, []); // Empty dependency array - only run once
 
 	useEffect(() => {
 		setPageNumber(initialPageNumber);

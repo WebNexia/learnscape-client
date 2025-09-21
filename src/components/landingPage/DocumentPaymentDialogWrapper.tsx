@@ -9,6 +9,10 @@ interface DocumentPaymentDialogWrapperProps {
 	setIsPaymentDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
 	userCurrency: string;
 	fromHomePage?: boolean;
+	showSuccess: boolean;
+	setShowSuccess: React.Dispatch<React.SetStateAction<boolean>>;
+	showEmailWarning: boolean;
+	setShowEmailWarning: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 /**

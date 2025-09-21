@@ -490,7 +490,7 @@ const Loading = () => {
 							height: '110vh',
 							marginLeft: '10rem',
 						}}>
-						<TypingAnimation />
+						{/* <TypingAnimation />
 						<Typography
 							sx={{
 								margin: '2rem',
@@ -501,7 +501,7 @@ const Loading = () => {
 							}}>
 							Loading...
 						</Typography>
-						<Logo />
+						<Logo /> */}
 					</Box>
 				</>
 			)}

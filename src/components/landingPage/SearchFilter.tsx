@@ -66,7 +66,6 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
 	}, [searchValue]);
 
 	const handleSearch = () => {
-		console.log('🔍 SearchFilter handleSearch called with localSearchValue:', localSearchValue);
 		onSearchChange(localSearchValue);
 		onSearch(localSearchValue); // Pass the search term directly
 		// Don't clear the search input - keep it like admin pages

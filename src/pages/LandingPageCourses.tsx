@@ -1,7 +1,8 @@
 import { Box, Typography, Button } from '@mui/material';
 import LandingPageLayout from '../components/landingPage/LandingPageLayout';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
-import { useContext } from 'react';
+import { useContext, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { AllPublicCoursesContext } from '../contexts/AllPublicCoursesContextProvider';
 import { SingleCourse } from '../interfaces/course';
 import DashboardCourseCard from '../components/userCourses/DashboardCourseCard';
@@ -12,6 +13,7 @@ import SearchFilter from '../components/landingPage/SearchFilter';
 const LandingPageCourses = () => {
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
+	const location = useLocation();
 
 	const {
 		courses,
@@ -30,6 +32,25 @@ const LandingPageCourses = () => {
 		onRemoveSearch,
 		isSearching,
 	} = useContext(AllPublicCoursesContext);
+
+	// Cleanup search state function
+	const cleanupSearchState = () => {
+		onReset(); // This will clear search state in the context
+	};
+
+	// Cleanup on component unmount
+	useEffect(() => {
+		return () => {
+			cleanupSearchState();
+		};
+	}, []);
+
+	// Cleanup when navigating away from page
+	useEffect(() => {
+		return () => {
+			cleanupSearchState();
+		};
+	}, [location.pathname]);
 
 	// Filter options for courses
 	const courseFilterOptions = [

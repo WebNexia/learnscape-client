@@ -4,6 +4,9 @@ import axios from '@utils/axiosInstance';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from '../firebase';
 import { User } from '../interfaces/user';
+import { Roles } from '../interfaces/enums';
+import { useNavigate } from 'react-router-dom';
+import { UserCoursesIdsWithCourseIds, UserLessonDataStorage } from './UserCourseLessonDataContextProvider';
 
 interface UserAuthContextTypes {
 	user?: User | undefined;
@@ -33,23 +36,47 @@ export const UserAuthContext = createContext<UserAuthContextTypes>({
 
 const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
+	const navigate = useNavigate();
 
 	const [user, setUser] = useState<User>();
 	const [userId, setUserId] = useState<string>('');
 	const [firebaseUserId, setFirebaseUserId] = useState<string>('');
-	const [skipFetchDuringSignup, setSkipFetchDuringSignup] = useState<boolean>(false);
 	const skipFetchDuringSignupRef = useRef<boolean>(false);
 	const isFetchingUserDataRef = useRef<boolean>(false);
+	const isLoginInProgressRef = useRef<boolean>(false);
+	const lastAuthStateChangeRef = useRef<number>(0);
 	const queryClient = useQueryClient();
 
-	// Custom function to update both state and ref
+	// Custom function to update ref
 	const setSkipFetchDuringSignupWithRef = (skip: boolean) => {
-		setSkipFetchDuringSignup(skip);
 		skipFetchDuringSignupRef.current = skip;
 	};
 
+	// Navigation logic - only redirect on initial login, not on page refresh
+	useEffect(() => {
+		// Only navigate if we're on the auth page or root (initial login)
+		const currentPath = window.location.pathname;
+		const isOnAuthPage = currentPath === '/auth' || currentPath === '/';
+
+		if (isOnAuthPage && user?.role === Roles.ADMIN) {
+			navigate('/admin/dashboard', { replace: true });
+		} else if (isOnAuthPage && user?.role === Roles.USER) {
+			navigate('/dashboard', { replace: true });
+		}
+	}, [user, navigate]);
+
 	useEffect(() => {
 		const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+			const now = Date.now();
+			const timeSinceLastChange = now - lastAuthStateChangeRef.current;
+
+			// Debounce rapid-fire auth state changes (less than 200ms apart)
+			if (timeSinceLastChange < 200) {
+				return;
+			}
+
+			lastAuthStateChangeRef.current = now;
+
 			if (currentUser) {
 				let sessionTimestamp = localStorage.getItem('sessionTimestamp');
 				const currentTime = Date.now();
@@ -71,15 +98,27 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 				}
 
 				setFirebaseUserId(currentUser.uid);
+				isLoginInProgressRef.current = true;
 				try {
-					await fetchUserData(currentUser.uid, skipFetchDuringSignupRef.current);
+					// Only fetch user data if we don't already have it for this Firebase user
+					if (!user || user.firebaseUserId !== currentUser.uid) {
+						await fetchUserData(currentUser.uid, skipFetchDuringSignupRef.current);
+					}
 				} catch (error) {
 					console.error('Failed to fetch user data:', error);
+				} finally {
+					// Reset login in progress flag after a delay
+					setTimeout(() => {
+						isLoginInProgressRef.current = false;
+					}, 500);
 				}
 			} else {
-				setUser(undefined);
-				setUserId('');
-				setFirebaseUserId('');
+				// Only clear user state if we're not in the middle of a login process
+				if (!isLoginInProgressRef.current && !isFetchingUserDataRef.current) {
+					setUser(undefined);
+					setUserId('');
+					setFirebaseUserId('');
+				}
 			}
 		});
 
@@ -97,8 +136,8 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 			return;
 		}
 
-		// Skip fetching if we already have the user data for this Firebase ID
-		if (user && user.firebaseUserId === firebaseUserId) {
+		// Skip fetching if we already have the user data for this Firebase ID AND userId is set
+		if (user && user.firebaseUserId === firebaseUserId && userId) {
 			return;
 		}
 
@@ -107,9 +146,62 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 
 		try {
 			const responseUserData = await axios.get(`${base_url}/users/${firebaseUserId}`);
-			setUser(responseUserData.data.data[0]);
-			setUserId(responseUserData.data.data[0]._id);
-			queryClient.setQueryData('userData', responseUserData.data.data[0]);
+			const userData = responseUserData.data.data[0];
+
+			if (userData && userData._id) {
+				setUser(userData);
+				setUserId(userData._id);
+				queryClient.setQueryData('userData', userData);
+
+				// Load user course and lesson data for non-admin users
+				if (userData.role !== Roles.ADMIN) {
+					try {
+						// Load user course data
+						const userCourseResponse = await axios.get(`${base_url}/usercourses/user/${userData._id}`);
+
+						const userCourseData: UserCoursesIdsWithCourseIds[] = userCourseResponse.data.response?.reduce(
+							(acc: UserCoursesIdsWithCourseIds[], value: any) => {
+								if (value.courseId && value.courseId._id) {
+									acc.push({
+										courseId: value.courseId._id,
+										userCourseId: value._id,
+										isCourseCompleted: value.isCompleted,
+										isCourseInProgress: value.isInProgress,
+										courseTitle: value.courseId.title,
+										createdAt: value.createdAt,
+										isActive: value.isActive,
+										validUntil: value.validUntil,
+									});
+								}
+								return acc;
+							},
+							[]
+						);
+						localStorage.setItem('userCourseData', JSON.stringify(userCourseData));
+
+						// Load user lesson data
+						const userLessonResponse = await axios.get(`${base_url}/userlessons/user/${userData._id}`);
+
+						const userLessonData: UserLessonDataStorage[] = userLessonResponse?.data.response?.map((userLesson: any) => ({
+							lessonId: userLesson?.lessonId?._id,
+							userLessonId: userLesson?._id,
+							courseId: userLesson?.courseId,
+							isCompleted: userLesson?.isCompleted,
+							isInProgress: userLesson?.isInProgress,
+							currentQuestion: userLesson?.currentQuestion,
+							teacherFeedback: userLesson?.teacherFeedback,
+							isFeedbackGiven: userLesson?.isFeedbackGiven,
+							updatedAt: userLesson?.updatedAt,
+						}));
+						localStorage.setItem('userLessonData', JSON.stringify(userLessonData));
+					} catch (error) {
+						console.error('❌ Failed to load user course and lesson data:', error);
+					}
+				}
+			} else {
+				console.error('❌ Invalid user data received:', userData);
+				throw new Error('Invalid user data received');
+			}
 		} catch (error) {
 			console.error('Failed to fetch user data:', error);
 			throw new Error('Failed to fetch user data');

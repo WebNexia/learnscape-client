@@ -1,7 +1,7 @@
 import { Alert, Box, Button, Paper, Snackbar, Typography } from '@mui/material';
 import theme from '../../../themes';
 import { SingleCourse } from '../../../interfaces/course';
-import { KeyboardBackspaceOutlined } from '@mui/icons-material';
+import { Info, KeyboardBackspaceOutlined } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import CoursePageBannerDataCard from './CoursePageBannerDataCard';
 import axios from '@utils/axiosInstance';
@@ -185,7 +185,11 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 					{fromHomePage && (
 						<>
 							<br />
-							{fromHomePage ? 'Kurs detaylarını görmek için giriş yapın.' : 'To view course details, please log in.'}
+							{fromHomePage
+								? course.courseManagement.isExternal
+									? ' Detaylar email adresinize gönderildi.'
+									: 'Kurs detaylarını görmek için platforma giriş yapın.'
+								: 'To view course details, please log in.'}
 						</>
 					)}
 				</Alert>
@@ -252,7 +256,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 							}}>
 							{course.description}
 						</Typography>
-						{!isEnrolledStatus && !course.isExpired ? (
+						{!isEnrolledStatus && !course.isExpired && (isCourseFree ? user?.isSubscribed || user?.hasRegisteredCourse : true) ? (
 							<CustomSubmitButton
 								variant='contained'
 								onClick={handleEnroll}
@@ -280,7 +284,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 								}}>
 								{fromHomePage ? 'Kayıt süresi doldu' : 'Enrollment is closed'}
 							</Alert>
-						) : (
+						) : isEnrolledStatus ? (
 							<Typography
 								onClick={() => {
 									documentsRef?.current?.scrollIntoView({ behavior: 'smooth' });
@@ -298,6 +302,23 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 								}}>
 								{fromHomePage ? 'Kurs Materyallerini Gör' : 'See Course Materials'}
 							</Typography>
+						) : (
+							<Typography variant='body2'>Subscribe to platform or register for a paid course to enroll in free courses</Typography>
+						)}
+						{fromHomePage && isCourseFree && (
+							<Box sx={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+								<Info fontSize='small' sx={{ color: 'lightgray', mt: '-2rem' }} />
+								<Typography
+									variant='body2'
+									sx={{
+										color: 'lightgray',
+										fontSize: isMobileSize ? '0.7rem' : '0.8rem',
+										fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
+										mt: '-2rem',
+									}}>
+									Ücretsiz kurslara kayıt olmak için platformda hesap açtıktan sonra platforma abone olun veya ücretli bir kursa kayıt olun!
+								</Typography>
+							</Box>
 						)}
 					</Box>
 				</Box>

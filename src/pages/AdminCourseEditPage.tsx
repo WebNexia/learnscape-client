@@ -76,8 +76,8 @@ const AdminCourseEditPage = () => {
 	const { user } = useAuth();
 
 	const { orgId } = useContext(OrganisationContext);
-	const { addNewLesson, updateLesson } = useContext(LessonsContext);
-	const { addNewDocument, updateDocument } = useContext(DocumentsContext);
+	const { addNewLesson, updateLesson, enableLessonsFetch } = useContext(LessonsContext);
+	const { addNewDocument, updateDocument, enableDocumentsFetch } = useContext(DocumentsContext);
 	const { updateCoursePublishing, updateCourse } = useContext(CoursesContext);
 
 	const [isEditMode, setIsEditMode] = useState<boolean>(false);
@@ -226,6 +226,11 @@ const AdminCourseEditPage = () => {
 	const closeCreateChapterModal = () => setIsChapterCreateModalOpen(false);
 
 	useEffect(() => {
+		enableLessonsFetch(); // 👈 Enable lessons fetching when component mounts
+		enableDocumentsFetch(); // 👈 Enable documents fetching when component mounts
+	}, []);
+
+	useEffect(() => {
 		if (courseId) {
 			const fetchSingleCourseData = async (courseId: string): Promise<void> => {
 				try {
@@ -325,8 +330,8 @@ const AdminCourseEditPage = () => {
 					updatedByImageUrl: responseUpdatedData.updatedByImageUrl,
 					updatedByRole: responseUpdatedData.updatedByRole,
 				});
+				// Only invalidate courses cache, not lessons
 				queryClient.invalidateQueries(['allCourses', orgId]);
-				queryClient.invalidateQueries(['allLessons', orgId]);
 
 				setHasUnsavedChanges(false);
 				setIsEditMode(false);
@@ -520,8 +525,8 @@ const AdminCourseEditPage = () => {
 						updatedByImageUrl: responseUpdatedData.updatedByImageUrl,
 						updatedByRole: responseUpdatedData.updatedByRole,
 					});
+					// Only invalidate courses cache, not lessons
 					queryClient.invalidateQueries(['allCourses', orgId]);
-					queryClient.invalidateQueries(['allLessons', orgId]);
 
 					// Update lesson contexts with current usedInCourses data
 					updatedChapters?.forEach((chapter) => {
@@ -640,6 +645,12 @@ const AdminCourseEditPage = () => {
 
 	const handleCourseUpdate = async (e: FormEvent): Promise<void> => {
 		e.preventDefault();
+
+		// Check if there are unsaved changes
+		if (!hasUnsavedChanges) {
+			setIsEditMode(false);
+			return;
+		}
 
 		// Validate image URL before proceeding
 		if (singleCourseBeforeSave?.imageUrl?.trim()) {
@@ -807,7 +818,8 @@ const AdminCourseEditPage = () => {
 												setChapterLessonDataBeforeSave(newChapters);
 											}}>
 											{chapterLessonDataBeforeSave &&
-												chapterLessonDataBeforeSave && chapterLessonDataBeforeSave.length !== 0 &&
+												chapterLessonDataBeforeSave &&
+												chapterLessonDataBeforeSave.length !== 0 &&
 												chapterLessonDataBeforeSave?.map((chapter) => {
 													return (
 														<Reorder.Item key={chapter.chapterId} value={chapter} style={{ listStyle: 'none', boxShadow }}>

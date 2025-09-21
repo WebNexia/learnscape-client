@@ -1,4 +1,4 @@
-import { Alert, Box, Checkbox, FormControlLabel, Snackbar, Typography } from '@mui/material';
+import { Box, Checkbox, FormControlLabel, Typography } from '@mui/material';
 import CustomDialog from '../layouts/dialog/CustomDialog';
 import CustomTextField from '../forms/customFields/CustomTextField';
 import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
@@ -12,7 +12,6 @@ import { Document } from '../../interfaces/document';
 import CustomErrorMessage from '../forms/customFields/CustomErrorMessage';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import { setCurrencySymbol } from '../../utils/setCurrencySymbol';
-import theme from '../../themes';
 import DocumentTermsConditions from './DocumentTermsConditions';
 import ReCAPTCHA from 'react-google-recaptcha';
 
@@ -22,6 +21,10 @@ interface DocumentPaymentDialogProps {
 	setIsPaymentDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
 	userCurrency: string;
 	fromHomePage?: boolean;
+	showSuccess: boolean;
+	setShowSuccess: React.Dispatch<React.SetStateAction<boolean>>;
+	showEmailWarning: boolean;
+	setShowEmailWarning: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const DIALOG_BG = 'linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.98))';
@@ -33,7 +36,15 @@ const INPUT_BORDERRADIUS = '0.5rem';
 const INPUT_FONT = 'Varela Round';
 const INPUT_FONTSIZE = '0.85rem';
 
-const DocumentPaymentDialog = ({ document, isPaymentDialogOpen, setIsPaymentDialogOpen, userCurrency, fromHomePage }: DocumentPaymentDialogProps) => {
+const DocumentPaymentDialog = ({
+	document,
+	isPaymentDialogOpen,
+	setIsPaymentDialogOpen,
+	userCurrency,
+	fromHomePage,
+	setShowSuccess,
+	setShowEmailWarning,
+}: DocumentPaymentDialogProps) => {
 	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize: boolean = isSmallScreen || isRotatedMedium;
 
@@ -43,8 +54,6 @@ const DocumentPaymentDialog = ({ document, isPaymentDialogOpen, setIsPaymentDial
 	const [firstName, setFirstName] = useState<string>('');
 	const [lastName, setLastName] = useState<string>('');
 	const [email, setEmail] = useState<string>('');
-	const [showSuccess, setShowSuccess] = useState<boolean>(false);
-	const [showEmailWarning, setShowEmailWarning] = useState<boolean>(false);
 	const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
 	const [cardNumberComplete, setCardNumberComplete] = useState<boolean>(false);
 	const [cardExpiryComplete, setCardExpiryComplete] = useState<boolean>(false);
@@ -174,6 +183,7 @@ const DocumentPaymentDialog = ({ document, isPaymentDialogOpen, setIsPaymentDial
 				setShowEmailWarning(true);
 				setIsProcessing(false);
 			} else {
+				setIsPaymentDialogOpen(false);
 				setShowSuccess(true);
 				setIsProcessing(false);
 			}
@@ -618,55 +628,9 @@ const DocumentPaymentDialog = ({ document, isPaymentDialogOpen, setIsPaymentDial
 					}}
 					disableBtn={isProcessing || !recaptchaToken || !firstName.trim() || !lastName.trim() || !email.trim()}
 					disableCancelBtn={isProcessing}
+					actionSx={{ padding: '0rem 1.5rem', marginBottom: '1rem', marginTop: '2rem' }}
 				/>
 			</form>
-			<Snackbar
-				open={showSuccess}
-				autoHideDuration={4000}
-				anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-				onClose={() => {
-					setShowSuccess(false);
-					setIsPaymentDialogOpen(false);
-					resetForm();
-				}}
-				sx={{ mt: { xs: '1.5rem', sm: '1.5rem', md: '2.5rem', lg: '2.5rem' } }}>
-				<Alert
-					severity='success'
-					variant='filled'
-					sx={{
-						width: '100%',
-						fontFamily: 'Varela Round',
-						fontSize: { xs: '0.8rem', sm: '0.9rem', md: '1rem', lg: '1rem' },
-						letterSpacing: 0,
-						color: theme.textColor?.common.main,
-					}}>
-					Ödeme başarıyla tamamlandı! Satın aldığınız kaynağa email'inizden ulaşabilirsiniz.
-				</Alert>
-			</Snackbar>
-			<Snackbar
-				open={showEmailWarning}
-				autoHideDuration={5000}
-				anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-				onClose={() => {
-					setShowEmailWarning(false);
-					setIsPaymentDialogOpen(false);
-					resetForm();
-				}}
-				sx={{ mt: { xs: '1.5rem', sm: '1.5rem', md: '2.5rem', lg: '2.5rem' } }}>
-				<Alert
-					severity='warning'
-					variant='filled'
-					sx={{
-						width: '100%',
-						fontFamily: 'Varela Round',
-						fontSize: { xs: '0.8rem', sm: '0.9rem', md: '1rem', lg: '1rem' },
-						letterSpacing: 0,
-						color: '#fff',
-						backgroundColor: '#FFA726',
-					}}>
-					Ödeme başarılı, ancak email gönderilemedi. Lütfen destek için iletişime geçin.
-				</Alert>
-			</Snackbar>
 		</CustomDialog>
 	);
 };

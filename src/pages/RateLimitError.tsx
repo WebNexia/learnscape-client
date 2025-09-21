@@ -54,7 +54,6 @@ const RateLimitError = () => {
 
 			if (remaining <= 0) {
 				// Rate limit has expired
-				console.log('Rate limit expired, clearing and redirecting');
 				localStorage.removeItem('rateLimitInfo');
 				navigate(-1);
 			}

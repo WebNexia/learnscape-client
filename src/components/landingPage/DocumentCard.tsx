@@ -1,4 +1,4 @@
-import { Box, Button, Card, CardContent, CardMedia, Typography, useTheme, Dialog, DialogContent, IconButton } from '@mui/material';
+import { Box, Button, Card, CardContent, CardMedia, Typography, useTheme, Dialog, DialogContent, IconButton, Snackbar, Alert } from '@mui/material';
 import { Document } from '../../interfaces/document';
 import { motion } from 'framer-motion';
 import CloseIcon from '@mui/icons-material/Close';
@@ -16,6 +16,8 @@ const DocumentCard = ({ document, userCurrency, fromHomePage }: DocumentCardProp
 	const theme = useTheme();
 	const [openSample, setOpenSample] = useState(false);
 	const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
+	const [showSuccess, setShowSuccess] = useState(false);
+	const [showEmailWarning, setShowEmailWarning] = useState(false);
 	const price = document.prices?.find((p) => p.currency === userCurrency);
 	const isFree = !price || price.amount === '0' || price.amount === 'Free';
 
@@ -323,7 +325,54 @@ const DocumentCard = ({ document, userCurrency, fromHomePage }: DocumentCardProp
 				setIsPaymentDialogOpen={setIsPaymentDialogOpen}
 				userCurrency={userCurrency}
 				fromHomePage={fromHomePage}
+				showSuccess={showSuccess}
+				setShowSuccess={setShowSuccess}
+				showEmailWarning={showEmailWarning}
+				setShowEmailWarning={setShowEmailWarning}
 			/>
+
+			{/* Success Snackbar */}
+			<Snackbar
+				open={showSuccess}
+				autoHideDuration={4000}
+				anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+				onClose={() => setShowSuccess(false)}
+				sx={{ mt: { xs: '1.5rem', sm: '1.5rem', md: '2.5rem', lg: '2.5rem' } }}>
+				<Alert
+					severity='success'
+					variant='filled'
+					sx={{
+						width: '100%',
+						fontFamily: 'Varela Round',
+						fontSize: { xs: '0.8rem', sm: '0.9rem', md: '1rem', lg: '1rem' },
+						letterSpacing: 0,
+						color: '#FFFFFF',
+					}}>
+					Ödeme başarıyla tamamlandı! Satın aldığınız kaynağa email'inizden ulaşabilirsiniz.
+				</Alert>
+			</Snackbar>
+
+			{/* Email Warning Snackbar */}
+			<Snackbar
+				open={showEmailWarning}
+				autoHideDuration={5000}
+				anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+				onClose={() => setShowEmailWarning(false)}
+				sx={{ mt: { xs: '1.5rem', sm: '1.5rem', md: '2.5rem', lg: '2.5rem' } }}>
+				<Alert
+					severity='warning'
+					variant='filled'
+					sx={{
+						width: '100%',
+						fontFamily: 'Varela Round',
+						fontSize: { xs: '0.8rem', sm: '0.9rem', md: '1rem', lg: '1rem' },
+						letterSpacing: 0,
+						color: '#fff',
+						backgroundColor: '#FFA726',
+					}}>
+					Ödeme başarılı, ancak email gönderilemedi. Lütfen destek için iletişime geçin.
+				</Alert>
+			</Snackbar>
 		</>
 	);
 };

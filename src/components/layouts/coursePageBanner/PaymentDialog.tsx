@@ -62,6 +62,8 @@ const PaymentDialog = ({
 
 	const recaptchaRef = useRef<any>(null);
 
+	const [isPromoCodeApplied, setIsPromoCodeApplied] = useState<boolean>(false);
+
 	let resolvedCountryCode = user?.countryCode || location?.countryCode || 'US';
 
 	const isCourseFree: boolean =
@@ -72,8 +74,11 @@ const PaymentDialog = ({
 	useEffect(() => {
 		if (!course) return;
 		const amount = +getPriceForCountry(course, resolvedCountryCode).amount;
-		setDiscountedAmount(isNaN(amount) ? 0 : amount);
-	}, [user, location, course]);
+		// Only update if no promo code is applied to prevent price changes during payment
+		if (!isPromoCodeApplied) {
+			setDiscountedAmount(isNaN(amount) ? 0 : amount);
+		}
+	}, [user, location, course, isPromoCodeApplied]);
 
 	const isMobileSize: boolean = isSmallScreen || isRotatedMedium;
 
@@ -94,7 +99,6 @@ const PaymentDialog = ({
 		return isNaN(amount) ? 0 : amount;
 	});
 
-	const [isPromoCodeApplied, setIsPromoCodeApplied] = useState<boolean>(false);
 	const [usersUsedPromoCode, setUsersUsedPromoCode] = useState<string[]>([]);
 
 	const [promoCodeId, setPromoCodeId] = useState<string>('');
@@ -165,6 +169,9 @@ const PaymentDialog = ({
 		if (!course) return;
 		setIsProcessing(true);
 		setIsSubmitted(true);
+
+		// Lock the price during payment processing to prevent changes
+		const lockedAmount = discountedAmount;
 
 		if (!validateRecaptchaToken()) {
 			setIsProcessing(false);
@@ -257,14 +264,17 @@ const PaymentDialog = ({
 							const backendMsg = error.response.data.message;
 							if (backendMsg.toLowerCase()?.includes('recaptcha')) {
 								setErrorMessage(
-									fromHomePage ? 'reCAPTCHA doğrulaması başarısız. Lütfen tekrar deneyin.' : 'reCAPTCHA verification failed. Please try again.'
+									fromHomePage
+										? "reCAPTCHA doğrulaması başarısız. Lütfen reCAPTCHA'yı tekrar tamamlayın ve deneyin."
+										: 'reCAPTCHA verification failed. Please complete the reCAPTCHA again and try.'
 								);
-								// Don't retry on reCAPTCHA errors
+								// Don't reset reCAPTCHA on reCAPTCHA errors - let user retry
+								setIsProcessing(false);
 								return;
 							} else {
 								setErrorMessage(backendMsg);
+								resetRecaptcha();
 							}
-							resetRecaptcha();
 						} else {
 							setErrorMessage(fromHomePage ? 'Bir hata oluştu. Lütfen tekrar deneyin.' : 'An error occurred. Please try again.');
 							resetRecaptcha();
@@ -301,7 +311,7 @@ const PaymentDialog = ({
 			try {
 				// Step 1: Create PaymentIntent (manual capture)
 				const response = await axiosInstance.post(`${base_url}/payments`, {
-					amount: discountedAmount,
+					amount: lockedAmount, // Use locked amount to prevent price changes
 					currency: getPriceForCountry(course, resolvedCountryCode!).currency,
 					orgId: resolvedOrgId,
 					userId: resolvedUserId,
@@ -380,10 +390,13 @@ const PaymentDialog = ({
 							paymentType: 'course',
 						});
 
-						// Update hasRegisteredCourse using new endpoint
+						// Update hasRegisteredCourse using public endpoint (no authentication required)
 						if (!user?.hasRegisteredCourse && !isCourseFree && !course?.courseManagement.isExternal) {
-							await axiosInstance.post(`${base_url}/users/update-registration-status`, {
+							await axiosInstance.post(`${base_url}/users/public-update-registration-status`, {
 								userId: resolvedUserId,
+								email: email || user?.email,
+								courseId: course?._id,
+								paymentIntentId: paymentIntentId,
 							});
 
 							setUser((prevUser) => {
@@ -398,11 +411,12 @@ const PaymentDialog = ({
 						console.error(`❌ Payment capture failed for paymentIntentId: ${paymentIntentId}, userId: ${resolvedUserId}`, captureError);
 
 						try {
-							await axiosInstance.delete(`${base_url}/userCourses/remove-by-user-course`, {
-								data: {
-									userId: resolvedUserId,
-									courseId: course?._id,
-								},
+							// Use public rollback endpoint that doesn't require authentication
+							await axiosInstance.post(`${base_url}/userCourses/public-rollback`, {
+								userId: resolvedUserId,
+								courseId: course?._id,
+								email: email || user?.email,
+								paymentIntentId: paymentIntentId,
 							});
 
 							if (isPromoCodeApplied && promoCodeId) {
@@ -433,8 +447,8 @@ const PaymentDialog = ({
 						resetForm(true);
 						setErrorMessage(
 							fromHomePage
-								? 'Kayıt sonrası ödeme başarısız oldu. Ücretlendirilmediniz ve erişiminiz geri alındı.'
-								: 'Payment failed after registration. You have not been charged, and your access was rolled back.'
+								? 'Ödeme işlemi tamamlanamadı. Lütfen tekrar deneyin veya destek ile iletişime geçin.'
+								: 'Payment processing failed. Please try again or contact support.'
 						);
 						return;
 					}

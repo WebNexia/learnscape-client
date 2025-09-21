@@ -1,10 +1,13 @@
 import { Box, DialogActions, DialogContent, FormControl, InputAdornment, MenuItem, Select, TableCell, Chip } from '@mui/material';
+import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
+import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
 import { format } from 'date-fns';
 import * as XLSX from 'xlsx';
 import DownloadIcon from '@mui/icons-material/Download';
 import { Typography, Table, TableBody, TableRow } from '@mui/material';
 import { useContext, useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import CustomTableHead from '../components/layouts/table/CustomTableHead';
 import CustomTableCell from '../components/layouts/table/CustomTableCell';
 import CustomTablePagination from '../components/layouts/table/CustomTablePagination';
@@ -18,6 +21,7 @@ import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import axios from '@utils/axiosInstance';
+import { useDashboardSync } from '../utils/dashboardSync';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import { truncateText } from '@utils/utilText';
 import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
@@ -43,9 +47,22 @@ const AdminInquiries = () => {
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
-	const { inquiries, error, removeInquiry, fetchMoreInquiries, sortInquiries, totalItems, loadedPages, inquiriesPageNumber, setInquiriesPageNumber } =
-		useContext(InquiriesContext);
+	const {
+		inquiries,
+		loading,
+		error,
+		removeInquiry,
+		fetchMoreInquiries,
+		sortInquiries,
+		totalItems,
+		loadedPages,
+		inquiriesPageNumber,
+		setInquiriesPageNumber,
+		enableInquiriesFetch,
+	} = useContext(InquiriesContext);
 	const { orgId } = useContext(OrganisationContext);
+	const location = useLocation();
+	const { refreshDashboard } = useDashboardSync();
 	const [searchValue, setSearchValue] = useState<string>('');
 	const [filterValue, setFilterValue] = useState<string>('');
 	const [searchResults, setSearchResults] = useState<Inquiry[]>([]);
@@ -91,7 +108,34 @@ const AdminInquiries = () => {
 
 	useEffect(() => {
 		setInquiriesPageNumber(1);
+		enableInquiriesFetch(); // 👈 Enable inquiries fetching when component mounts
 	}, []);
+
+	// Cleanup search state function
+	const cleanupSearchState = () => {
+		setSearchResults([]);
+		setSearchResultsLoadedPages([]);
+		setSearchResultsTotalItems(0);
+		setIsSearchActive(false);
+		setSearchValue('');
+		setFilterValue('');
+		setSearchedValue('');
+		setSearchButtonClicked(false);
+	};
+
+	// Cleanup on component unmount
+	useEffect(() => {
+		return () => {
+			cleanupSearchState();
+		};
+	}, []);
+
+	// Cleanup when navigating away from page
+	useEffect(() => {
+		return () => {
+			cleanupSearchState();
+		};
+	}, [location.pathname]);
 
 	const handlePageChange = async (newPage: number) => {
 		// Set appropriate page number based on search state
@@ -190,6 +234,9 @@ const AdminInquiries = () => {
 				setSearchResults((prev) => prev?.filter((inquiry) => inquiry._id !== selectedInquiry._id) || []);
 				setSearchResultsTotalItems((prev) => Math.max(0, prev - 1));
 			}
+
+			// Refresh dashboard to update inquiry count
+			refreshDashboard();
 
 			// Close all modals
 			setDeleteModalOpen({});
@@ -320,64 +367,41 @@ const AdminInquiries = () => {
 
 	if (error) return <Typography color='error'>{error}</Typography>;
 
+	// Show loading state while inquiries are being fetched or when data is empty and not loading yet
+	if (loading) {
+		return (
+			<DashboardPagesLayout pageName='Inquiries' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
+				<AdminTableSkeleton rows={8} columns={5} />
+			</DashboardPagesLayout>
+		);
+	}
+
 	return (
-		<DashboardPagesLayout pageName='Inquiries' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
-			<Box sx={{ width: '100%', height: '100%' }}>
-				<Box
-					sx={{
-						display: 'flex',
-						justifyContent: 'space-between',
-						alignItems: 'center',
-						padding: isMobileSizeSmall ? '1rem 1rem 0.5rem 1rem' : '2rem 2rem 1rem 2rem',
-						width: '100%',
-						mb: '1.25rem',
-					}}>
-					<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', flex: 4 }}>
-						<Box sx={{ display: 'flex', alignSelf: 'flex-start', width: isVerySmallScreen ? '12.5rem' : 'fit-content' }}>
-							<Box sx={{ mr: '1rem' }}>
-								<FormControl>
-									<Select
-										size='small'
-										value={filterValue}
-										onChange={async (e) => {
-											const newFilterValue = e.target.value;
-											setFilterValue(newFilterValue);
+		<AdminPageErrorBoundary pageName='Inquiries'>
+			<DashboardPagesLayout pageName='Inquiries' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
+				<Box sx={{ width: '100%', height: '100%' }}>
+					<Box
+						sx={{
+							display: 'flex',
+							justifyContent: 'space-between',
+							alignItems: 'center',
+							padding: isMobileSizeSmall ? '1rem 1rem 0.5rem 1rem' : '2rem 2rem 1rem 2rem',
+							width: '100%',
+							mb: '1.25rem',
+						}}>
+						<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', flex: 4 }}>
+							<Box sx={{ display: 'flex', alignSelf: 'flex-start', width: isVerySmallScreen ? '12.5rem' : 'fit-content' }}>
+								<Box sx={{ mr: '1rem' }}>
+									<FormControl>
+										<Select
+											size='small'
+											value={filterValue}
+											onChange={async (e) => {
+												const newFilterValue = e.target.value;
+												setFilterValue(newFilterValue);
 
-											// Auto-search when filter is selected
-											if (newFilterValue && newFilterValue.trim()) {
-												setInquiriesPageNumber(1);
-												setSearchResultsPage(1);
-												setIsSearchActive(true);
-												setSearchResultsLoadedPages([]);
-
-												try {
-													const params = new URLSearchParams({
-														limit: '300',
-														filter: newFilterValue.trim(),
-													});
-
-													// Include existing search value if it exists
-													if (searchValue && searchValue.trim()) {
-														params.append('search', searchValue.trim());
-													}
-
-													if (orderBy) {
-														params.append('sortBy', orderBy);
-													}
-													if (order) {
-														params.append('sortOrder', order);
-													}
-
-													const response = await axios.get(`${base_url}/inquiries/organisation/${orgId}?${params.toString()}`);
-													setSearchResults(response.data.data);
-													setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-													setSearchResultsLoadedPages([1]);
-												} catch (error) {
-													console.error('Filter search error:', error);
-												}
-											} else {
-												// If filter is cleared but search value exists, auto-search with search value
-												if (searchValue && searchValue.trim()) {
+												// Auto-search when filter is selected
+												if (newFilterValue && newFilterValue.trim()) {
 													setInquiriesPageNumber(1);
 													setSearchResultsPage(1);
 													setIsSearchActive(true);
@@ -386,8 +410,13 @@ const AdminInquiries = () => {
 													try {
 														const params = new URLSearchParams({
 															limit: '300',
-															search: searchValue.trim(),
+															filter: newFilterValue.trim(),
 														});
+
+														// Include existing search value if it exists
+														if (searchValue && searchValue.trim()) {
+															params.append('search', searchValue.trim());
+														}
 
 														if (orderBy) {
 															params.append('sortBy', orderBy);
@@ -401,363 +430,392 @@ const AdminInquiries = () => {
 														setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
 														setSearchResultsLoadedPages([1]);
 													} catch (error) {
-														console.error('Auto-search error:', error);
+														console.error('Filter search error:', error);
 													}
 												} else {
-													// If no search value, reset to context data
-													setIsSearchActive(false);
-													setSearchResults([]);
-													setSearchResultsLoadedPages([]);
-													setSearchResultsTotalItems(0);
+													// If filter is cleared but search value exists, auto-search with search value
+													if (searchValue && searchValue.trim()) {
+														setInquiriesPageNumber(1);
+														setSearchResultsPage(1);
+														setIsSearchActive(true);
+														setSearchResultsLoadedPages([]);
+
+														try {
+															const params = new URLSearchParams({
+																limit: '300',
+																search: searchValue.trim(),
+															});
+
+															if (orderBy) {
+																params.append('sortBy', orderBy);
+															}
+															if (order) {
+																params.append('sortOrder', order);
+															}
+
+															const response = await axios.get(`${base_url}/inquiries/organisation/${orgId}?${params.toString()}`);
+															setSearchResults(response.data.data);
+															setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
+															setSearchResultsLoadedPages([1]);
+														} catch (error) {
+															console.error('Auto-search error:', error);
+														}
+													} else {
+														// If no search value, reset to context data
+														setIsSearchActive(false);
+														setSearchResults([]);
+														setSearchResultsLoadedPages([]);
+														setSearchResultsTotalItems(0);
+													}
 												}
-											}
-										}}
-										displayEmpty
-										sx={{
-											backgroundColor: theme.bgColor?.common,
-											width: isMobileSizeSmall ? '7rem' : '10rem',
-											fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-											textTransform: 'capitalize',
-										}}>
-										<MenuItem
-											disabled
-											value='filter'
-											selected
+											}}
+											displayEmpty
 											sx={{
-												fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-												fontStyle: 'italic',
+												backgroundColor: theme.bgColor?.common,
+												width: isMobileSizeSmall ? '7rem' : '10rem',
+												fontSize: isMobileSize ? '0.7rem' : '0.85rem',
 												textTransform: 'capitalize',
-												padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-												minHeight: '2rem',
 											}}>
-											Filter Inquiries
-										</MenuItem>
-										<MenuItem
-											value=''
-											selected
-											sx={{
-												fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-												textTransform: 'capitalize',
-												padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-												minHeight: '2rem',
-											}}>
-											All Inquiries
-										</MenuItem>
-										{['From Home Page', 'From Contact Us', 'From About Us']?.map((type) => (
 											<MenuItem
-												value={type.toLowerCase()}
-												key={type}
+												disabled
+												value='filter'
+												selected
+												sx={{
+													fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+													fontStyle: 'italic',
+													textTransform: 'capitalize',
+													padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+													minHeight: '2rem',
+												}}>
+												Filter Inquiries
+											</MenuItem>
+											<MenuItem
+												value=''
+												selected
 												sx={{
 													fontSize: isMobileSize ? '0.65rem' : '0.85rem',
 													textTransform: 'capitalize',
 													padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
 													minHeight: '2rem',
 												}}>
-												{type}
+												All Inquiries
 											</MenuItem>
-										))}
-									</Select>
-								</FormControl>
-							</Box>
-							<CustomTextField
-								value={searchValue}
-								placeholder={'Search in Name, Email, Message'}
-								onChange={(e) => {
-									setSearchValue(e.target.value);
-								}}
-								sx={{ backgroundColor: '#fff', minWidth: isVerySmallScreen ? '10rem' : '18rem' }}
-								required={false}
-								InputProps={{
-									endAdornment: (
-										<InputAdornment position='end'>
-											<Search
-												sx={{
-													mr: '-0.5rem',
-												}}
-												fontSize={isMobileSize ? 'small' : 'medium'}
-											/>
-										</InputAdornment>
-									),
-								}}
-							/>
-							<CustomSubmitButton onClick={handleSearch} sx={{ marginLeft: '1rem' }} disabled={!searchValue}>
-								Search
-							</CustomSubmitButton>
-							<CustomDeleteButton
-								onClick={() => {
-									setSearchValue('');
-									setSearchedValue('');
-									setFilterValue('');
-									setSearchResults([]);
-									setSearchResultsLoadedPages([]);
-									setSearchResultsTotalItems(0);
-									setIsSearchActive(false);
-									setSearchButtonClicked(false);
-									setInquiriesPageNumber(1);
-									setSearchResultsPage(1);
-								}}>
-								Reset
-							</CustomDeleteButton>
-							<Box sx={{ height: '2rem', ml: '1rem', display: 'flex', alignItems: 'center' }}>
-								{isSearchActive ? (
-									<Typography
-										variant='body2'
-										sx={{
-											color: 'text.secondary',
-											fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-
-											whiteSpace: 'nowrap',
-										}}>
-										{searchResultsTotalItems} {searchResultsTotalItems === 1 ? 'result' : 'results'}
-									</Typography>
-								) : (
-									<Typography
-										variant='body2'
-										sx={{
-											color: 'text.secondary',
-											fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-											whiteSpace: 'nowrap',
-										}}>
-										{totalItems} {totalItems === 1 ? 'item' : 'items'}
-									</Typography>
-								)}
-							</Box>
-						</Box>
-					</Box>
-					<Box sx={{ display: 'flex', gap: 1, mb: '0.85rem', alignItems: 'center' }}>
-						<CustomSubmitButton
-							startIcon={<DownloadIcon />}
-							onClick={handleDownload}
-							sx={{
-								fontSize: isMobileSize ? '0.7rem' : undefined,
-							}}
-							disabled={displayInquiries && displayInquiries.length === 0}>
-							Download {isSearchActive ? 'Filtered' : 'All'} Inquiries
-						</CustomSubmitButton>
-						<CustomSubmitButton
-							startIcon={<EmailIcon />}
-							onClick={() => setEmailDialogOpen(true)}
-							sx={{
-								fontSize: isMobileSize ? '0.7rem' : undefined,
-								width: 'fit-content',
-							}}>
-							Send Bulk Email
-						</CustomSubmitButton>
-					</Box>
-				</Box>
-				<Box
-					sx={{
-						display: 'flex',
-						flexDirection: 'column',
-						alignItems: 'center',
-						padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : '0rem 2rem 2rem 2rem',
-						width: '100%',
-					}}>
-					{((isSearchActive && searchedValue && searchButtonClicked) || (isSearchActive && filterValue && filterValue.trim())) && (
-						<Box
-							sx={{
-								display: 'flex',
-								gap: 1,
-								flexWrap: 'wrap',
-								justifyContent: 'center',
-								borderRadius: '4px',
-								alignSelf: 'flex-start',
-								marginBottom: '1rem',
-								marginTop: '-1rem',
-							}}>
-							{isSearchActive && filterValue && filterValue.trim() && (
-								<Chip
-									label={`Filter: "${filterValue}"`}
-									onDelete={() => {
-										setFilterValue('');
-										// If search exists, keep search results
-										if (searchValue && searchValue.trim()) {
-											// Trigger search without filter value
-											const params = new URLSearchParams({
-												limit: '300',
-												search: searchValue.trim(),
-											});
-											if (orderBy) params.append('sortBy', orderBy);
-											if (order) params.append('sortOrder', order);
-
-											axios
-												.get(`${base_url}/inquiries/organisation/${orgId}?${params.toString()}`)
-												.then((response) => {
-													setSearchResults(response.data.data);
-													setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-													setSearchResultsLoadedPages([1]);
-													setIsSearchActive(true);
-													setInquiriesPageNumber(1);
-													setSearchResultsPage(1);
-												})
-												.catch((error) => console.error('Search error:', error));
-										} else {
-											// No search, reset to context data
-											setIsSearchActive(false);
-											setSearchResults([]);
-											setSearchResultsLoadedPages([]);
-											setSearchResultsTotalItems(0);
-										}
+											{['From Home Page', 'From Contact Us', 'From About Us']?.map((type) => (
+												<MenuItem
+													value={type.toLowerCase()}
+													key={type}
+													sx={{
+														fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+														textTransform: 'capitalize',
+														padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+														minHeight: '2rem',
+													}}>
+													{type}
+												</MenuItem>
+											))}
+										</Select>
+									</FormControl>
+								</Box>
+								<CustomTextField
+									value={searchValue}
+									placeholder={'Search in Name, Email, Message'}
+									onChange={(e) => {
+										setSearchValue(e.target.value);
 									}}
-									variant='outlined'
-									color='secondary'
-									size='small'
-									sx={{ backgroundColor: '#1976d2', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
+									sx={{ backgroundColor: '#fff', minWidth: isVerySmallScreen ? '10rem' : '18rem' }}
+									required={false}
+									InputProps={{
+										endAdornment: (
+											<InputAdornment position='end'>
+												<Search
+													sx={{
+														mr: '-0.5rem',
+													}}
+													fontSize={isMobileSize ? 'small' : 'medium'}
+												/>
+											</InputAdornment>
+										),
+									}}
 								/>
-							)}
-							{isSearchActive && searchedValue && searchButtonClicked && (
-								<Chip
-									label={`Search: "${searchedValue}"`}
-									onDelete={() => {
+								<CustomSubmitButton onClick={handleSearch} sx={{ marginLeft: '1rem' }} disabled={!searchValue}>
+									Search
+								</CustomSubmitButton>
+								<CustomDeleteButton
+									onClick={() => {
 										setSearchValue('');
 										setSearchedValue('');
+										setFilterValue('');
+										setSearchResults([]);
+										setSearchResultsLoadedPages([]);
+										setSearchResultsTotalItems(0);
+										setIsSearchActive(false);
 										setSearchButtonClicked(false);
-										// If filter exists, keep filter results
-										if (filterValue && filterValue.trim()) {
-											// Trigger filter search without search value
-											const params = new URLSearchParams({
-												limit: '300',
-												filter: filterValue.trim(),
-											});
-											if (orderBy) params.append('sortBy', orderBy);
-											if (order) params.append('sortOrder', order);
+										setInquiriesPageNumber(1);
+										setSearchResultsPage(1);
+									}}>
+									Reset
+								</CustomDeleteButton>
+								<Box sx={{ height: '2rem', ml: '1rem', display: 'flex', alignItems: 'center' }}>
+									{isSearchActive ? (
+										<Typography
+											variant='body2'
+											sx={{
+												color: 'text.secondary',
+												fontSize: isMobileSize ? '0.7rem' : '0.85rem',
 
-											axios
-												.get(`${base_url}/inquiries/organisation/${orgId}?${params.toString()}`)
-												.then((response) => {
-													setSearchResults(response.data.data);
-													setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-													setSearchResultsLoadedPages([1]);
-													setIsSearchActive(true);
-													setInquiriesPageNumber(1);
-													setSearchResultsPage(1);
-												})
-												.catch((error) => console.error('Filter search error:', error));
-										} else {
-											// No filter, reset to context data
-											setIsSearchActive(false);
-											setSearchResults([]);
-											setSearchResultsLoadedPages([]);
-											setSearchResultsTotalItems(0);
-										}
-									}}
-									color='primary'
-									variant='filled'
-									size='small'
-									sx={{ backgroundColor: '#1EC28B', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
-								/>
-							)}
+												whiteSpace: 'nowrap',
+											}}>
+											{searchResultsTotalItems} {searchResultsTotalItems === 1 ? 'result' : 'results'}
+										</Typography>
+									) : (
+										<Typography
+											variant='body2'
+											sx={{
+												color: 'text.secondary',
+												fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+												whiteSpace: 'nowrap',
+											}}>
+											{totalItems} {totalItems === 1 ? 'item' : 'items'}
+										</Typography>
+									)}
+								</Box>
+							</Box>
 						</Box>
-					)}
-					<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>
-						<CustomTableHead<Inquiry> orderBy={orderBy} order={order} handleSort={handleSort} columns={columns} />
-						<TableBody>
-							{paginatedInquiries &&
-								paginatedInquiries?.map((inquiry: Inquiry, index) => {
-									return (
-										<TableRow key={inquiry._id} hover>
-											<CustomTableCell value={inquiry.firstName + ' ' + inquiry.lastName} />
-											<CustomTableCell value={inquiry.email} />
-											<CustomTableCell value={inquiry.phone} />
-											<CustomTableCell value={inquiry.countryCode} />
-											<CustomTableCell value={truncateText(inquiry.message || '', 25)} />
-											<CustomTableCell value={dateFormatter(inquiry.createdAt)} />
-											<TableCell
-												sx={{
-													textAlign: 'center',
-												}}>
-												<CustomActionBtn
-													title='View'
-													onClick={() => handleViewInquiry(index, inquiry)}
-													icon={<Visibility fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
-												/>
+						<Box sx={{ display: 'flex', gap: 1, mb: '0.85rem', alignItems: 'center' }}>
+							<CustomSubmitButton
+								startIcon={<DownloadIcon />}
+								onClick={handleDownload}
+								sx={{
+									fontSize: isMobileSize ? '0.7rem' : undefined,
+								}}
+								disabled={displayInquiries && displayInquiries.length === 0}>
+								Download {isSearchActive ? 'Filtered' : 'All'} Inquiries
+							</CustomSubmitButton>
+							<CustomSubmitButton
+								startIcon={<EmailIcon />}
+								onClick={() => setEmailDialogOpen(true)}
+								sx={{
+									fontSize: isMobileSize ? '0.7rem' : undefined,
+									width: 'fit-content',
+								}}>
+								Send Bulk Email
+							</CustomSubmitButton>
+						</Box>
+					</Box>
+					<Box
+						sx={{
+							display: 'flex',
+							flexDirection: 'column',
+							alignItems: 'center',
+							padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : '0rem 2rem 2rem 2rem',
+							width: '100%',
+						}}>
+						{((isSearchActive && searchedValue && searchButtonClicked) || (isSearchActive && filterValue && filterValue.trim())) && (
+							<Box
+								sx={{
+									display: 'flex',
+									gap: 1,
+									flexWrap: 'wrap',
+									justifyContent: 'center',
+									borderRadius: '4px',
+									alignSelf: 'flex-start',
+									marginBottom: '1rem',
+									marginTop: '-1rem',
+								}}>
+								{isSearchActive && filterValue && filterValue.trim() && (
+									<Chip
+										label={`Filter: "${filterValue}"`}
+										onDelete={() => {
+											setFilterValue('');
+											// If search exists, keep search results
+											if (searchValue && searchValue.trim()) {
+												// Trigger search without filter value
+												const params = new URLSearchParams({
+													limit: '300',
+													search: searchValue.trim(),
+												});
+												if (orderBy) params.append('sortBy', orderBy);
+												if (order) params.append('sortOrder', order);
 
-												<CustomDialog
-													openModal={viewModalOpen[index]}
-													closeModal={() => handleCloseViewModal(index)}
-													maxWidth='sm'
-													title='Inquiry Details'>
-													{selectedInquiry && (
-														<DialogContent>
-															<Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 2 }}>
-																<Box>
-																	<Typography variant='body2' sx={{ mb: '0.75rem' }}>
-																		<strong>Name:</strong> {selectedInquiry.firstName} {selectedInquiry.lastName}
-																	</Typography>
-																	<Typography variant='body2' sx={{ mb: '0.75rem' }}>
-																		<strong>Phone:</strong> {selectedInquiry.phone}
-																	</Typography>
-																</Box>
-																<Box>
-																	<Typography variant='body2' sx={{ mb: '0.75rem' }}>
-																		<strong>Email:</strong> {selectedInquiry.email}
-																	</Typography>
-																	<Typography variant='body2' sx={{ mb: '0.75rem' }}>
-																		<strong>Country:</strong> {selectedInquiry.countryCode}
-																	</Typography>
-																</Box>
-															</Box>
-															<Typography variant='body2' sx={{ mb: '0.75rem' }}>
-																<strong>Message:</strong> {selectedInquiry.message || '-'}
-															</Typography>
-															<Typography variant='body2' sx={{ mb: '0.75rem' }}>
-																<strong>Submitted:</strong> {dateTimeFormatter(selectedInquiry.createdAt)}
-															</Typography>
-															<Typography variant='body2'>
-																<strong>From:</strong>{' '}
-																{selectedInquiry.category === 'HeroSection'
-																	? 'Home Page'
-																	: selectedInquiry.category === 'ContactUs'
-																		? 'Contact Us'
-																		: 'About Us'}
-															</Typography>
-														</DialogContent>
-													)}
-													<DialogActions>
-														<CustomCancelButton
-															onClick={() => handleCloseViewModal(index)}
-															sx={{
-																margin: '0 1rem 1rem 0',
-															}}>
-															Cancel
-														</CustomCancelButton>
-													</DialogActions>
-												</CustomDialog>
+												axios
+													.get(`${base_url}/inquiries/organisation/${orgId}?${params.toString()}`)
+													.then((response) => {
+														setSearchResults(response.data.data);
+														setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
+														setSearchResultsLoadedPages([1]);
+														setIsSearchActive(true);
+														setInquiriesPageNumber(1);
+														setSearchResultsPage(1);
+													})
+													.catch((error) => console.error('Search error:', error));
+											} else {
+												// No search, reset to context data
+												setIsSearchActive(false);
+												setSearchResults([]);
+												setSearchResultsLoadedPages([]);
+												setSearchResultsTotalItems(0);
+											}
+										}}
+										variant='outlined'
+										color='secondary'
+										size='small'
+										sx={{ backgroundColor: '#1976d2', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
+									/>
+								)}
+								{isSearchActive && searchedValue && searchButtonClicked && (
+									<Chip
+										label={`Search: "${searchedValue}"`}
+										onDelete={() => {
+											setSearchValue('');
+											setSearchedValue('');
+											setSearchButtonClicked(false);
+											// If filter exists, keep filter results
+											if (filterValue && filterValue.trim()) {
+												// Trigger filter search without search value
+												const params = new URLSearchParams({
+													limit: '300',
+													filter: filterValue.trim(),
+												});
+												if (orderBy) params.append('sortBy', orderBy);
+												if (order) params.append('sortOrder', order);
 
-												<CustomActionBtn
-													title='Delete'
-													onClick={() => handleDeleteInquiry(index, inquiry)}
-													icon={<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
-												/>
-
-												<CustomDialog
-													openModal={deleteModalOpen[index]}
-													closeModal={() => handleCloseDeleteModal(index)}
-													title='Delete Inquiry'
-													content={`Are you sure you want to delete "${truncateText(selectedInquiry?.message || '', 25)}"? This action cannot be undone.`}
-													maxWidth='xs'>
-													<CustomDialogActions
-														onCancel={() => handleCloseDeleteModal(index)}
-														deleteBtn={true}
-														onDelete={handleConfirmDelete}
-														actionSx={{ mb: '0.5rem' }}
+												axios
+													.get(`${base_url}/inquiries/organisation/${orgId}?${params.toString()}`)
+													.then((response) => {
+														setSearchResults(response.data.data);
+														setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
+														setSearchResultsLoadedPages([1]);
+														setIsSearchActive(true);
+														setInquiriesPageNumber(1);
+														setSearchResultsPage(1);
+													})
+													.catch((error) => console.error('Filter search error:', error));
+											} else {
+												// No filter, reset to context data
+												setIsSearchActive(false);
+												setSearchResults([]);
+												setSearchResultsLoadedPages([]);
+												setSearchResultsTotalItems(0);
+											}
+										}}
+										color='primary'
+										variant='filled'
+										size='small'
+										sx={{ backgroundColor: '#1EC28B', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
+									/>
+								)}
+							</Box>
+						)}
+						<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>
+							<CustomTableHead<Inquiry> orderBy={orderBy} order={order} handleSort={handleSort} columns={columns} />
+							<TableBody>
+								{paginatedInquiries &&
+									paginatedInquiries?.map((inquiry: Inquiry, index) => {
+										return (
+											<TableRow key={inquiry._id} hover>
+												<CustomTableCell value={inquiry.firstName + ' ' + inquiry.lastName} />
+												<CustomTableCell value={inquiry.email} />
+												<CustomTableCell value={inquiry.phone} />
+												<CustomTableCell value={inquiry.countryCode} />
+												<CustomTableCell value={truncateText(inquiry.message || '', 25)} />
+												<CustomTableCell value={dateFormatter(inquiry.createdAt)} />
+												<TableCell
+													sx={{
+														textAlign: 'center',
+													}}>
+													<CustomActionBtn
+														title='View'
+														onClick={() => handleViewInquiry(index, inquiry)}
+														icon={<Visibility fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 													/>
-												</CustomDialog>
-											</TableCell>
-										</TableRow>
-									);
-								})}
-						</TableBody>
-					</Table>
-					<CustomTablePagination count={inquiriesNumberOfPages} page={currentPage} onChange={handlePageChange} />
+
+													<CustomDialog
+														openModal={viewModalOpen[index]}
+														closeModal={() => handleCloseViewModal(index)}
+														maxWidth='sm'
+														title='Inquiry Details'>
+														{selectedInquiry && (
+															<DialogContent>
+																<Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 2 }}>
+																	<Box>
+																		<Typography variant='body2' sx={{ mb: '0.75rem' }}>
+																			<strong>Name:</strong> {selectedInquiry.firstName} {selectedInquiry.lastName}
+																		</Typography>
+																		<Typography variant='body2' sx={{ mb: '0.75rem' }}>
+																			<strong>Phone:</strong> {selectedInquiry.phone}
+																		</Typography>
+																	</Box>
+																	<Box>
+																		<Typography variant='body2' sx={{ mb: '0.75rem' }}>
+																			<strong>Email:</strong> {selectedInquiry.email}
+																		</Typography>
+																		<Typography variant='body2' sx={{ mb: '0.75rem' }}>
+																			<strong>Country:</strong> {selectedInquiry.countryCode}
+																		</Typography>
+																	</Box>
+																</Box>
+																<Typography variant='body2' sx={{ mb: '0.75rem' }}>
+																	<strong>Message:</strong> {selectedInquiry.message || '-'}
+																</Typography>
+																<Typography variant='body2' sx={{ mb: '0.75rem' }}>
+																	<strong>Submitted:</strong> {dateTimeFormatter(selectedInquiry.createdAt)}
+																</Typography>
+																<Typography variant='body2'>
+																	<strong>From:</strong>{' '}
+																	{selectedInquiry.category === 'HeroSection'
+																		? 'Home Page'
+																		: selectedInquiry.category === 'ContactUs'
+																			? 'Contact Us'
+																			: 'About Us'}
+																</Typography>
+															</DialogContent>
+														)}
+														<DialogActions>
+															<CustomCancelButton
+																onClick={() => handleCloseViewModal(index)}
+																sx={{
+																	margin: '0 1rem 1rem 0',
+																}}>
+																Cancel
+															</CustomCancelButton>
+														</DialogActions>
+													</CustomDialog>
+
+													<CustomActionBtn
+														title='Delete'
+														onClick={() => handleDeleteInquiry(index, inquiry)}
+														icon={<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
+													/>
+
+													<CustomDialog
+														openModal={deleteModalOpen[index]}
+														closeModal={() => handleCloseDeleteModal(index)}
+														title='Delete Inquiry'
+														content={`Are you sure you want to delete "${truncateText(selectedInquiry?.message || '', 25)}"? This action cannot be undone.`}
+														maxWidth='xs'>
+														<CustomDialogActions
+															onCancel={() => handleCloseDeleteModal(index)}
+															deleteBtn={true}
+															onDelete={handleConfirmDelete}
+															actionSx={{ mb: '0.5rem' }}
+														/>
+													</CustomDialog>
+												</TableCell>
+											</TableRow>
+										);
+									})}
+							</TableBody>
+						</Table>
+						<CustomTablePagination count={inquiriesNumberOfPages} page={currentPage} onChange={handlePageChange} />
+					</Box>
 				</Box>
-			</Box>
-			<CustomDialog openModal={emailDialogOpen} closeModal={() => setEmailDialogOpen(false)} maxWidth='md' title='Send Bulk Email'>
-				<DialogContent>
-					<EmailSender setEmailDialogOpen={setEmailDialogOpen} />
-				</DialogContent>
-			</CustomDialog>
-		</DashboardPagesLayout>
+				<CustomDialog openModal={emailDialogOpen} closeModal={() => setEmailDialogOpen(false)} maxWidth='md' title='Send Bulk Email'>
+					<DialogContent>
+						<EmailSender setEmailDialogOpen={setEmailDialogOpen} />
+					</DialogContent>
+				</CustomDialog>
+			</DashboardPagesLayout>
+		</AdminPageErrorBoundary>
 	);
 };
 

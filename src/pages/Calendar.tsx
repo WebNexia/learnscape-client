@@ -5,6 +5,8 @@ import { enUS } from 'date-fns/locale/en-US';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { Box } from '@mui/material';
+import CalendarSkeleton from '../components/layouts/skeleton/CalendarSkeleton';
+import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
 import { EventsContext } from '../contexts/EventsContextProvider';
 import { Event } from '../interfaces/event';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
@@ -32,7 +34,7 @@ const localizer = dateFnsLocalizer({
 });
 
 const EventCalendar = () => {
-	const { sortedEventsData, fetchMonthEvents, loadedMonths } = useContext(EventsContext);
+	const { sortedEventsData, fetchMonthEvents, loadedMonths, enableEventsFetch, isLoading } = useContext(EventsContext);
 	const { orgId } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
 
@@ -109,6 +111,11 @@ const EventCalendar = () => {
 		}
 	}, [selectedEvent, user?.role]);
 
+	// Enable events fetching only once when component mounts
+	useEffect(() => {
+		enableEventsFetch();
+	}, []); // Empty dependency array - only run once
+
 	const eventStyleGetter = (event: Event) => {
 		const backgroundColor = event.isAllDay ? 'lightblue' : '#ffb7b2';
 		return {
@@ -158,18 +165,28 @@ const EventCalendar = () => {
 		}
 	};
 
+	// Show loading state while events are being fetched or when data is empty and not loading yet
+	if (isLoading) {
+		return (
+			<DashboardPagesLayout pageName='Calendar' showCopyRight={true}>
+				<CalendarSkeleton />
+			</DashboardPagesLayout>
+		);
+	}
+
 	return (
-		<DashboardPagesLayout pageName='Calendar' showCopyRight={true}>
-			<Box sx={{ display: 'flex', flexDirection: 'column', padding: isMobileSize ? '1rem' : '1rem 2rem 2rem 2rem' }}>
-				{user?.role === Roles.ADMIN && (
-					<Box sx={{ display: 'flex', width: '100%', justifyContent: 'flex-end' }}>
-						<CustomSubmitButton sx={{ width: 'fit-content', marginBottom: '1rem' }} onClick={() => navigate(`/admin/calendar/public-events`)}>
-							Public Events
-						</CustomSubmitButton>
-					</Box>
-				)}
-				<style>
-					{`
+		<AdminPageErrorBoundary pageName='Calendar'>
+			<DashboardPagesLayout pageName='Calendar' showCopyRight={true}>
+				<Box sx={{ display: 'flex', flexDirection: 'column', padding: isMobileSize ? '1rem' : '1rem 2rem 2rem 2rem' }}>
+					{user?.role === Roles.ADMIN && (
+						<Box sx={{ display: 'flex', width: '100%', justifyContent: 'flex-end' }}>
+							<CustomSubmitButton sx={{ width: 'fit-content', marginBottom: '1rem' }} onClick={() => navigate(`/admin/calendar/public-events`)}>
+								Public Events
+							</CustomSubmitButton>
+						</Box>
+					)}
+					<style>
+						{`
 						.rbc-toolbar button {
 							font-size:${isMobileSize ? '0.75rem' : '0.95rem'}; /* Modify button font size */
 						}
@@ -188,54 +205,55 @@ const EventCalendar = () => {
 						}
 
    					 `}
-				</style>
-				<Calendar
-					localizer={localizer}
-					events={eventsData}
-					startAccessor='start'
-					endAccessor='end'
-					selectable={true}
-					style={{
-						height: isVerySmallScreen ? '65vh' : '78vh',
-						fontFamily: 'Poppins',
-						fontSize: isMobileSizeSmall ? '0.75rem' : '0.85rem',
-						width: isMobileSizeSmall ? '91vw' : '76vw',
-						backgroundColor: '#fff',
-						padding: '0.5rem',
-						borderRadius: '0.5rem',
-						border: 'solid lightgray 0.1rem',
-						boxShadow: '0 0.2rem 0.5rem 0.1rem rgba(0,0,0,0.2)',
-						flexGrow: 1,
-					}}
-					eventPropGetter={eventStyleGetter}
-					onSelectSlot={handleSelectSlot}
-					onSelectEvent={handleEventSelect}
-					onNavigate={handleNavigate}
+					</style>
+					<Calendar
+						localizer={localizer}
+						events={eventsData}
+						startAccessor='start'
+						endAccessor='end'
+						selectable={true}
+						style={{
+							height: isVerySmallScreen ? '65vh' : '78vh',
+							fontFamily: 'Poppins',
+							fontSize: isMobileSizeSmall ? '0.75rem' : '0.85rem',
+							width: isMobileSizeSmall ? '91vw' : '76vw',
+							backgroundColor: '#fff',
+							padding: '0.5rem',
+							borderRadius: '0.5rem',
+							border: 'solid lightgray 0.1rem',
+							boxShadow: '0 0.2rem 0.5rem 0.1rem rgba(0,0,0,0.2)',
+							flexGrow: 1,
+						}}
+						eventPropGetter={eventStyleGetter}
+						onSelectSlot={handleSelectSlot}
+						onSelectEvent={handleEventSelect}
+						onNavigate={handleNavigate}
+					/>
+				</Box>
+
+				<CreateEventDialog
+					newEvent={newEvent}
+					newEventModalOpen={newEventModalOpen}
+					setNewEvent={setNewEvent}
+					setNewEventModalOpen={setNewEventModalOpen}
 				/>
-			</Box>
 
-			<CreateEventDialog
-				newEvent={newEvent}
-				newEventModalOpen={newEventModalOpen}
-				setNewEvent={setNewEvent}
-				setNewEventModalOpen={setNewEventModalOpen}
-			/>
+				<EventDetailsDialog
+					eventDetailsModalOpen={eventDetailsModalOpen}
+					selectedEvent={selectedEvent}
+					setSelectedEvent={setSelectedEvent}
+					setEventDetailsModalOpen={setEventDetailsModalOpen}
+				/>
 
-			<EventDetailsDialog
-				eventDetailsModalOpen={eventDetailsModalOpen}
-				selectedEvent={selectedEvent}
-				setSelectedEvent={setSelectedEvent}
-				setEventDetailsModalOpen={setEventDetailsModalOpen}
-			/>
-
-			<EditEventDialog
-				setIsEventDeleted={setIsEventDeleted}
-				editEventModalOpen={editEventModalOpen}
-				selectedEvent={selectedEvent}
-				setEditEventModalOpen={setEditEventModalOpen}
-				setSelectedEvent={setSelectedEvent}
-			/>
-		</DashboardPagesLayout>
+				<EditEventDialog
+					setIsEventDeleted={setIsEventDeleted}
+					editEventModalOpen={editEventModalOpen}
+					selectedEvent={selectedEvent}
+					setEditEventModalOpen={setEditEventModalOpen}
+					setSelectedEvent={setSelectedEvent}
+				/>
+			</DashboardPagesLayout>
+		</AdminPageErrorBoundary>
 	);
 };
 

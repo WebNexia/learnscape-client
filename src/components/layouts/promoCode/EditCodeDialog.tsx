@@ -45,6 +45,7 @@ const EditCodeDialog = ({ singleCode, isEditCodeModalOpen, closeCodeEditModal, i
 			isActive: singleCode?.isActive!,
 			coursesApplicable: singleCode?.coursesApplicable!,
 			isAllCoursesSelected: singleCode?.isAllCoursesSelected!,
+			applicableForSubscriptions: singleCode?.applicableForSubscriptions || false,
 			orgId,
 			usersUsed: singleCode?.usersUsed!,
 		};
@@ -165,9 +166,31 @@ const EditCodeDialog = ({ singleCode, isEditCodeModalOpen, closeCodeEditModal, i
 							/>
 						</Box>
 					</Box>
-					<Box sx={{ display: 'flex', justifyContent: 'flex-start', mb: '0.85rem' }}>
+					<Box sx={{ display: 'flex', justifyContent: 'space-between', mb: '1rem' }}>
 						<FormControlLabel
 							labelPlacement='end'
+							control={
+								<Checkbox
+									checked={singleCode?.applicableForSubscriptions || false}
+									onChange={(e) => {
+										setSingleCode((prevData) => ({ ...prevData!, applicableForSubscriptions: e.target.checked }));
+									}}
+									sx={{
+										'& .MuiSvgIcon-root': {
+											fontSize: '1rem', // Adjust the checkbox icon size
+										},
+									}}
+								/>
+							}
+							label='Applicable for Subscriptions'
+							sx={{
+								'& .MuiFormControlLabel-label': {
+									fontSize: '0.85rem', // Adjust the label font size
+								},
+							}}
+						/>
+						<FormControlLabel
+							labelPlacement='start'
 							control={
 								<Checkbox
 									checked={singleCode?.isActive}

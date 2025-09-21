@@ -24,12 +24,6 @@ const PasswordResetPage = () => {
 	const navigate = useNavigate();
 	const location = useLocation();
 
-	// Debug logs for query params
-	// console.log('location.search:', location.search);
-	// const queryParams = new URLSearchParams(location.search);
-	// console.log('mode:', queryParams.get('mode'));
-	// console.log('oobCode:', queryParams.get('oobCode'));
-
 	const validatePassword = (password: string): string | null => {
 		const minLength = 6;
 		// const hasUppercase = /[A-Z]/.test(password);

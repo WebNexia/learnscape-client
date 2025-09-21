@@ -1,6 +1,8 @@
 import { Box, FormControl, InputAdornment, MenuItem, Select, Table, TableBody, TableCell, TableRow, Typography, Chip } from '@mui/material';
+import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { useContext, useEffect, useState, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import CustomTableHead from '../components/layouts/table/CustomTableHead';
 import CustomTableCell from '../components/layouts/table/CustomTableCell';
 import CustomActionBtn from '../components/layouts/table/CustomActionBtn';
@@ -20,13 +22,21 @@ import axios from '@utils/axiosInstance';
 
 const Submissions = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
-	const { userQuizSubmissions, fetchMoreUserQuizSubmissions, loadedPages, totalItems, userSubmissionsPageNumber, setUserSubmissionsPageNumber } =
-		useContext(LearnerQuizSubmissionsContext);
+	const {
+		userQuizSubmissions,
+		fetchMoreUserQuizSubmissions,
+		loadedPages,
+		totalItems,
+		userSubmissionsPageNumber,
+		setUserSubmissionsPageNumber,
+		loading,
+	} = useContext(LearnerQuizSubmissionsContext);
 	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
 	const { user } = useAuth();
+	const location = useLocation();
 
 	const userCourseData: string[] =
 		JSON.parse(localStorage.getItem('userCourseData') || '[]')?.map((data: UserCoursesIdsWithCourseIds) => data.courseTitle) || [];
@@ -156,7 +166,6 @@ const Submissions = () => {
 
 			// Search button only works when search value exists
 			if (searchValue && searchValue.trim()) {
-				console.log('Search value being sent:', searchValue.trim());
 				// Store the searched value
 				setSearchedValue(searchValue.trim());
 				// Build query parameters
@@ -176,9 +185,7 @@ const Submissions = () => {
 					params.append('sortOrder', order);
 				}
 
-				console.log('Search URL params:', params.toString());
 				const response = await axios.get(`${base_url}/quizSubmissions/user/${user?._id}?${params.toString()}`);
-				console.log('Search response:', response.data);
 				setSearchResults(response.data.data);
 				setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
 				setSearchResultsLoadedPages([1]);
@@ -235,6 +242,41 @@ const Submissions = () => {
 		// No need to manually call fetchUserQuizSubmissions
 	}, []);
 
+	// Cleanup search state function
+	const cleanupSearchState = () => {
+		setSearchResults([]);
+		setSearchResultsLoadedPages([]);
+		setSearchResultsTotalItems(0);
+		setIsSearchActive(false);
+		setSearchValue('');
+		setFilterValue('');
+		setSearchedValue('');
+		setSearchButtonClicked(false);
+	};
+
+	// Cleanup on component unmount
+	useEffect(() => {
+		return () => {
+			cleanupSearchState();
+		};
+	}, []);
+
+	// Cleanup when navigating away from page
+	useEffect(() => {
+		return () => {
+			cleanupSearchState();
+		};
+	}, [location.pathname]);
+
+	// Show loading state while quiz submissions are being fetched or when data is empty and not loading yet
+	if (loading) {
+		return (
+			<DashboardPagesLayout pageName='Quiz Submissions' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
+				<AdminTableSkeleton rows={8} columns={4} />
+			</DashboardPagesLayout>
+		);
+	}
+
 	return (
 		<DashboardPagesLayout pageName='Quiz Submissions' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
 			<Box
@@ -264,7 +306,6 @@ const Submissions = () => {
 
 										// Auto-search when filter changes
 										if (newFilterValue) {
-											console.log('Filter value being sent:', newFilterValue);
 											// Build query parameters
 											const params = new URLSearchParams({
 												limit: contextLimit.toString(),
@@ -286,7 +327,6 @@ const Submissions = () => {
 											axios
 												.get(`${base_url}/quizSubmissions/user/${user?._id}?${params.toString()}`)
 												.then((response) => {
-													console.log('Filter response:', response.data);
 													setSearchResults(response.data.data);
 													setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
 													setSearchResultsLoadedPages([1]);

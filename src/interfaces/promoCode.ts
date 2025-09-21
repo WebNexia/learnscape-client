@@ -9,6 +9,7 @@ export interface PromoCode {
 	isActive: boolean;
 	usersUsed: string[];
 	orgId: string;
+	applicableForSubscriptions: boolean;
 	createdAt: string;
 	updatedAt: string;
 }

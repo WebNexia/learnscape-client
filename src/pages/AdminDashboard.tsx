@@ -1,10 +1,7 @@
 import { Box, Grid } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
-import { useContext, useEffect, useState } from 'react';
-import { UsersContext } from '../contexts/UsersContextProvider';
-import { Roles } from '../interfaces/enums';
+import { useEffect, useState } from 'react';
 import { Chart, registerables } from 'chart.js';
-import { CoursesContext } from '../contexts/CoursesContextProvider';
 
 import AdminLearnersLineGraph from '../components/layouts/dashboard/AdminLearnerLineGraph';
 import AdminCoursesBarGraph from '../components/layouts/dashboard/AdminCoursesBarGraph';
@@ -20,9 +17,6 @@ import { useDashboardSummary } from '../hooks/useDashboardSummary';
 Chart.register(...registerables);
 
 const AdminDashboard = () => {
-	const { users } = useContext(UsersContext);
-	const { courses } = useContext(CoursesContext);
-
 	const navigate = useNavigate();
 
 	// New dashboard summary hook
@@ -39,8 +33,10 @@ const AdminDashboard = () => {
 	});
 
 	useEffect(() => {
-		const totalNumberOfUsers: number = users?.filter((user) => user?.role !== Roles.ADMIN)?.length || 0;
-		setTotalUsers(totalNumberOfUsers);
+		// Use dashboard data for total users instead of context
+		if (dashboardData && dashboardData.roleSpecific && 'totalUsers' in dashboardData.roleSpecific) {
+			setTotalUsers((dashboardData.roleSpecific as any).totalUsers || 0);
+		}
 
 		// Process user data to create chart data
 		const processUserData = () => {
@@ -64,8 +60,6 @@ const AdminDashboard = () => {
 						],
 					});
 					return;
-				} else {
-					console.log('⚠️ User timeline data is empty or invalid:', userTimeline);
 				}
 			}
 
@@ -107,7 +101,7 @@ const AdminDashboard = () => {
 
 		processUserData();
 		processBarChartData();
-	}, [dashboardData, users, courses]);
+	}, [dashboardData]);
 
 	return (
 		<DashboardPagesLayout pageName='Dashboard' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
@@ -125,7 +119,7 @@ const AdminDashboard = () => {
 						<AdminLearnersLineGraph
 							chartData={chartData}
 							totalUsers={dashboardData ? (dashboardData.roleSpecific as any).totalUsers : totalUsers}
-							totalNumberOfEnrolledLearners={dashboardData ? (dashboardData.roleSpecific as any).enrolledUsersCount : courses?.length}
+							totalNumberOfEnrolledLearners={dashboardData ? (dashboardData.roleSpecific as any).enrolledUsersCount : 0}
 						/>
 					</Grid>
 					<Grid
@@ -137,10 +131,7 @@ const AdminDashboard = () => {
 							navigate(`/admin/courses`);
 						}}
 						sx={{ cursor: 'pointer' }}>
-						<AdminCoursesBarGraph
-							barChartData={barChartData}
-							totalCourses={dashboardData ? (dashboardData.roleSpecific as any).totalCourses : courses?.length}
-						/>
+						<AdminCoursesBarGraph barChartData={barChartData} totalCourses={dashboardData ? (dashboardData.roleSpecific as any).totalCourses : 0} />
 					</Grid>
 					<Grid
 						item

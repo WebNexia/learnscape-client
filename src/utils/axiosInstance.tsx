@@ -71,7 +71,7 @@ axiosInstance.interceptors.response.use(
 		const config = error.config as CustomAxiosRequestConfig;
 
 		// Handle rate limit errors (429) and IP blocking (403)
-		if (error.response?.status === 429 || error.response?.status === 403) {
+		if (error.response?.status === 429 || (error.response?.status === 403 && error.response?.data?.type === 'ip_blocked')) {
 			if (window.location.pathname === '/rate-limit-error') {
 				// Already on the error page, do not redirect or update localStorage
 				return Promise.reject(error);
@@ -81,7 +81,7 @@ axiosInstance.interceptors.response.use(
 			let finalRetryAfter = Number.isFinite(retryAfter) ? retryAfter : 900;
 
 			let type = 'api';
-			if (error.response?.status === 403) {
+			if (error.response?.status === 403 && error.response?.data?.type === 'ip_blocked') {
 				type = 'ip_blocked';
 				// For IP blocking, use 24 hours as retry time
 				finalRetryAfter = 24 * 60 * 60; // 24 hours in seconds
