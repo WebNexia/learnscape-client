@@ -405,7 +405,12 @@ const Loading = () => {
 							alignItems: 'center',
 							width: '10rem',
 							minHeight: '100vh',
-							backgroundColor: user?.role === Roles.ADMIN ? theme.bgColor?.adminSidebar : theme.palette.primary.main,
+							backgroundColor:
+								user?.role === Roles.ADMIN
+									? theme.bgColor?.adminSidebar
+									: user?.role === Roles.INSTRUCTOR
+										? theme.bgColor?.instructorSidebar
+										: theme.palette.primary.main,
 							position: 'fixed',
 							left: 0,
 							zIndex: 10,
@@ -470,6 +475,20 @@ const Loading = () => {
 									<>
 										<SidebarBtn btnText='Dashboard' IconName={DashboardIcon} />
 										<SidebarBtn btnText='Courses' IconName={LibraryBooks} />
+										<SidebarBtn btnText='Submissions' IconName={LibraryAddCheck} />
+										<SidebarBtn btnText='Calendar' IconName={CalendarMonth} />
+										<SidebarBtn btnText='Messages' IconName={Email} />
+										<SidebarBtn btnText='Community' IconName={Groups} />
+										<SidebarBtn btnText='Settings' IconName={Settings} />
+									</>
+								)}
+								{user?.role === Roles.INSTRUCTOR && (
+									<>
+										<SidebarBtn btnText='Dashboard' IconName={DashboardIcon} />
+										<SidebarBtn btnText='Courses' IconName={LibraryBooks} />
+										<SidebarBtn btnText='Lessons' IconName={AssignmentIndRounded} />
+										<SidebarBtn btnText='Questions' IconName={QuizOutlined} />
+										<SidebarBtn btnText='Documents' IconName={FilePresent} />
 										<SidebarBtn btnText='Submissions' IconName={LibraryAddCheck} />
 										<SidebarBtn btnText='Calendar' IconName={CalendarMonth} />
 										<SidebarBtn btnText='Messages' IconName={Email} />

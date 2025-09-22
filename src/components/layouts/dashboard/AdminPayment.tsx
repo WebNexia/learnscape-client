@@ -32,8 +32,8 @@ const AdminPayment = ({ totalRevenue, totalPayments }: AdminPaymentProps) => {
 				<Typography variant={isMobileSize ? 'h6' : 'h5'}>Payment Summary</Typography>
 			</Box>
 			<Box sx={{ display: 'flex', alignItems: 'center', flex: 8 }}>
-				<Typography variant='h2' sx={{ fontSize: isMobileSize ? '3rem' : '4rem' }}>
-					{totalRevenue ? `£${totalRevenue}` : 'N/A'}
+				<Typography variant='h2' sx={{ fontSize: isMobileSize ? '2.5rem' : '3.5rem' }}>
+					{totalRevenue ? `£${totalRevenue.toFixed(2)}` : 'N/A'}
 				</Typography>
 			</Box>
 

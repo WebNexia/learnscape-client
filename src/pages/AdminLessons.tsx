@@ -40,11 +40,15 @@ import { dateFormatter } from '../utils/dateFormatter';
 import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
 import LessonInfoModal from '../components/lessons/LessonInfoModal';
 import CustomDeleteButton from '../components/forms/customButtons/CustomDeleteButton';
+import { useAuth } from '../hooks/useAuth';
+import { Roles } from '../interfaces/enums';
 
 const AdminLessons = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const navigate = useNavigate();
 	const location = useLocation();
+	const { user } = useAuth();
+	const isInstructor = user?.role === Roles.INSTRUCTOR;
 
 	const {
 		lessons,
@@ -290,7 +294,7 @@ const AdminLessons = () => {
 	// Show loading state while lessons are being fetched or when data is empty and not loading yet
 	if (loading) {
 		return (
-			<DashboardPagesLayout pageName='Lessons' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
+			<DashboardPagesLayout pageName={isInstructor ? 'My Lessons' : 'Lessons'} customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
 				<AdminTableSkeleton rows={8} columns={5} />
 			</DashboardPagesLayout>
 		);
@@ -353,8 +357,8 @@ const AdminLessons = () => {
 	};
 
 	return (
-		<AdminPageErrorBoundary pageName='Lessons'>
-			<DashboardPagesLayout pageName='Lessons' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
+		<AdminPageErrorBoundary pageName={isInstructor ? 'My Lessons' : 'Lessons'}>
+			<DashboardPagesLayout pageName={isInstructor ? 'My Lessons' : 'Lessons'} customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
 				<Box
 					sx={{
 						display: 'flex',
@@ -744,7 +748,11 @@ const AdminLessons = () => {
 												<CustomActionBtn
 													title='Edit'
 													onClick={() => {
-														navigate(`/admin/lesson-edit/lesson/${lesson._id}`);
+														if (isInstructor) {
+															navigate(`/instructor/lesson-edit/lesson/${lesson._id}`);
+														} else {
+															navigate(`/admin/lesson-edit/lesson/${lesson._id}`);
+														}
 													}}
 													icon={<Edit fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 												/>

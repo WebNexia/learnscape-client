@@ -21,9 +21,10 @@ interface CustomActionBtnProps {
 		| 'top-end'
 		| 'top-start'
 		| undefined;
+	disabled?: boolean;
 }
 
-const CustomActionBtn = ({ title, onClick, icon, placement = 'top' }: CustomActionBtnProps) => {
+const CustomActionBtn = ({ title, onClick, icon, placement = 'top', disabled = false }: CustomActionBtnProps) => {
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	return (
@@ -34,7 +35,8 @@ const CustomActionBtn = ({ title, onClick, icon, placement = 'top' }: CustomActi
 					'padding': isMobileSize ? '0.1rem' : undefined,
 					'&:hover': { backgroundColor: 'transparent' },
 				}}
-				onClick={onClick}>
+				onClick={onClick}
+				disabled={disabled}>
 				{icon}
 			</IconButton>
 		</Tooltip>

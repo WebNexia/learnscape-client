@@ -11,6 +11,8 @@ import CustomDialog from '../layouts/dialog/CustomDialog';
 import LessonInfoModal from '../lessons/LessonInfoModal';
 import { useStickyPaper } from '../../hooks/useStickyPaper';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
+import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
+import { Roles } from '../../interfaces/enums';
 
 interface LessonPaperProps {
 	singleLesson: Lesson;
@@ -65,6 +67,8 @@ const LessonPaper = ({
 	const horizontal = 'center';
 
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const { user } = useContext(UserAuthContext);
+	const isInstructor = user?.role === Roles.INSTRUCTOR;
 
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
@@ -79,7 +83,7 @@ const LessonPaper = ({
 				width: isSticky ? (isMobileSize ? '100%' : 'calc(100% - 10rem)') : '100%',
 				height: isSticky ? '3rem' : '6rem',
 				mt: isSticky ? 0 : '1.25rem',
-				backgroundColor: theme.bgColor?.adminPaper,
+				backgroundColor: isInstructor ? theme.bgColor?.instructorPaper : theme.bgColor?.adminPaper,
 				position: isSticky ? 'fixed' : 'relative',
 				top: isSticky ? (isMobileSize ? '3.5rem' : '4rem') : 'auto',
 				left: isSticky ? (isMobileSize ? '0' : '10rem') : 'auto', // Align with main content area
@@ -118,7 +122,7 @@ const LessonPaper = ({
 								},
 							}}
 							onClick={() => {
-								navigate(`/admin/lessons`);
+								navigate(`${isInstructor ? '/instructor/lessons' : '/admin/lessons'}`);
 								window.scrollTo({ top: 0, behavior: 'smooth' });
 							}}>
 							{isSticky ? 'Lessons' : 'Back to lessons'}

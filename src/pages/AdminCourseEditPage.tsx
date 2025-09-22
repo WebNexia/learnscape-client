@@ -28,10 +28,10 @@ import { DocumentsContext } from '../contexts/DocumentsContextProvider';
 import DocumentsListEditBox from '../components/adminDocuments/DocumentsListEditBox';
 import NoContentBoxAdmin from '../components/layouts/noContentBox/NoContentBoxAdmin';
 import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/CustomInfoMessageAlignedLeft';
-import { useAuth } from '../hooks/useAuth';
 import { validateImageUrl, validateDocumentUrl } from '../utils/urlValidation';
 import { Snackbar, Alert } from '@mui/material';
-import { useQueryClient } from 'react-query';
+import { UserAuthContext } from '../contexts/UserAuthContextProvider';
+import { Roles } from '../interfaces/enums';
 
 export interface ChapterUpdateTrack {
 	chapterId: string;
@@ -73,7 +73,8 @@ const AdminCourseEditPage = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const navigate = useNavigate();
 
-	const { user } = useAuth();
+	const { user } = useContext(UserAuthContext);
+	const isInstructor = user?.role === Roles.INSTRUCTOR;
 
 	const { orgId } = useContext(OrganisationContext);
 	const { addNewLesson, updateLesson, enableLessonsFetch } = useContext(LessonsContext);
@@ -112,8 +113,6 @@ const AdminCourseEditPage = () => {
 	const [isPopStateNavigation, setIsPopStateNavigation] = useState(false);
 	const [isUrlErrorOpen, setIsUrlErrorOpen] = useState<boolean>(false);
 	const [urlErrorMessage, setUrlErrorMessage] = useState<string>('');
-
-	const queryClient = useQueryClient();
 
 	useEffect(() => {
 		const handlePopState = () => {
@@ -301,7 +300,7 @@ const AdminCourseEditPage = () => {
 			};
 
 			try {
-				const response = await axios.patch(`${base_url}/courses/${courseId}`, {
+				const response = await axios.patch(`${base_url}${isInstructor ? '/courses/instructor' : '/courses'}/${courseId}`, {
 					...updatedCourse,
 				});
 
@@ -330,8 +329,6 @@ const AdminCourseEditPage = () => {
 					updatedByImageUrl: responseUpdatedData.updatedByImageUrl,
 					updatedByRole: responseUpdatedData.updatedByRole,
 				});
-				// Only invalidate courses cache, not lessons
-				queryClient.invalidateQueries(['allCourses', orgId]);
 
 				setHasUnsavedChanges(false);
 				setIsEditMode(false);
@@ -504,7 +501,7 @@ const AdminCourseEditPage = () => {
 				};
 
 				try {
-					const response = await axios.patch(`${base_url}/courses/${courseId}`, {
+					const response = await axios.patch(`${base_url}${isInstructor ? '/courses/instructor' : '/courses'}/${courseId}`, {
 						...updatedCourse,
 					});
 
@@ -525,8 +522,6 @@ const AdminCourseEditPage = () => {
 						updatedByImageUrl: responseUpdatedData.updatedByImageUrl,
 						updatedByRole: responseUpdatedData.updatedByRole,
 					});
-					// Only invalidate courses cache, not lessons
-					queryClient.invalidateQueries(['allCourses', orgId]);
 
 					// Update lesson contexts with current usedInCourses data
 					updatedChapters?.forEach((chapter) => {
@@ -610,7 +605,7 @@ const AdminCourseEditPage = () => {
 			return;
 		} else if (courseId !== undefined) {
 			try {
-				await axios.patch(`${base_url}/courses/${courseId}`, {
+				await axios.patch(`${base_url}${isInstructor ? '/courses/instructor' : '/courses'}/${courseId}`, {
 					isActive: !singleCourseBeforeSave?.isActive,
 					// publishedAt will be handled by the backend when publishing
 					// When unpublishing, we explicitly set it to null

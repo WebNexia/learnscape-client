@@ -62,6 +62,11 @@ const CoursesContextProvider = ({ children }: CoursesContextProviderProps) => {
 	const { user } = useContext(UserAuthContext);
 	const isLandingPageRoute = useIsLandingPageRoute();
 	const [isEnabled, setIsEnabled] = useState<boolean>(true); // Start enabled to prevent flash
+
+	// Role-based endpoint detection - separate routes for clarity
+	const isInstructor = user?.role === Roles.INSTRUCTOR;
+	const baseEndpoint = isInstructor ? `/courses/organisation/${orgId}/instructor` : `/courses/organisation/${orgId}`;
+
 	const {
 		data: courses,
 		isLoading,
@@ -79,9 +84,9 @@ const CoursesContextProvider = ({ children }: CoursesContextProviderProps) => {
 		loadedPages,
 	} = usePaginatedEntity<SingleCourse>({
 		orgId,
-		baseUrl: `${base_url}/courses/organisation/${orgId}`,
-		entityKey: 'allCourses',
-		enabled: isEnabled && isAuthenticated && (isAdmin || isLearner) && !isLandingPageRoute,
+		baseUrl: `${base_url}${baseEndpoint}`,
+		entityKey: isInstructor ? 'instructorCourses' : 'allCourses',
+		enabled: isEnabled && isAuthenticated && (isAdmin || isLearner || isInstructor) && !isLandingPageRoute,
 		role: user?.role as Roles,
 		staleTime: user?.role !== Roles.USER ? 0 : 5 * 60 * 1000,
 		cacheTime: 30 * 60 * 1000,

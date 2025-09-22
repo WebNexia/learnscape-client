@@ -3,6 +3,7 @@ import App from './App';
 import React from 'react';
 import AdminRouteGuard from './components/guards/AdminRouteGuard';
 import LearnerRouteGuard from './components/guards/LearnerRouteGuard';
+import InstructorRouteGuard from './components/guards/InstructorRouteGuard';
 import AdminQuizSubmissionsContextProvider from './contexts/AdminQuizSubmissionsContextProvider';
 import LearnerQuizSubmissionsContextProvider from './contexts/LearnerQuizSubmissionsContextProvider';
 import UserCourseLessonDataContextProvider from './contexts/UserCourseLessonDataContextProvider';
@@ -36,6 +37,7 @@ const AdminCourses = React.lazy(() => import('./pages/AdminCourses'));
 const AdminLessons = React.lazy(() => import('./pages/AdminLessons'));
 const AdminLessonEditPage = React.lazy(() => import('./pages/AdminLessonEditPage'));
 const AdminDashboard = React.lazy(() => import('./pages/AdminDashboard'));
+const InstructorDashboard = React.lazy(() => import('./pages/InstructorDashboard'));
 const AdminQuestions = React.lazy(() => import('./pages/AdminQuestions'));
 const AdminUsers = React.lazy(() => import('./pages/AdminUsers'));
 const AdminDocuments = React.lazy(() => import('./pages/AdminDocuments'));
@@ -258,6 +260,112 @@ export const router = createBrowserRouter([
 					</AdminRouteGuard>
 				),
 			},
+			// Instructor Routes
+			{
+				path: 'instructor/dashboard',
+				element: (
+					<InstructorRouteGuard>
+						<InstructorDashboard />
+					</InstructorRouteGuard>
+				),
+			},
+			{
+				path: 'instructor/courses',
+				element: (
+					<InstructorRouteGuard>
+						<AdminCourses />
+					</InstructorRouteGuard>
+				),
+			},
+			{
+				path: 'instructor/course-edit/course/:courseId',
+				element: (
+					<InstructorRouteGuard>
+						<AdminCourseEditPage />
+					</InstructorRouteGuard>
+				),
+			},
+			{
+				path: 'instructor/lessons',
+				element: (
+					<InstructorRouteGuard>
+						<AdminLessons />
+					</InstructorRouteGuard>
+				),
+			},
+			{
+				path: 'instructor/lesson-edit/lesson/:lessonId',
+				element: (
+					<InstructorRouteGuard>
+						<AdminLessonEditPage />
+					</InstructorRouteGuard>
+				),
+			},
+			{
+				path: 'instructor/questions',
+				element: (
+					<InstructorRouteGuard>
+						<div>Instructor Questions - Coming Soon</div>
+					</InstructorRouteGuard>
+				),
+			},
+			{
+				path: 'instructor/documents',
+				element: (
+					<InstructorRouteGuard>
+						<div>Instructor Documents - Coming Soon</div>
+					</InstructorRouteGuard>
+				),
+			},
+			{
+				path: 'instructor/submissions',
+				element: (
+					<InstructorRouteGuard>
+						<div>Instructor Submissions - Coming Soon</div>
+					</InstructorRouteGuard>
+				),
+			},
+			{
+				path: 'instructor/events',
+				element: (
+					<InstructorRouteGuard>
+						<Calendar />
+					</InstructorRouteGuard>
+				),
+			},
+			{
+				path: 'instructor/messages',
+				element: (
+					<InstructorRouteGuard>
+						<Messages />
+					</InstructorRouteGuard>
+				),
+			},
+			{
+				path: 'instructor/community',
+				element: (
+					<InstructorRouteGuard>
+						<Community />
+					</InstructorRouteGuard>
+				),
+			},
+			{
+				path: 'instructor/community/topic/:topicId',
+				element: (
+					<InstructorRouteGuard>
+						<CommunityTopicPage />
+					</InstructorRouteGuard>
+				),
+			},
+			{
+				path: 'instructor/settings',
+				element: (
+					<InstructorRouteGuard>
+						<Settings />
+					</InstructorRouteGuard>
+				),
+			},
+			// Learner Routes
 			{
 				path: 'dashboard',
 				element: (

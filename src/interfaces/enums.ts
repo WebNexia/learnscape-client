@@ -65,6 +65,16 @@ export const enum PageName {
 	ADMIN_SETTINGS = 'Settings',
 	ADMIN_QUIZ_SUBMISSIONS = 'Submissions',
 	ADMIN_PAYMENTS = 'Payments',
+	INSTRUCTOR_DASHBOARD = 'Dashboard',
+	INSTRUCTOR_COURSES = 'Courses',
+	INSTRUCTOR_LESSONS = 'Lessons',
+	INSTRUCTOR_QUESTIONS = 'Questions',
+	INSTRUCTOR_DOCUMENTS = 'Documents',
+	INSTRUCTOR_SUBMISSIONS = 'Submissions',
+	INSTRUCTOR_EVENTS = 'Calendar',
+	INSTRUCTOR_MESSAGES = 'Messages',
+	INSTRUCTOR_COMMUNITY = 'Community',
+	INSTRUCTOR_SETTINGS = 'Settings',
 	DASHBOARD = 'Dashboard',
 	COURSES = 'Courses',
 	SUBMISSIONS = 'Submissions',
@@ -77,6 +87,8 @@ export const enum PageName {
 export const enum Roles {
 	ADMIN = 'admin',
 	USER = 'learner',
+	INSTRUCTOR = 'instructor',
+	SUPER_ADMIN = 'super_admin',
 }
 
 export const enum QuestionType {

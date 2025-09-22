@@ -44,6 +44,7 @@ import axios from '@utils/axiosInstance';
 import CustomDeleteButton from '../components/forms/customButtons/CustomDeleteButton';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
+import { Roles } from '../interfaces/enums';
 
 const AdminCourses = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -65,6 +66,10 @@ const AdminCourses = () => {
 	} = useContext(CoursesContext);
 	const { orgId } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
+
+	// Role-based endpoint detection
+	const isInstructor = user?.role === 'instructor';
+	const baseEndpoint = isInstructor ? `/courses/instructor/${user?._id}` : `/courses/organisation/${orgId}`;
 
 	const vertical = 'top';
 	const horizontal = 'center';
@@ -290,7 +295,7 @@ const AdminCourses = () => {
 					params.append('sortOrder', order);
 				}
 
-				const response = await axios.get(`${base_url}/courses/organisation/${orgId}?${params.toString()}`);
+				const response = await axios.get(`${base_url}${baseEndpoint}?${params.toString()}`);
 				setSearchResults(response.data.data);
 				setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
 				setSearchResultsLoadedPages([1]);
@@ -314,7 +319,7 @@ const AdminCourses = () => {
 			// Add page parameter
 			searchParams.set('page', page.toString());
 
-			const response = await axios.get(`${base_url}/courses/organisation/${orgId}?${searchParams.toString()}`);
+			const response = await axios.get(`${base_url}${baseEndpoint}?${searchParams.toString()}`);
 
 			if (page === 1) {
 				// First page - replace all data
@@ -360,14 +365,18 @@ const AdminCourses = () => {
 	};
 
 	const createCourse = async (): Promise<void> => {
-		const prices: Price[] = [
-			{ amount: checked ? 'Free' : GBP?.amount!, currency: 'gbp' },
-			{ amount: checked ? 'Free' : USD?.amount!, currency: 'usd' },
-			{ amount: checked ? 'Free' : EUR?.amount!, currency: 'eur' },
-			{ amount: checked ? 'Free' : TRY?.amount!, currency: 'try' },
-		];
+		// For instructors, allow creating courses without prices
+		// For admins, always include prices
+		const prices: Price[] = isInstructor
+			? []
+			: [
+					{ amount: checked ? 'Free' : GBP?.amount!, currency: 'gbp' },
+					{ amount: checked ? 'Free' : USD?.amount!, currency: 'usd' },
+					{ amount: checked ? 'Free' : EUR?.amount!, currency: 'eur' },
+					{ amount: checked ? 'Free' : TRY?.amount!, currency: 'try' },
+				];
 		try {
-			const response = await axios.post(`${base_url}/courses`, {
+			const response = await axios.post(`${base_url}${isInstructor ? '/courses/instructor' : '/courses'}`, {
 				title: title.trim(),
 				description: description.trim(),
 				prices,
@@ -425,7 +434,7 @@ const AdminCourses = () => {
 	const handleClone = async (courseId: string, index: number) => {
 		setIsCloning(true);
 		try {
-			const response = await axios.post(`${base_url}/courses/${courseId}/clone`, { courseId });
+			const response = await axios.post(`${base_url}${isInstructor ? '/courses/instructor' : '/courses'}/${courseId}/clone`, { courseId });
 			closeCloneCourseModal(index);
 
 			addNewCourse({
@@ -470,7 +479,7 @@ const AdminCourses = () => {
 
 	const deleteCourse = async (courseId: string): Promise<void> => {
 		try {
-			const response = await axios.delete(`${base_url}/courses/${courseId}`);
+			const response = await axios.delete(`${base_url}${isInstructor ? '/courses/instructor' : '/courses'}/${courseId}`);
 
 			// Only remove from frontend state if the backend request was successful
 			if (response.data.status === 200) {
@@ -502,7 +511,7 @@ const AdminCourses = () => {
 
 	return (
 		<AdminPageErrorBoundary pageName='Courses'>
-			<DashboardPagesLayout pageName='Courses' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
+			<DashboardPagesLayout pageName={isInstructor ? 'My Courses' : 'Courses'} customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
 				<CustomDialog openModal={isCourseCreateModalOpen} closeModal={closeNewCourseModal} title='Create New Course' maxWidth='sm'>
 					<form
 						onSubmit={(e: React.FormEvent<HTMLFormElement>) => {
@@ -542,88 +551,91 @@ const AdminCourses = () => {
 							/>
 						</Tooltip>
 
-						<Box sx={{ display: 'flex', alignItems: 'center' }}>
-							<Box sx={{ margin: '1rem 2rem 1rem 2rem', flex: 2 }}>
-								<Box sx={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-									<Typography variant='h6' sx={{ fontSize: '0.9rem', mb: '0.25rem' }}>
-										Prices
-									</Typography>
-									<Tooltip title='Check to make this course free in all currencies.' placement='top' arrow>
-										<FormControlLabel
-											control={
-												<Checkbox
-													checked={checked}
-													onChange={(e) => {
-														setChecked(e.target.checked);
-														setTRY((prevData) => ({ ...prevData!, amount: '' }));
-														setEUR((prevData) => ({ ...prevData!, amount: '' }));
-														setUSD((prevData) => ({ ...prevData!, amount: '' }));
-														setGBP((prevData) => ({ ...prevData!, amount: '' }));
-													}}
-													sx={{
-														'& .MuiSvgIcon-root': {
-															fontSize: '1rem',
-														},
-													}}
-												/>
-											}
-											label='Free Course'
-											sx={{
-												'mr': '0rem',
-												'& .MuiFormControlLabel-label': {
-													fontSize: '0.75rem',
-												},
-											}}
-										/>
-									</Tooltip>
-								</Box>
+						{!isInstructor && (
+							<Box sx={{ display: 'flex', alignItems: 'center' }}>
+								<Box sx={{ margin: '1rem 2rem 1rem 2rem', flex: 2 }}>
+									<Box sx={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+										<Typography variant='h6' sx={{ fontSize: '0.9rem', mb: '0.25rem' }}>
+											Prices
+										</Typography>
+										<Tooltip title='Check to make this course free in all currencies.' placement='top' arrow>
+											<FormControlLabel
+												control={
+													<Checkbox
+														checked={checked}
+														onChange={(e) => {
+															setChecked(e.target.checked);
+															setTRY((prevData) => ({ ...prevData!, amount: '' }));
+															setEUR((prevData) => ({ ...prevData!, amount: '' }));
+															setUSD((prevData) => ({ ...prevData!, amount: '' }));
+															setGBP((prevData) => ({ ...prevData!, amount: '' }));
+														}}
+														sx={{
+															'& .MuiSvgIcon-root': {
+																fontSize: '1rem',
+															},
+														}}
+													/>
+												}
+												label='Free Course'
+												sx={{
+													'mr': '0rem',
+													'& .MuiFormControlLabel-label': {
+														fontSize: '0.75rem',
+													},
+												}}
+											/>
+										</Tooltip>
+									</Box>
 
-								<CustomTextField
-									label='GBP'
-									value={checked ? '' : GBP?.amount}
-									onChange={(e) => setGBP((prevData) => ({ ...prevData!, amount: e.target.value }))}
-									type='number'
-									disabled={checked}
-									sx={{ backgroundColor: checked ? 'transparent' : '#fff' }}
-									InputLabelProps={{
-										sx: { fontSize: '0.8rem' },
-									}}
-								/>
-								<CustomTextField
-									label='USD'
-									value={checked ? '' : USD?.amount}
-									onChange={(e) => setUSD((prevData) => ({ ...prevData!, amount: e.target.value }))}
-									type='number'
-									disabled={checked}
-									sx={{ backgroundColor: checked ? 'transparent' : '#fff' }}
-									InputLabelProps={{
-										sx: { fontSize: '0.8rem' },
-									}}
-								/>
-								<CustomTextField
-									label='EUR'
-									value={checked ? '' : EUR?.amount}
-									onChange={(e) => setEUR((prevData) => ({ ...prevData!, amount: e.target.value }))}
-									type='number'
-									disabled={checked}
-									sx={{ backgroundColor: checked ? 'transparent' : '#fff' }}
-									InputLabelProps={{
-										sx: { fontSize: '0.8rem' },
-									}}
-								/>
-								<CustomTextField
-									label='TRY'
-									value={checked ? '' : TRY?.amount}
-									onChange={(e) => setTRY((prevData) => ({ ...prevData!, amount: e.target.value }))}
-									type='number'
-									disabled={checked}
-									sx={{ backgroundColor: checked ? 'transparent' : '#fff' }}
-									InputLabelProps={{
-										sx: { fontSize: '0.8rem' },
-									}}
-								/>
+									<CustomTextField
+										label='GBP'
+										value={checked ? '' : GBP?.amount}
+										onChange={(e) => setGBP((prevData) => ({ ...prevData!, amount: e.target.value }))}
+										type='number'
+										disabled={checked}
+										sx={{ backgroundColor: checked ? 'transparent' : '#fff' }}
+										InputLabelProps={{
+											sx: { fontSize: '0.8rem' },
+										}}
+									/>
+									<CustomTextField
+										label='USD'
+										value={checked ? '' : USD?.amount}
+										onChange={(e) => setUSD((prevData) => ({ ...prevData!, amount: e.target.value }))}
+										type='number'
+										disabled={checked}
+										sx={{ backgroundColor: checked ? 'transparent' : '#fff' }}
+										InputLabelProps={{
+											sx: { fontSize: '0.8rem' },
+										}}
+									/>
+									<CustomTextField
+										label='EUR'
+										value={checked ? '' : EUR?.amount}
+										onChange={(e) => setEUR((prevData) => ({ ...prevData!, amount: e.target.value }))}
+										type='number'
+										disabled={checked}
+										sx={{ backgroundColor: checked ? 'transparent' : '#fff' }}
+										InputLabelProps={{
+											sx: { fontSize: '0.8rem' },
+										}}
+									/>
+									<CustomTextField
+										label='TRY'
+										value={checked ? '' : TRY?.amount}
+										onChange={(e) => setTRY((prevData) => ({ ...prevData!, amount: e.target.value }))}
+										type='number'
+										disabled={checked}
+										sx={{ backgroundColor: checked ? 'transparent' : '#fff' }}
+										InputLabelProps={{
+											sx: { fontSize: '0.8rem' },
+										}}
+									/>
+								</Box>
 							</Box>
-						</Box>
+						)}
+
 						<Box sx={{ margin: '0 2rem', display: 'flex', alignItems: 'center' }}>
 							<Tooltip title='This course will be managed outside the platform.' placement='top' arrow>
 								<FormControlLabel
@@ -649,6 +661,7 @@ const AdminCourses = () => {
 								/>
 							</Tooltip>
 						</Box>
+
 						<CustomDialogActions onCancel={closeNewCourseModal} actionSx={{ width: '95%', margin: '0.75rem auto' }} />
 					</form>
 				</CustomDialog>
@@ -697,7 +710,7 @@ const AdminCourses = () => {
 													params.append('sortOrder', order);
 												}
 
-												const response = await axios.get(`${base_url}/courses/organisation/${orgId}?${params.toString()}`);
+												const response = await axios.get(`${base_url}${baseEndpoint}?${params.toString()}`);
 												setSearchResults(response.data.data);
 												setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
 												setSearchResultsLoadedPages([1]);
@@ -725,7 +738,7 @@ const AdminCourses = () => {
 														params.append('sortOrder', order);
 													}
 
-													const response = await axios.get(`${base_url}/courses/organisation/${orgId}?${params.toString()}`);
+													const response = await axios.get(`${base_url}${baseEndpoint}?${params.toString()}`);
 													setSearchResults(response.data.data);
 													setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
 													setSearchResultsLoadedPages([1]);
@@ -778,6 +791,7 @@ const AdminCourses = () => {
 										'Unpublished Courses',
 										'Paid Courses',
 										'Free Courses',
+										'Unpriced Courses',
 										'Open Courses',
 										'Closed Courses',
 										'External Courses',
@@ -906,7 +920,7 @@ const AdminCourses = () => {
 											if (order) params.append('sortOrder', order);
 
 											axios
-												.get(`${base_url}/courses/organisation/${orgId}?${params.toString()}`)
+												.get(`${base_url}${baseEndpoint}?${params.toString()}`)
 												.then((response) => {
 													setSearchResults(response.data.data);
 													setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
@@ -948,7 +962,7 @@ const AdminCourses = () => {
 											if (order) params.append('sortOrder', order);
 
 											axios
-												.get(`${base_url}/courses/organisation/${orgId}?${params.toString()}`)
+												.get(`${base_url}${baseEndpoint}?${params.toString()}`)
 												.then((response) => {
 													setSearchResults(response.data.data);
 													setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
@@ -1056,7 +1070,11 @@ const AdminCourses = () => {
 													<CustomActionBtn
 														title='Edit'
 														onClick={() => {
-															navigate(`/admin/course-edit/course/${course._id}`);
+															if (isInstructor) {
+																navigate(`/instructor/course-edit/course/${course._id}`);
+															} else {
+																navigate(`/admin/course-edit/course/${course._id}`);
+															}
 														}}
 														icon={<Edit fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 													/>
@@ -1064,7 +1082,11 @@ const AdminCourses = () => {
 													<CustomActionBtn
 														title='View'
 														onClick={() => {
-															navigate(`/admin/course-edit/course/${course._id}`);
+															if (isInstructor) {
+																navigate(`/instructor/course-edit/course/${course._id}`);
+															} else {
+																navigate(`/admin/course-edit/course/${course._id}`);
+															}
 														}}
 														icon={<Visibility fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 													/>
@@ -1074,6 +1096,26 @@ const AdminCourses = () => {
 													onClick={() => {
 														openDeleteCourseModal(index);
 													}}
+													disabled={(() => {
+														// If user is admin, they can delete any course
+														if (user?.role === Roles.ADMIN) {
+															return false;
+														}
+
+														// If user is instructor, they can only delete courses where:
+														// 1. They are the instructor of the course
+														// 2. The course was not created by an admin
+														if (user?.role === Roles.INSTRUCTOR) {
+															const isInstructorOfCourse = course?.instructor?.userId === user?._id;
+															const wasCreatedByAdmin = course?.createdByRole === Roles.ADMIN;
+
+															// Can delete if they're the instructor AND course was not created by admin
+															return !(isInstructorOfCourse && !wasCreatedByAdmin);
+														}
+
+														// Default: disable for other roles
+														return true;
+													})()}
 													icon={<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 												/>
 												{isCourseDeleteModalOpen[index] !== undefined && !course.isActive && (

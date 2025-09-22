@@ -37,7 +37,8 @@ export function usePaginatedEntity<T extends { _id: string; updatedAt: string; i
 		const response = await axios.get(`${baseUrl}?page=${page}&limit=${limit}`);
 		const entities = response.data.data;
 		queryClient.setQueryData([entityKey, orgId, page], entities);
-		setTotalItems(response.data.totalItems);
+		const totalItems = response.data.totalItems || 0;
+		setTotalItems(totalItems);
 		setLoadedPages((prev) => Array.from(new Set([...prev, page])));
 		return entities;
 	};
@@ -114,6 +115,11 @@ export function usePaginatedEntity<T extends { _id: string; updatedAt: string; i
 		queryClient.setQueryData<T[]>([entityKey, orgId, pageNumber], (old = []) => [newEntity, ...(old || [])]);
 		setTotalItems((prev) => prev + 1);
 		setLoadedPages((prev) => (prev && prev.length === 0 ? [1] : prev));
+
+		// Invalidate dashboard cache when new course is created
+		if (entityKey === 'allCourses' || entityKey === 'instructorCourses') {
+			queryClient.invalidateQueries(['dashboardSummary']);
+		}
 	};
 
 	const updateEntity = (updatedEntity: T) => {
@@ -141,6 +147,11 @@ export function usePaginatedEntity<T extends { _id: string; updatedAt: string; i
 	const removeEntity = (id: string) => {
 		queryClient.setQueryData<T[]>([entityKey, orgId, pageNumber], (old = []) => (old || [])?.filter((item) => item._id !== id) || []);
 		setTotalItems((prev) => Math.max(0, prev - 1));
+
+		// Invalidate dashboard cache when course is removed
+		if (entityKey === 'allCourses' || entityKey === 'instructorCourses') {
+			queryClient.invalidateQueries(['dashboardSummary']);
+		}
 	};
 
 	const sortEntities = (property: keyof T, order: 'asc' | 'desc') => {

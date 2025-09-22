@@ -771,7 +771,7 @@ const AdminUsers = () => {
 																		fontSize: isMobileSize ? '0.65rem' : '0.85rem',
 																		textTransform: 'capitalize',
 																	}}>
-																	{[Roles.ADMIN, Roles.USER]?.map((type) => (
+																	{[Roles.ADMIN, Roles.INSTRUCTOR, Roles.USER]?.map((type) => (
 																		<MenuItem
 																			value={type}
 																			key={type}

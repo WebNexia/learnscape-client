@@ -2,6 +2,8 @@ import { Button } from '@mui/material';
 import theme from '../../../themes';
 import { useContext } from 'react';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
+import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
+import { Roles } from '../../../interfaces/enums';
 
 interface SidebarBtnProps {
 	btnText?: string;
@@ -12,13 +14,27 @@ interface SidebarBtnProps {
 
 const SidebarBtn = ({ btnText, onClick, IconName, active }: SidebarBtnProps) => {
 	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
+	const { user } = useContext(UserAuthContext);
 
 	const isMobileSize: boolean = isSmallScreen || isRotatedMedium;
+
+	// Get role-specific hover color
+	const getHoverColor = () => {
+		if (user?.role === Roles.ADMIN) {
+			return theme.bgColor?.adminSubmitBtn;
+		} else {
+			return theme.submitBtn?.backgroundColor; // Green for both instructor and learner
+		}
+	};
 
 	const btnTextChars: string[] | undefined = btnText?.split('');
 	let subPageText = '';
 
-	if (btnTextChars && btnTextChars && btnTextChars.length > 0 && btnTextChars && btnTextChars.length > 0 ? btnTextChars[btnTextChars.length - 1] : undefined === 's') {
+	if (
+		btnTextChars && btnTextChars && btnTextChars.length > 0 && btnTextChars && btnTextChars.length > 0
+			? btnTextChars[btnTextChars.length - 1]
+			: undefined === 's'
+	) {
 		btnTextChars?.pop();
 		subPageText = btnTextChars?.join('') || '';
 	}
@@ -43,7 +59,7 @@ const SidebarBtn = ({ btnText, onClick, IconName, active }: SidebarBtnProps) => 
 				'border': 'none',
 				'cursor': 'pointer',
 				'&:hover': {
-					color: active ? theme.textColor?.primary.main : theme.submitBtn?.backgroundColor,
+					color: active ? theme.textColor?.primary.main : getHoverColor(),
 					backgroundColor: active ? theme.palette.secondary.main : 'transparent',
 					border: 'none',
 				},

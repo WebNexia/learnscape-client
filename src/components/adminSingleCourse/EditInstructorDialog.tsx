@@ -13,6 +13,8 @@ import theme from '../../themes';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import HandleImageUploadURL from '../../components/forms/uploadImageVideoDocument/HandleImageUploadURL';
 import { validateImageUrl } from '../../utils/urlValidation';
+import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
+import { Roles } from '../../interfaces/enums';
 
 interface EditInstructorDialogProps {
 	isEditInstructorDialogOpen: boolean;
@@ -32,6 +34,8 @@ const EditInstructorDialog = ({
 	const isMobileSize: boolean = isSmallScreen || isRotatedMedium;
 
 	const { updateCourse } = useContext(CoursesContext);
+
+	const { user } = useContext(UserAuthContext);
 
 	const [searchValue, setSearchValue] = useState<string>('');
 	const [singleCourseCopy, setSingleCourseCopy] = useState<SingleCourse | undefined>(singleCourse);
@@ -107,143 +111,150 @@ const EditInstructorDialog = ({
 				}}
 				style={{ display: 'flex', flexDirection: 'column' }}>
 				<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', mb: '0.75rem', mt: '-0.5rem' }}>
-					<Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-						<CustomTextField
-							fullWidth={false}
-							label='Name'
-							value={singleCourseCopy?.instructor?.name}
-							onChange={(e) => {
-								setSingleCourseCopy((prevData) => {
-									if (!prevData) return prevData;
-									return {
-										...prevData,
-										instructor: {
-											...prevData.instructor,
-											name: e.target.value,
-											imageUrl: '',
-											email: '',
-											userId: '',
-										},
-									};
-								});
-								setIsUserSelected(false);
-							}}
-							sx={{ margin: '1rem 0rem 0rem 2rem', width: '100%' }}
-							InputLabelProps={{
-								sx: { fontSize: '0.8rem' },
-							}}
-							InputProps={{
-								inputProps: {
-									maxLength: 100,
-								},
-							}}
-						/>
-						<CustomTextField
-							fullWidth={false}
-							type='email'
-							label='Email Address'
-							value={singleCourseCopy?.instructor?.email}
-							disabled={isUserSelected || !!singleCourseCopy?.instructor?.userId}
-							onChange={(e) =>
-								setSingleCourseCopy((prevData) => {
-									if (!prevData) return prevData;
-									return {
-										...prevData,
-										instructor: {
-											...prevData.instructor,
-											email: e.target.value,
-										},
-									};
-								})
-							}
-							sx={{ margin: '1rem 2rem 0rem 1rem', width: '100%' }}
-							InputLabelProps={{
-								sx: { fontSize: '0.8rem' },
-							}}
-							required={false}
-							InputProps={{
-								inputProps: {
-									maxLength: 254,
-								},
-							}}
-						/>
-					</Box>
-					<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '1rem 4rem 0rem 2rem' }}>
-						<Box sx={{ width: '100%', mr: '3rem' }}>
-							<HandleImageUploadURL
-								label='Instructor Image'
+					{user?.role === Roles.ADMIN && (
+						<Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+							<CustomTextField
+								fullWidth={false}
+								label='Name'
+								value={singleCourseCopy?.instructor?.name}
+								disabled={user?.role !== Roles.ADMIN}
+								onChange={(e) => {
+									setSingleCourseCopy((prevData) => {
+										if (!prevData) return prevData;
+										return {
+											...prevData,
+											instructor: {
+												...prevData.instructor,
+												name: e.target.value,
+												imageUrl: '',
+												email: '',
+												userId: '',
+											},
+										};
+									});
+									setIsUserSelected(false);
+								}}
+								sx={{ margin: '1rem 0rem 0rem 2rem', width: '100%' }}
+								InputLabelProps={{
+									sx: { fontSize: '0.8rem' },
+								}}
+								InputProps={{
+									inputProps: {
+										maxLength: 100,
+									},
+								}}
+							/>
+							<CustomTextField
+								fullWidth={false}
+								type='email'
+								label='Email Address'
+								value={singleCourseCopy?.instructor?.email}
 								disabled={isUserSelected || !!singleCourseCopy?.instructor?.userId}
-								onImageUploadLogic={(url) => {
-									if (singleCourseCopy) {
-										setSingleCourseCopy({
-											...singleCourseCopy,
+								onChange={(e) =>
+									setSingleCourseCopy((prevData) => {
+										if (!prevData) return prevData;
+										return {
+											...prevData,
 											instructor: {
-												...singleCourseCopy.instructor,
-												imageUrl: url,
+												...prevData.instructor,
+												email: e.target.value,
 											},
-										});
-									}
-									// Validate URL immediately after upload
-									validateImageUrlOnChange(url);
+										};
+									})
+								}
+								sx={{ margin: '1rem 2rem 0rem 1rem', width: '100%' }}
+								InputLabelProps={{
+									sx: { fontSize: '0.8rem' },
 								}}
-								onChangeImgUrl={(e) => {
-									if (singleCourseCopy) {
-										setSingleCourseCopy({
-											...singleCourseCopy,
-											instructor: {
-												...singleCourseCopy.instructor,
-												imageUrl: e.target.value,
-											},
-										});
-									}
-									// Validate URL on change (debounced)
-									validateImageUrlOnChange(e.target.value);
+								required={false}
+								InputProps={{
+									inputProps: {
+										maxLength: 254,
+									},
 								}}
-								imageUrlValue={singleCourseCopy?.instructor?.imageUrl || ''}
-								imageFolderName='InstructorImages'
-								enterImageUrl={enterImageUrl}
-								setEnterImageUrl={setEnterImageUrl}
 							/>
 						</Box>
+					)}
+					{user?.role === Roles.ADMIN && (
+						<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '1rem 4rem 0rem 2rem' }}>
+							<Box sx={{ width: '100%', mr: '3rem' }}>
+								<HandleImageUploadURL
+									label='Instructor Image'
+									disabled={isUserSelected || !!singleCourseCopy?.instructor?.userId}
+									onImageUploadLogic={(url) => {
+										if (singleCourseCopy) {
+											setSingleCourseCopy({
+												...singleCourseCopy,
+												instructor: {
+													...singleCourseCopy.instructor,
+													imageUrl: url,
+												},
+											});
+										}
+										// Validate URL immediately after upload
+										validateImageUrlOnChange(url);
+									}}
+									onChangeImgUrl={(e) => {
+										if (singleCourseCopy) {
+											setSingleCourseCopy({
+												...singleCourseCopy,
+												instructor: {
+													...singleCourseCopy.instructor,
+													imageUrl: e.target.value,
+												},
+											});
+										}
+										// Validate URL on change (debounced)
+										validateImageUrlOnChange(e.target.value);
+									}}
+									imageUrlValue={singleCourseCopy?.instructor?.imageUrl || ''}
+									imageFolderName='InstructorImages'
+									enterImageUrl={enterImageUrl}
+									setEnterImageUrl={setEnterImageUrl}
+								/>
+							</Box>
 
-						<img
-							src={singleCourseCopy?.instructor?.imageUrl || 'https://img.sportsbookreview.com/images/avatars/default-avatar.jpg'}
-							alt='img'
-							style={{ width: '4.25rem', height: '4.25rem', borderRadius: '50%', objectFit: 'cover' }}
-						/>
-					</Box>
+							<img
+								src={singleCourseCopy?.instructor?.imageUrl || 'https://img.sportsbookreview.com/images/avatars/default-avatar.jpg'}
+								alt='img'
+								style={{ width: '4.25rem', height: '4.25rem', borderRadius: '50%', objectFit: 'cover' }}
+							/>
+						</Box>
+					)}
 				</Box>
 
-				<UserSearchSelect
-					value={searchValue}
-					onChange={setSearchValue}
-					fromEditInstructorDialog={true}
-					onSelect={(selectedUser) => {
-						setSingleCourseCopy((prevData) => {
-							if (!prevData) return prevData;
-							return {
-								...prevData,
-								instructor: {
-									...prevData.instructor,
-									name:
-										(selectedUser?.firstName?.charAt(0).toUpperCase() || '') +
-										(selectedUser?.firstName?.slice(1) || '') +
-										' ' +
-										(selectedUser?.lastName?.charAt?.(0)?.toUpperCase?.() || '') +
-										(selectedUser?.lastName?.slice(1) || ''),
-									userId: selectedUser?.firebaseUserId,
-									email: selectedUser?.email || '',
-									imageUrl: selectedUser?.imageUrl,
-								},
-							};
-						});
+				{user?.role === Roles.ADMIN && (
+					<UserSearchSelect
+						value={searchValue}
+						onChange={setSearchValue}
+						fromEditInstructorDialog={true}
+						onSelect={(selectedUser) => {
+							setSingleCourseCopy((prevData) => {
+								if (!prevData) return prevData;
+								return {
+									...prevData,
+									instructor: {
+										...prevData.instructor,
+										name:
+											(selectedUser?.firstName?.charAt(0).toUpperCase() || '') +
+											(selectedUser?.firstName?.slice(1) || '') +
+											' ' +
+											(selectedUser?.lastName?.charAt?.(0)?.toUpperCase?.() || '') +
+											(selectedUser?.lastName?.slice(1) || ''),
+										userId: selectedUser?.firebaseUserId,
+										email: selectedUser?.email || '',
+										imageUrl: selectedUser?.imageUrl,
+									},
+								};
+							});
 
-						setSearchValue('');
-						setIsUserSelected(true);
-					}}
-					sx={{ width: '90%' }}
-					listSx={{ width: '90%', margin: '-1rem auto 1rem auto', zIndex: 1000 }}
-				/>
+							setSearchValue('');
+							setIsUserSelected(true);
+						}}
+						sx={{ width: '90%' }}
+						listSx={{ width: '90%', margin: '-1rem auto 1rem auto', zIndex: 1000 }}
+					/>
+				)}
 
 				<CustomTextField
 					fullWidth={false}

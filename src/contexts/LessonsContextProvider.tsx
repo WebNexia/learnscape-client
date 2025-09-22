@@ -40,9 +40,13 @@ const LessonsContextProvider = ({ children }: LessonsContextProviderProps) => {
 	const { orgId } = useContext(OrganisationContext);
 	const { isAuthenticated, isAdmin, isLearner } = useAuth();
 	const { user } = useContext(UserAuthContext);
-
 	const isLandingPageRoute = useIsLandingPageRoute();
 	const [isEnabled, setIsEnabled] = useState<boolean>(true);
+
+	// Role-based endpoint detection - separate routes for clarity
+	const isInstructor = user?.role === Roles.INSTRUCTOR;
+	const baseEndpoint = isInstructor ? `/lessons/organisation/${orgId}/instructor` : `/lessons/organisation/${orgId}`;
+
 	const {
 		data: lessons,
 		isLoading,
@@ -60,9 +64,9 @@ const LessonsContextProvider = ({ children }: LessonsContextProviderProps) => {
 		loadedPages,
 	} = usePaginatedEntity<Lesson>({
 		orgId,
-		baseUrl: `${base_url}/lessons/organisation/${orgId}`,
-		entityKey: 'allLessons',
-		enabled: isEnabled && isAuthenticated && (isAdmin || isLearner) && !isLandingPageRoute, // 👈 Controlled by isEnabled state
+		baseUrl: `${base_url}${baseEndpoint}`,
+		entityKey: isInstructor ? 'instructorLessons' : 'allLessons',
+		enabled: isEnabled && isAuthenticated && (isAdmin || isLearner || isInstructor) && !isLandingPageRoute,
 		role: user?.role as Roles,
 		staleTime: user?.role !== Roles.USER ? 0 : 5 * 60 * 1000,
 		cacheTime: 30 * 60 * 1000,
