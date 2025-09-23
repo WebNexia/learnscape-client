@@ -120,6 +120,13 @@ export function usePaginatedEntity<T extends { _id: string; updatedAt: string; i
 		if (entityKey === 'allCourses' || entityKey === 'instructorCourses') {
 			queryClient.invalidateQueries(['dashboardSummary']);
 		}
+
+		// Invalidate questions cache when new question is created
+		if (entityKey === 'allQuestions' || entityKey === 'instructorQuestions') {
+			queryClient.invalidateQueries([entityKey, orgId]);
+			// Force refetch of the current page
+			queryClient.refetchQueries([entityKey, orgId, pageNumber]);
+		}
 	};
 
 	const updateEntity = (updatedEntity: T) => {
@@ -151,6 +158,11 @@ export function usePaginatedEntity<T extends { _id: string; updatedAt: string; i
 		// Invalidate dashboard cache when course is removed
 		if (entityKey === 'allCourses' || entityKey === 'instructorCourses') {
 			queryClient.invalidateQueries(['dashboardSummary']);
+		}
+
+		// Invalidate questions cache when question is removed
+		if (entityKey === 'allQuestions' || entityKey === 'instructorQuestions') {
+			queryClient.invalidateQueries([entityKey, orgId]);
 		}
 	};
 

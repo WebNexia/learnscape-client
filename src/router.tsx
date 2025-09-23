@@ -305,7 +305,7 @@ export const router = createBrowserRouter([
 				path: 'instructor/questions',
 				element: (
 					<InstructorRouteGuard>
-						<div>Instructor Questions - Coming Soon</div>
+						<AdminQuestions />
 					</InstructorRouteGuard>
 				),
 			},
@@ -313,7 +313,7 @@ export const router = createBrowserRouter([
 				path: 'instructor/documents',
 				element: (
 					<InstructorRouteGuard>
-						<div>Instructor Documents - Coming Soon</div>
+						<AdminDocuments />
 					</InstructorRouteGuard>
 				),
 			},

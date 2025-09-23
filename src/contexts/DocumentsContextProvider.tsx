@@ -36,11 +36,16 @@ export const DocumentsContext = createContext<DocumentsContextTypes>({} as Docum
 const DocumentsContextProvider = ({ children }: DocumentsContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
-	const { isAuthenticated, isAdmin, isLearner } = useAuth();
+	const { isAuthenticated, isAdmin, isLearner, isInstructor } = useAuth();
 	const { user } = useContext(UserAuthContext);
 
 	const isLandingPageRoute = useIsLandingPageRoute();
 	const [isEnabled, setIsEnabled] = useState<boolean>(true); // Start enabled to prevent flash
+
+	// Role-aware endpoint and entity key
+	const baseUrl = isInstructor ? `${base_url}/documents/organisation/${orgId}/instructor` : `${base_url}/documents/organisation/${orgId}`;
+	const entityKey = isInstructor ? 'instructorDocuments' : 'allDocuments';
+
 	const {
 		data: documents,
 		isLoading,
@@ -57,9 +62,9 @@ const DocumentsContextProvider = ({ children }: DocumentsContextProviderProps) =
 		loadedPages,
 	} = usePaginatedEntity<Document>({
 		orgId,
-		baseUrl: `${base_url}/documents/organisation/${orgId}`,
-		entityKey: 'allDocuments',
-		enabled: isEnabled && isAuthenticated && (isAdmin || isLearner) && !isLandingPageRoute,
+		baseUrl,
+		entityKey,
+		enabled: isEnabled && isAuthenticated && (isAdmin || isLearner || isInstructor) && !isLandingPageRoute,
 		role: user?.role as Roles,
 		staleTime: user?.role !== Roles.USER ? 0 : 5 * 60 * 1000,
 		cacheTime: 30 * 60 * 1000,

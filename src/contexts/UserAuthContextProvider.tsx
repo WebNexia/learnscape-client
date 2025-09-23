@@ -156,7 +156,7 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 				queryClient.setQueryData('userData', userData);
 
 				// Load user course and lesson data for non-admin users
-				if (userData.role !== Roles.ADMIN) {
+				if (userData.role === Roles.USER) {
 					try {
 						// Load user course data
 						const userCourseResponse = await axios.get(`${base_url}/usercourses/user/${userData._id}`);

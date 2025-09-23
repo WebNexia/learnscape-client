@@ -528,7 +528,7 @@ const AdminLessonEditPage = () => {
 					?.map(async (document) => {
 						if (document._id.includes('temp_doc_id')) {
 							try {
-								const response = await axios.post(`${base_url}/documents`, {
+								const response = await axios.post(`${base_url}/documents${isInstructor ? '/instructor' : ''}`, {
 									name: document.name.trim(),
 									orgId,
 									userId: user?._id,
@@ -577,7 +577,7 @@ const AdminLessonEditPage = () => {
 					const trackData = isDocumentUpdated?.find((data) => data.documentId === doc._id);
 					if (trackData?.isUpdated) {
 						try {
-							const response = await axios.patch(`${base_url}/documents/${doc._id}`, {
+							const response = await axios.patch(`${base_url}/documents${isInstructor ? '/instructor' : ''}/${doc._id}`, {
 								name: doc.name.trim(),
 							});
 
@@ -655,7 +655,7 @@ const AdminLessonEditPage = () => {
 
 						if (questionTypeId) {
 							try {
-								const response = await axios.post(`${base_url}/questions`, {
+								const response = await axios.post(`${base_url}/questions${isInstructor ? '/instructor' : ''}`, {
 									orgId,
 									question: question.question.trim(),
 									options: question.options,
@@ -704,7 +704,7 @@ const AdminLessonEditPage = () => {
 						if (trackData?.isUpdated) {
 							try {
 								const { questionType, ...questionWithoutType } = question;
-								const response = await axios.patch(`${base_url}/questions/${question._id}`, questionWithoutType);
+								const response = await axios.patch(`${base_url}/questions${isInstructor ? '/instructor' : ''}/${question._id}`, questionWithoutType);
 
 								const questionUpdateResponseData = response.data.data;
 

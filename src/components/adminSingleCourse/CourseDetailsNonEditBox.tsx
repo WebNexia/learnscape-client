@@ -14,6 +14,7 @@ import TRFlag from '../../assets/tr-flag-round-500.png';
 import EditInstructorDialog from './EditInstructorDialog';
 import { useState } from 'react';
 import { truncateText } from '@utils/utilText';
+import { useAuth } from '../../hooks/useAuth';
 
 interface CourseDetailsNonEditBoxProps {
 	singleCourse?: SingleCourse;
@@ -23,6 +24,8 @@ interface CourseDetailsNonEditBoxProps {
 
 const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: CourseDetailsNonEditBoxProps) => {
 	const [isEditInstructorDialogOpen, setIsEditInstructorDialogOpen] = useState<boolean>(false);
+
+	const { isInstructor } = useAuth();
 
 	return (
 		<Box
@@ -242,7 +245,11 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 																			<Tooltip title='Edit Lesson' placement='top' arrow>
 																				<IconButton
 																					onClick={() => {
-																						window.open(`/admin/lesson-edit/lesson/${lesson._id}`, '_blank');
+																						if (isInstructor) {
+																							window.open(`/instructor/lesson-edit/lesson/${lesson._id}`, '_blank');
+																						} else {
+																							window.open(`/admin/lesson-edit/lesson/${lesson._id}`, '_blank');
+																						}
 																						window.scrollTo({ top: 0, behavior: 'smooth' });
 																					}}>
 																					<EditTwoTone fontSize='small' />

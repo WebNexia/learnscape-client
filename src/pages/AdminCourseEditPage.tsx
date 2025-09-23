@@ -358,7 +358,7 @@ const AdminCourseEditPage = () => {
 							?.map(async (lesson: Lesson) => {
 								if (lesson._id.includes('temp_lesson_id')) {
 									try {
-										const lessonResponse = await axios.post(`${base_url}/lessons`, {
+										const lessonResponse = await axios.post(`${base_url}/lessons${isInstructor ? '/instructor' : ''}`, {
 											title: lesson.title.trim(),
 											type: lesson.type,
 											orgId,
@@ -396,7 +396,7 @@ const AdminCourseEditPage = () => {
 
 					if (chapter.chapterId.includes('temp_chapter_id')) {
 						try {
-							const response = await axios.post(`${base_url}/chapters`, {
+							const response = await axios.post(`${base_url}/chapters${isInstructor ? '/instructor' : ''}`, {
 								title: chapter.title.trim(),
 								lessonIds: chapter.lessonIds,
 								orgId,
@@ -420,7 +420,7 @@ const AdminCourseEditPage = () => {
 					?.map(async (document) => {
 						if (document._id.includes('temp_doc_id')) {
 							try {
-								const response = await axios.post(`${base_url}/documents`, {
+								const response = await axios.post(`${base_url}/documents${isInstructor ? '/instructor' : ''}`, {
 									name: document.name.trim(),
 									orgId,
 									userId: user?._id,
@@ -464,7 +464,7 @@ const AdminCourseEditPage = () => {
 					const trackData = isDocumentUpdated?.find((data) => data.documentId === doc._id);
 					if (trackData?.isUpdated) {
 						try {
-							const response = await axios.patch(`${base_url}/documents/${doc._id}`, {
+							const response = await axios.patch(`${base_url}/documents${isInstructor ? '/instructor' : ''}/${doc._id}`, {
 								name: doc.name.trim(),
 							});
 							const updatedDocumentResponseData = response.data.data;
@@ -554,7 +554,7 @@ const AdminCourseEditPage = () => {
 							const trackData = isChapterUpdated?.find((data) => data.chapterId === chapter.chapterId);
 							if (trackData?.isUpdated) {
 								try {
-									await axios.patch(`${base_url}/chapters/${chapter.chapterId}`, chapter);
+									await axios.patch(`${base_url}/chapters${isInstructor ? '/instructor' : ''}/${chapter.chapterId}`, chapter);
 								} catch (error) {
 									console.error('Error updating chapter:', error);
 								}
@@ -811,6 +811,7 @@ const AdminCourseEditPage = () => {
 											values={chapterLessonDataBeforeSave || []}
 											onReorder={(newChapters): void => {
 												setChapterLessonDataBeforeSave(newChapters);
+												setHasUnsavedChanges(true);
 											}}>
 											{chapterLessonDataBeforeSave &&
 												chapterLessonDataBeforeSave &&

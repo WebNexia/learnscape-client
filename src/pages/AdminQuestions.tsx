@@ -32,6 +32,8 @@ import { QuestionsContext } from '../contexts/QuestionsContextProvider';
 import { QuestionInterface } from '../interfaces/question';
 import useNewQuestion from '../hooks/useNewQuestion';
 import CreateQuestionDialog from '../components/forms/newQuestion/CreateQuestionDialog';
+import { useAuth } from '../hooks/useAuth';
+import { Roles } from '../interfaces/enums';
 import { stripHtml } from '../utils/stripHtml';
 import { truncateText } from '../utils/utilText';
 import AdminQuestionsEditQuestionDialog from '../components/forms/editQuestion/AdminQuestionsEditQuestionDialog';
@@ -49,6 +51,10 @@ const AdminQuestions = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
 	const location = useLocation();
+	const { user } = useAuth();
+
+	// Role detection
+	const isInstructor = user?.role === Roles.INSTRUCTOR;
 
 	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -249,7 +255,10 @@ const AdminQuestions = () => {
 	// Show loading state while questions are being fetched or when data is empty and not loading yet
 	if (loading) {
 		return (
-			<DashboardPagesLayout pageName='Questions' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
+			<DashboardPagesLayout
+				pageName={isInstructor ? 'My Questions' : 'Questions'}
+				customSettings={{ justifyContent: 'flex-start' }}
+				showCopyRight={true}>
 				<AdminTableSkeleton rows={8} columns={5} />
 			</DashboardPagesLayout>
 		);
@@ -268,7 +277,7 @@ const AdminQuestions = () => {
 
 	const deleteQuestion = async (questionId: string): Promise<void> => {
 		try {
-			const response = await axios.delete(`${base_url}/questions/${questionId}`);
+			const response = await axios.delete(`${base_url}/questions${isInstructor ? '/instructor' : ''}/${questionId}`);
 
 			// Only remove from frontend state if the backend request was successful
 			if (response.data.status === 200) {
@@ -396,8 +405,11 @@ const AdminQuestions = () => {
 	};
 
 	return (
-		<AdminPageErrorBoundary pageName='Questions'>
-			<DashboardPagesLayout pageName='Questions' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
+		<AdminPageErrorBoundary pageName={isInstructor ? 'My Questions' : 'Questions'}>
+			<DashboardPagesLayout
+				pageName={isInstructor ? 'My Questions' : 'Questions'}
+				customSettings={{ justifyContent: 'flex-start' }}
+				showCopyRight={true}>
 				<Box sx={{ width: '100%', height: '100%' }}>
 					<Box
 						sx={{

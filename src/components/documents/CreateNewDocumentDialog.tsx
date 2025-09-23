@@ -7,6 +7,7 @@ import ImageThumbnail from '../forms/uploadImageVideoDocument/ImageThumbnail';
 import CustomTextField from '../forms/customFields/CustomTextField';
 import { Document, Price } from '../../interfaces/document';
 import { Dispatch, SetStateAction } from 'react';
+import { useAuth } from '../../hooks/useAuth';
 
 interface CreateNewDocumentDialogProps {
 	isOpen: boolean;
@@ -59,6 +60,7 @@ const CreateNewDocumentDialog = ({
 	TRY,
 	setTRY,
 }: CreateNewDocumentDialogProps) => {
+	const { isInstructor } = useAuth();
 	return (
 		<CustomDialog title='Create New Document' openModal={isOpen} closeModal={onClose} maxWidth='lg'>
 			<form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', padding: '0 1rem' }}>
@@ -316,32 +318,34 @@ const CreateNewDocumentDialog = ({
 								}}
 							/>
 						</Box>
-						<Box>
-							<FormControlLabel
-								control={
-									<Checkbox
-										checked={singleDocument?.isOnLandingPage}
-										onChange={(e) => {
-											if (singleDocument) {
-												setSingleDocument({ ...singleDocument, isOnLandingPage: e.target.checked });
-											}
-										}}
-										sx={{
-											'& .MuiSvgIcon-root': {
-												fontSize: '1rem',
-											},
-										}}
-									/>
-								}
-								label='Display on Landing Page'
-								sx={{
-									'mr': '0rem',
-									'& .MuiFormControlLabel-label': {
-										fontSize: '0.75rem',
-									},
-								}}
-							/>
-						</Box>
+						{!isInstructor && (
+							<Box>
+								<FormControlLabel
+									control={
+										<Checkbox
+											checked={singleDocument?.isOnLandingPage}
+											onChange={(e) => {
+												if (singleDocument) {
+													setSingleDocument({ ...singleDocument, isOnLandingPage: e.target.checked });
+												}
+											}}
+											sx={{
+												'& .MuiSvgIcon-root': {
+													fontSize: '1rem',
+												},
+											}}
+										/>
+									}
+									label='Display on Landing Page'
+									sx={{
+										'mr': '0rem',
+										'& .MuiFormControlLabel-label': {
+											fontSize: '0.75rem',
+										},
+									}}
+								/>
+							</Box>
+						)}
 					</Box>
 				</Box>
 				<CustomDialogActions onCancel={onClose} submitBtnType='submit' disableBtn={!fileUploaded} actionSx={{ mt: '1rem' }} />
