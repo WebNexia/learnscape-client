@@ -45,6 +45,7 @@ import HandleImageUploadURL from '../../forms/uploadImageVideoDocument/HandleIma
 import ImageThumbnail from '../../forms/uploadImageVideoDocument/ImageThumbnail';
 import { validateImageUrl } from '../../../utils/urlValidation';
 import { useDashboardSync, dashboardSyncHelpers } from '../../../utils/dashboardSync';
+import { useAuth } from '../../../hooks/useAuth';
 
 interface CreateEventDialogProps {
 	newEvent: Event;
@@ -76,6 +77,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 	const { users } = useContext(UsersContext);
 	const { courses } = useContext(CoursesContext);
 	const { addNewEvent } = useContext(EventsContext);
+	const { isAdmin } = useAuth();
 
 	// Dashboard sync for real-time updates
 	const { refreshDashboard } = useDashboardSync();
@@ -274,7 +276,9 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 		};
 
 		try {
-			const res = await axios.post(`${base_url}/events`, event);
+			// Use instructor route if user is instructor
+			const endpoint = user?.role === 'instructor' ? `${base_url}/events/instructor/` : `${base_url}/events`;
+			const res = await axios.post(endpoint, event);
 
 			addNewEvent({ ...event, _id: res.data.data._id });
 
@@ -417,42 +421,44 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 							sx={{ flex: 3 }}
 						/>
 
-						<FormControlLabel
-							labelPlacement='start'
-							control={
-								<Checkbox
-									checked={newEvent.isPublic}
-									onChange={(e) => {
-										setNewEvent((prevData) => ({ ...prevData, isPublic: e.target.checked }));
+						{isAdmin && (
+							<FormControlLabel
+								labelPlacement='start'
+								control={
+									<Checkbox
+										checked={newEvent.isPublic}
+										onChange={(e) => {
+											setNewEvent((prevData) => ({ ...prevData, isPublic: e.target.checked }));
 
-										if (e.target.checked) {
-											setNewEvent((prevData) => ({
-												...prevData,
-												attendees: [],
-												coursesIds: [],
-												allAttendeesIds: [],
-												isAllCoursesSelected: false,
-												isAllLearnersSelected: false,
-											}));
-										}
-									}}
-									sx={{
-										'& .MuiSvgIcon-root': {
-											fontSize: isMobileSize ? '0.9rem' : '1rem',
-										},
-									}}
-								/>
-							}
-							label='Public Event'
-							sx={{
-								'& .MuiFormControlLabel-label': {
-									fontSize: isMobileSize ? '0.6rem' : '0.7rem',
-								},
-								'mb': '0.85rem',
-								'flex': 1,
-								'ml': '1.65rem',
-							}}
-						/>
+											if (e.target.checked) {
+												setNewEvent((prevData) => ({
+													...prevData,
+													attendees: [],
+													coursesIds: [],
+													allAttendeesIds: [],
+													isAllCoursesSelected: false,
+													isAllLearnersSelected: false,
+												}));
+											}
+										}}
+										sx={{
+											'& .MuiSvgIcon-root': {
+												fontSize: isMobileSize ? '0.9rem' : '1rem',
+											},
+										}}
+									/>
+								}
+								label='Public Event'
+								sx={{
+									'& .MuiFormControlLabel-label': {
+										fontSize: isMobileSize ? '0.6rem' : '0.7rem',
+									},
+									'mb': '0.85rem',
+									'flex': 1,
+									'ml': '1.65rem',
+								}}
+							/>
+						)}
 					</Box>
 
 					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -694,53 +700,55 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 										}}
 									/>
 								</Box>
-								<Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: '0.55rem' }}>
-									<FormControlLabel
-										labelPlacement='start'
-										disabled={newEvent.isPublic}
-										control={
-											<Checkbox
-												checked={newEvent.isAllLearnersSelected}
-												onChange={(e) => {
-													setSearchCourseValue('');
-													setSearchLearnerValue('');
-													setNewEvent((prevData) => ({ ...prevData, isAllLearnersSelected: e.target.checked }));
+								{isAdmin && (
+									<Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: '0.55rem' }}>
+										<FormControlLabel
+											labelPlacement='start'
+											disabled={newEvent.isPublic}
+											control={
+												<Checkbox
+													checked={newEvent.isAllLearnersSelected}
+													onChange={(e) => {
+														setSearchCourseValue('');
+														setSearchLearnerValue('');
+														setNewEvent((prevData) => ({ ...prevData, isAllLearnersSelected: e.target.checked }));
 
-													// Reset search results when "All Learners" is checked
-													if (e.target.checked) {
-														// Reset user search results
-														if (userSearchRef.current?.reset) {
-															userSearchRef.current.reset();
-														}
-														// Reset course search results
-														if (courseSearchRef.current?.reset) {
-															courseSearchRef.current.reset();
-														}
+														// Reset search results when "All Learners" is checked
+														if (e.target.checked) {
+															// Reset user search results
+															if (userSearchRef.current?.reset) {
+																userSearchRef.current.reset();
+															}
+															// Reset course search results
+															if (courseSearchRef.current?.reset) {
+																courseSearchRef.current.reset();
+															}
 
-														setNewEvent((prevData) => ({
-															...prevData,
-															attendees: [],
-															coursesIds: [],
-															allAttendeesIds: [],
-															isAllCoursesSelected: false,
-														}));
-													}
-												}}
-												sx={{
-													'& .MuiSvgIcon-root': {
-														fontSize: isMobileSize ? '0.9rem' : '1rem',
-													},
-												}}
-											/>
-										}
-										label='All Learners'
-										sx={{
-											'& .MuiFormControlLabel-label': {
-												fontSize: isMobileSize ? '0.6rem' : '0.7rem',
-											},
-										}}
-									/>
-								</Box>
+															setNewEvent((prevData) => ({
+																...prevData,
+																attendees: [],
+																coursesIds: [],
+																allAttendeesIds: [],
+																isAllCoursesSelected: false,
+															}));
+														}
+													}}
+													sx={{
+														'& .MuiSvgIcon-root': {
+															fontSize: isMobileSize ? '0.9rem' : '1rem',
+														},
+													}}
+												/>
+											}
+											label='All Learners'
+											sx={{
+												'& .MuiFormControlLabel-label': {
+													fontSize: isMobileSize ? '0.6rem' : '0.7rem',
+												},
+											}}
+										/>
+									</Box>
+								)}
 							</Box>
 						</Box>
 					)}
@@ -800,42 +808,44 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 										}}
 									/>
 								</Box>
-								<Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: '2.15rem' }}>
-									<FormControlLabel
-										disabled={newEvent.isAllLearnersSelected || newEvent.isPublic}
-										labelPlacement='start'
-										control={
-											<Checkbox
-												checked={newEvent.isAllCoursesSelected}
-												onChange={(e) => {
-													setSearchCourseValue('');
-													setNewEvent((prevData) => ({ ...prevData, isAllCoursesSelected: e.target.checked }));
+								{isAdmin && (
+									<Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: '2.15rem' }}>
+										<FormControlLabel
+											disabled={newEvent.isAllLearnersSelected || newEvent.isPublic}
+											labelPlacement='start'
+											control={
+												<Checkbox
+													checked={newEvent.isAllCoursesSelected}
+													onChange={(e) => {
+														setSearchCourseValue('');
+														setNewEvent((prevData) => ({ ...prevData, isAllCoursesSelected: e.target.checked }));
 
-													// Reset search results when "All Courses" is checked
-													if (e.target.checked) {
-														// Reset course search results
-														if (courseSearchRef.current?.reset) {
-															courseSearchRef.current.reset();
+														// Reset search results when "All Courses" is checked
+														if (e.target.checked) {
+															// Reset course search results
+															if (courseSearchRef.current?.reset) {
+																courseSearchRef.current.reset();
+															}
+
+															setNewEvent((prevData) => ({ ...prevData, coursesIds: [] }));
 														}
-
-														setNewEvent((prevData) => ({ ...prevData, coursesIds: [] }));
-													}
-												}}
-												sx={{
-													'& .MuiSvgIcon-root': {
-														fontSize: isMobileSize ? '0.9rem' : '1rem', // Adjust the checkbox icon size
-													},
-												}}
-											/>
-										}
-										label='All Courses'
-										sx={{
-											'& .MuiFormControlLabel-label': {
-												fontSize: isMobileSize ? '0.6rem' : '0.7rem', // Adjust the label font size
-											},
-										}}
-									/>
-								</Box>
+													}}
+													sx={{
+														'& .MuiSvgIcon-root': {
+															fontSize: isMobileSize ? '0.9rem' : '1rem', // Adjust the checkbox icon size
+														},
+													}}
+												/>
+											}
+											label='All Courses'
+											sx={{
+												'& .MuiFormControlLabel-label': {
+													fontSize: isMobileSize ? '0.6rem' : '0.7rem', // Adjust the label font size
+												},
+											}}
+										/>
+									</Box>
+								)}
 							</Box>
 						</Box>
 					)}

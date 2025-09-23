@@ -62,6 +62,7 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 				email: user?.email,
 				orgId,
 			});
+			setEventDetailsModalOpen(false);
 			setIsRegisterForEventSuccess(true);
 		} catch (error: any) {
 			if (axios.isAxiosError(error) && error.response?.status === 409) {
@@ -75,124 +76,126 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 	};
 
 	return (
-		<CustomDialog
-			openModal={eventDetailsModalOpen}
-			closeModal={() => {
-				setEventDetailsModalOpen(false);
-				setSelectedEvent(null);
-				setIsRegisterForEventSuccess(false);
-				setRegisterErrorMsg(null);
-			}}
-			title='Event Details'
-			maxWidth='sm'>
-			<DialogContent sx={{ margin: isMobileSizeSmall ? '0rem' : '0.5rem 1rem 1rem 0.25rem' }}>
-				<Box sx={{ display: 'flex', alignItems: 'center', mb: '0.75rem' }}>
-					<Typography variant='h6' sx={{ fontSize: isMobileSizeSmall ? '0.85rem' : isMobileSize ? '0.9rem' : undefined }}>
-						Title:
-					</Typography>
-					<Typography variant='body2' sx={{ ml: '0.5rem', fontSize: isMobileSizeSmall ? '0.75rem' : isMobileSize ? '0.85rem' : undefined }}>
-						{selectedEvent?.title}
-					</Typography>
-				</Box>
-				{selectedEvent?.description && (
+		<>
+			<CustomDialog
+				openModal={eventDetailsModalOpen}
+				closeModal={() => {
+					setEventDetailsModalOpen(false);
+					setSelectedEvent(null);
+					setIsRegisterForEventSuccess(false);
+					setRegisterErrorMsg(null);
+				}}
+				title='Event Details'
+				maxWidth='sm'>
+				<DialogContent sx={{ margin: isMobileSizeSmall ? '0rem' : '0.5rem 1rem 1rem 0.25rem' }}>
 					<Box sx={{ display: 'flex', alignItems: 'center', mb: '0.75rem' }}>
 						<Typography variant='h6' sx={{ fontSize: isMobileSizeSmall ? '0.85rem' : isMobileSize ? '0.9rem' : undefined }}>
-							Description:
+							Title:
 						</Typography>
 						<Typography variant='body2' sx={{ ml: '0.5rem', fontSize: isMobileSizeSmall ? '0.75rem' : isMobileSize ? '0.85rem' : undefined }}>
-							{selectedEvent?.description}
+							{selectedEvent?.title}
 						</Typography>
 					</Box>
-				)}
-
-				{selectedEvent?.start && (
-					<Box sx={{ display: 'flex', alignItems: 'center', mb: '0.5rem' }}>
-						<Typography variant='h6' sx={{ fontSize: isMobileSizeSmall ? '0.85rem' : isMobileSize ? '0.9rem' : undefined }}>
-							Starts:
-						</Typography>
-						<Typography variant='body2' sx={{ ml: '0.5rem', fontSize: isMobileSizeSmall ? '0.75rem' : isMobileSize ? '0.85rem' : undefined }}>
-							{selectedEvent.start.toLocaleString(undefined, {
-								weekday: 'long',
-								year: 'numeric',
-								month: 'long',
-								day: 'numeric',
-								hour: '2-digit',
-								minute: '2-digit',
-								timeZoneName: 'short',
-							})}
-						</Typography>
-					</Box>
-				)}
-				{selectedEvent?.end && (
-					<Box sx={{ display: 'flex', alignItems: 'center', mb: '0.75rem' }}>
-						<Typography variant='h6' sx={{ fontSize: isMobileSizeSmall ? '0.85rem' : isMobileSize ? '0.9rem' : undefined }}>
-							Ends:
-						</Typography>
-						<Typography variant='body2' sx={{ ml: '0.5rem', fontSize: isMobileSizeSmall ? '0.75rem' : isMobileSize ? '0.85rem' : undefined }}>
-							{selectedEvent.end.toLocaleString(undefined, {
-								weekday: 'long',
-								year: 'numeric',
-								month: 'long',
-								day: 'numeric',
-								hour: '2-digit',
-								minute: '2-digit',
-								timeZoneName: 'short',
-							})}
-						</Typography>
-					</Box>
-				)}
-				{selectedEvent?.eventLinkUrl && (
-					<Box sx={{ display: 'flex', alignItems: 'center', mb: '0.75rem' }}>
-						<Typography variant='h6' sx={{ fontSize: isMobileSizeSmall ? '0.85rem' : isMobileSize ? '0.9rem' : undefined }}>
-							Link:
-						</Typography>
-						<Link href={selectedEvent.eventLinkUrl} sx={{ ml: '0.5rem' }} rel='noopener noreferrer' target='_blank'>
-							<Typography variant='body2' sx={{ fontSize: isMobileSizeSmall ? '0.75rem' : isMobileSize ? '0.85rem' : undefined }}>
-								{selectedEvent.eventLinkUrl}
+					{selectedEvent?.description && (
+						<Box sx={{ display: 'flex', alignItems: 'center', mb: '0.75rem' }}>
+							<Typography variant='h6' sx={{ fontSize: isMobileSizeSmall ? '0.85rem' : isMobileSize ? '0.9rem' : undefined }}>
+								Description:
 							</Typography>
-						</Link>
-					</Box>
-				)}
+							<Typography variant='body2' sx={{ ml: '0.5rem', fontSize: isMobileSizeSmall ? '0.75rem' : isMobileSize ? '0.85rem' : undefined }}>
+								{selectedEvent?.description}
+							</Typography>
+						</Box>
+					)}
 
-				{selectedEvent?.location && (
-					<Box sx={{ display: 'flex', alignItems: 'center', mb: '0.75rem' }}>
-						<Typography variant='h6' sx={{ fontSize: isMobileSizeSmall ? '0.85rem' : isMobileSize ? '0.9rem' : undefined }}>
-							Location:
-						</Typography>
-						<Typography variant='body2' sx={{ ml: '0.5rem', fontSize: isMobileSizeSmall ? '0.75rem' : isMobileSize ? '0.85rem' : undefined }}>
-							{selectedEvent.location}
-						</Typography>
-					</Box>
-				)}
+					{selectedEvent?.start && (
+						<Box sx={{ display: 'flex', alignItems: 'center', mb: '0.5rem' }}>
+							<Typography variant='h6' sx={{ fontSize: isMobileSizeSmall ? '0.85rem' : isMobileSize ? '0.9rem' : undefined }}>
+								Starts:
+							</Typography>
+							<Typography variant='body2' sx={{ ml: '0.5rem', fontSize: isMobileSizeSmall ? '0.75rem' : isMobileSize ? '0.85rem' : undefined }}>
+								{selectedEvent.start.toLocaleString(undefined, {
+									weekday: 'long',
+									year: 'numeric',
+									month: 'long',
+									day: 'numeric',
+									hour: '2-digit',
+									minute: '2-digit',
+									timeZoneName: 'short',
+								})}
+							</Typography>
+						</Box>
+					)}
+					{selectedEvent?.end && (
+						<Box sx={{ display: 'flex', alignItems: 'center', mb: '0.75rem' }}>
+							<Typography variant='h6' sx={{ fontSize: isMobileSizeSmall ? '0.85rem' : isMobileSize ? '0.9rem' : undefined }}>
+								Ends:
+							</Typography>
+							<Typography variant='body2' sx={{ ml: '0.5rem', fontSize: isMobileSizeSmall ? '0.75rem' : isMobileSize ? '0.85rem' : undefined }}>
+								{selectedEvent.end.toLocaleString(undefined, {
+									weekday: 'long',
+									year: 'numeric',
+									month: 'long',
+									day: 'numeric',
+									hour: '2-digit',
+									minute: '2-digit',
+									timeZoneName: 'short',
+								})}
+							</Typography>
+						</Box>
+					)}
+					{selectedEvent?.eventLinkUrl && (
+						<Box sx={{ display: 'flex', alignItems: 'center', mb: '0.75rem' }}>
+							<Typography variant='h6' sx={{ fontSize: isMobileSizeSmall ? '0.85rem' : isMobileSize ? '0.9rem' : undefined }}>
+								Link:
+							</Typography>
+							<Link href={selectedEvent.eventLinkUrl} sx={{ ml: '0.5rem' }} rel='noopener noreferrer' target='_blank'>
+								<Typography variant='body2' sx={{ fontSize: isMobileSizeSmall ? '0.75rem' : isMobileSize ? '0.85rem' : undefined }}>
+									{selectedEvent.eventLinkUrl}
+								</Typography>
+							</Link>
+						</Box>
+					)}
 
-				{selectedEvent?.isPublic && (
-					<Box sx={{ display: 'flex', alignItems: 'center' }}>
-						<Typography variant='h6' sx={{ fontSize: isMobileSizeSmall ? '0.85rem' : isMobileSize ? '0.9rem' : undefined }}>
-							Type:
-						</Typography>
-						<Typography variant='body2' sx={{ ml: '0.5rem', fontSize: isMobileSizeSmall ? '0.75rem' : isMobileSize ? '0.85rem' : undefined }}>
-							{selectedEvent.type}
-						</Typography>
-					</Box>
-				)}
-				{registerErrorMsg && <CustomErrorMessage sx={{ mt: '1rem' }}>{registerErrorMsg}</CustomErrorMessage>}
-			</DialogContent>
-			<DialogActions sx={{ margin: '-1.5rem 1rem 1rem 0rem' }}>
-				<CustomCancelButton
-					onClick={() => {
-						setEventDetailsModalOpen(false);
-						setSelectedEvent(null);
-						setIsRegisterForEventSuccess(false);
-						setRegisterErrorMsg(null);
-					}}>
-					Close
-				</CustomCancelButton>
-				{selectedEvent?.isPublic && (
-					<CustomSubmitButton onClick={handleRegisterForEvent} disabled={isRegisterForEventSending}>
-						{isRegisterForEventSending ? 'Registering...' : 'Register'}
-					</CustomSubmitButton>
-				)}
-			</DialogActions>
+					{selectedEvent?.location && (
+						<Box sx={{ display: 'flex', alignItems: 'center', mb: '0.75rem' }}>
+							<Typography variant='h6' sx={{ fontSize: isMobileSizeSmall ? '0.85rem' : isMobileSize ? '0.9rem' : undefined }}>
+								Location:
+							</Typography>
+							<Typography variant='body2' sx={{ ml: '0.5rem', fontSize: isMobileSizeSmall ? '0.75rem' : isMobileSize ? '0.85rem' : undefined }}>
+								{selectedEvent.location}
+							</Typography>
+						</Box>
+					)}
+
+					{selectedEvent?.isPublic && (
+						<Box sx={{ display: 'flex', alignItems: 'center' }}>
+							<Typography variant='h6' sx={{ fontSize: isMobileSizeSmall ? '0.85rem' : isMobileSize ? '0.9rem' : undefined }}>
+								Type:
+							</Typography>
+							<Typography variant='body2' sx={{ ml: '0.5rem', fontSize: isMobileSizeSmall ? '0.75rem' : isMobileSize ? '0.85rem' : undefined }}>
+								{selectedEvent.type}
+							</Typography>
+						</Box>
+					)}
+					{registerErrorMsg && <CustomErrorMessage sx={{ mt: '1rem' }}>{registerErrorMsg}</CustomErrorMessage>}
+				</DialogContent>
+				<DialogActions sx={{ margin: '-1.5rem 1rem 1rem 0rem' }}>
+					<CustomCancelButton
+						onClick={() => {
+							setEventDetailsModalOpen(false);
+							setSelectedEvent(null);
+							setIsRegisterForEventSuccess(false);
+							setRegisterErrorMsg(null);
+						}}>
+						Close
+					</CustomCancelButton>
+					{selectedEvent?.isPublic && (
+						<CustomSubmitButton onClick={handleRegisterForEvent} disabled={isRegisterForEventSending}>
+							{isRegisterForEventSending ? 'Registering...' : 'Register'}
+						</CustomSubmitButton>
+					)}
+				</DialogActions>
+			</CustomDialog>
 			{isRegisterForEventSuccess && (
 				<Snackbar
 					open={isRegisterForEventSuccess}
@@ -200,7 +203,6 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 					anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
 					onClose={() => {
 						setIsRegisterForEventSuccess(false);
-						setEventDetailsModalOpen(false);
 					}}
 					sx={{ mt: { xs: '1.5rem', sm: '1.5rem', md: '2.5rem', lg: '2.5rem' } }}>
 					<Alert
@@ -216,7 +218,7 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 					</Alert>
 				</Snackbar>
 			)}
-		</CustomDialog>
+		</>
 	);
 };
 

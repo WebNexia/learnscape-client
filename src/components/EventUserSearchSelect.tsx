@@ -7,6 +7,7 @@ import { Search } from '@mui/icons-material';
 import { useSearch } from '../hooks/useSearch';
 import CustomSubmitButton from './forms/customButtons/CustomSubmitButton';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
+import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 import CustomDeleteButton from './forms/customButtons/CustomDeleteButton';
 import CustomErrorMessage from './forms/customFields/CustomErrorMessage';
 
@@ -27,6 +28,8 @@ const EventUserSearchSelect = forwardRef<any, EventUserSearchSelectProps>(
 		{ value, onChange, onSelect, currentUserId, placeholder = 'Search users...', sx = {}, listSx = {}, disabled = false, selectedUserIds = [] },
 		ref
 	) => {
+		const { user } = useContext(UserAuthContext);
+
 		const {
 			data: filtered,
 			loading,
@@ -36,7 +39,7 @@ const EventUserSearchSelect = forwardRef<any, EventUserSearchSelectProps>(
 			reset,
 			pagination,
 		} = useSearch<SearchUser>('users', 'events', {
-			userRole: 'admin', // Only admins can create events
+			userRole: user?.role === 'instructor' ? 'learner' : 'admin', // Instructors see learners, admins see all
 		});
 
 		const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
@@ -151,7 +154,7 @@ const EventUserSearchSelect = forwardRef<any, EventUserSearchSelectProps>(
 							width: isMobileSize ? '60%' : '70%',
 							maxHeight: '15rem',
 							overflow: 'auto',
-							margin: '-0.8rem 0 1.5rem -8rem',
+							margin: '-0.8rem 0 1.5rem -10rem',
 							border: 'solid 0.05rem lightgray',
 							mb: showLoadMore ? '1rem' : '3rem',
 							...listSx,

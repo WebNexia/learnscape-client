@@ -275,6 +275,7 @@ const UserSearchSelect: React.FC<UserSearchSelectProps> = ({
 						margin: '-0.8rem 0 1.5rem -5.5rem',
 						border: 'solid 0.05rem lightgray',
 						mb: showLoadMore ? '1rem' : '2rem',
+						marginLeft: 0,
 
 						...listSx,
 					}}>

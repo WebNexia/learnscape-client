@@ -51,11 +51,11 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
-	const { isAuthenticated, isAdmin, isLearner } = useAuth();
+	const { isAuthenticated, isAdmin, isLearner, isInstructor } = useAuth();
 	const location = useLocation();
 	const queryClient = useQueryClient();
 
-	const isCalendarRoute = location.pathname?.includes('/calendar');
+	const isCalendarRoute = location.pathname?.includes('/calendar') || location.pathname?.includes('/events');
 	// Month-based calendar state
 	const [loadedMonths, setLoadedMonths] = useState<string[]>([]);
 	const [isEnabled, setIsEnabled] = useState<boolean>(true); // Start enabled to prevent flash
@@ -213,7 +213,7 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 
 	// Use month-based fetching for calendar routes
 	const { data: eventsData, isLoading: isCalendarLoading } = useQuery(['calendarEvents', orgId], fetchInitialMonths, {
-		enabled: isEnabled && !!orgId && isAuthenticated && (isAdmin || isLearner) && isCalendarRoute,
+		enabled: isEnabled && !!orgId && isAuthenticated && (isAdmin || isLearner || isInstructor) && isCalendarRoute,
 		staleTime: user?.role !== Roles.USER ? 0 : 5 * 60 * 1000, // 5 minutes - data stays fresh
 		cacheTime: 30 * 60 * 1000, // 30 minutes - data stays in cache
 		refetchOnWindowFocus: user?.role === Roles.ADMIN,

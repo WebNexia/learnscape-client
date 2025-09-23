@@ -8,6 +8,7 @@ import { useSearch } from '../hooks/useSearch';
 import CustomSubmitButton from './forms/customButtons/CustomSubmitButton';
 import { truncateText } from '../utils/utilText';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
+import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 import CustomDeleteButton from './forms/customButtons/CustomDeleteButton';
 import CustomErrorMessage from './forms/customFields/CustomErrorMessage';
 
@@ -24,6 +25,8 @@ interface EventCourseSearchSelectProps {
 
 const EventCourseSearchSelect = forwardRef<any, EventCourseSearchSelectProps>(
 	({ value, onChange, onSelect, placeholder = 'Search courses...', sx = {}, listSx = {}, disabled = false, selectedCourseIds = [] }, ref) => {
+		const { user } = useContext(UserAuthContext);
+
 		const {
 			data: filtered,
 			loading,
@@ -33,7 +36,7 @@ const EventCourseSearchSelect = forwardRef<any, EventCourseSearchSelectProps>(
 			reset,
 			pagination,
 		} = useSearch<SearchCourse>('courses', 'events', {
-			userRole: 'admin', // Only admins can create events
+			userRole: user?.role === 'instructor' ? 'admin' : 'admin', // Both instructors and admins can search courses
 		});
 
 		const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
@@ -148,7 +151,7 @@ const EventCourseSearchSelect = forwardRef<any, EventCourseSearchSelectProps>(
 							width: isMobileSize ? '60%' : '70%',
 							maxHeight: '15rem',
 							overflow: 'auto',
-							margin: '-0.8rem 0 1.5rem -8rem',
+							margin: '-0.8rem 0 1.5rem -10rem',
 							border: 'solid 0.05rem lightgray',
 							mb: showLoadMore ? '1rem' : '3rem',
 							...listSx,
