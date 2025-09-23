@@ -239,7 +239,11 @@ const AdminQuizSubmissionCheck = () => {
 			);
 
 			if (isChecked === 'false') {
-				await axios.patch(`${base_url}/quizsubmissions/${submissionId}`, {
+				// Use instructor endpoint if user is instructor
+				const updateEndpoint =
+					user?.role === 'instructor' ? `${base_url}/quizsubmissions/instructor/${submissionId}` : `${base_url}/quizsubmissions/${submissionId}`;
+
+				await axios.patch(updateEndpoint, {
 					isChecked: true,
 				});
 

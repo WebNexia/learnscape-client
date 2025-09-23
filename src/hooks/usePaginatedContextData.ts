@@ -75,7 +75,7 @@ export function usePaginatedEntity<T extends { _id: string; updatedAt: string; i
 		staleTime,
 		cacheTime,
 		refetchOnWindowFocus: false, // 👈 Disabled to prevent multiple API calls
-		refetchOnMount: false, // 👈 Disabled to prevent multiple API calls
+		refetchOnMount: true, // 👈 Enable refetch on mount to get fresh data when navigating back
 	});
 
 	// Progressive pagination fill - with debouncing to prevent multiple rapid calls

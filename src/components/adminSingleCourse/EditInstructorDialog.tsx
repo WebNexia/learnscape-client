@@ -228,6 +228,8 @@ const EditInstructorDialog = ({
 						value={searchValue}
 						onChange={setSearchValue}
 						fromEditInstructorDialog={true}
+						userRole='admin'
+						allowCurrentUser={true}
 						onSelect={(selectedUser) => {
 							setSingleCourseCopy((prevData) => {
 								if (!prevData) return prevData;

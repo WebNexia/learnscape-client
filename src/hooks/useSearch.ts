@@ -18,7 +18,7 @@ interface UseSearchReturn<T> extends UseSearchState<T> {
 export const useSearch = <T extends SearchUser | SearchTopic | SearchCourse>(
 	type: 'users' | 'topics' | 'courses',
 	context: 'messages' | 'community' | 'events',
-	filters?: { userRole: 'admin' | 'student'; courseId?: string; topicId?: string }
+	filters?: { userRole: 'admin' | 'learner'; courseId?: string; topicId?: string; allowCurrentUser?: boolean }
 ): UseSearchReturn<T> => {
 	const [state, setState] = useState<UseSearchState<T>>({
 		data: [],

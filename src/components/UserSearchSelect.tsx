@@ -19,9 +19,10 @@ interface UserSearchSelectProps {
 	listSx?: object;
 	disabled?: boolean;
 	context?: 'messages' | 'community' | 'events';
-	userRole?: 'admin' | 'student';
+	userRole?: 'admin' | 'learner';
 	fromGroupChatSettings?: boolean;
 	fromEditInstructorDialog?: boolean;
+	allowCurrentUser?: boolean;
 	excludeUserIds?: string[];
 	blockedUsers?: string[];
 }
@@ -39,6 +40,7 @@ const UserSearchSelect: React.FC<UserSearchSelectProps> = ({
 	userRole = 'admin',
 	fromGroupChatSettings = false,
 	fromEditInstructorDialog = false,
+	allowCurrentUser = false,
 	excludeUserIds = [],
 	blockedUsers = [],
 }) => {
@@ -52,6 +54,7 @@ const UserSearchSelect: React.FC<UserSearchSelectProps> = ({
 		pagination,
 	} = useSearch<SearchUser>('users', context, {
 		userRole,
+		allowCurrentUser,
 	});
 
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
@@ -129,8 +132,12 @@ const UserSearchSelect: React.FC<UserSearchSelectProps> = ({
 	);
 
 	const filteredUsers = useMemo(() => {
-		return filtered?.filter((user) => user.firebaseUserId !== currentUserId && !excludeUserIds?.includes(user.firebaseUserId)) || [];
-	}, [filtered, currentUserId, excludeUserIds]);
+		return (
+			filtered?.filter(
+				(user) => (fromEditInstructorDialog ? true : user.firebaseUserId !== currentUserId) && !excludeUserIds?.includes(user.firebaseUserId)
+			) || []
+		);
+	}, [filtered, currentUserId, excludeUserIds, fromEditInstructorDialog]);
 
 	const hasResults = filteredUsers && filteredUsers.length > 0;
 	// Show Load More if there are more pages available, regardless of current filtered results

@@ -321,7 +321,19 @@ export const router = createBrowserRouter([
 				path: 'instructor/submissions',
 				element: (
 					<InstructorRouteGuard>
-						<div>Instructor Submissions - Coming Soon</div>
+						<AdminQuizSubmissionsContextProvider>
+							<AdminQuizSubmissions />
+						</AdminQuizSubmissionsContextProvider>
+					</InstructorRouteGuard>
+				),
+			},
+			{
+				path: 'instructor/check-submission/submission/:submissionId/lesson/:lessonId/userlesson/:userLessonId',
+				element: (
+					<InstructorRouteGuard>
+						<AdminQuizSubmissionsContextProvider>
+							<AdminQuizSubmissionCheck />
+						</AdminQuizSubmissionsContextProvider>
 					</InstructorRouteGuard>
 				),
 			},
