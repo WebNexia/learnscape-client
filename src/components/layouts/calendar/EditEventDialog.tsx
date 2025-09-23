@@ -79,7 +79,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 	const { orgId } = useContext(OrganisationContext);
 	const { courses } = useContext(CoursesContext);
 	const { updateEvent, removeEvent } = useContext(EventsContext);
-	const { isAdmin } = useAuth();
+	const { isAdmin, isLearner } = useAuth();
 
 	// Dashboard sync for real-time updates
 	const { refreshDashboard } = useDashboardSync();
@@ -314,8 +314,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 		try {
 			if (isEventUpdated) {
 				// Use instructor route if user is instructor
-				const endpoint =
-					user?.role === 'instructor' ? `${base_url}/events/instructor/${selectedEvent?._id}` : `${base_url}/events/${selectedEvent?._id}`;
+				const endpoint = `${base_url}/events/${selectedEvent?._id}`;
 				await axios.patch(endpoint, {
 					...selectedEvent,
 					allAttendeesIds: allParticipantsIds,
@@ -408,8 +407,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 	const deleteEvent = async () => {
 		try {
 			// Use instructor route if user is instructor
-			const endpoint =
-				user?.role === 'instructor' ? `${base_url}/events/instructor/${selectedEvent?._id}` : `${base_url}/events/${selectedEvent?._id}`;
+			const endpoint = `${base_url}/events/${selectedEvent?._id}`;
 			await axios.delete(endpoint);
 			if (selectedEvent?._id) removeEvent(selectedEvent?._id);
 
@@ -433,7 +431,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 				setSearchCourseValue('');
 				setIsEventUpdated(false);
 			}}
-			title='Edit Event'
+			title={`${isAdmin && selectedEvent?.createdBy !== user?._id ? `Edit Event -  (${selectedEvent?.createdByName || 'Unknown'})` : 'Edit Event'}`}
 			maxWidth='sm'>
 			<form
 				onSubmit={(e) => {
@@ -457,9 +455,10 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 								}}
 								InputProps={{ inputProps: { maxLength: 40 } }}
 								sx={{ flex: 3 }}
+								disabled={selectedEvent?.createdBy !== user?._id}
 							/>
 						</Tooltip>
-						{isAdmin && (
+						{isAdmin && selectedEvent?.createdBy === user?._id && (
 							<FormControlLabel
 								labelPlacement='start'
 								control={
@@ -527,6 +526,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 							InputProps={{ inputProps: { maxLength: 75 } }}
 							sx={{ flex: 3, mr: selectedEvent?.isPublic ? '1rem' : '0rem' }}
 							placeholder='Enter a description for the event (max 75 characters)'
+							disabled={selectedEvent?.createdBy !== user?._id}
 						/>
 						{selectedEvent?.isPublic && (
 							<FormControl sx={{ flex: 1, mb: '0.5rem' }}>
@@ -645,7 +645,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 										},
 									}}
 									sx={{ backgroundColor: '#fff', mr: '0.5rem' }}
-									disabled={selectedEvent?.isAllDay}
+									disabled={selectedEvent?.isAllDay || selectedEvent?.createdBy !== user?._id}
 									format={getDateTimeFormat(navigator.language)}
 								/>
 							</LocalizationProvider>
@@ -673,7 +673,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 										},
 									}}
 									sx={{ backgroundColor: '#fff' }}
-									disabled={selectedEvent?.isAllDay}
+									disabled={selectedEvent?.isAllDay || selectedEvent?.createdBy !== user?._id}
 									format={getDateTimeFormat(navigator.language)}
 								/>
 							</LocalizationProvider>
@@ -683,6 +683,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 							control={
 								<Checkbox
 									checked={selectedEvent?.isAllDay}
+									disabled={selectedEvent?.createdBy !== user?._id}
 									onChange={(e) => {
 										setIsEventUpdated(true);
 
@@ -742,6 +743,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 										}}>
 										<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>{attendee.username}</Typography>
 										<IconButton
+											disabled={selectedEvent?.createdBy !== user?._id}
 											onClick={() => {
 												setIsEventUpdated(true);
 												const updatedAttendees = selectedEvent.attendees?.filter((filteredAttendee) => attendee._id !== filteredAttendee._id) || [];
@@ -761,7 +763,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 						</Box>
 					)}
 
-					{!selectedEvent?.isPublic && (
+					{!selectedEvent?.isPublic && !isLearner && (
 						<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
 							<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'flex-start' }}>
 								<Box sx={{ flex: 3 }}>
@@ -775,7 +777,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 										onSelect={handleUserSelect}
 										currentUserId={user?.firebaseUserId}
 										placeholder={selectedEvent?.isAllLearnersSelected || selectedEvent?.isPublic ? '' : 'Search Learner'}
-										disabled={selectedEvent?.isAllLearnersSelected || selectedEvent?.isPublic}
+										disabled={selectedEvent?.isAllLearnersSelected || selectedEvent?.isPublic || selectedEvent?.createdBy !== user?._id}
 										selectedUserIds={selectedEvent?.attendees?.map((attendee) => attendee._id) || []}
 										sx={{
 											backgroundColor: selectedEvent?.isAllLearnersSelected || selectedEvent?.isPublic ? 'transparent' : '#fff',
@@ -786,7 +788,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 									<Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: '0.55rem' }}>
 										<FormControlLabel
 											labelPlacement='start'
-											disabled={selectedEvent?.isPublic}
+											disabled={selectedEvent?.isPublic || selectedEvent?.createdBy !== user?._id}
 											control={
 												<Checkbox
 													checked={selectedEvent?.isAllLearnersSelected}
@@ -859,6 +861,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 										}}>
 										<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>{truncateText(course?.title!, 20)}</Typography>
 										<IconButton
+											disabled={selectedEvent?.createdBy !== user?._id}
 											onClick={() => {
 												setIsEventUpdated(true);
 												const updatedCoursesIds = selectedEvent.coursesIds?.filter((filteredCourseId) => course?._id !== filteredCourseId) || [];
@@ -878,7 +881,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 						</Box>
 					)}
 
-					{!selectedEvent?.isPublic && (
+					{!selectedEvent?.isPublic && !isLearner && (
 						<Box
 							sx={{
 								display: 'flex',
@@ -900,7 +903,12 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 										placeholder={
 											selectedEvent?.isAllLearnersSelected || selectedEvent?.isAllCoursesSelected || selectedEvent?.isPublic ? '' : 'Search Course'
 										}
-										disabled={selectedEvent?.isAllLearnersSelected || selectedEvent?.isAllCoursesSelected || selectedEvent?.isPublic}
+										disabled={
+											selectedEvent?.isAllLearnersSelected ||
+											selectedEvent?.isAllCoursesSelected ||
+											selectedEvent?.isPublic ||
+											selectedEvent?.createdBy !== user?._id
+										}
 										selectedCourseIds={selectedEvent?.coursesIds || []}
 										sx={{
 											backgroundColor:
@@ -913,7 +921,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 								{isAdmin && (
 									<Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
 										<FormControlLabel
-											disabled={selectedEvent?.isAllLearnersSelected || selectedEvent?.isPublic}
+											disabled={selectedEvent?.isAllLearnersSelected || selectedEvent?.isPublic || selectedEvent?.createdBy !== user?._id}
 											labelPlacement='start'
 											control={
 												<Checkbox
@@ -976,6 +984,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 							setIsEventUpdated(true);
 						}}
 						required={false}
+						disabled={selectedEvent?.createdBy !== user?._id}
 					/>
 
 					<CustomTextField
@@ -996,6 +1005,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 						placeholder='Enter a location for the event (max 150 characters)'
 						multiline
 						rows={3}
+						disabled={selectedEvent?.createdBy !== user?._id}
 					/>
 				</DialogContent>
 				<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0 0.75rem' }}>
@@ -1012,6 +1022,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 							setIsEventUpdated(false);
 						}}
 						submitBtnText='Update'
+						disableBtn={selectedEvent?.createdBy !== user?._id}
 					/>
 				</Box>
 				<CustomDialog

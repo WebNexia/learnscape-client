@@ -8,6 +8,7 @@ export interface Event {
 	end: Date | null;
 	location: string;
 	createdBy: string;
+	createdByName?: string;
 	isActive: boolean;
 	eventLinkUrl: string;
 	isAllDay: boolean;

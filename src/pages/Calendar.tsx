@@ -38,7 +38,7 @@ const EventCalendar = () => {
 	const { sortedEventsData, fetchMonthEvents, loadedMonths, enableEventsFetch, isLoading } = useContext(EventsContext);
 	const { orgId } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
-	const { isInstructor, isAdmin } = useAuth();
+	const { isInstructor, isAdmin, isLearner } = useAuth();
 
 	const navigate = useNavigate();
 
@@ -106,13 +106,21 @@ const EventCalendar = () => {
 	useEffect(() => {
 		if (selectedEvent && selectedEvent._id) {
 			if (user?.role === Roles.USER) {
-				setEventDetailsModalOpen(true);
+				if (selectedEvent.createdBy === user?._id && (user?.hasRegisteredCourse || user?.isSubscribed)) {
+					setEditEventModalOpen(true);
+				} else {
+					setEventDetailsModalOpen(true);
+				}
 			} else if (isInstructor && !selectedEvent.isPublic) {
-				setEditEventModalOpen(true);
+				if (selectedEvent.createdBy === user?._id) {
+					setEditEventModalOpen(true);
+				} else {
+					setEventDetailsModalOpen(true);
+				}
 			} else if (isInstructor && selectedEvent.isPublic) {
 				setEventDetailsModalOpen(true);
 			} else {
-				setEditEventModalOpen;
+				setEditEventModalOpen(true);
 			}
 		}
 	}, [selectedEvent, user?.role]);
@@ -137,7 +145,7 @@ const EventCalendar = () => {
 	};
 
 	const handleSelectSlot = ({ start, end }: SlotInfo) => {
-		if (isAdmin || isInstructor) {
+		if (isAdmin || isInstructor || (isLearner && (user?.hasRegisteredCourse || user?.isSubscribed))) {
 			const isMonthView = start.getHours() === 0 && end.getHours() === 0;
 			const startTime = isMonthView ? new Date(start.setHours(16, 0, 0, 0)) : start;
 			const endTime = isMonthView ? new Date(start.setHours(17, 0, 0, 0)) : end;

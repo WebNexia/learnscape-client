@@ -77,7 +77,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 	const { users } = useContext(UsersContext);
 	const { courses } = useContext(CoursesContext);
 	const { addNewEvent } = useContext(EventsContext);
-	const { isAdmin } = useAuth();
+	const { isAdmin, isLearner } = useAuth();
 
 	// Dashboard sync for real-time updates
 	const { refreshDashboard } = useDashboardSync();
@@ -277,7 +277,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 
 		try {
 			// Use instructor route if user is instructor
-			const endpoint = user?.role === 'instructor' ? `${base_url}/events/instructor/` : `${base_url}/events`;
+			const endpoint = `${base_url}/events`;
 			const res = await axios.post(endpoint, event);
 
 			addNewEvent({ ...event, _id: res.data.data._id });
@@ -682,7 +682,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 						</Box>
 					)}
 
-					{!newEvent.isPublic && (
+					{!newEvent.isPublic && !isLearner && (
 						<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', mt: '0.5rem' }}>
 							<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'flex-start' }}>
 								<Box sx={{ flex: 3 }}>
@@ -784,7 +784,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 						</Box>
 					)}
 
-					{!newEvent.isPublic && (
+					{!newEvent.isPublic && !isLearner && (
 						<Box
 							sx={{
 								display: 'flex',
