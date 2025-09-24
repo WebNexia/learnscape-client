@@ -2,7 +2,6 @@ import { Box, Button, IconButton, Paper, Tooltip, Typography } from '@mui/materi
 import theme from '../../../../themes';
 import { useContext, useState } from 'react';
 import { UserAuthContext } from '../../../../contexts/UserAuthContextProvider';
-import { Roles } from '../../../../interfaces/enums';
 import { Delete, Edit, Flag, KeyboardBackspaceOutlined, Lock, LockOpenOutlined, Verified } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { TopicInfo } from '../../../../interfaces/communityMessage';
@@ -18,6 +17,7 @@ import { db } from '../../../../firebase';
 import { truncateText } from '../../../../utils/utilText';
 import { MediaQueryContext } from '../../../../contexts/MediaQueryContextProvider';
 import { useStickyPaper } from '../../../../hooks/useStickyPaper';
+import { useAuth } from '../../../../hooks/useAuth';
 
 interface TopicPaperProps {
 	refreshTopics: boolean;
@@ -37,8 +37,9 @@ const TopicPaper = ({ topic, setDisplayDeleteTopicMsg, setTopic, refreshTopics, 
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
+	const { isInstructor, isAdmin } = useAuth();
+
 	const navigate = useNavigate();
-	const isAdmin: boolean = user?.role === Roles.ADMIN;
 	const isTopicWriter: boolean = user?._id === topic?.userId?._id;
 
 	const { isSticky, paperRef } = useStickyPaper();
@@ -146,7 +147,8 @@ const TopicPaper = ({ topic, setDisplayDeleteTopicMsg, setTopic, refreshTopics, 
 				width: isSticky ? (isMobileSize ? '100%' : 'calc(100% - 10rem)') : '100%',
 				height: isSticky ? (isMobileSize ? '2.5rem' : '3rem') : isMobileSize ? '4rem' : '6rem',
 				marginTop: isSticky ? 0 : '1.5rem',
-				backgroundColor: !isAdmin ? theme.bgColor?.primary : theme.bgColor?.adminPaper,
+				backgroundColor:
+					!isAdmin && !isInstructor ? theme.bgColor?.primary : !isAdmin && isInstructor ? theme.bgColor?.instructorPaper : theme.bgColor?.adminPaper,
 				position: isSticky ? 'fixed' : 'relative',
 				top: isSticky ? (isMobileSize ? '3.5rem' : '4rem') : 'auto', // Assuming DashboardHeader height is 64px
 				left: isSticky ? (isMobileSize ? '0' : '10rem') : 'auto', // Align with main content area
@@ -190,6 +192,8 @@ const TopicPaper = ({ topic, setDisplayDeleteTopicMsg, setTopic, refreshTopics, 
 
 								if (isAdmin) {
 									navigate(`/admin/community`);
+								} else if (isInstructor) {
+									navigate(`/instructor/community`);
 								} else {
 									navigate(`/community`);
 								}

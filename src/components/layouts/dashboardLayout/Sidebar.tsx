@@ -255,8 +255,8 @@ const Sidebar = () => {
 							<SidebarBtn
 								btnText='Calendar'
 								IconName={CalendarMonth}
-								onClick={() => navigateWithPage(`/instructor/events`)}
-								active={currentPath?.includes('/instructor/events')}
+								onClick={() => navigateWithPage(`/instructor/calendar`)}
+								active={currentPath?.includes('/instructor/calendar')}
 							/>
 							<SidebarBtn
 								btnText='Messages'

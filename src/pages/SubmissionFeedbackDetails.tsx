@@ -1,6 +1,6 @@
 import { Box, IconButton, Typography } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
-import { useLocation, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useContext, useEffect, useState } from 'react';
 import { QuestionsContext } from '../contexts/QuestionsContextProvider';
 import axios from '@utils/axiosInstance';
@@ -37,8 +37,7 @@ const SubmissionFeedbackDetails = () => {
 	const [openQuestionFeedbackModal, setOpenQuestionFeedbackModal] = useState<boolean>(false);
 	const [currentResponseIndex, setCurrentResponseIndex] = useState<number>(0);
 
-	const { search } = useLocation();
-	const isChecked = new URLSearchParams(search).get('isChecked');
+	const [isChecked, setIsChecked] = useState<boolean>(false);
 
 	useEffect(() => {
 		const fetchData = async () => {
@@ -47,6 +46,8 @@ const SubmissionFeedbackDetails = () => {
 					axios.get(`${base_url}/userQuestions/userlesson/${userLessonId}`),
 					axios.get(`${base_url}/userlessons/${userLessonId}`),
 				]);
+
+				setIsChecked(lessonResponse.data.data[0].isFeedbackGiven);
 
 				const userCourseQuizData = quizResponse.data.response;
 				setUserResponseData(userCourseQuizData);
@@ -281,7 +282,7 @@ const SubmissionFeedbackDetails = () => {
 				{[
 					{ label: 'Quiz Name', value: quizName },
 					{ label: 'Course Name', value: courseName },
-					{ label: 'Status', value: isChecked === 'true' ? 'Checked' : 'Unchecked' },
+					{ label: 'Status', value: isChecked ? 'Checked' : 'Unchecked' },
 				]?.map(({ label, value }, index) => (
 					<Box key={index} sx={{ textAlign: 'center' }}>
 						<Typography variant='h6' sx={{ mb: '0.35rem', fontSize: isMobileSizeSmall ? '0.85rem' : undefined }}>

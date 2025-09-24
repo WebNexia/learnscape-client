@@ -96,7 +96,7 @@ const InstructorDashboard = () => {
 					</Grid>
 
 					{/* Upcoming Events (instructor's events + public events) */}
-					<Grid item sm={3} xs={6} onClick={() => navigate(`/instructor/events`)}>
+					<Grid item sm={3} xs={6} onClick={() => navigate(`/instructor/calendar`)}>
 						<UpcomingEvents dashboardEvents={dashboardData?.common.upcomingEvents} />
 					</Grid>
 

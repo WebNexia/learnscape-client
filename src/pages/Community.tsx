@@ -340,8 +340,12 @@ const Community = () => {
 							</Tooltip>
 						</Typography>
 					</Box>
-					<CustomDialog openModal={communityIntroModalOpen} closeModal={() => setCommunityIntroModalOpen(false)} maxWidth='sm'>
-						<DialogContent>
+					<CustomDialog
+						openModal={communityIntroModalOpen}
+						closeModal={() => setCommunityIntroModalOpen(false)}
+						maxWidth='sm'
+						title='Welcome to our Community'>
+						<DialogContent sx={{ padding: '2rem' }}>
 							<Typography
 								variant='body2'
 								sx={{ textAlign: 'justify', lineHeight: 1.6, mb: '0.75rem', fontSize: isMobileSize ? '0.7rem' : '0.85rem' }}>

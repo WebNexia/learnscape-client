@@ -61,11 +61,6 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 	}, [currentUserLessonData]);
 
 	useEffect(() => {
-		// React Query handles the initial fetch automatically
-		// No need to manually call fetchUserQuizSubmissions
-	}, []);
-
-	useEffect(() => {
 		if (sortedUserQuizSubmissionsData && sortedUserQuizSubmissionsData && sortedUserQuizSubmissionsData.length > 0) {
 			const isFeedbackGiven = sortedUserQuizSubmissionsData?.find((data) => data.lessonId === lesson._id)?.isChecked;
 

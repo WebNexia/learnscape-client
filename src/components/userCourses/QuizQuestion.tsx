@@ -162,8 +162,7 @@ const QuizQuestion = ({
 
 		setUserBlankValuePairsAfterSubmission(() => {
 			if (isLessonCompleted) {
-				const pairs: UserBlankValuePairAnswers[] =
-					userQuizAnswers?.find((data) => data.questionId == question._id)?.userBlankValuePairAnswers || [];
+				const pairs: UserBlankValuePairAnswers[] = userQuizAnswers?.find((data) => data.questionId == question._id)?.userBlankValuePairAnswers || [];
 				return pairs;
 			}
 			return [];
@@ -295,9 +294,10 @@ const QuizQuestion = ({
 				userLessonId,
 			};
 
-			// Send notifications to each instructor
-			for (const admin of adminUsers) {
-				const notificationRef = collection(db, 'notifications', admin.firebaseUserId, 'userNotifications');
+			// Send notification to course instructor if available
+			const courseInstructor = submissionResponse.data?.courseInstructor;
+			if (courseInstructor?.firebaseUserId) {
+				const notificationRef = collection(db, 'notifications', courseInstructor.firebaseUserId, 'userNotifications');
 				await addDoc(notificationRef, notificationData);
 			}
 		} catch (error) {

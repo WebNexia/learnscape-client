@@ -44,7 +44,7 @@ const AdminQuizSubmissionCheck = () => {
 	const navigate = useNavigate();
 
 	// Dashboard sync for real-time updates
-	const { refreshDashboard } = useDashboardSync();
+	const { refreshDashboard, refreshQuizSubmissions } = useDashboardSync();
 
 	const { search } = useLocation();
 	const isChecked = new URLSearchParams(search).get('isChecked');
@@ -248,7 +248,7 @@ const AdminQuizSubmissionCheck = () => {
 				});
 
 				// Trigger dashboard sync when quiz is checked
-				dashboardSyncHelpers.onQuizSubmitted(refreshDashboard);
+				dashboardSyncHelpers.onQuizSubmitted(refreshDashboard, refreshQuizSubmissions);
 			}
 
 			setDisplaySubmissionMsg(true);

@@ -560,14 +560,8 @@ const CommunityTopicPage = () => {
 		return () => window.removeEventListener('resize', handleResize);
 	}, []);
 
-	// Upload limit management
-	// Upload limit management - only for learners
-	const uploadLimitHook = user?.role === 'learner' ? useUploadLimit() : null;
-	const { getRemainingAudioUploads, getRemainingImageUploads, refreshUploadStats } = uploadLimitHook || {
-		getRemainingAudioUploads: () => 999,
-		getRemainingImageUploads: () => 999,
-		refreshUploadStats: () => Promise.resolve(),
-	};
+	// Upload limit management - for all roles
+	const { getRemainingAudioUploads, getRemainingImageUploads, getImageLimit, getAudioLimit, refreshUploadStats } = useUploadLimit();
 
 	// Progressive pagination handler
 	const handlePageChange = async (newPage: number) => {
@@ -1085,10 +1079,10 @@ const CommunityTopicPage = () => {
 												maxSessionAttempts={MAX_SESSION_ATTEMPTS}
 												onAudioUploadAttempt={() => setAudioUploadAttempts((prev) => prev + 1)}
 												recorderTitleDescription={
-													getRemainingAudioUploads() <= 0 && user?.role !== 'admin'
+													getRemainingAudioUploads() <= 0
 														? '(Daily limit reached. Resets everyday)'
-														: getRemainingAudioUploads() <= 5 && user?.role !== 'admin'
-															? '(' + getRemainingAudioUploads() + ' of 10 audio uploads remaining today)'
+														: getRemainingAudioUploads() <= 5
+															? '(' + getRemainingAudioUploads() + ' of ' + getAudioLimit() + ' audio uploads remaining today)'
 															: ''
 												}
 											/>
@@ -1175,15 +1169,15 @@ const CommunityTopicPage = () => {
 											imageFolderName='TopicMessageImages'
 											enterImageUrl={enterImageUrl}
 											setEnterImageUrl={setEnterImageUrl}
-											isImageUploadLimitReached={getRemainingImageUploads() <= 0 && user?.role !== 'admin'}
+											isImageUploadLimitReached={getRemainingImageUploads() <= 0}
 											imageUploadAttempts={imageUploadAttempts}
 											maxSessionAttempts={MAX_SESSION_ATTEMPTS}
 											onImageUploadAttempt={() => setImageUploadAttempts((prev) => prev + 1)}
 											labelDescription={
-												getRemainingImageUploads() <= 0 && user?.role !== 'admin'
+												getRemainingImageUploads() <= 0
 													? '(Daily limit reached. Resets everyday)'
-													: getRemainingImageUploads() <= 5 && user?.role !== 'admin'
-														? '(' + getRemainingImageUploads() + ' of 50 image uploads remaining today)'
+													: getRemainingImageUploads() <= 5
+														? '(' + getRemainingImageUploads() + ' of ' + getImageLimit() + ' image uploads remaining today)'
 														: ''
 											}
 										/>

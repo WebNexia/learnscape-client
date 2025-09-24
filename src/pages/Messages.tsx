@@ -335,17 +335,9 @@ const Messages = () => {
 		maxSizeInMB: 1,
 	});
 
-	// Upload limit management - only for learners
-	const uploadLimitHook = user?.role === 'learner' ? useUploadLimit() : null;
-	const { uploadInfo, checkCanUploadImage, checkCanUploadAudio, getRemainingImageUploads, getFormattedResetTime, refreshUploadStats } =
-		uploadLimitHook || {
-			uploadInfo: { imageUploadsRemaining: 999, audioUploadsRemaining: 999, imageUploadsUsed: 0, audioUploadsUsed: 0 },
-			checkCanUploadImage: () => true,
-			checkCanUploadAudio: () => true,
-			getRemainingImageUploads: () => 999,
-			getFormattedResetTime: () => '',
-			refreshUploadStats: () => Promise.resolve(),
-		};
+	// Upload limit management - for all roles
+	const { uploadInfo, checkCanUploadImage, checkCanUploadAudio, getRemainingImageUploads, getImageLimit, getFormattedResetTime, refreshUploadStats } =
+		useUploadLimit();
 
 	const handleEmojiSelect = useCallback((emoji: any) => {
 		setCurrentMessage((prevMessage) => prevMessage + emoji.native);
@@ -2439,6 +2431,7 @@ const Messages = () => {
 								isLargeImgMessageOpen={isLargeImgMessageOpen || false}
 								uploadInfo={uploadInfo}
 								getRemainingImageUploads={getRemainingImageUploads}
+								getImageLimit={getImageLimit}
 								getFormattedResetTime={getFormattedResetTime}
 								hasLeftParticipants={hasLeftParticipants}
 								onMessageChange={(e) => {

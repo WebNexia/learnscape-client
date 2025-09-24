@@ -15,7 +15,19 @@ export const useDashboardSync = () => {
 		queryClient.refetchQueries(['dashboardSummary']);
 	};
 
-	return { refreshDashboard };
+	const refreshQuizSubmissions = () => {
+		// Invalidate learner quiz submissions cache
+		queryClient.invalidateQueries(['learnerQuizSubmissions']);
+
+		// Invalidate admin/instructor quiz submissions cache
+		queryClient.invalidateQueries(['allAdminQuizSubmissions']);
+
+		// Also try to refetch immediately
+		queryClient.refetchQueries(['learnerQuizSubmissions']);
+		queryClient.refetchQueries(['allAdminQuizSubmissions']);
+	};
+
+	return { refreshDashboard, refreshQuizSubmissions };
 };
 
 /**
@@ -38,8 +50,9 @@ export const dashboardSyncHelpers = {
 	},
 
 	// Quiz related
-	onQuizSubmitted: (refreshDashboard: () => void) => {
+	onQuizSubmitted: (refreshDashboard: () => void, refreshQuizSubmissions: () => void) => {
 		refreshDashboard();
+		refreshQuizSubmissions();
 	},
 
 	// Event related

@@ -8,6 +8,7 @@ import { useSearch } from '../hooks/useSearch';
 import CustomSubmitButton from './forms/customButtons/CustomSubmitButton';
 import CustomDeleteButton from './forms/customButtons/CustomDeleteButton';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
+import CustomErrorMessage from './forms/customFields/CustomErrorMessage';
 
 interface UserSearchSelectProps {
 	value: string;
@@ -241,10 +242,8 @@ const UserSearchSelect: React.FC<UserSearchSelectProps> = ({
 
 			{/* Show "No users found" message */}
 			{noUserFound && value.trim() && !loading && !error && hasSearched && (
-				<Box sx={{ textAlign: 'center', margin: '1rem 0' }}>
-					<Typography variant='body2' sx={{ color: 'text.secondary', fontSize: isMobileSize ? '0.7rem' : '0.8rem' }}>
-						No users found matching your search.
-					</Typography>
+				<Box sx={{ textAlign: 'center', margin: '1rem 0 -1rem 0' }}>
+					<CustomErrorMessage sx={{ fontSize: isMobileSize ? '0.7rem' : '0.8rem' }}>No users found matching your search</CustomErrorMessage>
 				</Box>
 			)}
 

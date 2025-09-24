@@ -26,22 +26,11 @@ import CommunityMessagesContextProvider from './contexts/CommunityMessagesContex
 import EventsContextProvider from './contexts/EventsContextProvider';
 import AdminPublicEventsContextProvider from './contexts/AdminPublicEventsContextProvider';
 
-import { UserAuthContext } from './contexts/UserAuthContextProvider';
-import { useContext } from 'react';
-
 const queryClient = new QueryClient();
 
-// Conditional wrapper that only renders UploadLimitProvider for learners
+// UploadLimitProvider for all roles
 const ConditionalUploadLimitProvider = ({ children }: { children: React.ReactNode }) => {
-	const { user } = useContext(UserAuthContext);
-
-	// Only render UploadLimitProvider for learners
-	if (user?.role === 'learner') {
-		return <UploadLimitProvider>{children}</UploadLimitProvider>;
-	}
-
-	// For non-learners (admin, etc.), render children directly without UploadLimitProvider
-	return <>{children}</>;
+	return <UploadLimitProvider>{children}</UploadLimitProvider>;
 };
 
 function App() {

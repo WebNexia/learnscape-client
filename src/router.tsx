@@ -338,7 +338,7 @@ export const router = createBrowserRouter([
 				),
 			},
 			{
-				path: 'instructor/events',
+				path: 'instructor/calendar',
 				element: (
 					<InstructorRouteGuard>
 						<Calendar />

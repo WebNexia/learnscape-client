@@ -275,7 +275,7 @@ const CustomDrawer = ({ isDrawerOpen, setIsDrawerOpen }: CustomDrawerProps) => {
 									<SidebarBtn
 										btnText='Calendar'
 										IconName={CalendarMonth}
-										onClick={() => navigateWithPage(PageName.INSTRUCTOR_EVENTS, `/instructor/events`)}
+										onClick={() => navigateWithPage(PageName.INSTRUCTOR_EVENTS, `/instructor/calendar`)}
 										active={selectedPage === PageName.INSTRUCTOR_EVENTS}
 									/>
 									<SidebarBtn

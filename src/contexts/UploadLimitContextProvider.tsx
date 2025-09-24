@@ -83,49 +83,49 @@ export const UploadLimitProvider: React.FC<UploadLimitProviderProps> = ({ childr
 
 	// Check if user can upload audio
 	const checkCanUploadAudio = (): boolean => {
-		if (!uploadInfo || user?.role === 'admin') return true;
+		if (!uploadInfo) return true; // Allow if no data yet
 		return uploadInfo.audioUploads.remaining > 0;
 	};
 
 	// Check if user can upload images
 	const checkCanUploadImage = (): boolean => {
-		if (!uploadInfo || user?.role === 'admin') return true;
+		if (!uploadInfo) return true; // Allow if no data yet
 		return uploadInfo.imageUploads.remaining > 0;
 	};
 
 	// Get remaining audio uploads
 	const getRemainingAudioUploads = (): number => {
-		if (!uploadInfo || user?.role === 'admin') return 10;
+		if (!uploadInfo) return 0;
 		return uploadInfo.audioUploads.remaining;
 	};
 
 	// Get remaining image uploads
 	const getRemainingImageUploads = (): number => {
-		if (!uploadInfo || user?.role === 'admin') return 50;
+		if (!uploadInfo) return 0;
 		return uploadInfo.imageUploads.remaining;
 	};
 
 	// Get current audio count
 	const getCurrentAudioCount = (): number => {
-		if (!uploadInfo || user?.role === 'admin') return 0;
+		if (!uploadInfo) return 0;
 		return uploadInfo.audioUploads.currentCount;
 	};
 
 	// Get current image count
 	const getCurrentImageCount = (): number => {
-		if (!uploadInfo || user?.role === 'admin') return 0;
+		if (!uploadInfo) return 0;
 		return uploadInfo.imageUploads.currentCount;
 	};
 
 	// Get audio limit
 	const getAudioLimit = (): number => {
-		if (!uploadInfo || user?.role === 'admin') return 10;
+		if (!uploadInfo) return 0;
 		return uploadInfo.audioUploads.limit;
 	};
 
 	// Get image limit
 	const getImageLimit = (): number => {
-		if (!uploadInfo || user?.role === 'admin') return 50;
+		if (!uploadInfo) return 0;
 		return uploadInfo.imageUploads.limit;
 	};
 

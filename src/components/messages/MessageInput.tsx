@@ -22,6 +22,7 @@ interface MessageInputProps {
 	isLargeImgMessageOpen: boolean;
 	uploadInfo: any;
 	getRemainingImageUploads: () => number;
+	getImageLimit: () => number;
 	getFormattedResetTime: () => string;
 	onMessageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 	onImageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -44,7 +45,6 @@ const MessageInput = ({
 	isBlockedUser,
 	isBlockingUser,
 	activeChat,
-	user,
 	isMobileSize,
 	isRotatedMedium,
 	isVerySmallScreen,
@@ -52,6 +52,7 @@ const MessageInput = ({
 	isLargeImgMessageOpen,
 	uploadInfo,
 	getRemainingImageUploads,
+	getImageLimit,
 	getFormattedResetTime,
 	onMessageChange,
 	onImageChange,
@@ -69,8 +70,8 @@ const MessageInput = ({
 
 	return (
 		<>
-			{/* Upload limit info - only show for non-admin users */}
-			{uploadInfo && user?.role !== 'admin' && getRemainingImageUploads() <= 5 && (
+			{/* Upload limit info - show for all users when limit is low */}
+			{uploadInfo && getRemainingImageUploads() <= 5 && (
 				<Box
 					sx={{
 						display: 'flex',
@@ -88,7 +89,9 @@ const MessageInput = ({
 						zIndex: 10,
 					}}>
 					<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : undefined }}>
-						{getRemainingImageUploads() <= 0 ? `Daily limit reached` : `${getRemainingImageUploads()} of 50 image uploads remaining today`}
+						{getRemainingImageUploads() <= 0
+							? `Daily limit reached`
+							: `${getRemainingImageUploads()} of ${getImageLimit()} image uploads remaining today`}
 						{getRemainingImageUploads() > 0 && ` • Resets ${getFormattedResetTime()}`}
 					</Typography>
 				</Box>
@@ -105,7 +108,8 @@ const MessageInput = ({
 					isBlockedUser ||
 					isBlockingUser ||
 					!activeChat ||
-					(user?.role !== 'admin' && (!checkCanUploadImage() || !checkCanUploadAudio())) ||
+					!checkCanUploadImage() ||
+					!checkCanUploadAudio() ||
 					hasLeftParticipants(activeChat)
 				}
 			/>
@@ -117,7 +121,8 @@ const MessageInput = ({
 						isBlockedUser ||
 						isBlockingUser ||
 						!activeChat ||
-						(user?.role !== 'admin' && (!checkCanUploadImage() || !checkCanUploadAudio())) ||
+						!checkCanUploadImage() ||
+						!checkCanUploadAudio() ||
 						hasLeftParticipants(activeChat)
 					}
 					sx={{

@@ -106,10 +106,12 @@ const NotificationsBox = ({ showUnreadOnly }: NotificationsBoxProps) => {
 				const path =
 					user?.role === Roles.ADMIN
 						? `/admin/check-submission/submission/${note.submissionId}/lesson/${note.lessonId}/userlesson/${note.userLessonId}`
-						: `/submission-feedback/submission/${note.submissionId}/lesson/${note.lessonId}/userlesson/${note.userLessonId}`;
+						: user?.role === Roles.INSTRUCTOR
+							? `/instructor/check-submission/submission/${note.submissionId}/lesson/${note.lessonId}/userlesson/${note.userLessonId}`
+							: `/submission-feedback/submission/${note.submissionId}/lesson/${note.lessonId}/userlesson/${note.userLessonId}`;
 				navigate(path);
 			} else if (note.type === NotificationType.MESSAGE_RECEIVED) {
-				navigate(`${user?.role !== Roles.ADMIN ? '' : '/admin'}/messages`);
+				navigate(`${user?.role === Roles.ADMIN ? '/admin' : user?.role === Roles.INSTRUCTOR ? '/instructor' : ''}/messages`);
 			} else if (note.type === NotificationType.REPORT_TOPIC && user?.role === Roles.ADMIN) {
 				navigate(`/admin/community/topic/${note.communityTopicId}`);
 			} else if (
@@ -119,26 +121,34 @@ const NotificationsBox = ({ showUnreadOnly }: NotificationsBoxProps) => {
 				note.type === NotificationType.REPORT_MESSAGE ||
 				note.type === NotificationType.COMMUNITY_NOTIFICATION
 			) {
-				const response = await axios.get(`${base_url}/communityMessages/message/${note.communityMessageId}?limit=30`);
-				const { page } = response.data;
-				const basePath = user?.role === Roles.ADMIN ? '/admin' : '';
-				navigate(`${basePath}/community/topic/${note.communityTopicId}?page=${page}&messageId=${note.communityMessageId}`);
+				try {
+					const response = await axios.get(`${base_url}/communityMessages/message/${note.communityMessageId}?limit=250`);
+					const { page } = response.data;
+					const basePath = user?.role === Roles.ADMIN ? '/admin' : user?.role === Roles.INSTRUCTOR ? '/instructor' : '';
+					navigate(`${basePath}/community/topic/${note.communityTopicId}?page=${page}&messageId=${note.communityMessageId}`);
+				} catch (error) {
+					console.error('Error fetching message page:', error);
+					// Fallback: navigate to topic without specific page/message
+					const basePath = user?.role === Roles.ADMIN ? '/admin' : user?.role === Roles.INSTRUCTOR ? '/instructor' : '';
+					navigate(`${basePath}/community/topic/${note.communityTopicId}`);
+				}
 			} else if (note.type === NotificationType.NEW_COMMUNITY_TOPIC) {
-				navigate(`${user?.role !== Roles.ADMIN ? '' : '/admin'}/community/topic/${note.communityTopicId}`);
-			} else if (note.type === NotificationType.ADD_TO_EVENT) {
+				navigate(
+					`${user?.role === Roles.ADMIN ? '/admin' : user?.role === Roles.INSTRUCTOR ? '/instructor' : ''}/community/topic/${note.communityTopicId}`
+				);
+			} else if (note.type === NotificationType.ADD_TO_EVENT || note.type === NotificationType.PUBLIC_EVENT) {
 				// Only refresh calendar data if notification is unread
 				if (!note.isRead) {
 					await refreshCalendarData();
 				}
 				// Navigate to calendar
-				navigate(`/calendar`);
-			} else if (note.type === NotificationType.PUBLIC_EVENT) {
-				// Only refresh calendar data if notification is unread
-				if (!note.isRead) {
-					await refreshCalendarData();
+				if (user?.role === Roles.ADMIN) {
+					navigate(`/admin/calendar`);
+				} else if (user?.role === Roles.INSTRUCTOR) {
+					navigate(`/instructor/calendar`);
+				} else {
+					navigate(`/calendar`);
 				}
-				// Navigate to calendar
-				navigate(`/calendar`);
 			}
 
 			// Update local state only if notification was unread
