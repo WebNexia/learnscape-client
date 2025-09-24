@@ -97,6 +97,15 @@ const EventCourseSearchSelect = forwardRef<any, EventCourseSearchSelectProps>(
 						placeholder={placeholder}
 						disabled={disabled || loading}
 						InputProps={{
+							onKeyDown: (e) => {
+								if (e.key === 'Enter') {
+									e.preventDefault();
+									e.stopPropagation();
+									if (value.trim() && !disabled && !loading) {
+										handleSearch();
+									}
+								}
+							},
 							endAdornment: (
 								<InputAdornment position='end'>
 									{loading ? <CircularProgress size={20} sx={{ mr: '-0.5rem' }} /> : <Search sx={{ mr: '-0.5rem' }} fontSize='small' />}
@@ -149,7 +158,7 @@ const EventCourseSearchSelect = forwardRef<any, EventCourseSearchSelectProps>(
 							width: isMobileSize ? '60%' : '70%',
 							maxHeight: '15rem',
 							overflow: 'auto',
-							margin: '-0.8rem 0 1.5rem -10rem',
+							margin: '-0.8rem 0 1.5rem -8rem',
 							border: 'solid 0.05rem lightgray',
 							mb: showLoadMore ? '1rem' : '3rem',
 							...listSx,

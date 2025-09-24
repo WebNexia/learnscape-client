@@ -108,6 +108,15 @@ const EventUserSearchSelect = forwardRef<any, EventUserSearchSelectProps>(
 						placeholder={placeholder}
 						disabled={disabled || loading}
 						InputProps={{
+							onKeyDown: (e) => {
+								if (e.key === 'Enter') {
+									e.preventDefault();
+									e.stopPropagation();
+									if (value.trim() && !disabled && !loading) {
+										handleSearch();
+									}
+								}
+							},
 							endAdornment: (
 								<InputAdornment position='end'>
 									{loading ? <CircularProgress size={20} sx={{ mr: '-0.5rem' }} /> : <Search sx={{ mr: '-0.5rem' }} fontSize='small' />}
