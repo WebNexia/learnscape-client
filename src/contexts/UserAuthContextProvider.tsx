@@ -62,6 +62,8 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 			navigate('/admin/dashboard', { replace: true });
 		} else if (isOnAuthPage && user?.role === Roles.USER) {
 			navigate('/dashboard', { replace: true });
+		} else if (isOnAuthPage && user?.role === Roles.INSTRUCTOR) {
+			navigate('/instructor/dashboard', { replace: true });
 		}
 	}, [user, navigate]);
 
@@ -154,7 +156,7 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 				queryClient.setQueryData('userData', userData);
 
 				// Load user course and lesson data for non-admin users
-				if (userData.role !== Roles.ADMIN) {
+				if (userData.role === Roles.USER) {
 					try {
 						// Load user course data
 						const userCourseResponse = await axios.get(`${base_url}/usercourses/user/${userData._id}`);

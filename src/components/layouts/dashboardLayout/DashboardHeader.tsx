@@ -167,9 +167,11 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 					backgroundColor:
 						user?.role === Roles.ADMIN
 							? theme.bgColor?.adminHeader
-							: user?.role === Roles.USER
-								? theme.bgColor?.lessonInProgress
-								: theme.bgColor?.adminHeader,
+							: user?.role === Roles.INSTRUCTOR
+								? theme.bgColor?.instructorHeader
+								: user?.role === Roles.USER
+									? theme.bgColor?.lessonInProgress
+									: theme.bgColor?.adminHeader,
 					padding: isVerySmallScreen || isRotated ? '0 0.5rem 0 0.25rem' : '0 0rem',
 					position: 'relative',
 				}}>
@@ -191,7 +193,7 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 
 				<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
 					{/* Subscribe/Unsubscribe Button */}
-					{user?.role !== Roles.ADMIN && !user?.hasRegisteredCourse && (
+					{user?.role === Roles.USER && !user?.hasRegisteredCourse && (
 						<>
 							{!hasActiveSubscription(user) ? (
 								<Button

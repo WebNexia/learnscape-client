@@ -15,6 +15,8 @@ import { CoursesContext } from '../../contexts/CoursesContextProvider';
 import { dateTimeFormatter } from '@utils/dateFormatter';
 import { useStickyPaper } from '../../hooks/useStickyPaper';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
+import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
+import { Roles } from '../../interfaces/enums';
 
 interface CoursePaperProps {
 	singleCourse?: SingleCourse;
@@ -66,6 +68,8 @@ const CoursePaper = ({
 	const { addNewCourse } = useContext(CoursesContext);
 
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+
+	const { user } = useContext(UserAuthContext);
 
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
@@ -121,7 +125,7 @@ const CoursePaper = ({
 				width: isSticky ? (isMobileSize ? '100%' : 'calc(100% - 10rem)') : '100%',
 				height: isSticky ? '3rem' : '6rem',
 				marginTop: isSticky ? 0 : '1.25rem',
-				backgroundColor: theme.bgColor?.adminPaper,
+				backgroundColor: user?.role === Roles.ADMIN ? theme.bgColor?.adminPaper : theme.bgColor?.instructorPaper,
 				position: isSticky ? 'fixed' : 'relative',
 				top: isSticky ? (isMobileSize ? '3.5rem' : '4rem') : 'auto', // Assuming DashboardHeader height is 64px
 				left: isSticky ? (isMobileSize ? '0' : '10rem') : 'auto', // Align with main content area
@@ -161,7 +165,11 @@ const CoursePaper = ({
 								'fontSize': isSticky ? { xs: '0.7rem', sm: '0.8rem' } : undefined,
 							}}
 							onClick={() => {
-								navigate(`/admin/courses`);
+								if (user?.role === Roles.ADMIN) {
+									navigate(`/admin/courses`);
+								} else {
+									navigate(`/instructor/courses`);
+								}
 								window.scrollTo({ top: 0, behavior: 'smooth' });
 							}}>
 							{isSticky ? 'Courses' : 'Back to courses'}
@@ -286,15 +294,17 @@ const CoursePaper = ({
 									</Box>
 								) : (
 									<Box sx={{ ml: '1rem' }}>
-										<CustomSubmitButton
-											sx={{
-												visibility: isEditMode ? 'hidden' : 'visible',
-												padding: '0 0.75rem',
-												fontSize: isSticky ? (isMobileSize ? '0.6rem' : '0.75rem') : undefined,
-											}}
-											onClick={handlePublishing}>
-											{singleCourseBeforeSave?.isActive ? 'Unpublish' : 'Publish'}
-										</CustomSubmitButton>
+										{user?.role === Roles.ADMIN && (
+											<CustomSubmitButton
+												sx={{
+													visibility: isEditMode ? 'hidden' : 'visible',
+													padding: '0 0.75rem',
+													fontSize: isSticky ? (isMobileSize ? '0.6rem' : '0.75rem') : undefined,
+												}}
+												onClick={handlePublishing}>
+												{singleCourseBeforeSave?.isActive ? 'Unpublish' : 'Publish'}
+											</CustomSubmitButton>
+										)}
 										{!singleCourseBeforeSave?.isExpired ? (
 											<Tooltip title='Edit Course' placement='top' arrow>
 												<IconButton

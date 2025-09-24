@@ -51,7 +51,12 @@ const CustomDrawer = ({ isDrawerOpen, setIsDrawerOpen }: CustomDrawerProps) => {
 					alignItems: 'center',
 					width: '8.5rem',
 					minHeight: '100vh',
-					backgroundColor: user?.role === Roles.ADMIN ? theme.bgColor?.adminSidebar : theme.palette.primary.main,
+					backgroundColor:
+						user?.role === Roles.ADMIN
+							? theme.bgColor?.adminSidebar
+							: user?.role === Roles.INSTRUCTOR
+								? theme.bgColor?.instructorSidebar
+								: theme.palette.primary.main,
 					position: 'fixed',
 					left: 0,
 					zIndex: 10,
@@ -226,6 +231,70 @@ const CustomDrawer = ({ isDrawerOpen, setIsDrawerOpen }: CustomDrawerProps) => {
 										IconName={Settings}
 										onClick={() => navigateWithPage(PageName.SETTINGS, `/settings`)}
 										active={selectedPage === PageName.SETTINGS}
+									/>
+								</>
+							)}
+							{user?.role === Roles.INSTRUCTOR && (
+								<>
+									<SidebarBtn
+										btnText='Dashboard'
+										IconName={DashboardIcon}
+										onClick={() => navigateWithPage(PageName.INSTRUCTOR_DASHBOARD, `/instructor/dashboard`)}
+										active={selectedPage === PageName.INSTRUCTOR_DASHBOARD}
+									/>
+									<SidebarBtn
+										btnText='Courses'
+										IconName={LibraryBooks}
+										onClick={() => navigateWithPage(PageName.INSTRUCTOR_COURSES, `/instructor/courses`)}
+										active={selectedPage === PageName.INSTRUCTOR_COURSES}
+									/>
+									<SidebarBtn
+										btnText='Lessons'
+										IconName={AssignmentIndRounded}
+										onClick={() => navigateWithPage(PageName.INSTRUCTOR_LESSONS, `/instructor/lessons`)}
+										active={selectedPage === PageName.INSTRUCTOR_LESSONS}
+									/>
+									<SidebarBtn
+										btnText='Questions'
+										IconName={QuizOutlined}
+										onClick={() => navigateWithPage(PageName.INSTRUCTOR_QUESTIONS, `/instructor/questions`)}
+										active={selectedPage === PageName.INSTRUCTOR_QUESTIONS}
+									/>
+									<SidebarBtn
+										btnText='Documents'
+										IconName={FilePresent}
+										onClick={() => navigateWithPage(PageName.INSTRUCTOR_DOCUMENTS, `/instructor/documents`)}
+										active={selectedPage === PageName.INSTRUCTOR_DOCUMENTS}
+									/>
+									<SidebarBtn
+										btnText='Submissions'
+										IconName={LibraryAddCheck}
+										onClick={() => navigateWithPage(PageName.INSTRUCTOR_SUBMISSIONS, `/instructor/submissions`)}
+										active={selectedPage === PageName.INSTRUCTOR_SUBMISSIONS}
+									/>
+									<SidebarBtn
+										btnText='Calendar'
+										IconName={CalendarMonth}
+										onClick={() => navigateWithPage(PageName.INSTRUCTOR_EVENTS, `/instructor/calendar`)}
+										active={selectedPage === PageName.INSTRUCTOR_EVENTS}
+									/>
+									<SidebarBtn
+										btnText='Messages'
+										IconName={Email}
+										onClick={() => navigateWithPage(PageName.INSTRUCTOR_MESSAGES, `/instructor/messages`)}
+										active={selectedPage === PageName.INSTRUCTOR_MESSAGES}
+									/>
+									<SidebarBtn
+										btnText='Community'
+										IconName={Groups}
+										onClick={() => navigateWithPage(PageName.INSTRUCTOR_COMMUNITY, `/instructor/community`)}
+										active={selectedPage === PageName.INSTRUCTOR_COMMUNITY}
+									/>
+									<SidebarBtn
+										btnText='Settings'
+										IconName={Settings}
+										onClick={() => navigateWithPage(PageName.INSTRUCTOR_SETTINGS, `/instructor/settings`)}
+										active={selectedPage === PageName.INSTRUCTOR_SETTINGS}
 									/>
 								</>
 							)}

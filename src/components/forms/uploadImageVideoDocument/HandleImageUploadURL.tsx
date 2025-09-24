@@ -118,7 +118,7 @@ const HandleImageUploadURL = ({
 						{labelDescription && <span style={{ color: 'gray', fontSize: '0.75rem', marginLeft: '0.25rem' }}>{labelDescription}</span>}
 					</Typography>
 					<Box sx={{ display: 'flex', alignItems: 'center' }}>
-						{user?.role === 'admin' && (
+						{user?.role !== 'learner' && (
 							<>
 								<Box>
 									<Typography
@@ -146,7 +146,7 @@ const HandleImageUploadURL = ({
 						)}
 					</Box>
 				</Box>
-				{((!enterImageUrl && user?.role === 'admin') || user?.role !== 'admin') &&
+				{((!enterImageUrl && user?.role !== 'learner') || user?.role === 'learner') &&
 					!isImageUploadLimitReached &&
 					imageUploadAttempts < maxSessionAttempts && (
 						<Box sx={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -188,7 +188,7 @@ const HandleImageUploadURL = ({
 					</CustomErrorMessage>
 				)}
 
-				{enterImageUrl && user?.role === 'admin' && (
+				{enterImageUrl && user?.role !== 'learner' && (
 					<CustomTextField
 						disabled={disabled}
 						placeholder='Image URL'

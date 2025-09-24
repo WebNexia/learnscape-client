@@ -52,9 +52,19 @@ export interface LearnerData {
 	lessonTimeline: UserTimeline;
 }
 
+export interface InstructorData {
+	totalCourses: number;
+	totalUsers: number;
+	userTimeline: UserTimeline;
+	courseEnrollments: {
+		labels: string[];
+		data: number[];
+	};
+}
+
 export interface DashboardSummaryData {
 	common: CommonData;
-	roleSpecific: AdminData | LearnerData;
+	roleSpecific: AdminData | LearnerData | InstructorData;
 }
 
 /**

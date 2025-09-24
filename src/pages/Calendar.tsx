@@ -20,6 +20,7 @@ import EditEventDialog from '../components/layouts/calendar/EditEventDialog';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 
 const locales = {
 	'en-US': enUS,
@@ -37,6 +38,7 @@ const EventCalendar = () => {
 	const { sortedEventsData, fetchMonthEvents, loadedMonths, enableEventsFetch, isLoading } = useContext(EventsContext);
 	const { orgId } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
+	const { isInstructor, isAdmin, isLearner } = useAuth();
 
 	const navigate = useNavigate();
 
@@ -104,6 +106,18 @@ const EventCalendar = () => {
 	useEffect(() => {
 		if (selectedEvent && selectedEvent._id) {
 			if (user?.role === Roles.USER) {
+				if (selectedEvent.createdBy === user?._id && (user?.hasRegisteredCourse || user?.isSubscribed)) {
+					setEditEventModalOpen(true);
+				} else {
+					setEventDetailsModalOpen(true);
+				}
+			} else if (isInstructor && !selectedEvent.isPublic) {
+				if (selectedEvent.createdBy === user?._id) {
+					setEditEventModalOpen(true);
+				} else {
+					setEventDetailsModalOpen(true);
+				}
+			} else if (isInstructor && selectedEvent.isPublic) {
 				setEventDetailsModalOpen(true);
 			} else {
 				setEditEventModalOpen(true);
@@ -131,7 +145,7 @@ const EventCalendar = () => {
 	};
 
 	const handleSelectSlot = ({ start, end }: SlotInfo) => {
-		if (user?.role === Roles.ADMIN) {
+		if (isAdmin || isInstructor || (isLearner && (user?.hasRegisteredCourse || user?.isSubscribed))) {
 			const isMonthView = start.getHours() === 0 && end.getHours() === 0;
 			const startTime = isMonthView ? new Date(start.setHours(16, 0, 0, 0)) : start;
 			const endTime = isMonthView ? new Date(start.setHours(17, 0, 0, 0)) : end;
@@ -178,7 +192,7 @@ const EventCalendar = () => {
 		<AdminPageErrorBoundary pageName='Calendar'>
 			<DashboardPagesLayout pageName='Calendar' showCopyRight={true}>
 				<Box sx={{ display: 'flex', flexDirection: 'column', padding: isMobileSize ? '1rem' : '1rem 2rem 2rem 2rem' }}>
-					{user?.role === Roles.ADMIN && (
+					{isAdmin && (
 						<Box sx={{ display: 'flex', width: '100%', justifyContent: 'flex-end' }}>
 							<CustomSubmitButton sx={{ width: 'fit-content', marginBottom: '1rem' }} onClick={() => navigate(`/admin/calendar/public-events`)}>
 								Public Events

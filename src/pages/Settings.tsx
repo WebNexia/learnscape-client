@@ -32,7 +32,7 @@ const Settings = () => {
 	const { isSmallScreen, isRotatedMedium, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
-	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(user?.role === 'admin' ? true : false);
+	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(user?.role === 'admin' || user?.role === 'instructor' ? true : false);
 	const [username, setUsername] = useState<string>(user?.username || '');
 	const [imageUrl, setImageUrl] = useState<string>(user?.imageUrl || '');
 	const [firstName, setFirstName] = useState<string>(user?.firstName || '');

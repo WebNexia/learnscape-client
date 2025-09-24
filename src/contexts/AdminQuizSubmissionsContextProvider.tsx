@@ -41,9 +41,19 @@ const AdminQuizSubmissionsContextProvider = ({ children }: AdminQuizSubmissionsC
 	const location = useLocation();
 
 	const isAdminRoute = location.pathname.startsWith('/admin');
+	const isInstructorRoute = location.pathname.startsWith('/instructor');
+	const isInstructor = user?.role === 'instructor';
 
 	// Lazy loading state
 	const [isEnabled, setIsEnabled] = useState<boolean>(true); // Start enabled to prevent flash
+
+	// Determine the correct API endpoint based on user role
+	const getApiEndpoint = () => {
+		if (isInstructor) {
+			return `${base_url}/quizsubmissions/instructor/organisation/${orgId}`;
+		}
+		return `${base_url}/quizsubmissions/organisation/${orgId}`;
+	};
 
 	const {
 		data: quizSubmissions,
@@ -61,9 +71,9 @@ const AdminQuizSubmissionsContextProvider = ({ children }: AdminQuizSubmissionsC
 		fetchMoreEntities: fetchMoreQuizSubmissions,
 	} = usePaginatedEntity<QuizSubmission>({
 		orgId,
-		baseUrl: `${base_url}/quizsubmissions/organisation/${orgId}`,
+		baseUrl: getApiEndpoint(),
 		entityKey: 'allAdminQuizSubmissions',
-		enabled: isEnabled && isAuthenticated && isAdmin && isAdminRoute,
+		enabled: isEnabled && isAuthenticated && (isAdmin || isInstructor) && (isAdminRoute || isInstructorRoute),
 		role: user?.role as Roles,
 		staleTime: user?.role !== Roles.USER ? 0 : 5 * 60 * 1000,
 		cacheTime: 30 * 60 * 1000,

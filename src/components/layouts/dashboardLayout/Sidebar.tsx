@@ -42,7 +42,12 @@ const Sidebar = () => {
 				alignItems: 'center',
 				width: '10rem',
 				minHeight: '100vh',
-				backgroundColor: user?.role === Roles.ADMIN ? theme.bgColor?.adminSidebar : theme.palette.primary.main,
+				backgroundColor:
+					user?.role === Roles.ADMIN
+						? theme.bgColor?.adminSidebar
+						: user?.role === Roles.INSTRUCTOR
+							? theme.bgColor?.instructorSidebar
+							: theme.palette.primary.main,
 				position: 'fixed',
 				left: 0,
 				zIndex: 10,
@@ -206,6 +211,70 @@ const Sidebar = () => {
 								IconName={Settings}
 								onClick={() => navigateWithPage(`/settings`)}
 								active={currentPath?.includes('/settings')}
+							/>
+						</>
+					)}
+					{user?.role === Roles.INSTRUCTOR && (
+						<>
+							<SidebarBtn
+								btnText='Dashboard'
+								IconName={DashboardIcon}
+								onClick={() => navigateWithPage(`/instructor/dashboard`)}
+								active={currentPath?.includes('/instructor/dashboard')}
+							/>
+							<SidebarBtn
+								btnText='Courses'
+								IconName={LibraryBooks}
+								onClick={() => navigateWithPage(`/instructor/courses`)}
+								active={currentPath?.includes('/instructor/courses')}
+							/>
+							<SidebarBtn
+								btnText='Lessons'
+								IconName={AssignmentIndRounded}
+								onClick={() => navigateWithPage(`/instructor/lessons`)}
+								active={currentPath?.includes('/instructor/lessons')}
+							/>
+							<SidebarBtn
+								btnText='Questions'
+								IconName={QuizOutlined}
+								onClick={() => navigateWithPage(`/instructor/questions`)}
+								active={currentPath?.includes('/instructor/questions')}
+							/>
+							<SidebarBtn
+								btnText='Documents'
+								IconName={FilePresent}
+								onClick={() => navigateWithPage(`/instructor/documents`)}
+								active={currentPath?.includes('/instructor/documents')}
+							/>
+							<SidebarBtn
+								btnText='Submissions'
+								IconName={LibraryAddCheck}
+								onClick={() => navigateWithPage(`/instructor/submissions`)}
+								active={currentPath?.includes('/instructor/submissions')}
+							/>
+							<SidebarBtn
+								btnText='Calendar'
+								IconName={CalendarMonth}
+								onClick={() => navigateWithPage(`/instructor/calendar`)}
+								active={currentPath?.includes('/instructor/calendar')}
+							/>
+							<SidebarBtn
+								btnText='Messages'
+								IconName={Email}
+								onClick={() => navigateWithPage(`/instructor/messages`)}
+								active={currentPath?.includes('/instructor/messages')}
+							/>
+							<SidebarBtn
+								btnText='Community'
+								IconName={Groups}
+								onClick={() => navigateWithPage(`/instructor/community`)}
+								active={currentPath?.includes('/instructor/community')}
+							/>
+							<SidebarBtn
+								btnText='Settings'
+								IconName={Settings}
+								onClick={() => navigateWithPage(`/instructor/settings`)}
+								active={currentPath?.includes('/instructor/settings')}
 							/>
 						</>
 					)}

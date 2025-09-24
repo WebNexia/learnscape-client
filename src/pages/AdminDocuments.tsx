@@ -42,12 +42,14 @@ import theme from '../themes';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 import { validateDocumentUrl, validateImageUrl } from '../utils/urlValidation';
 import CustomDeleteButton from '../components/forms/customButtons/CustomDeleteButton';
+import { useAuth } from '../hooks/useAuth';
 
 const AdminDocuments = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
 	const { orgId } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
+	const { isInstructor } = useAuth();
 	const location = useLocation();
 
 	const {
@@ -319,7 +321,10 @@ const AdminDocuments = () => {
 	// Show loading state while documents are being fetched or when data is empty and not loading yet
 	if (loading) {
 		return (
-			<DashboardPagesLayout pageName='Documents' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
+			<DashboardPagesLayout
+				pageName={isInstructor ? 'My Documents' : 'Documents'}
+				customSettings={{ justifyContent: 'flex-start' }}
+				showCopyRight={true}>
 				<AdminTableSkeleton rows={8} columns={5} />
 			</DashboardPagesLayout>
 		);
@@ -386,7 +391,7 @@ const AdminDocuments = () => {
 				{ currency: 'try', amount: isFree ? 'Free' : TRY.amount },
 			];
 
-			const documentResponse = await axios.post(`${base_url}/documents`, {
+			const documentResponse = await axios.post(`${base_url}/documents${isInstructor ? '/instructor' : ''}`, {
 				name: singleDocument?.name.trim(),
 				documentUrl: singleDocument?.documentUrl,
 				userId: user?._id,
@@ -495,7 +500,7 @@ const AdminDocuments = () => {
 					pageCount: singleDocument.pageCount || 0,
 				};
 
-				const response = await axios.patch(`${base_url}/documents/${singleDocument._id}`, updateData);
+				const response = await axios.patch(`${base_url}/documents${isInstructor ? '/instructor' : ''}/${singleDocument._id}`, updateData);
 
 				if (!response.data || !response.data.data) {
 					throw new Error('Invalid response format from server');
@@ -543,7 +548,7 @@ const AdminDocuments = () => {
 
 	const deleteDocument = async (documentId: string): Promise<void> => {
 		try {
-			const response = await axios.delete(`${base_url}/documents/${documentId}`);
+			const response = await axios.delete(`${base_url}/documents${isInstructor ? '/instructor' : ''}/${documentId}`);
 
 			// Only remove from frontend state if the backend request was successful
 			if (response.data.status === 200) {
@@ -632,8 +637,11 @@ const AdminDocuments = () => {
 	};
 
 	return (
-		<AdminPageErrorBoundary pageName='Documents'>
-			<DashboardPagesLayout pageName='Documents' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
+		<AdminPageErrorBoundary pageName={isInstructor ? 'My Documents' : 'Documents'}>
+			<DashboardPagesLayout
+				pageName={isInstructor ? 'My Documents' : 'Documents'}
+				customSettings={{ justifyContent: 'flex-start' }}
+				showCopyRight={true}>
 				<Box sx={{ width: '100%', height: '100%' }}>
 					<Box
 						sx={{

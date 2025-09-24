@@ -8,15 +8,15 @@ interface ExtendedThemeOptions extends ThemeOptions {
 		color?: string;
 	};
 	submitBtn?: {
-		backgroundColor?: string;
-		marginTop?: string;
-		fontWeight?: number;
+		'backgroundColor'?: string;
+		'marginTop'?: string;
+		'fontWeight'?: number;
 		':hover': {
 			backgroundColor?: string;
 			color?: string;
 			border?: string;
 		};
-		textTransform: string;
+		'textTransform': string;
 	};
 	textColor?: {
 		primary: {
@@ -46,6 +46,10 @@ interface ExtendedThemeOptions extends ThemeOptions {
 		adminHeader: string;
 		adminPaper: string;
 		adminSubmitBtn: string;
+		instructorSidebar: string;
+		instructorHeader: string;
+		instructorPaper: string;
+		instructorSubmitBtn: string;
 		primary: string;
 		secondary: string;
 		lessonInProgress: string;
@@ -132,16 +136,16 @@ const theme = createTheme({
 		color: '#01435A',
 	},
 	submitBtn: {
-		fontFamily: 'Varela Round',
-		backgroundColor: '#1EC28B',
-		marginTop: '1.25rem',
-		fontWeight: 500,
+		'fontFamily': 'Varela Round',
+		'backgroundColor': '#1EC28B',
+		'marginTop': '1.25rem',
+		'fontWeight': 500,
 		':hover': {
 			backgroundColor: '#FDF7F0',
 			color: '#1EC28B',
 			border: 'solid #1EC28B',
 		},
-		textTransform: 'capitalize',
+		'textTransform': 'capitalize',
 	},
 	textColor: {
 		primary: {
@@ -177,6 +181,10 @@ const theme = createTheme({
 		adminHeader: '#009694',
 		adminPaper: '#007270',
 		adminSubmitBtn: '#009694',
+		instructorSidebar: '#0D3562',
+		instructorHeader: '#1C4F8B',
+		instructorPaper: '#0D3562',
+		instructorSubmitBtn: '#1D4ED8',
 		primary: '#01435A',
 		secondary: '#FDF7F0',
 		lessonInProgress: '#4D7B8B',

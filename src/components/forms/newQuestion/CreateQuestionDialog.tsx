@@ -23,6 +23,8 @@ import theme from '../../../themes';
 import { BlankValuePair, QuestionInterface } from '../../../interfaces/question';
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
 import { generateUniqueId } from '../../../utils/uniqueIdGenerator';
+import { useAuth } from '../../../hooks/useAuth';
+import { Roles } from '../../../interfaces/enums';
 
 import { QuestionsContext } from '../../../contexts/QuestionsContextProvider';
 import CustomErrorMessage from '../customFields/CustomErrorMessage';
@@ -106,6 +108,10 @@ const CreateQuestionDialog = ({
 	const { addNewQuestion, questionTypes } = useContext(QuestionsContext);
 	const { resetImageUpload } = useImageUpload();
 	const { resetVideoUpload } = useVideoUpload();
+	const { user } = useAuth();
+
+	// Role detection
+	const isInstructor = user?.role === Roles.INSTRUCTOR;
 
 	const editorId = generateUniqueId('editor-');
 	const editorRef = useRef<any>(null);
@@ -229,7 +235,7 @@ const CreateQuestionDialog = ({
 	const createQuestion = async () => {
 		try {
 			const questionTypeId = questionTypes?.find((type) => type.name === questionType)?._id || '';
-			const response = await axios.post(`${base_url}/questions`, {
+			const response = await axios.post(`${base_url}/questions${isInstructor ? '/instructor' : ''}`, {
 				questionType: questionTypeId,
 				question: isFlipCard ? newQuestion.question.trim() : editorContent.trim(),
 				options,

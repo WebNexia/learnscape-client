@@ -189,7 +189,7 @@ const GroupChatEditModal = ({
 										{participant.username}
 										{participant.firebaseUserId === activeChat.createdBy && (
 											<Typography component='span' sx={{ fontSize: '0.7rem', ml: 0.5, opacity: 0.8, color: '#fff' }}>
-												(Admin)
+												(Group Admin)
 											</Typography>
 										)}
 									</Typography>
@@ -320,7 +320,7 @@ const GroupChatEditModal = ({
 					</Typography>
 					<UserSearchSelect
 						context='messages'
-						userRole={user?.role as 'admin' | 'student'}
+						userRole={user?.role === 'instructor' ? 'admin' : (user?.role as 'admin' | 'learner')}
 						value={groupSearchValue}
 						onChange={onGroupSearchChange}
 						onSelect={handleSearchUserSelection}

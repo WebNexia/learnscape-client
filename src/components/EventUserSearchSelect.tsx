@@ -36,7 +36,7 @@ const EventUserSearchSelect = forwardRef<any, EventUserSearchSelectProps>(
 			reset,
 			pagination,
 		} = useSearch<SearchUser>('users', 'events', {
-			userRole: 'admin', // Only admins can create events
+			userRole: 'learner', // Both instructors and admins see learners only
 		});
 
 		const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
@@ -61,7 +61,17 @@ const EventUserSearchSelect = forwardRef<any, EventUserSearchSelectProps>(
 		);
 
 		const filteredUsers = useMemo(() => {
-			return filtered?.filter((user) => user.firebaseUserId !== currentUserId && !selectedUserIds?.includes(user.firebaseUserId)) || [];
+			if (!filtered) return [];
+
+			return filtered.filter((user) => {
+				// Exclude current user
+				if (user.firebaseUserId === currentUserId) return false;
+
+				// Exclude already selected users
+				if (selectedUserIds?.includes(user._id)) return false;
+
+				return true;
+			});
 		}, [filtered, currentUserId, selectedUserIds]);
 
 		const hasResults = filteredUsers && filteredUsers.length > 0;
@@ -91,7 +101,6 @@ const EventUserSearchSelect = forwardRef<any, EventUserSearchSelectProps>(
 						value={value}
 						onChange={(e) => {
 							onChange(e.target.value);
-							// Reset hasSearched when user clears the input
 							if (!e.target.value.trim()) {
 								setHasSearched(false);
 							}
@@ -99,6 +108,15 @@ const EventUserSearchSelect = forwardRef<any, EventUserSearchSelectProps>(
 						placeholder={placeholder}
 						disabled={disabled || loading}
 						InputProps={{
+							onKeyDown: (e) => {
+								if (e.key === 'Enter') {
+									e.preventDefault();
+									e.stopPropagation();
+									if (value.trim() && !disabled && !loading) {
+										handleSearch();
+									}
+								}
+							},
 							endAdornment: (
 								<InputAdornment position='end'>
 									{loading ? <CircularProgress size={20} sx={{ mr: '-0.5rem' }} /> : <Search sx={{ mr: '-0.5rem' }} fontSize='small' />}

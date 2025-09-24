@@ -10,6 +10,8 @@ import CustomErrorMessage from '../customFields/CustomErrorMessage';
 
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
 import useImageUpload from '../../../hooks/useImageUpload';
+import { useAuth } from '../../../hooks/useAuth';
+import { Roles } from '../../../interfaces/enums';
 import useVideoUpload from '../../../hooks/useVideoUpload';
 import HandleImageUploadURL from '../uploadImageVideoDocument/HandleImageUploadURL';
 import HandleVideoUploadURL from '../uploadImageVideoDocument/HandleVideoUploadURL';
@@ -17,7 +19,7 @@ import ImageThumbnail from '../uploadImageVideoDocument/ImageThumbnail';
 import VideoThumbnail from '../uploadImageVideoDocument/VideoThumbnail';
 import TinyMceEditor from '../../richTextEditor/TinyMceEditor';
 import TrueFalseOptions from '../../layouts/questionTypes/TrueFalseOptions';
-import { LessonsContext } from '../../../contexts/LessonsContextProvider';
+
 import { QuestionType } from '../../../interfaces/enums';
 import FlipCard from '../../layouts/flipCard/FlipCard';
 import Matching from '../../layouts/matching/Matching';
@@ -74,8 +76,11 @@ const AdminQuestionsEditQuestionDialog = ({
 }: EditQuestionDialogProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
-	const { fetchLessons } = useContext(LessonsContext);
 	const { updateQuestion, fetchQuestions, questionsPageNumber } = useContext(QuestionsContext);
+	const { user } = useAuth();
+
+	// Role detection
+	const isInstructor = user?.role === Roles.INSTRUCTOR;
 
 	const editorId = generateUniqueId('editor-');
 	const editorRef = useRef<any>(null);
@@ -258,7 +263,7 @@ const AdminQuestionsEditQuestionDialog = ({
 		try {
 			const updatedCorrectAnswer = isMultipleChoiceQuestion ? options[correctAnswerIndex] : correctAnswerAdminQuestions;
 
-			const response = await axios.patch(`${base_url}/questions/${question._id}`, {
+			const response = await axios.patch(`${base_url}/questions${isInstructor ? '/instructor' : ''}/${question._id}`, {
 				orgId,
 				question: !isFlipCard ? editorContent.trim() : questionAdminQuestions.trim(),
 				options,

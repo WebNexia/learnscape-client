@@ -12,6 +12,8 @@ import { OrganisationContext } from '../../../contexts/OrganisationContextProvid
 import { generateUniqueId } from '../../../utils/uniqueIdGenerator';
 import { chapterUpdateTrack } from '../../../utils/chapterUpdateTrack';
 import axios from '@utils/axiosInstance';
+import { useAuth } from '../../../hooks/useAuth';
+import { Roles } from '../../../interfaces/enums';
 
 interface CreateLessonDialogProps {
 	chapter?: ChapterLessonData;
@@ -37,13 +39,15 @@ const CreateLessonDialog = ({
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
 	const { addNewLesson, lessonTypes } = useContext(LessonsContext);
+	const { user } = useAuth();
+	const isInstructor = user?.role === Roles.INSTRUCTOR;
 
 	const [title, setTitle] = useState<string>('');
 	const [type, setType] = useState<string>('');
 
 	const createLesson = async () => {
 		try {
-			const response = await axios.post(`${base_url}/lessons`, {
+			const response = await axios.post(`${base_url}${isInstructor ? '/lessons/instructor' : '/lessons'}`, {
 				title: title.trim(),
 				type,
 				orgId,

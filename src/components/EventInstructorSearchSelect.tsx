@@ -1,30 +1,30 @@
-import { useCallback, useContext, forwardRef, useImperativeHandle, useMemo, useState } from 'react';
+import { useCallback, useContext, useMemo, forwardRef, useImperativeHandle, useState } from 'react';
 import CustomTextField from './forms/customFields/CustomTextField';
-import { SearchCourse } from '../interfaces/search';
+import { SearchUser } from '../interfaces/search';
 import { Box, InputAdornment, Typography, CircularProgress } from '@mui/material';
 import theme from '../themes';
 import { Search } from '@mui/icons-material';
 import { useSearch } from '../hooks/useSearch';
 import CustomSubmitButton from './forms/customButtons/CustomSubmitButton';
-import { truncateText } from '../utils/utilText';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 import CustomDeleteButton from './forms/customButtons/CustomDeleteButton';
 import CustomErrorMessage from './forms/customFields/CustomErrorMessage';
 
-interface EventCourseSearchSelectProps {
+interface EventInstructorSearchSelectProps {
 	value: string;
 	onChange: (value: string) => void;
-	onSelect: (course: SearchCourse) => void;
+	onSelect: (user: SearchUser) => void;
+	currentUserId?: string;
 	placeholder?: string;
 	sx?: object;
 	listSx?: object;
 	disabled?: boolean;
-	selectedCourseIds?: string[]; // Array of selected course IDs to exclude from search results
+	selectedUserIds?: string[]; // Array of selected user IDs to exclude from search results
 }
 
-const EventCourseSearchSelect = forwardRef<any, EventCourseSearchSelectProps>(
-	({ value, onChange, onSelect, placeholder = 'Search courses...', sx = {}, listSx = {}, disabled = false, selectedCourseIds = [] }, ref) => {
+const EventInstructorSearchSelect = forwardRef<any, EventInstructorSearchSelectProps>(
+	({ value, onChange, onSelect, placeholder = 'Search instructors...', listSx = {}, disabled = false, selectedUserIds = [], sx = {} }, ref) => {
 		const { user } = useContext(UserAuthContext);
 
 		const {
@@ -35,8 +35,9 @@ const EventCourseSearchSelect = forwardRef<any, EventCourseSearchSelectProps>(
 			loadMore,
 			reset,
 			pagination,
-		} = useSearch<SearchCourse>('courses', 'events', {
-			userRole: user?.role === 'instructor' ? 'admin' : 'admin', // Both instructors and admins can search courses
+		} = useSearch<SearchUser>('users', 'events', {
+			userRole: 'admin', // Only admins can search instructors
+			allowCurrentUser: false, // Never include current user in instructor search
 		});
 
 		const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
@@ -52,18 +53,23 @@ const EventCourseSearchSelect = forwardRef<any, EventCourseSearchSelectProps>(
 			}
 		}, [value, search]);
 
-		const handleCourseSelect = useCallback(
-			(course: SearchCourse) => {
-				onSelect(course);
+		const handleUserSelect = useCallback(
+			(user: SearchUser) => {
+				onSelect(user);
 			},
 			[onSelect]
 		);
 
-		const filteredCourses = useMemo(() => {
-			return filtered?.filter((course) => !selectedCourseIds?.includes(course._id)) || [];
-		}, [filtered, selectedCourseIds]);
+		const filteredUsers = useMemo(() => {
+			let currentFiltered = filtered || [];
 
-		const hasResults = filteredCourses && filteredCourses.length > 0;
+			// Exclude already selected users
+			currentFiltered = currentFiltered.filter((user) => !selectedUserIds?.includes(user._id));
+
+			return currentFiltered;
+		}, [filtered, selectedUserIds, user, value]);
+
+		const hasResults = filteredUsers && filteredUsers.length > 0;
 		const showLoadMore = pagination?.hasNextPage && hasResults;
 
 		// Expose reset function to parent component
@@ -82,11 +88,10 @@ const EventCourseSearchSelect = forwardRef<any, EventCourseSearchSelectProps>(
 					flexDirection: 'column',
 					alignItems: 'center',
 					mb: hasResults ? '-1rem' : '1.5rem',
-					margin: `0 auto ${hasResults ? '-1rem' : '1.5rem'} auto`,
+					margin: `0 auto ${hasResults ? '-1rem' : '-0.5rem'} auto`,
 				}}>
-				<Box sx={{ display: 'flex', gap: 1, width: '100%', alignItems: 'center' }}>
+				<Box sx={{ display: 'flex', gap: 1, width: '100%', alignItems: 'center', mt: '0.5rem' }}>
 					<CustomTextField
-						sx={{ ...sx, flex: 1 }}
 						value={value}
 						onChange={(e) => {
 							onChange(e.target.value);
@@ -96,6 +101,7 @@ const EventCourseSearchSelect = forwardRef<any, EventCourseSearchSelectProps>(
 						}}
 						placeholder={placeholder}
 						disabled={disabled || loading}
+						sx={{ ...sx, flex: 1 }}
 						InputProps={{
 							onKeyDown: (e) => {
 								if (e.key === 'Enter') {
@@ -116,7 +122,7 @@ const EventCourseSearchSelect = forwardRef<any, EventCourseSearchSelectProps>(
 					/>
 					<CustomSubmitButton
 						onClick={handleSearch}
-						disabled={loading || !value.trim() || disabled}
+						disabled={disabled || !value.trim() || loading}
 						sx={{
 							minWidth: 'auto',
 							padding: '0 0.5rem',
@@ -153,19 +159,18 @@ const EventCourseSearchSelect = forwardRef<any, EventCourseSearchSelectProps>(
 						sx={{
 							display: 'flex',
 							flexDirection: 'column',
-							justifyContent: 'flex-start',
 							alignItems: 'flex-start',
 							width: isMobileSize ? '60%' : '70%',
 							maxHeight: '15rem',
 							overflow: 'auto',
 							margin: '-0.8rem 0 1.5rem -8rem',
 							border: 'solid 0.05rem lightgray',
-							mb: showLoadMore ? '1rem' : '3rem',
+							mb: showLoadMore ? '1rem' : '2rem',
 							...listSx,
 						}}>
-						{filteredCourses?.map((course) => (
+						{filteredUsers?.map((user) => (
 							<Box
-								key={course._id}
+								key={user.firebaseUserId}
 								sx={{
 									'display': 'flex',
 									'justifyContent': 'flex-start',
@@ -178,25 +183,40 @@ const EventCourseSearchSelect = forwardRef<any, EventCourseSearchSelectProps>(
 										'backgroundColor': theme.bgColor?.primary,
 										'color': '#fff',
 										'cursor': 'pointer',
-										'& .course-title': {
-											color: '#fff',
-										},
-										'& .course-description': {
+										'& .username, & .email': {
 											color: '#fff',
 										},
 									},
 								}}
-								onClick={() => handleCourseSelect(course)}>
+								onClick={() => handleUserSelect(user)}>
+								<Box sx={{ borderRadius: '100%', marginRight: '1rem' }}>
+									<img
+										src={user.imageUrl}
+										alt='profile_img'
+										style={{
+											height: '2rem',
+											width: '2rem',
+											borderRadius: '100%',
+											border: 'solid lightgray 0.1rem',
+										}}
+									/>
+								</Box>
 								<Box>
-									<Typography className='course-title' variant='body2' sx={{ fontSize: '0.8rem' }}>
-										{truncateText(course.title, 30)}
+									<Typography className='username' variant='body2' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.8rem' }}>
+										{user.username}{' '}
+										<span style={{ fontSize: isMobileSize ? '0.65rem' : '0.75rem', color: 'text.secondary' }}>
+											{user.firstName && user.lastName && `(${user.firstName} ${user.lastName})`}
+										</span>
+									</Typography>
+									<Typography className='email' variant='caption' sx={{ fontSize: isMobileSize ? '0.6rem' : '0.7rem', color: 'text.secondary' }}>
+										{user.email}
 									</Typography>
 								</Box>
 							</Box>
 						))}
 					</Box>
 				) : (
-					// Show "No courses found" message when there are no results
+					// Show "No instructors found" message when there are no results
 					hasSearched &&
 					value.trim() &&
 					!loading && (
@@ -211,11 +231,12 @@ const EventCourseSearchSelect = forwardRef<any, EventCourseSearchSelectProps>(
 								border: 'none',
 								backgroundColor: 'transparent',
 							}}>
-							<CustomErrorMessage sx={{ fontSize: isMobileSize ? '0.65rem' : '0.75rem' }}>No courses found matching your search.</CustomErrorMessage>
+							<CustomErrorMessage sx={{ fontSize: isMobileSize ? '0.65rem' : '0.75rem' }}>
+								No instructors found matching your search.
+							</CustomErrorMessage>
 						</Box>
 					)
 				)}
-
 				{showLoadMore && (
 					<Box sx={{ textAlign: 'center', mt: 1 }}>
 						<CustomSubmitButton onClick={loadMore} disabled={loading} sx={{ fontSize: '0.8rem' }}>
@@ -228,4 +249,6 @@ const EventCourseSearchSelect = forwardRef<any, EventCourseSearchSelectProps>(
 	}
 );
 
-export default EventCourseSearchSelect;
+EventInstructorSearchSelect.displayName = 'EventInstructorSearchSelect';
+
+export default EventInstructorSearchSelect;

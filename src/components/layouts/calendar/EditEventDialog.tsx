@@ -44,9 +44,11 @@ import ImageThumbnail from '../../forms/uploadImageVideoDocument/ImageThumbnail'
 import { validateImageUrl } from '../../../utils/urlValidation';
 import { useDashboardSync, dashboardSyncHelpers } from '../../../utils/dashboardSync';
 import EventUserSearchSelect from '../../EventUserSearchSelect';
+import EventInstructorSearchSelect from '../../EventInstructorSearchSelect';
 import EventCourseSearchSelect from '../../EventCourseSearchSelect';
 import { SearchUser } from '../../../interfaces/search';
 import { SearchCourse } from '../../../interfaces/search';
+import { useAuth } from '../../../hooks/useAuth';
 
 interface EditEventDialogProps {
 	setIsEventDeleted: React.Dispatch<React.SetStateAction<boolean>>;
@@ -78,6 +80,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 	const { orgId } = useContext(OrganisationContext);
 	const { courses } = useContext(CoursesContext);
 	const { updateEvent, removeEvent } = useContext(EventsContext);
+	const { isAdmin, isLearner } = useAuth();
 
 	// Dashboard sync for real-time updates
 	const { refreshDashboard } = useDashboardSync();
@@ -88,6 +91,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 	const [deleteEventModalOpen, setDeleteEventModalOpen] = useState<boolean>(false);
 
 	const [searchLearnerValue, setSearchLearnerValue] = useState<string>('');
+	const [searchInstructorValue, setSearchInstructorValue] = useState<string>('');
 	const [searchCourseValue, setSearchCourseValue] = useState<string>('');
 
 	const [isEventUpdated, setIsEventUpdated] = useState<boolean>(false);
@@ -95,6 +99,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 
 	// Refs for search components to access their reset functions
 	const userSearchRef = useRef<any>(null);
+	const instructorSearchRef = useRef<any>(null);
 	const courseSearchRef = useRef<any>(null);
 
 	// Handlers for new search components
@@ -140,6 +145,51 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 			});
 		}
 		setSearchLearnerValue('');
+	};
+
+	const handleInstructorSelect = (selectedInstructor: SearchUser) => {
+		// Convert SearchUser to User format for compatibility
+		const instructor: User = {
+			_id: selectedInstructor._id, // Use MongoDB ObjectId
+			firebaseUserId: selectedInstructor.firebaseUserId,
+			username: selectedInstructor.username,
+			email: selectedInstructor.email || '',
+			imageUrl: selectedInstructor.imageUrl,
+			role: selectedInstructor.role,
+			// Add other required fields with defaults
+			firstName: selectedInstructor.firstName || '',
+			lastName: selectedInstructor.lastName || '',
+			phone: '',
+			orgId: orgId,
+			isActive: true,
+			hasRegisteredCourse: false,
+			countryCode: '',
+			isEmailVerified: false,
+			createdAt: new Date().toISOString(),
+			updatedAt: new Date().toISOString(),
+			// Add missing subscription properties
+			isSubscribed: false,
+			subscriptionType: null,
+			subscriptionExpiry: '',
+			subscriptionStatus: 'none',
+			subscriptionValidUntil: '',
+			accessLevel: 'limited',
+		};
+
+		// Check if instructor is already selected
+		const isAlreadySelected = selectedEvent?.attendees?.some((attendee) => attendee._id === instructor._id);
+		if (!isAlreadySelected && selectedEvent) {
+			setSelectedEvent((prevData) => {
+				if (prevData) {
+					return {
+						...prevData,
+						attendees: [...prevData.attendees, instructor],
+					};
+				}
+				return prevData;
+			});
+		}
+		setSearchInstructorValue('');
 	};
 
 	const handleCourseSelect = (selectedCourse: SearchCourse) => {
@@ -311,7 +361,9 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 
 		try {
 			if (isEventUpdated) {
-				await axios.patch(`${base_url}/events/${selectedEvent?._id}`, {
+				// Use instructor route if user is instructor
+				const endpoint = `${base_url}/events/${selectedEvent?._id}`;
+				await axios.patch(endpoint, {
 					...selectedEvent,
 					allAttendeesIds: allParticipantsIds,
 					type: !selectedEvent?.isPublic ? '' : selectedEvent?.type,
@@ -402,7 +454,9 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 
 	const deleteEvent = async () => {
 		try {
-			await axios.delete(`${base_url}/events/${selectedEvent?._id}`);
+			// Use instructor route if user is instructor
+			const endpoint = `${base_url}/events/${selectedEvent?._id}`;
+			await axios.delete(endpoint);
 			if (selectedEvent?._id) removeEvent(selectedEvent?._id);
 
 			// Trigger dashboard sync when event is deleted
@@ -422,10 +476,11 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 			closeModal={() => {
 				setEditEventModalOpen(false);
 				setSearchLearnerValue('');
+				setSearchInstructorValue('');
 				setSearchCourseValue('');
 				setIsEventUpdated(false);
 			}}
-			title='Edit Event'
+			title={`${isAdmin && selectedEvent?.createdBy !== user?._id ? `Edit Event -  (${selectedEvent?.createdByName || 'Unknown'})` : 'Edit Event'}`}
 			maxWidth='sm'>
 			<form
 				onSubmit={(e) => {
@@ -449,54 +504,57 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 								}}
 								InputProps={{ inputProps: { maxLength: 40 } }}
 								sx={{ flex: 3 }}
+								disabled={selectedEvent?.createdBy !== user?._id}
 							/>
 						</Tooltip>
-						<FormControlLabel
-							labelPlacement='start'
-							control={
-								<Checkbox
-									checked={selectedEvent?.isPublic}
-									onChange={(e) => {
-										setSelectedEvent((prevData) => {
-											if (prevData) {
-												return { ...prevData, isPublic: e.target.checked, type: '' };
-											}
-											return prevData;
-										});
-										setIsEventUpdated(true);
-										if (e.target.checked) {
+						{isAdmin && selectedEvent?.createdBy === user?._id && (
+							<FormControlLabel
+								labelPlacement='start'
+								control={
+									<Checkbox
+										checked={selectedEvent?.isPublic}
+										onChange={(e) => {
 											setSelectedEvent((prevData) => {
 												if (prevData) {
-													return {
-														...prevData,
-														attendees: [],
-														coursesIds: [],
-														allAttendeesIds: [],
-														isAllCoursesSelected: false,
-														isAllLearnersSelected: false,
-													};
+													return { ...prevData, isPublic: e.target.checked, type: '' };
 												}
 												return prevData;
 											});
-										}
-									}}
-									sx={{
-										'& .MuiSvgIcon-root': {
-											fontSize: isMobileSize ? '0.9rem' : '1rem',
-										},
-									}}
-								/>
-							}
-							label='Public Event'
-							sx={{
-								'& .MuiFormControlLabel-label': {
-									fontSize: isMobileSize ? '0.6rem' : '0.7rem',
-								},
-								'mb': '0.85rem',
-								'flex': 1,
-								'ml': '1.65rem',
-							}}
-						/>
+											setIsEventUpdated(true);
+											if (e.target.checked) {
+												setSelectedEvent((prevData) => {
+													if (prevData) {
+														return {
+															...prevData,
+															attendees: [],
+															coursesIds: [],
+															allAttendeesIds: [],
+															isAllCoursesSelected: false,
+															isAllLearnersSelected: false,
+														};
+													}
+													return prevData;
+												});
+											}
+										}}
+										sx={{
+											'& .MuiSvgIcon-root': {
+												fontSize: isMobileSize ? '0.9rem' : '1rem',
+											},
+										}}
+									/>
+								}
+								label='Public Event'
+								sx={{
+									'& .MuiFormControlLabel-label': {
+										fontSize: isMobileSize ? '0.6rem' : '0.7rem',
+									},
+									'mb': '0.85rem',
+									'flex': 1,
+									'ml': '1.65rem',
+								}}
+							/>
+						)}
 					</Box>
 					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
 						<CustomTextField
@@ -517,6 +575,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 							InputProps={{ inputProps: { maxLength: 75 } }}
 							sx={{ flex: 3, mr: selectedEvent?.isPublic ? '1rem' : '0rem' }}
 							placeholder='Enter a description for the event (max 75 characters)'
+							disabled={selectedEvent?.createdBy !== user?._id}
 						/>
 						{selectedEvent?.isPublic && (
 							<FormControl sx={{ flex: 1, mb: '0.5rem' }}>
@@ -635,7 +694,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 										},
 									}}
 									sx={{ backgroundColor: '#fff', mr: '0.5rem' }}
-									disabled={selectedEvent?.isAllDay}
+									disabled={selectedEvent?.isAllDay || selectedEvent?.createdBy !== user?._id}
 									format={getDateTimeFormat(navigator.language)}
 								/>
 							</LocalizationProvider>
@@ -663,7 +722,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 										},
 									}}
 									sx={{ backgroundColor: '#fff' }}
-									disabled={selectedEvent?.isAllDay}
+									disabled={selectedEvent?.isAllDay || selectedEvent?.createdBy !== user?._id}
 									format={getDateTimeFormat(navigator.language)}
 								/>
 							</LocalizationProvider>
@@ -673,6 +732,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 							control={
 								<Checkbox
 									checked={selectedEvent?.isAllDay}
+									disabled={selectedEvent?.createdBy !== user?._id}
 									onChange={(e) => {
 										setIsEventUpdated(true);
 
@@ -715,118 +775,243 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 						/>
 					</Box>
 
-					{selectedEvent?.attendees && selectedEvent?.attendees && selectedEvent?.attendees.length > 0 && (
-						<Box sx={{ display: 'flex', margin: '1.5rem 0 0.75rem 0', flexWrap: 'wrap' }}>
-							{selectedEvent.attendees?.map((attendee) => {
-								return (
-									<Box
-										key={attendee._id}
-										sx={{
-											display: 'flex',
-											alignItems: 'center',
-											border: 'solid lightgray 0.1rem',
-											padding: '0 0.25rem',
-											height: '1.75rem',
-											borderRadius: '0.25rem',
-											margin: '0.35rem 0.35rem 0 0',
-										}}>
-										<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>{attendee.username}</Typography>
-										<IconButton
-											onClick={() => {
-												setIsEventUpdated(true);
-												const updatedAttendees = selectedEvent.attendees?.filter((filteredAttendee) => attendee._id !== filteredAttendee._id) || [];
-
-												setSelectedEvent((prevData) => {
-													if (prevData) {
-														return { ...prevData, attendees: updatedAttendees };
-													}
-													return prevData;
-												});
-											}}>
-											<Cancel sx={{ fontSize: isMobileSize ? '0.85rem' : '0.95rem' }} />
-										</IconButton>
+					{!selectedEvent?.isPublic && isAdmin && (
+						<>
+							{/* Show selected instructors above instructor search */}
+							{selectedEvent?.attendees &&
+								selectedEvent.attendees.filter((attendee) => attendee.role === 'instructor' || attendee.role === 'admin').length > 0 && (
+									<Box sx={{ display: 'flex', margin: '1.5rem 0 0.75rem 0', flexWrap: 'wrap' }}>
+										{selectedEvent.attendees
+											?.filter((attendee) => attendee.role === 'instructor' || attendee.role === 'admin')
+											.map((attendee) => {
+												return (
+													<Box
+														key={attendee._id}
+														sx={{
+															display: 'flex',
+															alignItems: 'center',
+															border: 'solid lightgray 0.1rem',
+															padding: '0 0.25rem',
+															height: '1.75rem',
+															borderRadius: '0.25rem',
+															margin: '0.35rem 0.35rem 0 0',
+														}}>
+														<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>{attendee.username}</Typography>
+														<IconButton
+															disabled={selectedEvent?.createdBy !== user?._id}
+															onClick={() => {
+																setIsEventUpdated(true);
+																const updatedAttendees =
+																	selectedEvent.attendees?.filter((filteredAttendee) => attendee._id !== filteredAttendee._id) || [];
+																setSelectedEvent((prevData) => {
+																	if (prevData) {
+																		return { ...prevData, attendees: updatedAttendees };
+																	}
+																	return prevData;
+																});
+															}}>
+															<Cancel sx={{ fontSize: isMobileSize ? '0.8rem' : '0.9rem' }} />
+														</IconButton>
+													</Box>
+												);
+											})}
 									</Box>
-								);
-							})}
-						</Box>
-					)}
+								)}
 
-					{!selectedEvent?.isPublic && (
-						<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
-							<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'flex-start' }}>
-								<Box sx={{ flex: 3 }}>
-									<EventUserSearchSelect
-										ref={userSearchRef}
-										value={searchLearnerValue}
-										onChange={(value) => {
-											setSearchLearnerValue(value);
-											setIsEventUpdated(true);
-										}}
-										onSelect={handleUserSelect}
-										currentUserId={user?.firebaseUserId}
-										placeholder={selectedEvent?.isAllLearnersSelected || selectedEvent?.isPublic ? '' : 'Search Learner'}
-										disabled={selectedEvent?.isAllLearnersSelected || selectedEvent?.isPublic}
-										selectedUserIds={selectedEvent?.attendees?.map((attendee) => attendee._id) || []}
-										sx={{
-											backgroundColor: selectedEvent?.isAllLearnersSelected || selectedEvent?.isPublic ? 'transparent' : '#fff',
-										}}
-									/>
-								</Box>
-								<Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: '0.55rem' }}>
-									<FormControlLabel
-										labelPlacement='start'
-										disabled={selectedEvent?.isPublic}
-										control={
-											<Checkbox
-												checked={selectedEvent?.isAllLearnersSelected}
-												onChange={(e) => {
-													setSearchCourseValue('');
-													setSearchLearnerValue('');
-													setIsEventUpdated(true);
-													setSelectedEvent((prevData) => {
-														if (prevData) {
-															return { ...prevData, isAllLearnersSelected: e.target.checked };
-														}
-														return prevData;
-													});
-
-													// Reset search results when "All Learners" is checked
-													if (e.target.checked) {
-														// Reset user search results
-														if (userSearchRef.current?.reset) {
-															userSearchRef.current.reset();
-														}
-														// Reset course search results
-														if (courseSearchRef.current?.reset) {
-															courseSearchRef.current.reset();
-														}
-
+							<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', mt: '0.5rem' }}>
+								<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'flex-start' }}>
+									<Box sx={{ flex: 3 }}>
+										<EventInstructorSearchSelect
+											ref={instructorSearchRef}
+											value={searchInstructorValue}
+											onChange={setSearchInstructorValue}
+											onSelect={handleInstructorSelect}
+											currentUserId={user?.firebaseUserId}
+											placeholder={selectedEvent?.isPublic || selectedEvent?.isAllInstructorsSelected ? '' : 'Search Instructor'}
+											disabled={selectedEvent?.isPublic || selectedEvent?.createdBy !== user?._id || selectedEvent?.isAllInstructorsSelected}
+											selectedUserIds={selectedEvent?.attendees?.map((attendee) => attendee._id) || []}
+											sx={{
+												backgroundColor: selectedEvent?.isAllInstructorsSelected || selectedEvent?.isPublic ? 'transparent' : '#fff',
+											}}
+										/>
+									</Box>
+									<Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: '0.55rem' }}>
+										<FormControlLabel
+											labelPlacement='start'
+											disabled={selectedEvent?.isPublic || selectedEvent?.createdBy !== user?._id}
+											control={
+												<Checkbox
+													checked={selectedEvent?.isAllInstructorsSelected || false}
+													onChange={(e) => {
+														setSearchInstructorValue('');
+														setIsEventUpdated(true);
 														setSelectedEvent((prevData) => {
 															if (prevData) {
-																return { ...prevData, attendees: [], coursesIds: [], allAttendeesIds: [], isAllCoursesSelected: false };
+																return { ...prevData, isAllInstructorsSelected: e.target.checked };
 															}
 															return prevData;
 														});
-													}
-												}}
+
+														// Reset search results when "All Instructors" is checked
+														if (e.target.checked) {
+															// Reset instructor search results
+															if (instructorSearchRef.current?.reset) {
+																instructorSearchRef.current.reset();
+															}
+
+															// Remove all instructor attendees when "All Instructors" is selected
+															setSelectedEvent((prevData) => {
+																if (prevData) {
+																	return {
+																		...prevData,
+																		attendees: prevData.attendees?.filter((attendee) => attendee.role !== 'instructor') || [],
+																	};
+																}
+																return prevData;
+															});
+														}
+													}}
+													sx={{
+														'& .MuiSvgIcon-root': {
+															fontSize: isVerySmallScreen ? '0.9rem' : '1rem',
+														},
+													}}
+												/>
+											}
+											label='All Instructors'
+											sx={{
+												'mt': '0rem',
+												'& .MuiFormControlLabel-label': {
+													fontSize: isVerySmallScreen ? '0.6rem' : '0.7rem',
+												},
+											}}
+										/>
+									</Box>
+								</Box>
+							</Box>
+						</>
+					)}
+
+					{!selectedEvent?.isPublic && !isLearner && (
+						<>
+							{/* Show selected learners above learner search */}
+							{selectedEvent?.attendees && selectedEvent.attendees.filter((attendee) => attendee.role === 'learner').length > 0 && (
+								<Box sx={{ display: 'flex', margin: '1.5rem 0 0.75rem 0', flexWrap: 'wrap' }}>
+									{selectedEvent.attendees
+										?.filter((attendee) => attendee.role === 'learner')
+										.map((attendee) => {
+											return (
+												<Box
+													key={attendee._id}
+													sx={{
+														display: 'flex',
+														alignItems: 'center',
+														border: 'solid lightgray 0.1rem',
+														padding: '0 0.25rem',
+														height: '1.75rem',
+														borderRadius: '0.25rem',
+														margin: '0.35rem 0.35rem 0 0',
+													}}>
+													<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>{attendee.username}</Typography>
+													<IconButton
+														disabled={selectedEvent?.createdBy !== user?._id}
+														onClick={() => {
+															setIsEventUpdated(true);
+															const updatedAttendees =
+																selectedEvent.attendees?.filter((filteredAttendee) => attendee._id !== filteredAttendee._id) || [];
+															setSelectedEvent((prevData) => {
+																if (prevData) {
+																	return { ...prevData, attendees: updatedAttendees };
+																}
+																return prevData;
+															});
+														}}>
+														<Cancel sx={{ fontSize: isMobileSize ? '0.8rem' : '0.9rem' }} />
+													</IconButton>
+												</Box>
+											);
+										})}
+								</Box>
+							)}
+
+							<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', mt: '0.5rem' }}>
+								<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'flex-start' }}>
+									<Box sx={{ flex: 3 }}>
+										<EventUserSearchSelect
+											ref={userSearchRef}
+											value={searchLearnerValue}
+											onChange={(value) => {
+												setSearchLearnerValue(value);
+												setIsEventUpdated(true);
+											}}
+											onSelect={handleUserSelect}
+											currentUserId={user?.firebaseUserId}
+											placeholder={selectedEvent?.isAllLearnersSelected || selectedEvent?.isPublic ? '' : 'Search Learner'}
+											disabled={selectedEvent?.isAllLearnersSelected || selectedEvent?.isPublic || selectedEvent?.createdBy !== user?._id}
+											selectedUserIds={selectedEvent?.attendees?.map((attendee) => attendee._id) || []}
+											sx={{
+												backgroundColor: selectedEvent?.isAllLearnersSelected || selectedEvent?.isPublic ? 'transparent' : '#fff',
+											}}
+										/>
+									</Box>
+									{isAdmin && (
+										<Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: '0.55rem' }}>
+											<FormControlLabel
+												labelPlacement='start'
+												disabled={selectedEvent?.isPublic || selectedEvent?.createdBy !== user?._id}
+												control={
+													<Checkbox
+														checked={selectedEvent?.isAllLearnersSelected}
+														onChange={(e) => {
+															setSearchCourseValue('');
+															setSearchLearnerValue('');
+															setIsEventUpdated(true);
+															setSelectedEvent((prevData) => {
+																if (prevData) {
+																	return { ...prevData, isAllLearnersSelected: e.target.checked };
+																}
+																return prevData;
+															});
+
+															// Reset search results when "All Learners" is checked
+															if (e.target.checked) {
+																// Reset user search results
+																if (userSearchRef.current?.reset) {
+																	userSearchRef.current.reset();
+																}
+																// Reset course search results
+																if (courseSearchRef.current?.reset) {
+																	courseSearchRef.current.reset();
+																}
+
+																setSelectedEvent((prevData) => {
+																	if (prevData) {
+																		return { ...prevData, attendees: [], coursesIds: [], allAttendeesIds: [], isAllCoursesSelected: false };
+																	}
+																	return prevData;
+																});
+															}
+														}}
+														sx={{
+															'& .MuiSvgIcon-root': {
+																fontSize: isVerySmallScreen ? '0.9rem' : '1rem',
+															},
+														}}
+													/>
+												}
+												label='All Learners'
 												sx={{
-													'& .MuiSvgIcon-root': {
-														fontSize: isVerySmallScreen ? '0.9rem' : '1rem',
+													'mt': '0rem',
+													'& .MuiFormControlLabel-label': {
+														fontSize: isVerySmallScreen ? '0.6rem' : '0.7rem',
 													},
 												}}
 											/>
-										}
-										label='All Learners'
-										sx={{
-											'mt': '0rem',
-											'& .MuiFormControlLabel-label': {
-												fontSize: isVerySmallScreen ? '0.6rem' : '0.7rem',
-											},
-										}}
-									/>
+										</Box>
+									)}
 								</Box>
 							</Box>
-						</Box>
+						</>
 					)}
 
 					{selectedEvent?.coursesIds && selectedEvent.coursesIds && selectedEvent.coursesIds.length > 0 && (
@@ -847,6 +1032,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 										}}>
 										<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>{truncateText(course?.title!, 20)}</Typography>
 										<IconButton
+											disabled={selectedEvent?.createdBy !== user?._id}
 											onClick={() => {
 												setIsEventUpdated(true);
 												const updatedCoursesIds = selectedEvent.coursesIds?.filter((filteredCourseId) => course?._id !== filteredCourseId) || [];
@@ -866,7 +1052,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 						</Box>
 					)}
 
-					{!selectedEvent?.isPublic && (
+					{!selectedEvent?.isPublic && !isLearner && (
 						<Box
 							sx={{
 								display: 'flex',
@@ -888,7 +1074,12 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 										placeholder={
 											selectedEvent?.isAllLearnersSelected || selectedEvent?.isAllCoursesSelected || selectedEvent?.isPublic ? '' : 'Search Course'
 										}
-										disabled={selectedEvent?.isAllLearnersSelected || selectedEvent?.isAllCoursesSelected || selectedEvent?.isPublic}
+										disabled={
+											selectedEvent?.isAllLearnersSelected ||
+											selectedEvent?.isAllCoursesSelected ||
+											selectedEvent?.isPublic ||
+											selectedEvent?.createdBy !== user?._id
+										}
 										selectedCourseIds={selectedEvent?.coursesIds || []}
 										sx={{
 											backgroundColor:
@@ -898,53 +1089,55 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 										}}
 									/>
 								</Box>
-								<Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-									<FormControlLabel
-										disabled={selectedEvent?.isAllLearnersSelected || selectedEvent?.isPublic}
-										labelPlacement='start'
-										control={
-											<Checkbox
-												checked={selectedEvent?.isAllCoursesSelected}
-												onChange={(e) => {
-													setSearchCourseValue('');
-													setIsEventUpdated(true);
-													setSelectedEvent((prevData) => {
-														if (prevData) {
-															return { ...prevData, isAllCoursesSelected: e.target.checked };
-														}
-														return prevData;
-													});
-
-													// Reset search results when "All Courses" is checked
-													if (e.target.checked) {
-														// Reset course search results
-														if (courseSearchRef.current?.reset) {
-															courseSearchRef.current.reset();
-														}
-
+								{isAdmin && (
+									<Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+										<FormControlLabel
+											disabled={selectedEvent?.isAllLearnersSelected || selectedEvent?.isPublic || selectedEvent?.createdBy !== user?._id}
+											labelPlacement='start'
+											control={
+												<Checkbox
+													checked={selectedEvent?.isAllCoursesSelected}
+													onChange={(e) => {
+														setSearchCourseValue('');
+														setIsEventUpdated(true);
 														setSelectedEvent((prevData) => {
 															if (prevData) {
-																return { ...prevData, coursesIds: [] };
+																return { ...prevData, isAllCoursesSelected: e.target.checked };
 															}
 															return prevData;
 														});
-													}
-												}}
-												sx={{
-													'& .MuiSvgIcon-root': {
-														fontSize: isVerySmallScreen ? '0.9rem' : '1rem',
-													},
-												}}
-											/>
-										}
-										label='All Courses'
-										sx={{
-											'& .MuiFormControlLabel-label': {
-												fontSize: isVerySmallScreen ? '0.6rem' : '0.7rem', // Adjust the label font size
-											},
-										}}
-									/>
-								</Box>
+
+														// Reset search results when "All Courses" is checked
+														if (e.target.checked) {
+															// Reset course search results
+															if (courseSearchRef.current?.reset) {
+																courseSearchRef.current.reset();
+															}
+
+															setSelectedEvent((prevData) => {
+																if (prevData) {
+																	return { ...prevData, coursesIds: [] };
+																}
+																return prevData;
+															});
+														}
+													}}
+													sx={{
+														'& .MuiSvgIcon-root': {
+															fontSize: isVerySmallScreen ? '0.9rem' : '1rem',
+														},
+													}}
+												/>
+											}
+											label='All Courses'
+											sx={{
+												'& .MuiFormControlLabel-label': {
+													fontSize: isVerySmallScreen ? '0.6rem' : '0.7rem', // Adjust the label font size
+												},
+											}}
+										/>
+									</Box>
+								)}
 							</Box>
 						</Box>
 					)}
@@ -962,6 +1155,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 							setIsEventUpdated(true);
 						}}
 						required={false}
+						disabled={selectedEvent?.createdBy !== user?._id}
 					/>
 
 					<CustomTextField
@@ -982,10 +1176,11 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 						placeholder='Enter a location for the event (max 150 characters)'
 						multiline
 						rows={3}
+						disabled={selectedEvent?.createdBy !== user?._id}
 					/>
 				</DialogContent>
 				<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0 0.75rem' }}>
-					<Box sx={{ marginBottom: '1.5rem' }}>
+					<Box sx={{ marginBottom: '0.5rem' }}>
 						<CustomDeleteButton type='button' onClick={() => setDeleteEventModalOpen(true)} sx={{ height: isMobileSize ? '1.5rem' : undefined }}>
 							{isVerySmallScreen ? 'Delete' : 'Delete Event'}
 						</CustomDeleteButton>
@@ -998,6 +1193,8 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 							setIsEventUpdated(false);
 						}}
 						submitBtnText='Update'
+						disableBtn={selectedEvent?.createdBy !== user?._id}
+						actionSx={{ marginBottom: '0.5rem' }}
 					/>
 				</Box>
 				<CustomDialog

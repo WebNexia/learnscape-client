@@ -44,7 +44,7 @@ const AdminQuizSubmissionCheck = () => {
 	const navigate = useNavigate();
 
 	// Dashboard sync for real-time updates
-	const { refreshDashboard } = useDashboardSync();
+	const { refreshDashboard, refreshQuizSubmissions } = useDashboardSync();
 
 	const { search } = useLocation();
 	const isChecked = new URLSearchParams(search).get('isChecked');
@@ -239,12 +239,16 @@ const AdminQuizSubmissionCheck = () => {
 			);
 
 			if (isChecked === 'false') {
-				await axios.patch(`${base_url}/quizsubmissions/${submissionId}`, {
+				// Use instructor endpoint if user is instructor
+				const updateEndpoint =
+					user?.role === 'instructor' ? `${base_url}/quizsubmissions/instructor/${submissionId}` : `${base_url}/quizsubmissions/${submissionId}`;
+
+				await axios.patch(updateEndpoint, {
 					isChecked: true,
 				});
 
 				// Trigger dashboard sync when quiz is checked
-				dashboardSyncHelpers.onQuizSubmitted(refreshDashboard);
+				dashboardSyncHelpers.onQuizSubmitted(refreshDashboard, refreshQuizSubmissions);
 			}
 
 			setDisplaySubmissionMsg(true);

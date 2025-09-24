@@ -8,7 +8,7 @@ export const searchService = {
 	searchUsers: async (
 		searchTerm: string,
 		context: 'messages' | 'community' | 'events',
-		filters: { userRole: 'admin' | 'student'; courseId?: string; topicId?: string },
+		filters: { userRole: 'admin' | 'learner'; courseId?: string; topicId?: string; allowCurrentUser?: boolean },
 		pagination: { page: number; limit: number } = { page: 1, limit: 20 }
 	): Promise<SearchResponse<SearchUser>> => {
 		const request: SearchRequest = {

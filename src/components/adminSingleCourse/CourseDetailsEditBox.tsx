@@ -3,9 +3,11 @@ import CustomTextField from '../forms/customFields/CustomTextField';
 import CustomErrorMessage from '../forms/customFields/CustomErrorMessage';
 import { SingleCourse } from '../../interfaces/course';
 import theme from '../../themes';
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import HandleImageUploadURL from '../forms/uploadImageVideoDocument/HandleImageUploadURL';
 import useImageUpload from '../../hooks/useImageUpload';
+import { Roles } from '../../interfaces/enums';
+import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
 
 interface CourseDetailsEditBoxProps {
 	singleCourseBeforeSave?: SingleCourse;
@@ -27,6 +29,8 @@ const CourseDetailsEditBox = ({
 	setHasUnsavedChanges,
 }: CourseDetailsEditBoxProps) => {
 	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(true);
+
+	const { user } = useContext(UserAuthContext);
 
 	const { resetImageUpload } = useImageUpload();
 
@@ -206,7 +210,7 @@ const CourseDetailsEditBox = ({
 
 					{isMissingField && singleCourseBeforeSave?.description === '' && <CustomErrorMessage>Enter a description</CustomErrorMessage>}
 				</Box>
-				<Box sx={{ display: 'flex', alignItems: 'center', ml: '2rem' }}>
+				<Box sx={{ alignItems: 'center', ml: '2rem', display: user?.role === Roles.ADMIN ? 'flex' : 'none' }}>
 					<Tooltip title='External courses will be managed outside the platform.' placement='top' arrow>
 						<FormControlLabel
 							control={
@@ -249,7 +253,7 @@ const CourseDetailsEditBox = ({
 					alignItems: 'flex-start',
 					mt: '1.5rem',
 				}}>
-				<Box sx={{ flex: 1, zIndex: 1 }}>
+				<Box sx={{ flex: 1, zIndex: 1, display: user?.role === Roles.ADMIN ? undefined : 'none' }}>
 					<Typography variant='h6'>Prices</Typography>
 					<Box sx={{ display: 'flex', alignItems: 'center' }}>
 						<Box
@@ -368,7 +372,8 @@ const CourseDetailsEditBox = ({
 						<CustomErrorMessage>Enter price amount</CustomErrorMessage>
 					)}
 				</Box>
-				<Box sx={{ display: 'flex', marginLeft: '4rem', flex: 1 }}>
+
+				<Box sx={{ display: 'flex', marginLeft: user?.role === Roles.ADMIN ? '4rem' : '0', flex: 1 }}>
 					<Box sx={{ flex: 2 }}>
 						<Typography variant='h6'>Weeks</Typography>
 						<CustomTextField
@@ -430,6 +435,41 @@ const CourseDetailsEditBox = ({
 						}}
 						type='date'
 					/>
+				</Box>
+				<Box sx={{ display: user?.role !== Roles.ADMIN ? 'flex' : 'none', flex: 1, justifyContent: 'flex-end', width: '100%' }}>
+					<Tooltip title='External courses will be managed outside the platform.' placement='top' arrow>
+						<FormControlLabel
+							labelPlacement='start'
+							control={
+								<Checkbox
+									checked={singleCourseBeforeSave?.courseManagement?.isExternal}
+									onChange={(e) => {
+										setSingleCourseBeforeSave((prevData) => {
+											if (prevData) {
+												return {
+													...prevData,
+													courseManagement: { ...prevData.courseManagement, isExternal: e.target.checked },
+												};
+											}
+											return prevData;
+										});
+										setHasUnsavedChanges(true);
+									}}
+									sx={{
+										'& .MuiSvgIcon-root': {
+											fontSize: '1.25rem',
+										},
+									}}
+								/>
+							}
+							label='External Course'
+							sx={{
+								'& .MuiFormControlLabel-label': {
+									fontSize: '0.85rem',
+								},
+							}}
+						/>
+					</Tooltip>
 				</Box>
 			</Box>
 		</>

@@ -32,18 +32,13 @@ const EditTopicDialog = ({ editTopicModalOpen, topic, setEditTopicModalOpen, set
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
-	const { updateTopics, fetchTopics } = useContext(CommunityContext);
+	const { updateTopics } = useContext(CommunityContext);
 
 	const { isSmallScreen, isRotatedMedium, isVerySmallScreen, isRotated } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
-	// Upload limit management
-	// Upload limit management - only for learners
-	const uploadLimitHook = user?.role === 'learner' ? useUploadLimit() : null;
-	const { getRemainingAudioUploads, getRemainingImageUploads } = uploadLimitHook || {
-		getRemainingAudioUploads: () => 999,
-		getRemainingImageUploads: () => 999,
-	};
+	// Upload limit management - for all roles
+	const { getRemainingAudioUploads, getRemainingImageUploads, getImageLimit, getAudioLimit } = useUploadLimit();
 
 	const [enterImageUrl, setEnterImageUrl] = useState(true);
 	const [isAudioUploading, setIsAudioUploading] = useState(false);
@@ -258,10 +253,10 @@ const EditTopicDialog = ({ editTopicModalOpen, topic, setEditTopicModalOpen, set
 						<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '0.9rem' }}>
 							Audio Recording{' '}
 							<span style={{ color: 'gray', fontSize: '0.75rem', marginLeft: '0.25rem' }}>
-								{getRemainingAudioUploads() <= 0 && user?.role !== 'admin'
+								{getRemainingAudioUploads() <= 0
 									? '(Daily limit reached. Resets everyday)'
-									: getRemainingAudioUploads() <= 5 && user?.role !== 'admin'
-										? '(' + getRemainingAudioUploads() + ' of 10 audio uploads remaining today)'
+									: getRemainingAudioUploads() <= 5
+										? '(' + getRemainingAudioUploads() + ' of ' + getAudioLimit() + ' audio uploads remaining today)'
 										: ''}
 							</span>
 						</Typography>
@@ -318,15 +313,15 @@ const EditTopicDialog = ({ editTopicModalOpen, topic, setEditTopicModalOpen, set
 							imageFolderName='TopicImages'
 							enterImageUrl={enterImageUrl}
 							setEnterImageUrl={setEnterImageUrl}
-							isImageUploadLimitReached={getRemainingImageUploads() <= 0 && user?.role !== 'admin'}
+							isImageUploadLimitReached={getRemainingImageUploads() <= 0}
 							imageUploadAttempts={imageUploadAttempts}
 							maxSessionAttempts={MAX_SESSION_ATTEMPTS}
 							onImageUploadAttempt={() => setImageUploadAttempts((prev) => prev + 1)}
 							labelDescription={
-								getRemainingImageUploads() <= 0 && user?.role !== 'admin'
+								getRemainingImageUploads() <= 0
 									? '(Daily limit reached. Resets everyday)'
-									: getRemainingImageUploads() <= 5 && user?.role !== 'admin'
-										? '(' + getRemainingImageUploads() + ' of 50 image uploads remaining today)'
+									: getRemainingImageUploads() <= 5
+										? '(' + getRemainingImageUploads() + ' of ' + getImageLimit() + ' image uploads remaining today)'
 										: ''
 							}
 						/>

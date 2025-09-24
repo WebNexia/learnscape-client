@@ -8,12 +8,14 @@ export interface Event {
 	end: Date | null;
 	location: string;
 	createdBy: string;
+	createdByName?: string;
 	isActive: boolean;
 	eventLinkUrl: string;
 	isAllDay: boolean;
 	coursesIds: string[];
 	allAttendeesIds: string[];
 	isAllLearnersSelected: boolean;
+	isAllInstructorsSelected?: boolean;
 	isAllCoursesSelected: boolean;
 	isPublic: boolean;
 	type: string;
@@ -27,4 +29,5 @@ export interface AttendeeInfo {
 	_id: string;
 	firebaseUserId: string;
 	username: string;
+	role?: string;
 }

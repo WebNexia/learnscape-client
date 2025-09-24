@@ -152,7 +152,12 @@ const ChatHeader = ({
 								{activeChat.participants
 									?.filter((participant) => participant.firebaseUserId !== user?.firebaseUserId)
 									?.map((otherParticipant) => {
-										if (otherParticipant.role !== 'admin') {
+										// Determine if current user can block this participant
+										const canBlock =
+											(user?.role === 'admin' && otherParticipant.role !== 'admin') || // Admins can block anyone except other admins
+											(user?.role === 'instructor' && otherParticipant.role === 'learner'); // Instructors can only block learners
+
+										if (canBlock) {
 											const isBlocked = blockedUsers?.includes(otherParticipant.firebaseUserId) || false;
 
 											return (

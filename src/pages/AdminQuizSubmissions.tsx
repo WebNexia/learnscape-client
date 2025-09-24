@@ -12,6 +12,7 @@ import CustomActionBtn from '../components/layouts/table/CustomActionBtn';
 import { Edit, Search } from '@mui/icons-material';
 import CustomTablePagination from '../components/layouts/table/CustomTablePagination';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
+
 import axios from '@utils/axiosInstance';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
@@ -20,15 +21,25 @@ import theme from '../themes';
 import { CoursesContext } from '../contexts/CoursesContextProvider';
 import { truncateText } from '../utils/utilText';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
+import { useAuth } from '../hooks/useAuth';
 
 const AdminQuizSubmissions = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
+	const { isInstructor } = useAuth();
 	const location = useLocation();
 
 	const { courses } = useContext(CoursesContext);
 
 	const mappedCourses = courses?.map((course) => ({ courseId: course._id, courseTitle: course.title })) || [];
+
+	// Determine the correct API endpoint based on user role
+	const getApiEndpoint = () => {
+		if (isInstructor) {
+			return `${base_url}/quizsubmissions/instructor/organisation/${orgId}`;
+		}
+		return `${base_url}/quizsubmissions/organisation/${orgId}`;
+	};
 
 	// Function to get course name from course ID
 	const getCourseNameById = (courseId: string) => {
@@ -195,7 +206,7 @@ const AdminQuizSubmissions = () => {
 					params.append('sortOrder', order);
 				}
 
-				const response = await axios.get(`${base_url}/quizsubmissions/organisation/${orgId}?${params.toString()}`);
+				const response = await axios.get(`${getApiEndpoint()}?${params.toString()}`);
 				setSearchResults(response.data.data);
 				setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
 				setSearchResultsLoadedPages([1]);
@@ -236,7 +247,7 @@ const AdminQuizSubmissions = () => {
 				params.append('sortOrder', order);
 			}
 
-			const response = await axios.get(`${base_url}/quizsubmissions/organisation/${orgId}?${params.toString()}`);
+			const response = await axios.get(`${getApiEndpoint()}?${params.toString()}`);
 
 			if (page === 1) {
 				// First page - replace all data
@@ -638,10 +649,17 @@ const AdminQuizSubmissions = () => {
 												<CustomActionBtn
 													title='Check Quiz'
 													onClick={() => {
-														window.open(
-															`/admin/check-submission/submission/${submission._id}/lesson/${submission.lessonId}/userlesson/${submission.userLessonId}?isChecked=${submission.isChecked}`,
-															'_blank'
-														);
+														if (isInstructor) {
+															window.open(
+																`/instructor/check-submission/submission/${submission._id}/lesson/${submission.lessonId}/userlesson/${submission.userLessonId}?isChecked=${submission.isChecked}`,
+																'_blank'
+															);
+														} else {
+															window.open(
+																`/admin/check-submission/submission/${submission._id}/lesson/${submission.lessonId}/userlesson/${submission.userLessonId}?isChecked=${submission.isChecked}`,
+																'_blank'
+															);
+														}
 														window.scrollTo({ top: 0, behavior: 'smooth' });
 													}}
 													icon={<Edit fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}

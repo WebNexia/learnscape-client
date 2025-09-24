@@ -63,7 +63,7 @@ import CreateLessonWithAIDialog from '../components/adminSingleLesson/CreateLess
 import CreateQuestionWithAIDialog from '../components/adminSingleLesson/CreateQuestionWithAIDialog';
 import { validateImageUrl, validateVideoUrl, validateDocumentUrl } from '../utils/urlValidation';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
-import { useQueryClient } from 'react-query';
+import { Roles } from '../interfaces/enums';
 
 const colorChange = keyframes`
     0% {
@@ -100,8 +100,8 @@ const AdminLessonEditPage = () => {
 	const { lessonId } = useParams();
 	const { orgId } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
+	const isInstructor = user?.role === Roles.INSTRUCTOR;
 	const { updateLessonPublishing, updateLesson, lessonTypes } = useContext(LessonsContext);
-	const queryClient = useQueryClient();
 
 	const { questionTypes, fetchQuestionTypeName, addNewQuestion, updateQuestion } = useContext(QuestionsContext);
 	const { addNewDocument, updateDocument } = useContext(DocumentsContext);
@@ -382,7 +382,7 @@ const AdminLessonEditPage = () => {
 		// If unpublishing, allow it regardless of content
 		if (singleLesson?.isActive) {
 			try {
-				await axios.patch(`${base_url}/lessons/${lessonId}`, {
+				await axios.patch(`${base_url}${isInstructor ? '/lessons/instructor' : '/lessons'}/${lessonId}`, {
 					isActive: false,
 					publishedAt: null, // Clear publishedAt when unpublishing
 				});
@@ -409,7 +409,7 @@ const AdminLessonEditPage = () => {
 		if (hasRequiredFields) {
 			try {
 				const now = new Date().toISOString();
-				await axios.patch(`${base_url}/lessons/${lessonId}`, {
+				await axios.patch(`${base_url}${isInstructor ? '/lessons/instructor' : '/lessons'}/${lessonId}`, {
 					isActive: true,
 					publishedAt: now, // Set publishedAt when publishing
 					questionIds: singleLesson.questionIds,
@@ -528,7 +528,7 @@ const AdminLessonEditPage = () => {
 					?.map(async (document) => {
 						if (document._id.includes('temp_doc_id')) {
 							try {
-								const response = await axios.post(`${base_url}/documents`, {
+								const response = await axios.post(`${base_url}/documents${isInstructor ? '/instructor' : ''}`, {
 									name: document.name.trim(),
 									orgId,
 									userId: user?._id,
@@ -577,7 +577,7 @@ const AdminLessonEditPage = () => {
 					const trackData = isDocumentUpdated?.find((data) => data.documentId === doc._id);
 					if (trackData?.isUpdated) {
 						try {
-							const response = await axios.patch(`${base_url}/documents/${doc._id}`, {
+							const response = await axios.patch(`${base_url}/documents${isInstructor ? '/instructor' : ''}/${doc._id}`, {
 								name: doc.name.trim(),
 							});
 
@@ -655,7 +655,7 @@ const AdminLessonEditPage = () => {
 
 						if (questionTypeId) {
 							try {
-								const response = await axios.post(`${base_url}/questions`, {
+								const response = await axios.post(`${base_url}/questions${isInstructor ? '/instructor' : ''}`, {
 									orgId,
 									question: question.question.trim(),
 									options: question.options,
@@ -704,7 +704,7 @@ const AdminLessonEditPage = () => {
 						if (trackData?.isUpdated) {
 							try {
 								const { questionType, ...questionWithoutType } = question;
-								const response = await axios.patch(`${base_url}/questions/${question._id}`, questionWithoutType);
+								const response = await axios.patch(`${base_url}/questions${isInstructor ? '/instructor' : ''}/${question._id}`, questionWithoutType);
 
 								const questionUpdateResponseData = response.data.data;
 
@@ -721,7 +721,7 @@ const AdminLessonEditPage = () => {
 
 			if (isLessonUpdated || isQuestionUpdated?.some((data) => data.isUpdated === true)) {
 				try {
-					const response = await axios.patch(`${base_url}/lessons/${lessonId}`, {
+					const response = await axios.patch(`${base_url}${isInstructor ? '/lessons/instructor' : '/lessons'}/${lessonId}`, {
 						...singleLessonBeforeSave,
 						title: singleLessonBeforeSave.title,
 						type: singleLessonBeforeSave.type,
@@ -749,10 +749,6 @@ const AdminLessonEditPage = () => {
 						updatedByImageUrl: responseUpdatedData.updatedByImageUrl,
 						updatedByRole: responseUpdatedData.updatedByRole,
 					});
-					// 👈 Removed cache invalidation to prevent multiple API calls
-					// queryClient.invalidateQueries(['allCourses', orgId]);
-					// queryClient.invalidateQueries(['allLessons', orgId]);
-					// queryClient.invalidateQueries(['allQuestions', orgId]);
 
 					// Update question contexts with current usedInLessons data
 					updatedQuestions?.forEach((question) => {
