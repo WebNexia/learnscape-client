@@ -2491,7 +2491,7 @@ const Messages = () => {
 					<UserSearchSelect
 						key={`search-${errorMsg ? 'error' : 'normal'}`}
 						context='messages'
-						userRole={user?.role as 'admin' | 'student'}
+						userRole={user?.role === 'instructor' ? 'admin' : (user?.role as 'admin' | 'learner')}
 						value={searchValue}
 						onChange={(value) => {
 							setSearchValue(value);

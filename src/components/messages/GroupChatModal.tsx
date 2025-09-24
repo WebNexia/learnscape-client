@@ -193,7 +193,7 @@ const GroupChatModal = ({
 					</Typography>
 					<UserSearchSelect
 						context='messages'
-						userRole={user?.role as 'admin' | 'student'}
+						userRole={user?.role === 'instructor' ? 'admin' : (user?.role as 'admin' | 'learner')}
 						value={groupSearchValue}
 						onChange={onGroupSearchChange}
 						onSelect={handleSearchUserSelection}

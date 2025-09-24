@@ -104,7 +104,7 @@ const ChatList = ({
 								</IconButton>
 							</Tooltip>
 						</Box>
-						{user?.role === 'admin' && (
+						{(user?.role === 'admin' || user?.role === 'instructor') && (
 							<Box sx={{ flex: 1 }}>
 								<Tooltip title='Create Group Chat' placement='top' arrow>
 									<IconButton sx={{ ':hover': { backgroundColor: 'transparent' } }} onClick={onCreateGroupClick}>
