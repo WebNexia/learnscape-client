@@ -7,10 +7,11 @@ import { Search } from '@mui/icons-material';
 import { useSearch } from '../hooks/useSearch';
 import CustomSubmitButton from './forms/customButtons/CustomSubmitButton';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
+import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 import CustomDeleteButton from './forms/customButtons/CustomDeleteButton';
 import CustomErrorMessage from './forms/customFields/CustomErrorMessage';
 
-interface EventUserSearchSelectProps {
+interface EventInstructorSearchSelectProps {
 	value: string;
 	onChange: (value: string) => void;
 	onSelect: (user: SearchUser) => void;
@@ -22,11 +23,10 @@ interface EventUserSearchSelectProps {
 	selectedUserIds?: string[]; // Array of selected user IDs to exclude from search results
 }
 
-const EventUserSearchSelect = forwardRef<any, EventUserSearchSelectProps>(
-	(
-		{ value, onChange, onSelect, currentUserId, placeholder = 'Search users...', sx = {}, listSx = {}, disabled = false, selectedUserIds = [] },
-		ref
-	) => {
+const EventInstructorSearchSelect = forwardRef<any, EventInstructorSearchSelectProps>(
+	({ value, onChange, onSelect, placeholder = 'Search instructors...', listSx = {}, disabled = false, selectedUserIds = [], sx = {} }, ref) => {
+		const { user } = useContext(UserAuthContext);
+
 		const {
 			data: filtered,
 			loading,
@@ -36,7 +36,8 @@ const EventUserSearchSelect = forwardRef<any, EventUserSearchSelectProps>(
 			reset,
 			pagination,
 		} = useSearch<SearchUser>('users', 'events', {
-			userRole: 'learner', // Both instructors and admins see learners only
+			userRole: 'admin', // Only admins can search instructors
+			allowCurrentUser: false, // Never include current user in instructor search
 		});
 
 		const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
@@ -55,24 +56,18 @@ const EventUserSearchSelect = forwardRef<any, EventUserSearchSelectProps>(
 		const handleUserSelect = useCallback(
 			(user: SearchUser) => {
 				onSelect(user);
-				// Don't clear search input or reset results - keep them open
 			},
 			[onSelect]
 		);
 
 		const filteredUsers = useMemo(() => {
-			if (!filtered) return [];
+			let currentFiltered = filtered || [];
 
-			return filtered.filter((user) => {
-				// Exclude current user
-				if (user.firebaseUserId === currentUserId) return false;
+			// Exclude already selected users
+			currentFiltered = currentFiltered.filter((user) => !selectedUserIds?.includes(user._id));
 
-				// Exclude already selected users
-				if (selectedUserIds?.includes(user._id)) return false;
-
-				return true;
-			});
-		}, [filtered, currentUserId, selectedUserIds]);
+			return currentFiltered;
+		}, [filtered, selectedUserIds, user, value]);
 
 		const hasResults = filteredUsers && filteredUsers.length > 0;
 		const showLoadMore = pagination?.hasNextPage && hasResults;
@@ -93,11 +88,10 @@ const EventUserSearchSelect = forwardRef<any, EventUserSearchSelectProps>(
 					flexDirection: 'column',
 					alignItems: 'center',
 					mb: hasResults ? '-1rem' : '1.5rem',
-					margin: `0 auto ${hasResults ? '-1rem' : '1.5rem'} auto`,
+					margin: `0 auto ${hasResults ? '-1rem' : '-0.5rem'} auto`,
 				}}>
 				<Box sx={{ display: 'flex', gap: 1, width: '100%', alignItems: 'center', mt: '0.5rem' }}>
 					<CustomTextField
-						sx={{ ...sx, flex: 1 }}
 						value={value}
 						onChange={(e) => {
 							onChange(e.target.value);
@@ -107,6 +101,7 @@ const EventUserSearchSelect = forwardRef<any, EventUserSearchSelectProps>(
 						}}
 						placeholder={placeholder}
 						disabled={disabled || loading}
+						sx={{ ...sx, flex: 1 }}
 						InputProps={{
 							endAdornment: (
 								<InputAdornment position='end'>
@@ -118,7 +113,7 @@ const EventUserSearchSelect = forwardRef<any, EventUserSearchSelectProps>(
 					/>
 					<CustomSubmitButton
 						onClick={handleSearch}
-						disabled={loading || !value.trim() || disabled}
+						disabled={disabled || !value.trim() || loading}
 						sx={{
 							minWidth: 'auto',
 							padding: '0 0.5rem',
@@ -155,14 +150,13 @@ const EventUserSearchSelect = forwardRef<any, EventUserSearchSelectProps>(
 						sx={{
 							display: 'flex',
 							flexDirection: 'column',
-							justifyContent: 'flex-start',
 							alignItems: 'flex-start',
 							width: isMobileSize ? '60%' : '70%',
 							maxHeight: '15rem',
 							overflow: 'auto',
 							margin: '-0.8rem 0 1.5rem -8rem',
 							border: 'solid 0.05rem lightgray',
-							mb: showLoadMore ? '1rem' : '3rem',
+							mb: showLoadMore ? '1rem' : '2rem',
 							...listSx,
 						}}>
 						{filteredUsers?.map((user) => (
@@ -213,7 +207,7 @@ const EventUserSearchSelect = forwardRef<any, EventUserSearchSelectProps>(
 						))}
 					</Box>
 				) : (
-					// Show "No users found" message when there are no results
+					// Show "No instructors found" message when there are no results
 					hasSearched &&
 					value.trim() &&
 					!loading && (
@@ -228,11 +222,12 @@ const EventUserSearchSelect = forwardRef<any, EventUserSearchSelectProps>(
 								border: 'none',
 								backgroundColor: 'transparent',
 							}}>
-							<CustomErrorMessage sx={{ fontSize: isMobileSize ? '0.65rem' : '0.75rem' }}>No users found matching your search.</CustomErrorMessage>
+							<CustomErrorMessage sx={{ fontSize: isMobileSize ? '0.65rem' : '0.75rem' }}>
+								No instructors found matching your search.
+							</CustomErrorMessage>
 						</Box>
 					)
 				)}
-
 				{showLoadMore && (
 					<Box sx={{ textAlign: 'center', mt: 1 }}>
 						<CustomSubmitButton onClick={loadMore} disabled={loading} sx={{ fontSize: '0.8rem' }}>
@@ -245,4 +240,6 @@ const EventUserSearchSelect = forwardRef<any, EventUserSearchSelectProps>(
 	}
 );
 
-export default EventUserSearchSelect;
+EventInstructorSearchSelect.displayName = 'EventInstructorSearchSelect';
+
+export default EventInstructorSearchSelect;

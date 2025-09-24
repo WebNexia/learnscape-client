@@ -30,6 +30,7 @@ import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 import { UsersContext } from '../../../contexts/UsersContextProvider';
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
 import EventUserSearchSelect from '../../EventUserSearchSelect';
+import EventInstructorSearchSelect from '../../EventInstructorSearchSelect';
 import EventCourseSearchSelect from '../../EventCourseSearchSelect';
 import { SearchUser } from '../../../interfaces/search';
 import { SearchCourse } from '../../../interfaces/search';
@@ -86,11 +87,13 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
 	const [searchLearnerValue, setSearchLearnerValue] = useState<string>('');
+	const [searchInstructorValue, setSearchInstructorValue] = useState<string>('');
 	const [searchCourseValue, setSearchCourseValue] = useState<string>('');
 	const [enterCoverImageUrl, setEnterCoverImageUrl] = useState<boolean>(true);
 
 	// Refs for search components to access their reset functions
 	const userSearchRef = useRef<any>(null);
+	const instructorSearchRef = useRef<any>(null);
 	const courseSearchRef = useRef<any>(null);
 
 	// Handlers for new search components
@@ -132,6 +135,46 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 			}));
 		}
 		setSearchLearnerValue('');
+	};
+
+	const handleInstructorSelect = (selectedInstructor: SearchUser) => {
+		// Convert SearchUser to User format for compatibility
+		const instructor: User = {
+			_id: selectedInstructor._id, // Use MongoDB ObjectId
+			firebaseUserId: selectedInstructor.firebaseUserId,
+			username: selectedInstructor.username,
+			email: selectedInstructor.email || '',
+			imageUrl: selectedInstructor.imageUrl,
+			role: selectedInstructor.role,
+			// Add other required fields with defaults
+			firstName: selectedInstructor.firstName || '',
+			lastName: selectedInstructor.lastName || '',
+			phone: '',
+			orgId: orgId,
+			isActive: true,
+			hasRegisteredCourse: false,
+			countryCode: '',
+			isEmailVerified: false,
+			createdAt: new Date().toISOString(),
+			updatedAt: new Date().toISOString(),
+			// Add missing subscription properties
+			isSubscribed: false,
+			subscriptionType: null,
+			subscriptionExpiry: '',
+			subscriptionStatus: 'none',
+			subscriptionValidUntil: '',
+			accessLevel: 'limited',
+		};
+
+		// Check if instructor is already selected
+		const isAlreadySelected = newEvent.attendees?.some((attendee) => attendee._id === instructor._id);
+		if (!isAlreadySelected) {
+			setNewEvent((prevData) => ({
+				...prevData,
+				attendees: [...prevData.attendees, instructor],
+			}));
+		}
+		setSearchInstructorValue('');
 	};
 
 	const handleCourseSelect = (selectedCourse: SearchCourse) => {
@@ -393,6 +436,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 		}));
 
 		setSearchLearnerValue('');
+		setSearchInstructorValue('');
 		setSearchCourseValue('');
 	};
 
@@ -652,84 +696,83 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 						/>
 					</Box>
 
-					{newEvent.attendees && newEvent.attendees.length > 0 && (
-						<Box sx={{ display: 'flex', margin: '1.5rem 0 0.75rem 0', flexWrap: 'wrap' }}>
-							{newEvent.attendees?.map((attendee) => {
-								return (
-									<Box
-										key={attendee._id}
-										sx={{
-											display: 'flex',
-											alignItems: 'center',
-											border: 'solid lightgray 0.1rem',
-											padding: '0 0.25rem',
-											height: '1.75rem',
-											borderRadius: '0.25rem',
-											margin: '0.35rem 0.35rem 0 0',
-										}}>
-										<Typography sx={{ fontSize: isMobileSize ? '0.7rem' : '0.75rem' }}>{attendee.username}</Typography>
-										<IconButton
-											onClick={() => {
-												const updatedAttendees = newEvent.attendees?.filter((filteredAttendee) => attendee._id !== filteredAttendee._id) || [];
-
-												setNewEvent((prevData) => ({ ...prevData, attendees: updatedAttendees }));
-											}}>
-											<Cancel sx={{ fontSize: isMobileSize ? '0.8rem' : '0.9rem' }} />
-										</IconButton>
+					{!newEvent.isPublic && isAdmin && (
+						<>
+							{/* Show selected instructors above instructor search */}
+							{newEvent.attendees &&
+								newEvent.attendees.filter((attendee) => {
+									return attendee.role === 'instructor' || attendee.role === 'admin';
+								}).length > 0 && (
+									<Box sx={{ display: 'flex', margin: '1.5rem 0 0.75rem 0', flexWrap: 'wrap' }}>
+										{newEvent.attendees
+											?.filter((attendee) => attendee.role === 'instructor' || attendee.role === 'admin')
+											.map((attendee) => {
+												return (
+													<Box
+														key={attendee._id}
+														sx={{
+															display: 'flex',
+															alignItems: 'center',
+															border: 'solid lightgray 0.1rem',
+															padding: '0 0.25rem',
+															height: '1.75rem',
+															borderRadius: '0.25rem',
+															margin: '0.35rem 0.35rem 0 0',
+														}}>
+														<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>{attendee.username}</Typography>
+														<IconButton
+															onClick={() => {
+																const updatedAttendees =
+																	newEvent.attendees?.filter((filteredAttendee) => attendee._id !== filteredAttendee._id) || [];
+																setNewEvent((prevData) => ({ ...prevData, attendees: updatedAttendees }));
+															}}>
+															<Cancel sx={{ fontSize: isMobileSize ? '0.8rem' : '0.9rem' }} />
+														</IconButton>
+													</Box>
+												);
+											})}
 									</Box>
-								);
-							})}
-						</Box>
-					)}
+								)}
 
-					{!newEvent.isPublic && !isLearner && (
-						<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', mt: '0.5rem' }}>
-							<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'flex-start' }}>
-								<Box sx={{ flex: 3 }}>
-									<EventUserSearchSelect
-										ref={userSearchRef}
-										value={searchLearnerValue}
-										onChange={setSearchLearnerValue}
-										onSelect={handleUserSelect}
-										currentUserId={user?.firebaseUserId}
-										placeholder={newEvent.isAllLearnersSelected || newEvent.isPublic ? '' : 'Search Learner'}
-										disabled={newEvent.isAllLearnersSelected || newEvent.isPublic}
-										selectedUserIds={newEvent.attendees?.map((attendee) => attendee._id) || []}
-										sx={{
-											backgroundColor: newEvent.isAllLearnersSelected || newEvent.isPublic ? 'transparent' : '#fff',
-										}}
-									/>
-								</Box>
-								{isAdmin && (
+							<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', mt: '0.5rem' }}>
+								<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'flex-start' }}>
+									<Box sx={{ flex: 3 }}>
+										<EventInstructorSearchSelect
+											ref={instructorSearchRef}
+											value={searchInstructorValue}
+											onChange={setSearchInstructorValue}
+											onSelect={handleInstructorSelect}
+											currentUserId={user?.firebaseUserId}
+											placeholder={newEvent.isPublic || newEvent.isAllInstructorsSelected ? '' : 'Search Instructor'}
+											disabled={newEvent.isPublic || newEvent.isAllInstructorsSelected}
+											selectedUserIds={newEvent.attendees?.map((attendee) => attendee._id) || []}
+											sx={{
+												backgroundColor: newEvent.isPublic || newEvent.isAllInstructorsSelected ? 'transparent' : '#fff',
+											}}
+										/>
+									</Box>
 									<Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: '0.55rem' }}>
 										<FormControlLabel
 											labelPlacement='start'
 											disabled={newEvent.isPublic}
 											control={
 												<Checkbox
-													checked={newEvent.isAllLearnersSelected}
+													checked={newEvent.isAllInstructorsSelected || false}
 													onChange={(e) => {
-														setSearchCourseValue('');
-														setSearchLearnerValue('');
-														setNewEvent((prevData) => ({ ...prevData, isAllLearnersSelected: e.target.checked }));
+														setSearchInstructorValue('');
+														setNewEvent((prevData) => ({ ...prevData, isAllInstructorsSelected: e.target.checked }));
 
-														// Reset search results when "All Learners" is checked
+														// Reset search results when "All Instructors" is checked
 														if (e.target.checked) {
-															// Reset user search results
-															if (userSearchRef.current?.reset) {
-																userSearchRef.current.reset();
-															}
-															// Reset course search results
-															if (courseSearchRef.current?.reset) {
-																courseSearchRef.current.reset();
+															// Reset instructor search results
+															if (instructorSearchRef.current?.reset) {
+																instructorSearchRef.current.reset();
 															}
 
+															// Remove all instructor attendees when "All Instructors" is selected
 															setNewEvent((prevData) => ({
 																...prevData,
-																attendees: [],
-																coursesIds: [],
-																allAttendeesIds: [],
-																isAllCoursesSelected: false,
+																attendees: prevData.attendees?.filter((attendee) => attendee.role !== 'instructor') || [],
 															}));
 														}
 													}}
@@ -740,7 +783,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 													}}
 												/>
 											}
-											label='All Learners'
+											label='All Instructors'
 											sx={{
 												'& .MuiFormControlLabel-label': {
 													fontSize: isMobileSize ? '0.6rem' : '0.7rem',
@@ -748,9 +791,114 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 											}}
 										/>
 									</Box>
-								)}
+								</Box>
 							</Box>
-						</Box>
+						</>
+					)}
+
+					{!newEvent.isPublic && !isLearner && (
+						<>
+							{/* Show selected learners above learner search */}
+							{newEvent.attendees && newEvent.attendees.filter((attendee) => attendee.role === 'learner').length > 0 && (
+								<Box sx={{ display: 'flex', margin: '1.5rem 0 0.75rem 0', flexWrap: 'wrap' }}>
+									{newEvent.attendees
+										?.filter((attendee) => attendee.role === 'learner')
+										.map((attendee) => {
+											return (
+												<Box
+													key={attendee._id}
+													sx={{
+														display: 'flex',
+														alignItems: 'center',
+														border: 'solid lightgray 0.1rem',
+														padding: '0 0.25rem',
+														height: '1.75rem',
+														borderRadius: '0.25rem',
+														margin: '0.35rem 0.35rem 0 0',
+													}}>
+													<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>{attendee.username}</Typography>
+													<IconButton
+														onClick={() => {
+															const updatedAttendees = newEvent.attendees?.filter((filteredAttendee) => attendee._id !== filteredAttendee._id) || [];
+															setNewEvent((prevData) => ({ ...prevData, attendees: updatedAttendees }));
+														}}>
+														<Cancel sx={{ fontSize: isMobileSize ? '0.8rem' : '0.9rem' }} />
+													</IconButton>
+												</Box>
+											);
+										})}
+								</Box>
+							)}
+
+							<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', mt: '0.5rem' }}>
+								<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'flex-start' }}>
+									<Box sx={{ flex: 3 }}>
+										<EventUserSearchSelect
+											ref={userSearchRef}
+											value={searchLearnerValue}
+											onChange={setSearchLearnerValue}
+											onSelect={handleUserSelect}
+											currentUserId={user?.firebaseUserId}
+											placeholder={newEvent.isAllLearnersSelected || newEvent.isPublic ? '' : 'Search Learner'}
+											disabled={newEvent.isAllLearnersSelected || newEvent.isPublic}
+											selectedUserIds={newEvent.attendees?.map((attendee) => attendee._id) || []}
+											sx={{
+												backgroundColor: newEvent.isAllLearnersSelected || newEvent.isPublic ? 'transparent' : '#fff',
+											}}
+										/>
+									</Box>
+									{isAdmin && (
+										<Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: '0.55rem' }}>
+											<FormControlLabel
+												labelPlacement='start'
+												disabled={newEvent.isPublic}
+												control={
+													<Checkbox
+														checked={newEvent.isAllLearnersSelected}
+														onChange={(e) => {
+															setSearchCourseValue('');
+															setSearchLearnerValue('');
+															setNewEvent((prevData) => ({ ...prevData, isAllLearnersSelected: e.target.checked }));
+
+															// Reset search results when "All Learners" is checked
+															if (e.target.checked) {
+																// Reset user search results
+																if (userSearchRef.current?.reset) {
+																	userSearchRef.current.reset();
+																}
+																// Reset course search results
+																if (courseSearchRef.current?.reset) {
+																	courseSearchRef.current.reset();
+																}
+
+																setNewEvent((prevData) => ({
+																	...prevData,
+																	attendees: [],
+																	coursesIds: [],
+																	allAttendeesIds: [],
+																	isAllCoursesSelected: false,
+																}));
+															}
+														}}
+														sx={{
+															'& .MuiSvgIcon-root': {
+																fontSize: isMobileSize ? '0.9rem' : '1rem',
+															},
+														}}
+													/>
+												}
+												label='All Learners'
+												sx={{
+													'& .MuiFormControlLabel-label': {
+														fontSize: isMobileSize ? '0.6rem' : '0.7rem',
+													},
+												}}
+											/>
+										</Box>
+									)}
+								</Box>
+							</Box>
+						</>
 					)}
 
 					{newEvent.coursesIds && newEvent.coursesIds.length > 0 && (

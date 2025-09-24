@@ -55,7 +55,6 @@ const EventCourseSearchSelect = forwardRef<any, EventCourseSearchSelectProps>(
 		const handleCourseSelect = useCallback(
 			(course: SearchCourse) => {
 				onSelect(course);
-				// Don't clear search input or reset results - keep them open
 			},
 			[onSelect]
 		);
@@ -91,7 +90,6 @@ const EventCourseSearchSelect = forwardRef<any, EventCourseSearchSelectProps>(
 						value={value}
 						onChange={(e) => {
 							onChange(e.target.value);
-							// Reset hasSearched when user clears the input
 							if (!e.target.value.trim()) {
 								setHasSearched(false);
 							}

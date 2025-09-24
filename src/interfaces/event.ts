@@ -15,6 +15,7 @@ export interface Event {
 	coursesIds: string[];
 	allAttendeesIds: string[];
 	isAllLearnersSelected: boolean;
+	isAllInstructorsSelected?: boolean;
 	isAllCoursesSelected: boolean;
 	isPublic: boolean;
 	type: string;
@@ -28,4 +29,5 @@ export interface AttendeeInfo {
 	_id: string;
 	firebaseUserId: string;
 	username: string;
+	role?: string;
 }
