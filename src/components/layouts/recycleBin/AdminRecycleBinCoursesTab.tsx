@@ -36,6 +36,7 @@ import CustomDeleteButton from '../../forms/customButtons/CustomDeleteButton';
 import { ArchivedCourse } from '../../../interfaces/course';
 import { CoursesContext } from '../../../contexts/CoursesContextProvider';
 import { useRecycleBinCourses } from '../../../contexts/RecycleBinCoursesContextProvider';
+import { useFilterSearch } from '../../../hooks/useFilterSearch';
 
 const AdminRecycleBinCoursesTab = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -46,28 +47,56 @@ const AdminRecycleBinCoursesTab = () => {
 		archivedCourses,
 		totalItems,
 		currentPage,
-		searchResults,
-		searchResultsTotalItems,
-		searchResultsPage,
-		isSearchActive,
+		loadedPages,
+		fetchArchivedCourses,
+		setCurrentPage,
+		setArchivedCourses,
+		setTotalItems,
+		setLoadedPages,
+	} = useRecycleBinCourses();
+
+	const pageSize = 50;
+
+	// Create a wrapper function for fetchArchivedCourses to match the hook's expected signature
+	const fetchMoreContextData = async (startPage: number, endPage: number) => {
+		for (let page = startPage; page <= endPage; page++) {
+			await fetchArchivedCourses(page);
+		}
+	};
+
+	// Use the filter search hook
+	const {
 		searchValue,
 		setSearchValue,
 		filterValue,
-		setFilterValue,
+		displayData: displayCourses,
+		numberOfPages: coursesNumberOfPages,
+		searchResultsPage,
+		searchResultsTotalItems,
+		searchButtonClicked,
 		searchedValue,
-		setSearchedValue,
-		error,
-		fetchArchivedCourses,
-		setCurrentPage,
-		setSearchResultsPage,
-		setIsSearchActive,
-		setArchivedCourses,
-		setSearchResults,
-		setSearchResultsTotalItems,
-		setTotalItems,
-		loadedPages,
-		setLoadedPages,
-	} = useRecycleBinCourses();
+		orderBy,
+		order,
+		isSearchActive,
+		isLoading: isSearchLoading,
+		handleSearch,
+		handleFilterChange,
+		handlePageChange,
+		handleSort,
+		resetSearch,
+		resetFilter,
+		resetAll,
+	} = useFilterSearch<ArchivedCourse>({
+		getEndpoint: () => `${base_url}/courses/organisation/${orgId}/archived`,
+		limit: 200,
+		pageSize,
+		contextData: archivedCourses || [],
+		setContextPageNumber: setCurrentPage,
+		fetchMoreContextData,
+		contextLoadedPages: loadedPages,
+		defaultOrderBy: 'archivedAt',
+		defaultOrder: 'desc',
+	});
 
 	const vertical = 'top';
 	const horizontal = 'center';
@@ -76,19 +105,9 @@ const AdminRecycleBinCoursesTab = () => {
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
-	const [searchResultsLoadedPages, setSearchResultsLoadedPages] = useState<number[]>([]);
-	const [searchButtonClicked, setSearchButtonClicked] = useState<boolean>(false);
-
-	const pageSize = 50;
-
-	// Use search results if active, otherwise use archived courses
-	const displayCourses = isSearchActive ? searchResults : archivedCourses;
-	const coursesNumberOfPages = isSearchActive ? Math.ceil(searchResultsTotalItems / pageSize) : Math.ceil(totalItems / pageSize);
+	// Use appropriate page number for pagination
 	const currentPageNumber = isSearchActive ? searchResultsPage : currentPage;
 	const paginatedCourses = displayCourses?.slice((currentPageNumber - 1) * pageSize, currentPageNumber * pageSize) || [];
-
-	const [orderBy, setOrderBy] = useState<keyof ArchivedCourse>('archivedAt');
-	const [order, setOrder] = useState<'asc' | 'desc'>('desc');
 
 	// Modal states
 	const [isCourseRestoreModalOpen, setIsCourseRestoreModalOpen] = useState<boolean[]>([]);
@@ -126,180 +145,6 @@ const AdminRecycleBinCoursesTab = () => {
 		setCurrentPage(1);
 	}, []);
 
-	const handlePageChange = async (newPage: number) => {
-		if (isSearchActive) {
-			setSearchResultsPage(newPage);
-
-			// Check if we need to fetch more data for progressive pagination
-			const requiredRecords = newPage * pageSize;
-			if (searchResults.length < requiredRecords) {
-				// Build search parameters
-				const params = new URLSearchParams({
-					limit: '200',
-				});
-
-				if (searchValue && searchValue.trim()) {
-					params.append('search', searchValue.trim());
-				}
-				if (filterValue && filterValue.trim()) {
-					params.append('filter', filterValue.trim());
-				}
-				if (orderBy) {
-					params.append('sortBy', orderBy);
-				}
-				if (order) {
-					params.append('sortOrder', order);
-				}
-
-				// Calculate which pages we need to fetch
-				const currentLoadedPages = searchResultsLoadedPages && searchResultsLoadedPages.length > 0 ? Math.max(...searchResultsLoadedPages) : 0;
-				const targetPage = Math.ceil((newPage * pageSize) / 200);
-
-				// Fetch all missing pages in sequence
-				for (let page = currentLoadedPages + 1; page <= targetPage; page++) {
-					if (!searchResultsLoadedPages?.includes(page)) {
-						await fetchMoreSearchResults(page, params);
-					}
-				}
-			}
-		} else {
-			// Check if we need to fetch more data for regular archived courses
-			const requiredRecords = newPage * pageSize;
-			if (archivedCourses.length < requiredRecords && newPage <= coursesNumberOfPages) {
-				// Calculate which pages we need to fetch
-				const currentLoadedPages = loadedPages && loadedPages.length > 0 ? Math.max(...loadedPages) : 0;
-				const targetPage = Math.ceil((newPage * pageSize) / 200);
-
-				// Fetch all missing pages in sequence
-				if (currentLoadedPages < targetPage) {
-					for (let page = currentLoadedPages + 1; page <= targetPage; page++) {
-						if (!loadedPages?.includes(page)) {
-							await fetchArchivedCourses(page);
-							setLoadedPages((prev) => [...prev, page]);
-						}
-					}
-				}
-			}
-			setCurrentPage(newPage);
-		}
-	};
-
-	const fetchMoreSearchResults = async (page: number, searchParams: URLSearchParams) => {
-		if (!orgId) return;
-
-		try {
-			// Add page parameter
-			searchParams.set('page', page.toString());
-
-			const response = await axios.get(`${base_url}/courses/organisation/${orgId}/archived?${searchParams.toString()}`);
-
-			if (page === 1) {
-				// First page - replace all data
-				setSearchResults(response.data.data);
-				setSearchResultsLoadedPages([1]);
-			} else {
-				// Additional pages - append data
-				setSearchResults((prev) => [...prev, ...response.data.data]);
-				setSearchResultsLoadedPages((prev) => [...prev, page]);
-			}
-
-			setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-		} catch (error) {
-			console.error('Error fetching more search results:', error);
-		}
-	};
-
-	const handleSort = (property: keyof ArchivedCourse) => {
-		const isAsc = orderBy === property && order === 'asc';
-		setOrder(isAsc ? 'desc' : 'asc');
-		setOrderBy(property);
-
-		// Client-side sort for displayed items (both search results and regular courses)
-		const sortedCourses = [...(displayCourses || [])]?.sort((a, b) => {
-			let aValue: any = a[property];
-			let bValue: any = b[property];
-
-			// Handle nested properties
-			if (property === 'instructor') {
-				aValue = a.instructor?.name || '';
-				bValue = b.instructor?.name || '';
-			}
-
-			// Handle date properties
-			if (property === 'archivedAt') {
-				aValue = new Date(aValue || 0);
-				bValue = new Date(bValue || 0);
-			}
-
-			// Handle string comparison
-			if (typeof aValue === 'string' && typeof bValue === 'string') {
-				aValue = aValue.toLowerCase();
-				bValue = bValue.toLowerCase();
-			}
-
-			if (aValue < bValue) {
-				return order === 'asc' ? -1 : 1;
-			}
-			if (aValue > bValue) {
-				return order === 'asc' ? 1 : -1;
-			}
-			return 0;
-		});
-
-		// Update the appropriate state based on what's currently displayed
-		if (isSearchActive) {
-			setSearchResults(sortedCourses);
-		} else {
-			setArchivedCourses(sortedCourses);
-		}
-	};
-
-	const handleSearch = async () => {
-		try {
-			// Reset to first page when searching
-			setCurrentPage(1);
-			setSearchResultsPage(1);
-
-			// Search button only works when search value exists
-			if (searchValue && searchValue.trim()) {
-				// Store the searched value
-				setSearchedValue(searchValue.trim());
-				// Build query parameters
-				const params = new URLSearchParams({
-					limit: '200',
-					search: searchValue.trim(),
-				});
-
-				// Add filter if it exists
-				if (filterValue && filterValue.trim()) {
-					params.append('filter', filterValue.trim());
-				}
-				if (orderBy) {
-					params.append('sortBy', orderBy);
-				}
-				if (order) {
-					params.append('sortOrder', order);
-				}
-
-				const response = await axios.get(`${base_url}/courses/organisation/${orgId}/archived?${params.toString()}`);
-				setSearchResults(response.data.data);
-				setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-				setSearchResultsLoadedPages([1]);
-				setIsSearchActive(true);
-				setSearchButtonClicked(true);
-			} else {
-				// If no search value, clear search results
-				setSearchResults([]);
-				setSearchResultsLoadedPages([]);
-				setSearchResultsTotalItems(0);
-				setIsSearchActive(false);
-				setSearchButtonClicked(false);
-			}
-		} catch (error) {
-			console.error('Search error:', error);
-		}
-	};
-
 	const openRestoreCourseModal = (index: number) => {
 		const updatedState = [...isCourseRestoreModalOpen];
 		updatedState[index] = true;
@@ -335,11 +180,7 @@ const AdminRecycleBinCoursesTab = () => {
 			setArchivedCourses((prev) => prev?.filter((course) => course._id !== courseId) || []);
 			setTotalItems((prev) => prev - 1);
 
-			// If search is active, also remove from search results
-			if (isSearchActive) {
-				setSearchResults((prev) => prev?.filter((course) => course._id !== courseId) || []);
-				setSearchResultsTotalItems((prev) => Math.max(0, prev - 1));
-			}
+			// Note: Search results will be automatically updated by the hook
 
 			setSnackbarMessage('Course restored successfully');
 			setSnackbarSeverity('success');
@@ -360,11 +201,7 @@ const AdminRecycleBinCoursesTab = () => {
 			setArchivedCourses((prev) => prev?.filter((course) => course._id !== courseId) || []);
 			setTotalItems((prev) => prev - 1);
 
-			// If search is active, also remove from search results
-			if (isSearchActive) {
-				setSearchResults((prev) => prev?.filter((course) => course._id !== courseId) || []);
-				setSearchResultsTotalItems((prev) => Math.max(0, prev - 1));
-			}
+			// Note: Search results will be automatically updated by the hook
 
 			setSnackbarMessage('Course permanently deleted');
 			setSnackbarSeverity('success');
@@ -422,11 +259,7 @@ const AdminRecycleBinCoursesTab = () => {
 			setArchivedCourses((prev) => prev?.filter((course) => !selectedItems?.includes(course._id)) || []);
 			setTotalItems((prev) => prev - selectedItems.length);
 
-			// If search is active, also remove from search results
-			if (isSearchActive) {
-				setSearchResults((prev) => prev?.filter((course) => !selectedItems?.includes(course._id)) || []);
-				setSearchResultsTotalItems((prev) => Math.max(0, prev - selectedItems.length));
-			}
+			// Note: Search results will be automatically updated by the hook
 
 			setSelectedItems([]);
 			setSelectAll(false);
@@ -451,11 +284,7 @@ const AdminRecycleBinCoursesTab = () => {
 			setArchivedCourses((prev) => prev?.filter((course) => !selectedItems?.includes(course._id)) || []);
 			setTotalItems((prev) => prev - selectedItems.length);
 
-			// If search is active, also remove from search results
-			if (isSearchActive) {
-				setSearchResults((prev) => prev?.filter((course) => !selectedItems?.includes(course._id)) || []);
-				setSearchResultsTotalItems((prev) => Math.max(0, prev - selectedItems.length));
-			}
+			// Note: Search results will be automatically updated by the hook
 
 			setSelectedItems([]);
 			setSelectAll(false);
@@ -490,8 +319,6 @@ const AdminRecycleBinCoursesTab = () => {
 		}
 	};
 
-	if (error) return <Typography color='error'>{error}</Typography>;
-
 	return (
 		<>
 			<Box
@@ -508,41 +335,7 @@ const AdminRecycleBinCoursesTab = () => {
 							<Select
 								size='small'
 								value={filterValue}
-								onChange={async (e) => {
-									const newFilterValue = e.target.value;
-									setFilterValue(newFilterValue);
-
-									// Automatically trigger filter
-									if (newFilterValue && newFilterValue.trim()) {
-										setIsSearchActive(true);
-										// Use search results for filtered data
-										const params = new URLSearchParams({
-											limit: '200',
-											filter: newFilterValue.trim(),
-										});
-										if (searchValue && searchValue.trim()) {
-											params.append('search', searchValue.trim());
-										}
-										if (orderBy) params.append('sortBy', orderBy);
-										if (order) params.append('sortOrder', order);
-
-										const response = await axios.get(`${base_url}/courses/organisation/${orgId}/archived?${params.toString()}`);
-										if (response.data.status === 200) {
-											setSearchResults(response.data.data);
-											setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-											setSearchResultsLoadedPages([1]);
-											setCurrentPage(1);
-											setSearchResultsPage(1);
-										}
-									} else {
-										// If no filter, reset to normal view
-										setIsSearchActive(false);
-										setSearchResults([]);
-										setSearchResultsLoadedPages([]);
-										setSearchResultsTotalItems(0);
-										await fetchArchivedCourses(1, searchValue);
-									}
-								}}
+								onChange={(e) => handleFilterChange(e.target.value)}
 								displayEmpty
 								sx={{
 									backgroundColor: theme.bgColor?.common,
@@ -580,6 +373,7 @@ const AdminRecycleBinCoursesTab = () => {
 									'Expired Courses',
 									'Paid Courses',
 									'Free Courses',
+									'Unpriced Courses',
 									'Open Courses',
 									'Closed Courses',
 									'External Courses',
@@ -610,6 +404,14 @@ const AdminRecycleBinCoursesTab = () => {
 						sx={{ backgroundColor: '#fff', minWidth: isVerySmallScreen ? '10rem' : '17.5rem' }}
 						required={false}
 						InputProps={{
+							onKeyDown: (e) => {
+								if (e.key === 'Enter') {
+									e.preventDefault();
+									if (searchValue.trim() && !isSearchLoading) {
+										handleSearch();
+									}
+								}
+							},
 							endAdornment: (
 								<InputAdornment position='end'>
 									<Search
@@ -622,24 +424,10 @@ const AdminRecycleBinCoursesTab = () => {
 							),
 						}}
 					/>
-					<CustomSubmitButton onClick={handleSearch} sx={{ marginLeft: '1rem' }} disabled={!searchValue || !searchValue.trim()}>
+					<CustomSubmitButton onClick={handleSearch} sx={{ marginLeft: '1rem' }} disabled={!searchValue || !searchValue.trim() || isSearchLoading}>
 						Search
 					</CustomSubmitButton>
-					<CustomDeleteButton
-						onClick={() => {
-							setSearchValue('');
-							setFilterValue('');
-							setSearchedValue('');
-							setSearchButtonClicked(false);
-							setSearchResults([]);
-							setSearchResultsLoadedPages([]);
-							setSearchResultsTotalItems(0);
-							setIsSearchActive(false);
-							setCurrentPage(1);
-							setSearchResultsPage(1);
-						}}>
-						Reset
-					</CustomDeleteButton>
+					<CustomDeleteButton onClick={resetAll}>Reset</CustomDeleteButton>
 
 					<Box sx={{ ml: '1rem', display: 'flex', alignItems: 'center', height: '2rem' }}>
 						{isSearchActive ? (
@@ -702,37 +490,7 @@ const AdminRecycleBinCoursesTab = () => {
 						{filterValue && filterValue.trim() && (
 							<Chip
 								label={`Filter: ${filterValue}`}
-								onDelete={() => {
-									setFilterValue('');
-									// If search value exists, keep search results
-									if (searchValue && searchValue.trim()) {
-										// Trigger search without filter value
-										const params = new URLSearchParams({
-											limit: '200',
-											search: searchValue.trim(),
-										});
-										if (orderBy) params.append('sortBy', orderBy);
-										if (order) params.append('sortOrder', order);
-
-										axios
-											.get(`${base_url}/courses/organisation/${orgId}/archived?${params.toString()}`)
-											.then((response) => {
-												setSearchResults(response.data.data);
-												setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-												setSearchResultsLoadedPages([1]);
-												setIsSearchActive(true);
-												setCurrentPage(1);
-												setSearchResultsPage(1);
-											})
-											.catch((error) => console.error('Search error:', error));
-									} else {
-										// No search value, reset to archived courses
-										setIsSearchActive(false);
-										setSearchResults([]);
-										setSearchResultsLoadedPages([]);
-										setSearchResultsTotalItems(0);
-									}
-								}}
+								onDelete={resetFilter}
 								color='secondary'
 								variant='outlined'
 								size='small'
@@ -742,39 +500,7 @@ const AdminRecycleBinCoursesTab = () => {
 						{searchedValue && searchButtonClicked && (
 							<Chip
 								label={`Search: "${searchedValue}"`}
-								onDelete={() => {
-									setSearchValue('');
-									setSearchedValue('');
-									setSearchButtonClicked(false);
-									// If filter exists, keep filter results
-									if (filterValue && filterValue.trim()) {
-										// Trigger filter search without search value
-										const params = new URLSearchParams({
-											limit: '200',
-											filter: filterValue.trim(),
-										});
-										if (orderBy) params.append('sortBy', orderBy);
-										if (order) params.append('sortOrder', order);
-
-										axios
-											.get(`${base_url}/courses/organisation/${orgId}/archived?${params.toString()}`)
-											.then((response) => {
-												setSearchResults(response.data.data);
-												setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-												setSearchResultsLoadedPages([1]);
-												setIsSearchActive(true);
-												setCurrentPage(1);
-												setSearchResultsPage(1);
-											})
-											.catch((error) => console.error('Filter search error:', error));
-									} else {
-										// No filter, reset to archived courses
-										setIsSearchActive(false);
-										setSearchResults([]);
-										setSearchResultsLoadedPages([]);
-										setSearchResultsTotalItems(0);
-									}
-								}}
+								onDelete={resetSearch}
 								variant='outlined'
 								color='secondary'
 								size='small'
@@ -786,7 +512,7 @@ const AdminRecycleBinCoursesTab = () => {
 
 				<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>
 					<CustomTableHead<ArchivedCourse>
-						orderBy={orderBy}
+						orderBy={orderBy as keyof ArchivedCourse}
 						order={order}
 						handleSort={handleSort}
 						selectAll={selectAll}

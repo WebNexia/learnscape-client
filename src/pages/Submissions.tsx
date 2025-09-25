@@ -1,8 +1,7 @@
 import { Box, FormControl, InputAdornment, MenuItem, Select, Table, TableBody, TableCell, TableRow, Typography, Chip } from '@mui/material';
 import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
-import { useContext, useEffect, useState, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useContext } from 'react';
 import CustomTableHead from '../components/layouts/table/CustomTableHead';
 import CustomTableCell from '../components/layouts/table/CustomTableCell';
 import CustomActionBtn from '../components/layouts/table/CustomActionBtn';
@@ -18,61 +17,64 @@ import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import { useAuth } from '../hooks/useAuth';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import CustomDeleteButton from '../components/forms/customButtons/CustomDeleteButton';
-import axios from '@utils/axiosInstance';
+import { useFilterSearch } from '../hooks/useFilterSearch';
 
 const Submissions = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
-	const {
-		userQuizSubmissions,
-		fetchMoreUserQuizSubmissions,
-		loadedPages,
-		totalItems,
-		userSubmissionsPageNumber,
-		setUserSubmissionsPageNumber,
-		loading,
-	} = useContext(LearnerQuizSubmissionsContext);
+	const { userQuizSubmissions, fetchMoreUserQuizSubmissions, loadedPages, userSubmissionsPageNumber, setUserSubmissionsPageNumber, loading } =
+		useContext(LearnerQuizSubmissionsContext);
 	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
 	const { user } = useAuth();
-	const location = useLocation();
 
 	const userCourseData: string[] =
 		JSON.parse(localStorage.getItem('userCourseData') || '[]')?.map((data: UserCoursesIdsWithCourseIds) => data.courseTitle) || [];
 
-	// Use context pagination state instead of local state
-	const [searchValue, setSearchValue] = useState<string>('');
-	const [filterValue, setFilterValue] = useState<string>('');
-
-	// Progressive pagination and search state
-	const [searchResults, setSearchResults] = useState<QuizSubmission[]>([]);
-	const [isSearchActive, setIsSearchActive] = useState<boolean>(false);
-	const [searchResultsPage, setSearchResultsPage] = useState<number>(1);
-	const [searchResultsLoadedPages, setSearchResultsLoadedPages] = useState<number[]>([]);
-	const [searchResultsTotalItems, setSearchResultsTotalItems] = useState<number>(0);
-	const [searchButtonClicked, setSearchButtonClicked] = useState<boolean>(false);
-	const [searchedValue, setSearchedValue] = useState<string>('');
-
-	const [orderBy, setOrderBy] = useState<keyof QuizSubmission>('updatedAt');
-	const [order, setOrder] = useState<'asc' | 'desc'>('desc');
-
 	const pageSize = 50;
-	const contextLimit = 150; // Match the context provider limit
 
-	// Use search results if active, otherwise use context data
-	const displaySubmissions = isSearchActive ? searchResults : userQuizSubmissions;
-
-	// For pagination, use total items from server when not searching
-	const submissionsNumberOfPages = isSearchActive ? Math.ceil(searchResultsTotalItems / pageSize) : Math.ceil(totalItems / pageSize);
+	// Use the filter search hook
+	const {
+		searchValue,
+		setSearchValue,
+		filterValue,
+		displayData: displaySubmissions,
+		numberOfPages: submissionsNumberOfPages,
+		searchResultsPage,
+		searchResultsTotalItems,
+		searchButtonClicked,
+		searchedValue,
+		orderBy,
+		order,
+		isSearchActive,
+		isLoading: isSearchLoading,
+		handleSearch,
+		handleFilterChange,
+		handlePageChange,
+		handleSort,
+		resetSearch,
+		resetFilter,
+		resetAll,
+	} = useFilterSearch<QuizSubmission>({
+		getEndpoint: () => `${base_url}/quizSubmissions/user/${user?._id}`,
+		limit: 150,
+		pageSize,
+		contextData: userQuizSubmissions || [],
+		setContextPageNumber: setUserSubmissionsPageNumber,
+		fetchMoreContextData: fetchMoreUserQuizSubmissions,
+		contextLoadedPages: loadedPages,
+		defaultOrderBy: 'updatedAt',
+		defaultOrder: 'desc',
+	});
 
 	// Use appropriate page number for pagination
 	const currentPage = isSearchActive ? searchResultsPage : userSubmissionsPageNumber;
 
 	const sortedSubmissions =
 		[...(displaySubmissions || [])]?.sort((a, b) => {
-			const aValue = a[orderBy] ?? '';
-			const bValue = b[orderBy] ?? '';
+			const aValue = (a as any)[orderBy] ?? '';
+			const bValue = (b as any)[orderBy] ?? '';
 
 			if (order === 'asc') {
 				return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
@@ -86,187 +88,6 @@ const Submissions = () => {
 	const paginatedSubmissions = sortedSubmissions?.slice((currentPage - 1) * pageSize, currentPage * pageSize) || [];
 
 	// React Query handles data loading automatically
-
-	// Keep track of previous length to avoid unnecessary resets
-	const prevLengthRef = useRef<number>(0);
-
-	const handleSort = (property: keyof QuizSubmission) => {
-		const isAsc = orderBy === property && order === 'asc';
-		setOrder(isAsc ? 'desc' : 'asc');
-		setOrderBy(property);
-	};
-
-	useEffect(() => {
-		setUserSubmissionsPageNumber(1);
-	}, [setUserSubmissionsPageNumber]);
-
-	const handlePageChange = async (newPage: number) => {
-		// Set appropriate page number based on search state
-		if (isSearchActive) {
-			setSearchResultsPage(newPage);
-		} else {
-			setUserSubmissionsPageNumber(newPage);
-		}
-
-		// If in search mode, handle search results pagination
-		if (isSearchActive) {
-			// Check if we need to fetch more search results
-			const requiredRecords = newPage * pageSize;
-			if (searchResults.length < requiredRecords) {
-				// Build search parameters
-				const params = new URLSearchParams({
-					limit: contextLimit.toString(),
-				});
-
-				if (searchValue && searchValue.trim()) {
-					params.append('search', searchValue.trim());
-				}
-				if (filterValue && filterValue.trim()) {
-					params.append('filter', filterValue.trim());
-				}
-				if (orderBy) {
-					params.append('sortBy', orderBy);
-				}
-				if (order) {
-					params.append('sortOrder', order);
-				}
-
-				// Calculate which pages we need to fetch
-				const currentLoadedPages = searchResultsLoadedPages && searchResultsLoadedPages.length > 0 ? Math.max(...searchResultsLoadedPages) : 0;
-				const targetPage = Math.ceil((newPage * pageSize) / contextLimit);
-
-				// Fetch all missing pages in sequence
-				for (let page = currentLoadedPages + 1; page <= targetPage; page++) {
-					if (!searchResultsLoadedPages?.includes(page)) {
-						await fetchMoreSearchResults(page, params);
-					}
-				}
-			}
-		} else {
-			// Check if we need to fetch more data for context
-			const requiredRecords = newPage * pageSize;
-			if (userQuizSubmissions.length < requiredRecords && newPage <= submissionsNumberOfPages) {
-				// Calculate which pages we need to fetch
-				const currentLoadedPages = loadedPages && loadedPages.length > 0 ? Math.max(...loadedPages) : 0;
-				const targetPage = Math.ceil((newPage * pageSize) / contextLimit);
-
-				// Fetch all missing pages in sequence
-				if (currentLoadedPages < targetPage) {
-					await fetchMoreUserQuizSubmissions(currentLoadedPages + 1, targetPage);
-				}
-			}
-		}
-	};
-
-	const handleSearch = async () => {
-		try {
-			// Reset to first page when searching
-			setUserSubmissionsPageNumber(1);
-			setSearchResultsPage(1);
-
-			// Search button only works when search value exists
-			if (searchValue && searchValue.trim()) {
-				// Store the searched value
-				setSearchedValue(searchValue.trim());
-				// Build query parameters
-				const params = new URLSearchParams({
-					limit: contextLimit.toString(),
-					search: searchValue.trim(),
-				});
-
-				// Add filter if it exists
-				if (filterValue && filterValue.trim()) {
-					params.append('filter', filterValue.trim());
-				}
-				if (orderBy) {
-					params.append('sortBy', orderBy);
-				}
-				if (order) {
-					params.append('sortOrder', order);
-				}
-
-				const response = await axios.get(`${base_url}/quizSubmissions/user/${user?._id}?${params.toString()}`);
-				setSearchResults(response.data.data);
-				setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-				setSearchResultsLoadedPages([1]);
-				setIsSearchActive(true);
-				setSearchButtonClicked(true);
-			} else {
-				// If no search value, clear search results
-				setSearchResults([]);
-				setSearchResultsLoadedPages([]);
-				setSearchResultsTotalItems(0);
-				setIsSearchActive(false);
-				setSearchButtonClicked(false);
-				setSearchedValue('');
-			}
-		} catch (error) {
-			console.error('Search error:', error);
-		}
-	};
-
-	const fetchMoreSearchResults = async (page: number, searchParams: URLSearchParams) => {
-		try {
-			// Add page parameter
-			searchParams.set('page', page.toString());
-
-			const response = await axios.get(`${base_url}/quizSubmissions/user/${user?._id}?${searchParams.toString()}`);
-
-			if (page === 1) {
-				// First page - replace all data
-				setSearchResults(response.data.data);
-				setSearchResultsLoadedPages([1]);
-			} else {
-				// Subsequent pages - append data
-				setSearchResults((prev) => {
-					const newData = [...prev, ...response.data.data];
-					return newData;
-				});
-				setSearchResultsLoadedPages((prev) => [...prev, page]);
-			}
-
-			setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-		} catch (error) {
-			console.error('Fetch more search results error:', error);
-		}
-	};
-
-	useEffect(() => {
-		if (paginatedSubmissions && paginatedSubmissions.length !== prevLengthRef.current) {
-			prevLengthRef.current = paginatedSubmissions.length;
-		}
-	}, [displaySubmissions, userSubmissionsPageNumber]);
-
-	useEffect(() => {
-		// React Query handles the initial fetch automatically
-		// No need to manually call fetchUserQuizSubmissions
-	}, []);
-
-	// Cleanup search state function
-	const cleanupSearchState = () => {
-		setSearchResults([]);
-		setSearchResultsLoadedPages([]);
-		setSearchResultsTotalItems(0);
-		setIsSearchActive(false);
-		setSearchValue('');
-		setFilterValue('');
-		setSearchedValue('');
-		setSearchButtonClicked(false);
-	};
-
-	// Cleanup on component unmount
-	useEffect(() => {
-		return () => {
-			cleanupSearchState();
-		};
-	}, []);
-
-	// Cleanup when navigating away from page
-	useEffect(() => {
-		return () => {
-			cleanupSearchState();
-		};
-	}, [location.pathname]);
 
 	// Show loading state while quiz submissions are being fetched or when data is empty and not loading yet
 	if (loading) {
@@ -300,53 +121,7 @@ const Submissions = () => {
 								<Select
 									size='small'
 									value={filterValue}
-									onChange={(e) => {
-										const newFilterValue = e.target.value;
-										setFilterValue(newFilterValue);
-
-										// Auto-search when filter changes
-										if (newFilterValue) {
-											// Build query parameters
-											const params = new URLSearchParams({
-												limit: contextLimit.toString(),
-												filter: newFilterValue,
-											});
-
-											// Include existing search value if it exists
-											if (searchValue && searchValue.trim()) {
-												params.append('search', searchValue.trim());
-											}
-											if (orderBy) {
-												params.append('sortBy', orderBy);
-											}
-											if (order) {
-												params.append('sortOrder', order);
-											}
-
-											// Trigger search immediately
-											axios
-												.get(`${base_url}/quizSubmissions/user/${user?._id}?${params.toString()}`)
-												.then((response) => {
-													setSearchResults(response.data.data);
-													setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-													setSearchResultsLoadedPages([1]);
-													setIsSearchActive(true);
-													setSearchResultsPage(1);
-													setUserSubmissionsPageNumber(1);
-												})
-												.catch((error) => {
-													console.error('Filter search error:', error);
-												});
-										} else {
-											// No filter, reset to context data
-											setSearchResults([]);
-											setSearchResultsLoadedPages([]);
-											setSearchResultsTotalItems(0);
-											setIsSearchActive(false);
-											setSearchResultsPage(1);
-											setUserSubmissionsPageNumber(1);
-										}
-									}}
+									onChange={(e) => handleFilterChange(e.target.value)}
 									displayEmpty
 									sx={{
 										backgroundColor: theme.bgColor?.common,
@@ -440,6 +215,14 @@ const Submissions = () => {
 								sx={{ backgroundColor: '#fff' }}
 								required={false}
 								InputProps={{
+									onKeyDown: (e) => {
+										if (e.key === 'Enter') {
+											e.preventDefault();
+											if (searchValue.trim() && !isSearchLoading) {
+												handleSearch();
+											}
+										}
+									},
 									endAdornment: (
 										<InputAdornment position='end'>
 											<Search
@@ -453,24 +236,10 @@ const Submissions = () => {
 								}}
 							/>
 						</Box>
-						<CustomSubmitButton onClick={handleSearch} sx={{ marginLeft: '1rem' }} disabled={!searchValue}>
+						<CustomSubmitButton onClick={handleSearch} sx={{ marginLeft: '1rem' }} disabled={!searchValue || isSearchLoading}>
 							Search
 						</CustomSubmitButton>
-						<CustomDeleteButton
-							onClick={() => {
-								setSearchValue('');
-								setFilterValue('');
-								setSearchResults([]);
-								setIsSearchActive(false);
-								setUserSubmissionsPageNumber(1);
-								setSearchResultsPage(1);
-								setSearchResultsLoadedPages([]);
-								setSearchResultsTotalItems(0);
-								setSearchButtonClicked(false);
-								setSearchedValue('');
-							}}>
-							Reset
-						</CustomDeleteButton>
+						<CustomDeleteButton onClick={resetAll}>Reset</CustomDeleteButton>
 						<Box sx={{ ml: '1rem', display: 'flex', alignItems: 'center', height: '2rem' }}>
 							{isSearchActive ? (
 								<Typography
@@ -513,46 +282,7 @@ const Submissions = () => {
 						{isSearchActive && filterValue && filterValue.trim() && (
 							<Chip
 								label={`Filter: "${filterValue}"`}
-								onDelete={() => {
-									setFilterValue('');
-									// If search value exists, auto-search with remaining search value
-									if (searchValue && searchValue.trim()) {
-										const params = new URLSearchParams({
-											limit: contextLimit.toString(),
-											search: searchValue.trim(),
-										});
-										if (orderBy) {
-											params.append('sortBy', orderBy);
-										}
-										if (order) {
-											params.append('sortOrder', order);
-										}
-
-										axios
-											.get(`${base_url}/quizSubmissions/user/${user?._id}?${params.toString()}`)
-											.then((response) => {
-												setSearchResults(response.data.data);
-												setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-												setSearchResultsLoadedPages([1]);
-												setIsSearchActive(true);
-												setSearchResultsPage(1);
-												setUserSubmissionsPageNumber(1);
-											})
-											.catch((error) => {
-												console.error('Search error:', error);
-											});
-									} else {
-										// Clear everything and go back to context data
-										setSearchResults([]);
-										setSearchResultsLoadedPages([]);
-										setSearchResultsTotalItems(0);
-										setIsSearchActive(false);
-										setSearchResultsPage(1);
-										setUserSubmissionsPageNumber(1);
-										setSearchedValue('');
-										setSearchButtonClicked(false);
-									}
-								}}
+								onDelete={resetFilter}
 								color='secondary'
 								variant='outlined'
 								size='small'
@@ -562,46 +292,7 @@ const Submissions = () => {
 						{isSearchActive && searchedValue && searchButtonClicked && (
 							<Chip
 								label={`Search: "${searchedValue}"`}
-								onDelete={() => {
-									setSearchValue('');
-									setSearchedValue('');
-									setSearchButtonClicked(false);
-									// If filter exists, keep filter results
-									if (filterValue && filterValue.trim()) {
-										const params = new URLSearchParams({
-											limit: contextLimit.toString(),
-											filter: filterValue.trim(),
-										});
-										if (orderBy) {
-											params.append('sortBy', orderBy);
-										}
-										if (order) {
-											params.append('sortOrder', order);
-										}
-
-										axios
-											.get(`${base_url}/quizSubmissions/user/${user?._id}?${params.toString()}`)
-											.then((response) => {
-												setSearchResults(response.data.data);
-												setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-												setSearchResultsLoadedPages([1]);
-												setIsSearchActive(true);
-												setSearchResultsPage(1);
-												setUserSubmissionsPageNumber(1);
-											})
-											.catch((error) => {
-												console.error('Filter error:', error);
-											});
-									} else {
-										// No filter, reset to context data
-										setSearchResults([]);
-										setSearchResultsLoadedPages([]);
-										setSearchResultsTotalItems(0);
-										setIsSearchActive(false);
-										setSearchResultsPage(1);
-										setUserSubmissionsPageNumber(1);
-									}
-								}}
+								onDelete={resetSearch}
 								color='primary'
 								variant='filled'
 								size='small'
@@ -613,7 +304,7 @@ const Submissions = () => {
 
 				<Table sx={{ margin: '1rem 0' }} size='small' aria-label='a dense table'>
 					<CustomTableHead<QuizSubmission>
-						orderBy={orderBy}
+						orderBy={orderBy as keyof QuizSubmission}
 						order={order}
 						handleSort={handleSort}
 						columns={[

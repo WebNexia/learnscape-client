@@ -19,7 +19,6 @@ import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleto
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
 import { useContext, useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
 import { Download, Search, Visibility } from '@mui/icons-material';
 import CreateLessonDialog from '../components/forms/newLesson/CreateLessonDialog';
 import CustomTableHead from '../components/layouts/table/CustomTableHead';
@@ -38,16 +37,15 @@ import axios from '@utils/axiosInstance';
 import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import { AdminPublicEventsContext } from '../contexts/AdminPublicEventsContextProvider';
+import { useFilterSearch } from '../hooks/useFilterSearch';
 
 const AdminPublicEvents = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
-	const location = useLocation();
 
 	const {
 		publicEvents,
 		fetchMorePublicEvents,
-		totalItems,
 		loadedPages,
 		publicEventsPageNumber,
 		setPublicEventsPageNumber,
@@ -59,38 +57,53 @@ const AdminPublicEvents = () => {
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
-	const [searchValue, setSearchValue] = useState<string>('');
-	const [filterValue, setFilterValue] = useState<string>('');
-	const [searchResults, setSearchResults] = useState<Event[]>([]);
-	const [isSearchActive, setIsSearchActive] = useState<boolean>(false);
-	const [searchResultsPage, setSearchResultsPage] = useState<number>(1);
-	const [searchResultsLoadedPages, setSearchResultsLoadedPages] = useState<number[]>([]);
-	const [searchResultsTotalItems, setSearchResultsTotalItems] = useState<number>(0);
-	const [searchButtonClicked, setSearchButtonClicked] = useState<boolean>(false);
-	const [searchedValue, setSearchedValue] = useState<string>('');
-
 	const [eventDetailsModalOpen, setEventDetailsModalOpen] = useState<boolean>(false);
-
-	const [orderBy, setOrderBy] = useState<keyof Event>('updatedAt');
-	const [order, setOrder] = useState<'asc' | 'desc'>('desc');
 
 	const pageSize = 50;
 
+	// Use the filter search hook
+	const {
+		searchValue,
+		setSearchValue,
+		filterValue,
+		displayData: displayEvents,
+		numberOfPages: eventsNumberOfPages,
+		searchResultsPage,
+		searchResultsTotalItems,
+		searchButtonClicked,
+		searchedValue,
+		orderBy,
+		order,
+		isSearchActive,
+		isLoading: isSearchLoading,
+		handleSearch,
+		handleFilterChange,
+		handlePageChange,
+		handleSort,
+		resetSearch,
+		resetFilter,
+		resetAll,
+	} = useFilterSearch<Event>({
+		getEndpoint: () => `${base_url}/events/public/${orgId}?upcomingOnly=false`,
+		limit: 200,
+		pageSize,
+		contextData: publicEvents,
+		setContextPageNumber: setPublicEventsPageNumber,
+		fetchMoreContextData: fetchMorePublicEvents,
+		contextLoadedPages: loadedPages,
+		defaultOrderBy: 'start',
+		defaultOrder: 'asc',
+	});
+
 	const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
-
-	// Use search results if active, otherwise use context data
-	const displayEvents = isSearchActive ? searchResults : publicEvents;
-
-	// For pagination, use total items from server when not searching
-	const publicEventsNumberOfPages = isSearchActive ? Math.ceil(searchResultsTotalItems / pageSize) : Math.ceil(totalItems / pageSize);
 
 	// Use appropriate page number for pagination
 	const currentPage = isSearchActive ? searchResultsPage : publicEventsPageNumber;
 
 	const sortedPublicEvents =
 		[...(displayEvents || [])]?.sort((a, b) => {
-			const aValue = a[orderBy] ?? '';
-			const bValue = b[orderBy] ?? '';
+			const aValue = (a as any)[orderBy] ?? '';
+			const bValue = (b as any)[orderBy] ?? '';
 
 			if (order === 'asc') {
 				return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
@@ -103,149 +116,6 @@ const AdminPublicEvents = () => {
 
 	const [isNewLessonModalOpen, setIsNewLessonModalOpen] = useState<boolean>(false);
 
-	const handleSort = (property: keyof Event) => {
-		const isAsc = orderBy === property && order === 'asc';
-		setOrder(isAsc ? 'desc' : 'asc');
-		setOrderBy(property);
-	};
-
-	const handleSearch = async () => {
-		try {
-			// Reset to first page when searching
-			setPublicEventsPageNumber(1);
-			setSearchResultsPage(1);
-
-			// Search button works when search value or filter value exists
-			if ((searchValue && searchValue.trim()) || (filterValue && filterValue.trim())) {
-				// Store the searched value if it exists
-				if (searchValue && searchValue.trim()) {
-					setSearchedValue(searchValue.trim());
-				}
-
-				// Build query parameters
-				const params = new URLSearchParams({
-					limit: '200',
-				});
-
-				// Add search if it exists
-				if (searchValue && searchValue.trim()) {
-					params.append('search', searchValue.trim());
-				}
-
-				// Add filter if it exists
-				if (filterValue && filterValue.trim()) {
-					params.append('filter', filterValue.trim());
-				}
-				if (orderBy) {
-					params.append('sortBy', orderBy);
-				}
-				if (order) {
-					params.append('sortOrder', order);
-				}
-
-				const response = await axios.get(`${base_url}/events/public/${orgId}?upcomingOnly=false&${params.toString()}`);
-				setSearchResults(response.data.data);
-				setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-				setSearchResultsLoadedPages([1]);
-				setIsSearchActive(true);
-				setSearchButtonClicked(true);
-			} else {
-				// If no search value and no filter value, clear search results
-				setSearchResults([]);
-				setSearchResultsLoadedPages([]);
-				setSearchResultsTotalItems(0);
-				setIsSearchActive(false);
-				setSearchButtonClicked(false);
-			}
-		} catch (error) {
-			console.error('Search error:', error);
-		}
-	};
-
-	const fetchMoreSearchResults = async (page: number, searchParams: URLSearchParams) => {
-		try {
-			// Add page parameter
-			searchParams.set('page', page.toString());
-
-			const response = await axios.get(`${base_url}/events/public/${orgId}?upcomingOnly=false&${searchParams.toString()}`);
-
-			if (page === 1) {
-				// First page - replace all data
-				setSearchResults(response.data.data);
-				setSearchResultsLoadedPages([1]);
-			} else {
-				// Subsequent pages - append data
-				setSearchResults((prev) => {
-					const newData = [...prev, ...response.data.data];
-					return newData;
-				});
-				setSearchResultsLoadedPages((prev) => [...prev, page]);
-			}
-
-			setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-		} catch (error) {
-			console.error('Fetch more search results error:', error);
-		}
-	};
-
-	const handlePageChange = async (newPage: number) => {
-		// Set appropriate page number based on search state
-		if (isSearchActive) {
-			setSearchResultsPage(newPage);
-		} else {
-			setPublicEventsPageNumber(newPage);
-		}
-
-		// If in search mode, handle search results pagination
-		if (isSearchActive) {
-			// Check if we need to fetch more search results
-			const requiredRecords = newPage * pageSize;
-			if (searchResults.length < requiredRecords) {
-				// Build search parameters
-				const params = new URLSearchParams({
-					limit: '200',
-				});
-
-				if (searchValue && searchValue.trim()) {
-					params.append('search', searchValue.trim());
-				}
-				if (filterValue && filterValue.trim()) {
-					params.append('filter', filterValue.trim());
-				}
-				if (orderBy) {
-					params.append('sortBy', orderBy);
-				}
-				if (order) {
-					params.append('sortOrder', order);
-				}
-
-				// Calculate which pages we need to fetch
-				const currentLoadedPages = searchResultsLoadedPages && searchResultsLoadedPages.length > 0 ? Math.max(...searchResultsLoadedPages) : 0;
-				const targetPage = Math.ceil((newPage * pageSize) / 200);
-
-				// Fetch all missing pages in sequence
-				for (let page = currentLoadedPages + 1; page <= targetPage; page++) {
-					if (!searchResultsLoadedPages?.includes(page)) {
-						await fetchMoreSearchResults(page, params);
-					}
-				}
-			}
-		} else {
-			// Check if we need to fetch more data for context
-			const requiredRecords = newPage * pageSize;
-			if (publicEvents.length < requiredRecords && newPage <= publicEventsNumberOfPages) {
-				// Calculate which pages we need to fetch
-				const currentLoadedPages = loadedPages && loadedPages.length > 0 ? Math.max(...loadedPages) : 0;
-				const targetPage = Math.ceil((newPage * pageSize) / 200);
-
-				// Fetch all missing pages in sequence
-				if (currentLoadedPages < targetPage) {
-					await fetchMorePublicEvents(currentLoadedPages + 1, targetPage);
-				}
-			}
-		}
-	};
-
 	// Enable admin public events fetching only once when component mounts
 	useEffect(() => {
 		enableAdminPublicEventsFetch();
@@ -254,32 +124,6 @@ const AdminPublicEvents = () => {
 	useEffect(() => {
 		setPublicEventsPageNumber(1);
 	}, []); // Reset page number only once on mount
-
-	// Cleanup search state function
-	const cleanupSearchState = () => {
-		setSearchResults([]);
-		setSearchResultsLoadedPages([]);
-		setSearchResultsTotalItems(0);
-		setIsSearchActive(false);
-		setSearchValue('');
-		setFilterValue('');
-		setSearchedValue('');
-		setSearchButtonClicked(false);
-	};
-
-	// Cleanup on component unmount
-	useEffect(() => {
-		return () => {
-			cleanupSearchState();
-		};
-	}, []);
-
-	// Cleanup when navigating away from page
-	useEffect(() => {
-		return () => {
-			cleanupSearchState();
-		};
-	}, [location.pathname]);
 
 	const handleDownloadParticipants = async (eventId: string, eventTitle: string) => {
 		try {
@@ -333,79 +177,7 @@ const AdminPublicEvents = () => {
 								<Select
 									size='small'
 									value={filterValue}
-									onChange={async (e) => {
-										const newFilterValue = e.target.value;
-										setFilterValue(newFilterValue);
-
-										// Auto-search when filter is selected
-										if (newFilterValue && newFilterValue.trim()) {
-											setPublicEventsPageNumber(1);
-											setSearchResultsPage(1);
-											setIsSearchActive(true);
-											setSearchResultsLoadedPages([]);
-
-											try {
-												const params = new URLSearchParams({
-													limit: '200',
-													filter: newFilterValue.trim(),
-												});
-
-												// Include existing search value if it exists
-												if (searchValue && searchValue.trim()) {
-													params.append('search', searchValue.trim());
-												}
-
-												if (orderBy) {
-													params.append('sortBy', orderBy);
-												}
-												if (order) {
-													params.append('sortOrder', order);
-												}
-
-												const response = await axios.get(`${base_url}/events/public/${orgId}?upcomingOnly=false&${params.toString()}`);
-												setSearchResults(response.data.data);
-												setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-												setSearchResultsLoadedPages([1]);
-											} catch (error) {
-												console.error('Filter search error:', error);
-											}
-										} else {
-											// If filter is cleared but search value exists, auto-search with search value
-											if (searchValue && searchValue.trim()) {
-												setPublicEventsPageNumber(1);
-												setSearchResultsPage(1);
-												setIsSearchActive(true);
-												setSearchResultsLoadedPages([]);
-
-												try {
-													const params = new URLSearchParams({
-														limit: '200',
-														search: searchValue.trim(),
-													});
-
-													if (orderBy) {
-														params.append('sortBy', orderBy);
-													}
-													if (order) {
-														params.append('sortOrder', order);
-													}
-
-													const response = await axios.get(`${base_url}/events/public/${orgId}?upcomingOnly=false&${params.toString()}`);
-													setSearchResults(response.data.data);
-													setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-													setSearchResultsLoadedPages([1]);
-												} catch (error) {
-													console.error('Auto-search error:', error);
-												}
-											} else {
-												// If no search value, reset to context data
-												setIsSearchActive(false);
-												setSearchResults([]);
-												setSearchResultsLoadedPages([]);
-												setSearchResultsTotalItems(0);
-											}
-										}
-									}}
+									onChange={(e) => handleFilterChange(e.target.value)}
 									displayEmpty
 									sx={{
 										backgroundColor: theme.bgColor?.common,
@@ -489,6 +261,14 @@ const AdminPublicEvents = () => {
 								sx={{ backgroundColor: '#fff' }}
 								required={false}
 								InputProps={{
+									onKeyDown: (e) => {
+										if (e.key === 'Enter') {
+											e.preventDefault();
+											if (searchValue.trim() && !loading) {
+												handleSearch();
+											}
+										}
+									},
 									endAdornment: (
 										<InputAdornment position='end'>
 											<Search
@@ -502,24 +282,10 @@ const AdminPublicEvents = () => {
 								}}
 							/>
 						</Box>
-						<CustomSubmitButton onClick={handleSearch} sx={{ marginLeft: '1rem' }} disabled={!searchValue && !filterValue}>
+						<CustomSubmitButton onClick={handleSearch} sx={{ marginLeft: '1rem' }} disabled={!searchValue || isSearchLoading}>
 							Search
 						</CustomSubmitButton>
-						<CustomDeleteButton
-							onClick={() => {
-								setSearchValue('');
-								setFilterValue('');
-								setSearchedValue('');
-								setSearchButtonClicked(false);
-								setSearchResults([]);
-								setSearchResultsLoadedPages([]);
-								setSearchResultsTotalItems(0);
-								setIsSearchActive(false);
-								setPublicEventsPageNumber(1);
-								setSearchResultsPage(1);
-							}}>
-							Reset
-						</CustomDeleteButton>
+						<CustomDeleteButton onClick={resetAll}>Reset</CustomDeleteButton>
 						<Box sx={{ ml: '1rem', display: 'flex', alignItems: 'center', height: '2rem' }}>
 							{isSearchActive ? (
 								<Typography
@@ -571,37 +337,7 @@ const AdminPublicEvents = () => {
 							{isSearchActive && filterValue && filterValue.trim() && (
 								<Chip
 									label={`Filter: "${filterValue}"`}
-									onDelete={() => {
-										setFilterValue('');
-										// If search exists, keep search results
-										if (searchValue && searchValue.trim()) {
-											// Trigger search without filter value
-											const params = new URLSearchParams({
-												limit: '200',
-												search: searchValue.trim(),
-											});
-											if (orderBy) params.append('sortBy', orderBy);
-											if (order) params.append('sortOrder', order);
-
-											axios
-												.get(`${base_url}/events/public/${orgId}?upcomingOnly=false&${params.toString()}`)
-												.then((response) => {
-													setSearchResults(response.data.data);
-													setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-													setSearchResultsLoadedPages([1]);
-													setIsSearchActive(true);
-													setPublicEventsPageNumber(1);
-													setSearchResultsPage(1);
-												})
-												.catch((error) => console.error('Search error:', error));
-										} else {
-											// No search, reset to context data
-											setIsSearchActive(false);
-											setSearchResults([]);
-											setSearchResultsLoadedPages([]);
-											setSearchResultsTotalItems(0);
-										}
-									}}
+									onDelete={resetFilter}
 									variant='outlined'
 									color='secondary'
 									size='small'
@@ -611,39 +347,7 @@ const AdminPublicEvents = () => {
 							{isSearchActive && searchedValue && searchButtonClicked && (
 								<Chip
 									label={`Search: "${searchedValue}"`}
-									onDelete={() => {
-										setSearchValue('');
-										setSearchedValue('');
-										setSearchButtonClicked(false);
-										// If filter exists, keep filter results
-										if (filterValue && filterValue.trim()) {
-											// Trigger filter search without search value
-											const params = new URLSearchParams({
-												limit: '200',
-												filter: filterValue.trim(),
-											});
-											if (orderBy) params.append('sortBy', orderBy);
-											if (order) params.append('sortOrder', order);
-
-											axios
-												.get(`${base_url}/events/public/${orgId}?upcomingOnly=false&${params.toString()}`)
-												.then((response) => {
-													setSearchResults(response.data.data);
-													setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-													setSearchResultsLoadedPages([1]);
-													setIsSearchActive(true);
-													setPublicEventsPageNumber(1);
-													setSearchResultsPage(1);
-												})
-												.catch((error) => console.error('Filter search error:', error));
-										} else {
-											// No filter, reset to context data
-											setIsSearchActive(false);
-											setSearchResults([]);
-											setSearchResultsLoadedPages([]);
-											setSearchResultsTotalItems(0);
-										}
-									}}
+									onDelete={resetSearch}
 									color='primary'
 									variant='filled'
 									size='small'
@@ -654,7 +358,7 @@ const AdminPublicEvents = () => {
 					)}
 					<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>
 						<CustomTableHead<Event>
-							orderBy={orderBy}
+							orderBy={orderBy as keyof Event}
 							order={order}
 							handleSort={handleSort}
 							columns={[
@@ -699,7 +403,7 @@ const AdminPublicEvents = () => {
 								})}
 						</TableBody>
 					</Table>
-					<CustomTablePagination count={publicEventsNumberOfPages} page={currentPage} onChange={handlePageChange} />
+					<CustomTablePagination count={eventsNumberOfPages} page={currentPage} onChange={handlePageChange} />
 				</Box>
 
 				<CustomDialog openModal={eventDetailsModalOpen} closeModal={() => setEventDetailsModalOpen(false)} title='Event Details' maxWidth='sm'>

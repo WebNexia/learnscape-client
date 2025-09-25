@@ -6,7 +6,6 @@ import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitBu
 import CustomDeleteButton from '../components/forms/customButtons/CustomDeleteButton';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
 import { useContext, useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
 import { CommunityContext } from '../contexts/CommunityContextProvider';
 import { CommunityTopic } from '../interfaces/communityTopics';
 import Topic from '../components/layouts/community/communityTopic/Topic';
@@ -21,8 +20,8 @@ import CustomCancelButton from '../components/forms/customButtons/CustomCancelBu
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 import theme from '../themes';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
-import axios from '@utils/axiosInstance';
 import { Roles } from '../interfaces/enums';
+import { useFilterSearch } from '../hooks/useFilterSearch';
 
 export interface NewTopic {
 	title: string;
@@ -36,7 +35,6 @@ const Community = () => {
 		useContext(CommunityContext);
 	const { orgId } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
-	const location = useLocation();
 
 	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -55,33 +53,62 @@ const Community = () => {
 		audioUrl: '',
 	});
 
-	// Search and filter state
-	const [searchValue, setSearchValue] = useState<string>('');
-	const [filterValue, setFilterValue] = useState<string>('');
-	const [searchResults, setSearchResults] = useState<CommunityTopic[]>([]);
-	const [isSearchActive, setIsSearchActive] = useState<boolean>(false);
-	const [searchResultsPage, setSearchResultsPage] = useState<number>(1);
-
-	const [searchResultsTotalItems, setSearchResultsTotalItems] = useState<number>(0);
-	const [searchButtonClicked, setSearchButtonClicked] = useState<boolean>(false);
-	const [searchedValue, setSearchedValue] = useState<string>('');
-	const [searchResultsLoadedPages, setSearchResultsLoadedPages] = useState<number[]>([]);
+	// Use the filter search hook
+	const {
+		searchValue,
+		setSearchValue,
+		filterValue,
+		displayData: displayTopics,
+		numberOfPages: topicsNumberOfPages,
+		searchResultsPage,
+		searchResultsTotalItems,
+		searchButtonClicked,
+		searchedValue,
+		orderBy,
+		order,
+		isSearchActive,
+		isLoading: isSearchLoading,
+		handleSearch,
+		handleFilterChange,
+		handlePageChange,
+		resetSearch,
+		resetFilter,
+		resetAll,
+	} = useFilterSearch<CommunityTopic>({
+		getEndpoint: () => `${import.meta.env.VITE_SERVER_BASE_URL}/communityTopics/organisation/${orgId}`,
+		limit: 60,
+		pageSize: 20,
+		contextData: sortedTopicsData || [],
+		setContextPageNumber: setTopicsPageNumber,
+		fetchMoreContextData: fetchMoreTopics,
+		contextLoadedPages: loadedPages,
+		defaultOrderBy: 'updatedAt',
+		defaultOrder: 'desc',
+		customSearchParams: (currentFilterValue) => {
+			return currentFilterValue?.toLowerCase() === 'my topics' && user?._id ? { userId: user._id } : {};
+		},
+	});
 
 	const pageSize = 20;
 
-	// Use search results if active, otherwise use context data
-	const displayTopics =
-		(isSearchActive ? searchResults : sortedTopicsData || [])?.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()) ||
-		[];
+	// Sort the display data
+	const sortedTopics =
+		displayTopics?.sort((a, b) => {
+			const aValue = (a as any)[orderBy] ?? '';
+			const bValue = (b as any)[orderBy] ?? '';
 
-	// For pagination, use total items from server when not searching
-	const topicsNumberOfPages = isSearchActive ? Math.ceil(searchResultsTotalItems / pageSize) : Math.ceil(totalItems / pageSize);
+			if (order === 'asc') {
+				return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+			} else {
+				return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
+			}
+		}) || [];
 
 	// Use appropriate page number for pagination
 	const currentPage = isSearchActive ? searchResultsPage : topicsPageNumber;
 
 	// Paginate the data for display
-	const paginatedTopics = displayTopics?.slice((currentPage - 1) * pageSize, currentPage * pageSize) || [];
+	const paginatedTopics = sortedTopics?.slice((currentPage - 1) * pageSize, currentPage * pageSize) || [];
 
 	// Enable community fetching only once when component mounts
 	useEffect(() => {
@@ -91,209 +118,6 @@ const Community = () => {
 	useEffect(() => {
 		setTopicsPageNumber(1);
 	}, []); // Reset page number only once on mount
-
-	// Cleanup search state function
-	const cleanupSearchState = () => {
-		setSearchResults([]);
-		setSearchResultsLoadedPages([]);
-		setSearchResultsTotalItems(0);
-		setIsSearchActive(false);
-		setSearchValue('');
-		setFilterValue('');
-		setSearchedValue('');
-		setSearchButtonClicked(false);
-	};
-
-	// Cleanup on component unmount
-	useEffect(() => {
-		return () => {
-			cleanupSearchState();
-		};
-	}, []);
-
-	// Cleanup when navigating away from page
-	useEffect(() => {
-		return () => {
-			cleanupSearchState();
-		};
-	}, [location.pathname]);
-
-	// Handle search functionality
-	const handleSearch = async () => {
-		try {
-			// Reset to first page when searching
-			setTopicsPageNumber(1);
-			setSearchResultsPage(1);
-
-			// Search button only works when search value exists
-			if (searchValue && searchValue.trim()) {
-				// Store the searched value
-				setSearchedValue(searchValue.trim());
-				// Build query parameters
-				const params = new URLSearchParams({
-					limit: '60',
-					search: searchValue.trim(),
-				});
-
-				// Add filter if it exists
-				if (filterValue && filterValue.trim()) {
-					params.append('filter', filterValue.trim());
-					// Add userId for "My Topics" filter
-					if (filterValue.toLowerCase() === 'my topics' && user?._id) {
-						params.append('userId', user._id);
-					}
-				}
-
-				const response = await axios.get(`${import.meta.env.VITE_SERVER_BASE_URL}/communityTopics/organisation/${orgId}?${params.toString()}`);
-				setSearchResults(response.data.data);
-				setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-				setSearchResultsLoadedPages([1]);
-				setIsSearchActive(true);
-				setSearchButtonClicked(true);
-			} else {
-				// If no search value, clear search results
-				setSearchResults([]);
-				setSearchResultsLoadedPages([]);
-				setSearchResultsTotalItems(0);
-				setIsSearchActive(false);
-				setSearchButtonClicked(false);
-				setSearchedValue('');
-			}
-		} catch (error) {
-			console.error('Search error:', error);
-		}
-	};
-
-	const fetchMoreSearchResults = async (page: number, searchParams: URLSearchParams) => {
-		try {
-			// Add page parameter
-			searchParams.set('page', page.toString());
-
-			const response = await axios.get(`${import.meta.env.VITE_SERVER_BASE_URL}/communityTopics/organisation/${orgId}?${searchParams.toString()}`);
-
-			if (page === 1) {
-				// First page - replace all data
-				setSearchResults(response.data.data);
-				setSearchResultsLoadedPages([1]);
-			} else {
-				// Subsequent pages - append data
-				setSearchResults((prev) => {
-					const newData = [...prev, ...response.data.data];
-					return newData;
-				});
-				setSearchResultsLoadedPages((prev) => [...prev, page]);
-			}
-
-			setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-		} catch (error) {
-			console.error('Fetch more search results error:', error);
-		}
-	};
-
-	// Handle filter changes
-	const handleFilterChange = async (newFilterValue: string) => {
-		setFilterValue(newFilterValue);
-
-		// Auto-search when filter is selected
-		if (newFilterValue && newFilterValue.trim()) {
-			setTopicsPageNumber(1);
-			setSearchResultsPage(1);
-			setIsSearchActive(true);
-
-			try {
-				const params = new URLSearchParams({
-					limit: '60',
-					filter: newFilterValue.trim(),
-				});
-
-				// Include existing search value if it exists
-				if (searchValue && searchValue.trim()) {
-					params.append('search', searchValue.trim());
-				}
-
-				// Add userId for "My Topics" filter
-				if (newFilterValue.toLowerCase() === 'my topics' && user?._id) {
-					params.append('userId', user._id);
-				}
-
-				const response = await axios.get(`${import.meta.env.VITE_SERVER_BASE_URL}/communityTopics/organisation/${orgId}?${params.toString()}`);
-				setSearchResults(response.data.data);
-				setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-				setSearchResultsLoadedPages([1]);
-			} catch (error) {
-				console.error('Filter search error:', error);
-			}
-		} else {
-			// If filter is cleared but search value exists, auto-search with search value
-			if (searchValue && searchValue.trim()) {
-				handleSearch();
-			} else {
-				// Clear search results and go back to context data
-				setSearchResults([]);
-				setSearchResultsLoadedPages([]);
-				setSearchResultsTotalItems(0);
-				setIsSearchActive(false);
-				setSearchResultsPage(1);
-			}
-		}
-	};
-
-	// Handle page change
-	const handlePageChange = async (newPage: number) => {
-		// Set appropriate page number based on search state
-		if (isSearchActive) {
-			setSearchResultsPage(newPage);
-		} else {
-			setTopicsPageNumber(newPage);
-		}
-
-		// If in search mode, handle search results pagination
-		if (isSearchActive) {
-			// Check if we need to fetch more search results
-			const requiredRecords = newPage * pageSize;
-			if (searchResults.length < requiredRecords) {
-				// Build search parameters
-				const params = new URLSearchParams({
-					limit: '60',
-				});
-
-				if (searchValue && searchValue.trim()) {
-					params.append('search', searchValue.trim());
-				}
-				if (filterValue && filterValue.trim()) {
-					params.append('filter', filterValue.trim());
-					// Add userId for "My Topics" filter
-					if (filterValue.toLowerCase() === 'my topics' && user?._id) {
-						params.append('userId', user._id);
-					}
-				}
-
-				// Calculate which pages we need to fetch
-				const currentLoadedPages = searchResultsLoadedPages && searchResultsLoadedPages.length > 0 ? Math.max(...searchResultsLoadedPages) : 0;
-				const targetPage = Math.ceil((newPage * pageSize) / 60);
-
-				// Fetch all missing pages in sequence
-				for (let page = currentLoadedPages + 1; page <= targetPage; page++) {
-					if (!searchResultsLoadedPages?.includes(page)) {
-						await fetchMoreSearchResults(page, params);
-					}
-				}
-			}
-		} else {
-			// Check if we need to fetch more data for context
-			const requiredRecords = newPage * pageSize;
-			if (sortedTopicsData.length < requiredRecords && newPage <= topicsNumberOfPages) {
-				// Calculate which pages we need to fetch
-				const currentLoadedPages = loadedPages && loadedPages.length > 0 ? Math.max(...loadedPages) : 0;
-				const targetPage = Math.ceil((newPage * pageSize) / 60);
-
-				// Fetch all missing pages in sequence
-				if (currentLoadedPages < targetPage) {
-					await fetchMoreTopics(currentLoadedPages + 1, targetPage);
-				}
-			}
-		}
-	};
 
 	// Filter options based on user role
 	const getFilterOptions = () => {
@@ -438,6 +262,14 @@ const Community = () => {
 										sx={{ backgroundColor: '#fff', minWidth: isVerySmallScreen ? '10rem' : '17.5rem' }}
 										required={false}
 										InputProps={{
+											onKeyDown: (e) => {
+												if (e.key === 'Enter') {
+													e.preventDefault();
+													if (searchValue.trim() && !isSearchLoading) {
+														handleSearch();
+													}
+												}
+											},
 											endAdornment: (
 												<InputAdornment position='end'>
 													<Search
@@ -450,24 +282,10 @@ const Community = () => {
 											),
 										}}
 									/>
-									<CustomSubmitButton onClick={handleSearch} sx={{ marginLeft: '1rem' }} disabled={!searchValue}>
+									<CustomSubmitButton onClick={handleSearch} sx={{ marginLeft: '1rem' }} disabled={!searchValue || isSearchLoading}>
 										Search
 									</CustomSubmitButton>
-									<CustomDeleteButton
-										onClick={() => {
-											setSearchValue('');
-											setFilterValue('');
-											setSearchResults([]);
-											setSearchResultsLoadedPages([]);
-											setIsSearchActive(false);
-											setTopicsPageNumber(1);
-											setSearchResultsPage(1);
-											setSearchResultsTotalItems(0);
-											setSearchButtonClicked(false);
-											setSearchedValue('');
-										}}>
-										Reset
-									</CustomDeleteButton>
+									<CustomDeleteButton onClick={resetAll}>Reset</CustomDeleteButton>
 								</Box>
 								{/* Chips for active search and filter */}
 								{((isSearchActive && searchedValue && searchButtonClicked) || (isSearchActive && filterValue && filterValue.trim())) && (
@@ -484,20 +302,7 @@ const Community = () => {
 										{isSearchActive && filterValue && filterValue.trim() && (
 											<Chip
 												label={`Filter: "${filterValue}"`}
-												onDelete={() => {
-													setFilterValue('');
-													// If search value exists, keep search results
-													if (searchValue && searchValue.trim()) {
-														handleSearch();
-													} else {
-														// Clear search results and go back to context data
-														setSearchResults([]);
-														setSearchResultsLoadedPages([]);
-														setSearchResultsTotalItems(0);
-														setIsSearchActive(false);
-														setSearchResultsPage(1);
-													}
-												}}
+												onDelete={resetFilter}
 												variant='outlined'
 												color='secondary'
 												size='small'
@@ -507,42 +312,7 @@ const Community = () => {
 										{isSearchActive && searchedValue && searchButtonClicked && (
 											<Chip
 												label={`Search: "${searchedValue}"`}
-												onDelete={() => {
-													setSearchValue('');
-													setSearchedValue('');
-													setSearchButtonClicked(false);
-													// If filter is still active, keep filter results
-													if (filterValue) {
-														// Re-trigger filter search without search value
-														const params = new URLSearchParams({
-															limit: '60',
-															filter: filterValue,
-														});
-														// Add userId for "My Topics" filter
-														if (filterValue.toLowerCase() === 'my topics' && user?._id) {
-															params.append('userId', user._id);
-														}
-														axios
-															.get(`${import.meta.env.VITE_SERVER_BASE_URL}/communityTopics/organisation/${orgId}?${params.toString()}`)
-															.then((response) => {
-																setSearchResults(response.data.data);
-																setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-																setSearchResultsLoadedPages([1]);
-																setIsSearchActive(true);
-																setSearchResultsPage(1);
-															})
-															.catch((error) => {
-																console.error('Filter error:', error);
-															});
-													} else {
-														// Clear everything and go back to context data
-														setSearchResults([]);
-														setSearchResultsLoadedPages([]);
-														setSearchResultsTotalItems(0);
-														setIsSearchActive(false);
-														setSearchResultsPage(1);
-													}
-												}}
+												onDelete={resetSearch}
 												color='primary'
 												variant='filled'
 												size='small'

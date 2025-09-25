@@ -18,7 +18,6 @@ import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleto
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
 import { useContext, useEffect, useRef, useState } from 'react';
-import { useLocation } from 'react-router-dom';
 import axios from '@utils/axiosInstance';
 import { AutoAwesome, Delete, Edit, Info, Search } from '@mui/icons-material';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
@@ -46,11 +45,11 @@ import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/Cust
 import { dateFormatter } from '../utils/dateFormatter';
 import QuestionInfoModal from '../components/questions/QuestionInfoModal';
 import { decode } from 'html-entities';
+import { useFilterSearch } from '../hooks/useFilterSearch';
 
 const AdminQuestions = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
-	const location = useLocation();
 	const { user } = useAuth();
 
 	// Role detection
@@ -74,34 +73,49 @@ const AdminQuestions = () => {
 		enableQuestionsFetch,
 	} = useContext(QuestionsContext);
 
-	const [searchValue, setSearchValue] = useState<string>('');
-	const [filterValue, setFilterValue] = useState<string>('');
-	const [searchResults, setSearchResults] = useState<QuestionInterface[]>([]);
-	const [isSearchActive, setIsSearchActive] = useState<boolean>(false);
-	const [searchResultsPage, setSearchResultsPage] = useState<number>(1);
-	const [searchResultsLoadedPages, setSearchResultsLoadedPages] = useState<number[]>([]);
-	const [searchResultsTotalItems, setSearchResultsTotalItems] = useState<number>(0);
-	const [searchButtonClicked, setSearchButtonClicked] = useState<boolean>(false);
-	const [searchedValue, setSearchedValue] = useState<string>('');
-
-	const [orderBy, setOrderBy] = useState<keyof QuestionInterface>('updatedAt');
-	const [order, setOrder] = useState<'asc' | 'desc'>('desc');
-
 	const pageSize = 50;
 
-	// Use search results if active, otherwise use context data
-	const displayQuestions = isSearchActive ? searchResults : questions;
-
-	// For pagination, use total items from server when not searching
-	const questionsNumberOfPages = isSearchActive ? Math.ceil(searchResultsTotalItems / pageSize) : Math.ceil(totalItems / pageSize);
+	// Use the filter search hook
+	const {
+		searchValue,
+		setSearchValue,
+		filterValue,
+		displayData: displayQuestions,
+		numberOfPages: questionsNumberOfPages,
+		searchResultsPage,
+		searchResultsTotalItems,
+		searchButtonClicked,
+		searchedValue,
+		orderBy,
+		order,
+		isSearchActive,
+		isLoading: isSearchLoading,
+		handleSearch,
+		handleFilterChange,
+		handlePageChange,
+		handleSort,
+		resetSearch,
+		resetFilter,
+		resetAll,
+	} = useFilterSearch<QuestionInterface>({
+		getEndpoint: () => `${base_url}/questions/organisation/${orgId}`,
+		limit: 200,
+		pageSize,
+		contextData: questions,
+		setContextPageNumber: setQuestionsPageNumber,
+		fetchMoreContextData: fetchMoreQuestions,
+		contextLoadedPages: loadedPages,
+		defaultOrderBy: 'updatedAt',
+		defaultOrder: 'desc',
+	});
 
 	// Use appropriate page number for pagination
 	const currentPage = isSearchActive ? searchResultsPage : questionsPageNumber;
 
 	const sortedQuestions =
 		[...(displayQuestions || [])]?.sort((a, b) => {
-			const aValue = a[orderBy] ?? '';
-			const bValue = b[orderBy] ?? '';
+			const aValue = (a as any)[orderBy] ?? '';
+			const bValue = (b as any)[orderBy] ?? '';
 
 			if (order === 'asc') {
 				return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
@@ -113,12 +127,6 @@ const AdminQuestions = () => {
 	// For search results, slice the accumulated data based on current page
 	// For context data, use client-side pagination
 	const paginatedQuestions = sortedQuestions?.slice((currentPage - 1) * pageSize, currentPage * pageSize) || [];
-
-	const handleSort = (property: keyof QuestionInterface) => {
-		const isAsc = orderBy === property && order === 'asc';
-		setOrder(isAsc ? 'desc' : 'asc');
-		setOrderBy(property);
-	};
 
 	const [questionType, setQuestionType] = useState<string>('');
 
@@ -153,90 +161,6 @@ const AdminQuestions = () => {
 		setQuestionsPageNumber(1);
 		enableQuestionsFetch(); // 👈 Enable questions fetching when component mounts
 	}, []);
-
-	// Cleanup search state function
-	const cleanupSearchState = () => {
-		setSearchResults([]);
-		setSearchResultsLoadedPages([]);
-		setSearchResultsTotalItems(0);
-		setIsSearchActive(false);
-		setSearchValue('');
-		setFilterValue('');
-		setSearchedValue('');
-		setSearchButtonClicked(false);
-	};
-
-	// Cleanup on component unmount
-	useEffect(() => {
-		return () => {
-			cleanupSearchState();
-		};
-	}, []);
-
-	// Cleanup when navigating away from page
-	useEffect(() => {
-		return () => {
-			cleanupSearchState();
-		};
-	}, [location.pathname]);
-
-	const handlePageChange = async (newPage: number) => {
-		// Set appropriate page number based on search state
-		if (isSearchActive) {
-			setSearchResultsPage(newPage);
-		} else {
-			setQuestionsPageNumber(newPage);
-		}
-
-		// If in search mode, handle search results pagination
-		if (isSearchActive) {
-			// Check if we need to fetch more search results
-			const requiredRecords = newPage * pageSize;
-			if (searchResults.length < requiredRecords) {
-				// Build search parameters
-				const params = new URLSearchParams({
-					limit: '200',
-				});
-
-				if (searchValue && searchValue.trim()) {
-					params.append('search', searchValue.trim());
-				}
-				if (filterValue && filterValue.trim()) {
-					params.append('filter', filterValue.trim());
-				}
-				if (orderBy) {
-					params.append('sortBy', orderBy);
-				}
-				if (order) {
-					params.append('sortOrder', order);
-				}
-
-				// Calculate which pages we need to fetch
-				const currentLoadedPages = searchResultsLoadedPages && searchResultsLoadedPages.length > 0 ? Math.max(...searchResultsLoadedPages) : 0;
-				const targetPage = Math.ceil((newPage * pageSize) / 200);
-
-				// Fetch all missing pages in sequence
-				for (let page = currentLoadedPages + 1; page <= targetPage; page++) {
-					if (!searchResultsLoadedPages?.includes(page)) {
-						await fetchMoreSearchResults(page, params);
-					}
-				}
-			}
-		} else {
-			// Check if we need to fetch more data for context
-			const requiredRecords = newPage * pageSize;
-			if (questions.length < requiredRecords && newPage <= questionsNumberOfPages) {
-				// Calculate which pages we need to fetch
-				const currentLoadedPages = loadedPages && loadedPages.length > 0 ? Math.max(...loadedPages) : 0;
-				const targetPage = Math.ceil((newPage * pageSize) / 200);
-
-				// Fetch all missing pages in sequence
-				if (currentLoadedPages < targetPage) {
-					await fetchMoreQuestions(currentLoadedPages + 1, targetPage);
-				}
-			}
-		}
-	};
 
 	// Keep track of previous length to avoid unnecessary resets
 	const prevLengthRef = useRef<number>(0);
@@ -281,12 +205,6 @@ const AdminQuestions = () => {
 
 			// Only remove from frontend state if the backend request was successful
 			if (response.data.status === 200) {
-				// If search is active, also remove from search results
-				if (isSearchActive) {
-					setSearchResults((prev) => prev?.filter((question) => question._id !== questionId) || []);
-					setSearchResultsTotalItems((prev) => Math.max(0, prev - 1));
-				}
-
 				removeQuestion(questionId);
 
 				// Show success message
@@ -317,79 +235,6 @@ const AdminQuestions = () => {
 		const newEditModalOpen = [...editQuestionModalOpen];
 		newEditModalOpen[index] = false;
 		setEditQuestionModalOpen(newEditModalOpen);
-	};
-
-	const handleSearch = async () => {
-		try {
-			// Reset to first page when searching
-			setQuestionsPageNumber(1);
-			setSearchResultsPage(1);
-
-			// Search button only works when search value exists
-			if (searchValue && searchValue.trim()) {
-				// Store the searched value
-				setSearchedValue(searchValue.trim());
-				// Build query parameters
-				const params = new URLSearchParams({
-					limit: '200',
-					search: searchValue.trim(),
-				});
-
-				// Add filter if it exists
-				if (filterValue && filterValue.trim()) {
-					params.append('filter', filterValue.trim());
-				}
-				if (orderBy) {
-					params.append('sortBy', orderBy);
-				}
-				if (order) {
-					params.append('sortOrder', order);
-				}
-
-				const response = await axios.get(`${base_url}/questions/organisation/${orgId}?${params.toString()}`);
-				setSearchResults(response.data.data);
-				setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-				setSearchResultsLoadedPages([1]);
-				setIsSearchActive(true);
-				setSearchButtonClicked(true);
-			} else {
-				// If no search value, clear search results
-				setSearchResults([]);
-				setSearchResultsLoadedPages([]);
-				setSearchResultsTotalItems(0);
-				setIsSearchActive(false);
-				setSearchButtonClicked(false);
-				setSearchedValue('');
-			}
-		} catch (error) {
-			console.error('Search error:', error);
-		}
-	};
-
-	const fetchMoreSearchResults = async (page: number, searchParams: URLSearchParams) => {
-		try {
-			// Add page parameter
-			searchParams.set('page', page.toString());
-
-			const response = await axios.get(`${base_url}/questions/organisation/${orgId}?${searchParams.toString()}`);
-
-			if (page === 1) {
-				// First page - replace all data
-				setSearchResults(response.data.data);
-				setSearchResultsLoadedPages([1]);
-			} else {
-				// Subsequent pages - append data
-				setSearchResults((prev) => {
-					const newData = [...prev, ...response.data.data];
-					return newData;
-				});
-				setSearchResultsLoadedPages((prev) => [...prev, page]);
-			}
-
-			setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-		} catch (error) {
-			console.error('Fetch more search results error:', error);
-		}
 	};
 
 	const openQuestionInfoModal = (index: number) => {
@@ -428,56 +273,7 @@ const AdminQuestions = () => {
 										<Select
 											size='small'
 											value={filterValue}
-											onChange={(e) => {
-												const newFilterValue = e.target.value;
-												setFilterValue(newFilterValue);
-
-												// Auto-search when filter changes
-												if (newFilterValue) {
-													// Build query parameters
-													const params = new URLSearchParams({
-														limit: '200',
-														filter: newFilterValue,
-													});
-
-													// Include existing search value if it exists
-													if (searchValue && searchValue.trim()) {
-														params.append('search', searchValue.trim());
-													}
-													if (orderBy) {
-														params.append('sortBy', orderBy);
-													}
-													if (order) {
-														params.append('sortOrder', order);
-													}
-
-													// Trigger search immediately
-													axios
-														.get(`${base_url}/questions/organisation/${orgId}?${params.toString()}`)
-														.then((response) => {
-															setSearchResults(response.data.data);
-															setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-															setSearchResultsLoadedPages([1]);
-															setIsSearchActive(true);
-															setSearchResultsPage(1);
-														})
-														.catch((error) => {
-															console.error('Filter error:', error);
-														});
-												} else {
-													// If filter is cleared but search value exists, auto-search with search value
-													if (searchValue && searchValue.trim()) {
-														handleSearch();
-													} else {
-														// Clear search results and go back to context data
-														setSearchResults([]);
-														setSearchResultsLoadedPages([]);
-														setSearchResultsTotalItems(0);
-														setIsSearchActive(false);
-														setSearchResultsPage(1);
-													}
-												}
-											}}
+											onChange={(e) => handleFilterChange(e.target.value)}
 											displayEmpty
 											sx={{
 												backgroundColor: theme.bgColor?.common,
@@ -591,6 +387,14 @@ const AdminQuestions = () => {
 									sx={{ backgroundColor: '#fff', minWidth: isVerySmallScreen ? '10rem' : '17.5rem' }}
 									required={false}
 									InputProps={{
+										onKeyDown: (e) => {
+											if (e.key === 'Enter') {
+												e.preventDefault();
+												if (searchValue.trim() && !loading) {
+													handleSearch();
+												}
+											}
+										},
 										endAdornment: (
 											<InputAdornment position='end'>
 												<Search
@@ -603,24 +407,10 @@ const AdminQuestions = () => {
 										),
 									}}
 								/>
-								<CustomSubmitButton onClick={handleSearch} sx={{ marginLeft: '1rem' }} disabled={!searchValue}>
+								<CustomSubmitButton onClick={handleSearch} sx={{ marginLeft: '1rem' }} disabled={!searchValue || isSearchLoading}>
 									Search
 								</CustomSubmitButton>
-								<CustomDeleteButton
-									onClick={() => {
-										setSearchValue('');
-										setFilterValue('');
-										setSearchResults([]);
-										setIsSearchActive(false);
-										setQuestionsPageNumber(1);
-										setSearchResultsPage(1);
-										setSearchResultsLoadedPages([]);
-										setSearchResultsTotalItems(0);
-										setSearchButtonClicked(false);
-										setSearchedValue('');
-									}}>
-									Reset
-								</CustomDeleteButton>
+								<CustomDeleteButton onClick={resetAll}>Reset</CustomDeleteButton>
 								<Box sx={{ ml: '1rem', display: 'flex', alignItems: 'center', height: '2rem' }}>
 									{isSearchActive ? (
 										<Typography
@@ -708,20 +498,7 @@ const AdminQuestions = () => {
 								{isSearchActive && filterValue && filterValue.trim() && (
 									<Chip
 										label={`Filter: "${filterValue}"`}
-										onDelete={() => {
-											setFilterValue('');
-											// If search value exists, keep search results
-											if (searchValue && searchValue.trim()) {
-												handleSearch();
-											} else {
-												// Clear everything and go back to context data
-												setSearchResults([]);
-												setSearchResultsLoadedPages([]);
-												setSearchResultsTotalItems(0);
-												setIsSearchActive(false);
-												setSearchResultsPage(1);
-											}
-										}}
+										onDelete={resetFilter}
 										variant='outlined'
 										color='secondary'
 										size='small'
@@ -731,44 +508,7 @@ const AdminQuestions = () => {
 								{isSearchActive && searchedValue && searchButtonClicked && (
 									<Chip
 										label={`Search: "${searchedValue}"`}
-										onDelete={() => {
-											setSearchValue('');
-											setSearchedValue('');
-											setSearchButtonClicked(false);
-											// If filter is still active, keep filter results
-											if (filterValue) {
-												// Re-trigger filter search without search value
-												const params = new URLSearchParams({
-													limit: '200',
-													filter: filterValue,
-												});
-												if (orderBy) {
-													params.append('sortBy', orderBy);
-												}
-												if (order) {
-													params.append('sortOrder', order);
-												}
-												axios
-													.get(`${base_url}/questions/organisation/${orgId}?${params.toString()}`)
-													.then((response) => {
-														setSearchResults(response.data.data);
-														setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-														setSearchResultsLoadedPages([1]);
-														setIsSearchActive(true);
-														setSearchResultsPage(1);
-													})
-													.catch((error) => {
-														console.error('Filter error:', error);
-													});
-											} else {
-												// Clear everything and go back to context data
-												setSearchResults([]);
-												setSearchResultsLoadedPages([]);
-												setSearchResultsTotalItems(0);
-												setIsSearchActive(false);
-												setSearchResultsPage(1);
-											}
-										}}
+										onDelete={resetSearch}
 										color='primary'
 										variant='filled'
 										size='small'
@@ -779,11 +519,11 @@ const AdminQuestions = () => {
 						)}
 						<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>
 							<CustomTableHead<QuestionInterface>
-								orderBy={orderBy}
+								orderBy={orderBy as keyof QuestionInterface}
 								order={order}
 								handleSort={handleSort}
 								columns={[
-									{ key: 'clone', label: 'Cloned' },
+									{ key: 'clonedFromId', label: 'Cloned' },
 									{ key: 'questionType', label: 'Question Type' },
 									{ key: 'question', label: 'Question' },
 									{ key: 'createdAt', label: 'Created On' },
