@@ -1,26 +1,10 @@
-import {
-	Box,
-	FormControl,
-	InputAdornment,
-	Link,
-	MenuItem,
-	Select,
-	Table,
-	TableBody,
-	TableCell,
-	TableRow,
-	Snackbar,
-	Alert,
-	Typography,
-	Chip,
-} from '@mui/material';
+import { Box, Table, TableBody, TableCell, TableRow, Snackbar, Alert, Typography, Link } from '@mui/material';
 import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
 import { useContext, useEffect, useRef, useState } from 'react';
 import axios from '@utils/axiosInstance';
-import { Delete, Edit, Info, Search } from '@mui/icons-material';
-import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
+import { Delete, Edit, Info } from '@mui/icons-material';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
 import CustomTableHead from '../components/layouts/table/CustomTableHead';
@@ -31,7 +15,6 @@ import { DocumentsContext } from '../contexts/DocumentsContextProvider';
 import { Document, Price } from '../interfaces/document';
 import { truncateText } from '../utils/utilText';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
-import CustomTextField from '../components/forms/customFields/CustomTextField';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import { dateFormatter } from '../utils/dateFormatter';
 import DocumentInfoModal from '../components/documents/DocumentInfoModal';
@@ -40,9 +23,27 @@ import EditDocumentDialog from '../components/documents/EditDocumentDialog';
 import theme from '../themes';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 import { validateDocumentUrl, validateImageUrl } from '../utils/urlValidation';
-import CustomDeleteButton from '../components/forms/customButtons/CustomDeleteButton';
 import { useAuth } from '../hooks/useAuth';
 import { useFilterSearch } from '../hooks/useFilterSearch';
+import FilterSearchRow from '../components/layouts/FilterSearchRow';
+import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/CustomInfoMessageAlignedLeft';
+
+// Responsive column configuration
+const getColumns = (isVerySmallScreen: boolean) => {
+	return isVerySmallScreen
+		? [
+				{ key: 'name', label: 'Document Name' },
+				{ key: 'documentUrl', label: 'Document URL' },
+				{ key: 'actions', label: 'Actions' },
+			]
+		: [
+				{ key: 'name', label: 'Document Name' },
+				{ key: 'documentUrl', label: 'Document URL' },
+				{ key: 'createdAt', label: 'Created On' },
+				{ key: 'updatedAt', label: 'Updated On' },
+				{ key: 'actions', label: 'Actions' },
+			];
+};
 
 const AdminDocuments = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -66,9 +67,8 @@ const AdminDocuments = () => {
 		enableDocumentsFetch,
 	} = useContext(DocumentsContext);
 
-	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
+	const { isSmallScreen, isRotatedMedium, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
-	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
 	const pageSize = 50;
 
@@ -81,7 +81,6 @@ const AdminDocuments = () => {
 		numberOfPages: documentsNumberOfPages,
 		searchResultsPage,
 		searchResultsTotalItems,
-		searchButtonClicked,
 		searchedValue,
 		orderBy,
 		order,
@@ -488,131 +487,42 @@ const AdminDocuments = () => {
 				customSettings={{ justifyContent: 'flex-start' }}
 				showCopyRight={true}>
 				<Box sx={{ width: '100%', height: '100%' }}>
-					<Box
-						sx={{
-							display: 'flex',
-							justifyContent: 'space-between',
-							alignItems: 'center',
-							padding: isMobileSizeSmall ? '1rem 1rem 0.5rem 1rem' : '2rem 2rem 1rem 2rem',
-							width: '100%',
-							mb: '1.25rem',
-						}}>
-						<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', flex: 4 }}>
-							<Box sx={{ display: 'flex', alignSelf: 'flex-start', width: isVerySmallScreen ? '12.5rem' : 'fit-content' }}>
-								<Box sx={{ mr: '1rem' }}>
-									<FormControl>
-										<Select
-											size='small'
-											value={filterValue}
-											onChange={(e) => handleFilterChange(e.target.value)}
-											displayEmpty
-											sx={{
-												backgroundColor: theme.bgColor?.common,
-												width: isMobileSizeSmall ? '7rem' : '10rem',
-												fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-												textTransform: 'capitalize',
-											}}>
-											<MenuItem
-												disabled
-												value='filter'
-												selected
-												sx={{
-													fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-													fontStyle: 'italic',
-													textTransform: 'capitalize',
-													padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-													minHeight: '2rem',
-												}}>
-												Filter Documents
-											</MenuItem>
-											<MenuItem
-												value=''
-												selected
-												sx={{
-													fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-													textTransform: 'capitalize',
-													padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-													minHeight: '2rem',
-												}}>
-												All Documents
-											</MenuItem>
-											{['Paid Documents', 'Free Documents', 'On Landing Page', 'On Platform Only']?.map((type) => (
-												<MenuItem
-													value={type.toLowerCase()}
-													key={type}
-													sx={{
-														fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-														textTransform: 'capitalize',
-														padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-														minHeight: '2rem',
-													}}>
-													{type}
-												</MenuItem>
-											))}
-										</Select>
-									</FormControl>
-								</Box>
-								<CustomTextField
-									value={searchValue}
-									placeholder={'Search in name, description'}
-									onChange={(e) => {
-										setSearchValue(e.target.value);
-									}}
-									sx={{ backgroundColor: '#fff', minWidth: isVerySmallScreen ? '10rem' : '17.5rem' }}
-									required={false}
-									InputProps={{
-										onKeyDown: (e) => {
-											if (e.key === 'Enter') {
-												e.preventDefault();
-												if (searchValue.trim() && !loading) {
-													handleSearch();
-												}
-											}
-										},
-										endAdornment: (
-											<InputAdornment position='end'>
-												<Search
-													sx={{
-														mr: '-0.5rem',
-													}}
-													fontSize={isMobileSize ? 'small' : 'medium'}
-												/>
-											</InputAdornment>
-										),
-									}}
-								/>
-								<CustomSubmitButton onClick={handleSearch} sx={{ marginLeft: '1rem' }} disabled={!searchValue || isSearchLoading}>
-									Search
-								</CustomSubmitButton>
-								<CustomDeleteButton onClick={resetAll}>Reset</CustomDeleteButton>
-								<Box sx={{ ml: '1rem', display: 'flex', alignItems: 'center', height: '2rem' }}>
-									<Typography
-										variant='body2'
-										sx={{
-											color: 'text.secondary',
-											fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-
-											whiteSpace: 'nowrap',
-										}}>
-										{isSearchActive ? searchResultsTotalItems : totalItems}{' '}
-										{isSearchActive ? (searchResultsTotalItems === 1 ? 'result' : 'results') : totalItems === 1 ? 'item' : 'items'}
-									</Typography>
-								</Box>
-							</Box>
-						</Box>
-						<Box sx={{ display: 'flex', gap: 1, mb: '0.85rem', alignItems: 'center' }}>
-							<CustomSubmitButton
-								onClick={() => {
+					<FilterSearchRow
+						filterValue={filterValue}
+						onFilterChange={handleFilterChange}
+						filterOptions={[
+							{ value: '', label: 'All Documents' },
+							{ value: 'paid documents', label: 'Paid Documents' },
+							{ value: 'free documents', label: 'Free Documents' },
+							{ value: 'on landing page', label: 'On Landing Page' },
+							{ value: 'on platform only', label: 'On Platform Only' },
+						]}
+						filterPlaceholder='Filter Documents'
+						searchValue={searchValue}
+						onSearchChange={setSearchValue}
+						onSearch={handleSearch}
+						onReset={resetAll}
+						searchPlaceholder='Search in name, description'
+						isSearchLoading={isSearchLoading}
+						isSearchActive={isSearchActive}
+						searchResultsTotalItems={searchResultsTotalItems}
+						totalItems={totalItems}
+						searchedValue={searchedValue}
+						onResetSearch={resetSearch}
+						onResetFilter={resetFilter}
+						actionButtons={[
+							{
+								label: isVerySmallScreen ? 'New' : 'New Document',
+								onClick: () => {
 									setIsDocumentCreateModalOpen(true);
-									setEnterDocUrl(true);
-									setFileUploaded(false);
 									setSingleDocument({
-										_id: '',
 										name: '',
-										orgId,
-										userId: user?._id || '',
 										documentUrl: '',
+										userId: user?._id,
+										orgId,
 										imageUrl: '',
+										samplePageImageUrl: '',
+										isOnLandingPage: false,
 										prices: [
 											{ currency: 'gbp', amount: '0' },
 											{ currency: 'usd', amount: '0' },
@@ -621,31 +531,21 @@ const AdminDocuments = () => {
 										],
 										description: '',
 										pageCount: 0,
-										createdAt: '',
-										updatedAt: '',
-										clonedFromId: '',
-										clonedFromTitle: '',
-										usedInLessons: [],
-										usedInCourses: [],
-										samplePageImageUrl: '',
-										isOnLandingPage: false,
-										isArchived: false,
-										createdBy: '',
-										updatedBy: '',
-										createdByName: '',
-										updatedByName: '',
-										createdByImageUrl: '',
-										updatedByImageUrl: '',
-										createdByRole: '',
-										updatedByRole: '',
-									});
-								}}
-								sx={{ height: isVerySmallScreen ? '1.75rem' : '2.1rem', fontSize: isMobileSize ? '0.7rem' : undefined }}
-								type='button'>
-								{isVerySmallScreen ? 'New' : 'New Document'}
-							</CustomSubmitButton>
-						</Box>
-					</Box>
+									} as Document);
+									setIsFree(false);
+									setGBP({ currency: 'gbp', amount: '0' });
+									setUSD({ currency: 'usd', amount: '0' });
+									setEUR({ currency: 'eur', amount: '0' });
+									setTRY({ currency: 'try', amount: '0' });
+									setFileUploaded(false);
+									setEnterDocUrl(true);
+									setEnterDocImageUrl(true);
+									setEnterSamplePageImageUrl(true);
+								},
+							},
+						]}
+						isSticky={true}
+					/>
 
 					<CreateNewDocumentDialog
 						isOpen={isDocumentCreateModalOpen}
@@ -684,83 +584,45 @@ const AdminDocuments = () => {
 							display: 'flex',
 							flexDirection: 'column',
 							alignItems: 'center',
-							padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : '0rem 2rem 2rem 2rem',
+							padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : '0rem 1rem 2rem 1rem',
 							width: '100%',
 						}}>
-						{/* Chips for active search and filter */}
-						{((isSearchActive && searchedValue && searchButtonClicked) || (isSearchActive && filterValue && filterValue.trim())) && (
-							<Box
-								sx={{
-									display: 'flex',
-									gap: 1,
-									flexWrap: 'wrap',
-									justifyContent: 'flex-start',
-									borderRadius: '4px',
-									alignSelf: 'flex-start',
-									marginBottom: '1rem',
-									marginTop: '-1rem',
-								}}>
-								{isSearchActive && filterValue && filterValue.trim() && (
-									<Chip
-										label={`Filter: "${filterValue}"`}
-										onDelete={resetFilter}
-										variant='outlined'
-										color='secondary'
-										size='small'
-										sx={{ backgroundColor: '#1976d2', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
-									/>
-								)}
-								{isSearchActive && searchedValue && searchButtonClicked && (
-									<Chip
-										label={`Search: "${searchedValue}"`}
-										onDelete={resetSearch}
-										color='primary'
-										variant='filled'
-										size='small'
-										sx={{ backgroundColor: '#1EC28B', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
-									/>
-								)}
-							</Box>
-						)}
-						<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>
+						<Table
+							sx={{
+								'mb': '2rem',
+								'tableLayout': 'fixed',
+								'width': '100%',
+								'& .MuiTableHead-root': {
+									position: 'fixed',
+									top: (isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim()) ? '11rem' : '8rem',
+									left: isMobileSize ? 0 : '10rem',
+									right: 0,
+									zIndex: 99,
+									backgroundColor: theme.palette.background.paper,
+									boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+									display: 'table',
+									tableLayout: 'fixed',
+									width: isMobileSize ? '100%' : 'calc(100% - 10rem)',
+								},
+								'& .MuiTableHead-root .MuiTableCell-root': {
+									backgroundColor: theme.palette.background.paper,
+									padding: '0.25rem 1rem',
+								},
+							}}
+							size='small'
+							aria-label='a dense table'>
+							{(isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim() && <Box sx={{ height: '1.5rem' }}></Box>)}
 							<CustomTableHead<Document>
 								orderBy={orderBy as keyof Document}
 								order={order}
 								handleSort={handleSort}
-								columns={[
-									{ key: 'clonedFromId', label: 'Cloned' },
-									{ key: 'name', label: 'Document Name' },
-									{ key: 'documentUrl', label: 'Document URL' },
-									{ key: 'createdAt', label: 'Created On' },
-									{ key: 'updatedAt', label: 'Updated On' },
-									{ key: 'actions', label: 'Actions' },
-								]}
+								columns={getColumns(isVerySmallScreen)}
 							/>
 							<TableBody>
 								{paginatedDocuments &&
 									paginatedDocuments?.map((document: Document, index) => {
 										return (
 											<TableRow key={document._id} hover>
-												{' '}
-												<TableCell sx={{ textAlign: 'center', width: '0px' }}>
-													{document.clonedFromId && (
-														<Box
-															sx={{
-																backgroundColor: theme.palette.info.main,
-																color: 'white',
-																borderRadius: '50%',
-																width: '15px',
-																height: '15px',
-																display: 'flex',
-																alignItems: 'center',
-																justifyContent: 'center',
-																fontSize: '0.65rem',
-																margin: '0 auto',
-															}}>
-															C
-														</Box>
-													)}
-												</TableCell>
 												<CustomTableCell value={document.name} />
 												<TableCell sx={{ textAlign: 'center' }}>
 													<Link
@@ -771,8 +633,8 @@ const AdminDocuments = () => {
 														{isVerySmallScreen ? truncateText(document.documentUrl, 25) : truncateText(document.documentUrl, 40)}
 													</Link>
 												</TableCell>
-												<CustomTableCell value={dateFormatter(document.createdAt)} />
-												<CustomTableCell value={dateFormatter(document.updatedAt)} />
+												{!isVerySmallScreen && <CustomTableCell value={dateFormatter(document.createdAt)} />}
+												{!isVerySmallScreen && <CustomTableCell value={dateFormatter(document.updatedAt)} />}
 												<TableCell
 													sx={{
 														textAlign: 'center',
@@ -867,6 +729,7 @@ const AdminDocuments = () => {
 									})}
 							</TableBody>
 						</Table>
+						{isVerySmallScreen && <CustomInfoMessageAlignedLeft message='Rotate your device for more info' />}
 						<CustomTablePagination count={documentsNumberOfPages} page={currentPage} onChange={handlePageChange} />
 					</Box>
 

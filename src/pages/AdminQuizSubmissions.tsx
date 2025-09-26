@@ -1,4 +1,4 @@
-import { Box, FormControl, InputAdornment, MenuItem, Select, Table, TableBody, TableCell, TableRow, Typography, Chip } from '@mui/material';
+import { Box, Table, TableBody, TableCell, TableRow } from '@mui/material';
 import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
@@ -8,18 +8,17 @@ import { QuizSubmission } from '../interfaces/quizSubmission';
 import CustomTableHead from '../components/layouts/table/CustomTableHead';
 import CustomTableCell from '../components/layouts/table/CustomTableCell';
 import CustomActionBtn from '../components/layouts/table/CustomActionBtn';
-import { Edit, Search } from '@mui/icons-material';
+import { Edit } from '@mui/icons-material';
 import CustomTablePagination from '../components/layouts/table/CustomTablePagination';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
-import CustomTextField from '../components/forms/customFields/CustomTextField';
-import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
-import CustomDeleteButton from '../components/forms/customButtons/CustomDeleteButton';
 import theme from '../themes';
 import { CoursesContext } from '../contexts/CoursesContextProvider';
 import { truncateText } from '../utils/utilText';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import { useAuth } from '../hooks/useAuth';
 import { useFilterSearch } from '../hooks/useFilterSearch';
+import FilterSearchRow from '../components/layouts/FilterSearchRow';
+import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/CustomInfoMessageAlignedLeft';
 
 const AdminQuizSubmissions = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -36,12 +35,6 @@ const AdminQuizSubmissions = () => {
 			return `${base_url}/quizsubmissions/instructor/organisation/${orgId}`;
 		}
 		return `${base_url}/quizsubmissions/organisation/${orgId}`;
-	};
-
-	// Function to get course name from course ID
-	const getCourseNameById = (courseId: string) => {
-		const course = mappedCourses?.find((c) => c.courseId === courseId);
-		return course ? course.courseTitle : courseId;
 	};
 
 	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
@@ -68,7 +61,6 @@ const AdminQuizSubmissions = () => {
 		numberOfPages: submissionsNumberOfPages,
 		searchResultsPage,
 		searchResultsTotalItems,
-		searchButtonClicked,
 		searchedValue,
 		orderBy,
 		order,
@@ -136,215 +128,60 @@ const AdminQuizSubmissions = () => {
 	return (
 		<AdminPageErrorBoundary pageName='Quiz Submissions'>
 			<DashboardPagesLayout pageName='Quiz Submissions' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
-				<Box
-					sx={{
-						display: 'flex',
-						justifyContent: isMobileSize ? 'center' : 'space-between',
-						width: '100%',
-						padding: isMobileSizeSmall ? '1rem 1rem 0.5rem 1rem' : '2rem 2rem 1rem 2rem',
-						mb: '1.25rem',
-					}}>
-					<Box sx={{ display: 'flex', width: '65%' }}>
-						<Box sx={{ mr: '1rem' }}>
-							<FormControl>
-								<Select
-									size='small'
-									value={filterValue}
-									onChange={(e) => handleFilterChange(e.target.value)}
-									displayEmpty
-									sx={{
-										backgroundColor: theme.bgColor?.common,
-										width: isMobileSizeSmall ? '8rem' : '12rem',
-										fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-										textTransform: 'capitalize',
-									}}>
-									<MenuItem
-										disabled
-										value='filter'
-										selected
-										sx={{
-											fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-											fontStyle: 'italic',
-											textTransform: 'capitalize',
-											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-											minHeight: '2rem',
-										}}>
-										Filter Submissions
-									</MenuItem>
-									<MenuItem
-										value=''
-										sx={{
-											fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-											textTransform: 'capitalize',
-											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-											minHeight: '2rem',
-										}}>
-										All Submissions
-									</MenuItem>
-									<MenuItem
-										value='checked'
-										sx={{
-											fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-											textTransform: 'capitalize',
-											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-											minHeight: '2rem',
-										}}>
-										Checked
-									</MenuItem>
-									<MenuItem
-										value='unchecked'
-										sx={{
-											fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-											textTransform: 'capitalize',
-											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-											minHeight: '2rem',
-										}}>
-										Unchecked
-									</MenuItem>
-									<MenuItem
-										disabled
-										value='types'
-										selected
-										sx={{
-											fontSize: isMobileSize ? '0.6rem' : '0.7rem',
-											textTransform: 'inherit',
-											fontWeight: 'lighter',
-											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-											minHeight: '2rem',
-										}}>
-										------ Filter by Course ------
-									</MenuItem>
-									{mappedCourses?.map((course) => (
-										<MenuItem
-											key={course.courseId}
-											value={course.courseId}
-											sx={{
-												fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-												textTransform: 'capitalize',
-												padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-												minHeight: '2rem',
-											}}>
-											{truncateText(course.courseTitle, 20)}
-										</MenuItem>
-									))}
-								</Select>
-							</FormControl>
-						</Box>
+				<FilterSearchRow
+					filterValue={filterValue}
+					onFilterChange={handleFilterChange}
+					filterOptions={[
+						{ value: '', label: 'All Submissions' },
+						{ value: 'checked', label: 'Checked' },
+						{ value: 'unchecked', label: 'Unchecked' },
+						...(mappedCourses?.map((course) => ({
+							value: course.courseId,
+							label: truncateText(course.courseTitle, 20),
+						})) || []),
+					]}
+					filterPlaceholder='Filter Submissions'
+					searchValue={searchValue}
+					onSearchChange={setSearchValue}
+					onSearch={handleSearch}
+					onReset={resetAll}
+					searchPlaceholder='Search in Student Username and Quiz Name'
+					isSearchLoading={isSearchLoading}
+					isSearchActive={isSearchActive}
+					searchResultsTotalItems={searchResultsTotalItems}
+					totalItems={totalItems}
+					searchedValue={searchedValue}
+					onResetSearch={resetSearch}
+					onResetFilter={resetFilter}
+					isSticky={true}
+				/>
 
-						<CustomTextField
-							value={searchValue}
-							placeholder='Search in Student Username and Quiz Name'
-							onChange={(e) => {
-								setSearchValue(e.target.value);
-							}}
-							sx={{
-								'backgroundColor': '#fff',
-								'& .MuiInputBase-input::placeholder': {
-									fontSize: '0.75rem', // Change this to your desired font size
-								},
-							}}
-							required={false}
-							InputProps={{
-								onKeyDown: (e) => {
-									if (e.key === 'Enter') {
-										e.preventDefault();
-										if (searchValue.trim() && !isSearchLoading) {
-											handleSearch();
-										}
-									}
-								},
-								endAdornment: (
-									<InputAdornment position='end'>
-										<Search
-											sx={{
-												mr: '-0.5rem',
-											}}
-											fontSize={isMobileSize ? 'small' : 'medium'}
-										/>
-									</InputAdornment>
-								),
-							}}
-						/>
-						<CustomSubmitButton
-							sx={{
-								height: isVerySmallScreen ? '1.75rem' : '2rem',
-								marginLeft: '0.5rem',
-								fontSize: isMobileSize ? '0.7rem' : undefined,
-							}}
-							type='button'
-							disabled={!searchValue || isSearchLoading}
-							onClick={handleSearch}>
-							Search
-						</CustomSubmitButton>
-						<CustomDeleteButton
-							sx={{ height: isVerySmallScreen ? '1.75rem' : '2rem', marginLeft: '0.5rem', fontSize: isMobileSize ? '0.7rem' : undefined }}
-							type='button'
-							onClick={resetAll}>
-							Reset
-						</CustomDeleteButton>
-						<Box sx={{ display: 'flex', gap: 1, mb: '0.85rem', alignItems: 'center', ml: '1rem' }}>
-							{isSearchActive ? (
-								<Typography
-									variant='body2'
-									sx={{
-										color: 'text.secondary',
-										fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-										whiteSpace: 'nowrap',
-									}}>
-									{searchResultsTotalItems} {searchResultsTotalItems === 1 ? 'result' : 'results'}
-								</Typography>
-							) : (
-								<Typography
-									variant='body2'
-									sx={{
-										color: 'text.secondary',
-										fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-										whiteSpace: 'nowrap',
-									}}>
-									{totalItems} {totalItems === 1 ? 'item' : 'items'}
-								</Typography>
-							)}
-						</Box>
-					</Box>
-				</Box>
-
-				<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', padding: isMobileSizeSmall ? '0 1rem' : '0 2rem' }}>
-					{/* Chips for active search and filter */}
-					{((isSearchActive && searchedValue && searchButtonClicked) || (isSearchActive && filterValue && filterValue.trim())) && (
-						<Box
-							sx={{
-								display: 'flex',
-								gap: 1,
-								flexWrap: 'wrap',
-								justifyContent: 'flex-start',
-								borderRadius: '4px',
-								alignSelf: 'flex-start',
-								marginBottom: '1rem',
-								marginTop: '-1rem',
-							}}>
-							{isSearchActive && filterValue && filterValue.trim() && (
-								<Chip
-									label={`Filter: "${getCourseNameById(filterValue)}"`}
-									onDelete={resetFilter}
-									variant='outlined'
-									color='secondary'
-									size='small'
-									sx={{ backgroundColor: '#1976d2', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
-								/>
-							)}
-							{isSearchActive && searchedValue && searchButtonClicked && (
-								<Chip
-									label={`Search: "${searchedValue}"`}
-									onDelete={resetSearch}
-									color='primary'
-									variant='filled'
-									size='small'
-									sx={{ backgroundColor: '#1EC28B', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
-								/>
-							)}
-						</Box>
-					)}
-					<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>
+				<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', padding: isMobileSizeSmall ? '0 1rem' : '0 1rem' }}>
+					<Table
+						sx={{
+							'mb': '2rem',
+							'tableLayout': 'fixed',
+							'width': '100%',
+							'& .MuiTableHead-root': {
+								position: 'fixed',
+								top: (isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim()) ? '11rem' : '8rem',
+								left: isMobileSize ? 0 : '10rem',
+								right: 0,
+								zIndex: 99,
+								backgroundColor: theme.palette.background.paper,
+								boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+								display: 'table',
+								tableLayout: 'fixed',
+								width: isMobileSize ? '100%' : 'calc(100% - 10rem)',
+							},
+							'& .MuiTableHead-root .MuiTableCell-root': {
+								backgroundColor: theme.palette.background.paper,
+								padding: '0.25rem 1rem',
+							},
+						}}
+						size='small'
+						aria-label='a dense table'>
+						{(isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim() && <Box sx={{ height: '1.5rem' }}></Box>)}
 						<CustomTableHead<QuizSubmission>
 							orderBy={orderBy as keyof QuizSubmission}
 							order={order}
@@ -395,7 +232,7 @@ const AdminQuizSubmissions = () => {
 								})}
 						</TableBody>
 					</Table>
-
+					{isVerySmallScreen && <CustomInfoMessageAlignedLeft message='Rotate your device for more info' />}
 					<CustomTablePagination count={submissionsNumberOfPages} page={currentPage} onChange={handlePageChange} />
 				</Box>
 			</DashboardPagesLayout>

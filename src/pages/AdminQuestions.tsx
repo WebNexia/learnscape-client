@@ -1,26 +1,10 @@
-import {
-	Box,
-	FormControl,
-	InputAdornment,
-	MenuItem,
-	Select,
-	Table,
-	TableBody,
-	TableCell,
-	TableRow,
-	Tooltip,
-	Typography,
-	Chip,
-	Snackbar,
-	Alert,
-} from '@mui/material';
+import { Box, Table, TableBody, TableCell, TableRow, Tooltip, Typography, Snackbar, Alert } from '@mui/material';
 import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
 import { useContext, useEffect, useRef, useState } from 'react';
 import axios from '@utils/axiosInstance';
-import { AutoAwesome, Delete, Edit, Info, Search } from '@mui/icons-material';
-import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
+import { AutoAwesome, Delete, Edit, Info } from '@mui/icons-material';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
 import CustomTableHead from '../components/layouts/table/CustomTableHead';
@@ -36,16 +20,32 @@ import { Roles } from '../interfaces/enums';
 import { stripHtml } from '../utils/stripHtml';
 import { truncateText } from '../utils/utilText';
 import AdminQuestionsEditQuestionDialog from '../components/forms/editQuestion/AdminQuestionsEditQuestionDialog';
-import CustomTextField from '../components/forms/customFields/CustomTextField';
 import theme from '../themes';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
-import CustomDeleteButton from '../components/forms/customButtons/CustomDeleteButton';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/CustomInfoMessageAlignedLeft';
 import { dateFormatter } from '../utils/dateFormatter';
 import QuestionInfoModal from '../components/questions/QuestionInfoModal';
 import { decode } from 'html-entities';
 import { useFilterSearch } from '../hooks/useFilterSearch';
+import FilterSearchRow from '../components/layouts/FilterSearchRow';
+
+// Responsive column configuration
+const getColumns = (isVerySmallScreen: boolean) => {
+	return isVerySmallScreen
+		? [
+				{ key: 'question', label: 'Question' },
+				{ key: 'type', label: 'Type' },
+				{ key: 'actions', label: 'Actions' },
+			]
+		: [
+				{ key: 'question', label: 'Question' },
+				{ key: 'type', label: 'Type' },
+				{ key: 'createdAt', label: 'Created On' },
+				{ key: 'updatedAt', label: 'Updated On' },
+				{ key: 'actions', label: 'Actions' },
+			];
+};
 
 const AdminQuestions = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -55,9 +55,8 @@ const AdminQuestions = () => {
 	// Role detection
 	const isInstructor = user?.role === Roles.INSTRUCTOR;
 
-	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
+	const { isSmallScreen, isRotatedMedium, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
-	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
 	const {
 		questions,
@@ -84,7 +83,6 @@ const AdminQuestions = () => {
 		numberOfPages: questionsNumberOfPages,
 		searchResultsPage,
 		searchResultsTotalItems,
-		searchButtonClicked,
 		searchedValue,
 		orderBy,
 		order,
@@ -256,202 +254,48 @@ const AdminQuestions = () => {
 				customSettings={{ justifyContent: 'flex-start' }}
 				showCopyRight={true}>
 				<Box sx={{ width: '100%', height: '100%' }}>
-					<Box
-						sx={{
-							display: 'flex',
-							justifyContent: 'space-between',
-							alignItems: 'center',
-							padding: isMobileSizeSmall ? '1rem 1rem 0.5rem 1rem' : '2rem 2rem 1rem 2rem',
-							width: '100%',
-							mb: '1.25rem',
-						}}>
-						{isVerySmallScreen && <CustomInfoMessageAlignedLeft message='Rotate your device for search & filter' />}
-						<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', flex: 4 }}>
-							<Box sx={{ display: 'flex', alignSelf: 'flex-start', width: isVerySmallScreen ? '12.5rem' : 'fit-content' }}>
-								<Box sx={{ mr: '1rem' }}>
-									<FormControl>
-										<Select
-											size='small'
-											value={filterValue}
-											onChange={(e) => handleFilterChange(e.target.value)}
-											displayEmpty
-											sx={{
-												backgroundColor: theme.bgColor?.common,
-												width: isMobileSizeSmall ? '7rem' : '12rem',
-												fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-												textTransform: 'capitalize',
-											}}>
-											<MenuItem
-												disabled
-												value='filter'
-												selected
-												sx={{
-													fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-													fontStyle: 'italic',
-													textTransform: 'capitalize',
-													padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-													minHeight: '2rem',
-												}}>
-												Filter Questions
-											</MenuItem>
-											<MenuItem
-												value=''
-												selected
-												sx={{
-													fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-													textTransform: 'capitalize',
-													padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-													minHeight: '2rem',
-												}}>
-												All Questions
-											</MenuItem>
-											<MenuItem
-												value='ai generated'
-												selected
-												sx={{
-													fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-													textTransform: 'capitalize',
-													padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-													minHeight: '2rem',
-												}}>
-												AI Generated
-											</MenuItem>
-											<MenuItem
-												value='non ai generated'
-												selected
-												sx={{
-													fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-													textTransform: 'capitalize',
-													padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-													minHeight: '2rem',
-												}}>
-												Non-AI Generated
-											</MenuItem>
-											<MenuItem
-												value='cloned'
-												selected
-												sx={{
-													fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-													textTransform: 'capitalize',
-													padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-													minHeight: '2rem',
-												}}>
-												Cloned
-											</MenuItem>
-											<MenuItem
-												value='original'
-												selected
-												sx={{
-													fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-													textTransform: 'capitalize',
-													padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-													minHeight: '2rem',
-												}}>
-												Original
-											</MenuItem>
-											<MenuItem
-												disabled
-												value='types'
-												selected
-												sx={{
-													fontSize: isMobileSize ? '0.6rem' : '0.7rem',
-													textTransform: 'inherit',
-													fontWeight: 'lighter',
-													padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-													minHeight: '2rem',
-												}}>
-												------ Filter by Type ------
-											</MenuItem>
-											{questionTypes?.map((type) => (
-												<MenuItem
-													value={type.name.toLowerCase()}
-													key={type._id}
-													sx={{
-														fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-														textTransform: 'capitalize',
-														padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-														minHeight: '2rem',
-													}}>
-													{type.name}
-												</MenuItem>
-											))}
-										</Select>
-									</FormControl>
-								</Box>
-								<CustomTextField
-									value={searchValue}
-									placeholder={'Search in question, type'}
-									onChange={(e) => {
-										setSearchValue(e.target.value);
-									}}
-									sx={{ backgroundColor: '#fff', minWidth: isVerySmallScreen ? '10rem' : '17.5rem' }}
-									required={false}
-									InputProps={{
-										onKeyDown: (e) => {
-											if (e.key === 'Enter') {
-												e.preventDefault();
-												if (searchValue.trim() && !loading) {
-													handleSearch();
-												}
-											}
-										},
-										endAdornment: (
-											<InputAdornment position='end'>
-												<Search
-													sx={{
-														mr: '-0.5rem',
-													}}
-													fontSize={isMobileSize ? 'small' : 'medium'}
-												/>
-											</InputAdornment>
-										),
-									}}
-								/>
-								<CustomSubmitButton onClick={handleSearch} sx={{ marginLeft: '1rem' }} disabled={!searchValue || isSearchLoading}>
-									Search
-								</CustomSubmitButton>
-								<CustomDeleteButton onClick={resetAll}>Reset</CustomDeleteButton>
-								<Box sx={{ ml: '1rem', display: 'flex', alignItems: 'center', height: '2rem' }}>
-									{isSearchActive ? (
-										<Typography
-											variant='body2'
-											sx={{
-												color: 'text.secondary',
-												fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-												whiteSpace: 'nowrap',
-											}}>
-											{searchResultsTotalItems} {searchResultsTotalItems === 1 ? 'result' : 'results'}
-										</Typography>
-									) : (
-										<Typography
-											variant='body2'
-											sx={{
-												color: 'text.secondary',
-												fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-												whiteSpace: 'nowrap',
-											}}>
-											{totalItems} {totalItems === 1 ? 'item' : 'items'}
-										</Typography>
-									)}
-								</Box>
-							</Box>
-						</Box>
-						<Box sx={{ display: 'flex', gap: 1, mb: '0.85rem', alignItems: 'center' }}>
-							<CustomSubmitButton
-								onClick={() => {
+					<FilterSearchRow
+						filterValue={filterValue}
+						onFilterChange={handleFilterChange}
+						filterOptions={[
+							{ value: '', label: 'All Questions' },
+							{ value: 'ai generated', label: 'AI Generated' },
+							{ value: 'non ai generated', label: 'Non-AI Generated' },
+							{ value: 'cloned', label: 'Cloned' },
+							{ value: 'original', label: 'Original' },
+							...(questionTypes?.map((type) => ({
+								value: type.name.toLowerCase(),
+								label: type.name,
+							})) || []),
+						]}
+						filterPlaceholder='Filter Questions'
+						searchValue={searchValue}
+						onSearchChange={setSearchValue}
+						onSearch={handleSearch}
+						onReset={resetAll}
+						searchPlaceholder='Search in question, type'
+						isSearchLoading={isSearchLoading}
+						isSearchActive={isSearchActive}
+						searchResultsTotalItems={searchResultsTotalItems}
+						totalItems={totalItems}
+						searchedValue={searchedValue}
+						onResetSearch={resetSearch}
+						onResetFilter={resetFilter}
+						actionButtons={[
+							{
+								label: isVerySmallScreen ? 'New' : 'New Question',
+								onClick: () => {
 									setIsQuestionCreateModalOpen(true);
 									setQuestionType('');
 									setOptions(['']);
 									setCorrectAnswer('');
 									setIsDuplicateOption(false);
 									setCorrectAnswerIndex(-1);
-								}}
-								sx={{ height: isVerySmallScreen ? '1.75rem' : '2.1rem', fontSize: isMobileSize ? '0.7rem' : undefined }}
-								type='button'>
-								{isVerySmallScreen ? 'New' : 'New Question'}
-							</CustomSubmitButton>
-						</Box>
-					</Box>
+								},
+							},
+						]}
+						isSticky={true}
+					/>
 
 					<CreateQuestionDialog
 						createNewQuestion={true}
@@ -479,82 +323,52 @@ const AdminQuestions = () => {
 							display: 'flex',
 							flexDirection: 'column',
 							alignItems: 'center',
-							padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : '0rem 2rem 2rem 2rem',
+							padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : '0rem 1rem 2rem 1rem',
 							width: '100%',
 						}}>
-						{/* Chips for active search and filter */}
-						{((isSearchActive && searchedValue && searchButtonClicked) || (isSearchActive && filterValue && filterValue.trim())) && (
-							<Box
-								sx={{
-									display: 'flex',
-									gap: 1,
-									flexWrap: 'wrap',
-									justifyContent: 'flex-start',
-									borderRadius: '4px',
-									alignSelf: 'flex-start',
-									marginBottom: '1rem',
-									marginTop: '-1rem',
-								}}>
-								{isSearchActive && filterValue && filterValue.trim() && (
-									<Chip
-										label={`Filter: "${filterValue}"`}
-										onDelete={resetFilter}
-										variant='outlined'
-										color='secondary'
-										size='small'
-										sx={{ backgroundColor: '#1976d2', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
-									/>
-								)}
-								{isSearchActive && searchedValue && searchButtonClicked && (
-									<Chip
-										label={`Search: "${searchedValue}"`}
-										onDelete={resetSearch}
-										color='primary'
-										variant='filled'
-										size='small'
-										sx={{ backgroundColor: '#1EC28B', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
-									/>
-								)}
-							</Box>
-						)}
-						<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>
+						<Table
+							sx={{
+								'mb': '2rem',
+								'tableLayout': 'fixed',
+								'width': '100%',
+								'& .MuiTableHead-root': {
+									position: 'fixed',
+									top: (isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim()) ? '11rem' : '8rem',
+									left: isMobileSize ? 0 : '10rem',
+									right: 0,
+									zIndex: 99,
+									backgroundColor: theme.palette.background.paper,
+									boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+									display: 'table',
+									tableLayout: 'fixed',
+									width: isMobileSize ? '100%' : 'calc(100% - 10rem)',
+								},
+								'& .MuiTableHead-root .MuiTableCell-root': {
+									backgroundColor: theme.palette.background.paper,
+									padding: '0.25rem 1rem',
+								},
+							}}
+							size='small'
+							aria-label='a dense table'>
+							{(isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim() && <Box sx={{ height: '1.5rem' }}></Box>)}
 							<CustomTableHead<QuestionInterface>
 								orderBy={orderBy as keyof QuestionInterface}
 								order={order}
 								handleSort={handleSort}
-								columns={[
-									{ key: 'clonedFromId', label: 'Cloned' },
-									{ key: 'questionType', label: 'Question Type' },
-									{ key: 'question', label: 'Question' },
-									{ key: 'createdAt', label: 'Created On' },
-									{ key: 'updatedAt', label: 'Updated On' },
-									{ key: 'actions', label: 'Actions' },
-								]}
+								columns={getColumns(isVerySmallScreen)}
 							/>
 							<TableBody>
 								{paginatedQuestions &&
 									paginatedQuestions?.map((question: QuestionInterface, index) => {
 										return (
 											<TableRow key={question._id} hover>
-												<TableCell sx={{ textAlign: 'center', width: '0px' }}>
-													{question.clonedFromId && (
-														<Box
-															sx={{
-																backgroundColor: theme.palette.info.main,
-																color: 'white',
-																borderRadius: '50%',
-																width: '15px',
-																height: '15px',
-																display: 'flex',
-																alignItems: 'center',
-																justifyContent: 'center',
-																fontSize: '0.65rem',
-																margin: '0 auto',
-															}}>
-															C
-														</Box>
-													)}
-												</TableCell>
+												<CustomTableCell
+													value={
+														isVerySmallScreen
+															? truncateText(stripHtml(decode(question.question)), 25)
+															: truncateText(stripHtml(decode(question.question)), 45)
+													}
+												/>
 												<CustomTableCell value={question.questionType}>
 													{question.isAiGenerated && (
 														<Tooltip title='AI Generated' placement='top' arrow>
@@ -568,15 +382,9 @@ const AdminQuestions = () => {
 														</Tooltip>
 													)}
 												</CustomTableCell>
-												<CustomTableCell
-													value={
-														isVerySmallScreen
-															? truncateText(stripHtml(decode(question.question)), 25)
-															: truncateText(stripHtml(decode(question.question)), 45)
-													}
-												/>
-												<CustomTableCell value={dateFormatter(question.createdAt)} />
-												<CustomTableCell value={dateFormatter(question.updatedAt)} />
+
+												{!isVerySmallScreen && <CustomTableCell value={dateFormatter(question.createdAt)} />}
+												{!isVerySmallScreen && <CustomTableCell value={dateFormatter(question.updatedAt)} />}
 
 												<TableCell
 													sx={{
@@ -657,6 +465,7 @@ const AdminQuestions = () => {
 									})}
 							</TableBody>
 						</Table>
+						{isVerySmallScreen && <CustomInfoMessageAlignedLeft message='Rotate your device for more info' />}
 						<CustomTablePagination count={questionsNumberOfPages} page={currentPage} onChange={handlePageChange} />
 					</Box>
 

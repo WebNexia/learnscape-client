@@ -411,11 +411,6 @@ export const useFilterSearch = <T extends FilterSearchEntity>({
 			const isAsc = orderBy === property && order === 'asc';
 			setOrder(isAsc ? 'desc' : 'asc');
 			setOrderBy(property);
-
-			// If search is active, re-trigger search with new sort order
-			if (isSearchActive) {
-				handleSearch();
-			}
 		},
 		[orderBy, order, isSearchActive, handleSearch]
 	);

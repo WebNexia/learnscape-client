@@ -1,23 +1,38 @@
-import { Box, FormControl, InputAdornment, MenuItem, Select, Table, TableBody, TableCell, TableRow, Typography, Chip } from '@mui/material';
+import { Box, Table, TableBody, TableCell, TableRow } from '@mui/material';
 import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { useContext } from 'react';
 import CustomTableHead from '../components/layouts/table/CustomTableHead';
 import CustomTableCell from '../components/layouts/table/CustomTableCell';
 import CustomActionBtn from '../components/layouts/table/CustomActionBtn';
-import { PendingOutlined, Search } from '@mui/icons-material';
+import { PendingOutlined } from '@mui/icons-material';
 import CustomTablePagination from '../components/layouts/table/CustomTablePagination';
 import { QuizSubmission } from '../interfaces/quizSubmission';
 import { LearnerQuizSubmissionsContext } from '../contexts/LearnerQuizSubmissionsContextProvider';
 import theme from '../themes';
-import CustomTextField from '../components/forms/customFields/CustomTextField';
 import { truncateText } from '../utils/utilText';
 import { UserCoursesIdsWithCourseIds } from '../contexts/UserCourseLessonDataContextProvider';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import { useAuth } from '../hooks/useAuth';
-import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
-import CustomDeleteButton from '../components/forms/customButtons/CustomDeleteButton';
 import { useFilterSearch } from '../hooks/useFilterSearch';
+import FilterSearchRow from '../components/layouts/FilterSearchRow';
+import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/CustomInfoMessageAlignedLeft';
+
+// Responsive column configuration
+const getColumns = (isVerySmallScreen: boolean) => {
+	return isVerySmallScreen
+		? [
+				{ key: 'lessonName', label: 'Quiz Name' },
+				{ key: 'isChecked', label: 'Status' },
+				{ key: 'actions', label: 'Actions' },
+			]
+		: [
+				{ key: 'lessonName', label: 'Quiz Name' },
+				{ key: 'courseName', label: 'Course Name' },
+				{ key: 'isChecked', label: 'Status' },
+				{ key: 'actions', label: 'Actions' },
+			];
+};
 
 const Submissions = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -43,7 +58,6 @@ const Submissions = () => {
 		numberOfPages: submissionsNumberOfPages,
 		searchResultsPage,
 		searchResultsTotalItems,
-		searchButtonClicked,
 		searchedValue,
 		orderBy,
 		order,
@@ -100,226 +114,79 @@ const Submissions = () => {
 
 	return (
 		<DashboardPagesLayout pageName='Quiz Submissions' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
+			<FilterSearchRow
+				filterValue={filterValue}
+				onFilterChange={handleFilterChange}
+				filterOptions={[
+					{ value: '', label: 'All Submissions' },
+					{ value: 'checked', label: 'Checked' },
+					{ value: 'unchecked', label: 'Unchecked' },
+					...(userCourseData?.map((course) => ({
+						value: course.toLowerCase(),
+						label: truncateText(course, 25),
+					})) || []),
+				]}
+				filterPlaceholder='Filter Submissions'
+				searchValue={searchValue}
+				onSearchChange={setSearchValue}
+				onSearch={handleSearch}
+				onReset={resetAll}
+				searchPlaceholder='Search in Quiz and Course Name'
+				isSearchLoading={isSearchLoading}
+				isSearchActive={isSearchActive}
+				searchResultsTotalItems={searchResultsTotalItems}
+				totalItems={userQuizSubmissions.length}
+				searchedValue={searchedValue}
+				onResetSearch={resetSearch}
+				onResetFilter={resetFilter}
+				isSticky={true}
+			/>
+
 			<Box
 				sx={{
 					display: 'flex',
 					flexDirection: 'column',
 					alignItems: 'center',
-					padding: isMobileSize ? '1rem' : '1rem 2rem 2rem 2rem',
+					padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : '0rem 1rem 2rem 1rem',
 					width: '100%',
-					mt: isMobileSize ? '0.75rem' : '2rem',
 				}}>
-				<Box
+				<Table
 					sx={{
-						display: 'flex',
-						justifyContent: 'space-between',
-						width: '100%',
-					}}>
-					<Box sx={{ display: 'flex', justifyContent: isMobileSize ? 'center' : 'flex-start', alignContent: 'center', width: '100%' }}>
-						<Box>
-							<FormControl>
-								<Select
-									size='small'
-									value={filterValue}
-									onChange={(e) => handleFilterChange(e.target.value)}
-									displayEmpty
-									sx={{
-										backgroundColor: theme.bgColor?.common,
-										width: '12rem',
-										fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-										textTransform: 'capitalize',
-										mr: isMobileSize ? '0.5rem' : '1rem',
-									}}>
-									<MenuItem
-										disabled
-										value='filter'
-										selected
-										sx={{
-											fontSize: isMobileSizeSmall ? '0.65rem' : '0.85rem',
-											fontStyle: 'italic',
-											textTransform: 'capitalize',
-											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-											minHeight: '2rem',
-										}}>
-										Filter Submissions
-									</MenuItem>
-									<MenuItem
-										value=''
-										selected
-										sx={{
-											fontSize: isMobileSizeSmall ? '0.7rem' : '0.85rem',
-											textTransform: 'capitalize',
-											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-											minHeight: '2rem',
-										}}>
-										All Submissions
-									</MenuItem>
-									<MenuItem
-										value='checked'
-										sx={{
-											fontSize: isMobileSizeSmall ? '0.7rem' : '0.85rem',
-											textTransform: 'capitalize',
-											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-											minHeight: '2rem',
-										}}>
-										Checked
-									</MenuItem>
-									<MenuItem
-										value='unchecked'
-										sx={{
-											fontSize: isMobileSizeSmall ? '0.7rem' : '0.85rem',
-											textTransform: 'capitalize',
-											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-											minHeight: '2rem',
-										}}>
-										Unchecked
-									</MenuItem>
-									{userCourseData && userCourseData.length > 0 && (
-										<MenuItem
-											disabled
-											value='types'
-											selected
-											sx={{
-												fontSize: '0.65rem',
-												textTransform: 'inherit',
-												fontWeight: 'lighter',
-												padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-												minHeight: '2rem',
-											}}>
-											------ Filter by Course ------
-										</MenuItem>
-									)}
-									{userCourseData?.map((course) => (
-										<MenuItem
-											value={course.toLowerCase()}
-											key={course}
-											sx={{
-												fontSize: isMobileSizeSmall ? '0.7rem' : '0.85rem',
-												textTransform: 'capitalize',
-												padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-												minHeight: '2rem',
-											}}>
-											{truncateText(course, 25)}
-										</MenuItem>
-									))}
-								</Select>
-							</FormControl>
-						</Box>
-						<Box sx={{ alignSelf: 'flex-start', width: '17.5rem' }}>
-							<CustomTextField
-								value={searchValue}
-								placeholder={'Search in Quiz and Course Name'}
-								onChange={(e) => {
-									setSearchValue(e.target.value);
-								}}
-								sx={{ backgroundColor: '#fff' }}
-								required={false}
-								InputProps={{
-									onKeyDown: (e) => {
-										if (e.key === 'Enter') {
-											e.preventDefault();
-											if (searchValue.trim() && !isSearchLoading) {
-												handleSearch();
-											}
-										}
-									},
-									endAdornment: (
-										<InputAdornment position='end'>
-											<Search
-												sx={{
-													mr: '-0.5rem',
-												}}
-												fontSize={isMobileSize ? 'small' : 'medium'}
-											/>
-										</InputAdornment>
-									),
-								}}
-							/>
-						</Box>
-						<CustomSubmitButton onClick={handleSearch} sx={{ marginLeft: '1rem' }} disabled={!searchValue || isSearchLoading}>
-							Search
-						</CustomSubmitButton>
-						<CustomDeleteButton onClick={resetAll}>Reset</CustomDeleteButton>
-						<Box sx={{ ml: '1rem', display: 'flex', alignItems: 'center', height: '2rem' }}>
-							{isSearchActive ? (
-								<Typography
-									variant='body2'
-									sx={{
-										color: 'text.secondary',
-										fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-										whiteSpace: 'nowrap',
-									}}>
-									{searchResultsTotalItems} {searchResultsTotalItems === 1 ? 'result' : 'results'}
-								</Typography>
-							) : (
-								<Typography
-									variant='body2'
-									sx={{
-										color: 'text.secondary',
-										fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-										whiteSpace: 'nowrap',
-									}}>
-									{userQuizSubmissions.length} {userQuizSubmissions.length === 1 ? 'item' : 'items'}
-								</Typography>
-							)}
-						</Box>
-					</Box>
-				</Box>
-
-				{/* Chips for active search and filter */}
-				{((isSearchActive && searchedValue && searchButtonClicked) || (isSearchActive && filterValue && filterValue.trim())) && (
-					<Box
-						sx={{
-							display: 'flex',
-							gap: 1,
-							flexWrap: 'wrap',
-							justifyContent: 'center',
-							borderRadius: '4px',
-							alignSelf: 'flex-start',
-							marginBottom: '0rem',
-							marginTop: '0.75rem',
-						}}>
-						{isSearchActive && filterValue && filterValue.trim() && (
-							<Chip
-								label={`Filter: "${filterValue}"`}
-								onDelete={resetFilter}
-								color='secondary'
-								variant='outlined'
-								size='small'
-								sx={{ backgroundColor: '#1976d2', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
-							/>
-						)}
-						{isSearchActive && searchedValue && searchButtonClicked && (
-							<Chip
-								label={`Search: "${searchedValue}"`}
-								onDelete={resetSearch}
-								color='primary'
-								variant='filled'
-								size='small'
-								sx={{ backgroundColor: '#1EC28B', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
-							/>
-						)}
-					</Box>
-				)}
-
-				<Table sx={{ margin: '1rem 0' }} size='small' aria-label='a dense table'>
+						'margin': '1rem 0',
+						'tableLayout': 'fixed',
+						'width': '100%',
+						'& .MuiTableHead-root': {
+							position: 'fixed',
+							top: (isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim()) ? '11rem' : '8rem',
+							left: isMobileSize ? 0 : '10rem',
+							right: 0,
+							zIndex: 99,
+							backgroundColor: theme.palette.background.paper,
+							boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+							display: 'table',
+							tableLayout: 'fixed',
+							width: isMobileSize ? '100%' : 'calc(100% - 10rem)',
+						},
+						'& .MuiTableHead-root .MuiTableCell-root': {
+							backgroundColor: theme.palette.background.paper,
+							padding: '0.25rem 1rem',
+						},
+					}}
+					size='small'
+					aria-label='a dense table'>
+					{(isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim() && <Box sx={{ height: '1.5rem' }}></Box>)}
 					<CustomTableHead<QuizSubmission>
 						orderBy={orderBy as keyof QuizSubmission}
 						order={order}
 						handleSort={handleSort}
-						columns={[
-							{ key: 'lessonName', label: 'Quiz Name' },
-							{ key: 'courseName', label: 'Course Name' },
-							{ key: 'isChecked', label: 'Status' },
-							{ key: 'actions', label: 'Actions' },
-						]}
+						columns={getColumns(isVerySmallScreen)}
 					/>
 					<TableBody>
 						{paginatedSubmissions &&
 							paginatedSubmissions?.map((submission: QuizSubmission) => (
 								<TableRow key={submission._id} hover>
 									<CustomTableCell value={submission.lessonName} />
-									<CustomTableCell value={submission.courseName} />
+									{!isVerySmallScreen && <CustomTableCell value={submission.courseName} />}
 									<CustomTableCell value={submission.isChecked ? 'Checked' : 'Unchecked'} />
 
 									<TableCell
@@ -342,6 +209,7 @@ const Submissions = () => {
 							))}
 					</TableBody>
 				</Table>
+				{isVerySmallScreen && <CustomInfoMessageAlignedLeft message='Rotate your device for more info' />}
 				<CustomTablePagination count={submissionsNumberOfPages} page={currentPage} onChange={handlePageChange} />
 			</Box>
 		</DashboardPagesLayout>

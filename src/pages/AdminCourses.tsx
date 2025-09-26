@@ -8,15 +8,10 @@ import {
 	Checkbox,
 	Tooltip,
 	Typography,
-	FormControl,
-	Select,
-	MenuItem,
-	InputAdornment,
 	DialogContent,
 	Snackbar,
 	Alert,
 	DialogActions,
-	Chip,
 } from '@mui/material';
 import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
@@ -24,11 +19,10 @@ import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { CoursesContext } from '../contexts/CoursesContextProvider';
 import { Instructor, Price, SingleCourse } from '../interfaces/course';
-import { Delete, Edit, FileCopy, Search, Visibility } from '@mui/icons-material';
+import { Delete, Edit, FileCopy, Visibility } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 
 import CustomTextField from '../components/forms/customFields/CustomTextField';
-import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
 import CustomTableHead from '../components/layouts/table/CustomTableHead';
@@ -41,11 +35,11 @@ import theme from '../themes';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/CustomInfoMessageAlignedLeft';
 import axios from '@utils/axiosInstance';
-import CustomDeleteButton from '../components/forms/customButtons/CustomDeleteButton';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
 import { Roles } from '../interfaces/enums';
 import { useFilterSearch } from '../hooks/useFilterSearch';
+import FilterSearchRow from '../components/layouts/FilterSearchRow';
 
 const AdminCourses = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -74,9 +68,8 @@ const AdminCourses = () => {
 	const vertical = 'top';
 	const horizontal = 'center';
 
-	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
+	const { isSmallScreen, isRotatedMedium, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
-	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
 	const [title, setTitle] = useState<string>('');
 	const [description, setDescription] = useState<string>('');
@@ -99,7 +92,6 @@ const AdminCourses = () => {
 		numberOfPages: coursesNumberOfPages,
 		searchResultsPage,
 		searchResultsTotalItems,
-		searchButtonClicked,
 		searchedValue,
 		orderBy,
 		order,
@@ -513,189 +505,76 @@ const AdminCourses = () => {
 					</form>
 				</CustomDialog>
 
-				<Box
-					sx={{
-						display: 'flex',
-						flexDirection: 'row',
-						justifyContent: 'space-between',
-						padding: isMobileSizeSmall ? '1rem 1rem 0.5rem 1rem' : '2rem 2rem 1rem 2rem',
-						width: '100%',
-						mb: '1.25rem',
-					}}>
-					<Box sx={{ display: 'flex', alignSelf: 'flex-start', width: isVerySmallScreen ? '12.5rem' : 'fit-content' }}>
-						<Box>
-							<FormControl>
-								<Select
-									size='small'
-									value={filterValue}
-									onChange={(e) => handleFilterChange(e.target.value)}
-									displayEmpty
-									sx={{
-										backgroundColor: theme.bgColor?.common,
-										width: isMobileSizeSmall ? '8rem' : '12rem',
-										fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-										textTransform: 'capitalize',
-										mr: '1rem',
-									}}>
-									<MenuItem
-										disabled
-										value='filter'
-										selected
-										sx={{
-											fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-											fontStyle: 'italic',
-											textTransform: 'capitalize',
-											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-											minHeight: '2rem',
-										}}>
-										Filter Courses
-									</MenuItem>
-									<MenuItem
-										value=''
-										selected
-										sx={{
-											fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-											textTransform: 'capitalize',
-											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-											minHeight: '2rem',
-										}}>
-										All Courses
-									</MenuItem>
-									{[
-										'Published Courses',
-										'Unpublished Courses',
-										'Paid Courses',
-										'Free Courses',
-										'Unpriced Courses',
-										'Open Courses',
-										'Closed Courses',
-										'External Courses',
-										'Platform Courses',
-									]?.map((type) => (
-										<MenuItem
-											value={type.toLowerCase()}
-											key={type}
-											sx={{
-												fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-												textTransform: 'capitalize',
-												padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-												minHeight: '2rem',
-											}}>
-											{type}
-										</MenuItem>
-									))}
-								</Select>
-							</FormControl>
-						</Box>
-
-						<CustomTextField
-							value={searchValue}
-							placeholder={'Search in Title and Description'}
-							onChange={(e) => {
-								setSearchValue(e.target.value);
-							}}
-							sx={{ backgroundColor: '#fff', minWidth: isVerySmallScreen ? '10rem' : '17.5rem' }}
-							required={false}
-							InputProps={{
-								onKeyDown: (e) => {
-									if (e.key === 'Enter') {
-										e.preventDefault();
-										if (searchValue.trim() && !loading) {
-											handleSearch();
-										}
-									}
-								},
-								endAdornment: (
-									<InputAdornment position='end'>
-										<Search
-											sx={{
-												mr: '-0.5rem',
-											}}
-											fontSize={isMobileSize ? 'small' : 'medium'}
-										/>
-									</InputAdornment>
-								),
-							}}
-						/>
-						<CustomSubmitButton onClick={handleSearch} sx={{ marginLeft: '1rem' }} disabled={!searchValue || isSearchLoading}>
-							Search
-						</CustomSubmitButton>
-						<CustomDeleteButton onClick={resetAll}>Reset</CustomDeleteButton>
-						<Box sx={{ ml: '1rem', display: 'flex', alignItems: 'center', height: '2rem' }}>
-							{isSearchActive ? (
-								<Typography
-									variant='body2'
-									sx={{
-										color: 'text.secondary',
-										fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-										whiteSpace: 'nowrap',
-									}}>
-									{searchResultsTotalItems} {searchResultsTotalItems === 1 ? 'result' : 'results'}
-								</Typography>
-							) : (
-								<Typography
-									variant='body2'
-									sx={{
-										color: 'text.secondary',
-										fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-										whiteSpace: 'nowrap',
-									}}>
-									{totalItems} {totalItems === 1 ? 'item' : 'items'}
-								</Typography>
-							)}
-						</Box>
-					</Box>
-					<Box sx={{ display: 'flex', gap: 1, mb: '0.85rem', alignItems: 'center' }}>
-						<CustomSubmitButton onClick={openNewCourseModal} sx={{ fontSize: isMobileSize ? '0.7rem' : undefined }}>
-							{isVerySmallScreen ? 'New' : 'New Course'}
-						</CustomSubmitButton>
-					</Box>
-				</Box>
+				<FilterSearchRow
+					filterValue={filterValue}
+					onFilterChange={handleFilterChange}
+					filterOptions={[
+						{ value: '', label: 'All Courses' },
+						{ value: 'published courses', label: 'Published Courses' },
+						{ value: 'unpublished courses', label: 'Unpublished Courses' },
+						{ value: 'paid courses', label: 'Paid Courses' },
+						{ value: 'free courses', label: 'Free Courses' },
+						{ value: 'unpriced courses', label: 'Unpriced Courses' },
+						{ value: 'open courses', label: 'Open Courses' },
+						{ value: 'closed courses', label: 'Closed Courses' },
+						{ value: 'external courses', label: 'External Courses' },
+						{ value: 'platform courses', label: 'Platform Courses' },
+					]}
+					filterPlaceholder='Filter Courses'
+					searchValue={searchValue}
+					onSearchChange={setSearchValue}
+					onSearch={handleSearch}
+					onReset={resetAll}
+					searchPlaceholder='Search in Title and Description'
+					isSearchLoading={isSearchLoading}
+					isSearchActive={isSearchActive}
+					searchResultsTotalItems={searchResultsTotalItems}
+					totalItems={totalItems}
+					searchedValue={searchedValue}
+					onResetSearch={resetSearch}
+					onResetFilter={resetFilter}
+					actionButtons={[
+						{
+							label: 'New Course',
+							onClick: openNewCourseModal,
+						},
+					]}
+					isSticky={true}
+				/>
 
 				<Box
 					sx={{
 						display: 'flex',
 						flexDirection: 'column',
 						alignItems: 'center',
-						padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : '0rem 2rem 2rem 2rem',
+						padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : '0rem 1rem 2rem 1rem',
 						width: '100%',
 					}}>
-					{((isSearchActive && searchedValue && searchButtonClicked) || (filterValue && filterValue.trim())) && (
-						<Box
-							sx={{
-								mb: '1rem',
-								display: 'flex',
-								gap: 1,
-								flexWrap: 'wrap',
-								justifyContent: 'center',
-								borderRadius: '4px',
-								alignSelf: 'flex-start',
-								marginBottom: '1rem',
-								marginTop: '-1rem',
-							}}>
-							{isSearchActive && filterValue && filterValue.trim() && (
-								<Chip
-									label={`Filter: "${filterValue}"`}
-									onDelete={resetFilter}
-									variant='outlined'
-									color='secondary'
-									size='small'
-									sx={{ backgroundColor: '#1976d2', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
-								/>
-							)}
-							{isSearchActive && searchedValue && searchButtonClicked && (
-								<Chip
-									label={`Search: "${searchedValue}"`}
-									onDelete={resetSearch}
-									color='primary'
-									variant='filled'
-									size='small'
-									sx={{ backgroundColor: '#1EC28B', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
-								/>
-							)}
-						</Box>
-					)}
-					<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>
+					<Table
+						sx={{
+							'mb': '2rem',
+							'tableLayout': 'fixed',
+							'width': '100%',
+							'& .MuiTableHead-root': {
+								position: 'fixed',
+								top: (isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim()) ? '11rem' : '8rem',
+								left: isMobileSize ? 0 : '10rem',
+								right: 0,
+								zIndex: 99,
+								backgroundColor: theme.palette.background.paper,
+								boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+								display: 'table',
+								tableLayout: 'fixed',
+								width: isMobileSize ? '100%' : 'calc(100% - 10rem)',
+							},
+							'& .MuiTableHead-root .MuiTableCell-root': {
+								backgroundColor: theme.palette.background.paper,
+								padding: '0.25rem 1rem',
+							},
+						}}
+						size='small'
+						aria-label='a dense table'>
+						{(isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim() && <Box sx={{ height: '1.5rem' }}></Box>)}
 						<CustomTableHead<SingleCourse>
 							orderBy={orderBy as keyof SingleCourse}
 							order={order}
@@ -703,14 +582,12 @@ const AdminCourses = () => {
 							columns={
 								isVerySmallScreen
 									? [
-											{ key: 'clone', label: 'Cloned' },
 											{ key: 'title', label: 'Title' },
 											{ key: 'isActive', label: 'Status' },
 											{ key: 'startingDate', label: 'Starting Date' },
 											{ key: 'actions', label: 'Actions' },
 										]
 									: [
-											{ key: 'clone', label: 'Cloned' },
 											{ key: 'title', label: 'Title' },
 											{ key: 'isActive', label: 'Status' },
 											{ key: 'startingDate', label: 'Starting Date' },
@@ -726,7 +603,7 @@ const AdminCourses = () => {
 								paginatedCourses?.map((course: SingleCourse, index) => {
 									return (
 										<TableRow key={course._id} hover>
-											<TableCell sx={{ textAlign: 'center', width: '0px' }}>
+											{/* <TableCell sx={{ textAlign: 'center', width: '0px' }}>
 												{course.clonedFromId && (
 													<Box
 														sx={{
@@ -744,7 +621,7 @@ const AdminCourses = () => {
 														C
 													</Box>
 												)}
-											</TableCell>
+											</TableCell> */}
 											<CustomTableCell value={course.title} />
 											<CustomTableCell
 												value={
