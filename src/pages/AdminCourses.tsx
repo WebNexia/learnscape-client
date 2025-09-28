@@ -105,6 +105,7 @@ const AdminCourses = () => {
 		resetSearch,
 		resetFilter,
 		resetAll,
+		removeFromSearchResults,
 	} = useFilterSearch<SingleCourse>({
 		getEndpoint: () => `${base_url}${baseEndpoint}`,
 		limit: 200,
@@ -331,6 +332,11 @@ const AdminCourses = () => {
 			// Only remove from frontend state if the backend request was successful
 			if (response.data.status === 200) {
 				removeCourse(courseId);
+
+				// If search is active, remove from search results; otherwise context data is already updated
+				if (isSearchActive) {
+					removeFromSearchResults(courseId);
+				}
 
 				// Show success message
 				setSnackbarMessage('Course deleted successfully');
@@ -577,7 +583,7 @@ const AdminCourses = () => {
 						}}
 						size='small'
 						aria-label='a dense table'>
-						{(isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim() && <Box sx={{ height: '1.5rem' }}></Box>)}
+						{((isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim())) && <Box sx={{ height: '1.5rem' }}></Box>}
 						<CustomTableHead<SingleCourse>
 							orderBy={orderBy as keyof SingleCourse}
 							order={order}

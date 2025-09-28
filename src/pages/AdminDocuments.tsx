@@ -93,6 +93,7 @@ const AdminDocuments = () => {
 		resetSearch,
 		resetFilter,
 		resetAll,
+		removeFromSearchResults,
 	} = useFilterSearch<Document>({
 		getEndpoint: () => `${base_url}/documents/organisation/${orgId}`,
 		limit: 200,
@@ -402,6 +403,12 @@ const AdminDocuments = () => {
 			// Only remove from frontend state if the backend request was successful
 			if (response.data.status === 200) {
 				removeDocument(documentId);
+
+				// If search is active, remove from search results; otherwise context data is already updated
+				if (isSearchActive) {
+					removeFromSearchResults(documentId);
+				}
+
 				// Show success message
 				setSnackbarMessage('Document deleted successfully');
 				setSnackbarSeverity('success');
@@ -611,7 +618,7 @@ const AdminDocuments = () => {
 							}}
 							size='small'
 							aria-label='a dense table'>
-							{(isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim() && <Box sx={{ height: '1.5rem' }}></Box>)}
+							{((isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim())) && <Box sx={{ height: '1.5rem' }}></Box>}
 							<CustomTableHead<Document>
 								orderBy={orderBy as keyof Document}
 								order={order}

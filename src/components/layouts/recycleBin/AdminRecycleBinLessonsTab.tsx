@@ -91,6 +91,7 @@ const AdminRecycleBinLessonsTab = () => {
 		resetSearch,
 		resetFilter,
 		resetAll,
+		removeFromSearchResults,
 	} = useFilterSearch<ArchivedLesson>({
 		getEndpoint: () => `${base_url}/lessons/organisation/${orgId}/archived`,
 		limit: 200,
@@ -237,7 +238,7 @@ const AdminRecycleBinLessonsTab = () => {
 
 				// Clear search if currently viewing filtered data to show updated context data
 				if (isSearchActive) {
-					resetSearch();
+					removeFromSearchResults(lessonId);
 				}
 
 				// Add to lessons context
@@ -270,7 +271,7 @@ const AdminRecycleBinLessonsTab = () => {
 
 				// Clear search if currently viewing filtered data to show updated context data
 				if (isSearchActive) {
-					resetSearch();
+					removeFromSearchResults(lessonId);
 				}
 
 				setSnackbarMessage('Lesson permanently deleted');
@@ -305,9 +306,9 @@ const AdminRecycleBinLessonsTab = () => {
 			setArchivedLessons((prev) => prev?.filter((lesson) => !selectedItems?.includes(lesson._id)) || []);
 			setTotalItems((prev) => prev - selectedItems.length);
 
-			// Clear search if currently viewing filtered data to show updated context data
+			// If search is active, remove from search results; otherwise context data is already updated
 			if (isSearchActive) {
-				resetSearch();
+				selectedItems.forEach((lessonId) => removeFromSearchResults(lessonId));
 			}
 
 			setSelectedItems([]);
@@ -333,9 +334,9 @@ const AdminRecycleBinLessonsTab = () => {
 			setArchivedLessons((prev) => prev?.filter((lesson) => !selectedItems?.includes(lesson._id)) || []);
 			setTotalItems((prev) => prev - selectedItems.length);
 
-			// Clear search if currently viewing filtered data to show updated context data
+			// If search is active, remove from search results; otherwise context data is already updated
 			if (isSearchActive) {
-				resetSearch();
+				selectedItems.forEach((lessonId) => removeFromSearchResults(lessonId));
 			}
 
 			setSelectedItems([]);

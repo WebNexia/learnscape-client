@@ -77,11 +77,13 @@ const Courses = () => {
 	const {
 		searchValue,
 		filterValue,
+		searchedValue,
 		setSearchValue,
 		setFilterValue,
 		filteredData: filteredCourses,
 		totalItems,
 		isSearchActive,
+		handleSearch,
 		resetSearch,
 		resetFilter,
 		resetAll,
@@ -103,14 +105,14 @@ const Courses = () => {
 						filterPlaceholder='Filter Courses'
 						searchValue={searchValue}
 						onSearchChange={setSearchValue}
-						onSearch={() => {}}
+						onSearch={handleSearch}
 						onReset={resetAll}
 						searchPlaceholder='Search in Course Title and Description'
 						isSearchLoading={false}
 						isSearchActive={isSearchActive || !!filterValue}
 						searchResultsTotalItems={totalItems}
 						totalItems={totalItems}
-						searchedValue={searchValue}
+						searchedValue={searchedValue}
 						onResetSearch={resetSearch}
 						onResetFilter={resetFilter}
 						actionButtons={[
@@ -138,14 +140,14 @@ const Courses = () => {
 					filterPlaceholder='Filter Courses'
 					searchValue={searchValue}
 					onSearchChange={setSearchValue}
-					onSearch={() => {}} // No-op for frontend filtering
+					onSearch={handleSearch}
 					onReset={resetAll}
 					searchPlaceholder='Search in Course Title and Description'
 					isSearchLoading={false}
 					isSearchActive={isSearchActive || !!filterValue}
 					searchResultsTotalItems={totalItems}
 					totalItems={totalItems}
-					searchedValue={searchValue}
+					searchedValue={searchedValue}
 					onResetSearch={resetSearch}
 					onResetFilter={resetFilter}
 					actionButtons={[

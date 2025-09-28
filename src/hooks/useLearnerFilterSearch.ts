@@ -20,6 +20,8 @@ export interface UseLearnerFilterSearchReturn<T> {
 	// State
 	searchValue: string;
 	filterValue: string;
+	searchedValue: string;
+	searchButtonClicked: boolean;
 
 	// Setters
 	setSearchValue: (value: string) => void;
@@ -31,6 +33,7 @@ export interface UseLearnerFilterSearchReturn<T> {
 	isSearchActive: boolean;
 
 	// Actions
+	handleSearch: () => void;
 	resetSearch: () => void;
 	resetFilter: () => void;
 	resetAll: () => void;
@@ -43,6 +46,8 @@ export function useLearnerFilterSearch<T extends Record<string, any>>({
 }: UseLearnerFilterSearchOptions<T>): UseLearnerFilterSearchReturn<T> {
 	const [searchValue, setSearchValue] = useState('');
 	const [filterValue, setFilterValue] = useState('');
+	const [searchedValue, setSearchedValue] = useState('');
+	const [searchButtonClicked, setSearchButtonClicked] = useState(false);
 
 	// Memoized filtered data
 	const filteredData = useMemo(() => {
@@ -55,9 +60,9 @@ export function useLearnerFilterSearch<T extends Record<string, any>>({
 			filtered = filtered.filter((item) => customFilterFn(item, filterValue));
 		}
 
-		// Apply search filter on the already filtered data
-		if (searchValue.trim()) {
-			const searchLower = searchValue.toLowerCase();
+		// Apply search filter on the already filtered data (only when search button was clicked)
+		if (searchButtonClicked && searchedValue.trim()) {
+			const searchLower = searchedValue.toLowerCase();
 			filtered = filtered.filter((item) =>
 				searchFields.some((field) => {
 					const fieldValue = item[field];
@@ -70,26 +75,42 @@ export function useLearnerFilterSearch<T extends Record<string, any>>({
 		}
 
 		return filtered;
-	}, [data, searchValue, filterValue, searchFields, customFilterFn]);
+	}, [data, searchedValue, filterValue, searchFields, customFilterFn, searchButtonClicked]);
 
 	const totalItems = filteredData.length;
-	const isSearchActive = !!searchValue.trim();
+	const isSearchActive = searchButtonClicked && !!searchedValue.trim();
 
-	const resetSearch = () => setSearchValue('');
+	const handleSearch = () => {
+		setSearchedValue(searchValue.trim());
+		setSearchButtonClicked(true);
+	};
+
+	const resetSearch = () => {
+		setSearchValue('');
+		setSearchedValue('');
+		setSearchButtonClicked(false);
+	};
+
 	const resetFilter = () => setFilterValue('');
+
 	const resetAll = () => {
 		setSearchValue('');
 		setFilterValue('');
+		setSearchedValue('');
+		setSearchButtonClicked(false);
 	};
 
 	return {
 		searchValue,
 		filterValue,
+		searchedValue,
+		searchButtonClicked,
 		setSearchValue,
 		setFilterValue,
 		filteredData,
 		totalItems,
 		isSearchActive,
+		handleSearch,
 		resetSearch,
 		resetFilter,
 		resetAll,

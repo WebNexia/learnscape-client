@@ -95,6 +95,7 @@ const AdminQuestions = () => {
 		resetSearch,
 		resetFilter,
 		resetAll,
+		removeFromSearchResults,
 	} = useFilterSearch<QuestionInterface>({
 		getEndpoint: () => `${base_url}/questions/organisation/${orgId}`,
 		limit: 200,
@@ -204,6 +205,11 @@ const AdminQuestions = () => {
 			// Only remove from frontend state if the backend request was successful
 			if (response.data.status === 200) {
 				removeQuestion(questionId);
+
+				// If search is active, remove from search results; otherwise context data is already updated
+				if (isSearchActive) {
+					removeFromSearchResults(questionId);
+				}
 
 				// Show success message
 				setSnackbarMessage('Question deleted successfully');
@@ -350,7 +356,7 @@ const AdminQuestions = () => {
 							}}
 							size='small'
 							aria-label='a dense table'>
-							{(isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim() && <Box sx={{ height: '1.5rem' }}></Box>)}
+							{((isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim())) && <Box sx={{ height: '1.5rem' }}></Box>}
 							<CustomTableHead<QuestionInterface>
 								orderBy={orderBy as keyof QuestionInterface}
 								order={order}

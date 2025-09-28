@@ -57,6 +57,7 @@ const AdminPromoCodesTab = () => {
 		resetSearch,
 		resetFilter,
 		resetAll,
+		removeFromSearchResults,
 	} = useFilterSearch<PromoCode>({
 		getEndpoint: () => `${base_url}/promoCodes/organisation/${orgId}`,
 		limit: 200,
@@ -129,6 +130,11 @@ const AdminPromoCodesTab = () => {
 
 			await axios.delete(`${base_url}/promocodes/${code}`);
 			removePromoCode(promoCodeToDelete._id);
+
+			// If search is active, remove from search results; otherwise context data is already updated
+			if (isSearchActive) {
+				removeFromSearchResults(promoCodeToDelete._id);
+			}
 		} catch (error) {
 			console.error('Delete promo code error:', error);
 		}

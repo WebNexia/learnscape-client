@@ -93,6 +93,7 @@ const AdminLessons = () => {
 		resetSearch,
 		resetFilter,
 		resetAll,
+		removeFromSearchResults,
 	} = useFilterSearch<Lesson>({
 		getEndpoint: () => `${base_url}/lessons/organisation/${orgId}`,
 		limit: 200,
@@ -171,6 +172,11 @@ const AdminLessons = () => {
 			// Only remove from frontend state if the backend request was successful
 			if (response.data.status === 200) {
 				removeLesson(lessonId);
+
+				// If search is active, remove from search results; otherwise context data is already updated
+				if (isSearchActive) {
+					removeFromSearchResults(lessonId);
+				}
 
 				// Show success message
 				setSnackbarMessage('Lesson deleted successfully');
@@ -272,7 +278,7 @@ const AdminLessons = () => {
 						}}
 						size='small'
 						aria-label='a dense table'>
-						{(isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim() && <Box sx={{ height: '1.5rem' }}></Box>)}
+						{((isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim())) && <Box sx={{ height: '1.5rem' }}></Box>}
 						<CustomTableHead<Lesson>
 							orderBy={orderBy as keyof Lesson}
 							order={order}

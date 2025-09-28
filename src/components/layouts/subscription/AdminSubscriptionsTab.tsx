@@ -92,6 +92,7 @@ const AdminSubscriptionsTab = () => {
 		resetSearch,
 		resetFilter,
 		resetAll,
+		removeFromSearchResults,
 	} = useFilterSearch<UserSubscription>({
 		getEndpoint: () => `${base_url}/subscriptions/organisation/${orgId}`,
 		limit: 200,
@@ -275,13 +276,11 @@ const AdminSubscriptionsTab = () => {
 
 			if (response.data.status === 200) {
 				// Update local state - remove from context data
-				if (!isSearchActive) {
-					removeSubscription(subscriptionId);
-				}
+				removeSubscription(subscriptionId);
 
-				// If search is active, also remove from search results
+				// If search is active, remove from search results; otherwise context data is already updated
 				if (isSearchActive) {
-					// The hook will handle updating search results automatically
+					removeFromSearchResults(subscriptionId);
 				}
 
 				console.log(`Subscription ${subscriptionId} hard deleted.`);

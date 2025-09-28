@@ -98,6 +98,7 @@ const AdminRecycleBinDocumentsTab = () => {
 		resetSearch,
 		resetFilter,
 		resetAll,
+		removeFromSearchResults,
 	} = useFilterSearch<ArchivedDocument>({
 		getEndpoint: () => `${base_url}/documents/organisation/${orgId}/archived`,
 		limit: 200,
@@ -245,7 +246,7 @@ const AdminRecycleBinDocumentsTab = () => {
 
 				// Clear search if currently viewing filtered data to show updated context data
 				if (isSearchActive) {
-					resetSearch();
+					removeFromSearchResults(documentId);
 				}
 
 				// Add to documents context
@@ -278,7 +279,7 @@ const AdminRecycleBinDocumentsTab = () => {
 
 				// Clear search if currently viewing filtered data to show updated context data
 				if (isSearchActive) {
-					resetSearch();
+					removeFromSearchResults(documentId);
 				}
 
 				setSnackbarMessage('Document permanently deleted');
@@ -313,9 +314,9 @@ const AdminRecycleBinDocumentsTab = () => {
 			setArchivedDocuments((prev) => prev?.filter((document) => !selectedItems?.includes(document._id)) || []);
 			setTotalItems((prev) => prev - selectedItems.length);
 
-			// Refresh search results if currently viewing filtered data
+			// If search is active, remove from search results; otherwise context data is already updated
 			if (isSearchActive) {
-				await resetSearch();
+				selectedItems.forEach((documentId) => removeFromSearchResults(documentId));
 			}
 
 			setSelectedItems([]);
@@ -341,9 +342,9 @@ const AdminRecycleBinDocumentsTab = () => {
 			setArchivedDocuments((prev) => prev?.filter((document) => !selectedItems?.includes(document._id)) || []);
 			setTotalItems((prev) => prev - selectedItems.length);
 
-			// Refresh search results if currently viewing filtered data
+			// If search is active, remove from search results; otherwise context data is already updated
 			if (isSearchActive) {
-				await resetSearch();
+				selectedItems.forEach((documentId) => removeFromSearchResults(documentId));
 			}
 
 			setSelectedItems([]);

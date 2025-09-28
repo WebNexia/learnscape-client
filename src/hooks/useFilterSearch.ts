@@ -95,6 +95,7 @@ export interface UseFilterSearchReturn<T extends FilterSearchEntity> {
 	// Advanced functions for future use
 	refreshSearch: () => Promise<void>; // Re-run current search
 	getSearchParams: () => URLSearchParams; // Get current search parameters
+	removeFromSearchResults: (itemId: string) => void; // Remove item from search results
 	isLoading: boolean; // Loading state
 	error: string | null; // Error state
 
@@ -566,6 +567,17 @@ export const useFilterSearch = <T extends FilterSearchEntity>({
 		};
 	}, [cleanupSearchState]);
 
+	// Function to remove an item from search results without clearing search state
+	const removeFromSearchResults = useCallback(
+		(itemId: string) => {
+			if (isSearchActive) {
+				setSearchResults((prev) => prev.filter((item) => item._id !== itemId));
+				setSearchResultsTotalItems((prev) => Math.max(0, prev - 1));
+			}
+		},
+		[isSearchActive]
+	);
+
 	// Cleanup when navigating away from page
 	useEffect(() => {
 		return () => {
@@ -613,6 +625,7 @@ export const useFilterSearch = <T extends FilterSearchEntity>({
 		// Advanced functions
 		refreshSearch,
 		getSearchParams,
+		removeFromSearchResults,
 		isLoading,
 		error,
 

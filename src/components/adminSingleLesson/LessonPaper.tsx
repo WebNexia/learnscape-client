@@ -8,7 +8,7 @@ import CustomSubmitButton from '../forms/customButtons/CustomSubmitButton';
 import { FormEvent, useContext, useState } from 'react';
 import CustomCancelButton from '../forms/customButtons/CustomCancelButton';
 import CustomDialog from '../layouts/dialog/CustomDialog';
-import LessonInfoModal from '../lessons/LessonInfoModal';
+import LessonInfoModal from '../layouts/lessons/LessonInfoModal';
 import { useStickyPaper } from '../../hooks/useStickyPaper';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import { UserAuthContext } from '../../contexts/UserAuthContextProvider';

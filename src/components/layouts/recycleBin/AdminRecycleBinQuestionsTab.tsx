@@ -101,6 +101,7 @@ const AdminRecycleBinQuestionsTab = () => {
 		resetSearch,
 		resetFilter,
 		resetAll,
+		removeFromSearchResults,
 	} = useFilterSearch<ArchivedQuestion>({
 		getEndpoint: () => `${base_url}/questions/organisation/${orgId}/archived`,
 		limit: 200,
@@ -248,7 +249,7 @@ const AdminRecycleBinQuestionsTab = () => {
 
 				// Clear search if currently viewing filtered data to show updated context data
 				if (isSearchActive) {
-					resetSearch();
+					removeFromSearchResults(questionId);
 				}
 
 				// Add to questions context
@@ -281,7 +282,7 @@ const AdminRecycleBinQuestionsTab = () => {
 
 				// Clear search if currently viewing filtered data to show updated context data
 				if (isSearchActive) {
-					resetSearch();
+					removeFromSearchResults(questionId);
 				}
 
 				setSnackbarMessage('Question permanently deleted');
@@ -316,9 +317,9 @@ const AdminRecycleBinQuestionsTab = () => {
 			setArchivedQuestions((prev) => prev?.filter((question) => !selectedItems?.includes(question._id)) || []);
 			setTotalItems((prev) => prev - selectedItems.length);
 
-			// Refresh search results if currently viewing filtered data
+			// If search is active, remove from search results; otherwise context data is already updated
 			if (isSearchActive) {
-				await resetSearch();
+				selectedItems.forEach((questionId) => removeFromSearchResults(questionId));
 			}
 
 			setSelectedItems([]);
@@ -344,9 +345,9 @@ const AdminRecycleBinQuestionsTab = () => {
 			setArchivedQuestions((prev) => prev?.filter((question) => !selectedItems?.includes(question._id)) || []);
 			setTotalItems((prev) => prev - selectedItems.length);
 
-			// Refresh search results if currently viewing filtered data
+			// If search is active, remove from search results; otherwise context data is already updated
 			if (isSearchActive) {
-				await resetSearch();
+				selectedItems.forEach((questionId) => removeFromSearchResults(questionId));
 			}
 
 			setSelectedItems([]);

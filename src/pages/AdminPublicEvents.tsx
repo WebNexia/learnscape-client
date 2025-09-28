@@ -206,7 +206,7 @@ const AdminPublicEvents = () => {
 						}}
 						size='small'
 						aria-label='a dense table'>
-						{(isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim() && <Box sx={{ height: '1.5rem' }}></Box>)}
+						{((isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim())) && <Box sx={{ height: '1.5rem' }}></Box>}
 						<CustomTableHead<Event>
 							orderBy={orderBy as keyof Event}
 							order={order}

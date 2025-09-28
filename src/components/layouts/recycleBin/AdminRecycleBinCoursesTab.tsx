@@ -86,6 +86,7 @@ const AdminRecycleBinCoursesTab = () => {
 		resetSearch,
 		resetFilter,
 		resetAll,
+		removeFromSearchResults,
 	} = useFilterSearch<ArchivedCourse>({
 		getEndpoint: () => `${base_url}/courses/organisation/${orgId}/archived`,
 		limit: 200,
@@ -210,9 +211,9 @@ const AdminRecycleBinCoursesTab = () => {
 			setArchivedCourses((prev) => prev?.filter((course) => course._id !== courseId) || []);
 			setTotalItems((prev) => prev - 1);
 
-			// Clear search if currently viewing filtered data to show updated context data
+			// If search is active, remove from search results; otherwise context data is already updated
 			if (isSearchActive) {
-				resetSearch();
+				removeFromSearchResults(courseId);
 			}
 
 			setSnackbarMessage('Course restored successfully');
@@ -234,9 +235,9 @@ const AdminRecycleBinCoursesTab = () => {
 			setArchivedCourses((prev) => prev?.filter((course) => course._id !== courseId) || []);
 			setTotalItems((prev) => prev - 1);
 
-			// Clear search if currently viewing filtered data to show updated context data
+			// If search is active, remove from search results; otherwise context data is already updated
 			if (isSearchActive) {
-				resetSearch();
+				removeFromSearchResults(courseId);
 			}
 
 			setSnackbarMessage('Course permanently deleted');
@@ -295,9 +296,9 @@ const AdminRecycleBinCoursesTab = () => {
 			setArchivedCourses((prev) => prev?.filter((course) => !selectedItems?.includes(course._id)) || []);
 			setTotalItems((prev) => prev - selectedItems.length);
 
-			// Clear search if currently viewing filtered data to show updated context data
+			// If search is active, remove from search results; otherwise context data is already updated
 			if (isSearchActive) {
-				resetSearch();
+				selectedItems.forEach((courseId) => removeFromSearchResults(courseId));
 			}
 
 			setSelectedItems([]);
@@ -323,9 +324,9 @@ const AdminRecycleBinCoursesTab = () => {
 			setArchivedCourses((prev) => prev?.filter((course) => !selectedItems?.includes(course._id)) || []);
 			setTotalItems((prev) => prev - selectedItems.length);
 
-			// Clear search if currently viewing filtered data to show updated context data
+			// If search is active, remove from search results; otherwise context data is already updated
 			if (isSearchActive) {
-				resetSearch();
+				selectedItems.forEach((courseId) => removeFromSearchResults(courseId));
 			}
 
 			setSelectedItems([]);

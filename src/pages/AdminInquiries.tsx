@@ -93,6 +93,7 @@ const AdminInquiries = () => {
 		resetSearch,
 		resetFilter,
 		resetAll,
+		removeFromSearchResults,
 	} = useFilterSearch<Inquiry>({
 		getEndpoint: () => `${base_url}/inquiries/organisation/${orgId}`,
 		limit: 300,
@@ -158,6 +159,11 @@ const AdminInquiries = () => {
 		try {
 			await axios.delete(`${base_url}/inquiries/${selectedInquiry._id}`);
 			removeInquiry(selectedInquiry._id);
+
+			// If search is active, remove from search results; otherwise context data is already updated
+			if (isSearchActive) {
+				removeFromSearchResults(selectedInquiry._id);
+			}
 
 			// Refresh dashboard to update inquiry count
 			refreshDashboard();
@@ -300,7 +306,7 @@ const AdminInquiries = () => {
 							}}
 							size='small'
 							aria-label='a dense table'>
-							{(isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim() && <Box sx={{ height: '1.5rem' }}></Box>)}
+							{((isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim())) && <Box sx={{ height: '1.5rem' }}></Box>}
 							<CustomTableHead<Inquiry>
 								orderBy={orderBy as keyof Inquiry}
 								order={order}
