@@ -1,8 +1,8 @@
 import { Box, Grid, Typography, Avatar, DialogContent, DialogActions, FormControl, Select, MenuItem } from '@mui/material';
-import { Lesson } from '../../interfaces/lessons';
-import { dateTimeFormatter } from '../../utils/dateFormatter';
-import CustomCancelButton from '../forms/customButtons/CustomCancelButton';
-import { useResourceUsage } from '../../hooks/useResourceUsage';
+import { Lesson } from '../../../interfaces/lessons';
+import { dateTimeFormatter } from '../../../utils/dateFormatter';
+import CustomCancelButton from '../../forms/customButtons/CustomCancelButton';
+import { useResourceUsage } from '../../../hooks/useResourceUsage';
 import { useNavigate } from 'react-router-dom';
 
 interface LessonInfoModalProps {

@@ -21,7 +21,7 @@ import theme from '../themes';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import { dateFormatter } from '../utils/dateFormatter';
 import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
-import LessonInfoModal from '../components/lessons/LessonInfoModal';
+import LessonInfoModal from '../components/layouts/lessons/LessonInfoModal';
 import { useAuth } from '../hooks/useAuth';
 import { Roles } from '../interfaces/enums';
 import { useFilterSearch } from '../hooks/useFilterSearch';

@@ -1,8 +1,8 @@
 import { Box, Grid, Typography, Avatar, DialogContent, DialogActions, FormControl, Select, MenuItem } from '@mui/material';
-import { QuestionInterface } from '../../interfaces/question';
-import { dateTimeFormatter } from '../../utils/dateFormatter';
-import CustomCancelButton from '../forms/customButtons/CustomCancelButton';
-import { useResourceUsage } from '../../hooks/useResourceUsage';
+import { QuestionInterface } from '../../../interfaces/question';
+import { dateTimeFormatter } from '../../../utils/dateFormatter';
+import CustomCancelButton from '../../forms/customButtons/CustomCancelButton';
+import { useResourceUsage } from '../../../hooks/useResourceUsage';
 
 interface QuestionInfoModalProps {
 	question: QuestionInterface;

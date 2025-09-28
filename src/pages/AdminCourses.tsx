@@ -19,7 +19,7 @@ import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { CoursesContext } from '../contexts/CoursesContextProvider';
 import { Instructor, Price, SingleCourse } from '../interfaces/course';
-import { Delete, Edit, FileCopy, Visibility } from '@mui/icons-material';
+import { Delete, Edit, FileCopy, Info, Visibility } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 
 import CustomTextField from '../components/forms/customFields/CustomTextField';
@@ -40,6 +40,7 @@ import CustomCancelButton from '../components/forms/customButtons/CustomCancelBu
 import { Roles } from '../interfaces/enums';
 import { useFilterSearch } from '../hooks/useFilterSearch';
 import FilterSearchRow from '../components/layouts/FilterSearchRow';
+import CoursesInfoModal from '../components/layouts/courses/CoursesInfoModal';
 
 const AdminCourses = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -141,6 +142,8 @@ const AdminCourses = () => {
 	const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
 	const [snackbarMessage, setSnackbarMessage] = useState<string>('');
 	const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
+
+	const [isCourseInfoModalOpen, setIsCourseInfoModalOpen] = useState<boolean[]>([]);
 
 	// Keep track of previous length to avoid unnecessary resets
 	const prevLengthRef = useRef<number>(0);
@@ -603,25 +606,6 @@ const AdminCourses = () => {
 								paginatedCourses?.map((course: SingleCourse, index) => {
 									return (
 										<TableRow key={course._id} hover>
-											{/* <TableCell sx={{ textAlign: 'center', width: '0px' }}>
-												{course.clonedFromId && (
-													<Box
-														sx={{
-															backgroundColor: theme.palette.info.main,
-															color: 'white',
-															borderRadius: '50%',
-															width: '15px',
-															height: '15px',
-															display: 'flex',
-															alignItems: 'center',
-															justifyContent: 'center',
-															fontSize: '0.65rem',
-															margin: '0 auto',
-														}}>
-														C
-													</Box>
-												)}
-											</TableCell> */}
 											<CustomTableCell value={course.title} />
 											<CustomTableCell
 												value={
@@ -647,7 +631,7 @@ const AdminCourses = () => {
 												<CustomActionBtn
 													title='Clone'
 													onClick={() => openCloneCourseModal(index)}
-													icon={<FileCopy fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
+													icon={<FileCopy fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined, mr: '-0.5rem' }} />}
 												/>
 
 												{!course.isExpired ? (
@@ -660,7 +644,7 @@ const AdminCourses = () => {
 																navigate(`/admin/course-edit/course/${course._id}`);
 															}
 														}}
-														icon={<Edit fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
+														icon={<Edit fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined, mr: '-0.5rem' }} />}
 													/>
 												) : (
 													<CustomActionBtn
@@ -672,7 +656,7 @@ const AdminCourses = () => {
 																navigate(`/admin/course-edit/course/${course._id}`);
 															}
 														}}
-														icon={<Visibility fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
+														icon={<Visibility fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined, mr: '-0.5rem' }} />}
 													/>
 												)}
 												<CustomActionBtn
@@ -700,7 +684,30 @@ const AdminCourses = () => {
 														// Default: disable for other roles
 														return true;
 													})()}
-													icon={<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
+													icon={<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined, mr: '-0.5rem' }} />}
+												/>
+												<CustomActionBtn
+													title='More Info'
+													onClick={() => {
+														setIsCourseInfoModalOpen((prev) => {
+															const newState = [...prev];
+															newState[index] = true;
+															return newState;
+														});
+													}}
+													icon={<Info fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
+												/>
+
+												<CoursesInfoModal
+													singleCourse={course}
+													isCourseInfoDialogOpen={isCourseInfoModalOpen[index]}
+													setIsCourseInfoDialogOpen={() =>
+														setIsCourseInfoModalOpen((prev) => {
+															const newState = [...prev];
+															newState[index] = false;
+															return newState;
+														})
+													}
 												/>
 												{isCourseDeleteModalOpen[index] !== undefined && !course.isActive && (
 													<CustomDialog

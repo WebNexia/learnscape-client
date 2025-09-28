@@ -25,7 +25,7 @@ import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/CustomInfoMessageAlignedLeft';
 import { dateFormatter } from '../utils/dateFormatter';
-import QuestionInfoModal from '../components/questions/QuestionInfoModal';
+import QuestionInfoModal from '../components/layouts/questions/QuestionInfoModal';
 import { decode } from 'html-entities';
 import { useFilterSearch } from '../hooks/useFilterSearch';
 import FilterSearchRow from '../components/layouts/FilterSearchRow';
