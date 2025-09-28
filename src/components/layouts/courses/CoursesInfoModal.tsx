@@ -92,11 +92,11 @@ const CoursesInfoModal = ({ singleCourse, isCourseInfoDialogOpen, setIsCourseInf
 						)}
 
 						<Grid item xs={3}>
-							<Typography variant='body2'>External Course:</Typography>
+							<Typography variant='body2'>Type:</Typography>
 						</Grid>
 
 						<Grid item xs={9}>
-							<Typography variant='body2'>{singleCourse?.courseManagement?.isExternal ? 'Yes' : 'No'}</Typography>
+							<Typography variant='body2'>{singleCourse?.courseManagement?.isExternal ? 'Partner' : 'Platform'}</Typography>
 						</Grid>
 					</Grid>
 				</Box>

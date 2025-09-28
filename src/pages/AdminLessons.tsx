@@ -23,35 +23,42 @@ import { dateFormatter } from '../utils/dateFormatter';
 import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
 import LessonInfoModal from '../components/layouts/lessons/LessonInfoModal';
 import { useAuth } from '../hooks/useAuth';
-import { Roles } from '../interfaces/enums';
 import { useFilterSearch } from '../hooks/useFilterSearch';
 import FilterSearchRow from '../components/layouts/FilterSearchRow';
 import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/CustomInfoMessageAlignedLeft';
 
-// Responsive column configuration
-const getColumns = (isVerySmallScreen: boolean) => {
-	return isVerySmallScreen
-		? [
-				{ key: 'title', label: 'Title' },
-				{ key: 'type', label: 'Type' },
-				{ key: 'isActive', label: 'Status' },
-				{ key: 'actions', label: 'Actions' },
-			]
-		: [
-				{ key: 'title', label: 'Title' },
-				{ key: 'type', label: 'Type' },
-				{ key: 'isActive', label: 'Status' },
-				{ key: 'createdAt', label: 'Created On' },
-				{ key: 'updatedAt', label: 'Updated On' },
-				{ key: 'actions', label: 'Actions' },
-			];
-};
-
 const AdminLessons = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const navigate = useNavigate();
-	const { user } = useAuth();
-	const isInstructor = user?.role === Roles.INSTRUCTOR;
+	const { isInstructor } = useAuth();
+
+	// Responsive column configuration
+	const getColumns = (isVerySmallScreen: boolean) => {
+		return isVerySmallScreen
+			? [
+					{ key: 'type', label: 'Type' },
+					{ key: 'title', label: 'Title' },
+					{ key: 'isActive', label: 'Status' },
+					{ key: 'actions', label: 'Actions' },
+				]
+			: isInstructor
+				? [
+						{ key: 'type', label: 'Type' },
+						{ key: 'title', label: 'Title' },
+						{ key: 'isActive', label: 'Status' },
+						{ key: 'createdAt', label: 'Created On' },
+						{ key: 'updatedAt', label: 'Updated On' },
+						{ key: 'actions', label: 'Actions' },
+					]
+				: [
+						{ key: 'type', label: 'Type' },
+						{ key: 'title', label: 'Title' },
+						{ key: 'isActive', label: 'Status' },
+						{ key: 'createdByName', label: 'Created By' },
+						{ key: 'updatedAt', label: 'Updated On' },
+						{ key: 'actions', label: 'Actions' },
+					];
+	};
 
 	const {
 		lessons,
@@ -251,7 +258,7 @@ const AdminLessons = () => {
 						display: 'flex',
 						flexDirection: 'column',
 						alignItems: 'center',
-						padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : '0rem 1rem 2rem 1rem',
+						padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : '0rem 0rem 2rem 0rem',
 						width: '100%',
 					}}>
 					<Table
@@ -290,10 +297,11 @@ const AdminLessons = () => {
 								paginatedLessons?.map((lesson: Lesson, index) => {
 									return (
 										<TableRow key={lesson._id} hover>
-											<CustomTableCell value={lesson.title} />
 											<CustomTableCell value={lesson.type} />
+											<CustomTableCell value={lesson.title} />
 											<CustomTableCell value={lesson.isActive ? 'Published' : 'Unpublished'} />
-											{!isVerySmallScreen && <CustomTableCell value={dateFormatter(lesson.createdAt)} />}
+											{!isVerySmallScreen && !isInstructor && <CustomTableCell value={lesson.createdByName || 'N/A'} />}
+											{!isVerySmallScreen && isInstructor && <CustomTableCell value={dateFormatter(lesson.createdAt)} />}
 											{!isVerySmallScreen && <CustomTableCell value={dateFormatter(lesson.updatedAt)} />}
 
 											<TableCell

@@ -179,7 +179,7 @@ const AdminPublicEvents = () => {
 						display: 'flex',
 						flexDirection: 'column',
 						alignItems: 'center',
-						padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : '0rem 1rem 2rem 1rem',
+						padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : '0rem 0rem 2rem 0rem',
 						width: '100%',
 					}}>
 					<Table
@@ -212,8 +212,8 @@ const AdminPublicEvents = () => {
 							order={order}
 							handleSort={handleSort}
 							columns={[
-								{ key: 'title', label: 'Title' },
 								{ key: 'type', label: 'Type' },
+								{ key: 'title', label: 'Title' },
 								{ key: 'start', label: 'Start' },
 								{ key: 'end', label: 'End' },
 								{ key: 'participantCount', label: 'Participants(#)' },
@@ -225,8 +225,8 @@ const AdminPublicEvents = () => {
 								paginatedPublicEvents?.map((event: Event) => {
 									return (
 										<TableRow key={event._id} hover>
-											<CustomTableCell value={event.title} />
 											<CustomTableCell value={event.type} />
+											<CustomTableCell value={event.title} />
 											<CustomTableCell value={dateTimeFormatter(event.start)} />
 											<CustomTableCell value={dateTimeFormatter(event.end)} />
 											<CustomTableCell value={event.participantCount ?? 0} />

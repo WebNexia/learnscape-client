@@ -16,7 +16,6 @@ import { QuestionInterface } from '../interfaces/question';
 import useNewQuestion from '../hooks/useNewQuestion';
 import CreateQuestionDialog from '../components/forms/newQuestion/CreateQuestionDialog';
 import { useAuth } from '../hooks/useAuth';
-import { Roles } from '../interfaces/enums';
 import { stripHtml } from '../utils/stripHtml';
 import { truncateText } from '../utils/utilText';
 import AdminQuestionsEditQuestionDialog from '../components/forms/editQuestion/AdminQuestionsEditQuestionDialog';
@@ -30,30 +29,10 @@ import { decode } from 'html-entities';
 import { useFilterSearch } from '../hooks/useFilterSearch';
 import FilterSearchRow from '../components/layouts/FilterSearchRow';
 
-// Responsive column configuration
-const getColumns = (isVerySmallScreen: boolean) => {
-	return isVerySmallScreen
-		? [
-				{ key: 'question', label: 'Question' },
-				{ key: 'type', label: 'Type' },
-				{ key: 'actions', label: 'Actions' },
-			]
-		: [
-				{ key: 'question', label: 'Question' },
-				{ key: 'type', label: 'Type' },
-				{ key: 'createdAt', label: 'Created On' },
-				{ key: 'updatedAt', label: 'Updated On' },
-				{ key: 'actions', label: 'Actions' },
-			];
-};
-
 const AdminQuestions = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
-	const { user } = useAuth();
-
-	// Role detection
-	const isInstructor = user?.role === Roles.INSTRUCTOR;
+	const { isInstructor } = useAuth();
 
 	const { isSmallScreen, isRotatedMedium, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -71,6 +50,31 @@ const AdminQuestions = () => {
 		questionTypes,
 		enableQuestionsFetch,
 	} = useContext(QuestionsContext);
+
+	// Responsive column configuration
+	const getColumns = (isVerySmallScreen: boolean) => {
+		return isVerySmallScreen
+			? [
+					{ key: 'type', label: 'Type' },
+					{ key: 'question', label: 'Question' },
+					{ key: 'actions', label: 'Actions' },
+				]
+			: isInstructor
+				? [
+						{ key: 'type', label: 'Type' },
+						{ key: 'question', label: 'Question' },
+						{ key: 'createdAt', label: 'Created On' },
+						{ key: 'updatedAt', label: 'Updated On' },
+						{ key: 'actions', label: 'Actions' },
+					]
+				: [
+						{ key: 'type', label: 'Type' },
+						{ key: 'question', label: 'Question' },
+						{ key: 'createdByName', label: 'Created By' },
+						{ key: 'updatedAt', label: 'Updated On' },
+						{ key: 'actions', label: 'Actions' },
+					];
+	};
 
 	const pageSize = 50;
 
@@ -329,7 +333,7 @@ const AdminQuestions = () => {
 							display: 'flex',
 							flexDirection: 'column',
 							alignItems: 'center',
-							padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : '0rem 1rem 2rem 1rem',
+							padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : '0rem 0rem 2rem 0rem',
 							width: '100%',
 						}}>
 						<Table
@@ -368,13 +372,6 @@ const AdminQuestions = () => {
 									paginatedQuestions?.map((question: QuestionInterface, index) => {
 										return (
 											<TableRow key={question._id} hover>
-												<CustomTableCell
-													value={
-														isVerySmallScreen
-															? truncateText(stripHtml(decode(question.question)), 25)
-															: truncateText(stripHtml(decode(question.question)), 45)
-													}
-												/>
 												<CustomTableCell value={question.questionType}>
 													{question.isAiGenerated && (
 														<Tooltip title='AI Generated' placement='top' arrow>
@@ -388,8 +385,16 @@ const AdminQuestions = () => {
 														</Tooltip>
 													)}
 												</CustomTableCell>
+												<CustomTableCell
+													value={
+														isVerySmallScreen
+															? truncateText(stripHtml(decode(question.question)), 25)
+															: truncateText(stripHtml(decode(question.question)), 45)
+													}
+												/>
 
-												{!isVerySmallScreen && <CustomTableCell value={dateFormatter(question.createdAt)} />}
+												{!isVerySmallScreen && !isInstructor && <CustomTableCell value={question.createdByName || 'N/A'} />}
+												{!isVerySmallScreen && isInstructor && <CustomTableCell value={dateFormatter(question.createdAt)} />}
 												{!isVerySmallScreen && <CustomTableCell value={dateFormatter(question.updatedAt)} />}
 
 												<TableCell

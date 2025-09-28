@@ -30,7 +30,7 @@ const CustomTablePagination = ({ count, page, onChange }: CustomPaginationProps)
 				sx={{
 					'& .MuiPaginationItem-root': {
 						fontSize: isMobileSize ? '0.75rem' : '0.85rem',
-						mt: isMobileSize ? '1rem' : '1.5rem',
+						mt: '1rem',
 					},
 					'& .MuiPaginationItem-icon': {
 						fontSize: isMobileSize ? '1rem' : '1.25rem', // Adjust icon size

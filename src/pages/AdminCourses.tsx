@@ -1,28 +1,13 @@
-import {
-	Box,
-	Table,
-	TableBody,
-	TableRow,
-	TableCell,
-	FormControlLabel,
-	Checkbox,
-	Tooltip,
-	Typography,
-	DialogContent,
-	Snackbar,
-	Alert,
-	DialogActions,
-} from '@mui/material';
+import { Box, Table, TableBody, TableRow, TableCell, Typography, DialogContent, Snackbar, Alert, DialogActions } from '@mui/material';
 import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
-import React, { useContext, useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import { CoursesContext } from '../contexts/CoursesContextProvider';
-import { Instructor, Price, SingleCourse } from '../interfaces/course';
+import { SingleCourse } from '../interfaces/course';
 import { Delete, Edit, FileCopy, Info, Visibility } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 
-import CustomTextField from '../components/forms/customFields/CustomTextField';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
 import CustomTableHead from '../components/layouts/table/CustomTableHead';
@@ -41,6 +26,7 @@ import { Roles } from '../interfaces/enums';
 import { useFilterSearch } from '../hooks/useFilterSearch';
 import FilterSearchRow from '../components/layouts/FilterSearchRow';
 import CoursesInfoModal from '../components/layouts/courses/CoursesInfoModal';
+import CreateCourseDialog from '../components/forms/newCourse/CreateCourseDialog';
 
 const AdminCourses = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -71,16 +57,6 @@ const AdminCourses = () => {
 
 	const { isSmallScreen, isRotatedMedium, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
-
-	const [title, setTitle] = useState<string>('');
-	const [description, setDescription] = useState<string>('');
-	const [GBP, setGBP] = useState<Price | null>(null);
-	const [USD, setUSD] = useState<Price | null>(null);
-	const [EUR, setEUR] = useState<Price | null>(null);
-	const [TRY, setTRY] = useState<Price | null>(null);
-
-	const [checked, setChecked] = useState<boolean>(false);
-	const [isExternal, setIsExternal] = useState<boolean>(false);
 
 	const pageSize = 50;
 
@@ -120,9 +96,33 @@ const AdminCourses = () => {
 
 	// Use appropriate page number for pagination
 	const currentPage = isSearchActive ? searchResultsPage : coursesPageNumber;
+	// Helper function to get nested values for sorting
+	const getNestedValue = (obj: any, path: string) => {
+		return path.split('.').reduce((current, key) => current?.[key], obj) ?? '';
+	};
+
 	const sortedCourses = [...(displayCourses || [])]?.sort((a, b) => {
-		const aValue = (a as any)[orderBy] ?? '';
-		const bValue = (b as any)[orderBy] ?? '';
+		let aValue: any;
+		let bValue: any;
+
+		// Handle special cases for sorting
+		if (orderBy === 'isExternal') {
+			// For Type column, sort by external status
+			aValue = a?.courseManagement?.isExternal ? 'Partner' : 'Platform';
+			bValue = b?.courseManagement?.isExternal ? 'Partner' : 'Platform';
+		} else if (orderBy === 'instructor.name') {
+			// For instructor sorting, use nested property
+			aValue = getNestedValue(a, 'instructor.name') || 'N/A';
+			bValue = getNestedValue(b, 'instructor.name') || 'N/A';
+		} else if (orderBy.includes('.')) {
+			// Handle other nested properties
+			aValue = getNestedValue(a, orderBy);
+			bValue = getNestedValue(b, orderBy);
+		} else {
+			// Handle regular properties
+			aValue = (a as any)[orderBy] ?? '';
+			bValue = (b as any)[orderBy] ?? '';
+		}
 
 		if (order === 'asc') {
 			return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
@@ -177,15 +177,6 @@ const AdminCourses = () => {
 
 	const openNewCourseModal = () => {
 		setIsCourseCreateModalOpen(true);
-		setTitle('');
-		setDescription('');
-		setChecked(false);
-		setIsExternal(false);
-
-		setGBP({ amount: '', currency: 'gbp' });
-		setUSD({ amount: '', currency: 'usd' });
-		setEUR({ amount: '', currency: 'eur' });
-		setTRY({ amount: '', currency: 'try' });
 	};
 	const closeNewCourseModal = () => setIsCourseCreateModalOpen(false);
 
@@ -210,73 +201,6 @@ const AdminCourses = () => {
 		const updatedState = [...isCourseDeleteModalOpen];
 		updatedState[index] = false;
 		setIsCourseDeleteModalOpen(updatedState);
-	};
-
-	const createCourse = async (): Promise<void> => {
-		// For instructors, allow creating courses without prices
-		// For admins, always include prices
-		const prices: Price[] = isInstructor
-			? []
-			: [
-					{ amount: checked ? 'Free' : GBP?.amount!, currency: 'gbp' },
-					{ amount: checked ? 'Free' : USD?.amount!, currency: 'usd' },
-					{ amount: checked ? 'Free' : EUR?.amount!, currency: 'eur' },
-					{ amount: checked ? 'Free' : TRY?.amount!, currency: 'try' },
-				];
-		try {
-			const response = await axios.post(`${base_url}${isInstructor ? '/courses/instructor' : '/courses'}`, {
-				title: title.trim(),
-				description: description.trim(),
-				prices,
-				startingDate: '',
-				orgId,
-				imageUrl: '',
-				durationWeeks: null,
-				durationHours: null,
-				format: '',
-				courseManagement: {
-					isExternal: isExternal,
-					externalProvider: '',
-					externalUrl: '',
-					externalNotes: '',
-				},
-				instructor: {
-					name: `${(user?.firstName ?? '').charAt(0).toUpperCase()}${(user?.firstName ?? '').slice(1)} ${(user?.lastName ?? '').charAt(0).toUpperCase()}${(user?.lastName ?? '').slice(1)}`,
-					userId: user?._id,
-					imageUrl: user?.imageUrl,
-					email: user?.email,
-				},
-			});
-
-			// Notify context provider to update courses with the new course
-			addNewCourse({
-				_id: response.data._id,
-				title: title.trim(),
-				description: description.trim(),
-				prices,
-				orgId,
-				imageUrl: '',
-				durationWeeks: null,
-				durationHours: null,
-				format: '',
-				createdAt: response.data.createdAt,
-				updatedAt: response.data.updatedAt,
-				courseManagement: {
-					isExternal: isExternal,
-					externalProvider: '',
-					externalUrl: '',
-					externalNotes: '',
-				},
-				instructor: {
-					name: user?.firstName.toUpperCase() + ' ' + user?.lastName.toUpperCase(),
-					userId: user?._id!,
-					imageUrl: user?.imageUrl!,
-					email: user?.email!,
-				} as Instructor,
-			} as SingleCourse);
-		} catch (error) {
-			console.error('Create course error:', error);
-		}
 	};
 
 	const handleClone = async (courseId: string, index: number) => {
@@ -360,160 +284,7 @@ const AdminCourses = () => {
 	return (
 		<AdminPageErrorBoundary pageName='Courses'>
 			<DashboardPagesLayout pageName={isInstructor ? 'My Courses' : 'Courses'} customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
-				<CustomDialog openModal={isCourseCreateModalOpen} closeModal={closeNewCourseModal} title='Create New Course' maxWidth='sm'>
-					<form
-						onSubmit={(e: React.FormEvent<HTMLFormElement>) => {
-							e.preventDefault();
-							createCourse();
-							closeNewCourseModal();
-						}}
-						style={{ display: 'flex', flexDirection: 'column', marginTop: '-1rem' }}>
-						<Tooltip title='Max 50 Characters' placement='top' arrow>
-							<CustomTextField
-								fullWidth={false}
-								label='Title'
-								value={title}
-								onChange={(e) => setTitle(e.target.value)}
-								sx={{ margin: '1rem 2rem' }}
-								InputLabelProps={{
-									sx: { fontSize: '0.8rem' },
-								}}
-								InputProps={{ inputProps: { maxLength: 50 } }}
-							/>
-						</Tooltip>
-
-						<Tooltip title='Max 500 characters' placement='top' arrow>
-							<CustomTextField
-								fullWidth={false}
-								label='Description'
-								value={description}
-								onChange={(e) => setDescription(e.target.value)}
-								sx={{ margin: '1rem 2rem' }}
-								InputLabelProps={{
-									sx: { fontSize: '0.8rem' },
-								}}
-								InputProps={{ inputProps: { maxLength: 500 } }}
-								multiline
-								rows={5}
-								resizable
-							/>
-						</Tooltip>
-
-						{!isInstructor && (
-							<Box sx={{ display: 'flex', alignItems: 'center' }}>
-								<Box sx={{ margin: '1rem 2rem 1rem 2rem', flex: 2 }}>
-									<Box sx={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-										<Typography variant='h6' sx={{ fontSize: '0.9rem', mb: '0.25rem' }}>
-											Prices
-										</Typography>
-										<Tooltip title='Check to make this course free in all currencies.' placement='top' arrow>
-											<FormControlLabel
-												control={
-													<Checkbox
-														checked={checked}
-														onChange={(e) => {
-															setChecked(e.target.checked);
-															setTRY((prevData) => ({ ...prevData!, amount: '' }));
-															setEUR((prevData) => ({ ...prevData!, amount: '' }));
-															setUSD((prevData) => ({ ...prevData!, amount: '' }));
-															setGBP((prevData) => ({ ...prevData!, amount: '' }));
-														}}
-														sx={{
-															'& .MuiSvgIcon-root': {
-																fontSize: '1rem',
-															},
-														}}
-													/>
-												}
-												label='Free Course'
-												sx={{
-													'mr': '0rem',
-													'& .MuiFormControlLabel-label': {
-														fontSize: '0.75rem',
-													},
-												}}
-											/>
-										</Tooltip>
-									</Box>
-
-									<CustomTextField
-										label='GBP'
-										value={checked ? '' : GBP?.amount}
-										onChange={(e) => setGBP((prevData) => ({ ...prevData!, amount: e.target.value }))}
-										type='number'
-										disabled={checked}
-										sx={{ backgroundColor: checked ? 'transparent' : '#fff' }}
-										InputLabelProps={{
-											sx: { fontSize: '0.8rem' },
-										}}
-									/>
-									<CustomTextField
-										label='USD'
-										value={checked ? '' : USD?.amount}
-										onChange={(e) => setUSD((prevData) => ({ ...prevData!, amount: e.target.value }))}
-										type='number'
-										disabled={checked}
-										sx={{ backgroundColor: checked ? 'transparent' : '#fff' }}
-										InputLabelProps={{
-											sx: { fontSize: '0.8rem' },
-										}}
-									/>
-									<CustomTextField
-										label='EUR'
-										value={checked ? '' : EUR?.amount}
-										onChange={(e) => setEUR((prevData) => ({ ...prevData!, amount: e.target.value }))}
-										type='number'
-										disabled={checked}
-										sx={{ backgroundColor: checked ? 'transparent' : '#fff' }}
-										InputLabelProps={{
-											sx: { fontSize: '0.8rem' },
-										}}
-									/>
-									<CustomTextField
-										label='TRY'
-										value={checked ? '' : TRY?.amount}
-										onChange={(e) => setTRY((prevData) => ({ ...prevData!, amount: e.target.value }))}
-										type='number'
-										disabled={checked}
-										sx={{ backgroundColor: checked ? 'transparent' : '#fff' }}
-										InputLabelProps={{
-											sx: { fontSize: '0.8rem' },
-										}}
-									/>
-								</Box>
-							</Box>
-						)}
-
-						<Box sx={{ margin: '0 2rem', display: 'flex', alignItems: 'center' }}>
-							<Tooltip title='This course will be managed outside the platform.' placement='top' arrow>
-								<FormControlLabel
-									control={
-										<Checkbox
-											checked={isExternal}
-											onChange={(e) => {
-												setIsExternal(e.target.checked);
-											}}
-											sx={{
-												'& .MuiSvgIcon-root': {
-													fontSize: '1.25rem',
-												},
-											}}
-										/>
-									}
-									label='External Course'
-									sx={{
-										'& .MuiFormControlLabel-label': {
-											fontSize: '0.85rem',
-										},
-									}}
-								/>
-							</Tooltip>
-						</Box>
-
-						<CustomDialogActions onCancel={closeNewCourseModal} actionSx={{ width: '95%', margin: '0.75rem auto' }} />
-					</form>
-				</CustomDialog>
-
+				<CreateCourseDialog closeNewCourseModal={closeNewCourseModal} isCourseCreateModalOpen={isCourseCreateModalOpen} />
 				<FilterSearchRow
 					filterValue={filterValue}
 					onFilterChange={handleFilterChange}
@@ -556,7 +327,7 @@ const AdminCourses = () => {
 						display: 'flex',
 						flexDirection: 'column',
 						alignItems: 'center',
-						padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : '0rem 1rem 2rem 1rem',
+						padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : '0rem 0rem 2rem 0rem',
 						width: '100%',
 					}}>
 					<Table
@@ -596,15 +367,24 @@ const AdminCourses = () => {
 											{ key: 'startingDate', label: 'Starting Date' },
 											{ key: 'actions', label: 'Actions' },
 										]
-									: [
-											{ key: 'title', label: 'Title' },
-											{ key: 'isActive', label: 'Status' },
-											{ key: 'startingDate', label: 'Starting Date' },
-											{ key: 'durationWeeks', label: 'Weeks #' },
-											{ key: 'createdAt', label: 'Created On' },
-											{ key: 'updatedAt', label: 'Updated On' },
-											{ key: 'actions', label: 'Actions' },
-										]
+									: isInstructor
+										? [
+												{ key: 'isExternal', label: 'Type' },
+												{ key: 'title', label: 'Title' },
+												{ key: 'isActive', label: 'Status' },
+												{ key: 'startingDate', label: 'Starting Date' },
+												{ key: 'updatedAt', label: 'Updated On' },
+												{ key: 'actions', label: 'Actions' },
+											]
+										: [
+												{ key: 'isExternal', label: 'Type' },
+												{ key: 'title', label: 'Title' },
+												{ key: 'isActive', label: 'Status' },
+												{ key: 'instructor.name', label: 'Instructor' },
+												{ key: 'startingDate', label: 'Starting Date' },
+												{ key: 'updatedAt', label: 'Updated On' },
+												{ key: 'actions', label: 'Actions' },
+											]
 							}
 						/>
 						<TableBody>
@@ -612,7 +392,8 @@ const AdminCourses = () => {
 								paginatedCourses?.map((course: SingleCourse, index) => {
 									return (
 										<TableRow key={course._id} hover>
-											<CustomTableCell value={course.title} />
+											{!isVerySmallScreen && <CustomTableCell value={course?.courseManagement?.isExternal ? 'Partner' : 'Platform'} />}
+											<CustomTableCell value={course?.title} />
 											<CustomTableCell
 												value={
 													course.isActive
@@ -624,10 +405,8 @@ const AdminCourses = () => {
 															: 'Unpublished - Open'
 												}
 											/>
-
+											{!isVerySmallScreen && !isInstructor && <CustomTableCell value={course.instructor?.name || 'N/A'} />}
 											<CustomTableCell value={dateFormatter(course.startingDate) || 'N/A'} />
-											{!isVerySmallScreen && <CustomTableCell value={course.durationWeeks || 'N/A'} />}
-											{!isVerySmallScreen && <CustomTableCell value={dateFormatter(course.createdAt)} />}
 											{!isVerySmallScreen && <CustomTableCell value={dateFormatter(course.updatedAt)} />}
 
 											<TableCell

@@ -61,6 +61,12 @@ const QuestionInfoModal = ({ question, onClose }: QuestionInfoModalProps) => {
 								</Typography>
 							)}
 						</Grid>
+						<Grid item xs={3}>
+							<Typography variant='body2'>Cloned:</Typography>
+						</Grid>
+						<Grid item xs={9}>
+							<Typography variant='body2'>{question.clonedFromId ? 'Yes' : 'No'}</Typography>
+						</Grid>
 					</Grid>
 				</Box>
 			</DialogContent>

@@ -28,23 +28,6 @@ import { useFilterSearch } from '../hooks/useFilterSearch';
 import FilterSearchRow from '../components/layouts/FilterSearchRow';
 import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/CustomInfoMessageAlignedLeft';
 
-// Responsive column configuration
-const getColumns = (isVerySmallScreen: boolean) => {
-	return isVerySmallScreen
-		? [
-				{ key: 'name', label: 'Document Name' },
-				{ key: 'documentUrl', label: 'Document URL' },
-				{ key: 'actions', label: 'Actions' },
-			]
-		: [
-				{ key: 'name', label: 'Document Name' },
-				{ key: 'documentUrl', label: 'Document URL' },
-				{ key: 'createdAt', label: 'Created On' },
-				{ key: 'updatedAt', label: 'Updated On' },
-				{ key: 'actions', label: 'Actions' },
-			];
-};
-
 const AdminDocuments = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
@@ -69,6 +52,32 @@ const AdminDocuments = () => {
 
 	const { isSmallScreen, isRotatedMedium, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
+
+	// Responsive column configuration
+	const getColumns = (isVerySmallScreen: boolean) => {
+		return isVerySmallScreen
+			? [
+					{ key: 'name', label: 'Document Name' },
+					{ key: 'documentUrl', label: 'Document URL' },
+					{ key: 'actions', label: 'Actions' },
+				]
+			: isInstructor
+				? [
+						{ key: 'name', label: 'Document Name' },
+						{ key: 'documentUrl', label: 'Document URL' },
+						{ key: 'createdAt', label: 'Created On' },
+						{ key: 'updatedAt', label: 'Updated On' },
+						{ key: 'actions', label: 'Actions' },
+					]
+				: [
+						{ key: 'isOnLandingPage', label: 'On Landing Page' },
+						{ key: 'name', label: 'Document Name' },
+						{ key: 'documentUrl', label: 'Document URL' },
+						{ key: 'createdByName', label: 'Created By' },
+						{ key: 'updatedAt', label: 'Updated On' },
+						{ key: 'actions', label: 'Actions' },
+					];
+	};
 
 	const pageSize = 50;
 
@@ -591,7 +600,7 @@ const AdminDocuments = () => {
 							display: 'flex',
 							flexDirection: 'column',
 							alignItems: 'center',
-							padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : '0rem 1rem 2rem 1rem',
+							padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : '0rem 0rem 2rem 0rem',
 							width: '100%',
 						}}>
 						<Table
@@ -630,6 +639,7 @@ const AdminDocuments = () => {
 									paginatedDocuments?.map((document: Document, index) => {
 										return (
 											<TableRow key={document._id} hover>
+												{!isVerySmallScreen && !isInstructor && <CustomTableCell value={document.isOnLandingPage ? 'Yes' : 'No'} />}
 												<CustomTableCell value={document.name} />
 												<TableCell sx={{ textAlign: 'center' }}>
 													<Link
@@ -637,10 +647,11 @@ const AdminDocuments = () => {
 														target='_blank'
 														rel='noopener noreferrer'
 														sx={{ fontSize: isMobileSize ? '0.6rem' : undefined }}>
-														{isVerySmallScreen ? truncateText(document.documentUrl, 25) : truncateText(document.documentUrl, 40)}
+														{isVerySmallScreen ? truncateText(document.documentUrl, 25) : truncateText(document.documentUrl, 30)}
 													</Link>
 												</TableCell>
-												{!isVerySmallScreen && <CustomTableCell value={dateFormatter(document.createdAt)} />}
+												{!isVerySmallScreen && !isInstructor && <CustomTableCell value={document.createdByName || 'N/A'} />}
+												{!isVerySmallScreen && isInstructor && <CustomTableCell value={dateFormatter(document.createdAt)} />}
 												{!isVerySmallScreen && <CustomTableCell value={dateFormatter(document.updatedAt)} />}
 												<TableCell
 													sx={{
