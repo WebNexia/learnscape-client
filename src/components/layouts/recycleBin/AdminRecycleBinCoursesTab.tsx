@@ -107,7 +107,37 @@ const AdminRecycleBinCoursesTab = () => {
 
 	// Use appropriate page number for pagination
 	const currentPageNumber = isSearchActive ? searchResultsPage : currentPage;
-	const paginatedCourses = displayCourses?.slice((currentPageNumber - 1) * pageSize, currentPageNumber * pageSize) || [];
+
+	// Apply client-side sorting when not in search mode
+	const sortedCourses = [...(displayCourses || [])]?.sort((a, b) => {
+		// Handle nested properties like 'instructor.name'
+		const getNestedValue = (obj: any, path: string) => {
+			return path.split('.').reduce((current, key) => current?.[key], obj) ?? '';
+		};
+
+		let aValue, bValue;
+
+		// Special handling for Auto-Remove On column - sort by calculated deletion date
+		if (orderBy === 'autoRemoveDate') {
+			const getDeletionDate = (archivedAt: string) => {
+				const archivedDate = new Date(archivedAt);
+				return new Date(archivedDate.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days
+			};
+			aValue = getDeletionDate(a.archivedAt || '');
+			bValue = getDeletionDate(b.archivedAt || '');
+		} else {
+			aValue = getNestedValue(a, orderBy as string);
+			bValue = getNestedValue(b, orderBy as string);
+		}
+
+		if (order === 'asc') {
+			return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+		} else {
+			return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
+		}
+	});
+
+	const paginatedCourses = sortedCourses?.slice((currentPageNumber - 1) * pageSize, currentPageNumber * pageSize) || [];
 
 	// Modal states
 	const [isCourseRestoreModalOpen, setIsCourseRestoreModalOpen] = useState<boolean[]>([]);
@@ -180,7 +210,10 @@ const AdminRecycleBinCoursesTab = () => {
 			setArchivedCourses((prev) => prev?.filter((course) => course._id !== courseId) || []);
 			setTotalItems((prev) => prev - 1);
 
-			// Note: Search results will be automatically updated by the hook
+			// Clear search if currently viewing filtered data to show updated context data
+			if (isSearchActive) {
+				resetSearch();
+			}
 
 			setSnackbarMessage('Course restored successfully');
 			setSnackbarSeverity('success');
@@ -201,7 +234,10 @@ const AdminRecycleBinCoursesTab = () => {
 			setArchivedCourses((prev) => prev?.filter((course) => course._id !== courseId) || []);
 			setTotalItems((prev) => prev - 1);
 
-			// Note: Search results will be automatically updated by the hook
+			// Clear search if currently viewing filtered data to show updated context data
+			if (isSearchActive) {
+				resetSearch();
+			}
 
 			setSnackbarMessage('Course permanently deleted');
 			setSnackbarSeverity('success');
@@ -259,7 +295,10 @@ const AdminRecycleBinCoursesTab = () => {
 			setArchivedCourses((prev) => prev?.filter((course) => !selectedItems?.includes(course._id)) || []);
 			setTotalItems((prev) => prev - selectedItems.length);
 
-			// Note: Search results will be automatically updated by the hook
+			// Clear search if currently viewing filtered data to show updated context data
+			if (isSearchActive) {
+				resetSearch();
+			}
 
 			setSelectedItems([]);
 			setSelectAll(false);
@@ -284,7 +323,10 @@ const AdminRecycleBinCoursesTab = () => {
 			setArchivedCourses((prev) => prev?.filter((course) => !selectedItems?.includes(course._id)) || []);
 			setTotalItems((prev) => prev - selectedItems.length);
 
-			// Note: Search results will be automatically updated by the hook
+			// Clear search if currently viewing filtered data to show updated context data
+			if (isSearchActive) {
+				resetSearch();
+			}
 
 			setSelectedItems([]);
 			setSelectAll(false);
@@ -321,137 +363,181 @@ const AdminRecycleBinCoursesTab = () => {
 
 	return (
 		<>
+			{/* Sticky Filter/Search Row */}
 			<Box
 				sx={{
 					display: 'flex',
-					flexDirection: 'row',
 					justifyContent: 'space-between',
-					padding: isMobileSizeSmall ? '1rem 1rem 0.5rem 1rem' : '2rem 2rem 1rem 2rem',
-					width: '100%',
+					alignItems: 'flex-start',
+					padding: isMobileSizeSmall ? '1rem 1rem 0.5rem 1rem' : '2rem 2rem 0rem 2rem',
+					width: 'calc(100% - 10rem)',
+					position: 'fixed',
+					top: isMobileSize ? '7.5rem' : '6.5rem', // Account for header + tabs
+					left: isMobileSize ? 0 : '10rem',
+					right: 0,
+					zIndex: 99,
+					backgroundColor: theme.palette.background.paper,
+					backdropFilter: 'blur(10px)',
 				}}>
-				<Box sx={{ display: 'flex', alignSelf: 'flex-start', width: isVerySmallScreen ? '12.5rem' : 'fit-content' }}>
-					<Box>
-						<FormControl>
-							<Select
-								size='small'
-								value={filterValue}
-								onChange={(e) => handleFilterChange(e.target.value)}
-								displayEmpty
-								sx={{
-									backgroundColor: theme.bgColor?.common,
-									width: isMobileSizeSmall ? '8rem' : '12rem',
-									fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-									textTransform: 'capitalize',
-									mr: '1rem',
-								}}>
-								<MenuItem
-									disabled
-									value='filter'
-									selected
+				<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+					<Box sx={{ display: 'flex', alignSelf: 'flex-start', width: isVerySmallScreen ? '12.5rem' : 'fit-content' }}>
+						<Box>
+							<FormControl>
+								<Select
+									size='small'
+									value={filterValue}
+									onChange={(e) => handleFilterChange(e.target.value)}
+									displayEmpty
 									sx={{
-										fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-										fontStyle: 'italic',
+										backgroundColor: theme.bgColor?.common,
+										width: isMobileSizeSmall ? '8rem' : '12rem',
+										fontSize: isMobileSize ? '0.7rem' : '0.85rem',
 										textTransform: 'capitalize',
-										padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-										minHeight: '2rem',
+										mr: '1rem',
 									}}>
-									Filter Courses
-								</MenuItem>
-								<MenuItem
-									value=''
-									selected
-									sx={{
-										fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-										textTransform: 'capitalize',
-										padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-										minHeight: '2rem',
-									}}>
-									All deleted courses
-								</MenuItem>
-								{[
-									'Recently deleted',
-									'Expired Courses',
-									'Paid Courses',
-									'Free Courses',
-									'Unpriced Courses',
-									'Open Courses',
-									'Closed Courses',
-									'External Courses',
-									'Platform Courses',
-								]?.map((type) => (
 									<MenuItem
-										value={type.toLowerCase()}
-										key={type}
+										disabled
+										value='filter'
+										selected
+										sx={{
+											fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+											fontStyle: 'italic',
+											textTransform: 'capitalize',
+											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+											minHeight: '2rem',
+										}}>
+										Filter Courses
+									</MenuItem>
+									<MenuItem
+										value=''
+										selected
 										sx={{
 											fontSize: isMobileSize ? '0.65rem' : '0.85rem',
 											textTransform: 'capitalize',
 											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
 											minHeight: '2rem',
 										}}>
-										{type}
+										All deleted courses
 									</MenuItem>
-								))}
-							</Select>
-						</FormControl>
-					</Box>
+									{[
+										'Recently deleted',
+										'Expired Courses',
+										'Paid Courses',
+										'Free Courses',
+										'Unpriced Courses',
+										'Open Courses',
+										'Closed Courses',
+										'External Courses',
+										'Platform Courses',
+									]?.map((type) => (
+										<MenuItem
+											value={type.toLowerCase()}
+											key={type}
+											sx={{
+												fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+												textTransform: 'capitalize',
+												padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+												minHeight: '2rem',
+											}}>
+											{type}
+										</MenuItem>
+									))}
+								</Select>
+							</FormControl>
+						</Box>
 
-					<CustomTextField
-						value={searchValue}
-						placeholder={'Search in Title and Description'}
-						onChange={(e) => {
-							setSearchValue(e.target.value);
-						}}
-						sx={{ backgroundColor: '#fff', minWidth: isVerySmallScreen ? '10rem' : '17.5rem' }}
-						required={false}
-						InputProps={{
-							onKeyDown: (e) => {
-								if (e.key === 'Enter') {
-									e.preventDefault();
-									if (searchValue.trim() && !isSearchLoading) {
-										handleSearch();
+						<CustomTextField
+							value={searchValue}
+							placeholder={'Search in Title and Description'}
+							onChange={(e) => {
+								setSearchValue(e.target.value);
+							}}
+							sx={{ backgroundColor: '#fff', minWidth: isVerySmallScreen ? '10rem' : '17.5rem' }}
+							required={false}
+							InputProps={{
+								onKeyDown: (e) => {
+									if (e.key === 'Enter') {
+										e.preventDefault();
+										if (searchValue.trim() && !isSearchLoading) {
+											handleSearch();
+										}
 									}
-								}
-							},
-							endAdornment: (
-								<InputAdornment position='end'>
-									<Search
-										sx={{
-											mr: '-0.5rem',
-										}}
-										fontSize={isMobileSize ? 'small' : 'medium'}
-									/>
-								</InputAdornment>
-							),
-						}}
-					/>
-					<CustomSubmitButton onClick={handleSearch} sx={{ marginLeft: '1rem' }} disabled={!searchValue || !searchValue.trim() || isSearchLoading}>
-						Search
-					</CustomSubmitButton>
-					<CustomDeleteButton onClick={resetAll}>Reset</CustomDeleteButton>
+								},
+								endAdornment: (
+									<InputAdornment position='end'>
+										<Search
+											sx={{
+												mr: '-0.5rem',
+											}}
+											fontSize={isMobileSize ? 'small' : 'medium'}
+										/>
+									</InputAdornment>
+								),
+							}}
+						/>
+						<CustomSubmitButton onClick={handleSearch} sx={{ marginLeft: '1rem' }} disabled={!searchValue || !searchValue.trim() || isSearchLoading}>
+							Search
+						</CustomSubmitButton>
+						<CustomDeleteButton onClick={resetAll}>Reset</CustomDeleteButton>
 
-					<Box sx={{ ml: '1rem', display: 'flex', alignItems: 'center', height: '2rem' }}>
-						{isSearchActive ? (
-							<Typography
-								variant='body2'
-								sx={{
-									color: 'text.secondary',
-									fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-									whiteSpace: 'nowrap',
-								}}>
-								{searchResultsTotalItems} {searchResultsTotalItems === 1 ? 'result' : 'results'}
-							</Typography>
-						) : (
-							<Typography
-								variant='body2'
-								sx={{
-									color: 'text.secondary',
-									fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-									whiteSpace: 'nowrap',
-								}}>
-								{totalItems} {totalItems === 1 ? 'item' : 'items'}
-							</Typography>
-						)}
+						<Box sx={{ ml: '1rem', display: 'flex', alignItems: 'center', height: '2rem' }}>
+							{isSearchActive ? (
+								<Typography
+									variant='body2'
+									sx={{
+										color: 'text.secondary',
+										fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+										whiteSpace: 'nowrap',
+									}}>
+									{searchResultsTotalItems} {searchResultsTotalItems === 1 ? 'result' : 'results'}
+								</Typography>
+							) : (
+								<Typography
+									variant='body2'
+									sx={{
+										color: 'text.secondary',
+										fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+										whiteSpace: 'nowrap',
+									}}>
+									{totalItems} {totalItems === 1 ? 'item' : 'items'}
+								</Typography>
+							)}
+						</Box>
 					</Box>
+
+					{((isSearchActive && searchedValue && searchButtonClicked) || (filterValue && filterValue.trim())) && (
+						<Box
+							sx={{
+								display: 'flex',
+								gap: 1,
+								flexWrap: 'wrap',
+								justifyContent: 'center',
+								padding: '0.5rem 1rem 0.5rem 0rem',
+								borderRadius: '4px',
+								backgroundColor: theme.palette.background.paper,
+							}}>
+							{filterValue && filterValue.trim() && (
+								<Chip
+									label={`Filter: ${filterValue}`}
+									onDelete={resetFilter}
+									color='secondary'
+									variant='outlined'
+									size='small'
+									sx={{ backgroundColor: '#1976d2', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
+								/>
+							)}
+							{searchedValue && searchButtonClicked && (
+								<Chip
+									label={`Search: "${searchedValue}"`}
+									onDelete={resetSearch}
+									variant='outlined'
+									color='secondary'
+									size='small'
+									sx={{ backgroundColor: '#1EC28B', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
+								/>
+							)}
+						</Box>
+					)}
 				</Box>
 				<Box sx={{ display: 'flex', gap: 1, mb: '0.85rem', alignItems: 'center' }}>
 					{selectedItems && selectedItems.length > 0 && (
@@ -469,48 +555,57 @@ const AdminRecycleBinCoursesTab = () => {
 
 			<Box
 				sx={{
+					height: '3.5rem',
+					width: '100%',
+				}}
+			/>
+
+			<Box
+				sx={{
 					display: 'flex',
 					flexDirection: 'column',
 					alignItems: 'center',
-					padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : '0rem 2rem 2rem 2rem',
+					padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : '0rem 0rem 2rem 0rem',
 					width: '100%',
 				}}>
-				{((isSearchActive && searchedValue && searchButtonClicked) || (filterValue && filterValue.trim())) && (
-					<Box
-						sx={{
-							mb: '1rem',
-							display: 'flex',
-							gap: 1,
-							flexWrap: 'wrap',
-							justifyContent: 'center',
-							borderRadius: '4px',
-							alignSelf: 'flex-start',
-							marginBottom: '1rem',
-						}}>
-						{filterValue && filterValue.trim() && (
-							<Chip
-								label={`Filter: ${filterValue}`}
-								onDelete={resetFilter}
-								color='secondary'
-								variant='outlined'
-								size='small'
-								sx={{ backgroundColor: '#1976d2', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
-							/>
-						)}
-						{searchedValue && searchButtonClicked && (
-							<Chip
-								label={`Search: "${searchedValue}"`}
-								onDelete={resetSearch}
-								variant='outlined'
-								color='secondary'
-								size='small'
-								sx={{ backgroundColor: '#1EC28B', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
-							/>
-						)}
-					</Box>
-				)}
+				{/* Spacer for sticky table header */}
+				<Box
+					sx={{
+						height: (isSearchActive && searchedValue && searchButtonClicked) || (filterValue && filterValue.trim()) ? '5.25rem' : '2rem',
+						width: '100%',
+					}}
+				/>
 
-				<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>
+				<Table
+					sx={{
+						'mb': '2rem',
+						'width': '100%',
+						'tableLayout': 'fixed',
+						'& .MuiTableHead-root': {
+							position: 'fixed',
+							top: !((isSearchActive && searchedValue && searchButtonClicked) || (filterValue && filterValue.trim()))
+								? isMobileSize
+									? '11.5rem'
+									: '11rem'
+								: isMobileSize
+									? '14rem'
+									: '14rem', // Account for header + tabs + filter row
+							left: isMobileSize ? 0 : '10rem',
+							right: 0,
+							zIndex: 98,
+							backgroundColor: theme.palette.background.paper,
+							boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+							display: 'table',
+							tableLayout: 'fixed',
+							width: isMobileSize ? '100%' : 'calc(100% - 10rem)',
+						},
+						'& .MuiTableHead-root .MuiTableCell-root': {
+							backgroundColor: theme.palette.background.paper,
+							padding: '0.25rem 1rem',
+						},
+					}}
+					size='small'
+					aria-label='a dense table'>
 					<CustomTableHead<ArchivedCourse>
 						orderBy={orderBy as keyof ArchivedCourse}
 						order={order}
@@ -528,11 +623,11 @@ const AdminRecycleBinCoursesTab = () => {
 								: [
 										{ key: 'checkbox', label: '' },
 										{ key: 'title', label: 'Title' },
-										{ key: 'instructor', label: 'Instructor' },
-										{ key: 'archivedAt', label: 'Deleted On' },
+										{ key: 'instructor.name', label: 'Instructor' },
 										{ key: 'archivedByName', label: 'Deleted By' },
+										{ key: 'archivedAt', label: 'Deleted On' },
 										{
-											key: 'expiresIn',
+											key: 'autoRemoveDate',
 											label: 'Auto-Remove On',
 											infoIcon: (
 												<IconButton
@@ -563,13 +658,13 @@ const AdminRecycleBinCoursesTab = () => {
 
 								return (
 									<TableRow key={course._id} hover selected={isSelected}>
-										<TableCell padding='checkbox'>
+										<TableCell padding='checkbox' sx={{ textAlign: 'center' }}>
 											<input type='checkbox' checked={isSelected} onChange={() => handleSelectItem(course._id)} />
 										</TableCell>
 										<CustomTableCell value={course.title} />
 										{!isVerySmallScreen && <CustomTableCell value={course.instructor?.name || 'N/A'} />}
-										<CustomTableCell value={course.archivedAt ? dateFormatter(course.archivedAt) : 'N/A'} />
 										{!isVerySmallScreen && <CustomTableCell value={course.archivedByName || 'N/A'} />}
+										<CustomTableCell value={course.archivedAt ? dateFormatter(course.archivedAt) : 'N/A'} />
 										{!isVerySmallScreen && <CustomTableCell value={deletionDateStatus.label} />}
 										<TableCell sx={{ textAlign: 'center' }}>
 											<CustomActionBtn title='Restore Course' onClick={() => openRestoreCourseModal(index)} icon={<Restore fontSize='small' />} />

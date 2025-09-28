@@ -107,9 +107,35 @@ const AdminSubscriptionsTab = () => {
 	// Use appropriate page number for pagination
 	const currentPage = isSearchActive ? searchResultsPage : subscriptionsPageNumber;
 
+	// Helper function to get nested values for sorting
+	const getNestedValue = (obj: any, path: string) => {
+		return path.split('.').reduce((current, key) => current?.[key], obj) ?? '';
+	};
+
 	const sortedSubscriptions = [...(displaySubscriptions || [])]?.sort((a, b) => {
-		const aValue = a[orderBy as keyof UserSubscription] ?? '';
-		const bValue = b[orderBy as keyof UserSubscription] ?? '';
+		let aValue: any;
+		let bValue: any;
+
+		// Handle special cases for sorting
+		if (orderBy === 'userId') {
+			// For user sorting, use firstName + lastName combination
+			aValue =
+				typeof a.userId === 'object'
+					? `${a.userId?.firstName || ''} ${a.userId?.lastName || ''}`.trim() || a.userId?.email || a.userId?._id || ''
+					: a.userId || '';
+			bValue =
+				typeof b.userId === 'object'
+					? `${b.userId?.firstName || ''} ${b.userId?.lastName || ''}`.trim() || b.userId?.email || b.userId?._id || ''
+					: b.userId || '';
+		} else if (orderBy.includes('.')) {
+			// Handle nested properties
+			aValue = getNestedValue(a, orderBy);
+			bValue = getNestedValue(b, orderBy);
+		} else {
+			// Handle regular properties
+			aValue = a[orderBy as keyof UserSubscription] ?? '';
+			bValue = b[orderBy as keyof UserSubscription] ?? '';
+		}
 
 		if (order === 'asc') {
 			return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
@@ -276,178 +302,213 @@ const AdminSubscriptionsTab = () => {
 	};
 
 	return (
-		<Box
-			sx={{
-				display: 'flex',
-				flexDirection: 'column',
-				alignItems: 'center',
-				width: '100%',
-			}}>
+		<>
+			{/* Sticky Filter/Search Row */}
 			<Box
 				sx={{
 					display: 'flex',
 					justifyContent: isMobileSize ? 'center' : 'space-between',
-					padding: isMobileSizeSmall ? '1rem 1rem 0.5rem 1rem' : '2rem 2rem 1rem 2rem',
-					width: '100%',
+					padding: isMobileSizeSmall ? '1rem 1rem 0.5rem 1rem' : '2rem 2rem 0rem 2rem',
+					width: 'calc(100% - 10rem)',
+					position: 'fixed',
+					top: isMobileSize ? '7.5rem' : '6.5rem', // Account for header + tabs
+					left: isMobileSize ? 0 : '10rem',
+					right: 0,
+					zIndex: 99,
+					backgroundColor: theme.palette.background.paper,
+					backdropFilter: 'blur(10px)',
 				}}>
-				<Box sx={{ display: 'flex', width: '100%' }}>
-					<Box sx={{ mr: '1rem' }}>
-						<FormControl>
-							<Select
-								size='small'
-								value={filterValue}
-								onChange={(e) => handleFilterChange(e.target.value)}
-								displayEmpty
-								sx={{
-									backgroundColor: theme.bgColor?.common,
-									width: isMobileSizeSmall ? '8rem' : '12rem',
-									fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-									textTransform: 'capitalize',
-								}}>
-								<MenuItem
-									disabled
-									value='filter'
-									selected
+				<Box sx={{ display: 'flex', width: '100%', flexDirection: 'column' }}>
+					<Box sx={{ display: 'flex', width: '100%' }}>
+						<Box sx={{ mr: '1rem' }}>
+							<FormControl>
+								<Select
+									size='small'
+									value={filterValue}
+									onChange={(e) => handleFilterChange(e.target.value)}
+									displayEmpty
 									sx={{
-										fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-										fontStyle: 'italic',
+										backgroundColor: theme.bgColor?.common,
+										width: isMobileSizeSmall ? '8rem' : '12rem',
+										fontSize: isMobileSize ? '0.7rem' : '0.85rem',
 										textTransform: 'capitalize',
-										padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-										minHeight: '2rem',
 									}}>
-									Filter Subscriptions
-								</MenuItem>
-								<MenuItem
-									value=''
-									selected
-									sx={{
-										fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-										textTransform: 'capitalize',
-										padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-										minHeight: '2rem',
-									}}>
-									All Subscriptions
-								</MenuItem>
-								<MenuItem
-									disabled
-									value='types'
-									selected
-									sx={{
-										fontSize: isMobileSize ? '0.6rem' : '0.7rem',
-										textTransform: 'inherit',
-										fontWeight: 'lighter',
-										padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-										minHeight: '2rem',
-									}}>
-									------ Filter by Status ------
-								</MenuItem>
-								{['Active', 'Canceled', 'Past Due', 'Unpaid', 'Incomplete', 'Trialing']?.map((type) => (
 									<MenuItem
-										value={type.toLowerCase()}
-										key={type}
+										disabled
+										value='filter'
+										selected
+										sx={{
+											fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+											fontStyle: 'italic',
+											textTransform: 'capitalize',
+											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+											minHeight: '2rem',
+										}}>
+										Filter Subscriptions
+									</MenuItem>
+									<MenuItem
+										value=''
+										selected
 										sx={{
 											fontSize: isMobileSize ? '0.65rem' : '0.85rem',
 											textTransform: 'capitalize',
 											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
 											minHeight: '2rem',
 										}}>
-										{type}
+										All Subscriptions
 									</MenuItem>
-								))}
-								<MenuItem
-									disabled
-									value='types2'
-									selected
-									sx={{
-										fontSize: isMobileSize ? '0.6rem' : '0.7rem',
-										textTransform: 'inherit',
-										fontWeight: 'lighter',
-										padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-										minHeight: '2rem',
-									}}>
-									------ Filter by Type ------
-								</MenuItem>
-								{['Monthly', 'Yearly']?.map((type) => (
 									<MenuItem
-										value={type.toLowerCase()}
-										key={type}
+										disabled
+										value='types'
+										selected
 										sx={{
-											fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-											textTransform: 'capitalize',
+											fontSize: isMobileSize ? '0.6rem' : '0.7rem',
+											textTransform: 'inherit',
+											fontWeight: 'lighter',
 											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
 											minHeight: '2rem',
 										}}>
-										{type}
+										------ Filter by Status ------
 									</MenuItem>
-								))}
-							</Select>
-						</FormControl>
-					</Box>
-
-					<Box sx={{ display: 'flex', width: '65%' }}>
-						<CustomTextField
-							value={searchValue}
-							placeholder={isVerySmallScreen ? 'Search User' : 'Search in User Email and Name'}
-							onChange={(e) => {
-								setSearchValue(e.target.value);
-							}}
-							sx={{
-								'backgroundColor': '#fff',
-								'& .MuiInputBase-input::placeholder': {
-									fontSize: '0.75rem', // Change this to your desired font size
-								},
-							}}
-							required={false}
-							InputProps={{
-								onKeyDown: (e) => {
-									if (e.key === 'Enter') {
-										e.preventDefault();
-										if (searchValue.trim() && !isSearchLoading) {
-											handleSearch();
-										}
-									}
-								},
-								endAdornment: (
-									<InputAdornment position='end'>
-										<Search
+									{['Active', 'Canceled', 'Past Due', 'Unpaid', 'Incomplete', 'Trialing']?.map((type) => (
+										<MenuItem
+											value={type.toLowerCase()}
+											key={type}
 											sx={{
-												mr: '-0.5rem',
-											}}
-											fontSize={isMobileSize ? 'small' : 'medium'}
-										/>
-									</InputAdornment>
-								),
-							}}
-						/>
-						<CustomSubmitButton
-							sx={{
-								height: isVerySmallScreen ? '1.75rem' : '2rem',
-								marginLeft: '0.5rem',
-								fontSize: isMobileSize ? '0.7rem' : undefined,
-							}}
-							type='button'
-							disabled={!searchValue || isSearchLoading}
-							onClick={handleSearch}>
-							Search
-						</CustomSubmitButton>
-						<CustomDeleteButton
-							sx={{ height: isVerySmallScreen ? '1.75rem' : '2rem', marginLeft: '0.5rem', fontSize: isMobileSize ? '0.7rem' : undefined }}
-							type='button'
-							onClick={resetAll}>
-							Reset
-						</CustomDeleteButton>
-						<Box sx={{ height: '2rem', ml: '1rem', display: 'flex', alignItems: 'center' }}>
-							<Typography
-								variant='body2'
-								sx={{
-									color: 'text.secondary',
-									fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-									whiteSpace: 'nowrap',
-								}}>
-								{isSearchActive ? searchResultsTotalItems : totalItems}{' '}
-								{isSearchActive ? (searchResultsTotalItems === 1 ? 'result' : 'results') : totalItems === 1 ? 'item' : 'items'}
-							</Typography>
+												fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+												textTransform: 'capitalize',
+												padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+												minHeight: '2rem',
+											}}>
+											{type}
+										</MenuItem>
+									))}
+									<MenuItem
+										disabled
+										value='types2'
+										selected
+										sx={{
+											fontSize: isMobileSize ? '0.6rem' : '0.7rem',
+											textTransform: 'inherit',
+											fontWeight: 'lighter',
+											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+											minHeight: '2rem',
+										}}>
+										------ Filter by Type ------
+									</MenuItem>
+									{['Monthly', 'Yearly']?.map((type) => (
+										<MenuItem
+											value={type.toLowerCase()}
+											key={type}
+											sx={{
+												fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+												textTransform: 'capitalize',
+												padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+												minHeight: '2rem',
+											}}>
+											{type}
+										</MenuItem>
+									))}
+								</Select>
+							</FormControl>
 						</Box>
+
+						<Box sx={{ display: 'flex', width: '65%' }}>
+							<CustomTextField
+								value={searchValue}
+								placeholder={isVerySmallScreen ? 'Search User' : 'Search in User Email and Name'}
+								onChange={(e) => {
+									setSearchValue(e.target.value);
+								}}
+								sx={{
+									'backgroundColor': '#fff',
+									'& .MuiInputBase-input::placeholder': {
+										fontSize: '0.75rem', // Change this to your desired font size
+									},
+								}}
+								required={false}
+								InputProps={{
+									onKeyDown: (e) => {
+										if (e.key === 'Enter') {
+											e.preventDefault();
+											if (searchValue.trim() && !isSearchLoading) {
+												handleSearch();
+											}
+										}
+									},
+									endAdornment: (
+										<InputAdornment position='end'>
+											<Search
+												sx={{
+													mr: '-0.5rem',
+												}}
+												fontSize={isMobileSize ? 'small' : 'medium'}
+											/>
+										</InputAdornment>
+									),
+								}}
+							/>
+							<CustomSubmitButton
+								sx={{
+									height: isVerySmallScreen ? '1.75rem' : '2rem',
+									marginLeft: '0.5rem',
+									fontSize: isMobileSize ? '0.7rem' : undefined,
+								}}
+								type='button'
+								disabled={!searchValue || isSearchLoading}
+								onClick={handleSearch}>
+								Search
+							</CustomSubmitButton>
+							<CustomDeleteButton
+								sx={{ height: isVerySmallScreen ? '1.75rem' : '2rem', marginLeft: '0.5rem', fontSize: isMobileSize ? '0.7rem' : undefined }}
+								type='button'
+								onClick={resetAll}>
+								Reset
+							</CustomDeleteButton>
+							<Box sx={{ height: '2rem', ml: '1rem', display: 'flex', alignItems: 'center' }}>
+								<Typography
+									variant='body2'
+									sx={{
+										color: 'text.secondary',
+										fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+										whiteSpace: 'nowrap',
+									}}>
+									{isSearchActive ? searchResultsTotalItems : totalItems}{' '}
+									{isSearchActive ? (searchResultsTotalItems === 1 ? 'result' : 'results') : totalItems === 1 ? 'item' : 'items'}
+								</Typography>
+							</Box>
+						</Box>
+					</Box>
+					<Box
+						sx={{
+							display: 'flex',
+							gap: 1,
+							flexWrap: 'wrap',
+							justifyContent: 'flex-start',
+							padding: '0.5rem 1rem 0.5rem 0rem',
+							borderRadius: '4px',
+							backgroundColor: theme.palette.background.paper,
+						}}>
+						{filterValue && filterValue.trim() && (
+							<Chip
+								label={`Filter: ${filterValue}`}
+								onDelete={resetFilter}
+								color='secondary'
+								variant='outlined'
+								size='small'
+								sx={{ backgroundColor: '#1976d2', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
+							/>
+						)}
+						{searchedValue && searchButtonClicked && (
+							<Chip
+								label={`Search: "${searchedValue}"`}
+								onDelete={resetSearch}
+								variant='outlined'
+								color='secondary'
+								size='small'
+								sx={{ backgroundColor: '#1EC28B', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
+							/>
+						)}
 					</Box>
 				</Box>
 
@@ -471,48 +532,56 @@ const AdminSubscriptionsTab = () => {
 
 			<Box
 				sx={{
+					height: '3.5rem',
+					width: '100%',
+				}}
+			/>
+
+			<Box
+				sx={{
 					display: 'flex',
 					flexDirection: 'column',
 					alignItems: 'center',
-					padding: '0rem 2rem 2rem 2rem',
+					padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : '0rem 0rem 2rem 0rem',
 					width: '100%',
-					mt: '1rem',
 				}}>
-				{/* Chips for active search and filter */}
+				{/* Spacer for sticky table header */}
 				<Box
 					sx={{
-						display: 'flex',
-						gap: 1,
-						flexWrap: 'wrap',
-						justifyContent: 'flex-start',
-						borderRadius: '4px',
-						alignSelf: 'flex-start',
-						marginBottom: '1rem',
-						marginTop: '-1rem',
+						height: (isSearchActive && searchedValue && searchButtonClicked) || (filterValue && filterValue.trim()) ? '4rem' : '2rem',
 						width: '100%',
-					}}>
-					{isSearchActive && filterValue && filterValue.trim() && (
-						<Chip
-							label={`Filter: "${filterValue}"`}
-							onDelete={resetFilter}
-							color='secondary'
-							variant='outlined'
-							size='small'
-							sx={{ backgroundColor: '#1976d2', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
-						/>
-					)}
-					{isSearchActive && searchedValue && searchButtonClicked && (
-						<Chip
-							label={`Search: "${searchedValue}"`}
-							onDelete={resetSearch}
-							color='primary'
-							variant='filled'
-							size='small'
-							sx={{ backgroundColor: '#1EC28B', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
-						/>
-					)}
-				</Box>
-				<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>
+					}}
+				/>
+				<Table
+					sx={{
+						'mb': '2rem',
+						'width': '100%',
+						'tableLayout': 'fixed',
+						'& .MuiTableHead-root': {
+							position: 'fixed',
+							top: !((isSearchActive && searchedValue && searchButtonClicked) || (filterValue && filterValue.trim()))
+								? isMobileSize
+									? '11.5rem'
+									: '12rem'
+								: isMobileSize
+									? '14rem'
+									: '14rem', // Account for header + tabs + filter row
+							left: isMobileSize ? 0 : '10rem',
+							right: 0,
+							zIndex: 98,
+							backgroundColor: theme.palette.background.paper,
+							boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+							display: 'table',
+							tableLayout: 'fixed',
+							width: isMobileSize ? '100%' : 'calc(100% - 10rem)',
+						},
+						'& .MuiTableHead-root .MuiTableCell-root': {
+							backgroundColor: theme.palette.background.paper,
+							padding: '0.25rem 1rem',
+						},
+					}}
+					size='small'
+					aria-label='a dense table'>
 					<CustomTableHead<UserSubscription>
 						orderBy={orderBy as keyof UserSubscription}
 						order={order}
@@ -782,7 +851,7 @@ const AdminSubscriptionsTab = () => {
 					{snackbarMessage}
 				</Alert>
 			</Snackbar>
-		</Box>
+		</>
 	);
 };
 

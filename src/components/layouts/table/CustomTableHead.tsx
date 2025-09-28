@@ -29,7 +29,7 @@ const CustomTableHead = <T,>({ orderBy, order, handleSort, columns, selectAll, o
 				{columns?.map((column, index) => (
 					<TableCell key={index} sx={{ textAlign: 'center', padding: isMobileSizeSmall ? '0.05rem' : 'inherit', width: column.width || 'auto' }}>
 						{column.key === 'checkbox' ? (
-							<Checkbox checked={selectAll} onChange={onSelectAll} color='primary' />
+							<Checkbox checked={selectAll} onChange={onSelectAll} color='primary' size='small' />
 						) : (
 							<TableSortLabel
 								active={orderBy === column.key}

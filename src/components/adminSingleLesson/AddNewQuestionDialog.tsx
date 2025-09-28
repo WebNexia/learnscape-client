@@ -4,35 +4,18 @@ import { QuestionsContext } from '../../contexts/QuestionsContextProvider';
 import { QuestionInterface } from '../../interfaces/question';
 import { Lesson } from '../../interfaces/lessons';
 import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
-import {
-	Box,
-	Checkbox,
-	DialogContent,
-	FormControl,
-	FormControlLabel,
-	InputAdornment,
-	MenuItem,
-	Select,
-	Table,
-	TableBody,
-	TableCell,
-	TableRow,
-	Typography,
-	Chip,
-} from '@mui/material';
+import { Box, Checkbox, DialogContent, FormControlLabel, Table, TableBody, TableCell, TableRow } from '@mui/material';
 import CustomTableHead from '../layouts/table/CustomTableHead';
 import CustomTablePagination from '../layouts/table/CustomTablePagination';
 import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
 import CustomCancelButton from '../forms/customButtons/CustomCancelButton';
 import CustomTableCell from '../layouts/table/CustomTableCell';
+import StickyFilterSearchRow from '../layouts/StickyFilterSearchRow';
 import { stripHtml } from '../../utils/stripHtml';
 import { truncateText } from '../../utils/utilText';
 import { QuestionUpdateTrack } from '../../pages/AdminLessonEditPage';
 import { LessonType, QuestionType } from '../../interfaces/enums';
-import CustomTextField from '../forms/customFields/CustomTextField';
-import { Search } from '@mui/icons-material';
-import CustomSubmitButton from '../forms/customButtons/CustomSubmitButton';
-import CustomDeleteButton from '../forms/customButtons/CustomDeleteButton';
+
 import theme from '../../themes';
 import axios from '@utils/axiosInstance';
 import { OrganisationContext } from '../../contexts/OrganisationContextProvider';
@@ -85,6 +68,11 @@ const AddNewQuestionDialog = ({
 
 	const pageSize = 25;
 
+	const [selectedQuestions, setSelectedQuestions] = useState<QuestionInterface[]>([]);
+	const [selectedQuestionIds, setSelectedQuestionIds] = useState<string[]>([]);
+	const [orderBy, setOrderBy] = useState<keyof QuestionInterface>('questionType');
+	const [order, setOrder] = useState<'asc' | 'desc'>('asc');
+
 	// Helper function to filter questions by lesson type compatibility
 	const filterQuestionsByLessonType = (questions: QuestionInterface[]) => {
 		return questions?.filter((question: QuestionInterface) => {
@@ -115,9 +103,29 @@ const AddNewQuestionDialog = ({
 	};
 
 	// Use search results if active, otherwise use context data (filtered to exclude already added questions)
-	const displayQuestions = isSearchActive
+	const filteredQuestions = isSearchActive
 		? searchResults
 		: questions?.filter((question: QuestionInterface) => !singleLessonBeforeSave.questionIds?.includes(question._id)) || [];
+
+	// Apply client-side sorting
+	const sortedQuestions = [...filteredQuestions].sort((a, b) => {
+		if (!orderBy) return 0;
+
+		let aValue = a[orderBy];
+		let bValue = b[orderBy];
+
+		// Handle different data types
+		if (typeof aValue === 'string' && typeof bValue === 'string') {
+			aValue = aValue.toLowerCase();
+			bValue = bValue.toLowerCase();
+		}
+
+		if (aValue < bValue) return order === 'asc' ? -1 : 1;
+		if (aValue > bValue) return order === 'asc' ? 1 : -1;
+		return 0;
+	});
+
+	const displayQuestions = sortedQuestions;
 
 	// Filter questions by lesson type compatibility
 	const compatibleQuestions = filterQuestionsByLessonType(displayQuestions);
@@ -128,11 +136,6 @@ const AddNewQuestionDialog = ({
 	// Use appropriate page number for pagination
 	const currentPage = isSearchActive ? searchResultsPage : questionsPageNumber;
 	const paginatedQuestions = compatibleQuestions?.slice((currentPage - 1) * pageSize, currentPage * pageSize) || [];
-
-	const [selectedQuestions, setSelectedQuestions] = useState<QuestionInterface[]>([]);
-	const [selectedQuestionIds, setSelectedQuestionIds] = useState<string[]>([]);
-	const [orderBy, setOrderBy] = useState<keyof QuestionInterface>('questionType');
-	const [order, setOrder] = useState<'asc' | 'desc'>('asc');
 
 	useEffect(() => {
 		if (addNewQuestionModalOpen) {
@@ -210,7 +213,7 @@ const AddNewQuestionDialog = ({
 		} else {
 			// Check if we need to fetch more data for context
 			const requiredRecords = newPage * pageSize;
-			if (questions.length < requiredRecords && newPage <= questionsNumberOfPages) {
+			if (questions.length < requiredRecords) {
 				// Calculate which pages we need to fetch
 				const currentLoadedPages = loadedPages && loadedPages.length > 0 ? Math.max(...loadedPages) : 0;
 				const targetPage = Math.ceil((newPage * pageSize) / 200);
@@ -399,298 +402,186 @@ const AddNewQuestionDialog = ({
 	return (
 		<CustomDialog openModal={addNewQuestionModalOpen} closeModal={closeAddNewQuestionModal} title='Add New Question'>
 			<DialogContent>
-				<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', padding: '1rem 2rem 0 2rem' }}>
-					<Box sx={{ display: 'flex', width: '85%' }}>
-						<Box sx={{ mr: '1rem' }}>
-							<FormControl>
-								<Select
-									size='small'
-									value={filterValue}
-									onChange={async (e) => {
-										const newFilterValue = e.target.value;
-										setFilterValue(newFilterValue);
+				<StickyFilterSearchRow
+					filterValue={filterValue}
+					setFilterValue={async (newFilterValue) => {
+						setFilterValue(newFilterValue);
 
-										// Auto-search when filter is selected
-										if (newFilterValue && newFilterValue.trim()) {
-											setQuestionsPageNumber(1);
-											setSearchResultsPage(1);
-											setIsSearchActive(true);
-											setSearchResultsLoadedPages([]);
+						// Auto-search when filter is selected
+						if (newFilterValue && newFilterValue.trim()) {
+							setQuestionsPageNumber(1);
+							setSearchResultsPage(1);
+							setIsSearchActive(true);
+							setSearchResultsLoadedPages([]);
 
-											try {
-												const params = new URLSearchParams({
-													limit: '200',
-													filter: newFilterValue.trim(),
-												});
+							try {
+								const params = new URLSearchParams({
+									limit: '200',
+									filter: newFilterValue.trim(),
+								});
 
-												// Include existing search value if it exists
-												if (searchValue && searchValue.trim()) {
-													params.append('search', searchValue.trim());
-												}
+								// Include existing search value if it exists
+								if (searchValue && searchValue.trim()) {
+									params.append('search', searchValue.trim());
+								}
 
-												if (orderBy) {
-													params.append('sortBy', orderBy);
-												}
-												if (order) {
-													params.append('sortOrder', order);
-												}
+								if (orderBy) {
+									params.append('sortBy', orderBy);
+								}
+								if (order) {
+									params.append('sortOrder', order);
+								}
 
-												const response = await axios.get(`${base_url}/questions/organisation/${orgId}?${params.toString()}`);
+								const response = await axios.get(`${base_url}/questions/organisation/${orgId}?${params.toString()}`);
 
-												// Filter out already added questions from search results
-												const filteredResults =
-													response.data.data?.filter(
-														(question: QuestionInterface) => !singleLessonBeforeSave.questionIds?.includes(question._id)
-													) || [];
+								// Filter out already added questions from search results
+								const filteredResults =
+									response.data.data?.filter((question: QuestionInterface) => !singleLessonBeforeSave.questionIds?.includes(question._id)) || [];
 
-												// Filter by lesson type compatibility
-												const compatibleResults = filterQuestionsByLessonType(filteredResults);
+								// Filter by lesson type compatibility
+								const compatibleResults = filterQuestionsByLessonType(filteredResults);
 
-												setSearchResults(compatibleResults);
-												setSearchResultsTotalItems(compatibleResults.length);
-												setSearchResultsLoadedPages([1]);
-											} catch (error) {
-												console.error('Filter search error:', error);
-											}
-										} else {
-											// If filter is cleared but search value exists, auto-search with search value
-											if (searchValue && searchValue.trim()) {
-												setQuestionsPageNumber(1);
-												setSearchResultsPage(1);
-												setIsSearchActive(true);
-												setSearchResultsLoadedPages([]);
+								setSearchResults(compatibleResults);
+								setSearchResultsTotalItems(compatibleResults.length);
+								setSearchResultsLoadedPages([1]);
+							} catch (error) {
+								console.error('Filter search error:', error);
+							}
+						} else {
+							// If filter is cleared but search value exists, auto-search with search value
+							if (searchValue && searchValue.trim()) {
+								setQuestionsPageNumber(1);
+								setSearchResultsPage(1);
+								setIsSearchActive(true);
+								setSearchResultsLoadedPages([]);
 
-												try {
-													const params = new URLSearchParams({
-														limit: '200',
-														search: searchValue.trim(),
-													});
+								try {
+									const params = new URLSearchParams({
+										limit: '200',
+										search: searchValue.trim(),
+									});
 
-													if (orderBy) {
-														params.append('sortBy', orderBy);
-													}
-													if (order) {
-														params.append('sortOrder', order);
-													}
+									if (orderBy) {
+										params.append('sortBy', orderBy);
+									}
+									if (order) {
+										params.append('sortOrder', order);
+									}
 
-													const response = await axios.get(`${base_url}/questions/organisation/${orgId}?${params.toString()}`);
+									const response = await axios.get(`${base_url}/questions/organisation/${orgId}?${params.toString()}`);
 
-													// Filter out already added questions from search results
-													const filteredResults =
-														response.data.data?.filter(
-															(question: QuestionInterface) => !singleLessonBeforeSave.questionIds?.includes(question._id)
-														) || [];
+									// Filter out already added questions from search results
+									const filteredResults =
+										response.data.data?.filter((question: QuestionInterface) => !singleLessonBeforeSave.questionIds?.includes(question._id)) || [];
 
-													// Filter by lesson type compatibility
-													const compatibleResults = filterQuestionsByLessonType(filteredResults);
+									// Filter by lesson type compatibility
+									const compatibleResults = filterQuestionsByLessonType(filteredResults);
 
-													setSearchResults(compatibleResults);
-													setSearchResultsTotalItems(compatibleResults.length);
-													setSearchResultsLoadedPages([1]);
-												} catch (error) {
-													console.error('Auto-search error:', error);
-												}
-											} else {
-												// If no search value, reset to context data
-												setIsSearchActive(false);
-												setSearchResults([]);
-												setSearchResultsLoadedPages([]);
-												setSearchResultsTotalItems(0);
-											}
-										}
-									}}
-									displayEmpty
-									sx={{
-										backgroundColor: theme.bgColor?.common,
-										width: '12rem',
-										fontSize: '0.85rem',
-										textTransform: 'capitalize',
-									}}>
-									<MenuItem disabled value='filter' selected sx={{ fontSize: '0.85rem', fontStyle: 'italic', textTransform: 'capitalize' }}>
-										Filter Questions
-									</MenuItem>
-									<MenuItem value='' selected sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
-										All Questions
-									</MenuItem>
-									<MenuItem disabled value='types' selected sx={{ fontSize: '0.7rem', textTransform: 'inherit', fontWeight: 'lighter' }}>
-										------ Filter by Type ------
-									</MenuItem>
-									{questionTypes?.map((type) => (
-										<MenuItem value={type.name.toLowerCase()} key={type._id} sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
-											{type.name}
-										</MenuItem>
-									))}
-								</Select>
-							</FormControl>
-						</Box>
-
-						<CustomTextField
-							value={searchValue}
-							placeholder='Search in question text'
-							onChange={(e) => {
-								setSearchValue(e.target.value);
-							}}
-							sx={{ backgroundColor: '#fff' }}
-							required={false}
-							InputProps={{
-								endAdornment: (
-									<InputAdornment position='end'>
-										<Search
-											sx={{
-												mr: '-0.5rem',
-											}}
-										/>
-									</InputAdornment>
-								),
-							}}
-						/>
-						<CustomSubmitButton onClick={handleSearch} sx={{ marginLeft: '1rem' }} disabled={!searchValue}>
-							Search
-						</CustomSubmitButton>
-						<CustomDeleteButton
-							onClick={() => {
-								setSearchValue('');
-								setFilterValue('');
-								setSearchedValue('');
-								setSearchButtonClicked(false);
+									setSearchResults(compatibleResults);
+									setSearchResultsTotalItems(compatibleResults.length);
+									setSearchResultsLoadedPages([1]);
+								} catch (error) {
+									console.error('Auto-search error:', error);
+								}
+							} else {
+								// If no search value, reset to context data
+								setIsSearchActive(false);
 								setSearchResults([]);
 								setSearchResultsLoadedPages([]);
 								setSearchResultsTotalItems(0);
-								setIsSearchActive(false);
-								setQuestionsPageNumber(1);
-								setSearchResultsPage(1);
-							}}>
-							Reset
-						</CustomDeleteButton>
-					</Box>
-					<Box sx={{ display: 'flex', gap: 1, mb: '0.8rem', alignItems: 'center' }}>
-						{isSearchActive ? (
-							<Typography
-								variant='body2'
-								sx={{
-									color: 'text.secondary',
-									fontSize: '0.85rem',
-									ml: 1,
-									whiteSpace: 'nowrap',
-								}}>
-								{searchResultsTotalItems} {searchResultsTotalItems === 1 ? 'result' : 'results'}
-							</Typography>
-						) : (
-							<Typography
-								variant='body2'
-								sx={{
-									color: 'text.secondary',
-									fontSize: '0.85rem',
-									ml: 1,
-									whiteSpace: 'nowrap',
-								}}>
-								{compatibleQuestions.length} {compatibleQuestions.length === 1 ? 'item' : 'items'}
-							</Typography>
-						)}
-					</Box>
-				</Box>
+							}
+						}
+					}}
+					searchValue={searchValue}
+					setSearchValue={setSearchValue}
+					onSearch={handleSearch}
+					onReset={() => {
+						setSearchValue('');
+						setFilterValue('');
+						setSearchedValue('');
+						setSearchButtonClicked(false);
+						setSearchResults([]);
+						setSearchResultsLoadedPages([]);
+						setSearchResultsTotalItems(0);
+						setIsSearchActive(false);
+						setQuestionsPageNumber(1);
+						setSearchResultsPage(1);
+					}}
+					filterOptions={questionTypes?.map((type) => type.name) || []}
+					searchPlaceholder={'Search in question text'}
+					isSearchActive={isSearchActive}
+					searchResultsTotalItems={searchResultsTotalItems}
+					totalItems={compatibleQuestions.length}
+					searchedValue={searchedValue}
+					searchButtonClicked={searchButtonClicked}
+					onResetFilter={() => {
+						setFilterValue('');
+						// Auto-search with existing search value if it exists
+						if (searchValue && searchValue.trim()) {
+							handleSearch();
+						} else {
+							setIsSearchActive(false);
+							setSearchResults([]);
+							setSearchResultsLoadedPages([]);
+							setSearchResultsTotalItems(0);
+						}
+					}}
+					onResetSearch={() => {
+						setSearchedValue('');
+						setSearchButtonClicked(false);
+						setSearchValue('');
+						// Auto-search with existing filter if it exists
+						if (filterValue && filterValue.trim()) {
+							// Trigger filter change
+							setFilterValue(filterValue);
+						} else {
+							setIsSearchActive(false);
+							setSearchResults([]);
+							setSearchResultsLoadedPages([]);
+							setSearchResultsTotalItems(0);
+						}
+					}}
+				/>
 				<Box
 					sx={{
 						display: 'flex',
 						flexDirection: 'column',
 						alignItems: 'center',
-						padding: '1rem 2rem',
 						width: '100%',
 						height: '22.5rem',
+						overflow: 'auto',
 					}}>
-					{/* Chips for active search and filter */}
-					{((isSearchActive && searchedValue && searchButtonClicked) || (isSearchActive && filterValue && filterValue.trim())) && (
-						<Box
-							sx={{
-								display: 'flex',
-								gap: 1,
-								flexWrap: 'wrap',
-								justifyContent: 'center',
-								borderRadius: '4px',
-								alignSelf: 'flex-start',
-								marginBottom: '1rem',
-							}}>
-							{isSearchActive && filterValue && filterValue.trim() && (
-								<Chip
-									label={`Filter: "${filterValue}"`}
-									onDelete={() => {
-										setFilterValue('');
-										// If search value exists, auto-search with search value
-										if (searchValue && searchValue.trim()) {
-											handleSearch();
-										} else {
-											// Clear search results
-											setSearchResults([]);
-											setSearchResultsLoadedPages([]);
-											setSearchResultsTotalItems(0);
-											setIsSearchActive(false);
-											setSearchButtonClicked(false);
-											setSearchedValue('');
-										}
-									}}
-									variant='outlined'
-									color='secondary'
-									size='small'
-									sx={{ backgroundColor: '#1976d2', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
-								/>
-							)}
-							{isSearchActive && searchedValue && searchButtonClicked && (
-								<Chip
-									label={`Search: "${searchedValue}"`}
-									onDelete={() => {
-										setSearchValue('');
-										setSearchedValue('');
-										setSearchButtonClicked(false);
-										// If filter is still active, keep filter results
-										if (filterValue) {
-											// Re-trigger filter search without search value
-											const params = new URLSearchParams({
-												limit: '200',
-												filter: filterValue,
-											});
-											if (orderBy) {
-												params.append('sortBy', orderBy);
-											}
-											if (order) {
-												params.append('sortOrder', order);
-											}
-											axios
-												.get(`${base_url}/questions/organisation/${orgId}?${params.toString()}`)
-												.then((response) => {
-													// Filter out already added questions from search results
-													const filteredResults =
-														response.data.data?.filter(
-															(question: QuestionInterface) => !singleLessonBeforeSave.questionIds?.includes(question._id)
-														) || [];
-													// Filter by lesson type compatibility
-													const compatibleResults = filterQuestionsByLessonType(filteredResults);
-													setSearchResults(compatibleResults);
-													setSearchResultsTotalItems(compatibleResults.length);
-													setSearchResultsLoadedPages([1]);
-													setIsSearchActive(true);
-													setSearchResultsPage(1);
-												})
-												.catch((error) => {
-													console.error('Filter error:', error);
-												});
-										} else {
-											// Clear everything and go back to context data
-											setSearchResults([]);
-											setSearchResultsLoadedPages([]);
-											setSearchResultsTotalItems(0);
-											setIsSearchActive(false);
-											setSearchResultsPage(1);
-										}
-									}}
-									color='primary'
-									variant='filled'
-									size='small'
-									sx={{ backgroundColor: '#1EC28B', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
-								/>
-							)}
-						</Box>
-					)}
-					<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>
+					<Table
+						sx={{
+							'mb': '2rem',
+							'width': '100%',
+							'tableLayout': 'fixed',
+							'minWidth': '100%',
+							'& .MuiTableHead-root': {
+								position: 'sticky',
+								top: '0rem',
+								left: 0,
+								right: 0,
+								zIndex: 98,
+								backgroundColor: theme.bgColor?.secondary,
+								boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+							},
+							'& .MuiTableHead-root .MuiTableCell-root': {
+								backgroundColor: theme.bgColor?.secondary,
+								padding: '0.25rem 1rem',
+								width: '33.33%',
+							},
+							'& .MuiTableBody-root .MuiTableCell-root': {
+								padding: '0.25rem 1rem',
+								width: '33.33%',
+							},
+							'& .MuiTable-root': {
+								width: '100%',
+								minWidth: '100%',
+							},
+						}}
+						size='small'
+						aria-label='a dense table'>
 						<CustomTableHead<QuestionInterface>
 							orderBy={orderBy}
 							order={order}

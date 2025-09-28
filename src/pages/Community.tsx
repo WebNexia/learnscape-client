@@ -153,17 +153,48 @@ const Community = () => {
 	return (
 		<AdminPageErrorBoundary pageName='Community'>
 			<DashboardPagesLayout pageName='Community' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
+				{/* Sticky Title */}
+				<Box
+					sx={{
+						display: 'flex',
+						flexDirection: 'row',
+						justifyContent: 'center',
+						position: 'fixed',
+						top: '4rem', // Account for DashboardHeader height
+						left: isMobileSize ? 0 : '10rem', // Account for sidebar width on desktop
+						right: 0,
+						zIndex: 100, // Higher z-index to ensure it's above all content
+						backgroundColor: theme.palette.background.paper,
+						backdropFilter: 'blur(10px)',
+						width: isMobileSize ? '100%' : 'calc(100% - 10rem)',
+						padding: isMobileSize ? '0.5rem 1rem' : '0.5rem 2rem',
+					}}>
+					<Typography variant={isMobileSize ? 'h6' : 'h5'} sx={{ textAlign: 'center', fontWeight: 500 }}>
+						Join the Conversation!
+						<Tooltip title='Introduction to the Community' arrow placement='top'>
+							<IconButton onClick={() => setCommunityIntroModalOpen(true)} sx={{ ':hover': { backgroundColor: 'transparent' } }}>
+								<Info />
+							</IconButton>
+						</Tooltip>
+					</Typography>
+				</Box>
+
+				{/* Spacer to push content down when sticky */}
+				<Box
+					sx={{
+						height:
+							(isSearchActive && searchedValue && searchButtonClicked) || (filterValue && filterValue.trim())
+								? isMobileSize
+									? '10.5rem'
+									: '8rem'
+								: isMobileSize
+									? '9rem'
+									: '6.5rem', // Account for title height
+						width: '100%',
+					}}
+				/>
+
 				<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: isMobileSize ? '1.1rem' : '2rem', width: '100%' }}>
-					<Box>
-						<Typography variant={isMobileSize ? 'h6' : 'h5'} sx={{ textAlign: 'center', mb: isMobileSize ? '0.5rem' : '1rem', fontWeight: 500 }}>
-							Join the Conversation!
-							<Tooltip title='Introduction to the Community' arrow placement='top'>
-								<IconButton onClick={() => setCommunityIntroModalOpen(true)} sx={{ ':hover': { backgroundColor: 'transparent' } }}>
-									<Info />
-								</IconButton>
-							</Tooltip>
-						</Typography>
-					</Box>
 					<CustomDialog
 						openModal={communityIntroModalOpen}
 						closeModal={() => setCommunityIntroModalOpen(false)}
@@ -190,238 +221,247 @@ const Community = () => {
 						</CustomCancelButton>
 					</CustomDialog>
 					<Box sx={{ display: 'flex', flexDirection: 'column', width: '97%' }}>
+						{/* Sticky Filter/Search Row */}
 						<Box
 							sx={{
 								display: 'flex',
-								justifyContent: 'space-between',
-								alignItems: isSearchActive ? 'flex-start' : 'center',
-								width: '100%',
-								mb: '1rem',
+								flexDirection: 'column',
+								alignItems: 'center',
+								justifyContent: isMobileSize ? 'center' : 'space-between',
+								padding: isMobileSizeSmall ? '1rem 1rem 0.5rem 1rem' : '1rem 2rem 0rem 2rem',
+								width: isMobileSize ? '100%' : 'calc(100% - 10rem)',
+								position: 'fixed',
+								top: isMobileSize ? '7.5rem' : '6.5rem', // Account for header + title
+								left: isMobileSize ? 0 : '10rem',
+								right: 0,
+								zIndex: 99, // Below title but above content
+								backgroundColor: theme.palette.background.paper,
+								backdropFilter: 'blur(10px)',
 							}}>
-							<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', width: '100%', flex: 4, alignItems: 'center' }}>
-								<Box sx={{ display: 'flex', alignSelf: 'flex-start', width: isVerySmallScreen ? '12.5rem' : 'fit-content' }}>
-									<Box sx={{ mr: '1rem' }}>
-										<FormControl>
-											<Select
-												size='small'
-												value={filterValue}
-												onChange={(e) => handleFilterChange(e.target.value)}
-												displayEmpty
-												sx={{
-													backgroundColor: theme.bgColor?.common,
-													width: isMobileSizeSmall ? '7rem' : '11rem',
-													fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-													textTransform: 'capitalize',
-												}}>
-												<MenuItem
-													disabled
-													value='filter'
-													selected
+							<Box sx={{ display: 'flex', width: '100%', flexDirection: 'column' }}>
+								<Box sx={{ display: 'flex', width: '100%', alignItems: 'flex-start' }}>
+									<Box sx={{ display: 'flex', alignItems: 'flex-start', width: isVerySmallScreen ? '12.5rem' : 'fit-content' }}>
+										<Box sx={{ mr: '1rem' }}>
+											<FormControl>
+												<Select
+													size='small'
+													value={filterValue}
+													onChange={(e) => handleFilterChange(e.target.value)}
+													displayEmpty
 													sx={{
-														fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-														fontStyle: 'italic',
+														backgroundColor: theme.bgColor?.common,
+														width: isMobileSizeSmall ? '7rem' : '11rem',
+														fontSize: isMobileSize ? '0.7rem' : '0.85rem',
 														textTransform: 'capitalize',
-														padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-														minHeight: '2rem',
 													}}>
-													Filter Topics
-												</MenuItem>
-												<MenuItem
-													value=''
-													selected
-													sx={{
-														fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-														textTransform: 'capitalize',
-														padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-														minHeight: '2rem',
-													}}>
-													All Topics
-												</MenuItem>
-												{getFilterOptions()?.map((option) => (
 													<MenuItem
-														value={option.toLowerCase()}
-														key={option}
+														disabled
+														value='filter'
+														selected
+														sx={{
+															fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+															fontStyle: 'italic',
+															textTransform: 'capitalize',
+															padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+															minHeight: '2rem',
+														}}>
+														Filter Topics
+													</MenuItem>
+													<MenuItem
+														value=''
+														selected
 														sx={{
 															fontSize: isMobileSize ? '0.65rem' : '0.85rem',
 															textTransform: 'capitalize',
 															padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
 															minHeight: '2rem',
 														}}>
-														{option}
+														All Topics
 													</MenuItem>
-												))}
-											</Select>
-										</FormControl>
-									</Box>
-									<CustomTextField
-										value={searchValue}
-										placeholder={'Search in title, topic message'}
-										onChange={(e) => {
-											setSearchValue(e.target.value);
-										}}
-										sx={{ backgroundColor: '#fff', minWidth: isVerySmallScreen ? '10rem' : '17.5rem' }}
-										required={false}
-										InputProps={{
-											onKeyDown: (e) => {
-												if (e.key === 'Enter') {
-													e.preventDefault();
-													if (searchValue.trim() && !isSearchLoading) {
-														handleSearch();
-													}
-												}
-											},
-											endAdornment: (
-												<InputAdornment position='end'>
-													<Search
-														sx={{
-															mr: '-0.5rem',
-														}}
-														fontSize={isMobileSize ? 'small' : 'medium'}
-													/>
-												</InputAdornment>
-											),
-										}}
-									/>
-									<CustomSubmitButton onClick={handleSearch} sx={{ marginLeft: '1rem' }} disabled={!searchValue || isSearchLoading}>
-										Search
-									</CustomSubmitButton>
-									<CustomDeleteButton onClick={resetAll}>Reset</CustomDeleteButton>
-								</Box>
-								{/* Chips for active search and filter */}
-								{((isSearchActive && searchedValue && searchButtonClicked) || (isSearchActive && filterValue && filterValue.trim())) && (
-									<Box
-										sx={{
-											display: 'flex',
-											gap: 1,
-											flexWrap: 'wrap',
-											justifyContent: 'flex-start',
-											borderRadius: '4px',
-											alignSelf: 'flex-start',
-											marginBottom: '1rem',
-										}}>
-										{isSearchActive && filterValue && filterValue.trim() && (
-											<Chip
-												label={`Filter: "${filterValue}"`}
-												onDelete={resetFilter}
-												variant='outlined'
-												color='secondary'
-												size='small'
-												sx={{ backgroundColor: '#1976d2', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
-											/>
-										)}
-										{isSearchActive && searchedValue && searchButtonClicked && (
-											<Chip
-												label={`Search: "${searchedValue}"`}
-												onDelete={resetSearch}
-												color='primary'
-												variant='filled'
-												size='small'
-												sx={{ backgroundColor: '#1EC28B', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
-											/>
-										)}
-									</Box>
-								)}
-							</Box>
-							<Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-start', width: '100%', mb: '0.85rem' }}>
-								<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: 'auto' }}>
-									<CustomSubmitButton
-										size='small'
-										onClick={() => {
-											if (user?.hasRegisteredCourse || user?.isSubscribed || user?.role === 'admin') {
-												setCreateTopicModalOpen(true);
-											} else {
-												setMessageNonRegisteredModalOpen(true);
-											}
-										}}
-										sx={{ fontSize: isMobileSize ? '0.7rem' : undefined, padding: isMobileSize ? '0.1rem 0.35rem' : undefined }}>
-										Create Topic
-									</CustomSubmitButton>
-								</Box>
-								<CreateTopicDialog
-									setCreateTopicModalOpen={setCreateTopicModalOpen}
-									createTopicModalOpen={createTopicModalOpen}
-									topic={newTopic}
-									setTopic={setNewTopic}
-								/>
-								<CustomDialog openModal={messageNonRegisteredModalOpen} closeModal={() => setMessageNonRegisteredModalOpen(false)} maxWidth='xs'>
-									<DialogContent>
-										<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-											<Typography
-												variant='body2'
-												sx={{ fontSize: isMobileSize ? '0.85rem' : undefined, color: theme.textColor?.error.main, mt: '1rem' }}>
-												You need to enroll in a paid course or subscribe to create a topic.
-											</Typography>
+													{getFilterOptions()?.map((option) => (
+														<MenuItem
+															value={option.toLowerCase()}
+															key={option}
+															sx={{
+																fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+																textTransform: 'capitalize',
+																padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+																minHeight: '2rem',
+															}}>
+															{option}
+														</MenuItem>
+													))}
+												</Select>
+											</FormControl>
 										</Box>
-									</DialogContent>
-									<CustomCancelButton
-										sx={{
-											alignSelf: 'end',
-											width: isMobileSize ? '20%' : '10%',
-											margin: isMobileSize ? '0 1rem 1rem 0' : '0 1rem 1rem 0',
-											padding: 0,
-										}}
-										onClick={() => setMessageNonRegisteredModalOpen(false)}>
-										Close
-									</CustomCancelButton>
-								</CustomDialog>
+										<CustomTextField
+											value={searchValue}
+											placeholder={'Search in title, topic message'}
+											onChange={(e) => {
+												setSearchValue(e.target.value);
+											}}
+											sx={{ backgroundColor: '#fff', minWidth: isVerySmallScreen ? '10rem' : '17.5rem' }}
+											required={false}
+											InputProps={{
+												onKeyDown: (e) => {
+													if (e.key === 'Enter') {
+														e.preventDefault();
+														if (searchValue.trim() && !isSearchLoading) {
+															handleSearch();
+														}
+													}
+												},
+												endAdornment: (
+													<InputAdornment position='end'>
+														<Search
+															sx={{
+																mr: '-0.5rem',
+															}}
+															fontSize={isMobileSize ? 'small' : 'medium'}
+														/>
+													</InputAdornment>
+												),
+											}}
+										/>
+										<CustomSubmitButton onClick={handleSearch} sx={{ marginLeft: '1rem' }} disabled={!searchValue || isSearchLoading}>
+											Search
+										</CustomSubmitButton>
+										<CustomDeleteButton onClick={resetAll}>Reset</CustomDeleteButton>
+									</Box>
+									<Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', width: '100%' }}>
+										<CustomSubmitButton
+											size='small'
+											onClick={() => {
+												if (user?.hasRegisteredCourse || user?.isSubscribed || user?.role === 'admin') {
+													setCreateTopicModalOpen(true);
+												} else {
+													setMessageNonRegisteredModalOpen(true);
+												}
+											}}
+											sx={{ fontSize: isMobileSize ? '0.7rem' : undefined, padding: isMobileSize ? '0.1rem 0.35rem' : undefined }}>
+											Create Topic
+										</CustomSubmitButton>
+									</Box>
+								</Box>
+								<Box
+									sx={{
+										display: 'flex',
+										gap: 1,
+										flexWrap: 'wrap',
+										justifyContent: 'flex-start',
+										padding: '0.5rem 1rem 0.5rem 0rem',
+										borderRadius: '4px',
+										backgroundColor: theme.palette.background.paper,
+									}}>
+									{isSearchActive && filterValue && filterValue.trim() && (
+										<Chip
+											label={`Filter: "${filterValue}"`}
+											onDelete={resetFilter}
+											variant='outlined'
+											color='secondary'
+											size='small'
+											sx={{ backgroundColor: '#1976d2', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
+										/>
+									)}
+									{isSearchActive && searchedValue && searchButtonClicked && (
+										<Chip
+											label={`Search: "${searchedValue}"`}
+											onDelete={resetSearch}
+											color='primary'
+											variant='filled'
+											size='small'
+											sx={{ backgroundColor: '#1EC28B', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
+										/>
+									)}
+								</Box>
 							</Box>
 						</Box>
+
+						<Box sx={{ display: 'flex', flexDirection: 'column', width: '97%' }}>
+							<CreateTopicDialog
+								setCreateTopicModalOpen={setCreateTopicModalOpen}
+								createTopicModalOpen={createTopicModalOpen}
+								topic={newTopic}
+								setTopic={setNewTopic}
+							/>
+							<CustomDialog openModal={messageNonRegisteredModalOpen} closeModal={() => setMessageNonRegisteredModalOpen(false)} maxWidth='xs'>
+								<DialogContent>
+									<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+										<Typography
+											variant='body2'
+											sx={{ fontSize: isMobileSize ? '0.85rem' : undefined, color: theme.textColor?.error.main, mt: '1rem' }}>
+											You need to enroll in a paid course or subscribe to create a topic.
+										</Typography>
+									</Box>
+								</DialogContent>
+								<CustomCancelButton
+									sx={{
+										alignSelf: 'end',
+										width: isMobileSize ? '20%' : '10%',
+										margin: isMobileSize ? '0 1rem 1rem 0' : '0 1rem 1rem 0',
+										padding: 0,
+									}}
+									onClick={() => setMessageNonRegisteredModalOpen(false)}>
+									Close
+								</CustomCancelButton>
+							</CustomDialog>
+						</Box>
+					</Box>
+					<Box
+						sx={{
+							display: 'flex',
+							flexDirection: 'column',
+							width: '100%',
+							height: 'fit-content',
+							border: 'solid lightgray 0.02rem',
+							borderRadius: '0.35rem',
+							boxShadow: '0 0.1rem 0.4rem 0.1rem rgba(0,0,0,0.2)',
+						}}>
 						<Box
 							sx={{
 								display: 'flex',
-								flexDirection: 'column',
-								width: '100%',
-								height: 'fit-content',
-								border: 'solid lightgray 0.02rem',
-								borderRadius: '0.35rem',
-								boxShadow: '0 0.1rem 0.4rem 0.1rem rgba(0,0,0,0.2)',
+								justifyContent: 'space-between',
+								alignItems: 'center',
+								height: '3rem',
+								borderBottom: 'solid lightgray 0.1rem',
+								padding: '0.75rem',
 							}}>
-							<Box
-								sx={{
-									display: 'flex',
-									justifyContent: 'space-between',
-									alignItems: 'center',
-									height: '3rem',
-									borderBottom: 'solid lightgray 0.1rem',
-									padding: '0.75rem',
-								}}>
-								<Box sx={{ display: 'flex', alignItems: 'center' }}>
-									<Typography variant='h5' sx={{ fontSize: isMobileSize ? '0.85rem' : undefined }}>
-										Topics
-									</Typography>
-									<Tooltip title='Read the Community Rules' arrow placement='top'>
-										<IconButton onClick={() => setRulesModalOpen(true)} sx={{ ':hover': { backgroundColor: 'transparent' } }}>
-											<PriorityHigh sx={{ mr: '0.25rem' }} color='warning' fontSize={isMobileSize ? 'small' : 'medium'} />
-										</IconButton>
-									</Tooltip>
-								</Box>
-								<Box sx={{ ml: '1rem', display: 'flex', alignItems: 'center', height: '2rem' }}>
-									<Typography
-										variant='body2'
-										sx={{
-											color: 'text.secondary',
-											fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-											whiteSpace: 'nowrap',
-										}}>
-										{isSearchActive ? searchResultsTotalItems : totalItems}{' '}
-										{isSearchActive ? (searchResultsTotalItems === 1 ? 'Result' : 'Results') : totalItems === 1 ? 'Topic' : 'Topics'}
-									</Typography>
-								</Box>
-								<Box>
-									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-										Last Message
-									</Typography>
-								</Box>
+							<Box sx={{ display: 'flex', alignItems: 'center' }}>
+								<Typography variant='h5' sx={{ fontSize: isMobileSize ? '0.85rem' : undefined }}>
+									Topics
+								</Typography>
+								<Tooltip title='Read the Community Rules' arrow placement='top'>
+									<IconButton onClick={() => setRulesModalOpen(true)} sx={{ ':hover': { backgroundColor: 'transparent' } }}>
+										<PriorityHigh sx={{ mr: '0.25rem' }} color='warning' fontSize={isMobileSize ? 'small' : 'medium'} />
+									</IconButton>
+								</Tooltip>
+							</Box>
+							<Box sx={{ ml: '1rem', display: 'flex', alignItems: 'center', height: '2rem' }}>
+								<Typography
+									variant='body2'
+									sx={{
+										color: 'text.secondary',
+										fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+										whiteSpace: 'nowrap',
+									}}>
+									{isSearchActive ? searchResultsTotalItems : totalItems}{' '}
+									{isSearchActive ? (searchResultsTotalItems === 1 ? 'Result' : 'Results') : totalItems === 1 ? 'Topic' : 'Topics'}
+								</Typography>
 							</Box>
 							<Box>
-								{paginatedTopics?.map((topic: CommunityTopic) => (
-									<Topic key={topic._id} topic={topic} />
-								))}
+								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+									Last Message
+								</Typography>
 							</Box>
 						</Box>
-						<Box sx={{ display: 'flex', justifyContent: 'center', margin: isMobileSize ? '0.75rem' : '1.5rem', width: '95%' }}>
-							<CustomTablePagination count={topicsNumberOfPages} page={currentPage} onChange={handlePageChange} />
+						<Box>
+							{paginatedTopics?.map((topic: CommunityTopic) => (
+								<Topic key={topic._id} topic={topic} />
+							))}
 						</Box>
+					</Box>
+					<Box sx={{ display: 'flex', justifyContent: 'center', margin: isMobileSize ? '0.75rem' : '1.5rem', width: '95%' }}>
+						<CustomTablePagination count={topicsNumberOfPages} page={currentPage} onChange={handlePageChange} />
 					</Box>
 				</Box>
 				<CustomDialog openModal={rulesModalOpen} closeModal={() => setRulesModalOpen(false)} title='Community Guidelines'>

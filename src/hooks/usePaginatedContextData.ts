@@ -176,8 +176,23 @@ export function usePaginatedEntity<T extends { _id: string; updatedAt: string; i
 		);
 	};
 
+	// Get all accumulated data from all loaded pages
+	const getAllAccumulatedData = useCallback(() => {
+		if (!orgId || !loadedPages || loadedPages.length === 0) return data || [];
+
+		let allData: T[] = [];
+		for (const page of loadedPages) {
+			const pageData = queryClient.getQueryData<T[]>([entityKey, orgId, page]) || [];
+			allData = [...allData, ...pageData];
+		}
+
+		// Remove duplicates and sort by updatedAt
+		const unique = allData?.filter((item, index, self) => index === self?.findIndex?.((i) => i._id === item._id)) || [];
+		return unique?.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)) || [];
+	}, [orgId, loadedPages, queryClient, entityKey, data]);
+
 	return {
-		data: data || [],
+		data: getAllAccumulatedData(),
 		isLoading,
 		isError,
 		fetchEntities,
