@@ -155,6 +155,11 @@ const AllPublicCoursesContextProvider = (props: AllPublicCoursesContextProviderP
 			return;
 		}
 
+		// If the search term is the same as the current searched value, don't trigger search again
+		if (termToSearch.trim() === searchedValue) {
+			return;
+		}
+
 		setIsSearching(true);
 		setSearchedValue(termToSearch.trim()); // Store the searched value
 

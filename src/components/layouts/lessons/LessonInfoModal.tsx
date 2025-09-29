@@ -4,6 +4,7 @@ import { dateTimeFormatter } from '../../../utils/dateFormatter';
 import CustomCancelButton from '../../forms/customButtons/CustomCancelButton';
 import { useResourceUsage } from '../../../hooks/useResourceUsage';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../hooks/useAuth';
 
 interface LessonInfoModalProps {
 	lesson: Lesson;
@@ -14,7 +15,7 @@ const LessonInfoModal = ({ lesson, onClose }: LessonInfoModalProps) => {
 	const { usageInfo } = useResourceUsage(lesson);
 
 	const navigate = useNavigate();
-
+	const { isInstructor } = useAuth();
 	const handleCourseSelect = (courseId: string) => {
 		window.open(`/admin/course-edit/course/${courseId}`, '_blank');
 	};
@@ -52,7 +53,11 @@ const LessonInfoModal = ({ lesson, onClose }: LessonInfoModalProps) => {
 								<Typography
 									variant='body2'
 									onClick={() => {
-										navigate(`/admin/lesson-edit/lesson/${lesson.clonedFromId}`);
+										if (isInstructor) {
+											navigate(`/instructor/lesson-edit/lesson/${lesson.clonedFromId}`);
+										} else {
+											navigate(`/admin/lesson-edit/lesson/${lesson.clonedFromId}`);
+										}
 										onClose();
 									}}
 									sx={{

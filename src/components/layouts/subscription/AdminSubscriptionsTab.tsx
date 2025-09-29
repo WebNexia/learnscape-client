@@ -37,6 +37,7 @@ import CustomDialogActions from '../dialog/CustomDialogActions';
 import DownloadIcon from '@mui/icons-material/Download';
 import CustomCancelButton from '../../../components/forms/customButtons/CustomCancelButton';
 import { useFilterSearch } from '../../../hooks/useFilterSearch';
+import CustomInfoMessageAlignedLeft from '../infoMessage/CustomInfoMessageAlignedLeft';
 
 const AdminSubscriptionsTab = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -53,9 +54,9 @@ const AdminSubscriptionsTab = () => {
 		updateSubscription,
 	} = useContext(SubscriptionsContext);
 
-	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
+	const { isSmallScreen, isRotatedMedium, isRotated } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
-	const isMobileSizeSmall = isVerySmallScreen || isRotated;
+	const isMobileSizeSmall = isMobileSize || isRotated;
 
 	// Dialog states
 	const [isViewDialogOpen, setIsViewDialogOpen] = useState<boolean[]>([]);
@@ -308,7 +309,7 @@ const AdminSubscriptionsTab = () => {
 					display: 'flex',
 					justifyContent: isMobileSize ? 'center' : 'space-between',
 					padding: isMobileSizeSmall ? '1rem 1rem 0.5rem 1rem' : '2rem 2rem 0rem 2rem',
-					width: 'calc(100% - 10rem)',
+					width: isMobileSize ? '100%' : 'calc(100% - 10rem)',
 					position: 'fixed',
 					top: isMobileSize ? '7.5rem' : '6.5rem', // Account for header + tabs
 					left: isMobileSize ? 0 : '10rem',
@@ -415,7 +416,7 @@ const AdminSubscriptionsTab = () => {
 						<Box sx={{ display: 'flex', width: '65%' }}>
 							<CustomTextField
 								value={searchValue}
-								placeholder={isVerySmallScreen ? 'Search User' : 'Search in User Email and Name'}
+								placeholder={isMobileSize ? 'Search User' : 'Search in User Email and Name'}
 								onChange={(e) => {
 									setSearchValue(e.target.value);
 								}}
@@ -449,7 +450,7 @@ const AdminSubscriptionsTab = () => {
 							/>
 							<CustomSubmitButton
 								sx={{
-									height: isVerySmallScreen ? '1.75rem' : '2rem',
+									height: isMobileSize ? '1.75rem' : '2rem',
 									marginLeft: '0.5rem',
 									fontSize: isMobileSize ? '0.7rem' : undefined,
 								}}
@@ -459,7 +460,7 @@ const AdminSubscriptionsTab = () => {
 								Search
 							</CustomSubmitButton>
 							<CustomDeleteButton
-								sx={{ height: isVerySmallScreen ? '1.75rem' : '2rem', marginLeft: '0.5rem', fontSize: isMobileSize ? '0.7rem' : undefined }}
+								sx={{ height: isMobileSize ? '1.75rem' : '2rem', marginLeft: '0.5rem', fontSize: isMobileSize ? '0.7rem' : undefined }}
 								type='button'
 								onClick={resetAll}>
 								Reset
@@ -515,8 +516,8 @@ const AdminSubscriptionsTab = () => {
 					sx={{
 						display: 'flex',
 						justifyContent: 'flex-end',
-						width: isVerySmallScreen ? '5%' : isMobileSize ? '20%' : '35%',
-						height: isVerySmallScreen ? '1.75rem' : '2rem',
+						width: isMobileSize ? '5%' : isMobileSize ? '20%' : '35%',
+						height: isMobileSize ? '1.75rem' : '2rem',
 						fontSize: isMobileSize ? '0.65rem' : '0.85rem',
 						alignItems: 'center',
 					}}>
@@ -541,7 +542,7 @@ const AdminSubscriptionsTab = () => {
 					display: 'flex',
 					flexDirection: 'column',
 					alignItems: 'center',
-					padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : '0rem 0rem 2rem 0rem',
+					padding: isMobileSize ? '0rem 0rem 2rem 0rem' : '0rem 0rem 2rem 0rem',
 					width: '100%',
 				}}>
 				{/* Spacer for sticky table header */}
@@ -560,7 +561,7 @@ const AdminSubscriptionsTab = () => {
 							position: 'fixed',
 							top: !((isSearchActive && searchedValue && searchButtonClicked) || (filterValue && filterValue.trim()))
 								? isMobileSize
-									? '11.5rem'
+									? '12.5rem'
 									: '12rem'
 								: isMobileSize
 									? '14rem'
@@ -586,13 +587,12 @@ const AdminSubscriptionsTab = () => {
 						order={order}
 						handleSort={handleSort}
 						columns={
-							isVerySmallScreen
+							isMobileSize
 								? [
 										{ key: 'userId', label: 'User' },
 										{ key: 'subscriptionType', label: 'Type' },
-										{ key: 'currentAmount', label: 'Amount' },
 										{ key: 'status', label: 'Status' },
-										{ key: 'createdAt', label: 'Created' },
+										{ key: 'actions', label: 'Actions' },
 									]
 								: [
 										{ key: 'userId', label: 'User' },
@@ -613,9 +613,9 @@ const AdminSubscriptionsTab = () => {
 									<TableRow key={subscription._id} hover>
 										<CustomTableCell
 											value={
-												isVerySmallScreen
+												isMobileSize
 													? typeof subscription.userId === 'object'
-														? subscription.userId?.email || subscription.userId?._id || 'N/A'
+														? subscription.userId?.username || subscription.userId?._id || 'N/A'
 														: subscription.userId || 'N/A'
 													: typeof subscription.userId === 'object'
 														? `${subscription.userId?.firstName || ''} ${subscription.userId?.lastName || ''}`.trim() ||
@@ -626,13 +626,13 @@ const AdminSubscriptionsTab = () => {
 											}
 										/>
 										<CustomTableCell value={subscription.subscriptionType.charAt(0).toUpperCase() + subscription.subscriptionType.slice(1)} />
-										<CustomTableCell value={`${setCurrencySymbol(subscription.currentCurrency)}${subscription.currentAmount}`} />
-										{!isVerySmallScreen && <CustomTableCell value={subscription.currentCurrency.toUpperCase()} />}
+										{!isMobileSize && <CustomTableCell value={`${setCurrencySymbol(subscription.currentCurrency)}${subscription.currentAmount}`} />}
+										{!isMobileSize && <CustomTableCell value={subscription.currentCurrency.toUpperCase()} />}
 										<CustomTableCell value={subscription.status.charAt(0).toUpperCase() + subscription.status.slice(1)} />
-										{!isVerySmallScreen && <CustomTableCell value={dateFormatter(subscription.currentPeriodEnd)} />}
+										{!isMobileSize && <CustomTableCell value={dateFormatter(subscription.currentPeriodEnd)} />}
 										<CustomTableCell value={dateFormatter(subscription.createdAt)} />
 
-										{!isVerySmallScreen && (
+										{!isMobileSize && (
 											<TableCell
 												sx={{
 													textAlign: 'center',
@@ -664,6 +664,8 @@ const AdminSubscriptionsTab = () => {
 							})}
 					</TableBody>
 				</Table>
+				{isMobileSize && <CustomInfoMessageAlignedLeft message='Rotate your device for more info' />}
+
 				<CustomTablePagination count={subscriptionsNumberOfPages} page={currentPage} onChange={handlePageChange} />
 			</Box>
 

@@ -67,7 +67,11 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
 
 	const handleSearch = () => {
 		onSearchChange(localSearchValue);
-		onSearch(localSearchValue); // Pass the search term directly
+		// Only trigger search if the local search value is different from the current searched value
+		// or if there's no current search active
+		if (localSearchValue.trim() !== searchedValue || !searchedValue) {
+			onSearch(localSearchValue); // Pass the search term directly
+		}
 		// Don't clear the search input - keep it like admin pages
 	};
 
@@ -221,7 +225,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
 								'textTransform': 'capitalize',
 								'fontSize': '0.8rem',
 							}}>
-							{loading ? 'Aranıyor...' : 'Ara'}
+							Ara
 						</Button>
 						<Button
 							variant='outlined'
@@ -243,20 +247,20 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
 							Sıfırla
 						</Button>
 						{/* Course Count Display */}
-						{totalCount > 0 && (
-							<Typography
-								variant='body2'
-								sx={{
-									fontFamily: 'Varela Round',
-									color: 'text.secondary',
-									fontSize: '0.875rem',
-									ml: 2,
-									display: 'flex',
-									alignItems: 'center',
-								}}>
-								{hasActiveSearchOrFilter ? `${totalCount} sonuç bulundu` : `Toplam ${totalCount} ${isCoursesPage ? 'kurs' : 'kaynak'}`}
-							</Typography>
-						)}
+
+						<Typography
+							variant='body2'
+							sx={{
+								fontFamily: 'Varela Round',
+								color: 'text.secondary',
+								fontSize: '0.875rem',
+								ml: 2,
+								display: 'flex',
+								alignItems: 'center',
+							}}>
+							{hasActiveSearchOrFilter ? `${totalCount} sonuç bulundu` : `Toplam ${totalCount} ${isCoursesPage ? 'kurs' : 'kaynak'}`}
+						</Typography>
+
 						{isCoursesPage && (
 							<IconButton
 								size='small'

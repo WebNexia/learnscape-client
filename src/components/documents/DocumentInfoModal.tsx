@@ -86,6 +86,18 @@ const DocumentInfoModal = ({ document, onClose }: DocumentInfoModalProps) => {
 								</Typography>
 							)}
 						</Grid>
+						<Grid item xs={3}>
+							<Typography variant='body2'>Cloned:</Typography>
+						</Grid>
+						<Grid item xs={9}>
+							<Typography variant='body2'>{document.clonedFromId ? 'Yes' : 'No'}</Typography>
+						</Grid>
+						<Grid item xs={3}>
+							<Typography variant='body2'>On Landing Page:</Typography>
+						</Grid>
+						<Grid item xs={9}>
+							<Typography variant='body2'>{document.isOnLandingPage ? 'Yes' : 'No'}</Typography>
+						</Grid>
 					</Grid>
 				</Box>
 			</DialogContent>

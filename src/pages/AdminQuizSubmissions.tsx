@@ -37,9 +37,8 @@ const AdminQuizSubmissions = () => {
 		return `${base_url}/quizsubmissions/organisation/${orgId}`;
 	};
 
-	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
-	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
 	const {
 		quizSubmissions,
@@ -156,12 +155,14 @@ const AdminQuizSubmissions = () => {
 					isSticky={true}
 				/>
 
-				<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', padding: isMobileSizeSmall ? '0 1rem' : '0rem' }}>
+				<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', padding: '0rem' }}>
 					<Table
 						sx={{
 							'mb': '2rem',
 							'tableLayout': 'fixed',
 							'width': '100%',
+							'borderCollapse': 'collapse',
+							'borderSpacing': 0,
 							'& .MuiTableHead-root': {
 								position: 'fixed',
 								top: (isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim()) ? '11rem' : '8rem',
@@ -176,20 +177,85 @@ const AdminQuizSubmissions = () => {
 							},
 							'& .MuiTableHead-root .MuiTableCell-root': {
 								backgroundColor: theme.palette.background.paper,
-								padding: '0.25rem 1rem',
+								padding: isMobileSize ? '0.25rem 0rem' : '0.25rem 1rem',
+								boxSizing: 'border-box',
+								margin: 0,
+								verticalAlign: 'center',
+							},
+							'& .MuiTableHead-root .MuiTableCell-root:last-child': {
+								borderRight: 'none',
+							},
+							'& .MuiTableBody-root .MuiTableCell-root': {
+								padding: isMobileSize ? '0.5rem 0.5rem' : '0.25rem 1rem',
+								boxSizing: 'border-box',
+								margin: 0,
+								verticalAlign: 'center',
+							},
+							'& .MuiTableBody-root .MuiTableCell-root:last-child': {
+								borderRight: 'none',
+							},
+							// Column widths for header cells
+							'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(1)': {
+								minWidth: isMobileSize ? '100px' : '150px',
+								width: isMobileSize ? '25%' : '15%',
+							},
+							'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(2)': {
+								minWidth: isMobileSize ? '120px' : '200px',
+								width: isMobileSize ? '30%' : '30%',
+							},
+							'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(3)': {
+								minWidth: isMobileSize ? '100px' : '200px',
+								width: isMobileSize ? '25%' : '30%',
+							},
+							'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(4)': {
+								minWidth: isMobileSize ? '80px' : '100px',
+								width: isMobileSize ? '10%' : '10%',
+							},
+							'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(5)': {
+								minWidth: isMobileSize ? '60px' : '80px',
+								width: isMobileSize ? '10%' : '15%',
+							},
+							// Column widths for body cells - exact same as header
+							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(1)': {
+								minWidth: isMobileSize ? '100px' : '150px',
+								width: isMobileSize ? '25%' : '15%',
+							},
+							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(2)': {
+								minWidth: isMobileSize ? '120px' : '200px',
+								width: isMobileSize ? '30%' : '30%',
+							},
+							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(3)': {
+								minWidth: isMobileSize ? '100px' : '200px',
+								width: isMobileSize ? '25%' : '30%',
+							},
+							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(4)': {
+								minWidth: isMobileSize ? '80px' : '100px',
+								width: isMobileSize ? '10%' : '10%',
+							},
+							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(5)': {
+								minWidth: isMobileSize ? '60px' : '80px',
+								width: isMobileSize ? '10%' : '15%',
 							},
 						}}
 						size='small'
 						aria-label='a dense table'>
 						{((isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim())) && <Box sx={{ height: '1.5rem' }}></Box>}
+						{/* Spacer row to ensure header alignment */}
+						<TableRow sx={{ height: 0, visibility: 'hidden' }}>
+							<TableCell sx={{ width: isMobileSize ? '25%' : '15%', padding: 0, border: 'none' }} />
+							<TableCell sx={{ width: isMobileSize ? '30%' : '30%', padding: 0, border: 'none' }} />
+							<TableCell sx={{ width: isMobileSize ? '25%' : '30%', padding: 0, border: 'none' }} />
+							<TableCell sx={{ width: isMobileSize ? '10%' : '10%', padding: 0, border: 'none' }} />
+							<TableCell sx={{ width: isMobileSize ? '10%' : '15%', padding: 0, border: 'none' }} />
+						</TableRow>
 						<CustomTableHead<QuizSubmission>
 							orderBy={orderBy as keyof QuizSubmission}
 							order={order}
 							handleSort={handleSort}
 							columns={[
-								{ key: 'userName', label: isVerySmallScreen ? 'Username' : 'Student Username' },
-								{ key: 'lessonName', label: isVerySmallScreen ? 'Quiz' : 'Quiz Name' },
-								{ key: 'courseName', label: isVerySmallScreen ? 'Course' : 'Course Name' },
+								{ key: 'userName', label: isMobileSize ? 'Username' : 'Username' },
+								{ key: 'lessonName', label: isMobileSize ? 'Quiz' : 'Quiz Name' },
+								{ key: 'courseName', label: isMobileSize ? 'Course' : 'Course Name' },
 								{ key: 'isChecked', label: 'Status' },
 								{ key: 'actions', label: 'Actions' },
 							]}
@@ -232,7 +298,7 @@ const AdminQuizSubmissions = () => {
 								})}
 						</TableBody>
 					</Table>
-					{isVerySmallScreen && <CustomInfoMessageAlignedLeft message='Rotate your device for more info' />}
+					{isMobileSize && <CustomInfoMessageAlignedLeft message='Rotate your device for more info' />}
 					<CustomTablePagination count={submissionsNumberOfPages} page={currentPage} onChange={handlePageChange} />
 				</Box>
 			</DashboardPagesLayout>

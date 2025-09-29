@@ -33,8 +33,8 @@ const AdminLessons = () => {
 	const { isInstructor } = useAuth();
 
 	// Responsive column configuration
-	const getColumns = (isVerySmallScreen: boolean) => {
-		return isVerySmallScreen
+	const getColumns = (isMobileSize: boolean) => {
+		return isMobileSize
 			? [
 					{ key: 'type', label: 'Type' },
 					{ key: 'title', label: 'Title' },
@@ -74,7 +74,7 @@ const AdminLessons = () => {
 	} = useContext(LessonsContext);
 	const { orgId } = useContext(OrganisationContext);
 
-	const { isSmallScreen, isRotatedMedium, isVerySmallScreen } = useContext(MediaQueryContext);
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
 	const pageSize = 50;
@@ -245,7 +245,7 @@ const AdminLessons = () => {
 					onResetFilter={resetFilter}
 					actionButtons={[
 						{
-							label: isVerySmallScreen ? 'New' : 'New Lesson',
+							label: isMobileSize ? 'New' : 'New Lesson',
 							onClick: () => setIsNewLessonModalOpen(true),
 						},
 					]}
@@ -258,7 +258,7 @@ const AdminLessons = () => {
 						display: 'flex',
 						flexDirection: 'column',
 						alignItems: 'center',
-						padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : '0rem 0rem 2rem 0rem',
+						padding: isMobileSize ? '0rem 0.25rem 2rem 0.25rem' : '0rem 0rem 2rem 0rem',
 						width: '100%',
 					}}>
 					<Table
@@ -266,6 +266,8 @@ const AdminLessons = () => {
 							'mb': '2rem',
 							'tableLayout': 'fixed',
 							'width': '100%',
+							'borderCollapse': 'collapse',
+							'borderSpacing': 0,
 							'& .MuiTableHead-root': {
 								position: 'fixed',
 								top: (isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim()) ? '11rem' : '8rem',
@@ -281,17 +283,86 @@ const AdminLessons = () => {
 							'& .MuiTableHead-root .MuiTableCell-root': {
 								backgroundColor: theme.palette.background.paper,
 								padding: '0.25rem 1rem',
+								boxSizing: 'border-box',
+								margin: 0,
+								verticalAlign: 'center',
+							},
+							'& .MuiTableHead-root .MuiTableCell-root:last-child': {
+								borderRight: 'none',
+							},
+							'& .MuiTableBody-root .MuiTableCell-root': {
+								padding: '0.25rem 1rem',
+								boxSizing: 'border-box',
+								margin: 0,
+								verticalAlign: 'center',
+							},
+							'& .MuiTableBody-root .MuiTableCell-root:last-child': {
+								borderRight: 'none',
+							},
+							// Column widths for header cells
+							'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(1)': {
+								minWidth: isMobileSize ? '80px' : '100px',
+								width: isMobileSize ? '20%' : '15%',
+							},
+							'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(2)': {
+								minWidth: isMobileSize ? '200px' : '200px',
+								width: isMobileSize ? '30%' : '33%',
+							},
+							'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(3)': {
+								minWidth: isMobileSize ? '80px' : '100px',
+								width: isMobileSize ? '15%' : '12%',
+							},
+							'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(4)': {
+								minWidth: isMobileSize ? '0px' : '100px',
+								width: isMobileSize ? '15%' : '15%',
+							},
+							'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(5)': {
+								minWidth: isMobileSize ? '0px' : '100px',
+								width: isMobileSize ? '0%' : '15%',
+							},
+							'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(6)': {
+								minWidth: isMobileSize ? '0px' : '80px',
+								width: isMobileSize ? '0%' : '15%',
+							},
+							// Column widths for body cells - exact same as header
+							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(1)': {
+								minWidth: isMobileSize ? '80px' : '100px',
+								width: isMobileSize ? '20%' : '15%',
+							},
+							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(2)': {
+								minWidth: isMobileSize ? '200px' : '200px',
+								width: isMobileSize ? '30%' : '33%',
+							},
+							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(3)': {
+								minWidth: isMobileSize ? '80px' : '100px',
+								width: isMobileSize ? '15%' : '12%',
+							},
+							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(4)': {
+								minWidth: isMobileSize ? '0px' : '100px',
+								width: isMobileSize ? '15%' : '15%',
+							},
+							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(5)': {
+								minWidth: isMobileSize ? '0px' : '100px',
+								width: isMobileSize ? '0%' : '15%',
+							},
+							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(6)': {
+								minWidth: isMobileSize ? '0px' : '80px',
+								width: isMobileSize ? '0%' : '15%',
 							},
 						}}
 						size='small'
 						aria-label='a dense table'>
 						{((isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim())) && <Box sx={{ height: '1.5rem' }}></Box>}
-						<CustomTableHead<Lesson>
-							orderBy={orderBy as keyof Lesson}
-							order={order}
-							handleSort={handleSort}
-							columns={getColumns(isVerySmallScreen)}
-						/>
+						{/* Spacer row to ensure header alignment */}
+						<TableRow sx={{ height: 0, visibility: 'hidden' }}>
+							<TableCell sx={{ width: isMobileSize ? '20%' : '15%', padding: 0, border: 'none' }} />
+							<TableCell sx={{ width: isMobileSize ? '30%' : '33%', padding: 0, border: 'none' }} />
+							<TableCell sx={{ width: isMobileSize ? '15%' : '12%', padding: 0, border: 'none' }} />
+							<TableCell sx={{ width: isMobileSize ? '15%' : '15%', padding: 0, border: 'none' }} />
+							<TableCell sx={{ width: isMobileSize ? '0%' : '15%', padding: 0, border: 'none' }} />
+							<TableCell sx={{ width: isMobileSize ? '0%' : '15%', padding: 0, border: 'none' }} />
+						</TableRow>
+						<CustomTableHead<Lesson> orderBy={orderBy as keyof Lesson} order={order} handleSort={handleSort} columns={getColumns(isMobileSize)} />
 						<TableBody>
 							{paginatedLessons &&
 								paginatedLessons?.map((lesson: Lesson, index) => {
@@ -300,9 +371,9 @@ const AdminLessons = () => {
 											<CustomTableCell value={lesson.type} />
 											<CustomTableCell value={lesson.title} />
 											<CustomTableCell value={lesson.isActive ? 'Published' : 'Unpublished'} />
-											{!isVerySmallScreen && !isInstructor && <CustomTableCell value={lesson.createdByName || 'N/A'} />}
-											{!isVerySmallScreen && isInstructor && <CustomTableCell value={dateFormatter(lesson.createdAt)} />}
-											{!isVerySmallScreen && <CustomTableCell value={dateFormatter(lesson.updatedAt)} />}
+											{!isMobileSize && !isInstructor && <CustomTableCell value={lesson.createdByName || 'N/A'} />}
+											{!isMobileSize && isInstructor && <CustomTableCell value={dateFormatter(lesson.createdAt)} />}
+											{!isMobileSize && <CustomTableCell value={dateFormatter(lesson.updatedAt)} />}
 
 											<TableCell
 												sx={{
@@ -376,7 +447,7 @@ const AdminLessons = () => {
 								})}
 						</TableBody>
 					</Table>
-					{isVerySmallScreen && <CustomInfoMessageAlignedLeft message='Rotate your device for more info' />}
+					{isMobileSize && <CustomInfoMessageAlignedLeft message='Rotate your device for more info' />}
 					<CustomTablePagination count={lessonsNumberOfPages} page={currentPage} onChange={handlePageChange} />
 				</Box>
 

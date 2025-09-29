@@ -391,7 +391,7 @@ const AdminRecycleBinQuestionsTab = () => {
 					justifyContent: 'space-between',
 					alignItems: 'flex-start',
 					padding: isMobileSizeSmall ? '1rem 1rem 0.5rem 1rem' : '2rem 2rem 0rem 2rem',
-					width: 'calc(100% - 10rem)',
+					width: isMobileSize ? '100%' : 'calc(100% - 10rem)',
 					position: 'fixed',
 					top: isMobileSize ? '7.5rem' : '6.5rem', // Account for header + tabs
 					left: isMobileSize ? 0 : '10rem',
@@ -401,7 +401,7 @@ const AdminRecycleBinQuestionsTab = () => {
 					backdropFilter: 'blur(10px)',
 				}}>
 				<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-					<Box sx={{ display: 'flex', alignSelf: 'flex-start', width: isVerySmallScreen ? '12.5rem' : 'fit-content' }}>
+					<Box sx={{ display: 'flex', alignSelf: 'flex-start', width: isMobileSize ? '12.5rem' : 'fit-content' }}>
 						<Box>
 							<FormControl>
 								<Select
@@ -489,7 +489,7 @@ const AdminRecycleBinQuestionsTab = () => {
 							onChange={(e) => {
 								setSearchValue(e.target.value);
 							}}
-							sx={{ backgroundColor: '#fff', minWidth: isVerySmallScreen ? '10rem' : '17.5rem' }}
+							sx={{ backgroundColor: '#fff', minWidth: isMobileSize ? '10rem' : '17.5rem' }}
 							required={false}
 							InputProps={{
 								onKeyDown: (e) => {
@@ -602,13 +602,13 @@ const AdminRecycleBinQuestionsTab = () => {
 					display: 'flex',
 					flexDirection: 'column',
 					alignItems: 'center',
-					padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : '0rem 0rem 2rem 0rem',
+					padding: isMobileSize ? '0rem 0rem 2rem 0rem' : '0rem 0rem 2rem 0rem',
 					width: '100%',
 				}}>
 				{/* Spacer for sticky table header */}
 				<Box
 					sx={{
-						height: (isSearchActive && searchedValue && searchButtonClicked) || (filterValue && filterValue.trim()) ? '5.25rem' : '2rem',
+						height: (isSearchActive && searchedValue && searchButtonClicked) || (filterValue && filterValue.trim()) ? '5.25rem' : '2.25rem',
 						width: '100%',
 					}}
 				/>
@@ -650,7 +650,7 @@ const AdminRecycleBinQuestionsTab = () => {
 						selectAll={selectAll}
 						onSelectAll={handleSelectAll}
 						columns={
-							isVerySmallScreen
+							isMobileSize
 								? [
 										{ key: 'checkbox', label: '' },
 										{ key: 'question', label: 'Question' },
@@ -700,15 +700,13 @@ const AdminRecycleBinQuestionsTab = () => {
 										</TableCell>
 										<CustomTableCell
 											value={
-												isVerySmallScreen
-													? truncateText(stripHtml(decode(question.question)), 25)
-													: truncateText(stripHtml(decode(question.question)), 45)
+												isMobileSize ? truncateText(stripHtml(decode(question.question)), 25) : truncateText(stripHtml(decode(question.question)), 45)
 											}
 										/>
-										{!isVerySmallScreen && <CustomTableCell value={question.questionTypeName || 'N/A'} />}
-										{!isVerySmallScreen && <CustomTableCell value={question.archivedByName || 'N/A'} />}
+										{!isMobileSize && <CustomTableCell value={question.questionTypeName || 'N/A'} />}
+										{!isMobileSize && <CustomTableCell value={question.archivedByName || 'N/A'} />}
 										<CustomTableCell value={question.archivedAt ? dateFormatter(question.archivedAt) : 'N/A'} />
-										{!isVerySmallScreen && <CustomTableCell value={deletionDateStatus.label} />}
+										{!isMobileSize && <CustomTableCell value={deletionDateStatus.label} />}
 										<TableCell sx={{ textAlign: 'center' }}>
 											<CustomActionBtn title='Restore Question' onClick={() => openRestoreModal(index)} icon={<Restore fontSize='small' />} />
 											<CustomActionBtn title='Delete Permanently' onClick={() => openDeleteModal(index)} icon={<DeleteForever fontSize='small' />} />
@@ -724,7 +722,7 @@ const AdminRecycleBinQuestionsTab = () => {
 						sx={{ marginTop: '5rem' }}
 					/>
 				)}
-
+				{isMobileSize && <CustomInfoMessageAlignedLeft message='Rotate your device for more info' />}
 				<CustomTablePagination count={questionsNumberOfPages} page={currentPageNumber} onChange={handlePageChange} />
 			</Box>
 

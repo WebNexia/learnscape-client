@@ -29,9 +29,9 @@ const AdminPaymentsTab = () => {
 	const { payments, totalItems, loadedPages, paymentsPageNumber, setPaymentsPageNumber, fetchMorePayments } = useContext(PaymentsContext);
 	const { courses } = useContext(CoursesContext);
 
-	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
+	const { isSmallScreen, isRotatedMedium, isRotated } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
-	const isMobileSizeSmall = isVerySmallScreen || isRotated;
+	const isMobileSizeSmall = isMobileSize || isRotated;
 
 	const mappedCourses: string[] = courses?.map((course) => course.title) || [];
 
@@ -222,7 +222,7 @@ const AdminPaymentsTab = () => {
 						<Box sx={{ display: 'flex', width: '65%' }}>
 							<CustomTextField
 								value={searchValue}
-								placeholder={isVerySmallScreen ? 'Search in Username' : 'Search in First & Last Name, and Username'}
+								placeholder={isMobileSize ? 'Search in Username' : 'Search in First & Last Name, and Username'}
 								onChange={(e) => {
 									setSearchValue(e.target.value);
 								}}
@@ -256,7 +256,7 @@ const AdminPaymentsTab = () => {
 							/>
 							<CustomSubmitButton
 								sx={{
-									height: isVerySmallScreen ? '1.75rem' : '2rem',
+									height: isMobileSize ? '1.75rem' : '2rem',
 									marginLeft: '0.5rem',
 									fontSize: isMobileSize ? '0.7rem' : undefined,
 								}}
@@ -266,7 +266,7 @@ const AdminPaymentsTab = () => {
 								Search
 							</CustomSubmitButton>
 							<CustomDeleteButton
-								sx={{ height: isVerySmallScreen ? '1.75rem' : '2rem', marginLeft: '0.5rem', fontSize: isMobileSize ? '0.7rem' : undefined }}
+								sx={{ height: isMobileSize ? '1.75rem' : '2rem', marginLeft: '0.5rem', fontSize: isMobileSize ? '0.7rem' : undefined }}
 								type='button'
 								onClick={resetAll}>
 								Reset
@@ -322,8 +322,8 @@ const AdminPaymentsTab = () => {
 					sx={{
 						display: 'flex',
 						justifyContent: 'flex-end',
-						width: isVerySmallScreen ? '5%' : isMobileSize ? '20%' : '35%',
-						height: isVerySmallScreen ? '1.75rem' : '2rem',
+						width: isMobileSize ? '5%' : isMobileSize ? '20%' : '35%',
+						height: isMobileSize ? '1.75rem' : '2rem',
 						fontSize: isMobileSize ? '0.65rem' : '0.85rem',
 						alignItems: 'center',
 					}}>
@@ -397,9 +397,9 @@ const AdminPaymentsTab = () => {
 								? [
 										{ key: 'username', label: 'Username' },
 										{ key: 'courseTitle', label: 'Course' },
-										{ key: 'amount', label: 'Price' },
+										{ key: 'documentName', label: 'Document' },
 										{ key: 'amountReceivedInGbp', label: 'Received' },
-										{ key: 'createdAt', label: 'Date' },
+										{ key: 'actions', label: 'Actions' },
 									]
 								: [
 										{ key: 'firstName', label: 'First Name' },
@@ -418,16 +418,19 @@ const AdminPaymentsTab = () => {
 							paginatedPayments?.map((payment: Payment) => {
 								return (
 									<TableRow key={payment._id} hover>
-										{!isVerySmallScreen && <CustomTableCell value={payment.firstName} />}
-										{!isVerySmallScreen && <CustomTableCell value={payment.lastName} />}
+										{!isMobileSize && <CustomTableCell value={payment.firstName} />}
+										{!isMobileSize && <CustomTableCell value={payment.lastName} />}
+										{isMobileSize && <CustomTableCell value={payment.username} />}
 										<CustomTableCell value={payment.courseTitle} />
 										<CustomTableCell value={payment.documentName} />
-										<CustomTableCell value={`${setCurrencySymbol(payment.currency)}${payment.amount}`} />
+										{!isMobileSize && <CustomTableCell value={`${setCurrencySymbol(payment.currency)}${payment.amount}`} />}
 										<CustomTableCell value={`£${payment.amountReceivedInGbp}`} />
 
-										<CustomTableCell
-											value={new Date(payment.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-										/>
+										{!isMobileSize && (
+											<CustomTableCell
+												value={new Date(payment.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+											/>
+										)}
 										<TableCell
 											sx={{
 												textAlign: 'center',

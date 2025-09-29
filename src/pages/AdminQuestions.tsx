@@ -34,7 +34,7 @@ const AdminQuestions = () => {
 	const { orgId } = useContext(OrganisationContext);
 	const { isInstructor } = useAuth();
 
-	const { isSmallScreen, isRotatedMedium, isVerySmallScreen } = useContext(MediaQueryContext);
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
 	const {
@@ -52,8 +52,8 @@ const AdminQuestions = () => {
 	} = useContext(QuestionsContext);
 
 	// Responsive column configuration
-	const getColumns = (isVerySmallScreen: boolean) => {
-		return isVerySmallScreen
+	const getColumns = (isMobileSize: boolean) => {
+		return isMobileSize
 			? [
 					{ key: 'type', label: 'Type' },
 					{ key: 'question', label: 'Question' },
@@ -293,7 +293,7 @@ const AdminQuestions = () => {
 						onResetFilter={resetFilter}
 						actionButtons={[
 							{
-								label: isVerySmallScreen ? 'New' : 'New Question',
+								label: isMobileSize ? 'New' : 'New Question',
 								onClick: () => {
 									setIsQuestionCreateModalOpen(true);
 									setQuestionType('');
@@ -333,7 +333,7 @@ const AdminQuestions = () => {
 							display: 'flex',
 							flexDirection: 'column',
 							alignItems: 'center',
-							padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : '0rem 0rem 2rem 0rem',
+							padding: isMobileSize ? '0rem 0.25rem 2rem 0.25rem' : '0rem 0rem 2rem 0rem',
 							width: '100%',
 						}}>
 						<Table
@@ -341,6 +341,8 @@ const AdminQuestions = () => {
 								'mb': '2rem',
 								'tableLayout': 'fixed',
 								'width': '100%',
+								'borderCollapse': 'collapse',
+								'borderSpacing': 0,
 								'& .MuiTableHead-root': {
 									position: 'fixed',
 									top: (isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim()) ? '11rem' : '8rem',
@@ -356,16 +358,81 @@ const AdminQuestions = () => {
 								'& .MuiTableHead-root .MuiTableCell-root': {
 									backgroundColor: theme.palette.background.paper,
 									padding: '0.25rem 1rem',
+									boxSizing: 'border-box',
+									margin: 0,
+									verticalAlign: 'center',
+								},
+								'& .MuiTableHead-root .MuiTableCell-root:last-child': {
+									borderRight: 'none',
+								},
+								'& .MuiTableBody-root .MuiTableCell-root': {
+									padding: '0.25rem 1rem',
+									boxSizing: 'border-box',
+									margin: 0,
+									verticalAlign: 'center',
+								},
+								'& .MuiTableBody-root .MuiTableCell-root:last-child': {
+									borderRight: 'none',
+								},
+								// Column widths - better balanced ratios
+								'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(1)': {
+									minWidth: isMobileSize ? '80px' : '120px',
+									width: isMobileSize ? '25%' : '18%',
+								},
+								'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(2)': {
+									minWidth: isMobileSize ? '200px' : '300px',
+									width: isMobileSize ? '55%' : '38%',
+								},
+								'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(3)': {
+									minWidth: isMobileSize ? '80px' : '120px',
+									width: isMobileSize ? '20%' : '15%',
+								},
+								'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(4)': {
+									minWidth: isMobileSize ? '60px' : '100px',
+									width: isMobileSize ? '0%' : '15%',
+								},
+								'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(5)': {
+									minWidth: isMobileSize ? '0px' : '80px',
+									width: isMobileSize ? '0%' : '15%',
+								},
+								// Column widths for body cells - exact same as header
+								'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(1)': {
+									minWidth: isMobileSize ? '80px' : '120px',
+									width: isMobileSize ? '25%' : '18%',
+								},
+								'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(2)': {
+									minWidth: isMobileSize ? '200px' : '300px',
+									width: isMobileSize ? '55%' : '38%',
+								},
+								'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(3)': {
+									minWidth: isMobileSize ? '80px' : '120px',
+									width: isMobileSize ? '20%' : '15%',
+								},
+								'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(4)': {
+									minWidth: isMobileSize ? '60px' : '100px',
+									width: isMobileSize ? '0%' : '15%',
+								},
+								'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(5)': {
+									minWidth: isMobileSize ? '0px' : '80px',
+									width: isMobileSize ? '0%' : '15%',
 								},
 							}}
 							size='small'
 							aria-label='a dense table'>
 							{((isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim())) && <Box sx={{ height: '1.5rem' }}></Box>}
+							{/* Spacer row to ensure header alignment */}
+							<TableRow sx={{ height: 0, visibility: 'hidden' }}>
+								<TableCell sx={{ width: isMobileSize ? '25%' : '18%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isMobileSize ? '55%' : '38%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isMobileSize ? '20%' : '15%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isMobileSize ? '0%' : '15%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isMobileSize ? '0%' : '15%', padding: 0, border: 'none' }} />
+							</TableRow>
 							<CustomTableHead<QuestionInterface>
 								orderBy={orderBy as keyof QuestionInterface}
 								order={order}
 								handleSort={handleSort}
-								columns={getColumns(isVerySmallScreen)}
+								columns={getColumns(isMobileSize)}
 							/>
 							<TableBody>
 								{paginatedQuestions &&
@@ -387,15 +454,15 @@ const AdminQuestions = () => {
 												</CustomTableCell>
 												<CustomTableCell
 													value={
-														isVerySmallScreen
-															? truncateText(stripHtml(decode(question.question)), 25)
+														isMobileSize
+															? truncateText(stripHtml(decode(question.question)), 30)
 															: truncateText(stripHtml(decode(question.question)), 45)
 													}
 												/>
 
-												{!isVerySmallScreen && !isInstructor && <CustomTableCell value={question.createdByName || 'N/A'} />}
-												{!isVerySmallScreen && isInstructor && <CustomTableCell value={dateFormatter(question.createdAt)} />}
-												{!isVerySmallScreen && <CustomTableCell value={dateFormatter(question.updatedAt)} />}
+												{!isMobileSize && !isInstructor && <CustomTableCell value={question.createdByName || 'N/A'} />}
+												{!isMobileSize && isInstructor && <CustomTableCell value={dateFormatter(question.createdAt)} />}
+												{!isMobileSize && <CustomTableCell value={dateFormatter(question.updatedAt)} />}
 
 												<TableCell
 													sx={{
@@ -476,7 +543,7 @@ const AdminQuestions = () => {
 									})}
 							</TableBody>
 						</Table>
-						{isVerySmallScreen && <CustomInfoMessageAlignedLeft message='Rotate your device for more info' />}
+						{isMobileSize && <CustomInfoMessageAlignedLeft message='Rotate your device for more info' />}
 						<CustomTablePagination count={questionsNumberOfPages} page={currentPage} onChange={handlePageChange} />
 					</Box>
 

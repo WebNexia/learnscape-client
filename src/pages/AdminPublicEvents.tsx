@@ -36,7 +36,7 @@ const AdminPublicEvents = () => {
 		loading,
 	} = useContext(AdminPublicEventsContext);
 
-	const { isSmallScreen, isRotatedMedium, isVerySmallScreen } = useContext(MediaQueryContext);
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
 	const [eventDetailsModalOpen, setEventDetailsModalOpen] = useState<boolean>(false);
@@ -162,7 +162,7 @@ const AdminPublicEvents = () => {
 					onSearchChange={setSearchValue}
 					onSearch={handleSearch}
 					onReset={resetAll}
-					searchPlaceholder={isVerySmallScreen ? 'Search in Title' : 'Search in Title and Description'}
+					searchPlaceholder={isMobileSize ? 'Search in Title' : 'Search in Title and Description'}
 					isSearchLoading={isSearchLoading}
 					isSearchActive={isSearchActive}
 					searchResultsTotalItems={searchResultsTotalItems}
@@ -179,7 +179,7 @@ const AdminPublicEvents = () => {
 						display: 'flex',
 						flexDirection: 'column',
 						alignItems: 'center',
-						padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : '0rem 0rem 2rem 0rem',
+						padding: isMobileSize ? '0rem 0.25rem 2rem 0.25rem' : '0rem 0rem 2rem 0rem',
 						width: '100%',
 					}}>
 					<Table
@@ -187,6 +187,8 @@ const AdminPublicEvents = () => {
 							'mb': '2rem',
 							'tableLayout': 'fixed',
 							'width': '100%',
+							'borderCollapse': 'collapse',
+							'borderSpacing': 0,
 							'& .MuiTableHead-root': {
 								position: 'fixed',
 								top: (isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim()) ? '11rem' : '8rem',
@@ -201,31 +203,115 @@ const AdminPublicEvents = () => {
 							},
 							'& .MuiTableHead-root .MuiTableCell-root': {
 								backgroundColor: theme.palette.background.paper,
-								padding: '0.25rem 1rem',
+								padding: isMobileSize ? '0.25rem 0rem' : '0.25rem 1rem',
+								boxSizing: 'border-box',
+								margin: 0,
+								verticalAlign: 'center',
+							},
+							'& .MuiTableHead-root .MuiTableCell-root:last-child': {
+								borderRight: 'none',
+							},
+							'& .MuiTableBody-root .MuiTableCell-root': {
+								padding: isMobileSize ? '0.5rem 0.5rem' : '0.25rem 1rem',
+								boxSizing: 'border-box',
+								margin: 0,
+								verticalAlign: 'center',
+							},
+							'& .MuiTableBody-root .MuiTableCell-root:last-child': {
+								borderRight: 'none',
+							},
+							// Column widths for header cells
+							'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(1)': {
+								minWidth: isMobileSize ? '80px' : '100px',
+								width: isMobileSize ? '20%' : '12%',
+							},
+							'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(2)': {
+								minWidth: isMobileSize ? '150px' : '200px',
+								width: isMobileSize ? '25%' : '25%',
+							},
+							'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(3)': {
+								minWidth: isMobileSize ? '100px' : '120px',
+								width: isMobileSize ? '25%' : '20%',
+							},
+							'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(4)': {
+								minWidth: isMobileSize ? '100px' : '120px',
+								width: isMobileSize ? '20%' : '20%',
+							},
+							'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(5)': {
+								minWidth: isMobileSize ? '80px' : '100px',
+								width: isMobileSize ? '10%' : '10%',
+							},
+							'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(6)': {
+								minWidth: isMobileSize ? '60px' : '80px',
+								width: isMobileSize ? '0%' : '13%',
+							},
+							// Column widths for body cells - exact same as header
+							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(1)': {
+								minWidth: isMobileSize ? '80px' : '100px',
+								width: isMobileSize ? '20%' : '12%',
+							},
+							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(2)': {
+								minWidth: isMobileSize ? '150px' : '200px',
+								width: isMobileSize ? '25%' : '25%',
+							},
+							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(3)': {
+								minWidth: isMobileSize ? '100px' : '120px',
+								width: isMobileSize ? '25%' : '20%',
+							},
+							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(4)': {
+								minWidth: isMobileSize ? '100px' : '120px',
+								width: isMobileSize ? '20%' : '20%',
+							},
+							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(5)': {
+								minWidth: isMobileSize ? '80px' : '100px',
+								width: isMobileSize ? '10%' : '10%',
+							},
+							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(6)': {
+								minWidth: isMobileSize ? '60px' : '80px',
+								width: isMobileSize ? '0%' : '13%',
 							},
 						}}
 						size='small'
 						aria-label='a dense table'>
 						{((isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim())) && <Box sx={{ height: '1.5rem' }}></Box>}
+						{/* Spacer row to ensure header alignment */}
+						<TableRow sx={{ height: 0, visibility: 'hidden' }}>
+							<TableCell sx={{ width: isMobileSize ? '20%' : '12%', padding: 0, border: 'none' }} />
+							<TableCell sx={{ width: isMobileSize ? '25%' : '25%', padding: 0, border: 'none' }} />
+							<TableCell sx={{ width: isMobileSize ? '25%' : '20%', padding: 0, border: 'none' }} />
+							<TableCell sx={{ width: isMobileSize ? '20%' : '20%', padding: 0, border: 'none' }} />
+							<TableCell sx={{ width: isMobileSize ? '10%' : '10%', padding: 0, border: 'none' }} />
+							<TableCell sx={{ width: isMobileSize ? '0%' : '13%', padding: 0, border: 'none' }} />
+						</TableRow>
 						<CustomTableHead<Event>
 							orderBy={orderBy as keyof Event}
 							order={order}
 							handleSort={handleSort}
-							columns={[
-								{ key: 'type', label: 'Type' },
-								{ key: 'title', label: 'Title' },
-								{ key: 'start', label: 'Start' },
-								{ key: 'end', label: 'End' },
-								{ key: 'participantCount', label: 'Participants(#)' },
-								{ key: 'actions', label: 'Actions' },
-							]}
+							columns={
+								isMobileSize
+									? [
+											{ key: 'title', label: 'Title' },
+											{ key: 'start', label: 'Start' },
+											{ key: 'end', label: 'End' },
+											{ key: 'participantCount', label: 'Participants(#)' },
+											{ key: 'actions', label: 'Actions' },
+										]
+									: [
+											{ key: 'type', label: 'Type' },
+											{ key: 'title', label: 'Title' },
+											{ key: 'start', label: 'Start' },
+											{ key: 'end', label: 'End' },
+											{ key: 'participantCount', label: 'Participants(#)' },
+											{ key: 'actions', label: 'Actions' },
+										]
+							}
 						/>
 						<TableBody>
 							{paginatedPublicEvents &&
 								paginatedPublicEvents?.map((event: Event) => {
 									return (
 										<TableRow key={event._id} hover>
-											<CustomTableCell value={event.type} />
+											{!isMobileSize && <CustomTableCell value={event.type} />}
 											<CustomTableCell value={event.title} />
 											<CustomTableCell value={dateTimeFormatter(event.start)} />
 											<CustomTableCell value={dateTimeFormatter(event.end)} />
@@ -253,7 +339,7 @@ const AdminPublicEvents = () => {
 								})}
 						</TableBody>
 					</Table>
-					{isVerySmallScreen && <CustomInfoMessageAlignedLeft message='Rotate your device for more info' />}
+					{isMobileSize && <CustomInfoMessageAlignedLeft message='Rotate your device for more info' />}
 					<CustomTablePagination count={eventsNumberOfPages} page={currentPage} onChange={handlePageChange} />
 				</Box>
 

@@ -1,5 +1,5 @@
 export interface SearchFilters {
-	userRole?: 'admin' | 'learner';
+	userRole?: 'admin' | 'learner' | 'instructor';
 	courseId?: string;
 	topicId?: string;
 }

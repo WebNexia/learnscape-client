@@ -327,7 +327,7 @@ const AdminCourses = () => {
 						display: 'flex',
 						flexDirection: 'column',
 						alignItems: 'center',
-						padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : '0rem 0rem 2rem 0rem',
+						padding: isMobileSize ? '0rem 0.25rem 2rem 0.25rem' : '0rem 0rem 2rem 0rem',
 						width: '100%',
 					}}>
 					<Table
@@ -335,6 +335,8 @@ const AdminCourses = () => {
 							'mb': '2rem',
 							'tableLayout': 'fixed',
 							'width': '100%',
+							'borderCollapse': 'collapse',
+							'borderSpacing': 0,
 							'& .MuiTableHead-root': {
 								position: 'fixed',
 								top: (isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim()) ? '11rem' : '8rem',
@@ -350,17 +352,100 @@ const AdminCourses = () => {
 							'& .MuiTableHead-root .MuiTableCell-root': {
 								backgroundColor: theme.palette.background.paper,
 								padding: '0.25rem 1rem',
+								boxSizing: 'border-box',
+								margin: 0,
+								verticalAlign: 'center',
+							},
+							'& .MuiTableHead-root .MuiTableCell-root:last-child': {
+								borderRight: 'none',
+							},
+							'& .MuiTableBody-root .MuiTableCell-root': {
+								padding: '0.25rem 1rem',
+								boxSizing: 'border-box',
+								margin: 0,
+								verticalAlign: 'center',
+							},
+							'& .MuiTableBody-root .MuiTableCell-root:last-child': {
+								borderRight: 'none',
+							},
+							// Column widths for mobile (4 columns)
+							'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(1)': {
+								minWidth: isMobileSize ? '150px' : isInstructor ? '100px' : '100px',
+								width: isMobileSize ? '40%' : isInstructor ? '14%' : '10%',
+							},
+							'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(2)': {
+								minWidth: isMobileSize ? '200px' : isInstructor ? '200px' : '200px',
+								width: isMobileSize ? '25%' : isInstructor ? '30%' : '23%',
+							},
+							'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(3)': {
+								minWidth: isMobileSize ? '80px' : isInstructor ? '100px' : '100px',
+								width: isMobileSize ? '15%' : isInstructor ? '15%' : '15%',
+							},
+							'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(4)': {
+								minWidth: isMobileSize ? '100px' : isInstructor ? '100px' : '100px',
+								width: isMobileSize ? '20%' : isInstructor ? '13%' : '12%',
+							},
+							'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(5)': {
+								minWidth: isMobileSize ? '0px' : isInstructor ? '100px' : '100px',
+								width: isMobileSize ? '0%' : isInstructor ? '13%' : '13%',
+							},
+							'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(6)': {
+								minWidth: isMobileSize ? '0px' : isInstructor ? '80px' : '100px',
+								width: isMobileSize ? '0%' : isInstructor ? '15%' : '12%',
+							},
+							'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(7)': {
+								minWidth: isMobileSize ? '0px' : isInstructor ? '0px' : '80px',
+								width: isMobileSize ? '0%' : isInstructor ? '0%' : '15%',
+							},
+							// Column widths for body cells - exact same as header
+							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(1)': {
+								minWidth: isMobileSize ? '150px' : isInstructor ? '100px' : '100px',
+								width: isMobileSize ? '40%' : isInstructor ? '14%' : '10%',
+							},
+							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(2)': {
+								minWidth: isMobileSize ? '200px' : isInstructor ? '200px' : '200px',
+								width: isMobileSize ? '25%' : isInstructor ? '30%' : '23%',
+							},
+							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(3)': {
+								minWidth: isMobileSize ? '80px' : isInstructor ? '100px' : '100px',
+								width: isMobileSize ? '15%' : isInstructor ? '15%' : '15%',
+							},
+							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(4)': {
+								minWidth: isMobileSize ? '100px' : isInstructor ? '100px' : '100px',
+								width: isMobileSize ? '20%' : isInstructor ? '13%' : '12%',
+							},
+							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(5)': {
+								minWidth: isMobileSize ? '0px' : isInstructor ? '100px' : '100px',
+								width: isMobileSize ? '0%' : isInstructor ? '13%' : '13%',
+							},
+							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(6)': {
+								minWidth: isMobileSize ? '0px' : isInstructor ? '80px' : '100px',
+								width: isMobileSize ? '0%' : isInstructor ? '15%' : '12%',
+							},
+							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(7)': {
+								minWidth: isMobileSize ? '0px' : isInstructor ? '0px' : '80px',
+								width: isMobileSize ? '0%' : isInstructor ? '0%' : '15%',
 							},
 						}}
 						size='small'
 						aria-label='a dense table'>
 						{((isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim())) && <Box sx={{ height: '1.5rem' }}></Box>}
+						{/* Spacer row to ensure header alignment */}
+						<TableRow sx={{ height: 0, visibility: 'hidden' }}>
+							<TableCell sx={{ width: isMobileSize ? '40%' : isInstructor ? '14%' : '10%', padding: 0, border: 'none' }} />
+							<TableCell sx={{ width: isMobileSize ? '25%' : isInstructor ? '30%' : '23%', padding: 0, border: 'none' }} />
+							<TableCell sx={{ width: isMobileSize ? '15%' : isInstructor ? '15%' : '15%', padding: 0, border: 'none' }} />
+							<TableCell sx={{ width: isMobileSize ? '20%' : isInstructor ? '13%' : '12%', padding: 0, border: 'none' }} />
+							<TableCell sx={{ width: isMobileSize ? '0%' : isInstructor ? '13%' : '13%', padding: 0, border: 'none' }} />
+							<TableCell sx={{ width: isMobileSize ? '0%' : isInstructor ? '15%' : '12%', padding: 0, border: 'none' }} />
+							<TableCell sx={{ width: isMobileSize ? '0%' : isInstructor ? '0%' : '15%', padding: 0, border: 'none' }} />
+						</TableRow>
 						<CustomTableHead<SingleCourse>
 							orderBy={orderBy as keyof SingleCourse}
 							order={order}
 							handleSort={(property: keyof SingleCourse) => handleSort(property as string)}
 							columns={
-								isVerySmallScreen
+								isMobileSize
 									? [
 											{ key: 'title', label: 'Title' },
 											{ key: 'isActive', label: 'Status' },
@@ -392,7 +477,7 @@ const AdminCourses = () => {
 								paginatedCourses?.map((course: SingleCourse, index) => {
 									return (
 										<TableRow key={course._id} hover>
-											{!isVerySmallScreen && <CustomTableCell value={course?.courseManagement?.isExternal ? 'Partner' : 'Platform'} />}
+											{!isMobileSize && <CustomTableCell value={course?.courseManagement?.isExternal ? 'Partner' : 'Platform'} />}
 											<CustomTableCell value={course?.title} />
 											<CustomTableCell
 												value={
@@ -405,9 +490,9 @@ const AdminCourses = () => {
 															: 'Unpublished - Open'
 												}
 											/>
-											{!isVerySmallScreen && !isInstructor && <CustomTableCell value={course.instructor?.name || 'N/A'} />}
+											{!isMobileSize && !isInstructor && <CustomTableCell value={course.instructor?.name || 'N/A'} />}
 											<CustomTableCell value={dateFormatter(course.startingDate) || 'N/A'} />
-											{!isVerySmallScreen && <CustomTableCell value={dateFormatter(course.updatedAt)} />}
+											{!isMobileSize && <CustomTableCell value={dateFormatter(course.updatedAt)} />}
 
 											<TableCell
 												sx={{
@@ -416,7 +501,12 @@ const AdminCourses = () => {
 												<CustomActionBtn
 													title='Clone'
 													onClick={() => openCloneCourseModal(index)}
-													icon={<FileCopy fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined, mr: '-0.5rem' }} />}
+													icon={
+														<FileCopy
+															fontSize='small'
+															sx={{ fontSize: isMobileSize ? '0.8rem' : undefined, mr: isVerySmallScreen ? '0rem' : '-0.5rem' }}
+														/>
+													}
 												/>
 
 												{!course.isExpired ? (
@@ -429,7 +519,9 @@ const AdminCourses = () => {
 																navigate(`/admin/course-edit/course/${course._id}`);
 															}
 														}}
-														icon={<Edit fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined, mr: '-0.5rem' }} />}
+														icon={
+															<Edit fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined, mr: isMobileSize ? '0rem' : '-0.5rem' }} />
+														}
 													/>
 												) : (
 													<CustomActionBtn
@@ -441,7 +533,12 @@ const AdminCourses = () => {
 																navigate(`/admin/course-edit/course/${course._id}`);
 															}
 														}}
-														icon={<Visibility fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined, mr: '-0.5rem' }} />}
+														icon={
+															<Visibility
+																fontSize='small'
+																sx={{ fontSize: isMobileSize ? '0.8rem' : undefined, mr: isMobileSize ? '0rem' : '-0.5rem' }}
+															/>
+														}
 													/>
 												)}
 												<CustomActionBtn
@@ -469,7 +566,9 @@ const AdminCourses = () => {
 														// Default: disable for other roles
 														return true;
 													})()}
-													icon={<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined, mr: '-0.5rem' }} />}
+													icon={
+														<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined, mr: isMobileSize ? '0rem' : '-0.5rem' }} />
+													}
 												/>
 												<CustomActionBtn
 													title='More Info'

@@ -4,6 +4,7 @@ import CustomDialog from '../dialog/CustomDialog';
 import { dateTimeFormatter } from '../../../utils/dateFormatter';
 import { SingleCourse } from '../../../interfaces/course';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../hooks/useAuth';
 
 interface CoursesInfoModalProps {
 	singleCourse?: SingleCourse;
@@ -14,7 +15,7 @@ interface CoursesInfoModalProps {
 const CoursesInfoModal = ({ singleCourse, isCourseInfoDialogOpen, setIsCourseInfoDialogOpen }: CoursesInfoModalProps) => {
 	const navigate = useNavigate();
 
-	console.log(singleCourse);
+	const { isInstructor } = useAuth();
 
 	return (
 		<CustomDialog openModal={isCourseInfoDialogOpen} closeModal={() => setIsCourseInfoDialogOpen(false)} title={singleCourse?.title} maxWidth='sm'>
@@ -50,7 +51,11 @@ const CoursesInfoModal = ({ singleCourse, isCourseInfoDialogOpen, setIsCourseInf
 									variant='body2'
 									onClick={() => {
 										setIsCourseInfoDialogOpen(false);
-										navigate(`/admin/course-edit/course/${singleCourse?.clonedFromId}`);
+										if (isInstructor) {
+											navigate(`/instructor/course-edit/course/${singleCourse?.clonedFromId}`);
+										} else {
+											navigate(`/admin/course-edit/course/${singleCourse?.clonedFromId}`);
+										}
 									}}
 									sx={{
 										'cursor': 'pointer',

@@ -50,12 +50,12 @@ const AdminDocuments = () => {
 		enableDocumentsFetch,
 	} = useContext(DocumentsContext);
 
-	const { isSmallScreen, isRotatedMedium, isVerySmallScreen } = useContext(MediaQueryContext);
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
 	// Responsive column configuration
-	const getColumns = (isVerySmallScreen: boolean) => {
-		return isVerySmallScreen
+	const getColumns = (isMobileSize: boolean) => {
+		return isMobileSize
 			? [
 					{ key: 'name', label: 'Document Name' },
 					{ key: 'documentUrl', label: 'Document URL' },
@@ -70,7 +70,7 @@ const AdminDocuments = () => {
 						{ key: 'actions', label: 'Actions' },
 					]
 				: [
-						{ key: 'isOnLandingPage', label: 'On Landing Page' },
+						{ key: 'isOnLandingPage', label: 'Landing Page' },
 						{ key: 'name', label: 'Document Name' },
 						{ key: 'documentUrl', label: 'Document URL' },
 						{ key: 'createdByName', label: 'Created By' },
@@ -528,7 +528,7 @@ const AdminDocuments = () => {
 						onResetFilter={resetFilter}
 						actionButtons={[
 							{
-								label: isVerySmallScreen ? 'New' : 'New Document',
+								label: isMobileSize ? 'New' : 'New Document',
 								onClick: () => {
 									setIsDocumentCreateModalOpen(true);
 									setSingleDocument({
@@ -600,7 +600,7 @@ const AdminDocuments = () => {
 							display: 'flex',
 							flexDirection: 'column',
 							alignItems: 'center',
-							padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : '0rem 0rem 2rem 0rem',
+							padding: isMobileSize ? '0rem 0.25rem 2rem 0.25rem' : '0rem 0rem 2rem 0rem',
 							width: '100%',
 						}}>
 						<Table
@@ -608,6 +608,8 @@ const AdminDocuments = () => {
 								'mb': '2rem',
 								'tableLayout': 'fixed',
 								'width': '100%',
+								'borderCollapse': 'collapse',
+								'borderSpacing': 0,
 								'& .MuiTableHead-root': {
 									position: 'fixed',
 									top: (isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim()) ? '11rem' : '8rem',
@@ -623,23 +625,97 @@ const AdminDocuments = () => {
 								'& .MuiTableHead-root .MuiTableCell-root': {
 									backgroundColor: theme.palette.background.paper,
 									padding: '0.25rem 1rem',
+									boxSizing: 'border-box',
+									margin: 0,
+									verticalAlign: 'center',
+								},
+								'& .MuiTableHead-root .MuiTableCell-root:last-child': {
+									borderRight: 'none',
+								},
+								'& .MuiTableBody-root .MuiTableCell-root': {
+									padding: '0.25rem 1rem',
+									boxSizing: 'border-box',
+									margin: 0,
+									verticalAlign: 'center',
+								},
+								'& .MuiTableBody-root .MuiTableCell-root:last-child': {
+									borderRight: 'none',
+								},
+								// Column widths for header cells
+								'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(1)': {
+									minWidth: isMobileSize ? '150px' : isInstructor ? '150px' : '100px',
+									width: isMobileSize ? '40%' : isInstructor ? '25%' : '13%',
+								},
+								'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(2)': {
+									minWidth: isMobileSize ? '200px' : isInstructor ? '200px' : '200px',
+									width: isMobileSize ? '35%' : isInstructor ? '30%' : '27%',
+								},
+								'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(3)': {
+									minWidth: isMobileSize ? '100px' : isInstructor ? '100px' : '100px',
+									width: isMobileSize ? '25%' : isInstructor ? '15%' : '20%',
+								},
+								'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(4)': {
+									minWidth: isMobileSize ? '0px' : isInstructor ? '100px' : '100px',
+									width: isMobileSize ? '0%' : isInstructor ? '15%' : '13%',
+								},
+								'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(5)': {
+									minWidth: isMobileSize ? '0px' : isInstructor ? '0px' : '100px',
+									width: isMobileSize ? '0%' : isInstructor ? '15%' : '12%',
+								},
+								'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(6)': {
+									minWidth: isMobileSize ? '0px' : isInstructor ? '0px' : '80px',
+									width: isMobileSize ? '0%' : isInstructor ? '0%' : '15%',
+								},
+								// Column widths for body cells - exact same as header
+								'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(1)': {
+									minWidth: isMobileSize ? '150px' : isInstructor ? '150px' : '100px',
+									width: isMobileSize ? '40%' : isInstructor ? '25%' : '13%',
+								},
+								'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(2)': {
+									minWidth: isMobileSize ? '200px' : isInstructor ? '200px' : '200px',
+									width: isMobileSize ? '35%' : isInstructor ? '30%' : '27%',
+								},
+								'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(3)': {
+									minWidth: isMobileSize ? '100px' : isInstructor ? '100px' : '100px',
+									width: isMobileSize ? '25%' : isInstructor ? '15%' : '20%',
+								},
+								'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(4)': {
+									minWidth: isMobileSize ? '0px' : isInstructor ? '100px' : '100px',
+									width: isMobileSize ? '0%' : isInstructor ? '15%' : '13%',
+								},
+								'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(5)': {
+									minWidth: isMobileSize ? '0px' : isInstructor ? '0px' : '100px',
+									width: isMobileSize ? '0%' : isInstructor ? '15%' : '12%',
+								},
+								'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(6)': {
+									minWidth: isMobileSize ? '0px' : isInstructor ? '0px' : '80px',
+									width: isMobileSize ? '0%' : isInstructor ? '0%' : '15%',
 								},
 							}}
 							size='small'
 							aria-label='a dense table'>
 							{((isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim())) && <Box sx={{ height: '1.5rem' }}></Box>}
+							{/* Spacer row to ensure header alignment */}
+							<TableRow sx={{ height: 0, visibility: 'hidden' }}>
+								<TableCell sx={{ width: isMobileSize ? '40%' : isInstructor ? '25%' : '13%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isMobileSize ? '35%' : isInstructor ? '30%' : '27%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isMobileSize ? '25%' : isInstructor ? '15%' : '20%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isMobileSize ? '0%' : isInstructor ? '15%' : '13%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isMobileSize ? '0%' : isInstructor ? '15%' : '12%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isMobileSize ? '0%' : isInstructor ? '0%' : '15%', padding: 0, border: 'none' }} />
+							</TableRow>
 							<CustomTableHead<Document>
 								orderBy={orderBy as keyof Document}
 								order={order}
 								handleSort={handleSort}
-								columns={getColumns(isVerySmallScreen)}
+								columns={getColumns(isMobileSize)}
 							/>
 							<TableBody>
 								{paginatedDocuments &&
 									paginatedDocuments?.map((document: Document, index) => {
 										return (
 											<TableRow key={document._id} hover>
-												{!isVerySmallScreen && !isInstructor && <CustomTableCell value={document.isOnLandingPage ? 'Yes' : 'No'} />}
+												{!isMobileSize && !isInstructor && <CustomTableCell value={document.isOnLandingPage ? 'Yes' : 'No'} />}
 												<CustomTableCell value={document.name} />
 												<TableCell sx={{ textAlign: 'center' }}>
 													<Link
@@ -647,12 +723,12 @@ const AdminDocuments = () => {
 														target='_blank'
 														rel='noopener noreferrer'
 														sx={{ fontSize: isMobileSize ? '0.6rem' : undefined }}>
-														{isVerySmallScreen ? truncateText(document.documentUrl, 25) : truncateText(document.documentUrl, 30)}
+														{isMobileSize ? truncateText(document.documentUrl, 25) : truncateText(document.documentUrl, 27)}
 													</Link>
 												</TableCell>
-												{!isVerySmallScreen && !isInstructor && <CustomTableCell value={document.createdByName || 'N/A'} />}
-												{!isVerySmallScreen && isInstructor && <CustomTableCell value={dateFormatter(document.createdAt)} />}
-												{!isVerySmallScreen && <CustomTableCell value={dateFormatter(document.updatedAt)} />}
+												{!isMobileSize && !isInstructor && <CustomTableCell value={document.createdByName || 'N/A'} />}
+												{!isMobileSize && isInstructor && <CustomTableCell value={dateFormatter(document.createdAt)} />}
+												{!isMobileSize && <CustomTableCell value={dateFormatter(document.updatedAt)} />}
 												<TableCell
 													sx={{
 														textAlign: 'center',
@@ -747,7 +823,7 @@ const AdminDocuments = () => {
 									})}
 							</TableBody>
 						</Table>
-						{isVerySmallScreen && <CustomInfoMessageAlignedLeft message='Rotate your device for more info' />}
+						{isMobileSize && <CustomInfoMessageAlignedLeft message='Rotate your device for more info' />}
 						<CustomTablePagination count={documentsNumberOfPages} page={currentPage} onChange={handlePageChange} />
 					</Box>
 

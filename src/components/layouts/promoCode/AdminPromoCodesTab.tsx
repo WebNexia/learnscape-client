@@ -27,9 +27,9 @@ const AdminPromoCodesTab = () => {
 	const { promoCodes, totalItems, loadedPages, promoCodesPageNumber, setPromoCodesPageNumber, fetchMorePromoCodes, removePromoCode } =
 		useContext(PromoCodesContext);
 
-	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
+	const { isSmallScreen, isRotatedMedium, isRotated } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
-	const isMobileSizeSmall = isVerySmallScreen || isRotated;
+	const isMobileSizeSmall = isMobileSize || isRotated;
 
 	const { orgId } = useContext(OrganisationContext);
 
@@ -227,7 +227,7 @@ const AdminPromoCodesTab = () => {
 						<Box sx={{ display: 'flex', width: '45%' }}>
 							<CustomTextField
 								value={searchValue}
-								placeholder={isVerySmallScreen ? 'Search Code' : 'Search Promo Code'}
+								placeholder={isMobileSize ? 'Search Code' : 'Search Promo Code'}
 								onChange={(e) => {
 									setSearchValue(e.target.value);
 								}}
@@ -256,7 +256,7 @@ const AdminPromoCodesTab = () => {
 							/>
 							<CustomSubmitButton
 								sx={{
-									height: isVerySmallScreen ? '1.75rem' : '2rem',
+									height: isMobileSize ? '1.75rem' : '2rem',
 									marginLeft: '0.5rem',
 									fontSize: isMobileSize ? '0.7rem' : undefined,
 								}}
@@ -267,7 +267,7 @@ const AdminPromoCodesTab = () => {
 							</CustomSubmitButton>
 							<CustomDeleteButton
 								sx={{
-									height: isVerySmallScreen ? '1.75rem' : '2rem',
+									height: isMobileSize ? '1.75rem' : '2rem',
 									marginLeft: '0.5rem',
 									fontSize: isMobileSize ? '0.7rem' : undefined,
 								}}
@@ -337,7 +337,7 @@ const AdminPromoCodesTab = () => {
 						display: 'flex',
 						justifyContent: 'flex-end',
 						width: '20%',
-						height: isVerySmallScreen ? '1.75rem' : '2rem',
+						height: isMobileSize ? '1.75rem' : '2rem',
 						alignItems: 'center',
 					}}>
 					<CustomSubmitButton
@@ -365,7 +365,7 @@ const AdminPromoCodesTab = () => {
 					display: 'flex',
 					flexDirection: 'column',
 					alignItems: 'center',
-					padding: isMobileSize ? '0rem 0.25rem 2rem 0.25rem' : '0rem 0rem 2rem 0rem',
+					padding: isMobileSize ? '0rem 0rem 2rem rem' : '0rem 0rem 2rem 0rem',
 					width: '100%',
 				}}>
 				{/* Spacer for sticky table header */}
@@ -384,7 +384,7 @@ const AdminPromoCodesTab = () => {
 							position: 'fixed',
 							top: !((isSearchActive && searchedValue && searchButtonClicked) || (filterValue && filterValue.trim()))
 								? isMobileSize
-									? '11.5rem'
+									? '12.5rem'
 									: '12rem'
 								: isMobileSize
 									? '14rem'
@@ -412,8 +412,8 @@ const AdminPromoCodesTab = () => {
 						columns={
 							isMobileSize
 								? [
-										{ key: 'code', label: 'Promo Code' },
-										{ key: 'discountAmount', label: 'Discount Amount' },
+										{ key: 'code', label: isMobileSize ? 'Code' : 'Promo Code' },
+										{ key: 'discountAmount', label: isMobileSize ? 'Discount' : 'Discount Amount' },
 										{ key: 'isActive', label: 'Status' },
 										{ key: 'actions', label: 'Actions' },
 									]
@@ -434,12 +434,12 @@ const AdminPromoCodesTab = () => {
 									<TableRow key={promoCode._id} hover>
 										<CustomTableCell value={promoCode.code} />
 										<CustomTableCell value={promoCode.discountAmount} />
-										{!isVerySmallScreen && (
+										{!isMobileSize && (
 											<CustomTableCell
 												value={new Date(promoCode.expirationDate!).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
 											/>
 										)}
-										{!isVerySmallScreen && <CustomTableCell value={promoCode.usageLimit === 0 ? 'Unlimited' : promoCode.usageLimit} />}
+										{!isMobileSize && <CustomTableCell value={promoCode.usageLimit === 0 ? 'Unlimited' : promoCode.usageLimit} />}
 										<CustomTableCell value={promoCode.isActive ? 'Active' : 'Inactive'} />
 
 										<TableCell
@@ -494,7 +494,7 @@ const AdminPromoCodesTab = () => {
 							})}
 					</TableBody>
 				</Table>
-				{isVerySmallScreen && <CustomInfoMessageAlignedLeft message='Rotate your device for more info' />}
+				{isMobileSize && <CustomInfoMessageAlignedLeft message='Rotate your device for more info' />}
 				<CustomTablePagination count={promoCodesNumberOfPages} page={currentPage} onChange={handlePageChange} />
 			</Box>
 		</>

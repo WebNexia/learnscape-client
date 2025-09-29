@@ -16,31 +16,24 @@ import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import { useAuth } from '../hooks/useAuth';
 import { useFilterSearch } from '../hooks/useFilterSearch';
 import FilterSearchRow from '../components/layouts/FilterSearchRow';
-import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/CustomInfoMessageAlignedLeft';
 
 // Responsive column configuration
-const getColumns = (isVerySmallScreen: boolean) => {
-	return isVerySmallScreen
-		? [
-				{ key: 'lessonName', label: 'Quiz Name' },
-				{ key: 'isChecked', label: 'Status' },
-				{ key: 'actions', label: 'Actions' },
-			]
-		: [
-				{ key: 'lessonName', label: 'Quiz Name' },
-				{ key: 'courseName', label: 'Course Name' },
-				{ key: 'isChecked', label: 'Status' },
-				{ key: 'actions', label: 'Actions' },
-			];
+const getColumns = (isMobileSize: boolean) => {
+	return [
+		{ key: 'lessonName', label: isMobileSize ? 'Quiz' : 'Quiz Name' },
+		{ key: 'courseName', label: isMobileSize ? 'Course' : 'Course Name' },
+		{ key: 'isChecked', label: 'Status' },
+		{ key: 'actions', label: 'Actions' },
+	];
 };
 
 const Submissions = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { userQuizSubmissions, fetchMoreUserQuizSubmissions, loadedPages, userSubmissionsPageNumber, setUserSubmissionsPageNumber, loading } =
 		useContext(LearnerQuizSubmissionsContext);
-	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
+	const { isSmallScreen, isRotatedMedium, isRotated } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
-	const isMobileSizeSmall = isVerySmallScreen || isRotated;
+	const isMobileSizeSmall = isMobileSize || isRotated;
 
 	const { user } = useAuth();
 
@@ -147,7 +140,7 @@ const Submissions = () => {
 					display: 'flex',
 					flexDirection: 'column',
 					alignItems: 'center',
-					padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : '0rem 0rem 2rem 0rem',
+					padding: isMobileSize ? '0rem 0rem 2rem 0rem' : '0rem 0rem 2rem 0rem',
 					width: '100%',
 				}}>
 				<Table
@@ -155,6 +148,8 @@ const Submissions = () => {
 						'margin': '1rem 0',
 						'tableLayout': 'fixed',
 						'width': '100%',
+						'borderCollapse': 'collapse',
+						'borderSpacing': 0,
 						'& .MuiTableHead-root': {
 							position: 'fixed',
 							top: (isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim()) ? '11rem' : '8rem',
@@ -170,23 +165,79 @@ const Submissions = () => {
 						'& .MuiTableHead-root .MuiTableCell-root': {
 							backgroundColor: theme.palette.background.paper,
 							padding: '0.25rem 1rem',
+							boxSizing: 'border-box',
+							margin: 0,
+							verticalAlign: 'center',
+						},
+						'& .MuiTableHead-root .MuiTableCell-root:last-child': {
+							borderRight: 'none',
+						},
+						'& .MuiTableBody-root .MuiTableCell-root': {
+							padding: '0.25rem 1rem',
+							boxSizing: 'border-box',
+							margin: 0,
+							verticalAlign: 'center',
+						},
+						'& .MuiTableBody-root .MuiTableCell-root:last-child': {
+							borderRight: 'none',
+						},
+						// Column widths for header cells
+						'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(1)': {
+							minWidth: isMobileSize ? '150px' : '200px',
+							width: isMobileSize ? '50%' : '35%',
+						},
+						'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(2)': {
+							minWidth: isMobileSize ? '0px' : '200px',
+							width: isMobileSize ? '35%' : '35%',
+						},
+						'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(3)': {
+							minWidth: isMobileSize ? '80px' : '100px',
+							width: isMobileSize ? '15%' : '15%',
+						},
+						'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(4)': {
+							minWidth: isMobileSize ? '60px' : '80px',
+							width: isMobileSize ? '15%' : '15%',
+						},
+						// Column widths for body cells - exact same as header
+						'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(1)': {
+							minWidth: isMobileSize ? '150px' : '200px',
+							width: isMobileSize ? '35%' : '35%',
+						},
+						'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(2)': {
+							minWidth: isMobileSize ? '0px' : '200px',
+							width: isMobileSize ? '35%' : '35%',
+						},
+						'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(3)': {
+							minWidth: isMobileSize ? '80px' : '100px',
+							width: isMobileSize ? '15%' : '15%',
+						},
+						'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(4)': {
+							minWidth: isMobileSize ? '60px' : '80px',
+							width: isMobileSize ? '15%' : '15%',
 						},
 					}}
 					size='small'
 					aria-label='a dense table'>
 					{((isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim())) && <Box sx={{ height: '0.5rem' }}></Box>}
+					{/* Spacer row to ensure header alignment */}
+					<TableRow sx={{ height: 0, visibility: 'hidden' }}>
+						<TableCell sx={{ width: isMobileSize ? '35%' : '35%', padding: 0, border: 'none' }} />
+						<TableCell sx={{ width: isMobileSize ? '35%' : '35%', padding: 0, border: 'none' }} />
+						<TableCell sx={{ width: isMobileSize ? '15%' : '15%', padding: 0, border: 'none' }} />
+						<TableCell sx={{ width: isMobileSize ? '15%' : '15%', padding: 0, border: 'none' }} />
+					</TableRow>
 					<CustomTableHead<QuizSubmission>
 						orderBy={orderBy as keyof QuizSubmission}
 						order={order}
 						handleSort={handleSort}
-						columns={getColumns(isVerySmallScreen)}
+						columns={getColumns(isMobileSize)}
 					/>
 					<TableBody>
 						{paginatedSubmissions &&
 							paginatedSubmissions?.map((submission: QuizSubmission) => (
 								<TableRow key={submission._id} hover>
 									<CustomTableCell value={submission.lessonName} />
-									{!isVerySmallScreen && <CustomTableCell value={submission.courseName} />}
+									<CustomTableCell value={submission.courseName} />
 									<CustomTableCell value={submission.isChecked ? 'Checked' : 'Unchecked'} />
 
 									<TableCell
@@ -209,7 +260,7 @@ const Submissions = () => {
 							))}
 					</TableBody>
 				</Table>
-				{isVerySmallScreen && <CustomInfoMessageAlignedLeft message='Rotate your device for more info' />}
+
 				<CustomTablePagination count={submissionsNumberOfPages} page={currentPage} onChange={handlePageChange} />
 			</Box>
 		</DashboardPagesLayout>

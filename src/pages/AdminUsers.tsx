@@ -283,7 +283,7 @@ const AdminUsers = () => {
 							display: 'flex',
 							flexDirection: 'column',
 							alignItems: 'center',
-							padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : '0rem 1rem 2rem 1rem',
+							padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : '0rem 0rem 2rem 0rem',
 							width: '100%',
 						}}>
 						<Table
@@ -291,6 +291,8 @@ const AdminUsers = () => {
 								'mb': '2rem',
 								'tableLayout': 'fixed',
 								'width': '100%',
+								'borderCollapse': 'collapse',
+								'borderSpacing': 0,
 								'& .MuiTableHead-root': {
 									position: 'fixed',
 									top: (isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim()) ? '11rem' : '8rem',
@@ -306,11 +308,94 @@ const AdminUsers = () => {
 								'& .MuiTableHead-root .MuiTableCell-root': {
 									backgroundColor: theme.palette.background.paper,
 									padding: '0.25rem 1rem',
+									boxSizing: 'border-box',
+									margin: 0,
+									verticalAlign: 'center',
+								},
+								'& .MuiTableHead-root .MuiTableCell-root:last-child': {
+									borderRight: 'none',
+								},
+								'& .MuiTableBody-root .MuiTableCell-root': {
+									padding: '0.25rem 1rem',
+									boxSizing: 'border-box',
+									margin: 0,
+									verticalAlign: 'center',
+								},
+								'& .MuiTableBody-root .MuiTableCell-root:last-child': {
+									borderRight: 'none',
+								},
+								// Column widths for header cells
+								'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(1)': {
+									minWidth: isVerySmallScreen ? '80px' : '100px',
+									width: isVerySmallScreen ? '30%' : '14%',
+								},
+								'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(2)': {
+									minWidth: isVerySmallScreen ? '200px' : '100px',
+									width: isVerySmallScreen ? '40%' : '14%',
+								},
+								'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(3)': {
+									minWidth: isVerySmallScreen ? '100px' : '120px',
+									width: isVerySmallScreen ? '30%' : '12%',
+								},
+								'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(4)': {
+									minWidth: isVerySmallScreen ? '0px' : '150px',
+									width: isVerySmallScreen ? '0%' : '30%',
+								},
+								'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(5)': {
+									minWidth: isVerySmallScreen ? '0px' : '80px',
+									width: isVerySmallScreen ? '0%' : '12%',
+								},
+								'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(6)': {
+									minWidth: isVerySmallScreen ? '0px' : '80px',
+									width: isVerySmallScreen ? '0%' : '10%',
+								},
+								'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(7)': {
+									minWidth: isVerySmallScreen ? '0px' : '80px',
+									width: isVerySmallScreen ? '0%' : '10%',
+								},
+								// Column widths for body cells - exact same as header
+								'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(1)': {
+									minWidth: isVerySmallScreen ? '80px' : '100px',
+									width: isVerySmallScreen ? '30%' : '14%',
+								},
+								'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(2)': {
+									minWidth: isVerySmallScreen ? '200px' : '100px',
+									width: isVerySmallScreen ? '40%' : '14%',
+								},
+								'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(3)': {
+									minWidth: isVerySmallScreen ? '100px' : '120px',
+									width: isVerySmallScreen ? '30%' : '12%',
+								},
+								'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(4)': {
+									minWidth: isVerySmallScreen ? '0px' : '150px',
+									width: isVerySmallScreen ? '0%' : '30%',
+								},
+								'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(5)': {
+									minWidth: isVerySmallScreen ? '0px' : '80px',
+									width: isVerySmallScreen ? '0%' : '12%',
+								},
+								'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(6)': {
+									minWidth: isVerySmallScreen ? '0px' : '80px',
+									width: isVerySmallScreen ? '0%' : '10%',
+								},
+								'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(7)': {
+									minWidth: isVerySmallScreen ? '0px' : '80px',
+									width: isVerySmallScreen ? '0%' : '10%',
 								},
 							}}
 							size='small'
 							aria-label='a dense table'>
 							{((isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim())) && <Box sx={{ height: '1.5rem' }}></Box>}
+							{/* Spacer row to ensure header alignment */}
+							<TableRow sx={{ height: 0, visibility: 'hidden' }}>
+								<TableCell sx={{ width: isVerySmallScreen ? '30%' : '14%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isVerySmallScreen ? '40%' : '14%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isVerySmallScreen ? '30%' : '12%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isVerySmallScreen ? '0%' : '30%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isVerySmallScreen ? '0%' : '12%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isVerySmallScreen ? '0%' : '10%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isVerySmallScreen ? '0%' : '10%', padding: 0, border: 'none' }} />
+							</TableRow>
 							<CustomTableHead<User>
 								orderBy={orderBy as keyof User}
 								order={order}
@@ -334,16 +419,15 @@ const AdminUsers = () => {
 														textAlign: 'center',
 														padding: isMobileSizeSmall ? '0' : undefined,
 													}}>
-													{user._id !== userId && (
-														<CustomActionBtn
-															title='Edit'
-															onClick={() => {
-																toggleUserEditModal(index);
-																openEditUserModal(index);
-															}}
-															icon={<Edit fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
-														/>
-													)}
+													<CustomActionBtn
+														title='Edit'
+														onClick={() => {
+															toggleUserEditModal(index);
+															openEditUserModal(index);
+														}}
+														icon={<Edit fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
+														disabled={user._id === userId}
+													/>
 
 													<CustomDialog
 														openModal={isUserEditModalOpen[index]}
@@ -397,21 +481,22 @@ const AdminUsers = () => {
 															/>
 														</form>
 													</CustomDialog>
-													{user._id !== userId && (
-														<CustomActionBtn
-															title={user?.isActive ? 'Deactivate' : 'Activate'}
-															onClick={() => {
-																openStatusUpdateUserModal(index);
-															}}
-															icon={
-																user?.isActive ? (
-																	<Person fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />
-																) : (
-																	<PersonOff fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />
-																)
-															}
-														/>
-													)}
+
+													<CustomActionBtn
+														title={user?.isActive ? 'Deactivate' : 'Activate'}
+														onClick={() => {
+															openStatusUpdateUserModal(index);
+														}}
+														icon={
+															user?.isActive ? (
+																<Person fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />
+															) : (
+																<PersonOff fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />
+															)
+														}
+														disabled={user._id === userId}
+													/>
+
 													{isUserStatusUpdateModalOpen[index] !== undefined && (
 														<CustomDialog
 															openModal={isUserStatusUpdateModalOpen[index]}

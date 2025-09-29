@@ -431,7 +431,7 @@ const Message = ({
 									closeModal={() => setReportMsgModalOpen(false)}
 									title='Report Message'
 									content='Are you sure you want to report the message?'
-									maxWidth='sm'>
+									maxWidth='xs'>
 									<CustomDialogActions deleteBtn onDelete={reportMessage} onCancel={() => setReportMsgModalOpen(false)} deleteBtnText='Report' />
 								</CustomDialog>
 
@@ -528,7 +528,7 @@ const Message = ({
 							{message?.userId?.username} - {formatMessageTime(message?.createdAt)}
 						</Typography>
 					</Box>
-					<Box sx={{ padding: '1rem' }}>
+					<Box sx={{ padding: '0rem 1rem' }}>
 						{message.parentMessageId && (
 							<Box
 								sx={{
@@ -542,6 +542,20 @@ const Message = ({
 									Replying to: {typeof message.parentMessageId === 'object' ? message.parentMessageId.text : 'Original message'}
 								</Typography>
 							</Box>
+						)}
+
+						{message.text && (
+							<Typography
+								sx={{
+									lineHeight: isMobileSize ? 1.2 : 1.7,
+									margin: isMobileSize ? '0.15rem 0' : '0.5rem 0',
+									whiteSpace: 'pre-wrap',
+									wordBreak: 'break-word',
+									fontSize: '0.85rem',
+									padding: '0rem',
+								}}>
+								{renderMessageContent(message?.text || '')}
+							</Typography>
 						)}
 
 						{message.imageUrl ? (
@@ -567,7 +581,7 @@ const Message = ({
 						)}
 
 						{message.audioUrl && (
-							<Box sx={{ padding: '0.15rem 0.5rem', mt: 2 }}>
+							<Box sx={{ padding: '0.15rem 0rem', mt: 2 }}>
 								<audio
 									src={message.audioUrl}
 									controls

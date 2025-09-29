@@ -4,6 +4,7 @@ import { useContext, memo } from 'react';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 import SidebarBtn from '../dashboardLayout/SidebarBtn';
 import { Roles } from '../../../interfaces/enums';
+import { useLocation } from 'react-router-dom';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import logo from '../../../assets/logo.png';
 import {
@@ -148,6 +149,18 @@ const Loading = () => {
 	const { user } = useContext(UserAuthContext);
 	const { isRotatedMedium, isSmallScreen, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
+	const location = useLocation();
+
+	// Determine role from current route when user is not loaded yet
+	const getRoleFromRoute = (): Roles => {
+		if (location.pathname.startsWith('/admin/')) return Roles.ADMIN;
+		if (location.pathname.startsWith('/instructor/')) return Roles.INSTRUCTOR;
+		if (location.pathname.startsWith('/dashboard')) return Roles.USER;
+		return Roles.ADMIN; // fallback
+	};
+
+	// Get the effective role (user role if available, otherwise from route)
+	const effectiveRole = user?.role || getRoleFromRoute();
 
 	// Use useMemo for mode to prevent unnecessary re-renders
 	// const mode = useMemo(() => (localStorage.getItem('mode') as Mode) || Mode.LIGHT_MODE, []);
@@ -190,7 +203,12 @@ const Loading = () => {
 									alignItems: 'center',
 									height: '3rem',
 									width: '100%',
-									backgroundColor: user?.role === Roles.ADMIN ? theme.bgColor?.adminHeader : theme.bgColor?.lessonInProgress,
+									backgroundColor:
+										effectiveRole === Roles.ADMIN
+											? theme.bgColor?.adminHeader
+											: effectiveRole === Roles.INSTRUCTOR
+												? theme.bgColor?.instructorHeader
+												: theme.bgColor?.lessonInProgress,
 									padding: '0 1rem',
 								}}>
 								<IconButton>
@@ -308,7 +326,12 @@ const Loading = () => {
 									alignItems: 'center',
 									height: '3rem',
 									width: '100%',
-									backgroundColor: user?.role === Roles.ADMIN ? theme.bgColor?.adminHeader : theme.bgColor?.lessonInProgress,
+									backgroundColor:
+										effectiveRole === Roles.ADMIN
+											? theme.bgColor?.adminHeader
+											: effectiveRole === Roles.INSTRUCTOR
+												? theme.bgColor?.instructorHeader
+												: theme.bgColor?.lessonInProgress,
 									padding: '0 1rem 0 3rem',
 								}}>
 								<Box sx={{ display: 'flex', justifyContent: 'space-between' }}>

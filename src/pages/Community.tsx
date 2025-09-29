@@ -5,7 +5,7 @@ import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import CustomDeleteButton from '../components/forms/customButtons/CustomDeleteButton';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useState, useMemo } from 'react';
 import { CommunityContext } from '../contexts/CommunityContextProvider';
 import { CommunityTopic } from '../interfaces/communityTopics';
 import Topic from '../components/layouts/community/communityTopic/Topic';
@@ -91,18 +91,24 @@ const Community = () => {
 
 	const pageSize = 20;
 
-	// Sort the display data
-	const sortedTopics =
-		displayTopics?.sort((a, b) => {
-			const aValue = (a as any)[orderBy] ?? '';
-			const bValue = (b as any)[orderBy] ?? '';
+	// Force re-sort when topics data changes
+	const [sortKey, setSortKey] = useState(0);
 
-			if (order === 'asc') {
-				return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
-			} else {
-				return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
-			}
-		}) || [];
+	// Sort the display data
+	const sortedTopics = useMemo(() => {
+		return (
+			displayTopics?.sort((a, b) => {
+				const aValue = (a as any)[orderBy] ?? '';
+				const bValue = (b as any)[orderBy] ?? '';
+
+				if (order === 'asc') {
+					return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+				} else {
+					return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
+				}
+			}) || []
+		);
+	}, [displayTopics, orderBy, order, sortKey]); // Include sortKey to force re-sort
 
 	// Use appropriate page number for pagination
 	const currentPage = isSearchActive ? searchResultsPage : topicsPageNumber;
@@ -118,6 +124,13 @@ const Community = () => {
 	useEffect(() => {
 		setTopicsPageNumber(1);
 	}, []); // Reset page number only once on mount
+
+	// Force re-sort when topics data changes
+	useEffect(() => {
+		if (sortedTopicsData && sortedTopicsData.length > 0 && !isSearchActive) {
+			setSortKey((prev) => prev + 1);
+		}
+	}, [sortedTopicsData, isSearchActive]);
 
 	// Filter options based on user role
 	const getFilterOptions = () => {

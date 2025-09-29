@@ -102,9 +102,9 @@ const AdminRecycleBinCoursesTab = () => {
 	const vertical = 'top';
 	const horizontal = 'center';
 
-	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
+	const { isSmallScreen, isRotatedMedium, isRotated } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
-	const isMobileSizeSmall = isVerySmallScreen || isRotated;
+	const isMobileSizeSmall = isMobileSize || isRotated;
 
 	// Use appropriate page number for pagination
 	const currentPageNumber = isSearchActive ? searchResultsPage : currentPage;
@@ -371,7 +371,7 @@ const AdminRecycleBinCoursesTab = () => {
 					justifyContent: 'space-between',
 					alignItems: 'flex-start',
 					padding: isMobileSizeSmall ? '1rem 1rem 0.5rem 1rem' : '2rem 2rem 0rem 2rem',
-					width: 'calc(100% - 10rem)',
+					width: isMobileSize ? '100%' : 'calc(100% - 10rem)',
 					position: 'fixed',
 					top: isMobileSize ? '7.5rem' : '6.5rem', // Account for header + tabs
 					left: isMobileSize ? 0 : '10rem',
@@ -381,7 +381,7 @@ const AdminRecycleBinCoursesTab = () => {
 					backdropFilter: 'blur(10px)',
 				}}>
 				<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-					<Box sx={{ display: 'flex', alignSelf: 'flex-start', width: isVerySmallScreen ? '12.5rem' : 'fit-content' }}>
+					<Box sx={{ display: 'flex', alignSelf: 'flex-start', width: isMobileSize ? '12.5rem' : 'fit-content' }}>
 						<Box>
 							<FormControl>
 								<Select
@@ -453,7 +453,7 @@ const AdminRecycleBinCoursesTab = () => {
 							onChange={(e) => {
 								setSearchValue(e.target.value);
 							}}
-							sx={{ backgroundColor: '#fff', minWidth: isVerySmallScreen ? '10rem' : '17.5rem' }}
+							sx={{ backgroundColor: '#fff', minWidth: isMobileSize ? '10rem' : '17.5rem' }}
 							required={false}
 							InputProps={{
 								onKeyDown: (e) => {
@@ -566,7 +566,7 @@ const AdminRecycleBinCoursesTab = () => {
 					display: 'flex',
 					flexDirection: 'column',
 					alignItems: 'center',
-					padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : '0rem 0rem 2rem 0rem',
+					padding: isMobileSize ? '0rem 0rem 2rem 0rem' : '0rem 0rem 2rem 0rem',
 					width: '100%',
 				}}>
 				{/* Spacer for sticky table header */}
@@ -614,7 +614,7 @@ const AdminRecycleBinCoursesTab = () => {
 						selectAll={selectAll}
 						onSelectAll={handleSelectAll}
 						columns={
-							isVerySmallScreen
+							isMobileSize
 								? [
 										{ key: 'checkbox', label: '' },
 										{ key: 'title', label: 'Title' },
@@ -663,10 +663,10 @@ const AdminRecycleBinCoursesTab = () => {
 											<input type='checkbox' checked={isSelected} onChange={() => handleSelectItem(course._id)} />
 										</TableCell>
 										<CustomTableCell value={course.title} />
-										{!isVerySmallScreen && <CustomTableCell value={course.instructor?.name || 'N/A'} />}
-										{!isVerySmallScreen && <CustomTableCell value={course.archivedByName || 'N/A'} />}
+										{!isMobileSize && <CustomTableCell value={course.instructor?.name || 'N/A'} />}
+										{!isMobileSize && <CustomTableCell value={course.archivedByName || 'N/A'} />}
 										<CustomTableCell value={course.archivedAt ? dateFormatter(course.archivedAt) : 'N/A'} />
-										{!isVerySmallScreen && <CustomTableCell value={deletionDateStatus.label} />}
+										{!isMobileSize && <CustomTableCell value={deletionDateStatus.label} />}
 										<TableCell sx={{ textAlign: 'center' }}>
 											<CustomActionBtn title='Restore Course' onClick={() => openRestoreCourseModal(index)} icon={<Restore fontSize='small' />} />
 											<CustomActionBtn
@@ -686,7 +686,7 @@ const AdminRecycleBinCoursesTab = () => {
 						sx={{ marginTop: '5rem' }}
 					/>
 				)}
-
+				{isMobileSize && <CustomInfoMessageAlignedLeft message='Rotate your device for more info' />}
 				<CustomTablePagination count={coursesNumberOfPages} page={currentPageNumber} onChange={handlePageChange} />
 			</Box>
 
