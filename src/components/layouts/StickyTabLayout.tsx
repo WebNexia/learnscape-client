@@ -34,7 +34,7 @@ const StickyTabLayout: React.FC<StickyTabLayoutProps> = ({ activeTab, onTabChang
 					flexDirection: 'row',
 					justifyContent: 'center',
 					position: isSticky ? 'fixed' : 'relative',
-					top: isSticky ? '4rem' : 'auto', // Account for DashboardHeader height
+					top: isMobileSize ? '3.5rem' : '4rem', // Account for DashboardHeader height
 					left: isSticky ? (isMobileSize ? 0 : '10rem') : 'auto', // Account for sidebar width on desktop
 					right: isSticky ? 0 : 'auto',
 					zIndex: isSticky ? 100 : 'auto', // Higher z-index to ensure it's above all content
@@ -48,7 +48,7 @@ const StickyTabLayout: React.FC<StickyTabLayoutProps> = ({ activeTab, onTabChang
 					textColor='primary'
 					indicatorColor='secondary'
 					sx={{
-						'paddingTop': isMobileSize ? '0.5rem' : '0.25rem',
+						'paddingTop': isMobileSize ? '0.25rem' : '0.25rem',
 						'paddingLeft': isMobileSize ? '1rem' : '2rem',
 						'paddingRight': isMobileSize ? '1rem' : '2rem',
 						'& .MuiTabs-indicator': {

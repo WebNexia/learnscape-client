@@ -4,6 +4,8 @@ import { setCurrencySymbol } from '../../../utils/setCurrencySymbol';
 import theme from '../../../themes';
 import CustomDialog from '../dialog/CustomDialog';
 import CustomCancelButton from '../../../components/forms/customButtons/CustomCancelButton';
+import { useContext } from 'react';
+import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 interface PaymentDetailsDialogProps {
 	open: boolean;
@@ -13,6 +15,9 @@ interface PaymentDetailsDialogProps {
 
 const PaymentDetailsDialog = ({ open, onClose, payment }: PaymentDetailsDialogProps) => {
 	if (!payment) return null;
+
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
 
 	const formatDate = (dateString: string) => {
 		return new Date(dateString).toLocaleDateString('en-US', {
@@ -73,6 +78,7 @@ const PaymentDetailsDialog = ({ open, onClose, payment }: PaymentDetailsDialogPr
 								color: theme.textColor?.primary,
 								fontWeight: 600,
 								mb: 2,
+								fontSize: isMobileSize ? '0.85rem' : '1rem',
 							}}>
 							{section.title}
 						</Typography>
@@ -94,7 +100,7 @@ const PaymentDetailsDialog = ({ open, onClose, payment }: PaymentDetailsDialogPr
 										variant='body2'
 										sx={{
 											color: theme.textColor?.primary.main,
-											fontSize: '0.95rem',
+											fontSize: isMobileSize ? '0.75rem' : '0.95rem',
 											letterSpacing: '0.5px',
 											fontWeight: 500,
 										}}>
@@ -103,7 +109,7 @@ const PaymentDetailsDialog = ({ open, onClose, payment }: PaymentDetailsDialogPr
 									<Typography
 										variant='body1'
 										sx={{
-											fontSize: '0.85rem',
+											fontSize: isMobileSize ? '0.7rem' : '0.85rem',
 											backgroundColor: theme.bgColor?.secondary,
 											padding: '0.5rem 0.75rem',
 											borderRadius: '0.5rem',
@@ -114,7 +120,6 @@ const PaymentDetailsDialog = ({ open, onClose, payment }: PaymentDetailsDialogPr
 								</Box>
 							))}
 						</Box>
-						{/* {sectionIndex < sections.length - 1 && <Divider sx={{ mt: 5, borderColor: '#e0e0e0', borderWidth: '1px' }} />} */}
 					</Box>
 				))}
 			</Box>

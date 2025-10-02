@@ -5,6 +5,8 @@ import CustomCancelButton from '../../forms/customButtons/CustomCancelButton';
 import { useResourceUsage } from '../../../hooks/useResourceUsage';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../hooks/useAuth';
+import { useContext } from 'react';
+import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 interface LessonInfoModalProps {
 	lesson: Lesson;
@@ -20,33 +22,42 @@ const LessonInfoModal = ({ lesson, onClose }: LessonInfoModalProps) => {
 		window.open(`/admin/course-edit/course/${courseId}`, '_blank');
 	};
 
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
+
 	return (
 		<>
 			<DialogContent>
 				<Box display='flex' flexDirection='column' gap={1}>
 					<Grid container spacing={2.25} alignItems='center'>
 						<Grid item xs={3}>
-							<Typography variant='body2'>Created By:</Typography>
+							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+								Created By:
+							</Typography>
 						</Grid>
 						<Grid item xs={9} display='flex' alignItems='center'>
 							<Avatar sx={{ width: 25, height: 25, mr: '0.5rem' }} src={lesson.createdByImageUrl} />
-							<Typography variant='body2'>
+							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 								{lesson.createdByName} ({lesson.createdByRole}) on {dateTimeFormatter(lesson.createdAt)}
 							</Typography>
 						</Grid>
 
 						<Grid item xs={3}>
-							<Typography variant='body2'>Last Updated By:</Typography>
+							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+								Last Updated By:
+							</Typography>
 						</Grid>
 						<Grid item xs={9} display='flex' alignItems='center'>
 							<Avatar sx={{ width: 25, height: 25, mr: '0.5rem' }} src={lesson.updatedByImageUrl} />
-							<Typography variant='body2'>
+							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 								{lesson.updatedByName} ({lesson.updatedByRole}) on {dateTimeFormatter(lesson.updatedAt)}
 							</Typography>
 						</Grid>
 
 						<Grid item xs={3}>
-							<Typography variant='body2'>Cloned From:</Typography>
+							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+								Cloned From:
+							</Typography>
 						</Grid>
 						{lesson.clonedFromTitle ? (
 							<Grid item xs={9}>
@@ -65,45 +76,64 @@ const LessonInfoModal = ({ lesson, onClose }: LessonInfoModalProps) => {
 										':hover': {
 											textDecoration: 'underline',
 										},
+										'fontSize': isMobileSize ? '0.75rem' : '0.85rem',
 									}}>
 									📄 {lesson.clonedFromTitle}
 								</Typography>
 							</Grid>
 						) : (
 							<Grid item xs={9}>
-								<Typography variant='body2'>N/A</Typography>
+								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+									N/A
+								</Typography>
 							</Grid>
 						)}
 
 						<Grid item xs={3}>
-							<Typography variant='body2'>Published At:</Typography>
+							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+								Published At:
+							</Typography>
 						</Grid>
 						{lesson.publishedAt ? (
 							<Grid item xs={9}>
-								<Typography variant='body2'>🗓️ {dateTimeFormatter(lesson.publishedAt)}</Typography>
+								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+									🗓️ {dateTimeFormatter(lesson.publishedAt)}
+								</Typography>
 							</Grid>
 						) : (
 							<Grid item xs={9}>
-								<Typography variant='body2'>N/A</Typography>
+								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+									N/A
+								</Typography>
 							</Grid>
 						)}
 
 						<Grid item xs={3}>
-							<Typography variant='body2'>Used in Courses:</Typography>
+							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+								Used in Courses:
+							</Typography>
 						</Grid>
 						<Grid item xs={9}>
 							{usageInfo.courses && usageInfo.courses.length > 0 ? (
 								<FormControl fullWidth size='small' sx={{ width: '90%' }}>
-									<Select value='' displayEmpty renderValue={() => `${usageInfo.courses.length} course(s)`} sx={{ fontSize: '0.85rem' }}>
+									<Select
+										value=''
+										displayEmpty
+										renderValue={() => `${usageInfo.courses.length} course(s)`}
+										sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 										{usageInfo.courses?.map((course) => (
-											<MenuItem key={course.id} value={course.id} sx={{ fontSize: '0.8rem' }} onClick={() => handleCourseSelect(course.id)}>
+											<MenuItem
+												key={course.id}
+												value={course.id}
+												sx={{ fontSize: isMobileSize ? '0.7rem' : '0.8rem' }}
+												onClick={() => handleCourseSelect(course.id)}>
 												{course.title}
 											</MenuItem>
 										))}
 									</Select>
 								</FormControl>
 							) : (
-								<Typography variant='body2' color='text.secondary'>
+								<Typography variant='body2' color='text.secondary' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 									No courses using this lesson
 								</Typography>
 							)}

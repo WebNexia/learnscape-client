@@ -46,6 +46,7 @@ import FillInTheBlanksDragDrop from '../../layouts/FITBDragDrop/FillInTheBlanksD
 import CustomInfoMessageAlignedRight from '../../layouts/infoMessage/CustomInfoMessageAlignedRight';
 import axios from '@utils/axiosInstance';
 import { validateImageUrl, validateVideoUrl } from '../../../utils/urlValidation';
+import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 declare global {
 	interface Window {
@@ -109,6 +110,9 @@ const CreateQuestionDialog = ({
 	const { resetImageUpload } = useImageUpload();
 	const { resetVideoUpload } = useVideoUpload();
 	const { user } = useAuth();
+
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
 
 	// Role detection
 	const isInstructor = user?.role === Roles.INSTRUCTOR;
@@ -482,7 +486,7 @@ const CreateQuestionDialog = ({
 				autoHideDuration={5000}
 				anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
 				onClose={() => setIsUrlErrorOpen(false)}>
-				<Alert severity='error' variant='filled' sx={{ width: '100%' }}>
+				<Alert severity='error' variant='filled' sx={{ width: isMobileSize ? '60%' : '100%', fontSize: isMobileSize ? '0.75rem' : undefined }}>
 					{urlErrorMessage}
 				</Alert>
 			</Snackbar>

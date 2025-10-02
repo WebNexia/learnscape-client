@@ -270,7 +270,7 @@ const AdminUsers = () => {
 						onResetFilter={resetFilter}
 						actionButtons={[
 							{
-								label: `Download ${searchButtonClicked ? 'Filtered' : 'All'} Users`,
+								label: isMobileSize ? 'Download' : `Download ${searchButtonClicked ? 'Filtered' : 'All'} Users`,
 								onClick: handleDownloadUsers,
 								startIcon: <DownloadIcon />,
 								disabled: displayUsers && displayUsers.length === 0,
@@ -295,7 +295,14 @@ const AdminUsers = () => {
 								'borderSpacing': 0,
 								'& .MuiTableHead-root': {
 									position: 'fixed',
-									top: (isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim()) ? '11rem' : '8rem',
+									top:
+										(isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim())
+											? !isMobileSize
+												? '10rem'
+												: '12.5rem'
+											: isMobileSize
+												? '10.25rem'
+												: '8rem',
 									left: isMobileSize ? 0 : '10rem',
 									right: 0,
 									zIndex: 99,
@@ -385,7 +392,6 @@ const AdminUsers = () => {
 							}}
 							size='small'
 							aria-label='a dense table'>
-							{((isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim())) && <Box sx={{ height: '1.5rem' }}></Box>}
 							{/* Spacer row to ensure header alignment */}
 							<TableRow sx={{ height: 0, visibility: 'hidden' }}>
 								<TableCell sx={{ width: isVerySmallScreen ? '30%' : '14%', padding: 0, border: 'none' }} />
@@ -527,7 +533,7 @@ const AdminUsers = () => {
 									})}
 							</TableBody>
 						</Table>
-						{isVerySmallScreen && <CustomInfoMessageAlignedLeft message='Rotate your device for more info' />}
+						{isVerySmallScreen && <CustomInfoMessageAlignedLeft message='Rotate your device or use desktop for more info' />}
 						<CustomTablePagination count={usersNumberOfPages} page={currentPage} onChange={handlePageChange} />
 					</Box>
 				</Box>

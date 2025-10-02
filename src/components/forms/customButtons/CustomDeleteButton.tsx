@@ -1,5 +1,6 @@
 import { Button, ButtonOwnProps } from '@mui/material';
-import { FormEvent, MouseEvent, ReactNode } from 'react';
+import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
+import { FormEvent, MouseEvent, ReactNode, useContext } from 'react';
 
 interface CustomDeleteButtonProps {
 	children?: ReactNode;
@@ -20,6 +21,8 @@ const CustomDeleteButton = ({
 	disabled,
 	size = 'small',
 }: CustomDeleteButtonProps) => {
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
 	return (
 		<Button
 			type={type}
@@ -32,7 +35,8 @@ const CustomDeleteButton = ({
 				':hover': {
 					backgroundColor: 'error.light',
 				},
-				'height': '1.75rem',
+				'height': isMobileSize ? '1.5rem' : '1.75rem',
+				'fontSize': isMobileSize ? '0.7rem' : '0.85rem',
 				'mt': '0.2rem',
 			}}
 			onClick={onClick}

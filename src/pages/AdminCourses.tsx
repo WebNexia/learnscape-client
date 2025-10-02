@@ -1,4 +1,4 @@
-import { Box, Table, TableBody, TableRow, TableCell, Typography, DialogContent, Snackbar, Alert, DialogActions } from '@mui/material';
+import { Box, Table, TableBody, TableRow, TableCell, Typography, Snackbar, Alert, DialogActions } from '@mui/material';
 import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
@@ -27,6 +27,7 @@ import { useFilterSearch } from '../hooks/useFilterSearch';
 import FilterSearchRow from '../components/layouts/FilterSearchRow';
 import CoursesInfoModal from '../components/layouts/courses/CoursesInfoModal';
 import CreateCourseDialog from '../components/forms/newCourse/CreateCourseDialog';
+import CloneCourseDialog from '../components/layouts/courses/CloneCourseDialog';
 
 const AdminCourses = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -50,7 +51,7 @@ const AdminCourses = () => {
 
 	// Role-based endpoint detection
 	const isInstructor = user?.role === 'instructor';
-	const baseEndpoint = isInstructor ? `/courses/instructor/${user?._id}` : `/courses/organisation/${orgId}`;
+	const baseEndpoint = isInstructor ? `/courses/organisation/${orgId}/instructor` : `/courses/organisation/${orgId}`;
 
 	const vertical = 'top';
 	const horizontal = 'center';
@@ -212,11 +213,22 @@ const AdminCourses = () => {
 			addNewCourse({
 				_id: response.data.clonedCourse._id,
 				title: response.data.clonedCourse.title,
+				instructor: response.data.clonedCourse.instructor,
 				clonedFromId: response.data.clonedCourse.clonedFromId,
 				clonedFromTitle: response.data.clonedCourse.clonedFromTitle,
+				courseManagement: response.data.clonedCourse.courseManagement,
+				isActive: response.data.clonedCourse.isActive,
 				createdAt: response.data.clonedCourse.createdAt,
 				updatedAt: response.data.clonedCourse.updatedAt,
-			} as SingleCourse);
+				createdBy: response.data.clonedCourse.createdBy,
+				updatedBy: response.data.clonedCourse.updatedBy,
+				createdByName: response.data.clonedCourse.createdByName,
+				updatedByName: response.data.clonedCourse.updatedByName,
+				createdByImageUrl: response.data.clonedCourse.createdByImageUrl,
+				updatedByImageUrl: response.data.clonedCourse.updatedByImageUrl,
+				createdByRole: response.data.clonedCourse.createdByRole,
+				updatedByRole: response.data.clonedCourse.updatedByRole,
+			} as unknown as SingleCourse);
 
 			setIsCourseCloned(true);
 		} catch (error: any) {
@@ -339,7 +351,14 @@ const AdminCourses = () => {
 							'borderSpacing': 0,
 							'& .MuiTableHead-root': {
 								position: 'fixed',
-								top: (isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim()) ? '11rem' : '8rem',
+								top:
+									(isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim())
+										? !isMobileSize
+											? '10rem'
+											: '12.5rem'
+										: isMobileSize
+											? '10.25rem'
+											: '8rem',
 								left: isMobileSize ? 0 : '10rem',
 								right: 0,
 								zIndex: 99,
@@ -371,19 +390,19 @@ const AdminCourses = () => {
 							// Column widths for mobile (4 columns)
 							'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(1)': {
 								minWidth: isMobileSize ? '150px' : isInstructor ? '100px' : '100px',
-								width: isMobileSize ? '40%' : isInstructor ? '14%' : '10%',
+								width: isMobileSize ? '30%' : isInstructor ? '14%' : '10%',
 							},
 							'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(2)': {
 								minWidth: isMobileSize ? '200px' : isInstructor ? '200px' : '200px',
-								width: isMobileSize ? '25%' : isInstructor ? '30%' : '23%',
+								width: isMobileSize ? '30%' : isInstructor ? '30%' : '23%',
 							},
 							'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(3)': {
 								minWidth: isMobileSize ? '80px' : isInstructor ? '100px' : '100px',
-								width: isMobileSize ? '15%' : isInstructor ? '15%' : '15%',
+								width: isMobileSize ? '17%' : isInstructor ? '15%' : '15%',
 							},
 							'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(4)': {
 								minWidth: isMobileSize ? '100px' : isInstructor ? '100px' : '100px',
-								width: isMobileSize ? '20%' : isInstructor ? '13%' : '12%',
+								width: isMobileSize ? '23%' : isInstructor ? '13%' : '12%',
 							},
 							'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(5)': {
 								minWidth: isMobileSize ? '0px' : isInstructor ? '100px' : '100px',
@@ -400,19 +419,19 @@ const AdminCourses = () => {
 							// Column widths for body cells - exact same as header
 							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(1)': {
 								minWidth: isMobileSize ? '150px' : isInstructor ? '100px' : '100px',
-								width: isMobileSize ? '40%' : isInstructor ? '14%' : '10%',
+								width: isMobileSize ? '30%' : isInstructor ? '14%' : '10%',
 							},
 							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(2)': {
 								minWidth: isMobileSize ? '200px' : isInstructor ? '200px' : '200px',
-								width: isMobileSize ? '25%' : isInstructor ? '30%' : '23%',
+								width: isMobileSize ? '30%' : isInstructor ? '30%' : '23%',
 							},
 							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(3)': {
 								minWidth: isMobileSize ? '80px' : isInstructor ? '100px' : '100px',
-								width: isMobileSize ? '15%' : isInstructor ? '15%' : '15%',
+								width: isMobileSize ? '17%' : isInstructor ? '15%' : '15%',
 							},
 							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(4)': {
 								minWidth: isMobileSize ? '100px' : isInstructor ? '100px' : '100px',
-								width: isMobileSize ? '20%' : isInstructor ? '13%' : '12%',
+								width: isMobileSize ? '23%' : isInstructor ? '13%' : '12%',
 							},
 							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(5)': {
 								minWidth: isMobileSize ? '0px' : isInstructor ? '100px' : '100px',
@@ -429,13 +448,12 @@ const AdminCourses = () => {
 						}}
 						size='small'
 						aria-label='a dense table'>
-						{((isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim())) && <Box sx={{ height: '1.5rem' }}></Box>}
 						{/* Spacer row to ensure header alignment */}
 						<TableRow sx={{ height: 0, visibility: 'hidden' }}>
-							<TableCell sx={{ width: isMobileSize ? '40%' : isInstructor ? '14%' : '10%', padding: 0, border: 'none' }} />
-							<TableCell sx={{ width: isMobileSize ? '25%' : isInstructor ? '30%' : '23%', padding: 0, border: 'none' }} />
-							<TableCell sx={{ width: isMobileSize ? '15%' : isInstructor ? '15%' : '15%', padding: 0, border: 'none' }} />
-							<TableCell sx={{ width: isMobileSize ? '20%' : isInstructor ? '13%' : '12%', padding: 0, border: 'none' }} />
+							<TableCell sx={{ width: isMobileSize ? '30%' : isInstructor ? '14%' : '10%', padding: 0, border: 'none' }} />
+							<TableCell sx={{ width: isMobileSize ? '30%' : isInstructor ? '30%' : '23%', padding: 0, border: 'none' }} />
+							<TableCell sx={{ width: isMobileSize ? '17%' : isInstructor ? '15%' : '15%', padding: 0, border: 'none' }} />
+							<TableCell sx={{ width: isMobileSize ? '23%' : isInstructor ? '13%' : '12%', padding: 0, border: 'none' }} />
 							<TableCell sx={{ width: isMobileSize ? '0%' : isInstructor ? '13%' : '13%', padding: 0, border: 'none' }} />
 							<TableCell sx={{ width: isMobileSize ? '0%' : isInstructor ? '15%' : '12%', padding: 0, border: 'none' }} />
 							<TableCell sx={{ width: isMobileSize ? '0%' : isInstructor ? '0%' : '15%', padding: 0, border: 'none' }} />
@@ -449,7 +467,7 @@ const AdminCourses = () => {
 									? [
 											{ key: 'title', label: 'Title' },
 											{ key: 'isActive', label: 'Status' },
-											{ key: 'startingDate', label: 'Starting Date' },
+											{ key: 'startingDate', label: 'Start' },
 											{ key: 'actions', label: 'Actions' },
 										]
 									: isInstructor
@@ -632,50 +650,14 @@ const AdminCourses = () => {
 												)}
 
 												{isCourseCloneModalOpen[index] !== undefined && (
-													<CustomDialog
-														openModal={isCourseCloneModalOpen[index]}
-														closeModal={() => closeCloneCourseModal(index)}
-														title='Clone Course'
-														content='Are you sure you want to clone the course?'
-														maxWidth='sm'>
-														<DialogContent sx={{ mt: '-0.75rem' }}>
-															<Typography variant='body2'>Cloning this course will:</Typography>
-															<ul style={{ paddingLeft: '1.2rem', marginTop: '0.5rem' }}>
-																<li>
-																	<Typography variant='body2' sx={{ mb: '0.25rem' }}>
-																		Create a new course with a copy of all its chapters, lessons, questions, and documents
-																	</Typography>
-																</li>
-																<li>
-																	<Typography variant='body2' sx={{ mb: '0.25rem' }}>
-																		Preserve the original course and its content without any changes
-																	</Typography>
-																</li>
-																<li>
-																	<Typography variant='body2' sx={{ mb: '0.25rem' }}>
-																		Allow you to safely edit the new course without affecting previous versions
-																	</Typography>
-																</li>
-																<li>
-																	<Typography variant='body2' sx={{ mb: '0.25rem' }}>
-																		Keep the original pricing for all currencies
-																	</Typography>
-																</li>
-																<li>
-																	<Typography variant='body2'>Mark the cloned course as unpublished by default</Typography>
-																</li>
-															</ul>
-															<Typography variant='body2' sx={{ marginTop: '1rem' }}>
-																You can customize the cloned course (including pricing) before publishing it.
-															</Typography>
-														</DialogContent>
-
-														<CustomDialogActions
-															onCancel={() => closeCloneCourseModal(index)}
-															submitBtnText={isCloning ? 'Cloning...' : 'Clone'}
-															onSubmit={() => handleClone(course._id, index)}
-														/>
-													</CustomDialog>
+													<CloneCourseDialog
+														isCourseCloneModalOpen={isCourseCloneModalOpen}
+														index={index}
+														closeCloneCourseModal={closeCloneCourseModal}
+														isCloning={isCloning}
+														handleClone={handleClone}
+														course={course}
+													/>
 												)}
 												<Snackbar
 													open={isCourseCloned}
@@ -683,7 +665,14 @@ const AdminCourses = () => {
 													anchorOrigin={{ vertical, horizontal }}
 													sx={{ mt: '5rem' }}
 													onClose={() => setIsCourseCloned(false)}>
-													<Alert severity='success' variant='filled' sx={{ width: '100%', color: theme.textColor?.common.main }}>
+													<Alert
+														severity='success'
+														variant='filled'
+														sx={{
+															width: isMobileSize ? '60%' : '100%',
+															color: theme.textColor?.common.main,
+															fontSize: isMobileSize ? '0.75rem' : undefined,
+														}}>
 														Course is cloned successfully!
 													</Alert>
 												</Snackbar>
@@ -699,9 +688,10 @@ const AdminCourses = () => {
 														onClose={() => setSnackbarOpen(false)}
 														severity={snackbarSeverity}
 														sx={{
-															'width': '100%',
+															'width': isMobileSize ? '60%' : '100%',
 															'backgroundColor': theme.bgColor?.greenSecondary,
 															'color': theme.textColor?.common.main,
+															'fontSize': isMobileSize ? '0.75rem' : undefined,
 															'& .MuiAlert-icon': {
 																color: 'white',
 															},
@@ -715,7 +705,7 @@ const AdminCourses = () => {
 								})}
 						</TableBody>
 					</Table>
-					{isVerySmallScreen && <CustomInfoMessageAlignedLeft message='Rotate your device for more info' />}
+					{isVerySmallScreen && <CustomInfoMessageAlignedLeft message='Rotate your device or use desktop for more info' />}
 					<CustomTablePagination count={coursesNumberOfPages} page={currentPage} onChange={handlePageChange} />
 				</Box>
 			</DashboardPagesLayout>

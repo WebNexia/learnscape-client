@@ -57,8 +57,8 @@ const AdminDocuments = () => {
 	const getColumns = (isMobileSize: boolean) => {
 		return isMobileSize
 			? [
-					{ key: 'name', label: 'Document Name' },
-					{ key: 'documentUrl', label: 'Document URL' },
+					{ key: 'name', label: isMobileSize ? 'Name' : 'Document Name' },
+					{ key: 'documentUrl', label: isMobileSize ? 'URL' : 'Document URL' },
 					{ key: 'actions', label: 'Actions' },
 				]
 			: isInstructor
@@ -612,7 +612,14 @@ const AdminDocuments = () => {
 								'borderSpacing': 0,
 								'& .MuiTableHead-root': {
 									position: 'fixed',
-									top: (isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim()) ? '11rem' : '8rem',
+									top:
+										(isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim())
+											? !isMobileSize
+												? '10rem'
+												: '12.5rem'
+											: isMobileSize
+												? '10.25rem'
+												: '8rem',
 									left: isMobileSize ? 0 : '10rem',
 									right: 0,
 									zIndex: 99,
@@ -648,11 +655,11 @@ const AdminDocuments = () => {
 								},
 								'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(2)': {
 									minWidth: isMobileSize ? '200px' : isInstructor ? '200px' : '200px',
-									width: isMobileSize ? '35%' : isInstructor ? '30%' : '27%',
+									width: isMobileSize ? '30%' : isInstructor ? '30%' : '27%',
 								},
 								'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(3)': {
 									minWidth: isMobileSize ? '100px' : isInstructor ? '100px' : '100px',
-									width: isMobileSize ? '25%' : isInstructor ? '15%' : '20%',
+									width: isMobileSize ? '30%' : isInstructor ? '15%' : '20%',
 								},
 								'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(4)': {
 									minWidth: isMobileSize ? '0px' : isInstructor ? '100px' : '100px',
@@ -673,11 +680,11 @@ const AdminDocuments = () => {
 								},
 								'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(2)': {
 									minWidth: isMobileSize ? '200px' : isInstructor ? '200px' : '200px',
-									width: isMobileSize ? '35%' : isInstructor ? '30%' : '27%',
+									width: isMobileSize ? '30%' : isInstructor ? '30%' : '27%',
 								},
 								'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(3)': {
 									minWidth: isMobileSize ? '100px' : isInstructor ? '100px' : '100px',
-									width: isMobileSize ? '25%' : isInstructor ? '15%' : '20%',
+									width: isMobileSize ? '30%' : isInstructor ? '15%' : '20%',
 								},
 								'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(4)': {
 									minWidth: isMobileSize ? '0px' : isInstructor ? '100px' : '100px',
@@ -694,12 +701,11 @@ const AdminDocuments = () => {
 							}}
 							size='small'
 							aria-label='a dense table'>
-							{((isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim())) && <Box sx={{ height: '1.5rem' }}></Box>}
 							{/* Spacer row to ensure header alignment */}
 							<TableRow sx={{ height: 0, visibility: 'hidden' }}>
 								<TableCell sx={{ width: isMobileSize ? '40%' : isInstructor ? '25%' : '13%', padding: 0, border: 'none' }} />
-								<TableCell sx={{ width: isMobileSize ? '35%' : isInstructor ? '30%' : '27%', padding: 0, border: 'none' }} />
-								<TableCell sx={{ width: isMobileSize ? '25%' : isInstructor ? '15%' : '20%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isMobileSize ? '30%' : isInstructor ? '30%' : '27%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isMobileSize ? '30%' : isInstructor ? '15%' : '20%', padding: 0, border: 'none' }} />
 								<TableCell sx={{ width: isMobileSize ? '0%' : isInstructor ? '15%' : '13%', padding: 0, border: 'none' }} />
 								<TableCell sx={{ width: isMobileSize ? '0%' : isInstructor ? '15%' : '12%', padding: 0, border: 'none' }} />
 								<TableCell sx={{ width: isMobileSize ? '0%' : isInstructor ? '0%' : '15%', padding: 0, border: 'none' }} />
@@ -723,7 +729,7 @@ const AdminDocuments = () => {
 														target='_blank'
 														rel='noopener noreferrer'
 														sx={{ fontSize: isMobileSize ? '0.6rem' : undefined }}>
-														{isMobileSize ? truncateText(document.documentUrl, 25) : truncateText(document.documentUrl, 27)}
+														{isMobileSize ? truncateText(document.documentUrl, 20) : truncateText(document.documentUrl, 27)}
 													</Link>
 												</TableCell>
 												{!isMobileSize && !isInstructor && <CustomTableCell value={document.createdByName || 'N/A'} />}
@@ -823,7 +829,7 @@ const AdminDocuments = () => {
 									})}
 							</TableBody>
 						</Table>
-						{isMobileSize && <CustomInfoMessageAlignedLeft message='Rotate your device for more info' />}
+						{isMobileSize && <CustomInfoMessageAlignedLeft message='Rotate your device or use desktop for more info' />}
 						<CustomTablePagination count={documentsNumberOfPages} page={currentPage} onChange={handlePageChange} />
 					</Box>
 
@@ -842,7 +848,7 @@ const AdminDocuments = () => {
 						autoHideDuration={3500}
 						anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
 						onClose={() => setIsUrlErrorOpen(false)}>
-						<Alert severity='error' variant='filled' sx={{ width: '100%' }}>
+						<Alert severity='error' variant='filled' sx={{ width: isMobileSize ? '60%' : '100%', fontSize: isMobileSize ? '0.75rem' : undefined }}>
 							{urlErrorMessage}
 						</Alert>
 					</Snackbar>
@@ -857,9 +863,10 @@ const AdminDocuments = () => {
 							onClose={() => setSnackbarOpen(false)}
 							severity={snackbarSeverity}
 							sx={{
-								'width': '100%',
+								'width': isMobileSize ? '60%' : '100%',
 								'backgroundColor': theme.bgColor?.greenSecondary,
 								'color': theme.textColor?.common.main,
+								'fontSize': isMobileSize ? '0.75rem' : undefined,
 								'& .MuiAlert-icon': {
 									color: 'white',
 								},

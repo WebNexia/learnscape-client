@@ -165,7 +165,14 @@ const AdminQuizSubmissions = () => {
 							'borderSpacing': 0,
 							'& .MuiTableHead-root': {
 								position: 'fixed',
-								top: (isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim()) ? '11rem' : '8rem',
+								top:
+									(isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim())
+										? !isMobileSize
+											? '10rem'
+											: '12.5rem'
+										: isMobileSize
+											? '10.25rem'
+											: '8rem',
 								left: isMobileSize ? 0 : '10rem',
 								right: 0,
 								zIndex: 99,
@@ -201,19 +208,19 @@ const AdminQuizSubmissions = () => {
 							},
 							'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(2)': {
 								minWidth: isMobileSize ? '120px' : '200px',
-								width: isMobileSize ? '30%' : '30%',
+								width: isMobileSize ? '40%' : '30%',
 							},
 							'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(3)': {
 								minWidth: isMobileSize ? '100px' : '200px',
-								width: isMobileSize ? '25%' : '30%',
+								width: isMobileSize ? '15%' : '30%',
 							},
 							'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(4)': {
 								minWidth: isMobileSize ? '80px' : '100px',
-								width: isMobileSize ? '10%' : '10%',
+								width: isMobileSize ? '20%' : '10%',
 							},
 							'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(5)': {
 								minWidth: isMobileSize ? '60px' : '80px',
-								width: isMobileSize ? '10%' : '15%',
+								width: isMobileSize ? '0%' : '15%',
 							},
 							// Column widths for body cells - exact same as header
 							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(1)': {
@@ -222,43 +229,51 @@ const AdminQuizSubmissions = () => {
 							},
 							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(2)': {
 								minWidth: isMobileSize ? '120px' : '200px',
-								width: isMobileSize ? '30%' : '30%',
+								width: isMobileSize ? '40%' : '30%',
 							},
 							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(3)': {
 								minWidth: isMobileSize ? '100px' : '200px',
-								width: isMobileSize ? '25%' : '30%',
+								width: isMobileSize ? '15%' : '30%',
 							},
 							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(4)': {
 								minWidth: isMobileSize ? '80px' : '100px',
-								width: isMobileSize ? '10%' : '10%',
+								width: isMobileSize ? '20%' : '10%',
 							},
 							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(5)': {
 								minWidth: isMobileSize ? '60px' : '80px',
-								width: isMobileSize ? '10%' : '15%',
+								width: isMobileSize ? '0%' : '15%',
 							},
 						}}
 						size='small'
 						aria-label='a dense table'>
-						{((isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim())) && <Box sx={{ height: '1.5rem' }}></Box>}
 						{/* Spacer row to ensure header alignment */}
 						<TableRow sx={{ height: 0, visibility: 'hidden' }}>
 							<TableCell sx={{ width: isMobileSize ? '25%' : '15%', padding: 0, border: 'none' }} />
-							<TableCell sx={{ width: isMobileSize ? '30%' : '30%', padding: 0, border: 'none' }} />
-							<TableCell sx={{ width: isMobileSize ? '25%' : '30%', padding: 0, border: 'none' }} />
-							<TableCell sx={{ width: isMobileSize ? '10%' : '10%', padding: 0, border: 'none' }} />
-							<TableCell sx={{ width: isMobileSize ? '10%' : '15%', padding: 0, border: 'none' }} />
+							<TableCell sx={{ width: isMobileSize ? '40%' : '30%', padding: 0, border: 'none' }} />
+							<TableCell sx={{ width: isMobileSize ? '15%' : '30%', padding: 0, border: 'none' }} />
+							<TableCell sx={{ width: isMobileSize ? '20%' : '10%', padding: 0, border: 'none' }} />
+							<TableCell sx={{ width: isMobileSize ? '0%' : '15%', padding: 0, border: 'none' }} />
 						</TableRow>
 						<CustomTableHead<QuizSubmission>
 							orderBy={orderBy as keyof QuizSubmission}
 							order={order}
 							handleSort={handleSort}
-							columns={[
-								{ key: 'userName', label: isMobileSize ? 'Username' : 'Username' },
-								{ key: 'lessonName', label: isMobileSize ? 'Quiz' : 'Quiz Name' },
-								{ key: 'courseName', label: isMobileSize ? 'Course' : 'Course Name' },
-								{ key: 'isChecked', label: 'Status' },
-								{ key: 'actions', label: 'Actions' },
-							]}
+							columns={
+								isMobileSize
+									? [
+											{ key: 'userName', label: isMobileSize ? 'Username' : 'Username' },
+											{ key: 'lessonName', label: isMobileSize ? 'Quiz' : 'Quiz Name' },
+											{ key: 'isChecked', label: 'Status' },
+											{ key: 'actions', label: 'Actions' },
+										]
+									: [
+											{ key: 'userName', label: isMobileSize ? 'Username' : 'Username' },
+											{ key: 'lessonName', label: isMobileSize ? 'Quiz' : 'Quiz Name' },
+											{ key: 'courseName', label: isMobileSize ? 'Course' : 'Course Name' },
+											{ key: 'isChecked', label: 'Status' },
+											{ key: 'actions', label: 'Actions' },
+										]
+							}
 						/>
 						<TableBody>
 							{paginatedSubmissions &&
@@ -267,7 +282,7 @@ const AdminQuizSubmissions = () => {
 										<TableRow key={submission._id} hover>
 											<CustomTableCell value={submission.userName} />
 											<CustomTableCell value={submission.lessonName} />
-											<CustomTableCell value={submission.courseName} />
+											{!isMobileSize && <CustomTableCell value={submission.courseName} />}
 											<CustomTableCell value={submission.isChecked ? 'Checked' : 'Unchecked'} />
 
 											<TableCell
@@ -298,7 +313,7 @@ const AdminQuizSubmissions = () => {
 								})}
 						</TableBody>
 					</Table>
-					{isMobileSize && <CustomInfoMessageAlignedLeft message='Rotate your device for more info' />}
+					{isMobileSize && <CustomInfoMessageAlignedLeft message='Rotate your device or use desktop for more info' />}
 					<CustomTablePagination count={submissionsNumberOfPages} page={currentPage} onChange={handlePageChange} />
 				</Box>
 			</DashboardPagesLayout>

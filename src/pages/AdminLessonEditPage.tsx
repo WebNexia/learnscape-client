@@ -64,6 +64,7 @@ import CreateQuestionWithAIDialog from '../components/adminSingleLesson/CreateQu
 import { validateImageUrl, validateVideoUrl, validateDocumentUrl } from '../utils/urlValidation';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 import { Roles } from '../interfaces/enums';
+import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 
 const colorChange = keyframes`
     0% {
@@ -105,6 +106,8 @@ const AdminLessonEditPage = () => {
 
 	const { questionTypes, fetchQuestionTypeName, addNewQuestion, updateQuestion } = useContext(QuestionsContext);
 	const { addNewDocument, updateDocument } = useContext(DocumentsContext);
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
 
 	const vertical = 'top';
 	const horizontal = 'center';
@@ -932,7 +935,7 @@ const AdminLessonEditPage = () => {
 				anchorOrigin={{ vertical, horizontal }}
 				sx={{ mt: '5rem' }}
 				onClose={() => setIsErrorMessageOpen(false)}>
-				<Alert severity='error' variant='filled' sx={{ width: '100%' }}>
+				<Alert severity='error' variant='filled' sx={{ width: isMobileSize ? '60%' : '100%', fontSize: isMobileSize ? '0.75rem' : undefined }}>
 					{errorMessage}
 				</Alert>
 			</Snackbar>
@@ -943,7 +946,10 @@ const AdminLessonEditPage = () => {
 				anchorOrigin={{ vertical, horizontal }}
 				sx={{ mt: '5rem' }}
 				onClose={() => setIsAiContentGeneratedMsgOpen(false)}>
-				<Alert severity='success' variant='filled' sx={{ width: '100%', color: '#fff' }}>
+				<Alert
+					severity='success'
+					variant='filled'
+					sx={{ width: isMobileSize ? '60%' : '100%', color: '#fff', fontSize: isMobileSize ? '0.75rem' : undefined }}>
 					AI content generated successfully! You can now review and edit the content.
 				</Alert>
 			</Snackbar>
@@ -958,7 +964,7 @@ const AdminLessonEditPage = () => {
 					setIsUrlErrorOpen(false);
 					setIsEditMode(true);
 				}}>
-				<Alert severity='error' variant='filled' sx={{ width: '100%' }}>
+				<Alert severity='error' variant='filled' sx={{ width: isMobileSize ? '60%' : '100%', fontSize: isMobileSize ? '0.75rem' : undefined }}>
 					{errorMessage}
 				</Alert>
 			</Snackbar>

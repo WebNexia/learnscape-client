@@ -191,7 +191,14 @@ const AdminPublicEvents = () => {
 							'borderSpacing': 0,
 							'& .MuiTableHead-root': {
 								position: 'fixed',
-								top: (isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim()) ? '11rem' : '8rem',
+								top:
+									(isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim())
+										? !isMobileSize
+											? '10rem'
+											: '12.5rem'
+										: isMobileSize
+											? '10.25rem'
+											: '8rem',
 								left: isMobileSize ? 0 : '10rem',
 								right: 0,
 								zIndex: 99,
@@ -227,7 +234,7 @@ const AdminPublicEvents = () => {
 							},
 							'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(2)': {
 								minWidth: isMobileSize ? '150px' : '200px',
-								width: isMobileSize ? '25%' : '25%',
+								width: isMobileSize ? '30%' : '25%',
 							},
 							'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(3)': {
 								minWidth: isMobileSize ? '100px' : '120px',
@@ -239,7 +246,7 @@ const AdminPublicEvents = () => {
 							},
 							'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(5)': {
 								minWidth: isMobileSize ? '80px' : '100px',
-								width: isMobileSize ? '10%' : '10%',
+								width: isMobileSize ? '0%' : '10%',
 							},
 							'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(6)': {
 								minWidth: isMobileSize ? '60px' : '80px',
@@ -252,7 +259,7 @@ const AdminPublicEvents = () => {
 							},
 							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(2)': {
 								minWidth: isMobileSize ? '150px' : '200px',
-								width: isMobileSize ? '25%' : '25%',
+								width: isMobileSize ? '30%' : '25%',
 							},
 							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(3)': {
 								minWidth: isMobileSize ? '100px' : '120px',
@@ -264,7 +271,7 @@ const AdminPublicEvents = () => {
 							},
 							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(5)': {
 								minWidth: isMobileSize ? '80px' : '100px',
-								width: isMobileSize ? '10%' : '10%',
+								width: isMobileSize ? '0%' : '10%',
 							},
 							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(6)': {
 								minWidth: isMobileSize ? '60px' : '80px',
@@ -273,14 +280,13 @@ const AdminPublicEvents = () => {
 						}}
 						size='small'
 						aria-label='a dense table'>
-						{((isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim())) && <Box sx={{ height: '1.5rem' }}></Box>}
 						{/* Spacer row to ensure header alignment */}
 						<TableRow sx={{ height: 0, visibility: 'hidden' }}>
 							<TableCell sx={{ width: isMobileSize ? '20%' : '12%', padding: 0, border: 'none' }} />
-							<TableCell sx={{ width: isMobileSize ? '25%' : '25%', padding: 0, border: 'none' }} />
+							<TableCell sx={{ width: isMobileSize ? '30%' : '25%', padding: 0, border: 'none' }} />
 							<TableCell sx={{ width: isMobileSize ? '25%' : '20%', padding: 0, border: 'none' }} />
 							<TableCell sx={{ width: isMobileSize ? '20%' : '20%', padding: 0, border: 'none' }} />
-							<TableCell sx={{ width: isMobileSize ? '10%' : '10%', padding: 0, border: 'none' }} />
+							<TableCell sx={{ width: isMobileSize ? '0%' : '10%', padding: 0, border: 'none' }} />
 							<TableCell sx={{ width: isMobileSize ? '0%' : '13%', padding: 0, border: 'none' }} />
 						</TableRow>
 						<CustomTableHead<Event>
@@ -292,8 +298,7 @@ const AdminPublicEvents = () => {
 									? [
 											{ key: 'title', label: 'Title' },
 											{ key: 'start', label: 'Start' },
-											{ key: 'end', label: 'End' },
-											{ key: 'participantCount', label: 'Participants(#)' },
+											{ key: 'participantCount', label: 'Attendees(#)' },
 											{ key: 'actions', label: 'Actions' },
 										]
 									: [
@@ -301,7 +306,7 @@ const AdminPublicEvents = () => {
 											{ key: 'title', label: 'Title' },
 											{ key: 'start', label: 'Start' },
 											{ key: 'end', label: 'End' },
-											{ key: 'participantCount', label: 'Participants(#)' },
+											{ key: 'participantCount', label: 'Attendees(#)' },
 											{ key: 'actions', label: 'Actions' },
 										]
 							}
@@ -314,7 +319,7 @@ const AdminPublicEvents = () => {
 											{!isMobileSize && <CustomTableCell value={event.type} />}
 											<CustomTableCell value={event.title} />
 											<CustomTableCell value={dateTimeFormatter(event.start)} />
-											<CustomTableCell value={dateTimeFormatter(event.end)} />
+											{!isMobileSize && <CustomTableCell value={dateTimeFormatter(event.end)} />}
 											<CustomTableCell value={event.participantCount ?? 0} />
 											<TableCell
 												sx={{
@@ -339,7 +344,7 @@ const AdminPublicEvents = () => {
 								})}
 						</TableBody>
 					</Table>
-					{isMobileSize && <CustomInfoMessageAlignedLeft message='Rotate your device for more info' />}
+					{isMobileSize && <CustomInfoMessageAlignedLeft message='Rotate your device or use desktop for more info' />}
 					<CustomTablePagination count={eventsNumberOfPages} page={currentPage} onChange={handlePageChange} />
 				</Box>
 
@@ -347,26 +352,26 @@ const AdminPublicEvents = () => {
 					<DialogContent>
 						{selectedEvent ? (
 							<Box>
-								<Typography variant='h6' gutterBottom>
+								<Typography variant='h6' gutterBottom sx={{ fontSize: isMobileSize ? '0.85rem' : undefined }}>
 									{selectedEvent.title}
 								</Typography>
 								<Divider sx={{ mb: 2 }} />
-								<Typography variant='body2' sx={{ mb: '0.75rem' }}>
+								<Typography variant='body2' sx={{ mb: '0.75rem', fontSize: isMobileSize ? '0.75rem' : undefined }}>
 									<b>Type:</b> {selectedEvent.type}
 								</Typography>
-								<Typography variant='body2' sx={{ mb: '0.75rem' }}>
+								<Typography variant='body2' sx={{ mb: '0.75rem', fontSize: isMobileSize ? '0.75rem' : undefined }}>
 									<b>Start:</b> {dateTimeFormatter(selectedEvent.start)}
 								</Typography>
-								<Typography variant='body2' sx={{ mb: '0.75rem' }}>
+								<Typography variant='body2' sx={{ mb: '0.75rem', fontSize: isMobileSize ? '0.75rem' : undefined }}>
 									<b>End:</b> {dateTimeFormatter(selectedEvent.end)}
 								</Typography>
-								<Typography variant='body2' sx={{ mb: '0.75rem' }}>
+								<Typography variant='body2' sx={{ mb: '0.75rem', fontSize: isMobileSize ? '0.75rem' : undefined }}>
 									<b>Location:</b> {selectedEvent.location || '-'}
 								</Typography>
-								<Typography variant='body2' sx={{ mb: '0.75rem' }}>
+								<Typography variant='body2' sx={{ mb: '0.75rem', fontSize: isMobileSize ? '0.75rem' : undefined }}>
 									<b>Description:</b> {selectedEvent.description || '-'}
 								</Typography>
-								<Typography variant='body2' sx={{ mb: '0.75rem' }}>
+								<Typography variant='body2' sx={{ mb: '0.75rem', fontSize: isMobileSize ? '0.75rem' : undefined }}>
 									<b>Event Link:</b>{' '}
 									{selectedEvent.eventLinkUrl ? (
 										<Link href={selectedEvent.eventLinkUrl} target='_blank' rel='noopener noreferrer' sx={{ textDecoration: 'underline' }}>
@@ -376,15 +381,15 @@ const AdminPublicEvents = () => {
 										'-'
 									)}
 								</Typography>
-								<Typography variant='body2' sx={{ mb: '0.75rem' }}>
+								<Typography variant='body2' sx={{ mb: '0.75rem', fontSize: isMobileSize ? '0.75rem' : undefined }}>
 									<b>Created At:</b> {dateTimeFormatter(selectedEvent.createdAt)}
 								</Typography>
-								<Typography variant='body2' sx={{ mb: '0.75rem' }}>
+								<Typography variant='body2' sx={{ mb: '0.75rem', fontSize: isMobileSize ? '0.75rem' : undefined }}>
 									<b>Last Updated At:</b> {dateTimeFormatter(selectedEvent.updatedAt)}
 								</Typography>
 							</Box>
 						) : (
-							<Typography>No event selected.</Typography>
+							<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : undefined }}>No event selected.</Typography>
 						)}
 					</DialogContent>
 					<DialogActions>

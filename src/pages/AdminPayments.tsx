@@ -42,7 +42,7 @@ const AdminPayments = () => {
 						flexDirection: 'row',
 						justifyContent: 'center',
 						position: 'fixed',
-						top: '4rem', // Account for DashboardHeader height
+						top: isMobileSize ? '3.5rem' : '4rem', // Account for DashboardHeader height
 						left: isMobileSize ? 0 : '10rem', // Account for sidebar width on desktop
 						right: 0,
 						zIndex: 100, // Higher z-index to ensure it's above all content

@@ -1,4 +1,4 @@
-import { Alert, Box, Button, DialogContent, IconButton, Paper, Snackbar, Tooltip, Typography } from '@mui/material';
+import { Alert, Box, Button, IconButton, Paper, Snackbar, Tooltip, Typography } from '@mui/material';
 import theme from '../../themes';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Edit, FileCopy, Info, KeyboardBackspaceOutlined } from '@mui/icons-material';
@@ -8,8 +8,6 @@ import useImageUpload from '../../hooks/useImageUpload';
 import CustomSubmitButton from '../forms/customButtons/CustomSubmitButton';
 import { FormEvent, useContext, useState } from 'react';
 import CustomCancelButton from '../forms/customButtons/CustomCancelButton';
-import CustomDialog from '../layouts/dialog/CustomDialog';
-import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
 import axios from '@utils/axiosInstance';
 import { CoursesContext } from '../../contexts/CoursesContextProvider';
 import { useStickyPaper } from '../../hooks/useStickyPaper';
@@ -17,6 +15,7 @@ import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
 import { Roles } from '../../interfaces/enums';
 import CoursesInfoModal from '../layouts/courses/CoursesInfoModal';
+import CloneCourseDialog from '../layouts/courses/CloneCourseDialog';
 
 interface CoursePaperProps {
 	singleCourse?: SingleCourse;
@@ -95,19 +94,33 @@ const CoursePaper = ({
 	const [isCourseInfoDialogOpen, setIsCourseInfoDialogOpen] = useState<boolean>(false);
 	const [isCourseCloned, setIsCourseCloned] = useState<boolean>(false);
 
-	const handleClone = async () => {
+	const cloneCourse = async () => {
 		setIsCloning(true);
 		try {
 			const response = await axios.post(`${base_url}/courses/${courseId}/clone`, { courseId });
 			setIsCloneCourseDialogOpen(false);
 
+			console.log(response.data.clonedCourse);
+
 			addNewCourse({
-				_id: response.data._id,
+				_id: response.data.clonedCourse._id,
 				title: response.data.clonedCourse.title,
+				instructor: response.data.clonedCourse.instructor,
 				clonedFromId: response.data.clonedCourse.clonedFromId,
+				clonedFromTitle: response.data.clonedCourse.clonedFromTitle,
+				courseManagement: response.data.clonedCourse.courseManagement,
+				isActive: response.data.clonedCourse.isActive,
 				createdAt: response.data.clonedCourse.createdAt,
 				updatedAt: response.data.clonedCourse.updatedAt,
-			} as SingleCourse);
+				createdBy: response.data.clonedCourse.createdBy,
+				updatedBy: response.data.clonedCourse.updatedBy,
+				createdByName: response.data.clonedCourse.createdByName,
+				updatedByName: response.data.clonedCourse.updatedByName,
+				createdByImageUrl: response.data.clonedCourse.createdByImageUrl,
+				updatedByImageUrl: response.data.clonedCourse.updatedByImageUrl,
+				createdByRole: response.data.clonedCourse.createdByRole,
+				updatedByRole: response.data.clonedCourse.updatedByRole,
+			} as unknown as SingleCourse);
 
 			setIsCourseCloned(true);
 		} catch (error) {
@@ -234,7 +247,10 @@ const CoursePaper = ({
 									anchorOrigin={{ vertical, horizontal }}
 									sx={{ mt: '5rem' }}
 									onClose={() => setIsNoChapterMsgOpen(false)}>
-									<Alert severity='error' variant='filled' sx={{ width: '100%' }}>
+									<Alert
+										severity='error'
+										variant='filled'
+										sx={{ width: isMobileSize ? '60%' : '100%', fontSize: isMobileSize ? '0.75rem' : undefined }}>
 										Add at least one published lesson to publish the course
 									</Alert>
 								</Snackbar>
@@ -245,7 +261,14 @@ const CoursePaper = ({
 									anchorOrigin={{ vertical, horizontal }}
 									sx={{ mt: '5rem' }}
 									onClose={() => setIsCourseCloned(false)}>
-									<Alert severity='success' variant='filled' sx={{ width: '100%', color: theme.textColor?.common.main }}>
+									<Alert
+										severity='success'
+										variant='filled'
+										sx={{
+											width: isMobileSize ? '60%' : '100%',
+											color: theme.textColor?.common.main,
+											fontSize: isMobileSize ? '0.75rem' : undefined,
+										}}>
 										Course is cloned successfully!
 									</Alert>
 								</Snackbar>
@@ -256,7 +279,10 @@ const CoursePaper = ({
 									anchorOrigin={{ vertical, horizontal }}
 									sx={{ mt: '5rem' }}
 									onClose={() => setIsMissingFieldMsgOpen(false)}>
-									<Alert severity='error' variant='filled' sx={{ width: '100%' }}>
+									<Alert
+										severity='error'
+										variant='filled'
+										sx={{ width: isMobileSize ? '60%' : '100%', fontSize: isMobileSize ? '0.75rem' : undefined }}>
 										Fill in the required field(s)
 									</Alert>
 								</Snackbar>
@@ -339,45 +365,12 @@ const CoursePaper = ({
 								)}
 							</Box>
 
-							<CustomDialog
-								openModal={isCloneCourseDialogOpen}
-								closeModal={() => setIsCloneCourseDialogOpen(false)}
-								title='Clone Course'
-								content='Are you sure you want to clone the course?'
-								maxWidth='sm'>
-								<DialogContent sx={{ mt: '-0.75rem' }}>
-									<Typography variant='body2'>Cloning this course will:</Typography>
-									<ul style={{ paddingLeft: '1.2rem', marginTop: '0.5rem' }}>
-										<li>
-											<Typography variant='body2' sx={{ mb: '0.25rem' }}>
-												Create a new course with a copy of all its chapters, lessons, questions, and documents
-											</Typography>
-										</li>
-										<li>
-											<Typography variant='body2' sx={{ mb: '0.25rem' }}>
-												Preserve the original course and its content without any changes
-											</Typography>
-										</li>
-										<li>
-											<Typography variant='body2' sx={{ mb: '0.25rem' }}>
-												Allow you to safely edit the new course without affecting previous versions
-											</Typography>
-										</li>
-										<li>
-											<Typography variant='body2'>Mark the cloned course as unpublished by default</Typography>
-										</li>
-									</ul>
-									<Typography variant='body2' sx={{ marginTop: '1rem' }}>
-										You can customize the cloned course before publishing it.
-									</Typography>
-								</DialogContent>
-
-								<CustomDialogActions
-									onCancel={() => setIsCloneCourseDialogOpen(false)}
-									submitBtnText={isCloning ? 'Cloning...' : 'Clone'}
-									onSubmit={handleClone}
-								/>
-							</CustomDialog>
+							<CloneCourseDialog
+								isCloneCourseDialogOpen={isCloneCourseDialogOpen}
+								setIsCloneCourseDialogOpen={setIsCloneCourseDialogOpen}
+								isCloning={isCloning}
+								cloneCourse={cloneCourse}
+							/>
 							<CoursesInfoModal
 								singleCourse={singleCourseBeforeSave}
 								isCourseInfoDialogOpen={isCourseInfoDialogOpen}

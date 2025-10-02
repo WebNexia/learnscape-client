@@ -654,7 +654,7 @@ const CommunityTopicPage = () => {
 				<Alert
 					onClose={() => setDisplayDeleteTopicMsg(false)}
 					severity='success'
-					sx={{ width: '100%', fontSize: isMobileSize ? '0.7rem' : undefined }}>
+					sx={{ width: isMobileSize ? '60%' : '100%', fontSize: isMobileSize ? '0.75rem' : undefined }}>
 					You have successfully deleted the topic!
 				</Alert>
 			</Snackbar>
@@ -667,7 +667,7 @@ const CommunityTopicPage = () => {
 				onClose={() => {
 					setEveryoneMsg(false);
 				}}>
-				<Alert severity='error' variant='filled' sx={{ width: '100%', fontSize: isMobileSize ? '0.7rem' : undefined }}>
+				<Alert severity='error' variant='filled' sx={{ width: isMobileSize ? '60%' : '100%', fontSize: isMobileSize ? '0.75rem' : undefined }}>
 					Only admin users can mention @everyone.
 				</Alert>
 			</Snackbar>
@@ -1287,7 +1287,7 @@ const CommunityTopicPage = () => {
 				autoHideDuration={3500}
 				anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
 				onClose={() => setIsUrlErrorOpen(false)}>
-				<Alert severity='error' variant='filled' sx={{ width: '100%' }}>
+				<Alert severity='error' variant='filled' sx={{ width: isMobileSize ? '60%' : '100%', fontSize: isMobileSize ? '0.75rem' : undefined }}>
 					{urlErrorMessage}
 				</Alert>
 			</Snackbar>

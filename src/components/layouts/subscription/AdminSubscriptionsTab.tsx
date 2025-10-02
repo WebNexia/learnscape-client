@@ -1,29 +1,10 @@
-import {
-	Box,
-	FormControl,
-	InputAdornment,
-	MenuItem,
-	Select,
-	Table,
-	TableBody,
-	TableCell,
-	TableRow,
-	Typography,
-	Chip,
-	Snackbar,
-	Alert,
-	DialogContent,
-	DialogActions,
-} from '@mui/material';
+import { Box, Table, TableBody, TableCell, TableRow, Typography, Snackbar, Alert, DialogContent, DialogActions } from '@mui/material';
 import { useContext, useEffect, useState } from 'react';
 import { UserSubscription } from '../../../interfaces/subscription';
-import { Search, Visibility, Delete, Cancel } from '@mui/icons-material';
+import { Visibility, Delete, Cancel } from '@mui/icons-material';
 import CustomTableHead from '../table/CustomTableHead';
 import CustomTableCell from '../table/CustomTableCell';
 import CustomTablePagination from '../table/CustomTablePagination';
-import CustomTextField from '../../forms/customFields/CustomTextField';
-import CustomSubmitButton from '../../forms/customButtons/CustomSubmitButton';
-import CustomDeleteButton from '../../forms/customButtons/CustomDeleteButton';
 import CustomActionBtn from '../table/CustomActionBtn';
 import theme from '../../../themes';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
@@ -38,6 +19,7 @@ import DownloadIcon from '@mui/icons-material/Download';
 import CustomCancelButton from '../../../components/forms/customButtons/CustomCancelButton';
 import { useFilterSearch } from '../../../hooks/useFilterSearch';
 import CustomInfoMessageAlignedLeft from '../infoMessage/CustomInfoMessageAlignedLeft';
+import FilterSearchRow from '../FilterSearchRow';
 
 const AdminSubscriptionsTab = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -54,9 +36,8 @@ const AdminSubscriptionsTab = () => {
 		updateSubscription,
 	} = useContext(SubscriptionsContext);
 
-	const { isSmallScreen, isRotatedMedium, isRotated } = useContext(MediaQueryContext);
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
-	const isMobileSizeSmall = isMobileSize || isRotated;
 
 	// Dialog states
 	const [isViewDialogOpen, setIsViewDialogOpen] = useState<boolean[]>([]);
@@ -303,238 +284,48 @@ const AdminSubscriptionsTab = () => {
 
 	return (
 		<>
-			{/* Sticky Filter/Search Row */}
-			<Box
-				sx={{
-					display: 'flex',
-					justifyContent: isMobileSize ? 'center' : 'space-between',
-					padding: isMobileSizeSmall ? '1rem 1rem 0.5rem 1rem' : '2rem 2rem 0rem 2rem',
-					width: isMobileSize ? '100%' : 'calc(100% - 10rem)',
-					position: 'fixed',
-					top: isMobileSize ? '7.5rem' : '6.5rem', // Account for header + tabs
-					left: isMobileSize ? 0 : '10rem',
-					right: 0,
-					zIndex: 99,
-					backgroundColor: theme.palette.background.paper,
-					backdropFilter: 'blur(10px)',
-				}}>
-				<Box sx={{ display: 'flex', width: '100%', flexDirection: 'column' }}>
-					<Box sx={{ display: 'flex', width: '100%' }}>
-						<Box sx={{ mr: '1rem' }}>
-							<FormControl>
-								<Select
-									size='small'
-									value={filterValue}
-									onChange={(e) => handleFilterChange(e.target.value)}
-									displayEmpty
-									sx={{
-										backgroundColor: theme.bgColor?.common,
-										width: isMobileSizeSmall ? '8rem' : '12rem',
-										fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-										textTransform: 'capitalize',
-									}}>
-									<MenuItem
-										disabled
-										value='filter'
-										selected
-										sx={{
-											fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-											fontStyle: 'italic',
-											textTransform: 'capitalize',
-											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-											minHeight: '2rem',
-										}}>
-										Filter Subscriptions
-									</MenuItem>
-									<MenuItem
-										value=''
-										selected
-										sx={{
-											fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-											textTransform: 'capitalize',
-											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-											minHeight: '2rem',
-										}}>
-										All Subscriptions
-									</MenuItem>
-									<MenuItem
-										disabled
-										value='types'
-										selected
-										sx={{
-											fontSize: isMobileSize ? '0.6rem' : '0.7rem',
-											textTransform: 'inherit',
-											fontWeight: 'lighter',
-											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-											minHeight: '2rem',
-										}}>
-										------ Filter by Status ------
-									</MenuItem>
-									{['Active', 'Canceled', 'Past Due', 'Unpaid', 'Incomplete', 'Trialing']?.map((type) => (
-										<MenuItem
-											value={type.toLowerCase()}
-											key={type}
-											sx={{
-												fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-												textTransform: 'capitalize',
-												padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-												minHeight: '2rem',
-											}}>
-											{type}
-										</MenuItem>
-									))}
-									<MenuItem
-										disabled
-										value='types2'
-										selected
-										sx={{
-											fontSize: isMobileSize ? '0.6rem' : '0.7rem',
-											textTransform: 'inherit',
-											fontWeight: 'lighter',
-											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-											minHeight: '2rem',
-										}}>
-										------ Filter by Type ------
-									</MenuItem>
-									{['Monthly', 'Yearly']?.map((type) => (
-										<MenuItem
-											value={type.toLowerCase()}
-											key={type}
-											sx={{
-												fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-												textTransform: 'capitalize',
-												padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-												minHeight: '2rem',
-											}}>
-											{type}
-										</MenuItem>
-									))}
-								</Select>
-							</FormControl>
-						</Box>
-
-						<Box sx={{ display: 'flex', width: '65%' }}>
-							<CustomTextField
-								value={searchValue}
-								placeholder={isMobileSize ? 'Search User' : 'Search in User Email and Name'}
-								onChange={(e) => {
-									setSearchValue(e.target.value);
-								}}
-								sx={{
-									'backgroundColor': '#fff',
-									'& .MuiInputBase-input::placeholder': {
-										fontSize: '0.75rem', // Change this to your desired font size
-									},
-								}}
-								required={false}
-								InputProps={{
-									onKeyDown: (e) => {
-										if (e.key === 'Enter') {
-											e.preventDefault();
-											if (searchValue.trim() && !isSearchLoading) {
-												handleSearch();
-											}
-										}
-									},
-									endAdornment: (
-										<InputAdornment position='end'>
-											<Search
-												sx={{
-													mr: '-0.5rem',
-												}}
-												fontSize={isMobileSize ? 'small' : 'medium'}
-											/>
-										</InputAdornment>
-									),
-								}}
-							/>
-							<CustomSubmitButton
-								sx={{
-									height: isMobileSize ? '1.75rem' : '2rem',
-									marginLeft: '0.5rem',
-									fontSize: isMobileSize ? '0.7rem' : undefined,
-								}}
-								type='button'
-								disabled={!searchValue || isSearchLoading}
-								onClick={handleSearch}>
-								Search
-							</CustomSubmitButton>
-							<CustomDeleteButton
-								sx={{ height: isMobileSize ? '1.75rem' : '2rem', marginLeft: '0.5rem', fontSize: isMobileSize ? '0.7rem' : undefined }}
-								type='button'
-								onClick={resetAll}>
-								Reset
-							</CustomDeleteButton>
-							<Box sx={{ height: '2rem', ml: '1rem', display: 'flex', alignItems: 'center' }}>
-								<Typography
-									variant='body2'
-									sx={{
-										color: 'text.secondary',
-										fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-										whiteSpace: 'nowrap',
-									}}>
-									{isSearchActive ? searchResultsTotalItems : totalItems}{' '}
-									{isSearchActive ? (searchResultsTotalItems === 1 ? 'result' : 'results') : totalItems === 1 ? 'item' : 'items'}
-								</Typography>
-							</Box>
-						</Box>
-					</Box>
-					<Box
-						sx={{
-							display: 'flex',
-							gap: 1,
-							flexWrap: 'wrap',
-							justifyContent: 'flex-start',
-							padding: '0.5rem 1rem 0.5rem 0rem',
-							borderRadius: '4px',
-							backgroundColor: theme.palette.background.paper,
-						}}>
-						{filterValue && filterValue.trim() && (
-							<Chip
-								label={`Filter: ${filterValue}`}
-								onDelete={resetFilter}
-								color='secondary'
-								variant='outlined'
-								size='small'
-								sx={{ backgroundColor: '#1976d2', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
-							/>
-						)}
-						{searchedValue && searchButtonClicked && (
-							<Chip
-								label={`Search: "${searchedValue}"`}
-								onDelete={resetSearch}
-								variant='outlined'
-								color='secondary'
-								size='small'
-								sx={{ backgroundColor: '#1EC28B', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
-							/>
-						)}
-					</Box>
-				</Box>
-
-				<Box
-					sx={{
-						display: 'flex',
-						justifyContent: 'flex-end',
-						width: isMobileSize ? '5%' : isMobileSize ? '20%' : '35%',
-						height: isMobileSize ? '1.75rem' : '2rem',
-						fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-						alignItems: 'center',
-					}}>
-					<CustomSubmitButton
-						startIcon={<DownloadIcon />}
-						sx={{ fontSize: isMobileSize ? '0.7rem' : undefined, width: 'fit-content' }}
-						onClick={handleDownloadSubscriptions}>
-						{isSearchActive ? 'Download Filtered Subscriptions' : 'Download All Subscriptions'}
-					</CustomSubmitButton>
-				</Box>
-			</Box>
-
-			<Box
-				sx={{
-					height: '3.5rem',
-					width: '100%',
-				}}
+			<FilterSearchRow
+				filterValue={filterValue}
+				onFilterChange={handleFilterChange}
+				filterOptions={[
+					{ value: '', label: 'All Subscriptions' },
+					{ value: 'active', label: 'Active' },
+					{ value: 'canceled', label: 'Canceled' },
+					{ value: 'past due', label: 'Past Due' },
+					{ value: 'unpaid', label: 'Unpaid' },
+					{ value: 'incomplete', label: 'Incomplete' },
+					{ value: 'trialing', label: 'Trialing' },
+					{ value: 'monthly', label: 'Monthly' },
+					{ value: 'yearly', label: 'Yearly' },
+				]}
+				filterPlaceholder='Filter Subscriptions'
+				searchValue={searchValue}
+				onSearchChange={setSearchValue}
+				onSearch={handleSearch}
+				onReset={resetAll}
+				searchPlaceholder={isMobileSize ? 'Search User' : 'Search in User Email and Name'}
+				isSearchLoading={isSearchLoading}
+				isSearchActive={isSearchActive}
+				searchResultsTotalItems={searchResultsTotalItems}
+				totalItems={totalItems}
+				searchedValue={searchedValue}
+				onResetSearch={resetSearch}
+				onResetFilter={resetFilter}
+				actionButtons={[
+					{
+						label: isSearchActive
+							? isMobileSize
+								? 'Download Filtered'
+								: 'Download Filtered Subscriptions'
+							: isMobileSize
+								? 'Download All'
+								: 'Download All Subscriptions',
+						onClick: handleDownloadSubscriptions,
+						startIcon: <DownloadIcon />,
+					},
+				]}
+				isSticky={true}
+				isPayments={true}
 			/>
 
 			<Box
@@ -542,30 +333,25 @@ const AdminSubscriptionsTab = () => {
 					display: 'flex',
 					flexDirection: 'column',
 					alignItems: 'center',
-					padding: isMobileSize ? '0rem 0rem 2rem 0rem' : '0rem 0rem 2rem 0rem',
+					padding: isMobileSize ? '0rem 0.25rem 2rem 0.25rem' : '0rem 0rem 2rem 0rem',
 					width: '100%',
 				}}>
-				{/* Spacer for sticky table header */}
-				<Box
-					sx={{
-						height: (isSearchActive && searchedValue && searchButtonClicked) || (filterValue && filterValue.trim()) ? '4rem' : '2rem',
-						width: '100%',
-					}}
-				/>
 				<Table
 					sx={{
 						'mb': '2rem',
-						'width': '100%',
 						'tableLayout': 'fixed',
+						'width': '100%',
+						'borderCollapse': 'collapse',
+						'borderSpacing': 0,
 						'& .MuiTableHead-root': {
 							position: 'fixed',
 							top: !((isSearchActive && searchedValue && searchButtonClicked) || (filterValue && filterValue.trim()))
 								? isMobileSize
-									? '12.5rem'
-									: '12rem'
+									? '13.5rem'
+									: '11rem'
 								: isMobileSize
-									? '14rem'
-									: '14rem', // Account for header + tabs + filter row
+									? '16rem'
+									: '13.25rem',
 							left: isMobileSize ? 0 : '10rem',
 							right: 0,
 							zIndex: 98,
@@ -577,11 +363,71 @@ const AdminSubscriptionsTab = () => {
 						},
 						'& .MuiTableHead-root .MuiTableCell-root': {
 							backgroundColor: theme.palette.background.paper,
+							padding: isMobileSize ? '0.75rem 1rem' : '0.75rem 1rem',
+							boxSizing: 'border-box',
+							margin: 0,
+							verticalAlign: 'center',
+						},
+						'& .MuiTableHead-root .MuiTableCell-root:last-child': {
+							borderRight: 'none',
+						},
+						'& .MuiTableBody-root .MuiTableCell-root': {
 							padding: '0.25rem 1rem',
+							boxSizing: 'border-box',
+							margin: 0,
+							verticalAlign: 'center',
+						},
+						'& .MuiTableBody-root .MuiTableCell-root:last-child': {
+							borderRight: 'none',
+						},
+						// Column widths for mobile (4 columns)
+						'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(1)': {
+							minWidth: isMobileSize ? '120px' : '150px',
+							width: isMobileSize ? '30%' : '17.5%',
+						},
+						'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(2)': {
+							minWidth: isMobileSize ? '80px' : '100px',
+							width: isMobileSize ? '20%' : '10%',
+						},
+						'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(3)': {
+							minWidth: isMobileSize ? '80px' : '100px',
+							width: isMobileSize ? '20%' : '10%',
+						},
+						'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(4)': {
+							minWidth: isMobileSize ? '80px' : '100px',
+							width: isMobileSize ? '30%' : '10%',
+						},
+						// Desktop columns (8 columns)
+						'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(5)': {
+							minWidth: isMobileSize ? '0px' : '100px',
+							width: isMobileSize ? '0%' : '10%',
+						},
+						'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(6)': {
+							minWidth: isMobileSize ? '0px' : '100px',
+							width: isMobileSize ? '0%' : '12.5%',
+						},
+						'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(7)': {
+							minWidth: isMobileSize ? '0px' : '120px',
+							width: isMobileSize ? '0%' : '15%',
+						},
+						'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(8)': {
+							minWidth: isMobileSize ? '0px' : '100px',
+							width: isMobileSize ? '0%' : '10%',
 						},
 					}}
 					size='small'
 					aria-label='a dense table'>
+					{/* Spacer row to ensure header alignment */}
+					<TableRow sx={{ height: 0, visibility: 'hidden' }}>
+						<TableCell sx={{ width: isMobileSize ? '30%' : '17.5%', padding: 0, border: 'none' }} />
+						<TableCell sx={{ width: isMobileSize ? '20%' : '10%', padding: 0, border: 'none' }} />
+						<TableCell sx={{ width: isMobileSize ? '20%' : '10%', padding: 0, border: 'none' }} />
+						<TableCell sx={{ width: isMobileSize ? '30%' : '10%', padding: 0, border: 'none' }} />
+						<TableCell sx={{ width: isMobileSize ? '0%' : '10%', padding: 0, border: 'none' }} />
+						<TableCell sx={{ width: isMobileSize ? '0%' : '12.5%', padding: 0, border: 'none' }} />
+						<TableCell sx={{ width: isMobileSize ? '0%' : '15%', padding: 0, border: 'none' }} />
+						<TableCell sx={{ width: isMobileSize ? '0%' : '10%', padding: 0, border: 'none' }} />
+					</TableRow>
 					<CustomTableHead<UserSubscription>
 						orderBy={orderBy as keyof UserSubscription}
 						order={order}
@@ -630,41 +476,49 @@ const AdminSubscriptionsTab = () => {
 										{!isMobileSize && <CustomTableCell value={subscription.currentCurrency.toUpperCase()} />}
 										<CustomTableCell value={subscription.status.charAt(0).toUpperCase() + subscription.status.slice(1)} />
 										{!isMobileSize && <CustomTableCell value={dateFormatter(subscription.currentPeriodEnd)} />}
-										<CustomTableCell value={dateFormatter(subscription.createdAt)} />
+										{!isMobileSize && <CustomTableCell value={dateFormatter(subscription.createdAt)} />}
 
-										{!isMobileSize && (
-											<TableCell
-												sx={{
-													textAlign: 'center',
-													display: 'flex',
-													gap: '0.5rem',
-													justifyContent: 'center',
-												}}>
-												<CustomActionBtn
-													title='View Subscription'
-													onClick={() => openViewDialog(index, subscription)}
-													icon={<Visibility fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
-												/>
-												{!['canceled', 'incomplete', 'unpaid'].includes(subscription.status) && (
-													<CustomActionBtn
-														title='Cancel Subscription'
-														onClick={() => openCancelDialog(index, subscription)}
-														icon={<Cancel fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
+										<TableCell
+											sx={{
+												textAlign: 'center',
+												display: 'flex',
+												gap: '0.5rem',
+												justifyContent: 'center',
+											}}>
+											<CustomActionBtn
+												title='View Subscription'
+												onClick={() => openViewDialog(index, subscription)}
+												icon={
+													<Visibility
+														fontSize='small'
+														sx={{ fontSize: isMobileSize ? '0.8rem' : undefined, mr: isMobileSize ? '-0.35rem' : '-0.75rem' }}
 													/>
-												)}
+												}
+											/>
+											{!['canceled', 'incomplete', 'unpaid'].includes(subscription.status) && (
 												<CustomActionBtn
-													title='Delete Subscription'
-													onClick={() => openDeleteDialog(index, subscription)}
-													icon={<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
+													title='Cancel Subscription'
+													onClick={() => openCancelDialog(index, subscription)}
+													icon={
+														<Cancel
+															fontSize='small'
+															sx={{ fontSize: isMobileSize ? '0.8rem' : undefined, mr: isMobileSize ? '-0.35rem' : '-0.75rem' }}
+														/>
+													}
 												/>
-											</TableCell>
-										)}
+											)}
+											<CustomActionBtn
+												title='Delete Subscription'
+												onClick={() => openDeleteDialog(index, subscription)}
+												icon={<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
+											/>
+										</TableCell>
 									</TableRow>
 								);
 							})}
 					</TableBody>
 				</Table>
-				{isMobileSize && <CustomInfoMessageAlignedLeft message='Rotate your device for more info' />}
+				{isMobileSize && <CustomInfoMessageAlignedLeft message='Rotate your device or use desktop for more info' />}
 
 				<CustomTablePagination count={subscriptionsNumberOfPages} page={currentPage} onChange={handlePageChange} />
 			</Box>
@@ -677,75 +531,75 @@ const AdminSubscriptionsTab = () => {
 						openModal={isViewDialogOpen[index] || false}
 						closeModal={() => closeViewDialog(index)}
 						title='Subscription Details'
-						maxWidth='sm'>
+						maxWidth='xs'>
 						<DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: '1rem', p: '2rem 2rem 1rem 2rem' }}>
 							<Box>
-								<Typography variant='subtitle2' sx={{ fontWeight: 'bold' }}>
+								<Typography variant='subtitle2' sx={{ fontWeight: 'bold', fontSize: isMobileSize ? '0.85rem' : '0.95rem' }}>
 									User Information:
 								</Typography>
-								<Typography variant='body2' sx={{ mb: '0.5rem', mt: '0.5rem' }}>
+								<Typography variant='body2' sx={{ mb: '0.5rem', mt: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 									<span style={{ color: theme.textColor?.primary.main, textDecoration: 'underline', marginRight: '0.5rem' }}>Name:</span>
 									{typeof subscription.userId === 'object'
 										? `${subscription.userId?.firstName || ''} ${subscription.userId?.lastName || ''}`.trim() || 'N/A'
 										: 'N/A'}
 								</Typography>
-								<Typography variant='body2' sx={{ mb: '0.5rem', mt: '0.5rem' }}>
+								<Typography variant='body2' sx={{ mb: '0.5rem', mt: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 									<span style={{ color: theme.textColor?.primary.main, textDecoration: 'underline', marginRight: '0.5rem' }}>Email:</span>
 									{typeof subscription.userId === 'object' ? subscription.userId?.email || 'N/A' : 'N/A'}
 								</Typography>
-								<Typography variant='body2' sx={{ mb: '0.5rem', mt: '0.5rem' }}>
+								<Typography variant='body2' sx={{ mb: '0.5rem', mt: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 									<span style={{ color: theme.textColor?.primary.main, textDecoration: 'underline', marginRight: '0.5rem' }}>Username:</span>
 									{typeof subscription.userId === 'object' ? subscription.userId?.username || 'N/A' : 'N/A'}
 								</Typography>
 							</Box>
 							<Box>
-								<Typography variant='subtitle2' sx={{ fontWeight: 'bold' }}>
+								<Typography variant='subtitle2' sx={{ fontWeight: 'bold', fontSize: isMobileSize ? '0.85rem' : '0.95rem' }}>
 									Subscription Details:
 								</Typography>
-								<Typography variant='body2' sx={{ mb: '0.5rem', mt: '0.5rem' }}>
+								<Typography variant='body2' sx={{ mb: '0.5rem', mt: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 									<span style={{ color: theme.textColor?.primary.main, textDecoration: 'underline', marginRight: '0.5rem' }}>Type:</span>{' '}
 									{subscription.subscriptionType.charAt(0).toUpperCase() + subscription.subscriptionType.slice(1)}
 								</Typography>
-								<Typography variant='body2' sx={{ mb: '0.5rem' }}>
+								<Typography variant='body2' sx={{ mb: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 									<span style={{ color: theme.textColor?.primary.main, textDecoration: 'underline', marginRight: '0.5rem' }}>Status:</span>{' '}
 									{subscription.status.charAt(0).toUpperCase() + subscription.status.slice(1)}
 								</Typography>
-								<Typography variant='body2' sx={{ mb: '0.5rem' }}>
+								<Typography variant='body2' sx={{ mb: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 									<span style={{ color: theme.textColor?.primary.main, textDecoration: 'underline', marginRight: '0.5rem' }}>Amount:</span>{' '}
 									{setCurrencySymbol(subscription.currentCurrency)}
 									{subscription.currentAmount}
 								</Typography>
-								<Typography variant='body2' sx={{ mb: '0.5rem' }}>
+								<Typography variant='body2' sx={{ mb: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 									<span style={{ color: theme.textColor?.primary.main, textDecoration: 'underline', marginRight: '0.5rem' }}>
 										Current Period Start:
 									</span>{' '}
 									{dateFormatter(subscription.currentPeriodStart)}
 								</Typography>
-								<Typography variant='body2' sx={{ mb: '0.5rem' }}>
+								<Typography variant='body2' sx={{ mb: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 									<span style={{ color: theme.textColor?.primary.main, textDecoration: 'underline', marginRight: '0.5rem' }}>
 										Current Period End:
 									</span>{' '}
 									{dateFormatter(subscription.currentPeriodEnd)}
 								</Typography>
 								{subscription.nextBillingDate && (
-									<Typography variant='body2' sx={{ mb: '0.5rem' }}>
+									<Typography variant='body2' sx={{ mb: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 										<span style={{ color: theme.textColor?.primary.main, textDecoration: 'underline', marginRight: '0.5rem' }}>
 											Next Billing Date:
 										</span>{' '}
 										{dateFormatter(subscription.nextBillingDate)}
 									</Typography>
 								)}
-								<Typography variant='body2' sx={{ mb: '0.5rem' }}>
+								<Typography variant='body2' sx={{ mb: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 									<span style={{ color: theme.textColor?.primary.main, textDecoration: 'underline', marginRight: '0.5rem' }}>
 										Stripe Subscription ID:
 									</span>{' '}
 									{subscription.stripeSubscriptionId}
 								</Typography>
-								<Typography variant='body2' sx={{ mb: '0.5rem' }}>
+								<Typography variant='body2' sx={{ mb: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 									<span style={{ color: theme.textColor?.primary.main, textDecoration: 'underline', marginRight: '0.5rem' }}>Created:</span>{' '}
 									{dateFormatter(subscription.createdAt)}
 								</Typography>
-								<Typography variant='body2' sx={{ mb: '0.5rem' }}>
+								<Typography variant='body2' sx={{ mb: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 									<span style={{ color: theme.textColor?.primary.main, textDecoration: 'underline', marginRight: '0.5rem' }}>Updated:</span>{' '}
 									{dateFormatter(subscription.updatedAt)}
 								</Typography>
@@ -768,14 +622,14 @@ const AdminSubscriptionsTab = () => {
 						title='Cancel Subscription'
 						maxWidth='xs'>
 						<DialogContent>
-							<Typography variant='body2' sx={{ lineHeight: 1.7 }}>
+							<Typography variant='body2' sx={{ lineHeight: 1.7, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 								{`Are you sure you want to cancel the subscription for "${
 									typeof subscription.userId === 'object'
 										? subscription.userId?.email || subscription.userId?._id || 'N/A'
 										: subscription.userId || 'N/A'
 								}"? `}
 							</Typography>
-							<Typography variant='body2' sx={{ lineHeight: 1.7, mt: 2 }}>
+							<Typography variant='body2' sx={{ lineHeight: 1.7, mt: 2, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 								This action will cancel the subscription but preserve the record for audit purposes.
 							</Typography>
 						</DialogContent>
@@ -842,9 +696,10 @@ const AdminSubscriptionsTab = () => {
 					onClose={() => setSnackbarOpen(false)}
 					severity={snackbarSeverity}
 					sx={{
-						'width': '100%',
+						'width': isMobileSize ? '60%' : '100%',
 						'backgroundColor': theme.bgColor?.greenSecondary,
 						'color': theme.textColor?.common.main,
+						'fontSize': isMobileSize ? '0.75rem' : undefined,
 						'& .MuiAlert-icon': {
 							color: 'white',
 						},

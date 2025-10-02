@@ -349,7 +349,7 @@ const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, set
 				autoHideDuration={3500}
 				anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
 				onClose={() => setIsUrlErrorOpen(false)}>
-				<Alert severity='error' variant='filled' sx={{ width: '100%' }}>
+				<Alert severity='error' variant='filled' sx={{ width: isMobileSize ? '60%' : '100%', fontSize: isMobileSize ? '0.75rem' : undefined }}>
 					{urlErrorMessage}
 				</Alert>
 			</Snackbar>

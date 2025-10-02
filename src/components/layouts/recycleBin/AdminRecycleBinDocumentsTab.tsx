@@ -1,22 +1,6 @@
 import { useState, useEffect, useContext } from 'react';
-import {
-	Box,
-	Table,
-	TableBody,
-	TableCell,
-	TableRow,
-	Typography,
-	IconButton,
-	InputAdornment,
-	MenuItem,
-	FormControl,
-	Select,
-	Chip,
-	DialogContent,
-	Snackbar,
-	Alert,
-} from '@mui/material';
-import { Search, Restore, DeleteForever, Info } from '@mui/icons-material';
+import { Box, Table, TableBody, TableCell, TableRow, Typography, IconButton, DialogContent, Snackbar, Alert } from '@mui/material';
+import { Restore, DeleteForever, Info } from '@mui/icons-material';
 import axios from '@utils/axiosInstance';
 import theme from '../../../themes';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
@@ -26,9 +10,7 @@ import { useRecycleBinDocuments } from '../../../contexts/RecycleBinDocumentsCon
 import { Document } from '../../../interfaces/document';
 import { useFilterSearch } from '../../../hooks/useFilterSearch';
 import { dateFormatter } from '../../../utils/dateFormatter';
-import CustomTextField from '../../forms/customFields/CustomTextField';
-import CustomSubmitButton from '../../forms/customButtons/CustomSubmitButton';
-import CustomDeleteButton from '../../forms/customButtons/CustomDeleteButton';
+import FilterSearchRow from '../FilterSearchRow';
 import CustomTableHead from '../table/CustomTableHead';
 import CustomTableCell from '../table/CustomTableCell';
 import CustomActionBtn from '../table/CustomActionBtn';
@@ -114,9 +96,8 @@ const AdminRecycleBinDocumentsTab = () => {
 	const vertical = 'top';
 	const horizontal = 'center';
 
-	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
-	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
 	// Use appropriate page number for pagination
 	const currentPageNumber = isSearchActive ? searchResultsPage : currentPage;
@@ -381,190 +362,46 @@ const AdminRecycleBinDocumentsTab = () => {
 
 	return (
 		<>
-			{/* Sticky Filter/Search Row */}
-			<Box
-				sx={{
-					display: 'flex',
-					justifyContent: 'space-between',
-					alignItems: 'flex-start',
-					padding: isMobileSizeSmall ? '1rem 1rem 0.5rem 1rem' : '2rem 2rem 0rem 2rem',
-					width: isMobileSize ? '100%' : 'calc(100% - 10rem)',
-					position: 'fixed',
-					top: isMobileSize ? '7.5rem' : '6.5rem', // Account for header + tabs
-					left: isMobileSize ? 0 : '10rem',
-					right: 0,
-					zIndex: 99,
-					backgroundColor: theme.palette.background.paper,
-					backdropFilter: 'blur(10px)',
-				}}>
-				<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-					<Box sx={{ display: 'flex', alignSelf: 'flex-start', width: isMobileSize ? '12.5rem' : 'fit-content' }}>
-						<Box>
-							<FormControl>
-								<Select
-									size='small'
-									value={filterValue}
-									onChange={(e) => handleFilterChange(e.target.value)}
-									displayEmpty
-									sx={{
-										backgroundColor: theme.bgColor?.common,
-										width: isMobileSizeSmall ? '8rem' : '13rem',
-										fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-										textTransform: 'capitalize',
-										mr: '1rem',
-									}}>
-									<MenuItem
-										disabled
-										value='filter'
-										selected
-										sx={{
-											fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-											fontStyle: 'italic',
-											textTransform: 'capitalize',
-											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-											minHeight: '2rem',
-										}}>
-										Filter Documents
-									</MenuItem>
-									<MenuItem
-										value=''
-										selected
-										sx={{
-											fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-											textTransform: 'capitalize',
-											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-											minHeight: '2rem',
-										}}>
-										All deleted documents
-									</MenuItem>
-									{['Recently deleted', 'Paid Documents', 'Free Documents', 'On Landing Page', 'On Platform Only']?.map((type) => (
-										<MenuItem
-											value={type.toLowerCase()}
-											key={type}
-											sx={{
-												fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-												textTransform: 'capitalize',
-												padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-												minHeight: '2rem',
-											}}>
-											{type}
-										</MenuItem>
-									))}
-								</Select>
-							</FormControl>
-						</Box>
-						<CustomTextField
-							value={searchValue}
-							placeholder={'Search in Document Name'}
-							onChange={(e) => {
-								setSearchValue(e.target.value);
-							}}
-							sx={{ backgroundColor: '#fff', minWidth: isMobileSize ? '10rem' : '17.5rem' }}
-							required={false}
-							InputProps={{
-								onKeyDown: (e) => {
-									if (e.key === 'Enter') {
-										e.preventDefault();
-										if (searchValue.trim() && !isSearchLoading) {
-											handleSearch();
-										}
-									}
+			<FilterSearchRow
+				filterValue={filterValue}
+				onFilterChange={handleFilterChange}
+				filterOptions={[
+					{ value: '', label: 'All deleted documents' },
+					{ value: 'recently deleted', label: 'Recently deleted' },
+					{ value: 'paid documents', label: 'Paid Documents' },
+					{ value: 'free documents', label: 'Free Documents' },
+					{ value: 'on landing page', label: 'On Landing Page' },
+					{ value: 'on platform only', label: 'On Platform Only' },
+				]}
+				filterPlaceholder='Filter Documents'
+				searchValue={searchValue}
+				onSearchChange={setSearchValue}
+				onSearch={handleSearch}
+				onReset={resetAll}
+				searchPlaceholder='Search in Document Name'
+				isSearchLoading={isSearchLoading}
+				isSearchActive={isSearchActive}
+				searchResultsTotalItems={searchResultsTotalItems}
+				totalItems={totalItems}
+				searchedValue={searchedValue}
+				onResetSearch={resetSearch}
+				onResetFilter={resetFilter}
+				actionButtons={[
+					...(selectedItems && selectedItems.length > 0
+						? [
+								{
+									label: `Restore (${selectedItems.length})`,
+									onClick: () => setIsBulkRestoreModalOpen(true),
 								},
-								endAdornment: (
-									<InputAdornment position='end'>
-										<Search
-											sx={{
-												mr: '-0.5rem',
-											}}
-											fontSize={isMobileSize ? 'small' : 'medium'}
-										/>
-									</InputAdornment>
-								),
-							}}
-						/>
-						<CustomSubmitButton onClick={handleSearch} sx={{ marginLeft: '1rem' }} disabled={!searchValue || !searchValue.trim() || isSearchLoading}>
-							Search
-						</CustomSubmitButton>
-						<CustomDeleteButton onClick={resetAll}>Reset</CustomDeleteButton>
-
-						<Box sx={{ ml: '1rem', display: 'flex', alignItems: 'center', height: '2rem' }}>
-							{isSearchActive ? (
-								<Typography
-									variant='body2'
-									sx={{
-										color: 'text.secondary',
-										fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-										whiteSpace: 'nowrap',
-									}}>
-									{searchResultsTotalItems} {searchResultsTotalItems === 1 ? 'result' : 'results'}
-								</Typography>
-							) : (
-								<Typography
-									variant='body2'
-									sx={{
-										color: 'text.secondary',
-										fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-										whiteSpace: 'nowrap',
-									}}>
-									{totalItems} {totalItems === 1 ? 'item' : 'items'}
-								</Typography>
-							)}
-						</Box>
-					</Box>
-
-					{((isSearchActive && searchedValue && searchButtonClicked) || (filterValue && filterValue.trim())) && (
-						<Box
-							sx={{
-								display: 'flex',
-								gap: 1,
-								flexWrap: 'wrap',
-								justifyContent: 'center',
-								padding: '0.5rem 1rem 0.5rem 0rem',
-								borderRadius: '4px',
-								backgroundColor: theme.palette.background.paper,
-							}}>
-							{filterValue && filterValue.trim() && (
-								<Chip
-									label={`Filter: ${filterValue}`}
-									onDelete={resetFilter}
-									color='secondary'
-									variant='outlined'
-									size='small'
-									sx={{ backgroundColor: '#1976d2', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
-								/>
-							)}
-							{searchedValue && searchButtonClicked && (
-								<Chip
-									label={`Search: "${searchedValue}"`}
-									onDelete={resetSearch}
-									variant='outlined'
-									color='secondary'
-									size='small'
-									sx={{ backgroundColor: '#1EC28B', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
-								/>
-							)}
-						</Box>
-					)}
-				</Box>
-				<Box sx={{ display: 'flex', gap: 1, mb: '0.85rem', alignItems: 'center' }}>
-					{selectedItems && selectedItems.length > 0 && (
-						<>
-							<CustomSubmitButton onClick={() => setIsBulkRestoreModalOpen(true)} sx={{ fontSize: isMobileSize ? '0.7rem' : undefined }}>
-								Restore ({selectedItems.length})
-							</CustomSubmitButton>
-							<CustomDeleteButton onClick={() => setIsBulkDeleteModalOpen(true)} sx={{ fontSize: isMobileSize ? '0.7rem' : undefined }}>
-								Delete ({selectedItems.length})
-							</CustomDeleteButton>
-						</>
-					)}
-				</Box>
-			</Box>
-
-			<Box
-				sx={{
-					height: '3.5rem',
-					width: '100%',
-				}}
+								{
+									label: `Delete (${selectedItems.length})`,
+									onClick: () => setIsBulkDeleteModalOpen(true),
+								},
+							]
+						: []),
+				]}
+				isSticky={true}
+				isRecycleBin={true}
 			/>
 
 			<Box
@@ -575,28 +412,22 @@ const AdminRecycleBinDocumentsTab = () => {
 					padding: isMobileSize ? '0rem 0rem 2rem 0rem' : '0rem 0rem 2rem 0rem',
 					width: '100%',
 				}}>
-				{/* Spacer for sticky table header */}
-				<Box
-					sx={{
-						height: (isSearchActive && searchedValue && searchButtonClicked) || (filterValue && filterValue.trim()) ? '5.25rem' : '2.25rem',
-						width: '100%',
-					}}
-				/>
-
 				<Table
 					sx={{
 						'mb': '2rem',
-						'width': '100%',
 						'tableLayout': 'fixed',
+						'width': '100%',
+						'borderCollapse': 'collapse',
+						'borderSpacing': 0,
 						'& .MuiTableHead-root': {
 							position: 'fixed',
 							top: !((isSearchActive && searchedValue && searchButtonClicked) || (filterValue && filterValue.trim()))
 								? isMobileSize
-									? '11.5rem'
+									? '13.5rem'
 									: '11rem'
 								: isMobileSize
-									? '14rem'
-									: '14rem', // Account for header + tabs + filter row
+									? '16rem'
+									: '13.25rem',
 							left: isMobileSize ? 0 : '10rem',
 							right: 0,
 							zIndex: 98,
@@ -608,11 +439,66 @@ const AdminRecycleBinDocumentsTab = () => {
 						},
 						'& .MuiTableHead-root .MuiTableCell-root': {
 							backgroundColor: theme.palette.background.paper,
+							padding: isMobileSize ? '0.25rem 0.25rem' : '0.25rem 1rem',
+							boxSizing: 'border-box',
+							margin: 0,
+							verticalAlign: 'center',
+						},
+						'& .MuiTableHead-root .MuiTableCell-root:last-child': {
+							borderRight: 'none',
+						},
+						'& .MuiTableBody-root .MuiTableCell-root': {
 							padding: '0.25rem 1rem',
+							boxSizing: 'border-box',
+							margin: 0,
+							verticalAlign: 'center',
+						},
+						'& .MuiTableBody-root .MuiTableCell-root:last-child': {
+							borderRight: 'none',
+						},
+						// Column widths for mobile (4 columns)
+						'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(1)': {
+							minWidth: isMobileSize ? '50px' : '50px',
+							width: isMobileSize ? '10%' : '5%',
+						},
+						'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(2)': {
+							minWidth: isMobileSize ? '200px' : '300px',
+							width: isMobileSize ? '45%' : '30%',
+						},
+						'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(3)': {
+							minWidth: isMobileSize ? '120px' : '150px',
+							width: isMobileSize ? '25%' : '10%',
+						},
+						'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(4)': {
+							minWidth: isMobileSize ? '80px' : '100px',
+							width: isMobileSize ? '20%' : '15%',
+						},
+						// Desktop columns (6 columns)
+						'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(5)': {
+							minWidth: isMobileSize ? '0px' : '150px',
+							width: isMobileSize ? '0%' : '15%',
+						},
+						'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(6)': {
+							minWidth: isMobileSize ? '0px' : '120px',
+							width: isMobileSize ? '0%' : '15%',
+						},
+						'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(7)': {
+							minWidth: isMobileSize ? '0px' : '100px',
+							width: isMobileSize ? '0%' : '10%',
 						},
 					}}
 					size='small'
 					aria-label='a dense table'>
+					{/* Spacer row to ensure header alignment */}
+					<TableRow sx={{ height: 0, visibility: 'hidden' }}>
+						<TableCell sx={{ width: isMobileSize ? '10%' : '5%', padding: 0, border: 'none' }} />
+						<TableCell sx={{ width: isMobileSize ? '45%' : '30%', padding: 0, border: 'none' }} />
+						<TableCell sx={{ width: isMobileSize ? '25%' : '10%', padding: 0, border: 'none' }} />
+						<TableCell sx={{ width: isMobileSize ? '20%' : '15%', padding: 0, border: 'none' }} />
+						<TableCell sx={{ width: isMobileSize ? '0%' : '15%', padding: 0, border: 'none' }} />
+						<TableCell sx={{ width: isMobileSize ? '0%' : '15%', padding: 0, border: 'none' }} />
+						<TableCell sx={{ width: isMobileSize ? '0%' : '10%', padding: 0, border: 'none' }} />
+					</TableRow>
 					<CustomTableHead<ArchivedDocument>
 						orderBy={orderBy as keyof ArchivedDocument}
 						order={order}
@@ -635,7 +521,7 @@ const AdminRecycleBinDocumentsTab = () => {
 										{ key: 'archivedAt', label: 'Deleted On' },
 										{
 											key: 'autoRemoveDate',
-											label: 'Auto-Remove On',
+											label: 'Auto-Remove',
 											infoIcon: (
 												<IconButton
 													size='small'
@@ -674,8 +560,18 @@ const AdminRecycleBinDocumentsTab = () => {
 										{!isMobileSize && <CustomTableCell value={document.archivedByName || 'N/A'} />}
 										{!isMobileSize && <CustomTableCell value={deletionDateStatus.label} />}
 										<TableCell sx={{ textAlign: 'center' }}>
-											<CustomActionBtn title='Restore Document' onClick={() => openRestoreModal(index)} icon={<Restore fontSize='small' />} />
-											<CustomActionBtn title='Delete Permanently' onClick={() => openDeleteModal(index)} icon={<DeleteForever fontSize='small' />} />
+											<CustomActionBtn
+												title='Restore Document'
+												onClick={() => openRestoreModal(index)}
+												icon={
+													<Restore fontSize='small' sx={{ mr: isMobileSize ? '0rem' : '-0.6rem', fontSize: isMobileSize ? '1rem' : undefined }} />
+												}
+											/>
+											<CustomActionBtn
+												title='Delete Permanently'
+												onClick={() => openDeleteModal(index)}
+												icon={<DeleteForever fontSize='small' sx={{ fontSize: isMobileSize ? '1rem' : undefined }} />}
+											/>
 										</TableCell>
 									</TableRow>
 								);
@@ -688,7 +584,7 @@ const AdminRecycleBinDocumentsTab = () => {
 						sx={{ marginTop: '5rem' }}
 					/>
 				)}
-				{isMobileSize && <CustomInfoMessageAlignedLeft message='Rotate your device for more info' />}
+				{isMobileSize && <CustomInfoMessageAlignedLeft message='Rotate your device or use desktop for more info' />}
 				<CustomTablePagination count={documentsNumberOfPages} page={currentPageNumber} onChange={handlePageChange} />
 			</Box>
 
@@ -701,10 +597,10 @@ const AdminRecycleBinDocumentsTab = () => {
 					title='Restore Document'
 					maxWidth='xs'>
 					<DialogContent>
-						<Typography variant='body2' sx={{ lineHeight: 1.7 }}>
+						<Typography variant='body2' sx={{ lineHeight: 1.7, fontSize: isMobileSize ? '0.75rem' : undefined }}>
 							Are you sure you want to restore "{truncateText(document.name, 25)}"?
 						</Typography>
-						<Typography variant='body2' sx={{ lineHeight: 1.7, mt: 2 }}>
+						<Typography variant='body2' sx={{ lineHeight: 1.7, mt: 2, fontSize: isMobileSize ? '0.75rem' : undefined }}>
 							This document will become available again on all courses and lessons where it was previously used.
 						</Typography>
 					</DialogContent>
@@ -729,7 +625,7 @@ const AdminRecycleBinDocumentsTab = () => {
 					title='Delete Document Permanently'
 					maxWidth='xs'>
 					<DialogContent>
-						<Typography variant='body2' sx={{ lineHeight: 1.7 }}>
+						<Typography variant='body2' sx={{ lineHeight: 1.7, fontSize: isMobileSize ? '0.75rem' : undefined }}>
 							Are you sure you want to permanently delete "{truncateText(document.name, 25)}"? This action cannot be undone.
 						</Typography>
 					</DialogContent>
@@ -753,10 +649,10 @@ const AdminRecycleBinDocumentsTab = () => {
 				title='Restore Multiple Documents'
 				maxWidth='xs'>
 				<DialogContent>
-					<Typography variant='body2' sx={{ lineHeight: 1.7 }}>
+					<Typography variant='body2' sx={{ lineHeight: 1.7, fontSize: isMobileSize ? '0.75rem' : undefined }}>
 						Are you sure you want to restore {selectedItems.length} selected document(s)?
 					</Typography>
-					<Typography variant='body2' sx={{ lineHeight: 1.7, mt: 2 }}>
+					<Typography variant='body2' sx={{ lineHeight: 1.7, mt: 2, fontSize: isMobileSize ? '0.75rem' : undefined }}>
 						These documents will become available again on all courses and lessons where they were previously used.
 					</Typography>
 				</DialogContent>
@@ -775,7 +671,7 @@ const AdminRecycleBinDocumentsTab = () => {
 				title='Delete Multiple Documents Permanently'
 				maxWidth='xs'>
 				<DialogContent>
-					<Typography variant='body2' sx={{ lineHeight: 1.7 }}>
+					<Typography variant='body2' sx={{ lineHeight: 1.7, fontSize: isMobileSize ? '0.75rem' : undefined }}>
 						Are you sure you want to permanently delete {selectedItems.length} selected document(s)? This action cannot be undone.
 					</Typography>
 				</DialogContent>
@@ -791,10 +687,10 @@ const AdminRecycleBinDocumentsTab = () => {
 			{/* Info Dialog */}
 			<CustomDialog openModal={isInfoDialogOpen} closeModal={() => setIsInfoDialogOpen(false)} title='Auto-Removal Information' maxWidth='sm'>
 				<DialogContent>
-					<Typography variant='body2' sx={{ lineHeight: 1.7 }}>
+					<Typography variant='body2' sx={{ lineHeight: 1.7, fontSize: isMobileSize ? '0.75rem' : undefined }}>
 						Documents in the recycle bin are automatically permanently deleted after 7 days. This action cannot be undone.
 					</Typography>
-					<Typography variant='body2' sx={{ lineHeight: 1.7, mt: 2 }}>
+					<Typography variant='body2' sx={{ lineHeight: 1.7, mt: 2, fontSize: isMobileSize ? '0.75rem' : undefined }}>
 						You can restore documents before this date or manually delete them immediately using the "Delete Permanently" button.
 					</Typography>
 				</DialogContent>
@@ -813,9 +709,10 @@ const AdminRecycleBinDocumentsTab = () => {
 					severity={snackbarSeverity}
 					sx={{
 						'mt': '8.5rem',
-						'width': '100%',
+						'width': isMobileSize ? '60%' : '100%',
 						'backgroundColor': theme.bgColor?.greenSecondary,
 						'color': theme.textColor?.common.main,
+						'fontSize': isMobileSize ? '0.75rem' : undefined,
 						'& .MuiAlert-icon': {
 							color: 'white',
 						},

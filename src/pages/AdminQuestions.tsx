@@ -345,7 +345,14 @@ const AdminQuestions = () => {
 								'borderSpacing': 0,
 								'& .MuiTableHead-root': {
 									position: 'fixed',
-									top: (isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim()) ? '11rem' : '8rem',
+									top:
+										(isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim())
+											? !isMobileSize
+												? '10rem'
+												: '12.5rem'
+											: isMobileSize
+												? '10.25rem'
+												: '8rem',
 									left: isMobileSize ? 0 : '10rem',
 									right: 0,
 									zIndex: 99,
@@ -419,7 +426,6 @@ const AdminQuestions = () => {
 							}}
 							size='small'
 							aria-label='a dense table'>
-							{((isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim())) && <Box sx={{ height: '1.5rem' }}></Box>}
 							{/* Spacer row to ensure header alignment */}
 							<TableRow sx={{ height: 0, visibility: 'hidden' }}>
 								<TableCell sx={{ width: isMobileSize ? '25%' : '18%', padding: 0, border: 'none' }} />
@@ -543,7 +549,7 @@ const AdminQuestions = () => {
 									})}
 							</TableBody>
 						</Table>
-						{isMobileSize && <CustomInfoMessageAlignedLeft message='Rotate your device for more info' />}
+						{isMobileSize && <CustomInfoMessageAlignedLeft message='Rotate your device or use desktop for more info' />}
 						<CustomTablePagination count={questionsNumberOfPages} page={currentPage} onChange={handlePageChange} />
 					</Box>
 
@@ -572,9 +578,10 @@ const AdminQuestions = () => {
 						onClose={() => setSnackbarOpen(false)}
 						severity={snackbarSeverity}
 						sx={{
-							'width': '100%',
+							'width': isMobileSize ? '60%' : '100%',
 							'backgroundColor': theme.bgColor?.greenSecondary,
 							'color': theme.textColor?.common.main,
+							'fontSize': isMobileSize ? '0.75rem' : undefined,
 							'& .MuiAlert-icon': {
 								color: 'white',
 							},

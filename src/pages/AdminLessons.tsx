@@ -270,7 +270,14 @@ const AdminLessons = () => {
 							'borderSpacing': 0,
 							'& .MuiTableHead-root': {
 								position: 'fixed',
-								top: (isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim()) ? '11rem' : '8rem',
+								top:
+									(isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim())
+										? !isMobileSize
+											? '10rem'
+											: '12.5rem'
+										: isMobileSize
+											? '10.25rem'
+											: '8rem',
 								left: isMobileSize ? 0 : '10rem',
 								right: 0,
 								zIndex: 99,
@@ -302,7 +309,7 @@ const AdminLessons = () => {
 							// Column widths for header cells
 							'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(1)': {
 								minWidth: isMobileSize ? '80px' : '100px',
-								width: isMobileSize ? '20%' : '15%',
+								width: isMobileSize ? '18%' : '15%',
 							},
 							'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(2)': {
 								minWidth: isMobileSize ? '200px' : '200px',
@@ -314,7 +321,7 @@ const AdminLessons = () => {
 							},
 							'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(4)': {
 								minWidth: isMobileSize ? '0px' : '100px',
-								width: isMobileSize ? '15%' : '15%',
+								width: isMobileSize ? '17%' : '15%',
 							},
 							'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(5)': {
 								minWidth: isMobileSize ? '0px' : '100px',
@@ -327,7 +334,7 @@ const AdminLessons = () => {
 							// Column widths for body cells - exact same as header
 							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(1)': {
 								minWidth: isMobileSize ? '80px' : '100px',
-								width: isMobileSize ? '20%' : '15%',
+								width: isMobileSize ? '18%' : '15%',
 							},
 							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(2)': {
 								minWidth: isMobileSize ? '200px' : '200px',
@@ -339,7 +346,7 @@ const AdminLessons = () => {
 							},
 							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(4)': {
 								minWidth: isMobileSize ? '0px' : '100px',
-								width: isMobileSize ? '15%' : '15%',
+								width: isMobileSize ? '17%' : '15%',
 							},
 							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(5)': {
 								minWidth: isMobileSize ? '0px' : '100px',
@@ -352,13 +359,12 @@ const AdminLessons = () => {
 						}}
 						size='small'
 						aria-label='a dense table'>
-						{((isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim())) && <Box sx={{ height: '1.5rem' }}></Box>}
 						{/* Spacer row to ensure header alignment */}
 						<TableRow sx={{ height: 0, visibility: 'hidden' }}>
-							<TableCell sx={{ width: isMobileSize ? '20%' : '15%', padding: 0, border: 'none' }} />
+							<TableCell sx={{ width: isMobileSize ? '18%' : '15%', padding: 0, border: 'none' }} />
 							<TableCell sx={{ width: isMobileSize ? '30%' : '33%', padding: 0, border: 'none' }} />
 							<TableCell sx={{ width: isMobileSize ? '15%' : '12%', padding: 0, border: 'none' }} />
-							<TableCell sx={{ width: isMobileSize ? '15%' : '15%', padding: 0, border: 'none' }} />
+							<TableCell sx={{ width: isMobileSize ? '17%' : '15%', padding: 0, border: 'none' }} />
 							<TableCell sx={{ width: isMobileSize ? '0%' : '15%', padding: 0, border: 'none' }} />
 							<TableCell sx={{ width: isMobileSize ? '0%' : '15%', padding: 0, border: 'none' }} />
 						</TableRow>
@@ -447,7 +453,7 @@ const AdminLessons = () => {
 								})}
 						</TableBody>
 					</Table>
-					{isMobileSize && <CustomInfoMessageAlignedLeft message='Rotate your device for more info' />}
+					{isMobileSize && <CustomInfoMessageAlignedLeft message='Rotate your device or use desktop for more info' />}
 					<CustomTablePagination count={lessonsNumberOfPages} page={currentPage} onChange={handlePageChange} />
 				</Box>
 
@@ -476,9 +482,10 @@ const AdminLessons = () => {
 						onClose={() => setSnackbarOpen(false)}
 						severity={snackbarSeverity}
 						sx={{
-							'width': '100%',
+							'width': isMobileSize ? '60%' : '100%',
 							'backgroundColor': theme.bgColor?.greenSecondary,
 							'color': theme.textColor?.common.main,
+							'fontSize': isMobileSize ? '0.75rem' : undefined,
 							'& .MuiAlert-icon': {
 								color: 'white',
 							},

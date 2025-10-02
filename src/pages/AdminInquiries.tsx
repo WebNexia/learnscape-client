@@ -261,15 +261,15 @@ const AdminInquiries = () => {
 						onResetFilter={resetFilter}
 						actionButtons={[
 							{
-								label: `Download ${isSearchActive ? 'Filtered' : 'All'} Inquiries`,
+								label: isMobileSize ? 'Download' : `Download ${isSearchActive ? 'Filtered' : 'All'} Inquiries`,
 								onClick: handleDownload,
-								startIcon: <DownloadIcon />,
+								startIcon: !isMobileSize ? <DownloadIcon /> : undefined,
 								disabled: displayInquiries && displayInquiries.length === 0,
 							},
 							{
-								label: 'Send Bulk Email',
+								label: isMobileSize ? 'Email' : 'Send Bulk Email',
 								onClick: () => setEmailDialogOpen(true),
-								startIcon: <EmailIcon />,
+								startIcon: !isMobileSize ? <EmailIcon /> : undefined,
 							},
 						]}
 						isSticky={true}
@@ -289,7 +289,14 @@ const AdminInquiries = () => {
 								'width': '100%',
 								'& .MuiTableHead-root': {
 									position: 'fixed',
-									top: (isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim()) ? '11rem' : '8rem',
+									top:
+										(isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim())
+											? !isMobileSize
+												? '10rem'
+												: '12rem'
+											: isMobileSize
+												? '10.25rem'
+												: '8rem',
 									left: isMobileSize ? 0 : '10rem',
 									right: 0,
 									zIndex: 99,
@@ -306,7 +313,6 @@ const AdminInquiries = () => {
 							}}
 							size='small'
 							aria-label='a dense table'>
-							{((isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim())) && <Box sx={{ height: '1.5rem' }}></Box>}
 							<CustomTableHead<Inquiry>
 								orderBy={orderBy as keyof Inquiry}
 								order={order}
@@ -343,29 +349,29 @@ const AdminInquiries = () => {
 															<DialogContent>
 																<Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 2 }}>
 																	<Box>
-																		<Typography variant='body2' sx={{ mb: '0.75rem' }}>
+																		<Typography variant='body2' sx={{ mb: '0.75rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 																			<strong>Name:</strong> {selectedInquiry.firstName} {selectedInquiry.lastName}
 																		</Typography>
-																		<Typography variant='body2' sx={{ mb: '0.75rem' }}>
+																		<Typography variant='body2' sx={{ mb: '0.75rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 																			<strong>Phone:</strong> {selectedInquiry.phone}
 																		</Typography>
 																	</Box>
 																	<Box>
-																		<Typography variant='body2' sx={{ mb: '0.75rem' }}>
+																		<Typography variant='body2' sx={{ mb: '0.75rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 																			<strong>Email:</strong> {selectedInquiry.email}
 																		</Typography>
-																		<Typography variant='body2' sx={{ mb: '0.75rem' }}>
+																		<Typography variant='body2' sx={{ mb: '0.75rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 																			<strong>Country:</strong> {selectedInquiry.countryCode}
 																		</Typography>
 																	</Box>
 																</Box>
-																<Typography variant='body2' sx={{ mb: '0.75rem' }}>
+																<Typography variant='body2' sx={{ mb: '0.75rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 																	<strong>Message:</strong> {selectedInquiry.message || '-'}
 																</Typography>
-																<Typography variant='body2' sx={{ mb: '0.75rem' }}>
+																<Typography variant='body2' sx={{ mb: '0.75rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 																	<strong>Submitted:</strong> {dateTimeFormatter(selectedInquiry.createdAt)}
 																</Typography>
-																<Typography variant='body2'>
+																<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 																	<strong>From:</strong>{' '}
 																	{selectedInquiry.category === 'HeroSection'
 																		? 'Home Page'
@@ -411,7 +417,7 @@ const AdminInquiries = () => {
 									})}
 							</TableBody>
 						</Table>
-						{isVerySmallScreen && <CustomInfoMessageAlignedLeft message='Rotate your device for more info' />}
+						{isVerySmallScreen && <CustomInfoMessageAlignedLeft message='Rotate your device or use desktop for more info' />}
 						<CustomTablePagination count={inquiriesNumberOfPages} page={currentPage} onChange={handlePageChange} />
 					</Box>
 				</Box>
