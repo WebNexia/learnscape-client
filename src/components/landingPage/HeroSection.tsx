@@ -6,13 +6,14 @@ import Instructor_Img from '../../assets/instructor-new1.png';
 import { ContactPage, PlayCircle } from '@mui/icons-material';
 import CustomDialog from '../layouts/dialog/CustomDialog';
 import DialogContent from '@mui/material/DialogContent';
-import ReactPlayer from 'react-player';
 import ChatWhatsApp from './ChatWhatsApp';
 import { useGeoLocation } from '../../hooks/useGeoLocation';
 import axios from 'axios';
 import ContactFormDialog from './ContactFormDialog';
 import CustomCancelButton from '../forms/customButtons/CustomCancelButton';
 import { useRef } from 'react';
+import UniversalVideoPlayer from '../video/UniversalVideoPlayer';
+import ReactPlayer from 'react-player';
 
 const HeroSection = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -20,6 +21,7 @@ const HeroSection = () => {
 	const { isSmallScreen, isRotatedMedium, isVerySmallScreen } = useContext(MediaQueryContext);
 	const [isIntroVideoModalOpen, setIsIntroVideoModalOpen] = useState<boolean>(false);
 	const [isGetMoreDetailsModalOpen, setIsGetMoreDetailsModalOpen] = useState<boolean>(false);
+	const [videoError, setVideoError] = useState<boolean>(false);
 	const location = useGeoLocation();
 	const [firstName, setFirstName] = useState<string>('');
 	const [lastName, setLastName] = useState<string>('');
@@ -272,7 +274,10 @@ const HeroSection = () => {
 
 			<CustomDialog
 				openModal={isIntroVideoModalOpen}
-				closeModal={() => setIsIntroVideoModalOpen(false)}
+				closeModal={() => {
+					setIsIntroVideoModalOpen(false);
+					setVideoError(false); // Reset video error state when closing
+				}}
 				maxWidth='md'
 				PaperProps={{
 					sx: {
@@ -281,17 +286,49 @@ const HeroSection = () => {
 					},
 				}}>
 				<DialogContent sx={{ height: '70vh', background: 'transparent', p: 0 }}>
-					<ReactPlayer
-						url='https://www.youtube.com/watch?v=1QiKcS1MmmU&list=RD1QiKcS1MmmU&start_radio=1'
-						height='100%'
-						width='100%'
-						style={{
-							boxShadow: 'none',
-							background: 'transparent',
-							overflow: 'hidden',
-						}}
-						controls
-					/>
+					{!videoError ? (
+						<UniversalVideoPlayer
+							url='https://www.youtube.com/watch?v=AywFVNXoIXk'
+							height='100%'
+							width='100%'
+							controls={true}
+							style={{
+								boxShadow: 'none',
+								background: 'transparent',
+								overflow: 'hidden',
+							}}
+							onError={(error) => {
+								console.error('UniversalVideoPlayer error:', error);
+								setVideoError(true);
+							}}
+						/>
+					) : (
+						<ReactPlayer
+							url='https://www.youtube.com/watch?v=AywFVNXoIXk'
+							height='100%'
+							width='100%'
+							controls={true}
+							config={{
+								youtube: {
+									playerVars: {
+										autoplay: 0,
+										controls: 1,
+										modestbranding: 1,
+										rel: 0,
+										showinfo: 0,
+									},
+								},
+							}}
+							style={{
+								boxShadow: 'none',
+								background: 'transparent',
+								overflow: 'hidden',
+							}}
+							onError={(error) => {
+								console.error('ReactPlayer fallback error:', error);
+							}}
+						/>
+					)}
 				</DialogContent>
 			</CustomDialog>
 
