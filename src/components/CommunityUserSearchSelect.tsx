@@ -8,6 +8,7 @@ import { useSearch } from '../hooks/useSearch';
 import CustomSubmitButton from './forms/customButtons/CustomSubmitButton';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import CustomDeleteButton from './forms/customButtons/CustomDeleteButton';
+import { useAuth } from '../hooks/useAuth';
 
 interface CommunityUserSearchSelectProps {
 	value: string;
@@ -38,6 +39,22 @@ const CommunityUserSearchSelect: React.FC<CommunityUserSearchSelectProps> = ({
 	listSx = {},
 	disabled = false,
 }) => {
+	const { user } = useAuth();
+
+	// Determine userRole based on actual user role - memoized to prevent hook recreation
+	const userRole = useMemo(() => {
+		if (!user) return 'learner'; // fallback
+		switch (user.role) {
+			case 'admin':
+			case 'super_admin':
+				return 'admin';
+			case 'instructor':
+				return 'instructor';
+			default:
+				return 'learner';
+		}
+	}, [user?.role]);
+
 	const {
 		data: filtered,
 		loading,
@@ -47,7 +64,7 @@ const CommunityUserSearchSelect: React.FC<CommunityUserSearchSelectProps> = ({
 		reset,
 		pagination,
 	} = useSearch<SearchUser>('users', 'community', {
-		userRole: 'admin',
+		userRole,
 		topicId,
 	});
 

@@ -1,6 +1,7 @@
 import { Button, ButtonOwnProps } from '@mui/material';
-import { FormEvent, MouseEvent, ReactNode } from 'react';
+import { FormEvent, MouseEvent, ReactNode, useContext } from 'react';
 import theme from '../../../themes';
+import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 interface CustomSubmitButtonProps {
 	children: ReactNode;
@@ -31,6 +32,8 @@ const CustomSubmitButton = ({
 	size = 'small',
 	unsaved = false,
 }: CustomSubmitButtonProps) => {
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const handleClick = (event: MouseEvent<HTMLButtonElement> | FormEvent<Element>) => {
 		if (onClick) {
 			onClick(event);
@@ -50,7 +53,8 @@ const CustomSubmitButton = ({
 					backgroundColor: theme.bgColor?.common,
 					color: theme.bgColor?.adminSubmitBtn,
 				},
-				'height': '1.75rem',
+				'height': isMobileSize ? '1.5rem' : '1.75rem',
+				'fontSize': isMobileSize ? '0.7rem' : '0.85rem',
 				'mt': '0.2rem',
 			}}
 			size={size}

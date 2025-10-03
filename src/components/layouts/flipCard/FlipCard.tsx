@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useContext, useState } from 'react';
 import { Box, Typography } from '@mui/material';
 import { QuestionInterface } from '../../../interfaces/question';
 import FlipCardFrontFace from './FlipCardFrontFace';
 import FlipCardBackFace from './FlipCardBackFace';
 import { Lesson } from '../../../interfaces/lessons';
 import FlipCardPreview from './FlipCardPreview';
+import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 interface FlipCardProps {
 	newQuestion?: QuestionInterface;
@@ -36,9 +37,12 @@ const FlipCard = ({
 	const [frontText, setFrontText] = useState<string>(question?.question || newQuestion?.question || '');
 	const [backText, setBackText] = useState<string>(question?.correctAnswer || newQuestion?.question || '');
 
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
+
 	return (
 		<Box sx={{ width: '100%' }}>
-			<Box sx={{ display: 'flex' }}>
+			<Box sx={{ display: 'flex', flexDirection: isMobileSize ? 'column' : 'row', mt: isMobileSize ? '-3rem' : undefined }}>
 				<FlipCardFrontFace
 					frontText={frontText}
 					setIsQuestionMissing={setIsQuestionMissing}
@@ -63,7 +67,7 @@ const FlipCard = ({
 
 			{/* Flip Card Preview */}
 			<Box>
-				<Typography variant='body1' sx={{ margin: '3rem auto 0 auto', width: '50vh' }}>
+				<Typography variant='body1' sx={{ margin: isMobileSize ? '5rem auto 3rem auto' : '3rem auto 1rem auto', textAlign: 'center' }}>
 					Preview
 				</Typography>
 			</Box>

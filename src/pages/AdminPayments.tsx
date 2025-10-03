@@ -35,16 +35,32 @@ const AdminPayments = () => {
 	return (
 		<AdminPageErrorBoundary pageName='Payments'>
 			<DashboardPagesLayout pageName='Payments' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
-				<Box>
+				{/* Sticky Tabs */}
+				<Box
+					sx={{
+						display: 'flex',
+						flexDirection: 'row',
+						justifyContent: 'center',
+						position: 'fixed',
+						top: isMobileSize ? '3.5rem' : '4rem', // Account for DashboardHeader height
+						left: isMobileSize ? 0 : '10rem', // Account for sidebar width on desktop
+						right: 0,
+						zIndex: 100, // Higher z-index to ensure it's above all content
+						backgroundColor: theme.palette.background.paper,
+						backdropFilter: 'blur(10px)',
+						width: isMobileSize ? '100%' : 'calc(100% - 10rem)',
+					}}>
 					<Tabs
 						value={value}
 						onChange={handleChange}
 						textColor='primary'
 						indicatorColor='secondary'
 						sx={{
-							'paddingTop': isMobileSize ? '0.75rem' : '1.5rem',
+							'paddingTop': isMobileSize ? '0.5rem' : '0.25rem',
+							'paddingLeft': isMobileSize ? '1rem' : '2rem',
+							'paddingRight': isMobileSize ? '1rem' : '2rem',
 							'& .MuiTabs-indicator': {
-								backgroundColor: theme.bgColor?.adminHeader, // Custom indicator color
+								backgroundColor: theme.bgColor?.adminHeader,
 							},
 						}}>
 						<Tab
@@ -55,7 +71,7 @@ const AdminPayments = () => {
 								'textTransform': 'capitalize',
 								'fontFamily': 'Poppins',
 								'fontSize': isMobileSize ? '0.75rem' : undefined,
-								'&.MuiTab-root': { textTransform: 'capitalize' }, // Ensure capitalization
+								'&.MuiTab-root': { textTransform: 'capitalize' },
 							}}
 						/>
 						<Tab
@@ -66,7 +82,7 @@ const AdminPayments = () => {
 								'textTransform': 'capitalize',
 								'fontFamily': 'Poppins',
 								'fontSize': isMobileSize ? '0.75rem' : undefined,
-								'&.MuiTab-root': { textTransform: 'capitalize' }, // Ensure capitalization
+								'&.MuiTab-root': { textTransform: 'capitalize' },
 							}}
 						/>
 						<Tab
@@ -77,14 +93,26 @@ const AdminPayments = () => {
 								'textTransform': 'capitalize',
 								'fontFamily': 'Poppins',
 								'fontSize': isMobileSize ? '0.75rem' : undefined,
-								'&.MuiTab-root': { textTransform: 'capitalize' }, // Ensure capitalization
+								'&.MuiTab-root': { textTransform: 'capitalize' },
 							}}
 						/>
 					</Tabs>
 				</Box>
-				{value === 'Payments' && <AdminPaymentsTab />}
-				{value === 'Subscriptions' && <AdminSubscriptionsTab />}
-				{value === 'PromoCodes' && <AdminPromoCodesTab />}
+
+				{/* Spacer to push content down when sticky */}
+				<Box
+					sx={{
+						height: '5rem', // Account for tabs height
+						width: '100%',
+					}}
+				/>
+
+				{/* Content */}
+				<Box sx={{ padding: '0rem', width: '100%' }}>
+					{value === 'Payments' && <AdminPaymentsTab />}
+					{value === 'Subscriptions' && <AdminSubscriptionsTab />}
+					{value === 'PromoCodes' && <AdminPromoCodesTab />}
+				</Box>
 			</DashboardPagesLayout>
 		</AdminPageErrorBoundary>
 	);

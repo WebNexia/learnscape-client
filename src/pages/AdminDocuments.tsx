@@ -1,27 +1,10 @@
-import {
-	Box,
-	FormControl,
-	InputAdornment,
-	Link,
-	MenuItem,
-	Select,
-	Table,
-	TableBody,
-	TableCell,
-	TableRow,
-	Snackbar,
-	Alert,
-	Typography,
-	Chip,
-} from '@mui/material';
+import { Box, Table, TableBody, TableCell, TableRow, Snackbar, Alert, Typography, Link } from '@mui/material';
 import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
 import { useContext, useEffect, useRef, useState } from 'react';
-import { useLocation } from 'react-router-dom';
 import axios from '@utils/axiosInstance';
-import { Delete, Edit, Info, Search } from '@mui/icons-material';
-import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
+import { Delete, Edit, Info } from '@mui/icons-material';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
 import CustomTableHead from '../components/layouts/table/CustomTableHead';
@@ -32,7 +15,6 @@ import { DocumentsContext } from '../contexts/DocumentsContextProvider';
 import { Document, Price } from '../interfaces/document';
 import { truncateText } from '../utils/utilText';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
-import CustomTextField from '../components/forms/customFields/CustomTextField';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import { dateFormatter } from '../utils/dateFormatter';
 import DocumentInfoModal from '../components/documents/DocumentInfoModal';
@@ -41,8 +23,10 @@ import EditDocumentDialog from '../components/documents/EditDocumentDialog';
 import theme from '../themes';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 import { validateDocumentUrl, validateImageUrl } from '../utils/urlValidation';
-import CustomDeleteButton from '../components/forms/customButtons/CustomDeleteButton';
 import { useAuth } from '../hooks/useAuth';
+import { useFilterSearch } from '../hooks/useFilterSearch';
+import FilterSearchRow from '../components/layouts/FilterSearchRow';
+import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/CustomInfoMessageAlignedLeft';
 
 const AdminDocuments = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -50,7 +34,6 @@ const AdminDocuments = () => {
 	const { orgId } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
 	const { isInstructor } = useAuth();
-	const location = useLocation();
 
 	const {
 		documents,
@@ -67,37 +50,77 @@ const AdminDocuments = () => {
 		enableDocumentsFetch,
 	} = useContext(DocumentsContext);
 
-	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
-	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
-	const [searchValue, setSearchValue] = useState<string>('');
-	const [filterValue, setFilterValue] = useState<string>('');
-	const [searchResults, setSearchResults] = useState<Document[]>([]);
-	const [isSearchActive, setIsSearchActive] = useState<boolean>(false);
-	const [searchResultsPage, setSearchResultsPage] = useState<number>(1);
-	const [searchResultsLoadedPages, setSearchResultsLoadedPages] = useState<number[]>([]);
-	const [searchResultsTotalItems, setSearchResultsTotalItems] = useState<number>(0);
-	const [searchButtonClicked, setSearchButtonClicked] = useState<boolean>(false);
-	const [searchedValue, setSearchedValue] = useState<string>('');
-
-	const [orderBy, setOrderBy] = useState<keyof Document>('updatedAt');
-	const [order, setOrder] = useState<'asc' | 'desc'>('desc');
+	// Responsive column configuration
+	const getColumns = (isMobileSize: boolean) => {
+		return isMobileSize
+			? [
+					{ key: 'name', label: isMobileSize ? 'Name' : 'Document Name' },
+					{ key: 'documentUrl', label: isMobileSize ? 'URL' : 'Document URL' },
+					{ key: 'actions', label: 'Actions' },
+				]
+			: isInstructor
+				? [
+						{ key: 'name', label: 'Document Name' },
+						{ key: 'documentUrl', label: 'Document URL' },
+						{ key: 'createdAt', label: 'Created On' },
+						{ key: 'updatedAt', label: 'Updated On' },
+						{ key: 'actions', label: 'Actions' },
+					]
+				: [
+						{ key: 'isOnLandingPage', label: 'Landing Page' },
+						{ key: 'name', label: 'Document Name' },
+						{ key: 'documentUrl', label: 'Document URL' },
+						{ key: 'createdByName', label: 'Created By' },
+						{ key: 'updatedAt', label: 'Updated On' },
+						{ key: 'actions', label: 'Actions' },
+					];
+	};
 
 	const pageSize = 50;
 
-	// Use search results if active, otherwise use context data
-	const displayDocuments = isSearchActive ? searchResults : documents;
-
-	// For pagination, use total items from server when not searching
-	const documentsNumberOfPages = isSearchActive ? Math.ceil(searchResultsTotalItems / pageSize) : Math.ceil(totalItems / pageSize);
+	// Use the filter search hook
+	const {
+		searchValue,
+		setSearchValue,
+		filterValue,
+		displayData: displayDocuments,
+		numberOfPages: documentsNumberOfPages,
+		searchResultsPage,
+		searchResultsTotalItems,
+		searchedValue,
+		orderBy,
+		order,
+		isSearchActive,
+		isLoading: isSearchLoading,
+		handleSearch,
+		handleFilterChange,
+		handlePageChange,
+		handleSort,
+		resetSearch,
+		resetFilter,
+		resetAll,
+		removeFromSearchResults,
+	} = useFilterSearch<Document>({
+		getEndpoint: () => `${base_url}/documents/organisation/${orgId}`,
+		limit: 200,
+		pageSize,
+		contextData: documents,
+		setContextPageNumber: setDocumentsPageNumber,
+		fetchMoreContextData: fetchMoreDocuments,
+		contextLoadedPages: loadedPages,
+		defaultOrderBy: 'updatedAt',
+		defaultOrder: 'desc',
+	});
 
 	// Use appropriate page number for pagination
 	const currentPage = isSearchActive ? searchResultsPage : documentsPageNumber;
 	const sortedDocuments =
 		[...(displayDocuments || [])]?.sort((a, b) => {
-			const aValue = a[orderBy] ?? '';
-			const bValue = b[orderBy] ?? '';
+			const aValue = (a as any)[orderBy] ?? '';
+			const bValue = (b as any)[orderBy] ?? '';
 
 			if (order === 'asc') {
 				return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
@@ -139,170 +162,6 @@ const AdminDocuments = () => {
 		setDocumentsPageNumber(1);
 		enableDocumentsFetch(); // 👈 Enable documents fetching when component mounts
 	}, []);
-
-	// Cleanup search state function
-	const cleanupSearchState = () => {
-		setSearchResults([]);
-		setSearchResultsLoadedPages([]);
-		setSearchResultsTotalItems(0);
-		setIsSearchActive(false);
-		setSearchValue('');
-		setFilterValue('');
-		setSearchedValue('');
-		setSearchButtonClicked(false);
-	};
-
-	// Cleanup on component unmount
-	useEffect(() => {
-		return () => {
-			cleanupSearchState();
-		};
-	}, []);
-
-	// Cleanup when navigating away from page
-	useEffect(() => {
-		return () => {
-			cleanupSearchState();
-		};
-	}, [location.pathname]);
-
-	const handlePageChange = async (newPage: number) => {
-		// Set appropriate page number based on search state
-		if (isSearchActive) {
-			setSearchResultsPage(newPage);
-		} else {
-			setDocumentsPageNumber(newPage);
-		}
-
-		// If in search mode, handle search results pagination
-		if (isSearchActive) {
-			// Check if we need to fetch more search results
-			const requiredRecords = newPage * pageSize;
-			if (searchResults.length < requiredRecords) {
-				// Build search parameters
-				const params = new URLSearchParams({
-					limit: '200',
-				});
-
-				if (searchValue && searchValue.trim()) {
-					params.append('search', searchValue.trim());
-				}
-				if (filterValue && filterValue.trim()) {
-					params.append('filter', filterValue.trim());
-				}
-				if (orderBy) {
-					params.append('sortBy', orderBy);
-				}
-				if (order) {
-					params.append('sortOrder', order);
-				}
-
-				// Calculate which pages we need to fetch
-				const currentLoadedPages = searchResultsLoadedPages && searchResultsLoadedPages.length > 0 ? Math.max(...searchResultsLoadedPages) : 0;
-				const targetPage = Math.ceil((newPage * pageSize) / 200);
-
-				// Fetch all missing pages in sequence
-				for (let page = currentLoadedPages + 1; page <= targetPage; page++) {
-					if (!searchResultsLoadedPages?.includes(page)) {
-						await fetchMoreSearchResults(page, params);
-					}
-				}
-			}
-		} else {
-			// Check if we need to fetch more data for context
-			const requiredRecords = newPage * pageSize;
-			if (documents.length < requiredRecords && newPage <= documentsNumberOfPages) {
-				// Calculate which pages we need to fetch
-				const currentLoadedPages = loadedPages && loadedPages.length > 0 ? Math.max(...loadedPages) : 0;
-				const targetPage = Math.ceil((newPage * pageSize) / 200);
-
-				// Fetch all missing pages in sequence
-				if (currentLoadedPages < targetPage) {
-					await fetchMoreDocuments(currentLoadedPages + 1, targetPage);
-				}
-			}
-		}
-	};
-
-	const handleSort = async (property: keyof Document) => {
-		const isAsc = orderBy === property && order === 'asc';
-		const newOrder = isAsc ? 'desc' : 'asc';
-		setOrder(newOrder);
-		setOrderBy(property);
-	};
-
-	const handleSearch = async () => {
-		try {
-			// Reset to first page when searching
-			setDocumentsPageNumber(1);
-			setSearchResultsPage(1);
-
-			// Search button only works when search value exists
-			if (searchValue && searchValue.trim()) {
-				// Store the searched value
-				setSearchedValue(searchValue.trim());
-				// Build query parameters
-				const params = new URLSearchParams({
-					limit: '200',
-					search: searchValue.trim(),
-				});
-
-				// Add filter if it exists
-				if (filterValue && filterValue.trim()) {
-					params.append('filter', filterValue.trim());
-				}
-				if (orderBy) {
-					params.append('sortBy', orderBy);
-				}
-				if (order) {
-					params.append('sortOrder', order);
-				}
-
-				const response = await axios.get(`${base_url}/documents/organisation/${orgId}?${params.toString()}`);
-				setSearchResults(response.data.data);
-				setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-				setSearchResultsLoadedPages([1]);
-				setIsSearchActive(true);
-				setSearchButtonClicked(true);
-			} else {
-				// If no search value, clear search results
-				setSearchResults([]);
-				setSearchResultsLoadedPages([]);
-				setSearchResultsTotalItems(0);
-				setIsSearchActive(false);
-				setSearchButtonClicked(false);
-				setSearchedValue('');
-			}
-		} catch (error) {
-			console.error('Search error:', error);
-		}
-	};
-
-	const fetchMoreSearchResults = async (page: number, searchParams: URLSearchParams) => {
-		try {
-			// Add page parameter
-			searchParams.set('page', page.toString());
-
-			const response = await axios.get(`${base_url}/documents/organisation/${orgId}?${searchParams.toString()}`);
-
-			if (page === 1) {
-				// First page - replace all data
-				setSearchResults(response.data.data);
-				setSearchResultsLoadedPages([1]);
-			} else {
-				// Subsequent pages - append data
-				setSearchResults((prev) => {
-					const newData = [...prev, ...response.data.data];
-					return newData;
-				});
-				setSearchResultsLoadedPages((prev) => [...prev, page]);
-			}
-
-			setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-		} catch (error) {
-			console.error('Fetch more search results error:', error);
-		}
-	};
 
 	// Keep track of previous length to avoid unnecessary resets
 	const prevLengthRef = useRef<number>(0);
@@ -552,12 +411,13 @@ const AdminDocuments = () => {
 
 			// Only remove from frontend state if the backend request was successful
 			if (response.data.status === 200) {
-				// If search is active, also remove from search results
-				if (isSearchActive) {
-					setSearchResults((prev) => prev?.filter((document) => document._id !== documentId) || []);
-					setSearchResultsTotalItems((prev) => Math.max(0, prev - 1));
-				}
 				removeDocument(documentId);
+
+				// If search is active, remove from search results; otherwise context data is already updated
+				if (isSearchActive) {
+					removeFromSearchResults(documentId);
+				}
+
 				// Show success message
 				setSnackbarMessage('Document deleted successfully');
 				setSnackbarSeverity('success');
@@ -643,186 +503,42 @@ const AdminDocuments = () => {
 				customSettings={{ justifyContent: 'flex-start' }}
 				showCopyRight={true}>
 				<Box sx={{ width: '100%', height: '100%' }}>
-					<Box
-						sx={{
-							display: 'flex',
-							justifyContent: 'space-between',
-							alignItems: 'center',
-							padding: isMobileSizeSmall ? '1rem 1rem 0.5rem 1rem' : '2rem 2rem 1rem 2rem',
-							width: '100%',
-							mb: '1.25rem',
-						}}>
-						<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', flex: 4 }}>
-							<Box sx={{ display: 'flex', alignSelf: 'flex-start', width: isVerySmallScreen ? '12.5rem' : 'fit-content' }}>
-								<Box sx={{ mr: '1rem' }}>
-									<FormControl>
-										<Select
-											size='small'
-											value={filterValue}
-											onChange={(e) => {
-												const newFilterValue = e.target.value;
-												setFilterValue(newFilterValue);
-
-												// Auto-search when filter changes
-												if (newFilterValue) {
-													// Build query parameters
-													const params = new URLSearchParams({
-														limit: '200',
-														filter: newFilterValue,
-													});
-
-													// Include existing search value if it exists
-													if (searchValue && searchValue.trim()) {
-														params.append('search', searchValue.trim());
-													}
-													if (orderBy) {
-														params.append('sortBy', orderBy);
-													}
-													if (order) {
-														params.append('sortOrder', order);
-													}
-
-													// Trigger search immediately
-													axios
-														.get(`${base_url}/documents/organisation/${orgId}?${params.toString()}`)
-														.then((response) => {
-															setSearchResults(response.data.data);
-															setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-															setSearchResultsLoadedPages([1]);
-															setIsSearchActive(true);
-															setSearchResultsPage(1);
-														})
-														.catch((error) => {
-															console.error('Filter error:', error);
-														});
-												} else {
-													// If filter is cleared but search value exists, auto-search with search value
-													if (searchValue && searchValue.trim()) {
-														handleSearch();
-													} else {
-														// Clear search results and go back to context data
-														setSearchResults([]);
-														setSearchResultsLoadedPages([]);
-														setSearchResultsTotalItems(0);
-														setIsSearchActive(false);
-														setSearchResultsPage(1);
-													}
-												}
-											}}
-											displayEmpty
-											sx={{
-												backgroundColor: theme.bgColor?.common,
-												width: isMobileSizeSmall ? '7rem' : '10rem',
-												fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-												textTransform: 'capitalize',
-											}}>
-											<MenuItem
-												disabled
-												value='filter'
-												selected
-												sx={{
-													fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-													fontStyle: 'italic',
-													textTransform: 'capitalize',
-													padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-													minHeight: '2rem',
-												}}>
-												Filter Documents
-											</MenuItem>
-											<MenuItem
-												value=''
-												selected
-												sx={{
-													fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-													textTransform: 'capitalize',
-													padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-													minHeight: '2rem',
-												}}>
-												All Documents
-											</MenuItem>
-											{['Paid Documents', 'Free Documents', 'On Landing Page', 'On Platform Only']?.map((type) => (
-												<MenuItem
-													value={type.toLowerCase()}
-													key={type}
-													sx={{
-														fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-														textTransform: 'capitalize',
-														padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-														minHeight: '2rem',
-													}}>
-													{type}
-												</MenuItem>
-											))}
-										</Select>
-									</FormControl>
-								</Box>
-								<CustomTextField
-									value={searchValue}
-									placeholder={'Search in name, description'}
-									onChange={(e) => {
-										setSearchValue(e.target.value);
-									}}
-									sx={{ backgroundColor: '#fff', minWidth: isVerySmallScreen ? '10rem' : '17.5rem' }}
-									required={false}
-									InputProps={{
-										endAdornment: (
-											<InputAdornment position='end'>
-												<Search
-													sx={{
-														mr: '-0.5rem',
-													}}
-													fontSize={isMobileSize ? 'small' : 'medium'}
-												/>
-											</InputAdornment>
-										),
-									}}
-								/>
-								<CustomSubmitButton onClick={handleSearch} sx={{ marginLeft: '1rem' }} disabled={!searchValue}>
-									Search
-								</CustomSubmitButton>
-								<CustomDeleteButton
-									onClick={() => {
-										setSearchValue('');
-										setFilterValue('');
-										setSearchResults([]);
-										setIsSearchActive(false);
-										setDocumentsPageNumber(1);
-										setSearchResultsPage(1);
-										setSearchResultsLoadedPages([]);
-										setSearchResultsTotalItems(0);
-										setSearchButtonClicked(false);
-										setSearchedValue('');
-									}}>
-									Reset
-								</CustomDeleteButton>
-								<Box sx={{ ml: '1rem', display: 'flex', alignItems: 'center', height: '2rem' }}>
-									<Typography
-										variant='body2'
-										sx={{
-											color: 'text.secondary',
-											fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-
-											whiteSpace: 'nowrap',
-										}}>
-										{isSearchActive ? searchResultsTotalItems : totalItems}{' '}
-										{isSearchActive ? (searchResultsTotalItems === 1 ? 'result' : 'results') : totalItems === 1 ? 'item' : 'items'}
-									</Typography>
-								</Box>
-							</Box>
-						</Box>
-						<Box sx={{ display: 'flex', gap: 1, mb: '0.85rem', alignItems: 'center' }}>
-							<CustomSubmitButton
-								onClick={() => {
+					<FilterSearchRow
+						filterValue={filterValue}
+						onFilterChange={handleFilterChange}
+						filterOptions={[
+							{ value: '', label: 'All Documents' },
+							{ value: 'paid documents', label: 'Paid Documents' },
+							{ value: 'free documents', label: 'Free Documents' },
+							{ value: 'on landing page', label: 'On Landing Page' },
+							{ value: 'on platform only', label: 'On Platform Only' },
+						]}
+						filterPlaceholder='Filter Documents'
+						searchValue={searchValue}
+						onSearchChange={setSearchValue}
+						onSearch={handleSearch}
+						onReset={resetAll}
+						searchPlaceholder='Search in name, description'
+						isSearchLoading={isSearchLoading}
+						isSearchActive={isSearchActive}
+						searchResultsTotalItems={searchResultsTotalItems}
+						totalItems={totalItems}
+						searchedValue={searchedValue}
+						onResetSearch={resetSearch}
+						onResetFilter={resetFilter}
+						actionButtons={[
+							{
+								label: isMobileSize ? 'New' : 'New Document',
+								onClick: () => {
 									setIsDocumentCreateModalOpen(true);
-									setEnterDocUrl(true);
-									setFileUploaded(false);
 									setSingleDocument({
-										_id: '',
 										name: '',
-										orgId,
-										userId: user?._id || '',
 										documentUrl: '',
+										userId: user?._id,
+										orgId,
 										imageUrl: '',
+										samplePageImageUrl: '',
+										isOnLandingPage: false,
 										prices: [
 											{ currency: 'gbp', amount: '0' },
 											{ currency: 'usd', amount: '0' },
@@ -831,31 +547,21 @@ const AdminDocuments = () => {
 										],
 										description: '',
 										pageCount: 0,
-										createdAt: '',
-										updatedAt: '',
-										clonedFromId: '',
-										clonedFromTitle: '',
-										usedInLessons: [],
-										usedInCourses: [],
-										samplePageImageUrl: '',
-										isOnLandingPage: false,
-										isArchived: false,
-										createdBy: '',
-										updatedBy: '',
-										createdByName: '',
-										updatedByName: '',
-										createdByImageUrl: '',
-										updatedByImageUrl: '',
-										createdByRole: '',
-										updatedByRole: '',
-									});
-								}}
-								sx={{ height: isVerySmallScreen ? '1.75rem' : '2.1rem', fontSize: isMobileSize ? '0.7rem' : undefined }}
-								type='button'>
-								{isVerySmallScreen ? 'New' : 'New Document'}
-							</CustomSubmitButton>
-						</Box>
-					</Box>
+									} as Document);
+									setIsFree(false);
+									setGBP({ currency: 'gbp', amount: '0' });
+									setUSD({ currency: 'usd', amount: '0' });
+									setEUR({ currency: 'eur', amount: '0' });
+									setTRY({ currency: 'try', amount: '0' });
+									setFileUploaded(false);
+									setEnterDocUrl(true);
+									setEnterDocImageUrl(true);
+									setEnterSamplePageImageUrl(true);
+								},
+							},
+						]}
+						isSticky={true}
+					/>
 
 					<CreateNewDocumentDialog
 						isOpen={isDocumentCreateModalOpen}
@@ -894,133 +600,128 @@ const AdminDocuments = () => {
 							display: 'flex',
 							flexDirection: 'column',
 							alignItems: 'center',
-							padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : '0rem 2rem 2rem 2rem',
+							padding: isMobileSize ? '0rem 0.25rem 2rem 0.25rem' : '0rem 0rem 2rem 0rem',
 							width: '100%',
 						}}>
-						{/* Chips for active search and filter */}
-						{((isSearchActive && searchedValue && searchButtonClicked) || (isSearchActive && filterValue && filterValue.trim())) && (
-							<Box
-								sx={{
-									display: 'flex',
-									gap: 1,
-									flexWrap: 'wrap',
-									justifyContent: 'flex-start',
-									borderRadius: '4px',
-									alignSelf: 'flex-start',
-									marginBottom: '1rem',
-									marginTop: '-1rem',
-								}}>
-								{isSearchActive && filterValue && filterValue.trim() && (
-									<Chip
-										label={`Filter: "${filterValue}"`}
-										onDelete={() => {
-											setFilterValue('');
-											// If search value exists, keep search results
-											if (searchValue && searchValue.trim()) {
-												handleSearch();
-											} else {
-												// Clear everything and go back to context data
-												setSearchResults([]);
-												setSearchResultsLoadedPages([]);
-												setSearchResultsTotalItems(0);
-												setIsSearchActive(false);
-												setSearchResultsPage(1);
-											}
-										}}
-										variant='outlined'
-										color='secondary'
-										size='small'
-										sx={{ backgroundColor: '#1976d2', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
-									/>
-								)}
-								{isSearchActive && searchedValue && searchButtonClicked && (
-									<Chip
-										label={`Search: "${searchedValue}"`}
-										onDelete={() => {
-											setSearchValue('');
-											setSearchedValue('');
-											setSearchButtonClicked(false);
-											// If filter is still active, keep filter results
-											if (filterValue) {
-												// Re-trigger filter search without search value
-												const params = new URLSearchParams({
-													limit: '200',
-													filter: filterValue,
-												});
-												if (orderBy) {
-													params.append('sortBy', orderBy);
-												}
-												if (order) {
-													params.append('sortOrder', order);
-												}
-												axios
-													.get(`${base_url}/documents/organisation/${orgId}?${params.toString()}`)
-													.then((response) => {
-														setSearchResults(response.data.data);
-														setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-														setSearchResultsLoadedPages([1]);
-														setIsSearchActive(true);
-														setSearchResultsPage(1);
-													})
-													.catch((error) => {
-														console.error('Filter error:', error);
-													});
-											} else {
-												// Clear everything and go back to context data
-												setSearchResults([]);
-												setSearchResultsLoadedPages([]);
-												setSearchResultsTotalItems(0);
-												setIsSearchActive(false);
-												setSearchResultsPage(1);
-											}
-										}}
-										color='primary'
-										variant='filled'
-										size='small'
-										sx={{ backgroundColor: '#1EC28B', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
-									/>
-								)}
-							</Box>
-						)}
-						<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>
+						<Table
+							sx={{
+								'mb': '2rem',
+								'tableLayout': 'fixed',
+								'width': '100%',
+								'borderCollapse': 'collapse',
+								'borderSpacing': 0,
+								'& .MuiTableHead-root': {
+									position: 'fixed',
+									top:
+										(isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim())
+											? !isMobileSize
+												? '10rem'
+												: '12.5rem'
+											: isMobileSize
+												? '10.25rem'
+												: '8rem',
+									left: isMobileSize ? 0 : '10rem',
+									right: 0,
+									zIndex: 99,
+									backgroundColor: theme.palette.background.paper,
+									boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+									display: 'table',
+									tableLayout: 'fixed',
+									width: isMobileSize ? '100%' : 'calc(100% - 10rem)',
+								},
+								'& .MuiTableHead-root .MuiTableCell-root': {
+									backgroundColor: theme.palette.background.paper,
+									padding: '0.25rem 1rem',
+									boxSizing: 'border-box',
+									margin: 0,
+									verticalAlign: 'center',
+								},
+								'& .MuiTableHead-root .MuiTableCell-root:last-child': {
+									borderRight: 'none',
+								},
+								'& .MuiTableBody-root .MuiTableCell-root': {
+									padding: '0.25rem 1rem',
+									boxSizing: 'border-box',
+									margin: 0,
+									verticalAlign: 'center',
+								},
+								'& .MuiTableBody-root .MuiTableCell-root:last-child': {
+									borderRight: 'none',
+								},
+								// Column widths for header cells
+								'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(1)': {
+									minWidth: isMobileSize ? '150px' : isInstructor ? '150px' : '100px',
+									width: isMobileSize ? '40%' : isInstructor ? '25%' : '13%',
+								},
+								'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(2)': {
+									minWidth: isMobileSize ? '200px' : isInstructor ? '200px' : '200px',
+									width: isMobileSize ? '30%' : isInstructor ? '30%' : '27%',
+								},
+								'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(3)': {
+									minWidth: isMobileSize ? '100px' : isInstructor ? '100px' : '100px',
+									width: isMobileSize ? '30%' : isInstructor ? '15%' : '20%',
+								},
+								'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(4)': {
+									minWidth: isMobileSize ? '0px' : isInstructor ? '100px' : '100px',
+									width: isMobileSize ? '0%' : isInstructor ? '15%' : '13%',
+								},
+								'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(5)': {
+									minWidth: isMobileSize ? '0px' : isInstructor ? '0px' : '100px',
+									width: isMobileSize ? '0%' : isInstructor ? '15%' : '12%',
+								},
+								'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(6)': {
+									minWidth: isMobileSize ? '0px' : isInstructor ? '0px' : '80px',
+									width: isMobileSize ? '0%' : isInstructor ? '0%' : '15%',
+								},
+								// Column widths for body cells - exact same as header
+								'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(1)': {
+									minWidth: isMobileSize ? '150px' : isInstructor ? '150px' : '100px',
+									width: isMobileSize ? '40%' : isInstructor ? '25%' : '13%',
+								},
+								'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(2)': {
+									minWidth: isMobileSize ? '200px' : isInstructor ? '200px' : '200px',
+									width: isMobileSize ? '30%' : isInstructor ? '30%' : '27%',
+								},
+								'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(3)': {
+									minWidth: isMobileSize ? '100px' : isInstructor ? '100px' : '100px',
+									width: isMobileSize ? '30%' : isInstructor ? '15%' : '20%',
+								},
+								'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(4)': {
+									minWidth: isMobileSize ? '0px' : isInstructor ? '100px' : '100px',
+									width: isMobileSize ? '0%' : isInstructor ? '15%' : '13%',
+								},
+								'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(5)': {
+									minWidth: isMobileSize ? '0px' : isInstructor ? '0px' : '100px',
+									width: isMobileSize ? '0%' : isInstructor ? '15%' : '12%',
+								},
+								'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(6)': {
+									minWidth: isMobileSize ? '0px' : isInstructor ? '0px' : '80px',
+									width: isMobileSize ? '0%' : isInstructor ? '0%' : '15%',
+								},
+							}}
+							size='small'
+							aria-label='a dense table'>
+							{/* Spacer row to ensure header alignment */}
+							<TableRow sx={{ height: 0, visibility: 'hidden' }}>
+								<TableCell sx={{ width: isMobileSize ? '40%' : isInstructor ? '25%' : '13%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isMobileSize ? '30%' : isInstructor ? '30%' : '27%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isMobileSize ? '30%' : isInstructor ? '15%' : '20%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isMobileSize ? '0%' : isInstructor ? '15%' : '13%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isMobileSize ? '0%' : isInstructor ? '15%' : '12%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isMobileSize ? '0%' : isInstructor ? '0%' : '15%', padding: 0, border: 'none' }} />
+							</TableRow>
 							<CustomTableHead<Document>
-								orderBy={orderBy}
+								orderBy={orderBy as keyof Document}
 								order={order}
 								handleSort={handleSort}
-								columns={[
-									{ key: 'clone', label: 'Cloned' },
-									{ key: 'name', label: 'Document Name' },
-									{ key: 'documentId', label: 'Document URL' },
-									{ key: 'createdAt', label: 'Created On' },
-									{ key: 'updatedAt', label: 'Updated On' },
-									{ key: 'actions', label: 'Actions' },
-								]}
+								columns={getColumns(isMobileSize)}
 							/>
 							<TableBody>
 								{paginatedDocuments &&
 									paginatedDocuments?.map((document: Document, index) => {
 										return (
 											<TableRow key={document._id} hover>
-												{' '}
-												<TableCell sx={{ textAlign: 'center', width: '0px' }}>
-													{document.clonedFromId && (
-														<Box
-															sx={{
-																backgroundColor: theme.palette.info.main,
-																color: 'white',
-																borderRadius: '50%',
-																width: '15px',
-																height: '15px',
-																display: 'flex',
-																alignItems: 'center',
-																justifyContent: 'center',
-																fontSize: '0.65rem',
-																margin: '0 auto',
-															}}>
-															C
-														</Box>
-													)}
-												</TableCell>
+												{!isMobileSize && !isInstructor && <CustomTableCell value={document.isOnLandingPage ? 'Yes' : 'No'} />}
 												<CustomTableCell value={document.name} />
 												<TableCell sx={{ textAlign: 'center' }}>
 													<Link
@@ -1028,11 +729,12 @@ const AdminDocuments = () => {
 														target='_blank'
 														rel='noopener noreferrer'
 														sx={{ fontSize: isMobileSize ? '0.6rem' : undefined }}>
-														{isVerySmallScreen ? truncateText(document.documentUrl, 25) : truncateText(document.documentUrl, 40)}
+														{isMobileSize ? truncateText(document.documentUrl, 20) : truncateText(document.documentUrl, 27)}
 													</Link>
 												</TableCell>
-												<CustomTableCell value={dateFormatter(document.createdAt)} />
-												<CustomTableCell value={dateFormatter(document.updatedAt)} />
+												{!isMobileSize && !isInstructor && <CustomTableCell value={document.createdByName || 'N/A'} />}
+												{!isMobileSize && isInstructor && <CustomTableCell value={dateFormatter(document.createdAt)} />}
+												{!isMobileSize && <CustomTableCell value={dateFormatter(document.updatedAt)} />}
 												<TableCell
 													sx={{
 														textAlign: 'center',
@@ -1127,6 +829,7 @@ const AdminDocuments = () => {
 									})}
 							</TableBody>
 						</Table>
+						{isMobileSize && <CustomInfoMessageAlignedLeft message='Rotate your device or use desktop for more info' />}
 						<CustomTablePagination count={documentsNumberOfPages} page={currentPage} onChange={handlePageChange} />
 					</Box>
 
@@ -1145,7 +848,7 @@ const AdminDocuments = () => {
 						autoHideDuration={3500}
 						anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
 						onClose={() => setIsUrlErrorOpen(false)}>
-						<Alert severity='error' variant='filled' sx={{ width: '100%' }}>
+						<Alert severity='error' variant='filled' sx={{ width: isMobileSize ? '60%' : '100%', fontSize: isMobileSize ? '0.75rem' : undefined }}>
 							{urlErrorMessage}
 						</Alert>
 					</Snackbar>
@@ -1160,9 +863,10 @@ const AdminDocuments = () => {
 							onClose={() => setSnackbarOpen(false)}
 							severity={snackbarSeverity}
 							sx={{
-								'width': '100%',
+								'width': isMobileSize ? '60%' : '100%',
 								'backgroundColor': theme.bgColor?.greenSecondary,
 								'color': theme.textColor?.common.main,
+								'fontSize': isMobileSize ? '0.75rem' : undefined,
 								'& .MuiAlert-icon': {
 									color: 'white',
 								},

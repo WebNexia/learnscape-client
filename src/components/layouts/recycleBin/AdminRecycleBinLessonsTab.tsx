@@ -1,22 +1,6 @@
 import { useState, useEffect, useContext } from 'react';
-import {
-	Box,
-	Table,
-	TableBody,
-	TableCell,
-	TableRow,
-	Typography,
-	IconButton,
-	InputAdornment,
-	MenuItem,
-	FormControl,
-	Select,
-	Chip,
-	DialogContent,
-	Snackbar,
-	Alert,
-} from '@mui/material';
-import { Search, Restore, DeleteForever, Info } from '@mui/icons-material';
+import { Box, Table, TableBody, TableCell, TableRow, Typography, IconButton, DialogContent, Snackbar, Alert } from '@mui/material';
+import { Restore, DeleteForever, Info } from '@mui/icons-material';
 import axios from '@utils/axiosInstance';
 import theme from '../../../themes';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
@@ -24,10 +8,9 @@ import { OrganisationContext } from '../../../contexts/OrganisationContextProvid
 import { LessonsContext } from '../../../contexts/LessonsContextProvider';
 import { useRecycleBinLessons } from '../../../contexts/RecycleBinLessonsContextProvider';
 import { ArchivedLesson } from '../../../interfaces/lessons';
+import { useFilterSearch } from '../../../hooks/useFilterSearch';
 import { dateFormatter } from '../../../utils/dateFormatter';
-import CustomTextField from '../../forms/customFields/CustomTextField';
-import CustomSubmitButton from '../../forms/customButtons/CustomSubmitButton';
-import CustomDeleteButton from '../../forms/customButtons/CustomDeleteButton';
+import FilterSearchRow from '../FilterSearchRow';
 import CustomTableHead from '../table/CustomTableHead';
 import CustomTableCell from '../table/CustomTableCell';
 import CustomActionBtn from '../table/CustomActionBtn';
@@ -45,22 +28,8 @@ const AdminRecycleBinLessonsTab = () => {
 		archivedLessons,
 		totalItems,
 		currentPage,
-		searchResults,
-		searchResultsTotalItems,
-		isSearchActive,
-		searchValue,
-		setSearchValue,
-		filterValue,
-		setFilterValue,
-		searchedValue,
-		setSearchedValue,
-		searchButtonClicked,
-		setSearchButtonClicked,
 		fetchArchivedLessons,
 		setCurrentPage,
-		setSearchResults,
-		setSearchResultsTotalItems,
-		setIsSearchActive,
 		setArchivedLessons,
 		setTotalItems,
 		loadedPages,
@@ -73,31 +42,89 @@ const AdminRecycleBinLessonsTab = () => {
 		setSnackbarSeverity,
 	} = useRecycleBinLessons();
 
+	const pageSize = 50;
+
+	// Create a wrapper function for fetchArchivedLessons to match the hook's expected signature
+	const fetchMoreContextData = async (startPage: number, endPage: number) => {
+		for (let page = startPage; page <= endPage; page++) {
+			await fetchArchivedLessons(page);
+		}
+	};
+
+	// Use the filter search hook
+	const {
+		searchValue,
+		setSearchValue,
+		filterValue,
+		displayData: displayLessons,
+		numberOfPages: lessonsNumberOfPages,
+		searchResultsPage,
+		searchResultsTotalItems,
+		searchButtonClicked,
+		searchedValue,
+		orderBy,
+		order,
+		isSearchActive,
+		isLoading: isSearchLoading,
+		handleSearch,
+		handleFilterChange,
+		handlePageChange,
+		handleSort,
+		resetSearch,
+		resetFilter,
+		resetAll,
+		removeFromSearchResults,
+	} = useFilterSearch<ArchivedLesson>({
+		getEndpoint: () => `${base_url}/lessons/organisation/${orgId}/archived`,
+		limit: 200,
+		pageSize,
+		contextData: archivedLessons || [],
+		setContextPageNumber: setCurrentPage,
+		fetchMoreContextData,
+		contextLoadedPages: loadedPages,
+		defaultOrderBy: 'archivedAt',
+		defaultOrder: 'desc',
+	});
+
 	const vertical = 'top';
 	const horizontal = 'center';
 
-	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
-	const isMobileSizeSmall = isVerySmallScreen || isRotated;
-
-	const pageSize = 50;
-
-	// Use search results if active, otherwise use context data
-	const displayLessons = isSearchActive ? searchResults : archivedLessons;
-
-	// Add missing state variables for progressive pagination
-	const [searchResultsPage, setSearchResultsPage] = useState<number>(1);
-	const [searchResultsLoadedPages, setSearchResultsLoadedPages] = useState<number[]>([]);
-
-	// For pagination, use total items from server when not searching
-	const lessonsNumberOfPages = isSearchActive ? Math.ceil(searchResultsTotalItems / pageSize) : Math.ceil(totalItems / pageSize);
 
 	// Use appropriate page number for pagination
 	const currentPageNumber = isSearchActive ? searchResultsPage : currentPage;
-	const paginatedLessons = displayLessons?.slice((currentPageNumber - 1) * pageSize, currentPageNumber * pageSize) || [];
 
-	const [orderBy, setOrderBy] = useState<keyof ArchivedLesson>('archivedAt');
-	const [order, setOrder] = useState<'asc' | 'desc'>('desc');
+	// Apply client-side sorting when not in search mode
+	const sortedLessons = [...(displayLessons || [])]?.sort((a, b) => {
+		// Handle nested properties like 'instructor.name'
+		const getNestedValue = (obj: any, path: string) => {
+			return path.split('.').reduce((current, key) => current?.[key], obj) ?? '';
+		};
+
+		let aValue, bValue;
+
+		// Special handling for Auto-Remove On column - sort by calculated deletion date
+		if (orderBy === 'autoRemoveDate') {
+			const getDeletionDate = (archivedAt: string) => {
+				const archivedDate = new Date(archivedAt);
+				return new Date(archivedDate.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days
+			};
+			aValue = getDeletionDate(a.archivedAt || '');
+			bValue = getDeletionDate(b.archivedAt || '');
+		} else {
+			aValue = getNestedValue(a, orderBy as string);
+			bValue = getNestedValue(b, orderBy as string);
+		}
+
+		if (order === 'asc') {
+			return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+		} else {
+			return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
+		}
+	});
+
+	const paginatedLessons = sortedLessons?.slice((currentPageNumber - 1) * pageSize, currentPageNumber * pageSize) || [];
 
 	// Modal states
 	const [restoreModalOpen, setRestoreModalOpen] = useState<boolean[]>([]);
@@ -129,95 +156,6 @@ const AdminRecycleBinLessonsTab = () => {
 	useEffect(() => {
 		setCurrentPage(1);
 	}, []);
-
-	const handlePageChange = async (newPage: number) => {
-		if (isSearchActive) {
-			setSearchResultsPage(newPage);
-
-			// Check if we need to fetch more data for progressive pagination
-			const requiredRecords = newPage * pageSize;
-			if (searchResults.length < requiredRecords) {
-				// Build search parameters
-				const params = new URLSearchParams({
-					limit: '200',
-				});
-
-				if (searchValue && searchValue.trim()) {
-					params.append('search', searchValue.trim());
-				}
-				if (filterValue && filterValue.trim()) {
-					params.append('filter', filterValue.trim());
-				}
-				if (orderBy) {
-					params.append('sortBy', orderBy);
-				}
-				if (order) {
-					params.append('sortOrder', order);
-				}
-
-				// Calculate which pages we need to fetch
-				const currentLoadedPages = searchResultsLoadedPages && searchResultsLoadedPages.length > 0 ? Math.max(...searchResultsLoadedPages) : 0;
-				const targetPage = Math.ceil((newPage * pageSize) / 200);
-
-				// Fetch all missing pages in sequence
-				for (let page = currentLoadedPages + 1; page <= targetPage; page++) {
-					if (!searchResultsLoadedPages?.includes(page)) {
-						await fetchMoreSearchResults(page, params);
-					}
-				}
-			}
-		} else {
-			// Check if we need to fetch more data for regular archived lessons
-			const requiredRecords = newPage * pageSize;
-			if (archivedLessons.length < requiredRecords && newPage <= lessonsNumberOfPages) {
-				// Calculate which pages we need to fetch
-				const currentLoadedPages = loadedPages && loadedPages.length > 0 ? Math.max(...loadedPages) : 0;
-				const targetPage = Math.ceil((newPage * pageSize) / 200);
-
-				// Fetch all missing pages in sequence
-				if (currentLoadedPages < targetPage) {
-					for (let page = currentLoadedPages + 1; page <= targetPage; page++) {
-						if (!loadedPages?.includes(page)) {
-							await fetchArchivedLessons(page);
-							setLoadedPages((prev) => [...prev, page]);
-						}
-					}
-				}
-			}
-			setCurrentPage(newPage);
-		}
-	};
-
-	const fetchMoreSearchResults = async (page: number, searchParams: URLSearchParams) => {
-		if (!orgId) return;
-
-		try {
-			// Add page parameter
-			searchParams.set('page', page.toString());
-
-			const response = await axios.get(`${base_url}/lessons/organisation/${orgId}/archived?${searchParams.toString()}`);
-
-			if (page === 1) {
-				// First page - replace all data
-				setSearchResults(response.data.data);
-				setSearchResultsLoadedPages([1]);
-			} else {
-				// Additional pages - append data
-				setSearchResults((prev) => [...prev, ...response.data.data]);
-				setSearchResultsLoadedPages((prev) => [...prev, page]);
-			}
-
-			setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-		} catch (error) {
-			console.error('Error fetching more search results:', error);
-		}
-	};
-
-	const handleSort = (property: keyof ArchivedLesson) => {
-		const isAsc = orderBy === property && order === 'asc';
-		setOrder(isAsc ? 'desc' : 'asc');
-		setOrderBy(property);
-	};
 
 	const handleSelectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
 		const checked = event.target.checked;
@@ -270,55 +208,6 @@ const AdminRecycleBinLessonsTab = () => {
 		setDeleteModalOpen(newModalState);
 	};
 
-	const handleSearch = async () => {
-		try {
-			// Reset to first page when searching
-			setCurrentPage(1);
-			setSearchResultsPage(1);
-
-			// Search button only works when search value exists
-			if (searchValue && searchValue.trim()) {
-				// Store the searched value
-				setSearchedValue(searchValue.trim());
-				// Build query parameters
-				const params = new URLSearchParams({
-					limit: '200',
-					search: searchValue.trim(),
-				});
-
-				// Add filter if it exists
-				if (filterValue && filterValue.trim()) {
-					params.append('filter', filterValue.trim());
-				}
-				if (orderBy) {
-					params.append('sortBy', orderBy);
-				}
-				if (order) {
-					params.append('sortOrder', order);
-				}
-
-				const response = await axios.get(`${base_url}/lessons/organisation/${orgId}/archived?${params.toString()}`);
-				setSearchResults(response.data.data);
-				setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-				setSearchResultsLoadedPages([1]);
-				setIsSearchActive(true);
-				setSearchButtonClicked(true);
-			} else {
-				// If no search value, clear search results
-				setSearchResults([]);
-				setSearchResultsLoadedPages([]);
-				setSearchResultsTotalItems(0);
-				setIsSearchActive(false);
-				setSearchButtonClicked(false);
-			}
-		} catch (error) {
-			console.error('Search error:', error);
-			setSnackbarMessage('Search failed');
-			setSnackbarSeverity('error');
-			setSnackbarOpen(true);
-		}
-	};
-
 	const restoreLesson = async (lessonId: string) => {
 		try {
 			const response = await axios.patch(`${base_url}/lessons/${lessonId}/restore`);
@@ -328,10 +217,9 @@ const AdminRecycleBinLessonsTab = () => {
 				setArchivedLessons((prev) => prev?.filter((lesson) => lesson._id !== lessonId) || []);
 				setTotalItems((prev) => prev - 1);
 
-				// If search is active, also remove from search results
+				// Clear search if currently viewing filtered data to show updated context data
 				if (isSearchActive) {
-					setSearchResults((prev) => prev?.filter((lesson) => lesson._id !== lessonId) || []);
-					setSearchResultsTotalItems((prev) => Math.max(0, prev - 1));
+					removeFromSearchResults(lessonId);
 				}
 
 				// Add to lessons context
@@ -362,10 +250,9 @@ const AdminRecycleBinLessonsTab = () => {
 				setArchivedLessons((prev) => prev?.filter((lesson) => lesson._id !== lessonId) || []);
 				setTotalItems((prev) => prev - 1);
 
-				// If search is active, also remove from search results
+				// Clear search if currently viewing filtered data to show updated context data
 				if (isSearchActive) {
-					setSearchResults((prev) => prev?.filter((lesson) => lesson._id !== lessonId) || []);
-					setSearchResultsTotalItems((prev) => Math.max(0, prev - 1));
+					removeFromSearchResults(lessonId);
 				}
 
 				setSnackbarMessage('Lesson permanently deleted');
@@ -400,10 +287,9 @@ const AdminRecycleBinLessonsTab = () => {
 			setArchivedLessons((prev) => prev?.filter((lesson) => !selectedItems?.includes(lesson._id)) || []);
 			setTotalItems((prev) => prev - selectedItems.length);
 
-			// If search is active, also remove from search results
+			// If search is active, remove from search results; otherwise context data is already updated
 			if (isSearchActive) {
-				setSearchResults((prev) => prev?.filter((lesson) => !selectedItems?.includes(lesson._id)) || []);
-				setSearchResultsTotalItems((prev) => Math.max(0, prev - selectedItems.length));
+				selectedItems.forEach((lessonId) => removeFromSearchResults(lessonId));
 			}
 
 			setSelectedItems([]);
@@ -429,10 +315,9 @@ const AdminRecycleBinLessonsTab = () => {
 			setArchivedLessons((prev) => prev?.filter((lesson) => !selectedItems?.includes(lesson._id)) || []);
 			setTotalItems((prev) => prev - selectedItems.length);
 
-			// If search is active, also remove from search results
+			// If search is active, remove from search results; otherwise context data is already updated
 			if (isSearchActive) {
-				setSearchResults((prev) => prev?.filter((lesson) => !selectedItems?.includes(lesson._id)) || []);
-				setSearchResultsTotalItems((prev) => Math.max(0, prev - selectedItems.length));
+				selectedItems.forEach((lessonId) => removeFromSearchResults(lessonId));
 			}
 
 			setSelectedItems([]);
@@ -469,308 +354,150 @@ const AdminRecycleBinLessonsTab = () => {
 
 	return (
 		<>
-			<Box
-				sx={{
-					display: 'flex',
-					flexDirection: 'row',
-					justifyContent: 'space-between',
-					padding: isMobileSizeSmall ? '1rem 1rem 0.5rem 1rem' : '2rem 2rem 1rem 2rem',
-					width: '100%',
-				}}>
-				<Box sx={{ display: 'flex', alignSelf: 'flex-start', width: isVerySmallScreen ? '12.5rem' : 'fit-content' }}>
-					<Box>
-						<FormControl>
-							<Select
-								size='small'
-								value={filterValue}
-								onChange={async (e) => {
-									const newFilterValue = e.target.value;
-									setFilterValue(newFilterValue);
-
-									// Automatically trigger filter
-									if (newFilterValue && newFilterValue.trim()) {
-										// Reset pagination state
-										setCurrentPage(1);
-										setSearchResultsPage(1);
-										setSearchResultsLoadedPages([]);
-
-										setIsSearchActive(true);
-										// Use search results for filtered data
-										const params = new URLSearchParams({
-											limit: '200',
-											filter: newFilterValue.trim(),
-										});
-										if (searchValue && searchValue.trim()) {
-											params.append('search', searchValue.trim());
-										}
-										if (orderBy) params.append('sortBy', orderBy);
-										if (order) params.append('sortOrder', order);
-
-										const response = await axios.get(`${base_url}/lessons/organisation/${orgId}/archived?${params.toString()}`);
-										if (response.data.status === 200) {
-											setSearchResults(response.data.data);
-											setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-											setSearchResultsLoadedPages([1]);
-										}
-									} else {
-										// If no filter, reset to normal view
-										setIsSearchActive(false);
-										setSearchResults([]);
-										setSearchResultsTotalItems(0);
-										setSearchResultsLoadedPages([]);
-										await fetchArchivedLessons(1);
-									}
-								}}
-								displayEmpty
-								sx={{
-									backgroundColor: theme.bgColor?.common,
-									width: isMobileSizeSmall ? '8rem' : '12rem',
-									fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-									textTransform: 'capitalize',
-									mr: '1rem',
-								}}>
-								<MenuItem
-									disabled
-									value='filter'
-									selected
-									sx={{
-										fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-										fontStyle: 'italic',
-										textTransform: 'capitalize',
-										padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-										minHeight: '2rem',
-									}}>
-									Filter Lessons
-								</MenuItem>
-								<MenuItem
-									value=''
-									selected
-									sx={{
-										fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-										textTransform: 'capitalize',
-										padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-										minHeight: '2rem',
-									}}>
-									All deleted lessons
-								</MenuItem>
-								{['Recently deleted', 'Instructional Lessons', 'Practice Lessons', 'Quiz Lessons']?.map((type) => (
-									<MenuItem
-										value={type.toLowerCase()}
-										key={type}
-										sx={{
-											fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-											textTransform: 'capitalize',
-											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-											minHeight: '2rem',
-										}}>
-										{type}
-									</MenuItem>
-								))}
-							</Select>
-						</FormControl>
-					</Box>
-
-					<CustomTextField
-						value={searchValue}
-						placeholder={'Search in Title and Instructions'}
-						onChange={(e) => {
-							setSearchValue(e.target.value);
-						}}
-						sx={{ backgroundColor: '#fff', minWidth: isVerySmallScreen ? '10rem' : '17.5rem' }}
-						required={false}
-						InputProps={{
-							endAdornment: (
-								<InputAdornment position='end'>
-									<Search
-										sx={{
-											mr: '-0.5rem',
-										}}
-										fontSize={isMobileSize ? 'small' : 'medium'}
-									/>
-								</InputAdornment>
-							),
-							onKeyPress: (e) => {
-								if (e.key === 'Enter') {
-									handleSearch();
-								}
-							},
-						}}
-					/>
-					<CustomSubmitButton onClick={handleSearch} sx={{ marginLeft: '1rem' }} disabled={!searchValue || !searchValue.trim()}>
-						Search
-					</CustomSubmitButton>
-					<CustomDeleteButton
-						onClick={() => {
-							setSearchValue('');
-							setFilterValue('');
-							setSearchedValue('');
-							setSearchButtonClicked(false);
-							setSearchResults([]);
-							setSearchResultsTotalItems(0);
-							setIsSearchActive(false);
-							setSearchResultsPage(1);
-							setSearchResultsLoadedPages([]);
-							setCurrentPage(1);
-						}}>
-						Reset
-					</CustomDeleteButton>
-
-					<Box sx={{ ml: '1rem', display: 'flex', alignItems: 'center', height: '2rem' }}>
-						{isSearchActive ? (
-							<Typography
-								variant='body2'
-								sx={{
-									color: 'text.secondary',
-									fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-									whiteSpace: 'nowrap',
-								}}>
-								{searchResultsTotalItems} {searchResultsTotalItems === 1 ? 'result' : 'results'}
-							</Typography>
-						) : (
-							<Typography
-								variant='body2'
-								sx={{
-									color: 'text.secondary',
-									fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-									whiteSpace: 'nowrap',
-								}}>
-								{totalItems} {totalItems === 1 ? 'item' : 'items'}
-							</Typography>
-						)}
-					</Box>
-				</Box>
-				<Box sx={{ display: 'flex', gap: 1, mb: '0.85rem', alignItems: 'center' }}>
-					{selectedItems && selectedItems.length > 0 && (
-						<>
-							<CustomSubmitButton onClick={() => setIsBulkRestoreModalOpen(true)} sx={{ fontSize: isMobileSize ? '0.7rem' : undefined }}>
-								Restore ({selectedItems.length})
-							</CustomSubmitButton>
-							<CustomDeleteButton onClick={() => setIsBulkDeleteModalOpen(true)} sx={{ fontSize: isMobileSize ? '0.7rem' : undefined }}>
-								Delete ({selectedItems.length})
-							</CustomDeleteButton>
-						</>
-					)}
-				</Box>
-			</Box>
+			<FilterSearchRow
+				filterValue={filterValue}
+				onFilterChange={handleFilterChange}
+				filterOptions={[
+					{ value: '', label: 'All deleted lessons' },
+					{ value: 'recently deleted', label: 'Recently deleted' },
+					{ value: 'instructional lessons', label: 'Instructional Lessons' },
+					{ value: 'practice lessons', label: 'Practice Lessons' },
+					{ value: 'quiz lessons', label: 'Quizzes' },
+				]}
+				filterPlaceholder='Filter Lessons'
+				searchValue={searchValue}
+				onSearchChange={setSearchValue}
+				onSearch={handleSearch}
+				onReset={resetAll}
+				searchPlaceholder='Search in Title and Instructions'
+				isSearchLoading={isSearchLoading}
+				isSearchActive={isSearchActive}
+				searchResultsTotalItems={searchResultsTotalItems}
+				totalItems={totalItems}
+				searchedValue={searchedValue}
+				onResetSearch={resetSearch}
+				onResetFilter={resetFilter}
+				actionButtons={[
+					...(selectedItems && selectedItems.length > 0
+						? [
+								{
+									label: `Restore (${selectedItems.length})`,
+									onClick: () => setIsBulkRestoreModalOpen(true),
+								},
+								{
+									label: `Delete (${selectedItems.length})`,
+									onClick: () => setIsBulkDeleteModalOpen(true),
+								},
+							]
+						: []),
+				]}
+				isSticky={true}
+				isRecycleBin={true}
+			/>
 
 			<Box
 				sx={{
 					display: 'flex',
 					flexDirection: 'column',
 					alignItems: 'center',
-					padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : '0rem 2rem 2rem 2rem',
+					padding: isMobileSize ? '0rem 0rem 2rem 0rem' : '0rem 0rem 2rem 0rem',
 					width: '100%',
 				}}>
-				{((isSearchActive && searchedValue && searchButtonClicked) || (filterValue && filterValue.trim())) && (
-					<Box
-						sx={{
-							mb: '1rem',
-							display: 'flex',
-							gap: 1,
-							flexWrap: 'wrap',
-							justifyContent: 'center',
-							borderRadius: '4px',
-							alignSelf: 'flex-start',
-							marginBottom: '1rem',
-						}}>
-						{filterValue && filterValue.trim() && (
-							<Chip
-								label={`Filter: ${filterValue}`}
-								onDelete={() => {
-									setFilterValue('');
-									// If search value exists, keep search results
-									if (searchValue && searchValue.trim()) {
-										// Reset pagination state
-										setCurrentPage(1);
-										setSearchResultsPage(1);
-										setSearchResultsLoadedPages([]);
-
-										// Trigger search without filter value
-										const params = new URLSearchParams({
-											limit: '200',
-											search: searchValue.trim(),
-										});
-										if (orderBy) params.append('sortBy', orderBy);
-										if (order) params.append('sortOrder', order);
-
-										axios
-											.get(`${base_url}/lessons/organisation/${orgId}/archived?${params.toString()}`)
-											.then((response) => {
-												setSearchResults(response.data.data);
-												setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-												setSearchResultsLoadedPages([1]);
-												setIsSearchActive(true);
-											})
-											.catch((error) => console.error('Search error:', error));
-									} else {
-										// No search value, reset to archived lessons
-										setIsSearchActive(false);
-										setSearchResults([]);
-										setSearchResultsTotalItems(0);
-									}
-								}}
-								color='secondary'
-								variant='outlined'
-								size='small'
-								sx={{ backgroundColor: '#1976d2', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
-							/>
-						)}
-						{searchedValue && searchButtonClicked && (
-							<Chip
-								label={`Search: "${searchedValue}"`}
-								onDelete={() => {
-									setSearchValue('');
-									setSearchedValue('');
-									setSearchButtonClicked(false);
-									// If filter exists, keep filter results
-									if (filterValue && filterValue.trim()) {
-										// Reset pagination state
-										setCurrentPage(1);
-										setSearchResultsPage(1);
-										setSearchResultsLoadedPages([]);
-
-										// Trigger filter search without search value
-										const params = new URLSearchParams({
-											limit: '200',
-											filter: filterValue.trim(),
-										});
-										if (orderBy) params.append('sortBy', orderBy);
-										if (order) params.append('sortOrder', order);
-
-										axios
-											.get(`${base_url}/lessons/organisation/${orgId}/archived?${params.toString()}`)
-											.then((response) => {
-												setSearchResults(response.data.data);
-												setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-												setSearchResultsLoadedPages([1]);
-												setIsSearchActive(true);
-											})
-											.catch((error) => console.error('Filter search error:', error));
-									} else {
-										// No filter, reset to archived lessons
-										setIsSearchActive(false);
-										setSearchResults([]);
-										setSearchResultsTotalItems(0);
-									}
-								}}
-								variant='outlined'
-								color='secondary'
-								size='small'
-								sx={{ backgroundColor: '#1EC28B', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
-							/>
-						)}
-					</Box>
-				)}
-
-				<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>
+				<Table
+					sx={{
+						'mb': '2rem',
+						'tableLayout': 'fixed',
+						'width': '100%',
+						'borderCollapse': 'collapse',
+						'borderSpacing': 0,
+						'& .MuiTableHead-root': {
+							position: 'fixed',
+							top: !((isSearchActive && searchedValue && searchButtonClicked) || (filterValue && filterValue.trim()))
+								? isMobileSize
+									? '13.5rem'
+									: '11rem'
+								: isMobileSize
+									? '16rem'
+									: '13.25rem',
+							left: isMobileSize ? 0 : '10rem',
+							right: 0,
+							zIndex: 98,
+							backgroundColor: theme.palette.background.paper,
+							boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+							display: 'table',
+							tableLayout: 'fixed',
+							width: isMobileSize ? '100%' : 'calc(100% - 10rem)',
+						},
+						'& .MuiTableHead-root .MuiTableCell-root': {
+							backgroundColor: theme.palette.background.paper,
+							padding: isMobileSize ? '0.25rem 0.25rem' : '0.25rem 1rem',
+							boxSizing: 'border-box',
+							margin: 0,
+							verticalAlign: 'center',
+						},
+						'& .MuiTableHead-root .MuiTableCell-root:last-child': {
+							borderRight: 'none',
+						},
+						'& .MuiTableBody-root .MuiTableCell-root': {
+							padding: '0.25rem 1rem',
+							boxSizing: 'border-box',
+							margin: 0,
+							verticalAlign: 'center',
+						},
+						'& .MuiTableBody-root .MuiTableCell-root:last-child': {
+							borderRight: 'none',
+						},
+						// Column widths for mobile (4 columns)
+						'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(1)': {
+							minWidth: isMobileSize ? '50px' : '50px',
+							width: isMobileSize ? '10%' : '5%',
+						},
+						'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(2)': {
+							minWidth: isMobileSize ? '200px' : '300px',
+							width: isMobileSize ? '45%' : '25%',
+						},
+						'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(3)': {
+							minWidth: isMobileSize ? '120px' : '150px',
+							width: isMobileSize ? '25%' : '15%',
+						},
+						'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(4)': {
+							minWidth: isMobileSize ? '80px' : '100px',
+							width: isMobileSize ? '20%' : '15%',
+						},
+						// Desktop columns (6 columns)
+						'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(5)': {
+							minWidth: isMobileSize ? '0px' : '150px',
+							width: isMobileSize ? '0%' : '15%',
+						},
+						'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(6)': {
+							minWidth: isMobileSize ? '0px' : '120px',
+							width: isMobileSize ? '0%' : '15%',
+						},
+						'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(7)': {
+							minWidth: isMobileSize ? '0px' : '100px',
+							width: isMobileSize ? '0%' : '10%',
+						},
+					}}
+					size='small'
+					aria-label='a dense table'>
+					{/* Spacer row to ensure header alignment */}
+					<TableRow sx={{ height: 0, visibility: 'hidden' }}>
+						<TableCell sx={{ width: isMobileSize ? '10%' : '5%', padding: 0, border: 'none' }} />
+						<TableCell sx={{ width: isMobileSize ? '45%' : '25%', padding: 0, border: 'none' }} />
+						<TableCell sx={{ width: isMobileSize ? '25%' : '15%', padding: 0, border: 'none' }} />
+						<TableCell sx={{ width: isMobileSize ? '20%' : '15%', padding: 0, border: 'none' }} />
+						<TableCell sx={{ width: isMobileSize ? '0%' : '15%', padding: 0, border: 'none' }} />
+						<TableCell sx={{ width: isMobileSize ? '0%' : '15%', padding: 0, border: 'none' }} />
+						<TableCell sx={{ width: isMobileSize ? '0%' : '10%', padding: 0, border: 'none' }} />
+					</TableRow>
 					<CustomTableHead<ArchivedLesson>
-						orderBy={orderBy}
+						orderBy={orderBy as keyof ArchivedLesson}
 						order={order}
 						handleSort={handleSort}
 						selectAll={selectAll}
 						onSelectAll={handleSelectAll}
 						columns={
-							isVerySmallScreen
+							isMobileSize
 								? [
 										{ key: 'checkbox', label: '' },
 										{ key: 'title', label: 'Title' },
@@ -781,11 +508,11 @@ const AdminRecycleBinLessonsTab = () => {
 										{ key: 'checkbox', label: '' },
 										{ key: 'title', label: 'Title' },
 										{ key: 'type', label: 'Type' },
-										{ key: 'archivedAt', label: 'Deleted On' },
 										{ key: 'archivedByName', label: 'Deleted By' },
+										{ key: 'archivedAt', label: 'Deleted On' },
 										{
-											key: 'expiresIn',
-											label: 'Auto-Remove On',
+											key: 'autoRemoveDate',
+											label: 'Auto-Remove',
 											infoIcon: (
 												<IconButton
 													size='small'
@@ -815,17 +542,27 @@ const AdminRecycleBinLessonsTab = () => {
 
 								return (
 									<TableRow key={lesson._id} hover selected={isSelected}>
-										<TableCell padding='checkbox'>
+										<TableCell padding='checkbox' sx={{ textAlign: 'center' }}>
 											<input type='checkbox' checked={isSelected} onChange={() => handleSelectItem(lesson._id)} />
 										</TableCell>
-										<CustomTableCell value={lesson.title} />
-										{!isVerySmallScreen && <CustomTableCell value={lesson.type} />}
+										<CustomTableCell value={lesson.title || 'N/A'} />
+										{!isMobileSize && <CustomTableCell value={typeof lesson.type === 'string' ? lesson.type : (lesson.type as any)?.name || 'N/A'} />}
+										{!isMobileSize && <CustomTableCell value={lesson.archivedByName || 'N/A'} />}
 										<CustomTableCell value={lesson.archivedAt ? dateFormatter(lesson.archivedAt) : 'N/A'} />
-										{!isVerySmallScreen && <CustomTableCell value={lesson.archivedByName || 'N/A'} />}
-										{!isVerySmallScreen && <CustomTableCell value={deletionDateStatus.label} />}
+										{!isMobileSize && <CustomTableCell value={deletionDateStatus.label} />}
 										<TableCell sx={{ textAlign: 'center' }}>
-											<CustomActionBtn title='Restore Lesson' onClick={() => openRestoreModal(index)} icon={<Restore fontSize='small' />} />
-											<CustomActionBtn title='Delete Permanently' onClick={() => openDeleteModal(index)} icon={<DeleteForever fontSize='small' />} />
+											<CustomActionBtn
+												title='Restore Lesson'
+												onClick={() => openRestoreModal(index)}
+												icon={
+													<Restore fontSize='small' sx={{ mr: isMobileSize ? '0rem' : '-0.6rem', fontSize: isMobileSize ? '1rem' : undefined }} />
+												}
+											/>
+											<CustomActionBtn
+												title='Delete Permanently'
+												onClick={() => openDeleteModal(index)}
+												icon={<DeleteForever fontSize='small' sx={{ fontSize: isMobileSize ? '1rem' : undefined }} />}
+											/>
 										</TableCell>
 									</TableRow>
 								);
@@ -839,6 +576,7 @@ const AdminRecycleBinLessonsTab = () => {
 					/>
 				)}
 
+				{isMobileSize && <CustomInfoMessageAlignedLeft message='Rotate your device or use desktop for more info' />}
 				<CustomTablePagination count={lessonsNumberOfPages} page={currentPageNumber} onChange={handlePageChange} />
 			</Box>
 
@@ -851,10 +589,10 @@ const AdminRecycleBinLessonsTab = () => {
 					title='Restore Lesson'
 					maxWidth='xs'>
 					<DialogContent>
-						<Typography variant='body2' sx={{ lineHeight: 1.7 }}>
-							Are you sure you want to restore "{lesson.title}"?
+						<Typography variant='body2' sx={{ lineHeight: 1.7, fontSize: isMobileSize ? '0.75rem' : undefined }}>
+							Are you sure you want to restore "{lesson.title || 'this lesson'}"?
 						</Typography>
-						<Typography variant='body2' sx={{ lineHeight: 1.7, mt: 2 }}>
+						<Typography variant='body2' sx={{ lineHeight: 1.7, mt: 2, fontSize: isMobileSize ? '0.75rem' : undefined }}>
 							This lesson will become available again on all courses where it was previously used, and will be restored as unpublished.
 						</Typography>
 					</DialogContent>
@@ -879,8 +617,8 @@ const AdminRecycleBinLessonsTab = () => {
 					title='Delete Lesson Permanently'
 					maxWidth='xs'>
 					<DialogContent>
-						<Typography variant='body2' sx={{ lineHeight: 1.7 }}>
-							Are you sure you want to permanently delete "{lesson.title}"? This action cannot be undone.
+						<Typography variant='body2' sx={{ lineHeight: 1.7, fontSize: isMobileSize ? '0.75rem' : undefined }}>
+							Are you sure you want to permanently delete "{lesson.title || 'this lesson'}"? This action cannot be undone.
 						</Typography>
 					</DialogContent>
 					<CustomDialogActions
@@ -903,10 +641,10 @@ const AdminRecycleBinLessonsTab = () => {
 				title='Restore Multiple Lessons'
 				maxWidth='xs'>
 				<DialogContent>
-					<Typography variant='body2' sx={{ lineHeight: 1.7 }}>
+					<Typography variant='body2' sx={{ lineHeight: 1.7, fontSize: isMobileSize ? '0.75rem' : undefined }}>
 						Are you sure you want to restore {selectedItems.length} selected lesson(s)?
 					</Typography>
-					<Typography variant='body2' sx={{ lineHeight: 1.7, mt: 2 }}>
+					<Typography variant='body2' sx={{ lineHeight: 1.7, mt: 2, fontSize: isMobileSize ? '0.75rem' : undefined }}>
 						These lessons will become available again on all courses where they were previously used, and will be restored as unpublished.
 					</Typography>
 				</DialogContent>
@@ -925,7 +663,7 @@ const AdminRecycleBinLessonsTab = () => {
 				title='Delete Multiple Lessons Permanently'
 				maxWidth='xs'>
 				<DialogContent>
-					<Typography variant='body2' sx={{ lineHeight: 1.7 }}>
+					<Typography variant='body2' sx={{ lineHeight: 1.7, fontSize: isMobileSize ? '0.75rem' : undefined }}>
 						Are you sure you want to permanently delete {selectedItems.length} selected lesson(s)? This action cannot be undone.
 					</Typography>
 				</DialogContent>
@@ -941,10 +679,10 @@ const AdminRecycleBinLessonsTab = () => {
 			{/* Info Dialog */}
 			<CustomDialog openModal={isInfoDialogOpen} closeModal={() => setIsInfoDialogOpen(false)} title='Auto-Removal Information' maxWidth='sm'>
 				<DialogContent>
-					<Typography variant='body2' sx={{ lineHeight: 1.7 }}>
+					<Typography variant='body2' sx={{ lineHeight: 1.7, fontSize: isMobileSize ? '0.75rem' : undefined }}>
 						Lessons in the recycle bin are automatically permanently deleted after 7 days. This action cannot be undone.
 					</Typography>
-					<Typography variant='body2' sx={{ lineHeight: 1.7, mt: 2 }}>
+					<Typography variant='body2' sx={{ lineHeight: 1.7, mt: 2, fontSize: isMobileSize ? '0.75rem' : undefined }}>
 						You can restore lessons before this date or manually delete them immediately using the "Delete Permanently" button.
 					</Typography>
 				</DialogContent>
@@ -963,9 +701,10 @@ const AdminRecycleBinLessonsTab = () => {
 					severity={snackbarSeverity}
 					sx={{
 						'mt': '8.5rem',
-						'width': '100%',
+						'width': isMobileSize ? '60%' : '100%',
 						'backgroundColor': theme.bgColor?.greenSecondary,
 						'color': theme.textColor?.common.main,
+						'fontSize': isMobileSize ? '0.75rem' : undefined,
 						'& .MuiAlert-icon': {
 							color: 'white',
 						},

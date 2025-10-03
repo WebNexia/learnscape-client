@@ -1,34 +1,14 @@
-import {
-	Box,
-	FormControl,
-	InputAdornment,
-	MenuItem,
-	Select,
-	Table,
-	TableBody,
-	TableCell,
-	TableRow,
-	Typography,
-	Divider,
-	DialogContent,
-	Link,
-	DialogActions,
-	Chip,
-} from '@mui/material';
+import { Box, Table, TableBody, TableCell, TableRow, Typography, Divider, DialogContent, Link, DialogActions } from '@mui/material';
 import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
 import { useContext, useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
-import { Download, Search, Visibility } from '@mui/icons-material';
+import { Download, Visibility } from '@mui/icons-material';
 import CreateLessonDialog from '../components/forms/newLesson/CreateLessonDialog';
 import CustomTableHead from '../components/layouts/table/CustomTableHead';
 import CustomTableCell from '../components/layouts/table/CustomTableCell';
 import CustomTablePagination from '../components/layouts/table/CustomTablePagination';
 import CustomActionBtn from '../components/layouts/table/CustomActionBtn';
-import CustomTextField from '../components/forms/customFields/CustomTextField';
-import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
-import CustomDeleteButton from '../components/forms/customButtons/CustomDeleteButton';
 import theme from '../themes';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import { dateTimeFormatter } from '../utils/dateFormatter';
@@ -38,16 +18,17 @@ import axios from '@utils/axiosInstance';
 import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import { AdminPublicEventsContext } from '../contexts/AdminPublicEventsContextProvider';
+import { useFilterSearch } from '../hooks/useFilterSearch';
+import FilterSearchRow from '../components/layouts/FilterSearchRow';
+import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/CustomInfoMessageAlignedLeft';
 
 const AdminPublicEvents = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
-	const location = useLocation();
 
 	const {
 		publicEvents,
 		fetchMorePublicEvents,
-		totalItems,
 		loadedPages,
 		publicEventsPageNumber,
 		setPublicEventsPageNumber,
@@ -55,42 +36,55 @@ const AdminPublicEvents = () => {
 		loading,
 	} = useContext(AdminPublicEventsContext);
 
-	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
-	const isMobileSizeSmall = isVerySmallScreen || isRotated;
-
-	const [searchValue, setSearchValue] = useState<string>('');
-	const [filterValue, setFilterValue] = useState<string>('');
-	const [searchResults, setSearchResults] = useState<Event[]>([]);
-	const [isSearchActive, setIsSearchActive] = useState<boolean>(false);
-	const [searchResultsPage, setSearchResultsPage] = useState<number>(1);
-	const [searchResultsLoadedPages, setSearchResultsLoadedPages] = useState<number[]>([]);
-	const [searchResultsTotalItems, setSearchResultsTotalItems] = useState<number>(0);
-	const [searchButtonClicked, setSearchButtonClicked] = useState<boolean>(false);
-	const [searchedValue, setSearchedValue] = useState<string>('');
 
 	const [eventDetailsModalOpen, setEventDetailsModalOpen] = useState<boolean>(false);
 
-	const [orderBy, setOrderBy] = useState<keyof Event>('updatedAt');
-	const [order, setOrder] = useState<'asc' | 'desc'>('desc');
-
 	const pageSize = 50;
 
+	// Use the filter search hook
+	const {
+		searchValue,
+		setSearchValue,
+		filterValue,
+		displayData: displayEvents,
+		numberOfPages: eventsNumberOfPages,
+		searchResultsPage,
+		searchResultsTotalItems,
+		searchedValue,
+		orderBy,
+		order,
+		isSearchActive,
+		isLoading: isSearchLoading,
+		handleSearch,
+		handleFilterChange,
+		handlePageChange,
+		handleSort,
+		resetSearch,
+		resetFilter,
+		resetAll,
+	} = useFilterSearch<Event>({
+		getEndpoint: () => `${base_url}/events/public/${orgId}?upcomingOnly=false`,
+		limit: 200,
+		pageSize,
+		contextData: publicEvents,
+		setContextPageNumber: setPublicEventsPageNumber,
+		fetchMoreContextData: fetchMorePublicEvents,
+		contextLoadedPages: loadedPages,
+		defaultOrderBy: 'start',
+		defaultOrder: 'asc',
+	});
+
 	const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
-
-	// Use search results if active, otherwise use context data
-	const displayEvents = isSearchActive ? searchResults : publicEvents;
-
-	// For pagination, use total items from server when not searching
-	const publicEventsNumberOfPages = isSearchActive ? Math.ceil(searchResultsTotalItems / pageSize) : Math.ceil(totalItems / pageSize);
 
 	// Use appropriate page number for pagination
 	const currentPage = isSearchActive ? searchResultsPage : publicEventsPageNumber;
 
 	const sortedPublicEvents =
 		[...(displayEvents || [])]?.sort((a, b) => {
-			const aValue = a[orderBy] ?? '';
-			const bValue = b[orderBy] ?? '';
+			const aValue = (a as any)[orderBy] ?? '';
+			const bValue = (b as any)[orderBy] ?? '';
 
 			if (order === 'asc') {
 				return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
@@ -103,149 +97,6 @@ const AdminPublicEvents = () => {
 
 	const [isNewLessonModalOpen, setIsNewLessonModalOpen] = useState<boolean>(false);
 
-	const handleSort = (property: keyof Event) => {
-		const isAsc = orderBy === property && order === 'asc';
-		setOrder(isAsc ? 'desc' : 'asc');
-		setOrderBy(property);
-	};
-
-	const handleSearch = async () => {
-		try {
-			// Reset to first page when searching
-			setPublicEventsPageNumber(1);
-			setSearchResultsPage(1);
-
-			// Search button works when search value or filter value exists
-			if ((searchValue && searchValue.trim()) || (filterValue && filterValue.trim())) {
-				// Store the searched value if it exists
-				if (searchValue && searchValue.trim()) {
-					setSearchedValue(searchValue.trim());
-				}
-
-				// Build query parameters
-				const params = new URLSearchParams({
-					limit: '200',
-				});
-
-				// Add search if it exists
-				if (searchValue && searchValue.trim()) {
-					params.append('search', searchValue.trim());
-				}
-
-				// Add filter if it exists
-				if (filterValue && filterValue.trim()) {
-					params.append('filter', filterValue.trim());
-				}
-				if (orderBy) {
-					params.append('sortBy', orderBy);
-				}
-				if (order) {
-					params.append('sortOrder', order);
-				}
-
-				const response = await axios.get(`${base_url}/events/public/${orgId}?upcomingOnly=false&${params.toString()}`);
-				setSearchResults(response.data.data);
-				setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-				setSearchResultsLoadedPages([1]);
-				setIsSearchActive(true);
-				setSearchButtonClicked(true);
-			} else {
-				// If no search value and no filter value, clear search results
-				setSearchResults([]);
-				setSearchResultsLoadedPages([]);
-				setSearchResultsTotalItems(0);
-				setIsSearchActive(false);
-				setSearchButtonClicked(false);
-			}
-		} catch (error) {
-			console.error('Search error:', error);
-		}
-	};
-
-	const fetchMoreSearchResults = async (page: number, searchParams: URLSearchParams) => {
-		try {
-			// Add page parameter
-			searchParams.set('page', page.toString());
-
-			const response = await axios.get(`${base_url}/events/public/${orgId}?upcomingOnly=false&${searchParams.toString()}`);
-
-			if (page === 1) {
-				// First page - replace all data
-				setSearchResults(response.data.data);
-				setSearchResultsLoadedPages([1]);
-			} else {
-				// Subsequent pages - append data
-				setSearchResults((prev) => {
-					const newData = [...prev, ...response.data.data];
-					return newData;
-				});
-				setSearchResultsLoadedPages((prev) => [...prev, page]);
-			}
-
-			setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-		} catch (error) {
-			console.error('Fetch more search results error:', error);
-		}
-	};
-
-	const handlePageChange = async (newPage: number) => {
-		// Set appropriate page number based on search state
-		if (isSearchActive) {
-			setSearchResultsPage(newPage);
-		} else {
-			setPublicEventsPageNumber(newPage);
-		}
-
-		// If in search mode, handle search results pagination
-		if (isSearchActive) {
-			// Check if we need to fetch more search results
-			const requiredRecords = newPage * pageSize;
-			if (searchResults.length < requiredRecords) {
-				// Build search parameters
-				const params = new URLSearchParams({
-					limit: '200',
-				});
-
-				if (searchValue && searchValue.trim()) {
-					params.append('search', searchValue.trim());
-				}
-				if (filterValue && filterValue.trim()) {
-					params.append('filter', filterValue.trim());
-				}
-				if (orderBy) {
-					params.append('sortBy', orderBy);
-				}
-				if (order) {
-					params.append('sortOrder', order);
-				}
-
-				// Calculate which pages we need to fetch
-				const currentLoadedPages = searchResultsLoadedPages && searchResultsLoadedPages.length > 0 ? Math.max(...searchResultsLoadedPages) : 0;
-				const targetPage = Math.ceil((newPage * pageSize) / 200);
-
-				// Fetch all missing pages in sequence
-				for (let page = currentLoadedPages + 1; page <= targetPage; page++) {
-					if (!searchResultsLoadedPages?.includes(page)) {
-						await fetchMoreSearchResults(page, params);
-					}
-				}
-			}
-		} else {
-			// Check if we need to fetch more data for context
-			const requiredRecords = newPage * pageSize;
-			if (publicEvents.length < requiredRecords && newPage <= publicEventsNumberOfPages) {
-				// Calculate which pages we need to fetch
-				const currentLoadedPages = loadedPages && loadedPages.length > 0 ? Math.max(...loadedPages) : 0;
-				const targetPage = Math.ceil((newPage * pageSize) / 200);
-
-				// Fetch all missing pages in sequence
-				if (currentLoadedPages < targetPage) {
-					await fetchMorePublicEvents(currentLoadedPages + 1, targetPage);
-				}
-			}
-		}
-	};
-
 	// Enable admin public events fetching only once when component mounts
 	useEffect(() => {
 		enableAdminPublicEventsFetch();
@@ -254,32 +105,6 @@ const AdminPublicEvents = () => {
 	useEffect(() => {
 		setPublicEventsPageNumber(1);
 	}, []); // Reset page number only once on mount
-
-	// Cleanup search state function
-	const cleanupSearchState = () => {
-		setSearchResults([]);
-		setSearchResultsLoadedPages([]);
-		setSearchResultsTotalItems(0);
-		setIsSearchActive(false);
-		setSearchValue('');
-		setFilterValue('');
-		setSearchedValue('');
-		setSearchButtonClicked(false);
-	};
-
-	// Cleanup on component unmount
-	useEffect(() => {
-		return () => {
-			cleanupSearchState();
-		};
-	}, []);
-
-	// Cleanup when navigating away from page
-	useEffect(() => {
-		return () => {
-			cleanupSearchState();
-		};
-	}, [location.pathname]);
 
 	const handleDownloadParticipants = async (eventId: string, eventTitle: string) => {
 		try {
@@ -318,233 +143,35 @@ const AdminPublicEvents = () => {
 	return (
 		<AdminPageErrorBoundary pageName='Public Events'>
 			<DashboardPagesLayout pageName='Public Events' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
-				<Box
-					sx={{
-						display: 'flex',
-						flexDirection: 'row',
-						justifyContent: 'space-between',
-						padding: isMobileSizeSmall ? '1rem 1rem 0.5rem 1rem' : '2rem 2rem 1rem 2rem',
-						width: '100%',
-						mb: '1.25rem',
-					}}>
-					<Box sx={{ display: 'flex', justifyContent: 'flex-start', width: '100%' }}>
-						<Box sx={{ mr: '1rem' }}>
-							<FormControl>
-								<Select
-									size='small'
-									value={filterValue}
-									onChange={async (e) => {
-										const newFilterValue = e.target.value;
-										setFilterValue(newFilterValue);
-
-										// Auto-search when filter is selected
-										if (newFilterValue && newFilterValue.trim()) {
-											setPublicEventsPageNumber(1);
-											setSearchResultsPage(1);
-											setIsSearchActive(true);
-											setSearchResultsLoadedPages([]);
-
-											try {
-												const params = new URLSearchParams({
-													limit: '200',
-													filter: newFilterValue.trim(),
-												});
-
-												// Include existing search value if it exists
-												if (searchValue && searchValue.trim()) {
-													params.append('search', searchValue.trim());
-												}
-
-												if (orderBy) {
-													params.append('sortBy', orderBy);
-												}
-												if (order) {
-													params.append('sortOrder', order);
-												}
-
-												const response = await axios.get(`${base_url}/events/public/${orgId}?upcomingOnly=false&${params.toString()}`);
-												setSearchResults(response.data.data);
-												setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-												setSearchResultsLoadedPages([1]);
-											} catch (error) {
-												console.error('Filter search error:', error);
-											}
-										} else {
-											// If filter is cleared but search value exists, auto-search with search value
-											if (searchValue && searchValue.trim()) {
-												setPublicEventsPageNumber(1);
-												setSearchResultsPage(1);
-												setIsSearchActive(true);
-												setSearchResultsLoadedPages([]);
-
-												try {
-													const params = new URLSearchParams({
-														limit: '200',
-														search: searchValue.trim(),
-													});
-
-													if (orderBy) {
-														params.append('sortBy', orderBy);
-													}
-													if (order) {
-														params.append('sortOrder', order);
-													}
-
-													const response = await axios.get(`${base_url}/events/public/${orgId}?upcomingOnly=false&${params.toString()}`);
-													setSearchResults(response.data.data);
-													setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-													setSearchResultsLoadedPages([1]);
-												} catch (error) {
-													console.error('Auto-search error:', error);
-												}
-											} else {
-												// If no search value, reset to context data
-												setIsSearchActive(false);
-												setSearchResults([]);
-												setSearchResultsLoadedPages([]);
-												setSearchResultsTotalItems(0);
-											}
-										}
-									}}
-									displayEmpty
-									sx={{
-										backgroundColor: theme.bgColor?.common,
-										width: isMobileSizeSmall ? '8rem' : '12rem',
-										fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-										textTransform: 'capitalize',
-									}}>
-									<MenuItem
-										disabled
-										value='filter'
-										selected
-										sx={{
-											fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-											fontStyle: 'italic',
-											textTransform: 'capitalize',
-											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-											minHeight: '2rem',
-										}}>
-										Filter Events
-									</MenuItem>
-									<MenuItem
-										value=''
-										selected
-										sx={{
-											fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-											textTransform: 'capitalize',
-											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-											minHeight: '2rem',
-										}}>
-										All Events
-									</MenuItem>
-									{['Webinar', 'Guest Talk', 'Workshop', 'Training', 'Meeting', 'Other']?.map((type) => (
-										<MenuItem
-											value={type.toLowerCase()}
-											key={type}
-											sx={{
-												fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-												textTransform: 'capitalize',
-												padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-												minHeight: '2rem',
-											}}>
-											{type}
-										</MenuItem>
-									))}
-									<MenuItem
-										disabled
-										value='types'
-										selected
-										sx={{
-											fontSize: isMobileSize ? '0.6rem' : '0.7rem',
-											textTransform: 'inherit',
-											fontWeight: 'lighter',
-											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-											minHeight: '2rem',
-										}}>
-										----- Filter by Time -----
-									</MenuItem>
-									{['Upcoming Events', 'Past Events']?.map((type) => (
-										<MenuItem
-											value={type.toLowerCase()}
-											key={type}
-											sx={{
-												fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-												textTransform: 'capitalize',
-												padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-												minHeight: '2rem',
-											}}>
-											{type}
-										</MenuItem>
-									))}
-								</Select>
-							</FormControl>
-						</Box>
-						<Box sx={{ alignSelf: 'flex-start', width: isVerySmallScreen ? '7rem' : isMobileSize ? '15rem' : '17.5rem' }}>
-							<CustomTextField
-								value={searchValue}
-								placeholder={isVerySmallScreen ? 'Search in Title' : 'Search in Title and Description'}
-								onChange={(e) => {
-									setSearchValue(e.target.value);
-								}}
-								sx={{ backgroundColor: '#fff' }}
-								required={false}
-								InputProps={{
-									endAdornment: (
-										<InputAdornment position='end'>
-											<Search
-												sx={{
-													mr: '-0.5rem',
-												}}
-												fontSize={isMobileSize ? 'small' : 'medium'}
-											/>
-										</InputAdornment>
-									),
-								}}
-							/>
-						</Box>
-						<CustomSubmitButton onClick={handleSearch} sx={{ marginLeft: '1rem' }} disabled={!searchValue && !filterValue}>
-							Search
-						</CustomSubmitButton>
-						<CustomDeleteButton
-							onClick={() => {
-								setSearchValue('');
-								setFilterValue('');
-								setSearchedValue('');
-								setSearchButtonClicked(false);
-								setSearchResults([]);
-								setSearchResultsLoadedPages([]);
-								setSearchResultsTotalItems(0);
-								setIsSearchActive(false);
-								setPublicEventsPageNumber(1);
-								setSearchResultsPage(1);
-							}}>
-							Reset
-						</CustomDeleteButton>
-						<Box sx={{ ml: '1rem', display: 'flex', alignItems: 'center', height: '2rem' }}>
-							{isSearchActive ? (
-								<Typography
-									variant='body2'
-									sx={{
-										color: 'text.secondary',
-										fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-										whiteSpace: 'nowrap',
-									}}>
-									{searchResultsTotalItems} {searchResultsTotalItems === 1 ? 'result' : 'results'}
-								</Typography>
-							) : (
-								<Typography
-									variant='body2'
-									sx={{
-										color: 'text.secondary',
-										fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-										whiteSpace: 'nowrap',
-									}}>
-									{displayEvents.length} {displayEvents.length === 1 ? 'item' : 'items'}
-								</Typography>
-							)}
-						</Box>
-					</Box>
-				</Box>
+				<FilterSearchRow
+					filterValue={filterValue}
+					onFilterChange={handleFilterChange}
+					filterOptions={[
+						{ value: '', label: 'All Events' },
+						...['Webinar', 'Guest Talk', 'Workshop', 'Training', 'Meeting', 'Other'].map((type) => ({
+							value: type.toLowerCase(),
+							label: type,
+						})),
+						...['Upcoming Events', 'Past Events'].map((type) => ({
+							value: type.toLowerCase(),
+							label: type,
+						})),
+					]}
+					filterPlaceholder='Filter Events'
+					searchValue={searchValue}
+					onSearchChange={setSearchValue}
+					onSearch={handleSearch}
+					onReset={resetAll}
+					searchPlaceholder={isMobileSize ? 'Search in Title' : 'Search in Title and Description'}
+					isSearchLoading={isSearchLoading}
+					isSearchActive={isSearchActive}
+					searchResultsTotalItems={searchResultsTotalItems}
+					totalItems={displayEvents.length}
+					searchedValue={searchedValue}
+					onResetSearch={resetSearch}
+					onResetFilter={resetFilter}
+					isSticky={true}
+				/>
 				<CreateLessonDialog isNewLessonModalOpen={isNewLessonModalOpen} createNewLesson={true} setIsNewLessonModalOpen={setIsNewLessonModalOpen} />
 
 				<Box
@@ -552,129 +179,147 @@ const AdminPublicEvents = () => {
 						display: 'flex',
 						flexDirection: 'column',
 						alignItems: 'center',
-						padding: isVerySmallScreen ? '0rem 0.25rem 2rem 0.25rem' : '0rem 2rem 2rem 2rem',
+						padding: isMobileSize ? '0rem 0.25rem 2rem 0.25rem' : '0rem 0rem 2rem 0rem',
 						width: '100%',
 					}}>
-					{((isSearchActive && searchedValue && searchButtonClicked) || (isSearchActive && filterValue && filterValue.trim())) && (
-						<Box
-							sx={{
-								mb: '1rem',
-								display: 'flex',
-								gap: 1,
-								flexWrap: 'wrap',
-								justifyContent: 'center',
-								borderRadius: '4px',
-								alignSelf: 'flex-start',
-								marginBottom: '1rem',
-								marginTop: '-1rem',
-							}}>
-							{isSearchActive && filterValue && filterValue.trim() && (
-								<Chip
-									label={`Filter: "${filterValue}"`}
-									onDelete={() => {
-										setFilterValue('');
-										// If search exists, keep search results
-										if (searchValue && searchValue.trim()) {
-											// Trigger search without filter value
-											const params = new URLSearchParams({
-												limit: '200',
-												search: searchValue.trim(),
-											});
-											if (orderBy) params.append('sortBy', orderBy);
-											if (order) params.append('sortOrder', order);
-
-											axios
-												.get(`${base_url}/events/public/${orgId}?upcomingOnly=false&${params.toString()}`)
-												.then((response) => {
-													setSearchResults(response.data.data);
-													setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-													setSearchResultsLoadedPages([1]);
-													setIsSearchActive(true);
-													setPublicEventsPageNumber(1);
-													setSearchResultsPage(1);
-												})
-												.catch((error) => console.error('Search error:', error));
-										} else {
-											// No search, reset to context data
-											setIsSearchActive(false);
-											setSearchResults([]);
-											setSearchResultsLoadedPages([]);
-											setSearchResultsTotalItems(0);
-										}
-									}}
-									variant='outlined'
-									color='secondary'
-									size='small'
-									sx={{ backgroundColor: '#1976d2', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
-								/>
-							)}
-							{isSearchActive && searchedValue && searchButtonClicked && (
-								<Chip
-									label={`Search: "${searchedValue}"`}
-									onDelete={() => {
-										setSearchValue('');
-										setSearchedValue('');
-										setSearchButtonClicked(false);
-										// If filter exists, keep filter results
-										if (filterValue && filterValue.trim()) {
-											// Trigger filter search without search value
-											const params = new URLSearchParams({
-												limit: '200',
-												filter: filterValue.trim(),
-											});
-											if (orderBy) params.append('sortBy', orderBy);
-											if (order) params.append('sortOrder', order);
-
-											axios
-												.get(`${base_url}/events/public/${orgId}?upcomingOnly=false&${params.toString()}`)
-												.then((response) => {
-													setSearchResults(response.data.data);
-													setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-													setSearchResultsLoadedPages([1]);
-													setIsSearchActive(true);
-													setPublicEventsPageNumber(1);
-													setSearchResultsPage(1);
-												})
-												.catch((error) => console.error('Filter search error:', error));
-										} else {
-											// No filter, reset to context data
-											setIsSearchActive(false);
-											setSearchResults([]);
-											setSearchResultsLoadedPages([]);
-											setSearchResultsTotalItems(0);
-										}
-									}}
-									color='primary'
-									variant='filled'
-									size='small'
-									sx={{ backgroundColor: '#1EC28B', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
-								/>
-							)}
-						</Box>
-					)}
-					<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>
+					<Table
+						sx={{
+							'mb': '2rem',
+							'tableLayout': 'fixed',
+							'width': '100%',
+							'borderCollapse': 'collapse',
+							'borderSpacing': 0,
+							'& .MuiTableHead-root': {
+								position: 'fixed',
+								top:
+									(isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim())
+										? !isMobileSize
+											? '10rem'
+											: '12.5rem'
+										: isMobileSize
+											? '10.25rem'
+											: '8rem',
+								left: isMobileSize ? 0 : '10rem',
+								right: 0,
+								zIndex: 99,
+								backgroundColor: theme.palette.background.paper,
+								boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+								display: 'table',
+								tableLayout: 'fixed',
+								width: isMobileSize ? '100%' : 'calc(100% - 10rem)',
+							},
+							'& .MuiTableHead-root .MuiTableCell-root': {
+								backgroundColor: theme.palette.background.paper,
+								padding: isMobileSize ? '0.25rem 0rem' : '0.25rem 1rem',
+								boxSizing: 'border-box',
+								margin: 0,
+								verticalAlign: 'center',
+							},
+							'& .MuiTableHead-root .MuiTableCell-root:last-child': {
+								borderRight: 'none',
+							},
+							'& .MuiTableBody-root .MuiTableCell-root': {
+								padding: isMobileSize ? '0.5rem 0.5rem' : '0.25rem 1rem',
+								boxSizing: 'border-box',
+								margin: 0,
+								verticalAlign: 'center',
+							},
+							'& .MuiTableBody-root .MuiTableCell-root:last-child': {
+								borderRight: 'none',
+							},
+							// Column widths for header cells
+							'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(1)': {
+								minWidth: isMobileSize ? '80px' : '100px',
+								width: isMobileSize ? '20%' : '12%',
+							},
+							'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(2)': {
+								minWidth: isMobileSize ? '150px' : '200px',
+								width: isMobileSize ? '30%' : '25%',
+							},
+							'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(3)': {
+								minWidth: isMobileSize ? '100px' : '120px',
+								width: isMobileSize ? '25%' : '20%',
+							},
+							'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(4)': {
+								minWidth: isMobileSize ? '100px' : '120px',
+								width: isMobileSize ? '20%' : '20%',
+							},
+							'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(5)': {
+								minWidth: isMobileSize ? '80px' : '100px',
+								width: isMobileSize ? '0%' : '10%',
+							},
+							'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(6)': {
+								minWidth: isMobileSize ? '60px' : '80px',
+								width: isMobileSize ? '0%' : '13%',
+							},
+							// Column widths for body cells - exact same as header
+							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(1)': {
+								minWidth: isMobileSize ? '80px' : '100px',
+								width: isMobileSize ? '20%' : '12%',
+							},
+							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(2)': {
+								minWidth: isMobileSize ? '150px' : '200px',
+								width: isMobileSize ? '30%' : '25%',
+							},
+							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(3)': {
+								minWidth: isMobileSize ? '100px' : '120px',
+								width: isMobileSize ? '25%' : '20%',
+							},
+							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(4)': {
+								minWidth: isMobileSize ? '100px' : '120px',
+								width: isMobileSize ? '20%' : '20%',
+							},
+							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(5)': {
+								minWidth: isMobileSize ? '80px' : '100px',
+								width: isMobileSize ? '0%' : '10%',
+							},
+							'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(6)': {
+								minWidth: isMobileSize ? '60px' : '80px',
+								width: isMobileSize ? '0%' : '13%',
+							},
+						}}
+						size='small'
+						aria-label='a dense table'>
+						{/* Spacer row to ensure header alignment */}
+						<TableRow sx={{ height: 0, visibility: 'hidden' }}>
+							<TableCell sx={{ width: isMobileSize ? '20%' : '12%', padding: 0, border: 'none' }} />
+							<TableCell sx={{ width: isMobileSize ? '30%' : '25%', padding: 0, border: 'none' }} />
+							<TableCell sx={{ width: isMobileSize ? '25%' : '20%', padding: 0, border: 'none' }} />
+							<TableCell sx={{ width: isMobileSize ? '20%' : '20%', padding: 0, border: 'none' }} />
+							<TableCell sx={{ width: isMobileSize ? '0%' : '10%', padding: 0, border: 'none' }} />
+							<TableCell sx={{ width: isMobileSize ? '0%' : '13%', padding: 0, border: 'none' }} />
+						</TableRow>
 						<CustomTableHead<Event>
-							orderBy={orderBy}
+							orderBy={orderBy as keyof Event}
 							order={order}
 							handleSort={handleSort}
-							columns={[
-								{ key: 'title', label: 'Title' },
-								{ key: 'type', label: 'Type' },
-								{ key: 'start', label: 'Start' },
-								{ key: 'end', label: 'End' },
-								{ key: 'participantCount', label: 'Participants(#)' },
-								{ key: 'actions', label: 'Actions' },
-							]}
+							columns={
+								isMobileSize
+									? [
+											{ key: 'title', label: 'Title' },
+											{ key: 'start', label: 'Start' },
+											{ key: 'participantCount', label: 'Attendees(#)' },
+											{ key: 'actions', label: 'Actions' },
+										]
+									: [
+											{ key: 'type', label: 'Type' },
+											{ key: 'title', label: 'Title' },
+											{ key: 'start', label: 'Start' },
+											{ key: 'end', label: 'End' },
+											{ key: 'participantCount', label: 'Attendees(#)' },
+											{ key: 'actions', label: 'Actions' },
+										]
+							}
 						/>
 						<TableBody>
 							{paginatedPublicEvents &&
 								paginatedPublicEvents?.map((event: Event) => {
 									return (
 										<TableRow key={event._id} hover>
+											{!isMobileSize && <CustomTableCell value={event.type} />}
 											<CustomTableCell value={event.title} />
-											<CustomTableCell value={event.type} />
 											<CustomTableCell value={dateTimeFormatter(event.start)} />
-											<CustomTableCell value={dateTimeFormatter(event.end)} />
+											{!isMobileSize && <CustomTableCell value={dateTimeFormatter(event.end)} />}
 											<CustomTableCell value={event.participantCount ?? 0} />
 											<TableCell
 												sx={{
@@ -699,33 +344,34 @@ const AdminPublicEvents = () => {
 								})}
 						</TableBody>
 					</Table>
-					<CustomTablePagination count={publicEventsNumberOfPages} page={currentPage} onChange={handlePageChange} />
+					{isMobileSize && <CustomInfoMessageAlignedLeft message='Rotate your device or use desktop for more info' />}
+					<CustomTablePagination count={eventsNumberOfPages} page={currentPage} onChange={handlePageChange} />
 				</Box>
 
 				<CustomDialog openModal={eventDetailsModalOpen} closeModal={() => setEventDetailsModalOpen(false)} title='Event Details' maxWidth='sm'>
 					<DialogContent>
 						{selectedEvent ? (
 							<Box>
-								<Typography variant='h6' gutterBottom>
+								<Typography variant='h6' gutterBottom sx={{ fontSize: isMobileSize ? '0.85rem' : undefined }}>
 									{selectedEvent.title}
 								</Typography>
 								<Divider sx={{ mb: 2 }} />
-								<Typography variant='body2' sx={{ mb: '0.75rem' }}>
+								<Typography variant='body2' sx={{ mb: '0.75rem', fontSize: isMobileSize ? '0.75rem' : undefined }}>
 									<b>Type:</b> {selectedEvent.type}
 								</Typography>
-								<Typography variant='body2' sx={{ mb: '0.75rem' }}>
+								<Typography variant='body2' sx={{ mb: '0.75rem', fontSize: isMobileSize ? '0.75rem' : undefined }}>
 									<b>Start:</b> {dateTimeFormatter(selectedEvent.start)}
 								</Typography>
-								<Typography variant='body2' sx={{ mb: '0.75rem' }}>
+								<Typography variant='body2' sx={{ mb: '0.75rem', fontSize: isMobileSize ? '0.75rem' : undefined }}>
 									<b>End:</b> {dateTimeFormatter(selectedEvent.end)}
 								</Typography>
-								<Typography variant='body2' sx={{ mb: '0.75rem' }}>
+								<Typography variant='body2' sx={{ mb: '0.75rem', fontSize: isMobileSize ? '0.75rem' : undefined }}>
 									<b>Location:</b> {selectedEvent.location || '-'}
 								</Typography>
-								<Typography variant='body2' sx={{ mb: '0.75rem' }}>
+								<Typography variant='body2' sx={{ mb: '0.75rem', fontSize: isMobileSize ? '0.75rem' : undefined }}>
 									<b>Description:</b> {selectedEvent.description || '-'}
 								</Typography>
-								<Typography variant='body2' sx={{ mb: '0.75rem' }}>
+								<Typography variant='body2' sx={{ mb: '0.75rem', fontSize: isMobileSize ? '0.75rem' : undefined }}>
 									<b>Event Link:</b>{' '}
 									{selectedEvent.eventLinkUrl ? (
 										<Link href={selectedEvent.eventLinkUrl} target='_blank' rel='noopener noreferrer' sx={{ textDecoration: 'underline' }}>
@@ -735,15 +381,15 @@ const AdminPublicEvents = () => {
 										'-'
 									)}
 								</Typography>
-								<Typography variant='body2' sx={{ mb: '0.75rem' }}>
+								<Typography variant='body2' sx={{ mb: '0.75rem', fontSize: isMobileSize ? '0.75rem' : undefined }}>
 									<b>Created At:</b> {dateTimeFormatter(selectedEvent.createdAt)}
 								</Typography>
-								<Typography variant='body2' sx={{ mb: '0.75rem' }}>
+								<Typography variant='body2' sx={{ mb: '0.75rem', fontSize: isMobileSize ? '0.75rem' : undefined }}>
 									<b>Last Updated At:</b> {dateTimeFormatter(selectedEvent.updatedAt)}
 								</Typography>
 							</Box>
 						) : (
-							<Typography>No event selected.</Typography>
+							<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : undefined }}>No event selected.</Typography>
 						)}
 					</DialogContent>
 					<DialogActions>

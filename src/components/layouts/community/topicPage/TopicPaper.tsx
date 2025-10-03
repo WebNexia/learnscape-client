@@ -42,7 +42,7 @@ const TopicPaper = ({ topic, setDisplayDeleteTopicMsg, setTopic, refreshTopics, 
 	const navigate = useNavigate();
 	const isTopicWriter: boolean = user?._id === topic?.userId?._id;
 
-	const { isSticky, paperRef } = useStickyPaper();
+	const { isSticky, paperRef } = useStickyPaper(isMobileSize);
 
 	const [deleteTopicModalOpen, setDeleteTopicModalOpen] = useState<boolean>(false);
 	const [editTopicModalOpen, setEditTopicModalOpen] = useState<boolean>(false);

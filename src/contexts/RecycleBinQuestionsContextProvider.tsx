@@ -1,7 +1,9 @@
 import axios from '@utils/axiosInstance';
 import { ReactNode, createContext, useContext, useState } from 'react';
 import { QuestionInterface } from '../interfaces/question';
+import { QuestionType } from '../interfaces/questionTypes';
 import { OrganisationContext } from './OrganisationContextProvider';
+import { useQuery } from 'react-query';
 
 interface ArchivedQuestion extends QuestionInterface {
 	archivedAt?: string;
@@ -33,6 +35,7 @@ interface RecycleBinQuestionsContextTypes {
 	setTotalItems: React.Dispatch<React.SetStateAction<number>>;
 	loadedPages: number[];
 	setLoadedPages: React.Dispatch<React.SetStateAction<number[]>>;
+	questionTypes: QuestionType[];
 	snackbarOpen: boolean;
 	snackbarMessage: string;
 	snackbarSeverity: 'success' | 'error' | 'warning' | 'info';
@@ -69,6 +72,7 @@ export const RecycleBinQuestionsContext = createContext<RecycleBinQuestionsConte
 	setTotalItems: () => {},
 	loadedPages: [],
 	setLoadedPages: () => {},
+	questionTypes: [],
 	snackbarOpen: false,
 	snackbarMessage: '',
 	snackbarSeverity: 'info',
@@ -80,6 +84,21 @@ export const RecycleBinQuestionsContext = createContext<RecycleBinQuestionsConte
 export const RecycleBinQuestionsProvider = ({ children }: RecycleBinQuestionsContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
+
+	// Fetch question types
+	const fetchQuestionTypes = async (): Promise<QuestionType[]> => {
+		if (!orgId) return [];
+		const response = await axios.get(`${base_url}/questiontypes/organisation/${orgId}`);
+		return response.data.data;
+	};
+
+	const { data: questionTypesData } = useQuery(['allQuestionTypes', orgId], fetchQuestionTypes, {
+		enabled: !!orgId,
+		staleTime: 60 * 60 * 1000,
+		cacheTime: 24 * 60 * 60 * 1000,
+		refetchOnWindowFocus: false,
+		refetchOnMount: false,
+	});
 
 	const [archivedQuestions, setArchivedQuestions] = useState<ArchivedQuestion[]>([]);
 	const [totalItems, setTotalItems] = useState<number>(0);
@@ -148,6 +167,7 @@ export const RecycleBinQuestionsProvider = ({ children }: RecycleBinQuestionsCon
 		setTotalItems,
 		loadedPages,
 		setLoadedPages,
+		questionTypes: questionTypesData || [],
 		snackbarOpen,
 		snackbarMessage,
 		snackbarSeverity,

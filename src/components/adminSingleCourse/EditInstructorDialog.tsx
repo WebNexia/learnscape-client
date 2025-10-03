@@ -179,7 +179,7 @@ const EditInstructorDialog = ({
 						<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '1rem 4rem 0rem 2rem' }}>
 							<Box sx={{ width: '100%', mr: '3rem' }}>
 								<HandleImageUploadURL
-									label='Instructor Image'
+									label={isMobileSize ? 'Image' : 'Instructor Image'}
 									disabled={isUserSelected || !!singleCourseCopy?.instructor?.userId}
 									onImageUploadLogic={(url) => {
 										if (singleCourseCopy) {
@@ -408,7 +408,7 @@ const EditInstructorDialog = ({
 								}}
 							/>
 						)}
-						sx={{ margin: '0.5rem 0rem', width: '89%' }}
+						sx={{ margin: '0.5rem 0rem', width: isMobileSize ? '85%' : '89%' }}
 					/>
 				</Box>
 

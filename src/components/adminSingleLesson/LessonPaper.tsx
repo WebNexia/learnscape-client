@@ -8,7 +8,7 @@ import CustomSubmitButton from '../forms/customButtons/CustomSubmitButton';
 import { FormEvent, useContext, useState } from 'react';
 import CustomCancelButton from '../forms/customButtons/CustomCancelButton';
 import CustomDialog from '../layouts/dialog/CustomDialog';
-import LessonInfoModal from '../lessons/LessonInfoModal';
+import LessonInfoModal from '../layouts/lessons/LessonInfoModal';
 import { useStickyPaper } from '../../hooks/useStickyPaper';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
@@ -74,7 +74,7 @@ const LessonPaper = ({
 
 	const [isLessonInfoDialogOpen, setIsLessonInfoDialogOpen] = useState<boolean>(false);
 
-	const { isSticky, paperRef } = useStickyPaper();
+	const { isSticky, paperRef } = useStickyPaper(isMobileSize);
 	return (
 		<Paper
 			ref={paperRef}
@@ -106,12 +106,14 @@ const LessonPaper = ({
 						justifyContent: isSticky ? 'space-between' : 'space-between',
 						alignItems: isSticky ? 'center' : 'flex-start',
 						flex: { md: 2, lg: 3 },
-						padding: isSticky ? '0.5rem 1rem' : '0.5rem',
+						padding: isSticky ? (isMobileSize ? '0.25rem 0rem' : '0.5rem 1rem') : '0.5rem',
 					}}>
 					<Box>
 						<Button
 							variant='text'
-							startIcon={<KeyboardBackspaceOutlined />}
+							startIcon={
+								<KeyboardBackspaceOutlined sx={{ fontSize: isSticky ? (isMobileSize ? '0.6rem' : '0.75rem') : undefined }} fontSize='small' />
+							}
 							sx={{
 								'color': theme.textColor?.common.main,
 								'textTransform': 'inherit',
@@ -120,6 +122,7 @@ const LessonPaper = ({
 									backgroundColor: 'transparent',
 									textDecoration: 'underline',
 								},
+								'fontSize': isSticky ? { xs: '0.65rem', sm: '0.75rem' } : undefined,
 							}}
 							onClick={() => {
 								navigate(`${isInstructor ? '/instructor/lessons' : '/admin/lessons'}`);
@@ -128,31 +131,33 @@ const LessonPaper = ({
 							{isSticky ? 'Lessons' : 'Back to lessons'}
 						</Button>
 					</Box>
-					<Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-						<Box>
-							<Typography
-								variant='body1'
-								sx={{
-									textTransform: 'capitalize',
-									color: theme.textColor?.common.main,
-									padding: isSticky ? '0 0 0 0.5rem' : '0 0 0.5rem 0.5rem',
-									fontSize: isSticky ? '0.75rem' : undefined,
-								}}>
-								{singleLessonBeforeSave?.type}
-							</Typography>
+					{!isMobileSize && (
+						<Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+							<Box>
+								<Typography
+									variant='body1'
+									sx={{
+										textTransform: 'capitalize',
+										color: theme.textColor?.common.main,
+										padding: isSticky ? '0 0 0 0.5rem' : '0 0 0.5rem 0.5rem',
+										fontSize: isSticky ? '0.75rem' : undefined,
+									}}>
+									{singleLessonBeforeSave?.type}
+								</Typography>
+							</Box>
+							<Box sx={{ paddingLeft: '0.5rem', color: theme.textColor?.common.main }}>
+								{isActive ? (
+									<Tooltip title='Published' placement='right' arrow>
+										<PublishedWithChanges fontSize='small' />
+									</Tooltip>
+								) : (
+									<Tooltip title='Unpublished' placement='right' arrow>
+										<Unpublished fontSize='small' />
+									</Tooltip>
+								)}
+							</Box>
 						</Box>
-						<Box sx={{ paddingLeft: '0.5rem', color: theme.textColor?.common.main }}>
-							{isActive ? (
-								<Tooltip title='Published' placement='right' arrow>
-									<PublishedWithChanges fontSize='small' />
-								</Tooltip>
-							) : (
-								<Tooltip title='Unpublished' placement='right' arrow>
-									<Unpublished fontSize='small' />
-								</Tooltip>
-							)}
-						</Box>
-					</Box>
+					)}
 				</Box>
 				<Box
 					sx={{
@@ -198,7 +203,8 @@ const LessonPaper = ({
 								justifyContent: 'flex-end',
 								alignItems: 'center',
 								width: '100%',
-								flex: 2,
+								flex: isMobileSize ? 3.5 : 2,
+								mr: isMobileSize ? '-0.75rem' : '0rem',
 							}}>
 							<Box sx={{ display: 'flex' }}>
 								<Snackbar
@@ -212,7 +218,7 @@ const LessonPaper = ({
 									</Alert>
 								</Snackbar>
 								{isEditMode ? (
-									<Box>
+									<Box sx={{ width: '100%' }}>
 										<CustomSubmitButton
 											unsaved={hasUnsavedChanges}
 											sx={{ backgroundColor: theme.bgColor?.greenPrimary, fontSize: isSticky ? (isMobileSize ? '0.6rem' : '0.75rem') : undefined }}
@@ -264,7 +270,7 @@ const LessonPaper = ({
 										</CustomCancelButton>
 									</Box>
 								) : (
-									<Box sx={{ ml: '1rem' }}>
+									<Box sx={{ ml: isMobileSize ? '0rem' : '1rem' }}>
 										<CustomSubmitButton
 											sx={{
 												visibility: isEditMode ? 'hidden' : 'visible',
@@ -275,7 +281,7 @@ const LessonPaper = ({
 										</CustomSubmitButton>
 										<Tooltip title='Edit Lesson' placement='top' arrow>
 											<IconButton
-												sx={{ ml: '0.5rem' }}
+												sx={{ ml: isMobileSize ? '0rem' : '0.5rem' }}
 												onClick={() => {
 													setIsEditMode(true);
 													resetImageUpload();
@@ -287,7 +293,7 @@ const LessonPaper = ({
 										</Tooltip>
 										<Tooltip title='More Info' placement='top' arrow>
 											<IconButton
-												sx={{ ml: '-0.5rem' }}
+												sx={{ ml: isMobileSize ? '-0.75rem' : '-0.25rem' }}
 												onClick={() => {
 													setIsLessonInfoDialogOpen(true);
 												}}>

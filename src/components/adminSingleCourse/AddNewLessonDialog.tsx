@@ -1,23 +1,7 @@
-import {
-	Box,
-	Checkbox,
-	DialogContent,
-	FormControl,
-	FormControlLabel,
-	InputAdornment,
-	MenuItem,
-	Select,
-	Table,
-	TableBody,
-	TableCell,
-	TableRow,
-	Typography,
-	Chip,
-} from '@mui/material';
+import { Box, Checkbox, DialogContent, FormControlLabel, Table, TableBody, TableCell, TableRow } from '@mui/material';
 
 import CustomCancelButton from '../forms/customButtons/CustomCancelButton';
-import CustomSubmitButton from '../forms/customButtons/CustomSubmitButton';
-import CustomDeleteButton from '../forms/customButtons/CustomDeleteButton';
+import StickyFilterSearchRow from '../layouts/StickyFilterSearchRow';
 import { Lesson } from '../../interfaces/lessons';
 import { useContext, useEffect, useState } from 'react';
 import { LessonsContext } from '../../contexts/LessonsContextProvider';
@@ -29,12 +13,11 @@ import CustomTableHead from '../layouts/table/CustomTableHead';
 import CustomTableCell from '../layouts/table/CustomTableCell';
 import CustomTablePagination from '../layouts/table/CustomTablePagination';
 import { chapterUpdateTrack } from '../../utils/chapterUpdateTrack';
-import CustomTextField from '../forms/customFields/CustomTextField';
-import { Search } from '@mui/icons-material';
 import theme from '../../themes';
 import { useParams } from 'react-router-dom';
 import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
 import axios from '@utils/axiosInstance';
+import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 
 interface AddNewLessonDialogProps {
 	addNewLessonModalOpen: boolean;
@@ -58,6 +41,8 @@ const AddNewLessonDialog = ({
 	const { sortLessonsData, lessons, fetchMoreLessons, loadedPages } = useContext(LessonsContext);
 	const { courseId } = useParams();
 	const { user } = useContext(UserAuthContext);
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
 
 	const [lessonsPageNumber, setLessonsPageNumber] = useState<number>(1);
 	const [searchValue, setSearchValue] = useState<string>('');
@@ -72,8 +57,33 @@ const AddNewLessonDialog = ({
 
 	const pageSize = 25;
 
+	const [selectedLessons, setSelectedLessons] = useState<Lesson[]>([]);
+	const [selectedLessonIds, setSelectedLessonIds] = useState<string[]>([]);
+	const [orderBy, setOrderBy] = useState<keyof Lesson>('title');
+	const [order, setOrder] = useState<'asc' | 'desc'>('asc');
+
 	// Use search results if active, otherwise use context data (filtered to exclude already added lessons)
-	const displayLessons = isSearchActive ? searchResults : lessons?.filter((lesson: Lesson) => !chapter.lessonIds?.includes(lesson._id)) || [];
+	const filteredLessons = isSearchActive ? searchResults : lessons?.filter((lesson: Lesson) => !chapter.lessonIds?.includes(lesson._id)) || [];
+
+	// Apply client-side sorting
+	const sortedLessons = [...filteredLessons].sort((a, b) => {
+		if (!orderBy) return 0;
+
+		let aValue = a[orderBy];
+		let bValue = b[orderBy];
+
+		// Handle different data types
+		if (typeof aValue === 'string' && typeof bValue === 'string') {
+			aValue = aValue.toLowerCase();
+			bValue = bValue.toLowerCase();
+		}
+
+		if (aValue < bValue) return order === 'asc' ? -1 : 1;
+		if (aValue > bValue) return order === 'asc' ? 1 : -1;
+		return 0;
+	});
+
+	const displayLessons = sortedLessons;
 
 	// Calculate total pages based on filtered results when searching, otherwise use available lessons count
 	const lessonsNumberOfPages = isSearchActive ? Math.ceil(searchResultsTotalItems / pageSize) : Math.ceil(displayLessons.length / pageSize);
@@ -81,11 +91,6 @@ const AddNewLessonDialog = ({
 	// Use appropriate page number for pagination
 	const currentPage = isSearchActive ? searchResultsPage : lessonsPageNumber;
 	const paginatedLessons = displayLessons?.slice((currentPage - 1) * pageSize, currentPage * pageSize) || [];
-
-	const [selectedLessons, setSelectedLessons] = useState<Lesson[]>([]);
-	const [selectedLessonIds, setSelectedLessonIds] = useState<string[]>([]);
-	const [orderBy, setOrderBy] = useState<keyof Lesson>('title');
-	const [order, setOrder] = useState<'asc' | 'desc'>('asc');
 
 	useEffect(() => {
 		if (addNewLessonModalOpen) {
@@ -340,287 +345,171 @@ const AddNewLessonDialog = ({
 	return (
 		<CustomDialog openModal={addNewLessonModalOpen} closeModal={closeAddNewLessonModalOpen} title='Add New Lesson'>
 			<DialogContent>
-				<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', padding: '1rem 2rem 0 2rem' }}>
-					<Box sx={{ display: 'flex', width: '85%' }}>
-						<Box sx={{ mr: '1rem' }}>
-							<FormControl>
-								<Select
-									size='small'
-									value={filterValue}
-									onChange={async (e) => {
-										const newFilterValue = e.target.value;
-										setFilterValue(newFilterValue);
+				<StickyFilterSearchRow
+					filterValue={filterValue}
+					setFilterValue={async (newFilterValue) => {
+						setFilterValue(newFilterValue);
 
-										// Auto-search when filter is selected
-										if (newFilterValue && newFilterValue.trim()) {
-											setLessonsPageNumber(1);
-											setSearchResultsPage(1);
-											setIsSearchActive(true);
-											setSearchResultsLoadedPages([]);
+						// Auto-search when filter is selected
+						if (newFilterValue && newFilterValue.trim()) {
+							setLessonsPageNumber(1);
+							setSearchResultsPage(1);
+							setIsSearchActive(true);
+							setSearchResultsLoadedPages([]);
 
-											try {
-												const params = new URLSearchParams({
-													limit: '300',
-													filter: newFilterValue.trim(),
-												});
+							try {
+								const params = new URLSearchParams({
+									limit: '300',
+									filter: newFilterValue.trim(),
+								});
 
-												// Include existing search value if it exists
-												if (searchValue && searchValue.trim()) {
-													params.append('search', searchValue.trim());
-												}
+								// Include existing search value if it exists
+								if (searchValue && searchValue.trim()) {
+									params.append('search', searchValue.trim());
+								}
 
-												if (orderBy) {
-													params.append('sortBy', orderBy);
-												}
-												if (order) {
-													params.append('sortOrder', order);
-												}
+								if (orderBy) {
+									params.append('sortBy', orderBy);
+								}
+								if (order) {
+									params.append('sortOrder', order);
+								}
 
-												const response = await axios.get(`${base_url}/lessons/organisation/${orgId}?${params.toString()}`);
+								const response = await axios.get(`${base_url}/lessons/organisation/${orgId}?${params.toString()}`);
 
-												// Filter out already added lessons from search results
-												const filteredResults = response.data.data?.filter((lesson: Lesson) => !chapter.lessonIds?.includes(lesson._id)) || [];
+								// Filter out already added lessons from search results
+								const filteredResults = response.data.data?.filter((lesson: Lesson) => !chapter.lessonIds?.includes(lesson._id)) || [];
 
-												setSearchResults(filteredResults);
-												setSearchResultsTotalItems(filteredResults.length);
-												setSearchResultsLoadedPages([1]);
-											} catch (error) {
-												console.error('Filter search error:', error);
-											}
-										} else {
-											// If filter is cleared but search value exists, auto-search with search value
-											if (searchValue && searchValue.trim()) {
-												setLessonsPageNumber(1);
-												setSearchResultsPage(1);
-												setIsSearchActive(true);
-												setSearchResultsLoadedPages([]);
+								setSearchResults(filteredResults);
+								setSearchResultsTotalItems(filteredResults.length);
+								setSearchResultsLoadedPages([1]);
+							} catch (error) {
+								console.error('Filter search error:', error);
+							}
+						} else {
+							// If filter is cleared but search value exists, auto-search with search value
+							if (searchValue && searchValue.trim()) {
+								setLessonsPageNumber(1);
+								setSearchResultsPage(1);
+								setIsSearchActive(true);
+								setSearchResultsLoadedPages([]);
 
-												try {
-													const params = new URLSearchParams({
-														limit: '300',
-														search: searchValue.trim(),
-													});
+								try {
+									const params = new URLSearchParams({
+										limit: '300',
+										search: searchValue.trim(),
+									});
 
-													if (orderBy) {
-														params.append('sortBy', orderBy);
-													}
-													if (order) {
-														params.append('sortOrder', order);
-													}
+									if (orderBy) {
+										params.append('sortBy', orderBy);
+									}
+									if (order) {
+										params.append('sortOrder', order);
+									}
 
-													const response = await axios.get(`${base_url}/lessons/organisation/${orgId}?${params.toString()}`);
+									const response = await axios.get(`${base_url}/lessons/organisation/${orgId}?${params.toString()}`);
 
-													// Filter out already added lessons from search results
-													const filteredResults = response.data.data?.filter((lesson: Lesson) => !chapter.lessonIds?.includes(lesson._id)) || [];
+									// Filter out already added lessons from search results
+									const filteredResults = response.data.data?.filter((lesson: Lesson) => !chapter.lessonIds?.includes(lesson._id)) || [];
 
-													setSearchResults(filteredResults);
-													setSearchResultsTotalItems(filteredResults.length);
-													setSearchResultsLoadedPages([1]);
-												} catch (error) {
-													console.error('Auto-search error:', error);
-												}
-											} else {
-												// If no search value, reset to context data
-												setIsSearchActive(false);
-												setSearchResults([]);
-												setSearchResultsLoadedPages([]);
-												setSearchResultsTotalItems(0);
-											}
-										}
-									}}
-									displayEmpty
-									sx={{
-										backgroundColor: theme.bgColor?.common,
-										width: '12rem',
-										fontSize: '0.85rem',
-										textTransform: 'capitalize',
-									}}>
-									<MenuItem disabled value='filter' selected sx={{ fontSize: '0.85rem', fontStyle: 'italic', textTransform: 'capitalize' }}>
-										Filter Lessons
-									</MenuItem>
-									<MenuItem value='' selected sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
-										All Lessons
-									</MenuItem>
-									{['Published Lessons', 'Unpublished Lessons']?.map((type) => (
-										<MenuItem value={type.toLowerCase()} key={type} sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
-											{type}
-										</MenuItem>
-									))}
-									<MenuItem disabled value='types' selected sx={{ fontSize: '0.7rem', textTransform: 'inherit', fontWeight: 'lighter' }}>
-										----- Filter by Type -----
-									</MenuItem>
-									{['Instructional Lessons', 'Practice Lessons', 'Quizzes']?.map((type) => (
-										<MenuItem value={type.toLowerCase()} key={type} sx={{ fontSize: '0.85rem', textTransform: 'capitalize' }}>
-											{type}
-										</MenuItem>
-									))}
-								</Select>
-							</FormControl>
-						</Box>
-
-						<CustomTextField
-							value={searchValue}
-							placeholder={'Search Lesson in Title'}
-							onChange={(e) => {
-								setSearchValue(e.target.value);
-							}}
-							sx={{ backgroundColor: '#fff' }}
-							required={false}
-							InputProps={{
-								endAdornment: (
-									<InputAdornment position='end'>
-										<Search
-											sx={{
-												mr: '-0.5rem',
-											}}
-										/>
-									</InputAdornment>
-								),
-							}}
-						/>
-						<CustomSubmitButton onClick={handleSearch} sx={{ marginLeft: '1rem' }} disabled={!searchValue}>
-							Search
-						</CustomSubmitButton>
-						<CustomDeleteButton
-							onClick={() => {
-								setSearchValue('');
-								setFilterValue('');
-								setSearchedValue('');
-								setSearchButtonClicked(false);
+									setSearchResults(filteredResults);
+									setSearchResultsTotalItems(filteredResults.length);
+									setSearchResultsLoadedPages([1]);
+								} catch (error) {
+									console.error('Auto-search error:', error);
+								}
+							} else {
+								// If no search value, reset to context data
+								setIsSearchActive(false);
 								setSearchResults([]);
 								setSearchResultsLoadedPages([]);
 								setSearchResultsTotalItems(0);
-								setIsSearchActive(false);
-								setLessonsPageNumber(1);
-								setSearchResultsPage(1);
-							}}>
-							Reset
-						</CustomDeleteButton>
-					</Box>
-					<Box sx={{ display: 'flex', gap: 1, mb: '0.8rem', alignItems: 'center' }}>
-						{isSearchActive ? (
-							<Typography
-								variant='body2'
-								sx={{
-									color: 'text.secondary',
-									fontSize: '0.85rem',
-									ml: 1,
-									whiteSpace: 'nowrap',
-								}}>
-								{searchResultsTotalItems} {searchResultsTotalItems === 1 ? 'result' : 'results'}
-							</Typography>
-						) : (
-							<Typography
-								variant='body2'
-								sx={{
-									color: 'text.secondary',
-									fontSize: '0.85rem',
-									ml: 1,
-									whiteSpace: 'nowrap',
-								}}>
-								{displayLessons.length} {displayLessons.length === 1 ? 'item' : 'items'}
-							</Typography>
-						)}
-					</Box>
-				</Box>
+							}
+						}
+					}}
+					searchValue={searchValue}
+					setSearchValue={setSearchValue}
+					onSearch={handleSearch}
+					onReset={() => {
+						setSearchValue('');
+						setFilterValue('');
+						setSearchedValue('');
+						setSearchButtonClicked(false);
+						setSearchResults([]);
+						setSearchResultsLoadedPages([]);
+						setSearchResultsTotalItems(0);
+						setIsSearchActive(false);
+						setLessonsPageNumber(1);
+						setSearchResultsPage(1);
+					}}
+					filterOptions={['Published Lessons', 'Unpublished Lessons', 'Instructional Lessons', 'Practice Lessons', 'Quizzes']}
+					searchPlaceholder={'Search Lesson in Title'}
+					isSearchActive={isSearchActive}
+					searchResultsTotalItems={searchResultsTotalItems}
+					totalItems={displayLessons.length}
+					searchedValue={searchedValue}
+					searchButtonClicked={searchButtonClicked}
+					onResetFilter={() => {
+						setFilterValue('');
+						// Auto-search with existing search value if it exists
+						if (searchValue && searchValue.trim()) {
+							handleSearch();
+						} else {
+							setIsSearchActive(false);
+							setSearchResults([]);
+							setSearchResultsLoadedPages([]);
+							setSearchResultsTotalItems(0);
+						}
+					}}
+					onResetSearch={() => {
+						setSearchedValue('');
+						setSearchButtonClicked(false);
+						setSearchValue('');
+						// Auto-search with existing filter if it exists
+						if (filterValue && filterValue.trim()) {
+							// Trigger filter change
+							setFilterValue(filterValue);
+						} else {
+							setIsSearchActive(false);
+							setSearchResults([]);
+							setSearchResultsLoadedPages([]);
+							setSearchResultsTotalItems(0);
+						}
+					}}
+				/>
 
 				<Box
 					sx={{
 						display: 'flex',
 						flexDirection: 'column',
 						alignItems: 'center',
-						padding: '1rem 2rem',
 						width: '100%',
 						height: '22.5rem',
+						overflow: 'auto',
 					}}>
-					{/* Chips for active search and filter */}
-					{((isSearchActive && searchedValue && searchButtonClicked) || (isSearchActive && filterValue && filterValue.trim())) && (
-						<Box
-							sx={{
-								display: 'flex',
-								gap: 1,
-								flexWrap: 'wrap',
-								justifyContent: 'center',
-								borderRadius: '4px',
-								alignSelf: 'flex-start',
-								marginBottom: '1rem',
-							}}>
-							{isSearchActive && filterValue && filterValue.trim() && (
-								<Chip
-									label={`Filter: "${filterValue}"`}
-									onDelete={() => {
-										setFilterValue('');
-										// If search value exists, auto-search with search value
-										if (searchValue && searchValue.trim()) {
-											handleSearch();
-										} else {
-											// Clear search results
-											setSearchResults([]);
-											setSearchResultsLoadedPages([]);
-											setSearchResultsTotalItems(0);
-											setIsSearchActive(false);
-											setSearchButtonClicked(false);
-											setSearchedValue('');
-										}
-									}}
-									variant='outlined'
-									color='secondary'
-									size='small'
-									sx={{ backgroundColor: '#1976d2', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
-								/>
-							)}
-							{isSearchActive && searchedValue && searchButtonClicked && (
-								<Chip
-									label={`Search: "${searchedValue}"`}
-									onDelete={() => {
-										setSearchValue('');
-										setSearchedValue('');
-										setSearchButtonClicked(false);
-										// If filter is still active, keep filter results
-										if (filterValue) {
-											// Re-trigger filter search without search value
-											const params = new URLSearchParams({
-												limit: '300',
-												filter: filterValue,
-											});
-											if (orderBy) {
-												params.append('sortBy', orderBy);
-											}
-											if (order) {
-												params.append('sortOrder', order);
-											}
-											axios
-												.get(`${base_url}/lessons/organisation/${orgId}?${params.toString()}`)
-												.then((response) => {
-													// Filter out already added lessons from search results
-													const filteredResults = response.data.data?.filter((lesson: Lesson) => !chapter.lessonIds?.includes(lesson._id)) || [];
-													setSearchResults(filteredResults);
-													setSearchResultsTotalItems(filteredResults.length);
-													setSearchResultsLoadedPages([1]);
-													setIsSearchActive(true);
-													setSearchResultsPage(1);
-												})
-												.catch((error) => {
-													console.error('Filter error:', error);
-												});
-										} else {
-											// Clear everything and go back to context data
-											setSearchResults([]);
-											setSearchResultsLoadedPages([]);
-											setSearchResultsTotalItems(0);
-											setIsSearchActive(false);
-											setSearchResultsPage(1);
-										}
-									}}
-									color='primary'
-									variant='filled'
-									size='small'
-									sx={{ backgroundColor: '#1EC28B', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
-								/>
-							)}
-						</Box>
-					)}
-					<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>
+					<Table
+						stickyHeader
+						sx={{
+							'mb': '2rem',
+							'width': '100%',
+							'tableLayout': 'fixed',
+							'minWidth': '100%',
+							'& .MuiTableHead-root': {
+								position: 'sticky',
+								top: '0rem',
+								left: 0,
+								right: 0,
+								zIndex: 98,
+								backgroundColor: theme.bgColor?.secondary,
+								boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+							},
+							'& .MuiTableHead-root .MuiTableCell-root': {
+								backgroundColor: theme.bgColor?.secondary,
+								padding: '0.25rem 1rem',
+							},
+						}}
+						size='small'
+						aria-label='a dense table'>
 						<CustomTableHead<Lesson>
 							orderBy={orderBy}
 							order={order}
@@ -629,10 +518,10 @@ const AddNewLessonDialog = ({
 								{ key: 'title', label: 'Title' },
 								{ key: 'type', label: 'Type' },
 								{ key: 'isActive', label: 'Status' },
-								{ key: 'actions', label: 'Add Lessons' },
+								{ key: 'actions', label: isMobileSize ? 'Add' : 'Add Lessons' },
 							]}
 						/>
-						<TableBody>
+						<TableBody sx={{ width: '100%' }}>
 							{paginatedLessons &&
 								paginatedLessons?.map((lesson: Lesson) => {
 									const isSelected = selectedLessonIds?.indexOf(lesson._id) !== -1;
@@ -651,7 +540,7 @@ const AddNewLessonDialog = ({
 													label=''
 													sx={{
 														'& .MuiSvgIcon-root': {
-															fontSize: '1.25rem',
+															fontSize: isMobileSize ? '0.9rem' : '1.25rem',
 														},
 													}}
 												/>

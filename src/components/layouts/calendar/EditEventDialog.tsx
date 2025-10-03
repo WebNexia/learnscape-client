@@ -1179,7 +1179,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 						disabled={selectedEvent?.createdBy !== user?._id}
 					/>
 				</DialogContent>
-				<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0 0.75rem' }}>
+				<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0.25rem 0.75rem' }}>
 					<Box sx={{ marginBottom: '0.5rem' }}>
 						<CustomDeleteButton type='button' onClick={() => setDeleteEventModalOpen(true)} sx={{ height: isMobileSize ? '1.5rem' : undefined }}>
 							{isVerySmallScreen ? 'Delete' : 'Delete Event'}
@@ -1194,7 +1194,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 						}}
 						submitBtnText='Update'
 						disableBtn={selectedEvent?.createdBy !== user?._id}
-						actionSx={{ marginBottom: '0.5rem' }}
+						actionSx={{ marginBottom: '0rem' }}
 					/>
 				</Box>
 				<CustomDialog

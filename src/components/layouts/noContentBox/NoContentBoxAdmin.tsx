@@ -1,10 +1,15 @@
 import { Box, Typography } from '@mui/material';
+import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
+import { useContext } from 'react';
 
 interface NoContentBoxAdminProps {
 	content: string;
 }
 
 const NoContentBoxAdmin = ({ content }: NoContentBoxAdminProps) => {
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
+
 	return (
 		<Box
 			sx={{
@@ -16,7 +21,9 @@ const NoContentBoxAdmin = ({ content }: NoContentBoxAdminProps) => {
 				borderRadius: '0.35rem',
 				mt: '1rem',
 			}}>
-			<Typography variant='body1' sx={{fontSize:'0.9rem'}}>{content}</Typography>
+			<Typography variant='body1' sx={{ fontSize: isMobileSize ? '0.8rem' : '0.9rem' }}>
+				{content}
+			</Typography>
 		</Box>
 	);
 };

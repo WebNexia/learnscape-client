@@ -6,6 +6,7 @@ interface Column {
 	key: string;
 	label: string;
 	infoIcon?: React.ReactNode;
+	width?: string | number;
 }
 
 interface CustomTableHeadProps<T> {
@@ -26,9 +27,9 @@ const CustomTableHead = <T,>({ orderBy, order, handleSort, columns, selectAll, o
 		<TableHead>
 			<TableRow hover>
 				{columns?.map((column, index) => (
-					<TableCell key={index} sx={{ textAlign: 'center', padding: isMobileSizeSmall ? '0.05rem' : 'inherit' }}>
+					<TableCell key={index} sx={{ textAlign: 'center', padding: isMobileSizeSmall ? '0.05rem' : 'inherit', width: column.width || 'auto' }}>
 						{column.key === 'checkbox' ? (
-							<Checkbox checked={selectAll} onChange={onSelectAll} color='primary' />
+							<Checkbox checked={selectAll} onChange={onSelectAll} color='primary' size='small' />
 						) : (
 							<TableSortLabel
 								active={orderBy === column.key}

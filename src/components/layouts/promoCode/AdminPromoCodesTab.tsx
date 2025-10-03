@@ -1,24 +1,23 @@
-import { Box, FormControl, InputAdornment, MenuItem, Select, Table, TableBody, TableCell, TableRow, Typography, Chip } from '@mui/material';
+import { Box, Table, TableBody, TableCell, TableRow } from '@mui/material';
 import { PromoCode } from '../../../interfaces/promoCode';
 import { useContext, useEffect, useState } from 'react';
 import { PromoCodesContext } from '../../../contexts/PromoCodesContextProvider';
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
-import CustomSubmitButton from '../../forms/customButtons/CustomSubmitButton';
 import CreateCodeDialog from './CreateCodeDialog';
 import EditCodeDialog from './EditCodeDialog';
 import CustomTableHead from '../table/CustomTableHead';
 import CustomTableCell from '../table/CustomTableCell';
 import CustomActionBtn from '../table/CustomActionBtn';
 import CustomTablePagination from '../table/CustomTablePagination';
-import { Delete, Edit, Search } from '@mui/icons-material';
+import { Delete, Edit } from '@mui/icons-material';
 import axios from '@utils/axiosInstance';
 import CustomDialog from '../dialog/CustomDialog';
 import CustomDialogActions from '../dialog/CustomDialogActions';
-import CustomTextField from '../../forms/customFields/CustomTextField';
 import theme from '../../../themes';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 import CustomInfoMessageAlignedLeft from '../infoMessage/CustomInfoMessageAlignedLeft';
-import CustomDeleteButton from '../../forms/customButtons/CustomDeleteButton';
+import { useFilterSearch } from '../../../hooks/useFilterSearch';
+import FilterSearchRow from '../FilterSearchRow';
 
 const AdminPromoCodesTab = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -26,38 +25,54 @@ const AdminPromoCodesTab = () => {
 	const { promoCodes, totalItems, loadedPages, promoCodesPageNumber, setPromoCodesPageNumber, fetchMorePromoCodes, removePromoCode } =
 		useContext(PromoCodesContext);
 
-	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
-	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
 	const { orgId } = useContext(OrganisationContext);
-	const [searchValue, setSearchValue] = useState<string>('');
-	const [filterValue, setFilterValue] = useState<string>('');
-	const [searchResults, setSearchResults] = useState<PromoCode[]>([]);
-	const [isSearchActive, setIsSearchActive] = useState<boolean>(false);
-	const [searchResultsPage, setSearchResultsPage] = useState<number>(1);
-	const [searchResultsLoadedPages, setSearchResultsLoadedPages] = useState<number[]>([]);
-	const [searchResultsTotalItems, setSearchResultsTotalItems] = useState<number>(0);
-	const [searchButtonClicked, setSearchButtonClicked] = useState<boolean>(false);
-	const [searchedValue, setSearchedValue] = useState<string>('');
-
-	const [orderBy, setOrderBy] = useState<keyof PromoCode>('updatedAt');
-	const [order, setOrder] = useState<'asc' | 'desc'>('desc');
 
 	const pageSize = 50;
 
-	// Use search results if active, otherwise use context data
-	const displayPromoCodes = isSearchActive ? searchResults : promoCodes;
-
-	// Calculate total pages based on filtered results when searching, otherwise use total items from server
-	const promoCodesNumberOfPages = isSearchActive ? Math.ceil(searchResultsTotalItems / pageSize) : Math.ceil(totalItems / pageSize);
+	// Use the filter search hook
+	const {
+		searchValue,
+		setSearchValue,
+		filterValue,
+		displayData: displayPromoCodes,
+		numberOfPages: promoCodesNumberOfPages,
+		searchResultsPage,
+		searchResultsTotalItems,
+		searchButtonClicked,
+		searchedValue,
+		orderBy,
+		order,
+		isSearchActive,
+		isLoading: isSearchLoading,
+		handleSearch,
+		handleFilterChange,
+		handlePageChange,
+		handleSort,
+		resetSearch,
+		resetFilter,
+		resetAll,
+		removeFromSearchResults,
+	} = useFilterSearch<PromoCode>({
+		getEndpoint: () => `${base_url}/promoCodes/organisation/${orgId}`,
+		limit: 200,
+		pageSize,
+		contextData: promoCodes || [],
+		setContextPageNumber: setPromoCodesPageNumber,
+		fetchMoreContextData: fetchMorePromoCodes,
+		contextLoadedPages: loadedPages,
+		defaultOrderBy: 'updatedAt',
+		defaultOrder: 'desc',
+	});
 
 	// Use appropriate page number for pagination
 	const currentPage = isSearchActive ? searchResultsPage : promoCodesPageNumber;
 
 	const sortedPromoCodes = [...(displayPromoCodes || [])]?.sort((a, b) => {
-		const aValue = a[orderBy] ?? '';
-		const bValue = b[orderBy] ?? '';
+		const aValue = a[orderBy as keyof PromoCode] ?? '';
+		const bValue = b[orderBy as keyof PromoCode] ?? '';
 
 		if (order === 'asc') {
 			return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
@@ -76,12 +91,6 @@ const AdminPromoCodesTab = () => {
 
 	const [singleCode, setSingleCode] = useState<PromoCode | null>(null);
 
-	const handleSort = (property: keyof PromoCode) => {
-		const isAsc = orderBy === property && order === 'asc';
-		setOrder(isAsc ? 'desc' : 'asc');
-		setOrderBy(property);
-	};
-
 	useEffect(() => {
 		setPromoCodesPageNumber(1);
 		// Trigger initial fetch for context data
@@ -89,134 +98,6 @@ const AdminPromoCodesTab = () => {
 			// This will trigger the context to fetch data
 		}
 	}, []);
-
-	const handlePageChange = async (newPage: number) => {
-		if (isSearchActive) {
-			setSearchResultsPage(newPage);
-
-			// Check if we need to fetch more search results
-			const requiredRecords = newPage * pageSize;
-			if (searchResults.length < requiredRecords) {
-				// Calculate which pages we need to fetch
-				const currentLoadedPages = searchResultsLoadedPages && searchResultsLoadedPages.length > 0 ? Math.max(...searchResultsLoadedPages) : 0;
-				const targetPage = Math.ceil((newPage * pageSize) / 200);
-
-				// Fetch all missing pages in sequence
-				for (let page = currentLoadedPages + 1; page <= targetPage; page++) {
-					if (!searchResultsLoadedPages?.includes(page)) {
-						await fetchMoreSearchResults(page);
-					}
-				}
-			}
-		} else {
-			setPromoCodesPageNumber(newPage);
-
-			// Check if we need to fetch more data for context
-			const requiredRecords = newPage * pageSize;
-			if (promoCodes.length < requiredRecords && newPage <= promoCodesNumberOfPages) {
-				// Calculate which pages we need to fetch
-				const currentLoadedPages = loadedPages && loadedPages.length > 0 ? Math.max(...loadedPages) : 0;
-				const targetPage = Math.ceil((newPage * pageSize) / 200);
-
-				// Fetch all missing pages in sequence
-				if (currentLoadedPages < targetPage) {
-					await fetchMorePromoCodes(currentLoadedPages + 1, targetPage);
-				}
-			}
-		}
-	};
-
-	const handleSearch = async () => {
-		try {
-			// Reset to first page when searching
-			setPromoCodesPageNumber(1);
-			setSearchResultsPage(1);
-
-			// Search button only works when search value exists
-			if (searchValue && searchValue.trim()) {
-				// Store the searched value
-				setSearchedValue(searchValue.trim());
-				// Build query parameters
-				const params = new URLSearchParams({
-					limit: '200',
-					search: searchValue.trim(),
-				});
-
-				// Add filter if it exists
-				if (filterValue && filterValue.trim()) {
-					params.append('filter', filterValue.trim());
-				}
-				if (orderBy) {
-					params.append('sortBy', orderBy);
-				}
-				if (order) {
-					params.append('sortOrder', order);
-				}
-
-				const response = await axios.get(`${base_url}/promoCodes/organisation/${orgId}?${params.toString()}`);
-				setSearchResults(response.data.data);
-				setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-				setSearchResultsLoadedPages([1]);
-				setIsSearchActive(true);
-				setSearchButtonClicked(true);
-			} else {
-				// If no search value, clear search results
-				setSearchResults([]);
-				setSearchResultsLoadedPages([]);
-				setSearchResultsTotalItems(0);
-				setIsSearchActive(false);
-				setSearchButtonClicked(false);
-				setSearchedValue('');
-			}
-		} catch (error) {
-			console.error('Search error:', error);
-		}
-	};
-
-	const fetchMoreSearchResults = async (page: number) => {
-		try {
-			// Build query parameters
-			const params = new URLSearchParams({
-				limit: '200',
-				page: page.toString(),
-			});
-
-			if (searchedValue) {
-				params.append('search', searchedValue);
-			}
-			if (filterValue && filterValue.trim()) {
-				params.append('filter', filterValue.trim());
-			}
-			if (orderBy) {
-				params.append('sortBy', orderBy);
-			}
-			if (order) {
-				params.append('sortOrder', order);
-			}
-
-			const response = await axios.get(`${base_url}/promoCodes/organisation/${orgId}?${params.toString()}`);
-
-			if (page === 1) {
-				// First page - replace all data
-				setSearchResults(response.data.data);
-				setSearchResultsLoadedPages([1]);
-			} else {
-				// Subsequent pages - append data
-				setSearchResults((prev) => {
-					const newData = [...prev, ...response.data.data];
-					return newData;
-				});
-				setSearchResultsLoadedPages((prev) => [...prev, page]);
-			}
-
-			setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-		} catch (error) {
-			console.error('Fetch more search results error:', error);
-		}
-	};
-
-	// Check if search button should be disabled
-	const isSearchDisabled = !searchValue;
 
 	useEffect(() => {
 		setIsDeleteCodeModalOpen(Array(promoCodes.length).fill(false));
@@ -244,12 +125,13 @@ const AdminPromoCodesTab = () => {
 			const promoCodeToDelete = promoCodes?.find((pc) => pc.code === code);
 			if (!promoCodeToDelete) return;
 
-			if (isSearchActive) {
-				setSearchResults((prev) => prev?.filter((pc) => pc.code !== code) || []);
-				setSearchResultsTotalItems((prev) => Math.max(0, prev - 1));
-			}
 			await axios.delete(`${base_url}/promocodes/${code}`);
 			removePromoCode(promoCodeToDelete._id);
+
+			// If search is active, remove from search results; otherwise context data is already updated
+			if (isSearchActive) {
+				removeFromSearchResults(promoCodeToDelete._id);
+			}
 		} catch (error) {
 			console.error('Delete promo code error:', error);
 		}
@@ -268,237 +150,41 @@ const AdminPromoCodesTab = () => {
 	};
 
 	return (
-		<Box sx={{ width: '100%' }}>
-			<Box
-				sx={{
-					display: 'flex',
-					flexDirection: 'row',
-					justifyContent: 'space-between',
-					padding: isMobileSizeSmall ? '1rem 1rem 0.5rem 1rem' : '2rem 2rem 1rem 2rem',
-					width: '100%',
-				}}>
-				<Box sx={{ display: 'flex', justifyContent: 'flex-start', width: 'fit-content' }}>
-					<Box sx={{ mr: '1rem' }}>
-						<FormControl>
-							<Select
-								size='small'
-								value={filterValue}
-								onChange={async (e) => {
-									const newFilterValue = e.target.value;
-									setFilterValue(newFilterValue);
-
-									// Auto-search when filter is selected
-									if (newFilterValue && newFilterValue.trim()) {
-										setPromoCodesPageNumber(1);
-										setSearchResultsPage(1);
-										setIsSearchActive(true);
-										setSearchResultsLoadedPages([]);
-
-										try {
-											const params = new URLSearchParams({
-												limit: '200',
-												filter: newFilterValue.trim(),
-											});
-
-											// Include existing search value if it exists
-											if (searchValue && searchValue.trim()) {
-												params.append('search', searchValue.trim());
-											}
-
-											if (orderBy) {
-												params.append('sortBy', orderBy);
-											}
-											if (order) {
-												params.append('sortOrder', order);
-											}
-
-											const response = await axios.get(`${base_url}/promoCodes/organisation/${orgId}?${params.toString()}`);
-											setSearchResults(response.data.data);
-											setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-											setSearchResultsLoadedPages([1]);
-										} catch (error) {
-											console.error('Filter search error:', error);
-										}
-									} else {
-										// If filter is cleared but search value exists, auto-search with search value
-										if (searchValue && searchValue.trim()) {
-											setPromoCodesPageNumber(1);
-											setSearchResultsPage(1);
-											setIsSearchActive(true);
-											setSearchResultsLoadedPages([]);
-
-											try {
-												const params = new URLSearchParams({
-													limit: '200',
-													search: searchValue.trim(),
-												});
-
-												if (orderBy) {
-													params.append('sortBy', orderBy);
-												}
-												if (order) {
-													params.append('sortOrder', order);
-												}
-
-												const response = await axios.get(`${base_url}/promoCodes/organisation/${orgId}?${params.toString()}`);
-												setSearchResults(response.data.data);
-												setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-												setSearchResultsLoadedPages([1]);
-											} catch (error) {
-												console.error('Search error:', error);
-											}
-										} else {
-											// If no filter and no search, clear search results
-											setSearchResults([]);
-											setSearchResultsLoadedPages([]);
-											setSearchResultsTotalItems(0);
-											setIsSearchActive(false);
-											setSearchButtonClicked(false);
-											setSearchedValue('');
-										}
-									}
-								}}
-								displayEmpty
-								sx={{
-									backgroundColor: theme.bgColor?.common,
-									width: isMobileSizeSmall ? '8rem' : '12rem',
-									fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-									textTransform: 'capitalize',
-								}}>
-								<MenuItem
-									disabled
-									value='filter'
-									selected
-									sx={{
-										fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-										fontStyle: 'italic',
-										textTransform: 'capitalize',
-										padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-										minHeight: '2rem',
-									}}>
-									Filter Codes
-								</MenuItem>
-								<MenuItem
-									value=''
-									sx={{
-										fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-										textTransform: 'capitalize',
-										padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-										minHeight: '2rem',
-									}}>
-									All Codes
-								</MenuItem>
-								{['Active', 'Inactive', 'Unlimited Usage', 'Limited Usage', 'Expired', 'Unexpired']?.map((type) => (
-									<MenuItem
-										value={type.toLowerCase()}
-										key={type}
-										sx={{
-											fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-											textTransform: 'capitalize',
-											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-											minHeight: '2rem',
-										}}>
-										{type}
-									</MenuItem>
-								))}
-							</Select>
-						</FormControl>
-					</Box>
-					<CustomTextField
-						value={searchValue}
-						placeholder={isVerySmallScreen ? 'Search Code' : 'Search Promo Code'}
-						onChange={(e) => {
-							setSearchValue(e.target.value);
-						}}
-						sx={{ backgroundColor: '#fff' }}
-						required={false}
-						InputProps={{
-							endAdornment: (
-								<InputAdornment position='end'>
-									<Search
-										sx={{
-											mr: '-0.5rem',
-										}}
-										fontSize={isMobileSize ? 'small' : 'medium'}
-									/>
-								</InputAdornment>
-							),
-						}}
-					/>
-					<CustomSubmitButton
-						sx={{
-							height: isVerySmallScreen ? '1.75rem' : '2rem',
-							marginLeft: '0.5rem',
-							fontSize: isMobileSize ? '0.7rem' : undefined,
-						}}
-						type='button'
-						disabled={isSearchDisabled}
-						onClick={handleSearch}>
-						Search
-					</CustomSubmitButton>
-					<CustomDeleteButton
-						sx={{
-							height: isVerySmallScreen ? '1.75rem' : '2rem',
-							marginLeft: '0.5rem',
-							fontSize: isMobileSize ? '0.7rem' : undefined,
-						}}
-						type='button'
-						onClick={() => {
-							setSearchValue('');
-							setFilterValue('');
-							setSearchResults([]);
-							setSearchResultsLoadedPages([]);
-							setSearchResultsTotalItems(0);
-							setIsSearchActive(false);
-							setSearchButtonClicked(false);
-							setSearchedValue('');
-							setPromoCodesPageNumber(1);
-							setSearchResultsPage(1);
-						}}>
-						Reset
-					</CustomDeleteButton>
-					<Box sx={{ display: 'flex', gap: 1, mb: '0.85rem', alignItems: 'center', ml: '1rem' }}>
-						{isSearchActive ? (
-							<Typography
-								variant='body2'
-								sx={{
-									color: 'text.secondary',
-									fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-									whiteSpace: 'nowrap',
-								}}>
-								{searchResultsTotalItems} {searchResultsTotalItems === 1 ? 'result' : 'results'}
-							</Typography>
-						) : (
-							<Typography
-								variant='body2'
-								sx={{
-									color: 'text.secondary',
-									fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-									whiteSpace: 'nowrap',
-								}}>
-								{totalItems} {totalItems === 1 ? 'item' : 'items'}
-							</Typography>
-						)}
-					</Box>
-				</Box>
-				<Box
-					sx={{
-						display: 'flex',
-						justifyContent: 'flex-end',
-						width: '20%',
-						height: isVerySmallScreen ? '1.75rem' : '2rem',
-						alignItems: 'center',
-					}}>
-					<CustomSubmitButton
-						onClick={() => {
-							setIsNewCodeModalOpen(true);
-						}}
-						sx={{ fontSize: isMobileSize ? '0.7rem' : undefined }}
-						type='button'>
-						{isMobileSize ? 'New' : 'New Promo Code'}
-					</CustomSubmitButton>
-				</Box>
-			</Box>
+		<>
+			<FilterSearchRow
+				filterValue={filterValue}
+				onFilterChange={handleFilterChange}
+				filterOptions={[
+					{ value: '', label: 'All Codes' },
+					{ value: 'active', label: 'Active' },
+					{ value: 'inactive', label: 'Inactive' },
+					{ value: 'unlimited usage', label: 'Unlimited Usage' },
+					{ value: 'limited usage', label: 'Limited Usage' },
+					{ value: 'expired', label: 'Expired' },
+					{ value: 'unexpired', label: 'Unexpired' },
+				]}
+				filterPlaceholder='Filter Codes'
+				searchValue={searchValue}
+				onSearchChange={setSearchValue}
+				onSearch={handleSearch}
+				onReset={resetAll}
+				searchPlaceholder={isMobileSize ? 'Search Code' : 'Search Promo Code'}
+				isSearchLoading={isSearchLoading}
+				isSearchActive={isSearchActive}
+				searchResultsTotalItems={searchResultsTotalItems}
+				totalItems={totalItems}
+				searchedValue={searchedValue}
+				onResetSearch={resetSearch}
+				onResetFilter={resetFilter}
+				actionButtons={[
+					{
+						label: isMobileSize ? 'New' : 'New Promo Code',
+						onClick: () => setIsNewCodeModalOpen(true),
+					},
+				]}
+				isSticky={true}
+				isPayments={true}
+			/>
 
 			<CreateCodeDialog isNewCodeModalOpen={isNewCodeModalOpen} setIsNewCodeModalOpen={setIsNewCodeModalOpen} />
 
@@ -507,113 +193,106 @@ const AdminPromoCodesTab = () => {
 					display: 'flex',
 					flexDirection: 'column',
 					alignItems: 'center',
-					padding: '0rem 2rem 2rem 2rem',
+					padding: isMobileSize ? '0rem 0.25rem 2rem 0.25rem' : '0rem 0rem 2rem 0rem',
 					width: '100%',
-					mt: '1rem',
 				}}>
-				{/* Chips for active search and filter */}
-				{((isSearchActive && searchedValue && searchButtonClicked) || (isSearchActive && filterValue && filterValue.trim())) && (
-					<Box
-						sx={{
-							mb: '1rem',
-							display: 'flex',
-							gap: 1,
-							flexWrap: 'wrap',
-							justifyContent: 'center',
-							borderRadius: '4px',
-							alignSelf: 'flex-start',
-							marginBottom: '1rem',
-							marginTop: '-1rem',
-						}}>
-						{isSearchActive && filterValue && filterValue.trim() && (
-							<Chip
-								label={`Filter: "${filterValue}"`}
-								onDelete={() => {
-									setFilterValue('');
-									// If search value exists, auto-search with search value
-									if (searchValue && searchValue.trim()) {
-										handleSearch();
-									} else {
-										// Clear search results
-										setSearchResults([]);
-										setSearchResultsLoadedPages([]);
-										setSearchResultsTotalItems(0);
-										setIsSearchActive(false);
-										setSearchButtonClicked(false);
-										setSearchedValue('');
-									}
-								}}
-								variant='outlined'
-								color='secondary'
-								size='small'
-								sx={{ backgroundColor: '#1976d2', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
-							/>
-						)}
-						{isSearchActive && searchedValue && searchButtonClicked && (
-							<Chip
-								label={`Search: "${searchedValue}"`}
-								onDelete={() => {
-									setSearchValue('');
-									setSearchedValue('');
-									setSearchButtonClicked(false);
-									// If filter is still active, keep filter results
-									if (filterValue) {
-										// Re-trigger filter search without search value
-										const params = new URLSearchParams({
-											limit: '200',
-											filter: filterValue,
-										});
-										if (orderBy) {
-											params.append('sortBy', orderBy);
-										}
-										if (order) {
-											params.append('sortOrder', order);
-										}
-										axios
-											.get(`${base_url}/promoCodes/organisation/${orgId}?${params.toString()}`)
-											.then((response) => {
-												setSearchResults(response.data.data);
-												setSearchResultsTotalItems(response.data.totalItems || response.data.data.length);
-												setSearchResultsLoadedPages([1]);
-												setIsSearchActive(true);
-												setSearchResultsPage(1);
-											})
-											.catch((error) => {
-												console.error('Filter error:', error);
-											});
-									} else {
-										// Clear everything and go back to context data
-										setSearchResults([]);
-										setSearchResultsLoadedPages([]);
-										setSearchResultsTotalItems(0);
-										setIsSearchActive(false);
-										setSearchResultsPage(1);
-									}
-								}}
-								color='primary'
-								variant='filled'
-								size='small'
-								sx={{ backgroundColor: '#1EC28B', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
-							/>
-						)}
-					</Box>
-				)}
-				<Table sx={{ mb: '2rem' }} size='small' aria-label='a dense table'>
+				<Table
+					sx={{
+						'mb': '2rem',
+						'tableLayout': 'fixed',
+						'width': '100%',
+						'borderCollapse': 'collapse',
+						'borderSpacing': 0,
+						'& .MuiTableHead-root': {
+							position: 'fixed',
+							top: !((isSearchActive && searchedValue && searchButtonClicked) || (filterValue && filterValue.trim()))
+								? isMobileSize
+									? '13.5rem'
+									: '11rem'
+								: isMobileSize
+									? '16rem'
+									: '13.25rem',
+							left: isMobileSize ? 0 : '10rem',
+							right: 0,
+							zIndex: 98,
+							backgroundColor: theme.palette.background.paper,
+							boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+							display: 'table',
+							tableLayout: 'fixed',
+							width: isMobileSize ? '100%' : 'calc(100% - 10rem)',
+						},
+						'& .MuiTableHead-root .MuiTableCell-root': {
+							backgroundColor: theme.palette.background.paper,
+							padding: isMobileSize ? '0.75rem 0.75rem' : '0.75rem 1rem',
+							boxSizing: 'border-box',
+							margin: 0,
+							verticalAlign: 'center',
+						},
+						'& .MuiTableHead-root .MuiTableCell-root:last-child': {
+							borderRight: 'none',
+						},
+						'& .MuiTableBody-root .MuiTableCell-root': {
+							padding: '0.25rem 1rem',
+							boxSizing: 'border-box',
+							margin: 0,
+							verticalAlign: 'center',
+						},
+						'& .MuiTableBody-root .MuiTableCell-root:last-child': {
+							borderRight: 'none',
+						},
+						// Column widths for mobile (4 columns)
+						'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(1)': {
+							minWidth: isMobileSize ? '120px' : '150px',
+							width: isMobileSize ? '30%' : '20%',
+						},
+						'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(2)': {
+							minWidth: isMobileSize ? '80px' : '100px',
+							width: isMobileSize ? '25%' : '15%',
+						},
+						'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(3)': {
+							minWidth: isMobileSize ? '80px' : '100px',
+							width: isMobileSize ? '20%' : '20%',
+						},
+						'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(4)': {
+							minWidth: isMobileSize ? '80px' : '100px',
+							width: isMobileSize ? '25%' : '15%',
+						},
+						// Desktop columns (6 columns)
+						'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(5)': {
+							minWidth: isMobileSize ? '0px' : '120px',
+							width: isMobileSize ? '0%' : '15%',
+						},
+						'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(6)': {
+							minWidth: isMobileSize ? '0px' : '100px',
+							width: isMobileSize ? '0%' : '15%',
+						},
+					}}
+					size='small'
+					aria-label='a dense table'>
+					{/* Spacer row to ensure header alignment */}
+					<TableRow sx={{ height: 0, visibility: 'hidden' }}>
+						<TableCell sx={{ width: isMobileSize ? '30%' : '20%', padding: 0, border: 'none' }} />
+						<TableCell sx={{ width: isMobileSize ? '25%' : '15%', padding: 0, border: 'none' }} />
+						<TableCell sx={{ width: isMobileSize ? '20%' : '20%', padding: 0, border: 'none' }} />
+						<TableCell sx={{ width: isMobileSize ? '25%' : '15%', padding: 0, border: 'none' }} />
+						<TableCell sx={{ width: isMobileSize ? '0%' : '15%', padding: 0, border: 'none' }} />
+						<TableCell sx={{ width: isMobileSize ? '0%' : '15%', padding: 0, border: 'none' }} />
+					</TableRow>
 					<CustomTableHead<PromoCode>
-						orderBy={orderBy}
+						orderBy={orderBy as keyof PromoCode}
 						order={order}
 						handleSort={handleSort}
 						columns={
-							isVerySmallScreen
+							isMobileSize
 								? [
-										{ key: 'code', label: 'Promo Code' },
-										{ key: 'discountAmount', label: 'Discount Amount' },
+										{ key: 'code', label: isMobileSize ? 'Code' : 'Promo Code' },
+										{ key: 'discountAmount', label: 'Percentage' },
 										{ key: 'isActive', label: 'Status' },
 										{ key: 'actions', label: 'Actions' },
 									]
 								: [
 										{ key: 'code', label: 'Promo Code' },
-										{ key: 'discountAmount', label: 'Discount Percentage' },
+										{ key: 'discountAmount', label: 'Percentage' },
 										{ key: 'expirationDate', label: 'Expiration Date' },
 										{ key: 'usageLimit', label: 'Usage Limit' },
 										{ key: 'isActive', label: 'Status' },
@@ -628,12 +307,12 @@ const AdminPromoCodesTab = () => {
 									<TableRow key={promoCode._id} hover>
 										<CustomTableCell value={promoCode.code} />
 										<CustomTableCell value={promoCode.discountAmount} />
-										{!isVerySmallScreen && (
+										{!isMobileSize && (
 											<CustomTableCell
 												value={new Date(promoCode.expirationDate!).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
 											/>
 										)}
-										{!isVerySmallScreen && <CustomTableCell value={promoCode.usageLimit === 0 ? 'Unlimited' : promoCode.usageLimit} />}
+										{!isMobileSize && <CustomTableCell value={promoCode.usageLimit === 0 ? 'Unlimited' : promoCode.usageLimit} />}
 										<CustomTableCell value={promoCode.isActive ? 'Active' : 'Inactive'} />
 
 										<TableCell
@@ -688,10 +367,10 @@ const AdminPromoCodesTab = () => {
 							})}
 					</TableBody>
 				</Table>
-				{isVerySmallScreen && <CustomInfoMessageAlignedLeft message='Rotate your device for more info' />}
+				{isMobileSize && <CustomInfoMessageAlignedLeft message='Rotate your device or use desktop for more info' />}
 				<CustomTablePagination count={promoCodesNumberOfPages} page={currentPage} onChange={handlePageChange} />
 			</Box>
-		</Box>
+		</>
 	);
 };
 

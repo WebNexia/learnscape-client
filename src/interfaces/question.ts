@@ -39,3 +39,10 @@ export interface QuestionInterface {
 	createdByRole: string;
 	updatedByRole: string;
 }
+
+export interface ArchivedQuestion extends QuestionInterface {
+	archivedAt?: string;
+	archivedBy?: string;
+	archivedByName?: string;
+	questionTypeName?: string;
+}

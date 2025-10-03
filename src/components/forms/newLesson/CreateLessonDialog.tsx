@@ -14,6 +14,7 @@ import { chapterUpdateTrack } from '../../../utils/chapterUpdateTrack';
 import axios from '@utils/axiosInstance';
 import { useAuth } from '../../../hooks/useAuth';
 import { Roles } from '../../../interfaces/enums';
+import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 interface CreateLessonDialogProps {
 	chapter?: ChapterLessonData;
@@ -41,6 +42,8 @@ const CreateLessonDialog = ({
 	const { addNewLesson, lessonTypes } = useContext(LessonsContext);
 	const { user } = useAuth();
 	const isInstructor = user?.role === Roles.INSTRUCTOR;
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
 
 	const [title, setTitle] = useState<string>('');
 	const [type, setType] = useState<string>('');
@@ -162,14 +165,14 @@ const CreateLessonDialog = ({
 					label='Title'
 					value={title}
 					onChange={(e) => setTitle(e.target.value)}
-					sx={{ margin: '1rem 2rem' }}
+					sx={{ margin: isMobileSize ? '0.5rem 2rem' : '1rem 2rem' }}
 					InputLabelProps={{
 						sx: { fontSize: '0.8rem' },
 					}}
 					InputProps={{ inputProps: { maxLength: 100 } }}
 				/>
-				<FormControl sx={{ margin: '1rem 2rem' }}>
-					<Typography variant='body2' sx={{ mb: '0.5rem' }}>
+				<FormControl sx={{ margin: isMobileSize ? '0.5rem 2rem' : '1rem 2rem' }}>
+					<Typography variant='body2' sx={{ mb: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 						Type
 					</Typography>
 					<Select

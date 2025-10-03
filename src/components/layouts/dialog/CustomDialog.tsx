@@ -52,7 +52,7 @@ const CustomDialog = ({
 						marginBottom: isMobileSize ? '-0.5rem' : '0rem',
 						paddingTop: isMobileSize ? '1rem' : '2rem',
 						...titleSx,
-						fontSize: { xs: '1rem', sm: '1.25rem' },
+						fontSize: { xs: '0.85rem', sm: '1.25rem' },
 					}}>
 					{title}
 				</DialogTitle>

@@ -1,4 +1,4 @@
-import { Alert, Avatar, Box, Button, DialogActions, DialogContent, Grid, IconButton, Paper, Snackbar, Tooltip, Typography } from '@mui/material';
+import { Alert, Box, Button, IconButton, Paper, Snackbar, Tooltip, Typography } from '@mui/material';
 import theme from '../../themes';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Edit, FileCopy, Info, KeyboardBackspaceOutlined } from '@mui/icons-material';
@@ -8,15 +8,14 @@ import useImageUpload from '../../hooks/useImageUpload';
 import CustomSubmitButton from '../forms/customButtons/CustomSubmitButton';
 import { FormEvent, useContext, useState } from 'react';
 import CustomCancelButton from '../forms/customButtons/CustomCancelButton';
-import CustomDialog from '../layouts/dialog/CustomDialog';
-import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
 import axios from '@utils/axiosInstance';
 import { CoursesContext } from '../../contexts/CoursesContextProvider';
-import { dateTimeFormatter } from '@utils/dateFormatter';
 import { useStickyPaper } from '../../hooks/useStickyPaper';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
 import { Roles } from '../../interfaces/enums';
+import CoursesInfoModal from '../layouts/courses/CoursesInfoModal';
+import CloneCourseDialog from '../layouts/courses/CloneCourseDialog';
 
 interface CoursePaperProps {
 	singleCourse?: SingleCourse;
@@ -78,7 +77,7 @@ const CoursePaper = ({
 
 	const { resetImageUpload } = useImageUpload();
 
-	const { isSticky, paperRef } = useStickyPaper();
+	const { isSticky, paperRef } = useStickyPaper(isMobileSize);
 
 	const handleCancel = async (): Promise<void> => {
 		setIsEditMode(false);
@@ -95,19 +94,33 @@ const CoursePaper = ({
 	const [isCourseInfoDialogOpen, setIsCourseInfoDialogOpen] = useState<boolean>(false);
 	const [isCourseCloned, setIsCourseCloned] = useState<boolean>(false);
 
-	const handleClone = async () => {
+	const cloneCourse = async () => {
 		setIsCloning(true);
 		try {
 			const response = await axios.post(`${base_url}/courses/${courseId}/clone`, { courseId });
 			setIsCloneCourseDialogOpen(false);
 
+			console.log(response.data.clonedCourse);
+
 			addNewCourse({
-				_id: response.data._id,
+				_id: response.data.clonedCourse._id,
 				title: response.data.clonedCourse.title,
+				instructor: response.data.clonedCourse.instructor,
 				clonedFromId: response.data.clonedCourse.clonedFromId,
+				clonedFromTitle: response.data.clonedCourse.clonedFromTitle,
+				courseManagement: response.data.clonedCourse.courseManagement,
+				isActive: response.data.clonedCourse.isActive,
 				createdAt: response.data.clonedCourse.createdAt,
 				updatedAt: response.data.clonedCourse.updatedAt,
-			} as SingleCourse);
+				createdBy: response.data.clonedCourse.createdBy,
+				updatedBy: response.data.clonedCourse.updatedBy,
+				createdByName: response.data.clonedCourse.createdByName,
+				updatedByName: response.data.clonedCourse.updatedByName,
+				createdByImageUrl: response.data.clonedCourse.createdByImageUrl,
+				updatedByImageUrl: response.data.clonedCourse.updatedByImageUrl,
+				createdByRole: response.data.clonedCourse.createdByRole,
+				updatedByRole: response.data.clonedCourse.updatedByRole,
+			} as unknown as SingleCourse);
 
 			setIsCourseCloned(true);
 		} catch (error) {
@@ -148,12 +161,14 @@ const CoursePaper = ({
 						justifyContent: isSticky ? 'flex-start' : 'space-between',
 						alignItems: isSticky ? 'center' : 'flex-start',
 						flex: { md: 2, lg: 3 },
-						padding: isSticky ? '0.5rem 1rem' : '0.5rem',
+						padding: isSticky ? (isMobileSize ? '0.25rem 0.25rem' : '0.5rem 1rem') : '0.5rem',
 					}}>
 					<Box>
 						<Button
 							variant='text'
-							startIcon={<KeyboardBackspaceOutlined />}
+							startIcon={
+								<KeyboardBackspaceOutlined sx={{ fontSize: isSticky ? (isMobileSize ? '0.6rem' : '0.75rem') : undefined }} fontSize='small' />
+							}
 							sx={{
 								'color': theme.textColor?.common.main,
 								'textTransform': 'inherit',
@@ -162,7 +177,7 @@ const CoursePaper = ({
 									backgroundColor: 'transparent',
 									textDecoration: 'underline',
 								},
-								'fontSize': isSticky ? { xs: '0.7rem', sm: '0.8rem' } : undefined,
+								'fontSize': isSticky ? { xs: '0.65rem', sm: '0.75rem' } : undefined,
 							}}
 							onClick={() => {
 								if (user?.role === Roles.ADMIN) {
@@ -175,19 +190,21 @@ const CoursePaper = ({
 							{isSticky ? 'Courses' : 'Back to courses'}
 						</Button>
 					</Box>
-					<Box sx={{ paddingLeft: isSticky ? '0' : '0.5rem' }}>
-						<Typography
-							variant='body2'
-							sx={{
-								color: theme.textColor?.common.main,
-								fontSize: isSticky ? (isMobileSize ? '0.6rem' : '0.75rem') : undefined,
-							}}>
-							{isSticky ? '(' : ''}
-							{singleCourseBeforeSave?.isActive ? 'Published' : 'Unpublished'} - {singleCourseBeforeSave?.isExpired ? 'Closed' : 'Open'} -{' '}
-							{singleCourseBeforeSave?.courseManagement?.isExternal ? 'External' : 'Platform'}
-							{isSticky ? ')' : ''}
-						</Typography>
-					</Box>
+					{!isMobileSize && (
+						<Box sx={{ paddingLeft: isSticky ? '0' : '0.5rem' }}>
+							<Typography
+								variant='body2'
+								sx={{
+									color: theme.textColor?.common.main,
+									fontSize: isSticky ? (isMobileSize ? '0.6rem' : '0.75rem') : undefined,
+								}}>
+								{isSticky ? '(' : ''}
+								{singleCourseBeforeSave?.isActive ? 'Published' : 'Unpublished'} - {singleCourseBeforeSave?.isExpired ? 'Closed' : 'Open'} -{' '}
+								{singleCourseBeforeSave?.courseManagement?.isExternal ? 'External' : 'Platform'}
+								{isSticky ? ')' : ''}
+							</Typography>
+						</Box>
+					)}
 				</Box>
 				<Box
 					sx={{
@@ -214,7 +231,13 @@ const CoursePaper = ({
 									sx={{
 										color: theme.textColor?.common.main,
 										mr: isSticky ? '0.25rem' : '0.5rem',
-										fontSize: isSticky ? { xs: '0.7rem', sm: '0.8rem' } : undefined,
+										fontSize: isSticky
+											? singleCourseBeforeSave?.title && singleCourseBeforeSave?.title?.length > 40
+												? { xs: '0.65rem', sm: '0.75rem' }
+												: { xs: '0.7rem', sm: '0.8rem' }
+											: singleCourseBeforeSave?.title && singleCourseBeforeSave?.title?.length > 40
+												? '0.9rem'
+												: '1rem',
 									}}>
 									{singleCourseBeforeSave?.title}
 								</Typography>
@@ -234,7 +257,10 @@ const CoursePaper = ({
 									anchorOrigin={{ vertical, horizontal }}
 									sx={{ mt: '5rem' }}
 									onClose={() => setIsNoChapterMsgOpen(false)}>
-									<Alert severity='error' variant='filled' sx={{ width: '100%' }}>
+									<Alert
+										severity='error'
+										variant='filled'
+										sx={{ width: isMobileSize ? '60%' : '100%', fontSize: isMobileSize ? '0.75rem' : undefined }}>
 										Add at least one published lesson to publish the course
 									</Alert>
 								</Snackbar>
@@ -245,7 +271,14 @@ const CoursePaper = ({
 									anchorOrigin={{ vertical, horizontal }}
 									sx={{ mt: '5rem' }}
 									onClose={() => setIsCourseCloned(false)}>
-									<Alert severity='success' variant='filled' sx={{ width: '100%', color: theme.textColor?.common.main }}>
+									<Alert
+										severity='success'
+										variant='filled'
+										sx={{
+											width: isMobileSize ? '60%' : '100%',
+											color: theme.textColor?.common.main,
+											fontSize: isMobileSize ? '0.75rem' : undefined,
+										}}>
 										Course is cloned successfully!
 									</Alert>
 								</Snackbar>
@@ -256,7 +289,10 @@ const CoursePaper = ({
 									anchorOrigin={{ vertical, horizontal }}
 									sx={{ mt: '5rem' }}
 									onClose={() => setIsMissingFieldMsgOpen(false)}>
-									<Alert severity='error' variant='filled' sx={{ width: '100%' }}>
+									<Alert
+										severity='error'
+										variant='filled'
+										sx={{ width: isMobileSize ? '60%' : '100%', fontSize: isMobileSize ? '0.75rem' : undefined }}>
 										Fill in the required field(s)
 									</Alert>
 								</Snackbar>
@@ -293,7 +329,7 @@ const CoursePaper = ({
 										</CustomCancelButton>
 									</Box>
 								) : (
-									<Box sx={{ ml: '1rem' }}>
+									<Box sx={{ ml: isSticky ? '0.25rem' : '1rem' }}>
 										{user?.role === Roles.ADMIN && (
 											<CustomSubmitButton
 												sx={{
@@ -312,7 +348,14 @@ const CoursePaper = ({
 													onClick={() => {
 														setIsEditMode(true);
 													}}>
-													<Edit sx={{ color: 'white', fontSize: isSticky ? (isMobileSize ? '0.9rem' : '1rem') : undefined }} fontSize='small' />
+													<Edit
+														sx={{
+															color: 'white',
+															fontSize: isSticky ? (isMobileSize ? '0.9rem' : '1rem') : undefined,
+															ml: isSticky ? '-0.25rem' : '0rem',
+														}}
+														fontSize='small'
+													/>
 												</IconButton>
 											</Tooltip>
 										) : (
@@ -328,7 +371,7 @@ const CoursePaper = ({
 										)}
 										<Tooltip title='More Info' placement='top' arrow>
 											<IconButton
-												sx={{ padding: '0 0.75rem', ml: '-0.75rem' }}
+												sx={{ padding: isSticky ? '0 0rem' : '0 0.25rem', ml: isSticky ? '-0.25rem' : '-0.5rem' }}
 												onClick={() => {
 													setIsCourseInfoDialogOpen(true);
 												}}>
@@ -339,144 +382,17 @@ const CoursePaper = ({
 								)}
 							</Box>
 
-							<CustomDialog
-								openModal={isCloneCourseDialogOpen}
-								closeModal={() => setIsCloneCourseDialogOpen(false)}
-								title='Clone Course'
-								content='Are you sure you want to clone the course?'
-								maxWidth='sm'>
-								<DialogContent sx={{ mt: '-0.75rem' }}>
-									<Typography variant='body2'>Cloning this course will:</Typography>
-									<ul style={{ paddingLeft: '1.2rem', marginTop: '0.5rem' }}>
-										<li>
-											<Typography variant='body2' sx={{ mb: '0.25rem' }}>
-												Create a new course with a copy of all its chapters, lessons, questions, and documents
-											</Typography>
-										</li>
-										<li>
-											<Typography variant='body2' sx={{ mb: '0.25rem' }}>
-												Preserve the original course and its content without any changes
-											</Typography>
-										</li>
-										<li>
-											<Typography variant='body2' sx={{ mb: '0.25rem' }}>
-												Allow you to safely edit the new course without affecting previous versions
-											</Typography>
-										</li>
-										<li>
-											<Typography variant='body2'>Mark the cloned course as unpublished by default</Typography>
-										</li>
-									</ul>
-									<Typography variant='body2' sx={{ marginTop: '1rem' }}>
-										You can customize the cloned course before publishing it.
-									</Typography>
-								</DialogContent>
-
-								<CustomDialogActions
-									onCancel={() => setIsCloneCourseDialogOpen(false)}
-									submitBtnText={isCloning ? 'Cloning...' : 'Clone'}
-									onSubmit={handleClone}
-								/>
-							</CustomDialog>
-							<CustomDialog
-								openModal={isCourseInfoDialogOpen}
-								closeModal={() => setIsCourseInfoDialogOpen(false)}
-								title={singleCourse?.title}
-								maxWidth='sm'>
-								<DialogContent>
-									<Box display='flex' flexDirection='column' gap={1}>
-										<Grid container spacing={2.25}>
-											<Grid item xs={3}>
-												<Typography variant='body2'>Created By:</Typography>
-											</Grid>
-											<Grid item xs={9} display='flex' alignItems='center'>
-												<Avatar sx={{ width: 25, height: 25, mr: '0.5rem' }} src={singleCourse?.createdByImageUrl} />
-												<Typography variant='body2'>
-													{singleCourse?.createdByName} ({singleCourse?.createdByRole}) on {dateTimeFormatter(singleCourse?.createdAt)}
-												</Typography>
-											</Grid>
-
-											<Grid item xs={3}>
-												<Typography variant='body2'>Last Updated By:</Typography>
-											</Grid>
-											<Grid item xs={9} display='flex' alignItems='center'>
-												<Avatar sx={{ width: 25, height: 25, mr: '0.5rem' }} src={singleCourse?.updatedByImageUrl} />
-												<Typography variant='body2'>
-													{singleCourse?.updatedByName} ({singleCourse?.updatedByRole}) on {dateTimeFormatter(singleCourse?.updatedAt)}
-												</Typography>
-											</Grid>
-
-											<Grid item xs={3}>
-												<Typography variant='body2'>Cloned From:</Typography>
-											</Grid>
-											{singleCourse?.clonedFromTitle ? (
-												<Grid item xs={9}>
-													<Typography
-														variant='body2'
-														onClick={() => {
-															setIsCourseInfoDialogOpen(false);
-															navigate(`/admin/course-edit/course/${singleCourse?.clonedFromId}`);
-														}}
-														sx={{
-															'cursor': 'pointer',
-															':hover': {
-																textDecoration: 'underline',
-															},
-														}}>
-														📄 {singleCourse?.clonedFromTitle}
-													</Typography>
-												</Grid>
-											) : (
-												<Grid item xs={9}>
-													<Typography variant='body2'>{' N/A '}</Typography>
-												</Grid>
-											)}
-
-											{singleCourse?.versionNote && (
-												<>
-													<Grid item xs={3}>
-														<Typography variant='body2'>Version Note:</Typography>
-													</Grid>
-													<Grid item xs={9}>
-														<Typography variant='body2'>"{singleCourse.versionNote}"</Typography>
-													</Grid>
-												</>
-											)}
-
-											<Grid item xs={3}>
-												<Typography variant='body2'>Published At:</Typography>
-											</Grid>
-											{singleCourse?.publishedAt ? (
-												<Grid item xs={9}>
-													<Typography variant='body2'>🗓️ {dateTimeFormatter(singleCourse.publishedAt)}</Typography>
-												</Grid>
-											) : (
-												<Grid item xs={9}>
-													<Typography variant='body2'>{'N/A'}</Typography>
-												</Grid>
-											)}
-
-											<Grid item xs={3}>
-												<Typography variant='body2'>External Course:</Typography>
-											</Grid>
-
-											<Grid item xs={9}>
-												<Typography variant='body2'>{singleCourse?.courseManagement?.isExternal ? 'Yes' : 'No'}</Typography>
-											</Grid>
-										</Grid>
-									</Box>
-								</DialogContent>
-
-								<DialogActions>
-									<CustomCancelButton
-										onClick={() => setIsCourseInfoDialogOpen(false)}
-										sx={{
-											margin: '0 1.5rem 0.75rem 0',
-										}}>
-										Cancel
-									</CustomCancelButton>
-								</DialogActions>
-							</CustomDialog>
+							<CloneCourseDialog
+								isCloneCourseDialogOpen={isCloneCourseDialogOpen}
+								setIsCloneCourseDialogOpen={setIsCloneCourseDialogOpen}
+								isCloning={isCloning}
+								cloneCourse={cloneCourse}
+							/>
+							<CoursesInfoModal
+								singleCourse={singleCourseBeforeSave}
+								isCourseInfoDialogOpen={isCourseInfoDialogOpen}
+								setIsCourseInfoDialogOpen={setIsCourseInfoDialogOpen}
+							/>
 						</Box>
 					</Box>
 				</Box>

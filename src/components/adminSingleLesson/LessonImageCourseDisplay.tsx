@@ -1,8 +1,9 @@
 import { Box, Typography } from '@mui/material';
 import { Lesson } from '../../interfaces/lessons';
 import CustomDialog from '../layouts/dialog/CustomDialog';
-import { useState } from 'react';
+import { useContext, useState } from 'react';
 import UniversalVideoPlayer from '../video/UniversalVideoPlayer';
+import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 
 interface LessonImageCourseDisplayProps {
 	singleLesson: Lesson;
@@ -11,16 +12,19 @@ interface LessonImageCourseDisplayProps {
 const LessonImageCourseDisplay = ({ singleLesson }: LessonImageCourseDisplayProps) => {
 	const [isVideoPlayerOpen, setIsVideoPlayerOpen] = useState<boolean>(false);
 
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
+
 	return (
 		<Box
 			sx={{
 				display: 'flex',
-				justifyContent: 'space-between',
+				justifyContent: isMobileSize ? 'center' : 'space-between',
 				alignItems: 'center',
-				width: '90%',
+				width: isMobileSize ? '95%' : '90%',
 			}}>
 			<Box sx={{ display: 'flex', alignItems: 'center', textAlign: 'center' }}>
-				<Box sx={{ height: '8rem', width: '12rem', mr: '2rem' }}>
+				<Box sx={{ height: isMobileSize ? '6rem' : '8rem', width: isMobileSize ? '9rem' : '12rem', mr: '2rem' }}>
 					<img
 						src={singleLesson.imageUrl ? singleLesson.imageUrl : 'https://placehold.co/600x400/e2e8f0/64748b?text=No+Image'}
 						alt='lesson_img'
@@ -32,11 +36,11 @@ const LessonImageCourseDisplay = ({ singleLesson }: LessonImageCourseDisplayProp
 						}}
 					/>
 
-					<Typography variant='body2' sx={{ mt: '0.35rem' }}>
+					<Typography variant='body2' sx={{ mt: '0.35rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 						Cover Image
 					</Typography>
 				</Box>
-				<Box sx={{ height: '8rem', width: '12rem', cursor: 'pointer' }}>
+				<Box sx={{ height: isMobileSize ? '6rem' : '8rem', width: isMobileSize ? '9rem' : '12rem', cursor: 'pointer' }}>
 					{singleLesson?.videoUrl ? (
 						<Box
 							sx={{
@@ -97,7 +101,7 @@ const LessonImageCourseDisplay = ({ singleLesson }: LessonImageCourseDisplayProp
 							/>
 						</Box>
 					)}
-					<Typography variant='body2' sx={{ mt: '0.35rem' }}>
+					<Typography variant='body2' sx={{ mt: '0.35rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 						Video Thumbnail
 					</Typography>
 				</Box>

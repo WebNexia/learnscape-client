@@ -1,8 +1,6 @@
-import { Box, Tab, Tabs } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
-import { useContext, useState } from 'react';
-import theme from '../themes';
-import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
+import { useState } from 'react';
+import StickyTabLayout from '../components/layouts/StickyTabLayout';
 import AdminRecycleBinCoursesTab from '../components/layouts/recycleBin/AdminRecycleBinCoursesTab';
 
 import { RecycleBinCoursesProvider } from '../contexts/RecycleBinCoursesContextProvider';
@@ -19,8 +17,13 @@ const AdminRecycleBin = () => {
 		setValue(newValue);
 	};
 
-	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
-	const isMobileSize = isSmallScreen || isRotatedMedium;
+	// Tab configuration
+	const tabs = [
+		{ value: 'Courses', label: 'Courses' },
+		{ value: 'Lessons', label: 'Lessons' },
+		{ value: 'Questions', label: 'Questions' },
+		{ value: 'Documents', label: 'Documents' },
+	];
 
 	return (
 		<RecycleBinCoursesProvider>
@@ -28,68 +31,12 @@ const AdminRecycleBin = () => {
 				<RecycleBinQuestionsProvider>
 					<RecycleBinDocumentsProvider>
 						<DashboardPagesLayout pageName='Recycle Bin' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
-							<Box>
-								<Tabs
-									value={value}
-									onChange={handleChange}
-									textColor='primary'
-									indicatorColor='secondary'
-									sx={{
-										'paddingTop': isMobileSize ? '0.75rem' : '1.5rem',
-										'& .MuiTabs-indicator': {
-											backgroundColor: theme.bgColor?.adminHeader, // Custom indicator color
-										},
-									}}>
-									<Tab
-										value='Courses'
-										label='Courses'
-										sx={{
-											'&.Mui-selected': { color: theme.bgColor?.adminHeader },
-											'textTransform': 'capitalize',
-											'fontFamily': 'Poppins',
-											'fontSize': isMobileSize ? '0.75rem' : undefined,
-											'&.MuiTab-root': { textTransform: 'capitalize' }, // Ensure capitalization
-										}}
-									/>
-									<Tab
-										value='Lessons'
-										label='Lessons'
-										sx={{
-											'&.Mui-selected': { color: theme.bgColor?.adminHeader },
-											'textTransform': 'capitalize',
-											'fontFamily': 'Poppins',
-											'fontSize': isMobileSize ? '0.75rem' : undefined,
-											'&.MuiTab-root': { textTransform: 'capitalize' }, // Ensure capitalization
-										}}
-									/>
-									<Tab
-										value='Questions'
-										label='Questions'
-										sx={{
-											'&.Mui-selected': { color: theme.bgColor?.adminHeader },
-											'textTransform': 'capitalize',
-											'fontFamily': 'Poppins',
-											'fontSize': isMobileSize ? '0.75rem' : undefined,
-											'&.MuiTab-root': { textTransform: 'capitalize' }, // Ensure capitalization
-										}}
-									/>
-									<Tab
-										value='Documents'
-										label='Documents'
-										sx={{
-											'&.Mui-selected': { color: theme.bgColor?.adminHeader },
-											'textTransform': 'capitalize',
-											'fontFamily': 'Poppins',
-											'fontSize': isMobileSize ? '0.75rem' : undefined,
-											'&.MuiTab-root': { textTransform: 'capitalize' }, // Ensure capitalization
-										}}
-									/>
-								</Tabs>
-							</Box>
-							{value === 'Courses' && <AdminRecycleBinCoursesTab />}
-							{value === 'Lessons' && <AdminRecycleBinLessonsTab />}
-							{value === 'Questions' && <AdminRecycleBinQuestionsTab />}
-							{value === 'Documents' && <AdminRecycleBinDocumentsTab />}
+							<StickyTabLayout activeTab={value} onTabChange={handleChange} tabs={tabs} isSticky={true}>
+								{value === 'Courses' && <AdminRecycleBinCoursesTab />}
+								{value === 'Lessons' && <AdminRecycleBinLessonsTab />}
+								{value === 'Questions' && <AdminRecycleBinQuestionsTab />}
+								{value === 'Documents' && <AdminRecycleBinDocumentsTab />}
+							</StickyTabLayout>
 						</DashboardPagesLayout>
 					</RecycleBinDocumentsProvider>
 				</RecycleBinQuestionsProvider>

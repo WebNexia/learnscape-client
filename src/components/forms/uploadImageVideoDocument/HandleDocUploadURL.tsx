@@ -162,7 +162,7 @@ const HandleDocUploadURL = ({
 		<>
 			<FormControl sx={{ display: 'flex' }}>
 				<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-					<Typography variant={isMobileSize ? 'body2' : 'h6'} sx={{ fontSize: !isMobileSize ? '0.9rem' : 'inherit' }}>
+					<Typography variant={isMobileSize ? 'body2' : 'h6'} sx={{ fontSize: !isMobileSize ? '0.9rem' : '0.85rem' }}>
 						{label}
 					</Typography>
 					<Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -196,7 +196,7 @@ const HandleDocUploadURL = ({
 												if (setAddNewDocumentModalOpen) setAddNewDocumentModalOpen(true);
 											}}
 											size='small'>
-											<PostAddOutlined />
+											<PostAddOutlined fontSize='small' />
 										</IconButton>
 									</Tooltip>
 								</Box>

@@ -7,6 +7,7 @@ import ImageThumbnail from '../forms/uploadImageVideoDocument/ImageThumbnail';
 import CustomTextField from '../forms/customFields/CustomTextField';
 import { Document, Price } from '../../interfaces/document';
 import { Dispatch, SetStateAction } from 'react';
+import { useAuth } from '../../hooks/useAuth';
 
 interface EditDocumentDialogProps {
 	isOpen: boolean;
@@ -57,6 +58,7 @@ const EditDocumentDialog = ({
 	TRY,
 	setTRY,
 }: EditDocumentDialogProps) => {
+	const { isInstructor } = useAuth();
 	return (
 		<CustomDialog title='Edit Document' openModal={isOpen} closeModal={onClose} maxWidth='lg'>
 			<form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', padding: '0 1rem' }}>
@@ -182,6 +184,7 @@ const EditDocumentDialog = ({
 										fontSize: '0.75rem',
 									},
 								}}
+								disabled={isInstructor}
 							/>
 						</Box>
 
@@ -197,7 +200,7 @@ const EditDocumentDialog = ({
 										}
 									}}
 									type='number'
-									disabled={isFree}
+									disabled={isFree || isInstructor}
 									sx={{ backgroundColor: isFree ? 'transparent' : '#fff' }}
 									InputLabelProps={{
 										sx: { fontSize: '0.8rem' },
@@ -218,7 +221,7 @@ const EditDocumentDialog = ({
 										}
 									}}
 									type='number'
-									disabled={isFree}
+									disabled={isFree || isInstructor}
 									sx={{ backgroundColor: isFree ? 'transparent' : '#fff' }}
 									InputLabelProps={{
 										sx: { fontSize: '0.8rem' },
@@ -239,7 +242,7 @@ const EditDocumentDialog = ({
 										}
 									}}
 									type='number'
-									disabled={isFree}
+									disabled={isFree || isInstructor}
 									sx={{ backgroundColor: isFree ? 'transparent' : '#fff' }}
 									InputLabelProps={{
 										sx: { fontSize: '0.8rem' },
@@ -260,7 +263,7 @@ const EditDocumentDialog = ({
 										}
 									}}
 									type='number'
-									disabled={isFree}
+									disabled={isFree || isInstructor}
 									sx={{ backgroundColor: isFree ? 'transparent' : '#fff' }}
 									InputLabelProps={{
 										sx: { fontSize: '0.8rem' },
@@ -331,6 +334,7 @@ const EditDocumentDialog = ({
 												fontSize: '1rem',
 											},
 										}}
+										disabled={isInstructor}
 									/>
 								}
 								label='Display on Landing Page'

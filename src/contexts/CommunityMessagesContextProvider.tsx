@@ -11,7 +11,7 @@ interface CommunityMessagesContextTypes {
 	sortMessages: (property: keyof CommunityMessage, order: 'asc' | 'desc') => CommunityMessage[];
 	addNewMessage: (newMessage: CommunityMessage) => void;
 	removeMessage: (id: string) => void;
-	updateMessage: (messageId: string, updates: Partial<CommunityMessage>) => void;
+	updateMessage: (messageId: string, updates: Partial<CommunityMessage>, topicId?: string) => void;
 	numberOfPages: number;
 	pageNumber: number;
 	setPageNumber: React.Dispatch<React.SetStateAction<number>>;
@@ -65,6 +65,7 @@ const CommunityMessagesContextProvider = (props: CommunityMessagesContextProvide
 	const [loading, setLoading] = useState<boolean>(false);
 	const [error, setError] = useState<string | null>(null);
 	const [isEnabled, setIsEnabled] = useState<boolean>(false);
+	const [forceUpdate, setForceUpdate] = useState<number>(0);
 
 	const fetchMessages = useCallback(
 		async (topicId: string) => {
@@ -197,11 +198,21 @@ const CommunityMessagesContextProvider = (props: CommunityMessagesContextProvide
 		setTotalItems((prevTotalItems) => {
 			const newTotalItems = prevTotalItems + 1;
 
-			// Update the topic's message count in the community context
+			// Update the topic's message count, updatedAt, and lastMessage in the community context
 			if (currentTopicId) {
 				updateTopics({
 					_id: currentTopicId,
 					messageCount: newTotalItems,
+					updatedAt: new Date().toISOString(),
+					lastMessage: {
+						text: newMessage.text,
+						createdAt: newMessage.createdAt,
+						sender: {
+							_id: newMessage.userId?._id,
+							username: newMessage.userId?.username,
+							imageUrl: newMessage.userId?.imageUrl,
+						},
+					},
 				});
 			}
 
@@ -231,10 +242,20 @@ const CommunityMessagesContextProvider = (props: CommunityMessagesContextProvide
 	};
 
 	// Function to update message
-	const updateMessage = (messageId: string, updates: Partial<CommunityMessage>) => {
-		queryClient.setQueryData(['communityMessages', currentTopicId], (oldData: CommunityMessage[] | undefined) => {
-			return oldData?.map((message) => (message._id === messageId ? { ...message, ...updates } : message)) || [];
+	const updateMessage = (messageId: string, updates: Partial<CommunityMessage>, topicId?: string) => {
+		const targetTopicId = topicId || currentTopicId;
+
+		queryClient.setQueryData(['communityMessages', targetTopicId], (oldData: CommunityMessage[] | undefined) => {
+			if (!oldData) return [];
+			return oldData.map((message) => {
+				if (message._id === messageId) {
+					return { ...message, ...updates };
+				}
+				return message;
+			});
 		});
+
+		setForceUpdate((prev) => prev + 1);
 	};
 
 	// Calculate numberOfPages based on totalItems
@@ -242,6 +263,9 @@ const CommunityMessagesContextProvider = (props: CommunityMessagesContextProvide
 
 	// Get messages data from React Query cache
 	const messages = (queryClient.getQueryData(['communityMessages', currentTopicId]) as CommunityMessage[]) || [];
+
+	// Use forceUpdate to ensure re-renders
+	const _ = forceUpdate;
 
 	const enableCommunityMessagesFetch = () => setIsEnabled(true);
 	const disableCommunityMessagesFetch = () => setIsEnabled(false);

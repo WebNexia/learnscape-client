@@ -1,4 +1,4 @@
-import { useContext, useState } from 'react';
+import { useContext, useState, useEffect } from 'react';
 import { CommunityMessage } from '../../../../interfaces/communityMessage';
 import CustomDialog from '../../dialog/CustomDialog';
 import axios from '@utils/axiosInstance';
@@ -46,6 +46,15 @@ const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, set
 	const [showPicker, setShowPicker] = useState(false);
 	const [isMsgUpdated, setIsMsgUpdated] = useState(false);
 
+	// Local state for editing the message
+	const [editingMessage, setEditingMessage] = useState(message);
+
+	// Sync local state when message prop changes
+	useEffect(() => {
+		setEditingMessage(message);
+		setMessageBeforeSave(message);
+	}, [message]);
+
 	// URL validation error handling
 	const [isUrlErrorOpen, setIsUrlErrorOpen] = useState<boolean>(false);
 	const [urlErrorMessage, setUrlErrorMessage] = useState<string>('');
@@ -55,18 +64,13 @@ const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, set
 	const [imageUploadAttempts, setImageUploadAttempts] = useState<number>(0);
 	const MAX_SESSION_ATTEMPTS = 5;
 
-	const updateMessages = (callback: any) => {
-		const updatedMessage = callback(message);
-		updateMessage(message._id, updatedMessage);
-	};
-
 	const uploadAudio = async (blob: Blob) => {
 		setIsAudioUploading(true);
 		try {
 			const audioRef = ref(storage, `community-topic-message-audio-recordings/${user?.username}-${Date.now()}.webm`);
 			const uploadTask = await uploadBytes(audioRef, blob);
 			const downloadURL = await getDownloadURL(uploadTask.ref);
-			updateMessages((msg: CommunityMessage) => ({ ...msg, audioUrl: downloadURL }));
+			setEditingMessage((prev) => ({ ...prev, audioUrl: downloadURL }));
 			setIsMsgUpdated(true);
 		} finally {
 			setIsAudioUploading(false);
@@ -79,8 +83,8 @@ const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, set
 		let errorMessages: string[] = [];
 
 		// Validate image URL if provided
-		if (message.imageUrl?.trim()) {
-			const imageValidation = await validateImageUrl(message.imageUrl.trim());
+		if (editingMessage.imageUrl?.trim()) {
+			const imageValidation = await validateImageUrl(editingMessage.imageUrl.trim());
 			if (!imageValidation.isValid) {
 				errorMessages.push(`Image URL: ${imageValidation.error}`);
 				hasErrors = true;
@@ -111,18 +115,22 @@ const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, set
 
 		try {
 			const { data } = await axios.patch(`${base_url}/communityMessages/${message._id}`, {
-				text: message.text.trim(),
-				audioUrl: message.audioUrl.trim(),
-				imageUrl: message.imageUrl.trim(),
+				text: editingMessage.text.trim(),
+				audioUrl: editingMessage.audioUrl.trim(),
+				imageUrl: editingMessage.imageUrl.trim(),
 			});
 			setMessageBeforeSave(data);
-			updateMessages((msg: CommunityMessage) => ({
-				...msg,
-				text: message.text.trim(),
-				audioUrl: message.audioUrl.trim(),
-				imageUrl: message.imageUrl.trim(),
-				updatedAt: data.data.updatedAt,
-			}));
+			// Update the context with the changes
+			updateMessage(
+				message._id,
+				{
+					text: editingMessage.text.trim(),
+					audioUrl: editingMessage.audioUrl.trim(),
+					imageUrl: editingMessage.imageUrl.trim(),
+					updatedAt: data.data.updatedAt,
+				},
+				message.topicId
+			);
 			setEditMsgModalOpen(false);
 			setIsMsgEdited(true);
 		} catch (error: any) {
@@ -140,13 +148,13 @@ const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, set
 	};
 
 	const handleEmojiSelect = (emoji: any) => {
-		updateMessages((msg: CommunityMessage) => ({ ...msg, text: msg.text + emoji.native }));
+		setEditingMessage((prev) => ({ ...prev, text: prev.text + emoji.native }));
 		setShowPicker(false);
 		setIsMsgUpdated(true);
 	};
 
 	const handleCancel = () => {
-		updateMessages(() => messageBeforeSave);
+		setEditingMessage(messageBeforeSave);
 		setEditMsgModalOpen(false);
 		setIsMsgUpdated(false);
 		setShowImageUploader(!!messageBeforeSave.imageUrl);
@@ -177,9 +185,9 @@ const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, set
 						multiline
 						rows={3}
 						resizable={true}
-						value={message?.text}
+						value={editingMessage?.text}
 						onChange={(e) => {
-							updateMessages((msg: CommunityMessage) => ({ ...msg, text: e.target.value }));
+							setEditingMessage((prev) => ({ ...prev, text: e.target.value }));
 							setIsMsgUpdated(true);
 						}}
 						InputProps={{
@@ -244,7 +252,7 @@ const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, set
 							</span>
 						</Typography>
 
-						{!message.audioUrl && getRemainingAudioUploads() > 0 ? (
+						{!editingMessage.audioUrl && getRemainingAudioUploads() > 0 ? (
 							<AudioRecorder
 								uploadAudio={uploadAudio}
 								isAudioUploading={isAudioUploading}
@@ -260,7 +268,7 @@ const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, set
 									<>
 										<Box sx={{ flex: 9 }}>
 											<audio
-												src={message.audioUrl}
+												src={editingMessage.audioUrl}
 												controls
 												style={{
 													marginTop: '1rem',
@@ -275,7 +283,7 @@ const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, set
 											<CustomSubmitButton
 												sx={{ borderRadius: '0.35rem', fontSize: isMobileSize ? '0.75rem' : undefined }}
 												onClick={() => {
-													updateMessages((msg: CommunityMessage) => ({ ...msg, audioUrl: '' }));
+													setEditingMessage((prev) => ({ ...prev, audioUrl: '' }));
 													setIsMsgUpdated(true);
 												}}>
 												Remove
@@ -299,14 +307,14 @@ const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, set
 										: ''
 							}
 							onImageUploadLogic={(url) => {
-								updateMessages((msg: CommunityMessage) => ({ ...msg, imageUrl: url }));
+								setEditingMessage((prev) => ({ ...prev, imageUrl: url }));
 								setIsMsgUpdated(true);
 							}}
 							onChangeImgUrl={(e) => {
-								updateMessages((msg: CommunityMessage) => ({ ...msg, imageUrl: e.target.value }));
+								setEditingMessage((prev) => ({ ...prev, imageUrl: e.target.value }));
 								setIsMsgUpdated(true);
 							}}
-							imageUrlValue={message?.imageUrl}
+							imageUrlValue={editingMessage?.imageUrl}
 							imageFolderName='TopicMessageImages'
 							enterImageUrl={enterImageUrl}
 							setEnterImageUrl={setEnterImageUrl}
@@ -315,11 +323,11 @@ const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, set
 							maxSessionAttempts={MAX_SESSION_ATTEMPTS}
 							onImageUploadAttempt={() => setImageUploadAttempts((prev) => prev + 1)}
 						/>
-						{message.imageUrl && (
+						{editingMessage.imageUrl && (
 							<ImageThumbnail
-								imgSource={message.imageUrl}
+								imgSource={editingMessage.imageUrl}
 								removeImage={() => {
-									updateMessages((msg: CommunityMessage) => ({ ...msg, imageUrl: '' }));
+									setEditingMessage((prev) => ({ ...prev, imageUrl: '' }));
 									setIsMsgUpdated(true);
 								}}
 							/>
@@ -341,7 +349,7 @@ const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, set
 				autoHideDuration={3500}
 				anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
 				onClose={() => setIsUrlErrorOpen(false)}>
-				<Alert severity='error' variant='filled' sx={{ width: '100%' }}>
+				<Alert severity='error' variant='filled' sx={{ width: isMobileSize ? '60%' : '100%', fontSize: isMobileSize ? '0.75rem' : undefined }}>
 					{urlErrorMessage}
 				</Alert>
 			</Snackbar>

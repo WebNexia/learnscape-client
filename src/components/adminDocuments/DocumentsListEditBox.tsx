@@ -1,10 +1,11 @@
 import { Box, Link, Typography } from '@mui/material';
-import React from 'react';
+import React, { useContext } from 'react';
 import CustomDialog from '../layouts/dialog/CustomDialog';
 import CustomTextField from '../forms/customFields/CustomTextField';
 import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
 import { Document } from '../../interfaces/document';
 import { DocumentUpdateTrack } from '../../pages/AdminLessonEditPage';
+import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 
 interface DocumentsListEditBoxProps {
 	documentsSource: Document[] | undefined;
@@ -29,8 +30,10 @@ const DocumentsListEditBox = ({
 	setIsDocumentUpdated,
 	setHasUnsavedChanges,
 }: DocumentsListEditBoxProps) => {
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
 	return (
-		<Box sx={{ marginBottom: '5rem' }}>
+		<Box sx={{ marginBottom: isMobileSize ? '3rem' : '5rem' }}>
 			{documentsSource &&
 				documentsSource
 					?.filter((document) => document !== null)
@@ -43,10 +46,15 @@ const DocumentsListEditBox = ({
 								justifyContent: 'space-between',
 								alignItems: 'flex-start',
 								mb: '1rem',
-								width: '30%',
+								width: '100%',
 							}}>
 							<Box sx={{ mb: '0.25rem' }}>
-								<Link href={document.documentUrl} target='_blank' rel='noopener noreferrer' variant='body2'>
+								<Link
+									href={document.documentUrl}
+									target='_blank'
+									rel='noopener noreferrer'
+									variant='body2'
+									sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 									{document.name}
 								</Link>
 							</Box>
@@ -59,6 +67,7 @@ const DocumentsListEditBox = ({
 											textDecoration: 'underline',
 											cursor: 'pointer',
 										},
+										'fontSize': isMobileSize ? '0.7rem' : '0.85rem',
 									}}
 									onClick={() => removeDocOnClick(document)}>
 									Remove
@@ -71,6 +80,7 @@ const DocumentsListEditBox = ({
 											textDecoration: 'underline',
 											cursor: 'pointer',
 										},
+										'fontSize': isMobileSize ? '0.7rem' : '0.85rem',
 									}}>
 									Rename
 								</Typography>

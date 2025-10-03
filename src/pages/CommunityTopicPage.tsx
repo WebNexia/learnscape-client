@@ -172,6 +172,51 @@ const CommunityTopicPage = () => {
 
 	useEffect(() => {
 		if (highlightedMessageId && messages && messages.length > 0) {
+			// Find the message in the full messages array
+			const messageIndex = messages.findIndex((msg) => msg._id === highlightedMessageId);
+
+			if (messageIndex !== -1) {
+				// Calculate which frontend page this message is on (25 messages per frontend page)
+				const frontendPage = Math.floor(messageIndex / 25) + 1;
+
+				// If the message is not on the current frontend page, navigate to the correct page
+				if (frontendPage !== pageNumber) {
+					setPageNumber(frontendPage);
+					// The highlighting will happen after the page changes
+					return;
+				}
+			} else {
+				// Message not found in loaded messages - it might be on a further backend page
+				const fetchMessagePage = async () => {
+					try {
+						// Get the message details to find which backend page it's on
+						const response = await axios.get(`${base_url}/communityMessages/message/${highlightedMessageId}?limit=250`);
+						const { page: backendPage } = response.data;
+
+						if (backendPage) {
+							// Find the highest currently loaded backend page
+							const maxLoadedBackendPage = Math.max(...loadedPages, 1);
+
+							// If the target backend page is beyond what we've loaded, fetch all backend pages in between
+							if (backendPage > maxLoadedBackendPage) {
+								await fetchMoreMessages(topicId || '', maxLoadedBackendPage + 1, backendPage);
+							}
+
+							// After loading the backend page, the message should now be in the messages array
+							// The highlighting will happen when the effect runs again with the updated messages
+							return;
+						}
+					} catch (error) {
+						console.error('Error fetching message page:', error);
+						// Clear the highlighted message if we can't find it
+						setHighlightedMessageId('');
+					}
+				};
+
+				fetchMessagePage();
+				return;
+			}
+
 			// Add a small delay to ensure messages are fully rendered
 			const timer = setTimeout(() => {
 				const messageElement = messageRefs.current[highlightedMessageId];
@@ -211,7 +256,7 @@ const CommunityTopicPage = () => {
 
 			return () => clearTimeout(timer);
 		}
-	}, [highlightedMessageId, messages]);
+	}, [highlightedMessageId, messages, pageNumber, topicId, fetchMoreMessages, loadedPages]);
 
 	useEffect(() => {
 		// scrollToBottom();
@@ -609,7 +654,7 @@ const CommunityTopicPage = () => {
 				<Alert
 					onClose={() => setDisplayDeleteTopicMsg(false)}
 					severity='success'
-					sx={{ width: '100%', fontSize: isMobileSize ? '0.7rem' : undefined }}>
+					sx={{ width: isMobileSize ? '60%' : '100%', fontSize: isMobileSize ? '0.75rem' : undefined }}>
 					You have successfully deleted the topic!
 				</Alert>
 			</Snackbar>
@@ -622,7 +667,7 @@ const CommunityTopicPage = () => {
 				onClose={() => {
 					setEveryoneMsg(false);
 				}}>
-				<Alert severity='error' variant='filled' sx={{ width: '100%', fontSize: isMobileSize ? '0.7rem' : undefined }}>
+				<Alert severity='error' variant='filled' sx={{ width: isMobileSize ? '60%' : '100%', fontSize: isMobileSize ? '0.75rem' : undefined }}>
 					Only admin users can mention @everyone.
 				</Alert>
 			</Snackbar>
@@ -1242,7 +1287,7 @@ const CommunityTopicPage = () => {
 				autoHideDuration={3500}
 				anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
 				onClose={() => setIsUrlErrorOpen(false)}>
-				<Alert severity='error' variant='filled' sx={{ width: '100%' }}>
+				<Alert severity='error' variant='filled' sx={{ width: isMobileSize ? '60%' : '100%', fontSize: isMobileSize ? '0.75rem' : undefined }}>
 					{urlErrorMessage}
 				</Alert>
 			</Snackbar>

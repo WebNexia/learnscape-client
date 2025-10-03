@@ -175,6 +175,7 @@ const CreateNewDocumentDialog = ({
 												fontSize: '1rem',
 											},
 										}}
+										disabled={isInstructor}
 									/>
 								}
 								label='Free Document'
@@ -199,7 +200,7 @@ const CreateNewDocumentDialog = ({
 										}
 									}}
 									type='number'
-									disabled={isFree}
+									disabled={isFree || isInstructor}
 									sx={{ backgroundColor: isFree ? 'transparent' : '#fff' }}
 									InputLabelProps={{
 										sx: { fontSize: '0.8rem' },
@@ -220,7 +221,7 @@ const CreateNewDocumentDialog = ({
 										}
 									}}
 									type='number'
-									disabled={isFree}
+									disabled={isFree || isInstructor}
 									sx={{ backgroundColor: isFree ? 'transparent' : '#fff' }}
 									InputLabelProps={{
 										sx: { fontSize: '0.8rem' },
@@ -241,7 +242,7 @@ const CreateNewDocumentDialog = ({
 										}
 									}}
 									type='number'
-									disabled={isFree}
+									disabled={isFree || isInstructor}
 									sx={{ backgroundColor: isFree ? 'transparent' : '#fff' }}
 									InputLabelProps={{
 										sx: { fontSize: '0.8rem' },
@@ -262,7 +263,7 @@ const CreateNewDocumentDialog = ({
 										}
 									}}
 									type='number'
-									disabled={isFree}
+									disabled={isFree || isInstructor}
 									sx={{ backgroundColor: isFree ? 'transparent' : '#fff' }}
 									InputLabelProps={{
 										sx: { fontSize: '0.8rem' },
@@ -318,34 +319,34 @@ const CreateNewDocumentDialog = ({
 								}}
 							/>
 						</Box>
-						{!isInstructor && (
-							<Box>
-								<FormControlLabel
-									control={
-										<Checkbox
-											checked={singleDocument?.isOnLandingPage}
-											onChange={(e) => {
-												if (singleDocument) {
-													setSingleDocument({ ...singleDocument, isOnLandingPage: e.target.checked });
-												}
-											}}
-											sx={{
-												'& .MuiSvgIcon-root': {
-													fontSize: '1rem',
-												},
-											}}
-										/>
-									}
-									label='Display on Landing Page'
-									sx={{
-										'mr': '0rem',
-										'& .MuiFormControlLabel-label': {
-											fontSize: '0.75rem',
-										},
-									}}
-								/>
-							</Box>
-						)}
+
+						<Box>
+							<FormControlLabel
+								control={
+									<Checkbox
+										checked={singleDocument?.isOnLandingPage}
+										onChange={(e) => {
+											if (singleDocument) {
+												setSingleDocument({ ...singleDocument, isOnLandingPage: e.target.checked });
+											}
+										}}
+										sx={{
+											'& .MuiSvgIcon-root': {
+												fontSize: '1rem',
+											},
+										}}
+										disabled={isInstructor}
+									/>
+								}
+								label='Display on Landing Page'
+								sx={{
+									'mr': '0rem',
+									'& .MuiFormControlLabel-label': {
+										fontSize: '0.75rem',
+									},
+								}}
+							/>
+						</Box>
 					</Box>
 				</Box>
 				<CustomDialogActions onCancel={onClose} submitBtnType='submit' disableBtn={!fileUploaded} actionSx={{ mt: '1rem' }} />

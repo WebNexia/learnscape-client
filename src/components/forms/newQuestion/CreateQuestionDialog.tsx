@@ -46,6 +46,7 @@ import FillInTheBlanksDragDrop from '../../layouts/FITBDragDrop/FillInTheBlanksD
 import CustomInfoMessageAlignedRight from '../../layouts/infoMessage/CustomInfoMessageAlignedRight';
 import axios from '@utils/axiosInstance';
 import { validateImageUrl, validateVideoUrl } from '../../../utils/urlValidation';
+import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 declare global {
 	interface Window {
@@ -109,6 +110,9 @@ const CreateQuestionDialog = ({
 	const { resetImageUpload } = useImageUpload();
 	const { resetVideoUpload } = useVideoUpload();
 	const { user } = useAuth();
+
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
 
 	// Role detection
 	const isInstructor = user?.role === Roles.INSTRUCTOR;
@@ -482,7 +486,7 @@ const CreateQuestionDialog = ({
 				autoHideDuration={5000}
 				anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
 				onClose={() => setIsUrlErrorOpen(false)}>
-				<Alert severity='error' variant='filled' sx={{ width: '100%' }}>
+				<Alert severity='error' variant='filled' sx={{ width: isMobileSize ? '60%' : '100%', fontSize: isMobileSize ? '0.75rem' : undefined }}>
 					{urlErrorMessage}
 				</Alert>
 			</Snackbar>
@@ -497,11 +501,21 @@ const CreateQuestionDialog = ({
 				maxWidth='lg'>
 				<form onSubmit={(e) => e.preventDefault()} style={{ display: 'flex', flexDirection: 'column' }}>
 					<DialogContent sx={{ mt: '-4rem' }}>
-						<Box sx={{ display: 'flex', flexDirection: 'column', width: '100%', alignItems: 'flex-end', mb: '0.75rem' }}>
-							<Typography variant='body2' sx={{ mb: '0.5rem', fontSize: '0.95rem' }}>
-								Type
-							</Typography>
-							<FormControl sx={{ mb: '1rem', width: '15rem', backgroundColor: theme.bgColor?.common }}>
+						<Box
+							sx={{
+								display: 'flex',
+								flexDirection: 'column',
+								width: '100%',
+								alignItems: 'flex-end',
+								mb: '0.75rem',
+								mt: isMobileSize ? '0.5rem' : undefined,
+							}}>
+							{!isMobileSize && (
+								<Typography variant='body2' sx={{ mb: '0.5rem', fontSize: '0.95rem' }}>
+									Type
+								</Typography>
+							)}
+							<FormControl sx={{ mb: '1rem', width: isMobileSize ? 'fit-content' : '15rem', backgroundColor: theme.bgColor?.common }}>
 								<Select
 									value={questionType}
 									onChange={(event: SelectChangeEvent) => {
@@ -551,10 +565,18 @@ const CreateQuestionDialog = ({
 							</FormControl>
 						</Box>
 						<Box sx={{ display: 'flex', flexDirection: 'column' }}>
-							<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: '2rem', width: '100%' }}>
-								<Box sx={{ flex: 1, mr: '2rem' }}>
+							<Box
+								sx={{
+									display: 'flex',
+									flexDirection: isMobileSize ? 'column' : 'row',
+									justifyContent: 'space-between',
+									alignItems: 'flex-start',
+									mb: '2rem',
+									width: '100%',
+								}}>
+								<Box sx={{ flex: 1, mr: '2rem', width: isMobileSize ? '100%' : undefined, mb: isMobileSize ? '2rem' : undefined }}>
 									<HandleImageUploadURL
-										label='Question Image'
+										label={isMobileSize ? 'Image' : 'Question Image'}
 										onImageUploadLogic={(url) => {
 											setNewQuestion((prevQuestion) => ({ ...prevQuestion, imageUrl: url }));
 											if (isFlipCard) setIsQuestionMissing(false);
@@ -587,9 +609,9 @@ const CreateQuestionDialog = ({
 									)}
 								</Box>
 								{!isFlipCard && (
-									<Box sx={{ flex: 1 }}>
+									<Box sx={{ flex: 1, width: isMobileSize ? '100%' : undefined }}>
 										<HandleVideoUploadURL
-											label='Question Video'
+											label={isMobileSize ? 'Video' : 'Question Video'}
 											onVideoUploadLogic={(url) => {
 												setNewQuestion((prevQuestion) => ({ ...prevQuestion, videoUrl: url }));
 
@@ -626,7 +648,7 @@ const CreateQuestionDialog = ({
 									<Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
 										<Typography variant='h6' sx={{ mb: '0.5rem' }}>
 											Question{' '}
-											<span style={{ fontSize: '0.8rem', color: 'gray' }}>
+											<span style={{ fontSize: isMobileSize ? '0.7rem' : '0.8rem', color: 'gray' }}>
 												{isOpenEndedQuestion
 													? '(Students can enter max 5000 characters while answering)'
 													: isFITBTyping
@@ -770,7 +792,7 @@ const CreateQuestionDialog = ({
 												display: 'flex',
 												justifyContent: 'flex-end',
 												alignItems: 'center',
-												width: '90%',
+												width: isMobileSize ? '95%' : '90%',
 												marginLeft: '3rem',
 											}}>
 											<Tooltip title='Correct Answer' placement='left' arrow>
@@ -783,6 +805,7 @@ const CreateQuestionDialog = ({
 																handleCorrectAnswerChange(index);
 															}}
 															color='primary'
+															size='small'
 														/>
 													}
 													label=''
@@ -791,7 +814,7 @@ const CreateQuestionDialog = ({
 											{index === options.length - 1 && (
 												<Tooltip title='Add Option' placement='top' arrow>
 													<IconButton onClick={addOption}>
-														<AddCircle />
+														<AddCircle fontSize='small' />
 													</IconButton>
 												</Tooltip>
 											)}
@@ -800,7 +823,7 @@ const CreateQuestionDialog = ({
 												label={`Option ${index + 1}`}
 												value={option}
 												onChange={(e) => handleOptionChange?.(index, e.target.value)}
-												sx={{ marginTop: '0.75rem', marginRight: index === 0 ? '2.5rem' : 0 }}
+												sx={{ marginTop: isMobileSize ? '0.25rem' : '0.75rem', marginRight: index === 0 ? '2.5rem' : 0 }}
 												InputProps={{
 													inputProps: {
 														maxLength: 255,
@@ -810,7 +833,7 @@ const CreateQuestionDialog = ({
 											{index > 0 && (
 												<Tooltip title='Remove Option' placement='top' arrow>
 													<IconButton onClick={() => removeOption(index)}>
-														<RemoveCircle />
+														<RemoveCircle fontSize='small' />
 													</IconButton>
 												</Tooltip>
 											)}
