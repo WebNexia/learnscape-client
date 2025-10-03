@@ -52,9 +52,14 @@ const DashboardCourseCard = ({ course, isEnrolled, displayMyCourses, userCourseI
 				'cursor': 'pointer',
 			}}
 			onClick={() => {
-				if (!fromHomePage) {
+				if (user && !fromHomePage) {
+					// Logged-in user from dashboard - go to course page
+					navigate(`/course/${course._id}/userCourseId/${!userCourseId ? 'none' : userCourseId}?isEnrolled=${isEnrolled}`);
+				} else if (user && fromHomePage) {
+					// Logged-in user from home page - still go to course page
 					navigate(`/course/${course._id}/userCourseId/${!userCourseId ? 'none' : userCourseId}?isEnrolled=${isEnrolled}`);
 				} else {
+					// Non-logged-in user - go to landing page
 					navigate(`/landing-page-course/${encodeURIComponent(course?.title)}/${course?._id}`);
 				}
 				window.scrollTo({ top: 0, behavior: 'smooth' });
