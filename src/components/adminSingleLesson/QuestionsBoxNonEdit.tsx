@@ -10,6 +10,7 @@ import { LessonType } from '../../interfaces/enums';
 import NoContentBoxAdmin from '../layouts/noContentBox/NoContentBoxAdmin';
 import CustomInfoMessageAlignedRight from '../layouts/infoMessage/CustomInfoMessageAlignedRight';
 import { AutoAwesome } from '@mui/icons-material';
+import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 
 interface QuestionsBoxNonEditProps {
 	singleLesson?: Lesson;
@@ -19,6 +20,10 @@ interface QuestionsBoxNonEditProps {
 
 const QuestionsBoxNonEdit = ({ singleLesson, setIsDisplayNonEditQuestion, setDisplayedQuestionNonEdit }: QuestionsBoxNonEditProps) => {
 	const { fetchQuestionTypeName } = useContext(QuestionsContext);
+
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
+
 	return (
 		<Box
 			sx={{
@@ -28,10 +33,10 @@ const QuestionsBoxNonEdit = ({ singleLesson, setIsDisplayNonEditQuestion, setDis
 				width: '90%',
 				mt: singleLesson?.type === LessonType.INSTRUCTIONAL_LESSON ? '1rem' : '0rem',
 			}}>
-			<Box sx={{ margin: '3rem 0' }}>
+			<Box sx={{ margin: isMobileSize ? '2rem 0' : '3rem 0' }}>
 				<Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
 					<Box>
-						<Typography variant='h5'>Questions</Typography>
+						<Typography variant={isMobileSize ? 'h6' : 'h5'}>Questions</Typography>
 					</Box>
 					<CustomInfoMessageAlignedRight message='Click the questions to preview as a student' />
 				</Box>
@@ -93,12 +98,16 @@ const QuestionsBoxNonEdit = ({ singleLesson, setIsDisplayNonEditQuestion, setDis
 													}}
 												/>
 											</Box>
-											<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', margin: '0 1rem' }}>
+											<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', margin: isMobileSize ? '0 0.5rem' : '0 1rem' }}>
 												<Box>
-													<Typography variant='body2'>{truncateText(stripHtml(question.question), 60)}</Typography>
+													<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.65rem' : undefined }}>
+														{truncateText(stripHtml(question.question), isMobileSize ? 40 : 60)}
+													</Typography>
 												</Box>
 												<Box>
-													<Typography variant='body2' sx={{ mr: question.isAiGenerated ? '0.5rem' : '0' }}>
+													<Typography
+														variant='body2'
+														sx={{ mr: question.isAiGenerated ? '0.5rem' : '0', fontSize: isMobileSize ? '0.65rem' : undefined }}>
 														{fetchQuestionTypeName(question)}
 													</Typography>
 												</Box>

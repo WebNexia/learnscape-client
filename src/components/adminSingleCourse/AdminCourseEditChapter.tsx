@@ -14,6 +14,7 @@ import { chapterUpdateTrack } from '../../utils/chapterUpdateTrack';
 import { LessonsContext } from '../../contexts/LessonsContextProvider';
 import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
 import { useParams } from 'react-router-dom';
+import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 
 interface AdminCourseEditChapterProps {
 	chapter: ChapterLessonData;
@@ -42,6 +43,8 @@ const AdminCourseEditChapter = ({
 	const { updateLesson } = useContext(LessonsContext);
 	const { user } = useContext(UserAuthContext);
 	const { courseId } = useParams();
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
 
 	return (
 		<Box
@@ -132,11 +135,6 @@ const AdminCourseEditChapter = ({
 						/>
 					</Box>
 					<Box>
-						{/* <Tooltip title='Clone Chapter' placement='top'>
-							<IconButton>
-								<FileCopy fontSize='small' />
-							</IconButton>
-						</Tooltip> */}
 						<Tooltip title='Delete Chapter' placement='top' arrow>
 							<IconButton
 								onClick={() => {
@@ -228,18 +226,25 @@ const AdminCourseEditChapter = ({
 													display: 'flex',
 													justifyContent: 'space-between',
 													alignItems: 'center',
-													margin: '0 1rem',
+													margin: isMobileSize ? '0 0.5rem' : '0 1rem',
 													width: '100%',
+													gap: isMobileSize ? 1 : 0,
 												}}>
 												<Box sx={{ flex: 4 }}>
-													<Typography variant='body2'>{lesson.title}</Typography>
+													<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.65rem' : '0.85rem' }}>
+														{lesson.title}
+													</Typography>
 												</Box>
 												<Box sx={{ flex: 1 }}>
-													<Typography variant='body2'>{lesson.isActive ? 'Published' : 'Unpublished'}</Typography>
+													<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.55rem' : '0.85rem' }}>
+														{lesson.isActive ? 'Published' : 'Unpublished'}
+													</Typography>
 												</Box>
 												<Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', flex: 4 }}>
 													<Box sx={{ mr: '1rem' }}>
-														<Typography variant='body2'>({lesson.type})</Typography>
+														<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.6rem' : '0.85rem' }}>
+															({lesson.type})
+														</Typography>
 													</Box>
 													<Tooltip title='Remove Lesson' placement='right' arrow>
 														<IconButton
@@ -279,7 +284,7 @@ const AdminCourseEditChapter = ({
 																chapterUpdateTrack(chapter.chapterId, setIsChapterUpdated);
 																setHasUnsavedChanges(true);
 															}}>
-															<Delete fontSize='small' />
+															<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '1rem' : undefined }} />
 														</IconButton>
 													</Tooltip>
 												</Box>

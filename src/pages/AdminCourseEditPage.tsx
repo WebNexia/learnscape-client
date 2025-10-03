@@ -32,6 +32,8 @@ import { validateImageUrl, validateDocumentUrl } from '../utils/urlValidation';
 import { Snackbar, Alert } from '@mui/material';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 import { Roles } from '../interfaces/enums';
+import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
+import { useStickyPaper } from '../hooks/useStickyPaper';
 
 export interface ChapterUpdateTrack {
 	chapterId: string;
@@ -80,6 +82,11 @@ const AdminCourseEditPage = () => {
 	const { addNewLesson, updateLesson, enableLessonsFetch } = useContext(LessonsContext);
 	const { addNewDocument, updateDocument, enableDocumentsFetch } = useContext(DocumentsContext);
 	const { updateCoursePublishing, updateCourse } = useContext(CoursesContext);
+
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
+
+	const { isSticky } = useStickyPaper(isMobileSize);
 
 	const [isEditMode, setIsEditMode] = useState<boolean>(false);
 	const [singleCourse, setSingleCourse] = useState<SingleCourse>();
@@ -719,7 +726,7 @@ const AdminCourseEditPage = () => {
 				/>
 			</Box>
 
-			<Box sx={{ display: 'flex', width: '95%', justifyContent: 'center', marginTop: '9rem' }}>
+			<Box sx={{ display: 'flex', width: '95%', justifyContent: 'center', marginTop: isSticky && isMobileSize ? '3.5rem' : '9rem' }}>
 				{!isEditMode && (
 					<CourseDetailsNonEditBox singleCourse={singleCourseBeforeSave} chapters={chapterLessonData} setSingleCourse={setSingleCourseBeforeSave} />
 				)}
@@ -730,7 +737,7 @@ const AdminCourseEditPage = () => {
 							display: 'flex',
 							flexDirection: 'column',
 							justifyContent: 'flex-start',
-							width: '90%',
+							width: '95%',
 						}}>
 						<form>
 							<CourseDetailsEditBox
@@ -765,7 +772,7 @@ const AdminCourseEditPage = () => {
 													setIsChapterCreateModalOpen(true);
 													setNewChapterTitle('');
 												}}>
-												New Chapter
+												{isMobileSize ? 'New' : 'New Chapter'}
 											</CustomSubmitButton>
 										</Box>
 									</Box>
@@ -788,7 +795,7 @@ const AdminCourseEditPage = () => {
 												label='Chapter Title'
 												value={newChapterTitle}
 												onChange={(e) => setNewChapterTitle(e.target.value)}
-												sx={{ margin: '2rem 1rem' }}
+												sx={{ margin: isMobileSize ? '0.5rem 1rem' : '2rem 1rem' }}
 												InputLabelProps={{
 													sx: { fontSize: '0.8rem' },
 												}}

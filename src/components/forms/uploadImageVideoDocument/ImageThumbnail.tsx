@@ -1,4 +1,6 @@
 import { Box, Typography } from '@mui/material';
+import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
+import { useContext } from 'react';
 
 interface ImageThumbnailProps {
 	imgSource: string;
@@ -8,6 +10,8 @@ interface ImageThumbnailProps {
 }
 
 const ImageThumbnail = ({ imgSource, boxStyle, imgStyle, removeImage }: ImageThumbnailProps) => {
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
 	return (
 		<Box
 			sx={{
@@ -15,7 +19,7 @@ const ImageThumbnail = ({ imgSource, boxStyle, imgStyle, removeImage }: ImageThu
 				flexDirection: 'column',
 				justifyContent: 'center',
 				alignItems: 'center',
-				height: '8rem',
+				height: isMobileSize ? '6rem' : '8rem',
 				width: '100%',
 				marginTop: '1rem',
 				...boxStyle,

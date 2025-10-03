@@ -56,6 +56,17 @@ const LessonInfoModal = ({ lesson, onClose }: LessonInfoModalProps) => {
 
 						<Grid item xs={3}>
 							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+								Type:
+							</Typography>
+						</Grid>
+						<Grid item xs={9} display='flex' alignItems='center'>
+							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+								{lesson.type}
+							</Typography>
+						</Grid>
+
+						<Grid item xs={3}>
+							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 								Cloned From:
 							</Typography>
 						</Grid>
@@ -88,6 +99,17 @@ const LessonInfoModal = ({ lesson, onClose }: LessonInfoModalProps) => {
 								</Typography>
 							</Grid>
 						)}
+
+						<Grid item xs={3}>
+							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+								Published:
+							</Typography>
+						</Grid>
+						<Grid item xs={9} display='flex' alignItems='center'>
+							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+								{lesson.isActive ? 'Yes' : 'No'}
+							</Typography>
+						</Grid>
 
 						<Grid item xs={3}>
 							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>

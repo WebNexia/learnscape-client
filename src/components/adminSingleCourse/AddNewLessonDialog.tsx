@@ -17,6 +17,7 @@ import theme from '../../themes';
 import { useParams } from 'react-router-dom';
 import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
 import axios from '@utils/axiosInstance';
+import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 
 interface AddNewLessonDialogProps {
 	addNewLessonModalOpen: boolean;
@@ -40,6 +41,8 @@ const AddNewLessonDialog = ({
 	const { sortLessonsData, lessons, fetchMoreLessons, loadedPages } = useContext(LessonsContext);
 	const { courseId } = useParams();
 	const { user } = useContext(UserAuthContext);
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
 
 	const [lessonsPageNumber, setLessonsPageNumber] = useState<number>(1);
 	const [searchValue, setSearchValue] = useState<string>('');
@@ -515,7 +518,7 @@ const AddNewLessonDialog = ({
 								{ key: 'title', label: 'Title' },
 								{ key: 'type', label: 'Type' },
 								{ key: 'isActive', label: 'Status' },
-								{ key: 'actions', label: 'Add Lessons' },
+								{ key: 'actions', label: isMobileSize ? 'Add' : 'Add Lessons' },
 							]}
 						/>
 						<TableBody sx={{ width: '100%' }}>
@@ -537,7 +540,7 @@ const AddNewLessonDialog = ({
 													label=''
 													sx={{
 														'& .MuiSvgIcon-root': {
-															fontSize: '1.25rem',
+															fontSize: isMobileSize ? '0.9rem' : '1.25rem',
 														},
 													}}
 												/>

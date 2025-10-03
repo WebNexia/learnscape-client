@@ -1,5 +1,7 @@
 import { Box, Typography } from '@mui/material';
 import UniversalVideoPlayer from '../../video/UniversalVideoPlayer';
+import { useContext } from 'react';
+import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 interface VideoThumbnailProps {
 	videoPlayCondition: boolean | string;
@@ -22,6 +24,8 @@ const VideoThumbnail = ({
 	controls = true,
 	removeVideo,
 }: VideoThumbnailProps) => {
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
 	return (
 		<Box
 			sx={{
@@ -29,7 +33,7 @@ const VideoThumbnail = ({
 				flexDirection: 'column',
 				justifyContent: 'center',
 				alignItems: 'center',
-				height: '8rem',
+				height: isMobileSize ? '6rem' : '8rem',
 				width: '100%',
 				marginTop: '1rem',
 				...boxStyle,

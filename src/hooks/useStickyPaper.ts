@@ -1,11 +1,17 @@
 import { useState, useEffect, useRef } from 'react';
 
-export const useStickyPaper = () => {
-	const [isSticky, setIsSticky] = useState(false);
+export const useStickyPaper = (isMobileSize: boolean = false) => {
+	const [isSticky, setIsSticky] = useState(isMobileSize);
 	const paperRef = useRef<HTMLDivElement>(null);
 	const originalTopRef = useRef<number>(0);
 
 	useEffect(() => {
+		// If mobile size, always keep sticky
+		if (isMobileSize) {
+			setIsSticky(true);
+			return;
+		}
+
 		const handleScroll = () => {
 			if (!paperRef.current) return;
 
@@ -45,7 +51,7 @@ export const useStickyPaper = () => {
 			window.removeEventListener('resize', resetPosition);
 			clearTimeout(timer);
 		};
-	}, []);
+	}, [isMobileSize]);
 
 	return { isSticky, paperRef };
 };

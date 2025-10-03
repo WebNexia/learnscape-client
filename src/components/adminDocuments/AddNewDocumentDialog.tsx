@@ -15,6 +15,7 @@ import { Lesson } from '../../interfaces/lessons';
 import { SingleCourse } from '../../interfaces/course';
 import theme from '../../themes';
 import axios from '@utils/axiosInstance';
+import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 
 interface AddNewDocumentDialogProps {
 	addNewDocumentModalOpen?: boolean;
@@ -42,6 +43,8 @@ const AddNewDocumentDialog = ({
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
 	const { sortDocumentsData, documents, fetchMoreDocuments, loadedPages, updateDocument } = useContext(DocumentsContext);
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
 
 	const [documentsPageNumber, setDocumentsPageNumber] = useState<number>(1);
 	const [searchValue, setSearchValue] = useState<string>('');
@@ -537,7 +540,7 @@ const AddNewDocumentDialog = ({
 					}}>
 					<Table
 						sx={{
-							'mb': '2rem',
+							'mb': isMobileSize ? '1rem' : '2rem',
 							'width': '100%',
 							'tableLayout': 'fixed',
 							'minWidth': '100%',
@@ -564,7 +567,7 @@ const AddNewDocumentDialog = ({
 							columns={[
 								{ key: 'name', label: 'Name' },
 								{ key: 'documentUrl', label: 'URL' },
-								{ key: 'actions', label: 'Add Documents' },
+								{ key: 'actions', label: isMobileSize ? 'Add' : 'Add Documents' },
 							]}
 						/>
 						<TableBody>
@@ -582,8 +585,12 @@ const AddNewDocumentDialog = ({
 												<CustomTableCell value={document.name} />
 
 												<CustomTableCell>
-													<Link href={document.documentUrl} target='_blank' rel='noopener noreferrer'>
-														{truncateText(document.documentUrl, 30)}
+													<Link
+														href={document.documentUrl}
+														target='_blank'
+														rel='noopener noreferrer'
+														sx={{ fontSize: isMobileSize ? '0.6rem' : undefined }}>
+														{truncateText(document.documentUrl, isMobileSize ? 18 : 30)}
 													</Link>
 												</CustomTableCell>
 
@@ -598,7 +605,7 @@ const AddNewDocumentDialog = ({
 																onChange={() => handleCheckboxChange(document)}
 																sx={{
 																	'& .MuiSvgIcon-root': {
-																		fontSize: '1.25rem',
+																		fontSize: isMobileSize ? '0.9rem' : '1.25rem',
 																	},
 																}}
 															/>

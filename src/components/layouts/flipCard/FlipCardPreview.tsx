@@ -132,8 +132,8 @@ const FlipCardPreview = ({
 								setNewQuestion
 									? newQuestion?.imageUrl
 									: fromLessonEditPage || fromPracticeQuestionUser || questionNonEditModal
-									? question?.imageUrl
-									: imageUrlAdminQuestions
+										? question?.imageUrl
+										: imageUrlAdminQuestions
 							}
 							alt='img'
 							style={{

@@ -2,6 +2,8 @@ import { Box, Typography } from '@mui/material';
 import theme from '../../../themes';
 import { QuestionInterface } from '../../../interfaces/question';
 import { Lesson } from '../../../interfaces/lessons';
+import { useContext } from 'react';
+import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 interface FlipCardFrontFaceProps {
 	setIsQuestionMissing: React.Dispatch<React.SetStateAction<boolean>>;
@@ -53,9 +55,11 @@ const FlipCardFrontFace = ({
 			/>
 		</Box>
 	);
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
 	return (
-		<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', width: '100%' }}>
-			<Typography variant='body1' sx={{ width: '50vh' }}>
+		<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: isMobileSize ? 'center' : 'flex-end', width: '50vw' }}>
+			<Typography variant='body1' sx={{ width: '50vw' }}>
 				Front
 			</Typography>
 
@@ -65,7 +69,7 @@ const FlipCardFrontFace = ({
 				<Box
 					sx={{
 						backgroundColor: theme.bgColor?.greenPrimary,
-						width: '50vh',
+						width: '50vw',
 						height: '25vh',
 						color: 'white',
 						padding: '2rem 1rem',
@@ -115,7 +119,7 @@ const FlipCardFrontFace = ({
 				}}
 				style={{
 					backgroundColor: theme.bgColor?.greenPrimary,
-					width: '50vh',
+					width: '50vw',
 					height: '15vh',
 					color: 'white',
 					padding: '1rem 1rem',

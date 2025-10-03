@@ -19,6 +19,7 @@ import { LessonType, QuestionType } from '../../interfaces/enums';
 import theme from '../../themes';
 import axios from '@utils/axiosInstance';
 import { OrganisationContext } from '../../contexts/OrganisationContextProvider';
+import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 
 interface AddNewQuestionDialogProps {
 	addNewQuestionModalOpen: boolean;
@@ -43,6 +44,10 @@ const AddNewQuestionDialog = ({
 	const { orgId } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
 	const lessonId = singleLessonBeforeSave._id;
+
+	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
+
+	const isMobileSize: boolean = isSmallScreen || isRotatedMedium;
 
 	const {
 		sortQuestionsData,
@@ -587,9 +592,9 @@ const AddNewQuestionDialog = ({
 							order={order}
 							handleSort={handleSort}
 							columns={[
-								{ key: 'questionType', label: 'Question Type' },
+								{ key: 'questionType', label: isMobileSize ? 'Type' : 'Question Type' },
 								{ key: 'question', label: 'Question' },
-								{ key: 'actions', label: 'Add Questions' },
+								{ key: 'actions', label: isMobileSize ? 'Add' : 'Add Questions' },
 							]}
 						/>
 						<TableBody>

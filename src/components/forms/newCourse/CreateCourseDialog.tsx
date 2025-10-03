@@ -9,6 +9,7 @@ import { useAuth } from '../../../hooks/useAuth';
 import axios from '@utils/axiosInstance';
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
 import { CoursesContext } from '../../../contexts/CoursesContextProvider';
+import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 interface CreateCourseDialogProps {
 	closeNewCourseModal: () => void;
@@ -21,6 +22,8 @@ const CreateCourseDialog = ({ closeNewCourseModal, isCourseCreateModalOpen }: Cr
 	const { orgId } = useContext(OrganisationContext);
 	const { user } = useAuth();
 	const { addNewCourse } = useContext(CoursesContext);
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
 
 	const [title, setTitle] = useState<string>('');
 	const [description, setDescription] = useState<string>('');
@@ -130,7 +133,7 @@ const CreateCourseDialog = ({ closeNewCourseModal, isCourseCreateModalOpen }: Cr
 						onChange={(e) => setTitle(e.target.value)}
 						sx={{ margin: '1rem 2rem' }}
 						InputLabelProps={{
-							sx: { fontSize: '0.8rem' },
+							sx: { fontSize: isMobileSize ? '0.7rem' : '0.8rem' },
 						}}
 						InputProps={{ inputProps: { maxLength: 50 } }}
 					/>
@@ -144,7 +147,7 @@ const CreateCourseDialog = ({ closeNewCourseModal, isCourseCreateModalOpen }: Cr
 						onChange={(e) => setDescription(e.target.value)}
 						sx={{ margin: '1rem 2rem' }}
 						InputLabelProps={{
-							sx: { fontSize: '0.8rem' },
+							sx: { fontSize: isMobileSize ? '0.7rem' : '0.8rem' },
 						}}
 						InputProps={{ inputProps: { maxLength: 500 } }}
 						multiline
@@ -174,7 +177,7 @@ const CreateCourseDialog = ({ closeNewCourseModal, isCourseCreateModalOpen }: Cr
 												}}
 												sx={{
 													'& .MuiSvgIcon-root': {
-														fontSize: '1rem',
+														fontSize: isMobileSize ? '0.9rem' : '1rem',
 													},
 												}}
 											/>
@@ -183,7 +186,7 @@ const CreateCourseDialog = ({ closeNewCourseModal, isCourseCreateModalOpen }: Cr
 										sx={{
 											'mr': '0rem',
 											'& .MuiFormControlLabel-label': {
-												fontSize: '0.75rem',
+												fontSize: isMobileSize ? '0.65rem' : '0.75rem',
 											},
 										}}
 									/>
@@ -198,7 +201,7 @@ const CreateCourseDialog = ({ closeNewCourseModal, isCourseCreateModalOpen }: Cr
 								disabled={checked}
 								sx={{ backgroundColor: checked ? 'transparent' : '#fff' }}
 								InputLabelProps={{
-									sx: { fontSize: '0.8rem' },
+									sx: { fontSize: isMobileSize ? '0.7rem' : '0.8rem' },
 								}}
 							/>
 							<CustomTextField
@@ -209,7 +212,7 @@ const CreateCourseDialog = ({ closeNewCourseModal, isCourseCreateModalOpen }: Cr
 								disabled={checked}
 								sx={{ backgroundColor: checked ? 'transparent' : '#fff' }}
 								InputLabelProps={{
-									sx: { fontSize: '0.8rem' },
+									sx: { fontSize: isMobileSize ? '0.7rem' : '0.8rem' },
 								}}
 							/>
 							<CustomTextField
@@ -220,7 +223,7 @@ const CreateCourseDialog = ({ closeNewCourseModal, isCourseCreateModalOpen }: Cr
 								disabled={checked}
 								sx={{ backgroundColor: checked ? 'transparent' : '#fff' }}
 								InputLabelProps={{
-									sx: { fontSize: '0.8rem' },
+									sx: { fontSize: isMobileSize ? '0.7rem' : '0.8rem' },
 								}}
 							/>
 							<CustomTextField
@@ -231,7 +234,7 @@ const CreateCourseDialog = ({ closeNewCourseModal, isCourseCreateModalOpen }: Cr
 								disabled={checked}
 								sx={{ backgroundColor: checked ? 'transparent' : '#fff' }}
 								InputLabelProps={{
-									sx: { fontSize: '0.8rem' },
+									sx: { fontSize: isMobileSize ? '0.7rem' : '0.8rem' },
 								}}
 							/>
 						</Box>
@@ -249,7 +252,7 @@ const CreateCourseDialog = ({ closeNewCourseModal, isCourseCreateModalOpen }: Cr
 									}}
 									sx={{
 										'& .MuiSvgIcon-root': {
-											fontSize: '1.25rem',
+											fontSize: isMobileSize ? '1rem' : '1.25rem',
 										},
 									}}
 								/>
@@ -257,7 +260,7 @@ const CreateCourseDialog = ({ closeNewCourseModal, isCourseCreateModalOpen }: Cr
 							label='External Course'
 							sx={{
 								'& .MuiFormControlLabel-label': {
-									fontSize: '0.85rem',
+									fontSize: isMobileSize ? '0.75rem' : '0.85rem',
 								},
 							}}
 						/>

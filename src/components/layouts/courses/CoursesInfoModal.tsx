@@ -136,6 +136,19 @@ const CoursesInfoModal = ({ singleCourse, isCourseInfoDialogOpen, setIsCourseInf
 								{singleCourse?.courseManagement?.isExternal ? 'Partner' : 'Platform'}
 							</Typography>
 						</Grid>
+						<>
+							<Grid item xs={3}>
+								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+									Status:
+								</Typography>
+							</Grid>
+
+							<Grid item xs={9}>
+								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+									{singleCourse?.isActive ? 'Published' : 'Unpublished'} - {singleCourse?.isExpired ? 'Closed' : 'Open'}
+								</Typography>
+							</Grid>
+						</>
 					</Grid>
 				</Box>
 			</DialogContent>

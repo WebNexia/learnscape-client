@@ -8,6 +8,7 @@ import HandleImageUploadURL from '../forms/uploadImageVideoDocument/HandleImageU
 import useImageUpload from '../../hooks/useImageUpload';
 import { Roles } from '../../interfaces/enums';
 import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
+import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 
 interface CourseDetailsEditBoxProps {
 	singleCourseBeforeSave?: SingleCourse;
@@ -31,6 +32,8 @@ const CourseDetailsEditBox = ({
 	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(true);
 
 	const { user } = useContext(UserAuthContext);
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
 
 	const { resetImageUpload } = useImageUpload();
 
@@ -126,7 +129,7 @@ const CourseDetailsEditBox = ({
 						<img
 							src={singleCourseBeforeSave?.imageUrl || 'https://placehold.co/500x400/e2e8f0/64748b?text=No+Image'}
 							alt='course_img'
-							height='115rem'
+							height={isMobileSize ? '85rem' : '115rem'}
 							style={{
 								borderRadius: '0.2rem',
 								boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
@@ -159,58 +162,71 @@ const CourseDetailsEditBox = ({
 					</Box>
 				</Box>
 			</Box>
-			<Box sx={{ display: 'flex', justifyContent: 'space-between', mt: '-1.75rem' }}>
-				<Box sx={{ flex: 1 }}>
-					<Typography variant='h6'>Title*</Typography>
-					<Tooltip title='Max 50 Characters' placement='top' arrow>
-						<CustomTextField
-							sx={{
-								marginTop: '0.5rem',
-								backgroundColor: theme.bgColor?.common,
-							}}
-							multiline
-							value={singleCourseBeforeSave?.title}
-							onChange={(e) => {
-								setSingleCourseBeforeSave((prevData) => {
-									if (prevData) {
-										return { ...prevData, title: e.target.value };
-									}
-									return prevData;
-								});
-								setIsMissingField(false);
-								setHasUnsavedChanges(true);
-							}}
-							InputProps={{ inputProps: { maxLength: 50 } }}
-							error={isMissingField && singleCourseBeforeSave?.title === ''}
-						/>
-					</Tooltip>
-					{isMissingField && singleCourseBeforeSave?.title === '' && <CustomErrorMessage>Enter a title</CustomErrorMessage>}
-				</Box>
-				<Box sx={{ flex: 1.5, marginLeft: '2rem' }}>
-					<Typography variant='h6'>Description*</Typography>
-					<Tooltip title='Max 500 characters' placement='top' arrow>
-						<CustomTextField
-							sx={{ marginTop: '0.5rem' }}
-							value={singleCourseBeforeSave?.description}
-							onChange={(e) => {
-								setSingleCourseBeforeSave((prevData) => {
-									if (prevData) {
-										return { ...prevData, description: e.target.value };
-									}
-									return prevData;
-								});
-								setIsMissingField(false);
-								setHasUnsavedChanges(true);
-							}}
-							multiline
-							InputProps={{ inputProps: { maxLength: 500 } }}
-							error={isMissingField && singleCourseBeforeSave?.description === ''}
-						/>
-					</Tooltip>
+			<Box
+				sx={{
+					display: 'flex',
+					flexDirection: isMobileSize ? 'column' : 'row',
+					justifyContent: 'space-between',
+					mt: isMobileSize ? '-1rem' : '-1.75rem',
+					width: '100%',
+				}}>
+				<Box sx={{ display: 'flex', width: isMobileSize ? '100%' : '80%' }}>
+					<Box sx={{ flex: 1 }}>
+						<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '0.9rem' }}>
+							Title*
+						</Typography>
+						<Tooltip title='Max 50 Characters' placement='top' arrow>
+							<CustomTextField
+								sx={{
+									marginTop: '0.5rem',
+									backgroundColor: theme.bgColor?.common,
+								}}
+								multiline
+								value={singleCourseBeforeSave?.title}
+								onChange={(e) => {
+									setSingleCourseBeforeSave((prevData) => {
+										if (prevData) {
+											return { ...prevData, title: e.target.value };
+										}
+										return prevData;
+									});
+									setIsMissingField(false);
+									setHasUnsavedChanges(true);
+								}}
+								InputProps={{ inputProps: { maxLength: 50 } }}
+								error={isMissingField && singleCourseBeforeSave?.title === ''}
+							/>
+						</Tooltip>
+						{isMissingField && singleCourseBeforeSave?.title === '' && <CustomErrorMessage>Enter a title</CustomErrorMessage>}
+					</Box>
+					<Box sx={{ flex: 1.5, marginLeft: isMobileSize ? '1rem' : '2rem' }}>
+						<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '0.9rem' }}>
+							Description*
+						</Typography>
+						<Tooltip title='Max 500 characters' placement='top' arrow>
+							<CustomTextField
+								sx={{ marginTop: '0.5rem' }}
+								value={singleCourseBeforeSave?.description}
+								onChange={(e) => {
+									setSingleCourseBeforeSave((prevData) => {
+										if (prevData) {
+											return { ...prevData, description: e.target.value };
+										}
+										return prevData;
+									});
+									setIsMissingField(false);
+									setHasUnsavedChanges(true);
+								}}
+								multiline
+								InputProps={{ inputProps: { maxLength: 500 } }}
+								error={isMissingField && singleCourseBeforeSave?.description === ''}
+							/>
+						</Tooltip>
 
-					{isMissingField && singleCourseBeforeSave?.description === '' && <CustomErrorMessage>Enter a description</CustomErrorMessage>}
+						{isMissingField && singleCourseBeforeSave?.description === '' && <CustomErrorMessage>Enter a description</CustomErrorMessage>}
+					</Box>
 				</Box>
-				<Box sx={{ alignItems: 'center', ml: '2rem', display: user?.role === Roles.ADMIN ? 'flex' : 'none' }}>
+				<Box sx={{ alignItems: 'center', ml: isMobileSize ? '0rem' : '2rem', display: user?.role === Roles.ADMIN ? 'flex' : 'none' }}>
 					<Tooltip title='External courses will be managed outside the platform.' placement='top' arrow>
 						<FormControlLabel
 							control={
@@ -230,7 +246,7 @@ const CourseDetailsEditBox = ({
 									}}
 									sx={{
 										'& .MuiSvgIcon-root': {
-											fontSize: '1.25rem',
+											fontSize: isMobileSize ? '1rem' : '1.25rem',
 										},
 									}}
 								/>
@@ -238,7 +254,7 @@ const CourseDetailsEditBox = ({
 							label='External Course'
 							sx={{
 								'& .MuiFormControlLabel-label': {
-									fontSize: '0.85rem',
+									fontSize: isMobileSize ? '0.75rem' : '0.85rem',
 								},
 							}}
 						/>
@@ -249,12 +265,15 @@ const CourseDetailsEditBox = ({
 			<Box
 				sx={{
 					display: 'flex',
+					flexDirection: isMobileSize ? 'column' : 'row',
 					justifyContent: 'space-between',
 					alignItems: 'flex-start',
 					mt: '1.5rem',
 				}}>
 				<Box sx={{ flex: 1, zIndex: 1, display: user?.role === Roles.ADMIN ? undefined : 'none' }}>
-					<Typography variant='h6'>Prices</Typography>
+					<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '0.9rem' }}>
+						Prices
+					</Typography>
 					<Box sx={{ display: 'flex', alignItems: 'center' }}>
 						<Box
 							sx={{
@@ -323,7 +342,7 @@ const CourseDetailsEditBox = ({
 							/>
 						</Box>
 					</Box>
-					<Box sx={{ margin: '0 0 1rem 0.5rem' }}>
+					<Box sx={{ margin: '0 0 1rem 0rem' }}>
 						<FormControlLabel
 							control={
 								<Checkbox
@@ -355,7 +374,7 @@ const CourseDetailsEditBox = ({
 									}}
 									sx={{
 										'& .MuiSvgIcon-root': {
-											fontSize: '1.25rem',
+											fontSize: isMobileSize ? '1rem' : '1.25rem',
 										},
 									}}
 								/>
@@ -363,7 +382,7 @@ const CourseDetailsEditBox = ({
 							label='Free Course'
 							sx={{
 								'& .MuiFormControlLabel-label': {
-									fontSize: '0.85rem',
+									fontSize: isMobileSize ? '0.75rem' : '0.85rem',
 								},
 							}}
 						/>
@@ -373,103 +392,113 @@ const CourseDetailsEditBox = ({
 					)}
 				</Box>
 
-				<Box sx={{ display: 'flex', marginLeft: user?.role === Roles.ADMIN ? '4rem' : '0', flex: 1 }}>
-					<Box sx={{ flex: 2 }}>
-						<Typography variant='h6'>Weeks</Typography>
-						<CustomTextField
-							required={false}
-							sx={{ marginTop: '0.5rem' }}
-							value={singleCourseBeforeSave?.durationWeeks ?? ''}
-							onChange={(e) => {
-								if (singleCourseBeforeSave) {
-									setSingleCourseBeforeSave({
-										...singleCourseBeforeSave,
-										durationWeeks: +e.target.value,
-									});
-									setHasUnsavedChanges(true);
-								}
-							}}
-							type='number'
-							placeholder='# of weeks'
-						/>
-					</Box>
-					<Box sx={{ ml: '0.5rem', flex: 3 }}>
-						<Typography variant='h6'>Hours</Typography>
-						<CustomTextField
-							required={false}
-							sx={{ marginTop: '0.5rem' }}
-							value={singleCourseBeforeSave?.durationHours ?? ''}
-							onChange={(e) => {
-								if (singleCourseBeforeSave) {
-									setSingleCourseBeforeSave({
-										...singleCourseBeforeSave,
-										durationHours: +e.target.value,
-									});
-									setHasUnsavedChanges(true);
-								}
-							}}
-							type='number'
-							placeholder='# of hours'
-						/>
-					</Box>
-				</Box>
-				<Box sx={{ marginLeft: '4rem', flex: 1 }}>
-					<Typography variant='h6'>Starting Date</Typography>
-					<CustomTextField
-						required={false}
-						sx={{ marginTop: '0.5rem' }}
-						value={
-							singleCourseBeforeSave && singleCourseBeforeSave.startingDate
-								? formatDate(new Date(singleCourseBeforeSave.startingDate)) // Format the starting date
-								: ''
-						}
-						onChange={(e) => {
-							const selectedDate = parseDate(e.target.value);
-							if (singleCourseBeforeSave) {
-								setSingleCourseBeforeSave({
-									...singleCourseBeforeSave,
-									startingDate: selectedDate,
-								});
-								setHasUnsavedChanges(true);
-							}
-						}}
-						type='date'
-					/>
-				</Box>
-				<Box sx={{ display: user?.role !== Roles.ADMIN ? 'flex' : 'none', flex: 1, justifyContent: 'flex-end', width: '100%' }}>
-					<Tooltip title='External courses will be managed outside the platform.' placement='top' arrow>
-						<FormControlLabel
-							labelPlacement='start'
-							control={
-								<Checkbox
-									checked={singleCourseBeforeSave?.courseManagement?.isExternal}
+				<Box sx={{ display: 'flex', flexDirection: isMobileSize ? 'column' : 'row' }}>
+					<Box sx={{ display: 'flex' }}>
+						<Box sx={{ display: 'flex', marginLeft: user?.role === Roles.ADMIN ? (isMobileSize ? '0rem' : '4rem') : '0', flex: 1 }}>
+							<Box sx={{ flex: 2 }}>
+								<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '0.9rem' }}>
+									Weeks
+								</Typography>
+								<CustomTextField
+									required={false}
+									sx={{ marginTop: '0.5rem' }}
+									value={singleCourseBeforeSave?.durationWeeks ?? ''}
 									onChange={(e) => {
-										setSingleCourseBeforeSave((prevData) => {
-											if (prevData) {
-												return {
-													...prevData,
-													courseManagement: { ...prevData.courseManagement, isExternal: e.target.checked },
-												};
-											}
-											return prevData;
+										if (singleCourseBeforeSave) {
+											setSingleCourseBeforeSave({
+												...singleCourseBeforeSave,
+												durationWeeks: +e.target.value,
+											});
+											setHasUnsavedChanges(true);
+										}
+									}}
+									type='number'
+									placeholder='# of weeks'
+								/>
+							</Box>
+							<Box sx={{ ml: '0.5rem', flex: 3 }}>
+								<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '0.9rem' }}>
+									Hours
+								</Typography>
+								<CustomTextField
+									required={false}
+									sx={{ marginTop: '0.5rem' }}
+									value={singleCourseBeforeSave?.durationHours ?? ''}
+									onChange={(e) => {
+										if (singleCourseBeforeSave) {
+											setSingleCourseBeforeSave({
+												...singleCourseBeforeSave,
+												durationHours: +e.target.value,
+											});
+											setHasUnsavedChanges(true);
+										}
+									}}
+									type='number'
+									placeholder='# of hours'
+								/>
+							</Box>
+						</Box>
+						<Box sx={{ marginLeft: '4rem', flex: 1 }}>
+							<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '0.9rem' }}>
+								Starting Date
+							</Typography>
+							<CustomTextField
+								required={false}
+								sx={{ marginTop: '0.5rem' }}
+								value={
+									singleCourseBeforeSave && singleCourseBeforeSave.startingDate
+										? formatDate(new Date(singleCourseBeforeSave.startingDate)) // Format the starting date
+										: ''
+								}
+								onChange={(e) => {
+									const selectedDate = parseDate(e.target.value);
+									if (singleCourseBeforeSave) {
+										setSingleCourseBeforeSave({
+											...singleCourseBeforeSave,
+											startingDate: selectedDate,
 										});
 										setHasUnsavedChanges(true);
-									}}
-									sx={{
-										'& .MuiSvgIcon-root': {
-											fontSize: '1.25rem',
-										},
-									}}
-								/>
-							}
-							label='External Course'
-							sx={{
-								'& .MuiFormControlLabel-label': {
-									fontSize: '0.85rem',
-								},
-							}}
-						/>
-					</Tooltip>
+									}
+								}}
+								type='date'
+							/>
+						</Box>
+					</Box>
+					<Box sx={{ display: user?.role !== Roles.ADMIN ? 'flex' : 'none', flex: 1, justifyContent: 'flex-end', width: '100%' }}>
+						<Tooltip title='External courses will be managed outside the platform.' placement='top' arrow>
+							<FormControlLabel
+								labelPlacement='start'
+								control={
+									<Checkbox
+										checked={singleCourseBeforeSave?.courseManagement?.isExternal}
+										onChange={(e) => {
+											setSingleCourseBeforeSave((prevData) => {
+												if (prevData) {
+													return {
+														...prevData,
+														courseManagement: { ...prevData.courseManagement, isExternal: e.target.checked },
+													};
+												}
+												return prevData;
+											});
+											setHasUnsavedChanges(true);
+										}}
+										sx={{
+											'& .MuiSvgIcon-root': {
+												fontSize: isMobileSize ? '1rem' : '1.25rem',
+											},
+										}}
+									/>
+								}
+								label='External Course'
+								sx={{
+									'& .MuiFormControlLabel-label': {
+										fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+									},
+								}}
+							/>
+						</Tooltip>
+					</Box>
 				</Box>
 			</Box>
 		</>

@@ -1,5 +1,7 @@
 import { Box, Typography } from '@mui/material';
 import theme from '../../../themes';
+import { useContext } from 'react';
+import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 interface FlipCardBackFaceProps {
 	backText: string;
@@ -18,9 +20,19 @@ const FlipCardBackFace = ({
 	fromLessonEditPage,
 	setIsCorrectAnswerMissing,
 }: FlipCardBackFaceProps) => {
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
 	return (
-		<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', width: '100%', ml: '3rem' }}>
-			<Typography variant='body1' sx={{ width: '40vh' }}>
+		<Box
+			sx={{
+				display: 'flex',
+				flexDirection: 'column',
+				alignItems: isMobileSize ? 'center' : 'flex-start',
+				width: '100%',
+				ml: isMobileSize ? '0rem' : '3rem',
+				mt: isMobileSize ? '2rem' : undefined,
+			}}>
+			<Typography variant='body1' sx={{ width: isMobileSize ? '50vw' : '40vw' }}>
 				Back
 			</Typography>
 			<textarea
@@ -36,7 +48,7 @@ const FlipCardBackFace = ({
 				maxLength={255}
 				style={{
 					backgroundColor: 'coral',
-					width: '50vh',
+					width: '50vw',
 					height: '40vh',
 					color: 'white',
 					padding: '4rem 3rem',

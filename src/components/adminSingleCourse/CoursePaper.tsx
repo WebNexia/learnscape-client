@@ -77,7 +77,7 @@ const CoursePaper = ({
 
 	const { resetImageUpload } = useImageUpload();
 
-	const { isSticky, paperRef } = useStickyPaper();
+	const { isSticky, paperRef } = useStickyPaper(isMobileSize);
 
 	const handleCancel = async (): Promise<void> => {
 		setIsEditMode(false);
@@ -161,12 +161,14 @@ const CoursePaper = ({
 						justifyContent: isSticky ? 'flex-start' : 'space-between',
 						alignItems: isSticky ? 'center' : 'flex-start',
 						flex: { md: 2, lg: 3 },
-						padding: isSticky ? '0.5rem 1rem' : '0.5rem',
+						padding: isSticky ? (isMobileSize ? '0.25rem 0.25rem' : '0.5rem 1rem') : '0.5rem',
 					}}>
 					<Box>
 						<Button
 							variant='text'
-							startIcon={<KeyboardBackspaceOutlined />}
+							startIcon={
+								<KeyboardBackspaceOutlined sx={{ fontSize: isSticky ? (isMobileSize ? '0.6rem' : '0.75rem') : undefined }} fontSize='small' />
+							}
 							sx={{
 								'color': theme.textColor?.common.main,
 								'textTransform': 'inherit',
@@ -175,7 +177,7 @@ const CoursePaper = ({
 									backgroundColor: 'transparent',
 									textDecoration: 'underline',
 								},
-								'fontSize': isSticky ? { xs: '0.7rem', sm: '0.8rem' } : undefined,
+								'fontSize': isSticky ? { xs: '0.65rem', sm: '0.75rem' } : undefined,
 							}}
 							onClick={() => {
 								if (user?.role === Roles.ADMIN) {
@@ -188,19 +190,21 @@ const CoursePaper = ({
 							{isSticky ? 'Courses' : 'Back to courses'}
 						</Button>
 					</Box>
-					<Box sx={{ paddingLeft: isSticky ? '0' : '0.5rem' }}>
-						<Typography
-							variant='body2'
-							sx={{
-								color: theme.textColor?.common.main,
-								fontSize: isSticky ? (isMobileSize ? '0.6rem' : '0.75rem') : undefined,
-							}}>
-							{isSticky ? '(' : ''}
-							{singleCourseBeforeSave?.isActive ? 'Published' : 'Unpublished'} - {singleCourseBeforeSave?.isExpired ? 'Closed' : 'Open'} -{' '}
-							{singleCourseBeforeSave?.courseManagement?.isExternal ? 'External' : 'Platform'}
-							{isSticky ? ')' : ''}
-						</Typography>
-					</Box>
+					{!isMobileSize && (
+						<Box sx={{ paddingLeft: isSticky ? '0' : '0.5rem' }}>
+							<Typography
+								variant='body2'
+								sx={{
+									color: theme.textColor?.common.main,
+									fontSize: isSticky ? (isMobileSize ? '0.6rem' : '0.75rem') : undefined,
+								}}>
+								{isSticky ? '(' : ''}
+								{singleCourseBeforeSave?.isActive ? 'Published' : 'Unpublished'} - {singleCourseBeforeSave?.isExpired ? 'Closed' : 'Open'} -{' '}
+								{singleCourseBeforeSave?.courseManagement?.isExternal ? 'External' : 'Platform'}
+								{isSticky ? ')' : ''}
+							</Typography>
+						</Box>
+					)}
 				</Box>
 				<Box
 					sx={{
@@ -227,7 +231,13 @@ const CoursePaper = ({
 									sx={{
 										color: theme.textColor?.common.main,
 										mr: isSticky ? '0.25rem' : '0.5rem',
-										fontSize: isSticky ? { xs: '0.7rem', sm: '0.8rem' } : undefined,
+										fontSize: isSticky
+											? singleCourseBeforeSave?.title && singleCourseBeforeSave?.title?.length > 40
+												? { xs: '0.65rem', sm: '0.75rem' }
+												: { xs: '0.7rem', sm: '0.8rem' }
+											: singleCourseBeforeSave?.title && singleCourseBeforeSave?.title?.length > 40
+												? '0.9rem'
+												: '1rem',
 									}}>
 									{singleCourseBeforeSave?.title}
 								</Typography>
@@ -319,7 +329,7 @@ const CoursePaper = ({
 										</CustomCancelButton>
 									</Box>
 								) : (
-									<Box sx={{ ml: '1rem' }}>
+									<Box sx={{ ml: isSticky ? '0.25rem' : '1rem' }}>
 										{user?.role === Roles.ADMIN && (
 											<CustomSubmitButton
 												sx={{
@@ -338,7 +348,14 @@ const CoursePaper = ({
 													onClick={() => {
 														setIsEditMode(true);
 													}}>
-													<Edit sx={{ color: 'white', fontSize: isSticky ? (isMobileSize ? '0.9rem' : '1rem') : undefined }} fontSize='small' />
+													<Edit
+														sx={{
+															color: 'white',
+															fontSize: isSticky ? (isMobileSize ? '0.9rem' : '1rem') : undefined,
+															ml: isSticky ? '-0.25rem' : '0rem',
+														}}
+														fontSize='small'
+													/>
 												</IconButton>
 											</Tooltip>
 										) : (
@@ -354,7 +371,7 @@ const CoursePaper = ({
 										)}
 										<Tooltip title='More Info' placement='top' arrow>
 											<IconButton
-												sx={{ padding: '0 0.75rem', ml: '-0.75rem' }}
+												sx={{ padding: isSticky ? '0 0rem' : '0 0.25rem', ml: isSticky ? '-0.25rem' : '-0.5rem' }}
 												onClick={() => {
 													setIsCourseInfoDialogOpen(true);
 												}}>

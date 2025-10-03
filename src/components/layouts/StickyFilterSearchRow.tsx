@@ -67,118 +67,120 @@ const StickyFilterSearchRow = ({
 				}}>
 				<Box sx={{ display: 'flex', width: '100%', flexDirection: 'column' }}>
 					<Box sx={{ display: 'flex', width: '100%', justifyContent: 'space-between' }}>
-						<Box sx={{ display: 'flex', alignSelf: 'flex-start', width: isVerySmallScreen ? '12.5rem' : 'fit-content' }}>
-							<Box sx={{ mr: '1rem' }}>
-								<FormControl>
-									<Select
-										size='small'
-										value={filterValue}
-										onChange={(e) => setFilterValue(e.target.value)}
-										displayEmpty
-										sx={{
-											backgroundColor: theme.bgColor?.common,
-											width: isMobileSizeSmall ? '7rem' : '12rem',
-											fontSize: isMobileSize ? '0.7rem' : '0.85rem',
-											textTransform: 'capitalize',
-										}}>
-										<MenuItem
-											disabled
-											value='filter'
-											selected
+						<Box sx={{ display: 'flex', flexDirection: isMobileSize ? 'column' : 'row', width: isVerySmallScreen ? '100%' : 'fit-content' }}>
+							<Box sx={{ display: 'flex', width: '100%' }}>
+								<Box sx={{ mr: '1rem' }}>
+									<FormControl>
+										<Select
+											size='small'
+											value={filterValue}
+											onChange={(e) => setFilterValue(e.target.value)}
+											displayEmpty
 											sx={{
-												fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-												fontStyle: 'italic',
+												backgroundColor: theme.bgColor?.common,
+												width: isMobileSizeSmall ? '7rem' : '12rem',
+												fontSize: isMobileSize ? '0.7rem' : '0.85rem',
 												textTransform: 'capitalize',
-												padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-												minHeight: '2rem',
 											}}>
-											Filter
-										</MenuItem>
-										<MenuItem
-											value=''
-											selected
-											sx={{
-												fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-												textTransform: 'capitalize',
-												padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-												minHeight: '2rem',
-											}}>
-											All
-										</MenuItem>
-										{filterOptions?.map((option) => (
 											<MenuItem
-												value={option.toLowerCase()}
-												key={option}
+												disabled
+												value='filter'
+												selected
+												sx={{
+													fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+													fontStyle: 'italic',
+													textTransform: 'capitalize',
+													padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+													minHeight: '2rem',
+												}}>
+												Filter
+											</MenuItem>
+											<MenuItem
+												value=''
+												selected
 												sx={{
 													fontSize: isMobileSize ? '0.65rem' : '0.85rem',
 													textTransform: 'capitalize',
 													padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
 													minHeight: '2rem',
 												}}>
-												{option}
+												All
 											</MenuItem>
-										))}
-									</Select>
-								</FormControl>
-							</Box>
-							<CustomTextField
-								value={searchValue}
-								placeholder={searchPlaceholder}
-								onChange={(e) => {
-									setSearchValue(e.target.value);
-								}}
-								sx={{ backgroundColor: '#fff', minWidth: isVerySmallScreen ? '10rem' : '17.5rem' }}
-								required={false}
-								InputProps={{
-									onKeyDown: (e) => {
-										if (e.key === 'Enter') {
-											e.preventDefault();
-											if (searchValue.trim() && !isSearchLoading) {
-												onSearch();
+											{filterOptions?.map((option) => (
+												<MenuItem
+													value={option.toLowerCase()}
+													key={option}
+													sx={{
+														fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+														textTransform: 'capitalize',
+														padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+														minHeight: '2rem',
+													}}>
+													{option}
+												</MenuItem>
+											))}
+										</Select>
+									</FormControl>
+								</Box>
+								<CustomTextField
+									value={searchValue}
+									placeholder={searchPlaceholder}
+									onChange={(e) => {
+										setSearchValue(e.target.value);
+									}}
+									sx={{ backgroundColor: '#fff', minWidth: isVerySmallScreen ? '10rem' : '17.5rem' }}
+									required={false}
+									InputProps={{
+										onKeyDown: (e) => {
+											if (e.key === 'Enter') {
+												e.preventDefault();
+												if (searchValue.trim() && !isSearchLoading) {
+													onSearch();
+												}
 											}
-										}
-									},
-									endAdornment: (
-										<InputAdornment position='end'>
-											<Search
-												sx={{
-													mr: '-0.5rem',
-												}}
-												fontSize={isMobileSize ? 'small' : 'medium'}
-											/>
-										</InputAdornment>
-									),
-								}}
-							/>
-							<CustomSubmitButton onClick={onSearch} sx={{ marginLeft: '1rem' }} disabled={!searchValue || isSearchLoading}>
-								Search
-							</CustomSubmitButton>
-							<CustomDeleteButton onClick={onReset}>Reset</CustomDeleteButton>
-						</Box>
-						<Box sx={{ display: 'flex', gap: 1, mb: '0.8rem', alignItems: 'center' }}>
-							{isSearchActive ? (
-								<Typography
-									variant='body2'
-									sx={{
-										color: 'text.secondary',
-										fontSize: '0.85rem',
-										ml: 1,
-										whiteSpace: 'nowrap',
-									}}>
-									{searchResultsTotalItems} {searchResultsTotalItems === 1 ? 'result' : 'results'}
-								</Typography>
-							) : (
-								<Typography
-									variant='body2'
-									sx={{
-										color: 'text.secondary',
-										fontSize: '0.85rem',
-										ml: 1,
-										whiteSpace: 'nowrap',
-									}}>
-									{totalItems} {totalItems === 1 ? 'item' : 'items'}
-								</Typography>
-							)}
+										},
+										endAdornment: (
+											<InputAdornment position='end'>
+												<Search
+													sx={{
+														mr: '-0.5rem',
+													}}
+													fontSize={isMobileSize ? 'small' : 'medium'}
+												/>
+											</InputAdornment>
+										),
+									}}
+								/>
+							</Box>
+							<Box sx={{ display: 'flex', alignItems: 'center', height: '2rem' }}>
+								<CustomSubmitButton onClick={onSearch} sx={{ marginLeft: isMobileSize ? '0' : '1rem' }} disabled={!searchValue || isSearchLoading}>
+									Search
+								</CustomSubmitButton>
+								<CustomDeleteButton onClick={onReset}>Reset</CustomDeleteButton>
+								{isSearchActive ? (
+									<Typography
+										variant='body2'
+										sx={{
+											color: 'text.secondary',
+											fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+											ml: 1,
+											whiteSpace: 'nowrap',
+										}}>
+										{searchResultsTotalItems} {searchResultsTotalItems === 1 ? 'result' : 'results'}
+									</Typography>
+								) : (
+									<Typography
+										variant='body2'
+										sx={{
+											color: 'text.secondary',
+											fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+											ml: 1,
+											whiteSpace: 'nowrap',
+										}}>
+										{totalItems} {totalItems === 1 ? 'item' : 'items'}
+									</Typography>
+								)}
+							</Box>
 						</Box>
 					</Box>
 				</Box>
@@ -200,7 +202,13 @@ const StickyFilterSearchRow = ({
 							color='secondary'
 							variant='outlined'
 							size='small'
-							sx={{ backgroundColor: '#1976d2', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
+							sx={{
+								backgroundColor: '#1976d2',
+								color: 'white',
+								fontSize: isMobileSize ? '0.7rem' : '0.8rem',
+								letterSpacing: '0.025rem',
+								height: isMobileSize ? '1.1rem' : '1.25rem',
+							}}
 						/>
 					)}
 					{searchedValue && searchButtonClicked && (
@@ -210,7 +218,13 @@ const StickyFilterSearchRow = ({
 							variant='outlined'
 							color='secondary'
 							size='small'
-							sx={{ backgroundColor: '#1EC28B', color: 'white', fontSize: '0.9rem', letterSpacing: '0.025rem' }}
+							sx={{
+								backgroundColor: 'coral',
+								color: 'white',
+								fontSize: isMobileSize ? '0.7rem' : '0.8rem',
+								letterSpacing: '0.025rem',
+								height: isMobileSize ? '1.1rem' : '1.25rem',
+							}}
 						/>
 					)}
 				</Box>
