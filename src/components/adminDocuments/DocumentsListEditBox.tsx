@@ -30,13 +30,17 @@ const DocumentsListEditBox = ({
 	setIsDocumentUpdated,
 	setHasUnsavedChanges,
 }: DocumentsListEditBoxProps) => {
+	console.log('documentsSource', documentsSource);
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	return (
 		<Box sx={{ marginBottom: isMobileSize ? '3rem' : '5rem' }}>
 			{documentsSource &&
 				documentsSource
-					?.filter((document) => document !== null)
+					?.filter(
+						(document: Document) =>
+							document !== null && document?.createdByName !== ' ' && document?.name && document?.name.trim() !== '' && document?._id
+					)
 					?.map((document, index) => (
 						<Box
 							key={index}
@@ -50,12 +54,12 @@ const DocumentsListEditBox = ({
 							}}>
 							<Box sx={{ mb: '0.25rem' }}>
 								<Link
-									href={document.documentUrl}
+									href={document?.documentUrl}
 									target='_blank'
 									rel='noopener noreferrer'
 									variant='body2'
 									sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-									{document.name}
+									{document?.name}
 								</Link>
 							</Box>
 							<Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -119,7 +123,7 @@ const DocumentsListEditBox = ({
 												});
 												setHasUnsavedChanges(true);
 											}}
-											disableBtn={document.name.trim() === ''}
+											disableBtn={!document.name || document.name.trim() === ''}
 										/>
 									</form>
 								</CustomDialog>

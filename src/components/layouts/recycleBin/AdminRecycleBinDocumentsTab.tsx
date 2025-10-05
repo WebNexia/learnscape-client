@@ -600,8 +600,8 @@ const AdminRecycleBinDocumentsTab = () => {
 						<Typography variant='body2' sx={{ lineHeight: 1.7, fontSize: isMobileSize ? '0.75rem' : undefined }}>
 							Are you sure you want to restore "{truncateText(document.name, 25)}"?
 						</Typography>
-						<Typography variant='body2' sx={{ lineHeight: 1.7, mt: 2, fontSize: isMobileSize ? '0.75rem' : undefined }}>
-							This document will become available again on all courses and lessons where it was previously used.
+						<Typography variant='body2' sx={{ lineHeight: 1.7, mt: 2, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+							This document can be added to lessons and courses manually
 						</Typography>
 					</DialogContent>
 					<CustomDialogActions
@@ -626,7 +626,10 @@ const AdminRecycleBinDocumentsTab = () => {
 					maxWidth='xs'>
 					<DialogContent>
 						<Typography variant='body2' sx={{ lineHeight: 1.7, fontSize: isMobileSize ? '0.75rem' : undefined }}>
-							Are you sure you want to permanently delete "{truncateText(document.name, 25)}"? This action cannot be undone.
+							Are you sure you want to permanently delete "{truncateText(document.name, 25)}"?
+						</Typography>
+						<Typography variant='body2' sx={{ lineHeight: 1.7, mt: 2, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+							This action cannot be undone
 						</Typography>
 					</DialogContent>
 					<CustomDialogActions
@@ -653,7 +656,7 @@ const AdminRecycleBinDocumentsTab = () => {
 						Are you sure you want to restore {selectedItems.length} selected document(s)?
 					</Typography>
 					<Typography variant='body2' sx={{ lineHeight: 1.7, mt: 2, fontSize: isMobileSize ? '0.75rem' : undefined }}>
-						These documents will become available again on all courses and lessons where they were previously used.
+						These documents can be added to lessons and courses manually
 					</Typography>
 				</DialogContent>
 				<CustomDialogActions
@@ -672,7 +675,10 @@ const AdminRecycleBinDocumentsTab = () => {
 				maxWidth='xs'>
 				<DialogContent>
 					<Typography variant='body2' sx={{ lineHeight: 1.7, fontSize: isMobileSize ? '0.75rem' : undefined }}>
-						Are you sure you want to permanently delete {selectedItems.length} selected document(s)? This action cannot be undone.
+						Are you sure you want to permanently delete {selectedItems.length} selected document(s)?
+					</Typography>
+					<Typography variant='body2' sx={{ lineHeight: 1.7, mt: 2, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+						This action cannot be undone
 					</Typography>
 				</DialogContent>
 				<CustomDialogActions

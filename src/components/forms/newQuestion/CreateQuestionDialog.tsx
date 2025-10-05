@@ -647,14 +647,14 @@ const CreateQuestionDialog = ({
 								<Box sx={{ width: '100%', margin: '1rem 0' }}>
 									<Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
 										<Typography variant='h6' sx={{ mb: '0.5rem' }}>
-											Question{' '}
+											Question
 											<span style={{ fontSize: isMobileSize ? '0.7rem' : '0.8rem', color: 'gray' }}>
 												{isOpenEndedQuestion
-													? '(Students can enter max 5000 characters while answering)'
+													? ' (Students can enter max 5000 characters while answering)'
 													: isFITBTyping
-														? '(Students can enter max 50 characters for each blank)'
+														? ' (Students can enter max 50 characters for each blank)'
 														: isAudioVideoQuestion
-															? 'Students can upload up to 2-minute audio or 1-minute video recording'
+															? ' (Students can upload up to 2-minute audio or 1-minute video recording)'
 															: ''}
 											</span>
 										</Typography>
@@ -680,7 +680,7 @@ const CreateQuestionDialog = ({
 
 							{(isFITBDragDrop || isFITBTyping) && (
 								<Box>
-									<Box sx={{ marginTop: '1rem', width: '90%', margin: '0 auto' }}>
+									<Box sx={{ marginTop: '1rem', width: isMobileSize ? '100%' : '90%', margin: isMobileSize ? '1rem auto 0 auto' : '0 auto' }}>
 										<Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
 											<Typography variant='h6'>Blank Values</Typography>
 											{(isFITBDragDrop || isFITBTyping) && (
@@ -712,7 +712,7 @@ const CreateQuestionDialog = ({
 															cursor: 'pointer',
 														}}
 														onClick={() => returnBlankValues(pair)}>
-														<Typography>
+														<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 															{pair.blank}-{pair.value}
 														</Typography>
 													</Box>
@@ -729,19 +729,19 @@ const CreateQuestionDialog = ({
 											minHeight: '4rem',
 											margin: '3rem auto 0 auto',
 										}}>
-										<Box sx={{ display: 'flex', width: '90%', margin: '1rem 0rem 0rem 0rem' }}>
+										<Box sx={{ display: 'flex', width: isMobileSize ? '100%' : '90%', margin: '1rem 0rem 0rem 0rem' }}>
 											<Box sx={{ flex: 1 }}>
-												<Typography variant='h5'>Student View</Typography>
+												<Typography variant={isMobileSize ? 'h6' : 'h5'}>Student View</Typography>
 											</Box>
 											<CustomInfoMessageAlignedRight message='View as in a practice lesson' />
 										</Box>
 										{isFITBDragDrop && (
-											<Box sx={{ padding: '1rem 0', width: '90%' }}>
+											<Box sx={{ padding: '1rem 0', width: isMobileSize ? '100%' : '90%' }}>
 												<FillInTheBlanksDragDrop textWithBlanks={editorContent} blankValuePairs={sortedBlankValuePairs} />
 											</Box>
 										)}
 										{isFITBTyping && (
-											<Box sx={{ padding: '1rem 0', width: '90%' }}>
+											<Box sx={{ padding: '1rem 0', width: isMobileSize ? '100%' : '90%' }}>
 												<FillInTheBlanksTyping
 													textWithBlanks={editorContent}
 													blankValuePairs={sortedBlankValuePairs}
@@ -763,10 +763,20 @@ const CreateQuestionDialog = ({
 													setNewQuestion((prevData) => ({ ...prevData, audio: e.target.checked }));
 													setIsAudioVideoSelectionMissing(false);
 												}}
+												sx={{
+													'& .MuiSvgIcon-root': {
+														fontSize: isMobileSize ? '1rem' : '1.25rem',
+													},
+												}}
 											/>
 										}
 										label='Ask Audio Recording'
-										sx={{ margin: '2rem 0 2rem 3rem' }}
+										sx={{
+											'& .MuiFormControlLabel-label': {
+												fontSize: isMobileSize ? '0.75rem' : '0.9rem',
+											},
+											'margin': '2rem 0',
+										}}
 									/>
 									<FormControlLabel
 										control={
@@ -776,10 +786,20 @@ const CreateQuestionDialog = ({
 													setNewQuestion((prevData) => ({ ...prevData, video: e.target.checked }));
 													setIsAudioVideoSelectionMissing(false);
 												}}
+												sx={{
+													'& .MuiSvgIcon-root': {
+														fontSize: isMobileSize ? '1rem' : '1.25rem',
+													},
+												}}
 											/>
 										}
 										label='Ask Video Recording'
-										sx={{ margin: '2rem 0 2rem 3rem' }}
+										sx={{
+											'& .MuiFormControlLabel-label': {
+												fontSize: isMobileSize ? '0.75rem' : '0.9rem',
+											},
+											'margin': '2rem 0 2rem 3rem',
+										}}
 									/>
 								</Box>
 							)}

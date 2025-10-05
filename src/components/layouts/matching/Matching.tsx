@@ -1,5 +1,5 @@
 import { Box, IconButton, Tooltip, Typography } from '@mui/material';
-import { useState } from 'react';
+import { useContext, useState } from 'react';
 import CustomTextField from '../../forms/customFields/CustomTextField';
 import { MatchingPair, QuestionInterface } from '../../../interfaces/question';
 import { AddCircle, RemoveCircle } from '@mui/icons-material';
@@ -10,6 +10,7 @@ import { QuestionUpdateTrack } from '../../../pages/AdminLessonEditPage';
 import { questionLessonUpdateTrack } from '../../../utils/questionLessonUpdateTrack';
 import { LessonType } from '../../../interfaces/enums';
 import CustomInfoMessageAlignedRight from '../infoMessage/CustomInfoMessageAlignedRight';
+import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 interface MatchingProps {
 	question?: QuestionInterface;
@@ -41,6 +42,9 @@ const Matching = ({
 	const [pairs, setPairs] = useState<MatchingPair[]>(() =>
 		existingQuestion ? matchingPairs : [{ id: generateUniqueId('pair-'), question: '', answer: '' }]
 	);
+
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
 
 	const updatePairs = (newPairs: MatchingPair[]) => {
 		setPairs(newPairs);
@@ -84,15 +88,17 @@ const Matching = ({
 	};
 
 	return (
-		<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: '2rem', width: '100%' }}>
+		<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: isMobileSize ? '1.5rem' : '2rem', width: '100%' }}>
 			{pairs?.map((pair, index) => (
-				<Box key={pair.id} sx={{ display: 'flex', mb: '0.5rem', width: '90%', alignItems: 'center' }}>
+				<Box
+					key={pair.id}
+					sx={{ display: 'flex', mb: isMobileSize ? '0.25rem' : '0.5rem', width: isMobileSize ? '100%' : '90%', alignItems: 'center' }}>
 					<CustomTextField
 						placeholder='Pair Key'
 						value={pair.question}
 						onChange={(e) => handlePairChange(index, 'question', e.target.value)}
 						required
-						sx={{ marginRight: '1.5rem' }}
+						sx={{ marginRight: isMobileSize ? '0.5rem' : '1.5rem' }}
 						InputProps={{
 							inputProps: {
 								maxLength: 500,
@@ -104,7 +110,7 @@ const Matching = ({
 						value={pair.answer}
 						onChange={(e) => handlePairChange(index, 'answer', e.target.value)}
 						required
-						sx={{ marginRight: '1.5rem' }}
+						sx={{ marginRight: isMobileSize ? '0.5rem' : '1.5rem' }}
 						InputProps={{
 							inputProps: {
 								maxLength: 500,
@@ -118,22 +124,22 @@ const Matching = ({
 								'mb': '0.85rem',
 								':hover': { backgroundColor: 'transparent' },
 							}}>
-							<RemoveCircle />
+							<RemoveCircle fontSize='small' />
 						</IconButton>
 					</Tooltip>
 				</Box>
 			))}
-			<Box sx={{ width: '90%' }}>
+			<Box sx={{ width: isMobileSize ? '100%' : '90%' }}>
 				<Tooltip title='Add Pair' placement='right' arrow>
 					<IconButton onClick={addPair} sx={{ 'mb': '0.85rem', ':hover': { backgroundColor: 'transparent' } }}>
-						<AddCircle />
+						<AddCircle fontSize='small' />
 					</IconButton>
 				</Tooltip>
 			</Box>
 			<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
-				<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '90%', mt: '3rem' }}>
+				<Box sx={{ display: 'flex', justifyContent: 'space-between', width: isMobileSize ? '100%' : '90%', mt: isMobileSize ? '1.5rem' : '3rem' }}>
 					<Box>
-						<Typography variant='h5'>Student View </Typography>
+						<Typography variant={isMobileSize ? 'h6' : 'h5'}>Student View </Typography>
 					</Box>
 					<CustomInfoMessageAlignedRight message={`View as in a ${lessonType === LessonType.QUIZ ? 'quiz' : 'practice lesson'}`} />
 				</Box>

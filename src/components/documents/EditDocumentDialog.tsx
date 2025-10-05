@@ -6,8 +6,9 @@ import HandleImageUploadURL from '../forms/uploadImageVideoDocument/HandleImageU
 import ImageThumbnail from '../forms/uploadImageVideoDocument/ImageThumbnail';
 import CustomTextField from '../forms/customFields/CustomTextField';
 import { Document, Price } from '../../interfaces/document';
-import { Dispatch, SetStateAction } from 'react';
+import { Dispatch, SetStateAction, useContext } from 'react';
 import { useAuth } from '../../hooks/useAuth';
+import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 
 interface EditDocumentDialogProps {
 	isOpen: boolean;
@@ -21,6 +22,7 @@ interface EditDocumentDialogProps {
 	setEnterDocImageUrl: Dispatch<SetStateAction<boolean>>;
 	enterSamplePageImageUrl: boolean;
 	setEnterSamplePageImageUrl: Dispatch<SetStateAction<boolean>>;
+	fileUploaded: boolean;
 	setFileUploaded: Dispatch<SetStateAction<boolean>>;
 	isFree: boolean;
 	setIsFree: Dispatch<SetStateAction<boolean>>;
@@ -46,6 +48,7 @@ const EditDocumentDialog = ({
 	setEnterDocImageUrl,
 	enterSamplePageImageUrl,
 	setEnterSamplePageImageUrl,
+	fileUploaded,
 	setFileUploaded,
 	isFree,
 	setIsFree,
@@ -59,10 +62,12 @@ const EditDocumentDialog = ({
 	setTRY,
 }: EditDocumentDialogProps) => {
 	const { isInstructor } = useAuth();
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
 	return (
 		<CustomDialog title='Edit Document' openModal={isOpen} closeModal={onClose} maxWidth='lg'>
 			<form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', padding: '0 1rem' }}>
-				<Box sx={{ margin: '0.75rem 1rem' }}>
+				<Box sx={{ margin: isMobileSize ? '0.75rem 0' : '0.75rem 1rem' }}>
 					<HandleDocUploadURL
 						enterDocUrl={enterDocUrl}
 						setEnterDocUrl={setEnterDocUrl}
@@ -83,9 +88,17 @@ const EditDocumentDialog = ({
 						initialDocumentName={document?.name}
 					/>
 				</Box>
-				<Box sx={{ display: 'flex' }}>
-					<Box sx={{ display: 'flex', margin: '1rem 1rem', justifyContent: 'space-between', alignItems: 'flex-start', flex: 1 }}>
-						<Box sx={{ flex: 1 }}>
+				<Box sx={{ display: 'flex', flexDirection: isMobileSize ? 'column' : 'row' }}>
+					<Box
+						sx={{
+							display: 'flex',
+							flexDirection: isMobileSize ? 'column' : 'row',
+							margin: isMobileSize ? '1rem 0' : '1rem 1rem',
+							justifyContent: 'space-between',
+							alignItems: isMobileSize ? 'center' : 'flex-start',
+							flex: 1,
+						}}>
+						<Box sx={{ flex: 1, width: isMobileSize ? '100%' : undefined }}>
 							<HandleImageUploadURL
 								label='Cover Image'
 								onImageUploadLogic={(url) => {
@@ -104,7 +117,7 @@ const EditDocumentDialog = ({
 								setEnterImageUrl={setEnterDocImageUrl}
 							/>
 						</Box>
-						<Box sx={{ ml: '3rem' }}>
+						<Box sx={{ ml: isMobileSize ? '0rem' : '3rem' }}>
 							<ImageThumbnail
 								imgSource={document?.imageUrl || 'https://placehold.co/400x300/e2e8f0/64748b?text=Document+Cover'}
 								removeImage={() => {
@@ -117,8 +130,16 @@ const EditDocumentDialog = ({
 							/>
 						</Box>
 					</Box>
-					<Box sx={{ display: 'flex', margin: '1rem 1rem 1rem 6rem', justifyContent: 'space-between', alignItems: 'flex-start', flex: 1 }}>
-						<Box sx={{ flex: 1 }}>
+					<Box
+						sx={{
+							display: 'flex',
+							flexDirection: isMobileSize ? 'column' : 'row',
+							margin: isMobileSize ? '1rem 0' : '1rem 1rem 1rem 6rem',
+							justifyContent: 'space-between',
+							alignItems: isMobileSize ? 'center' : 'flex-start',
+							flex: 1,
+						}}>
+						<Box sx={{ flex: 1, width: isMobileSize ? '100%' : undefined }}>
 							<HandleImageUploadURL
 								label='Sample Page Image'
 								onImageUploadLogic={(url) => {
@@ -137,7 +158,7 @@ const EditDocumentDialog = ({
 								setEnterImageUrl={setEnterSamplePageImageUrl}
 							/>
 						</Box>
-						<Box sx={{ ml: '3rem' }}>
+						<Box sx={{ ml: isMobileSize ? '0rem' : '3rem' }}>
 							<ImageThumbnail
 								imgSource={document?.samplePageImageUrl || 'https://placehold.co/400x300/e2e8f0/64748b?text=Sample+Page'}
 								removeImage={() => {
@@ -151,12 +172,16 @@ const EditDocumentDialog = ({
 						</Box>
 					</Box>
 				</Box>
-				<Box sx={{ display: 'flex', margin: '1rem', alignItems: 'flex-end' }}>
-					<Box sx={{ flex: 1 }}>
+				<Box
+					sx={{
+						display: 'flex',
+						flexDirection: isMobileSize ? 'column' : 'row',
+						margin: isMobileSize ? '1rem 0' : '1rem',
+						alignItems: isMobileSize ? 'flex-start' : 'flex-end',
+					}}>
+					<Box sx={{ flex: 1, width: isMobileSize ? '100%' : undefined }}>
 						<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: '0.5rem' }}>
-							<Typography variant='h6' sx={{ fontSize: '0.9rem' }}>
-								Prices
-							</Typography>
+							<Typography variant='h6'>Prices</Typography>
 							<FormControlLabel
 								control={
 									<Checkbox
@@ -181,7 +206,7 @@ const EditDocumentDialog = ({
 								sx={{
 									'mr': '0rem',
 									'& .MuiFormControlLabel-label': {
-										fontSize: '0.75rem',
+										fontSize: isMobileSize ? '0.7rem' : '0.75rem',
 									},
 								}}
 								disabled={isInstructor}
@@ -189,7 +214,7 @@ const EditDocumentDialog = ({
 						</Box>
 
 						<Grid container spacing={2}>
-							<Grid item xs={6}>
+							<Grid item xs={6} sx={{ width: isMobileSize ? '100%' : undefined }}>
 								<CustomTextField
 									label='GBP'
 									value={isFree ? '0' : GBP.amount}
@@ -275,7 +300,7 @@ const EditDocumentDialog = ({
 							</Grid>
 						</Grid>
 					</Box>
-					<Box sx={{ flex: 1, ml: '7rem' }}>
+					<Box sx={{ flex: 1, ml: isMobileSize ? '0rem' : '7rem', mt: isMobileSize ? '1rem' : undefined }}>
 						<CustomTextField
 							label='Description'
 							value={document?.description || ''}
@@ -300,9 +325,9 @@ const EditDocumentDialog = ({
 						/>
 					</Box>
 				</Box>
-				<Box sx={{ display: 'flex', justifyContent: 'flex-end', margin: '0 1rem' }}>
-					<Box sx={{ flex: 1 }}></Box>
-					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flex: 1, ml: '7rem' }}>
+				<Box sx={{ display: 'flex', justifyContent: isMobileSize ? 'space-between' : 'flex-end', margin: isMobileSize ? '0rem 0' : '0 1rem' }}>
+					<Box sx={{ flex: 1, display: isMobileSize ? 'none' : 'block' }}></Box>
+					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flex: 1, ml: isMobileSize ? '0rem' : '7rem' }}>
 						<Box>
 							<CustomTextField
 								label='Page Count'
@@ -341,14 +366,14 @@ const EditDocumentDialog = ({
 								sx={{
 									'mr': '0rem',
 									'& .MuiFormControlLabel-label': {
-										fontSize: '0.75rem',
+										fontSize: isMobileSize ? '0.7rem' : '0.75rem',
 									},
 								}}
 							/>
 						</Box>
 					</Box>
 				</Box>
-				<CustomDialogActions onCancel={onClose} submitBtnType='submit' actionSx={{ mt: '1rem' }} submitBtnText='Save' />
+				<CustomDialogActions onCancel={onClose} submitBtnType='submit' actionSx={{ mt: '1rem' }} disableBtn={!fileUploaded} submitBtnText='Save' />
 			</form>
 		</CustomDialog>
 	);

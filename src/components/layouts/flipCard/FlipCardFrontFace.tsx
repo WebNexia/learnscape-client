@@ -4,6 +4,34 @@ import { QuestionInterface } from '../../../interfaces/question';
 import { Lesson } from '../../../interfaces/lessons';
 import { useContext } from 'react';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
+import { styled } from '@mui/material/styles';
+
+const StyledTextarea = styled('textarea')<{ isMobile: boolean }>(({ theme, isMobile }) => ({
+	'&::placeholder': {
+		fontSize: isMobile ? '0.7rem' : '0.9rem',
+		color: 'rgba(255, 255, 255, 0.7)',
+		fontStyle: 'italic',
+		opacity: 0.8,
+	},
+	'&::-webkit-input-placeholder': {
+		fontSize: isMobile ? '0.7rem' : '0.9rem',
+		color: 'rgba(255, 255, 255, 0.7)',
+		fontStyle: 'italic',
+		opacity: 0.8,
+	},
+	'&::-moz-placeholder': {
+		fontSize: isMobile ? '0.7rem' : '0.9rem',
+		color: 'rgba(255, 255, 255, 0.7)',
+		fontStyle: 'italic',
+		opacity: 0.8,
+	},
+	'&:-ms-input-placeholder': {
+		fontSize: isMobile ? '0.7rem' : '0.9rem',
+		color: 'rgba(255, 255, 255, 0.7)',
+		fontStyle: 'italic',
+		opacity: 0.8,
+	},
+}));
 
 interface FlipCardFrontFaceProps {
 	setIsQuestionMissing: React.Dispatch<React.SetStateAction<boolean>>;
@@ -16,6 +44,7 @@ interface FlipCardFrontFaceProps {
 	setQuestionAdminQuestions?: React.Dispatch<React.SetStateAction<string>>;
 	fromLessonEditPage: boolean | undefined;
 	imageUrlAdminQuestions?: string;
+	placeholder?: string;
 }
 
 const FlipCardFrontFace = ({
@@ -29,7 +58,10 @@ const FlipCardFrontFace = ({
 	setQuestionAdminQuestions,
 	fromLessonEditPage,
 	imageUrlAdminQuestions,
+	placeholder = 'Enter Front Face Text',
 }: FlipCardFrontFaceProps) => {
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const FrontFaceImage = (
 		<Box
 			sx={{
@@ -37,8 +69,8 @@ const FlipCardFrontFace = ({
 				alignItems: 'center',
 				justifyContent: 'center',
 				backgroundColor: theme.bgColor?.greenPrimary,
-				width: '50vh',
-				height: '25vh',
+				width: isMobileSize ? '20rem' : '25rem',
+				height: isMobileSize ? '20rem' : '40vh',
 				padding: '0.5rem',
 				border: 'none',
 				borderRadius: '0.5rem 0.5rem 0 0',
@@ -55,13 +87,10 @@ const FlipCardFrontFace = ({
 			/>
 		</Box>
 	);
-	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
-	const isMobileSize = isSmallScreen || isRotatedMedium;
+
 	return (
-		<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: isMobileSize ? 'center' : 'flex-end', width: '50vw' }}>
-			<Typography variant='body1' sx={{ width: '50vw' }}>
-				Front
-			</Typography>
+		<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: isMobileSize ? '20rem' : '25rem' }}>
+			<Typography variant={isMobileSize ? 'body2' : 'body1'}>Front</Typography>
 
 			{question?.imageUrl || newQuestion?.imageUrl ? (
 				FrontFaceImage
@@ -69,8 +98,8 @@ const FlipCardFrontFace = ({
 				<Box
 					sx={{
 						backgroundColor: theme.bgColor?.greenPrimary,
-						width: '50vw',
-						height: '25vh',
+						width: isMobileSize ? '15rem' : '25rem',
+						height: isMobileSize ? '10rem' : '30vh',
 						color: 'white',
 						padding: '2rem 1rem',
 						textAlign: 'center',
@@ -78,11 +107,12 @@ const FlipCardFrontFace = ({
 						borderRadius: '0.5rem 0.5rem 0 0',
 						objectFit: 'contain',
 					}}>
-					<Typography variant='body1'>No Image</Typography>
+					<Typography variant={isMobileSize ? 'body2' : 'body1'}>No Image</Typography>
 				</Box>
 			)}
 
-			<textarea
+			<StyledTextarea
+				isMobile={isMobileSize}
 				value={frontText}
 				maxLength={255}
 				onChange={(e) => {
@@ -119,12 +149,12 @@ const FlipCardFrontFace = ({
 				}}
 				style={{
 					backgroundColor: theme.bgColor?.greenPrimary,
-					width: '50vw',
-					height: '15vh',
+					width: isMobileSize ? '15rem' : '25rem',
+					height: isMobileSize ? '5rem' : '10vh',
 					color: 'white',
 					padding: '1rem 1rem',
 					fontFamily: theme.fontFamily?.main,
-					fontSize: '1rem',
+					fontSize: isMobileSize ? '0.8rem' : '1rem',
 					textAlign: 'center',
 					lineHeight: '1.5rem',
 					border: 'none',
@@ -133,7 +163,7 @@ const FlipCardFrontFace = ({
 					borderRadius: '0 0 0.5rem 0.5rem',
 				}}
 				rows={7}
-				placeholder='Enter Front Face Text'
+				placeholder={placeholder}
 			/>
 		</Box>
 	);

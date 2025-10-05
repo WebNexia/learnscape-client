@@ -216,6 +216,8 @@ const Message = ({
 					flex: 1,
 					padding: '0.35rem',
 					borderRight: 'solid lightgray 0.1rem',
+					minWidth: isMobileSize ? '5rem' : '7rem',
+					maxWidth: isMobileSize ? '5rem' : '7rem',
 				}}>
 				<Box>
 					<img

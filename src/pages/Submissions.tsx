@@ -145,14 +145,21 @@ const Submissions = () => {
 				}}>
 				<Table
 					sx={{
-						'margin': '1rem 0',
+						'mb': '2rem',
 						'tableLayout': 'fixed',
 						'width': '100%',
 						'borderCollapse': 'collapse',
 						'borderSpacing': 0,
 						'& .MuiTableHead-root': {
 							position: 'fixed',
-							top: (isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim()) ? '11rem' : '8rem',
+							top:
+								(isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim())
+									? !isMobileSize
+										? '10rem'
+										: '12.5rem'
+									: isMobileSize
+										? '10.25rem'
+										: '8rem',
 							left: isMobileSize ? 0 : '10rem',
 							right: 0,
 							zIndex: 99,
@@ -164,7 +171,7 @@ const Submissions = () => {
 						},
 						'& .MuiTableHead-root .MuiTableCell-root': {
 							backgroundColor: theme.palette.background.paper,
-							padding: '0.25rem 1rem',
+							padding: isMobileSize ? '0.25rem 0rem' : '0.25rem 1rem',
 							boxSizing: 'border-box',
 							margin: 0,
 							verticalAlign: 'center',
@@ -173,7 +180,7 @@ const Submissions = () => {
 							borderRight: 'none',
 						},
 						'& .MuiTableBody-root .MuiTableCell-root': {
-							padding: '0.25rem 1rem',
+							padding: isMobileSize ? '0.5rem 0.5rem' : '0.25rem 1rem',
 							boxSizing: 'border-box',
 							margin: 0,
 							verticalAlign: 'center',
@@ -218,7 +225,6 @@ const Submissions = () => {
 					}}
 					size='small'
 					aria-label='a dense table'>
-					{((isSearchActive && searchedValue) || (isSearchActive && filterValue?.trim())) && <Box sx={{ height: '0.5rem' }}></Box>}
 					{/* Spacer row to ensure header alignment */}
 					<TableRow sx={{ height: 0, visibility: 'hidden' }}>
 						<TableCell sx={{ width: isMobileSize ? '35%' : '35%', padding: 0, border: 'none' }} />
@@ -253,7 +259,7 @@ const Submissions = () => {
 													'_blank'
 												);
 											}}
-											icon={<PendingOutlined fontSize='small' />}
+											icon={<PendingOutlined fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
 										/>
 									</TableCell>
 								</TableRow>

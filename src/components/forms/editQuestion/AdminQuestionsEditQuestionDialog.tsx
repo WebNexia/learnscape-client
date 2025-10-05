@@ -32,6 +32,7 @@ import CustomInfoMessageAlignedRight from '../../layouts/infoMessage/CustomInfoM
 import axios from '@utils/axiosInstance';
 import { validateImageUrl, validateVideoUrl } from '../../../utils/urlValidation';
 import { decode } from 'html-entities';
+import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 interface EditQuestionDialogProps {
 	index: number;
@@ -78,6 +79,8 @@ const AdminQuestionsEditQuestionDialog = ({
 	const { orgId } = useContext(OrganisationContext);
 	const { updateQuestion, fetchQuestions, questionsPageNumber } = useContext(QuestionsContext);
 	const { user } = useAuth();
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
 
 	// Role detection
 	const isInstructor = user?.role === Roles.INSTRUCTOR;
@@ -318,7 +321,7 @@ const AdminQuestionsEditQuestionDialog = ({
 		if (field === 'videoUrl') setVideoUrlAdminQuestions(value);
 	};
 
-	const imagePlaceHolderUrl = 'https://placehold.co/500x400/e2e8f0/64748b?text=No+Image';
+	const imagePlaceHolderUrl = 'https://placehold.co/600x400/e2e8f0/64748b?text=No+Image';
 
 	const handleResetQuestion = () => {
 		setQuestionAdminQuestions(questionBeforeSave.question);
@@ -367,8 +370,16 @@ const AdminQuestionsEditQuestionDialog = ({
 						alignItems: 'center',
 						margin: '0.5rem 0.5rem 2rem 0.5rem',
 					}}>
-					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: '2rem', width: '100%' }}>
-						<Box sx={{ flex: 1, mr: '2rem' }}>
+					<Box
+						sx={{
+							display: 'flex',
+							flexDirection: isMobileSize ? 'column' : 'row',
+							justifyContent: 'space-between',
+							alignItems: isMobileSize ? 'center' : 'flex-start',
+							mb: '2rem',
+							width: '100%',
+						}}>
+						<Box sx={{ flex: 1, mr: isMobileSize ? '0rem' : '2rem', width: isMobileSize ? '100%' : undefined }}>
 							<HandleImageUploadURL
 								onImageUploadLogic={(url) => {
 									setImageUrlAdminQuestions(url);
@@ -391,7 +402,7 @@ const AdminQuestionsEditQuestionDialog = ({
 							)}
 						</Box>
 						{!isFlipCard && (
-							<Box sx={{ flex: 1 }}>
+							<Box sx={{ flex: 1, width: isMobileSize ? '100%' : undefined, mt: isMobileSize ? '2rem' : undefined }}>
 								<HandleVideoUploadURL
 									onVideoUploadLogic={(url) => {
 										setVideoUrlAdminQuestions(url);
@@ -458,7 +469,7 @@ const AdminQuestionsEditQuestionDialog = ({
 						</Box>
 					)}
 
-					<Box sx={{ width: '90%' }}>
+					<Box sx={{ width: isMobileSize ? '100%' : '90%' }}>
 						{isMultipleChoiceQuestion &&
 							options?.map((option, i) => (
 								<Box
@@ -468,7 +479,7 @@ const AdminQuestionsEditQuestionDialog = ({
 										justifyContent: 'flex-end',
 										alignItems: 'center',
 										width: '100%',
-										marginLeft: '3rem',
+										marginLeft: isMobileSize ? '0.5rem' : '3rem',
 									}}>
 									<Tooltip title='Correct Answer' placement='left' arrow>
 										<FormControlLabel
@@ -480,6 +491,7 @@ const AdminQuestionsEditQuestionDialog = ({
 														setIsCorrectAnswerMissing(false);
 													}}
 													color='primary'
+													size='small'
 												/>
 											}
 											label=''
@@ -488,7 +500,7 @@ const AdminQuestionsEditQuestionDialog = ({
 									{i === options.length - 1 && (
 										<Tooltip title='Add Option' placement='top' arrow>
 											<IconButton onClick={addOption}>
-												<AddCircle />
+												<AddCircle fontSize='small' />
 											</IconButton>
 										</Tooltip>
 									)}
@@ -508,7 +520,7 @@ const AdminQuestionsEditQuestionDialog = ({
 									{i > 0 && (
 										<Tooltip title='Remove Option' placement='top' arrow>
 											<IconButton onClick={() => removeOption(i)}>
-												<RemoveCircle />
+												<RemoveCircle fontSize='small' />
 											</IconButton>
 										</Tooltip>
 									)}
@@ -526,7 +538,7 @@ const AdminQuestionsEditQuestionDialog = ({
 
 						{(isFITBDragDrop || isFITBTyping) && (
 							<>
-								<Box sx={{ marginTop: '1rem' }}>
+								<Box sx={{ marginTop: '1rem', width: isMobileSize ? '100%' : '90%' }}>
 									<Typography variant='h6'>Blank Values</Typography>
 									<Box
 										sx={{
@@ -555,7 +567,7 @@ const AdminQuestionsEditQuestionDialog = ({
 															cursor: 'pointer',
 														}}
 														onClick={() => returnBlankValues(pair)}>
-														<Typography>
+														<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 															{pair.blank}-{pair.value}
 														</Typography>
 													</Box>
@@ -572,9 +584,9 @@ const AdminQuestionsEditQuestionDialog = ({
 										minHeight: '4rem',
 										margin: '3rem auto 0 auto',
 									}}>
-									<Box sx={{ display: 'flex', width: '100%', margin: '1rem 0rem 0rem 0rem' }}>
+									<Box sx={{ display: 'flex', width: '100%', margin: isMobileSize ? '0rem' : '1rem 0rem 0rem 0rem' }}>
 										<Box sx={{ flex: 1 }}>
-											<Typography variant='h5'>Student View</Typography>
+											<Typography variant={isMobileSize ? 'h6' : 'h5'}>Student View</Typography>
 										</Box>
 										<CustomInfoMessageAlignedRight message='View as in a practice lesson' />
 									</Box>
@@ -598,8 +610,8 @@ const AdminQuestionsEditQuestionDialog = ({
 						)}
 
 						{isAudioVideoQuestion && (
-							<Box sx={{ display: 'flex', justifyContent: 'center' }}>
-								<Box sx={{ margin: '2rem 0 2rem 3rem' }}>
+							<Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+								<Box sx={{ margin: isMobileSize ? '2rem 0' : '2rem 2rem 2rem 0rem' }}>
 									<FormControlLabel
 										control={
 											<Checkbox
@@ -608,12 +620,22 @@ const AdminQuestionsEditQuestionDialog = ({
 													setIsAudioAdminQuestions(e.target.checked);
 													setIsAudioVideoSelectionMissing(false);
 												}}
+												sx={{
+													'& .MuiSvgIcon-root': {
+														fontSize: isMobileSize ? '1rem' : '1.25rem',
+													},
+												}}
 											/>
 										}
 										label='Ask Audio Recording'
+										sx={{
+											'& .MuiFormControlLabel-label': {
+												fontSize: isMobileSize ? '0.8rem' : '0.9rem',
+											},
+										}}
 									/>
 								</Box>
-								<Box sx={{ margin: '2rem 0 2rem 3rem' }}>
+								<Box sx={{ margin: '2rem 0 ' }}>
 									<FormControlLabel
 										control={
 											<Checkbox
@@ -622,9 +644,19 @@ const AdminQuestionsEditQuestionDialog = ({
 													setIsVideoAdminQuestions(e.target.checked);
 													setIsAudioVideoSelectionMissing(false);
 												}}
+												sx={{
+													'& .MuiSvgIcon-root': {
+														fontSize: isMobileSize ? '1rem' : '1.25rem',
+													},
+												}}
 											/>
 										}
 										label='Ask Video Recording'
+										sx={{
+											'& .MuiFormControlLabel-label': {
+												fontSize: isMobileSize ? '0.8rem' : '0.9rem',
+											},
+										}}
 									/>
 								</Box>
 							</Box>
@@ -684,6 +716,7 @@ const AdminQuestionsEditQuestionDialog = ({
 					onSubmit={handleSubmit}
 					submitBtnText='Save'
 					submitBtnType='button'
+					actionSx={{ marginTop: isMobileSize ? '-3rem' : '-2rem' }}
 				/>
 			</form>
 

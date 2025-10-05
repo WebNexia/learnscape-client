@@ -41,8 +41,16 @@ const FlipCard = ({
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
 	return (
-		<Box sx={{ width: '100%' }}>
-			<Box sx={{ display: 'flex', flexDirection: isMobileSize ? 'column' : 'row', mt: isMobileSize ? '-3rem' : undefined }}>
+		<Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', mt: isMobileSize ? '2rem' : '0rem' }}>
+			<Box
+				sx={{
+					display: 'flex',
+					flexDirection: isMobileSize ? 'column' : 'row',
+					justifyContent: 'center',
+					alignItems: 'center',
+					width: '100%',
+					mt: isMobileSize ? '-3rem' : undefined,
+				}}>
 				<FlipCardFrontFace
 					frontText={frontText}
 					setIsQuestionMissing={setIsQuestionMissing}
@@ -66,20 +74,22 @@ const FlipCard = ({
 			</Box>
 
 			{/* Flip Card Preview */}
-			<Box>
-				<Typography variant='body1' sx={{ margin: isMobileSize ? '5rem auto 3rem auto' : '3rem auto 1rem auto', textAlign: 'center' }}>
-					Preview
-				</Typography>
+			<Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', mt: '3rem' }}>
+				<Box>
+					<Typography variant={isMobileSize ? 'body2' : 'body1'} sx={{ textAlign: 'center' }}>
+						Preview
+					</Typography>
+				</Box>
+				<FlipCardPreview
+					question={question}
+					newQuestion={newQuestion}
+					fromLessonEditPage={fromLessonEditPage}
+					imageUrlAdminQuestions={imageUrlAdminQuestions}
+					frontText={frontText}
+					backText={backText}
+					setNewQuestion={setNewQuestion}
+				/>
 			</Box>
-			<FlipCardPreview
-				question={question}
-				newQuestion={newQuestion}
-				fromLessonEditPage={fromLessonEditPage}
-				imageUrlAdminQuestions={imageUrlAdminQuestions}
-				frontText={frontText}
-				backText={backText}
-				setNewQuestion={setNewQuestion}
-			/>
 		</Box>
 	);
 };

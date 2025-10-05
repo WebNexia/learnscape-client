@@ -618,7 +618,7 @@ const AdminRecycleBinQuestionsTab = () => {
 							Are you sure you want to restore "{truncateText(stripHtml(decode(question.question)), 25)}"?
 						</Typography>
 						<Typography variant='body2' sx={{ lineHeight: 1.7, mt: 2, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-							This question will become available again on all lessons where it was previously used.
+							This question can be added to lessons manually
 						</Typography>
 					</DialogContent>
 					<CustomDialogActions
@@ -643,7 +643,10 @@ const AdminRecycleBinQuestionsTab = () => {
 					maxWidth='xs'>
 					<DialogContent>
 						<Typography variant='body2' sx={{ lineHeight: 1.7, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-							Are you sure you want to permanently delete "{truncateText(stripHtml(decode(question.question)), 25)}"? This action cannot be undone.
+							Are you sure you want to permanently delete "{truncateText(stripHtml(decode(question.question)), 25)}"?
+						</Typography>
+						<Typography variant='body2' sx={{ lineHeight: 1.7, mt: 2, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+							This action cannot be undone.
 						</Typography>
 					</DialogContent>
 					<CustomDialogActions
@@ -670,7 +673,7 @@ const AdminRecycleBinQuestionsTab = () => {
 						Are you sure you want to restore {selectedItems.length} selected question(s)?
 					</Typography>
 					<Typography variant='body2' sx={{ lineHeight: 1.7, mt: 2, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-						These questions will become available again on all lessons where they were previously used.
+						These questions can be added to lessons manually
 					</Typography>
 				</DialogContent>
 				<CustomDialogActions
@@ -689,7 +692,10 @@ const AdminRecycleBinQuestionsTab = () => {
 				maxWidth='xs'>
 				<DialogContent>
 					<Typography variant='body2' sx={{ lineHeight: 1.7, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-						Are you sure you want to permanently delete {selectedItems.length} selected question(s)? This action cannot be undone.
+						Are you sure you want to permanently delete {selectedItems.length} selected question(s)?
+					</Typography>
+					<Typography variant='body2' sx={{ lineHeight: 1.7, mt: 2, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+						This action cannot be undone.
 					</Typography>
 				</DialogContent>
 				<CustomDialogActions

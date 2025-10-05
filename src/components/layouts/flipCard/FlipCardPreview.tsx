@@ -9,17 +9,14 @@ interface FlipCardInnerProps {
 	isFlipped: boolean;
 }
 
-const FlipCardContainer = styled(Box)(
-	({ isMobileSize, isVerySmallScreen, isSmallScreen }: { isMobileSize: boolean; isVerySmallScreen: boolean; isSmallScreen: boolean }) => ({
-		position: 'relative',
-		display: 'flex',
-		width: isVerySmallScreen ? '70vw' : isSmallScreen ? '50vw' : '35vw',
-		height: isVerySmallScreen ? '30vh' : isSmallScreen ? '35vh' : '40vh',
-		perspective: '50rem',
-		margin: isMobileSize ? '-2.5rem auto 1.5rem auto' : '0rem auto 3rem auto',
-		cursor: 'pointer',
-	})
-);
+const FlipCardContainer = styled(Box)(({ isMobileSize }: { isMobileSize: boolean }) => ({
+	position: 'relative',
+	display: 'flex',
+	width: isMobileSize ? '15rem' : '25rem',
+	height: isMobileSize ? '15rem' : '40vh',
+	perspective: '50rem',
+	cursor: 'pointer',
+}));
 
 const FlipCardInner = styled(Box, {
 	shouldForwardProp: (prop) => prop !== 'isFlipped',
@@ -122,7 +119,7 @@ const FlipCardPreview = ({
 	};
 
 	return (
-		<FlipCardContainer isMobileSize={isMobileSize} isVerySmallScreen={isVerySmallScreen} isSmallScreen={isSmallScreen}>
+		<FlipCardContainer isMobileSize={isMobileSize}>
 			<FlipCardInner isFlipped={isFlipped} onClick={handleClick}>
 				<FlipCardFront>
 					{/* <Label>Front</Label> */}

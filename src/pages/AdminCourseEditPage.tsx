@@ -425,13 +425,13 @@ const AdminCourseEditPage = () => {
 				const updatedDocumentsPromises = (singleCourseBeforeSave?.documents as (Document | null)[]) // Assert as array of Document or null
 					?.filter((doc): doc is Document => doc !== null) // Type guard to filter out nulls
 					?.map(async (document) => {
-						if (document._id.includes('temp_doc_id')) {
+						if (document?._id?.includes('temp_doc_id')) {
 							try {
 								const response = await axios.post(`${base_url}/documents${isInstructor ? '/instructor' : ''}`, {
-									name: document.name.trim(),
+									name: document?.name?.trim(),
 									orgId,
 									userId: user?._id,
-									documentUrl: document.documentUrl.trim(),
+									documentUrl: document?.documentUrl?.trim(),
 								});
 
 								const newDocumentResponseData = response.data;
@@ -442,7 +442,7 @@ const AdminCourseEditPage = () => {
 									createdAt: newDocumentResponseData.createdAt,
 									updatedAt: newDocumentResponseData.updatedAt,
 									usedInCourses: courseId ? [courseId] : [],
-									usedInLessons: document.usedInLessons || [],
+									usedInLessons: document?.usedInLessons || [],
 									createdByName: newDocumentResponseData.createdByName,
 									createdByImageUrl: newDocumentResponseData.createdByImageUrl,
 									createdByRole: newDocumentResponseData.createdByRole,
@@ -468,11 +468,11 @@ const AdminCourseEditPage = () => {
 
 			await Promise.all(
 				updatedDocuments?.map(async (doc) => {
-					const trackData = isDocumentUpdated?.find((data) => data.documentId === doc._id);
+					const trackData = isDocumentUpdated?.find((data) => data.documentId === doc?._id);
 					if (trackData?.isUpdated) {
 						try {
 							const response = await axios.patch(`${base_url}/documents${isInstructor ? '/instructor' : ''}/${doc._id}`, {
-								name: doc.name.trim(),
+								name: doc?.name?.trim(),
 							});
 							const updatedDocumentResponseData = response.data.data;
 							const updatedDocument: Document = {
@@ -495,13 +495,13 @@ const AdminCourseEditPage = () => {
 				})
 			);
 
-			const updatedDocumentIds = updatedDocuments?.map((doc) => doc._id);
+			const updatedDocumentIds = updatedDocuments?.map((doc) => doc?._id);
 
 			if (singleCourseBeforeSave) {
 				const updatedCourse = {
 					...singleCourseBeforeSave,
 					chapters: updatedChapters,
-					chapterIds: updatedChapters?.map((chapter) => chapter.chapterId),
+					chapterIds: updatedChapters?.map((chapter) => chapter?.chapterId),
 					documentIds: updatedDocumentIds,
 					documents: updatedDocuments,
 					isExpired: validUntil ? validUntil < new Date() : false,
@@ -535,7 +535,7 @@ const AdminCourseEditPage = () => {
 						chapter.lessons?.forEach((lesson) => {
 							updateLesson({
 								...lesson,
-								usedInCourses: lesson.usedInCourses || [],
+								usedInCourses: lesson?.usedInCourses || [],
 							});
 						});
 					});
@@ -544,7 +544,7 @@ const AdminCourseEditPage = () => {
 					updatedDocuments?.forEach((document) => {
 						updateDocument({
 							...document,
-							usedInCourses: document.usedInCourses || [],
+							usedInCourses: document?.usedInCourses || [],
 						});
 					});
 
@@ -558,10 +558,10 @@ const AdminCourseEditPage = () => {
 
 					await Promise.all(
 						updatedChapters?.map(async (chapter) => {
-							const trackData = isChapterUpdated?.find((data) => data.chapterId === chapter.chapterId);
+							const trackData = isChapterUpdated?.find((data) => data.chapterId === chapter?.chapterId);
 							if (trackData?.isUpdated) {
 								try {
-									await axios.patch(`${base_url}/chapters${isInstructor ? '/instructor' : ''}/${chapter.chapterId}`, chapter);
+									await axios.patch(`${base_url}/chapters${isInstructor ? '/instructor' : ''}/${chapter?.chapterId}`, chapter);
 								} catch (error) {
 									console.error('Error updating chapter:', error);
 								}
@@ -590,7 +590,7 @@ const AdminCourseEditPage = () => {
 			}
 
 			const chapterUpdateData = updatedChapters?.map((chapter) => ({
-				chapterId: chapter.chapterId,
+				chapterId: chapter?.chapterId,
 				isUpdated: false,
 			}));
 
@@ -931,7 +931,7 @@ const AdminCourseEditPage = () => {
 
 							{!singleCourseBeforeSave?.courseManagement.isExternal && (
 								<DocumentsListEditBox
-									documentsSource={singleCourseBeforeSave?.documents}
+									documentsSource={singleCourseBeforeSave?.documents?.filter((doc) => doc && doc._id && doc.name && doc.name.trim() !== '')}
 									toggleDocRenameModal={toggleDocRenameModal}
 									closeDocRenameModal={closeDocRenameModal}
 									isDocRenameModalOpen={isDocRenameModalOpen}

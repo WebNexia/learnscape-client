@@ -276,15 +276,15 @@ const AdminQuizSubmissionCheck = () => {
 				}}>
 				{[
 					{ label: 'Username', value: username },
-					{ label: 'Quiz Name', value: quizName },
-					{ label: 'Course Name', value: courseName },
+					{ label: isMobileSize ? 'Quiz' : 'Quiz Name', value: quizName },
+					{ label: isMobileSize ? 'Course' : 'Course Name', value: courseName },
 					{ label: 'Status', value: isChecked === 'true' ? 'Checked' : 'Unchecked' },
 				]?.map(({ label, value }, index) => (
 					<Box key={index} sx={{ textAlign: 'center' }}>
-						<Typography variant='h6' sx={{ mb: '0.35rem', fontSize: isMobileSizeSmall ? '0.85rem' : undefined }}>
+						<Typography variant='h6' sx={{ mb: '0.35rem', fontSize: isMobileSizeSmall ? '0.8rem' : undefined }}>
 							{label}
 						</Typography>
-						<Typography variant='body2' sx={{ fontSize: isMobileSizeSmall ? '0.75rem' : '0.85rem' }}>
+						<Typography variant='body2' sx={{ fontSize: isMobileSizeSmall ? '0.7rem' : '0.85rem' }}>
 							{value}
 						</Typography>
 					</Box>
@@ -626,7 +626,7 @@ const AdminQuizSubmissionCheck = () => {
 			</CustomDialog>
 
 			<Box sx={{ width: isVerySmallScreen ? '90%' : '85%', margin: isMobileSize ? '1rem 0' : '2rem' }}>
-				<Typography variant='h5' sx={{ mb: '1rem', fontSize: isMobileSize ? '0.9rem' : '1rem' }}>
+				<Typography variant={isMobileSize ? 'h6' : 'h5'} sx={{ mb: '1rem', fontSize: isMobileSize ? '0.9rem' : '1rem' }}>
 					Feedback for Quiz
 				</Typography>
 				<CustomTextField
