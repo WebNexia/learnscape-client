@@ -1,4 +1,4 @@
-import { Box, Table, TableBody, TableRow, TableCell, Typography, Snackbar, Alert, DialogActions } from '@mui/material';
+import { Box, Table, TableBody, TableRow, TableCell, Typography, Snackbar, Alert, DialogActions, DialogContent } from '@mui/material';
 import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
@@ -616,8 +616,23 @@ const AdminCourses = () => {
 														openModal={isCourseDeleteModalOpen[index]}
 														closeModal={() => closeDeleteCourseModal(index)}
 														title='Delete Course'
-														content={`Are you sure you want to delete "${course.title}"?`}
 														maxWidth='xs'>
+														<DialogContent>
+															<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem' }}>
+																Are you sure you want to delete "{course.title}"?
+															</Typography>
+															<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem', mt: '1.5rem' }}>
+																This action will permanently delete the course, all learner registrations and progress
+															</Typography>
+
+															<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem', mt: '1.5rem' }}>
+																Lessons and documents in this course can be reused in other courses
+															</Typography>
+
+															<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem', mt: '1.5rem' }}>
+																This action cannot be undone.
+															</Typography>
+														</DialogContent>
 														<CustomDialogActions
 															onCancel={() => closeDeleteCourseModal(index)}
 															deleteBtn={true}

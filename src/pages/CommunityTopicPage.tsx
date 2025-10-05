@@ -674,11 +674,11 @@ const CommunityTopicPage = () => {
 			<Box
 				sx={{
 					display: 'flex',
-					width: '87%',
+					width: isMobileSize ? '90%' : '87%',
 					minHeight: isMobileSize ? '3rem' : '5rem',
 					maxHeight: isMobileSize ? '5rem' : '7rem',
 					border: 'solid lightgray 0.1rem',
-					marginTop: isMobileSize ? '5.5rem' : '9rem',
+					marginTop: isMobileSize ? '3.75rem' : '9rem',
 					borderRadius: '0.35rem',
 					boxShadow: isMobileSize ? '0rem 0.1rem 0.3rem 0.1rem rgba(0,0,0,0.2)' : '0rem 0.2rem 0.5rem 0.1rem rgba(0,0,0,0.2)',
 					position: 'relative',
@@ -830,9 +830,9 @@ const CommunityTopicPage = () => {
 					display: 'flex',
 					flexDirection: 'column',
 					alignItems: 'center',
-					width: '87%',
+					width: isMobileSize ? '92%' : '87%',
 					margin: '1.5rem 0 5rem 0',
-					paddingBottom: '5rem',
+					paddingBottom: isMobileSize ? '2rem' : '5rem',
 				}}>
 				{messages?.slice((pageNumber - 1) * 25, pageNumber * 25)?.map((message: CommunityMessage, index) => (
 					<Message
@@ -860,7 +860,7 @@ const CommunityTopicPage = () => {
 					display: 'flex',
 					flexDirection: 'column',
 					alignItems: 'center',
-					width: '100%',
+					width: isMobileSize ? '95%' : '100%',
 					position: 'fixed',
 					bottom: '0',
 					backgroundColor: theme.bgColor?.secondary,

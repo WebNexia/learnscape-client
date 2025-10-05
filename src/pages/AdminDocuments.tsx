@@ -1,4 +1,4 @@
-import { Box, Table, TableBody, TableCell, TableRow, Snackbar, Alert, Typography, Link } from '@mui/material';
+import { Box, Table, TableBody, TableCell, TableRow, Snackbar, Alert, Typography, Link, DialogContent } from '@mui/material';
 import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
@@ -773,6 +773,7 @@ const AdminDocuments = () => {
 														setEnterDocImageUrl={setEnterDocImageUrl}
 														enterSamplePageImageUrl={enterSamplePageImageUrl}
 														setEnterSamplePageImageUrl={setEnterSamplePageImageUrl}
+														fileUploaded={fileUploaded}
 														setFileUploaded={setFileUploaded}
 														isFree={isFree}
 														setIsFree={setIsFree}
@@ -801,6 +802,14 @@ const AdminDocuments = () => {
 															title='Delete Document'
 															content={`Are you sure you want to delete "${document.name}"?`}
 															maxWidth='xs'>
+															<DialogContent>
+																<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem' }}>
+																	Are you sure you want to delete "${document.name}"?
+																</Typography>
+																<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem', mt: '1.5rem' }}>
+																	You can restore it later from the recycle bin
+																</Typography>
+															</DialogContent>
 															<CustomDialogActions
 																onCancel={() => {
 																	closeDeleteDocumentModal(index);

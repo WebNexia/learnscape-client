@@ -1,4 +1,4 @@
-import { Box, Table, TableBody, TableCell, TableRow, Tooltip, Typography, Snackbar, Alert } from '@mui/material';
+import { Box, Table, TableBody, TableCell, TableRow, Tooltip, Typography, Snackbar, Alert, DialogContent } from '@mui/material';
 import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
@@ -530,8 +530,16 @@ const AdminQuestions = () => {
 															openModal={isQuestionDeleteModalOpen[index]}
 															closeModal={() => closeDeleteQuestionModal(index)}
 															title='Delete Question'
-															content={`Are you sure you want to delete "${truncateText(stripHtml(decode(question.question)), 25)}"?`}
+															content={``}
 															maxWidth='xs'>
+															<DialogContent>
+																<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem' }}>
+																	Are you sure you want to delete "{truncateText(stripHtml(decode(question.question)), 25)}"?
+																</Typography>
+																<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem', mt: '1.5rem' }}>
+																	You can restore it later from the recycle bin
+																</Typography>
+															</DialogContent>
 															<CustomDialogActions
 																onCancel={() => closeDeleteQuestionModal(index)}
 																deleteBtn={true}

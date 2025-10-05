@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import { Box, Checkbox, DialogContent, FormControlLabel, IconButton, Radio, Tooltip, Typography, Snackbar, Alert } from '@mui/material';
 import CustomDialog from '../../layouts/dialog/CustomDialog';
 import CustomTextField from '../customFields/CustomTextField';
@@ -28,6 +28,7 @@ import FillInTheBlanksTyping from '../../layouts/FITBTyping/FillInTheBlanksTypin
 import CustomInfoMessageAlignedRight from '../../layouts/infoMessage/CustomInfoMessageAlignedRight';
 import { validateImageUrl, validateVideoUrl } from '../../../utils/urlValidation';
 import { decode } from 'html-entities';
+import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 interface AdminLessonEditPageEditQuestionDialogProps {
 	index: number;
@@ -82,6 +83,9 @@ const AdminLessonEditPageEditQuestionDialog = ({
 }: AdminLessonEditPageEditQuestionDialogProps) => {
 	const editorId = generateUniqueId('editor-');
 	const editorRef = useRef<any>(null);
+
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
 
 	const isFlipCard = questionType === QuestionType.FLIP_CARD;
 	const isOpenEndedQuestion = questionType === QuestionType.OPEN_ENDED;
@@ -346,8 +350,16 @@ const AdminLessonEditPageEditQuestionDialog = ({
 						alignItems: 'center',
 						margin: '0.5rem 0.5rem 2rem 0.5rem',
 					}}>
-					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: '2rem', width: '100%' }}>
-						<Box sx={{ flex: 1, mr: '2rem' }}>
+					<Box
+						sx={{
+							display: 'flex',
+							flexDirection: isMobileSize ? 'column' : 'row',
+							justifyContent: 'space-between',
+							alignItems: isMobileSize ? 'center' : 'flex-start',
+							mb: '2rem',
+							width: '100%',
+						}}>
+						<Box sx={{ flex: 1, mr: isMobileSize ? '0rem' : '2rem', width: isMobileSize ? '100%' : undefined }}>
 							<HandleImageUploadURL
 								onImageUploadLogic={(url) => {
 									handleInputChange('imageUrl', url);
@@ -369,7 +381,7 @@ const AdminLessonEditPageEditQuestionDialog = ({
 							)}
 						</Box>
 						{!isFlipCard && (
-							<Box sx={{ flex: 1 }}>
+							<Box sx={{ flex: 1, width: isMobileSize ? '100%' : undefined, mt: isMobileSize ? '2rem' : undefined }}>
 								<HandleVideoUploadURL
 									onVideoUploadLogic={(url) => {
 										handleInputChange('videoUrl', url);
@@ -433,7 +445,7 @@ const AdminLessonEditPageEditQuestionDialog = ({
 						</Box>
 					)}
 
-					<Box sx={{ width: '90%' }}>
+					<Box sx={{ width: isMobileSize ? '100%' : '90%' }}>
 						{isMultipleChoiceQuestion &&
 							options?.map((option, i) => (
 								<Box
@@ -443,7 +455,7 @@ const AdminLessonEditPageEditQuestionDialog = ({
 										justifyContent: 'flex-end',
 										alignItems: 'center',
 										width: '100%',
-										marginLeft: '3rem',
+										marginLeft: isMobileSize ? '0.5rem' : '3rem',
 									}}>
 									<Tooltip title='Correct Answer' placement='left' arrow>
 										<FormControlLabel
@@ -456,6 +468,7 @@ const AdminLessonEditPageEditQuestionDialog = ({
 														questionLessonUpdateTrack(question._id, setIsLessonUpdated, setIsQuestionUpdated);
 													}}
 													color='primary'
+													size='small'
 												/>
 											}
 											label=''
@@ -464,7 +477,7 @@ const AdminLessonEditPageEditQuestionDialog = ({
 									{i === options.length - 1 && (
 										<Tooltip title='Add Option' placement='top' arrow>
 											<IconButton onClick={addOption}>
-												<AddCircle />
+												<AddCircle fontSize='small' />
 											</IconButton>
 										</Tooltip>
 									)}
@@ -485,7 +498,7 @@ const AdminLessonEditPageEditQuestionDialog = ({
 									{i > 0 && (
 										<Tooltip title='Remove Option' placement='top' arrow>
 											<IconButton onClick={() => removeOption(i)}>
-												<RemoveCircle />
+												<RemoveCircle fontSize='small' />
 											</IconButton>
 										</Tooltip>
 									)}
@@ -532,7 +545,7 @@ const AdminLessonEditPageEditQuestionDialog = ({
 															cursor: 'pointer',
 														}}
 														onClick={() => returnBlankValues(pair)}>
-														<Typography>
+														<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 															{pair.blank}-{pair.value}
 														</Typography>
 													</Box>
@@ -549,19 +562,19 @@ const AdminLessonEditPageEditQuestionDialog = ({
 										minHeight: '4rem',
 										margin: '4rem auto 0 auto',
 									}}>
-									<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', mt: '3rem' }}>
+									<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', mt: isMobileSize ? '0.5rem' : '3rem' }}>
 										<Box>
-											<Typography variant='h5'>Student View </Typography>
+											<Typography variant={isMobileSize ? 'h6' : 'h5'}>Student View </Typography>
 										</Box>
 										<CustomInfoMessageAlignedRight message={`View as in a ${lessonType === LessonType.QUIZ ? 'quiz' : 'practice lesson'}`} />
 									</Box>
 									{isFITBDragDrop && (
-										<Box sx={{ padding: '1rem 0' }}>
+										<Box sx={{ padding: '1rem 0', width: isMobileSize ? '100%' : '90%' }}>
 											<FillInTheBlanksDragDropProps textWithBlanks={editorContent} blankValuePairs={blankValuePairs} lessonType={lessonType} />
 										</Box>
 									)}
 									{isFITBTyping && (
-										<Box sx={{ padding: '1rem 0' }}>
+										<Box sx={{ padding: '1rem 0', width: isMobileSize ? '100%' : '90%' }}>
 											<FillInTheBlanksTyping textWithBlanks={editorContent} blankValuePairs={blankValuePairs} lessonType={lessonType} />
 										</Box>
 									)}
@@ -571,7 +584,7 @@ const AdminLessonEditPageEditQuestionDialog = ({
 
 						{isAudioVideoQuestion && (
 							<Box sx={{ display: 'flex', justifyContent: 'center' }}>
-								<Box sx={{ margin: '2rem 0 2rem 3rem' }}>
+								<Box sx={{ margin: isMobileSize ? '2rem 0' : '2rem 2rem 2rem 0rem' }}>
 									<FormControlLabel
 										control={
 											<Checkbox
@@ -580,9 +593,19 @@ const AdminLessonEditPageEditQuestionDialog = ({
 													handleInputChange('audio', e.target.checked);
 													setIsAudioVideoSelectionMissing(false);
 												}}
+												sx={{
+													'& .MuiSvgIcon-root': {
+														fontSize: isMobileSize ? '1rem' : '1.25rem',
+													},
+												}}
 											/>
 										}
 										label='Ask Audio Recording'
+										sx={{
+											'& .MuiFormControlLabel-label': {
+												fontSize: isMobileSize ? '0.8rem' : '0.9rem',
+											},
+										}}
 									/>
 								</Box>
 								<Box sx={{ margin: '2rem 0 2rem 3rem' }}>
@@ -594,9 +617,19 @@ const AdminLessonEditPageEditQuestionDialog = ({
 													handleInputChange('video', e.target.checked);
 													setIsAudioVideoSelectionMissing(false);
 												}}
+												sx={{
+													'& .MuiSvgIcon-root': {
+														fontSize: isMobileSize ? '1rem' : '1.25rem',
+													},
+												}}
 											/>
 										}
 										label='Ask Video Recording'
+										sx={{
+											'& .MuiFormControlLabel-label': {
+												fontSize: isMobileSize ? '0.8rem' : '0.9rem',
+											},
+										}}
 									/>
 								</Box>
 							</Box>
@@ -660,6 +693,7 @@ const AdminLessonEditPageEditQuestionDialog = ({
 					onSubmit={handleSubmit}
 					submitBtnText='Save'
 					submitBtnType='button'
+					actionSx={{ marginTop: isMobileSize ? '-3rem' : '-2rem' }}
 				/>
 			</form>
 

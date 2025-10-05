@@ -303,7 +303,7 @@ const MatchingPreview = ({
 				{!isLessonCompleted && (
 					<CustomInfoMessageAlignedLeft
 						message='Drag the correct cards from the right into the dashed areas to match the pairs'
-						sx={{ margin: '0 rem auto 0 auto', width: '90%' }}
+						sx={{ margin: '0 rem auto 0 auto', width: isMobileSize ? '100%' : '90%' }}
 					/>
 				)}
 				<Container>

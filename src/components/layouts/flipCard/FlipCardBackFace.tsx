@@ -2,6 +2,34 @@ import { Box, Typography } from '@mui/material';
 import theme from '../../../themes';
 import { useContext } from 'react';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
+import styled from 'styled-components';
+
+const StyledTextarea = styled('textarea')<{ isMobile: boolean }>(({ theme, isMobile }) => ({
+	'&::placeholder': {
+		fontSize: isMobile ? '0.7rem' : '0.9rem',
+		color: 'rgba(255, 255, 255, 0.7)',
+		fontStyle: 'italic',
+		opacity: 0.8,
+	},
+	'&::-webkit-input-placeholder': {
+		fontSize: isMobile ? '0.7rem' : '0.9rem',
+		color: 'rgba(255, 255, 255, 0.7)',
+		fontStyle: 'italic',
+		opacity: 0.8,
+	},
+	'&::-moz-placeholder': {
+		fontSize: isMobile ? '0.7rem' : '0.9rem',
+		color: 'rgba(255, 255, 255, 0.7)',
+		fontStyle: 'italic',
+		opacity: 0.8,
+	},
+	'&:-ms-input-placeholder': {
+		fontSize: isMobile ? '0.7rem' : '0.9rem',
+		color: 'rgba(255, 255, 255, 0.7)',
+		fontStyle: 'italic',
+		opacity: 0.8,
+	},
+}));
 
 interface FlipCardBackFaceProps {
 	backText: string;
@@ -27,15 +55,15 @@ const FlipCardBackFace = ({
 			sx={{
 				display: 'flex',
 				flexDirection: 'column',
-				alignItems: isMobileSize ? 'center' : 'flex-start',
-				width: '100%',
+				alignItems: 'center',
 				ml: isMobileSize ? '0rem' : '3rem',
 				mt: isMobileSize ? '2rem' : undefined,
 			}}>
-			<Typography variant='body1' sx={{ width: isMobileSize ? '50vw' : '40vw' }}>
+			<Typography variant={isMobileSize ? 'body2' : 'body1'} sx={{ textAlign: 'center' }}>
 				Back
 			</Typography>
-			<textarea
+			<StyledTextarea
+				isMobile={isMobileSize}
 				value={backText}
 				onChange={(e) => {
 					setBackText(e.target.value);
@@ -48,12 +76,12 @@ const FlipCardBackFace = ({
 				maxLength={255}
 				style={{
 					backgroundColor: 'coral',
-					width: '50vw',
-					height: '40vh',
+					width: isMobileSize ? '15rem' : '25rem',
+					height: isMobileSize ? '15rem' : '40vh',
 					color: 'white',
 					padding: '4rem 3rem',
 					fontFamily: theme.fontFamily?.main,
-					fontSize: '1rem',
+					fontSize: isMobileSize ? '0.8rem' : '1rem',
 					textAlign: 'center',
 					lineHeight: '1.5rem',
 					border: 'none',
