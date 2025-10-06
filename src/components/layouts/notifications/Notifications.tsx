@@ -2,12 +2,15 @@ import { collection, query, onSnapshot, orderBy, doc, updateDoc, where, Timestam
 import { useContext, useEffect, useState } from 'react';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 import { EventsContext } from '../../../contexts/EventsContextProvider';
+import { CoursesContext } from '../../../contexts/CoursesContextProvider';
+import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
 import { db } from '../../../firebase';
 import { Box, Typography } from '@mui/material';
 import { formatMessageTime } from '../../../utils/formatTime';
 import { Circle } from '@mui/icons-material';
 import { NotificationType, Roles } from '../../../interfaces/enums';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from 'react-query';
 import axios from '@utils/axiosInstance';
 
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
@@ -36,6 +39,8 @@ const NotificationsBox = ({ showUnreadOnly }: NotificationsBoxProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { user } = useContext(UserAuthContext);
 	const { refreshCalendarData } = useContext(EventsContext);
+	const { orgId } = useContext(OrganisationContext);
+	const queryClient = useQueryClient();
 	const [notifications, setNotifications] = useState<Notification[]>([]);
 	const [showAll, setShowAll] = useState<boolean>(false);
 	const [hasOlderNotifications, setHasOlderNotifications] = useState<boolean>(false);
@@ -148,6 +153,27 @@ const NotificationsBox = ({ showUnreadOnly }: NotificationsBoxProps) => {
 					navigate(`/instructor/calendar`);
 				} else {
 					navigate(`/calendar`);
+				}
+			} else if (note.type === NotificationType.COURSE_INSTRUCTOR_ASSIGNMENT) {
+				// Invalidate courses cache to refresh data
+				if (!note.isRead && orgId) {
+					try {
+						// Determine the correct entity key based on user role
+						const entityKey = user?.role === Roles.INSTRUCTOR ? 'instructorCourses' : 'allCourses';
+
+						// Invalidate all pages for this entity
+						queryClient.invalidateQueries([entityKey, orgId]);
+					} catch (error) {
+						console.error('Error invalidating courses cache:', error);
+					}
+				}
+				// Navigate to courses page based on user role
+				if (user?.role === Roles.ADMIN) {
+					navigate(`/admin/courses`);
+				} else if (user?.role === Roles.INSTRUCTOR) {
+					navigate(`/instructor/courses`);
+				} else {
+					navigate(`/courses`);
 				}
 			}
 

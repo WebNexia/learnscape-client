@@ -158,6 +158,10 @@ const AdminDocuments = () => {
 	const [snackbarMessage, setSnackbarMessage] = useState<string>('');
 	const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
 
+	// Loading states for create/update operations
+	const [isCreating, setIsCreating] = useState<boolean>(false);
+	const [isUpdating, setIsUpdating] = useState<boolean>(false);
+
 	useEffect(() => {
 		setDocumentsPageNumber(1);
 		enableDocumentsFetch(); // 👈 Enable documents fetching when component mounts
@@ -204,6 +208,7 @@ const AdminDocuments = () => {
 	};
 
 	const createDocument = async (): Promise<boolean> => {
+		setIsCreating(true);
 		try {
 			// Validate URLs before proceeding
 			let hasUrlErrors = false;
@@ -291,11 +296,14 @@ const AdminDocuments = () => {
 		} catch (error) {
 			console.error('Create document error:', error);
 			return false;
+		} finally {
+			setIsCreating(false);
 		}
 	};
 
 	const handleDocUpdate = async (): Promise<boolean> => {
 		if (singleDocument) {
+			setIsUpdating(true);
 			try {
 				// Validate URLs before proceeding
 				let hasUrlErrors = false;
@@ -400,6 +408,8 @@ const AdminDocuments = () => {
 					console.error('Error message:', error.message);
 				}
 				return false;
+			} finally {
+				setIsUpdating(false);
 			}
 		}
 		return false;
@@ -593,6 +603,7 @@ const AdminDocuments = () => {
 						setEUR={setEUR}
 						TRY={TRY}
 						setTRY={setTRY}
+						isCreating={isCreating}
 					/>
 
 					<Box
@@ -785,6 +796,7 @@ const AdminDocuments = () => {
 														setEUR={setEUR}
 														TRY={TRY}
 														setTRY={setTRY}
+														isUpdating={isUpdating}
 													/>
 
 													<CustomActionBtn

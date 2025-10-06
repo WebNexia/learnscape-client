@@ -14,7 +14,9 @@ import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import HandleImageUploadURL from '../../components/forms/uploadImageVideoDocument/HandleImageUploadURL';
 import { validateImageUrl } from '../../utils/urlValidation';
 import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
-import { Roles } from '../../interfaces/enums';
+import { Roles, NotificationType } from '../../interfaces/enums';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../../firebase';
 
 interface EditInstructorDialogProps {
 	isEditInstructorDialogOpen: boolean;
@@ -86,6 +88,45 @@ const EditInstructorDialog = ({
 
 			updateCourse(responseUpdatedData as SingleCourse);
 			setSingleCourse(singleCourseCopy);
+
+			// Check if instructor was changed and send notification to new instructor
+			if (
+				singleCourseCopy?.instructor?.userId &&
+				singleCourse?.instructor?.userId?.toString() !== singleCourseCopy.instructor.userId.toString() &&
+				user?.role === 'admin'
+			) {
+				try {
+					// Get the new instructor's data - API returns array, so get first element
+					const instructorResponse = await axios.get(`${base_url}/users/${singleCourseCopy.instructor.userId}`);
+					const instructorData = instructorResponse.data.data;
+
+					// Handle both array and object responses
+					const newInstructor = Array.isArray(instructorData) ? instructorData[0] : instructorData;
+
+					if (newInstructor && newInstructor.firebaseUserId) {
+						const adminName = user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : user?.username || 'Admin';
+						const notificationData = {
+							title: 'Assigned as Course Instructor',
+							message: `${adminName} has assigned you as the instructor for the course: "${singleCourseCopy.title}".`,
+							isRead: false,
+							timestamp: serverTimestamp(),
+							type: NotificationType.COURSE_INSTRUCTOR_ASSIGNMENT,
+							userImageUrl: user?.imageUrl || '',
+							courseId: singleCourseCopy._id,
+						};
+
+						// Add notification to instructor's notification collection
+						const notificationRef = collection(db, 'notifications', newInstructor.firebaseUserId, 'userNotifications');
+						await addDoc(notificationRef, notificationData);
+
+						console.log(`Notification sent to instructor ${newInstructor.firstName} ${newInstructor.lastName} for course assignment`);
+					}
+				} catch (notificationError) {
+					console.error('Failed to send instructor assignment notification:', notificationError);
+					// Don't fail the course update if notification fails
+				}
+			}
+
 			setIsEditInstructorDialogOpen(false); // Only close dialog on successful save
 		} catch (error) {
 			console.log(error);

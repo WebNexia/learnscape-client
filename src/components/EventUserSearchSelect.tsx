@@ -92,8 +92,7 @@ const EventUserSearchSelect = forwardRef<any, EventUserSearchSelectProps>(
 					display: 'flex',
 					flexDirection: 'column',
 					alignItems: 'center',
-					mb: hasResults ? '-1rem' : '1.5rem',
-					margin: `0 auto ${hasResults ? '-1rem' : '1.5rem'} auto`,
+					margin: `0 auto ${hasResults ? '-2rem' : '0rem'} auto`,
 				}}>
 				<Box sx={{ display: 'flex', gap: 1, width: '100%', alignItems: 'center', mt: '0.5rem' }}>
 					<CustomTextField
@@ -119,7 +118,11 @@ const EventUserSearchSelect = forwardRef<any, EventUserSearchSelectProps>(
 							},
 							endAdornment: (
 								<InputAdornment position='end'>
-									{loading ? <CircularProgress size={20} sx={{ mr: '-0.5rem' }} /> : <Search sx={{ mr: '-0.5rem' }} fontSize='small' />}
+									{loading ? (
+										<CircularProgress size={20} sx={{ mr: '-0.5rem', fontSize: isMobileSize ? '1rem' : undefined }} />
+									) : (
+										<Search sx={{ mr: '-0.5rem', fontSize: isMobileSize ? '1rem' : undefined }} fontSize='small' />
+									)}
 								</InputAdornment>
 							),
 							required: false,

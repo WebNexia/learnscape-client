@@ -108,7 +108,11 @@ const EventCourseSearchSelect = forwardRef<any, EventCourseSearchSelectProps>(
 							},
 							endAdornment: (
 								<InputAdornment position='end'>
-									{loading ? <CircularProgress size={20} sx={{ mr: '-0.5rem' }} /> : <Search sx={{ mr: '-0.5rem' }} fontSize='small' />}
+									{loading ? (
+										<CircularProgress size={20} sx={{ mr: '-0.5rem', fontSize: isMobileSize ? '1rem' : undefined }} />
+									) : (
+										<Search sx={{ mr: '-0.5rem', fontSize: isMobileSize ? '1rem' : undefined }} fontSize='small' />
+									)}
 								</InputAdornment>
 							),
 							required: false,

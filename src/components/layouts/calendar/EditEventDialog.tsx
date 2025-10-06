@@ -12,6 +12,7 @@ import {
 	Typography,
 	Snackbar,
 	Alert,
+	DialogActions,
 } from '@mui/material';
 import { AttendeeInfo, Event } from '../../../interfaces/event';
 import CustomDialog from '../dialog/CustomDialog';
@@ -21,7 +22,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import dayjs, { Dayjs } from 'dayjs';
 import 'dayjs/locale/en-gb';
-import { Cancel } from '@mui/icons-material';
+import { Cancel, InfoOutlined } from '@mui/icons-material';
 import { User } from '../../../interfaces/user';
 import { useContext, useState, useRef, useEffect } from 'react';
 import { UsersContext } from '../../../contexts/UsersContextProvider';
@@ -49,6 +50,7 @@ import EventCourseSearchSelect from '../../EventCourseSearchSelect';
 import { SearchUser } from '../../../interfaces/search';
 import { SearchCourse } from '../../../interfaces/search';
 import { useAuth } from '../../../hooks/useAuth';
+import CustomCancelButton from '../../../components/forms/customButtons/CustomCancelButton';
 
 interface EditEventDialogProps {
 	setIsEventDeleted: React.Dispatch<React.SetStateAction<boolean>>;
@@ -56,6 +58,8 @@ interface EditEventDialogProps {
 	selectedEvent: Event | null;
 	setEditEventModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
 	setSelectedEvent: React.Dispatch<React.SetStateAction<Event | null>>;
+	isUpdatingEvent?: boolean;
+	setIsUpdatingEvent?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const getDateTimeFormat = (locale: string) => {
@@ -73,7 +77,15 @@ const getDateTimeFormat = (locale: string) => {
 	}
 };
 
-const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent, setEditEventModalOpen, setSelectedEvent }: EditEventDialogProps) => {
+const EditEventDialog = ({
+	setIsEventDeleted,
+	editEventModalOpen,
+	selectedEvent,
+	setEditEventModalOpen,
+	setSelectedEvent,
+	isUpdatingEvent,
+	setIsUpdatingEvent,
+}: EditEventDialogProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { users } = useContext(UsersContext);
 	const { user } = useContext(UserAuthContext);
@@ -97,6 +109,10 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 	const [isEventUpdated, setIsEventUpdated] = useState<boolean>(false);
 	const [enterCoverImageUrl, setEnterCoverImageUrl] = useState<boolean>(true);
 
+	const [instructorSearchInfoOpen, setInstructorSearchInfoOpen] = useState<boolean>(false);
+	const [learnerSearchInfoOpen, setLearnerSearchInfoOpen] = useState<boolean>(false);
+	const [courseSearchInfoOpen, setCourseSearchInfoOpen] = useState<boolean>(false);
+
 	// Refs for search components to access their reset functions
 	const userSearchRef = useRef<any>(null);
 	const instructorSearchRef = useRef<any>(null);
@@ -106,7 +122,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 	const handleUserSelect = (selectedUser: SearchUser) => {
 		// Convert SearchUser to User format for compatibility
 		const user: User = {
-			_id: selectedUser.firebaseUserId, // Use firebaseUserId as _id for compatibility
+			_id: selectedUser._id, // Use MongoDB ObjectId
 			firebaseUserId: selectedUser.firebaseUserId,
 			username: selectedUser.username,
 			email: selectedUser.email || '',
@@ -136,9 +152,11 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 		if (!isAlreadySelected && selectedEvent) {
 			setSelectedEvent((prevData) => {
 				if (prevData) {
+					const newAttendees = [...prevData.attendees, user];
+
 					return {
 						...prevData,
-						attendees: [...prevData.attendees, user],
+						attendees: newAttendees,
 					};
 				}
 				return prevData;
@@ -181,9 +199,11 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 		if (!isAlreadySelected && selectedEvent) {
 			setSelectedEvent((prevData) => {
 				if (prevData) {
+					const newAttendees = [...prevData.attendees, instructor];
+
 					return {
 						...prevData,
-						attendees: [...prevData.attendees, instructor],
+						attendees: newAttendees,
 					};
 				}
 				return prevData;
@@ -271,10 +291,47 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 		return !hasErrors;
 	};
 
+	// Populate role information for existing attendees when dialog opens
+	useEffect(() => {
+		if (editEventModalOpen && selectedEvent?.attendees && users) {
+			const attendeesWithoutRole = selectedEvent.attendees.filter((attendee) => !attendee.role);
+
+			if (attendeesWithoutRole.length > 0) {
+				// Find role information from users context
+				const attendeesToUpdate = attendeesWithoutRole.map((attendee) => {
+					const userFromContext = users.find((user) => user._id === attendee._id);
+					if (userFromContext && userFromContext.role) {
+						return { ...attendee, role: userFromContext.role };
+					}
+					return attendee;
+				});
+
+				// Update attendees with role information
+				const hasUpdates = attendeesToUpdate.some((attendee, index) => attendee.role !== attendeesWithoutRole[index].role);
+
+				if (hasUpdates) {
+					setSelectedEvent((prevData) => {
+						if (prevData) {
+							const updatedAttendees = prevData.attendees.map((a) => {
+								const updatedAttendee = attendeesToUpdate.find((ua) => ua._id === a._id);
+								return updatedAttendee || a;
+							});
+							return { ...prevData, attendees: updatedAttendees };
+						}
+						return prevData;
+					});
+				}
+			}
+		}
+	}, [editEventModalOpen, users]); // Removed selectedEvent?.attendees dependency to prevent infinite loops
+
 	const editEvent = async () => {
+		if (setIsUpdatingEvent) setIsUpdatingEvent(true);
+
 		// Validate URLs before proceeding
 		const urlsValid = await validateUrls();
 		if (!urlsValid) {
+			if (setIsUpdatingEvent) setIsUpdatingEvent(false);
 			return; // Don't proceed if URL validation fails
 		}
 
@@ -285,105 +342,113 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 		let allParticipantsIds: string[] = [];
 		let allCoursesParticipantsInfo: AttendeeInfo[] = [];
 
-		if (selectedEvent?.isAllLearnersSelected) {
-			setSelectedEvent((prevData) => {
-				if (prevData) {
-					return { ...prevData, allAttendeesIds: [], coursesIds: [], attendees: [] };
-				}
-				return prevData;
-			});
+		// Build the complete list of participants based on selections
+		let allInstructors: AttendeeInfo[] = [];
+		let allLearners: AttendeeInfo[] = [];
+		let allSubscribers: AttendeeInfo[] = [];
+		let courseParticipants: AttendeeInfo[] = [];
 
-			allCoursesParticipantsInfo =
-				users
-					?.filter((filteredUser) => filteredUser._id !== user?._id)
-					?.map((mappedUser) => ({ _id: mappedUser._id, username: mappedUser.username, firebaseUserId: mappedUser.firebaseUserId })) || [];
-		} else if (selectedEvent?.isAllCoursesSelected) {
-			// Handle All Courses selection
+		// Handle "All Instructors" selection
+		if (selectedEvent?.isAllInstructorsSelected) {
+			const instructors = users?.filter((user) => (user.role === 'instructor' || user.role === 'admin') && user.isActive) || [];
+			allInstructors = instructors.map((instructor) => ({
+				_id: instructor._id,
+				username: instructor.username,
+				firebaseUserId: instructor.firebaseUserId,
+				role: instructor.role,
+			}));
+		}
+
+		// Handle "All Learners" selection
+		if (selectedEvent?.isAllLearnersSelected) {
+			const learners = users?.filter((user) => user.role === 'learner' && user.isActive) || [];
+			allLearners = learners.map((learner) => ({
+				_id: learner._id,
+				username: learner.username,
+				firebaseUserId: learner.firebaseUserId,
+				role: learner.role,
+			}));
+		}
+
+		// Handle "All Subscribers" selection
+		if (selectedEvent?.isAllSubscribersSelected) {
+			const subscribers =
+				users?.filter((user) => user.role === 'learner' && user.isActive && user.isSubscribed && user.subscriptionStatus === 'active') || [];
+			allSubscribers = subscribers.map((subscriber) => ({
+				_id: subscriber._id,
+				username: subscriber.username,
+				firebaseUserId: subscriber.firebaseUserId,
+				role: subscriber.role,
+			}));
+		}
+
+		// Handle "All Courses" selection
+		if (selectedEvent?.isAllCoursesSelected) {
 			try {
 				const res = await axios.get(`${base_url}/usercourses/participants/organisation/${orgId}`);
-
-				allCoursesParticipantsInfo = Array.from(new Map([...res.data.participants, ...participants]?.map((user) => [user._id, user])).values()) || [];
-				allParticipantsIds = [...res.data.participants, ...participants]?.map((participant: AttendeeInfo) => participant._id) || [];
-
-				setSelectedEvent((prevData) => {
-					if (prevData) {
-						return { ...prevData, allAttendeesIds: allParticipantsIds, isAllCoursesSelected: true };
-					}
-					return prevData;
-				});
+				courseParticipants = res.data.participants;
 			} catch (error) {
 				console.log(error);
 			}
 		} else if (selectedEvent?.coursesIds && selectedEvent?.coursesIds && selectedEvent?.coursesIds.length > 0) {
-			// Use local array to accumulate course participants
-			const courseParticipants: AttendeeInfo[] = [];
-
+			// Handle specific courses selection
 			await Promise.all(
 				selectedEvent?.coursesIds?.map((courseId) => {
 					return (async () => {
 						try {
 							const res = await axios.get(`${base_url}/userCourses/course/${courseId}`);
-							courseParticipants.push(...res.data.users); // Collect participants directly
+							courseParticipants.push(...res.data.users);
 						} catch (error) {
 							console.log(error);
 						}
 					})();
 				}) || []
 			);
-
-			// Combine and deduplicate all participants locally
-			const combinedParticipants = Array.from(new Map([...courseParticipants, ...participants]?.map((user) => [user._id, user])).values()) || [];
-
-			allCoursesParticipantsInfo = combinedParticipants; // Update state once with final list
-			allParticipantsIds = combinedParticipants?.map((participant) => participant._id) || [];
-
-			setSelectedEvent((prevData) => {
-				if (prevData) {
-					return { ...prevData, allAttendeesIds: allParticipantsIds };
-				}
-				return prevData;
-			});
-		} else {
-			// If no special selection, update with direct attendees
-			const uniqueParticipants = Array.from(new Map([...participants]?.map((user) => [user._id, user])).values()) || [];
-
-			allCoursesParticipantsInfo = uniqueParticipants;
-
-			allParticipantsIds = uniqueParticipants?.map((participant) => participant._id) || [];
-
-			setSelectedEvent((prevData) => {
-				if (prevData) {
-					return { ...prevData, allAttendeesIds: allParticipantsIds };
-				}
-				return prevData;
-			});
 		}
 
+		// Combine all participant sources and deduplicate
+		const allParticipantSources = [
+			...allInstructors,
+			...allLearners,
+			...allSubscribers,
+			...courseParticipants,
+			...participants, // Manually selected attendees
+		];
+
+		allCoursesParticipantsInfo = Array.from(new Map(allParticipantSources.map((user) => [user._id, user])).values());
+		allParticipantsIds = allCoursesParticipantsInfo.map((participant) => participant._id);
+
+		// Update event state with final participant list
+		setSelectedEvent((prevData) => {
+			if (prevData) {
+				return { ...prevData, allAttendeesIds: allParticipantsIds };
+			}
+			return prevData;
+		});
+
 		try {
-			if (isEventUpdated) {
-				// Use instructor route if user is instructor
-				const endpoint = `${base_url}/events/${selectedEvent?._id}`;
-				await axios.patch(endpoint, {
+			// Always attempt to update the event
+			const endpoint = `${base_url}/events/${selectedEvent?._id}`;
+			await axios.patch(endpoint, {
+				...selectedEvent,
+				allAttendeesIds: allParticipantsIds,
+				isAllInstructorsSelected: selectedEvent?.isAllInstructorsSelected,
+				isAllSubscribersSelected: selectedEvent?.isAllSubscribersSelected,
+				type: !selectedEvent?.isPublic ? '' : selectedEvent?.type,
+				coverImageUrl: !selectedEvent?.isPublic ? '' : selectedEvent?.coverImageUrl,
+			});
+
+			if (selectedEvent) {
+				updateEvent({
 					...selectedEvent,
 					allAttendeesIds: allParticipantsIds,
 					type: !selectedEvent?.isPublic ? '' : selectedEvent?.type,
 					coverImageUrl: !selectedEvent?.isPublic ? '' : selectedEvent?.coverImageUrl,
 				});
-				if (selectedEvent)
-					updateEvent({
-						...selectedEvent,
-						allAttendeesIds: allParticipantsIds,
-						type: !selectedEvent?.isPublic ? '' : selectedEvent?.type,
-						coverImageUrl: !selectedEvent?.isPublic ? '' : selectedEvent?.coverImageUrl,
-					});
-
-				// Trigger dashboard sync when event is updated
-				dashboardSyncHelpers.onEventCreated(refreshDashboard);
-			} else {
-				setIsEventUpdated(false);
-				setEditEventModalOpen(false);
-				return;
 			}
+
+			// Trigger dashboard sync when event is updated
+			dashboardSyncHelpers.onEventCreated(refreshDashboard);
 
 			const startDate = selectedEvent?.start?.toLocaleDateString(navigator.language || undefined, {
 				weekday: 'long',
@@ -424,8 +489,21 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 			const newAttendeeIds = allParticipantsIds;
 			const newlyAddedIds = newAttendeeIds?.filter((id) => !previousAttendeeIds?.includes(id)) || [];
 			const adminName = user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : user?.username || 'Admin';
+
+			// Send notifications to newly added participants
+			console.log('Notification recipients for event update:', {
+				allInstructors: allInstructors.length,
+				allLearners: allLearners.length,
+				allSubscribers: allSubscribers.length,
+				courseParticipants: courseParticipants.length,
+				manualAttendees: selectedEvent?.attendees?.length || 0,
+				totalRecipients: allCoursesParticipantsInfo.length,
+				newlyAddedIds: newlyAddedIds.length,
+				recipients: allCoursesParticipantsInfo.map((r) => ({ username: r.username, role: r.role })),
+			});
+
 			for (const participant of allCoursesParticipantsInfo) {
-				if (newlyAddedIds?.includes(participant._id)) {
+				if (newlyAddedIds?.includes(participant._id) && participant.firebaseUserId) {
 					const notificationRef = collection(db, 'notifications', participant.firebaseUserId, 'userNotifications');
 					await addDoc(notificationRef, {
 						title: 'Added to Event',
@@ -436,6 +514,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 						userImageUrl: user?.imageUrl,
 						eventId: selectedEvent?._id,
 					});
+					console.log(`Notification sent to: ${participant.username} (${participant.role})`);
 				}
 			}
 
@@ -449,6 +528,8 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 				setUrlErrorMessage('Failed to update event. Please try again.');
 			}
 			setIsUrlErrorOpen(true);
+		} finally {
+			if (setIsUpdatingEvent) setIsUpdatingEvent(false);
 		}
 	};
 
@@ -486,6 +567,10 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 				onSubmit={(e) => {
 					e.preventDefault();
 					editEvent();
+					setIsEventUpdated(false);
+					setSearchLearnerValue('');
+					setSearchInstructorValue('');
+					setSearchCourseValue('');
 				}}>
 				<DialogContent sx={{ mt: '-1rem' }}>
 					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -820,7 +905,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 
 							<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', mt: '0.5rem' }}>
 								<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'flex-start' }}>
-									<Box sx={{ flex: 3 }}>
+									<Box sx={{ display: 'flex', flex: isMobileSize ? 5 : 3.5, alignItems: 'flex-start' }}>
 										<EventInstructorSearchSelect
 											ref={instructorSearchRef}
 											value={searchInstructorValue}
@@ -834,8 +919,17 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 												backgroundColor: selectedEvent?.isAllInstructorsSelected || selectedEvent?.isPublic ? 'transparent' : '#fff',
 											}}
 										/>
+										{isAdmin && (
+											<IconButton sx={{ 'ml': '0.25rem', 'mt': '0.5rem', '&:hover': { backgroundColor: 'transparent' } }}>
+												<InfoOutlined
+													fontSize='small'
+													sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem' }}
+													onClick={() => setInstructorSearchInfoOpen(true)}
+												/>
+											</IconButton>
+										)}
 									</Box>
-									<Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: '0.55rem' }}>
+									<Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: '0.55rem', flex: 1 }}>
 										<FormControlLabel
 											labelPlacement='start'
 											disabled={selectedEvent?.isPublic || selectedEvent?.createdBy !== user?._id}
@@ -844,27 +938,42 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 													checked={selectedEvent?.isAllInstructorsSelected || false}
 													onChange={(e) => {
 														setSearchInstructorValue('');
+														setSearchLearnerValue('');
+														setSearchCourseValue('');
 														setIsEventUpdated(true);
+
 														setSelectedEvent((prevData) => {
 															if (prevData) {
-																return { ...prevData, isAllInstructorsSelected: e.target.checked };
+																return {
+																	...prevData,
+																	isAllInstructorsSelected: e.target.checked,
+																	// "All Instructors" and "All Courses" can be selected together (instructors are independent of courses)
+																};
 															}
 															return prevData;
 														});
 
 														// Reset search results when "All Instructors" is checked
 														if (e.target.checked) {
-															// Reset instructor search results
+															// Reset all search results
 															if (instructorSearchRef.current?.reset) {
 																instructorSearchRef.current.reset();
 															}
+															if (userSearchRef.current?.reset) {
+																userSearchRef.current.reset();
+															}
+															if (courseSearchRef.current?.reset) {
+																courseSearchRef.current.reset();
+															}
 
-															// Remove all instructor attendees when "All Instructors" is selected
+															// Clear all selections when "All Instructors" is selected
 															setSelectedEvent((prevData) => {
 																if (prevData) {
 																	return {
 																		...prevData,
-																		attendees: prevData.attendees?.filter((attendee) => attendee.role !== 'instructor') || [],
+																		attendees: [],
+																		coursesIds: [],
+																		allAttendeesIds: [],
 																	};
 																}
 																return prevData;
@@ -878,7 +987,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 													}}
 												/>
 											}
-											label='All Instructors'
+											label={isMobileSize ? 'All' : 'All Instructors'}
 											sx={{
 												'mt': '0rem',
 												'& .MuiFormControlLabel-label': {
@@ -936,7 +1045,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 
 							<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', mt: '0.5rem' }}>
 								<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'flex-start' }}>
-									<Box sx={{ flex: 3 }}>
+									<Box sx={{ display: 'flex', flex: isMobileSize ? 5 : 3.5, alignItems: 'flex-start' }}>
 										<EventUserSearchSelect
 											ref={userSearchRef}
 											value={searchLearnerValue}
@@ -953,9 +1062,18 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 												backgroundColor: selectedEvent?.isAllLearnersSelected || selectedEvent?.isPublic ? 'transparent' : '#fff',
 											}}
 										/>
+										{isAdmin && (
+											<IconButton sx={{ 'ml': '0.25rem', 'mt': '0.5rem', '&:hover': { backgroundColor: 'transparent' } }}>
+												<InfoOutlined
+													fontSize='small'
+													sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem' }}
+													onClick={() => setLearnerSearchInfoOpen(true)}
+												/>
+											</IconButton>
+										)}
 									</Box>
 									{isAdmin && (
-										<Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: '0.55rem' }}>
+										<Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: '0.55rem', flex: 1 }}>
 											<FormControlLabel
 												labelPlacement='start'
 												disabled={selectedEvent?.isPublic || selectedEvent?.createdBy !== user?._id}
@@ -965,28 +1083,39 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 														onChange={(e) => {
 															setSearchCourseValue('');
 															setSearchLearnerValue('');
+															setSearchInstructorValue('');
 															setIsEventUpdated(true);
+
 															setSelectedEvent((prevData) => {
 																if (prevData) {
-																	return { ...prevData, isAllLearnersSelected: e.target.checked };
+																	return {
+																		...prevData,
+																		isAllLearnersSelected: e.target.checked,
+																		// "All Learners" covers all subscribers, so uncheck "All Subscribers" when "All Learners" is selected
+																		isAllSubscribersSelected: e.target.checked ? false : prevData.isAllSubscribersSelected,
+																		// "All Learners" and "All Courses" overlap (courses contain learners), so uncheck "All Courses" when "All Learners" is selected
+																		isAllCoursesSelected: e.target.checked ? false : prevData.isAllCoursesSelected,
+																	};
 																}
 																return prevData;
 															});
 
 															// Reset search results when "All Learners" is checked
 															if (e.target.checked) {
-																// Reset user search results
+																// Reset all search results
 																if (userSearchRef.current?.reset) {
 																	userSearchRef.current.reset();
 																}
-																// Reset course search results
 																if (courseSearchRef.current?.reset) {
 																	courseSearchRef.current.reset();
+																}
+																if (instructorSearchRef.current?.reset) {
+																	instructorSearchRef.current.reset();
 																}
 
 																setSelectedEvent((prevData) => {
 																	if (prevData) {
-																		return { ...prevData, attendees: [], coursesIds: [], allAttendeesIds: [], isAllCoursesSelected: false };
+																		return { ...prevData, attendees: [], coursesIds: [], allAttendeesIds: [] };
 																	}
 																	return prevData;
 																});
@@ -999,7 +1128,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 														}}
 													/>
 												}
-												label='All Learners'
+												label={isMobileSize ? 'All' : 'All Learners'}
 												sx={{
 													'mt': '0rem',
 													'& .MuiFormControlLabel-label': {
@@ -1009,6 +1138,85 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 											/>
 										</Box>
 									)}
+								</Box>
+							</Box>
+						</>
+					)}
+
+					{!selectedEvent?.isPublic && isAdmin && (
+						<>
+							<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', mt: '-0.5rem', mb: '2rem' }}>
+								<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'flex-start' }}>
+									<Box sx={{ display: 'flex', flex: isMobileSize ? 5 : 3.5, alignItems: 'flex-start' }}>
+										{/* Placeholder for future subscriber search if needed */}
+									</Box>
+									<Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: '0.55rem' }}>
+										<FormControlLabel
+											labelPlacement='start'
+											disabled={selectedEvent?.isPublic || selectedEvent?.createdBy !== user?._id}
+											control={
+												<Checkbox
+													checked={selectedEvent?.isAllSubscribersSelected || false}
+													onChange={(e) => {
+														setSearchCourseValue('');
+														setSearchLearnerValue('');
+														setSearchInstructorValue('');
+														setIsEventUpdated(true);
+
+														setSelectedEvent((prevData) => {
+															if (prevData) {
+																return {
+																	...prevData,
+																	isAllSubscribersSelected: e.target.checked,
+																	// "All Subscribers" and "All Courses" can be selected together (different groups)
+																	// "All Subscribers" and "All Instructors" can be selected together (different groups)
+																};
+															}
+															return prevData;
+														});
+
+														// Reset search results when "All Subscribers" is checked
+														if (e.target.checked) {
+															// Reset all search results
+															if (userSearchRef.current?.reset) {
+																userSearchRef.current.reset();
+															}
+															if (courseSearchRef.current?.reset) {
+																courseSearchRef.current.reset();
+															}
+															if (instructorSearchRef.current?.reset) {
+																instructorSearchRef.current.reset();
+															}
+
+															setSelectedEvent((prevData) => {
+																if (prevData) {
+																	return {
+																		...prevData,
+																		attendees: [],
+																		coursesIds: [],
+																		allAttendeesIds: [],
+																	};
+																}
+																return prevData;
+															});
+														}
+													}}
+													sx={{
+														'& .MuiSvgIcon-root': {
+															fontSize: isVerySmallScreen ? '0.9rem' : '1rem',
+														},
+													}}
+												/>
+											}
+											label='All Subscribers'
+											sx={{
+												'mt': '0rem',
+												'& .MuiFormControlLabel-label': {
+													fontSize: isVerySmallScreen ? '0.6rem' : '0.7rem',
+												},
+											}}
+										/>
+									</Box>
 								</Box>
 							</Box>
 						</>
@@ -1062,7 +1270,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 								mt: selectedEvent?.coursesIds && selectedEvent.coursesIds && selectedEvent.coursesIds.length > 0 ? '0.5rem' : '-1.25rem',
 							}}>
 							<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'flex-start' }}>
-								<Box sx={{ flex: 3 }}>
+								<Box sx={{ display: 'flex', flex: isMobileSize ? 5 : 3.5, alignItems: 'flex-start' }}>
 									<EventCourseSearchSelect
 										ref={courseSearchRef}
 										value={searchCourseValue}
@@ -1088,9 +1296,18 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 													: '#fff',
 										}}
 									/>
+									{isAdmin && (
+										<IconButton sx={{ 'ml': '0.25rem', 'mb': '2.15rem', '&:hover': { backgroundColor: 'transparent' } }}>
+											<InfoOutlined
+												fontSize='small'
+												sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem' }}
+												onClick={() => setCourseSearchInfoOpen(true)}
+											/>
+										</IconButton>
+									)}
 								</Box>
 								{isAdmin && (
-									<Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+									<Box sx={{ display: 'flex', justifyContent: 'flex-end', flex: 1 }}>
 										<FormControlLabel
 											disabled={selectedEvent?.isAllLearnersSelected || selectedEvent?.isPublic || selectedEvent?.createdBy !== user?._id}
 											labelPlacement='start'
@@ -1099,24 +1316,44 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 													checked={selectedEvent?.isAllCoursesSelected}
 													onChange={(e) => {
 														setSearchCourseValue('');
+														setSearchLearnerValue('');
+														setSearchInstructorValue('');
 														setIsEventUpdated(true);
+
 														setSelectedEvent((prevData) => {
 															if (prevData) {
-																return { ...prevData, isAllCoursesSelected: e.target.checked };
+																return {
+																	...prevData,
+																	isAllCoursesSelected: e.target.checked,
+																	// "All Courses" contains learners, so uncheck "All Learners" when "All Courses" is selected
+																	// "All Instructors" can stay selected (instructors are independent of courses)
+																	isAllLearnersSelected: e.target.checked ? false : prevData.isAllLearnersSelected,
+																};
 															}
 															return prevData;
 														});
 
 														// Reset search results when "All Courses" is checked
 														if (e.target.checked) {
-															// Reset course search results
+															// Reset all search results
 															if (courseSearchRef.current?.reset) {
 																courseSearchRef.current.reset();
+															}
+															if (userSearchRef.current?.reset) {
+																userSearchRef.current.reset();
+															}
+															if (instructorSearchRef.current?.reset) {
+																instructorSearchRef.current.reset();
 															}
 
 															setSelectedEvent((prevData) => {
 																if (prevData) {
-																	return { ...prevData, coursesIds: [] };
+																	return {
+																		...prevData,
+																		coursesIds: [],
+																		attendees: [],
+																		allAttendeesIds: [],
+																	};
 																}
 																return prevData;
 															});
@@ -1129,7 +1366,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 													}}
 												/>
 											}
-											label='All Courses'
+											label={isMobileSize ? 'All' : 'All Courses'}
 											sx={{
 												'& .MuiFormControlLabel-label': {
 													fontSize: isVerySmallScreen ? '0.6rem' : '0.7rem', // Adjust the label font size
@@ -1190,6 +1427,7 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 							setEditEventModalOpen(false);
 							setSearchLearnerValue('');
 							setSearchCourseValue('');
+							setSearchInstructorValue('');
 							setIsEventUpdated(false);
 						}}
 						submitBtnText='Update'
@@ -1220,6 +1458,49 @@ const EditEventDialog = ({ setIsEventDeleted, editEventModalOpen, selectedEvent,
 					</Alert>
 				</Snackbar>
 			</form>
+			<CustomDialog
+				maxWidth='xs'
+				openModal={instructorSearchInfoOpen}
+				closeModal={() => setInstructorSearchInfoOpen(false)}
+				title='Instructor Search Info'>
+				<DialogContent>
+					<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.7 }}>
+						This search is used to search for instructors and admins in the organization.
+					</Typography>
+				</DialogContent>
+				<DialogActions>
+					<CustomCancelButton onClick={() => setInstructorSearchInfoOpen(false)} sx={{ margin: '0 0.5rem 0.5rem 0' }}>
+						Close
+					</CustomCancelButton>
+				</DialogActions>
+			</CustomDialog>
+			<CustomDialog maxWidth='xs' openModal={learnerSearchInfoOpen} closeModal={() => setLearnerSearchInfoOpen(false)} title='Learner Search Info'>
+				<DialogContent>
+					<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.7 }}>
+						This search is used to search for active learners (has registered course or subscriber) in the organization.
+					</Typography>
+				</DialogContent>
+				<DialogActions>
+					<CustomCancelButton onClick={() => setLearnerSearchInfoOpen(false)} sx={{ margin: '0 0.5rem 0.5rem 0' }}>
+						Close
+					</CustomCancelButton>
+				</DialogActions>
+			</CustomDialog>
+			<CustomDialog maxWidth='xs' openModal={courseSearchInfoOpen} closeModal={() => setCourseSearchInfoOpen(false)} title='Course Search Info'>
+				<DialogContent>
+					<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.7 }}>
+						This search is used to search for published courses in the organization.
+					</Typography>
+					<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.7, mt: '0.5rem' }}>
+						When course(s) are selected, all the learners enrolled in the selected course(s) will be added to the event.
+					</Typography>
+				</DialogContent>
+				<DialogActions>
+					<CustomCancelButton onClick={() => setCourseSearchInfoOpen(false)} sx={{ margin: '0 0.5rem 0.5rem 0' }}>
+						Close
+					</CustomCancelButton>
+				</DialogActions>
+			</CustomDialog>
 		</CustomDialog>
 	);
 };

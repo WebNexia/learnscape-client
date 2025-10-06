@@ -34,6 +34,7 @@ interface EditDocumentDialogProps {
 	setEUR: (price: Price) => void;
 	TRY: Price;
 	setTRY: (price: Price) => void;
+	isUpdating?: boolean;
 }
 
 const EditDocumentDialog = ({
@@ -60,6 +61,7 @@ const EditDocumentDialog = ({
 	setEUR,
 	TRY,
 	setTRY,
+	isUpdating = false,
 }: EditDocumentDialogProps) => {
 	const { isInstructor } = useAuth();
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
@@ -300,7 +302,7 @@ const EditDocumentDialog = ({
 							</Grid>
 						</Grid>
 					</Box>
-					<Box sx={{ flex: 1, ml: isMobileSize ? '0rem' : '7rem', mt: isMobileSize ? '1rem' : undefined }}>
+					<Box sx={{ flex: 1, ml: isMobileSize ? '0rem' : '7rem', mt: isMobileSize ? '1rem' : undefined, width: isMobileSize ? '100%' : undefined }}>
 						<CustomTextField
 							label='Description'
 							value={document?.description || ''}
@@ -373,7 +375,14 @@ const EditDocumentDialog = ({
 						</Box>
 					</Box>
 				</Box>
-				<CustomDialogActions onCancel={onClose} submitBtnType='submit' actionSx={{ mt: '1rem' }} disableBtn={!fileUploaded} submitBtnText='Save' />
+				<CustomDialogActions
+					onCancel={onClose}
+					disableCancelBtn={isUpdating}
+					submitBtnType='submit'
+					actionSx={{ mt: '1rem' }}
+					disableBtn={!fileUploaded || isUpdating}
+					submitBtnText={isUpdating ? 'Saving...' : 'Save'}
+				/>
 			</form>
 		</CustomDialog>
 	);
