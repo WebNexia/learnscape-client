@@ -1,5 +1,5 @@
 import axios from '@utils/axiosInstance';
-import { ReactNode, createContext, useContext, useState, useEffect } from 'react';
+import { ReactNode, createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
 import DataFetchErrorBoundary from '../components/error/DataFetchErrorBoundary';
 
@@ -23,6 +23,7 @@ interface CommunityContextTypes {
 	loadedPages: number[];
 	enableCommunityFetch: () => void;
 	disableCommunityFetch: () => void;
+	refreshCommunityData: () => void;
 }
 
 interface CommunityContextProviderProps {
@@ -44,6 +45,7 @@ export const CommunityContext = createContext<CommunityContextTypes>({
 	loadedPages: [],
 	enableCommunityFetch: () => {},
 	disableCommunityFetch: () => {},
+	refreshCommunityData: () => {},
 });
 
 const CommunityContextProvider = (props: CommunityContextProviderProps) => {
@@ -71,10 +73,11 @@ const CommunityContextProvider = (props: CommunityContextProviderProps) => {
 		if (!orgId) return [];
 
 		try {
-			const response = await axios.get(`${base_url}/communityTopics/organisation/${orgId}?page=${page}&limit=60`);
+			const response = await axios.get(`${base_url}/communityTopics/organisation/${orgId}?page=${page}&limit=100`);
 
 			// Update totalItems from server response
-			setTotalItems(response.data.totalItems || response.data.data.length);
+			const totalFromResponse = response.data.totalTopics || response.data.totalItems || response.data.data.length;
+			setTotalItems(totalFromResponse);
 
 			// Update loadedPages to track which pages we've fetched
 			if (!loadedPages?.includes(page)) {
@@ -94,7 +97,7 @@ const CommunityContextProvider = (props: CommunityContextProviderProps) => {
 			// Fetch all batches from startPage to endPage
 			const promises = [];
 			for (let page = startPage; page <= endPage; page++) {
-				promises.push(axios.get(`${base_url}/communityTopics/organisation/${orgId}?page=${page}&limit=60`));
+				promises.push(axios.get(`${base_url}/communityTopics/organisation/${orgId}?page=${page}&limit=100`));
 			}
 
 			const responses = await Promise.all(promises);
@@ -115,10 +118,10 @@ const CommunityContextProvider = (props: CommunityContextProviderProps) => {
 
 	const { data: topicsData, isLoading } = useQuery(['allTopics', orgId], () => fetchTopics(1), {
 		enabled: isEnabled && !!orgId && isAuthenticated && (isAdmin || isLearner || isInstructor) && !isLandingPageRoute,
-		staleTime: 5 * 60 * 1000, // 5 minutes - data stays fresh
-		cacheTime: 30 * 60 * 1000, // 30 minutes - data stays in cache
-		refetchOnWindowFocus: false, // No refetch on window focus
-		refetchOnMount: false, // No refetch on component remount
+		staleTime: 0, // Data is always stale - refetch when returning to page
+		cacheTime: 5 * 60 * 1000, // 5 minutes - data stays in cache
+		refetchOnWindowFocus: true, // Refetch on window focus
+		refetchOnMount: true, // Refetch on component remount
 	});
 
 	// Progressive pagination gap-filling (batched)
@@ -205,8 +208,15 @@ const CommunityContextProvider = (props: CommunityContextProviderProps) => {
 	// Get sorted topics data from React Query
 	const sortedTopicsData = topicsData || [];
 
-	const enableCommunityFetch = () => setIsEnabled(true);
-	const disableCommunityFetch = () => setIsEnabled(false);
+	const enableCommunityFetch = useCallback(() => setIsEnabled(true), []);
+	const disableCommunityFetch = useCallback(() => setIsEnabled(false), []);
+	const refreshCommunityData = useCallback(() => {
+		// Invalidate and refetch the query
+		queryClient.invalidateQueries(['allTopics', orgId]);
+		// Reset pagination state
+		setTopicsPageNumber(1);
+		setLoadedPages([]);
+	}, [orgId, queryClient]);
 
 	return (
 		<CommunityContext.Provider
@@ -225,6 +235,7 @@ const CommunityContextProvider = (props: CommunityContextProviderProps) => {
 				loadedPages,
 				enableCommunityFetch,
 				disableCommunityFetch,
+				refreshCommunityData,
 			}}>
 			<DataFetchErrorBoundary context='Community'>{props.children}</DataFetchErrorBoundary>
 		</CommunityContext.Provider>

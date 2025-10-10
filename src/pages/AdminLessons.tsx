@@ -60,18 +60,8 @@ const AdminLessons = () => {
 					];
 	};
 
-	const {
-		lessons,
-		loading,
-		error,
-		fetchMoreLessons,
-		removeLesson,
-		totalItems,
-		loadedPages,
-		lessonsPageNumber,
-		setLessonsPageNumber,
-		enableLessonsFetch,
-	} = useContext(LessonsContext);
+	const { lessons, loading, error, fetchMoreLessons, removeLesson, totalItems, loadedPages, enableLessonsFetch, setLessonsPageNumber } =
+		useContext(LessonsContext);
 	const { orgId } = useContext(OrganisationContext);
 
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
@@ -86,7 +76,7 @@ const AdminLessons = () => {
 		filterValue,
 		displayData: displayLessons,
 		numberOfPages: lessonsNumberOfPages,
-		searchResultsPage,
+		currentPage: lessonsCurrentPage,
 		searchResultsTotalItems,
 		searchedValue,
 		orderBy,
@@ -109,12 +99,12 @@ const AdminLessons = () => {
 		setContextPageNumber: setLessonsPageNumber,
 		fetchMoreContextData: fetchMoreLessons,
 		contextLoadedPages: loadedPages,
+		contextTotalItems: totalItems,
 		defaultOrderBy: 'updatedAt',
 		defaultOrder: 'desc',
 	});
 
 	// Use appropriate page number for pagination
-	const currentPage = isSearchActive ? searchResultsPage : lessonsPageNumber;
 	const sortedLessons =
 		[...(displayLessons || [])]?.sort((a, b) => {
 			const aValue = (a as any)[orderBy] ?? '';
@@ -126,7 +116,7 @@ const AdminLessons = () => {
 				return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
 			}
 		}) || [];
-	const paginatedLessons = sortedLessons?.slice((currentPage - 1) * pageSize, currentPage * pageSize) || [];
+	const paginatedLessons = sortedLessons;
 
 	// Modal states - moved to top to avoid hooks after early returns
 	const [isNewLessonModalOpen, setIsNewLessonModalOpen] = useState<boolean>(false);
@@ -142,11 +132,10 @@ const AdminLessons = () => {
 	useEffect(() => {
 		setIsLessonDeleteModalOpen(Array(paginatedLessons.length).fill(false));
 		setIsLessonInfoModalOpen(Array(paginatedLessons.length).fill(false));
-	}, [displayLessons, lessonsPageNumber]);
+	}, [lessonsCurrentPage, filterValue, searchValue]);
 
 	useEffect(() => {
-		setLessonsPageNumber(1);
-		enableLessonsFetch(); // 👈 Enable lessons fetching when component mounts
+		enableLessonsFetch();
 	}, []);
 
 	// Early returns AFTER all hooks
@@ -468,8 +457,16 @@ const AdminLessons = () => {
 								})}
 						</TableBody>
 					</Table>
-					{isMobileSize && <CustomInfoMessageAlignedLeft message='Rotate your device or use desktop for more info' />}
-					<CustomTablePagination count={lessonsNumberOfPages} page={currentPage} onChange={handlePageChange} />
+					{displayLessons && displayLessons.length === 0 && (
+						<CustomInfoMessageAlignedLeft
+							message={isSearchActive ? 'No lessons found matching your search criteria.' : 'No lessons found.'}
+							sx={{ marginTop: isMobileSize ? '3rem' : '5rem', marginBottom: '1rem' }}
+						/>
+					)}
+					{isMobileSize && !(displayLessons && displayLessons.length === 0) && (
+						<CustomInfoMessageAlignedLeft message='Rotate your device or use desktop for more info' />
+					)}
+					<CustomTablePagination count={lessonsNumberOfPages} page={lessonsCurrentPage} onChange={handlePageChange} />
 				</Box>
 
 				{isLessonInfoModalOpen?.map(

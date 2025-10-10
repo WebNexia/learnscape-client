@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext, useMemo } from 'react';
 import { Box, Table, TableBody, TableCell, TableRow, Typography, IconButton, DialogContent, Snackbar, Alert } from '@mui/material';
 import { Restore, DeleteForever, Info } from '@mui/icons-material';
 import axios from '@utils/axiosInstance';
@@ -37,7 +37,6 @@ const AdminRecycleBinQuestionsTab = () => {
 	const {
 		archivedQuestions,
 		totalItems,
-		currentPage,
 		fetchArchivedQuestions,
 		setCurrentPage,
 		setArchivedQuestions,
@@ -56,9 +55,13 @@ const AdminRecycleBinQuestionsTab = () => {
 
 	// Create a wrapper function for fetchArchivedQuestions to match the hook's expected signature
 	const fetchMoreContextData = async (startPage: number, endPage: number) => {
+		const promises = [];
 		for (let page = startPage; page <= endPage; page++) {
-			await fetchArchivedQuestions(page);
+			if (!loadedPages?.includes(page)) {
+				promises.push(fetchArchivedQuestions(page));
+			}
 		}
+		await Promise.all(promises);
 	};
 
 	// Use the filter search hook
@@ -68,7 +71,7 @@ const AdminRecycleBinQuestionsTab = () => {
 		filterValue,
 		displayData: displayQuestions,
 		numberOfPages: questionsNumberOfPages,
-		searchResultsPage,
+		currentPage: questionsCurrentPage,
 		searchResultsTotalItems,
 		searchButtonClicked,
 		searchedValue,
@@ -92,6 +95,7 @@ const AdminRecycleBinQuestionsTab = () => {
 		setContextPageNumber: setCurrentPage,
 		fetchMoreContextData,
 		contextLoadedPages: loadedPages,
+		contextTotalItems: totalItems,
 		defaultOrderBy: 'archivedAt',
 		defaultOrder: 'desc',
 	});
@@ -102,45 +106,41 @@ const AdminRecycleBinQuestionsTab = () => {
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
-	// Use appropriate page number for pagination
-	const currentPageNumber = isSearchActive ? searchResultsPage : currentPage;
-
 	// Apply client-side sorting when not in search mode
-	const sortedQuestions = [...(displayQuestions || [])]?.sort((a, b) => {
-		// Handle nested properties like 'instructor.name'
+	const sortedQuestions = useMemo(() => {
+		if (!displayQuestions) return [];
+
 		const getNestedValue = (obj: any, path: string) => {
 			return path.split('.').reduce((current, key) => current?.[key], obj) ?? '';
 		};
 
-		let aValue, bValue;
+		return [...displayQuestions].sort((a, b) => {
+			let aValue: any;
+			let bValue: any;
 
-		// Special handling for Auto-Remove On column - sort by calculated deletion date
-		if (orderBy === 'autoRemoveDate') {
-			const getDeletionDate = (archivedAt: string) => {
-				const archivedDate = new Date(archivedAt);
-				return new Date(archivedDate.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days
-			};
-			aValue = getDeletionDate(a.archivedAt || '');
-			bValue = getDeletionDate(b.archivedAt || '');
-		} else {
-			// Handle questionType field specifically
-			if (orderBy === 'questionType') {
+			if (orderBy === 'autoRemoveDate') {
+				const getDeletionDate = (archivedAt: string) => {
+					const archivedDate = new Date(archivedAt);
+					return new Date(archivedDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+				};
+				aValue = getDeletionDate(a.archivedAt || '');
+				bValue = getDeletionDate(b.archivedAt || '');
+			} else if (orderBy === 'questionType') {
 				aValue = a.questionTypeName || '';
 				bValue = b.questionTypeName || '';
 			} else {
 				aValue = getNestedValue(a, orderBy as string);
 				bValue = getNestedValue(b, orderBy as string);
 			}
-		}
 
-		if (order === 'asc') {
-			return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
-		} else {
+			if (order === 'asc') {
+				return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+			}
 			return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
-		}
-	});
+		});
+	}, [displayQuestions, orderBy, order]);
 
-	const paginatedQuestions = sortedQuestions?.slice((currentPageNumber - 1) * pageSize, currentPageNumber * pageSize) || [];
+	const paginatedQuestions = sortedQuestions;
 
 	// Modal states
 	const [restoreModalOpen, setRestoreModalOpen] = useState<boolean[]>([]);
@@ -154,24 +154,22 @@ const AdminRecycleBinQuestionsTab = () => {
 
 	// Load initial data when component mounts
 	useEffect(() => {
-		fetchArchivedQuestions(1);
-		setLoadedPages([1]);
-	}, []);
+		(async () => {
+			await fetchArchivedQuestions(1);
+			setLoadedPages([1]);
+		})();
+	}, []); // Empty dependency array - only run once on mount
 
 	// Info dialog state
 	const [isInfoDialogOpen, setIsInfoDialogOpen] = useState<boolean>(false);
 
 	// Keep track of previous length to avoid unnecessary resets
 	useEffect(() => {
-		if (displayQuestions && displayQuestions && displayQuestions.length !== 0) {
+		if (displayQuestions && displayQuestions.length !== 0) {
 			setRestoreModalOpen(Array(displayQuestions.length).fill(false));
 			setDeleteModalOpen(Array(displayQuestions.length).fill(false));
 		}
 	}, [displayQuestions]);
-
-	useEffect(() => {
-		setCurrentPage(1);
-	}, []);
 
 	const handleSelectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
 		const checked = event.target.checked;
@@ -231,7 +229,8 @@ const AdminRecycleBinQuestionsTab = () => {
 
 			if (response.data.status === 200) {
 				// Remove from archived questions
-				setArchivedQuestions((prev) => prev?.filter((question) => question._id !== questionId) || []);
+				setArchivedQuestions((prev = []) => (prev.some((q) => q._id === questionId) ? prev.filter((q) => q._id !== questionId) : prev));
+
 				setTotalItems((prev) => prev - 1);
 
 				// Clear search if currently viewing filtered data to show updated context data
@@ -264,7 +263,8 @@ const AdminRecycleBinQuestionsTab = () => {
 
 			if (response.data.status === 200) {
 				// Remove from archived questions
-				setArchivedQuestions((prev) => prev?.filter((question) => question._id !== questionId) || []);
+				setArchivedQuestions((prev = []) => (prev.some((q) => q._id === questionId) ? prev.filter((q) => q._id !== questionId) : prev));
+
 				setTotalItems((prev) => prev - 1);
 
 				// Clear search if currently viewing filtered data to show updated context data
@@ -301,7 +301,11 @@ const AdminRecycleBinQuestionsTab = () => {
 			);
 
 			// Remove the questions from the list
-			setArchivedQuestions((prev) => prev?.filter((question) => !selectedItems?.includes(question._id)) || []);
+			setArchivedQuestions((prev = []) => {
+				const setIds = new Set(selectedItems);
+				return prev.filter((q) => !setIds.has(q._id));
+			});
+
 			setTotalItems((prev) => prev - selectedItems.length);
 
 			// If search is active, remove from search results; otherwise context data is already updated
@@ -329,7 +333,10 @@ const AdminRecycleBinQuestionsTab = () => {
 			await Promise.all(selectedItems?.map((questionId) => axios.delete(`${base_url}/questions/${questionId}/hard`)) || []);
 
 			// Remove the questions from the list
-			setArchivedQuestions((prev) => prev?.filter((question) => !selectedItems?.includes(question._id)) || []);
+			setArchivedQuestions((prev = []) => {
+				const setIds = new Set(selectedItems);
+				return prev.filter((q) => !setIds.has(q._id));
+			});
 			setTotalItems((prev) => prev - selectedItems.length);
 
 			// If search is active, remove from search results; otherwise context data is already updated
@@ -598,11 +605,11 @@ const AdminRecycleBinQuestionsTab = () => {
 				{paginatedQuestions && paginatedQuestions.length === 0 && (
 					<CustomInfoMessageAlignedLeft
 						message={isSearchActive ? 'No deleted questions found matching your search criteria.' : 'No deleted questions found.'}
-						sx={{ marginTop: '5rem' }}
+						sx={{ marginTop: isMobileSize ? '3rem' : '5rem', marginBottom: '1rem' }}
 					/>
 				)}
 				{isMobileSize && <CustomInfoMessageAlignedLeft message='Rotate your device or use desktop for more info' />}
-				<CustomTablePagination count={questionsNumberOfPages} page={currentPageNumber} onChange={handlePageChange} />
+				<CustomTablePagination count={questionsNumberOfPages} page={questionsCurrentPage} onChange={handlePageChange} />
 			</Box>
 
 			{/* Restore Modal */}

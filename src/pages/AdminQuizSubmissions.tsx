@@ -2,7 +2,7 @@ import { Box, Table, TableBody, TableCell, TableRow } from '@mui/material';
 import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
-import { useContext, useEffect } from 'react';
+import { useContext, useEffect, useMemo } from 'react';
 import { AdminQuizSubmissionsContext } from '../contexts/AdminQuizSubmissionsContextProvider';
 import { QuizSubmission } from '../interfaces/quizSubmission';
 import CustomTableHead from '../components/layouts/table/CustomTableHead';
@@ -42,14 +42,15 @@ const AdminQuizSubmissions = () => {
 
 	const {
 		quizSubmissions,
+		loading,
 		totalItems,
 		loadedPages,
-		quizSubmissionsPageNumber,
-		setQuizSubmissionsPageNumber,
 		fetchMoreQuizSubmissions,
-		loading,
 		enableAdminQuizSubmissionsFetch,
+		setQuizSubmissionsPageNumber,
 	} = useContext(AdminQuizSubmissionsContext);
+
+	const pageSize = 50;
 
 	// Use the filter search hook
 	const {
@@ -58,7 +59,7 @@ const AdminQuizSubmissions = () => {
 		filterValue,
 		displayData: displaySubmissions,
 		numberOfPages: submissionsNumberOfPages,
-		searchResultsPage,
+		currentPage: quizSubmissionsCurrentPage,
 		searchResultsTotalItems,
 		searchedValue,
 		orderBy,
@@ -74,46 +75,34 @@ const AdminQuizSubmissions = () => {
 		resetAll,
 	} = useFilterSearch<QuizSubmission>({
 		getEndpoint: getApiEndpoint,
-		limit: 150,
-		pageSize: 50,
+		limit: 200,
+		pageSize,
 		contextData: quizSubmissions || [],
 		setContextPageNumber: setQuizSubmissionsPageNumber,
 		fetchMoreContextData: fetchMoreQuizSubmissions,
 		contextLoadedPages: loadedPages,
+		contextTotalItems: totalItems,
 		defaultOrderBy: 'createdAt',
 		defaultOrder: 'desc',
 	});
 
-	const pageSize = 50;
-
 	// Sort the display data
-	const sortedSubmissions =
-		displaySubmissions?.sort((a, b) => {
+	const sortedSubmissions = useMemo(() => {
+		if (!displaySubmissions) return [];
+		return [...displaySubmissions].sort((a, b) => {
 			const aValue = (a as any)[orderBy] ?? '';
 			const bValue = (b as any)[orderBy] ?? '';
+			return order === 'asc' ? (aValue > bValue ? 1 : aValue < bValue ? -1 : 0) : aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
+		});
+	}, [displaySubmissions, orderBy, order]);
 
-			if (order === 'asc') {
-				return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
-			} else {
-				return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
-			}
-		}) || [];
-
-	// Use appropriate page number for pagination
-	const currentPage = isSearchActive ? searchResultsPage : quizSubmissionsPageNumber;
-
-	// For search results, slice the accumulated data based on current page
 	// For context data, use client-side pagination
-	const paginatedSubmissions = sortedSubmissions?.slice((currentPage - 1) * pageSize, currentPage * pageSize) || [];
+	const paginatedQuizSubmissions = sortedSubmissions;
 
 	// Enable admin quiz submissions fetching only once when component mounts
 	useEffect(() => {
 		enableAdminQuizSubmissionsFetch();
-	}, []); // Empty dependency array - only run once
-
-	useEffect(() => {
-		setQuizSubmissionsPageNumber(1);
-	}, []); // Reset page number only once on mount
+	}, []);
 
 	// Show loading state while quiz submissions are being fetched
 	if (loading) {
@@ -276,8 +265,8 @@ const AdminQuizSubmissions = () => {
 							}
 						/>
 						<TableBody>
-							{paginatedSubmissions &&
-								paginatedSubmissions?.map((submission: QuizSubmission) => {
+							{paginatedQuizSubmissions &&
+								paginatedQuizSubmissions?.map((submission: QuizSubmission) => {
 									return (
 										<TableRow key={submission._id} hover>
 											<CustomTableCell value={submission.userName} />
@@ -313,8 +302,16 @@ const AdminQuizSubmissions = () => {
 								})}
 						</TableBody>
 					</Table>
-					{isMobileSize && <CustomInfoMessageAlignedLeft message='Rotate your device or use desktop for more info' />}
-					<CustomTablePagination count={submissionsNumberOfPages} page={currentPage} onChange={handlePageChange} />
+					{displaySubmissions && displaySubmissions.length === 0 && (
+						<CustomInfoMessageAlignedLeft
+							message={isSearchActive ? 'No quiz submissions found matching your search criteria.' : 'No quiz submissions found.'}
+							sx={{ marginTop: isMobileSize ? '3rem' : '5rem', marginBottom: '1rem' }}
+						/>
+					)}
+					{isMobileSize && !(displaySubmissions && displaySubmissions.length === 0) && (
+						<CustomInfoMessageAlignedLeft message='Rotate your device or use desktop for more info' />
+					)}
+					<CustomTablePagination count={submissionsNumberOfPages} page={quizSubmissionsCurrentPage} onChange={handlePageChange} />
 				</Box>
 			</DashboardPagesLayout>
 		</AdminPageErrorBoundary>

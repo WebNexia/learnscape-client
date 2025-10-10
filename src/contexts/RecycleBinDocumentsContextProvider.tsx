@@ -13,8 +13,6 @@ interface RecycleBinDocumentsContextTypes {
 	archivedDocuments: ArchivedDocument[];
 	totalItems: number;
 	currentPage: number;
-	loadedPages: number[];
-	setLoadedPages: React.Dispatch<React.SetStateAction<number[]>>;
 	searchResults: ArchivedDocument[];
 	searchResultsTotalItems: number;
 	isSearchActive: boolean;
@@ -33,6 +31,8 @@ interface RecycleBinDocumentsContextTypes {
 	setIsSearchActive: React.Dispatch<React.SetStateAction<boolean>>;
 	setArchivedDocuments: React.Dispatch<React.SetStateAction<ArchivedDocument[]>>;
 	setTotalItems: React.Dispatch<React.SetStateAction<number>>;
+	loadedPages: number[];
+	setLoadedPages: React.Dispatch<React.SetStateAction<number[]>>;
 	snackbarOpen: boolean;
 	snackbarMessage: string;
 	snackbarSeverity: 'success' | 'error' | 'warning' | 'info';
@@ -49,8 +49,6 @@ export const RecycleBinDocumentsContext = createContext<RecycleBinDocumentsConte
 	archivedDocuments: [],
 	totalItems: 0,
 	currentPage: 1,
-	loadedPages: [],
-	setLoadedPages: () => {},
 	searchResults: [],
 	searchResultsTotalItems: 0,
 	isSearchActive: false,
@@ -69,6 +67,8 @@ export const RecycleBinDocumentsContext = createContext<RecycleBinDocumentsConte
 	setIsSearchActive: () => {},
 	setArchivedDocuments: () => {},
 	setTotalItems: () => {},
+	loadedPages: [],
+	setLoadedPages: () => {},
 	snackbarOpen: false,
 	snackbarMessage: '',
 	snackbarSeverity: 'info',
@@ -84,8 +84,8 @@ export const RecycleBinDocumentsProvider = ({ children }: RecycleBinDocumentsCon
 	const [archivedDocuments, setArchivedDocuments] = useState<ArchivedDocument[]>([]);
 	const [totalItems, setTotalItems] = useState<number>(0);
 	const [currentPage, setCurrentPage] = useState<number>(1);
-	const [loadedPages, setLoadedPages] = useState<number[]>([]);
 	const [searchResults, setSearchResults] = useState<ArchivedDocument[]>([]);
+	const [loadedPages, setLoadedPages] = useState<number[]>([]);
 	const [searchResultsTotalItems, setSearchResultsTotalItems] = useState<number>(0);
 	const [isSearchActive, setIsSearchActive] = useState<boolean>(false);
 	const [searchValue, setSearchValue] = useState<string>('');
@@ -128,8 +128,6 @@ export const RecycleBinDocumentsProvider = ({ children }: RecycleBinDocumentsCon
 		archivedDocuments,
 		totalItems,
 		currentPage,
-		loadedPages,
-		setLoadedPages,
 		searchResults,
 		searchResultsTotalItems,
 		isSearchActive,
@@ -148,6 +146,8 @@ export const RecycleBinDocumentsProvider = ({ children }: RecycleBinDocumentsCon
 		setIsSearchActive,
 		setArchivedDocuments,
 		setTotalItems,
+		loadedPages,
+		setLoadedPages,
 		snackbarOpen,
 		snackbarMessage,
 		snackbarSeverity,

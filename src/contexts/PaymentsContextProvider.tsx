@@ -59,6 +59,7 @@ const PaymentsContextProvider = ({ children }: PaymentsContextProviderProps) => 
 		staleTime: user?.role !== Roles.USER ? 0 : 5 * 60 * 1000,
 		cacheTime: 30 * 60 * 1000,
 		limit: 200,
+		disableAutoGapFill: true,
 	});
 
 	const enablePaymentsFetch = () => setIsEnabled(true);

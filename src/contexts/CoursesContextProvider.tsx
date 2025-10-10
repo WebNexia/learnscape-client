@@ -89,7 +89,9 @@ const CoursesContextProvider = ({ children }: CoursesContextProviderProps) => {
 		enabled: isEnabled && isAuthenticated && (isAdmin || isLearner || isInstructor) && !isLandingPageRoute,
 		role: user?.role as Roles,
 		staleTime: user?.role !== Roles.USER ? 0 : 5 * 60 * 1000,
+		limit: 100,
 		cacheTime: 30 * 60 * 1000,
+		disableAutoGapFill: true,
 	});
 
 	const enableCoursesFetch = () => setIsEnabled(true);

@@ -1,6 +1,6 @@
 import { Box, Table, TableBody, TableCell, TableRow } from '@mui/material';
 import { PromoCode } from '../../../interfaces/promoCode';
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useMemo, useState } from 'react';
 import { PromoCodesContext } from '../../../contexts/PromoCodesContextProvider';
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
 import CreateCodeDialog from './CreateCodeDialog';
@@ -22,7 +22,7 @@ import FilterSearchRow from '../FilterSearchRow';
 const AdminPromoCodesTab = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
-	const { promoCodes, totalItems, loadedPages, promoCodesPageNumber, setPromoCodesPageNumber, fetchMorePromoCodes, removePromoCode } =
+	const { promoCodes, totalItems, loadedPages, fetchMorePromoCodes, removePromoCode, setPromoCodesPageNumber, enablePromoCodesFetch } =
 		useContext(PromoCodesContext);
 
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
@@ -39,7 +39,7 @@ const AdminPromoCodesTab = () => {
 		filterValue,
 		displayData: displayPromoCodes,
 		numberOfPages: promoCodesNumberOfPages,
-		searchResultsPage,
+		currentPage: promoCodesCurrentPage,
 		searchResultsTotalItems,
 		searchButtonClicked,
 		searchedValue,
@@ -63,27 +63,27 @@ const AdminPromoCodesTab = () => {
 		setContextPageNumber: setPromoCodesPageNumber,
 		fetchMoreContextData: fetchMorePromoCodes,
 		contextLoadedPages: loadedPages,
+		contextTotalItems: totalItems,
 		defaultOrderBy: 'updatedAt',
 		defaultOrder: 'desc',
 	});
 
-	// Use appropriate page number for pagination
-	const currentPage = isSearchActive ? searchResultsPage : promoCodesPageNumber;
+	const sortedPromoCodes = useMemo(() => {
+		if (!displayPromoCodes) return [];
 
-	const sortedPromoCodes = [...(displayPromoCodes || [])]?.sort((a, b) => {
-		const aValue = a[orderBy as keyof PromoCode] ?? '';
-		const bValue = b[orderBy as keyof PromoCode] ?? '';
+		return [...displayPromoCodes].sort((a, b) => {
+			const aValue = a[orderBy as keyof PromoCode] ?? '';
+			const bValue = b[orderBy as keyof PromoCode] ?? '';
 
-		if (order === 'asc') {
-			return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
-		} else {
-			return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
-		}
-	});
+			if (order === 'asc') {
+				return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+			} else {
+				return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
+			}
+		});
+	}, [displayPromoCodes, orderBy, order]);
 
-	// For search results, slice the accumulated data based on current page
-	// For context data, use client-side pagination
-	const paginatedPromoCodes = sortedPromoCodes?.slice((currentPage - 1) * pageSize, currentPage * pageSize) || [];
+	const paginatedPromoCodes = sortedPromoCodes;
 
 	const [isNewCodeModalOpen, setIsNewCodeModalOpen] = useState<boolean>(false);
 	const [isEditCodeModalOpen, setIsEditCodeModalOpen] = useState<boolean[]>([]);
@@ -92,21 +92,13 @@ const AdminPromoCodesTab = () => {
 	const [singleCode, setSingleCode] = useState<PromoCode | null>(null);
 
 	useEffect(() => {
-		setPromoCodesPageNumber(1);
-		// Trigger initial fetch for context data
-		if (promoCodes && promoCodes.length === 0) {
-			// This will trigger the context to fetch data
-		}
-	}, []);
+		enablePromoCodesFetch();
+	}, [enablePromoCodesFetch]);
 
 	useEffect(() => {
 		setIsDeleteCodeModalOpen(Array(promoCodes.length).fill(false));
 		setIsEditCodeModalOpen(Array(promoCodes.length).fill(false));
-	}, [promoCodes, promoCodesPageNumber]);
-
-	useEffect(() => {
-		setPromoCodesPageNumber(1);
-	}, []);
+	}, [promoCodesCurrentPage, filterValue, searchValue]);
 
 	const openDeleteCodeModal = (index: number) => {
 		const updatedState = [...isDeleteCodeModalOpen];
@@ -367,8 +359,16 @@ const AdminPromoCodesTab = () => {
 							})}
 					</TableBody>
 				</Table>
-				{isMobileSize && <CustomInfoMessageAlignedLeft message='Rotate your device or use desktop for more info' />}
-				<CustomTablePagination count={promoCodesNumberOfPages} page={currentPage} onChange={handlePageChange} />
+				{displayPromoCodes && displayPromoCodes.length === 0 && (
+					<CustomInfoMessageAlignedLeft
+						message={isSearchActive ? 'No promo codes found matching your search criteria.' : 'No promo codes found.'}
+						sx={{ marginTop: isMobileSize ? '3rem' : '5rem', marginBottom: '1rem' }}
+					/>
+				)}
+				{isMobileSize && !(displayPromoCodes && displayPromoCodes.length === 0) && (
+					<CustomInfoMessageAlignedLeft message='Rotate your device or use desktop for more info' />
+				)}
+				<CustomTablePagination count={promoCodesNumberOfPages} page={promoCodesCurrentPage} onChange={handlePageChange} />
 			</Box>
 		</>
 	);

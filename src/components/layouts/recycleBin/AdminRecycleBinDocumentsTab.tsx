@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext, useMemo } from 'react';
 import { Box, Table, TableBody, TableCell, TableRow, Typography, IconButton, DialogContent, Snackbar, Alert } from '@mui/material';
 import { Restore, DeleteForever, Info } from '@mui/icons-material';
 import axios from '@utils/axiosInstance';
@@ -34,13 +34,12 @@ const AdminRecycleBinDocumentsTab = () => {
 	const {
 		archivedDocuments,
 		totalItems,
-		currentPage,
-		loadedPages,
-		setLoadedPages,
 		fetchArchivedDocuments,
 		setCurrentPage,
 		setArchivedDocuments,
 		setTotalItems,
+		loadedPages,
+		setLoadedPages,
 		snackbarOpen,
 		snackbarMessage,
 		snackbarSeverity,
@@ -53,9 +52,13 @@ const AdminRecycleBinDocumentsTab = () => {
 
 	// Create a wrapper function for fetchArchivedDocuments to match the hook's expected signature
 	const fetchMoreContextData = async (startPage: number, endPage: number) => {
+		const promises = [];
 		for (let page = startPage; page <= endPage; page++) {
-			await fetchArchivedDocuments(page);
+			if (!loadedPages?.includes(page)) {
+				promises.push(fetchArchivedDocuments(page));
+			}
 		}
+		await Promise.all(promises);
 	};
 
 	// Use the filter search hook
@@ -65,7 +68,7 @@ const AdminRecycleBinDocumentsTab = () => {
 		filterValue,
 		displayData: displayDocuments,
 		numberOfPages: documentsNumberOfPages,
-		searchResultsPage,
+		currentPage: documentsCurrentPage,
 		searchResultsTotalItems,
 		searchButtonClicked,
 		searchedValue,
@@ -89,6 +92,7 @@ const AdminRecycleBinDocumentsTab = () => {
 		setContextPageNumber: setCurrentPage,
 		fetchMoreContextData,
 		contextLoadedPages: loadedPages,
+		contextTotalItems: totalItems,
 		defaultOrderBy: 'archivedAt',
 		defaultOrder: 'desc',
 	});
@@ -99,39 +103,38 @@ const AdminRecycleBinDocumentsTab = () => {
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
-	// Use appropriate page number for pagination
-	const currentPageNumber = isSearchActive ? searchResultsPage : currentPage;
-
 	// Apply client-side sorting when not in search mode
-	const sortedDocuments = [...(displayDocuments || [])]?.sort((a, b) => {
-		// Handle nested properties like 'instructor.name'
+	const sortedDocuments = useMemo(() => {
+		if (!displayDocuments) return [];
+
 		const getNestedValue = (obj: any, path: string) => {
 			return path.split('.').reduce((current, key) => current?.[key], obj) ?? '';
 		};
 
-		let aValue, bValue;
+		return [...displayDocuments].sort((a, b) => {
+			let aValue: any;
+			let bValue: any;
 
-		// Special handling for Auto-Remove On column - sort by calculated deletion date
-		if (orderBy === 'autoRemoveDate') {
-			const getDeletionDate = (archivedAt: string) => {
-				const archivedDate = new Date(archivedAt);
-				return new Date(archivedDate.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days
-			};
-			aValue = getDeletionDate(a.archivedAt || '');
-			bValue = getDeletionDate(b.archivedAt || '');
-		} else {
-			aValue = getNestedValue(a, orderBy as string);
-			bValue = getNestedValue(b, orderBy as string);
-		}
+			if (orderBy === 'autoRemoveDate') {
+				const getDeletionDate = (archivedAt: string) => {
+					const archivedDate = new Date(archivedAt);
+					return new Date(archivedDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+				};
+				aValue = getDeletionDate(a.archivedAt || '');
+				bValue = getDeletionDate(b.archivedAt || '');
+			} else {
+				aValue = getNestedValue(a, orderBy as string);
+				bValue = getNestedValue(b, orderBy as string);
+			}
 
-		if (order === 'asc') {
-			return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
-		} else {
+			if (order === 'asc') {
+				return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+			}
 			return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
-		}
-	});
+		});
+	}, [displayDocuments, orderBy, order]);
 
-	const paginatedDocuments = sortedDocuments?.slice((currentPageNumber - 1) * pageSize, currentPageNumber * pageSize) || [];
+	const paginatedDocuments = sortedDocuments;
 
 	// Modal states
 	const [restoreModalOpen, setRestoreModalOpen] = useState<boolean[]>([]);
@@ -556,8 +559,9 @@ const AdminRecycleBinDocumentsTab = () => {
 										</TableCell>
 										<CustomTableCell value={truncateText(document.name, isMobileSize ? 25 : 45)} />
 										{!isMobileSize && <CustomTableCell value={document.pageCount?.toString() || 'N/A'} />}
-										<CustomTableCell value={document.archivedAt ? dateFormatter(document.archivedAt) : 'N/A'} />
 										{!isMobileSize && <CustomTableCell value={document.archivedByName || 'N/A'} />}
+
+										<CustomTableCell value={document.archivedAt ? dateFormatter(document.archivedAt) : 'N/A'} />
 										{!isMobileSize && <CustomTableCell value={deletionDateStatus.label} />}
 										<TableCell sx={{ textAlign: 'center' }}>
 											<CustomActionBtn
@@ -581,11 +585,11 @@ const AdminRecycleBinDocumentsTab = () => {
 				{paginatedDocuments && paginatedDocuments.length === 0 && (
 					<CustomInfoMessageAlignedLeft
 						message={isSearchActive ? 'No deleted documents found matching your search criteria.' : 'No deleted documents found.'}
-						sx={{ marginTop: '5rem' }}
+						sx={{ marginTop: isMobileSize ? '3rem' : '5rem', marginBottom: '1rem' }}
 					/>
 				)}
 				{isMobileSize && <CustomInfoMessageAlignedLeft message='Rotate your device or use desktop for more info' />}
-				<CustomTablePagination count={documentsNumberOfPages} page={currentPageNumber} onChange={handlePageChange} />
+				<CustomTablePagination count={documentsNumberOfPages} page={documentsCurrentPage} onChange={handlePageChange} />
 			</Box>
 
 			{/* Restore Modal */}

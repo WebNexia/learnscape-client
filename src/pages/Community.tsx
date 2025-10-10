@@ -20,6 +20,8 @@ import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import { Roles } from '../interfaces/enums';
 import { useFilterSearch } from '../hooks/useFilterSearch';
 import FilterSearchRow from '../components/layouts/FilterSearchRow';
+import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/CustomInfoMessageAlignedLeft';
+import { useAuth } from '../hooks/useAuth';
 
 export interface NewTopic {
 	title: string;
@@ -29,10 +31,12 @@ export interface NewTopic {
 }
 
 const Community = () => {
-	const { sortedTopicsData, setTopicsPageNumber, topicsPageNumber, fetchMoreTopics, totalItems, loadedPages, enableCommunityFetch, isLoading } =
+	const { sortedTopicsData, setTopicsPageNumber, fetchMoreTopics, totalItems, loadedPages, enableCommunityFetch, refreshCommunityData, isLoading } =
 		useContext(CommunityContext);
 	const { orgId } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
+
+	const { isLearner } = useAuth();
 
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -49,6 +53,7 @@ const Community = () => {
 		imageUrl: '',
 		audioUrl: '',
 	});
+	const pageSize = 20;
 
 	// Use the filter search hook
 	const {
@@ -57,7 +62,7 @@ const Community = () => {
 		filterValue,
 		displayData: displayTopics,
 		numberOfPages: topicsNumberOfPages,
-		searchResultsPage,
+		currentPage: topicsCurrentPage,
 		searchResultsTotalItems,
 		searchedValue,
 		orderBy,
@@ -72,12 +77,13 @@ const Community = () => {
 		resetAll,
 	} = useFilterSearch<CommunityTopic>({
 		getEndpoint: () => `${import.meta.env.VITE_SERVER_BASE_URL}/communityTopics/organisation/${orgId}`,
-		limit: 60,
-		pageSize: 20,
+		limit: 100,
+		pageSize,
 		contextData: sortedTopicsData || [],
 		setContextPageNumber: setTopicsPageNumber,
 		fetchMoreContextData: fetchMoreTopics,
 		contextLoadedPages: loadedPages,
+		contextTotalItems: totalItems,
 		defaultOrderBy: 'updatedAt',
 		defaultOrder: 'desc',
 		customSearchParams: (currentFilterValue) => {
@@ -85,41 +91,27 @@ const Community = () => {
 		},
 	});
 
-	const pageSize = 20;
-
 	// Force re-sort when topics data changes
 	const [sortKey, setSortKey] = useState(0);
 
 	// Sort the display data
 	const sortedTopics = useMemo(() => {
-		return (
-			displayTopics?.sort((a, b) => {
-				const aValue = (a as any)[orderBy] ?? '';
-				const bValue = (b as any)[orderBy] ?? '';
-
-				if (order === 'asc') {
-					return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
-				} else {
-					return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
-				}
-			}) || []
-		);
-	}, [displayTopics, orderBy, order, sortKey]); // Include sortKey to force re-sort
-
-	// Use appropriate page number for pagination
-	const currentPage = isSearchActive ? searchResultsPage : topicsPageNumber;
+		if (!displayTopics) return [];
+		const sorted = [...displayTopics].sort((a, b) => {
+			const aValue = (a as any)[orderBy] ?? '';
+			const bValue = (b as any)[orderBy] ?? '';
+			return order === 'asc' ? (aValue > bValue ? 1 : aValue < bValue ? -1 : 0) : aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
+		});
+		return sorted;
+	}, [displayTopics, orderBy, order, sortKey]);
 
 	// Paginate the data for display
-	const paginatedTopics = sortedTopics?.slice((currentPage - 1) * pageSize, currentPage * pageSize) || [];
-
-	// Enable community fetching only once when component mounts
+	const paginatedTopics = sortedTopics;
+	// Enable community fetching and refresh data when component mounts
 	useEffect(() => {
 		enableCommunityFetch();
-	}, []); // Empty dependency array - only run once
-
-	useEffect(() => {
-		setTopicsPageNumber(1);
-	}, []); // Reset page number only once on mount
+		refreshCommunityData();
+	}, []); // Empty dependency array - only run once on mount
 
 	// Force re-sort when topics data changes
 	useEffect(() => {
@@ -182,7 +174,7 @@ const Community = () => {
 						Join the Conversation!
 						<Tooltip title='Introduction to the Community' arrow placement='top'>
 							<IconButton onClick={() => setCommunityIntroModalOpen(true)} sx={{ ':hover': { backgroundColor: 'transparent' } }}>
-								<Info />
+								<Info fontSize='small' />
 							</IconButton>
 						</Tooltip>
 					</Typography>
@@ -215,7 +207,7 @@ const Community = () => {
 						{
 							label: isMobileSize ? 'Create' : 'Create Topic',
 							onClick: () => {
-								if (user?.hasRegisteredCourse || user?.isSubscribed || user?.role === 'admin') {
+								if (user?.hasRegisteredCourse || user?.isSubscribed || !isLearner) {
 									setCreateTopicModalOpen(true);
 								} else {
 									setMessageNonRegisteredModalOpen(true);
@@ -337,8 +329,14 @@ const Community = () => {
 							))}
 						</Box>
 					</Box>
+					{displayTopics && displayTopics.length === 0 && (
+						<CustomInfoMessageAlignedLeft
+							message={isSearchActive ? 'No topics found matching your search criteria.' : 'No topics found.'}
+							sx={{ marginTop: '3rem' }}
+						/>
+					)}
 					<Box sx={{ display: 'flex', justifyContent: 'center', margin: isMobileSize ? '0.75rem' : '1.5rem', width: '95%' }}>
-						<CustomTablePagination count={topicsNumberOfPages} page={currentPage} onChange={handlePageChange} />
+						<CustomTablePagination count={topicsNumberOfPages} page={topicsCurrentPage} onChange={handlePageChange} />
 					</Box>
 				</Box>
 				<CustomDialog openModal={rulesModalOpen} closeModal={() => setRulesModalOpen(false)} title='Community Guidelines'>

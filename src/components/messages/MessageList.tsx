@@ -45,7 +45,7 @@ const MessageList = ({
 					width: '100%',
 				}}>
 				<Box>
-					{user?.hasRegisteredCourse || user?.isSubscribed || user?.role === 'admin' ? (
+					{user?.hasRegisteredCourse || user?.isSubscribed || user?.role !== 'learner' ? (
 						<>
 							<Chat sx={{ fontSize: '5rem', color: '#fff' }} />
 							<Typography sx={{ color: '#fff' }}>Select an existing chat or start a new chat by adding a user</Typography>

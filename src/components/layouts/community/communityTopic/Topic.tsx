@@ -47,7 +47,7 @@ const Topic = ({ topic }: TopicProps) => {
 						<Typography
 							variant='body2'
 							onClick={() => {
-								if (user?.hasRegisteredCourse || user?.isSubscribed || user?.role === Roles.ADMIN) {
+								if (user?.hasRegisteredCourse || user?.isSubscribed || user?.role !== Roles.USER) {
 									navigate(
 										`/${user?.role === Roles.USER ? 'community' : user?.role === Roles.INSTRUCTOR ? 'instructor/community' : 'admin/community'}/topic/${topic._id}`
 									);

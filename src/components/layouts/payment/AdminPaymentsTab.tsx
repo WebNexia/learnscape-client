@@ -1,5 +1,5 @@
 import { Box, Table, TableBody, TableCell, TableRow } from '@mui/material';
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useMemo, useState } from 'react';
 import { PaymentsContext } from '../../../contexts/PaymentsContextProvider';
 import { Payment } from '../../../interfaces/payment';
 import CustomTableHead from '../table/CustomTableHead';
@@ -24,13 +24,17 @@ const AdminPaymentsTab = () => {
 
 	const { orgId, organisation } = useContext(OrganisationContext);
 
-	const { payments, totalItems, loadedPages, paymentsPageNumber, setPaymentsPageNumber, fetchMorePayments } = useContext(PaymentsContext);
+	const { payments, totalItems, loadedPages, fetchMorePayments, enablePaymentsFetch, setPaymentsPageNumber } = useContext(PaymentsContext);
 	const { courses } = useContext(CoursesContext);
 
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
-	const mappedCourses: string[] = courses?.map((course) => course.title) || [];
+	const mappedCourses = useMemo(() => {
+		const courseTitles = courses?.map((course) => course.title) || [];
+		// Remove duplicates while preserving order for filter options
+		return [...new Set(courseTitles)];
+	}, [courses]);
 
 	const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -44,7 +48,7 @@ const AdminPaymentsTab = () => {
 		filterValue,
 		displayData: displayPayments,
 		numberOfPages: paymentsNumberOfPages,
-		searchResultsPage,
+		currentPage: paymentsCurrentPage,
 		searchResultsTotalItems,
 		searchButtonClicked,
 		searchedValue,
@@ -67,29 +71,25 @@ const AdminPaymentsTab = () => {
 		setContextPageNumber: setPaymentsPageNumber,
 		fetchMoreContextData: fetchMorePayments,
 		contextLoadedPages: loadedPages,
+		contextTotalItems: totalItems,
 		defaultOrderBy: 'createdAt',
 		defaultOrder: 'desc',
 	});
 
-	// Use appropriate page number for pagination
-	const currentPage = isSearchActive ? searchResultsPage : paymentsPageNumber;
+	const sortedPayments = useMemo(() => {
+		if (!displayPayments) return [];
+		return [...displayPayments].sort((a, b) => {
+			const aValue = a[orderBy as keyof Payment] ?? '';
+			const bValue = b[orderBy as keyof Payment] ?? '';
+			return order === 'asc' ? (aValue > bValue ? 1 : aValue < bValue ? -1 : 0) : aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
+		});
+	}, [displayPayments, orderBy, order]);
 
-	const sortedPayments = [...(displayPayments || [])]?.sort((a, b) => {
-		const aValue = a[orderBy as keyof Payment] ?? '';
-		const bValue = b[orderBy as keyof Payment] ?? '';
-
-		if (order === 'asc') {
-			return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
-		} else {
-			return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
-		}
-	});
-
-	const paginatedPayments = sortedPayments?.slice((currentPage - 1) * pageSize, currentPage * pageSize) || [];
+	const paginatedPayments = sortedPayments;
 
 	useEffect(() => {
-		setPaymentsPageNumber(1);
-	}, []);
+		enablePaymentsFetch();
+	}, [enablePaymentsFetch]);
 
 	const handleViewPayment = (payment: Payment) => {
 		setSelectedPayment(payment);
@@ -330,8 +330,16 @@ const AdminPaymentsTab = () => {
 							})}
 					</TableBody>
 				</Table>
-				{isMobileSize && <CustomInfoMessageAlignedLeft message='Rotate your device or use desktop for more info' />}
-				<CustomTablePagination count={paymentsNumberOfPages} page={currentPage} onChange={handlePageChange} />
+				{displayPayments && displayPayments.length === 0 && (
+					<CustomInfoMessageAlignedLeft
+						message={isSearchActive ? 'No payments found matching your search criteria.' : 'No payments found.'}
+						sx={{ marginTop: isMobileSize ? '3rem' : '5rem', marginBottom: '1rem' }}
+					/>
+				)}
+				{isMobileSize && !(displayPayments && displayPayments.length === 0) && (
+					<CustomInfoMessageAlignedLeft message='Rotate your device or use desktop for more info' />
+				)}
+				<CustomTablePagination count={paymentsNumberOfPages} page={paymentsCurrentPage} onChange={handlePageChange} />
 			</Box>
 
 			<PaymentDetailsDialog

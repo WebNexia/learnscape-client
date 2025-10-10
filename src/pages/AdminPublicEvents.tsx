@@ -2,7 +2,7 @@ import { Box, Table, TableBody, TableCell, TableRow, Typography, Divider, Dialog
 import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useMemo, useState } from 'react';
 import { Download, Visibility } from '@mui/icons-material';
 import CreateLessonDialog from '../components/forms/newLesson/CreateLessonDialog';
 import CustomTableHead from '../components/layouts/table/CustomTableHead';
@@ -26,15 +26,8 @@ const AdminPublicEvents = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
 
-	const {
-		publicEvents,
-		fetchMorePublicEvents,
-		loadedPages,
-		publicEventsPageNumber,
-		setPublicEventsPageNumber,
-		enableAdminPublicEventsFetch,
-		loading,
-	} = useContext(AdminPublicEventsContext);
+	const { publicEvents, fetchMorePublicEvents, totalItems, loadedPages, setPublicEventsPageNumber, enableAdminPublicEventsFetch, loading } =
+		useContext(AdminPublicEventsContext);
 
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -50,7 +43,7 @@ const AdminPublicEvents = () => {
 		filterValue,
 		displayData: displayEvents,
 		numberOfPages: eventsNumberOfPages,
-		searchResultsPage,
+		currentPage: publicEventsCurrentPage,
 		searchResultsTotalItems,
 		searchedValue,
 		orderBy,
@@ -72,17 +65,17 @@ const AdminPublicEvents = () => {
 		setContextPageNumber: setPublicEventsPageNumber,
 		fetchMoreContextData: fetchMorePublicEvents,
 		contextLoadedPages: loadedPages,
+		contextTotalItems: totalItems,
 		defaultOrderBy: 'start',
 		defaultOrder: 'asc',
 	});
 
 	const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 
-	// Use appropriate page number for pagination
-	const currentPage = isSearchActive ? searchResultsPage : publicEventsPageNumber;
+	const sortedPublicEvents = useMemo(() => {
+		if (!displayEvents) return [];
 
-	const sortedPublicEvents =
-		[...(displayEvents || [])]?.sort((a, b) => {
+		return [...displayEvents].sort((a, b) => {
 			const aValue = (a as any)[orderBy] ?? '';
 			const bValue = (b as any)[orderBy] ?? '';
 
@@ -91,20 +84,17 @@ const AdminPublicEvents = () => {
 			} else {
 				return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
 			}
-		}) || [];
+		});
+	}, [displayEvents, orderBy, order]);
 
-	const paginatedPublicEvents = sortedPublicEvents?.slice((currentPage - 1) * pageSize, currentPage * pageSize) || [];
+	const paginatedPublicEvents = sortedPublicEvents;
 
 	const [isNewLessonModalOpen, setIsNewLessonModalOpen] = useState<boolean>(false);
 
 	// Enable admin public events fetching only once when component mounts
 	useEffect(() => {
 		enableAdminPublicEventsFetch();
-	}, []); // Empty dependency array - only run once
-
-	useEffect(() => {
-		setPublicEventsPageNumber(1);
-	}, []); // Reset page number only once on mount
+	}, [enableAdminPublicEventsFetch]);
 
 	const handleDownloadParticipants = async (eventId: string, eventTitle: string) => {
 		try {
@@ -345,7 +335,14 @@ const AdminPublicEvents = () => {
 						</TableBody>
 					</Table>
 					{isMobileSize && <CustomInfoMessageAlignedLeft message='Rotate your device or use desktop for more info' />}
-					<CustomTablePagination count={eventsNumberOfPages} page={currentPage} onChange={handlePageChange} />
+					{displayEvents && displayEvents.length === 0 && (
+						<CustomInfoMessageAlignedLeft
+							message={isSearchActive ? 'No events found matching your search criteria.' : 'No events found.'}
+							sx={{ marginTop: isMobileSize ? '3rem' : '5rem', marginBottom: '1rem' }}
+						/>
+					)}
+
+					<CustomTablePagination count={eventsNumberOfPages} page={publicEventsCurrentPage} onChange={handlePageChange} />
 				</Box>
 
 				<CustomDialog openModal={eventDetailsModalOpen} closeModal={() => setEventDetailsModalOpen(false)} title='Event Details' maxWidth='sm'>

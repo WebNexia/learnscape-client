@@ -2,7 +2,7 @@ import { Box, Table, TableBody, TableCell, TableRow, Tooltip, Typography, Snackb
 import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
-import { useContext, useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import axios from '@utils/axiosInstance';
 import { AutoAwesome, Delete, Edit, Info } from '@mui/icons-material';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
@@ -45,7 +45,6 @@ const AdminQuestions = () => {
 		removeQuestion,
 		totalItems,
 		loadedPages,
-		questionsPageNumber,
 		setQuestionsPageNumber,
 		questionTypes,
 		enableQuestionsFetch,
@@ -76,6 +75,10 @@ const AdminQuestions = () => {
 					];
 	};
 
+	useEffect(() => {
+		enableQuestionsFetch();
+	}, []);
+
 	const pageSize = 50;
 
 	// Use the filter search hook
@@ -85,7 +88,7 @@ const AdminQuestions = () => {
 		filterValue,
 		displayData: displayQuestions,
 		numberOfPages: questionsNumberOfPages,
-		searchResultsPage,
+		currentPage: questionsCurrentPage,
 		searchResultsTotalItems,
 		searchedValue,
 		orderBy,
@@ -108,15 +111,15 @@ const AdminQuestions = () => {
 		setContextPageNumber: setQuestionsPageNumber,
 		fetchMoreContextData: fetchMoreQuestions,
 		contextLoadedPages: loadedPages,
+		contextTotalItems: totalItems,
 		defaultOrderBy: 'updatedAt',
 		defaultOrder: 'desc',
 	});
 
-	// Use appropriate page number for pagination
-	const currentPage = isSearchActive ? searchResultsPage : questionsPageNumber;
+	const sortedQuestions = useMemo(() => {
+		if (!displayQuestions) return [];
 
-	const sortedQuestions =
-		[...(displayQuestions || [])]?.sort((a, b) => {
+		return [...displayQuestions].sort((a, b) => {
 			const aValue = (a as any)[orderBy] ?? '';
 			const bValue = (b as any)[orderBy] ?? '';
 
@@ -125,11 +128,12 @@ const AdminQuestions = () => {
 			} else {
 				return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
 			}
-		}) || [];
+		});
+	}, [displayQuestions, orderBy, order]);
 
 	// For search results, slice the accumulated data based on current page
 	// For context data, use client-side pagination
-	const paginatedQuestions = sortedQuestions?.slice((currentPage - 1) * pageSize, currentPage * pageSize) || [];
+	const paginatedQuestions = sortedQuestions;
 
 	const [questionType, setQuestionType] = useState<string>('');
 
@@ -160,11 +164,6 @@ const AdminQuestions = () => {
 		handleOptionChange,
 	} = useNewQuestion();
 
-	useEffect(() => {
-		setQuestionsPageNumber(1);
-		enableQuestionsFetch(); // 👈 Enable questions fetching when component mounts
-	}, []);
-
 	// Keep track of previous length to avoid unnecessary resets
 	const prevLengthRef = useRef<number>(0);
 
@@ -175,7 +174,7 @@ const AdminQuestions = () => {
 			setEditQuestionModalOpen(Array(paginatedQuestions.length).fill(false));
 			setIsQuestionInfoModalOpen(Array(paginatedQuestions.length).fill(false));
 		}
-	}, [displayQuestions, questionsPageNumber]);
+	}, [questionsCurrentPage, filterValue, searchValue]);
 
 	if (error) return <Typography color='error'>{error}</Typography>;
 
@@ -557,8 +556,16 @@ const AdminQuestions = () => {
 									})}
 							</TableBody>
 						</Table>
-						{isMobileSize && <CustomInfoMessageAlignedLeft message='Rotate your device or use desktop for more info' />}
-						<CustomTablePagination count={questionsNumberOfPages} page={currentPage} onChange={handlePageChange} />
+						{displayQuestions && displayQuestions.length === 0 && (
+							<CustomInfoMessageAlignedLeft
+								message={isSearchActive ? 'No questions found matching your search criteria.' : 'No questions found.'}
+								sx={{ marginTop: isMobileSize ? '3rem' : '5rem', marginBottom: '1rem' }}
+							/>
+						)}
+						{isMobileSize && !(displayQuestions && displayQuestions.length === 0) && (
+							<CustomInfoMessageAlignedLeft message='Rotate your device or use desktop for more info' />
+						)}
+						<CustomTablePagination count={questionsNumberOfPages} page={questionsCurrentPage} onChange={handlePageChange} />
 					</Box>
 
 					{isQuestionInfoModalOpen?.map(
