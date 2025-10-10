@@ -1,5 +1,5 @@
 import { Box, Table, TableBody, TableCell, TableRow, Typography, Snackbar, Alert, DialogContent, DialogActions } from '@mui/material';
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useMemo, useState } from 'react';
 import { UserSubscription } from '../../../interfaces/subscription';
 import { Visibility, Delete, Cancel } from '@mui/icons-material';
 import CustomTableHead from '../table/CustomTableHead';
@@ -26,14 +26,14 @@ const AdminSubscriptionsTab = () => {
 
 	const { orgId, organisation } = useContext(OrganisationContext);
 	const {
-		subscriptions = [],
-		totalItems = 0,
-		loadedPages = [],
-		subscriptionsPageNumber = 1,
-		setSubscriptionsPageNumber,
+		subscriptions,
+		totalItems,
+		loadedPages,
 		fetchMoreSubscriptions,
 		removeSubscription,
 		updateSubscription,
+		enableSubscriptionsFetch,
+		setSubscriptionsPageNumber,
 	} = useContext(SubscriptionsContext);
 
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
@@ -59,7 +59,7 @@ const AdminSubscriptionsTab = () => {
 		filterValue,
 		displayData: displaySubscriptions,
 		numberOfPages: subscriptionsNumberOfPages,
-		searchResultsPage,
+		currentPage: subscriptionsCurrentPage,
 		searchResultsTotalItems,
 		searchButtonClicked,
 		searchedValue,
@@ -83,55 +83,52 @@ const AdminSubscriptionsTab = () => {
 		setContextPageNumber: setSubscriptionsPageNumber,
 		fetchMoreContextData: fetchMoreSubscriptions,
 		contextLoadedPages: loadedPages,
+		contextTotalItems: totalItems,
 		defaultOrderBy: 'createdAt',
 		defaultOrder: 'desc',
 	});
 
-	// Use appropriate page number for pagination
-	const currentPage = isSearchActive ? searchResultsPage : subscriptionsPageNumber;
+	const sortedSubscriptions = useMemo(() => {
+		if (!displaySubscriptions) return [];
 
-	// Helper function to get nested values for sorting
-	const getNestedValue = (obj: any, path: string) => {
-		return path.split('.').reduce((current, key) => current?.[key], obj) ?? '';
-	};
+		const getNestedValue = (obj: any, path: string) => {
+			return path.split('.').reduce((current, key) => current?.[key], obj) ?? '';
+		};
 
-	const sortedSubscriptions = [...(displaySubscriptions || [])]?.sort((a, b) => {
-		let aValue: any;
-		let bValue: any;
+		return [...displaySubscriptions].sort((a, b) => {
+			let aValue: any;
+			let bValue: any;
 
-		// Handle special cases for sorting
-		if (orderBy === 'userId') {
-			// For user sorting, use firstName + lastName combination
-			aValue =
-				typeof a.userId === 'object'
-					? `${a.userId?.firstName || ''} ${a.userId?.lastName || ''}`.trim() || a.userId?.email || a.userId?._id || ''
-					: a.userId || '';
-			bValue =
-				typeof b.userId === 'object'
-					? `${b.userId?.firstName || ''} ${b.userId?.lastName || ''}`.trim() || b.userId?.email || b.userId?._id || ''
-					: b.userId || '';
-		} else if (orderBy.includes('.')) {
-			// Handle nested properties
-			aValue = getNestedValue(a, orderBy);
-			bValue = getNestedValue(b, orderBy);
-		} else {
-			// Handle regular properties
-			aValue = a[orderBy as keyof UserSubscription] ?? '';
-			bValue = b[orderBy as keyof UserSubscription] ?? '';
-		}
+			if (orderBy === 'userId') {
+				aValue =
+					typeof a.userId === 'object'
+						? `${a.userId?.firstName || ''} ${a.userId?.lastName || ''}`.trim() || a.userId?.email || a.userId?._id || ''
+						: a.userId || '';
+				bValue =
+					typeof b.userId === 'object'
+						? `${b.userId?.firstName || ''} ${b.userId?.lastName || ''}`.trim() || b.userId?.email || b.userId?._id || ''
+						: b.userId || '';
+			} else if (orderBy.includes('.')) {
+				aValue = getNestedValue(a, orderBy);
+				bValue = getNestedValue(b, orderBy);
+			} else {
+				aValue = a[orderBy as keyof UserSubscription] ?? '';
+				bValue = b[orderBy as keyof UserSubscription] ?? '';
+			}
 
-		if (order === 'asc') {
-			return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
-		} else {
-			return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
-		}
-	});
+			if (order === 'asc') {
+				return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+			} else {
+				return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
+			}
+		});
+	}, [displaySubscriptions, orderBy, order]);
 
-	const paginatedSubscriptions = sortedSubscriptions?.slice((currentPage - 1) * pageSize, currentPage * pageSize) || [];
+	const paginatedSubscriptions = sortedSubscriptions;
 
 	useEffect(() => {
-		setSubscriptionsPageNumber(1);
-	}, []);
+		enableSubscriptionsFetch();
+	}, [enableSubscriptionsFetch]);
 
 	const handleDownloadSubscriptions = async () => {
 		try {
@@ -495,7 +492,7 @@ const AdminSubscriptionsTab = () => {
 													/>
 												}
 											/>
-											{!['canceled', 'incomplete', 'unpaid'].includes(subscription.status) && (
+											{
 												<CustomActionBtn
 													title='Cancel Subscription'
 													onClick={() => openCancelDialog(index, subscription)}
@@ -505,8 +502,9 @@ const AdminSubscriptionsTab = () => {
 															sx={{ fontSize: isMobileSize ? '0.8rem' : undefined, mr: isMobileSize ? '-0.35rem' : '-0.75rem' }}
 														/>
 													}
+													disabled={['canceled', 'incomplete', 'unpaid'].includes(subscription.status)}
 												/>
-											)}
+											}
 											<CustomActionBtn
 												title='Delete Subscription'
 												onClick={() => openDeleteDialog(index, subscription)}
@@ -518,9 +516,17 @@ const AdminSubscriptionsTab = () => {
 							})}
 					</TableBody>
 				</Table>
-				{isMobileSize && <CustomInfoMessageAlignedLeft message='Rotate your device or use desktop for more info' />}
+				{displaySubscriptions && displaySubscriptions.length === 0 && (
+					<CustomInfoMessageAlignedLeft
+						message={isSearchActive ? 'No subscriptions found matching your search criteria.' : 'No subscriptions found.'}
+						sx={{ marginTop: isMobileSize ? '3rem' : '5rem', marginBottom: '1rem' }}
+					/>
+				)}
+				{isMobileSize && !(displaySubscriptions && displaySubscriptions.length === 0) && (
+					<CustomInfoMessageAlignedLeft message='Rotate your device or use desktop for more info' />
+				)}
 
-				<CustomTablePagination count={subscriptionsNumberOfPages} page={currentPage} onChange={handlePageChange} />
+				<CustomTablePagination count={subscriptionsNumberOfPages} page={subscriptionsCurrentPage} onChange={handlePageChange} />
 			</Box>
 
 			{/* View Subscription Dialog */}

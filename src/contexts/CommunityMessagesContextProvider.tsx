@@ -1,5 +1,5 @@
 import axios from '@utils/axiosInstance';
-import { ReactNode, createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { ReactNode, createContext, useCallback, useContext, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import DataFetchErrorBoundary from '../components/error/DataFetchErrorBoundary';
 import { OrganisationContext } from './OrganisationContextProvider';
@@ -17,6 +17,7 @@ interface CommunityMessagesContextTypes {
 	setPageNumber: React.Dispatch<React.SetStateAction<number>>;
 	fetchMessages: (topicId: string) => Promise<CommunityMessage[]>;
 	fetchMoreMessages: (topicId: string, startPage: number, endPage: number) => Promise<void>;
+	fetchSpecificPage: (topicId: string, pageNumber: number) => Promise<CommunityMessage[]>;
 	totalItems: number;
 	loadedPages: number[];
 	currentTopicId: string;
@@ -42,6 +43,7 @@ export const CommunityMessagesContext = createContext<CommunityMessagesContextTy
 	setPageNumber: () => {},
 	fetchMessages: async () => [],
 	fetchMoreMessages: async () => {},
+	fetchSpecificPage: async () => [],
 	totalItems: 0,
 	loadedPages: [],
 	currentTopicId: '',
@@ -76,7 +78,7 @@ const CommunityMessagesContextProvider = (props: CommunityMessagesContextProvide
 
 			try {
 				// Fetch first batch of messages with traditional pagination
-				const response = await axios.get(`${base_url}/communityMessages/topic/${topicId}?page=1&limit=250`);
+				const response = await axios.get(`${base_url}/communityMessages/topic/${topicId}?page=1&limit=200`);
 
 				// Update totalItems from server response
 				setTotalItems(response.data.totalMessages || response.data.messages.length);
@@ -100,6 +102,34 @@ const CommunityMessagesContextProvider = (props: CommunityMessagesContextProvide
 		[isEnabled, orgId, base_url, queryClient] // ✅ dependencies → now stable
 	);
 
+	// Helper function to process fetched messages and update cache
+	const processFetchedMessages = async (response: any, topicId: string, backendPage: number) => {
+		// Update totalItems if not already set
+		if (response.data.totalMessages && totalItems === 0) {
+			setTotalItems(response.data.totalMessages);
+		}
+
+		// Get current cached data
+		const currentData = (queryClient.getQueryData(['communityMessages', topicId]) as CommunityMessage[]) || [];
+
+		// For smart pagination, we need to maintain chronological order
+		// Merge new messages with existing data and sort by createdAt
+		const existingIds = new Set(currentData.map((msg) => msg._id));
+		const newMessages = response.data.messages.filter((msg: any) => !existingIds.has(msg._id));
+
+		if (newMessages.length > 0) {
+			const mergedData = [...currentData, ...newMessages];
+			// Sort by createdAt to maintain chronological order (oldest first)
+			const sortedData = mergedData.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+			queryClient.setQueryData(['communityMessages', topicId], sortedData);
+		}
+
+		// Update loadedPages to track the corresponding backend page
+		if (!loadedPages?.includes(backendPage)) {
+			setLoadedPages((prev) => [...prev, backendPage]);
+		}
+	};
+
 	const fetchMoreMessages = async (topicId: string, startPage: number, endPage: number) => {
 		if (!orgId || !topicId || topicId !== currentTopicId) {
 			return;
@@ -110,7 +140,7 @@ const CommunityMessagesContextProvider = (props: CommunityMessagesContextProvide
 			const promises = [];
 			for (let page = startPage; page <= endPage; page++) {
 				if (!loadedPages?.includes(page)) {
-					promises.push(axios.get(`${base_url}/communityMessages/topic/${topicId}?page=${page}&limit=250`));
+					promises.push(axios.get(`${base_url}/communityMessages/topic/${topicId}?page=${page}&limit=200`));
 				}
 			}
 
@@ -119,47 +149,52 @@ const CommunityMessagesContextProvider = (props: CommunityMessagesContextProvide
 			}
 
 			const responses = await Promise.all(promises);
-			const allData = responses.flatMap((response) => response.data.messages);
 
-			// Update React Query cache with new data
-			const currentData = (queryClient.getQueryData(['communityMessages', topicId]) as CommunityMessage[]) || [];
-			queryClient.setQueryData(['communityMessages', topicId], [...currentData, ...allData]);
-
-			// Update loadedPages to track which pages we've fetched
-			const newLoadedPages = Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i);
-			setLoadedPages((prev) => [...prev, ...newLoadedPages]);
+			// Process each response to update cache and loadedPages
+			for (let i = 0; i < responses.length; i++) {
+				const response = responses[i];
+				const pageNumber = startPage + i;
+				await processFetchedMessages(response, topicId, pageNumber);
+			}
 		} catch (error: any) {
 			console.error('❌ Error fetching more messages:', error);
 			setError('Failed to fetch more messages');
 		}
 	};
 
-	// Progressive pagination gap-filling (batched)
-	useEffect(() => {
-		if (loadedPages && loadedPages.length > 0 && currentTopicId) {
-			const sortedPages = [...(loadedPages || [])]?.sort((a, b) => a - b) || [];
-			const maxPage = Math.max(...sortedPages);
-
-			let missingStart: number | null = null;
-
-			for (let page = 1; page <= maxPage; page++) {
-				if (!loadedPages?.includes(page)) {
-					if (missingStart === null) {
-						missingStart = page; // start of a gap
-					}
-				} else if (missingStart !== null) {
-					// end of a gap -> fetch missing range
-					fetchMoreMessages(currentTopicId, missingStart, page - 1);
-					missingStart = null;
-				}
-			}
-
-			// If gap continues till the end
-			if (missingStart !== null) {
-				fetchMoreMessages(currentTopicId, missingStart, maxPage);
-			}
+	const fetchSpecificPage = async (topicId: string, pageNumber: number): Promise<CommunityMessage[]> => {
+		if (!orgId || !topicId) {
+			return [];
 		}
-	}, [loadedPages, currentTopicId]);
+
+		try {
+			setLoading(true);
+			setError(null);
+
+			// Convert frontend page to backend page and fetch directly
+			const backendPage = Math.ceil((pageNumber * 20) / 200); // pageSize=20, limit=200
+
+			// Find the highest loaded backend page
+			const maxLoadedPage = loadedPages && loadedPages.length > 0 ? Math.max(...loadedPages) : 0;
+
+			// If we need to fill gaps, fetch all missing backend pages
+			if (backendPage > maxLoadedPage) {
+				await fetchMoreMessages(topicId, maxLoadedPage + 1, backendPage);
+			} else {
+				// If the page is already loaded, just fetch it directly
+				const response = await axios.get(`${base_url}/communityMessages/topic/${topicId}?page=${backendPage}&limit=200`);
+				await processFetchedMessages(response, topicId, backendPage);
+			}
+
+			return [];
+		} catch (error: any) {
+			console.error('❌ Error fetching specific page:', error);
+			setError('Failed to fetch page');
+			return [];
+		} finally {
+			setLoading(false);
+		}
+	};
 
 	// Function to refresh data
 	const refreshData = () => {
@@ -258,13 +293,14 @@ const CommunityMessagesContextProvider = (props: CommunityMessagesContextProvide
 		setForceUpdate((prev) => prev + 1);
 	};
 
-	// Calculate numberOfPages based on totalItems
-	const numberOfPages = Math.ceil(totalItems / 25);
+	// Calculate numberOfPages based on totalItems, with minimum of 1 page
+	const numberOfPages = Math.max(1, Math.ceil(totalItems / 20));
 
 	// Get messages data from React Query cache
 	const messages = (queryClient.getQueryData(['communityMessages', currentTopicId]) as CommunityMessage[]) || [];
 
 	// Use forceUpdate to ensure re-renders
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	const _ = forceUpdate;
 
 	const enableCommunityMessagesFetch = () => setIsEnabled(true);
@@ -283,6 +319,7 @@ const CommunityMessagesContextProvider = (props: CommunityMessagesContextProvide
 				setPageNumber,
 				fetchMessages,
 				fetchMoreMessages,
+				fetchSpecificPage,
 				totalItems,
 				loadedPages,
 				currentTopicId,

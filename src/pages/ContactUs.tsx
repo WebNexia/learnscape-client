@@ -42,7 +42,8 @@ const ContactUs = () => {
 		}
 	};
 
-	const { isVerySmallScreen } = useContext(MediaQueryContext);
+	const { isRotated, isVerySmallScreen, isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
 
 	const isValidPhone = (phone: string) => /^\+\d{8,}$/.test(phone);
 
@@ -245,10 +246,21 @@ const ContactUs = () => {
 									placeholder='Mesajınızı yazın'
 									InputProps={{
 										inputProps: {
-											maxLength: 1000,
+											maxLength: 500,
 										},
 									}}
 								/>
+								<Typography
+									variant='body2'
+									sx={{
+										fontSize: isMobileSize ? '0.7rem' : '0.8rem',
+										fontFamily: 'Varela Round',
+										color: theme.textColor?.secondary.main,
+										textAlign: 'right',
+										mb: '0.5rem',
+									}}>
+									{message.length}/500
+								</Typography>
 							</Grid>
 							<Grid item xs={12} sx={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
 								<ReCAPTCHA

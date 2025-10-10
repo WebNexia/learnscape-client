@@ -13,6 +13,7 @@ interface UsePaginatedEntityOptions<T extends { _id: string; updatedAt: string; 
 	cacheTime?: number;
 	initialPage?: number;
 	limit?: number;
+	disableAutoGapFill?: boolean; // Disable automatic gap filling
 }
 
 export function usePaginatedEntity<T extends { _id: string; updatedAt: string; isActive?: boolean }>({
@@ -25,6 +26,7 @@ export function usePaginatedEntity<T extends { _id: string; updatedAt: string; i
 	cacheTime = 30 * 60 * 1000,
 	initialPage = 1,
 	limit = 200,
+	disableAutoGapFill = false,
 }: UsePaginatedEntityOptions<T>) {
 	const queryClient = useQueryClient();
 
@@ -80,7 +82,7 @@ export function usePaginatedEntity<T extends { _id: string; updatedAt: string; i
 
 	// Progressive pagination fill - with debouncing to prevent multiple rapid calls
 	useEffect(() => {
-		if (loadedPages?.length > 0 && orgId) {
+		if (loadedPages?.length > 0 && orgId && !disableAutoGapFill) {
 			// Debounce to prevent rapid calls during updates
 			const timeoutId = setTimeout(() => {
 				const sortedPages = [...(loadedPages || [])]?.sort((a, b) => a - b) || [];
@@ -108,7 +110,7 @@ export function usePaginatedEntity<T extends { _id: string; updatedAt: string; i
 
 			return () => clearTimeout(timeoutId);
 		}
-	}, [loadedPages, orgId]);
+	}, [loadedPages, orgId, disableAutoGapFill]);
 
 	// CRUD Helpers
 	const addEntity = (newEntity: T) => {
@@ -188,7 +190,14 @@ export function usePaginatedEntity<T extends { _id: string; updatedAt: string; i
 
 		// Remove duplicates and sort by updatedAt
 		const unique = allData?.filter((item, index, self) => index === self?.findIndex?.((i) => i._id === item._id)) || [];
-		return unique?.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)) || [];
+		return (
+			unique?.sort((a, b) => {
+				// Handle cases where updatedAt might be undefined
+				const aUpdatedAt = a.updatedAt || (a as any).createdAt || '';
+				const bUpdatedAt = b.updatedAt || (b as any).createdAt || '';
+				return bUpdatedAt.localeCompare(aUpdatedAt);
+			}) || []
+		);
 	}, [orgId, loadedPages, queryClient, entityKey, data]);
 
 	return {

@@ -97,7 +97,7 @@ const ChatList = ({
 						<Box sx={{ flex: 1 }}>
 							<Tooltip title='Find User' placement='top' arrow>
 								<IconButton
-									disabled={!user?.hasRegisteredCourse && user?.role !== 'admin' && !user?.isSubscribed}
+									disabled={!user?.hasRegisteredCourse && user?.role === 'learner' && !user?.isSubscribed}
 									sx={{ ':hover': { backgroundColor: 'transparent' } }}
 									onClick={onAddUserClick}>
 									<AddBox fontSize={isMobileSize ? 'small' : 'medium'} />

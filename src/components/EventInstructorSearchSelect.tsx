@@ -27,17 +27,32 @@ const EventInstructorSearchSelect = forwardRef<any, EventInstructorSearchSelectP
 	({ value, onChange, onSelect, placeholder = 'Search instructors...', listSx = {}, disabled = false, selectedUserIds = [], sx = {} }, ref) => {
 		const { user } = useContext(UserAuthContext);
 
+		// Search for admins
 		const {
-			data: filtered,
-			loading,
-			error,
-			search,
-			loadMore,
-			reset,
-			pagination,
+			data: adminResults,
+			loading: adminLoading,
+			error: adminError,
+			search: searchAdmins,
+			loadMore: loadMoreAdmins,
+			reset: resetAdmins,
+			pagination: adminPagination,
 		} = useSearch<SearchUser>('users', 'events', {
-			userRole: 'admin', // Only admins can search instructors
-			allowCurrentUser: false, // Never include current user in instructor search
+			userRole: 'admin',
+			allowCurrentUser: false,
+		});
+
+		// Search for instructors
+		const {
+			data: instructorResults,
+			loading: instructorLoading,
+			error: instructorError,
+			search: searchInstructors,
+			loadMore: loadMoreInstructors,
+			reset: resetInstructors,
+			pagination: instructorPagination,
+		} = useSearch<SearchUser>('users', 'events', {
+			userRole: 'instructor',
+			allowCurrentUser: false,
 		});
 
 		const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
@@ -49,9 +64,10 @@ const EventInstructorSearchSelect = forwardRef<any, EventInstructorSearchSelectP
 		const handleSearch = useCallback(async () => {
 			if (value.trim()) {
 				setHasSearched(true);
-				await search(value);
+				// Search both admins and instructors
+				await Promise.all([searchAdmins(value), searchInstructors(value)]);
 			}
-		}, [value, search]);
+		}, [value, searchAdmins, searchInstructors]);
 
 		const handleUserSelect = useCallback(
 			(user: SearchUser) => {
@@ -61,21 +77,33 @@ const EventInstructorSearchSelect = forwardRef<any, EventInstructorSearchSelectP
 		);
 
 		const filteredUsers = useMemo(() => {
-			let currentFiltered = filtered || [];
+			// Combine admin and instructor results
+			const combinedResults = [...(adminResults || []), ...(instructorResults || [])];
+
+			// Remove duplicates based on _id
+			const uniqueResults = Array.from(new Map(combinedResults.map((user) => [user._id, user])).values());
 
 			// Exclude already selected users
-			currentFiltered = currentFiltered.filter((user) => !selectedUserIds?.includes(user._id));
+			const currentFiltered = uniqueResults.filter((user) => !selectedUserIds?.includes(user._id));
 
 			return currentFiltered;
-		}, [filtered, selectedUserIds, user, value]);
+		}, [adminResults, instructorResults, selectedUserIds, user, value]);
 
 		const hasResults = filteredUsers && filteredUsers.length > 0;
-		const showLoadMore = pagination?.hasNextPage && hasResults;
+		const loading = adminLoading || instructorLoading;
+		const error = adminError || instructorError;
+		const showLoadMore = (adminPagination?.hasNextPage || instructorPagination?.hasNextPage) && hasResults;
+
+		// Load more function
+		const loadMore = useCallback(async () => {
+			await Promise.all([loadMoreAdmins(), loadMoreInstructors()]);
+		}, [loadMoreAdmins, loadMoreInstructors]);
 
 		// Expose reset function to parent component
 		useImperativeHandle(ref, () => ({
 			reset: () => {
-				reset();
+				resetAdmins();
+				resetInstructors();
 				setHasSearched(false);
 			},
 		}));
@@ -114,7 +142,11 @@ const EventInstructorSearchSelect = forwardRef<any, EventInstructorSearchSelectP
 							},
 							endAdornment: (
 								<InputAdornment position='end'>
-									{loading ? <CircularProgress size={20} sx={{ mr: '-0.5rem' }} /> : <Search sx={{ mr: '-0.5rem' }} fontSize='small' />}
+									{loading ? (
+										<CircularProgress size={20} sx={{ mr: '-0.5rem', fontSize: isMobileSize ? '1rem' : undefined }} />
+									) : (
+										<Search sx={{ mr: '-0.5rem', fontSize: isMobileSize ? '1rem' : undefined }} fontSize='small' />
+									)}
 								</InputAdornment>
 							),
 							required: false,
@@ -140,7 +172,8 @@ const EventInstructorSearchSelect = forwardRef<any, EventInstructorSearchSelectP
 								e.stopPropagation();
 							}
 							onChange('');
-							reset();
+							resetAdmins();
+							resetInstructors();
 							setHasSearched(false);
 						}}
 						sx={{ minWidth: 'auto', padding: '0 0.5rem', marginBottom: '1.1rem', fontSize: isMobileSize ? '0.7rem' : '0.8rem' }}>

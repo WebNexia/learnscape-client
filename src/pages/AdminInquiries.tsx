@@ -55,18 +55,8 @@ const AdminInquiries = () => {
 	const { isSmallScreen, isRotatedMedium, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
-	const {
-		inquiries,
-		loading,
-		error,
-		removeInquiry,
-		fetchMoreInquiries,
-		totalItems,
-		loadedPages,
-		inquiriesPageNumber,
-		setInquiriesPageNumber,
-		enableInquiriesFetch,
-	} = useContext(InquiriesContext);
+	const { inquiries, loading, error, removeInquiry, fetchMoreInquiries, totalItems, loadedPages, setInquiriesPageNumber, enableInquiriesFetch } =
+		useContext(InquiriesContext);
 	const { orgId } = useContext(OrganisationContext);
 	const { refreshDashboard } = useDashboardSync();
 
@@ -79,7 +69,7 @@ const AdminInquiries = () => {
 		filterValue,
 		displayData: displayInquiries,
 		numberOfPages: inquiriesNumberOfPages,
-		searchResultsPage,
+		currentPage: inquiriesCurrentPage,
 		searchResultsTotalItems,
 		searchedValue,
 		orderBy,
@@ -96,18 +86,18 @@ const AdminInquiries = () => {
 		removeFromSearchResults,
 	} = useFilterSearch<Inquiry>({
 		getEndpoint: () => `${base_url}/inquiries/organisation/${orgId}`,
-		limit: 300,
+		limit: 200,
 		pageSize,
 		contextData: inquiries,
 		setContextPageNumber: setInquiriesPageNumber,
 		fetchMoreContextData: fetchMoreInquiries,
 		contextLoadedPages: loadedPages,
+		contextTotalItems: totalItems,
 		defaultOrderBy: 'createdAt',
 		defaultOrder: 'desc',
 	});
 
 	// Use appropriate page number for pagination
-	const currentPage = isSearchActive ? searchResultsPage : inquiriesPageNumber;
 	const sortedInquiries =
 		[...(displayInquiries || [])]?.sort((a, b) => {
 			const aValue = (a as any)[orderBy] ?? '';
@@ -120,7 +110,7 @@ const AdminInquiries = () => {
 			}
 		}) || [];
 
-	const paginatedInquiries = sortedInquiries?.slice((currentPage - 1) * pageSize, currentPage * pageSize) || [];
+	const paginatedInquiries = sortedInquiries;
 
 	// Modal states
 	const [viewModalOpen, setViewModalOpen] = useState<{ [key: number]: boolean }>({});
@@ -417,8 +407,16 @@ const AdminInquiries = () => {
 									})}
 							</TableBody>
 						</Table>
-						{isVerySmallScreen && <CustomInfoMessageAlignedLeft message='Rotate your device or use desktop for more info' />}
-						<CustomTablePagination count={inquiriesNumberOfPages} page={currentPage} onChange={handlePageChange} />
+						{displayInquiries && displayInquiries.length === 0 && (
+							<CustomInfoMessageAlignedLeft
+								message={isSearchActive ? 'No inquiries found matching your search criteria.' : 'No inquiries found.'}
+								sx={{ marginTop: isMobileSize ? '3rem' : '5rem', marginBottom: '1rem' }}
+							/>
+						)}
+						{isMobileSize && !(displayInquiries && displayInquiries.length === 0) && (
+							<CustomInfoMessageAlignedLeft message='Rotate your device or use desktop for more info' />
+						)}
+						<CustomTablePagination count={inquiriesNumberOfPages} page={inquiriesCurrentPage} onChange={handlePageChange} />
 					</Box>
 				</Box>
 				<CustomDialog openModal={emailDialogOpen} closeModal={() => setEmailDialogOpen(false)} maxWidth='md' title='Send Bulk Email'>

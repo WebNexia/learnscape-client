@@ -211,7 +211,7 @@ const Message = ({
 				sx={{
 					display: 'flex',
 					flexDirection: 'column',
-					justifyContent: 'flex-start',
+					justifyContent: 'center',
 					alignItems: 'center',
 					flex: 1,
 					padding: '0.35rem',

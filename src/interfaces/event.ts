@@ -16,6 +16,7 @@ export interface Event {
 	allAttendeesIds: string[];
 	isAllLearnersSelected: boolean;
 	isAllInstructorsSelected?: boolean;
+	isAllSubscribersSelected?: boolean;
 	isAllCoursesSelected: boolean;
 	isPublic: boolean;
 	type: string;

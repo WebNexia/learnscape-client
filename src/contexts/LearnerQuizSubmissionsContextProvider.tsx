@@ -18,6 +18,8 @@ interface LearnerQuizSubmissionsContextTypes {
 	fetchUserQuizSubmissions: (page: number) => Promise<QuizSubmission[]>;
 	fetchMoreUserQuizSubmissions: (startBatch: number, endBatch: number) => Promise<void>;
 	loading: boolean;
+	enableLearnerQuizSubmissionsFetch: () => void; // 👈 New function to enable fetching
+	disableLearnerQuizSubmissionsFetch: () => void; // 👈 New function to disable fetching
 }
 
 export const LearnerQuizSubmissionsContext = createContext<LearnerQuizSubmissionsContextTypes>({} as LearnerQuizSubmissionsContextTypes);
@@ -29,6 +31,7 @@ const LearnerQuizSubmissionsContextProvider = ({ children }: { children: ReactNo
 	const location = useLocation();
 	const isLearnerRoute = !location.pathname.startsWith('/admin');
 	const [userSubmissionsPageNumber, setUserSubmissionsPageNumber] = useState(1);
+	const [isEnabled, setIsEnabled] = useState<boolean>(true);
 
 	// 🔹 Use shared paginated entity hook
 	const {
@@ -43,12 +46,16 @@ const LearnerQuizSubmissionsContextProvider = ({ children }: { children: ReactNo
 		orgId,
 		baseUrl: `${base_url}/quizsubmissions/user/${user?._id}`,
 		entityKey: 'learnerQuizSubmissions',
-		enabled: !!orgId && !!user?._id && isAuthenticated && isLearnerRoute,
+		enabled: isEnabled && !!orgId && !!user?._id && isAuthenticated && isLearnerRoute,
 		role: user?.role as Roles,
 		staleTime: 5 * 60 * 1000,
 		cacheTime: 10 * 60 * 1000,
 		limit: 150,
+		disableAutoGapFill: true,
 	});
+
+	const enableLearnerQuizSubmissionsFetch = () => setIsEnabled(true);
+	const disableLearnerQuizSubmissionsFetch = () => setIsEnabled(false);
 
 	return (
 		<LearnerQuizSubmissionsContext.Provider
@@ -63,6 +70,8 @@ const LearnerQuizSubmissionsContextProvider = ({ children }: { children: ReactNo
 				fetchUserQuizSubmissions,
 				fetchMoreUserQuizSubmissions,
 				loading: isLoading,
+				enableLearnerQuizSubmissionsFetch,
+				disableLearnerQuizSubmissionsFetch,
 			}}>
 			{children}
 		</LearnerQuizSubmissionsContext.Provider>

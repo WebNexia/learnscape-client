@@ -85,7 +85,7 @@ const AboutUs = () => {
 			});
 			setShowSuccess(true);
 			resetForm();
-			// Do not close modal or reset form yet
+			setIsGetMoreDetailsModalOpen(false);
 		} catch (error) {
 			console.log(error);
 		} finally {

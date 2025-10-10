@@ -60,6 +60,8 @@ const InquiriesContextProvider = ({ children }: InquiriesContextProviderProps) =
 		role: user?.role as Roles,
 		staleTime: user?.role !== Roles.USER ? 0 : 5 * 60 * 1000,
 		cacheTime: 30 * 60 * 1000,
+		limit: 200,
+		disableAutoGapFill: true, // Disable auto gap-filling - useFilterSearch will handle gap-filling
 	});
 
 	const enableInquiriesFetch = () => setIsEnabled(true);

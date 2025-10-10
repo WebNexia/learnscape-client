@@ -43,8 +43,8 @@ const AdminCourses = () => {
 		totalItems,
 		loadedPages,
 		coursesPageNumber,
-		setCoursesPageNumber,
 		enableCoursesFetch,
+		setCoursesPageNumber,
 	} = useContext(CoursesContext);
 	const { orgId } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
@@ -59,7 +59,7 @@ const AdminCourses = () => {
 	const { isSmallScreen, isRotatedMedium, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
-	const pageSize = 50;
+	const pageSize = 25;
 
 	// Use the filter search hook
 	const {
@@ -68,7 +68,7 @@ const AdminCourses = () => {
 		filterValue,
 		displayData: displayCourses,
 		numberOfPages: coursesNumberOfPages,
-		searchResultsPage,
+		currentPage: coursesCurrentPage,
 		searchResultsTotalItems,
 		searchedValue,
 		orderBy,
@@ -85,18 +85,17 @@ const AdminCourses = () => {
 		removeFromSearchResults,
 	} = useFilterSearch<SingleCourse>({
 		getEndpoint: () => `${base_url}${baseEndpoint}`,
-		limit: 200,
+		limit: 100,
 		pageSize,
 		contextData: courses,
 		setContextPageNumber: setCoursesPageNumber,
 		fetchMoreContextData: fetchMoreCourses,
 		contextLoadedPages: loadedPages,
+		contextTotalItems: totalItems,
 		defaultOrderBy: 'updatedAt',
 		defaultOrder: 'desc',
 	});
 
-	// Use appropriate page number for pagination
-	const currentPage = isSearchActive ? searchResultsPage : coursesPageNumber;
 	// Helper function to get nested values for sorting
 	const getNestedValue = (obj: any, path: string) => {
 		return path.split('.').reduce((current, key) => current?.[key], obj) ?? '';
@@ -131,7 +130,7 @@ const AdminCourses = () => {
 			return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
 		}
 	});
-	const paginatedCourses = sortedCourses?.slice((currentPage - 1) * pageSize, currentPage * pageSize) || [];
+	const paginatedCourses = sortedCourses;
 
 	// Modal states - moved to top to avoid hooks after early returns
 	const [isCourseCreateModalOpen, setIsCourseCreateModalOpen] = useState<boolean>(false);
@@ -160,7 +159,6 @@ const AdminCourses = () => {
 	}, [displayCourses, coursesPageNumber]);
 
 	useEffect(() => {
-		setCoursesPageNumber(1);
 		enableCoursesFetch();
 	}, []);
 
@@ -720,8 +718,16 @@ const AdminCourses = () => {
 								})}
 						</TableBody>
 					</Table>
-					{isVerySmallScreen && <CustomInfoMessageAlignedLeft message='Rotate your device or use desktop for more info' />}
-					<CustomTablePagination count={coursesNumberOfPages} page={currentPage} onChange={handlePageChange} />
+					{displayCourses && displayCourses.length === 0 && (
+						<CustomInfoMessageAlignedLeft
+							message={isSearchActive ? 'No courses found matching your search criteria.' : 'No courses found.'}
+							sx={{ marginTop: isMobileSize ? '3rem' : '5rem', marginBottom: '1rem' }}
+						/>
+					)}
+					{isMobileSize && !(displayCourses && displayCourses.length === 0) && (
+						<CustomInfoMessageAlignedLeft message='Rotate your device or use desktop for more info' />
+					)}
+					<CustomTablePagination count={coursesNumberOfPages} page={coursesCurrentPage} onChange={handlePageChange} />
 				</Box>
 			</DashboardPagesLayout>
 		</AdminPageErrorBoundary>

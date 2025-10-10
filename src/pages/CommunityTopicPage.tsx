@@ -22,7 +22,8 @@ import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
-import CustomTablePagination from '../components/layouts/table/CustomTablePagination';
+import { Select, MenuItem, FormControl } from '@mui/material';
+import { FirstPage, LastPage, NavigateBefore, NavigateNext } from '@mui/icons-material';
 import { formatMessageTime } from '../utils/formatTime';
 import { CommunityMessagesContext } from '../contexts/CommunityMessagesContextProvider';
 
@@ -55,7 +56,9 @@ const CommunityTopicPage = () => {
 		setPageNumber,
 		fetchMessages,
 		fetchMoreMessages,
+		fetchSpecificPage, // eslint-disable-line @typescript-eslint/no-unused-vars
 		loadedPages,
+		totalItems,
 		addNewMessage,
 		currentTopicId,
 		enableCommunityMessagesFetch,
@@ -176,8 +179,8 @@ const CommunityTopicPage = () => {
 			const messageIndex = messages.findIndex((msg) => msg._id === highlightedMessageId);
 
 			if (messageIndex !== -1) {
-				// Calculate which frontend page this message is on (25 messages per frontend page)
-				const frontendPage = Math.floor(messageIndex / 25) + 1;
+				// Calculate which frontend page this message is on (20 messages per frontend page)
+				const frontendPage = Math.floor(messageIndex / 20) + 1;
 
 				// If the message is not on the current frontend page, navigate to the correct page
 				if (frontendPage !== pageNumber) {
@@ -190,7 +193,7 @@ const CommunityTopicPage = () => {
 				const fetchMessagePage = async () => {
 					try {
 						// Get the message details to find which backend page it's on
-						const response = await axios.get(`${base_url}/communityMessages/message/${highlightedMessageId}?limit=250`);
+						const response = await axios.get(`${base_url}/communityMessages/message/${highlightedMessageId}?limit=200`);
 						const { page: backendPage } = response.data;
 
 						if (backendPage) {
@@ -260,7 +263,7 @@ const CommunityTopicPage = () => {
 
 	useEffect(() => {
 		// scrollToBottom();
-	}, [messages]);
+	}, [messages, pageNumber, numberOfPages, loadedPages, totalItems]);
 
 	const handleEmojiSelect = (emoji: any) => {
 		setCurrentMessage((prevMessage) => prevMessage + emoji.native);
@@ -608,15 +611,22 @@ const CommunityTopicPage = () => {
 	// Upload limit management - for all roles
 	const { getRemainingAudioUploads, getRemainingImageUploads, getImageLimit, getAudioLimit, refreshUploadStats } = useUploadLimit();
 
-	// Progressive pagination handler
+	// Smart pagination handler
 	const handlePageChange = async (newPage: number) => {
-		const pageSize = 25; // 25 messages per page
+		const pageSize = 20; // 20 messages per page
 		const requiredRecords = newPage * pageSize;
 
-		// Check if we need to fetch more data
-		if (messages && messages.length < requiredRecords) {
-			const currentLoadedPages = loadedPages && loadedPages.length > 0 ? Math.max(...loadedPages) : 0; // Get the highest loaded page
-			const targetBackendPage = Math.ceil(requiredRecords / 250); // Calculate which backend page we need (250 messages per backend page)
+		// Smart "Last" button optimization: If jumping to a page far from current data, fetch directly
+		const isJumpingToLastPage = newPage === numberOfPages;
+		const hasRequiredData = messages && messages.length >= requiredRecords;
+
+		if (isJumpingToLastPage || !hasRequiredData) {
+			// For "Last" button or any page without data, fetch the specific page directly
+			await fetchSpecificPage(currentTopicId, newPage);
+		} else {
+			// For normal navigation, use progressive loading
+			const currentLoadedPages = loadedPages && loadedPages.length > 0 ? Math.max(...loadedPages) : 0;
+			const targetBackendPage = Math.ceil(requiredRecords / 200); // Calculate which backend page we need (200 messages per backend page)
 
 			// Fetch missing backend pages using batch approach (like other admin pages)
 			if (currentLoadedPages < targetBackendPage) {
@@ -834,24 +844,108 @@ const CommunityTopicPage = () => {
 					margin: '1.5rem 0 5rem 0',
 					paddingBottom: isMobileSize ? '2rem' : '5rem',
 				}}>
-				{messages?.slice((pageNumber - 1) * 25, pageNumber * 25)?.map((message: CommunityMessage, index) => (
-					<Message
-						key={message?._id}
-						message={message}
-						isFirst={index === 0}
-						isLast={index === messages?.slice((pageNumber - 1) * 25, pageNumber * 25)?.length - 1}
-						setReplyToMessage={setReplyToMessage}
-						messageRefs={messageRefs}
-						setPageNumber={setPageNumber}
-						setHighlightedMessageId={setHighlightedMessageId}
-						isTopicLocked={isTopicLocked}
-						topicTitle={topic.title}
-						renderMessageContent={renderMessageContent}
-					/>
-				))}
+				{(() => {
+					const pageSize = 20;
+					const startIndex = (pageNumber - 1) * pageSize;
+					const endIndex = startIndex + pageSize;
+					const pageMessages = messages?.slice(startIndex, endIndex) || [];
+
+					// If we don't have enough messages for this page, show appropriate state
+					if (pageMessages.length === 0) {
+						// If there are no messages at all, show empty state
+						if (totalItems === 0) {
+							return (
+								<Box sx={{ textAlign: 'center', padding: '2rem', color: 'gray' }}>
+									<Typography sx={{ fontSize: isMobileSize ? '0.7rem' : '0.85rem' }}>
+										No messages yet. Be the first to start the conversation!
+									</Typography>
+								</Box>
+							);
+						}
+						// Otherwise show loading state
+						return (
+							<Box sx={{ textAlign: 'center', padding: '2rem', color: 'gray' }}>
+								<Typography>Loading messages for page {pageNumber}...</Typography>
+								<Typography variant='caption'>
+									Page {pageNumber} of {numberOfPages}
+								</Typography>
+							</Box>
+						);
+					}
+
+					return pageMessages.map((message: CommunityMessage, index) => (
+						<Message
+							key={message?._id}
+							message={message}
+							isFirst={index === 0}
+							isLast={index === pageMessages.length - 1}
+							setReplyToMessage={setReplyToMessage}
+							messageRefs={messageRefs}
+							setPageNumber={setPageNumber}
+							setHighlightedMessageId={setHighlightedMessageId}
+							isTopicLocked={isTopicLocked}
+							topicTitle={topic.title}
+							renderMessageContent={renderMessageContent}
+						/>
+					));
+				})()}
 				<div ref={messagesEndRef} />
-				<Box sx={{ display: 'flex', justifyContent: 'center', mt: '1.5rem', width: '95%' }}>
-					<CustomTablePagination count={numberOfPages} page={pageNumber} onChange={handlePageChange} />
+				<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mt: '1.5rem', width: '95%', gap: 1 }}>
+					{/* First Page Button */}
+					<IconButton onClick={() => handlePageChange(1)} disabled={pageNumber === 1} sx={{ fontSize: isMobileSize ? '0.8rem' : '1rem' }}>
+						<FirstPage fontSize='small' />
+					</IconButton>
+
+					{/* Previous Page Button */}
+					<IconButton
+						onClick={() => handlePageChange(pageNumber - 1)}
+						disabled={pageNumber === 1}
+						sx={{ fontSize: isMobileSize ? '0.8rem' : '1rem' }}>
+						<NavigateBefore fontSize='small' />
+					</IconButton>
+
+					{/* Page Select Dropdown */}
+					<Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.85rem' }}>
+							Page:
+						</Typography>
+						<FormControl size='small' sx={{ minWidth: 60 }}>
+							<Select
+								value={pageNumber}
+								onChange={(e) => handlePageChange(Number(e.target.value))}
+								sx={{
+									'fontSize': isMobileSize ? '0.7rem' : '0.85rem',
+									'& .MuiSelect-select': {
+										padding: isMobileSize ? '4px 8px' : '6px 12px',
+									},
+								}}>
+								{Array.from({ length: numberOfPages }, (_, i) => i + 1).map((page) => (
+									<MenuItem key={page} value={page} sx={{ fontSize: isMobileSize ? '0.7rem' : '0.85rem' }}>
+										{page}
+									</MenuItem>
+								))}
+							</Select>
+						</FormControl>
+						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.85rem' }}>
+							of {numberOfPages}
+						</Typography>
+					</Box>
+
+					{/* Next Page Button */}
+					<IconButton
+						onClick={() => handlePageChange(pageNumber + 1)}
+						disabled={pageNumber === numberOfPages}
+						sx={{ fontSize: isMobileSize ? '0.8rem' : '1rem' }}>
+						<NavigateNext fontSize='small' />
+					</IconButton>
+
+					{/* Last Page Button */}
+					<IconButton
+						onClick={() => handlePageChange(numberOfPages)}
+						disabled={pageNumber === numberOfPages}
+						sx={{ fontSize: isMobileSize ? '0.8rem' : '1rem' }}>
+						<LastPage fontSize='small' />
+					</IconButton>
 				</Box>
 			</Box>
 

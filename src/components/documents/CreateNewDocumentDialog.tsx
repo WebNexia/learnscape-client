@@ -34,6 +34,7 @@ interface CreateNewDocumentDialogProps {
 	setEUR: (price: Price) => void;
 	TRY: Price;
 	setTRY: (price: Price) => void;
+	isCreating?: boolean;
 }
 
 const CreateNewDocumentDialog = ({
@@ -60,6 +61,7 @@ const CreateNewDocumentDialog = ({
 	setEUR,
 	TRY,
 	setTRY,
+	isCreating = false,
 }: CreateNewDocumentDialogProps) => {
 	const { isInstructor } = useAuth();
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
@@ -299,7 +301,7 @@ const CreateNewDocumentDialog = ({
 							</Grid>
 						</Grid>
 					</Box>
-					<Box sx={{ flex: 1, ml: isMobileSize ? '0rem' : '7rem', mt: isMobileSize ? '1rem' : undefined }}>
+					<Box sx={{ flex: 1, ml: isMobileSize ? '0rem' : '7rem', mt: isMobileSize ? '1rem' : undefined, width: isMobileSize ? '100%' : undefined }}>
 						<CustomTextField
 							label='Description'
 							value={singleDocument?.description || ''}
@@ -381,7 +383,14 @@ const CreateNewDocumentDialog = ({
 						</Box>
 					</Box>
 				</Box>
-				<CustomDialogActions onCancel={onClose} submitBtnType='submit' disableBtn={!fileUploaded} actionSx={{ mt: '1rem' }} />
+				<CustomDialogActions
+					onCancel={onClose}
+					submitBtnType='submit'
+					disableCancelBtn={isCreating}
+					disableBtn={!fileUploaded || isCreating}
+					actionSx={{ mt: '1rem' }}
+					submitBtnText={isCreating ? 'Creating...' : 'Create'}
+				/>
 			</form>
 		</CustomDialog>
 	);

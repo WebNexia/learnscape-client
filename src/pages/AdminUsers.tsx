@@ -50,7 +50,7 @@ const AdminUsers = () => {
 
 	const { userId } = useContext(UserAuthContext);
 
-	const { users, loading, error, fetchMoreUsers, updateUser, totalItems, loadedPages, usersPageNumber, setUsersPageNumber, enableUsersFetch } =
+	const { users, loading, error, fetchMoreUsers, updateUser, totalItems, loadedPages, enableUsersFetch, setUsersPageNumber } =
 		useContext(UsersContext);
 
 	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
@@ -66,7 +66,7 @@ const AdminUsers = () => {
 		filterValue,
 		displayData: displayUsers,
 		numberOfPages: usersNumberOfPages,
-		searchResultsPage,
+		currentPage: usersCurrentPage,
 		searchResultsTotalItems,
 		searchButtonClicked,
 		searchedValue,
@@ -83,18 +83,17 @@ const AdminUsers = () => {
 		resetAll,
 	} = useFilterSearch<User>({
 		getEndpoint: () => `${base_url}/users/organisation/${orgId}`,
-		limit: 300,
+		limit: 200,
 		pageSize,
 		contextData: users,
 		setContextPageNumber: setUsersPageNumber,
 		fetchMoreContextData: fetchMoreUsers,
 		contextLoadedPages: loadedPages,
+		contextTotalItems: totalItems,
 		defaultOrderBy: 'username',
 		defaultOrder: 'asc',
 	});
 
-	// Use appropriate page number for pagination
-	const currentPage = isSearchActive ? searchResultsPage : usersPageNumber;
 	const sortedUsers =
 		[...(displayUsers || [])]?.sort((a, b) => {
 			const aValue = (a as any)[orderBy] ?? '';
@@ -107,7 +106,7 @@ const AdminUsers = () => {
 			}
 		}) || [];
 
-	const paginatedUsers = sortedUsers?.slice((currentPage - 1) * pageSize, currentPage * pageSize) || [];
+	const paginatedUsers = sortedUsers;
 
 	// Modal states
 	const [isUserStatusUpdateModalOpen, setIsUserStatusUpdateModalOpen] = useState<boolean[]>([]);
@@ -115,14 +114,13 @@ const AdminUsers = () => {
 	const [singleUser, setSingleUser] = useState<User | null>(null);
 
 	useEffect(() => {
-		setUsersPageNumber(1);
-		enableUsersFetch(); // 👈 Enable users fetching when component mounts
+		enableUsersFetch();
 	}, []);
 
 	useEffect(() => {
 		setIsUserStatusUpdateModalOpen(Array(paginatedUsers.length).fill(false));
 		setIsUserEditModalOpen(Array(paginatedUsers.length).fill(false));
-	}, [usersPageNumber, filterValue, searchValue]);
+	}, [usersCurrentPage, filterValue, searchValue]);
 
 	const toggleStatusUpdateEditModal = (index: number) => {
 		const newEditModalOpen = [...isUserStatusUpdateModalOpen];
@@ -533,8 +531,16 @@ const AdminUsers = () => {
 									})}
 							</TableBody>
 						</Table>
-						{isVerySmallScreen && <CustomInfoMessageAlignedLeft message='Rotate your device or use desktop for more info' />}
-						<CustomTablePagination count={usersNumberOfPages} page={currentPage} onChange={handlePageChange} />
+						{displayUsers && displayUsers.length === 0 && (
+							<CustomInfoMessageAlignedLeft
+								message={isSearchActive ? 'No users found matching your search criteria.' : 'No users found.'}
+								sx={{ marginTop: isMobileSize ? '3rem' : '5rem', marginBottom: '1rem' }}
+							/>
+						)}
+						{isMobileSize && !(displayUsers && displayUsers.length === 0) && (
+							<CustomInfoMessageAlignedLeft message='Rotate your device or use desktop for more info' />
+						)}
+						<CustomTablePagination count={usersNumberOfPages} page={usersCurrentPage} onChange={handlePageChange} />
 					</Box>
 				</Box>
 			</DashboardPagesLayout>

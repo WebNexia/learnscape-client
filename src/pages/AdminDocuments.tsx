@@ -2,7 +2,7 @@ import { Box, Table, TableBody, TableCell, TableRow, Snackbar, Alert, Typography
 import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
-import { useContext, useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import axios from '@utils/axiosInstance';
 import { Delete, Edit, Info } from '@mui/icons-material';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
@@ -45,9 +45,9 @@ const AdminDocuments = () => {
 		updateDocument,
 		totalItems,
 		loadedPages,
-		documentsPageNumber,
-		setDocumentsPageNumber,
+
 		enableDocumentsFetch,
+		setDocumentsPageNumber,
 	} = useContext(DocumentsContext);
 
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
@@ -88,7 +88,7 @@ const AdminDocuments = () => {
 		filterValue,
 		displayData: displayDocuments,
 		numberOfPages: documentsNumberOfPages,
-		searchResultsPage,
+		currentPage: documentsCurrentPage,
 		searchResultsTotalItems,
 		searchedValue,
 		orderBy,
@@ -111,24 +111,21 @@ const AdminDocuments = () => {
 		setContextPageNumber: setDocumentsPageNumber,
 		fetchMoreContextData: fetchMoreDocuments,
 		contextLoadedPages: loadedPages,
+		contextTotalItems: totalItems,
 		defaultOrderBy: 'updatedAt',
 		defaultOrder: 'desc',
 	});
 
-	// Use appropriate page number for pagination
-	const currentPage = isSearchActive ? searchResultsPage : documentsPageNumber;
-	const sortedDocuments =
-		[...(displayDocuments || [])]?.sort((a, b) => {
+	const sortedDocuments = useMemo(() => {
+		if (!displayDocuments) return [];
+		return [...displayDocuments].sort((a, b) => {
 			const aValue = (a as any)[orderBy] ?? '';
 			const bValue = (b as any)[orderBy] ?? '';
+			return order === 'asc' ? (aValue > bValue ? 1 : aValue < bValue ? -1 : 0) : aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
+		});
+	}, [displayDocuments, orderBy, order]);
 
-			if (order === 'asc') {
-				return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
-			} else {
-				return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
-			}
-		}) || [];
-	const paginatedDocuments = sortedDocuments?.slice((currentPage - 1) * pageSize, currentPage * pageSize) || [];
+	const paginatedDocuments = sortedDocuments;
 
 	// Modal states
 	const [isDocumentDeleteModalOpen, setIsDocumentDeleteModalOpen] = useState<boolean[]>([]);
@@ -158,9 +155,12 @@ const AdminDocuments = () => {
 	const [snackbarMessage, setSnackbarMessage] = useState<string>('');
 	const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
 
+	// Loading states for create/update operations
+	const [isCreating, setIsCreating] = useState<boolean>(false);
+	const [isUpdating, setIsUpdating] = useState<boolean>(false);
+
 	useEffect(() => {
-		setDocumentsPageNumber(1);
-		enableDocumentsFetch(); // 👈 Enable documents fetching when component mounts
+		enableDocumentsFetch();
 	}, []);
 
 	// Keep track of previous length to avoid unnecessary resets
@@ -173,7 +173,7 @@ const AdminDocuments = () => {
 			setEditDocumentModalOpen(Array(paginatedDocuments.length).fill(false));
 			setIsDocumentInfoModalOpen(Array(paginatedDocuments.length).fill(false));
 		}
-	}, [displayDocuments, documentsPageNumber]);
+	}, [documentsCurrentPage, filterValue, searchValue]);
 
 	if (error) return <Typography color='error'>{error}</Typography>;
 
@@ -204,6 +204,7 @@ const AdminDocuments = () => {
 	};
 
 	const createDocument = async (): Promise<boolean> => {
+		setIsCreating(true);
 		try {
 			// Validate URLs before proceeding
 			let hasUrlErrors = false;
@@ -291,11 +292,14 @@ const AdminDocuments = () => {
 		} catch (error) {
 			console.error('Create document error:', error);
 			return false;
+		} finally {
+			setIsCreating(false);
 		}
 	};
 
 	const handleDocUpdate = async (): Promise<boolean> => {
 		if (singleDocument) {
+			setIsUpdating(true);
 			try {
 				// Validate URLs before proceeding
 				let hasUrlErrors = false;
@@ -400,6 +404,8 @@ const AdminDocuments = () => {
 					console.error('Error message:', error.message);
 				}
 				return false;
+			} finally {
+				setIsUpdating(false);
 			}
 		}
 		return false;
@@ -448,10 +454,10 @@ const AdminDocuments = () => {
 	};
 
 	const openEditDocumentModal = (docId: string) => {
-		const documentIndex = displayDocuments.findIndex((d) => d._id === docId);
+		const documentIndex = paginatedDocuments.findIndex((d) => d._id === docId);
 		if (documentIndex === -1) return;
 
-		const documentToEdit = displayDocuments[documentIndex];
+		const documentToEdit = paginatedDocuments[documentIndex];
 		setSingleDocument(documentToEdit);
 
 		const updatedState = [...editDocumentModalOpen];
@@ -593,6 +599,7 @@ const AdminDocuments = () => {
 						setEUR={setEUR}
 						TRY={TRY}
 						setTRY={setTRY}
+						isCreating={isCreating}
 					/>
 
 					<Box
@@ -748,14 +755,14 @@ const AdminDocuments = () => {
 													/>
 
 													<EditDocumentDialog
-														isOpen={editDocumentModalOpen[displayDocuments.findIndex((d) => d._id === document._id)]}
+														isOpen={editDocumentModalOpen[paginatedDocuments.findIndex((d) => d._id === document._id)]}
 														onClose={() => {
-															closeDocumentEditModal(displayDocuments.findIndex((d) => d._id === document._id));
+															closeDocumentEditModal(paginatedDocuments.findIndex((d) => d._id === document._id));
 															resetForm();
 														}}
 														onSubmit={async (e: React.FormEvent<HTMLFormElement>) => {
 															e.preventDefault();
-															const fullIndex = displayDocuments.findIndex((d) => d._id === document._id);
+															const fullIndex = paginatedDocuments.findIndex((d) => d._id === document._id);
 
 															if (singleDocument?.name && singleDocument.name.trim()) {
 																const success = await handleDocUpdate();
@@ -785,6 +792,7 @@ const AdminDocuments = () => {
 														setEUR={setEUR}
 														TRY={TRY}
 														setTRY={setTRY}
+														isUpdating={isUpdating}
 													/>
 
 													<CustomActionBtn
@@ -838,8 +846,16 @@ const AdminDocuments = () => {
 									})}
 							</TableBody>
 						</Table>
-						{isMobileSize && <CustomInfoMessageAlignedLeft message='Rotate your device or use desktop for more info' />}
-						<CustomTablePagination count={documentsNumberOfPages} page={currentPage} onChange={handlePageChange} />
+						{displayDocuments && displayDocuments.length === 0 && (
+							<CustomInfoMessageAlignedLeft
+								message={isSearchActive ? 'No documents found matching your search criteria.' : 'No documents found.'}
+								sx={{ marginTop: isMobileSize ? '3rem' : '5rem', marginBottom: '1rem' }}
+							/>
+						)}
+						{isMobileSize && !(displayDocuments && displayDocuments.length === 0) && (
+							<CustomInfoMessageAlignedLeft message='Rotate your device or use desktop for more info' />
+						)}
+						<CustomTablePagination count={documentsNumberOfPages} page={documentsCurrentPage} onChange={handlePageChange} />
 					</Box>
 
 					{isDocumentInfoModalOpen?.map(

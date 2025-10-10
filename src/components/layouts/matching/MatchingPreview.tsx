@@ -119,6 +119,17 @@ const MatchingPreview = ({
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
 	useEffect(() => {
+		// For admin preview mode, always initialize with initialPairs
+		if (!fromPracticeQuestionUser && !fromQuizQuestionUser) {
+			if (initialPairs && initialPairs.length > 0) {
+				setPairs(initialPairs?.map((pair) => ({ ...pair, answer: '' })) || []);
+				setResponses(
+					initialPairs?.map((pair) => ({ id: pair.id, question: pair.question, answer: pair.answer }))?.sort(() => Math.random() - 0.5) || []
+				);
+			}
+			return;
+		}
+
 		if (isLessonCompleted && fromQuizQuestionUser && userMatchingPairsAfterSubmission) {
 			const matchedPairs = initialPairs?.map((pair) => {
 				const userMatch = userMatchingPairsAfterSubmission?.find((match) => match.id === pair.id);

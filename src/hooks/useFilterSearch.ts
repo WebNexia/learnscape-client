@@ -36,9 +36,10 @@ export interface UseFilterSearchOptions<T extends FilterSearchEntity> {
 
 	// Context data integration
 	contextData: T[] | null;
-	setContextPageNumber: (page: number) => void;
+	setContextPageNumber?: (page: number) => void;
 	fetchMoreContextData: (startPage: number, endPage: number) => Promise<void>;
 	contextLoadedPages: number[];
+	contextTotalItems: number;
 
 	// Sorting configuration
 	defaultOrderBy?: keyof T | string;
@@ -80,6 +81,7 @@ export interface UseFilterSearchReturn<T extends FilterSearchEntity> {
 	// Display data (search results or context data)
 	displayData: T[];
 	numberOfPages: number;
+	currentPage: number;
 
 	// Actions
 	handleSearch: () => Promise<void>;
@@ -111,6 +113,7 @@ export const useFilterSearch = <T extends FilterSearchEntity>({
 	setContextPageNumber,
 	fetchMoreContextData,
 	contextLoadedPages,
+	contextTotalItems,
 	pageSize,
 	defaultOrderBy = 'updatedAt',
 	defaultOrder = 'desc',
@@ -144,11 +147,20 @@ export const useFilterSearch = <T extends FilterSearchEntity>({
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const [error, setError] = useState<string | null>(null);
 
-	// Use search results if active, otherwise use context data
-	const displayData = isSearchActive ? searchResults : contextData || [];
+	// Internal page tracking for context data pagination
+	const [currentContextPage, setCurrentContextPage] = useState<number>(1);
+
+	// Use search results if active, otherwise use context data with pagination
+	const displayData = isSearchActive
+		? searchResults.slice((searchResultsPage - 1) * pageSize, searchResultsPage * pageSize)
+		: contextData
+			? contextData.slice((currentContextPage - 1) * pageSize, currentContextPage * pageSize)
+			: [];
 
 	// For pagination, use total items from server when not searching
-	const numberOfPages = isSearchActive ? Math.ceil(searchResultsTotalItems / pageSize) : Math.ceil((contextData?.length || 0) / pageSize);
+	const numberOfPages = Math.ceil(
+		(isSearchActive ? searchResultsTotalItems || searchResults.length || 0 : contextTotalItems || contextData?.length || 0) / pageSize
+	);
 
 	// Build search parameters helper
 	const buildSearchParams = useCallback(() => {
@@ -193,7 +205,7 @@ export const useFilterSearch = <T extends FilterSearchEntity>({
 			onSearchStart?.();
 
 			// Reset to first page when searching
-			setContextPageNumber(1);
+			setContextPageNumber?.(1);
 			setSearchResultsPage(1);
 
 			// Search button only works when search value exists
@@ -243,7 +255,7 @@ export const useFilterSearch = <T extends FilterSearchEntity>({
 			if (newFilterValue && newFilterValue.trim()) {
 				setIsLoading(true);
 				setError(null);
-				setContextPageNumber(1);
+				setContextPageNumber?.(1);
 				setSearchResultsPage(1);
 				setIsSearchActive(true);
 				setSearchResultsLoadedPages([]);
@@ -353,39 +365,50 @@ export const useFilterSearch = <T extends FilterSearchEntity>({
 			if (isSearchActive) {
 				setSearchResultsPage(newPage);
 			} else {
-				setContextPageNumber(newPage);
+				// Update internal page tracking for context data
+				setCurrentContextPage(newPage);
 			}
 
 			// If in search mode, handle search results pagination
 			if (isSearchActive) {
-				// Check if we need to fetch more search results
+				// Check if we need to fetch a new chunk (API page) for search results
 				const requiredRecords = newPage * pageSize;
-				if (searchResults.length < requiredRecords) {
+				const currentLoadedRecords = searchResults.length;
+
+				// Only fetch if we need data from a new chunk (API page)
+				if (requiredRecords > currentLoadedRecords) {
 					// Build search parameters
 					const params = buildSearchParams();
 
-					// Calculate which pages we need to fetch
+					// Calculate which API pages we need to fetch
 					const currentLoadedPages = searchResultsLoadedPages && searchResultsLoadedPages.length > 0 ? Math.max(...searchResultsLoadedPages) : 0;
-					const targetPage = Math.ceil((newPage * pageSize) / limit);
+					const targetApiPage = Math.ceil(requiredRecords / limit);
 
-					// Fetch all missing pages in sequence
-					for (let page = currentLoadedPages + 1; page <= targetPage; page++) {
-						if (!searchResultsLoadedPages?.includes(page)) {
-							await fetchMoreSearchResults(page, params);
+					// Only fetch if we need a new API page
+					if (currentLoadedPages < targetApiPage) {
+						// Fetch all missing API pages in sequence
+						for (let page = currentLoadedPages + 1; page <= targetApiPage; page++) {
+							if (!searchResultsLoadedPages?.includes(page)) {
+								await fetchMoreSearchResults(page, params);
+							}
 						}
 					}
 				}
 			} else {
-				// Check if we need to fetch more data for context
+				// Check if we need to fetch a new chunk (API page) for context
 				const requiredRecords = newPage * pageSize;
-				if (contextData && contextData.length < requiredRecords && newPage <= numberOfPages) {
-					// Calculate which pages we need to fetch
-					const currentLoadedPages = contextLoadedPages && contextLoadedPages.length > 0 ? Math.max(...contextLoadedPages) : 0;
-					const targetPage = Math.ceil((newPage * pageSize) / limit);
+				const currentLoadedRecords = contextData ? contextData.length : 0;
 
-					// Fetch all missing pages in sequence
-					if (currentLoadedPages < targetPage) {
-						await fetchMoreContextData(currentLoadedPages + 1, targetPage);
+				// Only fetch if we need data from a new chunk (API page)
+				if (requiredRecords > currentLoadedRecords && newPage <= numberOfPages) {
+					// Calculate which API pages we need to fetch
+					const currentLoadedPages = contextLoadedPages && contextLoadedPages.length > 0 ? Math.max(...contextLoadedPages) : 0;
+					const targetApiPage = Math.ceil(requiredRecords / limit);
+
+					// Only fetch if we need a new API page
+					if (currentLoadedPages < targetApiPage) {
+						// Fetch all missing pages from currentLoadedPages + 1 to targetApiPage (gap-filling)
+						await fetchMoreContextData(currentLoadedPages + 1, targetApiPage);
 					}
 				}
 			}
@@ -610,6 +633,7 @@ export const useFilterSearch = <T extends FilterSearchEntity>({
 		// Display data
 		displayData,
 		numberOfPages,
+		currentPage: isSearchActive ? searchResultsPage : currentContextPage,
 
 		// Actions
 		handleSearch,
