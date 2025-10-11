@@ -1,9 +1,9 @@
-import { Avatar, Box, IconButton, Link, Tooltip, Typography, DialogContent, DialogActions } from '@mui/material';
+import { Avatar, Box, IconButton, Link, Tooltip, Typography, DialogContent, DialogActions, Collapse, Chip } from '@mui/material';
 import theme from '../../themes';
 import { SingleCourse } from '../../interfaces/course';
 
 import { ChapterLessonData } from '../../pages/AdminCourseEditPage';
-import { EditTwoTone, Visibility } from '@mui/icons-material';
+import { EditTwoTone, Visibility, ExpandMore, PlayCircleOutline } from '@mui/icons-material';
 import { dateFormatter } from '../../utils/dateFormatter';
 import NoContentBoxAdmin from '../layouts/noContentBox/NoContentBoxAdmin';
 import { setCurrencySymbol } from '../../utils/setCurrencySymbol';
@@ -13,7 +13,7 @@ import EUFlag from '../../assets/european_flag_icon_228671.png';
 import TRFlag from '../../assets/tr-flag-round-500.png';
 import EditInstructorDialog from './EditInstructorDialog';
 import CustomDialog from '../layouts/dialog/CustomDialog';
-import { useContext, useState } from 'react';
+import { useContext, useState, useMemo } from 'react';
 import { truncateText } from '@utils/utilText';
 import { useAuth } from '../../hooks/useAuth';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
@@ -29,6 +29,9 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 	const [isEditInstructorDialogOpen, setIsEditInstructorDialogOpen] = useState<boolean>(false);
 	const [isDescriptionModalOpen, setIsDescriptionModalOpen] = useState<boolean>(false);
 
+	// State to track which chapters are expanded (default: all expanded)
+	const [expandedChapters, setExpandedChapters] = useState<{ [chapterId: string]: boolean }>({});
+
 	const { isInstructor } = useAuth();
 
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
@@ -37,6 +40,39 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 	// Check if description is long enough to show "View Full" button
 	const description = singleCourse?.description || '';
 	const isDescriptionLong = description.length > (isMobileSize ? 85 : 200);
+
+	// Helper functions for chapter management
+	const toggleChapter = (chapterId: string) => {
+		setExpandedChapters((prev) => ({
+			...prev,
+			[chapterId]: !prev[chapterId],
+		}));
+	};
+
+	const isChapterExpanded = (chapterId: string) => {
+		return expandedChapters[chapterId] !== false; // Default to true if not set
+	};
+
+	// Calculate lesson statistics for each chapter
+	const getChapterStats = useMemo(() => {
+		const stats: { [chapterId: string]: { total: number; published: number; unpublished: number } } = {};
+
+		chapters?.forEach((chapter) => {
+			if (chapter && chapter.lessons) {
+				const validLessons = chapter.lessons.filter((lesson) => lesson !== null);
+				const published = validLessons.filter((lesson) => lesson.isActive).length;
+				const unpublished = validLessons.length - published;
+
+				stats[chapter.chapterId] = {
+					total: validLessons.length,
+					published,
+					unpublished,
+				};
+			}
+		});
+
+		return stats;
+	}, [chapters]);
 
 	return (
 		<Box
@@ -246,98 +282,195 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 							{singleCourse &&
 								singleCourse?.chapters &&
 								chapters?.map((chapter) => {
+									const chapterStats = getChapterStats[chapter.chapterId];
+									const isExpanded = isChapterExpanded(chapter.chapterId);
+
 									return (
-										<Box key={chapter.chapterId} sx={{ margin: '1rem 0 3rem 0' }}>
-											<Box display='flex'>
-												<Typography variant='h6' sx={{ mb: '0rem' }}>
-													{chapter.title}
-												</Typography>
-											</Box>
-											{chapter &&
-												chapter?.lessons &&
-												chapter?.lessons?.length !== 0 &&
-												chapter?.lessons
-													?.filter((lesson) => lesson !== null)
-													?.map((lesson) => {
-														return (
-															<Box
-																key={lesson._id}
+										<Box
+											key={chapter.chapterId}
+											sx={{
+												marginBottom: isMobileSize ? '1rem' : '1.5rem',
+												overflow: 'hidden',
+												transition: 'box-shadow 0.3s ease',
+											}}>
+											{/* Chapter Header */}
+											<Box
+												sx={{
+													'backgroundColor': isInstructor ? theme.bgColor?.instructorHeader : theme.bgColor?.adminHeader,
+													'padding': isMobileSize ? '0.5rem 1rem' : '0.5rem 1rem 0.5rem 0.25rem',
+													'cursor': 'pointer',
+													'display': 'flex',
+													'alignItems': 'center',
+													'justifyContent': 'space-between',
+													'transition': 'background-color 0.2s ease',
+													'borderRadius': '0.35rem',
+													'&:hover': {
+														backgroundColor: isInstructor ? theme.bgColor?.instructorPaper : theme.bgColor?.adminPaper,
+													},
+												}}
+												onClick={() => toggleChapter(chapter.chapterId)}
+												role='button'
+												tabIndex={0}
+												onKeyDown={(e) => {
+													if (e.key === 'Enter' || e.key === ' ') {
+														e.preventDefault();
+														toggleChapter(chapter.chapterId);
+													}
+												}}
+												aria-expanded={isExpanded}
+												aria-label={`${isExpanded ? 'Collapse' : 'Expand'} chapter: ${chapter.title}`}>
+												<Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+													<IconButton
+														sx={{
+															color: 'white',
+															marginRight: isMobileSize ? '0.5rem' : '1rem',
+															padding: isMobileSize ? '0.25rem' : '0.5rem',
+															transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+															transition: 'transform 0.3s ease',
+														}}
+														aria-hidden='true'>
+														<ExpandMore />
+													</IconButton>
+													<Typography
+														variant='h6'
+														sx={{
+															fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+															color: 'white',
+															flex: 1,
+															textShadow: '0 1px 3px rgba(0, 0, 0, 0.3)',
+														}}>
+														{chapter.title}
+													</Typography>
+												</Box>
+
+												{/* Chapter Statistics */}
+												<Box sx={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+													{chapterStats && (
+														<>
+															<Chip
+																icon={<PlayCircleOutline />}
+																label={`${chapterStats.published}/${chapterStats.total}`}
+																size='small'
 																sx={{
-																	display: 'flex',
-																	alignItems: 'center',
-																	height: '3rem',
-																	width: '100%',
-																	backgroundColor: theme.bgColor?.common,
-																	margin: '1rem 0',
-																	borderRadius: '0.25rem',
-																	boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
-																}}>
-																<Box
+																	'backgroundColor': 'rgba(255, 255, 255, 0.25)',
+																	'color': 'white',
+																	'fontSize': isMobileSize ? '0.7rem' : '0.8rem',
+																	'fontWeight': 600,
+																	'height': isMobileSize ? '1.5rem' : '1.8rem',
+																	'textShadow': '0 1px 2px rgba(0, 0, 0, 0.3)',
+																	'& .MuiChip-icon': {
+																		color: 'white',
+																		fontSize: isMobileSize ? '0.8rem' : '1rem',
+																	},
+																}}
+															/>
+															{chapterStats.unpublished > 0 && (
+																<Chip
+																	label={`${chapterStats.unpublished} Draft`}
+																	size='small'
 																	sx={{
-																		height: '3rem',
-																		width: '4rem',
-																	}}>
-																	<img
-																		src={lesson?.imageUrl || 'https://placehold.co/500x400/e2e8f0/64748b?text=No+Image'}
-																		alt='lesson_img'
-																		height='100%'
-																		width='100%'
-																		style={{
-																			borderRadius: '0.25rem 0 0 0.25rem',
-																		}}
-																	/>
-																</Box>
-																<Box
-																	sx={{
-																		display: 'flex',
-																		justifyContent: 'space-between',
-																		alignItems: 'center',
-																		width: '100%',
-																		margin: isMobileSize ? '0 0.25rem' : '0 1rem',
-																		gap: isMobileSize ? 2 : 0,
-																	}}>
-																	<Box sx={{ flex: 4 }}>
-																		<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.65rem' : '0.85rem' }}>
-																			{lesson?.title}
-																		</Typography>
-																	</Box>
-																	<Box sx={{ flex: 1 }}>
-																		<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.65rem' : '0.85rem' }}>
-																			{lesson?.isActive ? 'Published' : 'Unpublished'}
-																		</Typography>
-																	</Box>
+																		backgroundColor: 'rgba(255, 193, 7, 0.4)',
+																		color: 'white',
+																		fontSize: isMobileSize ? '0.6rem' : '0.7rem',
+																		fontWeight: 600,
+																		height: isMobileSize ? '1.3rem' : '1.6rem',
+																		textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)',
+																	}}
+																/>
+															)}
+														</>
+													)}
+												</Box>
+											</Box>
+
+											{/* Collapsible Lessons */}
+											<Collapse in={isExpanded} timeout='auto' unmountOnExit>
+												<Box sx={{ backgroundColor: 'transparent', padding: '0.5rem' }}>
+													{chapter &&
+														chapter?.lessons &&
+														chapter?.lessons?.length !== 0 &&
+														chapter?.lessons
+															?.filter((lesson) => lesson !== null)
+															?.map((lesson) => {
+																return (
 																	<Box
+																		key={lesson._id}
 																		sx={{
-																			display: 'flex',
-																			justifyContent: 'flex-end',
-																			alignItems: 'center',
-																			flex: 4,
+																			'display': 'flex',
+																			'alignItems': 'center',
+																			'height': '3rem',
+																			'width': '100%',
+																			'backgroundColor': '#ffffff',
+																			'border': '1px solid #e2e8f0',
+																			'margin': '0.5rem 0',
+																			'borderRadius': '0.5rem',
+																			'boxShadow': '0 1px 2px rgba(0, 0, 0, 0.05)',
+																			'transition': 'box-shadow 0.2s ease',
+																			'&:hover': {
+																				boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+																				borderColor: '#cbd5e1',
+																			},
 																		}}>
-																		<Box sx={{ mr: '1rem' }}>
-																			<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.65rem' : '0.85rem' }}>
-																				{lesson?.type}
-																			</Typography>
-																		</Box>
-																		<Box>
-																			<Tooltip title='Edit Lesson' placement='top' arrow>
-																				<IconButton
-																					onClick={() => {
-																						if (isInstructor) {
-																							window.open(`/instructor/lesson-edit/lesson/${lesson._id}`, '_blank');
-																						} else {
-																							window.open(`/admin/lesson-edit/lesson/${lesson._id}`, '_blank');
-																						}
-																						window.scrollTo({ top: 0, behavior: 'smooth' });
-																					}}>
-																					<EditTwoTone fontSize='small' />
-																				</IconButton>
-																			</Tooltip>
+																		<Box
+																			sx={{
+																				display: 'flex',
+																				justifyContent: 'space-between',
+																				alignItems: 'center',
+																				width: '100%',
+																				margin: isMobileSize ? '0 0.25rem' : '0 1rem',
+																				gap: isMobileSize ? 2 : 0,
+																			}}>
+																			<Box sx={{ flex: 4 }}>
+																				<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.65rem' : '0.85rem' }}>
+																					{lesson?.title}
+																				</Typography>
+																			</Box>
+																			<Box sx={{ flex: 1 }}>
+																				<Chip
+																					label={lesson?.isActive ? 'Published' : 'Draft'}
+																					size='small'
+																					sx={{
+																						backgroundColor: lesson?.isActive ? theme.palette.success.light : theme.palette.warning.light,
+																						color: lesson?.isActive ? theme.palette.success.contrastText : theme.palette.warning.contrastText,
+																						fontSize: isMobileSize ? '0.6rem' : '0.7rem',
+																						height: isMobileSize ? '1.2rem' : '1.5rem',
+																					}}
+																				/>
+																			</Box>
+																			<Box
+																				sx={{
+																					display: 'flex',
+																					justifyContent: 'flex-end',
+																					alignItems: 'center',
+																					flex: 4,
+																				}}>
+																				<Box sx={{ mr: '1rem' }}>
+																					<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.65rem' : '0.85rem' }}>
+																						{lesson?.type}
+																					</Typography>
+																				</Box>
+																				<Box>
+																					<Tooltip title='Edit Lesson' placement='top' arrow>
+																						<IconButton
+																							onClick={() => {
+																								if (isInstructor) {
+																									window.open(`/instructor/lesson-edit/lesson/${lesson._id}`, '_blank');
+																								} else {
+																									window.open(`/admin/lesson-edit/lesson/${lesson._id}`, '_blank');
+																								}
+																								window.scrollTo({ top: 0, behavior: 'smooth' });
+																							}}>
+																							<EditTwoTone fontSize='small' />
+																						</IconButton>
+																					</Tooltip>
+																				</Box>
+																			</Box>
 																		</Box>
 																	</Box>
-																</Box>
-															</Box>
-														);
-													})}
+																);
+															})}
+												</Box>
+											</Collapse>
 										</Box>
 									);
 								})}

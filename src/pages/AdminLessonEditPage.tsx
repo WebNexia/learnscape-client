@@ -329,12 +329,15 @@ const AdminLessonEditPage = () => {
 	}, [allowNavigation, nextLocation, navigate, isPopStateNavigation]);
 
 	useEffect(() => {
+		console.log(lessonId);
 		if (lessonId) {
 			const fetchSingleLessonData = async (lessonId: string): Promise<void> => {
 				try {
 					const response = await axios.get(`${base_url}/lessons/${lessonId}`);
 
 					const lessonsResponse = response?.data;
+
+					console.log(lessonsResponse.data);
 
 					setSingleLesson(lessonsResponse);
 					setSingleLessonBeforeSave(lessonsResponse);
@@ -677,12 +680,16 @@ const AdminLessonEditPage = () => {
 
 								const newQuestionResponseData = response.data;
 
-								addNewQuestion({ ...newQuestionResponseData });
+								addNewQuestion({
+									...newQuestionResponseData,
+									usedInLessons: lessonId ? [lessonId] : [],
+								});
 								return {
 									...question,
 									_id: response.data._id,
 									createdAt: response.data.createdAt,
 									updatedAt: response.data.updatedAt,
+									usedInLessons: lessonId ? [lessonId] : [],
 								} as QuestionInterface;
 							} catch (error: any) {
 								console.error('Error creating question:', error);
@@ -837,6 +844,13 @@ const AdminLessonEditPage = () => {
 
 		setIsQuestionUpdated((prevData: QuestionUpdateTrack[]) => prevData?.filter((data) => data.questionId !== question._id));
 
+		// Update the question's usedInLessons in the context
+		const updatedQuestion = {
+			...question,
+			usedInLessons: question.usedInLessons?.filter((id) => id !== lessonId) || [],
+		};
+		updateQuestion(updatedQuestion);
+
 		setSingleLessonBeforeSave((prevLesson) => {
 			return {
 				...prevLesson,
@@ -883,6 +897,12 @@ const AdminLessonEditPage = () => {
 				};
 			}
 			return prevData;
+		});
+
+		// Update questions context with the cloned question
+		addNewQuestion({
+			...clonedQuestion,
+			usedInLessons: lessonId ? [lessonId] : [],
 		});
 
 		setIsLessonUpdated(true);
@@ -1453,6 +1473,14 @@ const AdminLessonEditPage = () => {
 															questions: [...prevLesson.questions, ...convertedQuestions],
 															questionIds: [...prevLesson.questionIds, ...convertedQuestions?.map((q: QuestionInterface) => q._id)],
 														}));
+
+														// Update questions context with the new questions
+														convertedQuestions.forEach((question) => {
+															addNewQuestion({
+																...question,
+																usedInLessons: lessonId ? [lessonId] : [],
+															});
+														});
 
 														setIsLessonUpdated(true);
 														setHasUnsavedChanges(true);

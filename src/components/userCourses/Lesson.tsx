@@ -9,7 +9,6 @@ import ProgressIcon from '../../assets/ProgressIcon.png';
 import { LessonType } from '../../interfaces/enums';
 import { LearnerQuizSubmissionsContext } from '../../contexts/LearnerQuizSubmissionsContextProvider';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
-import logo from '../../assets/logo.png';
 
 interface LessonProps {
 	lesson: LessonById;
@@ -96,52 +95,25 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 	return (
 		<Box
 			sx={{
-				display: 'flex',
-				height:
+				'display': 'flex',
+				'height':
 					isEnrolledStatus && isLessonInProgress && isMobileSize
 						? '3.5rem'
 						: !(isEnrolledStatus && isLessonInProgress) && isMobileSize
 							? '2.5rem'
 							: isEnrolledStatus && isLessonInProgress
-								? '6rem'
-								: '4rem',
-				borderBottom: `0.1rem solid ${theme.border.lightMain}`,
-				backgroundColor: isEnrolledStatus && isLessonInProgress ? theme.bgColor?.lessonInProgress : 'white',
-				cursor: isEnrolledStatus ? 'pointer' : '',
-				borderRadius: lessonOrder === 1 ? '0.3rem 0.3rem 0 0 ' : '0rem',
+								? '4.5rem'
+								: '3rem',
+				'borderBottom': `0.1rem solid ${theme.border.lightMain}`,
+				'backgroundColor': isEnrolledStatus && isLessonInProgress ? theme.bgColor?.lessonInProgress : 'white',
+				'cursor': isEnrolledStatus ? 'pointer' : '',
+				'borderRadius': lessonOrder === 1 ? '0.3rem 0.3rem 0 0 ' : '0rem',
+				':hover': {
+					backgroundColor: !isLessonInProgress ? '#F0F2F5' : '',
+					borderColor: theme.border.lightMain,
+				},
 			}}
 			onClick={handleLessonClick}>
-			<Box
-				sx={{
-					height:
-						isEnrolledStatus && isLessonInProgress && isMobileSize
-							? '3.5rem'
-							: !(isEnrolledStatus && isLessonInProgress) && isMobileSize
-								? '2.5rem'
-								: isEnrolledStatus && isLessonInProgress
-									? '6rem'
-									: '4rem',
-					width:
-						isEnrolledStatus && isLessonInProgress && isMobileSize
-							? '3rem'
-							: !(isEnrolledStatus && isLessonInProgress) && isMobileSize
-								? '2rem'
-								: isEnrolledStatus && isLessonInProgress
-									? '10rem'
-									: '5rem',
-				}}>
-				<img
-					src={lesson.imageUrl || logo}
-					alt='lesson_pic'
-					width='100%'
-					height='100%'
-					style={{
-						borderBottom: `0.1rem solid ${theme.border.lightMain}`,
-						borderTopLeftRadius: lessonOrder === 1 ? '0.3rem' : 0,
-						objectFit: lesson.imageUrl ? 'cover' : 'contain',
-					}}
-				/>
-			</Box>
 			<Box
 				sx={{
 					display: 'flex',
@@ -150,10 +122,10 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 					width: '100%',
 					px: isMobileSize ? '0.5rem' : '1rem',
 				}}>
-				<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', flex: 10 }}>
+				<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', flex: 8 }}>
 					<Typography
 						sx={{
-							fontSize: isVerySmallScreen ? '0.6rem' : isRotatedMedium ? '0.75rem' : isSmallScreen ? '0.85rem' : '1rem',
+							fontSize: isVerySmallScreen ? '0.6rem' : isRotatedMedium ? '0.7rem' : isSmallScreen ? '0.75rem' : '0.8rem',
 							color: isEnrolledStatus && isLessonInProgress ? 'white' : null,
 						}}>
 						{lesson.title}
@@ -162,7 +134,7 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 				<Box sx={{ flex: 2 }}>
 					{lesson.type === LessonType.QUIZ && isLessonRegisteredInThisCourse && isLessonCompleted && (
 						<Box>
-							<Typography sx={{ fontSize: isVerySmallScreen ? '0.45rem' : isRotatedMedium ? '0.65rem' : isSmallScreen ? '0.75rem' : '0.85rem' }}>
+							<Typography sx={{ fontSize: isVerySmallScreen ? '0.55rem' : isRotatedMedium ? '0.65rem' : isSmallScreen ? '0.75rem' : '0.75rem' }}>
 								{isFeedbackGiven ? 'Checked' : 'Unchecked'}
 							</Typography>
 						</Box>
@@ -172,7 +144,7 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 					<Box>
 						<Typography
 							sx={{
-								fontSize: isVerySmallScreen ? '0.45rem' : isRotatedMedium ? '0.65rem' : isSmallScreen ? '0.75rem' : '0.85rem',
+								fontSize: isVerySmallScreen ? '0.55rem' : isRotatedMedium ? '0.65rem' : isSmallScreen ? '0.75rem' : '0.75rem',
 								marginRight: '1rem',
 								color: isEnrolledStatus && isLessonInProgress && isLessonRegisteredInThisCourse ? theme.textColor?.common.main : 'inherit',
 							}}>

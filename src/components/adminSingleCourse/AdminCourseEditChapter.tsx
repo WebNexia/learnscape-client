@@ -197,7 +197,7 @@ const AdminCourseEditChapter = ({
 												'height': '2.25rem',
 												'width': '100%',
 												'backgroundColor': theme.bgColor?.common,
-												'margin': '1rem 0',
+												'margin': '0.85rem 0',
 												'borderRadius': '0.25rem',
 												'boxShadow': '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
 												'transition': '0.4s',
@@ -206,21 +206,6 @@ const AdminCourseEditChapter = ({
 													cursor: 'pointer',
 												},
 											}}>
-											<Box
-												sx={{
-													height: '2.25rem',
-													width: '3rem',
-												}}>
-												<img
-													src={lesson?.imageUrl || 'https://placehold.co/500x400/e2e8f0/64748b?text=No+Img'}
-													alt='lesson_img'
-													height='100%'
-													width='100%'
-													style={{
-														borderRadius: '0.25rem 0 0 0.25rem',
-													}}
-												/>
-											</Box>
 											<Box
 												sx={{
 													display: 'flex',
