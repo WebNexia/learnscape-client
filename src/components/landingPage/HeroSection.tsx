@@ -1,6 +1,6 @@
 import { Box, Button, DialogActions, Typography } from '@mui/material';
 import { motion } from 'framer-motion';
-import { useContext, useState } from 'react';
+import { useContext, useState, useEffect } from 'react';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import Instructor_Img from '../../assets/instructor-new1.png';
 import { ContactPage, PlayCircle } from '@mui/icons-material';
@@ -34,6 +34,15 @@ const HeroSection = () => {
 	const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
 	const [errorDialogOpen, setErrorDialogOpen] = useState(false);
 	const [errorDialogMsg, setErrorDialogMsg] = useState('');
+
+	// Check if user has seen the intro video in this session
+	useEffect(() => {
+		const hasSeenIntroVideo = sessionStorage.getItem('hasSeenIntroVideo');
+		if (!hasSeenIntroVideo) {
+			// New tab/window - show the intro video
+			setIsIntroVideoModalOpen(true);
+		}
+	}, []);
 
 	const handleRecaptchaChange = (token: string | null) => {
 		setRecaptchaToken(token);
@@ -138,7 +147,7 @@ const HeroSection = () => {
 					width: '100%',
 				}}>
 				{/* Content */}
-				<Box sx={{ flex: 2, width: '100%', maxWidth: { md: '50%' } }}>
+				<Box sx={{ flex: 2, width: '100%', maxWidth: { md: '65%' } }}>
 					<motion.div initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }} style={{ width: '100%' }}>
 						<Typography
 							variant='h2'
@@ -155,20 +164,37 @@ const HeroSection = () => {
 								lineHeight: 1.2,
 								fontFamily: 'Varela Round',
 							}}>
-							Güvenle konuşun, tutkuyla öğrenin, sınırsızca gelişin!
+							10 yıldır tek bir probleme odaklandım:
+						</Typography>
+						<Typography
+							variant='h2'
+							sx={{ fontFamily: 'Varela Round', fontSize: isVerySmallScreen || isRotatedMedium ? '1.5rem' : isSmallScreen ? '1.75rem' : '2.25rem' }}>
+							Öğrencilerimin İngilizce'yi akıcı konuşamaması
 						</Typography>
 						<Typography
 							variant='h5'
 							sx={{
+								color: '#34495E',
+								opacity: 0.9,
+								fontSize: { xs: '0.9rem', sm: '1rem', md: '1.15rem' },
+								fontWeight: 400,
+								lineHeight: 1.6,
+								fontFamily: 'Varela Round',
+								margin: '1rem 0',
+							}}>
+							Bu kurs, duraksamaları, “nasıl söylenecek?” kaygısını, Türkçeden çeviri yapmayı geride bırakman için tasarlandı
+						</Typography>
+						<Typography
+							sx={{
 								mb: { xs: 3, sm: 4 },
 								color: '#34495E',
 								opacity: 0.9,
-								fontSize: { xs: '1rem', sm: '1.1rem', md: '1.3rem' },
+								fontSize: { xs: '0.9rem', sm: '1rem', md: '1.15rem' },
 								fontWeight: 400,
 								lineHeight: 1.6,
 								fontFamily: 'Varela Round',
 							}}>
-							Dünya standartlarında kurslar, uzman eğitmenler ve destekleyici bir topluluk
+							Artık İngilizce konuşmak doğal olacak!
 						</Typography>
 						<Box
 							sx={{
@@ -277,6 +303,8 @@ const HeroSection = () => {
 				closeModal={() => {
 					setIsIntroVideoModalOpen(false);
 					setVideoError(false); // Reset video error state when closing
+					// Mark that user has seen the intro video in this session
+					sessionStorage.setItem('hasSeenIntroVideo', 'true');
 				}}
 				maxWidth='md'
 				PaperProps={{
@@ -288,7 +316,7 @@ const HeroSection = () => {
 				<DialogContent sx={{ height: '70vh', background: 'transparent', p: 0 }}>
 					{!videoError ? (
 						<UniversalVideoPlayer
-							url='https://www.youtube.com/watch?v=AywFVNXoIXk'
+							url='https://www.youtube.com/watch?v=52t241OQ7Ec'
 							height='100%'
 							width='100%'
 							controls={true}
@@ -304,7 +332,7 @@ const HeroSection = () => {
 						/>
 					) : (
 						<ReactPlayer
-							url='https://www.youtube.com/watch?v=AywFVNXoIXk'
+							url='https://www.youtube.com/watch?v=52t241OQ7Ec'
 							height='100%'
 							width='100%'
 							controls={true}

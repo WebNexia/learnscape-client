@@ -1,4 +1,21 @@
-import { Box, Typography, Avatar, Grid, Paper, Button, Container, DialogContent, DialogActions } from '@mui/material';
+import {
+	Box,
+	Typography,
+	Avatar,
+	Grid,
+	Paper,
+	Button,
+	Container,
+	DialogContent,
+	DialogActions,
+	Table,
+	TableBody,
+	TableCell,
+	TableContainer,
+	TableHead,
+	TableRow,
+} from '@mui/material';
+import { CheckCircle, Cancel, Star } from '@mui/icons-material';
 import LandingPageLayout from '../components/landingPage/LandingPageLayout';
 import { useGeoLocation } from '../hooks/useGeoLocation';
 import { useState } from 'react';
@@ -15,6 +32,81 @@ const team = [
 	{ name: 'Jane Doe', role: 'Lead Developer', img: 'https://randomuser.me/api/portraits/women/44.jpg' },
 	{ name: 'John Smith', role: 'Product Designer', img: 'https://randomuser.me/api/portraits/men/65.jpg' },
 	{ name: 'Emily Chen', role: 'Marketing Lead', img: 'https://randomuser.me/api/portraits/women/68.jpg' },
+];
+
+const comparisonData = [
+	{
+		feature: 'Kişiselleştirilmiş Öğrenme',
+		ourApp: true,
+		otherApps: false,
+		conventionalCourses: false,
+	},
+	{
+		feature: '7/24 Erişim',
+		ourApp: true,
+		otherApps: true,
+		conventionalCourses: false,
+	},
+	{
+		feature: 'İnteraktif İçerik',
+		ourApp: true,
+		otherApps: true,
+		conventionalCourses: false,
+	},
+	{
+		feature: 'Uzman Eğitmen Desteği',
+		ourApp: true,
+		otherApps: false,
+		conventionalCourses: true,
+	},
+	{
+		feature: 'Topluluk Etkileşimi',
+		ourApp: true,
+		otherApps: true,
+		conventionalCourses: true,
+	},
+	{
+		feature: 'İlerleme Takibi',
+		ourApp: true,
+		otherApps: true,
+		conventionalCourses: false,
+	},
+	{
+		feature: 'Mobil Uyumluluk',
+		ourApp: true,
+		otherApps: true,
+		conventionalCourses: false,
+	},
+	{
+		feature: 'Maliyet Etkinliği',
+		ourApp: true,
+		otherApps: true,
+		conventionalCourses: false,
+	},
+	{
+		feature: 'Esnek Zamanlama',
+		ourApp: true,
+		otherApps: true,
+		conventionalCourses: false,
+	},
+	{
+		feature: 'Sertifika Programı',
+		ourApp: true,
+		otherApps: false,
+		conventionalCourses: true,
+	},
+	{
+		feature: 'AI Destekli Öğrenme',
+		ourApp: true,
+		otherApps: false,
+		conventionalCourses: false,
+	},
+	{
+		feature: 'Canlı Dersler',
+		ourApp: true,
+		otherApps: false,
+		conventionalCourses: true,
+	},
 ];
 
 const AboutUs = () => {
@@ -145,6 +237,204 @@ const AboutUs = () => {
 					</Grid>
 				</Grid>
 			</Container>
+
+			{/* Comparison Table Section */}
+			<Box sx={{ background: '#f8fafc', py: { xs: 5, md: 8 } }}>
+				<Container maxWidth='lg'>
+					<Typography
+						variant='h4'
+						sx={{
+							fontWeight: 700,
+							mb: 2,
+							textAlign: 'center',
+							fontFamily: 'Varela Round',
+							color: '#2c3e50',
+						}}>
+						Neden Bizimle Öğrenmelisiniz?
+					</Typography>
+					<Typography
+						variant='h6'
+						sx={{
+							mb: 4,
+							textAlign: 'center',
+							fontFamily: 'Varela Round',
+							color: '#7f8c8d',
+							fontWeight: 400,
+						}}>
+						Diğer platformlarla karşılaştırın
+					</Typography>
+
+					<TableContainer
+						component={Paper}
+						elevation={8}
+						sx={{
+							borderRadius: 3,
+							overflow: 'hidden',
+							boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
+						}}>
+						<Table sx={{ minWidth: 650 }}>
+							<TableHead>
+								<TableRow sx={{ background: 'linear-gradient(135deg, #1ec28b 0%, #3498db 100%)' }}>
+									<TableCell
+										sx={{
+											color: 'white',
+											fontWeight: 700,
+											fontSize: '1.1rem',
+											fontFamily: 'Varela Round',
+											border: 'none',
+										}}>
+										Özellikler
+									</TableCell>
+									<TableCell
+										align='center'
+										sx={{
+											color: 'white',
+											fontWeight: 700,
+											fontSize: '1.1rem',
+											fontFamily: 'Varela Round',
+											border: 'none',
+											position: 'relative',
+										}}>
+										<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+											<Star sx={{ color: '#ffd700' }} />
+											Bizim Platformumuz
+										</Box>
+									</TableCell>
+									<TableCell
+										align='center'
+										sx={{
+											color: 'white',
+											fontWeight: 700,
+											fontSize: '1.1rem',
+											fontFamily: 'Varela Round',
+											border: 'none',
+										}}>
+										Diğer Uygulamalar
+									</TableCell>
+									<TableCell
+										align='center'
+										sx={{
+											color: 'white',
+											fontWeight: 700,
+											fontSize: '1.1rem',
+											fontFamily: 'Varela Round',
+											border: 'none',
+										}}>
+										Geleneksel Kurslar
+									</TableCell>
+								</TableRow>
+							</TableHead>
+							<TableBody>
+								{comparisonData.map((row) => (
+									<TableRow
+										key={row.feature}
+										sx={{
+											'&:nth-of-type(odd)': {
+												backgroundColor: '#f8fafc',
+											},
+											'&:hover': {
+												backgroundColor: '#e8f4fd',
+												transform: 'scale(1.01)',
+												transition: 'all 0.2s ease-in-out',
+											},
+										}}>
+										<TableCell
+											component='th'
+											scope='row'
+											sx={{
+												fontWeight: 600,
+												fontFamily: 'Varela Round',
+												fontSize: '1rem',
+												color: '#2c3e50',
+											}}>
+											{row.feature}
+										</TableCell>
+										<TableCell align='center' sx={{ border: 'none' }}>
+											{row.ourApp ? (
+												<CheckCircle sx={{ color: '#27ae60', fontSize: '2rem' }} />
+											) : (
+												<Cancel sx={{ color: '#e74c3c', fontSize: '2rem' }} />
+											)}
+										</TableCell>
+										<TableCell align='center' sx={{ border: 'none' }}>
+											{row.otherApps ? (
+												<CheckCircle sx={{ color: '#27ae60', fontSize: '2rem' }} />
+											) : (
+												<Cancel sx={{ color: '#e74c3c', fontSize: '2rem' }} />
+											)}
+										</TableCell>
+										<TableCell align='center' sx={{ border: 'none' }}>
+											{row.conventionalCourses ? (
+												<CheckCircle sx={{ color: '#27ae60', fontSize: '2rem' }} />
+											) : (
+												<Cancel sx={{ color: '#e74c3c', fontSize: '2rem' }} />
+											)}
+										</TableCell>
+									</TableRow>
+								))}
+							</TableBody>
+						</Table>
+					</TableContainer>
+
+					{/* Summary Cards */}
+					<Grid container spacing={3} sx={{ mt: 4 }}>
+						<Grid item xs={12} md={4}>
+							<Paper
+								elevation={4}
+								sx={{
+									p: 3,
+									borderRadius: 3,
+									textAlign: 'center',
+									background: 'linear-gradient(135deg, #1ec28b 0%, #27ae60 100%)',
+									color: 'white',
+									height: '100%',
+								}}>
+								<Star sx={{ fontSize: '3rem', mb: 2, color: '#ffd700' }} />
+								<Typography variant='h6' sx={{ fontWeight: 700, mb: 1, fontFamily: 'Varela Round' }}>
+									En Kapsamlı
+								</Typography>
+								<Typography sx={{ fontFamily: 'Varela Round', opacity: 0.9 }}>Tüm özelliklerin bir arada olduğu tek platform</Typography>
+							</Paper>
+						</Grid>
+						<Grid item xs={12} md={4}>
+							<Paper
+								elevation={4}
+								sx={{
+									p: 3,
+									borderRadius: 3,
+									textAlign: 'center',
+									background: 'linear-gradient(135deg, #3498db 0%, #2980b9 100%)',
+									color: 'white',
+									height: '100%',
+								}}>
+								<CheckCircle sx={{ fontSize: '3rem', mb: 2 }} />
+								<Typography variant='h6' sx={{ fontWeight: 700, mb: 1, fontFamily: 'Varela Round' }}>
+									En Yenilikçi
+								</Typography>
+								<Typography sx={{ fontFamily: 'Varela Round', opacity: 0.9 }}>AI destekli öğrenme ve kişiselleştirme</Typography>
+							</Paper>
+						</Grid>
+						<Grid item xs={12} md={4}>
+							<Paper
+								elevation={4}
+								sx={{
+									p: 3,
+									borderRadius: 3,
+									textAlign: 'center',
+									background: 'linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%)',
+									color: 'white',
+									height: '100%',
+								}}>
+								<CheckCircle sx={{ fontSize: '3rem', mb: 2 }} />
+								<Typography variant='h6' sx={{ fontWeight: 700, mb: 1, fontFamily: 'Varela Round' }}>
+									En Esnek
+								</Typography>
+								<Typography sx={{ fontFamily: 'Varela Round', opacity: 0.9 }}>7/24 erişim ve esnek zamanlama</Typography>
+							</Paper>
+						</Grid>
+					</Grid>
+				</Container>
+			</Box>
 
 			{/* Team Section */}
 			<Box sx={{ background: '#f7fafc', py: { xs: 5, md: 8 } }}>

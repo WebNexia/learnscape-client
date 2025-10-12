@@ -530,9 +530,9 @@ const AdminLessonEditPage = () => {
 		try {
 			if (singleLessonBeforeSave?.documents) {
 				const updatedDocumentsPromises = (singleLessonBeforeSave?.documents as (Document | null)[])
-					?.filter((doc): doc is Document => doc !== null)
+					?.filter((doc): doc is Document => doc !== null && doc._id !== null && doc._id !== undefined)
 					?.map(async (document) => {
-						if (document._id.includes('temp_doc_id')) {
+						if (document._id && document._id.includes('temp_doc_id')) {
 							try {
 								const response = await axios.post(`${base_url}/documents${isInstructor ? '/instructor' : ''}`, {
 									name: document.name.trim(),
@@ -587,7 +587,7 @@ const AdminLessonEditPage = () => {
 								name: doc.name.trim(),
 							});
 
-							const documentUpdateData = response.data.data;
+							const documentUpdateData = response.data?.data || response.data;
 
 							updateDocument({
 								...doc,
@@ -608,7 +608,7 @@ const AdminLessonEditPage = () => {
 				})
 			);
 
-			const updatedDocumentIds = updatedDocuments?.map((doc) => doc._id) || [];
+			const updatedDocumentIds = updatedDocuments?.map((doc) => doc._id).filter((id) => id && id !== null && id !== undefined) || [];
 
 			const allowedQuestionTypes = (lessonType: LessonType): QuestionType[] => {
 				if (lessonType === LessonType.QUIZ) {
@@ -656,7 +656,7 @@ const AdminLessonEditPage = () => {
 				updatedQuestions = [];
 			} else if (filteredQuestions) {
 				const updatedQuestionsPromises = filteredQuestions?.map(async (question) => {
-					if (question._id.includes('temp_question_id')) {
+					if (question._id && question._id.includes('temp_question_id')) {
 						const questionTypeId = questionTypes?.find((type) => type.name === question.questionType || type._id === question.questionType)?._id;
 
 						if (questionTypeId) {
@@ -693,7 +693,7 @@ const AdminLessonEditPage = () => {
 								} as QuestionInterface;
 							} catch (error: any) {
 								console.error('Error creating question:', error);
-								setErrorMessage('Error creating question: ' + error.response.data.message);
+								setErrorMessage('Error creating question: ' + (error.response?.data?.message || error.message || 'Unknown error'));
 								setIsErrorMessageOpen(true);
 								setIsEditMode(true);
 
@@ -716,9 +716,11 @@ const AdminLessonEditPage = () => {
 								const { questionType, ...questionWithoutType } = question;
 								const response = await axios.patch(`${base_url}/questions${isInstructor ? '/instructor' : ''}/${question._id}`, questionWithoutType);
 
-								const questionUpdateResponseData = response.data.data;
+								const questionUpdateResponseData = response.data?.data || response.data;
 
-								updateQuestion({ ...questionUpdateResponseData });
+								if (questionUpdateResponseData) {
+									updateQuestion({ ...questionUpdateResponseData });
+								}
 							} catch (error) {
 								console.error('Error updating question:', error);
 							}
@@ -727,10 +729,14 @@ const AdminLessonEditPage = () => {
 				);
 			}
 
-			const updatedQuestionIds = updatedQuestions?.map((question) => question._id);
+			const updatedQuestionIds = updatedQuestions?.map((question) => question._id).filter((id) => id && id !== null && id !== undefined) || [];
 
 			if (isLessonUpdated || isQuestionUpdated?.some((data) => data.isUpdated === true)) {
 				try {
+					// Debug logging
+					console.log('Updating lesson with document IDs:', updatedDocumentIds);
+					console.log('Updating lesson with question IDs:', updatedQuestionIds);
+
 					const response = await axios.patch(`${base_url}${isInstructor ? '/lessons/instructor' : '/lessons'}/${lessonId}`, {
 						...singleLessonBeforeSave,
 						title: singleLessonBeforeSave.title,
@@ -740,12 +746,12 @@ const AdminLessonEditPage = () => {
 						imageUrl: singleLessonBeforeSave.imageUrl,
 						videoUrl: singleLessonBeforeSave.videoUrl,
 						text: editorContent?.trim() || '',
-						documentIds: updatedDocumentIds,
-						questionIds: updatedQuestionIds,
+						documentIds: updatedDocumentIds.length > 0 ? updatedDocumentIds : [],
+						questionIds: updatedQuestionIds.length > 0 ? updatedQuestionIds : [],
 						usedInCourses: singleLessonBeforeSave.usedInCourses,
 					});
 
-					const responseUpdatedData = response.data.data;
+					const responseUpdatedData = response.data?.data || response.data;
 
 					updateLesson({
 						...singleLessonBeforeSave,
@@ -764,7 +770,7 @@ const AdminLessonEditPage = () => {
 					updatedQuestions?.forEach((question) => {
 						updateQuestion({
 							...question,
-							usedInLessons: question.usedInLessons || [],
+							usedInLessons: question?.usedInLessons || [],
 						});
 					});
 
@@ -772,7 +778,7 @@ const AdminLessonEditPage = () => {
 					updatedDocuments?.forEach((document) => {
 						updateDocument({
 							...document,
-							usedInLessons: document.usedInLessons || [],
+							usedInLessons: document?.usedInLessons || [],
 						});
 					});
 
@@ -801,7 +807,14 @@ const AdminLessonEditPage = () => {
 					});
 				} catch (error: any) {
 					console.error('Error updating lesson:', error);
-					setErrorMessage(error.response.data.message);
+
+					// Check if it's specifically a document update error
+					if (error.response?.data?.error?.includes('documents usedInLessons')) {
+						setErrorMessage('Error updating lesson documents. Please check that all document references are valid and try again.');
+					} else {
+						setErrorMessage(error.response?.data?.message || error.message || 'An error occurred while updating the lesson');
+					}
+
 					setIsErrorMessageOpen(true);
 					setIsEditMode(true);
 				}
@@ -825,7 +838,7 @@ const AdminLessonEditPage = () => {
 			setIsEditMode(false);
 		} catch (error: any) {
 			console.error('Error during lesson update process:', error);
-			setErrorMessage(error.response.data.message);
+			setErrorMessage(error.response?.data?.message || error.message || 'An error occurred');
 			setIsErrorMessageOpen(true);
 			setIsEditMode(true);
 		}
@@ -847,7 +860,7 @@ const AdminLessonEditPage = () => {
 		// Update the question's usedInLessons in the context
 		const updatedQuestion = {
 			...question,
-			usedInLessons: question.usedInLessons?.filter((id) => id !== lessonId) || [],
+			usedInLessons: question?.usedInLessons?.filter((id) => id !== lessonId) || [],
 		};
 		updateQuestion(updatedQuestion);
 

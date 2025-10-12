@@ -1,6 +1,7 @@
 import {
 	Box,
 	Button,
+	DialogContent,
 	FormControl,
 	FormControlLabel,
 	FormHelperText,
@@ -704,8 +705,13 @@ const PracticeQuestion = ({
 					<CustomDialog
 						openModal={isLessonCourseCompletedModalOpen}
 						closeModal={() => setIsLessonCourseCompletedModalOpen(false)}
-						content={`You have completed this ${nextLessonId ? 'lesson' : 'course'}. Proceed to the next ${nextLessonId ? 'lesson' : 'course'}.`}
-						maxWidth='xs'>
+						maxWidth='xs'
+						title={`${nextLessonId ? 'Lesson Completed' : 'Course Completed'}`}>
+						<DialogContent sx={{ mb: '-0.5rem' }}>
+							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+								{`You have completed this ${nextLessonId ? 'lesson' : 'course'}. Proceed to the next ${nextLessonId ? 'lesson' : 'course'}.`}
+							</Typography>
+						</DialogContent>
 						<CustomDialogActions
 							onCancel={() => setIsLessonCourseCompletedModalOpen(false)}
 							onSubmit={async () => {
@@ -714,6 +720,7 @@ const PracticeQuestion = ({
 								window.scrollTo({ top: 0, behavior: 'smooth' });
 							}}
 							submitBtnText='OK'
+							actionSx={{ margin: '0rem 0.5rem 0.5rem 0' }}
 						/>
 					</CustomDialog>
 				</Box>

@@ -1,12 +1,12 @@
 import { useContext, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Box, Link, Typography } from '@mui/material';
+import { Box } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import CoursePageBanner from '../components/layouts/coursePageBanner/CoursePageBanner';
 import Chapters from '../components/userCourses/Chapters';
 import { UserCourseLessonDataContext, UserCoursesIdsWithCourseIds } from '../contexts/UserCourseLessonDataContextProvider';
-import { Document } from '../interfaces/document';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
+import DocumentViewer from '../components/documents/DocumentViewer';
 
 const CoursePage = () => {
 	const { singleCourseUser, fetchSingleCourseDataUser } = useContext(UserCourseLessonDataContext);
@@ -48,28 +48,14 @@ const CoursePage = () => {
 			{isEnrolledStatus && singleCourseUser?.documents && (
 				<Box
 					ref={documentsRef}
-					sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '2rem 0', width: isMobileSize ? '90%' : '85%' }}>
-					<Box sx={{ display: 'flex', alignSelf: 'flex-start' }}>
-						<Typography variant='h4' sx={{ mb: isMobileSize ? '0.5rem' : '1rem', fontSize: isMobileSize ? '0.9rem' : undefined }}>
-							Course Materials
-						</Typography>
-					</Box>
-					<Box sx={{ display: 'flex', alignSelf: 'flex-start', flexDirection: 'column' }}>
-						{singleCourseUser?.documents
-							?.filter((doc: Document) => doc !== null)
-							?.map((doc: Document) => (
-								<Box sx={{ marginBottom: '0.5rem' }} key={doc._id}>
-									<Link
-										href={doc?.documentUrl}
-										target='_blank'
-										rel='noopener noreferrer'
-										variant='body2'
-										sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-										{doc?.name}
-									</Link>
-								</Box>
-							))}
-					</Box>
+					sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', margin: '2rem 0', width: isMobileSize ? '90%' : '85%' }}>
+					<DocumentViewer
+						documents={singleCourseUser?.documents || []}
+						title='Course Materials'
+						layout={isMobileSize ? 'list' : 'grid'}
+						showTitle={true}
+						inlinePDFs={true}
+					/>
 				</Box>
 			)}
 		</DashboardPagesLayout>

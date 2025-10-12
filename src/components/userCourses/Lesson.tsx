@@ -105,7 +105,7 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 								? '4.5rem'
 								: '3rem',
 				'borderBottom': `0.1rem solid ${theme.border.lightMain}`,
-				'backgroundColor': isEnrolledStatus && isLessonInProgress ? theme.bgColor?.lessonInProgress : 'white',
+				'backgroundColor': isEnrolledStatus && isLessonInProgress ? '#A8D8A8' : 'white',
 				'cursor': isEnrolledStatus ? 'pointer' : '',
 				'borderRadius': lessonOrder === 1 ? '0.3rem 0.3rem 0 0 ' : '0rem',
 				':hover': {
@@ -126,7 +126,6 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 					<Typography
 						sx={{
 							fontSize: isVerySmallScreen ? '0.6rem' : isRotatedMedium ? '0.7rem' : isSmallScreen ? '0.75rem' : '0.8rem',
-							color: isEnrolledStatus && isLessonInProgress ? 'white' : null,
 						}}>
 						{lesson.title}
 					</Typography>
@@ -146,7 +145,6 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 							sx={{
 								fontSize: isVerySmallScreen ? '0.55rem' : isRotatedMedium ? '0.65rem' : isSmallScreen ? '0.75rem' : '0.75rem',
 								marginRight: '1rem',
-								color: isEnrolledStatus && isLessonInProgress && isLessonRegisteredInThisCourse ? theme.textColor?.common.main : 'inherit',
 							}}>
 							{lesson.type}
 						</Typography>

@@ -12,7 +12,7 @@ import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
 import ChatWhatsApp from './ChatWhatsApp';
 
 const LandingPageBanner = () => {
-	const { isVerySmallScreen, isSmallScreen, isRotated, isRotatedMedium } = useContext(MediaQueryContext);
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 
 	const [isIntroVideoModalOpen, setIsIntroVideoModalOpen] = useState<boolean>(false);
 	const [isGetMoreDetailsModalOpen, setIsGetMoreDetailsModalOpen] = useState<boolean>(false);

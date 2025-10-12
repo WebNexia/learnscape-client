@@ -14,7 +14,7 @@ interface ChaptersProps {
 const Chapters = ({ course, isEnrolledStatus }: ChaptersProps) => {
 	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isRotatedMedium || isSmallScreen;
-	const [allExpanded, setAllExpanded] = useState(true);
+	const [allExpanded, setAllExpanded] = useState<boolean>(false);
 	const chapterRefs = useRef<{ [key: number]: ChapterRef }>({});
 
 	const validChapters = course?.chapters?.filter((chapter) => chapter !== null && chapter.lessonIds && chapter.lessonIds.length > 0) || [];

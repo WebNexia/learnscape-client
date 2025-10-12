@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from 'react';
-import { Box, Button, IconButton, Link, Slide, Tooltip, Typography } from '@mui/material';
+import { Box, Button, DialogContent, IconButton, Slide, Tooltip, Typography } from '@mui/material';
 import { useParams } from 'react-router-dom';
 import axios from '@utils/axiosInstance';
 import { Article, Close, DoneAll, GetApp, Home, KeyboardBackspaceOutlined, KeyboardDoubleArrowRight, NotListedLocation } from '@mui/icons-material';
@@ -7,7 +7,6 @@ import theme from '../themes';
 import DashboardHeader from '../components/layouts/dashboardLayout/DashboardHeader';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import { sanitizeHtml } from '../utils/sanitizeHtml';
-import { Document } from '../interfaces/document';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import Questions from '../components/userCourses/Questions';
 import { useUserCourseLessonData } from '../hooks/useUserCourseLessonData';
@@ -28,6 +27,7 @@ import { useNavigate } from 'react-router-dom';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import { decode } from 'html-entities';
 import UniversalVideoPlayer from '../components/video/UniversalVideoPlayer';
+import DocumentViewer from '../components/documents/DocumentViewer';
 
 export interface QuizQuestionAnswer {
 	questionId: string;
@@ -562,27 +562,13 @@ const LessonPage = () => {
 			)}
 			{lesson?.documents?.length !== 0 && !isQuestionsVisible && (
 				<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '2rem', width: '85%' }}>
-					<Box sx={{ display: 'flex', alignSelf: 'flex-start' }}>
-						<Typography variant='h5' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }}>
-							Lesson Materials
-						</Typography>
-					</Box>
-					<Box sx={{ display: 'flex', flexDirection: 'column', alignSelf: 'flex-start' }}>
-						{lesson?.documents
-							?.filter((doc: Document) => doc !== null)
-							?.map((doc: Document) => (
-								<Box sx={{ marginTop: '0.5rem' }} key={doc._id}>
-									<Link
-										href={doc?.documentUrl}
-										target='_blank'
-										variant='body2'
-										rel='noopener noreferrer'
-										sx={{ fontSize: isMobileSize ? '0.7rem' : '0.85rem' }}>
-										{doc?.name}
-									</Link>
-								</Box>
-							))}
-					</Box>
+					<DocumentViewer
+						documents={lesson?.documents || []}
+						title='Lesson Materials'
+						layout={isMobileSize ? 'list' : 'grid'}
+						showTitle={true}
+						inlinePDFs={true}
+					/>
 				</Box>
 			)}
 
@@ -598,8 +584,13 @@ const LessonPage = () => {
 					<CustomDialog
 						openModal={isLessonCourseCompletedModalOpen}
 						closeModal={() => setIsLessonCourseCompletedModalOpen(false)}
-						content={`You have completed this ${nextLessonId ? 'lesson' : 'course'}. Proceed to the next ${nextLessonId ? 'lesson' : 'course'}.`}
-						maxWidth='xs'>
+						maxWidth='xs'
+						title={`${nextLessonId ? 'Lesson Completed' : 'Course Completed'}`}>
+						<DialogContent sx={{ mb: '-0.5rem' }}>
+							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+								{`You have completed this ${nextLessonId ? 'lesson' : 'course'}. Proceed to the next ${nextLessonId ? 'lesson' : 'course'}.`}
+							</Typography>
+						</DialogContent>
 						<CustomDialogActions
 							onCancel={() => setIsLessonCourseCompletedModalOpen(false)}
 							onSubmit={async () => {
@@ -608,6 +599,7 @@ const LessonPage = () => {
 								window.scrollTo({ top: 0, behavior: 'smooth' });
 							}}
 							submitBtnText='OK'
+							actionSx={{ margin: '0rem 0.5rem 0.5rem 0' }}
 						/>
 					</CustomDialog>
 				</Box>

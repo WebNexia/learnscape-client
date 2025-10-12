@@ -22,7 +22,7 @@ export interface ChapterRef {
 const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, isEnrolledStatus, nextChapterFirstLessonId }, ref) => {
 	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isRotatedMedium || isSmallScreen;
-	const [isExpanded, setIsExpanded] = useState(true); // Default to expanded
+	const [isExpanded, setIsExpanded] = useState<boolean>(false); // Default to expanded
 
 	// Calculate progress for this chapter
 	const progressData = useMemo(() => {
