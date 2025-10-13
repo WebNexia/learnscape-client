@@ -1,6 +1,7 @@
 import {
 	Box,
 	DialogActions,
+	DialogContent,
 	FormControl,
 	FormControlLabel,
 	FormHelperText,
@@ -79,7 +80,7 @@ const QuizQuestion = ({
 	const { userLessonId, handleNextLesson, nextLessonId } = useUserCourseLessonData();
 
 	const { lessonId, courseId, userCourseId } = useParams();
-	const { orgId, adminUsers } = useContext(OrganisationContext);
+	const { orgId } = useContext(OrganisationContext);
 	const { fetchQuestionTypeName } = useContext(QuestionsContext);
 	const { user } = useContext(UserAuthContext);
 
@@ -413,6 +414,11 @@ const QuizQuestion = ({
 									},
 								}}
 							/>
+							<Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: '0.5rem' }}>
+								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+									{value.length} characters
+								</Typography>
+							</Box>
 						</Box>
 					)}
 
@@ -514,7 +520,7 @@ const QuizQuestion = ({
 								display: 'flex',
 								justifyContent: 'center',
 								width: '100%',
-								margin: question.imageUrl || question.videoUrl ? '3rem auto 0 auto' : isMobileSize ? '8.75rem auto 0 auto' : '11rem auto 0 auto',
+								margin: question.imageUrl || question.videoUrl ? '3rem auto 0 auto' : isMobileSize ? '7rem auto 0 auto' : '8rem auto 0 auto',
 							}}>
 							<FillInTheBlanksDragDrop
 								questionId={question._id}
@@ -541,7 +547,7 @@ const QuizQuestion = ({
 								justifyContent: 'center',
 								alignItems: 'center',
 								width: '100%',
-								margin: question.imageUrl || question.videoUrl ? '3rem auto 0 auto' : isMobileSize ? '8.75rem auto 0 auto' : '11rem auto 0 auto',
+								margin: question.imageUrl || question.videoUrl ? '3rem auto 0 auto' : isMobileSize ? '7rem auto 0 auto' : '8rem auto 0 auto',
 							}}>
 							<FillInTheBlanksTyping
 								questionId={question._id}
@@ -633,11 +639,13 @@ const QuizQuestion = ({
 								padding: '1rem 2rem 2rem 2rem',
 								borderRadius: '0.35rem',
 							}}>
-							<Typography variant='h6' sx={{ mb: '0.5rem' }}>
+							<Typography variant='h6' sx={{ mb: '0.5rem', fontSize: isMobileSize ? '0.9rem' : '1rem' }}>
 								Instructor Feedback
 							</Typography>
 							<Box>
-								<Typography variant='body2'>{teacherQuestionFeedback}</Typography>
+								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+									{teacherQuestionFeedback}
+								</Typography>
 							</Box>
 							{teacherQuestionAudioFeedback && (
 								<Box sx={{ textAlign: 'center', width: '100%' }}>
@@ -770,17 +778,23 @@ const QuizQuestion = ({
 						)}
 					</IconButton>
 				</Tooltip>
-				<CustomDialog
-					openModal={isSubmitQuizModalOpen}
-					closeModal={() => setIsSubmitQuizModalOpen(false)}
-					content='Are you sure you want to submit the quiz?'
-					maxWidth='xs'>
+				<CustomDialog openModal={isSubmitQuizModalOpen} closeModal={() => setIsSubmitQuizModalOpen(false)} maxWidth='xs' title='Quiz Submission'>
+					<DialogContent>
+						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.8 }}>
+							Are you sure you want to submit the quiz? You will not have another chance.
+						</Typography>
+					</DialogContent>
 					{userQuizAnswersUploading ? (
 						<DialogActions sx={{ marginBottom: '1.5rem' }}>
 							<LoadingButton loading variant='outlined' sx={{ textTransform: 'capitalize', height: '2.5rem', margin: '0 0.5rem 0.5rem 0' }} />
 						</DialogActions>
 					) : (
-						<CustomDialogActions onCancel={() => setIsSubmitQuizModalOpen(false)} onSubmit={handleQuizSubmission} submitBtnText='Submit' />
+						<CustomDialogActions
+							onCancel={() => setIsSubmitQuizModalOpen(false)}
+							onSubmit={handleQuizSubmission}
+							submitBtnText='Submit'
+							actionSx={{ margin: '0rem 0.5rem 0.5rem 0' }}
+						/>
 					)}
 				</CustomDialog>
 

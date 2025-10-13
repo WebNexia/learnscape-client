@@ -26,30 +26,35 @@ const QuestionText = ({ question, questionNumber, isMatching }: QuestionTextProp
 							: isMatching
 								? '10rem 0 -1rem 0'
 								: isMobileSize
-									? '8.5rem 0 1rem 0'
-									: '11rem 0 1rem 0',
+									? '6.5rem 0 1rem 0'
+									: '8rem 0 1rem 0',
 			}}>
-			<Box className='rich-text-content' sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-				<Box sx={{ display: 'flex' }}>
-					<Typography variant='h6' sx={{ margin: '0.5rem 0.5rem 0 0', fontSize: isMobileSize ? '0.8rem' : undefined }}>
-						{questionNumber})
-					</Typography>
-					<Typography
-						variant='h6'
-						component='div'
-						dangerouslySetInnerHTML={{ __html: sanitizeHtml(decode(question.question)) }}
-						sx={{
-							'margin': '0.5rem 0.5rem 0 0',
-							'fontSize': isMobileSize ? '0.8rem' : undefined,
-							'& img': {
-								maxWidth: '100%',
-								height: 'auto',
-								borderRadius: '0.25rem',
-								margin: '0.5rem 0',
-								boxShadow: '0 0.1rem 0.2rem 0.1rem rgba(0,0,0,0.15)',
-							},
-						}}
-					/>
+			<Box className='rich-text-content' sx={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}>
+				<Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+					<Box>
+						<Typography variant='body2' sx={{ margin: '0.5rem 0.5rem 0 0', fontSize: isMobileSize ? '0.8rem' : '0.9rem' }}>
+							{questionNumber})
+						</Typography>
+					</Box>
+					<Box>
+						<Typography
+							variant='body2'
+							component='div'
+							dangerouslySetInnerHTML={{ __html: sanitizeHtml(decode(question.question)) }}
+							sx={{
+								'margin': '-0.25rem 0.5rem 0 0',
+								'fontSize': isMobileSize ? '0.8rem' : '0.9rem',
+								'& img': {
+									maxWidth: '100%',
+									height: 'auto',
+									borderRadius: '0.25rem',
+									margin: '0.5rem 0',
+									boxShadow: '0 0.1rem 0.2rem 0.1rem rgba(0,0,0,0.15)',
+								},
+								'lineHeight': 1.8,
+							}}
+						/>
+					</Box>
 				</Box>
 			</Box>
 		</FormLabel>

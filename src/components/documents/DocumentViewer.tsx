@@ -232,19 +232,9 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
 		</Box>
 	);
 
-	if (displayDocuments.length === 0) {
-		return (
-			<Box sx={{ textAlign: 'center', py: 4 }}>
-				<Typography variant='body1' color='text.secondary'>
-					No materials available
-				</Typography>
-			</Box>
-		);
-	}
-
 	return (
 		<Box sx={{ width: '100%' }}>
-			{showTitle && (
+			{showTitle && displayDocuments.length !== 0 && (
 				<Typography
 					variant='h5'
 					sx={{

@@ -262,67 +262,69 @@ const LessonPage = () => {
 			<Box
 				sx={{
 					display: 'flex',
-					flexDirection: 'column',
+					justifyContent: 'space-between',
+					alignItems: 'center',
 					position: 'fixed',
-					top: '3.5rem',
+					top: isMobileSize ? '3rem' : '3.5rem',
 					width: '100%',
 					backgroundColor: theme.bgColor?.secondary,
 					zIndex: 3,
+					height: isMobileSize ? '2.5rem' : '3rem',
+					mt: isMobileSize ? '0.25rem' : '0.5rem',
 				}}>
-				<Box sx={{ display: 'flex', justifyContent: !isInstructionalLesson && isQuestionsVisible ? 'space-between' : 'flex-end' }}>
-					{!isInstructionalLesson && isQuestionsVisible && (
-						<Box sx={{ alignSelf: 'flex-end' }}>
-							<Button
-								variant='text'
-								startIcon={<KeyboardBackspaceOutlined fontSize='small' />}
-								sx={{
-									'color': theme.textColor?.primary,
-									'width': 'fit-content',
-									'margin': '0.75rem 0 0 0.25rem',
-									'textTransform': 'inherit',
-									'fontFamily': theme.fontFamily?.main,
-									':hover': { backgroundColor: 'transparent', textDecoration: 'underline' },
-									'fontSize': isMobileSize ? '0.7rem' : '1rem',
-								}}
-								onClick={() => {
-									setIsQuestionsVisible(false);
-									window.scrollTo({ top: 0, behavior: 'smooth' });
-								}}>
-								Lesson Instructions
-							</Button>
-						</Box>
-					)}
-					<Box>
-						<Button
-							variant='text'
-							startIcon={<Home />}
-							sx={{
-								'fontSize': isMobileSize ? '0.7rem' : '1rem',
-								'color': theme.textColor?.primary,
-								'width': 'fit-content',
-								'margin': '0.75rem 0 0 0.25rem',
-								'textTransform': 'inherit',
-								'fontFamily': theme.fontFamily?.main,
-								':hover': { backgroundColor: 'transparent', textDecoration: 'underline' },
-							}}
-							onClick={handleLessonNavigation}
-							disabled={isQuizInProgress}>
-							Course Home Page
-						</Button>
-					</Box>
+				<Box sx={{ flex: 1, justifyContent: 'flex-start' }}>
+					<Button
+						variant='text'
+						startIcon={<KeyboardBackspaceOutlined fontSize='small' />}
+						sx={{
+							'display': !isInstructionalLesson && isQuestionsVisible ? 'flex' : 'none',
+							'color': theme.textColor?.primary,
+							'width': 'fit-content',
+							'textTransform': 'inherit',
+							'fontFamily': theme.fontFamily?.main,
+							':hover': { backgroundColor: 'transparent', textDecoration: 'underline' },
+							'fontSize': isMobileSize ? '0.7rem' : '0.8rem',
+						}}
+						onClick={() => {
+							setIsQuestionsVisible(false);
+							window.scrollTo({ top: 0, behavior: 'smooth' });
+						}}>
+						{isMobileSize ? 'Instructions' : 'Lesson Instructions'}
+					</Button>
 				</Box>
-				<Box sx={{ alignSelf: 'center' }}>
+
+				<Box sx={{ flex: 3, display: 'flex', justifyContent: 'center', textAlign: 'center' }}>
 					<Typography
 						variant={isMobileSize ? 'h6' : 'h3'}
-						sx={{ marginBottom: isMobileSize ? '0.5rem' : '1rem', fontSize: isMobileSize ? '0.9rem' : undefined, mt: '0.5rem' }}>
+						sx={{
+							fontSize: isMobileSize ? (lesson?.title?.length > 30 ? '0.75rem' : '0.85rem') : '1.25rem',
+						}}>
 						{lesson?.title}
 					</Typography>
 				</Box>
+				<Box sx={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
+					<Button
+						variant='text'
+						startIcon={<Home />}
+						sx={{
+							'fontSize': isMobileSize ? '0.7rem' : '0.8rem',
+							'color': theme.textColor?.primary,
+							'width': 'fit-content',
+							'textTransform': 'inherit',
+							'fontFamily': theme.fontFamily?.main,
+							':hover': { backgroundColor: 'transparent', textDecoration: 'underline' },
+						}}
+						onClick={handleLessonNavigation}
+						disabled={isQuizInProgress}>
+						{isMobileSize ? 'Course' : 'Course Home Page'}
+					</Button>
+				</Box>
 			</Box>
+
 			<Box
 				sx={{
 					position: 'fixed',
-					top: isMobileSize ? '9rem' : '11rem',
+					top: '9rem',
 					left: isSmallScreen ? '0.15rem' : isRotatedMedium ? '1rem' : '2rem',
 					width: '80%',
 					zIndex: 3,
@@ -337,7 +339,7 @@ const LessonPage = () => {
 						sx={{
 							position: 'fixed',
 							left: 0,
-							top: isMobileSize ? '11rem' : '14rem',
+							top: isMobileSize ? '11rem' : '8rem',
 							width: isVerySmallScreen ? '95%' : isRotatedMedium ? '60%' : '40%',
 							height: isRotatedMedium ? '50vh' : 'fit-content',
 							boxShadow: 10,
@@ -403,7 +405,7 @@ const LessonPage = () => {
 							display: 'flex',
 							justifyContent: 'center',
 							alignItems: 'center',
-							margin: isMobileSize ? '8.5rem 0 1rem 0' : '11rem 0 2rem 0',
+							margin: isMobileSize ? '6.5rem 0 1rem 0' : '9rem 0 2rem 0',
 							width: '100%',
 							height: '22rem',
 						}}>
@@ -435,7 +437,7 @@ const LessonPage = () => {
 						justifyContent: 'flex-start',
 						alignItems: 'center',
 						width: isVerySmallScreen ? '80%' : '85%',
-						margin: lesson?.videoUrl ? '1rem 0' : isSmallScreen ? '8.75rem 0 1rem 0' : isRotatedMedium ? '8.5rem 0 1rem 0' : '11rem 0 1rem 0',
+						margin: lesson?.videoUrl ? '1rem 0' : isMobileSize ? '6rem 0 1rem 0' : '8rem 0 1rem 0',
 					}}>
 					<Box
 						sx={{
@@ -566,7 +568,7 @@ const LessonPage = () => {
 						documents={lesson?.documents || []}
 						title='Lesson Materials'
 						layout={isMobileSize ? 'list' : 'grid'}
-						showTitle={true}
+						showTitle={lesson?.documents?.length !== 0}
 						inlinePDFs={true}
 					/>
 				</Box>

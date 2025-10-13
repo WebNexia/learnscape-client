@@ -506,7 +506,7 @@ const PracticeQuestion = ({
 				)}
 
 				{isFlipCard && (
-					<Box sx={{ mt: '12rem' }}>
+					<Box sx={{ mt: isMobileSize ? '8rem' : '9rem' }}>
 						<FlipCardPreview
 							question={question}
 							fromPracticeQuestionUser={true}
