@@ -348,38 +348,54 @@ const EditEventDialog = ({
 		let allSubscribers: AttendeeInfo[] = [];
 		let courseParticipants: AttendeeInfo[] = [];
 
-		// Handle "All Instructors" selection
+		// Handle "All Instructors" selection - fetch from API to get ALL instructors
 		if (selectedEvent?.isAllInstructorsSelected) {
-			const instructors = users?.filter((user) => (user.role === 'instructor' || user.role === 'admin') && user.isActive) || [];
-			allInstructors = instructors.map((instructor) => ({
-				_id: instructor._id,
-				username: instructor.username,
-				firebaseUserId: instructor.firebaseUserId,
-				role: instructor.role,
-			}));
+			try {
+				const response = await axios.get(`${base_url}/users/organisation/${orgId}?role=instructor&limit=10000`);
+				const instructors = response.data.data || [];
+				allInstructors = instructors.map((instructor: any) => ({
+					_id: instructor._id,
+					username: instructor.username,
+					firebaseUserId: instructor.firebaseUserId,
+					role: instructor.role,
+				}));
+			} catch (error) {
+				console.error('Error fetching all instructors:', error);
+			}
 		}
 
-		// Handle "All Learners" selection
+		// Handle "All Learners" selection - fetch from API to get ALL learners
 		if (selectedEvent?.isAllLearnersSelected) {
-			const learners = users?.filter((user) => user.role === 'learner' && user.isActive) || [];
-			allLearners = learners.map((learner) => ({
-				_id: learner._id,
-				username: learner.username,
-				firebaseUserId: learner.firebaseUserId,
-				role: learner.role,
-			}));
+			try {
+				const response = await axios.get(`${base_url}/users/organisation/${orgId}?role=learner&limit=10000`);
+				const learners = response.data.data || [];
+				allLearners = learners.map((learner: any) => ({
+					_id: learner._id,
+					username: learner.username,
+					firebaseUserId: learner.firebaseUserId,
+					role: learner.role,
+				}));
+			} catch (error) {
+				console.error('Error fetching all learners:', error);
+			}
 		}
 
-		// Handle "All Subscribers" selection
+		// Handle "All Subscribers" selection - fetch from API to get ALL subscribers
 		if (selectedEvent?.isAllSubscribersSelected) {
-			const subscribers =
-				users?.filter((user) => user.role === 'learner' && user.isActive && user.isSubscribed && user.subscriptionStatus === 'active') || [];
-			allSubscribers = subscribers.map((subscriber) => ({
-				_id: subscriber._id,
-				username: subscriber.username,
-				firebaseUserId: subscriber.firebaseUserId,
-				role: subscriber.role,
-			}));
+			try {
+				const response = await axios.get(
+					`${base_url}/users/organisation/${orgId}?role=learner&isSubscribed=true&subscriptionStatus=active&limit=10000`
+				);
+				const subscribers = response.data.data || [];
+				allSubscribers = subscribers.map((subscriber: any) => ({
+					_id: subscriber._id,
+					username: subscriber.username,
+					firebaseUserId: subscriber.firebaseUserId,
+					role: subscriber.role,
+				}));
+			} catch (error) {
+				console.error('Error fetching all subscribers:', error);
+			}
 		}
 
 		// Handle "All Courses" selection
@@ -429,9 +445,13 @@ const EditEventDialog = ({
 		try {
 			// Always attempt to update the event
 			const endpoint = `${base_url}/events/${selectedEvent?._id}`;
+
+			const uniqueAllAttendeesIds = [...new Set(allParticipantsIds)];
+
 			await axios.patch(endpoint, {
 				...selectedEvent,
-				allAttendeesIds: allParticipantsIds,
+				attendees: selectedEvent?.attendees?.map((a) => a._id) || [],
+				allAttendeesIds: uniqueAllAttendeesIds,
 				isAllInstructorsSelected: selectedEvent?.isAllInstructorsSelected,
 				isAllSubscribersSelected: selectedEvent?.isAllSubscribersSelected,
 				type: !selectedEvent?.isPublic ? '' : selectedEvent?.type,
@@ -441,7 +461,7 @@ const EditEventDialog = ({
 			if (selectedEvent) {
 				updateEvent({
 					...selectedEvent,
-					allAttendeesIds: allParticipantsIds,
+					allAttendeesIds: uniqueAllAttendeesIds,
 					type: !selectedEvent?.isPublic ? '' : selectedEvent?.type,
 					coverImageUrl: !selectedEvent?.isPublic ? '' : selectedEvent?.coverImageUrl,
 				});
@@ -465,23 +485,45 @@ const EditEventDialog = ({
 
 			// Notify all users only if event is being made public now
 			if (!wasPublic && selectedEvent?.isPublic) {
-				const allFirebaseUserIds: string[] =
-					users?.filter((filteredUser) => filteredUser._id !== user?._id)?.map((mappedUser) => mappedUser.firebaseUserId) || [];
+				try {
+					// Fetch ALL users from API instead of using limited context data
+					const allUsersResponse = await axios.get(`${base_url}/users/organisation/${orgId}?limit=10000`);
+					const allUsers = allUsersResponse.data.data || [];
 
-				const adminName = user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : user?.username || 'Admin';
-				const publicEventNotification = {
-					title: 'New Public Event',
-					message: `${adminName} has added a public event: "${selectedEvent.title}". It will take place on ${startDate} at ${startTime}.`,
-					isRead: false,
-					timestamp: serverTimestamp(),
-					type: 'PublicEvent',
-					userImageUrl: user?.imageUrl,
-					eventId: selectedEvent._id,
-				};
+					// Filter out the current user and get Firebase IDs
+					const allFirebaseUserIds: string[] = allUsers
+						.filter((filteredUser: any) => filteredUser._id !== user?._id)
+						.map((mappedUser: any) => mappedUser.firebaseUserId)
+						.filter((id: string) => id); // Remove any undefined/null IDs
 
-				for (const id of allFirebaseUserIds) {
-					const notificationRef = collection(db, 'notifications', id, 'userNotifications');
-					await addDoc(notificationRef, publicEventNotification);
+					if (allFirebaseUserIds.length > 0) {
+						const adminName = user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : user?.username || 'Admin';
+						const publicEventNotification = {
+							title: 'New Public Event',
+							message: `${adminName} has added a public event: "${selectedEvent.title}". It will take place on ${startDate} at ${startTime}.`,
+							isRead: false,
+							timestamp: serverTimestamp(),
+							type: 'PublicEvent',
+							userImageUrl: user?.imageUrl,
+							eventId: selectedEvent._id,
+						};
+
+						// Send notifications to all users
+						for (const id of allFirebaseUserIds) {
+							try {
+								const notificationRef = collection(db, 'notifications', id, 'userNotifications');
+								await addDoc(notificationRef, publicEventNotification);
+							} catch (error) {
+								console.error('❌ Failed to send notification to user:', id, error);
+							}
+						}
+
+						console.log(`✅ Public event notifications sent to ${allFirebaseUserIds.length} users`);
+					} else {
+						console.warn('⚠️ No users found to send public event notifications to');
+					}
+				} catch (error) {
+					console.error('❌ Failed to fetch users for public event notifications:', error);
 				}
 			}
 
@@ -1450,7 +1492,7 @@ const EditEventDialog = ({
 				</CustomDialog>
 				<Snackbar
 					open={isUrlErrorOpen}
-					autoHideDuration={3500}
+					autoHideDuration={4000}
 					anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
 					onClose={() => setIsUrlErrorOpen(false)}>
 					<Alert severity='error' variant='filled' sx={{ width: '100%' }}>

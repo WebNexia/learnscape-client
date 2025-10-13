@@ -48,7 +48,7 @@ const Questions: React.FC<QuestionsProps> = ({
 			setUserQuizAnswers(() => {
 				if (isLessonCompleted) {
 					return userQuizAnswers;
-				} else if (!localStorage.getItem(`UserQuizAnswers-${lessonId}`) || userQuizAnswers && userQuizAnswers.length === 0) {
+				} else if (!localStorage.getItem(`UserQuizAnswers-${lessonId}`) || (userQuizAnswers && userQuizAnswers.length === 0)) {
 					return questions
 						?.filter((question) => question !== null)
 						?.map(

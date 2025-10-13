@@ -19,7 +19,11 @@ const LessonInfoModal = ({ lesson, onClose }: LessonInfoModalProps) => {
 	const navigate = useNavigate();
 	const { isInstructor } = useAuth();
 	const handleCourseSelect = (courseId: string) => {
-		window.open(`/admin/course-edit/course/${courseId}`, '_blank');
+		if (isInstructor) {
+			window.open(`/instructor/course-edit/course/${courseId}`, '_blank');
+		} else {
+			window.open(`/admin/course-edit/course/${courseId}`, '_blank');
+		}
 	};
 
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);

@@ -5,6 +5,7 @@ import CustomCancelButton from '../../forms/customButtons/CustomCancelButton';
 import { useResourceUsage } from '../../../hooks/useResourceUsage';
 import { useContext } from 'react';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
+import { useAuth } from '../../../hooks/useAuth';
 
 interface QuestionInfoModalProps {
 	question: QuestionInterface;
@@ -12,10 +13,15 @@ interface QuestionInfoModalProps {
 }
 
 const QuestionInfoModal = ({ question, onClose }: QuestionInfoModalProps) => {
-	const { usageInfo } = useResourceUsage(question);
+	const { usageInfo, loading } = useResourceUsage(question);
+	const { isInstructor } = useAuth();
 
 	const handleLessonSelect = (lessonId: string) => {
-		window.open(`/admin/lesson-edit/lesson/${lessonId}`, '_blank');
+		if (isInstructor) {
+			window.open(`/instructor/lesson-edit/lesson/${lessonId}`, '_blank');
+		} else {
+			window.open(`/admin/lesson-edit/lesson/${lessonId}`, '_blank');
+		}
 	};
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -55,7 +61,11 @@ const QuestionInfoModal = ({ question, onClose }: QuestionInfoModalProps) => {
 							</Typography>
 						</Grid>
 						<Grid item xs={9}>
-							{usageInfo.lessons && usageInfo.lessons.length > 0 ? (
+							{loading ? (
+								<Typography variant='body2' color='text.secondary' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+									Loading usage info...
+								</Typography>
+							) : usageInfo.lessons && usageInfo.lessons.length > 0 ? (
 								<FormControl fullWidth size='small' sx={{ width: '90%' }}>
 									<Select
 										value=''

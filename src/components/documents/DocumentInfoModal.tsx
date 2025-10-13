@@ -5,6 +5,7 @@ import CustomCancelButton from '../forms/customButtons/CustomCancelButton';
 import { useResourceUsage } from '../../hooks/useResourceUsage';
 import { useContext } from 'react';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
+import { useAuth } from '../../hooks/useAuth';
 
 interface DocumentInfoModalProps {
 	document: Document;
@@ -13,13 +14,22 @@ interface DocumentInfoModalProps {
 
 const DocumentInfoModal = ({ document, onClose }: DocumentInfoModalProps) => {
 	const { usageInfo } = useResourceUsage(document);
+	const { isInstructor } = useAuth();
 
 	const handleCourseSelect = (courseId: string) => {
-		window.open(`/admin/course-edit/course/${courseId}`, '_blank');
+		if (isInstructor) {
+			window.open(`/instructor/course-edit/course/${courseId}`, '_blank');
+		} else {
+			window.open(`/admin/course-edit/course/${courseId}`, '_blank');
+		}
 	};
 
 	const handleLessonSelect = (lessonId: string) => {
-		window.open(`/admin/lesson-edit/lesson/${lessonId}`, '_blank');
+		if (isInstructor) {
+			window.open(`/instructor/lesson-edit/lesson/${lessonId}`, '_blank');
+		} else {
+			window.open(`/admin/lesson-edit/lesson/${lessonId}`, '_blank');
+		}
 	};
 
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);

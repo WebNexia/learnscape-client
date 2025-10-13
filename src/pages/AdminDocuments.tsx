@@ -861,7 +861,12 @@ const AdminDocuments = () => {
 					{isDocumentInfoModalOpen?.map(
 						(isOpen, index) =>
 							isOpen && (
-								<CustomDialog openModal={isOpen} closeModal={() => closeDocumentInfoModal(index)} title={displayDocuments[index].name} maxWidth='sm'>
+								<CustomDialog
+									key={index}
+									openModal={isOpen}
+									closeModal={() => closeDocumentInfoModal(index)}
+									title={displayDocuments[index].name}
+									maxWidth='sm'>
 									<DocumentInfoModal document={displayDocuments[index]} onClose={() => closeDocumentInfoModal(index)} />
 								</CustomDialog>
 							)
