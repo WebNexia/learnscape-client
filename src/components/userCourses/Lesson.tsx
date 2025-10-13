@@ -25,7 +25,7 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 	const { isSmallScreen, isVerySmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isRotatedMedium || isSmallScreen;
 
-	const { sortedUserQuizSubmissionsData } = useContext(LearnerQuizSubmissionsContext);
+	const { userQuizSubmissions } = useContext(LearnerQuizSubmissionsContext);
 
 	const currentUserLessonData: string | null = localStorage.getItem('userLessonData');
 
@@ -60,12 +60,12 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 	}, [currentUserLessonData]);
 
 	useEffect(() => {
-		if (sortedUserQuizSubmissionsData && sortedUserQuizSubmissionsData && sortedUserQuizSubmissionsData.length > 0) {
-			const isFeedbackGiven = sortedUserQuizSubmissionsData?.find((data) => data.lessonId === lesson._id)?.isChecked;
+		if (userQuizSubmissions && userQuizSubmissions && userQuizSubmissions.length > 0) {
+			const isFeedbackGiven = userQuizSubmissions?.find((data) => data.lessonId === lesson._id)?.isChecked;
 
 			setIsFeedbackGiven(isFeedbackGiven || false);
 		}
-	}, [sortedUserQuizSubmissionsData, lesson._id]);
+	}, [userQuizSubmissions, lesson._id]);
 
 	const handleLessonClick = () => {
 		const navigateToLesson = (lessonId: string, nextId?: string) => {

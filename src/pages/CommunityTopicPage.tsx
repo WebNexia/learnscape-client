@@ -1350,7 +1350,7 @@ const CommunityTopicPage = () => {
 							</InputAdornment>
 						),
 						inputProps: {
-							maxLength: 3000,
+							maxLength: 1500,
 						},
 					}}
 				/>
@@ -1375,6 +1375,18 @@ const CommunityTopicPage = () => {
 						<Picker data={data} onEmojiSelect={handleEmojiSelect} theme='dark' />
 					</Box>
 				)}
+				<Box
+					sx={{
+						display: 'flex',
+						justifyContent: 'flex-end',
+						alignItems: 'center',
+						width: isVerySmallScreen ? '95%' : isMobileSize ? '90%' : '78%',
+						mb: '0.5rem',
+					}}>
+					<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.65rem' : '0.75rem' }}>
+						{currentMessage.length}/1500 Characters
+					</Typography>
+				</Box>
 			</Box>
 			<Snackbar
 				open={isUrlErrorOpen}

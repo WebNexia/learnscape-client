@@ -129,6 +129,7 @@ const MessageInput = ({
 						':hover': {
 							backgroundColor: 'transparent',
 						},
+						'marginBottom': isMobileSize ? '0.5rem' : '1rem',
 					}}>
 					<Image fontSize={isMobileSize ? 'small' : 'medium'} />
 				</IconButton>
@@ -171,6 +172,12 @@ const MessageInput = ({
 					disabled={!!imageUpload || isBlockedUser || isBlockingUser || !activeChat || hasLeftParticipants(activeChat)}
 				/>
 
+				<Box sx={{ display: 'flex', justifyContent: 'flex-end', margin: isMobileSize ? '-0.25rem 0' : '0' }}>
+					<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.65rem' : '0.75rem' }}>
+						{currentMessage.length}/1000 Characters
+					</Typography>
+				</Box>
+
 				<Snackbar
 					open={isLargeImgMessageOpen}
 					autoHideDuration={3000}
@@ -190,7 +197,7 @@ const MessageInput = ({
 						sx={{
 							display: 'flex',
 							position: 'absolute',
-							bottom: '1rem',
+							bottom: '1.75rem',
 							left: isRotatedMedium ? '0.5rem' : '1rem',
 							maxHeight: isRotatedMedium ? '2rem' : isMobileSize ? '3.25rem' : '3.75rem',
 						}}>
@@ -228,6 +235,7 @@ const MessageInput = ({
 					':hover': {
 						backgroundColor: 'transparent',
 					},
+					'marginBottom': isMobileSize ? '0.5rem' : '1rem',
 				}}>
 				<Send fontSize='small' />
 			</IconButton>

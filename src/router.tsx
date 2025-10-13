@@ -537,7 +537,9 @@ export const router = createBrowserRouter([
 						<UserCourseLessonDataContextProvider>
 							<LessonsContextProvider>
 								<DocumentsContextProvider>
-									<CoursePage />
+									<LearnerQuizSubmissionsContextProvider>
+										<CoursePage />
+									</LearnerQuizSubmissionsContextProvider>
 								</DocumentsContextProvider>
 							</LessonsContextProvider>
 						</UserCourseLessonDataContextProvider>

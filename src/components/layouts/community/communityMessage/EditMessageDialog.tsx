@@ -178,7 +178,7 @@ const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, set
 					e.preventDefault();
 					editMessage();
 				}}>
-				<Box sx={{ marginBottom: '1rem', position: 'relative' }}>
+				<Box sx={{ marginBottom: '0.75rem', position: 'relative' }}>
 					<CustomTextField
 						label='Message'
 						required
@@ -219,25 +219,32 @@ const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, set
 							<Picker data={data} onEmojiSelect={handleEmojiSelect} theme='dark' />
 						</Box>
 					)}
-					<Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-						<Tooltip title={!showAudioRecorder ? 'Upload Audio' : 'Hide Recorder'} placement='top' arrow>
-							<IconButton onClick={() => toggleShow('audio')}>
-								{!showAudioRecorder ? (
-									<Mic fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
-								) : (
-									<MicOff fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
-								)}
-							</IconButton>
-						</Tooltip>
-						<Tooltip title={!showImageUploader ? 'Upload Image' : 'Hide Uploader'} placement='top' arrow>
-							<IconButton onClick={() => toggleShow('image')}>
-								{!showImageUploader ? (
-									<Image fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
-								) : (
-									<HideImage fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
-								)}
-							</IconButton>
-						</Tooltip>
+					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+						<Box>
+							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.8rem' }}>
+								{editingMessage.text.length}/1500 Characters
+							</Typography>
+						</Box>
+						<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+							<Tooltip title={!showAudioRecorder ? 'Upload Audio' : 'Hide Recorder'} placement='top' arrow>
+								<IconButton onClick={() => toggleShow('audio')}>
+									{!showAudioRecorder ? (
+										<Mic fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
+									) : (
+										<MicOff fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
+									)}
+								</IconButton>
+							</Tooltip>
+							<Tooltip title={!showImageUploader ? 'Upload Image' : 'Hide Uploader'} placement='top' arrow>
+								<IconButton onClick={() => toggleShow('image')}>
+									{!showImageUploader ? (
+										<Image fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
+									) : (
+										<HideImage fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
+									)}
+								</IconButton>
+							</Tooltip>
+						</Box>
 					</Box>
 				</Box>
 

@@ -270,7 +270,7 @@ const LessonPage = () => {
 					backgroundColor: theme.bgColor?.secondary,
 					zIndex: 3,
 					height: isMobileSize ? '2.5rem' : '3rem',
-					mt: isMobileSize ? '0.25rem' : '0.5rem',
+					mt: '0.5rem',
 				}}>
 				<Box sx={{ flex: 1, justifyContent: 'flex-start' }}>
 					<Button
@@ -297,7 +297,7 @@ const LessonPage = () => {
 					<Typography
 						variant={isMobileSize ? 'h6' : 'h3'}
 						sx={{
-							fontSize: isMobileSize ? (lesson?.title?.length > 30 ? '0.75rem' : '0.85rem') : '1.25rem',
+							fontSize: isMobileSize ? (lesson?.title?.length > 30 ? '0.7rem' : '0.85rem') : '1.25rem',
 						}}>
 						{lesson?.title}
 					</Typography>
@@ -324,7 +324,7 @@ const LessonPage = () => {
 			<Box
 				sx={{
 					position: 'fixed',
-					top: '9rem',
+					top: isMobileSize ? '6.5rem' : '9rem',
 					left: isSmallScreen ? '0.15rem' : isRotatedMedium ? '1rem' : '2rem',
 					width: '80%',
 					zIndex: 3,
@@ -339,11 +339,11 @@ const LessonPage = () => {
 						sx={{
 							position: 'fixed',
 							left: 0,
-							top: isMobileSize ? '11rem' : '8rem',
-							width: isVerySmallScreen ? '95%' : isRotatedMedium ? '60%' : '40%',
-							height: isRotatedMedium ? '50vh' : 'fit-content',
+							top: isVerySmallScreen ? '6rem' : isMobileSize ? '9rem' : '11rem',
+							width: isVerySmallScreen ? '90%' : isRotatedMedium ? '60%' : '40%',
+							height: 'fit-content',
 							boxShadow: 10,
-							padding: '1.5rem 1.5rem 1rem 1.5rem',
+							padding: '1rem 1rem 0.5rem 1rem',
 							borderRadius: '0 0.35rem  0.35rem 0 ',
 							bgcolor: 'background.paper',
 							overflow: 'auto',
@@ -352,7 +352,7 @@ const LessonPage = () => {
 						<Box sx={{ minHeight: '100%', width: '100%' }}>
 							<Box sx={{ display: 'flex', flexDirection: 'column' }}>
 								<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-									<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }}>
+									<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.75rem' : undefined }}>
 										{lesson.title} Notes
 									</Typography>
 									<IconButton
@@ -361,7 +361,7 @@ const LessonPage = () => {
 											setUserLessonNotes(editorContent);
 										}}
 										sx={{ padding: isMobileSize ? '0.5rem' : undefined }}>
-										<Close sx={{ fontSize: isMobileSize ? '1.1rem' : '1.25rem' }} />
+										<Close sx={{ fontSize: isMobileSize ? '1rem' : '1.25rem' }} />
 									</IconButton>
 								</Box>
 								<Box sx={{ mt: '0.5rem' }} id='editor-content'>

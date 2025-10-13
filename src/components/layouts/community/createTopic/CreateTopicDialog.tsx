@@ -243,7 +243,7 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 								</InputAdornment>
 							),
 							inputProps: {
-								maxLength: 1000,
+								maxLength: 1500,
 							},
 						}}
 					/>
@@ -267,40 +267,47 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 						</Box>
 					)}
 
-					<Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
 						<Box>
-							<Tooltip title={!showAudioRecorder ? 'Upload Audio' : 'Hide Recorder'} placement='top' arrow>
-								<IconButton
-									sx={{
-										':hover': {
-											backgroundColor: 'transparent',
-										},
-									}}
-									onClick={() => setShowAudioRecorder(!showAudioRecorder)}>
-									{!showAudioRecorder ? (
-										<Mic fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
-									) : (
-										<MicOff fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
-									)}
-								</IconButton>
-							</Tooltip>
+							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.8rem' }}>
+								{topic.text.length}/1500 Characters
+							</Typography>
 						</Box>
-						<Box>
-							<Tooltip title={!showImageUploader ? 'Upload Image' : 'Hide Uploader'} placement='top' arrow>
-								<IconButton
-									sx={{
-										':hover': {
-											backgroundColor: 'transparent',
-										},
-									}}
-									onClick={() => setShowImageUploader(!showImageUploader)}>
-									{!showImageUploader ? (
-										<Image fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
-									) : (
-										<HideImage fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
-									)}
-								</IconButton>
-							</Tooltip>
+						<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+							<Box>
+								<Tooltip title={!showAudioRecorder ? 'Upload Audio' : 'Hide Recorder'} placement='top' arrow>
+									<IconButton
+										sx={{
+											':hover': {
+												backgroundColor: 'transparent',
+											},
+										}}
+										onClick={() => setShowAudioRecorder(!showAudioRecorder)}>
+										{!showAudioRecorder ? (
+											<Mic fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
+										) : (
+											<MicOff fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
+										)}
+									</IconButton>
+								</Tooltip>
+							</Box>
+							<Box>
+								<Tooltip title={!showImageUploader ? 'Upload Image' : 'Hide Uploader'} placement='top' arrow>
+									<IconButton
+										sx={{
+											':hover': {
+												backgroundColor: 'transparent',
+											},
+										}}
+										onClick={() => setShowImageUploader(!showImageUploader)}>
+										{!showImageUploader ? (
+											<Image fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
+										) : (
+											<HideImage fontSize='small' sx={{ fontSize: isMobileSize ? '0.95rem' : undefined }} />
+										)}
+									</IconButton>
+								</Tooltip>
+							</Box>
 						</Box>
 					</Box>
 				</Box>

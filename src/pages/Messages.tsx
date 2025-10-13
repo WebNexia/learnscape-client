@@ -2410,7 +2410,7 @@ const Messages = () => {
 								display: 'flex',
 								alignItems: 'center',
 								borderTop: '0.04rem solid gray',
-								padding: isMobileSize ? '0.25rem' : '1rem',
+								padding: isMobileSize ? '0.25rem' : '0.75rem',
 								flexShrink: 0,
 								position: 'relative',
 							}}>
