@@ -160,7 +160,6 @@ class AdminPageErrorBoundary extends Component<Props, State> {
 								startIcon={<BugReport />}
 								onClick={() => {
 									// TODO: Open support modal or redirect to support
-									console.log('Report issue clicked');
 								}}
 								sx={{
 									minWidth: 140,

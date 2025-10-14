@@ -17,7 +17,6 @@ const LearnerRouteGuard: React.FC<LearnerRouteGuardProps> = ({ children }) => {
 		if (firebaseUserId && !user) {
 			// Set a timeout to prevent infinite loading
 			const timer = setTimeout(() => {
-				console.log('🔍 LearnerRouteGuard: Timeout reached, setting loading to false');
 				setIsLoading(false);
 			}, 3000); // Wait up to 3 seconds for user data
 			return () => clearTimeout(timer);

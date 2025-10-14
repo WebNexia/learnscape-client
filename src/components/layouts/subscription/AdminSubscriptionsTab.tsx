@@ -232,7 +232,6 @@ const AdminSubscriptionsTab = () => {
 						// The hook will handle updating search results automatically
 					}
 				}
-				console.log(`Subscription ${subscriptionId} canceled successfully.`);
 
 				// Show success message
 				setSnackbarMessage('Subscription canceled successfully');
@@ -261,8 +260,6 @@ const AdminSubscriptionsTab = () => {
 				if (isSearchActive) {
 					removeFromSearchResults(subscriptionId);
 				}
-
-				console.log(`Subscription ${subscriptionId} hard deleted.`);
 
 				// Show success message
 				setSnackbarMessage('Subscription deleted successfully');

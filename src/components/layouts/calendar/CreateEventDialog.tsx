@@ -420,7 +420,6 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 				if (participant.firebaseUserId) {
 					const notificationRef = collection(db, 'notifications', participant.firebaseUserId, 'userNotifications');
 					await addDoc(notificationRef, notificationData);
-					console.log(`Notification sent to: ${participant.username} (${participant.role})`);
 				}
 			}
 
@@ -458,8 +457,6 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 								console.error('❌ Failed to send notification to user:', id, error);
 							}
 						}
-
-						console.log(`✅ Public event notifications sent to ${allFirebaseUserIds.length} users`);
 					} else {
 						console.warn('⚠️ No users found to send public event notifications to');
 					}
