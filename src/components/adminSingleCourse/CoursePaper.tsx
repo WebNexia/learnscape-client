@@ -175,7 +175,7 @@ const CoursePaper = ({
 									backgroundColor: 'transparent',
 									textDecoration: 'underline',
 								},
-								'fontSize': isSticky ? { xs: '0.65rem', sm: '0.75rem' } : undefined,
+								'fontSize': isSticky ? { xs: '0.65rem', sm: '0.85rem' } : undefined,
 							}}
 							onClick={() => {
 								if (user?.role === Roles.ADMIN) {

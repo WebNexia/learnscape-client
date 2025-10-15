@@ -122,7 +122,7 @@ const LessonPaper = ({
 									backgroundColor: 'transparent',
 									textDecoration: 'underline',
 								},
-								'fontSize': isSticky ? { xs: '0.65rem', sm: '0.75rem' } : undefined,
+								'fontSize': isSticky ? { xs: '0.65rem', sm: '0.85rem' } : undefined,
 							}}
 							onClick={() => {
 								navigate(`${isInstructor ? '/instructor/lessons' : '/admin/lessons'}`);
@@ -142,19 +142,8 @@ const LessonPaper = ({
 										padding: isSticky ? '0 0 0 0.5rem' : '0 0 0.5rem 0.5rem',
 										fontSize: isSticky ? '0.75rem' : undefined,
 									}}>
-									{singleLessonBeforeSave?.type}
+									{singleLessonBeforeSave?.type} {isActive ? '(Published)' : 'Unpublished'}
 								</Typography>
-							</Box>
-							<Box sx={{ paddingLeft: '0.5rem', color: theme.textColor?.common.main }}>
-								{isActive ? (
-									<Tooltip title='Published' placement='right' arrow>
-										<PublishedWithChanges fontSize='small' />
-									</Tooltip>
-								) : (
-									<Tooltip title='Unpublished' placement='right' arrow>
-										<Unpublished fontSize='small' />
-									</Tooltip>
-								)}
 							</Box>
 						</Box>
 					)}

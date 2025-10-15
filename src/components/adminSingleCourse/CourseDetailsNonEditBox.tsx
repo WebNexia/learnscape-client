@@ -275,7 +275,7 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 			</Box>
 
 			{!singleCourse?.courseManagement.isExternal && (
-				<Box sx={{ mt: '4rem', minHeight: '30vh' }}>
+				<Box sx={{ mt: '4rem', minHeight: '30vh', mb: singleCourse?.chapterIds?.length === 0 ? '3rem' : '0rem' }}>
 					<Typography variant='h5' sx={{ mb: isMobileSize ? '1rem' : '1.25rem' }}>
 						CHAPTERS
 					</Typography>
