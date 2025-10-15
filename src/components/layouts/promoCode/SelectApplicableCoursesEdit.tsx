@@ -6,6 +6,7 @@ import { CoursesContext } from '../../../contexts/CoursesContextProvider';
 import { PromoCode } from '../../../interfaces/promoCode';
 import PromoCodeCourseSearchSelect from '../../PromoCodeCourseSearchSelect';
 import { SearchCourse } from '../../../interfaces/search';
+import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 interface SelectApplicableCoursesProps {
 	singleCode: PromoCode | null;
@@ -14,6 +15,10 @@ interface SelectApplicableCoursesProps {
 
 const SelectApplicableCoursesEdit = ({ singleCode, setSingleCode }: SelectApplicableCoursesProps) => {
 	const { courses } = useContext(CoursesContext);
+
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
+
 	const courseSearchRef = useRef<any>(null);
 
 	const [searchCourseValue, setSearchCourseValue] = useState<string>('');
@@ -99,7 +104,7 @@ const SelectApplicableCoursesEdit = ({ singleCode, setSingleCode }: SelectApplic
 									}}
 									sx={{
 										'& .MuiSvgIcon-root': {
-											fontSize: '1rem',
+											fontSize: isMobileSize ? '0.9rem' : '1rem',
 										},
 									}}
 								/>
@@ -107,7 +112,7 @@ const SelectApplicableCoursesEdit = ({ singleCode, setSingleCode }: SelectApplic
 							label='All Courses'
 							sx={{
 								'& .MuiFormControlLabel-label': {
-									fontSize: '0.85rem',
+									fontSize: isMobileSize ? '0.75rem' : '0.85rem',
 									fontWeight: 500,
 								},
 							}}

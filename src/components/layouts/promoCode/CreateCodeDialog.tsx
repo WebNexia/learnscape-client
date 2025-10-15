@@ -9,6 +9,7 @@ import { OrganisationContext } from '../../../contexts/OrganisationContextProvid
 import { PromoCodesContext } from '../../../contexts/PromoCodesContextProvider';
 import SelectApplicableCoursesCreate from './SelectApplicableCoursesCreate';
 import CustomErrorMessage from '../../forms/customFields/CustomErrorMessage';
+import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 interface CreateCodeDialogProps {
 	isNewCodeModalOpen: boolean;
@@ -20,6 +21,9 @@ const CreateCodeDialog = ({ isNewCodeModalOpen, setIsNewCodeModalOpen }: CreateC
 
 	const { orgId } = useContext(OrganisationContext);
 	const { addNewPromoCode } = useContext(PromoCodesContext);
+
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
 
 	const [newPromoCode, setNewPromoCode] = useState<PromoCode>({
 		_id: '',
@@ -119,26 +123,28 @@ const CreateCodeDialog = ({ isNewCodeModalOpen, setIsNewCodeModalOpen }: CreateC
 					createPromoCode();
 				}}>
 				<DialogContent sx={{ mt: '-0.5rem' }}>
-					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
 						<Box sx={{ width: '100%', mr: '1rem' }}>
-							<Typography variant='h6' sx={{ fontSize: '0.9rem', mb: '0.25rem' }}>
+							<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.9rem', mb: '0.25rem' }}>
 								Code
 							</Typography>
-							<Tooltip title='Max 15 Characters' placement='top' arrow>
-								<CustomTextField
-									value={newPromoCode.code}
-									onChange={(e) => setNewPromoCode((prevData) => ({ ...prevData, code: e.target.value.trim() }))}
-									InputProps={{
-										inputProps: {
-											maxLength: 15,
-										},
-									}}
-								/>
-							</Tooltip>
+
+							<CustomTextField
+								value={newPromoCode.code}
+								onChange={(e) => setNewPromoCode((prevData) => ({ ...prevData, code: e.target.value.trim() }))}
+								InputProps={{
+									inputProps: {
+										maxLength: 15,
+									},
+								}}
+							/>
+							<Typography sx={{ fontSize: isMobileSize ? '0.65rem' : '0.7rem', margin: '-0.25rem 0 0.5rem 0rem', textAlign: 'right' }}>
+								{newPromoCode.code.length}/15 Characters
+							</Typography>
 						</Box>
 						<Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', width: '100%' }}>
 							<Box sx={{ width: '100%' }}>
-								<Typography variant='h6' sx={{ fontSize: '0.9rem', mb: '0.25rem' }}>
+								<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.9rem', mb: '0.25rem' }}>
 									Discount Percentage
 								</Typography>
 								<CustomTextField
@@ -157,7 +163,7 @@ const CreateCodeDialog = ({ isNewCodeModalOpen, setIsNewCodeModalOpen }: CreateC
 
 					<Box sx={{ display: 'flex', alignItems: 'center', width: '100%', mt: '1rem' }}>
 						<Box sx={{ flex: 1 }}>
-							<Typography variant='h6' sx={{ fontSize: '0.9rem', mb: '0.25rem' }}>
+							<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.9rem', mb: '0.25rem' }}>
 								Expiration Date
 							</Typography>
 							<CustomTextField
@@ -175,7 +181,7 @@ const CreateCodeDialog = ({ isNewCodeModalOpen, setIsNewCodeModalOpen }: CreateC
 							/>
 						</Box>
 						<Box sx={{ flex: 1, ml: '0.75rem' }}>
-							<Typography variant='h6' sx={{ fontSize: '0.9rem', mb: '0.25rem' }}>
+							<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.9rem', mb: '0.25rem' }}>
 								Usage Limit
 							</Typography>
 							<CustomTextField
@@ -210,7 +216,7 @@ const CreateCodeDialog = ({ isNewCodeModalOpen, setIsNewCodeModalOpen }: CreateC
 							label='Applicable for Subscriptions'
 							sx={{
 								'& .MuiFormControlLabel-label': {
-									fontSize: '0.85rem', // Adjust the label font size
+									fontSize: isMobileSize ? '0.7rem' : '0.85rem', // Adjust the label font size
 								},
 							}}
 						/>

@@ -131,7 +131,6 @@ const PromoCodeCourseSearchSelect = forwardRef<any, PromoCodeCourseSearchSelectP
 							reset();
 							setHasSearched(false);
 						}}
-						disabled={disabled}
 						sx={{
 							minWidth: 'auto',
 							padding: isMobileSize ? '0 0.25rem' : '0 0.5rem',

@@ -9,6 +9,7 @@ import { useContext, useState } from 'react';
 import { PromoCodesContext } from '../../../contexts/PromoCodesContextProvider';
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
 import CustomErrorMessage from '../../forms/customFields/CustomErrorMessage';
+import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
 interface EditCodeDialogProps {
 	singleCode: PromoCode | null;
@@ -21,6 +22,9 @@ interface EditCodeDialogProps {
 const EditCodeDialog = ({ singleCode, isEditCodeModalOpen, closeCodeEditModal, index, setSingleCode }: EditCodeDialogProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { updatePromoCode } = useContext(PromoCodesContext);
+
+	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const isMobileSize = isSmallScreen || isRotatedMedium;
 
 	const [errorMsg, setErrorMsg] = useState<string>('');
 	const { orgId } = useContext(OrganisationContext);
@@ -94,26 +98,28 @@ const EditCodeDialog = ({ singleCode, isEditCodeModalOpen, closeCodeEditModal, i
 					editCode();
 				}}>
 				<DialogContent sx={{ mt: '-0.5rem' }}>
-					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
 						<Box sx={{ width: '100%', mr: '1rem' }}>
-							<Typography variant='h6' sx={{ fontSize: '0.9rem', mb: '0.25rem' }}>
+							<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.9rem', mb: '0.25rem' }}>
 								Code
 							</Typography>
-							<Tooltip title='Max 15 Characters' placement='top' arrow>
-								<CustomTextField
-									value={singleCode?.code}
-									onChange={(e) => setSingleCode((prevData) => ({ ...prevData!, code: e.target.value.trim() }))}
-									InputProps={{
-										inputProps: {
-											maxLength: 15,
-										},
-									}}
-								/>
-							</Tooltip>
+
+							<CustomTextField
+								value={singleCode?.code}
+								onChange={(e) => setSingleCode((prevData) => ({ ...prevData!, code: e.target.value.trim() }))}
+								InputProps={{
+									inputProps: {
+										maxLength: 15,
+									},
+								}}
+							/>
+							<Typography sx={{ fontSize: isMobileSize ? '0.65rem' : '0.7rem', margin: '-0.25rem 0 0.5rem 0rem', textAlign: 'right' }}>
+								{singleCode?.code.length}/15 Characters
+							</Typography>
 						</Box>
 						<Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
 							<Box sx={{ width: '100%' }}>
-								<Typography variant='h6' sx={{ fontSize: '0.9rem', mb: '0.25rem' }}>
+								<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.9rem', mb: '0.25rem' }}>
 									Discount Percentage
 								</Typography>
 								<CustomTextField
@@ -132,7 +138,7 @@ const EditCodeDialog = ({ singleCode, isEditCodeModalOpen, closeCodeEditModal, i
 
 					<Box sx={{ display: 'flex', alignItems: 'center', width: '100%', mt: '1rem' }}>
 						<Box sx={{ flex: 1 }}>
-							<Typography variant='h6' sx={{ fontSize: '0.9rem', mb: '0.25rem' }}>
+							<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.9rem', mb: '0.25rem' }}>
 								Expiration Date
 							</Typography>
 							<CustomTextField
@@ -150,7 +156,7 @@ const EditCodeDialog = ({ singleCode, isEditCodeModalOpen, closeCodeEditModal, i
 							/>
 						</Box>
 						<Box sx={{ flex: 2, ml: '0.75rem' }}>
-							<Typography variant='h6' sx={{ fontSize: '0.9rem', mb: '0.25rem' }}>
+							<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.9rem', mb: '0.25rem' }}>
 								Usage Limit
 							</Typography>
 							<CustomTextField
@@ -177,7 +183,7 @@ const EditCodeDialog = ({ singleCode, isEditCodeModalOpen, closeCodeEditModal, i
 									}}
 									sx={{
 										'& .MuiSvgIcon-root': {
-											fontSize: '1rem', // Adjust the checkbox icon size
+											fontSize: isMobileSize ? '0.9rem' : '1rem', // Adjust the checkbox icon size
 										},
 									}}
 								/>
@@ -185,7 +191,7 @@ const EditCodeDialog = ({ singleCode, isEditCodeModalOpen, closeCodeEditModal, i
 							label='Applicable for Subscriptions'
 							sx={{
 								'& .MuiFormControlLabel-label': {
-									fontSize: '0.85rem', // Adjust the label font size
+									fontSize: isMobileSize ? '0.75rem' : '0.85rem', // Adjust the label font size
 								},
 							}}
 						/>
@@ -199,7 +205,7 @@ const EditCodeDialog = ({ singleCode, isEditCodeModalOpen, closeCodeEditModal, i
 									}}
 									sx={{
 										'& .MuiSvgIcon-root': {
-											fontSize: '1rem', // Adjust the checkbox icon size
+											fontSize: isMobileSize ? '0.9rem' : '1rem', // Adjust the checkbox icon size
 										},
 									}}
 								/>
@@ -207,7 +213,7 @@ const EditCodeDialog = ({ singleCode, isEditCodeModalOpen, closeCodeEditModal, i
 							label='Active'
 							sx={{
 								'& .MuiFormControlLabel-label': {
-									fontSize: '0.85rem', // Adjust the label font size
+									fontSize: isMobileSize ? '0.75rem' : '0.85rem', // Adjust the label font size
 								},
 							}}
 						/>

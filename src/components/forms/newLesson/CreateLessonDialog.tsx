@@ -171,6 +171,10 @@ const CreateLessonDialog = ({
 					}}
 					InputProps={{ inputProps: { maxLength: 100 } }}
 				/>
+				<Typography sx={{ fontSize: isMobileSize ? '0.65rem' : '0.7rem', margin: '-0.25rem 2rem', textAlign: 'right' }}>
+					{title?.length}/100 Characters
+				</Typography>
+
 				<FormControl sx={{ margin: isMobileSize ? '0.5rem 2rem' : '1rem 2rem' }}>
 					<Typography variant='body2' sx={{ mb: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 						Type

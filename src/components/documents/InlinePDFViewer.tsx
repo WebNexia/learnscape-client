@@ -102,8 +102,6 @@ const InlinePDFViewer: React.FC<InlinePDFViewerProps> = ({ documentUrl, document
 			// Set worker source
 			pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-			console.log('Loading PDF from URL:', documentUrl);
-
 			// Load the PDF document with better error handling
 			const loadingTask = pdfjsLib.getDocument({
 				url: documentUrl,
@@ -113,12 +111,9 @@ const InlinePDFViewer: React.FC<InlinePDFViewerProps> = ({ documentUrl, document
 				disableStream: false,
 			});
 
-			loadingTask.onProgress = (progress: any) => {
-				console.log('PDF loading progress:', progress);
-			};
+			loadingTask.onProgress = (progress: any) => {};
 
 			const pdf = await loadingTask.promise;
-			console.log('PDF loaded successfully:', pdf);
 
 			setPdfDoc(pdf);
 			setTotalPages(pdf.numPages);
@@ -133,7 +128,6 @@ const InlinePDFViewer: React.FC<InlinePDFViewerProps> = ({ documentUrl, document
 				setError('Unable to access PDF file. It may be protected or the URL is incorrect.');
 			} else {
 				// Try fallback iframe method
-				console.log('PDF.js failed, trying iframe fallback');
 				setUseFallback(true);
 				setError(null);
 			}
@@ -146,7 +140,6 @@ const InlinePDFViewer: React.FC<InlinePDFViewerProps> = ({ documentUrl, document
 		if (!pdfDoc || !canvasRef.current) return;
 
 		try {
-			console.log('Rendering page:', pageNum);
 			const page = await pdfDoc.getPage(pageNum);
 			const canvas = canvasRef.current;
 			const context = canvas.getContext('2d');
@@ -157,7 +150,6 @@ const InlinePDFViewer: React.FC<InlinePDFViewerProps> = ({ documentUrl, document
 
 			// Calculate viewport
 			const viewport = page.getViewport({ scale });
-			console.log('Viewport dimensions:', viewport.width, 'x', viewport.height);
 
 			canvas.height = viewport.height;
 			canvas.width = viewport.width;
@@ -170,7 +162,6 @@ const InlinePDFViewer: React.FC<InlinePDFViewerProps> = ({ documentUrl, document
 
 			const renderTask = page.render(renderContext);
 			await renderTask.promise;
-			console.log('Page rendered successfully');
 		} catch (err: any) {
 			console.error('Error rendering page:', err);
 			setError(`Failed to render page ${pageNum}: ${err.message || 'Unknown error'}`);
@@ -357,7 +348,7 @@ const InlinePDFViewer: React.FC<InlinePDFViewerProps> = ({ documentUrl, document
 								height={isMobile ? '300px' : '550px'}
 								style={{ border: 'none', borderRadius: '0.5rem' }}
 								title={documentName}
-								onLoad={() => console.log('PDF iframe loaded successfully')}
+								onLoad={() => {}}
 								onError={() => {
 									console.error('PDF iframe failed to load');
 									setError('Unable to display PDF. Please try downloading it instead.');

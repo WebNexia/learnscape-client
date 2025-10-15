@@ -466,6 +466,9 @@ const AdminQuestionsEditQuestionDialog = ({
 								isFITB={isFITBDragDrop || isFITBTyping}
 								maxLength={5000}
 							/>
+							<Typography sx={{ fontSize: isMobileSize ? '0.65rem' : '0.7rem', margin: '0.5rem 0rem', textAlign: 'right' }}>
+								{editorContent.length}/5000 Characters
+							</Typography>
 						</Box>
 					)}
 

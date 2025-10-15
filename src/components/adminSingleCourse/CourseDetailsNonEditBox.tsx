@@ -18,6 +18,7 @@ import { truncateText } from '@utils/utilText';
 import { useAuth } from '../../hooks/useAuth';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import CustomCancelButton from '../forms/customButtons/CustomCancelButton';
+import { LessonType } from '../../interfaces/enums';
 
 interface CourseDetailsNonEditBoxProps {
 	singleCourse?: SingleCourse;
@@ -43,14 +44,17 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 
 	// Helper functions for chapter management
 	const toggleChapter = (chapterId: string) => {
-		setExpandedChapters((prev) => ({
-			...prev,
-			[chapterId]: !prev[chapterId],
-		}));
+		setExpandedChapters((prev) => {
+			const currentState = prev[chapterId] === true; // Default to false if not set
+			return {
+				...prev,
+				[chapterId]: !currentState,
+			};
+		});
 	};
 
 	const isChapterExpanded = (chapterId: string) => {
-		return expandedChapters[chapterId] !== false; // Default to true if not set
+		return expandedChapters[chapterId] === true; // Default to false if not set
 	};
 
 	// Calculate lesson statistics for each chapter
@@ -271,8 +275,8 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 			</Box>
 
 			{!singleCourse?.courseManagement.isExternal && (
-				<Box sx={{ mt: '4rem', minHeight: '40vh' }}>
-					<Typography variant='h5' sx={{ mb: isMobileSize ? '1.25rem' : '2.25rem' }}>
+				<Box sx={{ mt: '4rem', minHeight: '30vh' }}>
+					<Typography variant='h5' sx={{ mb: isMobileSize ? '1rem' : '1.25rem' }}>
 						CHAPTERS
 					</Typography>
 					{singleCourse?.chapterIds?.length === 0 ? (
@@ -289,7 +293,7 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 										<Box
 											key={chapter.chapterId}
 											sx={{
-												marginBottom: isMobileSize ? '1rem' : '1.5rem',
+												marginBottom: isMobileSize ? '1rem' : '1rem',
 												overflow: 'hidden',
 												transition: 'box-shadow 0.3s ease',
 											}}>
@@ -297,7 +301,7 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 											<Box
 												sx={{
 													'backgroundColor': isInstructor ? theme.bgColor?.instructorHeader : theme.bgColor?.adminHeader,
-													'padding': isMobileSize ? '0.5rem 1rem' : '0.5rem 1rem 0.5rem 0.25rem',
+													'padding': isMobileSize ? '0.75rem 1rem' : '0.75rem 1rem 0.75rem 0.5rem',
 													'cursor': 'pointer',
 													'display': 'flex',
 													'alignItems': 'center',
@@ -311,12 +315,6 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 												onClick={() => toggleChapter(chapter.chapterId)}
 												role='button'
 												tabIndex={0}
-												onKeyDown={(e) => {
-													if (e.key === 'Enter' || e.key === ' ') {
-														e.preventDefault();
-														toggleChapter(chapter.chapterId);
-													}
-												}}
 												aria-expanded={isExpanded}
 												aria-label={`${isExpanded ? 'Collapse' : 'Expand'} chapter: ${chapter.title}`}>
 												<Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
@@ -324,12 +322,13 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 														sx={{
 															color: 'white',
 															marginRight: isMobileSize ? '0.5rem' : '1rem',
-															padding: isMobileSize ? '0.25rem' : '0.5rem',
+															padding: '0rem',
 															transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
 															transition: 'transform 0.3s ease',
+															border: 'solid 0.5px white',
 														}}
 														aria-hidden='true'>
-														<ExpandMore />
+														<ExpandMore fontSize='small' />
 													</IconButton>
 													<Typography
 														variant='h6'
@@ -417,7 +416,7 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 																				justifyContent: 'space-between',
 																				alignItems: 'center',
 																				width: '100%',
-																				margin: isMobileSize ? '0 0.25rem' : '0 1rem',
+																				margin: isMobileSize ? '0 0.25rem 0 0.5rem' : '0 0.75rem',
 																				gap: isMobileSize ? 2 : 0,
 																			}}>
 																			<Box sx={{ flex: 4 }}>
@@ -444,9 +443,15 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 																					alignItems: 'center',
 																					flex: 4,
 																				}}>
-																				<Box sx={{ mr: '1rem' }}>
+																				<Box sx={{ mr: '0.5rem' }}>
 																					<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.65rem' : '0.85rem' }}>
-																						{lesson?.type}
+																						{!isMobileSize
+																							? lesson?.type
+																							: lesson?.type === LessonType.INSTRUCTIONAL_LESSON
+																								? 'Instructional'
+																								: lesson?.type === LessonType.PRACTICE_LESSON
+																									? 'Practice'
+																									: 'Quiz'}
 																					</Typography>
 																				</Box>
 																				<Box>
@@ -460,7 +465,7 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 																								}
 																								window.scrollTo({ top: 0, behavior: 'smooth' });
 																							}}>
-																							<EditTwoTone fontSize='small' />
+																							<EditTwoTone fontSize='small' sx={{ fontSize: isMobileSize ? '0.85rem' : undefined, ml: '-0.5rem' }} />
 																						</IconButton>
 																					</Tooltip>
 																				</Box>
@@ -481,7 +486,9 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 			{!singleCourse?.courseManagement.isExternal && (
 				<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', width: '100%', mb: '4rem' }}>
 					<Box sx={{ mb: '1.25rem' }}>
-						<Typography variant='h5'>Course Materials</Typography>
+						<Typography variant='h5' sx={{ fontSize: isMobileSize ? '1rem' : undefined }}>
+							Course Materials
+						</Typography>
 					</Box>
 					{singleCourse?.documents?.filter((doc) => doc !== null)?.length !== 0 ? (
 						<Box>
@@ -489,7 +496,12 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 								?.filter((doc) => doc !== null)
 								?.map((doc) => (
 									<Box sx={{ mb: '0.5rem' }} key={doc._id}>
-										<Link href={doc?.documentUrl} target='_blank' rel='noopener noreferrer' variant='body2'>
+										<Link
+											href={doc?.documentUrl}
+											target='_blank'
+											rel='noopener noreferrer'
+											variant='body2'
+											sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 											{doc?.name}
 										</Link>
 									</Box>

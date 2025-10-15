@@ -118,8 +118,6 @@ const EditInstructorDialog = ({
 						// Add notification to instructor's notification collection
 						const notificationRef = collection(db, 'notifications', newInstructor.firebaseUserId, 'userNotifications');
 						await addDoc(notificationRef, notificationData);
-
-						console.log(`Notification sent to instructor ${newInstructor.firstName} ${newInstructor.lastName} for course assignment`);
 					}
 				} catch (notificationError) {
 					console.error('Failed to send instructor assignment notification:', notificationError);

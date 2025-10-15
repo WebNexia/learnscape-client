@@ -750,7 +750,7 @@ const AdminCourseEditPage = () => {
 								setHasUnsavedChanges={setHasUnsavedChanges}
 							/>
 							{!singleCourseBeforeSave?.courseManagement.isExternal && (
-								<Box sx={{ mt: '2rem', minHeight: '40vh' }}>
+								<Box sx={{ mt: '2rem', minHeight: '30vh' }}>
 									<Box
 										sx={{
 											display: 'flex',

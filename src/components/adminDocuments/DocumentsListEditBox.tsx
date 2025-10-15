@@ -30,7 +30,6 @@ const DocumentsListEditBox = ({
 	setIsDocumentUpdated,
 	setHasUnsavedChanges,
 }: DocumentsListEditBoxProps) => {
-	console.log('documentsSource', documentsSource);
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	return (

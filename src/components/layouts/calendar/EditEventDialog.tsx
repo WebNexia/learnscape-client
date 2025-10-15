@@ -517,8 +517,6 @@ const EditEventDialog = ({
 								console.error('❌ Failed to send notification to user:', id, error);
 							}
 						}
-
-						console.log(`✅ Public event notifications sent to ${allFirebaseUserIds.length} users`);
 					} else {
 						console.warn('⚠️ No users found to send public event notifications to');
 					}
@@ -532,18 +530,6 @@ const EditEventDialog = ({
 			const newlyAddedIds = newAttendeeIds?.filter((id) => !previousAttendeeIds?.includes(id)) || [];
 			const adminName = user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : user?.username || 'Admin';
 
-			// Send notifications to newly added participants
-			console.log('Notification recipients for event update:', {
-				allInstructors: allInstructors.length,
-				allLearners: allLearners.length,
-				allSubscribers: allSubscribers.length,
-				courseParticipants: courseParticipants.length,
-				manualAttendees: selectedEvent?.attendees?.length || 0,
-				totalRecipients: allCoursesParticipantsInfo.length,
-				newlyAddedIds: newlyAddedIds.length,
-				recipients: allCoursesParticipantsInfo.map((r) => ({ username: r.username, role: r.role })),
-			});
-
 			for (const participant of allCoursesParticipantsInfo) {
 				if (newlyAddedIds?.includes(participant._id) && participant.firebaseUserId) {
 					const notificationRef = collection(db, 'notifications', participant.firebaseUserId, 'userNotifications');
@@ -556,7 +542,6 @@ const EditEventDialog = ({
 						userImageUrl: user?.imageUrl,
 						eventId: selectedEvent?._id,
 					});
-					console.log(`Notification sent to: ${participant.username} (${participant.role})`);
 				}
 			}
 

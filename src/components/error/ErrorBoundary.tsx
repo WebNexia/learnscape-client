@@ -105,7 +105,6 @@ const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error, errorInfo, context
 
 	const handleReportBug = () => {
 		// TODO: Open bug report modal or redirect to support
-		console.log('Report bug clicked');
 	};
 
 	return (

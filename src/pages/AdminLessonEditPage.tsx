@@ -337,8 +337,6 @@ const AdminLessonEditPage = () => {
 
 					const lessonsResponse = response?.data;
 
-					console.log(lessonsResponse.data);
-
 					setSingleLesson(lessonsResponse);
 					setSingleLessonBeforeSave(lessonsResponse);
 
@@ -733,10 +731,6 @@ const AdminLessonEditPage = () => {
 
 			if (isLessonUpdated || isQuestionUpdated?.some((data) => data.isUpdated === true)) {
 				try {
-					// Debug logging
-					console.log('Updating lesson with document IDs:', updatedDocumentIds);
-					console.log('Updating lesson with question IDs:', updatedQuestionIds);
-
 					const response = await axios.patch(`${base_url}${isInstructor ? '/lessons/instructor' : '/lessons'}/${lessonId}`, {
 						...singleLessonBeforeSave,
 						title: singleLessonBeforeSave.title,
@@ -1342,6 +1336,9 @@ const AdminLessonEditPage = () => {
 									value={editorContent}
 									maxLength={15000}
 								/>
+								<Typography sx={{ fontSize: isMobileSize ? '0.65rem' : '0.7rem', margin: '0.5rem 0', textAlign: 'right' }}>
+									{editorContent.length}/15000 Characters
+								</Typography>
 								<Box sx={{ margin: '1rem 0' }}>{instructionError && <CustomErrorMessage>Enter lesson instructions</CustomErrorMessage>}</Box>
 							</Box>
 

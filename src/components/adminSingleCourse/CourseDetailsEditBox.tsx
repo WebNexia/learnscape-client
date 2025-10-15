@@ -175,53 +175,63 @@ const CourseDetailsEditBox = ({
 						<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '0.9rem' }}>
 							Title*
 						</Typography>
-						<Tooltip title='Max 50 Characters' placement='top' arrow>
-							<CustomTextField
-								sx={{
-									marginTop: '0.5rem',
-									backgroundColor: theme.bgColor?.common,
-								}}
-								multiline
-								value={singleCourseBeforeSave?.title}
-								onChange={(e) => {
-									setSingleCourseBeforeSave((prevData) => {
-										if (prevData) {
-											return { ...prevData, title: e.target.value };
-										}
-										return prevData;
-									});
-									setIsMissingField(false);
-									setHasUnsavedChanges(true);
-								}}
-								InputProps={{ inputProps: { maxLength: 50 } }}
-								error={isMissingField && singleCourseBeforeSave?.title === ''}
-							/>
-						</Tooltip>
+
+						<CustomTextField
+							sx={{
+								marginTop: '0.5rem',
+								backgroundColor: theme.bgColor?.common,
+							}}
+							multiline
+							value={singleCourseBeforeSave?.title}
+							onChange={(e) => {
+								setSingleCourseBeforeSave((prevData) => {
+									if (prevData) {
+										return { ...prevData, title: e.target.value };
+									}
+									return prevData;
+								});
+								setIsMissingField(false);
+								setHasUnsavedChanges(true);
+							}}
+							InputProps={{ inputProps: { maxLength: 50 } }}
+							error={isMissingField && singleCourseBeforeSave?.title === ''}
+						/>
+						<Typography sx={{ fontSize: isMobileSize ? '0.65rem' : '0.7rem', margin: '-0.25rem 0 0.5rem 0rem', textAlign: 'right' }}>
+							{singleCourseBeforeSave?.title?.length}/50 Characters
+						</Typography>
+
 						{isMissingField && singleCourseBeforeSave?.title === '' && <CustomErrorMessage>Enter a title</CustomErrorMessage>}
 					</Box>
 					<Box sx={{ flex: 1.5, marginLeft: isMobileSize ? '1rem' : '2rem' }}>
 						<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '0.9rem' }}>
 							Description*
 						</Typography>
-						<Tooltip title='Max 500 characters' placement='top' arrow>
-							<CustomTextField
-								sx={{ marginTop: '0.5rem' }}
-								value={singleCourseBeforeSave?.description}
-								onChange={(e) => {
-									setSingleCourseBeforeSave((prevData) => {
-										if (prevData) {
-											return { ...prevData, description: e.target.value };
-										}
-										return prevData;
-									});
-									setIsMissingField(false);
-									setHasUnsavedChanges(true);
-								}}
-								multiline
-								InputProps={{ inputProps: { maxLength: 500 } }}
-								error={isMissingField && singleCourseBeforeSave?.description === ''}
-							/>
-						</Tooltip>
+
+						<CustomTextField
+							sx={{ marginTop: '0.5rem' }}
+							value={singleCourseBeforeSave?.description}
+							onChange={(e) => {
+								setSingleCourseBeforeSave((prevData) => {
+									if (prevData) {
+										return { ...prevData, description: e.target.value };
+									}
+									return prevData;
+								});
+								setIsMissingField(false);
+								setHasUnsavedChanges(true);
+							}}
+							multiline
+							InputProps={{ inputProps: { maxLength: 500 } }}
+							error={isMissingField && singleCourseBeforeSave?.description === ''}
+						/>
+						<Typography
+							sx={{
+								fontSize: isMobileSize ? '0.65rem' : '0.7rem',
+								margin: '-0.25rem 0 0.5rem 0rem',
+								textAlign: 'right',
+							}}>
+							{singleCourseBeforeSave?.description?.length}/500 Characters
+						</Typography>
 
 						{isMissingField && singleCourseBeforeSave?.description === '' && <CustomErrorMessage>Enter a description</CustomErrorMessage>}
 					</Box>

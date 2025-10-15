@@ -100,8 +100,6 @@ const CoursePaper = ({
 			const response = await axios.post(`${base_url}/courses/${courseId}/clone`, { courseId });
 			setIsCloneCourseDialogOpen(false);
 
-			console.log(response.data.clonedCourse);
-
 			addNewCourse({
 				_id: response.data.clonedCourse._id,
 				title: response.data.clonedCourse.title,

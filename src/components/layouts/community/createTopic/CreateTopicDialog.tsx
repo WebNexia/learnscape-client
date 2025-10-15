@@ -199,18 +199,19 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 					createTopic();
 				}}>
 				<Box sx={{ marginBottom: '0.5rem' }}>
-					<Tooltip title='Max 80 Characters' placement='top' arrow>
-						<CustomTextField
-							label='Title'
-							value={topic?.title}
-							onChange={(e) =>
-								setTopic((prevData) => {
-									return { ...prevData, title: e.target.value };
-								})
-							}
-							InputProps={{ inputProps: { maxLength: 80 } }}
-						/>
-					</Tooltip>
+					<CustomTextField
+						label='Title'
+						value={topic?.title}
+						onChange={(e) =>
+							setTopic((prevData) => {
+								return { ...prevData, title: e.target.value };
+							})
+						}
+						InputProps={{ inputProps: { maxLength: 80 } }}
+					/>
+					<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.75rem', textAlign: 'right' }}>
+						{topic?.title?.length}/80 Characters
+					</Typography>
 				</Box>
 				<Box sx={{ marginBottom: '1rem', position: 'relative' }}>
 					<CustomTextField
@@ -267,12 +268,7 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 						</Box>
 					)}
 
-					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-						<Box>
-							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.8rem' }}>
-								{topic.text.length}/1500 Characters
-							</Typography>
-						</Box>
+					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: '-0.5rem' }}>
 						<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
 							<Box>
 								<Tooltip title={!showAudioRecorder ? 'Upload Audio' : 'Hide Recorder'} placement='top' arrow>
@@ -308,6 +304,11 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 									</IconButton>
 								</Tooltip>
 							</Box>
+						</Box>
+						<Box>
+							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.75rem' }}>
+								{topic.text.length}/1500 Characters
+							</Typography>
 						</Box>
 					</Box>
 				</Box>
