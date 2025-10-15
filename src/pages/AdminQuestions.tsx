@@ -372,7 +372,7 @@ const AdminQuestions = () => {
 									borderRight: 'none',
 								},
 								'& .MuiTableBody-root .MuiTableCell-root': {
-									padding: '0.25rem 1rem',
+									padding: '0.35rem 1rem',
 									boxSizing: 'border-box',
 									margin: 0,
 									verticalAlign: 'center',

@@ -161,14 +161,15 @@ const EditTopicDialog = ({ editTopicModalOpen, topic, setEditTopicModalOpen, set
 					editTopic();
 				}}>
 				<Box sx={{ marginBottom: '0.5rem' }}>
-					<Tooltip title='Max 85 Characters' placement='top' arrow>
-						<CustomTextField
-							label='Title'
-							value={topic?.title}
-							onChange={(e) => setTopic((prevData) => ({ ...prevData, title: e.target.value }))}
-							InputProps={{ inputProps: { maxLength: 85 } }}
-						/>
-					</Tooltip>
+					<CustomTextField
+						label='Title'
+						value={topic?.title}
+						onChange={(e) => setTopic((prevData) => ({ ...prevData, title: e.target.value }))}
+						InputProps={{ inputProps: { maxLength: 80 } }}
+					/>
+					<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.75rem', textAlign: 'right' }}>
+						{topic?.title?.length}/80 Characters
+					</Typography>
 				</Box>
 
 				<Box sx={{ marginBottom: '1rem', position: 'relative' }}>
@@ -210,12 +211,7 @@ const EditTopicDialog = ({ editTopicModalOpen, topic, setEditTopicModalOpen, set
 						</Box>
 					)}
 
-					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-						<Box>
-							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.8rem' }}>
-								{topic.text.length}/1500 Characters
-							</Typography>
-						</Box>
+					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: '-0.5rem' }}>
 						<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
 							<Box>
 								<Tooltip title={!showAudioRecorder ? 'Upload Audio' : 'Hide Recorder'} placement='top' arrow>
@@ -251,6 +247,11 @@ const EditTopicDialog = ({ editTopicModalOpen, topic, setEditTopicModalOpen, set
 									</IconButton>
 								</Tooltip>
 							</Box>
+						</Box>
+						<Box>
+							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.75rem' }}>
+								{topic.text.length}/1500 Characters
+							</Typography>
 						</Box>
 					</Box>
 				</Box>

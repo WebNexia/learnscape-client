@@ -125,36 +125,34 @@ const CreateCourseDialog = ({ closeNewCourseModal, isCourseCreateModalOpen }: Cr
 					closeNewCourseModal();
 				}}
 				style={{ display: 'flex', flexDirection: 'column', marginTop: '-1rem' }}>
-				<Tooltip title='Max 50 Characters' placement='top' arrow>
-					<CustomTextField
-						fullWidth={false}
-						label='Title'
-						value={title}
-						onChange={(e) => setTitle(e.target.value)}
-						sx={{ margin: '1rem 2rem' }}
-						InputLabelProps={{
-							sx: { fontSize: isMobileSize ? '0.7rem' : '0.8rem' },
-						}}
-						InputProps={{ inputProps: { maxLength: 50 } }}
-					/>
-				</Tooltip>
+				<CustomTextField
+					fullWidth={false}
+					label='Title'
+					value={title}
+					onChange={(e) => setTitle(e.target.value)}
+					sx={{ margin: '1rem 2rem' }}
+					InputLabelProps={{
+						sx: { fontSize: isMobileSize ? '0.7rem' : '0.8rem' },
+					}}
+					InputProps={{ inputProps: { maxLength: 50 } }}
+				/>
+				<Typography sx={{ fontSize: '0.7rem', margin: '0 2rem', textAlign: 'right' }}>{title.length}/50 Characters</Typography>
 
-				<Tooltip title='Max 500 characters' placement='top' arrow>
-					<CustomTextField
-						fullWidth={false}
-						label='Description'
-						value={description}
-						onChange={(e) => setDescription(e.target.value)}
-						sx={{ margin: '1rem 2rem' }}
-						InputLabelProps={{
-							sx: { fontSize: isMobileSize ? '0.7rem' : '0.8rem' },
-						}}
-						InputProps={{ inputProps: { maxLength: 500 } }}
-						multiline
-						rows={5}
-						resizable
-					/>
-				</Tooltip>
+				<CustomTextField
+					fullWidth={false}
+					label='Description'
+					value={description}
+					onChange={(e) => setDescription(e.target.value)}
+					sx={{ margin: '1rem 2rem' }}
+					InputLabelProps={{
+						sx: { fontSize: isMobileSize ? '0.7rem' : '0.8rem' },
+					}}
+					InputProps={{ inputProps: { maxLength: 500 } }}
+					multiline
+					rows={5}
+					resizable
+				/>
+				<Typography sx={{ fontSize: '0.7rem', margin: '0 2rem', textAlign: 'right' }}>{description.length}/500 Characters</Typography>
 
 				{!isInstructor && (
 					<Box sx={{ display: 'flex', alignItems: 'center' }}>

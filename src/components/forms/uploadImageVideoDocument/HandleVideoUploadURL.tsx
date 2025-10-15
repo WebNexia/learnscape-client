@@ -40,7 +40,7 @@ const HandleVideoUploadURL = ({
 	return (
 		<FormControl sx={{ display: 'flex' }}>
 			<Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-				<Typography variant={isMobileSize ? 'body2' : 'h6'} sx={{ fontSize: !isMobileSize ? '0.9rem' : '0.8rem' }}>
+				<Typography variant={isMobileSize ? 'body2' : 'h6'} sx={{ fontSize: !isMobileSize ? '1rem' : '0.8rem' }}>
 					{label}
 				</Typography>
 				<Box sx={{ display: 'flex', alignItems: 'center' }}>

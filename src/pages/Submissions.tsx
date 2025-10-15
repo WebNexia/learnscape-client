@@ -174,7 +174,7 @@ const Submissions = () => {
 									},
 									'& .MuiTableHead-root .MuiTableCell-root': {
 										backgroundColor: theme.palette.background.paper,
-										padding: isMobileSize ? '0.25rem 0rem' : '0.25rem 1rem',
+										padding: '0.25rem 1rem',
 										boxSizing: 'border-box',
 										margin: 0,
 										verticalAlign: 'center',
@@ -183,7 +183,7 @@ const Submissions = () => {
 										borderRight: 'none',
 									},
 									'& .MuiTableBody-root .MuiTableCell-root': {
-										padding: isMobileSize ? '0.5rem 0.5rem' : '0.25rem 1rem',
+										padding: '0.5rem 1rem',
 										boxSizing: 'border-box',
 										margin: 0,
 										verticalAlign: 'center',
@@ -194,7 +194,7 @@ const Submissions = () => {
 									// Column widths for header cells
 									'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(1)': {
 										minWidth: isMobileSize ? '150px' : '200px',
-										width: isMobileSize ? '50%' : '35%',
+										width: isMobileSize ? '35%' : '35%',
 									},
 									'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(2)': {
 										minWidth: isMobileSize ? '0px' : '200px',

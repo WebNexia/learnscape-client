@@ -306,7 +306,6 @@ const EditDocumentDialog = ({
 						<CustomTextField
 							label='Description'
 							value={document?.description || ''}
-							placeholder='Enter a description for the document (max 100 characters)'
 							onChange={(e) => {
 								if (document) {
 									setDocument({ ...document, description: e.target.value });
@@ -325,6 +324,9 @@ const EditDocumentDialog = ({
 								},
 							}}
 						/>
+						<Typography sx={{ fontSize: isMobileSize ? '0.65rem' : '0.7rem', margin: '-0.25rem 0 0.5rem 0rem', textAlign: 'right' }}>
+							{document?.description.length}/100 Characters
+						</Typography>
 					</Box>
 				</Box>
 				<Box sx={{ display: 'flex', justifyContent: isMobileSize ? 'space-between' : 'flex-end', margin: isMobileSize ? '0rem 0' : '0 1rem' }}>

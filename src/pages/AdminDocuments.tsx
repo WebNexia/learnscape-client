@@ -647,7 +647,7 @@ const AdminDocuments = () => {
 									borderRight: 'none',
 								},
 								'& .MuiTableBody-root .MuiTableCell-root': {
-									padding: '0.25rem 1rem',
+									padding: '0.5rem 1rem',
 									boxSizing: 'border-box',
 									margin: 0,
 									verticalAlign: 'center',
@@ -808,11 +808,10 @@ const AdminDocuments = () => {
 															openModal={isDocumentDeleteModalOpen[index]}
 															closeModal={() => closeDeleteDocumentModal(index)}
 															title='Delete Document'
-															content={`Are you sure you want to delete "${document.name}"?`}
 															maxWidth='xs'>
 															<DialogContent>
 																<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem' }}>
-																	Are you sure you want to delete "${document.name}"?
+																	Are you sure you want to delete "{document.name}"?
 																</Typography>
 																<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem', mt: '1.5rem' }}>
 																	You can restore it later from the recycle bin

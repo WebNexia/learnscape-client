@@ -192,6 +192,7 @@ const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, set
 						}}
 						InputProps={{
 							sx: { padding: '0.5rem 1rem' },
+							inputProps: { maxLength: 1500 },
 							endAdornment: (
 								<InputAdornment position='end'>
 									<IconButton onClick={() => setShowPicker(!showPicker)} edge='end'>
@@ -219,12 +220,7 @@ const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, set
 							<Picker data={data} onEmojiSelect={handleEmojiSelect} theme='dark' />
 						</Box>
 					)}
-					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-						<Box>
-							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.8rem' }}>
-								{editingMessage.text.length}/1500 Characters
-							</Typography>
-						</Box>
+					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: '-0.5rem' }}>
 						<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
 							<Tooltip title={!showAudioRecorder ? 'Upload Audio' : 'Hide Recorder'} placement='top' arrow>
 								<IconButton onClick={() => toggleShow('audio')}>
@@ -244,6 +240,11 @@ const EditMessageDialog = ({ message, editMsgModalOpen, setEditMsgModalOpen, set
 									)}
 								</IconButton>
 							</Tooltip>
+						</Box>
+						<Box>
+							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.7rem' : '0.75rem' }}>
+								{editingMessage.text.length}/1500 Characters
+							</Typography>
 						</Box>
 					</Box>
 				</Box>

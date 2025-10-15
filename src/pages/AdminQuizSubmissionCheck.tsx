@@ -612,6 +612,9 @@ const AdminQuizSubmissionCheck = () => {
 							},
 						}}
 					/>
+					<Typography sx={{ fontSize: isMobileSize ? '0.65rem' : '0.7rem', margin: '-0.25rem 0 0.5rem 0rem', textAlign: 'right' }}>
+						{userQuestionsFeedbacks?.find((feedback) => feedback.userQuestionId === userResponseToFeedback?._id)?.feedback.length}/1000 Characters
+					</Typography>
 				</Box>
 
 				<CustomDialogActions
@@ -644,6 +647,9 @@ const AdminQuizSubmissionCheck = () => {
 						},
 					}}
 				/>
+				<Typography sx={{ fontSize: isMobileSize ? '0.65rem' : '0.7rem', margin: '-0.25rem 0 0.5rem 0rem', textAlign: 'right' }}>
+					{quizFeedback.length}/1000 Characters
+				</Typography>
 			</Box>
 
 			<Box sx={{ width: '85%', mb: '3rem', display: 'flex', justifyContent: 'flex-end' }}>

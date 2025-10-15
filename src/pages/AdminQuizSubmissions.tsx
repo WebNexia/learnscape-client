@@ -173,7 +173,7 @@ const AdminQuizSubmissions = () => {
 							},
 							'& .MuiTableHead-root .MuiTableCell-root': {
 								backgroundColor: theme.palette.background.paper,
-								padding: isMobileSize ? '0.25rem 0rem' : '0.25rem 1rem',
+								padding: '0.25rem 1rem',
 								boxSizing: 'border-box',
 								margin: 0,
 								verticalAlign: 'center',
@@ -182,7 +182,7 @@ const AdminQuizSubmissions = () => {
 								borderRight: 'none',
 							},
 							'& .MuiTableBody-root .MuiTableCell-root': {
-								padding: isMobileSize ? '0.5rem 0.5rem' : '0.25rem 1rem',
+								padding: '0.5rem 1rem',
 								boxSizing: 'border-box',
 								margin: 0,
 								verticalAlign: 'center',
