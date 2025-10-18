@@ -72,12 +72,6 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 	};
 
 	useEffect(() => {
-		if (!localStorage.getItem('mode')) {
-			localStorage.setItem('mode', Mode.LIGHT_MODE);
-		}
-	}, []);
-
-	useEffect(() => {
 		if (!user) return;
 
 		// Real-time listener for notifications, metadata-only query

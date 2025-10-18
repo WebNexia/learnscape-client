@@ -182,7 +182,7 @@ const HeroSection = () => {
 								fontFamily: 'Varela Round',
 								margin: '1rem 0',
 							}}>
-							Bu kurs, duraksamaları, “nasıl söylenecek?” kaygısını, Türkçeden çeviri yapmayı geride bırakman için tasarlandı
+							Bu kurs, duraksamaları, “nasıl söylenecek?” kaygısını, Türkçe'den çeviri yapmayı geride bırakman için tasarlandı
 						</Typography>
 						<Typography
 							sx={{

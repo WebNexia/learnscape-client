@@ -6,7 +6,6 @@ import LearnerRouteGuard from './components/guards/LearnerRouteGuard';
 import InstructorRouteGuard from './components/guards/InstructorRouteGuard';
 import AdminQuizSubmissionsContextProvider from './contexts/AdminQuizSubmissionsContextProvider';
 import LearnerQuizSubmissionsContextProvider from './contexts/LearnerQuizSubmissionsContextProvider';
-import UserCourseLessonDataContextProvider from './contexts/UserCourseLessonDataContextProvider';
 import LandingPageUpcomingPublicEventsContextProvider from './contexts/LandingPageUpcomingPublicEventsContextProvider';
 import LandingPageLatestCoursesContextProvider from './contexts/LandingPageLatestCoursesContextProvider';
 import AllPublicCoursesContextProvider from './contexts/AllPublicCoursesContextProvider';
@@ -513,9 +512,7 @@ export const router = createBrowserRouter([
 				element: (
 					<LearnerRouteGuard>
 						<LearnerQuizSubmissionsContextProvider>
-							<QuestionsContextProvider>
-								<Submissions />
-							</QuestionsContextProvider>
+							<Submissions />
 						</LearnerQuizSubmissionsContextProvider>
 					</LearnerRouteGuard>
 				),
@@ -524,9 +521,7 @@ export const router = createBrowserRouter([
 				path: 'submission-feedback/submission/:submissionId/lesson/:lessonId/userlesson/:userLessonId',
 				element: (
 					<LearnerRouteGuard>
-						<QuestionsContextProvider>
-							<SubmissionFeedbackDetails />
-						</QuestionsContextProvider>
+						<SubmissionFeedbackDetails />
 					</LearnerRouteGuard>
 				),
 			},
@@ -534,15 +529,7 @@ export const router = createBrowserRouter([
 				path: 'course/:courseId/userCourseId/:userCourseId',
 				element: (
 					<LearnerRouteGuard>
-						<UserCourseLessonDataContextProvider>
-							<LessonsContextProvider>
-								<DocumentsContextProvider>
-									<LearnerQuizSubmissionsContextProvider>
-										<CoursePage />
-									</LearnerQuizSubmissionsContextProvider>
-								</DocumentsContextProvider>
-							</LessonsContextProvider>
-						</UserCourseLessonDataContextProvider>
+						<CoursePage />
 					</LearnerRouteGuard>
 				),
 			},
@@ -550,15 +537,7 @@ export const router = createBrowserRouter([
 				path: 'course/:courseId/userCourseId/:userCourseId/lesson/:lessonId/',
 				element: (
 					<LearnerRouteGuard>
-						<UserCourseLessonDataContextProvider>
-							<LessonsContextProvider>
-								<QuestionsContextProvider>
-									<DocumentsContextProvider>
-										<LessonPage />
-									</DocumentsContextProvider>
-								</QuestionsContextProvider>
-							</LessonsContextProvider>
-						</UserCourseLessonDataContextProvider>
+						<LessonPage />
 					</LearnerRouteGuard>
 				),
 			},

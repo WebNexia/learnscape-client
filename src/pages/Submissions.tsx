@@ -12,7 +12,7 @@ import { QuizSubmission } from '../interfaces/quizSubmission';
 import { LearnerQuizSubmissionsContext } from '../contexts/LearnerQuizSubmissionsContextProvider';
 import theme from '../themes';
 import { truncateText } from '../utils/utilText';
-import { UserCoursesIdsWithCourseIds } from '../contexts/UserCourseLessonDataContextProvider';
+import { UserCoursesIdsWithCourseIds, UserCourseLessonDataContext } from '../contexts/UserCourseLessonDataContextProvider';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import { useAuth } from '../hooks/useAuth';
 import { useFilterSearch } from '../hooks/useFilterSearch';
@@ -48,9 +48,9 @@ const Submissions = () => {
 
 	const { user } = useAuth();
 	const { orgId } = useContext(OrganisationContext);
+	const { userCoursesData } = useContext(UserCourseLessonDataContext);
 	const navigate = useNavigate();
-	const userCourseData: string[] =
-		JSON.parse(localStorage.getItem('userCourseData') || '[]')?.map((data: UserCoursesIdsWithCourseIds) => data.courseTitle) || [];
+	const userCourseData: string[] = userCoursesData?.map((data: UserCoursesIdsWithCourseIds) => data.courseTitle) || [];
 
 	const pageSize = 25;
 

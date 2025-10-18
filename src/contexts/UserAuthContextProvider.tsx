@@ -1,12 +1,12 @@
 import { createContext, ReactNode, useEffect, useState, useRef } from 'react';
-import { useQueryClient } from 'react-query';
+import { useQueryClient, useQuery } from 'react-query';
 import axios from '@utils/axiosInstance';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from '../firebase';
 import { User } from '../interfaces/user';
 import { Roles } from '../interfaces/enums';
 import { useNavigate } from 'react-router-dom';
-import { UserCoursesIdsWithCourseIds, UserLessonDataStorage } from './UserCourseLessonDataContextProvider';
+import { UserCoursesIdsWithCourseIds } from './UserCourseLessonDataContextProvider';
 
 interface UserAuthContextTypes {
 	user?: User | undefined;
@@ -17,6 +17,7 @@ interface UserAuthContextTypes {
 	fetchUserData: (userId: string, skipIfSignup?: boolean) => Promise<void>;
 	signOut: () => Promise<void>;
 	setSkipFetchDuringSignup: (skip: boolean) => void;
+	userCourseData: UserCoursesIdsWithCourseIds[] | undefined;
 }
 
 export interface UserAuthContextProviderProps {
@@ -32,6 +33,7 @@ export const UserAuthContext = createContext<UserAuthContextTypes>({
 	fetchUserData: async () => {},
 	signOut: async () => {},
 	setSkipFetchDuringSignup: () => {},
+	userCourseData: undefined,
 });
 
 const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
@@ -41,6 +43,7 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 	const [user, setUser] = useState<User>();
 	const [userId, setUserId] = useState<string>('');
 	const [firebaseUserId, setFirebaseUserId] = useState<string>('');
+	const [userCourseData, setUserCourseData] = useState<UserCoursesIdsWithCourseIds[] | undefined>(undefined);
 	const skipFetchDuringSignupRef = useRef<boolean>(false);
 	const isFetchingUserDataRef = useRef<boolean>(false);
 	const isLoginInProgressRef = useRef<boolean>(false);
@@ -127,6 +130,30 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 		return () => unsubscribe();
 	}, []); // Remove skipFetchDuringSignup from dependencies since we're using ref
 
+	// React Query for userCourseData
+	const { data: userCourseDataFromQuery } = useQuery<UserCoursesIdsWithCourseIds[]>(
+		['userCourseData', userId],
+		async () => {
+			if (!userId) return [];
+			const response = await axios.get(`${base_url}/usercourses/user/${userId}`);
+
+			return response.data.response || [];
+		},
+		{
+			enabled: !!userId && user?.role === Roles.USER,
+			staleTime: 5 * 60 * 1000, // 5 minutes
+			cacheTime: 10 * 60 * 1000, // 10 minutes
+			refetchOnWindowFocus: false,
+		}
+	);
+
+	// Update context state when React Query data changes
+	useEffect(() => {
+		if (userCourseDataFromQuery) {
+			setUserCourseData(userCourseDataFromQuery);
+		}
+	}, [userCourseDataFromQuery]);
+
 	const fetchUserData = async (firebaseUserId: string, skipIfSignup?: boolean) => {
 		// Skip fetching if signup is in progress
 		if (skipIfSignup || skipFetchDuringSignupRef.current) {
@@ -155,51 +182,7 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 				setUserId(userData._id);
 				queryClient.setQueryData('userData', userData);
 
-				// Load user course and lesson data for non-admin users
-				if (userData.role === Roles.USER) {
-					try {
-						// Load user course data
-						const userCourseResponse = await axios.get(`${base_url}/usercourses/user/${userData._id}`);
-
-						const userCourseData: UserCoursesIdsWithCourseIds[] = userCourseResponse.data.response?.reduce(
-							(acc: UserCoursesIdsWithCourseIds[], value: any) => {
-								if (value.courseId && value.courseId._id) {
-									acc.push({
-										courseId: value.courseId._id,
-										userCourseId: value._id,
-										isCourseCompleted: value.isCompleted,
-										isCourseInProgress: value.isInProgress,
-										courseTitle: value.courseId.title,
-										createdAt: value.createdAt,
-										isActive: value.isActive,
-										validUntil: value.validUntil,
-									});
-								}
-								return acc;
-							},
-							[]
-						);
-						localStorage.setItem('userCourseData', JSON.stringify(userCourseData));
-
-						// Load user lesson data
-						const userLessonResponse = await axios.get(`${base_url}/userlessons/user/${userData._id}`);
-
-						const userLessonData: UserLessonDataStorage[] = userLessonResponse?.data.response?.map((userLesson: any) => ({
-							lessonId: userLesson?.lessonId?._id,
-							userLessonId: userLesson?._id,
-							courseId: userLesson?.courseId,
-							isCompleted: userLesson?.isCompleted,
-							isInProgress: userLesson?.isInProgress,
-							currentQuestion: userLesson?.currentQuestion,
-							teacherFeedback: userLesson?.teacherFeedback,
-							isFeedbackGiven: userLesson?.isFeedbackGiven,
-							updatedAt: userLesson?.updatedAt,
-						}));
-						localStorage.setItem('userLessonData', JSON.stringify(userLessonData));
-					} catch (error) {
-						console.error('❌ Failed to load user course and lesson data:', error);
-					}
-				}
+				// User lesson data now fetched per course using useUserLessonsForCourse hook
 			} else {
 				console.error('❌ Invalid user data received:', userData);
 				throw new Error('Invalid user data received');
@@ -216,8 +199,6 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 	const signOutUser = async () => {
 		await signOut(auth);
 		localStorage.removeItem('sessionTimestamp');
-		localStorage.removeItem('userCourseData');
-		localStorage.removeItem('userLessonData');
 		localStorage.removeItem('activeChatId');
 		localStorage.removeItem('chatList');
 		localStorage.removeItem('participantCache');
@@ -239,6 +220,7 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 				fetchUserData,
 				signOut: signOutUser,
 				setSkipFetchDuringSignup: setSkipFetchDuringSignupWithRef,
+				userCourseData,
 			}}>
 			{props.children}
 		</UserAuthContext.Provider>

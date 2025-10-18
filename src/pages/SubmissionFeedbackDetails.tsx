@@ -2,7 +2,7 @@ import { Box, IconButton, Typography } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import { useParams } from 'react-router-dom';
 import { useContext, useEffect, useState } from 'react';
-import { QuestionsContext } from '../contexts/QuestionsContextProvider';
+import useQuestionTypes from '../hooks/useQuestionTypes';
 import axios from '@utils/axiosInstance';
 import { QuestionType } from '../interfaces/enums';
 import { ArrowBackIosNewOutlined, ArrowForwardIosOutlined } from '@mui/icons-material';
@@ -27,7 +27,7 @@ const SubmissionFeedbackDetails = () => {
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
 	const { userLessonId } = useParams();
-	const { fetchQuestionTypeName } = useContext(QuestionsContext);
+	const { fetchQuestionTypeName } = useQuestionTypes();
 
 	const [quizName, setQuizName] = useState<string>('');
 	const [courseName, setCourseName] = useState<string>('');

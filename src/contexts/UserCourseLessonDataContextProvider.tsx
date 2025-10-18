@@ -5,12 +5,11 @@ import { UserAuthContext } from './UserAuthContextProvider';
 import { OrganisationContext } from './OrganisationContextProvider';
 import { useQuery } from 'react-query';
 
-import { useParams, useLocation } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useIsLandingPageRoute } from '../hooks/useIsLandingPageRoute';
 
 interface UserCourseLessonDataContextTypes {
-	fetchSingleCourseDataAdmin: (courseId: string) => void;
 	fetchSingleCourseDataUser: (courseId: string) => void;
 	singleCourse: SingleCourse | null;
 	setSingleCourse: React.Dispatch<React.SetStateAction<SingleCourse | null>>;
@@ -18,6 +17,7 @@ interface UserCourseLessonDataContextTypes {
 	setSingleCourseUser: React.Dispatch<React.SetStateAction<SingleCourse | null>>;
 	enableUserCourseLessonDataFetch: () => void;
 	disableUserCourseLessonDataFetch: () => void;
+	userCoursesData: UserCoursesIdsWithCourseIds[];
 }
 
 interface UserCoursesIdsContextProviderProps {
@@ -48,7 +48,6 @@ export interface UserLessonDataStorage {
 }
 
 export const UserCourseLessonDataContext = createContext<UserCourseLessonDataContextTypes>({
-	fetchSingleCourseDataAdmin: () => {},
 	singleCourse: null,
 	setSingleCourse: () => {},
 	singleCourseUser: null,
@@ -56,37 +55,25 @@ export const UserCourseLessonDataContext = createContext<UserCourseLessonDataCon
 	fetchSingleCourseDataUser: () => {},
 	enableUserCourseLessonDataFetch: () => {},
 	disableUserCourseLessonDataFetch: () => {},
+	userCoursesData: [],
 });
 
 const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
-	const { userId, user } = useContext(UserAuthContext);
+	const { userId, userCourseData } = useContext(UserAuthContext);
 	const { orgId } = useContext(OrganisationContext);
-	const { isAuthenticated, isLearner, isAdmin } = useAuth();
+	const { isAuthenticated, isLearner } = useAuth();
 
 	const { courseId } = useParams();
-	const location = useLocation();
 
 	const isLandingPageRoute = useIsLandingPageRoute();
-	const role = user?.role;
 
 	const [isLoaded, setIsLoaded] = useState<boolean>(false);
-	const [isEnabled, setIsEnabled] = useState<boolean>(false);
+	const [isEnabled, setIsEnabled] = useState<boolean>(true);
 
 	const [singleCourse, setSingleCourse] = useState<SingleCourse | null>(null);
 
 	const [singleCourseUser, setSingleCourseUser] = useState<SingleCourse | null>(null);
-
-	const fetchSingleCourseDataAdmin = async (courseId: string | undefined): Promise<void> => {
-		try {
-			if (courseId) {
-				const response = await axios.get(`${base_url}/courses/${courseId}`);
-				setSingleCourse(response.data.data || null);
-			}
-		} catch (error) {
-			console.log(error);
-		}
-	};
 
 	const fetchSingleCourseDataUser = async (courseId: string | undefined): Promise<void> => {
 		if (courseId) {
@@ -97,14 +84,6 @@ const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProvide
 	};
 
 	const {
-		// data: singleCourseDataAdmin,
-		// isLoading: singleCourseDataAdminLoading,
-		// error: singleCourseDataAdminError,
-	} = useQuery(['singleCourseDataAdmin', orgId], () => fetchSingleCourseDataAdmin(courseId), {
-		enabled: isEnabled && !!userId && !!orgId && isAuthenticated && isAdmin && !isLoaded && !isLandingPageRoute && !!courseId,
-	});
-
-	const {
 		// data: singleCourseDataUser,
 		// isLoading: singleCourseDataUserLoading,
 		// error: singleCourseDataUserError,
@@ -112,74 +91,21 @@ const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProvide
 		enabled: isEnabled && !!userId && !!orgId && isAuthenticated && isLearner && !isLoaded && !isLandingPageRoute && !!courseId,
 	});
 
-	// Check if we're on a learner course page or courses page
-	const isLearnerCoursePage = location.pathname?.includes('/courses') || location.pathname?.includes('/userCourseId/');
-
-	const {
-		isLoading,
-		error,
-		data: userCoursesData,
-	} = useQuery<UserCoursesIdsWithCourseIds[]>(
-		['userCoursesData', userId, orgId, role],
-		async () => {
-			const userCourseData: UserCoursesIdsWithCourseIds[] = JSON.parse(localStorage.getItem('userCourseData') || '[]');
-			return userCourseData;
-		},
-		{
-			enabled: isEnabled && !!userId && !!orgId && isAuthenticated && isLearner && !isLoaded && !isLandingPageRoute && isLearnerCoursePage,
-		}
-	);
-
-	const {
-		isLoading: userLessonsLoading,
-		error: userLessonsError,
-		data: userLessonData,
-	} = useQuery<UserLessonDataStorage[]>(
-		['userLessonData', userId, orgId, role],
-		async () => {
-			const userLessonData: UserLessonDataStorage[] = JSON.parse(localStorage.getItem('userLessonData') || '[]');
-			return userLessonData;
-		},
-		{
-			enabled: isEnabled && !!userId && !!orgId && isAuthenticated && isLearner && !isLoaded && !isLandingPageRoute && isLearnerCoursePage,
-		}
-	);
-
-	// const fetchUserCourseLessonData = async () => {
-	// 	if (!orgId) return;
-
-	// 	try {
-	// 		const response = await axios.get(`${base_url}/userCourseLessonData/organisation/${orgId}`);
-	// 		setUserCourseLessonData(response.data.data);
-	// 		setIsLoaded(true);
-	// 		return response.data.data;
-	// 	} catch (error) {
-	// 		setIsLoaded(true);
-	// 		throw error;
-	// 	}
-	// };
-
-	// const {
-	// 	data: userCourseLessonData,
-	// 	isLoading: userCourseLessonDataLoading,
-	// 	isError: userCourseLessonDataError,
-	// } = useQuery(['allUserCourseLessonData', orgId], () => fetchUserCourseLessonData(), {
-	// 	enabled: !!orgId && isAuthenticated && isLearner && !isLoaded,
-	// });
+	// Use userCourseData from UserAuthContext (no duplicate API call)
+	const userCoursesData = userCourseData || [];
 
 	const enableUserCourseLessonDataFetch = () => setIsEnabled(true);
 	const disableUserCourseLessonDataFetch = () => setIsEnabled(false);
 
 	useEffect(() => {
-		if (userCoursesData && userLessonData) {
+		if (userCoursesData) {
 			setIsLoaded(true);
 		}
-	}, [userCoursesData, userLessonData]);
+	}, [userCoursesData]);
 
 	return (
 		<UserCourseLessonDataContext.Provider
 			value={{
-				fetchSingleCourseDataAdmin,
 				fetchSingleCourseDataUser,
 				singleCourse,
 				setSingleCourse,
@@ -187,6 +113,7 @@ const UserCourseLessonDataContextProvider = (props: UserCoursesIdsContextProvide
 				setSingleCourseUser,
 				enableUserCourseLessonDataFetch,
 				disableUserCourseLessonDataFetch,
+				userCoursesData: userCoursesData || [],
 			}}>
 			{props.children}
 		</UserCourseLessonDataContext.Provider>

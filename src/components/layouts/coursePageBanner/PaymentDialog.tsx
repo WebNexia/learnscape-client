@@ -5,6 +5,7 @@ import TermsConditions from './TermsConditions';
 import CustomDialogActions from '../dialog/CustomDialogActions';
 import CustomSubmitButton from '../../forms/customButtons/CustomSubmitButton';
 import { useContext, useEffect, useState, useRef } from 'react';
+import { useQueryClient } from 'react-query';
 import { CardCvcElement, CardExpiryElement, CardNumberElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import axiosInstance from '@utils/axiosInstance';
 import axios from 'axios';
@@ -53,6 +54,7 @@ const PaymentDialog = ({
 }: PaymentDialogProps) => {
 	const { orgId } = useContext(OrganisationContext);
 	const { user, setUser } = useContext(UserAuthContext);
+	const queryClient = useQueryClient();
 
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
@@ -431,14 +433,9 @@ const PaymentDialog = ({
 								}
 							}
 
-							// 🧹 LocalStorage cleanup
-							const updatedCourses =
-								JSON.parse(localStorage.getItem('userCourseData') || '[]')?.filter((item: any) => item.courseId !== course?._id) || [];
-							localStorage.setItem('userCourseData', JSON.stringify(updatedCourses));
-
-							const updatedLessons =
-								JSON.parse(localStorage.getItem('userLessonData') || '[]')?.filter((item: any) => item.courseId !== course?._id) || [];
-							localStorage.setItem('userLessonData', JSON.stringify(updatedLessons));
+							// Invalidate React Query cache to refresh context data
+							await queryClient.invalidateQueries(['userCourseData']);
+							await queryClient.invalidateQueries(['userLessonsForCourse', course?._id, resolvedUserId]);
 						} catch (cleanupErr) {
 							resetForm(true);
 							console.error(`❌ Rollback failed for userId: ${resolvedUserId}, courseId: ${course?._id}`, cleanupErr);

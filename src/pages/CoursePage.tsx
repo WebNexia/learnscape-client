@@ -9,27 +9,25 @@ import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import DocumentViewer from '../components/documents/DocumentViewer';
 
 const CoursePage = () => {
-	const { singleCourseUser, fetchSingleCourseDataUser } = useContext(UserCourseLessonDataContext);
+	const { singleCourseUser, fetchSingleCourseDataUser, userCoursesData } = useContext(UserCourseLessonDataContext);
 	const { courseId, userCourseId } = useParams();
 
 	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isRotatedMedium || isSmallScreen;
 
-	let userCourseData: UserCoursesIdsWithCourseIds[] = [];
+	const userCourseData: UserCoursesIdsWithCourseIds[] = userCoursesData || [];
 
 	const [isEnrolledStatus, setIsEnrolledStatus] = useState<boolean>(false);
 	const documentsRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
-		const currentUserCourseData: string | null = localStorage.getItem('userCourseData');
-		if (currentUserCourseData !== null) {
-			userCourseData = JSON.parse(currentUserCourseData);
-			setIsEnrolledStatus(userCourseData?.some((data) => data.courseId === courseId) || false);
-		}
+		// Use context data instead of localStorage
+		setIsEnrolledStatus(userCourseData?.some((data) => data.courseId === courseId) || false);
+
 		if (courseId) {
 			fetchSingleCourseDataUser(courseId);
 		}
-	}, [userCourseId, courseId]);
+	}, [userCourseId, courseId, userCourseData]);
 
 	return (
 		<DashboardPagesLayout pageName='Course' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>

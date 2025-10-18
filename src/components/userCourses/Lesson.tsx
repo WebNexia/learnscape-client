@@ -9,6 +9,7 @@ import ProgressIcon from '../../assets/ProgressIcon.png';
 import { LessonType } from '../../interfaces/enums';
 import { LearnerQuizSubmissionsContext } from '../../contexts/LearnerQuizSubmissionsContextProvider';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
+import { useUserLessonsForCourse } from '../../hooks/useUserLessonsForCourse';
 
 interface LessonProps {
 	lesson: LessonById;
@@ -27,12 +28,9 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 
 	const { userQuizSubmissions } = useContext(LearnerQuizSubmissionsContext);
 
-	const currentUserLessonData: string | null = localStorage.getItem('userLessonData');
-
-	let parsedUserLessonData: UserLessonDataStorage[] = [];
-	if (currentUserLessonData !== null) {
-		parsedUserLessonData = JSON.parse(currentUserLessonData);
-	}
+	// Fetch user lessons for current course using the new hook
+	const { data: userLessonsData } = useUserLessonsForCourse(courseId || '');
+	const parsedUserLessonData = userLessonsData || [];
 
 	const [userLessonData, setUserLessonData] = useState<UserLessonDataStorage[]>(parsedUserLessonData);
 	const [isLessonInProgress, setIsLessonInProgress] = useState<boolean>(false);
@@ -42,22 +40,21 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 
 	useEffect(() => {
 		const fetchUserLessonProgress = () => {
+			// Update local state with hook data
 			setUserLessonData(parsedUserLessonData);
 
-			setUserLessonData((prevData) => {
-				prevData?.forEach((data: UserLessonDataStorage) => {
-					if (data.lessonId === lesson._id && data.courseId === courseId) {
-						setIsLessonInProgress(data.isInProgress);
-						setIsLessonCompleted(data.isCompleted);
-						setIsLessonRegisteredInThisCourse(true);
-					}
-				});
-				return prevData;
+			// Find current lesson data and update states
+			parsedUserLessonData?.forEach((data: UserLessonDataStorage) => {
+				if (data.lessonId === lesson._id && data.courseId === courseId) {
+					setIsLessonInProgress(data.isInProgress);
+					setIsLessonCompleted(data.isCompleted);
+					setIsLessonRegisteredInThisCourse(true);
+				}
 			});
 		};
 
 		fetchUserLessonProgress();
-	}, [currentUserLessonData]);
+	}, [parsedUserLessonData, lesson._id, courseId]);
 
 	useEffect(() => {
 		if (userQuizSubmissions && userQuizSubmissions && userQuizSubmissions.length > 0) {
@@ -130,15 +127,7 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 						{lesson.title}
 					</Typography>
 				</Box>
-				<Box sx={{ flex: 2 }}>
-					{lesson.type === LessonType.QUIZ && isLessonRegisteredInThisCourse && isLessonCompleted && (
-						<Box>
-							<Typography sx={{ fontSize: isVerySmallScreen ? '0.55rem' : isRotatedMedium ? '0.65rem' : isSmallScreen ? '0.75rem' : '0.75rem' }}>
-								{isFeedbackGiven ? 'Checked' : 'Unchecked'}
-							</Typography>
-						</Box>
-					)}
-				</Box>
+
 				<Box sx={{ display: 'flex', alignItems: 'center', flex: 4, justifyContent: 'flex-end' }}>
 					<Box>
 						<Typography

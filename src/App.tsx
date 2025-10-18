@@ -13,6 +13,7 @@ import OrganisationContextProvider from './contexts/OrganisationContextProvider'
 import MediaQueryContextProvider from './contexts/MediaQueryContextProvider';
 import { UploadLimitProvider } from './contexts/UploadLimitContextProvider';
 import CoursesContextProvider from './contexts/CoursesContextProvider';
+import UserCourseLessonDataContextProvider from './contexts/UserCourseLessonDataContextProvider';
 import CommunityContextProvider from './contexts/CommunityContextProvider';
 import CommunityMessagesContextProvider from './contexts/CommunityMessagesContextProvider';
 
@@ -30,16 +31,18 @@ function App() {
 				<MediaQueryContextProvider>
 					<OrganisationContextProvider>
 						<UserAuthContextProvider>
-							<ConditionalUploadLimitProvider>
-								{/* Centralized context providers - only one instance of each */}
-								<CoursesContextProvider>
-									<ErrorBoundary context='Application'>
-										<Suspense fallback={<Loading />}>
-											<Outlet />
-										</Suspense>
-									</ErrorBoundary>
-								</CoursesContextProvider>
-							</ConditionalUploadLimitProvider>
+							<UserCourseLessonDataContextProvider>
+								<ConditionalUploadLimitProvider>
+									{/* Centralized context providers - only one instance of each */}
+									<CoursesContextProvider>
+										<ErrorBoundary context='Application'>
+											<Suspense fallback={<Loading />}>
+												<Outlet />
+											</Suspense>
+										</ErrorBoundary>
+									</CoursesContextProvider>
+								</ConditionalUploadLimitProvider>
+							</UserCourseLessonDataContextProvider>
 						</UserAuthContextProvider>
 					</OrganisationContextProvider>
 				</MediaQueryContextProvider>
