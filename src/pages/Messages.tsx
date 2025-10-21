@@ -1075,68 +1075,6 @@ const Messages = () => {
 				timestamp: serverTimestamp(),
 			});
 
-			// Handle notifications for group chats and 1-1 chats
-			if (isGroup) {
-				// For group chats, send notifications to all participants except sender
-				for (const receiverId of receiverIds) {
-					if (receiverId) {
-						try {
-							const recipientRef = doc(db, 'users', receiverId);
-							const recipientDoc = await getDoc(recipientRef);
-							const recipientData = recipientDoc.data();
-
-							const isRecipientChatting = recipientData?.activeChatId === activeChat.chatId;
-
-							// Send a notification only if the recipient is not currently viewing the chat
-							if (!isRecipientChatting) {
-								const notificationData = {
-									title: 'New Group Message',
-									message: `${user?.username} sent a message to ${activeChat.groupName || 'the group'}.`,
-									isRead: false,
-									timestamp: serverTimestamp(),
-									type: 'MessageReceived',
-									userImageUrl: user?.imageUrl,
-								};
-
-								const notificationRef = collection(db, 'notifications', receiverId, 'userNotifications');
-								await addDoc(notificationRef, notificationData);
-							}
-						} catch (error) {
-							console.error('Error sending notification to user:', receiverId, error);
-						}
-					}
-				}
-			} else {
-				// For 1-1 chats, use the first receiver
-				const receiverId = receiverIds[0];
-				if (receiverId) {
-					try {
-						const recipientRef = doc(db, 'users', receiverId);
-						const recipientDoc = await getDoc(recipientRef);
-						const recipientData = recipientDoc.data();
-
-						const isRecipientChatting = recipientData?.activeChatId === activeChat.chatId;
-
-						// Send a notification only if the recipient is not currently viewing the chat
-						if (!isRecipientChatting) {
-							const notificationData = {
-								title: 'New Message',
-								message: `${user?.username} sent you a message.`,
-								isRead: false,
-								timestamp: serverTimestamp(),
-								type: 'MessageReceived',
-								userImageUrl: user?.imageUrl,
-							};
-
-							const notificationRef = collection(db, 'notifications', receiverId, 'userNotifications');
-							await addDoc(notificationRef, notificationData);
-						}
-					} catch (error) {
-						console.error('Error sending notification to user:', receiverId, error);
-					}
-				}
-			}
-
 			// Update the lastMessage field and set hasUnreadMessages to true for the receivers
 			await updateDoc(chatRef, {
 				lastMessage: {
