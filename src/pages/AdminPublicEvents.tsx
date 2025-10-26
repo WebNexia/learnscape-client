@@ -192,14 +192,14 @@ const AdminPublicEvents = () => {
 								left: isMobileSize ? 0 : '10rem',
 								right: 0,
 								zIndex: 99,
-								backgroundColor: theme.palette.background.paper,
+								backgroundColor: theme.bgColor?.secondary,
 								boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
 								display: 'table',
 								tableLayout: 'fixed',
 								width: isMobileSize ? '100%' : 'calc(100% - 10rem)',
 							},
 							'& .MuiTableHead-root .MuiTableCell-root': {
-								backgroundColor: theme.palette.background.paper,
+								backgroundColor: theme.bgColor?.secondary,
 								padding: isMobileSize ? '0.25rem 0rem' : '0.25rem 1rem',
 								boxSizing: 'border-box',
 								margin: 0,
@@ -270,15 +270,17 @@ const AdminPublicEvents = () => {
 						}}
 						size='small'
 						aria-label='a dense table'>
-						{/* Spacer row to ensure header alignment */}
-						<TableRow sx={{ height: 0, visibility: 'hidden' }}>
-							<TableCell sx={{ width: isMobileSize ? '20%' : '12%', padding: 0, border: 'none' }} />
-							<TableCell sx={{ width: isMobileSize ? '30%' : '25%', padding: 0, border: 'none' }} />
-							<TableCell sx={{ width: isMobileSize ? '25%' : '20%', padding: 0, border: 'none' }} />
-							<TableCell sx={{ width: isMobileSize ? '20%' : '20%', padding: 0, border: 'none' }} />
-							<TableCell sx={{ width: isMobileSize ? '0%' : '10%', padding: 0, border: 'none' }} />
-							<TableCell sx={{ width: isMobileSize ? '0%' : '13%', padding: 0, border: 'none' }} />
-						</TableRow>
+						<TableBody>
+							{/* Spacer row to ensure header alignment */}
+							<TableRow sx={{ height: 0, visibility: 'hidden' }}>
+								<TableCell sx={{ width: isMobileSize ? '20%' : '12%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isMobileSize ? '30%' : '25%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isMobileSize ? '25%' : '20%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isMobileSize ? '20%' : '20%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isMobileSize ? '0%' : '10%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isMobileSize ? '0%' : '13%', padding: 0, border: 'none' }} />
+							</TableRow>
+						</TableBody>
 						<CustomTableHead<Event>
 							orderBy={orderBy as keyof Event}
 							order={order}
