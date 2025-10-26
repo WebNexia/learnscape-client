@@ -165,14 +165,14 @@ const AdminQuizSubmissions = () => {
 								left: isMobileSize ? 0 : '10rem',
 								right: 0,
 								zIndex: 99,
-								backgroundColor: theme.palette.background.paper,
+								backgroundColor: theme.bgColor?.secondary,
 								boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
 								display: 'table',
 								tableLayout: 'fixed',
 								width: isMobileSize ? '100%' : 'calc(100% - 10rem)',
 							},
 							'& .MuiTableHead-root .MuiTableCell-root': {
-								backgroundColor: theme.palette.background.paper,
+								backgroundColor: theme.bgColor?.secondary,
 								padding: '0.25rem 1rem',
 								boxSizing: 'border-box',
 								margin: 0,
@@ -235,14 +235,16 @@ const AdminQuizSubmissions = () => {
 						}}
 						size='small'
 						aria-label='a dense table'>
-						{/* Spacer row to ensure header alignment */}
-						<TableRow sx={{ height: 0, visibility: 'hidden' }}>
-							<TableCell sx={{ width: isMobileSize ? '25%' : '15%', padding: 0, border: 'none' }} />
-							<TableCell sx={{ width: isMobileSize ? '40%' : '30%', padding: 0, border: 'none' }} />
-							<TableCell sx={{ width: isMobileSize ? '15%' : '30%', padding: 0, border: 'none' }} />
-							<TableCell sx={{ width: isMobileSize ? '20%' : '10%', padding: 0, border: 'none' }} />
-							<TableCell sx={{ width: isMobileSize ? '0%' : '15%', padding: 0, border: 'none' }} />
-						</TableRow>
+						<TableBody>
+							{/* Spacer row to ensure header alignment */}
+							<TableRow sx={{ height: 0, visibility: 'hidden' }}>
+								<TableCell sx={{ width: isMobileSize ? '25%' : '15%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isMobileSize ? '40%' : '30%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isMobileSize ? '15%' : '30%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isMobileSize ? '20%' : '10%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isMobileSize ? '0%' : '15%', padding: 0, border: 'none' }} />
+							</TableRow>
+						</TableBody>
 						<CustomTableHead<QuizSubmission>
 							orderBy={orderBy as keyof QuizSubmission}
 							order={order}

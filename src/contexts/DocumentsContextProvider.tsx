@@ -78,7 +78,7 @@ const DocumentsContextProvider = ({ children }: DocumentsContextProviderProps) =
 	return (
 		<DocumentsContext.Provider
 			value={{
-				documents,
+				documents: documents || [],
 				loading: isLoading || (isEnabled && !documents),
 				error: isError ? 'Failed to fetch documents' : null,
 				fetchDocuments,

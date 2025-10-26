@@ -99,7 +99,7 @@ export const useChatNavigation = ({
 							await deleteDoc(chatRef); // Clean up ghost chat
 						} catch (deleteError) {
 							// ✅ If deletion fails (document doesn't exist), just log and continue
-							console.log('Orphaned chat already deleted or permission denied, proceeding to create new chat');
+							console.error('Orphaned chat already deleted or permission denied, proceeding to create new chat');
 						}
 						return await createNewChat(selectedUser);
 					}

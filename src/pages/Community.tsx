@@ -165,7 +165,7 @@ const Community = () => {
 						left: isMobileSize ? 0 : '10rem', // Account for sidebar width on desktop
 						right: 0,
 						zIndex: 100, // Higher z-index to ensure it's above all content
-						backgroundColor: theme.palette.background.paper,
+						backgroundColor: theme.bgColor?.secondary,
 						backdropFilter: 'blur(10px)',
 						width: isMobileSize ? '100%' : 'calc(100% - 10rem)',
 						padding: isMobileSize ? '0.5rem 1rem' : '0.5rem 2rem',

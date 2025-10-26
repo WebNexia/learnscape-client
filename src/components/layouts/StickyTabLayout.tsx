@@ -38,7 +38,7 @@ const StickyTabLayout: React.FC<StickyTabLayoutProps> = ({ activeTab, onTabChang
 					left: isSticky ? (isMobileSize ? 0 : '10rem') : 'auto', // Account for sidebar width on desktop
 					right: isSticky ? 0 : 'auto',
 					zIndex: isSticky ? 100 : 'auto', // Higher z-index to ensure it's above all content
-					backgroundColor: theme.palette.background.paper,
+					backgroundColor: theme.bgColor?.secondary,
 					backdropFilter: isSticky ? 'blur(10px)' : 'none',
 					width: isSticky ? (isMobileSize ? '100%' : 'calc(100% - 10rem)') : '100%',
 				}}>

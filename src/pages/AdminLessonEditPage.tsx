@@ -329,7 +329,6 @@ const AdminLessonEditPage = () => {
 	}, [allowNavigation, nextLocation, navigate, isPopStateNavigation]);
 
 	useEffect(() => {
-		console.log(lessonId);
 		if (lessonId) {
 			const fetchSingleLessonData = async (lessonId: string): Promise<void> => {
 				try {
@@ -839,7 +838,7 @@ const AdminLessonEditPage = () => {
 	};
 
 	const removeQuestion = (question: QuestionInterface) => {
-		const updatedQuestions = singleLessonBeforeSave.questions
+		const updatedQuestions = singleLessonBeforeSave?.questions
 			?.filter((question) => question !== null)
 			?.filter((thisQuestion) => {
 				return thisQuestion?._id !== question._id;
@@ -1337,7 +1336,7 @@ const AdminLessonEditPage = () => {
 									maxLength={15000}
 								/>
 								<Typography sx={{ fontSize: isMobileSize ? '0.65rem' : '0.7rem', margin: '0.5rem 0', textAlign: 'right' }}>
-									{editorContent.length}/15000 Characters
+									{editorContent?.length || 0}/15000 Characters
 								</Typography>
 								<Box sx={{ margin: '1rem 0' }}>{instructionError && <CustomErrorMessage>Enter lesson instructions</CustomErrorMessage>}</Box>
 							</Box>
@@ -1519,7 +1518,7 @@ const AdminLessonEditPage = () => {
 														return { ...prevData, questions: newQuestions, questionIds: newQuestions?.map((question) => question._id) };
 													});
 												}}>
-												{singleLessonBeforeSave.questions &&
+												{singleLessonBeforeSave?.questions &&
 													singleLessonBeforeSave.questions?.length !== 0 &&
 													singleLessonBeforeSave.questions?.map((question, index) => {
 														if (question !== null) {

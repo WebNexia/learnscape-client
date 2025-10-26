@@ -270,14 +270,14 @@ const AdminLessons = () => {
 								left: isMobileSize ? 0 : '10rem',
 								right: 0,
 								zIndex: 99,
-								backgroundColor: theme.palette.background.paper,
+								backgroundColor: theme.bgColor?.secondary,
 								boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
 								display: 'table',
 								tableLayout: 'fixed',
 								width: isMobileSize ? '100%' : 'calc(100% - 10rem)',
 							},
 							'& .MuiTableHead-root .MuiTableCell-root': {
-								backgroundColor: theme.palette.background.paper,
+								backgroundColor: theme.bgColor?.secondary,
 								padding: '0.25rem 1rem',
 								boxSizing: 'border-box',
 								margin: 0,
@@ -348,15 +348,17 @@ const AdminLessons = () => {
 						}}
 						size='small'
 						aria-label='a dense table'>
-						{/* Spacer row to ensure header alignment */}
-						<TableRow sx={{ height: 0, visibility: 'hidden' }}>
-							<TableCell sx={{ width: isMobileSize ? '18%' : '15%', padding: 0, border: 'none' }} />
-							<TableCell sx={{ width: isMobileSize ? '30%' : '33%', padding: 0, border: 'none' }} />
-							<TableCell sx={{ width: isMobileSize ? '15%' : '12%', padding: 0, border: 'none' }} />
-							<TableCell sx={{ width: isMobileSize ? '17%' : '15%', padding: 0, border: 'none' }} />
-							<TableCell sx={{ width: isMobileSize ? '0%' : '15%', padding: 0, border: 'none' }} />
-							<TableCell sx={{ width: isMobileSize ? '0%' : '15%', padding: 0, border: 'none' }} />
-						</TableRow>
+						<TableBody>
+							{/* Spacer row to ensure header alignment */}
+							<TableRow sx={{ height: 0, visibility: 'hidden' }}>
+								<TableCell sx={{ width: isMobileSize ? '18%' : '15%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isMobileSize ? '30%' : '33%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isMobileSize ? '15%' : '12%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isMobileSize ? '17%' : '15%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isMobileSize ? '0%' : '15%', padding: 0, border: 'none' }} />
+								<TableCell sx={{ width: isMobileSize ? '0%' : '15%', padding: 0, border: 'none' }} />
+							</TableRow>
+						</TableBody>
 						<CustomTableHead<Lesson> orderBy={orderBy as keyof Lesson} order={order} handleSort={handleSort} columns={getColumns(isMobileSize)} />
 						<TableBody>
 							{paginatedLessons &&

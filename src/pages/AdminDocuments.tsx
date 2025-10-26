@@ -630,14 +630,14 @@ const AdminDocuments = () => {
 									left: isMobileSize ? 0 : '10rem',
 									right: 0,
 									zIndex: 99,
-									backgroundColor: theme.palette.background.paper,
+									backgroundColor: theme.bgColor?.secondary,
 									boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
 									display: 'table',
 									tableLayout: 'fixed',
 									width: isMobileSize ? '100%' : 'calc(100% - 10rem)',
 								},
 								'& .MuiTableHead-root .MuiTableCell-root': {
-									backgroundColor: theme.palette.background.paper,
+									backgroundColor: theme.bgColor?.secondary,
 									padding: '0.25rem 1rem',
 									boxSizing: 'border-box',
 									margin: 0,
@@ -708,15 +708,17 @@ const AdminDocuments = () => {
 							}}
 							size='small'
 							aria-label='a dense table'>
-							{/* Spacer row to ensure header alignment */}
-							<TableRow sx={{ height: 0, visibility: 'hidden' }}>
-								<TableCell sx={{ width: isMobileSize ? '40%' : isInstructor ? '25%' : '13%', padding: 0, border: 'none' }} />
-								<TableCell sx={{ width: isMobileSize ? '30%' : isInstructor ? '30%' : '27%', padding: 0, border: 'none' }} />
-								<TableCell sx={{ width: isMobileSize ? '30%' : isInstructor ? '15%' : '20%', padding: 0, border: 'none' }} />
-								<TableCell sx={{ width: isMobileSize ? '0%' : isInstructor ? '15%' : '13%', padding: 0, border: 'none' }} />
-								<TableCell sx={{ width: isMobileSize ? '0%' : isInstructor ? '15%' : '12%', padding: 0, border: 'none' }} />
-								<TableCell sx={{ width: isMobileSize ? '0%' : isInstructor ? '0%' : '15%', padding: 0, border: 'none' }} />
-							</TableRow>
+							<TableBody>
+								{/* Spacer row to ensure header alignment */}
+								<TableRow sx={{ height: 0, visibility: 'hidden' }}>
+									<TableCell sx={{ width: isMobileSize ? '40%' : isInstructor ? '25%' : '13%', padding: 0, border: 'none' }} />
+									<TableCell sx={{ width: isMobileSize ? '30%' : isInstructor ? '30%' : '27%', padding: 0, border: 'none' }} />
+									<TableCell sx={{ width: isMobileSize ? '30%' : isInstructor ? '15%' : '20%', padding: 0, border: 'none' }} />
+									<TableCell sx={{ width: isMobileSize ? '0%' : isInstructor ? '15%' : '13%', padding: 0, border: 'none' }} />
+									<TableCell sx={{ width: isMobileSize ? '0%' : isInstructor ? '15%' : '12%', padding: 0, border: 'none' }} />
+									<TableCell sx={{ width: isMobileSize ? '0%' : isInstructor ? '0%' : '15%', padding: 0, border: 'none' }} />
+								</TableRow>
+							</TableBody>
 							<CustomTableHead<Document>
 								orderBy={orderBy as keyof Document}
 								order={order}

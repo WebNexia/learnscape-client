@@ -823,12 +823,10 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 											}}
 										/>
 										{isAdmin && (
-											<IconButton sx={{ 'ml': '0.25rem', 'mt': '0.5rem', '&:hover': { backgroundColor: 'transparent' } }}>
-												<InfoOutlined
-													fontSize='small'
-													sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem' }}
-													onClick={() => setInstructorSearchInfoOpen(true)}
-												/>
+											<IconButton
+												sx={{ 'ml': '0.25rem', 'mt': '0.5rem', '&:hover': { backgroundColor: 'transparent' } }}
+												onClick={() => setInstructorSearchInfoOpen(true)}>
+												<InfoOutlined fontSize='small' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem' }} />
 											</IconButton>
 										)}
 									</Box>

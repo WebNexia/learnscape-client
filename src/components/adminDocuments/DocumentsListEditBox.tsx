@@ -35,6 +35,7 @@ const DocumentsListEditBox = ({
 	return (
 		<Box sx={{ marginBottom: isMobileSize ? '3rem' : '5rem' }}>
 			{documentsSource &&
+				documentsSource?.length > 0 &&
 				documentsSource
 					?.filter(
 						(document: Document) =>
@@ -87,7 +88,7 @@ const DocumentsListEditBox = ({
 									}}>
 									Rename
 								</Typography>
-								<CustomDialog openModal={isDocRenameModalOpen[index]} closeModal={() => closeDocRenameModal(index, document)} maxWidth='xs'>
+								<CustomDialog openModal={isDocRenameModalOpen[index] || false} closeModal={() => closeDocRenameModal(index, document)} maxWidth='xs'>
 									<form
 										style={{ display: 'flex', flexDirection: 'column', paddingTop: '1.5rem' }}
 										onSubmit={(e: React.FormEvent<HTMLFormElement>) => {

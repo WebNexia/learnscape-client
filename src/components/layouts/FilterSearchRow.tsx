@@ -5,6 +5,7 @@ import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import CustomTextField from '../forms/customFields/CustomTextField';
 import CustomSubmitButton from '../forms/customButtons/CustomSubmitButton';
 import CustomDeleteButton from '../forms/customButtons/CustomDeleteButton';
+import theme from '../../themes';
 
 interface FilterOption {
 	value: string;
@@ -79,7 +80,7 @@ const FilterSearchRow: React.FC<FilterSearchRowProps> = ({
 	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
-	const theme = useTheme();
+	const themeUseTheme = useTheme();
 
 	const stickyStyles = isSticky
 		? {
@@ -102,7 +103,7 @@ const FilterSearchRow: React.FC<FilterSearchRowProps> = ({
 					: isRecycleBin || isPayments
 						? 99
 						: 100, // Normal z-index
-				backgroundColor: theme.palette.background.paper,
+				backgroundColor: theme.bgColor?.secondary,
 				backdropFilter: 'blur(10px)',
 				minHeight: 'auto', // Ensure it doesn't collapse
 				paddingTop: isCommunity
@@ -176,7 +177,7 @@ const FilterSearchRow: React.FC<FilterSearchRowProps> = ({
 										},
 									}}
 									sx={{
-										backgroundColor: theme.palette.background.paper,
+										backgroundColor: themeUseTheme.palette.background.paper,
 										fontSize: isMobileSize ? '0.7rem' : '0.85rem',
 										textTransform: 'capitalize',
 									}}>
