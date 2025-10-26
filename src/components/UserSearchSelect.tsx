@@ -242,7 +242,7 @@ const UserSearchSelect: React.FC<UserSearchSelectProps> = ({
 
 			{/* Show "No users found" message */}
 			{noUserFound && value.trim() && !loading && !error && hasSearched && (
-				<Box sx={{ textAlign: 'center', margin: '1rem 0 -1rem 0' }}>
+				<Box sx={{ textAlign: 'center', margin: '1rem 0 0rem 0' }}>
 					<CustomErrorMessage sx={{ fontSize: isMobileSize ? '0.7rem' : '0.8rem' }}>No users found matching your search</CustomErrorMessage>
 				</Box>
 			)}
@@ -298,18 +298,16 @@ const UserSearchSelect: React.FC<UserSearchSelectProps> = ({
 								'padding': isMobileSize ? '0.25rem' : '0.5rem',
 								'transition': '0.5s',
 								'borderRadius': '0.25rem',
-								'cursor': blockedUsers?.includes(user.firebaseUserId) ? 'not-allowed' : 'pointer',
+								'cursor': 'pointer',
 								'opacity': blockedUsers?.includes(user.firebaseUserId) ? 0.6 : 1,
-								':hover': blockedUsers?.includes(user.firebaseUserId)
-									? {}
-									: {
-											'backgroundColor': theme.bgColor?.primary,
-											'color': '#fff',
-											'cursor': 'pointer',
-											'& .username, & .email, & .name': {
-												color: '#fff',
-											},
-										},
+								':hover': {
+									'backgroundColor': theme.bgColor?.primary,
+									'color': '#fff',
+									'cursor': 'pointer',
+									'& .username, & .email, & .name': {
+										color: '#fff',
+									},
+								},
 							}}
 							onClick={() => handleUserSelect(user)}>
 							<Box sx={{ borderRadius: '100%', marginRight: '1rem' }}>

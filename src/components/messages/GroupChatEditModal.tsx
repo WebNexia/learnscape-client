@@ -345,7 +345,7 @@ const GroupChatEditModal = ({
 			<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: '1.5rem', mt: '-1rem', px: 2 }}>
 				{/* Delete Button for Admin */}
 				<Box sx={{ ml: '-0.75rem' }}>
-					{user?.role === 'admin' && onDeleteGroupChat && (
+					{(user?.role === 'admin' || (user?.role === 'instructor' && activeChat.createdBy === user?.firebaseUserId)) && onDeleteGroupChat && (
 						<CustomDeleteButton onClick={onDeleteGroupChat} sx={{ fontSize: isMobileSize ? '0.7rem' : '0.8rem' }}>
 							Delete Group
 						</CustomDeleteButton>

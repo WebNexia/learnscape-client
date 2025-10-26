@@ -211,7 +211,7 @@ const ChatHeader = ({
 										</IconButton>
 									</Tooltip>
 								)}
-								{user?.role === 'admin' && onEditGroupChat && (
+								{(user?.role === 'admin' || (user?.role === 'instructor' && activeChat.createdBy === user?.firebaseUserId)) && onEditGroupChat && (
 									<Tooltip title='Edit Group' placement='top' arrow>
 										<IconButton size='small' onClick={onEditGroupChat} sx={{ ':hover': { backgroundColor: 'transparent' } }}>
 											<Edit fontSize='small' />
@@ -287,22 +287,18 @@ const ChatHeader = ({
 					<Box component='ul' sx={{ pl: 5, m: 0 }}>
 						{isBlocking ? (
 							<>
-								<Typography component='li' variant='body2' sx={{ mb: '0.5rem', fontSize: '0.8rem' }}>
-									They will know that you have blocked them
+								<Typography component='li' variant='body2' sx={{ mb: '0.5rem', fontSize: '0.8rem', lineHeight: '1.7' }}>
+									They will NOT know that you have blocked them
 								</Typography>
-								<Typography component='li' variant='body2' sx={{ mb: '0.5rem', fontSize: '0.8rem' }}>
-									They cannot send you messages
+								<Typography component='li' variant='body2' sx={{ mb: '0.5rem', fontSize: '0.8rem', lineHeight: '1.7' }}>
+									They can send you messages, but you will not receive them
 								</Typography>
-								<Typography component='li' variant='body2' sx={{ mb: '0.5rem', fontSize: '0.8rem' }}>
+								<Typography component='li' variant='body2' sx={{ mb: '0.5rem', fontSize: '0.8rem', lineHeight: '1.7' }}>
 									You cannot send them messages
 								</Typography>
-								{user?.role === 'admin' && (
-									<Typography component='li' variant='body2' sx={{ mb: '0.5rem', fontSize: '0.8rem' }}>
-										You cannot add them to a group chat
-									</Typography>
-								)}
-								<Typography component='li' variant='body2' sx={{ mb: '0.5rem', fontSize: '0.8rem' }}>
-									You can unblock them later to resume communication
+
+								<Typography component='li' variant='body2' sx={{ mb: '0.5rem', fontSize: '0.8rem', lineHeight: '1.7' }}>
+									You can unblock them later to resume communication. Then you will receive their messages which are sent after you blocked them
 								</Typography>
 							</>
 						) : (
@@ -316,11 +312,6 @@ const ChatHeader = ({
 								<Typography component='li' variant='body2' sx={{ mb: '0.5rem', fontSize: '0.8rem' }}>
 									Previous messages will be available to view
 								</Typography>
-								{user?.role === 'admin' && (
-									<Typography component='li' variant='body2' sx={{ mb: '0.5rem', fontSize: '0.8rem' }}>
-										You can add them to a group chat
-									</Typography>
-								)}
 							</>
 						)}
 					</Box>

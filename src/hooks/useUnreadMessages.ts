@@ -41,12 +41,34 @@ export const useUnreadMessages = (): boolean => {
 		// Create a single global listener for this user
 		globalUserId = user.firebaseUserId;
 		const chatsRef = collection(db, 'chats');
-		const q = query(chatsRef, where('participants', 'array-contains', user.firebaseUserId), where('hasUnreadMessages', '==', true));
+		const q = query(chatsRef, where('participants', 'array-contains', user.firebaseUserId));
 
 		globalListener = onSnapshot(
 			q,
 			(querySnapshot) => {
-				const hasUnread = !querySnapshot.empty;
+				let hasUnread = false;
+
+				// Check each chat for unread messages - stop as soon as we find one
+				for (const doc of querySnapshot.docs) {
+					const data = doc.data();
+
+					// Skip deleted chats
+					if (data.isDeletedBy?.includes(user.firebaseUserId)) {
+						continue;
+					}
+
+					// Skip chats where user has permanently left
+					if (data.removedParticipants?.includes(user.firebaseUserId)) {
+						continue;
+					}
+
+					// Check if current user has unread messages (not the sender)
+					if (data.hasUnreadMessages === true && data.unreadBy?.includes(user.firebaseUserId)) {
+						hasUnread = true;
+						break; // Stop checking as soon as we find one unread message
+					}
+				}
+
 				globalUnreadMessages = hasUnread;
 				setHasUnreadMessages(hasUnread);
 			},

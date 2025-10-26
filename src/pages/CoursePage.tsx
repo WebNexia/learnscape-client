@@ -21,7 +21,6 @@ const CoursePage = () => {
 	const documentsRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
-		// Use context data instead of localStorage
 		setIsEnrolledStatus(userCourseData?.some((data) => data.courseId === courseId) || false);
 
 		if (courseId) {

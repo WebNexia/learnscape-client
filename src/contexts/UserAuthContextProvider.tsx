@@ -199,10 +199,7 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 	const signOutUser = async () => {
 		await signOut(auth);
 		localStorage.removeItem('sessionTimestamp');
-		localStorage.removeItem('activeChatId');
-		localStorage.removeItem('chatList');
-		localStorage.removeItem('participantCache');
-		localStorage.removeItem('totalUnreadMessages');
+		sessionStorage.removeItem('activeChatId');
 		setUser(undefined);
 		setUserId('');
 		setFirebaseUserId('');

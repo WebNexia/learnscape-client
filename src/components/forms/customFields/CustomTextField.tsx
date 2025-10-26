@@ -9,6 +9,7 @@ interface CustomTextFieldProps {
 	value?: string | number;
 	type?: string;
 	onChange?: (e: ChangeEvent<HTMLInputElement>) => void;
+	onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
 	variant?: TextFieldProps['variant'];
 	size?: TextFieldProps['size'];
 	fullWidth?: boolean;
@@ -38,6 +39,7 @@ const CustomTextField = forwardRef<HTMLDivElement, CustomTextFieldProps>(
 			type = 'text',
 			value,
 			onChange,
+			onKeyDown,
 			fullWidth = true,
 			size = 'small',
 			required = true,
@@ -65,7 +67,8 @@ const CustomTextField = forwardRef<HTMLDivElement, CustomTextFieldProps>(
 		const validatedType = typeof type === 'string' ? type.toLowerCase() : 'text';
 
 		// Determine if input should be sanitized
-		const shouldSanitize = !disableSanitization && SANITIZED_INPUT_TYPES?.includes(validatedType);
+		// Don't sanitize multiline fields to preserve newlines
+		const shouldSanitize = !disableSanitization && !multiline && SANITIZED_INPUT_TYPES?.includes(validatedType);
 
 		// Sanitize input on change with enhanced security
 		const handleChange = useCallback(
@@ -126,7 +129,7 @@ const CustomTextField = forwardRef<HTMLDivElement, CustomTextFieldProps>(
 					}
 				}
 			},
-			[onChange, shouldSanitize, validatedType, InputProps?.inputProps?.maxLength]
+			[onChange, shouldSanitize, validatedType, InputProps?.inputProps?.maxLength, multiline]
 		);
 
 		return (
@@ -136,6 +139,7 @@ const CustomTextField = forwardRef<HTMLDivElement, CustomTextFieldProps>(
 				type={validatedType}
 				value={value}
 				onChange={handleChange}
+				onKeyDown={onKeyDown}
 				size={size}
 				sx={{
 					'marginBottom': '0.85rem',
