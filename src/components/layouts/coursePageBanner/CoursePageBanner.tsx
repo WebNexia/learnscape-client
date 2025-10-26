@@ -6,7 +6,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import CoursePageBannerDataCard from './CoursePageBannerDataCard';
 import axios from '@utils/axiosInstance';
 import { useContext, useState } from 'react';
-import { UserCoursesIdsWithCourseIds, UserLessonDataStorage } from '../../../contexts/UserCourseLessonDataContextProvider';
+import { useQueryClient } from 'react-query';
 import CustomSubmitButton from '../../forms/customButtons/CustomSubmitButton';
 import { dateFormatter } from '../../../utils/dateFormatter';
 import PaymentDialogWrapper from './PaymentDialogWrapper';
@@ -30,6 +30,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 	const navigate = useNavigate();
 
 	const { isRotated, isSmallScreen, isVerySmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const queryClient = useQueryClient();
 
 	const isMobileSize: boolean = isSmallScreen || isRotated;
 
@@ -76,7 +77,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 
 			// Only create userLesson if course is NOT external
 			if (!course.courseManagement?.isExternal) {
-				const responseUserLesson = await axios.post(`${base_url}/userlessons`, {
+				await axios.post(`${base_url}/userlessons`, {
 					lessonId: fromHomePage ? course.firstLessonId : firstLessonId,
 					userId: resolvedUserId,
 					courseId,
@@ -90,45 +91,12 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 					isFeedbackGiven: false,
 				});
 
-				// Update localStorage: userLessonData
-				const currentUserLessonData: string | null = localStorage.getItem('userLessonData');
-				if (currentUserLessonData !== null) {
-					const updatedUserLessonData: UserLessonDataStorage[] = JSON.parse(currentUserLessonData);
-					if (!updatedUserLessonData?.some((data) => data.lessonId === firstLessonId && data.courseId === courseId)) {
-						const newUserLessonData: UserLessonDataStorage = {
-							lessonId: firstLessonId,
-							userLessonId: responseUserLesson.data._id,
-							courseId,
-							currentQuestion: 1,
-							isCompleted: false,
-							isInProgress: true,
-							teacherFeedback: '',
-							isFeedbackGiven: false,
-							updatedAt: responseUserLesson.data.updatedAt,
-						};
-						updatedUserLessonData.push(newUserLessonData);
-						localStorage.setItem('userLessonData', JSON.stringify(updatedUserLessonData));
-					}
-				}
+				// Invalidate user lessons cache to refresh lesson data
+				await queryClient.invalidateQueries(['userLessonsForCourse', courseId, resolvedUserId]);
 			}
 
-			// Update localStorage: userCourseData
-			let updatedUserCoursesIds: UserCoursesIdsWithCourseIds[] = [];
-			const storedUserCoursesIds = localStorage.getItem('userCourseData');
-			if (storedUserCoursesIds !== null) {
-				updatedUserCoursesIds = JSON.parse(storedUserCoursesIds);
-			}
-			updatedUserCoursesIds.push({
-				courseId,
-				userCourseId,
-				isCourseCompleted: false,
-				isCourseInProgress: true,
-				courseTitle: course.title,
-				createdAt: response.data.createdAt,
-				isActive: true,
-				validUntil: response.data.validUntil,
-			});
-			localStorage.setItem('userCourseData', JSON.stringify(updatedUserCoursesIds));
+			// Invalidate React Query cache to refresh context data
+			await queryClient.invalidateQueries(['userCourseData']);
 
 			return userCourseId;
 		} catch (error) {

@@ -185,7 +185,7 @@ const TopicPaper = ({ topic, setDisplayDeleteTopicMsg, setTopic, refreshTopics, 
 									backgroundColor: 'transparent',
 									textDecoration: 'underline',
 								},
-								'fontSize': isMobileSize ? '0.65rem' : isSticky ? '0.8rem' : undefined,
+								'fontSize': isMobileSize ? '0.65rem' : isSticky ? '0.85rem' : undefined,
 							}}
 							onClick={() => {
 								if (refreshTopics) fetchTopics(1);

@@ -1,25 +1,33 @@
-import { useCallback, useContext, useState } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useCallback, useContext, useEffect, useState } from 'react';
+import { useLocation, useParams } from 'react-router-dom';
+import { useQueryClient } from 'react-query';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
-import { useLocalStorageData } from './useLocalStorageData';
 import axios from '@utils/axiosInstance';
-import { UserLessonDataStorage } from '../contexts/UserCourseLessonDataContextProvider';
+import { UserCourseLessonDataContext, UserLessonDataStorage } from '../contexts/UserCourseLessonDataContextProvider';
 import { useAuth } from './useAuth';
 import { useDashboardSync, dashboardSyncHelpers } from '../utils/dashboardSync';
+import { useUserLessonsForCourse } from './useUserLessonsForCourse';
 
 export const useUserCourseLessonData = () => {
 	const { lessonId, courseId, userCourseId } = useParams<{ lessonId: string; courseId: string; userCourseId: string }>();
 
 	const { orgId } = useContext(OrganisationContext);
-	const navigate = useNavigate();
 	const location = useLocation();
 	const { user } = useAuth();
 	const searchParams = new URLSearchParams(location.search);
 	const nextLessonId = searchParams.get('next');
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
-	const { setLocalStorageData, parsedUserCourseData, parsedUserLessonData } = useLocalStorageData();
-	
+	const { userCoursesData } = useContext(UserCourseLessonDataContext);
+	const queryClient = useQueryClient();
+
+	// Use context data for userCourseData, use hook for userLessonData
+	const parsedUserCourseData = userCoursesData || [];
+
+	// Fetch user lessons for current course using the new hook
+	const { data: userLessonsData } = useUserLessonsForCourse(courseId || '');
+	const parsedUserLessonData = userLessonsData || [];
+
 	// Dashboard sync for real-time updates
 	const { refreshDashboard } = useDashboardSync();
 
@@ -34,6 +42,12 @@ export const useUserCourseLessonData = () => {
 		return currentUserLessonData?.userLessonId;
 	});
 
+	// Update userLessonId when data loads
+	useEffect(() => {
+		const currentUserLessonData = parsedUserLessonData?.find((data) => data.lessonId === lessonId && data.courseId === courseId);
+		setUserLessonId(currentUserLessonData?.userLessonId);
+	}, [parsedUserLessonData, lessonId, courseId]);
+
 	// State for course completion status
 	const [isCourseCompleted, setIsCourseCompleted] = useState<boolean>(() => {
 		const currentUserCourseData = parsedUserCourseData?.find((data) => data.userCourseId === userCourseId);
@@ -42,17 +56,22 @@ export const useUserCourseLessonData = () => {
 
 	// Function to update last question index
 	const updateLastQuestion = useCallback(
-		(questionIndex: number) => {
-			const currentUserLessonIndex = parsedUserLessonData.findIndex((data) => data.userLessonId === userLessonId);
+		async (questionIndex: number) => {
+			if (!userLessonId) return;
 
-			if (currentUserLessonIndex !== -1 && !parsedUserLessonData[currentUserLessonIndex].isCompleted) {
-				const updatedUserLessonData = [...parsedUserLessonData];
-				updatedUserLessonData[currentUserLessonIndex].currentQuestion = questionIndex;
-				localStorage.setItem('userLessonData', JSON.stringify(updatedUserLessonData));
-				setLocalStorageData((prev) => ({ ...prev, userLessonData: updatedUserLessonData }));
+			try {
+				// Update on server
+				await axios.patch(`${base_url}/userlessons/${userLessonId}`, {
+					currentQuestion: questionIndex,
+				});
+
+				// Invalidate cache to refresh data
+				await queryClient.invalidateQueries(['userLessonsForCourse', courseId, user?._id]);
+			} catch (error) {
+				console.error('Failed to update question index:', error);
 			}
 		},
-		[userLessonId, parsedUserLessonData]
+		[userLessonId, courseId, user?._id, base_url, queryClient]
 	);
 
 	// Function to get last question index
@@ -74,33 +93,13 @@ export const useUserCourseLessonData = () => {
 			});
 
 			if (existingLessonResponse.data && existingLessonResponse.data.length > 0) {
-				const existingLesson = existingLessonResponse.data[0];
-				const newUserLessonData: UserLessonDataStorage = {
-					lessonId: nextLessonId,
-					userLessonId: existingLesson._id,
-					courseId: courseId,
-					currentQuestion: existingLesson.currentQuestion || 1,
-					isCompleted: existingLesson.isCompleted || false,
-					isInProgress: existingLesson.isInProgress || true,
-					teacherFeedback: existingLesson.teacherFeedback || '',
-					isFeedbackGiven: existingLesson.isFeedbackGiven || false,
-					updatedAt: existingLesson.updatedAt,
-				};
-
-				const updatedUserLessonData = [...parsedUserLessonData, newUserLessonData];
-				localStorage.setItem('userLessonData', JSON.stringify(updatedUserLessonData));
-				setLocalStorageData((prev) => ({ ...prev, userLessonData: updatedUserLessonData }));
-
-				// Force a refresh of the lesson data to ensure UI updates
-				setTimeout(() => {
-					const refreshedData = JSON.parse(localStorage.getItem('userLessonData') || '[]');
-					setLocalStorageData((prev) => ({ ...prev, userLessonData: refreshedData }));
-				}, 100);
+				// Invalidate cache to refresh lesson data
+				await queryClient.invalidateQueries(['userLessonsForCourse', courseId, user._id]);
 			}
 		} catch (fallbackError) {
 			console.error('Fallback also failed:', fallbackError);
 		}
-	}, [nextLessonId, user?._id, courseId, userCourseId, orgId, parsedUserLessonData, base_url, setLocalStorageData]);
+	}, [nextLessonId, user?._id, courseId, userCourseId, orgId, base_url, queryClient]);
 
 	// Function to handle moving to the next lesson
 	const handleNextLesson = useCallback(async () => {
@@ -108,19 +107,15 @@ export const useUserCourseLessonData = () => {
 			const currentUserLessonIndex = parsedUserLessonData.findIndex((data) => data.userLessonId === userLessonId);
 
 			if (currentUserLessonIndex !== -1 && !parsedUserLessonData[currentUserLessonIndex].isCompleted) {
-				const updatedUserLessonData = [...parsedUserLessonData];
-				updatedUserLessonData[currentUserLessonIndex].isCompleted = true;
-				updatedUserLessonData[currentUserLessonIndex].isInProgress = false;
-				updatedUserLessonData[currentUserLessonIndex].currentQuestion = 1;
-				localStorage.setItem('userLessonData', JSON.stringify(updatedUserLessonData));
-				setLocalStorageData((prev) => ({ ...prev, userLessonData: updatedUserLessonData }));
-
 				await axios.patch(`${base_url}/userlessons/${userLessonId}`, {
 					isCompleted: true,
 					isInProgress: false,
 					currentQuestion: 1,
 				});
-				
+
+				// Invalidate cache to refresh lesson data
+				await queryClient.invalidateQueries(['userLessonsForCourse', courseId, user?._id]);
+
 				// Trigger dashboard sync when lesson is completed
 				dashboardSyncHelpers.onLessonCompleted(refreshDashboard);
 			}
@@ -146,27 +141,8 @@ export const useUserCourseLessonData = () => {
 						});
 
 						if (responseUserLesson && responseUserLesson.data && responseUserLesson.data._id) {
-							const newUserLessonData: UserLessonDataStorage = {
-								lessonId: nextLessonId,
-								userLessonId: responseUserLesson.data._id,
-								courseId: courseId || '',
-								currentQuestion: 1,
-								isCompleted: false,
-								isInProgress: true,
-								teacherFeedback: '',
-								isFeedbackGiven: false,
-								updatedAt: responseUserLesson.data.updatedAt,
-							};
-
-							const updatedUserLessonData = [...parsedUserLessonData, newUserLessonData];
-							localStorage.setItem('userLessonData', JSON.stringify(updatedUserLessonData));
-							setLocalStorageData((prev) => ({ ...prev, userLessonData: updatedUserLessonData }));
-
-							// Force a refresh of the lesson data to ensure UI updates
-							setTimeout(() => {
-								const refreshedData = JSON.parse(localStorage.getItem('userLessonData') || '[]');
-								setLocalStorageData((prev) => ({ ...prev, userLessonData: refreshedData }));
-							}, 100);
+							// Invalidate cache to refresh lesson data
+							await queryClient.invalidateQueries(['userLessonsForCourse', courseId, user?._id]);
 						} else {
 							console.error('Failed to get userLessonId from the response:', responseUserLesson);
 							// Fallback: try to fetch existing lesson data from server
@@ -186,12 +162,8 @@ export const useUserCourseLessonData = () => {
 
 				setIsCourseCompleted(true);
 
-				const userCourseIndexToUpdate = parsedUserCourseData.findIndex((item) => item.userCourseId === userCourseId);
-				const updatedUserCourseData = [...parsedUserCourseData];
-				updatedUserCourseData[userCourseIndexToUpdate].isCourseCompleted = true;
-				updatedUserCourseData[userCourseIndexToUpdate].isCourseInProgress = false;
-				localStorage.setItem('userCourseData', JSON.stringify(updatedUserCourseData));
-				setLocalStorageData((prev) => ({ ...prev, userCourseData: updatedUserCourseData }));
+				// Invalidate React Query cache to refresh context data
+				await queryClient.invalidateQueries(['userCourseData']);
 
 				// navigate(`/course/${courseId}/user/${userId}/userCourseId/${userCourseId}?isEnrolled=true`);
 				window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -206,31 +178,29 @@ export const useUserCourseLessonData = () => {
 		courseId,
 		userCourseId,
 		orgId,
-		navigate,
 		parsedUserLessonData,
-		parsedUserCourseData,
 		base_url,
-		setIsLessonCompleted,
+		queryClient,
+		handleNextLessonFallback,
+		refreshDashboard,
 	]);
 
 	// Function to update in-progress lessons
 	const updateInProgressLessons = useCallback(async () => {
-		const updatedParsedUserLessonData = JSON.parse(localStorage.getItem('userLessonData') || '[]');
-		const inProgressLessons = updatedParsedUserLessonData?.filter((lesson: UserLessonDataStorage) => lesson.isInProgress) || [];
+		const inProgressLessons = parsedUserLessonData?.filter((lesson: UserLessonDataStorage) => lesson.isInProgress) || [];
 		try {
 			for (const lesson of inProgressLessons) {
-				const localStorageLesson = updatedParsedUserLessonData?.find((data: UserLessonDataStorage) => data.userLessonId === lesson.userLessonId);
-				if (localStorageLesson) {
-					const currentQuestion = localStorageLesson.currentQuestion;
-					await axios.patch(`${base_url}/userlessons/${lesson.userLessonId}`, {
-						currentQuestion,
-					});
-				}
+				const currentQuestion = lesson.currentQuestion;
+				await axios.patch(`${base_url}/userlessons/${lesson.userLessonId}`, {
+					currentQuestion,
+				});
 			}
+			// Invalidate cache to refresh lesson data
+			await queryClient.invalidateQueries(['userLessonsForCourse', courseId, user?._id]);
 		} catch (error) {
 			console.error('Failed to update in-progress lessons', error);
 		}
-	}, [base_url]);
+	}, [base_url, parsedUserLessonData, courseId, user?._id, queryClient]);
 
 	return {
 		isLessonCompleted,

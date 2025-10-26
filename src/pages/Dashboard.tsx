@@ -3,11 +3,11 @@ import DashboardPagesLayout from '../components/layouts/dashboardLayout/Dashboar
 import UpcomingEvents from '../components/layouts/dashboard/UpcomingEvents';
 import { useNavigate } from 'react-router-dom';
 import UnreadMessages from '../components/layouts/dashboard/UnreadMessages';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useContext } from 'react';
 
 import DashboardQuizSubmissions from '../components/layouts/dashboard/DashboardQuizSubmissions';
 import DashboardCommunityTopics from '../components/layouts/dashboard/DashboardCommunityTopics';
-import { UserCoursesIdsWithCourseIds, UserLessonDataStorage } from '../contexts/UserCourseLessonDataContextProvider';
+import { UserCoursesIdsWithCourseIds, UserCourseLessonDataContext } from '../contexts/UserCourseLessonDataContextProvider';
 import EnrolledCoursesLineGraph from '../components/layouts/dashboard/EnrolledCoursesLineGraph';
 import { Chart, registerables } from 'chart.js';
 import CompletedLessonsBarGraph from '../components/layouts/dashboard/CompletedLessonsBarGraph';
@@ -19,6 +19,7 @@ interface DashboardProps {}
 
 const Dashboard = ({}: DashboardProps) => {
 	const navigate = useNavigate();
+	const { userCoursesData } = useContext(UserCourseLessonDataContext);
 
 	// New dashboard summary hook
 	const { dashboardData } = useDashboardSummary();
@@ -38,7 +39,7 @@ const Dashboard = ({}: DashboardProps) => {
 	});
 
 	useEffect(() => {
-		// Use dashboard data if available, otherwise fall back to localStorage
+		// Use dashboard data if available, otherwise fall back to context data
 		if (dashboardData && dashboardData.roleSpecific && 'courseTimeline' in dashboardData.roleSpecific) {
 			const learnerData = dashboardData.roleSpecific as any;
 
@@ -120,13 +121,11 @@ const Dashboard = ({}: DashboardProps) => {
 			processCourseData();
 			processLessonData();
 		} else {
-			// Fallback to localStorage if dashboard data not available
-			const userCourses = JSON.parse(localStorage.getItem('userCourseData') || '[]');
-			const userLessons =
-				JSON.parse(localStorage.getItem('userLessonData') || '[]')?.filter((lesson: UserLessonDataStorage) => lesson.isCompleted) || [];
+			// Fallback to context data if dashboard data not available
+			const userCourses = userCoursesData || [];
 
 			setTotalEnrolledCourses(userCourses?.length || 0);
-			setNumberOfCompletedLessons(userLessons?.length || 0);
+			setNumberOfCompletedLessons(0); // Will be updated by dashboard data when available
 			setTotalCompletedCourses(userCourses?.filter((userCourse: UserCoursesIdsWithCourseIds) => userCourse.isCourseCompleted)?.length || 0);
 
 			// Set empty chart data as fallback

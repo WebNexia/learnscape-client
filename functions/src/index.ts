@@ -46,7 +46,7 @@ exports.setExpireAtForNotifications = functions.firestore.document('notification
 		}
 
 		const expireAt = admin.firestore.Timestamp.fromMillis(
-			created.toMillis() + 30 * 24 * 60 * 60 * 1000 // 30 days
+			created.toMillis() + 14 * 24 * 60 * 60 * 1000 // 14 days
 		);
 
 		await snap.ref.update({ expireAt });
@@ -61,55 +61,41 @@ exports.setExpireAtForNotifications = functions.firestore.document('notification
  * Deletes expired messages and notifications if TTL hasn't yet
  */
 exports.purgeExpiredDocs = functions.pubsub
-	.schedule('every monday 01:00') // once a week, 1 AM Monday
+	.schedule('every monday 01:00') // once a week, 1 AM London
 	.timeZone('Europe/London')
 	.onRun(async () => {
 		try {
 			const now = admin.firestore.Timestamp.now();
 
-			// 🔹 1. Cleanup messages
-			const msgGroup = db.collectionGroup('messages');
-			let deletedMsgs = 0;
+			const cleanupCollectionGroup = async (groupName: string, label: string) => {
+				let totalDeleted = 0;
+				const groupRef = db.collectionGroup(groupName);
 
-			while (true) {
-				const snap = await msgGroup.where('expireAt', '<=', now).orderBy('expireAt').limit(500).get();
+				while (true) {
+					const snap = await groupRef.where('expireAt', '<=', now).orderBy('expireAt').limit(500).get();
 
-				if (snap.empty) break;
+					if (snap.empty) break;
 
-				const batch = db.batch();
-				snap.docs.forEach((d) => batch.delete(d.ref));
-				await batch.commit();
+					const batch = db.batch();
+					snap.docs.forEach((doc) => batch.delete(doc.ref));
+					await batch.commit();
 
-				deletedMsgs += snap.size;
-			}
+					totalDeleted += snap.size;
+				}
 
-			// 🔹 2. Cleanup notifications
-			const notifGroup = db.collectionGroup('userNotifications');
-			let deletedNotifs = 0;
+				return { label, totalDeleted };
+			};
 
-			while (true) {
-				const snap = await notifGroup.where('expireAt', '<=', now).orderBy('expireAt').limit(500).get();
+			// ✅ Run both tasks in parallel — efficiency boost
+			const [msgResult, notifResult] = await Promise.all([
+				cleanupCollectionGroup('messages', 'messages'),
+				cleanupCollectionGroup('userNotifications', 'notifications'),
+			]);
 
-				if (snap.empty) break;
-
-				const batch = db.batch();
-				snap.docs.forEach((d) => batch.delete(d.ref));
-				await batch.commit();
-
-				deletedNotifs += snap.size;
-			}
-
+			console.log(`✅ Purge complete → ${msgResult.totalDeleted} messages, ${notifResult.totalDeleted} notifications removed.`);
 			return null;
 		} catch (error) {
-			console.error('Error purging expired docs:', error);
+			console.error('❌ Error purging expired docs:', error);
 			return null;
 		}
 	});
-
-/**
- * Example HTTPS Function (Optional)
- */
-// exports.helloWorld = functions.https.onRequest((request, response) => {
-//   functions.logger.info("Hello logs!", { structuredData: true });
-//   response.send("Hello from Firebase!");
-// });

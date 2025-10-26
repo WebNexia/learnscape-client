@@ -2,7 +2,7 @@ import { AppBar, Badge, Box, Button, IconButton, Switch, Toolbar, Tooltip, Typog
 import theme from '../../../themes';
 import { useNavigate } from 'react-router-dom';
 import { useContext, useEffect, useRef, useState } from 'react';
-import { Mode, Roles } from '../../../interfaces/enums';
+import { Roles } from '../../../interfaces/enums';
 import { Cancel, DoneAll, Menu, Notifications, BugReport, Delete, ClearAll, Star } from '@mui/icons-material';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 import { useUserCourseLessonData } from '../../../hooks/useUserCourseLessonData';
@@ -15,6 +15,7 @@ import ReportBugDialog from '../dashboard/ReportBugDialog';
 import SubscriptionDialog from '../../subscription/SubscriptionDialog';
 import UnsubscribeDialog from '../../subscription/UnsubscribeDialog';
 import ConditionalStripeProvider from '../../common/ConditionalStripeProvider';
+import { useUnreadMessages } from '../../../hooks/useUnreadMessages';
 
 interface DashboardHeaderProps {
 	pageName: string;
@@ -27,14 +28,14 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 	const hasActiveSubscription = (user: any): boolean => {
 		return user?.isSubscribed === true && user?.subscriptionStatus === 'active';
 	};
-	// const [mode, setMode] = useState<Mode>((localStorage.getItem('mode') as Mode) || Mode.LIGHT_MODE);
+
 	const navigate = useNavigate();
 	const { updateInProgressLessons } = useUserCourseLessonData();
 
 	const isMobileSize: boolean = isSmallScreen || isRotatedMedium;
 
 	const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
-
+	const hasUnreadMessages = useUnreadMessages();
 	const [notificationsOpen, setNotificationsOpen] = useState<boolean>(false);
 	const [numberOfUnreadNotifications, setNumberOfUnreadNotifications] = useState<number>(0);
 
@@ -70,12 +71,6 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 			}
 		});
 	};
-
-	useEffect(() => {
-		if (!localStorage.getItem('mode')) {
-			localStorage.setItem('mode', Mode.LIGHT_MODE);
-		}
-	}, []);
 
 	useEffect(() => {
 		if (!user) return;
@@ -189,7 +184,7 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 					</Typography>
 				</Box>
 
-				<CustomDrawer isDrawerOpen={isDrawerOpen} setIsDrawerOpen={setIsDrawerOpen}></CustomDrawer>
+				<CustomDrawer isDrawerOpen={isDrawerOpen} setIsDrawerOpen={setIsDrawerOpen} hasUnreadMessages={hasUnreadMessages}></CustomDrawer>
 
 				<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
 					{/* Subscribe/Unsubscribe Button */}

@@ -24,9 +24,10 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 interface CustomDrawerProps {
 	isDrawerOpen: boolean;
 	setIsDrawerOpen: React.Dispatch<React.SetStateAction<boolean>>;
+	hasUnreadMessages: boolean;
 }
 
-const CustomDrawer = ({ isDrawerOpen, setIsDrawerOpen }: CustomDrawerProps) => {
+const CustomDrawer = ({ isDrawerOpen, setIsDrawerOpen, hasUnreadMessages }: CustomDrawerProps) => {
 	const navigate = useNavigate();
 	const { user } = useContext(UserAuthContext);
 	const { organisation } = useContext(OrganisationContext);
@@ -171,6 +172,7 @@ const CustomDrawer = ({ isDrawerOpen, setIsDrawerOpen }: CustomDrawerProps) => {
 										IconName={Email}
 										onClick={() => navigateWithPage(PageName.ADMIN_MESSAGES, `/admin/messages`)}
 										active={selectedPage === PageName.ADMIN_MESSAGES}
+										hasUnreadMessages={hasUnreadMessages}
 									/>
 									<SidebarBtn
 										btnText='Community'
@@ -219,6 +221,7 @@ const CustomDrawer = ({ isDrawerOpen, setIsDrawerOpen }: CustomDrawerProps) => {
 										IconName={Email}
 										onClick={() => navigateWithPage(PageName.MESSAGES, `/messages`)}
 										active={selectedPage === PageName.MESSAGES}
+										hasUnreadMessages={hasUnreadMessages}
 									/>
 									<SidebarBtn
 										btnText='Community'

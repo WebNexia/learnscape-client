@@ -209,7 +209,7 @@ const AdminPublicEvents = () => {
 								borderRight: 'none',
 							},
 							'& .MuiTableBody-root .MuiTableCell-root': {
-								padding: isMobileSize ? '0.5rem 0.5rem' : '0.25rem 1rem',
+								padding: isMobileSize ? '0.5rem 0.5rem' : '0.5rem 1rem',
 								boxSizing: 'border-box',
 								margin: 0,
 								verticalAlign: 'center',

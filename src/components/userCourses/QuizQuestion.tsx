@@ -21,7 +21,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import theme from '../../themes';
 import { OrganisationContext } from '../../contexts/OrganisationContextProvider';
 import TrueFalseOptions from '../layouts/questionTypes/TrueFalseOptions';
-import { QuestionsContext } from '../../contexts/QuestionsContextProvider';
+import useQuestionTypes from '../../hooks/useQuestionTypes';
 import CustomTextField from '../forms/customFields/CustomTextField';
 import { useUserCourseLessonData } from '../../hooks/useUserCourseLessonData';
 import { CheckCircle, Done, DoneAll, KeyboardArrowLeft, KeyboardArrowRight, KeyboardDoubleArrowRight } from '@mui/icons-material';
@@ -43,7 +43,7 @@ import FillInTheBlanksDragDrop from '../layouts/FITBDragDrop/FillInTheBlanksDrag
 import MatchingPreview from '../layouts/matching/MatchingPreview';
 import { UserBlankValuePairAnswers, UserMatchingPairAnswers } from '../../interfaces/userQuestion';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { UserCoursesIdsWithCourseIds } from '../../contexts/UserCourseLessonDataContextProvider';
+import { UserCourseLessonDataContext } from '../../contexts/UserCourseLessonDataContextProvider';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 
 interface QuizQuestionProps {
@@ -81,8 +81,9 @@ const QuizQuestion = ({
 
 	const { lessonId, courseId, userCourseId } = useParams();
 	const { orgId } = useContext(OrganisationContext);
-	const { fetchQuestionTypeName } = useContext(QuestionsContext);
+	const { fetchQuestionTypeName } = useQuestionTypes();
 	const { user } = useContext(UserAuthContext);
+	const { userCoursesData } = useContext(UserCourseLessonDataContext);
 
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -142,8 +143,6 @@ const QuizQuestion = ({
 	const isCompletingCourse: boolean = isLastQuestion && nextLessonId === null;
 	const isCompletingLesson: boolean = isLastQuestion && nextLessonId !== null;
 
-	let userCourseData: UserCoursesIdsWithCourseIds[] = [];
-
 	useEffect(() => {
 		setUserQuizAnswerAfterSubmission(() => {
 			if (isLessonCompleted) {
@@ -197,15 +196,13 @@ const QuizQuestion = ({
 			return '';
 		});
 
-		const storedUserCourseData: string | null = localStorage.getItem('userCourseData');
-		if (storedUserCourseData !== null) {
-			userCourseData = JSON.parse(storedUserCourseData);
-		}
+		// Use context data instead of localStorage
+		const userCourseData = userCoursesData || [];
 
 		setCourseTitle(() => {
 			return userCourseData?.find((data) => data.courseId === courseId)?.courseTitle || '';
 		});
-	}, []);
+	}, [userCoursesData, courseId]);
 
 	useEffect(() => {
 		setSelectedQuestion(displayedQuestionNumber);

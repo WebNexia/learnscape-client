@@ -56,12 +56,18 @@ export function sanitizeTextInput(text: string): string {
 		return '';
 	}
 
-	const clean = DOMPurify.sanitize(text, {
+	let clean = DOMPurify.sanitize(text, {
 		ALLOWED_TAGS: [],
 		ALLOWED_ATTR: [],
 		FORBID_TAGS: ['*'],
 		FORBID_ATTR: ['*'],
 	});
+
+	clean = clean
+		.replace(/[\u200B-\u200D\uFEFF]/g, '')
+		.replace(/[\u0000-\u001F\u007F]+/g, '')
+		.normalize('NFKC');
+
 	return clean;
 }
 
@@ -76,15 +82,18 @@ export function sanitizeEmailInput(email: string): string {
 		return '';
 	}
 
-	const clean = DOMPurify.sanitize(email, {
+	let clean = DOMPurify.sanitize(email, {
 		ALLOWED_TAGS: [],
 		ALLOWED_ATTR: [],
 		FORBID_TAGS: ['*'],
 		FORBID_ATTR: ['*'],
 	});
 
-	// Return sanitized email without format validation during typing
-	// Format validation should be done on form submission, not during input
+	clean = clean
+		.replace(/[\u200B-\u200D\uFEFF]/g, '')
+		.replace(/[\u0000-\u001F\u007F]+/g, '')
+		.normalize('NFKC');
+
 	return clean;
 }
 

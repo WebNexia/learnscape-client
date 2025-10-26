@@ -20,11 +20,14 @@ import { useContext } from 'react';
 import { Roles } from '../../../interfaces/enums';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 
+import { useUnreadMessages } from '../../../hooks/useUnreadMessages';
 const Sidebar = () => {
 	const navigate = useNavigate();
 
 	const { user } = useContext(UserAuthContext);
 	const location = useLocation();
+
+	const hasUnreadMessages = useUnreadMessages();
 
 	// Determine the current page from the route
 	const currentPath = location.pathname;
@@ -153,6 +156,7 @@ const Sidebar = () => {
 								IconName={Email}
 								onClick={() => navigateWithPage(`/admin/messages`)}
 								active={currentPath?.includes('/admin/messages')}
+								hasUnreadMessages={hasUnreadMessages}
 							/>
 							<SidebarBtn
 								btnText='Community'
@@ -199,6 +203,7 @@ const Sidebar = () => {
 								IconName={Email}
 								onClick={() => navigateWithPage(`/messages`)}
 								active={currentPath?.includes('/messages')}
+								hasUnreadMessages={hasUnreadMessages}
 							/>
 							<SidebarBtn
 								btnText='Community'
@@ -263,6 +268,7 @@ const Sidebar = () => {
 								IconName={Email}
 								onClick={() => navigateWithPage(`/instructor/messages`)}
 								active={currentPath?.includes('/instructor/messages')}
+								hasUnreadMessages={hasUnreadMessages}
 							/>
 							<SidebarBtn
 								btnText='Community'

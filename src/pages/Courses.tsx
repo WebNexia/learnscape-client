@@ -7,16 +7,17 @@ import { CoursesContext } from '../contexts/CoursesContextProvider';
 import CoursesSkeleton from '../components/layouts/skeleton/CoursesSkeleton';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import FilterSearchRow from '../components/layouts/FilterSearchRow';
-import { UserCoursesIdsWithCourseIds } from '../contexts/UserCourseLessonDataContextProvider';
+import { UserCoursesIdsWithCourseIds, UserCourseLessonDataContext } from '../contexts/UserCourseLessonDataContextProvider';
 import { useLearnerFilterSearch } from '../hooks/useLearnerFilterSearch';
 import CoursesInfoDialog from '../components/layouts/CoursesInfoDialog';
 import { InfoOutlined } from '@mui/icons-material';
 
 const Courses = () => {
 	const { courses, loading, hasMore, loadMore, enableCoursesFetch } = useContext(CoursesContext);
+	const { userCoursesData } = useContext(UserCourseLessonDataContext);
 
-	// Get user course data from localStorage for enrollment and progress tracking
-	const userCourseData: UserCoursesIdsWithCourseIds[] = JSON.parse(localStorage.getItem('userCourseData') || '[]') || [];
+	// Get user course data from context for enrollment and progress tracking
+	const userCourseData: UserCoursesIdsWithCourseIds[] = userCoursesData || [];
 	const enrolledCourseIds = userCourseData?.map((data) => data.courseId) || [];
 
 	// Dialog state for course info

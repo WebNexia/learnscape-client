@@ -300,6 +300,10 @@ const AdminInquiries = () => {
 									backgroundColor: theme.palette.background.paper,
 									padding: '0.25rem 1rem',
 								},
+								'& .MuiTableBody-root .MuiTableCell-root': {
+									padding: '0.5rem 1rem',
+									boxSizing: 'border-box',
+								},
 							}}
 							size='small'
 							aria-label='a dense table'>

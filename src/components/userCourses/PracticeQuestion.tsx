@@ -23,7 +23,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import theme from '../../themes';
 import { OrganisationContext } from '../../contexts/OrganisationContextProvider';
 import TrueFalseOptions from '../layouts/questionTypes/TrueFalseOptions';
-import { QuestionsContext } from '../../contexts/QuestionsContextProvider';
+import useQuestionTypes from '../../hooks/useQuestionTypes';
 import CustomTextField from '../forms/customFields/CustomTextField';
 import { useUserCourseLessonData } from '../../hooks/useUserCourseLessonData';
 import { AutoAwesome, Close, Done, DoneAll, KeyboardArrowLeft, KeyboardArrowRight, KeyboardDoubleArrowRight } from '@mui/icons-material';
@@ -114,7 +114,7 @@ const PracticeQuestion = ({
 
 	const { userId, lessonId, courseId, userCourseId } = useParams();
 	const { orgId } = useContext(OrganisationContext);
-	const { fetchQuestionTypeName } = useContext(QuestionsContext);
+	const { fetchQuestionTypeName } = useQuestionTypes();
 
 	const isOpenEndedQuestion: boolean = fetchQuestionTypeName(question) === QuestionType.OPEN_ENDED;
 	const isTrueFalseQuestion: boolean = fetchQuestionTypeName(question) === QuestionType.TRUE_FALSE;

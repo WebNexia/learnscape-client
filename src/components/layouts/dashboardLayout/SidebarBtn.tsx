@@ -1,4 +1,4 @@
-import { Button } from '@mui/material';
+import { Button, Badge } from '@mui/material';
 import theme from '../../../themes';
 import { useContext } from 'react';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
@@ -10,9 +10,10 @@ interface SidebarBtnProps {
 	onClick?: () => void;
 	IconName: React.ElementType;
 	active?: boolean;
+	hasUnreadMessages?: boolean;
 }
 
-const SidebarBtn = ({ btnText, onClick, IconName, active }: SidebarBtnProps) => {
+const SidebarBtn = ({ btnText, onClick, IconName, active, hasUnreadMessages }: SidebarBtnProps) => {
 	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
 	const { user } = useContext(UserAuthContext);
 
@@ -42,7 +43,11 @@ const SidebarBtn = ({ btnText, onClick, IconName, active }: SidebarBtnProps) => 
 	return (
 		<Button
 			variant='outlined'
-			startIcon={<IconName />}
+			startIcon={
+				<Badge color='error' variant='dot' invisible={!hasUnreadMessages}>
+					<IconName />
+				</Badge>
+			}
 			sx={{
 				'color': active ? theme.textColor?.primary.main : theme.textColor?.common.main,
 				'backgroundColor': active ? theme.palette.secondary.main : 'transparent',

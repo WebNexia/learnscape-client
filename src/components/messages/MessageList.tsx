@@ -76,16 +76,16 @@ const MessageList = ({
 					return true;
 				}
 
-				// If the sender is in the global blocked users list, hide their messages
-				if (globalBlockedUsers?.includes(msg.senderId)) {
-					return false; // Filter out messages from blocked users
+				// ✅ Only filter blocked messages in 1-1 chats, not group chats
+				if (!isGroupChat(activeChat) && globalBlockedUsers?.includes(msg.senderId)) {
+					return false; // Filter out messages from blocked users in 1-1 chats only
 				}
 
 				// Show all other messages
 				return true;
 			}) || []
 		);
-	}, [messages, globalBlockedUsers, user?.firebaseUserId]);
+	}, [messages, globalBlockedUsers, user?.firebaseUserId, activeChat]);
 
 	return (
 		<>
@@ -156,8 +156,8 @@ const MessageList = ({
 									transition: 'background-color 0.5s ease',
 									backgroundColor: msg.senderId === user?.firebaseUserId ? '#DCF8C6' : '#FFF',
 									alignSelf: msg.senderId === user?.firebaseUserId ? 'flex-end' : 'flex-start',
-									maxWidth: '60%',
-									minWidth: '15%',
+									maxWidth: '40%',
+									minWidth: '12.5%',
 									wordWrap: 'break-word',
 									wordBreak: 'break-all',
 								}}>
@@ -170,7 +170,9 @@ const MessageList = ({
 												fontSize: isMobileSize ? '0.6rem' : '0.7rem',
 												color: '#666',
 											}}>
-											{activeChat.participants?.find((p) => p.firebaseUserId === msg.senderId)?.username || 'Unknown User'}
+											{msg.senderId === 'system'
+												? 'System'
+												: activeChat.participants?.find((p) => p.firebaseUserId === msg.senderId)?.username || 'Unknown User'}
 										</Typography>
 									</Box>
 								)}

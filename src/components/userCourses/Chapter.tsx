@@ -5,7 +5,8 @@ import { LessonById } from '../../interfaces/lessons';
 import { ChapterLessonData } from '../../pages/AdminCourseEditPage';
 import { useContext, useState, useMemo, forwardRef, useImperativeHandle } from 'react';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
-import { UserLessonDataStorage } from '../../contexts/UserCourseLessonDataContextProvider';
+import { useUserLessonsForCourse } from '../../hooks/useUserLessonsForCourse';
+import { useParams } from 'react-router-dom';
 import theme from '../../themes';
 
 interface ChapterProps {
@@ -24,16 +25,17 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, isEnrolledStatu
 	const isMobileSize = isRotatedMedium || isSmallScreen;
 	const [isExpanded, setIsExpanded] = useState<boolean>(false); // Default to expanded
 
+	// Get courseId from URL params
+	const { courseId } = useParams();
+
+	// Fetch user lessons for current course using the new hook
+	const { data: userLessonsData } = useUserLessonsForCourse(courseId || '');
+	const parsedUserLessonData = userLessonsData || [];
+
 	// Calculate progress for this chapter
 	const progressData = useMemo(() => {
 		if (!isEnrolledStatus || !chapter?.lessons) {
 			return { completed: 0, total: 0, percentage: 0 };
-		}
-
-		const currentUserLessonData: string | null = localStorage.getItem('userLessonData');
-		let parsedUserLessonData: UserLessonDataStorage[] = [];
-		if (currentUserLessonData !== null) {
-			parsedUserLessonData = JSON.parse(currentUserLessonData);
 		}
 
 		const validLessons = chapter.lessons.filter((lesson) => lesson !== null);
@@ -46,7 +48,7 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, isEnrolledStatu
 		const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
 
 		return { completed, total, percentage };
-	}, [chapter?.lessons, isEnrolledStatus]);
+	}, [chapter?.lessons, isEnrolledStatus, parsedUserLessonData]);
 
 	const handleToggleExpanded = () => {
 		setIsExpanded(!isExpanded);
