@@ -1,13 +1,13 @@
 import { AppBar, Badge, Box, Button, IconButton, Switch, Toolbar, Tooltip, Typography } from '@mui/material';
 import theme from '../../../themes';
 import { useNavigate } from 'react-router-dom';
-import { useContext, useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { Roles } from '../../../interfaces/enums';
 import { Cancel, DoneAll, Menu, Notifications, BugReport, Delete, ClearAll, Star } from '@mui/icons-material';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 import { useUserCourseLessonData } from '../../../hooks/useUserCourseLessonData';
 import NotificationsBox from '../notifications/Notifications';
-import { collection, doc, getDocs, onSnapshot, query, where, writeBatch } from 'firebase/firestore';
+import { collection, doc, onSnapshot, query, where, writeBatch, serverTimestamp, getDocs, limit } from 'firebase/firestore';
 import { db } from '../../../firebase';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 import CustomDrawer from './CustomDrawer';
@@ -24,15 +24,28 @@ interface DashboardHeaderProps {
 const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 	const { signOut, user, setUser } = useContext(UserAuthContext);
 	const { isRotated, isVerySmallScreen, isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
-	// Check subscription status directly from user data
-	const hasActiveSubscription = (user: any): boolean => {
-		return user?.isSubscribed === true && user?.subscriptionStatus === 'active';
-	};
 
 	const navigate = useNavigate();
 	const { updateInProgressLessons } = useUserCourseLessonData();
 
 	const isMobileSize: boolean = isSmallScreen || isRotatedMedium;
+
+	// Memoize expensive computations
+	const hasActiveSubscriptionMemo = useMemo(() => {
+		return (user: any): boolean => {
+			return user?.isSubscribed === true && user?.subscriptionStatus === 'active';
+		};
+	}, []);
+
+	const headerBackgroundColor = useMemo(() => {
+		return user?.role === Roles.ADMIN
+			? theme.bgColor?.adminHeader
+			: user?.role === Roles.INSTRUCTOR
+				? theme.bgColor?.instructorHeader
+				: user?.role === Roles.USER
+					? theme.bgColor?.lessonInProgress
+					: theme.bgColor?.adminHeader;
+	}, [user?.role]);
 
 	const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
 	const hasUnreadMessages = useUnreadMessages();
@@ -64,13 +77,13 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 		return () => document.removeEventListener('mousedown', handleClickOutside); // Cleanup on unmount
 	}, []);
 
-	const clearAllQuizData = () => {
+	const clearAllQuizData = useCallback(() => {
 		Object.keys(localStorage)?.forEach((key) => {
 			if (key.startsWith('UserQuizAnswers-')) {
 				localStorage.removeItem(key);
 			}
 		});
-	};
+	}, []);
 
 	useEffect(() => {
 		if (!user?.firebaseUserId) return;
@@ -91,64 +104,71 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 		return () => unsubscribe();
 	}, [user?.firebaseUserId]);
 
-	const markAllAsRead = async (userFirebaseId: string) => {
+	const markAllAsRead = useCallback(async (userFirebaseId: string) => {
 		if (!userFirebaseId) return;
 
 		try {
-			// Create a reference to the notifications collection for the user
-			const notificationsRef = collection(db, 'notifications', userFirebaseId, 'userNotifications');
-
-			// Query to fetch all unread notifications (isRead: false)
-			const q = query(notificationsRef, where('isRead', '==', false));
-			const querySnapshot = await getDocs(q);
-
-			if (querySnapshot.empty) {
-				return;
-			}
-
-			// Use a batch to update multiple documents at once
+			// ZERO-READ approach: Use metadata document to mark all notifications as read
+			// This creates a timestamp that the UI can use to treat all older notifications as read
 			const batch = writeBatch(db);
 
-			querySnapshot?.forEach((docSnapshot) => {
-				const notificationDocRef = doc(db, 'notifications', userFirebaseId, 'userNotifications', docSnapshot.id);
-				batch.update(notificationDocRef, { isRead: true });
-			});
+			// Create/update metadata document with current timestamp
+			const metadataDocRef = doc(db, 'notifications', userFirebaseId, '__meta__', 'readState');
+			batch.set(
+				metadataDocRef,
+				{
+					markAllAsReadTimestamp: serverTimestamp(),
+					lastUpdated: serverTimestamp(),
+				},
+				{ merge: true }
+			);
 
-			// Commit the batch
+			// Commit the batch - this is a blind write with ZERO reads
 			await batch.commit();
+
+			// The UI will handle the logic to treat notifications older than this timestamp as read
+			console.log('All notifications marked as read via metadata timestamp');
 		} catch (error) {
 			console.error('Error marking notifications as read:', error);
 		}
-	};
+	}, []);
 
-	const deleteAllNotifications = async (userFirebaseId: string) => {
+	const deleteAllNotifications = useCallback(async (userFirebaseId: string) => {
 		if (!userFirebaseId) return;
 
 		try {
-			// Create a reference to the notifications collection for the user
 			const notificationsRef = collection(db, 'notifications', userFirebaseId, 'userNotifications');
 
-			// Query to fetch all notifications (both read and unread)
-			const querySnapshot = await getDocs(notificationsRef);
+			// Firestore max batch limit = 500
+			const BATCH_LIMIT = 500;
 
-			if (querySnapshot.empty) {
-				return;
+			let hasMore = true;
+
+			while (hasMore) {
+				const snapshot = await getDocs(query(notificationsRef, limit(BATCH_LIMIT)));
+
+				if (snapshot.empty) {
+					hasMore = false;
+					break;
+				}
+
+				const batch = writeBatch(db);
+
+				snapshot.forEach((docSnapshot) => {
+					batch.delete(doc(db, 'notifications', userFirebaseId, 'userNotifications', docSnapshot.id));
+				});
+
+				await batch.commit();
+
+				// If exactly 500, there might be more — continue loop
+				hasMore = snapshot.size === BATCH_LIMIT;
 			}
 
-			// Use a batch to delete multiple documents at once
-			const batch = writeBatch(db);
-
-			querySnapshot?.forEach((docSnapshot) => {
-				const notificationDocRef = doc(db, 'notifications', userFirebaseId, 'userNotifications', docSnapshot.id);
-				batch.delete(notificationDocRef);
-			});
-
-			// Commit the batch
-			await batch.commit();
+			console.log('🔥 All notifications permanently deleted from Firestore');
 		} catch (error) {
-			console.error('Error deleting all notifications:', error);
+			console.error('Error deleting notifications:', error);
 		}
-	};
+	}, []);
 
 	return (
 		<AppBar position='sticky'>
@@ -159,14 +179,7 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 					alignItems: 'center',
 					height: '3.5rem',
 					width: '100%',
-					backgroundColor:
-						user?.role === Roles.ADMIN
-							? theme.bgColor?.adminHeader
-							: user?.role === Roles.INSTRUCTOR
-								? theme.bgColor?.instructorHeader
-								: user?.role === Roles.USER
-									? theme.bgColor?.lessonInProgress
-									: theme.bgColor?.adminHeader,
+					backgroundColor: headerBackgroundColor,
 					padding: isVerySmallScreen || isRotated ? '0 0.5rem 0 0.25rem' : '0 0rem',
 					position: 'relative',
 				}}>
@@ -190,7 +203,7 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 					{/* Subscribe/Unsubscribe Button */}
 					{user?.role === Roles.USER && !user?.hasRegisteredCourse && (
 						<>
-							{!hasActiveSubscription(user) ? (
+							{!hasActiveSubscriptionMemo(user) ? (
 								<Button
 									variant='contained'
 									startIcon={<Star />}

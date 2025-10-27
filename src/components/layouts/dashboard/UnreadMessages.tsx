@@ -1,54 +1,69 @@
 import { MarkunreadOutlined } from '@mui/icons-material';
 import { Box, Typography } from '@mui/material';
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useState, useMemo, memo } from 'react';
 import theme from '../../../themes';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '../../../firebase';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 
-const UnreadMessages = () => {
+const UnreadMessages = memo(() => {
 	const { user } = useContext(UserAuthContext);
 	const { isRotated, isSmallScreen } = useContext(MediaQueryContext);
 
-	const isMobileSize: boolean = isSmallScreen || isRotated;
-	const [hasUnreadMessages, setHasUnreadMessages] = useState<boolean>(false);
+	// Memoize expensive computations
+	const isMobileSize = useMemo(() => isSmallScreen || isRotated, [isSmallScreen, isRotated]);
+	const [unreadCount, setUnreadCount] = useState<number>(0);
+	const [isLoading, setIsLoading] = useState<boolean>(true);
+	const [error, setError] = useState<string | null>(null);
 
+	// Memoize the user ID to prevent unnecessary re-renders
+	const userFirebaseId = useMemo(() => user?.firebaseUserId, [user?.firebaseUserId]);
+
+	// Optimized real-time listener - only listens to chats with unread messages
 	useEffect(() => {
-		// If no user is authenticated, return early
-		if (!user?.firebaseUserId) return;
+		if (!userFirebaseId) {
+			setIsLoading(false);
+			return;
+		}
 
-		// Function to fetch unread messages
-		const fetchUnreadMessages = async () => {
-			const chatsRef = collection(db, 'chats');
-			const q = query(chatsRef, where('participants', 'array-contains', user?.firebaseUserId));
+		setIsLoading(true);
+		setError(null);
 
-			// Get all chat documents where the user is a participant
-			const querySnapshot = await getDocs(q);
+		const chatsRef = collection(db, 'chats');
+		// Only listen to chats **that actually have unread messages for this user**
+		const q = query(chatsRef, where('unreadBy', 'array-contains', userFirebaseId));
 
-			let hasUnread = false;
+		// Real-time listener — no polling needed
+		const unsubscribe = onSnapshot(
+			q,
+			(snapshot) => {
+				setUnreadCount(snapshot.size); // number instead of boolean
+				setIsLoading(false);
+			},
+			(error) => {
+				console.error('Error listening to unread messages:', error);
+				setError('Failed to load unread messages');
+				setIsLoading(false);
+			}
+		);
 
-			// Loop through chats to see if any hasUnreadMessages is true
-			querySnapshot?.forEach((doc) => {
-				const data = doc.data();
-				if (data.unreadBy && data.unreadBy?.includes(user.firebaseUserId)) {
-					hasUnread = true; // As soon as we find unread messages for this user, set the flag
-				}
-			});
+		return () => unsubscribe(); // cleanup
+	}, [userFirebaseId]);
 
-			// Set the state to true if there are any unread messages
-			setHasUnreadMessages(hasUnread);
-		};
+	// Memoize the message text to prevent unnecessary re-renders
+	const messageText = useMemo(() => {
+		if (isLoading) return 'Loading...';
+		if (error) return 'Error loading messages';
+		return unreadCount ? `You have ${unreadCount} unread message${unreadCount > 1 ? 's' : ''}` : 'You have no unread messages';
+	}, [isLoading, error, unreadCount]);
 
-		// Fetch unread messages on mount
-		fetchUnreadMessages();
-
-		// Set an interval to fetch unread messages every 5 minutes
-		const intervalId = setInterval(fetchUnreadMessages, 600000);
-
-		// Clear the interval when the component unmounts
-		return () => clearInterval(intervalId);
-	}, [user?.firebaseUserId]);
+	// Memoize the message color
+	const messageColor = useMemo(() => {
+		if (isLoading) return 'gray';
+		if (error) return '#ef5350';
+		return unreadCount ? '#ef5350' : 'gray';
+	}, [isLoading, error, unreadCount]);
 
 	return (
 		<Box
@@ -73,12 +88,10 @@ const UnreadMessages = () => {
 				<MarkunreadOutlined sx={{ ml: '0.5rem', color: theme.textColor?.greenPrimary.main }} fontSize={isMobileSize ? 'small' : 'medium'} />
 			</Box>
 			<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '7rem' }}>
-				<Typography sx={{ fontSize: isMobileSize ? '0.65rem' : '0.85rem', color: hasUnreadMessages ? '#ef5350' : 'gray', textAlign: 'center' }}>
-					{hasUnreadMessages ? 'You have unread messages' : 'You have no unread messages'}
-				</Typography>
+				<Typography sx={{ fontSize: isMobileSize ? '0.65rem' : '0.85rem', color: messageColor, textAlign: 'center' }}>{messageText}</Typography>
 			</Box>
 		</Box>
 	);
-};
+});
 
 export default UnreadMessages;

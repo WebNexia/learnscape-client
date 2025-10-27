@@ -15,7 +15,7 @@ import HandleImageUploadURL from '../../components/forms/uploadImageVideoDocumen
 import { validateImageUrl } from '../../utils/urlValidation';
 import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
 import { Roles, NotificationType } from '../../interfaces/enums';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { serverTimestamp, writeBatch, doc } from 'firebase/firestore';
 import { db } from '../../firebase';
 
 interface EditInstructorDialogProps {
@@ -115,9 +115,21 @@ const EditInstructorDialog = ({
 							courseId: singleCourseCopy._id,
 						};
 
-						// Add notification to instructor's notification collection
-						const notificationRef = collection(db, 'notifications', newInstructor.firebaseUserId, 'userNotifications');
-						await addDoc(notificationRef, notificationData);
+						// Use batch operation with content-based deduplication (non-blocking)
+						const batch = writeBatch(db);
+						const notificationDocRef = doc(
+							db,
+							'notifications',
+							newInstructor.firebaseUserId,
+							'userNotifications',
+							`instructor-assignment-${singleCourseCopy._id}`
+						);
+						batch.set(notificationDocRef, notificationData, { merge: true });
+
+						// Non-blocking notification - course assignment success is not dependent on notification success
+						batch.commit().catch((error) => {
+							console.warn('Failed to send instructor assignment notification:', error);
+						});
 					}
 				} catch (notificationError) {
 					console.error('Failed to send instructor assignment notification:', notificationError);

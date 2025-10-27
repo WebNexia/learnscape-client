@@ -12,7 +12,7 @@ import EditMessageDialog from './EditMessageDialog';
 import { renderMessageWithEmojis } from '../../../../utils/renderMessageWithEmojis';
 import { OrganisationContext } from '../../../../contexts/OrganisationContextProvider';
 import { CommunityMessagesContext } from '../../../../contexts/CommunityMessagesContextProvider';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { serverTimestamp, writeBatch, doc } from 'firebase/firestore';
 import { truncateText } from '../../../../utils/utilText';
 import { db } from '../../../../firebase';
 import { MediaQueryContext } from '../../../../contexts/MediaQueryContextProvider';
@@ -153,7 +153,7 @@ const Message = ({
 
 			updateMessage(message._id, { isReported: true });
 
-			// Create the notification data
+			// Send notifications AFTER message is marked as reported (non-blocking)
 			const notificationData = {
 				title: 'Message Reported',
 				message: `${user?.username} reported the message "${truncateText(message.text, 30)}" in ${truncateText(topicTitle, 25)} in community topics`,
@@ -165,11 +165,23 @@ const Message = ({
 				communityMessageId: message._id,
 			};
 
+			// Use batch operation with content-based deduplication (non-blocking)
+			const batch = writeBatch(db);
+			const usersAlreadyNotified = new Set<string>();
+
 			// Send notifications to each admin
 			for (const admin of adminUsers) {
-				const notificationRef = collection(db, 'notifications', admin.firebaseUserId, 'userNotifications');
-				await addDoc(notificationRef, notificationData);
+				if (admin.firebaseUserId && !usersAlreadyNotified.has(admin.firebaseUserId)) {
+					const notificationDocRef = doc(db, 'notifications', admin.firebaseUserId, 'userNotifications', `message-report-${message._id}`);
+					batch.set(notificationDocRef, notificationData, { merge: true });
+					usersAlreadyNotified.add(admin.firebaseUserId);
+				}
 			}
+
+			// Non-blocking notification - message reporting success is not dependent on notification success
+			batch.commit().catch((error) => {
+				console.warn('Failed to send message report notifications:', error);
+			});
 		} catch (error) {
 			console.log(error);
 		}
