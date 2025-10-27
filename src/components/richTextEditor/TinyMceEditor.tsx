@@ -129,7 +129,6 @@ const TinyMceEditor = ({
 				init={{
 					height: height,
 					width: '100%',
-					icons: 'thin',
 					menubar: 'edit view insert format tools table',
 					statusbar: false,
 					menu: {

@@ -22,7 +22,7 @@ import FillInTheBlanksDragDrop from '../components/layouts/FITBDragDrop/FillInTh
 import FillInTheBlanksTyping from '../components/layouts/FITBTyping/FillInTheBlanksTyping';
 import CustomInfoMessageAlignedRight from '../components/layouts/infoMessage/CustomInfoMessageAlignedRight';
 import QuestionResponseCard from '../components/layouts/quizSubmissions/QuestionResponseCard';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { serverTimestamp, writeBatch, doc } from 'firebase/firestore';
 import QuestionMedia from '../components/userCourses/QuestionMedia';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import { decode } from 'html-entities';
@@ -200,21 +200,6 @@ const AdminQuizSubmissionCheck = () => {
 				});
 			}
 
-			const notificationData = {
-				title: 'Quiz Checked',
-				message: `${user?.username} checked ${quizName} in the ${courseName} course.`,
-				isRead: false,
-				timestamp: serverTimestamp(),
-				type: 'QuizSubmission',
-				userImageUrl: user?.imageUrl,
-				lessonId,
-				submissionId,
-				userLessonId,
-			};
-
-			const notificationRef = collection(db, 'notifications', studentFirebaseId, 'userNotifications');
-			await addDoc(notificationRef, notificationData);
-
 			await Promise.all(
 				userQuestionsFeedbacks?.map((feedback) => {
 					if (feedback.feedback && feedback.isUpdated) {
@@ -250,6 +235,29 @@ const AdminQuizSubmissionCheck = () => {
 				// Trigger dashboard sync when quiz is checked
 				dashboardSyncHelpers.onQuizSubmitted(refreshDashboard, refreshQuizSubmissions);
 			}
+
+			// Send notification AFTER submission is fully finalized (non-blocking)
+			const notificationData = {
+				title: 'Quiz Checked',
+				message: `${user?.username} checked ${quizName} in the ${courseName} course.`,
+				isRead: false,
+				timestamp: serverTimestamp(),
+				type: 'QuizSubmission',
+				userImageUrl: user?.imageUrl,
+				lessonId,
+				submissionId,
+				userLessonId,
+			};
+
+			// Use batch operation with content-based deduplication (non-blocking)
+			const batch = writeBatch(db);
+			const notificationDocRef = doc(db, 'notifications', studentFirebaseId, 'userNotifications', submissionId || 'default');
+			batch.set(notificationDocRef, notificationData, { merge: true });
+
+			// Non-blocking notification - submission success is not dependent on notification success
+			batch.commit().catch((error) => {
+				console.warn('Failed to send quiz checked notification:', error);
+			});
 
 			setDisplaySubmissionMsg(true);
 			setIsQuizFeedbackUpdated(false);

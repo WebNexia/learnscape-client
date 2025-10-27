@@ -18,8 +18,7 @@ import data from '@emoji-mart/data';
 import { HideImage, Image, InsertEmoticon, Mic, MicOff } from '@mui/icons-material';
 import ImageThumbnail from '../../../forms/uploadImageVideoDocument/ImageThumbnail';
 import { truncateText } from '../../../../utils/utilText';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { UsersContext } from '../../../../contexts/UsersContextProvider';
+import { serverTimestamp, writeBatch, doc } from 'firebase/firestore';
 import { MediaQueryContext } from '../../../../contexts/MediaQueryContextProvider';
 import { validateImageUrl } from '../../../../utils/urlValidation';
 import { useUploadLimit } from '../../../../contexts/UploadLimitContextProvider';
@@ -35,7 +34,6 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
-	const { users } = useContext(UsersContext);
 	const { addNewTopic } = useContext(CommunityContext);
 
 	const { isSmallScreen, isRotatedMedium, isVerySmallScreen, isRotated } = useContext(MediaQueryContext);
@@ -101,7 +99,9 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 				audioUrl: topic.audioUrl,
 			});
 
-			const allIds: string[] = users?.map((user) => user.firebaseUserId) || [];
+			// Fetch all admins and instructors for notifications (single optimized call)
+			const adminInstructorResponse = await axios.get(`${base_url}/users/organisation/${orgId}/admin-instructor-users`);
+			const allIds: string[] = adminInstructorResponse.data.data?.map((user: any) => user.firebaseUserId) || [];
 
 			addNewTopic({
 				_id: response.data._id,
@@ -118,6 +118,7 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 
 			reset();
 
+			// Send notifications AFTER topic is created (non-blocking)
 			const notificationToUsersData = {
 				title: 'Community Topic Created',
 				message: `${user?.username} created a new topic: ${truncateText(topic.title, 25)}`,
@@ -128,12 +129,22 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 				communityTopicId: response.data._id,
 			};
 
+			// Use batch operation with content-based deduplication (non-blocking)
+			const batch = writeBatch(db);
+			const usersAlreadyNotified = new Set<string>();
+
 			for (const id of allIds) {
-				if (id !== user?.firebaseUserId) {
-					const notificationRef = collection(db, 'notifications', id, 'userNotifications');
-					await addDoc(notificationRef, notificationToUsersData);
+				if (id !== user?.firebaseUserId && !usersAlreadyNotified.has(id)) {
+					const notificationDocRef = doc(db, 'notifications', id, 'userNotifications', `topic-created-${response.data._id}`);
+					batch.set(notificationDocRef, notificationToUsersData, { merge: true });
+					usersAlreadyNotified.add(id);
 				}
 			}
+
+			// Non-blocking notification - topic creation success is not dependent on notification success
+			batch.commit().catch((error) => {
+				console.warn('Failed to send topic creation notifications:', error);
+			});
 		} catch (error: any) {
 			console.log(error);
 			// Show error message to user

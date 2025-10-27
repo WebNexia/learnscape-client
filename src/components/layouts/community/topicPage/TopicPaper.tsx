@@ -12,7 +12,7 @@ import CustomDialogActions from '../../dialog/CustomDialogActions';
 import { CommunityContext } from '../../../../contexts/CommunityContextProvider';
 import EditTopicDialog from '../editTopic/EditTopicDialog';
 import { OrganisationContext } from '../../../../contexts/OrganisationContextProvider';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { serverTimestamp, writeBatch, doc } from 'firebase/firestore';
 import { db } from '../../../../firebase';
 import { truncateText } from '../../../../utils/utilText';
 import { MediaQueryContext } from '../../../../contexts/MediaQueryContextProvider';
@@ -31,7 +31,7 @@ interface TopicPaperProps {
 const TopicPaper = ({ topic, setDisplayDeleteTopicMsg, setTopic, refreshTopics, isTopicLocked, setIsTopicLocked }: TopicPaperProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { user } = useContext(UserAuthContext);
-	const { adminUsers } = useContext(OrganisationContext);
+	const { orgId } = useContext(OrganisationContext);
 	const { removeTopic, fetchTopics } = useContext(CommunityContext);
 
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
@@ -83,7 +83,11 @@ const TopicPaper = ({ topic, setDisplayDeleteTopicMsg, setTopic, refreshTopics, 
 				return { ...prevData, isReported: true };
 			});
 
-			// Create the notification data
+			// Fetch all admins and instructors for notifications (not limited by pagination)
+			const adminInstructorResponse = await axios.get(`${base_url}/users/organisation/${orgId}/admin-instructor-users`);
+			const allAdminsAndInstructors = adminInstructorResponse.data.data || [];
+
+			// Send notifications AFTER topic is marked as reported (non-blocking)
 			const notificationData = {
 				title: 'Topic Reported',
 				message: `${user?.username} reported ${truncateText(topic.title, 25)} in community topics`,
@@ -94,11 +98,23 @@ const TopicPaper = ({ topic, setDisplayDeleteTopicMsg, setTopic, refreshTopics, 
 				communityTopicId: topic._id,
 			};
 
-			// Send notifications to each admin
-			for (const admin of adminUsers) {
-				const notificationRef = collection(db, 'notifications', admin.firebaseUserId, 'userNotifications');
-				await addDoc(notificationRef, notificationData);
+			// Use batch operation with content-based deduplication (non-blocking)
+			const batch = writeBatch(db);
+			const usersAlreadyNotified = new Set<string>();
+
+			// Send notifications to each admin and instructor
+			for (const user of allAdminsAndInstructors) {
+				if (user.firebaseUserId && !usersAlreadyNotified.has(user.firebaseUserId)) {
+					const notificationDocRef = doc(db, 'notifications', user.firebaseUserId, 'userNotifications', `topic-report-${topic._id}`);
+					batch.set(notificationDocRef, notificationData, { merge: true });
+					usersAlreadyNotified.add(user.firebaseUserId);
+				}
 			}
+
+			// Non-blocking notification - topic reporting success is not dependent on notification success
+			batch.commit().catch((error) => {
+				console.warn('Failed to send topic report notifications:', error);
+			});
 		} catch (error) {
 			console.log(error);
 		}

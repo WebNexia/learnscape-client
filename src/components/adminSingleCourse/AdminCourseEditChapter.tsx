@@ -52,6 +52,10 @@ const AdminCourseEditChapter = ({
 		setIsExpanded(!isExpanded);
 	};
 
+	const handleLessonAdded = () => {
+		setIsExpanded(true);
+	};
+
 	return (
 		<Box
 			sx={{
@@ -201,6 +205,7 @@ const AdminCourseEditChapter = ({
 				setChapterLessonDataBeforeSave={setChapterLessonDataBeforeSave}
 				setIsChapterUpdated={setIsChapterUpdated}
 				setHasUnsavedChanges={setHasUnsavedChanges}
+				onLessonAdded={handleLessonAdded}
 			/>
 
 			<CreateLessonDialog
@@ -211,6 +216,7 @@ const AdminCourseEditChapter = ({
 				setChapterLessonDataBeforeSave={setChapterLessonDataBeforeSave}
 				setIsChapterUpdated={setIsChapterUpdated}
 				setHasUnsavedChanges={setHasUnsavedChanges}
+				onLessonAdded={handleLessonAdded}
 			/>
 			{/* Collapsible Lessons Section */}
 			<Collapse in={isExpanded} timeout='auto' unmountOnExit>

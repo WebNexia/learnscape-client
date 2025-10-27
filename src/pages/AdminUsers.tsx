@@ -262,7 +262,7 @@ const AdminUsers = () => {
 						isSearchLoading={isSearchLoading}
 						isSearchActive={isSearchActive}
 						searchResultsTotalItems={searchResultsTotalItems}
-						totalItems={totalItems}
+						totalItems={totalItems || users?.length || 0}
 						searchedValue={searchedValue}
 						onResetSearch={resetSearch}
 						onResetFilter={resetFilter}
@@ -312,7 +312,7 @@ const AdminUsers = () => {
 								},
 								'& .MuiTableHead-root .MuiTableCell-root': {
 									backgroundColor: theme.bgColor?.secondary,
-									padding: '0.25rem 1rem',
+									padding: '0.75rem 1rem',
 									boxSizing: 'border-box',
 									margin: 0,
 									verticalAlign: 'center',
@@ -391,15 +391,17 @@ const AdminUsers = () => {
 							size='small'
 							aria-label='a dense table'>
 							{/* Spacer row to ensure header alignment */}
-							<TableRow sx={{ height: 0, visibility: 'hidden' }}>
-								<TableCell sx={{ width: isVerySmallScreen ? '30%' : '14%', padding: 0, border: 'none' }} />
-								<TableCell sx={{ width: isVerySmallScreen ? '40%' : '14%', padding: 0, border: 'none' }} />
-								<TableCell sx={{ width: isVerySmallScreen ? '30%' : '12%', padding: 0, border: 'none' }} />
-								<TableCell sx={{ width: isVerySmallScreen ? '0%' : '30%', padding: 0, border: 'none' }} />
-								<TableCell sx={{ width: isVerySmallScreen ? '0%' : '12%', padding: 0, border: 'none' }} />
-								<TableCell sx={{ width: isVerySmallScreen ? '0%' : '10%', padding: 0, border: 'none' }} />
-								<TableCell sx={{ width: isVerySmallScreen ? '0%' : '10%', padding: 0, border: 'none' }} />
-							</TableRow>
+							<TableBody>
+								<TableRow sx={{ height: 0, visibility: 'hidden' }}>
+									<TableCell sx={{ width: isVerySmallScreen ? '30%' : '14%', padding: 0, border: 'none' }} />
+									<TableCell sx={{ width: isVerySmallScreen ? '40%' : '14%', padding: 0, border: 'none' }} />
+									<TableCell sx={{ width: isVerySmallScreen ? '30%' : '12%', padding: 0, border: 'none' }} />
+									<TableCell sx={{ width: isVerySmallScreen ? '0%' : '30%', padding: 0, border: 'none' }} />
+									<TableCell sx={{ width: isVerySmallScreen ? '0%' : '12%', padding: 0, border: 'none' }} />
+									<TableCell sx={{ width: isVerySmallScreen ? '0%' : '10%', padding: 0, border: 'none' }} />
+									<TableCell sx={{ width: isVerySmallScreen ? '0%' : '10%', padding: 0, border: 'none' }} />
+								</TableRow>
+							</TableBody>
 							<CustomTableHead<User>
 								orderBy={orderBy as keyof User}
 								order={order}

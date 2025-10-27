@@ -1,4 +1,5 @@
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, Tooltip, IconButton } from '@mui/material';
+import InfoIcon from '@mui/icons-material/Info';
 import theme from '../../../themes';
 import { QuestionInterface } from '../../../interfaces/question';
 import { Lesson } from '../../../interfaces/lessons';
@@ -90,14 +91,47 @@ const FlipCardFrontFace = ({
 
 	return (
 		<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: isMobileSize ? '20rem' : '25rem' }}>
-			<Typography variant={isMobileSize ? 'body2' : 'body1'}>Front</Typography>
+			<Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+				<Typography variant={isMobileSize ? 'body2' : 'body1'}>Front</Typography>
+				<Tooltip
+					title={
+						<Box sx={{ p: 1 }}>
+							<Typography variant='body2' sx={{ fontWeight: 'bold', mb: 0.5, color: 'white' }}>
+								Text Formatting Help:
+							</Typography>
+							<Typography variant='body2' sx={{ mb: 0.5, color: 'white' }}>
+								*text* ---&gt; <strong>text</strong>
+							</Typography>
+							<Typography variant='body2' sx={{ color: 'white' }}>
+								_text_ ---&gt; <em>text</em>
+							</Typography>
+						</Box>
+					}
+					arrow
+					placement='top'
+					sx={{
+						'& .MuiTooltip-tooltip': {
+							backgroundColor: '#2c3e50',
+							color: 'white',
+							fontSize: '0.875rem',
+							border: '1px solid #34495e',
+						},
+						'& .MuiTooltip-arrow': {
+							color: '#2c3e50',
+						},
+					}}>
+					<IconButton size='small' sx={{ p: 0.5 }}>
+						<InfoIcon sx={{ fontSize: '1rem' }} />
+					</IconButton>
+				</Tooltip>
+			</Box>
 
 			{question?.imageUrl || newQuestion?.imageUrl ? (
 				FrontFaceImage
 			) : (
 				<Box
 					sx={{
-						backgroundColor: theme.bgColor?.greenPrimary,
+						background: 'linear-gradient(135deg, #4a7ba7 0%, #5a8bb7 100%)',
 						width: isMobileSize ? '15rem' : '25rem',
 						height: isMobileSize ? '10rem' : '30vh',
 						color: 'white',
@@ -107,7 +141,9 @@ const FlipCardFrontFace = ({
 						borderRadius: '0.5rem 0.5rem 0 0',
 						objectFit: 'contain',
 					}}>
-					<Typography variant={isMobileSize ? 'body2' : 'body1'}>No Image</Typography>
+					<Typography variant={isMobileSize ? 'body2' : 'body1'} sx={{ color: theme.textColor?.common.main }}>
+						No Image
+					</Typography>
 				</Box>
 			)}
 
@@ -148,7 +184,7 @@ const FlipCardFrontFace = ({
 					setIsQuestionMissing(false);
 				}}
 				style={{
-					backgroundColor: theme.bgColor?.greenPrimary,
+					background: 'linear-gradient(135deg, #4a7ba7 0%, #5a8bb7 100%)',
 					width: isMobileSize ? '15rem' : '25rem',
 					height: isMobileSize ? '5rem' : '10vh',
 					color: 'white',

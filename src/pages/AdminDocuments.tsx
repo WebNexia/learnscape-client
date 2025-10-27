@@ -528,7 +528,7 @@ const AdminDocuments = () => {
 						isSearchLoading={isSearchLoading}
 						isSearchActive={isSearchActive}
 						searchResultsTotalItems={searchResultsTotalItems}
-						totalItems={totalItems}
+						totalItems={totalItems || documents?.length || 0}
 						searchedValue={searchedValue}
 						onResetSearch={resetSearch}
 						onResetFilter={resetFilter}
@@ -638,7 +638,7 @@ const AdminDocuments = () => {
 								},
 								'& .MuiTableHead-root .MuiTableCell-root': {
 									backgroundColor: theme.bgColor?.secondary,
-									padding: '0.25rem 1rem',
+									padding: '0.75rem 1rem',
 									boxSizing: 'border-box',
 									margin: 0,
 									verticalAlign: 'center',

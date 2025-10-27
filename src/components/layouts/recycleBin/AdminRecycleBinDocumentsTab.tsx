@@ -385,7 +385,7 @@ const AdminRecycleBinDocumentsTab = () => {
 				isSearchLoading={isSearchLoading}
 				isSearchActive={isSearchActive}
 				searchResultsTotalItems={searchResultsTotalItems}
-				totalItems={totalItems}
+				totalItems={totalItems || archivedDocuments?.length || 0}
 				searchedValue={searchedValue}
 				onResetSearch={resetSearch}
 				onResetFilter={resetFilter}

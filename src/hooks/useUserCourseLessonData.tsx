@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useState } from 'react';
+import { useCallback, useContext, useEffect, useState, useMemo } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import { useQueryClient } from 'react-query';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
@@ -22,11 +22,17 @@ export const useUserCourseLessonData = () => {
 	const queryClient = useQueryClient();
 
 	// Use context data for userCourseData, use hook for userLessonData
-	const parsedUserCourseData = userCoursesData || [];
+	const parsedUserCourseData = useMemo(() => {
+		return userCoursesData || [];
+	}, [userCoursesData]);
 
 	// Fetch user lessons for current course using the new hook
 	const { data: userLessonsData } = useUserLessonsForCourse(courseId || '');
-	const parsedUserLessonData = userLessonsData || [];
+
+	// Memoize parsedUserLessonData to prevent unnecessary re-renders
+	const parsedUserLessonData = useMemo(() => {
+		return userLessonsData || [];
+	}, [userLessonsData]);
 
 	// Dashboard sync for real-time updates
 	const { refreshDashboard } = useDashboardSync();

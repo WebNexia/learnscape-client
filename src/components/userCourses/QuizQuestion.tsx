@@ -42,7 +42,7 @@ import FillInTheBlanksTyping from '../layouts/FITBTyping/FillInTheBlanksTyping';
 import FillInTheBlanksDragDrop from '../layouts/FITBDragDrop/FillInTheBlanksDragDrop';
 import MatchingPreview from '../layouts/matching/MatchingPreview';
 import { UserBlankValuePairAnswers, UserMatchingPairAnswers } from '../../interfaces/userQuestion';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { serverTimestamp, writeBatch, doc } from 'firebase/firestore';
 import { UserCourseLessonDataContext } from '../../contexts/UserCourseLessonDataContextProvider';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 
@@ -279,27 +279,33 @@ const QuizQuestion = ({
 				orgId,
 			});
 
-			// Create the notification data
-			const notificationData = {
-				title: 'Quiz Submitted',
-				message: `${user?.username} submitted ${lessonName} in the ${courseTitle} course.`,
-				isRead: false,
-				timestamp: serverTimestamp(),
-				type: 'QuizSubmission',
-				userImageUrl: user?.imageUrl,
-				lessonId,
-				submissionId: submissionResponse.data._id,
-				userLessonId,
-			};
-
-			// Send notification to course instructor if available
+			// Send notification AFTER quiz submission is complete (non-blocking)
 			const courseInstructor = submissionResponse.data?.courseInstructor;
 			if (courseInstructor?.firebaseUserId) {
-				const notificationRef = collection(db, 'notifications', courseInstructor.firebaseUserId, 'userNotifications');
-				await addDoc(notificationRef, notificationData);
+				const notificationData = {
+					title: 'Quiz Submitted',
+					message: `${user?.username} submitted ${lessonName} in the ${courseTitle} course.`,
+					isRead: false,
+					timestamp: serverTimestamp(),
+					type: 'QuizSubmission',
+					userImageUrl: user?.imageUrl,
+					lessonId,
+					submissionId: submissionResponse.data._id,
+					userLessonId,
+				};
+
+				// Use batch operation with content-based deduplication (non-blocking)
+				const batch = writeBatch(db);
+				const notificationDocRef = doc(db, 'notifications', courseInstructor.firebaseUserId, 'userNotifications', submissionResponse.data._id);
+				batch.set(notificationDocRef, notificationData, { merge: true });
+
+				// Non-blocking notification - quiz submission success is not dependent on notification success
+				batch.commit().catch((error) => {
+					console.warn('Failed to send quiz submitted notification:', error);
+				});
 			}
 		} catch (error) {
-			console.error('Error submitting quiz or sending notifications:', error);
+			console.error('Error submitting quiz:', error);
 		} finally {
 			setIsMsgModalAfterSubmitOpen(true);
 		}

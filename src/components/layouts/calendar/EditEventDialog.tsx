@@ -36,8 +36,7 @@ import theme from '../../../themes';
 import { truncateText } from '../../../utils/utilText';
 
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { db } from '../../../firebase';
+import { sendEventUpdatedNotifications } from '../../../utils/eventNotifications';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 import axios from '@utils/axiosInstance';
 import HandleImageUploadURL from '../../forms/uploadImageVideoDocument/HandleImageUploadURL';
@@ -58,7 +57,6 @@ interface EditEventDialogProps {
 	selectedEvent: Event | null;
 	setEditEventModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
 	setSelectedEvent: React.Dispatch<React.SetStateAction<Event | null>>;
-	isUpdatingEvent?: boolean;
 	setIsUpdatingEvent?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
@@ -83,7 +81,6 @@ const EditEventDialog = ({
 	selectedEvent,
 	setEditEventModalOpen,
 	setSelectedEvent,
-	isUpdatingEvent,
 	setIsUpdatingEvent,
 }: EditEventDialogProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -443,20 +440,21 @@ const EditEventDialog = ({
 		});
 
 		try {
-			// Always attempt to update the event
-			const endpoint = `${base_url}/events/${selectedEvent?._id}`;
-
 			const uniqueAllAttendeesIds = [...new Set(allParticipantsIds)];
+			// Only update the event if there are changes
+			if (isEventUpdated) {
+				const endpoint = `${base_url}/events/${selectedEvent?._id}`;
 
-			await axios.patch(endpoint, {
-				...selectedEvent,
-				attendees: selectedEvent?.attendees?.map((a) => a._id) || [],
-				allAttendeesIds: uniqueAllAttendeesIds,
-				isAllInstructorsSelected: selectedEvent?.isAllInstructorsSelected,
-				isAllSubscribersSelected: selectedEvent?.isAllSubscribersSelected,
-				type: !selectedEvent?.isPublic ? '' : selectedEvent?.type,
-				coverImageUrl: !selectedEvent?.isPublic ? '' : selectedEvent?.coverImageUrl,
-			});
+				await axios.patch(endpoint, {
+					...selectedEvent,
+					attendees: selectedEvent?.attendees?.map((a) => a._id) || [],
+					allAttendeesIds: uniqueAllAttendeesIds,
+					isAllInstructorsSelected: selectedEvent?.isAllInstructorsSelected,
+					isAllSubscribersSelected: selectedEvent?.isAllSubscribersSelected,
+					type: !selectedEvent?.isPublic ? '' : selectedEvent?.type,
+					coverImageUrl: !selectedEvent?.isPublic ? '' : selectedEvent?.coverImageUrl,
+				});
+			}
 
 			if (selectedEvent) {
 				updateEvent({
@@ -483,67 +481,20 @@ const EditEventDialog = ({
 				timeZoneName: 'short',
 			});
 
-			// Notify all users only if event is being made public now
-			if (!wasPublic && selectedEvent?.isPublic) {
-				try {
-					// Fetch ALL users from API instead of using limited context data
-					const allUsersResponse = await axios.get(`${base_url}/users/organisation/${orgId}?limit=10000`);
-					const allUsers = allUsersResponse.data.data || [];
-
-					// Filter out the current user and get Firebase IDs
-					const allFirebaseUserIds: string[] = allUsers
-						.filter((filteredUser: any) => filteredUser._id !== user?._id)
-						.map((mappedUser: any) => mappedUser.firebaseUserId)
-						.filter((id: string) => id); // Remove any undefined/null IDs
-
-					if (allFirebaseUserIds.length > 0) {
-						const adminName = user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : user?.username || 'Admin';
-						const publicEventNotification = {
-							title: 'New Public Event',
-							message: `${adminName} has added a public event: "${selectedEvent.title}". It will take place on ${startDate} at ${startTime}.`,
-							isRead: false,
-							timestamp: serverTimestamp(),
-							type: 'PublicEvent',
-							userImageUrl: user?.imageUrl,
-							eventId: selectedEvent._id,
-						};
-
-						// Send notifications to all users
-						for (const id of allFirebaseUserIds) {
-							try {
-								const notificationRef = collection(db, 'notifications', id, 'userNotifications');
-								await addDoc(notificationRef, publicEventNotification);
-							} catch (error) {
-								console.error('❌ Failed to send notification to user:', id, error);
-							}
-						}
-					} else {
-						console.warn('⚠️ No users found to send public event notifications to');
-					}
-				} catch (error) {
-					console.error('❌ Failed to fetch users for public event notifications:', error);
-				}
-			}
-
-			// Notify newly added participants
-			const newAttendeeIds = allParticipantsIds;
-			const newlyAddedIds = newAttendeeIds?.filter((id) => !previousAttendeeIds?.includes(id)) || [];
-			const adminName = user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : user?.username || 'Admin';
-
-			for (const participant of allCoursesParticipantsInfo) {
-				if (newlyAddedIds?.includes(participant._id) && participant.firebaseUserId) {
-					const notificationRef = collection(db, 'notifications', participant.firebaseUserId, 'userNotifications');
-					await addDoc(notificationRef, {
-						title: 'Added to Event',
-						message: `${adminName} has added you to the event: "${truncateText(selectedEvent?.title || '', 20)}". The event will start on ${startDate} at ${startTime}.`,
-						isRead: false,
-						timestamp: serverTimestamp(),
-						type: 'AddToEvent',
-						userImageUrl: user?.imageUrl,
-						eventId: selectedEvent?._id,
-					});
-				}
-			}
+			// Send notifications using the utility function
+			void sendEventUpdatedNotifications({
+				user,
+				selectedEvent,
+				startDate: startDate || '',
+				startTime: startTime || '',
+				previousAttendeeIds,
+				allCoursesParticipantsInfo,
+				baseUrl: base_url,
+				orgId,
+				wasPublic,
+			}).catch((error) => {
+				console.warn('Failed to send event updated notifications:', error);
+			});
 
 			setEditEventModalOpen(false);
 		} catch (error: any) {

@@ -151,7 +151,7 @@ const AdminPaymentsTab = () => {
 				isSearchLoading={isSearchLoading}
 				isSearchActive={isSearchActive}
 				searchResultsTotalItems={searchResultsTotalItems}
-				totalItems={totalItems}
+				totalItems={totalItems || payments?.length || 0}
 				searchedValue={searchedValue}
 				onResetSearch={resetSearch}
 				onResetFilter={resetFilter}
