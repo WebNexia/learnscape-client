@@ -47,21 +47,13 @@ const FlipCardSide = styled(Box)({
 });
 
 const FlipCardFront = styled(FlipCardSide)({
-	backgroundColor: theme.bgColor?.greenPrimary,
+	background: 'linear-gradient(135deg, #4a7ba7 0%, #5a8bb7 100%)',
 });
 
 const FlipCardBack = styled(FlipCardSide)({
-	backgroundColor: 'coral',
+	background: 'linear-gradient(135deg, #c47a6a 0%, #d48a7a 100%)',
 	transform: 'rotateY(180deg)',
 });
-
-// const Label = styled(Typography)({
-// 	position: 'absolute',
-// 	top: '0.5rem',
-// 	right: '0.5rem',
-// 	color: theme.bgColor?.lessonInProgress,
-// 	fontSize: '0.85rem',
-// });
 
 interface FlipCardPreviewProps {
 	questionNonEditModal?: boolean;
@@ -148,29 +140,71 @@ const FlipCardPreview = ({
 							padding: '0 1rem',
 							maxHeight: question?.imageUrl ? 'calc(70% - 1rem)' : '100%',
 							overflow: 'auto',
+							width: '100%',
 						}}>
 						<Typography
 							variant={question?.imageUrl ? 'body2' : 'body1'}
 							sx={{
-								whiteSpace: 'pre-wrap',
-								wordWrap: 'break-word',
-								textOverflow: 'ellipsis',
-								color: theme.textColor?.common.main,
-							}}>
-							{frontText || question?.question}
-						</Typography>
+								'whiteSpace': 'pre-wrap',
+								'wordWrap': 'break-word',
+								'textOverflow': 'ellipsis',
+								'color': theme.textColor?.common.main,
+								'fontSize': isMobileSize
+									? (frontText?.length && frontText.length > 40) || (question?.question?.length && question?.question?.length > 40)
+										? '1.15rem'
+										: '1.75rem'
+									: (frontText?.length && frontText.length > 40) || (question?.question?.length && question?.question?.length > 40)
+										? '1.75rem'
+										: '2.75rem',
+								'& strong': {
+									fontWeight: 'bold',
+								},
+								'& em': {
+									fontStyle: 'italic',
+								},
+								'& strong em, & em strong': {
+									fontWeight: 'bold',
+									fontStyle: 'italic',
+								},
+							}}
+							dangerouslySetInnerHTML={{
+								__html: (frontText || question?.question || '').replace(/\*(.*?)\*/g, '<strong>$1</strong>').replace(/_(.*?)_/g, '<em>$1</em>'),
+							}}
+						/>
 					</Box>
 				</FlipCardFront>
 
 				<FlipCardBack>
-					{/* <Label>Back</Label> */}
 					<Typography
 						variant={isMobileSize ? 'body2' : 'body1'}
 						sx={{
-							color: theme.textColor?.common.main,
-						}}>
-						{backText || question?.correctAnswer}
-					</Typography>
+							'whiteSpace': 'pre-wrap',
+							'wordWrap': 'break-word',
+							'textOverflow': 'ellipsis',
+							'textAlign': 'center',
+							'color': theme.textColor?.common.main,
+							'fontSize': isMobileSize
+								? (backText?.length && backText.length > 40) || (question?.correctAnswer?.length && question?.correctAnswer?.length > 40)
+									? '1.15rem'
+									: '1.5rem'
+								: (backText?.length && backText.length > 40) || (question?.correctAnswer?.length && question?.correctAnswer?.length > 40)
+									? '1.75rem'
+									: '2.75rem',
+							'& strong': {
+								fontWeight: 'bold',
+							},
+							'& em': {
+								fontStyle: 'italic',
+							},
+							'& strong em, & em strong': {
+								fontWeight: 'bold',
+								fontStyle: 'italic',
+							},
+						}}
+						dangerouslySetInnerHTML={{
+							__html: (backText || question?.correctAnswer || '').replace(/\*(.*?)\*/g, '<strong>$1</strong>').replace(/_(.*?)_/g, '<em>$1</em>'),
+						}}
+					/>
 				</FlipCardBack>
 			</FlipCardInner>
 		</FlipCardContainer>

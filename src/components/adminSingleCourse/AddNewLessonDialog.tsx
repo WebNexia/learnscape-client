@@ -26,6 +26,7 @@ interface AddNewLessonDialogProps {
 	setChapterLessonDataBeforeSave: React.Dispatch<React.SetStateAction<ChapterLessonData[]>>;
 	setIsChapterUpdated: React.Dispatch<React.SetStateAction<ChapterUpdateTrack[]>>;
 	setHasUnsavedChanges: React.Dispatch<React.SetStateAction<boolean>>;
+	onLessonAdded?: () => void;
 }
 
 const AddNewLessonDialog = ({
@@ -35,6 +36,7 @@ const AddNewLessonDialog = ({
 	setIsChapterUpdated,
 	setChapterLessonDataBeforeSave,
 	setHasUnsavedChanges,
+	onLessonAdded,
 }: AddNewLessonDialogProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
@@ -322,6 +324,9 @@ const AddNewLessonDialog = ({
 		setSelectedLessons([]);
 		setSelectedLessonIds([]);
 		setHasUnsavedChanges(true);
+
+		// Auto-expand chapter when lessons are added
+		onLessonAdded?.();
 	};
 
 	const handleResetCheckboxes = () => {

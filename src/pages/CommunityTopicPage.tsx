@@ -17,7 +17,8 @@ import HandleImageUploadURL from '../components/forms/uploadImageVideoDocument/H
 import ImageThumbnail from '../components/forms/uploadImageVideoDocument/ImageThumbnail';
 import AudioRecorder from '../components/userCourses/AudioRecorder';
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
-import { db, storage } from '../firebase';
+import { storage } from '../firebase';
+import { sendCommunityNotifications } from '../utils/communityNotifications';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
@@ -28,8 +29,6 @@ import { formatMessageTime } from '../utils/formatTime';
 import { CommunityMessagesContext } from '../contexts/CommunityMessagesContextProvider';
 
 import { Roles } from '../interfaces/enums';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { truncateText } from '../utils/utilText';
 import { validateImageUrl } from '../utils/urlValidation';
 import { renderMessageWithMentions } from '../utils/renderMessageWithMentions';
 
@@ -324,135 +323,13 @@ const CommunityTopicPage = () => {
 				parentMessageId: replyToMessage?._id,
 			});
 
-			if (replyToMessage && replyToMessage.userId?._id !== user?._id && replyToMessage.userId?.firebaseUserId) {
-				// Create the notification data
-				const replyToMsgNotificationData = {
-					title: 'Community Message Replied',
-					message: `${user?.username} replied to your message "${truncateText(replyToMessage.text, 30)}" in the topic ${truncateText(
-						topic.title,
-						25
-					)} under community topics`,
-					isRead: false,
-					timestamp: serverTimestamp(),
-					type: 'ReplyToCommunityMessage',
-					userImageUrl: user?.imageUrl,
-					communityTopicId: topic._id,
-					communityMessageId: response.data._id,
-				};
-
-				const notificationRef = collection(db, 'notifications', replyToMessage.userId?.firebaseUserId, 'userNotifications');
-				await addDoc(notificationRef, replyToMsgNotificationData);
-			}
-
-			if (topic.userId?._id !== user?._id && topic.userId?.firebaseUserId) {
-				const notificationToTopicOwnerData = {
-					title: 'Community Topic Replied',
-					message: `${user?.username} replied to your topic ${truncateText(topic.title, 25)} in community topics: "${truncateText(
-						currentMessage,
-						30
-					)}"`,
-					isRead: false,
-					timestamp: serverTimestamp(),
-					type: 'ReplyToCommunityTopic',
-					userImageUrl: user?.imageUrl,
-					communityTopicId: topic._id,
-					communityMessageId: response.data._id,
-				};
-
-				const notificationRef = collection(db, 'notifications', topic.userId?.firebaseUserId, 'userNotifications');
-				await addDoc(notificationRef, notificationToTopicOwnerData);
-			}
-
-			// Send notifications for mentioned users
-			const mentionedUsernames = extractMentions(currentMessage);
-			if (mentionedUsernames && mentionedUsernames.length > 0) {
-				try {
-					// Create a set of users who are already receiving notifications (to avoid duplicates)
-					const usersAlreadyNotified = new Set();
-
-					// Add topic creator if they're getting a topic reply notification
-					if (topic.userId?._id !== user?._id && topic.userId?.firebaseUserId) {
-						usersAlreadyNotified.add(topic.userId.firebaseUserId);
-					}
-
-					// Add reply message author if they're getting a reply notification
-					if (replyToMessage && replyToMessage.userId?._id !== user?._id && replyToMessage.userId?.firebaseUserId) {
-						usersAlreadyNotified.add(replyToMessage.userId.firebaseUserId);
-					}
-
-					// Check if @everyone is mentioned
-					const hasEveryoneMention = mentionedUsernames?.includes('everyone');
-
-					if (hasEveryoneMention) {
-						// Get all users who have participated in this topic
-						const topicParticipantsResponse = await axios.get(`${base_url}/communityMessages/topic-participants/${topic._id}`);
-						const topicParticipants = topicParticipantsResponse.data.data || [];
-
-						// Send @everyone notifications to all topic participants
-						for (const participant of topicParticipants) {
-							if (
-								participant.firebaseUserId &&
-								participant.firebaseUserId !== user?.firebaseUserId &&
-								!usersAlreadyNotified.has(participant.firebaseUserId)
-							) {
-								const everyoneNotificationData = {
-									title: 'Community Announcement',
-									message: `${user?.username} made an announcement in the topic "${truncateText(topic.title, 30)}": "${truncateText(currentMessage, 50)}"`,
-									isRead: false,
-									timestamp: serverTimestamp(),
-									type: 'MentionUser',
-									userImageUrl: user?.imageUrl,
-									communityTopicId: topic._id,
-									communityMessageId: response.data._id,
-								};
-
-								const notificationRef = collection(db, 'notifications', participant.firebaseUserId, 'userNotifications');
-								await addDoc(notificationRef, everyoneNotificationData);
-							}
-						}
-					} else {
-						// Handle regular user mentions
-						const regularMentions = mentionedUsernames?.filter((username) => username !== 'everyone') || [];
-						if (regularMentions && regularMentions.length > 0) {
-							// Get user data for mentioned usernames
-							const mentionedUsersResponse = await axios.get(
-								`${base_url}/users/search-by-usernames?usernames=${regularMentions.join(',')}&orgId=${orgId}`
-							);
-							const mentionedUsers = mentionedUsersResponse.data.data || [];
-
-							// Send notifications to each mentioned user (excluding the current user and users already notified)
-							for (const mentionedUser of mentionedUsers) {
-								if (
-									mentionedUser.firebaseUserId &&
-									mentionedUser.firebaseUserId !== user?.firebaseUserId &&
-									!usersAlreadyNotified.has(mentionedUser.firebaseUserId)
-								) {
-									const mentionNotificationData = {
-										title: 'You were mentioned',
-										message: `${user?.username} mentioned you in a community message: "${truncateText(currentMessage, 50)}"`,
-										isRead: false,
-										timestamp: serverTimestamp(),
-										type: 'MentionUser',
-										userImageUrl: user?.imageUrl,
-										communityTopicId: topic._id,
-										communityMessageId: response.data._id,
-									};
-
-									const notificationRef = collection(db, 'notifications', mentionedUser.firebaseUserId, 'userNotifications');
-									await addDoc(notificationRef, mentionNotificationData);
-								}
-							}
-						}
-					}
-				} catch (error) {
-					console.error('Failed to send mention notifications:', error);
-					// Don't block the message send if notification fails
-				}
-			}
-
 			setRefreshTopics(true);
 
 			addNewMessage(response.data);
+
+			// Capture data for background notifications
+			const newMessageId = response.data._id;
+			const messageCopy = currentMessage;
 
 			// Refresh upload limits after successful message send (non-blocking)
 			refreshUploadStats().catch((error) => {
@@ -468,6 +345,20 @@ const CommunityTopicPage = () => {
 			setShowUserSearch(false);
 			setUserSearchValue('');
 			scrollToBottom();
+
+			// Send notifications in background (non-blocking)
+			sendCommunityNotifications({
+				user,
+				topic,
+				replyToMessage,
+				currentMessage: messageCopy,
+				newMessageId,
+				baseUrl: base_url,
+				orgId,
+			}).catch((error) => {
+				console.warn('Failed to send notifications:', error);
+				// Don't block UI, just log the error
+			});
 		} catch (error: any) {
 			// Show error message to user
 			if (error?.response?.data?.message) {
@@ -1145,6 +1036,14 @@ const CommunityTopicPage = () => {
 					required={false}
 					disabled={isTopicLocked}
 					onChange={handleInputChange}
+					onKeyDown={(e) => {
+						if (e.key === 'Enter' && !e.shiftKey) {
+							e.preventDefault();
+							if (!isSending && currentMessage.trim()) {
+								sendMessage();
+							}
+						}
+					}}
 					placeholder={
 						isTopicLocked
 							? 'You cannot send a message since topic is locked'

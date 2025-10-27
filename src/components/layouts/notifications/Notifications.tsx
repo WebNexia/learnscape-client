@@ -51,18 +51,21 @@ const NotificationsBox = ({ showUnreadOnly }: NotificationsBoxProps) => {
 	const isMobileSize: boolean = isVerySmallScreen || isRotated;
 
 	useEffect(() => {
-		if (!user) return;
+		if (!user?.firebaseUserId) return;
 
-		// Real-time listener for notifications
 		const notificationsRef = collection(db, 'notifications', user.firebaseUserId, 'userNotifications');
 
 		const sevenDaysAgo = Timestamp.fromDate(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000));
+
+		// 1) Listen only to check if older notifications exist
 		const olderNotificationsQuery = query(notificationsRef, where('timestamp', '<', sevenDaysAgo), limit(1));
-		onSnapshot(olderNotificationsQuery, (snapshot) => {
+		const unsubscribeOld = onSnapshot(olderNotificationsQuery, (snapshot) => {
 			setHasOlderNotifications(snapshot.size > 0);
 		});
 
+		// 2) Main notifications query
 		let q = query(notificationsRef, orderBy('timestamp', 'desc'));
+
 		if (!showAll) {
 			q = query(q, where('timestamp', '>=', sevenDaysAgo));
 		}
@@ -70,10 +73,9 @@ const NotificationsBox = ({ showUnreadOnly }: NotificationsBoxProps) => {
 			q = query(q, where('isRead', '==', false));
 		}
 
-		const unsubscribe = onSnapshot(q, (snapshot) => {
-			const fetchedNotifications = snapshot.docs?.map((doc) => {
+		const unsubscribeMain = onSnapshot(q, (snapshot) => {
+			const fetchedNotifications = snapshot.docs.map((doc) => {
 				const data = doc.data();
-
 				return {
 					id: doc.id,
 					title: data.title || 'No title',
@@ -93,9 +95,12 @@ const NotificationsBox = ({ showUnreadOnly }: NotificationsBoxProps) => {
 			setNotifications(fetchedNotifications);
 		});
 
-		// Clean up the listener on component unmount
-		return () => unsubscribe();
-	}, [user, showUnreadOnly, showAll]);
+		// ✅ clean up BOTH listeners
+		return () => {
+			unsubscribeOld();
+			unsubscribeMain();
+		};
+	}, [user?.firebaseUserId, showUnreadOnly, showAll]);
 
 	const handleNotificationClick = async (note: Notification) => {
 		if (!user || !user.firebaseUserId) return;

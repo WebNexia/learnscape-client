@@ -200,7 +200,7 @@ const AdminPublicEvents = () => {
 							},
 							'& .MuiTableHead-root .MuiTableCell-root': {
 								backgroundColor: theme.bgColor?.secondary,
-								padding: isMobileSize ? '0.25rem 0rem' : '0.25rem 1rem',
+								padding: isMobileSize ? '0.25rem 0rem' : '0.75rem 1rem',
 								boxSizing: 'border-box',
 								margin: 0,
 								verticalAlign: 'center',

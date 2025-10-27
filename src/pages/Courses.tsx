@@ -112,7 +112,7 @@ const Courses = () => {
 						isSearchLoading={false}
 						isSearchActive={isSearchActive || !!filterValue}
 						searchResultsTotalItems={totalItems}
-						totalItems={totalItems}
+						totalItems={totalItems || courses?.length || 0}
 						searchedValue={searchedValue}
 						onResetSearch={resetSearch}
 						onResetFilter={resetFilter}

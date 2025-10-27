@@ -301,7 +301,7 @@ const AdminSubscriptionsTab = () => {
 				isSearchLoading={isSearchLoading}
 				isSearchActive={isSearchActive}
 				searchResultsTotalItems={searchResultsTotalItems}
-				totalItems={totalItems}
+				totalItems={totalItems || subscriptions?.length || 0}
 				searchedValue={searchedValue}
 				onResetSearch={resetSearch}
 				onResetFilter={resetFilter}

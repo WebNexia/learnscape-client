@@ -245,7 +245,7 @@ const AdminInquiries = () => {
 						isSearchLoading={isSearchLoading}
 						isSearchActive={isSearchActive}
 						searchResultsTotalItems={searchResultsTotalItems}
-						totalItems={totalItems}
+						totalItems={totalItems || inquiries?.length || 0}
 						searchedValue={searchedValue}
 						onResetSearch={resetSearch}
 						onResetFilter={resetFilter}

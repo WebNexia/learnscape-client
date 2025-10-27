@@ -76,7 +76,7 @@ const FlipCard = ({
 			{/* Flip Card Preview */}
 			<Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', mt: '3rem' }}>
 				<Box>
-					<Typography variant={isMobileSize ? 'body2' : 'body1'} sx={{ textAlign: 'center' }}>
+					<Typography variant={isMobileSize ? 'body2' : 'body1'} sx={{ textAlign: 'center', mb: '0.75rem' }}>
 						Preview
 					</Typography>
 				</Box>

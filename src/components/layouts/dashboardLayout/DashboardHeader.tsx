@@ -73,10 +73,10 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 	};
 
 	useEffect(() => {
-		if (!user) return;
+		if (!user?.firebaseUserId) return;
 
 		// Real-time listener for notifications, metadata-only query
-		const notificationsRef = collection(db, 'notifications', user.firebaseUserId, 'userNotifications');
+		const notificationsRef = collection(db, 'notifications', user?.firebaseUserId, 'userNotifications');
 		const q = query(notificationsRef, where('isRead', '==', false));
 
 		const unsubscribe = onSnapshot(
@@ -89,7 +89,7 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 		);
 
 		return () => unsubscribe();
-	}, [user]);
+	}, [user?.firebaseUserId]);
 
 	const markAllAsRead = async (userFirebaseId: string) => {
 		if (!userFirebaseId) return;

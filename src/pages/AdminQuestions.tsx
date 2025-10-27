@@ -286,7 +286,7 @@ const AdminQuestions = () => {
 						isSearchLoading={isSearchLoading}
 						isSearchActive={isSearchActive}
 						searchResultsTotalItems={searchResultsTotalItems}
-						totalItems={totalItems}
+						totalItems={totalItems || questions?.length || 0}
 						searchedValue={searchedValue}
 						onResetSearch={resetSearch}
 						onResetFilter={resetFilter}
@@ -363,7 +363,7 @@ const AdminQuestions = () => {
 								},
 								'& .MuiTableHead-root .MuiTableCell-root': {
 									backgroundColor: theme.bgColor?.secondary,
-									padding: '0.25rem 1rem',
+									padding: '0.5rem 1rem',
 									boxSizing: 'border-box',
 									margin: 0,
 									verticalAlign: 'center',

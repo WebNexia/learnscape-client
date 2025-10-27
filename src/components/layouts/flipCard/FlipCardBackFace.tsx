@@ -1,4 +1,5 @@
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, Tooltip, IconButton } from '@mui/material';
+import InfoIcon from '@mui/icons-material/Info';
 import theme from '../../../themes';
 import { useContext } from 'react';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
@@ -59,9 +60,42 @@ const FlipCardBackFace = ({
 				ml: isMobileSize ? '0rem' : '3rem',
 				mt: isMobileSize ? '2rem' : undefined,
 			}}>
-			<Typography variant={isMobileSize ? 'body2' : 'body1'} sx={{ textAlign: 'center' }}>
-				Back
-			</Typography>
+			<Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+				<Typography variant={isMobileSize ? 'body2' : 'body1'} sx={{ textAlign: 'center' }}>
+					Back
+				</Typography>
+				<Tooltip
+					title={
+						<Box sx={{ p: 1 }}>
+							<Typography variant='body2' sx={{ fontWeight: 'bold', mb: 0.5, color: 'white' }}>
+								Text Formatting Help:
+							</Typography>
+							<Typography variant='body2' sx={{ mb: 0.5, color: 'white' }}>
+								*text* ---&gt; <strong>text</strong>
+							</Typography>
+							<Typography variant='body2' sx={{ color: 'white' }}>
+								_text_ ---&gt; <em>text</em>
+							</Typography>
+						</Box>
+					}
+					arrow
+					placement='top'
+					sx={{
+						'& .MuiTooltip-tooltip': {
+							backgroundColor: '#2c3e50',
+							color: 'white',
+							fontSize: '0.875rem',
+							border: '1px solid #34495e',
+						},
+						'& .MuiTooltip-arrow': {
+							color: '#2c3e50',
+						},
+					}}>
+					<IconButton size='small' sx={{ p: 0.5 }}>
+						<InfoIcon sx={{ fontSize: '1rem' }} />
+					</IconButton>
+				</Tooltip>
+			</Box>
 			<StyledTextarea
 				isMobile={isMobileSize}
 				value={backText}
@@ -75,7 +109,7 @@ const FlipCardBackFace = ({
 				}}
 				maxLength={255}
 				style={{
-					backgroundColor: 'coral',
+					background: 'linear-gradient(135deg, #c47a6a 0%, #d48a7a 100%)',
 					width: isMobileSize ? '15rem' : '25rem',
 					height: isMobileSize ? '15rem' : '40vh',
 					color: 'white',
@@ -89,7 +123,7 @@ const FlipCardBackFace = ({
 					borderRadius: '0.5rem',
 				}}
 				rows={7}
-				placeholder='Enter Back Face Text'
+				placeholder={`Enter Back Face Text`}
 			/>
 		</Box>
 	);

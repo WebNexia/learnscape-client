@@ -402,7 +402,7 @@ const AdminRecycleBinQuestionsTab = () => {
 				isSearchLoading={isSearchLoading}
 				isSearchActive={isSearchActive}
 				searchResultsTotalItems={searchResultsTotalItems}
-				totalItems={totalItems}
+				totalItems={totalItems || archivedQuestions?.length || 0}
 				searchedValue={searchedValue}
 				onResetSearch={resetSearch}
 				onResetFilter={resetFilter}

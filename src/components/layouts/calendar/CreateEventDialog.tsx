@@ -28,7 +28,6 @@ import { CoursesContext } from '../../../contexts/CoursesContextProvider';
 import { User } from '../../../interfaces/user';
 import theme from '../../../themes';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
-import { UsersContext } from '../../../contexts/UsersContextProvider';
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
 import EventUserSearchSelect from '../../EventUserSearchSelect';
 import EventInstructorSearchSelect from '../../EventInstructorSearchSelect';
@@ -38,9 +37,8 @@ import { SearchCourse } from '../../../interfaces/search';
 
 import { EventsContext } from '../../../contexts/EventsContextProvider';
 import { truncateText } from '../../../utils/utilText';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { sendEventCreatedNotifications } from '../../../utils/eventNotifications';
 
-import { db } from '../../../firebase';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 import axios from '@utils/axiosInstance';
 import HandleImageUploadURL from '../../forms/uploadImageVideoDocument/HandleImageUploadURL';
@@ -77,7 +75,6 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 
 	const { user } = useContext(UserAuthContext);
 	const { orgId } = useContext(OrganisationContext);
-	const { users } = useContext(UsersContext);
 	const { courses } = useContext(CoursesContext);
 	const { addNewEvent } = useContext(EventsContext);
 	const { isAdmin, isLearner } = useAuth();
@@ -258,9 +255,6 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 			return; // Don't proceed if URL validation fails
 		}
 
-		const allFirebaseUserIds: string[] =
-			users?.filter((filteredUser) => filteredUser._id !== user?._id)?.map((mappedUser) => mappedUser.firebaseUserId) || [];
-
 		const participants = [...newEvent.attendees]; // Start with selected attendees
 		let allParticipantsIds: string[] = [];
 		let allCoursesParticipantsInfo: AttendeeInfo[] = [];
@@ -405,65 +399,20 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 				minute: '2-digit',
 				timeZoneName: 'short',
 			});
-			const adminName = user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : user?.username || 'Admin';
-			const notificationData = {
-				title: 'Added to Event',
-				message: `${adminName} has added you to a new event: "${truncateText(newEvent.title, 20)}". The event will start on ${startDate} at ${startTime}.`,
-				isRead: false,
-				timestamp: serverTimestamp(),
-				type: 'AddToEvent',
-				userImageUrl: user?.imageUrl,
+
+			void sendEventCreatedNotifications({
+				user,
+				newEventTitle: newEvent.title,
+				startDate: startDate || '',
+				startTime: startTime || '',
+				participants: allCoursesParticipantsInfo,
 				eventId: res.data.data._id,
-			};
-
-			for (const participant of allCoursesParticipantsInfo) {
-				if (participant.firebaseUserId) {
-					const notificationRef = collection(db, 'notifications', participant.firebaseUserId, 'userNotifications');
-					await addDoc(notificationRef, notificationData);
-				}
-			}
-
-			// Send notifications for public events to ALL users in organization
-			if (newEvent.isPublic) {
-				try {
-					// Fetch ALL users from API instead of using limited context data
-					const allUsersResponse = await axios.get(`${base_url}/users/organisation/${orgId}?limit=10000`);
-					const allUsers = allUsersResponse.data.data || [];
-
-					// Filter out the current user and get Firebase IDs
-					const allFirebaseUserIds: string[] = allUsers
-						.filter((filteredUser: any) => filteredUser._id !== user?._id)
-						.map((mappedUser: any) => mappedUser.firebaseUserId)
-						.filter((id: string) => id); // Remove any undefined/null IDs
-
-					if (allFirebaseUserIds.length > 0) {
-						const adminName = user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : user?.username || 'Admin';
-						const publicEventNotification = {
-							title: 'New Public Event',
-							message: `${adminName} has added a public event: "${newEvent.title}". It will take place on ${startDate} at ${startTime}.`,
-							isRead: false,
-							timestamp: serverTimestamp(),
-							type: 'PublicEvent',
-							userImageUrl: user?.imageUrl,
-							eventId: res.data.data._id,
-						};
-
-						// Send notifications to all users
-						for (const id of allFirebaseUserIds) {
-							try {
-								const notificationRef = collection(db, 'notifications', id, 'userNotifications');
-								await addDoc(notificationRef, publicEventNotification);
-							} catch (error) {
-								console.error('❌ Failed to send notification to user:', id, error);
-							}
-						}
-					} else {
-						console.warn('⚠️ No users found to send public event notifications to');
-					}
-				} catch (error) {
-					console.error('❌ Failed to fetch users for public event notifications:', error);
-				}
-			}
+				baseUrl: base_url,
+				orgId,
+				isPublic: newEvent.isPublic,
+			}).catch((error) => {
+				console.warn('Failed to send event created notifications:', error);
+			});
 		} catch (error: any) {
 			console.log(error);
 			// Show error message to user
