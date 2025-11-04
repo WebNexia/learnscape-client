@@ -7,6 +7,7 @@ import CustomDialogActions from '../../dialog/CustomDialogActions';
 import CustomTextField from '../../../forms/customFields/CustomTextField';
 import HandleImageUploadURL from '../../../forms/uploadImageVideoDocument/HandleImageUploadURL';
 import AudioRecorder from '../../../userCourses/AudioRecorder';
+import { CustomAudioPlayer } from '../../../audio';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../../../../firebase';
 import { UserAuthContext } from '../../../../contexts/UserAuthContextProvider';
@@ -40,7 +41,8 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
 	// Upload limit management - for all roles
-	const { getRemainingAudioUploads, getRemainingImageUploads, getImageLimit, getAudioLimit } = useUploadLimit();
+	const { getRemainingAudioUploads, getRemainingImageUploads, getImageLimit, getAudioLimit, incrementAudioUpload, incrementImageUpload } =
+		useUploadLimit();
 
 	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(user?.role === 'admin' ? true : false);
 	const [isAudioUploading, setIsAudioUploading] = useState<boolean>(false);
@@ -115,6 +117,10 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 				updatedAt: response.data.updatedAt || response.data.createdAt,
 				messageCount: 0,
 			});
+
+			// Use optimistic update for instant UI feedback
+			if (topic.imageUrl?.trim()) incrementImageUpload();
+			if (topic.audioUrl?.trim()) incrementAudioUpload();
 
 			reset();
 
@@ -353,17 +359,7 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 								{getRemainingAudioUploads() > 0 && (
 									<>
 										<Box sx={{ flex: 9 }}>
-											<audio
-												src={topic.audioUrl}
-												controls
-												style={{
-													marginTop: '1rem',
-													boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
-													borderRadius: '0.35rem',
-													width: '100%',
-													height: '2rem',
-												}}
-											/>
+											<CustomAudioPlayer audioUrl={topic.audioUrl} title='Topic Audio' />
 										</Box>
 										<Box sx={{ flex: 1, margin: '0.75rem 0 0 1.5rem' }}>
 											<CustomSubmitButton

@@ -8,6 +8,7 @@ import CustomDialog from '../layouts/dialog/CustomDialog';
 import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
 import LoadingButton from '@mui/lab/LoadingButton';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
+import CustomAudioPlayer from '../audio/CustomAudioPlayer';
 
 interface AudioRecorderProps {
 	uploadAudio: (blob: Blob) => Promise<void>;
@@ -226,16 +227,12 @@ const AudioRecorder = ({
 
 			{audio && !isRecording && !isAudioTooLarge && !isUploadLimitReached && audioUploadAttempts < maxSessionAttempts ? (
 				<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '30vw' }}>
-					<audio
-						src={audio}
-						controls
-						style={{
-							height: '2rem',
+					<CustomAudioPlayer
+						audioUrl={audio}
+						sx={{
 							width: isMobileSizeSmall ? '95%' : '80%',
 							marginTop: '1rem',
 							marginBottom: '1rem',
-							boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
-							borderRadius: '0.35rem',
 						}}
 					/>
 				</Box>
@@ -267,6 +264,7 @@ const AudioRecorder = ({
 				closeModal={() => {
 					setIsUploadModalOpen(false);
 				}}
+				title='Upload Audio'
 				content={`Are you sure you want to upload the audio recording?
 				${!teacherFeedback && !fromCreateCommunityTopic ? `You will not have another chance.` : ''}`}>
 				{isAudioUploading ? (
@@ -285,6 +283,7 @@ const AudioRecorder = ({
 							}
 						}}
 						submitBtnText='Upload'
+						actionSx={{ margin: '0 0.5rem 0.5rem 0' }}
 					/>
 				)}
 			</CustomDialog>

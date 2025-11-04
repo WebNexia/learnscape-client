@@ -45,6 +45,7 @@ import { UserBlankValuePairAnswers, UserMatchingPairAnswers } from '../../interf
 import { serverTimestamp, writeBatch, doc } from 'firebase/firestore';
 import { UserCourseLessonDataContext } from '../../contexts/UserCourseLessonDataContextProvider';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
+import CustomAudioPlayer from '../audio/CustomAudioPlayer';
 
 interface QuizQuestionProps {
 	question: QuestionInterface;
@@ -461,11 +462,11 @@ const QuizQuestion = ({
 										if (answer.questionId === question._id) {
 											if (answer.audioRecordUrl) {
 												return (
-													<audio
-														src={!isLessonCompleted ? answer.audioRecordUrl : uploadUrlForCompletedLesson}
-														controls
+													<CustomAudioPlayer
+														audioUrl={!isLessonCompleted ? answer.audioRecordUrl : uploadUrlForCompletedLesson}
 														key={question._id}
-														style={{ marginTop: '1rem', boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)', borderRadius: '0.35rem' }}></audio>
+														sx={{ marginTop: '1rem' }}
+													/>
 												);
 											} else if (answer.videoRecordUrl) {
 												return (
@@ -652,16 +653,14 @@ const QuizQuestion = ({
 							</Box>
 							{teacherQuestionAudioFeedback && (
 								<Box sx={{ textAlign: 'center', width: '100%' }}>
-									<audio
-										src={teacherQuestionAudioFeedback}
-										controls
+									<CustomAudioPlayer
+										audioUrl={teacherQuestionAudioFeedback}
 										key={question._id}
-										style={{
+										sx={{
 											marginTop: '1.5rem',
-											boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
-											borderRadius: '0.35rem',
 											width: '80%',
-										}}></audio>
+										}}
+									/>
 								</Box>
 							)}
 						</Box>

@@ -110,6 +110,9 @@ dependencies:
   react-google-recaptcha:
     specifier: ^3.1.0
     version: 3.1.0(react@18.3.1)
+  react-helmet-async:
+    specifier: ^2.0.5
+    version: 2.0.5(react@18.3.1)
   react-international-phone:
     specifier: ^4.6.0
     version: 4.6.0(react@18.3.1)
@@ -4355,6 +4358,17 @@ packages:
       prop-types: 15.8.1
       react: 18.3.1
       react-async-script: 1.2.0(react@18.3.1)
+    dev: false
+
+  /react-helmet-async@2.0.5(react@18.3.1):
+    resolution: {integrity: sha512-rYUYHeus+i27MvFE+Jaa4WsyBKGkL6qVgbJvSBoX8mbsWoABJXdEO0bZyi0F6i+4f0NuIb8AvqPMj3iXFHkMwg==}
+    peerDependencies:
+      react: ^16.6.0 || ^17.0.0 || ^18.0.0
+    dependencies:
+      invariant: 2.2.4
+      react: 18.3.1
+      react-fast-compare: 3.2.2
+      shallowequal: 1.1.0
     dev: false
 
   /react-international-phone@4.6.0(react@18.3.1):

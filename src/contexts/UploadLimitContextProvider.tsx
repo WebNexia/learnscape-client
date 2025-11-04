@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback } from 'react';
 import axios from '@utils/axiosInstance';
 import { UserAuthContext } from './UserAuthContextProvider';
 
@@ -29,6 +29,10 @@ interface UploadLimitContextType {
 	getAudioLimit: () => number;
 	getImageLimit: () => number;
 	getFormattedResetTime: () => string;
+	// New optimistic update methods
+	incrementAudioUpload: () => void;
+	incrementImageUpload: () => void;
+	resetUploads: () => void;
 }
 
 const UploadLimitContext = createContext<UploadLimitContextType | undefined>(undefined);
@@ -37,6 +41,15 @@ interface UploadLimitProviderProps {
 	children: ReactNode;
 }
 
+// Debounce utility
+const debounce = <T extends (...args: any[]) => any>(func: T, wait: number): T => {
+	let timeout: NodeJS.Timeout;
+	return ((...args: any[]) => {
+		clearTimeout(timeout);
+		timeout = setTimeout(() => func(...args), wait);
+	}) as T;
+};
+
 export const UploadLimitProvider: React.FC<UploadLimitProviderProps> = ({ children }) => {
 	const { user, userId } = useContext(UserAuthContext);
 	const [uploadInfo, setUploadInfo] = useState<UploadInfo | null>(null);
@@ -44,93 +57,168 @@ export const UploadLimitProvider: React.FC<UploadLimitProviderProps> = ({ childr
 	const [error, setError] = useState<string | null>(null);
 	const [lastFetchTime, setLastFetchTime] = useState<number>(0);
 	const [isFetching, setIsFetching] = useState<boolean>(false);
+	const [errorCount, setErrorCount] = useState<number>(0);
 
-	const fetchUploadStats = async (forceRefresh = false) => {
-		if (!userId) {
-			return;
-		}
+	const fetchUploadStats = useCallback(
+		async (forceRefresh = false) => {
+			if (!userId) {
+				return;
+			}
 
-		// Prevent multiple simultaneous requests
-		if (isFetching) {
-			return;
-		}
+			// Prevent multiple simultaneous requests
+			if (isFetching) {
+				return;
+			}
 
-		// Cache for 30 seconds to prevent excessive API calls
-		const now = Date.now();
-		if (!forceRefresh && uploadInfo && now - lastFetchTime < 30000) {
-			return;
-		}
+			// Cache for 30 seconds to prevent excessive API calls (unless force refresh)
+			const now = Date.now();
+			if (!forceRefresh && now - lastFetchTime < 30000) {
+				return;
+			}
 
-		setIsFetching(true);
-		setLoading(true);
-		setError(null);
+			setIsFetching(true);
+			setLoading(true);
+			setError(null);
 
-		try {
-			const response = await axios.get('/users/upload-counts');
-			setUploadInfo(response.data.uploadInfo);
-			setLastFetchTime(now);
-		} catch (err: any) {
-			setError(err.response?.data?.message || 'Failed to fetch upload statistics');
-		} finally {
-			setLoading(false);
-			setIsFetching(false);
-		}
-	};
+			try {
+				const response = await axios.get('/users/upload-counts');
+				const newUploadInfo = response.data.uploadInfo;
 
-	const refreshUploadStats = async () => {
+				// No need to apply pending increments since backend handles counting atomically
+				setUploadInfo(newUploadInfo);
+				setLastFetchTime(now);
+				setErrorCount(0); // Reset error count on success
+			} catch (err: any) {
+				const newErrorCount = errorCount + 1;
+				setErrorCount(newErrorCount);
+				setError(err.response?.data?.message || 'Failed to fetch upload statistics');
+
+				// Trigger fallback refresh after 3 failures
+				if (newErrorCount >= 3) {
+					console.warn('Multiple API failures detected, scheduling fallback refresh in 60 seconds');
+					setTimeout(() => {
+						fetchUploadStats(true); // Force refresh after 60 seconds
+					}, 60000);
+				}
+			} finally {
+				setLoading(false);
+				setIsFetching(false);
+			}
+		},
+		[userId, lastFetchTime, isFetching, errorCount]
+	);
+
+	// Debounced refresh to prevent rapid API calls
+	const debouncedRefresh = useMemo(() => debounce(fetchUploadStats, 1000), [fetchUploadStats]);
+
+	const refreshUploadStats = useCallback(async () => {
 		await fetchUploadStats(true);
-	};
+	}, [fetchUploadStats]);
+
+	// Optimistic update methods - simplified since backend handles counting atomically
+	const incrementAudioUpload = useCallback(() => {
+		setUploadInfo((prev) => {
+			if (!prev) return prev;
+			return {
+				...prev,
+				audioUploads: {
+					...prev.audioUploads,
+					currentCount: prev.audioUploads.currentCount + 1,
+					remaining: Math.max(0, prev.audioUploads.remaining - 1),
+				},
+			};
+		});
+
+		// Background sync to get accurate counts from server
+		debouncedRefresh();
+	}, [debouncedRefresh]);
+
+	const incrementImageUpload = useCallback(() => {
+		setUploadInfo((prev) => {
+			if (!prev) return prev;
+			return {
+				...prev,
+				imageUploads: {
+					...prev.imageUploads,
+					currentCount: prev.imageUploads.currentCount + 1,
+					remaining: Math.max(0, prev.imageUploads.remaining - 1),
+				},
+			};
+		});
+
+		// Background sync to get accurate counts from server
+		debouncedRefresh();
+	}, [debouncedRefresh]);
+
+	const resetUploads = useCallback(() => {
+		setUploadInfo((prev) => {
+			if (!prev) return prev;
+			return {
+				...prev,
+				audioUploads: {
+					...prev.audioUploads,
+					currentCount: 0,
+					remaining: prev.audioUploads.limit,
+				},
+				imageUploads: {
+					...prev.imageUploads,
+					currentCount: 0,
+					remaining: prev.imageUploads.limit,
+				},
+			};
+		});
+	}, []);
 
 	// Check if user can upload audio
-	const checkCanUploadAudio = (): boolean => {
+	const checkCanUploadAudio = useCallback((): boolean => {
 		if (!uploadInfo) return true; // Allow if no data yet
 		return uploadInfo.audioUploads.remaining > 0;
-	};
+	}, [uploadInfo]);
 
 	// Check if user can upload images
-	const checkCanUploadImage = (): boolean => {
+	const checkCanUploadImage = useCallback((): boolean => {
 		if (!uploadInfo) return true; // Allow if no data yet
 		return uploadInfo.imageUploads.remaining > 0;
-	};
+	}, [uploadInfo]);
 
 	// Get remaining audio uploads
-	const getRemainingAudioUploads = (): number => {
+	const getRemainingAudioUploads = useCallback((): number => {
 		if (!uploadInfo) return 0;
 		return uploadInfo.audioUploads.remaining;
-	};
+	}, [uploadInfo]);
 
 	// Get remaining image uploads
-	const getRemainingImageUploads = (): number => {
+	const getRemainingImageUploads = useCallback((): number => {
 		if (!uploadInfo) return 0;
 		return uploadInfo.imageUploads.remaining;
-	};
+	}, [uploadInfo]);
 
 	// Get current audio count
-	const getCurrentAudioCount = (): number => {
+	const getCurrentAudioCount = useCallback((): number => {
 		if (!uploadInfo) return 0;
 		return uploadInfo.audioUploads.currentCount;
-	};
+	}, [uploadInfo]);
 
 	// Get current image count
-	const getCurrentImageCount = (): number => {
+	const getCurrentImageCount = useCallback((): number => {
 		if (!uploadInfo) return 0;
 		return uploadInfo.imageUploads.currentCount;
-	};
+	}, [uploadInfo]);
 
 	// Get audio limit
-	const getAudioLimit = (): number => {
+	const getAudioLimit = useCallback((): number => {
 		if (!uploadInfo) return 0;
 		return uploadInfo.audioUploads.limit;
-	};
+	}, [uploadInfo]);
 
 	// Get image limit
-	const getImageLimit = (): number => {
+	const getImageLimit = useCallback((): number => {
 		if (!uploadInfo) return 0;
 		return uploadInfo.imageUploads.limit;
-	};
+	}, [uploadInfo]);
 
 	// Get formatted reset time (next day at user's timezone midnight)
-	const getFormattedResetTime = (): string => {
+	const getFormattedResetTime = useCallback((): string => {
 		if (!user?.countryCode) return 'midnight UTC';
 
 		const timezoneOffsets: { [key: string]: string } = {
@@ -146,20 +234,38 @@ export const UploadLimitProvider: React.FC<UploadLimitProviderProps> = ({ childr
 		};
 
 		return timezoneOffsets[user.countryCode] || 'midnight UTC';
-	};
+	}, [user?.countryCode]);
+
+	// Smart periodic refresh - only when limits are low
+	const shouldRefreshPeriodically = useCallback((): boolean => {
+		if (!uploadInfo) return true;
+		return uploadInfo.audioUploads.remaining <= 2 || uploadInfo.imageUploads.remaining <= 2;
+	}, [uploadInfo]);
 
 	// Fetch upload stats on mount and when user changes
 	useEffect(() => {
 		if (userId) {
 			fetchUploadStats();
 		}
-	}, [userId]);
+	}, [userId, fetchUploadStats]);
 
-	// Periodic refresh every 5 minutes to handle stale data
+	// Smart periodic refresh - only when needed
 	useEffect(() => {
 		if (!userId) return;
 
 		let interval: NodeJS.Timeout;
+
+		const startInterval = () => {
+			interval = setInterval(
+				async () => {
+					// Only refresh if limits are low
+					if (shouldRefreshPeriodically()) {
+						await fetchUploadStats(true); // Force refresh - error handling is now built-in
+					}
+				},
+				2 * 60 * 1000 // Reduced to 2 minutes, but only when needed
+			);
+		};
 
 		// Only refresh when page is visible and user is active
 		const handleVisibilityChange = () => {
@@ -167,33 +273,16 @@ export const UploadLimitProvider: React.FC<UploadLimitProviderProps> = ({ childr
 				// Page is hidden, clear interval
 				if (interval) clearInterval(interval);
 			} else {
-				// Page is visible, start interval
-				interval = setInterval(
-					async () => {
-						try {
-							await fetchUploadStats(true); // Force refresh
-						} catch (error) {
-							console.warn('Failed to refresh upload stats:', error);
-							// Don't throw error, just log it
-						}
-					},
-					5 * 60 * 1000
-				); // 5 minutes
+				// Page is visible, start interval if needed
+				if (shouldRefreshPeriodically()) {
+					startInterval();
+				}
 			}
 		};
 
-		// Start interval if page is visible
-		if (!document.hidden) {
-			interval = setInterval(
-				async () => {
-					try {
-						await fetchUploadStats(true); // Force refresh
-					} catch (error) {
-						console.warn('Failed to refresh upload stats:', error);
-					}
-				},
-				5 * 60 * 1000
-			); // 5 minutes
+		// Start interval if page is visible and refresh is needed
+		if (!document.hidden && shouldRefreshPeriodically()) {
+			startInterval();
 		}
 
 		// Listen for visibility changes
@@ -203,23 +292,46 @@ export const UploadLimitProvider: React.FC<UploadLimitProviderProps> = ({ childr
 			if (interval) clearInterval(interval);
 			document.removeEventListener('visibilitychange', handleVisibilityChange);
 		};
-	}, [userId]);
+	}, [userId, shouldRefreshPeriodically, fetchUploadStats]);
 
-	const value: UploadLimitContextType = {
-		uploadInfo,
-		loading,
-		error,
-		refreshUploadStats,
-		checkCanUploadAudio,
-		checkCanUploadImage,
-		getRemainingAudioUploads,
-		getRemainingImageUploads,
-		getCurrentAudioCount,
-		getCurrentImageCount,
-		getAudioLimit,
-		getImageLimit,
-		getFormattedResetTime,
-	};
+	const value: UploadLimitContextType = useMemo(
+		() => ({
+			uploadInfo,
+			loading,
+			error,
+			refreshUploadStats,
+			checkCanUploadAudio,
+			checkCanUploadImage,
+			getRemainingAudioUploads,
+			getRemainingImageUploads,
+			getCurrentAudioCount,
+			getCurrentImageCount,
+			getAudioLimit,
+			getImageLimit,
+			getFormattedResetTime,
+			incrementAudioUpload,
+			incrementImageUpload,
+			resetUploads,
+		}),
+		[
+			uploadInfo,
+			loading,
+			error,
+			refreshUploadStats,
+			checkCanUploadAudio,
+			checkCanUploadImage,
+			getRemainingAudioUploads,
+			getRemainingImageUploads,
+			getCurrentAudioCount,
+			getCurrentImageCount,
+			getAudioLimit,
+			getImageLimit,
+			getFormattedResetTime,
+			incrementAudioUpload,
+			incrementImageUpload,
+			resetUploads,
+		]
+	);
 
 	return <UploadLimitContext.Provider value={value}>{children}</UploadLimitContext.Provider>;
 };

@@ -231,8 +231,16 @@ const Messages = () => {
 	});
 
 	// Upload limit management - for all roles
-	const { uploadInfo, checkCanUploadImage, checkCanUploadAudio, getRemainingImageUploads, getImageLimit, getFormattedResetTime, refreshUploadStats } =
-		useUploadLimit();
+	const {
+		uploadInfo,
+		checkCanUploadImage,
+		checkCanUploadAudio,
+		getRemainingImageUploads,
+		getImageLimit,
+		getFormattedResetTime,
+		refreshUploadStats,
+		incrementImageUpload,
+	} = useUploadLimit();
 
 	// ✅ NEW: Use useChatNavigation hook
 	const {
@@ -618,6 +626,7 @@ const Messages = () => {
 								getFormattedResetTime={getFormattedResetTime}
 								checkCanUploadImage={checkCanUploadImage}
 								checkCanUploadAudio={checkCanUploadAudio}
+								incrementImageUpload={incrementImageUpload}
 							/>
 						</Box>
 					</Box>

@@ -1,0 +1,16 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /auth/
+Disallow: /api/
+Disallow: /dashboard/
+Disallow: /course/*/lesson/
+Disallow: /course/*/quiz/
+Disallow: /user/
+Disallow: /instructor/
+
+# Sitemap
+Sitemap: https://learnscape-qa.netlify.app/sitemap.xml
+
+# Crawl-delay for respectful crawling
+Crawl-delay: 1

@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios from '@utils/axiosInstance';
 import { collection, writeBatch, serverTimestamp, doc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { truncateText } from './utilText';
@@ -49,8 +49,12 @@ export async function sendCommunityNotifications({
 			usersAlreadyNotified.add(replyToMessage.userId.firebaseUserId);
 		}
 
-		// Send notification to topic owner if it's not a reply to their message
-		if (topic.userId?.firebaseUserId && (!replyToMessage || replyToMessage.userId?.firebaseUserId !== topic.userId?.firebaseUserId)) {
+		// Send notification to topic owner if it's not a reply to their message AND they're not the current user
+		if (
+			topic.userId?.firebaseUserId &&
+			topic.userId.firebaseUserId !== user?.firebaseUserId &&
+			(!replyToMessage || replyToMessage.userId?.firebaseUserId !== topic.userId?.firebaseUserId)
+		) {
 			const notificationToTopicOwnerData = {
 				title: 'Community Topic Replied',
 				message: `${user?.username} replied to your topic ${truncateText(topic.title, 25)} in community topics: "${truncateText(
@@ -77,32 +81,36 @@ export async function sendCommunityNotifications({
 				const hasEveryoneMention = mentionedUsernames?.includes('everyone');
 
 				if (hasEveryoneMention) {
-					// Get all users who have participated in this topic
-					const topicParticipantsResponse = await axios.get(`${baseUrl}/communityMessages/topic-participants/${topic._id}`);
-					const topicParticipants = topicParticipantsResponse.data.data || [];
+					try {
+						// Get all users who have participated in this topic
+						const topicParticipantsResponse = await axios.get(`${baseUrl}/communityMessages/topic-participants/${topic._id}`);
+						const topicParticipants = topicParticipantsResponse.data.data || [];
 
-					// Send @everyone notifications to all users who posted messages in this topic
-					for (const participant of topicParticipants) {
-						if (
-							participant.firebaseUserId &&
-							participant.firebaseUserId !== user?.firebaseUserId &&
-							!usersAlreadyNotified.has(participant.firebaseUserId)
-						) {
-							const everyoneNotificationData = {
-								title: 'Community Announcement',
-								message: `${user?.username} made an announcement in the topic "${truncateText(topic.title, 30)}": "${truncateText(currentMessage, 50)}"`,
-								isRead: false,
-								timestamp: serverTimestamp(),
-								type: 'MentionUser',
-								userImageUrl: user?.imageUrl,
-								communityTopicId: topic._id,
-								communityMessageId: newMessageId,
-							};
+						// Send @everyone notifications to all users who posted messages in this topic
+						for (const participant of topicParticipants) {
+							if (
+								participant.firebaseUserId &&
+								participant.firebaseUserId !== user?.firebaseUserId &&
+								!usersAlreadyNotified.has(participant.firebaseUserId)
+							) {
+								const everyoneNotificationData = {
+									title: 'Community Announcement',
+									message: `${user?.username} made an announcement in the topic "${truncateText(topic.title, 30)}": "${truncateText(currentMessage, 50)}"`,
+									isRead: false,
+									timestamp: serverTimestamp(),
+									type: 'MentionUser',
+									userImageUrl: user?.imageUrl,
+									communityTopicId: topic._id,
+									communityMessageId: newMessageId,
+								};
 
-							const notificationRef = doc(collection(db, 'notifications', participant.firebaseUserId, 'userNotifications'));
-							batch.set(notificationRef, everyoneNotificationData);
-							usersAlreadyNotified.add(participant.firebaseUserId);
+								const notificationRef = doc(collection(db, 'notifications', participant.firebaseUserId, 'userNotifications'));
+								batch.set(notificationRef, everyoneNotificationData);
+								usersAlreadyNotified.add(participant.firebaseUserId);
+							}
 						}
+					} catch (error) {
+						// Continue with other notifications even if @everyone fails
 					}
 				}
 

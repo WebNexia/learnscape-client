@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
+        http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+  
+  <!-- Homepage -->
+  <url>
+    <loc>https://learnscape-qa.netlify.app/</loc>
+    <lastmod>2024-01-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  
+  <!-- Main Public Pages -->
+  <url>
+    <loc>https://learnscape-qa.netlify.app/about-us</loc>
+    <lastmod>2024-01-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>https://learnscape-qa.netlify.app/contact-us</loc>
+    <lastmod>2024-01-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>https://learnscape-qa.netlify.app/resources</loc>
+    <lastmod>2024-01-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>https://learnscape-qa.netlify.app/landing-page-courses</loc>
+    <lastmod>2024-01-01</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  
+  <!-- Note: Individual course pages should be dynamically generated -->
+  <!-- Course pages follow pattern: /landing-page-course/:title/:courseId -->
+  <!-- These should be added programmatically when courses are published -->
+  <!-- 
+    For production, consider generating this sitemap dynamically by:
+    1. Fetching all published courses from the API
+    2. Adding each course URL to the sitemap
+    3. Updating lastmod dates based on course updatedAt timestamps
+    
+    Example implementation could be:
+    - A server-side route that generates the sitemap on-demand
+    - Or a build-time script that generates static sitemap.xml
+  -->
+  
+</urlset>
+
