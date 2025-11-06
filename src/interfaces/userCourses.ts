@@ -9,6 +9,7 @@ interface BaseUserCourse {
 	updatedAt: string;
 	isActive: boolean;
 	validUntil: string;
+	completedChapterChecklistIds?: string[];
 }
 
 export interface UserCoursesByUserId extends BaseUserCourse {
