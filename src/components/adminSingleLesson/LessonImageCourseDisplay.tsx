@@ -24,22 +24,6 @@ const LessonImageCourseDisplay = ({ singleLesson }: LessonImageCourseDisplayProp
 				width: isMobileSize ? '95%' : '90%',
 			}}>
 			<Box sx={{ display: 'flex', alignItems: 'center', textAlign: 'center' }}>
-				<Box sx={{ height: isMobileSize ? '6rem' : '8rem', width: isMobileSize ? '9rem' : '12rem', mr: '2rem' }}>
-					<img
-						src={singleLesson.imageUrl ? singleLesson.imageUrl : 'https://placehold.co/600x400/e2e8f0/64748b?text=No+Image'}
-						alt='lesson_img'
-						height='100%'
-						width='100%'
-						style={{
-							borderRadius: '0.2rem',
-							boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
-						}}
-					/>
-
-					<Typography variant='body2' sx={{ mt: '0.35rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-						Cover Image
-					</Typography>
-				</Box>
 				<Box sx={{ height: isMobileSize ? '6rem' : '8rem', width: isMobileSize ? '9rem' : '12rem', cursor: 'pointer' }}>
 					{singleLesson?.videoUrl ? (
 						<Box

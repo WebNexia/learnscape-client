@@ -21,6 +21,7 @@ import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitBu
 import { FormEvent, useContext, useEffect, useState } from 'react';
 import { Lesson } from '../interfaces/lessons';
 import axios from '@utils/axiosInstance';
+import { useQueryClient } from 'react-query';
 import { QuestionInterface } from '../interfaces/question';
 import { LessonsContext } from '../contexts/LessonsContextProvider';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
@@ -37,12 +38,10 @@ import CreateQuestionDialog from '../components/forms/newQuestion/CreateQuestion
 import { QuestionsContext } from '../contexts/QuestionsContextProvider';
 import useImageUpload from '../hooks/useImageUpload';
 import useVideoUpload from '../hooks/useVideoUpload';
-import HandleImageUploadURL from '../components/forms/uploadImageVideoDocument/HandleImageUploadURL';
 import HandleVideoUploadURL from '../components/forms/uploadImageVideoDocument/HandleVideoUploadURL';
 import AddNewQuestionDialog from '../components/adminSingleLesson/AddNewQuestionDialog';
 import { stripHtml } from '../utils/stripHtml';
 import { truncateText } from '../utils/utilText';
-import ImageThumbnail from '../components/forms/uploadImageVideoDocument/ImageThumbnail';
 import VideoThumbnail from '../components/forms/uploadImageVideoDocument/VideoThumbnail';
 import LessonImageCourseDisplay from '../components/adminSingleLesson/LessonImageCourseDisplay';
 import { sanitizeHtml } from '../utils/sanitizeHtml';
@@ -103,6 +102,7 @@ const AdminLessonEditPage = () => {
 	const { user } = useContext(UserAuthContext);
 	const isInstructor = user?.role === Roles.INSTRUCTOR;
 	const { updateLessonPublishing, updateLesson, lessonTypes } = useContext(LessonsContext);
+	const queryClient = useQueryClient();
 
 	const { questionTypes, fetchQuestionTypeName, addNewQuestion, updateQuestion } = useContext(QuestionsContext);
 	const { addNewDocument, updateDocument } = useContext(DocumentsContext);
@@ -184,7 +184,6 @@ const AdminLessonEditPage = () => {
 	const [isPublishAllowedMsgOpen, setIsPublishAllowedMsgOpen] = useState<boolean>(false);
 	const [isAiContentGeneratedMsgOpen, setIsAiContentGeneratedMsgOpen] = useState<boolean>(false);
 
-	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(true);
 	const [enterVideoUrl, setEnterVideoUrl] = useState<boolean>(true);
 	const [enterDocUrl, setEnterDocUrl] = useState<boolean>(true);
 
@@ -198,7 +197,6 @@ const AdminLessonEditPage = () => {
 
 	const resetEnterImageVideoUrl = () => {
 		setEnterVideoUrl(true);
-		setEnterImageUrl(true);
 		setEnterDocUrl(true);
 	};
 
@@ -388,6 +386,8 @@ const AdminLessonEditPage = () => {
 				await axios.patch(`${base_url}${isInstructor ? '/lessons/instructor' : '/lessons'}/${lessonId}`, {
 					isActive: false,
 					publishedAt: null, // Clear publishedAt when unpublishing
+					questionIds: singleLessonBeforeSave.questionIds || singleLesson.questionIds || [], // Preserve questions
+					documentIds: singleLessonBeforeSave.documentIds || singleLesson.documentIds || [], // Preserve documents
 				});
 
 				setIsActive(false);
@@ -395,6 +395,10 @@ const AdminLessonEditPage = () => {
 				setSingleLessonBeforeSave((prevData) => ({ ...prevData, isActive: false }));
 				updateLesson({ ...singleLesson, isActive: false });
 				if (lessonId) updateLessonPublishing(lessonId);
+
+				// Invalidate lessons cache to refresh AdminLessons table
+				const entityKey = isInstructor ? 'instructorLessons' : 'allLessons';
+				await queryClient.invalidateQueries([entityKey, orgId]);
 			} catch (error) {
 				console.log(error);
 			}
@@ -429,6 +433,10 @@ const AdminLessonEditPage = () => {
 				setSingleLessonBeforeSave((prevData) => ({ ...prevData, isActive: true }));
 				updateLesson({ ...singleLesson, isActive: true });
 				if (lessonId) updateLessonPublishing(lessonId);
+
+				// Invalidate lessons cache to refresh AdminLessons table
+				const entityKey = isInstructor ? 'instructorLessons' : 'allLessons';
+				await queryClient.invalidateQueries([entityKey, orgId]);
 			} catch (error) {
 				console.log(error);
 			}
@@ -1189,54 +1197,6 @@ const AdminLessonEditPage = () => {
 							</Box>
 
 							<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mt: '2rem', width: '100%' }}>
-								<Box sx={{ flex: 1, mr: '2rem' }}>
-									<HandleImageUploadURL
-										label='Cover Image'
-										onImageUploadLogic={(url) => {
-											setIsLessonUpdated(true);
-											setHasUnsavedChanges(true);
-
-											setSingleLessonBeforeSave(() => {
-												return { ...singleLessonBeforeSave, imageUrl: url };
-											});
-
-											// Validate URL immediately after upload
-											validateUrlOnChange(url, 'image');
-										}}
-										onChangeImgUrl={(e) => {
-											setSingleLessonBeforeSave((prevCourse) => ({
-												...prevCourse,
-												imageUrl: e.target.value,
-											}));
-											setIsLessonUpdated(true);
-											setHasUnsavedChanges(true);
-
-											// Validate URL on change (debounced)
-											validateUrlOnChange(e.target.value, 'image');
-										}}
-										imageUrlValue={singleLessonBeforeSave?.imageUrl}
-										imageFolderName='LessonImages'
-										enterImageUrl={enterImageUrl}
-										setEnterImageUrl={setEnterImageUrl}
-									/>
-									<ImageThumbnail
-										imgSource={singleLessonBeforeSave?.imageUrl || 'https://placehold.co/500x400/e2e8f0/64748b?text=No+Image'}
-										removeImage={() => {
-											{
-												setIsLessonUpdated(true);
-												setHasUnsavedChanges(true);
-												setSingleLessonBeforeSave((prevData) => {
-													return {
-														...prevData,
-														imageUrl: '',
-													};
-												});
-
-												resetImageUpload();
-											}
-										}}
-									/>
-								</Box>
 								<Box sx={{ flex: 1 }}>
 									<HandleVideoUploadURL
 										label='Lesson Video'
@@ -1283,6 +1243,8 @@ const AdminLessonEditPage = () => {
 
 											resetVideoUpload();
 										}}
+										boxStyle={{ flex: 1, mr: '2rem', height: singleLessonBeforeSave?.videoUrl ? '10rem' : '8rem' }}
+										playerWidth={isMobileSize ? '100%' : '40%'}
 									/>
 								</Box>
 							</Box>
