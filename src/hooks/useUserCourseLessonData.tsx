@@ -18,7 +18,7 @@ export const useUserCourseLessonData = () => {
 	const nextLessonId = searchParams.get('next');
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
-	const { userCoursesData } = useContext(UserCourseLessonDataContext);
+	const { userCoursesData, singleCourseUser } = useContext(UserCourseLessonDataContext);
 	const queryClient = useQueryClient();
 
 	// Use context data for userCourseData, use hook for userLessonData
@@ -124,6 +124,22 @@ export const useUserCourseLessonData = () => {
 
 				// Trigger dashboard sync when lesson is completed
 				dashboardSyncHelpers.onLessonCompleted(refreshDashboard);
+
+				// Mark lesson completion for checklist auto-open (find which chapter this lesson belongs to)
+				if (singleCourseUser && lessonId) {
+					for (const chapter of singleCourseUser.chapters || []) {
+						if (!chapter || !chapter.lessons) continue;
+						const lessonInChapter = chapter.lessons.find((l) => l && l._id === lessonId);
+						if (lessonInChapter) {
+							// Standardize to use _id (backend format)
+							const chapterId = (chapter as any)._id || (chapter as any).chapterId;
+							if (chapterId) {
+								sessionStorage.setItem(`lesson-completed-${chapterId}`, 'true');
+							}
+							break;
+						}
+					}
+				}
 			}
 
 			if (nextLessonId) {
@@ -161,15 +177,49 @@ export const useUserCourseLessonData = () => {
 					}
 				}
 			} else {
-				await axios.patch(`${base_url}/usercourses/${userCourseId}`, {
-					isCompleted: true,
-					isInProgress: false,
-				});
+				// Check if there are more lessons in the course before marking as completed
+				let hasMoreLessons = false;
+				if (singleCourseUser && lessonId) {
+					// Find current lesson's position
+					for (const chapter of singleCourseUser.chapters || []) {
+						if (!chapter || !chapter.lessons) continue;
+						for (let i = 0; i < chapter.lessons.length; i++) {
+							const lesson = chapter.lessons[i];
+							if (!lesson) continue;
+							if (lesson._id === lessonId) {
+								// Check if there are more lessons in current chapter
+								if (i < chapter.lessons.length - 1) {
+									hasMoreLessons = true;
+									break;
+								}
+								// Check if there are more chapters with lessons
+								const currentChapterIndex = singleCourseUser.chapters.indexOf(chapter);
+								for (let j = currentChapterIndex + 1; j < singleCourseUser.chapters.length; j++) {
+									const nextChapter = singleCourseUser.chapters[j];
+									if (nextChapter && nextChapter.lessons && nextChapter.lessons.length > 0) {
+										hasMoreLessons = true;
+										break;
+									}
+								}
+								break;
+							}
+						}
+						if (hasMoreLessons) break;
+					}
+				}
 
-				setIsCourseCompleted(true);
+				// Only mark course as completed if there are no more lessons
+				if (!hasMoreLessons) {
+					await axios.patch(`${base_url}/usercourses/${userCourseId}`, {
+						isCompleted: true,
+						isInProgress: false,
+					});
 
-				// Invalidate React Query cache to refresh context data
-				await queryClient.invalidateQueries(['userCourseData']);
+					setIsCourseCompleted(true);
+
+					// Invalidate React Query cache to refresh context data
+					await queryClient.invalidateQueries(['userCourseData']);
+				}
 
 				// navigate(`/course/${courseId}/user/${userId}/userCourseId/${userCourseId}?isEnrolled=true`);
 				window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -189,6 +239,8 @@ export const useUserCourseLessonData = () => {
 		queryClient,
 		handleNextLessonFallback,
 		refreshDashboard,
+		singleCourseUser,
+		lessonId,
 	]);
 
 	// Function to update in-progress lessons

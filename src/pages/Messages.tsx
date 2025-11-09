@@ -199,7 +199,7 @@ const Messages = () => {
 	});
 
 	// ✅ NEW: Use useChatExport hook
-	const { downloadChatHistory, downloadChatHistoryAsPDF, downloadChatHistoryAsHTML, downloadChatHistoryAsTXT } = useChatExport({
+	const { downloadChatHistoryAsPDF, downloadChatHistoryAsTXT } = useChatExport({
 		activeChat,
 		messages,
 		user,
@@ -421,9 +421,7 @@ const Messages = () => {
 							getChatDisplayImage={getChatDisplayImage}
 							isGroupChat={isGroupChat}
 							onBlockUnblockUser={handleBlockUnblockUser}
-							onDownloadChatHistory={downloadChatHistory}
 							onDownloadChatHistoryAsPDF={downloadChatHistoryAsPDF}
-							onDownloadChatHistoryAsHTML={downloadChatHistoryAsHTML}
 							onDownloadChatHistoryAsTXT={downloadChatHistoryAsTXT}
 							onEditGroupChat={() => {
 								if (activeChat && isGroupChat(activeChat)) {
