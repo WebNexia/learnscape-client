@@ -17,35 +17,39 @@ const StatisticsSection = () => {
 	];
 
 	return (
-		<Box sx={{ position: 'relative', backgroundColor: colorScheme.primary }}>
-			{/* Soft shadow at the top for modern transition */}
+		<Box sx={{ position: 'relative', backgroundColor: 'transparent' }}>
+			{/* Soft transition gradient */}
 			<Box
 				sx={{
 					width: '100%',
-					height: '24px',
-					boxShadow: '0 -8px 24px -8px rgba(44, 62, 80, 0.1)',
-					background: 'transparent',
+					height: '60px',
+					background: 'linear-gradient(180deg, rgba(102, 126, 234, 0.25) 0%, rgba(118, 75, 162, 0.2) 50%, transparent 100%)',
+					boxShadow: '0 -4px 30px rgba(102, 126, 234, 0.15)',
 				}}
 			/>
 			<Box
 				sx={{
 					py: 8,
-					backgroundColor: colorScheme.primary,
-					color: '#fff',
+					backgroundColor: 'transparent',
 					position: 'relative',
 					overflow: 'hidden',
 				}}>
-				{/* Background Pattern */}
+				{/* Animated Background Pattern */}
 				<Box
 					sx={{
-						position: 'absolute',
-						top: 0,
-						left: 0,
-						right: 0,
-						bottom: 0,
-						opacity: 0.1,
-						background: 'radial-gradient(circle, #fff 1px, transparent 1px)',
-						backgroundSize: '30px 30px',
+						'position': 'absolute',
+						'top': 0,
+						'left': 0,
+						'right': 0,
+						'bottom': 0,
+						'opacity': 0.15,
+						'background': 'radial-gradient(circle, rgba(91, 141, 239, 0.15) 1px, transparent 1px)',
+						'backgroundSize': '40px 40px',
+						'animation': 'floatPattern 20s linear infinite',
+						'@keyframes floatPattern': {
+							'0%': { transform: 'translate(0, 0)' },
+							'100%': { transform: 'translate(40px, 40px)' },
+						},
 					}}
 				/>
 
@@ -58,28 +62,34 @@ const StatisticsSection = () => {
 									whileInView={{ opacity: 1, y: 0 }}
 									transition={{ duration: 0.5, delay: index * 0.1 }}
 									viewport={{ once: true }}>
-									<Box sx={{ textAlign: 'center' }}>
+									<Box sx={{ textAlign: 'center', position: 'relative', zIndex: 1 }}>
 										<Typography
 											variant='h2'
 											sx={{
-												fontWeight: 700,
-												mb: 1,
-												fontSize: { xs: '1.75rem', sm: '2.75rem' },
-												background: 'linear-gradient(45deg, #fff, rgba(255, 255, 255, 0.8))',
-												WebkitBackgroundClip: 'text',
-												WebkitTextFillColor: 'transparent',
-												backgroundClip: 'text',
-												textShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
+												'fontWeight': 700,
+												'mb': 1,
+												'fontSize': { xs: '1.75rem', sm: '2.75rem' },
+												'background': 'linear-gradient(135deg, #4f46e5 0%, #5b21b6 25%, #7c3aed 50%, #3b82f6 75%, #2563eb 100%)',
+												'WebkitBackgroundClip': 'text',
+												'WebkitTextFillColor': 'transparent',
+												'backgroundClip': 'text',
+												'backgroundSize': '200% 200%',
+												'animation': 'gradientShift 5s ease infinite',
+												'fontFamily': 'Varela Round',
+												'@keyframes gradientShift': {
+													'0%': { backgroundPosition: '0% 50%' },
+													'50%': { backgroundPosition: '100% 50%' },
+													'100%': { backgroundPosition: '0% 50%' },
+												},
 											}}>
 											{stat.number}
 										</Typography>
 										<Typography
 											variant='h6'
 											sx={{
-												color: '#fff',
+												color: '#334155',
 												fontWeight: 500,
-												fontFamily: "'Plus Jakarta Sans', sans-serif",
-												textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)',
+												fontFamily: 'Varela Round',
 												fontSize: { xs: '0.9rem', sm: '1.35rem' },
 											}}>
 											{stat.label === 'Active Students'

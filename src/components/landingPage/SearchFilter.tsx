@@ -105,13 +105,20 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
 
 	return (
 		<Paper
-			elevation={2}
+			elevation={0}
 			sx={{
-				p: 1.75,
-				mb: 2,
-				borderRadius: 2,
-				backgroundColor: 'rgba(255, 255, 255, 0.95)',
-				backdropFilter: 'blur(10px)',
+				'p': 1.75,
+				'mb': 2,
+				'borderRadius': '1rem',
+				'backgroundColor': 'rgba(255, 255, 255, 0.9)',
+				'backdropFilter': 'blur(20px)',
+				'border': '2px solid rgba(91, 141, 239, 0.15)',
+				'boxShadow': '0 4px 20px rgba(91, 141, 239, 0.1)',
+				'transition': 'all 0.3s ease',
+				'&:hover': {
+					boxShadow: '0 6px 25px rgba(91, 141, 239, 0.15)',
+					borderColor: 'rgba(91, 141, 239, 0.25)',
+				},
 			}}>
 			<Grid container spacing={2} alignItems='center'>
 				{/* Search Input */}
@@ -128,12 +135,12 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
 						InputProps={{
 							startAdornment: (
 								<InputAdornment position='start'>
-									<Search color='action' fontSize='small' />
+									<Search sx={{ color: '#5B8DEF' }} fontSize='small' />
 								</InputAdornment>
 							),
 							endAdornment: localSearchValue && (
 								<InputAdornment position='end'>
-									<IconButton size='small' onClick={() => setLocalSearchValue('')} edge='end'>
+									<IconButton size='small' onClick={() => setLocalSearchValue('')} edge='end' sx={{ color: '#5B8DEF' }}>
 										<Clear />
 									</IconButton>
 								</InputAdornment>
@@ -145,11 +152,13 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
 						sx={{
 							'& .MuiOutlinedInput-root': {
 								'fontFamily': 'Varela Round',
+								'backgroundColor': 'rgba(250, 251, 252, 0.8)',
 								'&:hover .MuiOutlinedInput-notchedOutline': {
-									borderColor: theme.palette.primary.main,
+									borderColor: '#5B8DEF',
 								},
 								'&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-									borderColor: theme.palette.primary.main,
+									borderColor: '#5B8DEF',
+									borderWidth: '2px',
 								},
 							},
 							'& .MuiInputLabel-root': {
@@ -218,12 +227,21 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
 							sx={{
 								'fontFamily': 'Varela Round',
 								'fontWeight': 500,
-								'backgroundColor': theme.palette.primary.main,
+								'background': 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+								'color': '#FFFFFF',
+								'boxShadow': '0 4px 15px rgba(249, 115, 22, 0.35)',
 								'&:hover': {
-									backgroundColor: theme.palette.primary.dark,
+									background: 'linear-gradient(135deg, #fb923c 0%, #f97316 100%)',
+									transform: 'translateY(-2px)',
+									boxShadow: '0 6px 20px rgba(249, 115, 22, 0.45)',
+								},
+								'&.Mui-disabled': {
+									background: 'rgba(249, 115, 22, 0.3)',
+									color: 'rgba(255, 255, 255, 0.6)',
 								},
 								'textTransform': 'capitalize',
 								'fontSize': '0.8rem',
+								'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
 							}}>
 							Ara
 						</Button>
@@ -235,14 +253,24 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
 							sx={{
 								'fontFamily': 'Varela Round',
 								'fontWeight': 500,
-								'borderColor': theme.palette.grey[400],
-								'color': theme.palette.grey[700],
+								'borderColor': '#f97316',
+								'color': '#f97316',
+								'borderWidth': '2px',
+								'background': 'rgba(249, 115, 22, 0.08)',
 								'&:hover': {
-									borderColor: theme.palette.grey[600],
-									backgroundColor: theme.palette.grey[50],
+									borderColor: '#ea580c',
+									color: '#ea580c',
+									backgroundColor: 'rgba(249, 115, 22, 0.15)',
+									transform: 'translateY(-2px)',
+									boxShadow: '0 4px 15px rgba(249, 115, 22, 0.3)',
+								},
+								'&.Mui-disabled': {
+									borderColor: 'rgba(249, 115, 22, 0.3)',
+									color: 'rgba(249, 115, 22, 0.3)',
 								},
 								'textTransform': 'capitalize',
 								'fontSize': '0.8rem',
+								'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
 							}}>
 							Sıfırla
 						</Button>

@@ -21,22 +21,40 @@ const LandingPageLatestCourses = forwardRef<HTMLDivElement>((_, ref) => {
 	const publishedCourses = latestCourses?.filter((course: SingleCourse) => course.orgId === orgId) || [];
 
 	return (
-		<Box ref={ref} sx={{ bgcolor: '#f7f9fa', position: 'relative', padding: '3rem 0' }}>
+		<Box ref={ref} sx={{ backgroundColor: 'transparent', position: 'relative', padding: '3rem 0' }}>
 			<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', textAlign: 'center', mb: { xs: 2, sm: 3 } }}>
 				<Typography
-					variant='h2'
 					sx={{
-						fontSize: responsiveStyles.typography.h2,
-						fontFamily: DIALOG_FONT,
-						color: '#2C3E50',
-						letterSpacing: '-0.02em',
-						lineHeight: 1.2,
+						'fontSize': responsiveStyles.typography.h2,
+						'fontFamily': DIALOG_FONT,
+						'background': 'linear-gradient(135deg, #4f46e5 0%, #5b21b6 25%, #7c3aed 50%, #3b82f6 75%, #2563eb 100%)',
+						'WebkitBackgroundClip': 'text',
+						'WebkitTextFillColor': 'transparent',
+						'backgroundClip': 'text',
+						'backgroundSize': '200% 200%',
+						'animation': 'gradientShift 5s ease infinite',
+						'letterSpacing': '-0.02em',
+						'lineHeight': 1.2,
+						'fontWeight': 700,
+						'@keyframes gradientShift': {
+							'0%': { backgroundPosition: '0% 50%' },
+							'50%': { backgroundPosition: '100% 50%' },
+							'100%': { backgroundPosition: '0% 50%' },
+						},
 					}}>
 					Son Eklenen Kurslar
 				</Typography>
 				<IconButton
 					size='small'
-					sx={{ 'ml': { xs: '0.5rem', sm: '0.75rem' }, '& svg': { fontSize: { xs: '1.1rem', sm: '1.25rem' } } }}
+					sx={{
+						'ml': { xs: '0.5rem', sm: '0.75rem' },
+						'& svg': { fontSize: { xs: '1.1rem', sm: '1.25rem' }, color: '#5B8DEF' },
+						'&:hover': {
+							backgroundColor: 'rgba(91, 141, 239, 0.1)',
+							transform: 'scale(1.1)',
+						},
+						'transition': 'all 0.3s ease',
+					}}
 					onClick={() => setIsInfoDialogOpen(true)}>
 					<InfoOutlined />
 				</IconButton>
@@ -46,7 +64,14 @@ const LandingPageLatestCourses = forwardRef<HTMLDivElement>((_, ref) => {
 				{publishedCourses && publishedCourses.length > 0 ? (
 					publishedCourses?.map((course: SingleCourse) => {
 						return (
-							<Box key={course._id}>
+							<Box
+								key={course._id}
+								sx={{
+									'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+									'&:hover': {
+										transform: 'translateY(-5px)',
+									},
+								}}>
 								<DashboardCourseCard course={course} fromHomePage />
 							</Box>
 						);
@@ -56,7 +81,7 @@ const LandingPageLatestCourses = forwardRef<HTMLDivElement>((_, ref) => {
 						sx={{
 							textAlign: 'center',
 							fontSize: '1.25rem',
-							color: 'text.secondary',
+							color: '#334155',
 							fontFamily: DIALOG_FONT,
 							mt: '3rem',
 						}}>

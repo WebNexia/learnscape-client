@@ -14,18 +14,13 @@ const LandingPageLayout = ({ children }: LandingPageLayoutProps) => {
 			sx={{
 				display: 'flex',
 				flexDirection: 'column',
-				backgroundColor: '#FDF7F0',
-				backgroundImage: `
-					linear-gradient(135deg, rgba(44, 62, 80, 0.05), rgba(52, 152, 219, 0.05)),
-					radial-gradient(circle, rgba(44,62,80,0.08) 1px, transparent 1px)
-				`,
-				backgroundSize: 'auto, 30px 30px',
-				backgroundRepeat: 'repeat, repeat',
+				backgroundColor: 'transparent',
 				minHeight: '100vh',
 				position: 'relative',
+				zIndex: 1,
 			}}>
 			<Header />
-			<Box sx={{ flexGrow: 1 }}>{children}</Box>
+			<Box sx={{ flexGrow: 1, position: 'relative', zIndex: 1 }}>{children}</Box>
 			<Footer />
 		</Box>
 	);

@@ -2,7 +2,7 @@ import { Box, Button, DialogActions, Typography } from '@mui/material';
 import { motion } from 'framer-motion';
 import { useContext, useState, useEffect } from 'react';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
-import Instructor_Img from '../../assets/instructor-new1.png';
+import Hero_Img from '../../assets/man-writing-notebook-with-giant-pen.png';
 import { ContactPage, PlayCircle } from '@mui/icons-material';
 import CustomDialog from '../layouts/dialog/CustomDialog';
 import DialogContent from '@mui/material/DialogContent';
@@ -111,30 +111,13 @@ const HeroSection = () => {
 				display: 'flex',
 				justifyContent: 'center',
 				alignItems: 'center',
-				background: '#FDF7F0',
-				backgroundImage: `
-					linear-gradient(135deg, rgba(44, 62, 80, 0.05), rgba(52, 152, 219, 0.05)),
-					radial-gradient(circle, rgba(44,62,80,0.08) 1px, transparent 1px)
-				`,
-				backgroundSize: 'auto, 30px 30px',
-				backgroundRepeat: 'repeat, repeat',
+				background: 'transparent',
 				position: 'relative',
 				overflow: 'hidden',
 				pt: { xs: isRotatedMedium ? '20vh' : '5vh', md: '6vh' },
 				width: '100%',
 				px: { xs: '5%', sm: '6%', md: '8%' },
 			}}>
-			{/* Animated background elements */}
-			<Box
-				sx={{
-					position: 'absolute',
-					width: '100%',
-					height: '100%',
-					opacity: 0.1,
-					backgroundSize: '30px 30px',
-				}}
-			/>
-
 			<Box
 				sx={{
 					display: 'flex',
@@ -148,54 +131,48 @@ const HeroSection = () => {
 				}}>
 				{/* Content */}
 				<Box sx={{ flex: 2, width: '100%', maxWidth: { md: '65%' } }}>
-					<motion.div initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }} style={{ width: '100%' }}>
+					<motion.div
+						initial={{ opacity: 0, x: -50 }}
+						animate={{ opacity: 1, x: 0 }}
+						transition={{ duration: 0.8 }}
+						style={{ width: '100%', position: 'relative', zIndex: 2 }}>
 						<Typography
 							variant='h2'
 							className='gradient-text kaizen-title'
 							sx={{
 								fontSize: isVerySmallScreen || isRotatedMedium ? '1.75rem' : isSmallScreen ? '2rem' : '3rem',
-								fontWeight: 600,
+								fontWeight: 700,
 								mb: { xs: 1.5, sm: 2 },
-								background: 'linear-gradient(45deg, #2C3E50, #3498DB)',
-								WebkitBackgroundClip: 'text',
-								WebkitTextFillColor: 'transparent',
-								backgroundClip: 'text',
 								letterSpacing: '-0.02em',
 								lineHeight: 1.2,
 								fontFamily: 'Varela Round',
 							}}>
-							10 yıldır tek bir probleme odaklandım:
+							Ezber değil, <em>akıcı</em> iletişim
 						</Typography>
 						<Typography
 							variant='h2'
-							sx={{ fontFamily: 'Varela Round', fontSize: isVerySmallScreen || isRotatedMedium ? '1.5rem' : isSmallScreen ? '1.75rem' : '2.25rem' }}>
-							Öğrencilerimin İngilizce'yi akıcı konuşamaması
+							sx={{
+								fontFamily: 'Varela Round',
+								fontSize: isVerySmallScreen || isRotatedMedium ? '1.5rem' : isSmallScreen ? '1.75rem' : '2.25rem',
+								color: '#1e293b',
+								fontWeight: 600,
+								lineHeight: 1.3,
+							}}>
+							Artık konuşurken “nasıl söyleniyordu?” diye düşünmeyeceksin.
 						</Typography>
 						<Typography
 							variant='h5'
 							sx={{
-								color: '#34495E',
-								opacity: 0.9,
+								color: '#334155',
 								fontSize: { xs: '0.9rem', sm: '1rem', md: '1.15rem' },
 								fontWeight: 400,
-								lineHeight: 1.6,
+								lineHeight: 1.7,
 								fontFamily: 'Varela Round',
 								margin: '1rem 0',
 							}}>
-							Bu kurs, duraksamaları, “nasıl söylenecek?” kaygısını, Türkçe'den çeviri yapmayı geride bırakman için tasarlandı
+							Gelistirdigimiz eğitim modeliyle bir İngiliz gibi düşünecek ve doğal bir şekilde ozguvenle İngilizce konuşacaksın.
 						</Typography>
-						<Typography
-							sx={{
-								mb: { xs: 3, sm: 4 },
-								color: '#34495E',
-								opacity: 0.9,
-								fontSize: { xs: '0.9rem', sm: '1rem', md: '1.15rem' },
-								fontWeight: 400,
-								lineHeight: 1.6,
-								fontFamily: 'Varela Round',
-							}}>
-							Artık İngilizce konuşmak doğal olacak!
-						</Typography>
+
 						<Box
 							sx={{
 								display: 'flex',
@@ -205,46 +182,52 @@ const HeroSection = () => {
 								mb: { xs: 3 },
 							}}>
 							<Button
-								variant='outlined'
+								variant='contained'
 								endIcon={<PlayCircle />}
 								onClick={() => setIsIntroVideoModalOpen(true)}
 								sx={{
 									'fontFamily': 'Varela Round',
-									'borderColor': '#2C3E50',
-									'color': '#2C3E50',
-									'borderRadius': { xs: '0.5rem', sm: '0.9rem', md: '1.1rem' },
-									'padding': { xs: '0.5rem 1rem', sm: '0.5rem 1rem', md: '0.5rem 1rem' },
-									'fontSize': { xs: '0.6rem', sm: '0.8rem', md: '0.9rem' },
-									'fontWeight': 400,
+									'background': 'linear-gradient(135deg, #FF6B3D 0%, #ff7d55 100%)',
+									'color': '#FFFFFF',
+									'borderRadius': { xs: '0.75rem', sm: '1rem', md: '1.25rem' },
+									'padding': isSmallScreen || isRotatedMedium ? '0.4rem 1rem' : '0.5rem 1.75rem',
+									'fontSize': isVerySmallScreen ? '0.7rem' : isSmallScreen || isRotatedMedium ? '0.85rem' : '1rem',
+									'fontWeight': 500,
+									'boxShadow': '0 4px 15px rgba(255, 107, 61, 0.35)',
 									'&:hover': {
-										borderColor: '#2C3E50',
-										backgroundColor: 'rgba(44, 62, 80, 0.05)',
-										transform: 'translateY(-2px)',
+										background: 'linear-gradient(135deg, #ff7d55 0%, #FF6B3D 100%)',
+										transform: 'translateY(-3px)',
+										boxShadow: '0 6px 20px rgba(255, 107, 61, 0.45)',
 									},
-									'transition': 'all 0.3s ease',
+									'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+									'textTransform': 'capitalize',
 								}}>
 								İzle
 							</Button>
 							<Button
 								variant='outlined'
-								endIcon={<ContactPage />}
+								// endIcon={<ContactPage />}
 								onClick={() => setIsGetMoreDetailsModalOpen(true)}
 								sx={{
-									'borderColor': '#3498DB',
-									'color': '#3498DB',
-									'borderRadius': { xs: '0.5rem', sm: '0.9rem', md: '1.1rem' },
-									'padding': { xs: '0.5rem 1rem', sm: '0.5rem 1rem', md: '0.5rem 1rem' },
-									'fontSize': { xs: '0.6rem', sm: '0.8rem', md: '0.9rem' },
+									'border': 'none',
+									'color': 'white',
+									'borderRadius': { xs: '0.75rem', sm: '1rem', md: '1.25rem' },
+									'padding': isSmallScreen || isRotatedMedium ? '0.4rem 1rem' : '0.5rem 1.75rem',
+									'fontSize': isVerySmallScreen ? '0.7rem' : isSmallScreen || isRotatedMedium ? '0.85rem' : '1rem',
 									'fontFamily': 'Varela Round',
-									'fontWeight': 400,
+									'fontWeight': 800,
+									'letterSpacing': '0.03em',
+									'textShadow': '0 1px 2px rgba(0, 0, 0, 0.1)',
+									'textTransform': 'capitalize',
+									'background': 'linear-gradient(135deg, rgba(79, 70, 229, 0.7) 0%, rgba(91, 33, 182, 0.7) 50%, rgba(124, 58, 237, 0.7) 100%)',
 									'&:hover': {
-										borderColor: '#3498DB',
-										backgroundColor: 'rgba(52, 152, 219, 0.05)',
-										transform: 'translateY(-2px)',
+										background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.9) 0%, rgba(124, 58, 237, 0.9) 50%, rgba(147, 51, 234, 0.9) 100%)',
+										transform: 'translateY(-3px)',
+										boxShadow: '0 4px 15px rgba(79, 70, 229, 0.4)',
 									},
-									'transition': 'all 0.3s ease',
+									'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
 								}}>
-								Daha Fazla Bİlgİ
+								Daha Fazla Bilgi
 							</Button>
 						</Box>
 					</motion.div>
@@ -261,6 +244,8 @@ const HeroSection = () => {
 						display: 'flex',
 						justifyContent: 'center',
 						alignItems: 'center',
+						position: 'relative',
+						zIndex: 2,
 					}}>
 					<Box
 						sx={{
@@ -270,17 +255,36 @@ const HeroSection = () => {
 							position: 'relative',
 						}}>
 						<Box
-							component='img'
-							src={Instructor_Img}
-							alt='Instructor'
 							sx={{
-								'maxHeight': { xs: '25vh', sm: '40vh', md: '60vh' },
+								'position': 'absolute',
+								'top': '50%',
+								'left': '50%',
+								'transform': 'translate(-50%, -50%)',
+								'width': { xs: '200px', sm: '300px', md: '400px' },
+								'height': { xs: '200px', sm: '300px', md: '400px' },
+								'borderRadius': '50%',
+								'background': 'radial-gradient(circle, rgba(91, 141, 239, 0.15) 0%, transparent 70%)',
+								'filter': 'blur(40px)',
+								'animation': 'pulseGlow 3s ease-in-out infinite',
+								'@keyframes pulseGlow': {
+									'0%, 100%': { transform: 'translate(-50%, -50%) scale(1)', opacity: 0.6 },
+									'50%': { transform: 'translate(-50%, -50%) scale(1.2)', opacity: 0.8 },
+								},
+							}}
+						/>
+						<Box
+							component='img'
+							src={Hero_Img}
+							alt='Student learning'
+							sx={{
+								'maxHeight': { xs: '40vh', sm: '55vh', md: '75vh' },
 								'width': 'auto',
 								'borderRadius': '50%',
-								'transition': 'all 0.3s ease',
+								'transition': 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+								'position': 'relative',
+								'zIndex': 1,
 								'&:hover': {
-									transform: 'scale(1.05) translateY(-15px) rotate(-1deg)',
-									boxShadow: '1px 6px 12px rgba(44, 62, 80, 0.15)',
+									transform: 'scale(1.05) translateY(-10px)',
 								},
 							}}
 						/>

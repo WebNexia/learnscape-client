@@ -56,20 +56,36 @@ const TestimonialsSection = () => {
 	};
 
 	return (
-		<Box sx={{ position: 'relative', backgroundColor: '#fff', borderTop: '1px solid #e0e0e0' }}>
-			<Box sx={{ width: '100%', height: '24px', boxShadow: '0 -8px 24px -8px rgba(44, 62, 80, 0.1)', background: 'transparent' }} />
+		<Box sx={{ position: 'relative', backgroundColor: 'transparent' }}>
+			<Box
+				sx={{
+					width: '100%',
+					height: '60px',
+					background: 'linear-gradient(180deg, rgba(240, 147, 251, 0.25) 0%, rgba(79, 172, 254, 0.2) 50%, transparent 100%)',
+					boxShadow: '0 -4px 30px rgba(240, 147, 251, 0.15)',
+				}}
+			/>
 
-			<Box sx={{ py: responsiveStyles.spacing.section, backgroundColor: '#fff', position: 'relative' }}>
+			<Box sx={{ py: responsiveStyles.spacing.section, backgroundColor: 'transparent', position: 'relative' }}>
 				<Container maxWidth='md' sx={{ px: responsiveStyles.spacing.container }}>
 					<Typography
-						variant='h2'
 						align='center'
 						sx={{
-							fontSize: responsiveStyles.typography.h2,
-							mb: responsiveStyles.spacing.section,
-							color: colorScheme.primary,
-							fontWeight: 600,
-							fontFamily: "'Plus Jakarta Sans', sans-serif",
+							'fontSize': responsiveStyles.typography.h2,
+							'mb': responsiveStyles.spacing.section,
+							'background': 'linear-gradient(135deg, #4f46e5 0%, #5b21b6 25%, #7c3aed 50%, #3b82f6 75%, #2563eb 100%)',
+							'WebkitBackgroundClip': 'text',
+							'WebkitTextFillColor': 'transparent',
+							'backgroundClip': 'text',
+							'backgroundSize': '200% 200%',
+							'animation': 'gradientShift 5s ease infinite',
+							'fontWeight': 700,
+							'fontFamily': 'Varela Round',
+							'@keyframes gradientShift': {
+								'0%': { backgroundPosition: '0% 50%' },
+								'50%': { backgroundPosition: '100% 50%' },
+								'100%': { backgroundPosition: '0% 50%' },
+							},
 						}}>
 						Öğrencilerimiz Ne Diyor?
 					</Typography>
@@ -97,15 +113,22 @@ const TestimonialsSection = () => {
 								}}>
 								<Box
 									sx={{
-										p: responsiveStyles.components.card.padding,
-										backgroundColor: 'rgba(44, 62, 80, 0.02)',
-										borderRadius: responsiveStyles.components.card.borderRadius,
-										textAlign: 'center',
-										boxShadow: colorScheme.cardShadow,
-										position: 'relative',
-										overflow: 'hidden',
-										border: 'none',
-										minHeight: '10rem',
+										'p': responsiveStyles.components.card.padding,
+										'backgroundColor': 'rgba(255, 255, 255, 0.9)',
+										'backdropFilter': 'blur(10px)',
+										'borderRadius': responsiveStyles.components.card.borderRadius,
+										'textAlign': 'center',
+										'boxShadow': '0 4px 20px rgba(91, 141, 239, 0.1)',
+										'position': 'relative',
+										'overflow': 'hidden',
+										'border': '2px solid rgba(91, 141, 239, 0.15)',
+										'minHeight': '10rem',
+										'transition': 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+										'&:hover': {
+											transform: 'translateY(-5px)',
+											boxShadow: '0 8px 30px rgba(91, 141, 239, 0.2)',
+											borderColor: 'rgba(91, 141, 239, 0.3)',
+										},
 									}}>
 									<Box
 										sx={{
@@ -138,7 +161,7 @@ const TestimonialsSection = () => {
 										sx={{
 											mb: responsiveStyles.spacing.item,
 											fontStyle: 'italic',
-											color: colorScheme.primary,
+											color: '#334155',
 											fontSize: { xs: '0.85rem', sm: '0.9rem', md: '1.25rem' },
 											fontFamily: 'Varela Round',
 											lineHeight: 1.6,
@@ -176,7 +199,7 @@ const TestimonialsSection = () => {
 												variant='subtitle1'
 												fontWeight={700}
 												sx={{
-													color: colorScheme.secondary,
+													color: '#5B8DEF',
 													fontSize: responsiveStyles.typography.body1,
 													fontFamily: 'Varela Round',
 												}}>
@@ -186,7 +209,7 @@ const TestimonialsSection = () => {
 												variant='body2'
 												sx={{
 													opacity: 0.8,
-													color: colorScheme.primary,
+													color: '#334155',
 													fontSize: responsiveStyles.typography.body2,
 													fontFamily: 'Varela Round',
 												}}>
@@ -210,10 +233,11 @@ const TestimonialsSection = () => {
 									'width': { xs: 8, sm: 10 },
 									'height': { xs: 8, sm: 10 },
 									'borderRadius': '50%',
-									'backgroundColor': index === activeIndex ? colorScheme.secondary : 'rgba(44, 62, 80, 0.1)',
+									'backgroundColor': index === activeIndex ? '#5B8DEF' : 'rgba(91, 141, 239, 0.15)',
 									'p': 0,
 									'&:hover': {
-										backgroundColor: index === activeIndex ? colorScheme.secondary : 'rgba(44, 62, 80, 0.2)',
+										backgroundColor: index === activeIndex ? '#6B9EFF' : 'rgba(91, 141, 239, 0.25)',
+										transform: 'scale(1.1)',
 									},
 									'transition': 'all 0.3s ease',
 								}}

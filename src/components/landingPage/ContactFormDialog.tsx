@@ -329,13 +329,23 @@ const ContactFormDialog = ({
 					<CustomDialogActions
 						submitBtnText={sending ? 'Gönderiliyor...' : 'Gönder'}
 						cancelBtnText='Kapat'
+						submitBtnSx={{
+							'background': 'linear-gradient(135deg, #FF6B3D 0%, #ff7d55 100%)',
+							'fontFamily': 'Varela Round',
+							'&:hover': {
+								background: 'linear-gradient(135deg, #ff7d55 0%, #FF6B3D 100%)',
+							},
+							'&.Mui-disabled': {
+								background: 'rgba(0, 0, 0, 0.12)',
+								color: 'rgba(0, 0, 0, 0.26)',
+							},
+						}}
 						onCancel={() => {
 							setIsGetMoreDetailsModalOpen(false);
 							resetForm();
 							setShowSuccess(false);
 							resetRecaptcha();
 						}}
-						submitBtnSx={{ fontFamily: 'Varela Round' }}
 						cancelBtnSx={{ fontFamily: 'Varela Round' }}
 						disableBtn={sending || !isValidPhone(phone) || !recaptchaToken}
 						disableCancelBtn={sending}
