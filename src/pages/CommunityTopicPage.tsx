@@ -27,6 +27,7 @@ import { Select, MenuItem, FormControl } from '@mui/material';
 import { FirstPage, LastPage, NavigateBefore, NavigateNext } from '@mui/icons-material';
 import { formatMessageTime } from '../utils/formatTime';
 import { CommunityMessagesContext } from '../contexts/CommunityMessagesContextProvider';
+import { CustomAudioPlayer } from '../components/audio';
 
 import { Roles } from '../interfaces/enums';
 import { validateImageUrl } from '../utils/urlValidation';
@@ -332,10 +333,11 @@ const CommunityTopicPage = () => {
 			const messageCopy = currentMessage;
 
 			// Refresh upload limits after successful message send (non-blocking)
-			refreshUploadStats().catch((error) => {
-				console.warn('Failed to refresh upload stats:', error);
-				// Don't block UI, just log the error
-			});
+			// Use optimistic update for instant UI feedback
+			if (imgUrl.trim() || audioUrl.trim()) {
+				if (imgUrl.trim()) incrementImageUpload();
+				if (audioUrl.trim()) incrementAudioUpload();
+			}
 
 			// Reset form
 			setCurrentMessage('');
@@ -500,7 +502,8 @@ const CommunityTopicPage = () => {
 	}, []);
 
 	// Upload limit management - for all roles
-	const { getRemainingAudioUploads, getRemainingImageUploads, getImageLimit, getAudioLimit, refreshUploadStats } = useUploadLimit();
+	const { getRemainingAudioUploads, getRemainingImageUploads, getImageLimit, getAudioLimit, incrementAudioUpload, incrementImageUpload } =
+		useUploadLimit();
 
 	// Smart pagination handler
 	const handlePageChange = async (newPage: number) => {
@@ -635,17 +638,11 @@ const CommunityTopicPage = () => {
 						)}
 
 						{topic?.audioUrl && (
-							<Box>
-								<audio
-									src={topic.audioUrl}
-									controls
-									style={{
-										margin: '1rem 0',
-										boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
-										borderRadius: '0.35rem',
-										width: isVerySmallScreen ? '95%' : isMobileSize ? '80%' : '50%',
-										height: isMobileSize ? '1.5rem' : '2rem',
-									}}
+							<Box sx={{ mt: 2 }}>
+								<CustomAudioPlayer
+									audioUrl={topic.audioUrl}
+									title={topic.title || 'Topic Audio'}
+									sx={{ maxWidth: isVerySmallScreen ? '95%' : isMobileSize ? '80%' : '500px' }}
 								/>
 							</Box>
 						)}
@@ -710,17 +707,11 @@ const CommunityTopicPage = () => {
 					)}
 
 					{topic?.audioUrl && (
-						<Box>
-							<audio
-								src={topic.audioUrl}
-								controls
-								style={{
-									margin: '1rem 0',
-									boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
-									borderRadius: '0.35rem',
-									width: isVerySmallScreen ? '95%' : isMobileSize ? '80%' : '50%',
-									height: isMobileSize ? '1.5rem' : '2rem',
-								}}
+						<Box sx={{ mt: 2 }}>
+							<CustomAudioPlayer
+								audioUrl={topic.audioUrl}
+								title={topic.title || 'Topic Audio'}
+								sx={{ maxWidth: isVerySmallScreen ? '95%' : isMobileSize ? '80%' : '500px' }}
 							/>
 						</Box>
 					)}
@@ -915,17 +906,11 @@ const CommunityTopicPage = () => {
 								)}
 
 								{replyToMessage?.audioUrl && (
-									<Box>
-										<audio
-											src={replyToMessage.audioUrl}
-											controls
-											style={{
-												margin: '0.5rem 0',
-												boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
-												borderRadius: '0.35rem',
-												width: '30%',
-												height: '1.5rem',
-											}}
+									<Box sx={{ mt: 1 }}>
+										<CustomAudioPlayer
+											audioUrl={replyToMessage.audioUrl}
+											title={`Reply to ${replyToMessage.userId?.username || 'User'}`}
+											sx={{ maxWidth: '300px' }}
 										/>
 									</Box>
 								)}
@@ -949,14 +934,15 @@ const CommunityTopicPage = () => {
 								right: !imgUrl && isMobileSize ? '-2rem' : imgUrl && isMobileSize ? '2rem' : imgUrl ? '10rem' : '1rem',
 								width: '10rem',
 							}}>
-							<audio
-								src={audioUrl}
-								controls
-								style={{
-									boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
-									borderRadius: '0.35rem',
-									width: '100%',
-									height: '1.25rem',
+							<CustomAudioPlayer
+								audioUrl={audioUrl}
+								title='Recording Preview'
+								sx={{
+									'maxWidth': '100%',
+									'padding': '8px',
+									'& .MuiBox-root': {
+										fontSize: '0.75rem',
+									},
 								}}
 							/>
 							<Tooltip title='Remove Recording' placement='top' arrow>
@@ -989,7 +975,7 @@ const CommunityTopicPage = () => {
 					<Box
 						sx={{
 							position: 'absolute',
-							bottom: isMobileSize ? '4rem' : '5.75rem',
+							bottom: isMobileSize ? '5.5rem' : '7.15rem',
 							left: isVerySmallScreen ? '2.5%' : isMobileSize ? '5%' : '11%',
 							backgroundColor: '#fff',
 							borderRadius: '0.25rem',
@@ -998,7 +984,7 @@ const CommunityTopicPage = () => {
 							minHeight: '10rem',
 							overflowY: 'auto',
 							zIndex: 10,
-							width: isVerySmallScreen ? '95%' : isMobileSize ? '90%' : '40%',
+							width: isVerySmallScreen ? '95%' : isMobileSize ? '60%' : '40%',
 						}}>
 						<CommunityUserSearchSelect
 							topicId={topicId || ''}

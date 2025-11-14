@@ -9,6 +9,7 @@ import ChatWhatsApp from '../components/landingPage/ChatWhatsApp';
 import { LinkedIn, Language } from '@mui/icons-material';
 import theme from '../themes';
 import ScrollToTopButton from '../components/landingPage/ScrollToTopButton';
+import { SEO, StructuredData } from '../components/seo';
 
 const InstructorCard = ({ instructor }: { instructor: SingleCourse['instructor'] }) => {
 	// Ensure URLs have proper protocol
@@ -130,37 +131,133 @@ const LandingPageCourse = () => {
 		}
 	}, [courseId, courses]);
 
-	return (
-		<LandingPageLayout>
-			{!loading && !error && course && (
-				<Box
-					sx={{
-						display: 'flex',
-						flexDirection: { xs: 'column', sm: 'column', md: 'row' },
-						justifyContent: 'center',
-						alignItems: 'center',
-						width: '100%',
-						paddingTop: '13vh',
-						gap: '2rem',
-						flexWrap: { xs: 'wrap', md: 'nowrap' },
-					}}>
-					<CoursePageBanner course={course} fromHomePage={true} />
-					<InstructorCard instructor={course.instructor} />
-				</Box>
-			)}
+	// Helper function to truncate description to 150 characters
+	const getTruncatedDescription = (description: string): string => {
+		if (!description) return 'Explore this comprehensive online course on LearnScape. Learn from expert instructors and enhance your skills.';
+		return description.length > 150 ? `${description.substring(0, 150).trim()}...` : description;
+	};
 
-			{!loading && !error && !course && (
-				<Box sx={{ paddingTop: '25vh', textAlign: 'center' }}>
-					<Typography variant='h6' sx={{ fontFamily: 'Varela Round' }}>
-						Kurs bulunamadı
-					</Typography>
-				</Box>
+	// Build keywords from available course data
+	const getKeywords = (course: SingleCourse): string => {
+		const keywords: string[] = [course.title];
+
+		// Add instructor name
+		if (course.instructor?.name) {
+			keywords.push(course.instructor.name);
+		}
+
+		// Add instructor expertise/tags
+		if (course.instructor?.expertise && course.instructor.expertise.length > 0) {
+			keywords.push(...course.instructor.expertise);
+		}
+
+		// Add words from description (first 5-6 words)
+		if (course.description) {
+			const descWords = course.description
+				.split(/\s+/)
+				.slice(0, 6)
+				.filter((w) => w.length > 3);
+			keywords.push(...descWords);
+		}
+
+		return keywords.join(', ');
+	};
+
+	// Calculate if course is free
+	const isCourseFree = course?.prices && course.prices.every((price) => price.amount === '0' || price.amount === 'Free' || price.amount === '');
+
+	// Generate course URL (using title encoding since slug is not available)
+	const baseUrl = import.meta.env.VITE_SITE_URL || 'https://learnscape-qa.netlify.app';
+	const courseUrl = course ? `${baseUrl}/landing-page-course/${encodeURIComponent(course.title)}/${course._id}` : '';
+
+	// Get truncated description for SEO and StructuredData
+	const seoDescription = course ? getTruncatedDescription(course.description) : '';
+	const courseKeywords = course ? getKeywords(course) : '';
+
+	return (
+		<>
+			{!loading && !error && course && (
+				<>
+					<SEO
+						title={`${course.title} | LearnScape`}
+						description={seoDescription}
+						keywords={courseKeywords}
+						image={course.imageUrl}
+						url={courseUrl}
+						type='article'
+						author={course.instructor.name}
+						publishedTime={course.createdAt}
+						modifiedTime={course.updatedAt}
+					/>
+					<StructuredData type='Organization' />
+					<StructuredData
+						type='Course'
+						data={{
+							title: course.title,
+							description: seoDescription,
+							image: course.imageUrl,
+							url: courseUrl,
+							// courseCode: course.courseCode, // Not available in current model
+							level: 'Beginner', // Default level since not in model (would use course.level if available)
+							isFree: isCourseFree,
+							createdAt: course.createdAt,
+							updatedAt: course.updatedAt,
+							instructor: course.instructor.name,
+						}}
+					/>
+					<StructuredData
+						type='BreadcrumbList'
+						data={{
+							breadcrumbs: [
+								{ name: 'Home', url: baseUrl },
+								{ name: 'All Courses', url: `${baseUrl}/landing-page-courses` },
+								{ name: course.title, url: courseUrl },
+							],
+						}}
+					/>
+					<StructuredData
+						type='WebPage'
+						data={{
+							url: courseUrl,
+							name: course.title,
+							description: seoDescription,
+							datePublished: course.createdAt,
+							dateModified: course.updatedAt,
+						}}
+					/>
+				</>
 			)}
-			<Box sx={{ margin: '1rem 0 3rem 0' }}>
-				<ChatWhatsApp />
-				<ScrollToTopButton />
-			</Box>
-		</LandingPageLayout>
+			<LandingPageLayout>
+				{!loading && !error && course && (
+					<Box
+						sx={{
+							display: 'flex',
+							flexDirection: { xs: 'column', sm: 'column', md: 'row' },
+							justifyContent: 'center',
+							alignItems: 'center',
+							width: '100%',
+							paddingTop: '13vh',
+							gap: '2rem',
+							flexWrap: { xs: 'wrap', md: 'nowrap' },
+						}}>
+						<CoursePageBanner course={course} fromHomePage={true} />
+						<InstructorCard instructor={course.instructor} />
+					</Box>
+				)}
+
+				{!loading && !error && !course && (
+					<Box sx={{ paddingTop: '25vh', textAlign: 'center' }}>
+						<Typography variant='h6' sx={{ fontFamily: 'Varela Round' }}>
+							Kurs bulunamadı
+						</Typography>
+					</Box>
+				)}
+				<Box sx={{ margin: '1rem 0 3rem 0' }}>
+					<ChatWhatsApp />
+					<ScrollToTopButton />
+				</Box>
+			</LandingPageLayout>
+		</>
 	);
 };
 

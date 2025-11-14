@@ -2,6 +2,8 @@ import { Box, Button, Container, Typography } from '@mui/material';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { responsiveStyles } from '../../styles/responsiveStyles';
+import { useContext } from 'react';
+import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 
 const colorScheme = {
 	primary: '#2C3E50',
@@ -16,6 +18,7 @@ interface CTASectionProps {
 
 const CTASection = ({ coursesRef }: CTASectionProps) => {
 	const navigate = useNavigate();
+	const { isSmallScreen, isRotatedMedium, isVerySmallScreen } = useContext(MediaQueryContext);
 
 	const handleScrollToCourses = () => {
 		if (coursesRef.current) {
@@ -31,11 +34,22 @@ const CTASection = ({ coursesRef }: CTASectionProps) => {
 	return (
 		<Box
 			sx={{
-				position: 'relative',
-				backgroundColor: 'rgba(44, 62, 80, 0.02)',
-				py: responsiveStyles.spacing.section,
+				'position': 'relative',
+				'backgroundColor': 'transparent',
+				'py': responsiveStyles.spacing.section,
+				'overflow': 'hidden',
+				'&::before': {
+					content: '""',
+					position: 'absolute',
+					top: 0,
+					left: 0,
+					right: 0,
+					height: '60px',
+					background: 'linear-gradient(180deg, rgba(118, 75, 162, 0.25) 0%, rgba(102, 126, 234, 0.2) 50%, transparent 100%)',
+					boxShadow: '0 -4px 30px rgba(118, 75, 162, 0.15)',
+				},
 			}}>
-			<Container maxWidth='lg' sx={{ px: responsiveStyles.spacing.container }}>
+			<Container maxWidth='lg' sx={{ px: responsiveStyles.spacing.container, position: 'relative', zIndex: 1 }}>
 				<motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} viewport={{ once: true }}>
 					<Box
 						sx={{
@@ -44,13 +58,22 @@ const CTASection = ({ coursesRef }: CTASectionProps) => {
 							mx: 'auto',
 						}}>
 						<Typography
-							variant='h2'
 							sx={{
-								mb: responsiveStyles.spacing.item,
-								fontSize: responsiveStyles.typography.h2,
-								color: colorScheme.text,
-								fontWeight: 600,
-								fontFamily: 'Varela Round',
+								'mb': responsiveStyles.spacing.item,
+								'fontSize': responsiveStyles.typography.h2,
+								'background': 'linear-gradient(135deg, #4f46e5 0%, #5b21b6 25%, #7c3aed 50%, #3b82f6 75%, #2563eb 100%)',
+								'WebkitBackgroundClip': 'text',
+								'WebkitTextFillColor': 'transparent',
+								'backgroundClip': 'text',
+								'backgroundSize': '200% 200%',
+								'animation': 'gradientShift 5s ease infinite',
+								'fontWeight': 700,
+								'fontFamily': 'Varela Round',
+								'@keyframes gradientShift': {
+									'0%': { backgroundPosition: '0% 50%' },
+									'50%': { backgroundPosition: '100% 50%' },
+									'100%': { backgroundPosition: '0% 50%' },
+								},
 							}}>
 							Öğrenme Yolculuğunuza Başlamaya Hazır mısınız?
 						</Typography>
@@ -59,8 +82,7 @@ const CTASection = ({ coursesRef }: CTASectionProps) => {
 							sx={{
 								mb: responsiveStyles.spacing.container,
 								fontSize: responsiveStyles.typography.h5,
-								color: colorScheme.text,
-								opacity: 0.8,
+								color: '#334155',
 								fontWeight: 400,
 								fontFamily: 'Varela Round',
 								lineHeight: 1.6,
@@ -80,19 +102,21 @@ const CTASection = ({ coursesRef }: CTASectionProps) => {
 								size='large'
 								sx={{
 									...responsiveStyles.components.button,
-									'backgroundColor': colorScheme.primary,
-									'color': '#fff',
+									'background': 'linear-gradient(135deg, #FF6B3D 0%, #ff7d55 100%)',
+									'color': '#FFFFFF',
 									'fontFamily': 'Varela Round',
-									'fontWeight': 400,
+									'fontWeight': 500,
+									'boxShadow': '0 4px 15px rgba(255, 107, 61, 0.35)',
 									'&:hover': {
-										backgroundColor: colorScheme.secondary,
-										transform: 'translateY(-2px)',
-										boxShadow: '0 4px 12px rgba(44, 62, 80, 0.1)',
+										background: 'linear-gradient(135deg, #ff7d55 0%, #FF6B3D 100%)',
+										transform: 'translateY(-3px)',
+										boxShadow: '0 6px 20px rgba(255, 107, 61, 0.45)',
 									},
-									'transition': 'all 0.3s ease',
-									'borderRadius': { xs: '0.5rem', sm: '0.9rem', md: '1.1rem' },
-									'padding': { xs: '0.5rem 0.75rem', sm: '0.5rem 1rem', md: '0.5rem 1rem' },
-									'fontSize': { xs: '0.6rem', sm: '0.8rem', md: '0.9rem' },
+									'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+									'textTransform': 'capitalize',
+									'borderRadius': { xs: '0.75rem', sm: '1rem', md: '1.25rem' },
+									'padding': isSmallScreen || isRotatedMedium ? '0.4rem 1rem' : '0.5rem 1.75rem',
+									'fontSize': isVerySmallScreen ? '0.7rem' : isSmallScreen || isRotatedMedium ? '0.85rem' : '1rem',
 								}}
 								onClick={() => {
 									navigate('/auth');
@@ -108,21 +132,23 @@ const CTASection = ({ coursesRef }: CTASectionProps) => {
 								size='large'
 								sx={{
 									...responsiveStyles.components.button,
-									'borderColor': colorScheme.primary,
-									'color': colorScheme.primary,
-									'fontFamily': "'Plus Jakarta Sans', sans-serif",
-									'fontWeight': 400,
+									'border': 'none',
+									'color': 'white',
+									'fontFamily': 'Varela Round',
+									'fontWeight': 800,
+									'letterSpacing': '0.03em',
+									'textShadow': '0 1px 2px rgba(0, 0, 0, 0.1)',
+									'textTransform': 'capitalize',
+									'background': 'linear-gradient(135deg, rgba(79, 70, 229, 0.7) 0%, rgba(91, 33, 182, 0.7) 50%, rgba(124, 58, 237, 0.7) 100%)',
 									'&:hover': {
-										borderColor: colorScheme.secondary,
-										color: colorScheme.secondary,
-										backgroundColor: 'rgba(44, 62, 80, 0.05)',
-										transform: 'translateY(-2px)',
-										boxShadow: '0 4px 12px rgba(44, 62, 80, 0.1)',
+										background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.9) 0%, rgba(124, 58, 237, 0.9) 50%, rgba(147, 51, 234, 0.9) 100%)',
+										transform: 'translateY(-3px)',
+										boxShadow: '0 4px 15px rgba(79, 70, 229, 0.4)',
 									},
-									'transition': 'all 0.3s ease',
-									'borderRadius': { xs: '0.5rem', sm: '0.9rem', md: '1.1rem' },
-									'padding': { xs: '0.5rem 1rem', sm: '0.5rem 1rem', md: '0.5rem 1rem' },
-									'fontSize': { xs: '0.6rem', sm: '0.8rem', md: '0.9rem' },
+									'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+									'borderRadius': { xs: '0.75rem', sm: '1rem', md: '1.25rem' },
+									'padding': isSmallScreen || isRotatedMedium ? '0.4rem 1rem' : '0.5rem 1.75rem',
+									'fontSize': isVerySmallScreen ? '0.7rem' : isSmallScreen || isRotatedMedium ? '0.85rem' : '1rem',
 								}}
 								onClick={handleScrollToCourses}>
 								Kursları Görüntüle

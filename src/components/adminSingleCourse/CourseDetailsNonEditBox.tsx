@@ -1,9 +1,22 @@
-import { Avatar, Box, IconButton, Link, Tooltip, Typography, DialogContent, DialogActions, Collapse, Chip } from '@mui/material';
+import {
+	Avatar,
+	Box,
+	IconButton,
+	Link,
+	Tooltip,
+	Typography,
+	DialogContent,
+	DialogActions,
+	Collapse,
+	Chip,
+	Checkbox,
+	FormControlLabel,
+} from '@mui/material';
 import theme from '../../themes';
 import { SingleCourse } from '../../interfaces/course';
 
 import { ChapterLessonData } from '../../pages/AdminCourseEditPage';
-import { EditTwoTone, Visibility, ExpandMore, PlayCircleOutline } from '@mui/icons-material';
+import { EditTwoTone, Visibility, ExpandMore, PlayCircleOutline, Checklist } from '@mui/icons-material';
 import { dateFormatter } from '../../utils/dateFormatter';
 import NoContentBoxAdmin from '../layouts/noContentBox/NoContentBoxAdmin';
 import { setCurrencySymbol } from '../../utils/setCurrencySymbol';
@@ -29,6 +42,8 @@ interface CourseDetailsNonEditBoxProps {
 const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: CourseDetailsNonEditBoxProps) => {
 	const [isEditInstructorDialogOpen, setIsEditInstructorDialogOpen] = useState<boolean>(false);
 	const [isDescriptionModalOpen, setIsDescriptionModalOpen] = useState<boolean>(false);
+	const [checklistViewDialogOpen, setChecklistViewDialogOpen] = useState<Record<string, boolean>>({});
+	const [checkedItems, setCheckedItems] = useState<Record<string, Set<number>>>({});
 
 	// State to track which chapters are expanded (default: all expanded)
 	const [expandedChapters, setExpandedChapters] = useState<{ [chapterId: string]: boolean }>({});
@@ -302,7 +317,6 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 												sx={{
 													'backgroundColor': isInstructor ? theme.bgColor?.instructorHeader : theme.bgColor?.adminHeader,
 													'padding': isMobileSize ? '0.75rem 1rem' : '0.75rem 1rem 0.75rem 0.5rem',
-													'cursor': 'pointer',
 													'display': 'flex',
 													'alignItems': 'center',
 													'justifyContent': 'space-between',
@@ -312,13 +326,16 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 														backgroundColor: isInstructor ? theme.bgColor?.instructorPaper : theme.bgColor?.adminPaper,
 													},
 												}}
-												onClick={() => toggleChapter(chapter.chapterId)}
 												role='button'
 												tabIndex={0}
 												aria-expanded={isExpanded}
 												aria-label={`${isExpanded ? 'Collapse' : 'Expand'} chapter: ${chapter.title}`}>
 												<Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
 													<IconButton
+														onClick={(e) => {
+															e.stopPropagation();
+															toggleChapter(chapter.chapterId);
+														}}
 														sx={{
 															color: 'white',
 															marginRight: isMobileSize ? '0.5rem' : '1rem',
@@ -377,6 +394,28 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 																	}}
 																/>
 															)}
+
+															<Tooltip title='View Self-Evaluation Checklist' placement='top' arrow>
+																<IconButton
+																	sx={{
+																		'color': 'white',
+																		'padding': '0.25rem',
+																		'marginLeft': '0.5rem',
+																		'&:hover': {
+																			border: 'solid 0.5px white',
+																		},
+																	}}
+																	onClick={(e) => {
+																		e.stopPropagation();
+																		setChecklistViewDialogOpen((prev) => ({ ...prev, [chapter.chapterId]: true }));
+																		// Initialize checked items for this chapter
+																		if (!checkedItems[chapter.chapterId]) {
+																			setCheckedItems((prev) => ({ ...prev, [chapter.chapterId]: new Set<number>() }));
+																		}
+																	}}>
+																	<Checklist fontSize='small' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem' }} />
+																</IconButton>
+															</Tooltip>
 														</>
 													)}
 												</Box>
@@ -537,6 +576,95 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 					</CustomCancelButton>
 				</DialogActions>
 			</CustomDialog>
+
+			{/* Checklist View Dialogs (Student View) */}
+			{chapters.map((chapter) => {
+				return (
+					<CustomDialog
+						key={`checklist-${chapter.chapterId}`}
+						openModal={checklistViewDialogOpen[chapter.chapterId] || false}
+						closeModal={() => {
+							setChecklistViewDialogOpen((prev) => ({ ...prev, [chapter.chapterId]: false }));
+						}}
+						title='Self-Evaluation Checklist'
+						maxWidth='sm'>
+						<DialogContent>
+							<Box sx={{ display: 'flex', flexDirection: 'column', gap: '1rem', mt: '1rem' }}>
+								{chapter?.evaluationChecklistItems?.length && chapter?.evaluationChecklistItems?.length > 0 ? (
+									chapter.evaluationChecklistItems?.map((item, index) => (
+										<FormControlLabel
+											key={index}
+											control={
+												<Checkbox
+													checked={checkedItems[chapter.chapterId]?.has(index) || false}
+													onChange={(e) => {
+														const chapterId = chapter.chapterId;
+														const currentChecked = checkedItems[chapterId] || new Set<number>();
+														const newChecked = new Set(currentChecked);
+
+														if (e.target.checked) {
+															newChecked.add(index);
+														} else {
+															newChecked.delete(index);
+														}
+
+														setCheckedItems((prev) => ({
+															...prev,
+															[chapterId]: newChecked,
+														}));
+													}}
+													sx={{
+														'color': theme.palette.primary.main,
+														'& .MuiSvgIcon-root': {
+															fontSize: '1.25rem',
+														},
+													}}
+												/>
+											}
+											label={
+												<Typography
+													variant='body2'
+													sx={{
+														fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+														lineHeight: 1.7,
+														wordBreak: 'break-word',
+													}}>
+													{item}
+												</Typography>
+											}
+											sx={{
+												'alignItems': 'center',
+												'margin': 0,
+												'& .MuiFormControlLabel-label': {
+													marginLeft: '0.5rem',
+													fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+												},
+											}}
+										/>
+									))
+								) : (
+									<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+										<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+											No checklist items for this chapter
+										</Typography>
+									</Box>
+								)}
+							</Box>
+						</DialogContent>
+						<DialogActions>
+							<CustomCancelButton
+								onClick={() => {
+									setChecklistViewDialogOpen((prev) => ({ ...prev, [chapter.chapterId]: false }));
+								}}
+								sx={{
+									margin: '0 1rem 0.5rem 0',
+								}}>
+								Close
+							</CustomCancelButton>
+						</DialogActions>
+					</CustomDialog>
+				);
+			})}
 		</Box>
 	);
 };

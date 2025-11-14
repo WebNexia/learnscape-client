@@ -5,6 +5,7 @@ import { formatMessageTime } from '../../../../utils/formatTime';
 import { useContext, useEffect, useState } from 'react';
 import { UserAuthContext } from '../../../../contexts/UserAuthContextProvider';
 import { Roles } from '../../../../interfaces/enums';
+import { CustomAudioPlayer } from '../../../../components/audio';
 
 import CustomDialog from '../../dialog/CustomDialog';
 import CustomDialogActions from '../../dialog/CustomDialogActions';
@@ -288,17 +289,11 @@ const Message = ({
 											</Box>
 										)}
 										{message.parentMessageId.audioUrl && (
-											<Box>
-												<audio
-													src={message.parentMessageId.audioUrl}
-													controls
-													style={{
-														margin: '0.25rem 0',
-														boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
-														borderRadius: '0.35rem',
-														width: isMobileSize ? '90%' : '30%',
-														height: '1.5rem',
-													}}
+											<Box sx={{ mt: 1 }}>
+												<CustomAudioPlayer
+													audioUrl={message.parentMessageId.audioUrl}
+													title={`Reply to ${message.parentMessageId.userId?.username || 'User'}`}
+													sx={{ maxWidth: isMobileSize ? '90%' : '300px' }}
 												/>
 											</Box>
 										)}
@@ -352,16 +347,10 @@ const Message = ({
 
 								{message?.audioUrl && (
 									<Box sx={{ padding: '0.15rem 0.5rem' }}>
-										<audio
-											src={message.audioUrl}
-											controls
-											style={{
-												margin: '1rem 0',
-												boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
-												borderRadius: '0.35rem',
-												width: isMobileSize ? '85%' : '50%',
-												height: isMobileSize ? '1.5rem' : '2rem',
-											}}
+										<CustomAudioPlayer
+											audioUrl={message.audioUrl}
+											title={message.userId?.username || 'Community User'}
+											sx={{ maxWidth: isMobileSize ? '85%' : '400px' }}
 										/>
 									</Box>
 								)}
@@ -596,16 +585,10 @@ const Message = ({
 
 						{message.audioUrl && (
 							<Box sx={{ padding: '0.15rem 0rem', mt: 2 }}>
-								<audio
-									src={message.audioUrl}
-									controls
-									style={{
-										margin: '1rem 0',
-										boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
-										borderRadius: '0.35rem',
-										width: isMobileSize ? '85%' : '50%',
-										height: isMobileSize ? '1.5rem' : '2rem',
-									}}
+								<CustomAudioPlayer
+									audioUrl={message.audioUrl}
+									title={message.userId?.username || 'Community User'}
+									sx={{ maxWidth: isMobileSize ? '85%' : '400px' }}
 								/>
 							</Box>
 						)}

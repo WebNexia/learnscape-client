@@ -1,6 +1,6 @@
 import { Alert, Box, Button, IconButton, Paper, Snackbar, Tooltip, Typography } from '@mui/material';
 import theme from '../../themes';
-import { Edit, Info, KeyboardBackspaceOutlined, PublishedWithChanges, Unpublished } from '@mui/icons-material';
+import { Edit, Info, KeyboardBackspaceOutlined } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { Lesson } from '../../interfaces/lessons';
 import { QuestionUpdateTrack } from '../../pages/AdminLessonEditPage';
@@ -142,7 +142,7 @@ const LessonPaper = ({
 										padding: isSticky ? '0 0 0 0.5rem' : '0 0 0.5rem 0.5rem',
 										fontSize: isSticky ? '0.75rem' : undefined,
 									}}>
-									{singleLessonBeforeSave?.type} {isActive ? '(Published)' : 'Unpublished'}
+									{singleLessonBeforeSave?.type} {isActive ? '(Published)' : '(Unpublished)'}
 								</Typography>
 							</Box>
 						</Box>

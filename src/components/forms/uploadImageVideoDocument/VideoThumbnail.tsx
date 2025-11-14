@@ -9,6 +9,7 @@ interface VideoThumbnailProps {
 	videoPlaceholderUrl: string;
 	boxStyle?: object;
 	playerStyle?: React.CSSProperties;
+	playerWidth?: string;
 	imgStyle?: React.CSSProperties;
 	controls?: boolean;
 	removeVideo?: () => void;
@@ -20,6 +21,7 @@ const VideoThumbnail = ({
 	videoPlaceholderUrl,
 	boxStyle,
 	playerStyle,
+	playerWidth = '60%',
 	imgStyle,
 	controls = true,
 	removeVideo,
@@ -41,7 +43,7 @@ const VideoThumbnail = ({
 			{videoPlayCondition ? (
 				<UniversalVideoPlayer
 					url={videoUrl}
-					width='60%'
+					width={playerWidth}
 					height='100%'
 					controls={controls}
 					style={{

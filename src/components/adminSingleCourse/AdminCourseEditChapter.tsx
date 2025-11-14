@@ -1,7 +1,7 @@
-import { Box, IconButton, Tooltip, Typography, Collapse } from '@mui/material';
+import { Box, IconButton, Tooltip, Typography, Collapse, DialogContent } from '@mui/material';
 import { useMotionValue, Reorder } from 'framer-motion';
 import theme from '../../themes';
-import { CreateTwoTone, Delete, NoteAdd, ExpandMore } from '@mui/icons-material';
+import { CreateTwoTone, Delete, NoteAdd, ExpandMore, Checklist, AddCircle, RemoveCircle } from '@mui/icons-material';
 import { useState, useContext } from 'react';
 import { Lesson } from '../../interfaces/lessons';
 import { useRaisedShadow } from '../../hooks/useRaisedShadow';
@@ -16,6 +16,8 @@ import { LessonsContext } from '../../contexts/LessonsContextProvider';
 import { useParams } from 'react-router-dom';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import { useAuth } from '../../hooks/useAuth';
+import CustomDialog from '../layouts/dialog/CustomDialog';
+import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
 
 interface AdminCourseEditChapterProps {
 	chapter: ChapterLessonData;
@@ -39,6 +41,8 @@ const AdminCourseEditChapter = ({
 	const [isNewLessonModalOpen, setIsNewLessonModalOpen] = useState<boolean>(false);
 	const [addNewLessonModalOpen, setAddNewLessonModalOpen] = useState<boolean>(false);
 	const [isExpanded, setIsExpanded] = useState<boolean>(false);
+	const [isChecklistDialogOpen, setIsChecklistDialogOpen] = useState<boolean>(false);
+	const [checklistItems, setChecklistItems] = useState<string[]>(['']);
 
 	const y = useMotionValue(0);
 	const boxShadow = useRaisedShadow(y);
@@ -54,6 +58,62 @@ const AdminCourseEditChapter = ({
 
 	const handleLessonAdded = () => {
 		setIsExpanded(true);
+	};
+
+	const handleOpenChecklistDialog = () => {
+		const items = chapter.evaluationChecklistItems && chapter.evaluationChecklistItems.length > 0 ? [...chapter.evaluationChecklistItems] : [''];
+		setChecklistItems(items);
+		setIsChecklistDialogOpen(true);
+	};
+
+	const handleCloseChecklistDialog = () => {
+		setIsChecklistDialogOpen(false);
+		setChecklistItems(['']);
+	};
+
+	const handleAddChecklistItem = () => {
+		setChecklistItems([...checklistItems, '']);
+	};
+
+	const handleRemoveChecklistItem = (index: number) => {
+		if (checklistItems.length > 1) {
+			setChecklistItems(checklistItems.filter((_, i) => i !== index));
+		}
+	};
+
+	const handleChecklistItemChange = (index: number, value: string) => {
+		const updatedItems = [...checklistItems];
+		updatedItems[index] = value;
+		setChecklistItems(updatedItems);
+	};
+
+	const handleSaveChecklist = async () => {
+		try {
+			// Filter out empty items and trim them
+			const cleanItems = checklistItems.map((item) => item.trim()).filter((item) => item.length > 0);
+
+			// Update local state immediately
+			setChapterLessonDataBeforeSave((prevData) => {
+				if (prevData) {
+					return prevData.map((currentChapter) => {
+						if (currentChapter.chapterId === chapter.chapterId) {
+							return {
+								...currentChapter,
+								evaluationChecklistItems: cleanItems,
+							};
+						}
+						return currentChapter;
+					});
+				}
+				return prevData;
+			});
+
+			chapterUpdateTrack(chapter.chapterId, setIsChapterUpdated);
+			setHasUnsavedChanges(true);
+			setIsChecklistDialogOpen(false);
+		} catch (error) {
+			console.error('Error saving checklist:', error);
+		}
 	};
 
 	return (
@@ -146,6 +206,17 @@ const AdminCourseEditChapter = ({
 
 				{/* Chapter Actions */}
 				<Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0rem', flex: 1 }}>
+					<Tooltip title='Edit Self-Evaluation Checklist' placement='top' arrow>
+						<IconButton
+							sx={{ color: 'white' }}
+							onClick={(e) => {
+								e.stopPropagation();
+								handleOpenChecklistDialog();
+							}}>
+							<Checklist fontSize='small' sx={{ fontSize: isMobileSize ? '0.9rem' : undefined }} />
+						</IconButton>
+					</Tooltip>
+
 					<Tooltip title='Add Lesson' placement='top' arrow>
 						<IconButton
 							sx={{ color: 'white' }}
@@ -218,6 +289,61 @@ const AdminCourseEditChapter = ({
 				setHasUnsavedChanges={setHasUnsavedChanges}
 				onLessonAdded={handleLessonAdded}
 			/>
+
+			{/* Checklist Edit Dialog */}
+			<CustomDialog openModal={isChecklistDialogOpen} closeModal={handleCloseChecklistDialog} title='Edit Self-Evaluation Checklist' maxWidth='sm'>
+				<DialogContent>
+					<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', width: '100%' }}>
+						{checklistItems.map((item, index) => (
+							<Box
+								key={index}
+								sx={{
+									display: 'flex',
+									justifyContent: 'flex-end',
+									alignItems: 'center',
+									width: '100%',
+									marginLeft: '1rem',
+									mt: '0.5rem',
+								}}>
+								<CustomTextField
+									multiline
+									label={`Item ${index + 1}`}
+									value={item}
+									rows={2}
+									onChange={(e) => handleChecklistItemChange(index, e.target.value)}
+									sx={{ marginRight: index === 0 ? '2.25rem' : 0, width: '100%' }}
+									InputProps={{
+										inputProps: {
+											maxLength: 500,
+										},
+									}}
+								/>
+								{index === checklistItems.length - 1 && (
+									<Tooltip title='Add Item' placement='top' arrow>
+										<IconButton onClick={handleAddChecklistItem}>
+											<AddCircle fontSize='small' />
+										</IconButton>
+									</Tooltip>
+								)}
+								{index > 0 && (
+									<Tooltip title='Remove Item' placement='top' arrow>
+										<IconButton onClick={() => handleRemoveChecklistItem(index)}>
+											<RemoveCircle fontSize='small' />
+										</IconButton>
+									</Tooltip>
+								)}
+							</Box>
+						))}
+					</Box>
+				</DialogContent>
+				<CustomDialogActions
+					onCancel={handleCloseChecklistDialog}
+					onSubmit={handleSaveChecklist}
+					submitBtnText='Save'
+					actionSx={{ marginBottom: '0.5rem' }}
+				/>
+			</CustomDialog>
+
 			{/* Collapsible Lessons Section */}
 			<Collapse in={isExpanded} timeout='auto' unmountOnExit>
 				{chapter?.lessonIds?.length !== 0 && (

@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useState, useMemo } from 'react';
 import { Box, Button, DialogContent, IconButton, Slide, Tooltip, Typography } from '@mui/material';
 import { useParams } from 'react-router-dom';
 import axios from '@utils/axiosInstance';
@@ -28,6 +28,7 @@ import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import { decode } from 'html-entities';
 import UniversalVideoPlayer from '../components/video/UniversalVideoPlayer';
 import DocumentViewer from '../components/documents/DocumentViewer';
+import { UserCourseLessonDataContext } from '../contexts/UserCourseLessonDataContextProvider';
 
 export interface QuizQuestionAnswer {
 	questionId: string;
@@ -51,6 +52,40 @@ const LessonPage = () => {
 	const navigate = useNavigate();
 	const { fetchUserAnswersByLesson } = useFetchUserQuestion();
 	const { handleNextLesson, nextLessonId, isLessonCompleted, userLessonId } = useUserCourseLessonData();
+	const { singleCourseUser } = useContext(UserCourseLessonDataContext);
+
+	// Check if there are more lessons in the course (in any chapter)
+	const hasMoreLessonsInCourse = useMemo(() => {
+		if (!singleCourseUser || !lessonId) return false;
+
+		// Find current lesson's position
+		for (const chapter of singleCourseUser.chapters || []) {
+			if (!chapter || !chapter.lessons) continue;
+			for (const lesson of chapter.lessons) {
+				if (!lesson) continue;
+				if (lesson._id === lessonId) {
+					// Check if there are more lessons after this one in any chapter
+					const currentChapterIndex = singleCourseUser.chapters.indexOf(chapter);
+					const currentLessonIndex = chapter.lessons.indexOf(lesson);
+
+					// Check if there are more lessons in current chapter
+					if (currentLessonIndex < chapter.lessons.length - 1) {
+						return true;
+					}
+
+					// Check if there are more chapters with lessons
+					for (let i = currentChapterIndex + 1; i < singleCourseUser.chapters.length; i++) {
+						const nextChapter = singleCourseUser.chapters[i];
+						if (nextChapter && nextChapter.lessons && nextChapter.lessons.length > 0) {
+							return true;
+						}
+					}
+					return false;
+				}
+			}
+		}
+		return false;
+	}, [singleCourseUser, lessonId]);
 
 	const [isQuestionsVisible, setIsQuestionsVisible] = useState<boolean>(false);
 	const [isLessonCourseCompletedModalOpen, setIsLessonCourseCompletedModalOpen] = useState<boolean>(false);
@@ -577,20 +612,20 @@ const LessonPage = () => {
 			{isInstructionalLesson && (
 				<Box sx={{ display: 'flex', justifyContent: 'flex-end', width: isMobileSize ? '80%' : '85%', marginTop: 'auto', mb: '1rem' }}>
 					<CustomSubmitButton
-						endIcon={!nextLessonId ? <DoneAll /> : <KeyboardDoubleArrowRight />}
+						endIcon={nextLessonId || hasMoreLessonsInCourse ? <KeyboardDoubleArrowRight /> : <DoneAll />}
 						onClick={() => setIsLessonCourseCompletedModalOpen(true)}
 						type='button'
 						sx={{ marginTop: lesson?.documents && lesson?.documents.length === 0 ? '1rem' : '0rem', fontSize: isMobileSize ? '0.7rem' : '0.85rem' }}>
-						{nextLessonId ? 'Next Lesson' : 'Complete Course'}
+						{nextLessonId || hasMoreLessonsInCourse ? 'Next Lesson' : 'Complete Course'}
 					</CustomSubmitButton>
 					<CustomDialog
 						openModal={isLessonCourseCompletedModalOpen}
 						closeModal={() => setIsLessonCourseCompletedModalOpen(false)}
 						maxWidth='xs'
-						title={`${nextLessonId ? 'Lesson Completed' : 'Course Completed'}`}>
+						title={`${nextLessonId || hasMoreLessonsInCourse ? 'Lesson Completed' : 'Course Completed'}`}>
 						<DialogContent sx={{ mb: '-0.5rem' }}>
 							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-								{`You have completed this ${nextLessonId ? 'lesson' : 'course'}. Proceed to the next ${nextLessonId ? 'lesson' : 'course'}.`}
+								{`You have completed this ${nextLessonId || hasMoreLessonsInCourse ? 'lesson' : 'course'}. Proceed to the next ${nextLessonId || hasMoreLessonsInCourse ? 'lesson' : 'course'}.`}
 							</Typography>
 						</DialogContent>
 						<CustomDialogActions

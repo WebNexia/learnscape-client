@@ -33,6 +33,7 @@ export interface UserCoursesIdsWithCourseIds {
 	createdAt: string;
 	isActive: boolean;
 	validUntil: string;
+	completedChapterChecklistIds?: string[];
 }
 
 export interface UserLessonDataStorage {

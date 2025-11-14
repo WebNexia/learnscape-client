@@ -35,6 +35,8 @@ interface MessageInputProps {
 	getFormattedResetTime: () => string;
 	checkCanUploadImage: () => boolean;
 	checkCanUploadAudio: () => boolean;
+	// Optimistic update methods
+	incrementImageUpload: () => void;
 }
 
 const MessageInput = ({
@@ -62,6 +64,8 @@ const MessageInput = ({
 	getFormattedResetTime,
 	checkCanUploadImage,
 	checkCanUploadAudio,
+	// Optimistic update methods
+	incrementImageUpload,
 }: MessageInputProps) => {
 	// ✅ Internal state (moved from Messages.tsx)
 	const [currentMessage, setCurrentMessage] = useState<string>('');
@@ -163,8 +167,8 @@ const MessageInput = ({
 			}, 50);
 
 			// ✅ Instantly update last message preview in UI (before Firestore sync)
-			setChatList((prev) =>
-				prev?.map((c) =>
+			setChatList((prev) => {
+				const updated = prev?.map((c) =>
 					c.chatId === activeChat.chatId
 						? {
 								...c,
@@ -176,10 +180,16 @@ const MessageInput = ({
 								unreadMessagesCount: 0,
 							}
 						: c
-				)
-			);
-			setFilteredChatList((prev) =>
-				prev?.map((c) =>
+				);
+				// Sort by last message timestamp (most recent first)
+				return updated?.sort((a, b) => {
+					const aTime = a.lastMessage.timestamp ? new Date(a.lastMessage.timestamp).getTime() : 0;
+					const bTime = b.lastMessage.timestamp ? new Date(b.lastMessage.timestamp).getTime() : 0;
+					return bTime - aTime;
+				});
+			});
+			setFilteredChatList((prev) => {
+				const updated = prev?.map((c) =>
 					c.chatId === activeChat.chatId
 						? {
 								...c,
@@ -191,13 +201,22 @@ const MessageInput = ({
 								unreadMessagesCount: 0,
 							}
 						: c
-				)
-			);
+				);
+				// Sort by last message timestamp (most recent first)
+				return updated?.sort((a, b) => {
+					const aTime = a.lastMessage.timestamp ? new Date(a.lastMessage.timestamp).getTime() : 0;
+					const bTime = b.lastMessage.timestamp ? new Date(b.lastMessage.timestamp).getTime() : 0;
+					return bTime - aTime;
+				});
+			});
 
 			// ✅ UI stays instant
 			setReplyToMessage(null);
 			setCurrentMessage('');
-			if (imageUpload) refreshUploadStats().catch(() => {});
+			if (imageUpload) {
+				// Use optimistic update for instant UI feedback
+				incrementImageUpload();
+			}
 
 			// ✅ BACKGROUND REFRESH: Refresh chat list after sending message
 			refreshChatList();

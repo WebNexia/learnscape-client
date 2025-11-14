@@ -9,6 +9,7 @@ export interface BaseChapter {
 	lessonIds: string[];
 	lessons: Lesson[];
 	orgId: string;
+	evaluationChecklistItems?: string[];
 }
 
 export interface ChapterProgress extends BaseChapter {

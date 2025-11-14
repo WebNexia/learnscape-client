@@ -64,13 +64,10 @@ const Header = () => {
 						justifyContent: 'space-between',
 						width: '100%',
 						height: isMobileSize ? '10vh' : '13vh',
-						background: '#FDF7F0',
-						backgroundImage: `
-							linear-gradient(135deg, rgba(44, 62, 80, 0.05), rgba(52, 152, 219, 0.05)),
-							radial-gradient(circle, rgba(44,62,80,0.08) 1px, transparent 1px)
-						`,
-						backgroundSize: 'auto, 30px 30px',
-						backgroundRepeat: 'repeat, repeat',
+						background: 'linear-gradient(135deg, rgba(91, 141, 239, 0.12) 0%, rgba(139, 127, 217, 0.1) 100%)',
+						backdropFilter: 'blur(20px)',
+						borderBottom: '1px solid rgba(91, 141, 239, 0.15)',
+						boxShadow: '0 2px 20px rgba(91, 141, 239, 0.12)',
 						position: 'fixed',
 						top: 0,
 						px: isMobileSizeSmall ? '0.35rem' : '0.75rem',
@@ -113,11 +110,14 @@ const Header = () => {
 										<Typography
 											sx={{
 												'fontFamily': 'Varela Round',
-												'color': theme.textColor?.primary.main,
+												'color': item.isActive ? '#5B8DEF' : '#2C3E50',
 												'textDecoration': item.isActive ? 'underline' : 'none',
+												'textUnderlineOffset': '4px',
+												'fontWeight': item.isActive ? 600 : 400,
 												'&:hover': {
-													color: '#3498DB',
+													color: '#5B8DEF',
 													textDecoration: 'underline',
+													textUnderlineOffset: '4px',
 												},
 												'cursor': 'pointer',
 												'fontSize': isMobileSizeSmall ? '0.65rem' : isMobileSize ? '0.85rem' : '1.25rem',
@@ -135,17 +135,18 @@ const Header = () => {
 								'fontFamily': 'Varela Round',
 								'textTransform': 'capitalize',
 								'fontSize': isMobileSizeSmall ? '0.7rem' : isMobileSize ? '0.85rem' : '1rem',
-								'color': '#2C3E50',
-								'border': '1px solid #2C3E50',
-								'padding': isMobileSize ? '0.3rem 0.75rem' : '0.35rem 1.5rem',
-								'borderRadius': { xs: '0.5rem', sm: '0.9rem', md: '1.1rem' },
+								'color': '#FFFFFF',
+								'background': 'linear-gradient(135deg, #FF6B3D 0%, #ff7d55 100%)',
+								'padding': isMobileSize ? '0.4rem 1rem' : '0.5rem 1.75rem',
+								'borderRadius': { xs: '0.75rem', sm: '1rem', md: '1.25rem' },
+								'fontWeight': 500,
+								'boxShadow': '0 4px 15px rgba(255, 107, 61, 0.35)',
 								'&:hover': {
-									backgroundColor: theme.bgColor?.greenPrimary,
-									color: '#fff',
+									background: 'linear-gradient(135deg, #ff7d55 0%, #FF6B3D 100%)',
 									transform: 'translateY(-2px)',
-									boxShadow: '0 4px 12px rgba(44, 62, 80, 0.1)',
+									boxShadow: '0 6px 20px rgba(255, 107, 61, 0.45)',
 								},
-								'transition': 'all 0.3s ease',
+								'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
 							}}
 							onClick={() => navigate('/auth')}>
 							Giriş Yap

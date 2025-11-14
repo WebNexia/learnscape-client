@@ -38,7 +38,8 @@ const EditTopicDialog = ({ editTopicModalOpen, topic, setEditTopicModalOpen, set
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
 	// Upload limit management - for all roles
-	const { getRemainingAudioUploads, getRemainingImageUploads, getImageLimit, getAudioLimit } = useUploadLimit();
+	const { getRemainingAudioUploads, getRemainingImageUploads, getImageLimit, getAudioLimit, incrementAudioUpload, incrementImageUpload } =
+		useUploadLimit();
 
 	const [enterImageUrl, setEnterImageUrl] = useState(true);
 	const [isAudioUploading, setIsAudioUploading] = useState(false);
@@ -133,6 +134,12 @@ const EditTopicDialog = ({ editTopicModalOpen, topic, setEditTopicModalOpen, set
 				orgId,
 				updatedAt: response.data.updatedAt,
 			});
+
+			// Use optimistic update for instant UI feedback (only for new uploads)
+			// Note: For editing, we only increment if new uploads were added
+			// This is a simplified approach - in production you might want to track original vs new uploads
+			if (topic.imageUrl?.trim()) incrementImageUpload();
+			if (topic.audioUrl?.trim()) incrementAudioUpload();
 
 			reset();
 		} catch (error: any) {

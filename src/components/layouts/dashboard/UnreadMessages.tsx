@@ -20,7 +20,7 @@ const UnreadMessages = memo(() => {
 	// Memoize the user ID to prevent unnecessary re-renders
 	const userFirebaseId = useMemo(() => user?.firebaseUserId, [user?.firebaseUserId]);
 
-	// Optimized real-time listener - only listens to chats with unread messages
+	// Optimized real-time listener - only listens to chats where user is a participant
 	useEffect(() => {
 		if (!userFirebaseId) {
 			setIsLoading(false);
@@ -31,14 +31,22 @@ const UnreadMessages = memo(() => {
 		setError(null);
 
 		const chatsRef = collection(db, 'chats');
-		// Only listen to chats **that actually have unread messages for this user**
-		const q = query(chatsRef, where('unreadBy', 'array-contains', userFirebaseId));
+		// Query chats where user is a participant (security rule compliant)
+		const q = query(chatsRef, where('participants', 'array-contains', userFirebaseId));
 
 		// Real-time listener — no polling needed
 		const unsubscribe = onSnapshot(
 			q,
 			(snapshot) => {
-				setUnreadCount(snapshot.size); // number instead of boolean
+				// Count chats that have unreadBy array containing the user
+				let unreadCount = 0;
+				snapshot.forEach((doc) => {
+					const data = doc.data();
+					if (data.unreadBy && data.unreadBy.includes(userFirebaseId)) {
+						unreadCount++;
+					}
+				});
+				setUnreadCount(unreadCount);
 				setIsLoading(false);
 			},
 			(error) => {

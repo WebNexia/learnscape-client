@@ -199,7 +199,7 @@ const Messages = () => {
 	});
 
 	// ✅ NEW: Use useChatExport hook
-	const { downloadChatHistory, downloadChatHistoryAsPDF, downloadChatHistoryAsHTML, downloadChatHistoryAsTXT } = useChatExport({
+	const { downloadChatHistoryAsPDF, downloadChatHistoryAsTXT } = useChatExport({
 		activeChat,
 		messages,
 		user,
@@ -231,8 +231,16 @@ const Messages = () => {
 	});
 
 	// Upload limit management - for all roles
-	const { uploadInfo, checkCanUploadImage, checkCanUploadAudio, getRemainingImageUploads, getImageLimit, getFormattedResetTime, refreshUploadStats } =
-		useUploadLimit();
+	const {
+		uploadInfo,
+		checkCanUploadImage,
+		checkCanUploadAudio,
+		getRemainingImageUploads,
+		getImageLimit,
+		getFormattedResetTime,
+		refreshUploadStats,
+		incrementImageUpload,
+	} = useUploadLimit();
 
 	// ✅ NEW: Use useChatNavigation hook
 	const {
@@ -413,9 +421,7 @@ const Messages = () => {
 							getChatDisplayImage={getChatDisplayImage}
 							isGroupChat={isGroupChat}
 							onBlockUnblockUser={handleBlockUnblockUser}
-							onDownloadChatHistory={downloadChatHistory}
 							onDownloadChatHistoryAsPDF={downloadChatHistoryAsPDF}
-							onDownloadChatHistoryAsHTML={downloadChatHistoryAsHTML}
 							onDownloadChatHistoryAsTXT={downloadChatHistoryAsTXT}
 							onEditGroupChat={() => {
 								if (activeChat && isGroupChat(activeChat)) {
@@ -618,6 +624,7 @@ const Messages = () => {
 								getFormattedResetTime={getFormattedResetTime}
 								checkCanUploadImage={checkCanUploadImage}
 								checkCanUploadAudio={checkCanUploadAudio}
+								incrementImageUpload={incrementImageUpload}
 							/>
 						</Box>
 					</Box>

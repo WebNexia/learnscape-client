@@ -1,4 +1,5 @@
-import { FormControl, MenuItem, Select, SelectChangeEvent, Typography } from '@mui/material';
+import { FormControl, MenuItem, Select, SelectChangeEvent, Typography, IconButton, Tooltip, Box, Chip, DialogContent } from '@mui/material';
+import { Info } from '@mui/icons-material';
 import CustomTextField from '../customFields/CustomTextField';
 import { useContext, useState } from 'react';
 import { LessonsContext } from '../../../contexts/LessonsContextProvider';
@@ -49,6 +50,7 @@ const CreateLessonDialog = ({
 
 	const [title, setTitle] = useState<string>('');
 	const [type, setType] = useState<string>('');
+	const [isLessonTypeInfoDialogOpen, setIsLessonTypeInfoDialogOpen] = useState<boolean>(false);
 
 	const createLesson = async () => {
 		try {
@@ -181,9 +183,24 @@ const CreateLessonDialog = ({
 				</Typography>
 
 				<FormControl sx={{ margin: isMobileSize ? '0.5rem 2rem' : '1rem 2rem' }}>
-					<Typography variant='body2' sx={{ mb: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-						Type
-					</Typography>
+					<Box sx={{ display: 'flex', alignItems: 'center', mb: '0.5rem', gap: '0.5rem' }}>
+						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+							Type
+						</Typography>
+						<Tooltip title='Learn about lesson types' placement='top' arrow>
+							<IconButton
+								size='small'
+								onClick={() => setIsLessonTypeInfoDialogOpen(true)}
+								sx={{
+									'padding': '0.25rem',
+									'&:hover': {
+										backgroundColor: 'transparent',
+									},
+								}}>
+								<Info sx={{ color: theme.palette.primary.main, fontSize: isMobileSize ? '0.9rem' : '1rem' }} />
+							</IconButton>
+						</Tooltip>
+					</Box>
 					<Select
 						id='lesson_type'
 						value={type}
@@ -215,6 +232,154 @@ const CreateLessonDialog = ({
 					submitBtnSx={{ margin: '0.5rem 1.5rem 0.5rem 0' }}
 				/>
 			</form>
+
+			{/* Lesson Type Info Dialog */}
+			<CustomDialog
+				openModal={isLessonTypeInfoDialogOpen}
+				closeModal={() => setIsLessonTypeInfoDialogOpen(false)}
+				maxWidth='sm'
+				title='Lesson Types Explained'>
+				<DialogContent>
+					<Box sx={{ p: 1, pt: 2 }}>
+						<Typography
+							sx={{
+								mb: '1.5rem',
+								mt: '-1rem',
+								fontFamily: theme.fontFamily?.main,
+								fontSize: isMobileSize ? '0.8rem' : '0.9rem',
+								color: theme.palette.text.secondary,
+							}}>
+							Choose the appropriate lesson type based on your content and learning objectives:
+						</Typography>
+
+						{/* Instructional Lesson */}
+						<Box sx={{ mb: '2rem' }}>
+							<Box sx={{ display: 'flex', alignItems: 'center', mb: '0.75rem', gap: '0.75rem' }}>
+								<Chip
+									label='Instructional Lesson'
+									color='primary'
+									size='small'
+									sx={{
+										fontFamily: theme.fontFamily?.main,
+										fontWeight: 600,
+										minWidth: '10rem',
+										color: '#fff',
+										fontSize: isMobileSize ? '0.7rem' : '0.8rem',
+									}}
+								/>
+							</Box>
+							<Typography
+								sx={{
+									fontFamily: theme.fontFamily?.main,
+									fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+									color: theme.palette.text.primary,
+									lineHeight: 1.6,
+									pl: '0.5rem',
+								}}>
+								This lesson type is designed for instructional content delivery. It supports:
+							</Typography>
+							<Box component='ul' sx={{ pl: 4, mt: '0.5rem', mb: 0 }}>
+								<Typography component='li' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.25rem', lineHeight: 1.6 }}>
+									Single video content
+								</Typography>
+								<Typography component='li' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.25rem', lineHeight: 1.6 }}>
+									Written lesson instructions and materials
+								</Typography>
+								<Typography component='li' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: 0, lineHeight: 1.6 }}>
+									PDF documents and downloadable materials
+								</Typography>
+							</Box>
+						</Box>
+
+						{/* Practice Lesson */}
+						<Box sx={{ mb: '2rem' }}>
+							<Box sx={{ display: 'flex', alignItems: 'center', mb: '0.75rem', gap: '0.75rem' }}>
+								<Chip
+									label='Practice Lesson'
+									color='success'
+									size='small'
+									sx={{
+										fontFamily: theme.fontFamily?.main,
+										fontWeight: 600,
+										minWidth: '10rem',
+										color: '#fff',
+										fontSize: isMobileSize ? '0.7rem' : '0.8rem',
+									}}
+								/>
+							</Box>
+							<Typography
+								sx={{
+									fontFamily: theme.fontFamily?.main,
+									fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+									color: theme.palette.text.primary,
+									lineHeight: 1.6,
+									pl: '0.5rem',
+								}}>
+								This lesson type focuses on interactive practice and skill development:
+							</Typography>
+							<Box component='ul' sx={{ pl: 4, mt: '0.5rem', mb: 0 }}>
+								<Typography component='li' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.25rem', lineHeight: 1.6 }}>
+									Students progress through questions as they answer correctly
+								</Typography>
+								<Typography component='li' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.25rem', lineHeight: 1.6 }}>
+									Immediate feedback on answers to reinforce learning
+								</Typography>
+								<Typography component='li' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: 0, lineHeight: 1.6 }}>
+									<strong>Note:</strong> Audio/Video question type is not available for this lesson type
+								</Typography>
+							</Box>
+						</Box>
+
+						{/* Quiz */}
+						<Box sx={{ mb: '1rem' }}>
+							<Box sx={{ display: 'flex', alignItems: 'center', mb: '0.75rem', gap: '0.75rem' }}>
+								<Chip
+									label='Quiz'
+									color='warning'
+									size='small'
+									sx={{
+										fontFamily: theme.fontFamily?.main,
+										fontWeight: 600,
+										minWidth: '10rem',
+										color: '#fff',
+										fontSize: isMobileSize ? '0.7rem' : '0.8rem',
+									}}
+								/>
+							</Box>
+							<Typography
+								sx={{
+									fontFamily: theme.fontFamily?.main,
+									fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+									color: theme.palette.text.primary,
+									lineHeight: 1.6,
+									pl: '0.5rem',
+								}}>
+								This lesson type is designed for assessment and evaluation:
+							</Typography>
+							<Box component='ul' sx={{ pl: 4, mt: '0.5rem', mb: 0 }}>
+								<Typography component='li' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.25rem', lineHeight: 1.6 }}>
+									Students submit their answers and can view results after submission
+								</Typography>
+								<Typography component='li' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.25rem', lineHeight: 1.6 }}>
+									Instructors can provide detailed feedback for each question individually
+								</Typography>
+								<Typography component='li' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.25rem', lineHeight: 1.6 }}>
+									Overall quiz feedback can be provided by instructors
+								</Typography>
+								<Typography component='li' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: 0, lineHeight: 1.6 }}>
+									<strong>Note:</strong> Flip card question type is not available for this lesson type
+								</Typography>
+							</Box>
+						</Box>
+					</Box>
+				</DialogContent>
+				<CustomDialogActions
+					onSubmit={() => setIsLessonTypeInfoDialogOpen(false)}
+					submitBtnText='Got It'
+					actionSx={{ mb: '0.5rem', mr: '1rem', mt: '-1rem' }}
+					showCancelBtn={false}
+				/>
+			</CustomDialog>
 		</CustomDialog>
 	);
 };

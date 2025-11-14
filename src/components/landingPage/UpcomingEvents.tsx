@@ -252,21 +252,32 @@ export default function UpcomingEvents() {
 								<CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
 									<Box display='flex' alignItems='center' mb={1}>
 										<Chip label={event.type} color={event.type === 'Webinar' ? 'primary' : 'secondary'} size='small' sx={{ mr: 1 }} />
-										<Typography variant='body2' color='text.secondary'>
+										<Typography variant='body2' sx={{ color: '#5A6C7D', fontSize: '0.8rem' }}>
 											{dateTimeFormatter(event.start)}
 										</Typography>
 									</Box>
 									<Typography variant='h6' fontWeight={600} gutterBottom>
 										{event.title}
 									</Typography>
-									<Typography variant='body2' color='text.secondary' mb={2}>
+									<Typography variant='body2' sx={{ color: '#334155', mb: 2 }}>
 										{event.description}
 									</Typography>
 									<Button
 										variant='contained'
-										color='primary'
 										size='small'
-										sx={{ borderRadius: 2, textTransform: 'none' }}
+										sx={{
+											'background': 'linear-gradient(135deg, #FF6B3D 0%, #ff7d55 100%)',
+											'color': '#FFFFFF',
+											'borderRadius': 2,
+											'textTransform': 'none',
+											'fontFamily': 'Varela Round',
+											'boxShadow': '0 4px 15px rgba(255, 107, 61, 0.35)',
+											'&:hover': {
+												background: 'linear-gradient(135deg, #ff7d55 0%, #FF6B3D 100%)',
+												boxShadow: '0 6px 20px rgba(255, 107, 61, 0.45)',
+											},
+											'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+										}}
 										onClick={() => handleOpenRegisterDialog(event._id)}>
 										Kayıt Ol
 									</Button>
@@ -366,21 +377,34 @@ export default function UpcomingEvents() {
 								<CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
 									<Box display='flex' alignItems='center' mb={1}>
 										<Chip label={event?.type} size='small' sx={{ mr: 1, fontSize: '0.7rem' }} />
-										<Typography variant='body2' color='text.secondary' sx={{ fontSize: '0.7rem' }}>
+										<Typography variant='body2' sx={{ color: '#334155', fontSize: '0.7rem' }}>
 											{dateTimeFormatter(event.start)}
 										</Typography>
 									</Box>
 									<Typography variant='h6' fontWeight={600} gutterBottom sx={{ fontSize: '0.9rem' }}>
 										{event.title}
 									</Typography>
-									<Typography variant='body2' color='text.secondary' mb={2} sx={{ fontSize: '0.75rem' }}>
+									<Typography variant='body2' sx={{ color: '#334155', mb: 2, fontSize: '0.75rem' }}>
 										{event.description}
 									</Typography>
 									<Button
 										variant='contained'
-										color='primary'
 										size='small'
-										sx={{ borderRadius: 2, textTransform: 'none', float: 'right', fontSize: '0.75rem' }}
+										sx={{
+											'background': 'linear-gradient(135deg, #FF6B3D 0%, #ff7d55 100%)',
+											'color': '#FFFFFF',
+											'borderRadius': 2,
+											'textTransform': 'none',
+											'float': 'right',
+											'fontSize': '0.75rem',
+											'fontFamily': 'Varela Round',
+											'boxShadow': '0 4px 15px rgba(255, 107, 61, 0.35)',
+											'&:hover': {
+												background: 'linear-gradient(135deg, #ff7d55 0%, #FF6B3D 100%)',
+												boxShadow: '0 6px 20px rgba(255, 107, 61, 0.45)',
+											},
+											'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+										}}
 										onClick={() => handleOpenRegisterDialog(event._id)}>
 										Kayıt Ol
 									</Button>
@@ -422,24 +446,32 @@ export default function UpcomingEvents() {
 				flexDirection: 'column',
 				alignItems: 'center',
 				py: 6,
-				background: 'linear-gradient(90deg, #f8fafc 0%, #e0e7ef 100%)',
+				backgroundColor: 'transparent',
 			}}>
 			<Typography
 				sx={{
-					fontSize: responsiveStyles.typography.h2,
-					fontFamily: 'Varela Round',
-					color: '#2C3E50',
-					letterSpacing: '-0.02em',
-					lineHeight: 1.2,
+					'fontSize': responsiveStyles.typography.h2,
+					'fontFamily': 'Varela Round',
+					'background': 'linear-gradient(135deg, #4f46e5 0%, #5b21b6 25%, #7c3aed 50%, #3b82f6 75%, #2563eb 100%)',
+					'WebkitBackgroundClip': 'text',
+					'WebkitTextFillColor': 'transparent',
+					'backgroundClip': 'text',
+					'backgroundSize': '200% 200%',
+					'animation': 'gradientShift 5s ease infinite',
+					'letterSpacing': '-0.02em',
+					'lineHeight': 1.2,
+					'fontWeight': 700,
+					'@keyframes gradientShift': {
+						'0%': { backgroundPosition: '0% 50%' },
+						'50%': { backgroundPosition: '100% 50%' },
+						'100%': { backgroundPosition: '0% 50%' },
+					},
 				}}>
 				Yaklaşan Etkinlikler
 			</Typography>
 			{upcomingEvents && upcomingEvents.length > 0 && (isDesktop ? <TimelineDesktop /> : <CarouselMobile />)}
 			{upcomingEvents && upcomingEvents.length === 0 && (
-				<Typography
-					variant='body1'
-					color='text.secondary'
-					sx={{ fontFamily: 'Varela Round', fontSize: { xs: '1rem', md: '1.2rem' }, marginTop: '5rem' }}>
+				<Typography variant='body1' sx={{ color: '#334155', fontFamily: 'Varela Round', fontSize: { xs: '1rem', md: '1.2rem' }, marginTop: '5rem' }}>
 					Henüz yaklaşan etkinlik bulunmamaktadır.
 				</Typography>
 			)}
@@ -456,7 +488,7 @@ export default function UpcomingEvents() {
 					fontSize: '1.5rem',
 					fontWeight: 600,
 					fontFamily: 'Varela Round',
-					color: '#2C3E50',
+					color: '#1e293b',
 					ml: '0.5rem',
 					textAlign: 'center',
 					mb: 1,
@@ -553,7 +585,17 @@ export default function UpcomingEvents() {
 							submitBtnText={isRegisterForEventSending ? 'İşleniyor...' : 'Kayıt Ol'}
 							disableBtn={!recaptchaToken || isRegisterForEventSending}
 							disableCancelBtn={isRegisterForEventSending}
-							submitBtnSx={{ fontFamily: 'Varela Round' }}
+							submitBtnSx={{
+								'background': 'linear-gradient(135deg, #FF6B3D 0%, #ff7d55 100%)',
+								'fontFamily': 'Varela Round',
+								'&:hover': {
+									background: 'linear-gradient(135deg, #ff7d55 0%, #FF6B3D 100%)',
+								},
+								'&.Mui-disabled': {
+									background: 'rgba(0, 0, 0, 0.12)',
+									color: 'rgba(0, 0, 0, 0.26)',
+								},
+							}}
 							cancelBtnSx={{ fontFamily: 'Varela Round' }}
 							actionSx={{ mr: '-1rem', mb: '-0.5rem' }}
 						/>

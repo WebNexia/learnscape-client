@@ -45,6 +45,7 @@ export interface ChapterLessonData {
 	title: string;
 	lessons: Lesson[];
 	lessonIds: string[];
+	evaluationChecklistItems?: string[];
 }
 
 export class ChapterLessonDataImpl implements ChapterLessonData {
@@ -219,6 +220,7 @@ const AdminCourseEditPage = () => {
 				title: newChapterTitle,
 				lessonIds: [],
 				lessons: [],
+				evaluationChecklistItems: [],
 			};
 
 			setChapterLessonDataBeforeSave((prevData) => {
@@ -259,6 +261,7 @@ const AdminCourseEditPage = () => {
 									title: chapter.title,
 									lessons: chapter?.lessons,
 									lessonIds: chapter.lessons?.filter((lesson) => lesson !== null)?.map((lesson: Lesson) => lesson?._id) || [],
+									evaluationChecklistItems: chapter.evaluationChecklistItems || [],
 								};
 							});
 						setChapterLessonData(initialChapterLessonData);
@@ -408,6 +411,7 @@ const AdminCourseEditPage = () => {
 								lessonIds: chapter.lessonIds,
 								orgId,
 								courseId,
+								evaluationChecklistItems: chapter.evaluationChecklistItems || [],
 							});
 							chapter.chapterId = response.data._id;
 						} catch (error) {
@@ -561,7 +565,12 @@ const AdminCourseEditPage = () => {
 							const trackData = isChapterUpdated?.find((data) => data.chapterId === chapter?.chapterId);
 							if (trackData?.isUpdated) {
 								try {
-									await axios.patch(`${base_url}/chapters${isInstructor ? '/instructor' : ''}/${chapter?.chapterId}`, chapter);
+									await axios.patch(`${base_url}/chapters${isInstructor ? '/instructor' : ''}/${chapter?.chapterId}`, {
+										title: chapter.title,
+										lessonIds: chapter.lessonIds,
+										orgId,
+										evaluationChecklistItems: chapter.evaluationChecklistItems || [],
+									});
 								} catch (error) {
 									console.error('Error updating chapter:', error);
 								}

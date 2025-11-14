@@ -33,9 +33,17 @@ export const useChatList = ({ userFirebaseId, activeChat }: UseChatListProps): U
 			const response = await axios.get('/chats');
 			const chatListData = response.data;
 
-			// Update state with backend data
-			setChatList(chatListData);
-			setFilteredChatList(chatListData);
+			// Sort by last message timestamp (most recent first)
+			const sortedChatList = chatListData.sort((a: Chat, b: Chat) => {
+				// All timestamps are now ISO strings from backend
+				const aTime = a.lastMessage.timestamp ? new Date(a.lastMessage.timestamp).getTime() : 0;
+				const bTime = b.lastMessage.timestamp ? new Date(b.lastMessage.timestamp).getTime() : 0;
+				return bTime - aTime; // Descending order (most recent first)
+			});
+
+			// Update state with sorted backend data
+			setChatList(sortedChatList);
+			setFilteredChatList(sortedChatList);
 		} catch (error) {
 			console.error('❌ Error fetching chat list from backend:', error);
 			// Fallback to empty array
@@ -61,8 +69,15 @@ export const useChatList = ({ userFirebaseId, activeChat }: UseChatListProps): U
 				const response = await axios.get('/chats');
 				const chatListData = response.data;
 
-				setChatList(chatListData);
-				setFilteredChatList(chatListData);
+				// Sort by last message timestamp (most recent first)
+				const sortedChatList = chatListData.sort((a: Chat, b: Chat) => {
+					const aTime = a.lastMessage.timestamp ? new Date(a.lastMessage.timestamp).getTime() : 0;
+					const bTime = b.lastMessage.timestamp ? new Date(b.lastMessage.timestamp).getTime() : 0;
+					return bTime - aTime; // Descending order (most recent first)
+				});
+
+				setChatList(sortedChatList);
+				setFilteredChatList(sortedChatList);
 			} catch (error) {
 				console.error('❌ Error refreshing chat list:', error);
 				if (retries > 0) {

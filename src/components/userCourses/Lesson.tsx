@@ -4,10 +4,8 @@ import { CheckCircleOutlineRounded, Lock } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { UserLessonDataStorage } from '../../contexts/UserCourseLessonDataContextProvider';
 import { LessonById } from '../../interfaces/lessons';
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useState, useMemo } from 'react';
 import ProgressIcon from '../../assets/ProgressIcon.png';
-import { LessonType } from '../../interfaces/enums';
-import { LearnerQuizSubmissionsContext } from '../../contexts/LearnerQuizSubmissionsContextProvider';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import { useUserLessonsForCourse } from '../../hooks/useUserLessonsForCourse';
 
@@ -17,6 +15,9 @@ interface LessonProps {
 	nextLessonId: string;
 	nextChapterFirstLessonId: string;
 	lessonOrder: number;
+	isLastLessonOfChapter?: boolean;
+	currentChapterHasChecklist?: boolean;
+	currentChapterChecklistCompleted?: boolean;
 }
 
 const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLessonId, lessonOrder }: LessonProps) => {
@@ -26,8 +27,6 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 	const { isSmallScreen, isVerySmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isRotatedMedium || isSmallScreen;
 
-	const { userQuizSubmissions } = useContext(LearnerQuizSubmissionsContext);
-
 	// Fetch user lessons for current course using the new hook
 	const { data: userLessonsData } = useUserLessonsForCourse(courseId || '');
 	const parsedUserLessonData = userLessonsData || [];
@@ -35,7 +34,6 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 	const [userLessonData, setUserLessonData] = useState<UserLessonDataStorage[]>(parsedUserLessonData);
 	const [isLessonInProgress, setIsLessonInProgress] = useState<boolean>(false);
 	const [isLessonCompleted, setIsLessonCompleted] = useState<boolean>(false);
-	const [isFeedbackGiven, setIsFeedbackGiven] = useState<boolean>(false);
 	const [isLessonRegisteredInThisCourse, setIsLessonRegisteredInThisCourse] = useState<boolean>(false);
 
 	useEffect(() => {
@@ -55,14 +53,6 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 
 		fetchUserLessonProgress();
 	}, [parsedUserLessonData, lesson._id, courseId]);
-
-	useEffect(() => {
-		if (userQuizSubmissions && userQuizSubmissions && userQuizSubmissions.length > 0) {
-			const isFeedbackGiven = userQuizSubmissions?.find((data) => data.lessonId === lesson._id)?.isChecked;
-
-			setIsFeedbackGiven(isFeedbackGiven || false);
-		}
-	}, [userQuizSubmissions, lesson._id]);
 
 	const handleLessonClick = () => {
 		const navigateToLesson = (lessonId: string, nextId?: string) => {
@@ -89,6 +79,11 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 		}
 	};
 
+	const isAccessible = useMemo(() => {
+		if (!isEnrolledStatus) return false;
+		return isLessonRegisteredInThisCourse || isLessonInProgress || isLessonCompleted;
+	}, [isEnrolledStatus, isLessonRegisteredInThisCourse, isLessonInProgress, isLessonCompleted]);
+
 	return (
 		<Box
 			sx={{
@@ -103,7 +98,7 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 								: '3rem',
 				'borderBottom': `0.1rem solid ${theme.border.lightMain}`,
 				'backgroundColor': isEnrolledStatus && isLessonInProgress ? '#A8D8A8' : 'white',
-				'cursor': isEnrolledStatus ? 'pointer' : '',
+				'cursor': isAccessible ? 'pointer' : '',
 				'borderRadius': lessonOrder === 1 ? '0.3rem 0.3rem 0 0 ' : '0rem',
 				':hover': {
 					backgroundColor: !isLessonInProgress ? '#F0F2F5' : '',
@@ -141,11 +136,11 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 					<Box>
 						{isEnrolledStatus && isLessonInProgress && isLessonRegisteredInThisCourse ? (
 							<img src={ProgressIcon} alt='' style={{ height: isMobileSize ? '0.9rem' : '1.5rem' }} />
+						) : isEnrolledStatus && isLessonCompleted && isLessonRegisteredInThisCourse ? (
+							<CheckCircleOutlineRounded sx={{ color: theme.palette.success.main, fontSize: isMobileSize ? '0.9rem' : '1.35rem' }} />
 						) : !isEnrolledStatus || (!isLessonInProgress && !isLessonCompleted) || !isLessonRegisteredInThisCourse ? (
 							<Lock sx={{ color: theme.border.lightMain, fontSize: isMobileSize ? '0.9rem' : '1.35rem' }} />
-						) : (
-							<CheckCircleOutlineRounded sx={{ color: theme.palette.success.main, fontSize: isMobileSize ? '0.9rem' : '1.35rem' }} />
-						)}
+						) : null}
 					</Box>
 				</Box>
 			</Box>

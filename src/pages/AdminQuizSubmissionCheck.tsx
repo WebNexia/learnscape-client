@@ -24,6 +24,7 @@ import CustomInfoMessageAlignedRight from '../components/layouts/infoMessage/Cus
 import QuestionResponseCard from '../components/layouts/quizSubmissions/QuestionResponseCard';
 import { serverTimestamp, writeBatch, doc } from 'firebase/firestore';
 import QuestionMedia from '../components/userCourses/QuestionMedia';
+import { CustomAudioPlayer } from '../components/audio';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import { decode } from 'html-entities';
 import { useDashboardSync, dashboardSyncHelpers } from '../utils/dashboardSync';
@@ -514,25 +515,8 @@ const AdminQuizSubmissionCheck = () => {
 							Student's Recording
 						</Typography>
 						{userResponseToFeedback?.audioRecordUrl && (
-							<Box>
-								<audio
-									src={userResponseToFeedback?.audioRecordUrl}
-									controls
-									style={{
-										height: '1.5rem',
-										marginTop: '1rem',
-										boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
-										borderRadius: '0.35rem',
-										width: '100%',
-									}}
-								/>
-								<a
-									href={userResponseToFeedback?.audioRecordUrl}
-									download
-									style={{ display: 'block', marginTop: '0.5rem', textAlign: 'center' }}
-									target='_blank'>
-									<Typography variant='body2'>Download Audio</Typography>
-								</a>
+							<Box sx={{ mt: '1rem' }}>
+								<CustomAudioPlayer audioUrl={userResponseToFeedback?.audioRecordUrl} title='Student Recording' />
 							</Box>
 						)}
 						{userResponseToFeedback?.videoRecordUrl && (
@@ -566,19 +550,13 @@ const AdminQuizSubmissionCheck = () => {
 									<AudioRecorder uploadAudio={uploadAudio} isAudioUploading={isAudioUploading} recorderTitle='' teacherFeedback={true} />
 								) : (
 									<Box sx={{ display: 'flex', alignItems: 'center' }}>
-										<Box sx={{ flex: 9 }}>
-											<audio
-												src={
-													userQuestionsFeedbacks?.find((feedback) => feedback.userQuestionId === userResponseToFeedback?._id)?.teacherAudioFeedbackUrl
+										<Box sx={{ flex: 9, mt: '0.5rem' }}>
+											<CustomAudioPlayer
+												audioUrl={
+													userQuestionsFeedbacks?.find((feedback) => feedback.userQuestionId === userResponseToFeedback?._id)
+														?.teacherAudioFeedbackUrl || ''
 												}
-												controls
-												style={{
-													height: '1.5rem',
-													marginTop: '1rem',
-													boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
-													borderRadius: '0.35rem',
-													width: '100%',
-												}}
+												title='Teacher Audio Feedback'
 											/>
 										</Box>
 										<Box sx={{ flex: 1, margin: '0.75rem 0 0 1.5rem' }}>

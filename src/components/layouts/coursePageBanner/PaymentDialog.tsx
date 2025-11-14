@@ -623,8 +623,10 @@ const PaymentDialog = ({
 		<CustomDialog
 			openModal={isPaymentDialogOpen}
 			closeModal={() => {
-				resetForm();
-				setIsPaymentDialogOpen(false);
+				if (!isProcessing) {
+					resetForm();
+					setIsPaymentDialogOpen(false);
+				}
 			}}
 			title={fromHomePage && !isCourseFree ? 'Ödeme Yap' : isCourseFree ? 'Kayıt Ol' : 'Make Payment'}
 			maxWidth='sm'
@@ -1181,8 +1183,10 @@ const PaymentDialog = ({
 
 				<CustomDialogActions
 					onCancel={() => {
-						resetForm();
-						setIsPaymentDialogOpen(false);
+						if (!isProcessing) {
+							resetForm();
+							setIsPaymentDialogOpen(false);
+						}
 					}}
 					cancelBtnText={fromHomePage ? 'Kapat' : 'Cancel'}
 					cancelBtnSx={{

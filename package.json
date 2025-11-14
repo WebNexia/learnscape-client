@@ -45,6 +45,7 @@
 		"react-chartjs-2": "^5.2.0",
 		"react-dom": "^18.2.0",
 		"react-google-recaptcha": "^3.1.0",
+		"react-helmet-async": "^2.0.5",
 		"react-international-phone": "^4.6.0",
 		"react-phone-input-2": "^2.15.1",
 		"react-player": "^2.16.0",

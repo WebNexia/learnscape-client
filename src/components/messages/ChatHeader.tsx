@@ -16,9 +16,7 @@ interface ChatHeaderProps {
 	getChatDisplayImage: (chat: ChatType) => string;
 	isGroupChat: (chat: ChatType) => boolean;
 	onBlockUnblockUser: (firebaseUserId: string) => void;
-	onDownloadChatHistory?: () => void;
 	onDownloadChatHistoryAsPDF?: () => void;
-	onDownloadChatHistoryAsHTML?: () => void;
 	onDownloadChatHistoryAsTXT?: () => void;
 	onEditGroupChat?: () => void;
 	onViewGroupMembers?: () => void;
@@ -35,9 +33,7 @@ const ChatHeader = ({
 	getChatDisplayImage,
 	isGroupChat,
 	onBlockUnblockUser,
-	onDownloadChatHistory,
 	onDownloadChatHistoryAsPDF,
-	onDownloadChatHistoryAsHTML,
 	onDownloadChatHistoryAsTXT,
 	onEditGroupChat,
 	onViewGroupMembers,
@@ -56,18 +52,8 @@ const ChatHeader = ({
 		setDownloadMenuAnchor(null);
 	};
 
-	const handleDownloadJSON = () => {
-		onDownloadChatHistory?.();
-		handleDownloadMenuClose();
-	};
-
 	const handleDownloadPDF = () => {
 		onDownloadChatHistoryAsPDF?.();
-		handleDownloadMenuClose();
-	};
-
-	const handleDownloadHTML = () => {
-		onDownloadChatHistoryAsHTML?.();
 		handleDownloadMenuClose();
 	};
 
@@ -180,7 +166,7 @@ const ChatHeader = ({
 										}
 									})}
 								{/* Download Menu for 1-1 Chats - positioned after block button */}
-								{(onDownloadChatHistory || onDownloadChatHistoryAsPDF || onDownloadChatHistoryAsHTML || onDownloadChatHistoryAsTXT) && (
+								{(onDownloadChatHistoryAsPDF || onDownloadChatHistoryAsTXT) && (
 									<Tooltip title='Download Chat History' placement='top' arrow>
 										<IconButton
 											size='small'
@@ -204,7 +190,7 @@ const ChatHeader = ({
 						{isGroupChat(activeChat) && (
 							<Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
 								{/* Download Menu for Group Chats */}
-								{(onDownloadChatHistory || onDownloadChatHistoryAsPDF || onDownloadChatHistoryAsHTML || onDownloadChatHistoryAsTXT) && (
+								{(onDownloadChatHistoryAsPDF || onDownloadChatHistoryAsTXT) && (
 									<Tooltip title='Download Chat History' placement='top' arrow>
 										<IconButton size='small' onClick={handleDownloadMenuOpen} sx={{ ':hover': { backgroundColor: 'transparent' } }}>
 											<FileDownload fontSize='small' />
@@ -243,22 +229,10 @@ const ChatHeader = ({
 					vertical: 'top',
 					horizontal: 'right',
 				}}>
-				{onDownloadChatHistory && (
-					<MenuItem onClick={handleDownloadJSON}>
-						<FileDownload sx={{ mr: 1 }} fontSize='small' />
-						<Typography variant='body2'>Download as JSON</Typography>
-					</MenuItem>
-				)}
 				{onDownloadChatHistoryAsPDF && (
 					<MenuItem onClick={handleDownloadPDF}>
 						<FileDownload sx={{ mr: 1 }} fontSize='small' />
 						<Typography variant='body2'>Download as PDF</Typography>
-					</MenuItem>
-				)}
-				{onDownloadChatHistoryAsHTML && (
-					<MenuItem onClick={handleDownloadHTML}>
-						<FileDownload sx={{ mr: 1 }} fontSize='small' />
-						<Typography variant='body2'>Download as HTML</Typography>
 					</MenuItem>
 				)}
 				{onDownloadChatHistoryAsTXT && (
