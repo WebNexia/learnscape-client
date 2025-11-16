@@ -34,20 +34,10 @@ const CTASection = ({ coursesRef }: CTASectionProps) => {
 	return (
 		<Box
 			sx={{
-				'position': 'relative',
-				'backgroundColor': 'transparent',
-				'py': responsiveStyles.spacing.section,
-				'overflow': 'hidden',
-				'&::before': {
-					content: '""',
-					position: 'absolute',
-					top: 0,
-					left: 0,
-					right: 0,
-					height: '60px',
-					background: 'linear-gradient(180deg, rgba(118, 75, 162, 0.25) 0%, rgba(102, 126, 234, 0.2) 50%, transparent 100%)',
-					boxShadow: '0 -4px 30px rgba(118, 75, 162, 0.15)',
-				},
+				position: 'relative',
+				background: 'linear-gradient(90deg, rgba(118, 75, 162, 0.5) 0%, rgba(102, 126, 234, 0.4) 50%, transparent 100%)',
+				py: responsiveStyles.spacing.section,
+				overflow: 'hidden',
 			}}>
 			<Container maxWidth='lg' sx={{ px: responsiveStyles.spacing.container, position: 'relative', zIndex: 1 }}>
 				<motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} viewport={{ once: true }}>

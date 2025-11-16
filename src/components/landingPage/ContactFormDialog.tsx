@@ -7,6 +7,7 @@ import theme from '../../themes';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { useContext } from 'react';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
+import CustomErrorMessage from '../forms/customFields/CustomErrorMessage';
 
 interface ContactFormDialogProps {
 	isGetMoreDetailsModalOpen: boolean;
@@ -32,7 +33,7 @@ interface ContactFormDialogProps {
 	handleRecaptchaChange: (token: string | null) => void;
 	resetRecaptcha: () => void;
 	recaptchaRef: React.MutableRefObject<any>;
-	recaptchaToken: string | null;
+	errorDialogMsg: string;
 }
 const ContactFormDialog = ({
 	isGetMoreDetailsModalOpen,
@@ -58,9 +59,8 @@ const ContactFormDialog = ({
 	handleRecaptchaChange,
 	resetRecaptcha,
 	recaptchaRef,
-	recaptchaToken,
+	errorDialogMsg,
 }: ContactFormDialogProps) => {
-	const isValidPhone = (phone: string) => /^\+\d{8,}$/.test(phone);
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
@@ -277,7 +277,6 @@ const ContactFormDialog = ({
 							onChange={(e) => setMessage(e.target.value)}
 							fullWidth={false}
 							multiline
-							required={false}
 							rows={4}
 							sx={{
 								'width': '100%',
@@ -326,18 +325,32 @@ const ContactFormDialog = ({
 							/>
 						</Box>
 					</Box>
+					<Box sx={{ margin: { xs: '0 0.75rem', sm: '0 1rem', md: '0 2rem', lg: '0 2rem' } }}>
+						{errorDialogMsg && (
+							<CustomErrorMessage sx={{ width: '100%', fontSize: isMobileSize ? '0.7rem' : '0.8rem', fontFamily: 'Varela Round', mt: '1rem' }}>
+								{errorDialogMsg}
+							</CustomErrorMessage>
+						)}
+					</Box>
 					<CustomDialogActions
 						submitBtnText={sending ? 'Gönderiliyor...' : 'Gönder'}
 						cancelBtnText='Kapat'
 						submitBtnSx={{
-							'background': 'linear-gradient(135deg, #FF6B3D 0%, #ff7d55 100%)',
+							'background': 'linear-gradient(135deg, #FF6B3D 0%, #ff7d55 100%) !important',
+							'backgroundColor': 'transparent !important',
 							'fontFamily': 'Varela Round',
+							'color': 'white !important',
+							'transition': 'all 0.2s ease !important',
 							'&:hover': {
-								background: 'linear-gradient(135deg, #ff7d55 0%, #FF6B3D 100%)',
+								background: 'white !important',
+								backgroundColor: 'white !important',
+								color: '#FF6B3D !important',
+								border: '1px solid #FF6B3D !important',
 							},
 							'&.Mui-disabled': {
-								background: 'rgba(0, 0, 0, 0.12)',
-								color: 'rgba(0, 0, 0, 0.26)',
+								background: 'rgba(0, 0, 0, 0.12) !important',
+								backgroundColor: 'rgba(0, 0, 0, 0.12) !important',
+								color: 'rgba(0, 0, 0, 0.26) !important',
 							},
 						}}
 						onCancel={() => {
@@ -347,10 +360,10 @@ const ContactFormDialog = ({
 							resetRecaptcha();
 						}}
 						cancelBtnSx={{ fontFamily: 'Varela Round' }}
-						disableBtn={sending || !isValidPhone(phone) || !recaptchaToken}
+						disableBtn={sending}
 						disableCancelBtn={sending}
 						actionSx={{
-							padding: { xs: '1rem 0.5rem 0.75rem 0', sm: '1rem 1rem 0.75rem 0', md: '1rem 2rem 0.75rem 0', lg: '1rem 1.5rem 0.75rem 0' },
+							padding: { xs: '1rem 0.5rem 0.75rem 0', sm: '1rem 1rem 0.75rem 0', md: '1rem 2rem 0.75rem 0', lg: '1.5rem 1.5rem 0rem 0' },
 						}}
 					/>
 				</form>
@@ -362,7 +375,7 @@ const ContactFormDialog = ({
 				onClose={() => {
 					setShowSuccess(false);
 				}}
-				sx={{ mt: { xs: '1.5rem', sm: '1.5rem', md: '2.5rem', lg: '2.5rem' } }}>
+				sx={{ mt: { xs: '4.5rem', sm: '4.5rem', md: '5rem', lg: '5rem' } }}>
 				<Alert
 					severity='success'
 					variant='filled'

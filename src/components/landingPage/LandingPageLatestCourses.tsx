@@ -21,7 +21,13 @@ const LandingPageLatestCourses = forwardRef<HTMLDivElement>((_, ref) => {
 	const publishedCourses = latestCourses?.filter((course: SingleCourse) => course.orgId === orgId) || [];
 
 	return (
-		<Box ref={ref} sx={{ backgroundColor: 'transparent', position: 'relative', padding: '3rem 0' }}>
+		<Box
+			ref={ref}
+			sx={{
+				position: 'relative',
+				background: 'linear-gradient(270deg, rgba(102, 126, 234, 0.5) 0%, rgba(118, 75, 162, 0.4) 50%, transparent 100%)',
+				padding: '3rem 0',
+			}}>
 			<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', textAlign: 'center', mb: { xs: 2, sm: 3 } }}>
 				<Typography
 					sx={{
@@ -48,7 +54,7 @@ const LandingPageLatestCourses = forwardRef<HTMLDivElement>((_, ref) => {
 					size='small'
 					sx={{
 						'ml': { xs: '0.5rem', sm: '0.75rem' },
-						'& svg': { fontSize: { xs: '1.1rem', sm: '1.25rem' }, color: '#5B8DEF' },
+						'& svg': { fontSize: { xs: '1.1rem', sm: '1.25rem' }, color: '#fff' },
 						'&:hover': {
 							backgroundColor: 'rgba(91, 141, 239, 0.1)',
 							transform: 'scale(1.1)',
