@@ -55,11 +55,15 @@ export default function UpcomingEvents() {
 
 	const handleRecaptchaChange = (token: string | null) => {
 		setRecaptchaToken(token);
+		setRegisterErrorMsg(null);
 	};
 
 	const handleRegisterForEvent = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
-		if (!selectedEventId || !recaptchaToken) return;
+		if (!selectedEventId || !recaptchaToken) {
+			setRegisterErrorMsg('Lütfen reCAPTCHA doğrulamasını tamamlayın');
+			return;
+		}
 		try {
 			setIsRegisterForEventSending(true);
 			setRegisterErrorMsg(null);
@@ -266,17 +270,24 @@ export default function UpcomingEvents() {
 										variant='contained'
 										size='small'
 										sx={{
-											'background': 'linear-gradient(135deg, #FF6B3D 0%, #ff7d55 100%)',
-											'color': '#FFFFFF',
-											'borderRadius': 2,
-											'textTransform': 'none',
 											'fontFamily': 'Varela Round',
-											'boxShadow': '0 4px 15px rgba(255, 107, 61, 0.35)',
+											'fontWeight': 800,
+											'letterSpacing': '0.03em',
+											'textShadow': '0 1px 2px rgba(0, 0, 0, 0.1)',
+											'textTransform': 'capitalize',
+											'background': 'linear-gradient(135deg, rgba(79, 70, 229, 0.7) 0%, rgba(91, 33, 182, 0.7) 50%, rgba(124, 58, 237, 0.7) 100%)',
+											'color': '#FFFFFF',
+											'borderRadius': { xs: '0.75rem', sm: '1rem', md: '1.25rem' },
+											'padding': isMobile ? '0.4rem 1rem' : '0.5rem 1.75rem',
+											'fontSize': isMobile ? '0.85rem' : '1rem',
+											'boxShadow': '0 4px 15px rgba(79, 70, 229, 0.4)',
 											'&:hover': {
-												background: 'linear-gradient(135deg, #ff7d55 0%, #FF6B3D 100%)',
-												boxShadow: '0 6px 20px rgba(255, 107, 61, 0.45)',
+												background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.9) 0%, rgba(124, 58, 237, 0.9) 50%, rgba(147, 51, 234, 0.9) 100%)',
+												transform: 'translateY(-3px)',
+												boxShadow: '0 4px 15px rgba(79, 70, 229, 0.4)',
 											},
 											'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+											'height': '2rem',
 										}}
 										onClick={() => handleOpenRegisterDialog(event._id)}>
 										Kayıt Ol
@@ -347,10 +358,16 @@ export default function UpcomingEvents() {
 		const handleStepChange = (step: number) => setActiveStep(step);
 
 		return (
-			<Box sx={{ maxWidth: 360, position: 'relative' }}>
-				<SwipeableViews index={activeStep} onChangeIndex={handleStepChange} enableMouseEvents resistance>
+			<Box sx={{ maxWidth: 360, position: 'relative', backgroundColor: 'transparent' }}>
+				<SwipeableViews 
+					index={activeStep} 
+					onChangeIndex={handleStepChange} 
+					enableMouseEvents 
+					resistance
+					style={{ backgroundColor: 'transparent' }}
+					containerStyle={{ backgroundColor: 'transparent' }}>
 					{upcomingEvents?.map((event, _) => (
-						<div key={event._id}>
+						<div key={event._id} style={{ backgroundColor: 'transparent' }}>
 							<Card
 								sx={{
 									mt: '1.5rem',
@@ -479,9 +496,11 @@ export default function UpcomingEvents() {
 				title={'Kayıt Ol'}
 				openModal={isRegisterForEventModalOpen}
 				closeModal={() => {
-					setIsRegisterForEventModalOpen(false);
-					setIsRegisterForEventSuccess(false);
-					setRegisterErrorMsg(null);
+					if (!isRegisterForEventSending) {
+						setIsRegisterForEventModalOpen(false);
+						setIsRegisterForEventSuccess(false);
+						setRegisterErrorMsg(null);
+					}
 				}}
 				maxWidth='xs'
 				titleSx={{
@@ -574,22 +593,35 @@ export default function UpcomingEvents() {
 								style={{ marginBottom: '1rem' }}
 							/>
 						</div>
-						{registerErrorMsg && <CustomErrorMessage sx={{ mt: isMobile ? '0.5rem' : '1rem' }}>{registerErrorMsg}</CustomErrorMessage>}
+						{registerErrorMsg && (
+							<CustomErrorMessage
+								sx={{ m: isMobile ? '0.5rem 0' : '0.85rem 0', fontFamily: 'Varela Round', fontSize: isMobile ? '0.7rem' : '0.8rem' }}>
+								{registerErrorMsg}
+							</CustomErrorMessage>
+						)}
 						<CustomDialogActions
 							onCancel={() => {
-								setIsRegisterForEventModalOpen(false);
-								setIsRegisterForEventSuccess(false);
-								setRegisterErrorMsg(null);
+								if (!isRegisterForEventSending) {
+									setIsRegisterForEventModalOpen(false);
+									setIsRegisterForEventSuccess(false);
+									setRegisterErrorMsg(null);
+								}
 							}}
 							cancelBtnText='Kapat'
 							submitBtnText={isRegisterForEventSending ? 'İşleniyor...' : 'Kayıt Ol'}
-							disableBtn={!recaptchaToken || isRegisterForEventSending}
+							disableBtn={isRegisterForEventSending}
 							disableCancelBtn={isRegisterForEventSending}
 							submitBtnSx={{
-								'background': 'linear-gradient(135deg, #FF6B3D 0%, #ff7d55 100%)',
+								'background': 'linear-gradient(135deg, #FF6B3D 0%, #ff7d55 100%) !important',
+								'backgroundColor': 'transparent !important',
 								'fontFamily': 'Varela Round',
+								'color': 'white !important',
+								'transition': 'all 0.2s ease !important',
 								'&:hover': {
-									background: 'linear-gradient(135deg, #ff7d55 0%, #FF6B3D 100%)',
+									background: 'white !important',
+									backgroundColor: 'white !important',
+									color: '#FF6B3D !important',
+									border: '1px solid #FF6B3D !important',
 								},
 								'&.Mui-disabled': {
 									background: 'rgba(0, 0, 0, 0.12)',

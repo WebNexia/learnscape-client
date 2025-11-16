@@ -17,20 +17,14 @@ const StatisticsSection = () => {
 	];
 
 	return (
-		<Box sx={{ position: 'relative', backgroundColor: 'transparent' }}>
-			{/* Soft transition gradient */}
-			<Box
-				sx={{
-					width: '100%',
-					height: '60px',
-					background: 'linear-gradient(180deg, rgba(102, 126, 234, 0.25) 0%, rgba(118, 75, 162, 0.2) 50%, transparent 100%)',
-					boxShadow: '0 -4px 30px rgba(102, 126, 234, 0.15)',
-				}}
-			/>
+		<Box
+			sx={{
+				position: 'relative',
+				background: 'linear-gradient(90deg, rgba(102, 126, 234, 0.5) 0%, rgba(118, 75, 162, 0.4) 50%, transparent 100%)',
+			}}>
 			<Box
 				sx={{
 					py: 8,
-					backgroundColor: 'transparent',
 					position: 'relative',
 					overflow: 'hidden',
 				}}>
@@ -64,7 +58,6 @@ const StatisticsSection = () => {
 									viewport={{ once: true }}>
 									<Box sx={{ textAlign: 'center', position: 'relative', zIndex: 1 }}>
 										<Typography
-											variant='h2'
 											sx={{
 												'fontWeight': 700,
 												'mb': 1,

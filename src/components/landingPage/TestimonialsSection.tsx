@@ -57,15 +57,6 @@ const TestimonialsSection = () => {
 
 	return (
 		<Box sx={{ position: 'relative', backgroundColor: 'transparent' }}>
-			<Box
-				sx={{
-					width: '100%',
-					height: '60px',
-					background: 'linear-gradient(180deg, rgba(240, 147, 251, 0.25) 0%, rgba(79, 172, 254, 0.2) 50%, transparent 100%)',
-					boxShadow: '0 -4px 30px rgba(240, 147, 251, 0.15)',
-				}}
-			/>
-
 			<Box sx={{ py: responsiveStyles.spacing.section, backgroundColor: 'transparent', position: 'relative' }}>
 				<Container maxWidth='md' sx={{ px: responsiveStyles.spacing.container }}>
 					<Typography

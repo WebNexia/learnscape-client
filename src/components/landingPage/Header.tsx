@@ -45,6 +45,7 @@ const Header = () => {
 				navigate('/contact-us');
 				window.scrollTo({ top: 0, behavior: 'smooth' });
 			},
+			isActive: location.pathname === '/contact-us',
 		},
 		{
 			label: 'Hakkımızda',
@@ -52,6 +53,7 @@ const Header = () => {
 				navigate('/about-us');
 				window.scrollTo({ top: 0, behavior: 'smooth' });
 			},
+			isActive: location.pathname === '/about-us',
 		},
 	];
 
@@ -64,7 +66,7 @@ const Header = () => {
 						justifyContent: 'space-between',
 						width: '100%',
 						height: isMobileSize ? '10vh' : '13vh',
-						background: 'linear-gradient(135deg, rgba(91, 141, 239, 0.12) 0%, rgba(139, 127, 217, 0.1) 100%)',
+						background: 'linear-gradient(270deg, rgba(102, 126, 234, 0.5) 0%, rgba(118, 75, 162, 0.4) 50%, transparent 100%)',
 						backdropFilter: 'blur(20px)',
 						borderBottom: '1px solid rgba(91, 141, 239, 0.15)',
 						boxShadow: '0 2px 20px rgba(91, 141, 239, 0.12)',
@@ -110,12 +112,12 @@ const Header = () => {
 										<Typography
 											sx={{
 												'fontFamily': 'Varela Round',
-												'color': item.isActive ? '#5B8DEF' : '#2C3E50',
+												'color': item.isActive ? '#ff7d55' : '#0A1A2F',
 												'textDecoration': item.isActive ? 'underline' : 'none',
 												'textUnderlineOffset': '4px',
 												'fontWeight': item.isActive ? 600 : 400,
 												'&:hover': {
-													color: '#5B8DEF',
+													color: '#fff',
 													textDecoration: 'underline',
 													textUnderlineOffset: '4px',
 												},

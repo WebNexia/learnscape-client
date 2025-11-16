@@ -18,10 +18,10 @@ const features = [
 		color: '#4ECDC4',
 	},
 	{
-		icon: <Devices sx={{ fontSize: '3rem', fontWeight: 600 }} />,
+		icon: <Devices sx={{ fontSize: '3rem', fontWeight: 700, strokeWidth: 1.5 }} />,
 		title: 'Learn Anywhere',
 		description: 'Access your courses on any device, anytime, anywhere.',
-		color: '#FFE66D',
+		color: '#FF8C42',
 	},
 	{
 		icon: <EmojiEvents sx={{ fontSize: '3rem', fontWeight: 600 }} />,
@@ -128,19 +128,29 @@ const FeaturesSection = () => {
 										'mb': 2,
 										'p': 3,
 										'borderRadius': '50%',
-										'background': `linear-gradient(135deg, ${feature.color}30, ${feature.color}20)`,
-										'boxShadow': `0 4px 20px ${feature.color}35`,
+										'background': feature.title === 'Learn Anywhere' 
+											? `linear-gradient(135deg, ${feature.color}50, ${feature.color}40)`
+											: `linear-gradient(135deg, ${feature.color}30, ${feature.color}20)`,
+										'boxShadow': feature.title === 'Learn Anywhere'
+											? `0 4px 20px ${feature.color}60`
+											: `0 4px 20px ${feature.color}35`,
 										'transition': 'all 0.4s ease',
 										'display': 'flex',
 										'alignItems': 'center',
 										'justifyContent': 'center',
 										'& svg': {
-											filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2))',
+											filter: feature.title === 'Learn Anywhere'
+												? 'drop-shadow(0 3px 6px rgba(0, 0, 0, 0.5))'
+												: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2))',
 										},
 										'&:hover': {
 											transform: 'scale(1.1) rotate(5deg)',
-											boxShadow: `0 6px 25px ${feature.color}45`,
-											background: `linear-gradient(135deg, ${feature.color}40, ${feature.color}30)`,
+											boxShadow: feature.title === 'Learn Anywhere'
+												? `0 6px 25px ${feature.color}70`
+												: `0 6px 25px ${feature.color}45`,
+											background: feature.title === 'Learn Anywhere'
+												? `linear-gradient(135deg, ${feature.color}60, ${feature.color}50)`
+												: `linear-gradient(135deg, ${feature.color}40, ${feature.color}30)`,
 										},
 									}}>
 									{feature.icon}

@@ -147,7 +147,7 @@ const HeroSection = () => {
 								lineHeight: 1.2,
 								fontFamily: 'Varela Round',
 							}}>
-							Ezber değil, <em>akıcı</em> iletişim
+							Ezber değil, akıcı iletişim
 						</Typography>
 						<Typography
 							variant='h2'
@@ -158,7 +158,7 @@ const HeroSection = () => {
 								fontWeight: 600,
 								lineHeight: 1.3,
 							}}>
-							Artık konuşurken “nasıl söyleniyordu?” diye düşünmeyeceksin.
+							Artık konuşurken “nasıl söyleniyordu?” diye düşünmeyeceksin
 						</Typography>
 						<Typography
 							variant='h5'
@@ -170,7 +170,7 @@ const HeroSection = () => {
 								fontFamily: 'Varela Round',
 								margin: '1rem 0',
 							}}>
-							Gelistirdigimiz eğitim modeliyle bir İngiliz gibi düşünecek ve doğal bir şekilde ozguvenle İngilizce konuşacaksın.
+							Geliştirdiğimiz eğitim modeliyle bir İngiliz gibi düşünecek ve doğal bir şekilde özgüvenle İngilizce konuşacaksın
 						</Typography>
 
 						<Box
@@ -180,6 +180,8 @@ const HeroSection = () => {
 								flexWrap: 'wrap',
 								justifyContent: { xs: 'center', md: 'flex-start' },
 								mb: { xs: 3 },
+								height: '4rem',
+								mt: { xs: 2, sm: 2, md: 6 },
 							}}>
 							<Button
 								variant='contained'
@@ -191,7 +193,7 @@ const HeroSection = () => {
 									'color': '#FFFFFF',
 									'borderRadius': { xs: '0.75rem', sm: '1rem', md: '1.25rem' },
 									'padding': isSmallScreen || isRotatedMedium ? '0.4rem 1rem' : '0.5rem 1.75rem',
-									'fontSize': isVerySmallScreen ? '0.7rem' : isSmallScreen || isRotatedMedium ? '0.85rem' : '1rem',
+									'fontSize': isVerySmallScreen ? '0.8rem' : isSmallScreen || isRotatedMedium ? '0.85rem' : '1.05rem',
 									'fontWeight': 500,
 									'boxShadow': '0 4px 15px rgba(255, 107, 61, 0.35)',
 									'&:hover': {
@@ -201,8 +203,9 @@ const HeroSection = () => {
 									},
 									'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
 									'textTransform': 'capitalize',
+									'height': '3rem',
 								}}>
-								İzle
+								Tanıtımı İzle
 							</Button>
 							<Button
 								variant='outlined'
@@ -213,7 +216,7 @@ const HeroSection = () => {
 									'color': 'white',
 									'borderRadius': { xs: '0.75rem', sm: '1rem', md: '1.25rem' },
 									'padding': isSmallScreen || isRotatedMedium ? '0.4rem 1rem' : '0.5rem 1.75rem',
-									'fontSize': isVerySmallScreen ? '0.7rem' : isSmallScreen || isRotatedMedium ? '0.85rem' : '1rem',
+									'fontSize': isVerySmallScreen ? '0.8rem' : isSmallScreen || isRotatedMedium ? '0.85rem' : '1rem',
 									'fontFamily': 'Varela Round',
 									'fontWeight': 800,
 									'letterSpacing': '0.03em',
@@ -226,6 +229,7 @@ const HeroSection = () => {
 										boxShadow: '0 4px 15px rgba(79, 70, 229, 0.4)',
 									},
 									'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+									'height': '3rem',
 								}}>
 								Daha Fazla Bilgi
 							</Button>
@@ -364,20 +368,6 @@ const HeroSection = () => {
 				</DialogContent>
 			</CustomDialog>
 
-			{/* Error Dialog */}
-			<CustomDialog openModal={errorDialogOpen} closeModal={() => setErrorDialogOpen(false)} title='' maxWidth='xs'>
-				<DialogContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-					<Typography variant='body2' sx={{ mb: 1, mt: '1rem', fontFamily: 'Varela Round' }}>
-						{errorDialogMsg}
-					</Typography>
-					<DialogActions sx={{ display: 'flex', justifyContent: 'flex-end', width: '100%' }}>
-						<CustomCancelButton onClick={() => setErrorDialogOpen(false)} sx={{ fontFamily: 'Varela Round' }}>
-							Kapat
-						</CustomCancelButton>
-					</DialogActions>
-				</DialogContent>
-			</CustomDialog>
-
 			<ContactFormDialog
 				isGetMoreDetailsModalOpen={isGetMoreDetailsModalOpen}
 				setIsGetMoreDetailsModalOpen={setIsGetMoreDetailsModalOpen}
@@ -402,7 +392,7 @@ const HeroSection = () => {
 				handleRecaptchaChange={handleRecaptchaChange}
 				resetRecaptcha={resetRecaptcha}
 				recaptchaRef={recaptchaRef}
-				recaptchaToken={recaptchaToken}
+				errorDialogMsg={errorDialogMsg}
 			/>
 		</Box>
 	);

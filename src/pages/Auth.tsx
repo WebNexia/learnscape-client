@@ -21,6 +21,7 @@ import 'react-phone-input-2/lib/style.css';
 import logo from '../assets/logo.png';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { useNavigate } from 'react-router-dom';
+import LondonBg from '../assets/london-bg.jpg';
 
 const Auth = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -384,10 +385,77 @@ const Auth = () => {
 	return (
 		<Box
 			sx={{
-				height: '100vh',
-				display: 'flex',
-				flexDirection: 'column',
-				backgroundColor: '#FDF7F0',
+				'position': 'relative',
+				'overflow': 'hidden',
+				'minHeight': '100vh',
+				'height': '100vh',
+				'display': 'flex',
+				'flexDirection': 'column',
+				// Fixed background image - London cityscape
+				'backgroundImage': `url(${LondonBg})`,
+				'backgroundSize': 'cover',
+				'backgroundPosition': 'center',
+				'backgroundRepeat': 'no-repeat',
+				'backgroundAttachment': 'fixed',
+				// Overlay for better content readability
+				'&::before': {
+					content: '""',
+					position: 'fixed',
+					top: 0,
+					left: 0,
+					right: 0,
+					bottom: 0,
+					background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.75) 100%)',
+					zIndex: 0,
+					pointerEvents: 'none',
+				},
+				// Subtle gradient accent overlay
+				'&::after': {
+					content: '""',
+					position: 'fixed',
+					top: 0,
+					left: 0,
+					right: 0,
+					bottom: 0,
+					background:
+						'radial-gradient(circle at 20% 30%, rgba(99, 102, 241, 0.1) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(139, 92, 246, 0.08) 0%, transparent 50%)',
+					zIndex: 0,
+					pointerEvents: 'none',
+				},
+				'& h1, h2, h3, h4, h5, h6': {
+					fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif !important",
+					fontWeight: 500,
+				},
+				'& button': {
+					fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif !important",
+					fontWeight: 400,
+				},
+				'& .gradient-text': {
+					'background': 'linear-gradient(135deg, #4f46e5 0%, #5b21b6 50%, #7c3aed 100%)',
+					'WebkitBackgroundClip': 'text',
+					'WebkitTextFillColor': 'transparent',
+					'backgroundClip': 'text',
+					'backgroundSize': '200% 200%',
+					'animation': 'gradientShift 6s ease infinite',
+					'@keyframes gradientShift': {
+						'0%': { backgroundPosition: '0% 50%' },
+						'50%': { backgroundPosition: '100% 50%' },
+						'100%': { backgroundPosition: '0% 50%' },
+					},
+				},
+				'& .accent-color': {
+					color: '#1e293b',
+				},
+				'& .secondary-color': {
+					color: '#6366f1',
+				},
+				'& .tertiary-color': {
+					color: '#64748b',
+				},
+				'& .kaizen-title': {
+					fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif !important",
+					fontWeight: 600,
+				},
 			}}>
 			{/* Main content */}
 			<Box
@@ -400,22 +468,8 @@ const Auth = () => {
 					position: 'relative',
 					overflow: 'hidden',
 					paddingTop: '10vh',
+					zIndex: 2,
 				}}>
-				{/* Background Pattern */}
-				<Box
-					sx={{
-						position: 'absolute',
-						top: 0,
-						left: 0,
-						right: 0,
-						bottom: 0,
-						background: `
-							radial-gradient(circle at 20% 20%, rgba(77, 123, 139, 0.08) 0%, transparent 50%),
-							radial-gradient(circle at 80% 80%, rgba(1, 67, 90, 0.08) 0%, transparent 50%)
-						`,
-						zIndex: 0,
-					}}
-				/>
 				{/* Logo and Title */}
 				<Box sx={{ position: 'relative', zIndex: 1, mb: '1rem', mt: '-3rem' }}>
 					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }} onClick={() => navigate('/')}>
@@ -501,7 +555,7 @@ const Auth = () => {
 											transform: 'translateX(-50%)',
 											width: activeForm === AuthForms.SIGN_IN ? '30%' : '0%',
 											height: '2px',
-											backgroundColor: theme.bgColor?.greenPrimary,
+											backgroundColor: 'rgba(91, 33, 182, 0.7)',
 											transition: 'width 0.3s ease',
 										},
 										'&:hover': {
@@ -548,7 +602,7 @@ const Auth = () => {
 											transform: 'translateX(-50%)',
 											width: activeForm === AuthForms.SIGN_UP ? '30%' : '0%',
 											height: '2px',
-											backgroundColor: theme.bgColor?.greenPrimary,
+											backgroundColor: 'rgba(91, 33, 182, 0.7)',
 											transition: 'width 0.3s ease',
 										},
 										'&:hover': {
@@ -674,32 +728,37 @@ const Auth = () => {
 													</Typography>
 												</Box>
 											</Box>
-											<Button
-												variant='contained'
-												fullWidth
-												sx={{
-													...submitBtnStyles,
-													'fontFamily': 'Varela Round',
-													'borderRadius': '0.35rem',
-													'padding': '0.45rem',
-													'fontSize': '0.9rem',
-													'fontWeight': 400,
-													'letterSpacing': '0.3px',
-													'textTransform': 'none',
-													'boxShadow': '0 4px 12px rgba(30, 194, 139, 0.15)',
-													'transition': 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-													'&:hover': {
-														transform: 'translateY(-1px)',
-														boxShadow: '0 6px 16px rgba(30, 194, 139, 0.2)',
-													},
-													'&:active': {
-														transform: 'translateY(0)',
-														boxShadow: '0 4px 12px rgba(30, 194, 139, 0.15)',
-													},
-												}}
-												type='submit'>
-												Giriş Yap
-											</Button>
+											<Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+												<Button
+													variant='contained'
+													fullWidth
+													sx={{
+														'height': '2.25rem',
+														'fontFamily': 'Varela Round',
+														'textTransform': 'capitalize',
+														'fontSize': isMobileSize ? '0.85rem' : '0.9rem',
+														'color': '#FFFFFF',
+														'background': 'linear-gradient(135deg, #FF6B3D 0%, #ff7d55 100%)',
+														'padding': isMobileSize ? '0.4rem 1rem' : '0.5rem 1.75rem',
+														'borderRadius': { xs: '0.75rem', sm: '1rem', md: '1.25rem' },
+														'fontWeight': 500,
+														'boxShadow': '0 4px 15px rgba(255, 107, 61, 0.35)',
+														'&:hover': {
+															background: 'linear-gradient(135deg, #ff7d55 0%, #FF6B3D 100%)',
+															transform: 'translateY(-2px)',
+															boxShadow: '0 6px 20px rgba(255, 107, 61, 0.45)',
+														},
+														'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+														'&:disabled': {
+															backgroundColor: '#ccc',
+															color: '#666',
+															background: '#ccc',
+														},
+													}}
+													type='submit'>
+													Giriş Yap
+												</Button>
+											</Box>
 										</form>
 									</Box>
 								),
@@ -963,7 +1022,7 @@ const Auth = () => {
 													</Box>
 												</Box>
 											</Box>
-											<Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+											<Box sx={{ display: 'flex', justifyContent: 'center', width: '100%', mb: '1.5rem' }}>
 												<ReCAPTCHA
 													ref={recaptchaRef}
 													sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
@@ -974,32 +1033,38 @@ const Auth = () => {
 													key={activeForm === AuthForms.SIGN_UP ? 'signup' : 'other'}
 												/>
 											</Box>
-											<Button
-												variant='contained'
-												fullWidth
-												sx={{
-													...submitBtnStyles,
-													'borderRadius': '0.35rem',
-													'padding': '0.45rem',
-													'fontSize': '0.9rem',
-													'fontWeight': 400,
-													'letterSpacing': '0.3px',
-													'textTransform': 'none',
-													'boxShadow': '0 4px 12px rgba(30, 194, 139, 0.15)',
-													'transition': 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-													'&:hover': {
-														transform: 'translateY(-1px)',
-														boxShadow: '0 6px 16px rgba(30, 194, 139, 0.2)',
-													},
-													'&:active': {
-														transform: 'translateY(0)',
-														boxShadow: '0 4px 12px rgba(30, 194, 139, 0.15)',
-													},
-												}}
-												type='submit'
-												disabled={signingUp || !recaptchaToken}>
-												{signingUp ? 'İşleniyor...' : 'Kayıt Ol'}
-											</Button>
+											<Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+												<Button
+													variant='contained'
+													fullWidth
+													sx={{
+														'height': '2.25rem',
+														'fontFamily': 'Varela Round',
+														'textTransform': 'capitalize',
+														'fontSize': isMobileSize ? '0.85rem' : '0.9rem',
+														'color': '#FFFFFF',
+														'background': 'linear-gradient(135deg, #FF6B3D 0%, #ff7d55 100%)',
+														'padding': isMobileSize ? '0.4rem 1rem' : '0.5rem 1.25rem',
+														'borderRadius': { xs: '0.75rem', sm: '1rem', md: '1.25rem' },
+														'fontWeight': 500,
+														'boxShadow': '0 4px 15px rgba(255, 107, 61, 0.35)',
+														'&:hover': {
+															background: 'linear-gradient(135deg, #ff7d55 0%, #FF6B3D 100%)',
+															transform: 'translateY(-2px)',
+															boxShadow: '0 6px 20px rgba(255, 107, 61, 0.45)',
+														},
+														'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+														'&:disabled': {
+															backgroundColor: '#ccc',
+															color: '#666',
+															background: '#ccc',
+														},
+													}}
+													type='submit'
+													disabled={signingUp}>
+													{signingUp ? 'İşleniyor...' : 'Kayıt Ol'}
+												</Button>
+											</Box>
 										</form>
 									</Box>
 								),
@@ -1033,14 +1098,42 @@ const Auth = () => {
 												},
 											}}
 										/>
-										<ReCAPTCHA
-											ref={resetRecaptchaRef}
-											sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
-											onChange={handleResetRecaptchaChange}
-											onExpired={resetResetRecaptcha}
-											key={activeForm === AuthForms.RESET ? 'reset' : 'other'}
-										/>
-										<Button variant='contained' fullWidth sx={submitBtnStyles} type='submit' disabled={!resetRecaptchaToken}>
+										<Box sx={{ display: 'flex', justifyContent: 'center', width: '100%', mb: '1.5rem' }}>
+											<ReCAPTCHA
+												ref={resetRecaptchaRef}
+												sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
+												onChange={handleResetRecaptchaChange}
+												onExpired={resetResetRecaptcha}
+												key={activeForm === AuthForms.RESET ? 'reset' : 'other'}
+											/>
+										</Box>
+										<Button
+											variant='contained'
+											fullWidth
+											sx={{
+												'height': '2.25rem',
+												'fontFamily': 'Varela Round',
+												'textTransform': 'capitalize',
+												'fontSize': isMobileSize ? '0.85rem' : '0.9rem',
+												'color': '#FFFFFF',
+												'background': 'linear-gradient(135deg, #FF6B3D 0%, #ff7d55 100%)',
+												'padding': isMobileSize ? '0.4rem 1rem' : '0.5rem 1.75rem',
+												'borderRadius': { xs: '0.75rem', sm: '1rem', md: '1.25rem' },
+												'fontWeight': 500,
+												'boxShadow': '0 4px 15px rgba(255, 107, 61, 0.35)',
+												'&:hover': {
+													background: 'linear-gradient(135deg, #ff7d55 0%, #FF6B3D 100%)',
+													transform: 'translateY(-2px)',
+													boxShadow: '0 6px 20px rgba(255, 107, 61, 0.45)',
+												},
+												'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+												'&:disabled': {
+													backgroundColor: '#ccc',
+													color: '#666',
+													background: '#ccc',
+												},
+											}}
+											type='submit'>
 											Şifre Sıfırlama E-postası Gönder
 										</Button>
 										<Typography
@@ -1082,7 +1175,7 @@ const Auth = () => {
 								'cursor': 'pointer',
 								'transition': 'all 0.3s ease',
 								'&:hover': {
-									color: theme.bgColor?.greenPrimary,
+									color: 'rgba(91, 33, 182, 0.7)',
 									textDecoration: 'underline',
 								},
 							}}
@@ -1189,13 +1282,18 @@ const Auth = () => {
 					openModal={isUserNameImageInfoModalOpen}
 					closeModal={() => setIsUserNameImageInfoModalOpen(false)}
 					maxWidth='sm'
-					titleSx={{ fontFamily: 'Varela Round' }}>
+					titleSx={{ fontFamily: 'Varela Round' }}
+					PaperProps={{
+						style: {
+							backgroundColor: '#fff',
+						},
+					}}>
 					<DialogContent>
 						<Box sx={{ display: 'flex', flexDirection: 'column', margin: '0.5rem 0 0.75rem 1.5rem' }}>
 							<Typography
 								variant='body2'
 								sx={{
-									fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+									fontSize: isMobileSize ? '0.75rem' : '0.9rem',
 									fontFamily: 'Varela Round',
 									mb: '0.75rem',
 									lineHeight: '1.75',
@@ -1204,24 +1302,24 @@ const Auth = () => {
 								Kullanıcı adı platforma giriş yaptığınızda diğer kullanıcılar tarafından topluluk sayfalarında ve mesajlaşmalarda görülecektir. Bu
 								nedenle kullanıcı adınızın anlamlı olması önemlidir.
 							</Typography>
-							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontFamily: 'Varela Round' }}>
+							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.9rem', fontFamily: 'Varela Round' }}>
 								Kullanıcı adı şunları içerebilir:
 							</Typography>
 							<Box sx={{ margin: '0.85rem 0 0 3rem' }}>
 								{['en fazla 15 karakter', 'en az 5 karakter', 'alt çizgi (_) ve nokta (.)']?.map((rule, index) => (
 									<ul key={index}>
 										<li style={{ color: theme.textColor?.secondary.main }}>
-											<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.35rem', fontFamily: 'Varela Round' }}>
+											<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.9rem', mb: '0.35rem', fontFamily: 'Varela Round' }}>
 												{rule}
 											</Typography>
 										</li>
 									</ul>
 								))}
 							</Box>
-							<Typography variant='body2' sx={{ mt: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontFamily: 'Varela Round' }}>
+							<Typography variant='body2' sx={{ mt: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.9rem', fontFamily: 'Varela Round' }}>
 								Kullanıcı adı alt çizgi veya nokta ile başlayamaz/bitemez
 							</Typography>
-							<Typography variant='body2' sx={{ mt: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontFamily: 'Varela Round' }}>
+							<Typography variant='body2' sx={{ mt: '0.5rem', fontSize: isMobileSize ? '0.75rem' : '0.9rem', fontFamily: 'Varela Round' }}>
 								Kullanıcı adı boşluk içeremez
 							</Typography>
 						</Box>
@@ -1241,30 +1339,35 @@ const Auth = () => {
 					openModal={isPasswordInfoModalOpen}
 					closeModal={() => setIsPasswordInfoModalOpen(false)}
 					maxWidth='sm'
-					titleSx={{ fontFamily: 'Varela Round' }}>
+					titleSx={{ fontFamily: 'Varela Round' }}
+					PaperProps={{
+						style: {
+							backgroundColor: '#fff',
+						},
+					}}>
 					<DialogContent>
 						<Box sx={{ display: 'flex', flexDirection: 'column', margin: '0.5rem 0 0.75rem 1.5rem' }}>
-							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontFamily: 'Varela Round' }}>
+							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.9rem', fontFamily: 'Varela Round' }}>
 								Şifreniz şunları içermelidir:
 							</Typography>
 							<Box sx={{ margin: '0.85rem 0 0 3rem' }}>
 								{['en az 6, en fazla 50 karakter uzunluğunda olmalı', 'en az bir harf içermeli', 'en az bir rakam içermeli']?.map((rule, index) => (
 									<ul key={index}>
 										<li style={{ color: theme.textColor?.secondary.main }}>
-											<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.35rem', fontFamily: 'Varela Round' }}>
+											<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.9rem', mb: '0.35rem', fontFamily: 'Varela Round' }}>
 												{rule}
 											</Typography>
 										</li>
 									</ul>
 								))}
 							</Box>
-							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mt: '1rem', fontFamily: 'Varela Round' }}>
+							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.9rem', mt: '1rem', fontFamily: 'Varela Round' }}>
 								Şifreniz şunları içeremez:
 							</Typography>
 							<Box sx={{ margin: '0.5rem 0 0 3rem' }}>
 								<ul>
 									<li style={{ color: theme.textColor?.secondary.main }}>
-										<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.35rem', fontFamily: 'Varela Round' }}>
+										<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.9rem', mb: '0.35rem', fontFamily: 'Varela Round' }}>
 											boşluk içeremez
 										</Typography>
 									</li>
