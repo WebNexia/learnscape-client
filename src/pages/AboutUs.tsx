@@ -128,7 +128,7 @@ const AboutUs = () => {
 
 	const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
 	const [errorDialogOpen, setErrorDialogOpen] = useState(false);
-	const [errorDialogMsg, setErrorDialogMsg] = useState('');
+	const [errorDialogMsg, setErrorDialogMsg] = useState<string>('');
 
 	const handleRecaptchaChange = (token: string | null) => {
 		setRecaptchaToken(token);
@@ -528,7 +528,7 @@ const AboutUs = () => {
 							handleRecaptchaChange={handleRecaptchaChange}
 							resetRecaptcha={resetRecaptcha}
 							recaptchaRef={recaptchaRef}
-							recaptchaToken={recaptchaToken}
+							errorDialogMsg={errorDialogMsg}
 						/>
 						<ChatWhatsApp />
 						<ScrollToTopButton />
