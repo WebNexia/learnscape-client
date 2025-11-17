@@ -1,16 +1,15 @@
-import { Box, Button, DialogActions, Typography } from '@mui/material';
+import { Box, Button, Typography } from '@mui/material';
 import { motion } from 'framer-motion';
 import { useContext, useState, useEffect } from 'react';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import Hero_Img from '../../assets/man-writing-notebook-with-giant-pen.png';
-import { ContactPage, PlayCircle } from '@mui/icons-material';
+import { PlayCircle } from '@mui/icons-material';
 import CustomDialog from '../layouts/dialog/CustomDialog';
 import DialogContent from '@mui/material/DialogContent';
 import ChatWhatsApp from './ChatWhatsApp';
 import { useGeoLocation } from '../../hooks/useGeoLocation';
 import axios from 'axios';
 import ContactFormDialog from './ContactFormDialog';
-import CustomCancelButton from '../forms/customButtons/CustomCancelButton';
 import { useRef } from 'react';
 import UniversalVideoPlayer from '../video/UniversalVideoPlayer';
 import ReactPlayer from 'react-player';
@@ -32,7 +31,6 @@ const HeroSection = () => {
 	const [showSuccess, setShowSuccess] = useState<boolean>(false);
 
 	const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
-	const [errorDialogOpen, setErrorDialogOpen] = useState(false);
 	const [errorDialogMsg, setErrorDialogMsg] = useState('');
 
 	// Check if user has seen the intro video in this session
@@ -72,12 +70,10 @@ const HeroSection = () => {
 		e.preventDefault();
 		if (!isValidPhone(phone)) {
 			setErrorDialogMsg('Lütfen geçerli bir telefon numarası girin.');
-			setErrorDialogOpen(true);
 			return;
 		}
 		if (!recaptchaToken) {
 			setErrorDialogMsg('Lütfen reCAPTCHA doğrulamasını tamamlayın.');
-			setErrorDialogOpen(true);
 			return;
 		}
 

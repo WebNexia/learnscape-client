@@ -70,10 +70,12 @@ const ContactFormDialog = ({
 				title={title}
 				openModal={isGetMoreDetailsModalOpen}
 				closeModal={() => {
-					setIsGetMoreDetailsModalOpen(false);
-					resetForm();
-					setShowSuccess(false);
-					resetRecaptcha();
+					if (!sending) {
+						setIsGetMoreDetailsModalOpen(false);
+						resetForm();
+						setShowSuccess(false);
+						resetRecaptcha();
+					}
 				}}
 				maxWidth='sm'
 				titleSx={{
@@ -89,7 +91,7 @@ const ContactFormDialog = ({
 						height: 'auto',
 						maxHeight: '90vh',
 						overflow: 'visible',
-						borderRadius: '1.5rem',
+						borderRadius: '0.75rem',
 						background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.98))',
 						boxShadow: '0 8px 32px rgba(44, 62, 80, 0.1)',
 						backdropFilter: 'blur(8px)',
@@ -333,6 +335,14 @@ const ContactFormDialog = ({
 						)}
 					</Box>
 					<CustomDialogActions
+						onCancel={() => {
+							if (!sending) {
+								setIsGetMoreDetailsModalOpen(false);
+								resetForm();
+								setShowSuccess(false);
+								resetRecaptcha();
+							}
+						}}
 						submitBtnText={sending ? 'Gönderiliyor...' : 'Gönder'}
 						cancelBtnText='Kapat'
 						submitBtnSx={{
@@ -353,12 +363,6 @@ const ContactFormDialog = ({
 								color: 'rgba(0, 0, 0, 0.26) !important',
 							},
 						}}
-						onCancel={() => {
-							setIsGetMoreDetailsModalOpen(false);
-							resetForm();
-							setShowSuccess(false);
-							resetRecaptcha();
-						}}
 						cancelBtnSx={{ fontFamily: 'Varela Round' }}
 						disableBtn={sending}
 						disableCancelBtn={sending}
@@ -370,12 +374,12 @@ const ContactFormDialog = ({
 			</CustomDialog>
 			<Snackbar
 				open={showSuccess}
-				autoHideDuration={3100}
+				autoHideDuration={3500}
 				anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
 				onClose={() => {
 					setShowSuccess(false);
 				}}
-				sx={{ mt: { xs: '4.5rem', sm: '4.5rem', md: '5rem', lg: '5rem' } }}>
+				sx={{ mt: '6rem' }}>
 				<Alert
 					severity='success'
 					variant='filled'
@@ -385,6 +389,7 @@ const ContactFormDialog = ({
 						fontSize: { xs: '0.8rem', sm: '0.9rem', md: '1rem', lg: '1rem' },
 						letterSpacing: 0,
 						color: theme.textColor?.common.main,
+						backgroundColor: 'rgba(147, 51, 234, 1)',
 					}}>
 					Bilgileriniz alınmıştır, lütfen email'inizi kontrol edin
 				</Alert>

@@ -1250,8 +1250,10 @@ const Auth = () => {
 							'fontSize': isMobileSize ? '0.7rem' : undefined,
 							'boxShadow': '0 4px 12px rgba(0, 0, 0, 0.1)',
 							'borderRadius': '0.5rem',
+							'backgroundColor': 'rgba(147, 51, 234, 1)',
+							'color': theme.textColor?.common.main,
 							'& .MuiAlert-icon': {
-								color: '#1EC28B',
+								color: theme.textColor?.common.main,
 							},
 						}}>
 						Kayıt işlemi başarılı! Lütfen e-posta adresinizi doğrulayın. Spam klasörünü kontrol edin.
@@ -1268,8 +1270,10 @@ const Auth = () => {
 							'fontSize': isMobileSize ? '0.7rem' : undefined,
 							'boxShadow': '0 4px 12px rgba(0, 0, 0, 0.1)',
 							'borderRadius': '0.5rem',
+							'backgroundColor': 'rgba(147, 51, 234, 1)',
+							'color': theme.textColor?.common.main,
 							'& .MuiAlert-icon': {
-								color: '#1EC28B',
+								color: theme.textColor?.common.main,
 							},
 						}}>
 						Şifre sıfırlama e-postası gönderildi! Gelen kutunuzu ve spam klasörünü kontrol edin.

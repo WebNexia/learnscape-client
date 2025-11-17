@@ -1,4 +1,4 @@
-import { Button, ButtonOwnProps } from '@mui/material';
+import { Button, ButtonOwnProps, SxProps, Theme } from '@mui/material';
 import { FormEvent, MouseEvent, ReactNode, useContext } from 'react';
 import theme from '../../../themes';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
@@ -8,7 +8,7 @@ interface CustomSubmitButtonProps {
 	fullWidth?: boolean;
 	type?: 'submit' | 'button' | 'reset' | undefined;
 	variant?: ButtonOwnProps['variant'];
-	sx?: React.CSSProperties;
+	sx?: SxProps<Theme>;
 	onClick?: (event?: MouseEvent<HTMLButtonElement> | FormEvent<Element>) => void;
 	disabled?: boolean;
 	startIcon?: ReactNode;
