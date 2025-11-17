@@ -132,7 +132,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 				height: { xs: 'auto', sm: 'auto', md: 'auto', lg: fromHomePage ? '48vh' : 'auto' },
 				margin:
 					fromHomePage && !isSmallScreen && !isRotatedMedium ? '3rem 0 2rem 0' : isSmallScreen || isRotatedMedium ? '1.25rem 0 1.5rem 0' : '2rem 0',
-				backgroundColor: fromHomePage ? 'rgba(79, 70, 229, 0.7)' : theme.palette.primary.main,
+				backgroundColor: fromHomePage ? theme.bgColor?.primary : theme.palette.primary.main,
 				padding: '0.75rem',
 			}}>
 			<Snackbar
@@ -168,17 +168,21 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 					display: 'flex',
 					flexDirection: 'row',
 					justifyContent: 'space-between',
+					alignItems: 'flex-start',
 					height: '100%',
 					padding: { xs: '1rem 0rem 1rem 1rem', sm: '1rem', md: '1rem' },
+					position: 'relative',
 				}}>
 				<Box
 					sx={{
 						display: 'flex',
 						flexDirection: 'column',
-						margin: { xs: 'auto 1rem auto 0rem', sm: 'auto 1rem auto 0rem', md: 'auto 1rem auto 0rem' },
+
 						flex: { xs: 4, sm: 4, md: 3 },
 						position: 'relative',
 						height: 'fit-content',
+						mr: '1rem',
+						mt: '1rem',
 					}}>
 					<Box>
 						{!fromHomePage && (
@@ -207,7 +211,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 							variant={isSmallScreen ? 'h6' : 'h4'}
 							sx={{
 								color: theme.textColor?.common.main,
-								margin: '0.5rem 0 1rem 0',
+								margin: '0rem 0 1rem 0',
 								fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
 							}}>
 							{course.title} {fromHomePage && course.courseManagement.isExternal ? `(Partner Kursu)` : `(Platform Kursu)`}
@@ -224,80 +228,92 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 							}}>
 							{course.description}
 						</Typography>
-						{!isEnrolledStatus && !course.isExpired && (isCourseFree ? user?.isSubscribed || user?.hasRegisteredCourse : true) ? (
-							<CustomSubmitButton
-								variant='contained'
-								onClick={handleEnroll}
-								sx={{
-									'width': 'fit-content',
-									'padding': '1rem 1.5rem',
-									'position': 'absolute',
-									'bottom': isRotated ? 60 : 5,
-									'fontSize': isMobileSize ? '0.75rem' : '1rem',
-									'fontFamily': fromHomePage ? 'Varela Round' : '',
-									'pointerEvents': isProcessing ? 'none' : 'auto',
-									'background': fromHomePage
-										? 'linear-gradient(135deg, rgba(79, 70, 229, 0.8) 0%, rgba(91, 33, 182, 0.9) 50%, rgba(124, 58, 237, 0.8) 100%) !important'
-										: '',
-									'border': fromHomePage ? 'solid white 1px' : '',
-									':hover': {
-										color: '#fff !important',
-									},
-								}}>
-								{fromHomePage ? 'Kayıt Ol' : isProcessing ? 'Processing...' : 'Enroll'}
-							</CustomSubmitButton>
-						) : !isEnrolledStatus && course.isExpired ? (
-							<Alert
-								severity='warning'
-								sx={{
-									// position: 'absolute',
-									// bottom: isRotated ? 60 : 5,
-									fontSize: isVerySmallScreen || isRotated ? '0.75rem' : '0.9rem',
-									backgroundColor: !fromHomePage ? theme.bgColor?.lessonInProgress : theme.bgColor?.greenSecondary,
-									color: theme.textColor?.common.main,
-									width: 'fit-content',
-									fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
-								}}>
-								{fromHomePage ? 'Kayıt süresi doldu' : 'Enrollment is closed'}
-							</Alert>
-						) : isEnrolledStatus ? (
-							<Typography
-								onClick={() => {
-									documentsRef?.current?.scrollIntoView({ behavior: 'smooth' });
-								}}
-								sx={{
-									width: 'fit-content',
-									position: 'absolute',
-									bottom: isRotated ? 60 : 5,
-									fontSize: isVerySmallScreen || isRotated ? '0.65rem' : '0.9rem',
-									textTransform: 'capitalize',
-									color: theme.textColor?.common.main,
-									cursor: 'pointer',
-									textDecoration: 'underline',
-									fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
-								}}>
-								{fromHomePage ? 'Kurs Materyallerini Gör' : 'See Course Materials'}
-							</Typography>
-						) : (
-							<Typography variant='body2'>Subscribe to platform or register for a paid course to enroll in free courses</Typography>
-						)}
-						{fromHomePage && isCourseFree && (
-							<Box sx={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-								<Info fontSize='small' sx={{ color: 'lightgray', mt: '-4rem' }} />
-								<Typography
-									variant='body2'
-									sx={{
-										color: 'lightgray',
-										fontSize: isMobileSize ? '0.7rem' : '0.8rem',
-										fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
-										mt: '-4rem',
-									}}>
-									Ücretsiz kurslara kayıt olmak için platformda hesap açtıktan sonra platforma abone olun veya ücretli bir kursa kayıt olun!
-								</Typography>
-							</Box>
-						)}
 					</Box>
 				</Box>
+				{!isEnrolledStatus && !course.isExpired && (isCourseFree ? user?.isSubscribed || user?.hasRegisteredCourse : true) ? (
+					<CustomSubmitButton
+						variant='contained'
+						onClick={handleEnroll}
+						sx={{
+							'width': 'fit-content',
+							'padding': isMobileSize ? '1rem 1.5rem' : '1rem 2rem',
+							'position': 'absolute',
+							'bottom': isRotated ? 60 : '1.5rem',
+							'fontSize': isMobileSize ? '0.75rem' : '1rem',
+							'fontFamily': fromHomePage ? 'Varela Round' : '',
+							'pointerEvents': isProcessing ? 'none' : 'auto',
+							'background': fromHomePage ? '#FF6F4E !important' : '',
+							'borderRadius': fromHomePage ? '0.75rem' : undefined,
+							'color': fromHomePage ? '#fff !important' : '',
+							'&:hover': {
+								color: '#fff !important',
+								backgroundColor: fromHomePage ? '#FF6F4E !important' : undefined,
+							},
+						}}>
+						{fromHomePage ? 'Kayıt Ol' : isProcessing ? 'Processing...' : 'Enroll'}
+					</CustomSubmitButton>
+				) : !isEnrolledStatus && course.isExpired ? (
+					<Alert
+						severity='warning'
+						sx={{
+							position: 'absolute',
+							bottom: isRotated ? 60 : '1.5rem',
+							fontSize: isVerySmallScreen || isRotated ? '0.75rem' : '0.9rem',
+							backgroundColor: !fromHomePage ? theme.bgColor?.lessonInProgress : theme.bgColor?.greenSecondary,
+							color: theme.textColor?.common.main,
+							width: 'fit-content',
+							fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
+						}}>
+						{fromHomePage ? 'Kayıt süresi doldu' : 'Enrollment is closed'}
+					</Alert>
+				) : isEnrolledStatus ? (
+					<Typography
+						onClick={() => {
+							documentsRef?.current?.scrollIntoView({ behavior: 'smooth' });
+						}}
+						sx={{
+							width: 'fit-content',
+							position: 'absolute',
+							bottom: isRotated ? 60 : '1.5rem',
+							fontSize: isVerySmallScreen || isRotated ? '0.65rem' : '0.9rem',
+							textTransform: 'capitalize',
+							color: theme.textColor?.common.main,
+							cursor: 'pointer',
+							textDecoration: 'underline',
+							fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
+						}}>
+						{fromHomePage ? 'Kurs Materyallerini Gör' : 'See Course Materials'}
+					</Typography>
+				) : (
+					!fromHomePage && (
+						<Typography
+							variant='body2'
+							sx={{
+								width: 'fit-content',
+								position: 'absolute',
+								bottom: isRotated ? 60 : '1.5rem',
+								fontSize: isVerySmallScreen || isRotated ? '0.65rem' : '0.9rem',
+								color: theme.textColor?.common.main,
+								fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
+							}}>
+							Subscribe to platform or register for a paid course to enroll in free courses
+						</Typography>
+					)
+				)}
+				{fromHomePage && isCourseFree && (
+					<Box sx={{ display: 'flex', alignItems: 'center', gap: '0.5rem', position: 'absolute', bottom: isRotated ? 60 : '1.5rem' }}>
+						<Info fontSize='small' sx={{ color: 'lightgray' }} />
+						<Typography
+							variant='body2'
+							sx={{
+								color: 'lightgray',
+								fontSize: isMobileSize ? '0.7rem' : '0.8rem',
+								fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
+							}}>
+							Ücretsiz kurslara kayıt olmak için platformda hesap açtıktan sonra platforma abone olun veya ücretli bir kursa kayıt olun!
+						</Typography>
+					</Box>
+				)}
 				<Box
 					sx={{
 						display: 'flex',
@@ -307,7 +323,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 						flex: { xs: 1, sm: 1, md: 1.5 },
 						mr: isRotatedMedium ? '1rem' : '0rem',
 						height: 'fit-content',
-						my: 'auto',
+						mt: '1rem',
 					}}>
 					<Box>
 						<CoursePageBannerDataCard
@@ -315,8 +331,8 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 							content={dateFormatter(course.startingDate)}
 							fromHomePage={fromHomePage}
 							customSettings={{
-								color: fromHomePage ? 'blue' : theme.textColor?.common.main,
-								bgColor: fromHomePage ? undefined : theme.bgColor?.greenSecondary,
+								color: theme.textColor?.common.main,
+								bgColor: fromHomePage ? '#FF6F4E' : theme.bgColor?.greenSecondary,
 							}}
 						/>
 
@@ -324,10 +340,6 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 							title={fromHomePage ? 'Hafta(#)' : 'Weeks(#)'}
 							content={course.durationWeeks ?? ''}
 							fromHomePage={fromHomePage}
-							customSettings={{
-								color: fromHomePage ? 'blue' : theme.textColor?.common.main,
-								bgColor: fromHomePage ? undefined : theme.bgColor?.greenSecondary,
-							}}
 						/>
 					</Box>
 					<Box>
@@ -335,10 +347,6 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 							title={fromHomePage ? 'Saat(#)' : 'Hours(#)'}
 							content={course.durationHours ?? ''}
 							fromHomePage={fromHomePage}
-							customSettings={{
-								color: fromHomePage ? 'blue' : theme.textColor?.common.main,
-								bgColor: fromHomePage ? undefined : theme.bgColor?.greenSecondary,
-							}}
 						/>
 						<CoursePageBannerDataCard
 							title={fromHomePage ? 'Fiyat' : 'Price'}
@@ -346,10 +354,6 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 								isCourseFree ? (fromHomePage ? 'Ücretsiz' : 'Free') : getPriceForCountry(course, resolvedCountryCode!)?.amount
 							}`}
 							fromHomePage={fromHomePage}
-							customSettings={{
-								color: fromHomePage ? 'blue' : theme.textColor?.common.main,
-								bgColor: fromHomePage ? undefined : theme.bgColor?.greenSecondary,
-							}}
 						/>
 					</Box>
 				</Box>

@@ -28,19 +28,13 @@ const LandingPageDrawer = ({ isDrawerOpen, setIsDrawerOpen, navItems }: LandingP
 			onClose={() => setIsDrawerOpen(false)}
 			PaperProps={{
 				sx: {
-					'backgroundColor': '#FDF7F0',
+					'backgroundColor': 'rgba(190, 170, 210)',
 					'width': { xs: !isRotatedMedium ? '40vw' : '30vw', sm: !isRotatedMedium ? '13rem' : '20vw' },
 					'@media (max-width:600px) and (orientation: landscape)': {
 						width: '12rem',
 						minWidth: '10rem',
 						maxWidth: '13.75rem',
 					},
-					'backgroundImage': `
-						linear-gradient(135deg, rgba(44, 62, 80, 0.05), rgba(52, 152, 219, 0.05)),
-						radial-gradient(circle, rgba(44,62,80,0.08) 1px, transparent 1px)
-					`,
-					'backgroundSize': 'auto, 1.875rem 1.875rem',
-					'backgroundRepeat': 'repeat, repeat',
 				},
 			}}>
 			<Box
@@ -56,8 +50,8 @@ const LandingPageDrawer = ({ isDrawerOpen, setIsDrawerOpen, navItems }: LandingP
 					variant='h5'
 					sx={{
 						mb: responsiveStyles.spacing.section,
-						color: theme.textColor?.primary.main,
-						fontSize: !isRotatedMedium ? responsiveStyles.typography.h5 : '0.95rem',
+						color: theme.textColor?.common.main,
+						fontSize: '1rem',
 						fontFamily: 'Varela Round',
 						textAlign: 'center',
 					}}>
@@ -79,8 +73,8 @@ const LandingPageDrawer = ({ isDrawerOpen, setIsDrawerOpen, navItems }: LandingP
 									sx={{
 										'& .MuiTypography-root': {
 											fontFamily: 'Varela Round',
-											fontSize: !isRotatedMedium ? responsiveStyles.typography.h5 : '0.85rem',
-											color: theme.textColor?.primary.main,
+											fontSize: '0.9rem',
+											color: theme.textColor?.common.main,
 											textDecoration: item.isActive ? 'underline' : 'none',
 										},
 									}}

@@ -222,18 +222,16 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
 						<Button
 							variant='contained'
 							onClick={handleSearch}
-							disabled={loading || !localSearchValue.trim()}
+							disabled={loading}
 							startIcon={<Search fontSize='small' />}
 							sx={{
 								'fontFamily': 'Varela Round',
 								'fontWeight': 500,
-								'background': 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+								'background': 'linear-gradient(135deg, #FF6B3D 0%, #ff7d55 100%)',
 								'color': '#FFFFFF',
 								'boxShadow': '0 4px 15px rgba(249, 115, 22, 0.35)',
 								'&:hover': {
-									background: 'linear-gradient(135deg, #fb923c 0%, #f97316 100%)',
 									transform: 'translateY(-2px)',
-									boxShadow: '0 6px 20px rgba(249, 115, 22, 0.45)',
 								},
 								'&.Mui-disabled': {
 									background: 'rgba(249, 115, 22, 0.3)',
@@ -242,6 +240,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
 								'textTransform': 'capitalize',
 								'fontSize': '0.8rem',
 								'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+								'borderRadius': '0.75rem',
 							}}>
 							Ara
 						</Button>
@@ -253,8 +252,8 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
 							sx={{
 								'fontFamily': 'Varela Round',
 								'fontWeight': 500,
-								'borderColor': '#f97316',
-								'color': '#f97316',
+								'borderColor': '#FF6F4E',
+								'color': '#FF6F4E',
 								'borderWidth': '2px',
 								'background': 'rgba(249, 115, 22, 0.08)',
 								'&:hover': {
@@ -262,7 +261,6 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
 									color: '#ea580c',
 									backgroundColor: 'rgba(249, 115, 22, 0.15)',
 									transform: 'translateY(-2px)',
-									boxShadow: '0 4px 15px rgba(249, 115, 22, 0.3)',
 								},
 								'&.Mui-disabled': {
 									borderColor: 'rgba(249, 115, 22, 0.3)',
@@ -271,6 +269,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
 								'textTransform': 'capitalize',
 								'fontSize': '0.8rem',
 								'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+								'borderRadius': '0.75rem',
 							}}>
 							Sıfırla
 						</Button>
