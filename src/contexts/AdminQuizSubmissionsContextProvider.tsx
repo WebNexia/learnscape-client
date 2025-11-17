@@ -36,7 +36,7 @@ export const AdminQuizSubmissionsContext = createContext<AdminQuizSubmissionsCon
 const AdminQuizSubmissionsContextProvider = ({ children }: AdminQuizSubmissionsContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
-	const { isAuthenticated, isAdmin } = useAuth();
+	const { isAuthenticated, hasAdminAccess } = useAuth();
 	const { user } = useContext(UserAuthContext);
 	const location = useLocation();
 
@@ -73,7 +73,7 @@ const AdminQuizSubmissionsContextProvider = ({ children }: AdminQuizSubmissionsC
 		orgId,
 		baseUrl: getApiEndpoint(),
 		entityKey: 'allAdminQuizSubmissions',
-		enabled: isEnabled && isAuthenticated && (isAdmin || isInstructor) && (isAdminRoute || isInstructorRoute),
+		enabled: isEnabled && isAuthenticated && (hasAdminAccess || isInstructor) && (isAdminRoute || isInstructorRoute),
 		role: user?.role as Roles,
 		staleTime: user?.role !== Roles.USER ? 0 : 5 * 60 * 1000,
 		cacheTime: 30 * 60 * 1000,

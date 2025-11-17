@@ -8,7 +8,7 @@ import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitBu
 import { EmailAuthProvider, getAuth, reauthenticateWithCredential, updatePassword, onAuthStateChanged, verifyBeforeUpdateEmail } from 'firebase/auth';
 import theme from '../themes';
 import { Info, Visibility, VisibilityOff } from '@mui/icons-material';
-import { PasswordUpdateErrorMessages, TextFieldTypes } from '../interfaces/enums';
+import { PasswordUpdateErrorMessages, Roles, TextFieldTypes } from '../interfaces/enums';
 import axios from '@utils/axiosInstance';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
 import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
@@ -20,10 +20,12 @@ import CustomDialogActions from '../components/layouts/dialog/CustomDialogAction
 import { useGeoLocation } from '../hooks/useGeoLocation';
 import { PhoneInput } from 'react-international-phone';
 import 'react-international-phone/style.css';
+import { useAuth } from '../hooks/useAuth';
 
 const Settings = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { user, setUser } = useContext(UserAuthContext);
+	const { hasAdminAccess } = useAuth();
 	const navigate = useNavigate();
 	const auth = getAuth();
 
@@ -32,7 +34,7 @@ const Settings = () => {
 	const { isSmallScreen, isRotatedMedium, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
-	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(user?.role === 'admin' || user?.role === 'instructor' ? true : false);
+	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(hasAdminAccess || user?.role === Roles.INSTRUCTOR ? true : false);
 	const [username, setUsername] = useState<string>(user?.username || '');
 	const [imageUrl, setImageUrl] = useState<string>(user?.imageUrl || '');
 	const [firstName, setFirstName] = useState<string>(user?.firstName || '');

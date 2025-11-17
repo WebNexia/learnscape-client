@@ -33,7 +33,7 @@ const PromoCodeCourseSearchSelect = forwardRef<any, PromoCodeCourseSearchSelectP
 			reset,
 			pagination,
 		} = useSearch<SearchCourse>('courses', 'events', {
-			userRole: 'admin', // Only admins can create/edit promoCodes
+			userRole: 'admin', // Only owner and super-admin can create/edit promoCodes (paymentsAccessCheck on backend)
 		});
 
 		const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);

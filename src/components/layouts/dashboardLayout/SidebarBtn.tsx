@@ -21,7 +21,7 @@ const SidebarBtn = ({ btnText, onClick, IconName, active, hasUnreadMessages }: S
 
 	// Get role-specific hover color
 	const getHoverColor = () => {
-		if (user?.role === Roles.ADMIN) {
+		if (user?.role === Roles.ADMIN || user?.role === Roles.OWNER || user?.role === Roles.SUPER_ADMIN) {
 			return theme.bgColor?.adminSubmitBtn;
 		} else {
 			return theme.submitBtn?.backgroundColor; // Green for both instructor and learner

@@ -44,7 +44,7 @@ const InstructorRouteGuard: React.FC<InstructorRouteGuardProps> = ({ children })
 	}
 
 	// Redirect to appropriate dashboard based on role
-	if (user.role === Roles.ADMIN || user.role === Roles.SUPER_ADMIN) {
+	if (user.role === Roles.ADMIN || user.role === Roles.OWNER || user.role === Roles.SUPER_ADMIN) {
 		return <Navigate to='/admin/dashboard' replace />;
 	}
 

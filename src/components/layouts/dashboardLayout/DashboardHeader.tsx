@@ -16,6 +16,7 @@ import SubscriptionDialog from '../../subscription/SubscriptionDialog';
 import UnsubscribeDialog from '../../subscription/UnsubscribeDialog';
 import ConditionalStripeProvider from '../../common/ConditionalStripeProvider';
 import { useUnreadMessages } from '../../../hooks/useUnreadMessages';
+import { useAuth } from '../../../hooks/useAuth';
 
 interface DashboardHeaderProps {
 	pageName: string;
@@ -30,6 +31,8 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 
 	const isMobileSize: boolean = isSmallScreen || isRotatedMedium;
 
+	const { hasAdminAccess } = useAuth();
+
 	// Memoize expensive computations
 	const hasActiveSubscriptionMemo = useMemo(() => {
 		return (user: any): boolean => {
@@ -38,14 +41,14 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 	}, []);
 
 	const headerBackgroundColor = useMemo(() => {
-		return user?.role === Roles.ADMIN
+		return hasAdminAccess
 			? theme.bgColor?.adminHeader
 			: user?.role === Roles.INSTRUCTOR
 				? theme.bgColor?.instructorHeader
 				: user?.role === Roles.USER
 					? theme.bgColor?.lessonInProgress
 					: theme.bgColor?.adminHeader;
-	}, [user?.role]);
+	}, [hasAdminAccess, user?.role]);
 
 	const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
 	const hasUnreadMessages = useUnreadMessages();
@@ -268,7 +271,7 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 						</IconButton>
 					</Tooltip>
 
-					{user?.role === Roles.ADMIN && (
+					{hasAdminAccess && (
 						<Tooltip title='Recycle Bin' placement='top' arrow>
 							<IconButton
 								onClick={() => navigate('/admin/recycle-bin')}

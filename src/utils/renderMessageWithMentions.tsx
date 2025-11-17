@@ -16,7 +16,7 @@ export const renderMessageWithMentions = (text: string, processedTopics: any[], 
 			if (part.startsWith('@')) {
 				// Special handling for @everyone, only for admin users
 				if (part === '@everyone') {
-					if (user.role === Roles.ADMIN) {
+					if (user.role === Roles.ADMIN || user.role === Roles.OWNER || user.role === Roles.SUPER_ADMIN) {
 						// Render @everyone as a special mention for admins
 						return (
 							<span key={index} style={{ color: 'green', fontWeight: 'bold' }}>

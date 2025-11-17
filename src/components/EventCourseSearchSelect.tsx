@@ -8,9 +8,9 @@ import { useSearch } from '../hooks/useSearch';
 import CustomSubmitButton from './forms/customButtons/CustomSubmitButton';
 import { truncateText } from '../utils/utilText';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
-import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 import CustomDeleteButton from './forms/customButtons/CustomDeleteButton';
 import CustomErrorMessage from './forms/customFields/CustomErrorMessage';
+import { useAuth } from '../hooks/useAuth';
 
 interface EventCourseSearchSelectProps {
 	value: string;
@@ -25,7 +25,7 @@ interface EventCourseSearchSelectProps {
 
 const EventCourseSearchSelect = forwardRef<any, EventCourseSearchSelectProps>(
 	({ value, onChange, onSelect, placeholder = 'Search courses...', sx = {}, listSx = {}, disabled = false, selectedCourseIds = [] }, ref) => {
-		const { user } = useContext(UserAuthContext);
+		const { hasAdminAccess, isInstructor } = useAuth();
 
 		const {
 			data: filtered,
@@ -36,7 +36,7 @@ const EventCourseSearchSelect = forwardRef<any, EventCourseSearchSelectProps>(
 			reset,
 			pagination,
 		} = useSearch<SearchCourse>('courses', 'events', {
-			userRole: user?.role === 'instructor' ? 'admin' : 'admin', // Both instructors and admins can search courses
+			userRole: isInstructor ? 'admin' : hasAdminAccess ? 'admin' : 'admin', // Instructors and admin-level users (admin, owner, super-admin) can search courses
 		});
 
 		const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);

@@ -43,7 +43,8 @@ const LearnerRouteGuard: React.FC<LearnerRouteGuardProps> = ({ children }) => {
 		return <Navigate to='/auth' replace />;
 	}
 
-	if (user.role === Roles.ADMIN) {
+	// Redirect admin, owner, and super-admin to admin dashboard
+	if (user.role === Roles.ADMIN || user.role === Roles.OWNER || user.role === Roles.SUPER_ADMIN) {
 		return <Navigate to='/admin/dashboard' replace />;
 	}
 

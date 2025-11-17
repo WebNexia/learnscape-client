@@ -37,6 +37,7 @@ import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import { useUploadLimit } from '../contexts/UploadLimitContextProvider';
 import CommunityUserSearchSelect from '../components/CommunityUserSearchSelect';
 import { SearchUser } from '../interfaces/search';
+import { useAuth } from '../hooks/useAuth';
 
 export interface UserSuggestion {
 	username: string;
@@ -116,7 +117,8 @@ const CommunityTopicPage = () => {
 	const [imageUploadAttempts, setImageUploadAttempts] = useState<number>(0);
 	const MAX_SESSION_ATTEMPTS = 5;
 
-	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(user?.role === 'admin' ? true : false);
+	const { hasAdminAccess } = useAuth();
+	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(hasAdminAccess ? true : false);
 	const [isAudioUploading, setIsAudioUploading] = useState<boolean>(false);
 
 	// numberOfPages and pageNumber now come from CommunityMessagesContext
@@ -392,7 +394,7 @@ const CommunityTopicPage = () => {
 	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const input = e.target.value;
 		// Check if non-admin user is trying to mention @everyone
-		if (input?.includes('@everyone') && user?.role !== Roles.ADMIN) {
+		if (input?.includes('@everyone') && !hasAdminAccess) {
 			setEveryoneMsg(true);
 			const sanitizedInput = input.replace('@everyone', '');
 			setCurrentMessage(sanitizedInput);
@@ -405,7 +407,7 @@ const CommunityTopicPage = () => {
 		const lastWord = words && words.length > 0 ? (words && words.length > 0 ? words[words.length - 1] : undefined) : '';
 
 		// Check if admin is typing @everyone - close search box
-		if (lastWord === '@everyone' && user?.role === Roles.ADMIN) {
+		if (lastWord === '@everyone' && hasAdminAccess) {
 			setShowUserSearch(false);
 			setUserSearchValue('');
 			return;
@@ -1033,7 +1035,7 @@ const CommunityTopicPage = () => {
 					placeholder={
 						isTopicLocked
 							? 'You cannot send a message since topic is locked'
-							: user?.role === Roles.ADMIN
+							: hasAdminAccess
 								? 'You can use @everyone to mention all users, @ to mention specific users'
 								: 'You can use @ to mention specific users'
 					}

@@ -162,6 +162,9 @@ const Loading = () => {
 	// Get the effective role (user role if available, otherwise from route)
 	const effectiveRole = user?.role || getRoleFromRoute();
 
+	// Check if user has admin-level access (admin, owner, or super-admin)
+	const hasAdminAccess = effectiveRole === Roles.ADMIN || effectiveRole === Roles.OWNER || effectiveRole === Roles.SUPER_ADMIN;
+
 	// Use useMemo for mode to prevent unnecessary re-renders
 	// const mode = useMemo(() => (localStorage.getItem('mode') as Mode) || Mode.LIGHT_MODE, []);
 
@@ -203,12 +206,11 @@ const Loading = () => {
 									alignItems: 'center',
 									height: '3rem',
 									width: '100%',
-									backgroundColor:
-										effectiveRole === Roles.ADMIN
-											? theme.bgColor?.adminHeader
-											: effectiveRole === Roles.INSTRUCTOR
-												? theme.bgColor?.instructorHeader
-												: theme.bgColor?.lessonInProgress,
+									backgroundColor: hasAdminAccess
+										? theme.bgColor?.adminHeader
+										: effectiveRole === Roles.INSTRUCTOR
+											? theme.bgColor?.instructorHeader
+											: theme.bgColor?.lessonInProgress,
 									padding: '0 1rem',
 								}}>
 								<IconButton>
@@ -326,12 +328,11 @@ const Loading = () => {
 									alignItems: 'center',
 									height: '3rem',
 									width: '100%',
-									backgroundColor:
-										effectiveRole === Roles.ADMIN
-											? theme.bgColor?.adminHeader
-											: effectiveRole === Roles.INSTRUCTOR
-												? theme.bgColor?.instructorHeader
-												: theme.bgColor?.lessonInProgress,
+									backgroundColor: hasAdminAccess
+										? theme.bgColor?.adminHeader
+										: effectiveRole === Roles.INSTRUCTOR
+											? theme.bgColor?.instructorHeader
+											: theme.bgColor?.lessonInProgress,
 									padding: '0 1rem 0 3rem',
 								}}>
 								<Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -351,7 +352,7 @@ const Loading = () => {
 										/>
 									</IconButton>
 
-									{user?.role === Roles.ADMIN && (
+									{(user?.role === Roles.ADMIN || user?.role === Roles.OWNER || user?.role === Roles.SUPER_ADMIN) && (
 										<IconButton
 											sx={{
 												':hover': {
@@ -378,35 +379,7 @@ const Loading = () => {
 										}}>
 										<Notifications color='secondary' />
 									</IconButton>
-									{/* 
-									{
-										{
-											[Mode.DARK_MODE]: (
-												<IconButton
-													sx={{
-														'color': theme.textColor?.common.main,
-														'mr': '0.75rem',
-														':hover': {
-															backgroundColor: 'transparent',
-														},
-													}}>
-													<DarkMode />
-												</IconButton>
-											),
-											[Mode.LIGHT_MODE]: (
-												<IconButton
-													sx={{
-														'color': theme.textColor?.common.main,
-														'mr': '0.75rem',
-														':hover': {
-															backgroundColor: 'transparent',
-														},
-													}}>
-													<LightMode />
-												</IconButton>
-											),
-										}[mode]
-									} */}
+
 									<Button
 										sx={{
 											textTransform: 'capitalize',
@@ -428,12 +401,11 @@ const Loading = () => {
 							alignItems: 'center',
 							width: '10rem',
 							minHeight: '100vh',
-							backgroundColor:
-								user?.role === Roles.ADMIN
-									? theme.bgColor?.adminSidebar
-									: user?.role === Roles.INSTRUCTOR
-										? theme.bgColor?.instructorSidebar
-										: theme.palette.primary.main,
+							backgroundColor: hasAdminAccess
+								? theme.bgColor?.adminSidebar
+								: user?.role === Roles.INSTRUCTOR
+									? theme.bgColor?.instructorSidebar
+									: theme.palette.primary.main,
 							position: 'fixed',
 							left: 0,
 							zIndex: 10,
@@ -478,7 +450,7 @@ const Loading = () => {
 									alignItems: 'flex-start',
 									marginTop: '1.5rem',
 								}}>
-								{user?.role === Roles.ADMIN && (
+								{hasAdminAccess && (
 									<>
 										<SidebarBtn btnText='Dashboard' IconName={DashboardIcon} />
 										<SidebarBtn btnText='Users' IconName={PeopleAltOutlined} />

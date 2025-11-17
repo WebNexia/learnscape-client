@@ -51,7 +51,7 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
-	const { isAuthenticated, isAdmin, isLearner, isInstructor } = useAuth();
+	const { isAuthenticated, hasAdminAccess, isLearner, isInstructor } = useAuth();
 	const location = useLocation();
 	const queryClient = useQueryClient();
 
@@ -213,10 +213,10 @@ const EventsContextProvider = (props: EventsContextProviderProps) => {
 
 	// Use month-based fetching for calendar routes
 	const { data: eventsData, isLoading: isCalendarLoading } = useQuery(['calendarEvents', orgId], fetchInitialMonths, {
-		enabled: isEnabled && !!orgId && isAuthenticated && (isAdmin || isLearner || isInstructor) && isCalendarRoute,
+		enabled: isEnabled && !!orgId && isAuthenticated && (hasAdminAccess || isLearner || isInstructor) && isCalendarRoute,
 		staleTime: user?.role !== Roles.USER ? 0 : 5 * 60 * 1000, // 5 minutes - data stays fresh
 		cacheTime: 30 * 60 * 1000, // 30 minutes - data stays in cache
-		refetchOnWindowFocus: user?.role === Roles.ADMIN,
+		refetchOnWindowFocus: hasAdminAccess,
 		refetchOnMount: user?.role !== Roles.USER,
 	});
 

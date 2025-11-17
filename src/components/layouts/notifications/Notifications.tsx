@@ -2,7 +2,6 @@ import { collection, query, onSnapshot, orderBy, doc, updateDoc, where, Timestam
 import { useContext, useEffect, useState } from 'react';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 import { EventsContext } from '../../../contexts/EventsContextProvider';
-import { CoursesContext } from '../../../contexts/CoursesContextProvider';
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
 import { db } from '../../../firebase';
 import { Box, Typography } from '@mui/material';
@@ -114,15 +113,20 @@ const NotificationsBox = ({ showUnreadOnly }: NotificationsBoxProps) => {
 
 			if (note.type === NotificationType.QUIZ_SUBMISSION) {
 				const path =
-					user?.role === Roles.ADMIN
+					user?.role === Roles.ADMIN || user?.role === Roles.OWNER || user?.role === Roles.SUPER_ADMIN
 						? `/admin/check-submission/submission/${note.submissionId}/lesson/${note.lessonId}/userlesson/${note.userLessonId}`
 						: user?.role === Roles.INSTRUCTOR
 							? `/instructor/check-submission/submission/${note.submissionId}/lesson/${note.lessonId}/userlesson/${note.userLessonId}`
 							: `/submission-feedback/submission/${note.submissionId}/lesson/${note.lessonId}/userlesson/${note.userLessonId}`;
 				navigate(path);
 			} else if (note.type === NotificationType.MESSAGE_RECEIVED) {
-				navigate(`${user?.role === Roles.ADMIN ? '/admin' : user?.role === Roles.INSTRUCTOR ? '/instructor' : ''}/messages`);
-			} else if (note.type === NotificationType.REPORT_TOPIC && user?.role === Roles.ADMIN) {
+				navigate(
+					`${user?.role === Roles.ADMIN || user?.role === Roles.OWNER || user?.role === Roles.SUPER_ADMIN ? '/admin' : user?.role === Roles.INSTRUCTOR ? '/instructor' : ''}/messages`
+				);
+			} else if (
+				note.type === NotificationType.REPORT_TOPIC &&
+				(user?.role === Roles.ADMIN || user?.role === Roles.OWNER || user?.role === Roles.SUPER_ADMIN)
+			) {
 				navigate(`/admin/community/topic/${note.communityTopicId}`);
 			} else if (
 				note.type === NotificationType.REPLY_TO_COMMUNITY_MESSAGE ||
@@ -134,17 +138,27 @@ const NotificationsBox = ({ showUnreadOnly }: NotificationsBoxProps) => {
 				try {
 					const response = await axios.get(`${base_url}/communityMessages/message/${note.communityMessageId}?limit=250`);
 					const { page } = response.data;
-					const basePath = user?.role === Roles.ADMIN ? '/admin' : user?.role === Roles.INSTRUCTOR ? '/instructor' : '';
+					const basePath =
+						user?.role === Roles.ADMIN || user?.role === Roles.OWNER || user?.role === Roles.SUPER_ADMIN
+							? '/admin'
+							: user?.role === Roles.INSTRUCTOR
+								? '/instructor'
+								: '';
 					navigate(`${basePath}/community/topic/${note.communityTopicId}?page=${page}&messageId=${note.communityMessageId}`);
 				} catch (error) {
 					console.error('Error fetching message page:', error);
 					// Fallback: navigate to topic without specific page/message
-					const basePath = user?.role === Roles.ADMIN ? '/admin' : user?.role === Roles.INSTRUCTOR ? '/instructor' : '';
+					const basePath =
+						user?.role === Roles.ADMIN || user?.role === Roles.OWNER || user?.role === Roles.SUPER_ADMIN
+							? '/admin'
+							: user?.role === Roles.INSTRUCTOR
+								? '/instructor'
+								: '';
 					navigate(`${basePath}/community/topic/${note.communityTopicId}`);
 				}
 			} else if (note.type === NotificationType.NEW_COMMUNITY_TOPIC) {
 				navigate(
-					`${user?.role === Roles.ADMIN ? '/admin' : user?.role === Roles.INSTRUCTOR ? '/instructor' : ''}/community/topic/${note.communityTopicId}`
+					`${user?.role === Roles.ADMIN || user?.role === Roles.OWNER || user?.role === Roles.SUPER_ADMIN ? '/admin' : user?.role === Roles.INSTRUCTOR ? '/instructor' : ''}/community/topic/${note.communityTopicId}`
 				);
 			} else if (note.type === NotificationType.ADD_TO_EVENT || note.type === NotificationType.PUBLIC_EVENT) {
 				// Only refresh calendar data if notification is unread
@@ -152,7 +166,7 @@ const NotificationsBox = ({ showUnreadOnly }: NotificationsBoxProps) => {
 					await refreshCalendarData();
 				}
 				// Navigate to calendar
-				if (user?.role === Roles.ADMIN) {
+				if (user?.role === Roles.ADMIN || user?.role === Roles.OWNER || user?.role === Roles.SUPER_ADMIN) {
 					navigate(`/admin/calendar`);
 				} else if (user?.role === Roles.INSTRUCTOR) {
 					navigate(`/instructor/calendar`);
@@ -173,7 +187,7 @@ const NotificationsBox = ({ showUnreadOnly }: NotificationsBoxProps) => {
 					}
 				}
 				// Navigate to courses page based on user role
-				if (user?.role === Roles.ADMIN) {
+				if (user?.role === Roles.ADMIN || user?.role === Roles.OWNER || user?.role === Roles.SUPER_ADMIN) {
 					navigate(`/admin/courses`);
 				} else if (user?.role === Roles.INSTRUCTOR) {
 					navigate(`/instructor/courses`);

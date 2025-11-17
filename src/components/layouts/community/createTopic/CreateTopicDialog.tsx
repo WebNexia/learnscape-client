@@ -23,6 +23,7 @@ import { serverTimestamp, writeBatch, doc } from 'firebase/firestore';
 import { MediaQueryContext } from '../../../../contexts/MediaQueryContextProvider';
 import { validateImageUrl } from '../../../../utils/urlValidation';
 import { useUploadLimit } from '../../../../contexts/UploadLimitContextProvider';
+import { useAuth } from '../../../../hooks/useAuth';
 
 interface CreateTopicDialogProps {
 	createTopicModalOpen: boolean;
@@ -44,7 +45,8 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 	const { getRemainingAudioUploads, getRemainingImageUploads, getImageLimit, getAudioLimit, incrementAudioUpload, incrementImageUpload } =
 		useUploadLimit();
 
-	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(user?.role === 'admin' ? true : false);
+	const { hasAdminAccess } = useAuth();
+	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(hasAdminAccess ? true : false);
 	const [isAudioUploading, setIsAudioUploading] = useState<boolean>(false);
 
 	const [showAudioRecorder, setShowAudioRecorder] = useState<boolean>(false);

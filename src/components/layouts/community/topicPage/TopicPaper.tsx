@@ -37,7 +37,7 @@ const TopicPaper = ({ topic, setDisplayDeleteTopicMsg, setTopic, refreshTopics, 
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
-	const { isInstructor, isAdmin } = useAuth();
+	const { isInstructor, hasAdminAccess } = useAuth();
 
 	const navigate = useNavigate();
 	const isTopicWriter: boolean = user?._id === topic?.userId?._id;
@@ -60,7 +60,7 @@ const TopicPaper = ({ topic, setDisplayDeleteTopicMsg, setTopic, refreshTopics, 
 			setDisplayDeleteTopicMsg(true);
 
 			setTimeout(() => {
-				if (isAdmin) {
+				if (hasAdminAccess) {
 					navigate(`/admin/community`);
 				} else {
 					navigate(`/community`);
@@ -164,7 +164,11 @@ const TopicPaper = ({ topic, setDisplayDeleteTopicMsg, setTopic, refreshTopics, 
 				height: isSticky ? (isMobileSize ? '2.5rem' : '3rem') : isMobileSize ? '4rem' : '6rem',
 				marginTop: isSticky ? 0 : '1.5rem',
 				backgroundColor:
-					!isAdmin && !isInstructor ? theme.bgColor?.primary : !isAdmin && isInstructor ? theme.bgColor?.instructorPaper : theme.bgColor?.adminPaper,
+					!hasAdminAccess && !isInstructor
+						? theme.bgColor?.primary
+						: !hasAdminAccess && isInstructor
+							? theme.bgColor?.instructorPaper
+							: theme.bgColor?.adminPaper,
 				position: isSticky ? 'fixed' : 'relative',
 				top: isSticky ? (isMobileSize ? '3.5rem' : '4rem') : 'auto', // Assuming DashboardHeader height is 64px
 				left: isSticky ? (isMobileSize ? '0' : '10rem') : 'auto', // Align with main content area
@@ -206,7 +210,7 @@ const TopicPaper = ({ topic, setDisplayDeleteTopicMsg, setTopic, refreshTopics, 
 							onClick={() => {
 								if (refreshTopics) fetchTopics(1);
 
-								if (isAdmin) {
+								if (hasAdminAccess) {
 									navigate(`/admin/community`);
 								} else if (isInstructor) {
 									navigate(`/instructor/community`);
@@ -221,7 +225,7 @@ const TopicPaper = ({ topic, setDisplayDeleteTopicMsg, setTopic, refreshTopics, 
 					</Box>
 					<Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
 						<Box sx={{ display: 'flex', width: '100%', justifyContent: 'flex-start', alignItems: 'center' }}>
-							{!isTopicWriter && !isAdmin ? (
+							{!isTopicWriter && !hasAdminAccess ? (
 								<Tooltip title='Report Topic' placement='right' arrow>
 									<IconButton
 										sx={{
@@ -260,7 +264,7 @@ const TopicPaper = ({ topic, setDisplayDeleteTopicMsg, setTopic, refreshTopics, 
 										</Tooltip>
 									)}
 
-									{(isTopicWriter || isAdmin) && (
+									{(isTopicWriter || hasAdminAccess) && (
 										<>
 											<Tooltip title='Delete Topic' placement='top' arrow>
 												<IconButton
@@ -301,7 +305,7 @@ const TopicPaper = ({ topic, setDisplayDeleteTopicMsg, setTopic, refreshTopics, 
 											)}
 										</>
 									)}
-									{topic?.isReported && isAdmin && (
+									{topic?.isReported && hasAdminAccess && (
 										<Box sx={{ display: 'flex', alignItems: 'center' }}>
 											<Tooltip title='Resolve Report' placement='top' arrow>
 												<IconButton

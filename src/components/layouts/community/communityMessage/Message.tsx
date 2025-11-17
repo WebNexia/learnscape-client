@@ -21,6 +21,7 @@ import axios from '@utils/axiosInstance';
 import CustomCancelButton from '../../../../components/forms/customButtons/CustomCancelButton';
 import { stripHtml } from '@utils/stripHtml';
 import { decode } from 'html-entities';
+import { useAuth } from '../../../../hooks/useAuth';
 
 interface MessageProps {
 	message: CommunityMessage;
@@ -51,7 +52,8 @@ const Message = ({
 	const { user } = useContext(UserAuthContext);
 	const { adminUsers } = useContext(OrganisationContext);
 	const { removeMessage, updateMessage } = useContext(CommunityMessagesContext);
-	const isAdmin: boolean = user?.role === Roles.ADMIN;
+	const { hasAdminAccess } = useAuth();
+	const isAdmin: boolean = hasAdminAccess;
 	const isMessageWriter: boolean = user?._id === message?.userId?._id;
 
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);

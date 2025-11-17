@@ -7,6 +7,7 @@ import { User } from '../interfaces/user';
 import { Roles } from '../interfaces/enums';
 import { useNavigate } from 'react-router-dom';
 import { UserCoursesIdsWithCourseIds } from './UserCourseLessonDataContextProvider';
+import { useAuth } from '../hooks/useAuth';
 
 interface UserAuthContextTypes {
 	user?: User | undefined;
@@ -40,6 +41,8 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const navigate = useNavigate();
 
+	const { hasAdminAccess } = useAuth();
+
 	const [user, setUser] = useState<User>();
 	const [userId, setUserId] = useState<string>('');
 	const [firebaseUserId, setFirebaseUserId] = useState<string>('');
@@ -61,7 +64,8 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 		const currentPath = window.location.pathname;
 		const isOnAuthPage = currentPath === '/auth' || currentPath === '/';
 
-		if (isOnAuthPage && user?.role === Roles.ADMIN) {
+		// Admin, owner, and super-admin all go to admin dashboard
+		if (isOnAuthPage && hasAdminAccess) {
 			navigate('/admin/dashboard', { replace: true });
 		} else if (isOnAuthPage && user?.role === Roles.USER) {
 			navigate('/dashboard', { replace: true });

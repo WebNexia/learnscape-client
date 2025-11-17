@@ -9,6 +9,7 @@ import { SearchUser } from '../../interfaces/search';
 import theme from '../../themes';
 import { useState } from 'react';
 import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
+import { useAuth } from '../../hooks/useAuth';
 
 interface GroupChatModalProps {
 	createGroupModalOpen: boolean;
@@ -49,6 +50,7 @@ const GroupChatModal = ({
 	onGroupSearchChange,
 	onCreateGroupChat,
 }: GroupChatModalProps) => {
+	const { hasAdminAccess } = useAuth();
 	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(true);
 
 	const handleSearchUserSelection = (selectedUser: SearchUser) => {
@@ -193,7 +195,7 @@ const GroupChatModal = ({
 					</Typography>
 					<UserSearchSelect
 						context='messages'
-						userRole={user?.role === 'instructor' ? 'admin' : (user?.role as 'admin' | 'learner')}
+						userRole={user?.role === 'instructor' ? 'admin' : hasAdminAccess ? 'admin' : 'learner'}
 						value={groupSearchValue}
 						onChange={onGroupSearchChange}
 						onSelect={handleSearchUserSelection}

@@ -42,7 +42,7 @@ const QuestionsContextProvider = ({ children }: QuestionsContextProviderProps) =
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
-	const { isAuthenticated, isAdmin, isLearner, isInstructor } = useAuth();
+	const { isAuthenticated, hasAdminAccess, isLearner, isInstructor } = useAuth();
 
 	const isLandingPageRoute = useIsLandingPageRoute();
 	const [isEnabled, setIsEnabled] = useState<boolean>(true);
@@ -65,7 +65,7 @@ const QuestionsContextProvider = ({ children }: QuestionsContextProviderProps) =
 		orgId,
 		baseUrl: isInstructor ? `${base_url}/questions/organisation/${orgId}/instructor` : `${base_url}/questions/organisation/${orgId}`,
 		entityKey: isInstructor ? 'instructorQuestions' : 'allQuestions',
-		enabled: isEnabled && isAuthenticated && (isAdmin || isLearner || isInstructor) && !isLandingPageRoute,
+		enabled: isEnabled && isAuthenticated && (hasAdminAccess || isLearner || isInstructor) && !isLandingPageRoute,
 		role: user?.role as Roles,
 		staleTime: user?.role !== Roles.USER ? 0 : 5 * 60 * 1000,
 		cacheTime: 30 * 60 * 1000,
@@ -81,7 +81,7 @@ const QuestionsContextProvider = ({ children }: QuestionsContextProviderProps) =
 	};
 
 	const { data: questionTypesData } = useQuery(['allQuestionTypes', orgId], fetchQuestionTypes, {
-		enabled: !!orgId && isAuthenticated && (isAdmin || isLearner || isInstructor) && !isLandingPageRoute && isEnabled,
+		enabled: !!orgId && isAuthenticated && (hasAdminAccess || isLearner || isInstructor) && !isLandingPageRoute && isEnabled,
 		staleTime: 60 * 60 * 1000,
 		cacheTime: 24 * 60 * 60 * 1000,
 		refetchOnWindowFocus: false,

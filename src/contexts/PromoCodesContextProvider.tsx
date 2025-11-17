@@ -36,7 +36,7 @@ const PromoCodesContextProvider = ({ children }: PromoCodesContextProviderProps)
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
-	const { isAuthenticated, isAdmin } = useAuth();
+	const { isAuthenticated, canAccessPayments } = useAuth();
 
 	const isLandingPageRoute = useIsLandingPageRoute();
 	const [isEnabled, setIsEnabled] = useState<boolean>(true);
@@ -58,7 +58,7 @@ const PromoCodesContextProvider = ({ children }: PromoCodesContextProviderProps)
 		orgId,
 		baseUrl: `${base_url}/promocodes/organisation/${orgId}`,
 		entityKey: 'promoCodes',
-		enabled: isEnabled && isAuthenticated && isAdmin && !isLandingPageRoute,
+		enabled: isEnabled && isAuthenticated && canAccessPayments && !isLandingPageRoute,
 		role: user?.role as Roles,
 		staleTime: user?.role !== Roles.USER ? 0 : 5 * 60 * 1000,
 		cacheTime: 30 * 60 * 1000,

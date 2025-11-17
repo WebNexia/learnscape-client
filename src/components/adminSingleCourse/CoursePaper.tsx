@@ -16,6 +16,7 @@ import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
 import { Roles } from '../../interfaces/enums';
 import CoursesInfoModal from '../layouts/courses/CoursesInfoModal';
 import CloneCourseDialog from '../layouts/courses/CloneCourseDialog';
+import { useAuth } from '../../hooks/useAuth';
 
 interface CoursePaperProps {
 	singleCourse?: SingleCourse;
@@ -69,6 +70,7 @@ const CoursePaper = ({
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 
 	const { user } = useContext(UserAuthContext);
+	const { hasAdminAccess } = useAuth();
 
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
@@ -136,7 +138,7 @@ const CoursePaper = ({
 				width: isSticky ? (isMobileSize ? '100%' : 'calc(100% - 10rem)') : '100%',
 				height: isSticky ? '3rem' : '6rem',
 				marginTop: isSticky ? 0 : '1.25rem',
-				backgroundColor: user?.role === Roles.ADMIN ? theme.bgColor?.adminPaper : theme.bgColor?.instructorPaper,
+				backgroundColor: hasAdminAccess ? theme.bgColor?.adminPaper : theme.bgColor?.instructorPaper,
 				position: isSticky ? 'fixed' : 'relative',
 				top: isSticky ? (isMobileSize ? '3.5rem' : '4rem') : 'auto', // Assuming DashboardHeader height is 64px
 				left: isSticky ? (isMobileSize ? '0' : '10rem') : 'auto', // Align with main content area
@@ -178,7 +180,7 @@ const CoursePaper = ({
 								'fontSize': isSticky ? { xs: '0.65rem', sm: '0.85rem' } : undefined,
 							}}
 							onClick={() => {
-								if (user?.role === Roles.ADMIN) {
+								if (hasAdminAccess) {
 									navigate(`/admin/courses`);
 								} else {
 									navigate(`/instructor/courses`);
@@ -328,7 +330,7 @@ const CoursePaper = ({
 									</Box>
 								) : (
 									<Box sx={{ ml: isSticky ? '0.25rem' : '1rem' }}>
-										{user?.role === Roles.ADMIN && (
+										{hasAdminAccess && (
 											<CustomSubmitButton
 												sx={{
 													visibility: isEditMode ? 'hidden' : 'visible',
