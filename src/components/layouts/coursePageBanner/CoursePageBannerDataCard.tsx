@@ -33,7 +33,7 @@ const CoursePageBannerDataCard = ({ title, content, customSettings, fromHomePage
 			}}>
 			<Typography
 				sx={{
-					fontSize: isMobileSize ? '0.6rem' : '0.85rem',
+					fontSize: isMobileSize ? '0.6rem' : '0.8rem',
 					color: customSettings?.color || 'inherit',
 					fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
 					textAlign: 'center',
@@ -43,9 +43,10 @@ const CoursePageBannerDataCard = ({ title, content, customSettings, fromHomePage
 			<Typography
 				sx={{
 					color: customSettings?.color || theme.textColor?.primary.main,
-					fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+					fontSize: isMobileSize ? '0.65rem' : '0.9rem',
 					fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
 					textAlign: 'center',
+					fontWeight: fromHomePage ? 900 : 500,
 				}}>
 				{content}
 			</Typography>

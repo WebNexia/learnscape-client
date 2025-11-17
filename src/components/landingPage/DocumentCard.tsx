@@ -225,11 +225,13 @@ const DocumentCard = ({ document, userCurrency, fromHomePage }: DocumentCardProp
 									}
 								}}
 								sx={{
-									'backgroundColor': theme.palette.primary.main,
+									'background': 'linear-gradient(135deg, rgba(79, 70, 229, 0.7) 0%, rgba(91, 33, 182, 0.7) 50%, rgba(124, 58, 237, 0.7) 100%)',
 									'color': 'white',
 									'&:hover': {
-										backgroundColor: theme.palette.primary.dark,
+										background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.9) 0%, rgba(124, 58, 237, 0.9) 50%, rgba(147, 51, 234, 0.9) 100%)',
+										boxShadow: '0 4px 15px rgba(79, 70, 229, 0.4)',
 									},
+									'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
 									'fontFamily': "'Varela Round', sans-serif",
 									'fontSize': { xs: '0.75rem', sm: '0.8rem', md: '0.85rem', lg: '0.85rem' },
 									'padding': '0.5rem',
@@ -334,10 +336,10 @@ const DocumentCard = ({ document, userCurrency, fromHomePage }: DocumentCardProp
 			{/* Success Snackbar */}
 			<Snackbar
 				open={showSuccess}
-				autoHideDuration={4000}
+				autoHideDuration={3500}
 				anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
 				onClose={() => setShowSuccess(false)}
-				sx={{ mt: { xs: '1.5rem', sm: '1.5rem', md: '2.5rem', lg: '2.5rem' } }}>
+				sx={{ mt: '6rem' }}>
 				<Alert
 					severity='success'
 					variant='filled'
@@ -345,8 +347,8 @@ const DocumentCard = ({ document, userCurrency, fromHomePage }: DocumentCardProp
 						width: '100%',
 						fontFamily: 'Varela Round',
 						fontSize: { xs: '0.8rem', sm: '0.9rem', md: '1rem', lg: '1rem' },
-						letterSpacing: 0,
-						color: '#FFFFFF',
+						backgroundColor: 'rgba(147, 51, 234, 1)',
+						color: theme.palette.common.white,
 					}}>
 					Ödeme başarıyla tamamlandı! Satın aldığınız kaynağa email'inizden ulaşabilirsiniz.
 				</Alert>
@@ -358,7 +360,7 @@ const DocumentCard = ({ document, userCurrency, fromHomePage }: DocumentCardProp
 				autoHideDuration={5000}
 				anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
 				onClose={() => setShowEmailWarning(false)}
-				sx={{ mt: { xs: '1.5rem', sm: '1.5rem', md: '2.5rem', lg: '2.5rem' } }}>
+				sx={{ mt: '6rem' }}>
 				<Alert
 					severity='warning'
 					variant='filled'
@@ -366,7 +368,6 @@ const DocumentCard = ({ document, userCurrency, fromHomePage }: DocumentCardProp
 						width: '100%',
 						fontFamily: 'Varela Round',
 						fontSize: { xs: '0.8rem', sm: '0.9rem', md: '1rem', lg: '1rem' },
-						letterSpacing: 0,
 						color: '#fff',
 						backgroundColor: '#FFA726',
 					}}>

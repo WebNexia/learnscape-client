@@ -222,7 +222,7 @@ const ContactUs = () => {
 
 						{/* Contact Form Section */}
 						<Container maxWidth='sm' sx={{ mt: 2, mb: 4 }}>
-							<Paper elevation={3} sx={{ p: { xs: 3, md: 5 }, borderRadius: 3 }}>
+							<Paper elevation={3} sx={{ p: { xs: 3, md: 5 }, borderRadius: '0.75rem' }}>
 								<form onSubmit={handleInquiry}>
 									<Grid container spacing={1}>
 										<Grid item xs={12}>

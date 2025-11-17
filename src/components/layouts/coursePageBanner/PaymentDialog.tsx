@@ -25,7 +25,7 @@ import { useGeoLocation } from '../../../hooks/useGeoLocation';
 import ReCAPTCHA from 'react-google-recaptcha';
 
 const DIALOG_BG = 'linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.98))';
-const DIALOG_BORDERRADIUS = '1.5rem';
+const DIALOG_BORDERRADIUS = '0.75rem';
 const DIALOG_BOXSHADOW = '0 0.5rem 2rem rgba(44, 62, 80, 0.1)';
 const DIALOG_BORDER = '0.5rem solid rgba(255, 255, 255, 0.18)';
 const DIALOG_FONT = 'Varela Round';
@@ -775,9 +775,24 @@ const PaymentDialog = ({
 							sx={
 								fromHomePage
 									? {
-											fontFamily: 'Varela Round',
+											'background': 'linear-gradient(135deg, #FF6B3D 0%, #ff7d55 100%) !important',
+											'backgroundColor': 'transparent !important',
+											'fontFamily': 'Varela Round',
+											'color': 'white !important',
+											'transition': 'all 0.2s ease !important',
+											'&:hover': {
+												background: 'white !important',
+												backgroundColor: 'white !important',
+												color: '#FF6B3D !important',
+												border: '1px solid #FF6B3D !important',
+											},
+											'&.Mui-disabled': {
+												background: 'rgba(0, 0, 0, 0.12) !important',
+												backgroundColor: 'rgba(0, 0, 0, 0.12) !important',
+												color: 'rgba(0, 0, 0, 0.26) !important',
+											},
 										}
-									: {}
+									: undefined
 							}
 							onClick={handleApplyPromoCode}>
 							{fromHomePage ? 'Uygula' : 'Apply'}
@@ -1204,14 +1219,35 @@ const PaymentDialog = ({
 									: 'Make Payment'
 					}
 					submitBtnSx={{
-						fontFamily: fromHomePage ? DIALOG_FONT : '',
-						cursor: isProcessing ? 'not-allowed' : 'pointer',
-						cursorEvents: isProcessing ? 'none' : 'auto',
-						pointerEvents: isProcessing ? 'none' : 'auto',
+						...(fromHomePage
+							? {
+									'background': 'linear-gradient(135deg, #FF6B3D 0%, #ff7d55 100%) !important',
+									'backgroundColor': 'transparent !important',
+									'fontFamily': DIALOG_FONT,
+									'color': 'white !important',
+									'transition': 'all 0.2s ease !important',
+									'&:hover': {
+										background: 'white !important',
+										backgroundColor: 'white !important',
+										color: '#FF6B3D !important',
+										border: '1px solid #FF6B3D !important',
+									},
+									'&.Mui-disabled': {
+										background: 'rgba(0, 0, 0, 0.12) !important',
+										backgroundColor: 'rgba(0, 0, 0, 0.12) !important',
+										color: 'rgba(0, 0, 0, 0.26) !important',
+									},
+								}
+							: {
+									fontFamily: '',
+									cursor: isProcessing ? 'not-allowed' : 'pointer',
+									cursorEvents: isProcessing ? 'none' : 'auto',
+									pointerEvents: isProcessing ? 'none' : 'auto',
+								}),
 					}}
-					disableBtn={isProcessing || !recaptchaToken}
+					disableBtn={isProcessing}
 					disableCancelBtn={isProcessing}
-					actionSx={{ mr: '1rem' }}
+					actionSx={{ mr: '1rem', mb: '0.5rem' }}
 				/>
 			</form>
 		</CustomDialog>

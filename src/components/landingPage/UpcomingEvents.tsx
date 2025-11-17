@@ -81,6 +81,7 @@ export default function UpcomingEvents() {
 			resetRecaptcha();
 			setIsRegisterForEventSuccess(true);
 			setIsRegisterForEventSending(false);
+			setIsRegisterForEventModalOpen(false);
 		} catch (error: any) {
 			if (axios.isAxiosError(error) && error.response?.status === 409) {
 				setRegisterErrorMsg('Bu etkinliğe bu email adresiyle daha önce kayıt oldunuz');
@@ -359,10 +360,10 @@ export default function UpcomingEvents() {
 
 		return (
 			<Box sx={{ maxWidth: 360, position: 'relative', backgroundColor: 'transparent' }}>
-				<SwipeableViews 
-					index={activeStep} 
-					onChangeIndex={handleStepChange} 
-					enableMouseEvents 
+				<SwipeableViews
+					index={activeStep}
+					onChangeIndex={handleStepChange}
+					enableMouseEvents
 					resistance
 					style={{ backgroundColor: 'transparent' }}
 					containerStyle={{ backgroundColor: 'transparent' }}>
@@ -508,16 +509,14 @@ export default function UpcomingEvents() {
 					fontWeight: 600,
 					fontFamily: 'Varela Round',
 					color: '#1e293b',
-					ml: '0.5rem',
 					textAlign: 'center',
-					mb: 1,
 				}}
 				PaperProps={{
 					sx: {
 						height: 'auto',
 						maxHeight: '90vh',
 						overflow: 'visible',
-						borderRadius: '1.5rem',
+						borderRadius: '0.75rem',
 						background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.98))',
 						boxShadow: '0 8px 32px rgba(44, 62, 80, 0.1)',
 						backdropFilter: 'blur(8px)',
@@ -624,8 +623,9 @@ export default function UpcomingEvents() {
 									border: '1px solid #FF6B3D !important',
 								},
 								'&.Mui-disabled': {
-									background: 'rgba(0, 0, 0, 0.12)',
-									color: 'rgba(0, 0, 0, 0.26)',
+									background: 'rgba(0, 0, 0, 0.12) !important',
+									backgroundColor: 'rgba(0, 0, 0, 0.12) !important',
+									color: 'rgba(0, 0, 0, 0.26) !important',
 								},
 							}}
 							cancelBtnSx={{ fontFamily: 'Varela Round' }}
@@ -633,31 +633,30 @@ export default function UpcomingEvents() {
 						/>
 					</form>
 				</DialogContent>
-				{isRegisterForEventSuccess && (
-					<Snackbar
-						open={isRegisterForEventSuccess}
-						autoHideDuration={3000}
-						anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-						onClose={() => {
-							setIsRegisterForEventSuccess(false);
-							setIsRegisterForEventModalOpen(false);
-						}}
-						sx={{ mt: { xs: '1.5rem', sm: '1.5rem', md: '2.5rem', lg: '2.5rem' } }}>
-						<Alert
-							severity='success'
-							variant='filled'
-							sx={{
-								width: '100%',
-								fontFamily: 'Varela Round',
-								fontSize: { xs: '0.8rem', sm: '0.9rem', md: '1rem', lg: '1rem' },
-								letterSpacing: 0,
-								color: theme.palette.common.white,
-							}}>
-							Kaydınız alınmıştır, lütfen email'inizi kontrol edin.
-						</Alert>
-					</Snackbar>
-				)}
 			</CustomDialog>
+
+			<Snackbar
+				open={isRegisterForEventSuccess}
+				autoHideDuration={3500}
+				anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+				onClose={() => {
+					setIsRegisterForEventSuccess(false);
+				}}
+				sx={{ mt: '6rem' }}>
+				<Alert
+					severity='success'
+					variant='filled'
+					sx={{
+						width: '100%',
+						fontFamily: 'Varela Round',
+						fontSize: { xs: '0.8rem', sm: '0.9rem', md: '1rem', lg: '1rem' },
+						letterSpacing: 0,
+						color: theme.palette.common.white,
+						backgroundColor: 'rgba(147, 51, 234, 1)',
+					}}>
+					Kaydınız alınmıştır, lütfen email'inizi kontrol edin.
+				</Alert>
+			</Snackbar>
 		</Box>
 	);
 }

@@ -28,7 +28,7 @@ interface DocumentPaymentDialogProps {
 }
 
 const DIALOG_BG = 'linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.98))';
-const DIALOG_BORDERRADIUS = '1.5rem';
+const DIALOG_BORDERRADIUS = '0.75rem';
 const DIALOG_BOXSHADOW = '0 0.5rem 2rem rgba(44, 62, 80, 0.1)';
 const DIALOG_BORDER = '0.5rem solid rgba(255, 255, 255, 0.18)';
 const DIALOG_FONT = 'Varela Round';
@@ -220,8 +220,10 @@ const DocumentPaymentDialog = ({
 			}}
 			openModal={isPaymentDialogOpen}
 			closeModal={() => {
-				resetForm();
-				setIsPaymentDialogOpen(false);
+				if (!isProcessing) {
+					resetForm();
+					setIsPaymentDialogOpen(false);
+				}
 			}}
 			maxWidth='sm'
 			PaperProps={{
@@ -613,20 +615,34 @@ const DocumentPaymentDialog = ({
 
 				<CustomDialogActions
 					onCancel={() => {
-						resetForm();
-						setIsPaymentDialogOpen(false);
+						if (!isProcessing) {
+							resetForm();
+							setIsPaymentDialogOpen(false);
+						}
 					}}
 					cancelBtnText='Kapat'
 					cancelBtnSx={{ fontFamily: DIALOG_FONT, borderRadius: '' }}
 					submitBtnText={isProcessing ? 'İşleniyor' : 'Satın Al'}
 					submitBtnSx={{
-						fontFamily: DIALOG_FONT,
-						borderRadius: '',
-						cursor: isProcessing ? 'not-allowed' : 'pointer',
-						cursorEvents: isProcessing ? 'none' : 'auto',
-						pointerEvents: isProcessing ? 'none' : 'auto',
+						'background': 'linear-gradient(135deg, #FF6B3D 0%, #ff7d55 100%) !important',
+						'backgroundColor': 'transparent !important',
+						'fontFamily': DIALOG_FONT,
+						'color': 'white !important',
+						'transition': 'all 0.2s ease !important',
+						'borderRadius': '',
+						'&:hover': {
+							background: 'white !important',
+							backgroundColor: 'white !important',
+							color: '#FF6B3D !important',
+							border: '1px solid #FF6B3D !important',
+						},
+						'&.Mui-disabled': {
+							background: 'rgba(0, 0, 0, 0.12) !important',
+							backgroundColor: 'rgba(0, 0, 0, 0.12) !important',
+							color: 'rgba(0, 0, 0, 0.26) !important',
+						},
 					}}
-					disableBtn={isProcessing || !recaptchaToken || !firstName.trim() || !lastName.trim() || !email.trim()}
+					disableBtn={isProcessing}
 					disableCancelBtn={isProcessing}
 					actionSx={{ padding: '0rem 1.5rem', marginBottom: '1rem', marginTop: '2rem' }}
 				/>
