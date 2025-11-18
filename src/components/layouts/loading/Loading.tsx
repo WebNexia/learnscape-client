@@ -45,23 +45,6 @@ const float = keyframes`
   }
 `;
 
-// const dotsAnimation = keyframes`
-//   0% { content: ''; }
-//   25% { content: '.'; }
-//   50% { content: '..'; }
-//   75% { content: '...'; }
-//   100% { content: ''; }
-// `;
-
-// const blink = keyframes`
-//   0%, 100% {
-//     opacity: 1;
-//   }
-//   50% {
-//     opacity: 0;
-//   }
-// `;
-
 // Memoize the logo component to prevent unnecessary re-renders
 const Logo = memo(({ small }: { small?: boolean }) => (
 	<Box
@@ -165,19 +148,6 @@ const Loading = () => {
 	// Check if user has admin-level access (admin, owner, or super-admin)
 	const hasAdminAccess = effectiveRole === Roles.ADMIN || effectiveRole === Roles.OWNER || effectiveRole === Roles.SUPER_ADMIN;
 
-	// Use useMemo for mode to prevent unnecessary re-renders
-	// const mode = useMemo(() => (localStorage.getItem('mode') as Mode) || Mode.LIGHT_MODE, []);
-
-	// Use useMemo for currentPage to prevent unnecessary re-renders
-	// const currentPage = useMemo(() => {
-	// 	const path = window.location.pathname;
-	// 	return path?.includes('admin')
-	// 		? path?.split?.('/')?.[2]?.charAt?.(0)?.toUpperCase?.() + path?.split?.('/')?.[2]?.slice(1)
-	// 		: path?.split?.('/')?.[1]?.charAt?.(0)?.toUpperCase?.() + path?.split?.('/')?.[1]?.slice(1);
-	// }, []);
-
-	// const [selectedPage, setSelectedPage] = useState<string>(currentPage);
-
 	// If user is not logged in, show the base loading screen
 	if (!user) {
 		return <BaseLoadingScreen />;
@@ -243,34 +213,6 @@ const Loading = () => {
 										<Notifications color='secondary' sx={{ fontSize: '1rem', mr: '1rem' }} />
 									</IconButton>
 
-									{/* {
-										{
-											[Mode.DARK_MODE]: (
-												<IconButton
-													sx={{
-														'color': theme.textColor?.common.main,
-														'mr': '0.75rem',
-														':hover': {
-															backgroundColor: 'transparent',
-														},
-													}}>
-													<DarkMode sx={{ fontSize: '1rem' }} />
-												</IconButton>
-											),
-											[Mode.LIGHT_MODE]: (
-												<IconButton
-													sx={{
-														'color': theme.textColor?.common.main,
-														'mr': '0.75rem',
-														':hover': {
-															backgroundColor: 'transparent',
-														},
-													}}>
-													<LightMode sx={{ fontSize: '1rem' }} />
-												</IconButton>
-											),
-										}[mode]
-									} */}
 									<Button
 										sx={{
 											textTransform: 'capitalize',
@@ -450,7 +392,7 @@ const Loading = () => {
 									alignItems: 'flex-start',
 									marginTop: '1.5rem',
 								}}>
-								{hasAdminAccess && (
+								{user?.role === Roles.ADMIN && (
 									<>
 										<SidebarBtn btnText='Dashboard' IconName={DashboardIcon} />
 										<SidebarBtn btnText='Users' IconName={PeopleAltOutlined} />
@@ -459,13 +401,30 @@ const Loading = () => {
 										<SidebarBtn btnText='Questions' IconName={QuizOutlined} />
 										<SidebarBtn btnText='Documents' IconName={FilePresent} />
 										<SidebarBtn btnText='Submissions' IconName={LibraryAddCheck} />
-										<SidebarBtn btnText='Payments' IconName={CreditCard} />
 										<SidebarBtn btnText='Calendar' IconName={CalendarMonth} />
 										<SidebarBtn btnText='Messages' IconName={Email} />
 										<SidebarBtn btnText='Community' IconName={Groups} />
 										<SidebarBtn btnText='Settings' IconName={Settings} />
 									</>
 								)}
+								{user?.role === Roles.OWNER ||
+									(user?.role === Roles.SUPER_ADMIN && (
+										<>
+											<SidebarBtn btnText='Dashboard' IconName={DashboardIcon} />
+											<SidebarBtn btnText='Users' IconName={PeopleAltOutlined} />
+											<SidebarBtn btnText='Courses' IconName={LibraryBooks} />
+											<SidebarBtn btnText='Lessons' IconName={AssignmentIndRounded} />
+											<SidebarBtn btnText='Questions' IconName={QuizOutlined} />
+											<SidebarBtn btnText='Documents' IconName={FilePresent} />
+											<SidebarBtn btnText='Submissions' IconName={LibraryAddCheck} />
+											<SidebarBtn btnText='Payments' IconName={CreditCard} />
+											<SidebarBtn btnText='Calendar' IconName={CalendarMonth} />
+											<SidebarBtn btnText='Messages' IconName={Email} />
+											<SidebarBtn btnText='Community' IconName={Groups} />
+											<SidebarBtn btnText='Settings' IconName={Settings} />
+										</>
+									))}
+
 								{user?.role === Roles.USER && (
 									<>
 										<SidebarBtn btnText='Dashboard' IconName={DashboardIcon} />

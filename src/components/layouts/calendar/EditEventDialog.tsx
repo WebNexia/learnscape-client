@@ -655,6 +655,7 @@ const EditEventDialog = ({
 										setIsEventUpdated(true);
 									}}
 									size='small'
+									disabled={selectedEvent?.createdBy !== user?._id}
 									required
 									sx={{ backgroundColor: theme.bgColor?.common, fontSize: '0.8rem' }}>
 									<MenuItem
@@ -699,6 +700,7 @@ const EditEventDialog = ({
 									imageFolderName='EventImages'
 									enterImageUrl={enterCoverImageUrl}
 									setEnterImageUrl={setEnterCoverImageUrl}
+									disabled={selectedEvent?.createdBy !== user?._id}
 								/>
 							</Box>
 							<Box sx={{ ml: '3rem' }}>
@@ -712,6 +714,7 @@ const EditEventDialog = ({
 									}}
 									boxStyle={{ width: '8rem', height: '8rem' }}
 									imgStyle={{ objectFit: 'cover', maxWidth: '100%', maxHeight: '100%' }}
+									disableRemove={selectedEvent?.createdBy !== user?._id}
 								/>
 							</Box>
 						</Box>
@@ -1402,7 +1405,11 @@ const EditEventDialog = ({
 				</DialogContent>
 				<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0.25rem 0.75rem' }}>
 					<Box sx={{ marginBottom: '0.5rem' }}>
-						<CustomDeleteButton type='button' onClick={() => setDeleteEventModalOpen(true)} sx={{ height: isMobileSize ? '1.5rem' : undefined }}>
+						<CustomDeleteButton
+							type='button'
+							onClick={() => setDeleteEventModalOpen(true)}
+							disabled={selectedEvent?.createdBy !== user?._id}
+							sx={{ height: isMobileSize ? '1.5rem' : undefined }}>
 							{isVerySmallScreen ? 'Delete' : 'Delete Event'}
 						</CustomDeleteButton>
 					</Box>
