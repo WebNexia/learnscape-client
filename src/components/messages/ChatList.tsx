@@ -4,6 +4,7 @@ import CustomTextField from '../forms/customFields/CustomTextField';
 import theme from '../../themes';
 import { formatMessageTime } from '../../utils/formatTime';
 import { Chat as ChatType } from '../../pages/Messages';
+import { useAuth } from '../../hooks/useAuth';
 
 interface ChatListProps {
 	filteredChatList: ChatType[];
@@ -46,6 +47,7 @@ const ChatList = ({
 	isGroupChat,
 	globalBlockedUsers,
 }: ChatListProps) => {
+	const { hasAdminAccess } = useAuth();
 	return (
 		<>
 			{!isChatsListVisible && isVerySmallScreen && (
@@ -91,7 +93,7 @@ const ChatList = ({
 								placeholder='Username or Group Name'
 								value={searchChatValue}
 								onChange={onFilterChats}
-								disabled={!user?.hasRegisteredCourse && user?.role !== 'admin' && !user?.isSubscribed}
+								disabled={!user?.hasRegisteredCourse && !hasAdminAccess && !user?.isSubscribed}
 							/>
 						</Box>
 						<Box sx={{ flex: 1 }}>
@@ -104,7 +106,7 @@ const ChatList = ({
 								</IconButton>
 							</Tooltip>
 						</Box>
-						{(user?.role === 'admin' || user?.role === 'instructor') && (
+						{(hasAdminAccess || user?.role === 'instructor') && (
 							<Box sx={{ flex: 1 }}>
 								<Tooltip title='Create Group Chat' placement='top' arrow>
 									<IconButton sx={{ ':hover': { backgroundColor: 'transparent' } }} onClick={onCreateGroupClick}>

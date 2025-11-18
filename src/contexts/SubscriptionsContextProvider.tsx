@@ -35,7 +35,7 @@ export const SubscriptionsContext = createContext<SubscriptionsContextTypes>({} 
 const SubscriptionsContextProvider = ({ children }: SubscriptionsContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
-	const { isAuthenticated, isAdmin } = useAuth();
+	const { isAuthenticated, canAccessPayments } = useAuth();
 	const { user } = useContext(UserAuthContext);
 
 	const isLandingPageRoute = useIsLandingPageRoute();
@@ -58,7 +58,7 @@ const SubscriptionsContextProvider = ({ children }: SubscriptionsContextProvider
 		orgId,
 		baseUrl: `${base_url}/subscriptions/organisation/${orgId}`,
 		entityKey: 'allSubscriptions',
-		enabled: isEnabled && isAuthenticated && isAdmin && !isLandingPageRoute,
+		enabled: isEnabled && isAuthenticated && canAccessPayments && !isLandingPageRoute,
 		role: user?.role as Roles,
 		staleTime: user?.role !== Roles.USER ? 0 : 5 * 60 * 1000,
 		cacheTime: 30 * 60 * 1000,

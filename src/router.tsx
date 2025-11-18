@@ -4,6 +4,7 @@ import React from 'react';
 import AdminRouteGuard from './components/guards/AdminRouteGuard';
 import LearnerRouteGuard from './components/guards/LearnerRouteGuard';
 import InstructorRouteGuard from './components/guards/InstructorRouteGuard';
+import PaymentsRouteGuard from './components/guards/PaymentsRouteGuard';
 import AdminQuizSubmissionsContextProvider from './contexts/AdminQuizSubmissionsContextProvider';
 import LearnerQuizSubmissionsContextProvider from './contexts/LearnerQuizSubmissionsContextProvider';
 import LandingPageUpcomingPublicEventsContextProvider from './contexts/LandingPageUpcomingPublicEventsContextProvider';
@@ -234,7 +235,7 @@ export const router = createBrowserRouter([
 			{
 				path: 'admin/payments',
 				element: (
-					<AdminRouteGuard>
+					<PaymentsRouteGuard>
 						<PaymentsContextProvider>
 							<SubscriptionsContextProvider>
 								<PromoCodesContextProvider>
@@ -242,7 +243,7 @@ export const router = createBrowserRouter([
 								</PromoCodesContextProvider>
 							</SubscriptionsContextProvider>
 						</PaymentsContextProvider>
-					</AdminRouteGuard>
+					</PaymentsRouteGuard>
 				),
 			},
 			{

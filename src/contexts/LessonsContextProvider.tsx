@@ -38,7 +38,7 @@ export const LessonsContext = createContext<LessonsContextTypes>({} as LessonsCo
 const LessonsContextProvider = ({ children }: LessonsContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
-	const { isAuthenticated, isAdmin, isLearner } = useAuth();
+	const { isAuthenticated, hasAdminAccess, isLearner } = useAuth();
 	const { user } = useContext(UserAuthContext);
 	const isLandingPageRoute = useIsLandingPageRoute();
 	const [isEnabled, setIsEnabled] = useState<boolean>(true);
@@ -66,7 +66,7 @@ const LessonsContextProvider = ({ children }: LessonsContextProviderProps) => {
 		orgId,
 		baseUrl: `${base_url}${baseEndpoint}`,
 		entityKey: isInstructor ? 'instructorLessons' : 'allLessons',
-		enabled: isEnabled && isAuthenticated && (isAdmin || isLearner || isInstructor) && !isLandingPageRoute,
+		enabled: isEnabled && isAuthenticated && (hasAdminAccess || isLearner || isInstructor) && !isLandingPageRoute,
 		role: user?.role as Roles,
 		staleTime: user?.role !== Roles.USER ? 0 : 5 * 60 * 1000,
 		cacheTime: 30 * 60 * 1000,

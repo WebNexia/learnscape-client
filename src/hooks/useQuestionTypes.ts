@@ -12,7 +12,7 @@ interface QuestionType {
 const useQuestionTypes = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
-	const { isAuthenticated, isAdmin, isLearner, isInstructor } = useAuth();
+	const { isAuthenticated, hasAdminAccess, isLearner, isInstructor } = useAuth();
 
 	const { data: questionTypes = [] } = useQuery<QuestionType[]>(
 		['allQuestionTypes', orgId],
@@ -22,7 +22,7 @@ const useQuestionTypes = () => {
 			return response.data.data || [];
 		},
 		{
-			enabled: !!orgId && isAuthenticated && (isAdmin || isLearner || isInstructor),
+			enabled: !!orgId && isAuthenticated && (hasAdminAccess || isLearner || isInstructor),
 			staleTime: 60 * 60 * 1000, // 1 hour
 			cacheTime: 24 * 60 * 1000, // 24 hours
 			refetchOnMount: false,

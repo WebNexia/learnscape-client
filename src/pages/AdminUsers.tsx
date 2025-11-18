@@ -48,7 +48,7 @@ const AdminUsers = () => {
 
 	const { orgId, organisation } = useContext(OrganisationContext);
 
-	const { userId } = useContext(UserAuthContext);
+	const { userId, user } = useContext(UserAuthContext);
 
 	const { users, loading, error, fetchMoreUsers, updateUser, totalItems, loadedPages, enableUsersFetch, setUsersPageNumber } =
 		useContext(UsersContext);
@@ -94,6 +94,26 @@ const AdminUsers = () => {
 		defaultOrder: 'asc',
 	});
 
+	// Helper function to apply hierarchical visibility filter
+	const applyVisibilityFilter = (usersToFilter: User[]): User[] => {
+		return usersToFilter.filter((mappedUser) => {
+			// Owner can see all users (including super-admin and admin)
+			if (user?.role === Roles.OWNER) {
+				return true;
+			}
+			// Super-admin can see everyone except owner
+			if (user?.role === Roles.SUPER_ADMIN) {
+				return mappedUser.role !== Roles.OWNER;
+			}
+			// Admin can see everyone except super-admin and owner
+			if (user?.role === Roles.ADMIN) {
+				return mappedUser.role !== Roles.SUPER_ADMIN && mappedUser.role !== Roles.OWNER;
+			}
+			// Default: show all (shouldn't happen as this is an admin page)
+			return true;
+		});
+	};
+
 	const sortedUsers =
 		[...(displayUsers || [])]?.sort((a, b) => {
 			const aValue = (a as any)[orderBy] ?? '';
@@ -106,7 +126,8 @@ const AdminUsers = () => {
 			}
 		}) || [];
 
-	const paginatedUsers = sortedUsers;
+	// Apply visibility filter to sorted users
+	const paginatedUsers = applyVisibilityFilter(sortedUsers);
 
 	// Modal states
 	const [isUserStatusUpdateModalOpen, setIsUserStatusUpdateModalOpen] = useState<boolean[]>([]);
@@ -144,8 +165,8 @@ const AdminUsers = () => {
 			let dataToExport: User[];
 
 			if (searchButtonClicked) {
-				// If search is active, use the search results (already filtered)
-				dataToExport = displayUsers || [];
+				// If search is active, use the search results and apply visibility filter
+				dataToExport = applyVisibilityFilter(displayUsers || []);
 			} else {
 				// First, get the total count to know how many pages we need
 				const countResponse = await axios.get(`${base_url}/users/organisation/${orgId}?page=1&limit=1`);
@@ -162,7 +183,8 @@ const AdminUsers = () => {
 					allUsers = [...allUsers, ...response.data.data];
 				}
 
-				dataToExport = allUsers;
+				// Apply visibility filter to all fetched users
+				dataToExport = applyVisibilityFilter(allUsers);
 			}
 
 			// Create Excel data
@@ -271,7 +293,7 @@ const AdminUsers = () => {
 								label: isMobileSize ? 'Download' : `Download ${searchButtonClicked ? 'Filtered' : 'All'} Users`,
 								onClick: handleDownloadUsers,
 								startIcon: <DownloadIcon />,
-								disabled: displayUsers && displayUsers.length === 0,
+								disabled: paginatedUsers && paginatedUsers.length === 0,
 							},
 						]}
 						isSticky={true}
@@ -432,7 +454,7 @@ const AdminUsers = () => {
 															openEditUserModal(index);
 														}}
 														icon={<Edit fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
-														disabled={user._id === userId}
+														disabled={user._id === userId || user?.role === Roles.SUPER_ADMIN}
 													/>
 
 													<CustomDialog
@@ -482,7 +504,7 @@ const AdminUsers = () => {
 																	closeUserEditModal(index);
 																}}
 																submitBtnText='Save'
-																actionSx={{ mt: '1rem' }}
+																actionSx={{ mt: '1rem', mb: '0.5rem' }}
 																submitBtnType='submit'
 															/>
 														</form>
@@ -500,7 +522,7 @@ const AdminUsers = () => {
 																<PersonOff fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />
 															)
 														}
-														disabled={user._id === userId}
+														disabled={user._id === userId || user?.role === Roles.SUPER_ADMIN}
 													/>
 
 													{isUserStatusUpdateModalOpen[index] !== undefined && (
@@ -533,13 +555,13 @@ const AdminUsers = () => {
 									})}
 							</TableBody>
 						</Table>
-						{displayUsers && displayUsers.length === 0 && (
+						{paginatedUsers && paginatedUsers.length === 0 && (
 							<CustomInfoMessageAlignedLeft
 								message={isSearchActive ? 'No users found matching your search criteria.' : 'No users found.'}
 								sx={{ marginTop: isMobileSize ? '3rem' : '5rem', marginBottom: '1rem' }}
 							/>
 						)}
-						{isMobileSize && !(displayUsers && displayUsers.length === 0) && (
+						{isMobileSize && !(paginatedUsers && paginatedUsers.length === 0) && (
 							<CustomInfoMessageAlignedLeft message='Rotate your device or use desktop for more info' />
 						)}
 						<CustomTablePagination count={usersNumberOfPages} page={usersCurrentPage} onChange={handlePageChange} />

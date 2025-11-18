@@ -28,6 +28,7 @@ import FilterSearchRow from '../components/layouts/FilterSearchRow';
 import CoursesInfoModal from '../components/layouts/courses/CoursesInfoModal';
 import CreateCourseDialog from '../components/forms/newCourse/CreateCourseDialog';
 import CloneCourseDialog from '../components/layouts/courses/CloneCourseDialog';
+import { useAuth } from '../hooks/useAuth';
 
 const AdminCourses = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -48,9 +49,7 @@ const AdminCourses = () => {
 	} = useContext(CoursesContext);
 	const { orgId } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
-
-	// Role-based endpoint detection
-	const isInstructor = user?.role === 'instructor';
+	const { hasAdminAccess, isInstructor } = useAuth();
 	const baseEndpoint = isInstructor ? `/courses/organisation/${orgId}/instructor` : `/courses/organisation/${orgId}`;
 
 	const vertical = 'top';
@@ -566,16 +565,19 @@ const AdminCourses = () => {
 													}}
 													disabled={(() => {
 														// If user is admin, they can delete any course
-														if (user?.role === Roles.ADMIN) {
+														if (hasAdminAccess) {
 															return false;
 														}
 
 														// If user is instructor, they can only delete courses where:
 														// 1. They are the instructor of the course
 														// 2. The course was not created by an admin
-														if (user?.role === Roles.INSTRUCTOR) {
+														if (isInstructor) {
 															const isInstructorOfCourse = course?.instructor?.userId === user?._id;
-															const wasCreatedByAdmin = course?.createdByRole === Roles.ADMIN;
+															const wasCreatedByAdmin =
+																course?.createdByRole === Roles.ADMIN ||
+																course?.createdByRole === Roles.OWNER ||
+																course?.createdByRole === Roles.SUPER_ADMIN;
 
 															// Can delete if they're the instructor AND course was not created by admin
 															return !(isInstructorOfCourse && !wasCreatedByAdmin);

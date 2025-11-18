@@ -31,9 +31,9 @@ import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/Cust
 import { validateImageUrl, validateDocumentUrl } from '../utils/urlValidation';
 import { Snackbar, Alert } from '@mui/material';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
-import { Roles } from '../interfaces/enums';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import { useStickyPaper } from '../hooks/useStickyPaper';
+import { useAuth } from '../hooks/useAuth';
 
 export interface ChapterUpdateTrack {
 	chapterId: string;
@@ -77,7 +77,7 @@ const AdminCourseEditPage = () => {
 	const navigate = useNavigate();
 
 	const { user } = useContext(UserAuthContext);
-	const isInstructor = user?.role === Roles.INSTRUCTOR;
+	const { isInstructor } = useAuth();
 
 	const { orgId } = useContext(OrganisationContext);
 	const { addNewLesson, updateLesson, enableLessonsFetch } = useContext(LessonsContext);

@@ -4,6 +4,7 @@ import { Chat as ChatType } from '../../pages/Messages';
 import { useState } from 'react';
 import CustomDialog from '../layouts/dialog/CustomDialog';
 import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
+import { useAuth } from '../../hooks/useAuth';
 
 interface ChatHeaderProps {
 	activeChat: ChatType | null;
@@ -38,6 +39,7 @@ const ChatHeader = ({
 	onEditGroupChat,
 	onViewGroupMembers,
 }: ChatHeaderProps) => {
+	const { hasAdminAccess } = useAuth();
 	const [downloadMenuAnchor, setDownloadMenuAnchor] = useState<null | HTMLElement>(null);
 	const [blockConfirmOpen, setBlockConfirmOpen] = useState(false);
 	const [userToBlock, setUserToBlock] = useState<string>('');
@@ -140,8 +142,11 @@ const ChatHeader = ({
 									?.map((otherParticipant) => {
 										// Determine if current user can block this participant
 										const canBlock =
-											(user?.role === 'admin' && otherParticipant.role !== 'admin') || // Admins can block anyone except other admins
-											(user?.role === 'instructor' && otherParticipant.role === 'learner'); // Instructors can only block learners
+											(hasAdminAccess &&
+												otherParticipant.role !== 'admin' &&
+												otherParticipant.role !== 'owner' &&
+												otherParticipant.role !== 'super-admin') ||
+											(user?.role === 'instructor' && otherParticipant.role === 'learner');
 
 										if (canBlock) {
 											const isBlocked = blockedUsers?.includes(otherParticipant.firebaseUserId) || false;
@@ -197,7 +202,7 @@ const ChatHeader = ({
 										</IconButton>
 									</Tooltip>
 								)}
-								{(user?.role === 'admin' || (user?.role === 'instructor' && activeChat.createdBy === user?.firebaseUserId)) && onEditGroupChat && (
+								{(hasAdminAccess || (user?.role === 'instructor' && activeChat.createdBy === user?.firebaseUserId)) && onEditGroupChat && (
 									<Tooltip title='Edit Group' placement='top' arrow>
 										<IconButton size='small' onClick={onEditGroupChat} sx={{ ':hover': { backgroundColor: 'transparent' } }}>
 											<Edit fontSize='small' />

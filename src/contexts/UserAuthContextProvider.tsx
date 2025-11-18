@@ -61,11 +61,15 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 		const currentPath = window.location.pathname;
 		const isOnAuthPage = currentPath === '/auth' || currentPath === '/';
 
-		if (isOnAuthPage && user?.role === Roles.ADMIN) {
+		if (!user || !isOnAuthPage) return;
+
+		// Admin, owner, and super-admin all go to admin dashboard
+		const hasAdminAccess = user.role === Roles.ADMIN || user.role === Roles.OWNER || user.role === Roles.SUPER_ADMIN;
+		if (hasAdminAccess) {
 			navigate('/admin/dashboard', { replace: true });
-		} else if (isOnAuthPage && user?.role === Roles.USER) {
+		} else if (user.role === Roles.USER) {
 			navigate('/dashboard', { replace: true });
-		} else if (isOnAuthPage && user?.role === Roles.INSTRUCTOR) {
+		} else if (user.role === Roles.INSTRUCTOR) {
 			navigate('/instructor/dashboard', { replace: true });
 		}
 	}, [user, navigate]);
@@ -184,11 +188,12 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 
 				// User lesson data now fetched per course using useUserLessonsForCourse hook
 			} else {
-				console.error('❌ Invalid user data received:', userData);
 				throw new Error('Invalid user data received');
 			}
-		} catch (error) {
-			console.error('Failed to fetch user data:', error);
+		} catch (error: any) {
+			console.error('❌ Failed to fetch user data:', error);
+			console.error('❌ Error response:', error.response?.data);
+			console.error('❌ Error status:', error.response?.status);
 			throw new Error('Failed to fetch user data');
 		} finally {
 			// Reset fetching flag

@@ -44,8 +44,8 @@ const AdminRouteGuard: React.FC<AdminRouteGuardProps> = ({ children }) => {
 		return <Navigate to='/auth' replace />;
 	}
 
-	// Redirect to dashboard if user is not an admin
-	if (user.role !== Roles.ADMIN) {
+	// Redirect to dashboard if user is not an admin, owner, or super-admin
+	if (user.role !== Roles.ADMIN && user.role !== Roles.OWNER && user.role !== Roles.SUPER_ADMIN) {
 		return <Navigate to='/dashboard' replace />;
 	}
 

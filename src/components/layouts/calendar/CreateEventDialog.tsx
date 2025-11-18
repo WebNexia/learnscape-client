@@ -77,7 +77,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 	const { orgId } = useContext(OrganisationContext);
 	const { courses } = useContext(CoursesContext);
 	const { addNewEvent } = useContext(EventsContext);
-	const { isAdmin, isLearner } = useAuth();
+	const { hasAdminAccess, isLearner } = useAuth();
 
 	// Dashboard sync for real-time updates
 	const { refreshDashboard } = useDashboardSync();
@@ -486,7 +486,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 							sx={{ flex: 3 }}
 						/>
 
-						{isAdmin && (
+						{hasAdminAccess && (
 							<FormControlLabel
 								labelPlacement='start'
 								control={
@@ -717,16 +717,19 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 						/>
 					</Box>
 
-					{!newEvent.isPublic && isAdmin && (
+					{!newEvent.isPublic && hasAdminAccess && (
 						<>
 							{/* Show selected instructors above instructor search */}
 							{newEvent.attendees &&
 								newEvent.attendees.filter((attendee) => {
-									return attendee.role === 'instructor' || attendee.role === 'admin';
+									return attendee.role === 'instructor' || attendee.role === 'admin' || attendee.role === 'owner' || attendee.role === 'super-admin';
 								}).length > 0 && (
 									<Box sx={{ display: 'flex', margin: '1.5rem 0 0.75rem 0', flexWrap: 'wrap' }}>
 										{newEvent.attendees
-											?.filter((attendee) => attendee.role === 'instructor' || attendee.role === 'admin')
+											?.filter(
+												(attendee) =>
+													attendee.role === 'instructor' || attendee.role === 'admin' || attendee.role === 'owner' || attendee.role === 'super-admin'
+											)
 											.map((attendee) => {
 												return (
 													<Box
@@ -771,7 +774,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 												backgroundColor: newEvent.isPublic || newEvent.isAllInstructorsSelected ? 'transparent' : '#fff',
 											}}
 										/>
-										{isAdmin && (
+										{hasAdminAccess && (
 											<IconButton
 												sx={{ 'ml': '0.25rem', 'mt': '0.5rem', '&:hover': { backgroundColor: 'transparent' } }}
 												onClick={() => setInstructorSearchInfoOpen(true)}>
@@ -906,7 +909,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 											</IconButton>
 										)}
 									</Box>
-									{isAdmin && (
+									{hasAdminAccess && (
 										<Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: '0.55rem', flex: 1 }}>
 											<FormControlLabel
 												labelPlacement='start'
@@ -970,7 +973,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 						</>
 					)}
 
-					{!newEvent.isPublic && isAdmin && (
+					{!newEvent.isPublic && hasAdminAccess && (
 						<>
 							<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', mt: '-0.5rem', mb: '2rem' }}>
 								<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'flex-start' }}>
@@ -1036,7 +1039,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 					)}
 
 					{newEvent.coursesIds && newEvent.coursesIds.length > 0 && (
-						<Box sx={{ display: 'flex', margin: isAdmin ? '-2rem 0 0.75rem 0' : '0.5rem 0 0.75rem 0', flexWrap: 'wrap' }}>
+						<Box sx={{ display: 'flex', margin: hasAdminAccess ? '-2rem 0 0.75rem 0' : '0.5rem 0 0.75rem 0', flexWrap: 'wrap' }}>
 							{newEvent.coursesIds?.map((id) => {
 								const course = courses?.find((course) => course._id === id);
 								return (
@@ -1099,7 +1102,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 										</IconButton>
 									)}
 								</Box>
-								{isAdmin && (
+								{hasAdminAccess && (
 									<Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: '2.15rem', flex: 1 }}>
 										<FormControlLabel
 											disabled={newEvent.isAllLearnersSelected || newEvent.isPublic}
@@ -1214,7 +1217,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 			</CustomDialog>
 			<CustomDialog maxWidth='xs' openModal={learnerSearchInfoOpen} closeModal={() => setLearnerSearchInfoOpen(false)} title='Learner Search Info'>
 				<DialogContent>
-					{isAdmin ? (
+					{hasAdminAccess ? (
 						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.7 }}>
 							This search is used to search for active learners (has registered course or subscriber) in the organization.
 						</Typography>
@@ -1232,7 +1235,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 			</CustomDialog>
 			<CustomDialog maxWidth='xs' openModal={courseSearchInfoOpen} closeModal={() => setCourseSearchInfoOpen(false)} title='Course Search Info'>
 				<DialogContent>
-					{isAdmin ? (
+					{hasAdminAccess ? (
 						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.7 }}>
 							This search is used to search for published courses in the organization.
 						</Typography>

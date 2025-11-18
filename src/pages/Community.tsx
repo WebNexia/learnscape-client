@@ -36,7 +36,7 @@ const Community = () => {
 	const { orgId } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
 
-	const { isLearner } = useAuth();
+	const { isLearner, hasAdminAccess } = useAuth();
 
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -134,8 +134,8 @@ const Community = () => {
 			'This Month',
 		];
 
-		// Add admin-only options
-		if (user?.role === Roles.ADMIN) {
+		// Add admin-only options (admin, owner, super-admin)
+		if (hasAdminAccess) {
 			baseOptions?.splice(2, 0, 'Inactive Topics', 'Reported Topics', 'Non-reported Topics');
 		}
 

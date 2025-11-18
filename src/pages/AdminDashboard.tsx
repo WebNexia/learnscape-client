@@ -13,11 +13,14 @@ import DashboardQuizSubmissions from '../components/layouts/dashboard/DashboardQ
 import DashboardCommunityTopics from '../components/layouts/dashboard/DashboardCommunityTopics';
 import AdminInquiries from '../components/layouts/dashboard/AdminInquiries';
 import { useDashboardSummary } from '../hooks/useDashboardSummary';
+import { useAuth } from '../hooks/useAuth';
 
 Chart.register(...registerables);
 
 const AdminDashboard = () => {
 	const navigate = useNavigate();
+
+	const { canAccessPayments } = useAuth();
 
 	// New dashboard summary hook
 	const { dashboardData } = useDashboardSummary();
@@ -109,7 +112,7 @@ const AdminDashboard = () => {
 				<Grid container spacing={2}>
 					<Grid
 						item
-						md={4}
+						md={!canAccessPayments ? 6 : 4}
 						sm={12}
 						xs={12}
 						onClick={() => {
@@ -124,7 +127,7 @@ const AdminDashboard = () => {
 					</Grid>
 					<Grid
 						item
-						md={4}
+						md={!canAccessPayments ? 6 : 4}
 						sm={12}
 						xs={12}
 						onClick={() => {
@@ -133,20 +136,22 @@ const AdminDashboard = () => {
 						sx={{ cursor: 'pointer' }}>
 						<AdminCoursesBarGraph barChartData={barChartData} totalCourses={dashboardData ? (dashboardData.roleSpecific as any).totalCourses : 0} />
 					</Grid>
-					<Grid
-						item
-						md={4}
-						sm={12}
-						xs={12}
-						onClick={() => {
-							navigate(`/admin/payments`);
-						}}
-						sx={{ cursor: 'pointer' }}>
-						<AdminPayment
-							totalRevenue={dashboardData ? (dashboardData.roleSpecific as any).totalRevenue : undefined}
-							totalPayments={dashboardData ? (dashboardData.roleSpecific as any).totalPayments : undefined}
-						/>
-					</Grid>
+					{canAccessPayments && (
+						<Grid
+							item
+							md={4}
+							sm={12}
+							xs={12}
+							onClick={() => {
+								navigate(`/admin/payments`);
+							}}
+							sx={{ cursor: 'pointer' }}>
+							<AdminPayment
+								totalRevenue={dashboardData ? (dashboardData.roleSpecific as any).totalRevenue : undefined}
+								totalPayments={dashboardData ? (dashboardData.roleSpecific as any).totalPayments : undefined}
+							/>
+						</Grid>
+					)}
 					<Grid item sm={2.4} xs={6} onClick={() => navigate(`/admin/calendar`)}>
 						<UpcomingEvents dashboardEvents={dashboardData?.common.upcomingEvents} />
 					</Grid>

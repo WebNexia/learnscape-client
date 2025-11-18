@@ -51,7 +51,7 @@ export const CommunityContext = createContext<CommunityContextTypes>({
 const CommunityContextProvider = (props: CommunityContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
-	const { isAuthenticated, isAdmin, isLearner, isInstructor } = useAuth();
+	const { isAuthenticated, hasAdminAccess, isLearner, isInstructor } = useAuth();
 	const location = useLocation();
 	const queryClient = useQueryClient();
 	const isLandingPageRoute =
@@ -117,7 +117,7 @@ const CommunityContextProvider = (props: CommunityContextProviderProps) => {
 	};
 
 	const { data: topicsData, isLoading } = useQuery(['allTopics', orgId], () => fetchTopics(1), {
-		enabled: isEnabled && !!orgId && isAuthenticated && (isAdmin || isLearner || isInstructor) && !isLandingPageRoute,
+		enabled: isEnabled && !!orgId && isAuthenticated && (hasAdminAccess || isLearner || isInstructor) && !isLandingPageRoute,
 		staleTime: 0, // Data is always stale - refetch when returning to page
 		cacheTime: 5 * 60 * 1000, // 5 minutes - data stays in cache
 		refetchOnWindowFocus: true, // Refetch on window focus

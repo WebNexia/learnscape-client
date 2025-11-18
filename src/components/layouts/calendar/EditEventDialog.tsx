@@ -89,7 +89,7 @@ const EditEventDialog = ({
 	const { orgId } = useContext(OrganisationContext);
 	const { courses } = useContext(CoursesContext);
 	const { updateEvent, removeEvent } = useContext(EventsContext);
-	const { isAdmin, isLearner } = useAuth();
+	const { hasAdminAccess, isLearner } = useAuth();
 
 	// Dashboard sync for real-time updates
 	const { refreshDashboard } = useDashboardSync();
@@ -539,7 +539,7 @@ const EditEventDialog = ({
 				setSearchCourseValue('');
 				setIsEventUpdated(false);
 			}}
-			title={`${isAdmin && selectedEvent?.createdBy !== user?._id ? `Edit Event -  (${selectedEvent?.createdByName || 'Unknown'})` : 'Edit Event'}`}
+			title={`${hasAdminAccess && selectedEvent?.createdBy !== user?._id ? `Edit Event -  (${selectedEvent?.createdByName || 'Unknown'})` : 'Edit Event'}`}
 			maxWidth='sm'>
 			<form
 				onSubmit={(e) => {
@@ -570,7 +570,7 @@ const EditEventDialog = ({
 								disabled={selectedEvent?.createdBy !== user?._id}
 							/>
 						</Tooltip>
-						{isAdmin && selectedEvent?.createdBy === user?._id && (
+						{hasAdminAccess && selectedEvent?.createdBy === user?._id && (
 							<FormControlLabel
 								labelPlacement='start'
 								control={
@@ -655,6 +655,7 @@ const EditEventDialog = ({
 										setIsEventUpdated(true);
 									}}
 									size='small'
+									disabled={selectedEvent?.createdBy !== user?._id}
 									required
 									sx={{ backgroundColor: theme.bgColor?.common, fontSize: '0.8rem' }}>
 									<MenuItem
@@ -699,6 +700,7 @@ const EditEventDialog = ({
 									imageFolderName='EventImages'
 									enterImageUrl={enterCoverImageUrl}
 									setEnterImageUrl={setEnterCoverImageUrl}
+									disabled={selectedEvent?.createdBy !== user?._id}
 								/>
 							</Box>
 							<Box sx={{ ml: '3rem' }}>
@@ -712,6 +714,7 @@ const EditEventDialog = ({
 									}}
 									boxStyle={{ width: '8rem', height: '8rem' }}
 									imgStyle={{ objectFit: 'cover', maxWidth: '100%', maxHeight: '100%' }}
+									disableRemove={selectedEvent?.createdBy !== user?._id}
 								/>
 							</Box>
 						</Box>
@@ -838,14 +841,20 @@ const EditEventDialog = ({
 						/>
 					</Box>
 
-					{!selectedEvent?.isPublic && isAdmin && (
+					{!selectedEvent?.isPublic && hasAdminAccess && (
 						<>
 							{/* Show selected instructors above instructor search */}
 							{selectedEvent?.attendees &&
-								selectedEvent.attendees.filter((attendee) => attendee.role === 'instructor' || attendee.role === 'admin').length > 0 && (
+								selectedEvent.attendees.filter(
+									(attendee) =>
+										attendee.role === 'instructor' || attendee.role === 'admin' || attendee.role === 'owner' || attendee.role === 'super-admin'
+								).length > 0 && (
 									<Box sx={{ display: 'flex', margin: '1.5rem 0 0.75rem 0', flexWrap: 'wrap' }}>
 										{selectedEvent.attendees
-											?.filter((attendee) => attendee.role === 'instructor' || attendee.role === 'admin')
+											?.filter(
+												(attendee) =>
+													attendee.role === 'instructor' || attendee.role === 'admin' || attendee.role === 'owner' || attendee.role === 'super-admin'
+											)
 											.map((attendee) => {
 												return (
 													<Box
@@ -897,7 +906,7 @@ const EditEventDialog = ({
 												backgroundColor: selectedEvent?.isAllInstructorsSelected || selectedEvent?.isPublic ? 'transparent' : '#fff',
 											}}
 										/>
-										{isAdmin && (
+										{hasAdminAccess && (
 											<IconButton sx={{ 'ml': '0.25rem', 'mt': '0.5rem', '&:hover': { backgroundColor: 'transparent' } }}>
 												<InfoOutlined
 													fontSize='small'
@@ -1040,7 +1049,7 @@ const EditEventDialog = ({
 												backgroundColor: selectedEvent?.isAllLearnersSelected || selectedEvent?.isPublic ? 'transparent' : '#fff',
 											}}
 										/>
-										{isAdmin && (
+										{hasAdminAccess && (
 											<IconButton sx={{ 'ml': '0.25rem', 'mt': '0.5rem', '&:hover': { backgroundColor: 'transparent' } }}>
 												<InfoOutlined
 													fontSize='small'
@@ -1050,7 +1059,7 @@ const EditEventDialog = ({
 											</IconButton>
 										)}
 									</Box>
-									{isAdmin && (
+									{hasAdminAccess && (
 										<Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: '0.55rem', flex: 1 }}>
 											<FormControlLabel
 												labelPlacement='start'
@@ -1121,7 +1130,7 @@ const EditEventDialog = ({
 						</>
 					)}
 
-					{!selectedEvent?.isPublic && isAdmin && (
+					{!selectedEvent?.isPublic && hasAdminAccess && (
 						<>
 							<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', mt: '-0.5rem', mb: '2rem' }}>
 								<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'flex-start' }}>
@@ -1274,7 +1283,7 @@ const EditEventDialog = ({
 													: '#fff',
 										}}
 									/>
-									{isAdmin && (
+									{hasAdminAccess && (
 										<IconButton sx={{ 'ml': '0.25rem', 'mb': '2.15rem', '&:hover': { backgroundColor: 'transparent' } }}>
 											<InfoOutlined
 												fontSize='small'
@@ -1284,7 +1293,7 @@ const EditEventDialog = ({
 										</IconButton>
 									)}
 								</Box>
-								{isAdmin && (
+								{hasAdminAccess && (
 									<Box sx={{ display: 'flex', justifyContent: 'flex-end', flex: 1 }}>
 										<FormControlLabel
 											disabled={selectedEvent?.isAllLearnersSelected || selectedEvent?.isPublic || selectedEvent?.createdBy !== user?._id}
@@ -1396,7 +1405,11 @@ const EditEventDialog = ({
 				</DialogContent>
 				<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0.25rem 0.75rem' }}>
 					<Box sx={{ marginBottom: '0.5rem' }}>
-						<CustomDeleteButton type='button' onClick={() => setDeleteEventModalOpen(true)} sx={{ height: isMobileSize ? '1.5rem' : undefined }}>
+						<CustomDeleteButton
+							type='button'
+							onClick={() => setDeleteEventModalOpen(true)}
+							disabled={selectedEvent?.createdBy !== user?._id}
+							sx={{ height: isMobileSize ? '1.5rem' : undefined }}>
 							{isVerySmallScreen ? 'Delete' : 'Delete Event'}
 						</CustomDeleteButton>
 					</Box>

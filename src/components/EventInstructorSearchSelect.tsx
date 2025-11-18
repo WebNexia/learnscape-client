@@ -37,7 +37,7 @@ const EventInstructorSearchSelect = forwardRef<any, EventInstructorSearchSelectP
 			reset: resetAdmins,
 			pagination: adminPagination,
 		} = useSearch<SearchUser>('users', 'events', {
-			userRole: 'admin',
+			userRole: 'admin', // Admin-level users (admin, owner, super-admin) can search for instructors/admins
 			allowCurrentUser: false,
 		});
 

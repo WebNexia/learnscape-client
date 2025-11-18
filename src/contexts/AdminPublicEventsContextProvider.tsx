@@ -35,7 +35,7 @@ const AdminPublicEventsContextProvider = ({ children }: AdminPublicEventsContext
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
 	const { user } = useContext(UserAuthContext);
-	const { isAuthenticated, isAdmin } = useAuth();
+	const { isAuthenticated, hasAdminAccess } = useAuth();
 	const isLandingPageRoute = useIsLandingPageRoute();
 	const [isEnabled, setIsEnabled] = useState<boolean>(true); // Start enabled to prevent flash
 
@@ -54,7 +54,7 @@ const AdminPublicEventsContextProvider = ({ children }: AdminPublicEventsContext
 		orgId,
 		baseUrl: `${base_url}/events/public/${orgId}?upcomingOnly=false`,
 		entityKey: 'allPublicEvents',
-		enabled: isEnabled && isAuthenticated && isAdmin && !isLandingPageRoute,
+		enabled: isEnabled && isAuthenticated && hasAdminAccess && !isLandingPageRoute,
 		role: user?.role as Roles,
 		staleTime: user?.role !== Roles.USER ? 0 : 5 * 60 * 1000,
 		cacheTime: 30 * 60 * 1000,

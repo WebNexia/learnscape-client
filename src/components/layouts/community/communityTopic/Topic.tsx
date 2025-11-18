@@ -10,6 +10,7 @@ import { truncateText } from '../../../../utils/utilText';
 import CustomDialog from '../../dialog/CustomDialog';
 import CustomCancelButton from '../../../forms/customButtons/CustomCancelButton';
 import theme from '../../../../themes';
+import { useAuth } from '../../../../hooks/useAuth';
 
 interface TopicProps {
 	topic: CommunityTopic;
@@ -18,6 +19,7 @@ interface TopicProps {
 const Topic = ({ topic }: TopicProps) => {
 	const navigate = useNavigate();
 	const { user } = useContext(UserAuthContext);
+	const { hasAdminAccess, isInstructor } = useAuth();
 
 	const { isVerySmallScreen, isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -48,9 +50,15 @@ const Topic = ({ topic }: TopicProps) => {
 							variant='body2'
 							onClick={() => {
 								if (user?.hasRegisteredCourse || user?.isSubscribed || user?.role !== Roles.USER) {
-									navigate(
-										`/${user?.role === Roles.USER ? 'community' : user?.role === Roles.INSTRUCTOR ? 'instructor/community' : 'admin/community'}/topic/${topic._id}`
-									);
+									const basePath =
+										user?.role === Roles.USER
+											? 'community'
+											: isInstructor
+												? 'instructor/community'
+												: hasAdminAccess
+													? 'admin/community'
+													: 'community';
+									navigate(`/${basePath}/topic/${topic._id}`);
 								} else {
 									setMessageNonRegisteredModalOpen(true);
 								}

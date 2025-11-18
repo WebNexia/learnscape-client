@@ -7,9 +7,10 @@ interface ImageThumbnailProps {
 	boxStyle?: object;
 	imgStyle?: React.CSSProperties;
 	removeImage?: () => void;
+	disableRemove?: boolean;
 }
 
-const ImageThumbnail = ({ imgSource, boxStyle, imgStyle, removeImage }: ImageThumbnailProps) => {
+const ImageThumbnail = ({ imgSource, boxStyle, imgStyle, removeImage, disableRemove = false }: ImageThumbnailProps) => {
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	return (
@@ -36,17 +37,19 @@ const ImageThumbnail = ({ imgSource, boxStyle, imgStyle, removeImage }: ImageThu
 					...imgStyle,
 				}}
 			/>
-			<Box>
-				{imgSource !== 'https://savethefrogs.com/wp-content/uploads/placeholder-wire-image-white.jpg' &&
-					!imgSource?.includes('https://placehold.co/') && (
-						<Typography
-							variant='body2'
-							sx={{ fontSize: '0.75rem', textDecoration: 'underline', cursor: 'pointer', marginTop: '0.5rem' }}
-							onClick={removeImage}>
-							Remove
-						</Typography>
-					)}
-			</Box>
+			{!disableRemove && (
+				<Box>
+					{imgSource !== 'https://savethefrogs.com/wp-content/uploads/placeholder-wire-image-white.jpg' &&
+						!imgSource?.includes('https://placehold.co/') && (
+							<Typography
+								variant='body2'
+								sx={{ fontSize: '0.75rem', textDecoration: 'underline', cursor: 'pointer', marginTop: '0.5rem' }}
+								onClick={removeImage}>
+								Remove
+							</Typography>
+						)}
+				</Box>
+			)}
 		</Box>
 	);
 };

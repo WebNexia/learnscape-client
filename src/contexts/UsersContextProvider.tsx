@@ -37,7 +37,7 @@ export const UsersContext = createContext<UsersContextTypes>({} as UsersContextT
 const UsersContextProvider = ({ children }: UsersContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
-	const { isAuthenticated, isAdmin } = useAuth();
+	const { isAuthenticated, hasAdminAccess } = useAuth();
 	const { user } = useContext(UserAuthContext);
 	const isLandingPageRoute = useIsLandingPageRoute();
 	const [isEnabled, setIsEnabled] = useState<boolean>(true);
@@ -61,7 +61,7 @@ const UsersContextProvider = ({ children }: UsersContextProviderProps) => {
 		orgId,
 		baseUrl: `${base_url}/users/organisation/${orgId}`,
 		entityKey: 'users',
-		enabled: isEnabled && isAuthenticated && isAdmin && !isLandingPageRoute,
+		enabled: isEnabled && isAuthenticated && hasAdminAccess && !isLandingPageRoute,
 		role: user?.role as Roles,
 		staleTime: user?.role !== Roles.USER ? 0 : 5 * 60 * 1000,
 		cacheTime: 30 * 60 * 1000,

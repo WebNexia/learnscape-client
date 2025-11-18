@@ -88,7 +88,8 @@ export const enum Roles {
 	ADMIN = 'admin',
 	USER = 'learner',
 	INSTRUCTOR = 'instructor',
-	SUPER_ADMIN = 'super_admin',
+	SUPER_ADMIN = 'super-admin',
+	OWNER = 'owner',
 }
 
 export const enum QuestionType {

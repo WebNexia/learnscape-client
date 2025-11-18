@@ -1,21 +1,18 @@
 import { Box, Typography } from '@mui/material';
 import { useContext } from 'react';
 import { CheckBoxOutlined } from '@mui/icons-material';
-import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
-import { Roles } from '../../../interfaces/enums';
 import theme from '../../../themes';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 import { QuizNotification } from '../../../hooks/useDashboardSummary';
+import { useAuth } from '../../../hooks/useAuth';
 
 interface DashboardQuizSubmissionsProps {
 	quizNotification?: QuizNotification;
 }
 
 const DashboardQuizSubmissions = ({ quizNotification }: DashboardQuizSubmissionsProps) => {
-	const { user } = useContext(UserAuthContext);
 	const { isRotated, isSmallScreen } = useContext(MediaQueryContext);
-
-	const isAdmin = user?.role === Roles.ADMIN;
+	const { hasAdminAccess } = useAuth();
 	const isMobileSize: boolean = isSmallScreen || isRotated;
 	return (
 		<Box
@@ -34,7 +31,7 @@ const DashboardQuizSubmissions = ({ quizNotification }: DashboardQuizSubmissions
 			}}>
 			<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
 				<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : null }}>
-					{isAdmin ? 'Unchecked' : 'Checked'} Quizzes
+					{hasAdminAccess ? 'Unchecked' : 'Checked'} Quizzes
 				</Typography>
 				<CheckBoxOutlined sx={{ ml: '0.5rem', color: theme.textColor?.greenPrimary.main }} fontSize={isMobileSize ? 'small' : 'medium'} />
 			</Box>
@@ -42,7 +39,7 @@ const DashboardQuizSubmissions = ({ quizNotification }: DashboardQuizSubmissions
 				<Typography
 					sx={{
 						fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-						color: quizNotification?.hasNotification ? (isAdmin ? '#ef5350' : theme.textColor?.greenPrimary.main) : 'gray',
+						color: quizNotification?.hasNotification ? (hasAdminAccess ? '#ef5350' : theme.textColor?.greenPrimary.main) : 'gray',
 						textAlign: 'center',
 					}}>
 					{quizNotification?.message || 'No quiz notifications'}

@@ -34,7 +34,7 @@ export const InquiriesContext = createContext<InquiriesContextTypes>({} as Inqui
 const InquiriesContextProvider = ({ children }: InquiriesContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
-	const { isAuthenticated, isAdmin } = useAuth();
+	const { isAuthenticated, hasAdminAccess } = useAuth();
 
 	const { user } = useContext(UserAuthContext);
 
@@ -56,7 +56,7 @@ const InquiriesContextProvider = ({ children }: InquiriesContextProviderProps) =
 		orgId,
 		baseUrl: `${base_url}/inquiries/organisation/${orgId}`,
 		entityKey: 'allInquiries',
-		enabled: isEnabled && isAuthenticated && isAdmin && !isLandingPageRoute,
+		enabled: isEnabled && isAuthenticated && hasAdminAccess && !isLandingPageRoute,
 		role: user?.role as Roles,
 		staleTime: user?.role !== Roles.USER ? 0 : 5 * 60 * 1000,
 		cacheTime: 30 * 60 * 1000,

@@ -14,6 +14,7 @@ import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import CustomDeleteButton from '../forms/customButtons/CustomDeleteButton';
 import CustomSubmitButton from '../forms/customButtons/CustomSubmitButton';
 import CustomCancelButton from '../forms/customButtons/CustomCancelButton';
+import { useAuth } from '../../hooks/useAuth';
 
 interface GroupChatEditModalProps {
 	editGroupModalOpen: boolean;
@@ -64,6 +65,7 @@ const GroupChatEditModal = ({
 
 	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(true);
 
+	const { hasAdminAccess } = useAuth();
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
@@ -320,7 +322,7 @@ const GroupChatEditModal = ({
 					</Typography>
 					<UserSearchSelect
 						context='messages'
-						userRole={user?.role === 'instructor' ? 'admin' : (user?.role as 'admin' | 'learner')}
+						userRole={user?.role === 'instructor' ? 'admin' : hasAdminAccess ? 'admin' : 'learner'}
 						value={groupSearchValue}
 						onChange={onGroupSearchChange}
 						onSelect={handleSearchUserSelection}
@@ -345,7 +347,7 @@ const GroupChatEditModal = ({
 			<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: '1.5rem', mt: '-1rem', px: 2 }}>
 				{/* Delete Button for Admin */}
 				<Box sx={{ ml: '-0.75rem' }}>
-					{(user?.role === 'admin' || (user?.role === 'instructor' && activeChat.createdBy === user?.firebaseUserId)) && onDeleteGroupChat && (
+					{(hasAdminAccess || (user?.role === 'instructor' && activeChat.createdBy === user?.firebaseUserId)) && onDeleteGroupChat && (
 						<CustomDeleteButton onClick={onDeleteGroupChat} sx={{ fontSize: isMobileSize ? '0.7rem' : '0.8rem' }}>
 							Delete Group
 						</CustomDeleteButton>

@@ -32,6 +32,7 @@ import { useChatExport } from '../hooks/useChatExport';
 import { useUserBlocking } from '../hooks/useUserBlocking';
 import { useGroupChatManagement } from '../hooks/useGroupChatManagement';
 import { useChatNavigation } from '../hooks/useChatNavigation';
+import { useAuth } from '../hooks/useAuth';
 
 export interface Message {
 	id: string;
@@ -82,6 +83,7 @@ export interface Chat {
 
 const Messages = () => {
 	const { user } = useContext(UserAuthContext);
+	const { hasAdminAccess } = useAuth();
 
 	const { isSmallScreen, isRotatedMedium, isVerySmallScreen, isRotated } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -274,7 +276,7 @@ const Messages = () => {
 	});
 
 	const confirmDeleteGroupChat = async () => {
-		if (!activeChat || (user?.role !== 'admin' && !(user?.role === 'instructor' && activeChat.createdBy === user?.firebaseUserId))) return;
+		if (!activeChat || (!hasAdminAccess && !(user?.role === 'instructor' && activeChat.createdBy === user?.firebaseUserId))) return;
 
 		try {
 			await deleteGroupChat(activeChat.chatId);
@@ -653,7 +655,7 @@ const Messages = () => {
 					<UserSearchSelect
 						key={`search-${errorMsg ? 'error' : 'normal'}`}
 						context='messages'
-						userRole={user?.role === 'instructor' ? 'admin' : (user?.role as 'admin' | 'learner')}
+						userRole={user?.role === 'instructor' ? 'admin' : hasAdminAccess ? 'admin' : 'learner'}
 						value={searchValue}
 						onChange={(value) => {
 							setSearchValue(value);
@@ -665,7 +667,7 @@ const Messages = () => {
 						onSelect={handleSearchUserSelection}
 						currentUserId={user?.firebaseUserId}
 						blockedUsers={globalBlockedUsers}
-						placeholder={user?.role === 'admin' ? 'Search by username, name, or email' : 'Search users by username or name'}
+						placeholder={hasAdminAccess ? 'Search by username, name, or email' : 'Search users by username or name'}
 						sx={{ width: '80%' }}
 						listSx={{
 							margin: '-0.85rem auto 0 0.5rem',
@@ -748,7 +750,7 @@ const Messages = () => {
 					setEditGroupModalOpen(false);
 				}}
 				onDeleteGroupChat={() => {
-					if (!activeChat || (user?.role !== 'admin' && !(user?.role === 'instructor' && activeChat.createdBy === user?.firebaseUserId))) return;
+					if (!activeChat || (!hasAdminAccess && !(user?.role === 'instructor' && activeChat.createdBy === user?.firebaseUserId))) return;
 					setIsDeleteGroupDialogOpen(true);
 				}}
 			/>
@@ -810,10 +812,8 @@ const Messages = () => {
 						{(() => {
 							const chatToDelete = chatList?.find((chat) => chat.chatId === chatIdToDelete);
 							const isGroupChat = chatToDelete?.chatType === 'group';
-							const isAdmin = user?.role === 'admin';
-
-							// Show leave option for learners, or for admins in 1-1 chats
-							if (!isAdmin || !isGroupChat) {
+							// Show leave option for learners, or for admins/owner/super-admin in 1-1 chats
+							if (!hasAdminAccess || !isGroupChat) {
 								return (
 									<Box
 										sx={{

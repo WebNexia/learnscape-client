@@ -20,6 +20,7 @@ import {
 	Settings,
 } from '@mui/icons-material';
 import DashboardIcon from '@mui/icons-material/Dashboard';
+import { useAuth } from '../../../hooks/useAuth';
 
 interface CustomDrawerProps {
 	isDrawerOpen: boolean;
@@ -30,6 +31,7 @@ interface CustomDrawerProps {
 const CustomDrawer = ({ isDrawerOpen, setIsDrawerOpen, hasUnreadMessages }: CustomDrawerProps) => {
 	const navigate = useNavigate();
 	const { user } = useContext(UserAuthContext);
+	const { hasAdminAccess, canAccessPayments } = useAuth();
 	const { organisation } = useContext(OrganisationContext);
 
 	const currentPage = window.location.pathname?.includes('admin')
@@ -52,12 +54,11 @@ const CustomDrawer = ({ isDrawerOpen, setIsDrawerOpen, hasUnreadMessages }: Cust
 					alignItems: 'center',
 					width: '8.5rem',
 					minHeight: '100vh',
-					backgroundColor:
-						user?.role === Roles.ADMIN
-							? theme.bgColor?.adminSidebar
-							: user?.role === Roles.INSTRUCTOR
-								? theme.bgColor?.instructorSidebar
-								: theme.palette.primary.main,
+					backgroundColor: hasAdminAccess
+						? theme.bgColor?.adminSidebar
+						: user?.role === Roles.INSTRUCTOR
+							? theme.bgColor?.instructorSidebar
+							: theme.palette.primary.main,
 					position: 'fixed',
 					left: 0,
 					zIndex: 10,
@@ -111,7 +112,7 @@ const CustomDrawer = ({ isDrawerOpen, setIsDrawerOpen, hasUnreadMessages }: Cust
 								alignItems: 'flex-start',
 								marginTop: '1rem',
 							}}>
-							{user?.role === Roles.ADMIN && (
+							{hasAdminAccess && (
 								<>
 									<SidebarBtn
 										btnText='Dashboard'
@@ -155,12 +156,14 @@ const CustomDrawer = ({ isDrawerOpen, setIsDrawerOpen, hasUnreadMessages }: Cust
 										onClick={() => navigateWithPage(PageName.ADMIN_QUIZ_SUBMISSIONS, `/admin/submissions`)}
 										active={selectedPage === PageName.ADMIN_QUIZ_SUBMISSIONS}
 									/>
-									<SidebarBtn
-										btnText='Payments'
-										IconName={CreditCard}
-										onClick={() => navigateWithPage(PageName.ADMIN_PAYMENTS, `/admin/payments`)}
-										active={selectedPage === PageName.ADMIN_PAYMENTS}
-									/>
+									{canAccessPayments && (
+										<SidebarBtn
+											btnText='Payments'
+											IconName={CreditCard}
+											onClick={() => navigateWithPage(PageName.ADMIN_PAYMENTS, `/admin/payments`)}
+											active={selectedPage === PageName.ADMIN_PAYMENTS}
+										/>
+									)}
 									<SidebarBtn
 										btnText='Calendar'
 										IconName={CalendarMonth}

@@ -9,6 +9,7 @@ import useImageUpload from '../../hooks/useImageUpload';
 import { Roles } from '../../interfaces/enums';
 import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
+import { useAuth } from '../../hooks/useAuth';
 
 interface CourseDetailsEditBoxProps {
 	singleCourseBeforeSave?: SingleCourse;
@@ -32,6 +33,7 @@ const CourseDetailsEditBox = ({
 	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(true);
 
 	const { user } = useContext(UserAuthContext);
+	const { hasAdminAccess } = useAuth();
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
@@ -236,7 +238,7 @@ const CourseDetailsEditBox = ({
 						{isMissingField && singleCourseBeforeSave?.description === '' && <CustomErrorMessage>Enter a description</CustomErrorMessage>}
 					</Box>
 				</Box>
-				<Box sx={{ alignItems: 'center', ml: isMobileSize ? '0rem' : '2rem', display: user?.role === Roles.ADMIN ? 'flex' : 'none' }}>
+				<Box sx={{ alignItems: 'center', ml: isMobileSize ? '0rem' : '2rem', display: hasAdminAccess ? 'flex' : 'none' }}>
 					<Tooltip title='External courses will be managed outside the platform.' placement='top' arrow>
 						<FormControlLabel
 							control={
@@ -280,7 +282,7 @@ const CourseDetailsEditBox = ({
 					alignItems: 'flex-start',
 					mt: '1.5rem',
 				}}>
-				<Box sx={{ flex: 1, zIndex: 1, display: user?.role === Roles.ADMIN ? undefined : 'none' }}>
+				<Box sx={{ flex: 1, zIndex: 1, display: hasAdminAccess ? undefined : 'none' }}>
 					<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '0.9rem' }}>
 						Prices
 					</Typography>
@@ -404,7 +406,7 @@ const CourseDetailsEditBox = ({
 
 				<Box sx={{ display: 'flex', flexDirection: isMobileSize ? 'column' : 'row' }}>
 					<Box sx={{ display: 'flex' }}>
-						<Box sx={{ display: 'flex', marginLeft: user?.role === Roles.ADMIN ? (isMobileSize ? '0rem' : '4rem') : '0', flex: 1 }}>
+						<Box sx={{ display: 'flex', marginLeft: hasAdminAccess ? (isMobileSize ? '0rem' : '4rem') : '0', flex: 1 }}>
 							<Box sx={{ flex: 2 }}>
 								<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '0.9rem' }}>
 									Weeks
@@ -474,7 +476,7 @@ const CourseDetailsEditBox = ({
 							/>
 						</Box>
 					</Box>
-					<Box sx={{ display: user?.role !== Roles.ADMIN ? 'flex' : 'none', flex: 1, justifyContent: 'flex-end', width: '100%' }}>
+					<Box sx={{ display: !hasAdminAccess ? 'flex' : 'none', flex: 1, justifyContent: 'flex-end', width: '100%' }}>
 						<Tooltip title='External courses will be managed outside the platform.' placement='top' arrow>
 							<FormControlLabel
 								labelPlacement='start'

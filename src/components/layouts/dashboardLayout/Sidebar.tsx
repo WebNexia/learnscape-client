@@ -21,10 +21,12 @@ import { Roles } from '../../../interfaces/enums';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 
 import { useUnreadMessages } from '../../../hooks/useUnreadMessages';
+import { useAuth } from '../../../hooks/useAuth';
 const Sidebar = () => {
 	const navigate = useNavigate();
 
 	const { user } = useContext(UserAuthContext);
+	const { hasAdminAccess } = useAuth();
 	const location = useLocation();
 
 	const hasUnreadMessages = useUnreadMessages();
@@ -45,12 +47,11 @@ const Sidebar = () => {
 				alignItems: 'center',
 				width: '10rem',
 				minHeight: '100vh',
-				backgroundColor:
-					user?.role === Roles.ADMIN
-						? theme.bgColor?.adminSidebar
-						: user?.role === Roles.INSTRUCTOR
-							? theme.bgColor?.instructorSidebar
-							: theme.palette.primary.main,
+				backgroundColor: hasAdminAccess
+					? theme.bgColor?.adminSidebar
+					: user?.role === Roles.INSTRUCTOR
+						? theme.bgColor?.instructorSidebar
+						: theme.palette.primary.main,
 				position: 'fixed',
 				left: 0,
 				zIndex: 10,
@@ -95,7 +96,7 @@ const Sidebar = () => {
 						alignItems: 'flex-start',
 						marginTop: '1.5rem',
 					}}>
-					{user?.role === Roles.ADMIN && (
+					{hasAdminAccess && (
 						<>
 							<SidebarBtn
 								btnText='Dashboard'
@@ -139,12 +140,14 @@ const Sidebar = () => {
 								onClick={() => navigateWithPage(`/admin/submissions`)}
 								active={currentPath?.includes('/admin/submissions')}
 							/>
-							<SidebarBtn
-								btnText='Payments'
-								IconName={CreditCard}
-								onClick={() => navigateWithPage(`/admin/payments`)}
-								active={currentPath?.includes('/admin/payments')}
-							/>
+							{(user?.role === Roles.OWNER || user?.role === Roles.SUPER_ADMIN) && (
+								<SidebarBtn
+									btnText='Payments'
+									IconName={CreditCard}
+									onClick={() => navigateWithPage(`/admin/payments`)}
+									active={currentPath?.includes('/admin/payments')}
+								/>
+							)}
 							<SidebarBtn
 								btnText='Calendar'
 								IconName={CalendarMonth}

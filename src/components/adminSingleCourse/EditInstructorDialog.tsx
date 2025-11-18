@@ -14,9 +14,10 @@ import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import HandleImageUploadURL from '../../components/forms/uploadImageVideoDocument/HandleImageUploadURL';
 import { validateImageUrl } from '../../utils/urlValidation';
 import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
-import { Roles, NotificationType } from '../../interfaces/enums';
+import { NotificationType } from '../../interfaces/enums';
 import { serverTimestamp, writeBatch, doc } from 'firebase/firestore';
 import { db } from '../../firebase';
+import { useAuth } from '../../hooks/useAuth';
 
 interface EditInstructorDialogProps {
 	isEditInstructorDialogOpen: boolean;
@@ -38,6 +39,7 @@ const EditInstructorDialog = ({
 	const { updateCourse } = useContext(CoursesContext);
 
 	const { user } = useContext(UserAuthContext);
+	const { hasAdminAccess } = useAuth();
 
 	const [searchValue, setSearchValue] = useState<string>('');
 	const [singleCourseCopy, setSingleCourseCopy] = useState<SingleCourse | undefined>(singleCourse);
@@ -93,7 +95,7 @@ const EditInstructorDialog = ({
 			if (
 				singleCourseCopy?.instructor?.userId &&
 				singleCourse?.instructor?.userId?.toString() !== singleCourseCopy.instructor.userId.toString() &&
-				user?.role === 'admin'
+				hasAdminAccess
 			) {
 				try {
 					// Get the new instructor's data - API returns array, so get first element
@@ -162,13 +164,13 @@ const EditInstructorDialog = ({
 				}}
 				style={{ display: 'flex', flexDirection: 'column' }}>
 				<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', mb: '0.75rem', mt: '-0.5rem' }}>
-					{user?.role === Roles.ADMIN && (
+					{hasAdminAccess && (
 						<Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
 							<CustomTextField
 								fullWidth={false}
 								label='Name'
 								value={singleCourseCopy?.instructor?.name}
-								disabled={user?.role !== Roles.ADMIN}
+								disabled={!hasAdminAccess}
 								onChange={(e) => {
 									setSingleCourseCopy((prevData) => {
 										if (!prevData) return prevData;
@@ -226,7 +228,7 @@ const EditInstructorDialog = ({
 							/>
 						</Box>
 					)}
-					{user?.role === Roles.ADMIN && (
+					{hasAdminAccess && (
 						<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '1rem 4rem 0rem 2rem' }}>
 							<Box sx={{ width: '100%', mr: '3rem' }}>
 								<HandleImageUploadURL
@@ -274,7 +276,7 @@ const EditInstructorDialog = ({
 					)}
 				</Box>
 
-				{user?.role === Roles.ADMIN && (
+				{hasAdminAccess && (
 					<UserSearchSelect
 						value={searchValue}
 						onChange={setSearchValue}
