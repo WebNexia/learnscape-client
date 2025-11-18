@@ -7,7 +7,6 @@ import { User } from '../interfaces/user';
 import { Roles } from '../interfaces/enums';
 import { useNavigate } from 'react-router-dom';
 import { UserCoursesIdsWithCourseIds } from './UserCourseLessonDataContextProvider';
-import { useAuth } from '../hooks/useAuth';
 
 interface UserAuthContextTypes {
 	user?: User | undefined;
@@ -41,8 +40,6 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const navigate = useNavigate();
 
-	const { hasAdminAccess } = useAuth();
-
 	const [user, setUser] = useState<User>();
 	const [userId, setUserId] = useState<string>('');
 	const [firebaseUserId, setFirebaseUserId] = useState<string>('');
@@ -64,12 +61,15 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 		const currentPath = window.location.pathname;
 		const isOnAuthPage = currentPath === '/auth' || currentPath === '/';
 
+		if (!user || !isOnAuthPage) return;
+
 		// Admin, owner, and super-admin all go to admin dashboard
-		if (isOnAuthPage && hasAdminAccess) {
+		const hasAdminAccess = user.role === Roles.ADMIN || user.role === Roles.OWNER || user.role === Roles.SUPER_ADMIN;
+		if (hasAdminAccess) {
 			navigate('/admin/dashboard', { replace: true });
-		} else if (isOnAuthPage && user?.role === Roles.USER) {
+		} else if (user.role === Roles.USER) {
 			navigate('/dashboard', { replace: true });
-		} else if (isOnAuthPage && user?.role === Roles.INSTRUCTOR) {
+		} else if (user.role === Roles.INSTRUCTOR) {
 			navigate('/instructor/dashboard', { replace: true });
 		}
 	}, [user, navigate]);
@@ -188,11 +188,12 @@ const UserAuthContextProvider = (props: UserAuthContextProviderProps) => {
 
 				// User lesson data now fetched per course using useUserLessonsForCourse hook
 			} else {
-				console.error('❌ Invalid user data received:', userData);
 				throw new Error('Invalid user data received');
 			}
-		} catch (error) {
-			console.error('Failed to fetch user data:', error);
+		} catch (error: any) {
+			console.error('❌ Failed to fetch user data:', error);
+			console.error('❌ Error response:', error.response?.data);
+			console.error('❌ Error status:', error.response?.status);
 			throw new Error('Failed to fetch user data');
 		} finally {
 			// Reset fetching flag
