@@ -246,7 +246,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 							'borderRadius': fromHomePage ? '0.75rem' : undefined,
 							'color': fromHomePage ? '#fff !important' : '',
 							'&:hover': {
-								color: '#fff !important',
+								color: fromHomePage ? '#fff !important' : undefined,
 								backgroundColor: fromHomePage ? '#FF6F4E !important' : undefined,
 							},
 						}}>

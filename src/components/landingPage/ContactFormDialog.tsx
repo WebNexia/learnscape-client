@@ -90,7 +90,7 @@ const ContactFormDialog = ({
 					sx: {
 						height: 'auto',
 						maxHeight: '90vh',
-						overflow: 'visible',
+						overflow: 'auto',
 						borderRadius: '0.75rem',
 						background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.98))',
 						boxShadow: '0 8px 32px rgba(44, 62, 80, 0.1)',
