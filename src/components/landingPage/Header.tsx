@@ -8,7 +8,8 @@ import { Menu } from '@mui/icons-material';
 import LandingPageDrawer from '../landingPage/LandingPageDrawer';
 
 const Header = () => {
-	const { isVerySmallScreen, isSmallScreen, isRotated, isRotatedMedium } = useContext(MediaQueryContext);
+	const { isVerySmallScreen, isSmallScreen, isRotated, isRotatedMedium, isMobileLandscape, isMobilePortrait, isTabletPortrait } =
+		useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 	const navigate = useNavigate();
@@ -65,7 +66,15 @@ const Header = () => {
 						display: 'flex',
 						justifyContent: 'space-between',
 						width: '100%',
-						height: isMobileSize ? '10vh' : '13vh',
+						height: isMobileLandscape
+							? '10vh'
+							: isMobilePortrait
+								? '10vh'
+								: isTabletPortrait
+									? '10vh'
+									: isSmallScreen
+										? '10vh'
+										: { md: '13vh', lg: '13vh' },
 						background: 'linear-gradient(270deg, rgba(102, 126, 234, 0.5) 0%, rgba(118, 75, 162, 0.4) 50%, transparent 100%)',
 						backdropFilter: 'blur(20px)',
 						borderBottom: '1px solid rgba(91, 141, 239, 0.15)',
@@ -77,7 +86,7 @@ const Header = () => {
 						zIndex: 1201,
 					}}>
 					<Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
-						{(isVerySmallScreen || isRotatedMedium) && (
+						{(isSmallScreen || isRotatedMedium) && (
 							<IconButton onClick={() => setIsDrawerOpen(true)}>
 								<Menu sx={{ color: theme.textColor?.primary.main, padding: 0 }} fontSize='small' />
 							</IconButton>
@@ -103,7 +112,7 @@ const Header = () => {
 					</Box>
 					<LandingPageDrawer isDrawerOpen={isDrawerOpen} setIsDrawerOpen={setIsDrawerOpen} navItems={navItems} />
 
-					{!(isVerySmallScreen || isRotatedMedium) && (
+					{!(isSmallScreen || isRotatedMedium) && (
 						<Box sx={{ display: 'flex', justifyContent: 'center', flex: 1 }}>
 							{navItems
 								?.filter((item) => item.label !== 'Ana Sayfa')

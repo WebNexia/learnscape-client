@@ -56,7 +56,7 @@ export const useChatList = ({ userFirebaseId, activeChat }: UseChatListProps): U
 
 	// Event-driven refresh function with retry mechanism
 	const refreshChatList = useCallback(
-		async (retries = 3) => {
+		async (retries = 3, bypassCache = false) => {
 			if (!userFirebaseId) return;
 
 			// PERFORMANCE: Avoid useless backend calls when user switched tab
@@ -66,7 +66,9 @@ export const useChatList = ({ userFirebaseId, activeChat }: UseChatListProps): U
 			if (activeChat) return;
 
 			try {
-				const response = await axios.get('/chats');
+				// Add cache-busting parameter if bypassCache is true
+				const url = bypassCache ? `/chats?t=${Date.now()}` : '/chats';
+				const response = await axios.get(url);
 				const chatListData = response.data;
 
 				// Sort by last message timestamp (most recent first)

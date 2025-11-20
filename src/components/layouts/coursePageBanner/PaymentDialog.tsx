@@ -645,7 +645,7 @@ const PaymentDialog = ({
 							sx: {
 								height: 'auto',
 								maxHeight: '100vh',
-								overflow: 'visible',
+								overflow: 'auto',
 								borderRadius: DIALOG_BORDERRADIUS,
 								background: DIALOG_BG,
 								boxShadow: DIALOG_BOXSHADOW,

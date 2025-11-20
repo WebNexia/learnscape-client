@@ -172,36 +172,55 @@ export const useChatNavigation = ({
 
 			if (isVerySmallScreen) setIsChatsListVisible(false);
 
-			// ✅ OPTIMIZED: Batch Firestore operations
-			const messagesRef = collection(db, 'chats', chat.chatId, 'messages');
-			const unreadMessagesQuery = isGroupChat(chat)
-				? query(messagesRef, where('isRead', '==', false))
-				: query(messagesRef, where('receiverId', '==', user?.firebaseUserId), where('isRead', '==', false));
+			// ✅ FIXED: Mark messages as read and update chat document
+			try {
+				const chatDocRef = doc(db, 'chats', chat.chatId);
+				const chatDoc = await getDoc(chatDocRef);
 
-			getDocs(unreadMessagesQuery)
-				.then((snap) => {
-					if (!snap.empty) {
-						const batch = writeBatch(db);
+				if (!chatDoc.exists()) {
+					console.error('Chat document does not exist:', chat.chatId);
+					return;
+				}
 
-						// Batch message updates
-						snap.docs.forEach((doc) => {
-							batch.update(doc.ref, { isRead: true });
-						});
+				const chatData = chatDoc.data();
+				const currentUnreadBy = chatData?.unreadBy || [];
 
-						// Batch chat document update
-						const chatDocRef = doc(db, 'chats', chat.chatId);
-						batch.update(chatDocRef, {
-							hasUnreadMessages: false,
-							unreadBy: arrayRemove(user?.firebaseUserId),
-						});
+				// Check if user is in unreadBy array
+				if (!currentUnreadBy.includes(user?.firebaseUserId)) {
+					// User already marked as read, nothing to do
+					return;
+				}
 
-						// Single batch commit
-						batch.commit();
-					}
-				})
-				.catch(console.error);
+				const batch = writeBatch(db);
+
+				// For 1-1 chats: mark unread messages as read
+				if (!isGroupChat(chat)) {
+					const messagesRef = collection(db, 'chats', chat.chatId, 'messages');
+					const unreadMessagesQuery = query(messagesRef, where('receiverId', '==', user?.firebaseUserId), where('isRead', '==', false));
+
+					const snap = await getDocs(unreadMessagesQuery);
+					snap.docs.forEach((messageDoc) => {
+						batch.update(messageDoc.ref, { isRead: true });
+					});
+				}
+
+				// Remove user from unreadBy array
+				const updatedUnreadBy = currentUnreadBy.filter((uid: string) => uid !== user?.firebaseUserId);
+
+				// Update chat document: remove user from unreadBy
+				// Set hasUnreadMessages to true only if other users still have unread messages
+				batch.update(chatDocRef, {
+					unreadBy: arrayRemove(user?.firebaseUserId),
+					hasUnreadMessages: updatedUnreadBy.length > 0, // true if others still have unread
+				});
+
+				// ✅ FIXED: Await batch commit to ensure update completes
+				await batch.commit();
+			} catch (error) {
+				console.error('❌ Error marking messages as read:', error);
+			}
 		},
-		[user?.firebaseUserId, isVerySmallScreen, globalBlockedUsers, activeChatId, isGroupChat]
+		[user?.firebaseUserId, isVerySmallScreen, globalBlockedUsers, activeChatId, isGroupChat, refreshChatList]
 	);
 
 	const handleReplyMessage = useCallback((message: Message) => {
