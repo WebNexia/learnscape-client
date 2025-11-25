@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import {
 	Box,
 	Card,
@@ -20,6 +20,7 @@ import {
 import { Download, Visibility, Close, PictureAsPdf, Description, Image, VideoFile, AudioFile, GetApp, OpenInNew } from '@mui/icons-material';
 import { Document } from '../../interfaces/document';
 import InlinePDFViewer from './InlinePDFViewer';
+import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 
 interface DocumentViewerProps {
 	documents: Document[];
@@ -39,7 +40,7 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
 	inlinePDFs = false,
 }) => {
 	const theme = useTheme();
-	const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+	const { isMobileLandscape, isMobilePortrait } = useContext(MediaQueryContext);
 	const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
 	const [isViewerOpen, setIsViewerOpen] = useState(false);
 	const [loading, setLoading] = useState(false);
@@ -159,7 +160,7 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
 					variant='h6'
 					component='h3'
 					sx={{
-						fontSize: isMobile ? '0.9rem' : '1rem',
+						fontSize: isMobilePortrait ? '0.9rem' : '1rem',
 						fontWeight: 600,
 						mb: 1,
 						lineHeight: 1.3,
@@ -239,7 +240,7 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
 					variant='h5'
 					sx={{
 						mb: 2,
-						fontSize: isMobile ? '1rem' : '1.15rem',
+						fontSize: isMobilePortrait || isMobileLandscape ? '0.9rem' : '1.15rem',
 					}}>
 					{title}
 				</Typography>
@@ -249,7 +250,12 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
 			{inlinePDFs && pdfDocuments.length > 0 && (
 				<Box sx={{ mb: 3 }}>
 					{pdfDocuments.map((pdfDoc) => (
-						<InlinePDFViewer key={pdfDoc._id} documentUrl={pdfDoc.documentUrl} documentName={pdfDoc.name} height={isMobile ? '400px' : '600px'} />
+						<InlinePDFViewer
+							key={pdfDoc._id}
+							documentUrl={pdfDoc.documentUrl}
+							documentName={pdfDoc.name}
+							height={isMobilePortrait ? '400px' : '600px'}
+						/>
 					))}
 				</Box>
 			)}
@@ -258,7 +264,7 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
 			{nonPdfDocuments.length > 0 && (
 				<>
 					{inlinePDFs && pdfDocuments.length > 0 && (
-						<Typography variant='h6' sx={{ mb: 2, fontSize: isMobile ? '1rem' : '1.1rem' }}>
+						<Typography variant='h6' sx={{ mb: 2, fontSize: isMobilePortrait ? '1rem' : '1.1rem' }}>
 							Other Materials
 						</Typography>
 					)}
@@ -266,7 +272,7 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
 						<Box
 							sx={{
 								display: 'grid',
-								gridTemplateColumns: isMobile ? 'repeat(auto-fill, minmax(200px, 1fr))' : 'repeat(auto-fill, minmax(250px, 1fr))',
+								gridTemplateColumns: isMobilePortrait ? 'repeat(auto-fill, minmax(200px, 1fr))' : 'repeat(auto-fill, minmax(250px, 1fr))',
 								gap: 2,
 							}}>
 							{nonPdfDocuments.map(renderDocumentCard)}
@@ -284,7 +290,7 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
 						<Box
 							sx={{
 								display: 'grid',
-								gridTemplateColumns: isMobile ? 'repeat(auto-fill, minmax(200px, 1fr))' : 'repeat(auto-fill, minmax(250px, 1fr))',
+								gridTemplateColumns: isMobilePortrait ? 'repeat(auto-fill, minmax(200px, 1fr))' : 'repeat(auto-fill, minmax(250px, 1fr))',
 								gap: 2,
 							}}>
 							{displayDocuments.map(renderDocumentCard)}
@@ -296,7 +302,7 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
 			)}
 
 			{/* Document Viewer Modal */}
-			<Dialog open={isViewerOpen} onClose={() => setIsViewerOpen(false)} maxWidth='lg' fullWidth fullScreen={isMobile}>
+			<Dialog open={isViewerOpen} onClose={() => setIsViewerOpen(false)} maxWidth='lg' fullWidth fullScreen={isMobilePortrait}>
 				<DialogContent sx={{ p: 0, position: 'relative' }}>
 					<IconButton
 						onClick={() => setIsViewerOpen(false)}

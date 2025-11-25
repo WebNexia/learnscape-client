@@ -2,7 +2,18 @@ import { useContext, useEffect, useState, useMemo } from 'react';
 import { Box, Button, DialogContent, IconButton, Slide, Tooltip, Typography } from '@mui/material';
 import { useParams } from 'react-router-dom';
 import axios from '@utils/axiosInstance';
-import { Article, Close, DoneAll, GetApp, Home, KeyboardBackspaceOutlined, KeyboardDoubleArrowRight, NotListedLocation } from '@mui/icons-material';
+import {
+	Article,
+	Close,
+	DoneAll,
+	GetApp,
+	Home,
+	KeyboardBackspaceOutlined,
+	KeyboardDoubleArrowRight,
+	NotListedLocation,
+	VolumeOff,
+	VolumeUp,
+} from '@mui/icons-material';
 import theme from '../themes';
 import DashboardHeader from '../components/layouts/dashboardLayout/DashboardHeader';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
@@ -29,6 +40,7 @@ import { decode } from 'html-entities';
 import UniversalVideoPlayer from '../components/video/UniversalVideoPlayer';
 import DocumentViewer from '../components/documents/DocumentViewer';
 import { UserCourseLessonDataContext } from '../contexts/UserCourseLessonDataContextProvider';
+import { truncateText } from '@utils/utilText';
 
 export interface QuizQuestionAnswer {
 	questionId: string;
@@ -45,7 +57,18 @@ const LessonPage = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { lessonId, courseId, userCourseId } = useParams();
 	const { organisation } = useContext(OrganisationContext);
-	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
+	const {
+		isSmallScreen,
+		isRotatedMedium,
+		isRotated,
+		isVerySmallScreen,
+		isSmallMobilePortrait,
+		isSmallMobileLandscape,
+		isMobilePortrait,
+		isMobileLandscape,
+		isTabletLandscape,
+		isTabletPortrait,
+	} = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
@@ -97,6 +120,7 @@ const LessonPage = () => {
 	const [isUserLessonNotesUploading, setIsUserLessonNotesUploading] = useState<boolean>(false);
 	const [isNotesUpdated, setIsNotesUpdated] = useState<boolean>(false);
 	const [isQuestionsMapOpen, setIsQuestionsMapOpen] = useState<boolean>(false);
+	const [isSoundMuted, setIsSoundMuted] = useState<boolean>(false);
 
 	const [lesson, setLesson] = useState<Lesson>({
 		_id: '',
@@ -152,11 +176,19 @@ const LessonPage = () => {
 					});
 					setLessonType(lessonData.type);
 
-					const userLessonResponse = await axios.get(`${base_url}/userlessons/${userLessonId}`);
-					setUserLessonNotes(userLessonResponse.data.data[0].notes);
-					setEditorContent(userLessonResponse.data.data[0].notes);
-
-					setTeacherQuizFeedback(userLessonResponse.data.data[0].teacherFeedback);
+					// Only fetch user lesson data if userLessonId exists
+					if (userLessonId) {
+						try {
+							const userLessonResponse = await axios.get(`${base_url}/userlessons/${userLessonId}`);
+							if (userLessonResponse.data.data && userLessonResponse.data.data[0]) {
+								setUserLessonNotes(userLessonResponse.data.data[0].notes);
+								setEditorContent(userLessonResponse.data.data[0].notes);
+								setTeacherQuizFeedback(userLessonResponse.data.data[0].teacherFeedback);
+							}
+						} catch (error) {
+							console.log('Error fetching user lesson data:', error);
+						}
+					}
 
 					const answers = await fetchUserAnswersByLesson(lessonId);
 					if (lessonData.type === LessonType.QUIZ) {
@@ -218,6 +250,10 @@ const LessonPage = () => {
 	}, [isQuiz, isQuizInProgress]);
 
 	const updateUserLessonNotes = async () => {
+		if (!userLessonId) {
+			console.error('Cannot update notes: userLessonId is undefined');
+			return;
+		}
 		try {
 			setIsUserLessonNotesUploading(true);
 			const res = await axios.patch(`${base_url}/userlessons/${userLessonId}`, { notes: editorContent?.trim() });
@@ -305,7 +341,8 @@ const LessonPage = () => {
 					backgroundColor: theme.bgColor?.secondary,
 					zIndex: 3,
 					height: isMobileSize ? '2.5rem' : '3rem',
-					mt: '0.5rem',
+					mt: isSmallMobileLandscape || isMobileLandscape || isTabletPortrait ? '0.75rem' : '0.5rem',
+					boxShadow: '0 0.1rem 0.3rem 0.1rem rgba(0,0,0,0.2)',
 				}}>
 				<Box sx={{ flex: 1, justifyContent: 'flex-start' }}>
 					<Button
@@ -324,23 +361,44 @@ const LessonPage = () => {
 							setIsQuestionsVisible(false);
 							window.scrollTo({ top: 0, behavior: 'smooth' });
 						}}>
-						{isMobileSize ? 'Instructions' : 'Lesson Instructions'}
+						{isMobileSize ? '' : 'Lesson Instructions'}
 					</Button>
 				</Box>
 
-				<Box sx={{ flex: 3, display: 'flex', justifyContent: 'center', textAlign: 'center' }}>
+				{isQuestionsVisible && (
+					<Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+						{lessonType === LessonType.PRACTICE_LESSON && (
+							<Tooltip title={isSoundMuted ? 'Unmute' : 'Mute'} placement='left' arrow>
+								<IconButton onClick={() => setIsSoundMuted(!isSoundMuted)}>
+									{isSoundMuted ? (
+										<VolumeOff fontSize={isMobileSize ? 'small' : 'medium'} />
+									) : (
+										<VolumeUp fontSize={isMobileSize ? 'small' : 'medium'} />
+									)}
+								</IconButton>
+							</Tooltip>
+						)}
+						<Tooltip title='Take Notes' placement='right' arrow>
+							<IconButton onClick={() => setIsNotesDrawerOpen(!isNotesDrawerOpen)}>
+								<Article fontSize={isMobileSize ? 'small' : 'medium'} />
+							</IconButton>
+						</Tooltip>
+					</Box>
+				)}
+
+				<Box sx={{ flex: 3, display: isQuestionsVisible ? 'none' : 'flex', justifyContent: 'center', textAlign: 'center' }}>
 					<Typography
 						variant={isMobileSize ? 'h6' : 'h3'}
 						sx={{
 							fontSize: isMobileSize ? (lesson?.title?.length > 30 ? '0.7rem' : '0.85rem') : '1.25rem',
 						}}>
-						{lesson?.title}
+						{truncateText(lesson?.title, isSmallMobilePortrait ? 30 : lesson?.title?.length || 0)}
 					</Typography>
 				</Box>
 				<Box sx={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
 					<Button
 						variant='text'
-						startIcon={<Home />}
+						endIcon={<Home fontSize='small' />}
 						sx={{
 							'fontSize': isMobileSize ? '0.7rem' : '0.8rem',
 							'color': theme.textColor?.primary,
@@ -351,7 +409,7 @@ const LessonPage = () => {
 						}}
 						onClick={handleLessonNavigation}
 						disabled={isQuizInProgress}>
-						{isMobileSize ? 'Course' : 'Course Home Page'}
+						{isMobileSize ? '' : 'Course Home Page'}
 					</Button>
 				</Box>
 			</Box>
@@ -359,75 +417,92 @@ const LessonPage = () => {
 			<Box
 				sx={{
 					position: 'fixed',
-					top: isMobileSize ? '6.5rem' : '9rem',
+					top: isSmallMobilePortrait ? '6.5rem' : isSmallMobileLandscape ? '9rem' : '8rem',
 					left: isSmallScreen ? '0.15rem' : isRotatedMedium ? '1rem' : '2rem',
 					width: '80%',
 					zIndex: 3,
+					overflow: 'auto',
 				}}>
-				<Tooltip title='Take Notes' placement='right' arrow>
-					<IconButton onClick={() => setIsNotesDrawerOpen(!isNotesDrawerOpen)}>
-						<Article fontSize={isMobileSize ? 'small' : 'medium'} />
-					</IconButton>
-				</Tooltip>
+				{!isQuestionsVisible && (
+					<Tooltip title='Take Notes' placement='right' arrow>
+						<IconButton onClick={() => setIsNotesDrawerOpen(!isNotesDrawerOpen)}>
+							<Article fontSize={isMobileSize ? 'small' : 'medium'} />
+						</IconButton>
+					</Tooltip>
+				)}
 				<Slide direction='right' in={isNotesDrawerOpen} mountOnEnter unmountOnExit timeout={{ enter: 1000, exit: 500 }}>
 					<Box
 						sx={{
 							position: 'fixed',
 							left: 0,
-							top: isVerySmallScreen ? '6rem' : isMobileSize ? '9rem' : '11rem',
-							width: isVerySmallScreen ? '90%' : isRotatedMedium ? '60%' : '40%',
+							top: isSmallMobilePortrait || isSmallMobileLandscape || isMobilePortrait || isMobileLandscape ? '6rem' : '11rem',
+							width: isSmallMobilePortrait
+								? '90%'
+								: isSmallMobileLandscape
+									? '70%'
+									: isMobilePortrait
+										? '80%'
+										: isTabletPortrait
+											? '70%'
+											: isTabletLandscape
+												? '60%'
+												: '40%',
 							height: 'fit-content',
+							maxHeight:
+								isSmallMobilePortrait || isSmallMobileLandscape || isMobilePortrait || isMobileLandscape
+									? 'calc(100vh - 6rem)'
+									: 'calc(100vh - 11rem)',
 							boxShadow: 10,
 							padding: '1rem 1rem 0.5rem 1rem',
 							borderRadius: '0 0.35rem  0.35rem 0 ',
 							bgcolor: 'background.paper',
 							overflow: 'auto',
-							zIndex: 3,
+							zIndex: 30,
+							display: 'flex',
+							flexDirection: 'column',
 						}}>
-						<Box sx={{ minHeight: '100%', width: '100%' }}>
-							<Box sx={{ display: 'flex', flexDirection: 'column' }}>
-								<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-									<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.75rem' : undefined }}>
-										{lesson.title} Notes
-									</Typography>
-									<IconButton
-										onClick={() => {
-											setIsNotesDrawerOpen(false);
-											setUserLessonNotes(editorContent);
-										}}
-										sx={{ padding: isMobileSize ? '0.5rem' : undefined }}>
-										<Close sx={{ fontSize: isMobileSize ? '1rem' : '1.25rem' }} />
+						<Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+							<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+								<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.75rem' : undefined }}>
+									Lesson Notes
+								</Typography>
+								<IconButton
+									onClick={() => {
+										setIsNotesDrawerOpen(false);
+										setUserLessonNotes(editorContent);
+									}}
+									sx={{ padding: isMobileSize ? '0.5rem' : undefined }}>
+									<Close sx={{ fontSize: isMobileSize ? '1rem' : '1.25rem' }} />
+								</IconButton>
+							</Box>
+							<Box sx={{ mt: '0.5rem', flex: 1, minHeight: 0, overflow: 'hidden' }} id='editor-content'>
+								<TinyMceEditor
+									height='300'
+									handleEditorChange={(content) => {
+										setEditorContent(content);
+										setIsNotesUpdated(true);
+									}}
+									initialValue={userLessonNotes}
+								/>
+							</Box>
+							<Box sx={{ display: 'flex', mt: '1rem', justifyContent: 'space-between', flexShrink: 0 }}>
+								<Tooltip title='Download as PDF' placement='right' arrow>
+									<IconButton onClick={handleDownloadPDF} sx={{ padding: isMobileSize ? '0.5rem' : undefined }}>
+										<GetApp sx={{ fontSize: isMobileSize ? '1.15rem' : '1.25rem' }} />
 									</IconButton>
-								</Box>
-								<Box sx={{ mt: '0.5rem' }} id='editor-content'>
-									<TinyMceEditor
-										height='300'
-										handleEditorChange={(content) => {
-											setEditorContent(content);
-											setIsNotesUpdated(true);
-										}}
-										initialValue={userLessonNotes}
-									/>
-								</Box>
-								<Box sx={{ display: 'flex', mt: '1rem', justifyContent: 'space-between' }}>
-									<Tooltip title='Download as PDF' placement='right' arrow>
-										<IconButton onClick={handleDownloadPDF} sx={{ padding: isMobileSize ? '0.5rem' : undefined }}>
-											<GetApp sx={{ fontSize: isMobileSize ? '1.15rem' : '1.25rem' }} />
-										</IconButton>
-									</Tooltip>
-									{!isUserLessonNotesUploading ? (
-										<CustomSubmitButton
-											size='small'
-											onClick={updateUserLessonNotes}
-											sx={{ height: '1.75rem', fontSize: isMobileSize ? '0.75rem' : undefined }}>
-											Save
-										</CustomSubmitButton>
-									) : (
-										<LoadingButton loading variant='outlined' size='small' sx={{ textTransform: 'capitalize' }}>
-											Upload
-										</LoadingButton>
-									)}
-								</Box>
+								</Tooltip>
+								{!isUserLessonNotesUploading ? (
+									<CustomSubmitButton
+										size='small'
+										onClick={updateUserLessonNotes}
+										sx={{ height: '1.75rem', fontSize: isMobileSize ? '0.75rem' : undefined }}>
+										Save
+									</CustomSubmitButton>
+								) : (
+									<LoadingButton loading variant='outlined' size='small' sx={{ textTransform: 'capitalize' }}>
+										Upload
+									</LoadingButton>
+								)}
 							</Box>
 						</Box>
 					</Box>
@@ -440,7 +515,7 @@ const LessonPage = () => {
 							display: 'flex',
 							justifyContent: 'center',
 							alignItems: 'center',
-							margin: isMobileSize ? '6.5rem 0 1rem 0' : '9rem 0 2rem 0',
+							margin: isMobileSize ? '7rem 0 1rem 0' : '9rem 0 2rem 0',
 							width: '100%',
 							height: '22rem',
 						}}>
@@ -472,7 +547,7 @@ const LessonPage = () => {
 						justifyContent: 'flex-start',
 						alignItems: 'center',
 						width: isVerySmallScreen ? '80%' : '85%',
-						margin: lesson?.videoUrl ? '1rem 0' : isMobileSize ? '6rem 0 1rem 0' : '8rem 0 1rem 0',
+						margin: lesson?.videoUrl ? '1rem 0' : isSmallMobilePortrait ? '6rem 0 1rem 0' : '7rem 0 1rem 0',
 					}}>
 					<Box
 						sx={{
@@ -505,7 +580,7 @@ const LessonPage = () => {
 									dangerouslySetInnerHTML={{ __html: sanitizeHtml(decode(lesson.text)) }}
 									sx={{
 										'lineHeight': 1.9,
-										'fontSize': isMobileSize ? '0.75rem' : '0.85rem',
+										'fontSize': isMobileSize ? '0.7rem' : '0.9rem',
 										'& img': {
 											maxWidth: '100%',
 											height: 'auto',
@@ -567,7 +642,24 @@ const LessonPage = () => {
 				</Box>
 			)}
 			{isQuestionsVisible && (
-				<Box sx={{ width: '80%' }}>
+				<Box
+					sx={{
+						width: isSmallMobilePortrait
+							? '85%'
+							: isSmallMobileLandscape
+								? '75%'
+								: isMobilePortrait
+									? '80%'
+									: isMobileLandscape
+										? '70%'
+										: isTabletPortrait
+											? '70%'
+											: isTabletLandscape
+												? '70%'
+												: '60%',
+						mt: isSmallMobilePortrait ? '1rem' : isSmallMobileLandscape ? '1rem' : '1rem',
+						minHeight: 'calc(90vh)',
+					}}>
 					<Questions
 						questions={lesson?.questions}
 						lessonType={lessonType}
@@ -577,6 +669,7 @@ const LessonPage = () => {
 						userQuizAnswers={userQuizAnswers}
 						setUserQuizAnswers={setUserQuizAnswers}
 						lessonName={lesson.title}
+						isSoundMuted={isSoundMuted}
 					/>
 				</Box>
 			)}

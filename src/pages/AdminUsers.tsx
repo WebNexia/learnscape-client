@@ -48,7 +48,7 @@ const AdminUsers = () => {
 
 	const { orgId, organisation } = useContext(OrganisationContext);
 
-	const { userId, user } = useContext(UserAuthContext);
+	const { userId, user: loggedInUser } = useContext(UserAuthContext);
 
 	const { users, loading, error, fetchMoreUsers, updateUser, totalItems, loadedPages, enableUsersFetch, setUsersPageNumber } =
 		useContext(UsersContext);
@@ -98,15 +98,15 @@ const AdminUsers = () => {
 	const applyVisibilityFilter = (usersToFilter: User[]): User[] => {
 		return usersToFilter.filter((mappedUser) => {
 			// Owner can see all users (including super-admin and admin)
-			if (user?.role === Roles.OWNER) {
+			if (loggedInUser?.role === Roles.OWNER) {
 				return true;
 			}
 			// Super-admin can see everyone except owner
-			if (user?.role === Roles.SUPER_ADMIN) {
+			if (loggedInUser?.role === Roles.SUPER_ADMIN) {
 				return mappedUser.role !== Roles.OWNER;
 			}
 			// Admin can see everyone except super-admin and owner
-			if (user?.role === Roles.ADMIN) {
+			if (loggedInUser?.role === Roles.ADMIN) {
 				return mappedUser.role !== Roles.SUPER_ADMIN && mappedUser.role !== Roles.OWNER;
 			}
 			// Default: show all (shouldn't happen as this is an admin page)
@@ -454,7 +454,7 @@ const AdminUsers = () => {
 															openEditUserModal(index);
 														}}
 														icon={<Edit fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
-														disabled={user._id === userId || user?.role === Roles.SUPER_ADMIN}
+														disabled={user._id === userId}
 													/>
 
 													<CustomDialog
@@ -484,19 +484,27 @@ const AdminUsers = () => {
 																		fontSize: isMobileSize ? '0.65rem' : '0.85rem',
 																		textTransform: 'capitalize',
 																	}}>
-																	{[Roles.ADMIN, Roles.INSTRUCTOR, Roles.USER]?.map((type) => (
-																		<MenuItem
-																			value={type}
-																			key={type}
-																			sx={{
-																				fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-																				textTransform: 'capitalize',
-																				padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-																				minHeight: '2rem',
-																			}}>
-																			{type}
-																		</MenuItem>
-																	))}
+																	{[Roles.SUPER_ADMIN, Roles.ADMIN, Roles.INSTRUCTOR, Roles.USER]
+																		?.filter((type) => {
+																			// Only owner can see super-admin role
+																			if (type === Roles.SUPER_ADMIN) {
+																				return loggedInUser?.role === Roles.OWNER;
+																			}
+																			return true;
+																		})
+																		.map((type) => (
+																			<MenuItem
+																				value={type}
+																				key={type}
+																				sx={{
+																					fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+																					textTransform: 'capitalize',
+																					padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+																					minHeight: '2rem',
+																				}}>
+																				{type}
+																			</MenuItem>
+																		))}
 																</Select>
 															</FormControl>
 															<CustomDialogActions
@@ -522,7 +530,7 @@ const AdminUsers = () => {
 																<PersonOff fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />
 															)
 														}
-														disabled={user._id === userId || user?.role === Roles.SUPER_ADMIN}
+														disabled={user._id === userId}
 													/>
 
 													{isUserStatusUpdateModalOpen[index] !== undefined && (

@@ -10,21 +10,33 @@ interface QuestionMediaProps {
 }
 
 const QuestionMedia = ({ question, isStudentFeedbackPage }: QuestionMediaProps) => {
-	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const {
+		isSmallScreen,
+		isRotatedMedium,
+		isSmallMobileLandscape,
+		isSmallMobilePortrait,
+		isMobilePortrait,
+		isMobileLandscape,
+		isTabletPortrait,
+		isTabletLandscape,
+		isDesktopPortrait,
+		isDesktopLandscape,
+	} = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	// const isMobileSizeSmall = isVerySmallScreen || isRotated;
 	return (
 		<Box
 			sx={{
 				display: 'flex',
-				flexDirection: isMobileSize ? 'column' : 'row',
+				flexDirection: isSmallMobilePortrait || isMobilePortrait ? 'column' : isSmallMobileLandscape ? 'row' : 'row',
 				justifyContent: 'center',
 				alignItems: 'center',
 				width: '100%',
 				height: (() => {
 					if (!question?.imageUrl && !question?.videoUrl) return '0';
-					if (question?.imageUrl && question?.videoUrl) return isMobileSize ? '10rem' : '18rem';
-					return isMobileSize ? '10rem' : '18rem';
+					if (question?.imageUrl && question?.videoUrl) return isMobileSize ? '9rem' : '16rem';
+					if (question?.videoUrl && !question?.imageUrl) return isMobileSize ? '11rem' : '16rem';
+					return isMobileSize ? '9rem' : '16rem';
 				})(),
 				margin: (() => {
 					// Student feedback page margins
@@ -36,10 +48,16 @@ const QuestionMedia = ({ question, isStudentFeedbackPage }: QuestionMediaProps) 
 
 					// Regular page margins
 					if (question?.imageUrl && question?.videoUrl) {
-						return isMobileSize ? '12rem 0 4rem 0' : '9rem 0 0 0';
+						return isSmallMobilePortrait || isMobilePortrait
+							? '12rem 0 4rem 0'
+							: isSmallMobileLandscape || isMobileLandscape
+								? '6rem 0 0 0'
+								: isTabletPortrait || isTabletLandscape
+									? '7rem 0 0 0'
+									: '8rem 0 0 0';
 					}
 					if (question?.imageUrl || question?.videoUrl) {
-						return isMobileSize ? '6.5rem 0 -1rem 0' : '9rem 0 0 0';
+						return isMobileSize ? '6.5rem 0 -1rem 0' : '8rem 0 0 0';
 					}
 					return '0';
 				})(),
@@ -52,7 +70,7 @@ const QuestionMedia = ({ question, isStudentFeedbackPage }: QuestionMediaProps) 
 						display: 'flex',
 						justifyContent: 'center',
 						alignItems: 'center',
-						mb: isMobileSize ? '1rem' : '0rem',
+						mb: isSmallMobilePortrait || isMobilePortrait ? '1rem' : isSmallMobileLandscape ? '0rem' : '0rem',
 					}}>
 					<img
 						src={question?.imageUrl}
@@ -76,6 +94,7 @@ const QuestionMedia = ({ question, isStudentFeedbackPage }: QuestionMediaProps) 
 						display: 'flex',
 						justifyContent: 'center',
 						alignItems: 'center',
+						mb: isSmallMobilePortrait || isMobilePortrait ? '1rem' : isSmallMobileLandscape ? '0rem' : '0rem',
 					}}>
 					<UniversalVideoPlayer
 						url={question.videoUrl}

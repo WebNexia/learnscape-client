@@ -147,7 +147,20 @@ const QuestionDialogContentNonEdit = ({ question, singleLessonBeforeSave }: Ques
 						)}
 					</Box>
 				)}
-			{question && fetchQuestionTypeName(question) === QuestionType.FLIP_CARD && <FlipCardPreview question={question} questionNonEditModal={true} />}
+			{question && fetchQuestionTypeName(question) === QuestionType.FLIP_CARD && (
+				<Box
+					sx={{
+						width: '100%',
+						display: 'flex',
+						justifyContent: 'center',
+						alignItems: 'center',
+						padding: '2rem',
+						mt: isMobileSize ? '-5rem' : '2rem',
+						mb: '2rem',
+					}}>
+					<FlipCardPreview question={question} questionNonEditModal={true} />
+				</Box>
+			)}
 
 			{question && fetchQuestionTypeName(question) === QuestionType.AUDIO_VIDEO && (
 				<Box sx={{ display: 'flex', justifyContent: isMobileSize ? 'space-between' : 'center' }}>

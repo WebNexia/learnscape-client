@@ -86,7 +86,18 @@ const QuizQuestion = ({
 	const { user } = useContext(UserAuthContext);
 	const { userCoursesData } = useContext(UserCourseLessonDataContext);
 
-	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const {
+		isSmallScreen,
+		isRotatedMedium,
+		isSmallMobileLandscape,
+		isSmallMobilePortrait,
+		isMobilePortrait,
+		isMobileLandscape,
+		isTabletPortrait,
+		isTabletLandscape,
+		isDesktopPortrait,
+		isDesktopLandscape,
+	} = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
 	const [userQuizAnswerAfterSubmission, setUserQuizAnswerAfterSubmission] = useState<string>('');
@@ -383,6 +394,10 @@ const QuizQuestion = ({
 				display: displayedQuestionNumber === questionNumber ? 'flex' : 'none',
 				flexDirection: 'column',
 				alignItems: 'center',
+				position: 'relative',
+				minHeight: 'calc(95vh)',
+				height: 'fit-content',
+				paddingBottom: '8rem',
 			}}>
 			<form style={{ width: '100%' }}>
 				<FormControl sx={{ width: '100%' }} variant='standard'>
@@ -448,7 +463,7 @@ const QuizQuestion = ({
 									</CustomSubmitButton>
 								)}
 							</Box>
-							<Box sx={{ display: 'flex' }}>
+							<Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
 								{recordOption === 'video' ? (
 									<VideoRecorder uploadVideo={uploadVideo} isVideoUploading={isVideoUploading} />
 								) : recordOption === 'audio' ? (
@@ -457,7 +472,7 @@ const QuizQuestion = ({
 							</Box>
 
 							{isAudioVideoUploaded && (
-								<Box>
+								<Box sx={{ width: '80%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
 									{userQuizAnswers?.map((answer) => {
 										if (answer.questionId === question._id) {
 											if (answer.audioRecordUrl) {
@@ -465,16 +480,62 @@ const QuizQuestion = ({
 													<CustomAudioPlayer
 														audioUrl={!isLessonCompleted ? answer.audioRecordUrl : uploadUrlForCompletedLesson}
 														key={question._id}
-														sx={{ marginTop: '1rem' }}
+														sx={{
+															marginTop: '0.5rem',
+															marginBottom: '0.75rem',
+														}}
 													/>
 												);
 											} else if (answer.videoRecordUrl) {
 												return (
-													<video
-														src={!isLessonCompleted ? answer.videoRecordUrl : uploadUrlForCompletedLesson}
-														controls
+													<Box
 														key={question._id}
-														style={{ boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)', borderRadius: '0.25rem' }}></video>
+														sx={{
+															'display': 'flex',
+															'flexDirection': 'column',
+															'alignItems': 'center',
+															'background': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+															'borderRadius': '12px',
+															'padding': isMobileSize ? '0.35rem' : '0.5rem',
+															'boxShadow': '0 8px 20px rgba(0,0,0,0.1)',
+															'backdropFilter': 'blur(10px)',
+															'border': '1px solid rgba(255,255,255,0.1)',
+															'position': 'relative',
+															'overflow': 'hidden',
+															'transition': 'all 0.3s ease',
+															'width': isMobileSize ? '100%' : '80%',
+															'maxWidth': isMobileSize ? '100%' : '600px',
+															'marginTop': '0.5rem',
+															'marginBottom': '0.75rem',
+															'&:hover': {
+																transform: 'translateY(-2px)',
+																boxShadow: '0 12px 25px rgba(0,0,0,0.15)',
+															},
+															'&::before': {
+																content: '""',
+																position: 'absolute',
+																top: 0,
+																left: 0,
+																right: 0,
+																bottom: 0,
+																background: 'rgba(255,255,255,0.05)',
+																borderRadius: '12px',
+																zIndex: 0,
+															},
+														}}>
+														<video
+															src={!isLessonCompleted ? answer.videoRecordUrl : uploadUrlForCompletedLesson}
+															controls
+															style={{
+																borderRadius: '8px',
+																width: '100%',
+																height: 'auto',
+																maxHeight: isMobileSize ? '20rem' : '25rem',
+																objectFit: 'contain',
+																position: 'relative',
+																zIndex: 1,
+															}}></video>
+													</Box>
 												);
 											}
 										}
@@ -524,7 +585,16 @@ const QuizQuestion = ({
 								display: 'flex',
 								justifyContent: 'center',
 								width: '100%',
-								margin: question.imageUrl || question.videoUrl ? '3rem auto 0 auto' : isMobileSize ? '7rem auto 0 auto' : '8rem auto 0 auto',
+								margin:
+									question.imageUrl || question.videoUrl
+										? '2.5rem auto 0 auto'
+										: isSmallMobileLandscape || isSmallMobilePortrait || isMobilePortrait || isMobileLandscape
+											? '6rem auto 0 auto'
+											: isTabletPortrait || isTabletLandscape
+												? '7rem auto 0 auto'
+												: isDesktopPortrait || isDesktopLandscape
+													? '8rem auto 0 auto'
+													: '6rem auto 0 auto',
 							}}>
 							<FillInTheBlanksDragDrop
 								questionId={question._id}
@@ -551,7 +621,16 @@ const QuizQuestion = ({
 								justifyContent: 'center',
 								alignItems: 'center',
 								width: '100%',
-								margin: question.imageUrl || question.videoUrl ? '3rem auto 0 auto' : isMobileSize ? '7rem auto 0 auto' : '8rem auto 0 auto',
+								margin:
+									question.imageUrl || question.videoUrl
+										? '2.5rem auto 0 auto'
+										: isSmallMobileLandscape || isSmallMobilePortrait || isMobilePortrait || isMobileLandscape
+											? '6rem auto 0 auto'
+											: isTabletPortrait || isTabletLandscape
+												? '7rem auto 0 auto'
+												: isDesktopPortrait || isDesktopLandscape
+													? '8rem auto 0 auto'
+													: '6rem auto 0 auto',
 							}}>
 							<FillInTheBlanksTyping
 								questionId={question._id}
@@ -599,7 +678,7 @@ const QuizQuestion = ({
 												<Radio
 													sx={{
 														'& .MuiSvgIcon-root': {
-															fontSize: isMobileSize ? '0.9rem' : '1.15rem', // Resize radio button
+															fontSize: isMobileSize ? '0.9rem' : '1rem', // Resize radio button
 														},
 													}}
 												/>
@@ -611,7 +690,7 @@ const QuizQuestion = ({
 														fontWeight: isLessonCompleted && option === question.correctAnswer ? 600 : 'normal',
 														display: 'flex',
 														alignItems: 'center',
-														fontSize: isMobileSize ? '0.75rem' : '1rem',
+														fontSize: isMobileSize ? '0.8rem' : '0.9rem',
 													}}>
 													{option}
 													{isLessonCompleted && option === question.correctAnswer && (
@@ -673,10 +752,18 @@ const QuizQuestion = ({
 					display: 'flex',
 					justifyContent: 'space-between',
 					alignItems: 'center',
-					position: 'relative',
+					position: 'absolute',
 					mt: isMobileSize ? '1.5rem' : '2rem',
-					width: '50%',
+					width: '70%',
 					mb: '1rem',
+					bottom:
+						isSmallMobilePortrait || isMobilePortrait
+							? '1rem'
+							: isMobileLandscape || isSmallMobileLandscape
+								? '2rem'
+								: isTabletLandscape || isDesktopLandscape
+									? '3rem'
+									: '2rem',
 				}}>
 				<IconButton
 					sx={{
@@ -685,6 +772,7 @@ const QuizQuestion = ({
 						':hover': {
 							color: theme.bgColor?.greenPrimary,
 							backgroundColor: 'transparent',
+							border: '2px solid lightgray',
 						},
 					}}
 					onClick={() => {
@@ -737,10 +825,6 @@ const QuizQuestion = ({
 							</MenuItem>
 						))}
 					</Select>
-					{/* <Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-						{' '}
-						/ {numberOfQuestions}
-					</Typography> */}
 				</Box>
 				<Tooltip
 					title={
@@ -766,6 +850,7 @@ const QuizQuestion = ({
 							':hover': {
 								color: theme.bgColor?.greenPrimary,
 								backgroundColor: 'transparent',
+								border: '2px solid lightgray',
 							},
 							'padding': '0.35rem',
 						}}>
@@ -774,7 +859,7 @@ const QuizQuestion = ({
 						) : isLessonCompleted && isLastQuestion ? (
 							<KeyboardDoubleArrowRight fontSize={isMobileSize ? 'medium' : 'large'} />
 						) : isCompletingLesson ? (
-							<Done fontSize='large' />
+							<Done fontSize={isMobileSize ? 'medium' : 'large'} />
 						) : (
 							<KeyboardArrowRight fontSize={isMobileSize ? 'medium' : 'large'} />
 						)}

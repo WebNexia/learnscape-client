@@ -61,17 +61,27 @@ const FlipCardFrontFace = ({
 	imageUrlAdminQuestions,
 	placeholder = 'Enter Front Face Text',
 }: FlipCardFrontFaceProps) => {
-	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const {
+		isSmallScreen,
+		isRotatedMedium,
+		isMobilePortrait,
+		isMobileLandscape,
+		isTabletPortrait,
+		isTabletLandscape,
+		isDesktopPortrait,
+		isDesktopLandscape,
+	} = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
+
 	const FrontFaceImage = (
 		<Box
 			sx={{
 				display: 'flex',
 				alignItems: 'center',
 				justifyContent: 'center',
-				backgroundColor: theme.bgColor?.greenPrimary,
-				width: isMobileSize ? '20rem' : '25rem',
-				height: isMobileSize ? '20rem' : '40vh',
+				background: 'linear-gradient(135deg, #4a7ba7 0%, #5a8bb7 100%)',
+				width: isMobilePortrait ? '15rem' : isMobileLandscape ? '18rem' : isTabletPortrait ? '20rem' : '25rem',
+				height: isMobilePortrait ? '12rem' : isMobileLandscape ? '14.5rem' : isTabletPortrait ? '16rem' : '15rem',
 				padding: '0.5rem',
 				border: 'none',
 				borderRadius: '0.5rem 0.5rem 0 0',
@@ -81,7 +91,7 @@ const FlipCardFrontFace = ({
 				src={setNewQuestion ? newQuestion?.imageUrl : fromLessonEditPage ? question?.imageUrl : imageUrlAdminQuestions}
 				alt='img'
 				style={{
-					width: '100%',
+					width: isMobilePortrait ? '13.5rem' : isMobileLandscape ? '16.5rem' : isTabletPortrait ? '19rem' : '25rem',
 					height: '100%',
 					objectFit: 'contain',
 				}}
@@ -90,7 +100,13 @@ const FlipCardFrontFace = ({
 	);
 
 	return (
-		<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: isMobileSize ? '20rem' : '25rem' }}>
+		<Box
+			sx={{
+				display: 'flex',
+				flexDirection: 'column',
+				alignItems: 'center',
+				width: isMobilePortrait ? '15rem' : isMobileLandscape ? '18rem' : isTabletPortrait ? '20rem' : '25rem',
+			}}>
 			<Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
 				<Typography variant={isMobileSize ? 'body2' : 'body1'}>Front</Typography>
 				<Tooltip
@@ -132,8 +148,8 @@ const FlipCardFrontFace = ({
 				<Box
 					sx={{
 						background: 'linear-gradient(135deg, #4a7ba7 0%, #5a8bb7 100%)',
-						width: isMobileSize ? '15rem' : '25rem',
-						height: isMobileSize ? '10rem' : '30vh',
+						width: isMobilePortrait ? '15rem' : isMobileLandscape ? '18rem' : isTabletPortrait ? '20rem' : '25rem',
+						height: isMobilePortrait ? '12rem' : isMobileLandscape ? '14.5rem' : isTabletPortrait ? '16rem' : '15rem',
 						color: 'white',
 						padding: '2rem 1rem',
 						textAlign: 'center',
@@ -141,7 +157,7 @@ const FlipCardFrontFace = ({
 						borderRadius: '0.5rem 0.5rem 0 0',
 						objectFit: 'contain',
 					}}>
-					<Typography variant={isMobileSize ? 'body2' : 'body1'} sx={{ color: theme.textColor?.common.main }}>
+					<Typography variant='body1' sx={{ color: theme.textColor?.common.main }}>
 						No Image
 					</Typography>
 				</Box>
@@ -185,18 +201,19 @@ const FlipCardFrontFace = ({
 				}}
 				style={{
 					background: 'linear-gradient(135deg, #4a7ba7 0%, #5a8bb7 100%)',
-					width: isMobileSize ? '15rem' : '25rem',
-					height: isMobileSize ? '5rem' : '10vh',
+					width: isMobilePortrait ? '15rem' : isMobileLandscape ? '18rem' : isTabletPortrait ? '20rem' : '25rem',
+					height: isMobilePortrait ? '3rem' : isMobileLandscape ? '3.5rem' : isTabletPortrait ? '4rem' : '5rem',
 					color: 'white',
-					padding: '1rem 1rem',
+					padding: '0.5rem 0.5rem',
 					fontFamily: theme.fontFamily?.main,
-					fontSize: isMobileSize ? '0.8rem' : '1rem',
+					fontSize: isMobileSize ? '1rem' : '1rem',
 					textAlign: 'center',
 					lineHeight: '1.5rem',
 					border: 'none',
 					borderTop: `solid 0.1rem ${theme.bgColor?.lessonInProgress}`,
 					resize: 'none',
 					borderRadius: '0 0 0.5rem 0.5rem',
+					margin: 'auto 0',
 				}}
 				rows={7}
 				placeholder={placeholder}

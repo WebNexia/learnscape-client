@@ -131,6 +131,8 @@ interface FillInTheBlanksDragDropProps {
 	setIsLessonCompleted?: React.Dispatch<React.SetStateAction<boolean>>;
 	setShowQuestionSelector?: React.Dispatch<React.SetStateAction<boolean>>;
 	setUserQuizAnswers?: React.Dispatch<React.SetStateAction<QuizQuestionAnswer[]>>;
+	onCorrectMatch?: () => void;
+	onWrongMatch?: () => void;
 }
 
 // Function to decode HTML entities
@@ -157,6 +159,8 @@ const FillInTheBlanksDragDrop = ({
 	setIsLessonCompleted,
 	setShowQuestionSelector,
 	setUserQuizAnswers,
+	onCorrectMatch,
+	onWrongMatch,
 }: FillInTheBlanksDragDropProps) => {
 	const [blanks, setBlanks] = useState<BlankValuePair[]>([]);
 	const [responses, setResponses] = useState<BlankValuePair[]>([]);
@@ -274,8 +278,21 @@ const FillInTheBlanksDragDrop = ({
 		if (source.droppableId === 'responses' && destination.droppableId.startsWith('blank-')) {
 			const blankIndex = newBlanks.findIndex((blank) => `blank-${blank.id}` === destination.droppableId);
 			if (blankIndex !== -1 && !newBlanks[blankIndex].value) {
-				newBlanks[blankIndex].value = newResponses[source.index].value;
+				const matchedValue = newResponses[source.index].value;
+				newBlanks[blankIndex].value = matchedValue;
 				newResponses.splice(source.index, 1);
+
+				// Check if match is correct and play sound
+				if (!isLessonCompleted) {
+					const correctValue = blankValuePairs?.find((p) => p.blank === newBlanks[blankIndex].blank)?.value;
+					if (correctValue) {
+						if (correctValue === matchedValue) {
+							onCorrectMatch?.();
+						} else {
+							onWrongMatch?.();
+						}
+					}
+				}
 			}
 		}
 
@@ -333,7 +350,7 @@ const FillInTheBlanksDragDrop = ({
 	return (
 		<DragDropContext onDragEnd={handleDragEnd}>
 			<Container>
-				<Column sx={{ marginBottom: '1.5rem' }}>
+				<Column>
 					<TextContainer>
 						{textSegments?.map((segment, index) => {
 							const match = segment.match(/___(\d+)___/);
@@ -404,7 +421,7 @@ const FillInTheBlanksDragDrop = ({
 
 				{(!isLessonCompleted || lessonType === LessonType.PRACTICE_LESSON) && (
 					<>
-						<Box sx={{ width: '100%', flex: 1 }}>
+						<Box sx={{ width: '100%', flex: 1, mt: '2rem' }}>
 							<CustomInfoMessageAlignedLeft message='Select and drag the correct word cards into the blanks to complete the sentence(s)' />
 						</Box>
 						<Column
@@ -414,6 +431,7 @@ const FillInTheBlanksDragDrop = ({
 								boxShadow: '0.1rem 0 0.3rem 0.2rem rgba(0, 0, 0, 0.2)',
 								borderRadius: '0.35rem',
 								padding: '1rem',
+								marginBottom: '2rem',
 							}}>
 							<Droppable droppableId='responses'>
 								{(provided) => (
@@ -451,7 +469,7 @@ const FillInTheBlanksDragDrop = ({
 				)}
 
 				{isLessonCompleted && lessonType !== LessonType.PRACTICE_LESSON && (
-					<Box sx={{ margin: isMobileSize ? '0' : '1rem 0 1rem 0', width: '100%' }}>
+					<Box sx={{ margin: isMobileSize ? '2rem 0 1rem 0' : '3rem 0 1rem 0', width: '100%' }}>
 						<Box>
 							<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '1rem' }}>
 								Correct Text

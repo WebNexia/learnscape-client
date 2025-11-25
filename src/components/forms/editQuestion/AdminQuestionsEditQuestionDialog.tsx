@@ -472,7 +472,7 @@ const AdminQuestionsEditQuestionDialog = ({
 						</Box>
 					)}
 
-					<Box sx={{ width: isMobileSize ? '100%' : '90%' }}>
+					<Box sx={{ width: isMobileSize ? '100%' : '90%', mb: isOpenEndedQuestion ? '-1rem' : '-2rem' }}>
 						{isMultipleChoiceQuestion &&
 							options?.map((option, i) => (
 								<Box
@@ -495,6 +495,7 @@ const AdminQuestionsEditQuestionDialog = ({
 													}}
 													color='primary'
 													size='small'
+													sx={{ '& .MuiSvgIcon-root': { fontSize: isMobileSize ? '1.1rem' : undefined } }}
 												/>
 											}
 											label=''
@@ -503,7 +504,7 @@ const AdminQuestionsEditQuestionDialog = ({
 									{i === options.length - 1 && (
 										<Tooltip title='Add Option' placement='top' arrow>
 											<IconButton onClick={addOption}>
-												<AddCircle fontSize='small' />
+												<AddCircle fontSize='small' sx={{ fontSize: isMobileSize ? '1rem' : undefined }} />
 											</IconButton>
 										</Tooltip>
 									)}
@@ -523,7 +524,7 @@ const AdminQuestionsEditQuestionDialog = ({
 									{i > 0 && (
 										<Tooltip title='Remove Option' placement='top' arrow>
 											<IconButton onClick={() => removeOption(i)}>
-												<RemoveCircle fontSize='small' />
+												<RemoveCircle fontSize='small' sx={{ fontSize: isMobileSize ? '1rem' : undefined }} />
 											</IconButton>
 										</Tooltip>
 									)}
@@ -594,13 +595,13 @@ const AdminQuestionsEditQuestionDialog = ({
 										<CustomInfoMessageAlignedRight message='View as in a practice lesson' />
 									</Box>
 									{isFITBDragDrop && (
-										<Box sx={{ padding: '1rem 0', width: '100%' }}>
+										<Box sx={{ padding: '1rem 0', width: '100%', mb: '-2rem' }}>
 											<FillInTheBlanksDragDropProps textWithBlanks={editorContent} blankValuePairs={blankValuePairsAdminQuestions} />
 										</Box>
 									)}
 
 									{isFITBTyping && (
-										<Box sx={{ padding: '1rem 0' }}>
+										<Box sx={{ padding: '1rem 0', width: '100%', mb: '-2rem' }}>
 											<FillInTheBlanksTyping
 												textWithBlanks={editorContent}
 												blankValuePairs={blankValuePairsAdminQuestions}

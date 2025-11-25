@@ -37,19 +37,35 @@ const FlipCard = ({
 	const [frontText, setFrontText] = useState<string>(question?.question || newQuestion?.question || '');
 	const [backText, setBackText] = useState<string>(question?.correctAnswer || newQuestion?.question || '');
 
-	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const {
+		isSmallScreen,
+		isRotatedMedium,
+		isMobileLandscape,
+		isMobilePortrait,
+		isTabletPortrait,
+		isTabletLandscape,
+		isDesktopPortrait,
+		isDesktopLandscape,
+	} = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
 	return (
-		<Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', mt: isMobileSize ? '2rem' : '0rem' }}>
+		<Box
+			sx={{
+				width: '100%',
+				display: 'flex',
+				flexDirection: 'column',
+				alignItems: 'center',
+				mt: isMobilePortrait ? '-3rem' : isMobileLandscape ? '-2rem' : isTabletPortrait ? '-2rem' : isDesktopLandscape ? '1rem' : '-1rem',
+				mb: '1rem',
+			}}>
 			<Box
 				sx={{
 					display: 'flex',
-					flexDirection: isMobileSize ? 'column' : 'row',
+					flexDirection: isMobilePortrait ? 'column' : 'row',
 					justifyContent: 'center',
 					alignItems: 'center',
 					width: '100%',
-					mt: isMobileSize ? '-3rem' : undefined,
 				}}>
 				<FlipCardFrontFace
 					frontText={frontText}

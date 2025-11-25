@@ -90,6 +90,8 @@ interface MatchingPreviewProps {
 	setIsLessonCompleted?: React.Dispatch<React.SetStateAction<boolean>>;
 	setShowQuestionSelector?: React.Dispatch<React.SetStateAction<boolean>>;
 	setUserQuizAnswers?: React.Dispatch<React.SetStateAction<QuizQuestionAnswer[]>>;
+	onCorrectMatch?: () => void;
+	onWrongMatch?: () => void;
 }
 
 const MatchingPreview = ({
@@ -107,6 +109,8 @@ const MatchingPreview = ({
 	setIsLessonCompleted,
 	setShowQuestionSelector,
 	setUserQuizAnswers,
+	onCorrectMatch,
+	onWrongMatch,
 }: MatchingPreviewProps) => {
 	const [pairs, setPairs] = useState<MatchingPair[]>([]);
 	const [responses, setResponses] = useState<MatchingPair[]>([]);
@@ -252,8 +256,21 @@ const MatchingPreview = ({
 		if (source.droppableId === 'responses' && destination.droppableId.startsWith('prompt-')) {
 			const pairIndex = parseInt(destination.droppableId.split('-')[1], 10);
 			if (!newPairs[pairIndex].answer) {
-				newPairs[pairIndex].answer = newResponses[source.index].answer;
+				const matchedAnswer = newResponses[source.index].answer;
+				newPairs[pairIndex].answer = matchedAnswer;
 				newResponses.splice(source.index, 1);
+
+				// Check if match is correct and play sound
+				if (!isLessonCompleted) {
+					const originalPair = initialPairs?.find((pair) => pair.id === newPairs[pairIndex].id);
+					if (originalPair) {
+						if (originalPair.answer === matchedAnswer) {
+							onCorrectMatch?.();
+						} else {
+							onWrongMatch?.();
+						}
+					}
+				}
 			}
 		} else if (source.droppableId.startsWith('prompt-') && destination.droppableId === 'responses') {
 			const pairIndex = parseInt(source.droppableId.split('-')[1], 10);
@@ -411,24 +428,41 @@ const MatchingPreview = ({
 					</Column>
 				</Container>
 				{isLessonCompleted && fromQuizQuestionUser && (
-					<Box sx={{ margin: '3rem 0 1.5rem 0' }}>
+					<Box sx={{ margin: isMobileSize ? '2rem 0 1.5rem 0' : '3rem 0 1.5rem 0' }}>
 						<Box sx={{ margin: '1rem 0 1rem 0' }}>
 							<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '1rem' }}>
 								Correct Matching
 							</Typography>
 						</Box>
-						<Box>
-							{initialPairs?.map((pair) => {
+						<Box
+							sx={{
+								borderRadius: '0.5rem',
+								overflow: 'hidden',
+								boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+								border: '1px solid rgba(0,0,0,0.1)',
+							}}>
+							{initialPairs?.map((pair, index) => {
 								return (
-									<Box sx={{ display: 'flex' }} key={pair.id}>
+									<Box
+										sx={{
+											'display': 'flex',
+											'backgroundColor': index % 2 === 0 ? 'rgba(0,0,0,0.02)' : 'transparent',
+											'transition': 'background-color 0.2s ease',
+											'&:hover': {
+												backgroundColor: 'rgba(0,0,0,0.04)',
+											},
+										}}
+										key={pair.id}>
 										<Box
 											sx={{
 												display: 'flex',
 												justifyContent: 'center',
 												alignItems: 'center',
 												flex: 1,
-												border: '0.05rem solid gray',
+												borderRight: '1px solid rgba(0,0,0,0.1)',
+												borderBottom: index < initialPairs.length - 1 ? '1px solid rgba(0,0,0,0.1)' : 'none',
 												padding: isMobileSize ? '0.35rem 0.5rem' : '0.75rem 1rem',
+												backgroundColor: 'rgba(255,255,255,0.5)',
 											}}>
 											<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>{pair.question}</Typography>
 										</Box>
@@ -438,8 +472,9 @@ const MatchingPreview = ({
 												justifyContent: 'center',
 												alignItems: 'center',
 												flex: 1,
-												border: '0.05rem solid gray',
+												borderBottom: index < initialPairs.length - 1 ? '1px solid rgba(0,0,0,0.1)' : 'none',
 												padding: isMobileSize ? '0.35rem 0.5rem' : '0.75rem 1rem',
+												backgroundColor: 'rgba(255,255,255,0.5)',
 											}}>
 											<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>{pair.answer}</Typography>
 										</Box>

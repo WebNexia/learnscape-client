@@ -18,6 +18,7 @@ interface QuestionsProps {
 	setIsQuizInProgress: React.Dispatch<React.SetStateAction<boolean>>;
 	userQuizAnswers: QuizQuestionAnswer[];
 	setUserQuizAnswers: React.Dispatch<React.SetStateAction<QuizQuestionAnswer[]>>;
+	isSoundMuted?: boolean;
 }
 
 const Questions: React.FC<QuestionsProps> = ({
@@ -29,6 +30,7 @@ const Questions: React.FC<QuestionsProps> = ({
 	setIsQuizInProgress,
 	userQuizAnswers,
 	setUserQuizAnswers,
+	isSoundMuted = false,
 }) => {
 	const { getLastQuestion, isLessonCompleted, setIsLessonCompleted } = useUserCourseLessonData();
 	const [displayedQuestionNumber, setDisplayedQuestionNumber] = useState<number>(getLastQuestion);
@@ -114,6 +116,7 @@ const Questions: React.FC<QuestionsProps> = ({
 							openAiResponseDrawer={openAiResponseDrawer}
 							closeAiResponseDrawer={closeAiResponseDrawer}
 							toggleAiIcon={toggleAiIcon}
+							isSoundMuted={isSoundMuted}
 						/>
 					) : isQuiz ? (
 						<QuizQuestion
