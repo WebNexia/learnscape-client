@@ -34,6 +34,7 @@ interface ContactFormDialogProps {
 	resetRecaptcha: () => void;
 	recaptchaRef: React.MutableRefObject<any>;
 	errorDialogMsg: string;
+	setErrorDialogMsg: (value: string) => void;
 }
 const ContactFormDialog = ({
 	isGetMoreDetailsModalOpen,
@@ -60,6 +61,7 @@ const ContactFormDialog = ({
 	resetRecaptcha,
 	recaptchaRef,
 	errorDialogMsg,
+	setErrorDialogMsg,
 }: ContactFormDialogProps) => {
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -220,58 +222,128 @@ const ContactFormDialog = ({
 							/>
 						</Box>
 						<Box>
-							<PhoneInput
-								country={location?.countryCode?.toLowerCase() || 'tr'}
-								enableSearch={true}
-								searchPlaceholder='Ülke arayın...'
-								searchNotFound='Ülke bulunamadı'
-								enableAreaCodes={false}
-								countryCodeEditable={false}
-								value={phone}
-								onChange={(phoneNumber, _) => {
-									const formattedNumber = phoneNumber.startsWith('+') ? phoneNumber : `+${phoneNumber}`;
-									setPhone(formattedNumber);
-								}}
-								inputProps={{
-									required: true,
-									maxLength: 20,
-									style: {
-										width: '100%',
-										height: '2.25rem',
+							<Typography variant='body2' sx={{ marginBottom: '0.25rem', fontFamily: 'Varela Round', color: theme.textColor?.secondary.main }}>
+								Telefon Numarası *
+							</Typography>
+							<Box
+								component='div'
+								sx={{
+									'& > label': {
+										display: 'none !important',
+										visibility: 'hidden !important',
+										height: '0 !important',
+										width: '0 !important',
+										overflow: 'hidden !important',
+									},
+									'& label': {
+										display: 'none !important',
+										visibility: 'hidden !important',
+										height: '0 !important',
+										width: '0 !important',
+										overflow: 'hidden !important',
+									},
+									'& .react-tel-input label': {
+										display: 'none !important',
+										visibility: 'hidden !important',
+										height: '0 !important',
+										width: '0 !important',
+										overflow: 'hidden !important',
+									},
+									'& .flag-dropdown + label': {
+										display: 'none !important',
+										visibility: 'hidden !important',
+										height: '0 !important',
+										width: '0 !important',
+										overflow: 'hidden !important',
+									},
+									'& .react-tel-input > label': {
+										display: 'none !important',
+										visibility: 'hidden !important',
+										height: '0 !important',
+										width: '0 !important',
+										overflow: 'hidden !important',
+									},
+									'& [for*="phone"]': {
+										display: 'none !important',
+										visibility: 'hidden !important',
+										height: '0 !important',
+										width: '0 !important',
+										overflow: 'hidden !important',
+									},
+									'& [aria-label*="Phone"]': {
+										display: 'none !important',
+										visibility: 'hidden !important',
+										height: '0 !important',
+										width: '0 !important',
+										overflow: 'hidden !important',
+									},
+									'& .react-tel-input::before': {
+										display: 'none !important',
+										content: '""',
+									},
+									'& .react-tel-input > *:first-child:not(.flag-dropdown):not(input)': {
+										display: 'none !important',
+										visibility: 'hidden !important',
+										height: '0 !important',
+										width: '0 !important',
+										overflow: 'hidden !important',
+									},
+								}}>
+								<PhoneInput
+									country={location?.countryCode?.toLowerCase() || 'tr'}
+									enableSearch={true}
+									searchPlaceholder='Ülke arayın...'
+									searchNotFound='Ülke bulunamadı'
+									enableAreaCodes={false}
+									countryCodeEditable={false}
+									specialLabel=''
+									value={phone}
+									onChange={(phoneNumber, _) => {
+										const formattedNumber = phoneNumber.startsWith('+') ? phoneNumber : `+${phoneNumber}`;
+										setPhone(formattedNumber);
+										setErrorDialogMsg('');
+									}}
+									inputProps={{
+										required: true,
+										maxLength: 20,
+										style: {
+											width: '100%',
+											height: '2.25rem',
+											fontFamily: 'Varela Round',
+											fontSize: '0.9rem',
+											borderRadius: '0.5rem',
+											border: '1px solid rgba(0, 0, 0, 0.23)',
+											transition: 'all 0.2s ease',
+										},
+									}}
+									containerStyle={{
+										marginBottom: '0.5rem',
+										color: theme.textColor?.secondary.main,
 										fontFamily: 'Varela Round',
-										fontSize: '0.9rem',
+										transition: 'all 0.2s ease',
+									}}
+									buttonStyle={{
+										borderRadius: '0.35rem 0 0 0.35rem',
+										border: '1px solid rgba(0, 0, 0, 0.23)',
+										backgroundColor: 'transparent',
+									}}
+									dropdownStyle={{
+										borderRadius: '0.35rem',
+										border: '1px solid rgba(0, 0, 0, 0.23)',
+										boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+										fontFamily: 'Varela Round',
+									}}
+									searchStyle={{
+										width: '100%',
+										height: '2rem',
+										fontFamily: 'Varela Round',
+										fontSize: '0.85rem',
 										borderRadius: '0.5rem',
 										border: '1px solid rgba(0, 0, 0, 0.23)',
-										transition: 'all 0.2s ease',
-									},
-								}}
-								containerStyle={{
-									marginBottom: '0.5rem',
-									color: theme.textColor?.secondary.main,
-									fontFamily: 'Varela Round',
-									transition: 'all 0.2s ease',
-								}}
-								buttonStyle={{
-									borderRadius: '0.35rem 0 0 0.35rem',
-									border: '1px solid rgba(0, 0, 0, 0.23)',
-									backgroundColor: 'transparent',
-								}}
-								dropdownStyle={{
-									borderRadius: '0.35rem',
-									border: '1px solid rgba(0, 0, 0, 0.23)',
-									boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-									fontFamily: 'Varela Round',
-								}}
-								searchStyle={{
-									width: '100%',
-									height: '2rem',
-									fontFamily: 'Varela Round',
-									fontSize: '0.85rem',
-									borderRadius: '0.5rem',
-									border: '1px solid rgba(0, 0, 0, 0.23)',
-									margin: '0.5rem 0',
-								}}
-							/>
+										margin: '0.5rem 0',
+									}}
+								/>
+							</Box>
 						</Box>
 						<CustomTextField
 							label='Mesajınız'

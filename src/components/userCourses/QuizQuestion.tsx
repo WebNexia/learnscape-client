@@ -3,12 +3,9 @@ import {
 	DialogActions,
 	DialogContent,
 	FormControl,
-	FormControlLabel,
 	FormHelperText,
 	IconButton,
 	MenuItem,
-	Radio,
-	RadioGroup,
 	Select,
 	SelectChangeEvent,
 	Tooltip,
@@ -46,6 +43,7 @@ import { serverTimestamp, writeBatch, doc } from 'firebase/firestore';
 import { UserCourseLessonDataContext } from '../../contexts/UserCourseLessonDataContextProvider';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import CustomAudioPlayer from '../audio/CustomAudioPlayer';
+import { stripHtml } from '@utils/stripHtml';
 
 interface QuizQuestionProps {
 	question: QuestionInterface;
@@ -214,7 +212,7 @@ const QuizQuestion = ({
 		setCourseTitle(() => {
 			return userCourseData?.find((data) => data.courseId === courseId)?.courseTitle || '';
 		});
-	}, [userCoursesData, courseId]);
+	}, [userCoursesData, courseId, isLessonCompleted, userQuizAnswers, question._id, displayedQuestionNumber]);
 
 	useEffect(() => {
 		setSelectedQuestion(displayedQuestionNumber);
@@ -266,11 +264,11 @@ const QuizQuestion = ({
 							isCompleted: true,
 							isInProgress: false,
 							orgId,
-							userAnswer: answer.userAnswer.trim(),
-							userBlankValuePairAnswers: answer.userBlankValuePairAnswers,
-							userMatchingPairAnswers: answer.userMatchingPairAnswers,
-							videoRecordUrl: answer.videoRecordUrl.trim(),
-							audioRecordUrl: answer.audioRecordUrl.trim(),
+							userAnswer: answer.userAnswer?.trim() || '',
+							userBlankValuePairAnswers: answer.userBlankValuePairAnswers || [],
+							userMatchingPairAnswers: answer.userMatchingPairAnswers || [],
+							videoRecordUrl: answer.videoRecordUrl?.trim() || '',
+							audioRecordUrl: answer.audioRecordUrl?.trim() || '',
 							teacherFeedback: '',
 							teacherAudioFeedbackUrl: '',
 						});
@@ -563,7 +561,13 @@ const QuizQuestion = ({
 					)}
 
 					{isMatching && (
-						<Box sx={{ display: 'flex', justifyContent: 'center', width: isMobileSize ? '100%' : '80%', margin: '0 auto' }}>
+						<Box
+							sx={{
+								display: 'flex',
+								justifyContent: 'center',
+								width: isMobileSize ? '100%' : '80%',
+								margin: isMobileSize ? '0 auto' : '0 auto 3rem auto',
+							}}>
 							<MatchingPreview
 								questionId={question._id}
 								initialPairs={question.matchingPairs}
@@ -650,59 +654,160 @@ const QuizQuestion = ({
 					)}
 
 					{isMultipleChoiceQuestion && (
-						<RadioGroup
-							name='question'
-							value={isLessonCompleted ? userQuizAnswerAfterSubmission : value}
-							onChange={handleRadioChange}
-							sx={{ alignSelf: 'center' }}>
+						<Box
+							sx={{
+								alignSelf: 'center',
+								width: '100%',
+								maxWidth: isMobileSize ? '100%' : '600px',
+								display: 'flex',
+								flexDirection: 'column',
+								gap: '0.75rem',
+								mb: isDesktopLandscape || isDesktopPortrait ? '3rem' : '1rem',
+							}}>
 							{question &&
 								question.options &&
 								question.options?.map((option, index) => {
 									let textColor = null;
+									let borderColor = 'rgba(0, 0, 0, 0.12)';
+									let backgroundColor = 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.95) 100%)';
+									let boxShadow = '0 2px 8px rgba(0, 0, 0, 0.08)';
+									let isSelected = false;
+									let isCorrect = false;
+									let isWrong = false;
+									let checkmarkColor = theme.palette.primary.main;
+
+									// Get user's submitted answer - use state if available, otherwise get from array
+									const foundAnswer = userQuizAnswers?.find((data) => {
+										const dataQuestionId = String(data.questionId);
+										const currentQuestionId = String(question._id);
+										return dataQuestionId === currentQuestionId;
+									});
+
+									const currentUserAnswer = isLessonCompleted ? userQuizAnswerAfterSubmission || foundAnswer?.userAnswer || '' : value;
 
 									if (isLessonCompleted) {
 										const isCorrectAnswer = option === question.correctAnswer;
-										const isSelectedAnswer = option === userQuizAnswerAfterSubmission;
+										const isSelectedAnswer = option === currentUserAnswer && currentUserAnswer !== '';
 
 										if (isCorrectAnswer) {
+											// Correct answer: keep green border and light green background
 											textColor = theme.palette.success.main;
-										} else if (isSelectedAnswer) {
-											textColor = 'red';
+											borderColor = theme.palette.success.main;
+											backgroundColor = 'linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(76, 175, 80, 0.15) 100%)';
+											boxShadow = '0 4px 12px rgba(76, 175, 80, 0.2)';
+											isCorrect = true;
+											checkmarkColor = theme.palette.success.main;
+										} else if (isSelectedAnswer && !isCorrectAnswer) {
+											// Wrong answer: use error color border (only if user selected it and it's not the correct answer)
+											textColor = theme.palette.error.main;
+											borderColor = theme.palette.error.main;
+											backgroundColor = 'linear-gradient(135deg, rgba(211, 47, 47, 0.1) 0%, rgba(211, 47, 47, 0.15) 100%)';
+											boxShadow = '0 4px 12px rgba(211, 47, 47, 0.2)';
+											isWrong = true;
+										}
+									} else {
+										isSelected = value === option;
+										if (isSelected) {
+											borderColor = theme.palette.primary.main;
+											backgroundColor = 'linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)';
+											boxShadow = '0 4px 12px rgba(102, 126, 234, 0.2)';
 										}
 									}
 
 									return (
-										<FormControlLabel
-											value={option}
-											control={
-												<Radio
+										<Box
+											key={index}
+											onClick={() => {
+												if (!isLessonCompleted) {
+													const syntheticEvent = {
+														target: { value: option },
+													} as React.ChangeEvent<HTMLInputElement>;
+													handleRadioChange(syntheticEvent);
+												}
+											}}
+											sx={{
+												'position': 'relative',
+												'display': 'flex',
+												'alignItems': 'center',
+												'justifyContent': 'space-between',
+												'padding': isMobileSize ? '0.75rem 1rem' : '1rem 1.25rem',
+												'borderRadius': '12px',
+												'border': '2px solid',
+												'borderColor': borderColor,
+												'background': backgroundColor,
+												'boxShadow': boxShadow,
+												'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+												'cursor': isLessonCompleted ? 'default' : 'pointer',
+												'backdropFilter': 'blur(10px)',
+												'&:hover': {
+													transform: isLessonCompleted ? 'none' : 'translateY(-2px)',
+													boxShadow: isCorrect
+														? '0 6px 16px rgba(76, 175, 80, 0.3)'
+														: isWrong
+															? '0 6px 16px rgba(211, 47, 47, 0.3)'
+															: isSelected
+																? '0 6px 16px rgba(102, 126, 234, 0.3)'
+																: '0 4px 12px rgba(0, 0, 0, 0.12)',
+													borderColor: isCorrect
+														? theme.palette.success.main
+														: isWrong
+															? '#d32f2f'
+															: isSelected
+																? theme.palette.primary.main
+																: 'rgba(102, 126, 234, 0.4)',
+													background: isCorrect
+														? 'linear-gradient(135deg, rgba(76, 175, 80, 0.15) 0%, rgba(76, 175, 80, 0.2) 100%)'
+														: isWrong
+															? 'linear-gradient(135deg, rgba(211, 47, 47, 0.15) 0%, rgba(211, 47, 47, 0.2) 100%)'
+															: isSelected
+																? 'linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%)'
+																: 'linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%)',
+												},
+												'&::before': {
+													content: '""',
+													position: 'absolute',
+													top: 0,
+													left: 0,
+													right: 0,
+													bottom: 0,
+													background:
+														isCorrect || isWrong || isSelected
+															? 'linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%)'
+															: 'transparent',
+													borderRadius: '12px',
+													zIndex: 0,
+												},
+											}}>
+											<Typography
+												sx={{
+													color: textColor || (isSelected ? theme.palette.primary.main : theme.textColor?.secondary.main),
+													fontWeight: isCorrect || isSelected ? 600 : 400,
+													display: 'flex',
+													alignItems: 'center',
+													fontSize: isMobileSize ? '0.8rem' : '0.9rem',
+													zIndex: 1,
+													position: 'relative',
+													lineHeight: 1.5,
+													transition: 'all 0.2s ease',
+													flex: 1,
+												}}>
+												{stripHtml(option)}
+											</Typography>
+											{isCorrect && (
+												<CheckCircle
 													sx={{
-														'& .MuiSvgIcon-root': {
-															fontSize: isMobileSize ? '0.9rem' : '1rem', // Resize radio button
-														},
+														color: checkmarkColor,
+														fontSize: isMobileSize ? '1.25rem' : '1.5rem',
+														zIndex: 1,
+														position: 'relative',
+														ml: 1,
 													}}
 												/>
-											}
-											label={
-												<Typography
-													sx={{
-														color: textColor,
-														fontWeight: isLessonCompleted && option === question.correctAnswer ? 600 : 'normal',
-														display: 'flex',
-														alignItems: 'center',
-														fontSize: isMobileSize ? '0.8rem' : '0.9rem',
-													}}>
-													{option}
-													{isLessonCompleted && option === question.correctAnswer && (
-														<CheckCircle sx={{ color: theme.palette.success.main, marginLeft: 1 }} fontSize={isMobileSize ? 'small' : 'medium'} />
-													)}
-												</Typography>
-											}
-											key={index}
-										/>
+											)}
+										</Box>
 									);
 								})}
-						</RadioGroup>
+						</Box>
 					)}
 
 					{!isOpenEndedQuestion &&

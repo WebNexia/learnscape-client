@@ -3,13 +3,10 @@ import {
 	Button,
 	DialogContent,
 	FormControl,
-	FormControlLabel,
 	FormHelperText,
 	IconButton,
 	keyframes,
 	MenuItem,
-	Radio,
-	RadioGroup,
 	Select,
 	SelectChangeEvent,
 	Slide,
@@ -531,40 +528,102 @@ const PracticeQuestion = ({
 						)}
 
 						{isMultipleChoiceQuestion && (
-							<RadioGroup
-								name='question'
-								value={isLessonCompleted && displayedQuestionNumber < getLastQuestion() && !isLessonUpdating ? question.correctAnswer : value}
-								onChange={handleRadioChange}
-								sx={{ alignSelf: 'center' }}>
+							<Box
+								sx={{
+									alignSelf: 'center',
+									width: '100%',
+									maxWidth: isMobileSize ? '100%' : '600px',
+									display: 'flex',
+									flexDirection: 'column',
+									gap: '0.75rem',
+								}}>
 								{question &&
 									question.options &&
 									question.options?.map((option, index) => {
+										const isSelected =
+											(isLessonCompleted && displayedQuestionNumber < getLastQuestion() && !isLessonUpdating ? question.correctAnswer : value) ===
+											option;
 										return (
-											<FormControlLabel
-												value={option}
-												control={
-													<Radio
-														sx={{
-															'& .MuiSvgIcon-root': {
-																fontSize: isMobileSize ? '0.9rem' : '1rem', // Resize radio button
-															},
-														}}
-													/>
-												}
-												label={option}
+											<Box
 												key={index}
-												sx={{
-													'& .MuiFormControlLabel-label': {
-														fontSize: isMobileSize ? '0.8rem' : '0.9rem',
-													},
+												onClick={() => {
+													if (!isLessonCompleted || displayedQuestionNumber >= getLastQuestion() || isLessonUpdating) {
+														const syntheticEvent = {
+															target: { value: option },
+														} as React.ChangeEvent<HTMLInputElement>;
+														handleRadioChange(syntheticEvent);
+													} else {
+														setShowQuestionSelector(true);
+														setIsLessonUpdating(true);
+														setIsOpenEndedAnswerSubmitted(false);
+													}
 												}}
-											/>
+												sx={{
+													'position': 'relative',
+													'display': 'flex',
+													'alignItems': 'center',
+													'justifyContent': 'space-between',
+													'padding': isMobileSize ? '0.75rem 1rem' : '1rem 1.25rem',
+													'borderRadius': '12px',
+													'border': '2px solid',
+													'borderColor': isSelected ? theme.palette.primary.main : 'rgba(0, 0, 0, 0.12)',
+													'background': isSelected
+														? 'linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)'
+														: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.95) 100%)',
+													'boxShadow': isSelected ? '0 4px 12px rgba(102, 126, 234, 0.2)' : '0 2px 8px rgba(0, 0, 0, 0.08)',
+													'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+													'cursor': 'pointer',
+													'backdropFilter': 'blur(10px)',
+													'&:hover': {
+														transform: 'translateY(-2px)',
+														boxShadow: isSelected ? '0 6px 16px rgba(102, 126, 234, 0.3)' : '0 4px 12px rgba(0, 0, 0, 0.12)',
+														borderColor: isSelected ? theme.palette.primary.main : 'rgba(102, 126, 234, 0.4)',
+														background: isSelected
+															? 'linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%)'
+															: 'linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%)',
+													},
+													'&::before': {
+														content: '""',
+														position: 'absolute',
+														top: 0,
+														left: 0,
+														right: 0,
+														bottom: 0,
+														background: isSelected
+															? 'linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%)'
+															: 'transparent',
+														borderRadius: '12px',
+														zIndex: 0,
+													},
+												}}>
+												<Typography
+													sx={{
+														fontSize: isMobileSize ? '0.8rem' : '0.9rem',
+														fontWeight: isSelected ? 600 : 400,
+														color: isSelected ? theme.palette.primary.main : theme.textColor?.secondary.main,
+														zIndex: 1,
+														position: 'relative',
+														lineHeight: 1.5,
+														transition: 'all 0.2s ease',
+														flex: 1,
+													}}>
+													{stripHtml(option)}
+												</Typography>
+											</Box>
 										);
 									})}
-							</RadioGroup>
+							</Box>
 						)}
 						{!isOpenEndedQuestion && (!isLessonCompleted || isLessonUpdating) && helperText !== ' ' && (
-							<FormHelperText sx={{ color: success ? 'green' : 'inherit', alignSelf: 'center', mt: '2rem' }}>{helperText}</FormHelperText>
+							<FormHelperText
+								sx={{
+									color: success ? 'green' : 'inherit',
+									alignSelf: 'center',
+									mt: '2rem',
+									fontSize: isMobileLandscape || isMobilePortrait ? '0.9rem' : isTabletPortrait || isTabletLandscape ? '1rem' : '1rem',
+								}}>
+								{helperText}
+							</FormHelperText>
 						)}
 
 						{!isMatching && !isFITBDragDrop && !isFITBTyping && (
