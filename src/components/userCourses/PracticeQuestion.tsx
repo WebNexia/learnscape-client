@@ -3,13 +3,10 @@ import {
 	Button,
 	DialogContent,
 	FormControl,
-	FormControlLabel,
 	FormHelperText,
 	IconButton,
 	keyframes,
 	MenuItem,
-	Radio,
-	RadioGroup,
 	Select,
 	SelectChangeEvent,
 	Slide,
@@ -17,7 +14,7 @@ import {
 	Typography,
 } from '@mui/material';
 import { QuestionInterface } from '../../interfaces/question';
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import axios from '@utils/axiosInstance';
 import { useNavigate, useParams } from 'react-router-dom';
 import theme from '../../themes';
@@ -42,6 +39,7 @@ import MatchingPreview from '../layouts/matching/MatchingPreview';
 import FillInTheBlanksDragDrop from '../layouts/FITBDragDrop/FillInTheBlanksDragDrop';
 import FillInTheBlanksTyping from '../layouts/FITBTyping/FillInTheBlanksTyping';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
+import { useSoundEffect } from '../../hooks/useSoundEffect';
 
 const colorChange = keyframes`
     0% {
@@ -82,6 +80,7 @@ interface PracticeQuestionProps {
 	toggleAiIcon: (index: number) => void;
 	openAiResponseDrawer: (index: number) => void;
 	closeAiResponseDrawer: (index: number) => void;
+	isSoundMuted?: boolean;
 }
 
 const PracticeQuestion = ({
@@ -103,18 +102,37 @@ const PracticeQuestion = ({
 	toggleAiIcon,
 	openAiResponseDrawer,
 	closeAiResponseDrawer,
+	isSoundMuted = false,
 }: PracticeQuestionProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const navigate = useNavigate();
 	const { userLessonId, handleNextLesson, nextLessonId, updateLastQuestion, getLastQuestion } = useUserCourseLessonData();
 	const { aiResponse, handleInitialSubmit, isLoadingAiResponse } = useAiResponse();
 
-	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
+	const {
+		isSmallScreen,
+		isRotatedMedium,
+		isRotated,
+		isVerySmallScreen,
+		isSmallMobileLandscape,
+		isSmallMobilePortrait,
+		isMobileLandscape,
+		isMobilePortrait,
+		isTabletPortrait,
+		isTabletLandscape,
+		isDesktopPortrait,
+		isDesktopLandscape,
+	} = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
 	const { userId, lessonId, courseId, userCourseId } = useParams();
 	const { orgId } = useContext(OrganisationContext);
 	const { fetchQuestionTypeName } = useQuestionTypes();
+
+	// Sound effects - only enabled when lesson is not completed (active answering mode)
+	const { playSuccessSound, playErrorSound } = useSoundEffect(!isLessonCompleted, isSoundMuted);
+	const prevIsAnswerCorrectRef = useRef<boolean>(false);
+	const prevErrorRef = useRef<boolean>(false);
 
 	const isOpenEndedQuestion: boolean = fetchQuestionTypeName(question) === QuestionType.OPEN_ENDED;
 	const isTrueFalseQuestion: boolean = fetchQuestionTypeName(question) === QuestionType.TRUE_FALSE;
@@ -198,7 +216,52 @@ const PracticeQuestion = ({
 
 		// Reset AI feedback state when question changes
 		setHasRequestedAiFeedback(false);
+
+		// Reset sound tracking refs when question changes
+		prevIsAnswerCorrectRef.current = false;
+		prevErrorRef.current = false;
 	}, [displayedQuestionNumber, question._id]);
+
+	// Play sound effects for multiple choice and true/false questions
+	useEffect(() => {
+		// Only play sounds if lesson is not completed (active answering mode)
+		if (isLessonCompleted) return;
+
+		// Skip for open-ended and flip card (these don't have immediate correct/incorrect feedback)
+		if (isOpenEndedQuestion || isFlipCard) return;
+
+		// For FITB and Matching, sounds are handled by the components themselves via callbacks
+		// Only handle multiple choice and true/false here
+		if (isMatching || isFITBDragDrop || isFITBTyping) return;
+
+		// Play success sound when answer becomes correct
+		if (isAnswerCorrect && !prevIsAnswerCorrectRef.current) {
+			playSuccessSound();
+			prevIsAnswerCorrectRef.current = true;
+		}
+
+		// Play error sound when error becomes true (and answer is not correct)
+		if (error && !prevErrorRef.current && !isAnswerCorrect) {
+			playErrorSound();
+			prevErrorRef.current = true;
+		}
+
+		// Reset error ref when error becomes false
+		if (!error) {
+			prevErrorRef.current = false;
+		}
+	}, [
+		isAnswerCorrect,
+		error,
+		isLessonCompleted,
+		isMatching,
+		isFITBDragDrop,
+		isFITBTyping,
+		isOpenEndedQuestion,
+		isFlipCard,
+		playSuccessSound,
+		playErrorSound,
+	]);
 
 	const createUserQuestion = async () => {
 		const existingUserAnswer = userAnswers?.find((data) => data.questionId === question._id);
@@ -320,306 +383,443 @@ const PracticeQuestion = ({
 	return (
 		<Box
 			sx={{
-				display: 'flex',
-				justifyContent: 'center',
+				display: displayedQuestionNumber === questionNumber ? 'flex' : 'none',
+				flexDirection: 'column',
+				alignItems: 'center',
+				position: 'relative',
+				minHeight: 'calc(95vh)',
+				height: 'fit-content',
+				paddingBottom: '8rem',
 			}}>
+			{!isFlipCard && (
+				<form onSubmit={handleSubmit} style={{ width: '100%' }}>
+					<FormControl sx={{ width: '100%' }} error={error} variant='standard'>
+						<QuestionMedia question={question} />
+						{!isFITBDragDrop && !isFITBTyping && <QuestionText question={question} isMatching={isMatching} questionNumber={questionNumber} />}
+
+						{isOpenEndedQuestion && (
+							<Box sx={{ width: '95%', margin: '0rem auto' }}>
+								<CustomTextField
+									required={false}
+									multiline
+									rows={4}
+									resizable
+									value={value}
+									onChange={(e) => {
+										setValue(e.target.value);
+										setUserAnswer(e.target.value);
+										setQuestionPrompt((prevData) => {
+											return { ...prevData, userInput: e.target.value };
+										});
+									}}
+									InputProps={{
+										inputProps: {
+											maxLength: 5000,
+										},
+									}}
+								/>
+							</Box>
+						)}
+
+						{isTrueFalseQuestion && (
+							<Box>
+								<TrueFalseOptions
+									correctAnswer={value}
+									setCorrectAnswer={setValue}
+									fromLearner={true}
+									question={question}
+									isLessonCompleted={isLessonCompleted}
+									displayedQuestionNumber={displayedQuestionNumber}
+									setHelperText={setHelperText}
+									setIsLessonUpdating={setIsLessonUpdating}
+									isLessonUpdating={isLessonUpdating}
+									setUserAnswer={setUserAnswer}
+									lessonType={lessonType}
+									setQuestionPrompt={setQuestionPrompt}
+								/>
+							</Box>
+						)}
+
+						{isMatching && (
+							<Box sx={{ display: 'flex', justifyContent: 'center', width: '100%', margin: '0 auto 2rem auto' }}>
+								<MatchingPreview
+									initialPairs={question.matchingPairs}
+									setAllPairsMatchedMatching={setAllPairsMatchedMatching}
+									fromPracticeQuestionUser={true}
+									displayedQuestionNumber={displayedQuestionNumber}
+									numberOfQuestions={numberOfQuestions}
+									setIsLessonCompleted={setIsLessonCompleted}
+									setShowQuestionSelector={setShowQuestionSelector}
+									lessonType={lessonType}
+									isLessonCompleted={isLessonCompleted}
+									onCorrectMatch={!isLessonCompleted ? playSuccessSound : undefined}
+									onWrongMatch={!isLessonCompleted ? playErrorSound : undefined}
+								/>
+							</Box>
+						)}
+
+						{isFITBDragDrop && (
+							<Box
+								sx={{
+									display: 'flex',
+									justifyContent: 'center',
+									width: '100%',
+									margin:
+										question.imageUrl || question.videoUrl
+											? '2.5rem auto 0 auto'
+											: isSmallMobileLandscape || isSmallMobilePortrait || isMobilePortrait || isMobileLandscape
+												? '6rem auto 0 auto'
+												: isTabletPortrait || isTabletLandscape
+													? '7rem auto 0 auto'
+													: isDesktopPortrait || isDesktopLandscape
+														? '8rem auto 0 auto'
+														: '6rem auto 0 auto',
+								}}>
+								<FillInTheBlanksDragDrop
+									textWithBlanks={question.question}
+									blankValuePairs={question.blankValuePairs}
+									setAllPairsMatchedFITBDragDrop={setAllPairsMatchedFITBDragDrop}
+									fromPracticeQuestionUser={true}
+									displayedQuestionNumber={displayedQuestionNumber}
+									numberOfQuestions={numberOfQuestions}
+									isLessonCompleted={isLessonCompleted}
+									setIsLessonCompleted={setIsLessonCompleted}
+									setShowQuestionSelector={setShowQuestionSelector}
+									lessonType={lessonType}
+									onCorrectMatch={!isLessonCompleted ? playSuccessSound : undefined}
+									onWrongMatch={!isLessonCompleted ? playErrorSound : undefined}
+								/>
+							</Box>
+						)}
+
+						{isFITBTyping && (
+							<Box
+								sx={{
+									display: 'flex',
+									flexDirection: 'column',
+									justifyContent: 'center',
+									alignItems: 'center',
+									width: '100%',
+									margin:
+										question.imageUrl || question.videoUrl
+											? '2.5rem auto 0 auto'
+											: isSmallMobileLandscape || isSmallMobilePortrait || isMobilePortrait || isMobileLandscape
+												? '6rem auto 0 auto'
+												: isTabletPortrait || isTabletLandscape
+													? '7rem auto 0 auto'
+													: isDesktopPortrait || isDesktopLandscape
+														? '8rem auto 0 auto'
+														: '6rem auto 0 auto',
+								}}>
+								<FillInTheBlanksTyping
+									textWithBlanks={question.question}
+									blankValuePairs={question.blankValuePairs}
+									setAllPairsMatchedFITBTyping={setAllPairsMatchedFITBTyping}
+									fromPracticeQuestionUser={true}
+									displayedQuestionNumber={displayedQuestionNumber}
+									numberOfQuestions={numberOfQuestions}
+									isLessonCompleted={isLessonCompleted}
+									setIsLessonCompleted={setIsLessonCompleted}
+									setShowQuestionSelector={setShowQuestionSelector}
+									lessonType={lessonType}
+									onCorrectMatch={!isLessonCompleted ? playSuccessSound : undefined}
+								/>
+							</Box>
+						)}
+
+						{isMultipleChoiceQuestion && (
+							<Box
+								sx={{
+									alignSelf: 'center',
+									width: '100%',
+									maxWidth: isMobileSize ? '100%' : '600px',
+									display: 'flex',
+									flexDirection: 'column',
+									gap: '0.75rem',
+								}}>
+								{question &&
+									question.options &&
+									question.options?.map((option, index) => {
+										const isSelected =
+											(isLessonCompleted && displayedQuestionNumber < getLastQuestion() && !isLessonUpdating ? question.correctAnswer : value) ===
+											option;
+										return (
+											<Box
+												key={index}
+												onClick={() => {
+													if (!isLessonCompleted || displayedQuestionNumber >= getLastQuestion() || isLessonUpdating) {
+														const syntheticEvent = {
+															target: { value: option },
+														} as React.ChangeEvent<HTMLInputElement>;
+														handleRadioChange(syntheticEvent);
+													} else {
+														setShowQuestionSelector(true);
+														setIsLessonUpdating(true);
+														setIsOpenEndedAnswerSubmitted(false);
+													}
+												}}
+												sx={{
+													'position': 'relative',
+													'display': 'flex',
+													'alignItems': 'center',
+													'justifyContent': 'space-between',
+													'padding': isMobileSize ? '0.75rem 1rem' : '1rem 1.25rem',
+													'borderRadius': '12px',
+													'border': '2px solid',
+													'borderColor': isSelected ? theme.palette.primary.main : 'rgba(0, 0, 0, 0.12)',
+													'background': isSelected
+														? 'linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)'
+														: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.95) 100%)',
+													'boxShadow': isSelected ? '0 4px 12px rgba(102, 126, 234, 0.2)' : '0 2px 8px rgba(0, 0, 0, 0.08)',
+													'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+													'cursor': 'pointer',
+													'backdropFilter': 'blur(10px)',
+													'&:hover': {
+														transform: 'translateY(-2px)',
+														boxShadow: isSelected ? '0 6px 16px rgba(102, 126, 234, 0.3)' : '0 4px 12px rgba(0, 0, 0, 0.12)',
+														borderColor: isSelected ? theme.palette.primary.main : 'rgba(102, 126, 234, 0.4)',
+														background: isSelected
+															? 'linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%)'
+															: 'linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%)',
+													},
+													'&::before': {
+														content: '""',
+														position: 'absolute',
+														top: 0,
+														left: 0,
+														right: 0,
+														bottom: 0,
+														background: isSelected
+															? 'linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%)'
+															: 'transparent',
+														borderRadius: '12px',
+														zIndex: 0,
+													},
+												}}>
+												<Typography
+													sx={{
+														fontSize: isMobileSize ? '0.8rem' : '0.9rem',
+														fontWeight: isSelected ? 600 : 400,
+														color: isSelected ? theme.palette.primary.main : theme.textColor?.secondary.main,
+														zIndex: 1,
+														position: 'relative',
+														lineHeight: 1.5,
+														transition: 'all 0.2s ease',
+														flex: 1,
+													}}>
+													{stripHtml(option)}
+												</Typography>
+											</Box>
+										);
+									})}
+							</Box>
+						)}
+						{!isOpenEndedQuestion && (!isLessonCompleted || isLessonUpdating) && helperText !== ' ' && (
+							<FormHelperText
+								sx={{
+									color: success ? 'green' : 'inherit',
+									alignSelf: 'center',
+									mt: '2rem',
+									fontSize: isMobileLandscape || isMobilePortrait ? '0.9rem' : isTabletPortrait || isTabletLandscape ? '1rem' : '1rem',
+								}}>
+								{helperText}
+							</FormHelperText>
+						)}
+
+						{!isMatching && !isFITBDragDrop && !isFITBTyping && (
+							<Button
+								sx={{
+									'mt': isMobileSize ? '2rem' : '3rem',
+									'width': isMobileSize ? 'fit-content' : '10rem',
+									'alignSelf': 'center',
+									'fontSize': isMobileSize ? '0.7rem' : undefined,
+									'textTransform': 'capitalize',
+									'boxShadow': '0 0.1rem 0.2rem 0.1rem rgba(0,0,0,0.2)',
+									'border': 'none',
+									':hover': {
+										boxShadow: '0 0.1rem 0.3rem 0.1rem rgba(0,0,0,0.2)',
+										border: 'none',
+									},
+									'mb': '2rem',
+								}}
+								type='submit'
+								variant='outlined'>
+								Submit Answer
+							</Button>
+						)}
+					</FormControl>
+				</form>
+			)}
+
+			{isFlipCard && (
+				<Box sx={{ mt: isMobileSize ? '6.5rem' : '9rem' }}>
+					<FlipCardPreview
+						question={question}
+						fromPracticeQuestionUser={true}
+						setIsCardFlipped={setIsCardFlipped}
+						displayedQuestionNumber={displayedQuestionNumber}
+						numberOfQuestions={numberOfQuestions}
+						setIsLessonCompleted={setIsLessonCompleted}
+						setShowQuestionSelector={setShowQuestionSelector}
+					/>
+				</Box>
+			)}
+
 			<Box
 				sx={{
-					display: displayedQuestionNumber === questionNumber ? 'flex' : 'none',
-					flexDirection: 'column',
+					display: 'flex',
+					justifyContent: 'space-between',
 					alignItems: 'center',
-					width: '100%',
+					position: 'absolute',
+					mt: isMobileSize ? '1.5rem' : '2rem',
+					width: '70%',
+					mb: '1rem',
+					bottom:
+						isSmallMobilePortrait || isMobilePortrait
+							? '1rem'
+							: isMobileLandscape || isSmallMobileLandscape
+								? '2rem'
+								: isTabletLandscape || isDesktopLandscape
+									? '3rem'
+									: '2rem',
 				}}>
-				{!isFlipCard && (
-					<form onSubmit={handleSubmit} style={{ width: '100%' }}>
-						<FormControl sx={{ width: '100%' }} error={error} variant='standard'>
-							<QuestionMedia question={question} />
-							{!isFITBDragDrop && !isFITBTyping && <QuestionText question={question} isMatching={isMatching} questionNumber={questionNumber} />}
+				<IconButton
+					sx={{
+						'flexShrink': 0,
+						'padding': '0.35rem',
+						':hover': {
+							color: theme.bgColor?.greenPrimary,
+							backgroundColor: 'transparent',
+							border: '2px solid lightgray',
+						},
+					}}
+					onClick={() => {
+						if (!(displayedQuestionNumber - 1 === 0)) {
+							setDisplayedQuestionNumber((prev) => prev - 1);
+							setSelectedQuestion(displayedQuestionNumber - 1);
+						}
+						window.scrollTo({ top: 0, behavior: 'smooth' });
+						setIsOpenEndedAnswerSubmitted(false);
+					}}
+					disabled={displayedQuestionNumber - 1 === 0}>
+					<KeyboardArrowLeft fontSize={isMobileSize ? 'medium' : 'large'} />
+				</IconButton>
 
-							{isOpenEndedQuestion && (
-								<Box sx={{ width: '95%', margin: '0rem auto' }}>
-									<CustomTextField
-										required={false}
-										multiline
-										rows={4}
-										resizable
-										value={value}
-										onChange={(e) => {
-											setValue(e.target.value);
-											setUserAnswer(e.target.value);
-											setQuestionPrompt((prevData) => {
-												return { ...prevData, userInput: e.target.value };
-											});
-										}}
-										InputProps={{
-											inputProps: {
-												maxLength: 5000,
-											},
-										}}
-									/>
-								</Box>
-							)}
-
-							{isTrueFalseQuestion && (
-								<Box>
-									<TrueFalseOptions
-										correctAnswer={value}
-										setCorrectAnswer={setValue}
-										fromLearner={true}
-										question={question}
-										isLessonCompleted={isLessonCompleted}
-										displayedQuestionNumber={displayedQuestionNumber}
-										setHelperText={setHelperText}
-										setIsLessonUpdating={setIsLessonUpdating}
-										isLessonUpdating={isLessonUpdating}
-										setUserAnswer={setUserAnswer}
-										lessonType={lessonType}
-										setQuestionPrompt={setQuestionPrompt}
-									/>
-								</Box>
-							)}
-
-							{isMatching && (
-								<Box sx={{ display: 'flex', justifyContent: 'center', width: '100%', margin: '0 auto' }}>
-									<MatchingPreview
-										initialPairs={question.matchingPairs}
-										setAllPairsMatchedMatching={setAllPairsMatchedMatching}
-										fromPracticeQuestionUser={true}
-										displayedQuestionNumber={displayedQuestionNumber}
-										numberOfQuestions={numberOfQuestions}
-										setIsLessonCompleted={setIsLessonCompleted}
-										setShowQuestionSelector={setShowQuestionSelector}
-										lessonType={lessonType}
-										isLessonCompleted={isLessonCompleted}
-									/>
-								</Box>
-							)}
-
-							{isFITBDragDrop && (
-								<Box
-									sx={{
-										display: 'flex',
-										justifyContent: 'center',
-										width: '100%',
-										margin:
-											question.imageUrl && question.videoUrl && isVerySmallScreen
-												? '3.5rem auto 0 auto'
-												: question.imageUrl || question.videoUrl
-													? '2.5rem auto 0 auto'
-													: isMobileSize
-														? '8.75rem auto 0 auto'
-														: '11rem auto 0 auto',
-									}}>
-									<FillInTheBlanksDragDrop
-										textWithBlanks={question.question}
-										blankValuePairs={question.blankValuePairs}
-										setAllPairsMatchedFITBDragDrop={setAllPairsMatchedFITBDragDrop}
-										fromPracticeQuestionUser={true}
-										displayedQuestionNumber={displayedQuestionNumber}
-										numberOfQuestions={numberOfQuestions}
-										isLessonCompleted={isLessonCompleted}
-										setIsLessonCompleted={setIsLessonCompleted}
-										setShowQuestionSelector={setShowQuestionSelector}
-										lessonType={lessonType}
-									/>
-								</Box>
-							)}
-
-							{isFITBTyping && (
-								<Box
-									sx={{
-										display: 'flex',
-										flexDirection: 'column',
-										justifyContent: 'center',
-										alignItems: 'center',
-										width: '100%',
-										margin:
-											question.imageUrl || question.videoUrl ? '2.5rem auto 0 auto' : isMobileSize ? '8.75rem auto 0 auto' : '11rem auto 0 auto',
-									}}>
-									<FillInTheBlanksTyping
-										textWithBlanks={question.question}
-										blankValuePairs={question.blankValuePairs}
-										setAllPairsMatchedFITBTyping={setAllPairsMatchedFITBTyping}
-										fromPracticeQuestionUser={true}
-										displayedQuestionNumber={displayedQuestionNumber}
-										numberOfQuestions={numberOfQuestions}
-										isLessonCompleted={isLessonCompleted}
-										setIsLessonCompleted={setIsLessonCompleted}
-										setShowQuestionSelector={setShowQuestionSelector}
-										lessonType={lessonType}
-									/>
-								</Box>
-							)}
-
-							{isMultipleChoiceQuestion && (
-								<RadioGroup
-									name='question'
-									value={isLessonCompleted && displayedQuestionNumber < getLastQuestion() && !isLessonUpdating ? question.correctAnswer : value}
-									onChange={handleRadioChange}
-									sx={{ alignSelf: 'center' }}>
-									{question &&
-										question.options &&
-										question.options?.map((option, index) => {
-											return (
-												<FormControlLabel
-													value={option}
-													control={
-														<Radio
-															sx={{
-																'& .MuiSvgIcon-root': {
-																	fontSize: isMobileSize ? '0.9rem' : '1.15rem', // Resize radio button
-																},
-															}}
-														/>
-													}
-													label={option}
-													key={index}
-													sx={{
-														'& .MuiFormControlLabel-label': {
-															fontSize: isMobileSize ? '0.75rem' : '1rem', // Resize text
-														},
-													}}
-												/>
-											);
-										})}
-								</RadioGroup>
-							)}
-							{!isOpenEndedQuestion && (!isLessonCompleted || isLessonUpdating) && helperText !== ' ' && (
-								<FormHelperText sx={{ color: success ? 'green' : 'inherit', alignSelf: 'center', mt: '2rem' }}>{helperText}</FormHelperText>
-							)}
-
-							{!isMatching && !isFITBDragDrop && !isFITBTyping && (
-								<Button
-									sx={{
-										mt: isMobileSize ? '2rem' : '3rem',
-										width: isMobileSize ? '9rem' : '13rem',
-										alignSelf: 'center',
-										fontSize: isMobileSize ? '0.7rem' : undefined,
-									}}
-									type='submit'
-									variant='outlined'>
-									Submit Answer
-								</Button>
-							)}
-						</FormControl>
-					</form>
+				{!showQuestionSelector && (
+					<Typography
+						variant={isMobileSize ? 'body2' : 'body1'}
+						sx={{
+							position: 'absolute',
+							left: '50%',
+							transform: 'translateX(-50%)',
+						}}>
+						{displayedQuestionNumber} / {numberOfQuestions}
+					</Typography>
 				)}
 
-				{isFlipCard && (
-					<Box sx={{ mt: isMobileSize ? '8rem' : '9rem' }}>
-						<FlipCardPreview
-							question={question}
-							fromPracticeQuestionUser={true}
-							setIsCardFlipped={setIsCardFlipped}
-							displayedQuestionNumber={displayedQuestionNumber}
-							numberOfQuestions={numberOfQuestions}
-							setIsLessonCompleted={setIsLessonCompleted}
-							setShowQuestionSelector={setShowQuestionSelector}
-						/>
+				{showQuestionSelector && (
+					<Box
+						sx={{
+							display: 'flex',
+							alignItems: 'center',
+							position: 'absolute',
+							left: '50%',
+							transform: 'translateX(-50%)',
+						}}>
+						<Select
+							labelId='question_number'
+							id='question_number'
+							sx={{ fontSize: isMobileSize ? '0.75rem' : '0.9rem' }}
+							value={selectedQuestion}
+							onChange={handleQuestionChange}
+							size='small'
+							label='#'
+							required
+							MenuProps={{
+								PaperProps: {
+									style: {
+										maxHeight: isMobileSize ? 200 : 250,
+									},
+								},
+							}}>
+							{Array.from({ length: numberOfQuestions }, (_, i) => (
+								<MenuItem
+									key={i + 1}
+									value={i + 1}
+									sx={{
+										display: 'flex',
+										justifyContent: 'center',
+										fontSize: isMobileSize ? '0.75rem' : '0.9rem',
+										minHeight: '2rem',
+										padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
+									}}>
+									{i + 1}
+								</MenuItem>
+							))}
+						</Select>
 					</Box>
 				)}
 
-				<Box
-					sx={{
-						display: 'flex',
-						justifyContent: 'space-between',
-						alignItems: 'center',
-						position: 'relative',
-						mt: isMobileSize ? '1.5rem' : '2rem',
-						width: '50%',
-						mb: '1rem',
-					}}>
+				{displayedQuestionNumber !== numberOfQuestions || !isLessonCompleted ? (
 					<IconButton
-						sx={{
-							'flexShrink': 0,
-							'padding': '0.35rem',
-							':hover': {
-								color: theme.bgColor?.greenPrimary,
-								backgroundColor: 'transparent',
-							},
-						}}
 						onClick={() => {
-							if (!(displayedQuestionNumber - 1 === 0)) {
-								setDisplayedQuestionNumber((prev) => prev - 1);
-								setSelectedQuestion(displayedQuestionNumber - 1);
+							if (!(displayedQuestionNumber + 1 > numberOfQuestions)) {
+								setDisplayedQuestionNumber((prev) => prev + 1);
+								setSelectedQuestion(displayedQuestionNumber + 1);
 							}
+
 							window.scrollTo({ top: 0, behavior: 'smooth' });
 							setIsOpenEndedAnswerSubmitted(false);
 						}}
-						disabled={displayedQuestionNumber - 1 === 0}>
-						<KeyboardArrowLeft fontSize={isMobileSize ? 'medium' : 'large'} />
+						sx={{
+							'flexShrink': 0,
+							'padding': '0.35rem',
+							'color':
+								!isAnswerCorrect &&
+								!isOpenEndedAnswerSubmitted &&
+								!allPairsMatchedFITBDragDrop &&
+								!allPairsMatchedFITBTyping &&
+								!allPairsMatchedMatching &&
+								!isCardFlipped
+									? 'gray'
+									: theme.textColor?.common.main,
+							'backgroundColor':
+								!isAnswerCorrect &&
+								!isOpenEndedAnswerSubmitted &&
+								!allPairsMatchedFITBDragDrop &&
+								!allPairsMatchedFITBTyping &&
+								!allPairsMatchedMatching &&
+								!isCardFlipped
+									? 'inherit'
+									: theme.bgColor?.greenPrimary,
+							':hover': {
+								color: theme.bgColor?.greenPrimary,
+								backgroundColor: 'transparent',
+								border: '2px solid lightgray',
+							},
+						}}
+						disabled={
+							(!isAnswerCorrect || displayedQuestionNumber + 1 > numberOfQuestions || !isOpenEndedAnswerSubmitted) &&
+							!(isLessonCompleted || displayedQuestionNumber < getLastQuestion()) &&
+							!isCardFlipped &&
+							!allPairsMatchedFITBDragDrop &&
+							!allPairsMatchedFITBTyping &&
+							!allPairsMatchedMatching
+						}>
+						<KeyboardArrowRight fontSize={isMobileSize ? 'medium' : 'large'} />
 					</IconButton>
-
-					{!showQuestionSelector && (
-						<Typography
-							variant={isMobileSize ? 'body2' : 'body1'}
-							sx={{
-								position: 'absolute',
-								left: '50%',
-								transform: 'translateX(-50%)',
-							}}>
-							{displayedQuestionNumber} / {numberOfQuestions}
-						</Typography>
-					)}
-
-					{showQuestionSelector && (
-						<Box
-							sx={{
-								display: 'flex',
-								alignItems: 'center',
-								position: 'absolute',
-								left: '50%',
-								transform: 'translateX(-50%)',
-							}}>
-							<Select
-								labelId='question_number'
-								id='question_number'
-								sx={{ fontSize: isMobileSize ? '0.75rem' : '0.9rem' }}
-								value={selectedQuestion}
-								onChange={handleQuestionChange}
-								size='small'
-								label='#'
-								required
-								MenuProps={{
-									PaperProps: {
-										style: {
-											maxHeight: isMobileSize ? 200 : 250,
-										},
-									},
-								}}>
-								{Array.from({ length: numberOfQuestions }, (_, i) => (
-									<MenuItem
-										key={i + 1}
-										value={i + 1}
-										sx={{
-											display: 'flex',
-											justifyContent: 'center',
-											fontSize: isMobileSize ? '0.75rem' : '0.9rem',
-											minHeight: '2rem',
-											padding: isMobileSize ? '0.25rem 0.5rem' : undefined,
-										}}>
-										{i + 1}
-									</MenuItem>
-								))}
-							</Select>
-							{/* <Typography sx={{ fontSize: isMobileSize ? '0.85rem' : '1rem', margin: '0 2rem 0 0' }}> / {numberOfQuestions}</Typography> */}
-						</Box>
-					)}
-
-					{displayedQuestionNumber !== numberOfQuestions || !isLessonCompleted ? (
+				) : (
+					<Tooltip title={isCompletingCourse ? 'Complete Course' : isCompletingLesson ? 'Complete Lesson' : 'Next Lesson'} placement='top' arrow>
 						<IconButton
 							onClick={() => {
-								if (!(displayedQuestionNumber + 1 > numberOfQuestions)) {
-									setDisplayedQuestionNumber((prev) => prev + 1);
-									setSelectedQuestion(displayedQuestionNumber + 1);
+								if (isLessonCompleted) {
+									setIsLessonCourseCompletedModalOpen(true);
 								}
-
 								window.scrollTo({ top: 0, behavior: 'smooth' });
 								setIsOpenEndedAnswerSubmitted(false);
 							}}
 							sx={{
 								'flexShrink': 0,
-								'padding': '0.35rem',
 								'color':
 									!isAnswerCorrect &&
 									!isOpenEndedAnswerSubmitted &&
@@ -642,95 +842,49 @@ const PracticeQuestion = ({
 									color: theme.bgColor?.greenPrimary,
 									backgroundColor: 'transparent',
 								},
-							}}
-							disabled={
-								(!isAnswerCorrect || displayedQuestionNumber + 1 > numberOfQuestions || !isOpenEndedAnswerSubmitted) &&
-								!(isLessonCompleted || displayedQuestionNumber < getLastQuestion()) &&
-								!isCardFlipped &&
-								!allPairsMatchedFITBDragDrop &&
-								!allPairsMatchedFITBTyping &&
-								!allPairsMatchedMatching
-							}>
-							<KeyboardArrowRight fontSize={isMobileSize ? 'medium' : 'large'} />
+								'padding': '0.35rem',
+							}}>
+							{isCompletingCourse ? (
+								<DoneAll fontSize={isMobileSize ? 'small' : 'medium'} />
+							) : isCompletingLesson ? (
+								<Done fontSize={isMobileSize ? 'small' : 'medium'} />
+							) : isLessonCompleted && isLastQuestion ? (
+								<KeyboardDoubleArrowRight fontSize={isMobileSize ? 'small' : 'medium'} />
+							) : (
+								<KeyboardArrowRight fontSize={isMobileSize ? 'small' : 'medium'} />
+							)}
 						</IconButton>
-					) : (
-						<Tooltip title={isCompletingCourse ? 'Complete Course' : isCompletingLesson ? 'Complete Lesson' : 'Next Lesson'} placement='top' arrow>
-							<IconButton
-								onClick={() => {
-									if (isLessonCompleted) {
-										setIsLessonCourseCompletedModalOpen(true);
-									}
-									window.scrollTo({ top: 0, behavior: 'smooth' });
-									setIsOpenEndedAnswerSubmitted(false);
-								}}
-								sx={{
-									'flexShrink': 0,
-									'color':
-										!isAnswerCorrect &&
-										!isOpenEndedAnswerSubmitted &&
-										!allPairsMatchedFITBDragDrop &&
-										!allPairsMatchedFITBTyping &&
-										!allPairsMatchedMatching &&
-										!isCardFlipped
-											? 'gray'
-											: theme.textColor?.common.main,
-									'backgroundColor':
-										!isAnswerCorrect &&
-										!isOpenEndedAnswerSubmitted &&
-										!allPairsMatchedFITBDragDrop &&
-										!allPairsMatchedFITBTyping &&
-										!allPairsMatchedMatching &&
-										!isCardFlipped
-											? 'inherit'
-											: theme.bgColor?.greenPrimary,
-									':hover': {
-										color: theme.bgColor?.greenPrimary,
-										backgroundColor: 'transparent',
-									},
-									'padding': '0.35rem',
-								}}>
-								{isCompletingCourse ? (
-									<DoneAll fontSize={isMobileSize ? 'small' : 'medium'} />
-								) : isCompletingLesson ? (
-									<Done fontSize={isMobileSize ? 'small' : 'medium'} />
-								) : isLessonCompleted && isLastQuestion ? (
-									<KeyboardDoubleArrowRight fontSize={isMobileSize ? 'small' : 'medium'} />
-								) : (
-									<KeyboardArrowRight fontSize={isMobileSize ? 'small' : 'medium'} />
-								)}
-							</IconButton>
-						</Tooltip>
-					)}
+					</Tooltip>
+				)}
 
-					<CustomDialog
-						openModal={isLessonCourseCompletedModalOpen}
-						closeModal={() => setIsLessonCourseCompletedModalOpen(false)}
-						maxWidth='xs'
-						title={`${nextLessonId ? 'Lesson Completed' : 'Course Completed'}`}>
-						<DialogContent sx={{ mb: '-0.5rem' }}>
-							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-								{`You have completed this ${nextLessonId ? 'lesson' : 'course'}. Proceed to the next ${nextLessonId ? 'lesson' : 'course'}.`}
-							</Typography>
-						</DialogContent>
-						<CustomDialogActions
-							onCancel={() => setIsLessonCourseCompletedModalOpen(false)}
-							onSubmit={async () => {
-								await handleNextLesson();
-								navigate(`/course/${courseId}/userCourseId/${userCourseId}?isEnrolled=true`);
-								window.scrollTo({ top: 0, behavior: 'smooth' });
-							}}
-							submitBtnText='OK'
-							actionSx={{ margin: '0rem 0.5rem 0.5rem 0' }}
-						/>
-					</CustomDialog>
-				</Box>
+				<CustomDialog
+					openModal={isLessonCourseCompletedModalOpen}
+					closeModal={() => setIsLessonCourseCompletedModalOpen(false)}
+					maxWidth='xs'
+					title={`${nextLessonId ? 'Lesson Completed' : 'Course Completed'}`}>
+					<DialogContent sx={{ mb: '-0.5rem' }}>
+						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+							{`You have completed this ${nextLessonId ? 'lesson' : 'course'}. Proceed to the next ${nextLessonId ? 'lesson' : 'course'}.`}
+						</Typography>
+					</DialogContent>
+					<CustomDialogActions
+						onCancel={() => setIsLessonCourseCompletedModalOpen(false)}
+						onSubmit={async () => {
+							await handleNextLesson();
+							navigate(`/course/${courseId}/userCourseId/${userCourseId}?isEnrolled=true`);
+							window.scrollTo({ top: 0, behavior: 'smooth' });
+						}}
+						submitBtnText='OK'
+						actionSx={{ margin: '0rem 0.5rem 0.5rem 0' }}
+					/>
+				</CustomDialog>
 			</Box>
 			<Box
 				sx={{
 					display: 'flex',
 					justifyContent: 'flex-end',
 					position: 'fixed',
-					top: isMobileSize ? '9rem' : '11rem',
+					top: isMobileSize ? '7.5rem' : '11rem',
 					right: isSmallScreen ? '0.15rem' : isRotatedMedium ? '1rem' : '2rem',
 					width: '80%',
 					zIndex: 9,

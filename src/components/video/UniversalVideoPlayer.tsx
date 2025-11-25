@@ -32,15 +32,19 @@ const UniversalVideoPlayer = ({
 		return <DailymotionPlayer url={url} width={width} height={height} controls={controls} autoplay={autoplay} style={style} onError={onError} />;
 	}
 
+	// Format the URL and get config
+	const formattedUrl = formatVideoUrl(url);
+	const playerConfig = config || getVideoPlayerConfig(url, controls);
+
 	// For all other platforms, use ReactPlayer
 	return (
 		<ReactPlayer
-			url={formatVideoUrl(url)}
+			url={formattedUrl}
 			width={width}
 			height={height}
 			controls={controls}
 			style={style}
-			config={config || getVideoPlayerConfig(url, controls)}
+			config={playerConfig}
 			onError={onError}
 			light={light}
 			playing={autoplay}

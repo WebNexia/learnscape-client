@@ -49,7 +49,7 @@ const FlipCardBackFace = ({
 	fromLessonEditPage,
 	setIsCorrectAnswerMissing,
 }: FlipCardBackFaceProps) => {
-	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const { isSmallScreen, isRotatedMedium, isMobilePortrait, isMobileLandscape, isTabletPortrait } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	return (
 		<Box
@@ -57,8 +57,8 @@ const FlipCardBackFace = ({
 				display: 'flex',
 				flexDirection: 'column',
 				alignItems: 'center',
-				ml: isMobileSize ? '0rem' : '3rem',
-				mt: isMobileSize ? '2rem' : undefined,
+				ml: isMobilePortrait ? '0rem' : isMobileLandscape ? '2rem' : isTabletPortrait ? '2rem' : '3rem',
+				mt: isMobilePortrait ? '2rem' : undefined,
 			}}>
 			<Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
 				<Typography variant={isMobileSize ? 'body2' : 'body1'} sx={{ textAlign: 'center' }}>
@@ -110,12 +110,12 @@ const FlipCardBackFace = ({
 				maxLength={255}
 				style={{
 					background: 'linear-gradient(135deg, #c47a6a 0%, #d48a7a 100%)',
-					width: isMobileSize ? '15rem' : '25rem',
-					height: isMobileSize ? '15rem' : '40vh',
+					width: isMobilePortrait ? '15rem' : isMobileLandscape ? '18rem' : isTabletPortrait ? '20rem' : '25rem',
+					height: isMobilePortrait ? '15rem' : isMobileLandscape ? '18rem' : isTabletPortrait ? '20rem' : '20rem',
 					color: 'white',
-					padding: '4rem 3rem',
+					padding: '3rem 2rem',
 					fontFamily: theme.fontFamily?.main,
-					fontSize: isMobileSize ? '0.8rem' : '1rem',
+					fontSize: isMobilePortrait ? '1rem' : '1.5rem',
 					textAlign: 'center',
 					lineHeight: '1.5rem',
 					border: 'none',

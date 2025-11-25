@@ -84,7 +84,18 @@ const AdminLessonEditPageEditQuestionDialog = ({
 	const editorId = generateUniqueId('editor-');
 	const editorRef = useRef<any>(null);
 
-	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const {
+		isSmallScreen,
+		isRotatedMedium,
+		isSmallMobileLandscape,
+		isSmallMobilePortrait,
+		isMobilePortrait,
+		isMobileLandscape,
+		isTabletPortrait,
+		isTabletLandscape,
+		isDesktopPortrait,
+		isDesktopLandscape,
+	} = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
 	const isFlipCard = questionType === QuestionType.FLIP_CARD;
@@ -415,6 +426,7 @@ const AdminLessonEditPageEditQuestionDialog = ({
 							setIsQuestionMissing={setIsQuestionMissing}
 							setSingleLessonBeforeSave={setSingleLessonBeforeSave}
 							setIsCorrectAnswerMissing={setIsCorrectAnswerMissing}
+							fromLessonEditPage={true}
 						/>
 					) : (
 						<Box sx={{ width: '100%', margin: '1rem 0' }}>
@@ -448,7 +460,7 @@ const AdminLessonEditPageEditQuestionDialog = ({
 						</Box>
 					)}
 
-					<Box sx={{ width: isMobileSize ? '100%' : '90%' }}>
+					<Box sx={{ width: isMobileSize ? '100%' : '90%', mb: isOpenEndedQuestion ? '-1rem' : '-2rem' }}>
 						{isMultipleChoiceQuestion &&
 							options?.map((option, i) => (
 								<Box
@@ -472,6 +484,7 @@ const AdminLessonEditPageEditQuestionDialog = ({
 													}}
 													color='primary'
 													size='small'
+													sx={{ '& .MuiSvgIcon-root': { fontSize: isMobileSize ? '1.1rem' : undefined } }}
 												/>
 											}
 											label=''
@@ -480,7 +493,7 @@ const AdminLessonEditPageEditQuestionDialog = ({
 									{i === options.length - 1 && (
 										<Tooltip title='Add Option' placement='top' arrow>
 											<IconButton onClick={addOption}>
-												<AddCircle fontSize='small' />
+												<AddCircle fontSize='small' sx={{ fontSize: isMobileSize ? '1rem' : undefined }} />
 											</IconButton>
 										</Tooltip>
 									)}
@@ -501,7 +514,7 @@ const AdminLessonEditPageEditQuestionDialog = ({
 									{i > 0 && (
 										<Tooltip title='Remove Option' placement='top' arrow>
 											<IconButton onClick={() => removeOption(i)}>
-												<RemoveCircle fontSize='small' />
+												<RemoveCircle fontSize='small' sx={{ fontSize: isMobileSize ? '1rem' : undefined }} />
 											</IconButton>
 										</Tooltip>
 									)}
@@ -563,21 +576,26 @@ const AdminLessonEditPageEditQuestionDialog = ({
 										alignItems: 'center',
 										width: '100%',
 										minHeight: '4rem',
-										margin: '4rem auto 0 auto',
+										margin: '3rem auto 0 auto',
 									}}>
-									<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', mt: isMobileSize ? '0.5rem' : '3rem' }}>
+									<Box
+										sx={{
+											display: 'flex',
+											justifyContent: 'space-between',
+											width: '100%',
+										}}>
 										<Box>
 											<Typography variant={isMobileSize ? 'h6' : 'h5'}>Student View </Typography>
 										</Box>
 										<CustomInfoMessageAlignedRight message={`View as in a ${lessonType === LessonType.QUIZ ? 'quiz' : 'practice lesson'}`} />
 									</Box>
 									{isFITBDragDrop && (
-										<Box sx={{ padding: '1rem 0', width: isMobileSize ? '100%' : '90%' }}>
+										<Box sx={{ padding: '1rem 0', width: '100%', mb: '-2rem' }}>
 											<FillInTheBlanksDragDropProps textWithBlanks={editorContent} blankValuePairs={blankValuePairs} lessonType={lessonType} />
 										</Box>
 									)}
 									{isFITBTyping && (
-										<Box sx={{ padding: '1rem 0', width: isMobileSize ? '100%' : '90%' }}>
+										<Box sx={{ padding: '1rem 0', width: '100%', mb: '-2rem' }}>
 											<FillInTheBlanksTyping textWithBlanks={editorContent} blankValuePairs={blankValuePairs} lessonType={lessonType} />
 										</Box>
 									)}

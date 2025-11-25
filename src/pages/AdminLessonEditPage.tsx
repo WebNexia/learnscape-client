@@ -1568,7 +1568,7 @@ const AdminLessonEditPage = () => {
 																					closeModal={() => closeCloneQuestionModal(index)}
 																					title='Clone Question'
 																					content='Are you sure you want to clone the question?'
-																					maxWidth='sm'>
+																					maxWidth='xs'>
 																					<CustomDialogActions
 																						onSubmit={() => {
 																							cloneQuestion(question, index);
@@ -1576,6 +1576,7 @@ const AdminLessonEditPage = () => {
 																						}}
 																						onCancel={() => closeCloneQuestionModal(index)}
 																						submitBtnText='Clone'
+																						actionSx={{ mb: '0.5rem' }}
 																					/>
 																				</CustomDialog>
 

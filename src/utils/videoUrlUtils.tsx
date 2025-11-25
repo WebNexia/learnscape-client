@@ -29,7 +29,18 @@ export const formatVideoUrl = (url: string): string => {
 
 	// Handle YouTube URLs
 	if (url?.includes('youtube.com') || url?.includes('youtu.be')) {
-		// ReactPlayer handles YouTube URLs automatically
+		// Extract video ID and create clean URL for better compatibility
+		const patterns = [/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/, /youtube\.com\/embed\/([a-zA-Z0-9_-]+)/];
+
+		for (const pattern of patterns) {
+			const match = url.match(pattern);
+			if (match && match[1]) {
+				// Return clean watch URL format (ReactPlayer handles this best)
+				return `https://www.youtube.com/watch?v=${match[1]}`;
+			}
+		}
+
+		// Fallback to original URL if pattern doesn't match
 		return url;
 	}
 

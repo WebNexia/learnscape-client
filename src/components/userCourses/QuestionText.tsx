@@ -22,20 +22,15 @@ const QuestionText = ({ question, questionNumber, isMatching }: QuestionTextProp
 					question.videoUrl || question.imageUrl
 						? '3rem 0 0rem 0'
 						: isMatching && isMobileSize
-							? '8.5rem 0 -1rem 0'
+							? '6.5rem 0 -1rem 0'
 							: isMatching
-								? '10rem 0 -1rem 0'
+								? '8rem 0 -1rem 0'
 								: isMobileSize
 									? '6.5rem 0 1rem 0'
 									: '8rem 0 1rem 0',
 			}}>
 			<Box className='rich-text-content' sx={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}>
 				<Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
-					<Box>
-						<Typography variant='body2' sx={{ margin: '0.5rem 0.5rem 0 0', fontSize: isMobileSize ? '0.8rem' : '0.9rem' }}>
-							{questionNumber})
-						</Typography>
-					</Box>
 					<Box>
 						<Typography
 							variant='body2'

@@ -109,6 +109,8 @@ interface FillInTheBlanksTypingProps {
 	setIsLessonCompleted?: React.Dispatch<React.SetStateAction<boolean>>;
 	setShowQuestionSelector?: React.Dispatch<React.SetStateAction<boolean>>;
 	setUserQuizAnswers?: React.Dispatch<React.SetStateAction<QuizQuestionAnswer[]>>;
+	onCorrectMatch?: () => void;
+	onWrongMatch?: () => void;
 }
 
 const FillInTheBlanksTyping = ({
@@ -129,6 +131,8 @@ const FillInTheBlanksTyping = ({
 	setIsLessonCompleted,
 	setShowQuestionSelector,
 	setUserQuizAnswers,
+	onCorrectMatch,
+	onWrongMatch,
 }: FillInTheBlanksTypingProps) => {
 	const [userAnswers, setUserAnswers] = useState<Record<string, string>>({});
 	const [inputStatus, setInputStatus] = useState<Record<string, boolean | null>>({});
@@ -139,7 +143,20 @@ const FillInTheBlanksTyping = ({
 
 	const { updateLastQuestion, getLastQuestion } = useUserCourseLessonData();
 
-	const { isRotated, isVerySmallScreen, isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
+	const {
+		isRotated,
+		isVerySmallScreen,
+		isSmallScreen,
+		isRotatedMedium,
+		isSmallMobileLandscape,
+		isSmallMobilePortrait,
+		isMobileLandscape,
+		isMobilePortrait,
+		isTabletPortrait,
+		isTabletLandscape,
+		isDesktopPortrait,
+		isDesktopLandscape,
+	} = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
@@ -283,8 +300,13 @@ const FillInTheBlanksTyping = ({
 			newStatus[id] = null;
 		} else if (blankValuePairs?.find((pair) => pair.id === id)?.value === inputValue.trim()) {
 			newStatus[id] = true;
+			// Play success sound only when complete correct word is typed
+			if (!isLessonCompleted && onCorrectMatch) {
+				onCorrectMatch();
+			}
 		} else {
 			newStatus[id] = false;
+			// No error sound while typing - only success sound when correct word is complete
 		}
 
 		setUserAnswers(newAnswers);
@@ -350,7 +372,11 @@ const FillInTheBlanksTyping = ({
 				</TextContainer>
 
 				{(!isLessonCompleted || lessonType === LessonType.PRACTICE_LESSON) && (
-					<Box sx={{ mt: '2rem' }}>
+					<Box
+						sx={{
+							mt: '2rem',
+							mb: '2rem',
+						}}>
 						<CustomInfoMessageAlignedLeft message='Type the correct word into each blank to complete the sentence(s)' />
 						<Box
 							sx={{

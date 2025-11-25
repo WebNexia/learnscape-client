@@ -88,7 +88,7 @@ export const useUserCourseLessonData = () => {
 
 	// Fallback function to handle next lesson creation failures
 	const handleNextLessonFallback = useCallback(async () => {
-		if (!nextLessonId || !user?._id || !courseId || !userCourseId || !orgId) return;
+		if (!nextLessonId || !user?._id || !courseId || !orgId) return;
 
 		try {
 			// Check if the lesson already exists on the server using checkEnrollment endpoint
@@ -105,7 +105,7 @@ export const useUserCourseLessonData = () => {
 		} catch (fallbackError) {
 			console.error('Fallback also failed:', fallbackError);
 		}
-	}, [nextLessonId, user?._id, courseId, userCourseId, orgId, base_url, queryClient]);
+	}, [nextLessonId, user?._id, courseId, orgId, base_url, queryClient, parsedUserCourseData]);
 
 	// Function to handle moving to the next lesson
 	const handleNextLesson = useCallback(async () => {
@@ -147,12 +147,32 @@ export const useUserCourseLessonData = () => {
 
 				if (!existingNextLesson) {
 					try {
+						// Get valid userCourseId from context data instead of URL params (which might be "none")
+						// This is critical for free courses where URL might have "none" as placeholder
+						const validUserCourseData = parsedUserCourseData?.find((data) => data.courseId === courseId);
+						const validUserCourseId = validUserCourseData?.userCourseId;
+
+						// Validate that userCourseId is not "none" or invalid MongoDB ObjectId
+						if (!validUserCourseId || validUserCourseId === 'none' || !validUserCourseId.match(/^[0-9a-fA-F]{24}$/)) {
+							console.error(
+								'Invalid userCourseId - cannot create next lesson. userCourseId:',
+								validUserCourseId,
+								'courseId:',
+								courseId,
+								'URL param userCourseId:',
+								userCourseId
+							);
+							// Fallback: try to find existing lesson on server (which might already exist)
+							await handleNextLessonFallback();
+							return;
+						}
+
 						// Make sure the responseUserLesson API call is completed and returns valid data
 						const responseUserLesson = await axios.post(`${base_url}/userlessons`, {
 							lessonId: nextLessonId,
 							userId: user?._id,
 							courseId,
-							userCourseId,
+							userCourseId: validUserCourseId,
 							currentQuestion: 1,
 							isCompleted: false,
 							isInProgress: true,
@@ -210,10 +230,21 @@ export const useUserCourseLessonData = () => {
 
 				// Only mark course as completed if there are no more lessons
 				if (!hasMoreLessons) {
-					await axios.patch(`${base_url}/usercourses/${userCourseId}`, {
-						isCompleted: true,
-						isInProgress: false,
-					});
+					// Get valid userCourseId from context data instead of URL params
+					const validUserCourseData = parsedUserCourseData?.find((data) => data.courseId === courseId);
+					const validUserCourseId = validUserCourseData?.userCourseId || userCourseId;
+
+					// Validate that userCourseId is not "none" or invalid
+					if (validUserCourseId && validUserCourseId !== 'none' && validUserCourseId.match(/^[0-9a-fA-F]{24}$/)) {
+						await axios.patch(`${base_url}/usercourses/${validUserCourseId}`, {
+							isCompleted: true,
+							isInProgress: false,
+						});
+
+						setIsCourseCompleted(true);
+					} else {
+						console.error('Invalid userCourseId for course completion:', validUserCourseId);
+					}
 
 					setIsCourseCompleted(true);
 

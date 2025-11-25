@@ -170,11 +170,49 @@ const VideoRecorder = ({ uploadVideo, isVideoUploading }: VideoRecorderProps) =>
 
 			<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
 				{!recordedVideo && (
-					<video
-						ref={liveVideoFeed}
-						autoPlay
-						height={isMobileSize ? 150 : 250}
-						style={{ boxShadow: '0 0 0.4rem 0.2rem rgba(0,0,0,0.2)', borderRadius: '0.25rem' }}></video>
+					<Box
+						sx={{
+							'display': 'flex',
+							'flexDirection': 'column',
+							'background': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+							'borderRadius': '12px',
+							'padding': isMobileSize ? '0.35rem' : '0.5rem',
+							'boxShadow': '0 8px 20px rgba(0,0,0,0.1)',
+							'backdropFilter': 'blur(10px)',
+							'border': '1px solid rgba(255,255,255,0.1)',
+							'position': 'relative',
+							'overflow': 'hidden',
+							'transition': 'all 0.3s ease',
+							'width': '100%',
+							'maxWidth': isMobileSize ? '100%' : '500px',
+							'&:hover': {
+								transform: 'translateY(-2px)',
+								boxShadow: '0 12px 25px rgba(0,0,0,0.15)',
+							},
+							'&::before': {
+								content: '""',
+								position: 'absolute',
+								top: 0,
+								left: 0,
+								right: 0,
+								bottom: 0,
+								background: 'rgba(255,255,255,0.05)',
+								borderRadius: '12px',
+								zIndex: 0,
+							},
+						}}>
+						<video
+							ref={liveVideoFeed}
+							autoPlay
+							height={isMobileSize ? 150 : 250}
+							style={{
+								borderRadius: '8px',
+								width: '100%',
+								objectFit: 'contain',
+								position: 'relative',
+								zIndex: 1,
+							}}></video>
+					</Box>
 				)}
 
 				{isRecording && (
@@ -208,12 +246,50 @@ const VideoRecorder = ({ uploadVideo, isVideoUploading }: VideoRecorderProps) =>
 				)}
 
 				{recordedVideo && (
-					<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+					<Box
+						sx={{
+							'display': 'flex',
+							'flexDirection': 'column',
+							'alignItems': 'center',
+							'background': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+							'borderRadius': '12px',
+							'padding': isMobileSize ? '0.35rem' : '0.5rem',
+							'boxShadow': '0 8px 20px rgba(0,0,0,0.1)',
+							'backdropFilter': 'blur(10px)',
+							'border': '1px solid rgba(255,255,255,0.1)',
+							'position': 'relative',
+							'overflow': 'hidden',
+							'transition': 'all 0.3s ease',
+							'width': '100%',
+							'maxWidth': isMobileSize ? '100%' : '600px',
+							'&:hover': {
+								transform: 'translateY(-2px)',
+								boxShadow: '0 12px 25px rgba(0,0,0,0.15)',
+							},
+							'mb': '1rem',
+							'&::before': {
+								content: '""',
+								position: 'absolute',
+								top: 0,
+								left: 0,
+								right: 0,
+								bottom: 0,
+								background: 'rgba(255,255,255,0.05)',
+								borderRadius: '12px',
+								zIndex: 0,
+							},
+						}}>
 						<video
 							src={recordedVideo}
 							controls
 							height={isVerySmallScreen ? 225 : isMobileSize ? 250 : 350}
-							style={{ boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)', borderRadius: '0.25rem' }}></video>
+							style={{
+								borderRadius: '8px',
+								width: '100%',
+								objectFit: 'contain',
+								position: 'relative',
+								zIndex: 1,
+							}}></video>
 					</Box>
 				)}
 
@@ -253,6 +329,8 @@ const VideoRecorder = ({ uploadVideo, isVideoUploading }: VideoRecorderProps) =>
 			<CustomDialog
 				openModal={isUploadModalOpen}
 				closeModal={() => setIsUploadModalOpen(false)}
+				maxWidth='xs'
+				title='Upload Video'
 				content={`Are you sure you want to upload the video recording?
 					You will not have another chance.`}>
 				{isVideoUploading ? (
@@ -264,6 +342,7 @@ const VideoRecorder = ({ uploadVideo, isVideoUploading }: VideoRecorderProps) =>
 						onCancel={() => setIsUploadModalOpen(false)}
 						onSubmit={() => videoBlob && uploadVideo(videoBlob)}
 						submitBtnText='Upload'
+						actionSx={{ margin: '0 0.5rem 0.5rem 0' }}
 					/>
 				)}
 			</CustomDialog>

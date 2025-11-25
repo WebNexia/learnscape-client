@@ -162,7 +162,7 @@ const AudioRecorder = ({
 	}, [stream]);
 
 	return (
-		<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: isMobileSize ? '1.5rem' : '2rem' }}>
+		<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: isMobileSize ? '1.5rem' : '2rem', width: '100%' }}>
 			<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '0.9rem' }}>
 				{recorderTitle}{' '}
 			</Typography>
@@ -226,11 +226,11 @@ const AudioRecorder = ({
 			)}
 
 			{audio && !isRecording && !isAudioTooLarge && !isUploadLimitReached && audioUploadAttempts < maxSessionAttempts ? (
-				<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '30vw' }}>
+				<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
 					<CustomAudioPlayer
 						audioUrl={audio}
 						sx={{
-							width: isMobileSizeSmall ? '95%' : '80%',
+							width: isMobileSizeSmall ? '100%' : '80%',
 							marginTop: '1rem',
 							marginBottom: '1rem',
 						}}
@@ -259,7 +259,7 @@ const AudioRecorder = ({
 			)}
 
 			<CustomDialog
-				maxWidth={teacherFeedback || fromCreateCommunityTopic ? 'xs' : 'sm'}
+				maxWidth='xs'
 				openModal={isUploadModalOpen}
 				closeModal={() => {
 					setIsUploadModalOpen(false);

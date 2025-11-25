@@ -56,6 +56,7 @@ const HeroSection = () => {
 
 	const handleRecaptchaChange = (token: string | null) => {
 		setRecaptchaToken(token);
+		setErrorDialogMsg('');
 	};
 
 	const recaptchaRef = useRef<any>(null);
@@ -517,6 +518,7 @@ const HeroSection = () => {
 				resetRecaptcha={resetRecaptcha}
 				recaptchaRef={recaptchaRef}
 				errorDialogMsg={errorDialogMsg}
+				setErrorDialogMsg={setErrorDialogMsg}
 			/>
 		</Box>
 	);

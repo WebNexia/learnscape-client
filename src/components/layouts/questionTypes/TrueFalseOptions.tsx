@@ -100,7 +100,7 @@ const TrueFalseOptions = ({
 	};
 
 	return (
-		<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', mt: isMobileSize ? '1rem' : '2rem' }}>
+		<Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', mt: '1rem' }}>
 			<RadioGroup row value={fromLearner ? learnerSetting : adminSetting} onChange={handleChange}>
 				<Box sx={{ display: 'flex', alignItems: 'center' }}>
 					{showCheckmark('True') && lessonType !== LessonType.PRACTICE_LESSON && (

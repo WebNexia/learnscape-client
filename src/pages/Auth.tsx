@@ -883,56 +883,122 @@ const Auth = () => {
 														sx={{ marginBottom: '0.25rem', fontFamily: 'Varela Round', color: theme.textColor?.secondary.main }}>
 														Telefon Numarası *
 													</Typography>
-													<PhoneInput
-														country={location?.countryCode?.toLowerCase() || 'tr'}
-														enableSearch={true}
-														searchPlaceholder='Ülke arayın...'
-														searchNotFound='Ülke bulunamadı'
-														enableAreaCodes={false}
-														countryCodeEditable={false}
-														inputProps={{ required: true, maxLength: 20 }}
-														inputStyle={{
-															width: '100%',
-															height: '2.25rem',
-															fontFamily: 'Varela Round',
-															fontSize: isMobileSize ? '0.85rem' : '0.9rem',
-															borderRadius: '0.35rem',
-															border: '1px solid rgba(0, 0, 0, 0.23)',
-															transition: 'all 0.2s ease',
-														}}
-														containerStyle={{
-															marginBottom: '0.5rem',
-															color: theme.textColor?.secondary.main,
-															fontFamily: 'Varela Round',
-															transition: 'all 0.2s ease',
-														}}
-														buttonStyle={{
-															borderRadius: '0.35rem 0 0 0.35rem',
-															border: '1px solid rgba(0, 0, 0, 0.23)',
-															backgroundColor: 'transparent',
-														}}
-														dropdownStyle={{
-															borderRadius: '0.35rem',
-															border: '1px solid rgba(0, 0, 0, 0.23)',
-															boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-															fontFamily: 'Varela Round',
-														}}
-														searchStyle={{
-															width: '100%',
-															height: '2rem',
-															fontFamily: 'Varela Round',
-															fontSize: '0.85rem',
-															borderRadius: '0.35rem',
-															border: '1px solid rgba(0, 0, 0, 0.23)',
-															margin: '0.5rem 0',
-														}}
-														value={phone}
-														onChange={(phoneNumber, _) => {
-															const formattedNumber = phoneNumber.startsWith('+') ? phoneNumber : `+${phoneNumber}`;
-															setPhone(formattedNumber);
-															setErrorMsg(undefined);
-														}}
-													/>
+													<Box
+														component='div'
+														sx={{
+															'& > label': {
+																display: 'none !important',
+																visibility: 'hidden !important',
+																height: '0 !important',
+																width: '0 !important',
+																overflow: 'hidden !important',
+															},
+															'& label': {
+																display: 'none !important',
+																visibility: 'hidden !important',
+																height: '0 !important',
+																width: '0 !important',
+																overflow: 'hidden !important',
+															},
+															'& .react-tel-input label': {
+																display: 'none !important',
+																visibility: 'hidden !important',
+																height: '0 !important',
+																width: '0 !important',
+																overflow: 'hidden !important',
+															},
+															'& .flag-dropdown + label': {
+																display: 'none !important',
+																visibility: 'hidden !important',
+																height: '0 !important',
+																width: '0 !important',
+																overflow: 'hidden !important',
+															},
+															'& .react-tel-input > label': {
+																display: 'none !important',
+																visibility: 'hidden !important',
+																height: '0 !important',
+																width: '0 !important',
+																overflow: 'hidden !important',
+															},
+															'& [for*="phone"]': {
+																display: 'none !important',
+																visibility: 'hidden !important',
+																height: '0 !important',
+																width: '0 !important',
+																overflow: 'hidden !important',
+															},
+															'& [aria-label*="Phone"]': {
+																display: 'none !important',
+																visibility: 'hidden !important',
+																height: '0 !important',
+																width: '0 !important',
+																overflow: 'hidden !important',
+															},
+															'& .react-tel-input::before': {
+																display: 'none !important',
+																content: '""',
+															},
+															'& .react-tel-input > *:first-child:not(.flag-dropdown):not(input)': {
+																display: 'none !important',
+																visibility: 'hidden !important',
+																height: '0 !important',
+																width: '0 !important',
+																overflow: 'hidden !important',
+															},
+														}}>
+														<PhoneInput
+															country={location?.countryCode?.toLowerCase() || 'tr'}
+															enableSearch={true}
+															searchPlaceholder='Ülke arayın...'
+															searchNotFound='Ülke bulunamadı'
+															enableAreaCodes={false}
+															countryCodeEditable={false}
+															specialLabel=''
+															inputProps={{ required: true, maxLength: 20 }}
+															inputStyle={{
+																width: '100%',
+																height: '2.25rem',
+																fontFamily: 'Varela Round',
+																fontSize: isMobileSize ? '0.85rem' : '0.9rem',
+																borderRadius: '0.35rem',
+																border: '1px solid rgba(0, 0, 0, 0.23)',
+																transition: 'all 0.2s ease',
+															}}
+															containerStyle={{
+																marginBottom: '0.5rem',
+																color: theme.textColor?.secondary.main,
+																fontFamily: 'Varela Round',
+																transition: 'all 0.2s ease',
+															}}
+															buttonStyle={{
+																borderRadius: '0.35rem 0 0 0.35rem',
+																border: '1px solid rgba(0, 0, 0, 0.23)',
+																backgroundColor: 'transparent',
+															}}
+															dropdownStyle={{
+																borderRadius: '0.35rem',
+																border: '1px solid rgba(0, 0, 0, 0.23)',
+																boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+																fontFamily: 'Varela Round',
+															}}
+															searchStyle={{
+																width: '100%',
+																height: '2rem',
+																fontFamily: 'Varela Round',
+																fontSize: '0.85rem',
+																borderRadius: '0.35rem',
+																border: '1px solid rgba(0, 0, 0, 0.23)',
+																margin: '0.5rem 0',
+															}}
+															value={phone}
+															onChange={(phoneNumber, _) => {
+																const formattedNumber = phoneNumber.startsWith('+') ? phoneNumber : `+${phoneNumber}`;
+																setPhone(formattedNumber);
+																setErrorMsg(undefined);
+															}}
+														/>
+													</Box>
 												</Box>
 
 												<Box sx={{ display: 'flex', width: '100%' }}>
