@@ -130,6 +130,7 @@ const Chapters = ({ course, isEnrolledStatus }: ChaptersProps) => {
 								key={index}
 								ref={(ref) => ref && registerChapterRef(index, ref)}
 								chapter={chapter}
+								course={course}
 								isEnrolledStatus={isEnrolledStatus}
 								nextChapterFirstLessonId={nextChapterFirstLessonId}
 							/>

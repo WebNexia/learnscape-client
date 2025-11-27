@@ -98,6 +98,7 @@ const EditEventDialog = ({
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
 	const [deleteEventModalOpen, setDeleteEventModalOpen] = useState<boolean>(false);
+	const [isProcessing, setIsProcessing] = useState<boolean>(false);
 
 	const [searchLearnerValue, setSearchLearnerValue] = useState<string>('');
 	const [searchInstructorValue, setSearchInstructorValue] = useState<string>('');
@@ -323,11 +324,13 @@ const EditEventDialog = ({
 	}, [editEventModalOpen, users]); // Removed selectedEvent?.attendees dependency to prevent infinite loops
 
 	const editEvent = async () => {
+		setIsProcessing(true);
 		if (setIsUpdatingEvent) setIsUpdatingEvent(true);
 
 		// Validate URLs before proceeding
 		const urlsValid = await validateUrls();
 		if (!urlsValid) {
+			setIsProcessing(false);
 			if (setIsUpdatingEvent) setIsUpdatingEvent(false);
 			return; // Don't proceed if URL validation fails
 		}
@@ -507,6 +510,7 @@ const EditEventDialog = ({
 			}
 			setIsUrlErrorOpen(true);
 		} finally {
+			setIsProcessing(false);
 			if (setIsUpdatingEvent) setIsUpdatingEvent(false);
 		}
 	};
@@ -533,11 +537,13 @@ const EditEventDialog = ({
 		<CustomDialog
 			openModal={editEventModalOpen}
 			closeModal={() => {
-				setEditEventModalOpen(false);
-				setSearchLearnerValue('');
-				setSearchInstructorValue('');
-				setSearchCourseValue('');
-				setIsEventUpdated(false);
+				if (!isProcessing) {
+					setEditEventModalOpen(false);
+					setSearchLearnerValue('');
+					setSearchInstructorValue('');
+					setSearchCourseValue('');
+					setIsEventUpdated(false);
+				}
 			}}
 			title={`${hasAdminAccess && selectedEvent?.createdBy !== user?._id ? `Edit Event -  (${selectedEvent?.createdByName || 'Unknown'})` : 'Edit Event'}`}
 			maxWidth='sm'>
@@ -1415,14 +1421,17 @@ const EditEventDialog = ({
 					</Box>
 					<CustomDialogActions
 						onCancel={() => {
-							setEditEventModalOpen(false);
-							setSearchLearnerValue('');
-							setSearchCourseValue('');
-							setSearchInstructorValue('');
-							setIsEventUpdated(false);
+							if (!isProcessing) {
+								setEditEventModalOpen(false);
+								setSearchLearnerValue('');
+								setSearchCourseValue('');
+								setSearchInstructorValue('');
+								setIsEventUpdated(false);
+							}
 						}}
 						submitBtnText='Update'
-						disableBtn={selectedEvent?.createdBy !== user?._id}
+						disableBtn={isProcessing || selectedEvent?.createdBy !== user?._id}
+						disableCancelBtn={isProcessing}
 						actionSx={{ marginBottom: '0rem' }}
 					/>
 				</Box>

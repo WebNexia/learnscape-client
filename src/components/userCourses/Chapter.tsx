@@ -13,9 +13,11 @@ import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
 import { UserCourseLessonDataContext } from '../../contexts/UserCourseLessonDataContextProvider';
 import axios from '@utils/axiosInstance';
 import { useQueryClient } from 'react-query';
+import { SingleCourse } from '../../interfaces/course';
 
 interface ChapterProps {
 	chapter: ChapterLessonData | { _id: string; title: string; lessons: any[]; lessonIds: string[]; evaluationChecklistItems?: string[] };
+	course: SingleCourse;
 	isEnrolledStatus: boolean;
 	nextChapterFirstLessonId: string;
 }
@@ -25,7 +27,7 @@ export interface ChapterRef {
 	setExpanded: (expanded: boolean) => void;
 }
 
-const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, isEnrolledStatus, nextChapterFirstLessonId }, ref) => {
+const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrolledStatus, nextChapterFirstLessonId }, ref) => {
 	const { isRotatedMedium, isSmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isRotatedMedium || isSmallScreen;
 	const [isExpanded, setIsExpanded] = useState<boolean>(false); // Default to expanded
@@ -357,6 +359,7 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, isEnrolledStatu
 							<Lesson
 								key={lesson._id}
 								lesson={lesson}
+								course={course}
 								isEnrolledStatus={isEnrolledStatus}
 								nextLessonId={nextLessonId}
 								nextChapterFirstLessonId={nextChapterFirstLessonId}
