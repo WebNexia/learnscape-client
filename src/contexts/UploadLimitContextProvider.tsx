@@ -32,7 +32,6 @@ interface UploadLimitContextType {
 	// New optimistic update methods
 	incrementAudioUpload: () => void;
 	incrementImageUpload: () => void;
-	resetUploads: () => void;
 }
 
 const UploadLimitContext = createContext<UploadLimitContextType | undefined>(undefined);
@@ -150,25 +149,6 @@ export const UploadLimitProvider: React.FC<UploadLimitProviderProps> = ({ childr
 		debouncedRefresh();
 	}, [debouncedRefresh]);
 
-	const resetUploads = useCallback(() => {
-		setUploadInfo((prev) => {
-			if (!prev) return prev;
-			return {
-				...prev,
-				audioUploads: {
-					...prev.audioUploads,
-					currentCount: 0,
-					remaining: prev.audioUploads.limit,
-				},
-				imageUploads: {
-					...prev.imageUploads,
-					currentCount: 0,
-					remaining: prev.imageUploads.limit,
-				},
-			};
-		});
-	}, []);
-
 	// Check if user can upload audio
 	const checkCanUploadAudio = useCallback((): boolean => {
 		if (!uploadInfo) return true; // Allow if no data yet
@@ -217,24 +197,10 @@ export const UploadLimitProvider: React.FC<UploadLimitProviderProps> = ({ childr
 		return uploadInfo.imageUploads.limit;
 	}, [uploadInfo]);
 
-	// Get formatted reset time (next day at user's timezone midnight)
+	// Get formatted reset time (resets daily at UTC midnight via cron job)
 	const getFormattedResetTime = useCallback((): string => {
-		if (!user?.countryCode) return 'midnight UTC';
-
-		const timezoneOffsets: { [key: string]: string } = {
-			TR: 'midnight (UTC+3)',
-			US: 'midnight (UTC-5)',
-			GB: 'midnight (UTC+0)',
-			DE: 'midnight (UTC+1)',
-			FR: 'midnight (UTC+1)',
-			IT: 'midnight (UTC+1)',
-			ES: 'midnight (UTC+1)',
-			CA: 'midnight (UTC-5)',
-			AU: 'midnight (UTC+10)',
-		};
-
-		return timezoneOffsets[user.countryCode] || 'midnight UTC';
-	}, [user?.countryCode]);
+		return 'midnight UTC';
+	}, []);
 
 	// Smart periodic refresh - only when limits are low
 	const shouldRefreshPeriodically = useCallback((): boolean => {
@@ -311,7 +277,6 @@ export const UploadLimitProvider: React.FC<UploadLimitProviderProps> = ({ childr
 			getFormattedResetTime,
 			incrementAudioUpload,
 			incrementImageUpload,
-			resetUploads,
 		}),
 		[
 			uploadInfo,
@@ -329,7 +294,6 @@ export const UploadLimitProvider: React.FC<UploadLimitProviderProps> = ({ childr
 			getFormattedResetTime,
 			incrementAudioUpload,
 			incrementImageUpload,
-			resetUploads,
 		]
 	);
 
