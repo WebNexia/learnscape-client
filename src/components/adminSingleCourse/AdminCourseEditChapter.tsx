@@ -1,7 +1,7 @@
 import { Box, IconButton, Tooltip, Typography, Collapse, DialogContent } from '@mui/material';
 import { useMotionValue, Reorder } from 'framer-motion';
 import theme from '../../themes';
-import { CreateTwoTone, Delete, NoteAdd, ExpandMore, Checklist, AddCircle, RemoveCircle } from '@mui/icons-material';
+import { CreateTwoTone, Delete, NoteAdd, ExpandMore, Checklist, AddCircle, RemoveCircle, DragIndicator } from '@mui/icons-material';
 import { useState, useContext } from 'react';
 import { Lesson } from '../../interfaces/lessons';
 import { useRaisedShadow } from '../../hooks/useRaisedShadow';
@@ -11,7 +11,9 @@ import CustomErrorMessage from '../forms/customFields/CustomErrorMessage';
 import CreateLessonDialog from '../forms/newLesson/CreateLessonDialog';
 import AddNewLessonDialog from './AddNewLessonDialog';
 import { chapterUpdateTrack } from '../../utils/chapterUpdateTrack';
+import { ChecklistGroup } from '../../interfaces/chapter';
 import { LessonsContext } from '../../contexts/LessonsContextProvider';
+import { generateUniqueId } from '../../utils/uniqueIdGenerator';
 
 import { useParams } from 'react-router-dom';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
@@ -42,10 +44,13 @@ const AdminCourseEditChapter = ({
 	const [addNewLessonModalOpen, setAddNewLessonModalOpen] = useState<boolean>(false);
 	const [isExpanded, setIsExpanded] = useState<boolean>(false);
 	const [isChecklistDialogOpen, setIsChecklistDialogOpen] = useState<boolean>(false);
-	const [checklistItems, setChecklistItems] = useState<string[]>(['']);
+	const [checklistGroups, setChecklistGroups] = useState<ChecklistGroup[]>([{ groupTitle: '', items: [''] }]);
+	const [expandedGroups, setExpandedGroups] = useState<Set<number>>(new Set([0])); // Track which groups are expanded
 
 	const y = useMotionValue(0);
 	const boxShadow = useRaisedShadow(y);
+	const checklistGroupsY = useMotionValue(0);
+	const checklistGroupsBoxShadow = useRaisedShadow(checklistGroupsY);
 	const { updateLesson } = useContext(LessonsContext);
 	const { isInstructor, user } = useAuth();
 	const { courseId } = useParams();
@@ -61,36 +66,140 @@ const AdminCourseEditChapter = ({
 	};
 
 	const handleOpenChecklistDialog = () => {
-		const items = chapter.evaluationChecklistItems && chapter.evaluationChecklistItems.length > 0 ? [...chapter.evaluationChecklistItems] : [''];
-		setChecklistItems(items);
+		// Handle both old format (string[]) and new format (ChecklistGroup[])
+		let groupsToSet: ChecklistGroup[] = [];
+
+		if (chapter.evaluationChecklistItems && chapter.evaluationChecklistItems.length > 0) {
+			// Check if it's old format (array of strings)
+			if (typeof chapter.evaluationChecklistItems[0] === 'string') {
+				// Migrate old format to new grouped format
+				const oldItems = chapter.evaluationChecklistItems as unknown as string[];
+				groupsToSet = [{ groupTitle: 'Default Group', items: oldItems.length > 0 ? oldItems : [''], _id: generateUniqueId('checklist-group') }];
+			} else {
+				// New format - ensure each group has a unique ID
+				const groups = chapter.evaluationChecklistItems as ChecklistGroup[];
+				groupsToSet =
+					groups.length > 0
+						? groups.map((g) => ({
+								...g,
+								items: g.items.length > 0 ? [...g.items] : [''],
+								_id: g._id || generateUniqueId('checklist-group'), // Preserve existing ID or generate new one
+							}))
+						: [{ groupTitle: '', items: [''], _id: generateUniqueId('checklist-group') }];
+			}
+		} else {
+			groupsToSet = [{ groupTitle: '', items: [''], _id: generateUniqueId('checklist-group') }];
+		}
+
+		setChecklistGroups(groupsToSet);
+		// Expand all groups by default
+		setExpandedGroups(new Set(groupsToSet.map((_, index) => index)));
 		setIsChecklistDialogOpen(true);
 	};
 
 	const handleCloseChecklistDialog = () => {
 		setIsChecklistDialogOpen(false);
-		setChecklistItems(['']);
+		setChecklistGroups([{ groupTitle: '', items: [''] }]);
+		setExpandedGroups(new Set([0]));
 	};
 
-	const handleAddChecklistItem = () => {
-		setChecklistItems([...checklistItems, '']);
+	// Group management
+	const handleAddGroup = () => {
+		setChecklistGroups([...checklistGroups, { groupTitle: '', items: [''], _id: generateUniqueId('checklist-group') }]);
+		setExpandedGroups(new Set([...expandedGroups, checklistGroups.length]));
 	};
 
-	const handleRemoveChecklistItem = (index: number) => {
-		if (checklistItems.length > 1) {
-			setChecklistItems(checklistItems.filter((_, i) => i !== index));
+	const handleRemoveGroup = (groupIndex: number) => {
+		if (checklistGroups.length > 1) {
+			const newGroups = checklistGroups.filter((_, i) => i !== groupIndex);
+			setChecklistGroups(newGroups);
+			const newExpanded = new Set(expandedGroups);
+			newExpanded.delete(groupIndex);
+			// Adjust indices for groups after the removed one
+			const adjustedExpanded = new Set<number>();
+			newExpanded.forEach((idx) => {
+				if (idx < groupIndex) {
+					adjustedExpanded.add(idx);
+				} else if (idx > groupIndex) {
+					adjustedExpanded.add(idx - 1);
+				}
+			});
+			setExpandedGroups(adjustedExpanded);
 		}
 	};
 
-	const handleChecklistItemChange = (index: number, value: string) => {
-		const updatedItems = [...checklistItems];
-		updatedItems[index] = value;
-		setChecklistItems(updatedItems);
+	const handleGroupTitleChange = (groupIndex: number, value: string) => {
+		const updatedGroups = [...checklistGroups];
+		updatedGroups[groupIndex] = { ...updatedGroups[groupIndex], groupTitle: value };
+		setChecklistGroups(updatedGroups);
+		console.log('Group title changed:', groupIndex, value); // Debug log
+	};
+
+	const handleToggleGroupExpanded = (groupIndex: number) => {
+		const newExpanded = new Set(expandedGroups);
+		if (newExpanded.has(groupIndex)) {
+			newExpanded.delete(groupIndex);
+		} else {
+			newExpanded.add(groupIndex);
+		}
+		setExpandedGroups(newExpanded);
+	};
+
+	// Item management within groups
+	const handleAddChecklistItem = (groupIndex: number) => {
+		const updatedGroups = [...checklistGroups];
+		updatedGroups[groupIndex] = {
+			...updatedGroups[groupIndex],
+			items: [...updatedGroups[groupIndex].items, ''],
+		};
+		setChecklistGroups(updatedGroups);
+	};
+
+	const handleRemoveChecklistItem = (groupIndex: number, itemIndex: number) => {
+		const updatedGroups = [...checklistGroups];
+		if (updatedGroups[groupIndex].items.length > 1) {
+			updatedGroups[groupIndex] = {
+				...updatedGroups[groupIndex],
+				items: updatedGroups[groupIndex].items.filter((_, i) => i !== itemIndex),
+			};
+		} else {
+			// If only one item left, just clear it
+			updatedGroups[groupIndex] = {
+				...updatedGroups[groupIndex],
+				items: [''],
+			};
+		}
+		setChecklistGroups(updatedGroups);
+	};
+
+	const handleChecklistItemChange = (groupIndex: number, itemIndex: number, value: string) => {
+		const updatedGroups = [...checklistGroups];
+		updatedGroups[groupIndex] = {
+			...updatedGroups[groupIndex],
+			items: updatedGroups[groupIndex].items.map((item, i) => (i === itemIndex ? value : item)),
+		};
+		setChecklistGroups(updatedGroups);
 	};
 
 	const handleSaveChecklist = async () => {
 		try {
-			// Filter out empty items and trim them
-			const cleanItems = checklistItems.map((item) => item.trim()).filter((item) => item.length > 0);
+			// Clean and validate groups: filter out empty groups and items
+			const cleanGroups = checklistGroups
+				.map((group) => {
+					const cleanTitle = group.groupTitle.trim();
+					const cleanItems = group.items.map((item) => item.trim()).filter((item) => item.length > 0);
+
+					// Only include groups with a title and at least one item
+					if (cleanTitle.length > 0 && cleanItems.length > 0) {
+						return {
+							groupTitle: cleanTitle,
+							items: cleanItems,
+							// Don't include _id in saved data (it's only for UI drag-and-drop)
+						};
+					}
+					return null;
+				})
+				.filter((group) => group !== null) as ChecklistGroup[];
 
 			// Update local state immediately
 			setChapterLessonDataBeforeSave((prevData) => {
@@ -99,7 +208,7 @@ const AdminCourseEditChapter = ({
 						if (currentChapter.chapterId === chapter.chapterId) {
 							return {
 								...currentChapter,
-								evaluationChecklistItems: cleanItems,
+								evaluationChecklistItems: cleanGroups,
 							};
 						}
 						return currentChapter;
@@ -175,7 +284,13 @@ const AdminCourseEditChapter = ({
 				<Box sx={{ flex: 2 }}>
 					<Tooltip title='Max 50 Characters' placement='top' arrow>
 						<CustomTextField
-							sx={{ width: '100%', mb: '0rem' }}
+							sx={{
+								'width': '100%',
+								'mb': '0rem',
+								'& .MuiInputBase-root': {
+									borderRadius: '0',
+								},
+							}}
 							InputProps={{ inputProps: { maxLength: 50 } }}
 							value={chapter.title}
 							onChange={(e) => {
@@ -206,7 +321,7 @@ const AdminCourseEditChapter = ({
 
 				{/* Chapter Actions */}
 				<Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0rem', flex: 1 }}>
-					<Tooltip title='Edit Self-Evaluation Checklist' placement='top' arrow>
+					<Tooltip title='Edit Check-out Questions' placement='top' arrow>
 						<IconButton
 							sx={{ color: 'white' }}
 							onClick={(e) => {
@@ -291,49 +406,209 @@ const AdminCourseEditChapter = ({
 			/>
 
 			{/* Checklist Edit Dialog */}
-			<CustomDialog openModal={isChecklistDialogOpen} closeModal={handleCloseChecklistDialog} title='Edit Self-Evaluation Checklist' maxWidth='sm'>
+			<CustomDialog openModal={isChecklistDialogOpen} closeModal={handleCloseChecklistDialog} title='Edit Check-out Questions' maxWidth='sm'>
 				<DialogContent>
-					<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', width: '100%' }}>
-						{checklistItems.map((item, index) => (
-							<Box
-								key={index}
-								sx={{
-									display: 'flex',
-									justifyContent: 'flex-end',
-									alignItems: 'center',
-									width: '100%',
-									marginLeft: '1rem',
-									mt: '0.5rem',
-								}}>
-								<CustomTextField
-									multiline
-									label={`Item ${index + 1}`}
-									value={item}
-									rows={2}
-									onChange={(e) => handleChecklistItemChange(index, e.target.value)}
-									sx={{ marginRight: index === 0 ? '2.25rem' : 0, width: '100%' }}
-									InputProps={{
-										inputProps: {
-											maxLength: 500,
+					<Box sx={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%', mt: '1rem' }}>
+						<Reorder.Group
+							axis='y'
+							values={checklistGroups}
+							onReorder={(newGroups: ChecklistGroup[]) => {
+								// Create a map of group ID to old index (for tracking which groups were expanded)
+								const oldGroupMap = new Map<string, number>();
+								checklistGroups.forEach((group, index) => {
+									if (group._id) {
+										oldGroupMap.set(group._id, index);
+									}
+								});
+
+								// Map new groups to their old indices to preserve expansion state
+								const newExpanded = new Set<number>();
+								newGroups.forEach((newGroup, newIndex) => {
+									if (newGroup._id) {
+										const oldIndex = oldGroupMap.get(newGroup._id);
+										if (oldIndex !== undefined && expandedGroups.has(oldIndex)) {
+											newExpanded.add(newIndex);
+										}
+									}
+								});
+
+								setChecklistGroups(newGroups);
+								setExpandedGroups(newExpanded);
+							}}>
+							{checklistGroups.map((group, groupIndex) => (
+								<Reorder.Item key={group._id || groupIndex} value={group} style={{ boxShadow: checklistGroupsBoxShadow, listStyle: 'none' }}>
+									<Box
+										sx={{
+											border: '1px solid #e2e8f0',
+											borderRadius: '0.5rem',
+											overflow: 'hidden',
+											backgroundColor: '#ffffff',
+											marginBottom: '1.5rem',
+										}}>
+										{/* Group Header - Collapsible */}
+										<Box
+											sx={{
+												display: 'flex',
+												alignItems: 'center',
+												justifyContent: 'space-between',
+												padding: '1rem 1rem',
+												backgroundColor: isInstructor ? theme.bgColor?.instructorHeader : theme.bgColor?.adminHeader,
+											}}>
+											<Box sx={{ display: 'flex', alignItems: 'center', flex: 1, gap: '0.5rem' }}>
+												<IconButton
+													size='small'
+													onClick={() => handleToggleGroupExpanded(groupIndex)}
+													sx={{
+														color: 'white',
+														padding: '0.25rem',
+														transform: expandedGroups.has(groupIndex) ? 'rotate(180deg)' : 'rotate(0deg)',
+														transition: 'transform 0.3s ease',
+														cursor: 'pointer',
+														border: 'solid 0.5px white',
+													}}>
+													<ExpandMore fontSize='small' sx={{ fontSize: isMobileSize ? '1rem' : undefined }} />
+												</IconButton>
+												<Box
+													sx={{
+														flex: 1,
+														position: 'relative',
+														zIndex: 1,
+														marginLeft: '0.5rem',
+														mb: '-0.85rem',
+													}}>
+													<CustomTextField
+														value={group.groupTitle}
+														onChange={(e) => {
+															handleGroupTitleChange(groupIndex, e.target.value);
+														}}
+														placeholder={`Group ${groupIndex + 1} Title`}
+														disabled={false}
+														sx={{
+															'width': '100%',
+															'& .MuiOutlinedInput-root': {
+																'backgroundColor': 'white',
+																'&:hover': {
+																	backgroundColor: 'white',
+																},
+															},
+															'& .MuiInputBase-input': {
+																cursor: 'text',
+																pointerEvents: 'auto',
+															},
+															'& .MuiInputBase-root': {
+																pointerEvents: 'auto',
+																borderRadius: '0',
+															},
+														}}
+														InputProps={{
+															inputProps: {
+																maxLength: 100,
+															},
+														}}
+													/>
+												</Box>
+											</Box>
+											<Box sx={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+												{checklistGroups.length > 1 && (
+													<Tooltip title='Remove Group' placement='top' arrow>
+														<IconButton
+															size='small'
+															onClick={(e) => {
+																e.stopPropagation();
+																handleRemoveGroup(groupIndex);
+															}}
+															sx={{ color: 'white' }}>
+															<Delete fontSize='small' sx={{ fontSize: isMobileSize ? '1rem' : undefined, ml: '0.5rem' }} />
+														</IconButton>
+													</Tooltip>
+												)}
+												<Tooltip title='Drag to reorder' placement='top' arrow>
+													<IconButton
+														size='small'
+														sx={{
+															'color': 'white',
+															'cursor': 'grab',
+															'&:active': {
+																cursor: 'grabbing',
+															},
+														}}
+														onMouseDown={(e) => e.stopPropagation()}>
+														<DragIndicator fontSize='small' sx={{ fontSize: isMobileSize ? '1rem' : undefined, mr: '-0.65rem' }} />
+													</IconButton>
+												</Tooltip>
+											</Box>
+										</Box>
+
+										{/* Group Items - Collapsible */}
+										<Collapse in={expandedGroups.has(groupIndex)} timeout='auto' unmountOnExit>
+											<Box sx={{ padding: '1rem 0.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+												{group.items.map((item, itemIndex) => (
+													<Box
+														key={itemIndex}
+														sx={{
+															display: 'flex',
+															alignItems: 'flex-start',
+															gap: '0.5rem',
+															width: '100%',
+														}}>
+														<CustomTextField
+															multiline
+															label={`Item ${itemIndex + 1}`}
+															value={item}
+															rows={2}
+															onChange={(e) => handleChecklistItemChange(groupIndex, itemIndex, e.target.value)}
+															sx={{ flex: 1 }}
+															InputProps={{
+																inputProps: {
+																	maxLength: 500,
+																},
+															}}
+														/>
+														{itemIndex === group.items.length - 1 && (
+															<Tooltip title='Add Item' placement='top' arrow>
+																<IconButton onClick={() => handleAddChecklistItem(groupIndex)} sx={{ mt: '0.5rem' }}>
+																	<AddCircle fontSize='small' sx={{ fontSize: isMobileSize ? '1rem' : undefined }} />
+																</IconButton>
+															</Tooltip>
+														)}
+														{group.items.length > 1 && (
+															<Tooltip title='Remove Item' placement='top' arrow>
+																<IconButton onClick={() => handleRemoveChecklistItem(groupIndex, itemIndex)} sx={{ mt: '0.5rem', ml: '-0.5rem' }}>
+																	<RemoveCircle fontSize='small' sx={{ fontSize: isMobileSize ? '1rem' : undefined }} />
+																</IconButton>
+															</Tooltip>
+														)}
+													</Box>
+												))}
+											</Box>
+										</Collapse>
+									</Box>
+								</Reorder.Item>
+							))}
+						</Reorder.Group>
+
+						{/* Add Group Button */}
+						<Box sx={{ display: 'flex', justifyContent: 'center', mt: '0.5rem' }}>
+							<Tooltip title='Add Group' placement='top' arrow>
+								<IconButton
+									onClick={handleAddGroup}
+									sx={{
+										'border': `2px dashed ${isInstructor ? theme.bgColor?.instructorHeader : theme.bgColor?.adminHeader}`,
+										'borderRadius': '0.5rem',
+										'padding': '0.75rem',
+										'&:hover': {
+											borderColor: isInstructor ? theme.bgColor?.instructorHeader : theme.bgColor?.adminHeader,
 										},
-									}}
-								/>
-								{index === checklistItems.length - 1 && (
-									<Tooltip title='Add Item' placement='top' arrow>
-										<IconButton onClick={handleAddChecklistItem}>
-											<AddCircle fontSize='small' />
-										</IconButton>
-									</Tooltip>
-								)}
-								{index > 0 && (
-									<Tooltip title='Remove Item' placement='top' arrow>
-										<IconButton onClick={() => handleRemoveChecklistItem(index)}>
-											<RemoveCircle fontSize='small' />
-										</IconButton>
-									</Tooltip>
-								)}
-							</Box>
-						))}
+									}}>
+									<AddCircle
+										sx={{
+											fontSize: isMobileSize ? '1.15rem' : '1.35rem',
+											color: isInstructor ? theme.bgColor?.instructorHeader : theme.bgColor?.adminHeader,
+										}}
+									/>
+								</IconButton>
+							</Tooltip>
+						</Box>
 					</Box>
 				</DialogContent>
 				<CustomDialogActions

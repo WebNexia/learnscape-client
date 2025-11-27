@@ -3,6 +3,7 @@ import { ExpandMore, PlayCircleOutline, Checklist } from '@mui/icons-material';
 import Lesson from './Lesson';
 import { LessonById } from '../../interfaces/lessons';
 import { ChapterLessonData } from '../../pages/AdminCourseEditPage';
+import { ChecklistGroup } from '../../interfaces/chapter';
 import { useContext, useState, useMemo, forwardRef, useImperativeHandle, useCallback, useEffect, useRef } from 'react';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import { useUserLessonsForCourse } from '../../hooks/useUserLessonsForCourse';
@@ -16,7 +17,7 @@ import { useQueryClient } from 'react-query';
 import { SingleCourse } from '../../interfaces/course';
 
 interface ChapterProps {
-	chapter: ChapterLessonData | { _id: string; title: string; lessons: any[]; lessonIds: string[]; evaluationChecklistItems?: string[] };
+	chapter: ChapterLessonData | { _id: string; title: string; lessons: any[]; lessonIds: string[]; evaluationChecklistItems?: ChecklistGroup[] };
 	course: SingleCourse;
 	isEnrolledStatus: boolean;
 	nextChapterFirstLessonId: string;
@@ -32,8 +33,11 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 	const isMobileSize = isRotatedMedium || isSmallScreen;
 	const [isExpanded, setIsExpanded] = useState<boolean>(false); // Default to expanded
 	const [checklistDialogOpen, setChecklistDialogOpen] = useState<boolean>(false);
-	const [checkedItems, setCheckedItems] = useState<Set<number>>(new Set());
+	// Track checked items by group index and item index: Map<groupIndex, Set<itemIndex>>
+	const [checkedItems, setCheckedItems] = useState<Map<number, Set<number>>>(new Map());
 	const [isSubmittingChecklist, setIsSubmittingChecklist] = useState<boolean>(false);
+	// Track which groups are expanded in the checklist dialog
+	const [expandedChecklistGroups, setExpandedChecklistGroups] = useState<Set<number>>(new Set());
 
 	// Get courseId and userCourseId from URL params
 	const { courseId, userCourseId } = useParams();
@@ -90,10 +94,23 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 		return chapter?.evaluationChecklistItems && chapter.evaluationChecklistItems.length > 0;
 	}, [chapter?.evaluationChecklistItems]);
 
-	// Check if all items are checked
+	// Check if all items are checked (across all groups)
 	const allItemsChecked = useMemo(() => {
-		if (!hasChecklistItems) return false;
-		return checkedItems.size === chapter.evaluationChecklistItems?.length;
+		if (!hasChecklistItems || !chapter.evaluationChecklistItems) return false;
+
+		// Count total items across all groups
+		const totalItems = chapter.evaluationChecklistItems.reduce((sum, group) => sum + group.items.length, 0);
+
+		// Count checked items across all groups
+		let checkedCount = 0;
+		chapter.evaluationChecklistItems.forEach((group, groupIndex) => {
+			const groupChecked = checkedItems.get(groupIndex);
+			if (groupChecked) {
+				checkedCount += groupChecked.size;
+			}
+		});
+
+		return checkedCount === totalItems && totalItems > 0;
 	}, [checkedItems, hasChecklistItems, chapter.evaluationChecklistItems]);
 
 	// Track if we've already auto-opened for this chapter completion
@@ -118,7 +135,7 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 			const timer = setTimeout(() => {
 				setChecklistDialogOpen(true);
 				// Initialize empty checked items
-				setCheckedItems(new Set());
+				setCheckedItems(new Map());
 				// Mark as auto-opened in both ref and sessionStorage
 				hasAutoOpened.current = true;
 				sessionStorage.setItem(autoOpenKey, 'true');
@@ -145,30 +162,54 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 		setChecklistDialogOpen(true);
 		// If checklist is already completed, check all items
 		if (isChecklistCompleted && chapter.evaluationChecklistItems) {
-			const allIndices = new Set(chapter.evaluationChecklistItems.map((_, index) => index));
-			setCheckedItems(allIndices);
+			const allChecked = new Map<number, Set<number>>();
+			chapter.evaluationChecklistItems.forEach((group, groupIndex) => {
+				allChecked.set(groupIndex, new Set(group.items.map((_, itemIndex) => itemIndex)));
+			});
+			setCheckedItems(allChecked);
 		} else if (checkedItems.size === 0 && chapter.evaluationChecklistItems) {
-			// Initialize empty set if not already set
-			setCheckedItems(new Set());
+			// Initialize empty map if not already set
+			setCheckedItems(new Map());
 		}
+		// Start with all groups collapsed by default
+		setExpandedChecklistGroups(new Set());
+	};
+
+	const handleToggleChecklistGroup = (groupIndex: number) => {
+		const newExpanded = new Set(expandedChecklistGroups);
+		if (newExpanded.has(groupIndex)) {
+			newExpanded.delete(groupIndex);
+		} else {
+			newExpanded.add(groupIndex);
+		}
+		setExpandedChecklistGroups(newExpanded);
 	};
 
 	const handleCloseChecklistDialog = () => {
 		if (isChecklistCompleted || !isEnrolledStatus || !isChapterCompleted) {
 			setChecklistDialogOpen(false);
-			setCheckedItems(new Set());
+			setCheckedItems(new Map());
 		}
 	};
 
-	const handleCheckboxChange = (index: number) => {
+	const handleCheckboxChange = (groupIndex: number, itemIndex: number) => {
 		if (!isChapterCompleted || isChecklistCompleted) return; // Disable if chapter not completed or already completed
 
-		const newChecked = new Set(checkedItems);
-		if (newChecked.has(index)) {
-			newChecked.delete(index);
+		const newChecked = new Map(checkedItems);
+		const groupChecked = new Set(newChecked.get(groupIndex) || []);
+
+		if (groupChecked.has(itemIndex)) {
+			groupChecked.delete(itemIndex);
 		} else {
-			newChecked.add(index);
+			groupChecked.add(itemIndex);
 		}
+
+		if (groupChecked.size > 0) {
+			newChecked.set(groupIndex, groupChecked);
+		} else {
+			newChecked.delete(groupIndex);
+		}
+
 		setCheckedItems(newChecked);
 	};
 
@@ -194,7 +235,7 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 
 			// Close dialog
 			setChecklistDialogOpen(false);
-			setCheckedItems(new Set());
+			setCheckedItems(new Map());
 		} catch (error) {
 			console.error('Error submitting checklist:', error);
 			// TODO: Show error message to user
@@ -408,46 +449,157 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 									</Typography>
 								</Box>
 							)}
-							{chapter.evaluationChecklistItems?.map((item, index) => (
-								<FormControlLabel
-									key={index}
-									control={
-										<Checkbox
-											checked={isChecklistCompleted ? true : checkedItems.has(index)}
-											onChange={() => handleCheckboxChange(index)}
-											disabled={!isEnrolledStatus || !isChapterCompleted || isChecklistCompleted}
+							{chapter.evaluationChecklistItems?.map((group, groupIndex) => {
+								const isGroupExpanded = expandedChecklistGroups.has(groupIndex);
+								const isGroupChecked = group.items.every((_, itemIndex) => checkedItems.get(groupIndex)?.has(itemIndex) || false);
+								const groupCheckedCount = checkedItems.get(groupIndex)?.size || 0;
+								const groupTotalCount = group.items.length;
+
+								return (
+									<Box
+										key={groupIndex}
+										sx={{
+											'border': '1px solid #e2e8f0',
+											'borderRadius': '0.5rem',
+											'overflow': 'hidden',
+											'backgroundColor': '#ffffff',
+											'boxShadow': '0 2px 8px rgba(0, 0, 0, 0.08)',
+											'transition': 'all 0.3s ease',
+											'&:hover': {
+												boxShadow: '0 4px 12px rgba(0, 0, 0, 0.12)',
+												borderColor: theme.palette.primary.main,
+											},
+										}}>
+										{/* Group Header - Collapsible */}
+										<Box
 											sx={{
-												'color': theme.palette.primary.main,
-												'& .MuiSvgIcon-root': {
-													fontSize: '1.25rem',
-												},
-												'&.Mui-disabled': {
-													color: isChecklistCompleted ? theme.palette.success.main : theme.palette.action.disabled,
+												'display': 'flex',
+												'alignItems': 'center',
+												'justifyContent': 'space-between',
+												'padding': '0.75rem 1.25rem',
+												'background': isGroupChecked
+													? `linear-gradient(135deg, ${theme.palette.success.light}15 0%, ${theme.palette.success.main}20 100%)`
+													: `linear-gradient(135deg, ${theme.palette.primary.light}10 0%, ${theme.palette.primary.main}15 100%)`,
+												'cursor': 'pointer',
+												'transition': 'all 0.3s ease',
+												'&:hover': {
+													background: isGroupChecked
+														? `linear-gradient(135deg, ${theme.palette.success.light}25 0%, ${theme.palette.success.main}30 100%)`
+														: `linear-gradient(135deg, ${theme.palette.primary.light}20 0%, ${theme.palette.primary.main}25 100%)`,
 												},
 											}}
-										/>
-									}
-									label={
-										<Typography
-											variant='body2'
-											sx={{
-												fontSize: isMobileSize ? '0.75rem' : '0.85rem',
-												lineHeight: 1.7,
-												wordBreak: 'break-word',
-											}}>
-											{item}
-										</Typography>
-									}
-									sx={{
-										'alignItems': 'center',
-										'margin': 0,
-										'& .MuiFormControlLabel-label': {
-											marginLeft: '0.5rem',
-											fontSize: isMobileSize ? '0.75rem' : '0.85rem',
-										},
-									}}
-								/>
-							))}
+											onClick={() => handleToggleChecklistGroup(groupIndex)}>
+											<Box sx={{ display: 'flex', alignItems: 'center', flex: 1, gap: '0.75rem' }}>
+												<IconButton
+													size='small'
+													sx={{
+														color: theme.palette.primary.main,
+														padding: '0.25rem',
+														transform: isGroupExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+														transition: 'transform 0.3s ease',
+													}}>
+													<ExpandMore fontSize='small' />
+												</IconButton>
+												<Typography
+													variant='h6'
+													sx={{
+														fontSize: isMobileSize ? '0.8rem' : '0.9rem',
+														fontWeight: 500,
+														color: theme.palette.primary.main,
+														flex: 1,
+													}}>
+													{group.groupTitle}
+												</Typography>
+												{/* Progress indicator */}
+												<Chip
+													label={`${groupCheckedCount}/${groupTotalCount}`}
+													size='medium'
+													sx={{
+														backgroundColor: isGroupChecked ? theme.palette.success.main : theme.palette.grey[200],
+														color: isGroupChecked ? 'white' : theme.palette.text.secondary,
+														fontWeight: 600,
+														fontSize: isMobileSize ? '0.7rem' : '0.75rem',
+														height: '1.5rem',
+													}}
+												/>
+											</Box>
+										</Box>
+
+										{/* Group Items - Collapsible */}
+										<Collapse in={isGroupExpanded} timeout='auto' unmountOnExit>
+											<Box sx={{ padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+												{group.items.map((item, itemIndex) => {
+													const isItemChecked = isChecklistCompleted ? true : checkedItems.get(groupIndex)?.has(itemIndex) || false;
+
+													return (
+														<Box
+															key={`${groupIndex}-${itemIndex}`}
+															onClick={() => {
+																if (!isChecklistCompleted && isEnrolledStatus && isChapterCompleted) {
+																	handleCheckboxChange(groupIndex, itemIndex);
+																}
+															}}
+															sx={{
+																'display': 'flex',
+																'alignItems': 'center',
+																'gap': '0.75rem',
+																'padding': isMobileSize ? '0.5rem 0.5rem' : '0.875rem 1rem',
+																'borderRadius': '0.5rem',
+																'border': `2px solid ${isItemChecked ? theme.palette.success.main : '#e2e8f0'}`,
+																'backgroundColor': isItemChecked
+																	? `linear-gradient(135deg, ${theme.palette.success.light}10 0%, ${theme.palette.success.main}15 100%)`
+																	: '#ffffff',
+																'cursor': !isChecklistCompleted && isEnrolledStatus && isChapterCompleted ? 'pointer' : 'default',
+																'transition': 'all 0.2s ease',
+																'&:hover': {
+																	borderColor: isItemChecked ? theme.palette.success.main : theme.palette.primary.main,
+																	backgroundColor: isItemChecked
+																		? `linear-gradient(135deg, ${theme.palette.success.light}15 0%, ${theme.palette.success.main}20 100%)`
+																		: theme.palette.primary.light + '08',
+																	transform: !isChecklistCompleted && isEnrolledStatus && isChapterCompleted ? 'translateX(4px)' : 'none',
+																	boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+																},
+															}}>
+															<Checkbox
+																checked={isItemChecked}
+																onChange={() => handleCheckboxChange(groupIndex, itemIndex)}
+																disabled={!isEnrolledStatus || !isChapterCompleted || isChecklistCompleted}
+																sx={{
+																	'color': theme.palette.primary.main,
+																	'& .MuiSvgIcon-root': {
+																		fontSize: isMobileSize ? '1.15rem' : '1.35rem',
+																	},
+																	'&.Mui-checked': {
+																		color: theme.palette.success.main,
+																	},
+																	'&.Mui-disabled': {
+																		color: isChecklistCompleted ? theme.palette.success.main : theme.palette.action.disabled,
+																	},
+																	'mt': '-0.25rem',
+																}}
+															/>
+															<Typography
+																variant='body2'
+																sx={{
+																	fontSize: isMobileSize ? '0.7rem' : '0.8rem',
+																	lineHeight: 1.6,
+																	wordBreak: 'break-word',
+																	flex: 1,
+																	color: isItemChecked ? theme.palette.text.primary : theme.palette.text.secondary,
+																	textDecoration: isItemChecked ? 'none' : 'none',
+																	fontWeight: isItemChecked ? 500 : 400,
+																	pt: '0.25rem',
+																}}>
+																{item}
+															</Typography>
+														</Box>
+													);
+												})}
+											</Box>
+										</Collapse>
+									</Box>
+								);
+							})}
 						</Box>
 					</DialogContent>
 					{isEnrolledStatus && (
@@ -457,7 +609,7 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 							submitBtnText='Submit'
 							disableBtn={!isEnrolledStatus || !isChapterCompleted || isChecklistCompleted || !allItemsChecked || isSubmittingChecklist}
 							isSubmitting={isSubmittingChecklist}
-							actionSx={{ mb: '0.5rem' }}
+							actionSx={{ mb: '0.5rem', mr: '0.5rem' }}
 						/>
 					)}
 				</CustomDialog>

@@ -7,7 +7,7 @@ import { CoursesContext } from '../contexts/CoursesContextProvider';
 import { Price, SingleCourse } from '../interfaces/course';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
 import AdminCourseEditChapter from '../components/adminSingleCourse/AdminCourseEditChapter';
-import { BaseChapter } from '../interfaces/chapter';
+import { BaseChapter, ChecklistGroup } from '../interfaces/chapter';
 import { Reorder, useMotionValue } from 'framer-motion';
 import { useRaisedShadow } from '../hooks/useRaisedShadow';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
@@ -45,7 +45,7 @@ export interface ChapterLessonData {
 	title: string;
 	lessons: Lesson[];
 	lessonIds: string[];
-	evaluationChecklistItems?: string[];
+	evaluationChecklistItems?: ChecklistGroup[];
 }
 
 export class ChapterLessonDataImpl implements ChapterLessonData {
