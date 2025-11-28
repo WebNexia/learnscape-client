@@ -635,6 +635,7 @@ const AdminLessonEditPage = () => {
 						QuestionType.FITB_TYPING,
 						QuestionType.FITB_DRAG_DROP,
 						QuestionType.FLIP_CARD,
+						QuestionType.TRANSLATE,
 					];
 				} else {
 					// For INSTRUCTIONAL_LESSON
@@ -679,6 +680,7 @@ const AdminLessonEditPage = () => {
 									isAiGenerated: question.isAiGenerated,
 									matchingPairs: question.matchingPairs,
 									blankValuePairs: question.blankValuePairs,
+									translatePairs: question.translatePairs,
 									isActive: true,
 									...(question.clonedFromId ? { clonedFromId: question.clonedFromId } : {}),
 								});
@@ -1607,6 +1609,7 @@ const AdminLessonEditPage = () => {
 																						questionType={fetchQuestionTypeName(question)}
 																						isMinimumOptions={isMinimumOptions}
 																						isDuplicateOption={isDuplicateOption}
+																						singleLessonBeforeSave={singleLessonBeforeSave}
 																						setSingleLessonBeforeSave={setSingleLessonBeforeSave}
 																						setIsLessonUpdated={setIsLessonUpdated}
 																						handleCorrectAnswerChange={handleCorrectAnswerChange}

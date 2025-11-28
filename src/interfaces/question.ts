@@ -10,6 +10,12 @@ export interface BlankValuePair {
 	value: string;
 }
 
+export interface TranslatePair {
+	id: string;
+	originalText: string;
+	translation: string;
+}
+
 export interface QuestionInterface {
 	_id: string;
 	questionType: string;
@@ -25,6 +31,7 @@ export interface QuestionInterface {
 	isAiGenerated: boolean;
 	matchingPairs: MatchingPair[];
 	blankValuePairs: BlankValuePair[];
+	translatePairs: TranslatePair[];
 	createdAt: string;
 	updatedAt: string;
 	clonedFromId: string;

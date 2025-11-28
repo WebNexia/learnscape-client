@@ -20,7 +20,7 @@ import CustomDialog from '../../layouts/dialog/CustomDialog';
 import CustomTextField from '../customFields/CustomTextField';
 import CustomDialogActions from '../../layouts/dialog/CustomDialogActions';
 import theme from '../../../themes';
-import { BlankValuePair, QuestionInterface } from '../../../interfaces/question';
+import { BlankValuePair, QuestionInterface, TranslatePair } from '../../../interfaces/question';
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
 import { generateUniqueId } from '../../../utils/uniqueIdGenerator';
 import { useAuth } from '../../../hooks/useAuth';
@@ -39,6 +39,7 @@ import TrueFalseOptions from '../../layouts/questionTypes/TrueFalseOptions';
 import { LessonType, QuestionType } from '../../../interfaces/enums';
 import FlipCard from '../../layouts/flipCard/FlipCard';
 import Matching from '../../layouts/matching/Matching';
+import Translate from '../../layouts/translate/Translate';
 import { Lesson } from '../../../interfaces/lessons';
 import { updateEditorContentAndBlankPairs } from '../../../utils/updateEditorContentAndBlankPairs';
 import FillInTheBlanksTyping from '../../layouts/FITBTyping/FillInTheBlanksTyping';
@@ -143,6 +144,7 @@ const CreateQuestionDialog = ({
 		isAiGenerated: false,
 		matchingPairs: [],
 		blankValuePairs,
+		translatePairs: [],
 		createdAt: '',
 		updatedAt: '',
 		clonedFromId: '',
@@ -164,6 +166,8 @@ const CreateQuestionDialog = ({
 	const [isMinimumTwoMatchingPairs, setIsMinimumTwoMatchingPairs] = useState<boolean>(false);
 	const [isMissingPair, setIsMissingPair] = useState<boolean>(false);
 	const [isMinimumOneBlank, setIsMinimumOneBlank] = useState<boolean>(false);
+	const [isMinimumOneTranslatePair, setIsMinimumOneTranslatePair] = useState<boolean>(false);
+	const [isMissingTranslatePair, setIsMissingTranslatePair] = useState<boolean>(false);
 	const [isValidatingUrl, setIsValidatingUrl] = useState<boolean>(false);
 	const [isUrlErrorOpen, setIsUrlErrorOpen] = useState<boolean>(false);
 	const [urlErrorMessage, setUrlErrorMessage] = useState<string>('');
@@ -189,6 +193,7 @@ const CreateQuestionDialog = ({
 	const isMatching = questionType === QuestionType.MATCHING;
 	const isFITBTyping = questionType === QuestionType.FITB_TYPING;
 	const isFITBDragDrop = questionType === QuestionType.FITB_DRAG_DROP;
+	const isTranslate = questionType === QuestionType.TRANSLATE;
 
 	const resetValues = () => {
 		setNewQuestion({
@@ -206,6 +211,7 @@ const CreateQuestionDialog = ({
 			isAiGenerated: false,
 			matchingPairs: [],
 			blankValuePairs: [],
+			translatePairs: [],
 			createdAt: '',
 			updatedAt: '',
 			clonedFromId: '',
@@ -233,6 +239,8 @@ const CreateQuestionDialog = ({
 		setIsMinimumTwoMatchingPairs(false);
 		setBlankValuePairs([]);
 		setIsMinimumOneBlank(false);
+		setIsMinimumOneTranslatePair(false);
+		setIsMissingTranslatePair(false);
 		// URL errors are now handled by Snackbar
 	};
 
@@ -250,6 +258,7 @@ const CreateQuestionDialog = ({
 				video: newQuestion.video,
 				matchingPairs: newQuestion.matchingPairs,
 				blankValuePairs,
+				translatePairs: newQuestion.translatePairs,
 				orgId,
 				isActive: true,
 				isAiGenerated: false,
@@ -269,6 +278,7 @@ const CreateQuestionDialog = ({
 				video: newQuestion.video,
 				matchingPairs: newQuestion.matchingPairs,
 				blankValuePairs,
+				translatePairs: newQuestion.translatePairs,
 				orgId,
 				isActive: true,
 				isAiGenerated: false,
@@ -302,6 +312,7 @@ const CreateQuestionDialog = ({
 				video: newQuestion.video,
 				matchingPairs: newQuestion.matchingPairs,
 				blankValuePairs,
+				translatePairs: newQuestion.translatePairs,
 				isActive: true,
 				isAiGenerated: false,
 				createdAt: '',
@@ -431,6 +442,20 @@ const CreateQuestionDialog = ({
 			}
 		}
 
+		if (isTranslate) {
+			const nonBlankPairs = newQuestion.translatePairs?.filter((pair) => pair.originalText.trim() && pair.translation.trim()) || [];
+			const missingPairExists = newQuestion.translatePairs?.some((pair) => !pair.originalText.trim() || !pair.translation.trim()) || false;
+
+			if (nonBlankPairs.length < 1) {
+				setIsMinimumOneTranslatePair(true);
+				return;
+			}
+			if (missingPairExists) {
+				setIsMissingTranslatePair(true);
+				return;
+			}
+		}
+
 		if ((isFITBDragDrop || isFITBTyping) && blankValuePairs.length < 1) {
 			setIsMinimumOneBlank(true);
 			return;
@@ -444,7 +469,8 @@ const CreateQuestionDialog = ({
 			correctAnswerIndex === -1 &&
 			!correctAnswer &&
 			!isFITBDragDrop &&
-			!isFITBTyping
+			!isFITBTyping &&
+			!isTranslate
 		) {
 			setIsCorrectAnswerMissing(true);
 			return;
@@ -552,6 +578,7 @@ const CreateQuestionDialog = ({
 													QuestionType.FITB_TYPING,
 													QuestionType.FITB_DRAG_DROP,
 													QuestionType.FLIP_CARD,
+													QuestionType.TRANSLATE,
 												]?.includes(questionTypeName);
 											}
 											return true;
@@ -889,6 +916,13 @@ const CreateQuestionDialog = ({
 									lessonType={singleLessonBeforeSave?.type}
 								/>
 							)}
+							{isTranslate && (
+								<Translate
+									setNewQuestion={setNewQuestion}
+									setIsMinimumOneTranslatePair={setIsMinimumOneTranslatePair}
+									setIsMissingPair={setIsMissingTranslatePair}
+								/>
+							)}
 						</Box>
 						<Box sx={{ mt: '2rem' }}>
 							{isQuestionMissing && (
@@ -896,7 +930,7 @@ const CreateQuestionDialog = ({
 									{isFlipCard && !newQuestion.imageUrl ? '- Enter front face text and/or image' : '- Enter question'}
 								</CustomErrorMessage>
 							)}
-							{isCorrectAnswerMissing && !isAudioVideoQuestion && !isMatching && (
+							{isCorrectAnswerMissing && !isAudioVideoQuestion && !isMatching && !isTranslate && (
 								<CustomErrorMessage>{isFlipCard ? '- Enter back face text' : '- Select correct answer'}</CustomErrorMessage>
 							)}
 							{isAudioVideoQuestion && isAudioVideoSelectionMissing && (
@@ -907,6 +941,12 @@ const CreateQuestionDialog = ({
 								<>
 									{isMinimumTwoMatchingPairs && <CustomErrorMessage>- Enter at least 2 completed pairs</CustomErrorMessage>}
 									{isMissingPair && <CustomErrorMessage>- There is at least one incomplete pair</CustomErrorMessage>}
+								</>
+							)}
+							{isTranslate && (
+								<>
+									{isMinimumOneTranslatePair && <CustomErrorMessage>- Enter at least 1 completed pair</CustomErrorMessage>}
+									{isMissingTranslatePair && <CustomErrorMessage>- There is at least one incomplete pair</CustomErrorMessage>}
 								</>
 							)}
 							{(isFITBDragDrop || isFITBTyping) && isMinimumOneBlank && <CustomErrorMessage>- Enter at least 1 blank in the text</CustomErrorMessage>}

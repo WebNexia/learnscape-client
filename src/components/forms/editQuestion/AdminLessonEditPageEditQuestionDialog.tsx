@@ -20,6 +20,7 @@ import TrueFalseOptions from '../../layouts/questionTypes/TrueFalseOptions';
 import { LessonType, QuestionType } from '../../../interfaces/enums';
 import FlipCard from '../../layouts/flipCard/FlipCard';
 import Matching from '../../layouts/matching/Matching';
+import Translate from '../../layouts/translate/Translate';
 import { generateUniqueId } from '../../../utils/uniqueIdGenerator';
 import { updateEditorContentAndBlankPairs } from '../../../utils/updateEditorContentAndBlankPairs';
 import theme from '../../../themes';
@@ -41,6 +42,7 @@ interface AdminLessonEditPageEditQuestionDialogProps {
 	isMinimumOptions: boolean;
 	isDuplicateOption: boolean;
 	lessonType?: string;
+	singleLessonBeforeSave?: Lesson;
 	setSingleLessonBeforeSave?: React.Dispatch<React.SetStateAction<Lesson>>;
 	setCorrectAnswerIndex: React.Dispatch<React.SetStateAction<number>>;
 	handleCorrectAnswerChange: (index: number) => void;
@@ -67,6 +69,7 @@ const AdminLessonEditPageEditQuestionDialog = ({
 	isMinimumOptions,
 	isDuplicateOption,
 	lessonType,
+	singleLessonBeforeSave,
 	setSingleLessonBeforeSave,
 	handleCorrectAnswerChange,
 	setCorrectAnswerIndex,
@@ -106,6 +109,7 @@ const AdminLessonEditPageEditQuestionDialog = ({
 	const isMatching = questionType === QuestionType.MATCHING;
 	const isFITBTyping = questionType === QuestionType.FITB_TYPING;
 	const isFITBDragDrop = questionType === QuestionType.FITB_DRAG_DROP;
+	const isTranslate = questionType === QuestionType.TRANSLATE;
 
 	const [isAudioVideoSelectionMissing, setIsAudioVideoSelectionMissing] = useState(false);
 	const [isCorrectAnswerMissing, setIsCorrectAnswerMissing] = useState(
@@ -117,6 +121,8 @@ const AdminLessonEditPageEditQuestionDialog = ({
 	const [isMinimumTwoMatchingPairs, setIsMinimumTwoMatchingPairs] = useState<boolean>(false);
 	const [isMinimumOneBlank, setIsMinimumOneBlank] = useState<boolean>(false);
 	const [isMissingPair, setIsMissingPair] = useState<boolean>(false);
+	const [isMinimumOneTranslatePair, setIsMinimumOneTranslatePair] = useState<boolean>(false);
+	const [isMissingTranslatePair, setIsMissingTranslatePair] = useState<boolean>(false);
 	const [enterImageUrl, setEnterImageUrl] = useState<boolean>(true);
 	const [enterVideoUrl, setEnterVideoUrl] = useState<boolean>(true);
 	const [editorContent, setEditorContent] = useState(question.question);
@@ -155,7 +161,13 @@ const AdminLessonEditPageEditQuestionDialog = ({
 
 	useEffect(() => {
 		setIsCorrectAnswerMissing(
-			correctAnswerIndex < 0 && question.correctAnswer === '' && !isOpenEndedQuestion && !isFITBDragDrop && !isMatching && !isFITBTyping
+			correctAnswerIndex < 0 &&
+				question.correctAnswer === '' &&
+				!isOpenEndedQuestion &&
+				!isFITBDragDrop &&
+				!isMatching &&
+				!isFITBTyping &&
+				!isTranslate
 		);
 		resetVideoUpload();
 		resetImageUpload();
@@ -233,7 +245,7 @@ const AdminLessonEditPageEditQuestionDialog = ({
 			return;
 		}
 
-		if (isOpenEndedQuestion || isMatching || isFITBDragDrop || isFITBTyping) {
+		if (isOpenEndedQuestion || isMatching || isFITBDragDrop || isFITBTyping || isTranslate) {
 			setIsCorrectAnswerMissing(false);
 		}
 
@@ -253,6 +265,25 @@ const AdminLessonEditPageEditQuestionDialog = ({
 			setIsMissingPair(false);
 		}
 
+		if (isTranslate) {
+			// Read translatePairs from singleLessonBeforeSave (most up-to-date) since Translate component updates it directly
+			const currentQuestion = singleLessonBeforeSave?.questions?.find((q) => q?._id === question._id);
+			const currentTranslatePairs = currentQuestion?.translatePairs || question.translatePairs || [];
+			const nonBlankPairs = currentTranslatePairs?.filter((pair) => pair.originalText.trim() !== '' && pair.translation.trim() !== '') || [];
+			const missingPairExists = currentTranslatePairs?.some((pair) => pair.originalText.trim() === '' || pair.translation.trim() === '') || false;
+
+			if (nonBlankPairs.length < 1) {
+				setIsMinimumOneTranslatePair(true);
+				return;
+			}
+			if (missingPairExists) {
+				setIsMissingTranslatePair(true);
+				return;
+			}
+			setIsMinimumOneTranslatePair(false);
+			setIsMissingTranslatePair(false);
+		}
+
 		if (isFITBDragDrop || isFITBTyping) {
 			if (blankValuePairs.length < 1) {
 				setIsMinimumOneBlank(true);
@@ -266,10 +297,21 @@ const AdminLessonEditPageEditQuestionDialog = ({
 			setSingleLessonBeforeSave((prevData) => {
 				if (!prevData.questions) return prevData;
 
+				// Read translatePairs from prevData (most up-to-date) since Translate component updates it directly
+				const currentQuestion = prevData.questions?.find((q) => q?._id === question._id);
+				const currentTranslatePairs = currentQuestion?.translatePairs || question.translatePairs || [];
+
 				const updatedQuestions = prevData.questions?.map((prevQuestion) => {
 					if (prevQuestion && prevQuestion._id === question._id) {
-						setQuestionBeforeSave({ ...prevQuestion, options: options?.filter((option) => option !== '') || [], correctAnswer, blankValuePairs });
-						return { ...prevQuestion, options: options?.filter((option) => option !== '') || [], correctAnswer, blankValuePairs };
+						const updatedQuestion = {
+							...prevQuestion,
+							options: options?.filter((option) => option !== '') || [],
+							correctAnswer,
+							blankValuePairs,
+							translatePairs: currentTranslatePairs,
+						};
+						setQuestionBeforeSave(updatedQuestion);
+						return updatedQuestion;
 					}
 					return prevQuestion;
 				});
@@ -348,6 +390,8 @@ const AdminLessonEditPageEditQuestionDialog = ({
 				setCorrectAnswerIndex(-1);
 				handleResetQuestion();
 				setIsMinimumOneBlank(false);
+				setIsMinimumOneTranslatePair(false);
+				setIsMissingTranslatePair(false);
 				setIsUrlErrorOpen(false);
 			}}
 			title={`Edit Question (${questionType})`}
@@ -670,13 +714,27 @@ const AdminLessonEditPageEditQuestionDialog = ({
 								/>
 							</Box>
 						)}
+						{isTranslate && (
+							<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+								<Translate
+									question={question}
+									existingQuestion={true}
+									translatePairs={question.translatePairs || []}
+									setIsMinimumOneTranslatePair={setIsMinimumOneTranslatePair}
+									setIsMissingPair={setIsMissingTranslatePair}
+									setSingleLessonBeforeSave={setSingleLessonBeforeSave}
+									setIsLessonUpdated={setIsLessonUpdated}
+									setIsQuestionUpdated={setIsQuestionUpdated}
+								/>
+							</Box>
+						)}
 					</Box>
 					<Box sx={{ alignSelf: 'flex-start', marginTop: '1.5rem' }}>
 						{isQuestionMissing && (
 							<CustomErrorMessage>{isFlipCard ? '- Enter front face text or enter image' : '- Enter question'}</CustomErrorMessage>
 						)}
 
-						{isCorrectAnswerMissing && !isAudioVideoQuestion && !isMatching && (
+						{isCorrectAnswerMissing && !isAudioVideoQuestion && !isMatching && !isTranslate && (
 							<CustomErrorMessage>{isFlipCard ? '- Enter back face text' : '- Select correct answer'}</CustomErrorMessage>
 						)}
 						{isAudioVideoQuestion && isAudioVideoSelectionMissing && <CustomErrorMessage>- Select one of the recording options</CustomErrorMessage>}
@@ -685,6 +743,12 @@ const AdminLessonEditPageEditQuestionDialog = ({
 							<>
 								{isMinimumTwoMatchingPairs && <CustomErrorMessage>- Enter at least 2 completed pairs</CustomErrorMessage>}
 								{isMissingPair && <CustomErrorMessage>- There is at least one incomplete pair</CustomErrorMessage>}
+							</>
+						)}
+						{isTranslate && (
+							<>
+								{isMinimumOneTranslatePair && <CustomErrorMessage>- Enter at least 1 completed pair</CustomErrorMessage>}
+								{isMissingTranslatePair && <CustomErrorMessage>- There is at least one incomplete pair</CustomErrorMessage>}
 							</>
 						)}
 
@@ -708,6 +772,8 @@ const AdminLessonEditPageEditQuestionDialog = ({
 						resetEnterImageVideoUrl();
 						handleResetQuestion();
 						setIsMinimumOneBlank(false);
+						setIsMinimumOneTranslatePair(false);
+						setIsMissingTranslatePair(false);
 						setIsUrlErrorOpen(false);
 					}}
 					cancelBtnText='Cancel'
