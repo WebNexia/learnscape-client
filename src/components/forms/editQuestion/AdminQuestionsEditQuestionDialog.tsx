@@ -4,7 +4,7 @@ import CustomDialog from '../../layouts/dialog/CustomDialog';
 import CustomTextField from '../customFields/CustomTextField';
 import { AddCircle, RemoveCircle } from '@mui/icons-material';
 import CustomDialogActions from '../../layouts/dialog/CustomDialogActions';
-import { BlankValuePair, MatchingPair, QuestionInterface } from '../../../interfaces/question';
+import { BlankValuePair, MatchingPair, QuestionInterface, TranslatePair } from '../../../interfaces/question';
 import { QuestionsContext } from '../../../contexts/QuestionsContextProvider';
 import CustomErrorMessage from '../customFields/CustomErrorMessage';
 
@@ -23,6 +23,7 @@ import TrueFalseOptions from '../../layouts/questionTypes/TrueFalseOptions';
 import { QuestionType } from '../../../interfaces/enums';
 import FlipCard from '../../layouts/flipCard/FlipCard';
 import Matching from '../../layouts/matching/Matching';
+import Translate from '../../layouts/translate/Translate';
 import { generateUniqueId } from '../../../utils/uniqueIdGenerator';
 import theme from '../../../themes';
 import { updateEditorContentAndBlankPairs } from '../../../utils/updateEditorContentAndBlankPairs';
@@ -96,6 +97,7 @@ const AdminQuestionsEditQuestionDialog = ({
 	const isMatching = questionType === QuestionType.MATCHING;
 	const isFITBTyping = questionType === QuestionType.FITB_TYPING;
 	const isFITBDragDrop = questionType === QuestionType.FITB_DRAG_DROP;
+	const isTranslate = questionType === QuestionType.TRANSLATE;
 
 	const [questionAdminQuestions, setQuestionAdminQuestions] = useState(question.question);
 	const [imageUrlAdminQuestions, setImageUrlAdminQuestions] = useState(question.imageUrl);
@@ -105,6 +107,7 @@ const AdminQuestionsEditQuestionDialog = ({
 	const [isVideoAdminQuestions, setIsVideoAdminQuestions] = useState(question.video);
 	const [matchingPairsAdminQuestions, setMatchingPairsAdminQuestions] = useState<MatchingPair[]>(question.matchingPairs);
 	const [blankValuePairsAdminQuestions, setBlankValuePairsAdminQuestions] = useState<BlankValuePair[]>(question.blankValuePairs);
+	const [translatePairsAdminQuestions, setTranslatePairsAdminQuestions] = useState<TranslatePair[]>(question.translatePairs || []);
 
 	const [isAudioVideoSelectionMissing, setIsAudioVideoSelectionMissing] = useState(false);
 	const [isCorrectAnswerMissing, setIsCorrectAnswerMissing] = useState(
@@ -118,6 +121,8 @@ const AdminQuestionsEditQuestionDialog = ({
 	const [isMinimumTwoMatchingPairs, setIsMinimumTwoMatchingPairs] = useState(false);
 	const [isMissingPair, setIsMissingPair] = useState(false);
 	const [isMinimumOneBlank, setIsMinimumOneBlank] = useState<boolean>(false);
+	const [isMinimumOneTranslatePair, setIsMinimumOneTranslatePair] = useState<boolean>(false);
+	const [isMissingTranslatePair, setIsMissingTranslatePair] = useState<boolean>(false);
 
 	const [enterImageUrl, setEnterImageUrl] = useState(true);
 	const [enterVideoUrl, setEnterVideoUrl] = useState(true);
@@ -155,7 +160,13 @@ const AdminQuestionsEditQuestionDialog = ({
 
 	useEffect(() => {
 		setIsCorrectAnswerMissing(
-			correctAnswerIndex < 0 && question.correctAnswer === '' && !isOpenEndedQuestion && !isFITBDragDrop && !isMatching && !isFITBTyping
+			correctAnswerIndex < 0 &&
+				question.correctAnswer === '' &&
+				!isOpenEndedQuestion &&
+				!isFITBDragDrop &&
+				!isMatching &&
+				!isFITBTyping &&
+				!isTranslate
 		);
 		resetVideoUpload();
 		resetImageUpload();
@@ -170,6 +181,21 @@ const AdminQuestionsEditQuestionDialog = ({
 			setIsMinimumOneBlank(false);
 		}
 	}, [blankValuePairsAdminQuestions]);
+
+	// Sync all question data when question prop changes (when dialog opens with different question)
+	useEffect(() => {
+		setQuestionAdminQuestions(question.question);
+		setImageUrlAdminQuestions(question.imageUrl);
+		setVideoUrlAdminQuestions(question.videoUrl);
+		setCorrectAnswerAdminQuestions(question.correctAnswer);
+		setIsAudioAdminQuestions(question.audio);
+		setIsVideoAdminQuestions(question.video);
+		setMatchingPairsAdminQuestions(question.matchingPairs || []);
+		setBlankValuePairsAdminQuestions(question.blankValuePairs || []);
+		setTranslatePairsAdminQuestions(question.translatePairs || []);
+		setEditorContent(question.question);
+		setQuestionBeforeSave(question);
+	}, [question._id]);
 
 	const handleSubmit = async () => {
 		if (!isFlipCard) await handleInputChange('question', editorContent);
@@ -233,7 +259,7 @@ const AdminQuestionsEditQuestionDialog = ({
 			return;
 		}
 
-		if (isOpenEndedQuestion || isMatching || isFITBDragDrop || isFITBTyping) {
+		if (isOpenEndedQuestion || isMatching || isFITBDragDrop || isFITBTyping || isTranslate) {
 			setIsCorrectAnswerMissing(false);
 		}
 
@@ -251,6 +277,23 @@ const AdminQuestionsEditQuestionDialog = ({
 			}
 			setIsMinimumTwoMatchingPairs(false);
 			setIsMissingPair(false);
+		}
+
+		if (isTranslate) {
+			const nonBlankPairs = translatePairsAdminQuestions?.filter((pair) => pair.originalText.trim() !== '' && pair.translation.trim() !== '') || [];
+			const missingPairExists =
+				translatePairsAdminQuestions?.some((pair) => pair.originalText.trim() === '' || pair.translation.trim() === '') || false;
+
+			if (nonBlankPairs.length < 1) {
+				setIsMinimumOneTranslatePair(true);
+				return;
+			}
+			if (missingPairExists) {
+				setIsMissingTranslatePair(true);
+				return;
+			}
+			setIsMinimumOneTranslatePair(false);
+			setIsMissingTranslatePair(false);
 		}
 
 		if (isFITBDragDrop || isFITBTyping) {
@@ -277,6 +320,7 @@ const AdminQuestionsEditQuestionDialog = ({
 				video: isAudioVideoQuestion ? isVideoAdminQuestions : false,
 				matchingPairs: matchingPairsAdminQuestions,
 				blankValuePairs: blankValuePairsAdminQuestions,
+				translatePairs: translatePairsAdminQuestions,
 			});
 
 			const questionResponseData = response.data.data;
@@ -293,6 +337,7 @@ const AdminQuestionsEditQuestionDialog = ({
 				video: isAudioVideoQuestion ? isVideoAdminQuestions : false,
 				matchingPairs: matchingPairsAdminQuestions,
 				blankValuePairs: blankValuePairsAdminQuestions,
+				translatePairs: translatePairsAdminQuestions,
 				updatedByName: questionResponseData.updatedByName,
 				createdByName: questionResponseData.createdByName,
 				updatedByImageUrl: questionResponseData.updatedByImageUrl,
@@ -331,6 +376,7 @@ const AdminQuestionsEditQuestionDialog = ({
 		setIsVideoAdminQuestions(questionBeforeSave.video);
 		setMatchingPairsAdminQuestions(questionBeforeSave.matchingPairs);
 		setBlankValuePairsAdminQuestions(questionBeforeSave.blankValuePairs);
+		setTranslatePairsAdminQuestions(questionBeforeSave.translatePairs || []);
 		setEditorContent(questionBeforeSave.question);
 	};
 
@@ -357,6 +403,8 @@ const AdminQuestionsEditQuestionDialog = ({
 				setCorrectAnswerIndex(-1);
 				handleResetQuestion();
 				setIsMinimumOneBlank(false);
+				setIsMinimumOneTranslatePair(false);
+				setIsMissingTranslatePair(false);
 				setIsUrlErrorOpen(false);
 			}}
 			title={`Edit Question (${questionType})`}
@@ -676,13 +724,26 @@ const AdminQuestionsEditQuestionDialog = ({
 								/>
 							</Box>
 						)}
+						{isTranslate && (
+							<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+								<Translate
+									key={question._id}
+									question={question}
+									translatePairs={translatePairsAdminQuestions}
+									setIsMinimumOneTranslatePair={setIsMinimumOneTranslatePair}
+									setIsMissingPair={setIsMissingTranslatePair}
+									existingQuestion={true}
+									setTranslatePairsAdminQuestions={setTranslatePairsAdminQuestions}
+								/>
+							</Box>
+						)}
 					</Box>
 					<Box sx={{ alignSelf: 'flex-start', marginTop: '1.5rem' }}>
 						{isQuestionMissing && (
 							<CustomErrorMessage>{isFlipCard ? '- Enter front face text or enter image' : '- Enter question'}</CustomErrorMessage>
 						)}
 
-						{isCorrectAnswerMissing && !isAudioVideoQuestion && !isMatching && (
+						{isCorrectAnswerMissing && !isAudioVideoQuestion && !isMatching && !isTranslate && (
 							<CustomErrorMessage>{isFlipCard ? '- Enter back face text' : '- Select correct answer'}</CustomErrorMessage>
 						)}
 						{isAudioVideoQuestion && isAudioVideoSelectionMissing && <CustomErrorMessage>- Select one of the recording options</CustomErrorMessage>}
@@ -691,6 +752,12 @@ const AdminQuestionsEditQuestionDialog = ({
 							<>
 								{isMinimumTwoMatchingPairs && <CustomErrorMessage>- Enter at least 2 completed pairs</CustomErrorMessage>}
 								{isMissingPair && <CustomErrorMessage>- There is at least one incomplete pair</CustomErrorMessage>}
+							</>
+						)}
+						{isTranslate && (
+							<>
+								{isMinimumOneTranslatePair && <CustomErrorMessage>- Enter at least 1 completed pair</CustomErrorMessage>}
+								{isMissingTranslatePair && <CustomErrorMessage>- There is at least one incomplete pair</CustomErrorMessage>}
 							</>
 						)}
 
@@ -714,6 +781,8 @@ const AdminQuestionsEditQuestionDialog = ({
 						resetEnterImageVideoUrl();
 						handleResetQuestion();
 						setIsMinimumOneBlank(false);
+						setIsMinimumOneTranslatePair(false);
+						setIsMissingTranslatePair(false);
 						setIsUrlErrorOpen(false);
 					}}
 					cancelBtnText='Cancel'

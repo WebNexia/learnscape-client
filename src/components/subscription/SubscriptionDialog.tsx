@@ -417,7 +417,11 @@ const SubscriptionDialog: React.FC<SubscriptionDialogProps> = ({ open, onClose, 
 		<>
 			<CustomDialog
 				openModal={open}
-				closeModal={onClose}
+				closeModal={() => {
+					if (!isProcessing) {
+						onClose();
+					}
+				}}
 				title='Subscribe to Platform'
 				maxWidth='md'
 				titleSx={{
@@ -749,8 +753,10 @@ const SubscriptionDialog: React.FC<SubscriptionDialogProps> = ({ open, onClose, 
 					{/* Actions */}
 					<CustomDialogActions
 						onCancel={() => {
-							setShowSuccess(false);
-							onClose();
+							if (!isProcessing) {
+								setShowSuccess(false);
+								onClose();
+							}
 						}}
 						cancelBtnText='Cancel'
 						submitBtnText={isProcessing ? 'Processing...' : `Subscribe - ${currentPrice && setCurrencySymbol(currentPrice.currency)}${finalAmount}`}

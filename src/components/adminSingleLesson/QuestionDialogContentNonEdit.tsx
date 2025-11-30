@@ -1,4 +1,17 @@
-import { Box, Checkbox, DialogContent, FormControlLabel, Typography } from '@mui/material';
+import {
+	Box,
+	Checkbox,
+	DialogContent,
+	FormControlLabel,
+	Paper,
+	Table,
+	TableBody,
+	TableCell,
+	TableContainer,
+	TableHead,
+	TableRow,
+	Typography,
+} from '@mui/material';
 import { QuestionInterface } from '../../interfaces/question';
 import theme from '../../themes';
 import { sanitizeHtml } from '../../utils/sanitizeHtml';
@@ -242,6 +255,63 @@ const QuestionDialogContentNonEdit = ({ question, singleLessonBeforeSave }: Ques
 						blankValuePairs={question.blankValuePairs}
 						lessonType={singleLessonBeforeSave?.type}
 					/>
+				</Box>
+			)}
+
+			{question && fetchQuestionTypeName(question) === QuestionType.TRANSLATE && (
+				<Box sx={{ display: 'flex', justifyContent: 'center', mb: '2rem' }}>
+					<TableContainer component={Paper} sx={{ maxWidth: '90%', boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.2)' }}>
+						<Table size='small' aria-label='translate pairs table'>
+							<TableHead>
+								<TableRow>
+									<TableCell
+										sx={{
+											backgroundColor: theme.bgColor?.secondary,
+											fontWeight: 'bold',
+											fontSize: isMobileSize ? '0.8rem' : '1rem',
+											textAlign: 'center',
+											color: theme.textColor?.secondary.main,
+										}}>
+										Original Text
+									</TableCell>
+									<TableCell
+										sx={{
+											backgroundColor: theme.bgColor?.secondary,
+											fontWeight: 'bold',
+											fontSize: isMobileSize ? '0.8rem' : '1rem',
+											textAlign: 'center',
+											color: theme.textColor?.secondary.main,
+										}}>
+										Translation
+									</TableCell>
+								</TableRow>
+							</TableHead>
+							<TableBody>
+								{question.translatePairs?.map((pair, index) => (
+									<TableRow key={index} hover>
+										<TableCell
+											sx={{
+												fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+												wordBreak: 'break-word',
+												textAlign: 'center',
+												color: theme.textColor?.secondary.main,
+											}}>
+											{pair.originalText.trim()}
+										</TableCell>
+										<TableCell
+											sx={{
+												fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+												wordBreak: 'break-word',
+												textAlign: 'center',
+												color: theme.textColor?.secondary.main,
+											}}>
+											{pair.translation.trim()}
+										</TableCell>
+									</TableRow>
+								))}
+							</TableBody>
+						</Table>
+					</TableContainer>
 				</Box>
 			)}
 		</DialogContent>

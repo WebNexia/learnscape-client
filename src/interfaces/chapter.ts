@@ -1,5 +1,11 @@
 import { Lesson } from './lessons';
 
+export interface ChecklistGroup {
+	groupTitle: string;
+	items: string[];
+	_id?: string;
+}
+
 export interface BaseChapter {
 	_id: string;
 	title: string;
@@ -9,7 +15,7 @@ export interface BaseChapter {
 	lessonIds: string[];
 	lessons: Lesson[];
 	orgId: string;
-	evaluationChecklistItems?: string[];
+	evaluationChecklistItems?: ChecklistGroup[];
 }
 
 export interface ChapterProgress extends BaseChapter {

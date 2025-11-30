@@ -15,7 +15,7 @@ interface UnsubscribeDialogProps {
 }
 
 const UnsubscribeDialog: React.FC<UnsubscribeDialogProps> = ({ open, onClose }) => {
-	const { user, setUser } = useContext(UserAuthContext);
+	const { user, setUser, fetchUserData, firebaseUserId } = useContext(UserAuthContext);
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const [isProcessing, setIsProcessing] = useState(false);
 	const [error, setError] = useState<string | null>(null);
@@ -56,27 +56,49 @@ const UnsubscribeDialog: React.FC<UnsubscribeDialogProps> = ({ open, onClose }) 
 
 			if (subscriptionResponse.data.data) {
 				const subscriptionId = subscriptionResponse.data.data._id;
+				const subscription = subscriptionResponse.data.data;
 
 				// Cancel the subscription
 				await axiosInstance.delete(`${base_url}/subscriptions/${subscriptionId}`, {
 					data: { cancelReason: cancelReason.trim() || 'User requested cancellation' },
 				});
 
+				// Preserve subscriptionValidUntil (user keeps access until period end)
+				const subscriptionValidUntil = subscription.currentPeriodEnd
+					? new Date(subscription.currentPeriodEnd)
+					: user?.subscriptionValidUntil
+						? new Date(user.subscriptionValidUntil)
+						: null;
+
+				const now = new Date();
+				const hasAccessUntilPeriodEnd = subscriptionValidUntil && subscriptionValidUntil > now;
+
 				// Update user context to reflect cancellation
+				// User keeps subscription access until subscriptionValidUntil
 				setUser((prevUser) => {
 					if (prevUser) {
 						return {
 							...prevUser,
-							isSubscribed: false,
+							isSubscribed: false, // Mark as unsubscribed
 							subscriptionStatus: 'canceled',
-							accessLevel: 'limited',
+							accessLevel: hasAccessUntilPeriodEnd ? 'subscription' : 'limited', // Keep access if period hasn't ended
 							subscriptionType: null,
 							subscriptionExpiry: null,
-							subscriptionValidUntil: null,
+							subscriptionValidUntil: subscriptionValidUntil ? subscriptionValidUntil.toISOString() : null, // Preserve until period end
 						};
 					}
 					return prevUser;
 				});
+
+				// Refetch user data from backend to ensure we have the latest state
+				if (firebaseUserId) {
+					try {
+						await fetchUserData(firebaseUserId);
+					} catch (error) {
+						console.error('Failed to refetch user data after cancellation:', error);
+					}
+				}
+
 				handleClose();
 				setShowSuccess(true);
 			} else {
@@ -120,7 +142,14 @@ const UnsubscribeDialog: React.FC<UnsubscribeDialogProps> = ({ open, onClose }) 
 
 	return (
 		<>
-			<CustomDialog openModal={open} closeModal={handleClose} maxWidth='sm'>
+			<CustomDialog
+				openModal={open}
+				closeModal={() => {
+					if (!isProcessing) {
+						handleClose();
+					}
+				}}
+				maxWidth='sm'>
 				<Box sx={{ padding: isMobileSize ? '1rem' : '1rem 2rem 0rem 2rem' }}>
 					{/* Header */}
 					<Box sx={{ textAlign: 'center', mb: '2rem' }}>
@@ -200,7 +229,11 @@ const UnsubscribeDialog: React.FC<UnsubscribeDialogProps> = ({ open, onClose }) 
 
 					{/* Actions */}
 					<CustomDialogActions
-						onCancel={handleClose}
+						onCancel={() => {
+							if (!isProcessing) {
+								handleClose();
+							}
+						}}
 						cancelBtnText='Keep Subscription'
 						submitBtnText={isProcessing ? 'Canceling...' : 'Yes, Cancel Subscription'}
 						disableBtn={isProcessing}
@@ -215,7 +248,10 @@ const UnsubscribeDialog: React.FC<UnsubscribeDialogProps> = ({ open, onClose }) 
 				autoHideDuration={3500}
 				anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
 				onClose={() => {
-					setShowSuccess(false);
+					if (!isProcessing) {
+						handleClose();
+						setShowSuccess(false);
+					}
 				}}
 				sx={{ mt: { xs: '1.5rem', sm: '1.5rem', md: '2.5rem', lg: '2.5rem' } }}>
 				<Alert

@@ -101,6 +101,7 @@ const AddNewQuestionDialog = ({
 					QuestionType.FITB_TYPING,
 					QuestionType.FITB_DRAG_DROP,
 					QuestionType.FLIP_CARD,
+					QuestionType.TRANSLATE,
 				]?.includes(questionTypeName);
 			}
 			return true;

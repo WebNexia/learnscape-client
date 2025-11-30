@@ -199,6 +199,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 	// URL validation error handling
 	const [isUrlErrorOpen, setIsUrlErrorOpen] = useState<boolean>(false);
 	const [urlErrorMessage, setUrlErrorMessage] = useState<string>('');
+	const [isProcessing, setIsProcessing] = useState<boolean>(false);
 
 	useEffect(() => {
 		let locale = navigator.language;
@@ -249,9 +250,11 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 	};
 
 	const handleAddEvent = async () => {
+		setIsProcessing(true);
 		// Validate URLs before proceeding
 		const urlsValid = await validateUrls();
 		if (!urlsValid) {
+			setIsProcessing(false);
 			return; // Don't proceed if URL validation fails
 		}
 
@@ -422,6 +425,8 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 				setUrlErrorMessage('Failed to create event. Please try again.');
 			}
 			setIsUrlErrorOpen(true);
+		} finally {
+			setIsProcessing(false);
 		}
 
 		// Only reset form and close modal on success
@@ -465,8 +470,10 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 		<CustomDialog
 			openModal={newEventModalOpen}
 			closeModal={() => {
-				setNewEventModalOpen(false);
-				resetNewEventForm();
+				if (!isProcessing) {
+					setNewEventModalOpen(false);
+					resetNewEventForm();
+				}
 			}}
 			title='Create Event'
 			maxWidth='sm'>
@@ -1185,9 +1192,13 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 				<CustomDialogActions
 					actionSx={{ margin: '-1rem 0.5rem 0.5rem 0' }}
 					onCancel={() => {
-						setNewEventModalOpen(false);
-						resetNewEventForm();
+						if (!isProcessing) {
+							setNewEventModalOpen(false);
+							resetNewEventForm();
+						}
 					}}
+					disableCancelBtn={isProcessing}
+					disableBtn={isProcessing}
 				/>
 			</form>
 			<Snackbar

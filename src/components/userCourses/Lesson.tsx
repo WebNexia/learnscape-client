@@ -8,9 +8,12 @@ import { useContext, useEffect, useState, useMemo } from 'react';
 import ProgressIcon from '../../assets/ProgressIcon.png';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import { useUserLessonsForCourse } from '../../hooks/useUserLessonsForCourse';
+import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
+import { SingleCourse, Price } from '../../interfaces/course';
 
 interface LessonProps {
 	lesson: LessonById;
+	course: SingleCourse;
 	isEnrolledStatus: boolean;
 	nextLessonId: string;
 	nextChapterFirstLessonId: string;
@@ -20,10 +23,11 @@ interface LessonProps {
 	currentChapterChecklistCompleted?: boolean;
 }
 
-const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLessonId, lessonOrder }: LessonProps) => {
+const Lesson = ({ lesson, course, isEnrolledStatus, nextLessonId, nextChapterFirstLessonId, lessonOrder }: LessonProps) => {
 	const { courseId, userCourseId } = useParams();
 	const navigate = useNavigate();
 
+	const { user } = useContext(UserAuthContext);
 	const { isSmallScreen, isVerySmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isRotatedMedium || isSmallScreen;
 
@@ -55,6 +59,11 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 	}, [parsedUserLessonData, lesson._id, courseId]);
 
 	const handleLessonClick = () => {
+		// Don't navigate if lesson is not accessible (locked)
+		if (!isAccessible) {
+			return;
+		}
+
 		const navigateToLesson = (lessonId: string, nextId?: string) => {
 			const url = `/course/${courseId}/userCourseId/${userCourseId}/lesson/${lessonId}`;
 			const queryParams = `?isCompleted=${isLessonCompleted}`;
@@ -79,10 +88,89 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 		}
 	};
 
+	// Helper function to get currency for country code
+	const getCurrencyForCountry = (countryCode: string): 'gbp' | 'usd' | 'eur' | 'try' => {
+		if (!countryCode) return 'usd';
+		const code = countryCode.toUpperCase();
+
+		// TR -> TRY
+		if (code === 'TR') return 'try';
+
+		// GB -> GBP
+		if (code === 'GB') return 'gbp';
+
+		// EU countries -> EUR
+		const euCountries = ['DE', 'FR', 'IT', 'ES', 'NL', 'BE', 'IE', 'PT', 'GR', 'FI', 'AT', 'LU', 'CY', 'EE', 'LT', 'LV', 'SI', 'SK', 'MT'];
+		if (euCountries.includes(code)) return 'eur';
+
+		// Default to USD
+		return 'usd';
+	};
+
+	// Get price for user's country/currency
+	const getUserPrice = (course: SingleCourse, countryCode: string | undefined): Price | null => {
+		if (!countryCode || !course?.prices) return null;
+
+		const currency = getCurrencyForCountry(countryCode);
+		const price = course.prices.find((p) => p.currency === currency);
+
+		// Fallback to USD if currency not found
+		return price || course.prices.find((p) => p.currency === 'usd') || null;
+	};
+
+	// Check if course is a free platform course (not external and price is free for user's currency)
+	const isFreePlatformCourse = useMemo(() => {
+		// Must be a platform course (not external)
+		if (!course?.courseManagement || course.courseManagement.isExternal) return false;
+
+		// Get user's country code
+		const countryCode = user?.countryCode;
+		if (!countryCode) return false;
+
+		// Get price for user's currency
+		const userPrice = getUserPrice(course, countryCode);
+		if (!userPrice) return false;
+
+		// Check if price is free (empty string, '0', or 'Free')
+		const amount = userPrice.amount;
+		return amount === '' || amount === '0' || amount === 'Free';
+	}, [course, user?.countryCode]);
+
+	// Check if user has subscription access (hasRegisteredCourse OR isSubscribed OR subscriptionValidUntil is valid)
+	// Users with hasRegisteredCourse: true have full access to all features including free platform courses
+	const hasSubscriptionAccess = useMemo(() => {
+		if (!user) return false;
+
+		// Priority 1: If user has registered course, they have full access to everything (free content + all features)
+		if (user.hasRegisteredCourse) return true;
+
+		// Priority 2: If user is subscribed, they have access
+		if (user.isSubscribed) return true;
+
+		// Priority 3: Check if subscriptionValidUntil is valid (not null and in the future)
+		// This covers canceled subscriptions that still have access until period end
+		if (user.subscriptionValidUntil) {
+			const validUntil = new Date(user.subscriptionValidUntil);
+			const now = new Date();
+			if (validUntil > now) {
+				return true;
+			}
+		}
+
+		return false;
+	}, [user]);
+
 	const isAccessible = useMemo(() => {
 		if (!isEnrolledStatus) return false;
+
+		// For free platform courses, check subscription access
+		// hasRegisteredCourse grants access to free platform courses even without subscription
+		if (isFreePlatformCourse) {
+			if (!hasSubscriptionAccess) return false;
+		}
+
 		return isLessonRegisteredInThisCourse || isLessonInProgress || isLessonCompleted;
-	}, [isEnrolledStatus, isLessonRegisteredInThisCourse, isLessonInProgress, isLessonCompleted]);
+	}, [isEnrolledStatus, isFreePlatformCourse, hasSubscriptionAccess, isLessonRegisteredInThisCourse, isLessonInProgress, isLessonCompleted]);
 
 	return (
 		<Box
@@ -134,11 +222,11 @@ const Lesson = ({ lesson, isEnrolledStatus, nextLessonId, nextChapterFirstLesson
 						</Typography>
 					</Box>
 					<Box>
-						{isEnrolledStatus && isLessonInProgress && isLessonRegisteredInThisCourse ? (
+						{isEnrolledStatus && isLessonInProgress && isLessonRegisteredInThisCourse && isAccessible ? (
 							<img src={ProgressIcon} alt='' style={{ height: isMobileSize ? '0.9rem' : '1.5rem' }} />
-						) : isEnrolledStatus && isLessonCompleted && isLessonRegisteredInThisCourse ? (
+						) : isEnrolledStatus && isLessonCompleted && isLessonRegisteredInThisCourse && isAccessible ? (
 							<CheckCircleOutlineRounded sx={{ color: theme.palette.success.main, fontSize: isMobileSize ? '0.9rem' : '1.35rem' }} />
-						) : !isEnrolledStatus || (!isLessonInProgress && !isLessonCompleted) || !isLessonRegisteredInThisCourse ? (
+						) : !isAccessible ? (
 							<Lock sx={{ color: theme.border.lightMain, fontSize: isMobileSize ? '0.9rem' : '1.35rem' }} />
 						) : null}
 					</Box>

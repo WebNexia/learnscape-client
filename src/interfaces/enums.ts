@@ -101,6 +101,7 @@ export const enum QuestionType {
 	MATCHING = 'Matching',
 	FITB_TYPING = 'FITB-Typing',
 	FITB_DRAG_DROP = 'FITB-Drag/Drop',
+	TRANSLATE = 'Translate',
 }
 
 export const enum LessonType {

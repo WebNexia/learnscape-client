@@ -14,7 +14,7 @@ import {
 	Typography,
 } from '@mui/material';
 import { QuestionInterface } from '../../interfaces/question';
-import { useContext, useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import axios from '@utils/axiosInstance';
 import { useNavigate, useParams } from 'react-router-dom';
 import theme from '../../themes';
@@ -40,6 +40,7 @@ import FillInTheBlanksDragDrop from '../layouts/FITBDragDrop/FillInTheBlanksDrag
 import FillInTheBlanksTyping from '../layouts/FITBTyping/FillInTheBlanksTyping';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import { useSoundEffect } from '../../hooks/useSoundEffect';
+import CustomSubmitButton from '../forms/customButtons/CustomSubmitButton';
 
 const colorChange = keyframes`
     0% {
@@ -127,20 +128,24 @@ const PracticeQuestion = ({
 
 	const { userId, lessonId, courseId, userCourseId } = useParams();
 	const { orgId } = useContext(OrganisationContext);
-	const { fetchQuestionTypeName } = useQuestionTypes();
+	const { fetchQuestionTypeName, questionTypes } = useQuestionTypes();
 
 	// Sound effects - only enabled when lesson is not completed (active answering mode)
 	const { playSuccessSound, playErrorSound } = useSoundEffect(!isLessonCompleted, isSoundMuted);
 	const prevIsAnswerCorrectRef = useRef<boolean>(false);
 	const prevErrorRef = useRef<boolean>(false);
 
-	const isOpenEndedQuestion: boolean = fetchQuestionTypeName(question) === QuestionType.OPEN_ENDED;
-	const isTrueFalseQuestion: boolean = fetchQuestionTypeName(question) === QuestionType.TRUE_FALSE;
-	const isMultipleChoiceQuestion: boolean = fetchQuestionTypeName(question) === QuestionType.MULTIPLE_CHOICE;
-	const isFlipCard: boolean = fetchQuestionTypeName(question) === QuestionType.FLIP_CARD;
-	const isMatching: boolean = fetchQuestionTypeName(question) === QuestionType.MATCHING;
-	const isFITBTyping: boolean = fetchQuestionTypeName(question) === QuestionType.FITB_TYPING;
-	const isFITBDragDrop: boolean = fetchQuestionTypeName(question) === QuestionType.FITB_DRAG_DROP;
+	// Use useMemo to recalculate when questionTypes loads
+	const questionTypeName = useMemo(() => fetchQuestionTypeName(question), [question, questionTypes]);
+
+	const isTranslate: boolean = questionTypeName === QuestionType.TRANSLATE;
+	const isOpenEndedQuestion: boolean = questionTypeName === QuestionType.OPEN_ENDED;
+	const isTrueFalseQuestion: boolean = questionTypeName === QuestionType.TRUE_FALSE;
+	const isMultipleChoiceQuestion: boolean = questionTypeName === QuestionType.MULTIPLE_CHOICE;
+	const isFlipCard: boolean = questionTypeName === QuestionType.FLIP_CARD;
+	const isMatching: boolean = questionTypeName === QuestionType.MATCHING;
+	const isFITBTyping: boolean = questionTypeName === QuestionType.FITB_TYPING;
+	const isFITBDragDrop: boolean = questionTypeName === QuestionType.FITB_DRAG_DROP;
 
 	const [userAnswer, setUserAnswer] = useState<string>(''); //user answer for current question
 
@@ -157,7 +162,7 @@ const PracticeQuestion = ({
 
 	const [error, setError] = useState<boolean>(false);
 	const [success, setSuccess] = useState<boolean>(false);
-	const [helperText, setHelperText] = useState<string>(!isMatching && !isFITBDragDrop && !isFITBTyping ? 'Choose wisely' : '');
+	const [helperText, setHelperText] = useState<string>(isTrueFalseQuestion || isMultipleChoiceQuestion ? 'Choose wisely' : '');
 	const [isAnswerCorrect, setIsAnswerCorrect] = useState<boolean>(false);
 	const [isOpenEndedAnswerSubmitted, setIsOpenEndedAnswerSubmitted] = useState<boolean>(false);
 	const [selectedQuestion, setSelectedQuestion] = useState<number>(displayedQuestionNumber);
@@ -166,6 +171,11 @@ const PracticeQuestion = ({
 	const [allPairsMatchedMatching, setAllPairsMatchedMatching] = useState<boolean>(false);
 	const [allPairsMatchedFITBTyping, setAllPairsMatchedFITBTyping] = useState<boolean>(false);
 	const [allPairsMatchedFITBDragDrop, setAllPairsMatchedFITBDragDrop] = useState<boolean>(false);
+	const [translateAnswers, setTranslateAnswers] = useState<{ [pairId: string]: string }>({});
+	const [checkedTranslatePairs, setCheckedTranslatePairs] = useState<Set<string>>(new Set());
+
+	// Store translate answers per question ID to preserve them when navigating between questions
+	const translateAnswersStoreRef = useRef<{ [questionId: string]: { answers: { [pairId: string]: string }; checkedPairs: Set<string> } }>({});
 
 	const [isCardFlipped, setIsCardFlipped] = useState<boolean>(false);
 	const [hasRequestedAiFeedback, setHasRequestedAiFeedback] = useState<boolean>(false);
@@ -184,7 +194,29 @@ const PracticeQuestion = ({
 	});
 
 	useEffect(() => {
-		if (isLessonCompleted && question.correctAnswer && !isOpenEndedQuestion) {
+		if (isTranslate && isLessonCompleted) {
+			// If lesson is completed, mark all pairs as checked and show translations
+			const allPairIds = new Set(question.translatePairs?.map((pair, idx) => pair.id || idx.toString()) || []);
+			setCheckedTranslatePairs(allPairIds);
+			// Load user answers if available
+			const savedAnswer = userAnswers?.find((data) => data.questionId === question._id)?.userAnswer || '';
+			if (savedAnswer) {
+				setUserAnswer(savedAnswer);
+			}
+			// Clear stored answers when lesson is completed
+			translateAnswersStoreRef.current = {};
+		} else if (isTranslate && !isLessonCompleted) {
+			// Restore stored answers for this question if they exist
+			const stored = translateAnswersStoreRef.current[question._id];
+			if (stored) {
+				setTranslateAnswers(stored.answers);
+				setCheckedTranslatePairs(stored.checkedPairs);
+			} else {
+				// Initialize empty if no stored data
+				setTranslateAnswers({});
+				setCheckedTranslatePairs(new Set());
+			}
+		} else if (isLessonCompleted && question.correctAnswer && !isOpenEndedQuestion && !isTranslate) {
 			setValue(question.correctAnswer);
 		} else if (isOpenEndedQuestion) {
 			setValue(() => {
@@ -213,6 +245,10 @@ const PracticeQuestion = ({
 
 		setIsOpenEndedAnswerSubmitted(false);
 		setIsAnswerCorrect(false);
+		if (!isTranslate) {
+			setCheckedTranslatePairs(new Set());
+			setTranslateAnswers({});
+		}
 
 		// Reset AI feedback state when question changes
 		setHasRequestedAiFeedback(false);
@@ -222,6 +258,24 @@ const PracticeQuestion = ({
 		prevErrorRef.current = false;
 	}, [displayedQuestionNumber, question._id]);
 
+	// Save translate answers to store whenever they change (only during active practice, not when lesson is completed)
+	useEffect(() => {
+		if (isTranslate && !isLessonCompleted && question._id) {
+			translateAnswersStoreRef.current[question._id] = {
+				answers: { ...translateAnswers },
+				checkedPairs: new Set(checkedTranslatePairs),
+			};
+		}
+	}, [translateAnswers, checkedTranslatePairs, isTranslate, isLessonCompleted, question._id]);
+
+	// Clear stored answers when component unmounts (user navigates away)
+	useEffect(() => {
+		return () => {
+			// Clear on unmount (user navigates away from practice questions)
+			translateAnswersStoreRef.current = {};
+		};
+	}, []);
+
 	// Play sound effects for multiple choice and true/false questions
 	useEffect(() => {
 		// Only play sounds if lesson is not completed (active answering mode)
@@ -230,9 +284,9 @@ const PracticeQuestion = ({
 		// Skip for open-ended and flip card (these don't have immediate correct/incorrect feedback)
 		if (isOpenEndedQuestion || isFlipCard) return;
 
-		// For FITB and Matching, sounds are handled by the components themselves via callbacks
+		// For FITB, Matching, and Translate, sounds are handled by the components themselves via callbacks or not needed
 		// Only handle multiple choice and true/false here
-		if (isMatching || isFITBDragDrop || isFITBTyping) return;
+		if (isMatching || isFITBDragDrop || isFITBTyping || isTranslate) return;
 
 		// Play success sound when answer becomes correct
 		if (isAnswerCorrect && !prevIsAnswerCorrectRef.current) {
@@ -351,7 +405,7 @@ const PracticeQuestion = ({
 			setIsAnswerCorrect(true);
 			toggleAiIcon(index);
 		}
-		if (value === question.correctAnswer?.toString() && !isOpenEndedQuestion && !isMatching && !isFITBDragDrop && !isFITBTyping) {
+		if (value === question.correctAnswer?.toString() && !isOpenEndedQuestion && !isMatching && !isFITBDragDrop && !isFITBTyping && !isTranslate) {
 			setHelperText('You got it!');
 			setError(false);
 			setIsAnswerCorrect(true);
@@ -527,6 +581,181 @@ const PracticeQuestion = ({
 							</Box>
 						)}
 
+						{isTranslate && (
+							<Box
+								sx={{
+									display: 'flex',
+									flexDirection: 'column',
+									justifyContent: 'center',
+									alignItems: 'center',
+									width: '100%',
+									margin:
+										question.imageUrl || question.videoUrl
+											? '1rem auto 1rem auto'
+											: isSmallMobileLandscape || isSmallMobilePortrait || isMobilePortrait || isMobileLandscape
+												? '-0.5rem auto 0 auto'
+												: isTabletPortrait || isTabletLandscape
+													? '-0.5rem auto 0 auto'
+													: isDesktopPortrait || isDesktopLandscape
+														? '0rem auto 0 auto'
+														: '0rem auto',
+									gap: '1.5rem',
+								}}>
+								{question.translatePairs?.map((pair, index) => {
+									const pairId = pair.id || index.toString();
+									const isPairChecked = checkedTranslatePairs.has(pairId);
+									const showTranslation = isLessonCompleted || isPairChecked;
+
+									return (
+										<Box
+											key={pairId}
+											sx={{
+												display: 'flex',
+												flexDirection: 'column',
+												width: '100%',
+												maxWidth: isMobileSize ? '100%' : '600px',
+												gap: '1rem',
+												padding: '1.5rem',
+												borderRadius: '12px',
+												boxShadow: '2px 1px 8px rgba(0, 0, 0, 0.3)',
+												backgroundColor: theme.bgColor?.secondary || '#fff',
+												position: 'relative',
+												mb: question.translatePairs?.length > 1 ? '2rem' : '0rem',
+											}}>
+											<Typography
+												variant='body1'
+												sx={{
+													fontSize: isMobileSize ? '0.85rem' : '0.95rem',
+													color: theme.textColor?.secondary?.main,
+												}}>
+												Original Text:
+											</Typography>
+											<Typography
+												variant='body1'
+												sx={{
+													fontSize: isMobileSize ? '0.75rem' : '0.9rem',
+													padding: '1rem',
+													borderRadius: '8px',
+													backgroundColor: theme.bgColor?.primary || '#f5f5f5',
+													minHeight: '3rem',
+													display: 'flex',
+													alignItems: 'center',
+													color: theme.textColor?.common?.main,
+												}}>
+												{pair.originalText}
+											</Typography>
+
+											{!isLessonCompleted && (
+												<CustomTextField
+													label='Your Translation'
+													multiline
+													rows={2}
+													value={translateAnswers[pairId] || ''}
+													onChange={(e) => {
+														setTranslateAnswers((prev) => ({
+															...prev,
+															[pairId]: e.target.value,
+														}));
+													}}
+													disabled={showTranslation}
+													InputProps={{
+														inputProps: {
+															maxLength: 500,
+														},
+													}}
+													sx={{
+														width: '100%',
+													}}
+												/>
+											)}
+
+											{showTranslation && (
+												<>
+													<Typography
+														variant='body2'
+														sx={{
+															fontSize: isMobileSize ? '0.85rem' : '0.95rem',
+															mb: '-0.5rem',
+															mt: isLessonCompleted ? '0.5rem' : '0rem',
+														}}>
+														Translation:
+													</Typography>
+													<Box
+														sx={{
+															padding: '1rem',
+															borderRadius: '8px',
+															backgroundColor: theme.bgColor?.greenPrimary || '#e8f5e9',
+															border: `2px solid ${theme.textColor?.greenPrimary?.main || '#4caf50'}`,
+														}}>
+														<Typography
+															variant='body1'
+															sx={{
+																fontSize: isMobileSize ? '0.75rem' : '0.9rem',
+																color: theme.textColor?.common?.main,
+															}}>
+															{pair.translation}
+														</Typography>
+													</Box>
+												</>
+											)}
+
+											{!isLessonCompleted && !isPairChecked && (
+												<Box sx={{ display: 'flex', justifyContent: 'center', mt: '-1rem', mb: '-0.5rem' }}>
+													<CustomSubmitButton
+														onClick={async () => {
+															const answer = translateAnswers[pairId]?.trim() || '';
+															if (!answer) {
+																return;
+															}
+
+															// Mark this pair as checked
+															setCheckedTranslatePairs((prev) => new Set([...prev, pairId]));
+
+															// Update user answer
+															const updatedAnswers = { ...translateAnswers, [pairId]: answer };
+															setTranslateAnswers(updatedAnswers);
+
+															const userAnswerText =
+																question.translatePairs
+																	?.map((p, idx) => {
+																		const ans = updatedAnswers[p.id || idx.toString()] || '';
+																		return ans.trim() ? `${p.originalText}: ${ans}` : '';
+																	})
+																	.filter((text) => text !== '')
+																	.join(' | ') || '';
+
+															setUserAnswer(userAnswerText);
+															setError(false);
+
+															// Check if all pairs are checked
+															const allPairIds = new Set(question.translatePairs?.map((p, idx) => p.id || idx.toString()) || []);
+															const newCheckedPairs = new Set([...checkedTranslatePairs, pairId]);
+															const allChecked =
+																allPairIds.size > 0 &&
+																allPairIds.size === newCheckedPairs.size &&
+																Array.from(allPairIds).every((id) => newCheckedPairs.has(id));
+
+															if (allChecked) {
+																setIsAnswerCorrect(true);
+																setSuccess(true);
+
+																await createUserQuestion();
+																toggleAiIcon(index);
+															}
+														}}
+														sx={{
+															width: '40%',
+														}}>
+														Check
+													</CustomSubmitButton>
+												</Box>
+											)}
+										</Box>
+									);
+								})}
+							</Box>
+						)}
+
 						{isMultipleChoiceQuestion && (
 							<Box
 								sx={{
@@ -626,7 +855,7 @@ const PracticeQuestion = ({
 							</FormHelperText>
 						)}
 
-						{!isMatching && !isFITBDragDrop && !isFITBTyping && (
+						{!isMatching && !isFITBDragDrop && !isFITBTyping && !isTranslate && (
 							<Button
 								sx={{
 									'mt': isMobileSize ? '2rem' : '3rem',
@@ -774,22 +1003,34 @@ const PracticeQuestion = ({
 						sx={{
 							'flexShrink': 0,
 							'padding': '0.35rem',
-							'color':
-								!isAnswerCorrect &&
-								!isOpenEndedAnswerSubmitted &&
-								!allPairsMatchedFITBDragDrop &&
-								!allPairsMatchedFITBTyping &&
-								!allPairsMatchedMatching &&
-								!isCardFlipped
+							'color': isTranslate
+								? // For translate questions: gray if not all pairs checked (unless lesson completed or viewing previous)
+									!(isLessonCompleted || displayedQuestionNumber < getLastQuestion()) &&
+									checkedTranslatePairs.size !== (question.translatePairs?.length || 0)
+									? 'gray'
+									: theme.textColor?.common.main
+								: // For other question types: use existing logic
+									!isAnswerCorrect &&
+									  !isOpenEndedAnswerSubmitted &&
+									  !allPairsMatchedFITBDragDrop &&
+									  !allPairsMatchedFITBTyping &&
+									  !allPairsMatchedMatching &&
+									  !isCardFlipped
 									? 'gray'
 									: theme.textColor?.common.main,
-							'backgroundColor':
-								!isAnswerCorrect &&
-								!isOpenEndedAnswerSubmitted &&
-								!allPairsMatchedFITBDragDrop &&
-								!allPairsMatchedFITBTyping &&
-								!allPairsMatchedMatching &&
-								!isCardFlipped
+							'backgroundColor': isTranslate
+								? // For translate questions: inherit if not all pairs checked (unless lesson completed or viewing previous)
+									!(isLessonCompleted || displayedQuestionNumber < getLastQuestion()) &&
+									checkedTranslatePairs.size !== (question.translatePairs?.length || 0)
+									? 'inherit'
+									: theme.bgColor?.greenPrimary
+								: // For other question types: use existing logic
+									!isAnswerCorrect &&
+									  !isOpenEndedAnswerSubmitted &&
+									  !allPairsMatchedFITBDragDrop &&
+									  !allPairsMatchedFITBTyping &&
+									  !allPairsMatchedMatching &&
+									  !isCardFlipped
 									? 'inherit'
 									: theme.bgColor?.greenPrimary,
 							':hover': {
@@ -799,12 +1040,17 @@ const PracticeQuestion = ({
 							},
 						}}
 						disabled={
-							(!isAnswerCorrect || displayedQuestionNumber + 1 > numberOfQuestions || !isOpenEndedAnswerSubmitted) &&
-							!(isLessonCompleted || displayedQuestionNumber < getLastQuestion()) &&
-							!isCardFlipped &&
-							!allPairsMatchedFITBDragDrop &&
-							!allPairsMatchedFITBTyping &&
-							!allPairsMatchedMatching
+							isTranslate
+								? // For translate questions: disabled if not all pairs are checked (unless lesson is completed or viewing previous questions)
+									!(isLessonCompleted || displayedQuestionNumber < getLastQuestion()) &&
+									checkedTranslatePairs.size !== (question.translatePairs?.length || 0)
+								: // For other question types: use existing logic
+									(!isAnswerCorrect || displayedQuestionNumber + 1 > numberOfQuestions || !isOpenEndedAnswerSubmitted) &&
+									!(isLessonCompleted || displayedQuestionNumber < getLastQuestion()) &&
+									!isCardFlipped &&
+									!allPairsMatchedFITBDragDrop &&
+									!allPairsMatchedFITBTyping &&
+									!allPairsMatchedMatching
 						}>
 						<KeyboardArrowRight fontSize={isMobileSize ? 'medium' : 'large'} />
 					</IconButton>
@@ -889,7 +1135,7 @@ const PracticeQuestion = ({
 					width: '80%',
 					zIndex: 9,
 				}}>
-				{displayedQuestionNumber === questionNumber && !isFlipCard && !isMatching && !isFITBDragDrop && !isFITBTyping ? (
+				{displayedQuestionNumber === questionNumber && !isFlipCard && !isMatching && !isFITBDragDrop && !isFITBTyping && !isTranslate ? (
 					!hasRequestedAiFeedback && (isAiActive || isLessonCompleted) ? (
 						<Tooltip title='Receive feedback from AI' placement='left' arrow>
 							<IconButton
