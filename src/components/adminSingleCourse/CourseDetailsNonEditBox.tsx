@@ -525,7 +525,7 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 				</Box>
 			)}
 			{!singleCourse?.courseManagement.isExternal && (
-				<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', width: '100%', mb: '4rem' }}>
+				<Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', width: '100%', mb: '4rem', mt: '2rem' }}>
 					<Box sx={{ mb: '1.25rem' }}>
 						<Typography variant='h5' sx={{ fontSize: isMobileSize ? '1rem' : undefined }}>
 							Course Materials
@@ -668,88 +668,98 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 										} else {
 											// New format: display as grouped
 											const groups = items as ChecklistGroup[];
-											return groups.map((group, groupIndex) => (
-												<Box key={groupIndex} sx={{ mb: '1rem' }}>
-													{/* Group Header */}
-													<Typography
-														variant='h6'
-														sx={{
-															fontSize: isMobileSize ? '0.85rem' : '0.95rem',
-															fontWeight: 600,
-															mb: '0.5rem',
-															color: theme.palette.primary.main,
-														}}>
-														{group.groupTitle}
-													</Typography>
-													{/* Group Items */}
-													{group.items.map((item, itemIndex) => (
-														<FormControlLabel
-															key={`${groupIndex}-${itemIndex}`}
-															control={
-																<Checkbox
-																	checked={(() => {
-																		const chapterChecked = checkedItems[chapter.chapterId];
-																		if (chapterChecked instanceof Map) {
-																			return chapterChecked.get(groupIndex)?.has(itemIndex) || false;
-																		}
-																		return false;
-																	})()}
-																	onChange={(e) => {
-																		const chapterId = chapter.chapterId;
-																		const currentChecked = checkedItems[chapterId];
-																		// Ensure we're working with Map format for new grouped structure
-																		const currentMap = currentChecked instanceof Map ? currentChecked : new Map<number, Set<number>>();
-																		const groupChecked = new Set(currentMap.get(groupIndex) || []);
+											return groups
+												.filter((group) => group && typeof group === 'object' && Array.isArray(group.items))
+												.map((group, groupIndex) => (
+													<Box key={groupIndex} sx={{ mb: '1rem' }}>
+														{/* Group Header */}
+														<Typography
+															variant='h6'
+															sx={{
+																fontSize: isMobileSize ? '0.85rem' : '0.95rem',
+																fontWeight: 600,
+																mb: '0.5rem',
+																color: theme.palette.primary.main,
+															}}>
+															{group.groupTitle}
+														</Typography>
+														{/* Group Items */}
+														{group.items && Array.isArray(group.items) && group.items.length > 0 ? (
+															group.items.map((item, itemIndex) => (
+																<FormControlLabel
+																	key={`${groupIndex}-${itemIndex}`}
+																	control={
+																		<Checkbox
+																			checked={(() => {
+																				const chapterChecked = checkedItems[chapter.chapterId];
+																				if (chapterChecked instanceof Map) {
+																					return chapterChecked.get(groupIndex)?.has(itemIndex) || false;
+																				}
+																				return false;
+																			})()}
+																			onChange={(e) => {
+																				const chapterId = chapter.chapterId;
+																				const currentChecked = checkedItems[chapterId];
+																				// Ensure we're working with Map format for new grouped structure
+																				const currentMap = currentChecked instanceof Map ? currentChecked : new Map<number, Set<number>>();
+																				const groupChecked = new Set(currentMap.get(groupIndex) || []);
 
-																		if (e.target.checked) {
-																			groupChecked.add(itemIndex);
-																		} else {
-																			groupChecked.delete(itemIndex);
-																		}
+																				if (e.target.checked) {
+																					groupChecked.add(itemIndex);
+																				} else {
+																					groupChecked.delete(itemIndex);
+																				}
 
-																		const newChecked = new Map(currentMap);
-																		if (groupChecked.size > 0) {
-																			newChecked.set(groupIndex, groupChecked);
-																		} else {
-																			newChecked.delete(groupIndex);
-																		}
+																				const newChecked = new Map(currentMap);
+																				if (groupChecked.size > 0) {
+																					newChecked.set(groupIndex, groupChecked);
+																				} else {
+																					newChecked.delete(groupIndex);
+																				}
 
-																		setCheckedItems((prev) => ({
-																			...prev,
-																			[chapterId]: newChecked,
-																		}));
-																	}}
+																				setCheckedItems((prev) => ({
+																					...prev,
+																					[chapterId]: newChecked,
+																				}));
+																			}}
+																			sx={{
+																				'color': theme.palette.primary.main,
+																				'& .MuiSvgIcon-root': {
+																					fontSize: '1.25rem',
+																				},
+																			}}
+																		/>
+																	}
+																	label={
+																		<Typography
+																			variant='body2'
+																			sx={{
+																				fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+																				lineHeight: 1.7,
+																				wordBreak: 'break-word',
+																			}}>
+																			{item}
+																		</Typography>
+																	}
 																	sx={{
-																		'color': theme.palette.primary.main,
-																		'& .MuiSvgIcon-root': {
-																			fontSize: '1.25rem',
+																		'alignItems': 'center',
+																		'margin': 0,
+																		'& .MuiFormControlLabel-label': {
+																			marginLeft: '0.5rem',
+																			fontSize: isMobileSize ? '0.75rem' : '0.85rem',
 																		},
 																	}}
 																/>
-															}
-															label={
-																<Typography
-																	variant='body2'
-																	sx={{
-																		fontSize: isMobileSize ? '0.75rem' : '0.85rem',
-																		lineHeight: 1.7,
-																		wordBreak: 'break-word',
-																	}}>
-																	{item}
-																</Typography>
-															}
-															sx={{
-																'alignItems': 'center',
-																'margin': 0,
-																'& .MuiFormControlLabel-label': {
-																	marginLeft: '0.5rem',
-																	fontSize: isMobileSize ? '0.75rem' : '0.85rem',
-																},
-															}}
-														/>
-													))}
-												</Box>
-											));
+															))
+														) : (
+															<Typography
+																variant='body2'
+																sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', color: theme.palette.text.secondary }}>
+																No items in this group
+															</Typography>
+														)}
+													</Box>
+												));
 										}
 									})()
 								) : (
@@ -759,6 +769,45 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 										</Typography>
 									</Box>
 								)}
+
+								{/* Ask for Feedback - Read Only */}
+								<Box>
+									<FormControlLabel
+										control={
+											<Checkbox
+												checked={chapter.askForFeedback || false}
+												disabled
+												sx={{
+													'color': theme.palette.primary.main,
+													'& .MuiSvgIcon-root': {
+														fontSize: '1.25rem',
+													},
+													'&.Mui-disabled': {
+														color: theme.palette.action.disabled,
+													},
+												}}
+											/>
+										}
+										label={
+											<Typography
+												variant='body2'
+												sx={{
+													fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+													color: theme.palette.text.secondary,
+												}}>
+												Ask for Feedback
+											</Typography>
+										}
+										sx={{
+											'alignItems': 'center',
+											'margin': 0,
+											'& .MuiFormControlLabel-label': {
+												marginLeft: '0.5rem',
+												fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+											},
+										}}
+									/>
+								</Box>
 							</Box>
 						</DialogContent>
 						<DialogActions>

@@ -46,6 +46,7 @@ export interface ChapterLessonData {
 	lessons: Lesson[];
 	lessonIds: string[];
 	evaluationChecklistItems?: ChecklistGroup[];
+	askForFeedback?: boolean;
 }
 
 export class ChapterLessonDataImpl implements ChapterLessonData {
@@ -262,6 +263,7 @@ const AdminCourseEditPage = () => {
 									lessons: chapter?.lessons,
 									lessonIds: chapter.lessons?.filter((lesson) => lesson !== null)?.map((lesson: Lesson) => lesson?._id) || [],
 									evaluationChecklistItems: chapter.evaluationChecklistItems || [],
+									askForFeedback: chapter.askForFeedback || false,
 								};
 							});
 						setChapterLessonData(initialChapterLessonData);
@@ -412,6 +414,7 @@ const AdminCourseEditPage = () => {
 								orgId,
 								courseId,
 								evaluationChecklistItems: chapter.evaluationChecklistItems || [],
+								askForFeedback: chapter.askForFeedback || false,
 							});
 							chapter.chapterId = response.data._id;
 						} catch (error) {
@@ -570,6 +573,7 @@ const AdminCourseEditPage = () => {
 										lessonIds: chapter.lessonIds,
 										orgId,
 										evaluationChecklistItems: chapter.evaluationChecklistItems || [],
+										askForFeedback: chapter.askForFeedback || false,
 									});
 								} catch (error) {
 									console.error('Error updating chapter:', error);
@@ -854,7 +858,7 @@ const AdminCourseEditPage = () => {
 							)}
 
 							{chapterLessonDataBeforeSave.length > 2 && (
-								<Box sx={{ display: 'flex', width: '100%', justifyContent: 'flex-end', margin: '-1rem 0 2rem 0' }}>
+								<Box sx={{ display: 'flex', width: '100%', justifyContent: 'flex-end', margin: '1rem 0 2rem 0' }}>
 									<CustomSubmitButton
 										type='button'
 										sx={{ marginBottom: '1rem' }}

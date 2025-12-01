@@ -16,6 +16,7 @@ export interface BaseChapter {
 	lessons: Lesson[];
 	orgId: string;
 	evaluationChecklistItems?: ChecklistGroup[];
+	askForFeedback?: boolean;
 }
 
 export interface ChapterProgress extends BaseChapter {
