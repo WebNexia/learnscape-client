@@ -128,9 +128,6 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 
 			// Commit the batch - this is a blind write with ZERO reads
 			await batch.commit();
-
-			// The UI will handle the logic to treat notifications older than this timestamp as read
-			console.log('All notifications marked as read via metadata timestamp');
 		} catch (error) {
 			console.error('Error marking notifications as read:', error);
 		}
@@ -166,8 +163,6 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 				// If exactly 500, there might be more — continue loop
 				hasMore = snapshot.size === BATCH_LIMIT;
 			}
-
-			console.log('🔥 All notifications permanently deleted from Firestore');
 		} catch (error) {
 			console.error('Error deleting notifications:', error);
 		}

@@ -166,6 +166,7 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 
 	const handleOpenChecklistDialog = async (e: React.MouseEvent) => {
 		e.stopPropagation();
+		if (!isEnrolledStatus && !chapter.evaluationChecklistItems?.length) return;
 		setChecklistDialogOpen(true);
 		// If checklist is already completed, check all items
 		if (isChecklistCompleted && chapter.evaluationChecklistItems) {
@@ -406,7 +407,7 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 						title={
 							chapter?.evaluationChecklistItems?.length && chapter?.evaluationChecklistItems?.length > 0
 								? 'View Objectives'
-								: chapter.askForFeedback === true
+								: chapter.askForFeedback === true && isEnrolledStatus
 									? 'Give Feedback'
 									: ''
 						}
