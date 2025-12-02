@@ -55,6 +55,7 @@ const InstructorDashboard = React.lazy(() => import('./pages/InstructorDashboard
 const AdminQuestions = React.lazy(() => import('./pages/AdminQuestions'));
 const AdminUsers = React.lazy(() => import('./pages/AdminUsers'));
 const AdminDocuments = React.lazy(() => import('./pages/AdminDocuments'));
+const AdminFeedbacks = React.lazy(() => import('./pages/AdminFeedbacks'));
 const AdminQuizSubmissions = React.lazy(() => import('./pages/AdminQuizSubmissions'));
 const AdminQuizSubmissionCheck = React.lazy(() => import('./pages/AdminQuizSubmissionCheck'));
 const AdminPayments = React.lazy(() => import('./pages/AdminPayments'));
@@ -195,6 +196,14 @@ export const router = createBrowserRouter([
 						<QuestionsContextProvider>
 							<AdminQuestions />
 						</QuestionsContextProvider>
+					</AdminRouteGuard>
+				),
+			},
+			{
+				path: 'admin/feedbacks',
+				element: (
+					<AdminRouteGuard>
+						<AdminFeedbacks />
 					</AdminRouteGuard>
 				),
 			},

@@ -16,6 +16,7 @@ import axios from '@utils/axiosInstance';
 import { useQueryClient } from 'react-query';
 import { SingleCourse } from '../../interfaces/course';
 import CustomTextField from '../forms/customFields/CustomTextField';
+import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
 
 interface ChapterProps {
 	chapter:
@@ -43,7 +44,7 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 	const [expandedChecklistGroups, setExpandedChecklistGroups] = useState<Set<number>>(new Set());
 	// Feedback state
 	const [feedback, setFeedback] = useState<string>('');
-
+	const { user } = useContext(UserAuthContext);
 	// Get courseId and userCourseId from URL params
 	const { courseId, userCourseId } = useParams();
 
@@ -243,6 +244,7 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 			if (chapter.askForFeedback === true && courseId && course?.orgId && feedback.trim().length > 0) {
 				try {
 					await axios.post(`${base_url}/feedback`, {
+						userId: user?._id,
 						chapterId,
 						userCourseId,
 						courseId,

@@ -36,7 +36,9 @@ export function usePaginatedEntity<T extends { _id: string; updatedAt: string; i
 
 	const fetchEntities = async (page: number = 1) => {
 		if (!orgId) return [];
-		const response = await axios.get(`${baseUrl}?page=${page}&limit=${limit}`);
+		// Check if baseUrl already has query params
+		const separator = baseUrl.includes('?') ? '&' : '?';
+		const response = await axios.get(`${baseUrl}${separator}page=${page}&limit=${limit}`);
 		const entities = response.data.data;
 		queryClient.setQueryData([entityKey, orgId, page], entities);
 		const totalItems = response.data.totalItems || 0;
@@ -57,7 +59,9 @@ export function usePaginatedEntity<T extends { _id: string; updatedAt: string; i
 
 			let newEntities: T[] = [];
 			for (const page of pagesToFetch) {
-				const response = await axios.get(`${baseUrl}?page=${page}&limit=${limit}`);
+				// Check if baseUrl already has query params
+				const separator = baseUrl.includes('?') ? '&' : '?';
+				const response = await axios.get(`${baseUrl}${separator}page=${page}&limit=${limit}`);
 				newEntities = [...newEntities, ...response.data.data];
 			}
 

@@ -214,6 +214,7 @@ export const useFilterSearch = <T extends FilterSearchEntity>({
 				setSearchedValue(searchValue.trim());
 
 				const params = buildSearchParams();
+				params.set('page', '1'); // Explicitly set page to 1 for initial search
 				const endpoint = getEndpoint();
 				const separator = endpoint.includes('?') ? '&' : '?';
 				const response = await axios.get(`${endpoint}${separator}${params.toString()}`);
@@ -264,6 +265,7 @@ export const useFilterSearch = <T extends FilterSearchEntity>({
 					// Build params with the new filter value for custom parameters
 					const params = new URLSearchParams({
 						limit: limit.toString(),
+						page: '1', // Explicitly set page to 1 when filter changes
 					});
 					if (searchValue && searchValue.trim()) {
 						params.append('search', searchValue.trim());

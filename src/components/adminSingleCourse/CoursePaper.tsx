@@ -1,7 +1,7 @@
 import { Alert, Box, Button, IconButton, Paper, Snackbar, Tooltip, Typography } from '@mui/material';
 import theme from '../../themes';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Edit, FileCopy, Info, KeyboardBackspaceOutlined } from '@mui/icons-material';
+import { Edit, FileCopy, Info, KeyboardBackspaceOutlined, RateReview } from '@mui/icons-material';
 import { SingleCourse } from '../../interfaces/course';
 import { ChapterLessonData } from '../../pages/AdminCourseEditPage';
 import useImageUpload from '../../hooks/useImageUpload';
@@ -12,8 +12,6 @@ import axios from '@utils/axiosInstance';
 import { CoursesContext } from '../../contexts/CoursesContextProvider';
 import { useStickyPaper } from '../../hooks/useStickyPaper';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
-import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
-import { Roles } from '../../interfaces/enums';
 import CoursesInfoModal from '../layouts/courses/CoursesInfoModal';
 import CloneCourseDialog from '../layouts/courses/CloneCourseDialog';
 import { useAuth } from '../../hooks/useAuth';
@@ -69,7 +67,6 @@ const CoursePaper = ({
 
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 
-	const { user } = useContext(UserAuthContext);
 	const { hasAdminAccess } = useAuth();
 
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -329,7 +326,7 @@ const CoursePaper = ({
 										</CustomCancelButton>
 									</Box>
 								) : (
-									<Box sx={{ ml: isSticky ? '0.25rem' : '1rem' }}>
+									<Box sx={{ ml: isSticky ? '0.25rem' : '0.5rem' }}>
 										{hasAdminAccess && (
 											<CustomSubmitButton
 												sx={{
@@ -369,6 +366,7 @@ const CoursePaper = ({
 												</IconButton>
 											</Tooltip>
 										)}
+
 										<Tooltip title='More Info' placement='top' arrow>
 											<IconButton
 												sx={{ padding: isSticky ? '0 0rem' : '0 0.25rem', ml: isSticky ? '-0.25rem' : '-0.5rem' }}
@@ -376,6 +374,15 @@ const CoursePaper = ({
 													setIsCourseInfoDialogOpen(true);
 												}}>
 												<Info sx={{ color: 'white', fontSize: isSticky ? (isMobileSize ? '0.9rem' : '1rem') : undefined }} fontSize='small' />
+											</IconButton>
+										</Tooltip>
+										<Tooltip title='Feedbacks' placement='top' arrow>
+											<IconButton
+												sx={{ padding: isSticky ? '0 0rem' : '0 0.25rem', ml: isSticky ? '0.25rem' : '0.25rem' }}
+												onClick={() => {
+													navigate(`/admin/feedbacks?courseId=${courseId}`);
+												}}>
+												<RateReview sx={{ color: 'white', fontSize: isSticky ? (isMobileSize ? '0.9rem' : '1rem') : undefined }} fontSize='small' />
 											</IconButton>
 										</Tooltip>
 									</Box>
