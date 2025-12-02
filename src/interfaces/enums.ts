@@ -59,6 +59,7 @@ export const enum PageName {
 	ADMIN_LESSONS = 'Lessons',
 	ADMIN_QUESTIONS = 'Questions',
 	ADMIN_DOCUMENTS = 'Documents',
+	ADMIN_FEEDBACKS = 'Feedbacks',
 
 	ADMIN_MESSAGES = 'Messages',
 	ADMIN_COMMUNITY = 'Community',

@@ -1,4 +1,4 @@
-import { Box, IconButton, Tooltip, Typography, Collapse, DialogContent } from '@mui/material';
+import { Box, IconButton, Tooltip, Typography, Collapse, DialogContent, FormControlLabel, Checkbox } from '@mui/material';
 import { useMotionValue, Reorder } from 'framer-motion';
 import theme from '../../themes';
 import { CreateTwoTone, Delete, NoteAdd, ExpandMore, Checklist, AddCircle, RemoveCircle, DragIndicator } from '@mui/icons-material';
@@ -46,6 +46,9 @@ const AdminCourseEditChapter = ({
 	const [isChecklistDialogOpen, setIsChecklistDialogOpen] = useState<boolean>(false);
 	const [checklistGroups, setChecklistGroups] = useState<ChecklistGroup[]>([{ groupTitle: '', items: [''] }]);
 	const [expandedGroups, setExpandedGroups] = useState<Set<number>>(new Set([0])); // Track which groups are expanded
+	const [checklistValidationError, setChecklistValidationError] = useState<string>('');
+
+	const [askForFeedback, setAskForFeedback] = useState<boolean>(false);
 
 	const y = useMotionValue(0);
 	const boxShadow = useRaisedShadow(y);
@@ -92,6 +95,8 @@ const AdminCourseEditChapter = ({
 		}
 
 		setChecklistGroups(groupsToSet);
+		// Initialize askForFeedback from chapter data
+		setAskForFeedback(chapter.askForFeedback || false);
 		// Expand all groups by default
 		setExpandedGroups(new Set(groupsToSet.map((_, index) => index)));
 		setIsChecklistDialogOpen(true);
@@ -99,6 +104,7 @@ const AdminCourseEditChapter = ({
 
 	const handleCloseChecklistDialog = () => {
 		setIsChecklistDialogOpen(false);
+		setChecklistValidationError('');
 		setChecklistGroups([{ groupTitle: '', items: [''] }]);
 		setExpandedGroups(new Set([0]));
 	};
@@ -132,7 +138,10 @@ const AdminCourseEditChapter = ({
 		const updatedGroups = [...checklistGroups];
 		updatedGroups[groupIndex] = { ...updatedGroups[groupIndex], groupTitle: value };
 		setChecklistGroups(updatedGroups);
-		console.log('Group title changed:', groupIndex, value); // Debug log
+		// Clear validation error when user edits group title
+		if (checklistValidationError) {
+			setChecklistValidationError('');
+		}
 	};
 
 	const handleToggleGroupExpanded = (groupIndex: number) => {
@@ -183,20 +192,32 @@ const AdminCourseEditChapter = ({
 
 	const handleSaveChecklist = async () => {
 		try {
-			// Clean and validate groups: filter out empty groups and items
+			const hasInvalidGroup = checklistGroups.some((group) => {
+				const cleanTitle = group.groupTitle.trim();
+				const cleanItems = group.items.map((item) => item.trim()).filter((item) => item.length > 0);
+				return cleanItems.length > 0 && cleanTitle.length === 0;
+			});
+
+			if (hasInvalidGroup) {
+				setChecklistValidationError('Add a title to all groups with items.');
+				return;
+			}
+
+			// Clear any previous validation error
+			setChecklistValidationError('');
+
 			const cleanGroups = checklistGroups
 				.map((group) => {
 					const cleanTitle = group.groupTitle.trim();
 					const cleanItems = group.items.map((item) => item.trim()).filter((item) => item.length > 0);
 
-					// Only include groups with a title and at least one item
 					if (cleanTitle.length > 0 && cleanItems.length > 0) {
 						return {
 							groupTitle: cleanTitle,
 							items: cleanItems,
-							// Don't include _id in saved data (it's only for UI drag-and-drop)
 						};
 					}
+
 					return null;
 				})
 				.filter((group) => group !== null) as ChecklistGroup[];
@@ -209,6 +230,7 @@ const AdminCourseEditChapter = ({
 							return {
 								...currentChapter,
 								evaluationChecklistItems: cleanGroups,
+								askForFeedback: askForFeedback,
 							};
 						}
 						return currentChapter;
@@ -586,9 +608,32 @@ const AdminCourseEditChapter = ({
 								</Reorder.Item>
 							))}
 						</Reorder.Group>
+						{checklistValidationError && <CustomErrorMessage>{checklistValidationError}</CustomErrorMessage>}
+						<FormControlLabel
+							control={
+								<Checkbox
+									checked={askForFeedback}
+									onChange={(e) => {
+										setAskForFeedback(e.target.checked);
+									}}
+									sx={{
+										'& .MuiSvgIcon-root': {
+											fontSize: isMobileSize ? '1rem' : '1.1rem',
+										},
+									}}
+								/>
+							}
+							label='Ask for Feedback'
+							sx={{
+								'mr': '0rem',
+								'& .MuiFormControlLabel-label': {
+									fontSize: isMobileSize ? '0.75rem' : '0.8rem',
+								},
+							}}
+						/>
 
 						{/* Add Group Button */}
-						<Box sx={{ display: 'flex', justifyContent: 'center', mt: '0.5rem' }}>
+						<Box sx={{ display: 'flex', justifyContent: 'center', mt: '-0.5rem' }}>
 							<Tooltip title='Add Group' placement='top' arrow>
 								<IconButton
 									onClick={handleAddGroup}

@@ -1,4 +1,4 @@
-import { Box, Typography, IconButton, Collapse, Chip, Tooltip, DialogContent, Checkbox, FormControlLabel } from '@mui/material';
+import { Box, Typography, IconButton, Collapse, Chip, Tooltip, DialogContent, Checkbox } from '@mui/material';
 import { ExpandMore, PlayCircleOutline, Checklist } from '@mui/icons-material';
 import Lesson from './Lesson';
 import { LessonById } from '../../interfaces/lessons';
@@ -15,9 +15,13 @@ import { UserCourseLessonDataContext } from '../../contexts/UserCourseLessonData
 import axios from '@utils/axiosInstance';
 import { useQueryClient } from 'react-query';
 import { SingleCourse } from '../../interfaces/course';
+import CustomTextField from '../forms/customFields/CustomTextField';
+import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
 
 interface ChapterProps {
-	chapter: ChapterLessonData | { _id: string; title: string; lessons: any[]; lessonIds: string[]; evaluationChecklistItems?: ChecklistGroup[] };
+	chapter:
+		| ChapterLessonData
+		| { _id: string; title: string; lessons: any[]; lessonIds: string[]; evaluationChecklistItems?: ChecklistGroup[]; askForFeedback?: boolean };
 	course: SingleCourse;
 	isEnrolledStatus: boolean;
 	nextChapterFirstLessonId: string;
@@ -38,7 +42,9 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 	const [isSubmittingChecklist, setIsSubmittingChecklist] = useState<boolean>(false);
 	// Track which groups are expanded in the checklist dialog
 	const [expandedChecklistGroups, setExpandedChecklistGroups] = useState<Set<number>>(new Set());
-
+	// Feedback state
+	const [feedback, setFeedback] = useState<string>('');
+	const { user } = useContext(UserAuthContext);
 	// Get courseId and userCourseId from URL params
 	const { courseId, userCourseId } = useParams();
 
@@ -123,14 +129,15 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 		// Check if user came from a lesson page (indicates they just completed a lesson)
 		const fromLessonPage = document.referrer.includes('/lesson/') || sessionStorage.getItem(`lesson-completed-${chapterId}`) === 'true';
 
-		// Only auto-open if:
-		// 1. Chapter is completed
-		// 2. Has checklist items
-		// 3. Checklist is NOT completed
-		// 4. User is enrolled
-		// 5. We haven't auto-opened yet for this chapter
-		// 6. User came from a lesson page (just completed a lesson)
-		if (isChapterCompleted && hasChecklistItems && !isChecklistCompleted && isEnrolledStatus && !hasAutoOpened.current && fromLessonPage) {
+		const shouldAutoOpen =
+			isChapterCompleted &&
+			(hasChecklistItems || chapter.askForFeedback === true) &&
+			(!hasChecklistItems || !isChecklistCompleted) &&
+			isEnrolledStatus &&
+			!hasAutoOpened.current &&
+			fromLessonPage;
+
+		if (shouldAutoOpen) {
 			// Small delay to ensure UI is ready
 			const timer = setTimeout(() => {
 				setChecklistDialogOpen(true);
@@ -151,13 +158,13 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 			sessionStorage.removeItem(autoOpenKey);
 			hasAutoOpened.current = false;
 		}
-	}, [isChapterCompleted, hasChecklistItems, isChecklistCompleted, isEnrolledStatus, chapterId, autoOpenKey]);
+	}, [isChapterCompleted, hasChecklistItems, isChecklistCompleted, isEnrolledStatus, chapterId, autoOpenKey, chapter.askForFeedback]);
 
 	const handleToggleExpanded = () => {
 		setIsExpanded(!isExpanded);
 	};
 
-	const handleOpenChecklistDialog = (e: React.MouseEvent) => {
+	const handleOpenChecklistDialog = async (e: React.MouseEvent) => {
 		e.stopPropagation();
 		setChecklistDialogOpen(true);
 		// If checklist is already completed, check all items
@@ -173,6 +180,9 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 		}
 		// Start with all groups collapsed by default
 		setExpandedChecklistGroups(new Set());
+
+		// Always start with empty feedback (learners cannot view their previous feedback)
+		setFeedback('');
 	};
 
 	const handleToggleChecklistGroup = (groupIndex: number) => {
@@ -186,9 +196,10 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 	};
 
 	const handleCloseChecklistDialog = () => {
-		if (isChecklistCompleted || !isEnrolledStatus || !isChapterCompleted) {
+		if (isChecklistCompleted || !isEnrolledStatus || !isChapterCompleted || !hasChecklistItems) {
 			setChecklistDialogOpen(false);
 			setCheckedItems(new Map());
+			setFeedback('');
 		}
 	};
 
@@ -213,36 +224,65 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 		setCheckedItems(newChecked);
 	};
 
-	// Function to mark checklist as completed
 	const handleSubmitChecklist = useCallback(async () => {
-		if (!userCourseId || !chapterId || !isChapterCompleted || isChecklistCompleted || !allItemsChecked || isSubmittingChecklist) {
+		const canSubmitChecklist = hasChecklistItems && !isChecklistCompleted && allItemsChecked;
+		const canSubmitFeedback = chapter.askForFeedback === true;
+		const canSubmit = canSubmitChecklist || canSubmitFeedback;
+
+		if (!userCourseId || !chapterId || !isChapterCompleted || !canSubmit || isSubmittingChecklist) {
 			return;
 		}
 
 		setIsSubmittingChecklist(true);
 		try {
-			// Call API to add chapterId to completedChapterChecklistIds
-			await axios.patch(`${base_url}/usercourses/${userCourseId}`, {
-				completedChapterChecklistIds: chapterId,
-			});
+			if (hasChecklistItems && allItemsChecked && !isChecklistCompleted) {
+				await axios.patch(`${base_url}/usercourses/${userCourseId}`, {
+					completedChapterChecklistIds: chapterId,
+				});
+			}
 
-			// Invalidate React Query cache to refresh user course data
-			// The query key in UserAuthContextProvider is ['userCourseData', userId]
+			if (chapter.askForFeedback === true && courseId && course?.orgId && feedback.trim().length > 0) {
+				try {
+					await axios.post(`${base_url}/feedback`, {
+						userId: user?._id,
+						chapterId,
+						userCourseId,
+						courseId,
+						orgId: course.orgId,
+						feedback: feedback.trim(),
+					});
+				} catch (feedbackError) {
+					console.error('Error saving feedback:', feedbackError);
+				}
+			}
+
 			await queryClient.invalidateQueries({ queryKey: ['userCourseData'] });
 
-			// Also refetch to ensure data is updated
 			await queryClient.refetchQueries({ queryKey: ['userCourseData'] });
 
-			// Close dialog
 			setChecklistDialogOpen(false);
 			setCheckedItems(new Map());
+			setFeedback('');
 		} catch (error) {
 			console.error('Error submitting checklist:', error);
-			// TODO: Show error message to user
 		} finally {
 			setIsSubmittingChecklist(false);
 		}
-	}, [userCourseId, chapterId, isChapterCompleted, isChecklistCompleted, allItemsChecked, isSubmittingChecklist, base_url, queryClient]);
+	}, [
+		userCourseId,
+		chapterId,
+		isChapterCompleted,
+		isChecklistCompleted,
+		allItemsChecked,
+		hasChecklistItems,
+		isSubmittingChecklist,
+		base_url,
+		queryClient,
+		chapter.askForFeedback,
+		courseId,
+		course?.orgId,
+		feedback,
+	]);
 
 	// Expose functions to parent component
 	useImperativeHandle(ref, () => ({
@@ -363,7 +403,13 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 					)}
 
 					<Tooltip
-						title={chapter?.evaluationChecklistItems?.length && chapter?.evaluationChecklistItems?.length > 0 ? 'View Objectives' : ''}
+						title={
+							chapter?.evaluationChecklistItems?.length && chapter?.evaluationChecklistItems?.length > 0
+								? 'View Objectives'
+								: chapter.askForFeedback === true
+									? 'Give Feedback'
+									: ''
+						}
 						placement='top'
 						arrow>
 						<IconButton
@@ -415,15 +461,15 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 			</Collapse>
 
 			{/* Checklist Dialog */}
-			{hasChecklistItems && (
+			{(hasChecklistItems || chapter.askForFeedback) && (
 				<CustomDialog
 					openModal={checklistDialogOpen}
 					closeModal={handleCloseChecklistDialog}
-					title={isEnrolledStatus ? 'Chapter Objectives Checkout' : 'Chapter Objectives'}
+					title={isEnrolledStatus ? (hasChecklistItems ? 'Chapter Objectives Checkout' : 'Give Us Your Feedback') : 'Chapter Objectives'}
 					maxWidth='sm'>
 					<DialogContent>
 						<Box sx={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-							{isEnrolledStatus && !isChapterCompleted && (
+							{isEnrolledStatus && !isChapterCompleted && hasChecklistItems && (
 								<Box
 									sx={{
 										padding: '1rem',
@@ -600,14 +646,80 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 									</Box>
 								);
 							})}
+
+							{/* Feedback Section */}
+							{chapter.askForFeedback === true && isEnrolledStatus && (
+								<Box
+									sx={{
+										mt: '1rem',
+										backgroundColor: theme.palette.primary.light + '08',
+										borderRadius: '0.5rem',
+									}}>
+									<Typography
+										variant='body2'
+										sx={{
+											fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+											fontWeight: 500,
+											mb: '0.75rem',
+											color: theme.palette.text.primary,
+										}}>
+										Feedback (Optional)
+									</Typography>
+									<CustomTextField
+										multiline
+										rows={4}
+										value={feedback}
+										onChange={(e) => setFeedback(e.target.value)}
+										placeholder='Share your thoughts about this chapter and/or course...'
+										fullWidth
+										disabled={isSubmittingChecklist}
+										sx={{
+											'& .MuiOutlinedInput-root': {
+												fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+												backgroundColor: theme.bgColor?.common,
+											},
+										}}
+										InputProps={{
+											inputProps: {
+												maxLength: 1000,
+											},
+										}}
+									/>
+									<Typography
+										variant='caption'
+										sx={{
+											fontSize: isMobileSize ? '0.65rem' : '0.7rem',
+											color: theme.palette.text.secondary,
+											mt: '0.5rem',
+											display: 'block',
+											textAlign: 'right',
+										}}>
+										{feedback.length}/1000 characters
+									</Typography>
+								</Box>
+							)}
 						</Box>
 					</DialogContent>
 					{isEnrolledStatus && (
 						<CustomDialogActions
-							onSubmit={isEnrolledStatus && isChapterCompleted && !isChecklistCompleted && allItemsChecked ? handleSubmitChecklist : undefined}
+							onSubmit={
+								isEnrolledStatus &&
+								isChapterCompleted &&
+								((hasChecklistItems && !isChecklistCompleted && allItemsChecked) ||
+									(chapter.askForFeedback === true && (!hasChecklistItems || isChecklistCompleted)))
+									? handleSubmitChecklist
+									: undefined
+							}
 							onCancel={handleCloseChecklistDialog}
 							submitBtnText='Submit'
-							disableBtn={!isEnrolledStatus || !isChapterCompleted || isChecklistCompleted || !allItemsChecked || isSubmittingChecklist}
+							disableBtn={
+								!isEnrolledStatus ||
+								!isChapterCompleted ||
+								(hasChecklistItems && !isChecklistCompleted && !allItemsChecked) ||
+								(!hasChecklistItems && chapter.askForFeedback !== true) ||
+								(isChecklistCompleted && chapter.askForFeedback !== true) ||
+								isSubmittingChecklist
+							}
 							isSubmitting={isSubmittingChecklist}
 							actionSx={{ mb: '0.5rem', mr: '0.5rem' }}
 						/>
