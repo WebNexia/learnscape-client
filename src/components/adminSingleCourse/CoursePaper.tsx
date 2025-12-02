@@ -157,7 +157,7 @@ const CoursePaper = ({
 						flexDirection: isSticky ? 'row' : 'column',
 						justifyContent: isSticky ? 'flex-start' : 'space-between',
 						alignItems: isSticky ? 'center' : 'flex-start',
-						flex: { md: 2, lg: 3 },
+						flex: { sm: 1, md: 1, lg: 2 },
 						padding: isSticky ? (isMobileSize ? '0.25rem 0.25rem' : '0.5rem 1rem') : '0.5rem',
 					}}>
 					<Box>
@@ -208,7 +208,7 @@ const CoursePaper = ({
 						display: 'flex',
 						justifyContent: 'flex-end',
 						alignItems: isSticky ? 'center' : 'flex-start',
-						flex: 2,
+						flex: { sm: 4, md: 2, lg: 3 },
 						padding: isSticky ? '0.5rem 1rem' : '1rem',
 					}}>
 					<Box
@@ -378,7 +378,7 @@ const CoursePaper = ({
 										</Tooltip>
 										<Tooltip title='Feedbacks' placement='top' arrow>
 											<IconButton
-												sx={{ padding: isSticky ? '0 0rem' : '0 0.25rem', ml: isSticky ? '0.25rem' : '0.25rem' }}
+												sx={{ padding: isSticky ? '0 0rem' : '0 0.25rem', ml: isSticky ? '0.5rem' : '0.25rem' }}
 												onClick={() => {
 													navigate(`/admin/feedbacks?courseId=${courseId}`);
 												}}>
