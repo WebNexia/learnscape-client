@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 const colorScheme = {
 	primary: '#2C3E50',
 	secondary: '#3498DB',
-	accent: '#FDF7F0',
+	accent: '#FFFF',
 	text: '#34495E',
 };
 

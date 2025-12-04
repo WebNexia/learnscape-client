@@ -5,6 +5,8 @@ interface BaseLesson {
 	_id: string;
 	title: string;
 	type: string;
+	isGraded?: boolean;
+	questionScores?: { [questionId: string]: number | { total: number; perBlank?: number; perMatch?: number } };
 	imageUrl: string;
 	videoUrl: string;
 	isActive: boolean;

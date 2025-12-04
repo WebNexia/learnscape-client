@@ -6,11 +6,12 @@ import { stripHtml } from '../../utils/stripHtml';
 import { truncateText } from '../../utils/utilText';
 import { useContext } from 'react';
 import { QuestionsContext } from '../../contexts/QuestionsContextProvider';
-import { LessonType } from '../../interfaces/enums';
+import { LessonType, QuestionType } from '../../interfaces/enums';
 import NoContentBoxAdmin from '../layouts/noContentBox/NoContentBoxAdmin';
 import CustomInfoMessageAlignedRight from '../layouts/infoMessage/CustomInfoMessageAlignedRight';
-import { AutoAwesome } from '@mui/icons-material';
+import { AutoAwesome, InfoOutlined } from '@mui/icons-material';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
+import { calculateQuizTotalScore } from '../../utils/calculateQuizTotalScore';
 
 interface QuestionsBoxNonEditProps {
 	singleLesson?: Lesson;
@@ -35,8 +36,25 @@ const QuestionsBoxNonEdit = ({ singleLesson, setIsDisplayNonEditQuestion, setDis
 			}}>
 			<Box sx={{ margin: isMobileSize ? '2rem 0' : '3rem 0' }}>
 				<Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-					<Box>
+					<Box sx={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
 						<Typography variant={isMobileSize ? 'h6' : 'h5'}>Questions</Typography>
+						{(() => {
+							if (!singleLesson) return null;
+							const totalScore = calculateQuizTotalScore({
+								lesson: singleLesson,
+								fetchQuestionTypeName,
+							});
+							return singleLesson.isGraded && singleLesson.type === LessonType.QUIZ && totalScore > 0 ? (
+								<Typography
+									variant={isMobileSize ? 'body2' : 'body1'}
+									sx={{
+										color: theme.palette.text.secondary,
+										fontSize: isMobileSize ? '0.75rem' : '0.9rem',
+									}}>
+									(Total: {totalScore} pts)
+								</Typography>
+							) : null;
+						})()}
 					</Box>
 					<CustomInfoMessageAlignedRight message='Click the questions to preview as a student' />
 				</Box>
@@ -98,18 +116,104 @@ const QuestionsBoxNonEdit = ({ singleLesson, setIsDisplayNonEditQuestion, setDis
 													}}
 												/>
 											</Box>
-											<Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', margin: isMobileSize ? '0 0.5rem' : '0 1rem' }}>
-												<Box>
+											<Box
+												sx={{
+													display: 'flex',
+													justifyContent: 'space-between',
+													alignItems: 'center',
+													width: '100%',
+													margin: isMobileSize ? '0 0.5rem' : '0 1rem',
+												}}>
+												<Box sx={{ width: '35%' }}>
 													<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.65rem' : undefined }}>
 														{truncateText(stripHtml(question.question), isMobileSize ? 40 : 60)}
 													</Typography>
 												</Box>
-												<Box>
-													<Typography
-														variant='body2'
-														sx={{ mr: question.isAiGenerated ? '0.5rem' : '0', fontSize: isMobileSize ? '0.65rem' : undefined }}>
+												<Box sx={{ display: 'flex', alignItems: 'center' }}>
+													<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.65rem' : undefined }}>
 														{fetchQuestionTypeName(question)}
 													</Typography>
+												</Box>
+												<Box sx={{ display: 'flex', alignItems: 'center' }}>
+													{singleLesson?.isGraded &&
+														singleLesson?.questionScores &&
+														(() => {
+															const questionTypeName = fetchQuestionTypeName(question);
+															const questionId = question._id;
+															const currentScore = singleLesson.questionScores[questionId];
+
+															// FITB-Typing or FITB-DragDrop
+															if (questionTypeName === QuestionType.FITB_TYPING || questionTypeName === QuestionType.FITB_DRAG_DROP) {
+																const scoreObj =
+																	typeof currentScore === 'object' && currentScore !== null
+																		? (currentScore as { total?: number; perBlank?: number })
+																		: null;
+																const perBlank = scoreObj?.perBlank;
+																const blankCount = question.blankValuePairs?.length || 0;
+																const total = perBlank !== undefined && perBlank !== null && blankCount > 0 ? Number(perBlank) * blankCount : 0;
+
+																return perBlank !== undefined && perBlank !== null ? (
+																	<Box sx={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+																		<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.65rem' : undefined, textAlign: 'right' }}>
+																			{total} pts
+																		</Typography>
+																		<Tooltip title={`Points per blank: ${perBlank} (Total: ${total} points)`} placement='top' arrow>
+																			<InfoOutlined
+																				sx={{
+																					fontSize: '0.75rem',
+																					mr: '-0.75rem',
+																					color: theme.palette.text.secondary,
+																					cursor: 'help',
+																				}}
+																			/>
+																		</Tooltip>
+																	</Box>
+																) : null;
+															}
+
+															// Matching
+															if (questionTypeName === QuestionType.MATCHING) {
+																const scoreObj =
+																	typeof currentScore === 'object' && currentScore !== null
+																		? (currentScore as { total?: number; perMatch?: number })
+																		: null;
+																const perMatch = scoreObj?.perMatch;
+																const matchCount = question.matchingPairs?.length || 0;
+																const total = perMatch !== undefined && perMatch !== null && matchCount > 0 ? Number(perMatch) * matchCount : 0;
+
+																return perMatch !== undefined && perMatch !== null ? (
+																	<Box sx={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+																		<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.65rem' : undefined, textAlign: 'right' }}>
+																			{total} pts
+																		</Typography>
+																		<Tooltip title={`Points per match: ${perMatch} (Total: ${total} points)`} placement='top' arrow>
+																			<InfoOutlined
+																				sx={{
+																					fontSize: '0.75rem',
+																					mr: '-0.75rem',
+																					color: theme.palette.text.secondary,
+																					cursor: 'help',
+																				}}
+																			/>
+																		</Tooltip>
+																	</Box>
+																) : null;
+															}
+
+															// Simple questions (True/False, Multiple Choice, Open-ended, Audio/Video)
+															const score =
+																typeof currentScore === 'number'
+																	? currentScore
+																	: typeof currentScore === 'object' && currentScore !== null
+																		? ((currentScore as { total?: number }).total ?? undefined)
+																		: undefined;
+
+															return score !== undefined && score !== null ? (
+																<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.65rem' : undefined, textAlign: 'right' }}>
+																	{score} pts
+																</Typography>
+															) : null;
+														})()}
 												</Box>
 											</Box>
 										</Box>
