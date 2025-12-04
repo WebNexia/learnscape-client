@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import styled from 'styled-components';
 import { Box, Typography, TextField, TextFieldProps, IconButton, Tooltip } from '@mui/material';
 import { BlankValuePair } from '../../../interfaces/question';
@@ -140,8 +140,18 @@ const FillInTheBlanksTyping = ({
 	const [hints, setHints] = useState<string[]>([]);
 	const [textSegments, setTextSegments] = useState<string[]>([]);
 	const [hasInteracted, setHasInteracted] = useState(false);
+	const hintsInitializedRef = useRef<boolean>(false);
+	const previousQuestionIdRef = useRef<string | undefined>(questionId);
 
 	const { updateLastQuestion, getLastQuestion } = useUserCourseLessonData();
+
+	// Reset hints initialization when questionId changes
+	useEffect(() => {
+		if (previousQuestionIdRef.current !== questionId) {
+			hintsInitializedRef.current = false;
+			previousQuestionIdRef.current = questionId;
+		}
+	}, [questionId]);
 
 	const {
 		isRotated,
@@ -186,11 +196,14 @@ const FillInTheBlanksTyping = ({
 			setUserAnswers(initialAnswers);
 			setInputStatus(initialStatus);
 
-			const randomWords = shuffle(words)?.slice(0, 15) || [];
-			const values = blankValuePairs?.map((pair) => pair.value) || [];
-			const hintWords = shuffle([...values, ...randomWords]);
-
-			setHints(hintWords);
+			// Only set hints once, not on every update
+			if (!hintsInitializedRef.current) {
+				const randomWords = shuffle(words)?.slice(0, 15) || [];
+				const values = blankValuePairs?.map((pair) => pair.value) || [];
+				const hintWords = shuffle([...values, ...randomWords]);
+				setHints(hintWords);
+				hintsInitializedRef.current = true;
+			}
 		} else if (
 			(isLessonCompleted && fromPracticeQuestionUser) ||
 			(fromPracticeQuestionUser && !isLessonCompleted && displayedQuestionNumber! < getLastQuestion())
@@ -206,11 +219,14 @@ const FillInTheBlanksTyping = ({
 			setUserAnswers(initialAnswers);
 			setInputStatus(initialStatus);
 
-			const randomWords = shuffle(words)?.slice(0, 5) || [];
-			const values = blankValuePairs?.map((pair) => pair.value) || [];
-			const hintWords = shuffle([...values, ...randomWords]);
-
-			setHints(hintWords);
+			// Only set hints once, not on every update
+			if (!hintsInitializedRef.current) {
+				const randomWords = shuffle(words)?.slice(0, 5) || [];
+				const values = blankValuePairs?.map((pair) => pair.value) || [];
+				const hintWords = shuffle([...values, ...randomWords]);
+				setHints(hintWords);
+				hintsInitializedRef.current = true;
+			}
 		} else {
 			const initialAnswers: Record<string, string> = {};
 			const initialStatus: Record<string, boolean | null> = {};
@@ -223,13 +239,28 @@ const FillInTheBlanksTyping = ({
 			setUserAnswers(initialAnswers);
 			setInputStatus(initialStatus);
 
-			const randomWords =
-				lessonType === LessonType.QUIZ && !fromAdminQuestions ? shuffle(words)?.slice(0, 15) || [] : shuffle(words)?.slice(0, 5) || [];
-			const values = blankValuePairs?.map((pair) => pair.value) || [];
-			const hintWords = shuffle([...values, ...randomWords]);
-			setHints(hintWords);
+			// Only set hints once, not on every update
+			if (!hintsInitializedRef.current) {
+				const randomWords =
+					lessonType === LessonType.QUIZ && !fromAdminQuestions ? shuffle(words)?.slice(0, 15) || [] : shuffle(words)?.slice(0, 5) || [];
+				const values = blankValuePairs?.map((pair) => pair.value) || [];
+				const hintWords = shuffle([...values, ...randomWords]);
+				setHints(hintWords);
+				hintsInitializedRef.current = true;
+			}
 		}
-	}, [blankValuePairs, isLessonCompleted, userBlankValuePairsAfterSubmission, displayedQuestionNumber, getLastQuestion()]);
+	}, [
+		blankValuePairs,
+		isLessonCompleted,
+		userBlankValuePairsAfterSubmission,
+		displayedQuestionNumber,
+		questionId,
+		fromQuizQuestionUser,
+		fromPracticeQuestionUser,
+		lessonType,
+		fromAdminQuestions,
+		userQuizAnswers,
+	]);
 
 	useEffect(() => {
 		setUserQuizAnswers?.((prevData) => {

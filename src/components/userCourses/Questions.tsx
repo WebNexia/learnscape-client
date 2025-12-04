@@ -19,6 +19,7 @@ interface QuestionsProps {
 	userQuizAnswers: QuizQuestionAnswer[];
 	setUserQuizAnswers: React.Dispatch<React.SetStateAction<QuizQuestionAnswer[]>>;
 	isSoundMuted?: boolean;
+	onQuestionChange?: (questionNumber: number) => void;
 }
 
 const Questions: React.FC<QuestionsProps> = ({
@@ -31,12 +32,20 @@ const Questions: React.FC<QuestionsProps> = ({
 	userQuizAnswers,
 	setUserQuizAnswers,
 	isSoundMuted = false,
+	onQuestionChange,
 }) => {
 	const { getLastQuestion, isLessonCompleted, setIsLessonCompleted } = useUserCourseLessonData();
 	const [displayedQuestionNumber, setDisplayedQuestionNumber] = useState<number>(getLastQuestion);
 	const [showQuestionSelector, setShowQuestionSelector] = useState<boolean>(false);
 	const numberOfQuestions = questions?.length;
 	const { lessonId } = useParams();
+
+	// Notify parent component when displayed question changes
+	useEffect(() => {
+		if (onQuestionChange) {
+			onQuestionChange(displayedQuestionNumber);
+		}
+	}, [displayedQuestionNumber, onQuestionChange]);
 
 	// State for each question's AI response drawer and icon toggle
 	const [aiDrawerOpen, setAiDrawerOpen] = useState<boolean[]>(Array(numberOfQuestions).fill(false));

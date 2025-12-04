@@ -1,8 +1,10 @@
 import {
 	Alert,
 	Box,
+	Checkbox,
 	DialogContent,
 	FormControl,
+	FormControlLabel,
 	IconButton,
 	keyframes,
 	Link,
@@ -15,7 +17,7 @@ import {
 } from '@mui/material';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import theme from '../themes';
-import { AutoAwesome, Delete, Edit, FileCopy } from '@mui/icons-material';
+import { AutoAwesome, Delete, Edit, FileCopy, InfoOutlined } from '@mui/icons-material';
 import { useParams } from 'react-router-dom';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import { FormEvent, useContext, useEffect, useState } from 'react';
@@ -64,6 +66,7 @@ import { validateImageUrl, validateVideoUrl, validateDocumentUrl } from '../util
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 import { Roles } from '../interfaces/enums';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
+import { calculateQuizTotalScore } from '../utils/calculateQuizTotalScore';
 
 const colorChange = keyframes`
     0% {
@@ -139,6 +142,7 @@ const AdminLessonEditPage = () => {
 		_id: '',
 		title: '',
 		type: '',
+		isGraded: false,
 		imageUrl: '',
 		videoUrl: '',
 		isActive: false,
@@ -529,6 +533,46 @@ const AdminLessonEditPage = () => {
 			return;
 		}
 
+		// Validate scores if grading is enabled
+		if (singleLessonBeforeSave.isGraded && singleLessonBeforeSave.type === LessonType.QUIZ) {
+			const questions = singleLessonBeforeSave.questions?.filter((q) => q !== null && q !== undefined) || [];
+			const questionScores = singleLessonBeforeSave.questionScores || {};
+			const missingScores: string[] = [];
+
+			questions.forEach((question) => {
+				const questionId = question._id;
+				if (!questionId) return;
+
+				const score = questionScores[questionId];
+				const questionType = fetchQuestionTypeName(question);
+
+				// Check if score is missing based on question type
+				if (questionType === QuestionType.FITB_TYPING || questionType === QuestionType.FITB_DRAG_DROP || questionType === QuestionType.MATCHING) {
+					// For FITB and Matching, check if perBlank/perMatch exists
+					if (
+						!score ||
+						typeof score !== 'object' ||
+						(questionType === QuestionType.FITB_TYPING || questionType === QuestionType.FITB_DRAG_DROP
+							? !(score as { perBlank?: number }).perBlank
+							: !(score as { perMatch?: number }).perMatch)
+					) {
+						missingScores.push(question.question || `Question ${questions.indexOf(question) + 1}`);
+					}
+				} else {
+					// For other question types, check if score is a number
+					if (!score || typeof score !== 'number') {
+						missingScores.push(question.question || `Question ${questions.indexOf(question) + 1}`);
+					}
+				}
+			});
+
+			if (missingScores.length > 0) {
+				setErrorMessage(`Please provide scores for all questions`);
+				setIsErrorMessageOpen(true);
+				return;
+			}
+		}
+
 		let updatedQuestions: QuestionInterface[] = [];
 		let updatedDocuments: Document[] = [];
 
@@ -744,11 +788,13 @@ const AdminLessonEditPage = () => {
 						...singleLessonBeforeSave,
 						title: singleLessonBeforeSave.title,
 						type: singleLessonBeforeSave.type,
+						isGraded: singleLessonBeforeSave.isGraded,
 						orgId,
 						isActive: singleLessonBeforeSave.isActive,
 						imageUrl: singleLessonBeforeSave.imageUrl,
 						videoUrl: singleLessonBeforeSave.videoUrl,
 						text: editorContent?.trim() || '',
+						questionScores: singleLessonBeforeSave.isGraded ? singleLessonBeforeSave.questionScores || {} : {},
 						documentIds: updatedDocumentIds.length > 0 ? updatedDocumentIds : [],
 						questionIds: updatedQuestionIds.length > 0 ? updatedQuestionIds : [],
 						usedInCourses: singleLessonBeforeSave.usedInCourses,
@@ -1305,6 +1351,39 @@ const AdminLessonEditPage = () => {
 								<Box sx={{ margin: '1rem 0' }}>{instructionError && <CustomErrorMessage>Enter lesson instructions</CustomErrorMessage>}</Box>
 							</Box>
 
+							{singleLessonBeforeSave.type === LessonType.QUIZ && (
+								<Box sx={{ mt: '1.5rem' }}>
+									<FormControlLabel
+										control={
+											<Checkbox
+												checked={singleLessonBeforeSave.isGraded || false}
+												onChange={(e) => {
+													setIsLessonUpdated(true);
+													setHasUnsavedChanges(true);
+													setSingleLessonBeforeSave({
+														...singleLessonBeforeSave,
+														isGraded: e.target.checked,
+														questionScores: e.target.checked ? singleLessonBeforeSave.questionScores || {} : {},
+													});
+												}}
+												sx={{
+													'& .MuiSvgIcon-root': {
+														fontSize: isMobileSize ? '0.9rem' : '1.1rem',
+													},
+												}}
+											/>
+										}
+										label='Enable Grading'
+										sx={{
+											'mr': '0rem',
+											'& .MuiFormControlLabel-label': {
+												fontSize: isMobileSize ? '0.75rem' : '0.9rem',
+											},
+										}}
+									/>
+								</Box>
+							)}
+
 							{singleLessonBeforeSave.type !== LessonType.INSTRUCTIONAL_LESSON && (
 								<>
 									<Box
@@ -1313,10 +1392,30 @@ const AdminLessonEditPage = () => {
 											justifyContent: 'space-between',
 											alignItems: 'center',
 											width: '100%',
-											margin: isMobileSize ? '2rem 0 1rem 0' : '4rem 0 1rem 0',
+											margin: isMobileSize ? '2rem 0 1rem 0' : '3rem 0 1rem 0',
 										}}>
-										<Box sx={{ flex: 1 }}>
+										<Box sx={{ flex: 1, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
 											<Typography variant={isMobileSize ? 'h6' : 'h5'}>Questions</Typography>
+											{(() => {
+												const totalScore = calculateQuizTotalScore({
+													lesson: singleLessonBeforeSave,
+													fetchQuestionTypeName,
+												});
+												return singleLessonBeforeSave.isGraded && singleLessonBeforeSave.type === LessonType.QUIZ && totalScore > 0 ? (
+													<Typography
+														variant={isMobileSize ? 'body2' : 'body1'}
+														sx={{
+															color: theme.bgColor?.adminPaper,
+															fontSize: isMobileSize ? '0.75rem' : '0.9rem',
+															border: '1px solid #01435A',
+															padding: '0.25rem 0.5rem',
+															borderRadius: '0.25rem',
+															fontWeight: 600,
+														}}>
+														{totalScore}
+													</Typography>
+												) : null;
+											})()}
 										</Box>
 
 										<CustomInfoMessageAlignedLeft
@@ -1553,7 +1652,7 @@ const AdminLessonEditPage = () => {
 																				)}
 																			</Box>
 
-																			<Box sx={{ display: 'flex' }}>
+																			<Box sx={{ display: 'flex', alignItems: 'center' }}>
 																				<Box>
 																					<Tooltip title='Clone' placement='top' arrow>
 																						<IconButton
@@ -1634,6 +1733,219 @@ const AdminLessonEditPage = () => {
 																						/>
 																					</IconButton>
 																				</Tooltip>
+
+																				{singleLessonBeforeSave.isGraded && (
+																					<Box sx={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+																						{(() => {
+																							const questionTypeName = fetchQuestionTypeName(question);
+																							const questionId = question._id;
+																							const currentScore = singleLessonBeforeSave.questionScores?.[questionId];
+
+																							// FITB-Typing or FITB-DragDrop
+																							if (questionTypeName === QuestionType.FITB_TYPING || questionTypeName === QuestionType.FITB_DRAG_DROP) {
+																								const scoreObj =
+																									typeof currentScore === 'object' && currentScore !== null
+																										? (currentScore as { total?: number; perBlank?: number })
+																										: null;
+																								const perBlank = scoreObj?.perBlank;
+																								const blankCount = question.blankValuePairs?.length || 0;
+
+																								return (
+																									<Box sx={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+																										<CustomTextField
+																											type='text'
+																											value={perBlank !== undefined && perBlank !== null ? String(perBlank) : ''}
+																											required
+																											size='small'
+																											sx={{
+																												'width': isMobileSize ? '3rem' : '3.75rem',
+																												'mb': '-0.15rem',
+																												'ml': '0.15rem',
+																												'& .MuiInputBase-input': {
+																													textAlign: 'center',
+																												},
+																											}}
+																											onKeyDown={(e) => {
+																												if (
+																													[8, 9, 27, 13, 46].indexOf(e.keyCode) !== -1 ||
+																													(e.keyCode === 65 && e.ctrlKey === true) ||
+																													(e.keyCode >= 35 && e.keyCode <= 39) ||
+																													(e.keyCode >= 48 && e.keyCode <= 57 && !e.shiftKey) ||
+																													(e.keyCode >= 96 && e.keyCode <= 105)
+																												) {
+																													return;
+																												}
+																												e.preventDefault();
+																											}}
+																											onChange={(e) => {
+																												const inputValue = e.target.value.replace(/[^0-9]/g, '');
+																												const numValue =
+																													inputValue && inputValue.trim() !== '' ? parseInt(inputValue, 10) : undefined;
+																												const calculatedTotal = numValue !== undefined && blankCount > 0 ? numValue * blankCount : 0;
+																												setIsLessonUpdated(true);
+																												setHasUnsavedChanges(true);
+																												const updatedScores = { ...singleLessonBeforeSave.questionScores };
+																												if (numValue !== undefined) {
+																													updatedScores[questionId] = {
+																														total: calculatedTotal,
+																														perBlank: numValue,
+																													};
+																												} else {
+																													delete updatedScores[questionId];
+																												}
+																												setSingleLessonBeforeSave({
+																													...singleLessonBeforeSave,
+																													questionScores: updatedScores,
+																												});
+																											}}
+																										/>
+																										<Tooltip
+																											title={`Points per blank (Total: ${perBlank !== undefined && perBlank !== null && blankCount > 0 ? Number(perBlank) * blankCount : 0} points)`}
+																											placement='top'
+																											arrow>
+																											<InfoOutlined
+																												sx={{
+																													fontSize: '0.9rem',
+																													mr: '-0.75rem',
+																													color: theme.palette.text.secondary,
+																													cursor: 'help',
+																												}}
+																											/>
+																										</Tooltip>
+																									</Box>
+																								);
+																							}
+
+																							// Matching
+																							if (questionTypeName === QuestionType.MATCHING) {
+																								const scoreObj =
+																									typeof currentScore === 'object' && currentScore !== null
+																										? (currentScore as { total?: number; perMatch?: number })
+																										: null;
+																								const perMatch = scoreObj?.perMatch;
+																								const matchCount = question.matchingPairs?.length || 0;
+
+																								return (
+																									<Box sx={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+																										<CustomTextField
+																											type='text'
+																											value={perMatch !== undefined && perMatch !== null ? String(perMatch) : ''}
+																											required
+																											size='small'
+																											sx={{
+																												'width': isMobileSize ? '3rem' : '3.75rem',
+																												'mb': '-0.15rem',
+																												'ml': '0.15rem',
+																												'& .MuiInputBase-input': {
+																													textAlign: 'center',
+																												},
+																											}}
+																											onKeyDown={(e) => {
+																												if (
+																													[8, 9, 27, 13, 46].indexOf(e.keyCode) !== -1 ||
+																													(e.keyCode === 65 && e.ctrlKey === true) ||
+																													(e.keyCode >= 35 && e.keyCode <= 39) ||
+																													(e.keyCode >= 48 && e.keyCode <= 57 && !e.shiftKey) ||
+																													(e.keyCode >= 96 && e.keyCode <= 105)
+																												) {
+																													return;
+																												}
+																												e.preventDefault();
+																											}}
+																											onChange={(e) => {
+																												const inputValue = e.target.value.replace(/[^0-9]/g, '');
+																												const numValue =
+																													inputValue && inputValue.trim() !== '' ? parseInt(inputValue, 10) : undefined;
+																												const calculatedTotal = numValue !== undefined && matchCount > 0 ? numValue * matchCount : 0;
+																												setIsLessonUpdated(true);
+																												setHasUnsavedChanges(true);
+																												const updatedScores = { ...singleLessonBeforeSave.questionScores };
+																												if (numValue !== undefined) {
+																													updatedScores[questionId] = {
+																														total: calculatedTotal,
+																														perMatch: numValue,
+																													};
+																												} else {
+																													delete updatedScores[questionId];
+																												}
+																												setSingleLessonBeforeSave({
+																													...singleLessonBeforeSave,
+																													questionScores: updatedScores,
+																												});
+																											}}
+																										/>
+																										<Tooltip
+																											title={`Points per match (Total: ${perMatch !== undefined && perMatch !== null && matchCount > 0 ? Number(perMatch) * matchCount : 0} points)`}
+																											placement='top'
+																											arrow>
+																											<InfoOutlined
+																												sx={{
+																													fontSize: '0.9rem',
+																													mr: '-0.75rem',
+																													color: theme.palette.text.secondary,
+																													cursor: 'help',
+																												}}
+																											/>
+																										</Tooltip>
+																									</Box>
+																								);
+																							}
+
+																							// Simple questions (True/False, Multiple Choice, Open-ended, Audio/Video)
+																							const score =
+																								typeof currentScore === 'number'
+																									? currentScore
+																									: typeof currentScore === 'object' && currentScore !== null
+																										? ((currentScore as { total?: number }).total ?? undefined)
+																										: undefined;
+																							return (
+																								<CustomTextField
+																									type='text'
+																									value={score !== undefined && score !== null ? String(score) : ''}
+																									required
+																									size='small'
+																									sx={{
+																										'width': isMobileSize ? '3rem' : '3.75rem',
+																										'mb': '-0.15rem',
+																										'ml': '0.15rem',
+																										'mr': '0.4rem',
+																										'& .MuiInputBase-input': {
+																											textAlign: 'center',
+																										},
+																									}}
+																									onKeyDown={(e) => {
+																										if (
+																											[8, 9, 27, 13, 46].indexOf(e.keyCode) !== -1 ||
+																											(e.keyCode === 65 && e.ctrlKey === true) ||
+																											(e.keyCode >= 35 && e.keyCode <= 39) ||
+																											(e.keyCode >= 48 && e.keyCode <= 57 && !e.shiftKey) ||
+																											(e.keyCode >= 96 && e.keyCode <= 105)
+																										) {
+																											return;
+																										}
+																										e.preventDefault();
+																									}}
+																									onChange={(e) => {
+																										const inputValue = e.target.value.replace(/[^0-9]/g, '');
+																										const numValue = inputValue && inputValue.trim() !== '' ? parseInt(inputValue, 10) : undefined;
+																										setIsLessonUpdated(true);
+																										setHasUnsavedChanges(true);
+																										const updatedScores = { ...singleLessonBeforeSave.questionScores };
+																										if (numValue !== undefined) {
+																											updatedScores[questionId] = numValue;
+																										} else {
+																											delete updatedScores[questionId];
+																										}
+																										setSingleLessonBeforeSave({
+																											...singleLessonBeforeSave,
+																											questionScores: updatedScores,
+																										});
+																									}}
+																								/>
+																							);
+																						})()}
+																					</Box>
+																				)}
 																			</Box>
 																		</Box>
 																	</Box>

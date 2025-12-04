@@ -12,6 +12,10 @@ export interface UserQuestionData {
 	teacherAudioFeedbackUrl: string;
 	userMatchingPairAnswers: UserMatchingPairAnswers[];
 	userBlankValuePairAnswers: UserBlankValuePairAnswers[];
+	pointsEarned?: number;
+	pointsPossible?: number;
+	isAutoGraded?: boolean;
+	partialScores?: { [key: string]: number };
 }
 
 export const useFetchUserQuestion = () => {
@@ -32,6 +36,10 @@ export const useFetchUserQuestion = () => {
 						teacherAudioFeedbackUrl: data.teacherAudioFeedbackUrl,
 						userMatchingPairAnswers: data.userMatchingPairAnswers,
 						userBlankValuePairAnswers: data.userBlankValuePairAnswers,
+						pointsEarned: data.pointsEarned,
+						pointsPossible: data.pointsPossible,
+						isAutoGraded: data.isAutoGraded,
+						partialScores: data.partialScores,
 					})) || []
 				);
 			} catch (error) {

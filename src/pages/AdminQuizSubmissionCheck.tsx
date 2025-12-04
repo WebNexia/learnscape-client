@@ -6,9 +6,12 @@ import axios from '@utils/axiosInstance';
 import { QuestionsContext } from '../contexts/QuestionsContextProvider';
 import CustomTextField from '../components/forms/customFields/CustomTextField';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
-import { QuestionType } from '../interfaces/enums';
+import { QuestionType, LessonType } from '../interfaces/enums';
 import { sanitizeHtml } from '../utils/sanitizeHtml';
 import theme from '../themes';
+import { calculateQuizTotalScore } from '../utils/calculateQuizTotalScore';
+import { calculateScorePercentage } from '../utils/calculateScorePercentage';
+import { Lesson } from '../interfaces/lessons';
 import CustomDialogActions from '../components/layouts/dialog/CustomDialogActions';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 import { ArrowBackIosNewOutlined, ArrowForwardIosOutlined } from '@mui/icons-material';
@@ -68,6 +71,9 @@ const AdminQuizSubmissionCheck = () => {
 	const [displaySubmissionMsg, setDisplaySubmissionMsg] = useState<boolean>(false);
 	const [feedbackSubmitting, setFeedbackSubmitting] = useState<boolean>(false);
 	const [isAudioUploading, setIsAudioUploading] = useState<boolean>(false);
+	const [manualScore, setManualScore] = useState<number | undefined>(undefined);
+	const [isScoreUpdating, setIsScoreUpdating] = useState<boolean>(false);
+	const [lesson, setLesson] = useState<Lesson | null>(null);
 
 	useEffect(() => {
 		const fetchData = async () => {
@@ -85,6 +91,7 @@ const AdminQuizSubmissionCheck = () => {
 				setCourseName(userCourseQuizData[0].courseId.title);
 				setUserResponseToFeedback(userCourseQuizData[0]);
 				setQuizFeedback(lessonResponse.data.data[0]?.teacherFeedback || '');
+				setManualScore(userCourseQuizData[0]?.pointsEarned);
 
 				setUserQuestionsFeedbacks(
 					() =>
@@ -96,22 +103,24 @@ const AdminQuizSubmissionCheck = () => {
 							isFeedbackGiven: !!data.teacherFeedback,
 						})) || []
 				);
+
+				// Fetch lesson data to get isGraded and questionScores for total score calculation
+				if (lessonId) {
+					try {
+						const lessonDataResponse = await axios.get(`${base_url}/lessons/${lessonId}`);
+						const lessonData = lessonDataResponse.data;
+						setLesson(lessonData);
+					} catch (error) {
+						console.error('Error fetching lesson data:', error);
+					}
+				}
 			} catch (error) {
 				console.error(error);
 			}
 		};
 
 		fetchData();
-	}, [base_url, userLessonId]);
-
-	const handleNextResponse = () => {
-		if (currentResponseIndex < userResponseData.length - 1) {
-			setOpenQuestionFeedbackModal(true);
-			const nextIndex = currentResponseIndex + 1;
-			setCurrentResponseIndex(nextIndex);
-			setUserResponseToFeedback(userResponseData[nextIndex]);
-		}
-	};
+	}, [base_url, userLessonId, lessonId]);
 
 	const handlePreviousResponse = () => {
 		if (currentResponseIndex > 0) {
@@ -119,6 +128,17 @@ const AdminQuizSubmissionCheck = () => {
 			const prevIndex = currentResponseIndex - 1;
 			setCurrentResponseIndex(prevIndex);
 			setUserResponseToFeedback(userResponseData[prevIndex]);
+			setManualScore(userResponseData[prevIndex]?.pointsEarned);
+		}
+	};
+
+	const handleNextResponse = () => {
+		if (currentResponseIndex < userResponseData.length - 1) {
+			setOpenQuestionFeedbackModal(true);
+			const nextIndex = currentResponseIndex + 1;
+			setCurrentResponseIndex(nextIndex);
+			setUserResponseToFeedback(userResponseData[nextIndex]);
+			setManualScore(userResponseData[nextIndex]?.pointsEarned);
 		}
 	};
 
@@ -282,6 +302,9 @@ const AdminQuizSubmissionCheck = () => {
 					justifyContent: 'space-between',
 					width: isVerySmallScreen ? '90%' : '85%',
 					margin: isMobileSizeSmall ? '1rem' : '2rem',
+					boxShadow: '0 0.2rem 0.5rem 0.1rem rgba(0, 0, 0, 0.2)',
+					borderRadius: '0.35rem',
+					padding: '0.75rem 1rem',
 				}}>
 				{[
 					{ label: 'Username', value: username },
@@ -309,10 +332,50 @@ const AdminQuizSubmissionCheck = () => {
 						width: '100%',
 						margin: isMobileSize ? '0.25rem 0' : '0 0 0.75rem 0',
 					}}>
-					<Box>
+					<Box sx={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
 						<Typography variant='h5' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem' }}>
 							Questions
 						</Typography>
+						{lesson &&
+							lesson.isGraded &&
+							lesson.type === LessonType.QUIZ &&
+							(() => {
+								const totalPossible = calculateQuizTotalScore({ lesson, fetchQuestionTypeName });
+								const totalEarned =
+									userResponseData?.reduce((sum: number, response: any) => {
+										return sum + (response.pointsEarned !== undefined && response.pointsEarned !== null ? response.pointsEarned : 0);
+									}, 0) || 0;
+								const percentage = calculateScorePercentage(totalEarned, totalPossible);
+								return totalPossible > 0 ? (
+									<Box
+										sx={{
+											display: 'inline-flex',
+											alignItems: 'center',
+											backgroundColor: theme.palette.primary.main,
+											color: 'white',
+											padding: isMobileSize ? '0.3rem 0.6rem' : '0.35rem 0.75rem',
+											borderRadius: '1.5rem',
+											fontSize: isMobileSize ? '0.65rem' : '0.8rem',
+											fontWeight: 600,
+											fontFamily: theme.fontFamily?.main || 'Poppins, sans-serif',
+											boxShadow: '0 2px 8px rgba(1, 67, 90, 0.25)',
+											whiteSpace: 'nowrap',
+										}}>
+										{totalEarned}/{totalPossible} pts
+										{percentage !== null && (
+											<Typography
+												component='span'
+												sx={{
+													fontSize: isMobileSize ? '0.6rem' : '0.7rem',
+													color: '#ffff',
+													ml: '0.25rem',
+												}}>
+												- ({percentage}%)
+											</Typography>
+										)}
+									</Box>
+								) : null;
+							})()}
 					</Box>
 					<CustomInfoMessageAlignedRight
 						message={isVerySmallScreen ? 'Click questions to give feedback' : 'Click the questions to give/edit feedback for each question'}
@@ -330,6 +393,7 @@ const AdminQuizSubmissionCheck = () => {
 							setOpenQuestionFeedbackModal(true);
 							setUserResponseToFeedback(response);
 							setCurrentResponseIndex(index);
+							setManualScore(response?.pointsEarned);
 						}}
 					/>
 				))}
@@ -581,6 +645,109 @@ const AdminQuizSubmissionCheck = () => {
 						</Box>
 					</Box>
 				)}
+
+				{userResponseToFeedback?.pointsPossible !== undefined &&
+					userResponseToFeedback?.pointsPossible !== null &&
+					(() => {
+						const questionType = fetchQuestionTypeName(userResponseToFeedback?.questionId);
+						const canUpdateScore = questionType === QuestionType.OPEN_ENDED || questionType === QuestionType.AUDIO_VIDEO;
+						return canUpdateScore ? (
+							<Box sx={{ width: '90%', margin: '1.5rem auto' }}>
+								<Typography variant='h5' sx={{ mb: '1rem', fontSize: isMobileSize ? '0.9rem' : '1rem' }}>
+									Score
+								</Typography>
+								<Box sx={{ display: 'flex', alignItems: 'center', gap: '1rem', mb: '1rem' }}>
+									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+										Points Earned:
+									</Typography>
+									<CustomTextField
+										type='number'
+										value={manualScore !== undefined && manualScore !== null ? String(manualScore) : ''}
+										onChange={(e) => {
+											const value = e.target.value === '' ? undefined : parseInt(e.target.value, 10);
+											if (value === undefined || (value >= 0 && value <= (userResponseToFeedback?.pointsPossible || 0))) {
+												setManualScore(value);
+											}
+										}}
+										size='small'
+										sx={{
+											'width': '3.75rem',
+											'& input[type=number]::-webkit-inner-spin-button, & input[type=number]::-webkit-outer-spin-button': {
+												WebkitAppearance: 'none',
+												margin: 0,
+											},
+											'& input[type=number]': {
+												MozAppearance: 'textfield',
+											},
+										}}
+										InputProps={{
+											inputProps: {
+												min: 0,
+												max: userResponseToFeedback?.pointsPossible || 0,
+											},
+										}}
+									/>
+									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+										/ {userResponseToFeedback?.pointsPossible} pts
+									</Typography>
+									{(() => {
+										const isOpenEndedOrAudioVideo = questionType === QuestionType.OPEN_ENDED || questionType === QuestionType.AUDIO_VIDEO;
+										// For open-ended and audio/video, always show "Manually Graded" since they cannot be auto-graded
+										if (isOpenEndedOrAudioVideo) {
+											return (
+												<Typography
+													variant='body2'
+													sx={{ fontSize: isMobileSize ? '0.65rem' : '0.75rem', color: theme.palette.text.secondary, fontStyle: 'italic' }}>
+													(Manually Graded)
+												</Typography>
+											);
+										}
+										// For other question types, show based on isAutoGraded flag
+										return userResponseToFeedback?.isAutoGraded === false ? (
+											<Typography
+												variant='body2'
+												sx={{ fontSize: isMobileSize ? '0.65rem' : '0.75rem', color: theme.palette.text.secondary, fontStyle: 'italic' }}>
+												(Manually Graded)
+											</Typography>
+										) : (
+											<Typography
+												variant='body2'
+												sx={{ fontSize: isMobileSize ? '0.65rem' : '0.75rem', color: theme.palette.text.secondary, fontStyle: 'italic' }}>
+												(Auto Graded)
+											</Typography>
+										);
+									})()}
+								</Box>
+								<CustomSubmitButton
+									onClick={async () => {
+										if (manualScore !== undefined && manualScore !== null && manualScore !== userResponseToFeedback?.pointsEarned) {
+											try {
+												setIsScoreUpdating(true);
+												await axios.patch(`${base_url}/userQuestions/${userResponseToFeedback._id}/grade`, {
+													pointsEarned: manualScore,
+												});
+												// Update local state
+												setUserResponseData(
+													(prevResponses: any) =>
+														prevResponses?.map((response: any) =>
+															response._id === userResponseToFeedback._id ? { ...response, pointsEarned: manualScore, isAutoGraded: false } : response
+														) || []
+												);
+												setUserResponseToFeedback((prev: any) => ({ ...prev, pointsEarned: manualScore, isAutoGraded: false }));
+											} catch (error) {
+												console.error('Error updating score:', error);
+											} finally {
+												setIsScoreUpdating(false);
+											}
+										}
+									}}
+									disabled={isScoreUpdating || manualScore === userResponseToFeedback?.pointsEarned}
+									sx={{ mt: '1rem', fontSize: isMobileSize ? '0.75rem' : undefined }}>
+									{isScoreUpdating ? 'Updating...' : 'Update Score'}
+								</CustomSubmitButton>
+							</Box>
+						) : null;
+					})()}
 
 				<Box sx={{ width: '90%', margin: '1.5rem auto' }}>
 					<Typography variant='h5' sx={{ mb: '1rem', fontSize: isMobileSize ? '0.9rem' : '1rem' }}>

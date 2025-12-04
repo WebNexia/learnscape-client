@@ -1,4 +1,4 @@
-import { Box, Table, TableBody, TableCell, TableRow } from '@mui/material';
+import { Box, Table, TableBody, TableCell, TableRow, Typography } from '@mui/material';
 import AdminTableSkeleton from '../components/layouts/skeleton/AdminTableSkeleton';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
 import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
@@ -20,16 +20,11 @@ import FilterSearchRow from '../components/layouts/FilterSearchRow';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import { useNavigate } from 'react-router-dom';
 import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/CustomInfoMessageAlignedLeft';
-
-// Responsive column configuration
-const getColumns = (isMobileSize: boolean) => {
-	return [
-		{ key: 'lessonName', label: isMobileSize ? 'Quiz' : 'Quiz Name' },
-		{ key: 'courseName', label: isMobileSize ? 'Course' : 'Course Name' },
-		{ key: 'isChecked', label: 'Status' },
-		{ key: 'actions', label: 'Actions' },
-	];
-};
+import { Lesson } from '../interfaces/lessons';
+import { LessonType } from '../interfaces/enums';
+import { calculateQuizTotalScore } from '../utils/calculateQuizTotalScore';
+import { calculateScorePercentage } from '../utils/calculateScorePercentage';
+import useQuestionTypes from '../hooks/useQuestionTypes';
 
 const Submissions = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -45,6 +40,7 @@ const Submissions = () => {
 	const { isSmallScreen, isRotatedMedium, isRotated } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isMobileSize || isRotated;
+	const { fetchQuestionTypeName } = useQuestionTypes();
 
 	const { user } = useAuth();
 	const { orgId } = useContext(OrganisationContext);
@@ -102,6 +98,18 @@ const Submissions = () => {
 	useEffect(() => {
 		if (user?._id && orgId) enableLearnerQuizSubmissionsFetch();
 	}, [user?._id, orgId]);
+
+	// Responsive column configuration - same order and structure as AdminQuizSubmissions
+	// Always return 5 columns, Status will be hidden on mobile via CSS
+	const getColumns = (isMobileSize: boolean) => {
+		return [
+			{ key: 'lessonName', label: isMobileSize ? 'Quiz' : 'Quiz Name' },
+			{ key: 'courseName', label: isMobileSize ? 'Course' : 'Course Name' },
+			{ key: 'score', label: 'Score' },
+			{ key: 'isChecked', label: 'Status' },
+			{ key: 'actions', label: 'Actions' },
+		];
+	};
 
 	return (
 		<DashboardPagesLayout pageName='Quiz Submissions' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
@@ -191,37 +199,47 @@ const Submissions = () => {
 									'& .MuiTableBody-root .MuiTableCell-root:last-child': {
 										borderRight: 'none',
 									},
-									// Column widths for header cells
+
 									'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(1)': {
-										minWidth: isMobileSize ? '150px' : '200px',
-										width: isMobileSize ? '35%' : '35%',
+										minWidth: isMobileSize ? '120px' : '150px',
+										width: isMobileSize ? '30%' : '25%',
 									},
 									'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(2)': {
-										minWidth: isMobileSize ? '0px' : '200px',
-										width: isMobileSize ? '35%' : '35%',
+										minWidth: isMobileSize ? '100px' : '200px',
+										width: isMobileSize ? '30%' : '25%',
 									},
 									'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(3)': {
-										minWidth: isMobileSize ? '80px' : '100px',
-										width: isMobileSize ? '15%' : '15%',
+										minWidth: isMobileSize ? '100px' : '100px',
+										width: isMobileSize ? '25%' : '25%',
 									},
 									'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(4)': {
+										minWidth: isMobileSize ? '0px' : '100px',
+										width: isMobileSize ? '0%' : '10%',
+										display: isMobileSize ? 'none' : 'table-cell',
+									},
+									'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(5)': {
 										minWidth: isMobileSize ? '60px' : '80px',
 										width: isMobileSize ? '15%' : '15%',
 									},
-									// Column widths for body cells - exact same as header
+									// Column widths for body cells - same as header
 									'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(1)': {
-										minWidth: isMobileSize ? '150px' : '200px',
-										width: isMobileSize ? '35%' : '35%',
+										minWidth: isMobileSize ? '120px' : '150px',
+										width: isMobileSize ? '30%' : '25%',
 									},
 									'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(2)': {
-										minWidth: isMobileSize ? '0px' : '200px',
-										width: isMobileSize ? '35%' : '35%',
+										minWidth: isMobileSize ? '100px' : '200px',
+										width: isMobileSize ? '30%' : '25%',
 									},
 									'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(3)': {
-										minWidth: isMobileSize ? '80px' : '100px',
-										width: isMobileSize ? '15%' : '15%',
+										minWidth: isMobileSize ? '100px' : '100px',
+										width: isMobileSize ? '25%' : '25%',
 									},
 									'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(4)': {
+										minWidth: isMobileSize ? '0px' : '100px',
+										width: isMobileSize ? '0%' : '10%',
+										display: isMobileSize ? 'none' : 'table-cell',
+									},
+									'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(5)': {
 										minWidth: isMobileSize ? '60px' : '80px',
 										width: isMobileSize ? '15%' : '15%',
 									},
@@ -231,9 +249,10 @@ const Submissions = () => {
 								<TableBody>
 									{/* Spacer row to ensure header alignment */}
 									<TableRow sx={{ height: 0, visibility: 'hidden' }}>
-										<TableCell sx={{ width: isMobileSize ? '35%' : '35%', padding: 0, border: 'none' }} />
-										<TableCell sx={{ width: isMobileSize ? '35%' : '35%', padding: 0, border: 'none' }} />
-										<TableCell sx={{ width: isMobileSize ? '15%' : '15%', padding: 0, border: 'none' }} />
+										<TableCell sx={{ width: isMobileSize ? '30%' : '25%', padding: 0, border: 'none' }} />
+										<TableCell sx={{ width: isMobileSize ? '30%' : '25%', padding: 0, border: 'none' }} />
+										<TableCell sx={{ width: isMobileSize ? '25%' : '25%', padding: 0, border: 'none' }} />
+										<TableCell sx={{ width: isMobileSize ? '0%' : '10%', padding: 0, border: 'none' }} />
 										<TableCell sx={{ width: isMobileSize ? '15%' : '15%', padding: 0, border: 'none' }} />
 									</TableRow>
 								</TableBody>
@@ -245,29 +264,113 @@ const Submissions = () => {
 								/>
 								<TableBody>
 									{paginatedSubmissions &&
-										paginatedSubmissions?.map((submission: QuizSubmission) => (
-											<TableRow key={submission._id} hover>
-												<CustomTableCell value={submission.lessonName} />
-												<CustomTableCell value={submission.courseName} />
-												<CustomTableCell value={submission.isChecked ? 'Checked' : 'Unchecked'} />
+										paginatedSubmissions?.map((submission: QuizSubmission) => {
+											const totalEarned = submission.totalEarned ?? 0;
+											// Use lesson data from submission if available, otherwise try context
+											// Check if we have lesson type from backend (this indicates lesson lookup succeeded)
+											const hasLessonDataFromSubmission = submission.lessonType !== undefined && submission.lessonType !== null;
 
-												<TableCell
-													sx={{
-														textAlign: 'center',
-														padding: isMobileSizeSmall ? '0' : undefined,
-													}}>
-													<CustomActionBtn
-														title='See Details'
-														onClick={() => {
-															navigate(
-																`/submission-feedback/submission/${submission._id}/lesson/${submission.lessonId}/userlesson/${submission.userLessonId}?isChecked=${submission.isChecked}`
+											const lesson = hasLessonDataFromSubmission
+												? ({
+														_id: submission.lessonId,
+														isGraded: submission.lessonIsGraded ?? false,
+														type: submission.lessonType as LessonType,
+														questionScores: submission.lessonQuestionScores ?? {},
+														questions: submission.lessonQuestions ?? [],
+													} as Partial<Lesson> as Lesson | undefined)
+												: undefined;
+
+											const totalPossible =
+												lesson && lesson.isGraded && lesson.type === LessonType.QUIZ ? calculateQuizTotalScore({ lesson, fetchQuestionTypeName }) : 0;
+											const percentage = calculateScorePercentage(totalEarned, totalPossible);
+
+											return (
+												<TableRow key={submission._id} hover>
+													<CustomTableCell value={submission.lessonName} />
+													<CustomTableCell value={submission.courseName} />
+													<TableCell sx={{ textAlign: 'center' }}>
+														{(() => {
+															// Check if lesson exists and is a quiz
+															const isQuiz = lesson && lesson.type === LessonType.QUIZ;
+															const isGraded = lesson && lesson.isGraded && lesson.type === LessonType.QUIZ;
+
+															// If not a quiz or not graded, show N/A
+															if (!isQuiz || !isGraded) {
+																return (
+																	<Typography
+																		variant='body2'
+																		sx={{
+																			fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+																			color: theme.palette.text.secondary,
+																		}}>
+																		N/A
+																	</Typography>
+																);
+															}
+
+															// If graded quiz and has possible points, show score
+															if (totalPossible > 0) {
+																return (
+																	<Typography
+																		variant='body2'
+																		sx={{
+																			fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+																			fontWeight: 600,
+																		}}>
+																		{totalEarned}/{totalPossible} pts
+																		{percentage !== null && (
+																			<Typography
+																				component='span'
+																				sx={{
+																					display: isMobileSize ? 'none' : '',
+																					fontSize: '0.75rem',
+																					color: theme.palette.text.secondary,
+																					ml: '0.25rem',
+																				}}>
+																				({percentage}%)
+																			</Typography>
+																		)}
+																	</Typography>
+																);
+															}
+
+															// If graded quiz but no points possible (shouldn't happen, but fallback)
+															return (
+																<Typography
+																	variant='body2'
+																	sx={{
+																		fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+																		color: theme.palette.text.secondary,
+																	}}>
+																	N/A
+																</Typography>
 															);
-														}}
-														icon={<PendingOutlined fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
-													/>
-												</TableCell>
-											</TableRow>
-										))}
+														})()}
+													</TableCell>
+													<TableCell
+														sx={{
+															display: isMobileSize ? 'none' : 'table-cell',
+														}}>
+														{submission.isChecked ? 'Checked' : 'Unchecked'}
+													</TableCell>
+													<TableCell
+														sx={{
+															textAlign: 'center',
+															padding: isMobileSizeSmall ? '0' : undefined,
+														}}>
+														<CustomActionBtn
+															title='See Details'
+															onClick={() => {
+																navigate(
+																	`/submission-feedback/submission/${submission._id}/lesson/${submission.lessonId}/userlesson/${submission.userLessonId}?isChecked=${submission.isChecked}`
+																);
+															}}
+															icon={<PendingOutlined fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
+														/>
+													</TableCell>
+												</TableRow>
+											);
+										})}
 								</TableBody>
 							</Table>
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import styled from 'styled-components';
 import { Box, Typography } from '@mui/material';
@@ -166,8 +166,18 @@ const FillInTheBlanksDragDrop = ({
 	const [responses, setResponses] = useState<BlankValuePair[]>([]);
 	const [textSegments, setTextSegments] = useState<string[]>([]);
 	const [hasInteracted, setHasInteracted] = useState(false);
+	const responsesInitializedRef = useRef<boolean>(false);
+	const previousQuestionIdRef = useRef<string | undefined>(questionId);
 
 	const { updateLastQuestion, getLastQuestion } = useUserCourseLessonData();
+
+	// Reset responses initialization when questionId changes
+	useEffect(() => {
+		if (previousQuestionIdRef.current !== questionId) {
+			responsesInitializedRef.current = false;
+			previousQuestionIdRef.current = questionId;
+		}
+	}, [questionId]);
 
 	const { isRotated, isVerySmallScreen, isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -206,19 +216,36 @@ const FillInTheBlanksDragDrop = ({
 		) {
 			populateBlanks(blankValuePairs);
 
-			const remainingResponses = blankValuePairs?.filter((pair) => !initializedBlanks?.some((blank) => blank.value === pair.value)) || [];
-			const randomWords = shuffle(words)?.slice(0, 5) || [];
-			setResponses(shuffle([...remainingResponses, ...(randomWords?.map((word) => ({ id: `random-${word}`, value: word, blank: -1 })) || [])]));
+			// Only set responses once, not on every update
+			if (!responsesInitializedRef.current) {
+				const remainingResponses = blankValuePairs?.filter((pair) => !initializedBlanks?.some((blank) => blank.value === pair.value)) || [];
+				const randomWords = shuffle(words)?.slice(0, 5) || [];
+				setResponses(shuffle([...remainingResponses, ...(randomWords?.map((word) => ({ id: `random-${word}`, value: word, blank: -1 })) || [])]));
+				responsesInitializedRef.current = true;
+			}
 		}
 
 		setBlanks(initializedBlanks);
 
-		if (!isLessonCompleted) {
+		// Only set responses once, not on every update
+		if (!isLessonCompleted && !responsesInitializedRef.current) {
 			const wordCount = fromQuizQuestionUser || lessonType === LessonType.QUIZ ? 15 : 5;
 			const randomWords = shuffle(words)?.slice(0, wordCount) || [];
 			setResponses(shuffle([...blankValuePairs, ...(randomWords?.map((word) => ({ id: `random-${word}`, value: word, blank: -1 })) || [])]));
+			responsesInitializedRef.current = true;
 		}
-	}, [textWithBlanks, blankValuePairs, isLessonCompleted, userBlankValuePairsAfterSubmission, displayedQuestionNumber, getLastQuestion]);
+	}, [
+		textWithBlanks,
+		blankValuePairs,
+		isLessonCompleted,
+		userBlankValuePairsAfterSubmission,
+		displayedQuestionNumber,
+		questionId,
+		fromQuizQuestionUser,
+		fromPracticeQuestionUser,
+		lessonType,
+		userQuizAnswers,
+	]);
 
 	useEffect(() => {
 		if (hasInteracted && fromPracticeQuestionUser) {

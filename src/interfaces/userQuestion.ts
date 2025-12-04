@@ -25,6 +25,10 @@ export interface UserQuestion {
 	videoRecordUrl: string;
 	teacherFeedback: string;
 	teacherAudioFeedbackUrl: string;
+	pointsEarned?: number;
+	pointsPossible?: number;
+	isAutoGraded?: boolean;
+	partialScores?: { [key: string]: number };
 	createdAt: string;
 	updatedAt: string;
 }

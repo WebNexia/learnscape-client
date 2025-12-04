@@ -71,7 +71,7 @@ const theme = createTheme({
 			main: '#01435A',
 		},
 		secondary: {
-			main: '#FDF7F0',
+			main: '#FFFF',
 		},
 		light: {
 			main: '#FFFF',
@@ -141,7 +141,7 @@ const theme = createTheme({
 		'marginTop': '1.25rem',
 		'fontWeight': 500,
 		':hover': {
-			backgroundColor: '#FDF7F0',
+			backgroundColor: '#FFFF',
 			color: '#1EC28B',
 			border: 'solid #1EC28B',
 		},
@@ -186,7 +186,7 @@ const theme = createTheme({
 		instructorPaper: '#0D3562',
 		instructorSubmitBtn: '#1D4ED8',
 		primary: '#01435A',
-		secondary: '#FDF7F0',
+		secondary: '#FFFF',
 		lessonInProgress: '#4D7B8B',
 		common: '#FFFF',
 		commonTwo: '#F0F2F5',

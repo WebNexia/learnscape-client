@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom';
 import { useContext, useEffect, useState } from 'react';
 import useQuestionTypes from '../hooks/useQuestionTypes';
 import axios from '@utils/axiosInstance';
-import { QuestionType } from '../interfaces/enums';
+import { QuestionType, LessonType } from '../interfaces/enums';
 import { ArrowBackIosNewOutlined, ArrowForwardIosOutlined } from '@mui/icons-material';
 import theme from '../themes';
 import CustomDialog from '../components/layouts/dialog/CustomDialog';
@@ -18,11 +18,15 @@ import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import QuestionMedia from '../components/userCourses/QuestionMedia';
 import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
 import { decode } from 'html-entities';
+import CustomAudioPlayer from '../components/audio/CustomAudioPlayer';
+import { calculateQuizTotalScore } from '../utils/calculateQuizTotalScore';
+import { Lesson } from '../interfaces/lessons';
+import { calculateScorePercentage } from '../utils/calculateScorePercentage';
 
 const SubmissionFeedbackDetails = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
-	const { isSmallScreen, isRotatedMedium, isVerySmallScreen, isRotated } = useContext(MediaQueryContext);
+	const { isSmallScreen, isRotatedMedium, isVerySmallScreen, isRotated, isMobilePortrait } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isVerySmallScreen || isRotated;
 
@@ -36,6 +40,7 @@ const SubmissionFeedbackDetails = () => {
 	const [userSingleResponseWithFeedback, setUserSingleResponseWithFeedback] = useState<any>(null);
 	const [openQuestionFeedbackModal, setOpenQuestionFeedbackModal] = useState<boolean>(false);
 	const [currentResponseIndex, setCurrentResponseIndex] = useState<number>(0);
+	const [lesson, setLesson] = useState<Lesson | null>(null);
 
 	const [isChecked, setIsChecked] = useState<boolean>(false);
 
@@ -51,9 +56,45 @@ const SubmissionFeedbackDetails = () => {
 
 				const userCourseQuizData = quizResponse.data.response;
 				setUserResponseData(userCourseQuizData);
-				setQuizName(userCourseQuizData[0].lessonId.title);
-				setCourseName(userCourseQuizData[0].courseId.title);
+
+				// Handle lessonId - it might be an array from lookup or an object
+				const lessonIdObj = userCourseQuizData[0]?.lessonId;
+				const lessonIdTitle = Array.isArray(lessonIdObj) ? lessonIdObj[0]?.title : lessonIdObj?.title;
+				setQuizName(lessonIdTitle || '');
+
+				// Handle courseId - it might be an array from lookup or an object
+				const courseIdObj = userCourseQuizData[0]?.courseId;
+				const courseIdTitle = Array.isArray(courseIdObj) ? courseIdObj[0]?.title : courseIdObj?.title;
+				setCourseName(courseIdTitle || '');
+
 				setQuizFeedback(lessonResponse.data.data[0].teacherFeedback);
+
+				// Fetch lesson data to get isGraded and questionScores for total score calculation
+				// Get lessonId from userCourseQuizData (populated object with _id and title)
+				let lessonIdToFetch = null;
+
+				if (userCourseQuizData && userCourseQuizData.length > 0) {
+					const firstResponse = userCourseQuizData[0];
+					// lessonId is populated, so it's an object with _id
+					if (firstResponse.lessonId) {
+						if (firstResponse.lessonId._id) {
+							lessonIdToFetch = firstResponse.lessonId._id;
+						} else if (typeof firstResponse.lessonId === 'string') {
+							lessonIdToFetch = firstResponse.lessonId;
+						}
+					}
+				}
+
+				if (lessonIdToFetch) {
+					try {
+						const lessonDataResponse = await axios.get(`${base_url}/lessons/${lessonIdToFetch}`);
+						// API response structure is lessonResponse.data (not data.data)
+						const lessonData = lessonDataResponse.data;
+						setLesson(lessonData);
+					} catch (error) {
+						console.error('Error fetching lesson data:', error);
+					}
+				}
 			} catch (error) {
 				console.error(error);
 			}
@@ -103,7 +144,7 @@ const SubmissionFeedbackDetails = () => {
 				<Box sx={{ width: '90%', margin: '0 auto' }}>
 					{userSingleResponseWithFeedback?.questionId?.options?.map((option: string, index: number) => (
 						<Typography
-							variant={isMobileSize ? 'body2' : 'body1'}
+							variant='body2'
 							key={index}
 							sx={{
 								margin: isMobileSize ? '0.5rem 0 0 1.5rem' : '1rem 0 0 2rem',
@@ -194,7 +235,7 @@ const SubmissionFeedbackDetails = () => {
 			)}
 
 			{fetchQuestionTypeName(userSingleResponseWithFeedback?.questionId) === QuestionType.FITB_TYPING && (
-				<Box sx={{ width: '90%', margin: isMobileSize ? '-1rem auto' : '1rem auto' }}>
+				<Box sx={{ width: '90%', margin: isMobileSize ? '-1rem auto 1rem auto' : '1rem auto' }}>
 					<FillInTheBlanksTyping
 						textWithBlanks={userSingleResponseWithFeedback?.questionId.question}
 						blankValuePairs={userSingleResponseWithFeedback?.questionId.blankValuePairs}
@@ -212,29 +253,69 @@ const SubmissionFeedbackDetails = () => {
 						Your Recording
 					</Typography>
 					{userSingleResponseWithFeedback?.audioRecordUrl && (
-						<audio
-							src={userSingleResponseWithFeedback?.audioRecordUrl}
-							controls
-							style={{
+						<CustomAudioPlayer
+							audioUrl={userSingleResponseWithFeedback?.audioRecordUrl}
+							sx={{
 								marginTop: '1rem',
-								boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
-								borderRadius: '0.35rem',
 								width: '100%',
 							}}
 						/>
 					)}
 					{userSingleResponseWithFeedback?.videoRecordUrl && (
-						<Box sx={{ display: 'flex', justifyContent: 'center', mb: '1rem', width: '100%' }}>
-							<video
-								src={userSingleResponseWithFeedback?.videoRecordUrl}
-								controls
-								style={{
-									marginTop: '1rem',
-									boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
-									borderRadius: '0.35rem',
-									width: '60%',
-								}}
-							/>
+						<Box
+							sx={{
+								display: 'flex',
+								justifyContent: 'center',
+								mb: '1rem',
+								width: '100%',
+							}}>
+							<Box
+								sx={{
+									'display': 'flex',
+									'flexDirection': 'column',
+									'alignItems': 'center',
+									'background': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+									'borderRadius': '12px',
+									'padding': isMobileSize ? '0.35rem' : '0.5rem',
+									'boxShadow': '0 8px 20px rgba(0,0,0,0.1)',
+									'backdropFilter': 'blur(10px)',
+									'border': '1px solid rgba(255,255,255,0.1)',
+									'position': 'relative',
+									'overflow': 'hidden',
+									'transition': 'all 0.3s ease',
+									'width': isMobileSize ? '100%' : '60%',
+									'maxWidth': isMobileSize ? '100%' : '600px',
+									'marginTop': '1rem',
+									'&:hover': {
+										transform: 'translateY(-2px)',
+										boxShadow: '0 12px 25px rgba(0,0,0,0.15)',
+									},
+									'&::before': {
+										content: '""',
+										position: 'absolute',
+										top: 0,
+										left: 0,
+										right: 0,
+										bottom: 0,
+										background: 'rgba(255,255,255,0.05)',
+										borderRadius: '12px',
+										zIndex: 0,
+									},
+								}}>
+								<video
+									src={userSingleResponseWithFeedback?.videoRecordUrl}
+									controls
+									style={{
+										borderRadius: '8px',
+										width: '100%',
+										height: 'auto',
+										maxHeight: isMobileSize ? '20rem' : '25rem',
+										objectFit: 'contain',
+										position: 'relative',
+										zIndex: 1,
+									}}
+								/>
+							</Box>
 						</Box>
 					)}
 					{userSingleResponseWithFeedback?.teacherAudioFeedbackUrl && (
@@ -242,15 +323,11 @@ const SubmissionFeedbackDetails = () => {
 							<Typography variant='h5' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem' }}>
 								Instructor's Audio Feedback for Question
 							</Typography>
-							<audio
-								src={userSingleResponseWithFeedback?.teacherAudioFeedbackUrl}
-								controls
-								style={{
-									marginTop: '1rem',
-									boxShadow: '0 0.1rem 0.4rem 0.2rem rgba(0,0,0,0.3)',
-									borderRadius: '0.35rem',
+							<CustomAudioPlayer
+								audioUrl={userSingleResponseWithFeedback?.teacherAudioFeedbackUrl}
+								sx={{
+									marginTop: '1.5rem',
 									width: '100%',
-									height: '2rem',
 								}}
 							/>
 						</Box>
@@ -278,7 +355,16 @@ const SubmissionFeedbackDetails = () => {
 
 	return (
 		<DashboardPagesLayout pageName='Instructor Feedback' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
-			<Box sx={{ display: 'flex', justifyContent: 'space-around', width: '90%', margin: isMobileSize ? '1rem 0rem' : '2rem' }}>
+			<Box
+				sx={{
+					display: 'flex',
+					justifyContent: 'space-around',
+					width: '90%',
+					margin: isMobileSize ? '1rem 0rem' : '2rem',
+					boxShadow: '0 0.2rem 0.5rem 0.1rem rgba(0, 0, 0, 0.2)',
+					borderRadius: '0.35rem',
+					padding: '0.75rem 0',
+				}}>
 				{[
 					{ label: 'Quiz Name', value: quizName },
 					{ label: 'Course Name', value: courseName },
@@ -304,10 +390,51 @@ const SubmissionFeedbackDetails = () => {
 						width: '100%',
 						margin: isMobileSize ? '0.25rem 0' : '0 0 0.75rem 0',
 					}}>
-					<Box>
+					<Box sx={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
 						<Typography variant='h5' sx={{ fontSize: isMobileSize ? '0.9rem' : '1rem' }}>
 							Questions
 						</Typography>
+						{lesson &&
+							lesson.isGraded &&
+							lesson.type === LessonType.QUIZ &&
+							(() => {
+								const totalPossible = calculateQuizTotalScore({ lesson, fetchQuestionTypeName });
+								const totalEarned =
+									userResponseData?.reduce((sum: number, response: any) => {
+										return sum + (response.pointsEarned !== undefined && response.pointsEarned !== null ? response.pointsEarned : 0);
+									}, 0) || 0;
+								const percentage = calculateScorePercentage(totalEarned, totalPossible);
+								return totalPossible > 0 ? (
+									<Box
+										sx={{
+											display: 'inline-flex',
+											alignItems: 'center',
+											backgroundColor: theme.palette.primary.main,
+											color: 'white',
+											padding: isMobileSize ? '0.3rem 0.6rem' : '0.35rem 0.75rem',
+											borderRadius: '1.5rem',
+											fontSize: isMobileSize ? '0.65rem' : '0.8rem',
+											fontWeight: 600,
+											fontFamily: theme.fontFamily?.main || 'Poppins, sans-serif',
+											boxShadow: '0 2px 8px rgba(1, 67, 90, 0.25)',
+											whiteSpace: 'nowrap',
+										}}>
+										{totalEarned}/{totalPossible} pts
+										{percentage !== null && (
+											<Typography
+												component='span'
+												display={isMobilePortrait ? 'none' : ''}
+												sx={{
+													fontSize: isMobileSize ? '0.6rem' : '0.7rem',
+													color: '#ffff',
+													ml: '0.25rem',
+												}}>
+												- ({percentage}%)
+											</Typography>
+										)}
+									</Box>
+								) : null;
+							})()}
 					</Box>
 					<CustomInfoMessageAlignedRight
 						message={isVerySmallScreen ? 'Click on a question to view details' : 'Click on a question to view details and feedback (if available)'}

@@ -58,15 +58,36 @@ const QuestionResponseCard = ({ response, index, fromAdminSubmissions, fetchQues
 					) : null}
 				</Box>
 
-				<Typography
-					variant='body2'
-					sx={{
-						textAlign: 'right',
-						flex: 1,
-						fontSize: isMobileSize ? '0.65rem' : '0.85rem',
-					}}>
-					{fetchQuestionTypeName(response.questionId)}
-				</Typography>
+				<Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.25rem' }}>
+					<Typography
+						variant='body2'
+						sx={{
+							textAlign: 'right',
+							fontSize: isMobileSize ? '0.65rem' : '0.85rem',
+						}}>
+						{fetchQuestionTypeName(response.questionId)}
+					</Typography>
+					{response.pointsEarned !== undefined &&
+						response.pointsEarned !== null &&
+						response.pointsPossible !== undefined &&
+						response.pointsPossible !== null && (
+							<Typography
+								variant='body2'
+								sx={{
+									textAlign: 'right',
+									fontSize: isMobileSize ? '0.6rem' : '0.7rem',
+									color: theme.palette.text.secondary,
+									fontWeight: 600,
+								}}>
+								{(() => {
+									const questionType = fetchQuestionTypeName(response.questionId);
+									const isOpenEndedOrAudioVideo = questionType === QuestionType.OPEN_ENDED || questionType === QuestionType.AUDIO_VIDEO;
+									const displayEarned = isOpenEndedOrAudioVideo && response.pointsEarned === 0 ? '-' : response.pointsEarned;
+									return `${displayEarned}/${response.pointsPossible} pts`;
+								})()}
+							</Typography>
+						)}
+				</Box>
 			</Box>
 
 			<Box

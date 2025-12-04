@@ -74,6 +74,10 @@ const AddNewLessonDialog = ({
 		let aValue = a[orderBy];
 		let bValue = b[orderBy];
 
+		// Handle undefined/null values
+		if (aValue === undefined || aValue === null) return 1;
+		if (bValue === undefined || bValue === null) return -1;
+
 		// Handle different data types
 		if (typeof aValue === 'string' && typeof bValue === 'string') {
 			aValue = aValue.toLowerCase();

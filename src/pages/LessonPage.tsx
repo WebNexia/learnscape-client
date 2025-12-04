@@ -41,6 +41,10 @@ import UniversalVideoPlayer from '../components/video/UniversalVideoPlayer';
 import DocumentViewer from '../components/documents/DocumentViewer';
 import { UserCourseLessonDataContext } from '../contexts/UserCourseLessonDataContextProvider';
 import { truncateText } from '@utils/utilText';
+import useQuestionTypes from '../hooks/useQuestionTypes';
+import { QuestionType } from '../interfaces/enums';
+import { calculateQuizTotalScore } from '../utils/calculateQuizTotalScore';
+import { calculateScorePercentage } from '../utils/calculateScorePercentage';
 
 export interface QuizQuestionAnswer {
 	questionId: string;
@@ -51,6 +55,10 @@ export interface QuizQuestionAnswer {
 	teacherAudioFeedbackUrl: string;
 	userMatchingPairAnswers: UserMatchingPairAnswers[];
 	userBlankValuePairAnswers: UserBlankValuePairAnswers[];
+	pointsEarned?: number;
+	pointsPossible?: number;
+	isAutoGraded?: boolean;
+	partialScores?: { [key: string]: number };
 }
 
 const LessonPage = () => {
@@ -121,6 +129,9 @@ const LessonPage = () => {
 	const [isNotesUpdated, setIsNotesUpdated] = useState<boolean>(false);
 	const [isQuestionsMapOpen, setIsQuestionsMapOpen] = useState<boolean>(false);
 	const [isSoundMuted, setIsSoundMuted] = useState<boolean>(false);
+	const [currentQuestionNumber, setCurrentQuestionNumber] = useState<number>(0);
+
+	const { fetchQuestionTypeName } = useQuestionTypes();
 
 	const [lesson, setLesson] = useState<Lesson>({
 		_id: '',
@@ -202,6 +213,10 @@ const LessonPage = () => {
 								teacherAudioFeedbackUrl: answer.teacherAudioFeedbackUrl,
 								userMatchingPairAnswers: answer.userMatchingPairAnswers,
 								userBlankValuePairAnswers: answer.userBlankValuePairAnswers,
+								pointsEarned: answer.pointsEarned,
+								pointsPossible: answer.pointsPossible,
+								isAutoGraded: answer.isAutoGraded,
+								partialScores: answer.partialScores,
 							}))
 						);
 					} else {
@@ -365,8 +380,14 @@ const LessonPage = () => {
 					</Button>
 				</Box>
 
-				{isQuestionsVisible && (
-					<Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+				{isQuestionsVisible && !lesson.isGraded && (
+					<Box
+						sx={{
+							flex: 6,
+							display: 'flex',
+							justifyContent: 'center',
+							alignItems: 'center',
+						}}>
 						{lessonType === LessonType.PRACTICE_LESSON && (
 							<Tooltip title={isSoundMuted ? 'Unmute' : 'Mute'} placement='left' arrow>
 								<IconButton onClick={() => setIsSoundMuted(!isSoundMuted)}>
@@ -386,16 +407,158 @@ const LessonPage = () => {
 					</Box>
 				)}
 
-				<Box sx={{ flex: 3, display: isQuestionsVisible ? 'none' : 'flex', justifyContent: 'center', textAlign: 'center' }}>
-					<Typography
-						variant={isMobileSize ? 'h6' : 'h3'}
-						sx={{
-							fontSize: isMobileSize ? (lesson?.title?.length > 30 ? '0.7rem' : '0.85rem') : '1.25rem',
-						}}>
-						{truncateText(lesson?.title, isSmallMobilePortrait ? 30 : lesson?.title?.length || 0)}
-					</Typography>
+				<Box
+					sx={{
+						display: 'flex',
+						justifyContent: 'center',
+						textAlign: 'center',
+						alignItems: 'center',
+					}}>
+					{isQuestionsVisible && lesson.isGraded && lesson.type === LessonType.QUIZ ? (
+						(() => {
+							// displayedQuestionNumber is 1-indexed, convert to 0-indexed for array access
+							const questionIndex = currentQuestionNumber > 0 ? currentQuestionNumber - 1 : 0;
+							const filteredQuestions = lesson.questions?.filter((q) => q !== null && q !== undefined) || [];
+							const currentQuestion = filteredQuestions[questionIndex];
+							if (!currentQuestion) return null;
+							const questionId = currentQuestion._id;
+							const questionScores = lesson.questionScores || {};
+							const scoreConfig = questionScores[questionId];
+							if (!scoreConfig) return null;
+
+							const questionTypeName = fetchQuestionTypeName(currentQuestion);
+							let pointsPossible = 0;
+							let perItemScore: number | undefined = undefined;
+
+							if (
+								questionTypeName === QuestionType.FITB_TYPING ||
+								questionTypeName === QuestionType.FITB_DRAG_DROP ||
+								questionTypeName === QuestionType.MATCHING
+							) {
+								const scoreObj = typeof scoreConfig === 'object' ? scoreConfig : { total: scoreConfig };
+								pointsPossible = scoreObj.total || 0;
+								if (questionTypeName === QuestionType.FITB_TYPING || questionTypeName === QuestionType.FITB_DRAG_DROP) {
+									perItemScore = scoreObj.perBlank;
+								} else if (questionTypeName === QuestionType.MATCHING) {
+									perItemScore = scoreObj.perMatch;
+								}
+							} else {
+								pointsPossible = typeof scoreConfig === 'number' ? scoreConfig : 0;
+							}
+
+							// Get user's earned score for this question
+							const userAnswer = userQuizAnswers?.find((data) => data.questionId === questionId);
+							const pointsEarned = userAnswer?.pointsEarned;
+							const isOpenEndedOrAudioVideo = questionTypeName === QuestionType.OPEN_ENDED || questionTypeName === QuestionType.AUDIO_VIDEO;
+
+							return pointsPossible > 0 ? (
+								<Box
+									sx={{
+										display: 'inline-flex',
+										alignItems: 'center',
+										gap: '0.25rem',
+										backgroundColor: theme.palette.primary.main,
+										color: 'white',
+										padding: isMobileSize ? '0.4rem 0.75rem' : '0.35rem 1rem',
+										borderRadius: '1.5rem',
+										fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+										fontWeight: 600,
+										fontFamily: theme.fontFamily?.main || 'Poppins, sans-serif',
+										boxShadow: '0 2px 8px rgba(1, 67, 90, 0.25)',
+										whiteSpace: 'nowrap',
+									}}>
+									<Typography
+										component='span'
+										sx={{
+											fontSize: 'inherit',
+											fontWeight: 'inherit',
+											color: 'inherit',
+										}}>
+										{isLessonCompleted && pointsEarned !== undefined && pointsEarned !== null
+											? isOpenEndedOrAudioVideo && pointsEarned === 0
+												? `- / ${pointsPossible} pts`
+												: `${pointsEarned} / ${pointsPossible} pts`
+											: `${pointsPossible} pts`}
+									</Typography>
+									{perItemScore !== undefined && perItemScore !== null && !isLessonCompleted && (
+										<Typography
+											component='span'
+											sx={{
+												fontSize: 'inherit',
+												fontWeight: 500,
+												color: 'rgba(255, 255, 255, 0.9)',
+												opacity: 0.9,
+											}}>
+											({perItemScore} each)
+										</Typography>
+									)}
+								</Box>
+							) : null;
+						})()
+					) : (
+						<Box sx={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}>
+							{!isQuestionsVisible && (
+								<Typography
+									variant={isMobileSize ? 'h6' : 'h3'}
+									sx={{
+										fontSize: isMobileSize ? (lesson?.title?.length > 30 ? '0.7rem' : '0.85rem') : '1.25rem',
+									}}>
+									{truncateText(lesson?.title, isSmallMobilePortrait ? 30 : lesson?.title?.length || 0)}
+								</Typography>
+							)}
+							{lesson.isGraded &&
+								lesson.type === LessonType.QUIZ &&
+								(() => {
+									const totalPossible = calculateQuizTotalScore({ lesson, fetchQuestionTypeName });
+									// Calculate user's total earned score
+									const totalEarned =
+										userQuizAnswers?.reduce((sum, answer) => {
+											return sum + (answer.pointsEarned || 0);
+										}, 0) || 0;
+									const percentage = isLessonCompleted && totalEarned > 0 ? calculateScorePercentage(totalEarned, totalPossible) : null;
+									return totalPossible > 0 ? (
+										<Box
+											sx={{
+												display: 'inline-flex',
+												alignItems: 'center',
+												backgroundColor: theme.palette.primary.main,
+												color: 'white',
+												padding: isMobileSize ? '0.4rem 0.75rem' : '0.35rem 1rem',
+												borderRadius: '1.5rem',
+												fontSize: isMobileSize ? '0.7rem' : '0.85rem',
+												fontWeight: 600,
+												fontFamily: theme.fontFamily?.main || 'Poppins, sans-serif',
+												boxShadow: '0 2px 8px rgba(1, 67, 90, 0.25)',
+												whiteSpace: 'nowrap',
+												ml: '0.5rem',
+											}}>
+											{isLessonCompleted && totalEarned > 0 ? `${totalEarned}/${totalPossible} pts` : `${totalPossible} pts`}
+											{percentage !== null && (
+												<Typography
+													component='span'
+													display={isMobilePortrait ? 'none' : ''}
+													sx={{
+														fontSize: isMobileSize ? '0.65rem' : '0.75rem',
+														color: '#ffff',
+														ml: '0.25rem',
+													}}>
+													- ({percentage}%)
+												</Typography>
+											)}
+										</Box>
+									) : null;
+								})()}
+						</Box>
+					)}
 				</Box>
 				<Box sx={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
+					{lesson.isGraded && lesson.type === LessonType.QUIZ && isQuestionsVisible && (
+						<Tooltip title='Take Notes' placement='left' arrow>
+							<IconButton onClick={() => setIsNotesDrawerOpen(!isNotesDrawerOpen)}>
+								<Article fontSize={isMobileSize ? 'small' : 'medium'} />
+							</IconButton>
+						</Tooltip>
+					)}
 					<Button
 						variant='text'
 						endIcon={<Home fontSize='small' />}
@@ -558,7 +721,7 @@ const LessonPage = () => {
 							width: '100%',
 						}}>
 						{!isMobileSizeSmall && (
-							<Box sx={{ width: '100%', marginBottom: '1rem' }}>
+							<Box sx={{ width: '100%', marginBottom: '1rem', mt: !isInstructionalLesson && !isMobileSize ? '1rem' : '0' }}>
 								<Typography variant='h5' sx={{ fontSize: isRotatedMedium || isSmallScreen ? '0.85rem' : undefined }}>
 									{!isInstructionalLesson ? 'Instructions' : ''}
 								</Typography>
@@ -669,6 +832,7 @@ const LessonPage = () => {
 						userQuizAnswers={userQuizAnswers}
 						setUserQuizAnswers={setUserQuizAnswers}
 						lessonName={lesson.title}
+						onQuestionChange={setCurrentQuestionNumber}
 						isSoundMuted={isSoundMuted}
 					/>
 				</Box>

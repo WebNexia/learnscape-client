@@ -1,3 +1,5 @@
+import { QuestionInterface } from './question';
+
 export interface QuizSubmission {
 	_id: string;
 	lessonName: string;
@@ -11,4 +13,9 @@ export interface QuizSubmission {
 	isChecked: boolean;
 	createdAt: string;
 	updatedAt: string;
+	totalEarned?: number;
+	lessonIsGraded?: boolean;
+	lessonType?: string;
+	lessonQuestionScores?: { [questionId: string]: number | { total: number; perBlank?: number; perMatch?: number } };
+	lessonQuestions?: QuestionInterface[];
 }
