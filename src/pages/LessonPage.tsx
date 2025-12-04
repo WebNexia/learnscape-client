@@ -380,8 +380,14 @@ const LessonPage = () => {
 					</Button>
 				</Box>
 
-				{isQuestionsVisible && (
-					<Box sx={{ display: lesson.isGraded && lesson.type === LessonType.QUIZ ? 'none' : 'flex', alignItems: 'center', gap: 1 }}>
+				{isQuestionsVisible && !lesson.isGraded && (
+					<Box
+						sx={{
+							flex: 6,
+							display: 'flex',
+							justifyContent: 'center',
+							alignItems: 'center',
+						}}>
 						{lessonType === LessonType.PRACTICE_LESSON && (
 							<Tooltip title={isSoundMuted ? 'Unmute' : 'Mute'} placement='left' arrow>
 								<IconButton onClick={() => setIsSoundMuted(!isSoundMuted)}>
@@ -401,7 +407,13 @@ const LessonPage = () => {
 					</Box>
 				)}
 
-				<Box sx={{ flex: 3, display: isQuestionsVisible ? 'flex' : 'flex', justifyContent: 'center', textAlign: 'center', alignItems: 'center' }}>
+				<Box
+					sx={{
+						display: 'flex',
+						justifyContent: 'center',
+						textAlign: 'center',
+						alignItems: 'center',
+					}}>
 					{isQuestionsVisible && lesson.isGraded && lesson.type === LessonType.QUIZ ? (
 						(() => {
 							// displayedQuestionNumber is 1-indexed, convert to 0-indexed for array access
@@ -485,13 +497,15 @@ const LessonPage = () => {
 						})()
 					) : (
 						<Box sx={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}>
-							<Typography
-								variant={isMobileSize ? 'h6' : 'h3'}
-								sx={{
-									fontSize: isMobileSize ? (lesson?.title?.length > 30 ? '0.7rem' : '0.85rem') : '1.25rem',
-								}}>
-								{truncateText(lesson?.title, isSmallMobilePortrait ? 30 : lesson?.title?.length || 0)}
-							</Typography>
+							{!isQuestionsVisible && (
+								<Typography
+									variant={isMobileSize ? 'h6' : 'h3'}
+									sx={{
+										fontSize: isMobileSize ? (lesson?.title?.length > 30 ? '0.7rem' : '0.85rem') : '1.25rem',
+									}}>
+									{truncateText(lesson?.title, isSmallMobilePortrait ? 30 : lesson?.title?.length || 0)}
+								</Typography>
+							)}
 							{lesson.isGraded &&
 								lesson.type === LessonType.QUIZ &&
 								(() => {
@@ -522,6 +536,7 @@ const LessonPage = () => {
 											{percentage !== null && (
 												<Typography
 													component='span'
+													display={isMobilePortrait ? 'none' : ''}
 													sx={{
 														fontSize: isMobileSize ? '0.65rem' : '0.75rem',
 														color: '#ffff',
@@ -706,7 +721,7 @@ const LessonPage = () => {
 							width: '100%',
 						}}>
 						{!isMobileSizeSmall && (
-							<Box sx={{ width: '100%', marginBottom: '1rem' }}>
+							<Box sx={{ width: '100%', marginBottom: '1rem', mt: !isInstructionalLesson && !isMobileSize ? '1rem' : '0' }}>
 								<Typography variant='h5' sx={{ fontSize: isRotatedMedium || isSmallScreen ? '0.85rem' : undefined }}>
 									{!isInstructionalLesson ? 'Instructions' : ''}
 								</Typography>
