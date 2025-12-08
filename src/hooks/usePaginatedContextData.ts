@@ -14,6 +14,7 @@ interface UsePaginatedEntityOptions<T extends { _id: string; updatedAt: string; 
 	initialPage?: number;
 	limit?: number;
 	disableAutoGapFill?: boolean; // Disable automatic gap filling
+	refetchOnWindowFocus?: boolean; // Enable refetch on window focus (default: false)
 }
 
 export function usePaginatedEntity<T extends { _id: string; updatedAt: string; isActive?: boolean }>({
@@ -27,6 +28,7 @@ export function usePaginatedEntity<T extends { _id: string; updatedAt: string; i
 	initialPage = 1,
 	limit = 200,
 	disableAutoGapFill = false,
+	refetchOnWindowFocus = false,
 }: UsePaginatedEntityOptions<T>) {
 	const queryClient = useQueryClient();
 
@@ -80,7 +82,7 @@ export function usePaginatedEntity<T extends { _id: string; updatedAt: string; i
 		enabled: !!orgId && enabled,
 		staleTime,
 		cacheTime,
-		refetchOnWindowFocus: false, // 👈 Disabled to prevent multiple API calls
+		refetchOnWindowFocus, // Configurable - enables immediate updates for admins/instructors
 		refetchOnMount: true, // 👈 Enable refetch on mount to get fresh data when navigating back
 	});
 

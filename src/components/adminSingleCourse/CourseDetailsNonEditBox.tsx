@@ -33,6 +33,8 @@ import { useAuth } from '../../hooks/useAuth';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import CustomCancelButton from '../forms/customButtons/CustomCancelButton';
 import { LessonType } from '../../interfaces/enums';
+import { useParams, useNavigate } from 'react-router-dom';
+import CustomSubmitButton from '../forms/customButtons/CustomSubmitButton';
 
 interface CourseDetailsNonEditBoxProps {
 	singleCourse?: SingleCourse;
@@ -51,6 +53,8 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 	const [expandedChapters, setExpandedChapters] = useState<{ [chapterId: string]: boolean }>({});
 
 	const { isInstructor } = useAuth();
+	const { courseId } = useParams();
+	const navigate = useNavigate();
 
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -293,9 +297,25 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 
 			{!singleCourse?.courseManagement.isExternal && (
 				<Box sx={{ mt: '4rem', minHeight: '30vh', mb: singleCourse?.chapterIds?.length === 0 ? '3rem' : '0rem' }}>
-					<Typography variant='h5' sx={{ mb: isMobileSize ? '1rem' : '1.25rem' }}>
-						CHAPTERS
-					</Typography>
+					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+						<Typography variant='h5' sx={{ mb: isMobileSize ? '1rem' : '1.25rem' }}>
+							CHAPTERS
+						</Typography>
+
+						{!singleCourse?.courseManagement.isExternal && (
+							<CustomSubmitButton
+								type='button'
+								onClick={() => {
+									if (courseId) {
+										const routePrefix = isInstructor ? '/instructor' : '/admin';
+										navigate(`${routePrefix}/course/${courseId}/forms`);
+									}
+								}}
+								sx={{ mb: isMobileSize ? '1rem' : '1.25rem' }}>
+								Public Forms
+							</CustomSubmitButton>
+						)}
+					</Box>
 					{singleCourse?.chapterIds?.length === 0 ? (
 						<NoContentBoxAdmin content='No chapter for this course' />
 					) : (

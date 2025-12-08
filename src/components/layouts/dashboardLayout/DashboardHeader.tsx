@@ -3,7 +3,7 @@ import theme from '../../../themes';
 import { useNavigate } from 'react-router-dom';
 import { useContext, useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { Roles } from '../../../interfaces/enums';
-import { Cancel, DoneAll, Menu, Notifications, BugReport, Delete, ClearAll, Star } from '@mui/icons-material';
+import { Cancel, DoneAll, Menu, Notifications, BugReport, Delete, ClearAll, Star, Settings } from '@mui/icons-material';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 import { useUserCourseLessonData } from '../../../hooks/useUserCourseLessonData';
 import NotificationsBox from '../notifications/Notifications';
@@ -319,6 +319,31 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 							/>
 						</IconButton>
 					</Badge>
+
+					{(hasAdminAccess || user?.role === Roles.INSTRUCTOR) && (
+						<Tooltip title='Settings' placement='top' arrow>
+							<IconButton
+								onClick={() => {
+									const settingsPath = hasAdminAccess ? '/admin/settings' : '/instructor/settings';
+									navigate(settingsPath);
+								}}
+								sx={{
+									':hover': {
+										backgroundColor: 'transparent',
+									},
+									'mr': 1,
+									'ml': -1,
+								}}>
+								<Settings
+									color='secondary'
+									fontSize={isMobileSize ? 'small' : 'medium'}
+									sx={{
+										fontSize: isMobileSize ? '1rem' : undefined,
+									}}
+								/>
+							</IconButton>
+						</Tooltip>
+					)}
 
 					{notificationsOpen && (
 						<Box

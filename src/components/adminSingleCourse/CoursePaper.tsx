@@ -376,7 +376,7 @@ const CoursePaper = ({
 												<Info sx={{ color: 'white', fontSize: isSticky ? (isMobileSize ? '0.9rem' : '1rem') : undefined }} fontSize='small' />
 											</IconButton>
 										</Tooltip>
-										<Tooltip title='Feedbacks' placement='top' arrow>
+										<Tooltip title='Check-out Feedback' placement='top' arrow>
 											<IconButton
 												sx={{ padding: isSticky ? '0 0rem' : '0 0.25rem', ml: isSticky ? '0.5rem' : '0.25rem' }}
 												onClick={() => {

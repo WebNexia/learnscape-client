@@ -24,7 +24,7 @@ import { truncateText } from '../utils/utilText';
 import { useQuery, useQueryClient } from 'react-query';
 import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
 
-const AdminFeedbacks = () => {
+const AdminCheckoutsFeedback = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId, organisation } = useContext(OrganisationContext);
 	const [searchParams] = useSearchParams();
@@ -402,14 +402,14 @@ const AdminFeedbacks = () => {
 	};
 
 	return (
-		<AdminPageErrorBoundary pageName='Feedbacks'>
-			<DashboardPagesLayout pageName='Feedbacks' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
+		<AdminPageErrorBoundary pageName='Checkout Feedback'>
+			<DashboardPagesLayout pageName='Checkout Feedback' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
 				<Box sx={{ width: '100%', height: '100%' }}>
 					<FilterSearchRow
 						filterValue={filterValue}
 						onFilterChange={handleFilterChange}
-						filterOptions={[{ value: '', label: 'All Feedbacks' }]}
-						filterPlaceholder='Filter Feedbacks'
+						filterOptions={[{ value: '', label: 'All Feedback' }]}
+						filterPlaceholder='Filter Feedback'
 						searchValue={searchValue}
 						onSearchChange={setSearchValue}
 						onSearch={handleSearch}
@@ -433,7 +433,7 @@ const AdminFeedbacks = () => {
 									]
 								: []),
 							{
-								label: isMobileSize ? 'Download' : `Download ${searchButtonClicked ? 'Filtered' : 'All'} Feedbacks`,
+								label: isMobileSize ? 'Download' : `Download ${searchButtonClicked ? 'Filtered' : 'All'} Feedback`,
 								onClick: handleDownloadFeedbacks,
 								startIcon: isMobileSize ? undefined : <DownloadIcon />,
 								disabled: paginatedFeedbacks && paginatedFeedbacks.length === 0,
@@ -739,4 +739,4 @@ const AdminFeedbacks = () => {
 	);
 };
 
-export default AdminFeedbacks;
+export default AdminCheckoutsFeedback;

@@ -8,6 +8,7 @@ import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
 import { PageName, Roles } from '../../../interfaces/enums';
 import {
 	AssignmentIndRounded,
+	Ballot,
 	CalendarMonth,
 	CreditCard,
 	Email,
@@ -130,7 +131,10 @@ const CustomDrawer = ({ isDrawerOpen, setIsDrawerOpen, hasUnreadMessages }: Cust
 										btnText='Courses'
 										IconName={LibraryBooks}
 										onClick={() => navigateWithPage(PageName.ADMIN_COURSES, `/admin/courses`)}
-										active={selectedPage === PageName.ADMIN_COURSES}
+										active={
+											selectedPage === PageName.ADMIN_COURSES ||
+											(window.location.pathname?.includes('/admin/course') && window.location.pathname?.includes('/forms'))
+										}
 									/>
 									<SidebarBtn
 										btnText='Lessons'
@@ -149,6 +153,12 @@ const CustomDrawer = ({ isDrawerOpen, setIsDrawerOpen, hasUnreadMessages }: Cust
 										IconName={FilePresent}
 										onClick={() => navigateWithPage(PageName.ADMIN_DOCUMENTS, `/admin/documents`)}
 										active={selectedPage === PageName.ADMIN_DOCUMENTS}
+									/>
+									<SidebarBtn
+										btnText='Forms'
+										IconName={Ballot}
+										onClick={() => navigateWithPage(PageName.ADMIN_FORMS, `/admin/forms`)}
+										active={selectedPage === PageName.ADMIN_FORMS && !window.location.pathname?.includes('/admin/course')}
 									/>
 									<SidebarBtn
 										btnText='Submissions'
@@ -182,12 +192,6 @@ const CustomDrawer = ({ isDrawerOpen, setIsDrawerOpen, hasUnreadMessages }: Cust
 										IconName={Groups}
 										onClick={() => navigateWithPage(PageName.ADMIN_COMMUNITY, `/admin/community`)}
 										active={selectedPage === PageName.ADMIN_COMMUNITY}
-									/>
-									<SidebarBtn
-										btnText='Settings'
-										IconName={Settings}
-										onClick={() => navigateWithPage(PageName.ADMIN_SETTINGS, `/admin/settings`)}
-										active={selectedPage === PageName.ADMIN_SETTINGS}
 									/>
 								</>
 							)}
@@ -252,7 +256,10 @@ const CustomDrawer = ({ isDrawerOpen, setIsDrawerOpen, hasUnreadMessages }: Cust
 										btnText='Courses'
 										IconName={LibraryBooks}
 										onClick={() => navigateWithPage(PageName.INSTRUCTOR_COURSES, `/instructor/courses`)}
-										active={selectedPage === PageName.INSTRUCTOR_COURSES}
+										active={
+											selectedPage === PageName.INSTRUCTOR_COURSES ||
+											(window.location.pathname?.includes('/instructor/course') && window.location.pathname?.includes('/forms'))
+										}
 									/>
 									<SidebarBtn
 										btnText='Lessons'
@@ -271,6 +278,12 @@ const CustomDrawer = ({ isDrawerOpen, setIsDrawerOpen, hasUnreadMessages }: Cust
 										IconName={FilePresent}
 										onClick={() => navigateWithPage(PageName.INSTRUCTOR_DOCUMENTS, `/instructor/documents`)}
 										active={selectedPage === PageName.INSTRUCTOR_DOCUMENTS}
+									/>
+									<SidebarBtn
+										btnText='Forms'
+										IconName={Ballot}
+										onClick={() => navigateWithPage(PageName.INSTRUCTOR_FORMS, `/instructor/forms`)}
+										active={selectedPage === PageName.INSTRUCTOR_FORMS && !window.location.pathname?.includes('/instructor/course')}
 									/>
 									<SidebarBtn
 										btnText='Submissions'
@@ -295,12 +308,6 @@ const CustomDrawer = ({ isDrawerOpen, setIsDrawerOpen, hasUnreadMessages }: Cust
 										IconName={Groups}
 										onClick={() => navigateWithPage(PageName.INSTRUCTOR_COMMUNITY, `/instructor/community`)}
 										active={selectedPage === PageName.INSTRUCTOR_COMMUNITY}
-									/>
-									<SidebarBtn
-										btnText='Settings'
-										IconName={Settings}
-										onClick={() => navigateWithPage(PageName.INSTRUCTOR_SETTINGS, `/instructor/settings`)}
-										active={selectedPage === PageName.INSTRUCTOR_SETTINGS}
 									/>
 								</>
 							)}

@@ -3,6 +3,7 @@ import theme from '../../../themes';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import {
 	AssignmentIndRounded,
+	Ballot,
 	CalendarMonth,
 	CreditCard,
 	Email,
@@ -114,7 +115,11 @@ const Sidebar = () => {
 								btnText='Courses'
 								IconName={LibraryBooks}
 								onClick={() => navigateWithPage(`/admin/courses`)}
-								active={currentPath?.includes('/admin/courses') || currentPath?.includes('/admin/course-edit')}
+								active={
+									currentPath?.includes('/admin/courses') ||
+									currentPath?.includes('/admin/course-edit') ||
+									(currentPath?.includes('/admin/course') && currentPath?.includes('/forms'))
+								}
 							/>
 							<SidebarBtn
 								btnText='Lessons'
@@ -133,6 +138,12 @@ const Sidebar = () => {
 								IconName={FilePresent}
 								onClick={() => navigateWithPage(`/admin/documents`)}
 								active={currentPath?.includes('/admin/documents')}
+							/>
+							<SidebarBtn
+								btnText='Forms'
+								IconName={Ballot}
+								onClick={() => navigateWithPage(`/admin/forms`)}
+								active={currentPath?.includes('/admin/forms') && !currentPath?.includes('/admin/course')}
 							/>
 							<SidebarBtn
 								btnText='Submissions'
@@ -166,12 +177,6 @@ const Sidebar = () => {
 								IconName={Groups}
 								onClick={() => navigateWithPage(`/admin/community`)}
 								active={currentPath?.includes('/admin/community')}
-							/>
-							<SidebarBtn
-								btnText='Settings'
-								IconName={Settings}
-								onClick={() => navigateWithPage(`/admin/settings`)}
-								active={currentPath?.includes('/admin/settings')}
 							/>
 						</>
 					)}
@@ -234,7 +239,9 @@ const Sidebar = () => {
 								btnText='Courses'
 								IconName={LibraryBooks}
 								onClick={() => navigateWithPage(`/instructor/courses`)}
-								active={currentPath?.includes('/instructor/courses')}
+								active={
+									currentPath?.includes('/instructor/courses') || (currentPath?.includes('/instructor/course') && currentPath?.includes('/forms'))
+								}
 							/>
 							<SidebarBtn
 								btnText='Lessons'
@@ -253,6 +260,12 @@ const Sidebar = () => {
 								IconName={FilePresent}
 								onClick={() => navigateWithPage(`/instructor/documents`)}
 								active={currentPath?.includes('/instructor/documents')}
+							/>
+							<SidebarBtn
+								btnText='Forms'
+								IconName={Ballot}
+								onClick={() => navigateWithPage(`/instructor/forms`)}
+								active={currentPath?.includes('/instructor/forms') && !currentPath?.includes('/instructor/course')}
 							/>
 							<SidebarBtn
 								btnText='Submissions'
@@ -278,12 +291,6 @@ const Sidebar = () => {
 								IconName={Groups}
 								onClick={() => navigateWithPage(`/instructor/community`)}
 								active={currentPath?.includes('/instructor/community')}
-							/>
-							<SidebarBtn
-								btnText='Settings'
-								IconName={Settings}
-								onClick={() => navigateWithPage(`/instructor/settings`)}
-								active={currentPath?.includes('/instructor/settings')}
 							/>
 						</>
 					)}

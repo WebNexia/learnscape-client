@@ -19,6 +19,7 @@ import QuestionsContextProvider from './contexts/QuestionsContextProvider';
 import DocumentsContextProvider from './contexts/DocumentsContextProvider';
 import { RecycleBinQuestionsProvider } from './contexts/RecycleBinQuestionsContextProvider';
 import { RecycleBinDocumentsProvider } from './contexts/RecycleBinDocumentsContextProvider';
+import FeedbackFormsContextProvider from './contexts/FeedbackFormsContextProvider';
 import SubscriptionsContextProvider from './contexts/SubscriptionsContextProvider';
 import PromoCodesContextProvider from './contexts/PromoCodesContextProvider';
 import PaymentsContextProvider from './contexts/PaymentsContextProvider';
@@ -55,13 +56,18 @@ const InstructorDashboard = React.lazy(() => import('./pages/InstructorDashboard
 const AdminQuestions = React.lazy(() => import('./pages/AdminQuestions'));
 const AdminUsers = React.lazy(() => import('./pages/AdminUsers'));
 const AdminDocuments = React.lazy(() => import('./pages/AdminDocuments'));
-const AdminFeedbacks = React.lazy(() => import('./pages/AdminFeedbacks'));
+const AdminCheckoutsFeedback = React.lazy(() => import('./pages/AdminCheckoutsFeedback'));
 const AdminQuizSubmissions = React.lazy(() => import('./pages/AdminQuizSubmissions'));
 const AdminQuizSubmissionCheck = React.lazy(() => import('./pages/AdminQuizSubmissionCheck'));
 const AdminPayments = React.lazy(() => import('./pages/AdminPayments'));
 const AdminInquiries = React.lazy(() => import('./pages/AdminInquiries'));
 const AdminRecycleBin = React.lazy(() => import('./pages/AdminRecycleBin'));
 const AdminPublicEvents = React.lazy(() => import('./pages/AdminPublicEvents'));
+const AdminCourseFeedbackForms = React.lazy(() => import('./pages/AdminCourseFeedbackForms'));
+const AdminForms = React.lazy(() => import('./pages/AdminForms'));
+const AdminFeedbackFormTemplates = React.lazy(() => import('./pages/AdminFeedbackFormTemplates'));
+const FeedbackFormSubmissions = React.lazy(() => import('./pages/FeedbackFormSubmissions'));
+const PublicFeedbackFormPage = React.lazy(() => import('./pages/PublicFeedbackFormPage'));
 const PasswordResetPage = React.lazy(() => import('./pages/ResetPasswordPage'));
 const VerifyEmailPage = React.lazy(() => import('./pages/VerifyEmailPage'));
 const HandleAuthResetPassword = React.lazy(() => import('./pages/HandleAuthResetPassword'));
@@ -203,7 +209,7 @@ export const router = createBrowserRouter([
 				path: 'admin/feedbacks',
 				element: (
 					<AdminRouteGuard>
-						<AdminFeedbacks />
+						<AdminCheckoutsFeedback />
 					</AdminRouteGuard>
 				),
 			},
@@ -340,6 +346,60 @@ export const router = createBrowserRouter([
 						<AdminPublicEventsContextProvider>
 							<AdminPublicEvents />
 						</AdminPublicEventsContextProvider>
+					</AdminRouteGuard>
+				),
+			},
+			{
+				path: 'admin/course/:courseId/forms',
+				element: (
+					<AdminRouteGuard>
+						<FeedbackFormsContextProvider>
+							<AdminCourseFeedbackForms />
+						</FeedbackFormsContextProvider>
+					</AdminRouteGuard>
+				),
+			},
+			{
+				path: 'admin/forms',
+				element: (
+					<AdminRouteGuard>
+						<FeedbackFormsContextProvider>
+							<AdminForms />
+						</FeedbackFormsContextProvider>
+					</AdminRouteGuard>
+				),
+			},
+			{
+				path: 'admin/form-templates',
+				element: (
+					<AdminRouteGuard>
+						<FeedbackFormsContextProvider>
+							<AdminFeedbackFormTemplates />
+						</FeedbackFormsContextProvider>
+					</AdminRouteGuard>
+				),
+			},
+			{
+				path: 'admin/course/:courseId/forms/:formId/submissions',
+				element: (
+					<AdminRouteGuard>
+						<FeedbackFormsContextProvider>
+							<React.Suspense fallback={<div>Loading...</div>}>
+								<FeedbackFormSubmissions />
+							</React.Suspense>
+						</FeedbackFormsContextProvider>
+					</AdminRouteGuard>
+				),
+			},
+			{
+				path: 'admin/forms/:formId/submissions',
+				element: (
+					<AdminRouteGuard>
+						<FeedbackFormsContextProvider>
+							<React.Suspense fallback={<div>Loading...</div>}>
+								<FeedbackFormSubmissions />
+							</React.Suspense>
+						</FeedbackFormsContextProvider>
 					</AdminRouteGuard>
 				),
 			},
@@ -500,6 +560,60 @@ export const router = createBrowserRouter([
 					</InstructorRouteGuard>
 				),
 			},
+			{
+				path: 'instructor/course/:courseId/forms',
+				element: (
+					<InstructorRouteGuard>
+						<FeedbackFormsContextProvider>
+							<AdminCourseFeedbackForms />
+						</FeedbackFormsContextProvider>
+					</InstructorRouteGuard>
+				),
+			},
+			{
+				path: 'instructor/forms',
+				element: (
+					<InstructorRouteGuard>
+						<FeedbackFormsContextProvider>
+							<AdminForms />
+						</FeedbackFormsContextProvider>
+					</InstructorRouteGuard>
+				),
+			},
+			{
+				path: 'instructor/form-templates',
+				element: (
+					<InstructorRouteGuard>
+						<FeedbackFormsContextProvider>
+							<AdminFeedbackFormTemplates />
+						</FeedbackFormsContextProvider>
+					</InstructorRouteGuard>
+				),
+			},
+			{
+				path: 'instructor/course/:courseId/forms/:formId/submissions',
+				element: (
+					<InstructorRouteGuard>
+						<FeedbackFormsContextProvider>
+							<React.Suspense fallback={<div>Loading...</div>}>
+								<FeedbackFormSubmissions />
+							</React.Suspense>
+						</FeedbackFormsContextProvider>
+					</InstructorRouteGuard>
+				),
+			},
+			{
+				path: 'instructor/forms/:formId/submissions',
+				element: (
+					<InstructorRouteGuard>
+						<FeedbackFormsContextProvider>
+							<React.Suspense fallback={<div>Loading...</div>}>
+								<FeedbackFormSubmissions />
+							</React.Suspense>
+						</FeedbackFormsContextProvider>
+					</InstructorRouteGuard>
+				),
+			},
 			// Learner Routes
 			{
 				path: 'dashboard',
@@ -595,6 +709,15 @@ export const router = createBrowserRouter([
 					<LearnerRouteGuard>
 						<Settings />
 					</LearnerRouteGuard>
+				),
+			},
+			// Public Feedback Form Route (no authentication required)
+			{
+				path: 'feedback-form/:publicLink',
+				element: (
+					<React.Suspense fallback={<div>Loading...</div>}>
+						<PublicFeedbackFormPage />
+					</React.Suspense>
 				),
 			},
 			// Catch-all route for 404 errors - must be last
