@@ -35,6 +35,7 @@ import CustomCancelButton from '../forms/customButtons/CustomCancelButton';
 import { LessonType } from '../../interfaces/enums';
 import { useParams, useNavigate } from 'react-router-dom';
 import CustomSubmitButton from '../forms/customButtons/CustomSubmitButton';
+import { calculateQuizTotalScoreFromScores } from '../../utils/calculateQuizTotalScoreFromScores';
 
 interface CourseDetailsNonEditBoxProps {
 	singleCourse?: SingleCourse;
@@ -97,6 +98,26 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 		});
 
 		return stats;
+	}, [chapters]);
+
+	// Total possible score for the whole course (sum of all graded quizzes)
+	const totalPossibleScoreForCourse = useMemo(() => {
+		let total = 0;
+
+		chapters?.forEach((chapter) => {
+			if (!chapter?.lessons) return;
+
+			chapter.lessons
+				.filter((lesson) => lesson !== null)
+				.forEach((lesson) => {
+					const isGradedQuiz = lesson.isGraded && lesson.type === LessonType.QUIZ;
+					if (isGradedQuiz) {
+						total += calculateQuizTotalScoreFromScores(lesson);
+					}
+				});
+		});
+
+		return total;
 	}, [chapters]);
 
 	return (
@@ -298,9 +319,20 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 			{!singleCourse?.courseManagement.isExternal && (
 				<Box sx={{ mt: '4rem', minHeight: '30vh', mb: singleCourse?.chapterIds?.length === 0 ? '3rem' : '0rem' }}>
 					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-						<Typography variant='h5' sx={{ mb: isMobileSize ? '1rem' : '1.25rem' }}>
-							CHAPTERS
-						</Typography>
+						<Box sx={{ display: 'flex', alignItems: 'center' }}>
+							<Typography variant='h5'>CHAPTERS</Typography>
+							{totalPossibleScoreForCourse > 0 && (
+								<Typography
+									variant='body2'
+									sx={{
+										fontSize: isMobileSize ? '0.7rem' : '0.8rem',
+										color: theme.textColor?.secondary?.main || 'text.secondary',
+										ml: isMobileSize ? '0.25rem' : '0.5rem',
+									}}>
+									(Total score: {totalPossibleScoreForCourse} pts)
+								</Typography>
+							)}
+						</Box>
 
 						{!singleCourse?.courseManagement.isExternal && (
 							<CustomSubmitButton
@@ -504,20 +536,44 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 																					alignItems: 'center',
 																					flex: 4,
 																				}}>
-																				<Box sx={{ mr: '0.5rem' }}>
-																					<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.65rem' : '0.85rem' }}>
-																						{!isMobileSize
-																							? lesson?.type
-																							: lesson?.type === LessonType.INSTRUCTIONAL_LESSON
-																								? 'Instructional'
-																								: lesson?.type === LessonType.PRACTICE_LESSON
-																									? 'Practice'
-																									: 'Quiz'}
-																					</Typography>
-																				</Box>
+																				{(() => {
+																					const isGradedQuiz = lesson?.isGraded && lesson?.type === LessonType.QUIZ;
+																					const totalPossibleScore = isGradedQuiz ? calculateQuizTotalScoreFromScores(lesson) : 0;
+
+																					const typeLabel = !isMobileSize
+																						? lesson?.type
+																						: lesson?.type === LessonType.INSTRUCTIONAL_LESSON
+																							? 'Instructional'
+																							: lesson?.type === LessonType.PRACTICE_LESSON
+																								? 'Practice'
+																								: 'Quiz';
+
+																					return (
+																						<Box sx={{ mr: '0.5rem', display: 'flex', alignItems: 'center', gap: 0.75 }}>
+																							{isGradedQuiz && totalPossibleScore > 0 && (
+																								<Typography
+																									variant='caption'
+																									sx={{
+																										fontSize: isMobileSize ? '0.6rem' : '0.75rem',
+																										color: theme.textColor?.secondary?.main || 'text.secondary',
+																									}}>
+																									({totalPossibleScore} pts)
+																								</Typography>
+																							)}
+																							<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.65rem' : '0.85rem' }}>
+																								{typeLabel}
+																							</Typography>
+																						</Box>
+																					);
+																				})()}
 																				<Box>
 																					<Tooltip title='Edit Lesson' placement='top' arrow>
 																						<IconButton
+																							sx={{
+																								':hover': {
+																									backgroundColor: 'transparent',
+																								},
+																							}}
 																							onClick={() => {
 																								if (isInstructor) {
 																									window.open(`/instructor/lesson-edit/lesson/${lesson._id}`, '_blank');

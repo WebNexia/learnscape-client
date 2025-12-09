@@ -1,7 +1,7 @@
-import { Alert, Box, Button, Paper, Snackbar, Typography } from '@mui/material';
+import { Alert, Box, Button, IconButton, Paper, Snackbar, Tooltip, Typography } from '@mui/material';
 import theme from '../../../themes';
 import { SingleCourse } from '../../../interfaces/course';
-import { Info, KeyboardBackspaceOutlined } from '@mui/icons-material';
+import { Info, KeyboardBackspaceOutlined, Insights } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import CoursePageBannerDataCard from './CoursePageBannerDataCard';
 import axios from '@utils/axiosInstance';
@@ -22,9 +22,20 @@ interface CoursePageBannerProps {
 	setIsEnrolledStatus?: React.Dispatch<React.SetStateAction<boolean>>;
 	documentsRef?: React.RefObject<HTMLDivElement>;
 	fromHomePage?: boolean;
+	// Optional: used on learner course page for analytics navigation
+	userCourseId?: string;
+	isCourseCompleted?: boolean;
 }
 
-const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, documentsRef, fromHomePage }: CoursePageBannerProps) => {
+const CoursePageBanner = ({
+	course,
+	isEnrolledStatus,
+	setIsEnrolledStatus,
+	documentsRef,
+	fromHomePage,
+	userCourseId,
+	isCourseCompleted,
+}: CoursePageBannerProps) => {
 	const firstLessonId: string = course && course?.chapters && course?.chapters[0]?.lessonIds && course?.chapters[0]?.lessonIds[0];
 
 	const navigate = useNavigate();
@@ -173,6 +184,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 					padding: { xs: '1rem 0rem 1rem 1rem', sm: '1rem', md: '1rem' },
 					position: 'relative',
 				}}>
+				{/* Layout container */}
 				<Box
 					sx={{
 						display: 'flex',
@@ -185,7 +197,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 						mt: '1rem',
 					}}>
 					<Box>
-						{!fromHomePage && (
+						{!fromHomePage && isMobileSize && (
 							<Button
 								variant='text'
 								startIcon={<KeyboardBackspaceOutlined fontSize='small' />}
@@ -204,7 +216,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 									navigate(`/courses`);
 									window.scrollTo({ top: 0, behavior: 'smooth' });
 								}}>
-								{fromHomePage ? 'Kurslara Dön' : 'Back to courses'}
+								Back to courses
 							</Button>
 						)}
 						<Typography
@@ -230,6 +242,7 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 						</Typography>
 					</Box>
 				</Box>
+
 				{!isEnrolledStatus && !course.isExpired && (isCourseFree ? user?.isSubscribed || user?.hasRegisteredCourse : true) ? (
 					<CustomSubmitButton
 						variant='contained'
@@ -267,23 +280,55 @@ const CoursePageBanner = ({ course, isEnrolledStatus, setIsEnrolledStatus, docum
 						{fromHomePage ? 'Kayıt süresi doldu' : 'Enrollment is closed'}
 					</Alert>
 				) : isEnrolledStatus ? (
-					<Typography
-						onClick={() => {
-							documentsRef?.current?.scrollIntoView({ behavior: 'smooth' });
-						}}
+					// See Course Materials + Analytics icon (side by side at bottom)
+					<Box
 						sx={{
-							width: 'fit-content',
 							position: 'absolute',
 							bottom: isRotated ? 60 : '1.5rem',
-							fontSize: isVerySmallScreen || isRotated ? '0.65rem' : '0.9rem',
-							textTransform: 'capitalize',
-							color: theme.textColor?.common.main,
-							cursor: 'pointer',
-							textDecoration: 'underline',
-							fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
+							left: '1rem',
+							display: 'flex',
+							alignItems: 'center',
+							gap: 1,
 						}}>
-						{fromHomePage ? 'Kurs Materyallerini Gör' : 'See Course Materials'}
-					</Typography>
+						<Typography
+							onClick={() => {
+								documentsRef?.current?.scrollIntoView({ behavior: 'smooth' });
+							}}
+							sx={{
+								fontSize: isVerySmallScreen || isRotated ? '0.65rem' : '0.9rem',
+								textTransform: 'capitalize',
+								color: theme.textColor?.common.main,
+								cursor: 'pointer',
+								textDecoration: 'underline',
+								fontFamily: fromHomePage ? 'Varela Round' : theme.fontFamily?.main,
+							}}>
+							{fromHomePage ? 'Kurs Materyallerini Gör' : 'See Course Materials'}
+						</Typography>
+
+						{/* Analytics icon - visible for enrolled courses; disabled until course is completed */}
+						{!fromHomePage && userCourseId && !course.courseManagement?.isExternal && (
+							<Tooltip title='Course Analytics' placement='top' arrow>
+								{/* span wrapper keeps tooltip working when IconButton is disabled */}
+								<span>
+									<IconButton
+										aria-label='Course analytics'
+										size={isVerySmallScreen ? 'small' : 'medium'}
+										sx={{
+											color: theme.textColor?.common.main,
+										}}
+										onClick={() => {
+											if (courseId && userCourseId && isEnrolledStatus) {
+												// isCourseCompleted &&
+												navigate(`/course/${courseId}/userCourseId/${userCourseId}/analytics`);
+												window.scrollTo({ top: 0, behavior: 'smooth' });
+											}
+										}}>
+										<Insights fontSize={isMobileSize ? 'small' : 'medium'} sx={{ color: '#ffffff' }} />
+									</IconButton>
+								</span>
+							</Tooltip>
+						)}
+					</Box>
 				) : (
 					!fromHomePage && (
 						<Typography

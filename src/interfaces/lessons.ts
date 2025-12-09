@@ -6,6 +6,9 @@ interface BaseLesson {
 	title: string;
 	type: string;
 	isGraded?: boolean;
+	// Assessment metadata (optional; used for pre/post reporting)
+	assessmentType?: 'pre' | 'post' | 'none';
+	assessmentGroupId?: string | null;
 	questionScores?: { [questionId: string]: number | { total: number; perBlank?: number; perMatch?: number } };
 	imageUrl: string;
 	videoUrl: string;

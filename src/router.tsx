@@ -48,6 +48,7 @@ const Settings = React.lazy(() => import('./pages/Settings'));
 const CoursePage = React.lazy(() => import('./pages/CoursePage'));
 const LessonPage = React.lazy(() => import('./pages/LessonPage'));
 const AdminCourseEditPage = React.lazy(() => import('./pages/AdminCourseEditPage'));
+const AdminCourseAnalytics = React.lazy(() => import('./pages/AdminCourseAnalytics'));
 const AdminCourses = React.lazy(() => import('./pages/AdminCourses'));
 const AdminLessons = React.lazy(() => import('./pages/AdminLessons'));
 const AdminLessonEditPage = React.lazy(() => import('./pages/AdminLessonEditPage'));
@@ -68,6 +69,7 @@ const AdminForms = React.lazy(() => import('./pages/AdminForms'));
 const AdminFeedbackFormTemplates = React.lazy(() => import('./pages/AdminFeedbackFormTemplates'));
 const FeedbackFormSubmissions = React.lazy(() => import('./pages/FeedbackFormSubmissions'));
 const PublicFeedbackFormPage = React.lazy(() => import('./pages/PublicFeedbackFormPage'));
+const CourseAnalytics = React.lazy(() => import('./pages/CourseAnalytics'));
 const PasswordResetPage = React.lazy(() => import('./pages/ResetPasswordPage'));
 const VerifyEmailPage = React.lazy(() => import('./pages/VerifyEmailPage'));
 const HandleAuthResetPassword = React.lazy(() => import('./pages/HandleAuthResetPassword'));
@@ -164,6 +166,14 @@ export const router = createBrowserRouter([
 								<AdminCourseEditPage />
 							</DocumentsContextProvider>
 						</LessonsContextProvider>
+					</AdminRouteGuard>
+				),
+			},
+			{
+				path: 'admin/course-analytics/course/:courseId',
+				element: (
+					<AdminRouteGuard>
+						<AdminCourseAnalytics />
 					</AdminRouteGuard>
 				),
 			},
@@ -384,7 +394,7 @@ export const router = createBrowserRouter([
 				element: (
 					<AdminRouteGuard>
 						<FeedbackFormsContextProvider>
-							<React.Suspense fallback={<div>Loading...</div>}>
+							<React.Suspense>
 								<FeedbackFormSubmissions />
 							</React.Suspense>
 						</FeedbackFormsContextProvider>
@@ -396,7 +406,7 @@ export const router = createBrowserRouter([
 				element: (
 					<AdminRouteGuard>
 						<FeedbackFormsContextProvider>
-							<React.Suspense fallback={<div>Loading...</div>}>
+							<React.Suspense>
 								<FeedbackFormSubmissions />
 							</React.Suspense>
 						</FeedbackFormsContextProvider>
@@ -433,6 +443,14 @@ export const router = createBrowserRouter([
 								<AdminCourseEditPage />
 							</DocumentsContextProvider>
 						</LessonsContextProvider>
+					</InstructorRouteGuard>
+				),
+			},
+			{
+				path: 'instructor/course-analytics/course/:courseId',
+				element: (
+					<InstructorRouteGuard>
+						<AdminCourseAnalytics />
 					</InstructorRouteGuard>
 				),
 			},
@@ -595,7 +613,7 @@ export const router = createBrowserRouter([
 				element: (
 					<InstructorRouteGuard>
 						<FeedbackFormsContextProvider>
-							<React.Suspense fallback={<div>Loading...</div>}>
+							<React.Suspense>
 								<FeedbackFormSubmissions />
 							</React.Suspense>
 						</FeedbackFormsContextProvider>
@@ -607,7 +625,7 @@ export const router = createBrowserRouter([
 				element: (
 					<InstructorRouteGuard>
 						<FeedbackFormsContextProvider>
-							<React.Suspense fallback={<div>Loading...</div>}>
+							<React.Suspense>
 								<FeedbackFormSubmissions />
 							</React.Suspense>
 						</FeedbackFormsContextProvider>
@@ -666,6 +684,14 @@ export const router = createBrowserRouter([
 				),
 			},
 			{
+				path: 'course/:courseId/userCourseId/:userCourseId/analytics',
+				element: (
+					<LearnerRouteGuard>
+						<CourseAnalytics />
+					</LearnerRouteGuard>
+				),
+			},
+			{
 				path: 'calendar',
 				element: (
 					<LearnerRouteGuard>
@@ -715,7 +741,7 @@ export const router = createBrowserRouter([
 			{
 				path: 'feedback-form/:publicLink',
 				element: (
-					<React.Suspense fallback={<div>Loading...</div>}>
+					<React.Suspense>
 						<PublicFeedbackFormPage />
 					</React.Suspense>
 				),

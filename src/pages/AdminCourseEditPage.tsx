@@ -34,6 +34,8 @@ import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
 import { useStickyPaper } from '../hooks/useStickyPaper';
 import { useAuth } from '../hooks/useAuth';
+import { LessonType } from '../interfaces/enums';
+import { calculateQuizTotalScoreFromScores } from '../utils/calculateQuizTotalScoreFromScores';
 
 export interface ChapterUpdateTrack {
 	chapterId: string;
@@ -213,6 +215,21 @@ const AdminCourseEditPage = () => {
 
 		setIsDocRenameModalOpen(newRenameModalOpen);
 	};
+
+	// Total possible score for the whole course (sum of all graded quizzes) - EDIT view
+	const totalPossibleScoreForCourseEdit = chapterLessonDataBeforeSave.reduce((courseTotal, chapter) => {
+		if (!chapter?.lessons) return courseTotal;
+
+		const chapterTotal = chapter.lessons
+			.filter((lesson) => lesson !== null)
+			.reduce((sum, lesson) => {
+				const isGradedQuiz = lesson.isGraded && lesson.type === LessonType.QUIZ;
+				if (!isGradedQuiz) return sum;
+				return sum + calculateQuizTotalScoreFromScores(lesson);
+			}, 0);
+
+		return courseTotal + chapterTotal;
+	}, 0);
 
 	const createChapterTemplate = () => {
 		try {
@@ -771,14 +788,26 @@ const AdminCourseEditPage = () => {
 											alignItems: 'center',
 											width: '100%',
 										}}>
-										<Typography variant='h5' sx={{ flex: 2 }}>
-											CHAPTERS
-										</Typography>
+										<Box sx={{ display: 'flex', flexDirection: isMobileSize ? 'column' : 'row', alignItems: 'center', flex: 2 }}>
+											<Typography variant='h5'>CHAPTERS</Typography>
+											{totalPossibleScoreForCourseEdit > 0 && (
+												<Typography
+													variant='body2'
+													sx={{
+														fontSize: isMobileSize ? '0.7rem' : '0.8rem',
+														color: theme.textColor?.secondary?.main || 'text.secondary',
+														ml: isMobileSize ? '0.25rem' : '0.5rem',
+													}}>
+													({isMobileSize ? '' : 'Total score: '}
+													{totalPossibleScoreForCourseEdit} pts)
+												</Typography>
+											)}
+										</Box>
 										<CustomInfoMessageAlignedLeft
 											message='Drag the lessons in each chapter and chapters to reorder'
 											sx={{ justifyContent: 'center', alignItems: 'center', flex: 4, marginTop: '0.85rem' }}
 										/>
-										<Box sx={{ display: 'flex', justifyContent: 'flex-end', flex: 2 }}>
+										<Box sx={{ display: 'flex', justifyContent: 'flex-end', flex: 2, mb: '0.35rem' }}>
 											<CustomSubmitButton
 												type='button'
 												onClick={() => {

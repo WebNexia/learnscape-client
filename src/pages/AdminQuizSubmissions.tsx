@@ -19,17 +19,14 @@ import { useAuth } from '../hooks/useAuth';
 import { useFilterSearch } from '../hooks/useFilterSearch';
 import FilterSearchRow from '../components/layouts/FilterSearchRow';
 import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/CustomInfoMessageAlignedLeft';
-import { Lesson } from '../interfaces/lessons';
 import { LessonType } from '../interfaces/enums';
-import { calculateQuizTotalScore } from '../utils/calculateQuizTotalScore';
+import { calculateQuizTotalScoreFromScores } from '../utils/calculateQuizTotalScoreFromScores';
 import { calculateScorePercentage } from '../utils/calculateScorePercentage';
-import { QuestionsContext } from '../contexts/QuestionsContextProvider';
 
 const AdminQuizSubmissions = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { orgId } = useContext(OrganisationContext);
 	const { isInstructor } = useAuth();
-	const { fetchQuestionTypeName } = useContext(QuestionsContext);
 
 	const { courses } = useContext(CoursesContext);
 
@@ -281,42 +278,15 @@ const AdminQuizSubmissions = () => {
 							{paginatedQuizSubmissions &&
 								paginatedQuizSubmissions?.map((submission: QuizSubmission) => {
 									const totalEarned = submission.totalEarned ?? 0;
-									// Use lesson data from submission (backend provides this via lookup)
-									// Check if we have lesson type from backend (this indicates lesson lookup succeeded)
-									const hasLessonDataFromSubmission = submission.lessonType !== undefined && submission.lessonType !== null;
 
-									const lesson = hasLessonDataFromSubmission
-										? ({
-												_id: submission.lessonId,
-												isGraded: submission.lessonIsGraded ?? false,
-												type: submission.lessonType as LessonType,
-												questionScores: submission.lessonQuestionScores ?? {},
-												questions: (submission.lessonQuestions ?? []).filter((q: any) => q !== null && q !== undefined),
-											} as Partial<Lesson> as Lesson | undefined)
-										: undefined;
+									const isQuiz = submission.lessonType === LessonType.QUIZ;
+									const isGraded = !!submission.lessonIsGraded && isQuiz;
 
 									const totalPossible =
-										lesson && lesson.isGraded && lesson.type === LessonType.QUIZ ? calculateQuizTotalScore({ lesson, fetchQuestionTypeName }) : 0;
+										isGraded && submission.lessonQuestionScores
+											? calculateQuizTotalScoreFromScores({ questionScores: submission.lessonQuestionScores })
+											: 0;
 									const percentage = calculateScorePercentage(totalEarned, totalPossible);
-
-									// Debug logging (only in development)
-									if (process.env.NODE_ENV === 'development') {
-										console.log('Submission score calculation:', {
-											submissionId: submission._id,
-											lessonId: submission.lessonId,
-											lesson: lesson
-												? {
-														isGraded: lesson.isGraded,
-														type: lesson.type,
-														questionsCount: lesson.questions?.length,
-														questionScoresCount: Object.keys(lesson.questionScores || {}).length,
-													}
-												: null,
-											totalEarned,
-											totalPossible,
-											percentage,
-										});
-									}
 
 									return (
 										<TableRow key={submission._id} hover>
@@ -331,10 +301,6 @@ const AdminQuizSubmissions = () => {
 											</TableCell>
 											<TableCell sx={{ textAlign: 'center' }}>
 												{(() => {
-													// Check if lesson exists and is a quiz
-													const isQuiz = lesson && lesson.type === LessonType.QUIZ;
-													const isGraded = lesson && lesson.isGraded && lesson.type === LessonType.QUIZ;
-
 													// If not a quiz or not graded, show N/A
 													if (!isQuiz || !isGraded) {
 														return (

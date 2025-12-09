@@ -14,12 +14,15 @@ import { chapterUpdateTrack } from '../../utils/chapterUpdateTrack';
 import { ChecklistGroup } from '../../interfaces/chapter';
 import { LessonsContext } from '../../contexts/LessonsContextProvider';
 import { generateUniqueId } from '../../utils/uniqueIdGenerator';
+import { LessonType } from '../../interfaces/enums';
+import { calculateQuizTotalScoreFromScores } from '../../utils/calculateQuizTotalScoreFromScores';
 
 import { useParams } from 'react-router-dom';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import { useAuth } from '../../hooks/useAuth';
 import CustomDialog from '../layouts/dialog/CustomDialog';
 import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
+import { truncateText } from '@utils/utilText';
 
 interface AdminCourseEditChapterProps {
 	chapter: ChapterLessonData;
@@ -723,7 +726,7 @@ const AdminCourseEditChapter = ({
 													}}>
 													<Box sx={{ flex: 4 }}>
 														<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.65rem' : '0.85rem' }}>
-															{lesson.title}
+															{truncateText(lesson.title, isMobileSize ? 20 : 40)}
 														</Typography>
 													</Box>
 													<Box sx={{ flex: 1 }}>
@@ -732,13 +735,36 @@ const AdminCourseEditChapter = ({
 														</Typography>
 													</Box>
 													<Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', flex: 4 }}>
-														<Box sx={{ mr: '1rem' }}>
-															<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.6rem' : '0.85rem' }}>
-																({lesson.type})
-															</Typography>
-														</Box>
+														{(() => {
+															const isGradedQuiz = lesson?.isGraded && lesson?.type === LessonType.QUIZ;
+															const totalPossibleScore = isGradedQuiz ? calculateQuizTotalScoreFromScores(lesson) : 0;
+
+															return (
+																<Box sx={{ mr: isMobileSize ? '0.25rem' : '1rem', display: 'flex', alignItems: 'center', gap: 0.75 }}>
+																	{isGradedQuiz && totalPossibleScore > 0 && (
+																		<Typography
+																			variant='caption'
+																			sx={{
+																				fontSize: isMobileSize ? '0.55rem' : '0.75rem',
+																				color: theme.textColor?.secondary?.main || 'text.secondary',
+																			}}>
+																			({totalPossibleScore} pts)
+																		</Typography>
+																	)}
+																	<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.6rem' : '0.85rem' }}>
+																		{lesson.type}
+																	</Typography>
+																</Box>
+															);
+														})()}
 														<Tooltip title='Remove Lesson' placement='right' arrow>
 															<IconButton
+																sx={{
+																	':hover': {
+																		backgroundColor: 'transparent',
+																	},
+																	'mr': isMobileSize ? '-0.5rem' : '-0.5rem',
+																}}
 																onClick={() => {
 																	setChapterLessonDataBeforeSave((prevData) => {
 																		if (prevData) {
