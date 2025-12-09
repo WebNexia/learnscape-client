@@ -17,6 +17,10 @@ const CoursePage = () => {
 
 	const userCourseData: UserCoursesIdsWithCourseIds[] = userCoursesData || [];
 
+	const currentUserCourse = userCourseData.find((data) => data.courseId === courseId);
+	const isCourseCompleted = currentUserCourse?.isCourseCompleted ?? false;
+	const currentUserCourseId = currentUserCourse?.userCourseId;
+
 	const [isEnrolledStatus, setIsEnrolledStatus] = useState<boolean>(false);
 	const documentsRef = useRef<HTMLDivElement>(null);
 
@@ -38,6 +42,8 @@ const CoursePage = () => {
 						setIsEnrolledStatus={setIsEnrolledStatus}
 						documentsRef={documentsRef}
 						fromHomePage={false}
+						userCourseId={currentUserCourseId}
+						isCourseCompleted={isCourseCompleted}
 					/>
 					<Chapters course={singleCourseUser} isEnrolledStatus={isEnrolledStatus} />
 				</>

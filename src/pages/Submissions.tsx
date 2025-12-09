@@ -20,11 +20,9 @@ import FilterSearchRow from '../components/layouts/FilterSearchRow';
 import { OrganisationContext } from '../contexts/OrganisationContextProvider';
 import { useNavigate } from 'react-router-dom';
 import CustomInfoMessageAlignedLeft from '../components/layouts/infoMessage/CustomInfoMessageAlignedLeft';
-import { Lesson } from '../interfaces/lessons';
 import { LessonType } from '../interfaces/enums';
-import { calculateQuizTotalScore } from '../utils/calculateQuizTotalScore';
+import { calculateQuizTotalScoreFromScores } from '../utils/calculateQuizTotalScoreFromScores';
 import { calculateScorePercentage } from '../utils/calculateScorePercentage';
-import useQuestionTypes from '../hooks/useQuestionTypes';
 
 const Submissions = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -40,7 +38,6 @@ const Submissions = () => {
 	const { isSmallScreen, isRotatedMedium, isRotated } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 	const isMobileSizeSmall = isMobileSize || isRotated;
-	const { fetchQuestionTypeName } = useQuestionTypes();
 
 	const { user } = useAuth();
 	const { orgId } = useContext(OrganisationContext);
@@ -266,22 +263,14 @@ const Submissions = () => {
 									{paginatedSubmissions &&
 										paginatedSubmissions?.map((submission: QuizSubmission) => {
 											const totalEarned = submission.totalEarned ?? 0;
-											// Use lesson data from submission if available, otherwise try context
-											// Check if we have lesson type from backend (this indicates lesson lookup succeeded)
-											const hasLessonDataFromSubmission = submission.lessonType !== undefined && submission.lessonType !== null;
 
-											const lesson = hasLessonDataFromSubmission
-												? ({
-														_id: submission.lessonId,
-														isGraded: submission.lessonIsGraded ?? false,
-														type: submission.lessonType as LessonType,
-														questionScores: submission.lessonQuestionScores ?? {},
-														questions: submission.lessonQuestions ?? [],
-													} as Partial<Lesson> as Lesson | undefined)
-												: undefined;
+											const isQuiz = submission.lessonType === LessonType.QUIZ;
+											const isGraded = !!submission.lessonIsGraded && isQuiz;
 
 											const totalPossible =
-												lesson && lesson.isGraded && lesson.type === LessonType.QUIZ ? calculateQuizTotalScore({ lesson, fetchQuestionTypeName }) : 0;
+												isGraded && submission.lessonQuestionScores
+													? calculateQuizTotalScoreFromScores({ questionScores: submission.lessonQuestionScores })
+													: 0;
 											const percentage = calculateScorePercentage(totalEarned, totalPossible);
 
 											return (
@@ -290,10 +279,6 @@ const Submissions = () => {
 													<CustomTableCell value={submission.courseName} />
 													<TableCell sx={{ textAlign: 'center' }}>
 														{(() => {
-															// Check if lesson exists and is a quiz
-															const isQuiz = lesson && lesson.type === LessonType.QUIZ;
-															const isGraded = lesson && lesson.isGraded && lesson.type === LessonType.QUIZ;
-
 															// If not a quiz or not graded, show N/A
 															if (!isQuiz || !isGraded) {
 																return (

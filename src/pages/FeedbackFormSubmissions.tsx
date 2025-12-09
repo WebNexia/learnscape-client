@@ -388,6 +388,25 @@ const FeedbackFormSubmissions = () => {
 			// Create and download Excel file
 			const XLSX = await import('xlsx');
 			const ws = XLSX.utils.json_to_sheet(excelData);
+
+			// Auto-fit column widths based on content (approximate fit)
+			if (excelData.length > 0) {
+				const headers = Object.keys(excelData[0]);
+				const cols = headers.map((key) => {
+					const headerLength = key.length;
+					const maxCellLength = excelData.reduce((max, row) => {
+						const cellValue = row[key];
+						const cellLength = cellValue === undefined || cellValue === null ? 0 : String(cellValue).length;
+						return Math.max(max, cellLength);
+					}, headerLength);
+
+					// Add a little padding, clamp to reasonable range
+					const width = Math.min(Math.max(maxCellLength + 2, 10), 60);
+					return { wch: width };
+				});
+				(ws as any)['!cols'] = cols;
+			}
+
 			const wb = XLSX.utils.book_new();
 			XLSX.utils.book_append_sheet(wb, ws, 'Submissions');
 

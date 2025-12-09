@@ -1,7 +1,7 @@
 import { Alert, Box, Button, IconButton, Paper, Snackbar, Tooltip, Typography } from '@mui/material';
 import theme from '../../themes';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Edit, FileCopy, Info, KeyboardBackspaceOutlined, RateReview } from '@mui/icons-material';
+import { Edit, FileCopy, Info, KeyboardBackspaceOutlined, RateReview, Insights } from '@mui/icons-material';
 import { SingleCourse } from '../../interfaces/course';
 import { ChapterLessonData } from '../../pages/AdminCourseEditPage';
 import useImageUpload from '../../hooks/useImageUpload';
@@ -188,7 +188,13 @@ const CoursePaper = ({
 						</Button>
 					</Box>
 					{!isMobileSize && (
-						<Box sx={{ paddingLeft: isSticky ? '0' : '0.5rem' }}>
+						<Box
+							sx={{
+								display: 'flex',
+								alignItems: 'center',
+								paddingLeft: isSticky ? '0' : '0.5rem',
+								gap: 1,
+							}}>
 							<Typography
 								variant='body2'
 								sx={{
@@ -200,6 +206,45 @@ const CoursePaper = ({
 								{singleCourseBeforeSave?.courseManagement?.isExternal ? 'External' : 'Platform'}
 								{isSticky ? ')' : ''}
 							</Typography>
+
+							{/* Analytics icon next to status info */}
+							{!singleCourseBeforeSave?.courseManagement?.isExternal && (
+								<Tooltip title='Course Analytics' placement='top' arrow>
+									<IconButton
+										size='small'
+										sx={{ color: theme.textColor?.common.main }}
+										onClick={() => {
+											if (!courseId) return;
+											const basePath = hasAdminAccess ? '/admin' : '/instructor';
+											navigate(`${basePath}/course-analytics/course/${courseId}`);
+										}}>
+										<Insights fontSize='small' />
+									</IconButton>
+								</Tooltip>
+							)}
+						</Box>
+					)}
+					{isMobileSize && (
+						<Box
+							sx={{
+								display: 'flex',
+								alignItems: 'center',
+								paddingLeft: '0.25rem',
+							}}>
+							{!singleCourseBeforeSave?.courseManagement?.isExternal && (
+								<Tooltip title='Course Analytics' placement='top' arrow>
+									<IconButton
+										size='small'
+										sx={{ color: theme.textColor?.common.main }}
+										onClick={() => {
+											if (!courseId) return;
+											const basePath = hasAdminAccess ? '/admin' : '/instructor';
+											navigate(`${basePath}/course-analytics/course/${courseId}`);
+										}}>
+										<Insights fontSize='small' />
+									</IconButton>
+								</Tooltip>
+							)}
 						</Box>
 					)}
 				</Box>

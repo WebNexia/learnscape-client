@@ -142,119 +142,145 @@ const PublicFeedbackFormPage = () => {
 		switch (field.type) {
 			case 'text':
 				return (
-					<TextField
-						key={field.fieldId}
-						fullWidth
-						label={field.label}
-						placeholder={field.placeholder}
-						required={isRequired}
-						value={value || ''}
-						onChange={(e) => handleFieldChange(field.fieldId, e.target.value)}
-						variant='outlined'
-						sx={{
-							'mb': 3,
-							'& .MuiOutlinedInput-root': {
-								'backgroundColor': 'rgba(255, 255, 255, 0.95)',
-								'borderRadius': '12px',
-								'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-								'boxShadow': '0 2px 8px rgba(0, 0, 0, 0.08)',
-								'&:hover': {
-									backgroundColor: 'rgba(255, 255, 255, 1)',
-									boxShadow: '0 4px 12px rgba(102, 126, 234, 0.15)',
+					<>
+						<FormLabel
+							required={isRequired}
+							sx={{
+								mb: '0.5rem',
+								display: 'block',
+								color: theme.textColor?.primary.main,
+								fontWeight: 600,
+								fontSize: '0.95rem',
+								fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif !important",
+							}}>
+							{field.label}
+						</FormLabel>
+						<TextField
+							key={field.fieldId}
+							fullWidth
+							placeholder={field.placeholder}
+							required={isRequired}
+							value={value || ''}
+							onChange={(e) => handleFieldChange(field.fieldId, e.target.value)}
+							variant='outlined'
+							sx={{
+								'mb': '1.5rem',
+								'& .MuiOutlinedInput-root': {
+									'backgroundColor': 'rgba(255, 255, 255, 0.95)',
+									'borderRadius': '12px',
+									'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+									'boxShadow': '0 2px 8px rgba(0, 0, 0, 0.08)',
+									'&:hover': {
+										backgroundColor: 'rgba(255, 255, 255, 1)',
+										boxShadow: '0 4px 12px rgba(102, 126, 234, 0.15)',
+									},
+									'&.Mui-focused': {
+										backgroundColor: 'rgba(255, 255, 255, 1)',
+										boxShadow: '0 6px 20px rgba(102, 126, 234, 0.25)',
+									},
+									'& fieldset': {
+										borderColor: 'rgba(102, 126, 234, 0.3)',
+										borderWidth: '2px',
+										transition: 'all 0.3s ease',
+									},
+									'&:hover fieldset': {
+										borderColor: 'rgba(102, 126, 234, 0.5)',
+									},
+									'&.Mui-focused fieldset': {
+										borderColor: 'rgba(102, 126, 234, 0.8)',
+										borderWidth: '2px',
+									},
 								},
-								'&.Mui-focused': {
-									backgroundColor: 'rgba(255, 255, 255, 1)',
-									boxShadow: '0 6px 20px rgba(102, 126, 234, 0.25)',
-								},
-								'& fieldset': {
-									borderColor: 'rgba(102, 126, 234, 0.3)',
-									borderWidth: '2px',
+								'& .MuiInputLabel-root': {
+									fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif !important",
+									fontSize: '0.95rem',
 									transition: 'all 0.3s ease',
 								},
-								'&:hover fieldset': {
-									borderColor: 'rgba(102, 126, 234, 0.5)',
+								'& .MuiInputBase-input': {
+									fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif",
+									fontSize: '0.95rem',
+									padding: '14px 16px',
 								},
-								'&.Mui-focused fieldset': {
-									borderColor: 'rgba(102, 126, 234, 0.8)',
-									borderWidth: '2px',
+								'& .MuiInputBase-input::placeholder': {
+									fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif !important",
+									opacity: 0.6,
 								},
-							},
-							'& .MuiInputLabel-root': {
-								fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif !important",
-								fontSize: '0.95rem',
-								transition: 'all 0.3s ease',
-							},
-							'& .MuiInputBase-input': {
-								fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif",
-								fontSize: '0.95rem',
-								padding: '14px 16px',
-							},
-							'& .MuiInputBase-input::placeholder': {
-								fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif !important",
-								opacity: 0.6,
-							},
-						}}
-					/>
+							}}
+						/>
+					</>
 				);
 
 			case 'textarea':
 				return (
-					<TextField
-						key={field.fieldId}
-						fullWidth
-						label={field.label}
-						placeholder={field.placeholder}
-						required={isRequired}
-						value={value || ''}
-						onChange={(e) => handleFieldChange(field.fieldId, e.target.value)}
-						multiline
-						rows={4}
-						variant='outlined'
-						sx={{
-							'mb': 3,
-							'& .MuiOutlinedInput-root': {
-								'backgroundColor': 'rgba(255, 255, 255, 0.95)',
-								'borderRadius': '12px',
-								'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-								'boxShadow': '0 2px 8px rgba(0, 0, 0, 0.08)',
-								'&:hover': {
-									backgroundColor: 'rgba(255, 255, 255, 1)',
-									boxShadow: '0 4px 12px rgba(102, 126, 234, 0.15)',
+					<>
+						<FormLabel
+							required={isRequired}
+							sx={{
+								mb: '0.5rem',
+								display: 'block',
+								color: theme.textColor?.primary.main,
+								fontWeight: 600,
+								fontSize: '0.95rem',
+								fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif !important",
+							}}>
+							{field.label}
+						</FormLabel>
+						<TextField
+							key={field.fieldId}
+							fullWidth
+							placeholder={field.placeholder}
+							required={isRequired}
+							value={value || ''}
+							onChange={(e) => handleFieldChange(field.fieldId, e.target.value)}
+							multiline
+							rows={4}
+							variant='outlined'
+							sx={{
+								'mb': '2rem',
+								'& .MuiOutlinedInput-root': {
+									'backgroundColor': 'rgba(255, 255, 255, 0.95)',
+									'borderRadius': '12px',
+									'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+									'boxShadow': '0 2px 8px rgba(0, 0, 0, 0.08)',
+									'&:hover': {
+										backgroundColor: 'rgba(255, 255, 255, 1)',
+										boxShadow: '0 4px 12px rgba(102, 126, 234, 0.15)',
+									},
+									'&.Mui-focused': {
+										backgroundColor: 'rgba(255, 255, 255, 1)',
+										boxShadow: '0 6px 20px rgba(102, 126, 234, 0.25)',
+									},
+									'& fieldset': {
+										borderColor: 'rgba(102, 126, 234, 0.3)',
+										borderWidth: '2px',
+										transition: 'all 0.3s ease',
+									},
+									'&:hover fieldset': {
+										borderColor: 'rgba(102, 126, 234, 0.5)',
+									},
+									'&.Mui-focused fieldset': {
+										borderColor: 'rgba(102, 126, 234, 0.8)',
+										borderWidth: '2px',
+									},
 								},
-								'&.Mui-focused': {
-									backgroundColor: 'rgba(255, 255, 255, 1)',
-									boxShadow: '0 6px 20px rgba(102, 126, 234, 0.25)',
-								},
-								'& fieldset': {
-									borderColor: 'rgba(102, 126, 234, 0.3)',
-									borderWidth: '2px',
+								'& .MuiInputLabel-root': {
+									fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif !important",
+									fontSize: '0.95rem',
 									transition: 'all 0.3s ease',
 								},
-								'&:hover fieldset': {
-									borderColor: 'rgba(102, 126, 234, 0.5)',
+								'& .MuiInputBase-input': {
+									fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif",
+									fontSize: '0.95rem',
+									padding: '0 0.5rem',
+									lineHeight: 1.6,
 								},
-								'&.Mui-focused fieldset': {
-									borderColor: 'rgba(102, 126, 234, 0.8)',
-									borderWidth: '2px',
+								'& .MuiInputBase-input::placeholder': {
+									fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif !important",
+									opacity: 0.6,
 								},
-							},
-							'& .MuiInputLabel-root': {
-								fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif !important",
-								fontSize: '0.95rem',
-								transition: 'all 0.3s ease',
-							},
-							'& .MuiInputBase-input': {
-								fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif",
-								fontSize: '0.95rem',
-								padding: '0.5rem',
-								lineHeight: 1.6,
-							},
-							'& .MuiInputBase-input::placeholder': {
-								fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif !important",
-								opacity: 0.6,
-							},
-						}}
-					/>
+							}}
+						/>
+					</>
 				);
 
 			case 'rating':
@@ -262,7 +288,7 @@ const PublicFeedbackFormPage = () => {
 					<Box
 						key={field.fieldId}
 						sx={{
-							'mb': 3,
+							'mb': '2rem',
 							'p': 2,
 							'borderRadius': '12px',
 							'backgroundColor': 'rgba(255, 255, 255, 0.95)',
@@ -275,7 +301,7 @@ const PublicFeedbackFormPage = () => {
 						<FormLabel
 							required={isRequired}
 							sx={{
-								mb: 2,
+								mb: '0.5rem',
 								display: 'block',
 								color: theme.textColor?.primary.main,
 								fontWeight: 600,
@@ -317,7 +343,7 @@ const PublicFeedbackFormPage = () => {
 					<Box
 						key={field.fieldId}
 						sx={{
-							'mb': 3,
+							'mb': '2rem',
 							'p': 2,
 							'borderRadius': '12px',
 							'backgroundColor': 'rgba(255, 255, 255, 0.95)',
@@ -330,7 +356,7 @@ const PublicFeedbackFormPage = () => {
 						<FormLabel
 							required={isRequired}
 							sx={{
-								mb: 2,
+								mb: '0.5rem',
 								display: 'block',
 								color: theme.textColor?.primary.main,
 								fontWeight: 600,
@@ -427,7 +453,7 @@ const PublicFeedbackFormPage = () => {
 					<Box
 						key={field.fieldId}
 						sx={{
-							'mb': 3,
+							'mb': '2rem',
 							'p': 2,
 							'borderRadius': '12px',
 							'backgroundColor': 'rgba(255, 255, 255, 0.95)',
@@ -441,7 +467,7 @@ const PublicFeedbackFormPage = () => {
 							required={isRequired}
 							component='legend'
 							sx={{
-								mb: 2,
+								mb: '0.5rem',
 								display: 'block',
 								color: theme.textColor?.primary.main,
 								fontWeight: 600,
@@ -551,63 +577,76 @@ const PublicFeedbackFormPage = () => {
 
 			case 'date':
 				return (
-					<TextField
-						key={field.fieldId}
-						fullWidth
-						label={field.label}
-						placeholder={field.placeholder}
-						required={isRequired}
-						type='date'
-						value={value || ''}
-						onChange={(e) => handleFieldChange(field.fieldId, e.target.value)}
-						InputLabelProps={{
-							shrink: true,
-						}}
-						variant='outlined'
-						sx={{
-							'mb': 3,
-							'& .MuiOutlinedInput-root': {
-								'backgroundColor': 'rgba(255, 255, 255, 0.95)',
-								'borderRadius': '12px',
-								'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-								'boxShadow': '0 2px 8px rgba(0, 0, 0, 0.08)',
-								'&:hover': {
-									backgroundColor: 'rgba(255, 255, 255, 1)',
-									boxShadow: '0 4px 12px rgba(102, 126, 234, 0.15)',
+					<>
+						<FormLabel
+							required={isRequired}
+							sx={{
+								mb: '0.5rem',
+								display: 'block',
+								color: theme.textColor?.primary.main,
+								fontWeight: 600,
+								fontSize: '0.95rem',
+								fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif !important",
+							}}>
+							{field.label}
+						</FormLabel>
+						<TextField
+							key={field.fieldId}
+							fullWidth
+							placeholder={field.placeholder}
+							required={isRequired}
+							type='date'
+							value={value || ''}
+							onChange={(e) => handleFieldChange(field.fieldId, e.target.value)}
+							InputLabelProps={{
+								shrink: true,
+							}}
+							variant='outlined'
+							sx={{
+								'mb': '1.5rem',
+								'& .MuiOutlinedInput-root': {
+									'backgroundColor': 'rgba(255, 255, 255, 0.95)',
+									'borderRadius': '12px',
+									'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+									'boxShadow': '0 2px 8px rgba(0, 0, 0, 0.08)',
+									'&:hover': {
+										backgroundColor: 'rgba(255, 255, 255, 1)',
+										boxShadow: '0 4px 12px rgba(102, 126, 234, 0.15)',
+									},
+									'&.Mui-focused': {
+										backgroundColor: 'rgba(255, 255, 255, 1)',
+										boxShadow: '0 6px 20px rgba(102, 126, 234, 0.25)',
+									},
+									'& fieldset': {
+										borderColor: 'rgba(102, 126, 234, 0.3)',
+										borderWidth: '2px',
+										transition: 'all 0.3s ease',
+									},
+									'&:hover fieldset': {
+										borderColor: 'rgba(102, 126, 234, 0.5)',
+									},
+									'&.Mui-focused fieldset': {
+										borderColor: 'rgba(102, 126, 234, 0.8)',
+										borderWidth: '2px',
+									},
 								},
-								'&.Mui-focused': {
-									backgroundColor: 'rgba(255, 255, 255, 1)',
-									boxShadow: '0 6px 20px rgba(102, 126, 234, 0.25)',
-								},
-								'& fieldset': {
-									borderColor: 'rgba(102, 126, 234, 0.3)',
-									borderWidth: '2px',
+								'& .MuiInputLabel-root': {
+									fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif !important",
+									fontSize: '0.95rem',
 									transition: 'all 0.3s ease',
 								},
-								'&:hover fieldset': {
-									borderColor: 'rgba(102, 126, 234, 0.5)',
+								'& .MuiInputBase-input': {
+									fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif",
+									fontSize: '0.95rem',
+									padding: '14px 16px',
 								},
-								'&.Mui-focused fieldset': {
-									borderColor: 'rgba(102, 126, 234, 0.8)',
-									borderWidth: '2px',
+								'& .MuiInputBase-input::placeholder': {
+									fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif !important",
+									opacity: 0.6,
 								},
-							},
-							'& .MuiInputLabel-root': {
-								fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif !important",
-								fontSize: '0.95rem',
-								transition: 'all 0.3s ease',
-							},
-							'& .MuiInputBase-input': {
-								fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif",
-								fontSize: '0.95rem',
-								padding: '14px 16px',
-							},
-							'& .MuiInputBase-input::placeholder': {
-								fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif !important",
-								opacity: 0.6,
-							},
-						}}
-					/>
+							}}
+						/>
+					</>
 				);
 
 			default:

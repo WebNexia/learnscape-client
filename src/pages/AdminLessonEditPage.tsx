@@ -798,6 +798,8 @@ const AdminLessonEditPage = () => {
 						documentIds: updatedDocumentIds.length > 0 ? updatedDocumentIds : [],
 						questionIds: updatedQuestionIds.length > 0 ? updatedQuestionIds : [],
 						usedInCourses: singleLessonBeforeSave.usedInCourses,
+						// Default assessmentGroupId to first usedInCourses entry if not explicitly set
+						assessmentGroupId: singleLessonBeforeSave.assessmentGroupId || singleLessonBeforeSave.usedInCourses?.[0] || null,
 					});
 
 					const responseUpdatedData = response.data?.data || response.data;
@@ -1352,35 +1354,69 @@ const AdminLessonEditPage = () => {
 							</Box>
 
 							{singleLessonBeforeSave.type === LessonType.QUIZ && (
-								<Box sx={{ mt: '1.5rem' }}>
-									<FormControlLabel
-										control={
-											<Checkbox
-												checked={singleLessonBeforeSave.isGraded || false}
-												onChange={(e) => {
-													setIsLessonUpdated(true);
-													setHasUnsavedChanges(true);
-													setSingleLessonBeforeSave({
-														...singleLessonBeforeSave,
-														isGraded: e.target.checked,
-														questionScores: e.target.checked ? singleLessonBeforeSave.questionScores || {} : {},
-													});
-												}}
-												sx={{
-													'& .MuiSvgIcon-root': {
-														fontSize: isMobileSize ? '0.9rem' : '1.1rem',
-													},
-												}}
-											/>
-										}
-										label='Enable Grading'
-										sx={{
-											'mr': '0rem',
-											'& .MuiFormControlLabel-label': {
-												fontSize: isMobileSize ? '0.75rem' : '0.9rem',
-											},
-										}}
-									/>
+								<Box sx={{ mt: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+									<Box sx={{ flex: 1 }}>
+										<FormControlLabel
+											control={
+												<Checkbox
+													checked={singleLessonBeforeSave.isGraded || false}
+													onChange={(e) => {
+														setIsLessonUpdated(true);
+														setHasUnsavedChanges(true);
+														setSingleLessonBeforeSave({
+															...singleLessonBeforeSave,
+															isGraded: e.target.checked,
+															questionScores: e.target.checked ? singleLessonBeforeSave.questionScores || {} : {},
+														});
+													}}
+													sx={{
+														'& .MuiSvgIcon-root': {
+															fontSize: isMobileSize ? '0.9rem' : '1.1rem',
+														},
+													}}
+												/>
+											}
+											label='Enable Grading'
+											sx={{
+												'mr': '0rem',
+												'& .MuiFormControlLabel-label': {
+													fontSize: isMobileSize ? '0.75rem' : '0.9rem',
+												},
+											}}
+										/>
+									</Box>
+									<Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, alignItems: 'flex-end' }}>
+										<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.85rem' : '0.9rem', mb: '0.5rem' }}>
+											Assessment Type
+										</Typography>
+										<Select
+											value={singleLessonBeforeSave.assessmentType || 'none'}
+											onChange={(e: SelectChangeEvent) => {
+												const value = e.target.value as 'pre' | 'post' | 'none';
+												setSingleLessonBeforeSave((prev) => ({
+													...prev,
+													assessmentType: value,
+												}));
+												setIsLessonUpdated(true);
+												setHasUnsavedChanges(true);
+											}}
+											size='small'
+											sx={{
+												backgroundColor: theme.bgColor?.common,
+												fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+												width: isMobileSize ? '100%' : '50%',
+											}}>
+											<MenuItem value='none' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+												None
+											</MenuItem>
+											<MenuItem value='pre' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+												Pre-assessment
+											</MenuItem>
+											<MenuItem value='post' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+												Post-assessment
+											</MenuItem>
+										</Select>
+									</Box>
 								</Box>
 							)}
 

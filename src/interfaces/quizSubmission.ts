@@ -13,9 +13,20 @@ export interface QuizSubmission {
 	isChecked: boolean;
 	createdAt: string;
 	updatedAt: string;
+
+	// Existing summary / helper fields
 	totalEarned?: number;
 	lessonIsGraded?: boolean;
 	lessonType?: string;
 	lessonQuestionScores?: { [questionId: string]: number | { total: number; perBlank?: number; perMatch?: number } };
 	lessonQuestions?: QuestionInterface[];
+
+	// Assessment metadata (for future pre/post reporting)
+	assessmentType?: 'pre' | 'post' | 'none';
+	assessmentGroupId?: string | null;
+
+	// Optional score summary for reporting
+	scoreRaw?: number;
+	scoreMax?: number;
+	scorePercent?: number;
 }
