@@ -102,14 +102,18 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 
 	// Check if all items are checked (across all groups)
 	const allItemsChecked = useMemo(() => {
-		if (!hasChecklistItems || !chapter.evaluationChecklistItems) return false;
+		if (!hasChecklistItems || !chapter?.evaluationChecklistItems || !Array.isArray(chapter.evaluationChecklistItems)) return false;
 
-		// Count total items across all groups
-		const totalItems = chapter.evaluationChecklistItems.reduce((sum, group) => sum + group.items.length, 0);
+		// Count total items across all groups (skip malformed groups safely)
+		const totalItems = chapter.evaluationChecklistItems.reduce((sum, group) => {
+			if (!group || !Array.isArray(group.items)) return sum;
+			return sum + group.items.length;
+		}, 0);
 
 		// Count checked items across all groups
 		let checkedCount = 0;
 		chapter.evaluationChecklistItems.forEach((group, groupIndex) => {
+			if (!group || !Array.isArray(group.items)) return;
 			const groupChecked = checkedItems.get(groupIndex);
 			if (groupChecked) {
 				checkedCount += groupChecked.size;
@@ -117,7 +121,7 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 		});
 
 		return checkedCount === totalItems && totalItems > 0;
-	}, [checkedItems, hasChecklistItems, chapter.evaluationChecklistItems]);
+	}, [checkedItems, hasChecklistItems, chapter?.evaluationChecklistItems]);
 
 	// Track if we've already auto-opened for this chapter completion
 	// Use sessionStorage to persist across page visits within the same session
@@ -172,6 +176,7 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 		if (isChecklistCompleted && chapter.evaluationChecklistItems) {
 			const allChecked = new Map<number, Set<number>>();
 			chapter.evaluationChecklistItems.forEach((group, groupIndex) => {
+				if (!group || !Array.isArray(group.items)) return;
 				allChecked.set(groupIndex, new Set(group.items.map((_, itemIndex) => itemIndex)));
 			});
 			setCheckedItems(allChecked);
@@ -497,10 +502,15 @@ const Chapter = forwardRef<ChapterRef, ChapterProps>(({ chapter, course, isEnrol
 								</Box>
 							)}
 							{chapter.evaluationChecklistItems?.map((group, groupIndex) => {
+								if (!group || !Array.isArray(group.items) || group.items.length === 0) {
+									return null;
+								}
+
 								const isGroupExpanded = expandedChecklistGroups.has(groupIndex);
-								const isGroupChecked = group.items.every((_, itemIndex) => checkedItems.get(groupIndex)?.has(itemIndex) || false);
-								const groupCheckedCount = checkedItems.get(groupIndex)?.size || 0;
+								const groupChecked = checkedItems.get(groupIndex);
 								const groupTotalCount = group.items.length;
+								const groupCheckedCount = groupChecked?.size || 0;
+								const isGroupChecked = groupTotalCount > 0 && groupCheckedCount === groupTotalCount;
 
 								return (
 									<Box
