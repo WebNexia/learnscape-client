@@ -76,6 +76,7 @@ export const feedbackFormsService = {
 			userName?: string;
 			userEmail?: string;
 			userId?: string;
+			recaptchaToken?: string | null;
 		}
 	): Promise<FeedbackFormSubmission> => {
 		const response = await axiosInstance.post(`${base_url}/feedback-forms/public/${publicLink}/submit`, submissionData);

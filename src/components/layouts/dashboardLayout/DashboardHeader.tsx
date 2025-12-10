@@ -91,18 +91,14 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 	useEffect(() => {
 		if (!user?.firebaseUserId) return;
 
-		// Real-time listener for notifications, metadata-only query
+		// Real-time listener for unread notifications count
 		const notificationsRef = collection(db, 'notifications', user?.firebaseUserId, 'userNotifications');
 		const q = query(notificationsRef, where('isRead', '==', false));
 
-		const unsubscribe = onSnapshot(
-			q,
-			{ includeMetadataChanges: true }, // Fetch metadata only
-			(snapshot) => {
-				const unreadCount = snapshot.size; // Snapshot size gives the count of unread notifications
-				setNumberOfUnreadNotifications(unreadCount);
-			}
-		);
+		const unsubscribe = onSnapshot(q, { includeMetadataChanges: true }, (snapshot) => {
+			const unreadCount = snapshot.size;
+			setNumberOfUnreadNotifications(unreadCount);
+		});
 
 		return () => unsubscribe();
 	}, [user?.firebaseUserId]);
@@ -111,23 +107,40 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 		if (!userFirebaseId) return;
 
 		try {
-			// ZERO-READ approach: Use metadata document to mark all notifications as read
-			// This creates a timestamp that the UI can use to treat all older notifications as read
-			const batch = writeBatch(db);
+			const notificationsRef = collection(db, 'notifications', userFirebaseId, 'userNotifications');
 
-			// Create/update metadata document with current timestamp
-			const metadataDocRef = doc(db, 'notifications', userFirebaseId, '__meta__', 'readState');
-			batch.set(
-				metadataDocRef,
-				{
-					markAllAsReadTimestamp: serverTimestamp(),
-					lastUpdated: serverTimestamp(),
-				},
-				{ merge: true }
-			);
+			// Firestore max batch limit = 500
+			const BATCH_LIMIT = 500;
 
-			// Commit the batch - this is a blind write with ZERO reads
-			await batch.commit();
+			let hasMore = true;
+			let totalUpdated = 0;
+
+			while (hasMore) {
+				// Get unread notifications only (more efficient - only reads what we need to update)
+				const snapshot = await getDocs(query(notificationsRef, where('isRead', '==', false), limit(BATCH_LIMIT)));
+
+				if (snapshot.empty) {
+					hasMore = false;
+					break;
+				}
+
+				const batch = writeBatch(db);
+
+				snapshot.forEach((docSnapshot) => {
+					batch.update(doc(db, 'notifications', userFirebaseId, 'userNotifications', docSnapshot.id), {
+						isRead: true,
+					});
+				});
+
+				await batch.commit();
+				totalUpdated += snapshot.size;
+
+				// If exactly 500, there might be more — continue loop
+				hasMore = snapshot.size === BATCH_LIMIT;
+			}
+
+			// eslint-disable-next-line no-console
+			console.log(`Marked ${totalUpdated} notifications as read`);
 		} catch (error) {
 			console.error('Error marking notifications as read:', error);
 		}

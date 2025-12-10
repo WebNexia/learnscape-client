@@ -890,6 +890,7 @@ const PracticeQuestion = ({
 						numberOfQuestions={numberOfQuestions}
 						setIsLessonCompleted={setIsLessonCompleted}
 						setShowQuestionSelector={setShowQuestionSelector}
+						isSoundMuted={isSoundMuted}
 					/>
 				</Box>
 			)}

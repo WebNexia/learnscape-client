@@ -4,6 +4,7 @@ import theme from '../../../themes';
 import { QuestionInterface } from '../../../interfaces/question';
 import { useUserCourseLessonData } from '../../../hooks/useUserCourseLessonData';
 import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
+import { useSoundEffect } from '../../../hooks/useSoundEffect';
 
 interface FlipCardInnerProps {
 	isFlipped: boolean;
@@ -86,6 +87,7 @@ interface FlipCardPreviewProps {
 	setIsCardFlipped?: React.Dispatch<React.SetStateAction<boolean>>;
 	setIsLessonCompleted?: React.Dispatch<React.SetStateAction<boolean>>;
 	setShowQuestionSelector?: React.Dispatch<React.SetStateAction<boolean>>;
+	isSoundMuted?: boolean;
 }
 
 const FlipCardPreview = ({
@@ -103,6 +105,7 @@ const FlipCardPreview = ({
 	setIsCardFlipped,
 	setIsLessonCompleted,
 	setShowQuestionSelector,
+	isSoundMuted = false,
 }: FlipCardPreviewProps) => {
 	const [isFlipped, setIsFlipped] = useState<boolean>(false);
 	const { updateLastQuestion, getLastQuestion, handleNextLesson } = useUserCourseLessonData();
@@ -111,8 +114,18 @@ const FlipCardPreview = ({
 		useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
 
+	// Sound effect for flip - enabled only for practice questions (not for edit/preview modes)
+	const { playFlipSound } = useSoundEffect(fromPracticeQuestionUser, isSoundMuted);
+
 	const handleClick = async () => {
-		setIsFlipped(!isFlipped);
+		const newFlippedState = !isFlipped;
+		setIsFlipped(newFlippedState);
+
+		// Play flip sound when card is flipped (only in practice/question mode, not in edit mode)
+		if (fromPracticeQuestionUser || questionNonEditModal) {
+			playFlipSound();
+		}
+
 		if (setIsCardFlipped) setIsCardFlipped(true);
 
 		if (displayedQuestionNumber && numberOfQuestions) {
