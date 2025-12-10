@@ -292,13 +292,7 @@ const AdminQuizSubmissions = () => {
 										<TableRow key={submission._id} hover>
 											<CustomTableCell value={submission.userName} />
 											<CustomTableCell value={submission.lessonName} />
-											<TableCell
-												sx={{
-													display: isMobileSize ? 'none' : 'table-cell',
-													textAlign: 'center',
-												}}>
-												{submission.courseName}
-											</TableCell>
+											<CustomTableCell value={submission.courseName} />
 											<TableCell sx={{ textAlign: 'center' }}>
 												{(() => {
 													// If not a quiz or not graded, show N/A
@@ -324,7 +318,7 @@ const AdminQuizSubmissions = () => {
 																	fontSize: isMobileSize ? '0.7rem' : '0.85rem',
 																	fontWeight: 600,
 																}}>
-																{totalEarned}/{totalPossible} pts
+																{totalEarned}/{totalPossible}
 																{percentage !== null && (
 																	<Typography
 																		component='span'
@@ -353,12 +347,7 @@ const AdminQuizSubmissions = () => {
 													);
 												})()}
 											</TableCell>
-											<TableCell
-												sx={{
-													display: isMobileSize ? 'none' : 'table-cell',
-												}}>
-												{submission.isChecked ? 'Checked' : 'Unchecked'}
-											</TableCell>
+											<CustomTableCell value={submission.isChecked ? 'Checked' : 'Unchecked'} />
 											<TableCell
 												sx={{
 													textAlign: 'center',
@@ -393,9 +382,7 @@ const AdminQuizSubmissions = () => {
 							sx={{ marginTop: isMobileSize ? '3rem' : '5rem', marginBottom: '1rem' }}
 						/>
 					)}
-					{isMobileSize && !(displaySubmissions && displaySubmissions.length === 0) && (
-						<CustomInfoMessageAlignedLeft message='Rotate your device or use desktop for more info' />
-					)}
+
 					<CustomTablePagination count={submissionsNumberOfPages} page={quizSubmissionsCurrentPage} onChange={handlePageChange} />
 				</Box>
 			</DashboardPagesLayout>

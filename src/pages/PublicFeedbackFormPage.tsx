@@ -1,6 +1,6 @@
 import { Box, Container, Typography, TextField, Button, Rating, FormLabel, Alert, CircularProgress, Paper, Divider } from '@mui/material';
-import { useContext, useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useContext, useEffect, useState, useRef, Fragment } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { feedbackFormsService } from '../services/feedbackFormsService';
 import { FeedbackForm, FeedbackFormField } from '../interfaces/feedbackForm';
 import theme from '../themes';
@@ -8,9 +8,19 @@ import logo from '../assets/logo.png';
 import LondonBg from '../assets/london-bg.jpg';
 import { CheckCircle, Error as ErrorIcon, Check } from '@mui/icons-material';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
+import { sanitizeTextInput, sanitizeEmailInput, validateInputLength } from '../utils/sanitizeHtml';
+import CustomTextField from '../components/forms/customFields/CustomTextField';
+import ReCAPTCHA from 'react-google-recaptcha';
+
+// Email validation regex (RFC 5322 compliant, simplified)
+const isValidEmail = (email: string): boolean => {
+	const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+	return emailRegex.test(email) && email.length <= 254;
+};
 
 const PublicFeedbackFormPage = () => {
 	const { publicLink } = useParams<{ publicLink: string }>();
+	const navigate = useNavigate();
 	const { isSmallScreen } = useContext(MediaQueryContext);
 	const [form, setForm] = useState<FeedbackForm | null>(null);
 	const [loading, setLoading] = useState<boolean>(true);
@@ -21,6 +31,8 @@ const PublicFeedbackFormPage = () => {
 	const [responses, setResponses] = useState<Record<string, any>>({});
 	const [userName, setUserName] = useState<string>('');
 	const [userEmail, setUserEmail] = useState<string>('');
+	const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+	const recaptchaRef = useRef<any>(null);
 
 	// Check if form has already been submitted (using localStorage)
 	useEffect(() => {
@@ -36,7 +48,7 @@ const PublicFeedbackFormPage = () => {
 	useEffect(() => {
 		const fetchForm = async () => {
 			if (!publicLink) {
-				setError('Invalid form link');
+				setError('Geçersiz form bağlantısı');
 				setLoading(false);
 				return;
 			}
@@ -47,14 +59,14 @@ const PublicFeedbackFormPage = () => {
 
 				// Check if form deadline has passed
 				if (formData.submissionDeadline && new Date(formData.submissionDeadline) < new Date()) {
-					setError('This form submission deadline has passed and is no longer accepting responses.');
+					setError('Bu formun gönderim süresi dolmuştur.');
 					setForm(null);
 				} else {
 					setForm(formData);
 					setError(null);
 				}
 			} catch (err: any) {
-				setError(err?.response?.data?.message || 'Form not found or no longer available');
+				setError(err?.response?.data?.message || 'Form bulunamadı veya erişilebilir değil');
 			} finally {
 				setLoading(false);
 			}
@@ -63,10 +75,80 @@ const PublicFeedbackFormPage = () => {
 		fetchForm();
 	}, [publicLink]);
 
+	// Security constants
+	const MAX_TEXT_LENGTH = 500;
+	const MAX_TEXTAREA_LENGTH = 2000;
+	const MAX_NAME_LENGTH = 100;
+	const MAX_EMAIL_LENGTH = 254;
+
 	const handleFieldChange = (fieldId: string, value: any) => {
+		// Sanitize value based on field type
+		const field = form?.fields.find((f) => f.fieldId === fieldId);
+		let sanitizedValue = value;
+
+		if (field) {
+			switch (field.type) {
+				case 'text':
+					// Sanitize text input and enforce length limit
+					if (typeof value === 'string') {
+						sanitizedValue = validateInputLength(sanitizeTextInput(value), MAX_TEXT_LENGTH);
+					}
+					break;
+				case 'textarea':
+					// Sanitize textarea input and enforce length limit
+					if (typeof value === 'string') {
+						sanitizedValue = validateInputLength(sanitizeTextInput(value), MAX_TEXTAREA_LENGTH);
+					}
+					break;
+				case 'rating':
+					// Validate rating is a number within range
+					if (value !== null && value !== undefined) {
+						const numValue = Number(value);
+						if (!isNaN(numValue)) {
+							const minRating = field.minRating || 1;
+							const maxRating = field.maxRating || 5;
+							sanitizedValue = Math.max(minRating, Math.min(maxRating, numValue));
+						} else {
+							sanitizedValue = null;
+						}
+					}
+					break;
+				case 'multiple-choice':
+					// Validate option is in allowed options and sanitize
+					if (field.options && typeof value === 'string') {
+						const sanitizedOption = sanitizeTextInput(value).trim();
+						if (field.options.includes(sanitizedOption)) {
+							sanitizedValue = sanitizedOption;
+						} else {
+							return; // Invalid option, don't update
+						}
+					}
+					break;
+				case 'checkbox':
+					// Validate all selected options are in allowed options and sanitize
+					if (Array.isArray(value)) {
+						const validOptions = value
+							.filter((v) => field.options?.includes(String(v)))
+							.map((v) => sanitizeTextInput(String(v)).trim())
+							.filter((v) => field.options?.includes(v));
+						sanitizedValue = validOptions;
+					}
+					break;
+				case 'date':
+					// Validate date format
+					if (typeof value === 'string' && value) {
+						// Basic date format validation (YYYY-MM-DD)
+						if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+							return; // Invalid date format, don't update
+						}
+					}
+					break;
+			}
+		}
+
 		setResponses((prev) => ({
 			...prev,
-			[fieldId]: value,
+			[fieldId]: sanitizedValue,
 		}));
 	};
 
@@ -80,12 +162,55 @@ const PublicFeedbackFormPage = () => {
 				if (value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0)) {
 					return false;
 				}
+
+				// Additional type-specific validation
+				if (field.type === 'text' && typeof value === 'string' && value.trim().length === 0) {
+					return false;
+				}
+				if (field.type === 'textarea' && typeof value === 'string' && value.trim().length === 0) {
+					return false;
+				}
+				if (field.type === 'rating' && (value === null || value === undefined || value === 0)) {
+					return false;
+				}
+			}
+
+			// Validate field values match their types
+			const value = responses[field.fieldId];
+			if (value !== undefined && value !== null && value !== '') {
+				if (field.type === 'rating') {
+					const numValue = Number(value);
+					if (isNaN(numValue)) return false;
+					const minRating = field.minRating || 1;
+					const maxRating = field.maxRating || 5;
+					if (numValue < minRating || numValue > maxRating) return false;
+				}
+				if (field.type === 'multiple-choice' && field.options && !field.options.includes(value)) {
+					return false;
+				}
+				if (field.type === 'checkbox' && Array.isArray(value)) {
+					for (const v of value) {
+						if (!field.options?.includes(v)) return false;
+					}
+				}
 			}
 		}
 
-		// If not anonymous, require name/email
+		// If not anonymous, require and validate name/email
 		if (!form.allowAnonymous) {
-			if (!userName.trim() || !userEmail.trim()) {
+			const sanitizedName = sanitizeTextInput(userName).trim();
+			const sanitizedEmail = sanitizeEmailInput(userEmail).trim();
+
+			if (!sanitizedName || sanitizedName.length === 0 || sanitizedName.length > MAX_NAME_LENGTH) {
+				return false;
+			}
+
+			if (!sanitizedEmail || sanitizedEmail.length === 0 || sanitizedEmail.length > MAX_EMAIL_LENGTH) {
+				return false;
+			}
+
+			// Validate email format
+			if (!isValidEmail(sanitizedEmail)) {
 				return false;
 			}
 		}
@@ -98,8 +223,44 @@ const PublicFeedbackFormPage = () => {
 
 		if (!form || !publicLink) return;
 
+		// Check reCAPTCHA
+		if (!recaptchaToken) {
+			setSubmitError('Lütfen reCAPTCHA doğrulamasını tamamlayın');
+			return;
+		}
+
 		if (!validateForm()) {
-			setSubmitError('Please fill in all required fields');
+			// Provide more specific error messages
+			if (!form.allowAnonymous) {
+				const sanitizedName = sanitizeTextInput(userName).trim();
+				const sanitizedEmail = sanitizeEmailInput(userEmail).trim();
+
+				if (!sanitizedName || sanitizedName.length === 0) {
+					setSubmitError('Lütfen adınızı girin');
+					return;
+				}
+				if (!sanitizedEmail || sanitizedEmail.length === 0) {
+					setSubmitError('Lütfen e-posta adresinizi girin');
+					return;
+				}
+				if (!isValidEmail(sanitizedEmail)) {
+					setSubmitError('Lütfen geçerli bir e-posta adresi girin');
+					return;
+				}
+			}
+
+			// Check for missing required fields
+			for (const field of form.fields) {
+				if (field.required) {
+					const value = responses[field.fieldId];
+					if (value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0)) {
+						setSubmitError(`Lütfen zorunlu alanı doldurun: ${field.label}`);
+						return;
+					}
+				}
+			}
+
+			setSubmitError('Lütfen tüm zorunlu alanları doldurun');
 			return;
 		}
 
@@ -107,18 +268,68 @@ const PublicFeedbackFormPage = () => {
 			setSubmitting(true);
 			setSubmitError(null);
 
-			const submissionData = {
-				responses: Object.entries(responses).map(([fieldId, value]) => ({
+			// Sanitize all responses before sending
+			const sanitizedResponses = Object.entries(responses).map(([fieldId, value]) => {
+				const field = form.fields.find((f) => f.fieldId === fieldId);
+				let sanitizedValue = value;
+
+				if (field) {
+					switch (field.type) {
+						case 'text':
+						case 'textarea':
+							if (typeof value === 'string') {
+								sanitizedValue = sanitizeTextInput(value).trim();
+							}
+							break;
+						case 'date':
+							// Date is already validated format, just ensure it's a string
+							if (typeof value === 'string') {
+								sanitizedValue = value.trim();
+							}
+							break;
+						case 'rating':
+							// Ensure rating is a number
+							sanitizedValue = Number(value);
+							break;
+						case 'multiple-choice':
+							// Ensure value is a string and in allowed options
+							if (typeof value === 'string' && field.options?.includes(value)) {
+								sanitizedValue = sanitizeTextInput(value).trim();
+							}
+							break;
+						case 'checkbox':
+							// Sanitize each option in array
+							if (Array.isArray(value)) {
+								sanitizedValue = value.filter((v) => field.options?.includes(v)).map((v) => sanitizeTextInput(String(v)).trim());
+							}
+							break;
+					}
+				}
+
+				return {
 					fieldId,
-					value,
-				})),
+					value: sanitizedValue,
+				};
+			});
+
+			const submissionData = {
+				responses: sanitizedResponses,
+				recaptchaToken,
 				...(form.allowAnonymous
 					? {}
 					: {
-							userName: userName.trim(),
-							userEmail: userEmail.trim(),
+							userName: validateInputLength(sanitizeTextInput(userName).trim(), MAX_NAME_LENGTH),
+							userEmail: validateInputLength(sanitizeEmailInput(userEmail).trim().toLowerCase(), MAX_EMAIL_LENGTH),
 						}),
 			};
+
+			// Final validation before submission
+			if (!form.allowAnonymous && submissionData.userEmail) {
+				if (!isValidEmail(submissionData.userEmail)) {
+					setSubmitError('Lütfen geçerli bir e-posta adresi girin');
+					return;
+				}
+			}
 
 			await feedbackFormsService.submitFeedbackForm(publicLink, submissionData);
 
@@ -127,9 +338,20 @@ const PublicFeedbackFormPage = () => {
 				localStorage.setItem(`form_submitted_${publicLink}`, 'true');
 			}
 
+			// Reset reCAPTCHA
+			if (recaptchaRef.current) {
+				recaptchaRef.current.reset();
+			}
+			setRecaptchaToken(null);
+
 			setSubmitted(true);
 		} catch (err: any) {
-			setSubmitError(err?.response?.data?.message || 'Failed to submit form. Please try again.');
+			setSubmitError(err?.response?.data?.message || 'Form gönderilemedi. Lütfen tekrar deneyin.');
+			// Reset reCAPTCHA on error
+			if (recaptchaRef.current) {
+				recaptchaRef.current.reset();
+			}
+			setRecaptchaToken(null);
 		} finally {
 			setSubmitting(false);
 		}
@@ -155,7 +377,7 @@ const PublicFeedbackFormPage = () => {
 							}}>
 							{field.label}
 						</FormLabel>
-						<TextField
+						<CustomTextField
 							key={field.fieldId}
 							fullWidth
 							placeholder={field.placeholder}
@@ -163,6 +385,7 @@ const PublicFeedbackFormPage = () => {
 							value={value || ''}
 							onChange={(e) => handleFieldChange(field.fieldId, e.target.value)}
 							variant='outlined'
+							type='text'
 							sx={{
 								'mb': '1.5rem',
 								'& .MuiOutlinedInput-root': {
@@ -231,10 +454,17 @@ const PublicFeedbackFormPage = () => {
 							placeholder={field.placeholder}
 							required={isRequired}
 							value={value || ''}
-							onChange={(e) => handleFieldChange(field.fieldId, e.target.value)}
+							onChange={(e) => {
+								// Sanitize textarea input on change
+								const sanitized = validateInputLength(sanitizeTextInput(e.target.value), MAX_TEXTAREA_LENGTH);
+								handleFieldChange(field.fieldId, sanitized);
+							}}
 							multiline
 							rows={4}
 							variant='outlined'
+							inputProps={{
+								maxLength: MAX_TEXTAREA_LENGTH,
+							}}
 							sx={{
 								'mb': '2rem',
 								'& .MuiOutlinedInput-root': {
@@ -293,9 +523,11 @@ const PublicFeedbackFormPage = () => {
 							'borderRadius': '12px',
 							'backgroundColor': 'rgba(255, 255, 255, 0.95)',
 							'boxShadow': '0 2px 8px rgba(0, 0, 0, 0.08)',
+							'border': '2px solid rgba(102, 126, 234, 0.3)',
 							'transition': 'all 0.3s ease',
 							'&:hover': {
 								boxShadow: '0 4px 12px rgba(102, 126, 234, 0.15)',
+								borderColor: 'rgba(102, 126, 234, 0.5)',
 							},
 						}}>
 						<FormLabel
@@ -348,9 +580,11 @@ const PublicFeedbackFormPage = () => {
 							'borderRadius': '12px',
 							'backgroundColor': 'rgba(255, 255, 255, 0.95)',
 							'boxShadow': '0 2px 8px rgba(0, 0, 0, 0.08)',
+							'border': '2px solid rgba(102, 126, 234, 0.3)',
 							'transition': 'all 0.3s ease',
 							'&:hover': {
 								boxShadow: '0 4px 12px rgba(102, 126, 234, 0.15)',
+								borderColor: 'rgba(102, 126, 234, 0.5)',
 							},
 						}}>
 						<FormLabel
@@ -458,9 +692,11 @@ const PublicFeedbackFormPage = () => {
 							'borderRadius': '12px',
 							'backgroundColor': 'rgba(255, 255, 255, 0.95)',
 							'boxShadow': '0 2px 8px rgba(0, 0, 0, 0.08)',
+							'border': '2px solid rgba(102, 126, 234, 0.3)',
 							'transition': 'all 0.3s ease',
 							'&:hover': {
 								boxShadow: '0 4px 12px rgba(102, 126, 234, 0.15)',
+								borderColor: 'rgba(102, 126, 234, 0.5)',
 							},
 						}}>
 						<FormLabel
@@ -671,7 +907,7 @@ const PublicFeedbackFormPage = () => {
 					'backgroundRepeat': 'no-repeat',
 					'&::before': {
 						content: '""',
-						position: 'absolute',
+						position: 'fixed',
 						top: 0,
 						left: 0,
 						right: 0,
@@ -682,7 +918,7 @@ const PublicFeedbackFormPage = () => {
 					},
 					'&::after': {
 						content: '""',
-						position: 'absolute',
+						position: 'fixed',
 						top: 0,
 						left: 0,
 						right: 0,
@@ -722,7 +958,7 @@ const PublicFeedbackFormPage = () => {
 				}}>
 				<CircularProgress sx={{ color: theme.palette.primary.main, zIndex: 1 }} />
 				<Typography variant='h6' sx={{ mt: 2, color: theme.textColor?.primary.main, zIndex: 1 }}>
-					Loading form...
+					Form yükleniyor...
 				</Typography>
 			</Box>
 		);
@@ -745,7 +981,7 @@ const PublicFeedbackFormPage = () => {
 					'backgroundRepeat': 'no-repeat',
 					'&::before': {
 						content: '""',
-						position: 'absolute',
+						position: 'fixed',
 						top: 0,
 						left: 0,
 						right: 0,
@@ -756,7 +992,7 @@ const PublicFeedbackFormPage = () => {
 					},
 					'&::after': {
 						content: '""',
-						position: 'absolute',
+						position: 'fixed',
 						top: 0,
 						left: 0,
 						right: 0,
@@ -795,7 +1031,18 @@ const PublicFeedbackFormPage = () => {
 					'padding': 4,
 				}}>
 				<Box sx={{ textAlign: 'center', mb: 4 }}>
-					<img src={logo} alt='Logo' style={{ height: '80px', marginBottom: '2rem' }} />
+					<Box
+						onClick={() => navigate('/')}
+						sx={{
+							'display': 'inline-block',
+							'cursor': 'pointer',
+							'transition': 'opacity 0.3s ease',
+							'&:hover': {
+								opacity: 0.8,
+							},
+						}}>
+						<img src={logo} alt='Logo' style={{ height: '80px', marginBottom: '2rem' }} />
+					</Box>
 				</Box>
 				<Paper
 					elevation={8}
@@ -812,11 +1059,11 @@ const PublicFeedbackFormPage = () => {
 					<Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
 						<ErrorIcon color='error' sx={{ mr: 1 }} />
 						<Typography variant='h5' sx={{ color: theme.textColor?.primary.main, fontWeight: 600 }}>
-							Form Not Available
+							Form Bulunamadı
 						</Typography>
 					</Box>
 					<Typography variant='body1' sx={{ color: theme.textColor?.secondary.main }}>
-						{error || 'This form is no longer available or the link is invalid.'}
+						{error || 'Bu form bulunamadı veya bağlantı geçersiz.'}
 					</Typography>
 				</Paper>
 			</Box>
@@ -840,7 +1087,7 @@ const PublicFeedbackFormPage = () => {
 					'backgroundRepeat': 'no-repeat',
 					'&::before': {
 						content: '""',
-						position: 'absolute',
+						position: 'fixed',
 						top: 0,
 						left: 0,
 						right: 0,
@@ -851,7 +1098,7 @@ const PublicFeedbackFormPage = () => {
 					},
 					'&::after': {
 						content: '""',
-						position: 'absolute',
+						position: 'fixed',
 						top: 0,
 						left: 0,
 						right: 0,
@@ -890,7 +1137,18 @@ const PublicFeedbackFormPage = () => {
 					'padding': 4,
 				}}>
 				<Box sx={{ textAlign: 'center', mb: 4 }}>
-					<img src={logo} alt='Logo' style={{ height: '80px', marginBottom: '2rem' }} />
+					<Box
+						onClick={() => navigate('/')}
+						sx={{
+							'display': 'inline-block',
+							'cursor': 'pointer',
+							'transition': 'opacity 0.3s ease',
+							'&:hover': {
+								opacity: 0.8,
+							},
+						}}>
+						<img src={logo} alt='Logo' style={{ height: '80px', marginBottom: '2rem' }} />
+					</Box>
 				</Box>
 				<Paper
 					elevation={8}
@@ -907,10 +1165,10 @@ const PublicFeedbackFormPage = () => {
 					}}>
 					<CheckCircle sx={{ fontSize: 64, color: theme.palette.success.main, mb: 2 }} />
 					<Typography variant='h4' sx={{ color: theme.textColor?.primary.main, fontWeight: 600, mb: 2 }}>
-						Thank You!
+						Teşekkürler!
 					</Typography>
 					<Typography variant='body1' sx={{ color: theme.textColor?.secondary.main, mb: 3 }}>
-						Your response has been submitted successfully.
+						Yanıtınız başarıyla gönderildi.
 					</Typography>
 				</Paper>
 			</Box>
@@ -933,7 +1191,7 @@ const PublicFeedbackFormPage = () => {
 				'backgroundAttachment': 'fixed',
 				'&::before': {
 					content: '""',
-					position: 'absolute',
+					position: 'fixed',
 					top: 0,
 					left: 0,
 					right: 0,
@@ -944,7 +1202,7 @@ const PublicFeedbackFormPage = () => {
 				},
 				'&::after': {
 					content: '""',
-					position: 'absolute',
+					position: 'fixed',
 					top: 0,
 					left: 0,
 					right: 0,
@@ -1011,7 +1269,18 @@ const PublicFeedbackFormPage = () => {
 			<Container maxWidth='md' sx={{ position: 'relative', zIndex: 1 }}>
 				{/* Header with Logo */}
 				<Box sx={{ textAlign: 'center', mb: 3 }}>
-					<img src={logo} alt='Logo' style={{ height: '80px', marginBottom: '1rem', filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))' }} />
+					<Box
+						onClick={() => navigate('/')}
+						sx={{
+							'display': 'inline-block',
+							'cursor': 'pointer',
+							'transition': 'opacity 0.3s ease',
+							'&:hover': {
+								opacity: 0.8,
+							},
+						}}>
+						<img src={logo} alt='Logo' style={{ height: '80px', marginBottom: '1rem', filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))' }} />
+					</Box>
 				</Box>
 
 				{/* Form Card */}
@@ -1045,15 +1314,24 @@ const PublicFeedbackFormPage = () => {
 					{!form.allowAnonymous && (
 						<Box sx={{ mb: 4 }}>
 							<Typography variant='h6' sx={{ color: theme.textColor?.primary.main, mb: 2, fontWeight: 600 }}>
-								Your Information
+								Bilgileriniz
 							</Typography>
-							<TextField
+							<CustomTextField
 								fullWidth
-								label='Name'
+								label='İsim'
 								required
+								type='text'
 								value={userName}
-								onChange={(e) => setUserName(e.target.value)}
+								onChange={(e) => {
+									const sanitized = validateInputLength(sanitizeTextInput(e.target.value), MAX_NAME_LENGTH);
+									setUserName(sanitized);
+								}}
 								variant='outlined'
+								InputProps={{
+									inputProps: {
+										maxLength: MAX_NAME_LENGTH,
+									},
+								}}
 								sx={{
 									'mb': 2,
 									'& .MuiOutlinedInput-root': {
@@ -1093,14 +1371,22 @@ const PublicFeedbackFormPage = () => {
 									},
 								}}
 							/>
-							<TextField
+							<CustomTextField
 								fullWidth
-								label='Email'
+								label='E-posta'
 								type='email'
 								required
 								value={userEmail}
-								onChange={(e) => setUserEmail(e.target.value)}
+								onChange={(e) => {
+									const sanitized = validateInputLength(sanitizeEmailInput(e.target.value), MAX_EMAIL_LENGTH);
+									setUserEmail(sanitized);
+								}}
 								variant='outlined'
+								InputProps={{
+									inputProps: {
+										maxLength: MAX_EMAIL_LENGTH,
+									},
+								}}
 								sx={{
 									'& .MuiOutlinedInput-root': {
 										'backgroundColor': 'rgba(255, 255, 255, 0.95)',
@@ -1151,7 +1437,28 @@ const PublicFeedbackFormPage = () => {
 
 					{/* Form Fields */}
 					<form onSubmit={handleSubmit}>
-						{sortedFields.map((field) => renderField(field))}
+						{sortedFields.map((field) => (
+							<Fragment key={field.fieldId}>{renderField(field)}</Fragment>
+						))}
+
+						{/* reCAPTCHA */}
+						<Box sx={{ display: 'flex', justifyContent: 'center', mt: 3, mb: 2 }}>
+							<ReCAPTCHA
+								ref={recaptchaRef}
+								sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
+								onChange={(token) => {
+									setRecaptchaToken(token);
+									setSubmitError(null);
+								}}
+								onExpired={() => {
+									setRecaptchaToken(null);
+								}}
+								onError={() => {
+									setRecaptchaToken(null);
+									setSubmitError('reCAPTCHA doğrulaması başarısız oldu. Lütfen tekrar deneyin.');
+								}}
+							/>
+						</Box>
 
 						{/* Submit Button */}
 						<Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
@@ -1177,7 +1484,7 @@ const PublicFeedbackFormPage = () => {
 									'textTransform': 'uppercase',
 									'borderRadius': '0.5rem',
 								}}>
-								{submitting ? <CircularProgress size={24} sx={{ color: 'white' }} /> : 'Submit'}
+								{submitting ? <CircularProgress size={24} sx={{ color: 'white' }} /> : 'Gönder'}
 							</Button>
 						</Box>
 					</form>

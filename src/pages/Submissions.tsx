@@ -302,7 +302,7 @@ const Submissions = () => {
 																			fontSize: isMobileSize ? '0.7rem' : '0.85rem',
 																			fontWeight: 600,
 																		}}>
-																		{totalEarned}/{totalPossible} pts
+																		{totalEarned}/{totalPossible}
 																		{percentage !== null && (
 																			<Typography
 																				component='span'
@@ -332,12 +332,7 @@ const Submissions = () => {
 															);
 														})()}
 													</TableCell>
-													<TableCell
-														sx={{
-															display: isMobileSize ? 'none' : 'table-cell',
-														}}>
-														{submission.isChecked ? 'Checked' : 'Unchecked'}
-													</TableCell>
+													<CustomTableCell value={submission.isChecked ? 'Checked' : 'Unchecked'} />
 													<TableCell
 														sx={{
 															textAlign: 'center',
@@ -350,7 +345,7 @@ const Submissions = () => {
 																	`/submission-feedback/submission/${submission._id}/lesson/${submission.lessonId}/userlesson/${submission.userLessonId}?isChecked=${submission.isChecked}`
 																);
 															}}
-															icon={<PendingOutlined fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
+															icon={<PendingOutlined fontSize='small' sx={{ fontSize: isMobileSize ? '0.85rem' : undefined }} />}
 														/>
 													</TableCell>
 												</TableRow>

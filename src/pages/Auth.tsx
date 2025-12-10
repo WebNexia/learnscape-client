@@ -939,7 +939,7 @@ const Auth = () => {
 																display: 'none !important',
 																content: '""',
 															},
-															'& .react-tel-input > *:first-child:not(.flag-dropdown):not(input)': {
+															'& .react-tel-input > *:first-of-type:not(.flag-dropdown):not(input)': {
 																display: 'none !important',
 																visibility: 'hidden !important',
 																height: '0 !important',

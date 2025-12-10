@@ -112,11 +112,7 @@ const AdminCourseAnalytics = () => {
 
 					{!isLoading && error && <Alert severity='error'>{error.message || 'Failed to load course analytics. Please try again later.'}</Alert>}
 
-					{!isLoading && !error && data && data.students.length === 0 && (
-						<Alert severity='info'>No enrolled students found for this course yet.</Alert>
-					)}
-
-					{!isLoading && !error && data && data.students.length > 0 && (
+					{!isLoading && !error && data && (
 						<>
 							<Box
 								sx={{
@@ -259,6 +255,7 @@ const AdminCourseAnalytics = () => {
 									mt: 2,
 									borderRadius: 2,
 									overflow: 'hidden',
+									mb: '3rem',
 								}}>
 								<Table>
 									<TableHead sx={{ backgroundColor: theme.bgColor?.secondary }}>

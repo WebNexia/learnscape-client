@@ -704,7 +704,7 @@ const AdminCheckoutsFeedback = () => {
 						</Table>
 						{displayFeedbacks && displayFeedbacks.length === 0 && (
 							<CustomInfoMessageAlignedLeft
-								message={isSearchActive ? 'No feedbacks found matching your search criteria.' : 'No feedbacks found.'}
+								message={isSearchActive ? 'No feedback found matching your search criteria.' : 'No feedback found.'}
 								sx={{ marginTop: isMobileSize ? '3rem' : '5rem', marginBottom: '1rem' }}
 							/>
 						)}

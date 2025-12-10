@@ -285,7 +285,9 @@ const AdminQuizSubmissionCheck = () => {
 
 			setUserQuestionsFeedbacks((prev) => prev?.map((feedback) => ({ ...feedback, isUpdated: false })) || []);
 
-			navigate(`/admin/check-submission/submission/${submissionId}/lesson/${lessonId}/userlesson/${userLessonId}?isChecked=true`);
+			// Navigate to the correct route based on user role
+			const basePath = user?.role === 'instructor' ? '/instructor' : '/admin';
+			navigate(`${basePath}/check-submission/submission/${submissionId}/lesson/${lessonId}/userlesson/${userLessonId}?isChecked=true`);
 		} catch (error) {
 			console.error(error);
 		} finally {
