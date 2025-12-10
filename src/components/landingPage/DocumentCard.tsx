@@ -5,6 +5,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import { useState } from 'react';
 import DocumentPaymentDialogWrapper from './DocumentPaymentDialogWrapper';
 import { Download, ShoppingCart } from '@mui/icons-material';
+import { decodeHtmlEntities } from '../../utils/utilText';
 
 interface DocumentCardProps {
 	document: Pick<Document, '_id' | 'name' | 'prices' | 'imageUrl' | 'description' | 'samplePageImageUrl' | 'documentUrl' | 'orgId' | 'pageCount'>;
@@ -59,7 +60,7 @@ const DocumentCard = ({ document, userCurrency, fromHomePage }: DocumentCardProp
 							<CardMedia
 								component='img'
 								image={document.imageUrl}
-								alt={document.name}
+								alt={decodeHtmlEntities(document.name || '')}
 								sx={{
 									'height': { xs: '8rem', sm: '8rem', md: '9rem', lg: '9rem' },
 									'objectFit': 'cover',
@@ -138,7 +139,7 @@ const DocumentCard = ({ document, userCurrency, fromHomePage }: DocumentCardProp
 									lg: document?.name?.length > 35 ? '0.775rem' : '0.9rem',
 								},
 							}}>
-							{document.name}
+							{decodeHtmlEntities(document.name || '')}
 						</Typography>
 
 						<Box

@@ -21,6 +21,7 @@ import { Download, Visibility, Close, PictureAsPdf, Description, Image, VideoFil
 import { Document } from '../../interfaces/document';
 import InlinePDFViewer from './InlinePDFViewer';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
+import { decodeHtmlEntities } from '../../utils/utilText';
 
 interface DocumentViewerProps {
 	documents: Document[];
@@ -127,7 +128,7 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
 	const handleDownloadDocument = (document: Document) => {
 		const link = window.document.createElement('a');
 		link.href = document.documentUrl;
-		link.download = document.name;
+		link.download = decodeHtmlEntities(document.name || '');
 		link.target = '_blank';
 		window.document.body.appendChild(link);
 		link.click();
@@ -169,7 +170,7 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
 						WebkitBoxOrient: 'vertical',
 						overflow: 'hidden',
 					}}>
-					{document.name}
+					{decodeHtmlEntities(document.name || '')}
 				</Typography>
 			</CardContent>
 			<Box sx={{ p: 2, pt: 0 }}>
@@ -218,7 +219,7 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
 			<Box sx={{ mr: 2, display: 'flex', alignItems: 'center' }}>{getDocumentIcon(document.documentUrl)}</Box>
 			<Box sx={{ flexGrow: 1 }}>
 				<Typography variant='body1' sx={{ fontWeight: 500, mb: 0.5 }}>
-					{document.name}
+					{decodeHtmlEntities(document.name || '')}
 				</Typography>
 				<Chip label={getDocumentType(document.documentUrl)} size='small' variant='outlined' sx={{ fontSize: '0.7rem' }} />
 			</Box>

@@ -43,7 +43,7 @@ import useVideoUpload from '../hooks/useVideoUpload';
 import HandleVideoUploadURL from '../components/forms/uploadImageVideoDocument/HandleVideoUploadURL';
 import AddNewQuestionDialog from '../components/adminSingleLesson/AddNewQuestionDialog';
 import { stripHtml } from '../utils/stripHtml';
-import { truncateText } from '../utils/utilText';
+import { truncateText, decodeHtmlEntities } from '../utils/utilText';
 import VideoThumbnail from '../components/forms/uploadImageVideoDocument/VideoThumbnail';
 import LessonImageCourseDisplay from '../components/adminSingleLesson/LessonImageCourseDisplay';
 import { sanitizeHtml } from '../utils/sanitizeHtml';
@@ -1160,7 +1160,7 @@ const AdminLessonEditPage = () => {
 													rel='noopener noreferrer'
 													variant='body2'
 													sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-													{doc?.name}
+													{decodeHtmlEntities(doc?.name || '')}
 												</Link>
 											</Box>
 										))}

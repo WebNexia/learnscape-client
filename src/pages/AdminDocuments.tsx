@@ -731,7 +731,7 @@ const AdminDocuments = () => {
 										return (
 											<TableRow key={document._id} hover>
 												{!isMobileSize && !isInstructor && <CustomTableCell value={document.isOnLandingPage ? 'Yes' : 'No'} />}
-												<CustomTableCell value={document.name} />
+												<CustomTableCell value={document.name || ''} />
 												<TableCell sx={{ textAlign: 'center' }}>
 													<Link
 														href={document.documentUrl}
@@ -813,7 +813,7 @@ const AdminDocuments = () => {
 															maxWidth='xs'>
 															<DialogContent>
 																<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem' }}>
-																	Are you sure you want to delete "{document.name}"?
+																	Are you sure you want to delete "{document.name || ''}"?
 																</Typography>
 																<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.5rem', mt: '1.5rem' }}>
 																	You can restore it later from the recycle bin
