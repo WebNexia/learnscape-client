@@ -73,6 +73,7 @@ const CourseAnalytics = React.lazy(() => import('./pages/CourseAnalytics'));
 const PasswordResetPage = React.lazy(() => import('./pages/ResetPasswordPage'));
 const VerifyEmailPage = React.lazy(() => import('./pages/VerifyEmailPage'));
 const HandleAuthResetPassword = React.lazy(() => import('./pages/HandleAuthResetPassword'));
+const CertificateVerificationPage = React.lazy(() => import('./pages/CertificateVerificationPage'));
 const RateLimitError = React.lazy(() => import('./pages/RateLimitError'));
 const NotFound = React.lazy(() => import('./pages/NotFound'));
 
@@ -125,6 +126,7 @@ export const router = createBrowserRouter([
 			{ path: 'reset-password', element: <PasswordResetPage /> },
 			{ path: 'verify-email', element: <VerifyEmailPage /> },
 			{ path: 'handle-auth-reset', element: <HandleAuthResetPassword /> },
+			{ path: 'courses/certificates/verify/:certificateId', element: <CertificateVerificationPage /> },
 			{ path: 'about-us', element: <AboutUs /> },
 			{ path: 'contact-us', element: <ContactUs /> },
 			{
