@@ -28,7 +28,7 @@ import TRFlag from '../../assets/tr-flag-round-500.png';
 import EditInstructorDialog from './EditInstructorDialog';
 import CustomDialog from '../layouts/dialog/CustomDialog';
 import { useContext, useState, useMemo } from 'react';
-import { truncateText } from '@utils/utilText';
+import { truncateText, decodeHtmlEntities } from '@utils/utilText';
 import { useAuth } from '../../hooks/useAuth';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import CustomCancelButton from '../forms/customButtons/CustomCancelButton';
@@ -619,7 +619,7 @@ const CourseDetailsNonEditBox = ({ singleCourse, chapters, setSingleCourse }: Co
 											rel='noopener noreferrer'
 											variant='body2'
 											sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-											{doc?.name}
+											{decodeHtmlEntities(doc?.name || '')}
 										</Link>
 									</Box>
 								))}

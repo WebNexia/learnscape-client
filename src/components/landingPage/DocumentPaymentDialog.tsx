@@ -14,6 +14,7 @@ import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import { setCurrencySymbol } from '../../utils/setCurrencySymbol';
 import DocumentTermsConditions from './DocumentTermsConditions';
 import ReCAPTCHA from 'react-google-recaptcha';
+import { decodeHtmlEntities } from '../../utils/utilText';
 
 interface DocumentPaymentDialogProps {
 	document: Pick<Document, '_id' | 'name' | 'prices' | 'documentUrl' | 'orgId'>;
@@ -208,7 +209,7 @@ const DocumentPaymentDialog = ({
 
 	return (
 		<CustomDialog
-			title={`Kaynak Satın Al (${document.name})`}
+			title={`Kaynak Satın Al (${decodeHtmlEntities(document.name || '')})`}
 			titleSx={{
 				fontSize: '1.5rem',
 				fontWeight: 600,

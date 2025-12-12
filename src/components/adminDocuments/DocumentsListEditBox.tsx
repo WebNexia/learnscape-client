@@ -4,6 +4,7 @@ import CustomDialog from '../layouts/dialog/CustomDialog';
 import CustomTextField from '../forms/customFields/CustomTextField';
 import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
 import { Document } from '../../interfaces/document';
+import { decodeHtmlEntities } from '../../utils/utilText';
 import { DocumentUpdateTrack } from '../../pages/AdminLessonEditPage';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 
@@ -59,7 +60,7 @@ const DocumentsListEditBox = ({
 									rel='noopener noreferrer'
 									variant='body2'
 									sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-									{document?.name}
+									{decodeHtmlEntities(document?.name || '')}
 								</Link>
 							</Box>
 							<Box sx={{ display: 'flex', alignItems: 'center' }}>

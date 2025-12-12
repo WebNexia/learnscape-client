@@ -7,10 +7,13 @@ import { useUserAssessmentSummary } from '../hooks/useUserAssessmentSummary';
 import { useUserCourseAnalytics } from '../hooks/useUserCourseAnalytics';
 import { useUserCourseRank } from '../hooks/useUserCourseRank';
 import { useCourseLeaderboard } from '../hooks/useCourseLeaderboard';
+import { useCourseCertificate } from '../hooks/useCourseCertificate';
+import { useCourseCompletion } from '../hooks/useCourseCompletion';
 import theme from '../themes';
-import { KeyboardBackspaceOutlined } from '@mui/icons-material';
+import { KeyboardBackspaceOutlined, Download, CheckCircle } from '@mui/icons-material';
 import { useContext } from 'react';
 import { MediaQueryContext } from '../contexts/MediaQueryContextProvider';
+import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
 
 const CourseAnalytics = () => {
 	const { courseId, userCourseId } = useParams<{ courseId: string; userCourseId: string }>();
@@ -25,6 +28,8 @@ const CourseAnalytics = () => {
 	const { data: courseAnalytics, isLoading: isCourseAnalyticsLoading, error: courseAnalyticsError } = useUserCourseAnalytics(courseId);
 	const { data: rankAnalytics, isLoading: isRankLoading, error: rankError } = useUserCourseRank(courseId);
 	const { data: leaderboardData, isLoading: isLeaderboardLoading, error: leaderboardError } = useCourseLeaderboard(courseId);
+	const { isCompleted } = useCourseCompletion(courseId, userCourseId);
+	const { downloadCertificate, isDownloading, error: certificateError } = useCourseCertificate(courseId);
 
 	const pre = data?.pre || null;
 	const post = data?.post || null;
@@ -93,12 +98,6 @@ const CourseAnalytics = () => {
 		<AdminPageErrorBoundary>
 			<DashboardPagesLayout pageName='Course Analytics' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
 				<Box sx={{ width: '100%', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: 3 }}>
-					{(isLoading || isCourseAnalyticsLoading || isRankLoading || isLeaderboardLoading) && (
-						<Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
-							<CircularProgress />
-						</Box>
-					)}
-
 					{!isLoading && error && <Alert severity='error'>{error.message || 'Failed to load assessment analytics. Please try again later.'}</Alert>}
 
 					{!isCourseAnalyticsLoading && courseAnalyticsError && (
@@ -132,6 +131,53 @@ const CourseAnalytics = () => {
 							Back to course
 						</Button>
 					</Box>
+
+					{/* Course Completion Certificate Section */}
+					{isCompleted && (
+						<Paper
+							elevation={4}
+							sx={{
+								p: 3,
+								borderRadius: 3,
+								backgroundColor: theme.bgColor?.secondary,
+								boxShadow: '0 14px 32px rgba(15, 23, 42, 0.3)',
+								border: '2px solid rgba(34, 197, 94, 0.3)',
+								background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.05) 0%, rgba(16, 185, 129, 0.05) 100%)',
+								margin: '0 auto',
+								mb: '3rem',
+								width: '80%',
+							}}>
+							<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+								<Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+									<CheckCircle sx={{ color: '#22c55e', fontSize: isMobileSize ? '2rem' : '2.5rem' }} />
+									<Typography variant='h5' sx={{ fontWeight: 700, color: theme.textColor?.primary.main }}>
+										Course Completed! 🎉
+									</Typography>
+								</Box>
+								<Typography variant='body1' sx={{ color: theme.textColor?.secondary?.main || 'text.secondary', textAlign: 'center' }}>
+									Congratulations! You have successfully completed this course.
+								</Typography>
+								<CustomSubmitButton
+									startIcon={isDownloading ? <CircularProgress size={20} color='inherit' /> : <Download />}
+									onClick={downloadCertificate}
+									disabled={isDownloading}
+									sx={{
+										textTransform: 'capitalize',
+										mt: 1,
+										px: 4,
+										py: 2,
+										fontSize: isMobileSize ? '0.9rem' : '1rem',
+									}}>
+									{isDownloading ? 'Generating Certificate...' : isMobileSize ? 'Certificate' : 'Download Certificate'}
+								</CustomSubmitButton>
+								{certificateError && (
+									<Alert severity='error' sx={{ mt: 1, width: '100%', maxWidth: 500 }}>
+										{certificateError}
+									</Alert>
+								)}
+							</Box>
+						</Paper>
+					)}
 
 					{!isLoading && !error && hasAnyData && (
 						<>
@@ -251,7 +297,7 @@ const CourseAnalytics = () => {
 										display: 'flex',
 										gap: 2.5,
 										flexWrap: 'wrap',
-										mt: 3,
+										mt: '1rem',
 										justifyContent: 'center',
 									}}>
 									<Paper

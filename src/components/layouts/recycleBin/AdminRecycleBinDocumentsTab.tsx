@@ -557,7 +557,7 @@ const AdminRecycleBinDocumentsTab = () => {
 										<TableCell padding='checkbox' sx={{ textAlign: 'center' }}>
 											<input type='checkbox' checked={isSelected} onChange={() => handleSelectItem(document._id)} />
 										</TableCell>
-										<CustomTableCell value={truncateText(document.name, isMobileSize ? 25 : 45)} />
+										<CustomTableCell value={truncateText(document.name || '', isMobileSize ? 25 : 45)} />
 										{!isMobileSize && <CustomTableCell value={document.pageCount?.toString() || 'N/A'} />}
 										{!isMobileSize && <CustomTableCell value={document.archivedByName || 'N/A'} />}
 
@@ -602,7 +602,7 @@ const AdminRecycleBinDocumentsTab = () => {
 					maxWidth='xs'>
 					<DialogContent>
 						<Typography variant='body2' sx={{ lineHeight: 1.7, fontSize: isMobileSize ? '0.75rem' : undefined }}>
-							Are you sure you want to restore "{truncateText(document.name, 25)}"?
+							Are you sure you want to restore "{truncateText(document.name || '', 25)}"?
 						</Typography>
 						<Typography variant='body2' sx={{ lineHeight: 1.7, mt: 2, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 							This document can be added to lessons and courses manually
@@ -630,7 +630,7 @@ const AdminRecycleBinDocumentsTab = () => {
 					maxWidth='xs'>
 					<DialogContent>
 						<Typography variant='body2' sx={{ lineHeight: 1.7, fontSize: isMobileSize ? '0.75rem' : undefined }}>
-							Are you sure you want to permanently delete "{truncateText(document.name, 25)}"?
+							Are you sure you want to permanently delete "{truncateText(document.name || '', 25)}"?
 						</Typography>
 						<Typography variant='body2' sx={{ lineHeight: 1.7, mt: 2, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
 							This action cannot be undone

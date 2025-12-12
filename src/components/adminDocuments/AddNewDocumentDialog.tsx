@@ -582,7 +582,7 @@ const AddNewDocumentDialog = ({
 										const isSelected = selectedDocumentIds?.indexOf(document._id) !== -1;
 										return (
 											<TableRow key={document._id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }} hover>
-												<CustomTableCell value={document.name} />
+												<CustomTableCell value={document.name || ''} />
 
 												<CustomTableCell>
 													<Link
