@@ -1,4 +1,4 @@
-import { Box, Container, Typography, TextField, Button, Rating, FormLabel, Alert, CircularProgress, Paper, Divider } from '@mui/material';
+import { Box, Container, Typography, Button, Rating, FormLabel, Alert, CircularProgress, Paper, Divider } from '@mui/material';
 import { useContext, useEffect, useState, useRef, Fragment } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { feedbackFormsService } from '../services/feedbackFormsService';
@@ -95,9 +95,9 @@ const PublicFeedbackFormPage = () => {
 					}
 					break;
 				case 'textarea':
-					// Sanitize textarea input and enforce length limit
 					if (typeof value === 'string') {
-						sanitizedValue = validateInputLength(sanitizeTextInput(value), MAX_TEXTAREA_LENGTH);
+						const withoutHtml = value.replace(/<[^>]*>/g, '');
+						sanitizedValue = withoutHtml.length > MAX_TEXTAREA_LENGTH ? withoutHtml.substring(0, MAX_TEXTAREA_LENGTH) : withoutHtml;
 					}
 					break;
 				case 'rating':
@@ -391,7 +391,7 @@ const PublicFeedbackFormPage = () => {
 								'& .MuiOutlinedInput-root': {
 									'backgroundColor': 'rgba(255, 255, 255, 0.95)',
 									'borderRadius': '12px',
-									'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+
 									'boxShadow': '0 2px 8px rgba(0, 0, 0, 0.08)',
 									'&:hover': {
 										backgroundColor: 'rgba(255, 255, 255, 1)',
@@ -404,7 +404,6 @@ const PublicFeedbackFormPage = () => {
 									'& fieldset': {
 										borderColor: 'rgba(102, 126, 234, 0.3)',
 										borderWidth: '2px',
-										transition: 'all 0.3s ease',
 									},
 									'&:hover fieldset': {
 										borderColor: 'rgba(102, 126, 234, 0.5)',
@@ -417,7 +416,6 @@ const PublicFeedbackFormPage = () => {
 								'& .MuiInputLabel-root': {
 									fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif !important",
 									fontSize: '0.95rem',
-									transition: 'all 0.3s ease',
 								},
 								'& .MuiInputBase-input': {
 									fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif",
@@ -448,45 +446,45 @@ const PublicFeedbackFormPage = () => {
 							}}>
 							{field.label}
 						</FormLabel>
-						<TextField
+						<CustomTextField
 							key={field.fieldId}
 							fullWidth
 							placeholder={field.placeholder}
 							required={isRequired}
 							value={value || ''}
 							onChange={(e) => {
-								// Sanitize textarea input on change
-								const sanitized = validateInputLength(sanitizeTextInput(e.target.value), MAX_TEXTAREA_LENGTH);
-								handleFieldChange(field.fieldId, sanitized);
+								const rawValue = e.target.value;
+								const withoutHtml = rawValue.replace(/<[^>]*>/g, '');
+								const limited = withoutHtml.length > MAX_TEXTAREA_LENGTH ? withoutHtml.substring(0, MAX_TEXTAREA_LENGTH) : withoutHtml;
+								handleFieldChange(field.fieldId, limited);
 							}}
 							multiline
 							rows={4}
 							variant='outlined'
-							inputProps={{
-								maxLength: MAX_TEXTAREA_LENGTH,
+							disableSanitization={true}
+							InputProps={{
+								inputProps: {
+									maxLength: MAX_TEXTAREA_LENGTH,
+								},
 							}}
 							sx={{
 								'mb': '2rem',
 								'& .MuiOutlinedInput-root': {
 									'backgroundColor': 'rgba(255, 255, 255, 0.95)',
 									'borderRadius': '12px',
-									'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
 									'boxShadow': '0 2px 8px rgba(0, 0, 0, 0.08)',
 									'&:hover': {
-										backgroundColor: 'rgba(255, 255, 255, 1)',
-										boxShadow: '0 4px 12px rgba(102, 126, 234, 0.15)',
+										boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
 									},
 									'&.Mui-focused': {
-										backgroundColor: 'rgba(255, 255, 255, 1)',
-										boxShadow: '0 6px 20px rgba(102, 126, 234, 0.25)',
+										boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
 									},
 									'& fieldset': {
 										borderColor: 'rgba(102, 126, 234, 0.3)',
 										borderWidth: '2px',
-										transition: 'all 0.3s ease',
 									},
 									'&:hover fieldset': {
-										borderColor: 'rgba(102, 126, 234, 0.5)',
+										borderColor: 'rgba(102, 126, 234, 0.3)',
 									},
 									'&.Mui-focused fieldset': {
 										borderColor: 'rgba(102, 126, 234, 0.8)',
@@ -496,7 +494,6 @@ const PublicFeedbackFormPage = () => {
 								'& .MuiInputLabel-root': {
 									fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif !important",
 									fontSize: '0.95rem',
-									transition: 'all 0.3s ease',
 								},
 								'& .MuiInputBase-input': {
 									fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif",
@@ -524,7 +521,6 @@ const PublicFeedbackFormPage = () => {
 							'backgroundColor': 'rgba(255, 255, 255, 0.95)',
 							'boxShadow': '0 2px 8px rgba(0, 0, 0, 0.08)',
 							'border': '2px solid rgba(102, 126, 234, 0.3)',
-							'transition': 'all 0.3s ease',
 							'&:hover': {
 								boxShadow: '0 4px 12px rgba(102, 126, 234, 0.15)',
 								borderColor: 'rgba(102, 126, 234, 0.5)',
@@ -557,7 +553,7 @@ const PublicFeedbackFormPage = () => {
 								'& .MuiRating-iconFilled': {
 									color: '#667eea',
 									filter: 'drop-shadow(0 2px 4px rgba(102, 126, 234, 0.3))',
-									transition: 'all 0.2s ease',
+									// Removed transition
 								},
 								'& .MuiRating-iconEmpty': {
 									color: 'rgba(102, 126, 234, 0.3)',
@@ -581,7 +577,7 @@ const PublicFeedbackFormPage = () => {
 							'backgroundColor': 'rgba(255, 255, 255, 0.95)',
 							'boxShadow': '0 2px 8px rgba(0, 0, 0, 0.08)',
 							'border': '2px solid rgba(102, 126, 234, 0.3)',
-							'transition': 'all 0.3s ease',
+							// Removed transitions to prevent flashing
 							'&:hover': {
 								boxShadow: '0 4px 12px rgba(102, 126, 234, 0.15)',
 								borderColor: 'rgba(102, 126, 234, 0.5)',
@@ -614,7 +610,7 @@ const PublicFeedbackFormPage = () => {
 											'border': `2px solid ${isSelected ? '#667eea' : 'rgba(102, 126, 234, 0.2)'}`,
 											'backgroundColor': isSelected ? 'rgba(102, 126, 234, 0.08)' : 'rgba(255, 255, 255, 0.6)',
 											'cursor': 'pointer',
-											'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+											// Removed transitions to prevent flashing
 											'position': 'relative',
 											'overflow': 'hidden',
 											'&::before': {
@@ -627,7 +623,7 @@ const PublicFeedbackFormPage = () => {
 												background: isSelected
 													? 'linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%)'
 													: 'transparent',
-												transition: 'all 0.3s ease',
+												// Removed transition
 											},
 											'&:hover': {
 												borderColor: '#667eea',
@@ -649,7 +645,7 @@ const PublicFeedbackFormPage = () => {
 												'border': `2px solid ${isSelected ? '#667eea' : 'rgba(102, 126, 234, 0.4)'}`,
 												'backgroundColor': isSelected ? '#667eea' : 'transparent',
 												'mr': 2,
-												'transition': 'all 0.3s ease',
+												// Removed transitions to prevent flashing
 												'position': 'relative',
 												'flexShrink': 0,
 												'&::after': {
@@ -659,7 +655,7 @@ const PublicFeedbackFormPage = () => {
 													height: isSelected ? '8px' : '0',
 													borderRadius: '50%',
 													backgroundColor: 'white',
-													transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+													// Removed transition
 												},
 											}}
 										/>
@@ -671,7 +667,6 @@ const PublicFeedbackFormPage = () => {
 												fontWeight: isSelected ? 600 : 400,
 												position: 'relative',
 												zIndex: 1,
-												transition: 'all 0.3s ease',
 											}}>
 											{option}
 										</Typography>
@@ -693,7 +688,6 @@ const PublicFeedbackFormPage = () => {
 							'backgroundColor': 'rgba(255, 255, 255, 0.95)',
 							'boxShadow': '0 2px 8px rgba(0, 0, 0, 0.08)',
 							'border': '2px solid rgba(102, 126, 234, 0.3)',
-							'transition': 'all 0.3s ease',
 							'&:hover': {
 								boxShadow: '0 4px 12px rgba(102, 126, 234, 0.15)',
 								borderColor: 'rgba(102, 126, 234, 0.5)',
@@ -731,7 +725,6 @@ const PublicFeedbackFormPage = () => {
 											'border': `2px solid ${isSelected ? '#667eea' : 'rgba(102, 126, 234, 0.2)'}`,
 											'backgroundColor': isSelected ? 'rgba(102, 126, 234, 0.08)' : 'rgba(255, 255, 255, 0.6)',
 											'cursor': 'pointer',
-											'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
 											'position': 'relative',
 											'overflow': 'hidden',
 											'&::before': {
@@ -744,7 +737,6 @@ const PublicFeedbackFormPage = () => {
 												background: isSelected
 													? 'linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%)'
 													: 'transparent',
-												transition: 'all 0.3s ease',
 											},
 											'&:hover': {
 												borderColor: '#667eea',
@@ -766,7 +758,6 @@ const PublicFeedbackFormPage = () => {
 												border: `2px solid ${isSelected ? '#667eea' : 'rgba(102, 126, 234, 0.4)'}`,
 												backgroundColor: isSelected ? '#667eea' : 'transparent',
 												mr: 2,
-												transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
 												position: 'relative',
 												flexShrink: 0,
 												overflow: 'hidden',
@@ -774,20 +765,10 @@ const PublicFeedbackFormPage = () => {
 											{isSelected && (
 												<Check
 													sx={{
-														'color': 'white',
-														'fontSize': '18px',
-														'position': 'absolute',
-														'animation': 'checkmarkAppear 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-														'@keyframes checkmarkAppear': {
-															'0%': {
-																opacity: 0,
-																transform: 'scale(0) rotate(-45deg)',
-															},
-															'100%': {
-																opacity: 1,
-																transform: 'scale(1) rotate(0deg)',
-															},
-														},
+														color: 'white',
+														fontSize: '18px',
+														position: 'absolute',
+														// Removed animation to prevent flashing
 													}}
 												/>
 											)}
@@ -800,7 +781,6 @@ const PublicFeedbackFormPage = () => {
 												fontWeight: isSelected ? 600 : 400,
 												position: 'relative',
 												zIndex: 1,
-												transition: 'all 0.3s ease',
 											}}>
 											{option}
 										</Typography>
@@ -826,7 +806,7 @@ const PublicFeedbackFormPage = () => {
 							}}>
 							{field.label}
 						</FormLabel>
-						<TextField
+						<CustomTextField
 							key={field.fieldId}
 							fullWidth
 							placeholder={field.placeholder}
@@ -834,6 +814,7 @@ const PublicFeedbackFormPage = () => {
 							type='date'
 							value={value || ''}
 							onChange={(e) => handleFieldChange(field.fieldId, e.target.value)}
+							disableSanitization={true}
 							InputLabelProps={{
 								shrink: true,
 							}}
@@ -843,23 +824,19 @@ const PublicFeedbackFormPage = () => {
 								'& .MuiOutlinedInput-root': {
 									'backgroundColor': 'rgba(255, 255, 255, 0.95)',
 									'borderRadius': '12px',
-									'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
 									'boxShadow': '0 2px 8px rgba(0, 0, 0, 0.08)',
 									'&:hover': {
-										backgroundColor: 'rgba(255, 255, 255, 1)',
-										boxShadow: '0 4px 12px rgba(102, 126, 234, 0.15)',
+										boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
 									},
 									'&.Mui-focused': {
-										backgroundColor: 'rgba(255, 255, 255, 1)',
-										boxShadow: '0 6px 20px rgba(102, 126, 234, 0.25)',
+										boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
 									},
 									'& fieldset': {
 										borderColor: 'rgba(102, 126, 234, 0.3)',
 										borderWidth: '2px',
-										transition: 'all 0.3s ease',
 									},
 									'&:hover fieldset': {
-										borderColor: 'rgba(102, 126, 234, 0.5)',
+										borderColor: 'rgba(102, 126, 234, 0.3)',
 									},
 									'&.Mui-focused fieldset': {
 										borderColor: 'rgba(102, 126, 234, 0.8)',
@@ -869,7 +846,6 @@ const PublicFeedbackFormPage = () => {
 								'& .MuiInputLabel-root': {
 									fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif !important",
 									fontSize: '0.95rem',
-									transition: 'all 0.3s ease',
 								},
 								'& .MuiInputBase-input': {
 									fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif",
@@ -1036,7 +1012,6 @@ const PublicFeedbackFormPage = () => {
 						sx={{
 							'display': 'inline-block',
 							'cursor': 'pointer',
-							'transition': 'opacity 0.3s ease',
 							'&:hover': {
 								opacity: 0.8,
 							},
@@ -1051,7 +1026,6 @@ const PublicFeedbackFormPage = () => {
 						maxWidth: 500,
 						width: '100%',
 						backgroundColor: 'rgba(255, 255, 255, 0.95)',
-						backdropFilter: 'blur(10px)',
 						borderRadius: 3,
 						position: 'relative',
 						zIndex: 1,
@@ -1142,7 +1116,6 @@ const PublicFeedbackFormPage = () => {
 						sx={{
 							'display': 'inline-block',
 							'cursor': 'pointer',
-							'transition': 'opacity 0.3s ease',
 							'&:hover': {
 								opacity: 0.8,
 							},
@@ -1157,7 +1130,6 @@ const PublicFeedbackFormPage = () => {
 						maxWidth: 600,
 						width: '100%',
 						backgroundColor: 'rgba(255, 255, 255, 0.95)',
-						backdropFilter: 'blur(10px)',
 						borderRadius: 3,
 						textAlign: 'center',
 						position: 'relative',
@@ -1183,7 +1155,7 @@ const PublicFeedbackFormPage = () => {
 			sx={{
 				'minHeight': '100vh',
 				'position': 'relative',
-				'overflow': 'hidden',
+				'overflow': 'auto',
 				'backgroundImage': `url(${LondonBg})`,
 				'backgroundSize': 'cover',
 				'backgroundPosition': 'center',
@@ -1220,9 +1192,6 @@ const PublicFeedbackFormPage = () => {
 					fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif !important",
 					fontWeight: 400,
 				},
-				'& *': {
-					fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif",
-				},
 				'& label': {
 					fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif !important",
 				},
@@ -1242,17 +1211,10 @@ const PublicFeedbackFormPage = () => {
 					fontFamily: "'Varela Round', 'Segoe UI', 'Arial', sans-serif !important",
 				},
 				'& .gradient-text': {
-					'background': 'linear-gradient(135deg, #4f46e5 0%, #5b21b6 50%, #7c3aed 100%)',
-					'WebkitBackgroundClip': 'text',
-					'WebkitTextFillColor': 'transparent',
-					'backgroundClip': 'text',
-					'backgroundSize': '200% 200%',
-					'animation': 'gradientShift 6s ease infinite',
-					'@keyframes gradientShift': {
-						'0%': { backgroundPosition: '0% 50%' },
-						'50%': { backgroundPosition: '100% 50%' },
-						'100%': { backgroundPosition: '0% 50%' },
-					},
+					background: 'linear-gradient(135deg, #4f46e5 0%, #5b21b6 50%, #7c3aed 100%)',
+					WebkitBackgroundClip: 'text',
+					WebkitTextFillColor: 'transparent',
+					backgroundClip: 'text',
 				},
 				'& .accent-color': {
 					color: '#1e293b',
@@ -1274,7 +1236,6 @@ const PublicFeedbackFormPage = () => {
 						sx={{
 							'display': 'inline-block',
 							'cursor': 'pointer',
-							'transition': 'opacity 0.3s ease',
 							'&:hover': {
 								opacity: 0.8,
 							},
@@ -1289,7 +1250,6 @@ const PublicFeedbackFormPage = () => {
 					sx={{
 						p: { xs: 3, sm: 5 },
 						backgroundColor: 'rgba(255, 255, 255, 0.95)',
-						backdropFilter: 'blur(10px)',
 						borderRadius: 3,
 						boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
 						position: 'relative',
@@ -1337,7 +1297,6 @@ const PublicFeedbackFormPage = () => {
 									'& .MuiOutlinedInput-root': {
 										'backgroundColor': 'rgba(255, 255, 255, 0.95)',
 										'borderRadius': '12px',
-										'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
 										'boxShadow': '0 2px 8px rgba(0, 0, 0, 0.08)',
 										'&:hover': {
 											backgroundColor: 'rgba(255, 255, 255, 1)',
@@ -1350,7 +1309,6 @@ const PublicFeedbackFormPage = () => {
 										'& fieldset': {
 											borderColor: 'rgba(102, 126, 234, 0.3)',
 											borderWidth: '2px',
-											transition: 'all 0.3s ease',
 										},
 										'&:hover fieldset': {
 											borderColor: 'rgba(102, 126, 234, 0.5)',
@@ -1391,7 +1349,6 @@ const PublicFeedbackFormPage = () => {
 									'& .MuiOutlinedInput-root': {
 										'backgroundColor': 'rgba(255, 255, 255, 0.95)',
 										'borderRadius': '12px',
-										'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
 										'boxShadow': '0 2px 8px rgba(0, 0, 0, 0.08)',
 										'&:hover': {
 											backgroundColor: 'rgba(255, 255, 255, 1)',
@@ -1404,7 +1361,6 @@ const PublicFeedbackFormPage = () => {
 										'& fieldset': {
 											borderColor: 'rgba(102, 126, 234, 0.3)',
 											borderWidth: '2px',
-											transition: 'all 0.3s ease',
 										},
 										'&:hover fieldset': {
 											borderColor: 'rgba(102, 126, 234, 0.5)',
@@ -1480,7 +1436,6 @@ const PublicFeedbackFormPage = () => {
 										background: 'linear-gradient(135deg, #ff7d55 0%, #FF6B3D 100%)',
 										boxShadow: '0 6px 20px rgba(255, 107, 61, 0.45)',
 									},
-									'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
 									'textTransform': 'uppercase',
 									'borderRadius': '0.5rem',
 								}}>
