@@ -261,14 +261,12 @@ const MatchingPreview = ({
 				newResponses.splice(source.index, 1);
 
 				// Check if match is correct and play sound
-				if (!isLessonCompleted) {
-					const originalPair = initialPairs?.find((pair) => pair.id === newPairs[pairIndex].id);
-					if (originalPair) {
-						if (originalPair.answer === matchedAnswer) {
-							onCorrectMatch?.();
-						} else {
-							onWrongMatch?.();
-						}
+				const originalPair = initialPairs?.find((pair) => pair.id === newPairs[pairIndex].id);
+				if (originalPair) {
+					if (originalPair.answer === matchedAnswer) {
+						onCorrectMatch?.();
+					} else {
+						onWrongMatch?.();
 					}
 				}
 			}

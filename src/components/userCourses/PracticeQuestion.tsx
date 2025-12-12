@@ -130,8 +130,8 @@ const PracticeQuestion = ({
 	const { orgId } = useContext(OrganisationContext);
 	const { fetchQuestionTypeName, questionTypes } = useQuestionTypes();
 
-	// Sound effects - only enabled when lesson is not completed (active answering mode)
-	const { playSuccessSound, playErrorSound } = useSoundEffect(!isLessonCompleted, isSoundMuted);
+	// Sound effects - enabled even when lesson is completed
+	const { playSuccessSound, playErrorSound } = useSoundEffect(true, isSoundMuted);
 	const prevIsAnswerCorrectRef = useRef<boolean>(false);
 	const prevErrorRef = useRef<boolean>(false);
 
@@ -268,39 +268,27 @@ const PracticeQuestion = ({
 		}
 	}, [translateAnswers, checkedTranslatePairs, isTranslate, isLessonCompleted, question._id]);
 
-	// Clear stored answers when component unmounts (user navigates away)
 	useEffect(() => {
 		return () => {
-			// Clear on unmount (user navigates away from practice questions)
 			translateAnswersStoreRef.current = {};
 		};
 	}, []);
 
-	// Play sound effects for multiple choice and true/false questions
 	useEffect(() => {
-		// Only play sounds if lesson is not completed (active answering mode)
-		if (isLessonCompleted) return;
-
-		// Skip for open-ended and flip card (these don't have immediate correct/incorrect feedback)
 		if (isOpenEndedQuestion || isFlipCard) return;
 
-		// For FITB, Matching, and Translate, sounds are handled by the components themselves via callbacks or not needed
-		// Only handle multiple choice and true/false here
 		if (isMatching || isFITBDragDrop || isFITBTyping || isTranslate) return;
 
-		// Play success sound when answer becomes correct
 		if (isAnswerCorrect && !prevIsAnswerCorrectRef.current) {
 			playSuccessSound();
 			prevIsAnswerCorrectRef.current = true;
 		}
 
-		// Play error sound when error becomes true (and answer is not correct)
 		if (error && !prevErrorRef.current && !isAnswerCorrect) {
 			playErrorSound();
 			prevErrorRef.current = true;
 		}
 
-		// Reset error ref when error becomes false
 		if (!error) {
 			prevErrorRef.current = false;
 		}
@@ -506,8 +494,8 @@ const PracticeQuestion = ({
 									setShowQuestionSelector={setShowQuestionSelector}
 									lessonType={lessonType}
 									isLessonCompleted={isLessonCompleted}
-									onCorrectMatch={!isLessonCompleted ? playSuccessSound : undefined}
-									onWrongMatch={!isLessonCompleted ? playErrorSound : undefined}
+									onCorrectMatch={playSuccessSound}
+									onWrongMatch={playErrorSound}
 								/>
 							</Box>
 						)}
@@ -540,8 +528,8 @@ const PracticeQuestion = ({
 									setIsLessonCompleted={setIsLessonCompleted}
 									setShowQuestionSelector={setShowQuestionSelector}
 									lessonType={lessonType}
-									onCorrectMatch={!isLessonCompleted ? playSuccessSound : undefined}
-									onWrongMatch={!isLessonCompleted ? playErrorSound : undefined}
+									onCorrectMatch={playSuccessSound}
+									onWrongMatch={playErrorSound}
 								/>
 							</Box>
 						)}
@@ -576,7 +564,7 @@ const PracticeQuestion = ({
 									setIsLessonCompleted={setIsLessonCompleted}
 									setShowQuestionSelector={setShowQuestionSelector}
 									lessonType={lessonType}
-									onCorrectMatch={!isLessonCompleted ? playSuccessSound : undefined}
+									onCorrectMatch={playSuccessSound}
 								/>
 							</Box>
 						)}
