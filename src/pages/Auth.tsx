@@ -1454,7 +1454,7 @@ const Auth = () => {
 					</DialogContent>
 				</CustomDialog>
 				<Typography sx={{ fontSize: isSmallScreen ? '0.55rem' : '0.65rem', position: 'absolute', bottom: 3, fontFamily: 'Varela Round' }}>
-					&copy; 2025 Webnexia Software Solutions Ltd. Tüm hakları saklıdır.
+					&copy; {new Date().getFullYear()} Webnexia Software Solutions Ltd. Tüm hakları saklıdır.
 				</Typography>
 			</Box>
 		</Box>
