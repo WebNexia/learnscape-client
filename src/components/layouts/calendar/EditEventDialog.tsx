@@ -89,7 +89,7 @@ const EditEventDialog = ({
 	const { orgId } = useContext(OrganisationContext);
 	const { courses } = useContext(CoursesContext);
 	const { updateEvent, removeEvent } = useContext(EventsContext);
-	const { hasAdminAccess, isLearner } = useAuth();
+	const { hasAdminAccess, isLearner, isInstructor } = useAuth();
 
 	// Dashboard sync for real-time updates
 	const { refreshDashboard } = useDashboardSync();
@@ -290,34 +290,49 @@ const EditEventDialog = ({
 	};
 
 	// Populate role information for existing attendees when dialog opens
+	// Also set isZoomMeeting flag if Zoom fields exist
 	useEffect(() => {
-		if (editEventModalOpen && selectedEvent?.attendees && users) {
-			const attendeesWithoutRole = selectedEvent.attendees.filter((attendee) => !attendee.role);
-
-			if (attendeesWithoutRole.length > 0) {
-				// Find role information from users context
-				const attendeesToUpdate = attendeesWithoutRole.map((attendee) => {
-					const userFromContext = users.find((user) => user._id === attendee._id);
-					if (userFromContext && userFromContext.role) {
-						return { ...attendee, role: userFromContext.role };
+		if (editEventModalOpen && selectedEvent) {
+			// Check if Zoom fields exist to set isZoomMeeting flag
+			const hasZoomFields = !!(selectedEvent.zoomMeetingId || selectedEvent.zoomMeetingNumber);
+			if (hasZoomFields && !selectedEvent.isZoomMeeting) {
+				setSelectedEvent((prevData) => {
+					if (prevData) {
+						return { ...prevData, isZoomMeeting: true };
 					}
-					return attendee;
+					return prevData;
 				});
+			}
 
-				// Update attendees with role information
-				const hasUpdates = attendeesToUpdate.some((attendee, index) => attendee.role !== attendeesWithoutRole[index].role);
+			// Populate role information for attendees
+			if (selectedEvent.attendees && users) {
+				const attendeesWithoutRole = selectedEvent.attendees.filter((attendee) => !attendee.role);
 
-				if (hasUpdates) {
-					setSelectedEvent((prevData) => {
-						if (prevData) {
-							const updatedAttendees = prevData.attendees.map((a) => {
-								const updatedAttendee = attendeesToUpdate.find((ua) => ua._id === a._id);
-								return updatedAttendee || a;
-							});
-							return { ...prevData, attendees: updatedAttendees };
+				if (attendeesWithoutRole.length > 0) {
+					// Find role information from users context
+					const attendeesToUpdate = attendeesWithoutRole.map((attendee) => {
+						const userFromContext = users.find((user) => user._id === attendee._id);
+						if (userFromContext && userFromContext.role) {
+							return { ...attendee, role: userFromContext.role };
 						}
-						return prevData;
+						return attendee;
 					});
+
+					// Update attendees with role information
+					const hasUpdates = attendeesToUpdate.some((attendee, index) => attendee.role !== attendeesWithoutRole[index].role);
+
+					if (hasUpdates) {
+						setSelectedEvent((prevData) => {
+							if (prevData) {
+								const updatedAttendees = prevData.attendees.map((a) => {
+									const updatedAttendee = attendeesToUpdate.find((ua) => ua._id === a._id);
+									return updatedAttendee || a;
+								});
+								return { ...prevData, attendees: updatedAttendees };
+							}
+							return prevData;
+						});
+					}
 				}
 			}
 		}
@@ -445,10 +460,11 @@ const EditEventDialog = ({
 		try {
 			const uniqueAllAttendeesIds = [...new Set(allParticipantsIds)];
 			// Only update the event if there are changes
+			let updateResponse = null;
 			if (isEventUpdated) {
 				const endpoint = `${base_url}/events/${selectedEvent?._id}`;
 
-				await axios.patch(endpoint, {
+				updateResponse = await axios.patch(endpoint, {
 					...selectedEvent,
 					attendees: selectedEvent?.attendees?.map((a) => a._id) || [],
 					allAttendeesIds: uniqueAllAttendeesIds,
@@ -456,15 +472,46 @@ const EditEventDialog = ({
 					isAllSubscribersSelected: selectedEvent?.isAllSubscribersSelected,
 					type: !selectedEvent?.isPublic ? '' : selectedEvent?.type,
 					coverImageUrl: !selectedEvent?.isPublic ? '' : selectedEvent?.coverImageUrl,
+					// Clear eventLinkUrl if Zoom is selected
+					eventLinkUrl: selectedEvent?.isZoomMeeting ? '' : selectedEvent?.eventLinkUrl,
+					isZoomMeeting: selectedEvent?.isZoomMeeting || false, // Send flag to backend to create Zoom meeting
 				});
+
+				// Backend now creates Zoom meeting automatically if isZoomMeeting is true
+				// Update local state with Zoom data from response if it exists
+				const updatedEventData = updateResponse.data.data;
+				if (updatedEventData?.zoomMeetingId) {
+					setSelectedEvent((prevData) => {
+						if (prevData) {
+							return {
+								...prevData,
+								zoomMeetingId: updatedEventData.zoomMeetingId,
+								zoomMeetingPassword: updatedEventData.zoomMeetingPassword,
+								zoomMeetingNumber: updatedEventData.zoomMeetingNumber,
+								zoomJoinUrl: updatedEventData.zoomJoinUrl,
+							};
+						}
+						return prevData;
+					});
+				}
 			}
 
 			if (selectedEvent) {
+				// Get updated event data from response (includes Zoom meeting data if created)
+				const updatedEventData = isEventUpdated && updateResponse?.data?.data ? updateResponse.data.data : selectedEvent;
+
 				updateEvent({
 					...selectedEvent,
 					allAttendeesIds: uniqueAllAttendeesIds,
 					type: !selectedEvent?.isPublic ? '' : selectedEvent?.type,
 					coverImageUrl: !selectedEvent?.isPublic ? '' : selectedEvent?.coverImageUrl,
+					// Include Zoom data from backend response if it exists
+					...(updatedEventData?.zoomMeetingId && {
+						zoomMeetingId: updatedEventData.zoomMeetingId,
+						zoomMeetingPassword: updatedEventData.zoomMeetingPassword,
+						zoomMeetingNumber: updatedEventData.zoomMeetingNumber,
+						zoomJoinUrl: updatedEventData.zoomJoinUrl,
+					}),
 				});
 			}
 
@@ -1372,21 +1419,64 @@ const EditEventDialog = ({
 						</Box>
 					)}
 
-					<CustomTextField
-						label='Event Link'
-						value={selectedEvent?.eventLinkUrl}
-						onChange={(e) => {
-							setSelectedEvent((prevData) => {
-								if (prevData) {
-									return { ...prevData, eventLinkUrl: e.target.value };
-								}
-								return prevData;
-							});
-							setIsEventUpdated(true);
-						}}
-						required={false}
-						disabled={selectedEvent?.createdBy !== user?._id}
-					/>
+					{(hasAdminAccess || isInstructor) && (
+						<FormControlLabel
+							labelPlacement='start'
+							control={
+								<Checkbox
+									checked={selectedEvent?.isZoomMeeting || false}
+									onChange={(e) => {
+										const isChecked = e.target.checked;
+										setSelectedEvent((prevData) => {
+											if (prevData) {
+												return {
+													...prevData,
+													isZoomMeeting: isChecked,
+													// Clear event link when Zoom is selected
+													eventLinkUrl: isChecked ? '' : prevData.eventLinkUrl,
+												};
+											}
+											return prevData;
+										});
+										setIsEventUpdated(true);
+										// Zoom meeting will be created when form is submitted (in editEvent function)
+									}}
+									disabled={selectedEvent?.createdBy !== user?._id}
+									sx={{
+										'& .MuiSvgIcon-root': {
+											fontSize: isVerySmallScreen ? '0.9rem' : '1rem',
+										},
+									}}
+								/>
+							}
+							label='Create Zoom Meeting'
+							sx={{
+								'mb': '0.5rem',
+								'ml': '0rem',
+								'& .MuiFormControlLabel-label': {
+									fontSize: isMobileSize ? '0.7rem' : '0.8rem',
+								},
+							}}
+						/>
+					)}
+
+					{!(hasAdminAccess || isInstructor) || !selectedEvent?.isZoomMeeting ? (
+						<CustomTextField
+							label='Event Link'
+							value={selectedEvent?.eventLinkUrl}
+							onChange={(e) => {
+								setSelectedEvent((prevData) => {
+									if (prevData) {
+										return { ...prevData, eventLinkUrl: e.target.value };
+									}
+									return prevData;
+								});
+								setIsEventUpdated(true);
+							}}
+							required={false}
+							disabled={selectedEvent?.createdBy !== user?._id || ((hasAdminAccess || isInstructor) && selectedEvent?.isZoomMeeting)}
+						/>
+					) : null}
 
 					<CustomTextField
 						label='Location'
