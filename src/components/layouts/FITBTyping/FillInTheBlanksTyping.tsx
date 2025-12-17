@@ -332,7 +332,7 @@ const FillInTheBlanksTyping = ({
 		} else if (blankValuePairs?.find((pair) => pair.id === id)?.value === inputValue.trim()) {
 			newStatus[id] = true;
 			// Play success sound only when complete correct word is typed
-			if (!isLessonCompleted && onCorrectMatch) {
+			if (onCorrectMatch) {
 				onCorrectMatch();
 			}
 		} else {

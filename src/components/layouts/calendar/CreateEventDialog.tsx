@@ -77,7 +77,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 	const { orgId } = useContext(OrganisationContext);
 	const { courses } = useContext(CoursesContext);
 	const { addNewEvent } = useContext(EventsContext);
-	const { hasAdminAccess, isLearner } = useAuth();
+	const { hasAdminAccess, isLearner, isInstructor } = useAuth();
 
 	// Dashboard sync for real-time updates
 	const { refreshDashboard } = useDashboardSync();
@@ -362,7 +362,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 			description: newEvent.description,
 			start: newEvent.start,
 			end: newEvent.end,
-			eventLinkUrl: newEvent.eventLinkUrl,
+			eventLinkUrl: newEvent.isZoomMeeting ? '' : newEvent.eventLinkUrl, // Clear eventLinkUrl if Zoom is selected
 			location: newEvent.location,
 			isAllDay: newEvent.isAllDay,
 			isActive: true,
@@ -378,6 +378,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 			isPublic: newEvent.isPublic,
 			coverImageUrl: newEvent.isPublic ? newEvent.coverImageUrl : '',
 			type: newEvent.isPublic ? newEvent.type : '',
+			isZoomMeeting: newEvent.isZoomMeeting || false, // Send flag to backend to create Zoom meeting
 		};
 
 		try {
@@ -385,7 +386,20 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 			const endpoint = `${base_url}/events`;
 			const res = await axios.post(endpoint, event);
 
-			addNewEvent({ ...event, _id: res.data.data._id });
+			const createdEvent = res.data.data;
+			// Backend now creates Zoom meeting automatically if isZoomMeeting is true
+			// Zoom meeting data is already included in the response
+
+			addNewEvent({
+				...event,
+				_id: createdEvent._id,
+				...(createdEvent.zoomMeetingId && {
+					zoomMeetingId: createdEvent.zoomMeetingId,
+					zoomMeetingPassword: createdEvent.zoomMeetingPassword,
+					zoomMeetingNumber: createdEvent.zoomMeetingNumber,
+					zoomJoinUrl: createdEvent.zoomJoinUrl,
+				}),
+			});
 
 			// Trigger dashboard sync when event is created
 			dashboardSyncHelpers.onEventCreated(refreshDashboard);
@@ -459,6 +473,12 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 			coverImageUrl: '',
 			participantCount: 0,
 			type: '',
+			// Zoom fields
+			zoomMeetingId: '',
+			zoomMeetingPassword: '',
+			zoomMeetingNumber: '',
+			zoomJoinUrl: '',
+			isZoomMeeting: false,
 		}));
 
 		setSearchLearnerValue('');
@@ -1171,12 +1191,48 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 						</Box>
 					)}
 
-					<CustomTextField
-						label='Event Link'
-						value={newEvent.eventLinkUrl}
-						onChange={(e) => setNewEvent((prevData) => ({ ...prevData, eventLinkUrl: e.target.value }))}
-						required={false}
-					/>
+					{(hasAdminAccess || isInstructor) && (
+						<FormControlLabel
+							labelPlacement='start'
+							control={
+								<Checkbox
+									checked={newEvent.isZoomMeeting || false}
+									onChange={(e) => {
+										const isChecked = e.target.checked;
+										setNewEvent((prevData) => ({
+											...prevData,
+											isZoomMeeting: isChecked,
+											// Clear event link when Zoom is selected
+											eventLinkUrl: isChecked ? '' : prevData.eventLinkUrl,
+										}));
+									}}
+									sx={{
+										'& .MuiSvgIcon-root': {
+											fontSize: isVerySmallScreen ? '0.9rem' : '1rem',
+										},
+									}}
+								/>
+							}
+							label='Create Zoom Meeting'
+							sx={{
+								'mb': '0.5rem',
+								'ml': '0rem',
+								'& .MuiFormControlLabel-label': {
+									fontSize: isMobileSize ? '0.7rem' : '0.8rem',
+								},
+							}}
+						/>
+					)}
+
+					{!(hasAdminAccess || isInstructor) || !newEvent.isZoomMeeting ? (
+						<CustomTextField
+							label='Event Link'
+							value={newEvent.eventLinkUrl}
+							onChange={(e) => setNewEvent((prevData) => ({ ...prevData, eventLinkUrl: e.target.value }))}
+							required={false}
+							disabled={(hasAdminAccess || isInstructor) && newEvent.isZoomMeeting}
+						/>
+					) : null}
 
 					<CustomTextField
 						label='Location'

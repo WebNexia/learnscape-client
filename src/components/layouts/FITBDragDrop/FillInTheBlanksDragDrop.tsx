@@ -310,14 +310,12 @@ const FillInTheBlanksDragDrop = ({
 				newResponses.splice(source.index, 1);
 
 				// Check if match is correct and play sound
-				if (!isLessonCompleted) {
-					const correctValue = blankValuePairs?.find((p) => p.blank === newBlanks[blankIndex].blank)?.value;
-					if (correctValue) {
-						if (correctValue === matchedValue) {
-							onCorrectMatch?.();
-						} else {
-							onWrongMatch?.();
-						}
+				const correctValue = blankValuePairs?.find((p) => p.blank === newBlanks[blankIndex].blank)?.value;
+				if (correctValue) {
+					if (correctValue === matchedValue) {
+						onCorrectMatch?.();
+					} else {
+						onWrongMatch?.();
 					}
 				}
 			}

@@ -45,6 +45,7 @@ const Messages = React.lazy(() => import('./pages/Messages'));
 const Community = React.lazy(() => import('./pages/Community'));
 const CommunityTopicPage = React.lazy(() => import('./pages/CommunityTopicPage'));
 const Settings = React.lazy(() => import('./pages/Settings'));
+const ZoomMeetingPage = React.lazy(() => import('./pages/ZoomMeetingPage'));
 const CoursePage = React.lazy(() => import('./pages/CoursePage'));
 const LessonPage = React.lazy(() => import('./pages/LessonPage'));
 const AdminCourseEditPage = React.lazy(() => import('./pages/AdminCourseEditPage'));
@@ -127,6 +128,7 @@ export const router = createBrowserRouter([
 			{ path: 'verify-email', element: <VerifyEmailPage /> },
 			{ path: 'handle-auth-reset', element: <HandleAuthResetPassword /> },
 			{ path: 'courses/certificates/verify/:certificateId', element: <CertificateVerificationPage /> },
+			{ path: 'zoom-meeting/:eventId', element: <ZoomMeetingPage /> },
 			{ path: 'about-us', element: <AboutUs /> },
 			{ path: 'contact-us', element: <ContactUs /> },
 			{

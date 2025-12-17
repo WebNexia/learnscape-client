@@ -24,6 +24,12 @@ export interface Event {
 	participantCount: number;
 	createdAt: string;
 	updatedAt: string;
+	// Zoom fields
+	zoomMeetingId?: string;
+	zoomMeetingPassword?: string;
+	zoomMeetingNumber?: string;
+	zoomJoinUrl?: string;
+	isZoomMeeting?: boolean; // Frontend-only: checkbox state
 }
 
 export interface AttendeeInfo {
