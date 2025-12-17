@@ -183,7 +183,7 @@ const Footer = () => {
 						color: theme.textColor?.common.main,
 						fontFamily: fontFamilyLandingPage,
 					}}>
-					&copy; 2025 Webnexia Software Solutions Ltd. Tüm hakları saklıdır.
+					&copy; {new Date().getFullYear()} Webnexia Software Solutions Ltd. Tüm hakları saklıdır.
 				</Typography>
 			</Box>
 		</Box>

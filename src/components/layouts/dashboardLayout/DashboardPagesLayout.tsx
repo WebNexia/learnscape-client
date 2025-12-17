@@ -58,7 +58,7 @@ const DashboardPagesLayout = ({ children, pageName, customSettings, showCopyRigh
 								position: 'absolute',
 								bottom: 3,
 							}}>
-							&copy; 2025 Webnexia Software Solutions Ltd. All rights reserved.
+							&copy; {new Date().getFullYear()} Webnexia Software Solutions Ltd. All rights reserved.
 						</Typography>
 					)}
 				</Box>

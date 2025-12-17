@@ -1467,7 +1467,7 @@ const PublicFeedbackFormPage = () => {
 							right: 0,
 							textAlign: 'center',
 						}}>
-						&copy; 2025 Webnexia Software Solutions Ltd. Tüm hakları saklıdır.
+						&copy; {new Date().getFullYear()} Webnexia Software Solutions Ltd. Tüm hakları saklıdır.
 					</Typography>
 				</Box>
 			</Container>
