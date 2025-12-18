@@ -58,3 +58,7 @@ a {
 .react-tel-input .special-label {
 	display: none;
 }
+
+#zmmtg-root {
+	background: transparent !important;
+}
