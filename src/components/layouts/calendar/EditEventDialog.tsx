@@ -1525,12 +1525,15 @@ const EditEventDialog = ({
 						actionSx={{ marginBottom: '0rem' }}
 					/>
 				</Box>
-				<CustomDialog
-					openModal={deleteEventModalOpen}
-					closeModal={() => setDeleteEventModalOpen(false)}
-					title='Delete Event'
-					content='Are you sure you want to delete the event?'
-					maxWidth='xs'>
+				<CustomDialog openModal={deleteEventModalOpen} closeModal={() => setDeleteEventModalOpen(false)} title='Delete Event' maxWidth='xs'>
+					<DialogContent>
+						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.7 }}>
+							Are you sure you want to delete the event?
+						</Typography>
+						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.7, mt: '0.75rem' }}>
+							If you delete the event and if there is a Zoom meeting created for the event, the Zoom meeting will be deleted as well.
+						</Typography>
+					</DialogContent>
 					<CustomDialogActions
 						deleteBtn
 						onCancel={() => setDeleteEventModalOpen(false)}
