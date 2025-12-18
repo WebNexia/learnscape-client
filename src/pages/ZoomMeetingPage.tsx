@@ -4,33 +4,14 @@ import { Box, CircularProgress, Typography, Alert, Button, TextField, IconButton
 import { Fullscreen, FullscreenExit } from '@mui/icons-material';
 import axios from '@utils/axiosInstance';
 import axiosOriginal from 'axios';
+import ZoomMtgEmbedded from '@zoom/meetingsdk/embedded';
+// Required Meeting SDK styles. Without these, the embedded UI/toolbar can appear invisible until a hard refresh.
+import '@zoom/meetingsdk/dist/css/bootstrap.css';
+import '@zoom/meetingsdk/dist/css/react-select.css';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
 import logo from '../assets/logo.png';
 
-// Zoom Web SDK types
-declare global {
-	interface Window {
-		ZoomMtg: {
-			init: (config: any) => void;
-			join: (config: {
-				sdkKey: string;
-				signature: string;
-				meetingNumber: string;
-				// Zoom Meeting SDK uses `passWord` (capital W)
-				passWord: string;
-				userName: string;
-				userEmail?: string;
-				tk?: string;
-				zak?: string;
-				success: (success: any) => void;
-				error: (error: any) => void;
-			}) => void;
-			preLoadWasm: () => void;
-			prepareWebSDK: () => void;
-			setZoomJSLib: (path: string, dir: string) => void;
-		};
-	}
-}
+type ZoomEmbeddedClient = ReturnType<typeof ZoomMtgEmbedded.createClient>;
 
 const ZoomMeetingPage = () => {
 	const { eventId } = useParams<{ eventId: string }>();
@@ -56,16 +37,45 @@ const ZoomMeetingPage = () => {
 		meetingNumber?: string;
 		joinUrl?: string;
 	} | null>(null);
+	const [zoomRuntimeStatus, setZoomRuntimeStatus] = useState<{ status?: string | null } | null>(null);
 	const [sdkLoaded, setSdkLoaded] = useState(false);
 	const [isJoined, setIsJoined] = useState(false);
 	const [isJoining, setIsJoining] = useState(false);
 	const [isFullscreen, setIsFullscreen] = useState(false);
+	const [signatureDebug, setSignatureDebug] = useState<{
+		role?: number;
+		mn?: string | number;
+		sdkKeyLast4?: string;
+		appKeyLast4?: string;
+		iat?: number;
+		exp?: number;
+		tokenExp?: number;
+	} | null>(null);
 	const joinTimeoutRef = useRef<number | null>(null);
 	const joinStartedAtRef = useRef<number | null>(null);
 	const [joinPhase, setJoinPhase] = useState<string | null>(null);
 	const zoomContainerRef = useRef<HTMLDivElement>(null);
-	const scriptsLoadedRef = useRef(false);
+	const meetingSdkRootRef = useRef<HTMLDivElement>(null);
+	const embeddedClientRef = useRef<ZoomEmbeddedClient | null>(null);
+	const [isEmbeddedInited, setIsEmbeddedInited] = useState(false);
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
+
+	const decodeJwtPayload = (token: string) => {
+		try {
+			const parts = token.split('.');
+			if (parts.length < 2) return null;
+			const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+			const json = decodeURIComponent(
+				atob(base64)
+					.split('')
+					.map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+					.join('')
+			);
+			return JSON.parse(json);
+		} catch {
+			return null;
+		}
+	};
 
 	const fetchZoomCredentials = async (userEmail?: string) => {
 		if (!eventId) {
@@ -152,146 +162,61 @@ const ZoomMeetingPage = () => {
 		}
 	};
 
+	const fetchZoomStatus = async (userEmail?: string) => {
+		if (!eventId) return;
+		try {
+			const emailToUse = userEmail || (user && user.email ? user.email : null);
+			const url = emailToUse
+				? `${base_url}/events/${eventId}/zoom-status?email=${encodeURIComponent(emailToUse)}`
+				: `${base_url}/events/${eventId}/zoom-status`;
+			const resp = await axios.get(url);
+			setZoomRuntimeStatus(resp.data.data || null);
+		} catch (err) {
+			// Status is best-effort; do not block join page
+			setZoomRuntimeStatus(null);
+		}
+	};
+
 	useEffect(() => {
-		const loadZoomSDK = () => {
-			if (scriptsLoadedRef.current) {
-				return;
-			}
-
-			scriptsLoadedRef.current = true;
-
-			// Required CSS for Meeting SDK UI (prevents blank/unstyled render)
-			const ensureCss = (href: string, id: string) => {
-				if (document.getElementById(id)) return;
-				const link = document.createElement('link');
-				link.id = id;
-				link.rel = 'stylesheet';
-				link.type = 'text/css';
-				link.href = href;
-				document.head.appendChild(link);
-			};
-			ensureCss('https://source.zoom.us/3.0.0/css/bootstrap.css', 'zoom-sdk-bootstrap-css');
-			ensureCss('https://source.zoom.us/3.0.0/css/react-select.css', 'zoom-sdk-react-select-css');
-
-			// Load Zoom Web SDK dependencies
-			const dependencies = [
-				'https://source.zoom.us/3.0.0/lib/vendor/react.min.js',
-				'https://source.zoom.us/3.0.0/lib/vendor/react-dom.min.js',
-				'https://source.zoom.us/3.0.0/lib/vendor/redux.min.js',
-				'https://source.zoom.us/3.0.0/lib/vendor/redux-thunk.min.js',
-				'https://source.zoom.us/3.0.0/lib/vendor/lodash.min.js',
-			];
-
-			let loadedCount = 0;
-			const totalDeps = dependencies.length;
-
-			dependencies.forEach((src) => {
-				const script = document.createElement('script');
-				script.src = src;
-				script.async = true;
-				script.onload = () => {
-					loadedCount++;
-					if (loadedCount === totalDeps) {
-						// All dependencies loaded, now load main Zoom SDK
-						const zoomScript = document.createElement('script');
-						zoomScript.src = 'https://source.zoom.us/zoom-meeting-3.0.0.min.js';
-						zoomScript.async = true;
-						zoomScript.onload = () => {
-							if (window.ZoomMtg) {
-								window.ZoomMtg.setZoomJSLib('https://source.zoom.us/3.0.0/lib', '/av');
-								window.ZoomMtg.preLoadWasm();
-								window.ZoomMtg.prepareWebSDK();
-								// Wait a bit for WASM to fully load before marking SDK as ready
-								setTimeout(() => {
-									console.log('Zoom SDK fully loaded and ready');
-									setSdkLoaded(true);
-								}, 1000);
-							}
-						};
-						zoomScript.onerror = () => {
-							setError('Failed to load Zoom SDK');
-							setLoading(false);
-						};
-						document.body.appendChild(zoomScript);
-					}
-				};
-				script.onerror = () => {
-					setError('Failed to load Zoom SDK dependencies');
-					setLoading(false);
-				};
-				document.body.appendChild(script);
-			});
-		};
-
-		loadZoomSDK();
-		// Initial fetch - will use logged-in user's email if available
+		embeddedClientRef.current = ZoomMtgEmbedded.createClient();
+		setSdkLoaded(true);
 		fetchZoomCredentials();
+		fetchZoomStatus();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [eventId, base_url, user]);
 
-	// Zoom Web SDK expects `#zmmtg-root` to be a direct child of <body>.
-	// We keep it hidden until the user clicks "Join Meeting".
+	// Poll Zoom meeting runtime status while user is on the page (helps avoid "Live now" when host hasn't started).
 	useEffect(() => {
-		if (document.getElementById('zmmtg-root')) return;
-		const root = document.createElement('div');
-		root.id = 'zmmtg-root';
-		// Hidden by default; when enabled we position it over our in-page container.
-		// Keep z-index low so it doesn't permanently cover the page if Zoom gets stuck.
-		root.style.cssText = 'position:absolute; top:0; left:0; width:0; height:0; z-index:20; display:none; pointer-events:none;';
-		document.body.appendChild(root);
-		return () => {
-			const existing = document.getElementById('zmmtg-root');
-			if (existing) existing.remove();
-		};
-	}, []);
+		if (!eventId) return;
+		if (isJoined) return;
+		const emailToUse = email || (user && user.email ? user.email : undefined);
+		const interval = window.setInterval(() => {
+			fetchZoomStatus(emailToUse);
+		}, 20000);
+		return () => window.clearInterval(interval);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [eventId, user, email, isJoined]);
 
-	// Zoom Web SDK injects global CSS that can lock scrolling (e.g. html/body overflow hidden).
-	// Force-override while this page is mounted (removed on unmount).
-	useEffect(() => {
-		if (document.getElementById('zoom-scroll-fix')) return;
-		const style = document.createElement('style');
-		style.id = 'zoom-scroll-fix';
-		style.innerHTML = `
-      html, body {
-        overflow: auto !important;
-        height: auto !important;
-      }
-
-      body.ReactModal__Body--open {
-        overflow: auto !important;
-        position: static !important;
-      }
-    `;
-		document.head.appendChild(style);
-		return () => {
-			style.remove();
-		};
-	}, []);
-
-	const syncZmmtgRootToContainer = () => {
-		const zoomRoot = document.getElementById('zmmtg-root');
-		const container = document.getElementById('zoom-meeting-container');
-		if (!zoomRoot || !container) return;
-		const rect = container.getBoundingClientRect();
-		// Absolute positioned in document coordinates; will scroll with the page.
-		zoomRoot.style.position = 'absolute';
-		zoomRoot.style.left = `${rect.left + window.scrollX}px`;
-		zoomRoot.style.top = `${rect.top + window.scrollY}px`;
-		zoomRoot.style.width = `${rect.width}px`;
-		zoomRoot.style.height = `${rect.height}px`;
-		zoomRoot.style.zIndex = '20';
-	};
-
-	const cleanupZoomOverlay = () => {
-		const root = document.getElementById('zmmtg-root');
-		if (root) {
-			// Clear any stuck inner UI
-			root.innerHTML = '';
-			root.style.display = 'none';
-			root.style.pointerEvents = 'none';
+	const cleanupZoomOverlay = async () => {
+		try {
+			// Component View cleanup
+			const client = embeddedClientRef.current;
+			if (client) {
+				// `leaveMeeting` exists on component view clients; ignore if missing
+				const clientAny = client as any;
+				await clientAny.leaveMeeting?.();
+			}
+		} catch {
+			// ignore
 		}
-		window.removeEventListener('resize', syncZmmtgRootToContainer);
-		window.removeEventListener('scroll', syncZmmtgRootToContainer);
+		try {
+			if (meetingSdkRootRef.current) {
+				meetingSdkRootRef.current.innerHTML = '';
+			}
+		} catch {
+			// ignore
+		}
+		setIsEmbeddedInited(false);
 	};
 
 	// Watchdog: if joining gets stuck, force-show an error and clean up the Zoom overlay.
@@ -304,7 +229,7 @@ const ZoomMeetingPage = () => {
 			if (!startedAt) return;
 			if (Date.now() - startedAt > 15000) {
 				setError(
-					'Still joining… This usually means the Zoom meeting requires authentication (or the browser session is blocked). Try: Open in Zoom App / try a different browser.'
+					'Still joining… This usually means the Zoom meeting requires authentication (or the browser session is blocked). Try: Incognito / a different browser.'
 				);
 				setIsJoining(false);
 				setJoinPhase(null);
@@ -319,6 +244,14 @@ const ZoomMeetingPage = () => {
 		const now = Date.now();
 		const startMs = eventDetails?.start ? new Date(eventDetails.start).getTime() : null;
 		const endMs = eventDetails?.end ? new Date(eventDetails.end).getTime() : null;
+		const runtime = (zoomRuntimeStatus?.status || '').toLowerCase();
+
+		if (runtime === 'started') return 'Live now';
+		if (runtime === 'waiting') {
+			if (startMs && now >= startMs) return 'Waiting for host';
+			return 'Starts soon';
+		}
+		if (runtime === 'ended') return 'Ended';
 
 		if (startMs && endMs) {
 			if (now >= startMs && now <= endMs) return 'Live now';
@@ -332,9 +265,23 @@ const ZoomMeetingPage = () => {
 		return 'Ready to join';
 	})();
 
+	const canJoinNow = (() => {
+		// If Zoom says started, allow join.
+		const runtime = (zoomRuntimeStatus?.status || '').toLowerCase();
+		if (runtime === 'started') return true;
+		// If we don't know status, keep existing behavior (allow join).
+		if (!runtime) return true;
+		// waiting/ended -> do not join
+		return false;
+	})();
+
 	const handleJoinMeeting = async () => {
-		if (!sdkLoaded || !zoomCredentials || !window.ZoomMtg) {
+		if (!sdkLoaded || !zoomCredentials || !embeddedClientRef.current) {
 			setError('Zoom SDK is not ready. Please wait a moment and try again.');
+			return;
+		}
+		if (!canJoinNow) {
+			setError(meetingStatus === 'Ended' ? 'This meeting has ended.' : 'Waiting for host to start the meeting.');
 			return;
 		}
 
@@ -346,9 +293,8 @@ const ZoomMeetingPage = () => {
 			return;
 		}
 
-		// Check if zmmtg-root exists
-		const zoomRoot = document.getElementById('zmmtg-root');
-		if (!zoomRoot) {
+		// Component View needs an in-page root element
+		if (!meetingSdkRootRef.current) {
 			setError('Zoom container not found. Please refresh the page.');
 			return;
 		}
@@ -377,7 +323,17 @@ const ZoomMeetingPage = () => {
 				...(emailToUse && { email: emailToUse }),
 			});
 
-			const { signature, sdkKey } = signatureResponse.data.data;
+			const { signature, sdkKey, role: serverRole } = signatureResponse.data.data;
+			const decoded = signature ? decodeJwtPayload(signature) : null;
+			setSignatureDebug({
+				role: typeof serverRole === 'number' ? serverRole : decoded?.role,
+				mn: decoded?.mn,
+				sdkKeyLast4: typeof sdkKey === 'string' ? sdkKey.slice(-4) : undefined,
+				appKeyLast4: typeof decoded?.appKey === 'string' ? decoded.appKey.slice(-4) : undefined,
+				iat: decoded?.iat,
+				exp: decoded?.exp,
+				tokenExp: decoded?.tokenExp,
+			});
 
 			if (!signature || !sdkKey) {
 				setError('Failed to generate Zoom signature');
@@ -386,54 +342,32 @@ const ZoomMeetingPage = () => {
 				return;
 			}
 
-			// Initialize Zoom SDK
-			// Make Zoom root visible and align it to our in-page container
-			syncZmmtgRootToContainer();
-			window.addEventListener('resize', syncZmmtgRootToContainer);
-			window.addEventListener('scroll', syncZmmtgRootToContainer, { passive: true });
-			zoomRoot.style.display = 'block';
-			zoomRoot.style.pointerEvents = 'auto';
+			const client = embeddedClientRef.current;
+			if (!client) throw new Error('Zoom embedded client missing');
 
-			// Meeting SDK expects init to complete before join; otherwise it can render black.
-			setJoinPhase('Initializing Zoom…');
-			window.ZoomMtg.init({
-				leaveUrl: window.location.href,
-				patchJsMedia: true,
-				success: () => {
-					setJoinPhase('Joining meeting…');
-					window.ZoomMtg.join({
-						sdkKey: sdkKey,
-						signature: signature,
-						meetingNumber: meetingNumber,
-						// Zoom Meeting SDK expects `passWord` (capital W), not `password`.
-						passWord: password,
-						userName: user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email || 'Guest User' : email || 'Guest User',
-						...(emailToUse && { userEmail: emailToUse }),
-						success: (_success: any) => {
-							if (joinTimeoutRef.current) window.clearTimeout(joinTimeoutRef.current);
-							setTimeout(() => {
-								setIsJoined(true);
-								setIsJoining(false);
-								setJoinPhase(null);
-							}, 500);
-						},
-						error: (joinErr: any) => {
-							if (joinTimeoutRef.current) window.clearTimeout(joinTimeoutRef.current);
-							setError(`Failed to join meeting: ${joinErr?.reason || joinErr?.message || 'Unknown error'}`);
-							setIsJoining(false);
-							setJoinPhase(null);
-							cleanupZoomOverlay();
-						},
-					});
-				},
-				error: (initErr: any) => {
-					if (joinTimeoutRef.current) window.clearTimeout(joinTimeoutRef.current);
-					setError(`Failed to initialize Zoom: ${initErr?.reason || initErr?.message || 'Unknown error'}`);
-					setIsJoining(false);
-					setJoinPhase(null);
-					cleanupZoomOverlay();
-				},
+			if (!isEmbeddedInited) {
+				setJoinPhase('Initializing Zoom…');
+				await client.init({
+					zoomAppRoot: meetingSdkRootRef.current,
+					language: 'en-US',
+				});
+				setIsEmbeddedInited(true);
+			}
+
+			setJoinPhase('Joining meeting…');
+			await client.join({
+				sdkKey,
+				signature,
+				meetingNumber,
+				password,
+				userName: user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'LearnScape User' : 'Guest User',
+				// Do not pass userEmail unless you implement Zoom's registration-required flow
 			});
+
+			if (joinTimeoutRef.current) window.clearTimeout(joinTimeoutRef.current);
+			setIsJoined(true);
+			setIsJoining(false);
+			setJoinPhase(null);
 		} catch (err: any) {
 			if (joinTimeoutRef.current) window.clearTimeout(joinTimeoutRef.current);
 			if (axiosOriginal.isAxiosError(err) && err.response?.status === 500) {
@@ -450,7 +384,7 @@ const ZoomMeetingPage = () => {
 			}
 			setIsJoining(false);
 			setJoinPhase(null);
-			cleanupZoomOverlay();
+			await cleanupZoomOverlay();
 		}
 	};
 
@@ -636,7 +570,7 @@ const ZoomMeetingPage = () => {
 							overflow: 'hidden',
 							textOverflow: 'ellipsis',
 						}}>
-						Zoom Meeting
+						{eventDetails?.title}
 					</Typography>
 				</Box>
 			</Box>
@@ -686,37 +620,29 @@ const ZoomMeetingPage = () => {
 						ref={zoomContainerRef}
 						sx={{
 							width: '100%',
-							aspectRatio: '16/9',
-							// Ensure the whole page fits within 100dvh (no page scroll)
-							maxHeight: { xs: '42dvh', sm: '48dvh' },
-							bgcolor: '#111',
-							borderRadius: 2,
-							overflow: 'hidden',
-							boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
-							position: 'relative',
-							minHeight: { xs: 180, sm: 240 },
-						}}>
-						{/* Fullscreen Toggle Button - only when joined */}
-						{isJoined && (
-							<IconButton
-								onClick={toggleFullscreen}
-								sx={{
-									'position': 'absolute',
-									'top': 8,
-									'right': 8,
-									'zIndex': 1000,
-									'bgcolor': 'rgba(0, 0, 0, 0.5)',
-									'color': 'white',
-									'&:hover': {
-										bgcolor: 'rgba(0, 0, 0, 0.7)',
-									},
-								}}>
-								{isFullscreen ? <FullscreenExit /> : <Fullscreen />}
-							</IconButton>
-						)}
 
-						{/* Placeholder when not joined - Zoom SDK renders in body, not here */}
-						{!isJoined && !isJoining && (
+							height: isJoined ? '80vh' : '60dvh',
+							maxHeight: isJoined ? '80vh' : '60dvh',
+							bgcolor: !isJoined ? '#111' : 'transparent',
+							borderRadius: '0.5rem',
+							overflow: 'visible',
+							boxShadow: !isJoined ? '0 8px 24px rgba(0,0,0,0.15)' : 'none',
+							position: 'relative',
+							minHeight: { xs: 260, sm: 340, md: 420 },
+							mt: isJoined ? '4rem' : 0,
+						}}>
+						{/* Component View root: Zoom renders inside this element */}
+						<Box
+							ref={meetingSdkRootRef}
+							sx={{
+								position: 'relative',
+								width: '100%',
+								height: '100%',
+							}}
+						/>
+
+						{/* Placeholder when not joined */}
+						{!isJoined && (
 							<Box
 								sx={{
 									width: '100%',
@@ -724,13 +650,13 @@ const ZoomMeetingPage = () => {
 									display: 'flex',
 									alignItems: 'center',
 									justifyContent: 'center',
-									bgcolor: '#2a2a2a',
+									bgcolor: 'transparent',
 									position: 'absolute',
 									top: 0,
 									left: 0,
 									zIndex: 2,
 								}}>
-								<Typography variant='subtitle1' sx={{ color: '#fff', textAlign: 'center', fontWeight: 600 }}>
+								<Typography variant='body1' sx={{ color: '#fff', textAlign: 'center', fontWeight: 600, fontSize: { xs: '	1rem', sm: '1.25rem' } }}>
 									{meetingStatus === 'Starts soon' ? 'Ready to join (scheduled)' : meetingStatus}
 								</Typography>
 							</Box>
@@ -738,74 +664,58 @@ const ZoomMeetingPage = () => {
 					</Box>
 
 					{/* Event Details and Join Button - below Zoom UI */}
-					<Box
-						sx={{
-							bgcolor: 'white',
-							borderRadius: 2,
-							p: { xs: 1.5, sm: 2 },
-							boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-							display: 'flex',
-							flexDirection: 'column',
-							gap: 1,
-							overflow: 'hidden',
-							flex: 1,
-							minHeight: 0,
-							border: '1px solid rgba(15, 23, 42, 0.06)',
-						}}>
-						{/* Event Title */}
-						<Typography
-							variant='subtitle1'
+					{!isJoined && (
+						<Box
 							sx={{
-								fontWeight: 800,
-								lineHeight: 1.2,
-								display: '-webkit-box',
-								WebkitLineClamp: 2,
-								WebkitBoxOrient: 'vertical',
+								bgcolor: 'white',
+								borderRadius: 2,
+								p: { xs: 2.25, sm: 3 },
+								boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+								display: 'flex',
+								flexDirection: 'column',
+								alignItems: 'center',
+								justifyContent: 'center',
+								gap: 3,
 								overflow: 'hidden',
+								flex: 1,
+								minHeight: 0,
+								border: '1px solid rgba(15, 23, 42, 0.06)',
 							}}>
-							{eventDetails?.title || 'Meeting Details'}
-						</Typography>
+							{/* Event Info */}
+							<Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, overflow: 'hidden' }}>
+								{eventDetails?.start && (
+									<Typography variant='caption' color='text.secondary' sx={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+										<strong>Starts:</strong>{' '}
+										{new Date(eventDetails.start).toLocaleString(undefined, {
+											weekday: 'long',
+											year: 'numeric',
+											month: 'long',
+											day: 'numeric',
+											hour: '2-digit',
+											minute: '2-digit',
+											timeZoneName: 'short',
+										})}
+									</Typography>
+								)}
+								{eventDetails?.end && (
+									<Typography variant='caption' color='text.secondary' sx={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+										<strong>Ends:</strong>{' '}
+										{new Date(eventDetails.end).toLocaleString(undefined, {
+											weekday: 'long',
+											year: 'numeric',
+											month: 'long',
+											day: 'numeric',
+											hour: '2-digit',
+											minute: '2-digit',
+											timeZoneName: 'short',
+										})}
+									</Typography>
+								)}
+							</Box>
 
-						{/* Event Info */}
-						<Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, overflow: 'hidden' }}>
-							{eventDetails?.start && (
-								<Typography variant='caption' color='text.secondary' sx={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-									<strong>Starts:</strong>{' '}
-									{new Date(eventDetails.start).toLocaleString(undefined, {
-										weekday: 'long',
-										year: 'numeric',
-										month: 'long',
-										day: 'numeric',
-										hour: '2-digit',
-										minute: '2-digit',
-										timeZoneName: 'short',
-									})}
-								</Typography>
-							)}
-							{eventDetails?.end && (
-								<Typography variant='caption' color='text.secondary' sx={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-									<strong>Ends:</strong>{' '}
-									{new Date(eventDetails.end).toLocaleString(undefined, {
-										weekday: 'long',
-										year: 'numeric',
-										month: 'long',
-										day: 'numeric',
-										hour: '2-digit',
-										minute: '2-digit',
-										timeZoneName: 'short',
-									})}
-								</Typography>
-							)}
-							{eventDetails?.location && (
-								<Typography variant='caption' color='text.secondary' sx={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-									<strong>Location:</strong> {eventDetails.location}
-								</Typography>
-							)}
-						</Box>
+							{/* Join Button - only show when not joined */}
 
-						{/* Join Button - only show when not joined */}
-						{!isJoined && (
-							<Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>
+							<Box sx={{ mt: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
 								{isJoining && joinPhase && (
 									<Typography variant='caption' color='text.secondary'>
 										{joinPhase}
@@ -818,13 +728,14 @@ const ZoomMeetingPage = () => {
 										console.log('Join Meeting button clicked!', { sdkLoaded, hasCredentials: !!zoomCredentials, isJoining });
 										handleJoinMeeting();
 									}}
-									disabled={!sdkLoaded || isJoining || !zoomCredentials}
+									disabled={!sdkLoaded || isJoining || !zoomCredentials || !canJoinNow}
 									sx={{
 										'background': sdkLoaded && zoomCredentials ? 'linear-gradient(135deg, #2D8CFF 0%, #0066CC 100%)' : '#666',
 										'color': 'white',
-										'py': 1.1,
-										'fontSize': '0.95rem',
+										'py': { xs: 0.5, sm: 0.5 },
+										'fontSize': { xs: '0.8rem', sm: '0.9rem' },
 										'fontWeight': 600,
+										'textTransform': 'capitalize',
 										'&:hover': {
 											background: sdkLoaded && zoomCredentials ? 'linear-gradient(135deg, #0066CC 0%, #2D8CFF 100%)' : '#666',
 										},
@@ -836,17 +747,15 @@ const ZoomMeetingPage = () => {
 									}}>
 									{isJoining ? 'Joining...' : meetingStatus === 'Live now' ? 'Join Now' : 'Join Meeting'}
 								</Button>
+								{!canJoinNow && (
+									<Typography variant='caption' color='text.secondary'>
+										{meetingStatus === 'Ended' ? 'Meeting ended' : 'Waiting for host to start…'}
+									</Typography>
+								)}
 								{error && <Alert severity='error'>{error}</Alert>}
 							</Box>
-						)}
-
-						{/* Open in Zoom App button */}
-						{zoomCredentials?.joinUrl && (
-							<Button variant='outlined' onClick={() => window.open(zoomCredentials.joinUrl, '_blank')} sx={{ alignSelf: 'flex-start' }}>
-								Open in Zoom App
-							</Button>
-						)}
-					</Box>
+						</Box>
+					)}
 				</Box>
 			</Box>
 
