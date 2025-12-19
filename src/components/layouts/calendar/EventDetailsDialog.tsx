@@ -240,7 +240,7 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 					{/* For public events: show Join Meeting if registered and has Zoom, otherwise show Register */}
 					{selectedEvent?.isPublic && selectedEvent?.zoomJoinUrl && isUserRegistered && (
 						<CustomSubmitButton
-							onClick={() => navigate(`/zoom-meeting/${selectedEvent._id}`)}
+							onClick={() => window.open(`/zoom-meeting/${selectedEvent._id}?autojoin=1`, '_blank', 'noopener,noreferrer')}
 							sx={{
 								'background': 'linear-gradient(135deg, #2D8CFF 0%, #0066CC 100%) !important',
 								'backgroundColor': 'transparent !important',
@@ -260,7 +260,7 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 					{/* For non-public events: show Join Meeting if Zoom exists */}
 					{!selectedEvent?.isPublic && selectedEvent?.zoomJoinUrl && (
 						<CustomSubmitButton
-							onClick={() => navigate(`/zoom-meeting/${selectedEvent._id}`)}
+							onClick={() => window.open(`/zoom-meeting/${selectedEvent._id}?autojoin=1`, '_blank', 'noopener,noreferrer')}
 							sx={{
 								'background': 'linear-gradient(135deg, #2D8CFF 0%, #0066CC 100%) !important',
 								'backgroundColor': 'transparent !important',
