@@ -1,5 +1,6 @@
 import {
 	Box,
+	Button,
 	Checkbox,
 	DialogContent,
 	FormControl,
@@ -90,6 +91,7 @@ const EditEventDialog = ({
 	const { courses } = useContext(CoursesContext);
 	const { updateEvent, removeEvent } = useContext(EventsContext);
 	const { hasAdminAccess, isLearner, isInstructor } = useAuth();
+	const canManageEvent = !!selectedEvent && (selectedEvent.createdBy === user?._id || hasAdminAccess);
 
 	// Dashboard sync for real-time updates
 	const { refreshDashboard } = useDashboardSync();
@@ -99,6 +101,7 @@ const EditEventDialog = ({
 
 	const [deleteEventModalOpen, setDeleteEventModalOpen] = useState<boolean>(false);
 	const [isProcessing, setIsProcessing] = useState<boolean>(false);
+	const [isStartingMeeting, setIsStartingMeeting] = useState<boolean>(false);
 
 	const [searchLearnerValue, setSearchLearnerValue] = useState<string>('');
 	const [searchInstructorValue, setSearchInstructorValue] = useState<string>('');
@@ -546,6 +549,8 @@ const EditEventDialog = ({
 				console.warn('Failed to send event updated notifications:', error);
 			});
 
+			// Prevent Calendar.tsx effect from immediately re-opening the dialog when selectedEvent changes.
+			setSelectedEvent(null);
 			setEditEventModalOpen(false);
 		} catch (error: any) {
 			console.log(error);
@@ -592,7 +597,7 @@ const EditEventDialog = ({
 					setIsEventUpdated(false);
 				}
 			}}
-			title={`${hasAdminAccess && selectedEvent?.createdBy !== user?._id ? `Edit Event -  (${selectedEvent?.createdByName || 'Unknown'})` : 'Edit Event'}`}
+			title={`Edit Event${selectedEvent?.createdByName ? ` - (Added by ${selectedEvent.createdByName})` : ''}`}
 			maxWidth='sm'>
 			<form
 				onSubmit={(e) => {
@@ -620,7 +625,7 @@ const EditEventDialog = ({
 								}}
 								InputProps={{ inputProps: { maxLength: 40 } }}
 								sx={{ flex: 3 }}
-								disabled={selectedEvent?.createdBy !== user?._id}
+								disabled={selectedEvent?.isPublic || selectedEvent?.createdBy !== user?._id}
 							/>
 						</Tooltip>
 						{hasAdminAccess && selectedEvent?.createdBy === user?._id && (
@@ -691,7 +696,7 @@ const EditEventDialog = ({
 							InputProps={{ inputProps: { maxLength: 75 } }}
 							sx={{ flex: 3, mr: selectedEvent?.isPublic ? '1rem' : '0rem' }}
 							placeholder='Enter a description for the event (max 75 characters)'
-							disabled={selectedEvent?.createdBy !== user?._id}
+							disabled={selectedEvent?.isPublic || selectedEvent?.createdBy !== user?._id}
 						/>
 						{selectedEvent?.isPublic && (
 							<FormControl sx={{ flex: 1, mb: '0.5rem' }}>
@@ -708,7 +713,7 @@ const EditEventDialog = ({
 										setIsEventUpdated(true);
 									}}
 									size='small'
-									disabled={selectedEvent?.createdBy !== user?._id}
+									disabled={!canManageEvent}
 									required
 									sx={{ backgroundColor: theme.bgColor?.common, fontSize: '0.8rem' }}>
 									<MenuItem
@@ -753,7 +758,7 @@ const EditEventDialog = ({
 									imageFolderName='EventImages'
 									enterImageUrl={enterCoverImageUrl}
 									setEnterImageUrl={setEnterCoverImageUrl}
-									disabled={selectedEvent?.createdBy !== user?._id}
+									disabled={!canManageEvent}
 								/>
 							</Box>
 							<Box sx={{ ml: '3rem' }}>
@@ -851,7 +856,7 @@ const EditEventDialog = ({
 							control={
 								<Checkbox
 									checked={selectedEvent?.isAllDay}
-									disabled={selectedEvent?.createdBy !== user?._id}
+									disabled={selectedEvent?.isPublic || selectedEvent?.createdBy !== user?._id}
 									onChange={(e) => {
 										setIsEventUpdated(true);
 
@@ -923,7 +928,7 @@ const EditEventDialog = ({
 														}}>
 														<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>{attendee.username}</Typography>
 														<IconButton
-															disabled={selectedEvent?.createdBy !== user?._id}
+															disabled={!canManageEvent}
 															onClick={() => {
 																setIsEventUpdated(true);
 																const updatedAttendees =
@@ -1063,7 +1068,7 @@ const EditEventDialog = ({
 													}}>
 													<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>{attendee.username}</Typography>
 													<IconButton
-														disabled={selectedEvent?.createdBy !== user?._id}
+														disabled={!canManageEvent}
 														onClick={() => {
 															setIsEventUpdated(true);
 															const updatedAttendees =
@@ -1280,7 +1285,7 @@ const EditEventDialog = ({
 										}}>
 										<Typography sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>{truncateText(course?.title!, 20)}</Typography>
 										<IconButton
-											disabled={selectedEvent?.createdBy !== user?._id}
+											disabled={selectedEvent?.isPublic || selectedEvent?.createdBy !== user?._id}
 											onClick={() => {
 												setIsEventUpdated(true);
 												const updatedCoursesIds = selectedEvent.coursesIds?.filter((filteredCourseId) => course?._id !== filteredCourseId) || [];
@@ -1419,46 +1424,102 @@ const EditEventDialog = ({
 						</Box>
 					)}
 
-					{(hasAdminAccess || isInstructor) && (
-						<FormControlLabel
-							labelPlacement='start'
-							control={
-								<Checkbox
-									checked={selectedEvent?.isZoomMeeting || false}
-									onChange={(e) => {
-										const isChecked = e.target.checked;
-										setSelectedEvent((prevData) => {
-											if (prevData) {
-												return {
-													...prevData,
-													isZoomMeeting: isChecked,
-													// Clear event link when Zoom is selected
-													eventLinkUrl: isChecked ? '' : prevData.eventLinkUrl,
-												};
-											}
-											return prevData;
-										});
-										setIsEventUpdated(true);
-										// Zoom meeting will be created when form is submitted (in editEvent function)
-									}}
-									disabled={selectedEvent?.createdBy !== user?._id}
+					{(hasAdminAccess || isInstructor) &&
+						(() => {
+							const hasZoomMeeting = !!(selectedEvent?.zoomMeetingId || selectedEvent?.zoomMeetingNumber || selectedEvent?.zoomJoinUrl);
+							if (hasZoomMeeting) {
+								return (
+									<Box sx={{ mb: '0.75rem' }}>
+										<Button
+											variant='contained'
+											disabled={!selectedEvent?._id || (!hasAdminAccess && selectedEvent?.createdBy !== user?._id) || isStartingMeeting}
+											onClick={async () => {
+												if (!selectedEvent?._id) return;
+												if (!hasAdminAccess && selectedEvent?.createdBy !== user?._id) {
+													setUrlErrorMessage('You do not have permission to start this Zoom meeting.');
+													setIsUrlErrorOpen(true);
+													return;
+												}
+
+												try {
+													setIsStartingMeeting(true);
+													const res = await axios.get(`${base_url}/events/${selectedEvent._id}/zoom-start-url`);
+													const startUrl = res?.data?.data?.startUrl;
+
+													if (!startUrl || typeof startUrl !== 'string') {
+														setUrlErrorMessage('Zoom start link not available for this event. Please recreate the Zoom meeting.');
+														setIsUrlErrorOpen(true);
+														return;
+													}
+
+													window.open(startUrl, '_blank', 'noopener,noreferrer');
+												} catch (error: any) {
+													const msg =
+														error?.response?.data?.message ||
+														'Failed to start Zoom meeting. If this is an older meeting, the host start link may have expired—try recreating the Zoom meeting.';
+													setUrlErrorMessage(msg);
+													setIsUrlErrorOpen(true);
+												} finally {
+													setIsStartingMeeting(false);
+												}
+											}}
+											sx={{
+												'backgroundColor': '#2D8CFF',
+												'textTransform': 'capitalize',
+												'fontSize': isMobileSize ? '0.75rem' : '0.85rem',
+												'fontWeight': 550,
+												'&:hover': {
+													backgroundColor: '#2681F2',
+												},
+												'mt': '0.5rem',
+											}}>
+											Start Meeting
+										</Button>
+									</Box>
+								);
+							}
+
+							return (
+								<FormControlLabel
+									labelPlacement='start'
+									control={
+										<Checkbox
+											checked={selectedEvent?.isZoomMeeting || false}
+											onChange={(e) => {
+												const isChecked = e.target.checked;
+												setSelectedEvent((prevData) => {
+													if (prevData) {
+														return {
+															...prevData,
+															isZoomMeeting: isChecked,
+															// Clear event link when Zoom is selected
+															eventLinkUrl: isChecked ? '' : prevData.eventLinkUrl,
+														};
+													}
+													return prevData;
+												});
+												setIsEventUpdated(true);
+												// Zoom meeting will be created when form is submitted (in editEvent function)
+											}}
+											disabled={selectedEvent?.createdBy !== user?._id}
+											sx={{
+												'& .MuiSvgIcon-root': {
+													fontSize: isVerySmallScreen ? '0.9rem' : '1rem',
+												},
+											}}
+										/>
+									}
+									label='Create Zoom Meeting'
 									sx={{
-										'& .MuiSvgIcon-root': {
-											fontSize: isVerySmallScreen ? '0.9rem' : '1rem',
+										'mb': '0.5rem',
+										'ml': '0rem',
+										'& .MuiFormControlLabel-label': {
+											fontSize: isMobileSize ? '0.7rem' : '0.8rem',
 										},
 									}}
 								/>
-							}
-							label='Create Zoom Meeting'
-							sx={{
-								'mb': '0.5rem',
-								'ml': '0rem',
-								'& .MuiFormControlLabel-label': {
-									fontSize: isMobileSize ? '0.7rem' : '0.8rem',
-								},
-							}}
-						/>
-					)}
+							);
+						})()}
 
 					{!(hasAdminAccess || isInstructor) || !selectedEvent?.isZoomMeeting ? (
 						<CustomTextField
@@ -1496,7 +1557,7 @@ const EditEventDialog = ({
 						placeholder='Enter a location for the event (max 150 characters)'
 						multiline
 						rows={3}
-						disabled={selectedEvent?.createdBy !== user?._id}
+						disabled={selectedEvent?.isPublic || selectedEvent?.createdBy !== user?._id}
 					/>
 				</DialogContent>
 				<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0.25rem 0.75rem' }}>
@@ -1504,7 +1565,7 @@ const EditEventDialog = ({
 						<CustomDeleteButton
 							type='button'
 							onClick={() => setDeleteEventModalOpen(true)}
-							disabled={selectedEvent?.createdBy !== user?._id}
+							disabled={!canManageEvent}
 							sx={{ height: isMobileSize ? '1.5rem' : undefined }}>
 							{isVerySmallScreen ? 'Delete' : 'Delete Event'}
 						</CustomDeleteButton>
@@ -1520,7 +1581,7 @@ const EditEventDialog = ({
 							}
 						}}
 						submitBtnText='Update'
-						disableBtn={isProcessing || selectedEvent?.createdBy !== user?._id}
+						disableBtn={isProcessing || !canManageEvent}
 						disableCancelBtn={isProcessing}
 						actionSx={{ marginBottom: '0rem' }}
 					/>
