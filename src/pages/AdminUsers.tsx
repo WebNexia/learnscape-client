@@ -4,7 +4,7 @@ import DashboardPagesLayout from '../components/layouts/dashboardLayout/Dashboar
 import AdminPageErrorBoundary from '../components/error/AdminPageErrorBoundary';
 import { useContext, useEffect, useState } from 'react';
 import axios from '@utils/axiosInstance';
-import { Edit, Person, PersonOff } from '@mui/icons-material';
+import { Edit, Person, PersonOff, Videocam } from '@mui/icons-material';
 import DownloadIcon from '@mui/icons-material/Download';
 import { useFilterSearch } from '../hooks/useFilterSearch';
 import FilterSearchRow from '../components/layouts/FilterSearchRow';
@@ -15,6 +15,7 @@ import CustomTableHead from '../components/layouts/table/CustomTableHead';
 import CustomTableCell from '../components/layouts/table/CustomTableCell';
 import CustomTablePagination from '../components/layouts/table/CustomTablePagination';
 import CustomActionBtn from '../components/layouts/table/CustomActionBtn';
+import CustomTextField from '../components/forms/customFields/CustomTextField';
 import { UsersContext } from '../contexts/UsersContextProvider';
 import { User } from '../interfaces/user';
 import { UserAuthContext } from '../contexts/UserAuthContextProvider';
@@ -33,8 +34,7 @@ const getColumns = (isVerySmallScreen: boolean) => {
 				{ key: 'actions', label: 'Actions' },
 			]
 		: [
-				{ key: 'firstName', label: 'First Name' },
-				{ key: 'lastName', label: 'Last Name' },
+				{ key: 'fullName', label: 'Full Name' },
 				{ key: 'username', label: 'Username' },
 				{ key: 'email', label: 'Email Address' },
 				{ key: 'isActive', label: 'Status' },
@@ -116,8 +116,8 @@ const AdminUsers = () => {
 
 	const sortedUsers =
 		[...(displayUsers || [])]?.sort((a, b) => {
-			const aValue = (a as any)[orderBy] ?? '';
-			const bValue = (b as any)[orderBy] ?? '';
+			const aValue = orderBy === 'fullName' ? `${a.firstName || ''} ${a.lastName || ''}`.trim() : ((a as any)[orderBy] ?? '');
+			const bValue = orderBy === 'fullName' ? `${b.firstName || ''} ${b.lastName || ''}`.trim() : ((b as any)[orderBy] ?? '');
 
 			if (order === 'asc') {
 				return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
@@ -132,6 +132,7 @@ const AdminUsers = () => {
 	// Modal states
 	const [isUserStatusUpdateModalOpen, setIsUserStatusUpdateModalOpen] = useState<boolean[]>([]);
 	const [isUserEditModalOpen, setIsUserEditModalOpen] = useState<boolean[]>([]);
+	const [isZoomHostModalOpen, setIsZoomHostModalOpen] = useState<boolean[]>([]);
 	const [singleUser, setSingleUser] = useState<User | null>(null);
 
 	useEffect(() => {
@@ -141,6 +142,7 @@ const AdminUsers = () => {
 	useEffect(() => {
 		setIsUserStatusUpdateModalOpen(Array(paginatedUsers.length).fill(false));
 		setIsUserEditModalOpen(Array(paginatedUsers.length).fill(false));
+		setIsZoomHostModalOpen(Array(paginatedUsers.length).fill(false));
 	}, [usersCurrentPage, filterValue, searchValue]);
 
 	const toggleStatusUpdateEditModal = (index: number) => {
@@ -236,6 +238,37 @@ const AdminUsers = () => {
 		const newEditModalOpen = [...isUserEditModalOpen];
 		newEditModalOpen[index] = false;
 		setIsUserEditModalOpen(newEditModalOpen);
+	};
+
+	const toggleZoomHostModal = (index: number) => {
+		const next = [...isZoomHostModalOpen];
+		next[index] = !next[index];
+		setIsZoomHostModalOpen(next);
+	};
+
+	const openZoomHostModal = (index: number) => {
+		const userToEdit: User = paginatedUsers[index];
+		setSingleUser(userToEdit);
+		toggleZoomHostModal(index);
+	};
+
+	const closeZoomHostModal = (index: number) => {
+		const next = [...isZoomHostModalOpen];
+		next[index] = false;
+		setIsZoomHostModalOpen(next);
+	};
+
+	const handleUpdateZoomHostUser = async (index: number) => {
+		try {
+			const zoomHostUser = (singleUser?.zoomHostUser || '').toString().trim();
+			await axios.patch(`${base_url}/users/${singleUser?._id}`, {
+				zoomHostUser,
+			});
+			updateUser({ ...singleUser!, zoomHostUser });
+			closeZoomHostModal(index);
+		} catch (error) {
+			console.error('Update Zoom host user error:', error);
+		}
 	};
 
 	const handleUpdateUserRole = async (index: number) => {
@@ -354,60 +387,52 @@ const AdminUsers = () => {
 								// Column widths for header cells
 								'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(1)': {
 									minWidth: isVerySmallScreen ? '80px' : '100px',
-									width: isVerySmallScreen ? '30%' : '14%',
+									width: isVerySmallScreen ? '30%' : '18%',
 								},
 								'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(2)': {
 									minWidth: isVerySmallScreen ? '200px' : '100px',
-									width: isVerySmallScreen ? '40%' : '14%',
+									width: isVerySmallScreen ? '35%' : '12%',
 								},
 								'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(3)': {
 									minWidth: isVerySmallScreen ? '100px' : '120px',
-									width: isVerySmallScreen ? '30%' : '12%',
+									width: isVerySmallScreen ? '35%' : '28%',
 								},
 								'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(4)': {
 									minWidth: isVerySmallScreen ? '0px' : '150px',
-									width: isVerySmallScreen ? '0%' : '30%',
+									width: isVerySmallScreen ? '0%' : '10%',
 								},
 								'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(5)': {
 									minWidth: isVerySmallScreen ? '0px' : '80px',
-									width: isVerySmallScreen ? '0%' : '12%',
+									width: isVerySmallScreen ? '0%' : '10%',
 								},
 								'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(6)': {
-									minWidth: isVerySmallScreen ? '0px' : '80px',
-									width: isVerySmallScreen ? '0%' : '10%',
-								},
-								'& .MuiTableHead-root .MuiTableCell-root:nth-of-type(7)': {
-									minWidth: isVerySmallScreen ? '0px' : '80px',
-									width: isVerySmallScreen ? '0%' : '10%',
+									minWidth: isVerySmallScreen ? '0px' : '120px',
+									width: isVerySmallScreen ? '0%' : '22%',
 								},
 								// Column widths for body cells - exact same as header
 								'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(1)': {
 									minWidth: isVerySmallScreen ? '80px' : '100px',
-									width: isVerySmallScreen ? '30%' : '14%',
+									width: isVerySmallScreen ? '30%' : '18%',
 								},
 								'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(2)': {
 									minWidth: isVerySmallScreen ? '200px' : '100px',
-									width: isVerySmallScreen ? '40%' : '14%',
+									width: isVerySmallScreen ? '35%' : '12%',
 								},
 								'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(3)': {
 									minWidth: isVerySmallScreen ? '100px' : '120px',
-									width: isVerySmallScreen ? '30%' : '12%',
+									width: isVerySmallScreen ? '35%' : '28%',
 								},
 								'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(4)': {
 									minWidth: isVerySmallScreen ? '0px' : '150px',
-									width: isVerySmallScreen ? '0%' : '30%',
+									width: isVerySmallScreen ? '0%' : '10%',
 								},
 								'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(5)': {
 									minWidth: isVerySmallScreen ? '0px' : '80px',
-									width: isVerySmallScreen ? '0%' : '12%',
+									width: isVerySmallScreen ? '0%' : '10%',
 								},
 								'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(6)': {
-									minWidth: isVerySmallScreen ? '0px' : '80px',
-									width: isVerySmallScreen ? '0%' : '10%',
-								},
-								'& .MuiTableBody-root .MuiTableCell-root:nth-of-type(7)': {
-									minWidth: isVerySmallScreen ? '0px' : '80px',
-									width: isVerySmallScreen ? '0%' : '10%',
+									minWidth: isVerySmallScreen ? '0px' : '120px',
+									width: isVerySmallScreen ? '0%' : '22%',
 								},
 							}}
 							size='small'
@@ -415,19 +440,18 @@ const AdminUsers = () => {
 							{/* Spacer row to ensure header alignment */}
 							<TableBody>
 								<TableRow sx={{ height: 0, visibility: 'hidden' }}>
-									<TableCell sx={{ width: isVerySmallScreen ? '30%' : '14%', padding: 0, border: 'none' }} />
-									<TableCell sx={{ width: isVerySmallScreen ? '40%' : '14%', padding: 0, border: 'none' }} />
-									<TableCell sx={{ width: isVerySmallScreen ? '30%' : '12%', padding: 0, border: 'none' }} />
-									<TableCell sx={{ width: isVerySmallScreen ? '0%' : '30%', padding: 0, border: 'none' }} />
-									<TableCell sx={{ width: isVerySmallScreen ? '0%' : '12%', padding: 0, border: 'none' }} />
+									<TableCell sx={{ width: isVerySmallScreen ? '30%' : '18%', padding: 0, border: 'none' }} />
+									<TableCell sx={{ width: isVerySmallScreen ? '35%' : '12%', padding: 0, border: 'none' }} />
+									<TableCell sx={{ width: isVerySmallScreen ? '35%' : '28%', padding: 0, border: 'none' }} />
 									<TableCell sx={{ width: isVerySmallScreen ? '0%' : '10%', padding: 0, border: 'none' }} />
 									<TableCell sx={{ width: isVerySmallScreen ? '0%' : '10%', padding: 0, border: 'none' }} />
+									<TableCell sx={{ width: isVerySmallScreen ? '0%' : '22%', padding: 0, border: 'none' }} />
 								</TableRow>
 							</TableBody>
 							<CustomTableHead<User>
-								orderBy={orderBy as keyof User}
+								orderBy={orderBy as any}
 								order={order}
-								handleSort={(property: keyof User) => handleSort(property as string)}
+								handleSort={(property: any) => handleSort(property as string)}
 								columns={getColumns(isVerySmallScreen)}
 							/>
 							<TableBody>
@@ -435,8 +459,7 @@ const AdminUsers = () => {
 									paginatedUsers?.map((user: User, index) => {
 										return (
 											<TableRow key={user._id} hover>
-												{!isVerySmallScreen && <CustomTableCell value={user.firstName} />}
-												{!isVerySmallScreen && <CustomTableCell value={user.lastName} />}
+												{!isVerySmallScreen && <CustomTableCell value={`${user.firstName || ''} ${user.lastName || ''}`.trim()} />}
 												<CustomTableCell value={user.username} />
 												<CustomTableCell value={user.email} />
 												{!isVerySmallScreen && <CustomTableCell value={user.isActive ? 'Active' : 'Deactivated'} />}
@@ -517,6 +540,53 @@ const AdminUsers = () => {
 															/>
 														</form>
 													</CustomDialog>
+
+													{(loggedInUser?.role === Roles.OWNER || loggedInUser?.role === Roles.SUPER_ADMIN) && (
+														<>
+															<CustomActionBtn
+																title='Zoom Host'
+																onClick={() => {
+																	openZoomHostModal(index);
+																}}
+																icon={<Videocam fontSize='small' sx={{ fontSize: isMobileSize ? '0.8rem' : undefined }} />}
+																disabled={user._id === userId}
+															/>
+
+															<CustomDialog
+																openModal={isZoomHostModalOpen[index]}
+																closeModal={() => closeZoomHostModal(index)}
+																maxWidth='xs'
+																title='Zoom Host'>
+																<form
+																	style={{ display: 'flex', flexDirection: 'column' }}
+																	onSubmit={async (e: React.FormEvent<HTMLFormElement>) => {
+																		e.preventDefault();
+																		await handleUpdateZoomHostUser(index);
+																	}}>
+																	<Box sx={{ px: '1.5rem', pt: '0.5rem' }}>
+																		<Typography
+																			variant='body2'
+																			sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', mb: '0.75rem', lineHeight: 1.7 }}>
+																			Set the Zoom host <b>email address</b> that should own meetings created by this user. Leave empty to use the
+																			default shared host.
+																		</Typography>
+																		<CustomTextField
+																			label='Zoom Host Email'
+																			value={singleUser?.zoomHostUser || ''}
+																			onChange={(e) => setSingleUser((prev) => (prev ? { ...prev, zoomHostUser: e.target.value } : prev))}
+																			required={false}
+																		/>
+																	</Box>
+																	<CustomDialogActions
+																		onCancel={() => closeZoomHostModal(index)}
+																		submitBtnText='Save'
+																		actionSx={{ mt: '1rem', mb: '0.5rem' }}
+																		submitBtnType='submit'
+																	/>
+																</form>
+															</CustomDialog>
+														</>
+													)}
 
 													<CustomActionBtn
 														title={user?.isActive ? 'Deactivate' : 'Activate'}

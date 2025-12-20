@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Box, CircularProgress, Typography, Alert, Button, TextField } from '@mui/material';
+import { Box, CircularProgress, Typography, Alert, Button } from '@mui/material';
 import axios from '@utils/axiosInstance';
 import axiosOriginal from 'axios';
 import { ZoomMtg } from '@zoom/meetingsdk';
@@ -17,9 +17,6 @@ const ZoomMeetingPage = () => {
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [isPublicEvent, setIsPublicEvent] = useState<boolean | null>(null);
-	const [showEmailInput, setShowEmailInput] = useState(false);
-	const [email, setEmail] = useState<string>('');
-	const [emailError, setEmailError] = useState<string | null>(null);
 	const [eventDetails, setEventDetails] = useState<{
 		title?: string;
 		description?: string;
@@ -50,6 +47,14 @@ const ZoomMeetingPage = () => {
 	const autoJoinRequested = (() => {
 		try {
 			return new URLSearchParams(window.location.search).get('autojoin') === '1';
+		} catch {
+			return false;
+		}
+	})();
+
+	const isHostStart = (() => {
+		try {
+			return new URLSearchParams(window.location.search).get('host') === '1';
 		} catch {
 			return false;
 		}
@@ -95,7 +100,7 @@ const ZoomMeetingPage = () => {
 
 	// decodeJwtPayload removed (was used only for signature debugging).
 
-	const fetchZoomCredentials = async (userEmail?: string) => {
+	const fetchZoomCredentials = async () => {
 		if (!eventId) {
 			setError('Event ID is missing');
 			setLoading(false);
@@ -103,14 +108,7 @@ const ZoomMeetingPage = () => {
 		}
 
 		try {
-			// For public events, email is required (from user input or logged-in user)
-			// For non-public events, authentication is required
-			const emailToUse = userEmail || (user && user.email ? user.email : null);
-			const url = emailToUse
-				? `${base_url}/events/${eventId}/zoom-credentials?email=${encodeURIComponent(emailToUse)}`
-				: `${base_url}/events/${eventId}/zoom-credentials`;
-
-			const response = await axios.get(url);
+			const response = await axios.get(`${base_url}/events/${eventId}/zoom-credentials`);
 			const credentials = response.data.data;
 
 			if (!credentials.meetingId && !credentials.meetingNumber) {
@@ -139,12 +137,6 @@ const ZoomMeetingPage = () => {
 
 			setZoomCredentials(credentials);
 			setLoading(false);
-			console.log('Zoom credentials fetched:', {
-				hasMeetingNumber: !!credentials.meetingNumber,
-				hasMeetingId: !!credentials.meetingId,
-				hasPassword: !!credentials.meetingPassword,
-				credentials,
-			});
 		} catch (err: any) {
 			console.error('Error fetching Zoom credentials:', err);
 			if (axiosOriginal.isAxiosError(err) && err.response?.status === 404) {
@@ -152,22 +144,6 @@ const ZoomMeetingPage = () => {
 			} else if (axiosOriginal.isAxiosError(err) && err.response?.status === 403) {
 				const errorMessage = err.response?.data?.message || 'You do not have access to this Zoom meeting';
 				setError(errorMessage);
-			} else if (axiosOriginal.isAxiosError(err) && err.response?.status === 400) {
-				// Email required for public events
-				const errorMessage = err.response?.data?.message || 'Email is required';
-				setError(errorMessage);
-				// Check if it's a public event
-				try {
-					const eventResponse = await axios.get(`${base_url}/events/${eventId}`);
-					const event = eventResponse.data.data;
-					if (event?.isPublic) {
-						setIsPublicEvent(true);
-						setShowEmailInput(true);
-						setError(null); // Clear error, show email input instead
-					}
-				} catch (eventErr) {
-					// Ignore
-				}
 			} else if (axiosOriginal.isAxiosError(err) && err.response?.status === 401) {
 				const auth = getAuth();
 				const hasFirebaseUser = !!auth.currentUser;
@@ -179,7 +155,7 @@ const ZoomMeetingPage = () => {
 						await auth.currentUser?.getIdToken(true);
 						setError(null);
 						setLoading(true);
-						return await fetchZoomCredentials(userEmail);
+						return await fetchZoomCredentials();
 					} catch {
 						// fall through
 					}
@@ -193,7 +169,7 @@ const ZoomMeetingPage = () => {
 						await waitForFirebaseUser(12000);
 						setError(null);
 						authWaitInFlightRef.current = false;
-						return await fetchZoomCredentials(userEmail);
+						return await fetchZoomCredentials();
 					} catch {
 						// fall through to show auth error
 						authWaitInFlightRef.current = false;
@@ -211,14 +187,10 @@ const ZoomMeetingPage = () => {
 		}
 	};
 
-	const fetchZoomStatus = async (userEmail?: string) => {
+	const fetchZoomStatus = async () => {
 		if (!eventId) return;
 		try {
-			const emailToUse = userEmail || (user && user.email ? user.email : null);
-			const url = emailToUse
-				? `${base_url}/events/${eventId}/zoom-status?email=${encodeURIComponent(emailToUse)}`
-				: `${base_url}/events/${eventId}/zoom-status`;
-			const resp = await axios.get(url);
+			const resp = await axios.get(`${base_url}/events/${eventId}/zoom-status`);
 			setZoomRuntimeStatus(resp.data.data || null);
 		} catch (err) {
 			// Status is best-effort; do not block join page
@@ -261,13 +233,12 @@ const ZoomMeetingPage = () => {
 	useEffect(() => {
 		if (!eventId) return;
 		if (isJoined) return;
-		const emailToUse = email || (user && user.email ? user.email : undefined);
 		const interval = window.setInterval(() => {
-			fetchZoomStatus(emailToUse);
+			fetchZoomStatus();
 		}, 20000);
 		return () => window.clearInterval(interval);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [eventId, user, email, isJoined]);
+	}, [eventId, user, isJoined]);
 
 	const cleanupZoomOverlay = async () => {
 		try {
@@ -358,6 +329,11 @@ const ZoomMeetingPage = () => {
 	})();
 
 	const canJoinNow = (() => {
+		// Host start should be allowed even when meeting status is "waiting" (waiting room).
+		if (isHostStart) {
+			const runtime = (zoomRuntimeStatus?.status || '').toLowerCase();
+			return runtime !== 'ended';
+		}
 		// If Zoom says started, allow join.
 		const runtime = (zoomRuntimeStatus?.status || '').toLowerCase();
 		if (runtime === 'started') return true;
@@ -371,14 +347,13 @@ const ZoomMeetingPage = () => {
 	useEffect(() => {
 		if (!autoJoinRequested) return;
 		if (autoJoinFiredRef.current) return;
-		if (showEmailInput && isPublicEvent) return; // needs email first
 		if (!sdkLoaded || !zoomCredentials) return;
 		if (isJoining || isJoined) return;
 		if (!canJoinNow) return;
 		autoJoinFiredRef.current = true;
 		handleJoinMeeting();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [autoJoinRequested, sdkLoaded, zoomCredentials, isJoining, isJoined, canJoinNow, showEmailInput, isPublicEvent]);
+	}, [autoJoinRequested, sdkLoaded, zoomCredentials, isJoining, isJoined, canJoinNow, isPublicEvent, isHostStart]);
 
 	const handleJoinMeeting = async () => {
 		if (!sdkLoaded || !zoomCredentials) {
@@ -413,14 +388,12 @@ const ZoomMeetingPage = () => {
 			}, 60000);
 
 			// Get signature from backend
-			const emailToUse = email || (user && user.email ? user.email : null);
-			const signatureResponse = await axios.post(`${base_url}/events/${eventId}/zoom-signature`, {
+			const signatureResponse = await axios.post(`${base_url}/events/${eventId}/${isHostStart ? 'zoom-host-signature' : 'zoom-signature'}`, {
 				meetingNumber,
-				role: 0, // 0 = participant, 1 = host
-				...(emailToUse && { email: emailToUse }),
+				role: isHostStart ? 1 : 0,
 			});
 
-			const { signature, sdkKey, role: serverRole } = signatureResponse.data.data;
+			const { signature, sdkKey, zak } = signatureResponse.data.data;
 
 			if (!signature || !sdkKey) {
 				setError('Failed to generate Zoom signature');
@@ -447,6 +420,7 @@ const ZoomMeetingPage = () => {
 					meetingNumber,
 					passWord: password,
 					userName: user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'LearnScape User' : 'Guest User',
+					...(isHostStart ? { zak } : {}),
 					success: () => resolve(),
 					error: (e: any) => reject(e),
 				});
@@ -469,12 +443,9 @@ const ZoomMeetingPage = () => {
 			if (joinTimeoutRef.current) window.clearTimeout(joinTimeoutRef.current);
 			const errMsg = typeof err?.message === 'string' ? err.message : typeof err === 'string' ? err : err ? JSON.stringify(err) : '';
 			if (axiosOriginal.isAxiosError(err) && err.response?.status === 500) {
-				setError('Zoom SDK credentials not configured on server');
+				setError(err.response?.data?.message || 'Server error while preparing Zoom start/join.');
 			} else if (axiosOriginal.isAxiosError(err) && err.response?.status === 400) {
-				setError(err.response?.data?.message || 'Email is required');
-				if (isPublicEvent) {
-					setShowEmailInput(true);
-				}
+				setError(err.response?.data?.message || 'Bad request');
 			} else if (axiosOriginal.isAxiosError(err) && err.response?.status === 403) {
 				setError(err.response?.data?.message || 'You must register for this event to join the Zoom meeting');
 			} else {
@@ -484,25 +455,6 @@ const ZoomMeetingPage = () => {
 			setJoinPhase(null);
 			await cleanupZoomOverlay();
 		}
-	};
-
-	const handleEmailSubmit = async () => {
-		if (!email) {
-			setEmailError('Email is required');
-			return;
-		}
-
-		// Validate email format
-		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-		if (!emailRegex.test(email)) {
-			setEmailError('Invalid email format');
-			return;
-		}
-
-		setEmailError(null);
-		setLoading(true);
-		setError(null);
-		await fetchZoomCredentials(email);
 	};
 
 	if (loading) {
@@ -518,55 +470,6 @@ const ZoomMeetingPage = () => {
 				}}>
 				<CircularProgress />
 				<Typography variant='body1'>Loading Zoom meeting...</Typography>
-			</Box>
-		);
-	}
-
-	// Show email input for public events if email is required
-	if (showEmailInput && isPublicEvent) {
-		return (
-			<Box
-				sx={{
-					display: 'flex',
-					flexDirection: 'column',
-					justifyContent: 'center',
-					alignItems: 'center',
-					height: '100vh',
-					gap: 2,
-					p: 3,
-				}}>
-				<Typography variant='h6' sx={{ mb: 2 }}>
-					Enter Your Email to Join
-				</Typography>
-				<Typography variant='body2' sx={{ mb: 2, color: 'text.secondary', maxWidth: 400, textAlign: 'center' }}>
-					Please enter the email address you used to register for this event.
-				</Typography>
-				<TextField
-					label='Email Address'
-					type='email'
-					value={email}
-					onChange={(e) => {
-						setEmail(e.target.value);
-						setEmailError(null);
-					}}
-					error={!!emailError}
-					helperText={emailError}
-					sx={{ mb: 2, minWidth: 300 }}
-					fullWidth={false}
-				/>
-				<Box sx={{ display: 'flex', gap: 2 }}>
-					<Button variant='outlined' onClick={() => navigate(-1)}>
-						Go Back
-					</Button>
-					<Button variant='contained' onClick={handleEmailSubmit} disabled={loading}>
-						{loading ? 'Loading...' : 'Join Meeting'}
-					</Button>
-				</Box>
-				{error && (
-					<Alert severity='error' sx={{ mt: 2, maxWidth: 500 }}>
-						{error}
-					</Alert>
-				)}
 			</Box>
 		);
 	}
@@ -609,7 +512,14 @@ const ZoomMeetingPage = () => {
 				overflow: 'hidden',
 				position: 'relative',
 			}}>
-			{autoJoinRequested && !showEmailInput && !isJoined && !isJoining && (
+			{error && !isJoined && (
+				<Box sx={{ position: 'fixed', top: 16, left: 16, right: 16, zIndex: 2000, display: 'flex', justifyContent: 'center' }}>
+					<Alert severity='error' sx={{ maxWidth: 900, width: '100%' }}>
+						{error}
+					</Alert>
+				</Box>
+			)}
+			{autoJoinRequested && !isJoined && !isJoining && (
 				<Box
 					sx={{
 						position: 'fixed',
