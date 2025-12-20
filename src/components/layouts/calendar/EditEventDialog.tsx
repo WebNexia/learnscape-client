@@ -1443,16 +1443,9 @@ const EditEventDialog = ({
 
 												try {
 													setIsStartingMeeting(true);
-													const res = await axios.get(`${base_url}/events/${selectedEvent._id}/zoom-start-url`);
-													const startUrl = res?.data?.data?.startUrl;
-
-													if (!startUrl || typeof startUrl !== 'string') {
-														setUrlErrorMessage('Zoom start link not available for this event. Please recreate the Zoom meeting.');
-														setIsUrlErrorOpen(true);
-														return;
-													}
-
-													window.open(startUrl, '_blank', 'noopener,noreferrer');
+													// Start as host via Meeting SDK (no Zoom login required in browser)
+													const url = `${window.location.origin}/zoom-meeting/${selectedEvent._id}?autojoin=1&host=1`;
+													window.open(url, '_blank', 'noopener,noreferrer');
 												} catch (error: any) {
 													const msg =
 														error?.response?.data?.message ||

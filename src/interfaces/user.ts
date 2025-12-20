@@ -15,6 +15,7 @@ export interface User {
 	updatedAt: string;
 	countryCode: string;
 	isEmailVerified: boolean;
+	zoomHostUser?: string;
 	// Subscription fields
 	isSubscribed: boolean;
 	subscriptionType: 'monthly' | 'yearly' | null;
