@@ -21,6 +21,10 @@ export interface Payment {
 	refundId?: string;
 	createdAt: string;
 	updatedAt: string;
+	ownerIncome?: number; // Owner's commission income
+	superAdminIncome?: number; // Super-admin's share income
+	commissionRate?: number; // Commission rate (0.15 for 15%)
+	commissionType?: string; // 'percentage' or 'fixed'
 }
 
 interface TransactionDetails {

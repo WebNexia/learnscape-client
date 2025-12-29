@@ -147,7 +147,12 @@ const AdminDashboard = () => {
 							}}
 							sx={{ cursor: 'pointer' }}>
 							<AdminPayment
-								totalRevenue={dashboardData ? (dashboardData.roleSpecific as any).totalRevenue : undefined}
+								ownerIncome={dashboardData ? (dashboardData.roleSpecific as any).ownerIncome : undefined}
+								ownerIncomeFromPayments={dashboardData ? (dashboardData.roleSpecific as any).ownerIncomeFromPayments : undefined}
+								ownerIncomeFromSubscriptions={dashboardData ? (dashboardData.roleSpecific as any).ownerIncomeFromSubscriptions : undefined}
+								superAdminIncome={dashboardData ? (dashboardData.roleSpecific as any).superAdminIncome : undefined}
+								superAdminIncomeFromPayments={dashboardData ? (dashboardData.roleSpecific as any).superAdminIncomeFromPayments : undefined}
+								superAdminIncomeFromSubscriptions={dashboardData ? (dashboardData.roleSpecific as any).superAdminIncomeFromSubscriptions : undefined}
 								totalPayments={dashboardData ? (dashboardData.roleSpecific as any).totalPayments : undefined}
 							/>
 						</Grid>

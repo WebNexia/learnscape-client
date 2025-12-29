@@ -45,7 +45,9 @@ const Messages = React.lazy(() => import('./pages/Messages'));
 const Community = React.lazy(() => import('./pages/Community'));
 const CommunityTopicPage = React.lazy(() => import('./pages/CommunityTopicPage'));
 const Settings = React.lazy(() => import('./pages/Settings'));
+const AdminSetup = React.lazy(() => import('./pages/AdminSetup'));
 const ZoomMeetingPage = React.lazy(() => import('./pages/ZoomMeetingPage'));
+const EventRecordingPage = React.lazy(() => import('./pages/EventRecordingPage'));
 const CoursePage = React.lazy(() => import('./pages/CoursePage'));
 const LessonPage = React.lazy(() => import('./pages/LessonPage'));
 const AdminCourseEditPage = React.lazy(() => import('./pages/AdminCourseEditPage'));
@@ -129,6 +131,7 @@ export const router = createBrowserRouter([
 			{ path: 'handle-auth-reset', element: <HandleAuthResetPassword /> },
 			{ path: 'courses/certificates/verify/:certificateId', element: <CertificateVerificationPage /> },
 			{ path: 'zoom-meeting/:eventId', element: <ZoomMeetingPage /> },
+			{ path: 'event-recording/:eventId/:recordingId?', element: <EventRecordingPage /> }, // recordingId optional for YouTube recordings
 			{ path: 'about-us', element: <AboutUs /> },
 			{ path: 'contact-us', element: <ContactUs /> },
 			{
@@ -324,6 +327,14 @@ export const router = createBrowserRouter([
 				element: (
 					<AdminRouteGuard>
 						<Settings />
+					</AdminRouteGuard>
+				),
+			},
+			{
+				path: 'admin/setup',
+				element: (
+					<AdminRouteGuard>
+						<AdminSetup />
 					</AdminRouteGuard>
 				),
 			},
