@@ -25,7 +25,7 @@ import { useAuth } from '../hooks/useAuth';
 const Settings = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { user, setUser } = useContext(UserAuthContext);
-	const { hasAdminAccess } = useAuth();
+	const { hasAdminAccess, canAccessPayments } = useAuth();
 	const navigate = useNavigate();
 	const auth = getAuth();
 
@@ -327,6 +327,19 @@ const Settings = () => {
 
 	return (
 		<DashboardPagesLayout pageName='Settings' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
+			{canAccessPayments && (
+				<Box
+					sx={{
+						display: 'flex',
+						justifyContent: 'flex-end',
+						padding: isVerySmallScreen ? '1rem 1.5rem 0' : isRotatedMedium ? '1rem 1rem 0' : '2rem 3rem 0',
+						width: '100%',
+					}}>
+					<CustomSubmitButton onClick={() => navigate('/admin/setup')} size='small'>
+						Org Setup
+					</CustomSubmitButton>
+				</Box>
+			)}
 			<Box
 				sx={{
 					display: 'flex',

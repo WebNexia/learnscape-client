@@ -18,6 +18,7 @@ import axios from '@utils/axiosInstance';
 import { useFilterSearch } from '../../../hooks/useFilterSearch';
 import FilterSearchRow from '../FilterSearchRow';
 import CustomInfoMessageAlignedLeft from '../infoMessage/CustomInfoMessageAlignedLeft';
+import { useAuth } from '../../../hooks/useAuth';
 
 const AdminPaymentsTab = () => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
@@ -29,6 +30,7 @@ const AdminPaymentsTab = () => {
 
 	const { isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
+	const { isOwner, isSuperAdmin } = useAuth();
 
 	const mappedCourses = useMemo(() => {
 		const courseTitles = courses?.map((course) => course.title) || [];
@@ -308,7 +310,15 @@ const AdminPaymentsTab = () => {
 										<CustomTableCell value={payment.courseTitle} />
 										<CustomTableCell value={payment.documentName} />
 										{!isMobileSize && <CustomTableCell value={`${setCurrencySymbol(payment.currency)}${payment.amount}`} />}
-										<CustomTableCell value={`£${payment.amountReceivedInGbp}`} />
+										<CustomTableCell
+											value={
+												isOwner && payment.ownerIncome !== undefined && payment.ownerIncome !== null
+													? `£${payment.ownerIncome.toFixed(2)}`
+													: isSuperAdmin && payment.superAdminIncome !== undefined && payment.superAdminIncome !== null
+														? `£${payment.superAdminIncome.toFixed(2)}`
+														: `£${payment.amountReceivedInGbp || '0.00'}`
+											}
+										/>
 
 										{!isMobileSize && (
 											<CustomTableCell

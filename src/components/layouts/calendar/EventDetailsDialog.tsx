@@ -35,6 +35,19 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 	const [isRegisterForEventSending, setIsRegisterForEventSending] = useState<boolean>(false);
 	const [registerErrorMsg, setRegisterErrorMsg] = useState<string | null>(null);
 	const [isUserRegistered, setIsUserRegistered] = useState<boolean>(false);
+	const [recordings, setRecordings] = useState<
+		Array<{
+			recordingId: string;
+			recordingStart: string;
+			recordingEnd: string;
+			fileType: string;
+			fileSize: number;
+			playUrl: string;
+			recordingType: string;
+			status: string;
+		}>
+	>([]);
+	const [isLoadingRecordings, setIsLoadingRecordings] = useState<boolean>(false);
 
 	// Check if user is registered for the event (for public events)
 	useEffect(() => {
@@ -59,6 +72,38 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 			setIsUserRegistered(false);
 		}
 	}, [eventDetailsModalOpen, selectedEvent?._id, user, selectedEvent?.isPublic, base_url]);
+
+	// Fetch recordings for the event
+	useEffect(() => {
+		const fetchRecordings = async () => {
+			if (!selectedEvent?._id || !selectedEvent?.zoomMeetingId) {
+				setRecordings([]);
+				return;
+			}
+
+			try {
+				setIsLoadingRecordings(true);
+				const response = await axios.get(`${base_url}/events/${selectedEvent._id}/zoom-recordings`);
+				setRecordings(response.data.data?.recordings || []);
+			} catch (error: any) {
+				// 404 is normal if no recordings exist
+				if (axiosOriginal.isAxiosError(error) && error.response?.status === 404) {
+					setRecordings([]);
+				} else {
+					console.error('Error fetching recordings:', error);
+					setRecordings([]);
+				}
+			} finally {
+				setIsLoadingRecordings(false);
+			}
+		};
+
+		if (eventDetailsModalOpen && selectedEvent) {
+			fetchRecordings();
+		} else {
+			setRecordings([]);
+		}
+	}, [eventDetailsModalOpen, selectedEvent?._id, selectedEvent?.zoomMeetingId, base_url]);
 
 	// Helper function to check if event has ended
 	const isEventEnded = (event: Event | null): boolean => {
@@ -225,6 +270,55 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 							</Typography>
 						</Box>
 					)}
+					{/* Recordings section - show YouTube if available, otherwise Zoom recording */}
+					{selectedEvent?.youtubeVideoId ? (
+						<Box sx={{ mb: '0.75rem' }}>
+							<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : undefined, mb: '0.5rem' }}>
+								Recording:
+							</Typography>
+							<Link
+								onClick={() => navigate(`/event-recording/${selectedEvent?._id}`)}
+								sx={{
+									'display': 'block',
+									'cursor': 'pointer',
+									'color': theme.palette.primary.main,
+									'textDecoration': 'none',
+									'&:hover': {
+										textDecoration: 'underline',
+									},
+								}}>
+								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+									Watch Recording (YouTube)
+								</Typography>
+							</Link>
+						</Box>
+					) : recordings.length > 0 ? (
+						<Box sx={{ mb: '0.75rem' }}>
+							<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : undefined, mb: '0.5rem' }}>
+								Recording:
+							</Typography>
+							<Link
+								onClick={() => navigate(`/event-recording/${selectedEvent?._id}/${recordings[0].recordingId}`)}
+								sx={{
+									'display': 'block',
+									'cursor': 'pointer',
+									'color': theme.palette.primary.main,
+									'textDecoration': 'none',
+									'&:hover': {
+										textDecoration: 'underline',
+									},
+								}}>
+								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+									Watch Recording ({new Date(recordings[0].recordingStart).toLocaleString()})
+								</Typography>
+							</Link>
+						</Box>
+					) : null}
+					{isLoadingRecordings && (
+						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', color: 'text.secondary', mb: '0.75rem' }}>
+							Checking for recordings...
+						</Typography>
+					)}
 					{registerErrorMsg && <CustomErrorMessage sx={{ mt: '1rem' }}>{registerErrorMsg}</CustomErrorMessage>}
 				</DialogContent>
 				<DialogActions sx={{ margin: '-1.5rem 1rem 1rem 0rem' }}>
@@ -238,7 +332,8 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 						Close
 					</CustomCancelButton>
 					{/* For public events: show Join Meeting if registered and has Zoom, otherwise show Register */}
-					{selectedEvent?.isPublic && selectedEvent?.zoomJoinUrl && isUserRegistered && (
+					{/* Disable Join Meeting if recordings exist (YouTube or Zoom) */}
+					{selectedEvent?.isPublic && selectedEvent?.zoomJoinUrl && isUserRegistered && !selectedEvent?.youtubeVideoId && recordings.length === 0 && (
 						<CustomSubmitButton
 							onClick={() => window.open(`/zoom-meeting/${selectedEvent._id}?autojoin=1`, '_blank', 'noopener,noreferrer')}
 							sx={{
@@ -252,13 +347,17 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 							Join Meeting
 						</CustomSubmitButton>
 					)}
-					{selectedEvent?.isPublic && (!selectedEvent?.zoomJoinUrl || !isUserRegistered) && !isEventEnded(selectedEvent) && (
-						<CustomSubmitButton onClick={handleRegisterForEvent} disabled={isRegisterForEventSending}>
-							{isRegisterForEventSending ? 'Registering...' : 'Register'}
-						</CustomSubmitButton>
-					)}
-					{/* For non-public events: show Join Meeting if Zoom exists */}
-					{!selectedEvent?.isPublic && selectedEvent?.zoomJoinUrl && (
+					{selectedEvent?.isPublic &&
+						(!selectedEvent?.zoomJoinUrl || !isUserRegistered) &&
+						!isEventEnded(selectedEvent) &&
+						!selectedEvent?.youtubeVideoId &&
+						recordings.length === 0 && (
+							<CustomSubmitButton onClick={handleRegisterForEvent} disabled={isRegisterForEventSending}>
+								{isRegisterForEventSending ? 'Registering...' : 'Register'}
+							</CustomSubmitButton>
+						)}
+					{/* For non-public events: show Join Meeting if Zoom exists and no recordings (YouTube or Zoom) */}
+					{!selectedEvent?.isPublic && selectedEvent?.zoomJoinUrl && !selectedEvent?.youtubeVideoId && recordings.length === 0 && (
 						<CustomSubmitButton
 							onClick={() => window.open(`/zoom-meeting/${selectedEvent._id}?autojoin=1`, '_blank', 'noopener,noreferrer')}
 							sx={{

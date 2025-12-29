@@ -30,6 +30,10 @@ export interface Event {
 	zoomMeetingNumber?: string;
 	zoomJoinUrl?: string;
 	isZoomMeeting?: boolean; // Frontend-only: checkbox state
+	// Zoom recordings
+	hasRecordings?: boolean; // Frontend-only: indicates if recordings exist
+	// YouTube recording
+	youtubeVideoId?: string; // YouTube video ID if recording was uploaded to YouTube
 }
 
 export interface AttendeeInfo {
