@@ -107,6 +107,7 @@ const AdminSetup = () => {
 	useEffect(() => {
 		const urlParams = new URLSearchParams(window.location.search);
 		const youtubeConnect = urlParams.get('youtube_connect');
+		const stripeConnect = urlParams.get('stripe_connect');
 
 		if (youtubeConnect === 'success') {
 			setSuccess(true);
@@ -115,6 +116,19 @@ const AdminSetup = () => {
 			window.history.replaceState({}, '', window.location.pathname);
 		} else if (youtubeConnect === 'error') {
 			const errorMsg = urlParams.get('error') || 'Failed to connect YouTube account';
+			setError(errorMsg);
+			// Clean URL
+			window.history.replaceState({}, '', window.location.pathname);
+		}
+
+		// Handle Stripe Connect callback from URL
+		if (stripeConnect === 'success') {
+			setSuccess(true);
+			fetchStripeConnectStatus();
+			// Clean URL
+			window.history.replaceState({}, '', window.location.pathname);
+		} else if (stripeConnect === 'error') {
+			const errorMsg = urlParams.get('error') || 'Failed to complete Stripe Connect onboarding';
 			setError(errorMsg);
 			// Clean URL
 			window.history.replaceState({}, '', window.location.pathname);
