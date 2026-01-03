@@ -79,13 +79,13 @@ const UnsubscribeDialog: React.FC<UnsubscribeDialogProps> = ({ open, onClose }) 
 					if (prevUser) {
 						return {
 							...prevUser,
-							isSubscribed: false, // Mark as unsubscribed
-							subscriptionStatus: 'canceled',
+							isSubscribed: Boolean(hasAccessUntilPeriodEnd), // Keep as subscribed if period hasn't ended (ensure boolean)
+							subscriptionStatus: (hasAccessUntilPeriodEnd ? 'canceled_at_period_end' : 'canceled') as 'canceled_at_period_end' | 'canceled', // Mark as scheduled for cancellation
 							accessLevel: hasAccessUntilPeriodEnd ? 'subscription' : 'limited', // Keep access if period hasn't ended
-							subscriptionType: null,
-							subscriptionExpiry: null,
+							subscriptionType: hasAccessUntilPeriodEnd ? prevUser.subscriptionType : null, // Keep type until period ends
+							subscriptionExpiry: hasAccessUntilPeriodEnd ? prevUser.subscriptionExpiry : null, // Keep expiry until period ends
 							subscriptionValidUntil: subscriptionValidUntil ? subscriptionValidUntil.toISOString() : null, // Preserve until period end
-						};
+						} as typeof prevUser;
 					}
 					return prevUser;
 				});

@@ -36,7 +36,30 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 	// Memoize expensive computations
 	const hasActiveSubscriptionMemo = useMemo(() => {
 		return (user: any): boolean => {
-			return user?.isSubscribed === true && user?.subscriptionStatus === 'active';
+			// User has active subscription if:
+			// 1. isSubscribed is true AND status is 'active', OR
+			// 2. subscriptionStatus is 'canceled_at_period_end' (scheduled for cancellation but still has access)
+			return (user?.isSubscribed === true && user?.subscriptionStatus === 'active') || user?.subscriptionStatus === 'canceled_at_period_end';
+		};
+	}, []);
+
+	// Check if subscription is scheduled for cancellation (user cannot re-subscribe until period ends)
+	const isSubscriptionScheduledForCancellation = useMemo(() => {
+		return (user: any): boolean => {
+			return user?.subscriptionStatus === 'canceled_at_period_end';
+		};
+	}, []);
+
+	// Format period end date for tooltip
+	const getPeriodEndTooltip = useMemo(() => {
+		return (user: any): string => {
+			if (!user?.subscriptionValidUntil) return '';
+			const endDate = new Date(user.subscriptionValidUntil);
+			return `Access ends on ${endDate.toLocaleDateString('en-GB', {
+				year: 'numeric',
+				month: 'long',
+				day: 'numeric',
+			})}`;
 		};
 	}, []);
 
@@ -215,47 +238,80 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 					{user?.role === Roles.USER && !user?.hasRegisteredCourse && (
 						<>
 							{!hasActiveSubscriptionMemo(user) ? (
-								<Button
-									variant='contained'
-									startIcon={<Star />}
-									onClick={() => setSubscriptionDialogOpen(true)}
-									sx={{
-										'backgroundColor': theme.textColor?.greenPrimary.main,
-										'color': '#fff',
-										'fontSize': isMobileSize ? '0.7rem' : '0.8rem',
-										'fontFamily': theme.fontFamily?.main,
-										'textTransform': 'capitalize',
-										'mr': 1,
-										'px': isMobileSize ? 1 : 2,
-										'py': 0.5,
-										'&:hover': {
-											backgroundColor: theme.textColor?.greenPrimary.main,
-											opacity: 0.8,
-										},
-									}}>
-									Subscribe
-								</Button>
+								<Tooltip
+									title={
+										isSubscriptionScheduledForCancellation(user)
+											? getPeriodEndTooltip(user) ||
+												'Subscription is scheduled for cancellation. You cannot re-subscribe until the current period ends.'
+											: ''
+									}
+									arrow>
+									<span>
+										<Button
+											variant='contained'
+											startIcon={<Star />}
+											onClick={() => setSubscriptionDialogOpen(true)}
+											disabled={isSubscriptionScheduledForCancellation(user)}
+											sx={{
+												'backgroundColor': theme.textColor?.greenPrimary.main,
+												'color': '#fff',
+												'fontSize': isMobileSize ? '0.7rem' : '0.8rem',
+												'fontFamily': theme.fontFamily?.main,
+												'textTransform': 'capitalize',
+												'mr': 1,
+												'px': isMobileSize ? 1 : 2,
+												'py': 0.5,
+												'&:hover': {
+													backgroundColor: theme.textColor?.greenPrimary.main,
+													opacity: 0.8,
+												},
+												'&:disabled': {
+													backgroundColor: '#ccc',
+													color: '#fff',
+													opacity: 0.6,
+												},
+											}}>
+											Subscribe
+										</Button>
+									</span>
+								</Tooltip>
 							) : (
-								<Button
-									variant='outlined'
-									startIcon={<Star />}
-									onClick={() => setUnsubscribeDialogOpen(true)}
-									sx={{
-										'borderColor': theme.textColor?.error.main,
-										'color': '#fff',
-										'fontSize': isMobileSize ? '0.7rem' : '0.8rem',
-										'fontFamily': theme.fontFamily?.main,
-										'textTransform': 'capitalize',
-										'mr': 1,
-										'px': isMobileSize ? 1 : 2,
-										'py': 0.5,
-										'&:hover': {
-											borderColor: theme.textColor?.error.main,
-											backgroundColor: theme.textColor?.error.main,
-										},
-									}}>
-									Unsubscribe
-								</Button>
+								<Tooltip
+									title={
+										isSubscriptionScheduledForCancellation(user)
+											? getPeriodEndTooltip(user) || 'Subscription is already scheduled for cancellation'
+											: ''
+									}
+									arrow>
+									<span>
+										<Button
+											variant='outlined'
+											startIcon={<Star />}
+											onClick={() => setUnsubscribeDialogOpen(true)}
+											disabled={isSubscriptionScheduledForCancellation(user)}
+											sx={{
+												'borderColor': theme.textColor?.error.main,
+												'color': '#fff',
+												'fontSize': isMobileSize ? '0.7rem' : '0.8rem',
+												'fontFamily': theme.fontFamily?.main,
+												'textTransform': 'capitalize',
+												'mr': 1,
+												'px': isMobileSize ? 1 : 2,
+												'py': 0.5,
+												'&:hover': {
+													borderColor: theme.textColor?.error.main,
+													backgroundColor: theme.textColor?.error.main,
+												},
+												'&:disabled': {
+													borderColor: '#ccc',
+													color: '#ccc',
+													opacity: 0.6,
+												},
+											}}>
+											{isSubscriptionScheduledForCancellation(user) ? 'Cancelled' : 'Unsubscribe'}
+										</Button>
+									</span>
+								</Tooltip>
 							)}
 						</>
 					)}

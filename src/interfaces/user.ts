@@ -20,7 +20,7 @@ export interface User {
 	isSubscribed: boolean;
 	subscriptionType: 'monthly' | 'yearly' | null;
 	subscriptionExpiry: string | null;
-	subscriptionStatus: 'none' | 'active' | 'past_due' | 'canceled' | 'trialing';
+	subscriptionStatus: 'none' | 'active' | 'past_due' | 'canceled' | 'canceled_at_period_end' | 'trialing';
 	subscriptionValidUntil: string | null;
 	accessLevel: 'limited' | 'subscription' | 'full';
 }

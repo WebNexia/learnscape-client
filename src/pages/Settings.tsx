@@ -336,7 +336,7 @@ const Settings = () => {
 						width: '100%',
 					}}>
 					<CustomSubmitButton onClick={() => navigate('/admin/setup')} size='small'>
-						Org Setup
+						Account Setup
 					</CustomSubmitButton>
 				</Box>
 			)}
