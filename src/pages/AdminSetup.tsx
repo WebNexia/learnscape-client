@@ -1,4 +1,26 @@
-import { Box, Tab, Tabs, Typography, Snackbar, Alert, MenuItem, Select, FormControl, InputLabel, Tooltip, IconButton } from '@mui/material';
+import {
+	Box,
+	Tab,
+	Tabs,
+	Typography,
+	Snackbar,
+	Alert,
+	MenuItem,
+	Select,
+	FormControl,
+	InputLabel,
+	Tooltip,
+	IconButton,
+	Dialog,
+	DialogTitle,
+	DialogContent,
+	DialogActions,
+	Button,
+	List,
+	ListItem,
+	ListItemText,
+	Divider,
+} from '@mui/material';
 import { InfoOutlined } from '@mui/icons-material';
 import { useState, useEffect, useContext } from 'react';
 import DashboardPagesLayout from '../components/layouts/dashboardLayout/DashboardPagesLayout';
@@ -93,6 +115,8 @@ const AdminSetup = () => {
 		clientId: '',
 		clientSecret: '',
 	});
+
+	const [zoomHelpDialogOpen, setZoomHelpDialogOpen] = useState<boolean>(false);
 
 	// Fetch settings on mount
 	useEffect(() => {
@@ -367,13 +391,13 @@ const AdminSetup = () => {
 
 	if (!canAccessPayments) {
 		return (
-			<DashboardPagesLayout pageName='Org Setup' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
+			<DashboardPagesLayout pageName='Account Setup' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
 				<Box sx={{ padding: '2rem', textAlign: 'center' }}>
 					<Typography variant='h6' color='error'>
 						Access Denied
 					</Typography>
 					<Typography variant='body2' sx={{ mt: 1 }}>
-						Only super-admins can access organization setup.
+						Only super-admins can access account setup.
 					</Typography>
 				</Box>
 			</DashboardPagesLayout>
@@ -381,7 +405,7 @@ const AdminSetup = () => {
 	}
 
 	return (
-		<DashboardPagesLayout pageName='Organization Setup' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
+		<DashboardPagesLayout pageName='Account Setup' customSettings={{ justifyContent: 'flex-start' }} showCopyRight={true}>
 			{/* Sticky Tabs */}
 			<Box
 				sx={{
@@ -482,9 +506,26 @@ const AdminSetup = () => {
 						{/* Zoom Tab */}
 						{activeTab === 'zoom' && (
 							<Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-								<Typography variant='h6' sx={{ mb: 1 }}>
-									Zoom Integration Settings
-								</Typography>
+								<Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+									<Box>
+										<Typography variant='h6'>Zoom Integration Settings</Typography>
+									</Box>
+									<Box>
+										<Tooltip title='How to find Zoom credentials' arrow placement='top'>
+											<IconButton
+												size='small'
+												onClick={() => setZoomHelpDialogOpen(true)}
+												sx={{
+													'color': theme.textColor?.primary.main,
+													'&:hover': {
+														backgroundColor: 'rgba(0, 0, 0, 0.04)',
+													},
+												}}>
+												<InfoOutlined fontSize='small' sx={{ fontSize: '1rem' }} />
+											</IconButton>
+										</Tooltip>
+									</Box>
+								</Box>
 								<CustomTextField
 									label='Account ID'
 									value={settings.zoom.accountId}
@@ -809,7 +850,6 @@ const AdminSetup = () => {
 						{error && <CustomErrorMessage sx={{ mt: 2, mb: 1 }}>{error}</CustomErrorMessage>}
 
 						<Box sx={{ display: 'flex', gap: 2, mt: 3, justifyContent: 'flex-end' }}>
-							<CustomCancelButton onClick={() => fetchSettings()}>Reset</CustomCancelButton>
 							<CustomSubmitButton type='submit' disabled={saving}>
 								{saving ? 'Saving...' : 'Save'}
 							</CustomSubmitButton>
@@ -817,6 +857,146 @@ const AdminSetup = () => {
 					</form>
 				)}
 			</Box>
+
+			{/* Zoom Help Dialog */}
+			<Dialog open={zoomHelpDialogOpen} onClose={() => setZoomHelpDialogOpen(false)} maxWidth='md' fullWidth>
+				<DialogTitle>How to Find Zoom Credentials</DialogTitle>
+				<DialogContent>
+					<Typography variant='body2' sx={{ mb: 2, color: 'text.secondary' }}>
+						Follow these steps to find your Zoom credentials in the Zoom Marketplace:
+					</Typography>
+					<List>
+						<ListItem>
+							<ListItemText
+								primary='Account ID'
+								secondary={
+									<>
+										1. Go to{' '}
+										<a href='https://marketplace.zoom.us/' target='_blank' rel='noopener noreferrer'>
+											Zoom Marketplace
+										</a>
+										<br />
+										2. Sign in with your Zoom account
+										<br />
+										3. Navigate to <strong>Develop → Build App</strong>
+										<br />
+										4. Select your app or create a new Server-to-Server OAuth app
+										<br />
+										5. The <strong>Account ID</strong> is displayed in the app credentials section
+									</>
+								}
+							/>
+						</ListItem>
+						<Divider />
+						<ListItem>
+							<ListItemText
+								primary='Client ID'
+								secondary={
+									<>
+										1. In your Server-to-Server OAuth app settings
+										<br />
+										2. Go to the <strong>App Credentials</strong> tab
+										<br />
+										3. The <strong>Client ID</strong> is shown in the credentials section
+									</>
+								}
+							/>
+						</ListItem>
+						<Divider />
+						<ListItem>
+							<ListItemText
+								primary='Client Secret'
+								secondary={
+									<>
+										1. In the same <strong>App Credentials</strong> tab
+										<br />
+										2. Click <strong>Show</strong> next to Client Secret to reveal it
+										<br />
+										3. Copy the <strong>Client Secret</strong> (you may need to verify your identity)
+									</>
+								}
+							/>
+						</ListItem>
+						<Divider />
+						<ListItem>
+							<ListItemText
+								primary='Meeting SDK Key'
+								secondary={
+									<>
+										1. In Zoom Marketplace, go to <strong>Develop → Build App</strong>
+										<br />
+										2. Create or select a <strong>General App</strong> (different from Server-to-Server OAuth)
+										<br />
+										3. Go to the <strong>App Credentials</strong> tab
+										<br />
+										4. The <strong>Client ID</strong> in this General App is your <strong>Meeting SDK Key</strong>
+									</>
+								}
+							/>
+						</ListItem>
+						<Divider />
+						<ListItem>
+							<ListItemText
+								primary='Meeting SDK Secret'
+								secondary={
+									<>
+										1. In the same General App <strong>App Credentials</strong> tab
+										<br />
+										2. Click <strong>Show</strong> next to Client Secret to reveal it
+										<br />
+										3. The <strong>Client Secret</strong> in this General App is your <strong>Meeting SDK Secret</strong>
+										<br />
+										4. Copy the secret (you may need to verify your identity)
+									</>
+								}
+							/>
+						</ListItem>
+					</List>
+					<Typography variant='body2' sx={{ mt: 2, color: 'text.secondary', fontStyle: 'italic' }}>
+						Note: You need to create two separate apps in Zoom Marketplace:
+						<br />• One <strong>Server-to-Server OAuth</strong> app (for Account ID, Client ID, Client Secret)
+						<br />• One <strong>General App</strong> (for Meeting SDK Key and Secret - these are the Client ID and Client Secret of the General App)
+					</Typography>
+
+					<Divider sx={{ my: 3 }} />
+
+					<Typography variant='h6' sx={{ mb: 2 }}>
+						Required OAuth Scopes
+					</Typography>
+					<Typography variant='body2' sx={{ mb: 2, color: 'text.secondary' }}>
+						When setting up your <strong>Server-to-Server OAuth</strong> app, make sure to enable the following scopes in the <strong>Scopes</strong>{' '}
+						tab:
+					</Typography>
+					<List dense>
+						<ListItem>
+							<ListItemText primary='meeting:write' secondary='Required to create and manage Zoom meetings for events' />
+						</ListItem>
+						<ListItem>
+							<ListItemText primary='meeting:read' secondary='Required to read meeting details and information' />
+						</ListItem>
+						<ListItem>
+							<ListItemText primary='recording:read' secondary='Required to access and retrieve meeting recordings' />
+						</ListItem>
+						<ListItem>
+							<ListItemText primary='user:read' secondary='Required to read user information for meeting hosts' />
+						</ListItem>
+					</List>
+					<Typography variant='body2' sx={{ mt: 2, color: 'text.secondary' }}>
+						<strong>How to set scopes:</strong>
+						<br />
+						1. In your Server-to-Server OAuth app, go to the <strong>Scopes</strong> tab
+						<br />
+						2. Under <strong>Account-level scopes</strong>, enable the scopes listed above
+						<br />
+						3. Click <strong>Save</strong> to apply the changes
+						<br />
+						4. You may need to activate your app after setting scopes
+					</Typography>
+				</DialogContent>
+				<DialogActions sx={{ margin: '0 0.5rem 0.5rem 0' }}>
+					<CustomCancelButton onClick={() => setZoomHelpDialogOpen(false)}>Close</CustomCancelButton>
+				</DialogActions>
+			</Dialog>
 
 			<Snackbar
 				open={success}
