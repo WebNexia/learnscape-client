@@ -92,7 +92,7 @@ const AdminCourseEditPage = () => {
 
 	const { isSticky } = useStickyPaper(isMobileSize);
 
-	const [isEditMode, setIsEditMode] = useState<boolean>(false);
+	const [isEditMode, setIsEditMode] = useState<boolean>(true);
 	const [singleCourse, setSingleCourse] = useState<SingleCourse>();
 	const [singleCourseBeforeSave, setSingleCourseBeforeSave] = useState<SingleCourse>();
 	const [isFree, setIsFree] = useState<boolean>(false);
@@ -1076,6 +1076,7 @@ const AdminCourseEditPage = () => {
 					}}
 					submitBtnText='Leave Page'
 					cancelBtnText='Stay'
+					actionSx={{ margin: '0 0.5rem 0.5rem 0' }}
 				/>
 			</CustomDialog>
 
