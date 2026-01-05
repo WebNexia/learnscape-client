@@ -125,64 +125,110 @@ const EventRecordingPage = () => {
 			<Box
 				sx={{
 					width: '100%',
-					minHeight: '100vh',
+					height: '100vh',
 					display: 'flex',
 					flexDirection: 'column',
-					bgcolor: '#f7f9fb',
-					p: { xs: 2, sm: 3, md: 4 },
+					p: { xs: 1, sm: 2, md: 3 },
+					justifyContent: 'center',
+					alignItems: 'center',
+					overflow: 'hidden',
 				}}>
 				<Paper
 					elevation={3}
 					sx={{
 						width: '100%',
-						maxWidth: 1200,
+						height: '100%',
+						maxWidth: { xs: '100%', sm: 1100 },
+						maxHeight: '100%',
 						mx: 'auto',
-						p: { xs: 2, sm: 3, md: 4 },
+						p: { xs: 1.5, sm: 2, md: 3 },
 						bgcolor: 'white',
+						display: 'flex',
+						flexDirection: 'column',
+						overflow: 'hidden',
 					}}>
 					{/* Event Info */}
-					<Box sx={{ mb: 3 }}>
-						<Typography variant='h4' sx={{ mb: 1, fontWeight: 'bold' }}>
+					<Box
+						sx={{
+							mb: { xs: 1.5, sm: 2 },
+							display: 'flex',
+							justifyContent: 'space-between',
+							alignItems: 'center',
+							flexShrink: 0,
+							gap: 1,
+						}}>
+						<Typography
+							variant='h4'
+							sx={{
+								fontWeight: 'bold',
+								fontSize: { xs: '1rem', sm: '1.25rem', md: '1.5rem' },
+								overflow: 'hidden',
+								textOverflow: 'ellipsis',
+								whiteSpace: 'nowrap',
+								flex: 1,
+							}}>
 							{eventDetails.title || 'Event Recording'}
 						</Typography>
-						<Typography variant='body2' sx={{ color: 'text.secondary', mb: 2 }}>
-							Recording available on YouTube
-						</Typography>
+						<Button variant='outlined' onClick={() => navigate(-1)} sx={{ textTransform: 'capitalize', flexShrink: 0 }} size='small'>
+							Go Back
+						</Button>
 					</Box>
 
-					{/* Embedded YouTube Player */}
+					{/* Embedded YouTube Player - Responsive container */}
 					<Box
 						sx={{
 							position: 'relative',
 							width: '100%',
-							paddingBottom: '56.25%', // 16:9 aspect ratio
-							height: 0,
-							overflow: 'hidden',
+							flex: 1,
+							minHeight: 0,
+							display: 'flex',
+							alignItems: 'center',
+							justifyContent: 'center',
 							borderRadius: 2,
 							boxShadow: 2,
-							mb: 3,
+							overflow: 'hidden',
+							mb: { xs: 1.5, sm: 2 },
+							bgcolor: '#000',
 						}}>
-						<iframe
-							src={`https://www.youtube.com/embed/${eventDetails.youtubeVideoId}`}
-							title='YouTube Recording'
-							style={{
-								position: 'absolute',
-								top: 0,
-								left: 0,
-								width: '100%',
-								height: '100%',
-								border: 'none',
-							}}
-							allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture'
-							allowFullScreen
-						/>
-					</Box>
-
-					{/* Back Button */}
-					<Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-						<Button variant='outlined' onClick={() => navigate(-1)}>
-							Go Back
-						</Button>
+						<Box
+							sx={{
+								'position': 'relative',
+								// Fit video within available space while maintaining 16:9 aspect ratio
+								'width': '100%',
+								'height': '100%',
+								'aspectRatio': '16 / 9',
+								'maxWidth': '100%',
+								'maxHeight': '100%',
+								// Landscape: use full width, height adjusts automatically
+								'@media (orientation: landscape)': {
+									width: '100%',
+									height: 'auto',
+									maxHeight: '100%',
+								},
+								// Portrait: use full height, width adjusts to maintain aspect ratio
+								'@media (orientation: portrait)': {
+									width: 'auto',
+									height: '100%',
+									maxWidth: '100%',
+									// Ensure minimum width to prevent too narrow video
+									minWidth: 0,
+								},
+							}}>
+							<iframe
+								src={`https://www.youtube.com/embed/${eventDetails.youtubeVideoId}`}
+								title='YouTube Recording'
+								style={{
+									position: 'absolute',
+									top: 0,
+									left: 0,
+									width: '100%',
+									height: '100%',
+									border: 'none',
+								}}
+								allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture'
+								allowFullScreen
+							/>
+						</Box>
 					</Box>
 				</Paper>
 			</Box>
