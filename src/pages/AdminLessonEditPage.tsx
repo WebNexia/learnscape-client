@@ -20,7 +20,7 @@ import theme from '../themes';
 import { AutoAwesome, Delete, Edit, FileCopy, InfoOutlined } from '@mui/icons-material';
 import { useParams } from 'react-router-dom';
 import CustomSubmitButton from '../components/forms/customButtons/CustomSubmitButton';
-import { FormEvent, useContext, useEffect, useState } from 'react';
+import { FormEvent, useContext, useEffect, useRef, useState } from 'react';
 import { Lesson } from '../interfaces/lessons';
 import axios from '@utils/axiosInstance';
 import { useQueryClient } from 'react-query';
@@ -168,7 +168,7 @@ const AdminLessonEditPage = () => {
 		updatedByRole: '',
 	};
 
-	const [isEditMode, setIsEditMode] = useState<boolean>(false);
+	const [isEditMode, setIsEditMode] = useState<boolean>(true);
 	const [singleLesson, setSingleLesson] = useState<Lesson>(defaultLesson);
 	const [singleLessonBeforeSave, setSingleLessonBeforeSave] = useState<Lesson>(defaultLesson);
 
@@ -180,6 +180,9 @@ const AdminLessonEditPage = () => {
 	const [isQuestionUpdated, setIsQuestionUpdated] = useState<QuestionUpdateTrack[]>([]);
 	const [isDocumentUpdated, setIsDocumentUpdated] = useState<DocumentUpdateTrack[]>([]);
 	const [hasUnsavedChanges, setHasUnsavedChanges] = useState<boolean>(false);
+
+	// Track if lesson data has been loaded to prevent false positive unsaved changes on mount
+	const isInitialLoadRef = useRef<boolean>(true);
 
 	const [isQuestionCloneModalOpen, setIsQuestionCloneModalOpen] = useState<boolean[]>([]);
 	const [addNewQuestionModalOpen, setAddNewQuestionModalOpen] = useState<boolean>(false);
@@ -331,6 +334,9 @@ const AdminLessonEditPage = () => {
 	}, [allowNavigation, nextLocation, navigate, isPopStateNavigation]);
 
 	useEffect(() => {
+		// Reset initial load flag when lessonId changes
+		isInitialLoadRef.current = true;
+
 		if (lessonId) {
 			const fetchSingleLessonData = async (lessonId: string): Promise<void> => {
 				try {
@@ -365,8 +371,13 @@ const AdminLessonEditPage = () => {
 					}, []);
 
 					setIsDocumentUpdated(documentUpdateData);
+
+					setTimeout(() => {
+						isInitialLoadRef.current = false;
+					}, 1000);
 				} catch (error) {
 					console.log(error);
+					isInitialLoadRef.current = false;
 				}
 			};
 			fetchSingleLessonData(lessonId);
@@ -1339,8 +1350,11 @@ const AdminLessonEditPage = () => {
 									handleEditorChange={(content) => {
 										setEditorContent(content);
 										setPrevEditorContent(content);
-										setIsLessonUpdated(true);
-										setHasUnsavedChanges(true);
+
+										if (!isInitialLoadRef.current) {
+											setIsLessonUpdated(true);
+											setHasUnsavedChanges(true);
+										}
 										setInstructionError(false);
 									}}
 									initialValue={singleLesson.text}
@@ -2179,6 +2193,7 @@ const AdminLessonEditPage = () => {
 					}}
 					submitBtnText='Leave Page'
 					cancelBtnText='Stay'
+					actionSx={{ margin: '0 0.5rem 0.5rem 0' }}
 				/>
 			</CustomDialog>
 		</DashboardPagesLayout>
