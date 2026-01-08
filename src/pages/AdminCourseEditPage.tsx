@@ -92,7 +92,7 @@ const AdminCourseEditPage = () => {
 
 	const { isSticky } = useStickyPaper(isMobileSize);
 
-	const [isEditMode, setIsEditMode] = useState<boolean>(true);
+	const [isEditMode, setIsEditMode] = useState<boolean>(false);
 	const [singleCourse, setSingleCourse] = useState<SingleCourse>();
 	const [singleCourseBeforeSave, setSingleCourseBeforeSave] = useState<SingleCourse>();
 	const [isFree, setIsFree] = useState<boolean>(false);
