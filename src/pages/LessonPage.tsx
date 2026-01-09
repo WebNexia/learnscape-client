@@ -742,8 +742,9 @@ const LessonPage = () => {
 									component='div'
 									dangerouslySetInnerHTML={{ __html: sanitizeHtml(decode(lesson.text)) }}
 									sx={{
-										'lineHeight': 1.9,
+										'lineHeight': 2,
 										'fontSize': isMobileSize ? '0.7rem' : '0.9rem',
+										'color': 'black',
 										'& img': {
 											maxWidth: '100%',
 											height: 'auto',

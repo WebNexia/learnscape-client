@@ -76,7 +76,7 @@ const Sidebar = () => {
 					marginBottom: '0.5rem',
 				}}>
 				<img
-					src={user?.imageUrl}
+					src={user?.imageUrl || 'https://img.sportsbookreview.com/images/avatars/default-avatar.jpg'}
 					alt='user_profile_pic'
 					style={{
 						height: '3rem',

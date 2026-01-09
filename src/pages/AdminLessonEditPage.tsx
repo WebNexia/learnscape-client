@@ -795,6 +795,14 @@ const AdminLessonEditPage = () => {
 
 			if (isLessonUpdated || isQuestionUpdated?.some((data) => data.isUpdated === true)) {
 				try {
+					// Handle assessmentGroupId: convert to string or undefined (not null)
+					const assessmentGroupIdValue = singleLessonBeforeSave.assessmentGroupId || singleLessonBeforeSave.usedInCourses?.[0];
+					const assessmentGroupIdString = assessmentGroupIdValue
+						? typeof assessmentGroupIdValue === 'string'
+							? assessmentGroupIdValue
+							: String(assessmentGroupIdValue)
+						: undefined;
+
 					const response = await axios.patch(`${base_url}${isInstructor ? '/lessons/instructor' : '/lessons'}/${lessonId}`, {
 						...singleLessonBeforeSave,
 						title: singleLessonBeforeSave.title,
@@ -809,8 +817,8 @@ const AdminLessonEditPage = () => {
 						documentIds: updatedDocumentIds.length > 0 ? updatedDocumentIds : [],
 						questionIds: updatedQuestionIds.length > 0 ? updatedQuestionIds : [],
 						usedInCourses: singleLessonBeforeSave.usedInCourses,
-						// Default assessmentGroupId to first usedInCourses entry if not explicitly set
-						assessmentGroupId: singleLessonBeforeSave.assessmentGroupId || singleLessonBeforeSave.usedInCourses?.[0] || null,
+						// Only include assessmentGroupId if it has a value (as a string)
+						...(assessmentGroupIdString && { assessmentGroupId: assessmentGroupIdString }),
 					});
 
 					const responseUpdatedData = response.data?.data || response.data;
