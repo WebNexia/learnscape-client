@@ -13,6 +13,7 @@ import {
 	Tooltip,
 	Typography,
 } from '@mui/material';
+import { LoadingButton } from '@mui/lab';
 import { QuestionInterface } from '../../interfaces/question';
 import { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import axios from '@utils/axiosInstance';
@@ -165,6 +166,7 @@ const PracticeQuestion = ({
 	const [helperText, setHelperText] = useState<string>(isTrueFalseQuestion || isMultipleChoiceQuestion ? 'Choose wisely' : '');
 	const [isAnswerCorrect, setIsAnswerCorrect] = useState<boolean>(false);
 	const [isOpenEndedAnswerSubmitted, setIsOpenEndedAnswerSubmitted] = useState<boolean>(false);
+	const [isSubmittingOpenEnded, setIsSubmittingOpenEnded] = useState<boolean>(false);
 	const [selectedQuestion, setSelectedQuestion] = useState<number>(displayedQuestionNumber);
 	const [isLessonUpdating, setIsLessonUpdating] = useState<boolean>(false);
 	const [isLessonCourseCompletedModalOpen, setIsLessonCourseCompletedModalOpen] = useState<boolean>(false);
@@ -245,6 +247,7 @@ const PracticeQuestion = ({
 
 		setIsOpenEndedAnswerSubmitted(false);
 		setIsAnswerCorrect(false);
+		setIsSubmittingOpenEnded(false);
 		if (!isTranslate) {
 			setCheckedTranslatePairs(new Set());
 			setTranslateAnswers({});
@@ -387,11 +390,15 @@ const PracticeQuestion = ({
 		event.preventDefault();
 
 		if (isOpenEndedQuestion && value !== '') {
+			setIsSubmittingOpenEnded(true);
+			setError(false); // Explicitly set error to false for open-ended questions
 			await createUserQuestion();
 			setUserAnswer(value);
 			setIsOpenEndedAnswerSubmitted(true);
 			setIsAnswerCorrect(true);
+			setIsSubmittingOpenEnded(false);
 			toggleAiIcon(index);
+			return; // Return early to prevent other error checks
 		}
 		if (value === question.correctAnswer?.toString() && !isOpenEndedQuestion && !isMatching && !isFITBDragDrop && !isFITBTyping && !isTranslate) {
 			setHelperText('You got it!');
@@ -402,12 +409,12 @@ const PracticeQuestion = ({
 			setUserAnswer(value);
 			setIsOpenEndedAnswerSubmitted(true);
 			toggleAiIcon(index);
-		} else if (value !== question.correctAnswer && value !== '') {
+		} else if (value !== question.correctAnswer && value !== '' && !isOpenEndedQuestion) {
 			setHelperText('Sorry, wrong answer!');
 			setError(true);
 			setIsAnswerCorrect(false);
 			setUserAnswer(value);
-		} else {
+		} else if (!isOpenEndedQuestion) {
 			setHelperText('Please select an option.');
 			setError(true);
 			setIsAnswerCorrect(false);
@@ -435,7 +442,7 @@ const PracticeQuestion = ({
 			}}>
 			{!isFlipCard && (
 				<form onSubmit={handleSubmit} style={{ width: '100%' }}>
-					<FormControl sx={{ width: '100%' }} error={error} variant='standard'>
+					<FormControl sx={{ width: '100%' }} error={error && !isOpenEndedQuestion} variant='standard'>
 						<QuestionMedia question={question} />
 						{!isFITBDragDrop && !isFITBTyping && <QuestionText question={question} isMatching={isMatching} questionNumber={questionNumber} />}
 
@@ -615,6 +622,7 @@ const PracticeQuestion = ({
 												sx={{
 													fontSize: isMobileSize ? '0.85rem' : '0.95rem',
 													color: theme.textColor?.secondary?.main,
+													fontFamily: 'Poppins, sans-serif',
 												}}>
 												Original Text:
 											</Typography>
@@ -629,6 +637,7 @@ const PracticeQuestion = ({
 													display: 'flex',
 													alignItems: 'center',
 													color: theme.textColor?.common?.main,
+													fontFamily: 'Poppins, sans-serif',
 												}}>
 												{pair.originalText}
 											</Typography>
@@ -665,6 +674,7 @@ const PracticeQuestion = ({
 															fontSize: isMobileSize ? '0.85rem' : '0.95rem',
 															mb: '-0.5rem',
 															mt: isLessonCompleted ? '0.5rem' : '0rem',
+															fontFamily: 'Poppins, sans-serif',
 														}}>
 														Translation:
 													</Typography>
@@ -680,6 +690,7 @@ const PracticeQuestion = ({
 															sx={{
 																fontSize: isMobileSize ? '0.75rem' : '0.9rem',
 																color: theme.textColor?.common?.main,
+																fontFamily: 'Poppins, sans-serif',
 															}}>
 															{pair.translation}
 														</Typography>
@@ -844,7 +855,8 @@ const PracticeQuestion = ({
 						)}
 
 						{!isMatching && !isFITBDragDrop && !isFITBTyping && !isTranslate && (
-							<Button
+							<LoadingButton
+								loading={isSubmittingOpenEnded}
 								sx={{
 									'mt': isMobileSize ? '2rem' : '3rem',
 									'width': isMobileSize ? 'fit-content' : '10rem',
@@ -859,10 +871,11 @@ const PracticeQuestion = ({
 									},
 									'mb': '2rem',
 								}}
+								disabled={isLessonCompleted || isSubmittingOpenEnded}
 								type='submit'
 								variant='outlined'>
 								Submit Answer
-							</Button>
+							</LoadingButton>
 						)}
 					</FormControl>
 				</form>
@@ -1044,7 +1057,18 @@ const PracticeQuestion = ({
 						<KeyboardArrowRight fontSize={isMobileSize ? 'medium' : 'large'} />
 					</IconButton>
 				) : (
-					<Tooltip title={isCompletingCourse ? 'Complete Course' : isCompletingLesson ? 'Complete Lesson' : 'Next Lesson'} placement='top' arrow>
+					<Tooltip
+						title={
+							isCompletingCourse
+								? 'Complete Course'
+								: isLessonCompleted && isLastQuestion
+									? 'Next Lesson'
+									: isCompletingLesson
+										? 'Complete Lesson'
+										: 'Next Lesson'
+						}
+						placement='top'
+						arrow>
 						<IconButton
 							onClick={() => {
 								if (isLessonCompleted) {
@@ -1081,10 +1105,10 @@ const PracticeQuestion = ({
 							}}>
 							{isCompletingCourse ? (
 								<DoneAll fontSize={isMobileSize ? 'small' : 'medium'} />
-							) : isCompletingLesson ? (
-								<Done fontSize={isMobileSize ? 'small' : 'medium'} />
 							) : isLessonCompleted && isLastQuestion ? (
 								<KeyboardDoubleArrowRight fontSize={isMobileSize ? 'small' : 'medium'} />
+							) : isCompletingLesson ? (
+								<Done fontSize={isMobileSize ? 'small' : 'medium'} />
 							) : (
 								<KeyboardArrowRight fontSize={isMobileSize ? 'small' : 'medium'} />
 							)}
@@ -1098,7 +1122,7 @@ const PracticeQuestion = ({
 					maxWidth='xs'
 					title={`${nextLessonId ? 'Lesson Completed' : 'Course Completed'}`}>
 					<DialogContent sx={{ mb: '-0.5rem' }}>
-						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontFamily: 'Poppins, sans-serif' }}>
 							{`You have completed this ${nextLessonId ? 'lesson' : 'course'}. Proceed to the next ${nextLessonId ? 'lesson' : 'course'}.`}
 						</Typography>
 					</DialogContent>
@@ -1124,7 +1148,13 @@ const PracticeQuestion = ({
 					width: '80%',
 					zIndex: 9,
 				}}>
-				{displayedQuestionNumber === questionNumber && !isFlipCard && !isMatching && !isFITBDragDrop && !isFITBTyping && !isTranslate ? (
+				{displayedQuestionNumber === questionNumber &&
+				!isFlipCard &&
+				!isMatching &&
+				!isFITBDragDrop &&
+				!isFITBTyping &&
+				!isTranslate &&
+				!isTrueFalseQuestion ? (
 					!hasRequestedAiFeedback && (isAiActive || isLessonCompleted) ? (
 						<Tooltip title='Receive feedback from AI' placement='left' arrow>
 							<IconButton
@@ -1205,7 +1235,7 @@ const PracticeQuestion = ({
 							<Box sx={{ minHeight: '100%' }}>
 								<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
 									<Box>
-										<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '1rem' }}>
+										<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : '1rem', fontFamily: 'Poppins, sans-serif' }}>
 											AI Assist
 										</Typography>
 									</Box>
@@ -1220,7 +1250,9 @@ const PracticeQuestion = ({
 										<TypingAnimation />
 									</Box>
 								) : (
-									<Typography variant='body2' sx={{ mt: '0.5rem', lineHeight: 1.9, fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+									<Typography
+										variant='body2'
+										sx={{ mt: '0.5rem', lineHeight: 1.9, fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontFamily: 'Poppins, sans-serif' }}>
 										{aiResponse}
 									</Typography>
 								)}

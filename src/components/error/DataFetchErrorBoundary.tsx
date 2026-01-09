@@ -41,7 +41,7 @@ class DataFetchErrorBoundary extends Component<Props, State> {
 		});
 
 		// Log error to console in development
-		if (process.env.NODE_ENV === 'development') {
+		if (import.meta.env.DEV) {
 			console.error(`DataFetchErrorBoundary [${this.props.context}]:`, error, errorInfo);
 		}
 	}
@@ -151,7 +151,7 @@ class DataFetchErrorBoundary extends Component<Props, State> {
 						</Button>
 
 						{/* Development Error Details */}
-						{process.env.NODE_ENV === 'development' && (
+						{import.meta.env.DEV && (
 							<Paper
 								variant='outlined'
 								sx={{

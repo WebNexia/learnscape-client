@@ -143,6 +143,9 @@ export const useUserCourseLessonData = () => {
 			}
 
 			if (nextLessonId) {
+				// Store nextLessonId in sessionStorage to expand its chapter when navigating back
+				sessionStorage.setItem(`expand-chapter-for-lesson-${nextLessonId}`, 'true');
+				
 				const existingNextLesson = parsedUserLessonData?.find((data) => data.lessonId === nextLessonId && data.courseId === courseId);
 
 				if (!existingNextLesson) {

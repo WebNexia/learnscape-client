@@ -35,8 +35,8 @@ const VideoRecorder = ({ uploadVideo, isVideoUploading }: VideoRecorderProps) =>
 	const [videoChunks, setVideoChunks] = useState<Blob[]>([]);
 	const [remainingTime, setRemainingTime] = useState<number>(MAX_RECORDING_TIME / 1000); // in seconds
 	const [isVideoTooLarge, setIsVideoTooLarge] = useState<boolean>(false);
-	const recordingTimeout = useRef<NodeJS.Timeout | null>(null);
-	const countdownInterval = useRef<NodeJS.Timeout | null>(null);
+	const recordingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const countdownInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
 	const [isUploadModalOpen, setIsUploadModalOpen] = useState<boolean>(false);
 

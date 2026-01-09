@@ -44,25 +44,38 @@ const CustomDrawer = ({ isDrawerOpen, setIsDrawerOpen, hasUnreadMessages }: Cust
 	const navigateWithPage = (pageName: string, path: string) => {
 		setSelectedPage(pageName);
 		navigate(path);
+		setIsDrawerOpen(false); // Close drawer after navigation
 	};
 	return (
-		<Drawer open={isDrawerOpen} onClose={() => setIsDrawerOpen(false)}>
+		<Drawer
+			open={isDrawerOpen}
+			onClose={() => setIsDrawerOpen(false)}
+			variant='temporary'
+			anchor='left'
+			ModalProps={{
+				keepMounted: true, // Better mobile performance
+			}}
+			PaperProps={{
+				sx: {
+					width: '8.5rem',
+					backgroundColor: hasAdminAccess
+						? theme.bgColor?.adminSidebar
+						: user?.role === Roles.INSTRUCTOR
+							? theme.bgColor?.instructorSidebar
+							: theme.palette.primary.main,
+					touchAction: 'pan-y', // Enable touch scrolling on iOS
+					WebkitTapHighlightColor: 'transparent', // Remove iOS tap highlight
+				},
+			}}>
 			<Box
 				sx={{
 					display: 'flex',
 					flexDirection: 'column',
 					justifyContent: 'flex-start',
 					alignItems: 'center',
-					width: '8.5rem',
+					width: '100%',
 					minHeight: '100vh',
-					backgroundColor: hasAdminAccess
-						? theme.bgColor?.adminSidebar
-						: user?.role === Roles.INSTRUCTOR
-							? theme.bgColor?.instructorSidebar
-							: theme.palette.primary.main,
-					position: 'fixed',
-					left: 0,
-					zIndex: 10,
+					position: 'relative',
 				}}>
 				<Box
 					sx={{

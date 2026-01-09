@@ -219,7 +219,16 @@ const DashboardHeader = ({ pageName }: DashboardHeaderProps) => {
 				}}>
 				<Box sx={{ display: 'flex', alignItems: 'center' }}>
 					{(isSmallScreen || isRotatedMedium) && (
-						<IconButton onClick={() => setIsDrawerOpen(true)}>
+						<IconButton
+							onClick={() => setIsDrawerOpen(true)}
+							sx={{
+								touchAction: 'manipulation', // Better touch handling on iOS
+								WebkitTapHighlightColor: 'transparent', // Remove iOS tap highlight
+								cursor: 'pointer',
+								minWidth: '44px', // Minimum touch target size for iOS (44x44px)
+								minHeight: '44px',
+								padding: '0.5rem',
+							}}>
 							<Menu sx={{ color: '#fff', padding: 0 }} fontSize='small' />
 						</IconButton>
 					)}

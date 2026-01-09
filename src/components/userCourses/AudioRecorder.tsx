@@ -55,8 +55,8 @@ const AudioRecorder = ({
 	const [isAudioTooLarge, setIsAudioTooLarge] = useState<boolean>(false);
 
 	const [remainingTime, setRemainingTime] = useState<number>(maxRecordTime / 1000); // in seconds
-	const recordingTimeout = useRef<NodeJS.Timeout | null>(null);
-	const countdownInterval = useRef<NodeJS.Timeout | null>(null);
+	const recordingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const countdownInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
 	const [isUploadModalOpen, setIsUploadModalOpen] = useState<boolean>(false);
 

@@ -42,7 +42,7 @@ interface UploadLimitProviderProps {
 
 // Debounce utility
 const debounce = <T extends (...args: any[]) => any>(func: T, wait: number): T => {
-	let timeout: NodeJS.Timeout;
+	let timeout: ReturnType<typeof setTimeout>;
 	return ((...args: any[]) => {
 		clearTimeout(timeout);
 		timeout = setTimeout(() => func(...args), wait);
@@ -219,7 +219,7 @@ export const UploadLimitProvider: React.FC<UploadLimitProviderProps> = ({ childr
 	useEffect(() => {
 		if (!userId) return;
 
-		let interval: NodeJS.Timeout;
+		let interval: ReturnType<typeof setInterval>;
 
 		const startInterval = () => {
 			interval = setInterval(
