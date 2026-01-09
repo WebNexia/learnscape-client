@@ -45,6 +45,7 @@ import useQuestionTypes from '../hooks/useQuestionTypes';
 import { QuestionType } from '../interfaces/enums';
 import { calculateQuizTotalScore } from '../utils/calculateQuizTotalScore';
 import { calculateScorePercentage } from '../utils/calculateScorePercentage';
+import CustomCancelButton from '../components/forms/customButtons/CustomCancelButton';
 
 export interface QuizQuestionAnswer {
 	questionId: string;
@@ -654,18 +655,26 @@ const LessonPage = () => {
 										<GetApp sx={{ fontSize: isMobileSize ? '1.15rem' : '1.25rem' }} />
 									</IconButton>
 								</Tooltip>
-								{!isUserLessonNotesUploading ? (
-									<CustomSubmitButton
+								<Box>
+									<CustomCancelButton
 										size='small'
-										onClick={updateUserLessonNotes}
-										sx={{ height: '1.75rem', fontSize: isMobileSize ? '0.75rem' : undefined }}>
-										Save
-									</CustomSubmitButton>
-								) : (
-									<LoadingButton loading variant='outlined' size='small' sx={{ textTransform: 'capitalize' }}>
-										Upload
-									</LoadingButton>
-								)}
+										onClick={() => setIsNotesDrawerOpen(false)}
+										sx={{ height: '1.75rem', fontSize: isMobileSize ? '0.75rem' : undefined, marginRight: '0.5rem' }}>
+										Close
+									</CustomCancelButton>
+									{!isUserLessonNotesUploading ? (
+										<CustomSubmitButton
+											size='small'
+											onClick={updateUserLessonNotes}
+											sx={{ height: '1.75rem', fontSize: isMobileSize ? '0.75rem' : undefined }}>
+											Save
+										</CustomSubmitButton>
+									) : (
+										<LoadingButton loading variant='outlined' size='small' sx={{ textTransform: 'capitalize' }}>
+											Upload
+										</LoadingButton>
+									)}
+								</Box>
 							</Box>
 						</Box>
 					</Box>

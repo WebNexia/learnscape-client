@@ -146,12 +146,13 @@ const TinyMceEditor = ({
 					plugins:
 						'lists bullist numlist link image media charmap print preview media searchreplace visualblocks code fullscreen insertdatetime table paste code help wordcount fontfamily',
 					toolbar:
-						'undo redo | fontfamily fontsize | formatselect | bold italic underline strikethrough subscript superscript | forecolor backcolor | image | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | code',
-					font_family_formats:
-						'System Font=system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif; Arial=arial,helvetica,sans-serif; Comic Sans MS=comic sans ms,sans-serif; Courier New=courier new,courier,monospace; Georgia=georgia,palatino,serif; Lucida=Lucida Sans Unicode, Lucida Grande,sans-serif; Roboto=Roboto,sans-serif; Times New Roman=times new roman,times,serif; Verdana=verdana,geneva,sans-serif;',
+						'undo redo | formatselect | bold italic underline strikethrough subscript superscript | forecolor backcolor | image | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | code',
+					font_family_formats: 'System Font=system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;',
+					font_size_formats: '12pt',
 					content_style: `
 						body {
-							font-size: ${isSmallScreen || isRotatedMedium ? '14px' : '16px'};
+							font-size: 12pt;
+							font-family: system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
 						}
 					`,
 					image_title: true,

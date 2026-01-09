@@ -2,7 +2,7 @@ import { Box, Button, Stack } from '@mui/material';
 import { ExpandMore, ExpandLess } from '@mui/icons-material';
 import { SingleCourse } from '../../interfaces/course';
 import Chapter, { ChapterRef } from './Chapter';
-import { useContext, useState, useRef, useCallback } from 'react';
+import { useContext, useState, useRef, useCallback, useEffect } from 'react';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import theme from '../../themes';
 
@@ -42,6 +42,40 @@ const Chapters = ({ course, isEnrolledStatus }: ChaptersProps) => {
 	const registerChapterRef = useCallback((index: number, ref: ChapterRef) => {
 		chapterRefs.current[index] = ref;
 	}, []);
+
+	// Auto-expand chapter containing the next lesson after lesson completion
+	useEffect(() => {
+		if (!course?.chapters) return;
+
+		// Find which lesson ID is stored in sessionStorage
+		let nextLessonIdToExpand: string | null = null;
+		for (let i = 0; i < sessionStorage.length; i++) {
+			const key = sessionStorage.key(i);
+			if (key && key.startsWith('expand-chapter-for-lesson-')) {
+				const storedValue = sessionStorage.getItem(key);
+				if (storedValue === 'true') {
+					nextLessonIdToExpand = key.replace('expand-chapter-for-lesson-', '');
+					break;
+				}
+			}
+		}
+
+		if (nextLessonIdToExpand) {
+			// Find which chapter contains this lesson
+			course.chapters.forEach((chapter, index) => {
+				if (!chapter || !chapter.lessons) return;
+				const hasNextLesson = chapter.lessons.some((lesson) => lesson && lesson._id === nextLessonIdToExpand);
+				if (hasNextLesson && chapterRefs.current[index]) {
+					// Small delay to ensure refs are registered
+					setTimeout(() => {
+						chapterRefs.current[index]?.setExpanded(true);
+						// Clear the sessionStorage after expanding
+						sessionStorage.removeItem(`expand-chapter-for-lesson-${nextLessonIdToExpand}`);
+					}, 100);
+				}
+			});
+		}
+	}, [course]);
 
 	return (
 		<Box sx={{ width: isMobileSize ? '90%' : '85%', marginBottom: isEnrolledStatus ? '0rem' : '2rem' }}>

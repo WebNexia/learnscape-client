@@ -827,11 +827,11 @@ const QuizQuestion = ({
 								padding: '1rem 2rem 2rem 2rem',
 								borderRadius: '0.35rem',
 							}}>
-							<Typography variant='h6' sx={{ mb: '0.5rem', fontSize: isMobileSize ? '0.9rem' : '1rem' }}>
+							<Typography variant='h6' sx={{ mb: '0.5rem', fontSize: isMobileSize ? '0.9rem' : '1rem', fontFamily: 'Poppins, sans-serif' }}>
 								Instructor Feedback
 							</Typography>
 							<Box>
-								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontFamily: 'Poppins, sans-serif' }}>
 									{teacherQuestionFeedback}
 								</Typography>
 							</Box>
@@ -972,7 +972,7 @@ const QuizQuestion = ({
 				</Tooltip>
 				<CustomDialog openModal={isSubmitQuizModalOpen} closeModal={() => setIsSubmitQuizModalOpen(false)} maxWidth='xs' title='Quiz Submission'>
 					<DialogContent>
-						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.8 }}>
+						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.8, fontFamily: 'Poppins, sans-serif' }}>
 							Are you sure you want to submit the quiz? You will not have another chance.
 						</Typography>
 					</DialogContent>
@@ -999,7 +999,7 @@ const QuizQuestion = ({
 					maxWidth='sm'>
 					<Box sx={{ display: 'flex', flexDirection: 'column', width: '90%', margin: '2rem auto 0 auto' }}>
 						<Box>
-							<Typography variant='body1' sx={{ mb: '0.75rem', lineHeight: '1.9', fontSize: isMobileSize ? '0.85rem' : '0.95rem' }}>
+							<Typography variant='body1' sx={{ mb: '0.75rem', lineHeight: '1.9', fontSize: isMobileSize ? '0.85rem' : '0.95rem', fontFamily: 'Poppins, sans-serif' }}>
 								You will receive feedback on the quiz from your instructor soon. You can review the answers for the following question types by
 								revisiting the quiz:
 							</Typography>
@@ -1007,7 +1007,7 @@ const QuizQuestion = ({
 
 						<Box sx={{ ml: '3rem' }}>
 							{[QuestionType.MULTIPLE_CHOICE, QuestionType.TRUE_FALSE, QuestionType.MATCHING, 'Fill in the Blanks']?.map((type, index) => (
-								<Typography key={index} variant='body2' sx={{ lineHeight: '1.9', fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+								<Typography key={index} variant='body2' sx={{ lineHeight: '1.9', fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontFamily: 'Poppins, sans-serif' }}>
 									- {type}
 								</Typography>
 							))}
