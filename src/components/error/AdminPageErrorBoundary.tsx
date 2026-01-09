@@ -40,7 +40,7 @@ class AdminPageErrorBoundary extends Component<Props, State> {
 		});
 
 		// Log error to console in development
-		if (process.env.NODE_ENV === 'development') {
+		if (import.meta.env.DEV) {
 			console.error(`AdminPageErrorBoundary [${this.props.pageName}]:`, error, errorInfo);
 		}
 	}
@@ -171,7 +171,7 @@ class AdminPageErrorBoundary extends Component<Props, State> {
 						</Box>
 
 						{/* Development Error Details */}
-						{process.env.NODE_ENV === 'development' && (
+						{import.meta.env.DEV && (
 							<Paper
 								variant='outlined'
 								sx={{
