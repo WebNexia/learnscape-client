@@ -16,19 +16,19 @@ export const useSoundEffect = (enabled: boolean = true, isMuted: boolean = false
 		if (!successAudioRef.current) {
 			successAudioRef.current = new Audio('/assets/sounds/success.wav');
 			successAudioRef.current.preload = 'auto';
-			successAudioRef.current.volume = 0.5; // Set volume to 50%
+			successAudioRef.current.volume = 0.25;
 		}
 
 		if (!errorAudioRef.current) {
 			errorAudioRef.current = new Audio('/assets/sounds/error.wav');
 			errorAudioRef.current.preload = 'auto';
-			errorAudioRef.current.volume = 0.5; // Set volume to 50%
+			errorAudioRef.current.volume = 0.25;
 		}
 
 		if (!flipAudioRef.current) {
 			flipAudioRef.current = new Audio('/assets/sounds/flip.wav');
 			flipAudioRef.current.preload = 'auto';
-			flipAudioRef.current.volume = 0.4; // Set volume to 40% (slightly quieter for frequent flips)
+			flipAudioRef.current.volume = 0.25;
 		}
 	}
 

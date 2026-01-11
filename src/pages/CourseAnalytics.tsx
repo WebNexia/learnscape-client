@@ -477,12 +477,13 @@ const CourseAnalytics = () => {
 								elevation={3}
 								sx={{
 									borderRadius: 3,
-									backgroundColor: theme.bgColor?.secondary,
+									backgroundColor: 'transparent',
 									overflow: 'hidden',
 								}}>
 								{leaderboardData.leaderboard.slice(0, 3).map((item, index) => {
 									const isMe = item.isCurrentUser;
 									const isTop3 = item.rank <= 3;
+									const isLastItem = index === leaderboardData.leaderboard.slice(0, 3).length - 1;
 
 									return (
 										<Box
@@ -493,9 +494,9 @@ const CourseAnalytics = () => {
 												justifyContent: 'space-between',
 												px: isMe ? 2.5 : 2,
 												py: isMe ? 1.75 : 1.25,
-												borderBottom: index === leaderboardData.leaderboard.slice(0, 3).length - 1 ? 'none' : '1px solid rgba(148, 163, 184, 0.25)',
-												backgroundColor: isMe ? 'rgba(34, 197, 94, 0.10)' : 'transparent',
-												boxShadow: isMe ? '0 10px 24px rgba(22, 163, 74, 0.25)' : 'none',
+												borderBottom: isLastItem ? 'none' : '1px solid rgba(148, 163, 184, 0.25)',
+												backgroundColor: isMe && item.isCurrentUser ? 'rgba(34, 197, 94, 0.10)' : 'rgba(255, 255, 255, 1)',
+												boxShadow: isMe && item.isCurrentUser ? '0 10px 24px rgba(22, 163, 74, 0.25)' : 'none',
 											}}>
 											<Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
 												<Typography

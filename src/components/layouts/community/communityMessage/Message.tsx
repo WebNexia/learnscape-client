@@ -236,7 +236,7 @@ const Message = ({
 				}}>
 				<Box>
 					<img
-						src={message?.userId?.imageUrl}
+						src={message?.userId?.imageUrl || 'https://img.sportsbookreview.com/images/avatars/default-avatar.jpg'}
 						alt='profile'
 						style={{ height: isMobileSize ? '1.75rem' : '2.25rem', width: isMobileSize ? '1.75rem' : '2.25rem', borderRadius: '50%' }}
 					/>

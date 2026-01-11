@@ -36,6 +36,7 @@ const LandingPageCourse = React.lazy(() => import('./pages/LandingPageCourse'));
 const LandingPageCourses = React.lazy(() => import('./pages/LandingPageCourses'));
 const AboutUs = React.lazy(() => import('./pages/AboutUs'));
 const ContactUs = React.lazy(() => import('./pages/ContactUs'));
+const CookiePolicy = React.lazy(() => import('./pages/CookiePolicy'));
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 const Courses = React.lazy(() => import('./pages/Courses'));
 const Submissions = React.lazy(() => import('./pages/Submissions'));
@@ -134,6 +135,7 @@ export const router = createBrowserRouter([
 			{ path: 'event-recording/:eventId/:recordingId?', element: <EventRecordingPage /> }, // recordingId optional for YouTube recordings
 			{ path: 'about-us', element: <AboutUs /> },
 			{ path: 'contact-us', element: <ContactUs /> },
+			{ path: 'cookie-policy', element: <CookiePolicy /> },
 			{
 				path: 'admin/dashboard',
 				element: (

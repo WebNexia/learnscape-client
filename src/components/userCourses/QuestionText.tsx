@@ -39,15 +39,15 @@ const QuestionText = ({ question, questionNumber, isMatching }: QuestionTextProp
 							dangerouslySetInnerHTML={{ __html: sanitizeHtml(decode(question.question)) }}
 							sx={{
 								'margin': '-0.25rem 0.5rem 0 0',
-								'fontSize': isMobileSizeSmall ? '0.75rem' : '0.9rem',
+								'fontSize': isMobileSizeSmall ? '0.75rem' : '0.95rem',
 								'& *': {
-									fontSize: `${isMobileSizeSmall ? '0.75rem' : '0.9rem'} !important`,
+									fontSize: `${isMobileSizeSmall ? '0.75rem' : '0.95rem'} !important`,
 									lineHeight: '1.9 !important',
 									fontFamily: 'inherit !important',
 									color: 'inherit !important',
 								},
 								'& p, & div, & span': {
-									fontSize: `${isMobileSizeSmall ? '0.75rem' : '0.9rem'} !important`,
+									fontSize: `${isMobileSizeSmall ? '0.75rem' : '0.95rem'} !important`,
 									lineHeight: '1.9 !important',
 									fontFamily: 'inherit !important',
 									color: 'inherit !important',

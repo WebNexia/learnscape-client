@@ -65,7 +65,7 @@ const Sidebar = () => {
 					marginBottom: '0.5rem',
 				}}>
 				<Typography variant='h1' sx={{ color: theme.textColor?.common.main, fontSize: '1.5rem' }}>
-					Kaizenglish
+					AdenKent
 				</Typography>
 			</Box>
 			<Box

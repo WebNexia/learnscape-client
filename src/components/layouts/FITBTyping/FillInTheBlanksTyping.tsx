@@ -86,6 +86,7 @@ const StyledInput = styled(
 		}};
 		font-size: ${({ isMobileSizeSmall }) => (isMobileSizeSmall ? '0.75rem' : '0.85rem')};
 		height: ${({ isMobileSizeSmall }) => (isMobileSizeSmall ? '0.75rem' : undefined)};
+		width: ${({ isMobileSizeSmall }) => (isMobileSizeSmall ? '5rem' : '5rem')};
 	}
 	margin: 0.1rem 0.25rem;
 	min-width: 3rem;

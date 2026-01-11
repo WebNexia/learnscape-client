@@ -999,7 +999,9 @@ const QuizQuestion = ({
 					maxWidth='sm'>
 					<Box sx={{ display: 'flex', flexDirection: 'column', width: '90%', margin: '2rem auto 0 auto' }}>
 						<Box>
-							<Typography variant='body1' sx={{ mb: '0.75rem', lineHeight: '1.9', fontSize: isMobileSize ? '0.85rem' : '0.95rem', fontFamily: 'Poppins, sans-serif' }}>
+							<Typography
+								variant='body1'
+								sx={{ mb: '0.75rem', lineHeight: '1.9', fontSize: isMobileSize ? '0.85rem' : '0.95rem', fontFamily: 'Poppins, sans-serif' }}>
 								You will receive feedback on the quiz from your instructor soon. You can review the answers for the following question types by
 								revisiting the quiz:
 							</Typography>
@@ -1007,7 +1009,10 @@ const QuizQuestion = ({
 
 						<Box sx={{ ml: '3rem' }}>
 							{[QuestionType.MULTIPLE_CHOICE, QuestionType.TRUE_FALSE, QuestionType.MATCHING, 'Fill in the Blanks']?.map((type, index) => (
-								<Typography key={index} variant='body2' sx={{ lineHeight: '1.9', fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontFamily: 'Poppins, sans-serif' }}>
+								<Typography
+									key={index}
+									variant='body2'
+									sx={{ lineHeight: '1.9', fontSize: isMobileSize ? '0.75rem' : '0.85rem', fontFamily: 'Poppins, sans-serif' }}>
 									- {type}
 								</Typography>
 							))}
