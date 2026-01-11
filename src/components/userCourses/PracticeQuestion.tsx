@@ -27,7 +27,7 @@ import { useUserCourseLessonData } from '../../hooks/useUserCourseLessonData';
 import { AutoAwesome, Close, Done, DoneAll, KeyboardArrowLeft, KeyboardArrowRight, KeyboardDoubleArrowRight } from '@mui/icons-material';
 import AiIcon from '@mui/icons-material/AutoAwesome';
 import { UserQuestionData } from '../../hooks/useFetchUserQuestion';
-import { QuestionType } from '../../interfaces/enums';
+import { QuestionType, LessonType } from '../../interfaces/enums';
 import CustomDialog from '../layouts/dialog/CustomDialog';
 import CustomDialogActions from '../layouts/dialog/CustomDialogActions';
 import QuestionMedia from './QuestionMedia';
@@ -380,10 +380,40 @@ const PracticeQuestion = ({
 			setIsOpenEndedAnswerSubmitted(false);
 		}
 
-		setValue((event.target as HTMLInputElement).value);
+		const selectedValue = (event.target as HTMLInputElement).value;
+		setValue(selectedValue);
 		setHelperText(' ');
 		setError(false);
-		setUserAnswer((event.target as HTMLInputElement).value);
+		setUserAnswer(selectedValue);
+
+		// Auto-submit for Multiple Choice practice questions when answer is selected
+		if (!isLessonCompleted && isMultipleChoiceQuestion && lessonType === LessonType.PRACTICE_LESSON) {
+			// Use setTimeout to ensure state updates are processed first
+			setTimeout(() => {
+				handleAutoSubmit(selectedValue);
+			}, 0);
+		}
+	};
+
+	// Auto-submit handler for True-False and Multiple Choice questions
+	const handleAutoSubmit = async (answerValue: string) => {
+		if (!answerValue || isLessonCompleted) return;
+
+		if (answerValue === question.correctAnswer?.toString()) {
+			setHelperText('You got it!');
+			setError(false);
+			setIsAnswerCorrect(true);
+			setSuccess(true);
+			await createUserQuestion();
+			setUserAnswer(answerValue);
+			setIsOpenEndedAnswerSubmitted(true);
+			toggleAiIcon(index);
+		} else {
+			setHelperText('Sorry, wrong answer!');
+			setError(true);
+			setIsAnswerCorrect(false);
+			setUserAnswer(answerValue);
+		}
 	};
 
 	const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -485,6 +515,7 @@ const PracticeQuestion = ({
 									setUserAnswer={setUserAnswer}
 									lessonType={lessonType}
 									setQuestionPrompt={setQuestionPrompt}
+									onAutoSubmit={handleAutoSubmit}
 								/>
 							</Box>
 						)}
@@ -780,6 +811,7 @@ const PracticeQuestion = ({
 															target: { value: option },
 														} as React.ChangeEvent<HTMLInputElement>;
 														handleRadioChange(syntheticEvent);
+														// Auto-submit is handled in handleRadioChange for practice questions
 													} else {
 														setShowQuestionSelector(true);
 														setIsLessonUpdating(true);
@@ -854,7 +886,7 @@ const PracticeQuestion = ({
 							</FormHelperText>
 						)}
 
-						{!isMatching && !isFITBDragDrop && !isFITBTyping && !isTranslate && (
+						{!isMatching && !isFITBDragDrop && !isFITBTyping && !isTranslate && !isMultipleChoiceQuestion && !isTrueFalseQuestion && (
 							<LoadingButton
 								loading={isSubmittingOpenEnded}
 								sx={{
@@ -1154,7 +1186,8 @@ const PracticeQuestion = ({
 				!isFITBDragDrop &&
 				!isFITBTyping &&
 				!isTranslate &&
-				!isTrueFalseQuestion ? (
+				!isTrueFalseQuestion &&
+				!isMultipleChoiceQuestion ? (
 					!hasRequestedAiFeedback && (isAiActive || isLessonCompleted) ? (
 						<Tooltip title='Receive feedback from AI' placement='left' arrow>
 							<IconButton

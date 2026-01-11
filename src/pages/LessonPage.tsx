@@ -131,6 +131,7 @@ const LessonPage = () => {
 	const [isQuestionsMapOpen, setIsQuestionsMapOpen] = useState<boolean>(false);
 	const [isSoundMuted, setIsSoundMuted] = useState<boolean>(false);
 	const [currentQuestionNumber, setCurrentQuestionNumber] = useState<number>(0);
+	const [isNavigatingToNextLesson, setIsNavigatingToNextLesson] = useState<boolean>(false);
 
 	const { fetchQuestionTypeName } = useQuestionTypes();
 
@@ -319,6 +320,10 @@ const LessonPage = () => {
 	};
 
 	const handleLessonNavigation = () => {
+		// Store current lesson ID in sessionStorage to expand the chapter containing this lesson
+		if (lessonId) {
+			sessionStorage.setItem(`expand-chapter-for-lesson-${lessonId}`, 'true');
+		}
 		navigate(`/course/${courseId}/userCourseId/${userCourseId}?isEnrolled=true`);
 		window.scrollTo({ top: 0, behavior: 'smooth' });
 		if (isNotesUpdated) {
@@ -887,7 +892,10 @@ const LessonPage = () => {
 					</CustomSubmitButton>
 					<CustomDialog
 						openModal={isLessonCourseCompletedModalOpen}
-						closeModal={() => setIsLessonCourseCompletedModalOpen(false)}
+						closeModal={() => {
+							setIsLessonCourseCompletedModalOpen(false);
+							setIsNavigatingToNextLesson(false);
+						}}
 						maxWidth='xs'
 						title={`${nextLessonId || hasMoreLessonsInCourse ? 'Lesson Completed' : 'Course Completed'}`}>
 						<DialogContent sx={{ mb: '-0.5rem' }}>
@@ -896,13 +904,23 @@ const LessonPage = () => {
 							</Typography>
 						</DialogContent>
 						<CustomDialogActions
-							onCancel={() => setIsLessonCourseCompletedModalOpen(false)}
+							onCancel={() => {
+								setIsLessonCourseCompletedModalOpen(false);
+								setIsNavigatingToNextLesson(false);
+							}}
 							onSubmit={async () => {
-								await handleNextLesson();
-								navigate(`/course/${courseId}/userCourseId/${userCourseId}?isEnrolled=true`);
-								window.scrollTo({ top: 0, behavior: 'smooth' });
+								setIsNavigatingToNextLesson(true);
+								try {
+									await handleNextLesson();
+									navigate(`/course/${courseId}/userCourseId/${userCourseId}?isEnrolled=true`);
+									window.scrollTo({ top: 0, behavior: 'smooth' });
+								} catch (error) {
+									console.error('Error navigating to next lesson:', error);
+									setIsNavigatingToNextLesson(false);
+								}
 							}}
 							submitBtnText='OK'
+							isSubmitting={isNavigatingToNextLesson}
 							actionSx={{ margin: '0rem 0.5rem 0.5rem 0' }}
 						/>
 					</CustomDialog>

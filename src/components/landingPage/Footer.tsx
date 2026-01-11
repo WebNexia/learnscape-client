@@ -1,12 +1,15 @@
 import { Box, Container, Typography } from '@mui/material';
+import { Link } from 'react-router-dom';
 import { useContext } from 'react';
 import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
+import { useCookieConsent } from '../../contexts/CookieConsentContext';
 import theme from '../../themes';
 import { Instagram, WhatsApp } from '@mui/icons-material';
 import { responsiveStyles } from '../../styles/responsiveStyles';
 
 const Footer = () => {
 	const { isSmallScreen } = useContext(MediaQueryContext);
+	const { openCookieConsent } = useCookieConsent();
 
 	const fontFamilyLandingPage = "'Varela Round', 'Segoe UI', 'Arial', sans-serif !important";
 
@@ -46,7 +49,7 @@ const Footer = () => {
 								fontSize: responsiveStyles.typography.body2,
 								fontFamily: fontFamilyLandingPage,
 							}}>
-							Kaizenglish
+							AdenKent
 						</Typography>
 						<Typography
 							variant='body2'
@@ -103,7 +106,7 @@ const Footer = () => {
 								fontSize: { xs: '0.65rem', sm: '0.85rem', md: '0.9rem' },
 								fontFamily: fontFamilyLandingPage,
 							}}>
-							info@kaizenglish.com
+							info@adenkent.com
 						</Typography>
 						<Box
 							component='a'
@@ -146,6 +149,42 @@ const Footer = () => {
 								fontFamily: fontFamilyLandingPage,
 							}}>
 							Kurumsal
+						</Typography>
+						<Typography
+							component={Link}
+							to='/cookie-policy'
+							variant='body2'
+							onClick={() => {
+								window.scrollTo({ top: 0, behavior: 'smooth' });
+							}}
+							sx={{
+								'color': theme.textColor?.common.main,
+								'fontSize': { xs: '0.65rem', sm: '0.85rem', md: '0.9rem' },
+								'fontFamily': fontFamilyLandingPage,
+								'display': 'block',
+								'mb': '0.25rem',
+								'textDecoration': 'none',
+								'cursor': 'pointer',
+								'&:hover': {
+									textDecoration: 'underline',
+								},
+							}}>
+							Çerez Politikası
+						</Typography>
+						<Typography
+							variant='body2'
+							onClick={openCookieConsent}
+							sx={{
+								'color': theme.textColor?.common.main,
+								'fontSize': { xs: '0.65rem', sm: '0.85rem', md: '0.9rem' },
+								'fontFamily': fontFamilyLandingPage,
+								'cursor': 'pointer',
+								'mb': '0.25rem',
+								'&:hover': {
+									textDecoration: 'underline',
+								},
+							}}>
+							Çerez Tercihleri
 						</Typography>
 						<Typography
 							variant='body2'

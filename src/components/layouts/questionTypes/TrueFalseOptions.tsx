@@ -29,6 +29,7 @@ interface TrueFalseOptionsProps {
 	lessonType?: string | undefined;
 	userQuizAnswerAfterSubmission?: string;
 	setQuestionPrompt?: React.Dispatch<React.SetStateAction<QuestionPrompt>>;
+	onAutoSubmit?: (value: string) => void; // Callback for auto-submit when answer is selected
 }
 
 const TrueFalseOptions = ({
@@ -50,6 +51,7 @@ const TrueFalseOptions = ({
 	lessonType,
 	userQuizAnswerAfterSubmission,
 	setQuestionPrompt,
+	onAutoSubmit,
 }: TrueFalseOptionsProps) => {
 	const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
 		const value = (event.target as HTMLInputElement).value;
@@ -79,6 +81,14 @@ const TrueFalseOptions = ({
 				}
 				return prevData;
 			});
+		}
+
+		// Auto-submit for practice questions when answer is selected
+		if (onAutoSubmit && fromLearner && !isLessonCompleted && lessonType === LessonType.PRACTICE_LESSON) {
+			// Use setTimeout to ensure state updates are processed first
+			setTimeout(() => {
+				onAutoSubmit(value);
+			}, 0);
 		}
 	};
 

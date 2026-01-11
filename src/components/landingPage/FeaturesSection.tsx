@@ -68,7 +68,7 @@ const FeaturesSection = () => {
 								'100%': { backgroundPosition: '0% 50%' },
 							},
 						}}>
-						Neden Kaizenglish?
+						Neden AdenKent?
 					</Typography>
 					<Typography
 						variant='h5'
@@ -128,29 +128,28 @@ const FeaturesSection = () => {
 										'mb': 2,
 										'p': 3,
 										'borderRadius': '50%',
-										'background': feature.title === 'Learn Anywhere' 
-											? `linear-gradient(135deg, ${feature.color}50, ${feature.color}40)`
-											: `linear-gradient(135deg, ${feature.color}30, ${feature.color}20)`,
-										'boxShadow': feature.title === 'Learn Anywhere'
-											? `0 4px 20px ${feature.color}60`
-											: `0 4px 20px ${feature.color}35`,
+										'background':
+											feature.title === 'Learn Anywhere'
+												? `linear-gradient(135deg, ${feature.color}50, ${feature.color}40)`
+												: `linear-gradient(135deg, ${feature.color}30, ${feature.color}20)`,
+										'boxShadow': feature.title === 'Learn Anywhere' ? `0 4px 20px ${feature.color}60` : `0 4px 20px ${feature.color}35`,
 										'transition': 'all 0.4s ease',
 										'display': 'flex',
 										'alignItems': 'center',
 										'justifyContent': 'center',
 										'& svg': {
-											filter: feature.title === 'Learn Anywhere'
-												? 'drop-shadow(0 3px 6px rgba(0, 0, 0, 0.5))'
-												: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2))',
+											filter:
+												feature.title === 'Learn Anywhere'
+													? 'drop-shadow(0 3px 6px rgba(0, 0, 0, 0.5))'
+													: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2))',
 										},
 										'&:hover': {
 											transform: 'scale(1.1) rotate(5deg)',
-											boxShadow: feature.title === 'Learn Anywhere'
-												? `0 6px 25px ${feature.color}70`
-												: `0 6px 25px ${feature.color}45`,
-											background: feature.title === 'Learn Anywhere'
-												? `linear-gradient(135deg, ${feature.color}60, ${feature.color}50)`
-												: `linear-gradient(135deg, ${feature.color}40, ${feature.color}30)`,
+											boxShadow: feature.title === 'Learn Anywhere' ? `0 6px 25px ${feature.color}70` : `0 6px 25px ${feature.color}45`,
+											background:
+												feature.title === 'Learn Anywhere'
+													? `linear-gradient(135deg, ${feature.color}60, ${feature.color}50)`
+													: `linear-gradient(135deg, ${feature.color}40, ${feature.color}30)`,
 										},
 									}}>
 									{feature.icon}
