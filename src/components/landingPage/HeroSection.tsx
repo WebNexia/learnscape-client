@@ -254,7 +254,7 @@ const HeroSection = () => {
 								fontWeight: 400,
 								lineHeight: 1.7,
 								fontFamily: 'Varela Round',
-								margin: '1rem 0',
+								margin: isMobilePortrait ? '0.75rem 0 0 0' : '1rem 0',
 							}}>
 							Geliştirdiğimiz eğitim modeliyle bir İngiliz gibi düşünecek ve doğal bir şekilde özgüvenle İngilizce konuşacaksın
 						</Typography>
