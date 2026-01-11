@@ -179,11 +179,11 @@ const HeroSection = () => {
 							className='gradient-text kaizen-title'
 							sx={{
 								fontSize: isSmallMobilePortrait
-									? '1.5rem'
+									? '1.35rem'
 									: isSmallMobileLandscape
 										? '1.75rem'
 										: isMobilePortrait
-											? '2rem'
+											? '1.85rem'
 											: isMobileLandscape
 												? '2.25rem'
 												: isTabletPortrait
