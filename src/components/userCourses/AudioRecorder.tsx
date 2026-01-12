@@ -30,7 +30,7 @@ const AudioRecorder = ({
 	recorderTitle = 'Audio Recorder',
 	recorderTitleDescription,
 	teacherFeedback,
-	maxRecordTime = 120000, // 2 minutes default
+	maxRecordTime = 300000, // 5 minutes default
 	fromCreateCommunityTopic,
 	isUploadLimitReached,
 	audioUploadAttempts = 0,
@@ -39,7 +39,7 @@ const AudioRecorder = ({
 }: AudioRecorderProps) => {
 	const mimeType = 'audio/webm; codecs=opus';
 	const QUALITY = 64000; // Medium quality (64 kbps)
-	const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB limit (~5.5 minutes at 64kbps)
+	const MAX_FILE_SIZE = 3 * 1024 * 1024; // 3MB limit (~6.5 minutes at 64kbps)
 
 	const { isSmallScreen, isRotatedMedium, isRotated, isVerySmallScreen } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -114,7 +114,7 @@ const AudioRecorder = ({
 				setIsAudioTooLarge(true);
 				setAudio(null);
 				setAudioBlob(null);
-				alert(`Audio file is too large (${Math.round(audioBlob.size / 1024 / 1024)}MB). Maximum allowed is 2MB.`);
+				alert(`Audio file is too large (${Math.round(audioBlob.size / 1024 / 1024)}MB). Maximum allowed is 3MB.`);
 			} else {
 				setIsAudioTooLarge(false);
 				setAudio(audioUrl);

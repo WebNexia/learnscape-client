@@ -497,7 +497,7 @@ const AdminQuestionsEditQuestionDialog = ({
 										: isFITBTyping
 											? '(Students can enter max 50 characters for each blank)'
 											: isAudioVideoQuestion
-												? 'Students can upload up to 2-minute audio or 1-minute video recording'
+												? 'Students can upload up to 5-minute audio or 1-minute video recording'
 												: ''}
 								</span>
 							</Typography>

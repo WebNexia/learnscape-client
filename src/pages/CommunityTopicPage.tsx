@@ -669,6 +669,9 @@ const CommunityTopicPage = () => {
 						<img
 							src={topic?.userId?.imageUrl || 'https://img.sportsbookreview.com/images/avatars/default-avatar.jpg'}
 							alt='profile'
+							onError={(e) => {
+								e.currentTarget.src = 'https://img.sportsbookreview.com/images/avatars/default-avatar.jpg';
+							}}
 							style={{ height: isMobileSize ? '2rem' : '4rem', width: isMobileSize ? '2rem' : '4rem', borderRadius: '50%' }}
 						/>
 					</Box>
@@ -879,8 +882,11 @@ const CommunityTopicPage = () => {
 								}}>
 								<Box>
 									<img
-										src={replyToMessage?.userId?.imageUrl}
+										src={replyToMessage?.userId?.imageUrl || 'https://img.sportsbookreview.com/images/avatars/default-avatar.jpg'}
 										alt='profile'
+										onError={(e) => {
+											e.currentTarget.src = 'https://img.sportsbookreview.com/images/avatars/default-avatar.jpg';
+										}}
 										style={{ height: isMobileSize ? '1.5rem' : '2rem', width: isMobileSize ? '1.5rem' : '2rem', borderRadius: '50%' }}
 									/>
 								</Box>
@@ -1099,7 +1105,7 @@ const CommunityTopicPage = () => {
 											<AudioRecorder
 												uploadAudio={uploadAudio}
 												isAudioUploading={isAudioUploading}
-												maxRecordTime={60000}
+												maxRecordTime={300000}
 												fromCreateCommunityTopic={true}
 												audioUploadAttempts={audioUploadAttempts}
 												maxSessionAttempts={MAX_SESSION_ATTEMPTS}

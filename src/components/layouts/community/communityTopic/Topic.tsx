@@ -41,6 +41,9 @@ const Topic = ({ topic }: TopicProps) => {
 					<img
 						src={topic?.userId?.imageUrl || 'https://img.sportsbookreview.com/images/avatars/default-avatar.jpg'}
 						alt='profile_pic'
+						onError={(e) => {
+							e.currentTarget.src = 'https://img.sportsbookreview.com/images/avatars/default-avatar.jpg';
+						}}
 						style={{ height: isMobileSize ? '2rem' : '3rem', width: isMobileSize ? '2rem' : '3rem', borderRadius: '50%' }}
 					/>
 				</Box>
@@ -102,8 +105,11 @@ const Topic = ({ topic }: TopicProps) => {
 						{topic?.lastMessage?.sender?.imageUrl && (
 							<Box sx={{ mr: '0.85rem' }}>
 								<img
-									src={topic?.lastMessage?.sender?.imageUrl}
+									src={topic?.lastMessage?.sender?.imageUrl || 'https://img.sportsbookreview.com/images/avatars/default-avatar.jpg'}
 									alt='profile_pic'
+									onError={(e) => {
+										e.currentTarget.src = 'https://img.sportsbookreview.com/images/avatars/default-avatar.jpg';
+									}}
 									style={{ height: isMobileSize ? '1.5rem' : '2rem', width: isMobileSize ? '1.5rem' : '2rem', borderRadius: '50%' }}
 								/>
 							</Box>

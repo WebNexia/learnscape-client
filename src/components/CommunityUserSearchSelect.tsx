@@ -242,8 +242,11 @@ const CommunityUserSearchSelect: React.FC<CommunityUserSearchSelectProps> = ({
 							onClick={() => handleUserSelect(user)}>
 							<Box sx={{ borderRadius: '100%', marginRight: '1rem' }}>
 								<img
-									src={user.imageUrl}
+									src={user.imageUrl || 'https://img.sportsbookreview.com/images/avatars/default-avatar.jpg'}
 									alt='profile_img'
+									onError={(e) => {
+										e.currentTarget.src = 'https://img.sportsbookreview.com/images/avatars/default-avatar.jpg';
+									}}
 									style={{
 										height: '2rem',
 										width: '2rem',
