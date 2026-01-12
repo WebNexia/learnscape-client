@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useContext, useState } from 'react';
 import { OrganisationContext } from '../../../contexts/OrganisationContextProvider';
 import { UserAuthContext } from '../../../contexts/UserAuthContextProvider';
+import { MediaQueryContext } from '../../../contexts/MediaQueryContextProvider';
 import { PageName, Roles } from '../../../interfaces/enums';
 import {
 	AssignmentIndRounded,
@@ -34,6 +35,7 @@ const CustomDrawer = ({ isDrawerOpen, setIsDrawerOpen, hasUnreadMessages }: Cust
 	const { user } = useContext(UserAuthContext);
 	const { hasAdminAccess, canAccessPayments } = useAuth();
 	const { organisation } = useContext(OrganisationContext);
+	const { isMobilePortrait } = useContext(MediaQueryContext);
 
 	const currentPage = window.location.pathname?.includes('admin')
 		? window.location.pathname?.split('/')?.[2]?.charAt(0)?.toUpperCase() + window.location.pathname?.split('/')?.[2]?.slice(1)
@@ -91,7 +93,7 @@ const CustomDrawer = ({ isDrawerOpen, setIsDrawerOpen, hasUnreadMessages }: Cust
 				<Box
 					sx={{
 						flexGrow: 1, // Allow the box to grow and take available space
-						overflowY: 'auto', // Enable vertical scrolling
+						overflowY: isMobilePortrait && user?.role === Roles.USER ? 'visible' : 'auto', // Disable scrolling for learner on mobile
 						width: '100%', // Make sure it takes full width
 						overflowX: 'hidden',
 						height: '50vh',

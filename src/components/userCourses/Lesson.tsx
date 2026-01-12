@@ -10,6 +10,7 @@ import { MediaQueryContext } from '../../contexts/MediaQueryContextProvider';
 import { useUserLessonsForCourse } from '../../hooks/useUserLessonsForCourse';
 import { UserAuthContext } from '../../contexts/UserAuthContextProvider';
 import { SingleCourse, Price } from '../../interfaces/course';
+import { LessonType } from '../../interfaces/enums';
 
 interface LessonProps {
 	lesson: LessonById;
@@ -218,7 +219,7 @@ const Lesson = ({ lesson, course, isEnrolledStatus, nextLessonId, nextChapterFir
 								fontSize: isVerySmallScreen ? '0.55rem' : isRotatedMedium ? '0.65rem' : isSmallScreen ? '0.75rem' : '0.75rem',
 								marginRight: '1rem',
 							}}>
-							{lesson.type}
+							{lesson.type === LessonType.INSTRUCTIONAL_LESSON ? 'Lecture' : lesson.type === LessonType.PRACTICE_LESSON ? 'Practice' : 'Quiz'}
 						</Typography>
 					</Box>
 					<Box>
