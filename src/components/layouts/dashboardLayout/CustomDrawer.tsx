@@ -93,10 +93,10 @@ const CustomDrawer = ({ isDrawerOpen, setIsDrawerOpen, hasUnreadMessages }: Cust
 				<Box
 					sx={{
 						flexGrow: 1, // Allow the box to grow and take available space
-						overflowY: isMobilePortrait && user?.role === Roles.USER ? 'visible' : 'auto', // Disable scrolling for learner on mobile
+						overflowY: isMobilePortrait && user?.role === Roles.USER ? 'hidden' : 'auto', // Disable scrolling for learner on mobile
 						width: '100%', // Make sure it takes full width
 						overflowX: 'hidden',
-						height: '50vh',
+						height: isMobilePortrait && user?.role === Roles.USER ? 'auto' : '50vh',
 					}}>
 					<Box
 						sx={{
