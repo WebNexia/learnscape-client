@@ -145,6 +145,7 @@ const FillInTheBlanksTyping = ({
 	const [hasInteracted, setHasInteracted] = useState(false);
 	const hintsInitializedRef = useRef<boolean>(false);
 	const previousQuestionIdRef = useRef<string | undefined>(questionId);
+	const previousIsLessonCompletedRef = useRef<boolean | undefined>(isLessonCompleted);
 
 	const { updateLastQuestion, getLastQuestion } = useUserCourseLessonData();
 
@@ -155,6 +156,24 @@ const FillInTheBlanksTyping = ({
 			previousQuestionIdRef.current = questionId;
 		}
 	}, [questionId]);
+
+	// Reset hints initialization when isLessonCompleted changes from true to false (practice again mode)
+	useEffect(() => {
+		if (previousIsLessonCompletedRef.current === true && isLessonCompleted === false && fromPracticeQuestionUser) {
+			hintsInitializedRef.current = false;
+			// Reset answers to empty
+			const initialAnswers: Record<string, string> = {};
+			const initialStatus: Record<string, boolean | null> = {};
+			blankValuePairs?.forEach((pair) => {
+				initialAnswers[pair.id] = '';
+				initialStatus[pair.id] = null;
+			});
+			setUserAnswers(initialAnswers);
+			setInputStatus(initialStatus);
+			setHasInteracted(false);
+		}
+		previousIsLessonCompletedRef.current = isLessonCompleted;
+	}, [isLessonCompleted, fromPracticeQuestionUser, blankValuePairs]);
 
 	const {
 		isRotated,
@@ -207,10 +226,8 @@ const FillInTheBlanksTyping = ({
 				setHints(hintWords);
 				hintsInitializedRef.current = true;
 			}
-		} else if (
-			(isLessonCompleted && fromPracticeQuestionUser) ||
-			(fromPracticeQuestionUser && !isLessonCompleted && displayedQuestionNumber! < getLastQuestion())
-		) {
+		} else if (isLessonCompleted && fromPracticeQuestionUser) {
+			// Only populate with correct answers when lesson is completed (review mode)
 			const initialAnswers: Record<string, string> = {};
 			const initialStatus: Record<string, boolean | null> = {};
 
