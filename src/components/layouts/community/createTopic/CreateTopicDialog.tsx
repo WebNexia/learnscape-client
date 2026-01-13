@@ -349,7 +349,7 @@ const CreateTopicDialog = ({ createTopicModalOpen, topic, setCreateTopicModalOpe
 							<AudioRecorder
 								uploadAudio={uploadAudio}
 								isAudioUploading={isAudioUploading}
-								maxRecordTime={60000}
+								maxRecordTime={300000}
 								fromCreateCommunityTopic={true}
 								recorderTitle=''
 								audioUploadAttempts={audioUploadAttempts}

@@ -132,6 +132,7 @@ const LessonPage = () => {
 	const [isSoundMuted, setIsSoundMuted] = useState<boolean>(false);
 	const [currentQuestionNumber, setCurrentQuestionNumber] = useState<number>(0);
 	const [isNavigatingToNextLesson, setIsNavigatingToNextLesson] = useState<boolean>(false);
+	const [practiceAgainMode, setPracticeAgainMode] = useState<boolean>(false);
 
 	const { fetchQuestionTypeName } = useQuestionTypes();
 
@@ -175,6 +176,11 @@ const LessonPage = () => {
 
 	const isQuiz = lessonType === LessonType.QUIZ;
 	const isInstructionalLesson = lessonType === LessonType.INSTRUCTIONAL_LESSON;
+
+	// Reset practiceAgainMode when lessonId changes (on mount/navigation)
+	useEffect(() => {
+		setPracticeAgainMode(false);
+	}, [lessonId]);
 
 	useEffect(() => {
 		const fetchData = async () => {
@@ -800,23 +806,46 @@ const LessonPage = () => {
 				</Box>
 			)}
 			{!isInstructionalLesson && !isQuestionsVisible && (
-				<Box sx={{ mt: isMobileSize ? '1rem' : '2rem' }}>
+				<Box
+					sx={{
+						mt: isMobileSize ? '1rem' : '2rem',
+						display: 'flex',
+						flexDirection: isMobileSize ? 'column' : 'row',
+						gap: isMobileSize ? '1rem' : '1rem',
+						justifyContent: 'center',
+						alignItems: 'center',
+					}}>
 					<CustomSubmitButton
 						onClick={() => {
+							setPracticeAgainMode(false);
 							setIsQuestionsVisible(true);
 							if (isQuiz && !isLessonCompleted) setIsQuizInProgress(true);
 							window.scrollTo({ top: 0, behavior: 'smooth' });
 						}}
 						capitalize={false}
 						sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-						{lessonType === LessonType.PRACTICE_LESSON
+						{lessonType === LessonType.PRACTICE_LESSON && !isLessonCompleted
 							? 'Go to Questions'
-							: isQuiz && !isLessonCompleted && isQuizInProgress
-								? 'Resume'
-								: isQuiz && !isLessonCompleted
-									? 'Start Quiz'
-									: 'Review Quiz'}
+							: lessonType === LessonType.PRACTICE_LESSON && isLessonCompleted
+								? 'Review Questions'
+								: isQuiz && !isLessonCompleted && isQuizInProgress
+									? 'Resume'
+									: isQuiz && !isLessonCompleted
+										? 'Start Quiz'
+										: 'Review Quiz'}
 					</CustomSubmitButton>
+					{lessonType === LessonType.PRACTICE_LESSON && isLessonCompleted && (
+						<CustomSubmitButton
+							onClick={() => {
+								setPracticeAgainMode(true);
+								setIsQuestionsVisible(true);
+								window.scrollTo({ top: 0, behavior: 'smooth' });
+							}}
+							capitalize={false}
+							sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+							Practice Again
+						</CustomSubmitButton>
+					)}
 				</Box>
 			)}
 			{isQuestionsVisible && (
@@ -849,6 +878,7 @@ const LessonPage = () => {
 						lessonName={lesson.title}
 						onQuestionChange={setCurrentQuestionNumber}
 						isSoundMuted={isSoundMuted}
+						practiceAgainMode={practiceAgainMode}
 					/>
 				</Box>
 			)}

@@ -238,6 +238,9 @@ const Message = ({
 					<img
 						src={message?.userId?.imageUrl || 'https://img.sportsbookreview.com/images/avatars/default-avatar.jpg'}
 						alt='profile'
+						onError={(e) => {
+							e.currentTarget.src = 'https://img.sportsbookreview.com/images/avatars/default-avatar.jpg';
+						}}
 						style={{ height: isMobileSize ? '1.75rem' : '2.25rem', width: isMobileSize ? '1.75rem' : '2.25rem', borderRadius: '50%' }}
 					/>
 				</Box>

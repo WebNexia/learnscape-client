@@ -20,6 +20,7 @@ interface QuestionsProps {
 	setUserQuizAnswers: React.Dispatch<React.SetStateAction<QuizQuestionAnswer[]>>;
 	isSoundMuted?: boolean;
 	onQuestionChange?: (questionNumber: number) => void;
+	practiceAgainMode?: boolean;
 }
 
 const Questions: React.FC<QuestionsProps> = ({
@@ -33,12 +34,20 @@ const Questions: React.FC<QuestionsProps> = ({
 	setUserQuizAnswers,
 	isSoundMuted = false,
 	onQuestionChange,
+	practiceAgainMode = false,
 }) => {
 	const { getLastQuestion, isLessonCompleted, setIsLessonCompleted } = useUserCourseLessonData();
-	const [displayedQuestionNumber, setDisplayedQuestionNumber] = useState<number>(getLastQuestion);
+	const [displayedQuestionNumber, setDisplayedQuestionNumber] = useState<number>(isLessonCompleted ? 1 : getLastQuestion);
 	const [showQuestionSelector, setShowQuestionSelector] = useState<boolean>(false);
 	const numberOfQuestions = questions?.length;
 	const { lessonId } = useParams();
+
+	// Reset to question 1 when lesson is completed
+	useEffect(() => {
+		if (isLessonCompleted && displayedQuestionNumber !== 1) {
+			setDisplayedQuestionNumber(1);
+		}
+	}, [isLessonCompleted]);
 
 	// Notify parent component when displayed question changes
 	useEffect(() => {
@@ -126,6 +135,7 @@ const Questions: React.FC<QuestionsProps> = ({
 							closeAiResponseDrawer={closeAiResponseDrawer}
 							toggleAiIcon={toggleAiIcon}
 							isSoundMuted={isSoundMuted}
+							practiceAgainMode={practiceAgainMode}
 						/>
 					) : isQuiz ? (
 						<QuizQuestion

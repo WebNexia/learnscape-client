@@ -168,6 +168,7 @@ const FillInTheBlanksDragDrop = ({
 	const [hasInteracted, setHasInteracted] = useState(false);
 	const responsesInitializedRef = useRef<boolean>(false);
 	const previousQuestionIdRef = useRef<string | undefined>(questionId);
+	const previousIsLessonCompletedRef = useRef<boolean | undefined>(isLessonCompleted);
 
 	const { updateLastQuestion, getLastQuestion } = useUserCourseLessonData();
 
@@ -178,6 +179,21 @@ const FillInTheBlanksDragDrop = ({
 			previousQuestionIdRef.current = questionId;
 		}
 	}, [questionId]);
+
+	// Reset responses initialization when isLessonCompleted changes from true to false (practice again mode)
+	useEffect(() => {
+		if (previousIsLessonCompletedRef.current === true && isLessonCompleted === false && fromPracticeQuestionUser) {
+			responsesInitializedRef.current = false;
+			// Reset blanks to empty
+			const emptyBlanks = blankValuePairs?.map((pair) => ({
+				...pair,
+				value: '',
+			}));
+			setBlanks(emptyBlanks || []);
+			setHasInteracted(false);
+		}
+		previousIsLessonCompletedRef.current = isLessonCompleted;
+	}, [isLessonCompleted, fromPracticeQuestionUser, blankValuePairs]);
 
 	const { isRotated, isVerySmallScreen, isSmallScreen, isRotatedMedium } = useContext(MediaQueryContext);
 	const isMobileSize = isSmallScreen || isRotatedMedium;
@@ -210,10 +226,8 @@ const FillInTheBlanksDragDrop = ({
 			populateBlanks(userBlankValuePairsAfterSubmission);
 		} else if (!isLessonCompleted && fromQuizQuestionUser) {
 			populateBlanks(userQuizAnswers?.find((quizAnswer) => quizAnswer.questionId === questionId)?.userBlankValuePairAnswers || []);
-		} else if (
-			(isLessonCompleted && fromPracticeQuestionUser) ||
-			(!isLessonCompleted && fromPracticeQuestionUser && displayedQuestionNumber! < getLastQuestion())
-		) {
+		} else if (isLessonCompleted && fromPracticeQuestionUser) {
+			// Only populate with correct answers when lesson is completed (review mode)
 			populateBlanks(blankValuePairs);
 
 			// Only set responses once, not on every update

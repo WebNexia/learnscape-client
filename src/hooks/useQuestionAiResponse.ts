@@ -256,7 +256,7 @@ const useQuestionAiResponse = () => {
 					- Instructions should be engaging and educational
 					- Focus on speaking, presentation, or demonstration skills
 					- Make instructions appropriate for the topic and level
-					- Always specify time limits: maximum 60 seconds for audio, maximum 30 seconds for video
+					- Always specify time limits: maximum 5 minutes for audio, maximum 30 seconds for video
 					- Choose appropriate time limits based on the complexity of the task and student level
 					- Set audio/video flags based on the instruction type:
 					  * If instruction mentions "record audio" or "speak about", set audio: true, video: false
@@ -264,10 +264,10 @@ const useQuestionAiResponse = () => {
 					  * If instruction allows both, set audio: true, video: true
 					
 					Time Limit Guidelines:
-					- Audio recordings: maximum 60 seconds
+					- Audio recordings: maximum 5 minutes
 					- Video recordings: maximum 30 seconds
-					- Simple explanations: 15-30 seconds
-					- Detailed explanations: 30-60 seconds (audio only)
+					- Simple explanations: 30-60 seconds
+					- Detailed explanations: 1-5 minutes (audio only)
 					- Demonstrations: 15-30 seconds (video only)
 					
 					Return the response in this exact JSON format:

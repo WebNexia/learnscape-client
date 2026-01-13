@@ -24,7 +24,7 @@ import TrueFalseOptions from '../layouts/questionTypes/TrueFalseOptions';
 import useQuestionTypes from '../../hooks/useQuestionTypes';
 import CustomTextField from '../forms/customFields/CustomTextField';
 import { useUserCourseLessonData } from '../../hooks/useUserCourseLessonData';
-import { AutoAwesome, Close, Done, DoneAll, KeyboardArrowLeft, KeyboardArrowRight, KeyboardDoubleArrowRight } from '@mui/icons-material';
+import { AutoAwesome, Close, Done, DoneAll, KeyboardArrowLeft, KeyboardArrowRight, KeyboardDoubleArrowRight, Refresh } from '@mui/icons-material';
 import AiIcon from '@mui/icons-material/AutoAwesome';
 import { UserQuestionData } from '../../hooks/useFetchUserQuestion';
 import { QuestionType, LessonType } from '../../interfaces/enums';
@@ -83,6 +83,7 @@ interface PracticeQuestionProps {
 	openAiResponseDrawer: (index: number) => void;
 	closeAiResponseDrawer: (index: number) => void;
 	isSoundMuted?: boolean;
+	practiceAgainMode?: boolean;
 }
 
 const PracticeQuestion = ({
@@ -105,6 +106,7 @@ const PracticeQuestion = ({
 	openAiResponseDrawer,
 	closeAiResponseDrawer,
 	isSoundMuted = false,
+	practiceAgainMode = false,
 }: PracticeQuestionProps) => {
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const navigate = useNavigate();
@@ -151,7 +153,7 @@ const PracticeQuestion = ({
 	const [userAnswer, setUserAnswer] = useState<string>(''); //user answer for current question
 
 	const [value, setValue] = useState<string>(() => {
-		if ((isLessonCompleted && question.correctAnswer) || (!isLessonCompleted && displayedQuestionNumber < getLastQuestion())) {
+		if ((isLessonCompleted && question.correctAnswer && !practiceAgainMode) || (!isLessonCompleted && displayedQuestionNumber < getLastQuestion())) {
 			return question.correctAnswer;
 		} else if (isOpenEndedQuestion) {
 			const answer: string = userAnswers?.find((data) => data.questionId == question._id)?.userAnswer || '';
@@ -197,14 +199,10 @@ const PracticeQuestion = ({
 
 	useEffect(() => {
 		if (isTranslate && isLessonCompleted) {
-			// If lesson is completed, mark all pairs as checked and show translations
-			const allPairIds = new Set(question.translatePairs?.map((pair, idx) => pair.id || idx.toString()) || []);
-			setCheckedTranslatePairs(allPairIds);
-			// Load user answers if available
-			const savedAnswer = userAnswers?.find((data) => data.questionId === question._id)?.userAnswer || '';
-			if (savedAnswer) {
-				setUserAnswer(savedAnswer);
-			}
+			// Translate answers are not saved to database, so always start fresh for practice
+			setTranslateAnswers({});
+			// Don't mark pairs as checked - allow practice mode
+			setCheckedTranslatePairs(new Set());
 			// Clear stored answers when lesson is completed
 			translateAnswersStoreRef.current = {};
 		} else if (isTranslate && !isLessonCompleted) {
@@ -218,8 +216,11 @@ const PracticeQuestion = ({
 				setTranslateAnswers({});
 				setCheckedTranslatePairs(new Set());
 			}
-		} else if (isLessonCompleted && question.correctAnswer && !isOpenEndedQuestion && !isTranslate) {
+		} else if (isLessonCompleted && question.correctAnswer && !isOpenEndedQuestion && !isTranslate && !practiceAgainMode) {
 			setValue(question.correctAnswer);
+		} else if (isLessonCompleted && practiceAgainMode && !isOpenEndedQuestion && !isTranslate && !isFlipCard) {
+			// Hide answers in practice again mode - reset to empty
+			setValue('');
 		} else if (isOpenEndedQuestion) {
 			setValue(() => {
 				const answer = userAnswers?.find((data) => data.questionId === question._id)?.userAnswer || '';
@@ -374,7 +375,8 @@ const PracticeQuestion = ({
 	};
 
 	const handleRadioChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-		if (isLessonCompleted) {
+		const effectiveIsLessonCompleted = isLessonCompleted && !practiceAgainMode;
+		if (effectiveIsLessonCompleted) {
 			setShowQuestionSelector(true);
 			setIsLessonUpdating(true);
 			setIsOpenEndedAnswerSubmitted(false);
@@ -387,7 +389,7 @@ const PracticeQuestion = ({
 		setUserAnswer(selectedValue);
 
 		// Auto-submit for Multiple Choice practice questions when answer is selected
-		if (!isLessonCompleted && isMultipleChoiceQuestion && lessonType === LessonType.PRACTICE_LESSON) {
+		if (!effectiveIsLessonCompleted && isMultipleChoiceQuestion && lessonType === LessonType.PRACTICE_LESSON) {
 			// Use setTimeout to ensure state updates are processed first
 			setTimeout(() => {
 				handleAutoSubmit(selectedValue);
@@ -397,7 +399,8 @@ const PracticeQuestion = ({
 
 	// Auto-submit handler for True-False and Multiple Choice questions
 	const handleAutoSubmit = async (answerValue: string) => {
-		if (!answerValue || isLessonCompleted) return;
+		const effectiveIsLessonCompleted = isLessonCompleted && !practiceAgainMode;
+		if (!answerValue || effectiveIsLessonCompleted) return;
 
 		if (answerValue === question.correctAnswer?.toString()) {
 			setHelperText('You got it!');
@@ -507,7 +510,7 @@ const PracticeQuestion = ({
 									setCorrectAnswer={setValue}
 									fromLearner={true}
 									question={question}
-									isLessonCompleted={isLessonCompleted}
+									isLessonCompleted={isLessonCompleted && !practiceAgainMode}
 									displayedQuestionNumber={displayedQuestionNumber}
 									setHelperText={setHelperText}
 									setIsLessonUpdating={setIsLessonUpdating}
@@ -531,7 +534,7 @@ const PracticeQuestion = ({
 									setIsLessonCompleted={setIsLessonCompleted}
 									setShowQuestionSelector={setShowQuestionSelector}
 									lessonType={lessonType}
-									isLessonCompleted={isLessonCompleted}
+									isLessonCompleted={isLessonCompleted && !practiceAgainMode}
 									onCorrectMatch={playSuccessSound}
 									onWrongMatch={playErrorSound}
 								/>
@@ -562,7 +565,7 @@ const PracticeQuestion = ({
 									fromPracticeQuestionUser={true}
 									displayedQuestionNumber={displayedQuestionNumber}
 									numberOfQuestions={numberOfQuestions}
-									isLessonCompleted={isLessonCompleted}
+									isLessonCompleted={isLessonCompleted && !practiceAgainMode}
 									setIsLessonCompleted={setIsLessonCompleted}
 									setShowQuestionSelector={setShowQuestionSelector}
 									lessonType={lessonType}
@@ -598,7 +601,7 @@ const PracticeQuestion = ({
 									fromPracticeQuestionUser={true}
 									displayedQuestionNumber={displayedQuestionNumber}
 									numberOfQuestions={numberOfQuestions}
-									isLessonCompleted={isLessonCompleted}
+									isLessonCompleted={isLessonCompleted && !practiceAgainMode}
 									setIsLessonCompleted={setIsLessonCompleted}
 									setShowQuestionSelector={setShowQuestionSelector}
 									lessonType={lessonType}
@@ -630,7 +633,7 @@ const PracticeQuestion = ({
 								{question.translatePairs?.map((pair, index) => {
 									const pairId = pair.id || index.toString();
 									const isPairChecked = checkedTranslatePairs.has(pairId);
-									const showTranslation = isLessonCompleted || isPairChecked;
+									const showTranslation = isPairChecked; // Only show translation when pair is checked, not just because lesson is completed
 
 									return (
 										<Box
@@ -673,29 +676,26 @@ const PracticeQuestion = ({
 												{pair.originalText}
 											</Typography>
 
-											{!isLessonCompleted && (
-												<CustomTextField
-													label='Your Translation'
-													multiline
-													rows={2}
-													value={translateAnswers[pairId] || ''}
-													onChange={(e) => {
-														setTranslateAnswers((prev) => ({
-															...prev,
-															[pairId]: e.target.value,
-														}));
-													}}
-													disabled={showTranslation}
-													InputProps={{
-														inputProps: {
-															maxLength: 500,
-														},
-													}}
-													sx={{
-														width: '100%',
-													}}
-												/>
-											)}
+											<CustomTextField
+												label='Your Translation'
+												multiline
+												rows={2}
+												value={translateAnswers[pairId] || ''}
+												onChange={(e) => {
+													setTranslateAnswers((prev) => ({
+														...prev,
+														[pairId]: e.target.value,
+													}));
+												}}
+												InputProps={{
+													inputProps: {
+														maxLength: 500,
+													},
+												}}
+												sx={{
+													width: '100%',
+												}}
+											/>
 
 											{showTranslation && (
 												<>
@@ -729,7 +729,7 @@ const PracticeQuestion = ({
 												</>
 											)}
 
-											{!isLessonCompleted && !isPairChecked && (
+											{!isPairChecked && (
 												<Box sx={{ display: 'flex', justifyContent: 'center', mt: '-1rem', mb: '-0.5rem' }}>
 													<CustomSubmitButton
 														onClick={async () => {
@@ -757,27 +757,48 @@ const PracticeQuestion = ({
 															setUserAnswer(userAnswerText);
 															setError(false);
 
-															// Check if all pairs are checked
-															const allPairIds = new Set(question.translatePairs?.map((p, idx) => p.id || idx.toString()) || []);
-															const newCheckedPairs = new Set([...checkedTranslatePairs, pairId]);
-															const allChecked =
-																allPairIds.size > 0 &&
-																allPairIds.size === newCheckedPairs.size &&
-																Array.from(allPairIds).every((id) => newCheckedPairs.has(id));
+															// Only submit to server if lesson is not completed
+															if (!isLessonCompleted) {
+																// Check if all pairs are checked
+																const allPairIds = new Set(question.translatePairs?.map((p, idx) => p.id || idx.toString()) || []);
+																const newCheckedPairs = new Set([...checkedTranslatePairs, pairId]);
+																const allChecked =
+																	allPairIds.size > 0 &&
+																	allPairIds.size === newCheckedPairs.size &&
+																	Array.from(allPairIds).every((id) => newCheckedPairs.has(id));
 
-															if (allChecked) {
-																setIsAnswerCorrect(true);
-																setSuccess(true);
+																if (allChecked) {
+																	setIsAnswerCorrect(true);
+																	setSuccess(true);
 
-																await createUserQuestion();
-																toggleAiIcon(index);
+																	await createUserQuestion();
+																	toggleAiIcon(index);
+																}
 															}
 														}}
 														sx={{
 															width: '40%',
 														}}>
-														Check
+														Compare
 													</CustomSubmitButton>
+												</Box>
+											)}
+
+											{isPairChecked && (
+												<Box sx={{ display: 'flex', justifyContent: 'center', mb: '-1rem' }}>
+													<Tooltip title='Try Again' placement='top' arrow>
+														<IconButton
+															onClick={() => {
+																// Un-check the pair to allow editing again
+																setCheckedTranslatePairs((prev) => {
+																	const newSet = new Set(prev);
+																	newSet.delete(pairId);
+																	return newSet;
+																});
+															}}>
+															<Refresh fontSize='small' />
+														</IconButton>
+													</Tooltip>
 												</Box>
 											)}
 										</Box>
@@ -799,14 +820,16 @@ const PracticeQuestion = ({
 								{question &&
 									question.options &&
 									question.options?.map((option, index) => {
+										const effectiveIsLessonCompleted = isLessonCompleted && !practiceAgainMode;
 										const isSelected =
-											(isLessonCompleted && displayedQuestionNumber < getLastQuestion() && !isLessonUpdating ? question.correctAnswer : value) ===
-											option;
+											(effectiveIsLessonCompleted && displayedQuestionNumber < getLastQuestion() && !isLessonUpdating
+												? question.correctAnswer
+												: value) === option;
 										return (
 											<Box
 												key={index}
 												onClick={() => {
-													if (!isLessonCompleted || displayedQuestionNumber >= getLastQuestion() || isLessonUpdating) {
+													if (!effectiveIsLessonCompleted || displayedQuestionNumber >= getLastQuestion() || isLessonUpdating) {
 														const syntheticEvent = {
 															target: { value: option },
 														} as React.ChangeEvent<HTMLInputElement>;
