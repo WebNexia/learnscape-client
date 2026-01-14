@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState, useMemo } from 'react';
-import { Box, Button, DialogContent, IconButton, Slide, Tooltip, Typography } from '@mui/material';
+import { Box, Button, DialogActions, DialogContent, IconButton, Slide, Tooltip, Typography } from '@mui/material';
 import { useParams } from 'react-router-dom';
 import axios from '@utils/axiosInstance';
 import {
@@ -7,6 +7,7 @@ import {
 	Close,
 	DoneAll,
 	GetApp,
+	HelpOutline,
 	Home,
 	KeyboardBackspaceOutlined,
 	KeyboardDoubleArrowRight,
@@ -133,6 +134,7 @@ const LessonPage = () => {
 	const [currentQuestionNumber, setCurrentQuestionNumber] = useState<number>(0);
 	const [isNavigatingToNextLesson, setIsNavigatingToNextLesson] = useState<boolean>(false);
 	const [practiceAgainMode, setPracticeAgainMode] = useState<boolean>(false);
+	const [isHelpDialogOpen, setIsHelpDialogOpen] = useState<boolean>(false);
 
 	const { fetchQuestionTypeName } = useQuestionTypes();
 
@@ -810,7 +812,6 @@ const LessonPage = () => {
 					sx={{
 						mt: isMobileSize ? '1rem' : '2rem',
 						display: 'flex',
-						flexDirection: isMobileSize ? 'column' : 'row',
 						gap: isMobileSize ? '1rem' : '1rem',
 						justifyContent: 'center',
 						alignItems: 'center',
@@ -834,18 +835,35 @@ const LessonPage = () => {
 										? 'Start Quiz'
 										: 'Review Quiz'}
 					</CustomSubmitButton>
-					{lessonType === LessonType.PRACTICE_LESSON && isLessonCompleted && (
-						<CustomSubmitButton
-							onClick={() => {
-								setPracticeAgainMode(true);
-								setIsQuestionsVisible(true);
-								window.scrollTo({ top: 0, behavior: 'smooth' });
-							}}
-							capitalize={false}
-							sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-							Practice Again
-						</CustomSubmitButton>
-					)}
+					<Box>
+						{lessonType === LessonType.PRACTICE_LESSON && isLessonCompleted && (
+							<CustomSubmitButton
+								onClick={() => {
+									setPracticeAgainMode(true);
+									setIsQuestionsVisible(true);
+									window.scrollTo({ top: 0, behavior: 'smooth' });
+								}}
+								capitalize={false}
+								sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+								Practice Again
+							</CustomSubmitButton>
+						)}
+						<IconButton onClick={() => setIsHelpDialogOpen(true)} sx={{ ':hover': { backgroundColor: 'transparent' } }}>
+							<HelpOutline fontSize='small' sx={{ fontSize: isMobileSize ? '1rem' : '1.25rem' }} />
+						</IconButton>
+						<CustomDialog openModal={isHelpDialogOpen} closeModal={() => setIsHelpDialogOpen(false)} maxWidth='xs'>
+							<DialogContent>
+								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', lineHeight: 1.9, mt: '0.75rem' }}>
+									You can solve the multiple choice, true/false, fill in the blank, matching pairs, and translate questions again.
+								</Typography>
+							</DialogContent>
+							<DialogActions>
+								<CustomCancelButton onClick={() => setIsHelpDialogOpen(false)} sx={{ margin: '0rem 0.5rem 0.5rem 0' }}>
+									Close
+								</CustomCancelButton>
+							</DialogActions>
+						</CustomDialog>
+					</Box>
 				</Box>
 			)}
 			{isQuestionsVisible && (

@@ -183,6 +183,9 @@ const ChatList = ({
 														<img
 															src={chatDisplayImage || 'https://img.sportsbookreview.com/images/avatars/default-avatar.jpg'}
 															alt='profile_img'
+															onError={(e) => {
+																e.currentTarget.src = 'https://img.sportsbookreview.com/images/avatars/default-avatar.jpg';
+															}}
 															style={{
 																height: isMobileSize ? '1.75rem' : '2.5rem',
 																width: isMobileSize ? '1.75rem' : '2.5rem',

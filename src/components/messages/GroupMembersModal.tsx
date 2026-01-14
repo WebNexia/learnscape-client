@@ -27,6 +27,9 @@ const GroupMembersModal = ({ membersModalOpen, activeChat, onCloseModal }: Group
 						<img
 							src={activeChat.groupImageUrl}
 							alt='group_img'
+							onError={(e) => {
+								e.currentTarget.src = 'https://img.sportsbookreview.com/images/avatars/default-avatar.jpg';
+							}}
 							style={{
 								height: '3.5rem',
 								width: '3.5rem',
@@ -64,8 +67,11 @@ const GroupMembersModal = ({ membersModalOpen, activeChat, onCloseModal }: Group
 									gap: 1,
 								}}>
 								<img
-									src={participant.imageUrl}
+									src={participant.imageUrl || 'https://img.sportsbookreview.com/images/avatars/default-avatar.jpg'}
 									alt='profile_img'
+									onError={(e) => {
+										e.currentTarget.src = 'https://img.sportsbookreview.com/images/avatars/default-avatar.jpg';
+									}}
 									style={{
 										height: '2rem',
 										width: '2rem',
