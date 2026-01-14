@@ -298,7 +298,7 @@ export const useChatNavigation = ({
 					return 'https://t4.ftcdn.net/jpg/02/53/91/57/360_F_253915708_G8elkrM3HdQPi3txjwTirLDXVfPuqnww.jpg';
 				}
 				const otherParticipant = chat.participants?.find((p) => p.firebaseUserId !== user?.firebaseUserId);
-				return otherParticipant?.imageUrl || '';
+				return otherParticipant?.imageUrl || 'https://img.sportsbookreview.com/images/avatars/default-avatar.jpg';
 			},
 		[isGroupChat, user?.firebaseUserId]
 	);

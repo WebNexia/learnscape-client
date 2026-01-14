@@ -102,6 +102,9 @@ const ChatHeader = ({
 								<img
 									src={getChatDisplayImage(activeChat) || 'https://img.sportsbookreview.com/images/avatars/default-avatar.jpg'}
 									alt='profile_img'
+									onError={(e) => {
+										e.currentTarget.src = 'https://img.sportsbookreview.com/images/avatars/default-avatar.jpg';
+									}}
 									style={{
 										height: isMobileSize ? '2.25rem' : '3rem',
 										width: isMobileSize ? '2.25rem' : '3rem',
