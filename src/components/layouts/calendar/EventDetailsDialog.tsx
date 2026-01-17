@@ -270,50 +270,76 @@ const EventDetailsDialog = ({ eventDetailsModalOpen, selectedEvent, setEventDeta
 							</Typography>
 						</Box>
 					)}
-					{/* Recordings section - show YouTube if available, otherwise Zoom recording */}
-					{selectedEvent?.youtubeVideoId ? (
+
+					{/* Show all available recordings (YouTube, Zoom, or manual) */}
+					{(selectedEvent?.youtubeVideoId || recordings.length > 0 || selectedEvent?.sessionRecordingUrl) && (
 						<Box sx={{ mb: '0.75rem' }}>
 							<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : undefined, mb: '0.5rem' }}>
-								Recording:
+								Recording{selectedEvent?.youtubeVideoId && (recordings.length > 0 || selectedEvent?.sessionRecordingUrl) ? 's' : ''}:
 							</Typography>
-							<Link
-								onClick={() => navigate(`/event-recording/${selectedEvent?._id}`)}
-								sx={{
-									'display': 'block',
-									'cursor': 'pointer',
-									'color': theme.palette.primary.main,
-									'textDecoration': 'none',
-									'&:hover': {
-										textDecoration: 'underline',
-									},
-								}}>
-								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-									Watch Recording (YouTube)
-								</Typography>
-							</Link>
+							
+							{/* Automatically uploaded YouTube video from Zoom */}
+							{selectedEvent?.youtubeVideoId && (
+								<Link
+									onClick={() => navigate(`/event-recording/${selectedEvent?._id}`)}
+									sx={{
+										'display': 'block',
+										'cursor': 'pointer',
+										'color': theme.palette.primary.main,
+										'textDecoration': 'none',
+										'mb': recordings.length > 0 || selectedEvent?.sessionRecordingUrl ? '0.5rem' : '0',
+										'&:hover': {
+											textDecoration: 'underline',
+										},
+									}}>
+									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+										Watch Recording (YouTube)
+									</Typography>
+								</Link>
+							)}
+
+							{/* Zoom recordings from API */}
+							{recordings.length > 0 && (
+								<Link
+									onClick={() => navigate(`/event-recording/${selectedEvent?._id}/${recordings[0].recordingId}`)}
+									sx={{
+										'display': 'block',
+										'cursor': 'pointer',
+										'color': theme.palette.primary.main,
+										'textDecoration': 'none',
+										'mb': selectedEvent?.sessionRecordingUrl ? '0.5rem' : '0',
+										'&:hover': {
+											textDecoration: 'underline',
+										},
+									}}>
+									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+										Watch Recording ({new Date(recordings[0].recordingStart).toLocaleString()})
+									</Typography>
+								</Link>
+							)}
+
+							{/* Manually provided session recording URL */}
+							{selectedEvent?.sessionRecordingUrl && (
+								<Link
+									href={selectedEvent.sessionRecordingUrl}
+									target='_blank'
+									rel='noopener noreferrer'
+									sx={{
+										'display': 'block',
+										'cursor': 'pointer',
+										'color': theme.palette.primary.main,
+										'textDecoration': 'none',
+										'&:hover': {
+											textDecoration: 'underline',
+										},
+									}}>
+									<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
+										Watch Recording {selectedEvent?.youtubeVideoId || recordings.length > 0 ? '(Additional)' : ''}
+									</Typography>
+								</Link>
+							)}
 						</Box>
-					) : recordings.length > 0 ? (
-						<Box sx={{ mb: '0.75rem' }}>
-							<Typography variant='h6' sx={{ fontSize: isMobileSize ? '0.85rem' : undefined, mb: '0.5rem' }}>
-								Recording:
-							</Typography>
-							<Link
-								onClick={() => navigate(`/event-recording/${selectedEvent?._id}/${recordings[0].recordingId}`)}
-								sx={{
-									'display': 'block',
-									'cursor': 'pointer',
-									'color': theme.palette.primary.main,
-									'textDecoration': 'none',
-									'&:hover': {
-										textDecoration: 'underline',
-									},
-								}}>
-								<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem' }}>
-									Watch Recording ({new Date(recordings[0].recordingStart).toLocaleString()})
-								</Typography>
-							</Link>
-						</Box>
-					) : null}
+					)}
 					{isLoadingRecordings && (
 						<Typography variant='body2' sx={{ fontSize: isMobileSize ? '0.75rem' : '0.85rem', color: 'text.secondary', mb: '0.75rem' }}>
 							Checking for recordings...

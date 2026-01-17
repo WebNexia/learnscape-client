@@ -74,7 +74,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 
 	const { user } = useContext(UserAuthContext);
-	const { orgId } = useContext(OrganisationContext);
+	const { orgId, organisation } = useContext(OrganisationContext);
 	const { courses } = useContext(CoursesContext);
 	const { addNewEvent } = useContext(EventsContext);
 	const { hasAdminAccess, isLearner, isInstructor } = useAuth();
@@ -93,6 +93,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 	const [instructorSearchInfoOpen, setInstructorSearchInfoOpen] = useState<boolean>(false);
 	const [learnerSearchInfoOpen, setLearnerSearchInfoOpen] = useState<boolean>(false);
 	const [courseSearchInfoOpen, setCourseSearchInfoOpen] = useState<boolean>(false);
+	const [isZoomConfigured, setIsZoomConfigured] = useState<boolean>(false);
 
 	// Refs for search components to access their reset functions
 	const userSearchRef = useRef<any>(null);
@@ -211,6 +212,16 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 		} // Add more mappings as needed
 		dayjs.locale(locale);
 	}, []);
+
+	// Check if Zoom credentials are configured from organisation context
+	useEffect(() => {
+		// Check if Zoom is configured from organisation data
+		if (organisation?.hasZoomConfigured) {
+			setIsZoomConfigured(true);
+		} else {
+			setIsZoomConfigured(false);
+		}
+	}, [organisation?.hasZoomConfigured]);
 
 	// URL validation function
 	const validateUrls = async (): Promise<boolean> => {
@@ -1191,7 +1202,7 @@ const CreateEventDialog = ({ newEvent, newEventModalOpen, setNewEvent, setNewEve
 						</Box>
 					)}
 
-					{(hasAdminAccess || isInstructor) && (
+					{(hasAdminAccess || isInstructor) && isZoomConfigured && (
 						<FormControlLabel
 							labelPlacement='start'
 							control={

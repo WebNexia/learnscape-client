@@ -87,7 +87,7 @@ const EditEventDialog = ({
 	const base_url = import.meta.env.VITE_SERVER_BASE_URL;
 	const { users } = useContext(UsersContext);
 	const { user } = useContext(UserAuthContext);
-	const { orgId } = useContext(OrganisationContext);
+	const { orgId, organisation } = useContext(OrganisationContext);
 	const { courses } = useContext(CoursesContext);
 	const { updateEvent, removeEvent } = useContext(EventsContext);
 	const { hasAdminAccess, isLearner, isInstructor } = useAuth();
@@ -270,6 +270,20 @@ const EditEventDialog = ({
 				}
 			} catch (error) {
 				errorMessages.push('Event Link URL: Invalid URL format');
+				hasErrors = true;
+			}
+		}
+
+		// Validate session recording URL if provided
+		if (selectedEvent?.sessionRecordingUrl?.trim()) {
+			try {
+				const url = new URL(selectedEvent.sessionRecordingUrl.trim());
+				if (!url.protocol.startsWith('http')) {
+					errorMessages.push('Session Recording URL: Invalid URL format. Must start with http:// or https://');
+					hasErrors = true;
+				}
+			} catch (error) {
+				errorMessages.push('Session Recording URL: Invalid URL format');
 				hasErrors = true;
 			}
 		}
@@ -1429,7 +1443,7 @@ const EditEventDialog = ({
 							const hasZoomMeeting = !!(selectedEvent?.zoomMeetingId || selectedEvent?.zoomMeetingNumber || selectedEvent?.zoomJoinUrl);
 							if (hasZoomMeeting) {
 								return (
-									<Box sx={{ mb: '0.75rem' }}>
+									<Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mb: '0.75rem' }}>
 										<Button
 											variant='contained'
 											disabled={!selectedEvent?._id || (!hasAdminAccess && selectedEvent?.createdBy !== user?._id) || isStartingMeeting}
@@ -1532,6 +1546,53 @@ const EditEventDialog = ({
 						/>
 					) : null}
 
+					{/* Session Recording URL - always available for admins/instructors (can be used alongside Zoom or instead of it) */}
+					{(hasAdminAccess || isInstructor) && (
+						<Box sx={{ mb: '0.75rem' }}>
+							<Box sx={{ display: 'flex', alignItems: 'center', mb: '0.5rem' }}>
+								<Typography
+									sx={{
+										fontSize: isMobileSize ? '0.75rem' : '0.85rem',
+										fontWeight: 500,
+										mr: '0.5rem',
+									}}>
+									Session Recording URL
+								</Typography>
+								<Tooltip
+									title={
+										organisation?.hasZoomConfigured
+											? 'If you create a Zoom meeting, recorded sessions will be automatically available for users. You can also add an additional recording URL here (e.g., from free Zoom account or other platforms).'
+											: 'Add a recording link here (e.g., YouTube, Vimeo, Zoom, or other video platform). Recorded sessions will be available for users to view.'
+									}
+									arrow
+									placement='top'>
+									<InfoOutlined
+										sx={{
+											fontSize: isMobileSize ? '0.9rem' : '1rem',
+											color: theme.palette.primary.main,
+											cursor: 'help',
+										}}
+									/>
+								</Tooltip>
+							</Box>
+							<CustomTextField
+								value={selectedEvent?.sessionRecordingUrl || ''}
+								onChange={(e) => {
+									setSelectedEvent((prevData) => {
+										if (prevData) {
+											return { ...prevData, sessionRecordingUrl: e.target.value };
+										}
+										return prevData;
+									});
+									setIsEventUpdated(true);
+								}}
+								required={false}
+								placeholder='Enter recording link (e.g., YouTube, Vimeo, Zoom, or other video platform)'
+								disabled={selectedEvent?.isPublic || selectedEvent?.createdBy !== user?._id}
+							/>
+						</Box>
+					)}
+
 					<CustomTextField
 						label='Location'
 						value={selectedEvent?.location}
@@ -1576,7 +1637,7 @@ const EditEventDialog = ({
 						submitBtnText='Update'
 						disableBtn={isProcessing || !canManageEvent}
 						disableCancelBtn={isProcessing}
-						actionSx={{ marginBottom: '0rem' }}
+						actionSx={{ marginBottom: '0rem', marginRight: '-0.25rem' }}
 					/>
 				</Box>
 				<CustomDialog openModal={deleteEventModalOpen} closeModal={() => setDeleteEventModalOpen(false)} title='Delete Event' maxWidth='xs'>

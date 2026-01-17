@@ -3,4 +3,5 @@ export interface Organisation {
 	logoUrl: string;
 	orgCode: string;
 	orgName: string;
+	hasZoomConfigured?: boolean;
 }
