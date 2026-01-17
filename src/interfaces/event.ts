@@ -34,6 +34,8 @@ export interface Event {
 	hasRecordings?: boolean; // Frontend-only: indicates if recordings exist
 	// YouTube recording
 	youtubeVideoId?: string; // YouTube video ID if recording was uploaded to YouTube
+	// Manual session recording URL (when Zoom is not configured)
+	sessionRecordingUrl?: string; // Manual recording link for non-Zoom meetings
 }
 
 export interface AttendeeInfo {
